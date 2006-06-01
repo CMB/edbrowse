@@ -1,0 +1,531 @@
+<body onload=onlfunc() onunload=onunlfunc()>
+<script language="JavaScript">
+/* This is the javascript regression test for edbrowse.
+It attempts to exercise all the implemented features of javascript,
+which is, by the way, not all the features of javascript by any means.
+Run this program after every software change,
+and certainly before each release.
+If a test fails, we give you the test number and abort.
+Fix the bug and rerun, until all tests pass.
+Warning: these tests are in no particular order, except if you rearrange
+them they will fail, because some depend on variables that were
+set by others.  Yeah, it's ugly. */
+
+var udef = "undefined";
+function fail(n) { alert("failed "+n); close(); }
+
+var popwin = new Window("http://www.moreAndMoreCrap.com/BuyNow.html", "obnoxious_ad", "width=72");
+
+var n, j;
+// for loop with break and continue
+for(n=0, j=1; j<=20; ++j) {
+n += j*j;
+if(j%7 == 0) continue;
+--n;
+if(j == 18) break;
+}
+if(n != 2093) fail(1);
+
+// while loop with break and continue
+j = 0;
+while(j < 20) {
+++j;
+n += j*j;
+if(j >= 3 && j <= 5) continue;
+++n;
+if(j == 7) break;
+}
+if(n != 2237) fail(2);
+
+// else ambiguity
+if(j == 7)
+if(n == 29) n = 282; else n = 321;
+if(n-1 != 320) fail(3);
+
+// switch, default
+switch(n) {
+case j: j=1; break;
+case 19: j=2; break;
+case 321: j=3; break;
+} /* switch */
+if(j != 3) fail(4);
+switch(n) {
+case j: j=1; break;
+case 19: j=2; break;
+case 321: j=3;
+case 11: j = 4;
+} /* switch */
+if(j != 4) fail(5);
+switch(n) {
+case j: j=1; break;
+case 19: j=2; break;
+default: j=3; break;
+case 777: j = 7; break;
+} /* switch */
+if(j != 3) fail(6);
+
+var bt = true; // a boolean value
+var f = 6.25; // a perfectly representable floating value
+if("cat" + 15 + "dog" + f + bt != "cat15dog6.25true") fail(7);
+if(Math.sqrt(f) != 2.5) fail(8);
+
+// silly braces and semis, and optional semis
+{{
+j = 7
+j += 2
+;;;;
+j *= 3
+}}
+if(j != 27) fail(9);
+
+if(Math.pow(11,4) != 14641) fail(10);
+
+var alpha = "abc\144\x65fghijklmnopqrstuvwxyz\r\n";
+if(alpha.substring(2,7) != "cdefg") fail(11);
+if(alpha.length != 28) fail(12);
+if(alpha.charAt(10) != 'k') fail(13);
+if(alpha.indexOf("rrr") != -1) fail(15);
+if(alpha.lastIndexOf("quack") != -1) fail(16);
+if(alpha.indexOf("def") != 3) fail(17);
+alpha += "ubcxyz";
+if(alpha.lastIndexOf("bc") != 29) fail(18);
+
+var a = alpha.split('b');
+if(a.length != 3) fail(20);
+if(a[0] != 'a') fail(21);
+if(a[2] != "cxyz") fail(22);
+if(a.join("--") != "a--cdefghijklmnopqrstuvwxyz\r\nu--cxyz") fail(23);
+
+a = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"];
+if(a.length != 7) fail(30);
+a[3] = 99;
+a[4] = [9, 8, 7];
+if(a[3] + a[4][0] != 108) fail(32);
+a.length = 6; // lop off violet
+if(typeof(a[8]) != udef || a.length != 6) fail(33);
+if(a[5]+a[0] != "indigored") fail(34);
+
+//escape unescape
+alpha = "This 3rd-line is ©me!";
+if(unescape(escape(alpha)) != alpha) fail(36);
+
+// function with a static variable
+function mult$sv(x,y)
+{
+++mult$sv.counter;
+return mult$sv.counter*x*y;
+}
+mult$sv.counter = 0;
+if(mult$sv(17,3) != 51) fail(40);
+if(mult$sv(19,5) != 190) fail(41);
+if(mult$sv.counter != 2) fail(42);
+
+// A recursive function with func.x references
+function factorial(n)
+{
+if(n <= 1) return 1;
+var y = 7+n;
+return n*factorial(n-1);
+}
+if(factorial(6) != 720) fail(44);
+var bang = factorial;
+if(bang(8) != 40320) fail(45);
+if(bang != factorial) fail(46);
+if(typeof factorial.n != udef || typeof factorial.y != udef) fail(47);
+
+// vararg function
+var domax = function() {
+if(arguments.length != 7) fail(50);
+var max = -Number.MAX_VALUE;
+for(var j=0; j<arguments.length; ++j) {
+var k = arguments[j];
+if(k > max) max = k;
+}
+return max;
+}
+if(domax(7, 2.5, 12, -3, -955.5, 76, 19) != 76) fail(51);
+
+/*********************************************************************
+function fc1(x) {
+ function g(z) { return z*z*z; }
+return x + fc2(7);
+}
+function fc2(y) {
+if(caller != fc1) fail(52);
+return y*y + caller.g(3);
+}
+if(fc1(8) != 84) fail(53);
+if(fc1.g(5) != 125) fail(54);
+*********************************************************************/
+
+var mysqrt = Math.sqrt;
+if(mysqrt(1089) != 33) fail(55);
+
+// bits
+if((10&7) != 2) fail(60);
+if((10|7) != 15) fail(61);
+if((10^7) != 13) fail(62);
+if(~10 != -11) fail(63);
+if(10<<2 != 40) fail(64);
+if(10>>2 != 2) fail(66);
+if(-15 >> 2 != -4) fail(67);
+if(-1 >>> 16 != 65535) fail(68);
+
+// a little bit of oo stuff
+// Let's make methods both ways.
+function Circle()
+{
+this.r = 1;
+if(arguments.length == 1) this.r = arguments[0];
+this.c = function() { return this.r*Math.PI*2; }
+this.a = CircleArea;
+}
+function CircleArea() { return this.r*this.r*Math.PI; }
+var c1 = new Circle();
+var c2 = new Circle(23);
+// also test the with construct
+with(Math) {
+if(c1.r != 1 || c2.r != 23) fail(70);
+c2.r = 10;
+if(c2.a() != 100*PI) fail(72);
+}
+n = "";
+for(j in c2) n += j;
+if(n != "rca") fail(73);
+
+// internal sort
+a = new Array("red", "orange", "yellow", "green", "blue", "indigo", "violet");
+function acmp(x,y) { return x > y ? 1 : -1; }
+a.sort(acmp);
+if(a.join(':') != "blue:green:indigo:orange:red:violet:yellow") fail(74);
+if(a.length != 7) fail(75);
+if(a[5] != "violet") fail(76);
+
+var oo = new Object;
+if(typeof oo != "object") fail(77);
+oo.p = 61, oo.q = 67;
+n = "";
+for(j in oo) n += j+oo[j];
+if(n != "p61q67") fail(78);
+if(c2.constructor != Circle || oo.constructor != Object) fail(79);
+
+// the date object
+var d = new Date(2003,11,25,17,55,9);
+d.setYear(d.getYear()-1);
+if(d.getMonth() != 11 || d.getDate() != 25) fail(81);
+if(d.getHours() != 17 || d.getMinutes() != 55 || d.getSeconds() != 9) fail(82);
+if(d.constructor != Date || a.constructor != Array) fail(84);
+
+// default this
+function topthis() { this.topprop = 887; }
+topthis();
+if(topprop != 887) fail(88);
+
+// A couple functions, and the first couple lines of the input form.
+function calc(thisform)
+    {
+var l = thisform.body.value.length;
+thisform.result.value = l;
+if (l > 2000) {
+alert("You cant go over Limit of 2000 Characters!");
+}
+    }
+document.writeln("<form method=POST \
+name=questionnaire \
+onsubmit='return submitFunction(questionnaire)' \
+onreset='return resetFunction()' \
+onload=formLoad(this.name) onunload=formUnload(this.name)>");
+// The rest of the form you'll see in straight html
+// Let javascript generate another javascript tag
+document.writeln("<script language=JavaScript>document.writeln('Subject: ');</" + "script>");
+
+</script>
+
+<input type='hidden' name='id' value='eklhad'>
+<input type='hidden' name='password' value='secret'>
+<input type='text' name='subject' size='50' maxlength='80'>
+<br>State and zip:
+<select name=state onchange=newSelect(this)>
+<option selected value=-->
+Please choose one
+<option value=AL>
+Alabama
+<option value=AK>
+Alaska
+<option value=AS>
+American Samoa
+<option value=AZ>
+Arizona
+<option value=AR>
+Arkansas
+<option value=CA>
+California
+<option value=CO>
+Colorado
+<option value=CT>
+Connecticut
+<option value=DE>
+Delaware
+<option value=DC>
+District Of Columbia
+<option value=FM>
+Federated States Of Micronesia
+<option value=FL>
+Florida
+<option value=GA>
+Georgia
+<option value=GU>
+Guam
+<option value=HI>
+Hawaii
+<option value=ID>
+Idaho
+<option value=IL>
+Illinois
+<option value=IN>
+Indiana
+<option value=IA>
+Iowa
+<option value=KS>
+Kansas
+<option value=KY>
+Kentucky
+<option value=LA>
+Louisiana
+<option value=ME>
+Maine
+<option value=MH>
+Marshall Islands
+<option value=MD>
+Maryland
+<option value=MA>
+Massachusetts
+<option value=MI>
+Michigan
+<option value=MN>
+Minnesota
+<option value=MS>
+Mississippi
+<option value=MO>
+Missouri
+<option value=MT>
+Montana
+<option value=NE>
+Nebraska
+<option value=NV>
+Nevada
+<option value=NH>
+New Hampshire
+<option value=NJ>
+New Jersey
+<option value=NM>
+New Mexico
+<option value=NY>
+New York
+<option value=NC>
+North Carolina
+<option value=ND>
+North Dakota
+<option value=MP>
+Northern Mariana Islands
+<option value=OH>
+Ohio
+<option value=OK>
+Oklahoma
+<option value=OR>
+Oregon
+<option value=PW>
+Palau
+<option value=PA>
+Pennsylvania
+<option value=PR>
+Puerto Rico
+<option value=RI>
+Rhode Island
+<option value=SC>
+South Carolina
+<option value=SD>
+South Dakota
+<option value=TN>
+Tennessee
+<option value=TX>
+Texas
+<option value=UT>
+Utah
+<option value=VT>
+Vermont
+<option value=VI>
+Virgin Islands
+<option value=VA>
+Virginia
+<option value=WA>
+Washington
+<option value=WV>
+West Virginia
+<option value=WI>
+Wisconsin
+<option value=WY>
+Wyoming
+<option value=BH>
+90210
+</select>
+<input type=number maxlength=5 name="zip code" readonly value="&#56;8888">
+<span id=almond></span>
+<table><tr></tr><tr id=pecan></tr></table>
+<br>My favorite colors are:
+<select name=colors multiple>
+<option> red
+<option> orange
+<option> yellow
+<option selected> green
+<option> blue
+<option> indigo
+<option> violet
+<option selected> white
+<-- MSU colors -->
+</select>
+<br>Salary range:
+poverty
+<input type=radio name=money value=0>
+gettin-by
+<input type=radio name=money value=1 checked>
+comfortable
+<input type=radio name=money value=2>
+rich
+<input type=radio name=money value=3>
+<br>Pets:
+dog <input type=checkbox name=dog id=hound checked onclick=alert('rover')>
+cat <input type=checkbox name=cat onclick="alert('fluffy'); if(this.checked&&questionnaire.dog.checked) alert('chased by dog');" value=meow>
+bird <input type=checkbox name=bird>
+rabbit <input type=checkbox name=rabbit>
+<br>Message Body:
+<textarea name='body' rows='6' cols='50'>
+Type your brilliant thoughts here.
+We'll get back to you if we like what you have to say.
+</textarea>
+<br>
+<input type=button name=b value=calc onclick=calc(this.form)>
+<input type='text' readonly name='result' size='4'>
+<input type='reset' value='Reset' name='b0'>
+<input type='submit' value='Send Message' name='b1'
+onclick="alert('rock and roll')">
+</form>
+<bgsound src=whatever.mid>
+
+<script language="JavaScript">
+// I'll push the button for you
+document.questionnaire.b.onclick();
+if(document.questionnaire.result.value != 90) fail(85);
+if(document.questionnaire.id.value != "eklhad") fail(86);
+if(document.forms[0].elements[1].value != "secret") fail(87);
+
+// prototype objects, use the Circle model
+Circle.prototype.q = 97;
+Circle.prototype.m = function(z) { return z*z*z; };
+c2.q = 84; // hide 97
+if(c1.q != 97) fail(90);
+if(c2.q != 84) fail(91);
+if(c1["m"](9) != 729) fail(92);
+with(c1) {
+if(q != 97) fail(93);
+if(m(7) != 343) fail(94);
+}
+
+// prototype an implicite class
+String.prototype.xy = function() {
+return this.replace(/x/g, 'y');
+}
+n = "sixty";
+if(n.xy() != "siyty") fail(95);
+if("fix my fox".xy() != "fiy my foy") fail(96);
+Array.prototype.firstLast = function() {
+var temp = this[0];
+var l = this.length-1;
+this[0] = this[l];
+this[l] = temp;
+};
+a = [17,21,25];
+a.firstLast();
+if(a.join('zz') != "25zz21zz17") fail(97);
+
+// check some of the element tags
+with(document.questionnaire) {
+if(!(dog.checked && dog.defaultChecked)) fail(100);
+if(cat.checked || cat.defaultChecked) fail(101);
+if(dog.type != "checkbox" || money.type != "radio" || money.length != 4) fail(102);
+if(id.type != "hidden" || subject.type != "text") fail(103);
+if(b0.type != "reset" || b1.type != "submit") fail(104);
+if(body.type != "textarea" || b.type != "button") fail(105);
+if(state.type != "select-one" || colors.type != "select-multiple") fail(106);
+if(id.defaultValue != "eklhad") fail(107);
+if(body.value.substring(10,19) != "brilliant") fail(108);
+// focus and blur are ignored
+dog.focus();
+cat.blur();
+focus();
+blur();
+}
+
+// for(var i in document.idMaster) alert(i);
+if(document.getElementById("hound").name != "dog") fail(110);
+if(document.getElementById("almond") != document.spans[0]) fail(111);
+// I'm not sure of any of this table row stuff
+if(document.getElementById("pecan") != document.tables[0].rows[1]) fail(112);
+if(document.all.tags("FORM")[0] != document.questionnaire) fail(113);
+if(document.all.tags("span").length != 1) fail(114);
+
+n = 0;
+a = [29,31,37];
+for(j in a) {
+if(j.length > 1) continue;
+n += (j*1+2)*a[j];
+}
+if(n != 299) fail(119);
+
+/* inline object */
+var ilo = {a:document.questionnaire, b:9+5*3};
+if(typeof ilo.a != "object") fail(120);
+if(ilo.b != 24) fail(121);
+if(ilo.a.id.value != "eklhad") fail(122);
+
+function submitFunction(me) {
+if(document.questionnaire != me) fail(123);
+var where = prompt("Enter m for mail, w for web, a to autosubmit, x to abort.", "x");
+me.action =
+(where == 'm' ? "mailto:karl@eklhad.net" : "http://localhost:1200/foobar");
+if(where == 'a') me.submit();
+if(where != 'm' && where != 'w') return false;
+return true;
+}
+
+function resetFunction() {
+return confirm("All that hard work, are you sure you want to reset?");
+}
+
+function newSelect(e) {
+alert(e.name + " in " + e.form.name + " has become " +
+e.options[e.selectedIndex].value);
+}
+
+function onlfunc() {
+alert("page loading");
+}
+function onunlfunc() {
+if(confirm("Care to visit MathReference.com"))
+new Window("http://www.mathreference.com");
+else alert("ok, never mind");
+}
+function formLoad(name) { onlv++; alert("form " + name + " loading"); }
+function formUnload(name) { alert("form " + name + " unloading"); }
+var onlv = 77;
+
+setTimeout("joker()", 750);
+function joker()
+{
+alert("times up!");
+document.writeln("<P>Some extra html in another buffer.");
+}
+
+</script>
+
+</body>

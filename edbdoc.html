@@ -1,0 +1,3439 @@
+<HTML>
+<FONT face=Arial,Helvetica,sans-serif size=4>
+<HEAD>
+<META name=description content="edbrowse documentation, a text based editor, browser, and mail client.">
+<meta name=keywords content="
+text based, command line, interactive,
+editor, browser, mail client,
+portable, C,
+javascript,
+secure, ssl,
+blind, script, accessible">
+<TITLE> edbrowse documentation </TITLE>
+<LINK REL="SHORTCUT ICON" href="pc.ico">
+</HEAD>
+<BODY bgcolor=white text=black link=red vlink=red alink=navy>
+
+<H2 align=center> edbrowse Documentation </H2>
+
+<H3 align=center> <A NAME=top> Contents </A> </H3>
+
+<H4> Chapter 1, Preface </H4>
+
+<UL>
+<LI><A HREF=#auth> Author </A>
+<LI><A HREF=#copy> Copyright Notice </A>
+<LI><A HREF=#ack> Acknowledgements </A>
+<LI><A HREF=#over> Overview </A>
+</UL>
+
+<H4> Chapter 2, Quick Reference Guide </H4>
+
+<UL>
+<LI><A HREF=#guide> Quick Reference Guide </A>
+<LI><A HREF=#tips> Tips for Avoiding Line Numbers </A>
+<LI><A HREF=#mlist> Mailing List </A>
+</UL>
+
+<H4> Chapter 3, The Editor </H4>
+
+<UL>
+<LI><A HREF=#dev> Important Deviations From /bin/ed </A>
+<LI><A HREF=#brace> Balancing Braces </A>
+<LI><A HREF=#cx> Context Switch </A>
+<LI><A HREF=#usage> Usage </A>
+<LI><A HREF=#bin> Binary Characters </A>
+<LI><A HREF=#bfile> Binary Files </A>
+<LI><A HREF=#dir> Directory Scan, File Manager </A>
+<LI><A HREF=#case> Upper/Lower Case </A>
+<LI><A HREF=#bl> Break Line </A>
+<LI><A HREF=#race> Race Conditions </A>
+</UL>
+
+<H4> Chapter 4, Web Browser </H4>
+
+<UL>
+<LI><A HREF=#url> Accessing A URL </A>
+<LI><A HREF=#browse> Browse Mode </A>
+<LI><A HREF=#math> Technical, Math </A>
+<LI><A HREF=#title> Title, Description, Keywords </A>
+<LI><A HREF=#rf> The Refresh Command </A>
+<LI><A HREF=#hlink> Hyperlinks </A>
+<LI><A HREF=#ilink> Internal Links </A>
+<LI><A HREF=#back> The Back Key </A>
+<LI><A HREF=#move> The M Command </A>
+<LI><A HREF=#music> Background Music </A>
+<LI><A HREF=#input> Input Fields </A>
+<LI><A HREF=#entry> Data Entry </A>
+<LI><A HREF=#textarea> Text Areas </A>
+<LI><A HREF=#button> Push The Button </A>
+<LI><A HREF=#addr> Web And Email Addresses </A>
+<LI><A HREF=#cook> Cookies </A>
+<LI><A HREF=#ssl> Secure Connections </A>
+<LI><A HREF=#ftp> FTP Retrievals </A>
+<LI><A HREF=#frame> Frames </A>
+</UL>
+
+<H4> Chapter 5, Javascript </H4>
+
+<UL>
+<LI><A HREF=#js> Introduction to Javascript </A>
+<LI><A HREF=#valid> Validating and Modifying Forms </A>
+<LI><A HREF=#popup> Popups and Popunders </A>
+<LI><A HREF=#onc> Onchange and Undo </A>
+</UL>
+
+<H4> Chapter 6, Edbrowse Scripts and the Configuration File </H4>
+
+<UL>
+<LI><A HREF=#cfg> The Config File </A>
+<LI><A HREF=#keyval> Keyword = Value </A>
+<LI><A HREF=#agent> User Agent </A>
+<LI><A HREF=#script> Edbrowse Functions </A>
+<LI><A HREF=#init> The Init Script </A>
+<LI><A HREF=#ma> Mail Accounts </A>
+<LI><A HREF=#sampcfg> A Sample Config File </A>
+</UL>
+
+<H4> Chapter 7, Mail Client </H4>
+
+<UL>
+<LI><A HREF=#sm> Send Mail </A>
+<LI><A HREF=#smc> Send Mail Client </A>
+<LI><A HREF=#fmc> Fetch Mail Client </A>
+<LI><A HREF=#mailfmt> Formatted Mail </A>
+<LI><A HREF=#filter> Mail Filtering </A>
+</UL>
+
+<H3 align=center> <A NAME=auth> Author </A> </H3>
+
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>Karl Dahlke
+<A HREF=mailto:karl@eklhad.net>karl@eklhad.net</A>
+248-524-1004 (during regular business hours)
+</font></PRE>
+
+<H3 align=center> <A NAME=copy> Copyright Notice </A> </H3>
+
+This program is copyright (C) (C) Karl Dahlke, 2000-2005.&nbsp;
+It is made available by the author under the terms of the GNU General Public License (GPL),
+as articulated by the Free Software Foundation.&nbsp;
+It may be used for any purpose, and redistributed, provided this copyright notice is included.
+
+<H3 align=center> <A NAME=ack> Acknowledgements </A> </H3>
+
+This program borrows some code and design concepts from the
+<A HREF=http://atrey.karlin.mff.cuni.cz/~clock/twibright/links/>
+links project</A>,
+which is also freely available under the terms of the GPL.&nbsp;
+My thanks to the authors for all their hard work.
+
+<P>
+I would be dead in the water if it weren't for a cadres of excellent online tutorials.&nbsp;
+Their technical writing puts mine to shame.&nbsp;
+Please look through some of these web pages; you'll be glad you did.
+
+<P>
+<A HREF=http://www.mcli.dist.maricopa.edu/tut/>
+Writing html
+</A>
+<br><A HREF=http://www.htmlcodetutorial.com>
+An html Code Tutorial
+</A>
+<br><A HREF=http://www.htmlgoodies.com/tutors/>
+So You Want to Write some html...
+</A>
+<br><A HREF=http://hotwired.lycos.com/webmonkey/javascript/tutorials/tutorial1.html>
+Javascript for Webmasters
+</A>
+<br><A HREF=http://safari.oreilly.com>
+Javascript, the Definitive Guide
+</A>
+
+<P>
+This package requires Spider Monkey Javascript, released by Mozilla under the MPL.&nbsp;
+You can
+<A HREF=ftp://ftp.mozilla.org/pub/mozilla.org/js/js-1.5.tar.gz>
+download it here</A>.&nbsp;
+Programmers and maintainers of this package should take advantage of the
+<a href=http://developer.mozilla.org/en/docs/Category:JSAPI_Reference>
+online documentation</A>.
+
+<P>
+If you're building a blacklist of domains or ip addresses,
+this is a
+<a href=http://www.joewein.de/sw/spam-bl.htm>
+good place to start</A>.
+
+<H3 align=center> <A NAME=over> Overview </A> </H3>
+
+This program is, at first glance, a reimplementation of /bin/ed.&nbsp;
+In fact you might issue a few ed commands and not realize that you are
+actually running my program.&nbsp;
+But as you proceed
+you will eventually discover some discrepancies,
+areas where my program differs from ed.&nbsp;
+(These are discussed later.)
+
+<P>
+Reinventing ed <em>seems</em> like a complete waste of time,
+until you realize that this program also acts as a browser -
+a browser embedded inside ed.&nbsp;
+You can edit a URL as easily as a local file,
+and activate browse mode to render the html tags
+in a manner that is appropriate for a command-response program such as this.&nbsp;
+In other words, we discard most of the formatting information
+and retain the links and fill-out forms.&nbsp;
+This allows blind  users to access the Internet
+via an application that is entirely compatible with the linear nature of speech or braille.
+
+<P>
+I find this approach superior to the "quick fix"
+of pasting an adaptor onto a preexisting screen browser (lynx)
+or graphical browser (Netscape).&nbsp;
+Of course that's just my opinion.&nbsp;
+To be fair, many blind users, even totally blind users, are satisfied with their auditory screen scrapers.&nbsp;
+I'm glad it works for them, but this approach frustrates the hell out of me.&nbsp;
+If you also prefer linear applications,
+give this browser a try.
+
+<P>
+This documentation assumes you are familiar with ed.&nbsp;
+In fact it helps if you are fluent in ed.&nbsp;
+Experience with internet browsers and the associated terminology is also helpful.
+
+<H3 align=center> <A NAME=guide> Quick Reference Guide </A> </H3>
+
+Here are the ed and edbrowse commands, all in one place.&nbsp;
+This is a quick reference guide.&nbsp;
+Most of these commands will not make sense until you read the rest of the documentation.
+
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>q: quit the current session
+qt: quit the program completely, whether you've written your files or not
+!command: shell escape
+p: print the current line
+4,7p: print lines 4 through 7
+'a,'bp: print a range of lines, marked with labels a and b
+kb: mark the current line as b
+l: list the current line, showing nonascii chars in hex
+n: print the current line with its line number
+=: print the number of lines in the file
+z22: print the next 22 lines
+s/x/y/: replace x with y on the current line
+s/x/y/2: replace the second instance of x with y on the current line
+4,7s/x/y/g: replace all instances of x with y, on lines 4 through 7
+/x/: look for the line containing x
+/x/i: look for the line containing x or X
+ci: searches and substitutions are case insensitive
+cs: searches and substitutions are case sensitive
+sg: substitution strings are global across sessions
+sl: substitution strings are local to their sessions
+lc: convert line to lower case
+mc: convert line to mixed case
+uc: convert line to upper case
+h: help, explain the last question mark
+f: print the name of the current file
+f foo: set the file name to foo
+f/: retain only the lass component of the filename
+e: print the number of the current session
+e3: move to session 3
+e foo: edit the file named foo
+r foo: read the contents of foo into the current buffer
+w foo: write the current buffer to foo
+w+ foo: append to foo
+w/: write to the lass component of the filename
+d: delete the current line
+1,$d: delete all the lines, 1 through eof
+u: undo the last command
+i: insert text before the current line, end with a period
+c: change the current line, enter a new block of text, end with period
+a: add text after the current line, end with a period
+a+: include the line you just typed in, when you thought you were in append mode
+4,7m11: move lines 4 through 7 to line 11
+4,7t11: copy lines 4 through 7 to line 11
+3,4j: join lines 3 and 4 together
+3,4J: join lines 3 and 4 together with a space between
+g/x/ p: print every line that has an x
+v/x/ p: print every line that does not have an x
+B: find the line with the balancing brace
+b: brouse the current file, which is assumed to be in html
+b foo.html: edit the file foo.html and browse it
+b url: fetch url from the internet and browse it
+ub: unbrowse a file
+g: go to the link on the current line
+g2: go to the second link on the current line
+^: the back key, go back to the web page you were looking at before
+i=xyz: set the input field on the current line to xyz
+i2=xyz: set the second input field on the current line to xyz
+i2*: push the second button on the current line, usually submit or reset
+i3?: describe the third input field on the current line
+db: set debug level [0-7]
+cd: change directory
+bl: break line into sentences and phrases
+dr: directory is readonly
+dw: directory is writable, and d moves files to your recycle bin
+dx: directory is writable, and d deletes files
+hf: show hidden files in directory listing (toggle)
+bd: binary detection on files (toggle)
+eo: end markers off
+el: show end markers ^$ when a line is listed
+ep: show end markers when a line is listed or printed
+pa: play audio
+ft: show the title of the current web page
+fd: show the description of the current web page
+fk: show the keywords of the current web page
+rh: redirect html (toggle)
+js: allow javascript (toggle)
+tn: send dos-style newlines on lines in textareas (toggle)
+fma: ftp mode active
+fmp: ftp mode passive
+fmd: ftp mode default, passive then active
+rf: refresh the web page or directory listing
+et: edit this web page as pure text
+vs: verify ssl connections (toggle)
+ip: show referenced ip numbers, usually for saved mail messages
+sm: send mail [account number]
+</font></PRE>
+
+<H3 align=center> <A NAME=tips> Tips for Avoiding Line Numbers </A> </H3>
+
+If you're new to ed, you may find this program awkward.&nbsp;
+I often receive complaints about line numbers.&nbsp;
+People hate line numbers.&nbsp;
+They don't want to read the first page line by line,
+1p 2p 3p 4p 5p etc.&nbsp;
+Well I hate line numbers too, and I never use them.&nbsp;
+Haven't for years.
+
+<P>
+If you just want to read the whole document, type ,p.&nbsp;
+That works, if you use a command line speech adapter.&nbsp;
+The whole document is in buffer, and you can read through it using the function keys on your adapter.&nbsp;
+Now I realize most people still use screen readers, so this won't work.&nbsp;
+Still, there's an easy way to step through screen by screen.&nbsp;
+Start with 1z20 to get the first 20 lines.&nbsp;
+Then the z command will give you the next 20, and the next 20, and so on.&nbsp;
+You may want to use 22, or 24, or whatever makes sense relative to your screen.
+
+<P>
+Another approach is to simply hit return, again and again, and proceed line by line.&nbsp;
+You may need to hit a function key to "read" each line,
+after you hit return,
+or maybe not, if your adapter has an autoread feature.
+
+<P>
+Once you are use to the regular expressions, you can jump to any part of the document,
+even a large document, in record time simply by searching for a unique text fragment.&nbsp;
+This comes with practice.&nbsp;
+Sometimes I guess wrong, and my search string is not unique.&nbsp;
+I wind up somewhere else and have to search again.&nbsp;
+This doesn't happen very often.&nbsp;
+I usually get to the right place in one or two tries.
+
+<P>
+If you want to mark certain lines of text, please don't try to remember the line numbers.&nbsp;
+Use the k command to mark them.&nbsp;
+I usually use ka and kb to mark the start and end of a block of text,
+while kc marks the new location.&nbsp;
+The move command is then 'a,'bm'c - with absolutely no line numbers.&nbsp;
+(This is standard ed fair, though most people never take advantage of it.)
+
+<P>
+To look for links on a web page, search for the right brace.&nbsp;
+Yes, you may stumble across a literal right brace in the text, but this doesn't happen very often.&nbsp;
+You might access a particular link by typing /{Next}/g.&nbsp;
+Similarly, you can look for input fields by searching for the greater than sign.&nbsp;
+(This will make sense as you read about the representation of web pages.)&nbsp;
+And of course, multiple operations can be scripted, a feature unique to this browser.
+
+<P>
+These are just some of the tips and tricks that will make you as fast and efficient as anybody using a screen editor or browser,
+provided you are familiar with the page.&nbsp;
+(You will never be faster than your sighted colleague when traveling through unfamiliar territory,
+no matter what system you use.)&nbsp;
+My wife is always amazed at how quickly I can negotiate websites,
+or edit the common documents that we work on together.
+
+<H3 align=center> <A NAME=mlist> Mailing List </A> </H3>
+
+There is a mailing list for users of edbrowse and other command line utilities.&nbsp;
+You can join by sending mail to
+<A HREF=mailto:commandline-subscribe@yahoogroups.com?subject=Subscribe>
+commandline-subscribe@yahoogroups.com</A>.
+
+<H3 align=center> <A NAME=dev> Important Deviations From /bin/ed </A> </H3>
+
+Certain search/substitute commands may behave differently under this editor.&nbsp;
+This is because the regular expressions are interpreted
+by the perl compatible regular expression (pcre) library,
+rather than the traditional regexp library.&nbsp;
+Hence regular expressions have more features, and more power,
+than the regular expressions employed by /bin/ed.&nbsp;
+The syntax is also somewhat different.&nbsp;
+For instance, perl uses bare parentheses where ed uses escaped braces --
+to delimit sections of matched text.&nbsp;
+And perl uses $1 ... $9 to reference the matched substrings,
+whereas ed uses \1 ... \9.&nbsp;
+Also, perl supports the i suffix, for case insensitive search,
+along with the traditional g suffix for global substitute.&nbsp;
+There is no reason to describe all the nuances here.&nbsp;
+Please read the perlre man page `man perlre' for a full description
+of regular expressions under perl.&nbsp;
+Once you are accustomed to their power and flexibility,
+you'll never go back to ed.
+
+<P>
+Great!  You've read the perlre man page, and you're back.&nbsp;
+Here are a few changes that I've made to perl regular expressions.&nbsp;
+I have found that ( and ) are almost always meant to be literal,
+as in searching for myFunction(),
+so I reverse the sense of escaped parentheses in perl.&nbsp;
+That is, ( and ) now match the literal characters,
+and \( and \) are used to demark substrings of the matched text.&nbsp;
+These substrings are then referenced, in the replacement string, by $1 through $9.&nbsp;
+Similarly, | means a literal |, and \| is alternation.&nbsp;
+I also change the sense of &amp;, on the right hand side,
+to mean what it means in ed.&nbsp;
+I leave ^ $ . [ ] + * ? and {m,n} alone, to be interpreted by perl,
+as described in the perlre man page.&nbsp;
+However, if * is the first character, it is treated as a literal star.&nbsp;
+This makes sense, as there is no previous character to modify.&nbsp;
+Some versions of ed do this, some don't.&nbsp;
+But I find it convenient; when I want to replace * + or ?, I don't have to escape it, just because it is a modifier.&nbsp;
+Similarly, an open bracket by itself is treated as literal.&nbsp;
+These changes to regexp, to look more like ed, may be confusing
+if you are a perl expert.&nbsp;
+Sorry about that, but I think these changes make this
+editor much easier to use for everyone,
+especially the experienced ed users.&nbsp;
+Below are some additional differences between this program and /bin/ed.
+
+<UL>
+<P><LI>
+Lines beginning with # are ignored, making it easier to comment your edbrowse scripts.&nbsp;
+The # character has no special significance in the middle of a line.
+
+<P><LI>
+Lines beginning with ! implement a shell escape.&nbsp;
+The ! character has no special significance in the middle of a line.&nbsp;
+The ! alone spawns an interactive subshell - type exit to return to edbrowse.&nbsp;
+The work "ok" is printed when the shell command is finished -
+thus you can tell when a no-output command is done.
+
+<P><LI>
+Type `cd dirname' to change directories.&nbsp;
+The new directory is always printed.&nbsp;
+Type cd alone to find out where you are.&nbsp;
+I don't know what happens under dos
+if you type cd f:/this/that, I never tested it.
+
+<P>
+Unlike bash, edbrowse does not retrace your steps back through symbolic links.&nbsp;
+Thus .. is always the physical parent directory.
+
+<P>
+environment variables are expanded before the cd command is applied, including the leading ~.&nbsp;
+Thuse cd ~/work takes you to the work directory under your home directory.
+
+<P>
+This command does not change any filenames that may be active.&nbsp;
+You can edit foo, cd .., and write,
+and foo will be copied to the parent directory.&nbsp;
+That's probably not what you want, so be careful.
+
+<P><LI>
+r operates on the current line by default,
+rather then the last line.&nbsp;
+Use $r to read a file at the end of your working text.
+
+<P><LI>
+The w+ command appends to the file.&nbsp;
+Some versions of ed use w&gt; for this operation,
+but for 40 years &gt; has been the industry standard for write with truncate,
+so using &gt; for append is somewhat confusing.&nbsp;
+And w&gt;&gt; is just too clunky, so I use w+.
+
+<P><LI>
+w/ writes the data into a file whose name is the last component
+of the current file name.&nbsp;
+This is useful when you've just downloaded this.that.com/foo/bar/package-2.7.7-22.tar.gz,
+and you want to write the file locally, but don't want to retype the stuff at the end.&nbsp;
+Alternatively, f/ changes the filename, keeping only the last component.
+
+<P><LI>
+Whenever a file is read from or written to disk,
+$var, in the filename, is replaced with the corresponding environment variable.&nbsp;
+Thus you can edit your address book at any time via `e $adbook',
+provided $adbook has been set in your environment.&nbsp;
+Also, a leading ~/ is replaced with $HOME/,
+making it easy to edit files in your home directory
+such as ~/.profile.
+
+<P>
+Shell metta characters are also expanded, provided the result is one file name.&nbsp;
+You can read or write a file by typing a minimal portion of its name.&nbsp;
+Neither $variables nor stars are expanded for files on the command line,
+as this expansion is already done by the Unix shell.&nbsp;
+Windows users should compile using the setargv.obj utility,
+which performs wildcard expansion on command line arguments.&nbsp;
+Thus you should be able to edit *.c in any operating system
+and get all the C source files in the current directory.
+
+<P><LI>
+Many versions of ed place a $ at the end of a listed line,
+but this is not one of them, at least not by default.&nbsp;
+I use a linear speech adapter, rather than a screen reader,
+so the embedded newlines tell me exactly where the line boundaries are.&nbsp;
+The extraneous $ character just gets in my way.
+
+<P>
+However, I realize most people still use screen readers,
+where trailing whitespace is indistinguishable from the blank screen,
+and a wrapped fragment is sometimes mistaken for a second line.&nbsp;
+Therefore, you can use the command `el' to place end markers around listed lines.&nbsp;
+Listed lines begin with ^ and end with $.&nbsp;
+Enter `ep' to place end markers around all printed lines.&nbsp;
+Use `eo' to turn end markers off.
+
+<P><LI>
+q quits without a warning message if the text
+has never been associated with a file.
+
+<P><LI>
+Capital Q does not quit the editor absolutely.&nbsp;
+This is because I often hit caps lock by mistake,
+or even shift q by mistake,
+and if I've forgotten about some important changes that I've made,
+those changes are gone!&nbsp;
+I know, this seems contrived, like it would never happen,
+but it has happened to me many times,
+so I disabled capital Q.&nbsp;
+Type qt to quit absolute.
+
+<P><LI>
+Capital J joins lines together with spaces between them.
+
+<P><LI>
+x (encryption) is not implemented.
+
+<P><LI>
+P (prompt) is not implemented.
+
+<P><LI>
+missing line numbers before or after the comma are assumed to be 1 and $.&nbsp;
+This is consistent with ,p -- to print the entire file.
+
+<P><LI>
+You cannot enter one command across two physical lines
+by putting a backslash at the end of the first line.&nbsp;
+And there's no need to in any case, because perl supports \n translation.&nbsp;
+To split a line in the middle of the word doghouse, you would type
+<br>
+s/doghouse/dog-\nhouse/
+
+<P><LI>
+Only the first 500 characters of a line are displayed.&nbsp;
+The rest of the line is in the buffer, and can even be modified via a substitute command,
+but if you want to see it, you will need to split it,
+as in the doghouse example above.
+
+<P><LI>
+a+ adds text, like a, but also adds the line you last typed,
+when you thought you were in append mode, but you weren't.
+
+<P><LI>
+This program is less tolerant of whitespace than /bin/ed.
+<br>
+57 , 63 p      will not fly.
+
+<P><LI>
+A single % on the right hand side of a substitution is replaced with the last right hand side.&nbsp;
+Some versions of ed do this, some don't; I find it a convenient feature.
+
+<P><LI>
+s, is shorthand for s/, +/,\n
+This is used to split lines at phrase boundaries.&nbsp;
+You can also use s. to split a line after the first period -- at a sentence boundary.&nbsp;
+s; s: s) and s" can also be used.&nbsp;
+s,3 splits the line after the third comma.&nbsp;
+You might need to use s.2 if the sentence begins with Mr. Flintstone.
+
+<P><LI>
+Type s by itself for s//%.
+
+<P><LI>
+The commands sg and sl make the remembered substitution and replacement strings global and local respectively.&nbsp;
+If you want to look at all instances of "foo" in all the files in the current directory,
+and change some of them to bar at your discretion,
+edit *, then enter sg to make substitution strings global to all edit sessions.&nbsp;
+In the first session, search for foo, and replace some of them with bar.&nbsp;
+Type e2 to move to the next session, whence you can search using slash alone,
+because the string "foo" is applied to all sessions.&nbsp;
+Similarly, you can use % to refer to "bar".&nbsp;
+The sl command returns this editor to its local behavior,
+where each file has its own search/replace strings.
+
+<P><LI>
+Errors associated with reading or writing files, or switching sessions,
+are always printed.  Other errors elicit the usual question mark,
+whence you must type h to read the explanation.&nbsp;
+Type capital H if you always want to see the error messages.
+
+<P><LI>
+In most versions of ed, the command z7 means .,+6p,
+making the current line +7.&nbsp;
+I think this is inconsistent, having one and only one ed command that leaves dot
+somewhere other than the last line printed.&nbsp;
+The confusion is compounded when z prints the last lines in the file,
+whence dot actually is the last line printed.&nbsp;
+So I have changed the z command slightly.&nbsp;
+In this program z7 means +,+7p,
+and the current line becomes the last line printed, just like the other commands.&nbsp;
+Without a number, z prints the previous number of lines.&nbsp;
+Thus you can read your file a chunk or screen at a time.
+
+</UL>
+
+<P>
+Subsequent sections describe
+new and interesting features, completely foreign to ed.&nbsp;
+These include the simultaneous edit of multiple files
+similar to emacs and vi,
+and the ability to browse an html file and "edit" its fill-out form.&nbsp;
+That's why I wrote the program in the first place.
+
+<H3 align=center> <A NAME=brace> Balancing Braces </A> </H3>
+
+The capital B command is of interest to programmers,
+and will probably not be used by casual home users.&nbsp;
+It locates the line with the balancing brace, parenthesis, or bracket.&nbsp;
+Consider the following code fragment.
+
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif><code>    if(x == 3 &&
+    y == 7) {
+        printf("hello\n");
+    } else {
+        printf("world\n");
+        exit(1);
+    }
+</code></font></PRE>
+
+<P>
+The capital B command, on either the second or the last line,
+moves to the middle line "} else {",
+because that balances the open brace.&nbsp;
+On the first line, B moves to the second line,
+which balances the open parenthesis.&nbsp;
+The second line balances {, rather than ),
+because braces have precedence over parentheses,
+which have precedence over brackets.&nbsp;
+You can force a parenthesis match by typing B),
+which moves from line 2 back to line 1.
+
+<P>
+The B command on the else line is ambiguous -
+I don't know whether to look backwards or forwards.&nbsp;
+You must type B{ or B}.
+
+<P>
+You can explicitly balance &lt;&gt;, as in multiline html tags,
+or `', used in some preprocessors such as m4.
+
+<P>
+Comments or literal strings that contain balancing punctuation marks will
+definitely throw edbrowse off the track.&nbsp;
+If you are the author of the source,
+you might want to avoid braces in comments,
+or use comments to keep braces in balance.
+
+<P>
+static char openstring[] = "{block"; /* closing } is found elsewhere */
+
+<H3 align=center> <A NAME=cx> Context Switch </A> </H3>
+
+This program allows you to edit multiple files at the same time,
+and transfer text between them.&nbsp;
+This is similar to the world of virtual terminals (Linux),
+where you switch between sessions via alt-f1 through alt-f6.&nbsp;
+In this case you switch to a different editing session via the commands
+e1 through e6.&nbsp;
+Note that `e 2' edits a file whose name is "2",
+whereas `e2' (without the space) switches to session 2.&nbsp;
+Similarly, you can read the contents of session 3 into the current buffer
+via r3, and you can write the current buffer into session 5 via w5.&nbsp;
+The latter command will produce a warning if session five already exists,
+and you have made changes to its text, but have not saved those changes.&nbsp;
+In other words, you are about to lose your edits in session 5.&nbsp;
+Typing h will produce the explanation:
+"Expecting `w' on session 5".
+
+<P>
+If you quit a session you are moved to the next valid editing session,
+wrapping around to session 1 if necessary.&nbsp;
+The program exits when the last session quits.
+
+<P>
+Warning, the program contains a bug regarding the undo command.&nbsp;
+If you switch to another session, then switch back,
+you cannot undo your last edit.&nbsp;
+You'd think this would be easy to fix,
+but it is trickier than it seems, so I haven't gotten rround to it.&nbsp;
+I just wanted you to know.&nbsp;
+Make sure everything is copasetic before you switch to another session.
+
+<P>
+Let's run through a cut&amp;paste example.&nbsp;
+You are editing file foo in session 1, and you realize
+that a paragraph from file bar would fit perfectly right here.&nbsp;
+Here is how it might look.&nbsp;
+Lines beginning with &lt; are the user's input,
+and lines beginning with &gt; form the program's responses.&nbsp;
+The # sign delimits my injected comments.
+
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>&lt; e2   # switch to session 2
+&gt; new session
+#  Unlike ed, the r command does not establish a file name, even if the
+#  buffer is empty.
+#  Thus "r bar" is safer than "e bar".
+#  The text is not linked to the file bar,
+#  and we cannot accidentally corrupt this file.
+#  After all, we don't want to change bar, we just want to steal from it.
+&lt; r bar
+&gt; 28719
+&lt; /start/
+&gt; This is the start of the cool paragraph that you want to copy.
+&lt; 1,-d  # don't need the stuff before it
+&lt; /end/
+&gt; This is the end of the cool paragraph that you want to copy.
+&lt; +,$d  # don't need the stuff after it
+&lt; e1
+&gt; foo
+&lt; r2
+&gt; 3279  # size of text read from session 2
+&lt; q2  # clean house, get rid of session 2
+&lt; w  # write foo, with the new paragraph included
+&gt; 62121
+</font></PRE>
+
+<P>
+The following moves the data from one file to another.
+
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>&lt; e2
+&gt; new session
+&lt; e bar  # this time I'm going to change bar
+&gt; 28719
+&lt; /start/
+&gt; This is the start of the cool paragraph that you want to move.
+&lt; ka  # mark the paragraph
+&lt; /end/
+&gt; This is the end of the cool paragraph that you want to copy.
+&lt; kb
+&lt; 'a,'bw3
+&gt; 3279
+&lt; 'a,'bd
+&lt; w  # write bar, withouth the cool paragraph
+&gt; 25440
+&lt; q
+&gt; no file  # now in session 3
+&lt; e1
+&gt; foo  # back to session 1
+&lt; r3
+&gt; 3279
+&lt; q3  # quit session 3 remotely, while still in session 1
+&lt; w  # write foo, with the new paragraph included
+&gt; 62121
+</font></PRE>
+
+<P>
+An e command, by itself, tells you the current session, in case you've forgotten.&nbsp;
+This is similar to f, by itself, which tells you the current file.
+
+<H3 align=center> <A NAME=usage> Usage </A> </H3>
+
+type `edbrowse -h' to produce the usage message.&nbsp;
+You will see the -m option, used in several different ways.&nbsp;
+Try to ignore this for now.&nbsp;
+The -m option causes edbrowse to run as an interactive mail client,
+rather than an editor.&nbsp;
+This will be discussed later.
+
+<P>
+The -dx option sets the debug level to x, where x is between 0 and 9.&nbsp;
+The default is -d1,
+which prints the sizes of files as they are written and read.&nbsp;
+Some people like -d2, which prints the URLs
+as you jump to new web pages or submit forms online.&nbsp;
+Unless you are debugging the program, you probably don't want to go any higher than -d3.&nbsp;
+On rare occasions you might want to set -d4, to see the http headers in and out.&nbsp;
+Remember, the debug level can be changed on the fly by using the dbx command (x between 0 and 9).
+
+<P>
+The -e option causes edbrowse to exit when it encounters an error.&nbsp;
+This is usually used by batch scripts.&nbsp;
+If there is a problem, you don't want to march on, executing the rest of the edbrowse commands.
+
+<P>
+Use -c to suppress processing of, and edit, the .ebrc configuration file.&nbsp;
+(This config file will be described later.)&nbsp;
+And why would you want to do this?&nbsp;
+Suppose you have made a change to this file,
+and thereby produced a syntax error, so that edbrowse cannot even get started.&nbsp;
+Now you can't use edbrowse to fix your config file.&nbsp;
+Of course you could rename the config file to something else, fix it, and put it back;
+but then you might discover another syntax error, and so on.&nbsp;
+Instead, use the -c option to edit the config file directly.&nbsp;
+It is automatically loaded into buffer 1.&nbsp;
+Note that -c must be the first option.
+
+<P>
+The arguments are the files to edit.&nbsp;
+Edbrowse reads these files into corresponding sessions,
+and starts you off in session 1.&nbsp;
+If there are no arguments, you start in session 1,
+but there is no text and no associated file.
+
+<P>
+If you like this program, and you want it to be your primary editor,
+you can set the following Unix alias.
+
+<P>
+alias e="/usr/local/bin/edbrowse"
+
+<P>
+If you do this, you can use `e filename',
+to edit a new file, whether you are inside edbrowse or at the shell prompt.&nbsp;
+Very convenient.
+
+<H3 align=center> <A NAME=bin> Binary Characters </A> </H3>
+
+At all times, even when entering a file name, this program scans its input
+for binary codes.&nbsp;
+Sorry, but I like hex better than octal.&nbsp;
+I know it's not standard, but there it is.&nbsp;
+Use the three character sequence ~bd to enter the nonascii character 0xbd,
+which is the code for 1/2.&nbsp;
+Similarly, if you list a line, with the l command, the 1/2 character
+is displayed as ~bd.&nbsp;
+All nonascii and most control characters
+are entered and displayed in this manner.&nbsp;
+Tab and newline must be entered directly from the keyboard.&nbsp;
+Tab and backspace are displayed as &gt; and &lt; respectively.&nbsp;
+If the following line is entered,
+
+<P>
+Hello~07 ~x is ~bd of y
+
+<P>
+And then listed, you will see the very same text,
+but there is a bell and a 1/2 character inside.&nbsp;
+The ~x is not encoded into anything, because x is not a hex digit.&nbsp;
+If you want to force a ~, even though there are hex digits following,
+use two tildes, ~~.
+
+<P>
+When you are entering a regular expression, you have the choice, hex or octal.&nbsp;
+This program converts ~xx, as a hex value,
+and the perl regexp machinery converts \nnn, as octal.&nbsp;
+Thus any of the following will undos a file.&nbsp;
+The first is translated via my software, the second and third by perl regexp.
+
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>,s/~0d$//
+,s/\15$//
+,s/\r$//
+</font></PRE>
+
+<P>
+Embedded escape characters are always displayed in hex,
+whether the line is listed or not.&nbsp;
+Most terminals and terminal emulaters, including the Linux console
+and my speech adapter,
+interpret various escape sequences as control commands.&nbsp;
+Thus an errant escape sequence from a binary file could send your terminal or your speech adapter into an unexpected state,
+making recovery difficult.&nbsp;
+It seems prudent to render escapes as visible characters all the time.&nbsp;
+If you have no idea where that ~1b came from, it's probably a literal escape character.
+
+<P>
+Returns and nulls are also converted into hex all the time.&nbsp;
+Thus an embedded return will not make one line look like two lines.&nbsp;
+You will usually see this when importing a dos text file.&nbsp;
+Every line ends in ~0d.&nbsp;
+Issue one of the three commands shown above to undos the file.
+
+<H3 align=center> <A NAME=bfile> Binary Files </A> </H3>
+
+Data is considered binary if it is sufficiently large
+(more than 50 bytes)
+and it contains a significant fraction of non-ascii or null characters (more than 25%).&nbsp;
+International text may contain scattered binary codes, for accented letters etc,
+but most of the characters should still be ascii.&nbsp;
+Therefore binary data is not international text.&nbsp;
+In fact you probably won't be able to display or edit binary data effectively,
+at least not by this program.&nbsp;
+But don't let that stop you.&nbsp;
+As an exercise, create an executable program that prints "hello world",
+then edit the executable using this editor.&nbsp;
+Look for the string "hello world" and replace world with jorld.&nbsp;
+Write the file and run the executable.&nbsp;
+You should now see "hello jorld".
+
+<P>
+When binary data is first read into the buffer, you will see the words "binary data".&nbsp;
+After that the buffer remains "binary", even if you delete all the data and read in ascii text.&nbsp;
+You must use the `e' command to get a fresh, ascii buffer.
+
+<P>
+For the most part it doesn't really matter if the data is considered binary or ascii.&nbsp;
+Either way you can display and edit the data, and write it to a file.
+
+<P>
+This program tries to "do the right thing" under DOS/Windows.&nbsp;
+That is, it converts crlf to and from newline if it believes the file is text;
+and it leaves binary data alone.&nbsp;
+These distinctions are not relevant on Unix/Linux.
+
+<P>
+Although this approach is satisfactory for English and most European languages,
+it fails miserably for Asian languages, which definitely look like binary data.&nbsp;
+You can disable binary detection by entering the `bd' command.&nbsp;
+If you speak an Asian language,
+you may want to put this command in your init script,
+so edbrowse comes up the way you want -
+treating your international files as text files.
+
+<P>
+If you speak an Asian language, and you are running Windows,
+and binary detection is disabled,
+<em>don't</em> use this program to manipulate binary files,
+as they will get corrupted!&nbsp;
+Better still, say goodbye to Windows and start using a real operating system.
+
+<H3 align=center> <A NAME=dir> Directory Scan, File Manager </A> </H3>
+
+If you edit a directory
+you will see a list of all the visible files in that directory,
+in alphabetical order.&nbsp;
+(Use the `hf' option if you want to see the hidden files too.)&nbsp;
+Type g to go to one of these files or sub directories.&nbsp;
+Type ^ to return to the parent directory.&nbsp;
+(Note, g is the "go" command, and ^ is the back key; more on this later.)&nbsp;
+Thus you can traverse an entire directory tree
+as though you were inside a file manager.
+
+<P>
+Like `ls -F', a subdirectory is indicated by a trailing slash.&nbsp;
+This slash is not part of the filename.&nbsp;
+Similarly, named pipe is indicated by |,
+symbolic link by @,
+block special by *, character special by &lt;,
+and socket by ^.&nbsp;
+If a regular file ends in one of these characters, it may confuse you,
+but it won't confuse this program.&nbsp;
+Edbrowse knows whether that trailing | is part of the filename
+or a pipe indicator.&nbsp;
+Since each file is represented by a single line of text,
+files with newlines embedded in their names cannot be accessed.
+
+<P>
+If you read a directory into a preexisting file it is just text.&nbsp;
+You can't visit any of the underlying files, because they are just words.&nbsp;
+You must edit a directory in its own session
+or read a directory into an empty session
+if you want to access the underlying files.&nbsp;
+Note that you can write the buffer to another editting session,
+and in that session the words are just words.&nbsp;
+This distinction is important as we start to edit the text.
+
+<P>
+By default, directories are readonly.&nbsp;
+If you try to delete a line, and hence the associated file,
+it will tell you that you are still in directory read mode.&nbsp;
+I'm trying to save you from yourself!&nbsp;
+Type dw to enable directory writes,
+and dr to make directories readonly again.
+
+<P>
+When directory writes are enabled,
+you can remove files using the d command.&nbsp;
+For instance, g/\.o$/d removes all the object files.&nbsp;
+Since these edits have implications outside the scope of this program,
+there is no undo capability.&nbsp;
+When you make a change it is made.&nbsp;
+With this in mind, I borrowed a good idea from Microsoft.&nbsp;
+(That's one.)&nbsp;
+The deleted file isn't actually deleted;
+it is moved to your recycle bin,
+located in $HOME/.recycle.&nbsp;
+So if you accidentally type ,d and remove all your files,
+you can recover them from your recycle bin.&nbsp;
+You may want to set up a cron job that removes
+all the files from your recycle bin once a week.&nbsp;
+This directory is created mode 700, so nobody else can look at your deleted files.&nbsp;
+If you create this directory yourself, please make it 700.&nbsp;
+After all, some of your files might be private.
+
+<P>
+Because this operation is a move, rather than a true delete,
+there are a few restrictions based on your operating system.&nbsp;
+If your OS can move directories,
+this program will be able to delete a subdirectory as easily as a file.&nbsp;
+The entire subtree is moved to your recycle bin.&nbsp;
+Make sure your cleanup cron job is capable of removing directory trees, not just files.
+
+<P>
+Depending on your OS, you may not be able to move files across file systems.&nbsp;
+From /disk2 to /disk1, or from the D drive to the C drive.&nbsp;
+In this case you might want to issue the dx command,
+which makes directories writable, like dw, but actually deletes the files.&nbsp;
+You'll need this if you're trying to free up space on the disk.&nbsp;
+Note that symbolic links are always deleted;
+there isn't much point in moving a link to the recycle bin.
+
+<P>
+"What's the point of all this?" you may ask.&nbsp;
+"What's wrong with the shell?"
+
+<P>
+Nothing, as long as the file names are small and familiar.&nbsp;
+But sometimes the file names are long and cumbersome,
+and it is nearly impossible to type those names into the shell,
+character for character, upper and lower case, with no mistakes.&nbsp;
+Meta characters such as the * can help,
+but only when the file you want has a name radically different from the other files in the directory.&nbsp;
+This isn't always the case.&nbsp;
+Suppose an application generates log files as follows.
+
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>ProgramFooBar.-04-04-1998.06:31:59.log
+ProgramFooBar.-04-11-1998.11:37:14.log
+ProgramFooBar.-04-18-1998.16:22:51.log
+</font></PRE>
+
+<P>
+How do you delete the old ones and keep the most recent,
+or rename them to something more manageable?&nbsp;
+Stars are a bit risky; you can access multiple files without realizing it.&nbsp;
+And we're not even talking about those pesky files with spaces or invisible control characters in their names.&nbsp;
+Our sighted friend calls up his file manager and simply clicks on the file he wants to view or edit or remove.&nbsp;
+Sometimes I want/need that kind of power.
+
+<P>
+When the substitute command changes text, it renames the underlying file.&nbsp;
+This won't move the file on top of another existing file,
+so you can't lose any data this way.&nbsp;
+Again, I'm saving you from yourself.
+
+<P>
+The search and substitute commands ignore the trailing filetype characters.&nbsp;
+If you want to rename a directory from foo/ to foobar/,
+you can type s/$/bar/.&nbsp;
+The bar will be placed at the end of the word foo, because the trailing / isn't really there.
+
+<P>
+Now suppose you want to run an arbitrary program on some of these files.&nbsp;
+This could be a print utility,a compiler, whatever.&nbsp;
+Sometimes you can rename the files for your convenience, then work in the shell.&nbsp;
+But sometimes you don't own the files,
+and sometimes they must retain their original names.&nbsp;
+This happens when several html documents reference each other through hyperlinks,
+using their existing filenames.&nbsp;
+So you can't rename the files, yet you still want to run your program on one or two of them.
+
+<P>
+You can run any program on any file without retyping that filename via the shell escape.&nbsp;
+Use kx to assign the label x to the file you are interested in.&nbsp;
+(This is standard ed syntax.)&nbsp;
+Then run !program 'x
+to invoke your program on that file.&nbsp;
+This sounds involved, but it is merely macro substitution, implemented in a few lines of code.&nbsp;
+If 'x is present in a shell escape, and is not next to any letters or digits,
+we replace it with the text on the line labeled x.&nbsp;
+Thus if your filename contains spaces, you'd better run !program "'x",
+to make sure the entire file name is one argument to the running program.
+
+<P>
+The token '. is replaced with the text on the current line,
+and the token '_ is replaced with the current filename.&nbsp;
+If you try to write a file, and remember that you left it readonly,
+you can make it writable via !chmod +w '_,
+then write the text to the file.
+
+<P>
+You can expand multiple tokens in one shell command.&nbsp;
+Use kx and ky to mark two files that you want to compare, then run !diff 'x 'y.
+
+<P>
+This feature is not limited to directory scans.&nbsp;
+You may be editing a simple file,
+but you can still paste the contents of a line into your shell command.&nbsp;
+Off hand I don't know why you'd want to do this,
+but you can.
+
+<H3 align=center> <A NAME=case> Upper/Lower Case </A> </H3>
+
+The `lc' command converts a line to lower case,
+and `uc' converts it to upper case.&nbsp;
+Perl users will recognize these directives.&nbsp;
+As an extension, `mc' converts to mixed case, capitalizing the first letter of each word,
+and the d in mcdonald.
+
+<P>
+This is especially useful in a directory scan.&nbsp;
+The last thing a blind person wants to worry about is whether some of the letters in a file name are upper case.&nbsp;
+If directory write mode is enabled,
+type ,lc to convert all the file names to lower case.&nbsp;
+It's that simple.
+
+<P>
+If you want to upcase a particular word, type s/word/uc/.&nbsp;
+This converts the word to upper case.&nbsp;
+All the other substitution suffixes apply.&nbsp;
+To change foo, Foo, FOo, and FOO to FOO, everywhere,
+type ,s/\bfoo\b/uc/ig.
+
+<H3 align=center> <A NAME=bl> Break Line </A> </H3>
+
+The `bl' command breaks the current line into sentences and phrases,
+each about 70 characters long.&nbsp;
+It also compresses white space and strips white space from the end of the line.&nbsp;
+If the line contains return characters,
+these are turned into line separaters -
+places where the line will definitely be cut.&nbsp;
+The only white space that is preserved is the tabs or spaces
+at the beginning of the line, or after each return character.&nbsp;
+This is a modest attemp to keep indented text indented,
+if that makes any sense?
+
+<P>
+I use this feature in two different ways.&nbsp;
+If I am familiar with the document,
+(I probably wrote it),
+I may use the bl command on a line of text that seems rather long.&nbsp;
+I typed it in quickly, as an uninterrupted thought, and now I want to break it up.&nbsp;
+But I don't want to count punctuation marks and say,
+"I think we need a break after the third comma
+and the period following that and then at the next comma",
+issuing the s punctuation commands along the way.&nbsp;
+Oh I like the s commands well enough - they put you in complete contrl -
+but it's easier to type bl - and bl usually does the right thing.&nbsp;
+Also, bl compresses accidental double spaces,
+a typo that I will never hear if I simply read the line as a whole.
+
+<P>
+When the document comes in from the outside,
+usually from another word processor such as MS-Word,
+bl serves a completely different function.&nbsp;
+Paragraphs are often stored on a single physical line.&nbsp;
+Sometimes the entire document is on a single line,
+with return characters, \r, separating paragraphs.&nbsp;
+Wysiwyg word processors don't worry about separating sentences and phrases -
+that's what word wrap is for.&nbsp;
+Well - bl is our version of word wrap.&nbsp;
+It doesn't try to conform to any screen;
+it merely cuts the text into manageable chunks,
+each piece a separate semantic unit.&nbsp;
+When bl is issued,
+physical lines will contain sentences or phrases, as delimited by punctuation,
+or by the newline/return characters embedded in the original document.
+
+<P>
+If one of the original lines, delimited by newline or return,
+is long, i.e. more than 120 characters,
+it is assumed to be a self-contained paragraph,
+and a blank line is added before and after.&nbsp;
+Thus a disassembled paragraph containing 20 sentences
+does not simply flow into the next disassembled paragraph containing 18 more sentences.&nbsp;
+An empty line separates the two paragraphs.&nbsp;
+This is only applicable if bl is applied to a range of lines,
+or the entire document,
+as might occur when making an outside document readable.
+
+<P>
+Don't apply the bl command to a preformatted section,
+such as a table or ascii art.&nbsp;
+If you're not sure what to expect,
+i.e. you didn't write the file,
+scan through it first,
+and apply bl to the range of lines that actually represents text.&nbsp;
+Often this is the entire document (,bl).&nbsp;
+The following commands do a pretty good job of cleaning up a typical Microsoft Word document.
+
+<P>
+<PRE><font size=3 face=Arial,Helvetica,sans-serif>e whatever.doc or whatever.wps
+# change filename, so you don't accidently overwrite the microsoft document
+f _
+,s/[~80-~ff~00-~0c~0e-~1f]//g  # strip out non ascii control/formatting codes
+g/^\s*$/d  # these blank lines use to contain non ascii codes
+,bl  # break lines and paragraphs
+1,20p  # first couple lines are often garbage, but then the text begins.
+</font></PRE>
+
+<P>
+Of course the program catdoc does a better job of converting word documents into text.&nbsp;
+This is often bundled with xls2cvs.&nbsp;
+These are must-have programs for people who want a command line environment.
+
+<H3 align=center> <A NAME=race> Race Conditions </A> </H3>
+
+Suppose you are writing a file,
+and edbrowse truncates the existing file,
+then the computer crashes before edbrowse can write the new data.&nbsp;
+When you bring your computer back to life,
+your file is empty, zero bytes, and all your work is lost.
+
+<P>
+This is a narrow window to be sure;
+the computer has to fail at precisely the wrong millisecond.&nbsp;
+To guard against this improbable calamity,
+some editors write your data to a temp file,
+remove the true file, and move the temp file over to the true file.&nbsp;
+This way your data cannot be lost.&nbsp;
+Either the new or the old file will survive.
+
+<P>
+Then links came on the scene, hard links, and then symbolic links.&nbsp;
+Authors of ed, and other editors, had to scramble.&nbsp;
+You can't remove a link, write to temp,
+and move the temp file over to the link.&nbsp;
+It isn't a link any more, it's a regular file,
+and your filesystem is not what it use to be.&nbsp;
+For one thing, the true file, pointed to by the (symbolic) link,
+has not been changed at all.&nbsp;
+This is not what you want!&nbsp;
+So people rewrote there editors to disable this feature if the named file is
+a link to some other file.&nbsp;
+They had to revert back to the old truncate and write paradigm,
+and hope that nothing bad happens in between.&nbsp;
+And you know what, it never does.&nbsp;
+The window is just too small.
+
+<P>
+With this in mind, edbrowse doesn't mess with temp files at all.&nbsp;
+I just don't bother.&nbsp;
+I truncate the file and write out the data,
+and I don't expect anything to go wrong during the critical millisecond.
+
+<P>
+Another race condition is more subtle.&nbsp;
+Suppose you are editing a file and your friend,
+or a system program, edits the same file.&nbsp;
+Your file has actually been changed out from under you,
+while you held it in memory.&nbsp;
+When you go to write your changes,
+they will clobber any changes made by your friend, or the system utility.&nbsp;
+Most text editors guard against this by watching the timestamp.&nbsp;
+When you first edit the file foo,
+an editor might remember the timestamp on foo.&nbsp;
+then, when you are ready to write your changes,
+it checks the timestamp, and if foo has been updated in the interim,
+it issues a warning message.&nbsp;
+"File has been updated by someone else -
+do you really want to write?"
+
+<P>
+This is a good feature,
+but edbrowse doesn't have it, simply because I haven't gotten round to writing it.&nbsp;
+I'm the only user on my PC,
+and you're probably the only user on your PC too,
+so this feature is not in high demand.&nbsp;
+Still, I should implement it some day.
+
+<H3 align=center> <A NAME=url> Accessing A URL </A> </H3>
+
+Instead of invoking `e filename', you can invoke `e http://this.that.com/file.html',
+and the editor will retrieve the named file using the http protocol.&nbsp;
+The source (i.e. raw html) is made available for edit.&nbsp;
+You can modify it and save it on your local machine.&nbsp;
+Because the text was retrieve from another machine,
+it cannot be written back to that machine,
+hence the `w' command will not work.&nbsp;
+You must specify a local file `w myfile.html',
+or another editing session `w3'.
+
+<P>
+Note that this is not browsing, we are simply retrieving text from
+another machine and editing it locally.&nbsp;
+The text need not be html, it could be (for instance) a plain ascii document.&nbsp;
+Many people, myself included, put various types of files, even executables,
+on their websites for retrieval.&nbsp;
+Of course you wouldn't want to edit a binary file,
+but you can still use this editor to retrieve the file and save it locally,
+thus implementing an http download.
+
+<P>
+While inside the editor, you can type `e URL'
+to leave the current buffer and
+retrieve text from a remote machine.&nbsp;
+Or you can type `r URL' to retrieve remote text and add it to the current buffer.&nbsp;
+There is no `w URL' command, because the http protocol
+does not allow you to "write" html source back to a remote machine.
+
+<P>
+As a convenience, any filename with two or more embedded dots
+and a standard suffix (such as .com or .net)
+is treated as a URL.&nbsp;
+You can usually omit the http:// prefix.&nbsp;
+Try invoking `e www.space.com',
+as an example.&nbsp;
+But again, you are looking at html source, which probably isn't what you want.&nbsp;
+Browsing will be discussed later.
+
+<P>
+Whenever you retrieve data from a URL, the editor, directed by the http protocol,
+might change the filename out from under you.&nbsp;
+This is because the resource has moved,
+and the original computer was kind enough to give you the new address.&nbsp;
+If debugging is set to 2 or higher,
+you might see a series of three or four different URLs
+as the editor is redirected across the internet.&nbsp;
+Finally it retrieves your document,
+and the current file name holds the correct (latest) URL.&nbsp;
+You might want to update your bookmark file accordingly.&nbsp;
+Then again, you might not.&nbsp;
+Sometimes the initial url is the "public" location of the web page,
+and subsequent redirections occur inside the company.&nbsp;
+In this case you'll want to retain the public url,
+which will always work, even if the company relocates its web server.&nbsp;
+Use youre best judgment.
+
+<H3 align=center> <A NAME=browse> Browse Mode </A> </H3>
+
+If the editor contains html text, from any source,
+you can type `b' to activate browse mode.&nbsp;
+The command will be rejected only if the buffer is lacking in common html tags,
+or the editor is already in browse mode.&nbsp;
+You can force its hand by adding &lt;html&gt; at the top,
+or any other tag we recognize -
+it will always try to convert such a file.&nbsp;
+Now the transformed text is readable, without any visible html tags.&nbsp;
+In other words, &lt;P&gt; has been turned into a paragraph break,
+&lt;OL&gt; has become an ordered (numbered) list, and so on.&nbsp;
+The filename is also changed; a .browse suffix has been appended.&nbsp;
+If you write the transformed data, deliberately or accidentally,
+the reformatted text will be saved in a new file,
+whatever.html.browse,
+without disturbing the original html.&nbsp;
+This protects you if you are developing your own web pages.&nbsp;
+BTW, I believe blind people should write raw html,
+rather than wielding a wysiwyg web development tool such as Front Page.&nbsp;
+In fact I write all my documents in html, even short business letters.&nbsp;
+I can create headings, lists, tables, etc,
+without using a wysiwyg editor or a screen reader.&nbsp;
+This
+<A HREF=http://www.htmlcodetutorial.com>
+excellent tutorial</A>
+will get you started.
+
+<P>
+When the browse conversion is executed, the system checks for
+common syntax errors, such as a numbered list that is never closed.&nbsp;
+If the file name is a URL, these syntax errors are not reported.&nbsp;
+After all, it's not your web page, and there's nothing you can do about it.&nbsp;
+However, if the web page is yours, as indicated by a local filename,
+the first syntax error is displayed,
+whence you can return to the html source and fix it.&nbsp;
+Type `ub' to undo the browse conversion.&nbsp;
+This takes you back to the raw html text under its original filename.&nbsp;
+Now you can coorect the error and try the `b' command again.&nbsp;
+For your convenience, the label 'e is set to the line containing the error.&nbsp;
+Repeat this process until `b' runs without errors.
+
+<P>
+If you try to quit, and the editor says "expecting `w'",
+remember that you should be back in raw html before you issue the write command.&nbsp;
+You could write the browsed text into file.browse,
+and that will satisfy the "write" criteria,
+but this isn't really what you want.&nbsp;
+You've corrected errors in the html source, and that's what you need to save,
+so remember to undo the browse reformatting before you write the file.
+
+<P>
+Note that you can issue the unbrowse command even if there were no errors.&nbsp;
+If, for instance, you are looking at a well-constructed page
+on some other website,
+and you'd like to read or save the raw html, just type ub.&nbsp;
+As an exercise, invoke `e www.space.com',
+and use the `b' and `ub' commands to switch between
+the raw html and the browsable text.
+
+<P>
+The browse reformatting is relatively simple,
+because a blind person doesn't want complexity.&nbsp;
+We don't care about fonts and italics etc, and if we do,
+the best way to obtain this information is by reading the raw html.&nbsp;
+So most tags are discarded, except those related to headers, paragraphs, and lists.
+
+<P>
+I don't indent subsections or list items.&nbsp;
+The visual effect is lost on us,
+and sometimes the extra spaces get in the way.
+
+<P>
+Because the physical line is, for us, the unit of thought,
+i.e. the atomic construct that is modified or moved or copied,
+lines are cut at approximately 80 characters, give or take a few,
+usually at a sentence or phrase boundary.&nbsp;
+Thus reading line by line often reveals a sequence of sentences,
+or at least self-contained phrases within a larger sentence.&nbsp;
+I consider this the optimal way to view or edit a document --
+any document.&nbsp;
+If you read this manual raw, without doing the browse on the file,
+you'll see what I mean.&nbsp;
+Review the <A HREF=#bl>break line</A> command above.
+
+<P>
+The layout of a preformatted section, &lt;pre&gt;, is honored,
+although sequences of blank lines are compressed down to one blank line,
+and whitespace at the end of lines is stripped.&nbsp;
+This preserves the structure of street addresses,
+and other preformatted blocks.
+
+<P>
+Tables are formatted like an ascii unload from a spreadsheet or sql database.&nbsp;
+Pipes separate the fields on each row.&nbsp;
+There is no whitespace around the pipes,
+and the fields of a given row probably won't line up with the fields below.&nbsp;
+It isn't pretty,
+but a blind user can't really trace down a column in any case,
+especially when using a line editor such as this.&nbsp;
+Better to write the table to a local file and use cut, sort, join, etc.&nbsp;
+Here is a sample table.
+
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>part number|quantity|price
+2635|2|$34.80
+1398|1|$67.50
+8118|5|$125.00
+</font></PRE>
+
+<P>
+Empty fields at the end of a row are dropped.&nbsp;
+These are almost always images -- sometimes an entire row of images --
+sometimes an entire table of images.&nbsp;
+The blind user doesn't need to read the no-content pipes.
+
+<P>
+Note that the browsable text is readonly.&nbsp;
+After all, it's not the "source" -- why should you edit it?&nbsp;
+There are ways to enter and edit the input fields of an on-line form,
+but this will be discussed later.&nbsp;
+For now, you can think of the text as readonly.&nbsp;
+Issue a copy or insert or substitute command,
+and you'll get an error.
+
+<P>
+If you do want to edit the text, as pure text,
+enter the `et' command (edit as text).&nbsp;
+You will not be able to return to the html that produced this page.&nbsp;
+Nor can you follow a hyperlink or submit a fill-out form.&nbsp;
+The browsable text has become plain text, with no internet semantics.
+
+<P>
+The command `b file.html' is shorthand for `e file.html', followed by `b'.&nbsp;
+Remember that the ub command reverses the browse conversion, and reproduces the original html text,
+as though you had entered `e file.html' alone.
+
+<P>
+If a url is opened from the command line,
+as in `e www.google.com', it is automatically browsed.&nbsp;
+Type `ub' to revert back to the raw html.
+
+<H3 align=center> <A NAME=math> Technical, Math </A> </H3>
+
+Most people never read technical web pages, but if you do...
+
+<P>
+A subscript, as indicated by html tags, is enclosed in brackets.&nbsp;
+Thus x&lt;sub&gt;n&lt;/sub&gt; becomes x[n].&nbsp;
+This transformation is not done if the subscript is a one or two digit number.&nbsp;
+Thus x subscript 1 is rendered x1, just like your professor would say it.&nbsp;
+This is not ambiguous, as you might first think;
+only programmers use x1 as a variable name, not mathematicians.&nbsp;
+If you see x1 in a formula, it means x subscript 1.&nbsp;
+Even 17a3b3 is not ambiguous;
+it is a translation of 17 times a[3] times b[3].
+
+<P>
+Superscripts are enclosed in parentheses, with a preceeding arrow.&nbsp;
+The parentheses are omited if the superscript is a number.&nbsp;
+Thus x cubed looks like x^3,
+while x to the n-1 power looks like x^(n-1).
+
+<P>
+There are, sad to say, three different ways to encode mathematical symbols
+in html.&nbsp;
+At present edbrowse only supports one of them,
+though it is the most common, and the most portable among all browsers.&nbsp;
+This is the unicode system,
+where the Greek letter theta is specified as
+&amp;#952;.&nbsp;
+Explorer turns this expression into &#952;,
+one character on the screen,
+while edbrowse turns it into the word theta.&nbsp;
+We also put spaces around the word
+if its neighbors are also words.&nbsp;
+This is illustrated by the circumfrence of a circle, which is 2 times pi times r.&nbsp;
+These three tokens are usually squashed together,
+and there is no confusion in the sighted world,
+where pi is a separate Greek letter.&nbsp;
+But if pi is spelled out,
+and the tokens are left together,
+the result is 2pir.&nbsp;
+Now pir looks like a three letter word.&nbsp;
+To avoid this, edbrowse inserts spaces, giving 2 pi r.
+
+<P>
+These translations are designed to work with the pages of the
+<A HREF=http://www.mathreference.com> Math Reference Project</A>,
+an archive of advanced mathematics
+that atemps to be both sighted and blind friendly at the same time.&nbsp;
+This may be impossible,
+but I'm giving it a whirl.
+
+<H3 align=center> <A NAME=title> Title, Description, Keywords </A> </H3>
+
+While in browse mode, the commands ft, fd, and fk
+produce the title, description, and keywords of the current web page respectively.&nbsp;
+These are normally not visible to the user.&nbsp;
+The title describes the web page in 80 characters or less.&nbsp;
+The description is a more complete explanation,
+which is displayed by a search engine such as yahoo or altavista.&nbsp;
+The user reads the description via the search engine and decides whether to read that web page.&nbsp;
+Finally, the keywords are used by search engines to facilitate keyword searches.&nbsp;
+Like the rest of the browsable text,
+these three attributes are readonly.&nbsp;
+If it is your web page,
+you can modify them by returning to the raw html.&nbsp;
+Web designers should pay close attention to the description and the keywords,
+else your pages will not be accessible via the standard search engines.
+
+<P>
+Note that `ft' prints the title of the web page,
+whereas `f t' (with a space) renames the current file to "t",
+which is probably not what you want.
+
+<H3 align=center> <A NAME=rf> The Refresh Command </A> </H3>
+
+Type `rf' to refresh the current file.&nbsp;
+This rereads the file or url into the current buffer.&nbsp;
+It does not push a new editing session onto the stack.&nbsp;
+This is analogous to the refresh button on Netscape and Explorer.
+
+<P>
+If a web page is updated every minute, e.g. with the latest stock prices for your favorite companies,
+you can type rf to fetch the latest copy of this web page.&nbsp;
+This assumes the intervening internet servers are not caching the web page
+and handing you the same out-of-date copy over and over again.
+
+<P>
+On your local machine,
+you can use this feature to read the latest version of a dynamic file,
+such as a log file.&nbsp;
+Or you can reread a directory,
+to incorporate any new files that have been placed in that directory.&nbsp;
+For example, you might use the shell escape to execute
+`cat x y &gt;z',
+yet z will not appear in your directory scan until you type rf.
+
+<P>
+Edbrowse prints the word "replace" when a file or web page replaces another,
+rather than pushing it onto a stack.&nbsp;
+This is implied by the rf command, but it can happen for other reasons as well.
+
+<H3 align=center> <A NAME=hlink> Hyperlinks </A> </H3>
+
+A link to another web page is enclosed in braces, like this:
+
+<P>
+{Recent reports} suggest a connection between autism and intestinal bacteria.
+
+<P>
+Behind the scenes, "recent reports" is linked to
+www.pecanbread.com/BTVCautismchapter.html,
+but you don't see that unless you activate the link
+or view the raw html.
+
+<P>
+Of course the browsable text might also contain words inside braces,
+especially if the web page is technical in nature.&nbsp;
+Hence there is some ambiguity.&nbsp;
+However, I believe it is clear from context.&nbsp;
+{More information} is probably a link,
+whereas ${HOME}/.profile is probably not.
+
+<P>
+Some web pages present a series of icons
+that are actually links to other pages.&nbsp;
+That is, you click on an icon, rather than a phrase, to go somewhere else.&nbsp;
+These icons are suppose to be intuitive.&nbsp;
+Sometimes they are -- sometimes they're not.&nbsp;
+In any case, they aren't much use to the blind.&nbsp;
+Sometimes the web designer is kind enough to supply
+a text phrase that roughly describes the image.&nbsp;
+In this case the phrase is used as the link.&nbsp;
+It appears in braces, as though there were no image at all.&nbsp;
+If there is no alternate phrase,
+the filename of the hyperlink reference is used.&nbsp;
+This name can be surprisingly helpful,
+or it can be utterly useless, as in "index.html".&nbsp;
+If this name canot be determined,
+the generic link {image} is used.&nbsp;
+In this case you will have to go to the web page to find out what it contains.
+
+<P>
+To follow a link, enter the `g' (go) command.&nbsp;
+Yes, `g' also initiates a global command,
+such as a global substitute,
+but only when it is followed by a regular expression.&nbsp;
+By itself, g follows the link on the current line,
+g2 follows the second link on the current line,
+and 4g follows the link on line 4.&nbsp;
+If a link spreads across multiple lines, you must be on the first of these lines,
+the line containing the left brace.
+
+<P>
+The g command can also act on a link that is written in raw text,
+as long as it "looks" like a valid url.&nbsp;
+If your friend sends you an interesting url via email,
+and you save it to a text file,
+you can "go" to that link,
+even though the file is not html,
+and you've never issued a browse command.
+
+<H3 align=center> <A NAME=ilink> Internal Links </A> </H3>
+
+Although most links lead to other web pages,
+some links point to other sections within the current document.&nbsp;
+Again, you will be able to tell by context.&nbsp;
+Links in the table of contents are usually
+shortcuts to chapters in the current document.&nbsp;
+The same holds for links that look like:
+see {Appendix I},
+or, see the section on {Hardware Configuration}.
+
+<P>
+The g command follows an internal link or an external link.&nbsp;
+Either way you find yourself in a different place.&nbsp;
+However, if the link is internal,
+you are still browsing the same file.&nbsp;
+In fact, the only thing that has changed is the current line number.&nbsp;
+The new line is displayed,
+and should correspond to the link you activated.&nbsp;
+Often the words are the same.&nbsp;
+Activate {Appendix I}, and you'll probably see the section heading "Appendix I".&nbsp;
+Enter z10 to read the first few lines of the appendix.
+
+<H3 align=center> <A NAME=back> The Back Key </A> </H3>
+
+If you edit a new file via the `e', `b', or `g' commands,
+and you already have text in the buffer,
+that text is bundled up and pushed onto an internal stack.&nbsp;
+You can pop the stack by issuing the `^' command.&nbsp;
+This is suppose to be intuitive --
+the up arrow pointing to the previous page that rolled off your screen.
+
+<P>
+This feature seems rather silly if you're just editing files,
+but it makes sense when surfing the net.&nbsp;
+Often we descend through two or three links,
+only to find ourselves at a dead end.&nbsp;
+"I didn't want to go here."&nbsp;
+So we hit the back key again and again, until we reach familiar territory.&nbsp;
+We can now proceed in a new direction.&nbsp;
+The command ^3 or ^^^ backs up through three pages.&nbsp;
+Don't use this iterative feature unless you know exactly how many times you need to back up.
+
+<P>
+Note that the entire state of an editing session is saved and reproduced,
+including the file name,
+the last search/replace strings for substitutions,
+the hyperlinks and forms,
+the compiled javascript,
+everything!
+
+<P>
+Unlike lynx, I don't keep a running history of every web page visited.&nbsp;
+I never really saw a need for this feature.&nbsp;
+99% of the time I simply want to back up one or two pages,
+and that's it.&nbsp;
+Unfortunately this high-runner operation requires two somersaults and a back flip under lynx.&nbsp;
+It is a one key command in my browser.
+
+<P>
+The stack should not be confused with parallel edits,
+as described in an earlier section.&nbsp;
+In fact each editing session, e1 e2 e3 ..., has its own internal stack.&nbsp;
+Parallel sessions are appropriate when you need to move back and forth between two files,
+or cut&amp;paste between them.&nbsp;
+However, one session, with its internal stack,
+is usually sufficient to surf the net.
+
+<P>
+If a browse command fails completely,
+giving you a rather uninteresting empty buffer,
+the stack is popped automatically,
+taking you back to the previous web page.&nbsp;
+Now you can retry the link by typing `g' again,
+or follow a different link on the page.&nbsp;
+Note that a browse command can fail, and still give you text explaining why it failed,
+if the remote server is well-designed.&nbsp;
+In this case you may see the error message "file not found",
+yet you will be viewing a new web page, which explains the problem.&nbsp;
+After you've read the explanation,
+follow its directions,
+or type ^ to back up and try again.
+
+<P>
+If you are presented with a number, even 0, the stack has been pushed, and you are in a new file or url.&nbsp;
+The number is the size of the new file.&nbsp;
+Use the ^ command to get back.&nbsp;
+If there is no number, merely an error message,
+then edbrowse did not create a new buffer.&nbsp;
+It probably didn't get that far.&nbsp;
+Typing . will produce the same line you saw before.
+
+<P>
+Following an internal link to another section in the current document
+does not push anything onto the stack.&nbsp;
+In other words, ^ will not take you back to where you were.&nbsp;
+In fact, it will take you up to the previous web page, which is not what you want.&nbsp;
+If you want to take a glance at Appendix I, and then return,
+mark the current position with `kr'.&nbsp;
+After you've visited the appendix, use the label 'r to return to your original location in the file.
+
+<H3 align=center> <A NAME=move> The M Command </A> </H3>
+
+If you want to read and/or interact with several web pages in parallel,
+pages that would normally stack up,
+you can move each one to another session using the capital M command.&nbsp;
+The tags and links are transferred along with the rendered text.&nbsp;
+Once the web page has moved to another session,
+edbrowse issues the ^ command for you.&nbsp;
+Now you are back to the previous page.
+
+<P>
+It is generally unsafe to make a copy of a running web page,
+with all its javascript objects etc,
+so the M command <em>moves</em> the page out of the way,
+and takes you back to the previous page.&nbsp;
+Note, this command works just as well with files.
+
+<P>
+Suppose a web page presents
+<P>
+{planes}
+<br>
+{trains}
+<br>
+{automobiles}
+
+<P>
+If you are curious about all three topics,
+issue these commands in this order.
+
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>1g
+M2
+2g
+M3
+3g
+M4
+</font></PRE>
+
+<P>
+Now sessions 2 3 and 4 are the subpages about plains trains and automobiels respectively.&nbsp;
+You can fill out forms or follow hyperlinks in any of them,
+or stay in session 1 and do something else.
+
+<H3 align=center> <A NAME=music> Background Music </A> </H3>
+
+If you are trying to listen to a speech synthesizer,
+the last thing you need is background music.&nbsp;
+Instead of playing the song, I make it available to you through a hyperlink.
+<P>
+{Background Music}
+<P>
+This always appears at or near the top of the page.&nbsp;
+Click on this link and download the wave or mp3 file,
+and play it at your convenience.&nbsp;
+Use the play audio `pa' command.&nbsp;
+Normally pa uses the name of the file to infer the audio format.&nbsp;
+If the filename ends in .wav, it's a wave file, and so on.&nbsp;
+If the filename is not particularly helpful, and you know the audio format, you can specify it as follows.
+<P>
+paw: play audio .wav
+<br>
+paa: play audio .au
+<br>
+pav: play audio .voc
+<br>
+pa3: play audio .mp3
+
+<P>
+These commands call various programs that are present on most Linux distributions.&nbsp;
+If you are on Windows, I don't really know what to do.
+
+<H3 align=center> <A NAME=input> Input Fields </A> </H3>
+
+The input fields of an on-line form are usually indicated by angle brackets.&nbsp;
+For example, a search engine might present the following form.
+
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>Keywords: &lt;&gt;
+Advanced parsing: &lt;-&gt;
+Language: &lt;en&gt;
+Search now: &lt;GO&gt;
+Cleaar form: &lt;RESET&gt;
+</font></PRE>
+
+<P>
+The first line in this sample form is a simple text field, which is initially empty.&nbsp;
+You supply the keywords to search for.&nbsp;
+Entering and editing input fields is discussed later.
+
+<P>
+The second line is a checkbox.&nbsp;
+This field tells the search engine to use advanced boolean features,
+such as this keyword and that, or this, but not that, etc.&nbsp;
+The feature is disabled, indicated by -.&nbsp;
+(Most people don't know how to use advanced search anyways.)&nbsp;
+A + means the checkbox is on.
+
+<P>
+The third line determines the language of the keywords, English by default.&nbsp;
+This isn't a free text field, you can't just type in anything you want.&nbsp;
+We'll describe how to view the options later.
+
+<P>
+The fourth line is the submit button, which sends the form to the search engine
+and retrieves the results.&nbsp;
+This "field" cannot be edited; it is merely a button to push.
+
+<P>
+The fifth line is also a button to push.&nbsp;
+It clears all the data you have entered, so you can start over.&nbsp;
+Default values will be restored.&nbsp;
+Thus the third line goes back to &lt;en&gt;, rather than &lt;&gt;.
+
+<H3 align=center> <A NAME=entry> Data Entry </A> </H3>
+
+Filling out a form is relatively easy,
+once you are familiar with the (overloaded) `i' command.&nbsp;
+Yes, i by itself means insert text,
+but in browse mode, i refers to the input fields.
+
+<P>
+If there is only one input field on the current line, i?&nbsp;
+displays information about that input field.&nbsp;
+If the line contains multiple input fields, you will need to use a number,
+as in i3? for the third field.&nbsp;
+The type of input field is displayed, then its size,
+then the field name.&nbsp;
+If the input field is drawn from a set of options,
+the option list is displayed as well,
+with menu numbers prepended.&nbsp;
+When you want to select an option,
+you can either type in a substring that determines that option uniquely,
+such as mich for Michigan,
+or you can type in its menu number.&nbsp;
+Needless to say, the latter is often easier.&nbsp;
+Recall the sample form in the previous section.&nbsp;
+If you type i? at the third field, you might see the following.
+
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>select[7] language
+1: english
+2: french
+3: german
+4: italian
+5: spanish
+</font></PRE>
+
+<P>
+If a select list contains hundreds of options,
+type i?string to see only those options that contain the specified string.&nbsp;
+Type I?mi in a state field and get Michigan, Mississippi, Missouri, and Minnesota.&nbsp;
+Then you can select the option you want by name or by number.
+
+<P>
+Now let's do some data entry.&nbsp;
+Type i=xyz to place xyz in the input field.&nbsp;
+Remember, you will need to type i3=xyz
+to put information into the third input field on the current line.&nbsp;
+If you get an error, it is probably because the field has a fixed set of options,
+and you didn't pick one of those options.&nbsp;
+You can either type in one of the options or its menu number.&nbsp;
+You can also type in a fragment of the option you want,
+and edbrowse will fill in the rest.&nbsp;
+This is done whenever one and only one option contains a copy
+(case insensitive) of the string you entered.&nbsp;
+Thus you could enter tali above and get Italian,
+as that is the only language with those four letters.&nbsp;
+This is useful when you are entering your address,
+and they ask for the state.&nbsp;
+Type in a few letters of your state name, enough to be unique,
+and you'll probably glom onto the correct option in the list.&nbsp;
+Note the paradigm here:
+blind people don't want to wade through a menu unless they absolutely have to!
+
+<P>
+You can use i&lt;7 to pull the contents of session 7 into the current input field.&nbsp;
+Session 7 must have one line of text.&nbsp;
+Similarly, i&lt;filename reads the contents of the file into the current input field.&nbsp;
+Again, the file should contain one line of text.&nbsp;
+The filename is expanded in the usual way.&nbsp;
+This includes wildcard expansion, as long as the expansion leads to one and only one file.&nbsp;
+Put enough characters around the * to designate a single file.
+
+<P>
+Now suppose you are entering your credit card number, all 16 digits, into a free text field.&nbsp;
+If you've made a typo, you don't really want to enter the entire string again.&nbsp;
+No problem -- use the substitute command.&nbsp;
+You can write this as i/x/y/ or s/x/y/ -- as you prefer.&nbsp;
+Remember, you may need to specify a field, as in s3/x/y/.&nbsp;
+The usual substitution syntax is honored.&nbsp;
+Don't overgenralize the g suffix in your mind.&nbsp;
+s3/x/y/g changes every x to y in the third input field, but does not affect the other fields on the current line.
+
+<P>
+If the submit button is the third field on the current line, you can press it via i3*.&nbsp;
+However, i* is sufficient when there is only one button on the line.&nbsp;
+Similarly, you can establish a text field by entering i=kangaroo,
+rather than i1=kangaroo, if the second field on the current line is a submit button.&nbsp;
+You only need specify a field number
+when there are multiple input fields, or multiple buttons, on the current line.
+
+<H3 align=center> <A NAME=textarea> Text Areas </A> </H3>
+
+Some internet forms allow you to type freely, as in "Please enter your comments here."&nbsp;
+This is done inside a window within the screen,
+having a fixed number of rows and columns,
+although that is usually an artificial constraint.&nbsp;
+The sighted user can type more lines than the window will hold,
+and the window scrolls appropriately.&nbsp;
+Fortunately the blind user can ignore the artificial window and type freely.&nbsp;
+Still, the i? directive tells you how big the window would be,
+if you were running a visual browser.&nbsp;
+You might see something like "area[7x40]", which indicates a window 7 rows by 40 columns.
+
+<P>
+The lynx implementation of the text area is particularly hideous.&nbsp;
+This is not surprising, since lynx is not an editor.&nbsp;
+You can correct small typos on the current line,
+but you can't actually "edit" the text you are working on.&nbsp;
+Once you hit return, that line is done, and you're on to the next line.&nbsp;
+You can't move lines around or insert lines etc.&nbsp;
+Nor can you prepare your comments ahead of time and read them into the text area from a file.
+
+<P>
+In edbrowse, the text area is managed from another editing session.&nbsp;
+This allows you to use the full power of the editor.&nbsp;
+You can move text, make global substitutions,
+or read comments in from a prepared file.&nbsp;
+The editing session is chosen for you, and appears in the input field.&nbsp;
+Consider the following form.
+
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>Enter your email address: &lt;&gt;
+Enter your comments: &lt;buffer 2&gt;
+</font></PRE>
+
+<P>
+In this example, session 2 was not active when browsing began.&nbsp;
+The browser allocated session 2 specifically for this input field.&nbsp;
+Type e2 to move to session 2, prepare your comments,
+and type e1 to return to the input form.&nbsp;
+On most web pages the text area starts out blank,
+whence buffer 2 will be empty,
+but this is not always the case.&nbsp;
+Be sure to check for pre-existing text before you start typing your thoughts.&nbsp;
+A particularly arrogant site might preload the text area with:
+"I love your website because:".
+
+<P>
+When you finally submit the form,
+as discussed in the next section,
+text buffer 2, associated with the second editing session,
+will replace the words "bufffer 2" in the input field.&nbsp;
+Thus your carefully crafted comments are on their way.&nbsp;
+(This doesn't mean anybody is going to listen to them.)
+
+<H3 align=center> <A NAME=button> Push The Button </A> </H3>
+
+If the third input field on the current line is a reset or submit button,
+you can press the button via i3*.&nbsp;
+The reset button puts the input fields back to their original values,
+as supplied by the web page when it was first loaded.
+
+<P>
+The submit button sends the form to the remote server and waits for a response.&nbsp;
+This is similar to following an internet link,
+but in this case you are sending some data along with the request.&nbsp;
+Type "kangaroo" into a search engine and you'll soon be reading a web page about kangaroos.&nbsp;
+As with any other link, you can use the ^ key to go back.&nbsp;
+In this case you will return to the on-line form.&nbsp;
+You can change the data and submit the form again, asking about another animal.
+
+<P>
+I have implemented the "get" and "post" methods,
+the most common http protocols,
+and they seem to work on most sites.
+
+<P>
+Once you have submitted your form,
+and you are viewing the results,
+you may notice some strange characters at the end of the filename.&nbsp;
+If you have retrieved information on kangaroos, the filename might look like:
+www.search-engine.com?keywords=kangaroo.&nbsp;
+The text after the question mark is an encoded version of the data
+you entered into the form.&nbsp;
+It becomes part of the virtual URL.&nbsp;
+This is actually a good thing, as we shall see in the next section.
+
+<H3 align=center> <A NAME=addr> Web And Email Addresses </A> </H3>
+
+The capital A command shows you the web addresses behind
+the links on the current line.&nbsp;
+Each web address will be surrounded by &lt;a&gt; and &lt;/a&gt; tags,
+ready to be pasted into a bookmark file, if that is what you wish.&nbsp;
+These addresses exist in a new editing session; the previous session has been pushed onto the stack.&nbsp;
+You can add these to your bookmark file via w+ $bookmarks,
+assumeing you have set the environment variable bookmarks appropriately.&nbsp;
+They will be appended at the end;
+you can move them to a more appropriate place in the file later on, when you're not "on line".&nbsp;
+For many, with dial up connections,
+connect time is precious,
+and should not be spent rearranging bookmark files.&nbsp;
+Finally, use the ^ key to return to the web page you were viewing.&nbsp;
+Here is how it might look.
+
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>&lt; b this.that.com/whatever  # browse a web page
+&gt; 16834  # size of the raw html
+&gt; 7855  # size of the browsable text
+&lt; /kangaroo/i  # looking for kangaroo on the page
+&gt; Click here for {more information about kangaroos}, or {send us mail}.
+&lt; A  # capture the URLs
+&gt; 144  # size of the URLs
+&lt; ,p  # let's see them
+&gt; &lt;A HREF=www.kangaroo-info.com&gt;
+&gt; more information about kangaroos
+&gt;  &lt;/A&gt;
+&gt; send us mail:info@kangaroo.org
+&lt; 4d  # don't need the email address
+&lt; w+ $bookmarks  # append this url to the bookmark file
+&gt; 336
+&lt; ^  # back to browsing
+&gt; Click here for {more information about kangaroos}, or {send us mail}.
+</font></PRE>
+
+<P>
+I suppose I could interrogate the environment variable $bookmarks myself,
+and append the URL to that file automatically,
+but as this example shows, you might not want all the links.&nbsp;
+In fact the email link makes no sense in a bookmark file.&nbsp;
+Also, you may want to change the description of the link,
+though in this example the description is pretty reasonable.
+
+<P>
+Alternatively, you might discard the url and retain the email address,
+appending it to your address book.&nbsp;
+Again, you will want to change the generic phrase "send us mail"
+to a brief string that is meaningful to you, such as kangaroo-mail.&nbsp;
+This becomes the alias, which you can use to send mail
+to that recipient.&nbsp;
+(Subsequent sections describe the use of edbrowse as a mail client.)
+
+<P>
+If there are no links on the current line, or you are not in browse mode,
+the current filename is used.&nbsp;
+This is useful when you want to bookmark the current page,
+rather than some other page pointed to by a link.
+
+<P>
+If the current page is the result of a form submition, the filename
+may include your input fields after the question mark.&nbsp;
+If it does, that's a feature, not a bug.&nbsp;
+This exact URL, with the data at the end, can be stored as a bookmark
+and activated again and again,
+as though you had filled out the form each time.&nbsp;
+Every week you can call up this virtual URL
+to see if there is any new information on kangaroos.&nbsp;
+A more practical example might be a canned query that retrieves
+the weather for a certain city
+or the stock prices for the companies in your portfolio.&nbsp;
+You can also write concise scripts that "fill in" the virtual
+form, simply by modifying the information after the question mark.&nbsp;
+This provides a simple command to retrieve the weather from any major city
+or the current price of any stock.
+
+<P>
+If the form uses the post, rather than the get method,
+the same data will appear,
+but the question mark is replaced with a control a.&nbsp;
+Unfortunately the control a is not visible, and this could cause confusion.&nbsp;
+When in doubt, list the line.
+
+<P>
+One last warning about adding links to your bookmark file.&nbsp;
+Let's say you've issued your A command, and tweaked the description a bit.&nbsp;
+Now the link is just write, and you want to save it.&nbsp;
+You accidentally type `w $bookmarks', forgetting the plus.&nbsp;
+Instead of apending the link to the end, you have clobbered your entire bookmark file.&nbsp;
+Years of accumulated links are gone.&nbsp;
+To avoid this disastrous typo, create a macro to append to your bookmark file.&nbsp;
+I know, we haven't talked about user defined macros yet, but we will.&nbsp;
+And when we do, you should write a "bookmark append" macro that looks like this.
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>function+bma {
+  w+ $bookmarks
+}
+</font></PRE>
+
+<P>
+Now you can type &lt;bma to add a link to your favorites,
+and you don't have to worry about typos.&nbsp;
+It's shorter than `w+ $bookmarks' anyways.&nbsp;
+We'll return to this topic when we introduce macros,
+actually functions,
+that are defined in your config file.
+
+<H3 align=center> <A NAME=cook> Cookies </A> </H3>
+
+Some websites serve "cookies",
+which your browser is expected to retain
+and pass back during subsequent exchanges.&nbsp;
+In fact many websites simply won't work without cooky support.&nbsp;
+Therefore edbrowse always accepts cookies.
+
+<P>
+Note that only Netscape-style cookies are supported.&nbsp;
+However, this is the most common flavor of cooky.&nbsp;
+It will probably meet your needs.
+
+<P>
+Persistent cookies are stored in a file,
+usually $HOME/.cookies,
+and are thus available for subsequent edbrowse sessions.&nbsp;
+These cookies are used to store long-term information about you,
+such as your login and password into amazon.com.&nbsp;
+Hence your .cookies file should be mode 0600.&nbsp;
+In fact the file is created mode 0600, for your own protection.
+
+<P>
+You probably won't need to view your .cookies file, ever,
+but it is text based, and can be edited directly if you wish.
+
+<H3 align=center> <A NAME=ssl> Secure Connections </A> </H3>
+
+Edbrowse supports the most common method of encrypting web traffic,
+HTTP over SSL/TLS, colloquially known as secure http.&nbsp;
+Websites that support
+secure http have URLs of the form:
+https://secure.server.com.&nbsp;
+Notice the protocol is https:// rather than http://.&nbsp;
+The extra s stands for "secure".&nbsp;
+The traffic is encrypted, i.e. mathematically scrambled,
+and cannot be intercepted by a nefarious third party.
+
+<P>
+Edbrowse will verify ssl connections,
+if you supply a file of ssl certificates.&nbsp;
+This is an antispoofing measure, to make sure a hacker isn't posing as your bank,
+trying to steal your account numbers and passwords.&nbsp;
+You can grab a certificate file <A HREF=ssl-certs>here</A>,
+but I don't always keep it up to date.&nbsp;
+If you don't have this file,
+or, if you don't specify its location in your config file,
+you will not be able to verify secure connections, and you will be warned accordingly.&nbsp;
+Some browsers don't have this feature at all, so it's not the end of the world,
+but in general it's a good idea to verify your secure connections,
+unless it prevents you from getting to a website whose authenticity you accept at face value.&nbsp;
+In that case you can use the vs command to turn the feature off.&nbsp;
+This is a toggle command; type vs again to turn the feature on.
+
+<P>
+Never send sensitive information,
+such as social security numbers or credit card numbers,
+over an insecure channel.&nbsp;
+Make sure the form is using ssl.&nbsp;
+How can you tell?&nbsp;
+The submit button will have the word "secure" added to its text.
+<P>
+&lt;Make your purchase now secure&gt;
+<P>
+This is similar to the lock icon that Explorer uses to tell you that your connection is secure,
+although my system is not quite as foolproof.&nbsp;
+A website could fake you out by putting the word secure in the submit text.
+
+<P>
+Note that generic buttons (besides the submit button) can also submit your form,
+through javascript.&nbsp;
+I don't know if that button is going to submit the form or not,
+and I don't want to put the word "secure" on every button on the page.&nbsp;
+I only add it to the submit button,
+but if that button is secure then they are all secure.&nbsp;
+They all use the same form, and the same url.
+
+<P>
+In theory, it is possible for javascript too switch the destination url out from under you at the last minute,
+from https://this.is.safe.com to http://this.is.untrusted.com.&nbsp;
+I don't know if other browsers watch for this bait-and-switch, but edbrowse does.&nbsp;
+If the original url was secure,
+and I reported this to you via &lt;submit secure&gt;,
+and javascript changes it to an insecure connection, I won't submit the form.&nbsp;
+This is really paranoid,
+because the first website, the one that asked for your credit card number,
+also supplies the javascript,
+and they have no incentive to breech security,
+since you're going to hand them your credit card number anyways.
+
+<P>
+If you have logins on secure servers,
+such as PayPal.com,
+you must keep your password absolutely safe.&nbsp;
+Never send that password over an insecure connection.&nbsp;
+It becomes as valuable as your credit card numbers.&nbsp;
+I have a special password that I use for my secure logins,
+and <em>only</em> for those logins.&nbsp;
+I use other, expendable passwords when the connection is not secure.
+
+<P>
+Please don't fall for all those email scams
+that tell you your login has expired, and would you please log in again using this convenient form.&nbsp;
+The mail is forged to look legitimate,
+and the form actually sends your secret password to a thief,
+who then rades your account.&nbsp;
+A reputable company will
+never, never, never, ask you to login through an email form.&nbsp;
+They will always tell you to go back to the website and log in there.
+
+<P>
+Internet security is complex, to say the least,
+and it is beyond the scope of this document.&nbsp;
+If you have any questions about it,
+please send them to me directly.&nbsp;
+As a general rule,
+secure http is really quite safe, and you can use it to send sensitive information across the Net.&nbsp;
+It's probably safer than giving your credit card number to the clerk on the phone,
+who use to take your order before there was e-commerce.&nbsp;
+so it's ok to be a little bit paranoid,
+in fact it's probably a good idea,
+but don't let that stop you from making your online purchases.
+
+<H3 align=center> <A NAME=ftp> FTP Retrievals </A> </H3>
+
+This browser supports the retrieval of ftp files and directories.&nbsp;
+You can provide an FTP URL like:
+ftp://ftp.random.com/tarball.tar.gz
+and the file will be fetched.&nbsp;
+It doesn't matter whether you type in the url yourself,
+or it is a hyperlink on a web page.&nbsp;
+The file is retrieved, and placed in a local file of the same name.&nbsp;
+You will ssee the words:
+<P>
+ftp download
+<br>
+some stats on the size of the file and the bits per second
+<br>
+success
+
+<P>
+Of course the download could fail, in which case you will receive an error message.&nbsp;
+If it was simply interrupted,
+due to some internet glitch,
+you can issue the command again,
+and edbrowse will resume the download from where it left off.&nbsp;
+This can save time when fetching a large file.
+
+<P>
+By default, edbrowse uses the account name "anonymous" and the password
+"some-user@edbrowse.net" for ftp connections.&nbsp;
+However, you can override this in the url,
+and some web pages take advantage of this feature.&nbsp;
+For example, let's say you want to access the file /etc/passwd on whatever.localdomain.&nbsp;
+This file isn't readable by anonymous users.&nbsp;
+You have to log in as a real person.&nbsp;
+Within edbrowse, you might use the command:
+<P>
+e ftp://chris:xxx@whatever.localdomain/etc/passwd
+
+<P>
+The ftp connection will be made as user "Chris", with password "XXX".
+
+<P>
+Some ftp URLs point at directories, not files.  If you visit one of these,
+and it is located on a Unix-like server, you will receive the listing as an
+html file with hyperlinks.  You can visit the directory members just as
+though you were exploring a website.&nbsp;
+If the server does not run some
+flavore of Unix, you will receive the directory listing in plain
+text.
+
+<P>
+The ftp mode, i.e. the style of data connection,
+can be either active or passive.&nbsp;
+One works well when the client is behind a router,
+and the other works well when the server is behind a router.&nbsp;
+You can specify ftp mode active by entering the command `fma',
+or ftp mode passive by `fmp'.&nbsp;
+The command `fmd' sets the ftp mode to a default,
+which tries to establish a passive connection first,
+and then an active connection as a fallback.&nbsp;
+This is a reasonable default, so you should probably leave this alone.
+
+<P>
+Edbrowse doesn't actually establish the ftp connections,
+rather, it invokes the program ncftpget to fetch the file,
+and ncftpls to list the directory.&nbsp;
+These programs are distributed with most Unix systems.&nbsp;
+If you don't have these programs, please visit
+<A HREF=http://www.ncftp.com>ncftp.com</A>.
+
+<P>
+Once again, review the differences.&nbsp;
+Http pulls a file into a buffer in memory, i.e. an edbrowse session,
+while ftp copies the file directly to disk.&nbsp;
+Also, ftp does not print dots every 100K to indicate progress,
+so you just have to wait until it's done.&nbsp;
+(Depending on your operating system, you could switch to another virtual console/window and check on the length of the local file.)
+
+<H3 align=center> <A NAME=frame> Frames </A> </H3>
+
+Frames are a mechanism whereby a web page can fetch and display several other web pages on the screen at once.&nbsp;
+Each subpage is called a frame, and lives in its own space on the screen.&nbsp;
+Sometimes the frames are top middle and bottom;
+sometimes they are left middle and right.&nbsp;
+Edbrowse presents these frames as hyperlinks,
+and you can call up each in turn,
+or jump straight to a specific frame if you are familiar with the website.&nbsp;
+Usually the top frame is navigational in nature,
+and the bottom is a legal disclaimer/copyright notice,
+so you're just as happy to skip these and cut to the chase.&nbsp;
+On rare occasions, and I've only seen this once,
+you <em>must</em> open the top frame,
+whether you are interested in it or not,
+because that particular html page sets some cookies that you need to run the website.
+
+<P>
+A page of frames might look like this.&nbsp;
+I think you can guess which one to click on.
+
+<P>
+Frame {navigation}
+<br>
+Frame {main}
+<br>
+Frame {bottom}
+
+<P>
+I thought about a FetchFrame feature that fetches all the frames and presents them in one go,
+just as they are all displayed on the screen for a sighted user,
+but this feature is <em>very</em> difficult to implement,
+and so far, nobody seems to want it.&nbsp;
+So as you might imagine, it's way down on the list.
+
+<H3 align=center> <A NAME=js> Introduction to Javascript </A> </H3>
+
+Javascript is software, embedded in the web page, that runs on your computer.&nbsp;
+These functions do not run on the web server,
+they run right on your box.&nbsp;
+Hence it is sometimes called client side javascript.&nbsp;
+And javascript can do almost anything.&nbsp;
+You could, for instance, download a web page that includes a javascript function to compute the digits of pi,
+right on your computer,
+although that would be rather silly.&nbsp;
+Most of the time javascript is used to validate and/or modify forms,
+or create fancy visual effects.
+
+<P>
+The first version of edbrowse, written in perl, ignored javascript completely,
+and that was ok for a while,
+but more and more sites use javascript,
+and these websites were simply inaccessible.&nbsp;
+Most of the e-commerce sites fall into this category.&nbsp;
+If you want to make purchases, or manage your bank account online,
+you <em>need</em> a javascript enabled browser.
+
+<P>
+The second version of edbrowse, written in C,
+and indicated by a version number that starts with 2,
+included a home grown javascript compiler and engine
+that I wrote myself.&nbsp;
+This worked pretty well, for a spare time project,
+but javascript evolves, like any other language or standard,
+and I just couldn't keep up.
+
+<P>
+The third version, which is the "latest and greatest", uses a javascript engine from Mozilla.com,
+which is open source under the Mozzilla Public License.&nbsp;
+This allows me to leverage, rather than reinvent, some 70,000 lines of code -
+and somebody else is maintaining that code as javascript evolves.&nbsp;
+this illustrates the power of the open source community.
+
+<P>
+Edbrowse does not support all the features of client side (DOM) javascript,
+and it never will.&nbsp;
+For example, many websites use javascript to change images
+on the fly as you move your mouse around the screen.&nbsp;
+This has no meaning in edbrowse.&nbsp;
+Other websites bring up multiple windows,
+and let you control the contents of subwindows using icons in a master window.&nbsp;
+This would be very difficult to simulate in a command-line environment -
+so we don't try.
+
+<P>
+As a rough approximation, I expect to implement about half of javascript,
+the half that will satisfy 95% of the websites we care about.&nbsp;
+So you may see warning messages about this or that feature not supported.&nbsp;
+If you are tired of wading through these messages,
+or if a bug in my javascript interpreter causes edbrowse to crash completely,
+you can turn javascript off via the `js' command.&nbsp;
+This is useful when you are casually surfing the net, looking for information,
+and you know you're not going to need javascript.&nbsp;
+You can also disable javascript for specific domains.&nbsp;
+This will be discussed later, when we describe the edbrowse config file.
+
+<H3 align=center> <A NAME=valid> Validating Forms </A> </H3>
+
+When a web page asks for user input,
+it often includes a
+"validate&amp;submit" function.&nbsp;
+This function checks your entries:
+have you filled in all the riquired fields -
+is there an @ sign in your email address -
+are there 5 digits in your zip code -
+and so on.&nbsp;
+If there are no errors, it submits the form.&nbsp;
+These functions usually behave well under edbrowse.&nbsp;
+When you push the button, you will either see the error message,
+or the form will be submitted,
+and a confirmation page should appear shortly.
+
+<P>
+In some cases the javascript function
+reformats your data.&nbsp;
+It may fill in some of the "hidden" fields for you,
+or it may compute sales tax and adjust the purchase price accordingly.&nbsp;
+This is more than form validation, this is active javascript,
+and the data won't be right unless the javascript runs properly
+on your computer.&nbsp;
+More and more sites are using active javascript,
+so a javascript enabled browser is a must.
+
+<P>
+Some javascript functions manage menus dynamically.&nbsp;
+Make a primary selection,
+and javascript populates a second dropdown list with options
+corresponding to your first selection.&nbsp;
+You can now make a second selection,
+which further refines your search.&nbsp;
+If the first menu presents "meats", "vegetables", "fruits", and "grains",
+and you select fruits,
+the second menu might contain
+"apples", "oranges", "lemons", etc.&nbsp;
+Javascript makes this possible.&nbsp;
+Unfortunately these dynamic menus are not yet supported by edbrowse.
+
+<H3 align=center> <A NAME=popup> Popups and Popunders </A> </H3>
+
+A popup is a window that suddenly appears in front of the window you really want to see.&nbsp;
+It usually advertises something, and is often annoying,
+although in rare cases it is a necessary aspect of the website.
+
+<P>
+You have a distinct advantage over all those other surfers with their graphical browsers.&nbsp;
+The popup window does not open automatically.&nbsp;
+Windows are not well defined in a command line browser anyways,
+so it would be folly to try to implement this feature,
+or any other aspect of multi-windowing for that matter.&nbsp;
+Instead, the popup appears as a hyperlink at or near the top of the page,
+and you can click on it if you like, or ignore it.&nbsp;
+This is similar to the <A HREF=#music>background music</A>, described in an earlier section.&nbsp;
+The popup link might look like this.
+<P>
+{Popup: specials()}
+
+<P>
+Popunders are not as common.&nbsp;
+They appear after you have closed the window.&nbsp;
+In some sense they are hidden "under" your web page, and when you close the page they pop out.&nbsp;
+In edbrowse, this does not happen automatically.&nbsp;
+When you type q, you quit, and that's the end of it.&nbsp;
+As you might expect, the popunder function appears as a hyperlink.&nbsp;
+It might look like this.
+<P>
+{On Close: foo()}
+
+<P>
+Remember, the popup link is a simple html link to another web page,
+while the Close link calls a javascript function on the current page.&nbsp;
+However, this javascript function usually links to another web page,
+so don't be surprised if you find yourself somewhere else on the internet.&nbsp;
+In either case, popup or popunder, you can use the back key to return to the
+page you were looking at.&nbsp;
+If you need access to a popup window and the main page in parallel,
+use the <A HREF=#move>M command</A>.
+
+<P>
+Javascript also includes timer functions,
+that fire after a specified number of seconds.&nbsp;
+These are implemented as hyperlinks at the top of the page.&nbsp;
+They usually manage visual effects, and are rather pointless.&nbsp;
+The following timer might draw a star burst on the screen in 16 seconds.
+<P>
+{Timer 16: starburst()}
+
+<H3 align=center> <A NAME=onc> Onchange and Undo </A> </H3>
+
+When you set or change the value of an input field,
+the form can (optionally) call a javascript routine.&nbsp;
+It doesn't usually, but it can.&nbsp;
+In an earlier example, I described a primary and secondary menu.&nbsp;
+When the first selection is made,
+e.g. fruits,
+javascript sets up the second menu commensurate with your primary selection,
+using the "onchange" feature.
+
+<P>
+This is all well and good,
+but edbrowse has something
+your graphical browser does not, the undo command.&nbsp;
+And in this context, it doesn't really work.&nbsp;
+Change fruits to vegetables, and the second menu presents carrots and peas and the like.&nbsp;
+Now type u for undo,
+and the first field reverts back to fruits,
+but the second menu still contains vegetables.&nbsp;
+This is because the undo feature was originally written for the text editor.&nbsp;
+It simply puts the text back the way it was, and has no capacity to "undo" the side effects of javascript code.&nbsp;
+So the moral of the story, if there is one,
+is to set and change the values of an input form directly,
+and avoid the undo command, unless you're pretty sure there are no javascript side effects associated with that field.
+
+<H3 align=center> <A NAME=cfg> Config File </A> </H3>
+
+At startup, edbrowse reads and parses a config file.&nbsp;
+It's ok if this file is missing, but if it is present,
+it has to be syntactically correct.&nbsp;
+An error in your config file will cause edbrowse to abort.&nbsp;
+If this happens, use the -c option to edit the config file directly.&nbsp;
+This bypasses initialization, and places you in the editor,
+with the config file preloaded.&nbsp;
+Make your corrections, write the file,
+quit, and invoke edbrowse again.&nbsp;
+Repeate these steps until there are no errors,
+and you see the words "edbrowse ready".
+
+<P>
+The config file is in $HOME/.ebrc.&nbsp;
+The "eb" is shorthand for edbrowse.&nbsp;
+You cannot rename the config file; it is what it is.&nbsp;
+This is true on Windows as well, so make sure HOME is set.
+
+<P>
+The config file is line oriented.&nbsp;
+Lines begining with # are comments, and are ignored.&nbsp;
+Blank lines are also ignored.&nbsp;
+All other lines fall into one of 5 categories.
+
+<OL>
+<P><LI> Define an option, using the keyword=value syntax.
+<P><LI> Define an edbrowse script that can be invoked from the command line,
+or from another script.
+<P><LI> An edbrowse command, that becomes part of an edbrowse script.
+<P><LI> Establish an email account.&nbsp;
+This will be described later, when we talk about the email client.
+<P><LI> A mail filtering rule.&nbsp;
+</OL>
+
+<H3 align=center> <A NAME=keyval> Keyword = Value </A> </H3>
+
+The best documentation is an example, so let's dive right in.
+
+<P>
+Recall the section on <A HREF=#cook>cookies</A>.&nbsp;
+You'll need a file, often called a cookie jar,
+to store your cookies.&nbsp;
+The line that establishes this cookie jar might look like this.
+<P>
+jar = /home/eklhad/.ebsys/cookie-jar
+
+<P>
+This is a simple keyword = value syntax.&nbsp;
+It's ok if the filename has embedded spaces, or even an equals sign.&nbsp;
+No need to quote it.
+
+<P>
+When edbrowse sees this line in its config file, it records the location of the cookie jar,
+and it checks the validity of that file.&nbsp;
+If the file is a directory (or something weird),
+or is otherwise inaccessible,
+edbrowse prints an error message and aborts.&nbsp;
+If this happens,
+use the -c option to edit your config file,
+and change the cookie jar.
+
+<P>
+Here are some additional name=value directives.&nbsp;
+Some of these are used to set up an email account.&nbsp;
+This will become clearer when we talk about the mail client.
+
+<P>
+certfile = /home/eklhad/.ebsys/ssl-certs
+
+<P>
+Specify the file that holds the certificates for secure connections.&nbsp;
+This was explained in the section on <A HREF=#ssl>secure connections</A>.
+
+<P>
+maildir = /home/eklhad/mbox
+<P>
+Go to this directory when fetching mail.&nbsp;
+thus, if you save a mail message, you'll always know where it is.
+
+<P>
+webtimer = 30
+<br>
+mailtimer = 180
+
+<P>
+Wait 30 seconds for a response from a web server, and 3 minutes for a response from the mail server.&nbsp;
+A time value of 0 waits forever.&nbsp;
+Sorry, there seems to be no way to interrupt a socket call,
+other than control backslash (quit), which kills the entire program.&nbsp;
+That's why these timers are here - so you don't hang forever.&nbsp;
+The defaults are 20 and 0 respectively.
+
+<P>
+nojs = space.com
+<P>
+Specify domains that don't need javascript.&nbsp;
+You can eliminate annoying error messages and speed up access
+by disabling javascript for certain websites.&nbsp;
+Javascript will not be run on pages within these domains,
+nor will it be fetched from these domains.
+
+<P>
+The above directive will also drop javascript from subdomains such as www.space.com.
+
+<P>
+You can include a path or partial path after the domain, as in space.com/popups.&nbsp;
+This will block the popup ads that you don't want to see, and often generate edbrowse errors in any case.&nbsp;
+Subdomains are not considered when a path is given; the domain must match exactly.
+
+<P>
+inserver = pop3.some-domain.com
+<br>
+inport = 110
+<br>
+outserver = smtp.some-domain.com
+<br>
+outport = 25
+<P>
+Specify the machines and ports that you use to fetch mail and send mail respectively.&nbsp;
+You can use the fully qualified domain names, or aliases, as defined in /etc/hosts.&nbsp;
+The ports shown here are standard, and almost always correct.&nbsp;
+They are also default in edbrowse, so you need not set inport and outport unless they are different from that shown above.&nbsp;
+Note, these keywords are only valid in the context of a mail account, as indicated by mail{}.
+
+<P>
+login = eklhad
+<br>
+password = secret
+<P>
+Specify the login and password that edbrowse uses to fetch your mail.
+
+<P>
+from = Karl Dahlke
+<br>
+reply = karl.dahlke@some-domain.com
+<P>
+These lines are added in to the emails that you send.&nbsp;
+They tell the recipient who you are, and how to reply.&nbsp;
+It is
+<A HREF=http://www.spamlaws.com>
+illegal</A> to use these lines for deceptive purposes.&nbsp;
+Make sure they identify you, and that the reply address is indeed one of your email accounts.
+
+<P>
+adbook = /home/eklhad/.ebsys/address-book
+<P>
+When specifying recipients, you can use aliases instead of full email addresses.&nbsp;
+Aliases are checked against your address book,
+a line oriented text file that is specified here.&nbsp;
+If your address book contains the line
+<P>
+fred : fred.flintstone@bedrock.us : 226 cobblestone way : 5553827
+<P>
+then you can use the alias fred,
+and edbrowse will substitute Fred's email address when sending mail.&nbsp;
+Only the first two fields in the address book are significant
+as far as edbrowse is concerned.&nbsp;
+Other fields might hold phone/fax numbers, street address, etc.&nbsp;
+It's up to you.
+
+<P>
+spamcan = /home/eklhad/.recycle/save-spam
+<P>
+There is no perfect spam filter.&nbsp;
+But I can't live without one,
+so I wrote a simple ip blocker.&nbsp;
+(This is discussed below.)&nbsp;
+When spam is received,
+edbrowse prints the line "spam from such and so",
+and saves the mail in this file.&nbsp;
+If you recognize the name, spam from your friend,
+you can call up this file, find the email, and read it.&nbsp;
+This should not happen, as there is no particular reason to block the ip address of your friend's computer,
+but hey, better safe than sorry.
+
+<P>
+ipblack = /home/eklhad/.ebsys/ip-blacklist
+<P>
+A line oriented text file holds the ip addresses of known porn/spam sites.&nbsp;
+The syntax is the usual: numbers separated by dots,
+with an optional /xx netmask indicator at the end.&nbsp;
+If the file contains the following two lines,
+any ip address that starts with 192.168,
+or 10.11.12.13, are forbidden addresses.
+<P>
+192.168.0.0/16
+<br>
+10.11.12.13
+
+<P>
+If an email refers to a website that resolves to any of these addresses it is considered spam,
+and flagged as such.&nbsp;
+Let's be clear; I am not blocking email that comes from certain sources.&nbsp;
+After all, your friend's computer may well be sending you viruses or spyware.&nbsp;
+Rather, I screen email that has certain urls in its body.&nbsp;
+If the button that says "cheap meds for you" leads to a forbidden website,
+you'll never see the email.
+
+<P>
+Note, I use the very same blacklist in my firewall.&nbsp;
+A shell script reads in the addresses and issues the appropriate iptables commands.&nbsp;
+My file has some 2,000 entries.&nbsp;
+This is large, but manageable.&nbsp;
+If the list gets much larger, I may rebuild the kernel
+with the "large ip tables" option enabled.&nbsp;
+This makes packet matching more efficient when there are many rules.&nbsp;
+I suppose it sorts them or something.
+
+<H3 align=center> <A NAME=agent> User Agent </A> </H3>
+
+Every time you fetch a web page from the internet,
+your browser identifies itself to the host.&nbsp;
+This is done automatically.&nbsp;
+Edbrose identifies itself as "edbrowse/2.2.9",
+where the number after the slash indicates the current version of edbrowse.
+
+<P>
+All well and good, but some websites have no respect for edbrowse,
+or lynx for that matter.&nbsp;
+They won't even let you in the door unless you look like Explorere or Netscape.&nbsp;
+Clickbank.com, a major credit card processor, is one example.
+<P>
+So what do we do?&nbsp;
+We lie!
+
+<P>
+You can specify different agents in your .ebrc file,
+and activate them with the `ua' (user agent) command.&nbsp;
+If the following lines are in your .ebrc file,
+you can type ua1 to pretend to bee lynx,
+and ua2 to pretend to be Mozilla.&nbsp;
+Type ua0 to resurrect the standard edbrowse identification.&nbsp;
+Let's hope there aren't too many asinine websites out there,
+like Clickbank, that force us to lie.&nbsp;
+It's just so stupid, and pointless.
+
+<P>
+agent = Lynx/2.8.4rel.1 libwww-FM/2.14
+<br>
+agent = Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; Win 9x 4.90)
+
+<P>
+This feature was written pre-javascript,
+and is not 100% compatible with the navigator object.&nbsp;
+Navigator.userAgent returns the correct string, according to the agent you select,
+but other aspectss of the navigator object do not change with the agent,
+and they should.
+
+<H3 align=center> <A NAME=script> Edbrowse Functions </A> </H3>
+
+You can bundle a set of edbrowse commands together under one name,
+similar to a macro.&nbsp;
+If the following appears in your .ebrc file,
+you can type &lt;ud to undos a file.
+<P>
+function:ud {
+<br>
+&nbsp;&nbsp;,s/\r$//
+<br>
+}
+
+<P>
+The new &lt; command is suppose to remind you of redirection,
+i.e. read input commands from this macro.&nbsp;
+And macros can invoke other macros,
+by using a &lt; command in the body.&nbsp;
+Almost any edbrowse command is fair game.&nbsp;
+A macro can fetch web pages from the internet,
+fill out forms, submit requests, and send mail.
+
+<P>
+Normally, edbrowse marches along, whether a command succeeds or not.&nbsp;
+However, you can tell a macro to stop if it encounters an error
+by using this syntax.
+<P>
+function+hw {
+<br>
+&nbsp;&nbsp;/hello/p
+<br>
+&nbsp;&nbsp;/world/p
+<br>
+}
+
+<P>
+The plus sign after the word function means each command in that function must succeed.&nbsp;
+If there is no line containing the word hello, the function stops.&nbsp;
+If there is such a line, then the function moves on,
+and looks for a line containing the word world.
+
+<P>
+Other than some indenting, the format is fixed, and unforgiving.&nbsp;
+You cannot, for instance, put the opening brace on its own line, as K&amp;R would suggest.
+
+<P>
+These functions, or macros, can accept parameters.&nbsp;
+Let's make the previous function a bit more general.
+<P>
+function+hw {
+<br>
+&nbsp;&nbsp;/~1/p
+<br>
+&nbsp;&nbsp;/~2/p
+<br>
+}
+
+<P>
+You can reproduce the earlier behavior by typing &lt;hw hello world.&nbsp;
+Or you can search for different lines by invoking &lt;hw foo bar.&nbsp;
+The latter looks for a line containing foo and prints it,
+and if this succeeds it looks for a line containing bar and prints that.&nbsp;
+Let's build a more useful function, a shortcut to google.&nbsp;
+The variable ~0 represents all the arguments together.&nbsp;
+In this case ~0 is the keywords you pass to google, for your search.
+<P>
+function+gg {
+<br>
+&nbsp;&nbsp;b www.google.com/search?q=~0&amp;hl=n&amp;btnG=Google+Search&amp;meta=
+<br>
+}
+
+<P>
+With this in place, you simply type `&lt;gg kangaroo habitat'
+to find out where kangaroos live.
+
+<P>
+Finally, an edbrowse function can branch,
+based upon the success or failure of the previous command.&nbsp;
+Use if(*) for success, and if(?) for failure.&nbsp;
+The ? is suppose to remind you of the question mark that you get when an edbrowse command fails.&nbsp;
+The following looks for a line containing foo, and if it finds one,
+it advances to the next line, and if that line contains bar, it deletes it.
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>function+silly {
+  /foo/
+  if(*) {
+    +s/bar//
+    if(*) {
+      d
+    }
+  }
+}
+</font></PRE>
+
+<P>
+I deliberately used function+ instead of function: in the above example.&nbsp;
+Normally the + will cause the function to abort if an edbrowse command fails.&nbsp;
+However, if the result of that command is used by a control statement,
+the function does not abort.&nbsp;
+This is similar to set -e in the shell,
+which causes a script to abort,
+unless the result of the command is used by an if statement.
+
+<P>
+Other control statements include while(*) while(?) until(*) and until(?).&nbsp;
+The following deletes lines from the top of the file,
+as long as they contain foo or bar.&nbsp;
+It then deletes the blank lines at the top.
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>function+topclean {
+  until(?) {
+    1g/foo\|bar/d
+  }
+  until(?) {
+    1g/^$/d
+  }
+}
+</font></PRE>
+
+<P>
+You can use loop(100){ ... } to repeat a set of commands 100 times.&nbsp;
+I haven't used this feature very often.
+
+<H3 align=center> <A NAME=init> The Init Script </A> </H3>
+
+The script named "init" is run at edbrowse startup.&nbsp;
+You can use this to establish your default settings - even read in your bookmark file,
+so your "favorites" are close at hand.&nbsp;
+Here is an example.
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>function+init {
+#  turn debug off, so we don't see any status messages from this script
+db0
+#  Assume directories can be modified
+dw
+#  Put beginning and end markers around listed lines
+el
+#  Let session 99 hold your favorites, ready to surf.
+e99
+b $bookmarks
+#  back to session 1, ready to go to work
+e1
+#  Restore debug level to something reasonable, 1 or 2
+db1
+}
+</font></PRE>
+
+<P>
+This is just a sample.&nbsp;
+Put anything you like in your init script,
+or leave it out altogether if you are happy with edbrowse out of the box.
+
+<H3 align=center> <A NAME=ma> Mail Accounts </A> </H3>
+
+The next chapter describes edbrowse as a mail client,
+so let's use the config file to define your email accounts.&nbsp;
+You can define several accounts, as necessary.&nbsp;
+They are implicitly numbered,
+in the order they appear in the config file.&nbsp;
+So the first mail account becomes #1, the second becomes #2, and so on.
+
+<P>
+We already discussed the relevant keywords for an email account.&nbsp;
+All you have to do is enclose them in mail{...}, like this.
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>mail {
+  default
+  inserver = pop3.some-domain.com
+  outserver = smtp.some-domain.com
+  login = eklhad
+  password = secret
+  from = Karl Dahlke
+  reply = karl.dahlke@some-domain.com
+}
+</font></PRE>
+
+<P>
+The "default" directive makes this account the default.&nbsp;
+One and only one account should be labeled default.&nbsp;
+If you do not specify an account when fetching or sending mail, the default account is used.&nbsp;
+Beyond this, the default smtp server is <em>always</em> used to send mail,
+no matter which account you specify.&nbsp;
+If account #1 is default, and you send mail using account #3,
+the name and reply address from account #3 will be sent to the recipient,
+and if he replies, his reply will be sent to your third email account.&nbsp;
+However, the smtp server from your default account is always used to physically transmit the message.&nbsp;
+There are technical reasons for doing this,
+that are beyond the scope of this document.&nbsp;
+Trust me, it's the right thing to do.
+
+<P>
+Mail filtering, by sender and/or subject,
+is controlled by your config file as well.&nbsp;
+This will be <A HREF=#filter>described later</A>,
+as part of the fetchmail client.
+
+<H3 align=center> <A NAME=sampcfg> A Sample Config File </A> </H3>
+
+The best documentation is an example,
+so I have provided a sample config file with fake data.&nbsp;
+It is well commented.&nbsp;
+You can download a copy <A HREF=sample.ebrc>here</A>.
+
+<H3 align=center> <A NAME=sm> Send Mail </A> </H3>
+
+You can email the contents of your current editing session to someone else
+via the `sm' command.&nbsp;
+Your email accounts are described in your <A HREF=#cfg>config file</A>.
+
+<P>
+The contents of your .signature file, in your home directory, are automatically appended.&nbsp;
+This is standard behavior for Unix mail clients.
+
+<P>
+The recipients, attachments, and subject must appear at the top of your file.&nbsp;
+The sm command is picky, so observe the following syntax carefully.
+
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>To: fred.flintstone@bedrock.us
+To: barney.rubble@bedrock.us
+account: 1
+attach: hollyrock-brochure.pdf
+Subject: Hollyrock Vacation
+Come visit Hollyrock.
+Brochure attached.
+Sincerely,
+Rock studios incorporated.
+</font></PRE>
+
+<P>
+The account line is optional.&nbsp;
+It tells edbrowse to use the first mail account specified in your .ebrc config file.&nbsp;
+If you don't include an account: line,
+edbrowse uses the default account, indicated by "default" in your .ebrc file.
+
+<P>
+Typing sm5 causes edbrowse to use account number 5
+in your config file.&nbsp;
+This overrides the account: line in your file, if there is one.&nbsp;
+It is often easier to type sm5 than to insert an account:5 line.&nbsp;
+Note, sm-5 is the same as sm5, but the .signature file is not included.&nbsp;
+Sometimes you want a different ending on your email, for a particular situation.
+
+<P>
+Use the attach: lines to add attachments to your email.&nbsp;
+Each line should specify a file to attach,
+and they must appear before the subject line.&nbsp;
+If the filename is simply a number,
+the corresponding edbrowse session is used instead.&nbsp;
+Return to the earlier example,
+where we are trying to attach a Hollyrock brochure.&nbsp;
+Another way to do this is to switch to session 2 and read in the pdf file.&nbsp;
+This is a binary file, but that doesn't matter.&nbsp;
+Don't try to edit it, just hold it in session 2.&nbsp;
+Then switch back to session 1 and use the line attach:2.
+
+<P>
+If you use attach:2, instead of attach:hollyrock-brochure.pdf,
+Fred will notice one difference.&nbsp;
+The attachment is not prenamed for him.&nbsp;
+If he wants to save the attachment,
+he'll have to come up with a filename himself.&nbsp;
+Other than that, the email looks the same.
+
+<P>
+The alt: directive is almost the same as the attach: directive.&nbsp;
+If you use alt:, the attachment is not treated as an adjunct file.&nbsp;
+Instead, it is an alternate representation of the same email.&nbsp;
+The mail client will use the alternate representation if it can.&nbsp;
+This is usually used to send multimedia email,
+with hyperlinks and pictures etc.&nbsp;
+The primary email is in plain text,
+but the alternate attachment is in html or rich text.&nbsp;
+Unless something is amiss, the user sees the alternate presentation,
+complete with graphics and hyperlinks.
+
+<P>
+Like attachments,
+the alt: line can refer to a file or an edbrowse session.
+
+<P>
+As you may have guessed,
+the to: lines establish the recipients.&nbsp;
+Please don't specify more than a few recipients.&nbsp;
+Some servers, my mail server included,
+set a hard limit on the number of recipients.&nbsp;
+If you exceed this number,
+somewhere between 10 and 100,
+the remaining recipients simply don't get their mail.&nbsp;
+Best to limit your "to:" lines to 10 or less.
+
+<P>
+When specifying recipients, you can use aliases instead of full email addresses.&nbsp;
+Aliases are checked against your address book,
+a text file that is specified in your .ebrc file.&nbsp;
+If your address book contains the line
+<P>
+fred : fred.flintstone@bedrock.us : 226 cobblestone way : 5553827
+<P>
+then you can simply write "To:fred" at the top of your file.&nbsp;
+Only the first two fields in the address book are significant
+as far as edbrowse is concerned.&nbsp;
+Other fields might hold phone/fax numbers, street address, etc.
+<P>
+Note that "Reply to fred" is an alternate syntax for "to: fred".
+
+<P>
+Some web pages include sendmail links.&nbsp;
+They look just like other hyperlinks, but they send email to the appropriate person.&nbsp;
+Click here for
+<A HREF=http://developer.netscape.com/viewsource/husted_mailto/mailto.html>
+technical details</A>.
+
+<P>
+If you activate a sendmail link,
+you will be placed in a new editing session with the "to" and "subject" lines preloaded.&nbsp;
+If the url did not specify a subject,
+the subject is simply "Hello".&nbsp;
+You will probably want to replace this with a better subject line.&nbsp;
+Write your mail message and type `sm' to send it on its way.&nbsp;
+Then type ^ to return to the web page you were looking at.&nbsp;
+Note that the body of your email may also be preloaded with some default text,
+so be sure to check before you write and send.
+
+<P>
+You can include attachments by placing "attach:" lines at the top of the file,
+assuming the recipient can handle these attachments.&nbsp;
+This might make sense when the sendmail link is asking for {bug reports} -
+you might attach a program and/or its output.&nbsp;
+Yet this is somewhat unusual.&nbsp;
+Most sendmail links expect a few sentences of feedback, and nothing more.
+
+<P>
+Some web forms are submitted via email, rather than a direct http transmission.&nbsp;
+Edbrowse handles this properly.&nbsp;
+It shows you the destination email address,
+sends the mail through smtp,
+and tells you to watch for a reply.&nbsp;
+This reply could be an email response, or even a phone call
+if you provided your phone number in the form.&nbsp;
+But remember, nothing happens immediately.&nbsp;
+You are still on the same web page, still looking at the same submit button.&nbsp;
+Don't push the button again!&nbsp;
+The mail has been sent,
+and you'll be hearing from the company in the next few days.
+
+<H3 align=center> <A NAME=smc> Send Mail Client </A> </H3>
+
+as described in the previous section,
+edbrowse incorporates the features of a mail client.&nbsp;
+In addition to the interactive `sm' command,
+you can send mail in a batch fashion, from the command line.&nbsp;
+If fred and barney are in your address book,
+and you want to send them mail from the command line, with an attachment,
+using your primary email account, do this.&nbsp;
+(I'm assuming e has been aliased to an edbrowse executable.)
+<P>
+e -m1 fred barney hollyrock-notice +hollyrock-brochure.pdf
+
+<P>
+Files with the leading + are assumed to be attachments.&nbsp;
+If they are binary they will be encoded properly,
+according to the mime standard.&nbsp;
+A leading - indicates an alternate format, like this.
+
+<P>
+e -m1 fred barney hollyrock-notice -hollyrock-graphical.html
+
+<P>
+Remember, you can specify several mail accounts in your .ebrc file.&nbsp;
+The first account is indicated by index 1, as in -m1, and so on.&nbsp;
+You can make your life a lot easier with some aliases in your .bashrc file.
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>#  My mail, home account
+alias mymail="e -m1"
+#  My wife's account.
+alias wifemail="e -m2"
+#  My work account.
+alias workmail="e -m3"
+#  mail is obsolete
+alias mail="echo use mymail, wifemail, or workmail"
+</font></PRE>
+
+<H3 align=center> <A NAME=fmc> Fetch Mail Client </A> </H3>
+
+If edbrowse is run with the -m1 option, and no other arguments,
+it is an interactive fetch mail client,
+retrieving mail from your first pop3 account.&nbsp;
+The first thing it tells you is how many messages you have.&nbsp;
+If there are no messages it says "No mail", and exits.&nbsp;
+If there are messages, it retrieves each one in turn.&nbsp;
+For each message, it displays some header information (such as subject
+and sender) and the first page of text, and then presents a prompt.&nbsp;
+A '?' prompt means the message is complete --
+a '*' prompt means there is more text to read.&nbsp;
+You respond by hitting a key.&nbsp;
+Keys have the following meaning.
+
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>?	summary of key commands
+q	quit the program
+x	abort the program, deleted mail is not really deleted
+space	display more text
+n	read the next message
+d	delete this message
+i	show referenced ip addresses, then delete this message
+j	junk this message, and any messages with this subject, for 10 days
+J	junk this subject for a year
+w	write this message to a file and delete it
+k	keep this message in a file, but don't delete it
+u	write this message unformatted to a file and delete it
+</font></PRE>
+
+<P>
+The last three commands, k w and u, require a filename, which you enter.&nbsp;
+The reserved filename "x" is essentially /dev/null,
+whence the mail message is discarded.&nbsp;
+You can save the mail message to x (discard) and still save the attachments.&nbsp;
+If the file is anything other than x,
+and the program cannot write to the specified file, it asks you for a new filename.
+
+<P>
+The junk command adds a filter rule to your config file,
+sending any message with this subject to oblivion.&nbsp;
+This is useful when you don't want to read a particular discussion thread in a mailing list.&nbsp;
+Use the j command to junk it for ten days.&nbsp;
+If the subject pops up again in two months, you might be interested.&nbsp;
+Use the capital J command to junk a subject for a year.&nbsp;
+This is typically used for spam subjects, such as
+"Cheap meds for you."
+
+<P>
+Issue the i command when the mail is obviously porn/spam.&nbsp;
+You will see the ip addresses, which you can add to your blacklist file.&nbsp;
+This is not done automatically, because I believe in a certain amount of manual control over the process.&nbsp;
+For example, if you, as a human, notice that you have blocked out
+7 addresses starting with 10.16.29,
+you may want to get rid of those rules and replace them with the single rule 10.16.29.0/24.&nbsp;
+There is a slight risk in doing this,
+since a valid address might be nestled in amongst all these spam sites.&nbsp;
+But it's not likely.&nbsp;
+In fact, I sometimes take a leap of faith and exclude an entire two-byte block.&nbsp;
+That's 65,536 websites that are locked out of my computer, for email or browsing.&nbsp;
+A bit heavy handed perhaps, but I really hate all this spam and spyware crap!
+
+<P>
+If one of those 65,536 addresses turns out to be valid,
+use a bang to negate the sense of the address, like this.
+
+<P>
+10.5.33.177!
+<br>
+10.5.0.0/16
+
+<P>
+Doing these ip lookups in real-time can slow the process of fetching your mail.&nbsp;
+You can disable the whole thing by omiting, or commenting out, the ipblack= line in your config file.
+
+<P>
+IP filtering only works for hyperlinks.&nbsp;
+If an email has an online form that is submitted to a forbidden site, I don't detect that.&nbsp;
+I should though - as these are the most dangerous emails of all.&nbsp;
+They pretend to come from your bank, then send your account numbers to a thief in Russia.&nbsp;
+So yes, this form of ip blocking is on my list of fun things to do.
+
+<P>
+Like spam keywording, ip blocking is no panacea.&nbsp;
+For example, a spammer with half a brain can sign up for http redirection at no cost.&nbsp;
+Suddenly the domain in the email does not reflect the true destination at all.&nbsp;
+I could add software to pull down the html page and test for redirection,
+but that would <em>really</em> slow down the interactive mail process.&nbsp;
+Beyond this, a spammer can use javascript to assemble his destination url on the fly,
+and as you know, there is no way to anticipate the actions of a javascript program and pre-determine the destination url.&nbsp;
+And so, the arms race continues,
+and just like the real world, the offensive team will always have the upper hand.
+
+<H3 align=center> <A NAME=mailfmt> Formatted Mail </A> </H3>
+
+By default, incoming mail is formatted for readability.&nbsp;
+If you want to save a copy of the mail, exactly as it was received (unformatted),
+type  u  at the interactive prompt.&nbsp;
+If you don't want the formatting at all, use the -u option on the command line,
+as in `e -um1'.&nbsp;
+This is occasionally necessary,
+if a bug in my formatting routine causes edbrowse to blow up.&nbsp;
+You still want to get your mail,
+(and send me a copy so I can fix the bug),
+so use the -u option to bypass formatting.
+
+<P>
+When an html mail message is rendered, javascript is disabled.&nbsp;
+Thus the mail appears sooner, and the mail client is less likely to crash due to a bug in the javascript machinery.&nbsp;
+There really isn't much loss here, because you couldn't activate the links or fill out the form anyways.&nbsp;
+If you want to "interact" with this email message,
+you have to save it unformatted to a file,
+finish your email session, edit that file,
+and type b to browse.&nbsp;
+Now the html is active, as though you were looking at a web page on somebody's site.
+
+<P>
+There is a reason for this falderal.&nbsp;
+When you are running edbrowse as a fetchmail client, there is a time limit, imposed by your pop3 server.&nbsp;
+You have about 20 seconds to decide the fate of each message.&nbsp;
+Throw it away, skip it, save it to a file, etc.&nbsp;
+If you doddle, the mail server hangs up and you have to start all over again.&nbsp;
+This is not the time to interact with your message;
+this is not the time to fill out forms or follow hyperlinks to other interesting websites.&nbsp;
+If you are that interested, save the message to a file and move on.
+
+<P>
+Your sighted friend, running Outlook Express,
+doesn't have to worry about this, because every message is saved to a file automatically.&nbsp;
+When he scans his mail, he is actually looking at files that have been transferred to his computer
+some time in the past.&nbsp;
+He is not in the middle of a pop3 session, and there are no time limits.&nbsp;
+This may be a better approach; I don't know.&nbsp;
+Someday I may add a feature to grab all your messages and copy them to local files in your mail directory.&nbsp;
+You could then use edbrowse in directory mode to step through each file in turn.&nbsp;
+Personally, I get a lot of silly little emails, and spam too,
+so I am happy to delete the majority of my messages as they come,
+in real time,
+and save the few that are interesting.&nbsp;
+Other filtering options can simplify this process.&nbsp;
+For instance, mail from my friend Dorothy will always be saved in a particular place,
+because I always want to read that at my leisure.&nbsp;
+this is described in the next section.
+
+<H3 align=center> <A NAME=filter> Mail Filtering </A> </H3>
+
+Your config file supports a modest level of mail filtering.&nbsp;
+You can redirect incoming mail
+based upon the sender, the receiver, or the subject.&nbsp;
+These parameters are established in your config file.&nbsp;
+A mail filtering rule has the form:
+<P>
+matchString &gt; destinationFile
+
+<P>
+Actually the &gt; is a bit misleading.&nbsp;
+If the file exists, the email is appended to the end; the file is not truncated.&nbsp;
+So perhaps we should use &gt;&gt;,
+but I didn't want to bother with the extra greater, over and over again.
+
+<P>
+The destination file is interpreted relative to the mail directory,
+which is set in your config file.&nbsp;
+Of course you can override with an absolute path if you wish.
+
+<P>
+A mail filtering rule always occurs in the context of a filter block.&nbsp;
+For instance, if you wish to redirect mail from certain people, do this.
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>fromfilter {
+fred flintstone &gt; fredmail
+fred.flintstone@bedrock.us &gt; fredmail
+jerk@hotmail.com &gt; x
+word@m-w.com > -wod
+}
+</font></PRE>
+
+<P>
+You can specify the sender's name, or his email address.&nbsp;
+It's not a bad idea to do both,
+in case he sends mail from some other account etc.
+
+<P>
+Notice that I didn't capitalize Fred Flintstone.&nbsp;
+Matches are case insensitive.
+
+<P>
+The file name "x" is special; it discards the mail entirely.&nbsp;
+You can use this to throw away mail from people
+who are constantly harassing you, or sending you spam.
+
+<P>
+The last entry sends mail to -wod.&nbsp;
+The leading - is special;
+it means the mail should be saved to wod unformatted.&nbsp;
+This happens to be the word of the day from Merriam Webster.&nbsp;
+I like to save it unformatted, so I can browse it,
+and click on {audio} to hear the word pronounced.&nbsp;
+If an email contains hyperlinks,
+you may want to save it unformatted,
+so you can browse it later.
+
+<P>
+You can also filter mail based on the to: field.&nbsp;
+This is useful if you have several mail accounts,
+or mail aliases that are forwarded to your primary account.&nbsp;
+Here is a sample block.
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>tofilter {
+support@my-side-business.com &gt; support
+sales@my-side-business.com &gt; sales
+@my-side-business.com &gt; business
+me@my-regular-dayjob.com &gt; work
+}
+</font></PRE>
+
+<P>
+The third entry is a catchall address,
+saving any mail that is sent to that domain.&nbsp;
+Since rules are applied in order,
+support requests are stored in a file called "support",
+sales are stored in a file called "sales",
+and all other emails sent to your business are stored in "business".
+
+<P>
+You can use catchall addresses in the fromfilter block as well.&nbsp;
+Anything from this domain goes here, etc.
+
+<P>
+You can filter based on subject, using the subjfilter{...} block.&nbsp;
+This can close the door on the virus de jure.&nbsp;
+If a virus uses a subject line of "Come Kiss Me",
+you can redirect "come kiss me" to x, and it's gone.
+
+<P>
+You can also use this feature to block warnings from other ISPs,
+complaining that you sent them emails with virus attachments.&nbsp;
+You didn't, of course, because you run linux.&nbsp;
+You're immune!&nbsp;
+Your reply address was forged, so the virus warning was sent back to you,
+but you really had nothing to do with it.&nbsp;
+Lines like this one can throw these spurious warnings away.
+
+<P>
+subjfilter {
+<br>
+Come Kiss Me > x
+<br>
+Net Integrator Virus Alert > x
+<br>
+}
+
+<P>
+Finally, the reply address is checked against your address book.&nbsp;
+If there is a match, the mail is saved in a file whose name is the email alias.&nbsp;
+Consider a line in your address book that looks like fred:Fred.Flintstone@SomeDomain.com.&nbsp;
+When you receive email from this particular address, it is saved to the file fred.&nbsp;
+Thus you don't have to enter and maintain redundant entries in the filter.&nbsp;
+There is no need to include Fred.Flintstone@SomeDomain.com &gt; fred.&nbsp;
+It's taken care of.
+
+<P>
+If you want to save mail from Fred unformatted, place a minus sign,
+i.e. -fred, in your address book.&nbsp;
+This is the same convention as the from filter.&nbsp;
+If you don't want mail from Fred to be redirected,
+but you still want to use the alias fred when sending mail,
+place an exclamation mark at the start, i.e. !fred.
+
+<P>
+Note that mail filtering occurs before spam detection.&nbsp;
+Thus mail from your friend,
+or to your business,
+will always be saved in a file,
+even if it references a forbidden website.
+
+<P>
+If an email is redirected to a file, and it includes attachments,
+edbrowse will ask you what to do with those attachments,
+as though you had used the w command to save the mail yourself.&nbsp;
+If your friend has send you a program (attached) that he wants you to look at, just hit return
+to save it to the default filename.&nbsp;
+If your friend's mail has some kind of logo, or background image, that you don't care about,
+just type x and it will go away.&nbsp;
+If the image has a recognizable suffix, such as gif, I discard it automatically.&nbsp;
+If you really want these images, you'll have to save the email unformatted, and browse it later.
+
+<P>
+Use the -p option to pass over the filters, as in `e -pm1'.&nbsp;
+This also stops spam detection.&nbsp;
+I set this when looking at other people's mail, such as my wife's account.&nbsp;
+I don't want her mail sent somewhere else because it matches one of my filter rules.
+
+<H3 align=center> <A NAME=end> Wrap up </A> </H3>
+
+That concludes the user's guide.&nbsp;
+As you can see, edbrowse is a difficult program to master, but an easy program to use.&nbsp;
+I believe this is the key to success for any blind user or programmer.&nbsp;
+One can certainly paste a screen reader on top of an existing 2 dimensional program
+such as emacs or lynx, and get "up and running" quickly,
+but to be truly competitive in the workplace, or efficient at home,
+you need a <A HREF=http://www.eklhad.net/cli.html>command line interface</a>.&nbsp;
+Edbrowse is an important step in this direction.&nbsp;
+It doesn't address the speech adapter, or other common applications such as spreadsheets, finances, or audio systems,
+but it does provide a high quality text editor and a decent browser and mail client.&nbsp;
+It's a good start.
+
+<P>
+<A HREF=#top>Back to top</A>
+
+</BODY></font>

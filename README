@@ -1,0 +1,299 @@
+edbrowse, a line oriented editor browser.
+
+Written and maintained by Karl Dahlke, karl@eklhad.net
+
+This package, including source and documentation, is released to you
+under the general public license.
+Basically, this means the software is free, and you can do anything you like
+with it; but at some time in your life, you should really read
+all the dreary, legal details.
+http://www.fsf.org/licensing/licenses/gpl.html
+
+------------------------------------------------------------
+
+Netscape and Explorer are graphical browsers.
+Lynx and Links are screen browsers.
+This is a command line browser; the only one of its kind.
+
+The user's guide can be found in edbdoc.html (in this package).
+Of course this reasoning is a bit circular.
+You need to use a browser to read the documentation,
+which describes how to use the browser.
+Well you can always do this:
+
+lynx -dump edbdoc.html >edbdoc.txt
+
+This produces the documentation in text form,
+which you can read using your favorite editor.
+Of course we hope edbrowse will eventually become your
+favorite editor, whence you can browse the documentation directly.
+
+------------------------------------------------------------
+
+Ok, I'm going to assume you've read the documentation.
+No need to repeat all that here.
+You're here because you want to compile the program, or modify the source
+in some way.  Great!
+
+I haven't developed a configure script, and I really need to do that,
+but I just don't have the time.
+So I'm hoping this entire package will build on any Unix platform as is.
+That's wildly optimistic, but there it is.
+(I haven't heard too many problems in this regard.)
+
+As you may know, edbrowse was originally a perl script.
+(Perl is a fantastic prototyping language, but not always the best choice
+for serious software.)
+As such, it was only natural to use perl regular expressions for
+my search/substitute functions in the editor.
+And once you've experienced the power of perl regexp, you'll never
+go back to ed.  So I use the perl compatible regular expression
+library, /lib/libpcre.so.0, available on most Linux systems.
+If you don't have this file, check your installation disks.
+the pcre and pcre-devel packages might be there, just not installed.
+If you can't find them there, you can get the pcre source here.
+
+ftp://ftp.sourceforge.net/pub/sourceforge/pcre/
+
+Note that my files include <pcre.h>.
+Some distributions put it in /usr/include/pcre/pcre.h,
+so you'll have to adjust the source, the -I path, or make a link.
+Yeah I know, that's something a configure script should do for you,
+but I'm just not there yet.
+
+We assume you have the ssl libraries installed, for secure connections.
+You just can't buy anything on the Net without secure connections,
+so I make no effort to "work around" these libraries.
+You just have to have them, period.
+If you don't have /lib/libssl.so.2, you'll need to install the library,
+or build the package from source.
+
+http://www.openssl.org/source/
+
+Finally, you need the Spider Monkey javascript engine from Mozilla.com
+(I got smart and decided not to reinvent all this machinery.)
+ftp://ftp.mozilla.org/pub/mozilla.org/js/js-1.5.tar.gz
+Expand this in /usr/local.
+It will create a directory js.
+Go into js/src and run
+gmake -f Makefile.ref
+This should build everything you need.
+cd Linux_All_DBG.OBJ
+ln -s libjs.so /usr/lib
+
+Now return to your edbrowse directory.
+To build edbrowse - guess what - you type make.
+Then you send me mail when it doesn't work.  :-)
+Not a bad idea to read through the makefile before running make.
+It's pretty simple.
+
+If it compiles,
+there is no guarantee that this program will perform as expected.
+It might trash your precious files.
+It might send bad data across the Internet,
+causing you to buy a $37,000 elephant instead of
+$37 worth of printer supplies.
+No guarantees whatsoever.
+Use this program at your own risk.
+There - now the lawyers are happy.
+
+------------------------------------------------------------
+
+Blind people could care less about indenting their code.
+In fact we would rather not.  It's a real nuisance!
+But in deference to my sighted colleagues, I have run all
+the source through indent(1), using the following settings.
+Braces are in the style of the linux kernel, which I like.
+We don't waste time (especially on a braile display)
+consuming an extra line just for the left brace.
+If you modify this code, please use the following as your .indent.pro.
+Thank you for your understanding.
+
+// leave blanklines alone!
+-nsob
+-ncdb
+-nbad
+-nbap
+-nbbb
+// Measure levels of indenting - use 8 spaces = one tab (standard)
+-ut
+-ts8
+-i4
+-bli0
+-cbi0
+-nlp
+// I really want -ci0, but that doesn't work!
+// So I'm settling for ci3, which acts like -lp when an if statement
+// is involved, and those are the ones that are usually long anyways.
+-ci3
+-ip0
+-pi0
+-cli0
+-di2
+// Braces are set by the coding standards of the linux kernel
+-br
+-brs
+-cdw
+-ce
+-bs
+// Breaking long lines.
+-l80
+-hnl
+-psl
+-nbbo
+// Inserting spaces - usually I don't want it
+-nprs
+-npcs
+-ncs
+// can't prevent the space in switch (x)
+-nsaf
+-nsai
+-nsaw
+// the space in while(x--) ; is a good thing
+-ss
+
+------------------------------------------------------------
+
+Debug levels:
+0: silent
+1: show the sizes of files and web pages as they are read and written
+2: show the url as you call up a web page
+3: show each url through redirection,
+   cookies, http codes, and form data
+4: show the socket connections, and the http headers in and out
+5: url resolution
+6: free and alloc text lines, show javascript
+7: reformatted regular expressions, breakline chunks.
+8: not used
+9: not used
+
+------------------------------------------------------------
+
+Sourcefiles.
+
+README:
+You're reading it right now.
+
+todo:
+Things to do, unfinished business.
+
+main.c:
+Read and parse the config file.
+Entry point.
+Command line options.
+Invoke mail client if mail options are present.
+If run as editor/browser, treat arguments as files or URLs
+and read them into buffers.
+Read commands from stdin and invoke them via the command
+interpreter in bufsup.c.
+
+bufsup.c:
+Manage all the text buffers.
+Interpret the standard ed commands, move, copy, delete, substitute, etc.
+
+stringfile.c:
+Helper functions to manage memory, strings, files, directories.
+
+url.c:
+Split a url into its components.
+Decide if it's a proxy url.
+Watch for infinite loops during url redirection.
+Resolve relative url into absolute url
+based on the location of the current web page.
+
+tcp.c:
+Place a wrapper around the tcp calls.
+Hides the differences between Unix and Windows.
+Yes, I want to port this program to Windows.
+Can you help??
+
+http.c:
+Send the http request, and read the data from the web server.
+Handles https connections as well,
+and 301/302 redirection.
+Uncompresses html data if necessary.
+
+html.c:
+Parse the html tags and format the text.
+Update input fields.
+Submit/reset forms.
+
+cookies.c:
+Send and receive cookies.  Maintain the cookie jar.
+
+auth.c:
+Remember user and password for web pages that require authentication.
+Only the basic method is implemented at this time.
+
+sendmail.c:
+Send mail (smtp).  Encode attachments.
+
+fetchmail.c:
+Fetch mail (pop3).  Decode attachments.
+Browse mail files, separate mime components.
+
+jsdom.c:
+Document object model under javascript.
+Build objects for the hyperlinks, forms, elements, etc.
+Includes basic methods like alert() prompt() window.open() etc.
+
+jsloc.c:
+The location object, and other objects (like document.cookie)
+with strange side effects.
+
+jsrt:
+This is the javascript regression test for edbrowse.
+It exercises some of the javascript DOM interactions.
+
+------------------------------------------------------------
+
+Multiple Representations:
+
+A web form asks for your name, and you type in Fred Flintstone.
+This piece of data is part of your edbrowse buffer.
+In this sense it is merely text.
+You can make corrections with the substitute command,
+use the undo command to back up, etc.
+Yet it is also carried into the html tags in html.c,
+so that it can be sent when you push the submit button.
+This is a second copy of the data.
+As if that weren't bad enough, I now need a third copy for javascript.
+When it accesses form.fullname, it needs to find,
+and in bizarre cases change, the text that you entered.
+I believe the first representation, in your editor, must be separate
+from the second and third (which I have managed to merge together).
+Remember that an input field could be an antire text area,
+i.e. the text in another editing session.
+When you are in that session, composing your thoughts,
+am I really going to take every textual change, every substitute,
+every delete, every insert, every undo,
+and map those changes over to the html tag that goes with this session,
+and the java variable that goes with this session?
+I don't think so!
+So I'm stuck with something almost as bad.
+As part of the browse command, the field data, whether set up by html
+or modified by javascript, must be copied into your editor text.
+Then you can change it to your heart's content, but when you submit the form,
+or run any javascript, for any reason, all that text has to be carried
+back to the javascript world.
+This is accomplished by jSyncup() in html.c.
+When javascript is done, any changes it has made to the fields have
+to be mapped back to the editor, where you can see them.
+This is done by javaSetsTagVar() in html.c.
+
+You should really receive some alerts if fields
+have been changed out from under you.
+A sighted person would see the screen change, but you can't.
+You know that field says Fred Flintstone, that's what you typed
+in, but javascript has changed it to Barney Rubble, and you need
+to be notified.
+Edbrowse does this for you.
+
+------------------------------------------------------------
+
+To look at all this source, some 16,000 lines,
+you wouldn't know I was a professional programmer with 25 years experience.
+I mean it really looks hacked together.
+Well - I wrote it in my spare time, because I needed this tool desperately.
+No careful methodology, just "Gitter duhn".
+

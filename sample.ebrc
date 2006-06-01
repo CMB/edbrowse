@@ -1,0 +1,314 @@
+#  .ebrc: the configuration file for edbrowse (version 2.2 or above)
+#  This is a sample file.
+#  This file contains passwords - make sure it is not readable by others.
+#  chmod 600 .ebrc
+#  (Of course this public file has no real passwords, but yours will.)
+
+#  First the email accounts; I have several.
+#  My primary account, from my ISP.
+#  Access this account via -m1.
+#  The next account is -m2, and so on.
+mail {
+#  The pop3 server and the smtp server, they need not be the same.
+inserver = mail.comcast.net
+outserver = smtp.comcast.net
+#  login and password
+login = kdahlke189603
+password = elephant
+#  Who is this mail from?  Your name, and a reply address.
+#  Note, it is now illegal to forge email, so make sure your name
+#  is really yours, or your business, and make sure the reply address
+#  is one of your email accounts, or is forwarded to you.
+from = Karl Dahlke
+reply = kdahlke189603@comcast.net
+}
+
+#  My personal email account.
+#  This is a subaccount under my primary ISP account.
+mail {
+inserver = mail.comcast.net
+outserver = smtp.comcast.net
+#  When I send mail out, this is the default account.
+default
+login = eklhad
+password = zebra
+from = Karl Dahlke
+reply = eklhad@comcast.net
+}
+
+#  My wife's account.
+#  I check on it once in a while, with her permission of course.
+mail {
+inserver = mail.comcast.net
+outserver = smtp.comcast.net
+login = kdwife
+password = kangaroo
+from = Wendy Dahlke
+reply = kdwife@comcast.net
+}
+
+#  My work account.
+mail {
+#  The shortcut eyemail is defined in /etc/hosts.
+#  You can do it this way, or use a full domain name,
+#  as I did with comcast.
+inserver = eyemail
+outserver = eyemail
+login = karl.dahlke@my-work-domain.com
+password = cheetah
+from = Karl Dahlke
+reply = karl.dahlke@my-work-domain.com
+}
+
+#  Mail that looks like it came from my other web sites.
+#  Let's start with the math site.
+mail {
+inserver = mail.comcast.net
+outserver = mail.comcast.net
+login = eklhad
+password = zebra
+from = Karl Dahlke
+#  All MathReference email is forwarded to me.
+reply = webmaster@mathreference.com
+}
+
+mail {
+inserver = mail.comcast.net
+outserver = mail.comcast.net
+login = eklhad
+password = zebra
+#  My wife and I work on this site together.
+from = Karl and Wendy Dahlke
+reply = webmaster@scrapsayings.com
+}
+
+#  free mail account, for safelists and other crap
+mail {
+inserver = imap.mail15.com
+outserver = smtp.mail15.com
+login = eklhad
+password = giraffe
+from = Karl Dahlke
+reply = eklhad@mail15.com
+}
+
+#  An email associated with my private domain, independent of my ISP
+#  This is usually forwarded to my ISP.
+mail {
+inserver = mail.comcast.net
+outserver = mail.comcast.net
+login = eklhad
+password = zebra
+from = Karl Dahlke
+reply = karl@eklhad.net
+}
+
+#  That's all the mail accounts.
+#  Here is my address book.
+#  Format    is alias:email:other fields.
+adbook=/home/eklhad/outside/adbook
+
+#  ip addresses on the blacklist
+ipblack=/home/eklhad/outside/ipblack
+
+#  The cookie jar - where we store the http cookies.
+#  This file contains passwords, make sure it is 0600.
+#  Do not hand edit this file, unless you know what you are doing!
+jar = /home/eklhad/outside/cookies
+
+#  Move to this directory when fetching mail.
+maildir = /home/eklhad/mbox
+
+#  wait 30 seconds for a response from a web server
+webtimer = 30
+#  wait 3 minutes for a response from a mail server
+mailtimer = 180
+
+#  Write spam messages here.  I use a file in my recycle bin,
+#  so I know it gets cleaned out every week.
+spamcan = /home/eklhad/.recycle/spamcan
+
+#  Redirect mail based on the sender, or the destination account.
+fromfilter {
+fred flintstone > fredmail
+fred.flintstone@bedrock.us > fredmail
+jerk@hotmail.com > x
+word@m-w.com > -wod
+}
+
+tofilter {
+support@my-side-business.com > support
+sales@my-side-business.com > sales
+@my-side-business.com > business
+me@my-regular-dayjob.com > work
+}
+
+#  Plenty of sites use javascript solely for visual effect.
+#  And this javascript tends to be complicated, which means I usually
+#  don't parse it properly, and you get lots of annoying errors.
+#  You can disable it per site.
+#  Note, better to say space.com, instead of www.space.com,
+#  unless there is a foo.space.com where you really need the javascript.
+nojs = space.com
+nojs = nasa.gov
+nojs = google.com
+nojs = paypal.com
+
+#  Every time you fetch a web page from the internet,
+#  your browser identifies itself to the host.
+#  This is done automatically.
+#  Edbrose identifies itself as "edbrowse/2.1.3",
+#  where the number after the slash indicates the current version of edbrowse.
+#  All well and good, but some websites have no respect for edbrowse,
+#  or lynx for that matter.
+#  They won't let you in the door unless you look like Explorere or Netscape.
+#  Clickbank.com, a major credit card processor, is one example.
+#  So what do we do?  We lie!
+#  You can specify different agents in this config file,
+#  and activate them with the `ua' (user agent) command.
+#  With the following lines in your config file,
+#  you can type ua1 to pretend to bee lynx, and ua2 to pretend to be Mozilla.
+#  Type ua0 to resurrect the standard edbrowse identification.
+
+agent = Lynx/2.8.4rel.1 libwww-FM/2.14
+agent = Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; Win 9x 4.90)
+
+#  Ok, we're ready to write our first script.
+#  Let's start out with something simple.
+#  undos and unword a file.
+#  No doubt a Windows expert could help me with the latter.
+function+ud {
+,s/\r$//
+}
+
+function:uw {
+#  Fix the apostrophe
+,s/’/'/g
+#  Strip out nonascii stuff.
+#  Sorry to be so English-centric.
+#  This will mess you up if you're reading a Spanish word document,
+#  and you lose your nonascii letters.
+,s/[\0-\11\13\14\16-\37\200-\377]//g
+#  After the above, there'll be lots of blank lines.
+g/^ *$/ d
+#  Break lines at return boundaries.
+,bl
+#  Strip off trailing junk.
+/^ !"#\$%&'()\*/,$d
+}
+
+#  How about a function to access google.
+#  That's something everybody does all the time.
+#  I went to the home page, put in some keywords, set db2,
+#  and pressed search.
+#  That gave me the url.
+#  Here it is, with ~0 embedded.
+#  ~0 stands for all the arguments, in other words, the rest of the line.
+#  So   <gg elephants tigers   will call up google,
+#  looking for "elephants tigers".
+function+gg {
+b www.google.com/search?q=~0&hl=n&btnG=Google+Search&meta=
+#  Ok, we got the web page back.
+#  How do we know?  Go back and look at the function line.
+#  The + means stop if there are any errors.
+#  We're still here, so I guess there weren't any errors.
+#  Google has returned its results.
+#  But there's lots of text that I don't care to read.
+#  So I wrote a google cleanup function.
+#  Let's call it now.
+#  It's ok that this function hasn't been defined yet;
+#  forward references are allowed.
+<ggc
+}
+
+#  The google cleanup function.
+#  This is called when you access google (above),
+#  but you may want to call it again, when you ask for the next ten results,
+#  and the next ten results, etc.
+#  That's why I made it a separate function.
+#  Look at the function definition and note the : instead of +
+#  This means the function will march on, even if there are errors.
+#  This lets us delete certain lines, if they are there.
+#  And if they're not there, we get an error, and march on.
+#  No big deal.
+function:ggc {
+#  get rid of pdf warnings
+g/^Your browser may not have a PDF reader available.$/d
+g/^{Similar pages}$/d
+#  trailing lines, after "search next", can go away
+/^{search Next}$/+,$d
+#  initial lines and stats can go away
+1,/Search took [\d.]+ seconds/d
+#  move the "did you mean" line to the end; we need to keep this one
+/^Did you mean:$/,/^Did you mean:$/+2m$
+#  more stuff at the start that we don't need
+1,/^Categor[iesy]+: *|/d
+1,/{See your message here...}/d
+1,/^|Sponsored Link$/d
+#  First two nonblank lines and first blank line can go away
+1g/./d
+1g/./d
+1g/^$/d
+#  put the "did you mean" line back to the top, if it's there
+/^Did you mean:$/,$m0
+}
+
+#  mariam-webster dictionary lookup
+function+mw {
+#  You can't see it, unless you list the line, but there is
+#  a control a between dictionary and book.
+#  This indicates post method, rather than get method.
+b www.m-w.com/cgi-bin/dictionarybook=Dictionary&va=~1
+<mwc
+}
+
+function:mwc {
+/^{Get the Word of the Day/,$d
+1,/^Click on the Collegiate Thesaurus tab to look up the current word/+2d
+1,/^<>| *<Go>$/-d
+1,/^One entry found for/+d
+1,/^Suggestions for/-d
+}
+
+#  Clean up an article from www.space.com.
+#  Now you're ready for the big time.
+#  if(*) means proceed if the previous command succeeded.
+#  if(?) means proceed if the previous command failed.
+#  Get it ... ? as in the question mark of an error.
+#  Similarly for while(*), until(*), etc.
+#  There is also a loop(n) construct, to repeat something n times.
+function:sca {
+#  stuff at the end can go
+/^{Add these headlines to your site}$/,$d
+#  All the stuff at the top, before the word posted, can go
+1,/^posted/d
+if(*) {
+#  now the top line is the date, don't need it
+1g/ 20\d\d$/d
+#  Now a blank line
+1g/^$/d
+}
+#  We don't care about the section called images, which is inserted
+#  after the first paragraph of the article.
+/^| *Images\|More Stories$/d
+if(*) {
+#  delete some sections before this line, and after it.
+?^|SCIENCE TUESDAY\||TECH WEDNESDAY$?,-d
+.,/{>>Uplink your views}/d
+if(*){
+d
+} else {
+.,/^| *More Stories$/d
+.,/^| *Related SPACE.com STORIES$/d
+.,/^| *Related Links$/d
+.,/^| *Multimedia$/d
+until(?) {
+d
+.g/^|* *{.*}$/d
+}
+}
+#  Now print the article
+,p
+}
+}
+
