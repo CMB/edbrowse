@@ -611,6 +611,15 @@ switch(s.toLowerCase()) { \n\
 case 'link': return new Link();\n\
 case 'image': case 'img': return new Image();\n\
 default: alert('createElement default'); return new Object(); }} \n\
+\n\
+URL.prototype.indexOf = function(s) { \n\
+return this.toString().indexOf(s); }\n\
+\n\
+URL.prototype.lastIndexOf = function(s) { \n\
+return this.toString().lastIndexOf(s); }\n\
+\n\
+URL.prototype.substring = function(from, to) { \n\
+return this.toString().substring(from, to); }\n\
 ";
 
 void *
