@@ -2695,10 +2695,17 @@ if(stringEqual(line, "us")) return unstripChild();
 	return true;
     }
 
-    if(stringEqual(line, "rh")) {
+    if(stringEqual(line, "hr")) {
 	allowRedirection ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
-	    puts(allowRedirection ? "redirect html" : "do not redirect html");
+	    puts(allowRedirection ? "http redirection" : "no http redirection");
+	return true;
+    }
+
+    if(stringEqual(line, "sr")) {
+	sendReferrer ^= 1;
+	if(helpMessagesOn || debugLevel >= 1)
+	    puts(sendReferrer ? "send referrer" : "do not send referrer");
 	return true;
     }
 

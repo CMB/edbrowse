@@ -557,7 +557,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
     stringAndString(&hdr, &l, currentAgent);
     stringAndString(&hdr, &l, eol);
 
-    if(currentReferrer) {
+    if(sendReferrer && currentReferrer) {
 	const char *post2 = strchr(currentReferrer, '\1');
 	const char *q = strchr(currentReferrer, '"');
 /* I just can't handle quote in the referring url */
@@ -575,7 +575,6 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	    cw->referrer[post2 - currentReferrer] = 0;
 	}
     }
-    /* referrer */
     stringAndString(&hdr, &l, "Accept: */*\r\n");
     stringAndString(&hdr, &l, (isprox ? "Proxy-Connection: " : "Connection: "));
 /* Keep-Alive feature not yet implemented */

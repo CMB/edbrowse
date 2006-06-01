@@ -146,7 +146,7 @@ extern bool zapMail;		/* just get rid of the mail */
 extern bool js_redirects;	/* window.location = new_url */
 extern uchar browseLocal;	/* browsing a local file */
 extern bool parsePage;		/* parsing the html page, and any java therein */
-extern bool htmlAttrVal_nl; /* allow nl in the attribute of an html tag */
+extern bool htmlAttrVal_nl;	/* allow nl in the attribute of an html tag */
 extern bool unformatMail;	/* suppress formatting */
 extern bool passMail;		/* pass mail across the filters */
 extern bool errorExit;		/* exit on any error, for scripting purposes */
@@ -174,6 +174,7 @@ extern bool caseInsensitive, searchStringsAll, displayAlt;
 extern bool textAreaDosNewlines;	/* when transmitting a textarea */
 extern bool undoable;		/* an undoable operation is taking place */
 extern bool allowRedirection;	/* from http code 301, or http refresh */
+extern bool sendReferrer;	/* in the http header */
 extern bool allowJS;		/* javascript on */
 extern bool helpMessagesOn;	/* no need to type h */
 extern bool verifyCertificates;	/* ssl protocol */
