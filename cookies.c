@@ -127,13 +127,16 @@ receiveCookie(const char *url, const char *str)
     for(q = str; *q != '='; q++)
 	if(!*q || q >= p)
 	    return false;
-    if(str == q || q + 1 == p)
+    if(str == q)
 	return false;
 
     c = allocZeroMem(sizeof (struct cookie));
     c->name = pullString1(str, q);
     ++q;
-    c->value = pullString1(q, p);
+    if(q - p > 1)
+	c->value = pullString1(q, p);
+    else
+	c->value = EMPTYSTRING;
 
     c->server = cloneString(server);
 
