@@ -620,12 +620,15 @@ return this.toString().lastIndexOf(s); }\n\
 \n\
 URL.prototype.substring = function(from, to) { \n\
 return this.toString().substring(from, to); }\n\
+\n\
+history.toString = function() { \n\
+return 'Sorry, edbrowse does not maintain a browsing history.'; } \
 ";
 
 void *
 createJavaContext(void)
 {
-    JSObject *o, *nav, *screen;
+    JSObject *o, *nav, *screen, *hist;
     const char *itemname;
     int i;
     char verx11[20];
@@ -750,6 +753,21 @@ createJavaContext(void)
     establish_property_number(screen, "availWidth", 1024, true);
     establish_property_number(screen, "availTop", 0, true);
     establish_property_number(screen, "availLeft", 0, true);
+
+    hist = JS_NewObject(jcx, 0, 0, jwin);
+    JS_DefineProperty(jcx, jwin, "history",
+       OBJECT_TO_JSVAL(hist), NULL, NULL, PROP_FIXED);
+
+/* attributes of history */
+    establish_property_string(hist, "current", cw->fileName, true);
+/* There's no history in edbrowse. */
+/* Only the current file is known, hence length is 1. */
+    establish_property_number(hist, "length", 1, true);
+    establish_property_string(hist, "next", 0, true);
+    establish_property_string(hist, "previous", 0, true);
+    JS_DefineFunction(jcx, hist, "back", nullFunction, 0, PROP_FIXED);
+    JS_DefineFunction(jcx, hist, "forward", nullFunction, 0, PROP_FIXED);
+    JS_DefineFunction(jcx, hist, "go", nullFunction, 0, PROP_FIXED);
 
 /* Set up some things in javascript */
     JS_EvaluateScript(jcx, jwin, initScript, strlen(initScript),
