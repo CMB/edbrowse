@@ -70,8 +70,8 @@ or build the package from source.
 
 http://www.openssl.org/source/
 
-Finally, you need the Spider Monkey javascript engine from Mozilla.com
-(I got smart and decided not to reinvent all this machinery.)
+Finally, you need the Spider Monkey javascript engine from Mozilla.org
+(I got smart and decided not to reinvent all this js machinery.)
 ftp://ftp.mozilla.org/pub/mozilla.org/js/js-1.5.tar.gz
 Expand this in /usr/local.
 It will create a directory js.
@@ -185,14 +185,15 @@ Invoke mail client if mail options are present.
 If run as editor/browser, treat arguments as files or URLs
 and read them into buffers.
 Read commands from stdin and invoke them via the command
-interpreter in bufsup.c.
+interpreter in buffers.c.
 
-bufsup.c:
+buffers.c:
 Manage all the text buffers.
 Interpret the standard ed commands, move, copy, delete, substitute, etc.
 
 stringfile.c:
 Helper functions to manage memory, strings, files, directories.
+Hides many of the OS specific quirks.
 
 url.c:
 Split a url into its components.
@@ -207,6 +208,11 @@ Hides the differences between Unix and Windows.
 Yes, I want to port this program to Windows.
 Can you help??
 
+format.c:
+Parse html tags and comments.
+Translate common unicode sequences.
+Arrange text into lines and paragraphs.
+
 http.c:
 Send the http request, and read the data from the web server.
 Handles https connections as well,
@@ -214,7 +220,7 @@ and 301/302 redirection.
 Uncompresses html data if necessary.
 
 html.c:
-Parse the html tags and format the text.
+Render the html tags and format the text.
 Update input fields.
 Submit/reset forms.
 
@@ -247,7 +253,7 @@ It exercises some of the javascript DOM interactions.
 
 ------------------------------------------------------------
 
-Multiple Representations:
+Multiple Representations.
 
 A web form asks for your name, and you type in Fred Flintstone.
 This piece of data is part of your edbrowse buffer.
@@ -258,7 +264,7 @@ Yet it is also carried into the html tags in html.c,
 so that it can be sent when you push the submit button.
 This is a second copy of the data.
 As if that weren't bad enough, I now need a third copy for javascript.
-When it accesses form.fullname, it needs to find,
+When js accesses form.fullname, it needs to find,
 and in bizarre cases change, the text that you entered.
 I believe the first representation, in your editor, must be separate
 from the second and third (which I have managed to merge together).
@@ -291,7 +297,7 @@ Edbrowse does this for you.
 
 ------------------------------------------------------------
 
-To look at all this source, some 16,000 lines,
+To look at all this source, some 20,000 lines,
 you wouldn't know I was a professional programmer with 25 years experience.
 I mean it really looks hacked together.
 Well - I wrote it in my spare time, because I needed this tool desperately.
