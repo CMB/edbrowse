@@ -27,7 +27,7 @@ int localAccount, maxAccount;
 struct MACCOUNT accounts[MAXACCOUNT];
 bool caseInsensitive, searchStringsAll, displayAlt = true;
 bool textAreaDosNewlines = true, undoable;
-bool allowRedirection = true, allowJS = true, sendReferrer = true;
+bool allowRedirection = true, allowJS = true, sendReferrer = false;
 bool verifyCertificates = true, binaryDetect = true;
 char ftpMode;
 bool showHiddenFiles, helpMessagesOn;
