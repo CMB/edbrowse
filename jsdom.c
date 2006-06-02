@@ -621,6 +621,12 @@ return this.toString().lastIndexOf(s); }\n\
 URL.prototype.substring = function(from, to) { \n\
 return this.toString().substring(from, to); }\n\
 \n\
+URL.prototype.toLowerCase = function() { \n\
+return this.toString().toLowerCase(); }\n\
+\n\
+URL.prototype.toUpperCase = function() { \n\
+return this.toString().toUpperCase(); }\n\
+\n\
 history.toString = function() { \n\
 return 'Sorry, edbrowse does not maintain a browsing history.'; } \
 ";
