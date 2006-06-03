@@ -109,7 +109,7 @@ bool infPush(int tagno, char **post_string) ;
 void javaSetsTagVar(void *v, const char *val) ;
 void javaSubmitsForm(void *v, bool reset) ;
 void javaOpensWindow(const char *href, const char *name) ;
-void javaSetsTimeout(const char *code, int n) ;
+void javaSetsTimeout(const char *code, int n, bool isInterval) ;
 
 /* sourcefile=format.c */
 void prepareForBrowse(char *h, int h_len) ;

@@ -3257,16 +3257,19 @@ javaOpensWindow(const char *href, const char *name)
 }				/* javaOpensWindow */
 
 void
-javaSetsTimeout(const char *code, int n)
+javaSetsTimeout(const char *code, int n, bool isInterval)
 {
     struct htmlTag *t = newTag("A");
     char timedesc[48];
     char *jsrc;
+    int l;
 
+    strcpy(timedesc, (isInterval ? "Interval" : "Timer"));
+    l = strlen(timedesc);
     if(n > 1000)
-	sprintf(timedesc, "Timer %d", n / 1000);
+	sprintf(timedesc + l, " %d", n / 1000);
     else
-	sprintf(timedesc, "Timer %dms", n);
+	sprintf(timedesc + l, " %dms", n);
     jsrc = allocMem(12 + strlen(code) + 1);
     sprintf(jsrc, "javascript: %s", code);
     t->href = jsrc;

@@ -308,18 +308,35 @@ win_sto(JSContext * cx, JSObject * obj, uintN argc, jsval * argv, jsval * rval)
     } else if(argc == 2 && JSVAL_IS_STRING(argv[0]) && JSVAL_IS_INT(argv[1])) {
 	const char *s = stringize(argv[0]);
 	int n = JSVAL_TO_INT(argv[1]);
-	javaSetsTimeout(s, n);
+	javaSetsTimeout(s, n, false);
     } else {
 	JS_ReportError(jcx, "invalid arguments to setTimeout()");
     }
     return JS_TRUE;
 }				/* win_sto */
 
+static JSBool
+win_intv(JSContext * cx, JSObject * obj, uintN argc, jsval * argv, jsval * rval)
+{
+    if(!parsePage) {
+	JS_ReportError(jcx,
+	   "cannot use setInterval() to schedule the execution of a function");
+    } else if(argc == 2 && JSVAL_IS_STRING(argv[0]) && JSVAL_IS_INT(argv[1])) {
+	const char *s = stringize(argv[0]);
+	int n = JSVAL_TO_INT(argv[1]);
+	javaSetsTimeout(s, n, true);
+    } else {
+	JS_ReportError(jcx, "invalid arguments to setInterval()");
+    }
+    return JS_TRUE;
+}				/* win_intv */
+
 static JSFunctionSpec window_methods[] = {
     {"alert", win_alert, 1, 0, 0},
     {"prompt", win_prompt, 2, 0, 0},
     {"confirm", win_confirm, 1, 0, 0},
     {"setTimeout", win_sto, 2, 0, 0},
+    {"setInterval", win_intv, 2, 0, 0},
     {"open", window_ctor, 3, 0, 0},
     {"close", win_close, 0, 0, 0},
     {"focus", nullFunction, 0, 0, 0},
