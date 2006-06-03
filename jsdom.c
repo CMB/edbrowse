@@ -499,6 +499,13 @@ static JSFunctionSpec head_methods[] = {
     {0}
 };
 
+static JSClass meta_class = {
+    "Meta",
+    JSCLASS_HAS_PRIVATE,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
+};
+
 /* Don't be confused; this is for <link>, not <a> */
 static JSClass link_class = {
     "Link",
@@ -587,6 +594,7 @@ static struct DOMCLASS domClasses[] = {
     {&form_class, form_methods},
     {&body_class, body_methods},
     {&head_class, head_methods},
+    {&meta_class},
     {&link_class, link_methods, nullFunction, 0},
     {&image_class, 0, nullFunction, 1},
     {&frame_class},
@@ -602,7 +610,7 @@ static struct DOMCLASS domClasses[] = {
 
 static const char *docarrays[] = {
     "frames", "heads", "bodies", "links", "tables", "divs", "spans",
-    "forms", "images", "areas", 0
+    "forms", "images", "areas", "metas", 0
 };
 
 
@@ -616,8 +624,9 @@ case 'a': return document.anchors; \n\
 case 'img': case 'image': return document.images; \n\
 case 'span': return document.spans; \n\
 case 'head': return document.heads; \n\
+case 'meta': return document.metas; \n\
 case 'body': return document.bodies; \n\
-default: alert('all.tags default'); return new Array(); }} \n\
+default: alert('all.tags default ' + s); return new Array(); }} \n\
 \n\
 document.getElementById = function(s) { \n\
 return document.idMaster[s]; } \n\
@@ -629,7 +638,7 @@ document.createElement = function(s) { \n\
 switch(s.toLowerCase()) { \n\
 case 'link': return new Link();\n\
 case 'image': case 'img': return new Image();\n\
-default: alert('createElement default'); return new Object(); }} \n\
+default: alert('createElement default ' + s); return new Object(); }} \n\
 \n\
 URL.prototype.indexOf = function(s) { \n\
 return this.toString().indexOf(s); }\n\

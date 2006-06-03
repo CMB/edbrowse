@@ -57,6 +57,8 @@ static int radioChecked_l;
 static char *preamble;
 static int preamble_l;
 
+static void htmlName(void) ;
+
 /* Switch from the linked list of tags to an array. */
 static void
 buildTagArray(void)
@@ -420,59 +422,66 @@ getBaseHref(int n)
 static void
 htmlMeta(void)
 {
-    char *name, *content;
+    char *name, *content, *heq;
     char **ptr;
+    void *e;
 
-    name = htmlAttrVal(topAttrib, "http-equiv");
-    if(name && *name) {
-	content = htmlAttrVal(topAttrib, "content");
-	if(content && *content) {
-	    bool rc;
-	    int delay;
+    htmlName();
+    topTag->jv = e =
+       domLink("Meta", topTag->name, topTag->id, 0, 0, "metas", jdoc, false);
+    name = topTag->name;
+    content = htmlAttrVal(topAttrib, "content");
+    if(content == EMPTYSTRING)
+	content = 0;
+    if(e)
+	establish_property_string(e, "content", content, true);
+    heq = htmlAttrVal(topAttrib, "http-equiv");
+    if(heq == EMPTYSTRING)
+	heq = 0;
+
+    if(heq && content) {
+	bool rc;
+	int delay;
 /* It's not clear if we should process the http refresh command
  * immediately, the moment we spot it, or if we finish parsing
  * all the html first.
  * Does it matter?  It might.
  * A subsequent meta tag could use http-equiv to set a cooky,
- * and we won't see that cooky, if we jump to the new page right now.
+ * and we won't see that cooky if we jump to the new page right now.
  * And there's no telling what subsequent javascript might do.
  * So - I'm going to postpone the refresh, until everything is parsed.
  * Bear in mind, we really don't want to refresh if we're working
  * on a local file. */
-	    if(stringEqualCI(name, "Set-Cookie")) {
-		rc = receiveCookie(cw->fileName, content);
-		debugPrint(3, rc ? "jar" : "rejected");
+	if(stringEqualCI(heq, "Set-Cookie")) {
+	    rc = receiveCookie(cw->fileName, content);
+	    debugPrint(3, rc ? "jar" : "rejected");
+	}
+
+	if(allowRedirection && !browseLocal && stringEqualCI(heq, "Refresh")) {
+	    if(parseRefresh(content, &delay)) {
+		char *newcontent;
+		unpercentURL(content);
+		newcontent = resolveURL(basehref, content);
+		gotoLocation(newcontent, delay, true);
 	    }
-	    if(allowRedirection && !browseLocal &&
-	       stringEqualCI(name, "Refresh")) {
-		if(parseRefresh(content, &delay)) {
-		    char *newcontent;
-		    unpercentURL(content);
-		    newcontent = resolveURL(basehref, content);
-		    gotoLocation(newcontent, delay, true);
-		}
-	    }
-	    nzFree(content);
-	}			/* content */
-	nzFree(name);
+	}
     }
-    /* http-equiv */
-    name = htmlAttrVal(topAttrib, "name");
-    if(name && *name) {
+
+    if(name) {
 	ptr = 0;
 	if(stringEqualCI(name, "description"))
 	    ptr = &cw->fd;
 	if(stringEqualCI(name, "keywords"))
 	    ptr = &cw->fk;
-	if(ptr && !*ptr) {
-	    content = htmlAttrVal(topAttrib, "content");
-	    if(content) {
-		stripWhite(content);
-		*ptr = content;
-	    }
+	if(ptr && !*ptr && content) {
+	    stripWhite(content);
+	    *ptr = content;
+	    content = 0;
 	}
-	nzFree(name);
-    }				/* name */
+    }
+    /* name */
+    nzFree(content);
+    nzFree(heq);
 }				/* htmlMeta */
 
 static void
