@@ -1088,7 +1088,7 @@ encodeTags(char *html)
     int dw_line, dw_nest = 0;
     char hnum[40];		/* hidden number */
     char c;
-    bool retainTag;
+    bool retainTag, onload_done = false;
     bool a_text;		/* visible text within the hyperlink */
     bool slash, a_href, rc;
     bool premode = false, invisible = false;
@@ -1121,6 +1121,7 @@ encodeTags(char *html)
     t->href = cloneString(cw->fileName);
     basehref = t->href;
 
+  top:
     while(c = *h) {
 	if(c != '<') {
 	    if(c == '\n')
@@ -1930,7 +1931,7 @@ encodeTags(char *html)
 
 /* Run the various onload functions */
 /* Turn the onunload functions into hyperlinks */
-    if(!cw->jsdead) {
+    if(!cw->jsdead && !onload_done) {
 	const struct htmlTag *lasttag;
 	onloadGo(jwin, 0, "window");
 	onloadGo(jdoc, 0, "document");
@@ -1950,7 +1951,17 @@ encodeTags(char *html)
 		break;
 	}			/* loop over tags */
     }
-    /* javascript is engaged */
+    onload_done = true;
+
+/* The onload function can, and often does, invoke document.write() */
+    if(cw->dw) {
+	nzFree(html);
+	html = h = cw->dw;
+	cw->dw = 0;
+	cw->dw_l = 0;
+	goto top;
+    }
+
     if(browseLocal == 1) {	/* no errors yet */
 	foreach(t, htmlStack) {
 	    browseLine = t->ln;
@@ -1985,7 +1996,6 @@ encodeTags(char *html)
 	}			/* loop over all tags */
     }
 
-    /* no prior errors */
     /* clean up */
     browseLine = 0;
     nzFree(html);
