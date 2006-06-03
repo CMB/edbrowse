@@ -794,9 +794,12 @@ freeJavaContext(void *jsc)
 void
 establish_innerHTML(void *jv, const char *start, const char *end, bool is_ta)
 {
-    JSObject *obj = jv;
+    JSObject *obj = jv, *o;
+    jsval v;
+
     if(!obj)
 	return;
+
 /* null start means the pointer has been corrupted by a document.write() call */
     if(!start)
 	start = end = EMPTYSTRING;
@@ -809,6 +812,11 @@ establish_innerHTML(void *jv, const char *start, const char *end, bool is_ta)
 	   STRING_TO_JSVAL(JS_NewStringCopyN(jcx, start, end - start)),
 	   NULL, setter_innerText, JSPROP_ENUMERATE | JSPROP_PERMANENT);
     }
+
+/* Anything with an innerHTML might also have a style. */
+    o = JS_NewObject(jcx, 0, 0, obj);
+    v = OBJECT_TO_JSVAL(o);
+    JS_DefineProperty(jcx, obj, "style", v, NULL, NULL, JSPROP_ENUMERATE);
 }				/* establish_innerHTML */
 
 void
