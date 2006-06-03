@@ -918,8 +918,6 @@ edbrowse  [-e] [-d?] file1 file2 ...");
 
     ssl_init(doConfig);
 
-    js_eb_setup();
-
     srand(time(0));
 
     loadBlacklist();

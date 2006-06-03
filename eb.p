@@ -196,7 +196,6 @@ const char * currentOS(void) ;
 const char * currentMachine(void) ;
 
 /* sourcefile=jsdom.c */
-void js_eb_setup(void) ;
 void * createJavaContext(void) ;
 void freeJavaContext(void *jsc) ;
 void establish_innerHTML(void *jv, const char *start, const char *end, bool is_ta) ;

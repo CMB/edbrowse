@@ -16,7 +16,6 @@
 #define PROP_FIXED (JSPROP_ENUMERATE|JSPROP_READONLY|JSPROP_PERMANENT)
 
 
-static JSRuntime *jrt;
 void *jcx;			/* really JSContext */
 void *jwin;			/* window object, really JSObject */
 void *jdoc;			/* window.document, really JSObject */
@@ -61,22 +60,6 @@ my_ErrorReporter(JSContext * cx, const char *message, JSErrorReport * report)
 
     JS_free(cx, prefix);
 }				/* my_ErrorReporter */
-
-
-/*********************************************************************
-Set up the javascript runtime world, as used by edbrowse.
-*********************************************************************/
-
-void
-js_eb_setup(void)
-{
-/* 10 meg js space - should this be configurable? */
-    jrt = JS_NewRuntime(4L * 1024L * 1024L);
-    if(!jrt)
-	errorPrint("2could not allocate memory for javascript operations.");
-    gOutFile = stdout;
-    gErrFile = stderr;
-}				/* js_eb_setup */
 
 
 /*********************************************************************
@@ -662,11 +645,21 @@ return 'Sorry, edbrowse does not maintain a browsing history.'; } \
 void *
 createJavaContext(void)
 {
+    static JSRuntime *jrt;
     JSObject *o, *nav, *screen, *hist, *del;
     const char *itemname;
     int i;
     char verx11[20];
     jsval rval;
+
+    if(!jrt) {
+/* 4 meg js space - should this be configurable? */
+	jrt = JS_NewRuntime(4L * 1024L * 1024L);
+	if(!jrt)
+	    errorPrint("2could not allocate memory for javascript operations.");
+	gOutFile = stdout;
+	gErrFile = stderr;
+    }
 
     jcx = JS_NewContext(jrt, gStackChunkSize);
     if(!jcx)
