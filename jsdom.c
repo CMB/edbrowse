@@ -662,7 +662,7 @@ return 'Sorry, edbrowse does not maintain a browsing history.'; } \
 void *
 createJavaContext(void)
 {
-    JSObject *o, *nav, *screen, *hist;
+    JSObject *o, *nav, *screen, *hist, *del;
     const char *itemname;
     int i;
     char verx11[20];
@@ -779,14 +779,26 @@ createJavaContext(void)
     screen = JS_NewObject(jcx, 0, 0, jwin);
     JS_DefineProperty(jcx, jwin, "screen",
        OBJECT_TO_JSVAL(screen), NULL, NULL, PROP_FIXED);
-
-/* attributes of the screen */
     establish_property_number(screen, "height", 768, true);
     establish_property_number(screen, "width", 1024, true);
     establish_property_number(screen, "availHeight", 768, true);
     establish_property_number(screen, "availWidth", 1024, true);
     establish_property_number(screen, "availTop", 0, true);
     establish_property_number(screen, "availLeft", 0, true);
+
+    del = JS_NewObject(jcx, 0, 0, jdoc);
+    JS_DefineProperty(jcx, jdoc, "body",
+       OBJECT_TO_JSVAL(del), NULL, NULL, PROP_FIXED);
+    JS_DefineProperty(jcx, jdoc, "documentElement",
+       OBJECT_TO_JSVAL(del), NULL, NULL, PROP_FIXED);
+    establish_property_number(del, "clientHeight", 768, true);
+    establish_property_number(del, "clientWidth", 1024, true);
+    establish_property_number(del, "offsetHeight", 768, true);
+    establish_property_number(del, "offsetWidth", 1024, true);
+    establish_property_number(del, "scrollHeight", 768, true);
+    establish_property_number(del, "scrollWidth", 1024, true);
+    establish_property_number(del, "scrollTop", 0, true);
+    establish_property_number(del, "scrollLeft", 0, true);
 
     hist = JS_NewObject(jcx, 0, 0, jwin);
     JS_DefineProperty(jcx, jwin, "history",
