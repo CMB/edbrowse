@@ -126,6 +126,8 @@ window_ctor(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
     javaOpensWindow(newloc, winname);
     if(!parsePage)
 	return JS_FALSE;
+    JS_DefineProperty(jcx, obj, "opener",
+       OBJECT_TO_JSVAL(jwin), NULL, NULL, PROP_FIXED);
     return JS_TRUE;
 }				/* window_ctor */
 
