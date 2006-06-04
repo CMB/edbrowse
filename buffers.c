@@ -1000,36 +1000,24 @@ readFile(const char *filename, const char *post)
 
     if(isURL(filename)) {
 	const char *domain = getHostURL(filename);
-	const char *prot;
 	if(!domain)
 	    return false;	/* some kind of error */
 	if(!*domain) {
 	    setError("empty domain in url");
 	    return false;
 	}
-	prot = getProtURL(filename);
 	serverData = 0;
 	serverDataLen = 0;
-	if(stringEqualCI(prot, "http") || stringEqualCI(prot, "https")) {
-	    rc = httpConnect(0, filename);
-	} else if(stringEqualCI(prot, "ftp")) {
-	    rc = ftpConnect(filename);
-	} else if(stringEqualCI(prot, "rtsp") || stringEqualCI(prot, "pnm")) {
-	    char cmd[300];
-	    sprintf(cmd, "trplayer %s", filename);
-	    debugPrint(3, "%s", cmd);
-	    system(cmd);
-	    rc = true;
-	} else {
-	    setError("the %s protocol is not supported at this time", prot);
-	    rc = false;
-	}
+
+	rc = httpConnect(0, filename);
+
 	if(!rc) {
 /* The error could have occured after redirection */
 	    nzFree(changeFileName);
 	    changeFileName = 0;
 	    return false;
 	}
+
 /* We got some data.  Any warnings along the way have been printed,
  * like 404 file not found, but it's still worth continuing. */
 	rbuf = serverData;
@@ -1040,7 +1028,7 @@ readFile(const char *filename, const char *post)
 	    cw->dot = endRange;
 	    return true;
 	}
-	/* empty */
+
     } else {			/* url or file */
 
 /* reading a file from disk */
@@ -2410,15 +2398,20 @@ substituteText(const char *line)
     return -1;
 }				/* substituteText */
 
-/* Implement various two letter commands.
- * Most of these set and clear modes.
- * Return 1 or 0 for success or failure as usual.
- * But return 2 if there is a new command to run. */
+/*********************************************************************
+Implement various two letter commands.
+Most of these set and clear modes.
+Return 1 or 0 for success or failure as usual.
+But return 2 if there is a new command to run.
+The second parameter is a result parameter, the new command.
+*********************************************************************/
+
 static int
 twoLetter(const char *line, const char **runThis)
-{				/* result parameter */
+{
     static char newline[MAXTTYLINE];
     char c;
+    bool rc;
     int i;
 
     *runThis = newline;
@@ -2491,24 +2484,43 @@ if(stringEqual(line, "us")) return unstripChild();
 	    return false;
 	}
     }
-    /* cd */
-    if(line[0] == 'p' && line[1] == 'a') {
-	static const char types[] = "wa3v";
+
+    if(line[0] == 'p' && line[1] == 'b') {
 	c = line[2];
-	if(!c || strchr(types, c) && !line[3]) {
-#if 0
-/* some wave files don't look like binary, for some reason */
-	    if(!cw->binMode) {
-		setError("binary data expected");
+	if(!c || c == '.') {
+	    const struct MIMETYPE *mt;
+	    char *cmd;
+	    const char *suffix = 0;
+	    if(!cw->dol) {
+		setError("cannot play an empty buffer");
 		return false;
 	    }
-#endif
-	    if(!c)
-		return playAudio(0);
-	    return playAudio(strchr(types, c) - types + 1);
+	    if(c == '.') {
+		suffix = line + 3;
+	    } else {
+		if(cw->fileName)
+		    suffix = strrchr(cw->fileName, '.');
+		if(!suffix) {
+		    setError
+		       ("file has no suffix, use mt.xxx to specify your own suffix");
+		    return false;
+		}
+		++suffix;
+	    }
+	    mt = findMimeBySuffix(suffix);
+	    if(!mt) {
+		setError
+		   ("suffix .%s is not a recognized mime type, please check your config file.",
+		   suffix);
+		return false;
+	    }
+	    cmd = pluginCommand(mt, 0, suffix);
+	    rc = bufferToProgram(cmd);
+	    nzFree(cmd);
+	    return rc;
 	}
     }
-    /* pa */
+
     if(stringEqual(line, "rf")) {
 	cmd = 'e';
 	if(!cw->fileName) {
@@ -3836,7 +3848,9 @@ runCommand(const char *line)
 	    first = '#';
 	    goto browse;
 	}
+
 /* Different URL, go get it. */
+/* did you make changes that you didn't write? */
 	if(!cxQuit(context, 0))
 	    return false;
 	freeUndoLines(cw->map);
@@ -3886,10 +3900,15 @@ runCommand(const char *line)
 	if(!serverData && isURL(w->fileName)) {
 	    fileSize = -1;
 	    freeWindow(w);
+	    if(noStack && cw->prev) {
+		w = cw;
+		cw = w->prev;
+		cs->lw = cw;
+		freeWindow(w);
+	    }
 	    return j;
 	}
 	if(noStack) {
-	    puts("replace");
 	    w->prev = cw->prev;
 	    cxQuit(context, 1);
 	} else {
@@ -3911,7 +3930,7 @@ runCommand(const char *line)
 	if(cmd == 'e')
 	    return true;
     }
-    /* e or b */
+
   browse:
     if(cmd == 'b') {
 	if(!cw->browseMode) {

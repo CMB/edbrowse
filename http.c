@@ -427,6 +427,10 @@ httpConnect(const char *from, const char *url)
     int delay;			/* before we refresh the page */
     int recount = 0;		/* count redirections */
     char user[MAXUSERPASS], pass[MAXUSERPASS];
+    struct MIMETYPE *mt;
+    const char *prot;
+    char *cmd;
+    char suffix[12];
 
     if(!isURL(url)) {
 	setError("%s is not a url", url);
@@ -449,7 +453,8 @@ httpConnect(const char *from, const char *url)
     hce = ENC_PLAIN;
     isprox = isProxyURL(url);
     hssl = 0;
-    secure = stringEqualCI(getProtURL(url), "https");
+    prot = getProtURL(url);
+    secure = stringEqualCI(prot, "https");
     host = getHostURL(url);
     if(!host)
 	errorPrint("@empty host in httpConnect");
@@ -459,6 +464,35 @@ httpConnect(const char *from, const char *url)
 	return false;
     }
     debugPrint(4, "%s -> %s", host, tcp_ip_dots(hip));
+
+/* See if the protocol is a recognized stream */
+    if(stringEqualCI(prot, "http") || stringEqualCI(prot, "https")) {
+	;			/* ok for now */
+    } else if(stringEqualCI(prot, "ftp")) {
+	return ftpConnect(url);
+    } else if(mt = findMimeByProtocol(prot)) {
+      mimeProcess:
+	cmd = pluginCommand(mt, url, 0);
+	system(cmd);
+	nzFree(cmd);
+	return true;
+    } else {
+	setError
+	   ("the %s protocol is not supported by edbrowse, and is not included in the mime types in your config file",
+	   prot);
+	return false;
+    }
+
+/* Ok, it's http, but the suffix could force a plugin */
+    post = url + strcspn(url, "?#\1");
+    for(s = post - 1; s >= url && *s != '.' && *s != '/'; --s) ;
+    if(*s == '.') {
+	++s;
+	strncpy(suffix, s, post - s);
+	suffix[post - s] = 0;
+	if((mt = findMimeBySuffix(suffix)) && mt->stream)
+	    goto mimeProcess;
+    }
 
 /* Pull user password out of the url */
     user[0] = pass[0] = 0;

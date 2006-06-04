@@ -82,18 +82,8 @@ from = Karl and Wendy Dahlke
 reply = webmaster@scrapsayings.com
 }
 
-#  free mail account, for safelists and other crap
-mail {
-inserver = imap.mail15.com
-outserver = smtp.mail15.com
-login = eklhad
-password = giraffe
-from = Karl Dahlke
-reply = eklhad@mail15.com
-}
-
 #  An email associated with my private domain, independent of my ISP
-#  This is usually forwarded to my ISP.
+#  This is forwarded to my ISP.
 mail {
 inserver = mail.comcast.net
 outserver = mail.comcast.net
@@ -108,6 +98,9 @@ reply = karl@eklhad.net
 #  Format    is alias:email:other fields.
 adbook=/home/eklhad/outside/adbook
 
+#  Move to this directory when fetching mail.
+maildir = /home/eklhad/mbox
+
 #  ip addresses on the blacklist
 ipblack=/home/eklhad/outside/ipblack
 
@@ -115,9 +108,6 @@ ipblack=/home/eklhad/outside/ipblack
 #  This file contains passwords, make sure it is 0600.
 #  Do not hand edit this file, unless you know what you are doing!
 jar = /home/eklhad/outside/cookies
-
-#  Move to this directory when fetching mail.
-maildir = /home/eklhad/mbox
 
 #  wait 30 seconds for a response from a web server
 webtimer = 30
@@ -141,6 +131,33 @@ support@my-side-business.com > support
 sales@my-side-business.com > sales
 @my-side-business.com > business
 me@my-regular-dayjob.com > work
+}
+
+#  Describe the mime types and the programs to run them.
+#  For obvious reasons, I'm only worried about the audio -
+#  though there may be some application files that could be meaningfully processed.
+mime {
+type = audio/basic
+mdesc = audio file in a wave format
+suffix = wav,voc,au
+#  The star is replaced with the suffix at runtime
+program = play -t * -
+}
+
+mime {
+type = audio/mp3
+mdesc = audio file in mp3 format
+suffix = mp3
+program = mpg123 -q -
+}
+
+mime {
+#  the < forces it to be a stream, hence the url is passed to the program
+type = <audio/x-pn-realaudio
+mdesc = streaming audio
+suffix = rm,ra,ram
+protocol = rtsp,pnm
+program = trplayer
 }
 
 #  Plenty of sites use javascript solely for visual effect.

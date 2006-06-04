@@ -96,6 +96,8 @@ typedef uchar *pst;		/* perl string */
 #define MAXUSERPASS 40
 /* Number of pop3 mail accounts */
 #define MAXACCOUNT 100
+/* Number of mime types */
+#define MAXMIME 100
 /* How many sessions open concurrently */
 #define MAXSESSION 1000
 /* Allocation increment for a growing string, that we don't expect
@@ -137,6 +139,12 @@ struct MACCOUNT {		/* pop3 account */
     int inport, outport;
 };
 
+struct MIMETYPE {
+    char *type, *desc;
+    char *suffix, *prot, *program;
+    bool stream;
+};
+
 /* various globals */
 extern int debugLevel;		/* 0 to 9 */
 extern int webTimeout, mailTimeout;
@@ -168,9 +176,11 @@ extern void *jdoc;		/* javascript document object */
 extern void *jwloc;		/* javascript location object */
 extern int maxAccount;		/* how many email accounts specified */
 extern int localAccount;	/* this is the smtp server for outgoing mail */
-extern struct MACCOUNT accounts[];	/* all the email accounts */
 extern char *mailDir;		/* move to this directory when fetching mail */
-extern bool caseInsensitive, searchStringsAll, displayAlt;
+extern struct MACCOUNT accounts[];	/* all the email accounts */
+extern int maxMime;		/* how many emime types specified */
+extern struct MIMETYPE mimetypes[];
+extern bool caseInsensitive, searchStringsAll;
 extern bool textAreaDosNewlines;	/* when transmitting a textarea */
 extern bool undoable;		/* an undoable operation is taking place */
 extern bool allowRedirection;	/* from http code 301, or http refresh */

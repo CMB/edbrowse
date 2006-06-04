@@ -13,7 +13,7 @@
 /* Define the globals that are declared in eb.h. */
 /* See eb.h for descriptive comments. */
 
-const char *version = "3.1.1";
+const char *version = "3.1.2";
 char *userAgents[10], *currentAgent, *currentReferrer;
 const char eol[] = "\r\n";
 char EMPTYSTRING[] = "";
@@ -25,7 +25,9 @@ const char opint[] = "operation interrupted";
 int fileSize, maxFileSize = 50000000;
 int localAccount, maxAccount;
 struct MACCOUNT accounts[MAXACCOUNT];
-bool caseInsensitive, searchStringsAll, displayAlt = true;
+int maxMime;
+struct MIMETYPE mimetypes[MAXMIME];
+bool caseInsensitive, searchStringsAll;
 bool textAreaDosNewlines = true, undoable;
 bool allowRedirection = true, allowJS = true, sendReferrer = false;
 bool verifyCertificates = true, binaryDetect = true;
@@ -144,19 +146,20 @@ readConfigFile(void)
     bool cmt = false;
     bool startline = true;
     bool cfgmodify = false;
-    uchar mailblock = 0;
+    uchar mailblock = 0, mimeblock = 0;
     int nest, ln, j;
     int sn = 0;			/* script number */
     char stack[MAXNEST];
     char last[24];
     int lidx = 0;
     struct MACCOUNT *act;
+    struct MIMETYPE *mt;
     static const char *const keywords[] = {
 	"inserver", "outserver", "login", "password", "from", "reply",
 	"inport", "outport",
-	"adbook", "ipblack", "junksub", "maildir",
-	"filtersub", "filterfrom", "filter", "agent",
-	"jar", "nojs", "spamcan", "spamwords",
+	"type", "desc", "suffix", "protocol", "program",
+	"adbook", "ipblack", "maildir", "agent",
+	"jar", "nojs", "spamcan",
 	"webtimer", "mailtimer", "certfile",
 	0
     };
@@ -173,6 +176,7 @@ readConfigFile(void)
     memcpy(cfgcopy, buf, (cfglen = buflen));
 
 /* Undos, uncomment, watch for nulls */
+/* Encode mail{ as hex 81 m, and other encodings. */
     ln = 1;
     for(s = t = v = buf; s < buf + buflen; ++s) {
 	c = *s;
@@ -203,6 +207,11 @@ readConfigFile(void)
 	    if(stringEqual(last, "mail{")) {
 		*v = '\x81';
 		v[1] = 'm';
+		t = v + 2;
+	    }
+	    if(stringEqual(last, "mime{")) {
+		*v = '\x81';
+		v[1] = 'e';
 		t = v + 2;
 	    }
 	    if(stringEqual(last, "fromfilter{")) {
@@ -311,6 +320,7 @@ readConfigFile(void)
     ln = 1;
     nest = 0;
     stack[0] = ' ';
+
     for(s = buf, cfglp = cfgcopy; *s; s = t + 1, cfglp = cfgnlp, ++ln) {
 	cfgnlp = strchr(cfglp, '\n') + 1;
 	t = strchr(s, '\n');
@@ -320,6 +330,7 @@ readConfigFile(void)
 	    continue;		/* comment */
 	*t = 0;			/* I'll put it back later */
 
+/* Gather the filters in a mail filter block */
 	if(mailblock > 1 && !strchr("\x81\x82\x83", *s)) {
 	    v = strchr(s, '>');
 	    if(!v)
@@ -367,6 +378,7 @@ readConfigFile(void)
 	v = strchr(s, '=');
 	if(!v)
 	    goto nokeyword;
+
 	while(v > s && (v[-1] == ' ' || v[-1] == '\t'))
 	    --v;
 	if(v == s)
@@ -377,6 +389,7 @@ readConfigFile(void)
 		*v = c;
 		goto nokeyword;
 	    }
+
 	n = stringInList(keywords, s);
 	if(n < 0) {
 	    if(!nest)
@@ -384,13 +397,25 @@ readConfigFile(void)
 	    *v = c;		/* put it back */
 	    goto nokeyword;
 	}
+
 	if(n < 8 && mailblock != 1)
 	    errorPrint
 	       ("1.ebrc: line %d, attribute %s canot be set outside of a mail descriptor",
 	       ln, s);
+
+	if(n >= 8 && n < 13 && mimeblock != 1)
+	    errorPrint
+	       ("1.ebrc: line %d, attribute %s canot be set outside of a mime descriptor",
+	       ln, s);
+
 	if(n >= 8 && mailblock)
 	    errorPrint
 	       ("1.ebrc: line %d, attribute %s canot be set inside a mail descriptor or filter block",
+	       ln, s);
+
+	if((n < 8 || n >= 13) && mimeblock)
+	    errorPrint
+	       ("1.ebrc: line %d, attribute %s canot be set inside a mime descriptor",
 	       ln, s);
 
 /* act upon the keywords */
@@ -405,49 +430,83 @@ readConfigFile(void)
 	if(!*v)
 	    errorPrint("1.ebrc: line %d, attribute %s is set to nothing", ln,
 	       s);
+
 	switch (n) {
 	case 0:
 	    act->inurl = v;
 	    continue;
+
 	case 1:
 	    act->outurl = v;
 	    continue;
+
 	case 2:
 	    act->login = v;
 	    continue;
+
 	case 3:
 	    act->password = v;
 	    continue;
+
 	case 4:
 	    act->from = v;
 	    continue;
+
 	case 5:
 	    act->reply = v;
 	    continue;
+
 	case 6:
 	    act->inport = atoi(v);
 	    continue;
+
 	case 7:
 	    act->outport = atoi(v);
 	    continue;
+
 	case 8:
+	    if(*v == '<')
+		mt->stream = true, ++v;
+	    mt->type = v;
+	    continue;
+
+	case 9:
+	    mt->desc = v;
+	    continue;
+
+	case 10:
+	    mt->suffix = v;
+	    continue;
+
+	case 11:
+	    mt->prot = v;
+	    continue;
+
+	case 12:
+	    mt->program = v;
+	    continue;
+
+	case 13:
 	    addressFile = v;
 	    ftype = fileTypeByName(v, false);
 	    if(ftype && ftype != 'f')
 		errorPrint("1.ebrc: address book %s is not a regular file", v);
 	    continue;
-	case 9:
+
+	case 14:
 	    ipbFile = v;
 	    ftype = fileTypeByName(v, false);
 	    if(ftype && ftype != 'f')
 		errorPrint("1.ebrc: ip blacklist %s is not a regular file", v);
 	    continue;
-	case 11:
+
+	case 15:
 	    mailDir = v;
 	    if(fileTypeByName(v, false) != 'd')
 		errorPrint("1.ebrc: %s is not a directory", v);
 	    continue;
-	case 15:
+
+	case 16:
 	    for(j = 0; j < 10; ++j)
 		if(!userAgents[j])
 		    break;
@@ -456,7 +515,8 @@ readConfigFile(void)
 		   ln);
 	    userAgents[j] = v;
 	    continue;
-	case 16:
+
+	case 17:
 	    cookieFile = v;
 	    ftype = fileTypeByName(v, false);
 	    if(ftype && ftype != 'f')
@@ -467,7 +527,8 @@ readConfigFile(void)
 		   ftype ? "create" : "write to", v);
 	    close(j);
 	    continue;
-	case 17:
+
+	case 18:
 	    if(javaDisCount == MAXNOJS)
 		errorPrint("1.ebrc: too many no js directives, limit %d",
 		   MAXNOJS);
@@ -479,19 +540,23 @@ readConfigFile(void)
 		   ln, v);
 	    javaDis[javaDisCount++] = v;
 	    continue;
-	case 18:
+
+	case 19:
 	    spamCan = v;
 	    ftype = fileTypeByName(v, false);
 	    if(ftype && ftype != 'f')
 		errorPrint("1.ebrc: mail trash can %s is not a regular file",
 		   v);
 	    continue;
+
 	case 20:
 	    webTimeout = atoi(v);
 	    continue;
+
 	case 21:
 	    mailTimeout = atoi(v);
 	    continue;
+
 	case 22:
 	    sslCerts = v;
 	    ftype = fileTypeByName(v, false);
@@ -505,6 +570,7 @@ readConfigFile(void)
 		   v);
 	    close(j);
 	    continue;
+
 	default:
 	    errorPrint("1.ebrc: line %d, keyword %s is not yet implemented", ln,
 	       s);
@@ -543,10 +609,28 @@ readConfigFile(void)
 		    act->outport = 25;
 		continue;
 	    }
+
 	    if(mailblock) {
 		mailblock = 0;
 		continue;
 	    }
+
+	    if(mimeblock == 1) {
+		++maxMime;
+		mimeblock = 0;
+		if(!mt->type)
+		    errorPrint("1.ebrc: missing type at line %d", ln);
+		if(!mt->desc)
+		    errorPrint("1.ebrc: missing description at line %d", ln);
+		if(!mt->suffix && !mt->prot)
+		    errorPrint
+		       ("1.ebrc: missing suffix or protocol list at line %d",
+		       ln);
+		if(!mt->program)
+		    errorPrint("1.ebrc: missing program at line %d", ln);
+		continue;
+	    }
+
 	    if(--nest < 0)
 		errorPrint("1.ebrc: unexpected } at line %d", ln);
 	    if(nest)
@@ -575,20 +659,24 @@ readConfigFile(void)
 
 /* Starting something */
 	c = s[1];
-	if((nest || mailblock) && strchr("fmrts", c)) {
+	if((nest || mailblock || mimeblock) && strchr("fmerts", c)) {
 	    const char *curblock = "another function";
 	    if(mailblock)
 		curblock = "a mail descriptor";
 	    if(mailblock > 1)
 		curblock = "a filter block";
+	    if(mimeblock)
+		curblock = "a mime descriptor";
 	    errorPrint
-	       ("1.ebrc: line %d, cannot start a function, mail descriptor, or filter block inside %s",
+	       ("1.ebrc: line %d, cannot start a function, mail/mime descriptor, or filter block inside %s",
 	       ln, curblock);
 	}
-	if(!strchr("fmrts", c) && !nest)
+
+	if(!strchr("fmerts", c) && !nest)
 	    errorPrint
 	       ("1.ebrc: statement at line %d must appear inside a function",
 	       ln);
+
 	if(c == 'm') {
 	    mailblock = 1;
 	    if(maxAccount == MAXACCOUNT)
@@ -599,14 +687,26 @@ readConfigFile(void)
 	    continue;
 	}
 
+	if(c == 'e') {
+	    mimeblock = 1;
+	    if(maxMime == MAXMIME)
+		errorPrint
+		   ("1too many mime types in your config file, limit %d",
+		   MAXMIME);
+	    mt = mimetypes + maxMime;
+	    continue;
+	}
+
 	if(c == 'r') {
 	    mailblock = 2;
 	    continue;
 	}
+
 	if(c == 't') {
 	    mailblock = 3;
 	    continue;
 	}
+
 	if(c == 's') {
 	    mailblock = 4;
 	    continue;
@@ -622,7 +722,7 @@ readConfigFile(void)
 	    ebScript[sn] = t;
 	    goto putback;
 	}
-	/* new function */
+
 	if(++nest >= sizeof (stack))
 	    errorPrint
 	       ("1.ebrc: line %d, control structures are nested too deeply",
@@ -636,6 +736,9 @@ readConfigFile(void)
     if(nest)
 	errorPrint("1.ebrc: function %s is not closed at eof",
 	   ebScriptName[sn]);
+
+    if(mailblock | mimeblock)
+	errorPrint("1.ebrc: mail or mime block is not closed at EOF");
 
     if(cfgmodify)
 	updateConfig();
@@ -1255,7 +1358,7 @@ bufferToProgram(const char *cmd)
     FILE *f;
     char *buf;
     int buflen, n;
-    bool rc;
+
     f = popen(cmd, "w");
     if(!f) {
 	setError("could not spawn subcommand %s, errno %d", cmd, errno);
@@ -1265,48 +1368,106 @@ bufferToProgram(const char *cmd)
 	pclose(f);
 	return false;		/* should never happen */
     }
-    rc = true;
     n = fwrite(buf, buflen, 1, f);
-    if(n < buflen)
-	rc = false;
-    if(pclose(f))
-	rc = false;
+    pclose(f);
     nzFree(buf);
-    if(!rc)
-	setError("subcommand %s did not terminate normally", cmd);
-    return rc;
+    return true;
 }				/* bufferToProgram */
 
-bool
-playAudio(int type)
+struct MIMETYPE *
+findMimeBySuffix(const char *suffix)
 {
-    const char *s;
-    static const char *const commands[] = { 0,
-	"play -t wav -",
-	"play -t au -",
-	"mpg123 -q -",
-	"play -t voc -",
-    };
-    if(!type) {			/* unspecified, check the filename */
-	if(!cw->fileName)
-	    goto badtype;
-	s = strrchr(cw->fileName, '.');
+    int i;
+    int len = strlen(suffix);
+    struct MIMETYPE *m = mimetypes;
+
+    for(i = 0; i < maxMime; ++i, ++m) {
+	const char *s = m->suffix, *t;
 	if(!s)
-	    goto badtype;
-	++s;
-	if(stringEqualCI(s, "wav"))
-	    type = 1;
-	if(stringEqualCI(s, "au"))
-	    type = 2;
-	if(stringEqualCI(s, "mp3"))
-	    type = 3;
-	if(stringEqualCI(s, "voc"))
-	    type = 4;
+	    continue;
+	while(*s) {
+	    t = strchr(s, ',');
+	    if(!t)
+		t = s + strlen(s);
+	    if(t - s == len && memEqualCI(s, suffix, len))
+		return m;
+	    if(*t)
+		++t;
+	    s = t;
+	}
     }
-    if(!type) {
-      badtype:
-	setError("unknown audio format");
-	return false;
+
+    return 0;
+}				/* findMimeBySuffix */
+
+struct MIMETYPE *
+findMimeByProtocol(const char *prot)
+{
+    int i;
+    int len = strlen(prot);
+    struct MIMETYPE *m = mimetypes;
+
+    for(i = 0; i < maxMime; ++i, ++m) {
+	const char *s = m->prot, *t;
+	if(!s)
+	    continue;
+	while(*s) {
+	    t = strchr(s, ',');
+	    if(!t)
+		t = s + strlen(s);
+	    if(t - s == len && memEqualCI(s, prot, len))
+		return m;
+	    if(*t)
+		++t;
+	    s = t;
+	}
     }
-    return bufferToProgram(commands[type]);
-}				/* playAudio */
+
+    return 0;
+}				/* findMimeByProtocol */
+
+/* The result is allocated */
+char *
+pluginCommand(const struct MIMETYPE *m, const char *file, const char *suffix)
+{
+    int len, suflen;
+    const char *s;
+    char *cmd, *t;
+
+/* leave rooom for space quote quote null */
+    len = strlen(m->program) + 4;
+    if(file)
+	len += strlen(file);
+
+    suflen = 0;
+    if(suffix) {
+/* extra room for * to suffix conversion */
+	suflen = strlen(suffix);
+	for(s = m->program; *s; ++s)
+	    if(*s == '*')
+		len += suflen - 1;
+    }
+
+    cmd = allocMem(len);
+    t = cmd;
+    for(s = m->program; *s; ++s) {
+	if(suffix && *s == '*') {
+	    strcpy(t, suffix);
+	    t += suflen;
+	} else {
+	    *t++ = *s;
+	}
+    }
+
+    if(file) {
+	*t++ = ' ';
+	*t++ = '"';
+	strcpy(t, file);
+	t += strlen(t);
+	*t++ = '"';
+    }
+    *t = 0;
+
+    debugPrint(3, "%s", cmd);
+    return cmd;
+}				/* pluginCommand */

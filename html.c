@@ -57,7 +57,7 @@ static int radioChecked_l;
 static char *preamble;
 static int preamble_l;
 
-static void htmlName(void) ;
+static void htmlName(void);
 
 /* Switch from the linked list of tags to an array. */
 static void
@@ -1787,7 +1787,7 @@ encodeTags(char *html)
 /* I'm going to assume that if the web designer took the time
  * to put in an alt tag, then it's worth reading.
  * You can turn this feature off, but I don't think you'd want to. */
-		if(displayAlt && (a = htmlAttrVal(topAttrib, "alt")))
+		if(a = htmlAttrVal(topAttrib, "alt"))
 		    stringAndString(&new, &l, a);
 		continue;
 	    }

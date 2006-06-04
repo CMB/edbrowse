@@ -92,6 +92,7 @@ blind, script, accessible">
 <LI><A HREF=#script> Edbrowse Functions </A>
 <LI><A HREF=#init> The Init Script </A>
 <LI><A HREF=#ma> Mail Accounts </A>
+<LI><A HREF=#mt> Mime Descriptors </A>
 <LI><A HREF=#sampcfg> A Sample Config File </A>
 </UL>
 
@@ -277,7 +278,7 @@ bd: binary detection on files (toggle)
 eo: end markers off
 el: show end markers ^$ when a line is listed
 ep: show end markers when a line is listed or printed
-pa: play audio
+pb: play buffer
 ft: show the title of the current web page
 fd: show the description of the current web page
 fk: show the keywords of the current web page
@@ -1533,11 +1534,6 @@ For example, you might use the shell escape to execute
 `cat x y &gt;z',
 yet z will not appear in your directory scan until you type rf.
 
-<P>
-Edbrowse prints the word "replace" when a file or web page replaces another,
-rather than pushing it onto a stack.&nbsp;
-This is implied by the rf command, but it can happen for other reasons as well.
-
 <H3 align=center> <A NAME=hlink> Hyperlinks </A> </H3>
 
 A link to another web page is enclosed in braces, like this:
@@ -1753,22 +1749,20 @@ Instead of playing the song, I make it available to you through a hyperlink.
 This always appears at or near the top of the page.&nbsp;
 Click on this link and download the wave or mp3 file,
 and play it at your convenience.&nbsp;
-Use the play audio `pa' command.&nbsp;
-Normally pa uses the name of the file to infer the audio format.&nbsp;
+Use the play buffer `pb' command.&nbsp;
+Normally pb uses the name of the file to infer the audio format.&nbsp;
 If the filename ends in .wav, it's a wave file, and so on.&nbsp;
-If the filename is not particularly helpful, and you know the audio format, you can specify it as follows.
-<P>
-paw: play audio .wav
-<br>
-paa: play audio .au
-<br>
-pav: play audio .voc
-<br>
-pa3: play audio .mp3
+If the filename is not particularly helpful, and you know the audio format, you can specify it by typing
+pb.wav for a wave file, pb.mp3 for an mp3 file, and so on.
 
 <P>
-These commands call various programs that are present on most Linux distributions.&nbsp;
-If you are on Windows, I don't really know what to do.
+The config file (described below)
+includes mime type descriptors,
+which tell edbrowse how to play wave and mp3 files etc.&nbsp;
+These must be set up, or the pb command won't work.&nbsp;
+It will say something like,
+"I don't know how to process an mp3 file".&nbsp;
+This is consistent with other browsers, which use "plugins" to play multimedia files that are retrieved from the internet.
 
 <H3 align=center> <A NAME=input> Input Fields </A> </H3>
 
@@ -2944,6 +2938,24 @@ Mail filtering, by sender and/or subject,
 is controlled by your config file as well.&nbsp;
 This will be <A HREF=#filter>described later</A>,
 as part of the fetchmail client.
+
+<H3 align=center> <A NAME=mt> Mime Descriptors </A> </H3>
+
+Mime types are determined by the extension of the file, or in some cases the protocol.&nbsp;
+They might tell edbrowse to use /usr/bin/play to play file.wav or file.voc,
+and /usr/bin/mpg123 to play file.mp3, and so on.&nbsp;
+Rather than repeat it all here, I suggest you look at the mime {...} sections in the sample config file, referenced below.&nbsp;
+Linux users can probably copy this part directly into their own config file.&nbsp;
+It generally does the right thing.&nbsp;
+Here is one example.
+
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>mime {
+type = audio/mp3
+mdesc = audio file in mp3 format
+suffix = mp3
+program = mpg123 -q -
+}
+</font></PRE>
 
 <H3 align=center> <A NAME=sampcfg> A Sample Config File </A> </H3>
 

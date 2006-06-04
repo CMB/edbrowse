@@ -8,7 +8,9 @@ void eeCheck(void) ;
 int main(int argc, char **argv) ;
 bool runEbFunction(const char *line) ;
 bool bufferToProgram(const char *cmd) ;
-bool playAudio(int type) ;
+struct MIMETYPE * findMimeBySuffix(const char *suffix) ;
+struct MIMETYPE * findMimeByProtocol(const char *prot) ;
+char * pluginCommand(const struct MIMETYPE *m, const char *file, const char *suffix) ;
 
 /* sourcefile=buffers.c */
 pst fetchLine(int n, int show) ;
