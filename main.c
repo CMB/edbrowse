@@ -930,9 +930,9 @@ main(int argc, char **argv)
 
     recycleBin = allocMem(strlen(home) + 10);
     sprintf(recycleBin, "%s/.recycle", home);
-    edbrowseTempFile = allocMem(strlen(recycleBin) + 8 + 3);
-/* The extra 3 is for .gz */
-    sprintf(edbrowseTempFile, "%s/eb.tmp", recycleBin);
+    edbrowseTempFile = allocMem(strlen(recycleBin) + 8 + 6);
+/* The extra 6 is for the suffix */
+    sprintf(edbrowseTempFile, "%s/eb_tmp", recycleBin);
     if(fileTypeByName(recycleBin, false) != 'd') {
 	if(mkdir(recycleBin, 0700)) {
 	    free(recycleBin);
@@ -1353,23 +1353,53 @@ runEbFunction(const char *line)
 
 /* Send the contents of the current buffer to a running program */
 bool
-bufferToProgram(const char *cmd)
+bufferToProgram(const char *cmd, const char *suffix, bool trailPercent)
 {
     FILE *f;
-    char *buf;
+    char *buf = 0;
     int buflen, n;
+    int size1, size2;
+    char *u = edbrowseTempFile + strlen(edbrowseTempFile);
 
-    f = popen(cmd, "w");
-    if(!f) {
-	setError("could not spawn subcommand %s, errno %d", cmd, errno);
-	return false;
-    }
-    if(!unfoldBuffer(context, false, &buf, &buflen)) {
+    if(!trailPercent) {
+/* pipe the buffer into the program */
+	f = popen(cmd, "w");
+	if(!f) {
+	    setError("could not spawn subcommand %s, errno %d", cmd, errno);
+	    return false;
+	}
+	if(!unfoldBuffer(context, false, &buf, &buflen)) {
+	    pclose(f);
+	    return false;	/* should never happen */
+	}
+	n = fwrite(buf, buflen, 1, f);
 	pclose(f);
-	return false;		/* should never happen */
+    } else {
+	sprintf(u, ".%s", suffix);
+	size1 = currentBufferSize();
+	size2 = fileSizeByName(edbrowseTempFile);
+	if(size1 == size2) {
+/* assume it's the same data */
+	    *u = 0;
+	} else {
+	    f = fopen(edbrowseTempFile, "w");
+	    if(!f) {
+		setError("could not create temp file %s, errno %d",
+		   edbrowseTempFile, errno);
+		*u = 0;
+		return false;
+	    }
+	    *u = 0;
+	    if(!unfoldBuffer(context, false, &buf, &buflen)) {
+		fclose(f);
+		return false;	/* should never happen */
+	    }
+	    n = fwrite(buf, buflen, 1, f);
+	    fclose(f);
+	}
+	system(cmd);
     }
-    n = fwrite(buf, buflen, 1, f);
-    pclose(f);
+
     nzFree(buf);
     return true;
 }				/* bufferToProgram */
@@ -1433,15 +1463,19 @@ pluginCommand(const struct MIMETYPE *m, const char *file, const char *suffix)
     int len, suflen;
     const char *s;
     char *cmd, *t;
+    bool trailPercent = false;
 
 /* leave rooom for space quote quote null */
     len = strlen(m->program) + 4;
-    if(file)
+    if(file) {
 	len += strlen(file);
+    } else if(m->program[strlen(m->program) - 1] == '%') {
+	trailPercent = true;
+	len += strlen(edbrowseTempFile) + 6;
+    }
 
     suflen = 0;
     if(suffix) {
-/* extra room for * to suffix conversion */
 	suflen = strlen(suffix);
 	for(s = m->program; *s; ++s)
 	    if(*s == '*')
@@ -1458,15 +1492,13 @@ pluginCommand(const struct MIMETYPE *m, const char *file, const char *suffix)
 	    *t++ = *s;
 	}
     }
+    *t = 0;
 
     if(file) {
-	*t++ = ' ';
-	*t++ = '"';
-	strcpy(t, file);
-	t += strlen(t);
-	*t++ = '"';
+	sprintf(t, " \"%s\"", file);
+    } else if(trailPercent) {
+	sprintf(t - 1, " \"%s.%s\"", edbrowseTempFile, suffix);
     }
-    *t = 0;
 
     debugPrint(3, "%s", cmd);
     return cmd;

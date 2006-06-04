@@ -183,8 +183,16 @@ apparentSize(int cx, bool browsing)
 	    size += pstLength(line);
 	}
     }				/* loop over lines */
+    if(sessionList[cx].lw->nlMode)
+	--size;
     return size;
 }				/* apparentSize */
+
+int
+currentBufferSize(void)
+{
+    return apparentSize(context, cw->browseMode);
+}				/* currentBufferSize */
 
 /* get the directory suffix for a file.
  * This only makes sense in directory mode. */
@@ -2491,6 +2499,7 @@ if(stringEqual(line, "us")) return unstripChild();
 	    const struct MIMETYPE *mt;
 	    char *cmd;
 	    const char *suffix = 0;
+	    bool trailPercent = false;
 	    if(!cw->dol) {
 		setError("cannot play an empty buffer");
 		return false;
@@ -2507,6 +2516,10 @@ if(stringEqual(line, "us")) return unstripChild();
 		}
 		++suffix;
 	    }
+	    if(strlen(suffix) > 5) {
+		setError("suffix is limited to 5 characters");
+		return false;
+	    }
 	    mt = findMimeBySuffix(suffix);
 	    if(!mt) {
 		setError
@@ -2514,8 +2527,10 @@ if(stringEqual(line, "us")) return unstripChild();
 		   suffix);
 		return false;
 	    }
+	    if(mt->program[strlen(mt->program) - 1] == '%')
+		trailPercent = true;
 	    cmd = pluginCommand(mt, 0, suffix);
-	    rc = bufferToProgram(cmd);
+	    rc = bufferToProgram(cmd, suffix, trailPercent);
 	    nzFree(cmd);
 	    return rc;
 	}
@@ -2951,7 +2966,8 @@ unfoldBuffer(int cx, bool cr, char **data, int *len)
     }
     if(cr)
 	size += w->dol;
-    buf = allocMem(size + 1);
+/* a few bytes more, just for safety */
+    buf = allocMem(size + 4);
     *data = buf;
     for(ln = 1; ln <= w->dol; ++ln) {
 	pst line = fetchLineContext(ln, -1, cx);

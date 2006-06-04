@@ -148,7 +148,19 @@ mime {
 type = audio/mp3
 mdesc = audio file in mp3 format
 suffix = mp3
-program = mpg123 -q -
+#program = mpg123 -q -
+#  The above line works, but can be inconvenient, depending on the player.
+#  Some mp3 players don't work as well
+#  when they get their input from a pipe.
+#  When it comes from a file, they respond better to keyboard commands,
+#  to pause, back up, etc.
+#  So I invented a special % character at the end,
+#  which becomes a temp file with the proper suffix.
+program = mpg123 -q %
+#  And we could have done the same with play above.
+#program = play %
+#  Then you wouldn't need the -t *
+#  because the temp file has the right suffix, and play understands.
 }
 
 mime {

@@ -7,13 +7,14 @@ bool javaOK(const char *url) ;
 void eeCheck(void) ;
 int main(int argc, char **argv) ;
 bool runEbFunction(const char *line) ;
-bool bufferToProgram(const char *cmd) ;
+bool bufferToProgram(const char *cmd, const char *suffix, bool trailPercent) ;
 struct MIMETYPE * findMimeBySuffix(const char *suffix) ;
 struct MIMETYPE * findMimeByProtocol(const char *prot) ;
 char * pluginCommand(const struct MIMETYPE *m, const char *file, const char *suffix) ;
 
 /* sourcefile=buffers.c */
 pst fetchLine(int n, int show) ;
+int currentBufferSize(void) ;
 void displayLine(int n) ;
 pst inputLine(void) ;
 void freeUndoLines(const char *cmap) ;

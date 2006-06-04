@@ -488,6 +488,8 @@ httpConnect(const char *from, const char *url)
     for(s = post - 1; s >= url && *s != '.' && *s != '/'; --s) ;
     if(*s == '.') {
 	++s;
+	if(post >= s + sizeof (suffix))
+	    post = s + sizeof (suffix) - 1;
 	strncpy(suffix, s, post - s);
 	suffix[post - s] = 0;
 	if((mt = findMimeBySuffix(suffix)) && mt->stream)
