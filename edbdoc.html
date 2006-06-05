@@ -2944,7 +2944,7 @@ as part of the fetchmail client.
 Mime types are determined by the extension of the file, or in some cases the protocol.&nbsp;
 They might tell edbrowse to use /usr/bin/play to play file.wav or file.voc,
 and /usr/bin/mpg123 to play file.mp3, and so on.&nbsp;
-Rather than repeat it all here, I suggest you look at the mime {...} sections in the sample config file, referenced below.&nbsp;
+Rather than repeat it all here, I suggest you look at the mime {...} sections in the sample config file provided below.&nbsp;
 Linux users can probably copy this part directly into their own config file.&nbsp;
 It generally does the right thing.&nbsp;
 Here is one example.
@@ -2954,6 +2954,30 @@ type = audio/mp3
 mdesc = audio file in mp3 format
 suffix = mp3
 program = mpg123 -q -
+}
+</font></PRE>
+
+<P>
+If you have pulled down a file from the internet that ends in .mp3,
+type `pb' to play the contents of the buffer.&nbsp;
+The data is piped into the program,
+whose options tell it to expect data from standard in.&nbsp;
+If the mp3 player works better from a file,
+use a trailing percent to turn the buffer into a temp file with the proper suffix.
+
+<P>
+program = mpg123 -q %
+
+<P>
+The command `pb' could mean process buffer,as well as play buffer.&nbsp;
+For instance, a mime descriptor might unzip a zip archive.
+
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>mime {
+type = data/zip
+mdesc = a compressed zip archive
+suffix = zip
+#  use %, since unzip cannot read data from standard in
+program = unzip %
 }
 </font></PRE>
 
