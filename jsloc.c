@@ -672,14 +672,21 @@ establish_property_bool(void *jv, const char *name, bool value, bool readonly)
        (value ? JSVAL_TRUE : JSVAL_FALSE), NULL, my_setter, attr);
 }				/* establish_property_bool */
 
-void
+void *
 establish_property_array(void *jv, const char *name)
 {
     JSObject *obj = jv;
     JSObject *a = JS_NewArrayObject(jcx, 0, NULL);
-    JS_DefineProperty(jcx, obj, name,
-       OBJECT_TO_JSVAL(a), NULL, NULL, PROP_FIXED);
+    establish_property_object(obj, name, a);
+    return a;
 }				/* establish_property_array */
+
+void
+establish_property_object(void *parent, const char *name, void *child)
+{
+    JS_DefineProperty(jcx, parent, name,
+       OBJECT_TO_JSVAL(((JSObject *) child)), 0, 0, PROP_FIXED);
+}				/* establish_property_object */
 
 void
 establish_property_url(void *jv, const char *name,

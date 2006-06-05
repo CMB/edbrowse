@@ -109,8 +109,7 @@ window_ctor(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
     javaOpensWindow(newloc, winname);
     if(!parsePage)
 	return JS_FALSE;
-    JS_DefineProperty(jcx, obj, "opener",
-       OBJECT_TO_JSVAL(jwin), NULL, NULL, PROP_FIXED);
+    establish_property_object(obj, "opener", jwin);
     return JS_TRUE;
 }				/* window_ctor */
 
@@ -647,10 +646,13 @@ createJavaContext(void)
 {
     static JSRuntime *jrt;
     JSObject *o, *nav, *screen, *hist, *del;
+/* navigator mime types and plugins */
+    JSObject *navmt, *navpi;
     const char *itemname;
     int i;
     char verx11[20];
     jsval rval;
+    struct MIMETYPE *mt;
 
     if(!jrt) {
 /* 4 meg js space - should this be configurable? */
@@ -681,14 +683,10 @@ createJavaContext(void)
     if(!JS_InitStandardClasses(jcx, jwin))
 	errorPrint("2unable to create standard classes for javascript");
 
-    JS_DefineProperty(jcx, jwin, "window",
-       OBJECT_TO_JSVAL(jwin), NULL, NULL, PROP_FIXED);
-    JS_DefineProperty(jcx, jwin, "self",
-       OBJECT_TO_JSVAL(jwin), NULL, NULL, PROP_FIXED);
-    JS_DefineProperty(jcx, jwin, "parent",
-       OBJECT_TO_JSVAL(jwin), NULL, NULL, PROP_FIXED);
-    JS_DefineProperty(jcx, jwin, "top",
-       OBJECT_TO_JSVAL(jwin), NULL, NULL, PROP_FIXED);
+    establish_property_object(jwin, "window", jwin);
+    establish_property_object(jwin, "self", jwin);
+    establish_property_object(jwin, "parent", jwin);
+    establish_property_object(jwin, "top", jwin);
 
 /* Some visual attributes of the window.
  * These are just guesses.
@@ -719,8 +717,7 @@ createJavaContext(void)
     jdoc = JS_NewObject(jcx, &doc_class, NULL, jwin);
     if(!jdoc)
 	errorPrint("2unable to create document object for javascript");
-    JS_DefineProperty(jcx, jwin, "document",
-       OBJECT_TO_JSVAL(jdoc), NULL, NULL, PROP_FIXED);
+    establish_property_object(jwin, "document", jdoc);
 
     establish_property_string(jdoc, "bgcolor", "white", false);
     establish_property_string(jdoc, "cookie", 0, false);
@@ -735,15 +732,12 @@ createJavaContext(void)
 	establish_property_array(jdoc, itemname);
 
     o = JS_NewObject(jcx, 0, 0, jdoc);
-    JS_DefineProperty(jcx, jdoc, "idMaster",
-       OBJECT_TO_JSVAL(o), NULL, NULL, PROP_FIXED);
+    establish_property_object(jdoc, "idMaster", o);
     o = JS_NewObject(jcx, 0, 0, jdoc);
-    JS_DefineProperty(jcx, jdoc, "all",
-       OBJECT_TO_JSVAL(o), NULL, NULL, PROP_FIXED);
+    establish_property_object(jdoc, "all", o);
 
     nav = JS_NewObject(jcx, 0, 0, jwin);
-    JS_DefineProperty(jcx, jwin, "navigator",
-       OBJECT_TO_JSVAL(nav), NULL, NULL, PROP_FIXED);
+    establish_property_object(jwin, "navigator", nav);
 
 /* attributes of the navigator */
     establish_property_string(nav, "appName", "edbrowse", true);
@@ -761,17 +755,50 @@ createJavaContext(void)
 /* We need to locale-ize the next one */
     establish_property_string(nav, "userLanguage", "english", true);
     establish_property_string(nav, "language", "english", true);
-    establish_property_array(nav, "plugins");
-    establish_property_array(nav, "mimeTypes");
-/* And we need to fill in the mime types that edbrowse understands, I guess */
     JS_DefineFunction(jcx, nav, "javaEnabled", falseFunction, 0, PROP_FIXED);
     JS_DefineFunction(jcx, nav, "taintEnabled", falseFunction, 0, PROP_FIXED);
     establish_property_bool(nav, "cookieEnabled", true, true);
     establish_property_bool(nav, "onLine", true, true);
 
+/* Build the array of mime types and plugins,
+ * according to the entries in the config file. */
+    navpi = establish_property_array(nav, "plugins");
+    navmt = establish_property_array(nav, "mimeTypes");
+    mt = mimetypes;
+    for(i = 0; i < maxMime; ++i, ++mt) {
+/* po is the plugin object and mo is the mime object */
+	JSObject *mo, *po;
+	jsval mov, pov;
+	int len;
+
+	po = JS_NewObject(jcx, 0, 0, nav);
+	pov = OBJECT_TO_JSVAL(po);
+	JS_DefineElement(jcx, navpi, i, pov, NULL, NULL, PROP_FIXED);
+	mo = JS_NewObject(jcx, 0, 0, nav);
+	mov = OBJECT_TO_JSVAL(mo);
+	JS_DefineElement(jcx, navmt, i, mov, NULL, NULL, PROP_FIXED);
+	establish_property_object(mo, "enabledPlugin", po);
+	establish_property_string(mo, "type", mt->type, true);
+	establish_property_object(navmt, mt->type, mo);
+	establish_property_string(mo, "description", mt->desc, true);
+	establish_property_string(mo, "suffixes", mt->suffix, true);
+/* I don't really have enough information, from the config file, to fill
+ * in the attributes of the plugin object.
+ * I'm just going to fake it.
+ * Description will be the same as that of the mime type,
+ * and the filename will be the program to run.
+ * No idea if this is right or not. */
+	establish_property_string(po, "description", mt->desc, true);
+	establish_property_string(po, "filename", mt->program, true);
+/* For the name, how about the program without its options? */
+	len = strcspn(mt->program, " \t");
+	JS_DefineProperty(jcx, po, "name",
+	   STRING_TO_JSVAL(JS_NewStringCopyN(jcx, mt->program, len)),
+	   0, 0, PROP_FIXED);
+    }
+
     screen = JS_NewObject(jcx, 0, 0, jwin);
-    JS_DefineProperty(jcx, jwin, "screen",
-       OBJECT_TO_JSVAL(screen), NULL, NULL, PROP_FIXED);
+    establish_property_object(jwin, "screen", screen);
     establish_property_number(screen, "height", 768, true);
     establish_property_number(screen, "width", 1024, true);
     establish_property_number(screen, "availHeight", 768, true);
@@ -780,10 +807,8 @@ createJavaContext(void)
     establish_property_number(screen, "availLeft", 0, true);
 
     del = JS_NewObject(jcx, 0, 0, jdoc);
-    JS_DefineProperty(jcx, jdoc, "body",
-       OBJECT_TO_JSVAL(del), NULL, NULL, PROP_FIXED);
-    JS_DefineProperty(jcx, jdoc, "documentElement",
-       OBJECT_TO_JSVAL(del), NULL, NULL, PROP_FIXED);
+    establish_property_object(jdoc, "body", del);
+    establish_property_object(jdoc, "documentElement", del);
     establish_property_number(del, "clientHeight", 768, true);
     establish_property_number(del, "clientWidth", 1024, true);
     establish_property_number(del, "offsetHeight", 768, true);
@@ -794,8 +819,7 @@ createJavaContext(void)
     establish_property_number(del, "scrollLeft", 0, true);
 
     hist = JS_NewObject(jcx, 0, 0, jwin);
-    JS_DefineProperty(jcx, jwin, "history",
-       OBJECT_TO_JSVAL(hist), NULL, NULL, PROP_FIXED);
+    establish_property_object(jwin, "history", hist);
 
 /* attributes of history */
     establish_property_string(hist, "current", cw->fileName, true);
@@ -950,11 +974,12 @@ domLink(const char *classname,	/* instantiate this class */
     if(symname)
 	establish_property_string(v, "name", symname, true);
     if(idname) {
+	JSObject *master;
 /* v.id becomes idname, and idMaster.idname becomes v */
 	establish_property_string(v, "id", idname, true);
 	JS_GetProperty(jcx, jdoc, "idMaster", &listv);
-	JSObject *master = JSVAL_TO_OBJECT(listv);
-	JS_DefineProperty(jcx, master, idname, vv, NULL, NULL, attr);
+	master = JSVAL_TO_OBJECT(listv);
+	establish_property_object(master, idname, v);
     }
 
     if(href && href_url) {
@@ -963,8 +988,7 @@ domLink(const char *classname,	/* instantiate this class */
 
     if(cp == &element_class) {
 /* link back to the form that owns the element */
-	JS_DefineProperty(jcx, v, "form",
-	   OBJECT_TO_JSVAL(owner), NULL, NULL, attr);
+	establish_property_object(v, "form", owner);
     }
 
     return v;
