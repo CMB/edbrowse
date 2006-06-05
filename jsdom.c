@@ -591,7 +591,7 @@ static struct DOMCLASS domClasses[] = {
 };
 
 static const char *docarrays[] = {
-    "frames", "heads", "bodies", "links", "tables", "divs", "spans",
+    "heads", "bodies", "links", "tables", "divs", "spans",
     "forms", "images", "areas", "metas", 0
 };
 
@@ -730,6 +730,9 @@ createJavaContext(void)
 /* create arrays under document */
     for(i = 0; itemname = docarrays[i]; ++i)
 	establish_property_array(jdoc, itemname);
+
+/* Some arrays are under window */
+    establish_property_array(jwin, "frames");
 
     o = JS_NewObject(jcx, 0, 0, jdoc);
     establish_property_object(jdoc, "idMaster", o);

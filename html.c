@@ -1730,8 +1730,8 @@ encodeTags(char *html)
 	    if(action == TAGACT_FRAME) {
 		htmlHref("src");
 		topTag->jv =
-		   domLink("Frame", topTag->name, topTag->id, "src",
-		   topTag->href, "frames", jdoc, false);
+		   domLink("Frame", topTag->name, 0, "src",
+		   topTag->href, "frames", jwin, false);
 	    } else {
 		htmlHref("href");
 		topTag->jv =
