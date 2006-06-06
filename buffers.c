@@ -2984,7 +2984,6 @@ unfoldBuffer(int cx, bool cr, char **data, int *len)
 	*buf++ = '\n';
     }				/* loop over lines */
     if(w->dol && w->nlMode) {
-	--size;
 	if(cr)
 	    --size;
     }
@@ -4260,6 +4259,7 @@ browseCurrentBuffer(void)
     if(!unfoldBuffer(context, false, &rawbuf, &rawsize))
 	return false;		/* should never happen */
     prepareForBrowse(rawbuf, rawsize);
+  printf("%d|%s\n", rawsize, rawbuf);
 
 /* No harm in running this code in mail client, but no help either,
  * and it begs for bugs, so leave it out. */

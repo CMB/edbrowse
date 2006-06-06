@@ -13,8 +13,4 @@ local java sourcefile
 window.screenLeft window.screenTop window.document.body.offsetWidth window.document.body.offsetHeight window.screenX window.screenY window.outerWidth window.outerHeight
 newlines in text areas in mailed form - or should it be mime
 test uploaded file
-
-e espeak.sourceforge.net
-5g
-glibc detects memory corruption while executing
-http://a.as-us.falkag.net/dat/njf/104/sourceforge/none_p6_middle_rectangle.js
+setTimeout and setInterval could take a function as first argument
