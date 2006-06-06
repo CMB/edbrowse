@@ -4259,7 +4259,6 @@ browseCurrentBuffer(void)
     if(!unfoldBuffer(context, false, &rawbuf, &rawsize))
 	return false;		/* should never happen */
     prepareForBrowse(rawbuf, rawsize);
-  printf("%d|%s\n", rawsize, rawbuf);
 
 /* No harm in running this code in mail client, but no help either,
  * and it begs for bugs, so leave it out. */
