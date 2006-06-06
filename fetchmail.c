@@ -1139,7 +1139,7 @@ headerGlean(char *start, char *end)
 		++nimages;
 	    } else if((q = strrchr(q, '.'))) {
 		static const char *const imagelist[] = {
-		    "gif", "jpg", "tif", "bmp", "asc", 0
+		    "gif", "jpg", "tif", "bmp", "asc", "png", 0
 		};
 /* the asc isn't an image, it's a signature card. */
 /* Similarly for the winmail.dat */
