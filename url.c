@@ -808,7 +808,7 @@ encodePostData(const char *s)
     while(c = *s++) {
 	if(isalnum(c))
 	    goto putc;
-	if(strchr("-._~*()!',+", c))
+	if(strchr("-._~*()!',", c))
 	    goto putc;
 	sprintf(buf, "%%%02X", (uchar) c);
 	stringAndString(&post, &l, buf);
