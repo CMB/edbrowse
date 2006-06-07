@@ -329,9 +329,8 @@ setTimeout(uintN argc, jsval * argv, bool isInterval)
 /* Extract the function name, which requires several steps */
 	    JSFunction *f = JS_ValueToFunction(jcx, OBJECT_TO_JSVAL(fo));
 	    const char *s = JS_GetFunctionName(f);
-/* The following should never happen, as unnamed functions
- * are named anonymous. */
-	    if(!s || !*s)
+/* Remember that unnamed functions are named anonymous. */
+	    if(!s || !*s || stringEqual(s, "anonymous"))
 		s = "javascript";
 	    int len = strlen(s);
 	    if(len > sizeof (fname) - 4)
@@ -1018,6 +1017,8 @@ domLink(const char *classname,	/* instantiate this class */
 	if(alist) {
 	    JS_GetArrayLength(jcx, alist, &length);
 	    JS_DefineElement(jcx, alist, length, vv, NULL, NULL, attr);
+	    if(symname)
+		establish_property_object(alist, symname, v);
 	}			/* list indicated */
     }
 
