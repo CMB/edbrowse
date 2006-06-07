@@ -2442,6 +2442,8 @@ infReplace(int tagno, const char *newtext, int notify)
     if(!linesComing(2))
 	return false;
 
+    jMyContext();
+
     if(itype == INP_SELECT) {
 	if(!locateOptions(t, newtext, 0, 0, false))
 	    return false;
@@ -2449,7 +2451,7 @@ infReplace(int tagno, const char *newtext, int notify)
 	updateFieldInBuffer(tagno, display, notify, true);
 	nzFree(display);
     }
-    /* select */
+
     if(itype == INP_FILE) {
 	if(!envFile(newtext, &newtext))
 	    return false;
@@ -2458,14 +2460,14 @@ infReplace(int tagno, const char *newtext, int notify)
 	    return false;
 	}
     }
-    /* file */
+
     if(itype == INP_NUMBER) {
 	if(*newtext && stringIsNum(newtext) < 0) {
 	    setError("number expected");
 	    return false;
 	}
     }
-    /* number */
+
     if(itype == INP_RADIO && form && t->name && *newtext == '+') {
 /* clear the other radio button */
 	while(v = *list++) {
@@ -2497,7 +2499,7 @@ infReplace(int tagno, const char *newtext, int notify)
 		return true;
 	}
     }
-    /* onclick */
+
     if(itype >= INP_TEXT && itype <= INP_SELECT &&
        tagHandler(t->seqno, "onchange")) {
 	if(cw->jsdead)
@@ -2510,7 +2512,7 @@ infReplace(int tagno, const char *newtext, int notify)
 		return true;
 	}
     }
-    /* onchange */
+
     return true;
 }				/* infReplace */
 

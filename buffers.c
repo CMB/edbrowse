@@ -4051,7 +4051,7 @@ runCommand(const char *line)
     if(cmd == 'm' || cmd == 't') {
 	return moveCopy();
     }
-    /* m or t */
+
     if(cmd == 'i') {
 	if(scmd == '=') {
 	    rc = infReplace(tagno, line, 1);
