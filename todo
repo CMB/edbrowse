@@ -10,7 +10,9 @@ enpty file submit
 makeIt('1','IE')
 <a href="faq.html#something">something</a> <h4 id="something">heading 4</h4>
 local java sourcefile
-window.screenLeft window.screenTop window.document.body.offsetWidth window.document.body.offsetHeight window.screenX window.screenY window.outerWidth window.outerHeight
+window.screenLeft window.screenTop window.screenX window.screenY window.outerWidth window.outerHeight
 newlines in text areas in mailed form - or should it be mime
 test uploaded file
-setTimeout and setInterval could take a function as first argument
+onload and onunload in body seem to run under document, not the body subobject
+call javaSetsTagBool when js checks or updates a checkbox or radio button
+what does all.tags("object") mean?

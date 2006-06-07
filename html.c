@@ -3266,11 +3266,10 @@ javaOpensWindow(const char *href, const char *name)
 }				/* javaOpensWindow */
 
 void
-javaSetsTimeout(const char *code, int n, bool isInterval)
+javaSetsTimeout(int n, const char *jsrc, void *to, bool isInterval)
 {
     struct htmlTag *t = newTag("A");
     char timedesc[48];
-    char *jsrc;
     int l;
 
     strcpy(timedesc, (isInterval ? "Interval" : "Timer"));
@@ -3279,8 +3278,8 @@ javaSetsTimeout(const char *code, int n, bool isInterval)
 	sprintf(timedesc + l, " %d", n / 1000);
     else
 	sprintf(timedesc + l, " %dms", n);
-    jsrc = allocMem(12 + strlen(code) + 1);
-    sprintf(jsrc, "javascript: %s", code);
-    t->href = jsrc;
-    toPreamble(t->seqno, timedesc, code, 0);
+
+    t->jv = to;
+    t->href = cloneString("#");
+    toPreamble(t->seqno, timedesc, jsrc, 0);
 }				/* javaSetsTimeout */

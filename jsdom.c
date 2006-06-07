@@ -22,6 +22,8 @@ void *jdoc;			/* window.document, really JSObject */
 void *jwloc;			/* window.location, really JSObject */
 static size_t gStackChunkSize = 8192;
 static FILE *gOutFile, *gErrFile;
+static const char *emptyParms[] = { 0 };
+static jsval emptyArgs[] = { 0 };
 
 static void
 my_ErrorReporter(JSContext * cx, const char *message, JSErrorReport * report)
@@ -281,35 +283,91 @@ win_confirm(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
     return JS_TRUE;
 }				/* win_confirm */
 
+static JSClass timer_class = {
+    "Timer",
+    JSCLASS_HAS_PRIVATE,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
+};
+
+/* Set a timer or an interval */
+static JSObject *
+setTimeout(uintN argc, jsval * argv, bool isInterval)
+{
+    jsval v0, v1;
+    JSObject *fo = 0;		/* function object */
+    JSObject *to;		/* tag object */
+    int n;			/* number of milliseconds */
+    char fname[48];		/* function name */
+    const char *fstr;		/* function string */
+    const char *methname = (isInterval ? "setInterval" : "setTimeout");
+
+    if(!parsePage) {
+	JS_ReportError(jcx,
+	   "cannot use %s() to delay the execution of a function", methname);
+	return JSVAL_NULL;
+    }
+
+    if(argc != 2 || !JSVAL_IS_INT(argv[1]))
+	goto badarg;
+
+    v0 = argv[0];
+    v1 = argv[1];
+    n = JSVAL_TO_INT(v1);
+
+    if(JSVAL_IS_STRING(v0) ||
+       JSVAL_IS_OBJECT(v0) &&
+       JS_ValueToObject(jcx, v0, &fo) && JS_ObjectIsFunction(jcx, fo)) {
+
+/* build the tag object and link it to window */
+	to = JS_NewObject(jcx, &timer_class, NULL, jwin);
+	v1 = OBJECT_TO_JSVAL(to);
+	JS_DefineProperty(jcx, jwin, fakePropName(), v1,
+	   NULL, NULL, JSPROP_READONLY | JSPROP_PERMANENT);
+
+	if(fo) {
+/* Extract the function name, which requires several steps */
+	    JSFunction *f = JS_ValueToFunction(jcx, OBJECT_TO_JSVAL(fo));
+	    const char *s = JS_GetFunctionName(f);
+/* The following should never happen, as unnamed functions
+ * are named anonymous. */
+	    if(!s || !*s)
+		s = "javascript";
+	    int len = strlen(s);
+	    if(len > sizeof (fname) - 4)
+		len = sizeof (fname) - 4;
+	    strncpy(fname, s, len);
+	    fname[len] = 0;
+	    strcat(fname, "()");
+	    fstr = fname;
+	    establish_property_object(to, "onclick", fo);
+	} else {
+/* compile the function from the string */
+	    fstr = stringize(v0);
+	    JS_CompileFunction(jcx, to, "onclick", 0, emptyParms,	/* no named parameters */
+	       fstr, strlen(fstr), "onclick", 1);
+	}
+
+	javaSetsTimeout(n, fstr, to, isInterval);
+	return to;
+    }
+
+  badarg:
+    JS_ReportError(jcx, "invalid arguments to %s()", methname);
+    return JSVAL_NULL;
+}				/* setTimeout */
+
 static JSBool
 win_sto(JSContext * cx, JSObject * obj, uintN argc, jsval * argv, jsval * rval)
 {
-    if(!parsePage) {
-	JS_ReportError(jcx,
-	   "cannot use setTimeout() to delay the execution of a function");
-    } else if(argc == 2 && JSVAL_IS_STRING(argv[0]) && JSVAL_IS_INT(argv[1])) {
-	const char *s = stringize(argv[0]);
-	int n = JSVAL_TO_INT(argv[1]);
-	javaSetsTimeout(s, n, false);
-    } else {
-	JS_ReportError(jcx, "invalid arguments to setTimeout()");
-    }
+    *rval = OBJECT_TO_JSVAL(setTimeout(argc, argv, false));
     return JS_TRUE;
 }				/* win_sto */
 
 static JSBool
 win_intv(JSContext * cx, JSObject * obj, uintN argc, jsval * argv, jsval * rval)
 {
-    if(!parsePage) {
-	JS_ReportError(jcx,
-	   "cannot use setInterval() to schedule the execution of a function");
-    } else if(argc == 2 && JSVAL_IS_STRING(argv[0]) && JSVAL_IS_INT(argv[1])) {
-	const char *s = stringize(argv[0]);
-	int n = JSVAL_TO_INT(argv[1]);
-	javaSetsTimeout(s, n, true);
-    } else {
-	JS_ReportError(jcx, "invalid arguments to setInterval()");
-    }
+    *rval = OBJECT_TO_JSVAL(setTimeout(argc, argv, true));
     return JS_TRUE;
 }				/* win_intv */
 
