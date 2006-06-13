@@ -133,7 +133,7 @@ receiveCookie(const char *url, const char *str)
     c = allocZeroMem(sizeof (struct cookie));
     c->name = pullString1(str, q);
     ++q;
-    if(q - p > 1)
+    if(p - q > 1)
 	c->value = pullString1(q, p);
     else
 	c->value = EMPTYSTRING;
