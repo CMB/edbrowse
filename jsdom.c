@@ -115,6 +115,15 @@ window_ctor(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
     return JS_TRUE;
 }				/* window_ctor */
 
+/* window.open() instantiates a new window object */
+static JSBool
+win_open(JSContext * cx, JSObject * obj, uintN argc, jsval * argv, jsval * rval)
+{
+    JSObject *newwin = JS_ConstructObjectWithArguments(jcx,
+       &window_class, 0, jwin, argc, argv);
+    *rval = OBJECT_TO_JSVAL(newwin);
+}				/* win_open */
+
 /* for window.focus etc */
 static JSBool
 nullFunction(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
@@ -376,7 +385,7 @@ static JSFunctionSpec window_methods[] = {
     {"confirm", win_confirm, 1, 0, 0},
     {"setTimeout", win_sto, 2, 0, 0},
     {"setInterval", win_intv, 2, 0, 0},
-    {"open", window_ctor, 3, 0, 0},
+    {"open", win_open, 3, 0, 0},
     {"close", win_close, 0, 0, 0},
     {"focus", nullFunction, 0, 0, 0},
     {"blur", nullFunction, 0, 0, 0},
