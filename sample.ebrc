@@ -138,7 +138,7 @@ me@my-regular-dayjob.com > work
 #  though there may be some application files that could be meaningfully processed.
 mime {
 type = audio/basic
-mdesc = audio file in a wave format
+desc = audio file in a wave format
 suffix = wav,voc,au
 #  The star is replaced with the suffix at runtime
 program = play -t * -
@@ -146,7 +146,7 @@ program = play -t * -
 
 mime {
 type = audio/mp3
-mdesc = audio file in mp3 format
+desc = audio file in mp3 format
 suffix = mp3
 #program = mpg123 -q -
 #  The above line works, but can be inconvenient, depending on the player.
@@ -166,7 +166,7 @@ program = mpg123 -q %
 mime {
 #  the < forces it to be a stream, hence the url is passed to the program
 type = <audio/x-pn-realaudio
-mdesc = streaming audio
+desc = streaming audio
 suffix = rm,ra,ram
 protocol = rtsp,pnm
 program = trplayer
