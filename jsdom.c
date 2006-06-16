@@ -690,18 +690,16 @@ default: alert('createElement default ' + s); return new Object(); }} \n\
 \n\
 URL.prototype.indexOf = function(s) { \n\
 return this.toString().indexOf(s); }\n\
-\n\
 URL.prototype.lastIndexOf = function(s) { \n\
 return this.toString().lastIndexOf(s); }\n\
-\n\
 URL.prototype.substring = function(from, to) { \n\
 return this.toString().substring(from, to); }\n\
-\n\
 URL.prototype.toLowerCase = function() { \n\
 return this.toString().toLowerCase(); }\n\
-\n\
 URL.prototype.toUpperCase = function() { \n\
 return this.toString().toUpperCase(); }\n\
+URL.prototype.match = function(s) { \n\
+return this.toString().match(s); }\n\
 \n\
 history.toString = function() { \n\
 return 'Sorry, edbrowse does not maintain a browsing history.'; } \

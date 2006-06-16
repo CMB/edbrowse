@@ -293,7 +293,7 @@ isURL(const char *url)
 {
     int j = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     if(j < 0)
-	return true;		/* URL with error */
+	return false;
     return j;
 }				/* isURL */
 

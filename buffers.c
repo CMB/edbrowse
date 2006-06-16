@@ -4110,7 +4110,7 @@ runCommand(const char *line)
 	setError("no file specified");
 	return false;
     }
-    /* r */
+
     if(cmd == 's') {
 	j = substituteText(line);
 	if(j < 0) {
