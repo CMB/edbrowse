@@ -3994,6 +3994,10 @@ runCommand(const char *line)
 		newlocation = 0;
 		icmd = cmd = 'b';
 		first = *line;
+		if(intFlag) {
+		    puts("redirection interrupted by user");
+		    return true;
+		}
 		goto rebrowse;
 	    }
 	}

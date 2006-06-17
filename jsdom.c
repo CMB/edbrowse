@@ -669,7 +669,7 @@ switch(s.toLowerCase()) { \n\
 case 'form': return document.forms; \n\
 case 'table': return document.tables; \n\
 case 'div': return document.divs; \n\
-case 'a': return document.anchors; \n\
+case 'a': return document.links; \n\
 case 'img': case 'image': return document.images; \n\
 case 'span': return document.spans; \n\
 case 'head': return document.heads; \n\
