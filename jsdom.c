@@ -20,6 +20,7 @@ void *jcx;			/* really JSContext */
 void *jwin;			/* window object, really JSObject */
 void *jdoc;			/* window.document, really JSObject */
 void *jwloc;			/* window.location, really JSObject */
+void *jdloc;			/* document.location, really JSObject */
 static size_t gStackChunkSize = 8192;
 static FILE *gOutFile, *gErrFile;
 static const char *emptyParms[] = { 0 };
@@ -787,7 +788,7 @@ createJavaContext(void)
     establish_property_string(jdoc, "cookie", 0, false);
     establish_property_string(jdoc, "referrer", cw->referrer, true);
     establish_property_url(jdoc, "URL", cw->fileName, true);
-    establish_property_url(jdoc, "location", cw->fileName, true);
+    establish_property_url(jdoc, "location", cw->fileName, false);
     establish_property_url(jwin, "location", firstURL(), false);
     establish_property_string(jdoc, "domain", getHostURL(cw->fileName), false);
 
@@ -952,8 +953,10 @@ jMyContext(void)
 	jdoc = JSVAL_TO_OBJECT(oval);
 	JS_GetProperty(jcx, jwin, "location", &oval);
 	jwloc = JSVAL_TO_OBJECT(oval);
+	JS_GetProperty(jcx, jdoc, "location", &oval);
+	jdloc = JSVAL_TO_OBJECT(oval);
     } else
-	jwin = jdoc = jwloc = 0;
+	jwin = jdoc = jwloc = jdloc = 0;
 }				/* jMyContext */
 
 bool

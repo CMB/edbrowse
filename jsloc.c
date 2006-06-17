@@ -68,7 +68,7 @@ static bool setter_suspend;
 static bool
 isWinLoc(void)
 {
-    if(uo != jwloc) {		/* not window.location */
+    if(uo != jwloc && uo != jdloc) {
 	nzFree(uo_href);
 	uo_href = 0;
 	return true;
@@ -697,23 +697,24 @@ establish_property_url(void *jv, const char *name,
     if(readonly)
 	attr |= JSPROP_READONLY;
 
-/* window.location, but not document.location, has a special setter */
+/* window.location, and document.location, has a special setter */
     my_setter = 0;
-    if(stringEqual(name, "location") && obj == jwin)
+    if(stringEqual(name, "location"))
 	my_setter = setter_loc;
-
     uo = JS_NewObject(jcx, &url_class, NULL, obj);
     JS_DefineProperty(jcx, obj, name,
        OBJECT_TO_JSVAL(uo), NULL, my_setter, attr);
-
     if(!url)
 	url = EMPTYSTRING;
     url_initialize(url, readonly, false);
     if(my_setter == setter_loc) {
-	jwloc = uo;
-	JS_DefineFunction(jcx, jwloc, "reload", loc_reload, 0, PROP_FIXED);
-	JS_DefineFunction(jcx, jwloc, "replace", loc_replace, 1, PROP_FIXED);
-    }				/* window.location */
+	if(obj == jwin)
+	    jwloc = uo;
+	else
+	    jdloc = uo;
+	JS_DefineFunction(jcx, uo, "reload", loc_reload, 0, PROP_FIXED);
+	JS_DefineFunction(jcx, uo, "replace", loc_replace, 1, PROP_FIXED);
+    }				/* location object */
 }				/* establish_property_url */
 
 void
@@ -759,7 +760,6 @@ get_property_url(void *jv, bool doaction)
     jsval v;
     const char *s;
     JSBool found = false;
-
     if(!obj)
 	return 0;
     if(!doaction) {
@@ -778,7 +778,6 @@ get_property_url(void *jv, bool doaction)
     }
     if(!found)
 	return 0;
-
     if(!JSVAL_IS_STRING(v)) {
 	if(!JSVAL_IS_OBJECT(v)) {
 	  badobj:
@@ -830,7 +829,6 @@ static JSClass option_class = {
     JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
-
 void *
 establish_js_option(void *ev, int idx)
 {

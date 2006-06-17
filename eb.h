@@ -173,7 +173,8 @@ extern char serverLine[MAXTTYLINE];	/* lines to and from the mail server */
 extern void *jcx;		/* javascript context */
 extern void *jwin;		/* javascript window object */
 extern void *jdoc;		/* javascript document object */
-extern void *jwloc;		/* javascript location object */
+extern void *jwloc;		/* javascript window.location */
+extern void *jdloc;		/* javascript document.location */
 extern int maxAccount;		/* how many email accounts specified */
 extern int localAccount;	/* this is the smtp server for outgoing mail */
 extern char *mailDir;		/* move to this directory when fetching mail */
