@@ -1833,7 +1833,7 @@ encodeTags(char *html)
 	    a = htmlAttrVal(topAttrib, "language");
 /* If no language is specified, javascript is default. */
 	    if(!cw->jsdead &&
-	       (!a || !*a ||
+	       (!a || !*a || !intFlag &&
 	       a && memEqualCI(a, "javascript", 10) && !isalpha(a[10]))) {
 /* It's javascript, run with the source, or the inline text. */
 		int js_line = browseLine;
