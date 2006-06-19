@@ -982,7 +982,7 @@ domLink(const char *classname,	/* instantiate this class */
    const char *symname, const char *idname, const char *href, const char *href_url, const char *list,	/* next member of this array */
    void *owner, bool isradio)
 {
-    JSObject *v = 0, *w, *alist = 0;
+    JSObject *v = 0, *w, *alist = 0, *master;
     jsval vv, listv;
     jsuint length, attr = PROP_FIXED;
     JSClass *cp;
@@ -1015,6 +1015,9 @@ domLink(const char *classname,	/* instantiate this class */
 
 	if(symname) {
 	    JS_DefineProperty(jcx, owner, symname, vv, NULL, NULL, attr);
+	    JS_GetProperty(jcx, jdoc, "all", &listv);
+	    master = JSVAL_TO_OBJECT(listv);
+	    establish_property_object(master, symname, v);
 	} else {
 	    JS_DefineProperty(jcx, owner, fakePropName(), vv,
 	       NULL, NULL, JSPROP_READONLY | JSPROP_PERMANENT);
@@ -1046,7 +1049,6 @@ domLink(const char *classname,	/* instantiate this class */
     if(symname)
 	establish_property_string(v, "name", symname, true);
     if(idname) {
-	JSObject *master;
 /* v.id becomes idname, and idMaster.idname becomes v */
 	establish_property_string(v, "id", idname, true);
 	JS_GetProperty(jcx, jdoc, "idMaster", &listv);
