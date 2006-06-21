@@ -1,21 +1,29 @@
 #  This is the makefile for edbrowse.
 
-#  compile and load flags
+#  Flags for gcc compilation.
 #  Note, some have reported seg-faults with this program when -O is used.
 #  This is a problem with gcc version 2.95 or less.
-#  Since performance is not critical here, better safe than sorry.
-#  Assumes smjs is installed in /usr/local
+#  Since performance is not critical here, better leave it out.
+#
+#  The -I flags assume smjs is installed in /usr/local
 #  You may also need -I/usr/include/pcre or -I/usr/local/include/pcre
+
 CFLAGS = -I/usr/local/js/src -I/usr/local/js/src/Linux_All_DBG.OBJ -DXP_UNIX -DX86_LINUX
 
-#  Normal load flags.
+#  If the smjs library is already installed by your linux distribution,
+#  e.g. Debian, use the following flags.
+#CFLAGS = -I/usr/include/smjs -DXP_UNIX -DX86_LINUX
+
+#  Normal load flags
 LFLAGS = -s
 
 #  Libraries for edbrowse.
-#  I assume you have linked libjs.so into /usr/lib,
-#  so that -ljs will suffice.
+#  I assume you have linked libjs.so into /usr/lib/libsmjs.so
+#  so that -lsmjs will suffice.
+#  Some distros, e.g. Debian, already do this for you.
 #  Some folks need to add -lcrypto to this list.
-LIBS = -lpcre -lm -lssl -ljs
+
+LIBS = -lpcre -lm -lssl -lsmjs
 
 #  Make the dynamically linked executable program by default.
 #  Edbrowse executable.

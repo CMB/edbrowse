@@ -79,7 +79,7 @@ Go into js/src and run
 gmake -f Makefile.ref
 This should build everything you need.
 cd Linux_All_DBG.OBJ
-ln -s `pwd`/libjs.so /usr/lib
+ln -s `pwd`/libjs.so /usr/lib/libsmjs.so
 
 Now return to your edbrowse directory.
 To build edbrowse - guess what - you type make.
