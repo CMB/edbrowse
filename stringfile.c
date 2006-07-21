@@ -992,6 +992,11 @@ nextScanFile(const char *base)
 	if(!base)
 	    base = ".";
 	df = opendir(base);
+	if(!df) {
+	    puts
+	       ("warning, the directory is inaccessible - the listing will be empty");
+	    return 0;
+	}
     }
 #endif
 
@@ -1042,7 +1047,7 @@ nextScanFile(const char *base)
 /* Sorted directory list.  Uses textLines[]. */
 bool
 sortedDirList(const char *dir, int *start, int *end)
-{				/* result parameters */
+{
     char *f;
     int j;
     bool change;

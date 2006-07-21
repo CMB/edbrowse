@@ -3604,7 +3604,7 @@ runCommand(const char *line)
 	}
 /* more e to come */
     }
-    /* e */
+
     if(cmd == 'g') {		/* see if it's a go command */
 	char *p, *h;
 	int tagno;
@@ -3688,7 +3688,7 @@ runCommand(const char *line)
 		return true;
 	}			/* go command */
     }
-    /* g */
+
     if(cmd == 's') {
 /* Some shorthand, like s,2 to split the line at the second comma */
 	if(!first) {
@@ -3707,7 +3707,7 @@ runCommand(const char *line)
 	}
 	first = *line;
     }
-    /* s */
+
     scmd = ' ';
     if((cmd == 'i' || cmd == 's') && first) {
 	char c;
@@ -3841,7 +3841,7 @@ runCommand(const char *line)
 	    return false;
 	}
     }
-    /* s or i */
+
   rebrowse:
     if(cmd == 'e' || cmd == 'b' && first && first != '#') {
 	if(cw->fileName && !noStack && sameURL(line, cw->fileName)) {
