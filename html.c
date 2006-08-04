@@ -2134,7 +2134,7 @@ findField(const char *line, int ftype, int n,
 	    }
 	}			/* loop over line */
     }
-    /* browse mode */
+
     if(nm < 0)
 	nm = 0;
     if(total)

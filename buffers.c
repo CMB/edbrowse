@@ -2597,6 +2597,7 @@ if(stringEqual(line, "us")) return unstripChild();
     }
     /* ub */
     if(stringEqual(line, "ip")) {
+	jMyContext();
 	sethostent(1);
 	allIPs();
 	endhostent();
@@ -3019,7 +3020,6 @@ showLinks(void)
 	    if(tagno != j)
 		continue;	/* should never happen */
 
-	    jMyContext();
 	    click = tagHandler(tagno, "onclick");
 	    dclick = tagHandler(tagno, "ondblclick");
 
@@ -3625,13 +3625,13 @@ runCommand(const char *line)
 		return false;
 	    }
 	    p = (char *)fetchLine(endRange, -1);
+	    jMyContext();
 	    findField(p, 0, j, &n, &tagno, &h, &ev);
 	    debugPrint(5, "findField returns %d, %s", tagno, h);
 	    if(!h) {
 		fieldNumProblem("links", 'g', j, n);
 		return false;
 	    }
-	    jMyContext();
 	    jsh = memEqualCI(h, "javascript:", 11);
 	    if(tagno) {
 		over = tagHandler(tagno, "onmouseover");
