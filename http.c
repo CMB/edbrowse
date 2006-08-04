@@ -993,7 +993,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	       ("zcat cannot uncompress the data, to reconstruct the web page");
 	    return false;
 	}
-	serverData = allocMem(n);
+	serverData = allocMem(n+2);
 	fh = open(edbrowseTempFile, O_RDONLY | O_BINARY);
 	if(fh < 0) {
 	    setError("cannot access the uncompressed web page in %s",
@@ -1008,13 +1008,14 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	}
 	close(fh);
 	serverDataLen = n;
+serverData[n] = 0;
 /* doesn't hurt to clean house, now that everything worked. */
 	strcpy(u, suffix);
 	unlink(edbrowseTempFile);
 	*u = 0;
 	unlink(edbrowseTempFile);
     }
-    /* web page was compressed */
+
     return true;
 
   nohead:

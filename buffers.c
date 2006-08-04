@@ -3650,7 +3650,7 @@ runCommand(const char *line)
 		    puts("javascript is disabled, no action taken");
 		else
 		    puts("javascript is disabled, going straight to the url");
-		jsgo = false;
+		jsgo = jsh = false;
 	    }
 	    line = allocatedLine = h;
 	    first = *line;
