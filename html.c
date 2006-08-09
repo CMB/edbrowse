@@ -3030,7 +3030,6 @@ infPush(int tagno, char **post_string)
 	return true;
     }
 
-    /* reset button */
     /* Before we submit, run the onsubmit code */
     if(t && tagHandler(form->seqno, "onsubmit")) {
 	if(cw->jsdead)
@@ -3044,12 +3043,12 @@ infPush(int tagno, char **post_string)
 		return true;
 	}
     }
-    /* onsubmit */
+
     action = form->href;
 /* But we defer to the java variable */
     if(form->jv) {
 	const char *jh = get_property_url(form->jv, true);
-	if(!action || jh && !stringEqual(jh, action)) {
+	if(jh && (!action || !stringEqual(jh, action))) {
 /* Tie action to the form tag, to plug a small memory leak */
 	    nzFree(form->href);
 	    form->href = resolveURL(getBaseHref(form->seqno), jh);
