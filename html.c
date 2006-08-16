@@ -1055,7 +1055,7 @@ onloadGo(void *obj, const char *jsrc, const char *tagname)
 	return;
     if(handlerPresent(obj, "onclick")) {
 	runningError
-	   ("due to an edbrowse quirk, a tag cannot have onunload and onclik handlers simultaneously");
+	   ("tag cannot have onunload and onclik handlers simultaneously");
 	return;
     }
 

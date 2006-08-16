@@ -105,12 +105,17 @@ loc_replace(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
    jsval * rval)
 {
     const char *s;
+    char *ss, *t;
     if(argc > 0 && JSVAL_IS_STRING(argv[0])) {
 	s = stringize(argv[0]);
-	if(isURL(s)) {
-	    gotoLocation(cloneString(s), 0, true);
-	    return JS_FALSE;
-	}
+/* I have to copy the string, just so I can run unpercent */
+	ss = cloneString(s);
+	unpercentURL(ss);
+	t = resolveURL(cw->fileName, ss);
+	nzFree(ss);
+/* This call frees t, or takes it over, so you should not free it here. */
+	gotoLocation(t, 0, true);
+	return JS_FALSE;
     }
     JS_ReportError(jcx,
        "argument to location.replace() does not look like a url");
@@ -269,7 +274,6 @@ setter_loc(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 	t = resolveURL(cw->fileName, ss);
 	nzFree(ss);
 /* This call frees t, or takes it over, so you should not free it here. */
-	debugPrint(3, "window.location reset to %s", t);
 	gotoLocation(t, 0, true);
     }
 /* Return false to stop javascript. */

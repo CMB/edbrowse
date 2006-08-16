@@ -84,11 +84,11 @@ static void
 removeHiddenNumbers(pst p)
 {
     pst s, t, u;
-    char c, d;
+    uchar c, d;
 
     s = t = p;
     while((c = *s) != '\n') {
-	if(c != InternalCodeChar) {
+	if(c != (uchar)InternalCodeChar) {
 	  addchar:
 	    *t++ = c;
 	    ++s;
