@@ -63,6 +63,18 @@ typedef ushort idNameCode;
 
 #define stringEqual !strcmp
 
+/* ctype macros, when you're passing a byte,
+ * and you don't want to worry about whether it's char or uchar.
+ * Call the regular routines when c is an int, from fgetc etc. */
+#define isspaceByte(c) isspace((uchar)c)
+#define isalphaByte(c) isalpha((uchar)c)
+#define isalnumByte(c) isalnum((uchar)c)
+#define islowerByte(c) islower((uchar)c)
+#define isupperByte(c) isupper((uchar)c)
+#define isdigitByte(c) isdigit((uchar)c)
+#define ispunctByte(c) ispunct((uchar)c)
+#define isprintByte(c) isprint((uchar)c)
+
 /* http encoding, content type, content transfer encoding */
 enum { ENC_PLAIN, ENC_COMPRESS, ENC_GZIP, ENC_URL, ENC_MFD };
 enum { CT_OTHER, CT_TEXT, CT_HTML, CT_RICH, CT_APPLIC, CT_MULTI, CT_ALT };

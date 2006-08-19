@@ -232,8 +232,8 @@ win_prompt(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
     c = 'x';
     if(*msg)
 	c = msg[strlen(msg) - 1];
-    if(!isspace(c)) {
-	if(!ispunct(c))
+    if(!isspaceByte(c)) {
+	if(!ispunctByte(c))
 	    printf(":");
 	printf(" ");
     }
@@ -275,8 +275,8 @@ win_confirm(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
 	c = 'x';
 	if(*msg)
 	    c = msg[strlen(msg) - 1];
-	if(!isspace(c)) {
-	    if(!ispunct(c))
+	if(!isspaceByte(c)) {
+	    if(!ispunctByte(c))
 		printf(":");
 	    printf(" ");
 	}

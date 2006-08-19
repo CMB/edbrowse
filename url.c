@@ -88,7 +88,7 @@ httpDefault(const char *url)
     if(s && s < end) {
 	const char *colon = s;
 	++s;
-	while(isdigit(*s))
+	while(isdigitByte(*s))
 	    ++s;
 	if(s == end)
 	    end = colon;
@@ -103,7 +103,7 @@ httpDefault(const char *url)
 /* All digits, like an ip address, is ok. */
     if(n == 3) {
 	for(s = url; s < end; ++s)
-	    if(!isdigit(*s) && *s != '.')
+	    if(!isdigitByte(*s) && *s != '.')
 		break;
 	if(s == end)
 	    return true;
@@ -170,7 +170,7 @@ parseURL(const char *url, const char **proto, int *prlen, const char **user, int
 	    ++q;
 	if(*q == '/')
 	    ++q;
-	while(isspace(*q))
+	while(isspaceByte(*q))
 	    ++q;
 	if(!*q)
 	    return false;
@@ -196,7 +196,7 @@ parseURL(const char *url, const char **proto, int *prlen, const char **user, int
     } else {			/* nothing yet */
 	if(p && p - url < 12 && p[1] == '/') {
 	    for(q = url; q < p; ++q)
-		if(!isalpha(*q))
+		if(!isalphaByte(*q))
 		    break;
 	    if(q == p) {	/* some protocol we don't know */
 		char qprot[12];
@@ -258,7 +258,7 @@ parseURL(const char *url, const char **proto, int *prlen, const char **user, int
 	int n;
 	const char *cc, *pp = q + strcspn(q, "/?#\1");
 	n = strtol(q + 1, (char **)&cc, 10);
-	if(cc != pp || !isdigit(q[1])) {
+	if(cc != pp || !isdigitByte(q[1])) {
 	    setError("invalid :port specifier at the end of the domain");
 	    return -1;
 	}
@@ -732,9 +732,9 @@ altText(const char *base)
     strncpy(buf, base, sizeof (buf) - 1);
     spaceCrunch(buf, true, true);
     len = strlen(buf);
-    if(len && !isalnum(buf[len - 1]))
+    if(len && !isalnumByte(buf[len - 1]))
 	buf[--len] = 0;
-    while(len && !isalnum(buf[0]))
+    while(len && !isalnumByte(buf[0]))
 	strcpy(buf, buf + 1), --len;
     if(len > 10) {
 /* see if it's a phrase/sentence or a pathname/url */
@@ -785,7 +785,7 @@ altText(const char *base)
     if(len < 3)
 	goto retry;
     for(n = 0, s = buf; *s; ++s)
-	if(isalpha(*s))
+	if(isalphaByte(*s))
 	    ++n;
     if(n * 2 <= len)
 	return 0;		/* not enough letters */
@@ -806,7 +806,7 @@ encodePostData(const char *s)
 	return EMPTYSTRING;
     post = initString(&l);
     while(c = *s++) {
-	if(isalnum(c))
+	if(isalnumByte(c))
 	    goto putc;
 	if(strchr("-._~*()!',", c))
 	    goto putc;
@@ -868,7 +868,7 @@ decodePostData(const char *data, const char *name, int seqno)
 /* I don't know if this is suppose to be case insensitive all the time,
  * though there are situations when it must be, as in
  * mailto:address?Subject=blah-blah */
-		if(isalpha(c)) {
+		if(isalphaByte(c)) {
 		    if(!((c ^ *n) & 0xdf))
 			++n;
 		    else

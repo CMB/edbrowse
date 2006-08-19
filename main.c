@@ -261,9 +261,9 @@ readConfigFile(void)
 		v[1] = 'u';
 		t = v + 2;
 	    }
-	    if(!strncmp(last, "loop(", 5) && isdigit(last[5])) {
+	    if(!strncmp(last, "loop(", 5) && isdigitByte(last[5])) {
 		q = last + 6;
-		while(isdigit(*q))
+		while(isdigitByte(*q))
 		    ++q;
 		if(stringEqual(q, "){")) {
 		    *q = 0;
@@ -278,11 +278,11 @@ readConfigFile(void)
 		q = last + 9;
 		if(*q == 0 || *q == '{' || *q == '(')
 		    errorPrint("1.ebrc: missing function name at line %d", ln);
-		if(isdigit(*q))
+		if(isdigitByte(*q))
 		    errorPrint
 		       ("1.ebrc: function name at line %d begins with a digit",
 		       ln);
-		while(isalnum(*q))
+		while(isalnumByte(*q))
 		    ++q;
 		if(q - last - 9 > 10)
 		    errorPrint
@@ -385,7 +385,7 @@ readConfigFile(void)
 	    goto nokeyword;
 	c = *v, *v = 0;
 	for(q = s; q < v; ++q)
-	    if(!isalpha(*q)) {
+	    if(!isalphaByte(*q)) {
 		*v = c;
 		goto nokeyword;
 	    }
@@ -801,9 +801,9 @@ mailRedirect(const char *to, const char *from,
 	    while(true) {
 		char c = subj[j];
 		char d = m[k];
-		if(isupper(c))
+		if(isupperByte(c))
 		    c = tolower(c);
-		if(isupper(d))
+		if(isupperByte(d))
 		    d = tolower(d);
 		if(!c || !d)
 		    break;
@@ -976,7 +976,7 @@ main(int argc, char **argv)
 	    debugLevel = 4;
 	    continue;
 	}
-	if(*s == 'd' && isdigit(s[1]) && !s[2]) {
+	if(*s == 'd' && isdigitByte(s[1]) && !s[2]) {
 	    debugLevel = s[1] - '0';
 	    continue;
 	}
@@ -988,7 +988,7 @@ main(int argc, char **argv)
 	    ++s, unformatMail = true;
 	if(*s == 'p')
 	    ++s, passMail = true;
-	if(*s == 'm' && isdigit(s[1])) {
+	if(*s == 'm' && isdigitByte(s[1])) {
 	    if(!maxAccount)
 		errorPrint
 		   ("1no mail accounts specified, please check your .ebrc config file");
@@ -1196,7 +1196,7 @@ runEbFunction(const char *line)
     if(t)
 	*t = 0;
     for(s = linecopy; *s; ++s)
-	if(!isalnum(*s)) {
+	if(!isalnumByte(*s)) {
 	    setError("function name should only contain letters and numbers");
 	    goto fail;
 	}
@@ -1258,7 +1258,7 @@ runEbFunction(const char *line)
 	    }
 	    if(ucontrol == 'W' || ucontrol == 'U') {
 		bool jump = ok;
-		if(islower(control))
+		if(islowerByte(control))
 		    jump ^= true;
 		if(ucontrol == 'U')
 		    jump ^= true;
@@ -1293,7 +1293,7 @@ runEbFunction(const char *line)
 		goto nextline;
 /* if or while, test on ok */
 	    jump = ok;
-	    if(isupper(control))
+	    if(isupperByte(control))
 		jump ^= true;
 	    ok = true;
 	    if(jump)
@@ -1307,11 +1307,11 @@ runEbFunction(const char *line)
 /* compute length of line, then build the line */
 	l = endl - ip;
 	for(s = ip; s < endl; ++s)
-	    if(*s == '~' && isdigit(s[1]))
+	    if(*s == '~' && isdigitByte(s[1]))
 		l += argl[s[1] - '0'];
 	t = new = allocMem(l + 1);
 	for(s = ip; s < endl; ++s) {
-	    if(*s == '~' && isdigit(s[1])) {
+	    if(*s == '~' && isdigitByte(s[1])) {
 		j = *++s - '0';
 		if(j) {
 		    strcpy(t, args[j]);

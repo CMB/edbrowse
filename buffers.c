@@ -96,11 +96,11 @@ removeHiddenNumbers(pst p)
 	}
 	u = s + 1;
 	d = *u;
-	if(!isdigit(d))
+	if(!isdigitByte(d))
 	    goto addchar;
 	do {
 	    d = *++u;
-	} while(isdigit(d));
+	} while(isdigitByte(d));
 	if(d == '*') {
 	    s = u + 1;
 	    continue;
@@ -245,7 +245,7 @@ displayLine(int n)
 		c = '<';
 	    if(c == '\t')
 		c = '>';
-	    if(!isprint(c))
+	    if(!isprintByte(c))
 		expand = true;
 	}			/* list */
 	if(expand)
@@ -1085,7 +1085,7 @@ readFile(const char *filename, const char *post)
 		if(!ftype)
 		    continue;
 		s = cw->map + (endRange + 1 + j - start) * LNWIDTH + 8;
-		if(isupper(ftype)) {	/* symbolic link */
+		if(isupperByte(ftype)) {	/* symbolic link */
 		    if(!cw->dirMode)
 			*t = '@', *++t = '\n';
 		    else
@@ -1386,10 +1386,10 @@ shellEscape(const char *line)
 	for(t = line; *t; ++t) {
 	    if(*t != '\'')
 		goto addchar;
-	    if(t > line && isalnum(t[-1]))
+	    if(t > line && isalnumByte(t[-1]))
 		goto addchar;
 	    key = t[1];
-	    if(key && isalnum(t[2]))
+	    if(key && isalnumByte(t[2]))
 		goto addchar;
 
 	    if(key == '_') {
@@ -1434,7 +1434,7 @@ shellEscape(const char *line)
 		continue;
 	    }
 	    /* '. current line */
-	    if(islower(key)) {
+	    if(islowerByte(key)) {
 		n = cw->labels[key - 'a'];
 		if(!n) {
 		    setError("label %c not set", key);
@@ -1589,8 +1589,8 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 		*e++ = '\\';
 	}
 
-	if(c == '$' && !isleft && isdigit(d)) {
-	    if(d == '0' || isdigit(line[2])) {
+	if(c == '$' && !isleft && isdigitByte(d)) {
+	    if(d == '0' || isdigitByte(line[2])) {
 		setError("replacement string can only use $1 through $9");
 		return false;
 	    }
@@ -1635,13 +1635,13 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 	mod = 0;
 	if(c == '?' || c == '*' || c == '+')
 	    mod = 1;
-	if(c == '{' && isdigit(d)) {
+	if(c == '{' && isdigitByte(d)) {
 	    const char *t = line + 1;
-	    while(isdigit(*t))
+	    while(isdigitByte(*t))
 		++t;
 	    if(*t == ',')
 		++t;
-	    while(isdigit(*t))
+	    while(isdigitByte(*t))
 		++t;
 	    if(*t == '}')
 		mod = t + 2 - line;
@@ -1708,7 +1708,7 @@ getRangePart(const char *line, int *lineno, const char **split)
     int ln = cw->dot;		/* this is where we start */
     char first = *line;
 
-    if(isdigit(first)) {
+    if(isdigitByte(first)) {
 	ln = strtol(line, (char **)&line, 10);
     } else if(first == '.') {
 	++line;
@@ -1716,7 +1716,7 @@ getRangePart(const char *line, int *lineno, const char **split)
     } else if(first == '$') {
 	++line;
 	ln = cw->dol;
-    } else if(first == '\'' && islower(line[1])) {
+    } else if(first == '\'' && islowerByte(line[1])) {
 	ln = cw->labels[line[1] - 'a'];
 	if(!ln) {
 	    setError("label %c not set", line[1]);
@@ -1792,7 +1792,7 @@ getRangePart(const char *line, int *lineno, const char **split)
     while((first = *line) == '+' || first == '-') {
 	int add = 1;
 	++line;
-	if(isdigit(*line))
+	if(isdigitByte(*line))
 	    add = strtol(line, (char **)&line, 10);
 	ln += (first == '+' ? add : -add);
     }
@@ -2076,7 +2076,7 @@ replaceText(const char *line, int len, const char *rhs,
 		*r++ = d;
 		continue;
 	    }			/* backslash */
-	    if(c == '$' && isdigit(d)) {
+	    if(c == '$' && isdigitByte(d)) {
 		int y, z;
 		t += 2;
 		d -= '0';
@@ -2155,7 +2155,7 @@ substituteText(const char *line)
 
     if(!bl_mode) {
 /* watch for s2/x/y/ for the second input field */
-	if(isdigit(*line))
+	if(isdigitByte(*line))
 	    whichField = strtol(line, (char **)&line, 10);
 	if(!*line) {
 	    setError("no regular expression after %c", icmd);
@@ -2198,7 +2198,7 @@ substituteText(const char *line)
 		    ++line;
 		    continue;
 		}
-		if(isdigit(c)) {
+		if(isdigitByte(c)) {
 		    if(nth) {
 			setError("multiple numbers after the third delimiter");
 			return -1;
@@ -2432,12 +2432,12 @@ if(stringEqual(line, "ws")) return stripChild();
 if(stringEqual(line, "us")) return unstripChild();
 */
 
-    if(line[0] == 'd' && line[1] == 'b' && isdigit(line[2]) && !line[3]) {
+    if(line[0] == 'd' && line[1] == 'b' && isdigitByte(line[2]) && !line[3]) {
 	debugLevel = line[2] - '0';
 	return true;
     }
 
-    if(line[0] == 'u' && line[1] == 'a' && isdigit(line[2]) && !line[3]) {
+    if(line[0] == 'u' && line[1] == 'a' && isdigitByte(line[2]) && !line[3]) {
 	char *t = userAgents[line[2] - '0'];
 	cmd = 'e';
 	if(!t) {
@@ -2468,7 +2468,7 @@ if(stringEqual(line, "us")) return unstripChild();
 
     if(line[0] == 'c' && line[1] == 'd') {
 	c = line[2];
-	if(!c || isspace(c)) {
+	if(!c || isspaceByte(c)) {
 	    const char *t = line + 2;
 	    skipWhite(&t);
 	    c = *t;
@@ -2663,7 +2663,7 @@ if(stringEqual(line, "us")) return unstripChild();
 	    dosig = false;
 	    ++t;
 	}
-	if(isdigit(*t))
+	if(isdigitByte(*t))
 	    account = strtol(t, (char **)&t, 10);
 	if(!*t) {
 /* send mail */
@@ -3009,7 +3009,7 @@ showLinks(void)
 	for(p = line; (c = *p) != '\n'; ++p) {
 	    if(c != (char)InternalCodeChar)
 		continue;
-	    if(!isdigit(p[1]))
+	    if(!isdigitByte(p[1]))
 		continue;
 	    j = strtol(p + 1, &s, 10);
 	    if(*s != '{')
@@ -3263,11 +3263,11 @@ runCommand(const char *line)
 	setError("zero line number");
 	return (globSub = false);
     }
-    while(isspace(first))
+    while(isspaceByte(first))
 	postSpace = true, first = *++line;
     if(strchr(spaceplus_cmd, cmd) && !postSpace && first) {
 	s = line;
-	while(isdigit(*s))
+	while(isdigitByte(*s))
 	    ++s;
 	if(*s) {
 	    setError("no space after command");
@@ -3308,7 +3308,7 @@ runCommand(const char *line)
     }
 
     if(cmd == 'z') {
-	if(isdigit(first)) {
+	if(isdigitByte(first)) {
 	    last_z = strtol(line, (char **)&line, 10);
 	    if(!last_z)
 		last_z = 1;
@@ -3389,7 +3389,7 @@ runCommand(const char *line)
     }
     /* u */
     if(cmd == 'k') {
-	if(!islower(first) || line[1]) {
+	if(!islowerByte(first) || line[1]) {
 	    setError("please enter k[a-z]");
 	    return false;
 	}
@@ -3695,7 +3695,7 @@ runCommand(const char *line)
 	    strcpy(newline, "//%");
 	    line = newline;
 	} else if(strchr(",.;:!?)-\"", first) &&
-	   (!line[1] || isdigit(line[1]) && !line[2])) {
+	   (!line[1] || isdigitByte(line[1]) && !line[2])) {
 	    char esc[2];
 	    esc[0] = esc[1] = 0;
 	    if(first == '.' || first == '?')
@@ -3712,7 +3712,7 @@ runCommand(const char *line)
     if((cmd == 'i' || cmd == 's') && first) {
 	char c;
 	s = line;
-	if(isdigit(*s))
+	if(isdigitByte(*s))
 	    cx = strtol(s, (char **)&s, 10);
 	c = *s;
 	if(c && (strchr(valid_delim, c) || cmd == 'i' && strchr("*<?=", c))) {

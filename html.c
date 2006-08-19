@@ -117,10 +117,10 @@ toPreamble(int tagno, const char *msg, const char *j, const char *h)
 	if(memEqualCI(j, "javascript:", 11))
 	    j += 11;
 	skipWhite(&j);
-	if(isalpha(*j) || *j == '_') {
+	if(isalphaByte(*j) || *j == '_') {
 	    fn[0] = ':';
 	    fn[1] = ' ';
-	    for(s = fn + 2; isalnum(*j) || *j == '_'; ++j) {
+	    for(s = fn + 2; isalnumByte(*j) || *j == '_'; ++j) {
 		if(s < fn + sizeof (fn) - 3)
 		    *s++ = *j;
 	    }
@@ -1146,7 +1146,7 @@ encodeTags(char *html)
 		if(lastact == TAGACT_TD && c == ' ')
 		    goto nextchar;
 		stringAndChar(&new, &l, c);
-		if(!isspace(c)) {
+		if(!isspaceByte(c)) {
 		    a_text = true;
 		    lastact = 0;
 		}
@@ -1700,16 +1700,16 @@ encodeTags(char *html)
 	    }
 /* backup, and see if we can get rid of the parentheses or brackets */
 	    a = new + open->lic + j;
-	    if(j == 2 && isalpha(*a) && !a[1])
+	    if(j == 2 && isalphaByte(*a) && !a[1])
 		goto unparen;
-	    if(j == 2 && isalnum(a[-3]) && (stringEqual(a, "th") ||
+	    if(j == 2 && isalnumByte(a[-3]) && (stringEqual(a, "th") ||
 	       stringEqual(a, "rd") ||
 	       stringEqual(a, "nd") || stringEqual(a, "st"))) {
 		a -= 2, l -= 2;
 		strcpy(a, a + 2);
 		continue;
 	    }
-	    while(isdigit(*a))
+	    while(isdigitByte(*a))
 		++a;
 	    if(!*a)
 		goto unparen;
@@ -1834,7 +1834,7 @@ encodeTags(char *html)
 /* If no language is specified, javascript is default. */
 	    if(!cw->jsdead &&
 	       (!a || !*a || !intFlag &&
-	       a && memEqualCI(a, "javascript", 10) && !isalpha(a[10]))) {
+	       a && memEqualCI(a, "javascript", 10) && !isalphaByte(a[10]))) {
 /* It's javascript, run with the source, or the inline text. */
 		int js_line = browseLine;
 		char *js_file = cw->fileName;
@@ -2258,7 +2258,7 @@ htmlTest(void)
 	char c;
 	int state = 0;
 
-	while(isspace(*p) && *p != '\n')
+	while(isspaceByte(*p) && *p != '\n')
 	    ++p;
 	if(*p == '\n')
 	    continue;		/* skip blank line */
@@ -2269,12 +2269,12 @@ htmlTest(void)
 /* If it starts with <tag, for any tag we recognize,
  * we'll call it good. */
 	    for(j = 1; j < 10; ++j) {
-		if(!isalnum(p[j]))
+		if(!isalnumByte(p[j]))
 		    break;
 		look[j - 1] = p[j];
 	    }
 	    look[j - 1] = 0;
-	    if(j > 1 && (p[j] == '>' || isspace(p[j]))) {
+	    if(j > 1 && (p[j] == '>' || isspaceByte(p[j]))) {
 /* something we recognize? */
 		const struct tagInfo *ti;
 		for(ti = elements; ti->name; ++ti)
@@ -2294,20 +2294,20 @@ htmlTest(void)
 	    if(state == 1) {
 		if(c == '/')
 		    state = 2;
-		else if(isalpha(c))
+		else if(isalphaByte(c))
 		    state = 3;
 		else
 		    state = 0;
 		continue;
 	    }
 	    if(state == 2) {
-		if(isalpha(c))
+		if(isalphaByte(c))
 		    state = 3;
 		else
 		    state = 0;
 		continue;
 	    }
-	    if(isalpha(c))
+	    if(isalphaByte(c))
 		continue;
 	    if(c == '>')
 		++cnt;

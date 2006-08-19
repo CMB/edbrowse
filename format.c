@@ -81,7 +81,7 @@ skipHtmlComment(const char *h, int *lines)
 	    h += 2;
 	    while(*h == '-')
 		h++;
-	    while(isspace(*h)) {
+	    while(isspaceByte(*h)) {
 		if(*h == '\n')
 		    ++lns;
 		h++;
@@ -142,13 +142,13 @@ parseTag(char *e,
 	return false;
     while(isA(*e) || *e == '=')
 	++e;
-    if(!isspace(*e) && *e != '>' && *e != '<' && *e != '/' && *e != ':')
+    if(!isspaceByte(*e) && *e != '>' && *e != '<' && *e != '/' && *e != ':')
 	return false;
 /* Note that name includes the leading / */
     if(name && namelen)
 	*namelen = e - *name;
 /* skip past space colon slash */
-    while(isspace(*e) || *e == '/' || *e == ':') {
+    while(isspaceByte(*e) || *e == '/' || *e == ':') {
 	if(*e == '\n')
 	    ++lns;
 	++e;
@@ -165,7 +165,7 @@ parseTag(char *e,
 	return false;
     while(atchr(*e))
 	++e;
-    while(isspace(*e)) {
+    while(isspaceByte(*e)) {
 	if(*e == '\n')
 	    ++lns;
 	++e;
@@ -173,7 +173,7 @@ parseTag(char *e,
     if(*e != '=')
 	goto nextattr;
     ++e;
-    while(isspace(*e)) {
+    while(isspaceByte(*e)) {
 	if(*e == '\n')
 	    ++lns;
 	++e;
@@ -198,10 +198,10 @@ parseTag(char *e,
 		goto x3;
 	}
     } else {
-	while(!isspace(*e) && *e != '>' && *e != '<' && *e)
+	while(!isspaceByte(*e) && *e != '>' && *e != '<' && *e)
 	    ++e;
     }
-    while(isspace(*e)) {
+    while(isspaceByte(*e)) {
 	if(*e == '\n')
 	    ++lns;
 	++e;
@@ -247,7 +247,7 @@ htmlAttrVal(const char *e, const char *name)
     if(!e)
 	return a;
   top:
-    while(isspace(*e))
+    while(isspaceByte(*e))
 	e++;
     if(!*e)
 	return 0;
@@ -259,15 +259,15 @@ htmlAttrVal(const char *e, const char *name)
     f = *n;
     while(atchr(*e))
 	f = 'x', e++;
-    while(isspace(*e))
+    while(isspaceByte(*e))
 	e++;
     if(*e != '=')
 	goto ea;
     e++;
-    while(isspace(*e))
+    while(isspaceByte(*e))
 	e++;
     if(!isquote(*e)) {
-	while(*e && !isspace(*e) && *e != '>' && *e != '<') {
+	while(*e && !isspaceByte(*e) && *e != '>' && *e != '<') {
 	    if(!f)
 		valChar(&a, &l, *e);
 	    e++;
@@ -425,9 +425,9 @@ anchorSwap(char *buf)
 	    c = becomes[ss - from];
 	if(c != (char)InternalCodeChar)
 	    goto put1;
-	if(!isdigit(s[1]))
+	if(!isdigitByte(s[1]))
 	    goto put1;
-	for(a = s + 2; isdigit(*a); ++a) ;
+	for(a = s + 2; isdigitByte(*a); ++a) ;
 	if(*a != '{')
 	    goto put1;
 	for(++a; *a == ' '; ++a) ;
@@ -452,7 +452,7 @@ anchorSwap(char *buf)
 	a = 0;
 
 	for(s = buf; c = *s; ++s) {
-	    if(isspace(c)) {
+	    if(isspaceByte(c)) {
 		if(!w)
 		    w = s;
 		continue;
@@ -472,7 +472,7 @@ anchorSwap(char *buf)
 	    a = 0;
 
 	    if(c == (char)InternalCodeChar) {
-		if(!isdigit(s[1]))
+		if(!isdigitByte(s[1]))
 		    goto normalChar;
 		n = strtol(s + 1, &ss, 10);
 		preFormatCheck(n, &pretag, &slash);
@@ -563,9 +563,9 @@ anchorSwap(char *buf)
 	    goto putc;
 	if(s[1] != (char)InternalCodeChar)
 	    goto putc;
-	if(!isdigit(s[2]))
+	if(!isdigitByte(s[2]))
 	    goto putc;
-	for(a = s + 3; isdigit(*a); ++a) ;
+	for(a = s + 3; isdigitByte(*a); ++a) ;
 	linkchar = 0;
 	if(*a == '{')
 	    linkchar = '}';
@@ -590,7 +590,7 @@ anchorSwap(char *buf)
 		break;
 	    if(d != (char)InternalCodeChar)
 		continue;
-	    while(isdigit(a[n]))
+	    while(isdigitByte(a[n]))
 		++n;
 	    d = a[n++];
 	    if(!d)
@@ -616,7 +616,7 @@ anchorSwap(char *buf)
 	    ss = w;
 	if(strchr("\r\n\f", c) && ss)
 	    w = ss, ss = 0;
-	if(!isspace(c) && c != '|')
+	if(!isspaceByte(c) && c != '|')
 	    ss = 0;
 	*w++ = c;
     }				/* loop over buffer */
@@ -626,7 +626,7 @@ anchorSwap(char *buf)
 /* Now compress the implied linebreaks into one. */
     premode = false;
     for(s = buf; c = *s; ++s) {
-	if(c == (char)InternalCodeChar && isdigit(s[1])) {
+	if(c == (char)InternalCodeChar && isdigitByte(s[1])) {
 	    n = strtol(s + 1, &s, 10);
 	    if(*s == '*') {
 		preFormatCheck(n, &pretag, &slash);
@@ -634,11 +634,11 @@ anchorSwap(char *buf)
 		    premode = !slash;
 	    }
 	}
-	if(!isspace(c))
+	if(!isspaceByte(c))
 	    continue;
 	strong = false;
 	a = 0;
-	for(w = s; isspace(*w); ++w) {
+	for(w = s; isspaceByte(*w); ++w) {
 	    if(*w == '\n' || *w == '\f')
 		strong = true;
 	    if(*w == '\r' && !a)
@@ -740,7 +740,7 @@ spaceNotInInput(void)
 	    return true;
 	if(c != '<')
 	    continue;
-	while(t > bl_start && isdigit(t[-1]))
+	while(t > bl_start && isdigitByte(t[-1]))
 	    --t;
 	if(*t == '<')
 	    continue;
@@ -792,7 +792,7 @@ appendSpaceChunk(const char *chunk, int len, bool premode)
 		char trailing[12];
 		for(i = 0; i < 6; ++i) {
 		    c = bl_cursor[i - 6];
-		    if(isupper(c))
+		    if(isupperByte(c))
 			c = tolower(c);
 		    trailing[i] = c;
 		}
@@ -801,7 +801,7 @@ appendSpaceChunk(const char *chunk, int len, bool premode)
 		    if(strstr(trailing, prefix[i]))
 			ok = false;
 /* Check for John C. Calhoon */
-		if(isupper(bl_cursor[-2]) && isspace(bl_cursor[-3]))
+		if(isupperByte(bl_cursor[-2]) && isspaceByte(bl_cursor[-3]))
 		    ok = false;
 	    }
 	    if(ok)
@@ -1012,8 +1012,8 @@ htmlReformat(const char *buf)
     new = initString(&l);
 
     for(h = buf; (c = *h); h = nh) {
-	if(isspace(c)) {
-	    for(s = h + 1; isspace(*s); ++s) ;
+	if(isspaceByte(c)) {
+	    for(s = h + 1; isspaceByte(*s); ++s) ;
 	    nh = s;
 	    appendSpaceChunk(h, nh - h, premode);
 	    if(lspace == 3 || lspace == 2 &&
@@ -1030,7 +1030,7 @@ htmlReformat(const char *buf)
 	/* white space */
 	if(c != (char)InternalCodeChar) {
 	    for(s = h + 1; *s; ++s)
-		if(isspace(*s) || *s == (char)InternalCodeChar)
+		if(isspaceByte(*s) || *s == (char)InternalCodeChar)
 		    break;
 	    nh = s;
 	    appendPrintableChunk(h, nh - h, premode);
@@ -1061,7 +1061,7 @@ htmlReformat(const char *buf)
 	if(c != (char)InternalCodeChar)
 	    continue;
 /* Does this start a new hyperlink? */
-	for(s = h + 1; isdigit(*s); ++s) ;
+	for(s = h + 1; isdigitByte(*s); ++s) ;
 	if(*s != '{')
 	    continue;
 	appendSpaceChunk("\n", 1, false);
@@ -1306,7 +1306,7 @@ andTranslate(const char *s, bool invisible)
     while(c = *s) {
 	if(c == (uchar) InternalCodeChar && !invisible) {
 	    const char *t = s + 1;
-	    while(isdigit(*t))
+	    while(isdigitByte(*t))
 		++t;
 	    if(t > s + 1 && *t && strchr("{}<>*", *t)) {	/* it's a tag */
 		bool separate, pretag, slash;
@@ -1362,7 +1362,7 @@ andTranslate(const char *s, bool invisible)
 		goto putc;
 	    }
 /* We're replacing with a word */
-	    if(!invisible && isalnum(*r)) {
+	    if(!invisible && isalnumByte(*r)) {
 /* insert spaces either side */
 		if(alnum)
 		    stringAndChar(&new, &l, ' ');
@@ -1392,7 +1392,7 @@ andTranslate(const char *s, bool invisible)
 	j = 1;
 
       putc:
-	if(isalnum(c)) {
+	if(isalnumByte(c)) {
 	    if(alnum == 2)
 		stringAndChar(&new, &l, ' ');
 	    alnum = 1;

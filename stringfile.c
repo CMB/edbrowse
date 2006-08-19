@@ -114,7 +114,7 @@ void
 skipWhite(const char **s)
 {
     const char *t = *s;
-    while(isspace(*t))
+    while(isspaceByte(*t))
 	++t;
     *s = t;
 }				/* skipWhite */
@@ -128,7 +128,7 @@ stripWhite(char *s)
     if(t > s)
 	strcpy(s, t);
     u = s + strlen(s);
-    while(u > s && isspace(u[-1]))
+    while(u > s && isspaceByte(u[-1]))
 	--u;
     *u = 0;
 }				/* stripWhite */
@@ -141,14 +141,14 @@ spaceCrunch(char *s, bool onespace, bool unprint)
     char c;
     bool space = true;
     for(i = j = 0; c = s[i]; ++i) {
-	if(isspace(c)) {
+	if(isspaceByte(c)) {
 	    if(!onespace)
 		continue;
 	    if(!space)
 		s[j++] = ' ', space = true;
 	    continue;
 	}
-	if(unprint && !isprint(c))
+	if(unprint && !isprintByte(c))
 	    continue;
 	s[j++] = c, space = false;
     }
@@ -323,7 +323,7 @@ int
 stringIsNum(const char *s)
 {
     int n;
-    if(!isdigit(s[0]))
+    if(!isdigitByte(s[0]))
 	return -1;
     n = strtol(s, (char **)&s, 10);
     if(*s)
@@ -347,9 +347,9 @@ memEqualCI(const char *s, const char *t, int len)
     char c, d;
     while(len--) {
 	c = *s, d = *t;
-	if(islower(c))
+	if(islowerByte(c))
 	    c = toupper(c);
-	if(islower(d))
+	if(islowerByte(d))
 	    d = toupper(d);
 	if(c != d)
 	    return false;
@@ -375,9 +375,9 @@ stringEqualCI(const char *s, const char *t)
 {
     char c, d;
     while((c = *s) && (d = *t)) {
-	if(islower(c))
+	if(islowerByte(c))
 	    c = toupper(c);
-	if(islower(d))
+	if(islowerByte(d))
 	    d = toupper(d);
 	if(c != d)
 	    return false;
@@ -485,11 +485,11 @@ freeList(struct listHead *l)
     }
 }				/* freeList */
 
-/* like isalnum, but allows _ and - */
+/* like isalnumByte, but allows _ and - */
 bool
 isA(char c)
 {
-    if(isalnum(c))
+    if(isalnumByte(c))
 	return true;
     return (c == '_' || c == '-');
 }				/* isA */
@@ -546,7 +546,7 @@ errorPrint(const char *msg, ...)
 	++msg;
 	bailflag = 1;
 	fprintf(stderr, "disaster, ");
-    } else if(isdigit(*msg)) {
+    } else if(isdigitByte(*msg)) {
 	++msg;
 	bailflag = *msg - '0';
     }
@@ -766,17 +766,17 @@ caseShift(char *s, char action)
 
     for(; c = *s; ++s) {
 	if(action == 'u') {
-	    if(isalpha(c))
+	    if(isalphaByte(c))
 		*s = toupper(c);
 	    continue;
 	}
 	if(action == 'l') {
-	    if(isalpha(c))
+	    if(isalphaByte(c))
 		*s = tolower(c);
 	    continue;
 	}
 /* mixed case left */
-	if(isalpha(c)) {
+	if(isalphaByte(c)) {
 	    if(ws)
 		c = toupper(c);
 	    else
@@ -1143,7 +1143,7 @@ envFile(const char *line, const char **expanded)
 	    ++s;
 	    continue;
 	}
-	if(dollar && !isalnum(c) && c != '_') {
+	if(dollar && !isalnumByte(c) && c != '_') {
 	    *t = 0;
 	    value = getenv(dollar + 1);
 	    if(!value) {
@@ -1156,7 +1156,7 @@ envFile(const char *line, const char **expanded)
 	    t = dollar + strlen(dollar);
 	    dollar = 0;
 	}
-	if(c == '$' && (s[1] == '_' || isalpha(s[1])))
+	if(c == '$' && (s[1] == '_' || isalphaByte(s[1])))
 	    dollar = t;
 	*t++ = c;
 	if(!c)

@@ -81,7 +81,7 @@ loadAddressBook(void)
 	    }
 	    if(state == 3) {
 		++nads;
-		while(isspace(t[-1]))
+		while(isspaceByte(t[-1]))
 		    --t;
 		*t = 0;
 		v = strchr(last, ':');
@@ -112,7 +112,7 @@ loadAddressBook(void)
 		}
 
 		while(last < t) {
-		    if(!isprint(*last)) {
+		    if(!isprintByte(*last)) {
 			setError
 			   ("unprintable characters in your alias or email, address book line %d",
 			   ln - 1);
@@ -389,7 +389,7 @@ encodeAttachment(const char *file, int ismail,
 	while(*s != '\n')
 	    ++s;
 	v = s;
-	while(s > t && isspace(s[-1]))
+	while(s > t && isspaceByte(s[-1]))
 	    --s;
 	if(s == t) {
 	    setError("empty subject line");
@@ -405,7 +405,7 @@ encodeAttachment(const char *file, int ismail,
 	t = subjectLine + (s - t);
 	for(s = subjectLine; s < t; ++s) {
 	    c = *s;
-	    if(!isprint(c) && c != ' ') {
+	    if(!isprintByte(c) && c != ' ') {
 		setError
 		   ("invalid characters in the subject line, please use only spaces and printable ascii text");
 		goto freefail;
@@ -1042,7 +1042,7 @@ sendMailCurrent(int sm_account, bool dosig)
 	    line += 8;
 	    while(*line == ' ' || *line == '\t')
 		++line;
-	    if(!isdigit(*line) ||
+	    if(!isdigitByte(*line) ||
 	       (account = strtol(line, &line, 10)) == 0 ||
 	       account > maxAccount || *line != '\n') {
 		setError("invalid account number at line %d", ln);

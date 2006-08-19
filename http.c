@@ -93,7 +93,7 @@ readSocket(SSL * ssl, int fh)
     struct CHUNK *chunklist = 0, *lastchunk = 0, *p, *q;
     int n, len = 0;
     char *data;
-    bool isprint = false;
+    bool isprintByte = false;
 
     while(true) {
 	p = allocMem(sizeof (struct CHUNK));
@@ -124,9 +124,9 @@ readSocket(SSL * ssl, int fh)
 	    break;
 	printf(".");
 	fflush(stdout);
-	isprint = true;
+	isprintByte = true;
     }				/* loop reading data */
-    if(isprint)
+    if(isprintByte)
 	printf("\n");
 
 /* Put it all together */
@@ -222,9 +222,9 @@ parseHeaderDate(const char *date)
 	goto fail;
     date++;
 
-    if(isdigit(*date)) {	/* first format */
+    if(isdigitByte(*date)) {	/* first format */
 	y = 0;
-	if(isdigit(date[1])) {
+	if(isdigitByte(date[1])) {
 	    tm.tm_mday = (date[0] - '0') * 10 + date[1] - '0';
 	    date += 2;
 	} else {
@@ -242,13 +242,13 @@ parseHeaderDate(const char *date)
 	date += 3;
 	if(*date == ' ') {
 	    date++;
-	    if(!isdigit(date[0]))
+	    if(!isdigitByte(date[0]))
 		goto fail;
-	    if(!isdigit(date[1]))
+	    if(!isdigitByte(date[1]))
 		goto fail;
-	    if(!isdigit(date[2]))
+	    if(!isdigitByte(date[2]))
 		goto fail;
-	    if(!isdigit(date[3]))
+	    if(!isdigitByte(date[3]))
 		goto fail;
 	    tm.tm_year =
 	       (date[0] - '0') * 1000 + (date[1] - '0') * 100 + (date[2] -
@@ -257,11 +257,11 @@ parseHeaderDate(const char *date)
 	} else if(*date == '-') {
 	    /* Sunday, 06-Nov-94 08:49:37 GMT */
 	    date++;
-	    if(!isdigit(date[0]))
+	    if(!isdigitByte(date[0]))
 		goto fail;
-	    if(!isdigit(date[1]))
+	    if(!isdigitByte(date[1]))
 		goto fail;
-	    if(!isdigit(date[2])) {
+	    if(!isdigitByte(date[2])) {
 		tm.tm_year =
 		   (date[0] >=
 		   '7' ? 1900 : 2000) + (date[0] - '0') * 10 + date[1] - '0' -
@@ -287,12 +287,12 @@ parseHeaderDate(const char *date)
 	date += 3;
 	while(*date == ' ')
 	    date++;
-	if(!isdigit(date[0]))
+	if(!isdigitByte(date[0]))
 	    goto fail;
 	tm.tm_mday = date[0] - '0';
 	date++;
 	if(*date != ' ') {
-	    if(!isdigit(date[0]))
+	    if(!isdigitByte(date[0]))
 		goto fail;
 	    tm.tm_mday = tm.tm_mday * 10 + date[0] - '0';
 	    date++;
@@ -303,27 +303,27 @@ parseHeaderDate(const char *date)
     }
 
 /* ready to crack time */
-    if(!isdigit(date[0]))
+    if(!isdigitByte(date[0]))
 	goto fail;
-    if(!isdigit(date[1]))
+    if(!isdigitByte(date[1]))
 	goto fail;
     tm.tm_hour = (date[0] - '0') * 10 + date[1] - '0';
     date += 2;
     if(*date != ':')
 	goto fail;
     date++;
-    if(!isdigit(date[0]))
+    if(!isdigitByte(date[0]))
 	goto fail;
-    if(!isdigit(date[1]))
+    if(!isdigitByte(date[1]))
 	goto fail;
     tm.tm_min = (date[0] - '0') * 10 + date[1] - '0';
     date += 2;
     if(*date != ':')
 	goto fail;
     date++;
-    if(!isdigit(date[0]))
+    if(!isdigitByte(date[0]))
 	goto fail;
-    if(!isdigit(date[1]))
+    if(!isdigitByte(date[1]))
 	goto fail;
     tm.tm_sec = (date[0] - '0') * 10 + date[1] - '0';
     date += 2;
@@ -333,13 +333,13 @@ parseHeaderDate(const char *date)
 	if(*date != ' ')
 	    goto fail;
 	date++;
-	if(!isdigit(date[0]))
+	if(!isdigitByte(date[0]))
 	    goto fail;
-	if(!isdigit(date[1]))
+	if(!isdigitByte(date[1]))
 	    goto fail;
-	if(!isdigit(date[2]))
+	if(!isdigitByte(date[2]))
 	    goto fail;
-	if(!isdigit(date[3]))
+	if(!isdigitByte(date[3]))
 	    goto fail;
 	tm.tm_year =
 	   (date[0] - '0') * 1000 + (date[1] - '0') * 100 + (date[2] -
@@ -363,9 +363,9 @@ parseRefresh(char *ref, int *delay_p)
 {
     int delay = 0;
     char *u = ref;
-    if(isdigit(*u))
+    if(isdigitByte(*u))
 	delay = atoi(u);
-    while(isdigit(*u) || *u == '.')
+    while(isdigitByte(*u) || *u == '.')
 	++u;
     if(*u == ';')
 	++u;
@@ -697,13 +697,13 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	goto nohead;
     if(*u++ != '/')
 	goto nohead;
-    while(isdigit(*u) || *u == '.')
+    while(isdigitByte(*u) || *u == '.')
 	++u;
     if(*u != ' ')
 	goto nohead;
     while(*u == ' ')
 	++u;
-    if(!isdigit(*u))
+    if(!isdigitByte(*u))
 	goto nohead;
     hcode = strtol(u, &u, 10);
     while(*u == ' ')
@@ -761,7 +761,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
     if(hcode == 401) {		/* authorization requested */
 	int authmeth = 1;	/* basic method by default */
 	if(u = extractHeaderItem(serverData, hdr, "WWW-Authenticate", 0)) {
-	    if(!memEqualCI(u, "basic", 5) || isalnum(u[5])) {
+	    if(!memEqualCI(u, "basic", 5) || isalnumByte(u[5])) {
 		setError("authorization method %s not recognized", u);
 		nzFree(u);
 		goto abort;
@@ -1050,7 +1050,7 @@ ftpls(char *line)
 	sscanf(line + j, " %d %s %s %d", &nlinks, user, group, &fsize);
 	q = strchr(line, ':');
 	if(q) {
-	    for(++q; isdigit(*q) || *q == ':'; ++q) ;
+	    for(++q; isdigitByte(*q) || *q == ':'; ++q) ;
 	    while(*q == ' ')
 		++q;
 	    if(*q) {		/* file name */

@@ -63,9 +63,9 @@ loadBlacklist(void)
 	    t = s + strlen(s);
 	else
 	    *t++ = 0;
-	while(isspace(*s))
+	while(isspaceByte(*s))
 	    ++s;
-	if(isdigit(*s)) {
+	if(isdigitByte(*s)) {
 	    long ip;
 	    unsigned long ipmask;
 	    char dotstop = 0;
@@ -174,9 +174,9 @@ getFileName(const char *defname, bool isnew)
 	    printf("[%s] ", defname);
 	if(!fgets(buf, sizeof (buf), stdin))
 	    exit(0);
-	for(p = buf; isspace(*p); ++p) ;
+	for(p = buf; isspaceByte(*p); ++p) ;
 	l = strlen(p);
-	while(l && isspace(p[l - 1]))
+	while(l && isspaceByte(p[l - 1]))
 	    --l;
 	p[l] = 0;
 	if(!l) {
@@ -709,7 +709,7 @@ emailTest(void)
 	if(first == ' ' || first == '\t')
 	    continue;
 	++j;			/* nonindented line */
-	for(q = p; isalnum(*q) || *q == '_' || *q == '-'; ++q) ;
+	for(q = p; isalnumByte(*q) || *q == '_' || *q == '-'; ++q) ;
 	if(q == p)
 	    continue;
 	if(*q++ != ':')
@@ -729,11 +729,11 @@ emailTest(void)
 static uchar
 unb64(char c)
 {
-    if(isupper(c))
+    if(isupperByte(c))
 	return c - 'A';
-    if(islower(c))
+    if(islowerByte(c))
 	return c - ('a' - 26);
-    if(isdigit(c))
+    if(isdigitByte(c))
 	return c - ('0' - 52);
     if(c == '+')
 	return 62;
@@ -754,7 +754,7 @@ unpack64(struct MHINFO *w)
     equals = false;
     for(q = r = w->start; q < w->end; ++q) {
 	c = *q;
-	if(isspace(c))
+	if(isspaceByte(c))
 	    continue;
 	if(equals) {
 	    if(c == '=')
@@ -829,7 +829,7 @@ ctExtras(struct MHINFO *w, const char *s, const char *t)
     if(w->ct < CT_MULTI) {
 	quote = 0;
 	for(q = s + 1; q < t; ++q) {
-	    if(isalnum(q[-1]))
+	    if(isalnumByte(q[-1]))
 		continue;
 /* could be name= or filename= */
 	    if(memEqualCI(q, "file", 4))
@@ -860,7 +860,7 @@ ctExtras(struct MHINFO *w, const char *s, const char *t)
     if(w->ct >= CT_MULTI) {
 	quote = 0;
 	for(q = s + 1; q < t; ++q) {
-	    if(isalnum(q[-1]))
+	    if(isalnumByte(q[-1]))
 		continue;
 	    if(!memEqualCI(q, "boundary=", 9))
 		continue;
@@ -922,7 +922,7 @@ headerGlean(char *start, char *end)
 	}
 
 /* find the lead word */
-	for(q = s; isalnum(*q) || *q == '_' || *q == '-'; ++q) ;
+	for(q = s; isalnumByte(*q) || *q == '_' || *q == '-'; ++q) ;
 	if(q == s)
 	    continue;		/* should never happen */
 	if(*q++ != ':')
@@ -944,9 +944,9 @@ headerGlean(char *start, char *end)
 		static const char *const prefix[] = {
 		    "re", "sv", "fwd", 0
 		};
-		if(!isalpha(*q))
+		if(!isalphaByte(*q))
 		    continue;
-		if(q > vl && isalnum(q[-1]))
+		if(q > vl && isalnumByte(q[-1]))
 		    continue;
 		for(j = 0; prefix[j]; ++j)
 		    if(memEqualCI(q, prefix[j], strlen(prefix[j])))
@@ -991,7 +991,7 @@ headerGlean(char *start, char *end)
 		continue;
 /* don't need the weekday, seconds, or timezone */
 	    if(vr - vl > 5 &&
-	       isalpha(vl[0]) && isalpha(vl[1]) && isalpha(vl[2]) &&
+	       isalphaByte(vl[0]) && isalphaByte(vl[1]) && isalphaByte(vl[2]) &&
 	       vl[3] == ',' && vl[4] == ' ')
 		vl += 5;
 	    strncpy(w->date, vl, vr - vl);
@@ -1205,7 +1205,7 @@ headerGlean(char *start, char *end)
 	}			/* empty line */
 	if(first == ' ' || first == '\t')
 	    continue;		/* indented */
-	for(q = s; isalnum(*q) || *q == '_' || *q == '-'; ++q) ;
+	for(q = s; isalnumByte(*q) || *q == '_' || *q == '-'; ++q) ;
 	if(q == s || *q != ':') {
 	    vl = 0;
 	    continue;
@@ -1241,12 +1241,12 @@ headerGlean(char *start, char *end)
 	if(vr - vl >= 4 && memEqualCI(vr - 4, "<br>", 4))
 	    vr -= 4;
 	while(vl < vr) {
-	    if(isalnum(*vl))
+	    if(isalnumByte(*vl))
 		break;
 	    ++vl;
 	}
 	while(vl < vr) {
-	    if(isalnum(vr[-1]))
+	    if(isalnumByte(vr[-1]))
 		break;
 	    --vr;
 	}
@@ -1306,7 +1306,7 @@ headerShow(struct MHINFO *w, bool top)
 	}
 /* need a dot at the end? */
 	s = buf + strlen(buf);
-	if(isalnum(s[-1]))
+	if(isalnumByte(s[-1]))
 	    *s++ = '.';
 	strcpy(s, mailIsHtml ? "\n<br>" : "\n");
 	if(w->date[0]) {
