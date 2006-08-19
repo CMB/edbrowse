@@ -27,7 +27,7 @@ All sockets use the setup protocol: connect() -> listen() + accept().
 #include <sys/select.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <asm/param.h>
+#include <sys/param.h>
 /* for some reason this prototype is missing */
 extern char *inet_ntoa(struct in_addr);
 extern int inet_aton(const char *, struct in_addr *);

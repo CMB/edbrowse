@@ -10,7 +10,17 @@
 #include <dos.h>
 #else
 #include <dirent.h>
+#ifdef __NetBSD__
+#include <termios.h>
+typedef struct termios termstruct;
+#define TTY_GET_COMMAND TIOCGETA
+#define TTY_SET_COMMAND TIOCSETA
+#else
 #include <termio.h>
+typedef struct termio termstruct;
+#define TTY_GET_COMMAND TCGETA
+#define TTY_SET_COMMAND TCSETA
+#endif
 #include <sys/utsname.h>
 #endif
 #include <pcre.h>
@@ -862,13 +872,13 @@ fileTimeByName(const char *name)
 
 #ifndef DOSLIKE
 
-static struct termio savettybuf;
+static termstruct savettybuf;
 void
 ttySaveSettings(void)
 {
     isInteractive = isatty(0);
     if(isInteractive) {
-	if(ioctl(0, TCGETA, &savettybuf))
+	if(ioctl(0, TTY_GET_COMMAND, &savettybuf))
 	    errorPrint("@canot use ioctl() to manage the tty");
     }
 }				/* ttySaveSettings */
@@ -877,7 +887,7 @@ static void
 ttyRestoreSettings(void)
 {
     if(isInteractive)
-	ioctl(0, TCSETA, &savettybuf);
+	ioctl(0, TTY_SET_COMMAND, &savettybuf);
 }				/* ttyRestoreSettings */
 
 /* put the tty in raw mode.
@@ -890,13 +900,13 @@ ttyRestoreSettings(void)
 static void
 ttyRaw(int charcount, int timeout, bool isecho)
 {
-    struct termio buf = savettybuf;	/* structure copy */
+    termstruct buf = savettybuf;	/* structure copy */
     buf.c_cc[VMIN] = charcount;
     buf.c_cc[VTIME] = timeout;
     buf.c_lflag &= ~(ICANON | ECHO);
     if(isecho)
 	buf.c_lflag |= ECHO;
-    ioctl(0, TCSETA, &buf);
+    ioctl(0, TTY_SET_COMMAND, &buf);
 }				/* ttyRaw */
 
 /* simulate MSDOS getche() system call */
