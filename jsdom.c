@@ -11,7 +11,13 @@
 #include "eb.h"
 
 #include "jsapi.h"
-#include "jsprf.h"
+/* jsprf.h is not publically visible on some systems,
+so I can't #include it here.
+Instead, I'll declare the needed prototype myself, and hope it is consistent
+with whatever smjs you are using. */
+extern
+JS_PUBLIC_API(char *)
+JS_smprintf(const char *fmt, ...);
 
 #define PROP_FIXED (JSPROP_ENUMERATE|JSPROP_READONLY|JSPROP_PERMANENT)
 
