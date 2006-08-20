@@ -10,7 +10,7 @@
 #include <dos.h>
 #else
 #include <dirent.h>
-#ifdef __NetBSD__
+#ifdef SYSBSD
 #include <termios.h>
 typedef struct termios termstruct;
 #define TTY_GET_COMMAND TIOCGETA

@@ -15,6 +15,11 @@
 #define DOSLIKE 1
 #endif
 
+/* System V or system BSD? */
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD)
+#define SYSBSD 1
+#endif
+
 /* seems like everybody needs these header files */
 #include <sys/types.h>
 #include <ctype.h>
