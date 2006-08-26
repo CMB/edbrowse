@@ -26,6 +26,7 @@ jsrt
 main.c
 main.o
 makefile
+makefile.bsd
 sample.ebrc
 sendmail.c
 sendmail.o

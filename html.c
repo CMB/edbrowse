@@ -750,7 +750,8 @@ displayOptions(const struct htmlTag *sel)
 }				/* displayOptions */
 
 static struct htmlTag *
-locateOptionByName(const struct htmlTag *sel, const char *name, int *pmc)
+locateOptionByName(const struct htmlTag *sel, const char *name, int *pmc,
+   bool exact)
 {
     struct htmlTag **list = cw->tags, *t, *em = 0, *pm = 0;
     int pmcount = 0;		/* partial match count */
@@ -764,6 +765,8 @@ locateOptionByName(const struct htmlTag *sel, const char *name, int *pmc)
 	    em = t;
 	    continue;
 	}
+	if(exact)
+	    continue;
 	if(strstrCI(s, name)) {
 	    pm = t;
 	    ++pmcount;
@@ -840,12 +843,14 @@ locateOptions(const struct htmlTag *sel, const char *input,
 	if(*s == ',')
 	    ++s;
 
-	t = 0;
-	n = stringIsNum(iopt);
-	if(n >= 0)
-	    t = locateOptionByNum(sel, n);
+	t = locateOptionByName(sel, iopt, &pmc, true);
+	if(!t) {
+	    n = stringIsNum(iopt);
+	    if(n >= 0)
+		t = locateOptionByNum(sel, n);
+	}
 	if(!t)
-	    t = locateOptionByName(sel, iopt, &pmc);
+	    t = locateOptionByName(sel, iopt, &pmc, false);
 	if(!t) {
 	    if(n >= 0)
 		setError("%d is out of range", n);

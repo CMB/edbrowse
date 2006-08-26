@@ -1866,6 +1866,14 @@ Note the paradigm here:
 blind people don't want to wade through a menu unless they absolutely have to!
 
 <P>
+There is some ambiguity when the option is itself a number.&nbsp;
+In this case I perform three matches.&nbsp;
+If you type in the number exactly as it appears, that option is selected.&nbsp;
+If the number you entered is not a perfect match for one of the options, it is treated as a menu number.&nbsp;
+If it is not a valid menu number (e.g. out of range), I perform a partial match on the options, looking for those digits as a substring.&nbsp;
+This may seem confusing, but it is usually what you want.
+
+<P>
 You can use i&lt;7 to pull the contents of session 7 into the current input field.&nbsp;
 Session 7 must have one line of text.&nbsp;
 Similarly, i&lt;filename reads the contents of the file into the current input field.&nbsp;
