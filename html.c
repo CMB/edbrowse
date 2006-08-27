@@ -1848,7 +1848,17 @@ encodeTags(char *html)
 		    javatext = 0;
 		    if(javaOK(t->href)) {
 			debugPrint(2, "java source %s", t->href);
-			if(httpConnect(basehref, t->href)) {
+			if(browseLocal && !isURL(t->href)) {
+			    if(!fileIntoMemory(t->href, &serverData,
+			       &serverDataLen)) {
+				runningError
+				   ("could not fetch local javascript, %s",
+				   errorMsg);
+			    } else {
+				javatext = serverData;
+				prepareForBrowse(javatext, serverDataLen);
+			    }
+			} else if(httpConnect(basehref, t->href)) {
 			    if(hcode == 200) {
 				javatext = serverData;
 				prepareForBrowse(javatext, serverDataLen);
