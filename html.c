@@ -1894,6 +1894,7 @@ encodeTags(char *html)
 			char *after;
 			struct htmlTag *z;
 			debugPrint(3, "docwrite %d bytes", cw->dw_l);
+			debugPrint(4, "<<\n%s\n>>", cw->dw+10);
 			stringAndString(&cw->dw, &cw->dw_l, "</docwrite>");
 			afterlen = strlen(h) + strlen(cw->dw);
 			after = allocMem(afterlen + 1);
