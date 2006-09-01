@@ -1894,7 +1894,7 @@ encodeTags(char *html)
 			char *after;
 			struct htmlTag *z;
 			debugPrint(3, "docwrite %d bytes", cw->dw_l);
-			debugPrint(4, "<<\n%s\n>>", cw->dw+10);
+			debugPrint(4, "<<\n%s\n>>", cw->dw + 10);
 			stringAndString(&cw->dw, &cw->dw_l, "</docwrite>");
 			afterlen = strlen(h) + strlen(cw->dw);
 			after = allocMem(afterlen + 1);
@@ -2810,14 +2810,13 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 	    nx = allocMem(namelen + 3);
 	    strcpy(nx, name);
 	    strcpy(nx + namelen, ".x");
-	    value = "0";
-	    postNameVal(nx, value, fsep, false, boundary, post, l);
+	    postNameVal(nx, "0", fsep, false, boundary, post, l);
 	    nx[namelen + 1] = 'y';
-	    postNameVal(nx, value, fsep, false, boundary, post, l);
+	    postNameVal(nx, "0", fsep, false, boundary, post, l);
 	    nzFree(nx);
-	    continue;
+	    goto success;
 	}
-	/* the submit button */
+
 	if(itype >= INP_RADIO) {
 	    value = t->value;
 	    bval = fetchBoolVar(t);

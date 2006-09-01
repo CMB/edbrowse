@@ -619,7 +619,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
 /* Web caching not yet implemented. */
     stringAndString(&hdr, &l,
        "Pragma: no-cache\r\nCache-Control: no-cache\r\n");
-    stringAndString(&hdr, &l, "Accept-Encoding: gzip, compress\r\n");
+    stringAndString(&hdr, &l, "Accept-Encoding: gzip, compress, deflate\r\n");
     stringAndString(&hdr, &l, "Accept-Language: en\r\n");
     if(u = getAuthString(url)) {
 	stringAndString(&hdr, &l, u);
@@ -993,7 +993,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	       ("zcat cannot uncompress the data, to reconstruct the web page");
 	    return false;
 	}
-	serverData = allocMem(n+2);
+	serverData = allocMem(n + 2);
 	fh = open(edbrowseTempFile, O_RDONLY | O_BINARY);
 	if(fh < 0) {
 	    setError("cannot access the uncompressed web page in %s",
@@ -1008,7 +1008,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	}
 	close(fh);
 	serverDataLen = n;
-serverData[n] = 0;
+	serverData[n] = 0;
 /* doesn't hurt to clean house, now that everything worked. */
 	strcpy(u, suffix);
 	unlink(edbrowseTempFile);

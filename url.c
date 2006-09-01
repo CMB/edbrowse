@@ -808,7 +808,11 @@ encodePostData(const char *s)
     while(c = *s++) {
 	if(isalnumByte(c))
 	    goto putc;
-	if(strchr("-._~*()!',", c))
+	if(c == ' ') {
+	    c = '+';
+	    goto putc;
+	}
+	if(strchr("-._~*()!", c))
 	    goto putc;
 	sprintf(buf, "%%%02X", (uchar) c);
 	stringAndString(&post, &l, buf);
@@ -824,6 +828,8 @@ dohex(char c, const char **sp)
 {
     const char *s = *sp;
     char d, e;
+    if(c == '+')
+	return ' ';
     if(c != '%')
 	return c;
     d = *s++;
