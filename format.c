@@ -1121,6 +1121,7 @@ andTranslate(const char *s, bool invisible)
 	"plus\0+",
 	"minus\0-",
 	"mdash\0 - ",
+	"ndash\0 - ",
 	"colon\0:",
 	"apos\0`",
 	"star\0*",
