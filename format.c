@@ -1202,6 +1202,7 @@ andTranslate(const char *s, bool invisible)
 	"frac34\0\xbe",
 	"frac13\01/3",
 	"frac23\02/3",
+	"plusmn\0+-",
 	"micro\0micro",
 	"trade\0(TM)",
 	"hellip\0...",
@@ -1255,7 +1256,7 @@ andTranslate(const char *s, bool invisible)
 	"#967\0chi",
 	"#968\0psi",
 	"#969\0omega",
-	"#8177\0+-",		/* I made this one up */
+	"#177\0+-",
 	"#8211\0-",
 	"#8212\0 - ",
 	"#8216\0`",
