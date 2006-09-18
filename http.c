@@ -3,12 +3,25 @@
  * (c) 2002 Mikulas Patocka
  * This file is part of the Links project, released under GPL.
  *
- * Modified by Karl Dahlke for integration with edbrowse.
+ * Modified by Karl Dahlke for integration with edbrowse,
+ * which is also released under the GPL.
+ * 
+ * OpenSSL exception:
+ * As a special exception, I hereby grant permission to link
+ * the code of this program with the OpenSSL library
+ * (or with modified versions of OpenSSL that use the same license as OpenSSL),
+ * and distribute linked combinations including the two.
+ * You must obey the GNU General Public License in all respects
+ * for all of the code used other than OpenSSL.
+ * If you modify this file, you may extend this exception to your version of the
+ * file, but you are not obligated to do so.
+ * If you do not wish to do so, delete this exception statement from your version.
  */
 
 #include "eb.h"
 #include "tcp.h"
 /* You need the open ssl library for secure connections. */
+/* Hence the openSSL exception above. */
 #include <openssl/ssl.h>
 #include <openssl/err.h>	/* for error-retrieval */
 #include <openssl/rand.h>
