@@ -1020,10 +1020,23 @@ domLink(const char *classname,	/* instantiate this class */
 	vv = OBJECT_TO_JSVAL(v);
 
 	if(symname) {
-	    JS_DefineProperty(jcx, owner, symname, vv, NULL, NULL, attr);
-	    JS_GetProperty(jcx, jdoc, "all", &listv);
-	    master = JSVAL_TO_OBJECT(listv);
-	    establish_property_object(master, symname, v);
+/*********************************************************************
+This is realy a kludge, because I don't understand it.
+If <form> has an action attribute,
+and there is an input tag, usualy hidden, with name=action,
+that input tag is linked up under form.action,
+and then when I submit, and call form.action, it blows up.
+It is a semantic collision.
+Maybe hidden tags shouldn't be linked under form at all - I don't know.
+For now I just suppress this when it happens.
+*********************************************************************/
+	    if(!stringEqual(symname, "action") ||
+	       !stringEqual(classname, "Element")) {
+		JS_DefineProperty(jcx, owner, symname, vv, NULL, NULL, attr);
+		JS_GetProperty(jcx, jdoc, "all", &listv);
+		master = JSVAL_TO_OBJECT(listv);
+		establish_property_object(master, symname, v);
+	    }
 	} else {
 	    JS_DefineProperty(jcx, owner, fakePropName(), vv,
 	       NULL, NULL, JSPROP_READONLY | JSPROP_PERMANENT);

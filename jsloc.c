@@ -793,7 +793,7 @@ get_property_url(void *jv, bool doaction)
 	if(!JSVAL_IS_OBJECT(v)) {
 	  badobj:
 	    JS_ReportError(jcx,
-	       "url object is assigned something that I don't understand; I will not be able to fetch the next web page.");
+	       "url object is assigned something that I don't understand; I may not be able to fetch the next web page.");
 	    return 0;
 	}
 	lo = JSVAL_TO_OBJECT(v);

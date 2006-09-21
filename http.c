@@ -1253,9 +1253,9 @@ allIPs(void)
     for(ln = 1; ln <= cw->dol; ++ln) {
 	p = (char *)fetchLine(ln, -1);
 	ftype = 0;		/* input stuff doesn't work */
-	findField(p, ftype, 0, &nf, 0, 0, 0);
+	findField(p, ftype, 0, &nf, 0, 0, 0, 0);
 	for(j = 1; j <= nf; ++j) {
-	    findField(p, ftype, j, &nf, &tagno, &href, 0);
+	    findField(p, ftype, j, &nf, 0, &tagno, &href, 0);
 	    if(!href)
 		continue;
 	    if(dom = getHostURL(href)) {

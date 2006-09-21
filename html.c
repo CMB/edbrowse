@@ -2090,7 +2090,7 @@ htmlParse(char *buf, int remote)
 
 void
 findField(const char *line, int ftype, int n,
-   int *total, int *tagno, char **href, void **evp)
+   int *total, int *realtotal, int *tagno, char **href, void **evp)
 {
     const struct htmlTag *t, **list = cw->tags;
     int nt = 0;			/* number of fields total */
@@ -2155,6 +2155,8 @@ findField(const char *line, int ftype, int n,
 	nm = 0;
     if(total)
 	*total = nrt;
+    if(realtotal)
+	*realtotal = nt;
     if(tagno)
 	*tagno = nm;
     if(!ftype && nm) {
@@ -2224,6 +2226,8 @@ findField(const char *line, int ftype, int n,
 	nm = 0;
     if(total)
 	*total = nt;
+    if(realtotal)
+	*realtotal = nt;
     if(href)
 	*href = nmh;
     else
@@ -2231,9 +2235,9 @@ findField(const char *line, int ftype, int n,
 }				/* findField */
 
 void
-findInputField(const char *line, int ftype, int n, int *total, int *tagno)
+findInputField(const char *line, int ftype, int n, int *total, int *realtotal, int *tagno)
 {
-    findField(line, ftype, n, total, tagno, 0, 0);
+    findField(line, ftype, n, total, realtotal, tagno, 0, 0);
 }				/* findInputField */
 
 bool

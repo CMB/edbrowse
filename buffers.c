@@ -1935,9 +1935,9 @@ doGlobal(const char *line)
 }				/* doGlobal */
 
 static void
-fieldNumProblem(const char *desc, char c, int n, int nt)
+fieldNumProblem(const char *desc, char c, int n, int nt, int nrt)
 {
-    if(!nt) {
+    if(!nrt) {
 	setError("no %s present", desc);
 	return;
     }
@@ -2145,7 +2145,7 @@ substituteText(const char *line)
     int lastSubst = 0;		/* last successful substitution */
     char *re;			/* the parsed regular expression */
     int ln;			/* line number */
-    int j, linecount, slashcount, nullcount, tagno, total;
+    int j, linecount, slashcount, nullcount, tagno, total, realtotal;
     char lhs[MAXRE], rhs[MAXRE];
 
     subPrint = 1;		/* default is to print the last line substituted */
@@ -2262,9 +2262,9 @@ substituteText(const char *line)
 
 	    if(cw->browseMode) {
 		char search[20];
-		findInputField(p, 1, whichField, &total, &tagno);
+		findInputField(p, 1, whichField, &total, &realtotal, &tagno);
 		if(!tagno) {
-		    fieldNumProblem("input fields", 'i', whichField, total);
+		    fieldNumProblem("input fields", 'i', whichField, total, realtotal);
 		    continue;
 		}
 		sprintf(search, "%c%d<", InternalCodeChar, tagno);
@@ -3016,7 +3016,7 @@ showLinks(void)
 		continue;
 	    p = s;
 	    ++k;
-	    findField(line, 0, k, 0, &tagno, &h, &ev);
+	    findField(line, 0, k, 0, 0, &tagno, &h, &ev);
 	    if(tagno != j)
 		continue;	/* should never happen */
 
@@ -3626,10 +3626,10 @@ runCommand(const char *line)
 	    }
 	    p = (char *)fetchLine(endRange, -1);
 	    jMyContext();
-	    findField(p, 0, j, &n, &tagno, &h, &ev);
+	    findField(p, 0, j, &n, 0, &tagno, &h, &ev);
 	    debugPrint(5, "findField returns %d, %s", tagno, h);
 	    if(!h) {
-		fieldNumProblem("links", 'g', j, n);
+		fieldNumProblem("links", 'g', j, n, n);
 		return false;
 	    }
 	    jsh = memEqualCI(h, "javascript:", 11);
@@ -3726,6 +3726,7 @@ runCommand(const char *line)
 	    }
 	    if(cmd == 'i' && strchr("?=<*", c)) {
 		char *p;
+		int realtotal;
 		scmd = c;
 		line = s + 1;
 		first = *line;
@@ -3737,11 +3738,11 @@ runCommand(const char *line)
 		    j = 2;
 		if(scmd == '?')
 		    j = 3;
-		findInputField(p, j, cx, &n, &tagno);
+		findInputField(p, j, cx, &n, &realtotal, &tagno);
 		debugPrint(5, "findField returns %d.%d", n, tagno);
 		if(!tagno) {
 		    fieldNumProblem((c == '*' ? "buttons" : "input fields"),
-		       'i', cx, n);
+		       'i', cx, n, realtotal);
 		    return false;
 		}
 		if(scmd == '?') {
