@@ -632,7 +632,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
 /* Web caching not yet implemented. */
     stringAndString(&hdr, &l,
        "Pragma: no-cache\r\nCache-Control: no-cache\r\n");
-    stringAndString(&hdr, &l, "Accept-Encoding: gzip, compress, deflate\r\n");
+    stringAndString(&hdr, &l, "Accept-Encoding: gzip, compress\r\n");
     stringAndString(&hdr, &l, "Accept-Language: en\r\n");
     if(u = getAuthString(url)) {
 	stringAndString(&hdr, &l, u);
