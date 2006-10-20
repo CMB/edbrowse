@@ -1,4 +1,4 @@
-/* tcp.c: NT/Unix TCP layer for Intellivoice */
+/* tcp.c: NT/Unix TCP layer for portable socket applications */
 
 
 /*********************************************************************
@@ -381,10 +381,17 @@ tcp_readFully(int fh, char *buf, int buflen)
 int
 tcp_write(int fh, const char *buf, int buflen)
 {
-    int n = send(fh, buf, buflen, 0);
-    if(n < 0)
-	setErrnoNT();
-    return n;
+    int savelen = buflen;
+    int n;
+    while(buflen) {
+	n = send(fh, buf, buflen, 0);
+	if(n < 0) {
+	    setErrnoNT();
+	    return n;
+	}
+	buf += n, buflen -= n;
+    }
+    return savelen;
 }				/* tcp_write */
 
 
