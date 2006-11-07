@@ -46,9 +46,9 @@ static int errno1;
 /* Global variables.  See tcp.h for comments. */
 char tcp_thisMachineName[MAXHOSTNAMELEN];
 char tcp_thisMachineDots[20];
-long tcp_thisMachineIP;
+IP32bit tcp_thisMachineIP;
 char tcp_farMachineDots[20];
-long tcp_farMachineIP;
+IP32bit tcp_farMachineIP;
 short tcp_farMachinePort;
 
 
@@ -90,18 +90,18 @@ tcp_init()
 Routines to convert between names and IP addresses.
 *********************************************************************/
 
-long
+IP32bit
 tcp_name_ip(const char *name)
 {
     struct hostent *hp;
-    long *ip;
+    IP32bit *ip;
 
     hp = gethostbyname(name);
 #if 0
     printf("%s\n", hstrerror(h_errno));
 #endif
     if(!hp)
-	return -1;
+	return NULL_IP;
 #if 0
     puts("found it");
     if(hp->h_aliases) {
@@ -113,23 +113,23 @@ tcp_name_ip(const char *name)
 	}
     }
 #endif
-    ip = (long *)*(hp->h_addr_list);
+    ip = (IP32bit *)*(hp->h_addr_list);
     if(!ip)
-	return -1;
+	return NULL_IP;
     return *ip;
 }				/* tcp_name_ip */
 
 char *
 tcp_name_dots(const char *name)
 {
-    long ip = tcp_name_ip(name);
-    if(ip == -1)
+    IP32bit ip = tcp_name_ip(name);
+    if(ip == NULL_IP)
 	return 0;
     return tcp_ip_dots(ip);
 }				/* tcp_name_dots */
 
 char *
-tcp_ip_dots(long ip)
+tcp_ip_dots(IP32bit ip)
 {
     return inet_ntoa(*(struct in_addr *)&ip);
 }				/* tcp_ip_dots */
@@ -157,7 +157,7 @@ tcp_isDots(const char *s)
     return (nd == 3);
 }				/* tcp_isDots */
 
-long
+IP32bit
 tcp_dots_ip(const char *s)
 {
     struct in_addr a;
@@ -165,13 +165,13 @@ tcp_dots_ip(const char *s)
 #ifdef SCO
     inet_aton(s, &a);
 #else
-    *(long *)&a = inet_addr(s);
+    *(IP32bit *)&a = inet_addr(s);
 #endif
-    return *(long *)&a;
+    return *(IP32bit *)&a;
 }				/* tcp_dots_ip */
 
 char *
-tcp_ip_name(long ip)
+tcp_ip_name(IP32bit ip)
 {
     struct hostent *hp = gethostbyaddr((char *)&ip, 4, AF_INET);
     if(!hp)
@@ -225,7 +225,7 @@ makeSocket()
 }				/* makeSocket */
 
 int
-tcp_connect(long ip, int portnum, int timeout)
+tcp_connect(IP32bit ip, int portnum, int timeout)
 {
     struct sockaddr_in sa;
     int s;			/* file descriptor of socket */
@@ -407,7 +407,7 @@ Test driver program.
 int
 main(int argc, char **argv)
 {
-    long ip;
+    IP32bit ip;
     int port;
     int fh;
     int nb;			/* number of bytes */
@@ -452,7 +452,7 @@ main(int argc, char **argv)
     /* listen */
     ip = tcp_name_ip(argv[2]);
     port = atoi(argv[3]);
-    if(ip == -1) {
+    if(ip == NULL_IP) {
 	fprintf(stderr, "no such machine %s\n", argv[2]);
 	exit(0);
     }

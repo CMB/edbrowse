@@ -11,14 +11,17 @@
 #include <netinet/in.h>
 #endif
 
+typedef unsigned int IP32bit;
+#define NULL_IP (IP32bit)(-1)
+
 /* Name of the current machine, as in tuvok.intellivoice.com */
 extern char tcp_thisMachineName[];
 
 /* IP address of the current machine, packed and displayable. */
 extern char tcp_thisMachineDots[];	/* "192.128.25.1" */
-extern long tcp_thisMachineIP;	/* pack the above string into a long */
+extern IP32bit tcp_thisMachineIP;	/* pack the above string */
 extern char tcp_farMachineDots[];	/* like the above, but for the far machine */
-extern long tcp_farMachineIP;
+extern IP32bit tcp_farMachineIP;
 extern short tcp_farMachinePort;
 
 /* Set up the TCP stack and initialize the above variables */
@@ -27,17 +30,17 @@ int tcp_init();
 
 /* routines to convert between names and IP addresses */
 int tcp_isDots(const char *s);
-long tcp_name_ip(const char *name);
-char *tcp_ip_name(long packed_ip);
+IP32bit tcp_name_ip(const char *name);
+char *tcp_ip_name(IP32bit packed_ip);
 char *tcp_name_dots(const char *name);
 char *tcp_dots_name(const char *displayable_ip);
-char *tcp_ip_dots(long packed_ip);
-long tcp_dots_ip(const char *displayable_ip);
+char *tcp_ip_dots(IP32bit packed_ip);
+IP32bit tcp_dots_ip(const char *displayable_ip);
 
 /* Connect to a far machine.  Use one of the above routines to
  * convert to the packed IP address of the far machine.
  * Returns the socket handle, or -1 if there was a problem. */
-int tcp_connect(long far_ip, int far_portnum, int timeout);
+int tcp_connect(IP32bit far_ip, int far_portnum, int timeout);
 
 /* Listen for an incoming connection.
  * We expect only one such connection at a time.

@@ -5,7 +5,6 @@
  */
 
 #include "eb.h"
-#include "tcp.h"
 
 #include <signal.h>
 #include <pcre.h>
@@ -13,7 +12,7 @@
 /* Define the globals that are declared in eb.h. */
 /* See eb.h for descriptive comments. */
 
-const char *version = "3.1.2";
+const char *version = "3.1.3";
 char *userAgents[10], *currentAgent, *currentReferrer;
 const char eol[] = "\r\n";
 char EMPTYSTRING[] = "";

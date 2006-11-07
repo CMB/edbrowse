@@ -36,6 +36,8 @@
 #include <unistd.h>
 #endif
 
+#include "tcp.h"
+
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif
@@ -313,7 +315,7 @@ struct ebWindow {
     char *dw;			/* document.write string */
     int dw_l;			/* length of the above */
     void *tags;			/* array of html tags, when browsing */
-    long *iplist;		/* ip addresses referenced by this page */
+    IP32bit *iplist;		/* ip addresses referenced by this page */
     void *jsc;			/* js context, if in browse mode, and running javascript */
 };
 extern struct ebWindow *cw;	/* current window */

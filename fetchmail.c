@@ -7,7 +7,6 @@
  */
 
 #include "eb.h"
-#include "tcp.h"
 
 #define MHLINE 120		/* length of a mail header line */
 #define BAD64 1
@@ -41,8 +40,8 @@ static int fm_l;
 static struct MHINFO *lastMailInfo;
 static char *lastMailText;
 #define MAXIPBLACK 3000
-static long ipblacklist[MAXIPBLACK];
-static unsigned long ipblackmask[MAXIPBLACK];
+static IP32bit ipblacklist[MAXIPBLACK];
+static IP32bit ipblackmask[MAXIPBLACK];
 static bool ipblackcomp[MAXIPBLACK];
 static int nipblack;
 
@@ -66,8 +65,8 @@ loadBlacklist(void)
 	while(isspaceByte(*s))
 	    ++s;
 	if(isdigitByte(*s)) {
-	    long ip;
-	    unsigned long ipmask;
+	    IP32bit ip;
+	    IP32bit ipmask;
 	    char dotstop = 0;
 	    char *q = strpbrk(s, "/!");
 	    if(q)
@@ -86,7 +85,7 @@ loadBlacklist(void)
 			    dotstop = '!';
 		    }
 		    if(bits > 0 && bits < 32) {
-			static const unsigned long masklist[] = {
+			static const IP32bit masklist[] = {
 			    0xffffffff, 0xfeffffff, 0xfcffffff, 0xf8ffffff,
 			    0xf0ffffff, 0xe0ffffff, 0xc0ffffff, 0x80ffffff,
 			    0x00ffffff, 0x00feffff, 0x00fcffff, 0x00f8ffff,
@@ -118,10 +117,10 @@ loadBlacklist(void)
 }				/* loadBlacklist */
 
 bool
-onBlacklist1(long tip)
+onBlacklist1(IP32bit tip)
 {
-    long blip;			/* black ip */
-    unsigned long mask;
+    IP32bit blip;			/* black ip */
+    IP32bit mask;
     int j;
     for(j = 0; j < nipblack; ++j) {
 	bool comp = ipblackcomp[j];
@@ -140,11 +139,11 @@ onBlacklist1(long tip)
 static bool
 onBlacklist(void)
 {
-    long *ipp = cw->iplist;
-    long tip;			/* test ip */
+    IP32bit *ipp = cw->iplist;
+    IP32bit tip;			/* test ip */
     if(!ipp)
 	return false;
-    while((tip = *ipp++) != -1)
+    while((tip = *ipp++) != NULL_IP)
 	if(onBlacklist1(tip))
 	    return true;
     return false;
@@ -508,11 +507,12 @@ fetchMail(int account)
 				    puts(ipbFile ? "none" :
 				       "no blacklist file specified, feature disabled");
 			    } else {
-				for(k = 0; (j = cw->iplist[k]) != -1; ++k) {
-				    puts(tcp_ip_dots(j));
+				IP32bit addr;
+				for(k = 0; (addr = cw->iplist[k]) != NULL_IP; ++k) {
+				    puts(tcp_ip_dots(addr));
 				    if(nipblack == MAXIPBLACK)
 					continue;
-				    ipblacklist[nipblack] = j;
+				    ipblacklist[nipblack] = addr;
 				    ipblackmask[nipblack] = 0xffffffff;
 				    ipblackcomp[nipblack] = false;
 				    ++nipblack;

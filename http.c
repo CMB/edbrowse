@@ -19,7 +19,7 @@
  */
 
 #include "eb.h"
-#include "tcp.h"
+
 /* You need the open ssl library for secure connections. */
 /* Hence the openSSL exception above. */
 #include <openssl/ssl.h>
@@ -426,7 +426,7 @@ httpConnect(const char *from, const char *url)
 {
     int port;			/* usually 80 */
     const char *portloc;
-    long hip;			/* host IP */
+    IP32bit hip;			/* host IP */
     const char *host, *post, *s;
     char *hdr;			/* http header */
     char *u;
@@ -1239,10 +1239,10 @@ This only works on the current buffer.
 void
 allIPs(void)
 {
-    static long iplist[5 + 1];
+    static IP32bit iplist[5 + 1];
     char *domlist[8];
     int iptotal = 0, domtotal = 0;
-    long ip;
+    IP32bit ip;
     int ntags, tagno;
     char *href;
     const char *dom;
@@ -1277,7 +1277,7 @@ allIPs(void)
 			ip = tcp_dots_ip(dom);
 		    else
 			ip = tcp_name_ip(dom);
-		    if(ip != -1) {
+		    if(ip != NULL_IP) {
 /* could be a repeat */
 			for(k = 0; k < iptotal; ++k)
 			    if(iplist[k] == ip)
@@ -1301,7 +1301,7 @@ allIPs(void)
     }				/* loop over lines */
 
   done:
-    iplist[iptotal] = -1;
+    iplist[iptotal] = NULL_IP;
     cw->iplist = iplist;
     for(k = 0; k < domtotal; ++k)
 	nzFree(domlist[k]);

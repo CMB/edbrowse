@@ -6,7 +6,7 @@
  */
 
 #include "eb.h"
-#include "tcp.h"
+
 #include <time.h>
 
 char serverLine[MAXTTYLINE];
@@ -248,9 +248,8 @@ serverClose(void)
 bool
 mailConnect(const char *host, int port)
 {
-    long ip;
-    ip = tcp_name_ip(host);
-    if(ip == -1) {
+    IP32bit ip = tcp_name_ip(host);
+    if(ip == NULL_IP) {
 	setError(intFlag ? opint : "cannot locate the mail server %s", host);
 	return false;
     }

@@ -5,7 +5,6 @@
  */
 
 #include "eb.h"
-#include "tcp.h"
 
 /* If this include file is missing, you need the pcre package,
  * and the pcre-devel package. */
@@ -2604,8 +2603,8 @@ if(stringEqual(line, "us")) return unstripChild();
 	if(!cw->iplist || cw->iplist[0] == -1) {
 	    puts("none");
 	} else {
-	    long ip;
-	    for(i = 0; (ip = cw->iplist[i]) != -1; ++i) {
+	    IP32bit ip;
+	    for(i = 0; (ip = cw->iplist[i]) != NULL_IP; ++i) {
 		puts(tcp_ip_dots(ip));
 	    }
 	}

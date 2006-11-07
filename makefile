@@ -34,8 +34,7 @@ EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
 	html.o format.o cookies.o stringfile.o jsdom.o jsloc.o
 
 #  Header file dependencies.
-$(EBOBJS) : eb.h eb.p
-main.o tcp.o http.o sendmail.o: tcp.h
+$(EBOBJS) : eb.h eb.p tcp.h
 
 edbrowse: $(EBOBJS) tcp.o
 	cc $(LFLAGS) -o edbrowse tcp.o $(EBOBJS) $(LIBS)

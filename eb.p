@@ -90,7 +90,7 @@ bool sendMailCurrent(int sm_account, bool dosig) ;
 
 /* sourcefile=fetchmail.c */
 void loadBlacklist(void) ;
-bool onBlacklist1(long tip) ;
+bool onBlacklist1(IP32bit tip) ;
 void fetchMail(int account) ;
 bool emailTest(void) ;
 char * emailParse(char *buf) ;
