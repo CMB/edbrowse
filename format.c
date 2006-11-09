@@ -1267,6 +1267,7 @@ andTranslate(const char *s, bool invisible)
 	"#8217\0'",
 	"#8220\0`",
 	"#8221\0'",
+	"bull\0*",
 	"#8226\0*",
 	"#8230\0...",
 	"#8242\0prime",
