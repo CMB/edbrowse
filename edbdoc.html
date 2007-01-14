@@ -2142,7 +2142,9 @@ This is an antispoofing measure, to make sure a hacker isn't posing as your bank
 trying to steal your account numbers and passwords.&nbsp;
 You can grab a certificate file <A HREF=ssl-certs>here</A>,
 but I don't always keep it up to date.&nbsp;
-If you don't have this file,
+On some Linux distributions, you can run `cd /etc/ssl/certs ; cat * >../edbrowse-certs'
+to capture ssl certificates that are as current as your linux system.
+If you don't have or create this file,
 or, if you don't specify its location in your config file,
 you will not be able to verify secure connections, and you will be warned accordingly.&nbsp;
 Some browsers don't have this feature at all, so it's not the end of the world,
@@ -2198,7 +2200,7 @@ and <em>only</em> for those logins.&nbsp;
 I use other, expendable passwords when the connection is not secure.
 
 <P>
-Please don't fall for all those email scams
+Please don't fall for all those "phishing" email scams
 that tell you your login has expired, and would you please log in again using this convenient form.&nbsp;
 The mail is forged to look legitimate,
 and the form actually sends your secret password to a thief,
