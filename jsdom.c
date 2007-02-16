@@ -992,6 +992,7 @@ domLink(const char *classname,	/* instantiate this class */
     jsval vv, listv;
     jsuint length, attr = PROP_FIXED;
     JSClass *cp;
+    bool dupname = false;
     int i;
 
     if(cw->jsdead)
@@ -1002,12 +1003,15 @@ domLink(const char *classname,	/* instantiate this class */
 	if(stringEqual(cp->name, classname))
 	    break;
 
-    if(isradio) {
+    if(symname) {
 	JSBool found;
 	JS_HasProperty(jcx, owner, symname, &found);
 	if(found) {
-	    JS_GetProperty(jcx, owner, symname, &vv);
-	    v = JSVAL_TO_OBJECT(vv);
+	    if(isradio) {
+		JS_GetProperty(jcx, owner, symname, &vv);
+		v = JSVAL_TO_OBJECT(vv);
+	    } else
+		dupname = true;
 	}
     }
 
@@ -1030,6 +1034,7 @@ Maybe hidden tags shouldn't be linked under form at all - I don't know.
 For now I just suppress this when it happens.
 *********************************************************************/
 	if(symname &&
+	   !dupname &&
 	   (!stringEqual(symname, "action") ||
 	   !stringEqual(classname, "Element"))) {
 	    JS_DefineProperty(jcx, owner, symname, vv, NULL, NULL, attr);
@@ -1037,6 +1042,7 @@ For now I just suppress this when it happens.
 	    master = JSVAL_TO_OBJECT(listv);
 	    establish_property_object(master, symname, v);
 	} else {
+/* tie this to something, to protect it from the garbage collector */
 	    JS_DefineProperty(jcx, owner, fakePropName(), vv,
 	       NULL, NULL, JSPROP_READONLY | JSPROP_PERMANENT);
 	}
@@ -1048,7 +1054,7 @@ For now I just suppress this when it happens.
 	if(alist) {
 	    JS_GetArrayLength(jcx, alist, &length);
 	    JS_DefineElement(jcx, alist, length, vv, NULL, NULL, attr);
-	    if(symname)
+	    if(symname && !dupname)
 		establish_property_object(alist, symname, v);
 	}			/* list indicated */
     }
