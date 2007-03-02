@@ -1964,6 +1964,9 @@ encodeTags(char *html)
 	foreach(t, htmlStack) {
 	    char *jsrc;
 	    ev = t->jv;
+/* in case the option has disappeared */
+	    if(t->action == TAGACT_OPTION)
+		goto next_onload;
 	    if(!ev)
 		goto next_onload;
 	    if(t->slash)
@@ -2235,7 +2238,8 @@ findField(const char *line, int ftype, int n,
 }				/* findField */
 
 void
-findInputField(const char *line, int ftype, int n, int *total, int *realtotal, int *tagno)
+findInputField(const char *line, int ftype, int n, int *total, int *realtotal,
+   int *tagno)
 {
     findField(line, ftype, n, total, realtotal, tagno, 0, 0);
 }				/* findInputField */
@@ -3218,7 +3222,6 @@ javaSetsTagVar(void *v, const char *val)
 	return;
 /* ok, we found it */
     if(t->itype == INP_HIDDEN || t->itype == INP_RADIO) {
-/* this should never happen */
 	return;
     }
     if(t->itype == INP_TA) {
