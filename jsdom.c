@@ -1007,6 +1007,42 @@ domLink(const char *classname,	/* instantiate this class */
 	JSBool found;
 	JS_HasProperty(jcx, owner, symname, &found);
 	if(found) {
+
+/*********************************************************************
+This could be a duplicate name.
+Yes, that really happens.
+Link to the first tag having this name,
+and link the second tag under a fake name, so gc won't throw it away.
+Or - it could be a duplicate name because multiple radio buttons
+all share the same name.
+The first time we create the array, and thereafter we just link
+under that array.
+Or - and this really does happen -
+an input tag could have the name action, colliding with form.action.
+I have no idea what to do here.
+I will assume the tag displaces the action.
+That means javascript cannot change the action of the form,
+which it rarely does anyways.
+When it refers to form.action, that will be the input tag.
+I'll check for that one first.
+Ok???
+Yeah, it makes my head spin too.
+*********************************************************************/
+
+	    if(stringEqual(symname, "action")) {
+		JSObject *ao;	/* action object */
+		JS_GetProperty(jcx, owner, symname, &vv);
+		ao = JSVAL_TO_OBJECT(vv);
+/* actioncrash tells me if we've already had this collision */
+		JS_HasProperty(jcx, ao, "actioncrash", &found);
+		if(!found) {
+		    JS_DeleteProperty(jcx, owner, symname);
+/* gc will clean this up later */
+/* advance, as though this were not found */
+		    goto afterfound;
+		}
+	    }
+
 	    if(isradio) {
 		JS_GetProperty(jcx, owner, symname, &vv);
 		v = JSVAL_TO_OBJECT(vv);
@@ -1014,6 +1050,7 @@ domLink(const char *classname,	/* instantiate this class */
 		dupname = true;
 	}
     }
+  afterfound:
 
     if(!v) {
 	if(isradio) {
@@ -1023,26 +1060,17 @@ domLink(const char *classname,	/* instantiate this class */
 	    v = JS_NewObject(jcx, cp, NULL, owner);
 	vv = OBJECT_TO_JSVAL(v);
 
-/*********************************************************************
-This is realy a kludge, because I don't understand it.
-If <form> has an action attribute,
-and there is an input tag, usualy hidden, with name=action,
-that input tag is linked up under form.action,
-and then when I submit, and call form.action, it blows up.
-It is a semantic collision.
-Maybe hidden tags shouldn't be linked under form at all - I don't know.
-For now I just suppress this when it happens.
-*********************************************************************/
-	if(symname &&
-	   !dupname &&
-	   (!stringEqual(symname, "action") ||
-	   !stringEqual(classname, "Element"))) {
+	if(symname && !dupname) {
 	    JS_DefineProperty(jcx, owner, symname, vv, NULL, NULL, attr);
+	    if(stringEqual(symname, "action"))
+		establish_property_bool(v, "actioncrash", true, true);
+
+/* link to document.all */
 	    JS_GetProperty(jcx, jdoc, "all", &listv);
 	    master = JSVAL_TO_OBJECT(listv);
 	    establish_property_object(master, symname, v);
 	} else {
-/* tie this to something, to protect it from the garbage collector */
+/* tie this to something, to protect it from gc */
 	    JS_DefineProperty(jcx, owner, fakePropName(), vv,
 	       NULL, NULL, JSPROP_READONLY | JSPROP_PERMANENT);
 	}

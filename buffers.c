@@ -4403,7 +4403,7 @@ updateFieldInBuffer(int tagno, const char *newtext, int notify, bool required)
 	addToListBack(&inputChangesPending, ic);
 	return;
     }
-    /* still rendering the page */
+
     if(locateTagInBuffer(tagno, &ln, &p, &s, &t)) {
 	n = (plen = pstLength((pst) p)) + strlen(newtext) - (t - s);
 	new = allocMem(n);
@@ -4422,7 +4422,7 @@ updateFieldInBuffer(int tagno, const char *newtext, int notify, bool required)
 	cw->firstOpMode = undoable = true;
 	return;
     }
-    /* tag found */
+
     if(required)
 	errorPrint("fieldInBuffer could not find tag %d newtext %s", tagno,
 	   newtext);

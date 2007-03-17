@@ -16,3 +16,5 @@ test uploaded file
 onload and onunload in body seem to run under document, not the body subobject
 call javaSetsTagBool when js checks or updates a checkbox or radio button
 what does all.tags("object") mean?
+<input disabled>
+options.length = 0, js objects gone, but <option> tags still exist, and point to those objects

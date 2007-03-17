@@ -797,6 +797,9 @@ get_property_url(void *jv, bool doaction)
 	    return 0;
 	}
 	lo = JSVAL_TO_OBJECT(v);
+	JS_HasProperty(jcx, lo, "actioncrash", &found);
+	if(found)
+	    return 0;
 	if(!JS_InstanceOf(jcx, lo, &url_class, emptyArgs))
 	    goto badobj;
 	JS_GetProperty(jcx, lo, "href", &v);
