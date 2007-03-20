@@ -1065,6 +1065,7 @@ edbrowse  [-e] [-d?] file1 file2 ...");
     cookiesFromJar();
 
     signal(SIGINT, catchSig);
+    siginterrupt(SIGINT,1);
     signal(SIGPIPE, SIG_IGN);
 
 
