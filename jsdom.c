@@ -986,7 +986,7 @@ javaParseExecute(void *this, const char *str, const char *filename, int lineno)
 void *
 domLink(const char *classname,	/* instantiate this class */
    const char *symname, const char *idname, const char *href, const char *href_url, const char *list,	/* next member of this array */
-   void *owner, bool isradio)
+   void *owner, int radiosel)
 {
     JSObject *v = 0, *w, *alist = 0, *master;
     jsval vv, listv;
@@ -1043,21 +1043,29 @@ Yeah, it makes my head spin too.
 		}
 	    }
 
-	    if(isradio) {
+	    if(radiosel == 1) {
 		JS_GetProperty(jcx, owner, symname, &vv);
 		v = JSVAL_TO_OBJECT(vv);
-	    } else
+	    } else {
 		dupname = true;
+	    }
 	}
     }
-  afterfound:
 
+  afterfound:
     if(!v) {
-	if(isradio) {
+	if(radiosel) {
 	    v = JS_NewArrayObject(jcx, 0, NULL);
-	    establish_property_string(v, "type", "radio", true);
-	} else
+	    if(radiosel == 1) {
+		establish_property_string(v, "type", "radio", true);
+	    } else {
+/* self-referencing - hope this is ok */
+		establish_property_object(v, "options", v);
+		establish_property_number(v, "selectedIndex", -1, false);
+	    }
+	} else {
 	    v = JS_NewObject(jcx, cp, NULL, owner);
+	}
 	vv = OBJECT_TO_JSVAL(v);
 
 	if(symname && !dupname) {
@@ -1087,7 +1095,7 @@ Yeah, it makes my head spin too.
 	}			/* list indicated */
     }
 
-    if(isradio) {
+    if(radiosel == 1) {
 /* drop down to the element within the radio array, and return that element */
 /* w becomes the object associated with this radio button */
 /* v is, by assumption, an array */

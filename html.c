@@ -520,7 +520,8 @@ formControl(bool namecheck)
     void *e;			/* the new element */
     const char *typedesc;
     int itype = topTag->itype;
-    bool isradio = itype == INP_RADIO;
+    int isradio = itype == INP_RADIO;
+    int isselect = (itype == INP_SELECT) * 2;
 
     if(currentForm) {
 	topTag->controller = currentForm;
@@ -535,19 +536,15 @@ formControl(bool namecheck)
     if(fo) {
 	topTag->jv = e =
 	   domLink("Element", topTag->name, topTag->id, 0, 0,
-	   "elements", fo, isradio);
+	   "elements", fo, isradio | isselect);
     } else {
 	topTag->jv = e =
-	   domLink("Element", topTag->name, topTag->id, 0, 0, 0, jdoc, isradio);
+	   domLink("Element", topTag->name, topTag->id, 0, 0, 0,
+	   jdoc, isradio | isselect);
     }
     get_js_events();
     if(!e)
 	return;
-
-    if(itype == INP_SELECT) {
-	establish_property_array(e, "options");
-	establish_property_number(e, "selectedIndex", -1, false);
-    }
 
     if(itype <= INP_RADIO) {
 	establish_property_string(e, "value", topTag->value, false);
@@ -557,7 +554,7 @@ formControl(bool namecheck)
 	}			/* not file */
     }
 
-    if(itype == INP_SELECT)
+    if(isselect)
 	typedesc = topTag->multiple ? "select-multiple" : "select-one";
     else
 	typedesc = inp_types[itype];

@@ -300,6 +300,13 @@ setter_loc_href(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
     uo = obj;
     url_initialize(url, false, true);
     uo_href = cloneString(url);
+    if(uo == jwloc || uo == jdloc) {
+	char *t;
+	unpercentURL(uo_href);
+	t = resolveURL(cw->fileName, uo_href);
+	nzFree(uo_href);
+	uo_href = t;
+    }
     return isWinLoc();
 }				/* setter_loc_href */
 

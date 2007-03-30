@@ -204,7 +204,7 @@ void freeJavaContext(void *jsc) ;
 void establish_innerHTML(void *jv, const char *start, const char *end, bool is_ta) ;
 void jMyContext(void) ;
 bool javaParseExecute(void *this, const char *str, const char *filename, int lineno) ;
-void * domLink(const char *classname, const char *symname, const char *idname, const char *href, const char *href_url, const char *list, void *owner, bool isradio) ;
+void * domLink(const char *classname, const char *symname, const char *idname, const char *href, const char *href_url, const char *list, void *owner, int radiosel) ;
 
 /* sourcefile=jsloc.c */
 const char * stringize(long v) ;
