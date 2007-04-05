@@ -426,7 +426,7 @@ httpConnect(const char *from, const char *url)
 {
     int port;			/* usually 80 */
     const char *portloc;
-    IP32bit hip;			/* host IP */
+    IP32bit hip;		/* host IP */
     const char *host, *post, *s;
     char *hdr;			/* http header */
     char *u;
@@ -582,6 +582,8 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	    break;
 	c = *s;
 	if(!c)
+	    break;
+	if(c == '#')
 	    break;
 	if(c == '\\')
 	    c = '/';
@@ -807,7 +809,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	    fflush(stdout);
 	    fflush(stdin);
 	    if(!fgets(user, sizeof (user), stdin))
-		exit(0);
+		ebClose(0);
 	    n = strlen(user);
 	    if(n >= sizeof (user) - 1) {
 		printf("user name too long, limit %d characters",
@@ -824,7 +826,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	    fflush(stdout);
 	    fflush(stdin);
 	    if(!fgets(pass, sizeof (pass), stdin))
-		exit(0);
+		ebClose(0);
 	    n = strlen(pass);
 	    if(n >= sizeof (pass) - 1) {
 		printf("user name too long, limit %d characters",
