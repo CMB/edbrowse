@@ -285,6 +285,19 @@ cloneMemory(const char *s, int n)
     return t;
 }				/* cloneMemory */
 
+void
+clipString(char *s)
+{
+    int len;
+    if(!s)
+	return;
+    len = strlen(s);
+    while(--len >= 0)
+	if(!isspaceByte(s[len]))
+	    break;
+    s[len + 1] = 0;
+}				/* clipString */
+
 char *
 Cify(const char *s, int n)
 {
@@ -340,6 +353,36 @@ stringIsFloat(const char *s, double *dp)
 	return false;		/* extra stuff at the end */
     return true;
 }				/* stringIsFloat */
+
+bool
+isSQL(const char *s)
+{
+    char c;
+    const char *c1 = 0, *c2 = 0;
+    c = *s;
+    if(!isalphaByte(c))
+	goto no;
+    for(++s; c = *s; ++s) {
+	if(c == '_')
+	    continue;
+	if(isalnumByte(c))
+	    continue;
+	if(c == ':') {
+	    if(c1)
+		goto no;
+	    c1 = s;
+	    continue;
+	}
+	if(c == ']') {
+	    c2 = s;
+	    goto yes;
+	}
+    }
+  no:
+    return false;
+  yes:
+    return true;
+}				/* isSQL */
 
 bool
 memEqualCI(const char *s, const char *t, int len)
@@ -421,6 +464,18 @@ stringInListCI(const char *const *list, const char *s)
 	}
     return -1;
 }				/* stringInListCI */
+
+int
+charInList(const char *list, char c)
+{
+    char *s;
+    if(!list)
+	errorPrint("@charInList(null,...)");
+    s = strchr(list, c);
+    if(!s)
+	return -1;
+    return s - list;
+}				/* charInList */
 
 /* In an empty list, next and prev point back to the list, not to 0. */
 /* We also allow zero. */
@@ -1304,3 +1359,54 @@ currentMachine(void)
     uname(&utsbuf);
     return utsbuf.machine;
 }				/* currentMachine */
+
+FILE *
+efopen(const char *name, const char *mode)
+{
+    FILE *f;
+
+    if(name[0] == '-' && name[1] == 0) {
+	if(*mode == 'r')
+	    return stdin;
+	if(*mode == 'w' || *mode == 'a')
+	    return stdout;
+    }
+
+    f = fopen(name, mode);
+    if(f)
+	return f;
+
+    if(*mode == 'r')
+	errorPrint("2cannot open %s", name);
+    else if(*mode == 'w' || *mode == 'a')
+	errorPrint("2cannot create or write to %s", name);
+    else
+	errorPrint("@calling fopen() with invalid mode %s", mode);
+    return 0;
+}				/* efopen */
+
+void
+appendFile(const char *fname, const char *message, ...)
+{
+    FILE *f;
+    va_list p;
+    long a[5];
+
+    va_start(p, message);
+    varargLocals(p, message, a);
+    va_end(p);
+
+    f = efopen(fname, "a");
+    fprintf(f, message, a[0], a[1], a[2], a[3], a[4]);
+    fprintf(f, "\n");
+    fclose(f);
+}				/* appendFile */
+
+/* like the above, but no formatting */
+void
+appendFileNF(const char *filename, const char *msg)
+{
+    FILE *f = efopen(filename, "a");
+    fprintf(f, "%s\n", msg);
+    fclose(f);
+}				/* appendFileNF */

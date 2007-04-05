@@ -106,6 +106,15 @@ blind, script, accessible">
 <LI><A HREF=#filter> Mail Filtering </A>
 </UL>
 
+<H4> Chapter 8, Database Access </H4>
+
+<UL>
+<LI><A HREF=#sqlb> Building edbrowse with Database Access </A>
+<LI><A HREF=#rtb> Reading Tables </A>
+<LI><A HREF=#insupd> Insert, Update, Delete </A>
+<LI><A HREF=#td> Table Descriptors </A>
+</UL>
+
 <H3 align=center> <A NAME=auth> Author </A> </H3>
 
 <P><PRE><font size=3 face=Arial,Helvetica,sans-serif>Karl Dahlke
@@ -115,7 +124,7 @@ blind, script, accessible">
 
 <H3 align=center> <A NAME=copy> Copyright Notice </A> </H3>
 
-This program is copyright (C) (C) Karl Dahlke, 2000-2006.&nbsp;
+This program is copyright (C) (C) Karl Dahlke, 2000-2007.&nbsp;
 It is made available by the author under the terms of the GNU General Public License (GPL),
 as articulated by the Free Software Foundation.&nbsp;
 It may be used for any purpose, and redistributed, provided this copyright notice is included.
@@ -298,6 +307,7 @@ rf: refresh the web page or directory listing
 et: edit this web page as pure text
 vs: verify ssl connections (toggle)
 ip: show referenced ip numbers, usually for saved mail messages
+sc: show columns
 sm: send mail [account number]
 </font></PRE>
 
@@ -965,8 +975,7 @@ For instance, g/\.o$/d removes all the object files.&nbsp;
 Since these edits have implications outside the scope of this program,
 there is no undo capability.&nbsp;
 When you make a change it is made.&nbsp;
-With this in mind, I borrowed a good idea from Microsoft.&nbsp;
-(That's one.)&nbsp;
+With this in mind, I borrowed a good idea from Microsoft, which, as you might expect, originated with Apple.&nbsp;
 The deleted file isn't actually deleted;
 it is moved to your recycle bin,
 located in $HOME/.recycle.&nbsp;
@@ -3470,6 +3479,216 @@ Use the -p option to pass over the filters, as in `e -pm1'.&nbsp;
 This also stops spam detection.&nbsp;
 I set this when looking at other people's mail, such as my wife's account.&nbsp;
 I don't want her mail sent somewhere else because it matches one of my filter rules.
+
+<H3 align=center> <A NAME=sqlb> Building edbrowse with Database Access </A> </H3>
+
+If you simply type make, you get edbrowse, with no database interface.&nbsp;
+Two other targets support database access.&nbsp;
+Run either `make edbrowseodbc' or make `edbrowseinf'.&nbsp;
+The former uses odbc to access just about any sql database,
+and the latter uses the
+<A HREF=http://www.informix.com>Informix</A> interface.&nbsp;
+If you would like to test the odbc interface,
+or write a new interface, e.g. for Oracle or mysql,
+I will be eternally grateful.&nbsp;
+You are basically implementing the interface described in dbapi.h,
+using the C database development toolkit provided by the vendor.&nbsp;
+The easiest way to proceed is to copy one of the two files that is already there,
+dbinfx.ec or dbodbc.c, and make changes as necessary.
+
+<H3 align=center> <A NAME=rtb> Reading Tables </A> </H3>
+
+When a file name is of a certain format, with the http:// in front etc,
+it is deemed to be a url.&nbsp;
+Edbrowse does not look on your computer for the file; it goes out to the internet.&nbsp;
+Similarly, when the file name has a certain format,
+it is assumed to be a table or view in the database.&nbsp;
+If you have a table called customers, you follow it up with a right bracket.
+
+<P>
+e customers]
+
+<P>
+This allows you to bring in the entire table,
+or portions thereof, one row per line, with fields delimited by pipes.&nbsp;
+If the result looks like a bunch of numbers and pipes,
+and you have forgottten the structure of the table,
+use the sc (show columns) command.&nbsp;
+The output might look like this.
+
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>Table customers
+1 *custnum int
+2 firstname string
+3 lastname string
+4 birthdate date
+5 sex char
+6 email string
+7 picture blob
+</font></PRE>
+
+<P>
+The first column is a unique number that designates this particular customer.&nbsp;
+After all, two customers could have the same first and last name,
+and even the same birthdate.&nbsp;
+Serial numbers are <em>always</em> a good idea,
+and that usually becomes the primary key.&nbsp;
+This is indicated by a star, just before the column name.&nbsp;
+If edbrowse changes or deletes a record, the primary key is used.&nbsp;
+I assume, at all times, that the key determines a unique record in the database,
+and that each record appears at most once in an editing session.
+
+<P>
+Note that edbrowse can support a primary key with two columns, such as a serial number and a modifier.&nbsp;
+I actually have some tables at work that look like this.
+
+<P>
+The table syntax is more than just an identifier and a right bracket.&nbsp;
+You can follow the right bracket with a where clause.&nbsp;
+This is important if you don't want the entire table,
+especially if there are millions of rows.&nbsp;
+Here are some table commands and their meanings.
+
+<P>
+customers]
+<br>
+Set the buffer up for the customers table, but don't fetch any rows.
+
+<P>
+customers]*
+<br>
+Fetch all the rows in the table.
+
+<P>
+customers]37
+<br>
+Fetch the customer whose serial number is 37.&nbsp;
+The primary key is assumed; your table has to have a primary key
+if you are going to use this syntax.
+
+<P>
+customers]1=37
+<br>
+Fetch the row whose first column is 37.
+
+<P>
+customers]37-59
+<br>
+Fetch the customers with serial numbers between 37 and 59 inclusive.
+
+<P>
+customers]3=Smith
+<br>
+Fetch the customers whose last name is Smith.
+
+<P>
+customers]lastname=Smith
+<br>
+Same as above.
+
+<P>
+customers]last=Smith
+<br>
+Same as above.&nbsp;
+If the string uniquely gloms onto a column name, we're all set.
+
+<P>
+customers]last=Barn*
+<br>
+Fetch the customers whose last names begin with Barn.
+
+<P>
+customers]birth=01/01/1960-12/31/1960
+<br>
+Fetch the customers who were born in 1960.
+
+<P>
+It is sometimes best to edit with a blank template, i.e. without a where clause.&nbsp;
+Then, you can read in whatever rows you like.&nbsp;
+Type an r before any of the strings shown above to read rows into your buffer.&nbsp;
+Note, you cannot read data from different tables into the same buffer,
+but you can switch to another editing session to look at another table,
+without losing the rows you are working on.
+
+<P>
+When reading rows into a growing buffer, you can usually omit the table, since it has to be customers] every time.&nbsp;
+For instance, you can bring in customer #738 by typing `r customers]738' or `r 738'.
+
+<P>
+If you want a clean slate, type `rf' to refresh the buffer.&nbsp;
+This brings you back to a template for the table, with no rows.&nbsp;
+WARNING - do not clear your buffer by deleting all the rows,
+as that will delete the corresponding entries in the database.&nbsp;
+This feature works just like directory mode -
+your edits are translated into actions in the real world, so be careful.&nbsp;
+Referential integrity will usually save you from this accidental delete disaster,
+if you routinely use this sql feature to link tables together,
+which is a good idea at many levels.
+
+<P>
+Now, how about the seventh column in our example, the one called "picture"?&nbsp;
+This is the customer's picture, a jpg image that is in binary,
+and cannot be easily folded into an editing session.&nbsp;
+Instead, it is stored in another buffer,
+e.g. buffer 7, and this is indicated by &lt;7&gt;.&nbsp;
+You can switch to session 7 and save the file, or throw it away.
+
+<P>
+2139|Fred|Flintstone|08/21/1969|M|foo@bar.bar.com|&lt;7&gt;
+
+<P>
+To do anything with the database, your config file must specify
+the name of the database, the login, and the password.&nbsp;
+(The last two can sometimes be omitted, if they are inferred from your identity on the computer.)&nbsp;
+Here is how the line might look
+if you are tapping into the retail database, where the customers table resides.
+
+<P>
+database = retail,mylogin,mypassword
+
+<P>
+Although this cannot be changed on the fly, you can access other databases by vectoring through this one.&nbsp;
+For instance, you can read the parts table in the inventory database by calling up inventory:parts].&nbsp;
+This is standard sql syntax for looking at tables in another database;
+I just pass it through.
+
+<H3 align=center> <A NAME=insupd> Insert, Update, Delete </A> </H3>
+
+These aren't implemented yet, so there isn't much to talk about.&nbsp;
+I hope, in the near future,
+that i inserts a row, d deletes a row,
+and s modifies a row by performing a substitution -
+just like directory mode.&nbsp;
+Coming soon to a computer near you.
+
+<H3 align=center> <A NAME=td> Table Descriptors </A> </H3>
+
+Suppose a table contains 100 fields.&nbsp;
+Displaying all those fields is awkward, to say the least.&nbsp;
+Sometimes you are interested in a group of 6 fields,
+and sometimes you are interested in another group of 8.&nbsp;
+You can set up virtual tables, similar to views, in your config file.&nbsp;
+The short name is the alias, and you can call up the table using this alias.&nbsp;
+It will contain only the columns you specify.&nbsp;
+Here are two descriptors for the aforementioned customers table.
+
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>Table {
+    tname = customers
+#  cnm is my cryptic shorthand for customer name
+#  I want to be cryptic here, cause I'm going to be typing this a lot.
+    tshort = cnm
+    cols = custnum,firstname,lastname
+#  Specify the primary key, in this case, the first column selected.
+    keycol = 1
+}
+
+table {
+    tname = customers
+#  All I care about here is customer and birthdate.
+    tshort = cbd
+    cols = birthdate,custnum
+    keycol = 2
+}
+</font></PRE>
 
 <H3 align=center> <A NAME=end> Wrap up </A> </H3>
 

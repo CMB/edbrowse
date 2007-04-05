@@ -9,6 +9,7 @@
 #  You may also need -I/usr/include/pcre or -I/usr/local/include/pcre
 
 CFLAGS = -I/usr/local/js/src -I/usr/local/js/src/Linux_All_DBG.OBJ -DXP_UNIX -DX86_LINUX
+ESQLDFLAGS = -s -Xlinker -rpath -Xlinker $(INFORMIXDIR)/lib:$(INFORMIXDIR)/lib/esql
 
 #  If the smjs library is already installed by your linux distribution,
 #  e.g. Debian, use the following flags.
@@ -36,13 +37,24 @@ EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
 #  Header file dependencies.
 $(EBOBJS) : eb.h eb.p tcp.h
 
-edbrowse: $(EBOBJS) tcp.o
-	cc $(LFLAGS) -o edbrowse tcp.o $(EBOBJS) $(LIBS)
+edbrowse: $(EBOBJS) tcp.o dbstubs.o
+	cc $(LFLAGS) -o edbrowse $(EBOBJS) tcp.o dbstubs.o $(LIBS)
+
+dbinfx.o : dbinfx.ec
+	esql -c dbinfx.ec
+
+dbinfx.o dbops.o : dbapi.h eb.h
+
+edbrowseinf: $(EBOBJS) tcp.o dbops.o dbinfx.o
+	esql $(ESQLDFLAGS) -o edbrowseinf $(EBOBJS) tcp.o dbops.o dbinfx.o $(LIBS)
+
+edbrowseodbc: $(EBOBJS) tcp.o dbops.o dbodbc.o
+	cc $(LFLAGS) -o edbrowseodbc $(EBOBJS) tcp.o dbops.o dbodbc.o $(LIBS)
 
 #  Build function prototypes.
 proto:
 	mkproto -g main.c buffers.c url.c auth.c http.c sendmail.c fetchmail.c \
-	html.c format.c cookies.c stringfile.c jsdom.c jsloc.c >eb.p
+	html.c format.c cookies.c stringfile.c jsdom.c jsloc.c dbstubs.c >eb.p
 
 #  I've had no luck getting this to work - can you help?
 edbrowse.static: $(EBOBJS) tcp.o

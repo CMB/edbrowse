@@ -26,6 +26,9 @@ int localAccount, maxAccount;
 struct MACCOUNT accounts[MAXACCOUNT];
 int maxMime;
 struct MIMETYPE mimetypes[MAXMIME];
+static int maxTables;
+static struct DBTABLE dbtables[MAXDBT];
+char *dbarea, *dblogin, *dbpw;	/* to log into the database */
 bool caseInsensitive, searchStringsAll;
 bool textAreaDosNewlines = true, undoable;
 bool allowRedirection = true, allowJS = true, sendReferrer = false;
@@ -145,7 +148,7 @@ readConfigFile(void)
     bool cmt = false;
     bool startline = true;
     bool cfgmodify = false;
-    uchar mailblock = 0, mimeblock = 0;
+    uchar mailblock = 0, mimeblock = 0, tabblock = 0;
     int nest, ln, j;
     int sn = 0;			/* script number */
     char stack[MAXNEST];
@@ -153,13 +156,15 @@ readConfigFile(void)
     int lidx = 0;
     struct MACCOUNT *act;
     struct MIMETYPE *mt;
+    struct DBTABLE *td;
     static const char *const keywords[] = {
 	"inserver", "outserver", "login", "password", "from", "reply",
 	"inport", "outport",
 	"type", "desc", "suffix", "protocol", "program",
+	"tname", "tshort", "cols", "keycol",
 	"adbook", "ipblack", "maildir", "agent",
 	"jar", "nojs", "spamcan",
-	"webtimer", "mailtimer", "certfile",
+	"webtimer", "mailtimer", "certfile", "database",
 	0
     };
 
@@ -211,6 +216,11 @@ readConfigFile(void)
 	    if(stringEqual(last, "mime{")) {
 		*v = '\x81';
 		v[1] = 'e';
+		t = v + 2;
+	    }
+	    if(stringEqual(last, "table{")) {
+		*v = '\x81';
+		v[1] = 'b';
 		t = v + 2;
 	    }
 	    if(stringEqual(last, "fromfilter{")) {
@@ -407,6 +417,11 @@ readConfigFile(void)
 	       ("1.ebrc: line %d, attribute %s canot be set outside of a mime descriptor",
 	       ln, s);
 
+	if(n >= 13 && n < 17 && tabblock != 1)
+	    errorPrint
+	       ("1.ebrc: line %d, attribute %s canot be set outside of a table descriptor",
+	       ln, s);
+
 	if(n >= 8 && mailblock)
 	    errorPrint
 	       ("1.ebrc: line %d, attribute %s canot be set inside a mail descriptor or filter block",
@@ -415,6 +430,11 @@ readConfigFile(void)
 	if((n < 8 || n >= 13) && mimeblock)
 	    errorPrint
 	       ("1.ebrc: line %d, attribute %s canot be set inside a mime descriptor",
+	       ln, s);
+
+	if((n < 13 || n >= 17) && tabblock)
+	    errorPrint
+	       ("1.ebrc: line %d, attribute %s canot be set inside a table descriptor",
 	       ln, s);
 
 /* act upon the keywords */
@@ -486,26 +506,62 @@ readConfigFile(void)
 	    continue;
 
 	case 13:
+	    td->name = v;
+	    continue;
+
+	case 14:
+	    td->shortname = v;
+	    continue;
+
+	case 15:
+	    while(*v) {
+		if(td->ncols == MAXTCOLS)
+		    errorPrint("1.ebrc: line %d, too many columns, limit %d",
+		       ln, MAXTCOLS);
+		td->cols[td->ncols++] = v;
+		q = strchr(v, ',');
+		if(!q)
+		    break;
+		*q = 0;
+		v = q + 1;
+	    }
+	    continue;
+
+	case 16:
+	    if(!isdigitByte(*v))
+		errorPrint
+		   ("1.ebrc: line %d, keycol should be number or number,number",
+		   ln);
+	    td->key1 = strtol(v, &v, 10);
+	    if(*v == ',' && isdigitByte(v[1]))
+		td->key2 = strtol(v + 1, &v, 10);
+	    if(td->key1 > td->ncols || td->key2 > td->ncols)
+		errorPrint
+		   ("1.ebrc: line %d, keycol is out of range; only %d columns specified",
+		   ln, td->ncols);
+	    continue;
+
+	case 17:
 	    addressFile = v;
 	    ftype = fileTypeByName(v, false);
 	    if(ftype && ftype != 'f')
 		errorPrint("1.ebrc: address book %s is not a regular file", v);
 	    continue;
 
-	case 14:
+	case 18:
 	    ipbFile = v;
 	    ftype = fileTypeByName(v, false);
 	    if(ftype && ftype != 'f')
 		errorPrint("1.ebrc: ip blacklist %s is not a regular file", v);
 	    continue;
 
-	case 15:
+	case 19:
 	    mailDir = v;
 	    if(fileTypeByName(v, false) != 'd')
 		errorPrint("1.ebrc: %s is not a directory", v);
 	    continue;
 
-	case 16:
+	case 20:
 	    for(j = 0; j < 10; ++j)
 		if(!userAgents[j])
 		    break;
@@ -515,7 +571,7 @@ readConfigFile(void)
 	    userAgents[j] = v;
 	    continue;
 
-	case 17:
+	case 21:
 	    cookieFile = v;
 	    ftype = fileTypeByName(v, false);
 	    if(ftype && ftype != 'f')
@@ -527,7 +583,7 @@ readConfigFile(void)
 	    close(j);
 	    continue;
 
-	case 18:
+	case 22:
 	    if(javaDisCount == MAXNOJS)
 		errorPrint("1.ebrc: too many no js directives, limit %d",
 		   MAXNOJS);
@@ -540,7 +596,7 @@ readConfigFile(void)
 	    javaDis[javaDisCount++] = v;
 	    continue;
 
-	case 19:
+	case 23:
 	    spamCan = v;
 	    ftype = fileTypeByName(v, false);
 	    if(ftype && ftype != 'f')
@@ -548,15 +604,15 @@ readConfigFile(void)
 		   v);
 	    continue;
 
-	case 20:
+	case 24:
 	    webTimeout = atoi(v);
 	    continue;
 
-	case 21:
+	case 25:
 	    mailTimeout = atoi(v);
 	    continue;
 
-	case 22:
+	case 26:
 	    sslCerts = v;
 	    ftype = fileTypeByName(v, false);
 	    if(ftype && ftype != 'f')
@@ -568,6 +624,20 @@ readConfigFile(void)
 		   ("1.ebrc: SSL certificate file %s does not exist or is not readable.",
 		   v);
 	    close(j);
+	    continue;
+
+	case 27:
+	    dbarea = v;
+	    v = strchr(v, ',');
+	    if(!v)
+		continue;
+	    *v++ = 0;
+	    dblogin = v;
+	    v = strchr(v, ',');
+	    if(!v)
+		continue;
+	    *v++ = 0;
+	    dbpw = v;
 	    continue;
 
 	default:
@@ -630,6 +700,18 @@ readConfigFile(void)
 		continue;
 	    }
 
+	    if(tabblock == 1) {
+		++maxTables;
+		tabblock = 0;
+		if(!td->name)
+		    errorPrint("1.ebrc: missing table name at line %d", ln);
+		if(!td->shortname)
+		    errorPrint("1.ebrc: missing short name at line %d", ln);
+		if(!td->ncols)
+		    errorPrint("1.ebrc: missing columns at line %d", ln);
+		continue;
+	    }
+
 	    if(--nest < 0)
 		errorPrint("1.ebrc: unexpected } at line %d", ln);
 	    if(nest)
@@ -671,7 +753,7 @@ readConfigFile(void)
 	       ln, curblock);
 	}
 
-	if(!strchr("fmerts", c) && !nest)
+	if(!strchr("fmertsb", c) && !nest)
 	    errorPrint
 	       ("1.ebrc: statement at line %d must appear inside a function",
 	       ln);
@@ -693,6 +775,16 @@ readConfigFile(void)
 		   ("1too many mime types in your config file, limit %d",
 		   MAXMIME);
 	    mt = mimetypes + maxMime;
+	    continue;
+	}
+
+	if(c == 'b') {
+	    tabblock = 1;
+	    if(maxTables == MAXDBT)
+		errorPrint
+		   ("1too many sql tables in your config file, limit %d",
+		   MAXDBT);
+	    td = dbtables + maxTables;
 	    continue;
 	}
 
@@ -887,10 +979,17 @@ catchSig(int n)
 }				/* catchSig */
 
 void
+ebClose(int n)
+{
+    dbClose();
+    exit(n);
+}				/* ebClose */
+
+void
 eeCheck(void)
 {
     if(errorExit)
-	exit(1);
+	ebClose(1);
 }
 
 /* I'm not going to expand wild card arguments here.
@@ -1061,11 +1160,11 @@ edbrowse  [-e] [-d?] file1 file2 ...");
 	showError();
 	exit(1);
     }
-    /* mail client */
+
     cookiesFromJar();
 
     signal(SIGINT, catchSig);
-    siginterrupt(SIGINT,1);
+    siginterrupt(SIGINT, 1);
     signal(SIGPIPE, SIG_IGN);
 
 
@@ -1081,31 +1180,29 @@ edbrowse  [-e] [-d?] file1 file2 ...");
 	    runEbFunction("init");
 	changeFileName = 0;
 	fetchHistory(0, 0);	/* reset history */
+	cw->fileName = cloneString(file);
+	if(isSQL(file))
+	    cw->sqlMode = true;
 	rc = readFile(file, "");
-	debugPrint(1, "%d", fileSize);
+	if(fileSize >= 0)
+	    debugPrint(1, "%d", fileSize);
 	fileSize = -1;
 	if(!rc) {
 	    showError();
-	    cw->fileName = cloneString(file);
-	} else {
-	    cw->fileName =
-	       (changeFileName ? changeFileName : cloneString(file));
+	} else if(changeFileName) {
+	    nzFree(cw->fileName);
+	    cw->fileName = changeFileName;
 	    changeFileName = 0;
 	}
-	if(memEqualCI(cw->fileName, "ftp://", 6)) {
+	if(cw->fileName && memEqualCI(cw->fileName, "ftp://", 6)) {
 	    nzFree(cw->fileName);
 	    cw->fileName = 0;
 	}
 	cw->firstOpMode = cw->changeMode = false;
 /* Browse the text if it's a url */
 	if(rc && !(cw->binMode | cw->dirMode) && cw->dol && isURL(cw->fileName)) {
-#if 1
 	    if(runCommand("b"))
 		debugPrint(1, "%d", fileSize);
-#else
-	    if(browseCurrentBuffer())
-		debugPrint(1, "%d", fileSize);
-#endif
 	    else
 		showError();
 	}
@@ -1403,6 +1500,31 @@ bufferToProgram(const char *cmd, const char *suffix, bool trailPercent)
     nzFree(buf);
     return true;
 }				/* bufferToProgram */
+
+struct DBTABLE *
+findTableDescriptor(const char *sn)
+{
+    int i;
+    struct DBTABLE *td = dbtables;
+    for(i = 0; i < maxTables; ++i, ++td)
+	if(stringEqual(td->shortname, sn))
+	    return td;
+    return 0;
+}				/* findTableDescriptor */
+
+struct DBTABLE *
+newTableDescriptor(const char *name)
+{
+    struct DBTABLE *td;
+    if(maxTables == MAXDBT) {
+	setError("too many sql tables in cache, limit %d", MAXDBT);
+	return 0;
+    }
+    td = dbtables + maxTables++;
+    td->name = td->shortname = cloneString(name);
+    td->ncols = 0; /* it's already 0 */
+    return td;
+}				/* newTableDescriptor */
 
 struct MIMETYPE *
 findMimeBySuffix(const char *suffix)

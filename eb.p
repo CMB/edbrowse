@@ -4,10 +4,13 @@
 bool junkSubject(const char *s, char key) ;
 const char * mailRedirect(const char *to, const char *from, const char *reply, const char *subj) ;
 bool javaOK(const char *url) ;
+void ebClose(int n) ;
 void eeCheck(void) ;
 int main(int argc, char **argv) ;
 bool runEbFunction(const char *line) ;
 bool bufferToProgram(const char *cmd, const char *suffix, bool trailPercent) ;
+struct DBTABLE * findTableDescriptor(const char *sn) ;
+struct DBTABLE * newTableDescriptor(const char *name) ;
 struct MIMETYPE * findMimeBySuffix(const char *suffix) ;
 struct MIMETYPE * findMimeByProtocol(const char *prot) ;
 char * pluginCommand(const struct MIMETYPE *m, const char *file, const char *suffix) ;
@@ -30,7 +33,7 @@ bool readFile(const char *filename, const char *post) ;
 bool unfoldBuffer(int cx, bool cr, char **data, int *len) ;
 bool runCommand(const char *line) ;
 bool edbrowseCommand(const char *line, bool script) ;
-int sideBuffer(int cx, const char *text, const char *bufname, bool autobrowse) ;
+int sideBuffer(int cx, const char *text, int textlen, const char *bufname, bool autobrowse) ;
 bool browseCurrentBuffer(void) ;
 void updateFieldInBuffer(int tagno, const char *newtext, int notify, bool required) ;
 char * getFieldFromBuffer(int tagno) ;
@@ -151,16 +154,19 @@ void stringAndNum(char **s, int *l, int n) ;
 void stringAndKnum(char **s, int *l, int n) ;
 char * cloneString(const char *s) ;
 char * cloneMemory(const char *s, int n) ;
+void clipString(char *s) ;
 char * Cify(const char *s, int n) ;
 char * pullString(const char *s, int l) ;
 char * pullString1(const char *s, const char *t) ;
 int stringIsNum(const char *s) ;
 bool stringIsFloat(const char *s, double *dp) ;
+bool isSQL(const char *s) ;
 bool memEqualCI(const char *s, const char *t, int len) ;
 char * strstrCI(const char *base, const char *search) ;
 bool stringEqualCI(const char *s, const char *t) ;
 int stringInList(const char *const *list, const char *s) ;
 int stringInListCI(const char *const *list, const char *s) ;
+int charInList(const char *list, char c) ;
 bool listIsEmpty(const struct listHead * l) ;
 void initList(struct listHead *l) ;
 void delFromList(void *x) ;
@@ -197,6 +203,9 @@ bool sortedDirList(const char *dir, int *start, int *end) ;
 bool envFile(const char *line, const char **expanded) ;
 const char * currentOS(void) ;
 const char * currentMachine(void) ;
+FILE * efopen(const char *name, const char *mode) ;
+void appendFile(const char *fname, const char *message, ...) ;
+void appendFileNF(const char *filename, const char *msg) ;
 
 /* sourcefile=jsdom.c */
 void * createJavaContext(void) ;
@@ -226,4 +235,9 @@ bool handlerGo(void *obj, const char *name) ;
 void handlerSet(void *ev, const char *name, const char *code) ;
 void link_onunload_onclick(void *jv) ;
 bool handlerPresent(void *ev, const char *name) ;
+
+/* sourcefile=dbstubs.c */
+bool sqlReadRows(const char *filename, char **bufptr) ;
+void dbClose(void) ;
+void showColumns(void) ;
 

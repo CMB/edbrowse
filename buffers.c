@@ -16,8 +16,10 @@
 static const char valid_cmd[] = "aAbBcdefghHijJklmMnpqrstuvwz=^<";
 /* Commands that can be done in browse mode. */
 static const char browse_cmd[] = "AbBdefghHijJklmMnpqsuvwz=^<";
+/* Commands for sql mode. */
+static const char sql_cmd[] = "AefghHklmnpqrvwz=^<";
 /* Commands for directory mode. */
-static const char dir_cmd[] = "AbdefghHklMnpqsvwz=^<";
+static const char dir_cmd[] = "AdefghHklmnpqsvwz=^<";
 /* Commands that work at line number 0, in an empty file. */
 static const char zero_cmd[] = "aAbefhHMqruw=^<";
 /* Commands that expect a space afterward. */
@@ -87,7 +89,7 @@ removeHiddenNumbers(pst p)
 
     s = t = p;
     while((c = *s) != '\n') {
-	if(c != (uchar)InternalCodeChar) {
+	if(c != (uchar) InternalCodeChar) {
 	  addchar:
 	    *t++ = c;
 	    ++s;
@@ -304,7 +306,7 @@ inputLine(void)
 	if(intFlag)
 	    goto top;
 	printf("EOF\n");
-	exit(1);
+	ebClose(1);
     }
     inInput = false;
     intFlag = false;
@@ -517,7 +519,8 @@ cxQuit(int cx, int action)
 
 /* We might be trashing data, make sure that's ok. */
     if(w->changeMode &&
-       !w->dirMode && lastq != cx && w->fileName && !isURL(w->fileName)) {
+       !(w->dirMode | w->sqlMode) && lastq != cx && w->fileName &&
+       !isURL(w->fileName)) {
 	lastqq = cx;
 	setError("expecting `w'");
 	if(cx != context)
@@ -986,7 +989,25 @@ joinText(void)
     return true;
 }				/* joinText */
 
-/* Read a file into the current buffer, or a URL.
+/* We got some data, from a file or from the internet.
+ * Count the binary characters and decide if this is, on the whole,
+ * binary or text.  I allow some nonascii chars,
+ * like you might see in Spanish or German, and still call it text,
+ * but if there's too many such chars, I call it binary.
+ * It's not an exact science. */
+static bool
+looksBinary(const char *buf, int buflen)
+{
+    int i, bincount = 0;
+    for(i = 0; i < buflen; ++i) {
+	char c = buf[i];
+	if(c <= 0)
+	    ++bincount;
+    }
+    return (bincount * 4 - 10 >= buflen);
+}				/* looksBinary */
+
+/* Read a file, or url, into the current buffer.
  * Post/get data is passed, via the second parameter, if it's a URL. */
 bool
 readFile(const char *filename, const char *post)
@@ -994,9 +1015,41 @@ readFile(const char *filename, const char *post)
     char *rbuf;			/* read buffer */
     int readSize;		/* should agree with fileSize */
     int fh;			/* file handle */
-    int i, bincount;
     bool rc;			/* return code */
     char *nopound;
+
+    serverData = 0;
+    serverDataLen = 0;
+
+    if(isSQL(filename)) {
+	const char *t1, *t2;
+	if(!cw->sqlMode) {
+	    setError("cannot read from the database into another file");
+	    return false;
+	}
+	t1 = strchr(cw->fileName, ']');
+	t2 = strchr(filename, ']');
+	if(t1 - cw->fileName != t2 - filename ||
+	   memcmp(cw->fileName, filename, t2 - filename)) {
+	    setError("cannot read different tables into the same session");
+	    return false;
+	}
+	rc = sqlReadRows(filename, &rbuf);
+	if(!rc) {
+	    nzFree(rbuf);
+	    if(!cw->dol && cmd != 'r') {
+		cw->sqlMode = false;
+		nzFree(cw->fileName);
+		cw->fileName = 0;
+	    }
+	    return false;
+	}
+	serverData = rbuf;
+	fileSize = strlen(rbuf);
+	if(rbuf == EMPTYSTRING)
+	    return true;
+	goto intext;
+    }
 
     if(memEqualCI(filename, "file://", 7))
 	filename += 7;
@@ -1013,8 +1066,6 @@ readFile(const char *filename, const char *post)
 	    setError("empty domain in url");
 	    return false;
 	}
-	serverData = 0;
-	serverDataLen = 0;
 
 	rc = httpConnect(0, filename);
 
@@ -1130,19 +1181,7 @@ readFile(const char *filename, const char *post)
 	}			/* empty */
     }				/* file or URL */
 
-/* We got some data, from a file or from the internet.
- * Count the binary characters and decide if this is, on the whole,
- * binary or text.  I allow some nonascii chars,
- * like you might see in Spanish or German, and still call it text,
- * but if there's too many such chars, I call it binary.
- * It's not an exact science. */
-    bincount = 0;
-    for(i = 0; i < fileSize; ++i) {
-	char c = rbuf[i];
-	if(c <= 0)
-	    ++bincount;
-    }
-    if(bincount * 4 - 10 < fileSize) {
+    if(!looksBinary(rbuf, fileSize)) {
 /* looks like text.  In DOS, we should have compressed crlf.
  * Let's do that now. */
 #ifdef DOSLIKE
@@ -1159,8 +1198,11 @@ readFile(const char *filename, const char *post)
 	cw->binMode = true;
     }
 
+  intext:
     rc = addTextToBuffer((const pst)rbuf, fileSize, endRange);
     free(rbuf);
+    if(cw->sqlMode)
+	undoable = false;
     return rc;
 }				/* readFile */
 
@@ -1179,8 +1221,12 @@ writeFile(const char *name, int mode)
 	setError("cannot write to a url");
 	return false;
     }
+    if(isSQL(name)) {
+	setError("cannot write to a database table");
+	return false;
+    }
     if(!cw->dol) {
-	setError("writing an empty file");
+	setError("cannot write an empty file");
 	return false;
     }
 /* mode should be TRUNC or APPEND */
@@ -2263,7 +2309,8 @@ substituteText(const char *line)
 		char search[20];
 		findInputField(p, 1, whichField, &total, &realtotal, &tagno);
 		if(!tagno) {
-		    fieldNumProblem("input fields", 'i', whichField, total, realtotal);
+		    fieldNumProblem("input fields", 'i', whichField, total,
+		       realtotal);
 		    continue;
 		}
 		sprintf(search, "%c%d<", InternalCodeChar, tagno);
@@ -2424,7 +2471,7 @@ twoLetter(const char *line, const char **runThis)
     *runThis = newline;
 
     if(stringEqual(line, "qt"))
-	exit(0);
+	ebClose(0);
 
 /*
 if(stringEqual(line, "ws")) return stripChild();
@@ -2503,6 +2550,18 @@ if(stringEqual(line, "us")) return unstripChild();
 		setError("cannot play an empty buffer");
 		return false;
 	    }
+	    if(cw->browseMode) {
+		setError("cannot play in browse mode");
+		return false;
+	    }
+	    if(cw->dirMode) {
+		setError("cannot play in directory mode");
+		return false;
+	    }
+	    if(cw->sqlMode) {
+		setError("cannot play in database mode");
+		return false;
+	    }
 	    if(c == '.') {
 		suffix = line + 3;
 	    } else {
@@ -2548,7 +2607,16 @@ if(stringEqual(line, "us")) return unstripChild();
 	debrowseSuffix(newline);
 	return 2;
     }
-    /* rf */
+
+    if(stringEqual(line, "sc")) {
+	if(!cw->sqlMode) {
+	    setError("not in database mode");
+	    return false;
+	}
+	showColumns();
+	return true;
+    }
+
     if(stringEqual(line, "ub") || stringEqual(line, "et")) {
 	bool ub = (line[0] == 'u');
 	cmd = 'e';
@@ -3225,6 +3293,10 @@ runCommand(const char *line)
 	    setError("cannot break lines in directory mode");
 	    return false;
 	}
+	if(cw->sqlMode) {
+	    setError("cannot break lines in database mode");
+	    return false;
+	}
 	if(cw->browseMode) {
 	    setError("cannot break lines in browse mode");
 	    return false;
@@ -3252,6 +3324,10 @@ runCommand(const char *line)
 
     if(cw->dirMode && !strchr(dir_cmd, cmd)) {
 	setError("%c not available in directory mode", icmd);
+	return (globSub = false);
+    }
+    if(cw->sqlMode && !strchr(sql_cmd, cmd)) {
+	setError("%c not available in database mode", icmd);
 	return (globSub = false);
     }
     if(cw->browseMode && !strchr(browse_cmd, cmd)) {
@@ -3300,7 +3376,7 @@ runCommand(const char *line)
     }
 
 /* env variable and wild card expansion */
-    if(strchr("brewf", cmd) && first && !isURL(line)) {
+    if(strchr("brewf", cmd) && first && !isURL(line) && !isSQL(line)) {
 	if(!envFile(line, &line))
 	    return false;
 	first = *line;
@@ -3434,7 +3510,7 @@ runCommand(const char *line)
 	    if(++cx == MAXSESSION)
 		cx = 1;
 	    if(cx == context)
-		exit(0);
+		ebClose(0);
 	    if(!sessionList[cx].lw)
 		continue;
 	    cxSwitch(cx, true);
@@ -3488,6 +3564,11 @@ runCommand(const char *line)
 	if(cw->dirMode && stringEqual(line, cw->fileName)) {
 	    setError
 	       ("cannot write to the directory; files are modified as you go");
+	    return false;
+	}
+	if(cw->sqlMode && stringEqual(line, cw->fileName)) {
+	    setError
+	       ("cannot write to the database; rows are modified as you go");
 	    return false;
 	}
 	return writeFile(line, writeMode);
@@ -3613,7 +3694,11 @@ runCommand(const char *line)
 	j = 0;
 	if(first)
 	    j = strtol(line, (char **)&s, 10);
-	if(j >= 0 && (!*s || stringEqual(s, "?"))) {
+	if(j >= 0 && !*s) {
+	    if(cw->sqlMode) {
+		setError("g not available in database mode");
+		return false;
+	    }
 	    jsh = jsgo = nogo = false;
 	    jsdead = cw->jsdead;
 	    if(!cw->jsc)
@@ -3901,10 +3986,12 @@ runCommand(const char *line)
 		printf
 		   ("SendMail link.  Compose your mail, type sm to send, then ^ to get back.\n");
 	} else {
-	    w->fileName = cloneString(line);
-	    if(icmd == 'g' && !nogo && isURL(cw->fileName))
-		debugPrint(2, "*%s", cw->fileName);
-	    j = readFile(cw->fileName, "");
+	    cw->fileName = cloneString(line);
+	    if(isSQL(line))
+		cw->sqlMode = true;
+	    if(icmd == 'g' && !nogo && isURL(line))
+		debugPrint(2, "*%s", line);
+	    j = readFile(line, "");
 	}
 	w->firstOpMode = w->changeMode = false;
 	undoable = false;
@@ -3912,7 +3999,7 @@ runCommand(const char *line)
 /* Don't push a new session if we were trying to read a url,
  * and didn't get anything.  This is a feature that I'm
  * not sure if I really like. */
-	if(!serverData && isURL(w->fileName)) {
+	if(!serverData && (isURL(line) || isSQL(line))) {
 	    fileSize = -1;
 	    freeWindow(w);
 	    if(noStack && cw->prev) {
@@ -3951,10 +4038,6 @@ runCommand(const char *line)
 	if(!cw->browseMode) {
 	    if(cw->binMode) {
 		setError("cannot browse a binary file");
-		return false;
-	    }
-	    if(cw->dirMode) {
-		setError("cannot browse a directory");
 		return false;
 	    }
 	    if(!cw->dol) {
@@ -4051,7 +4134,7 @@ runCommand(const char *line)
     if(cmd == 'g' || cmd == 'v') {
 	return doGlobal(line);
     }
-    /* g or v */
+
     if(cmd == 'm' || cmd == 't') {
 	return moveCopy();
     }
@@ -4106,6 +4189,38 @@ runCommand(const char *line)
 	if(cx)
 	    return readContext(cx);
 	if(first) {
+	    if(cw->sqlMode && !isSQL(line)) {
+		j = 0;		/* count the dashes */
+		s = strchr(line, '=');
+		if(s) {
+		    const char *q;
+		    for(q = line; q < s; ++q)
+			if(!isalnumByte(*q))
+			    goto notwhere;
+		    ++s;
+		} else {
+		    s = line;
+		}
+		for(; *s; ++s) {
+		    if(*s == '-' && s > line && s[1]) {
+			++j;
+			continue;
+		    }
+		    if(isdigitByte(*s))
+			continue;
+		    if(*s == '/')
+			continue;
+		    goto notwhere;
+		}
+		if(j > 1) {
+		  notwhere:
+		    setError("cannot read text into a database session");
+		    return false;
+		}
+		strcpy(newline, cw->fileName);
+		strcpy(strchr(newline, ']') + 1, line);
+		line = newline;
+	    }
 	    j = readFile(line, "");
 	    if(!serverData)
 		fileSize = -1;
@@ -4172,7 +4287,8 @@ edbrowseCommand(const char *line, bool script)
 
 /* Take some text, usually empty, and put it in a side buffer. */
 int
-sideBuffer(int cx, const char *text, const char *bufname, bool autobrowse)
+sideBuffer(int cx, const char *text, int textlen,
+   const char *bufname, bool autobrowse)
 {
     int svcx = context;
     bool rc;
@@ -4193,8 +4309,13 @@ sideBuffer(int cx, const char *text, const char *bufname, bool autobrowse)
 	cw->fileName = cloneString(bufname);
 	debrowseSuffix(cw->fileName);
     }
-    if(*text) {
-	rc = addTextToBuffer((pst) text, strlen(text), 0);
+    if(textlen < 0) {
+	textlen = strlen(text);
+    } else {
+	cw->binMode = looksBinary(text, textlen);
+    }
+    if(textlen) {
+	rc = addTextToBuffer((pst) text, textlen, 0);
 	if(!rc)
 	    debugPrint(0,
 	       "warning: could not preload <buffer %d> with its initial text",
@@ -4212,7 +4333,6 @@ sideBuffer(int cx, const char *text, const char *bufname, bool autobrowse)
 	    allowJS = true;
 	}			/* browse the side window */
     }
-    /* put text in the side window */
     /* back to original context */
     cxSwitch(svcx, false);
     return cx;

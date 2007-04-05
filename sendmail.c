@@ -970,6 +970,10 @@ sendMailCurrent(int sm_account, bool dosig)
 	setError("cannot send mail while in browse mode");
 	return false;
     }
+    if(cw->sqlMode) {
+	setError("cannot send mail while in database mode");
+	return false;
+    }
     if(cw->dirMode) {
 	setError("cannot send mail from directory mode");
 	return false;

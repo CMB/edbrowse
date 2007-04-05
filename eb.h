@@ -116,7 +116,10 @@ typedef uchar *pst;		/* perl string */
 /* Number of pop3 mail accounts */
 #define MAXACCOUNT 100
 /* Number of mime types */
-#define MAXMIME 100
+#define MAXMIME 40
+/* number of db tables */
+#define MAXDBT 100
+#define MAXTCOLS 20
 /* How many sessions open concurrently */
 #define MAXSESSION 1000
 /* Allocation increment for a growing string, that we don't expect
@@ -164,6 +167,14 @@ struct MIMETYPE {
     bool stream;
 };
 
+struct DBTABLE {
+    char *name, *shortname;
+    char *cols[MAXTCOLS];
+    char ncols;
+    char key1, key2;
+    char *types;
+};
+
 /* various globals */
 extern int debugLevel;		/* 0 to 9 */
 extern int webTimeout, mailTimeout;
@@ -198,8 +209,9 @@ extern int maxAccount;		/* how many email accounts specified */
 extern int localAccount;	/* this is the smtp server for outgoing mail */
 extern char *mailDir;		/* move to this directory when fetching mail */
 extern struct MACCOUNT accounts[];	/* all the email accounts */
-extern int maxMime;		/* how many emime types specified */
+extern int maxMime;		/* how many mime types specified */
 extern struct MIMETYPE mimetypes[];
+extern char *dbarea, *dblogin, *dbpw;	/* to log into the database */
 extern bool caseInsensitive, searchStringsAll;
 extern bool textAreaDosNewlines;	/* when transmitting a textarea */
 extern bool undoable;		/* an undoable operation is taking place */
@@ -312,11 +324,13 @@ struct ebWindow {
     bool dirMode;		/* directory mode */
     bool firstOpMode;		/* first change has been made, undo is possible */
     bool jsdead;		/* javascript is dead, for this window */
+    bool sqlMode;		/* accessing a table */
     char *dw;			/* document.write string */
     int dw_l;			/* length of the above */
     void *tags;			/* array of html tags, when browsing */
     IP32bit *iplist;		/* ip addresses referenced by this page */
     void *jsc;			/* js context, if in browse mode, and running javascript */
+    struct DBTABLE *table;	/* if in sqlMode */
 };
 extern struct ebWindow *cw;	/* current window */
 

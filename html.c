@@ -648,7 +648,7 @@ jsdw(void)
     if(!cw->dw)
 	return;
     memcpy(cw->dw + 3, "<html>\n", 7);
-    side = sideBuffer(0, cw->dw + 10, cw->fileName, true);
+    side = sideBuffer(0, cw->dw + 10, -1, cw->fileName, true);
     if(side) {
 	printf("A separate window has been created in buffer %d\n", side);
     } else {
@@ -1225,7 +1225,7 @@ encodeTags(char *html)
 	    }
 	    l -= strlen(new + offset);
 	    new[offset] = 0;
-	    j = sideBuffer(0, currentTA->value, 0, false);
+	    j = sideBuffer(0, currentTA->value, -1, 0, false);
 	    if(j) {
 		currentTA->lic = j;
 		sprintf(hnum, "%c%d<buffer %d%c0>",
@@ -2570,7 +2570,7 @@ resetVar(struct htmlTag *t)
     if(itype == INP_TA) {
 	int cx = t->lic;
 	if(cx)
-	    sideBuffer(cx, t->value, 0, false);
+	    sideBuffer(cx, t->value, -1, 0, false);
     } else if(itype != INP_HIDDEN && itype != INP_SELECT)
 	updateFieldInBuffer(t->seqno, w, 0, false);
 
