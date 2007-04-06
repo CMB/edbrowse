@@ -1059,7 +1059,7 @@ insupdError(const char *action, int rcnt)
 	    desc = "deadlock detected";
 	    break;
 	case EXCCHECK:
-	    desc = "your data violates a check constraint in the database";
+	    desc = "check constraint violated";
 	    break;
 	case EXCTIMEOUT:
 	    desc = "daatabase timeout";
@@ -1111,6 +1111,7 @@ sqlDelRows(int start, int end)
 	    sql_exec("delete from %s where %s = %S and %s = %S",
 	       td->name, td->cols[key1], lineFields[key1],
 	       td->cols[key2], lineFields[key2]);
+	nzFree(line);
 	if(!insupdError("deleted", 1))
 	    return false;
 	delText(ln, ln);
@@ -1118,3 +1119,89 @@ sqlDelRows(int start, int end)
 
     return true;
 }				/* sqlDelRows */
+
+bool
+sqlUpdateRow(pst source, int slen, pst dest, int dlen)
+{
+    char *d2;			/* clone of dest */
+    char *s, *t;
+    int j, l1, l2, nkeys, key1, key2;
+    char *u1, *u2;		/* pieces of the update statement */
+    int u1len, u2len;
+
+/* compare all the way out to newline, so we know both strings end at the same time */
+    if(slen == dlen && !memcmp(source, dest, slen + 1))
+	return true;
+
+    if(!setTable())
+	return false;
+
+    nkeys = keyCountCheck();
+    key1 = td->key1 - 1;
+    key2 = td->key2 - 1;
+    if(!nkeys)
+	return false;
+
+    d2 = (char *)clonePstring(dest);
+    if(!intoFields(d2)) {
+	nzFree(d2);
+	return false;
+    }
+
+    j = 0;
+    u1 = initString(&u1len);
+    u2 = initString(&u2len);
+    s = (char *)source;
+
+    while(1) {
+	t = strpbrk(s, "|\n");
+	l1 = t - s;
+	l2 = strlen(lineFields[j]);
+	if(l1 != l2 || memcmp(s, lineFields[j], l1)) {
+	    if(j == key1 || j == key2) {
+		setError("cannot change a key column");
+		goto abort;
+	    }
+	    if(td->types[j] == 'B') {
+		setError("cannot change a blob field");
+		goto abort;
+	    }
+	    if(td->types[j] == 'T') {
+		setError("cannot change a text field");
+		goto abort;
+	    }
+	    if(*u1)
+		stringAndChar(&u1, &u1len, ',');
+	    stringAndString(&u1, &u1len, td->cols[j]);
+	    if(*u2)
+		stringAndChar(&u2, &u2len, ',');
+	    stringAndString(&u2, &u2len, lineFormat("%S", lineFields[j]));
+	}
+	if(*t == '\n')
+	    break;
+	s = t + 1;
+	++j;
+    }
+
+    sql_exclist(insupdExceptions);
+    if(nkeys == 1)
+	sql_exec("update %s set(%s) = (%s) where %s = %S",
+	   td->name, u1, u2, td->cols[key1], lineFields[key1]);
+    else
+	sql_exec("update %s set(%s) = (%s) where %s = %S and %s = %S",
+	   td->name, u1, u2,
+	   td->cols[key1], lineFields[key1], td->cols[key2], lineFields[key2]);
+    if(!insupdError("updated", 1))
+	goto abort;
+
+    nzFree(d2);
+    nzFree(u1);
+    nzFree(u2);
+    return true;
+
+  abort:
+    nzFree(d2);
+    nzFree(u1);
+    nzFree(u2);
+    return false;
+}				/* sqlUpdateRow */

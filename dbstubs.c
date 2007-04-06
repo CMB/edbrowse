@@ -31,3 +31,8 @@ bool
 sqlDelRows(int start, int end)
 {
 }				/* sqlDelRows */
+
+bool
+sqlUpdateRow(pst source, int slen, pst dest, int dlen)
+{
+}				/* sqlUpdateRow */

@@ -17,7 +17,7 @@ static const char valid_cmd[] = "aAbBcdefghHijJklmMnpqrstuvwz=^<";
 /* Commands that can be done in browse mode. */
 static const char browse_cmd[] = "AbBdefghHijJklmMnpqsuvwz=^<";
 /* Commands for sql mode. */
-static const char sql_cmd[] = "AdefghHklmnpqrvwz=^<";
+static const char sql_cmd[] = "AdefghHklmnpqrsvwz=^<";
 /* Commands for directory mode. */
 static const char dir_cmd[] = "AdefghHklmnpqsvwz=^<";
 /* Commands that work at line number 0, in an empty file. */
@@ -2346,6 +2346,21 @@ substituteText(const char *line)
 	if(!linesComing(linecount + 1))
 	    goto abort;
 
+	if(cw->sqlMode) {
+	    if(linecount) {
+		setError("replacement data contains newlines");
+		goto abort;
+	    }
+	    if(nullcount) {
+		setError("replacement data contains null characters");
+		goto abort;
+	    }
+	    *replaceLineEnd = '\n';
+	    if(!sqlUpdateRow(p, len - 1, (pst) replaceLine,
+	       replaceLineEnd - replaceLine))
+		goto abort;
+	}
+
 	if(cw->dirMode) {
 /* move the file, then update the text */
 	    char src[ABSPATH], *dest;
@@ -2375,7 +2390,7 @@ substituteText(const char *line)
 		}
 	    }			/* source and dest are different */
 	}
-	/* directory */
+
 	if(cw->browseMode) {
 	    if(nullcount) {
 		setError("cannot embed nulls in an input field");
