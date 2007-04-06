@@ -3653,12 +3653,15 @@ I just pass it through.
 
 <H3 align=center> <A NAME=insupd> Insert, Update, Delete </A> </H3>
 
-These aren't implemented yet, so there isn't much to talk about.&nbsp;
-I hope, in the near future,
-that i inserts a row, d deletes a row,
-and s modifies a row by performing a substitution -
-just like directory mode.&nbsp;
-Coming soon to a computer near you.
+Insert and update aren't implemented yet, so there isn't much to talk about there.&nbsp;
+Delete works as you would expect; delete a row,
+and the corresponding entry disappears.&nbsp;
+There is no undo command.&nbsp;
+It couldn't be done in any case, since you may have selected only part of the row (see below),
+and I wouldn't have all the data to put the row back.&nbsp;
+As mentioned before, referential integrity should be employed wherever it makes sense.&nbsp;
+As a last check, I only let you delete 100 rows at a time.&nbsp;
+Be careful, and run regular backups.
 
 <H3 align=center> <A NAME=td> Table Descriptors </A> </H3>
 

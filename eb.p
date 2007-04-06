@@ -29,6 +29,7 @@ void linesReset(void) ;
 bool linesComing(int n) ;
 void gotoLocation(char *url, int delay, bool rf) ;
 bool addTextToBuffer(const pst inbuf, int length, int destl) ;
+void delText(int start, int end) ;
 bool readFile(const char *filename, const char *post) ;
 bool unfoldBuffer(int cx, bool cr, char **data, int *len) ;
 bool runCommand(const char *line) ;
@@ -240,4 +241,5 @@ bool handlerPresent(void *ev, const char *name) ;
 bool sqlReadRows(const char *filename, char **bufptr) ;
 void dbClose(void) ;
 void showColumns(void) ;
+bool sqlDelRows(int start, int end) ;
 

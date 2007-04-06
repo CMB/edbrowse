@@ -765,24 +765,28 @@ setTable(void)
 
 /* haven't glommed onto this table yet */
     td = findTableDescriptor(myTab);
-    sql_exclist(exclist);
     if(td) {
-	buildSelectClause();
-	cid = sql_prepare(scl);
-	nzFree(scl);
-	if(rv_lastStatus) {
-	    if(rv_lastStatus == EXCNOTABLE)
-		setError("no such table %s", td->name);
-	    else if(rv_lastStatus == EXCNOCOLUMN)
-		setError("invalid column name");
-	    else
-		unexpected();
-	    return false;
+	if(!td->types) {
+	    buildSelectClause();
+	    sql_exclist(exclist);
+	    cid = sql_prepare(scl);
+	    nzFree(scl);
+	    if(rv_lastStatus) {
+		if(rv_lastStatus == EXCNOTABLE)
+		    setError("no such table %s", td->name);
+		else if(rv_lastStatus == EXCNOCOLUMN)
+		    setError("invalid column name");
+		else
+		    unexpected();
+		return false;
+	    }
+	    td->types = cloneString(rv_type);
+	    sql_free(cid);
 	}
-	td->types = cloneString(rv_type);
 
     } else {
 
+	sql_exclist(exclist);
 	cid = sql_prepare("select * from %s", myTab);
 	if(rv_lastStatus) {
 	    if(rv_lastStatus == EXCNOTABLE)
@@ -807,6 +811,8 @@ setTable(void)
 	td->ncols = nc;
 	for(i = 0; i < nc; ++i)
 	    td->cols[i] = cloneString(rv_name[i]);
+	sql_free(cid);
+
 	getPrimaryKey(myTab, &part1, &part2);
 	if(part1 > nc)
 	    part1 = 0;
@@ -815,7 +821,6 @@ setTable(void)
 	td->key1 = part1;
 	td->key2 = part2;
     }
-    sql_free(cid);
 
     s = strpbrk(td->types, "BT");
     if(s)
@@ -841,7 +846,9 @@ showColumns(void)
     printf("table %s", td->name);
     if(!stringEqual(td->name, td->shortname))
 	printf(" [%s]", td->shortname);
-    printf("\n");
+    i = sql_selectOne("select count(*) from %s", td->name);
+    printf(", %d rows\n", i);
+
     for(i = 0; i < td->ncols; ++i) {
 	printf("%d ", i + 1);
 	if(td->key1 == i + 1 || td->key2 == i + 1)
@@ -961,3 +968,153 @@ sqlReadRows(const char *filename, char **bufptr)
     sql_closeFree(cid);
     return false;
 }				/* sqlReadRows */
+
+static char *lineFields[MAXTCOLS];
+
+/* Split a line at pipe boundaries, and make sure the field count is correct */
+static bool
+intoFields(char *line)
+{
+    char *s = line;
+    int j = 0;
+    int c;
+
+    while(1) {
+	lineFields[j] = s;
+	s = strpbrk(s, "|\n");
+	c = *s;
+	*s++ = 0;
+	++j;
+	if(c == '\n')
+	    break;
+	if(j < td->ncols)
+	    continue;
+	setError
+	   ("line contains too many fields, please do not introduce any pipes into the text");
+	return false;
+    }
+
+    if(j == td->ncols)
+	return true;
+    setError
+       ("line contains too few fields, please do not remove any pipes from the text");
+    return false;
+}				/* intoFields */
+
+static bool
+rowCountCheck(const char *action, int cnt1)
+{
+    int cnt2 = rv_lastNrows;
+    static char rowword1[] = "rows";
+    static char rowword2[] = "records";
+
+    if(cnt1 == cnt2)
+	return true;
+
+    rowword1[3] = (cnt1 == 1 ? 0 : 's');
+    rowword2[6] = (cnt2 == 1 ? 0 : 's');
+    setError("oops!  I %s %d %s, and %d database %s were affected.",
+       action, cnt1, rowword1, cnt2, rowword2);
+    return false;
+}				/* rowCountCheck */
+
+static int
+keyCountCheck(void)
+{
+    if(!td->key1) {
+	setError("key column not specified");
+	return false;
+    }
+    return (td->key2 ? 2 : 1);
+}				/* keyCountCheck */
+
+/* Typical error conditions for insert update delete */
+static const short insupdExceptions[] = { EXCSQLMISC,
+    EXCVIEWUSE, EXCREFINT, EXCITEMLOCK, EXCPERMISSION,
+    EXCDEADLOCK, EXCCHECK, EXCTIMEOUT, 0
+};
+
+static bool
+insupdError(const char *action, int rcnt)
+{
+    int rc = rv_lastStatus;
+    const char *desc;
+
+    if(rc) {
+	switch (rc) {
+	case EXCVIEWUSE:
+	    desc = "cannot modify a view";
+	    break;
+	case EXCREFINT:
+	    desc = "some other row in the database depends on this row";
+	    break;
+	case EXCITEMLOCK:
+	    desc = "row or table is locked";
+	    break;
+	case EXCPERMISSION:
+	    desc =
+	       "you do not have permission to modify the database in this way";
+	    break;
+	case EXCDEADLOCK:
+	    desc = "deadlock detected";
+	    break;
+	case EXCCHECK:
+	    desc = "your data violates a check constraint in the database";
+	    break;
+	case EXCTIMEOUT:
+	    desc = "daatabase timeout";
+	    break;
+	default:
+	    setError("miscelaneous sql error %d", rv_vendorStatus);
+	    return false;
+	}
+	setError(desc);
+	return false;
+    }
+
+    return rowCountCheck(action, rcnt);
+}				/* insupdError */
+
+bool
+sqlDelRows(int start, int end)
+{
+    int nkeys, ndel, key1, key2, ln;
+
+    if(!setTable())
+	return false;
+
+    nkeys = keyCountCheck();
+    key1 = td->key1 - 1;
+    key2 = td->key2 - 1;
+    if(!nkeys)
+	return false;
+
+    ndel = end - start + 1;
+    ln = start;
+    if(ndel > 100) {
+	setError("cannot delete more than 100 rows at a time");
+	return false;
+    }
+
+/* We could delete all the rows with one statement, using an in(list),
+ * but that won't work when the key is two columns.
+ * I have to write the one-line-at-a-time code anyways,
+ * I'll just use that for now. */
+    while(ndel--) {
+	char *line = (char *)fetchLine(ln, 0);
+	intoFields(line);
+	sql_exclist(insupdExceptions);
+	if(nkeys == 1)
+	    sql_exec("delete from %s where %s = %S",
+	       td->name, td->cols[key1], lineFields[key1]);
+	else
+	    sql_exec("delete from %s where %s = %S and %s = %S",
+	       td->name, td->cols[key1], lineFields[key1],
+	       td->cols[key2], lineFields[key2]);
+	if(!insupdError("deleted", 1))
+	    return false;
+	delText(ln, ln);
+    }
+
+    return true;
+}				/* sqlDelRows */

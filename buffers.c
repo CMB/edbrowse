@@ -17,7 +17,7 @@ static const char valid_cmd[] = "aAbBcdefghHijJklmMnpqrstuvwz=^<";
 /* Commands that can be done in browse mode. */
 static const char browse_cmd[] = "AbBdefghHijJklmMnpqsuvwz=^<";
 /* Commands for sql mode. */
-static const char sql_cmd[] = "AefghHklmnpqrvwz=^<";
+static const char sql_cmd[] = "AdefghHklmnpqrvwz=^<";
 /* Commands for directory mode. */
 static const char dir_cmd[] = "AdefghHklmnpqsvwz=^<";
 /* Commands that work at line number 0, in an empty file. */
@@ -771,7 +771,7 @@ inputLinesIntoBuffer(void)
 
 /* Delete a block of text. */
 
-static void
+void
 delText(int start, int end)
 {
     int i, j;
@@ -3377,9 +3377,11 @@ runCommand(const char *line)
 
 /* env variable and wild card expansion */
     if(strchr("brewf", cmd) && first && !isURL(line) && !isSQL(line)) {
-	if(!envFile(line, &line))
-	    return false;
-	first = *line;
+	if(cmd != 'r' || !cw->sqlMode) {
+	    if(!envFile(line, &line))
+		return false;
+	    first = *line;
+	}
     }
 
     if(cmd == 'z') {
@@ -3534,6 +3536,10 @@ runCommand(const char *line)
 	if(first) {
 	    if(cw->dirMode) {
 		setError("cannot change the name of a directory");
+		return false;
+	    }
+	    if(cw->sqlMode) {
+		setError("cannot change the name of a table");
 		return false;
 	    }
 	    nzFree(cw->fileName);
@@ -4175,12 +4181,16 @@ runCommand(const char *line)
 		globSub = false;
 	    return j;
 	}
-	if(endRange == cw->dol)
-	    cw->nlMode = false;
+	if(cw->sqlMode) {
+	    j = sqlDelRows(startRange, endRange);
+	    if(!j)
+		globSub = false;
+	    return j;
+	}
 	delText(startRange, endRange);
 	return true;
     }
-    /* d */
+
     if(cmd == 'j' || cmd == 'J') {
 	return joinText();
     }
@@ -4201,6 +4211,8 @@ runCommand(const char *line)
 		} else {
 		    s = line;
 		}
+		if(stringEqual(s, "*"))
+		    goto sqlwhere;
 		for(; *s; ++s) {
 		    if(*s == '-' && s > line && s[1]) {
 			++j;
@@ -4217,6 +4229,7 @@ runCommand(const char *line)
 		    setError("cannot read text into a database session");
 		    return false;
 		}
+	      sqlwhere:
 		strcpy(newline, cw->fileName);
 		strcpy(strchr(newline, ']') + 1, line);
 		line = newline;

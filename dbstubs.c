@@ -25,5 +25,9 @@ dbClose(void)
 void
 showColumns(void)
 {
-} /* showColumns */
+}				/* showColumns */
 
+bool
+sqlDelRows(int start, int end)
+{
+}				/* sqlDelRows */
