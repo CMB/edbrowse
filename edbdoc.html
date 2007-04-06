@@ -3653,7 +3653,26 @@ I just pass it through.
 
 <H3 align=center> <A NAME=insupd> Insert, Update, Delete </A> </H3>
 
-Insert and update aren't implemented yet, so there isn't much to talk about there.&nbsp;
+Insert isn't implemented yet, so there isn't much to talk about there.
+
+<P>
+Use the substitute command to update a row.&nbsp;
+Make sure you don't accidentally introduce an additional pipe, or remove a pipe.&nbsp;
+Key columns cannot be modified.&nbsp;
+If you are updating many rows with one command,
+through a range or through g//s,
+and an error occurs while updating the database,
+substitution stops in its tracks.&nbsp;
+The editing session will reflect the database,
+with some rows changed and others untouched.&nbsp;
+There are many reasons for these update errors, including datatype mismatch
+(e.g. pushing an integer into a date field), and check constraints
+(e.g. putting J in for sex, instead of M or F).&nbsp;
+If you have any say in the database design,
+apply check constraints wherever they make sense.&nbsp;
+They will protect you from erroneous substitutions, wich would produce inconsistent updates.
+
+<P>
 Delete works as you would expect; delete a row,
 and the corresponding entry disappears.&nbsp;
 There is no undo command.&nbsp;
