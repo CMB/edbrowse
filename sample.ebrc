@@ -172,6 +172,31 @@ protocol = rtsp,pnm
 program = trplayer
 }
 
+
+#  Database access - specify the database, login, and password.
+database = retail,mylogin,mypassword
+
+#  Sections of the customers table in the retail database.
+#  See the edbrowse documentation for more details.
+table {
+    tname = customers
+#  cnm is my cryptic shorthand for customer name
+#  I want to be cryptic here, cause I'm going to be typing this a lot.
+    tshort = cnm
+    cols = custnum,firstname,lastname
+#  Specify the primary key, in this case, the first column selected.
+    keycol = 1
+}
+
+table {
+    tname = customers
+#  All I care about here is customer and birthdate.
+    tshort = cbd
+    cols = birthdate,custnum
+    keycol = 2
+}
+
+
 #  Plenty of sites use javascript solely for visual effect.
 #  And this javascript tends to be complicated, which means I usually
 #  don't parse it properly, and you get lots of annoying errors.
