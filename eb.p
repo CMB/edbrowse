@@ -243,4 +243,5 @@ void dbClose(void) ;
 void showColumns(void) ;
 bool sqlDelRows(int start, int end) ;
 bool sqlUpdateRow(pst source, int slen, pst dest, int dlen) ;
+bool sqlAddRows(int ln) ;
 

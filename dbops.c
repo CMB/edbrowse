@@ -1031,7 +1031,7 @@ keyCountCheck(void)
 /* Typical error conditions for insert update delete */
 static const short insupdExceptions[] = { EXCSQLMISC,
     EXCVIEWUSE, EXCREFINT, EXCITEMLOCK, EXCPERMISSION,
-    EXCDEADLOCK, EXCCHECK, EXCTIMEOUT, 0
+    EXCDEADLOCK, EXCCHECK, EXCTIMEOUT, EXCNOTNULLCOLUMN, 0
 };
 
 static bool
@@ -1057,6 +1057,9 @@ insupdError(const char *action, int rcnt)
 	    break;
 	case EXCDEADLOCK:
 	    desc = "deadlock detected";
+	    break;
+	case EXCNOTNULLCOLUMN:
+	    desc = "placing null into a not-null column";
 	    break;
 	case EXCCHECK:
 	    desc = "check constraint violated";
@@ -1205,3 +1208,120 @@ sqlUpdateRow(pst source, int slen, pst dest, int dlen)
     nzFree(u2);
     return false;
 }				/* sqlUpdateRow */
+
+bool
+sqlAddRows(int ln)
+{
+    char *u1, *u2;		/* pieces of the insert statement */
+    char *unld, *s;
+    int u1len, u2len;
+    int j, l, rowid;
+    double dv;
+    char inp[256];
+
+    if(!setTable())
+	return false;
+
+    while(1) {
+	u1 = initString(&u1len);
+	u2 = initString(&u2len);
+	for(j = 0; j < td->ncols; ++j) {
+	  reenter:
+	    if(strchr("BT", td->types[j]))
+		continue;
+	    printf("%s: ", td->cols[j]);
+	    fflush(stdout);
+	    if(!fgets(inp, sizeof (inp), stdin)) {
+		puts("EOF");
+		ebClose(1);
+	    }
+	    l = strlen(inp);
+	    if(l && inp[l - 1] == '\n')
+		inp[--l] = 0;
+	    if(stringEqual(inp, ".")) {
+		nzFree(u1);
+		nzFree(u2);
+		return true;
+	    }
+
+/* For now, a null field is always excepted. */
+/* Someday we may want to check this against the not-null constraint. */
+	    if(inp[0] == 0)
+		goto goodfield;
+
+/* verify the integrity of the entered field */
+	    if(strchr(inp, '|')) {
+		puts("please, no pipes in the data");
+		goto reenter;
+	    }
+
+	    switch (td->types[j]) {
+	    case 'N':
+		s = inp;
+		if(*s == '-')
+		    ++s;
+		if(stringIsNum(s) < 0) {
+		    puts("number expected");
+		    goto reenter;
+		}
+		break;
+	    case 'F':
+		if(!stringIsFloat(inp, &dv)) {
+		    puts("decimal number expected");
+		    goto reenter;
+		}
+		break;
+	    case 'C':
+		if(strlen(inp) > 1) {
+		    puts("one character expected");
+		    goto reenter;
+		}
+		break;
+	    case 'D':
+		if(stringDate(inp, false) < 0) {
+		    puts("date expected");
+		    goto reenter;
+		}
+		break;
+	    case 'I':
+		if(stringTime(inp) < 0) {
+		    puts("time expected");
+		    goto reenter;
+		}
+		break;
+	    }
+
+	  goodfield:
+	    if(*u1)
+		stringAndChar(&u1, &u1len, ',');
+	    stringAndString(&u1, &u1len, td->cols[j]);
+	    if(*u2)
+		stringAndChar(&u2, &u2len, ',');
+	    stringAndString(&u2, &u2len, lineFormat("%S", inp));
+	}
+	sql_exclist(insupdExceptions);
+	sql_exec("insert into %s (%s) values (%s)", td->name, u1, u2);
+	nzFree(u1);
+	nzFree(u2);
+	if(!insupdError("inserted", 1)) {
+	    printf("Error: ");
+	    showError();
+	    continue;
+	}
+/* Fetch the row just entered;
+its serial number may have changed from 0 to something real */
+	rowid = rv_lastRowid;
+	buildSelectClause();
+	sql_select("%s where rowid = %d", scl, rowid, 0);
+	nzFree(scl);
+	unld = sql_mkunld('|');
+	l = strlen(unld);
+	unld[l - 1] = '\n';	/* overwrite the last pipe */
+	if(!addTextToBuffer((pst) unld, l, ln))
+	    return false;
+	++ln;
+    }
+
+/* This pointis not reached; make the compilerhappy */
+    return true;
+}				/* sqlAddRows */

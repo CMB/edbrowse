@@ -17,7 +17,7 @@ static const char valid_cmd[] = "aAbBcdefghHijJklmMnpqrstuvwz=^<";
 /* Commands that can be done in browse mode. */
 static const char browse_cmd[] = "AbBdefghHijJklmMnpqsuvwz=^<";
 /* Commands for sql mode. */
-static const char sql_cmd[] = "AdefghHklmnpqrsvwz=^<";
+static const char sql_cmd[] = "AadefghHiklmnpqrsvwz=^<";
 /* Commands for directory mode. */
 static const char dir_cmd[] = "AdefghHklmnpqsvwz=^<";
 /* Commands that work at line number 0, in an empty file. */
@@ -305,7 +305,7 @@ inputLine(void)
     if(!fgets((char *)line, sizeof (line), stdin)) {
 	if(intFlag)
 	    goto top;
-	printf("EOF\n");
+	puts("EOF");
 	ebClose(1);
     }
     inInput = false;
@@ -3418,7 +3418,6 @@ runCommand(const char *line)
 	    endRange = cw->dol;
     }
 
-    /* z */
     /* the a+ feature, when you thought you were in append mode */
     if(cmd == 'a') {
 	if(stringEqual(line, "+"))
@@ -4174,21 +4173,34 @@ runCommand(const char *line)
 	cmd = 'a';
 	--startRange, --endRange;
     }
-    /* i */
+
     if(cmd == 'c') {
 	delText(startRange, endRange);
 	endRange = --startRange;
 	cmd = 'a';
     }
-    /* c */
+
     if(cmd == 'a') {
 	if(inscript) {
 	    setError("cannot run an insert command from an edbrowse function");
 	    return false;
 	}
+	if(cw->sqlMode) {
+	    j = cw->dol;
+	    rc = sqlAddRows(endRange);
+/* adjust dot */
+	    j = cw->dol - j;
+	    if(j)
+		cw->dot = endRange + j;
+	    else if(!endRange && cw->dol)
+		cw->dot = 1;
+	    else
+		cw->dot = endRange;
+	    return rc;
+	}
 	return inputLinesIntoBuffer();
     }
-    /* a */
+
     if(cmd == 'd') {
 	if(cw->dirMode) {
 	    j = delFiles();

@@ -36,3 +36,8 @@ bool
 sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 {
 }				/* sqlUpdateRow */
+
+bool
+sqlAddRows(int ln)
+{
+}				/* sqlAddRows */

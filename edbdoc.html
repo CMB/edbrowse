@@ -3653,7 +3653,20 @@ I just pass it through.
 
 <H3 align=center> <A NAME=insupd> Insert, Update, Delete </A> </H3>
 
-Insert isn't implemented yet, so there isn't much to talk about there.
+Adding database rows is substantially different from adding text.&nbsp;
+Since a row may contain a dozen fields, and you may not remember what goes where,
+edbrowse prompts you for each field in turn.&nbsp;
+It also checks the integrity of each field as it is entered,
+e.g. a date has to look like mm/dd/yyyy etc.&nbsp;
+If a row cannot be added because of a database error,
+edbrowse prints the error,
+and data entry continues;
+giving you a chance to reenter the row.&nbsp;
+Data entry stops when you enter a period all by itself,
+no matter what field you are on.&nbsp;
+The rows that were entered successfully will be present in your buffer,
+and the current line is the last entered row.&nbsp;
+Note that blobs cannot be entered at this time.
 
 <P>
 Use the substitute command to update a row.&nbsp;
@@ -3712,13 +3725,22 @@ table {
 }
 </font></PRE>
 
+<P>
+When inserting a row through one of these descriptors,
+remember that you are only specifying a subset of the columns in the table.&nbsp;
+The other columns will be null, or they will take on their default values,
+as specified by the schema.&nbsp;
+If you receive a Not-Null error, it could be due to one of the other columns,
+which requires an entered value.&nbsp;
+It is usually safer to insert a row using the complete table.
+
 <H3 align=center> <A NAME=end> Wrap up </A> </H3>
 
 That concludes the user's guide.&nbsp;
 As you can see, edbrowse is a difficult program to master, but an easy program to use.&nbsp;
 I believe this is the key to success for any blind user or programmer.&nbsp;
 One can certainly paste a screen reader on top of an existing 2 dimensional program
-such as emacs or lynx, and get "up and running" quickly,
+such as emacs or lynx, and get up and running quickly,
 but to be truly competitive in the workplace, or efficient at home,
 you need a <A HREF=http://www.eklhad.net/cli.html>command line interface</a>.&nbsp;
 Edbrowse is an important step in this direction.&nbsp;
