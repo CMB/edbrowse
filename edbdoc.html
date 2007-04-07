@@ -3516,7 +3516,7 @@ and you have forgottten the structure of the table,
 use the sc (show columns) command.&nbsp;
 The output might look like this.
 
-<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>Table customers
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>Table customers, 536281 rows
 1 *custnum int
 2 firstname string
 3 lastname string
@@ -3629,11 +3629,11 @@ Now, how about the seventh column in our example, the one called "picture"?&nbsp
 This is the customer's picture, a jpg image that is in binary,
 and cannot be easily folded into an editing session.&nbsp;
 Instead, it is stored in another buffer,
-e.g. buffer 7, and this is indicated by &lt;7&gt;.&nbsp;
-You can switch to session 7 and save the file, or throw it away.
+e.g. buffer 9, and this is indicated by &lt;9&gt;.&nbsp;
+You can switch to session 9 and save the file, or throw it away.
 
 <P>
-2139|Fred|Flintstone|08/21/1969|M|foo@bar.bar.com|&lt;7&gt;
+2139|Fred|Flintstone|08/21/1969|M|foo@bar.bar.com|&lt;9&gt;
 
 <P>
 To do anything with the database, your config file must specify
@@ -3656,7 +3656,7 @@ I just pass it through.
 Adding database rows is substantially different from adding text.&nbsp;
 Since a row may contain a dozen fields, and you may not remember what goes where,
 edbrowse prompts you for each field in turn.&nbsp;
-It also checks the integrity of each field as it is entered,
+It also checks the integrity of each field as you go,
 e.g. a date has to look like mm/dd/yyyy etc.&nbsp;
 If a row cannot be added because of a database error,
 edbrowse prints the error,
