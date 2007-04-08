@@ -1957,67 +1957,6 @@ sql_closeFree(cid1);
 sql_closeFree(cid2);
 } /* cursor_comm */
 
-/* Sync up two tables, or corresponding sections of two tables.
-These are usually equischema tables in parallel databases or machines. */
-static const char *synctable; /* table being sync-ed */
-static const char *synckeycol; /* key column */
-static const char *sync_clause; /* additional clause, to sync only part of the table */
-
-static int syncup_comm_fn(char action,
-char *line1, char *line2, int key)
-{
-switch(action) {
-case '<': /* delete */
-sql_exec("delete from %s where %s = %d %0s",
-synctable, synckeycol, key, sync_clause);
-break;
-case '>': /* insert */
-sql_exec("insert into %s values(%s)", synctable, line2);
-break;
-case '*': /* update */
-sql_exec("update %s set * = (%s) where %s = %d %0s",
-synctable, line2, synckeycol, key, sync_clause);
-break;
-} /* switch */
-return 0;
-} /* syncup_comm_fn */
-
-/* make table1 look like table2 */
-void syncup_table(
-const char *table1, const char *table2, /* the two tables */
-const char *keycol, /* the key column */
-const char *otherclause) /* additional restriction */
-{
-char stmt1[200], stmt2[200];
-int len;
-
-synctable = table1;
-synckeycol = keycol;
-sync_clause = otherclause;
-len = strlen(table1);
-if((int)strlen(table2) > len) len = strlen(table2);
-if(otherclause) len += strlen(otherclause);
-len += strlen(keycol);
-if(len + 30 > sizeof(stmt1))
-errorPrint("2constructed select statement in syncup_table() is too long");
-
-if(otherclause) {
-while(*otherclause == ' ') ++otherclause;
-if(strncmp(otherclause, "and ", 4) &&
-strncmp(otherclause, "AND ", 4))
-errorPrint("2restricting clause in syncup_table() does not start with \"and\".");
-sprintf(stmt1, "select * from %s where %s order by %s",
-table1, otherclause+4, keycol);
-sprintf(stmt2, "select * from %s where %s order by %s",
-table2, otherclause+4, keycol);
-} else {
-sprintf(stmt1, "select * from %s order by %s", table1, keycol);
-sprintf(stmt2, "select * from %s order by %s", table2, keycol);
-}
-
-cursor_comm(stmt1, stmt2, keycol, (fnptr)syncup_comm_fn, 0);
-} /* syncup_table */
-
 /*********************************************************************
 Get the primary key for a table.
 In informix, you can use system tables to get this information.

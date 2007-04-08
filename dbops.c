@@ -1325,3 +1325,78 @@ its serial number may have changed from 0 to something real */
 /* This pointis not reached; make the compilerhappy */
     return true;
 }				/* sqlAddRows */
+
+
+/*********************************************************************
+Sync up two tables, or corresponding sections of two tables.
+These are usually equischema tables in parallel databases or machines.
+This isn't used by edbrowse; it's just something I wrote,
+and I thought you might find it useful.
+It follows the C convention of copying the second argument
+to the first, like the string and memory functions,
+rather than the shell convention of copying (cp) the first argument to the second.
+Hey - why have one standard, when you can have two?
+*********************************************************************/
+
+static const char *synctable;	/* table being sync-ed */
+static const char *synckeycol;	/* key column */
+static const char *sync_clause;	/* additional clause, to sync only part of the table */
+
+static int
+syncup_comm_fn(char action, char *line1, char *line2, int key)
+{
+    switch (action) {
+    case '<':			/* delete */
+	sql_exec("delete from %s where %s = %d %0s",
+	   synctable, synckeycol, key, sync_clause);
+	break;
+    case '>':			/* insert */
+	sql_exec("insert into %s values(%s)", synctable, line2);
+	break;
+    case '*':			/* update */
+	sql_exec("update %s set * = (%s) where %s = %d %0s",
+	   synctable, line2, synckeycol, key, sync_clause);
+	break;
+    }				/* switch */
+    return 0;
+}				/* syncup_comm_fn */
+
+/* make table1 look like table2 */
+void
+syncup_table(const char *table1, const char *table2,	/* the two tables */
+   const char *keycol,		/* the key column */
+   const char *otherclause)
+{
+    char stmt1[200], stmt2[200];
+    int len;
+
+    synctable = table1;
+    synckeycol = keycol;
+    sync_clause = otherclause;
+    len = strlen(table1);
+    if((int)strlen(table2) > len)
+	len = strlen(table2);
+    if(otherclause)
+	len += strlen(otherclause);
+    len += strlen(keycol);
+    if(len + 30 > sizeof (stmt1))
+	errorPrint
+	   ("2constructed select statement in syncup_table() is too long");
+
+    if(otherclause) {
+	while(*otherclause == ' ')
+	    ++otherclause;
+	if(strncmp(otherclause, "and ", 4) && strncmp(otherclause, "AND ", 4))
+	    errorPrint
+	       ("2restricting clause in syncup_table() does not start with \"and\".");
+	sprintf(stmt1, "select * from %s where %s order by %s", table1,
+	   otherclause + 4, keycol);
+	sprintf(stmt2, "select * from %s where %s order by %s", table2,
+	   otherclause + 4, keycol);
+    } else {
+	sprintf(stmt1, "select * from %s order by %s", table1, keycol);
+	sprintf(stmt2, "select * from %s order by %s", table2, keycol);
+    }
+
+    cursor_comm(stmt1, stmt2, keycol, (fnptr) syncup_comm_fn, 0);
+}				/* syncup_table */
