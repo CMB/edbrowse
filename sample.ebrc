@@ -90,7 +90,7 @@ outserver = mail.comcast.net
 login = eklhad
 password = zebra
 from = Karl Dahlke
-reply = karl@eklhad.net
+reply = eklhad@comcast.net
 }
 
 #  That's all the mail accounts.
