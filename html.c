@@ -825,7 +825,7 @@ locateOptions(const struct htmlTag *sel, const char *input,
 		    set_property_bool(t->jv, "selected", false);
 	    }
     }
-    /* all options unselected */
+
     s = input;
     while(*s) {
 	e = 0;
@@ -1672,8 +1672,6 @@ encodeTags(char *html)
 	    t->controller = currentSel;
 	    t->lic = nopt++;
 	    t->value = htmlAttrVal(topAttrib, "value");
-	    if(t->value == EMPTYSTRING)
-		t->value = 0;
 	    if(htmlAttrPresent(topAttrib, "selected")) {
 		if(currentSel->lic && !currentSel->multiple)
 		    browseError("multiple options are selected");
@@ -2837,7 +2835,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 		value = "on";
 	    goto success;
 	}
-	/* checkable */
+
 	if(itype < INP_FILE) {
 /* Even a hidden variable can be adjusted by js.
  * fetchTextVar allows for this possibility.
@@ -2848,7 +2846,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 	    nzFree(value);
 	    continue;
 	}
-	/* simple text field */
+
 	if(itype == INP_TA) {
 	    int cx = t->lic;
 	    char *cxbuf;
@@ -2890,7 +2888,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 	    postNameVal(name, 0, fsep, false, boundary, post, l);
 	    continue;
 	}
-	/* textarea */
+
 	if(itype == INP_SELECT) {
 	    char *display = getFieldFromBuffer(t->seqno);
 	    char *s, *e;
@@ -2906,6 +2904,12 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 	    nzFree(display);
 	    if(!rc)
 		goto fail;	/* this should never happen */
+/* option could have an empty value, usually the null choice,
+ * before you have made a selection. */
+	    if(!*value) {
+		postNameVal(name, value, fsep, false, boundary, post, l);
+		continue;
+	    }
 /* Step through the options */
 	    for(s = value; *s; s = e) {
 		char more;
@@ -2922,7 +2926,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 	    nzFree(value);
 	    continue;
 	}
-	/* select */
+
 	if(itype == INP_FILE) {	/* the only one left */
 	    value = fetchTextVar(t);
 	    if(!value)
