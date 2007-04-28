@@ -591,8 +591,11 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	stringAndString(&hdr, &l, prot);
 	stringAndString(&hdr, &l, "://");
 	stringAndString(&hdr, &l, host);
-	stringAndChar(&hdr, &l, ':');
-	stringAndNum(&hdr, &l, port);
+/* Some proxy servers won't accept :80 after the hostname.  Dunno why. */
+	if(secure || port != 80) {
+	    stringAndChar(&hdr, &l, ':');
+	    stringAndNum(&hdr, &l, port);
+	}
     }
     stringAndChar(&hdr, &l, '/');
 
