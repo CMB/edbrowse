@@ -1084,9 +1084,9 @@ ftpls(char *line)
 	    break;
     if(j == 10 && line[j] == ' ') {	/* long list */
 	int fsize, nlinks;
-	char user[40], group[40];
+	char user[42], group[42];
 	char *q;
-	sscanf(line + j, " %d %s %s %d", &nlinks, user, group, &fsize);
+	sscanf(line + j, " %d %40s %40s %d", &nlinks, user, group, &fsize);
 	q = strchr(line, ':');
 	if(q) {
 	    for(++q; isdigitByte(*q) || *q == ':'; ++q) ;
