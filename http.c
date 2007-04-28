@@ -471,12 +471,21 @@ httpConnect(const char *from, const char *url)
     host = getHostURL(url);
     if(!host)
 	errorPrint("@empty host in httpConnect");
-    hip = tcp_name_ip(host);
+    if(proxy_host) {
+	if(secure) {
+	    setError("secure proxy not yet implemented");
+	    return false;
+	}
+	hip = tcp_name_ip(proxy_host);
+    } else {
+	hip = tcp_name_ip(host);
+    }
     if(hip == -1) {
 	setError(intFlag ? opint : "cannot identify %s on the network", host);
 	return false;
     }
-    debugPrint(4, "%s -> %s", host, tcp_ip_dots(hip));
+    debugPrint(4, "%s -> %s",
+       (proxy_host ? proxy_host : host), tcp_ip_dots(hip));
 
 /* See if the protocol is a recognized stream */
     if(stringEqualCI(prot, "http") || stringEqualCI(prot, "https")) {
@@ -539,12 +548,15 @@ httpConnect(const char *from, const char *url)
     newurl = false;
 
     getPortLocURL(url, &portloc, &port);
-    hsock = tcp_connect(hip, port, webTimeout);
+    hsock = tcp_connect(hip, (proxy_host ? proxy_port : port), webTimeout);
     if(hsock < 0) {
 	setError(intFlag ? opint : "cannot connect to %s", host);
 	return false;
     }
-    debugPrint(4, "connected to port %d", port);
+    if(proxy_host)
+	debugPrint(4, "connected to port %d/%d", proxy_port, port);
+    else
+	debugPrint(4, "connected to port %d", port);
     if(secure) {
 	hssl = SSL_new(sslcx);
 	SSL_set_fd(hssl, hsock);
@@ -574,7 +586,16 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	post++;
 
     hdr = initString(&l);
-    stringAndString(&hdr, &l, post ? "POST /" : "GET /");
+    stringAndString(&hdr, &l, post ? "POST " : "GET ");
+    if(proxy_host) {
+	stringAndString(&hdr, &l, prot);
+	stringAndString(&hdr, &l, "://");
+	stringAndString(&hdr, &l, host);
+	stringAndChar(&hdr, &l, ':');
+	stringAndNum(&hdr, &l, port);
+    }
+    stringAndChar(&hdr, &l, '/');
+
     s = getDataURL(url);
     while(true) {
 	char c, buf[4];

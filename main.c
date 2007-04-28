@@ -29,6 +29,8 @@ struct MIMETYPE mimetypes[MAXMIME];
 static int maxTables;
 static struct DBTABLE dbtables[MAXDBT];
 char *dbarea, *dblogin, *dbpw;	/* to log into the database */
+char *proxy_host;
+int proxy_port;
 bool caseInsensitive, searchStringsAll;
 bool textAreaDosNewlines = true, undoable;
 bool allowRedirection = true, allowJS = true, sendReferrer = false;
@@ -164,7 +166,7 @@ readConfigFile(void)
 	"tname", "tshort", "cols", "keycol",
 	"adbook", "ipblack", "maildir", "agent",
 	"jar", "nojs", "spamcan",
-	"webtimer", "mailtimer", "certfile", "database",
+	"webtimer", "mailtimer", "certfile", "database", "proxy",
 	0
     };
 
@@ -638,6 +640,16 @@ readConfigFile(void)
 		continue;
 	    *v++ = 0;
 	    dbpw = v;
+	    continue;
+
+	case 28:		/* proxy */
+	    proxy_host = v;
+	    proxy_port = 80;
+	    v = strchr(v, ':');
+	    if(v) {
+		*v++ = 0;
+		proxy_port = atoi(v);
+	    }
 	    continue;
 
 	default:
@@ -1522,7 +1534,7 @@ newTableDescriptor(const char *name)
     }
     td = dbtables + maxTables++;
     td->name = td->shortname = cloneString(name);
-    td->ncols = 0; /* it's already 0 */
+    td->ncols = 0;		/* it's already 0 */
     return td;
 }				/* newTableDescriptor */
 

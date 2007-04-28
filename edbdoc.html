@@ -71,6 +71,7 @@ blind, script, accessible">
 <LI><A HREF=#cook> Cookies </A>
 <LI><A HREF=#ssl> Secure Connections </A>
 <LI><A HREF=#ftp> FTP Retrievals </A>
+<LI><A HREF=#proxy> Proxy Servers </A>
 <LI><A HREF=#frame> Frames </A>
 </UL>
 
@@ -2307,6 +2308,46 @@ while ftp copies the file directly to disk.&nbsp;
 Also, ftp does not print dots every 100K to indicate progress,
 so you just have to wait until it's done.&nbsp;
 (Depending on your operating system, you could switch to another virtual console/window and check on the length of the local file.)
+
+<H3 align=center> <A NAME=proxy> Proxy Servers </A> </H3>
+
+A proxy server is a web server that sits between your web browser and remote websites.&nbsp;
+It intercepts your requests for web pages and forwards them to the system that hosts
+the site you are browsing.&nbsp;
+Proxy servers are used for a variety of reasons.&nbsp;
+Here are just a few of them:
+
+<OL>
+<P><LI>Efficiency.&nbsp;
+The proxy server may be able to store previously-accessed webpages
+(known as caching).&nbsp;
+If your connection to the proxy is faster than your connection to the rest of the network,
+then caching insures that frequently-accessed web pages load quickly.
+<P><LI>Policies.&nbsp;
+Some firewall administrators require their users to use
+a proxy server.
+<P><LI>Anonymity.&nbsp;
+There are so-called anonymizing
+proxy servers that hide your IP address from the websites that you browse.
+</OL>
+
+<P>
+If you wish to use a proxy server for http traffic, simply set the proxy
+option in your configuration file.&nbsp;
+Provide the hostname and port, separated by a colon.&nbsp;
+For example:
+<P>
+proxy = proxy.campus.edu:3128
+
+<p>
+Note that proxies often listen on ports other than port 80.&nbsp;
+Squid is a proxy server that comes bundled with some Linux distributions, and it uses
+port 3128 by default.
+
+<p>
+Presently, edbrowse only handles proxying of standard http.&nbsp;
+Secure http and ftp
+can both be proxied, but this functionality is not implemented.
 
 <H3 align=center> <A NAME=frame> Frames </A> </H3>
 

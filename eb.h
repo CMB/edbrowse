@@ -212,6 +212,8 @@ extern struct MACCOUNT accounts[];	/* all the email accounts */
 extern int maxMime;		/* how many mime types specified */
 extern struct MIMETYPE mimetypes[];
 extern char *dbarea, *dblogin, *dbpw;	/* to log into the database */
+extern char *proxy_host;
+extern int proxy_port;
 extern bool caseInsensitive, searchStringsAll;
 extern bool textAreaDosNewlines;	/* when transmitting a textarea */
 extern bool undoable;		/* an undoable operation is taking place */
