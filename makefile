@@ -8,15 +8,26 @@
 #  The -I flags assume smjs is installed in /usr/local
 #  You may also need -I/usr/include/pcre or -I/usr/local/include/pcre
 
-CFLAGS = -I/usr/local/js/src -I/usr/local/js/src/Linux_All_DBG.OBJ -DXP_UNIX -DX86_LINUX
-ESQLDFLAGS = -s -Xlinker -rpath -Xlinker $(INFORMIXDIR)/lib:$(INFORMIXDIR)/lib/esql
+#  Allow for symbolic debugging.
+DEBUGFLAGS=-g -ggdb
+STRIP=
+ifeq ($(EBDEBUG),) # debugging turned off
+DEBUGFLAGS=
+STRIP=-s
+endif
+
+CFLAGS = -I/usr/local/js/src -I/usr/local/js/src/Linux_All_DBG.OBJ -DXP_UNIX -DX86_LINUX $(DEBUGFLAGS)
 
 #  If the smjs library is already installed by your linux distribution,
 #  e.g. Debian, use the following flags.
-#CFLAGS = -I/usr/include/smjs -DXP_UNIX -DX86_LINUX
+#
+#CFLAGS = -I/usr/include/smjs -DXP_UNIX -DX86_LINUX $(DEBUGFLAGS)
 
 #  Normal load flags
-LFLAGS = -s
+LFLAGS = $(STRIP)
+
+#  ESQL C load flags
+ESQLDFLAGS = $(STRIP) -Xlinker -rpath -Xlinker $(INFORMIXDIR)/lib:$(INFORMIXDIR)/lib/esql
 
 #  Libraries for edbrowse.
 #  I assume you have linked libjs.so into /usr/lib/libsmjs.so
@@ -52,6 +63,7 @@ edbrowseodbc: $(EBOBJS) tcp.o dbops.o dbodbc.o
 	cc $(LFLAGS) -o edbrowseodbc $(EBOBJS) tcp.o dbops.o dbodbc.o $(LIBS)
 
 #  Build function prototypes.
+#  mkproto is my program, not a general unix utility.
 proto:
 	mkproto -g main.c buffers.c url.c auth.c http.c sendmail.c fetchmail.c \
 	html.c format.c cookies.c stringfile.c jsdom.c jsloc.c dbstubs.c >eb.p
