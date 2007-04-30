@@ -342,18 +342,36 @@ inputLine(void)
     return line;
 }				/* inputLine */
 
+static struct {
+    char lhs[MAXRE], rhs[MAXRE];
+    bool lhs_yes, rhs_yes;
+} globalSubs;
+
 static void
-carrySubstitutionStrings(const struct ebWindow *w, struct ebWindow *nw)
+saveSubstitutionStrings(void)
 {
     if(!searchStringsAll)
 	return;
-    if(!w)
+    if(!cw)
 	return;
-    nw->lhs_yes = w->lhs_yes;
-    strcpy(nw->lhs, w->lhs);
-    nw->rhs_yes = w->rhs_yes;
-    strcpy(nw->rhs, w->rhs);
-}				/* carrySubstitutionStrings */
+    globalSubs.lhs_yes = cw->lhs_yes;
+    strcpy(globalSubs.lhs, cw->lhs);
+    globalSubs.rhs_yes = cw->rhs_yes;
+    strcpy(globalSubs.rhs, cw->rhs);
+}				/* saveSubstitutionStrings */
+
+static void
+restoreSubstitutionStrings(struct ebWindow *nw)
+{
+    if(!searchStringsAll)
+	return;
+    if(!nw)
+	return;
+    nw->lhs_yes = globalSubs.lhs_yes;
+    strcpy(nw->lhs, globalSubs.lhs);
+    nw->rhs_yes = globalSubs.rhs_yes;
+    strcpy(nw->rhs, globalSubs.rhs);
+}				/* restoreSubstitutionStrings */
 
 /* Create a new window, with default variables. */
 static struct ebWindow *
@@ -361,7 +379,8 @@ createWindow(void)
 {
     struct ebWindow *nw;	/* the new window */
     nw = allocZeroMem(sizeof (struct ebWindow));
-    carrySubstitutionStrings(cw, nw);
+    saveSubstitutionStrings();
+    restoreSubstitutionStrings(nw);
     return nw;
 }				/* createWindow */
 
@@ -568,8 +587,10 @@ cxSwitch(int cx, bool interactive)
 	cxInit(cx);
 	nw = sessionList[cx].lw;
 	created = true;
-    } else
-	carrySubstitutionStrings(cw, nw);
+    } else {
+	saveSubstitutionStrings();
+	restoreSubstitutionStrings(nw);
+    }
 
     if(cw) {
 	freeUndoLines(cw->map);
@@ -3521,6 +3542,7 @@ runCommand(const char *line)
 		return false;
 	    }
 	}
+	saveSubstitutionStrings();
 	if(!cxQuit(cx, 2))
 	    return false;
 	if(cx != context)
@@ -3611,10 +3633,11 @@ runCommand(const char *line)
 		setError("no previous text");
 		return false;
 	    }
+	    saveSubstitutionStrings();
 	    if(!cxQuit(context, 1))
 		return false;
-	    carrySubstitutionStrings(cw, prev);
 	    sessionList[context].lw = cw = prev;
+	    restoreSubstitutionStrings(cw);
 	    --cx;
 	}
 	printDot();
