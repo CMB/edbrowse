@@ -119,7 +119,7 @@ loadBlacklist(void)
 bool
 onBlacklist1(IP32bit tip)
 {
-    IP32bit blip;			/* black ip */
+    IP32bit blip;		/* black ip */
     IP32bit mask;
     int j;
     for(j = 0; j < nipblack; ++j) {
@@ -140,7 +140,7 @@ static bool
 onBlacklist(void)
 {
     IP32bit *ipp = cw->iplist;
-    IP32bit tip;			/* test ip */
+    IP32bit tip;		/* test ip */
     if(!ipp)
 	return false;
     while((tip = *ipp++) != NULL_IP)
@@ -508,7 +508,8 @@ fetchMail(int account)
 				       "no blacklist file specified, feature disabled");
 			    } else {
 				IP32bit addr;
-				for(k = 0; (addr = cw->iplist[k]) != NULL_IP; ++k) {
+				for(k = 0; (addr = cw->iplist[k]) != NULL_IP;
+				   ++k) {
 				    puts(tcp_ip_dots(addr));
 				    if(nipblack == MAXIPBLACK)
 					continue;
@@ -1101,6 +1102,14 @@ headerGlean(char *start, char *end)
     if(vl && vr && vl < vr) {
 	*vr = 0;
 	strcpy(w->reply, vl + 1);
+    }
+/* get rid of (name) comment */
+    vl = strchr(w->reply, '(');
+    vr = strchr(w->reply, ')');
+    if(vl && vr && vl < vr) {
+	while(vl > w->reply && vl[-1] == ' ')
+	    --vl;
+	*vl = 0;
     }
 /* no @ means it's not an email address */
     if(!strchr(w->reply, '@'))
