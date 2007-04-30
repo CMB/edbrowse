@@ -347,6 +347,8 @@ carrySubstitutionStrings(const struct ebWindow *w, struct ebWindow *nw)
 {
     if(!searchStringsAll)
 	return;
+    if(!w)
+	return;
     nw->lhs_yes = w->lhs_yes;
     strcpy(nw->lhs, w->lhs);
     nw->rhs_yes = w->rhs_yes;
@@ -359,8 +361,7 @@ createWindow(void)
 {
     struct ebWindow *nw;	/* the new window */
     nw = allocZeroMem(sizeof (struct ebWindow));
-    if(cw)
-	carrySubstitutionStrings(cw, nw);
+    carrySubstitutionStrings(cw, nw);
     return nw;
 }				/* createWindow */
 
@@ -527,9 +528,9 @@ cxQuit(int cx, int action)
 	    setError("expecting `w' on session %d", cx);
 	return false;
     }
-    /* warning message */
+
     if(!action)
-	return true;		/* just a check */
+	return true;		/* just a test */
 
     if(cx == context) {
 /* Don't need to retain the undo lines. */
@@ -548,6 +549,9 @@ cxQuit(int cx, int action)
 	sessionList[cx].fw = sessionList[cx].lw = 0;
     } else
 	freeWindow(w);
+
+    if(cx == context)
+	cw = 0;
 
     return true;
 }				/* cxQuit */
@@ -3533,7 +3537,7 @@ runCommand(const char *line)
 	    return true;
 	}			/* loop over sessions */
     }
-    /* q */
+
     if(cmd == 'f') {
 	if(cx) {
 	    if(!cxCompare(cx))
@@ -3616,7 +3620,7 @@ runCommand(const char *line)
 	printDot();
 	return true;
     }
-    /* ^ */
+
     if(cmd == 'M') {		/* move this to another session */
 	if(first && !cx) {
 	    setError("unexpected text after the M command");

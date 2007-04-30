@@ -355,9 +355,8 @@ fetchMail(int account)
 	    lastMailText = 0;
 	    if(sessionList[1].lw)
 		cxQuit(1, 2);
-	    linesReset();
 	    cs = 0;
-	    cw = 0;
+	    linesReset();
 	    cxSwitch(1, false);
 /* Now grab the entire message */
 	    sprintf(serverLine, "retr %d%s", m, eol);
