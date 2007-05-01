@@ -51,6 +51,10 @@ $(EBOBJS) : eb.h eb.p tcp.h
 edbrowse: $(EBOBJS) tcp.o dbstubs.o
 	cc $(LFLAGS) -o edbrowse $(EBOBJS) tcp.o dbstubs.o $(LIBS)
 
+#  You probably need to be root to do this.
+install:
+	install edbrowse /usr/local/bin
+
 dbinfx.o : dbinfx.ec
 	esql -c dbinfx.ec
 
@@ -71,4 +75,7 @@ proto:
 #  I've had no luck getting this to work - can you help?
 edbrowse.static: $(EBOBJS) tcp.o
 	cc --static $(LFLAGS) -o edbrowse.static tcp.o $(EBOBJS) $(LIBS)
+
+clean:
+	rm -f *.o edbrowse edbrowseinf edbrowseodbc
 
