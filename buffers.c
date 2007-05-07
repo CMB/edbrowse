@@ -3750,6 +3750,7 @@ runCommand(const char *line)
 	    jsdead = cw->jsdead;
 	    if(!cw->jsc)
 		jsdead = true;
+	    click = dclick = over = false;
 	    cmd = 'b';
 	    if(endRange > startRange) {
 		setError("cannot apply the g command to a range");
