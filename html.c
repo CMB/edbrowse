@@ -2672,6 +2672,7 @@ postDelimiter(char fsep, const char *boundary, char **post, int *l)
     if(fsep == '-') {
 	stringAndString(post, l, "--");
 	stringAndString(post, l, boundary);
+	stringAndChar(post, l, '\r');
 	fsep = '\n';
     }
     stringAndChar(post, l, fsep);
@@ -2702,7 +2703,7 @@ postNameVal(const char *name, const char *val,
 	    break;
 	case '\n':
 	    stringAndString(post, l, name);
-	    stringAndString(post, l, "=\n");
+	    stringAndString(post, l, "=\r\n");
 	    break;
 	case '-':
 	    stringAndString(post, l, "Content-Disposition: form-data; name=\"");
@@ -2727,7 +2728,7 @@ postNameVal(const char *name, const char *val,
 	break;
     case '\n':
 	stringAndString(post, l, val);
-	stringAndChar(post, l, '\n');
+	stringAndString(post, l, eol);
 	break;
     case '-':
 	if(isfile) {
@@ -2751,13 +2752,13 @@ postNameVal(const char *name, const char *val,
 		    break;
 		}
 	}
-	stringAndString(post, l, "\nContent-Type: ");
+	stringAndString(post, l, "\r\nContent-Type: ");
 	stringAndString(post, l, ct);
-	stringAndString(post, l, "\nContent-Transfer-Encoding: ");
+	stringAndString(post, l, "\r\nContent-Transfer-Encoding: ");
 	stringAndString(post, l, ce);
-	stringAndString(post, l, "\n\n");
+	stringAndString(post, l, "\r\n\r\n");
 	stringAndString(post, l, val);
-	stringAndChar(post, l, '\n');
+	stringAndString(post, l, eol);
 	if(isfile)
 	    nzFree(enc);
 	break;
@@ -2786,7 +2787,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 	boundary = makeBoundary();
 	stringAndString(post, l, "`mfd~");
 	stringAndString(post, l, boundary);
-	stringAndChar(post, l, '\n');
+	stringAndString(post, l, eol);
     }
 
     while(t = *list++) {
@@ -2955,7 +2956,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
     if(form->mime) {		/* the last boundary */
 	stringAndString(post, l, "--");
 	stringAndString(post, l, boundary);
-	stringAndString(post, l, "--\n");
+	stringAndString(post, l, "--\r\n");
     }
 
     if(noname)
