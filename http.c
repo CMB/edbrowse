@@ -673,9 +673,9 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	    post += 5;
 	    stringAndString(&hdr, &l,
 	       "Content-Type: multipart/form-data; boundary=");
-	    s = strchr(post, '\n');
+	    s = strchr(post, '\r');
 	    stringAndBytes(&hdr, &l, post, s - post);
-	    post = s + 1;
+	    post = s + 2;
 	    stringAndString(&hdr, &l, eol);
 	}
 	stringAndString(&hdr, &l, "Content-Length: ");
