@@ -1,0 +1,172 @@
+..\" Man page for edbrowse
+..\"
+..\" Copyright (C), 2007 Kapil Hari Paranjape
+..\"
+..\" You may distribute under the terms of the GNU General Public
+..\" License as specified in the file /usr/share/common-licences/GPLv2
+..\" that comes with the Debian distribution.
+..\"
+..\" Written by Kapil Hari Paranjape
+..\" based on the edbdoc.html file written by Karl Dahlke.
+..\" Last Modified on Wed,  9 May 2007 07:19:43 +0530
+..\" Include a Macro From Branden Robinson's WTFM.PDF
+..de URI
+\\$2 \(la URI: \\$1 \(ra\\$3
+..
+..if \n[.g] .mso www.tmac
+..\" End if Include
+..TH edbrowse 1 2007-05-09 "edbrowse 3.2.1"
+..SH NAME
+edbrowse \- text editor and web browser
+..SH SYNOPSIS
+..BR edbrowse
+..RI "[ " "file1" " ]"
+..RI "[ " "file2" " ]"
+..I ...
+..LP
+..BR edbrowse
+..RI "[ " "url1" " ]"
+..RI "[ " "url2" " ]"
+..I " ..."
+..LP
+..SH DESCRIPTION
+(This manual page was written for the Debian GNU/Linux distribution
+because the original program does not have a man page. Instead the
+program is documented in detail in the HTML documentation that
+accompanies the program; see below.)
+..PP
+..BR edbrowse
+is a line-oriented text editor very similar to
+..BR ed (1),
+It is used to create, display, modify and otherwise manipulate text
+files.
+..PP
+In addition
+..BR edbrowse
+can be used to display web pages and edit the
+contents of these pages. It supports the use of forms and Javascript in
+web pages.
+..PP
+If
+..BR edbrowse
+is invoked with a
+..I file
+argument, then a copy of
+..I file
+is read into the editor's buffer. If it is invoked with a
+..I url
+argument, then the
+..I url
+is read into the editor's buffer and the HTML is rendered as text.
+Changes are made to this copy and not directly to
+..I file
+or 
+..I url
+itself.
+..PP
+Please refer to
+..BR ed (1)
+for further details regarding the editing commands. Explanation of the
+browsing functions can be found in the HTML documentation.
+..PP
+..SH EXAMPLES
+To read the HTML documentation on a Debian system you can do
+..IP
+..BR "edbrowse file:///usr/share/doc/edbrowse/edbdoc.html"
+..PP
+To read (say) 20 lines of the buffer at a time starting from
+the top use the command
+..I `1z20'
+followed by repeating
+..I `z' 
+to scroll another 20 lines at a time.
+..PP
+To quit the editor completely type
+..I `qt'
+\&. Upon quitting
+..BR edbrowse ,
+any changes not explicitly saved  with a
+..I `w'
+command are lost. The
+..I `w'
+command does not apply to URLs but one can save the corresponding
+buffer to a file by the command \fIw file\fR.
+..PP
+..SH OPTIONS
+..TP
+..B \-h
+Display the usage message.
+..TP
+..B \-e
+Batch mode. This options causes 
+..BR edbrowse
+to exit when it encounters an error.
+..TP
+..B \-d?
+Debug level. Can be set to a value between 0 and 9. The default is 1 
+which prints the sizes of buffers. Some people like 2 which prints
+out URLs as they are retrieved. This value can be changed within the 
+editor with the
+..I dbx
+command with x a value betwen 0 and 9.
+..TP
+..B \-c
+Edit config file. This command supresses the processing of the
+configuration file
+..I $HOME/.ebrc
+and starts editing it instead. This option is useful if this file
+is syntactically incorrect or otherwise corrupted.
+..PP
+..SH FILES
+..TP 20
+..I $HOME/.ebrc
+Configuration file. The file which
+..B edbrowse
+reads when it starts up. If the file exists then it must be
+syntactically correct.
+..PP
+..SH DIAGNOSTICS
+When an error occurs,
+if
+..BR edbrowse 
+it
+prints a `?' and returns to command mode.
+An explanation of the last error can be
+printed with the
+..I `h'
+(help) command.
+..PP
+Attempting to quit
+..B edbrowse
+with the 
+..I `q'
+command or trying to edit another file before writing a modified buffer
+results in an error. If the command is entered a second time, it succeeds,
+but any changes to the buffer are lost.
+..PP
+..SH BUGS
+This manual page is not complete.  Users should refer to the HTML
+documentation for fuller details of the
+configuration options and for details of the use of edbrowse.
+..PP
+..SH SEE ALSO
+..IR ed (1),
+..IR sed (1),
+..IR pcrepattern (3).
+..PP
+The
+..URL "/usr/share/doc/edbrowse/edbdoc.html" "HTML documentation" " "
+provides greater detail about the program.
+..PP
+..SH AUTHORS
+This manual page was originally written by Kapil Hari Paranjape
+<kapil@imsc.res.in>,
+for the Debian GNU/Linux system (but it may be used by others).
+..PP
+The
+..B edbrowse
+program is written by Karl Dahlke
+<eklhad@comcast.net>. The author maintains
+..URL "http://edbrowse.sourceforge.net" "a web page" " "
+for the program.
+ .
