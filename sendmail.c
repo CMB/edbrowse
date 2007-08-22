@@ -9,6 +9,8 @@
 
 #include <time.h>
 
+#define MAXRECAT 100		/* max number of recipients or attachments */
+
 char serverLine[MAXTTYLINE];
 static char spareLine[MAXTTYLINE];
 int mssock;			/* server socket */
@@ -672,10 +674,12 @@ sendMail(int account, const char **recipients, const char *body,
     const char *from, *reply, *login, *smlogin, *pass;
     const struct MACCOUNT *a;
     const char *s, *boundary;
+    char reccc[MAXRECAT];
     char *t;
     int nat, cx, i, j;
     char *out = 0;
     bool mustmime = false;
+    bool firstrec;
     const char *ct, *ce;
     char *encoded = 0;
     struct MACCOUNT *localMail;
@@ -712,6 +716,19 @@ sendMail(int account, const char **recipients, const char *body,
     if(!loadAddressBook())
 	return false;
 
+/* set copy flags */
+    for(j = 0; s = recipients[j]; ++j) {
+	char cc = 0;
+	if(*s == '^' || *s == '?')
+	    cc = *s++;
+	if(j == MAXRECAT) {
+	    setError("too many recipients, limit %d", MAXRECAT);
+	    return false;
+	}
+	recipients[j] = s;
+	reccc[j] = cc;
+    }
+
 /* Look up aliases in the address book */
     for(j = 0; s = recipients[j]; ++j) {
 	if(strchr(s, '@'))
@@ -739,6 +756,7 @@ sendMail(int account, const char **recipients, const char *body,
 	setError("alias %s not found in your address book", s);
 	return false;
     }				/* recipients */
+
     if(!j) {
 	setError("no recipients specified");
 	return false;
@@ -837,13 +855,40 @@ sendMail(int account, const char **recipients, const char *body,
 
 /* Build the outgoing mail, and send it in one go, as one string. */
     out = initString(&j);
+
+    firstrec = true;
     for(i = 0; s = recipients[i]; ++i) {
-	stringAndString(&out, &j, i ? "  " : "To: ");
+	if(reccc[i])
+	    continue;
+	stringAndString(&out, &j, firstrec ? "To:" : ",\r\n  ");
 	stringAndString(&out, &j, s);
-	if(recipients[i + 1])
-	    stringAndChar(&out, &j, ',');
-	stringAndString(&out, &j, eol);
+	firstrec = false;
     }
+    if(!firstrec)
+	stringAndString(&out, &j, eol);
+
+    firstrec = true;
+    for(i = 0; s = recipients[i]; ++i) {
+	if(reccc[i] != '^')
+	    continue;
+	stringAndString(&out, &j, firstrec ? "CC:" : ",\r\n  ");
+	stringAndString(&out, &j, s);
+	firstrec = false;
+    }
+    if(!firstrec)
+	stringAndString(&out, &j, eol);
+
+    firstrec = true;
+    for(i = 0; s = recipients[i]; ++i) {
+	if(reccc[i] != '?')
+	    continue;
+	stringAndString(&out, &j, firstrec ? "BCC:" : ",\r\n  ");
+	stringAndString(&out, &j, s);
+	firstrec = false;
+    }
+    if(!firstrec)
+	stringAndString(&out, &j, eol);
+
     sprintf(serverLine, "From: %s <%s>%s", from, reply, eol);
     stringAndString(&out, &j, serverLine);
     sprintf(serverLine, "Reply-to: %s <%s>%s", from, reply, eol);
@@ -949,7 +994,6 @@ validAccount(int n)
     return true;
 }				/* validAccount */
 
-#define MAXRECAT 100		/* max number of recipients or attachments */
 bool
 sendMailCurrent(int sm_account, bool dosig)
 {
@@ -998,14 +1042,16 @@ sendMailCurrent(int sm_account, bool dosig)
 	char *line = (char *)fetchLine(ln, -1);
 	if(memEqualCI(line, "to:", 3) ||
 	   memEqualCI(line, "mailto:", 7) ||
+	   memEqualCI(line, "cc:", 3) ||
+	   memEqualCI(line, "bcc:", 4) ||
 	   memEqualCI(line, "reply to:", 9) ||
 	   memEqualCI(line, "reply to ", 9)) {
-	    if(toupper(line[0]) == 'R')
-		line += 9;
-	    else if(toupper(line[0]) == 'M')
-		line += 7;
-	    else
-		line += 3;
+	    char cc = 0;
+	    if(toupper(line[0]) == 'C')
+		cc = '^';
+	    if(toupper(line[0]) == 'B')
+		cc = '?';
+	    line = strchr(line, ':') + 1;
 	    while(*line == ' ' || *line == '\t')
 		++line;
 	    if(*line == '\n') {
@@ -1018,6 +1064,13 @@ sendMailCurrent(int sm_account, bool dosig)
 	    }
 	    ++nrec;
 	    for(t = line; *t != '\n'; ++t) ;
+	    if(cc) {
+		if(!lr) {
+		    setError("cannot cc or bcc to the first recipient");
+		    goto done;
+		}
+		stringAndChar(&recmem, &lr, cc);
+	    }
 	    stringAndBytes(&recmem, &lr, line, t + 1 - line);
 	    continue;
 	}

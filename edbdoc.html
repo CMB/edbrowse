@@ -3068,7 +3068,7 @@ The recipients, attachments, and subject must appear at the top of your file.&nb
 The sm command is picky, so observe the following syntax carefully.
 
 <P><PRE><font size=3 face=Arial,Helvetica,sans-serif>To: fred.flintstone@bedrock.us
-To: barney.rubble@bedrock.us
+CC: barney.rubble@bedrock.us
 account: 1
 attach: hollyrock-brochure.pdf
 Subject: Hollyrock Vacation
@@ -3134,11 +3134,17 @@ As you may have guessed,
 the to: lines establish the recipients.&nbsp;
 Please don't specify more than a few recipients.&nbsp;
 Some servers, my mail server included,
-set a hard limit on the number of recipients.&nbsp;
+set a hard limit of 100 on the number of recipients.&nbsp;
 If you exceed this number,
-somewhere between 10 and 100,
 the remaining recipients simply don't get their mail.&nbsp;
-Best to limit your "to:" lines to 10 or less.
+Best to limit your "to:" lines to a couple dozen.
+
+<P>
+Remember that CC stands for carbon copy.&nbsp;
+This tells the recipient, in this case Barney Rubble,
+that he is receiving a copy of the email for his convenience;
+he need not respond.&nbsp;
+Use BCC for blind carbon copy, so that each person does not see all the other email addresses.
 
 <P>
 When specifying recipients, you can use aliases instead of full email addresses.&nbsp;
@@ -3206,16 +3212,20 @@ and you want to send them mail from the command line, with an attachment,
 using your primary email account, do this.&nbsp;
 (I'm assuming e has been aliased to an edbrowse executable.)
 <P>
-e -m1 fred barney hollyrock-notice +hollyrock-brochure.pdf
+e -m1 fred ^barney hollyrock-notice +hollyrock-brochure.pdf
 
 <P>
-Files with the leading + are assumed to be attachments.&nbsp;
+The ^ in front of barney means he is a CC recipient.&nbsp;
+Use "?barney" for BCC.
+
+<P>
+Files with a leading + are assumed to be attachments.&nbsp;
 If they are binary they will be encoded properly,
 according to the mime standard.&nbsp;
 A leading - indicates an alternate format, like this.
 
 <P>
-e -m1 fred barney hollyrock-notice -hollyrock-graphical.html
+e -m1 fred ^barney hollyrock-notice -hollyrock-graphical.html
 
 <P>
 Remember, you can specify several mail accounts in your .ebrc file.&nbsp;
