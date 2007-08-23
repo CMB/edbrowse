@@ -1052,9 +1052,9 @@ sendMailCurrent(int sm_account, bool dosig)
 	    if(toupper(line[0]) == 'B')
 		cc = '?';
 	    if(toupper(line[0]) == 'R')
-line += 9;
-else
-	    line = strchr(line, ':') + 1;
+		line += 9;
+	    else
+		line = strchr(line, ':') + 1;
 	    while(*line == ' ' || *line == '\t')
 		++line;
 	    if(*line == '\n') {
