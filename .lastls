@@ -39,6 +39,7 @@ main.c
 main.o
 makefile
 makefile.bsd
+man-edbrowse-debian.1
 sample.ebrc
 sendmail.c
 sendmail.o

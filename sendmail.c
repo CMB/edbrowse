@@ -1051,6 +1051,9 @@ sendMailCurrent(int sm_account, bool dosig)
 		cc = '^';
 	    if(toupper(line[0]) == 'B')
 		cc = '?';
+	    if(toupper(line[0]) == 'R')
+line += 9;
+else
 	    line = strchr(line, ':') + 1;
 	    while(*line == ' ' || *line == '\t')
 		++line;
