@@ -1423,6 +1423,11 @@ runEbFunction(const char *line)
 	    if(*s == '~' && isdigitByte(s[1])) {
 		j = *++s - '0';
 		if(j) {
+		    if(!args[j]) {
+			setError("~%d has no corresponding argument", j);
+			nzFree(new);
+			goto fail;
+		    }
 		    strcpy(t, args[j]);
 		    t += argl[j];
 		    continue;
