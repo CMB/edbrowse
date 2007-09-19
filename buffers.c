@@ -3468,10 +3468,10 @@ runCommand(const char *line)
 	return true;
     }
 
-if(cmd == 'X') {
-cw->dot = endRange;
-return true;
-}
+    if(cmd == 'X') {
+	cw->dot = endRange;
+	return true;
+    }
 
     if(strchr("lpn", cmd)) {
 	for(i = startRange; i <= endRange; ++i) {
