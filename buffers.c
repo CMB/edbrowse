@@ -13,21 +13,21 @@
 /* Static variables for this file. */
 
 /* The valid edbrowse commands. */
-static const char valid_cmd[] = "aAbBcdefghHijJklmMnpqrstuvwz=^<";
+static const char valid_cmd[] = "aAbBcdefghHijJklmMnpqrstuvwXz=^<";
 /* Commands that can be done in browse mode. */
-static const char browse_cmd[] = "AbBdefghHijJklmMnpqsuvwz=^<";
+static const char browse_cmd[] = "AbBdefghHijJklmMnpqsuvwXz=^<";
 /* Commands for sql mode. */
-static const char sql_cmd[] = "AadefghHiklmnpqrsvwz=^<";
+static const char sql_cmd[] = "AadefghHiklmnpqrsvwXz=^<";
 /* Commands for directory mode. */
-static const char dir_cmd[] = "AdefghHklmnpqsvwz=^<";
+static const char dir_cmd[] = "AdefghHklmnpqsvwXz=^<";
 /* Commands that work at line number 0, in an empty file. */
 static const char zero_cmd[] = "aAbefhHMqruw=^<";
 /* Commands that expect a space afterward. */
 static const char spaceplus_cmd[] = "befrw";
 /* Commands that should have no text after them. */
-static const char nofollow_cmd[] = "aAcdhHjlmnptu=";
+static const char nofollow_cmd[] = "aAcdhHjlmnptuX=";
 /* Commands that can be done after a g// global directive. */
-static const char global_cmd[] = "dijJlmnpst";
+static const char global_cmd[] = "dijJlmnpstX";
 
 static struct ebWindow preWindow, undoWindow;
 static int startRange, endRange;	/* as in 57,89p */
@@ -3467,7 +3467,12 @@ runCommand(const char *line)
 	    debugPrint(1, "help messages on");
 	return true;
     }
-    /* H */
+
+if(cmd == 'X') {
+cw->dot = endRange;
+return true;
+}
+
     if(strchr("lpn", cmd)) {
 	for(i = startRange; i <= endRange; ++i) {
 	    displayLine(i);
@@ -3477,7 +3482,7 @@ runCommand(const char *line)
 	}
 	return true;
     }
-    /* lpn */
+
     if(cmd == '=') {
 	printf("%d\n", endRange);
 	return true;
