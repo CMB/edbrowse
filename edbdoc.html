@@ -3277,7 +3277,8 @@ The reserved filename "x" is essentially /dev/null,
 whence the mail message is discarded.&nbsp;
 You can save the mail message to x (discard) and still save the attachments.&nbsp;
 If the file is anything other than x,
-and the program cannot write to the specified file, it asks you for a new filename.
+and the program cannot write to the specified file, it asks you for a new filename.&nbsp;
+Note that capital X will do the same thing.
 
 <P>
 The junk command adds a filter rule to your config file,
@@ -3525,6 +3526,12 @@ If your friend's mail has some kind of logo, or background image, that you don't
 just type x and it will go away.&nbsp;
 If the image has a recognizable suffix, such as gif, I discard it automatically.&nbsp;
 If you really want these images, you'll have to save the email unformatted, and browse it later.
+
+<P>
+When brousing an email inside the editor,
+edbrowse offers you all the attachments, be they images or not.&nbsp;
+You can discard a single attachment by entering x,
+or all the image attachments by entering capital X.
 
 <P>
 Use the -p option to pass over the filters, as in `e -pm1'.&nbsp;

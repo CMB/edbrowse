@@ -195,11 +195,13 @@ getFileName(const char *defname, bool isnew)
     }
 }				/* getFileName */
 
+static bool ignoreImages;
+
 static void
 writeAttachment(struct MHINFO *w)
 {
     const char *atname;
-    if(ismc && w->atimage)
+    if((ismc | ignoreImages) && w->atimage)
 	return;			/* image ignored */
     if(w->error64 == BAD64)
 	printf("abbreviated ");
@@ -212,6 +214,11 @@ writeAttachment(struct MHINFO *w)
     } else {
 	printf("attachment ");
 	atname = getFileName((w->cfn[0] ? w->cfn : 0), true);
+/* X is like x, but deletes all future images */
+	if(stringEqual(atname, "X")) {
+	    atname = "x";
+	    ignoreImages = true;
+	}
     }
     if(!ismc && stringEqual(atname, "e")) {
 	int cx, svcx = context;
@@ -1523,7 +1530,7 @@ emailParse(char *buf)
     struct MHINFO *w, *v;
     nattach = nimages = 0;
     firstAttach = 0;
-    mailIsHtml = mailIsSpam = false;
+    mailIsHtml = mailIsSpam = ignoreImages = false;
     fm = initString(&fm_l);
     w = headerGlean(buf, buf + strlen(buf));
     mailIsHtml = (mailTextType(w) == CT_HTML);
