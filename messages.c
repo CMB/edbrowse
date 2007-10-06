@@ -159,12 +159,9 @@ i_puts(int msg)
 void
 i_printf(int msg, ...)
 {
-    va_list p;
-    long a[5];
     const char *realmsg = messageArray[msg];
+    va_list p;
     va_start(p, msg);
-    varargLocals(p, realmsg, a);
+    vprintf(realmsg, p);
     va_end(p);
-
-    printf(realmsg, a[0], a[1], a[2], a[3], a[4]);
 }				/* i_printf */

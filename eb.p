@@ -182,7 +182,6 @@ void addAtPosition(void *p, void *x) ;
 void freeList(struct listHead *l) ;
 bool isA(char c) ;
 bool isquote(char c) ;
-void varargLocals(va_list p, const char *msg, long *locals) ;
 void errorPrint(const char *msg, ...) ;
 void debugPrint(int lev, const char *msg, ...) ;
 void nl(void) ;

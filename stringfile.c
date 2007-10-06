@@ -555,59 +555,28 @@ isquote(char c)
     return c == '"' || c == '\'';
 }				/* isquote */
 
-/* Gather at most 5 parameters from a vararg list
- * and place them in local variables.
- * Only take as many as indicated by the percents in a sprintf string.
- * If we blindly take more, we risk core dumps, at least on the Sun. */
-
-void
-varargLocals(va_list p, const char *msg, long *locals)
-{
-    const char *s = msg;
-    int cnt;
-
-    for(cnt = 0; cnt < 5; msg = s) {
-	s = strchr(msg, '%');
-	if(!s)
-	    break;
-	++s;
-	if(*s == '%') {
-	    ++s;
-	    continue;
-	}
-	if(strchr("-.0123456789lhusdfxco", *s)) {
-	    long n = va_arg(p, long);
-	    locals[cnt++] = n;
-	}
-    }				/* while finding percents in msg */
-
-/* a little protection, in case they pass too few arguments */
-    while(cnt < 5)
-	locals[cnt++] = (long)"argmissing";
-}				/* varargLocals */
-
 /* print an error message */
 void
 errorPrint(const char *msg, ...)
 {
     char bailflag = 0;
     va_list p;
-    long a[5];
+
     va_start(p, msg);
-    varargLocals(p, msg, a);
-    va_end(p);
 
     if(*msg == '@') {
-	++msg;
 	bailflag = 1;
+	++msg;
+/* I should internationalize this, but it's never suppose to happen! */
 	fprintf(stderr, "disaster, ");
     } else if(isdigitByte(*msg)) {
-	++msg;
 	bailflag = *msg - '0';
+	++msg;
     }
 
-    fprintf(stderr, msg, a[0], a[1], a[2], a[3], a[4]);
+    vfprintf(stderr, msg, p);
     fprintf(stderr, "\n");
+    va_end(p);
 
     if(bailflag)
 	exit(bailflag);
@@ -617,13 +586,11 @@ void
 debugPrint(int lev, const char *msg, ...)
 {
     va_list p;
-    long a[5];
     if(lev > debugLevel)
 	return;
     va_start(p, msg);
-    varargLocals(p, msg, a);
+    vprintf(msg, p);
     va_end(p);
-    printf(msg, a[0], a[1], a[2], a[3], a[4]);
     nl();
     if(lev == 0 && !memcmp(msg, "warning", 7))
 	eeCheck();
@@ -644,7 +611,6 @@ void
 setError(const char *msg, ...)
 {
     va_list p;
-    long a[5];
 
     if(!msg) {
 	errorMsg[0] = 0;
@@ -652,10 +618,8 @@ setError(const char *msg, ...)
     }
 
     va_start(p, msg);
-    varargLocals(p, msg, a);
+    vsprintf(errorMsg, msg, p);
     va_end(p);
-/* Yeah I know, there's a va_list sprintf call; this is old code. */
-    sprintf(errorMsg, msg, a[0], a[1], a[2], a[3], a[4]);
 
 /* sanity check */
     if(strlen(errorMsg) >= sizeof (errorMsg)) {
@@ -693,20 +657,18 @@ void
 browseError(const char *msg, ...)
 {
     va_list p;
-    long a[5];
     if(ismc)
 	return;
     if(browseLocal != 1)
 	return;
-    va_start(p, msg);
-    varargLocals(p, msg, a);
-    va_end(p);
     if(browseLine) {
 	i_printf(64, browseLine);
 	cw->labels[4] = browseLine;
     } else
 	i_printf(65);
-    printf(msg, a[0], a[1], a[2], a[3], a[4]);
+    va_start(p, msg);
+    vprintf(msg, p);
+    va_end(p);
     nl();
     browseLocal = 2;
 }				/* browseError */
@@ -716,17 +678,15 @@ void
 runningError(const char *msg, ...)
 {
     va_list p;
-    long a[5];
     if(ismc)
 	return;
-    va_start(p, msg);
-    varargLocals(p, msg, a);
-    va_end(p);
     if(browseLine) {
 	i_printf(64, browseLine);
 	cw->labels[4] = browseLine;
     }
-    printf(msg, a[0], a[1], a[2], a[3], a[4]);
+    va_start(p, msg);
+    vprintf(msg, p);
+    va_end(p);
     nl();
     browseLocal = 2;
 }				/* runningError */
@@ -1397,14 +1357,10 @@ appendFile(const char *fname, const char *message, ...)
 {
     FILE *f;
     va_list p;
-    long a[5];
-
-    va_start(p, message);
-    varargLocals(p, message, a);
-    va_end(p);
-
     f = efopen(fname, "a");
-    fprintf(f, message, a[0], a[1], a[2], a[3], a[4]);
+    va_start(p, message);
+    vfprintf(f, message, p);
+    va_end(p);
     fprintf(f, "\n");
     fclose(f);
 }				/* appendFile */
