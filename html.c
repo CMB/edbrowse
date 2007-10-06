@@ -650,10 +650,9 @@ jsdw(void)
     memcpy(cw->dw + 3, "<html>\n", 7);
     side = sideBuffer(0, cw->dw + 10, -1, cw->fileName, true);
     if(side) {
-	printf("A separate window has been created in buffer %d\n", side);
+	i_printf(70, side);
     } else {
-	puts
-	   ("The following has been sent to your browser, but there is no buffer to contain it.");
+	i_puts(66);
 	printf("%s\n", cw->dw + 10);
     }
     nzFree(cw->dw);
@@ -2356,7 +2355,7 @@ infShow(int tagno, const char *search)
 	++s;
     printf("%s", s);
     if(t->multiple)
-	printf(" many");
+	i_printf(71);
     if(t->itype >= INP_TEXT && t->itype <= INP_NUMBER && t->lic)
 	printf("[%d]", t->lic);
     if(t->itype == INP_TA) {
@@ -2366,8 +2365,8 @@ infShow(int tagno, const char *search)
 	if(rows && cols) {
 	    printf("[%sx%s", rows, cols);
 	    if(wrap && stringEqualCI(wrap, "virtual"))
-		printf(" recommended");
-	    printf("]");
+		i_printf(72);
+	    i_printf(73);
 	}
 	nzFree(rows);
 	nzFree(cols);
@@ -2396,9 +2395,9 @@ infShow(int tagno, const char *search)
     }
     if(!show) {
 	if(!search)
-	    puts("no options");
+	    i_puts(67);
 	else
-	    printf("no options contain the string %s\n", search);
+	    i_printf(74, search);
     }
 }				/* infShow */
 
@@ -2622,7 +2621,7 @@ formReset(const struct htmlTag *form)
 	    set_property_number(t->jv, "selectedIndex", -1);
     }				/* loop over tags */
 
-    puts("form has been reset");
+    i_puts(68);
 }				/* formReset */
 
 /* Fetch a field value (from a form) to post. */
@@ -2961,7 +2960,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 
     if(noname)
 	debugPrint(0, "warning: fields without names will not be transmitted");
-    puts("submitting form");
+    i_puts(69);
     return true;
 
   fail:
@@ -3179,12 +3178,11 @@ infPush(int tagno, char **post_string)
 	    sprintf(q, "subject:html form(%s)\n", name ? name : "?");
 	strcpy(q + strlen(q), post + actlen);
 	nzFree(post);
-	printf("sending mail to %s\n", addr);
+	i_printf(75, addr);
 	sleep(1);
 	rc = sendMail(localAccount, tolist, q, -1, atlist, 0, false);
 	if(rc)
-	    printf
-	       ("Your information has been sent; watch for a reply via return mail.\n");
+	    i_puts(76);
 	nzFree(addr);
 	nzFree(subj);
 	nzFree(q);

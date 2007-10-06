@@ -1159,6 +1159,6 @@ sendMailCurrent(int sm_account, bool dosig)
     if(!rc && intFlag)
 	setError(opint);
     if(rc)
-	puts("ok");
+	i_puts(38);
     return rc;
 }				/* sendMailCurrent */

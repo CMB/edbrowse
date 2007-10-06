@@ -168,7 +168,7 @@ getFileName(const char *defname, bool isnew)
     int l;
     char *p;
     while(true) {
-	printf("filename: ");
+	i_printf(86);
 	if(defname)
 	    printf("[%s] ", defname);
 	if(!fgets(buf, sizeof (buf), stdin))
@@ -187,7 +187,7 @@ getFileName(const char *defname, bool isnew)
 	} else
 	    defname = 0;
 	if(isnew && fileTypeByName(p, false)) {
-	    printf("Sorry, file %s already exists.\n", p);
+	    i_printf(87, p);
 	    defname = 0;
 	    continue;
 	}
@@ -204,15 +204,15 @@ writeAttachment(struct MHINFO *w)
     if((ismc | ignoreImages) && w->atimage)
 	return;			/* image ignored */
     if(w->error64 == BAD64)
-	printf("abbreviated ");
+	i_printf(88);
     if(w->start == w->end) {
-	printf("empty attachment");
+	i_printf(89);
 	if(w->cfn[0])
 	    printf(" %s", w->cfn);
 	nl();
 	atname = "x";
     } else {
-	printf("attachment ");
+	i_printf(90);
 	atname = getFileName((w->cfn[0] ? w->cfn : 0), true);
 /* X is like x, but deletes all future images */
 	if(stringEqual(atname, "X")) {
@@ -226,12 +226,12 @@ writeAttachment(struct MHINFO *w)
 	    if(!sessionList[cx].lw)
 		break;
 	if(cx == MAXSESSION) {
-	    printf("no buffers left, atachment discarded");
+	    i_printf(91);
 	} else {
 	    cxSwitch(cx, false);
-	    printf("session %d\n", cx);
+	    i_printf(43, cx);
 	    if(!addTextToBuffer((pst) w->start, w->end - w->start, 0))
-		printf("could not copy the attachment into buffer %d", cx);
+		i_printf(92, cx);
 	    else if(w->cfn[0])
 		cw->fileName = cloneString(w->cfn);
 	    cxSwitch(svcx, false);	/* back to where we were */
@@ -239,13 +239,13 @@ writeAttachment(struct MHINFO *w)
     } else if(!stringEqual(atname, "x")) {
 	int fh = open(atname, O_WRONLY | O_BINARY | O_CREAT | O_TRUNC, 0666);
 	if(fh < 0) {
-	    printf("cannot create file %s, attachment is discarded\n", atname);
+	    i_printf(93, atname);
 	    if(ismc)
 		exit(1);
 	} else {
 	    int nb = w->end - w->start;
 	    if(write(fh, w->start, nb) < nb) {
-		printf("cannot write to file %s, attachment is discarded\n");
+		i_printf(94, atname);
 		if(ismc)
 		    exit(1);
 	    }
@@ -321,7 +321,7 @@ fetchMail(int account)
 	   serverLine);
     nmsgs = atoi(serverLine + 4);
     if(!nmsgs) {
-	printf("no mail\n");
+	i_puts(95);
 	serverClose();
 	exit(0);
     }
@@ -332,7 +332,7 @@ fetchMail(int account)
 /* the conect will drop when the program exits */
     }
 
-    printf("%d messages\n", nmsgs);
+    i_printf(96, nmsgs);
     if(zapMail && nmsgs > 300)
 	nmsgs = 300;
 
@@ -437,18 +437,18 @@ fetchMail(int account)
 		    if(*redirect == '-')
 			++redirect, key = 'u';
 		    if(stringEqual(redirect, "x"))
-			puts("junk");
+			i_puts(77);
 		    else
 			printf("> %s\n", redirect);
 		} else if((mailIsSpam | mailIsBlack) && spamCan) {
 		    redirect = spamCan;
 		    key = 'u';
-		    printf("spam");
+		    i_printf(97);
 		    if(lastMailInfo->from[0]) {
-			printf(" from ");
+			i_printf(98);
 			printf("%s", lastMailInfo->from);
 		    } else if(lastMailInfo->reply[0]) {
-			printf(" from ");
+			i_printf(98);
 			printf("%s", lastMailInfo->reply);
 		    }
 		    nl();
@@ -458,7 +458,7 @@ fetchMail(int account)
 		   (lastMailInfo->from != 0) -
 		   (lastMailInfo->reply != 0) <= 1) {
 		    redirect = "x";
-		    printf("empty\n");
+		    i_puts(33);
 		}
 	    }
 	    if(redirect)
@@ -493,25 +493,24 @@ fetchMail(int account)
 
 			switch (key) {
 			case 'q':
-			    puts("quit");
+			    i_puts(78);
 			    serverClose();
 			case 'x':
 			    exit(0);
 			case 'n':
-			    puts("next");
+			    i_puts(79);
 			    goto afterinput;
 			case 'd':
-			    puts("delete");
+			    i_puts(80);
 			    delflag = true;
 			    goto afterinput;
 			case 'i':
-			    puts("ip delete");
+			    i_puts(81);
 			    if(!cw->iplist || cw->iplist[0] == -1) {
 				if(passMail)
-				    puts("-p option disables this feature");
+				    i_puts(82);
 				else
-				    puts(ipbFile ? "none" :
-				       "no blacklist file specified, feature disabled");
+				    i_puts(ipbFile ? 2 : 83);
 			    } else {
 				IP32bit addr;
 				for(k = 0; (addr = cw->iplist[k]) != NULL_IP;
@@ -529,34 +528,24 @@ fetchMail(int account)
 			    goto afterinput;
 			case 'j':
 			case 'J':
-			    puts("junk");
+			    i_puts(77);
 			    if(!junkSubject(lastMailInfo->subject, key))
 				continue;
 			    delflag = true;
 			    goto afterinput;
 			case ' ':
 			    if(displine > cw->dol)
-				puts("end of message");
+				i_puts(84);
 			    goto nextpage;
 			case '?':
-			    printf("?\tprint this help message.\n\
-q\tquit this program.\n\
-x\texit without changing anything on the mail server.\n\
-space\tread more of this mail message.\n\
-n\tmove on to the next mail message.\n\
-d\tdelete this message.\n\
-j\tjunk this subject for ten days.\n\
-J\tjunk this subject for a year.\n\
-w\twrite this message to a file and delete it.\n\
-k\tkeep this message in a file, but don't delete it.\n\
-u\twrite this message unformatted to a file, and delete it.\n");
+			    i_puts(99);
 			    continue;
 			case 'k':
 			case 'w':
 			case 'u':
 			    break;
 			default:
-			    puts("not yet implemented");
+			    i_puts(85);
 			    continue;
 			}	/* switch */
 		    }
@@ -576,7 +565,7 @@ u\twrite this message unformatted to a file, and delete it.\n");
 			   open(atname, O_WRONLY | O_TEXT | O_CREAT | O_APPEND,
 			   0666);
 			if(fh < 0) {
-			    printf("cannot create file %s\n", atname);
+			    i_printf(100, atname);
 			    goto savemail;
 			}
 			if(exists)
@@ -586,7 +575,7 @@ u\twrite this message unformatted to a file, and delete it.\n");
 			if(key == 'u' || unformatMail) {
 			    if(write(fh, exact, exact_l) < exact_l) {
 			      badsave:
-				printf("cannot write to file %s\n", atname);
+				i_printf(101, atname);
 				close(fh);
 				goto savemail;
 			    }
@@ -607,9 +596,9 @@ u\twrite this message unformatted to a file, and delete it.\n");
 				writeAttachments(lastMailInfo);
 			}	/* unformat or format */
 			if(atname != spamCan) {
-			    printf("mail save, %d bytes", fsize);
+			    i_printf(102, fsize);
 			    if(exists)
-				printf(" appended");
+				i_printf(103);
 			    nl();
 			}
 		    }		/* saving to a real file */
@@ -1130,7 +1119,7 @@ headerGlean(char *start, char *end)
     }
 
     if(debugLevel >= 5) {
-	printf("mail header analyzed\n");
+	puts("mail header analyzed");
 	printf("subject: %s\n", w->subject);
 	printf("from: %s\n", w->from);
 	printf("date: %s\n", w->date);
