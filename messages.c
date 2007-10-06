@@ -490,10 +490,12 @@ static const char *englishMessages[] = {
 };
 
 static const char *frenchMessages[] = {
+    "EOF",
 };
 
 /* English by default */
 static const char **messageArray = englishMessages;
+static int messageArrayLength = sizeof (englishMessages) / sizeof (char *);
 
 void
 selectLanguage(void)
@@ -507,12 +509,24 @@ selectLanguage(void)
 	return;			/* english is default */
     if(stringEqual(s, "eng"))
 	return;			/* english is default */
+
     if(stringEqual(s, "fr")) {
 	messageArray = frenchMessages;
+	messageArrayLength = sizeof (frenchMessages) / sizeof (char *);
 	return;
     }
+
     errorPrint("1Sorry, language %s is not emplemented", s);
 }				/* selectLanguage */
+
+static const char *
+getString(int msg)
+{
+    const char **a = messageArray;
+    if(msg >= messageArrayLength)
+	a = englishMessages;
+    return a[msg];
+}				/* getString */
 
 /*********************************************************************
 Internationalize the standard puts and printf.
@@ -524,13 +538,13 @@ The i_ prefix means international.
 void
 i_puts(int msg)
 {
-    puts(messageArray[msg]);
+    puts(getString(msg));
 }				/* i_puts */
 
 void
 i_printf(int msg, ...)
 {
-    const char *realmsg = messageArray[msg];
+    const char *realmsg = getString(msg);
     va_list p;
     va_start(p, msg);
     vprintf(realmsg, p);
@@ -559,7 +573,7 @@ setError(int msg, ...)
     }
 
     va_start(p, msg);
-    vsprintf(errorMsg, messageArray[msg], p);
+    vsprintf(errorMsg, getString(msg), p);
     va_end(p);
 
 /* sanity check */
@@ -608,7 +622,7 @@ browseError(int msg, ...)
     } else
 	i_printf(65);
     va_start(p, msg);
-    vprintf(messageArray[msg], p);
+    vprintf(getString(msg), p);
     va_end(p);
     nl();
     browseLocal = 2;
@@ -626,7 +640,7 @@ runningError(int msg, ...)
 	cw->labels[4] = browseLine;
     }
     va_start(p, msg);
-    vprintf(messageArray[msg], p);
+    vprintf(getString(msg), p);
     va_end(p);
     nl();
     browseLocal = 2;
