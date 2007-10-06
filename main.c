@@ -20,7 +20,6 @@ int debugLevel = 1;
 int webTimeout = 20, mailTimeout = 0;
 bool ismc, browseLocal, zapMail, unformatMail, passMail, errorExit;
 bool isInteractive, intFlag, inInput;
-const char opint[] = "operation interrupted";
 int fileSize, maxFileSize = 50000000;
 int localAccount, maxAccount;
 struct MACCOUNT accounts[MAXACCOUNT];
@@ -1296,7 +1295,7 @@ runEbFunction(const char *line)
 /* Separate function name and arguments */
     spaceCrunch(linecopy, true, false);
     if(linecopy[0] == 0) {
-	setError("no function specified");
+	setError(376);
 	goto fail;
     }
     memset(args, 0, sizeof (args));
@@ -1307,14 +1306,14 @@ runEbFunction(const char *line)
 	*t = 0;
     for(s = linecopy; *s; ++s)
 	if(!isalnumByte(*s)) {
-	    setError("function name should only contain letters and numbers");
+	    setError(377);
 	    goto fail;
 	}
     for(j = 0; ebScript[j]; ++j)
 	if(stringEqual(linecopy, ebScriptName[j] + 1))
 	    break;
     if(!ebScript[j]) {
-	setError("no such function %s", linecopy);
+	setError(378, linecopy);
 	goto fail;
     }
 
@@ -1328,7 +1327,7 @@ runEbFunction(const char *line)
     j = 0;
     for(s = t; s; s = t) {
 	if(++j >= 10) {
-	    setError("too many arguments");
+	    setError(379);
 	    goto fail;
 	}
 	args[j] = ++s;
@@ -1343,7 +1342,7 @@ runEbFunction(const char *line)
 
     while(code = *ip) {
 	if(intFlag) {
-	    setError(opint);
+	    setError(157);
 	    goto fail;
 	}
 	endl = strchr(ip, '\n');
@@ -1425,7 +1424,7 @@ runEbFunction(const char *line)
 		j = *++s - '0';
 		if(j) {
 		    if(!args[j]) {
-			setError("~%d has no corresponding argument", j);
+			setError(380, j);
 			nzFree(new);
 			goto fail;
 		    }
@@ -1480,7 +1479,7 @@ bufferToProgram(const char *cmd, const char *suffix, bool trailPercent)
 /* pipe the buffer into the program */
 	f = popen(cmd, "w");
 	if(!f) {
-	    setError("could not spawn subcommand %s, errno %d", cmd, errno);
+	    setError(381, cmd, errno);
 	    return false;
 	}
 	if(!unfoldBuffer(context, false, &buf, &buflen)) {
@@ -1499,8 +1498,7 @@ bufferToProgram(const char *cmd, const char *suffix, bool trailPercent)
 	} else {
 	    f = fopen(edbrowseTempFile, "w");
 	    if(!f) {
-		setError("could not create temp file %s, errno %d",
-		   edbrowseTempFile, errno);
+		setError(382, edbrowseTempFile, errno);
 		*u = 0;
 		return false;
 	    }
@@ -1535,7 +1533,7 @@ newTableDescriptor(const char *name)
 {
     struct DBTABLE *td;
     if(maxTables == MAXDBT) {
-	setError("too many sql tables in cache, limit %d", MAXDBT);
+	setError(383, MAXDBT);
 	return 0;
     }
     td = dbtables + maxTables++;

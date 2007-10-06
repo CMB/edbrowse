@@ -55,7 +55,7 @@ loadAddressBook(void)
 	}
 	if(c == ':') {		/* delimiter */
 	    if(state == 0) {
-		setError("missing alias in address book line %d", ln);
+		setError(317, ln);
 	      freefail:
 		nzFree(buf);
 		return false;
@@ -78,7 +78,7 @@ loadAddressBook(void)
 	    if(state == 0)
 		continue;
 	    if(state == 1) {
-		setError("missing : in address book line %d", ln - 1);
+		setError(318, ln - 1);
 		goto freefail;
 	    }
 	    if(state == 3) {
@@ -88,36 +88,26 @@ loadAddressBook(void)
 		*t = 0;
 		v = strchr(last, ':');
 		if(v - last >= 16) {
-		    setError
-		       ("alias in address book line %d is too long, limit 15 characters",
-		       ln - 1);
+		    setError(319, ln - 1);
 		    goto freefail;
 		}
 		++v;
 		if(t - v >= 64) {
-		    setError
-		       ("email in address book line %d is too long, limit 63 characters",
-		       ln - 1);
+		    setError(320, ln - 1);
 		    goto freefail;
 		}
 		if(!strchr(v, '@')) {
-		    setError
-		       (" email in address book line %d does not have an @",
-		       ln - 1);
+		    setError(321, ln - 1);
 		    goto freefail;
 		}
 		if(strpbrk(v, " \t")) {
-		    setError
-		       ("cannot handle whitespace in email, address book line %d",
-		       ln - 1);
+		    setError(322, ln - 1);
 		    goto freefail;
 		}
 
 		while(last < t) {
 		    if(!isprintByte(*last)) {
-			setError
-			   ("unprintable characters in your alias or email, address book line %d",
-			   ln - 1);
+			setError(323, ln - 1);
 			goto freefail;
 		    }
 		    ++last;
@@ -141,7 +131,7 @@ loadAddressBook(void)
 
     *t = 0;
     if(state) {
-	setError("last line of your address book is not terminated");
+	setError(324);
 	goto freefail;
     }
 
@@ -199,7 +189,7 @@ serverPutLine(const char *buf)
     }
     n = tcp_write(mssock, buf, len);
     if(n < len) {
-	setError("cannot send data to the mail server");
+	setError(325);
 	return false;
     }
     return true;
@@ -218,7 +208,7 @@ serverGetLine(void)
 	len =
 	   tcp_read(mssock, serverLine + slen, sizeof (serverLine) - 1 - slen);
 	if(len <= 0) {
-	    setError("cannot read data from the mail server");
+	    setError(326);
 	    return false;
 	}
 	slen += len;
@@ -226,7 +216,7 @@ serverGetLine(void)
     }
     s = strchr(serverLine, '\n');
     if(!s) {
-	setError("line from the mail server is too long, or unterminated");
+	setError(327);
 	return false;
     }
     strcpy(spareLine, s + 1);
@@ -252,13 +242,13 @@ mailConnect(const char *host, int port)
 {
     IP32bit ip = tcp_name_ip(host);
     if(ip == NULL_IP) {
-	setError(intFlag ? opint : "cannot locate the mail server %s", host);
+	setError((intFlag ? 157 : 328), host);
 	return false;
     }
     debugPrint(4, "%s -> %s", host, tcp_ip_dots(ip));
     mssock = tcp_connect(ip, port, mailTimeout);
     if(mssock < 0) {
-	setError(intFlag ? opint : "cannot connect to the mail server");
+	setError(intFlag ? 157 : 329);
 	return false;
     }
     debugPrint(4, "connected to port %d", port);
@@ -347,7 +337,7 @@ encodeAttachment(const char *file, int ismail,
 	    if(!unfoldBuffer(cx, false, &buf, &buflen))
 		return false;
 	    if(!buflen) {
-		setError("buffer %d is empty", cx);
+		setError(330, cx);
 		goto freefail;
 	    }
 	    sprintf(newfilename, "<buffer %d>", cx);
@@ -358,7 +348,7 @@ encodeAttachment(const char *file, int ismail,
 	    if(!fileIntoMemory(file, &buf, &buflen))
 		return false;
 	    if(!buflen) {
-		setError("file %s is empty", file);
+		setError(331, file);
 		goto freefail;
 	    }
 	}
@@ -380,7 +370,7 @@ encodeAttachment(const char *file, int ismail,
 	while(*s == ' ' || *s == '\t')
 	    ++s;
 	if(!memEqualCI(s, "subject:", 8)) {
-	    setError("your email should begin with subject:");
+	    setError(332);
 	    goto freefail;
 	}
 	s += 8;
@@ -393,12 +383,11 @@ encodeAttachment(const char *file, int ismail,
 	while(s > t && isspaceByte(s[-1]))
 	    --s;
 	if(s == t) {
-	    setError("empty subject line");
+	    setError(333);
 	    goto freefail;
 	}
 	if(s - t >= sizeof (subjectLine)) {
-	    setError("subject line too long, limit %d characters",
-	       sizeof (subjectLine) - 1);
+	    setError(334, sizeof (subjectLine) - 1);
 	    goto freefail;
 	}
 	memcpy(subjectLine, t, s - t);
@@ -407,8 +396,7 @@ encodeAttachment(const char *file, int ismail,
 	for(s = subjectLine; s < t; ++s) {
 	    c = *s;
 	    if(!isprintByte(c) && c != ' ') {
-		setError
-		   ("invalid characters in the subject line, please use only spaces and printable ascii text");
+		setError(335);
 		goto freefail;
 	    }
 	}
@@ -427,7 +415,7 @@ encodeAttachment(const char *file, int ismail,
 	    if(c != 0) {
 		int fd, n;
 		if(c != 'f') {
-		    setError(".signature is not a regular file");
+		    setError(336);
 		    goto freefail;
 		}
 		n = fileSizeByName(sigFile);
@@ -435,7 +423,7 @@ encodeAttachment(const char *file, int ismail,
 		    buf = reallocMem(buf, buflen + n + 1);
 		    fd = open(sigFile, O_RDONLY);
 		    if(fd < 0) {
-			setError("cannot access .signature file");
+			setError(337);
 			goto freefail;
 		    }
 		    read(fd, buf + buflen, n);
@@ -496,9 +484,7 @@ encodeAttachment(const char *file, int ismail,
 
     if(buflen > 20 && nacount * 5 > buflen) {	/* binary file */
 	if(ismail) {
-	    setError
-	       ("cannot mail the binary file %s, perhaps this should be an attachment?",
-	       file);
+	    setError(338, file);
 	    goto freefail;
 	}
 
@@ -708,8 +694,7 @@ sendMail(int account, const char **recipients, const char *body,
     if(nat)
 	mustmime = true;
     if(nalt && nalt < nat) {
-	setError
-	   ("either none or all of the attachments must be declared \"alternative\"");
+	setError(339);
 	return false;
     }
 
@@ -722,7 +707,7 @@ sendMail(int account, const char **recipients, const char *body,
 	if(*s == '^' || *s == '?')
 	    cc = *s++;
 	if(j == MAXRECAT) {
-	    setError("too many recipients, limit %d", MAXRECAT);
+	    setError(340, MAXRECAT);
 	    return false;
 	}
 	recipients[j] = s;
@@ -749,16 +734,15 @@ sendMail(int account, const char **recipients, const char *body,
 	    continue;
 	}
 	if(!addressFile) {
-	    setError
-	       ("No address book specified, please check your .ebrc config file");
+	    setError(341);
 	    return false;
 	}
-	setError("alias %s not found in your address book", s);
+	setError(342, s);
 	return false;
     }				/* recipients */
 
     if(!j) {
-	setError("no recipients specified");
+	setError(343);
 	return false;
     }
 
@@ -768,21 +752,21 @@ sendMail(int account, const char **recipients, const char *body,
 	    if(!cxCompare(cx) || !cxActive(cx))
 		return false;
 	    if(!sessionList[cx].lw->dol) {
-		setError("session %d is empty, cannot atach", cx);
+		setError(344, cx);
 		return false;
 	    }
 	} else {
 	    char ftype = fileTypeByName(s, false);
 	    if(!ftype) {
-		setError("cannot access attachment %s", s);
+		setError(345, s);
 		return false;
 	    }
 	    if(ftype != 'f') {
-		setError("file %s is not a regular file, cannot attach", s);
+		setError(346, s);
 		return false;
 	    }
 	    if(!fileSizeByName(s)) {
-		setError("file %s is empty, cannot attach", s);
+		setError(347, s);
 		return false;
 	    }
 	}
@@ -806,9 +790,7 @@ sendMail(int account, const char **recipients, const char *body,
 	    goto mailfail;
     }
     if(!memEqualCI(serverLine, "220 ", 4)) {
-	setError
-	   ("unexpected prompt \"%s\" at the start of the sendmail session",
-	   serverLine);
+	setError(348, serverLine);
 	goto mailfail;
     }
 
@@ -818,7 +800,7 @@ sendMail(int account, const char **recipients, const char *body,
     if(!serverGetLine())
 	goto mailfail;
     if(!memEqualCI(serverLine, "250 ", 4)) {
-	setError("mail server doesn't recognize %s", login);
+	setError(349, login);
 	goto mailfail;
     }
 
@@ -828,7 +810,7 @@ sendMail(int account, const char **recipients, const char *body,
     if(!serverGetLine())
 	goto mailfail;
     if(!memEqualCI(serverLine, "250 ", 4)) {
-	setError("mail server rejected %s", reply);
+	setError(350, reply);
 	goto mailfail;
     }
 
@@ -839,7 +821,7 @@ sendMail(int account, const char **recipients, const char *body,
 	if(!serverGetLine())
 	    goto mailfail;
 	if(!memEqualCI(serverLine, "250 ", 4)) {
-	    setError("mail server rejected %s", s);
+	    setError(350, s);
 	    goto mailfail;
 	}
     }
@@ -849,7 +831,7 @@ sendMail(int account, const char **recipients, const char *body,
     if(!serverGetLine())
 	goto mailfail;
     if(!memEqualCI(serverLine, "354 ", 4)) {
-	setError("mail server is not ready to receive data, %s", serverLine);
+	setError(351, serverLine);
 	goto mailfail;
     }
 
@@ -965,7 +947,7 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 /* do these next two lines make any sense? */
        !strstrCI(serverLine, "message accepted") &&
        !strstrCI(serverLine, "message received")) {
-	setError("could not send mail message, %s", serverLine);
+	setError(352, serverLine);
 	goto mailfail;
     }
 
@@ -983,12 +965,11 @@ bool
 validAccount(int n)
 {
     if(!maxAccount) {
-	setError("no mail accounts specified, plese check your config file");
+	setError(353);
 	return false;
     }
     if(n <= 0 || n > maxAccount) {
-	setError("invalid account number %d, please use 1 through %d", n,
-	   maxAccount);
+	setError(354, n, maxAccount);
 	return false;
     }
     return true;
@@ -1011,23 +992,23 @@ sendMailCurrent(int sm_account, bool dosig)
     bool subj = false;
 
     if(cw->browseMode) {
-	setError("cannot send mail while in browse mode");
+	setError(355);
 	return false;
     }
     if(cw->sqlMode) {
-	setError("cannot send mail while in database mode");
+	setError(356);
 	return false;
     }
     if(cw->dirMode) {
-	setError("cannot send mail from directory mode");
+	setError(357);
 	return false;
     }
     if(cw->binMode) {
-	setError("cannot mail binary data, should this be an attachment?");
+	setError(358);
 	return false;
     }
     if(!cw->dol) {
-	setError("cannot mail an empty file");
+	setError(359);
 	return false;
     }
 
@@ -1058,18 +1039,18 @@ sendMailCurrent(int sm_account, bool dosig)
 	    while(*line == ' ' || *line == '\t')
 		++line;
 	    if(*line == '\n') {
-		setError("no recipient at line %d", ln);
+		setError(360, ln);
 		goto done;
 	    }
 	    if(nrec == MAXRECAT) {
-		setError("too many recipients, limit %d", MAXRECAT);
+		setError(340, MAXRECAT);
 		goto done;
 	    }
 	    ++nrec;
 	    for(t = line; *t != '\n'; ++t) ;
 	    if(cc) {
 		if(!lr) {
-		    setError("cannot cc or bcc to the first recipient");
+		    setError(361);
 		    goto done;
 		}
 		stringAndChar(&recmem, &lr, cc);
@@ -1085,11 +1066,11 @@ sendMailCurrent(int sm_account, bool dosig)
 	    while(*line == ' ' || *line == '\t')
 		++line;
 	    if(*line == '\n') {
-		setError("no attachment at line %d", ln);
+		setError(362, ln);
 		goto done;
 	    }
 	    if(nat == MAXRECAT) {
-		setError("too many recipients, limit %d", MAXRECAT);
+		setError(340, MAXRECAT);
 		goto done;
 	    }
 	    ++nat;
@@ -1104,7 +1085,7 @@ sendMailCurrent(int sm_account, bool dosig)
 	    if(!isdigitByte(*line) ||
 	       (account = strtol(line, &line, 10)) == 0 ||
 	       account > maxAccount || *line != '\n') {
-		setError("invalid account number at line %d", ln);
+		setError(363, ln);
 		goto done;
 	    }
 	    continue;
@@ -1113,7 +1094,7 @@ sendMailCurrent(int sm_account, bool dosig)
 	    while(*line == ' ' || *line == '\t')
 		++line;
 	    if(*line == '\n') {
-		setError("empty subject");
+		setError(364);
 		goto done;
 	    }
 	    subj = true;
@@ -1124,16 +1105,12 @@ sendMailCurrent(int sm_account, bool dosig)
     if(sm_account)
 	account = sm_account;
     if(!subj) {
-	setError(ln > cw->dol ?
-	   "there is no subject line" :
-	   "line %d should begin with to: attach: alt: account: or subject:",
-	   ln);
+	setError(((ln > cw->dol) + 365), ln);
 	goto done;
     }
 
     if(nrec == 0) {
-	setError
-	   ("no recipients specified, place to: emailaddress at the top of youre file");
+	setError(367);
 	goto done;
     }
 
@@ -1157,7 +1134,7 @@ sendMailCurrent(int sm_account, bool dosig)
     nzFree(recmem);
     nzFree(atmem);
     if(!rc && intFlag)
-	setError(opint);
+	setError(157);
     if(rc)
 	i_puts(38);
     return rc;

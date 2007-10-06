@@ -97,7 +97,7 @@ addWebAuthorization(const char *url,
 
     if(proxy) {
 	if(!urlProx) {
-	    setError("proxy authentication for a non-proxy url");
+	    setError(107);
 	    return false;
 	}
     } else if(urlProx)

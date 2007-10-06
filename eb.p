@@ -82,6 +82,12 @@ void allIPs(void) ;
 void selectLanguage(void) ;
 void i_puts(int msg) ;
 void i_printf(int msg, ...) ;
+void setError(int msg, ...) ;
+void showError(void) ;
+void showErrorConditional(char cmd) ;
+void showErrorAbort(void) ;
+void browseError(const char *msg, ...) ;
+void runningError(const char *msg, ...) ;
 
 /* sourcefile=sendmail.c */
 bool loadAddressBook(void) ;
@@ -185,12 +191,6 @@ bool isquote(char c) ;
 void errorPrint(const char *msg, ...) ;
 void debugPrint(int lev, const char *msg, ...) ;
 void nl(void) ;
-void setError(const char *msg, ...) ;
-void showError(void) ;
-void showErrorConditional(char cmd) ;
-void showErrorAbort(void) ;
-void browseError(const char *msg, ...) ;
-void runningError(const char *msg, ...) ;
 int perl2c(char *t) ;
 unsigned pstLength(pst s) ;
 pst clonePstring(pst s) ;

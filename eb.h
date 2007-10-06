@@ -191,7 +191,6 @@ extern bool errorExit;		/* exit on any error, for scripting purposes */
 extern bool isInteractive;
 extern bool intFlag;		/* set this when interrupt signal is caught */
 extern bool binaryDetect;
-extern const char opint[];
 extern bool inInput;		/* reading line from standard in */
 extern int fileSize;		/* when reading/writing files */
 extern int maxFileSize;		/* max size of an editable file */

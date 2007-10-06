@@ -602,95 +602,6 @@ nl(void)
     puts("");
 }				/* nl */
 
-char errorMsg[4000];
-/* Show the error message, not just the question mark, after these commands. */
-static const char showerror_cmd[] = "AbefMqrw^";
-
-/* Set the error message.  Type h to see the message. */
-void
-setError(const char *msg, ...)
-{
-    va_list p;
-
-    if(!msg) {
-	errorMsg[0] = 0;
-	return;
-    }
-
-    va_start(p, msg);
-    vsprintf(errorMsg, msg, p);
-    va_end(p);
-
-/* sanity check */
-    if(strlen(errorMsg) >= sizeof (errorMsg)) {
-	i_printf(63, strlen(errorMsg));
-	puts(errorMsg);
-	exit(1);
-    }
-}				/* setError */
-
-void
-showError(void)
-{
-    if(errorMsg[0])
-	puts(errorMsg);
-    else
-	i_puts(106);
-}				/* showError */
-
-void
-showErrorConditional(char cmd)
-{
-    if(helpMessagesOn || strchr(showerror_cmd, cmd))
-	showError();
-    else
-	printf("?\n");
-}				/* showErrorConditional */
-
-void
-showErrorAbort(void)
-{
-    errorPrint("1%s", errorMsg);
-}				/* showErrorAbort */
-
-void
-browseError(const char *msg, ...)
-{
-    va_list p;
-    if(ismc)
-	return;
-    if(browseLocal != 1)
-	return;
-    if(browseLine) {
-	i_printf(64, browseLine);
-	cw->labels[4] = browseLine;
-    } else
-	i_printf(65);
-    va_start(p, msg);
-    vprintf(msg, p);
-    va_end(p);
-    nl();
-    browseLocal = 2;
-}				/* browseError */
-
-/* Javascript errors, we need to see these no matter what. */
-void
-runningError(const char *msg, ...)
-{
-    va_list p;
-    if(ismc)
-	return;
-    if(browseLine) {
-	i_printf(64, browseLine);
-	cw->labels[4] = browseLine;
-    }
-    va_start(p, msg);
-    vprintf(msg, p);
-    va_end(p);
-    nl();
-    browseLocal = 2;
-}				/* runningError */
-
 /* Turn perl string into C string, and complain about nulls. */
 int
 perl2c(char *t)
@@ -745,12 +656,12 @@ fileIntoMemory(const char *filename, char **data, int *len)
     char *buf;
     char ftype = fileTypeByName(filename, false);
     if(ftype && ftype != 'f') {
-	setError("%s is not a regular file", filename);
+	setError(384, filename);
 	return false;
     }
     fh = open(filename, O_RDONLY | O_BINARY);
     if(fh < 0) {
-	setError("cannot open %s", filename);
+	setError(223, filename);
 	return false;
     }
     length = fileSizeByName(filename);
@@ -759,7 +670,7 @@ fileIntoMemory(const char *filename, char **data, int *len)
 	return false;
     }				/* should never hapen */
     if(length > maxFileSize) {
-	setError("file is too large, limit 40MB");
+	setError(385);
 	close(fh);
 	return false;
     }
@@ -769,7 +680,7 @@ fileIntoMemory(const char *filename, char **data, int *len)
 	n = read(fh, buf, length);
     close(fh);			/* don't need that any more */
     if(n < length) {
-	setError("cannot read the contents of %s", filename);
+	setError(386, filename);
 	free(buf);
 	return false;
     }
@@ -841,7 +752,7 @@ fileTypeByName(const char *name, bool showlink)
     char c;
     int mode;
     if(lstat(name, &buf)) {
-	setError("cannot access %s", name);
+	setError(387, name);
 	return 0;
     }
     mode = buf.st_mode & S_IFMT;
@@ -876,7 +787,7 @@ fileSizeByName(const char *name)
 {
     struct stat buf;
     if(stat(name, &buf)) {
-	setError("cannot access %s", name);
+	setError(387, name);
 	return -1;
     }
     return buf.st_size;
@@ -887,7 +798,7 @@ fileTimeByName(const char *name)
 {
     struct stat buf;
     if(stat(name, &buf)) {
-	setError("cannot access %s", name);
+	setError(387, name);
 	return -1;
     }
     return buf.st_mtime;
@@ -1169,7 +1080,7 @@ envFile(const char *line, const char **expanded)
 	    *t = 0;
 	    value = getenv(dollar + 1);
 	    if(!value) {
-		setError("environement variable %s not set", dollar + 1);
+		setError(388, dollar + 1);
 		return false;
 	    }
 	    if(dollar + strlen(value) >= line1 + sizeof (line1) - 1)
@@ -1203,7 +1114,7 @@ envFile(const char *line, const char **expanded)
 	return true;
     }
     if(cut && dollar < cut) {
-	setError("cannot expand * ? or [] prior to the last /");
+	setError(389);
 	return false;
     }
 
@@ -1211,7 +1122,7 @@ envFile(const char *line, const char **expanded)
     if(cut) {
 	*cut = 0;
 	if(cut > line1 && fileTypeByName(line1, false) != 'd') {
-	    setError("%s is not an accessible directory", line1);
+	    setError(390, line1);
 	    return false;
 	}
     }
@@ -1222,12 +1133,11 @@ envFile(const char *line, const char **expanded)
     cc = badBrackets = false;
     while(c = *s) {
 	if(t >= re + sizeof (re) - 3) {
-	    setError("shell pattern is too long");
+	    setError(391);
 	    return false;
 	}
 	if(c == '\\') {
-	    setError
-	       ("sorry, I don't know how to expand filenames with \\ in them");
+	    setError(392);
 	    return false;
 	}
 /* things we need to escape */
@@ -1253,14 +1163,14 @@ envFile(const char *line, const char **expanded)
     *t++ = '$';
     *t = 0;
     if(badBrackets | cc) {
-	setError("improperly formed [] pattern");
+	setError(393);
 	return false;
     }
 
     debugPrint(7, "shell regexp %s", re);
     re_cc = pcre_compile(re, 0, &re_error, &re_offset, 0);
     if(!re_cc) {
-	setError("error compiling the shell pattern, %s", re_error);
+	setError(394, re_error);
 	return false;
     }
 
@@ -1279,7 +1189,7 @@ envFile(const char *line, const char **expanded)
 	re_count = pcre_exec(re_cc, 0, file, strlen(file), 0, 0, re_vector, 3);
 	if(re_count < -1) {
 	    pcre_free(re_cc);
-	    setError("unexpected error while evaluating the shell pattern");
+	    setError(395);
 	    return false;
 	}
 	if(re_count < 0)
@@ -1296,8 +1206,7 @@ envFile(const char *line, const char **expanded)
     }
     pcre_free(re_cc);
     if(filecount != 1) {
-	setError(filecount ? "shell pattern matches more than one file" :
-	   "shell pattern does not match any files");
+	setError((filecount > 0) + 396);
 	return false;
     }
     if(cc)
@@ -1307,7 +1216,7 @@ envFile(const char *line, const char **expanded)
     return true;
 
   longvar:
-    setError("line becomes too long when shell variables are expanded");
+    setError(398);
     return false;
 }				/* envFile */
 

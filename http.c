@@ -115,8 +115,7 @@ readSocket(SSL * ssl, int fh)
 	else
 	    n = tcp_readFully(fh, p->data, CHUNKSIZE);
 	if(n < 0) {
-	    setError(intFlag ? opint :
-	       "could not read the data from the server");
+	    setError(intFlag ? 157 : 284);
 	    free(p);
 	    for(p = chunklist; p; p = q) {
 		q = p->next;
@@ -220,8 +219,8 @@ extractHeaderParam(const char *str, const char *item)
 time_t
 parseHeaderDate(const char *date)
 {
-    static const char *const months[12] =
-       { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    static const char *const months[12] = {
+	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     };
     time_t t = 0;
@@ -446,7 +445,7 @@ httpConnect(const char *from, const char *url)
     char suffix[12];
 
     if(!isURL(url)) {
-	setError("%s is not a url", url);
+	setError(285, url);
 	return false;
     }
 
@@ -473,7 +472,7 @@ httpConnect(const char *from, const char *url)
 	errorPrint("@empty host in httpConnect");
     if(proxy_host) {
 	if(secure) {
-	    setError("secure proxy not yet implemented");
+	    setError(286);
 	    return false;
 	}
 	hip = tcp_name_ip(proxy_host);
@@ -481,7 +480,7 @@ httpConnect(const char *from, const char *url)
 	hip = tcp_name_ip(host);
     }
     if(hip == -1) {
-	setError(intFlag ? opint : "cannot identify %s on the network", host);
+	setError((intFlag ? 157 : 287), host);
 	return false;
     }
     debugPrint(4, "%s -> %s",
@@ -499,9 +498,7 @@ httpConnect(const char *from, const char *url)
 	nzFree(cmd);
 	return true;
     } else {
-	setError
-	   ("the %s protocol is not supported by edbrowse, and is not included in the mime types in your config file",
-	   prot);
+	setError(288, prot);
 	return false;
     }
 
@@ -524,8 +521,7 @@ httpConnect(const char *from, const char *url)
 	s = getUserURL(url);
 	if(s) {
 	    if(strlen(s) >= sizeof (user) - 2) {
-		setError("user name too long, limit %d characters",
-		   sizeof (user));
+		setError(289, sizeof (user));
 		return false;
 	    }
 	    strcpy(user, s);
@@ -533,8 +529,7 @@ httpConnect(const char *from, const char *url)
 	s = getPassURL(url);
 	if(s) {
 	    if(strlen(s) >= sizeof (pass) - 2) {
-		setError("password too long, limit %d characters",
-		   sizeof (pass));
+		setError(290, sizeof (pass));
 		return false;
 	    }
 	    strcpy(pass, s);
@@ -550,7 +545,7 @@ httpConnect(const char *from, const char *url)
     getPortLocURL(url, &portloc, &port);
     hsock = tcp_connect(hip, (proxy_host ? proxy_port : port), webTimeout);
     if(hsock < 0) {
-	setError(intFlag ? opint : "cannot connect to %s", host);
+	setError((intFlag ? 157 : 291), host);
 	return false;
     }
     if(proxy_host)
@@ -568,12 +563,9 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	    err = ERR_peek_last_error();
 	    ERR_clear_error();
 	    if(ERR_GET_REASON(err) != SSL_R_CERTIFICATE_VERIFY_FAILED)
-		setError("cannot establish a secure connection to %s, error %d",
-		   host, err);
+		setError(292, host, err);
 	    else
-		setError
-		   ("The certificate for host %s could not be verified - SSL connection aborted",
-		   host);
+		setError(293, host);
 	    SSL_free(hssl);
 	    close(hsock);
 	    return false;
@@ -707,8 +699,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
     debugPrint(4, "http header sent, %d/%d bytes", n, l);
     free(hdr);
     if(n < l) {
-	setError(intFlag ? opint :
-	   "could not send the request to the web server");
+	setError(intFlag ? 157 : 294);
 	if(secure)
 	    SSL_free(hssl);
 	close(hsock);
@@ -801,7 +792,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	int authmeth = 1;	/* basic method by default */
 	if(u = extractHeaderItem(serverData, hdr, "WWW-Authenticate", 0)) {
 	    if(!memEqualCI(u, "basic", 5) || isalnumByte(u[5])) {
-		setError("authorization method %s not recognized", u);
+		setError(295, u);
 		nzFree(u);
 		goto abort;
 	    }
@@ -824,7 +815,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	}
 	if(!(user[0] | pass[0])) {
 	    if(!isInteractive) {
-		setError("web page requires authorization");
+		setError(296);
 		goto abort;
 	    }
 	    i_puts(52);
@@ -842,7 +833,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	    if(n && user[n - 1] == '\n')
 		user[--n] = 0;
 	    if(stringEqual(user, "x")) {
-		setError("login aborted");
+		setError(297);
 		goto abort;
 	    }
 	    i_printf(59);
@@ -858,7 +849,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	    if(n && pass[n - 1] == '\n')
 		pass[--n] = 0;
 	    if(stringEqual(pass, "x")) {
-		setError("login aborted");
+		setError(297);
 		goto abort;
 	    }
 	}
@@ -1001,14 +992,12 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	   open(edbrowseTempFile, O_WRONLY | O_BINARY | O_CREAT | O_TRUNC,
 	   0666);
 	if(fh < 0) {
-	    setError("cannot create temp file %s, to uncompress the web page",
-	       edbrowseTempFile);
+	    setError(298, edbrowseTempFile);
 	    *u = 0;
 	    goto abort;
 	}
 	if(write(fh, serverData, serverDataLen) < serverDataLen) {
-	    setError("cannot write to temp file %s, to uncompress the web page",
-	       edbrowseTempFile);
+	    setError(299, edbrowseTempFile);
 	    close(fh);
 	    *u = 0;
 	    goto abort;
@@ -1026,20 +1015,17 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	free(scmd);
 	n = fileSizeByName(edbrowseTempFile);
 	if(n <= 0) {
-	    setError
-	       ("zcat cannot uncompress the data, to reconstruct the web page");
+	    setError(300);
 	    return false;
 	}
 	serverData = allocMem(n + 2);
 	fh = open(edbrowseTempFile, O_RDONLY | O_BINARY);
 	if(fh < 0) {
-	    setError("cannot access the uncompressed web page in %s",
-	       edbrowseTempFile);
+	    setError(301, edbrowseTempFile);
 	    goto abort;
 	}
 	if(read(fh, serverData, n) < n) {
-	    setError("cannot read the uncompressed web page in %s",
-	       edbrowseTempFile);
+	    setError(302, edbrowseTempFile);
 	    close(fh);
 	    goto abort;
 	}
@@ -1144,19 +1130,6 @@ ftpConnect(const char *url)
     int c;
     static const char npf[] = "not a plain file.";
     const int npfsize = strlen(npf);
-    static const char *const failmessages[] = { 0,
-	"could not connect to remote host",
-	"could not connect to remote host (timed out)",
-	"transfer failed",
-	"transfer failed (timed out)",
-	"no such directory",
-	"could not change directory (timed out)",
-	"malformed url",
-	"usage error",
-	"error in login config file",
-	"library initialization failed",
-	"session initialization failed",
-    };
 
     serverData = 0;
     serverDataLen = 0;
@@ -1164,8 +1137,7 @@ ftpConnect(const char *url)
     debugPrint(1, "ftp download");
     dirmode = false;
 
-  top:
-    cmd = initString(&cmd_l);
+  top:cmd = initString(&cmd_l);
     if(dirmode) {
 	stringAndString(&cmd, &cmd_l, "ncftpls -l ");
     } else {
@@ -1189,7 +1161,7 @@ ftpConnect(const char *url)
 
     f = popen(cmd, "r");
     if(!f) {
-	setError("could not spawn subcommand %s, errno %d", cmd, errno);
+	setError(303, cmd, errno);
 	nzFree(cmd);
 	return false;
     }
@@ -1237,9 +1209,9 @@ ftpConnect(const char *url)
 	if(!(rc & 0xff))
 	    rc >>= 8;
 	if(rc > 0 && rc <= 11)
-	    setError(failmessages[rc]);
+	    setError(303 + rc);
 	else
-	    setError("unexpected ftp error %d", rc);
+	    setError(315, rc);
 	return false;
     }
     i_puts(dirmode + 54);
@@ -1314,7 +1286,8 @@ allIPs(void)
 			    }
 			}
 		    }		/* valid ip */
-		}		/* different domain */
+		}
+		/* different domain */
 	    }			/* valid domain */
 	    nzFree(href);
 	    if(iptotal == 5)

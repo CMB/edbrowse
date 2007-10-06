@@ -604,14 +604,13 @@ ebConnect(void)
     if(sql_database)
 	return true;
     if(!dbarea) {
-	setError
-	   ("the config file does not specify the database - cannot connect");
+	setError(399);
 	return false;
     }
     sql_exclist(exclist);
     sql_connect(dbarea, dblogin, dbpw);
     if(rv_lastStatus) {
-	setError("cannot connect to the database - error %d", rv_vendorStatus);
+	setError(400, rv_vendorStatus);
 	return false;
     }
     if(!sql_database)
@@ -632,13 +631,12 @@ static int scllen;
 static char *wcl;		/* where clause */
 static int wcllen;
 static char wherecol[COLNAMELEN + 2];
-static const char synwhere[] = "syntax error in where clause";
 static struct DBTABLE *td;
 
 static void
 unexpected(void)
 {
-    setError("unexpected sql error %d", rv_vendorStatus);
+    setError(401, rv_vendorStatus);
 }				/* unexpected */
 
 static void
@@ -671,14 +669,13 @@ buildWhereClause(void)
     e = strchr(w, '=');
     if(!e) {
 	if(!td->key1) {
-	    setError("no key column specified");
+	    setError(402);
 	    return false;
 	}
 	e = td->cols[td->key1 - 1];
 	l = strlen(e);
 	if(l > COLNAMELEN) {
-	    setError("column name %s is too long, limit %d characters", e,
-	       COLNAMELEN);
+	    setError(403, e, COLNAMELEN);
 	    return false;
 	}
 	strcpy(wherecol, e);
@@ -686,11 +683,11 @@ buildWhereClause(void)
     } else if(isdigit(*w)) {
 	n = strtol(w, (char **)&w, 10);
 	if(w != e) {
-	    setError(synwhere);
+	    setError(404);
 	    return false;
 	}
 	if(n == 0 || n > td->ncols) {
-	    setError("column %d is out of range", n);
+	    setError(405, n);
 	    return false;
 	}
 	goto setcol_n;
@@ -703,22 +700,21 @@ buildWhereClause(void)
 		if(!strstr(td->cols[i], wherecol))
 		    continue;
 		if(n) {
-		    setError("multiple columns match %s", wherecol);
+		    setError(406, wherecol);
 		    return false;
 		}
 		n = i + 1;
 	    }
 	}
 	if(!n) {
-	    setError("no column matches %s", wherecol);
+	    setError(407, wherecol);
 	    return false;
 	}
       setcol_n:
 	w = td->cols[n - 1];
 	l = strlen(w);
 	if(l > COLNAMELEN) {
-	    setError("column name %s is too long, limit %d characters", w,
-	       COLNAMELEN);
+	    setError(403, w, COLNAMELEN);
 	    return false;
 	}
 	strcpy(wherecol, w);
@@ -773,9 +769,9 @@ setTable(void)
 	    nzFree(scl);
 	    if(rv_lastStatus) {
 		if(rv_lastStatus == EXCNOTABLE)
-		    setError("no such table %s", td->name);
+		    setError(408, td->name);
 		else if(rv_lastStatus == EXCNOCOLUMN)
-		    setError("invalid column name");
+		    setError(409);
 		else
 		    unexpected();
 		return false;
@@ -790,7 +786,7 @@ setTable(void)
 	cid = sql_prepare("select * from %s", myTab);
 	if(rv_lastStatus) {
 	    if(rv_lastStatus == EXCNOTABLE)
-		setError("no such table %s", myTab);
+		setError(408, myTab);
 	    else
 		unexpected();
 	    return false;
@@ -826,7 +822,7 @@ setTable(void)
     if(s)
 	s = strpbrk(s + 1, "BT");
     if(s) {
-	setError("cannot select more than one blob column");
+	setError(410);
 	return false;
     }
 
@@ -917,12 +913,11 @@ sqlReadRows(const char *filename, char **bufptr)
 	while(sql_fetchNext(cid, 0)) {
 	    unld = sql_mkunld('\177');
 	    if(strchr(unld, '|')) {
-		setError
-		   ("the data contains pipes, which is my reserved delimiter");
+		setError(411);
 		goto abort;
 	    }
 	    if(strchr(unld, '\n')) {
-		setError("the data contains newlines");
+		setError(412);
 		goto abort;
 	    }
 	    for(s = unld; *s; ++s)
@@ -989,32 +984,25 @@ intoFields(char *line)
 	    break;
 	if(j < td->ncols)
 	    continue;
-	setError
-	   ("line contains too many fields, please do not introduce any pipes into the text");
+	setError(413);
 	return false;
     }
 
     if(j == td->ncols)
 	return true;
-    setError
-       ("line contains too few fields, please do not remove any pipes from the text");
+    setError(414);
     return false;
 }				/* intoFields */
 
 static bool
-rowCountCheck(const char *action, int cnt1)
+rowCountCheck(int action, int cnt1)
 {
     int cnt2 = rv_lastNrows;
-    static char rowword1[] = "rows";
-    static char rowword2[] = "records";
 
     if(cnt1 == cnt2)
 	return true;
 
-    rowword1[3] = (cnt1 == 1 ? 0 : 's');
-    rowword2[6] = (cnt2 == 1 ? 0 : 's');
-    setError("oops!  I %s %d %s, and %d database %s were affected.",
-       action, cnt1, rowword1, cnt2, rowword2);
+    setError(421 + action, cnt1, cnt2);
     return false;
 }				/* rowCountCheck */
 
@@ -1022,7 +1010,7 @@ static int
 keyCountCheck(void)
 {
     if(!td->key1) {
-	setError("key column not specified");
+	setError(415);
 	return false;
     }
     return (td->key2 ? 2 : 1);
@@ -1035,43 +1023,43 @@ static const short insupdExceptions[] = { EXCSQLMISC,
 };
 
 static bool
-insupdError(const char *action, int rcnt)
+insupdError(int action, int rcnt)
 {
     int rc = rv_lastStatus;
-    const char *desc;
+    int msg;
 
     if(rc) {
 	switch (rc) {
 	case EXCVIEWUSE:
-	    desc = "cannot modify a view";
+	    msg = 431;
 	    break;
 	case EXCREFINT:
-	    desc = "some other row in the database depends on this row";
+	    msg = 424;
 	    break;
 	case EXCITEMLOCK:
-	    desc = "row or table is locked";
+	    msg = 425;
 	    break;
 	case EXCPERMISSION:
-	    desc =
-	       "you do not have permission to modify the database in this way";
+	    msg = 426;
 	    break;
 	case EXCDEADLOCK:
-	    desc = "deadlock detected";
+	    msg = 427;
 	    break;
 	case EXCNOTNULLCOLUMN:
-	    desc = "placing null into a not-null column";
+	    msg = 428;
 	    break;
 	case EXCCHECK:
-	    desc = "check constraint violated";
+	    msg = 429;
 	    break;
 	case EXCTIMEOUT:
-	    desc = "daatabase timeout";
+	    msg = 430;
 	    break;
 	default:
-	    setError("miscelaneous sql error %d", rv_vendorStatus);
+	    setError(416, rv_vendorStatus);
 	    return false;
 	}
-	setError(desc);
+
+	setError(msg);
 	return false;
     }
 
@@ -1095,7 +1083,7 @@ sqlDelRows(int start, int end)
     ndel = end - start + 1;
     ln = start;
     if(ndel > 100) {
-	setError("cannot delete more than 100 rows at a time");
+	setError(417);
 	return false;
     }
 
@@ -1115,7 +1103,7 @@ sqlDelRows(int start, int end)
 	       td->name, td->cols[key1], lineFields[key1],
 	       td->cols[key2], lineFields[key2]);
 	nzFree(line);
-	if(!insupdError("deleted", 1))
+	if(!insupdError(0, 1))
 	    return false;
 	delText(ln, ln);
     }
@@ -1162,15 +1150,15 @@ sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 	l2 = strlen(lineFields[j]);
 	if(l1 != l2 || memcmp(s, lineFields[j], l1)) {
 	    if(j == key1 || j == key2) {
-		setError("cannot change a key column");
+		setError(418);
 		goto abort;
 	    }
 	    if(td->types[j] == 'B') {
-		setError("cannot change a blob field");
+		setError(419);
 		goto abort;
 	    }
 	    if(td->types[j] == 'T') {
-		setError("cannot change a text field");
+		setError(420);
 		goto abort;
 	    }
 	    if(*u1)
@@ -1194,7 +1182,7 @@ sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 	sql_exec("update %s set(%s) = (%s) where %s = %S and %s = %S",
 	   td->name, u1, u2,
 	   td->cols[key1], lineFields[key1], td->cols[key2], lineFields[key2]);
-    if(!insupdError("updated", 1))
+    if(!insupdError(2, 1))
 	goto abort;
 
     nzFree(d2);
@@ -1303,7 +1291,7 @@ sqlAddRows(int ln)
 	sql_exec("insert into %s (%s) values (%s)", td->name, u1, u2);
 	nzFree(u1);
 	nzFree(u2);
-	if(!insupdError("inserted", 1)) {
+	if(!insupdError(1, 1)) {
 	    printf("Error: ");
 	    showError();
 	    continue;

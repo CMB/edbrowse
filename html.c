@@ -849,10 +849,9 @@ locateOptions(const struct htmlTag *sel, const char *input,
 	    t = locateOptionByName(sel, iopt, &pmc, false);
 	if(!t) {
 	    if(n >= 0)
-		setError("%d is out of range", n);
+		setError(238, n);
 	    else
-		setError("%s options contain the string %s",
-		   (pmc ? "multiple" : "no"), iopt);
+		setError(pmc + 239, iopt);
 /* This should never happen when we're doing a set check */
 	    if(setcheck) {
 		runningError
@@ -2414,44 +2413,42 @@ infReplace(int tagno, const char *newtext, int notify)
 
 /* sanity checks on the input */
     if(itype <= INP_SUBMIT) {
-	char *b = "";
+	int b = 241;
 	if(itype == INP_SUBMIT || itype == INP_IMAGE)
-	    b = "submit ";
+	    b = 242;
 	if(itype == INP_RESET)
-	    b = "reset ";
-	setError("this is a %sbutton; use i* to push the button", b);
+	    b = 243;
+	setError(b);
 	return false;
     }
 
     if(itype == INP_TA) {
-	setError("this is a textarea, you must edit it from session %d",
-	   t->lic);
+	setError(244, t->lic);
 	return false;
     }
 
     if(t->rdonly) {
-	setError("readonly field");
+	setError(245);
 	return false;
     }
 
     if(strchr(newtext, '\n')) {
-	setError("input field cannot contain a newline character");
+	setError(246);
 	return false;
     }
 
     if(itype >= INP_TEXT && itype <= INP_NUMBER && t->lic && newlen > t->lic) {
-	setError("input too long, limit %d", t->lic);
+	setError(247, t->lic);
 	return false;
     }
 
     if(itype >= INP_RADIO) {
 	if(newtext[0] != '+' && newtext[0] != '-' || newtext[1]) {
-	    setError("field must be set to + or -");
+	    setError(248);
 	    return false;
 	}
 	if(itype == INP_RADIO && newtext[0] == '-') {
-	    setError
-	       ("you cannot clear a radio button; you must set another one");
+	    setError(249);
 	    return false;
 	}
     }
@@ -2474,14 +2471,14 @@ infReplace(int tagno, const char *newtext, int notify)
 	if(!envFile(newtext, &newtext))
 	    return false;
 	if(newtext[0] && access(newtext, 4)) {
-	    setError("%s is not an accessible file", newtext);
+	    setError(250, newtext);
 	    return false;
 	}
     }
 
     if(itype == INP_NUMBER) {
 	if(*newtext && stringIsNum(newtext) < 0) {
-	    setError("number expected");
+	    setError(251);
 	    return false;
 	}
     }
@@ -2868,7 +2865,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 		    goto fail;
 		for(j = 0; j < cxlen; ++j)
 		    if(cxbuf[j] == 0) {
-			setError("session %d contains nulls", cx);
+			setError(252, cx);
 			nzFree(cxbuf);
 			goto fail;
 		    }
@@ -2934,8 +2931,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 	    if(!*value)
 		continue;
 	    if(!(form->post & form->mime)) {
-		setError
-		   ("sending a file requires method=post and enctype=multipart/form-data");
+		setError(253);
 		nzFree(value);
 		goto fail;
 	    }
@@ -3004,12 +3000,12 @@ infPush(int tagno, char **post_string)
     }
 
     if(itype > INP_SUBMIT) {
-	setError("this is an input field, not a button");
+	setError(254);
 	return false;
     }
 
     if(!form && itype != INP_BUTTON) {
-	setError("this button is not part of a form");
+	setError(255);
 	return false;
     }
 
@@ -3030,7 +3026,7 @@ infPush(int tagno, char **post_string)
 
     if(itype == INP_BUTTON) {
 	if(!handlerPresent(t->jv, "onclick")) {
-	    setError("no javascript associated with this button");
+	    setError(256);
 	    return false;
 	}
 	return true;
@@ -3086,7 +3082,7 @@ infPush(int tagno, char **post_string)
     }
 
     if(!action) {
-	setError("form does not include a destination url");
+	setError(257);
 	return false;
     }
 
@@ -3094,13 +3090,13 @@ infPush(int tagno, char **post_string)
 
     prot = getProtURL(action);
     if(!prot) {
-	setError("the action of the form is not a url");
+	setError(258);
 	return false;
     }
 
     if(stringEqualCI(prot, "javascript")) {
 	if(cw->jsdead) {
-	    setError("javascript is disabled, cannot activate this form");
+	    setError(259);
 	    return false;
 	}
 	javaParseExecute(form->jv, action, 0, 0);
@@ -3115,12 +3111,11 @@ infPush(int tagno, char **post_string)
 	form->bymail = true;
     } else if(stringEqualCI(prot, "http")) {
 	if(form->secure) {
-	    setError
-	       ("This form has changed from https to http, and is now insecure");
+	    setError(260);
 	    return false;
 	}
     } else if(!stringEqualCI(prot, "https")) {
-	setError("cannot submit using protocol %s", prot);
+	setError(261, prot);
 	return false;
     }
 

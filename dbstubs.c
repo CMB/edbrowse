@@ -7,12 +7,11 @@
 
 #include "eb.h"
 
-static const char missing[] = "edbrowse was not compiled with database access";
 
 bool
 sqlReadRows(const char *filename, char **bufptr)
 {
-    setError(missing);
+    setError(316);
     *bufptr = EMPTYSTRING;
     return false;
 }				/* sqlReadRows */
