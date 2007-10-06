@@ -16,7 +16,7 @@ all: edbrowse
 
 #  edbrowse objects
 EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
-	html.o format.o cookies.o stringfile.o jsdom.o jsloc.o
+	html.o format.o cookies.o stringfile.o jsdom.o jsloc.o messages.o
 
 #  Header file dependencies.
 $(EBOBJS) : eb.h eb.p
@@ -27,8 +27,9 @@ edbrowse: $(EBOBJS) tcp.o
 
 #  Build function prototypes.
 proto:
-	mkproto -g main.c buffers.c url.c auth.c http.c sendmail.c fetchmail.c \
-	html.c format.c cookies.c stringfile.c jsdom.c jsloc.c >eb.p
+	mkproto -g main.c buffers.c url.c auth.c http.c messages.c \
+	sendmail.c fetchmail.c html.c \
+	format.c cookies.c stringfile.c jsdom.c jsloc.c dbstubs.c >eb.p
 
 #  I've had no luck getting this to work - can you help?
 edbrowse.static: $(EBOBJS) tcp.o

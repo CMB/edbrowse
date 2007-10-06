@@ -188,7 +188,7 @@ win_close(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
    jsval * rval)
 {
 /* It's too confusing to just close the window */
-    puts("this page is finished, please use your back key or quit");
+    i_puts(104);
     cw->jsdead = true;
     return JS_TRUE;
 }				/* win_close */
@@ -463,7 +463,7 @@ setter_innerText(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
     if(!JSVAL_IS_STRING(v))
 	return JS_FALSE;
     s = JS_GetStringBytes(JSVAL_TO_STRING(v));
-    puts("Sorry, innerText update not yet implemented.");
+    i_puts(105);
 /* The string has already been updated in the object. */
     return JS_TRUE;
 }				/* setter_innerText */

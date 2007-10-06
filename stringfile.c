@@ -668,7 +668,10 @@ setError(const char *msg, ...)
 void
 showError(void)
 {
-    printf("%s\n", errorMsg[0] ? errorMsg : "no errors");
+    if(errorMsg[0])
+	puts(errorMsg);
+    else
+	i_puts(106);
 }				/* showError */
 
 void

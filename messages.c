@@ -113,6 +113,9 @@ static const char *englishMessages[] = {
     "cannot write to file %s\n",
     "mail save, %d bytes",
     " appended",
+    "this page is finished, please use your back key or quit",
+    "Sorry, innerText update not yet implemented.",
+    "no errors",
 };
 
 static const char *frenchMessages[] = {
