@@ -414,7 +414,7 @@ refreshDelay(int sec, const char *u)
 /* the value 15 seconds is somewhat arbitrary */
     if(sec < 15)
 	return true;
-    printf("redirect to %s delayed by %d seconds", u, sec);
+    i_printf(56, u, sec);
     return false;
 }				/* refreshDelay */
 
@@ -827,17 +827,16 @@ hssl->options |= SSL_OP_NO_TLSv1;
 		setError("web page requires authorization");
 		goto abort;
 	    }
-	    puts("authorization requested - type x to abort.");
+	    i_puts(52);
 	  getlogin:
-	    printf("Username: ");
+	    i_printf(57);
 	    fflush(stdout);
 	    fflush(stdin);
 	    if(!fgets(user, sizeof (user), stdin))
 		ebClose(0);
 	    n = strlen(user);
 	    if(n >= sizeof (user) - 1) {
-		printf("user name too long, limit %d characters",
-		   sizeof (user) - 2);
+		i_printf(58, sizeof (user) - 2);
 		goto getlogin;
 	    }
 	    if(n && user[n - 1] == '\n')
@@ -846,15 +845,14 @@ hssl->options |= SSL_OP_NO_TLSv1;
 		setError("login aborted");
 		goto abort;
 	    }
-	    printf("Password: ");
+	    i_printf(59);
 	    fflush(stdout);
 	    fflush(stdin);
 	    if(!fgets(pass, sizeof (pass), stdin))
 		ebClose(0);
 	    n = strlen(pass);
 	    if(n >= sizeof (pass) - 1) {
-		printf("user name too long, limit %d characters",
-		   sizeof (pass) - 2);
+		i_printf(60, sizeof (pass) - 2);
 		goto getlogin;
 	    }
 	    if(n && pass[n - 1] == '\n')
@@ -943,7 +941,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
 		}
 		if(recount >= 10) {
 		    free(u);
-		    puts("too many redirections");
+		    i_puts(53);
 		    goto gotFile;
 		}
 /* Redirection looks valid, let's run with it. */
@@ -1244,7 +1242,7 @@ ftpConnect(const char *url)
 	    setError("unexpected ftp error %d", rc);
 	return false;
     }
-    puts(dirmode ? "directory" : "success");
+    i_puts(dirmode + 54);
     if(dirmode) {		/* need a final slash */
 	int l = strlen(url);
 	changeFileName = allocMem(l + 2);

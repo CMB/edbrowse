@@ -103,15 +103,15 @@ junkSubject(const char *s, char key)
     char *new;
     long exp = nowday;
     if(!s || !*s) {
-	puts("no subject");
+	i_puts(46);
 	return false;
     }
     if(!cfgcopy) {
-	puts("no config file present");
+	i_puts(47);
 	return false;
     }
     if(!subjstart) {
-	puts(".ebrc config file does not contain a subjfilter{...} block");
+	i_puts(48);
 	return false;
     }
     if(key == 'j')
@@ -982,7 +982,7 @@ catchSig(int n)
 {
     intFlag = true;
     if(inInput)
-	printf("interrupt, type qt to quit completely\n");
+	i_puts(49);
 /* If we were reading from a file, or socket, this signal should
  * cause the read to fail.  Check for intFlag, so we know it was
  * interrupted, and not an io failure.
@@ -1226,7 +1226,7 @@ edbrowse  [-e] [-d?] file1 file2 ...");
 	++cx;
 	cxSwitch(cx, false);
 	runEbFunction("init");
-	printf("edbrowse ready\n");
+	i_puts(50);
     }
     if(cx > 1)
 	cxSwitch(1, false);
@@ -1237,8 +1237,7 @@ edbrowse  [-e] [-d?] file1 file2 ...");
 	pst p = inputLine();
 	copyPstring(saveline, p);
 	if(perl2c((char *)p))
-	    printf
-	       ("entered command line contains nulls; you can use \\0 in a search/replace string to indicate null\n");
+	    i_puts(51);
 	else
 	    edbrowseCommand((char *)p, false);
 	copyPstring(linePending, saveline);

@@ -57,7 +57,7 @@ cookieIntoJar(const struct cookie *c)
 	static bool warn = false;
 	if(warn)
 	    return;
-	puts("your config file does not specify a cooky jar");
+	i_puts(61);
 	warn = true;
 	return;
     }

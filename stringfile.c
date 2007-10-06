@@ -632,8 +632,8 @@ debugPrint(int lev, const char *msg, ...)
 void
 nl(void)
 {
-puts("");
-} /* nl */
+    puts("");
+}				/* nl */
 
 char errorMsg[4000];
 /* Show the error message, not just the question mark, after these commands. */
@@ -659,8 +659,7 @@ setError(const char *msg, ...)
 
 /* sanity check */
     if(strlen(errorMsg) >= sizeof (errorMsg)) {
-	printf("disaster, error message, length %d is too long\n",
-	   strlen(errorMsg));
+	i_printf(63, strlen(errorMsg));
 	puts(errorMsg);
 	exit(1);
     }
@@ -700,10 +699,10 @@ browseError(const char *msg, ...)
     varargLocals(p, msg, a);
     va_end(p);
     if(browseLine) {
-	printf("line %d: ", browseLine);
+	i_printf(64, browseLine);
 	cw->labels[4] = browseLine;
     } else
-	printf("browse error: ");
+	i_printf(65);
     printf(msg, a[0], a[1], a[2], a[3], a[4]);
     nl();
     browseLocal = 2;
@@ -721,7 +720,7 @@ runningError(const char *msg, ...)
     varargLocals(p, msg, a);
     va_end(p);
     if(browseLine) {
-	printf("line %d: ", browseLine);
+	i_printf(64, browseLine);
 	cw->labels[4] = browseLine;
     }
     printf(msg, a[0], a[1], a[2], a[3], a[4]);
@@ -1064,8 +1063,7 @@ nextScanFile(const char *base)
 	    base = ".";
 	df = opendir(base);
 	if(!df) {
-	    puts
-	       ("warning, the directory is inaccessible - the listing will be empty");
+	    i_puts(62);
 	    return 0;
 	}
     }
