@@ -346,7 +346,7 @@ get_js_event(const char *name)
     if(stringEqual(name, "onchange")) {
 	if(action == TAGACT_INPUT || action == TAGACT_SELECT) {
 	    if(itype == INP_TA)
-		runningError("onchange handler does not work with textarea");
+		runningError(463);
 	    else if(itype > INP_HIDDEN && itype <= INP_SELECT) {
 		topTag->handler = true;
 		if(currentForm)
@@ -378,7 +378,7 @@ get_js_events(void)
     if(handlerPresent(ev, "onfocus") || handlerPresent(ev, "onblur"))
 	browseError(434);
     if(handlerPresent(ev, "ondblclick"))
-	runningError("warning, javascript cannot be invoked by a double click");
+	runningError(464);
     if(handlerPresent(ev, "onclick")) {
 	if((action == TAGACT_A || action == TAGACT_AREA || action == TAGACT_FRAME) && topTag->href || action == TAGACT_INPUT && (itype <= INP_SUBMIT || itype >= INP_RADIO)) ;	/* ok */
 	else
@@ -851,9 +851,7 @@ locateOptions(const struct htmlTag *sel, const char *input,
 		setError(pmc + 239, iopt);
 /* This should never happen when we're doing a set check */
 	    if(setcheck) {
-		runningError
-		   ("error resolving option %s during sync or form submit",
-		   iopt);
+		runningError(465, iopt);
 		continue;
 	    }
 	    goto fail;
@@ -1050,8 +1048,7 @@ onloadGo(void *obj, const char *jsrc, const char *tagname)
     if(!handlerPresent(obj, "onunload"))
 	return;
     if(handlerPresent(obj, "onclick")) {
-	runningError
-	   ("tag cannot have onunload and onclik handlers simultaneously");
+	runningError(466);
 	return;
     }
 
@@ -1817,8 +1814,7 @@ encodeTags(char *html)
 /* I'm not going to process an open ended script. */
 	    if(!rc) {
 		nzFree(javatext);
-		runningError
-		   ("script is not closed at eof, suspending javascript");
+		runningError(467);
 		cw->jsdead = true;
 		continue;
 	    }
@@ -1839,9 +1835,7 @@ encodeTags(char *html)
 			if(browseLocal && !isURL(t->href)) {
 			    if(!fileIntoMemory(t->href, &serverData,
 			       &serverDataLen)) {
-				runningError
-				   ("could not fetch local javascript, %s",
-				   errorMsg);
+				runningError(468, errorMsg);
 			    } else {
 				javatext = serverData;
 				prepareForBrowse(javatext, serverDataLen);
@@ -1852,13 +1846,10 @@ encodeTags(char *html)
 				prepareForBrowse(javatext, serverDataLen);
 			    } else {
 				nzFree(serverData);
-				runningError
-				   ("could not fetch javascript from %s, code %d",
-				   t->href, hcode);
+				runningError(469, t->href, hcode);
 			    }
 			} else {
-			    runningError("could not fetch javascript, %s",
-			       errorMsg);
+			    runningError(470, errorMsg);
 			}
 			js_line = 1;
 			js_file = t->href;
@@ -2500,7 +2491,7 @@ infReplace(int tagno, const char *newtext, int notify)
 
     if(itype >= INP_RADIO && tagHandler(t->seqno, "onclick")) {
 	if(cw->jsdead)
-	    runningError("javascript disabled, skipping the onclick code");
+	    runningError(471);
 	else {
 	    jSyncup();
 	    handlerGo(t->jv, "onclick");
@@ -2513,7 +2504,7 @@ infReplace(int tagno, const char *newtext, int notify)
     if(itype >= INP_TEXT && itype <= INP_SELECT &&
        tagHandler(t->seqno, "onchange")) {
 	if(cw->jsdead)
-	    runningError("javascript disabled, skipping the onchange code");
+	    runningError(472);
 	else {
 	    jSyncup();
 	    handlerGo(t->jv, "onchange");
@@ -3006,9 +2997,7 @@ infPush(int tagno, char **post_string)
 
     if(t && tagHandler(t->seqno, "onclick")) {
 	if(cw->jsdead)
-	    runningError("javascript disabled, %s",
-	       itype ==
-	       INP_BUTTON ? "no action taken" : "skipping the onclick code");
+	    runningError(itype == INP_BUTTON ? 473 : 471);
 	else {
 	    rc = handlerGo(t->jv, "onclick");
 	    jsdw();
@@ -3031,7 +3020,7 @@ infPush(int tagno, char **post_string)
 /* Before we reset, run the onreset code */
 	if(t && tagHandler(form->seqno, "onreset")) {
 	    if(cw->jsdead)
-		runningError("javascript disabled, skipping the onreset code");
+		runningError(474);
 	    else {
 		rc = handlerGo(form->jv, "onreset");
 		jsdw();
@@ -3048,7 +3037,7 @@ infPush(int tagno, char **post_string)
     /* Before we submit, run the onsubmit code */
     if(t && tagHandler(form->seqno, "onsubmit")) {
 	if(cw->jsdead)
-	    runningError("javascript disabled, skipping the onsubmit code");
+	    runningError(475);
 	else {
 	    rc = handlerGo(form->jv, "onsubmit");
 	    jsdw();
@@ -3196,8 +3185,7 @@ tagFromJavaVar(void *v)
 	if(t->jv == v)
 	    break;
     if(!t)
-	runningError
-	   ("could not find the html tag associated with the javascript variable being modified");
+	runningError(476);
     return t;
 }				/* tagFromJavaVar */
 
@@ -3215,8 +3203,7 @@ javaSetsTagVar(void *v, const char *val)
 	return;
     }
     if(t->itype == INP_TA) {
-	runningError
-	   ("javascript modified a textarea, and that isn't implemented yet");
+	runningError(477);
 	return;
     }
     updateFieldInBuffer(t->seqno, val, parsePage ? 0 : 2, false);

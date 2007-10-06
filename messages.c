@@ -470,6 +470,23 @@ static const char *englishMessages[] = {
     "unprocessed tag action %d",
     "%s is not closed at eof",
     "java is opening a blank window",
+    "unexpected characters after the encoded attachment",
+    "invalid characters in the encoded attachment",
+    "onchange handler does not work with textarea",
+    "warning, javascript cannot be invoked by a double click",
+    "error resolving option %s during sync or form submit",
+    "tag cannot have onunload and onclik handlers simultaneously",
+    "script is not closed at eof, suspending javascript",
+    "could not fetch local javascript, %s",
+    "could not fetch javascript from %s, code %d",
+    "could not fetch javascript, %s",
+    "javascript disabled, skipping the onclick code",
+    "javascript disabled, skipping the onchange code",
+    "javascript disabled, no action taken",
+    "javascript disabled, skipping the onreset code",
+    "javascript disabled, skipping the onsubmit code",
+    "could not find the html tag associated with the javascript variable being modified",
+    "javascript modified a textarea, and that isn't implemented yet",
 };
 
 static const char *frenchMessages[] = {
@@ -599,7 +616,7 @@ browseError(int msg, ...)
 
 /* Javascript errors, we need to see these no matter what. */
 void
-runningError(const char *msg, ...)
+runningError(int msg, ...)
 {
     va_list p;
     if(ismc)
@@ -609,7 +626,7 @@ runningError(const char *msg, ...)
 	cw->labels[4] = browseLine;
     }
     va_start(p, msg);
-    vprintf(msg, p);
+    vprintf(messageArray[msg], p);
     va_end(p);
     nl();
     browseLocal = 2;

@@ -87,7 +87,7 @@ void showError(void) ;
 void showErrorConditional(char cmd) ;
 void showErrorAbort(void) ;
 void browseError(int msg, ...) ;
-void runningError(const char *msg, ...) ;
+void runningError(int msg, ...) ;
 
 /* sourcefile=sendmail.c */
 bool loadAddressBook(void) ;

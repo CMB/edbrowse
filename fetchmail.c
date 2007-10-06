@@ -755,7 +755,7 @@ unpack64(struct MHINFO *w)
 	if(equals) {
 	    if(c == '=')
 		continue;
-	    runningError("unexpected characters after the encoded attachment");
+	    runningError(461);
 	    w->error64 = EXTRA64;
 	    break;
 	}
@@ -765,7 +765,7 @@ unpack64(struct MHINFO *w)
 	}
 	val = unb64(c);
 	if(val & 64) {
-	    runningError("invalid characters in the encoded attachment");
+	    runningError(462);
 	    w->error64 = BAD64;
 	    break;
 	}
