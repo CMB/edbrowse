@@ -1,0 +1,431 @@
+#  .ebrc: le fichier de configuration pour edbrowse (version 2.2 ou au-dessus)
+#  C'est un fichier exemple.
+#  Ce fichier contient des mots de passe. 
+#  Assurez-vous qu'il ne soit pas lisible par d'autres
+#  chmod 600 .ebrc
+#  (Evidemment, les mots de passe de cet exemple sont faux...)
+
+# -----------------------------------------------------------------------
+
+#  D'abord les comptes mail : j'en ai plusieurs
+#  Le compte principal, chez mon fournisseur d'accès
+#  Vous y accédez via -m1.
+#  Le compte suivant est is -m2, et ainsi de suite.
+
+mail {
+#  Le serveur pop3 et le serveur smtp, pas forcément identiques.
+inserver = mail.comcast.net
+outserver = smtp.comcast.net
+#  nom d'utilidateur et mot de passe
+login = kdahlke189603
+password = elephant
+# qui est l'expéditeur ? Votre nom, et une adresse de réponse.
+# il est maintenant de illégal de créer unemail, ainsi assurez-vous
+# que c'est vraiment votre nom, et assurez-vous que l'adresse de réponse
+# est bien l'un de vos comptes mail, ou qu'il est  ré-expédié.
+from = Karl Dahlke
+reply = kdahlke189603@comcast.net
+}
+
+
+#  mon compte personnel.
+#  un deuxième compte chez mon fournisseur d'accès
+.
+mail {
+inserver = mail.comcast.net
+outserver = smtp.comcast.net
+#  quand j'envoie un mail, c'est le compte par défaut
+default
+login = eklhad
+password = zebra
+from = Karl Dahlke
+reply = eklhad@comcast.net
+}
+
+
+#  le compte de mon épouse
+#  je teste de temps en temps, évidemment avec sa permission
+
+mail {
+inserver = mail.comcast.net
+outserver = smtp.comcast.net
+login = kdwife
+password = kangaroo
+from = Wendy Dahlke
+reply = kdwife@comcast.net
+}
+
+#  mon compte au travail
+#  L'alias "un_autre" est défini dans le fichier /etc/hosts.
+#  Vous pouvez faire pareil, ou définir le nom complet du serveur
+#  comme j'ai fait pour comcast.
+
+mail {
+inserver = un_autre
+outserver = un_autre
+login = karl.dahlke@my-work-domain.com
+password = cheetah
+from = Karl Dahlke
+reply = karl.dahlke@my-work-domain.com
+}
+
+
+#  les mails qui viennent de mes autres sites web
+#  on commence par le site consacré aux maths
+
+mail {
+inserver = mail.comcast.net
+outserver = mail.comcast.net
+login = eklhad
+password = zebra
+from = Karl Dahlke
+#  tout le courrier adressé à MathReference email m'est ré-expédié.
+reply = webmaster@mathreference.com
+}
+
+mail {
+inserver = mail.comcast.net
+outserver = mail.comcast.net
+login = eklhad
+password = zebra
+#  mon épouse et moi gérons ensemble ce site.
+from = Karl and Wendy Dahlke
+reply = webmaster@scrapsayings.com
+}
+
+#  un compte mail associé à mon domaine privé, indépendant de mon FAI
+#  il est redirigé par mon FAI
+
+mail {
+inserver = mail.comcast.net
+outserver = mail.comcast.net
+login = eklhad
+password = zebra
+from = Karl Dahlke
+reply = eklhad@comcast.net
+}
+
+# -----------------------------------------------------------------------
+
+#  Terminé pour les comptes mail
+#  Ci-dessous, mon carnet d'adresses
+#  le format est alias:adresse mail:autres champs.
+
+adbook=/home/eklhad/outside/adbook
+
+# -----------------------------------------------------------------------
+
+#  répertoire de réception du courrier
+
+maildir = /home/eklhad/mbox
+
+# -----------------------------------------------------------------------
+
+#  addresses ip en liste noire
+
+ipblack=/home/eklhad/outside/ipblack
+
+# -----------------------------------------------------------------------
+
+#  récipient des cookies - où sont stockés les cookies http .
+#  Ce fichier contient des motes de passe, mettez-le en 0600
+#  ne touchez pas à ce fichier, sauf si vous savez ce que vous faites
+
+jar = /home/eklhad/outside/cookies
+
+# -----------------------------------------------------------------------
+
+#  attendre 30 secondes la réponse d'un serveur web
+webtimer = 30
+#  attendre 3 minutes la réponse d'un serveur mail mail
+mailtimer = 180
+
+# -----------------------------------------------------------------------
+
+#  stockage des spams. C'est un fichier dans ma corbeille
+#  ainsi je suis sûr qu'il est nettoyé chaque semaine
+
+spamcan = /home/eklhad/.recycle/spamcan
+
+# -----------------------------------------------------------------------
+
+#  redirection des mails à partir de l'expéditeur ou du compte de destination
+
+fromfilter {
+fred flintstone > fredmail
+fred.flintstone@bedrock.us > fredmail
+jerk@hotmail.com > x
+word@m-w.com > -wod
+}
+
+
+tofilter {
+support@my-side-business.com > support
+sales@my-side-business.com > sales
+@my-side-business.com > business
+me@my-regular-dayjob.com > work
+}
+
+# -----------------------------------------------------------------------
+
+#  Description des types mime et des programmes associés
+#  pour des raisons évidentes, il n'y a que l'audio qui m'importe
+
+mime {
+type = audio/basic
+desc = fichier audio au format wave
+suffix = wav,voc,au
+#  l'étoile est remplacée par l'extension au lancement
+program = play -t * -
+}
+
+mime {
+type = audio/mp3
+desc = fichier audio au format mp3
+suffix = mp3
+#program = mpg123 -q -
+#  la ligne ci-dessus fonctionne, tout dépend du player
+#  certains players mp3 ne fonctionnet pas bien
+#  lorsqu'on leur passe les données via un pipe
+#  Lorsque les données provienne d'un fichier,
+#  ils répondent mieux aux ordres clavier
+#  pour s'interrompre, revenir en arrière etc.
+#  J'ai donc inventé le caractère spécial % à la fin
+#  lequel devient un fichier temporaire avec la bonne extension
+program = mpg123 -q %
+#  et on fait la même chose que précédemment
+#program = play %
+#  Vous n'aurez donc pas besoin du "-t *"
+#  parce que le fichier temporaire a la bonne extension
+# que le player comprend
+}
+
+mime {
+# le < force le fichier à être un flot,
+# sans quoi c'est l'url qui est passée au programme
+type = <audio/x-pn-realaudio
+desc = stream audio
+suffix = rm,ra,ram
+protocol = rtsp,pnm
+program = trplayer
+}
+
+# -----------------------------------------------------------------------
+
+# Accès à la base de données : spécifie le nom de la base,
+# le nom d'utilisateur et le mot de passe
+
+database = nom_base,nom_utilisateur,mot_de_passe
+
+#  extraits de la table clients de la base nom_base
+#  consultez la documentation de edbrowse pour en savoir plus
+
+table {
+   tname = clients
+#  cnm est le code de la table abrégé
+#  je veux un code, parce j'aurais à le taper souvent
+   tshort = cnm
+   cols = custnum,firstname,lastname
+#  spécifie l'index primaire, dans ce cas la 1ère colonne
+   keycol = 1
+}
+
+table {
+   tname = clients
+#  tout ce qui m'intéresse ici est le n° de client et sa date de naissance
+   tshort = cbd
+   cols = birthdate,custnum
+   keycol = 2
+}
+
+# -----------------------------------------------------------------------
+
+#  Beaucoup de sites utilisent javascript pour des effets visuels
+#  et ce javascript tend à se compliquer, que je ne peux généralement pas
+#  analyser correctement, et donc on obtient une quantité d'erreurs gênantes
+#  Vous pouvez le désactiver site par site
+#  Notez, vaut mieux space.com que www.space.com
+#  à moins qu'il existe un foo.space.com, pour lequel vous avez besoin de
+#  javascript
+
+nojs = space.com
+nojs = nasa.gov
+nojs = google.com
+nojs = paypal.com
+
+#  Chaque fois que vous chargez une page web de l'internet
+#  votre navigateur s'identifie auprès de l'hôte
+#  C'est automatique
+#  Edbrowse s'identifie lui-même comme "edbrowse/2.1.3",
+#  où le numéro après le slash signifie la version courante d'edbrowse
+#  Tout cela est bel et bon, mais certains sites n'ont aucun respect pour 
+#  edbrowse ou lynx.
+#  Ils ne vous laissent pas entrer tant que vous ne ressemblez pas
+#  à Internet Explorer ou Netscape
+#  Clickbank.com, un site de gestion de cartes bancaires, en est un exemple
+#  Alors que fait-on ? On ment !
+#  Vous pouvez définir plusieurs agents dans ce fichier de config
+#  et les activer avec la commande `ua' (user agent).
+#  Les lignes qui suivent vous permettent de taper
+#  ua1 pour se faire passer pour lynx,  ua2 pour Mozilla.
+#  Tapez ua0 pour ressusciter l'identification standard d'edbrowse.
+
+agent = Lynx/2.8.4rel.1 libwww-FM/2.14
+agent = Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; Win 9x 4.90)
+
+# -----------------------------------------------------------------------
+
+#  Ok, vous êtes prêts à écrire votre premier script
+#  On commence par quelque chose de simple
+#  Supprimer les fins de ligne dos et décoder un fichier word
+#  Nul doute qu'un expert de Windows pourrait m'aider ici.
+
+function+ud {
+,s/\r$//
+}
+
+function:uw {
+#  traite l'apostrophe
+,s/�/'/g
+#  élimine tout ce qui non-assi
+#  Désolé d'être aussi centré sur l'Anglais
+#  Cela va vous gêner si vous lisez un document Word en espagnol (et en français),
+#  vous perdrez les lettres non-ascii
+,s/[\0-\11\13\14\16-\37\200-\377]//g
+#  Ensuite, il y a beaucoup de lignes vides
+g/^ *$/ d
+#  Séparez les lignes après les retours-chariot.
+,bl
+#  éliminez toutes les déchets restants
+/^ !"#\$%&'()\*/,$d
+}
+
+# -----------------------------------------------------------------------
+
+#  Une fonction pour accéder à google
+#  Tout le fait, tout le temps
+#  J'appelle la page d'entrée, tape quelques mots-clé, 
+#  met le niveau de débogage à db2,
+#  et j'appuie sur le bouton chercher
+#  Ce qui me donne l'url
+#  C'est ce que fait ce sui suit, en y mettant ~0.
+#  ~0 remplace tous les arguments, en d'autres termes, le reste de la ligne.
+#  Ainsi <gg éléphants tigres appelle google,
+#  pour chercher "éléphants tigres".
+
+function+gg {
+b www.google.com/search?q=~0&hl=n&btnG=Google+Search&meta=
+#  Ok, on a récupéré la page google.
+#  Comment le sait-on ?  Regardez plus haut la ligne "function".
+#  Le signe + signifie stop s'il y a des erreurs
+#  Arrivé ici, je suppose qu'il n'y a eu aucune erreur
+#  Google a renvoyé les résultats
+#  Mais il y a plein de texte qui ne m'intéresse pas
+#  Aussi j'ai écrit une fonction de nettoyage de google
+#  qu'on va appeler maintenant
+#  Même si la fonction n'a pas été définie auparavant, cela fonctionne
+#  les références en avant sont permises
+<ggc
+}
+
+#  La fonction de nettoyage des résultats google
+#  appelée dès que vous avez accédé à google
+#  mais vous voudrez l'appeler une nouvelle fois, 
+#  pour les 10 prochains résultats
+#  et les 10 suivants, etc.
+#  Voilà pourquoi j'en ai fait une fonction séparée
+#  Regardez la définition de la fonction et notez, pas de signe +
+#  Cela signifie que l'éxécution de la fonction se poursuivra,
+#  même s'il y a des erreurs
+#  Ceci nous permet d'effacer certaines lignes, si elles sont présentes
+#  Et si elles n'y sont pas, on a une erreur, et on continue.
+#  Ce n'est pas compliqué
+
+function:ggc {
+# TODO : vérifier les messages sur google.fr
+#  on se débarrasse des avertissements concernant les pdf
+g/^Your browser may not have a PDF reader available.$/d
+g/^{Similar pages}$/d
+#  les lignes après "suivant", peuvent disparaître
+/^{Suivant}$/+,$d
+#  les lignes du début et les stats peuvent disparaître
+1,/Résultats [\d.]+ secondes/d
+# déplace "Essayez avec cette orthographe" à la fin. On doit le garder
+/^Essayez avec cette orthographe:$/,/^DEssayez avec cette orthographe:$/+2m$
+#  encore des messages au départ dont nous n'avons pas besoin
+1,/^Categor[iesy]+: *|/d
+1,/{See your message here...}/d
+1,/^|Liens commerciaux$/d
+# Les deux premières lignes non vides et la 1ère ligne vide peuvent disparaître
+1g/./d
+1g/./d
+1g/^$/d
+#  remt "Essayez avec cette orthographe" en tête, si la ligne existe
+/^Did you mean:$/,$m0
+}
+
+# -----------------------------------------------------------------------
+
+#  chercher dans le dictionnaire mariam-webster
+
+function+mw {
+#  Vous ne pouvez le voir, mais il y a un caratère de contrôle
+#  entre "dictionary" et "book".
+#  Ceci signifie qu'on emploie la méthode POST, au lieu de GET
+b www.m-w.com/cgi-bin/dictionarybook=Dictionary&va=~1
+<mwc
+}
+
+function:mwc {
+/^{Get the Word of the Day/,$d
+1,/^Click on the Collegiate Thesaurus tab to look up the current word/+2d
+1,/^<>| *<Go>$/-d
+1,/^One entry found for/+d
+1,/^Suggestions for/-d
+}
+
+# -----------------------------------------------------------------------
+
+#  Nettoyage d'un article de www.space.com.
+#  if(*) signifie exécute si la commande précédente a réussi
+#  if(?) signifie exécute si la commande précédente a échoué
+#  Si on obtient... ?, c'est une question
+#  signifie qu'il y a eu une erreur
+#  Idem pour while(*), until(*), etc.
+#  Il y a auusi une construction loop(n) ,pour répéter quelque chose n fois.
+
+function:sca {
+#  ce qui est à la fin peut disparaître
+/^{Add these headlines to your site}$/,$d
+#  Tout ce qui est au début, avant le mot posted, peut disparaître
+1,/^posted/d
+if(*) {
+#  la première ligne est maintenant la date, peut disparaître
+1g/ 20\d\d$/d
+#  et maintenant une ligne vide
+1g/^$/d
+}
+#  On ne s'intéresse pas à la section appelée images, insérée
+#  après le premier paragraphe de l'article
+/^| *Images\|More Stories$/d
+if(*) {
+#  détruit quelques sections avant cette ligne, et après
+?^|SCIENCE TUESDAY\||TECH WEDNESDAY$?,-d
+.,/{>>Uplink your views}/d
+if(*){
+d
+} else {
+.,/^| *More Stories$/d
+.,/^| *Related SPACE.com STORIES$/d
+.,/^| *Related Links$/d
+.,/^| *Multimedia$/d
+until(?) {
+d
+.g/^|* *{.*}$/d
+}
+}
+#  et maintenant, affiche l'article
+,p
+}
+}
+
