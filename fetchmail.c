@@ -209,7 +209,7 @@ writeAttachment(struct MHINFO *w)
 	printf("empty attachment");
 	if(w->cfn[0])
 	    printf(" %s", w->cfn);
-	printf("\n");
+	nl();
 	atname = "x";
     } else {
 	printf("attachment ");
@@ -451,7 +451,7 @@ fetchMail(int account)
 			printf(" from ");
 			printf("%s", lastMailInfo->reply);
 		    }
-		    printf("\n");
+		    nl();
 		} else if(!nattach &&	/* drop empty mail message */
 		   cw->dol -
 		   (lastMailInfo->subject != 0) -
@@ -610,7 +610,7 @@ u\twrite this message unformatted to a file, and delete it.\n");
 			    printf("mail save, %d bytes", fsize);
 			    if(exists)
 				printf(" appended");
-			    printf("\n");
+			    nl();
 			}
 		    }		/* saving to a real file */
 		    goto afterinput;

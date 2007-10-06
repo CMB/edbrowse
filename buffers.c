@@ -262,7 +262,7 @@ displayLine(int n)
     printf("%s", dirSuffix(n));
     if(endMarks == 2 || endMarks && cmd == 'l')
 	printf("$");
-    printf("\n");
+    nl();
 
     free(line);
 }				/* displayLine */
@@ -273,7 +273,7 @@ printDot(void)
     if(cw->dot)
 	displayLine(cw->dot);
     else
-	printf("empty\n");
+	i_puts(33);
 }				/* printDot */
 
 /* Get a line from standard in.  Need not be a terminal.
@@ -305,7 +305,7 @@ inputLine(void)
     if(!fgets((char *)line, sizeof (line), stdin)) {
 	if(intFlag)
 	    goto top;
-	puts("EOF");
+	i_puts(0);
 	ebClose(1);
     }
     inInput = false;
@@ -601,11 +601,11 @@ cxSwitch(int cx, bool interactive)
     context = cx;
     if(interactive && debugLevel) {
 	if(created)
-	    printf("new session\n");
+	    i_puts(34);
 	else if(cw->fileName)
 	    puts(cw->fileName);
 	else
-	    puts("no file");
+	    i_puts(1);
     }
 
 /* The next line is required when this function is called from main(),
@@ -737,7 +737,7 @@ addTextToBuffer(const pst inbuf, int length, int destl)
 	if(destl == cw->dol) {
 	    cw->nlMode = true;
 	    if(cmd != 'b' && !cw->binMode && !ismc)
-		printf("no trailing newline\n");
+		i_puts(35);
 	}
     }				/* missing newline */
     start = end = textLinesCount;
@@ -1130,7 +1130,7 @@ readFile(const char *filename, const char *post)
 		return false;
 	    if(!cw->dol) {
 		cw->dirMode = true;
-		printf("directory mode\n");
+		i_puts(36);
 	    }
 	    if(start == end) {	/* empty directory */
 		cw->dot = endRange;
@@ -1219,7 +1219,7 @@ readFile(const char *filename, const char *post)
 	fileSize = j;
 #endif
     } else if(binaryDetect & !cw->binMode) {
-	printf("binary data\n");
+	i_puts(37);
 	cw->binMode = true;
     }
 
@@ -1346,7 +1346,7 @@ readContext(int cx)
     }
     if(binaryDetect & !cw->binMode && lw->binMode) {
 	cw->binMode = true;
-	printf("binary data\n");
+	i_puts(37);
     }
     return true;
 }				/* readContext */
@@ -1447,7 +1447,7 @@ shellEscape(const char *line)
 	sprintf(subshell, "exec %s -i", sh);
 	system(subshell);
 #endif
-	printf("ok\n");
+	i_puts(38);
 	return true;
     }
 
@@ -1530,7 +1530,7 @@ shellEscape(const char *line)
  * even if the shell command failed.
  * Edbrowse succeeds if it is *able* to run the system command. */
     system(newline);
-    printf("ok\n");
+    i_puts(38);
     free(newline);
     return true;
 }				/* shellEscape */
@@ -2709,7 +2709,7 @@ if(stringEqual(line, "us")) return unstripChild();
 	allIPs();
 	endhostent();
 	if(!cw->iplist || cw->iplist[0] == -1) {
-	    puts("none");
+	    i_puts(2);
 	} else {
 	    IP32bit ip;
 	    for(i = 0; (ip = cw->iplist[i]) != NULL_IP; ++i) {
@@ -2742,22 +2742,23 @@ if(stringEqual(line, "us")) return unstripChild();
 
     if(line[0] == 'f' && line[2] == 0 &&
        (line[1] == 'd' || line[1] == 'k' || line[1] == 't')) {
-	const char *s, *t;
+	const char *s;
+	int t;
 	cmd = 'e';
 	if(!cw->browseMode) {
 	    setError("not in browse mode");
 	    return false;
 	}
 	if(line[1] == 't')
-	    s = cw->ft, t = "title";
+	    s = cw->ft, t = 40;
 	if(line[1] == 'd')
-	    s = cw->fd, t = "description";
+	    s = cw->fd, t = 41;
 	if(line[1] == 'k')
-	    s = cw->fk, t = "keywords";
+	    s = cw->fk, t = 42;
 	if(s)
 	    puts(s);
 	else
-	    printf("no %s\n", t);
+	    i_puts(t);
 	return true;
     }
 
@@ -2784,78 +2785,77 @@ if(stringEqual(line, "us")) return unstripChild();
     if(stringEqual(line, "sg")) {
 	searchStringsAll = true;
 	if(helpMessagesOn)
-	    puts("substitutions global");
+	    i_puts(3);
 	return true;
     }
 
     if(stringEqual(line, "sl")) {
 	searchStringsAll = false;
 	if(helpMessagesOn)
-	    puts("substitutions local");
+	    i_puts(4);
 	return true;
     }
 
     if(stringEqual(line, "ci")) {
 	caseInsensitive = true;
 	if(helpMessagesOn)
-	    puts("case insensitive");
+	    i_puts(5);
 	return true;
     }
 
     if(stringEqual(line, "cs")) {
 	caseInsensitive = false;
 	if(helpMessagesOn)
-	    puts("case sensitive");
+	    i_puts(6);
 	return true;
     }
 
     if(stringEqual(line, "dr")) {
 	dirWrite = 0;
 	if(helpMessagesOn)
-	    puts("directories readonly");
+	    i_puts(7);
 	return true;
     }
 
     if(stringEqual(line, "dw")) {
 	dirWrite = 1;
 	if(helpMessagesOn)
-	    puts("directories writable");
+	    i_puts(8);
 	return true;
     }
 
     if(stringEqual(line, "dx")) {
 	dirWrite = 2;
 	if(helpMessagesOn)
-	    puts("directories writable with delete");
+	    i_puts(9);
 	return true;
     }
 
     if(stringEqual(line, "hr")) {
 	allowRedirection ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
-	    puts(allowRedirection ? "http redirection" : "no http redirection");
+	    i_puts(allowRedirection + 10);
 	return true;
     }
 
     if(stringEqual(line, "sr")) {
 	sendReferrer ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
-	    puts(sendReferrer ? "send referrer" : "do not send referrer");
+	    i_puts(sendReferrer + 12);
 	return true;
     }
 
     if(stringEqual(line, "js")) {
 	allowJS ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
-	    puts(allowJS ? "javascript enabled" : "javascript disabled");
+	    i_puts(allowJS + 14);
 	return true;
     }
 
     if(stringEqual(line, "bd")) {
 	binaryDetect ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
-	    puts(binaryDetect ? "watching for binary files" :
-	       "treating binary like text");
+	    i_puts(binaryDetect + 16);
 	return true;
     }
 
@@ -2868,11 +2868,11 @@ if(stringEqual(line, "us")) return unstripChild();
 	    ftpMode = 'E';
 	if(helpMessagesOn || debugLevel >= 1) {
 	    if(ftpMode == 'F')
-		puts("passive mode");
+		i_puts(18);
 	    if(ftpMode == 'E')
-		puts("active mode");
+		i_puts(19);
 	    if(ftpMode == 0)
-		puts("passive/active mode");
+		i_puts(20);
 	}
 	return true;
     }
@@ -2880,8 +2880,7 @@ if(stringEqual(line, "us")) return unstripChild();
     if(stringEqual(line, "vs")) {
 	verifyCertificates ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
-	    puts(verifyCertificates ? "verify ssl connections" :
-	       "don't verify ssl connections (less secure)");
+	    i_puts(verifyCertificates + 21);
 	ssl_must_verify(verifyCertificates);
 	return true;
     }
@@ -2889,37 +2888,35 @@ if(stringEqual(line, "us")) return unstripChild();
     if(stringEqual(line, "hf")) {
 	showHiddenFiles ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
-	    puts(showHiddenFiles ? "show hidden files in directory mode" :
-	       "don't show hidden files in directory mode");
+	    i_puts(showHiddenFiles + 23);
 	return true;
     }
 
     if(stringEqual(line, "tn")) {
 	textAreaDosNewlines ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
-	    puts(textAreaDosNewlines ? "text areas use dos newlines" :
-	       "text areas use unix newlines");
+	    i_puts(textAreaDosNewlines + 25);
 	return true;
     }
 
     if(stringEqual(line, "eo")) {
 	endMarks = 0;
 	if(helpMessagesOn)
-	    puts("end markers off");
+	    i_puts(27);
 	return true;
     }
 
     if(stringEqual(line, "el")) {
 	endMarks = 1;
 	if(helpMessagesOn)
-	    puts("end markers on listed lines");
+	    i_puts(28);
 	return true;
     }
 
     if(stringEqual(line, "ep")) {
 	endMarks = 2;
 	if(helpMessagesOn)
-	    puts("end markers on");
+	    i_puts(29);
 	return true;
     }
 
@@ -3572,10 +3569,13 @@ runCommand(const char *line)
 	    if(!cxActive(cx))
 		return false;
 	    s = sessionList[cx].lw->fileName;
-	    printf("%s", s ? s : "no file");
+	    if(s)
+		printf("%s", s);
+	    else
+		i_printf(1);
 	    if(sessionList[cx].lw->binMode)
-		printf(" [binary]");
-	    printf("\n");
+		i_printf(39);
+	    nl();
 	    return true;
 	}			/* another session */
 	if(first) {
@@ -3591,13 +3591,16 @@ runCommand(const char *line)
 	    cw->fileName = cloneString(line);
 	}
 	s = cw->fileName;
-	printf("%s", s ? s : "no file");
+	if(s)
+	    printf("%s", s);
+	else
+	    i_printf(1);
 	if(cw->binMode)
-	    printf(" [binary]");
-	printf("\n");
+	    i_printf(39);
+	nl();
 	return true;
     }
-    /* f */
+
     if(cmd == 'w') {
 	if(cx) {		/* write to another buffer */
 	    if(writeMode == O_APPEND) {
@@ -3731,7 +3734,7 @@ runCommand(const char *line)
 	    return true;
 	}
 	if(!first) {
-	    printf("session %d\n", context);
+	    i_printf(43, context);
 	    return true;
 	}
 /* more e to come */
@@ -3784,9 +3787,9 @@ runCommand(const char *line)
 	    debugPrint(5, "click %d dclick %d over %d", click, dclick, over);
 	    if(jsgo & jsdead) {
 		if(nogo)
-		    puts("javascript is disabled, no action taken");
+		    i_puts(30);
 		else
-		    puts("javascript is disabled, going straight to the url");
+		    i_puts(31);
 		jsgo = jsh = false;
 	    }
 	    line = allocatedLine = h;
@@ -4036,8 +4039,7 @@ runCommand(const char *line)
 	    nzFree(subj);
 	    nzFree(body);
 	    if(j)
-		printf
-		   ("SendMail link.  Compose your mail, type sm to send, then ^ to get back.\n");
+		i_puts(44);
 	} else {
 	    cw->fileName = cloneString(line);
 	    if(isSQL(line))
@@ -4131,7 +4133,7 @@ runCommand(const char *line)
 		icmd = cmd = 'b';
 		first = *line;
 		if(intFlag) {
-		    puts("redirection interrupted by user");
+		    i_puts(32);
 		    return true;
 		}
 		goto rebrowse;
@@ -4611,7 +4613,7 @@ updateFieldInBuffer(int tagno, const char *newtext, int notify, bool required)
 	if(notify == 1)
 	    displayLine(ln);
 	if(notify == 2)
-	    printf("line %d has been updated\n", ln);
+	    i_printf(45, ln);
 	cw->firstOpMode = undoable = true;
 	return;
     }

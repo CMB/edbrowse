@@ -2375,7 +2375,7 @@ infShow(int tagno, const char *search)
     }				/* text area */
     if(t->name)
 	printf(" %s", t->name);
-    printf("\n");
+    nl();
     if(t->itype != INP_SELECT)
 	return;
 

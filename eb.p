@@ -78,6 +78,11 @@ bool httpConnect(const char *from, const char *url) ;
 bool ftpConnect(const char *url) ;
 void allIPs(void) ;
 
+/* sourcefile=messages.c */
+void selectLanguage(void) ;
+void i_puts(int msg) ;
+void i_printf(int msg, ...) ;
+
 /* sourcefile=sendmail.c */
 bool loadAddressBook(void) ;
 const char * reverseAlias(const char *reply) ;
@@ -180,6 +185,7 @@ bool isquote(char c) ;
 void varargLocals(va_list p, const char *msg, long *locals) ;
 void errorPrint(const char *msg, ...) ;
 void debugPrint(int lev, const char *msg, ...) ;
+void nl(void) ;
 void setError(const char *msg, ...) ;
 void showError(void) ;
 void showErrorConditional(char cmd) ;

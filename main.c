@@ -1017,6 +1017,8 @@ main(int argc, char **argv)
     int cx, account;
     bool rc, doConfig = true;
 
+    selectLanguage();
+
     ttySaveSettings();
 
 /* Let's everybody use my malloc and free routines */

@@ -624,10 +624,16 @@ debugPrint(int lev, const char *msg, ...)
     varargLocals(p, msg, a);
     va_end(p);
     printf(msg, a[0], a[1], a[2], a[3], a[4]);
-    printf("\n");
+    nl();
     if(lev == 0 && !memcmp(msg, "warning", 7))
 	eeCheck();
 }				/* debugPrint */
+
+void
+nl(void)
+{
+puts("");
+} /* nl */
 
 char errorMsg[4000];
 /* Show the error message, not just the question mark, after these commands. */
@@ -699,7 +705,7 @@ browseError(const char *msg, ...)
     } else
 	printf("browse error: ");
     printf(msg, a[0], a[1], a[2], a[3], a[4]);
-    printf("\n");
+    nl();
     browseLocal = 2;
 }				/* browseError */
 
@@ -719,7 +725,7 @@ runningError(const char *msg, ...)
 	cw->labels[4] = browseLine;
     }
     printf(msg, a[0], a[1], a[2], a[3], a[4]);
-    printf("\n");
+    nl();
     browseLocal = 2;
 }				/* runningError */
 

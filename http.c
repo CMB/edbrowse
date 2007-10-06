@@ -140,7 +140,7 @@ readSocket(SSL * ssl, int fh)
 	isprintByte = true;
     }				/* loop reading data */
     if(isprintByte)
-	printf("\n");
+	nl();
 
 /* Put it all together */
     serverData = data = allocMem(len + 1);

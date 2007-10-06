@@ -40,6 +40,8 @@ main.o
 makefile
 makefile.bsd
 man-edbrowse-debian.1
+messages.c
+messages.o
 sample.ebrc
 sendmail.c
 sendmail.o
