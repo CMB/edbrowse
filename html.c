@@ -374,21 +374,19 @@ get_js_events(void)
 /* Some warnings about some handlers that we just don't "handle" */
     if(handlerPresent(ev, "onkeypress") ||
        handlerPresent(ev, "onkeyup") || handlerPresent(ev, "onkeydown"))
-	browseError
-	   ("warning, javascript cannot be invoked through keystroke events");
+	browseError(433);
     if(handlerPresent(ev, "onfocus") || handlerPresent(ev, "onblur"))
-	browseError("javascript cannot be invoked through focus or blur");
+	browseError(434);
     if(handlerPresent(ev, "ondblclick"))
 	runningError("warning, javascript cannot be invoked by a double click");
     if(handlerPresent(ev, "onclick")) {
 	if((action == TAGACT_A || action == TAGACT_AREA || action == TAGACT_FRAME) && topTag->href || action == TAGACT_INPUT && (itype <= INP_SUBMIT || itype >= INP_RADIO)) ;	/* ok */
 	else
-	    browseError
-	       ("warning, onclick code is not associated with a hyperlink or button");
+	    browseError(435);
     }
     if(handlerPresent(ev, "onchange")) {
 	if(action != TAGACT_INPUT && action != TAGACT_SELECT || itype == INP_TA)
-	    browseError("onchange handler is not accessible");
+	    browseError(436);
     }
 /* Other warnings might be appropriate, but I'm going to assume this
  * is valid javascript, and you won't put an onsubmit function on <P> etc */
@@ -527,11 +525,11 @@ formControl(bool namecheck)
 	topTag->controller = currentForm;
 	fo = currentForm->jv;
     } else if(itype != INP_BUTTON)
-	browseError("%s is not part of a fill-out form", topTag->info->desc);
+	browseError(437, topTag->info->desc);
 
     htmlName();
     if(namecheck && !topTag->name)
-	browseError("%s does not have a name", topTag->info->desc);
+	browseError(438, topTag->info->desc);
 
     if(fo) {
 	topTag->jv = e =
@@ -601,7 +599,7 @@ htmlForm(void)
 	if(stringEqualCI(a, "post"))
 	    topTag->post = true;
 	else if(!stringEqualCI(a, "get"))
-	    browseError("unrecognized method, plese use GET or POST");
+	    browseError(439);
 	nzFree(a);
     }
 
@@ -610,8 +608,7 @@ htmlForm(void)
 	if(stringEqualCI(a, "multipart/form-data"))
 	    topTag->mime = true;
 	else if(!stringEqualCI(a, "application/x-www-form-urlencoded"))
-	    browseError
-	       ("unrecognized enctype, plese use multipart/form-data or application/x-www-form-urlencoded");
+	    browseError(440);
 	nzFree(a);
     }
 
@@ -625,7 +622,7 @@ htmlForm(void)
 	    else if(stringEqualCI(prot, "https"))
 		topTag->secure = true;
 	    else if(!stringEqualCI(prot, "http"))
-		browseError("form cannot submit using protocol %s", prot);
+		browseError(441, prot);
 	}
     }
 
@@ -670,7 +667,7 @@ htmlInput(void)
 	caseShift(s, 'l');
 	n = stringInList(inp_types, s);
 	if(n < 0) {
-	    browseError("unrecognized input type %s", s);
+	    browseError(442, s);
 	    n = INP_TEXT;
 	}
     }
@@ -700,7 +697,7 @@ htmlInput(void)
 	    }
 	    sprintf(namebuf, "|%s|", topTag->name);
 	    if(strstr(radioChecked, namebuf)) {
-		browseError("multiple radio buttons have been selected");
+		browseError(443);
 		return;
 	    }
 	    stringAndString(&radioChecked, &radioChecked_l, namebuf + 1);
@@ -1005,19 +1002,18 @@ findOpenTag(const char *name)
 	if(closing) {
 	    if(match)
 		return t;
-	    browseError("%s is closed inside %s", desc, t->info->desc);
+	    browseError(444, desc, t->info->desc);
 	    continue;
 	}
 	if(!match)
 	    continue;
 	if(!(t->info->nest & 2))
-	    browseError("%s begins in the middle of %s", desc, desc);
+	    browseError(445, desc, desc);
 	return t;
     }				/* loop */
 
     if(closing)
-	browseError("an unexpected closure of %s, which was never opened",
-	   desc);
+	browseError(446, desc);
     return NULL;
 }				/* findOpenTag */
 
@@ -1234,7 +1230,7 @@ encodeTags(char *html)
 	    currentTA = 0;
 	    if(slash)
 		continue;
-	    browseError("a text area begins in the middle of a text area");
+	    browseError(447);
 	}
 
 	if(!action)
@@ -1274,7 +1270,7 @@ encodeTags(char *html)
 	if(ti->bits & TAG_CLOSEA && currentA &&
 	   (action != TAGACT_A || !slash) &&
 	   (a_text || action <= TAGACT_OPTION)) {
-	    browseError("%s appears inside an anchor", ti->desc);
+	    browseError(448, ti->desc);
 	    stringAndString(&new, &l, "\2000}");
 	    currentA->balanced = true;
 	    currentA = 0;
@@ -1297,7 +1293,7 @@ encodeTags(char *html)
 	    if(v->action != action &&
 	       !(v->action == TAGACT_OPTION && action == TAGACT_SELECT) ||
 	       action != TAGACT_OPTION && !slash)
-		browseError("%s contains html tags", v->info->desc);
+		browseError(449, v->info->desc);
 	    if(!(ti->bits & TAG_CLOSEA))
 		continue;
 /* close off the title or option */
@@ -1316,8 +1312,7 @@ encodeTags(char *html)
 		    for(y = a; *y; ++y)
 			if(*y == ',')
 			    *y = ' ';
-		    browseError
-		       ("option cannot contain a comma when it is part of a multiple select");
+		    browseError(450);
 		}
 		spaceCrunch(a, true, true);
 		*ptr = a;
@@ -1329,7 +1324,7 @@ encodeTags(char *html)
 
 		if(currentOpt) {
 		    if(!*a) {
-			browseError("empty option");
+			browseError(451);
 		    } else {
 			if(!v->value)
 			    v->value = cloneString(a);
@@ -1390,7 +1385,7 @@ encodeTags(char *html)
 	    if(slash)
 		continue;
 	    if(cw->ft)
-		browseError("multiple titles");
+		browseError(452);
 	    offset = l;
 	    currentTitle = t;
 	    continue;
@@ -1483,7 +1478,7 @@ encodeTags(char *html)
 		}
 	    }
 	    if(j < 0)
-		browseError("%s is not inside a list", ti->desc);
+		browseError(453, ti->desc);
 	    if(!retainTag)
 		continue;
 	    hnum[0] = '\r';
@@ -1506,7 +1501,7 @@ encodeTags(char *html)
 		break;
 	}
 	    if(v == (struct htmlTag *)&htmlStack)
-		browseError("%s is not inside a list", ti->desc);
+		browseError(453, ti->desc);
 	    goto nop;
 
 	case TAGACT_TABLE:
@@ -1528,7 +1523,7 @@ encodeTags(char *html)
 
 	case TAGACT_TR:
 	    if(!intable) {
-		browseError("%s is not inside a table", ti->desc);
+		browseError(454, ti->desc);
 		continue;
 	    }
 /* This really doesn't work for tables inside tables */
@@ -1548,7 +1543,7 @@ encodeTags(char *html)
 
 	case TAGACT_TD:
 	    if(!inrow) {
-		browseError("%s is not inside a table row", ti->desc);
+		browseError(455, ti->desc);
 		continue;
 	    }
 	    if(slash)
@@ -1662,7 +1657,7 @@ encodeTags(char *html)
 	    if(slash)
 		continue;
 	    if(!currentSel) {
-		browseError("option appears outside a select statement");
+		browseError(456);
 		continue;
 	    }
 	    currentOpt = t;
@@ -1672,7 +1667,7 @@ encodeTags(char *html)
 	    t->value = htmlAttrVal(topAttrib, "value");
 	    if(htmlAttrPresent(topAttrib, "selected")) {
 		if(currentSel->lic && !currentSel->multiple)
-		    browseError("multiple options are selected");
+		    browseError(457);
 		else
 		    t->checked = t->rchecked = true, ++currentSel->lic;
 	    }
@@ -1923,7 +1918,7 @@ encodeTags(char *html)
 	    continue;
 
 	default:
-	    browseError("unprocessed tag action %d", action);
+	    browseError(458, action);
 	    continue;
 	}			/* switch */
 
@@ -1987,7 +1982,7 @@ encodeTags(char *html)
 	foreach(t, htmlStack) {
 	    browseLine = t->ln;
 	    if(t->info->nest && !t->slash && !t->balanced) {
-		browseError("%s is not closed at eof", t->info->desc);
+		browseError(459, t->info->desc);
 		break;
 	    }
 
@@ -2011,7 +2006,7 @@ encodeTags(char *html)
 		    break;
 	    }
 	    if(v == (struct htmlTag *)&htmlStack) {	/* end of list */
-		browseError("label %s not found", a);
+		browseError(233, a);
 		break;
 	    }
 	}			/* loop over all tags */
@@ -3261,7 +3256,7 @@ javaOpensWindow(const char *href, const char *name)
     const char *a;
 
     if(!href || !*href) {
-	browseError("java is opening a blank window");
+	browseError(460);
 	return;
     }
 

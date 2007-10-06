@@ -86,7 +86,7 @@ void setError(int msg, ...) ;
 void showError(void) ;
 void showErrorConditional(char cmd) ;
 void showErrorAbort(void) ;
-void browseError(const char *msg, ...) ;
+void browseError(int msg, ...) ;
 void runningError(const char *msg, ...) ;
 
 /* sourcefile=sendmail.c */

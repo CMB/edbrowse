@@ -339,7 +339,7 @@ findEndScript(const char *h, const char *tagname,
     end = strstrCI(s, look);
     if(!end) {
 	rc = false;
-	browseError("no closing %s", look);
+	browseError(432, look);
 	end = (char *)h + strlen(h);
     } else if(is_js) {
 /* Check for document.write("</script>");

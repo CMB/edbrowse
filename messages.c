@@ -242,7 +242,7 @@ static const char *englishMessages[] = {
     "cannot browse an empty file",
     "this doesn't look like browsable text",
     "already browsing",
-    "label %s not found",
+    "label %s is not found",
     "i not available in browse mode",
     "cannot run an insert command from an edbrowse function",
     "cannot read text into a database session",
@@ -441,6 +441,35 @@ static const char *englishMessages[] = {
     "check constraint violated",
     "database timeout",
     "cannot modify a view",
+    "no closing %s",
+    "warning, javascript cannot be invoked through keystroke events",
+    "javascript cannot be invoked through focus or blur",
+    "warning, onclick code is not associated with a hyperlink or button",
+    "onchange handler is not accessible",
+    "%s is not part of a fill-out form",
+    "%s does not have a name",
+    "unrecognized method, plese use GET or POST",
+    "unrecognized enctype, plese use multipart/form-data or application/x-www-form-urlencoded",
+    "form cannot submit using protocol %s",
+    "unrecognized input type %s",
+    "multiple radio buttons have been selected",
+    "%s is closed inside %s",
+    "%s begins in the middle of %s",
+    "an unexpected closure of %s, which was never opened",
+    "a text area begins in the middle of a text area",
+    "%s appears inside an anchor",
+    "%s contains html tags",
+    "option cannot contain a comma when it is part of a multiple select",
+    "empty option",
+    "multiple titles",
+    "%s is not inside a list",
+    "%s is not inside a table",
+    "%s is not inside a table row",
+    "option appears outside a select statement",
+    "multiple options are selected",
+    "unprocessed tag action %d",
+    "%s is not closed at eof",
+    "java is opening a blank window",
 };
 
 static const char *frenchMessages[] = {
@@ -549,7 +578,7 @@ showErrorAbort(void)
 }				/* showErrorAbort */
 
 void
-browseError(const char *msg, ...)
+browseError(int msg, ...)
 {
     va_list p;
     if(ismc)
@@ -562,7 +591,7 @@ browseError(const char *msg, ...)
     } else
 	i_printf(65);
     va_start(p, msg);
-    vprintf(msg, p);
+    vprintf(messageArray[msg], p);
     va_end(p);
     nl();
     browseLocal = 2;

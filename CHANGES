@@ -1,5 +1,10 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.3.1:
+The error and output messages of edbrowse have been internationalized.
+Set LANG= to specify the language.
+At present, LANG=en and LANG=fr are supported.  (English and French)
+
 3.2.1:
 This version introduces sql database access,
 through Informix esql (tested) and odbc (not tested).
