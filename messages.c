@@ -8,6 +8,7 @@
 #include "eb.h"
 
 /* Arrays of messages, one array for each language. */
+
 static const char *englishMessages[] = {
     "EOF",
     "no file",
@@ -39,7 +40,7 @@ static const char *englishMessages[] = {
     "end markers off",
     "end markers on listed lines",
     "end markers on",
-    "javascript is disabled, no action taken",
+    "javascript disabled, no action taken",
     "javascript is disabled, going straight to the url",
     "redirection interrupted by user",
     "empty",
@@ -213,7 +214,7 @@ static const char *englishMessages[] = {
     "please enter k[a-z]",
     "cannot label an entire range",
     "backing up 0 is invalid",
-    "session 0 is invalid",
+    "spurious",
     "unexpected text after the q command",
     "cannot change the name of a directory",
     "cannot change the name of a table",
@@ -298,8 +299,8 @@ static const char *englishMessages[] = {
     "secure proxy not yet implemented",
     "cannot identify %s on the network",
     "the %s protocol is not supported by edbrowse, and is not included in the mime types in your config file",
-    "user name too long, limit %d characters",
-    "password too long, limit %d characters",
+    "spurious",
+    "spurious",
     "cannot connect to %s",
     "cannot establish a secure connection to %s, error %d",
     "The certificate for host %s could not be verified - SSL connection aborted",
@@ -480,7 +481,7 @@ static const char *englishMessages[] = {
     "could not fetch local javascript, %s",
     "could not fetch javascript from %s, code %d",
     "could not fetch javascript, %s",
-    "javascript disabled, skipping the onclick code",
+    "spurious",
     "javascript disabled, skipping the onchange code",
     "javascript disabled, no action taken",
     "javascript disabled, skipping the onreset code",

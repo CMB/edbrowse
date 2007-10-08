@@ -42,8 +42,10 @@ makefile
 makefile.bsd
 man-edbrowse-debian.1
 messages.c
+messages.h
 messages.o
 sample.ebrc
+sample_fr.ebrc
 sendmail.c
 sendmail.o
 ssl-certs

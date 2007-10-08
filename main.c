@@ -102,15 +102,15 @@ junkSubject(const char *s, char key)
     char *new;
     long exp = nowday;
     if(!s || !*s) {
-	i_puts(46);
+	i_puts(MSG_NOSUBJECT);
 	return false;
     }
     if(!cfgcopy) {
-	i_puts(47);
+	i_puts(MSG_NOCONFIG);
 	return false;
     }
     if(!subjstart) {
-	i_puts(48);
+	i_puts(MSG_NOSUBJFILTER);
 	return false;
     }
     if(key == 'j')
@@ -981,7 +981,7 @@ catchSig(int n)
 {
     intFlag = true;
     if(inInput)
-	i_puts(49);
+	i_puts(MSG_interrupt);
 /* If we were reading from a file, or socket, this signal should
  * cause the read to fail.  Check for intFlag, so we know it was
  * interrupted, and not an io failure.
@@ -1225,7 +1225,7 @@ edbrowse  [-e] [-d?] file1 file2 ...");
 	++cx;
 	cxSwitch(cx, false);
 	runEbFunction("init");
-	i_puts(50);
+	i_puts(MSG_READY);
     }
     if(cx > 1)
 	cxSwitch(1, false);
@@ -1236,7 +1236,7 @@ edbrowse  [-e] [-d?] file1 file2 ...");
 	pst p = inputLine();
 	copyPstring(saveline, p);
 	if(perl2c((char *)p))
-	    i_puts(51);
+	    i_puts(MSG_ENTERNULL);
 	else
 	    edbrowseCommand((char *)p, false);
 	copyPstring(linePending, saveline);
@@ -1295,7 +1295,7 @@ runEbFunction(const char *line)
 /* Separate function name and arguments */
     spaceCrunch(linecopy, true, false);
     if(linecopy[0] == 0) {
-	setError(376);
+	setError(MSG_NOFUNCTION);
 	goto fail;
     }
     memset(args, 0, sizeof (args));
@@ -1306,14 +1306,14 @@ runEbFunction(const char *line)
 	*t = 0;
     for(s = linecopy; *s; ++s)
 	if(!isalnumByte(*s)) {
-	    setError(377);
+	    setError(MSG_BADFUNCTIONMAME);
 	    goto fail;
 	}
     for(j = 0; ebScript[j]; ++j)
 	if(stringEqual(linecopy, ebScriptName[j] + 1))
 	    break;
     if(!ebScript[j]) {
-	setError(378, linecopy);
+	setError(MSG_NOSUCHFUNCTION, linecopy);
 	goto fail;
     }
 
@@ -1327,7 +1327,7 @@ runEbFunction(const char *line)
     j = 0;
     for(s = t; s; s = t) {
 	if(++j >= 10) {
-	    setError(379);
+	    setError(MSG_MANYARGS);
 	    goto fail;
 	}
 	args[j] = ++s;
@@ -1342,7 +1342,7 @@ runEbFunction(const char *line)
 
     while(code = *ip) {
 	if(intFlag) {
-	    setError(157);
+	    setError(MSG_INTERRUPTED);
 	    goto fail;
 	}
 	endl = strchr(ip, '\n');
@@ -1424,7 +1424,7 @@ runEbFunction(const char *line)
 		j = *++s - '0';
 		if(j) {
 		    if(!args[j]) {
-			setError(380, j);
+			setError(MSG_NOARGUMENT, j);
 			nzFree(new);
 			goto fail;
 		    }
@@ -1479,7 +1479,7 @@ bufferToProgram(const char *cmd, const char *suffix, bool trailPercent)
 /* pipe the buffer into the program */
 	f = popen(cmd, "w");
 	if(!f) {
-	    setError(381, cmd, errno);
+	    setError(MSG_NOSPAWN, cmd, errno);
 	    return false;
 	}
 	if(!unfoldBuffer(context, false, &buf, &buflen)) {
@@ -1498,7 +1498,7 @@ bufferToProgram(const char *cmd, const char *suffix, bool trailPercent)
 	} else {
 	    f = fopen(edbrowseTempFile, "w");
 	    if(!f) {
-		setError(382, edbrowseTempFile, errno);
+		setError(MSG_NOTEMPCREATE2, edbrowseTempFile, errno);
 		*u = 0;
 		return false;
 	    }
@@ -1533,7 +1533,7 @@ newTableDescriptor(const char *name)
 {
     struct DBTABLE *td;
     if(maxTables == MAXDBT) {
-	setError(383, MAXDBT);
+	setError(MSG_MANYTABLES, MAXDBT);
 	return 0;
     }
     td = dbtables + maxTables++;

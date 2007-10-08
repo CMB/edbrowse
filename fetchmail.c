@@ -168,7 +168,7 @@ getFileName(const char *defname, bool isnew)
     int l;
     char *p;
     while(true) {
-	i_printf(86);
+	i_printf(MSG_FILENAME);
 	if(defname)
 	    printf("[%s] ", defname);
 	if(!fgets(buf, sizeof (buf), stdin))
@@ -187,7 +187,7 @@ getFileName(const char *defname, bool isnew)
 	} else
 	    defname = 0;
 	if(isnew && fileTypeByName(p, false)) {
-	    i_printf(87, p);
+	    i_printf(MSG_FILEEXISTS, p);
 	    defname = 0;
 	    continue;
 	}
@@ -204,15 +204,15 @@ writeAttachment(struct MHINFO *w)
     if((ismc | ignoreImages) && w->atimage)
 	return;			/* image ignored */
     if(w->error64 == BAD64)
-	i_printf(88);
+	i_printf(MSG_ABBREVIATED);
     if(w->start == w->end) {
-	i_printf(89);
+	i_printf(MSG_EMPTYATT);
 	if(w->cfn[0])
 	    printf(" %s", w->cfn);
 	nl();
 	atname = "x";
     } else {
-	i_printf(90);
+	i_printf(MSG_ATT);
 	atname = getFileName((w->cfn[0] ? w->cfn : 0), true);
 /* X is like x, but deletes all future images */
 	if(stringEqual(atname, "X")) {
@@ -226,12 +226,12 @@ writeAttachment(struct MHINFO *w)
 	    if(!sessionList[cx].lw)
 		break;
 	if(cx == MAXSESSION) {
-	    i_printf(91);
+	    i_printf(MSG_NOBUFFERATT);
 	} else {
 	    cxSwitch(cx, false);
-	    i_printf(43, cx);
+	    i_printf(MSG_SESSIONd, cx);
 	    if(!addTextToBuffer((pst) w->start, w->end - w->start, 0))
-		i_printf(92, cx);
+		i_printf(MSG_NOCOPYATT, cx);
 	    else if(w->cfn[0])
 		cw->fileName = cloneString(w->cfn);
 	    cxSwitch(svcx, false);	/* back to where we were */
@@ -239,13 +239,13 @@ writeAttachment(struct MHINFO *w)
     } else if(!stringEqual(atname, "x")) {
 	int fh = open(atname, O_WRONLY | O_BINARY | O_CREAT | O_TRUNC, 0666);
 	if(fh < 0) {
-	    i_printf(93, atname);
+	    i_printf(MSG_NOSAVEATT, atname);
 	    if(ismc)
 		exit(1);
 	} else {
 	    int nb = w->end - w->start;
 	    if(write(fh, w->start, nb) < nb) {
-		i_printf(94, atname);
+		i_printf(MSG_NOWRITEATT, atname);
 		if(ismc)
 		    exit(1);
 	    }
@@ -321,7 +321,7 @@ fetchMail(int account)
 	   serverLine);
     nmsgs = atoi(serverLine + 4);
     if(!nmsgs) {
-	i_puts(95);
+	i_puts(MSG_NOMAIL);
 	serverClose();
 	exit(0);
     }
@@ -332,7 +332,7 @@ fetchMail(int account)
 /* the conect will drop when the program exits */
     }
 
-    i_printf(96, nmsgs);
+    i_printf(MSG_DMESSAGES, nmsgs);
     if(zapMail && nmsgs > 300)
 	nmsgs = 300;
 
@@ -437,18 +437,18 @@ fetchMail(int account)
 		    if(*redirect == '-')
 			++redirect, key = 'u';
 		    if(stringEqual(redirect, "x"))
-			i_puts(77);
+			i_puts(MSG_JUNK);
 		    else
 			printf("> %s\n", redirect);
 		} else if((mailIsSpam | mailIsBlack) && spamCan) {
 		    redirect = spamCan;
 		    key = 'u';
-		    i_printf(97);
+		    i_printf(MSG_SPAM);
 		    if(lastMailInfo->from[0]) {
-			i_printf(98);
+			i_printf(MSG_FROM);
 			printf("%s", lastMailInfo->from);
 		    } else if(lastMailInfo->reply[0]) {
-			i_printf(98);
+			i_printf(MSG_FROM);
 			printf("%s", lastMailInfo->reply);
 		    }
 		    nl();
@@ -458,7 +458,7 @@ fetchMail(int account)
 		   (lastMailInfo->from != 0) -
 		   (lastMailInfo->reply != 0) <= 1) {
 		    redirect = "x";
-		    i_puts(33);
+		    i_puts(MSG_EMPTY);
 		}
 	    }
 	    if(redirect)
@@ -493,24 +493,25 @@ fetchMail(int account)
 
 			switch (key) {
 			case 'q':
-			    i_puts(78);
+			    i_puts(MSG_QUIT);
 			    serverClose();
 			case 'x':
 			    exit(0);
 			case 'n':
-			    i_puts(79);
+			    i_puts(MSG_NEXT);
 			    goto afterinput;
 			case 'd':
-			    i_puts(80);
+			    i_puts(MSG_DELETE);
 			    delflag = true;
 			    goto afterinput;
 			case 'i':
-			    i_puts(81);
+			    i_puts(MSG_IPDELETE);
 			    if(!cw->iplist || cw->iplist[0] == -1) {
 				if(passMail)
-				    i_puts(82);
+				    i_puts(MSG_POPTION);
 				else
-				    i_puts(ipbFile ? 2 : 83);
+				    i_puts(ipbFile ? MSG_NONE :
+				       MSG_NOBLACKLIST);
 			    } else {
 				IP32bit addr;
 				for(k = 0; (addr = cw->iplist[k]) != NULL_IP;
@@ -528,24 +529,24 @@ fetchMail(int account)
 			    goto afterinput;
 			case 'j':
 			case 'J':
-			    i_puts(77);
+			    i_puts(MSG_JUNK);
 			    if(!junkSubject(lastMailInfo->subject, key))
 				continue;
 			    delflag = true;
 			    goto afterinput;
 			case ' ':
 			    if(displine > cw->dol)
-				i_puts(84);
+				i_puts(MSG_ENDMAIL);
 			    goto nextpage;
 			case '?':
-			    i_puts(99);
+			    i_puts(MSG_MAILHELP);
 			    continue;
 			case 'k':
 			case 'w':
 			case 'u':
 			    break;
 			default:
-			    i_puts(85);
+			    i_puts(MSG_NYI);
 			    continue;
 			}	/* switch */
 		    }
@@ -565,7 +566,7 @@ fetchMail(int account)
 			   open(atname, O_WRONLY | O_TEXT | O_CREAT | O_APPEND,
 			   0666);
 			if(fh < 0) {
-			    i_printf(100, atname);
+			    i_printf(MSG_NOCREATE, atname);
 			    goto savemail;
 			}
 			if(exists)
@@ -575,7 +576,7 @@ fetchMail(int account)
 			if(key == 'u' || unformatMail) {
 			    if(write(fh, exact, exact_l) < exact_l) {
 			      badsave:
-				i_printf(101, atname);
+				i_printf(MSG_NOWRITE, atname);
 				close(fh);
 				goto savemail;
 			    }
@@ -596,9 +597,9 @@ fetchMail(int account)
 				writeAttachments(lastMailInfo);
 			}	/* unformat or format */
 			if(atname != spamCan) {
-			    i_printf(102, fsize);
+			    i_printf(MSG_MAILSAVED, fsize);
 			    if(exists)
-				i_printf(103);
+				i_printf(MSG_APPENDED);
 			    nl();
 			}
 		    }		/* saving to a real file */
@@ -710,11 +711,16 @@ emailTest(void)
 	    continue;
 	if(*q++ != ':')
 	    continue;
-	for(n = 0; mhwords[n]; ++n)
-	    if(memEqualCI(mhwords[n], p, q - p))
-		break;
-	if(mhwords[n])
+/* X-Whatever is a mail header word */
+	if(q - p >= 8 && p[1] == '-' && toupper(p[0]) == 'X') {
 	    ++k;
+	} else {
+	    for(n = 0; mhwords[n]; ++n)
+		if(memEqualCI(mhwords[n], p, q - p))
+		    break;
+	    if(mhwords[n])
+		++k;
+	}
 	if(k >= 4 && k * 2 >= j)
 	    return true;
     }				/* loop over lines */
@@ -755,7 +761,7 @@ unpack64(struct MHINFO *w)
 	if(equals) {
 	    if(c == '=')
 		continue;
-	    runningError(461);
+	    runningError(MSG_ATTAFTERCHARS);
 	    w->error64 = EXTRA64;
 	    break;
 	}
@@ -765,7 +771,7 @@ unpack64(struct MHINFO *w)
 	}
 	val = unb64(c);
 	if(val & 64) {
-	    runningError(462);
+	    runningError(MSG_ATTBAD64);
 	    w->error64 = BAD64;
 	    break;
 	}

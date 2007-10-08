@@ -656,12 +656,12 @@ fileIntoMemory(const char *filename, char **data, int *len)
     char *buf;
     char ftype = fileTypeByName(filename, false);
     if(ftype && ftype != 'f') {
-	setError(384, filename);
+	setError(MSG_REGULARFILE, filename);
 	return false;
     }
     fh = open(filename, O_RDONLY | O_BINARY);
     if(fh < 0) {
-	setError(223, filename);
+	setError(MSG_NOOPEN, filename);
 	return false;
     }
     length = fileSizeByName(filename);
@@ -670,7 +670,7 @@ fileIntoMemory(const char *filename, char **data, int *len)
 	return false;
     }				/* should never hapen */
     if(length > maxFileSize) {
-	setError(385);
+	setError(MSG_LARGEFILE);
 	close(fh);
 	return false;
     }
@@ -680,7 +680,7 @@ fileIntoMemory(const char *filename, char **data, int *len)
 	n = read(fh, buf, length);
     close(fh);			/* don't need that any more */
     if(n < length) {
-	setError(386, filename);
+	setError(MSG_NOREAD2, filename);
 	free(buf);
 	return false;
     }
@@ -752,7 +752,7 @@ fileTypeByName(const char *name, bool showlink)
     char c;
     int mode;
     if(lstat(name, &buf)) {
-	setError(387, name);
+	setError(MSG_NOACCESS, name);
 	return 0;
     }
     mode = buf.st_mode & S_IFMT;
@@ -787,7 +787,7 @@ fileSizeByName(const char *name)
 {
     struct stat buf;
     if(stat(name, &buf)) {
-	setError(387, name);
+	setError(MSG_NOACCESS, name);
 	return -1;
     }
     return buf.st_size;
@@ -798,7 +798,7 @@ fileTimeByName(const char *name)
 {
     struct stat buf;
     if(stat(name, &buf)) {
-	setError(387, name);
+	setError(MSG_NOACCESS, name);
 	return -1;
     }
     return buf.st_mtime;
@@ -937,7 +937,7 @@ nextScanFile(const char *base)
 	    base = ".";
 	df = opendir(base);
 	if(!df) {
-	    i_puts(62);
+	    i_puts(MSG_NODIRNOLIST);
 	    return 0;
 	}
     }
@@ -1080,7 +1080,7 @@ envFile(const char *line, const char **expanded)
 	    *t = 0;
 	    value = getenv(dollar + 1);
 	    if(!value) {
-		setError(388, dollar + 1);
+		setError(MSG_NOENVVAR, dollar + 1);
 		return false;
 	    }
 	    if(dollar + strlen(value) >= line1 + sizeof (line1) - 1)
@@ -1114,7 +1114,7 @@ envFile(const char *line, const char **expanded)
 	return true;
     }
     if(cut && dollar < cut) {
-	setError(389);
+	setError(MSG_EARLYEXPAND);
 	return false;
     }
 
@@ -1122,7 +1122,7 @@ envFile(const char *line, const char **expanded)
     if(cut) {
 	*cut = 0;
 	if(cut > line1 && fileTypeByName(line1, false) != 'd') {
-	    setError(390, line1);
+	    setError(MSG_NOACCESSDIR, line1);
 	    return false;
 	}
     }
@@ -1133,11 +1133,11 @@ envFile(const char *line, const char **expanded)
     cc = badBrackets = false;
     while(c = *s) {
 	if(t >= re + sizeof (re) - 3) {
-	    setError(391);
+	    setError(MSG_SHELLPATTERNLONG);
 	    return false;
 	}
 	if(c == '\\') {
-	    setError(392);
+	    setError(MSG_EXPANDBACK);
 	    return false;
 	}
 /* things we need to escape */
@@ -1163,14 +1163,14 @@ envFile(const char *line, const char **expanded)
     *t++ = '$';
     *t = 0;
     if(badBrackets | cc) {
-	setError(393);
+	setError(MSG_SHELLSYNTAX);
 	return false;
     }
 
     debugPrint(7, "shell regexp %s", re);
     re_cc = pcre_compile(re, 0, &re_error, &re_offset, 0);
     if(!re_cc) {
-	setError(394, re_error);
+	setError(MSG_SHELLCOMPILE, re_error);
 	return false;
     }
 
@@ -1189,7 +1189,7 @@ envFile(const char *line, const char **expanded)
 	re_count = pcre_exec(re_cc, 0, file, strlen(file), 0, 0, re_vector, 3);
 	if(re_count < -1) {
 	    pcre_free(re_cc);
-	    setError(395);
+	    setError(MSG_SHELLEXPAND);
 	    return false;
 	}
 	if(re_count < 0)
@@ -1206,7 +1206,7 @@ envFile(const char *line, const char **expanded)
     }
     pcre_free(re_cc);
     if(filecount != 1) {
-	setError((filecount > 0) + 396);
+	setError((filecount > 0) + MSG_SHELLNOMATCH);
 	return false;
     }
     if(cc)
@@ -1216,7 +1216,7 @@ envFile(const char *line, const char **expanded)
     return true;
 
   longvar:
-    setError(398);
+    setError(MSG_SHELLLINELONG);
     return false;
 }				/* envFile */
 

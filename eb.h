@@ -346,4 +346,7 @@ extern struct ebSession *cs;	/* current session */
 /* function prototypes */
 #include "eb.p"
 
+/* Symbolic constants for language independent messages */
+#include "messages.h"
+
 #endif

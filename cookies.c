@@ -57,7 +57,7 @@ cookieIntoJar(const struct cookie *c)
 	static bool warn = false;
 	if(warn)
 	    return;
-	i_puts(61);
+	i_puts(MSG_NOJAR);
 	warn = true;
 	return;
     }
