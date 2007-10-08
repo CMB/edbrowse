@@ -652,3 +652,107 @@ runningError(int msg, ...)
     nl();
     browseLocal = 2;
 }				/* runningError */
+
+
+/*********************************************************************
+Now for the international version of caseShift.
+This converts anything that might reasonably be a letter, such as È and è.
+This routine is used by default; even if the language is English.
+After all, you might be a native English speaker, using edbrowse
+in English, but you are writing a document in French.
+This (unfortunately) does not affect \w in regular expressions,
+which is still restricted to English letters.
+Even more annoying, \b uses English as boundary,
+so that \bbar\b will indeed match on the line fooÈbar.
+There may be a way to set locale in libpcre; I don't know.
+Anyways, here are the nonascii letters, upper and lower.
+*********************************************************************/
+
+static const char upperMore[] = "©ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞßÿ";
+
+static const char lowerMore[] = "©àáâãäåæçèéêëìíîïğñòóôõöøùúûüışßÿ";
+
+static const char letterMore[] =
+   "©ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞ©àáâãäåæçèéêëìíîïğñòóôõöøùúûüışßÿ";
+static bool
+i_isalphaByte(unsigned char c)
+{
+    if(isalphaByte(c))
+	return true;
+    if(c == false)
+	return 0;
+    if(strchr(letterMore, c))
+	return true;
+    return false;
+}				/* i_isalphaByte */
+
+/* assumes the arg is a letter */
+static unsigned char
+i_tolower(unsigned char c)
+{
+    char *s;
+    if(isalphaByte(c))
+	return tolower(c);
+    s = strchr(upperMore, c);
+    if(s)
+	c = lowerMore[s - upperMore];
+    return c;
+}				/* i_tolower */
+
+static unsigned char
+i_toupper(unsigned char c)
+{
+    char *s;
+    if(isalphaByte(c))
+	return toupper(c);
+    s = strchr(lowerMore, c);
+    if(s)
+	c = upperMore[s - lowerMore];
+    return c;
+}				/* i_toupper */
+
+/* This is a variation on the original routine, found in stringfile.c */
+void
+i_caseShift(unsigned char *s, char action)
+{
+    unsigned char c;
+/* The McDonalds conversion is very English - should we do it in all languages? */
+    int mc = 0;
+    bool ws = true;
+
+    for(; c = *s; ++s) {
+	if(action == 'u') {
+	    if(i_isalphaByte(c))
+		*s = i_toupper(c);
+	    continue;
+	}
+
+	if(action == 'l') {
+	    if(i_isalphaByte(c))
+		*s = i_tolower(c);
+	    continue;
+	}
+
+/* mixed case left */
+	if(i_isalphaByte(c)) {
+	    if(ws)
+		c = i_toupper(c);
+	    else
+		c = i_tolower(c);
+	    if(ws && c == 'M')
+		mc = 1;
+	    else if(mc == 1 && c == 'c')
+		mc = 2;
+	    else if(mc == 2) {
+		c = i_toupper(c);
+		mc = 0;
+	    } else
+		mc = 0;
+	    *s = c;
+	    ws = false;
+	    continue;
+	}
+
+	ws = true, mc = 0;
+    }				/* loop */
+}				/* caseShift */

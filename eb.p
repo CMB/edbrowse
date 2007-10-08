@@ -88,6 +88,7 @@ void showErrorConditional(char cmd) ;
 void showErrorAbort(void) ;
 void browseError(int msg, ...) ;
 void runningError(int msg, ...) ;
+void i_caseShift(unsigned char *s, char action) ;
 
 /* sourcefile=sendmail.c */
 bool loadAddressBook(void) ;
