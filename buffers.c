@@ -170,7 +170,7 @@ apparentSize(int cx, bool browsing)
     int i, ln, size;
     struct ebWindow *w;
     if(cx <= 0 || cx >= MAXSESSION || (w = sessionList[cx].lw) == 0) {
-	setError(MSG_SESSIONNA, cx);
+	setError(MSG_SessionInactive, cx);
 	return -1;
     }
     size = 0;
@@ -273,7 +273,7 @@ printDot(void)
     if(cw->dot)
 	displayLine(cw->dot);
     else
-	i_puts(MSG_EMPTY);
+	i_puts(MSG_Empty);
 }				/* printDot */
 
 /* Get a line from standard in.  Need not be a terminal.
@@ -496,16 +496,16 @@ bool
 cxCompare(int cx)
 {
     if(cx == 0) {
-	setError(MSG_SESSION0);
+	setError(MSG_Session0);
 	return false;
     }
     if(cx >= MAXSESSION) {
-	setError(MSG_SESSIONHIGH, cx, MAXSESSION - 1);
+	setError(MSG_SessionHigh, cx, MAXSESSION - 1);
 	return false;
     }
     if(cx != context)
 	return true;		/* ok */
-    setError(MSG_SESSIONCURRENT, cx);
+    setError(MSG_SessionCurrent, cx);
     return false;
 }				/*cxCompare */
 
@@ -517,7 +517,7 @@ cxActive(int cx)
 	errorPrint("@session %d out of range in cxActive", cx);
     if(sessionList[cx].lw)
 	return true;
-    setError(MSG_SESSIONNA, cx);
+    setError(MSG_SessionInactive, cx);
     return false;
 }				/* cxActive */
 
@@ -542,9 +542,9 @@ cxQuit(int cx, int action)
        !(w->dirMode | w->sqlMode) && lastq != cx && w->fileName &&
        !isURL(w->fileName)) {
 	lastqq = cx;
-	setError(MSG_EXPECTW);
+	setError(MSG_ExpectW);
 	if(cx != context)
-	    setError(MSG_EXPECTWD, cx);
+	    setError(MSG_ExpectWX, cx);
 	return false;
     }
 
@@ -601,11 +601,11 @@ cxSwitch(int cx, bool interactive)
     context = cx;
     if(interactive && debugLevel) {
 	if(created)
-	    i_puts(MSG_NEWSESSION);
+	    i_puts(MSG_SessionNew);
 	else if(cw->fileName)
 	    puts(cw->fileName);
 	else
-	    i_puts(MSG_NOFILE);
+	    i_puts(MSG_NoFile);
     }
 
 /* The next line is required when this function is called from main(),
@@ -633,7 +633,7 @@ linesComing(int n)
 {
     int need = textLinesCount + n;
     if(need > LNMAX) {
-	setError(MSG_LINELIMIT);
+	setError(MSG_LineLimit);
 	return false;
     }
     if(need > textLinesMax) {
@@ -736,7 +736,7 @@ addTextToBuffer(const pst inbuf, int length, int destl)
 	if(destl == cw->dol) {
 	    cw->nlMode = true;
 	    if(cmd != 'b' && !cw->binMode && !ismc)
-		i_puts(MSG_NOTRAIL);
+		i_puts(MSG_NoTrailing);
 	}
     }				/* missing newline */
     start = end = textLinesCount;
@@ -837,7 +837,7 @@ makeAbsPath(char *f)
 {
     static char path[ABSPATH];
     if(strlen(cw->baseDirName) + strlen(f) > ABSPATH - 2) {
-	setError(MSG_LONGPATHNAME, ABSPATH);
+	setError(MSG_PathNameLong, ABSPATH);
 	return 0;
     }
     sprintf(path, "%s/%s", cw->baseDirName, f);
@@ -849,11 +849,11 @@ delFiles(void)
 {
     int ln, cnt;
     if(!dirWrite) {
-	setError(MSG_DIRNOWRITE);
+	setError(MSG_DirNoWrite);
 	return false;
     }
     if(dirWrite == 1 && !recycleBin) {
-	setError(MSG_NORECYCLE);
+	setError(MSG_NoRecycle);
 	return false;
     }
     ln = startRange;
@@ -873,7 +873,7 @@ delFiles(void)
 	ftype = dirSuffix(ln);
 	if(dirWrite == 2 || *ftype == '@') {
 	    if(unlink(path)) {
-		setError(MSG_NOREMOVE, file);
+		setError(MSG_NoRemove, file);
 		free(file);
 		return false;
 	    }
@@ -881,7 +881,7 @@ delFiles(void)
 	    char bin[ABSPATH];
 	    sprintf(bin, "%s/%s", recycleBin, file);
 	    if(rename(path, bin)) {
-		setError(MSG_NOMOVETOTRASH, file);
+		setError(MSG_NoMoveToTrash, file);
 		free(file);
 		return false;
 	    }
@@ -909,12 +909,12 @@ moveCopy(void)
     int lowcut, highcut, diff, i;
 
     if(dl > sr && dl < er) {
-	setError(MSG_DESTINBLOCK);
+	setError(MSG_DestInBlock);
 	return false;
     }
     if(cmd == 'm' && (dl == er || dl == sr)) {
 	if(globSub)
-	    setError(MSG_NOCHANGE);
+	    setError(MSG_NoChange);
 	return false;
     }
 
@@ -981,7 +981,7 @@ joinText(void)
     int j, size;
     pst newline, t;
     if(startRange == endRange) {
-	setError(MSG_JOIN1);
+	setError(MSG_Join1);
 	return false;
     }
     if(!linesComing(1))
@@ -1044,14 +1044,14 @@ readFile(const char *filename, const char *post)
     if(isSQL(filename)) {
 	const char *t1, *t2;
 	if(!cw->sqlMode) {
-	    setError(MSG_DBOTHERFILE);
+	    setError(MSG_DBOtherFile);
 	    return false;
 	}
 	t1 = strchr(cw->fileName, ']');
 	t2 = strchr(filename, ']');
 	if(t1 - cw->fileName != t2 - filename ||
 	   memcmp(cw->fileName, filename, t2 - filename)) {
-	    setError(MSG_DIFFERENTTABLE);
+	    setError(MSG_DBOtherTable);
 	    return false;
 	}
 	rc = sqlReadRows(filename, &rbuf);
@@ -1074,7 +1074,7 @@ readFile(const char *filename, const char *post)
     if(memEqualCI(filename, "file://", 7))
 	filename += 7;
     if(!*filename) {
-	setError(MSG_MISSINGFILENAME);
+	setError(MSG_MissingFileName);
 	return false;
     }
 
@@ -1083,7 +1083,7 @@ readFile(const char *filename, const char *post)
 	if(!domain)
 	    return false;	/* some kind of error */
 	if(!*domain) {
-	    setError(MSG_EMPTYDOMAIN);
+	    setError(MSG_DomainEmpty);
 	    return false;
 	}
 
@@ -1125,7 +1125,7 @@ readFile(const char *filename, const char *post)
 		return false;
 	    if(!cw->dol) {
 		cw->dirMode = true;
-		i_puts(MSG_DIRMODE);
+		i_puts(MSG_DirMode);
 	    }
 	    if(start == end) {	/* empty directory */
 		cw->dot = endRange;
@@ -1214,7 +1214,7 @@ readFile(const char *filename, const char *post)
 	fileSize = j;
 #endif
     } else if(binaryDetect & !cw->binMode) {
-	i_puts(MSG_BINDATA);
+	i_puts(MSG_BinaryData);
 	cw->binMode = true;
     }
 
@@ -1234,19 +1234,19 @@ writeFile(const char *name, int mode)
     if(memEqualCI(name, "file://", 7))
 	name += 7;
     if(!*name) {
-	setError(MSG_MISSINGFILENAME);
+	setError(MSG_MissingFileName);
 	return false;
     }
     if(isURL(name)) {
-	setError(MSG_WRITEURL);
+	setError(MSG_NoWriteURL);
 	return false;
     }
     if(isSQL(name)) {
-	setError(MSG_WRITEDB);
+	setError(MSG_WriteDB);
 	return false;
     }
     if(!cw->dol) {
-	setError(MSG_WRITEEMPTY);
+	setError(MSG_WriteEmpty);
 	return false;
     }
 /* mode should be TRUNC or APPEND */
@@ -1255,7 +1255,7 @@ writeFile(const char *name, int mode)
 	mode |= O_BINARY;
     fh = open(name, mode, 0666);
     if(fh < 0) {
-	setError(MSG_NOCREATE2, name);
+	setError(MSG_NoCreate2, name);
 	return false;
     }
     fileSize = 0;
@@ -1268,7 +1268,7 @@ writeFile(const char *name, int mode)
 		--len;
 	    if(write(fh, p, len) < len) {
 	      badwrite:
-		setError(MSG_NOWRITE2, name);
+		setError(MSG_NoWrite2, name);
 		close(fh);
 		return false;
 	    }
@@ -1341,7 +1341,7 @@ readContext(int cx)
     }
     if(binaryDetect & !cw->binMode && lw->binMode) {
 	cw->binMode = true;
-	i_puts(MSG_BINDATA);
+	i_puts(MSG_BinaryData);
     }
     return true;
 }				/* readContext */
@@ -1433,7 +1433,7 @@ shellEscape(const char *line)
     if(!linesize) {
 /* interactive shell */
 	if(!isInteractive) {
-	    setError(MSG_SESSIONBACKGROUND);
+	    setError(MSG_SessionBackground);
 	    return false;
 	}
 #ifdef DOSLIKE
@@ -1477,7 +1477,7 @@ shellEscape(const char *line)
 		if(key == '+')
 		    ++n;
 		if(n > cw->dol || n == 0) {
-		    setError(MSG_OUTOFRANGE, key);
+		    setError(MSG_OutOfRange, key);
 		    return false;
 		}
 	      frombuf:
@@ -1489,7 +1489,7 @@ shellEscape(const char *line)
 		    p = fetchLine(n, 1);
 		    if(perl2c((char *)p)) {
 			free(p);
-			setError(MSG_SHELLNULL);
+			setError(MSG_ShellNull);
 			return false;
 		    }
 		    strcpy(s, (char *)p);
@@ -1502,7 +1502,7 @@ shellEscape(const char *line)
 	    if(islowerByte(key)) {
 		n = cw->labels[key - 'a'];
 		if(!n) {
-		    setError(MSG_NOLABLE, key);
+		    setError(MSG_NoLabel, key);
 		    return false;
 		}
 		goto frombuf;
@@ -1563,7 +1563,7 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 
     *rexp = re;
     if(!strchr(valid_delim, delim)) {
-	setError(MSG_BADDELIMIT);
+	setError(MSG_BadDelimit);
 	return false;
     }
     start = line;
@@ -1573,7 +1573,7 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 	if(isleft) {
 	    if(c == delim || c == 0) {
 		if(!cw->lhs_yes) {
-		    setError(MSG_NOLHS);
+		    setError(MSG_NoSearchString);
 		    return false;
 		}
 		strcpy(re, cw->lhs);
@@ -1589,7 +1589,7 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 	    }
 	} else if(c == '%' && (line[1] == delim || line[1] == 0)) {
 	    if(!cw->rhs_yes) {
-		setError(MSG_NORHS);
+		setError(MSG_NoReplaceString);
 		return false;
 	    }
 	    strcpy(re, cw->rhs);
@@ -1600,7 +1600,7 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
     /* ebmuck tricks */
     while(c = *line) {
 	if(e >= re + MAXRE - 3) {
-	    setError(MSG_REXPLONG);
+	    setError(MSG_RexpLong);
 	    return false;
 	}
 	d = line[1];
@@ -1608,7 +1608,7 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 	if(c == '\\') {
 	    line += 2;
 	    if(d == 0) {
-		setError(MSG_LINEback);
+		setError(MSG_LineBackslash);
 		return false;
 	    }
 	    ondeck = true;
@@ -1623,7 +1623,7 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 		if(d == ')')
 		    --paren;
 		if(paren < 0) {
-		    setError(MSG_UNEXPECTEDRIGHT);
+		    setError(MSG_UnexpectedRight);
 		    return false;
 		}
 		*e++ = d;
@@ -1656,7 +1656,7 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 
 	if(c == '$' && !isleft && isdigitByte(d)) {
 	    if(d == '0' || isdigitByte(line[2])) {
-		setError(MSG_REXPDOLLAR);
+		setError(MSG_RexpDollar);
 		return false;
 	    }
 	}
@@ -1720,7 +1720,7 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 	    }
 	    if(!ondeck) {
 		*e = 0;
-		setError(MSG_REXPMODIFIER, e - mod - 1);
+		setError(MSG_RexpModifier, e - mod - 1);
 		return false;
 	    }
 	    ondeck = false;
@@ -1736,11 +1736,11 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 
     if(ebmuck) {
 	if(cc) {
-	    setError(MSG_NOBRACKET);
+	    setError(MSG_NoBracket);
 	    return false;
 	}
 	if(paren) {
-	    setError(MSG_NOPAREN);
+	    setError(MSG_NoParen);
 	    return false;
 	}
 
@@ -1784,7 +1784,7 @@ getRangePart(const char *line, int *lineno, const char **split)
     } else if(first == '\'' && islowerByte(line[1])) {
 	ln = cw->labels[line[1] - 'a'];
 	if(!ln) {
-	    setError(MSG_NOLABLE, line[1]);
+	    setError(MSG_NoLabel, line[1]);
 	    return false;
 	}
 	line += 2;
@@ -1795,7 +1795,7 @@ getRangePart(const char *line, int *lineno, const char **split)
 	char incr;		/* forward or back */
 /* Don't look through an empty buffer. */
 	if(cw->dol == 0) {
-	    setError(MSG_EMPTYBUFFER);
+	    setError(MSG_EmptyBuffer);
 	    return false;
 	}
 	if(!regexpCheck(line, true, true, &re, &line))
@@ -1814,7 +1814,7 @@ getRangePart(const char *line, int *lineno, const char **split)
 	    re_opt |= PCRE_CASELESS;
 	re_cc = pcre_compile(re, re_opt, &re_error, &re_offset, 0);
 	if(!re_cc) {
-	    setError(MSG_REXPERROR, re_error);
+	    setError(MSG_RexpError, re_error);
 	    return false;
 	}
 /* We should probably study the pattern, if the file is large.
@@ -1835,14 +1835,14 @@ getRangePart(const char *line, int *lineno, const char **split)
 	    free(subject);
 	    if(re_count < -1) {
 		pcre_free(re_cc);
-		setError(MSG_REXPERROR2, ln);
+		setError(MSG_RexpError2, ln);
 		return (globSub = false);
 	    }
 	    if(re_count >= 0)
 		break;
 	    if(ln == cw->dot) {
 		pcre_free(re_cc);
-		setError(MSG_NOTFOUND);
+		setError(MSG_NotFound);
 		return false;
 	    }
 	}			/* loop over lines */
@@ -1861,11 +1861,11 @@ getRangePart(const char *line, int *lineno, const char **split)
     }
 
     if(ln > cw->dol) {
-	setError(MSG_LINEHIGH);
+	setError(MSG_LineHigh);
 	return false;
     }
     if(ln < 0) {
-	setError(MSG_LINELOW);
+	setError(MSG_LineLow);
 	return false;
     }
 
@@ -1889,14 +1889,14 @@ doGlobal(const char *line)
     int i, origdot, yesdot, nodot;
 
     if(!delim) {
-	setError(MSG_REXPMISSING, icmd);
+	setError(MSG_RexpMissing, icmd);
 	return false;
     }
 
     if(!regexpCheck(line, true, true, &re, &line))
 	return false;
     if(*line != delim) {
-	setError(MSG_NODELIM);
+	setError(MSG_NoDelimit);
 	return false;
     }
     ++line;
@@ -1914,7 +1914,7 @@ doGlobal(const char *line)
 	re_opt |= PCRE_CASELESS;
     re_cc = pcre_compile(re, re_opt, &re_error, &re_offset, 0);
     if(!re_cc) {
-	setError(MSG_REXPERROR, re_error);
+	setError(MSG_RexpError, re_error);
 	return false;
     }
     for(i = startRange; i <= endRange; ++i) {
@@ -1925,7 +1925,7 @@ doGlobal(const char *line)
 	free(subject);
 	if(re_count < -1) {
 	    pcre_free(re_cc);
-	    setError(MSG_REXPERROR2, i);
+	    setError(MSG_RexpError2, i);
 	    return false;
 	}
 	if(re_count < 0 && cmd == 'v' || re_count >= 0 && cmd == 'g') {
@@ -1936,7 +1936,7 @@ doGlobal(const char *line)
     pcre_free(re_cc);
 
     if(!gcnt) {
-	setError((cmd == 'v') + MSG_NOMATCHG);
+	setError((cmd == 'v') + MSG_NoMatchG);
 	return false;
     }
 
@@ -1986,10 +1986,10 @@ doGlobal(const char *line)
     } else {
 	cw->dot = origdot;
 	if(!errorMsg[0])
-	    setError(MSG_NONMODIFIED);
+	    setError(MSG_NotModifiedG);
     }
     if(!errorMsg[0] && intFlag)
-	setError(MSG_INTERRUPTED);
+	setError(MSG_Interrupted);
     return (errorMsg[0] == 0);
 }				/* doGlobal */
 
@@ -1997,17 +1997,17 @@ static void
 fieldNumProblem(int desc, char c, int n, int nt, int nrt)
 {
     if(!nrt) {
-	setError(MSG_NOINPUTFIELDS + desc);
+	setError(MSG_NoInputFields + desc);
 	return;
     }
     if(!n) {
-	setError(MSG_MANYINPUTFIELDS + desc, c, c, nt);
+	setError(MSG_ManyInputFields + desc, c, c, nt);
 	return;
     }
     if(nt > 1)
-	setError(MSG_INPUTRANGE, n, c, c, nt);
+	setError(MSG_InputRange, n, c, c, nt);
     else
-	setError(MSG_INPUTRANGE2, n, c, c);
+	setError(MSG_InputRange2, n, c, c);
 }				/* fieldNumProblem */
 
 /* Perform a substitution on a given line.
@@ -2034,7 +2034,7 @@ replaceText(const char *line, int len, const char *rhs,
 /* find the next match */
 	re_count = pcre_exec(re_cc, 0, line, len, offset, 0, re_vector, 33);
 	if(re_count < -1) {
-	    setError(MSG_REXPERROR2, ln);
+	    setError(MSG_RexpError2, ln);
 	    return -1;
 	}
 	if(re_count < 0)
@@ -2043,7 +2043,7 @@ replaceText(const char *line, int len, const char *rhs,
 	lastoffset = offset;
 	offset = re_vector[1];	/* ready for next iteration */
 	if(offset == lastoffset && (nth > 1 || global)) {
-	    setError(MSG_MANYEMPTYSTRINGS);
+	    setError(MSG_ManyEmptyStrings);
 	    return -1;
 	}
 	if(!global &&instance != nth)
@@ -2173,7 +2173,7 @@ replaceText(const char *line, int len, const char *rhs,
     return true;
 
   longvar:
-    setError(MSG_LONGSUBSTITUTION, REPLACELINELEN);
+    setError(MSG_SubLong, REPLACELINELEN);
     return -1;
 }				/* replaceText */
 
@@ -2213,12 +2213,12 @@ substituteText(const char *line)
 	if(isdigitByte(*line))
 	    whichField = strtol(line, (char **)&line, 10);
 	if(!*line) {
-	    setError(MSG_REXPMISSING2, icmd);
+	    setError(MSG_RexpMissing2, icmd);
 	    return -1;
 	}
 
 	if(cw->dirMode && !dirWrite) {
-	    setError(MSG_DIRNOWRITE);
+	    setError(MSG_DirNoWrite);
 	    return -1;
 	}
 
@@ -2226,7 +2226,7 @@ substituteText(const char *line)
 	    return -1;
 	strcpy(lhs, re);
 	if(!*line) {
-	    setError(MSG_NODELIM);
+	    setError(MSG_NoDelimit);
 	    return -1;
 	}
 	if(!regexpCheck(line, false, true, &re, &line))
@@ -2254,17 +2254,17 @@ substituteText(const char *line)
 		}
 		if(isdigitByte(c)) {
 		    if(nth) {
-			setError(MSG_MANYSUBNUMBERS);
+			setError(MSG_SubNumbersMany);
 			return -1;
 		    }
 		    nth = strtol(line, (char **)&line, 10);
 		    continue;
 		}		/* number */
-		setError(MSG_BADSUBSUFFIX);
+		setError(MSG_SubSuffixBad);
 		return -1;
 	    }			/* loop gathering suffix flags */
 	    if(g_mode && nth) {
-		setError(MSG_SUBNUMBERG);
+		setError(MSG_SubNumberG);
 		return -1;
 	    }
 	}			/* closing delimiter */
@@ -2276,7 +2276,7 @@ substituteText(const char *line)
 	    re_opt |= PCRE_CASELESS;
 	re_cc = pcre_compile(lhs, re_opt, &re_error, &re_offset, 0);
 	if(!re_cc) {
-	    setError(MSG_REXPERROR, re_error);
+	    setError(MSG_RexpError, re_error);
 	    return -1;
 	}
     } else {
@@ -2294,7 +2294,7 @@ substituteText(const char *line)
 	if(bl_mode) {
 	    int newlen;
 	    if(!breakLine(p, len, &newlen)) {
-		setError(MSG_LONGBL, REPLACELINELEN);
+		setError(MSG_BreakLong, REPLACELINELEN);
 		return -1;
 	    }
 /* empty line is not allowed */
@@ -2352,11 +2352,11 @@ substituteText(const char *line)
 
 	if(cw->sqlMode) {
 	    if(linecount) {
-		setError(MSG_REPLACENEWLINE);
+		setError(MSG_ReplaceNewline);
 		goto abort;
 	    }
 	    if(nullcount) {
-		setError(MSG_REPLACENULL);
+		setError(MSG_ReplaceNull);
 		goto abort;
 	    }
 	    *replaceLineEnd = '\n';
@@ -2369,7 +2369,7 @@ substituteText(const char *line)
 /* move the file, then update the text */
 	    char src[ABSPATH], *dest;
 	    if(slashcount + nullcount + linecount) {
-		setError(MSG_BADDIRNAME);
+		setError(MSG_DirNameBad);
 		goto abort;
 	    }
 	    p[len - 1] = 0;	/* temporary */
@@ -2384,11 +2384,11 @@ substituteText(const char *line)
 		goto abort;
 	    if(!stringEqual(src, dest)) {
 		if(fileTypeByName(dest, true)) {
-		    setError(MSG_DESTFILEEXISTS);
+		    setError(MSG_DestFileExists);
 		    goto abort;
 		}
 		if(rename(src, dest)) {
-		    setError(MSG_NORENAME, dest);
+		    setError(MSG_NoRename, dest);
 		    goto abort;
 		}
 	    }			/* source and dest are different */
@@ -2396,11 +2396,11 @@ substituteText(const char *line)
 
 	if(cw->browseMode) {
 	    if(nullcount) {
-		setError(MSG_INPUTNULL2);
+		setError(MSG_InputNull2);
 		goto abort;
 	    }
 	    if(linecount) {
-		setError(MSG_INPUTNEWLINE2);
+		setError(MSG_InputNewline2);
 		goto abort;
 	    }
 	    replaceLine[replaceLineLen] = 0;
@@ -2448,14 +2448,14 @@ substituteText(const char *line)
 	pcre_free(re_cc);
 
     if(intFlag) {
-	setError(MSG_INTERRUPTED);
+	setError(MSG_Interrupted);
 	return -1;
     }
 
     if(!lastSubst) {
 	if(!globSub) {
 	    if(!errorMsg[0])
-		setError(bl_mode + MSG_NOMATCH);
+		setError(bl_mode + MSG_NoMatch);
 	}
 	return false;
     }
@@ -2505,7 +2505,7 @@ if(stringEqual(line, "us")) return unstripChild();
 	char *t = userAgents[line[2] - '0'];
 	cmd = 'e';
 	if(!t) {
-	    setError(MSG_NOAGENT, line[2]);
+	    setError(MSG_NoAgent, line[2]);
 	    return false;
 	}
 	currentAgent = t;
@@ -2541,7 +2541,7 @@ if(stringEqual(line, "us")) return unstripChild();
 		char cwdbuf[ABSPATH];
 	      pwd:
 		if(!getcwd(cwdbuf, sizeof (cwdbuf))) {
-		    setError(c ? MSG_CDPRINT : MSG_CDSET);
+		    setError(c ? MSG_CDGetError : MSG_CDSetError);
 		    return false;
 		}
 		puts(cwdbuf);
@@ -2551,7 +2551,7 @@ if(stringEqual(line, "us")) return unstripChild();
 		return false;
 	    if(!chdir(t))
 		goto pwd;
-	    setError(MSG_CDBAD);
+	    setError(MSG_CDInvalid);
 	    return false;
 	}
     }
@@ -2564,19 +2564,19 @@ if(stringEqual(line, "us")) return unstripChild();
 	    const char *suffix = 0;
 	    bool trailPercent = false;
 	    if(!cw->dol) {
-		setError(MSG_AUDIOEMPTY);
+		setError(MSG_AudioEmpty);
 		return false;
 	    }
 	    if(cw->browseMode) {
-		setError(MSG_AUDIOBROWSE);
+		setError(MSG_AudioBrowse);
 		return false;
 	    }
 	    if(cw->dirMode) {
-		setError(MSG_AUDIODIR);
+		setError(MSG_AudioDir);
 		return false;
 	    }
 	    if(cw->sqlMode) {
-		setError(MSG_AUDIODB);
+		setError(MSG_AudioDB);
 		return false;
 	    }
 	    if(c == '.') {
@@ -2585,18 +2585,18 @@ if(stringEqual(line, "us")) return unstripChild();
 		if(cw->fileName)
 		    suffix = strrchr(cw->fileName, '.');
 		if(!suffix) {
-		    setError(MSG_NOSUFFIX);
+		    setError(MSG_NoSuffix);
 		    return false;
 		}
 		++suffix;
 	    }
 	    if(strlen(suffix) > 5) {
-		setError(MSG_LONGSUFFIX);
+		setError(MSG_SuffixLong);
 		return false;
 	    }
 	    mt = findMimeBySuffix(suffix);
 	    if(!mt) {
-		setError(MSG_BADSUFFIX, suffix);
+		setError(MSG_SuffixBad, suffix);
 		return false;
 	    }
 	    if(mt->program[strlen(mt->program) - 1] == '%')
@@ -2611,7 +2611,7 @@ if(stringEqual(line, "us")) return unstripChild();
     if(stringEqual(line, "rf")) {
 	cmd = 'e';
 	if(!cw->fileName) {
-	    setError(MSG_NOREFRESH);
+	    setError(MSG_NoRefresh);
 	    return false;
 	}
 	if(cw->browseMode)
@@ -2624,7 +2624,7 @@ if(stringEqual(line, "us")) return unstripChild();
 
     if(stringEqual(line, "sc")) {
 	if(!cw->sqlMode) {
-	    setError(MSG_NODB);
+	    setError(MSG_NoDB);
 	    return false;
 	}
 	showColumns();
@@ -2635,7 +2635,7 @@ if(stringEqual(line, "us")) return unstripChild();
 	bool ub = (line[0] == 'u');
 	cmd = 'e';
 	if(!cw->browseMode) {
-	    setError(MSG_NOBROWSE);
+	    setError(MSG_NoBrowse);
 	    return false;
 	}
 	freeUndoLines(cw->map);
@@ -2683,7 +2683,7 @@ if(stringEqual(line, "us")) return unstripChild();
 	allIPs();
 	endhostent();
 	if(!cw->iplist || cw->iplist[0] == -1) {
-	    i_puts(MSG_NONE);
+	    i_puts(MSG_None);
 	} else {
 	    IP32bit ip;
 	    for(i = 0; (ip = cw->iplist[i]) != NULL_IP; ++i) {
@@ -2697,17 +2697,17 @@ if(stringEqual(line, "us")) return unstripChild();
 	char *t;
 	cmd = line[0];
 	if(!cw->fileName) {
-	    setError(MSG_NOREFRESH);
+	    setError(MSG_NoRefresh);
 	    return false;
 	}
 	t = strrchr(cw->fileName, '/');
 	if(!t) {
-	    setError(MSG_NOSLASH);
+	    setError(MSG_NoSlash);
 	    return false;
 	}
 	++t;
 	if(!*t) {
-	    setError(MSG_YESSLASH);
+	    setError(MSG_YesSlash);
 	    return false;
 	}
 	sprintf(newline, "%c `%s", cmd, t);
@@ -2720,15 +2720,15 @@ if(stringEqual(line, "us")) return unstripChild();
 	int t;
 	cmd = 'e';
 	if(!cw->browseMode) {
-	    setError(MSG_NOBROWSE);
+	    setError(MSG_NoBrowse);
 	    return false;
 	}
 	if(line[1] == 't')
-	    s = cw->ft, t = MSG_NOTITLE;
+	    s = cw->ft, t = MSG_NoTitle;
 	if(line[1] == 'd')
-	    s = cw->fd, t = MSG_NODESC;
+	    s = cw->fd, t = MSG_NoDesc;
 	if(line[1] == 'k')
-	    s = cw->fk, t = MSG_NOKEYWORDS;
+	    s = cw->fk, t = MSG_NoKeywords;
 	if(s)
 	    puts(s);
 	else
@@ -2751,7 +2751,7 @@ if(stringEqual(line, "us")) return unstripChild();
 /* send mail */
 	    return sendMailCurrent(account, dosig);
 	} else {
-	    setError(MSG_SMBADCHAR);
+	    setError(MSG_SMBadChar);
 	    return false;
 	}
     }
@@ -2759,77 +2759,77 @@ if(stringEqual(line, "us")) return unstripChild();
     if(stringEqual(line, "sg")) {
 	searchStringsAll = true;
 	if(helpMessagesOn)
-	    i_puts(MSG_SUBGLOBAL);
+	    i_puts(MSG_SubGlobal);
 	return true;
     }
 
     if(stringEqual(line, "sl")) {
 	searchStringsAll = false;
 	if(helpMessagesOn)
-	    i_puts(MSG_SUBLOCAL);
+	    i_puts(MSG_SubLocal);
 	return true;
     }
 
     if(stringEqual(line, "ci")) {
 	caseInsensitive = true;
 	if(helpMessagesOn)
-	    i_puts(MSG_CASEINS);
+	    i_puts(MSG_CaseIns);
 	return true;
     }
 
     if(stringEqual(line, "cs")) {
 	caseInsensitive = false;
 	if(helpMessagesOn)
-	    i_puts(MSG_CASESen);
+	    i_puts(MSG_CaseSen);
 	return true;
     }
 
     if(stringEqual(line, "dr")) {
 	dirWrite = 0;
 	if(helpMessagesOn)
-	    i_puts(MSG_DIRREAD);
+	    i_puts(MSG_DirReadonly);
 	return true;
     }
 
     if(stringEqual(line, "dw")) {
 	dirWrite = 1;
 	if(helpMessagesOn)
-	    i_puts(MSG_DIRWRITE);
+	    i_puts(MSG_DirWritable);
 	return true;
     }
 
     if(stringEqual(line, "dx")) {
 	dirWrite = 2;
 	if(helpMessagesOn)
-	    i_puts(MSG_DIRX);
+	    i_puts(MSG_DirX);
 	return true;
     }
 
     if(stringEqual(line, "hr")) {
 	allowRedirection ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
-	    i_puts(allowRedirection + MSG_NOREDIREDCT);
+	    i_puts(allowRedirection + MSG_RedirectionOff);
 	return true;
     }
 
     if(stringEqual(line, "sr")) {
 	sendReferrer ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
-	    i_puts(sendReferrer + MSG_NOREFERER);
+	    i_puts(sendReferrer + MSG_RefererOff);
 	return true;
     }
 
     if(stringEqual(line, "js")) {
 	allowJS ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
-	    i_puts(allowJS + MSG_NOJS);
+	    i_puts(allowJS + MSG_JavaOff);
 	return true;
     }
 
     if(stringEqual(line, "bd")) {
 	binaryDetect ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
-	    i_puts(binaryDetect + MSG_NOBINARY);
+	    i_puts(binaryDetect + MSG_BinaryIgnore);
 	return true;
     }
 
@@ -2842,11 +2842,11 @@ if(stringEqual(line, "us")) return unstripChild();
 	    ftpMode = 'E';
 	if(helpMessagesOn || debugLevel >= 1) {
 	    if(ftpMode == 'F')
-		i_puts(MSG_PMODE);
+		i_puts(MSG_PassiveMode);
 	    if(ftpMode == 'E')
-		i_puts(MSG_AMODE);
+		i_puts(MSG_ActiveMode);
 	    if(ftpMode == 0)
-		i_puts(MSG_PAMODE);
+		i_puts(MSG_PassActMode);
 	}
 	return true;
     }
@@ -2854,7 +2854,7 @@ if(stringEqual(line, "us")) return unstripChild();
     if(stringEqual(line, "vs")) {
 	verifyCertificates ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
-	    i_puts(verifyCertificates + MSG_NOVERSSL);
+	    i_puts(verifyCertificates + MSG_CertifyOff);
 	ssl_must_verify(verifyCertificates);
 	return true;
     }
@@ -2862,35 +2862,35 @@ if(stringEqual(line, "us")) return unstripChild();
     if(stringEqual(line, "hf")) {
 	showHiddenFiles ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
-	    i_puts(showHiddenFiles + MSG_NOHIDDEN);
+	    i_puts(showHiddenFiles + MSG_HiddenOff);
 	return true;
     }
 
     if(stringEqual(line, "tn")) {
 	textAreaDosNewlines ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
-	    i_puts(textAreaDosNewlines + MSG_TAUNIX);
+	    i_puts(textAreaDosNewlines + MSG_AreaUnix);
 	return true;
     }
 
     if(stringEqual(line, "eo")) {
 	endMarks = 0;
 	if(helpMessagesOn)
-	    i_puts(MSG_MARKOFF);
+	    i_puts(MSG_MarkOff);
 	return true;
     }
 
     if(stringEqual(line, "el")) {
 	endMarks = 1;
 	if(helpMessagesOn)
-	    i_puts(MSG_MARKLIST);
+	    i_puts(MSG_MarkList);
 	return true;
     }
 
     if(stringEqual(line, "ep")) {
 	endMarks = 2;
 	if(helpMessagesOn)
-	    i_puts(MSG_MARKON);
+	    i_puts(MSG_MarkOn);
 	return true;
     }
 
@@ -2952,7 +2952,7 @@ balanceLine(const char *line)
 
     if(c = *line) {
 	if(!strchr(alllist, c) || line[1]) {
-	    setError(MSG_BALANCECHAR, alllist);
+	    setError(MSG_BalanceChar, alllist);
 	    return false;
 	}
 	if(t = strchr(openlist, c)) {
@@ -2967,12 +2967,12 @@ balanceLine(const char *line)
 	unbalanced(c, d, endRange, &backward, &forward);
 	if(direction > 0) {
 	    if((level = forward) == 0) {
-		setError(MSG_NOOPENCHAR, c);
+		setError(MSG_BalanceNoOpen, c);
 		return false;
 	    }
 	} else {
 	    if((level = backward) == 0) {
-		setError(MSG_NOOPENCHAR, d);
+		setError(MSG_BalanceNoOpen, d);
 		return false;
 	    }
 	}
@@ -2984,7 +2984,7 @@ balanceLine(const char *line)
 	    d = closelist[i];
 	    unbalanced(c, d, endRange, &backward, &forward);
 	    if(backward && forward) {
-		setError(MSG_BALANCEAMBIG, c, d, c, d);
+		setError(MSG_BalanceAmbig, c, d, c, d);
 		return false;
 	    }
 	    level = backward + forward;
@@ -2996,7 +2996,7 @@ balanceLine(const char *line)
 	    break;
 	}
 	if(!level) {
-	    setError(MSG_NOBALANCE);
+	    setError(MSG_BalanceNothing);
 	    return false;
 	}
     }				/* explicit character passed in, or look for one */
@@ -3016,7 +3016,7 @@ balanceLine(const char *line)
 	level += (forward - backward) * direction;
     }				/* loop over lines */
 
-    setError(MSG_UNBALANCED, selected);
+    setError(MSG_Unbalanced, selected);
     return false;
 }				/* balanceLine */
 
@@ -3032,11 +3032,11 @@ unfoldBuffer(int cx, bool cr, char **data, int *len)
 	return false;
     w = sessionList[cx].lw;
     if(w->browseMode) {
-	setError(MSG_SESSIONBROWSE, cx);
+	setError(MSG_SessionBrowse, cx);
 	return false;
     }
     if(w->dirMode) {
-	setError(MSG_SESSIONDIR, cx);
+	setError(MSG_SessionDir, cx);
 	return false;
     }
     if(cr)
@@ -3144,7 +3144,7 @@ showLinks(void)
     /* browse mode */
     if(!a_l) {			/* nothing found yet */
 	if(!cw->fileName) {
-	    setError(MSG_NOFILENAME);
+	    setError(MSG_NoFileName);
 	    return 0;
 	}
 	h = cloneString(cw->fileName);
@@ -3228,7 +3228,7 @@ runCommand(const char *line)
 	didRange = true;
 	++startRange, ++endRange;
 	if(endRange > cw->dol) {
-	    setError(MSG_ENDBUFFER);
+	    setError(MSG_EndBuffer);
 	    return false;
 	}
     }
@@ -3250,7 +3250,7 @@ runCommand(const char *line)
 	didRange = true;
 	endRange = startRange + 1;
 	if(endRange > cw->dol) {
-	    setError(MSG_ENDJOIN);
+	    setError(MSG_EndJoin);
 	    return false;
 	}
     }
@@ -3282,7 +3282,7 @@ runCommand(const char *line)
 	}
     }
     if(endRange < startRange) {
-	setError(MSG_BADRANGE);
+	setError(MSG_BadRange);
 	return false;
     }
 
@@ -3297,15 +3297,15 @@ runCommand(const char *line)
 /* Breakline is actually a substitution of lines. */
     if(stringEqual(line, "bl")) {
 	if(cw->dirMode) {
-	    setError(MSG_BREAKDIR);
+	    setError(MSG_BreakDir);
 	    return false;
 	}
 	if(cw->sqlMode) {
-	    setError(MSG_BREAKDB);
+	    setError(MSG_BreakDB);
 	    return false;
 	}
 	if(cw->browseMode) {
-	    setError(MSG_BREAKBROWSE);
+	    setError(MSG_BreakBrowse);
 	    return false;
 	}
 	line = "s`bl";
@@ -3320,7 +3320,7 @@ runCommand(const char *line)
     icmd = cmd;
 
     if(!strchr(valid_cmd, cmd)) {
-	setError(MSG_UNKNOWNCOMMAND, cmd);
+	setError(MSG_UnknownCommand, cmd);
 	return (globSub = false);
     }
 
@@ -3330,19 +3330,19 @@ runCommand(const char *line)
 	writeMode = O_APPEND, first = *++line;
 
     if(cw->dirMode && !strchr(dir_cmd, cmd)) {
-	setError(MSG_DIRCOMMAND, icmd);
+	setError(MSG_DirCommand, icmd);
 	return (globSub = false);
     }
     if(cw->sqlMode && !strchr(sql_cmd, cmd)) {
-	setError(MSG_BADRANGE, icmd);
+	setError(MSG_BadRange, icmd);
 	return (globSub = false);
     }
     if(cw->browseMode && !strchr(browse_cmd, cmd)) {
-	setError(MSG_BROWSECOMMAND, icmd);
+	setError(MSG_BrowseCommand, icmd);
 	return (globSub = false);
     }
     if(startRange == 0 && !strchr(zero_cmd, cmd)) {
-	setError(MSG_ATLINE0);
+	setError(MSG_AtLine0);
 	return (globSub = false);
     }
     while(isspaceByte(first))
@@ -3352,12 +3352,12 @@ runCommand(const char *line)
 	while(isdigitByte(*s))
 	    ++s;
 	if(*s) {
-	    setError(MSG_NOSPACEAFTER);
+	    setError(MSG_NoSpaceAfter);
 	    return (globSub = false);
 	}
     }
     if(globSub && !strchr(global_cmd, cmd)) {
-	setError(MSG_NOGLOBAL, icmd);
+	setError(MSG_GlobalCommand, icmd);
 	return (globSub = false);
     }
 
@@ -3367,7 +3367,7 @@ runCommand(const char *line)
 	    destLine = cw->dot;
 	} else {
 	    if(!strchr(valid_laddr, first)) {
-		setError(MSG_BADDEST);
+		setError(MSG_BadDest);
 		return (globSub = false);
 	    }
 	    if(!getRangePart(line, &destLine, &line))
@@ -3401,7 +3401,7 @@ runCommand(const char *line)
 	startRange = endRange + 1;
 	endRange = startRange;
 	if(startRange > cw->dol) {
-	    setError(MSG_LINEHIGH);
+	    setError(MSG_LineHigh);
 	    return false;
 	}
 	cmd = 'p';
@@ -3420,7 +3420,7 @@ runCommand(const char *line)
 	linePending[0] = 0;
 
     if(first && strchr(nofollow_cmd, cmd)) {
-	setError(MSG_TEXTAFTER, icmd);
+	setError(MSG_TextAfter, icmd);
 	return (globSub = false);
     }
 
@@ -3463,7 +3463,7 @@ runCommand(const char *line)
 	struct ebWindow *uw = &undoWindow;
 	char *swapmap;
 	if(!cw->firstOpMode) {
-	    setError(MSG_NOUNDO);
+	    setError(MSG_NoUndo);
 	    return false;
 	}
 /* swap, so we can undo our undo, if need be */
@@ -3478,11 +3478,11 @@ runCommand(const char *line)
     /* u */
     if(cmd == 'k') {
 	if(!islowerByte(first) || line[1]) {
-	    setError(MSG_ENTERKAZ);
+	    setError(MSG_EnterKAZ);
 	    return false;
 	}
 	if(startRange < endRange) {
-	    setError(MSG_RANGELABEL);
+	    setError(MSG_RangeLabel);
 	    return false;
 	}
 	cw->labels[first - 'a'] = endRange;
@@ -3494,7 +3494,7 @@ runCommand(const char *line)
     if(!postSpace) {
 	cx = stringIsNum(line);
 	if(!cx) {
-	    setError((cmd == '^') ? MSG_BACKUP0 : MSG_SESSION0);
+	    setError((cmd == '^') ? MSG_Backup0 : MSG_Session0);
 	    return false;
 	}
 	if(cx < 0)
@@ -3510,7 +3510,7 @@ runCommand(const char *line)
 	} else {
 	    cx = context;
 	    if(first) {
-		setError(MSG_QAFTER);
+		setError(MSG_QAfter);
 		return false;
 	    }
 	}
@@ -3542,19 +3542,19 @@ runCommand(const char *line)
 	    if(s)
 		printf("%s", s);
 	    else
-		i_printf(MSG_NOFILE);
+		i_printf(MSG_NoFile);
 	    if(sessionList[cx].lw->binMode)
-		i_printf(MSG_BINARYBRACKETS);
+		i_printf(MSG_BinaryBrackets);
 	    nl();
 	    return true;
 	}			/* another session */
 	if(first) {
 	    if(cw->dirMode) {
-		setError(MSG_DIRRENAME);
+		setError(MSG_DirRename);
 		return false;
 	    }
 	    if(cw->sqlMode) {
-		setError(MSG_TABLERENAME);
+		setError(MSG_TableRename);
 		return false;
 	    }
 	    nzFree(cw->fileName);
@@ -3564,9 +3564,9 @@ runCommand(const char *line)
 	if(s)
 	    printf("%s", s);
 	else
-	    i_printf(MSG_NOFILE);
+	    i_printf(MSG_NoFile);
 	if(cw->binMode)
-	    i_printf(MSG_BINARYBRACKETS);
+	    i_printf(MSG_BinaryBrackets);
 	nl();
 	return true;
     }
@@ -3574,7 +3574,7 @@ runCommand(const char *line)
     if(cmd == 'w') {
 	if(cx) {		/* write to another buffer */
 	    if(writeMode == O_APPEND) {
-		setError(MSG_BUFFERAPPEND);
+		setError(MSG_BufferAppend);
 		return false;
 	    }
 	    return writeContext(cx);
@@ -3582,15 +3582,15 @@ runCommand(const char *line)
 	if(!first)
 	    line = cw->fileName;
 	if(!line) {
-	    setError(MSG_NOFILESPECIFIED);
+	    setError(MSG_NoFileSpecified);
 	    return false;
 	}
 	if(cw->dirMode && stringEqual(line, cw->fileName)) {
-	    setError(MSG_NODIRWRITE);
+	    setError(MSG_NoDirWrite);
 	    return false;
 	}
 	if(cw->sqlMode && stringEqual(line, cw->fileName)) {
-	    setError(MSG_NODBWRITE);
+	    setError(MSG_NoDBWrite);
 	    return false;
 	}
 	return writeFile(line, writeMode);
@@ -3598,7 +3598,7 @@ runCommand(const char *line)
     /* w */
     if(cmd == '^') {		/* back key, pop the stack */
 	if(first && !cx) {
-	    setError(MSG_ARROWAFTER);
+	    setError(MSG_ArrowAfter);
 	    return false;
 	}
 	if(!cx)
@@ -3606,7 +3606,7 @@ runCommand(const char *line)
 	while(cx) {
 	    struct ebWindow *prev = cw->prev;
 	    if(!prev) {
-		setError(MSG_NOPREVIOUS);
+		setError(MSG_NoPrevious);
 		return false;
 	    }
 	    saveSubstitutionStrings();
@@ -3622,15 +3622,15 @@ runCommand(const char *line)
 
     if(cmd == 'M') {		/* move this to another session */
 	if(first && !cx) {
-	    setError(MSG_MAFTER);
+	    setError(MSG_MAfter);
 	    return false;
 	}
 	if(!first) {
-	    setError(MSG_NODESTSESSION);
+	    setError(MSG_NoDestSession);
 	    return false;
 	}
 	if(!cw->prev) {
-	    setError(MSG_NOBACKUP);
+	    setError(MSG_NoBackup);
 	    return false;
 	}
 	if(!cxCompare(cx))
@@ -3677,7 +3677,7 @@ runCommand(const char *line)
     if(cmd == 'g' && cw->dirMode && !first) {
 	char *p, *dirline, *endline;
 	if(endRange > startRange) {
-	    setError(MSG_GRANGE);
+	    setError(MSG_RangeG);
 	    return false;
 	}
 	p = (char *)fetchLine(endRange, -1);
@@ -3702,7 +3702,7 @@ runCommand(const char *line)
 	    return true;
 	}
 	if(!first) {
-	    i_printf(MSG_SESSIONd, context);
+	    i_printf(MSG_SessionX, context);
 	    return true;
 	}
 /* more e to come */
@@ -3729,7 +3729,7 @@ runCommand(const char *line)
 	    click = dclick = over = false;
 	    cmd = 'b';
 	    if(endRange > startRange) {
-		setError(MSG_GRANGE);
+		setError(MSG_RangeG);
 		return false;
 	    }
 	    p = (char *)fetchLine(endRange, -1);
@@ -3755,9 +3755,9 @@ runCommand(const char *line)
 	    debugPrint(5, "click %d dclick %d over %d", click, dclick, over);
 	    if(jsgo & jsdead) {
 		if(nogo)
-		    i_puts(MSG_NJSNOACT);
+		    i_puts(MSG_NJNoAction);
 		else
-		    i_puts(MSG_NJSGO);
+		    i_puts(MSG_NJGoing);
 		jsgo = jsh = false;
 	    }
 	    line = allocatedLine = h;
@@ -3825,11 +3825,11 @@ runCommand(const char *line)
 	c = *s;
 	if(c && (strchr(valid_delim, c) || cmd == 'i' && strchr("*<?=", c))) {
 	    if(!cw->browseMode && (cmd == 'i' || cx)) {
-		setError(MSG_NOBROWSE);
+		setError(MSG_NoBrowse);
 		return false;
 	    }
 	    if(endRange > startRange && cmd == 'i') {
-		setError(MSG_IRANGE, c);
+		setError(MSG_RangeI, c);
 		return false;
 	    }
 	    if(cmd == 'i' && strchr("?=<*", c)) {
@@ -3864,7 +3864,7 @@ runCommand(const char *line)
 		    }
 		    skipWhite(&line);
 		    if(!*line) {
-			setError(MSG_NOFILESPECIFIED);
+			setError(MSG_NoFileSpecified);
 			return false;
 		    }
 		    n = stringIsNum(line);
@@ -3875,11 +3875,11 @@ runCommand(const char *line)
 			    return false;
 			dol = sessionList[n].lw->dol;
 			if(!dol) {
-			    setError(MSG_BUFDEMPTY, n);
+			    setError(MSG_BufferXEmpty, n);
 			    return false;
 			}
 			if(dol > 1) {
-			    setError(MSG_BUFDLINES, n);
+			    setError(MSG_BufferXLines, n);
 			    return false;
 			}
 			p = (char *)fetchLineContext(1, 1, n);
@@ -3896,31 +3896,31 @@ runCommand(const char *line)
 			    return false;
 			fd = open(line, O_RDONLY | O_TEXT);
 			if(fd < 0) {
-			    setError(MSG_NOOPEN, line);
+			    setError(MSG_NoOpen, line);
 			    return false;
 			}
 			n = read(fd, newline, sizeof (newline));
 			close(fd);
 			if(n < 0) {
-			    setError(MSG_NOREAD, line);
+			    setError(MSG_NoRead, line);
 			    return false;
 			}
 		    }
 		    for(j = 0; j < n; ++j) {
 			if(newline[j] == 0) {
-			    setError(MSG_INPUTNULL, line);
+			    setError(MSG_InputNull, line);
 			    return false;
 			}
 			if(newline[j] == '\r' && !fromfile &&
 			   j < n - 1 && newline[j + 1] != '\n') {
-			    setError(MSG_CR);
+			    setError(MSG_InputCR);
 			    return false;
 			}
 			if(newline[j] == '\r' || newline[j] == '\n')
 			    break;
 		    }
 		    if(j == sizeof (newline)) {
-			setError(MSG_FIRSTLINELONG, line);
+			setError(MSG_FirstLineLong, line);
 			return false;
 		    }
 		    newline[j] = 0;
@@ -3943,7 +3943,7 @@ runCommand(const char *line)
 	    } else
 		cmd = 's';
 	} else {
-	    setError(MSG_TEXTAFTER, icmd);
+	    setError(MSG_TextAfter, icmd);
 	    return false;
 	}
     }
@@ -3952,7 +3952,7 @@ runCommand(const char *line)
     if(cmd == 'e' || cmd == 'b' && first && first != '#') {
 	if(cw->fileName && !noStack && sameURL(line, cw->fileName)) {
 	    if(stringEqual(line, cw->fileName)) {
-		setError(MSG_FILEINBUFFER);
+		setError(MSG_AlreadyInBuffer);
 		return false;
 	    }
 /* Same url, but a different #section */
@@ -4003,7 +4003,7 @@ runCommand(const char *line)
 	    nzFree(subj);
 	    nzFree(body);
 	    if(j)
-		i_puts(MSG_SENDMAIL);
+		i_puts(MSG_MailHowto);
 	} else {
 	    cw->fileName = cloneString(line);
 	    if(isSQL(line))
@@ -4056,11 +4056,11 @@ runCommand(const char *line)
     if(cmd == 'b') {
 	if(!cw->browseMode) {
 	    if(cw->binMode) {
-		setError(MSG_BROWSEBINARY);
+		setError(MSG_BrowseBinary);
 		return false;
 	    }
 	    if(!cw->dol) {
-		setError(MSG_BROWSEEMPTY);
+		setError(MSG_BrowseEmpty);
 		return false;
 	    }
 	    if(fileSize >= 0) {
@@ -4069,13 +4069,13 @@ runCommand(const char *line)
 	    }
 	    if(!browseCurrentBuffer()) {
 		if(icmd == 'b') {
-		    setError(MSG_UNBROWSABLE);
+		    setError(MSG_Unbrowsable);
 		    return false;
 		}
 		return true;
 	    }
 	} else if(!first) {
-	    setError(MSG_ALREADYBROWSING);
+	    setError(MSG_BrowseAlready);
 	    return false;
 	}
 
@@ -4097,7 +4097,7 @@ runCommand(const char *line)
 		icmd = cmd = 'b';
 		first = *line;
 		if(intFlag) {
-		    i_puts(MSG_INTREDIRECT);
+		    i_puts(MSG_RedirectionInterrupted);
 		    return true;
 		}
 		goto rebrowse;
@@ -4128,7 +4128,7 @@ runCommand(const char *line)
 		return true;
 	    }
 	}
-	setError(MSG_NOLABEL2, s);
+	setError(MSG_NoLable2, s);
 	return false;
     }
     /* b */
@@ -4166,7 +4166,7 @@ runCommand(const char *line)
 	    return rc;
 	}
 	if(cw->browseMode) {
-	    setError(MSG_IBROWSE);
+	    setError(MSG_BrowseI);
 	    return false;
 	}
 	cmd = 'a';
@@ -4181,7 +4181,7 @@ runCommand(const char *line)
 
     if(cmd == 'a') {
 	if(inscript) {
-	    setError(MSG_INSERTFUNCTION);
+	    setError(MSG_InsertFunction);
 	    return false;
 	}
 	if(cw->sqlMode) {
@@ -4252,7 +4252,7 @@ runCommand(const char *line)
 		}
 		if(j > 1) {
 		  notwhere:
-		    setError(MSG_READTEXTDB);
+		    setError(MSG_readText);
 		    return false;
 		}
 	      sqlwhere:
@@ -4265,7 +4265,7 @@ runCommand(const char *line)
 		fileSize = -1;
 	    return j;
 	}
-	setError(MSG_NOFILESPECIFIED);
+	setError(MSG_NoFileSpecified);
 	return false;
     }
 
@@ -4577,7 +4577,7 @@ updateFieldInBuffer(int tagno, const char *newtext, int notify, bool required)
 	if(notify == 1)
 	    displayLine(ln);
 	if(notify == 2)
-	    i_printf(MSG_LINEUPD, ln);
+	    i_printf(MSG_LineUpdated, ln);
 	cw->firstOpMode = undoable = true;
 	return;
     }

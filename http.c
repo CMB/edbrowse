@@ -115,7 +115,7 @@ readSocket(SSL * ssl, int fh)
 	else
 	    n = tcp_readFully(fh, p->data, CHUNKSIZE);
 	if(n < 0) {
-	    setError(intFlag ? MSG_INTERRUPTED : MSG_READSERVER);
+	    setError(intFlag ? MSG_Interrupted : MSG_WebRead);
 	    free(p);
 	    for(p = chunklist; p; p = q) {
 		q = p->next;
@@ -413,7 +413,7 @@ refreshDelay(int sec, const char *u)
 /* the value 15 seconds is somewhat arbitrary */
     if(sec < 15)
 	return true;
-    i_printf(MSG_DELAYED, u, sec);
+    i_printf(MSG_RedirectDelayed, u, sec);
     return false;
 }				/* refreshDelay */
 
@@ -445,7 +445,7 @@ httpConnect(const char *from, const char *url)
     char suffix[12];
 
     if(!isURL(url)) {
-	setError(MSG_BADURL, url);
+	setError(MSG_BadURL, url);
 	return false;
     }
 
@@ -472,7 +472,7 @@ httpConnect(const char *from, const char *url)
 	errorPrint("@empty host in httpConnect");
     if(proxy_host) {
 	if(secure) {
-	    setError(MSG_SSLPROXYNYI);
+	    setError(MSG_SSLProxyNYI);
 	    return false;
 	}
 	hip = tcp_name_ip(proxy_host);
@@ -480,7 +480,7 @@ httpConnect(const char *from, const char *url)
 	hip = tcp_name_ip(host);
     }
     if(hip == -1) {
-	setError((intFlag ? MSG_INTERRUPTED : MSG_IDENTIFYHOST), host);
+	setError((intFlag ? MSG_Interrupted : MSG_IdentifyHost), host);
 	return false;
     }
     debugPrint(4, "%s -> %s",
@@ -498,7 +498,7 @@ httpConnect(const char *from, const char *url)
 	nzFree(cmd);
 	return true;
     } else {
-	setError(MSG_BADPROT, prot);
+	setError(MSG_WebProtBad, prot);
 	return false;
     }
 
@@ -521,7 +521,7 @@ httpConnect(const char *from, const char *url)
 	s = getUserURL(url);
 	if(s) {
 	    if(strlen(s) >= sizeof (user) - 2) {
-		setError(MSG_USERNAMELONG, sizeof (user));
+		setError(MSG_UserNameLong, sizeof (user));
 		return false;
 	    }
 	    strcpy(user, s);
@@ -529,7 +529,7 @@ httpConnect(const char *from, const char *url)
 	s = getPassURL(url);
 	if(s) {
 	    if(strlen(s) >= sizeof (pass) - 2) {
-		setError(MSG_PASSWORDLONG, sizeof (pass));
+		setError(MSG_PasswordLong, sizeof (pass));
 		return false;
 	    }
 	    strcpy(pass, s);
@@ -545,7 +545,7 @@ httpConnect(const char *from, const char *url)
     getPortLocURL(url, &portloc, &port);
     hsock = tcp_connect(hip, (proxy_host ? proxy_port : port), webTimeout);
     if(hsock < 0) {
-	setError((intFlag ? MSG_INTERRUPTED : MSG_CONNECTHOST), host);
+	setError((intFlag ? MSG_Interrupted : MSG_WebConnect), host);
 	return false;
     }
     if(proxy_host)
@@ -563,9 +563,9 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	    err = ERR_peek_last_error();
 	    ERR_clear_error();
 	    if(ERR_GET_REASON(err) != SSL_R_CERTIFICATE_VERIFY_FAILED)
-		setError(MSG_CONNECTSECUREHOST, host, err);
+		setError(MSG_WebConnectSecure, host, err);
 	    else
-		setError(MSG_NOCERTIFY, host);
+		setError(MSG_NoCertify, host);
 	    SSL_free(hssl);
 	    close(hsock);
 	    return false;
@@ -699,7 +699,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
     debugPrint(4, "http header sent, %d/%d bytes", n, l);
     free(hdr);
     if(n < l) {
-	setError(intFlag ? MSG_INTERRUPTED : MSG_SENDWEBSERVER);
+	setError(intFlag ? MSG_Interrupted : MSG_WebSend);
 	if(secure)
 	    SSL_free(hssl);
 	close(hsock);
@@ -792,7 +792,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	int authmeth = 1;	/* basic method by default */
 	if(u = extractHeaderItem(serverData, hdr, "WWW-Authenticate", 0)) {
 	    if(!memEqualCI(u, "basic", 5) || isalnumByte(u[5])) {
-		setError(MSG_BADAUTHMETH, u);
+		setError(MSG_BadAuthMethod, u);
 		nzFree(u);
 		goto abort;
 	    }
@@ -815,41 +815,41 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	}
 	if(!(user[0] | pass[0])) {
 	    if(!isInteractive) {
-		setError(MSG_AUTHORIZE2);
+		setError(MSG_Authorize2);
 		goto abort;
 	    }
-	    i_puts(MSG_AUTHORIZE);
+	    i_puts(MSG_WebAuthorize);
 	  getlogin:
-	    i_printf(MSG_USERNAME);
+	    i_printf(MSG_UserName);
 	    fflush(stdout);
 	    fflush(stdin);
 	    if(!fgets(user, sizeof (user), stdin))
 		ebClose(0);
 	    n = strlen(user);
 	    if(n >= sizeof (user) - 1) {
-		i_printf(MSG_USERNAMELONG, sizeof (user) - 2);
+		i_printf(MSG_UserNameLong, sizeof (user) - 2);
 		goto getlogin;
 	    }
 	    if(n && user[n - 1] == '\n')
 		user[--n] = 0;
 	    if(stringEqual(user, "x")) {
-		setError(MSG_LOGINABORT);
+		setError(MSG_LoginAbort);
 		goto abort;
 	    }
-	    i_printf(MSG_PASSWORD);
+	    i_printf(MSG_Password);
 	    fflush(stdout);
 	    fflush(stdin);
 	    if(!fgets(pass, sizeof (pass), stdin))
 		ebClose(0);
 	    n = strlen(pass);
 	    if(n >= sizeof (pass) - 1) {
-		i_printf(MSG_PASSWORDLONG, sizeof (pass) - 2);
+		i_printf(MSG_PasswordLong, sizeof (pass) - 2);
 		goto getlogin;
 	    }
 	    if(n && pass[n - 1] == '\n')
 		pass[--n] = 0;
 	    if(stringEqual(pass, "x")) {
-		setError(MSG_LOGINABORT);
+		setError(MSG_LoginAbort);
 		goto abort;
 	    }
 	}
@@ -932,7 +932,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
 		}
 		if(recount >= 10) {
 		    free(u);
-		    i_puts(MSG_MANYREDIRECT);
+		    i_puts(MSG_RedirectMany);
 		    goto gotFile;
 		}
 /* Redirection looks valid, let's run with it. */
@@ -992,12 +992,12 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	   open(edbrowseTempFile, O_WRONLY | O_BINARY | O_CREAT | O_TRUNC,
 	   0666);
 	if(fh < 0) {
-	    setError(MSG_NOTEMPCREATE, edbrowseTempFile);
+	    setError(MSG_TempNoCreate, edbrowseTempFile);
 	    *u = 0;
 	    goto abort;
 	}
 	if(write(fh, serverData, serverDataLen) < serverDataLen) {
-	    setError(MSG_NOTEMPWRITE, edbrowseTempFile);
+	    setError(MSG_TempNoWrite, edbrowseTempFile);
 	    close(fh);
 	    *u = 0;
 	    goto abort;
@@ -1015,17 +1015,17 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	free(scmd);
 	n = fileSizeByName(edbrowseTempFile);
 	if(n <= 0) {
-	    setError(MSG_NOTEMPUNCOMPRESS);
+	    setError(MSG_TempNoUncompress);
 	    return false;
 	}
 	serverData = allocMem(n + 2);
 	fh = open(edbrowseTempFile, O_RDONLY | O_BINARY);
 	if(fh < 0) {
-	    setError(MSG_NOTEMPACCESS, edbrowseTempFile);
+	    setError(MSG_TempNoAccess, edbrowseTempFile);
 	    goto abort;
 	}
 	if(read(fh, serverData, n) < n) {
-	    setError(MSG_NOTEMPREAD, edbrowseTempFile);
+	    setError(MSG_TempNoRead, edbrowseTempFile);
 	    close(fh);
 	    goto abort;
 	}
@@ -1161,7 +1161,7 @@ ftpConnect(const char *url)
 
     f = popen(cmd, "r");
     if(!f) {
-	setError(MSG_NOTEMPSYSTEM, cmd, errno);
+	setError(MSG_TempNoSystem, cmd, errno);
 	nzFree(cmd);
 	return false;
     }
@@ -1209,12 +1209,12 @@ ftpConnect(const char *url)
 	if(!(rc & 0xff))
 	    rc >>= 8;
 	if(rc > 0 && rc <= 11)
-	    setError(MSG_FTPCONNECT - 1 + rc);
+	    setError(MSG_FTPConnect - 1 + rc);
 	else
-	    setError(MSG_FTPUNEXPECTED, rc);
+	    setError(MSG_FTPUnexpected, rc);
 	return false;
     }
-    i_puts(dirmode + MSG_SUCCESS);
+    i_puts(dirmode + MSG_Success);
     if(dirmode) {		/* need a final slash */
 	int l = strlen(url);
 	changeFileName = allocMem(l + 2);

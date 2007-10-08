@@ -184,7 +184,7 @@ parseURL(const char *url, const char **proto, int *prlen, const char **user, int
 	if(p[1] != '/' || p[2] != '/') {
 	    if(protocols[a].need_slashes) {
 		if(p[1] != '/') {
-		    setError(MSG_PROTEXPECTED, protocols[a].prot);
+		    setError(MSG_ProtExpected, protocols[a].prot);
 		    return -1;
 		}
 /* We got one out of two slashes, I'm going to call it good */
@@ -202,7 +202,7 @@ parseURL(const char *url, const char **proto, int *prlen, const char **user, int
 		char qprot[12];
 		memcpy(qprot, url, p - url);
 		qprot[p - url] = 0;
-		setError(MSG_BADPROT2, qprot);
+		setError(MSG_BadProt, qprot);
 		return -1;
 	    }
 	}
@@ -259,7 +259,7 @@ parseURL(const char *url, const char **proto, int *prlen, const char **user, int
 	const char *cc, *pp = q + strcspn(q, "/?#\1");
 	n = strtol(q + 1, (char **)&cc, 10);
 	if(cc != pp || !isdigitByte(q[1])) {
-	    setError(MSG_BADPORT);
+	    setError(MSG_BadPort);
 	    return -1;
 	}
 	if(port)
@@ -331,7 +331,7 @@ getHostURL(const char *url)
     if(!s)
 	return EMPTYSTRING;
     if(l >= sizeof (hostbuf)) {
-	setError(MSG_DOMAINLONG);
+	setError(MSG_DomainLong);
 	return 0;
     }
     memcpy(hostbuf, s, l);
@@ -368,7 +368,7 @@ getHostPassURL(const char *url)
     if(u)
 	z = u, hl += h - u, t += h - u;
     if(hl >= sizeof (hostbuf)) {
-	setError(MSG_DOMAINLONG);
+	setError(MSG_DomainLong);
 	return 0;
     }
     memcpy(hostbuf, z, hl);
@@ -393,7 +393,7 @@ getUserURL(const char *url)
     if(!s)
 	return EMPTYSTRING;
     if(l >= sizeof (buf)) {
-	setError(MSG_USERNAMELONG2);
+	setError(MSG_UserNameLong2);
 	return 0;
     }
     memcpy(buf, s, l);
@@ -415,7 +415,7 @@ getPassURL(const char *url)
     if(!s)
 	return EMPTYSTRING;
     if(l >= sizeof (buf)) {
-	setError(MSG_PASSWORDLONG2);
+	setError(MSG_PasswordLong2);
 	return 0;
     }
     memcpy(buf, s, l);
@@ -518,7 +518,7 @@ fetchHistory(const char *prev, const char *next)
 	    }
     }
     if(n_fetch >= MAXFETCH) {
-	setError(MSG_MANYFETCHES);
+	setError(MSG_WebFetchMany);
 	return -1;
     }
 /* Have we seen this one before? */
@@ -538,7 +538,7 @@ fetchHistory(const char *prev, const char *next)
 	from = histFrom[from];
     if(from < 0)
 	return false;
-    setError(MSG_FETCHESITSELF);
+    setError(MSG_WebFetchSelf);
     return -1;
 }				/* FetchHistory */
 

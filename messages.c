@@ -340,7 +340,7 @@ static const char *englishMessages[] = {
     "line from the mail server is too long, or unterminated",
     "cannot locate the mail server %s",
     "cannot connect to the mail server",
-    "buffer %d is empty",
+    "spurious",
     "file %s is empty",
     "your email should begin with subject:",
     "empty subject line",

@@ -188,7 +188,7 @@ win_close(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
    jsval * rval)
 {
 /* It's too confusing to just close the window */
-    i_puts(MSG_PAGEDONE);
+    i_puts(MSG_PageDone);
     cw->jsdead = true;
     return JS_TRUE;
 }				/* win_close */
@@ -463,7 +463,7 @@ setter_innerText(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
     if(!JSVAL_IS_STRING(v))
 	return JS_FALSE;
     s = JS_GetStringBytes(JSVAL_TO_STRING(v));
-    i_puts(MSG_INNERTEXT);
+    i_puts(MSG_InnerText);
 /* The string has already been updated in the object. */
     return JS_TRUE;
 }				/* setter_innerText */

@@ -55,7 +55,7 @@ loadAddressBook(void)
 	}
 	if(c == ':') {		/* delimiter */
 	    if(state == 0) {
-		setError(MSG_NOALIAS, ln);
+		setError(MSG_ABNoAlias, ln);
 	      freefail:
 		nzFree(buf);
 		return false;
@@ -78,7 +78,7 @@ loadAddressBook(void)
 	    if(state == 0)
 		continue;
 	    if(state == 1) {
-		setError(MSG_NOCOLON, ln - 1);
+		setError(MSG_ABNoColon, ln - 1);
 		goto freefail;
 	    }
 	    if(state == 3) {
@@ -88,26 +88,26 @@ loadAddressBook(void)
 		*t = 0;
 		v = strchr(last, ':');
 		if(v - last >= 16) {
-		    setError(MSG_ALIASLONG, ln - 1);
+		    setError(MSG_ABAliasLong, ln - 1);
 		    goto freefail;
 		}
 		++v;
 		if(t - v >= 64) {
-		    setError(MSG_EMAILLONG, ln - 1);
+		    setError(MSG_ABMailLong, ln - 1);
 		    goto freefail;
 		}
 		if(!strchr(v, '@')) {
-		    setError(MSG_EMAILNOAT, ln - 1);
+		    setError(MSG_ABNoAt, ln - 1);
 		    goto freefail;
 		}
 		if(strpbrk(v, " \t")) {
-		    setError(MSG_EMAILSPACES, ln - 1);
+		    setError(MSG_ABMailSpaces, ln - 1);
 		    goto freefail;
 		}
 
 		while(last < t) {
 		    if(!isprintByte(*last)) {
-			setError(MSG_EMAILUNPRINTABLE, ln - 1);
+			setError(MSG_AbMailUnprintable, ln - 1);
 			goto freefail;
 		    }
 		    ++last;
@@ -131,7 +131,7 @@ loadAddressBook(void)
 
     *t = 0;
     if(state) {
-	setError(MSG_ADBOOKUNTERMINATED);
+	setError(MSG_ABUnterminated);
 	goto freefail;
     }
 
@@ -189,7 +189,7 @@ serverPutLine(const char *buf)
     }
     n = tcp_write(mssock, buf, len);
     if(n < len) {
-	setError(MSG_MAILSERVEWRITE);
+	setError(MSG_MailWrite);
 	return false;
     }
     return true;
@@ -208,7 +208,7 @@ serverGetLine(void)
 	len =
 	   tcp_read(mssock, serverLine + slen, sizeof (serverLine) - 1 - slen);
 	if(len <= 0) {
-	    setError(MSG_MAILSERVEREAD);
+	    setError(MSG_MailRead);
 	    return false;
 	}
 	slen += len;
@@ -216,7 +216,7 @@ serverGetLine(void)
     }
     s = strchr(serverLine, '\n');
     if(!s) {
-	setError(MSG_MAILSERVELONG);
+	setError(MSG_MailResponseLong);
 	return false;
     }
     strcpy(spareLine, s + 1);
@@ -242,13 +242,13 @@ mailConnect(const char *host, int port)
 {
     IP32bit ip = tcp_name_ip(host);
     if(ip == NULL_IP) {
-	setError((intFlag ? MSG_INTERRUPTED : MSG_MAILSERVEFIND), host);
+	setError((intFlag ? MSG_Interrupted : MSG_MailLocate), host);
 	return false;
     }
     debugPrint(4, "%s -> %s", host, tcp_ip_dots(ip));
     mssock = tcp_connect(ip, port, mailTimeout);
     if(mssock < 0) {
-	setError(intFlag ? MSG_INTERRUPTED : MSG_MAILSERVECONNECT);
+	setError(intFlag ? MSG_Interrupted : MSG_MailConnect);
 	return false;
     }
     debugPrint(4, "connected to port %d", port);
@@ -337,7 +337,7 @@ encodeAttachment(const char *file, int ismail,
 	    if(!unfoldBuffer(cx, false, &buf, &buflen))
 		return false;
 	    if(!buflen) {
-		setError(MSG_BUFFERDEMPTY, cx);
+		setError(MSG_BufferXEmpty, cx);
 		goto freefail;
 	    }
 	    sprintf(newfilename, "<buffer %d>", cx);
@@ -348,7 +348,7 @@ encodeAttachment(const char *file, int ismail,
 	    if(!fileIntoMemory(file, &buf, &buflen))
 		return false;
 	    if(!buflen) {
-		setError(MSG_FILESEMPTY, file);
+		setError(MSG_FileXEmpty, file);
 		goto freefail;
 	    }
 	}
@@ -370,7 +370,7 @@ encodeAttachment(const char *file, int ismail,
 	while(*s == ' ' || *s == '\t')
 	    ++s;
 	if(!memEqualCI(s, "subject:", 8)) {
-	    setError(MSG_STARTSUBJECT);
+	    setError(MSG_SubjectStart);
 	    goto freefail;
 	}
 	s += 8;
@@ -383,11 +383,11 @@ encodeAttachment(const char *file, int ismail,
 	while(s > t && isspaceByte(s[-1]))
 	    --s;
 	if(s == t) {
-	    setError(MSG_SUBJECTEMPTY);
+	    setError(MSG_SubjectEmpty);
 	    goto freefail;
 	}
 	if(s - t >= sizeof (subjectLine)) {
-	    setError(MSG_SUBJECTLONG, sizeof (subjectLine) - 1);
+	    setError(MSG_SubjectLong, sizeof (subjectLine) - 1);
 	    goto freefail;
 	}
 	memcpy(subjectLine, t, s - t);
@@ -396,7 +396,7 @@ encodeAttachment(const char *file, int ismail,
 	for(s = subjectLine; s < t; ++s) {
 	    c = *s;
 	    if(!isprintByte(c) && c != ' ') {
-		setError(MSG_SUBJECTCHARS);
+		setError(MSG_SubjectChars);
 		goto freefail;
 	    }
 	}
@@ -415,7 +415,7 @@ encodeAttachment(const char *file, int ismail,
 	    if(c != 0) {
 		int fd, n;
 		if(c != 'f') {
-		    setError(MSG_SIGREGULAR);
+		    setError(MSG_SigRegular);
 		    goto freefail;
 		}
 		n = fileSizeByName(sigFile);
@@ -423,7 +423,7 @@ encodeAttachment(const char *file, int ismail,
 		    buf = reallocMem(buf, buflen + n + 1);
 		    fd = open(sigFile, O_RDONLY);
 		    if(fd < 0) {
-			setError(MSG_SIGACCESS);
+			setError(MSG_SigAccess);
 			goto freefail;
 		    }
 		    read(fd, buf + buflen, n);
@@ -484,7 +484,7 @@ encodeAttachment(const char *file, int ismail,
 
     if(buflen > 20 && nacount * 5 > buflen) {	/* binary file */
 	if(ismail) {
-	    setError(MSG_MAILBINARY, file);
+	    setError(MSG_MailBinary, file);
 	    goto freefail;
 	}
 
@@ -694,7 +694,7 @@ sendMail(int account, const char **recipients, const char *body,
     if(nat)
 	mustmime = true;
     if(nalt && nalt < nat) {
-	setError(MSG_ATTALT);
+	setError(MSG_AttAlternate);
 	return false;
     }
 
@@ -707,7 +707,7 @@ sendMail(int account, const char **recipients, const char *body,
 	if(*s == '^' || *s == '?')
 	    cc = *s++;
 	if(j == MAXRECAT) {
-	    setError(MSG_MANYRECIP, MAXRECAT);
+	    setError(MSG_RecipMany, MAXRECAT);
 	    return false;
 	}
 	recipients[j] = s;
@@ -734,15 +734,15 @@ sendMail(int account, const char **recipients, const char *body,
 	    continue;
 	}
 	if(!addressFile) {
-	    setError(MSG_NOADDRESSBOOK);
+	    setError(MSG_ABMissing);
 	    return false;
 	}
-	setError(MSG_NOALIAS2, s);
+	setError(MSG_ABNoAlias2, s);
 	return false;
     }				/* recipients */
 
     if(!j) {
-	setError(MSG_NORECIP);
+	setError(MSG_RecipNone);
 	return false;
     }
 
@@ -752,21 +752,21 @@ sendMail(int account, const char **recipients, const char *body,
 	    if(!cxCompare(cx) || !cxActive(cx))
 		return false;
 	    if(!sessionList[cx].lw->dol) {
-		setError(MSG_SESSIONEMPTYATT, cx);
+		setError(MSG_AttSessionEmpty, cx);
 		return false;
 	    }
 	} else {
 	    char ftype = fileTypeByName(s, false);
 	    if(!ftype) {
-		setError(MSG_ACCESSATT, s);
+		setError(MSG_AttAccess, s);
 		return false;
 	    }
 	    if(ftype != 'f') {
-		setError(MSG_REGULARATT, s);
+		setError(MSG_AttRegular, s);
 		return false;
 	    }
 	    if(!fileSizeByName(s)) {
-		setError(MSG_EMPTYATT2, s);
+		setError(MSG_AttEmpty2, s);
 		return false;
 	    }
 	}
@@ -790,7 +790,7 @@ sendMail(int account, const char **recipients, const char *body,
 	    goto mailfail;
     }
     if(!memEqualCI(serverLine, "220 ", 4)) {
-	setError(MSG_MAILSERVEPROMPT, serverLine);
+	setError(MSG_MailBadPrompt, serverLine);
 	goto mailfail;
     }
 
@@ -800,7 +800,7 @@ sendMail(int account, const char **recipients, const char *body,
     if(!serverGetLine())
 	goto mailfail;
     if(!memEqualCI(serverLine, "250 ", 4)) {
-	setError(MSG_MAILSERVEWHAT, login);
+	setError(MSG_MailWhat, login);
 	goto mailfail;
     }
 
@@ -810,7 +810,7 @@ sendMail(int account, const char **recipients, const char *body,
     if(!serverGetLine())
 	goto mailfail;
     if(!memEqualCI(serverLine, "250 ", 4)) {
-	setError(MSG_MAILSERVEREJECT, reply);
+	setError(MSG_MailReject, reply);
 	goto mailfail;
     }
 
@@ -821,7 +821,7 @@ sendMail(int account, const char **recipients, const char *body,
 	if(!serverGetLine())
 	    goto mailfail;
 	if(!memEqualCI(serverLine, "250 ", 4)) {
-	    setError(MSG_MAILSERVEREJECT, s);
+	    setError(MSG_MailReject, s);
 	    goto mailfail;
 	}
     }
@@ -831,7 +831,7 @@ sendMail(int account, const char **recipients, const char *body,
     if(!serverGetLine())
 	goto mailfail;
     if(!memEqualCI(serverLine, "354 ", 4)) {
-	setError(MSG_MAILSERVENOTREADY, serverLine);
+	setError(MSG_MailNotReady, serverLine);
 	goto mailfail;
     }
 
@@ -947,7 +947,7 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 /* do these next two lines make any sense? */
        !strstrCI(serverLine, "message accepted") &&
        !strstrCI(serverLine, "message received")) {
-	setError(MSG_MAILSERVENOSEND, serverLine);
+	setError(MSG_MailNotSent, serverLine);
 	goto mailfail;
     }
 
@@ -965,11 +965,11 @@ bool
 validAccount(int n)
 {
     if(!maxAccount) {
-	setError(MSG_NOMAILACCOUNTS);
+	setError(MSG_MailAccountsNone);
 	return false;
     }
     if(n <= 0 || n > maxAccount) {
-	setError(MSG_BADMAILACCOUNT, n, maxAccount);
+	setError(MSG_MailAccountBad, n, maxAccount);
 	return false;
     }
     return true;
@@ -992,23 +992,23 @@ sendMailCurrent(int sm_account, bool dosig)
     bool subj = false;
 
     if(cw->browseMode) {
-	setError(MSG_MAILBROWSE);
+	setError(MSG_MailBrowse);
 	return false;
     }
     if(cw->sqlMode) {
-	setError(MSG_MAILDB);
+	setError(MSG_MailDB);
 	return false;
     }
     if(cw->dirMode) {
-	setError(MSG_MAILDIR);
+	setError(MSG_MailDir);
 	return false;
     }
     if(cw->binMode) {
-	setError(MSG_MAILBINARY2);
+	setError(MSG_MailBinary2);
 	return false;
     }
     if(!cw->dol) {
-	setError(MSG_MAILEMPTY);
+	setError(MSG_MailEmpty);
 	return false;
     }
 
@@ -1039,18 +1039,18 @@ sendMailCurrent(int sm_account, bool dosig)
 	    while(*line == ' ' || *line == '\t')
 		++line;
 	    if(*line == '\n') {
-		setError(MSG_NORECIPLINE, ln);
+		setError(MSG_RecipNone2, ln);
 		goto done;
 	    }
 	    if(nrec == MAXRECAT) {
-		setError(MSG_MANYRECIP, MAXRECAT);
+		setError(MSG_RecipMany, MAXRECAT);
 		goto done;
 	    }
 	    ++nrec;
 	    for(t = line; *t != '\n'; ++t) ;
 	    if(cc) {
 		if(!lr) {
-		    setError(MSG_MAILCC1);
+		    setError(MSG_MailFirstCC);
 		    goto done;
 		}
 		stringAndChar(&recmem, &lr, cc);
@@ -1066,11 +1066,11 @@ sendMailCurrent(int sm_account, bool dosig)
 	    while(*line == ' ' || *line == '\t')
 		++line;
 	    if(*line == '\n') {
-		setError(MSG_NOATTLINE, ln);
+		setError(MSG_AttLineX, ln);
 		goto done;
 	    }
 	    if(nat == MAXRECAT) {
-		setError(MSG_MANYRECIP, MAXRECAT);
+		setError(MSG_RecipMany, MAXRECAT);
 		goto done;
 	    }
 	    ++nat;
@@ -1085,7 +1085,7 @@ sendMailCurrent(int sm_account, bool dosig)
 	    if(!isdigitByte(*line) ||
 	       (account = strtol(line, &line, 10)) == 0 ||
 	       account > maxAccount || *line != '\n') {
-		setError(MSG_BADMAILACCOUNTLINE, ln);
+		setError(MSG_MailAccountBadLineX, ln);
 		goto done;
 	    }
 	    continue;
@@ -1094,7 +1094,7 @@ sendMailCurrent(int sm_account, bool dosig)
 	    while(*line == ' ' || *line == '\t')
 		++line;
 	    if(*line == '\n') {
-		setError(MSG_SUBJECTEMPTY2);
+		setError(MSG_SubjectEmpty2);
 		goto done;
 	    }
 	    subj = true;
@@ -1105,12 +1105,12 @@ sendMailCurrent(int sm_account, bool dosig)
     if(sm_account)
 	account = sm_account;
     if(!subj) {
-	setError(((ln > cw->dol) + MSG_FIRSTMAILLINE), ln);
+	setError(((ln > cw->dol) + MSG_MailFirstLine), ln);
 	goto done;
     }
 
     if(nrec == 0) {
-	setError(MSG_NORECIP3);
+	setError(MSG_RecipNone3);
 	goto done;
     }
 
@@ -1134,7 +1134,7 @@ sendMailCurrent(int sm_account, bool dosig)
     nzFree(recmem);
     nzFree(atmem);
     if(!rc && intFlag)
-	setError(MSG_INTERRUPTED);
+	setError(MSG_Interrupted);
     if(rc)
 	i_puts(MSG_OK);
     return rc;

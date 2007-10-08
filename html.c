@@ -346,7 +346,7 @@ get_js_event(const char *name)
     if(stringEqual(name, "onchange")) {
 	if(action == TAGACT_INPUT || action == TAGACT_SELECT) {
 	    if(itype == INP_TA)
-		runningError(MSG_ONCHANGETEXT);
+		runningError(MSG_OnchangeText);
 	    else if(itype > INP_HIDDEN && itype <= INP_SELECT) {
 		topTag->handler = true;
 		if(currentForm)
@@ -374,19 +374,19 @@ get_js_events(void)
 /* Some warnings about some handlers that we just don't "handle" */
     if(handlerPresent(ev, "onkeypress") ||
        handlerPresent(ev, "onkeyup") || handlerPresent(ev, "onkeydown"))
-	browseError(MSG_JSKEYSTROKE);
+	browseError(MSG_JSKeystroke);
     if(handlerPresent(ev, "onfocus") || handlerPresent(ev, "onblur"))
-	browseError(MSG_JSFOCUS);
+	browseError(MSG_JSFocus);
     if(handlerPresent(ev, "ondblclick"))
-	runningError(MSG_DOUBLECLICK);
+	runningError(MSG_Doubleclick);
     if(handlerPresent(ev, "onclick")) {
 	if((action == TAGACT_A || action == TAGACT_AREA || action == TAGACT_FRAME) && topTag->href || action == TAGACT_INPUT && (itype <= INP_SUBMIT || itype >= INP_RADIO)) ;	/* ok */
 	else
-	    browseError(MSG_STRAyONCLICK);
+	    browseError(MSG_StrayOnclick);
     }
     if(handlerPresent(ev, "onchange")) {
 	if(action != TAGACT_INPUT && action != TAGACT_SELECT || itype == INP_TA)
-	    browseError(MSG_ONCHANGE);
+	    browseError(MSG_Onchange);
     }
 /* Other warnings might be appropriate, but I'm going to assume this
  * is valid javascript, and you won't put an onsubmit function on <P> etc */
@@ -525,11 +525,11 @@ formControl(bool namecheck)
 	topTag->controller = currentForm;
 	fo = currentForm->jv;
     } else if(itype != INP_BUTTON)
-	browseError(MSG_NOTINFORM2, topTag->info->desc);
+	browseError(MSG_NotInForm2, topTag->info->desc);
 
     htmlName();
     if(namecheck && !topTag->name)
-	browseError(MSG_FIELDNONAME, topTag->info->desc);
+	browseError(MSG_FieldNoName, topTag->info->desc);
 
     if(fo) {
 	topTag->jv = e =
@@ -599,7 +599,7 @@ htmlForm(void)
 	if(stringEqualCI(a, "post"))
 	    topTag->post = true;
 	else if(!stringEqualCI(a, "get"))
-	    browseError(MSG_GETPOST);
+	    browseError(MSG_GetPost);
 	nzFree(a);
     }
 
@@ -608,7 +608,7 @@ htmlForm(void)
 	if(stringEqualCI(a, "multipart/form-data"))
 	    topTag->mime = true;
 	else if(!stringEqualCI(a, "application/x-www-form-urlencoded"))
-	    browseError(MSG_ENCTYPE);
+	    browseError(MSG_Enctype);
 	nzFree(a);
     }
 
@@ -622,7 +622,7 @@ htmlForm(void)
 	    else if(stringEqualCI(prot, "https"))
 		topTag->secure = true;
 	    else if(!stringEqualCI(prot, "http"))
-		browseError(MSG_BADFORMPROT, prot);
+		browseError(MSG_FormProtBad, prot);
 	}
     }
 
@@ -647,9 +647,9 @@ jsdw(void)
     memcpy(cw->dw + 3, "<html>\n", 7);
     side = sideBuffer(0, cw->dw + 10, -1, cw->fileName, true);
     if(side) {
-	i_printf(MSG_SIDEBUFFER, side);
+	i_printf(MSG_SideBufferX, side);
     } else {
-	i_puts(MSG_NOSIDEBUFFER);
+	i_puts(MSG_NoSideBuffer);
 	printf("%s\n", cw->dw + 10);
     }
     nzFree(cw->dw);
@@ -667,7 +667,7 @@ htmlInput(void)
 	caseShift(s, 'l');
 	n = stringInList(inp_types, s);
 	if(n < 0) {
-	    browseError(MSG_BADINPUTTYPE, s);
+	    browseError(MSG_InputType, s);
 	    n = INP_TEXT;
 	}
     }
@@ -697,7 +697,7 @@ htmlInput(void)
 	    }
 	    sprintf(namebuf, "|%s|", topTag->name);
 	    if(strstr(radioChecked, namebuf)) {
-		browseError(MSG_MANYRADIOSELECT);
+		browseError(MSG_RadioMany);
 		return;
 	    }
 	    stringAndString(&radioChecked, &radioChecked_l, namebuf + 1);
@@ -846,12 +846,12 @@ locateOptions(const struct htmlTag *sel, const char *input,
 	    t = locateOptionByName(sel, iopt, &pmc, false);
 	if(!t) {
 	    if(n >= 0)
-		setError(MSG_DOUTOFRANGE, n);
+		setError(MSG_XOutOfRange, n);
 	    else
-		setError(pmc + MSG_NOOPTMATCH, iopt);
+		setError(pmc + MSG_OptMatchNone, iopt);
 /* This should never happen when we're doing a set check */
 	    if(setcheck) {
-		runningError(MSG_OPTIONSYNC, iopt);
+		runningError(MSG_OptionSync, iopt);
 		continue;
 	    }
 	    goto fail;
@@ -1000,18 +1000,18 @@ findOpenTag(const char *name)
 	if(closing) {
 	    if(match)
 		return t;
-	    browseError(MSG_TAGNEST, desc, t->info->desc);
+	    browseError(MSG_TagNest, desc, t->info->desc);
 	    continue;
 	}
 	if(!match)
 	    continue;
 	if(!(t->info->nest & 2))
-	    browseError(MSG_TAGINTAG, desc, desc);
+	    browseError(MSG_TagInTag, desc, desc);
 	return t;
     }				/* loop */
 
     if(closing)
-	browseError(MSG_TAGCLOSE, desc);
+	browseError(MSG_TagClose, desc);
     return NULL;
 }				/* findOpenTag */
 
@@ -1048,7 +1048,7 @@ onloadGo(void *obj, const char *jsrc, const char *tagname)
     if(!handlerPresent(obj, "onunload"))
 	return;
     if(handlerPresent(obj, "onclick")) {
-	runningError(MSG_UNLOADCLICK);
+	runningError(MSG_UnloadClick);
 	return;
     }
 
@@ -1227,7 +1227,7 @@ encodeTags(char *html)
 	    currentTA = 0;
 	    if(slash)
 		continue;
-	    browseError(MSG_TANEST);
+	    browseError(MSG_TextareaNest);
 	}
 
 	if(!action)
@@ -1267,7 +1267,7 @@ encodeTags(char *html)
 	if(ti->bits & TAG_CLOSEA && currentA &&
 	   (action != TAGACT_A || !slash) &&
 	   (a_text || action <= TAGACT_OPTION)) {
-	    browseError(MSG_INANCHOR, ti->desc);
+	    browseError(MSG_InAnchor, ti->desc);
 	    stringAndString(&new, &l, "\2000}");
 	    currentA->balanced = true;
 	    currentA = 0;
@@ -1290,7 +1290,7 @@ encodeTags(char *html)
 	    if(v->action != action &&
 	       !(v->action == TAGACT_OPTION && action == TAGACT_SELECT) ||
 	       action != TAGACT_OPTION && !slash)
-		browseError(MSG_HASTAGS, v->info->desc);
+		browseError(MSG_HasTags, v->info->desc);
 	    if(!(ti->bits & TAG_CLOSEA))
 		continue;
 /* close off the title or option */
@@ -1309,7 +1309,7 @@ encodeTags(char *html)
 		    for(y = a; *y; ++y)
 			if(*y == ',')
 			    *y = ' ';
-		    browseError(MSG_OPTIONCOMMA);
+		    browseError(MSG_OptionComma);
 		}
 		spaceCrunch(a, true, true);
 		*ptr = a;
@@ -1321,7 +1321,7 @@ encodeTags(char *html)
 
 		if(currentOpt) {
 		    if(!*a) {
-			browseError(MSG_OPTIONEMPTY);
+			browseError(MSG_OptionEmpty);
 		    } else {
 			if(!v->value)
 			    v->value = cloneString(a);
@@ -1382,7 +1382,7 @@ encodeTags(char *html)
 	    if(slash)
 		continue;
 	    if(cw->ft)
-		browseError(MSG_MANYTITLES);
+		browseError(MSG_ManyTitles);
 	    offset = l;
 	    currentTitle = t;
 	    continue;
@@ -1475,7 +1475,7 @@ encodeTags(char *html)
 		}
 	    }
 	    if(j < 0)
-		browseError(MSG_NOTINLIST, ti->desc);
+		browseError(MSG_NotInList, ti->desc);
 	    if(!retainTag)
 		continue;
 	    hnum[0] = '\r';
@@ -1498,7 +1498,7 @@ encodeTags(char *html)
 		break;
 	}
 	    if(v == (struct htmlTag *)&htmlStack)
-		browseError(MSG_NOTINLIST, ti->desc);
+		browseError(MSG_NotInList, ti->desc);
 	    goto nop;
 
 	case TAGACT_TABLE:
@@ -1520,7 +1520,7 @@ encodeTags(char *html)
 
 	case TAGACT_TR:
 	    if(!intable) {
-		browseError(MSG_NOTINTABLE, ti->desc);
+		browseError(MSG_NotInTable, ti->desc);
 		continue;
 	    }
 /* This really doesn't work for tables inside tables */
@@ -1540,7 +1540,7 @@ encodeTags(char *html)
 
 	case TAGACT_TD:
 	    if(!inrow) {
-		browseError(MSG_NOTINTROW, ti->desc);
+		browseError(MSG_NotInRow, ti->desc);
 		continue;
 	    }
 	    if(slash)
@@ -1654,7 +1654,7 @@ encodeTags(char *html)
 	    if(slash)
 		continue;
 	    if(!currentSel) {
-		browseError(MSG_OPTNOTINSELECT);
+		browseError(MSG_NotInSelect);
 		continue;
 	    }
 	    currentOpt = t;
@@ -1664,7 +1664,7 @@ encodeTags(char *html)
 	    t->value = htmlAttrVal(topAttrib, "value");
 	    if(htmlAttrPresent(topAttrib, "selected")) {
 		if(currentSel->lic && !currentSel->multiple)
-		    browseError(MSG_MANYOPTSELECT);
+		    browseError(MSG_ManyOptSelected);
 		else
 		    t->checked = t->rchecked = true, ++currentSel->lic;
 	    }
@@ -1814,7 +1814,7 @@ encodeTags(char *html)
 /* I'm not going to process an open ended script. */
 	    if(!rc) {
 		nzFree(javatext);
-		runningError(MSG_SCRIPTNOTCLOSED);
+		runningError(MSG_ScriptNotClosed);
 		cw->jsdead = true;
 		continue;
 	    }
@@ -1835,7 +1835,7 @@ encodeTags(char *html)
 			if(browseLocal && !isURL(t->href)) {
 			    if(!fileIntoMemory(t->href, &serverData,
 			       &serverDataLen)) {
-				runningError(MSG_GETLOCALJS, errorMsg);
+				runningError(MSG_GetLocalJS, errorMsg);
 			    } else {
 				javatext = serverData;
 				prepareForBrowse(javatext, serverDataLen);
@@ -1846,10 +1846,10 @@ encodeTags(char *html)
 				prepareForBrowse(javatext, serverDataLen);
 			    } else {
 				nzFree(serverData);
-				runningError(MSG_GETJS, t->href, hcode);
+				runningError(MSG_GetJS, t->href, hcode);
 			    }
 			} else {
-			    runningError(MSG_GETJS2, errorMsg);
+			    runningError(MSG_GetJS2, errorMsg);
 			}
 			js_line = 1;
 			js_file = t->href;
@@ -1909,7 +1909,7 @@ encodeTags(char *html)
 	    continue;
 
 	default:
-	    browseError(MSG_BADTAG, action);
+	    browseError(MSG_BadTag, action);
 	    continue;
 	}			/* switch */
 
@@ -1973,7 +1973,7 @@ encodeTags(char *html)
 	foreach(t, htmlStack) {
 	    browseLine = t->ln;
 	    if(t->info->nest && !t->slash && !t->balanced) {
-		browseError(MSG_TAGNOTCLOSED, t->info->desc);
+		browseError(MSG_TagNotClosed, t->info->desc);
 		break;
 	    }
 
@@ -1997,7 +1997,7 @@ encodeTags(char *html)
 		    break;
 	    }
 	    if(v == (struct htmlTag *)&htmlStack) {	/* end of list */
-		browseError(MSG_NOLABEL2, a);
+		browseError(MSG_NoLable2, a);
 		break;
 	    }
 	}			/* loop over all tags */
@@ -2340,7 +2340,7 @@ infShow(int tagno, const char *search)
 	++s;
     printf("%s", s);
     if(t->multiple)
-	i_printf(MSG_MANY);
+	i_printf(MSG_Many);
     if(t->itype >= INP_TEXT && t->itype <= INP_NUMBER && t->lic)
 	printf("[%d]", t->lic);
     if(t->itype == INP_TA) {
@@ -2350,8 +2350,8 @@ infShow(int tagno, const char *search)
 	if(rows && cols) {
 	    printf("[%sx%s", rows, cols);
 	    if(wrap && stringEqualCI(wrap, "virtual"))
-		i_printf(MSG_RECOMMENDED);
-	    i_printf(MSG_CLOSE);
+		i_printf(MSG_Recommended);
+	    i_printf(MSG_Close);
 	}
 	nzFree(rows);
 	nzFree(cols);
@@ -2380,9 +2380,9 @@ infShow(int tagno, const char *search)
     }
     if(!show) {
 	if(!search)
-	    i_puts(MSG_NOOPTIONS);
+	    i_puts(MSG_NoOptions);
 	else
-	    i_printf(MSG_NOOPTMATCH2, search);
+	    i_printf(MSG_NoOptionsMatch, search);
     }
 }				/* infShow */
 
@@ -2399,42 +2399,42 @@ infReplace(int tagno, const char *newtext, int notify)
 
 /* sanity checks on the input */
     if(itype <= INP_SUBMIT) {
-	int b = MSG_ISBUTTON;
+	int b = MSG_IsButton;
 	if(itype == INP_SUBMIT || itype == INP_IMAGE)
-	    b = MSG_SUBMITBUTTON;
+	    b = MSG_SubmitButton;
 	if(itype == INP_RESET)
-	    b = MSG_RESETBUTTON;
+	    b = MSG_ResetButton;
 	setError(b);
 	return false;
     }
 
     if(itype == INP_TA) {
-	setError(MSG_TEXTAREA, t->lic);
+	setError(MSG_Textarea, t->lic);
 	return false;
     }
 
     if(t->rdonly) {
-	setError(MSG_READONLY);
+	setError(MSG_Readonly);
 	return false;
     }
 
     if(strchr(newtext, '\n')) {
-	setError(MSG_INPUTNEWLINE);
+	setError(MSG_InputNewline);
 	return false;
     }
 
     if(itype >= INP_TEXT && itype <= INP_NUMBER && t->lic && newlen > t->lic) {
-	setError(MSG_INPUTLONG, t->lic);
+	setError(MSG_InputLong, t->lic);
 	return false;
     }
 
     if(itype >= INP_RADIO) {
 	if(newtext[0] != '+' && newtext[0] != '-' || newtext[1]) {
-	    setError(MSG_INPUTRADIO);
+	    setError(MSG_InputRadio);
 	    return false;
 	}
 	if(itype == INP_RADIO && newtext[0] == '-') {
-	    setError(MSG_CLEARRADIO);
+	    setError(MSG_ClearRadio);
 	    return false;
 	}
     }
@@ -2457,14 +2457,14 @@ infReplace(int tagno, const char *newtext, int notify)
 	if(!envFile(newtext, &newtext))
 	    return false;
 	if(newtext[0] && access(newtext, 4)) {
-	    setError(MSG_FILEACCESS, newtext);
+	    setError(MSG_FileAccess, newtext);
 	    return false;
 	}
     }
 
     if(itype == INP_NUMBER) {
 	if(*newtext && stringIsNum(newtext) < 0) {
-	    setError(MSG_NUMBEREXPECTED);
+	    setError(MSG_NumberExpected);
 	    return false;
 	}
     }
@@ -2491,7 +2491,7 @@ infReplace(int tagno, const char *newtext, int notify)
 
     if(itype >= INP_RADIO && tagHandler(t->seqno, "onclick")) {
 	if(cw->jsdead)
-	    runningError(MSG_NJSNOONCLICK);
+	    runningError(MSG_NJNoOnclick);
 	else {
 	    jSyncup();
 	    handlerGo(t->jv, "onclick");
@@ -2504,7 +2504,7 @@ infReplace(int tagno, const char *newtext, int notify)
     if(itype >= INP_TEXT && itype <= INP_SELECT &&
        tagHandler(t->seqno, "onchange")) {
 	if(cw->jsdead)
-	    runningError(MSG_NJSNOONCHANGE);
+	    runningError(MSG_NJNoOnchange);
 	else {
 	    jSyncup();
 	    handlerGo(t->jv, "onchange");
@@ -2604,7 +2604,7 @@ formReset(const struct htmlTag *form)
 	    set_property_number(t->jv, "selectedIndex", -1);
     }				/* loop over tags */
 
-    i_puts(MSG_FORMRESET);
+    i_puts(MSG_FormReset);
 }				/* formReset */
 
 /* Fetch a field value (from a form) to post. */
@@ -2851,7 +2851,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 		    goto fail;
 		for(j = 0; j < cxlen; ++j)
 		    if(cxbuf[j] == 0) {
-			setError(MSG_SESSIONNULL, cx);
+			setError(MSG_SessionNull, cx);
 			nzFree(cxbuf);
 			goto fail;
 		    }
@@ -2917,7 +2917,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 	    if(!*value)
 		continue;
 	    if(!(form->post & form->mime)) {
-		setError(MSG_FILEPOST);
+		setError(MSG_FilePost);
 		nzFree(value);
 		goto fail;
 	    }
@@ -2942,7 +2942,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 
     if(noname)
 	debugPrint(0, "warning: fields without names will not be transmitted");
-    i_puts(MSG_FORMSUBMIT);
+    i_puts(MSG_FormSubmit);
     return true;
 
   fail:
@@ -2986,18 +2986,18 @@ infPush(int tagno, char **post_string)
     }
 
     if(itype > INP_SUBMIT) {
-	setError(MSG_NOBUTTON);
+	setError(MSG_NoButton);
 	return false;
     }
 
     if(!form && itype != INP_BUTTON) {
-	setError(MSG_NOTINFORM);
+	setError(MSG_NotInForm);
 	return false;
     }
 
     if(t && tagHandler(t->seqno, "onclick")) {
 	if(cw->jsdead)
-	    runningError(itype == INP_BUTTON ? MSG_NJSNOACT : MSG_NJSNOONCLICK);
+	    runningError(itype == INP_BUTTON ? MSG_NJNoAction : MSG_NJNoOnclick);
 	else {
 	    rc = handlerGo(t->jv, "onclick");
 	    jsdw();
@@ -3010,7 +3010,7 @@ infPush(int tagno, char **post_string)
 
     if(itype == INP_BUTTON) {
 	if(!handlerPresent(t->jv, "onclick")) {
-	    setError(MSG_BUTTONNOJS);
+	    setError(MSG_ButtonNoJS);
 	    return false;
 	}
 	return true;
@@ -3020,7 +3020,7 @@ infPush(int tagno, char **post_string)
 /* Before we reset, run the onreset code */
 	if(t && tagHandler(form->seqno, "onreset")) {
 	    if(cw->jsdead)
-		runningError(MSG_NJSNORESET);
+		runningError(MSG_NJNoReset);
 	    else {
 		rc = handlerGo(form->jv, "onreset");
 		jsdw();
@@ -3037,7 +3037,7 @@ infPush(int tagno, char **post_string)
     /* Before we submit, run the onsubmit code */
     if(t && tagHandler(form->seqno, "onsubmit")) {
 	if(cw->jsdead)
-	    runningError(MSG_NJSNOSUBMIT);
+	    runningError(MSG_NJNoSubmit);
 	else {
 	    rc = handlerGo(form->jv, "onsubmit");
 	    jsdw();
@@ -3066,7 +3066,7 @@ infPush(int tagno, char **post_string)
     }
 
     if(!action) {
-	setError(MSG_NOFORMURL);
+	setError(MSG_FormNoURL);
 	return false;
     }
 
@@ -3074,13 +3074,13 @@ infPush(int tagno, char **post_string)
 
     prot = getProtURL(action);
     if(!prot) {
-	setError(MSG_BADFORMURL);
+	setError(MSG_FormBadURL);
 	return false;
     }
 
     if(stringEqualCI(prot, "javascript")) {
 	if(cw->jsdead) {
-	    setError(MSG_NJSNOFORM);
+	    setError(MSG_NJNoForm);
 	    return false;
 	}
 	javaParseExecute(form->jv, action, 0, 0);
@@ -3095,11 +3095,11 @@ infPush(int tagno, char **post_string)
 	form->bymail = true;
     } else if(stringEqualCI(prot, "http")) {
 	if(form->secure) {
-	    setError(MSG_BECAMEINSECURE);
+	    setError(MSG_BecameInsecure);
 	    return false;
 	}
     } else if(!stringEqualCI(prot, "https")) {
-	setError(MSG_BADSUBMITPROT, prot);
+	setError(MSG_SubmitProtBad, prot);
 	return false;
     }
 
@@ -3157,11 +3157,11 @@ infPush(int tagno, char **post_string)
 	    sprintf(q, "subject:html form(%s)\n", name ? name : "?");
 	strcpy(q + strlen(q), post + actlen);
 	nzFree(post);
-	i_printf(MSG_SENDINGMAIL, addr);
+	i_printf(MSG_MailSending, addr);
 	sleep(1);
 	rc = sendMail(localAccount, tolist, q, -1, atlist, 0, false);
 	if(rc)
-	    i_puts(MSG_MAILSENT);
+	    i_puts(MSG_MailSent);
 	nzFree(addr);
 	nzFree(subj);
 	nzFree(q);
@@ -3185,7 +3185,7 @@ tagFromJavaVar(void *v)
 	if(t->jv == v)
 	    break;
     if(!t)
-	runningError(MSG_LOSTTAG);
+	runningError(MSG_LostTag);
     return t;
 }				/* tagFromJavaVar */
 
@@ -3203,7 +3203,7 @@ javaSetsTagVar(void *v, const char *val)
 	return;
     }
     if(t->itype == INP_TA) {
-	runningError(MSG_JSTA);
+	runningError(MSG_JSTextarea);
 	return;
     }
     updateFieldInBuffer(t->seqno, val, parsePage ? 0 : 2, false);
@@ -3243,7 +3243,7 @@ javaOpensWindow(const char *href, const char *name)
     const char *a;
 
     if(!href || !*href) {
-	browseError(MSG_JSBLANK);
+	browseError(MSG_JSBlankWindow);
 	return;
     }
 

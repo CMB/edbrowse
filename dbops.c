@@ -604,13 +604,13 @@ ebConnect(void)
     if(sql_database)
 	return true;
     if(!dbarea) {
-	setError(MSG_DBUNSPECIFIED);
+	setError(MSG_DBUnspecified);
 	return false;
     }
     sql_exclist(exclist);
     sql_connect(dbarea, dblogin, dbpw);
     if(rv_lastStatus) {
-	setError(MSG_DBCONNECT, rv_vendorStatus);
+	setError(MSG_DBConnect, rv_vendorStatus);
 	return false;
     }
     if(!sql_database)
@@ -636,7 +636,7 @@ static struct DBTABLE *td;
 static void
 unexpected(void)
 {
-    setError(MSG_DBUNEXPECTED, rv_vendorStatus);
+    setError(MSG_DBUnexpected, rv_vendorStatus);
 }				/* unexpected */
 
 static void
@@ -669,13 +669,13 @@ buildWhereClause(void)
     e = strchr(w, '=');
     if(!e) {
 	if(!td->key1) {
-	    setError(MSG_DBNOKEY);
+	    setError(MSG_DBNoKey);
 	    return false;
 	}
 	e = td->cols[td->key1 - 1];
 	l = strlen(e);
 	if(l > COLNAMELEN) {
-	    setError(MSG_DBCOLUMNLONG, e, COLNAMELEN);
+	    setError(MSG_DBColumnLong, e, COLNAMELEN);
 	    return false;
 	}
 	strcpy(wherecol, e);
@@ -683,11 +683,11 @@ buildWhereClause(void)
     } else if(isdigit(*w)) {
 	n = strtol(w, (char **)&w, 10);
 	if(w != e) {
-	    setError(MSG_DBSYNTAX);
+	    setError(MSG_DBSyntax);
 	    return false;
 	}
 	if(n == 0 || n > td->ncols) {
-	    setError(MSG_DBCOLRANGE, n);
+	    setError(MSG_DBColRange, n);
 	    return false;
 	}
 	goto setcol_n;
@@ -700,21 +700,21 @@ buildWhereClause(void)
 		if(!strstr(td->cols[i], wherecol))
 		    continue;
 		if(n) {
-		    setError(MSG_DBMANYCOLUMNS, wherecol);
+		    setError(MSG_DBManyColumns, wherecol);
 		    return false;
 		}
 		n = i + 1;
 	    }
 	}
 	if(!n) {
-	    setError(MSG_DBNOCOLUMN, wherecol);
+	    setError(MSG_DBNoColumn, wherecol);
 	    return false;
 	}
       setcol_n:
 	w = td->cols[n - 1];
 	l = strlen(w);
 	if(l > COLNAMELEN) {
-	    setError(MSG_DBCOLUMNLONG, w, COLNAMELEN);
+	    setError(MSG_DBColumnLong, w, COLNAMELEN);
 	    return false;
 	}
 	strcpy(wherecol, w);
@@ -769,9 +769,9 @@ setTable(void)
 	    nzFree(scl);
 	    if(rv_lastStatus) {
 		if(rv_lastStatus == EXCNOTABLE)
-		    setError(MSG_DBNOTABLE, td->name);
+		    setError(MSG_DBNoTable, td->name);
 		else if(rv_lastStatus == EXCNOCOLUMN)
-		    setError(MSG_DBBADCOLUMN);
+		    setError(MSG_DBBadColumn);
 		else
 		    unexpected();
 		return false;
@@ -786,7 +786,7 @@ setTable(void)
 	cid = sql_prepare("select * from %s", myTab);
 	if(rv_lastStatus) {
 	    if(rv_lastStatus == EXCNOTABLE)
-		setError(MSG_DBNOTABLE, myTab);
+		setError(MSG_DBNoTable, myTab);
 	    else
 		unexpected();
 	    return false;
@@ -822,7 +822,7 @@ setTable(void)
     if(s)
 	s = strpbrk(s + 1, "BT");
     if(s) {
-	setError(MSG_DBMANYBLOBS);
+	setError(MSG_DBManyBlobs);
 	return false;
     }
 
@@ -913,11 +913,11 @@ sqlReadRows(const char *filename, char **bufptr)
 	while(sql_fetchNext(cid, 0)) {
 	    unld = sql_mkunld('\177');
 	    if(strchr(unld, '|')) {
-		setError(MSG_DBPIPES);
+		setError(MSG_DBPipes);
 		goto abort;
 	    }
 	    if(strchr(unld, '\n')) {
-		setError(MSG_DBNEWLINE);
+		setError(MSG_DBNewline);
 		goto abort;
 	    }
 	    for(s = unld; *s; ++s)
@@ -984,13 +984,13 @@ intoFields(char *line)
 	    break;
 	if(j < td->ncols)
 	    continue;
-	setError(MSG_DBADDFIELD);
+	setError(MSG_DBAddField);
 	return false;
     }
 
     if(j == td->ncols)
 	return true;
-    setError(MSG_DBLOSTFIELD);
+    setError(MSG_DBLostField);
     return false;
 }				/* intoFields */
 
@@ -1002,7 +1002,7 @@ rowCountCheck(int action, int cnt1)
     if(cnt1 == cnt2)
 	return true;
 
-    setError(MSG_DBDELETECOUNT + action, cnt1, cnt2);
+    setError(MSG_DBDeleteCount + action, cnt1, cnt2);
     return false;
 }				/* rowCountCheck */
 
@@ -1010,7 +1010,7 @@ static int
 keyCountCheck(void)
 {
     if(!td->key1) {
-	setError(MSG_DBNOKEYCOL);
+	setError(MSG_DBNoKeyCol);
 	return false;
     }
     return (td->key2 ? 2 : 1);
@@ -1031,31 +1031,31 @@ insupdError(int action, int rcnt)
     if(rc) {
 	switch (rc) {
 	case EXCVIEWUSE:
-	    msg = MSG_DBVIEW;
+	    msg = MSG_DBView;
 	    break;
 	case EXCREFINT:
-	    msg = MSG_DBREFINT;
+	    msg = MSG_DBRefInt;
 	    break;
 	case EXCITEMLOCK:
-	    msg = MSG_DBLOCKED;
+	    msg = MSG_DBLocked;
 	    break;
 	case EXCPERMISSION:
-	    msg = MSG_DBPERMS;
+	    msg = MSG_DBPerms;
 	    break;
 	case EXCDEADLOCK:
-	    msg = MSG_DBDEADLOCK;
+	    msg = MSG_DBDeadlock;
 	    break;
 	case EXCNOTNULLCOLUMN:
-	    msg = MSG_DBNOTNULL;
+	    msg = MSG_DBNotNull;
 	    break;
 	case EXCCHECK:
-	    msg = MSG_DBCHECK;
+	    msg = MSG_DBCheck;
 	    break;
 	case EXCTIMEOUT:
-	    msg = MSG_DBTIMEOUT;
+	    msg = MSG_DBTimeout;
 	    break;
 	default:
-	    setError(MSG_DBMISC, rv_vendorStatus);
+	    setError(MSG_DBMisc, rv_vendorStatus);
 	    return false;
 	}
 
@@ -1083,7 +1083,7 @@ sqlDelRows(int start, int end)
     ndel = end - start + 1;
     ln = start;
     if(ndel > 100) {
-	setError(MSG_DBMASSDELETE);
+	setError(MSG_DBMassDelete);
 	return false;
     }
 
@@ -1150,15 +1150,15 @@ sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 	l2 = strlen(lineFields[j]);
 	if(l1 != l2 || memcmp(s, lineFields[j], l1)) {
 	    if(j == key1 || j == key2) {
-		setError(MSG_DBCHANGEKEY);
+		setError(MSG_DBChangeKey);
 		goto abort;
 	    }
 	    if(td->types[j] == 'B') {
-		setError(MSG_DBCHANGEBLOB);
+		setError(MSG_DBChangeBlob);
 		goto abort;
 	    }
 	    if(td->types[j] == 'T') {
-		setError(MSG_DBCHANGETEXT);
+		setError(MSG_DBChangeText);
 		goto abort;
 	    }
 	    if(*u1)
