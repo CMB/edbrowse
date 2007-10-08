@@ -524,9 +524,15 @@ static const char *
 getString(int msg)
 {
     const char **a = messageArray;
+    const char *s;
     if(msg >= messageArrayLength)
 	a = englishMessages;
-    return a[msg];
+    s = a[msg];
+    if(!s)
+	s = englishMessages[msg];
+    if(!s)
+	errorPrint("@printing null message %d", msg);
+    return s;
 }				/* getString */
 
 /*********************************************************************
