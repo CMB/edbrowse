@@ -4444,7 +4444,7 @@ browseCurrentBuffer(void)
 	    do_ip = false;
 	if(passMail)
 	    do_ip = false;
-	if(memEqualCI(newbuf, "<html>\n", 7)) {
+	if(memEqualCI(newbuf, "<html>\n", 7) && allowRedirection) {
 /* double browse, mail then html */
 	    bmode = 2;
 	    rawbuf = newbuf;

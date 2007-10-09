@@ -1856,7 +1856,9 @@ encodeTags(char *html)
 		    }
 		}		/* fetch from the net */
 		if(javatext) {
-		    char *w = strrchr(js_file, '/');
+		    char *w = 0;
+		    if(js_file)
+			w = strrchr(js_file, '/');
 		    if(w) {
 /* Trailing slash doesn't count */
 			if(w[1] == 0 && w > js_file)
@@ -2997,7 +2999,8 @@ infPush(int tagno, char **post_string)
 
     if(t && tagHandler(t->seqno, "onclick")) {
 	if(cw->jsdead)
-	    runningError(itype == INP_BUTTON ? MSG_NJNoAction : MSG_NJNoOnclick);
+	    runningError(itype ==
+	       INP_BUTTON ? MSG_NJNoAction : MSG_NJNoOnclick);
 	else {
 	    rc = handlerGo(t->jv, "onclick");
 	    jsdw();

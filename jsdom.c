@@ -54,20 +54,23 @@ my_ErrorReporter(JSContext * cx, const char *message, JSErrorReport * report)
     if(report->lineno) {
 	tmp = prefix;
 	prefix = JS_smprintf("%s%u: ", tmp ? tmp : "", report->lineno);
-	JS_free(cx, tmp);
+	if(tmp)
+	    JS_free(cx, tmp);
     }
     if(JSREPORT_IS_WARNING(report->flags)) {
 	tmp = prefix;
 	prefix = JS_smprintf("%s%swarning: ",
 	   tmp ? tmp : "", JSREPORT_IS_STRICT(report->flags) ? "strict " : "");
-	JS_free(cx, tmp);
+	if(tmp)
+	    JS_free(cx, tmp);
     }
 
     if(prefix)
 	fputs(prefix, gErrFile);
     fprintf(gErrFile, "%s\n", message);
 
-    JS_free(cx, prefix);
+    if(prefix)
+	JS_free(cx, prefix);
 }				/* my_ErrorReporter */
 
 
