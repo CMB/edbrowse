@@ -3431,7 +3431,8 @@ runCommand(const char *line)
     /* h */
     if(cmd == 'H') {
 	if(helpMessagesOn ^= 1)
-	    debugPrint(1, "help messages on");
+	    if(debugLevel >= 1)
+		i_puts(MSG_HelpOn);
 	return true;
     }
 
@@ -4338,8 +4339,7 @@ sideBuffer(int cx, const char *text, int textlen,
 	    if(!sessionList[cx].lw)
 		break;
 	if(cx == MAXSESSION) {
-	    debugPrint(0,
-	       "warning: no buffers available to handle the ancillary window");
+	    i_puts(MSG_NoBufferExtraWindow);
 	    return 0;
 	}
     }
@@ -4356,9 +4356,7 @@ sideBuffer(int cx, const char *text, int textlen,
     if(textlen) {
 	rc = addTextToBuffer((pst) text, textlen, 0);
 	if(!rc)
-	    debugPrint(0,
-	       "warning: could not preload <buffer %d> with its initial text",
-	       cx);
+	    i_printf(MSG_BufferPreload, cx);
 	if(autobrowse) {
 /* This is html; we need to render it.
  * I'm disabling javascript in this window.

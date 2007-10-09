@@ -2943,7 +2943,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
     }
 
     if(noname)
-	debugPrint(0, "warning: fields without names will not be transmitted");
+	i_puts(MSG_UnnamedFields);
     i_puts(MSG_FormSubmit);
     return true;
 
@@ -3110,17 +3110,14 @@ infPush(int tagno, char **post_string)
     stringAndString(&post, &l, action);
     section = strchr(post, '#');
     if(section) {
-	debugPrint(0,
-	   "warning: form url specifies a section %s, which will be ignored",
-	   section);
+	i_printf(MSG_SectionIgnored, section);
 	*section = 0;
 	l = strlen(post);
     }
     section = strpbrk(post, "?\1");
     if(section) {
 	if(*section == '\1' || !(form->bymail | form->post)) {
-	    debugPrint(0,
-	       "warning: the url already specifies some data, which will be overwritten by the data in this form");
+	    i_puts(MSG_URLDataOverwrite);
 	    *section = 0;
 	    l = strlen(post);
 	}

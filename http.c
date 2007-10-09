@@ -59,8 +59,8 @@ ssl_init(bool doConfig)
     if(!sslCerts) {
 	verifyCertificates = false;
 	if(doConfig)
-	    debugPrint(1,
-	       "no ssl certificate file specified; secure connections cannot be verified");
+	    if(debugLevel >= 1)
+		i_puts(MSG_NoCertFile);
     }
 
     SSL_CTX_set_default_verify_paths(sslcx);
@@ -400,7 +400,7 @@ parseRefresh(char *ref, int *delay_p)
 	*delay_p = delay;
 	return true;
     }
-    debugPrint(0, "warning: garbled refresh directive, %s", ref);
+    i_printf(MSG_GarbledRefresh, ref);
     *delay_p = 0;
     return false;
 }				/* parseRefresh */
@@ -873,8 +873,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	if(stringEqualCI(u, "8bit"))
 	    hce = 0;
 	if(hce < 0) {
-	    debugPrint(0, "warning: unrecognized http compression method %s",
-	       u);
+	    i_printf(MSG_CompressUnrecognized, u);
 	    hce = 0;
 	}
 	nzFree(u);
@@ -909,9 +908,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	    if(!loc[0])
 		loc = 0;
 	    if(!loc) {
-		debugPrint(0,
-		   "warning: http redirection %d, but a new url is not specified",
-		   hcode);
+		i_printf(MSG_RedirectNoURL, hcode);
 		if(hcode >= 301 && hcode <= 303)
 		    hcode = 200;
 	    } else
@@ -965,7 +962,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
     }
     /* looking for redirection */
     if(hcode != 200)
-	debugPrint(0, "warning, html error %d, %s", hcode, herror);
+	i_printf(MSG_HTTPError, hcode, herror);
 
   gotFile:
 /* Don't need the header any more */
@@ -1042,7 +1039,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
     return true;
 
   nohead:
-    debugPrint(0, "warning: page does not have a recognizable http header");
+    i_puts(MSG_HTTPHeader);
     return true;
 
   abort:
@@ -1134,7 +1131,8 @@ ftpConnect(const char *url)
     serverData = 0;
     serverDataLen = 0;
     fileSize = -1;
-    debugPrint(1, "ftp download");
+    if(debugLevel >= 1)
+	i_puts(MSG_FTPDownload);
     dirmode = false;
 
   top:cmd = initString(&cmd_l);
