@@ -980,7 +980,7 @@ static const char *frenchMessages[] = {
     "javascript a modifiÃ© une zone de texte, et ce n'est pas encore implÃ©mentÃ©",
     "attention : directive de rafraîchissement altérée, %s\n",
     "attention : méthode %s de compression http inconnue\n",
-    0,
+    "attention: redirection http %d, mais la nouvelle url n'a pas été spécifiée\n",
     "attention : erreur html %d, %s\n",
     "attention : la page n'a pas d'en-tête http reconnaissable",
     "attention : impossible de modifier le fichier de configuration",
@@ -1027,7 +1027,7 @@ getString(int msg)
     if(!s)
 	s = englishMessages[msg];
     if(!s)
-	s = "spurious";
+	s = "spurious message";
     return s;
 }				/* getString */
 
