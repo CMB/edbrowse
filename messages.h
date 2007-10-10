@@ -483,7 +483,7 @@ enum {
     MSG_GetJS2,
     MSG_NJNoOnclick,
     MSG_NJNoOnchange,
-    MSG_URLDataOverwrite,
+    MSG_UU1,
     MSG_NJNoReset,
     MSG_NJNoSubmit,
     MSG_LostTag,

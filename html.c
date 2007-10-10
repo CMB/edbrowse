@@ -3117,7 +3117,8 @@ infPush(int tagno, char **post_string)
     section = strpbrk(post, "?\1");
     if(section) {
 	if(*section == '\1' || !(form->bymail | form->post)) {
-	    i_puts(MSG_URLDataOverwrite);
+	    debugPrint(3,
+	       "the url already specifies some data, which will be overwritten by the data in this form");
 	    *section = 0;
 	    l = strlen(post);
 	}
