@@ -975,6 +975,10 @@ javaParseExecute(void *this, const char *str, const char *filename, int lineno)
     bool rc;
     jsval rval;
 
+/* Sometimes Mac puts these three chars at the start of a text file. */
+    if(!strncmp(str, "\xef\xbb\xbf", 3))
+	str += 3;
+
     debugPrint(6, "javascript:\n%s", str);
     ok = JS_EvaluateScript(jcx, this, str, strlen(str),
        filename, lineno, &rval);
