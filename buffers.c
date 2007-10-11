@@ -403,15 +403,21 @@ freeWindowLines(char *map)
     debugPrint(6, "freeWindowLines = %d", cnt);
 }				/* freeWindowLines */
 
+/* quick sort compare */
+static int
+qscmp(const void *s, const void *t)
+{
+    return memcmp(s, t, 6);
+}				/* qscmp */
+
 /* Free any lines not used by the snapshot of the current session. */
 void
 freeUndoLines(const char *cmap)
 {
     char *map = undoWindow.map;
-    char *s;
-    const char *t;
-    int ln;
-    int cnt = 0;
+    char *cmap2;
+    char *s, *t;
+    int diff, ln, cnt = 0;
 
     if(!map) {
 	debugPrint(6, "freeUndoLines = null");
@@ -425,44 +431,50 @@ freeUndoLines(const char *cmap)
 	return;
     }
 
-/* This is pretty efficient most of the time,
- * real inefficient sometimes. */
+/* sort both arrays, run comm, and find out which lines are not needed any more,
+then free them.
+ * Use quick sort; some files are 100,000 lines long.
+ * I have to copy the second array, so I can sort it.
+ * The first I can sort in place, cause it's going to get thrown away. */
+
+    cmap2 = cloneString(cmap);
+    qsort(map + LNWIDTH, (strlen(map) / LNWIDTH) - 1, LNWIDTH, qscmp);
+    qsort(cmap2 + LNWIDTH, (strlen(cmap2) / LNWIDTH) - 1, LNWIDTH, qscmp);
+
     s = map + LNWIDTH;
-    t = cmap + LNWIDTH;
-    for(; *s && *t; s += LNWIDTH, t += LNWIDTH)
-	if(!memcmp(s, t, 6))
-	    *s = '*';
-	else
-	    break;
-
-    if(*s) {			/* more to do */
-	s = map + strlen(map);
-	t = cmap + strlen(cmap);
-	s -= LNWIDTH, t -= LNWIDTH;
-	while(s > map && t > cmap) {
-	    if(!memcmp(s, t, 6))
-		*s = '*';
-	    s -= LNWIDTH, t -= LNWIDTH;
+    t = cmap2 + LNWIDTH;
+    while(*s && *t) {
+	diff = memcmp(s, t, 6);
+	if(!diff) {
+	    s += LNWIDTH;
+	    t += LNWIDTH;
+	    continue;
 	}
-
-/* Ok, who's left? */
-	for(s = map + LNWIDTH; *s; s += LNWIDTH) {
-	    if(*s == '*')
-		continue;	/* in use */
-	    for(t = cmap + LNWIDTH; *t; t += LNWIDTH)
-		if(!memcmp(s, t, 6))
-		    break;
-	    if(*t)
-		continue;	/* in use */
-	    ln = atoi(s);
-	    if(textLines[ln]) {
-		free(textLines[ln]);
-		textLines[ln] = 0;
-		++cnt;
-	    }
+	if(diff > 0) {
+	    t += LNWIDTH;
+	    continue;
 	}
+/* This line isn't being used any more. */
+	ln = atoi(s);
+	if(textLines[ln]) {
+	    free(textLines[ln]);
+	    textLines[ln] = 0;
+	    ++cnt;
+	}
+	s += LNWIDTH;
     }
 
+    while(*s) {
+	ln = atoi(s);
+	if(textLines[ln]) {
+	    free(textLines[ln]);
+	    textLines[ln] = 0;
+	    ++cnt;
+	}
+	s += LNWIDTH;
+    }
+
+    free(cmap2);
     free(map);
     undoWindow.map = 0;
     debugPrint(6, "freeUndoLines = %d", cnt);
