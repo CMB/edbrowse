@@ -446,7 +446,7 @@ enum {
     MSG_JSKeystroke,
     MSG_JSFocus,
     MSG_StrayOnclick,
-    MSG_Onchange,
+    MSG_StrayOnchange,
     MSG_NotInForm2,
     MSG_FieldNoName,
     MSG_GetPost,

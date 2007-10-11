@@ -386,7 +386,7 @@ get_js_events(void)
     }
     if(handlerPresent(ev, "onchange")) {
 	if(action != TAGACT_INPUT && action != TAGACT_SELECT || itype == INP_TA)
-	    browseError(MSG_Onchange);
+	    browseError(MSG_StrayOnchange);
     }
 /* Other warnings might be appropriate, but I'm going to assume this
  * is valid javascript, and you won't put an onsubmit function on <P> etc */
