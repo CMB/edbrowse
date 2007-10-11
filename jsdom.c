@@ -37,6 +37,11 @@ my_ErrorReporter(JSContext * cx, const char *message, JSErrorReport * report)
 {
     char *prefix, *tmp;
 
+    if(debugLevel < 2)
+	return;
+    if(ismc)
+	return;
+
     if(!report) {
 	fprintf(gErrFile, "%s\n", message);
 	return;
@@ -44,7 +49,7 @@ my_ErrorReporter(JSContext * cx, const char *message, JSErrorReport * report)
 
 /* Conditionally ignore reported warnings. */
     if(JSREPORT_IS_WARNING(report->flags)) {
-	if(ismc | browseLocal)
+	if(browseLocal)
 	    return;
     }
 

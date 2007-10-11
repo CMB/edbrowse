@@ -3,7 +3,6 @@ onclick in <form>
 http deflate
 why is there an extra blank line after preformatted section
 &nbsp:
-build a reply function or macro
 find host fails for gvm1ghzxnlx0(+%##*vposzwx.watchfly.com
 document.myFlash
 empty buffer submit
@@ -19,3 +18,4 @@ what does all.tags("object") mean?
 <input disabled>
 options.length = 0, js objects gone, but <option> tags still exist, and point to those objects
 onclick in table cell, or other areas
+attachEvent("onclick", doSomething);
