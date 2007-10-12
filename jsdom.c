@@ -617,6 +617,13 @@ static JSClass trow_class = {
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
 
+static JSClass cell_class = {
+    "Cell",
+    JSCLASS_HAS_PRIVATE,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
+};
+
 static JSClass div_class = {
     "Div",
     JSCLASS_HAS_PRIVATE,
@@ -667,6 +674,7 @@ static struct DOMCLASS domClasses[] = {
     {&area_class},
     {&span_class},
     {&trow_class},
+    {&cell_class},
     {&option_class},
     {0}
 };

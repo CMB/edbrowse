@@ -241,6 +241,7 @@ struct htmlTag {
     bool retain:1;
     bool multiple:1;
     bool rdonly:1;
+    bool clickable:1;		/* but not an input field */
     bool secure:1;
     bool checked:1;
     bool rchecked:1;		/* for reset */
@@ -356,6 +357,8 @@ get_js_event(const char *name)
     }
 }				/* get_js_event */
 
+static bool strayClick;
+
 static void
 get_js_events(void)
 {
@@ -382,7 +385,7 @@ get_js_events(void)
     if(handlerPresent(ev, "onclick")) {
 	if((action == TAGACT_A || action == TAGACT_AREA || action == TAGACT_FRAME) && topTag->href || action == TAGACT_INPUT && (itype <= INP_SUBMIT || itype >= INP_RADIO)) ;	/* ok */
 	else
-	    browseError(MSG_StrayOnclick);
+	    strayClick = true;
     }
     if(handlerPresent(ev, "onchange")) {
 	if(action != TAGACT_INPUT && action != TAGACT_SELECT || itype == INP_TA)
@@ -1032,6 +1035,8 @@ newTag(const char *name)
     t->info = ti;
     t->seqno = ntags++;
     t->balanced = true;
+    if(stringEqual(name, "a"))
+	t->clickable = true;
     addToListBack(&htmlStack, t);
     return t;
 }				/* newTag */
@@ -1264,14 +1269,19 @@ encodeTags(char *html)
 	    continue;		/* negated version means nothing */
 
 /* Does this tag force the closure of an anchor? */
-	if(ti->bits & TAG_CLOSEA && currentA &&
-	   (action != TAGACT_A || !slash) &&
-	   (a_text || action <= TAGACT_OPTION)) {
-	    browseError(MSG_InAnchor, ti->desc);
-	    stringAndString(&new, &l, "\2000}");
-	    currentA->balanced = true;
-	    currentA = 0;
-/* when the </a> comes along, it will be unbalanced, and we'll ignore it. */
+	if(currentA && (action != TAGACT_A || !slash)) {
+	    if(open && open->clickable)
+		goto forceCloseAnchor;
+	    rc = htmlAttrPresent(topAttrib, "onclick");
+	    if(rc ||
+	       ti->bits & TAG_CLOSEA && (a_text || action <= TAGACT_OPTION)) {
+		browseError(MSG_InAnchor, ti->desc);
+	      forceCloseAnchor:
+		stringAndString(&new, &l, "\2000}");
+		currentA->balanced = true;
+		currentA = 0;
+/* if/when the </a> comes along, it will be unbalanced, and we'll ignore it. */
+	    }
 	}
 
 	retainTag = true;
@@ -1281,6 +1291,8 @@ encodeTags(char *html)
 	    retainTag = false;
 	if(ti->bits & TAG_INVISIBLE)
 	    invisible = !slash;
+
+	strayClick = false;
 
 /* Are we gathering text to build title or option? */
 	if(currentTitle || currentOpt) {
@@ -1400,8 +1412,10 @@ encodeTags(char *html)
 		   domLink("Anchor", topTag->name, topTag->id, "href",
 		   topTag->href, "links", jdoc, false);
 		get_js_events();
-		if(t->href)
+		if(t->href) {
 		    a_href = true;
+		    topTag->clickable = true;
+		}
 		a_text = false;
 	    }
 	    if(a_href) {
@@ -1523,18 +1537,18 @@ encodeTags(char *html)
 		browseError(MSG_NotInTable, ti->desc);
 		continue;
 	    }
-/* This really doesn't work for tables inside tables */
 	    if(slash)
 		--inrow;
 	    else
 		++inrow;
 	    tdfirst = true;
-	    if((!slash) && (open = findOpenTag("table")) && (to = open->jv)) {
+	    if((!slash) && (open = findOpenTag("table")) && open->jv) {
 		htmlName();
-		topTag->jv =
+		topTag->jv = to =
 		   domLink("Trow", topTag->name, topTag->id, 0, 0,
 		   "rows", open->jv, false);
 		get_js_events();
+		establish_property_array(to, "cells");
 	    }
 	    goto nop;
 
@@ -1552,6 +1566,13 @@ encodeTags(char *html)
 		    --l;
 		new[l] = 0;
 		stringAndChar(&new, &l, '|');
+	    }
+	    if((open = findOpenTag("tr")) && open->jv) {
+		htmlName();
+		topTag->jv = to =
+		   domLink("Cell", topTag->name, topTag->id, 0, 0,
+		   "cells", open->jv, false);
+		get_js_events();
 	    }
 	    goto endtag;
 
@@ -1589,7 +1610,7 @@ encodeTags(char *html)
 	    else
 		j &= 3;
 	    if(!j)
-		continue;
+		goto endtag;
 	    c = '\f';
 	    if(j == 1) {
 		c = '\r';
@@ -1599,7 +1620,7 @@ encodeTags(char *html)
 	    if(currentA)
 		c = ' ';
 	    stringAndChar(&new, &l, c);
-	    continue;
+	    goto endtag;
 
 	case TAGACT_FORM:
 	    htmlForm();
@@ -1728,6 +1749,7 @@ encodeTags(char *html)
 		   domLink("Area", topTag->name, topTag->id, "href",
 		   topTag->href, "areas", jdoc, false);
 	    }
+	    topTag->clickable = true;
 	    get_js_events();
 	    if(!retainTag)
 		continue;
@@ -1928,6 +1950,14 @@ encodeTags(char *html)
 	stringAndString(&new, &l, hnum);
       endtag:
 	lastact = action;
+	if(strayClick) {
+	    topTag->clickable = true;
+	    a_text = false;
+	    topTag->href = cloneString("#");
+	    currentA = topTag;
+	    sprintf(hnum, "%c%d{", InternalCodeChar, topTag->seqno);
+	    stringAndString(&new, &l, hnum);
+	}
     }				/* loop over html string */
 
     if(currentA) {
@@ -3269,7 +3299,7 @@ javaOpensWindow(const char *href, const char *name)
 void
 javaSetsTimeout(int n, const char *jsrc, void *to, bool isInterval)
 {
-    struct htmlTag *t = newTag("A");
+    struct htmlTag *t = newTag("a");
     char timedesc[48];
     int l;
 
