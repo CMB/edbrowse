@@ -1544,7 +1544,9 @@ void
 i_puts(int msg)
 {
     puts(getString(msg));
-} /* i_puts */ void
+}				/* i_puts */
+
+void
 i_printf(int msg, ...)
 {
     const char *realmsg = getString(msg);
@@ -1554,6 +1556,17 @@ i_printf(int msg, ...)
     va_end(p);
 }				/* i_printf */
 
+void
+i_printfExit(int msg, ...)
+{
+    const char *realmsg = getString(msg);
+    va_list p;
+    va_start(p, msg);
+    vprintf(realmsg, p);
+    va_end(p);
+    exit(1);
+}				/* i_printfExit */
+
 /*********************************************************************
 The following error display functions are specific to edbrowse,
 rather than extended versions of the standard unix print functions.
@@ -1561,6 +1574,7 @@ Thus I don't need the i_ prefix.
 *********************************************************************/
 
 char errorMsg[4000];
+
 /* Show the error message, not just the question mark, after these commands. */
 static const char showerror_cmd[] = "AbefMqrw^";
 
