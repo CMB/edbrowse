@@ -2060,7 +2060,7 @@ preFormatCheck(int tagno, bool * pretag, bool * slash)
 {
     const struct htmlTag *t;
     if(!parsePage)
-	errorPrint("@calling preFormatTag without parsePage");
+	i_printfExit(MSG_ErrCallPreFormat);
     *pretag = *slash = false;
     if(tagno >= 0 && tagno < ntags) {
 	t = tagArray[tagno];
@@ -2075,7 +2075,7 @@ htmlParse(char *buf, int remote)
     char *newbuf;
 
     if(parsePage)
-	errorPrint("@htmlParse() is not reentrant.");
+	i_printfExit(MSG_HtmlNotreentrant);
     parsePage = true;
     if(remote >= 0)
 	browseLocal = !remote;
@@ -2960,7 +2960,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 	    goto fail;
 	}
 	/* file */
-	errorPrint("@unexpected input type in submitForm()");
+	i_printfExit(MSG_UnexSubmitForm);
 
       success:
 	postNameVal(name, value, fsep, false, boundary, post, l);
@@ -3211,7 +3211,7 @@ tagFromJavaVar(void *v)
     struct htmlTag **list = cw->tags;
     struct htmlTag *t;
     if(!list)
-	errorPrint("@list = 0 in tagFromJavaVar()");
+	i_printfExit(MSG_NullListInform);
     while(t = *list++)
 	if(t->jv == v)
 	    break;

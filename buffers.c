@@ -139,16 +139,16 @@ fetchLineContext(int n, int show, int cx)
     pst p;			/* the resulting copy of the string */
 
     if(!lw)
-	errorPrint("@invalid session %d in fetchLineContext()", cx);
+	i_printfExit(MSG_InvalidSession, cx);
     map = lw->map;
     dol = lw->dol;
     if(n <= 0 || n > dol)
-	errorPrint("@invalid line number %d in fetchLineContext()", n);
+	i_printfExit(MSG_InvalidLineNb, n);
 
     t = map + LNWIDTH * n;
     idx = atoi(t);
     if(!textLines[idx])
-	errorPrint("@line %d->%d became null", n, idx);
+	i_printfExit(MSG_LineNull, n, idx);
     if(show < 0)
 	return textLines[idx];
     p = clonePstring(textLines[idx]);
@@ -526,7 +526,7 @@ bool
 cxActive(int cx)
 {
     if(cx <= 0 || cx >= MAXSESSION)
-	errorPrint("@session %d out of range in cxActive", cx);
+	i_printfExit(MSG_SessionOutRange, cx);
     if(sessionList[cx].lw)
 	return true;
     setError(MSG_SessionInactive, cx);
@@ -538,7 +538,7 @@ cxInit(int cx)
 {
     struct ebWindow *lw = createWindow();
     if(sessionList[cx].lw)
-	errorPrint("@double init on session %d", cx);
+	i_printfExit(MSG_DoubleInit, cx);
     sessionList[cx].fw = sessionList[cx].lw = lw;
 }				/* cxInit */
 
@@ -547,7 +547,7 @@ cxQuit(int cx, int action)
 {
     struct ebWindow *w = sessionList[cx].lw;
     if(!w)
-	errorPrint("@quitting a nonactive session %d", cx);
+	i_printfExit(MSG_QuitNoActive, cx);
 
 /* We might be trashing data, make sure that's ok. */
     if(w->changeMode &&
@@ -700,7 +700,7 @@ addToMap(int start, int end, int destl)
     int i, j;
     int nlines = end - start;
     if(nlines == 0)
-	errorPrint("@empty new piece in addToMap()");
+	i_printfExit(MSG_EmptyPiece);
     for(i = 0; i < 26; ++i) {
 	int ln = cw->labels[i];
 	if(ln <= destl)
@@ -875,7 +875,7 @@ delFiles(void)
 	file = (char *)fetchLine(ln, 0);
 	t = strchr(file, '\n');
 	if(!t)
-	    errorPrint("@no newline on directory entry %s", file);
+	    i_printfExit(MSG_NoNlOnDir, file);
 	*t = 0;
 	path = makeAbsPath(file);
 	if(!path) {
@@ -4545,7 +4545,7 @@ locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
 	s = strchr(s, '<') + 1;
 	t = strstr(s, "\2000>");
 	if(!t)
-	    errorPrint("@no closing > at line %d", ln);
+	    i_printfExit(MSG_NoClosingLine, ln);
 	*ln_p = ln;
 	*p_p = p;
 	*s_p = s;
@@ -4593,8 +4593,7 @@ updateFieldInBuffer(int tagno, const char *newtext, int notify, bool required)
     }
 
     if(required)
-	errorPrint("fieldInBuffer could not find tag %d newtext %s", tagno,
-	   newtext);
+	i_printfExit(MSG_NoTagFound, tagno, newtext);
 }				/* updateFieldInBuffer */
 
 /* This is the inverse of the above function, fetch instead of update. */

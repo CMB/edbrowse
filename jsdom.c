@@ -745,21 +745,21 @@ createJavaContext(void)
 /* 4 meg js space - should this be configurable? */
 	jrt = JS_NewRuntime(4L * 1024L * 1024L);
 	if(!jrt)
-	    errorPrint("2could not allocate memory for javascript operations.");
+	    i_printfExit(MSG_JavaMemError);
 	gOutFile = stdout;
 	gErrFile = stderr;
     }
 
     jcx = JS_NewContext(jrt, gStackChunkSize);
     if(!jcx)
-	errorPrint("2unable to create javascript context");
+	i_printfExit(MSG_JavaContextError);
     JS_SetErrorReporter(jcx, my_ErrorReporter);
     JS_SetOptions(jcx, JSOPTION_VAROBJFIX);
 
 /* Create the Window object, which is the global object in DOM. */
     jwin = JS_NewObject(jcx, &window_class, NULL, NULL);
     if(!jwin)
-	errorPrint("2unable to create window object for javascript");
+	i_printfExit(MSG_JavaWindowError);
     JS_InitClass(jcx, jwin, 0, &window_class, window_ctor, 3,
        NULL, window_methods, NULL, NULL);
 /* Ok, but the global object was created before the class,
@@ -768,7 +768,7 @@ createJavaContext(void)
 
 /* Math, Date, Number, String, etc */
     if(!JS_InitStandardClasses(jcx, jwin))
-	errorPrint("2unable to create standard classes for javascript");
+	i_printfExit(MSG_JavaClassError);
 
     establish_property_object(jwin, "window", jwin);
     establish_property_object(jwin, "self", jwin);
@@ -803,7 +803,7 @@ createJavaContext(void)
        NULL, doc_methods, NULL, NULL);
     jdoc = JS_NewObject(jcx, &doc_class, NULL, jwin);
     if(!jdoc)
-	errorPrint("2unable to create document object for javascript");
+	i_printfExit(MSG_JavaObjError);
     establish_property_object(jwin, "document", jdoc);
 
     establish_property_string(jdoc, "bgcolor", "white", false);

@@ -102,8 +102,7 @@ loadBlacklist(void)
 		if(ipmask)
 		    ip &= ipmask;
 		if(nipblack == MAXIPBLACK)
-		    errorPrint("1too many ip addresses in blacklist, limit %d",
-		       MAXIPBLACK);
+		    i_printfExit(MSG_ManyIP, MAXIPBLACK);
 		ipblacklist[nipblack] = ip;
 		ipblackmask[nipblack] = ipmask;
 		ipblackcomp[nipblack] = (dotstop == '!');
@@ -286,14 +285,13 @@ fetchMail(int account)
 
     if(!isInteractive) {
 	if(!zapMail)
-	    errorPrint
-	       ("1fetchmail client is interactive, and cannot run in the background");
+	    i_printfExit(MSG_FetchNotBackgnd);
     }
 
     if(!mailDir)
-	errorPrint("1mailbox directory not specified in your .ebrc file");
+	i_printfExit(MSG_NoMailDir);
     if(chdir(mailDir))
-	errorPrint("1Cannot change directory to %s", mailDir);
+	i_printfExit(MSG_NoDirChange, mailDir);
 
     if(!loadAddressBook())
 	showErrorAbort();
@@ -303,7 +301,7 @@ fetchMail(int account)
     if(!serverGetLine())
 	showErrorAbort();
     if(memcmp(serverLine, "+OK ", 4))
-	errorPrint("1Unexpected pop3 introduction <%s>", serverLine);
+	i_printfExit(MSG_BadPopIntro, serverLine);
     sprintf(serverLine, "user %s%s", login, eol);
     serverPutGet(serverLine);
     if(pass) {			/* I think this is always required */
@@ -311,14 +309,12 @@ fetchMail(int account)
 	serverPutGet(serverLine);
     }				/* password */
     if(memcmp(serverLine, "+OK", 3))
-	errorPrint("1Could not complete the pop3 login/password sequence <%s>",
-	   serverLine);
+	i_printfExit(MSG_PopNotComplete, serverLine);
 
 /* How many mail messages? */
     serverPutGet("stat\r\n");
     if(memcmp(serverLine, "+OK ", 4))
-	errorPrint("1Could not obtain status information on your mailbox <%s>",
-	   serverLine);
+	i_printfExit(MSG_NoStatusMailBox, serverLine);
     nmsgs = atoi(serverLine + 4);
     if(!nmsgs) {
 	i_puts(MSG_NoMail);
@@ -373,16 +369,13 @@ fetchMail(int account)
 	    while(true) {
 		int nr = tcp_read(mssock, retrbuf, sizeof (retrbuf));
 		if(nr <= 0)
-		    errorPrint
-		       ("1error reading message from the server, errno %d",
-		       errno);
+		    i_printfExit(MSG_ErrorReadMess, errno);
 		if(retr1) {
 /* add null, to make it easy to print the error message, if necessary */
 		    if(nr < sizeof (retrbuf))
 			retrbuf[nr] = 0;
 		    if(memcmp(retrbuf, "+OK", 3))
-			errorPrint("cannot fetch mail message %d <%s>", m,
-			   retrbuf);
+			i_printfExit(MSG_ErrorFetchMess, m, retrbuf);
 		    j = 3;
 		    while(retrbuf[j] != '\n')
 			++j;
@@ -618,9 +611,9 @@ fetchMail(int account)
 	    if(!serverPutLine(serverLine))
 		showErrorAbort();
 	    if(!serverGetLine())
-		errorPrint("1Sorry, you took too long; mail server hung up.");
+		i_printfExit(MSG_MailTimeOver);
 	    if(memcmp(serverLine, "+OK", 3))
-		errorPrint("1unable to delete message <%s>", serverLine);
+		i_printfExit(MSG_UnableDelMail, serverLine);
 	}
 	/* deleted */
 	nzFree(exact);

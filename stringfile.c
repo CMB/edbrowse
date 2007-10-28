@@ -39,7 +39,7 @@ allocMem(unsigned n)
     if(!n)
 	return EMPTYSTRING;
     if(!(s = malloc(n)))
-	errorPrint("@error allocating %u bytes", n);
+	i_printfExit(MSG_MemAllocError, n);
     return s;
 }				/* allocMem */
 
@@ -50,7 +50,7 @@ allocZeroMem(unsigned n)
     if(!n)
 	return EMPTYSTRING;
     if(!(s = calloc(n, 1)))
-	errorPrint("@error callocating %u bytes", n);
+	i_printfExit(MSG_MemCallocError, n);
     return s;
 }				/* allocZeroMem */
 
@@ -59,13 +59,13 @@ reallocMem(void *p, unsigned n)
 {
     void *s;
     if(!n)
-	errorPrint("@reallocMem(p,0)");
+	i_printfExit(MSG_ReallocP);
     if(!p)
-	errorPrint("@reallocMem(0,%d)", n);
+	i_printfExit(MSG_Realloc0, n);
     if(p == EMPTYSTRING)
 	return allocMem(n);
     if(!(s = realloc(p, n)))
-	errorPrint("@error re-allocating %u bytes", n);
+	i_printfExit(MSG_ErrorRealloc, n);
     return s;
 }				/* reallocMem */
 
@@ -438,7 +438,7 @@ stringInList(const char *const *list, const char *s)
 {
     int i = 0;
     if(!list)
-	errorPrint("@stringInList(null,...)");
+	i_printfExit(MSG_NullStrList);
     if(s)
 	while(*list) {
 	    if(stringEqual(s, *list))
@@ -454,7 +454,7 @@ stringInListCI(const char *const *list, const char *s)
 {
     int i = 0;
     if(!list)
-	errorPrint("@stringInListCI(null,...)");
+	i_printfExit(MSG_NullStrListCI);
     if(s)
 	while(*list) {
 	    if(stringEqualCI(s, *list))
@@ -470,7 +470,7 @@ charInList(const char *list, char c)
 {
     char *s;
     if(!list)
-	errorPrint("@charInList(null,...)");
+	i_printfExit(MSG_NullCharInList);
     s = strchr(list, c);
     if(!s)
 	return -1;
@@ -622,7 +622,7 @@ pstLength(pst s)
 {
     pst t;
     if(!s)
-	errorPrint("@null pointer in pstLength");
+	i_printfExit(MSG_NullPtr);
     t = s;
     while(*t != '\n')
 	++t;
@@ -813,7 +813,7 @@ ttySaveSettings(void)
     isInteractive = isatty(0);
     if(isInteractive) {
 	if(ioctl(0, TTY_GET_COMMAND, &savettybuf))
-	    errorPrint("@canot use ioctl() to manage the tty");
+	    i_printfExit(MSG_IoctlError);
     }
 }				/* ttySaveSettings */
 
@@ -1253,11 +1253,11 @@ efopen(const char *name, const char *mode)
 	return f;
 
     if(*mode == 'r')
-	errorPrint("2cannot open %s", name);
+	i_printfExit(MSG_OpenFail, name);
     else if(*mode == 'w' || *mode == 'a')
-	errorPrint("2cannot create or write to %s", name);
+	i_printfExit(MSG_CreateFail, name);
     else
-	errorPrint("@calling fopen() with invalid mode %s", mode);
+	i_printfExit(MSG_InvalidFopen, mode);
     return 0;
 }				/* efopen */
 

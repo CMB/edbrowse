@@ -211,7 +211,7 @@ build_host(int exception, const char *hostname, int port)
     else
 	strcpy(urlbuffer, hostname);
     if(strlen(urlbuffer) >= sizeof (urlbuffer))
-	errorPrint("@hostname:port is too long");
+	i_printfExit(MSG_PortTooLong);
     v = STRING_TO_JSVAL(JS_NewStringCopyZ(jcx, urlbuffer));
     JS_SetProperty(jcx, uo, "host", &v);
     setter_suspend = false;
@@ -434,7 +434,7 @@ url_initialize(const char *url, bool readonly, bool exclude_href)
     if(s = getProtURL(url)) {
 	sprintf(urlbuffer, "%s:", s);
 	if(strlen(urlbuffer) >= sizeof (urlbuffer))
-	    errorPrint("@protocol: is too long");
+	    i_printfExit(MSG_ProtTooLong);
 	s = urlbuffer;
     }
     loc_def_set("protocol", s, setter_loc_prot, attr);
@@ -458,7 +458,7 @@ url_initialize(const char *url, bool readonly, bool exclude_href)
 	if(pl)
 	    sprintf(urlbuffer + strlen(urlbuffer), ":%d", port);
 	if(strlen(urlbuffer) >= sizeof (urlbuffer))
-	    errorPrint("@hostname:port is too long");
+	    i_printfExit(MSG_PortTooLong);
 	s = urlbuffer;
     }
     loc_def_set("host", s, setter_loc_host, attr);

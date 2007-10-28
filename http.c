@@ -469,7 +469,7 @@ httpConnect(const char *from, const char *url)
     secure = stringEqualCI(prot, "https");
     host = getHostURL(url);
     if(!host)
-	errorPrint("@empty host in httpConnect");
+	i_printfExit(MSG_EmptyHost);
     if(proxy_host) {
 	if(secure) {
 	    setError(MSG_SSLProxyNYI);

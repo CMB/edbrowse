@@ -1042,7 +1042,7 @@ htmlReformat(const char *buf)
 	tagno = strtol(h + 1, (char **)&nh, 10);
 	c = *nh++;
 	if(!c || !strchr("{}<>*", c))
-	    errorPrint("@tag code %d has bad character %c following", tagno, c);
+	    i_printfExit(MSG_BadTagCode, tagno, c);
 	appendPrintableChunk(h, nh - h, premode);
 	preFormatCheck(tagno, &pretag, &slash);
 	if(pretag)

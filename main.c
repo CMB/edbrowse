@@ -90,8 +90,7 @@ updateConfig(void)
 	return;
     }
     if(write(fh, cfgcopy, cfglen) < cfglen)
-	errorPrint
-	   ("@could not rewrite your config file; your configuration data may be lost!");
+	i_printfExit(MSG_ERBC_NoWrite);
     close(fh);
 }				/* updateConfig */
 
@@ -138,7 +137,7 @@ junkSubject(const char *s, char key)
     return true;
 }				/* junkSubject */
 
-/* This routine succeeds, or aborts via errorPrint */
+/* This routine succeeds, or aborts via i_printfExit */
 static void
 readConfigFile(void)
 {
@@ -186,7 +185,7 @@ readConfigFile(void)
     for(s = t = v = buf; s < buf + buflen; ++s) {
 	c = *s;
 	if(c == '\0')
-	    errorPrint("1.ebrc: null characters at line %d", ln);
+	    i_printfExit(MSG_ERBC_Nulls, ln);
 	if(c == '\r' && s[1] == '\n')
 	    continue;
 	if(cmt) {
@@ -287,21 +286,15 @@ readConfigFile(void)
 	       (last[8] == '+' || last[8] == ':')) {
 		q = last + 9;
 		if(*q == 0 || *q == '{' || *q == '(')
-		    errorPrint("1.ebrc: missing function name at line %d", ln);
+		    i_printfExit(MSG_ERBC_NoFnName, ln);
 		if(isdigitByte(*q))
-		    errorPrint
-		       ("1.ebrc: function name at line %d begins with a digit",
-		       ln);
+		    i_printfExit(MSG_ERBC_FnDigit, ln);
 		while(isalnumByte(*q))
 		    ++q;
 		if(q - last - 9 > 10)
-		    errorPrint
-		       ("1.ebrc: function name at line %d is too long, limit ten characters",
-		       ln);
+		    i_printfExit(MSG_ERBC_FnTooLong, ln);
 		if(*q != '{' || q[1])
-		    errorPrint
-		       ("1.ebrc: improper function definition syntax at line %d",
-		       ln);
+		    i_printfExit(MSG_ERBC_SyntaxErr, ln);
 		last[7] = 'f';
 		last[6] = '\x81';
 		strcpy(v, last + 6);
@@ -344,13 +337,11 @@ readConfigFile(void)
 	if(mailblock > 1 && !strchr("\x81\x82\x83", *s)) {
 	    v = strchr(s, '>');
 	    if(!v)
-		errorPrint("1.ebrc: line %d, \"condition > file\" expected",
-		   ln);
+		i_printfExit(MSG_ERBC_NoCondFile, ln);
 	    while(v > s && (v[-1] == ' ' || v[-1] == '\t'))
 		--v;
 	    if(v == s)
-		errorPrint(".ebrc: line %d, filter rule has no match string",
-		   ln);
+		i_printfExit(MSG_ERBC_NoMatchStr, ln);
 	    c = *v, *v++ = 0;
 	    if(c != '>') {
 		while(*v != '>')
@@ -360,10 +351,9 @@ readConfigFile(void)
 	    while(*v == ' ' || *v == '\t')
 		++v;
 	    if(!*v)
-		errorPrint("1.ebrc: line %d, match on %s is set nowhere", ln,
-		   s);
+		i_printfExit(MSG_ERBC_MatchNowh, ln, s);
 	    if(n_filters == MAXFILTER - 1)
-		errorPrint("1.ebrc: line %d, too many mail filters", ln);
+		i_printfExit(MSG_ERBC_Filters, ln);
 	    filters[n_filters].redirect = v;
 	    if(mailblock >= 2) {
 		long exp = strtol(s, &v, 10);
@@ -403,40 +393,28 @@ readConfigFile(void)
 	n = stringInList(keywords, s);
 	if(n < 0) {
 	    if(!nest)
-		errorPrint("1.ebrc: unrecognized keyword %s at line %d", s, ln);
+		i_printfExit(MSG_ERBC_BadKeyword, s, ln);
 	    *v = c;		/* put it back */
 	    goto nokeyword;
 	}
 
 	if(n < 8 && mailblock != 1)
-	    errorPrint
-	       ("1.ebrc: line %d, attribute %s canot be set outside of a mail descriptor",
-	       ln, s);
+	    i_printfExit(MSG_ERBC_MailAttrOut, ln, s);
 
 	if(n >= 8 && n < 13 && mimeblock != 1)
-	    errorPrint
-	       ("1.ebrc: line %d, attribute %s canot be set outside of a mime descriptor",
-	       ln, s);
+	    i_printfExit(MSG_ERBC_MimeAttrOut, ln, s);
 
 	if(n >= 13 && n < 17 && tabblock != 1)
-	    errorPrint
-	       ("1.ebrc: line %d, attribute %s canot be set outside of a table descriptor",
-	       ln, s);
+	    i_printfExit(MSG_ERBC_TableAttrOut, ln, s);
 
 	if(n >= 8 && mailblock)
-	    errorPrint
-	       ("1.ebrc: line %d, attribute %s canot be set inside a mail descriptor or filter block",
-	       ln, s);
+	    i_printfExit(MSG_ERBC_MailAttrIn, ln, s);
 
 	if((n < 8 || n >= 13) && mimeblock)
-	    errorPrint
-	       ("1.ebrc: line %d, attribute %s canot be set inside a mime descriptor",
-	       ln, s);
+	    i_printfExit(MSG_ERBC_MimeAttrIn, ln, s);
 
 	if((n < 13 || n >= 17) && tabblock)
-	    errorPrint
-	       ("1.ebrc: line %d, attribute %s canot be set inside a table descriptor",
-	       ln, s);
+	    i_printfExit(MSG_ERBC_TableAttrIn, ln, s);
 
 /* act upon the keywords */
 	++v;
@@ -448,8 +426,7 @@ readConfigFile(void)
 	while(*v == ' ' || *v == '\t')
 	    ++v;
 	if(!*v)
-	    errorPrint("1.ebrc: line %d, attribute %s is set to nothing", ln,
-	       s);
+	    i_printfExit(MSG_ERBC_NoAttr, ln, s);
 
 	switch (n) {
 	case 0:
@@ -517,8 +494,7 @@ readConfigFile(void)
 	case 15:
 	    while(*v) {
 		if(td->ncols == MAXTCOLS)
-		    errorPrint("1.ebrc: line %d, too many columns, limit %d",
-		       ln, MAXTCOLS);
+		    i_printfExit(MSG_ERBC_ManyCols, ln, MAXTCOLS);
 		td->cols[td->ncols++] = v;
 		q = strchr(v, ',');
 		if(!q)
@@ -530,36 +506,32 @@ readConfigFile(void)
 
 	case 16:
 	    if(!isdigitByte(*v))
-		errorPrint
-		   ("1.ebrc: line %d, keycol should be number or number,number",
-		   ln);
+		i_printfExit(MSG_ERBC_KeyNotNb, ln);
 	    td->key1 = strtol(v, &v, 10);
 	    if(*v == ',' && isdigitByte(v[1]))
 		td->key2 = strtol(v + 1, &v, 10);
 	    if(td->key1 > td->ncols || td->key2 > td->ncols)
-		errorPrint
-		   ("1.ebrc: line %d, keycol is out of range; only %d columns specified",
-		   ln, td->ncols);
+		i_printfExit(MSG_ERBC_KeyOutRange, ln, td->ncols);
 	    continue;
 
 	case 17:
 	    addressFile = v;
 	    ftype = fileTypeByName(v, false);
 	    if(ftype && ftype != 'f')
-		errorPrint("1.ebrc: address book %s is not a regular file", v);
+		i_printfExit(MSG_ERBC_AbNotFile, v);
 	    continue;
 
 	case 18:
 	    ipbFile = v;
 	    ftype = fileTypeByName(v, false);
 	    if(ftype && ftype != 'f')
-		errorPrint("1.ebrc: ip blacklist %s is not a regular file", v);
+		i_printfExit(MSG_ERBC_IPNotFile, v);
 	    continue;
 
 	case 19:
 	    mailDir = v;
 	    if(fileTypeByName(v, false) != 'd')
-		errorPrint("1.ebrc: %s is not a directory", v);
+		i_printfExit(MSG_ERBC_NotDir, v);
 	    continue;
 
 	case 20:
@@ -567,8 +539,7 @@ readConfigFile(void)
 		if(!userAgents[j])
 		    break;
 	    if(j == 10)
-		errorPrint("1.ebrc: line %d, too many user agents, limit 9",
-		   ln);
+		i_printfExit(MSG_ERBC_ManyAgents, ln);
 	    userAgents[j] = v;
 	    continue;
 
@@ -576,24 +547,21 @@ readConfigFile(void)
 	    cookieFile = v;
 	    ftype = fileTypeByName(v, false);
 	    if(ftype && ftype != 'f')
-		errorPrint("1.ebrc: cookie jar %s is not a regular file", v);
+		i_printfExit(MSG_ERBC_JarNotFile, v);
 	    j = open(v, O_WRONLY | O_APPEND | O_CREAT, 0600);
 	    if(j < 0)
-		errorPrint("1.ebrc: cannot %s cookie jar %s",
-		   ftype ? "create" : "write to", v);
+		i_printfExit(MSG_ERBC_JarNoWrite, v);
 	    close(j);
 	    continue;
 
 	case 22:
 	    if(javaDisCount == MAXNOJS)
-		errorPrint("1.ebrc: too many no js directives, limit %d",
-		   MAXNOJS);
+		i_printfExit(MSG_ERBC_NoJS, MAXNOJS);
 	    if(*v == '.')
 		++v;
 	    q = strchr(v, '.');
 	    if(!q || q[1] == 0)
-		errorPrint("1.ebrc: line %d, domain %s does not contain a dot",
-		   ln, v);
+		i_printfExit(MSG_ERBC_DomainDot, ln, v);
 	    javaDis[javaDisCount++] = v;
 	    continue;
 
@@ -601,8 +569,7 @@ readConfigFile(void)
 	    spamCan = v;
 	    ftype = fileTypeByName(v, false);
 	    if(ftype && ftype != 'f')
-		errorPrint("1.ebrc: mail trash can %s is not a regular file",
-		   v);
+		i_printfExit(MSG_ERBC_TrashNotFile, v);
 	    continue;
 
 	case 24:
@@ -617,13 +584,10 @@ readConfigFile(void)
 	    sslCerts = v;
 	    ftype = fileTypeByName(v, false);
 	    if(ftype && ftype != 'f')
-		errorPrint
-		   ("1.ebrc: SSL certificate file %s is not a regular file", v);
+		i_printfExit(MSG_ERBC_SSLNoFile, v);
 	    j = open(v, O_RDONLY);
 	    if(j < 0)
-		errorPrint
-		   ("1.ebrc: SSL certificate file %s does not exist or is not readable.",
-		   v);
+		i_printfExit(MSG_ERBC_SSLNoRead, v);
 	    close(j);
 	    continue;
 
@@ -652,8 +616,7 @@ readConfigFile(void)
 	    continue;
 
 	default:
-	    errorPrint("1.ebrc: line %d, keyword %s is not yet implemented", ln,
-	       s);
+	    i_printfExit(MSG_ERBC_KeywordNYI, ln, s);
 	}			/* switch */
 
       nokeyword:
@@ -662,7 +625,7 @@ readConfigFile(void)
 	    if(localAccount == maxAccount + 1)
 		continue;
 	    if(localAccount)
-		errorPrint("1.ebrc: sets multiple mail accounts as default");
+		i_printfExit(MSG_ERBC_SevDefaults);
 	    localAccount = maxAccount + 1;
 	    continue;
 	}
@@ -672,17 +635,17 @@ readConfigFile(void)
 		++maxAccount;
 		mailblock = 0;
 		if(!act->inurl)
-		    errorPrint("1.ebrc: missing inserver at line %d", ln);
+		    i_printfExit(MSG_ERBC_NoInserver, ln);
 		if(!act->outurl)
-		    errorPrint("1.ebrc: missing outserver at line %d", ln);
+		    i_printfExit(MSG_ERBC_NoOutserver, ln);
 		if(!act->login)
-		    errorPrint("1.ebrc: missing login at line %d", ln);
+		    i_printfExit(MSG_ERBC_NoLogin, ln);
 		if(!act->password)
-		    errorPrint("1.ebrc: missing password at line %d", ln);
+		    i_printfExit(MSG_ERBC_NPasswd, ln);
 		if(!act->from)
-		    errorPrint("1.ebrc: missing from at line %d", ln);
+		    i_printfExit(MSG_ERBC_NoFrom, ln);
 		if(!act->reply)
-		    errorPrint("1.ebrc: missing reply at line %d", ln);
+		    i_printfExit(MSG_ERBC_NoReply, ln);
 		if(!act->inport)
 		    act->inport = 110;
 		if(!act->outport)
@@ -699,15 +662,13 @@ readConfigFile(void)
 		++maxMime;
 		mimeblock = 0;
 		if(!mt->type)
-		    errorPrint("1.ebrc: missing type at line %d", ln);
+		    i_printfExit(MSG_ERBC_NoType, ln);
 		if(!mt->desc)
-		    errorPrint("1.ebrc: missing description at line %d", ln);
+		    i_printfExit(MSG_ERBC_NDesc, ln);
 		if(!mt->suffix && !mt->prot)
-		    errorPrint
-		       ("1.ebrc: missing suffix or protocol list at line %d",
-		       ln);
+		    i_printfExit(MSG_ERBC_NoSuffix, ln);
 		if(!mt->program)
-		    errorPrint("1.ebrc: missing program at line %d", ln);
+		    i_printfExit(MSG_ERBC_NoProgram, ln);
 		continue;
 	    }
 
@@ -715,16 +676,16 @@ readConfigFile(void)
 		++maxTables;
 		tabblock = 0;
 		if(!td->name)
-		    errorPrint("1.ebrc: missing table name at line %d", ln);
+		    i_printfExit(MSG_ERBC_NoTblName, ln);
 		if(!td->shortname)
-		    errorPrint("1.ebrc: missing short name at line %d", ln);
+		    i_printfExit(MSG_ERBC_NoShortName, ln);
 		if(!td->ncols)
-		    errorPrint("1.ebrc: missing columns at line %d", ln);
+		    i_printfExit(MSG_ERBC_NColumns, ln);
 		continue;
 	    }
 
 	    if(--nest < 0)
-		errorPrint("1.ebrc: unexpected } at line %d", ln);
+		i_printfExit(MSG_ERBC_UnexpBrace, ln);
 	    if(nest)
 		goto putback;
 /* This ends the function */
@@ -737,15 +698,13 @@ readConfigFile(void)
 /* Does else make sense here? */
 	    c = toupper(stack[nest]);
 	    if(c != 'I')
-		errorPrint
-		   ("1.ebrc: else at line %d is not part of an if statement",
-		   ln);
+		i_printfExit(MSG_ERBC_UnexElse, ln);
 	    goto putback;
 	}
 
 	if(*s != '\x81') {
 	    if(!nest)
-		errorPrint("1.ebrc: garbled text at line %d", ln);
+		i_printfExit(MSG_ERBC_GarblText, ln);
 	    goto putback;
 	}
 
@@ -759,22 +718,16 @@ readConfigFile(void)
 		curblock = "a filter block";
 	    if(mimeblock)
 		curblock = "a mime descriptor";
-	    errorPrint
-	       ("1.ebrc: line %d, cannot start a function, mail/mime descriptor, or filter block inside %s",
-	       ln, curblock);
+	    i_printfExit(MSG_ERBC_FnNotStart, ln, curblock);
 	}
 
 	if(!strchr("fmertsb", c) && !nest)
-	    errorPrint
-	       ("1.ebrc: statement at line %d must appear inside a function",
-	       ln);
+	    i_printfExit(MSG_ERBC_StatNotInFn, ln);
 
 	if(c == 'm') {
 	    mailblock = 1;
 	    if(maxAccount == MAXACCOUNT)
-		errorPrint
-		   ("1too many email accounts in your config file, limit %d",
-		   MAXACCOUNT);
+		i_printfExit(MSG_ERBC_ManyAcc, MAXACCOUNT);
 	    act = accounts + maxAccount;
 	    continue;
 	}
@@ -782,9 +735,7 @@ readConfigFile(void)
 	if(c == 'e') {
 	    mimeblock = 1;
 	    if(maxMime == MAXMIME)
-		errorPrint
-		   ("1too many mime types in your config file, limit %d",
-		   MAXMIME);
+		i_printfExit(MSG_ERBC_ManyTypes, MAXMIME);
 	    mt = mimetypes + maxMime;
 	    continue;
 	}
@@ -792,9 +743,7 @@ readConfigFile(void)
 	if(c == 'b') {
 	    tabblock = 1;
 	    if(maxTables == MAXDBT)
-		errorPrint
-		   ("1too many sql tables in your config file, limit %d",
-		   MAXDBT);
+		i_printfExit(MSG_ERBC_ManyTables, MAXDBT);
 	    td = dbtables + maxTables;
 	    continue;
 	}
@@ -817,8 +766,7 @@ readConfigFile(void)
 	if(c == 'f') {
 	    stack[++nest] = c;
 	    if(sn == MAXEBSCRIPT)
-		errorPrint("1too many functions in your config file, limit %d",
-		   sn);
+		i_printfExit(MSG_ERBC_ManyFn, sn);
 	    ebScriptName[sn] = s + 2;
 	    t[-1] = 0;
 	    ebScript[sn] = t;
@@ -826,9 +774,7 @@ readConfigFile(void)
 	}
 
 	if(++nest >= sizeof (stack))
-	    errorPrint
-	       ("1.ebrc: line %d, control structures are nested too deeply",
-	       ln);
+	    i_printfExit(MSG_ERBC_TooDeeply, ln);
 	stack[nest] = c;
 
       putback:
@@ -836,11 +782,10 @@ readConfigFile(void)
     }				/* loop over lines */
 
     if(nest)
-	errorPrint("1.ebrc: function %s is not closed at eof",
-	   ebScriptName[sn]);
+	i_printfExit(MSG_ERBC_FnNotClosed, ebScriptName[sn]);
 
     if(mailblock | mimeblock)
-	errorPrint("1.ebrc: mail or mime block is not closed at EOF");
+	i_printfExit(MSG_ERBC_MNotClosed);
 
     if(cfgmodify)
 	updateConfig();
@@ -1031,9 +976,9 @@ main(int argc, char **argv)
 	home = 0;
 /* I require this, though I'm not sure what this means for non-Unix OS's */
     if(!home)
-	errorPrint("1home directory not defined by $HOME.");
+	i_printfExit(MSG_NotHome);
     if(fileTypeByName(home, false) != 'd')
-	errorPrint("1%s is not a directory", home);
+	i_printfExit(MSG_NotDir, home);
 
 /* See sample.ebrc in this directory for a sample config file. */
     configFile = allocMem(strlen(home) + 7);
@@ -1101,12 +1046,10 @@ main(int argc, char **argv)
 	    ++s, passMail = true;
 	if(*s == 'm' && isdigitByte(s[1])) {
 	    if(!maxAccount)
-		errorPrint
-		   ("1no mail accounts specified, please check your .ebrc config file");
+		i_printfExit(MSG_NoMailAcc);
 	    account = strtol(s + 1, &s, 10);
 	    if(account == 0 || account > maxAccount)
-		errorPrint("1invalid account number, please use 1 through %d",
-		   maxAccount);
+		i_printfExit(MSG_BadAccNb, maxAccount);
 	    if(!*s) {
 		ismc = true;	/* running as a mail client */
 		allowJS = false;	/* no javascript in mail client */
@@ -1116,12 +1059,7 @@ main(int argc, char **argv)
 		break;
 	    }
 	}
-	errorPrint("1edbrowse  -v    (show version)\n\
-edbrowse -h (this message)\n\
-edbrowse -c (edit config file)\n\
-edbrowse  [-e] [-d?] -[u|p]m?    (read your mail) \n\
-edbrowse  [-e] [-d?] -m? address1 address2 ... file [+attachments]\n\
-edbrowse  [-e] [-d?] file1 file2 ...");
+	i_printfExit(MSG_Usage);
     }				/* options */
 
     if(tcp_init() < 0)
@@ -1143,8 +1081,7 @@ edbrowse  [-e] [-d?] file1 file2 ...");
 	if(!argc)
 	    fetchMail(account);
 	if(argc == 1)
-	    errorPrint
-	       ("1please specify at least one recipient and the file to send");
+	    i_printfExit(MSG_MinOneRec);
 /* I don't know that argv[argc] is 0, or that I can set it to 0,
  * so I back everything up by 1. */
 	reclist = argv - 1;
@@ -1158,8 +1095,7 @@ edbrowse  [-e] [-d?] file1 file2 ...");
 	}
 	atlist = argv + argc - nat - 1;
 	if(atlist <= argv)
-	    errorPrint
-	       ("1please specify at least one recipient and the file to send, before your attachments");
+	    i_printfExit(MSG_MinOneRecBefAtt);
 	body = *atlist;
 	if(nat)
 	    memcpy(atlist, atlist + 1, sizeof (char *) * nat);
@@ -1186,8 +1122,7 @@ edbrowse  [-e] [-d?] file1 file2 ...");
 	char *file = *argv;
 	++cx;
 	if(cx == MAXSESSION)
-	    errorPrint("1too many files open simultaneously, limit %d",
-	       MAXSESSION);
+	    i_printfExit(MSG_ManyOpen, MAXSESSION);
 	cxSwitch(cx, false);
 	if(cx == 1)
 	    runEbFunction("init");

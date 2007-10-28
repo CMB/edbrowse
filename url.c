@@ -445,7 +445,7 @@ getDirURL(const char *url, const char **start_p, const char **end_p)
 	goto slash;
     if(!strchr("#?\1", *dir)) {
 	if(*--dir != '/')
-	    errorPrint("1misplaced / in getDirURL(%s)", url);
+	    i_printfExit(MSG_BadDirSlash, url);
     }
     end = strpbrk(dir, "#?\1");
     if(!end)
@@ -565,7 +565,7 @@ squashDirectories(char *url)
 	return;
     --dd;
     if(*dd != '/')
-	errorPrint("@misplaced / in %s", url);
+	i_printfExit(MSG_BadSlash, url);
     end = dd + strcspn(dd, "?#\1");
     while(true) {
 	s = strstr(dd, "/./");
@@ -851,7 +851,7 @@ decodePostData(const char *data, const char *name, int seqno)
     char c;
 
     if(!seqno && !name)
-	errorPrint("@decodePostData(0,0)");
+	i_printfExit(MSG_DecodePost);
 
     for(s = data; *s; s = (*t ? t + 1 : t)) {
 	n = 0;

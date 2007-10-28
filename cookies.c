@@ -254,7 +254,7 @@ cookiesFromJar(void)
 /* Pour the cookies back into the jar */
     f = fopen(cookieFile, "w");
     if(!f)
-	errorPrint("1cannot rebuild your cookie jar %s", cookieFile);
+	i_printfExit(MSG_NoRebCookie, cookieFile);
     foreach(c, cookies)
        fprintf(f, "%s\tFALSE\t%s\t%s\t%u\t%s\t%s\n",
        c->domain, c->path,
