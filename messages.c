@@ -497,7 +497,7 @@ static const char *englishMessages[] = {
     "help messages on",
     "ftp download",
     "no ssl certificate file specified; secure connections cannot be verified",
-    "Disaster",
+    0,
     "could not rewrite your config file; your configuration data may be lost!",
     ".ebrc: null characters at line %d",
     ".ebrc: missing function name at line %d",
@@ -1108,7 +1108,7 @@ static const char *frenchMessages[] = {
     "messages d'aide activés",
     "téléchargement ftp",
     "pas de fichier de certificats ssl; les connexions sécurisées ne pourront être vérifiées",
-    "Désastre",
+    0,
     "Impossible de ré-écrire votre fichier de configuration : les données risquent d'être perdues !",
     "Caractères nuls à la ligne %d",
     ".ebrc : pas de nom de fonction à la ligne %d",
@@ -1797,6 +1797,7 @@ i_printf(int msg, ...)
     va_end(p);
 }				/* i_printf */
 
+/* Print and exit.  This puts newline on, like puts. */
 void
 i_printfExit(int msg, ...)
 {
