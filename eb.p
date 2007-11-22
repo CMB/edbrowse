@@ -238,6 +238,7 @@ void set_property_bool(void *jv, const char *name, int value) ;
 const char * get_property_url(void *jv, bool doaction) ;
 const char * get_property_string(void *jv, const char *name) ;
 bool get_property_bool(void *jv, const char *name) ;
+const char * get_property_option(void *jv) ;
 void * establish_js_option(void *ev, int idx) ;
 bool handlerGo(void *obj, const char *name) ;
 void handlerSet(void *ev, const char *name, const char *code) ;

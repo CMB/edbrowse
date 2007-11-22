@@ -837,6 +837,28 @@ get_property_bool(void *jv, const char *name)
     return JSVAL_TO_BOOLEAN(v);
 }				/* get_property_bool */
 
+const char *
+get_property_option(void *jv)
+{
+    JSObject *obj = jv;
+    jsval v;
+    JSObject *oa;		/* option array */
+    JSObject *oo;		/* option object */
+    int n;
+
+    if(!obj)
+	return 0;
+    JS_GetProperty(jcx, obj, "selectedIndex", &v);
+    n = JSVAL_TO_INT(v);
+    if(n < 0)
+	return 0;
+    JS_GetProperty(jcx, obj, "options", &v);
+    oa = JSVAL_TO_OBJECT(v);
+    JS_GetElement(jcx, oa, n, &v);
+    oo = JSVAL_TO_OBJECT(v);
+    return get_property_string(oo, "value");
+}				/* get_property_option */
+
 
 /*********************************************************************
 Manage the array of options under an html select.

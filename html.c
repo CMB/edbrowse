@@ -168,7 +168,7 @@ static const struct tagInfo elements[] = {
     {"IMAGE", "an image", TAGACT_IMAGE, 0, 0, 4},
     {"BR", "a line break", TAGACT_BR, 0, 1, 4},
     {"P", "a paragraph", TAGACT_NOP, 0, 2, 5},
-    {"DIV", "a divided section", TAGACT_DIV, 1, 5, 0},
+    {"DIV", "a divided section", TAGACT_DIV, 3, 5, 0},
     {"HTML", "html", TAGACT_NOP, 0, 0, 0},
     {"BLOCKQUOTE", "a quoted paragraph", TAGACT_NOP, 1, 10, 1},
     {"H1", "a level 1 header", TAGACT_NOP, 1, 10, 1},
@@ -940,17 +940,18 @@ jSyncup(void)
 	    set_property_bool(eo, "checked", checked);
 	    continue;
 	}
-	/* checkable */
+
 	value = getFieldFromBuffer(t->seqno);
 /* If that line has been deleted from the user's buffer,
  * indicated by value = 0,
  * revert back to the original (reset) value. */
 
 	if(itype == INP_SELECT) {
-/* should value be replaced here, or do we know it's ok? */
 	    locateOptions(t, (value ? value : t->value), 0, 0, true);
+	    if(!t->multiple)
+		value = cloneString( get_property_option(eo));
 	}
-	/* select */
+
 	if(itype == INP_TA) {
 	    if(!value) {
 		set_property_string(eo, "value", 0);
@@ -968,7 +969,7 @@ jSyncup(void)
 	    nzFree(cxbuf);
 	    continue;
 	}
-	/* text area */
+
 	if(value) {
 	    set_property_string(eo, "value", value);
 	    nzFree(value);

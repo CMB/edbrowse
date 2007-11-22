@@ -504,7 +504,7 @@ return confirm("All that hard work, are you sure you want to reset?");
 
 function newSelect(e) {
 alert(e.name + " in " + e.form.name + " has become " +
-e.options[e.selectedIndex].value);
+e.options[e.selectedIndex].value + " or " + e.value);
 }
 
 function onlfunc() {
