@@ -812,6 +812,7 @@ unpackQP(struct MHINFO *w)
 	*r++ = '=';
     }
     w->end = r;
+    *r = 0;
 }				/* unpackQP */
 
 /* Look for the name of the attachment and boundary */
