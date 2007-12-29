@@ -784,7 +784,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
     s = serverData;
     while(u = extractHeaderItem(s, hdr, "Set-Cookie", &s)) {
 	rc = receiveCookie(url, u);
-	free(u);
+	nzFree(u);
 	debugPrint(3, rc ? "accepted" : "rejected");
     }
 
