@@ -949,7 +949,7 @@ jSyncup(void)
 	if(itype == INP_SELECT) {
 	    locateOptions(t, (value ? value : t->value), 0, 0, true);
 	    if(!t->multiple)
-		value = cloneString( get_property_option(eo));
+		value = cloneString(get_property_option(eo));
 	}
 
 	if(itype == INP_TA) {
@@ -2700,41 +2700,36 @@ postNameVal(const char *name, const char *val,
     char *enc;
     const char *ct, *ce;	/* content type, content encoding */
 
-    if(name && !*name)
-	name = 0;
-    if(val && !*val)
-	val = 0;
-    if(!name && !val)
+    if(!name)
+	name = EMPTYSTRING;
+    if(!val)
+	val = EMPTYSTRING;
+    if(!*name && !*val)
 	return true;
 
-    if(name) {
-	postDelimiter(fsep, boundary, post, l);
-	switch (fsep) {
-	case '&':
-	    enc = encodePostData(name);
-	    stringAndString(post, l, enc);
-	    stringAndChar(post, l, '=');
-	    nzFree(enc);
-	    break;
-	case '\n':
-	    stringAndString(post, l, name);
-	    stringAndString(post, l, "=\r\n");
-	    break;
-	case '-':
-	    stringAndString(post, l, "Content-Disposition: form-data; name=\"");
-	    stringAndString(post, l, name);
-	    stringAndChar(post, l, '"');
+    postDelimiter(fsep, boundary, post, l);
+    switch (fsep) {
+    case '&':
+	enc = encodePostData(name);
+	stringAndString(post, l, enc);
+	stringAndChar(post, l, '=');
+	nzFree(enc);
+	break;
+    case '\n':
+	stringAndString(post, l, name);
+	stringAndString(post, l, "=\r\n");
+	break;
+    case '-':
+	stringAndString(post, l, "Content-Disposition: form-data; name=\"");
+	stringAndString(post, l, name);
+	stringAndChar(post, l, '"');
 /* I'm leaving nl off, in case we need ; filename */
-	    break;
-	}			/* switch */
-    }
-    /* name */
-    if(!val) {
-	if(fsep == '&')
-	    return true;
-	val = EMPTYSTRING;
-    }
-    /* no value */
+	break;
+    }				/* switch */
+
+    if(!*val && fsep == '&')
+	return true;
+
     switch (fsep) {
     case '&':
 	enc = encodePostData(val);
@@ -2821,7 +2816,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 	    if(!name)
 		continue;
 	    value = t->value;
-	    if(!value)
+	    if(!value || !*value)
 		value = "Submit";
 	    if(t->itype != INP_IMAGE)
 		goto success;
@@ -2841,10 +2836,8 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 	    bval = fetchBoolVar(t);
 	    if(!bval)
 		continue;
-	    if(!name) {
+	    if(!name)
 		noname = true;
-		continue;
-	    }
 	    if(value && !*value)
 		value = 0;
 	    if(itype == INP_CHECKBOX && value == 0)
@@ -2867,10 +2860,8 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 	    int cx = t->lic;
 	    char *cxbuf;
 	    int cxlen;
-	    if(!name) {
+	    if(!name)
 		noname = true;
-		continue;
-	    }
 	    if(cx) {
 		if(fsep == '-') {
 		    char cxstring[12];
@@ -2899,7 +2890,6 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 		    continue;
 		goto fail;
 	    }
-	    /* valid context */
 	    /* Just an empty string */
 	    postNameVal(name, 0, fsep, false, boundary, post, l);
 	    continue;
@@ -2960,7 +2950,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 		continue;
 	    goto fail;
 	}
-	/* file */
+
 	i_printfExit(MSG_UnexSubmitForm);
 
       success:
@@ -2973,8 +2963,6 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 	stringAndString(post, l, "--\r\n");
     }
 
-    if(noname)
-	i_puts(MSG_UnnamedFields);
     i_puts(MSG_FormSubmit);
     return true;
 

@@ -18,4 +18,4 @@ what does all.tags("object") mean?
 <input disabled>
 options.length = 0, js objects gone, but <option> tags still exist, and point to those objects
 attachEvent("onclick", doSomething);
-optionlist.value has the readable text, not the value
+field has no name - do you send the id?
