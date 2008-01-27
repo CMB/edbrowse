@@ -586,8 +586,6 @@ getter_cookie(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 	if(memEqualCI(cook, "cookie: ", 8)) {	/* should often happen */
 	    strcpy(cook, cook + 8);
 	}
-	while(s = strstr(cook, "; "))
-	    strcpy(s + 1, s + 2);
 	if(s = strstr(cook, "\r\n"))
 	    *s = 0;
     }

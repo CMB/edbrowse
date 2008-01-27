@@ -1,3 +1,4 @@
+every attribute in the html tag needs to become a property in the corresponding object
 dynamic domain objects are not implemented yet
 onclick in <form>
 http deflate
@@ -18,4 +19,4 @@ what does all.tags("object") mean?
 <input disabled>
 options.length = 0, js objects gone, but <option> tags still exist, and point to those objects
 attachEvent("onclick", doSomething);
-field has no name - do you send the id?
+getAttribute setAttribute
