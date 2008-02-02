@@ -2867,7 +2867,7 @@ if(stringEqual(line, "us")) return unstripChild();
 	verifyCertificates ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(verifyCertificates + MSG_CertifyOff);
-	ssl_must_verify(verifyCertificates);
+	ssl_verify_setting();
 	return true;
     }
 

@@ -5,99 +5,19 @@
  *
  * Modified by Karl Dahlke for integration with edbrowse,
  * which is also released under the GPL.
- * 
- * OpenSSL exception:
- * As a special exception, I hereby grant permission to link
- * the code of this program with the OpenSSL library
- * (or with modified versions of OpenSSL that use the same license as OpenSSL),
- * and distribute linked combinations including the two.
- * You must obey the GNU General Public License in all respects
- * for all of the code used other than OpenSSL.
- * If you modify this file, you may extend this exception to your version of the
- * file, but you are not obligated to do so.
- * If you do not wish to do so, delete this exception statement from your version.
  */
 
 #include "eb.h"
 
-/* You need the open ssl library for secure connections. */
-/* Hence the openSSL exception above. */
-#include <openssl/ssl.h>
-#include <openssl/err.h>	/* for error-retrieval */
-#include <openssl/rand.h>
+#include <time.h>
 
-static SSL_CTX *sslcx;		/* the overall ssl context */
 char *serverData;
 int serverDataLen;
-
-/* Called from main() */
-void
-ssl_init(bool doConfig)
-{
-/* I don't understand any of this. */
-    char f_randfile[ABSPATH];
-    if(RAND_egd(RAND_file_name(f_randfile, sizeof (f_randfile))) < 0) {
-	/* Not an EGD, so read and write to it */
-	if(RAND_load_file(f_randfile, -1))
-	    RAND_write_file(f_randfile);
-    }
-    SSLeay_add_ssl_algorithms();
-    sslcx = SSL_CTX_new(SSLv23_client_method());
-    SSL_CTX_set_options(sslcx, SSL_OP_ALL);
-
-    /*
-       Load certificates from the file whose pathname is
-       sslCerts.
-       The third argument to this function is the name of a directory in which
-       certificates are stored, one per file.
-       Both the filename and the directory name may be NULL.
-       Right now, we only support one large file containing all the
-       certificates.  This could be changed easily.
-     */
-
-    SSL_CTX_load_verify_locations(sslcx, sslCerts, NULL);
-    if(!sslCerts) {
-	verifyCertificates = false;
-	if(doConfig)
-	    if(debugLevel >= 1)
-		i_puts(MSG_NoCertFile);
-    }
-
-    SSL_CTX_set_default_verify_paths(sslcx);
-    SSL_CTX_set_mode(sslcx, SSL_MODE_AUTO_RETRY);
-    ssl_must_verify(verifyCertificates);
-}				/* ssl_init */
-
-void
-ssl_must_verify(bool verify_flag)
-{
-    if(verify_flag == true)
-	SSL_CTX_set_verify(sslcx, SSL_VERIFY_PEER, NULL);
-    else
-	SSL_CTX_set_verify(sslcx, SSL_VERIFY_NONE, NULL);
-}				/* ssl_must_verify */
-
-/* This is similar to our tcp_readFully in tcp.c */
-static int
-ssl_readFully(SSL * ssl, char *buf, int len)
-{
-    int pos = 0;
-    int n;
-    while(len) {
-	n = SSL_read(ssl, buf + pos, len);
-	if(n < 0)
-	    return n;
-	if(!n)
-	    return pos;
-	len -= n, pos += n;
-    }
-    return pos;			/* filled the whole buffer */
-}				/* ssl_readFully */
 
 /* Read from a socket, 100K at a time. */
 #define CHUNKSIZE 100000
 static bool
-readSocket(SSL * ssl, int fh)
+readSocket(int secure, int fh)
 {
     struct CHUNK {
 	struct CHUNK *next;
@@ -110,8 +30,8 @@ readSocket(SSL * ssl, int fh)
 
     while(true) {
 	p = allocMem(sizeof (struct CHUNK));
-	if(ssl)
-	    n = ssl_readFully(ssl, p->data, CHUNKSIZE);
+	if(secure)
+	    n = ssl_readFully(p->data, CHUNKSIZE);
 	else
 	    n = tcp_readFully(fh, p->data, CHUNKSIZE);
 	if(n < 0) {
@@ -429,10 +349,9 @@ httpConnect(const char *from, const char *url)
     const char *host, *post, *s;
     char *hdr;			/* http header */
     char *u;
-    int l, n, err;
+    int l, n;
     bool isprox, rc, secure, newurl;
     int hsock;			/* http socket */
-    SSL *hssl;			/* for secure connections */
     int hct;			/* content type */
     int hce;			/* content encoding */
     char *ref, *loc;		/* refresh= location= */
@@ -464,7 +383,6 @@ httpConnect(const char *from, const char *url)
     hct = CT_HTML;		/* the default */
     hce = ENC_PLAIN;
     isprox = isProxyURL(url);
-    hssl = 0;
     prot = getProtURL(url);
     secure = stringEqualCI(prot, "https");
     host = getHostURL(url);
@@ -553,21 +471,12 @@ httpConnect(const char *from, const char *url)
     else
 	debugPrint(4, "connected to port %d", port);
     if(secure) {
-	hssl = SSL_new(sslcx);
-	SSL_set_fd(hssl, hsock);
-/* Do we need this?
-hssl->options |= SSL_OP_NO_TLSv1;
-*/
-	err = SSL_connect(hssl);
-	if(err != 1) {
-	    err = ERR_peek_last_error();
-	    ERR_clear_error();
-	    if(ERR_GET_REASON(err) != SSL_R_CERTIFICATE_VERIFY_FAILED)
-		setError(MSG_WebConnectSecure, host, err);
-	    else
+	n = ssl_newbind(hsock);
+	if(n < 0) {
+	    if(n == -999)
 		setError(MSG_NoCertify, host);
-	    SSL_free(hssl);
-	    close(hsock);
+	    else
+		setError(MSG_WebConnectSecure, host, n);
 	    return false;
 	}
 	debugPrint(4, "secure connection established");
@@ -693,7 +602,7 @@ hssl->options |= SSL_OP_NO_TLSv1;
 	stringAndString(&hdr, &l, post);
 
     if(secure)
-	n = SSL_write(hssl, hdr, l);
+	n = ssl_write(hdr, l);
     else
 	n = tcp_write(hsock, hdr, l);
     debugPrint(4, "http header sent, %d/%d bytes", n, l);
@@ -701,14 +610,14 @@ hssl->options |= SSL_OP_NO_TLSv1;
     if(n < l) {
 	setError(intFlag ? MSG_Interrupted : MSG_WebSend);
 	if(secure)
-	    SSL_free(hssl);
+	    ssl_done();
 	close(hsock);
 	return false;
     }
 
-    rc = readSocket(hssl, hsock);
+    rc = readSocket(secure, hsock);
     if(secure)
-	SSL_free(hssl);
+	ssl_done();
     close(hsock);
     if(!rc)
 	goto abort;

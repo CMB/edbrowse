@@ -14,6 +14,9 @@
 typedef unsigned int IP32bit;
 #define NULL_IP (IP32bit)(-1)
 
+/* Unix/Linux has a max absolute path length of 256, I think. */
+#define ABSPATH 256
+
 /* Name of the current machine, as in tuvok.intellivoice.com */
 extern char tcp_thisMachineName[];
 
@@ -26,7 +29,7 @@ extern short tcp_farMachinePort;
 
 /* Set up the TCP stack and initialize the above variables */
 /* Returns 0 (ok) or -1 (with errno set) */
-int tcp_init();
+int tcp_init(void);
 
 /* routines to convert between names and IP addresses */
 int tcp_isDots(const char *s);
@@ -56,5 +59,14 @@ int tcp_write(int handle, const char *buf, int buflen);
 
 /* Close the socket */
 void tcp_close(int handle);
+
+/* Routines to establish, read, and write secure sockets. */
+extern char *sslCerts;		/* ssl certificates to validate the secure server */
+extern int verifyCertificates;	/* is a certificate required for the ssl connection? */
+void ssl_init(void);
+void ssl_verify_setting(void);
+int ssl_newbind(int fd);
+void ssl_done(void);
+int ssl_readFully(char *buf, int len);
 
 #endif

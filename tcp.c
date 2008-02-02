@@ -11,6 +11,16 @@ The host name of interest is always the primary name (no aliases).
 The IP address of interest is always the first in the list
 of possible IP addresses.
 All sockets use the setup protocol: connect() -> listen() + accept().
+This file also includes routines for secure sockets, using the openssl library.
+As a special exception, I hereby grant permission to link
+the code of this program with the OpenSSL library
+(or with modified versions of OpenSSL that use the same license as OpenSSL),
+and distribute linked combinations including the two.
+You must obey the GNU General Public License in all respects
+for all of the code used other than OpenSSL.
+If you modify this file, you may extend this exception to your version of the
+file, but you are not obligated to do so.
+If you do not wish to do so, delete this exception statement from your version.
 *********************************************************************/
 
 
@@ -27,6 +37,9 @@ All sockets use the setup protocol: connect() -> listen() + accept().
 #include <sys/select.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>	/* for error-retrieval */
+#include <openssl/rand.h>
 #include <sys/param.h>
 /* for some reason this prototype is missing */
 extern char *inet_ntoa(struct in_addr);
@@ -61,7 +74,7 @@ This is the case under NT.
 *********************************************************************/
 
 int
-tcp_init()
+tcp_init(void)
 {
     int rc;
 
@@ -113,7 +126,7 @@ tcp_name_ip(const char *name)
 	}
     }
 #endif
-    ip = (IP32bit *)*(hp->h_addr_list);
+    ip = (IP32bit *) * (hp->h_addr_list);
     if(!ip)
 	return NULL_IP;
     return *ip;
@@ -161,13 +174,13 @@ IP32bit
 tcp_dots_ip(const char *s)
 {
     struct in_addr a;
-/* Why the hell can't SCO Unix be like everybody else? */
+/* Why can't SCO Unix be like everybody else? */
 #ifdef SCO
     inet_aton(s, &a);
 #else
-    *(IP32bit *)&a = inet_addr(s);
+    *(IP32bit *) & a = inet_addr(s);
 #endif
-    return *(IP32bit *)&a;
+    return *(IP32bit *) & a;
 }				/* tcp_dots_ip */
 
 char *
@@ -192,7 +205,7 @@ Connect to a far machine, or listen for an incoming call.
 
 /* create a new socket */
 static int
-makeSocket()
+makeSocket(void)
 {
     int s;			/* file descriptor for socket */
     s = socket(AF_INET, SOCK_STREAM, 0);
@@ -393,6 +406,115 @@ tcp_write(int fh, const char *buf, int buflen)
     }
     return savelen;
 }				/* tcp_write */
+
+
+/*********************************************************************
+Secure sockets.
+Assumes one secure socket at a time.
+I know, it's not threadsafe, but it's all edbrowse needs.
+*********************************************************************/
+
+static SSL_CTX *sslcx;		/* the overall ssl context */
+char *sslCerts;
+int verifyCertificates = 1;
+
+/* Called from main() */
+/* Return -1 if we can't set up the certificates. */
+void
+ssl_init(void)
+{
+/* I don't understand any of this. */
+    char f_randfile[ABSPATH];
+    if(RAND_egd(RAND_file_name(f_randfile, sizeof (f_randfile))) < 0) {
+	/* Not an EGD, so read and write to it */
+	if(RAND_load_file(f_randfile, -1))
+	    RAND_write_file(f_randfile);
+    }
+    SSLeay_add_ssl_algorithms();
+    sslcx = SSL_CTX_new(SSLv23_client_method());
+    SSL_CTX_set_options(sslcx, SSL_OP_ALL);
+
+    /*
+       Load certificates from the file whose pathname is
+       sslCerts.
+       The third argument to this function is the name of a directory in which
+       certificates are stored, one per file.
+       Both the filename and the directory name may be NULL.
+       Right now, we only support one large file containing all the
+       certificates.  This could be changed easily.
+     */
+
+    SSL_CTX_load_verify_locations(sslcx, sslCerts, NULL);
+
+    SSL_CTX_set_default_verify_paths(sslcx);
+    SSL_CTX_set_mode(sslcx, SSL_MODE_AUTO_RETRY);
+    ssl_verify_setting();
+}				/* ssl_init */
+
+void
+ssl_verify_setting(void)
+{
+    if(verifyCertificates)
+	SSL_CTX_set_verify(sslcx, SSL_VERIFY_PEER, NULL);
+    else
+	SSL_CTX_set_verify(sslcx, SSL_VERIFY_NONE, NULL);
+}				/* ssl_verify_setting */
+
+static SSL *secstream;		/* secure stream */
+
+int
+ssl_newbind(int fd)
+{
+    int err;
+
+    secstream = SSL_new(sslcx);
+    SSL_set_fd(secstream, fd);
+/* Do we need this?
+secstream->options |= SSL_OP_NO_TLSv1;
+*/
+    err = SSL_connect(secstream);
+    if(err != 1) {
+	err = ERR_peek_last_error();
+	ERR_clear_error();
+	ssl_done();
+	close(fd);
+	if(ERR_GET_REASON(err) == SSL_R_CERTIFICATE_VERIFY_FAILED)
+	    return -999;
+	else
+	    return err;
+    }
+
+    return 0;
+}				/* ssl_newbind */
+
+void
+ssl_done(void)
+{
+    SSL_free(secstream);
+}				/* ssl_done */
+
+/* This is similar to our tcp_readFully */
+int
+ssl_readFully(char *buf, int len)
+{
+    int pos = 0;
+    int n;
+    while(len) {
+	n = SSL_read(secstream, buf + pos, len);
+	if(n < 0)
+	    return n;
+	if(!n)
+	    return pos;
+	len -= n, pos += n;
+    }
+    return pos;			/* filled the whole buffer */
+}				/* ssl_readFully */
+
+int
+ssl_write(const char *buf, int len)
+{
+    return SSL_write(secstream, buf, len);
+}				/* ssl_write */
 
 
 /*********************************************************************

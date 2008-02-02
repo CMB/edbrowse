@@ -33,7 +33,7 @@ int proxy_port;
 bool caseInsensitive, searchStringsAll;
 bool textAreaDosNewlines = true, undoable;
 bool allowRedirection = true, allowJS = true, sendReferrer = false;
-bool verifyCertificates = true, binaryDetect = true;
+bool binaryDetect = true;
 char ftpMode;
 bool showHiddenFiles, helpMessagesOn;
 uchar dirWrite, endMarks;
@@ -42,7 +42,7 @@ uchar linePending[MAXTTYLINE];
 char *changeFileName, *mailDir;
 char *addressFile, *ipbFile;
 char *home, *recycleBin, *configFile, *sigFile;
-char *sslCerts, *cookieFile, *spamCan;
+char *cookieFile, *spamCan;
 char *edbrowseTempFile, *edbrowseTempPDF, *edbrowseTempHTML;
 pst *textLines;
 int textLinesMax, textLinesCount;
@@ -1077,7 +1077,13 @@ main(int argc, char **argv)
 	debugPrint(4, "host info established for %s, %s",
 	   tcp_thisMachineName, tcp_thisMachineDots);
 
-    ssl_init(doConfig);
+    if(!sslCerts) {
+	verifyCertificates = 0;
+	if(doConfig)
+	    if(debugLevel >= 1)
+		i_puts(MSG_NoCertFile);
+    }
+    ssl_init();
 
     srand(time(0));
 

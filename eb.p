@@ -67,8 +67,6 @@ char * getAuthString(const char *url) ;
 bool addWebAuthorization(const char *url, int realm, const char *user, const char *password, bool proxy) ;
 
 /* sourcefile=http.c */
-void ssl_init(bool doConfig) ;
-void ssl_must_verify(bool verify_flag) ;
 char * extractHeaderItem(const char *head, const char *end, const char *item, const char **ptr) ;
 char * extractHeaderParam(const char *str, const char *item) ;
 time_t parseHeaderDate(const char *date) ;

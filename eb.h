@@ -98,9 +98,6 @@ typedef uchar *pst;		/* perl string */
 #define InternalCodeChar '\x80'
 #define InternalCodeCharAlternate '\x81'
 
-/* Unix/Linux has a max absolute path length of 256, I think. */
-#define ABSPATH 256
-
 /* How long can a regular expression be? */
 #define MAXRE 400
 /* How long can an entered line be? */
@@ -221,7 +218,6 @@ extern bool allowRedirection;	/* from http code 301, or http refresh */
 extern bool sendReferrer;	/* in the http header */
 extern bool allowJS;		/* javascript on */
 extern bool helpMessagesOn;	/* no need to type h */
-extern bool verifyCertificates;	/* ssl protocol */
 extern char ftpMode;
 extern bool showHiddenFiles;	/* during directory scan */
 extern uchar dirWrite;		/* directory write mode, e.g. rename files */
@@ -238,7 +234,6 @@ extern char *currentReferrer;
 extern char *home;		/* home directory */
 extern char *recycleBin;	/* holds deleted files */
 extern char *configFile, *sigFile;
-extern char *sslCerts;		/* ssl certificates, to validate the secure server */
 extern char *cookieFile;	/* persistent cookies */
 extern char *spamCan;		/* dump spam emails */
 extern char *edbrowseTempFile;
