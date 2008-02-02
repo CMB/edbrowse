@@ -12,7 +12,7 @@
 /* Define the globals that are declared in eb.h. */
 /* See eb.h for descriptive comments. */
 
-const char *version = "3.3.1";
+const char *version = "3.3.2";
 char *userAgents[10], *currentAgent, *currentReferrer;
 const char eol[] = "\r\n";
 char EMPTYSTRING[] = "";
@@ -42,7 +42,8 @@ uchar linePending[MAXTTYLINE];
 char *changeFileName, *mailDir;
 char *addressFile, *ipbFile;
 char *home, *recycleBin, *configFile, *sigFile;
-char *sslCerts, *cookieFile, *edbrowseTempFile, *spamCan;
+char *sslCerts, *cookieFile, *spamCan;
+char *edbrowseTempFile, *edbrowseTempPDF, *edbrowseTempHTML;
 pst *textLines;
 int textLinesMax, textLinesCount;
 struct ebWindow *cw;
@@ -454,10 +455,14 @@ readConfigFile(void)
 	    continue;
 
 	case 6:
+	    if(*v == '*')
+		act->inssl = true, ++v;
 	    act->inport = atoi(v);
 	    continue;
 
 	case 7:
+	    if(*v == '*')
+		act->outssl = true, ++v;
 	    act->outport = atoi(v);
 	    continue;
 
@@ -989,6 +994,10 @@ main(int argc, char **argv)
     edbrowseTempFile = allocMem(strlen(recycleBin) + 8 + 6);
 /* The extra 6 is for the suffix */
     sprintf(edbrowseTempFile, "%s/eb_tmp", recycleBin);
+    edbrowseTempPDF = allocMem(strlen(recycleBin) + 8);
+    sprintf(edbrowseTempPDF, "%s/eb_pdf", recycleBin);
+    edbrowseTempHTML = allocMem(strlen(recycleBin) + 9);
+    sprintf(edbrowseTempHTML, "%s/eb_html", recycleBin);
     if(fileTypeByName(recycleBin, false) != 'd') {
 	if(mkdir(recycleBin, 0700)) {
 	    free(recycleBin);

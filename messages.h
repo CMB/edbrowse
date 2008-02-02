@@ -613,4 +613,5 @@ enum {
     MSG_BadDirSlash,
     MSG_BadSlash,
     MSG_DecodePost,
+    MSG_NoPDF,
 };

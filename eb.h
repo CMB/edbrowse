@@ -159,6 +159,7 @@ struct MACCOUNT {		/* pop3 account */
     char *login, *password, *from, *reply;
     char *inurl, *outurl;
     int inport, outport;
+    bool inssl, outssl;
 };
 
 struct MIMETYPE {
@@ -241,6 +242,8 @@ extern char *sslCerts;		/* ssl certificates, to validate the secure server */
 extern char *cookieFile;	/* persistent cookies */
 extern char *spamCan;		/* dump spam emails */
 extern char *edbrowseTempFile;
+extern char *edbrowseTempPDF;
+extern char *edbrowseTempHTML;
 
 /* Ok, this is kinda simple and stupid.
  * Every line in every window in every session is a string, without the

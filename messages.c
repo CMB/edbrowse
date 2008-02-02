@@ -613,6 +613,7 @@ static const char *englishMessages[] = {
     "misplaced / in getDirURL(%s)",
     "misplaced / in %s",
     "decodePostData(0,0)",
+    "cannot convert pdf to html; make sure pdftohtml is installed, and try running it on %s",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
@@ -1220,6 +1221,7 @@ static const char *frenchMessages[] = {
     "/ mal placé dans getDirUrl(%s)",
     "/ mal placé dans %s",
     "decodePostData(0,0)",
+    0,
 };
 
 /* Translation by Cleverson: clever92000@yahoo.com.br */
@@ -1827,6 +1829,7 @@ static const char *brazilianPortugueseMessages[] = {
     "/ mal posicionada na getDirURL(%s)",
     "/ mal posicionada na %s",
     "decodePostData(0,0)",
+    0,
 };
 
 /* English by default */

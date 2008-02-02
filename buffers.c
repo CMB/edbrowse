@@ -2372,7 +2372,7 @@ substituteText(const char *line)
 		goto abort;
 	    }
 	    *replaceLineEnd = '\n';
-	    if(!sqlUpdateRow(p, len - 1, (pst) replaceLine,
+	    if(!sqlUpdateRow((pst) p, len - 1, (pst) replaceLine,
 	       replaceLineEnd - replaceLine))
 		goto abort;
 	}
@@ -4059,7 +4059,9 @@ runCommand(const char *line)
 	    changeFileName = 0;
 	}
 /* Some files we just can't browse */
-	if(!cw->dol || cw->binMode | cw->dirMode)
+	if(!cw->dol || cw->dirMode)
+	    cmd = 'e';
+	if(cw->binMode && !stringIsPDF(cw->fileName))
 	    cmd = 'e';
 	if(cmd == 'e')
 	    return true;
@@ -4068,7 +4070,7 @@ runCommand(const char *line)
   browse:
     if(cmd == 'b') {
 	if(!cw->browseMode) {
-	    if(cw->binMode) {
+	    if(cw->binMode && !stringIsPDF(cw->fileName)) {
 		setError(MSG_BrowseBinary);
 		return false;
 	    }
@@ -4081,10 +4083,8 @@ runCommand(const char *line)
 		fileSize = -1;
 	    }
 	    if(!browseCurrentBuffer()) {
-		if(icmd == 'b') {
-		    setError(MSG_Unbrowsable);
+		if(icmd == 'b')
 		    return false;
-		}
 		return true;
 	    }
 	} else if(!first) {
@@ -4144,7 +4144,7 @@ runCommand(const char *line)
 	setError(MSG_NoLable2, s);
 	return false;
     }
-    /* b */
+
     if(!globSub) {		/* get ready for subsequent undo */
 	struct ebWindow *pw = &preWindow;
 	pw->dot = cw->dot;
@@ -4414,23 +4414,67 @@ browseCurrentBuffer(void)
 {
     char *rawbuf, *newbuf;
     int rawsize, j;
-    bool rc, remote = false, do_ip = false;
+    bool rc, remote = false, do_ip = false, ispdf = false;
     bool save_ch = cw->changeMode;
     uchar bmode = 0;
 
-    if(cw->fileName)
+    if(cw->fileName) {
 	remote = isURL(cw->fileName);
+	ispdf = stringIsPDF(cw->fileName);
+    }
+
+/* I'm trusting the pdf suffix, and not looking inside. */
+    if(ispdf)
+	bmode = 3;
 /* A mail message often contains lots of html tags,
  * so we need to check for email headers first. */
-    if(!remote && emailTest())
+    else if(!remote && emailTest())
 	bmode = 1;
     else if(htmlTest())
 	bmode = 2;
-    else
+    else {
+	setError(MSG_Unbrowsable);
 	return false;
+    }
 
     if(!unfoldBuffer(context, false, &rawbuf, &rawsize))
 	return false;		/* should never happen */
+
+/* expand pdf using pdftohtml */
+/* http://rpmfind.net/linux/RPM/suse/updates/10.0/i386/rpm/i586/pdftohtml-0.36-130.9.i586.html */
+    if(bmode == 3) {
+	char *cmd;
+	int fh =
+	   open(edbrowseTempPDF, O_CREAT | O_TRUNC | O_WRONLY | O_BINARY, 0666);
+	if(fh < 0) {
+	    setError(MSG_TempNoCreate2, edbrowseTempPDF, errno);
+	    nzFree(rawbuf);
+	    return false;
+	}
+	if(write(fh, rawbuf, rawsize) < rawsize) {
+	    setError(MSG_TempNoWrite, edbrowseTempPDF);
+	    nzFree(rawbuf);
+	    return false;
+	}
+	close(fh);
+	nzFree(rawbuf);
+	unlink(edbrowseTempHTML);
+	j = strlen(edbrowseTempPDF);
+	cmd = allocMem(50 + j);
+	sprintf(cmd, "pdftohtml -i -noframes %s >/dev/null 2>&1",
+	   edbrowseTempPDF);
+	system(cmd);
+	nzFree(cmd);
+	if(fileSizeByName(edbrowseTempHTML) <= 0) {
+	    setError(MSG_NoPDF, edbrowseTempPDF);
+	    return false;
+	}
+	rc = fileIntoMemory(edbrowseTempHTML, &rawbuf, &rawsize);
+	if(!rc)
+	    return false;
+	bmode = 2;
+    }
+
     prepareForBrowse(rawbuf, rawsize);
 
 /* No harm in running this code in mail client, but no help either,

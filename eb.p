@@ -174,6 +174,7 @@ char * pullString(const char *s, int l) ;
 char * pullString1(const char *s, const char *t) ;
 int stringIsNum(const char *s) ;
 bool stringIsFloat(const char *s, double *dp) ;
+bool stringIsPDF(const char *s) ;
 bool isSQL(const char *s) ;
 bool memEqualCI(const char *s, const char *t, int len) ;
 char * strstrCI(const char *base, const char *search) ;

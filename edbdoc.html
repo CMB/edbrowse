@@ -74,6 +74,7 @@ blind, script, accessible">
 <LI><A HREF=#ftp> FTP Retrievals </A>
 <LI><A HREF=#proxy> Proxy Servers </A>
 <LI><A HREF=#frame> Frames </A>
+<LI><A HREF=#pdf> PDF </A>
 </UL>
 
 <H4> Chapter 5, Javascript </H4>
@@ -2407,6 +2408,26 @@ just as they are all displayed on the screen for a sighted user,
 but this feature is <em>very</em> difficult to implement,
 and so far, nobody seems to want it.&nbsp;
 So as you might imagine, it's way down on the list.
+
+<H3 align=center> <A NAME=pdf> PDF </A> </H3>
+
+PDF is a portable document format developed by <A HREF=http://www.adobe.com>adobe.com</A>.&nbsp;
+A document, using this format, and designated with the suffix .pdf, prints the same way, every time, on every printer.&nbsp;
+That is its principle advantage.&nbsp;
+However, pdf files are entirely unreadable by blind individuals.&nbsp;
+Fortunately, there is a utility,
+<A HREF=http://rpmfind.net/linux/RPM/suse/updates/10.0/i386/rpm/i586/pdftohtml-0.36-130.9.i586.html>
+pdftohtml</A>,
+that converts pdf to html.&nbsp;
+Sometimes it works well, and sometimes lines are broken in bizarre places;
+but it's better than nothing.&nbsp;
+If you install this package, edbrowse will automatically convert pdf files into html files,
+and then render them as text.
+
+<P>
+Note, there are also pdf to text converters that skip the middle (html) step,
+but I wanted to preserve the functionality of any hyperlinks that might be embedded within pdf.&nbsp;
+So I thought it worthwhile going through html, even though it adds a little complexity.
 
 <H3 align=center> <A NAME=js> Introduction to Javascript </A> </H3>
 
