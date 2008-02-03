@@ -511,6 +511,12 @@ ssl_readFully(char *buf, int len)
 }				/* ssl_readFully */
 
 int
+ssl_read(char *buf, int len)
+{
+    return SSL_read(secstream, buf, len);
+}				/* ssl_read */
+
+int
 ssl_write(const char *buf, int len)
 {
     return SSL_write(secstream, buf, len);

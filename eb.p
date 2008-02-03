@@ -92,10 +92,10 @@ void i_caseShift(unsigned char *s, char action) ;
 /* sourcefile=sendmail.c */
 bool loadAddressBook(void) ;
 const char * reverseAlias(const char *reply) ;
-bool serverPutLine(const char *buf) ;
-bool serverGetLine(void) ;
-void serverClose(void) ;
-bool mailConnect(const char *host, int port) ;
+bool serverPutLine(const char *buf, bool secure) ;
+bool serverGetLine(bool secure) ;
+void serverClose(bool secure) ;
+bool mailConnect(const char *host, int port, bool secure) ;
 char * base64Encode(const char *inbuf, int inlen, bool lines) ;
 bool encodeAttachment(const char *file, int ismail, const char **type_p, const char **enc_p, char **data_p) ;
 char * makeBoundary(void) ;

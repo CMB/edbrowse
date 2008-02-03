@@ -266,11 +266,11 @@ writeAttachments(struct MHINFO *w)
 }				/* writeAttachments */
 
 static void
-serverPutGet(const char *line)
+serverPutGet(const char *line, bool secure)
 {
-    if(!serverPutLine(line))
+    if(!serverPutLine(line, secure))
 	showErrorAbort();
-    if(!serverGetLine())
+    if(!serverGetLine(secure))
 	showErrorAbort();
 }				/* serverPutGet */
 
@@ -296,29 +296,29 @@ fetchMail(int account)
     if(!loadAddressBook())
 	showErrorAbort();
 
-    if(!mailConnect(host, a->inport))
+    if(!mailConnect(host, a->inport, a->inssl))
 	showErrorAbort();
-    if(!serverGetLine())
+    if(!serverGetLine(a->inssl))
 	showErrorAbort();
     if(memcmp(serverLine, "+OK ", 4))
 	i_printfExit(MSG_BadPopIntro, serverLine);
     sprintf(serverLine, "user %s%s", login, eol);
-    serverPutGet(serverLine);
+    serverPutGet(serverLine, a->inssl);
     if(pass) {			/* I think this is always required */
 	sprintf(serverLine, "pass %s%s", pass, eol);
-	serverPutGet(serverLine);
+	serverPutGet(serverLine, a->inssl);
     }				/* password */
     if(memcmp(serverLine, "+OK", 3))
 	i_printfExit(MSG_PopNotComplete, serverLine);
 
 /* How many mail messages? */
-    serverPutGet("stat\r\n");
+    serverPutGet("stat\r\n", a->inssl);
     if(memcmp(serverLine, "+OK ", 4))
 	i_printfExit(MSG_NoStatusMailBox, serverLine);
     nmsgs = atoi(serverLine + 4);
     if(!nmsgs) {
 	i_puts(MSG_NoMail);
-	serverClose();
+	serverClose(a->inssl);
 	exit(0);
     }
 
@@ -363,11 +363,15 @@ fetchMail(int account)
 	    cxSwitch(1, false);
 /* Now grab the entire message */
 	    sprintf(serverLine, "retr %d%s", m, eol);
-	    if(!serverPutLine(serverLine))
+	    if(!serverPutLine(serverLine, a->inssl))
 		showErrorAbort();
 	    retr1 = true;
 	    while(true) {
-		int nr = tcp_read(mssock, retrbuf, sizeof (retrbuf));
+		int nr;
+		if(a->inssl)
+		    nr = ssl_read(retrbuf, sizeof (retrbuf));
+		else
+		    nr = tcp_read(mssock, retrbuf, sizeof (retrbuf));
 		if(nr <= 0)
 		    i_printfExit(MSG_ErrorReadMess, errno);
 		if(retr1) {
@@ -487,7 +491,7 @@ fetchMail(int account)
 			switch (key) {
 			case 'q':
 			    i_puts(MSG_Quit);
-			    serverClose();
+			    serverClose(a->inssl);
 			case 'x':
 			    exit(0);
 			case 'n':
@@ -608,9 +612,9 @@ fetchMail(int account)
  * So if you didn't mean to delete, type x to exit abruptly,
  * then fetch your mail again. */
 	    sprintf(serverLine, "dele %d%s", m, eol);
-	    if(!serverPutLine(serverLine))
+	    if(!serverPutLine(serverLine, a->inssl))
 		showErrorAbort();
-	    if(!serverGetLine())
+	    if(!serverGetLine(a->inssl))
 		i_printfExit(MSG_MailTimeOver);
 	    if(memcmp(serverLine, "+OK", 3))
 		i_printfExit(MSG_UnableDelMail, serverLine);
@@ -621,7 +625,7 @@ fetchMail(int account)
 
     if(zapMail)
 	printf("%d\n", nmsgs);
-    serverClose();
+    serverClose(a->inssl);
     exit(0);
 }				/* fetchMail */
 

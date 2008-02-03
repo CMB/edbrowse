@@ -67,6 +67,8 @@ void ssl_init(void);
 void ssl_verify_setting(void);
 int ssl_newbind(int fd);
 void ssl_done(void);
+int ssl_read(char *buf, int len);
+int ssl_write(const char *buf, int len);
 int ssl_readFully(char *buf, int len);
 
 #endif
