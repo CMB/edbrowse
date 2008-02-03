@@ -972,7 +972,7 @@ main(int argc, char **argv)
  * but oh well.
  * Someday I'll check whether stdout is regular and buffer accordingly.
 */
-setlinebuf(stdout);
+    setlinebuf(stdout);
 
     selectLanguage();
 
