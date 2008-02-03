@@ -1223,8 +1223,8 @@ static const char *frenchMessages[] = {
     "/ mal placé dans getDirUrl(%s)",
     "/ mal placé dans %s",
     "decodePostData(0,0)",
-    0,
-    0,
+    "impossible de convertir le pdf en html : assurez-vous d'avoir pdftohtml installé, et essayez de le lancer sur %s",
+    "seule la séquence `auth login' de sendmail est supportée jusqu'à présent",
     "Séquence smtp nom utilisateur/mot de passe interrompue <%s>",
 };
 

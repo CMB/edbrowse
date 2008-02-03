@@ -72,6 +72,7 @@ securité, ssl, aveugle, script, accessible, accessibilité">
 </li><li><a href="#ftp"> Téléchargements Ftp </a>
 </li><li><a href="#proxy"> Serveurs proxy </a>
 </li><li><a href="#frame"> Cadres </a>
+</li><li><a href="#pdf"> PDF </a>
 </li></font></ul>
 
 <h4><font face="Arial,Helvetica,sans-serif" size="4"> Chapitre 5, Javascript </font></h4>
@@ -132,7 +133,7 @@ securité, ssl, aveugle, script, accessible, accessibilité">
  
 
 </font><p>
-<font face="Arial,Helvetica,sans-serif" size="4">Par exception, je permets ici de lier le code de ce programme avec la bibliothèque d'OpenSSL (ou avec les versions modifiées d'OpenSSL sous même licence qu'OpenSSL), et distribuer les combinaisons liées comprenant les deux.Vous devez respecter la licence publique générale de GNU en tous points pour tous les codes utilisés autres qu'OpenSSL. Si vous modifiez ce programme, vous pouvez étendre cette exception à votre version du programme, mais vous n'y êtes pas tenu. Si vous ne souhaitez pas faire ainsi, supprimez ce rapport d'exception de votre version..
+<font face="Arial,Helvetica,sans-serif" size="4">Par exception, je permets ici de lier le code de ce programme avec la bibliothèque d'OpenSSL (ou avec les versions modifiées d'OpenSSL sous même licence qu'OpenSSL), et distribuer les combinaisons liées comprenant les deux. Vous devez respecter la licence publique générale de GNU en tous points pour tous les codes utilisés autres qu'OpenSSL. Si vous modifiez ce programme, vous pouvez étendre cette exception à votre version du programme, mais vous n'y êtes pas tenu. Si vous ne souhaitez pas faire ainsi, supprimez ce rapport d'exception de votre version..
 
 </font></p><h3 align="center"><font face="Arial,Helvetica,sans-serif" size="4"> <a name="ack"> Remerciements </a> </font></h3>
 
@@ -1823,6 +1824,24 @@ Frame {pied}
 </font></p><p>
 <font face="Arial,Helvetica,sans-serif" size="4">J'ai pensé à un dispositif de récupération de cadres qui chercherait tous les cadres et les présenterait en seul jet, tout comme elles sont affichées simultanément sur l'écran pour un utilisateur voyant, mais il est très difficile d'implémenter ce dispositif, et jusqu'ici, personne ne semble le vouloir.&nbsp;
 Comme vous pouvez l'imaginer, il est tout en bas de la liste des choses à faire.&nbsp;
+
+</font></p><h3 align="center"><font face="Arial,Helvetica,sans-serif" size="4"> <a name="pdf"> PDF </a> </font></h3>
+
+<font face="Arial,Helvetica,sans-serif" size="4">PDF est un format portable de documents développé par <a href=http://www.adobe.com>adobe.com</a>.&nbsp;
+Un document de ce format, désigné par le suffixe .pdf, sera toujours imprimé de la même façon sur n'importe quelle imprimante.&nbsp;
+C'est son principal avantage.&nbsp;
+Cependant, les documents pdf sont totalement illisibles par un non-voyant..&nbsp;
+Heureusement, il existe un utilitaire,
+<A HREF=http://rpmfind.net/linux/RPM/suse/updates/10.0/i386/rpm/i586/pdftohtml-0.36-130.9.i586.html>pdftohtml</A>,
+qui convertit le pdf en html.&nbsp;
+Parfois, il fonctionne très bien, et parfois les lignes sont coupées d'étrange façon;
+mais c'est mieux que rien.&nbsp;
+Si vous installez ce paquet, edbrowse convertira autmatiquement les fichiers pdf en fichiers html,&nbsp;
+qu'il affichera ensuite comme du texte.
+<p></p>
+Notez qu'il existe également un convertisseur pdf en texte qui évite l'étape intermédiaire (html),&nbsp;
+mais j'ai voulu garder les fonctionnalités des liens hypertextes parfois présents dans le pdf.&nbsp;
+J'ai donc pensé qu'il vaut la peine de passer par le html, malgré quelques complications suppléméntaires.
 
 </font></p><h3 align="center"><font face="Arial,Helvetica,sans-serif" size="4"> <a name="js"> Introduction à Javascript </a> </font></h3>
 
