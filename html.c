@@ -207,7 +207,7 @@ static const struct tagInfo elements[] = {
     {"SCRIPT", "a script", TAGACT_SCRIPT, 0, 0, 1},
     {"NOSCRIPT", "no script section", TAGACT_NOP, 1, 0, 3},
     {"NOFRAMES", "no frames section", TAGACT_NOP, 1, 0, 3},
-    {"EMBED", "embedded html", TAGACT_MUSIC, 1, 0, 3},
+    {"EMBED", "embedded html", TAGACT_MUSIC, 0, 0, 5},
     {"NOEMBED", "no embed section", TAGACT_NOP, 1, 0, 3},
     {"OBJECT", "an html object", TAGACT_OBJ, 0, 0, 3},
     {"EM", "emphasized text", TAGACT_JS, 1, 0, 0},
@@ -1781,7 +1781,7 @@ encodeTags(char *html)
 	    if(!t->href)
 		continue;
 	    toPreamble(t->seqno,
-	       (ti->name[0] == 'A' ? "Audio passage" : "Background Music"),
+	       (ti->name[0] != 'B' ? "Audio passage" : "Background Music"),
 	       0, 0);
 	    t->action = TAGACT_A;
 	    continue;
