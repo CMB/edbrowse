@@ -614,4 +614,6 @@ enum {
     MSG_BadSlash,
     MSG_DecodePost,
     MSG_NoPDF,
+    MSG_AuthLoginOnly,
+    MSG_SmtpNotComplete,
 };

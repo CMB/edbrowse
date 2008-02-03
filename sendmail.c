@@ -234,6 +234,15 @@ serverGetLine(bool secure)
     return true;
 }				/* serverGetLine */
 
+static bool
+serverPutGet(const char *line, bool secure)
+{
+    if(!serverPutLine(line, secure))
+	return false;
+    if(!serverGetLine(secure))
+	return false;
+}				/* serverPutGet */
+
 void
 serverClose(bool secure)
 {
@@ -814,20 +823,51 @@ sendMail(int account, const char **recipients, const char *body,
 	goto mailfail;
     }
 
-    sprintf(serverLine, "helo %s%s", smlogin, eol);
+    sprintf(serverLine, "%s %s%s", (a->outssl ? "ehlo" : "Helo"), smlogin, eol);
     if(!serverPutLine(serverLine, ao->outssl))
 	goto mailfail;
+  get250:
     if(!serverGetLine(ao->outssl))
 	goto mailfail;
-    if(!memEqualCI(serverLine, "250 ", 4)) {
+    if(!memEqualCI(serverLine, "250", 3) ||
+       serverLine[3] != ' ' && serverLine[3] != '-') {
 	setError(MSG_MailWhat, login);
 	goto mailfail;
     }
+    if(serverLine[3] == '-')
+	goto get250;
+
+    if(ao->outssl) {
+	char *b;
+/* login authentication is the only thing I support right now. */
+	if(!serverPutGet("auth login\r\n", true))
+	    goto mailfail;
+	if(!memEqualCI(serverLine, "334 ", 4)) {
+	    setError(MSG_AuthLoginOnly);
+	    goto mailfail;
+	}
+	b = base64Encode(login, strlen(login), false);
+	sprintf(serverLine, "%s%s", b, eol);
+	nzFree(b);
+	if(!serverPutGet(serverLine, true))
+	    goto mailfail;
+	if(!memEqualCI(serverLine, "334 ", 4)) {
+	    setError(MSG_AuthLoginOnly);
+	    goto mailfail;
+	}
+	b = base64Encode(pass, strlen(pass), false);
+	sprintf(serverLine, "%s%s", b, eol);
+	nzFree(b);
+	if(!serverPutGet(serverLine, true))
+	    goto mailfail;
+	if(!memEqualCI(serverLine, "235 ", 4)) {
+	    setError(MSG_SmtpNotComplete, serverLine);
+	    goto mailfail;
+	}
+    }
 
     sprintf(serverLine, "mail from: <%s>%s", reply, eol);
-    if(!serverPutLine(serverLine, ao->outssl))
-	goto mailfail;
-    if(!serverGetLine(ao->outssl))
+    if(!serverPutGet(serverLine, ao->outssl))
 	goto mailfail;
     if(!memEqualCI(serverLine, "250 ", 4)) {
 	setError(MSG_MailReject, reply);
@@ -836,9 +876,7 @@ sendMail(int account, const char **recipients, const char *body,
 
     for(j = 0; s = recipients[j]; ++j) {
 	sprintf(serverLine, "rcpt to: <%s>%s", s, eol);
-	if(!serverPutLine(serverLine, ao->outssl))
-	    goto mailfail;
-	if(!serverGetLine(ao->outssl))
+	if(!serverPutGet(serverLine, ao->outssl))
 	    goto mailfail;
 	if(!memEqualCI(serverLine, "250 ", 4)) {
 	    setError(MSG_MailReject, s);
@@ -846,9 +884,7 @@ sendMail(int account, const char **recipients, const char *body,
 	}
     }
 
-    if(!serverPutLine("data\r\n", ao->outssl))
-	goto mailfail;
-    if(!serverGetLine(ao->outssl))
+    if(!serverPutGet("data\r\n", ao->outssl))
 	goto mailfail;
     if(!memEqualCI(serverLine, "354 ", 4)) {
 	setError(MSG_MailNotReady, serverLine);

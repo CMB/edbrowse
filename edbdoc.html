@@ -2728,9 +2728,17 @@ outport = 25
 <P>
 Specify the machines and ports that you use to fetch mail and send mail respectively.&nbsp;
 You can use the fully qualified domain names, or aliases, as defined in /etc/hosts.&nbsp;
-The ports shown here are standard, and almost always correct.&nbsp;
+The ports shown here are standard, and usually correct.&nbsp;
 They are also default in edbrowse, so you need not set inport and outport unless they are different from that shown above.&nbsp;
 Note, these keywords are only valid in the context of a mail account, as indicated by mail{}.
+
+<P>
+A star in front of the port number,
+e.g. inport *110,
+means the socket is to be encrypted, for security.&nbsp;
+When the smtp port is encrypted, login authentication is assumed.&nbsp;
+No other authentication method is implemented at this time,
+nor is authentication possible outside the context of an encrypted stream.
 
 <P>
 login = eklhad
@@ -3033,15 +3041,29 @@ All you have to do is enclose them in mail{...}, like this.
 The "default" directive makes this account the default.&nbsp;
 One and only one account should be labeled default.&nbsp;
 If you do not specify an account when fetching or sending mail, the default account is used.&nbsp;
-Beyond this, the default smtp server is <em>always</em> used to send mail,
+Beyond this, the default smtp server is always used to send mail,
 no matter which account you specify.&nbsp;
 If account #1 is default, and you send mail using account #3,
 the name and reply address from account #3 will be sent to the recipient,
 and if he replies, his reply will be sent to your third email account.&nbsp;
-However, the smtp server from your default account is always used to physically transmit the message.&nbsp;
+However, the smtp server from your default account is used to physically transmit the message.&nbsp;
 There are technical reasons for doing this,
-that are beyond the scope of this document.&nbsp;
-Trust me, it's the right thing to do.
+having to do with security.&nbsp;
+However, if an account has its sendmail stream encrypted, then security is not an issue,
+and we can use these settings to send and receive mail.&nbsp;
+Here is a typical configuration for Google's gmail.
+
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>mail {
+  inserver = pop.gmail.com
+  outserver = smtp.gmail.com
+  inport = *995
+  outport = *465
+  login = somebody@gmail.com
+  password = secret
+  reply = somebody@gmail.com
+  from = Karl Dahlke
+}
+</font></PRE>
 
 <P>
 Mail filtering, by sender and/or subject,

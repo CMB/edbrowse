@@ -3,6 +3,9 @@ Here are some changes introduced by recent versions of edbrowse.
 3.3.2:
 Supports reading of pdf files by calling the utility pdftohtml.
 http://rpmfind.net/linux/RPM/suse/updates/10.0/i386/rpm/i586/pdftohtml-0.36-130.9.i586.html
+Also brings in email over ssl.
+Secure smtp implies auth login;
+no other authentication method is implemented at this time.
 
 3.3.1:
 The error and output messages of edbrowse have been internationalized.

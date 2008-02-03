@@ -614,6 +614,8 @@ static const char *englishMessages[] = {
     "misplaced / in %s",
     "decodePostData(0,0)",
     "cannot convert pdf to html; make sure pdftohtml is installed, and try running it on %s",
+    "only sendmail `auth login' is supported at this time",
+    "Could not complete the smtp login/password sequence <%s>",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
@@ -1222,6 +1224,8 @@ static const char *frenchMessages[] = {
     "/ mal placé dans %s",
     "decodePostData(0,0)",
     0,
+    0,
+    "Séquence smtp nom utilisateur/mot de passe interrompue <%s>",
 };
 
 /* Translation by Cleverson: clever92000@yahoo.com.br */
@@ -1830,6 +1834,8 @@ static const char *brazilianPortugueseMessages[] = {
     "/ mal posicionada na %s",
     "decodePostData(0,0)",
     0,
+    0,
+    "não consegui completar a seqüência usuario/senha <%s> no SMTP",
 };
 
 /* English by default */
