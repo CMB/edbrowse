@@ -199,6 +199,7 @@ void copyPstring(pst s, const pst t) ;
 bool fileIntoMemory(const char *filename, char **data, int *len) ;
 void caseShift(char *s, char action) ;
 char fileTypeByName(const char *name, bool showlink) ;
+char fileTypeByHandle(int fd) ;
 int fileSizeByName(const char *name) ;
 time_t fileTimeByName(const char *name) ;
 void ttySaveSettings(void) ;

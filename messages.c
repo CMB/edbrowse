@@ -614,7 +614,7 @@ static const char *englishMessages[] = {
     "misplaced / in %s",
     "decodePostData(0,0)",
     "cannot convert pdf to html; make sure pdftohtml is installed, and try running it on %s",
-    "only sendmail `auth login' is supported at this time",
+    "only sendmail `auth login' method is supported at this time",
     "Could not complete the smtp login/password sequence <%s>",
 };
 
@@ -1833,7 +1833,7 @@ static const char *brazilianPortugueseMessages[] = {
     "/ mal posicionada na getDirURL(%s)",
     "/ mal posicionada na %s",
     "decodePostData(0,0)",
-    0,
+    "Não foi possível converter o PDF para HTML; certifique-se que o PDFToHTML esteja instalado e tente usá-lo no %s",
     0,
     "não consegui completar a seqüência usuario/senha <%s> no SMTP",
 };

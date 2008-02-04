@@ -791,6 +791,34 @@ fileTypeByName(const char *name, bool showlink)
     return c;
 }				/* fileTypeByName */
 
+char
+fileTypeByHandle(int fd)
+{
+    struct stat buf;
+    char c;
+    int mode;
+    if(fstat(fd, &buf)) {
+	setError(MSG_NoAccess, "handle");
+	return 0;
+    }
+    mode = buf.st_mode & S_IFMT;
+    c = 'f';
+    if(mode == S_IFDIR)
+	c = 'd';
+#ifndef DOSLIKE
+/* I don't think these are Windows constructs. */
+    if(mode == S_IFBLK)
+	c = 'b';
+    if(mode == S_IFCHR)
+	c = 'c';
+    if(mode == S_IFIFO)
+	c = 'p';
+    if(mode == S_IFSOCK)
+	c = 's';
+#endif
+    return c;
+}				/* fileTypeByHandle */
+
 int
 fileSizeByName(const char *name)
 {

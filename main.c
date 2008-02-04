@@ -966,13 +966,9 @@ main(int argc, char **argv)
     int cx, account;
     bool rc, doConfig = true;
 
-/*
- * In case this is being piped over to a synthesizer, or whatever.
- * It's a little less efficient if you are really sending the output to a logfile,
- * but oh well.
- * Someday I'll check whether stdout is regular and buffer accordingly.
-*/
-    setlinebuf(stdout);
+/* In case this is being piped over to a synthesizer, or whatever. */
+    if(fileTypeByHandle(fileno(stdout)) != 'f')
+	setlinebuf(stdout);
 
     selectLanguage();
 
