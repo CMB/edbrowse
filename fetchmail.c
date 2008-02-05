@@ -661,6 +661,7 @@ static const char *const mhwords[] = {
     "status:",
     "subject:",
     "to:",
+    "user-agent:",
     "x-beenthere:",
     "x-comment:",
     "x-loop:",
@@ -885,6 +886,95 @@ ctExtras(struct MHINFO *w, const char *s, const char *t)
     }				/* multi or alt */
 }				/* ctExtras */
 
+static void
+isoDecode(char *vl, char **vrp)
+{
+    char *vr = *vrp;
+    int len = vr - vl;
+    char *s, *t, c, d, code;
+    uchar val, leftover, mod;
+
+    if(len < 10)
+	goto unzero;
+    if(vl[0] != '=')
+	goto unzero;
+    if(vl[1] != '?')
+	goto unzero;
+    if(vr[-1] != '=')
+	goto unzero;
+    if(vr[-2] != '?')
+	goto unzero;
+    if(!memEqualCI(vl + 2, "iso-", 4) && !memEqualCI(vl + 2, "utf-", 4))
+	goto unzero;
+    s = strchr(vl + 2, '?');
+    if(vr - s < 5)
+	goto unzero;
+    if(s[2] != '?')
+	goto unzero;
+    code = s[1];
+    if(code != 'Q' && code != 'B')
+	goto unzero;
+
+    s += 3;
+    vr -= 2;
+    t = vl;
+
+    if(code == 'Q') {
+	while(s < vr) {
+	    c = *s++;
+	    if(c == '=') {
+		c = *s;
+		d = s[1];
+		if(isxdigit(c) && isxdigit(d)) {
+		    d = fromHex(c, d);
+		    *t++ = d;
+		    s += 2;
+		    continue;
+		}
+		c = '=';
+	    }
+	    *t++ = c;
+	}
+	vr = t;
+	goto unzero;
+    }
+
+/* base64 */
+    mod = 0;
+    for(; s < vr; ++s) {
+	c = *s;
+	if(isspaceByte(c))
+	    continue;
+	if(c == '=')
+	    break;
+	val = unb64(c);
+	if(val & 64)
+	    val = 0;		/* ignore errors here */
+	if(mod == 0) {
+	    leftover = val << 2;
+	} else if(mod == 1) {
+	    *t++ = (leftover | (val >> 4));
+	    leftover = val << 4;
+	} else if(mod == 2) {
+	    *t++ = (leftover | (val >> 2));
+	    leftover = val << 6;
+	} else {
+	    *t++ = (leftover | val);
+	}
+	++mod;
+	mod &= 3;
+    }
+    vr = t;
+
+  unzero:
+    for(s = vl; s < vr; ++s) {
+	c = *s;
+	if(c == 0 || c == '\t')
+	    *s = ' ';
+    }
+    *vrp = vr;
+}				/* isoDecode */
+
 /* Now that we know it's mail, see what information we can
  * glean from the headers.
  * Returns a pointer to an allocated MHINFO structure.
@@ -931,6 +1021,11 @@ headerGlean(char *start, char *end)
 	for(vr = t; vr > vl && (vr[-1] == ' ' || vr[-1] == '\t'); --vr) ;
 	if(vr == vl)
 	    continue;		/* empty */
+
+/* latin chars in the subject or from line */
+	isoDecode(vl, &vr);
+
+/* too long? */
 	if(vr - vl > MHLINE - 1)
 	    vr = vl + MHLINE - 1;
 
@@ -970,21 +1065,21 @@ headerGlean(char *start, char *end)
 		strcat(w->subject, "...");
 	    continue;
 	}
-	/* subject */
+
 	if(memEqualCI(s, "reply-to:", q - s)) {
 	    linetype = 'r';
 	    if(!w->reply[0])
 		strncpy(w->reply, vl, vr - vl);
 	    continue;
 	}
-	/* reply */
+
 	if(memEqualCI(s, "from:", q - s)) {
 	    linetype = 'f';
 	    if(!w->from[0])
 		strncpy(w->from, vl, vr - vl);
 	    continue;
 	}
-	/* from */
+
 	if(memEqualCI(s, "date:", q - s) || memEqualCI(s, "sent:", q - s)) {
 	    linetype = 'd';
 	    if(w->date[0])
@@ -1000,7 +1095,7 @@ headerGlean(char *start, char *end)
 		*q = 0;
 	    continue;
 	}
-	/* date */
+
 	if(memEqualCI(s, "to:", q - s)) {
 	    linetype = 't';
 	    if(w->to[0])
@@ -1034,12 +1129,12 @@ headerGlean(char *start, char *end)
 	    *q = 0;		/* cut it off at the comma */
 	    continue;
 	}
-	/* to */
+
 	if(memEqualCI(s, "cc:", q - s) || memEqualCI(s, "bcc:", q - s)) {
 	    w->andOthers = true;
 	    continue;
 	}
-	/* carbon copy */
+
 	if(memEqualCI(s, "content-type:", q - s)) {
 	    linetype = 'c';
 	    if(memEqualCI(vl, "text", 4))
@@ -1058,7 +1153,7 @@ headerGlean(char *start, char *end)
 	    ctExtras(w, s, t);
 	    continue;
 	}
-	/* content type */
+
 	if(memEqualCI(s, "content-transfer-encoding:", q - s)) {
 	    linetype = 'e';
 	    if(memEqualCI(vl, "quoted-printable", 16))
@@ -1071,7 +1166,7 @@ headerGlean(char *start, char *end)
 		w->ce = CE_64;
 	    continue;
 	}
-	/* content transfer encoding */
+
 	linetype = 0;
     }				/* loop over lines */
 

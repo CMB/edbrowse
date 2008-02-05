@@ -15,7 +15,7 @@ char serverLine[MAXTTYLINE];
 static char spareLine[MAXTTYLINE];
 int mssock;			/* mail server socket */
 static bool doSignature;
-static char subjectLine[81];
+static char subjectLine[200];
 
 static struct ALIAS {
     char name[16];
@@ -335,6 +335,71 @@ base64Encode(const char *inbuf, int inlen, bool lines)
     return outstr;
 }				/* base64Encode */
 
+char *
+qpEncode(const char *line)
+{
+    char *newbuf;
+    int l;
+    const char *s;
+    char c;
+
+    newbuf = initString(&l);
+    for(s = line; (c = *s); ++s) {
+	if(c < '\n' && c != '\t' || c == '=') {
+	    char expand[4];
+	    sprintf(expand, "=%02X", (uchar) c);
+	    stringAndString(&newbuf, &l, expand);
+	} else {
+	    stringAndChar(&newbuf, &l, c);
+	}
+    }
+
+    return newbuf;
+}				/* qpEncode */
+
+/* Return 0 if there was no need to encode */
+static char *
+isoEncode(char *start, char *end)
+{
+    int nacount = 0, count = 0, len;
+    char *s, *t;
+    char c, code;
+
+    for(s = start; s < end; ++s) {
+	c = *s;
+	if(c == 0)
+	    *s = ' ';
+	if(isspaceByte(c))
+	    *s = ' ';
+    }
+
+    for(s = start; s < end; ++s) {
+	c = *s;
+	++count;
+	if(!isprintByte(c) && c != ' ')
+	    ++nacount;
+    }
+
+    if(!nacount)
+	return 0;
+
+    if(nacount * 4 >= count && count > 8) {
+	code = 'B';
+	s = base64Encode(start, end - start, false);
+	goto package;
+    }
+
+    code = 'Q';
+    s = qpEncode(start);
+
+  package:
+    len = strlen(s);
+    t = allocMem(len + 20);
+    sprintf(t, "=?ISO-8859-1?%c?%s?=", code, s);
+    nzFree(s);
+    return t;
+}				/* isoEncode */
+
 /* Read a file into memory, mime encode it,
  * and return the type of encoding and the encoded data.
  * Last three parameters are result parameters.
@@ -422,12 +487,14 @@ encodeAttachment(const char *file, int ismail,
 	memcpy(subjectLine, t, s - t);
 	subjectLine[s - t] = 0;
 	t = subjectLine + (s - t);
-	for(s = subjectLine; s < t; ++s) {
-	    c = *s;
-	    if(!isprintByte(c) && c != ' ') {
-		setError(MSG_SubjectChars);
+	s = isoEncode(subjectLine, t);
+	if(s) {
+	    if(strlen(s) >= sizeof (subjectLine)) {
+		setError(MSG_SubjectLong, sizeof (subjectLine) - 1);
 		goto freefail;
 	    }
+	    strcpy(subjectLine, s);
+	    nzFree(s);
 	}
 	debugPrint(6, "subject = %s", subjectLine);
 /* Blank lines after subject are optional, and ignored. */
@@ -686,7 +753,7 @@ bool
 sendMail(int account, const char **recipients, const char *body,
    int subjat, const char **attachments, int nalt, bool dosig)
 {
-    const char *from, *reply, *login, *smlogin, *pass;
+    char *from, *fromiso, *reply, *login, *smlogin, *pass;
     const struct MACCOUNT *a, *ao, *localMail;
     const char *s, *boundary;
     char reccc[MAXRECAT];
@@ -927,10 +994,15 @@ sendMail(int account, const char **recipients, const char *body,
     if(!firstrec)
 	stringAndString(&out, &j, eol);
 
-    sprintf(serverLine, "From: %s <%s>%s", from, reply, eol);
+    fromiso = isoEncode(from, from + strlen(from));
+    if(!fromiso)
+	fromiso = from;
+    sprintf(serverLine, "From: %s <%s>%s", fromiso, reply, eol);
     stringAndString(&out, &j, serverLine);
-    sprintf(serverLine, "Reply-to: %s <%s>%s", from, reply, eol);
+    sprintf(serverLine, "Reply-to: %s <%s>%s", fromiso, reply, eol);
     stringAndString(&out, &j, serverLine);
+    if(fromiso != from)
+	nzFree(fromiso);
     sprintf(serverLine, "Subject: %s%s", subjectLine, eol);
     stringAndString(&out, &j, serverLine);
     sprintf(serverLine, "Date: %s%sMessage-ID: <%s.%s>%sMime-Version: 1.0%s",
