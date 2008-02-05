@@ -890,16 +890,29 @@ static void
 isoDecode(char *vl, char **vrp)
 {
     char *vr = *vrp;
+    char *vm, *vn;		/* middle */
     int len = vr - vl;
     char *s, *t, c, d, code;
     uchar val, leftover, mod;
 
+    vm = vn = vr;
     if(len < 10)
 	goto unzero;
     if(vl[0] != '=')
 	goto unzero;
     if(vl[1] != '?')
 	goto unzero;
+    if(vr[-1] == '>') {
+	for(--vr; vr > vl; --vr)
+	    if(*vr == '<')
+		break;
+	if(vr > vl) {
+	    while(vr[-1] == ' ')
+		--vr;
+	} else
+	    vr = vm;
+    }
+    vm = vr;
     if(vr[-1] != '=')
 	goto unzero;
     if(vr[-2] != '?')
@@ -907,7 +920,7 @@ isoDecode(char *vl, char **vrp)
     if(!memEqualCI(vl + 2, "iso-", 4) && !memEqualCI(vl + 2, "utf-", 4))
 	goto unzero;
     s = strchr(vl + 2, '?');
-    if(vr - s < 5)
+    if(s < vr && vr - s < 5)
 	goto unzero;
     if(s[2] != '?')
 	goto unzero;
@@ -972,6 +985,10 @@ isoDecode(char *vl, char **vrp)
 	if(c == 0 || c == '\t')
 	    *s = ' ';
     }
+
+    for(s = vm; s < vn; ++s, ++vr)
+	*vr = *s;
+
     *vrp = vr;
 }				/* isoDecode */
 
@@ -1022,9 +1039,6 @@ headerGlean(char *start, char *end)
 	if(vr == vl)
 	    continue;		/* empty */
 
-/* latin chars in the subject or from line */
-	isoDecode(vl, &vr);
-
 /* too long? */
 	if(vr - vl > MHLINE - 1)
 	    vr = vl + MHLINE - 1;
@@ -1058,6 +1072,7 @@ headerGlean(char *start, char *end)
 		vr -= j;
 		--q;		/* try again */
 	    }
+	    isoDecode(vl, &vr);
 	    strncpy(w->subject, vl, vr - vl);
 /* If the subject is really long, spreads onto the next line,
  * I'll just use ... */
@@ -1075,8 +1090,10 @@ headerGlean(char *start, char *end)
 
 	if(memEqualCI(s, "from:", q - s)) {
 	    linetype = 'f';
-	    if(!w->from[0])
-		strncpy(w->from, vl, vr - vl);
+	    if(w->from[0])
+		continue;
+	    isoDecode(vl, &vr);
+	    strncpy(w->from, vl, vr - vl);
 	    continue;
 	}
 
