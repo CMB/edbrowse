@@ -1834,7 +1834,7 @@ static const char *brazilianPortugueseMessages[] = {
     "/ mal posicionada na %s",
     "decodePostData(0,0)",
     "Não foi possível converter o PDF para HTML; certifique-se que o PDFToHTML esteja instalado e tente usá-lo no %s",
-    0,
+    "No momento, somente o método `auth login' do sendmail é suportado",
     "não consegui completar a seqüência usuario/senha <%s> no SMTP",
 };
 
