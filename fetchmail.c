@@ -8,7 +8,7 @@
 
 #include "eb.h"
 
-#define MHLINE 120		/* length of a mail header line */
+#define MHLINE 200		/* length of a mail header line */
 #define BAD64 1
 #define EXTRA64 2
 struct MHINFO {
@@ -890,50 +890,34 @@ static void
 isoDecode(char *vl, char **vrp)
 {
     char *vr = *vrp;
-    char *vm, *vn;		/* middle */
-    int len = vr - vl;
+    char *start, *end;		/* section being decoded */
     char *s, *t, c, d, code;
+    int len;
     uchar val, leftover, mod;
 
-    vm = vn = vr;
-    if(len < 10)
-	goto unzero;
-    if(vl[0] != '=')
-	goto unzero;
-    if(vl[1] != '?')
-	goto unzero;
-    if(vr[-1] == '>') {
-	for(--vr; vr > vl; --vr)
-	    if(*vr == '<')
-		break;
-	if(vr > vl) {
-	    while(vr[-1] == ' ')
-		--vr;
-	} else
-	    vr = vm;
-    }
-    vm = vr;
-    if(vr[-1] != '=')
-	goto unzero;
-    if(vr[-2] != '?')
-	goto unzero;
-    if(!memEqualCI(vl + 2, "iso-", 4) && !memEqualCI(vl + 2, "utf-", 4))
-	goto unzero;
-    s = strchr(vl + 2, '?');
-    if(s < vr && vr - s < 5)
-	goto unzero;
-    if(s[2] != '?')
-	goto unzero;
+    start = vl;
+  restart:
+    start = strstr(start, "=?");
+    if(!start || start >= vr)
+	goto finish;
+    start += 2;
+    if(!memEqualCI(start, "iso-", 4) && !memEqualCI(start, "utf-", 4))
+	goto restart;
+    s = strchr(start, '?');
+    if(!s || s > vr - 5 || s[2] != '?')
+	goto restart;
     code = s[1];
     if(code != 'Q' && code != 'B')
-	goto unzero;
-
+	goto restart;
     s += 3;
-    vr -= 2;
-    t = vl;
+    end = strstr(s, "?=");
+    if(!end || end > vr - 2)
+	goto restart;
+
+    t = start - 2;
 
     if(code == 'Q') {
-	while(s < vr) {
+	while(s < end) {
 	    c = *s++;
 	    if(c == '=') {
 		c = *s;
@@ -948,13 +932,12 @@ isoDecode(char *vl, char **vrp)
 	    }
 	    *t++ = c;
 	}
-	vr = t;
-	goto unzero;
+	goto copy;
     }
 
 /* base64 */
     mod = 0;
-    for(; s < vr; ++s) {
+    for(; s < end; ++s) {
 	c = *s;
 	if(isspaceByte(c))
 	    continue;
@@ -977,17 +960,22 @@ isoDecode(char *vl, char **vrp)
 	++mod;
 	mod &= 3;
     }
-    vr = t;
 
-  unzero:
+  copy:
+    s += 2;
+    start = t;
+    len = vr - s;
+    if(len)
+	memcpy(t, s, len);
+    vr = t + len;
+    goto restart;
+
+  finish:
     for(s = vl; s < vr; ++s) {
 	c = *s;
 	if(c == 0 || c == '\t')
 	    *s = ' ';
     }
-
-    for(s = vm; s < vn; ++s, ++vr)
-	*vr = *s;
 
     *vrp = vr;
 }				/* isoDecode */
