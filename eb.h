@@ -187,7 +187,7 @@ extern bool unformatMail;	/* suppress formatting */
 extern bool passMail;		/* pass mail across the filters */
 extern bool errorExit;		/* exit on any error, for scripting purposes */
 extern bool isInteractive;
-extern bool intFlag;		/* set this when interrupt signal is caught */
+extern volatile bool intFlag;		/* set this when interrupt signal is caught */
 extern bool binaryDetect;
 extern bool inInput;		/* reading line from standard in */
 extern int fileSize;		/* when reading/writing files */
