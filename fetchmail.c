@@ -942,7 +942,7 @@ isoDecode(char *vl, char **vrp)
 	if(isspaceByte(c))
 	    continue;
 	if(c == '=')
-	    break;
+	    continue;
 	val = unb64(c);
 	if(val & 64)
 	    val = 0;		/* ignore errors here */
