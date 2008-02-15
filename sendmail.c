@@ -684,18 +684,11 @@ static char *
 mailTimeString(void)
 {
     static char buf[48];
-    static const char wday[] = "Sun\0Mon\0Tue\0Wed\0Thu\0Fri\0Sat";
-    static const char month[] =
-       "Jan\0Feb\0Mar\0Apr\0May\0Jun\0Jul\0Aug\0Sep\0Oct\0Nov\0Dec";
     struct tm *cur_tm;
     long now;
     time(&now);
     cur_tm = localtime(&now);
-    sprintf(buf, "%s, %02d %s %d %02d:%02d:%02d",
-       wday + cur_tm->tm_wday * 4,
-       cur_tm->tm_mday,
-       month + cur_tm->tm_mon * 4,
-       cur_tm->tm_year + 1900, cur_tm->tm_hour, cur_tm->tm_min, cur_tm->tm_sec);
+    strftime(buf, sizeof (buf), "%a, %d %b %Y %H:%M:%S %z", cur_tm);
     return buf;
 }				/* mailTimeString */
 
