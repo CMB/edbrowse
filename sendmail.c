@@ -572,8 +572,15 @@ encodeAttachment(const char *file, int ismail,
 	t = buf + i;
 	if(s && t - s > 120)
 	    longline = true;
+	if(!s && i > 120)
+	    longline = true;
 	s = t;
     }
+    t = buf + i;
+    if(s && t - s > 120)
+	longline = true;
+    if(!s && i > 120)
+	longline = true;
     debugPrint(6, "attaching %s length %d nonascii %d nulls %d longline %d",
        file, buflen, nacount, nullcount, longline);
     nacount += nullcount;
@@ -592,7 +599,7 @@ encodeAttachment(const char *file, int ismail,
 	ce = "base64";
 	goto success;
     }
-    /* binary file */
+
     if(!ct)
 	ct = "text/plain";
 
