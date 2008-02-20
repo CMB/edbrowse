@@ -907,6 +907,7 @@ isoDecode(char *vl, char **vrp)
     if(!s || s > vr - 5 || s[2] != '?')
 	goto restart;
     code = s[1];
+    code = toupper(code);
     if(code != 'Q' && code != 'B')
 	goto restart;
     s += 3;
