@@ -652,7 +652,9 @@ resolveURL(const char *base, const char *rel)
 		s -= 7;
 	    if(s > base && s[-1] == '/')
 		--s;
-	} else if(!strchr("#?\1", *s))
+	} else if(!strchr("#?\1", *s)) {
+	    --s;
+	} else if(s[-1] == '/')
 	    --s;
 	l = s - base;
 	strncpy(n, base, l);
