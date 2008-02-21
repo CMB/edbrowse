@@ -24,6 +24,7 @@ struct MHINFO {
     int boundlen;
     char *tolist, *cclist;
     int tolen, cclen;
+    char mid[MHLINE];		/* message id */
     char cfn[MHLINE];		/* content file name */
     uchar ct, ce;		/* content type, content encoding */
     bool andOthers;
@@ -1087,6 +1088,13 @@ headerGlean(char *start, char *end)
 	    continue;
 	}
 
+	if(memEqualCI(s, "message-id:", q - s)) {
+	    linetype = 'm';
+	    if(!w->mid[0])
+		strncpy(w->mid, vl, vr - vl);
+	    continue;
+	}
+
 	if(memEqualCI(s, "from:", q - s)) {
 	    linetype = 'f';
 	    if(w->from[0])
@@ -1149,7 +1157,7 @@ headerGlean(char *start, char *end)
 	    continue;
 	}
 
-	if(memEqualCI(s, "cc:", q - s) || memEqualCI(s, "bcc:", q - s)) {
+	if(memEqualCI(s, "cc:", q - s)) {
 	    linetype = 'y';
 	    if(w->cclen)
 		stringAndChar(&w->cclist, &w->cclen, ',');
@@ -1245,6 +1253,12 @@ headerGlean(char *start, char *end)
 	*vr = 0;
 	strcpy(w->to, vl + 1);
     }
+    vl = strchr(w->mid, '<');
+    vr = strchr(w->mid, '>');
+    if(vl && vr && vl < vr) {
+	*vr = 0;
+	strcpy(w->mid, vl + 1);
+    }
 
     if(debugLevel >= 5) {
 	puts("mail header analyzed");
@@ -1255,6 +1269,7 @@ headerGlean(char *start, char *end)
 	cutDuplicateEmails(w->tolist, w->cclist, w->reply);
 	printf("tolist: %s\n", w->tolist);
 	printf("cclist: %s\n", w->cclist);
+	printf("message: %s\n", w->mid);
 	printf("boundary: %d|%s\n", w->boundlen, w->boundary);
 	printf("filename: %s\n", w->cfn);
 	printf("content %d/%d\n", w->ct, w->ce);
