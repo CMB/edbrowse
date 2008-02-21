@@ -13,21 +13,21 @@
 /* Static variables for this file. */
 
 /* The valid edbrowse commands. */
-static const char valid_cmd[] = "aAbBcdefghHijJklmMnpqrstuvwXz=^<";
+static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^<";
 /* Commands that can be done in browse mode. */
-static const char browse_cmd[] = "AbBdefghHijJklmMnpqsuvwXz=^<";
+static const char browse_cmd[] = "AbBdDefghHijJklmMnpqsuvwXz=^<";
 /* Commands for sql mode. */
-static const char sql_cmd[] = "AadefghHiklmnpqrsvwXz=^<";
+static const char sql_cmd[] = "AadDefghHiklmnpqrsvwXz=^<";
 /* Commands for directory mode. */
-static const char dir_cmd[] = "AdefghHklmnpqsvwXz=^<";
+static const char dir_cmd[] = "AdDefghHklmnpqsvwXz=^<";
 /* Commands that work at line number 0, in an empty file. */
 static const char zero_cmd[] = "aAbefhHMqruw=^<";
 /* Commands that expect a space afterward. */
 static const char spaceplus_cmd[] = "befrw";
 /* Commands that should have no text after them. */
-static const char nofollow_cmd[] = "aAcdhHjlmnptuX=";
+static const char nofollow_cmd[] = "aAcdDhHjlmnptuX=";
 /* Commands that can be done after a g// global directive. */
-static const char global_cmd[] = "dijJlmnpstX";
+static const char global_cmd[] = "dDijJlmnpstX";
 
 static struct ebWindow preWindow, undoWindow;
 static int startRange, endRange;	/* as in 57,89p */
@@ -1053,41 +1053,13 @@ readFile(const char *filename, const char *post)
     serverData = 0;
     serverDataLen = 0;
 
-    if(isSQL(filename)) {
-	const char *t1, *t2;
-	if(!cw->sqlMode) {
-	    setError(MSG_DBOtherFile);
-	    return false;
-	}
-	t1 = strchr(cw->fileName, ']');
-	t2 = strchr(filename, ']');
-	if(t1 - cw->fileName != t2 - filename ||
-	   memcmp(cw->fileName, filename, t2 - filename)) {
-	    setError(MSG_DBOtherTable);
-	    return false;
-	}
-	rc = sqlReadRows(filename, &rbuf);
-	if(!rc) {
-	    nzFree(rbuf);
-	    if(!cw->dol && cmd != 'r') {
-		cw->sqlMode = false;
-		nzFree(cw->fileName);
-		cw->fileName = 0;
-	    }
-	    return false;
-	}
-	serverData = rbuf;
-	fileSize = strlen(rbuf);
-	if(rbuf == EMPTYSTRING)
-	    return true;
-	goto intext;
-    }
-
-    if(memEqualCI(filename, "file://", 7))
+    if(memEqualCI(filename, "file://", 7)) {
 	filename += 7;
-    if(!*filename) {
-	setError(MSG_MissingFileName);
-	return false;
+	if(!*filename) {
+	    setError(MSG_MissingFileName);
+	    return false;
+	}
+	goto fromdisk;
     }
 
     if(isURL(filename)) {
@@ -1119,99 +1091,132 @@ readFile(const char *filename, const char *post)
 	    return true;
 	}
 
-    } else {			/* url or file */
+	goto gotdata;
+    }
 
+    if(isSQL(filename)) {
+	const char *t1, *t2;
+	if(!cw->sqlMode) {
+	    setError(MSG_DBOtherFile);
+	    return false;
+	}
+	t1 = strchr(cw->fileName, ']');
+	t2 = strchr(filename, ']');
+	if(t1 - cw->fileName != t2 - filename ||
+	   memcmp(cw->fileName, filename, t2 - filename)) {
+	    setError(MSG_DBOtherTable);
+	    return false;
+	}
+	rc = sqlReadRows(filename, &rbuf);
+	if(!rc) {
+	    nzFree(rbuf);
+	    if(!cw->dol && cmd != 'r') {
+		cw->sqlMode = false;
+		nzFree(cw->fileName);
+		cw->fileName = 0;
+	    }
+	    return false;
+	}
+	serverData = rbuf;
+	fileSize = strlen(rbuf);
+	if(rbuf == EMPTYSTRING)
+	    return true;
+	goto intext;
+    }
+
+  fromdisk:
 /* reading a file from disk */
-	fileSize = 0;
-	if(fileTypeByName(filename, false) == 'd') {
+    fileSize = 0;
+    if(fileTypeByName(filename, false) == 'd') {
 /* directory scan */
-	    int len, j, start, end;
-	    cw->baseDirName = cloneString(filename);
+	int len, j, start, end;
+	cw->baseDirName = cloneString(filename);
 /* get rid of trailing slash */
-	    len = strlen(cw->baseDirName);
-	    if(len && cw->baseDirName[len - 1] == '/')
-		cw->baseDirName[len - 1] = 0;
+	len = strlen(cw->baseDirName);
+	if(len && cw->baseDirName[len - 1] == '/')
+	    cw->baseDirName[len - 1] = 0;
 /* Understand that the empty string now means / */
 /* get the files, or fail if there is a problem */
-	    if(!sortedDirList(filename, &start, &end))
-		return false;
-	    if(!cw->dol) {
-		cw->dirMode = true;
-		i_puts(MSG_DirMode);
-	    }
-	    if(start == end) {	/* empty directory */
-		cw->dot = endRange;
-		fileSize = 0;
-		return true;
-	    }
-
-	    addToMap(start, end, endRange);
-
-/* change 0 to nl and count bytes */
+	if(!sortedDirList(filename, &start, &end))
+	    return false;
+	if(!cw->dol) {
+	    cw->dirMode = true;
+	    i_puts(MSG_DirMode);
+	}
+	if(start == end) {	/* empty directory */
+	    cw->dot = endRange;
 	    fileSize = 0;
-	    for(j = start; j < end; ++j) {
-		char *s, c, ftype;
-		pst t = textLines[j];
-		char *abspath = makeAbsPath((char *)t);
-		while(*t) {
-		    if(*t == '\n')
-			*t = '\t';
-		    ++t;
-		}
-		*t = '\n';
-		len = t - textLines[j];
-		fileSize += len + 1;
-		if(!abspath)
-		    continue;	/* should never happen */
-		ftype = fileTypeByName(abspath, true);
-		if(!ftype)
-		    continue;
-		s = cw->map + (endRange + 1 + j - start) * LNWIDTH + 8;
-		if(isupperByte(ftype)) {	/* symbolic link */
-		    if(!cw->dirMode)
-			*t = '@', *++t = '\n';
-		    else
-			*s++ = '@';
-		    ++fileSize;
-		}
-		ftype = tolower(ftype);
-		c = 0;
-		if(ftype == 'd')
-		    c = '/';
-		if(ftype == 's')
-		    c = '^';
-		if(ftype == 'c')
-		    c = '<';
-		if(ftype == 'b')
-		    c = '*';
-		if(ftype == 'p')
-		    c = '|';
-		if(!c)
-		    continue;
-		if(!cw->dirMode)
-		    *t = c, *++t = '\n';
-		else
-		    *s++ = c;
-		++fileSize;
-	    }			/* loop fixing files in the directory scan */
 	    return true;
 	}
-	/* reading a directory */
-	nopound = cloneString(filename);
-	rbuf = strchr(nopound, '#');
-	if(rbuf)
-	    *rbuf = 0;
-	rc = fileIntoMemory(nopound, &rbuf, &fileSize);
-	nzFree(nopound);
-	if(!rc)
-	    return false;
-	serverData = rbuf;
-	if(fileSize == 0) {	/* empty file */
-	    free(rbuf);
-	    cw->dot = endRange;
-	    return true;
-	}			/* empty */
-    }				/* file or URL */
+
+	addToMap(start, end, endRange);
+
+/* change 0 to nl and count bytes */
+	fileSize = 0;
+	for(j = start; j < end; ++j) {
+	    char *s, c, ftype;
+	    pst t = textLines[j];
+	    char *abspath = makeAbsPath((char *)t);
+	    while(*t) {
+		if(*t == '\n')
+		    *t = '\t';
+		++t;
+	    }
+	    *t = '\n';
+	    len = t - textLines[j];
+	    fileSize += len + 1;
+	    if(!abspath)
+		continue;	/* should never happen */
+	    ftype = fileTypeByName(abspath, true);
+	    if(!ftype)
+		continue;
+	    s = cw->map + (endRange + 1 + j - start) * LNWIDTH + 8;
+	    if(isupperByte(ftype)) {	/* symbolic link */
+		if(!cw->dirMode)
+		    *t = '@', *++t = '\n';
+		else
+		    *s++ = '@';
+		++fileSize;
+	    }
+	    ftype = tolower(ftype);
+	    c = 0;
+	    if(ftype == 'd')
+		c = '/';
+	    if(ftype == 's')
+		c = '^';
+	    if(ftype == 'c')
+		c = '<';
+	    if(ftype == 'b')
+		c = '*';
+	    if(ftype == 'p')
+		c = '|';
+	    if(!c)
+		continue;
+	    if(!cw->dirMode)
+		*t = c, *++t = '\n';
+	    else
+		*s++ = c;
+	    ++fileSize;
+	}			/* loop fixing files in the directory scan */
+	return true;
+    }
+    /* reading a directory */
+    nopound = cloneString(filename);
+    rbuf = strchr(nopound, '#');
+    if(rbuf)
+	*rbuf = 0;
+    rc = fileIntoMemory(nopound, &rbuf, &fileSize);
+    nzFree(nopound);
+    if(!rc)
+	return false;
+    serverData = rbuf;
+    if(fileSize == 0) {		/* empty file */
+	free(rbuf);
+	cw->dot = endRange;
+	return true;
+    }
+    /* empty */
+  gotdata:
 
     if(!looksBinary(rbuf, fileSize)) {
 /* looks like text.  In DOS, we should have compressed crlf.
@@ -4213,21 +4218,23 @@ runCommand(const char *line)
 	return inputLinesIntoBuffer();
     }
 
-    if(cmd == 'd') {
+    if(cmd == 'd' || cmd == 'D') {
 	if(cw->dirMode) {
 	    j = delFiles();
-	    if(!j)
-		globSub = false;
-	    return j;
+	    goto afterdelete;
 	}
 	if(cw->sqlMode) {
 	    j = sqlDelRows(startRange, endRange);
-	    if(!j)
-		globSub = false;
-	    return j;
+	    goto afterdelete;
 	}
 	delText(startRange, endRange);
-	return true;
+	j = 1;
+      afterdelete:
+	if(!j)
+	    globSub = false;
+	else if(cmd == 'D')
+	    printDot();
+	return j;
     }
 
     if(cmd == 'j' || cmd == 'J') {

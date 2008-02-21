@@ -22,6 +22,8 @@ struct MHINFO {
     char date[MHLINE];
     char boundary[MHLINE];
     int boundlen;
+    char *ra;			/* reply all */
+    int ralen;
     char cfn[MHLINE];		/* content file name */
     uchar ct, ce;		/* content type, content encoding */
     bool andOthers;
@@ -157,6 +159,7 @@ freeMailInfo(struct MHINFO *w)
 	delFromList(v);
 	freeMailInfo(v);
     }
+    nzFree(w->ra);
     nzFree(w);
 }				/* freeMailInfo */
 
