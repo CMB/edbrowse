@@ -1429,3 +1429,122 @@ andTranslate(const char *s, bool invisible)
 
     return new;
 }				/* andTranslate */
+
+/*********************************************************************
+Crunch a to-list or a copy-to-list down to its email addresses.
+Delimit them with newlines.
+"Smith, John" <jsmith@whatever.com>
+becomes
+jsmith@whatever.com
+*********************************************************************/
+
+void
+extractEmailAddresses(char *line)
+{
+    char *s, *t;
+    char *mark;			/* start of current entry */
+    char quote = 0, c;
+
+    for(s = t = mark = line; c = *s; ++s) {
+	if(c == ',' && !quote) {
+	    mark = t + 1;
+	    c = ' ';
+	    goto append;
+	}
+
+	if(c == '"') {
+	    if(!quote)
+		quote = c;
+	    else if(quote == c)
+		quote = 0;
+/* don't think you can quote in an email address */
+	    continue;
+	}
+
+	if(c == '<') {
+	    if(!quote) {
+		quote = c;
+		t = mark;
+	    }
+	    continue;
+	}
+
+	if(c == '>') {
+	    if(quote == '<')
+		quote = 0;
+	    continue;
+	}
+
+	if(quote == '"')
+	    continue;
+
+	if(c < ' ')
+	    c = ' ';
+	if(c == ' ' && quote == '<')
+	    c = '_';
+
+      append:
+	*t++ = c;
+    }
+
+    *t = 0;
+    spaceCrunch(line, true, false);
+    for(s = line; c = *s; ++s)
+	if(c == ' ')
+	    *s = ',';
+    if(*line)
+	strcat(line, ",");
+}				/* extractEmailAddresses */
+
+static void
+cutDuplicateEmail(char *line, const char *dup, int duplen)
+{
+    char *s;
+    while(*line) {
+	s = strchr(line, ',');
+	if(!s)
+	    return;		/* should never happen */
+	if(duplen == s - line && memEqualCI(line, dup, duplen)) {
+	    ++s;
+	    strcpy(line, s);
+	    continue;
+	}
+	line = s + 1;
+    }
+}				/* cutDuplicateEmail */
+
+void
+cutDuplicateEmails(char *tolist, char *cclist, const char *reply)
+{
+    int len;
+    char *s, *t;
+
+    len = strlen(reply);
+    if(len) {
+	cutDuplicateEmail(tolist, reply, len);
+	cutDuplicateEmail(cclist, reply, len);
+    }
+
+    s = tolist;
+    while(*s) {
+	t = strchr(s, ',');
+	if(!t)
+	    break;		/* should never happen */
+	len = t - s;
+	++t;
+	cutDuplicateEmail(t, s, len);
+	cutDuplicateEmail(cclist, s, len);
+	s = t;
+    }
+
+    s = cclist;
+    while(*s) {
+	t = strchr(s, ',');
+	if(!t)
+	    break;		/* should never happen */
+	len = t - s;
+	++t;
+	cutDuplicateEmail(t, s, len);
+	s = t;
+    }
+}				/* cutDuplicateEmails */

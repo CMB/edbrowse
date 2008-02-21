@@ -408,7 +408,7 @@ isoEncode(char *start, char *end)
  * If ismail is negative, then -ismail indicates the subject line,
  * and the string file is not the filename, but rather, the mail to send. */
 bool
-encodeAttachment(const char *file, int ismail,
+encodeAttachment(const char *file, int ismail, bool emptyok,
    const char **type_p, const char **enc_p, char **data_p)
 {
     char *buf;
@@ -431,6 +431,13 @@ encodeAttachment(const char *file, int ismail,
 	    if(!unfoldBuffer(cx, false, &buf, &buflen))
 		return false;
 	    if(!buflen) {
+		if(emptyok) {
+		  empty:
+		    buf = EMPTYSTRING;
+		    ct = "text/plain";
+		    ce = "7bit";
+		    goto success;
+		}
 		setError(MSG_BufferXEmpty, cx);
 		goto freefail;
 	    }
@@ -442,6 +449,8 @@ encodeAttachment(const char *file, int ismail,
 	    if(!fileIntoMemory(file, &buf, &buflen))
 		return false;
 	    if(!buflen) {
+		if(emptyok)
+		    goto empty;
 		setError(MSG_FileXEmpty, file);
 		goto freefail;
 	    }
@@ -868,7 +877,7 @@ sendMail(int account, const char **recipients, const char *body,
 	}
     }				/* loop over attachments */
 
-    if(!encodeAttachment(body, subjat, &ct, &ce, &encoded))
+    if(!encodeAttachment(body, subjat, false, &ct, &ce, &encoded))
 	return false;
     if(ce[0] == 'q')
 	mustmime = true;
@@ -1037,7 +1046,7 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 
     if(mustmime) {
 	for(i = 0; s = attachments[i]; ++i) {
-	    if(!encodeAttachment(s, 0, &ct, &ce, &encoded))
+	    if(!encodeAttachment(s, 0, false, &ct, &ce, &encoded))
 		return false;
 	    sprintf(serverLine, "%s--%s%sContent-Type: %s", eol, boundary, eol,
 	       ct);

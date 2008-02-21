@@ -6,7 +6,6 @@ why is there an extra blank line after preformatted section
 &nbsp:
 find host fails for gvm1ghzxnlx0(+%##*vposzwx.watchfly.com
 document.myFlash
-empty buffer submit
 enpty file submit
 makeIt('1','IE')
 <a href="faq.html#something">something</a> <h4 id="something">heading 4</h4>
@@ -20,4 +19,3 @@ what does all.tags("object") mean?
 options.length = 0, js objects gone, but <option> tags still exist, and point to those objects
 attachEvent("onclick", doSomething);
 getAttribute setAttribute
-www.foo.com/?whatever action=/search

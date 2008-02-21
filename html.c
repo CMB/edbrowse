@@ -2747,7 +2747,7 @@ postNameVal(const char *name, const char *val,
 		stringAndString(post, l, val);
 		stringAndChar(post, l, '"');
 	    }
-	    if(!encodeAttachment(val, 0, &ct, &ce, &enc))
+	    if(!encodeAttachment(val, 0, true, &ct, &ce, &enc))
 		return false;
 	    val = enc;
 /* remember to free val in this case */

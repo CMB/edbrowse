@@ -98,7 +98,7 @@ void serverClose(bool secure) ;
 bool mailConnect(const char *host, int port, bool secure) ;
 char * base64Encode(const char *inbuf, int inlen, bool lines) ;
 char * qpEncode(const char *line) ;
-bool encodeAttachment(const char *file, int ismail, const char **type_p, const char **enc_p, char **data_p) ;
+bool encodeAttachment(const char *file, int ismail, bool emptyok, const char **type_p, const char **enc_p, char **data_p) ;
 char * makeBoundary(void) ;
 bool sendMail(int account, const char **recipients, const char *body, int subjat, const char **attachments, int nalt, bool dosig) ;
 bool validAccount(int n) ;
@@ -141,6 +141,8 @@ bool breakLine(const char *line, int len, int *newlen) ;
 void breakLineSetup(void) ;
 char * htmlReformat(const char *buf) ;
 char * andTranslate(const char *s, bool invisible) ;
+void extractEmailAddresses(char *line) ;
+void cutDuplicateEmails(char *tolist, char *cclist, const char *reply) ;
 
 /* sourcefile=cookies.c */
 bool domainSecurityCheck(const char *server, const char *domain) ;

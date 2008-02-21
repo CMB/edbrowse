@@ -22,8 +22,8 @@ struct MHINFO {
     char date[MHLINE];
     char boundary[MHLINE];
     int boundlen;
-    char *ra;			/* reply all */
-    int ralen;
+    char *tolist, *cclist;
+    int tolen, cclen;
     char cfn[MHLINE];		/* content file name */
     uchar ct, ce;		/* content type, content encoding */
     bool andOthers;
@@ -159,7 +159,8 @@ freeMailInfo(struct MHINFO *w)
 	delFromList(v);
 	freeMailInfo(v);
     }
-    nzFree(w->ra);
+    nzFree(w->tolist);
+    nzFree(w->cclist);
     nzFree(w);
 }				/* freeMailInfo */
 
@@ -1003,6 +1004,8 @@ headerGlean(char *start, char *end)
     w->ct = CT_OTHER;
     w->ce = CE_8BIT;
     w->andOthers = false;
+    w->tolist = initString(&w->tolen);
+    w->cclist = initString(&w->cclen);
     w->start = start, w->end = end;
 
     for(s = start; s < end; s = t + 1) {
@@ -1017,6 +1020,10 @@ headerGlean(char *start, char *end)
 	if(first == ' ' || first == '\t') {
 	    if(linetype == 'c')
 		ctExtras(w, s, t);
+	    if(linetype == 't')
+		stringAndBytes(&w->tolist, &w->tolen, s, t - s);
+	    if(linetype == 'y')
+		stringAndBytes(&w->cclist, &w->cclen, s, t - s);
 	    continue;
 	}
 
@@ -1107,6 +1114,9 @@ headerGlean(char *start, char *end)
 
 	if(memEqualCI(s, "to:", q - s)) {
 	    linetype = 't';
+	    if(w->tolen)
+		stringAndChar(&w->tolist, &w->tolen, ',');
+	    stringAndBytes(&w->tolist, &w->tolen, q, vr - q);
 	    if(w->to[0])
 		continue;
 	    strncpy(w->to, vl, vr - vl);
@@ -1140,6 +1150,10 @@ headerGlean(char *start, char *end)
 	}
 
 	if(memEqualCI(s, "cc:", q - s) || memEqualCI(s, "bcc:", q - s)) {
+	    linetype = 'y';
+	    if(w->cclen)
+		stringAndChar(&w->cclist, &w->cclen, ',');
+	    stringAndBytes(&w->cclist, &w->cclen, q, vr - q);
 	    w->andOthers = true;
 	    continue;
 	}
@@ -1178,6 +1192,12 @@ headerGlean(char *start, char *end)
 
 	linetype = 0;
     }				/* loop over lines */
+
+/* make sure there's room for a final nl */
+    stringAndChar(&w->tolist, &w->tolen, ' ');
+    stringAndChar(&w->cclist, &w->cclen, ' ');
+    extractEmailAddresses(w->tolist);
+    extractEmailAddresses(w->cclist);
 
     w->start = start = s + 1;
 
@@ -1232,6 +1252,9 @@ headerGlean(char *start, char *end)
 	printf("from: %s\n", w->from);
 	printf("date: %s\n", w->date);
 	printf("reply: %s\n", w->reply);
+	cutDuplicateEmails(w->tolist, w->cclist, w->reply);
+	printf("tolist: %s\n", w->tolist);
+	printf("cclist: %s\n", w->cclist);
 	printf("boundary: %d|%s\n", w->boundlen, w->boundary);
 	printf("filename: %s\n", w->cfn);
 	printf("content %d/%d\n", w->ct, w->ce);
