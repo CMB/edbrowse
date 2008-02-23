@@ -33,6 +33,7 @@ ESQLDFLAGS = $(STRIP) -Xlinker -rpath -Xlinker $(INFORMIXDIR)/lib:$(INFORMIXDIR)
 #  I assume you have linked libjs.so into /usr/lib/libsmjs.so
 #  so that -lsmjs will suffice.
 #  Some distros, e.g. Debian, already do this for you.
+#  You can use the target jslink below.
 #  Some folks need to add -lcrypto to this list.
 
 LIBS = -lpcre -lm -lssl -lsmjs
@@ -54,6 +55,13 @@ edbrowse: $(EBOBJS) tcp.o dbstubs.o
 #  You probably need to be root to do this.
 install:
 	install edbrowse /usr/local/bin
+
+#  If you had to build the javascript library yourself,
+#  link it into /usr/lib.
+#  If it's already there, do nothing.
+#  This has to be done as root.
+jslink:
+	[ -f /usr/lib/libsmjs.so ] || ln -s /usr/local/js/src/Linux_All_DBG.OBJ/libjs.so /usr/lib/libsmjs.so
 
 dbinfx.o : dbinfx.ec
 	esql -c dbinfx.ec
