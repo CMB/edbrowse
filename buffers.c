@@ -490,6 +490,7 @@ freeWindow(struct ebWindow *w)
     nzFree(w->ft);
     nzFree(w->fd);
     nzFree(w->fk);
+    nzFree(w->mailInfo);
     freeTags(w->tags);
     freeWindowLines(w->map);
     nzFree(w->fileName);
@@ -2500,18 +2501,13 @@ twoLetter(const char *line, const char **runThis)
 {
     static char newline[MAXTTYLINE];
     char c;
-    bool rc;
+    bool rc, ub;
     int i;
 
     *runThis = newline;
 
     if(stringEqual(line, "qt"))
 	ebClose(0);
-
-/*
-if(stringEqual(line, "ws")) return stripChild();
-if(stringEqual(line, "us")) return unstripChild();
-*/
 
     if(line[0] == 'd' && line[1] == 'b' && isdigitByte(line[2]) && !line[3]) {
 	debugLevel = line[2] - '0';
@@ -2529,6 +2525,24 @@ if(stringEqual(line, "us")) return unstripChild();
 	if(helpMessagesOn || debugLevel >= 1)
 	    puts(currentAgent);
 	return true;
+    }
+
+    if(stringEqual(line, "re") || stringEqual(line, "rea")) {
+	bool wasbrowse = cw->browseMode;
+	freeUndoLines(cw->map);
+	undoWindow.map = 0;
+	nzFree(preWindow.map);
+	preWindow.map = 0;
+	cw->firstOpMode = undoable = false;
+	cmd = 'e';		/* so error messages are printed */
+	rc = setupReply(line[2] == 'a');
+	cw->firstOpMode = undoable = false;
+	if(wasbrowse && cw->browseMode) {
+	    cw->iplist = 0;
+	    ub = false;
+	    goto et_go;
+	}
+	return rc;
     }
 
 /* ^^^^ is the same as ^4 */
@@ -2649,7 +2663,8 @@ if(stringEqual(line, "us")) return unstripChild();
     }
 
     if(stringEqual(line, "ub") || stringEqual(line, "et")) {
-	bool ub = (line[0] == 'u');
+	ub = (line[0] == 'u');
+	rc = true;
 	cmd = 'e';
 	if(!cw->browseMode) {
 	    setError(MSG_NoBrowse);
@@ -2670,6 +2685,7 @@ if(stringEqual(line, "us")) return unstripChild();
 	    freeWindowLines(cw->map);
 	    cw->map = cw->r_map;
 	} else {
+	  et_go:
 	    for(i = 1; i <= cw->dol; ++i) {
 		int ln = atoi(cw->map + i * LNWIDTH);
 		removeHiddenNumbers(textLines[ln]);
@@ -2689,11 +2705,13 @@ if(stringEqual(line, "us")) return unstripChild();
 	cw->fd = 0;
 	nzFree(cw->fk);
 	cw->fk = 0;
+	nzFree(cw->mailInfo);
+	cw->mailInfo = 0;
 	if(ub)
 	    fileSize = apparentSize(context, false);
 	return true;
     }
-    /* ub */
+
     if(stringEqual(line, "ip")) {
 	jMyContext();
 	sethostent(1);
@@ -3237,7 +3255,7 @@ runCommand(const char *line)
 	if(j != 2)
 	    return j;
     }
-    /* not global command */
+
     startRange = endRange = cw->dot;	/* default range */
 /* Just hit return to read the next line. */
     first = *line;

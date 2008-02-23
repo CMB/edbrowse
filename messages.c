@@ -151,7 +151,7 @@ static const char *englishMessages[] = {
     "no remembered replacement string",
     "regular expression too long",
     "line ends in backslash",
-    "Unexpected closing )",
+    "unexpected closing )",
     "replacement string can only use $1 through $9",
     "%s modifier has no preceding character",
     "no closing ]",
@@ -616,6 +616,13 @@ static const char *englishMessages[] = {
     "cannot convert pdf to html; make sure pdftohtml is installed, and try running it on %s",
     "only sendmail `auth login' method is supported at this time",
     "Could not complete the smtp login/password sequence <%s>",
+    "cannot reply in directory mode",
+    "cannot reply in database mode",
+    "cannot reply to an empty file",
+    "cannot reply to a binary file",
+    "subject and reply lines are required",
+    "warning, there is no message ID to reference",
+    "Sorry, email headers are not available.\nYou must start with an unformatted email message, browse, then reply all.",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
@@ -1226,6 +1233,13 @@ static const char *frenchMessages[] = {
     "impossible de convertir le pdf en html : assurez-vous d'avoir pdftohtml installé, et essayez de le lancer sur %s",
     "seule la séquence `auth login' de sendmail est supportée jusqu'à présent",
     "Séquence smtp nom utilisateur/mot de passe interrompue <%s>",
+    "impossible de rÃ©pondre en mode rÃ©pertoire",
+    "impossible de rÃ©pondre en mode base de donnÃ©es",
+    "impossible de rÃ©pondre Ã  un fichier vide",
+    "impossible de rÃ©pondre Ã  un fichier binaire",
+    "lignes 'subject' et 'reply' obligatoires",
+    "attention, pas d'identificateur ID de message pour le rÃ©fÃ©rencer",
+    "DÃ©solÃ©, pas d'en-tÃªtes de couurier.\nVous devez commencer avec un courrier non formatÃ©, le consulter, puis rÃ©pondre Ã  tous.",
 };
 
 /* Translation by Cleverson: clever92000@yahoo.com.br */
@@ -1836,6 +1850,13 @@ static const char *brazilianPortugueseMessages[] = {
     "Não foi possível converter o PDF para HTML; certifique-se que o PDFToHTML esteja instalado e tente usá-lo no %s",
     "No momento, somente o método `auth login' do sendmail é suportado",
     "não consegui completar a seqüência usuario/senha <%s> no SMTP",
+    "não é possível replicar em modo diretório",
+    "não é possível replicar em modo banco de dados",
+    "não posso replicar para um arquivo vazio",
+    "não posso replicar para um arquivo binário",
+    "linhas subject e reply são obrigatórias",
+    "aviso: não há ID da mensagem a referenciar",
+    0,
 };
 
 /* English by default */

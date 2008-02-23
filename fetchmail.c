@@ -25,6 +25,7 @@ struct MHINFO {
     char *tolist, *cclist;
     int tolen, cclen;
     char mid[MHLINE];		/* message id */
+    char ref[MHLINE];		/* references */
     char cfn[MHLINE];		/* content file name */
     uchar ct, ce;		/* content type, content encoding */
     bool andOthers;
@@ -986,6 +987,18 @@ isoDecode(char *vl, char **vrp)
     *vrp = vr;
 }				/* isoDecode */
 
+static void
+extractLessGreater(char *s)
+{
+    char *vl, *vr;
+    vl = strchr(s, '<');
+    vr = strchr(s, '>');
+    if(vl && vr && vl < vr) {
+	*vr = 0;
+	strcpy(s, vl + 1);
+    }
+}				/* extractLessGreater */
+
 /* Now that we know it's mail, see what information we can
  * glean from the headers.
  * Returns a pointer to an allocated MHINFO structure.
@@ -1092,6 +1105,13 @@ headerGlean(char *start, char *end)
 	    linetype = 'm';
 	    if(!w->mid[0])
 		strncpy(w->mid, vl, vr - vl);
+	    continue;
+	}
+
+	if(memEqualCI(s, "references:", q - s)) {
+	    linetype = 'e';
+	    if(!w->ref[0])
+		strncpy(w->ref, vl, vr - vl);
 	    continue;
 	}
 
@@ -1228,12 +1248,7 @@ headerGlean(char *start, char *end)
 	    --vl;
 	*vl = 0;
     }
-    vl = strchr(w->reply, '<');
-    vr = strchr(w->reply, '>');
-    if(vl && vr && vl < vr) {
-	*vr = 0;
-	strcpy(w->reply, vl + 1);
-    }
+    extractLessGreater(w->reply);
 /* get rid of (name) comment */
     vl = strchr(w->reply, '(');
     vr = strchr(w->reply, ')');
@@ -1247,34 +1262,26 @@ headerGlean(char *start, char *end)
 	w->reply[0] = 0;
     if(stringEqual(w->reply, w->from))
 	w->from[0] = 0;
-    vl = strchr(w->to, '<');
-    vr = strchr(w->to, '>');
-    if(vl && vr && vl < vr) {
-	*vr = 0;
-	strcpy(w->to, vl + 1);
-    }
-    vl = strchr(w->mid, '<');
-    vr = strchr(w->mid, '>');
-    if(vl && vr && vl < vr) {
-	*vr = 0;
-	strcpy(w->mid, vl + 1);
-    }
+    extractLessGreater(w->to);
+    extractLessGreater(w->mid);
+    extractLessGreater(w->ref);
 
+    cutDuplicateEmails(w->tolist, w->cclist, w->reply);
     if(debugLevel >= 5) {
 	puts("mail header analyzed");
 	printf("subject: %s\n", w->subject);
 	printf("from: %s\n", w->from);
 	printf("date: %s\n", w->date);
 	printf("reply: %s\n", w->reply);
-	cutDuplicateEmails(w->tolist, w->cclist, w->reply);
 	printf("tolist: %s\n", w->tolist);
 	printf("cclist: %s\n", w->cclist);
+	printf("reference: %s\n", w->ref);
 	printf("message: %s\n", w->mid);
 	printf("boundary: %d|%s\n", w->boundlen, w->boundary);
 	printf("filename: %s\n", w->cfn);
 	printf("content %d/%d\n", w->ct, w->ce);
     }
-    /* debug */
+
     if(w->ce == CE_QP)
 	unpackQP(w);
     if(w->ce == CE_64)
@@ -1684,11 +1691,184 @@ emailParse(char *buf)
 	stringAndChar(&fm, &fm_l, '\n');
     if(!ismc) {
 	writeAttachments(w);
+	cw->mailInfo =
+	   allocMem(strlen(w->ref) + strlen(w->mid) + strlen(w->tolist) +
+	   strlen(w->cclist) + strlen(w->reply) + 6);
+	sprintf(cw->mailInfo, "%s>%s>%s>%s>%s>",
+	   w->reply, w->tolist, w->cclist, w->ref, w->mid);
 	freeMailInfo(w);
 	nzFree(buf);
+	debugPrint(5, "mailInfo: %s", cw->mailInfo);
     } else {
 	lastMailInfo = w;
 	lastMailText = buf;
     }
     return fm;
 }				/* emailParse */
+
+
+/*********************************************************************
+Set up for a reply.
+This looks at the first 5 lines, which could contain
+subject
+to
+reply to
+from
+mail send
+in no particular order.
+Move replyt to the top and get rid of the others.
+Then, if you have browsed a mail file,
+grab the message id and reference it.
+Also, if mailing to all, stick in the other recipients.
+*********************************************************************/
+
+bool
+setupReply(bool all)
+{
+    int subln, repln, fromln, whenln, toln;
+    char linetype[8];
+    int j;
+    char *out, *s, *t;
+    bool rc;
+
+/* basic sanity */
+    if(cw->dirMode) {
+	setError(MSG_ReDir);
+	return false;
+    }
+
+    if(cw->sqlMode) {
+	setError(MSG_ReDB);
+	return false;
+    }
+
+    if(!cw->dol) {
+	setError(MSG_ReEmpty);
+	return false;
+    }
+
+    if(cw->binMode) {
+	setError(MSG_ReBinary);
+	return false;
+    }
+
+    subln = repln = fromln = whenln = toln = 0;
+    strcpy(linetype, " xxxxx");
+    for(j = 1; j <= 5; ++j) {
+	if(j > cw->dol)
+	    break;
+	pst p = fetchLine(j, -1);
+
+	if(memEqualCI(p, "subject:", 8)) {
+	    linetype[j] = 's';
+	    subln = j;
+	    continue;
+	}
+
+	if(memEqualCI(p, "to ", 3)) {
+	    linetype[j] = 't';
+	    toln = j;
+	    continue;
+	}
+
+	if(memEqualCI(p, "from ", 5)) {
+	    linetype[j] = 'f';
+	    fromln = j;
+	    continue;
+	}
+
+	if(memEqualCI(p, "mail sent ", 10)) {
+	    linetype[j] = 'w';
+	    whenln = j;
+	    continue;
+	}
+
+	if(memEqualCI(p, "reply to ", 9)) {
+	    linetype[j] = 'r';
+	    repln = j;
+	    continue;
+	}
+
+	break;
+    }
+
+    if(!subln || !repln) {
+	setError(MSG_ReSubjectReply);
+	return false;
+    }
+
+/* delete the lines we don't need */
+    for(j = 5; j >= 1; --j) {
+	if(!strchr("wft", linetype[j]))
+	    continue;
+	delText(j, j);
+	strcpy(linetype + j, linetype + j + 1);
+    }
+
+/* move reply to 1, if it isn't already there */
+    if(linetype[1] != 'r') {
+	char *map = cw->map;
+	char swap[LNWIDTH];
+	char *q1 = map + LNWIDTH;
+	char *q2 = map + LNWIDTH * 2;
+	memcpy(swap, q1, LNWIDTH);
+	memcpy(q1, q2, LNWIDTH);
+	memcpy(q2, swap, LNWIDTH);
+    }
+
+    if(!cw->mailInfo) {
+	cw->browseMode = false;
+	if(all) {
+	    setError(MSG_ReNoInfo);
+	    return false;
+	}
+	return true;		/* that's all we can do */
+    }
+
+/* Build the header lines and put them in the buffer */
+    out = initString(&j);
+/* step through the to list */
+    s = strchr(cw->mailInfo, '>') + 1;
+    while(*s != '>') {
+	t = strchr(s, ',');
+	if(all) {
+	    stringAndString(&out, &j, "to: ");
+	    stringAndBytes(&out, &j, s, t - s);
+	    stringAndChar(&out, &j, '\n');
+	}
+	s = t + 1;
+    }
+
+/* step through the cc list */
+    ++s;
+    while(*s != '>') {
+	t = strchr(s, ',');
+	if(all) {
+	    stringAndString(&out, &j, "cc: ");
+	    stringAndBytes(&out, &j, s, t - s);
+	    stringAndChar(&out, &j, '\n');
+	}
+	s = t + 1;
+    }
+
+    ++s;
+    t = strchr(s, '>');
+    if(t[1] == '>') {
+	i_puts(MSG_ReNoID);
+    } else {
+	stringAndString(&out, &j, "references: <");
+	if(*s != '>') {
+	    stringAndBytes(&out, &j, s, t - s);
+	    stringAndString(&out, &j, "> <");
+	}
+	stringAndString(&out, &j, t + 1);
+	stringAndChar(&out, &j, '\n');
+    }
+
+    rc = true;
+    if(j)
+	rc = addTextToBuffer(out, j, 1);
+    nzFree(out);
+    cw->browseMode = false;
+    return rc;
+}				/* setupReply */

@@ -108,6 +108,7 @@ blind, script, accessible">
 <LI><A HREF=#fmc> Fetch Mail Client </A>
 <LI><A HREF=#mailfmt> Formatted Mail </A>
 <LI><A HREF=#filter> Mail Filtering </A>
+<LI><A HREF=#reply> Mail Reply </A>
 </UL>
 
 <H4> Chapter 8, Database Access </H4>
@@ -350,6 +351,8 @@ vs: verify ssl connections (toggle)
 ip: show referenced ip numbers, usually for saved mail messages
 sc: show columns
 sm: send mail [account number]
+re: reply to a mail message
+rea: reply to all
 </font></PRE>
 
 <H3 align=center> <A NAME=tips> Tips for Avoiding Line Numbers </A> </H3>
@@ -3619,6 +3622,72 @@ Use the -p option to pass over the filters, as in `e -pm1'.&nbsp;
 This also stops spam detection.&nbsp;
 I set this when looking at other people's mail, such as my wife's account.&nbsp;
 I don't want her mail sent somewhere else because it matches one of my filter rules.
+
+<H3 align=center> <A NAME=reply> Mail Reply </A> </H3>
+
+The `re' command prepares a formatted email for reply.&nbsp;
+The "Reply to" line (which must exist) is moved to the top.&nbsp;
+This contains the email address that you will reply to,
+and it is created when you format (i.e. browse) your email message.&nbsp;
+If this line is not present, the reply command will fail.
+
+<P>
+The "Subject:" line must also be present.&nbsp;
+This too is created when the email is formatted.&nbsp;
+After the reply command is issued, the subject may move down the page,
+to make room for other email headers as follows.
+
+<P>
+If this email has just been browsed,
+and the unformatted data still exists within the current edbrowse session,
+reply will look for the message id of the original email.&nbsp;
+This should be referenced in the reply.&nbsp;
+The resulting line looks like this.
+
+<P>
+references: <4387A55E6AF43C4F9830C74EFECE9132022D0638@foo-bar.net>
+
+<P>
+This is not a line you should ever type in, edit, or delete.&nbsp;
+Just leave it be.&nbsp;
+If you participate in a discussion list, this line is important.&nbsp;
+It tells the server that your reply is indeed a reply,
+and that it should be linked to the referenced message.&nbsp;
+Using this information, the server maintains discussion threads.&nbsp;
+If you delete this line before sending your response,
+you will create a new thread, and that will only confuse and annoy
+the other participants.&nbsp;
+So - if you are going to reply to a message on a discussion list,
+take the time to save it unformatted, then browse,
+then reply.&nbsp;
+Leave the References: line alone,
+edit the body of the email, add your comments, and send.
+
+<P>
+Sometimes the references line will have two IDs separated by white space.&nbsp;
+The first is the beginning of the thread, the message that started this topic,
+and the second is the comment that you are replying to directly.&nbsp;
+Again, this helps list servers organize the emails into threads.
+
+<P>
+The command `rea' means reply to all,
+and this also uses the original email headers.&nbsp;
+All the recipients will appear at the top of your file.&nbsp;
+Some will be indicated by cc, if they were carbon copied.&nbsp;
+You can delete any of these recipients before sending your response.&nbsp;
+Of course, you probably don't want to delete the first line,
+as that is the reply to address.
+
+<P>
+Note that the reply command takes the file out of browse mode, and turns it into a plain text file.&nbsp;
+This supports text editing, to write your reply in the body of the message.&nbsp;
+If you want to start over from scratch,
+you can't just unbrowse, because it is not in browse mode.&nbsp;
+You must re-edit the saved mail message,
+browse, and reply.
+
+<P>
+Like everything else in edbrowse, you'll get use to it once you play with it.
 
 <H3 align=center> <A NAME=sqlb> Building edbrowse with Database Access </A> </H3>
 

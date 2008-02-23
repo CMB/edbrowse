@@ -1547,4 +1547,19 @@ cutDuplicateEmails(char *tolist, char *cclist, const char *reply)
 	cutDuplicateEmail(t, s, len);
 	s = t;
     }
+
+/* If your email address is on the to or cc list, drop it.
+ * But retain it if it is the reply, in case you sent mail to yourself. */
+    if(reply[0]) {
+	struct MACCOUNT *m = accounts;
+	int i;
+	for(i = 0; i < maxAccount; ++i, ++m) {
+	    const char *r = m->reply;
+	    if(!r)
+		continue;
+	    len = strlen(r);
+	    cutDuplicateEmail(tolist, r, len);
+	    cutDuplicateEmail(cclist, r, len);
+	}
+    }
 }				/* cutDuplicateEmails */

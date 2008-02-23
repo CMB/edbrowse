@@ -3179,7 +3179,7 @@ infPush(int tagno, char **post_string)
 	nzFree(post);
 	i_printf(MSG_MailSending, addr);
 	sleep(1);
-	rc = sendMail(localAccount, tolist, q, -1, atlist, 0, false);
+	rc = sendMail(localAccount, tolist, q, -1, atlist, 0, 0, false);
 	if(rc)
 	    i_puts(MSG_MailSent);
 	nzFree(addr);

@@ -1124,7 +1124,7 @@ main(int argc, char **argv)
 	memcpy(reclist, reclist + 1, sizeof (char *) * nrec);
 	atlist[-1] = 0;
 	if(sendMail(account, (const char **)reclist, body, 1,
-	   (const char **)atlist, nalt, true))
+	   (const char **)atlist, 0, nalt, true))
 	    exit(0);
 	showError();
 	exit(1);

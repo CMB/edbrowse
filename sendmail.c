@@ -760,7 +760,8 @@ makeBoundary(void)
 /* Send mail to the smtp server. */
 bool
 sendMail(int account, const char **recipients, const char *body,
-   int subjat, const char **attachments, int nalt, bool dosig)
+   int subjat, const char **attachments, const char *refline,
+   int nalt, bool dosig)
 {
     char *from, *fromiso, *reply, *login, *smlogin, *pass;
     const struct MACCOUNT *a, *ao, *localMail;
@@ -1012,6 +1013,15 @@ sendMail(int account, const char **recipients, const char *body,
     stringAndString(&out, &j, serverLine);
     if(fromiso != from)
 	nzFree(fromiso);
+    if(refline) {
+	s = refline + strlen(refline);
+	if(s > refline && s[-1] == '\n')
+	    --s;
+	stringAndBytes(&out, &j, refline, s - refline);
+	stringAndString(&out, &j, eol);
+    }
+    sprintf(serverLine, "User-Agent: %s%s", currentAgent, eol);
+    stringAndString(&out, &j, serverLine);
     sprintf(serverLine, "Subject: %s%s", subjectLine, eol);
     stringAndString(&out, &j, serverLine);
     sprintf(serverLine, "Date: %s%sMessage-ID: <%s.%s>%sMime-Version: 1.0%s",
@@ -1122,6 +1132,7 @@ sendMailCurrent(int sm_account, bool dosig)
     char *s, *t;
     char cxbuf[4];
     int lr, la, ln;
+    char *refline = 0;
     int nrec = 0, nat = 0, nalt = 0;
     int account = localAccount;
     int j;
@@ -1158,6 +1169,7 @@ sendMailCurrent(int sm_account, bool dosig)
 /* Gather recipients and attachments, until we reach subject: */
     for(ln = 1; ln <= cw->dol; ++ln) {
 	char *line = (char *)fetchLine(ln, -1);
+
 	if(memEqualCI(line, "to:", 3) ||
 	   memEqualCI(line, "mailto:", 7) ||
 	   memEqualCI(line, "cc:", 3) ||
@@ -1195,6 +1207,7 @@ sendMailCurrent(int sm_account, bool dosig)
 	    stringAndBytes(&recmem, &lr, line, t + 1 - line);
 	    continue;
 	}
+
 	if(memEqualCI(line, "attach:", 7) || memEqualCI(line, "alt:", 4)) {
 	    if(toupper(line[1]) == 'T')
 		line += 7;
@@ -1215,6 +1228,7 @@ sendMailCurrent(int sm_account, bool dosig)
 	    stringAndBytes(&atmem, &la, line, t + 1 - line);
 	    continue;
 	}
+
 	if(memEqualCI(line, "account:", 8)) {
 	    line += 8;
 	    while(*line == ' ' || *line == '\t')
@@ -1227,6 +1241,13 @@ sendMailCurrent(int sm_account, bool dosig)
 	    }
 	    continue;
 	}
+
+	if(memEqualCI(line, "references:", 11)) {
+	    if(!refline)
+		refline = line;
+	    continue;
+	}
+
 	if(memEqualCI(line, "subject:", 8)) {
 	    while(*line == ' ' || *line == '\t')
 		++line;
@@ -1236,6 +1257,7 @@ sendMailCurrent(int sm_account, bool dosig)
 	    }
 	    subj = true;
 	}
+
 	break;
     }				/* loop over lines */
 
@@ -1265,7 +1287,7 @@ sendMailCurrent(int sm_account, bool dosig)
     atlist[j] = 0;
 
     sprintf(cxbuf, "%d", context);
-    rc = sendMail(account, reclist, cxbuf, ln, atlist, nalt, dosig);
+    rc = sendMail(account, reclist, cxbuf, ln, atlist, refline, nalt, dosig);
 
   done:
     nzFree(recmem);

@@ -616,4 +616,11 @@ enum {
     MSG_NoPDF,
     MSG_AuthLoginOnly,
     MSG_SmtpNotComplete,
+    MSG_ReDir,
+    MSG_ReDB,
+    MSG_ReEmpty,
+    MSG_ReBinary,
+    MSG_ReSubjectReply,
+    MSG_ReNoID,
+    MSG_ReNoInfo,
 };
