@@ -14,7 +14,7 @@ blind, script, accessible">
 </HEAD>
 <BODY bgcolor=white text=black link=red vlink=red alink=navy>
 
-<H2 align=center> edbrowse Documentation </H2>
+<H2 align=center> edbrowse Documentation, a User's Guide </H2>
 
 <H3 align=center> <A NAME=top> Contents </A> </H3>
 
@@ -3741,7 +3741,7 @@ After all, two customers could have the same first and last name,
 and even the same birthdate.&nbsp;
 Serial numbers are <em>always</em> a good idea,
 and that usually becomes the primary key.&nbsp;
-This is indicated by a star, just before the column name.&nbsp;
+This is indicated by a star just before the column name.&nbsp;
 If edbrowse changes or deletes a record, the primary key is used.&nbsp;
 I assume, at all times, that the key determines a unique record in the database,
 and that each record appears at most once in an editing session.
@@ -3828,10 +3828,11 @@ This brings you back to a template for the table, with no rows.&nbsp;
 WARNING - do not clear your buffer by deleting all the rows,
 as that will delete the corresponding entries in the database.&nbsp;
 This feature works just like directory mode -
-your edits are translated into actions in the real world, so be careful.&nbsp;
-Referential integrity will usually save you from this accidental delete disaster,
+your edits are translated into actions in the real world, so be careful!&nbsp;
+Referential integrity might save you from this accidental delete disaster,
 if you routinely use this sql feature to link tables together,
-which is a good idea at many levels.
+which is a good idea at many levels.&nbsp;
+But don't rely on it!
 
 <P>
 Now, how about the seventh column in our example, the one called "picture"?&nbsp;
@@ -3892,7 +3893,7 @@ There are many reasons for these update errors, including datatype mismatch
 (e.g. putting J in for sex, instead of M or F).&nbsp;
 If you have any say in the database design,
 apply check constraints wherever they make sense.&nbsp;
-They will protect you from erroneous substitutions, wich would produce inconsistent updates.
+They will protect you from erroneous substitutions that would produce inconsistent updates.
 
 <P>
 Delete works as you would expect; delete a row,
@@ -3951,7 +3952,7 @@ I believe this is the key to success for any blind user or programmer.&nbsp;
 One can certainly paste a screen reader on top of an existing 2 dimensional program
 such as emacs or lynx, and get up and running quickly,
 but to be truly competitive in the workplace, or efficient at home,
-you need a <A HREF=http://www.eklhad.net/cli.html>command line interface</a>.&nbsp;
+you need a command line interface.&nbsp;
 Edbrowse is an important step in this direction.&nbsp;
 It doesn't address the speech adapter, or other common applications such as spreadsheets, finances, or audio systems,
 but it does provide a high quality text editor and a decent browser and mail client.&nbsp;
