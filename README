@@ -27,13 +27,13 @@ Netscape and Explorer are graphical browsers.
 Lynx and Links are screen browsers.
 This is a command line browser; the only one of its kind.
 
-The user's guide can be found in edbdoc.html (in this package).
+The user's guide can be found in doc/usersguide.html (in this package).
 Of course this reasoning is a bit circular.
 You need to use a browser to read the documentation,
 which describes how to use the browser.
 Well you can always do this:
 
-lynx -dump edbdoc.html >edbdoc.txt
+cd doc ; lynx -dump usersguide.html >usersguide.txt
 
 This produces the documentation in text form,
 which you can read using your favorite editor.
