@@ -17,10 +17,9 @@ dbops.c
 dbops.o
 dbstubs.c
 dbstubs.o
+doc/
 eb.h
 eb.p
-edbdoc.html
-edbdoc_fr.html
 edbrowse
 edbrowseinf
 fetchmail.c
@@ -40,15 +39,11 @@ main.c
 main.o
 makefile
 makefile.bsd
-man-edbrowse-debian.1
 messages.c
 messages.h
 messages.o
-sample.ebrc
-sample_fr.ebrc
 sendmail.c
 sendmail.o
-ssl-certs
 stringfile.c
 stringfile.o
 tcp.c

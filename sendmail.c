@@ -1,7 +1,7 @@
 /* sendmail.c
  * Send mail using the smtp protocol.
  * Send the contents of a file, or the current edbrowse buffer.
- * Copyright (c) Karl Dahlke, 2006
+ * Copyright (c) Karl Dahlke, 2008
  * This file is part of the edbrowse project, released under GPL.
  */
 
@@ -408,7 +408,7 @@ isoEncode(char *start, char *end)
  * If ismail is negative, then -ismail indicates the subject line,
  * and the string file is not the filename, but rather, the mail to send. */
 bool
-encodeAttachment(const char *file, int ismail, bool emptyok,
+encodeAttachment(const char *file, int ismail, bool webform,
    const char **type_p, const char **enc_p, char **data_p)
 {
     char *buf;
@@ -431,7 +431,7 @@ encodeAttachment(const char *file, int ismail, bool emptyok,
 	    if(!unfoldBuffer(cx, false, &buf, &buflen))
 		return false;
 	    if(!buflen) {
-		if(emptyok) {
+		if(webform) {
 		  empty:
 		    buf = EMPTYSTRING;
 		    ct = "text/plain";
@@ -449,7 +449,7 @@ encodeAttachment(const char *file, int ismail, bool emptyok,
 	    if(!fileIntoMemory(file, &buf, &buflen))
 		return false;
 	    if(!buflen) {
-		if(emptyok)
+		if(webform)
 		    goto empty;
 		setError(MSG_FileXEmpty, file);
 		goto freefail;

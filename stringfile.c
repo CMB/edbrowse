@@ -1,5 +1,5 @@
 /* stringfile.c: manage strings, files, and directories for edbrowse.
-* Copyright (c) Karl Dahlke, 2006
+* Copyright (c) Karl Dahlke, 2008
 * This file is part of the edbrowse project, released under GPL.
  */
 

@@ -1,6 +1,6 @@
 /* format.c
  * Format text, establish line breaks, manage whitespace.
- * Copyright (c) Karl Dahlke, 2006
+ * Copyright (c) Karl Dahlke, 2008
  * This file is part of the edbrowse project, released under GPL.
  */
 

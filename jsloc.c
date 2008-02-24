@@ -1,7 +1,7 @@
 /* jsloc.c
 * Javascript support, the URL class and the location object.
  * The cookie string, and other things with get/set side effects.
-* Copyright (c) Karl Dahlke, 2006
+* Copyright (c) Karl Dahlke, 2008
 * This file is part of the edbrowse project, released under GPL.
 */
 

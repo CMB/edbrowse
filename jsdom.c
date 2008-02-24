@@ -1,6 +1,6 @@
 /* jsdom.c
 * Javascript support, the connection to spider monkey JS.
-* Copyright (c) Karl Dahlke, 2006
+* Copyright (c) Karl Dahlke, 2008
 * This file is part of the edbrowse project, released under GPL.
 * This file contains the basics of the document object model.
  * The Spider Monkey Javascript compiler/engine is released by Mozilla,

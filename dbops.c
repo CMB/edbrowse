@@ -1,6 +1,6 @@
 /* dbops.c
  * Database operations.
- * Copyright (c) Karl Dahlke, 2007
+ * Copyright (c) Karl Dahlke, 2008
  * This file is part of the edbrowse project, released under GPL.
  */
 
