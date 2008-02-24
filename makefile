@@ -3,10 +3,14 @@
 #  Flags for gcc compilation.
 #  Note, some have reported seg-faults with this program when -O is used.
 #  This is a problem with gcc version 2.95 or less.
-#  Since performance is not critical here, better leave it out.
+#  Since performance is not critical here, I leave it out.
 #
 #  The -I flags assume smjs is installed in /usr/local
 #  You may also need -I/usr/include/pcre or -I/usr/local/include/pcre
+#
+#  If smjs comes compiled on your distribution,
+#  you may need -DMOZILLA_1_8_BRANCH
+#  This issue has cropped up on certain flavors of debian.
 
 #  Allow for symbolic debugging.
 DEBUGFLAGS=-g -ggdb
