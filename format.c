@@ -408,21 +408,44 @@ void
 anchorSwap(char *buf)
 {
     char c, d, *s, *ss, *w, *a;
+    const char *z;
     bool premode, pretag, state_braces, state_text, state_atext;
     bool strong, change, slash;
     int n, cnt;
     char tag[20];
 
+    static const char couples[] =
+       "\xc2\xa2\xc2\xa5\xc2\xa9\xc2\xab\xc2\xae\xc2\xb1\xc2\xba\xc2\xbb\xc2\xbf\xc3\x85\xc3\x94\xc3\x96\xc3\x97\xc3\x99\xc3\x9c\xc3\xa0\xc3\xa6\xc5\x93";
+    static const char from[] =
+       "\x1b\x95\x99\x9c\x9d\x91\x92\x93\x94\xa0\xad\x96\x97\x85\xa6\xc2";
+    static const char becomes[] = "_*'`'`'`' ----- ";
+
 /* Transliterate a few characters.  One of them is 0xa0 to space,
  * so we need to do this now, before the anchors swap with whitespace.
  * Also get rid of hyperlinks with absolutely nothing to click on. */
+
+/* Exception for some characters, when they are part of an utf-8 
+ * composed character (example \xc3\xa0 = 'à'), 
+ * the string 'couples' contains these "couples" of characters.
+ * When a character is part of one of these couples, we must not
+ * transliterate it.
+ */
+
     for(s = w = buf; c = *s; ++s) {
-	static const char from[] =
-	   "\x1b\x95\x99\x9c\x9d\x91\x92\x93\x94\xa0\xad\x96\x97\x85\xa6\xc2";
-	static const char becomes[] = "_*'`'`'`' ----- ";
+	d = s[1];
+	for(z = couples; *z; z += 2) {
+	    if(c == z[0] && d == z[1]) {
+		*w++ = c;
+		c = d;
+		++s;
+		goto put1;
+	    }
+	}
+
 	ss = strchr(from, c);
 	if(ss)
 	    c = becomes[ss - from];
+
 	if(c != (char)InternalCodeChar)
 	    goto put1;
 	if(!isdigitByte(s[1]))
@@ -435,6 +458,7 @@ anchorSwap(char *buf)
 	    goto put1;
 	s = a + 2;
 	continue;
+
       put1:
 	*w++ = c;
     }
