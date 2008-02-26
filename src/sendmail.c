@@ -599,7 +599,7 @@ encodeAttachment(const char *file, int ismail, bool webform,
  * and we would normally qp encode, do base 64. */
 
     if(buflen > 20 && nacount * 5 > buflen ||
-       webform && (nacount * 10 > buflen || nullcount || longline)) {
+       webform && (nacount * 20 > buflen || nullcount || longline)) {
 	if(ismail) {
 	    setError(MSG_MailBinary, file);
 	    goto freefail;
@@ -629,7 +629,7 @@ encodeAttachment(const char *file, int ismail, bool webform,
 
 /* Do we need to use quoted-printable? */
 /* Perhaps this hshould read (nacount > 0) */
-    if(nacount * 10 > buflen || nullcount || longline) {
+    if(nacount * 20 > buflen || nullcount || longline) {
 	char *newbuf;
 	int l, colno = 0, space = 0;
 
