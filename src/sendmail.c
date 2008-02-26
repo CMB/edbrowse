@@ -594,7 +594,12 @@ encodeAttachment(const char *file, int ismail, bool webform,
        file, buflen, nacount, nullcount, longline);
     nacount += nullcount;
 
-    if(buflen > 20 && nacount * 5 > buflen) {	/* binary file */
+/* Criteria for base64 encode.
+ * But, some web servers won't take qp encode, so if this is a web form,
+ * and we would normally qp encode, do base 64. */
+
+    if(buflen > 20 && nacount * 5 > buflen ||
+       webform && (nacount * 10 > buflen || nullcount || longline)) {
 	if(ismail) {
 	    setError(MSG_MailBinary, file);
 	    goto freefail;
@@ -624,7 +629,7 @@ encodeAttachment(const char *file, int ismail, bool webform,
 
 /* Do we need to use quoted-printable? */
 /* Perhaps this hshould read (nacount > 0) */
-    if(nacount * 20 > buflen || nullcount || longline) {
+    if(nacount * 10 > buflen || nullcount || longline) {
 	char *newbuf;
 	int l, colno = 0, space = 0;
 
