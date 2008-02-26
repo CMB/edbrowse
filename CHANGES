@@ -1,5 +1,10 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.3.3:
+New reply feature, maintains the thread for discussion lists.
+Move docs to a doc directory, and source to an src directory.
+Fix some utf8 bugs.
+
 3.3.2:
 Supports reading of pdf files by calling the utility pdftohtml.
 http://rpmfind.net/linux/RPM/suse/updates/10.0/i386/rpm/i586/pdftohtml-0.36-130.9.i586.html

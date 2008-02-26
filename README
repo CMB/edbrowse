@@ -93,7 +93,7 @@ This should build everything you need.
 cd Linux_All_DBG.OBJ
 ln -s `pwd`/libjs.so /usr/lib/libsmjs.so
 
-Now return to your edbrowse directory.
+Now return to your edbrowse src directory.
 To build edbrowse - guess what - you type make.
 Then you send me mail when it doesn't work.  :-)
 Not a bad idea to read through the makefile before running make.
@@ -185,13 +185,7 @@ Debug levels:
 
 ------------------------------------------------------------
 
-Sourcefiles.
-
-README:
-You're reading it right now.
-
-todo:
-Things to do, unfinished business.
+Sourcefiles (in the src directory).
 
 main.c:
 Read and parse the config file.
@@ -313,7 +307,7 @@ Edbrowse does this for you.
 
 ------------------------------------------------------------
 
-To look at all this source, some 20,000 lines,
+To look at all this source, some 30,000 lines,
 you wouldn't know I was a professional programmer with 25 years experience.
 I mean it really looks hacked together.
 Well - I wrote it in my spare time, because I needed this tool desperately.
