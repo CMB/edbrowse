@@ -907,7 +907,8 @@ isoDecode(char *vl, char **vrp)
     if(!start || start >= vr)
 	goto finish;
     start += 2;
-    if(!memEqualCI(start, "iso-", 4) && !memEqualCI(start, "utf-", 4))
+    if(!memEqualCI(start, "iso-", 4) &&
+       !memEqualCI(start, "utf-", 4) && !memEqualCI(start, "windows-", 4))
 	goto restart;
     s = strchr(start, '?');
     if(!s || s > vr - 5 || s[2] != '?')
