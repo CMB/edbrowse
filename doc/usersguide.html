@@ -3660,21 +3660,25 @@ If this line is not present, the reply command will fail.
 <P>
 The "Subject:" line must also be present.&nbsp;
 This too is created when the email is formatted.&nbsp;
-After the reply command is issued, the subject may move down the page,
+After the re command is issued, the subject may move down the page,
 to make room for other email headers as follows.
 
 <P>
 If this email has just been browsed,
 and the unformatted data still exists within the current edbrowse session,
-reply will look for the message id of the original email.&nbsp;
+re will look for the message id of the original email.&nbsp;
 This should be referenced in the reply.&nbsp;
-The resulting line looks like this.
+The resulting lines might look like this.
 
 <P>
+Reply to somebody@foo.bar.com
+<br>
 references: <4387A55E6AF43C4F9830C74EFECE9132022D0638@foo-bar.net>
+<br>
+Subject: What's in a name?
 
 <P>
-This is not a line you should ever type in, edit, or delete.&nbsp;
+The reference line is not a line you should ever type in, edit, or delete.&nbsp;
 Just leave it be.&nbsp;
 If you participate in a discussion list, this line is important.&nbsp;
 It tells the server that your reply is indeed a reply,
@@ -3702,11 +3706,11 @@ and this also uses the original email headers.&nbsp;
 All the recipients will appear at the top of your file.&nbsp;
 Some will be indicated by cc, if they were carbon copied.&nbsp;
 You can delete any of these recipients before sending your response.&nbsp;
-Of course, you probably don't want to delete the first line,
+Of course you probably don't want to delete the first line,
 as that is the reply to address.
 
 <P>
-Note that the reply command takes the file out of browse mode, and turns it into a plain text file.&nbsp;
+Note that the re command takes the file out of browse mode, and turns it into a plain text file.&nbsp;
 This supports text editing, to write your reply in the body of the message.&nbsp;
 If you want to start over from scratch,
 you can't just unbrowse, because it is not in browse mode.&nbsp;
