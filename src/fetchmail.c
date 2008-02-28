@@ -1726,7 +1726,7 @@ Also, if mailing to all, stick in the other recipients.
 bool
 setupReply(bool all)
 {
-    int subln, repln, fromln, whenln, toln;
+    int subln, repln;
     char linetype[8];
     int j;
     char *out, *s, *t;
@@ -1753,11 +1753,12 @@ setupReply(bool all)
 	return false;
     }
 
-    subln = repln = fromln = whenln = toln = 0;
-    strcpy(linetype, " xxxxx");
-    for(j = 1; j <= 5; ++j) {
+    subln = repln = 0;
+    strcpy(linetype, " xxxxxx");
+    for(j = 1; j <= 6; ++j) {
 	if(j > cw->dol)
 	    break;
+
 	pst p = fetchLine(j, -1);
 
 	if(memEqualCI(p, "subject:", 8)) {
@@ -1768,25 +1769,30 @@ setupReply(bool all)
 
 	if(memEqualCI(p, "to ", 3)) {
 	    linetype[j] = 't';
-	    toln = j;
 	    continue;
 	}
 
 	if(memEqualCI(p, "from ", 5)) {
 	    linetype[j] = 'f';
-	    fromln = j;
 	    continue;
 	}
 
 	if(memEqualCI(p, "mail sent ", 10)) {
 	    linetype[j] = 'w';
-	    whenln = j;
 	    continue;
 	}
 
 	if(memEqualCI(p, "reply to ", 9)) {
 	    linetype[j] = 'r';
 	    repln = j;
+	    continue;
+	}
+
+/* This one has to be last. */
+	while(isdigitByte(*p))
+	    ++p;
+	if(memEqualCI(p, " attachment", 11) || memEqualCI(p, " image", 6)) {
+	    linetype[j] = 'a';
 	    continue;
 	}
 
@@ -1799,8 +1805,8 @@ setupReply(bool all)
     }
 
 /* delete the lines we don't need */
-    for(j = 5; j >= 1; --j) {
-	if(!strchr("wft", linetype[j]))
+    for(j = 6; j >= 1; --j) {
+	if(!strchr("wfta", linetype[j]))
 	    continue;
 	delText(j, j);
 	strcpy(linetype + j, linetype + j + 1);
