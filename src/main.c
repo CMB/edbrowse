@@ -1001,8 +1001,8 @@ main(int argc, char **argv)
     sprintf(edbrowseTempFile, "%s/eb_tmp", recycleBin);
     edbrowseTempPDF = allocMem(strlen(recycleBin) + 8);
     sprintf(edbrowseTempPDF, "%s/eb_pdf", recycleBin);
-    edbrowseTempHTML = allocMem(strlen(recycleBin) + 9);
-    sprintf(edbrowseTempHTML, "%s/eb_html", recycleBin);
+    edbrowseTempHTML = allocMem(strlen(recycleBin) + 13);
+    sprintf(edbrowseTempHTML, "%s/eb_pdf.html", recycleBin);
     if(fileTypeByName(recycleBin, false) != 'd') {
 	if(mkdir(recycleBin, 0700)) {
 	    free(recycleBin);
