@@ -1759,7 +1759,7 @@ setupReply(bool all)
 	if(j > cw->dol)
 	    break;
 
-	pst p = fetchLine(j, -1);
+	char *p = (char *)fetchLine(j, -1);
 
 	if(memEqualCI(p, "subject:", 8)) {
 	    linetype[j] = 's';
@@ -1874,7 +1874,7 @@ setupReply(bool all)
 
     rc = true;
     if(j)
-	rc = addTextToBuffer(out, j, 1);
+	rc = addTextToBuffer((unsigned char *)out, j, 1);
     nzFree(out);
     cw->browseMode = false;
     return rc;
