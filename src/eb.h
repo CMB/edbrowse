@@ -95,8 +95,8 @@ typedef uchar *pst;		/* perl string */
 /* A specific nonascii char denotes an html tag
  * in the rendered html text.
  * See the comments in bufsub.c for the rationale. */
-#define InternalCodeChar '\x80'
-#define InternalCodeCharAlternate '\x81'
+#define InternalCodeChar '\1'
+#define InternalCodeCharAlternate '\2'
 
 /* How long can a regular expression be? */
 #define MAXRE 400

@@ -105,8 +105,9 @@ targetVal(const char *e)
 static void
 toPreamble(int tagno, const char *msg, const char *j, const char *h)
 {
+    int l;
     char buf[120];
-    sprintf(buf, "\r\200%d{%s", tagno, msg);
+    sprintf(buf, "\r%c%d{%s", InternalCodeChar, tagno, msg);
     if(h) {
 	strcat(buf, ": ");
 	strcat(buf, h);
@@ -130,7 +131,9 @@ toPreamble(int tagno, const char *msg, const char *j, const char *h)
 		strcat(buf, fn);
 	}
     }
-    strcat(buf, "\2000}\r");
+    l = strlen(buf);
+    buf[l++] = InternalCodeChar;
+    strcpy(buf + l, "0}\r");
     if(!preamble)
 	preamble = initString(&preamble_l);
     stringAndString(&preamble, &preamble_l, buf);
@@ -1278,7 +1281,8 @@ encodeTags(char *html)
 	       ti->bits & TAG_CLOSEA && (a_text || action <= TAGACT_OPTION)) {
 		browseError(MSG_InAnchor, ti->desc);
 	      forceCloseAnchor:
-		stringAndString(&new, &l, "\2000}");
+		stringAndChar(&new, &l, InternalCodeChar);
+		stringAndString(&new, &l, "0}");
 		currentA->balanced = true;
 		currentA = 0;
 /* if/when the </a> comes along, it will be unbalanced, and we'll ignore it. */
@@ -1388,7 +1392,8 @@ encodeTags(char *html)
 		if(currentForm->bymail)
 		    stringAndString(&new, &l, " bymail");
 	    }
-	    stringAndString(&new, &l, "\2000>");
+	    stringAndChar(&new, &l, InternalCodeChar);
+	    stringAndString(&new, &l, "0>");
 	    goto endtag;
 
 	case TAGACT_TITLE:
@@ -1421,7 +1426,7 @@ encodeTags(char *html)
 	    }
 	    if(a_href) {
 		if(slash) {
-		    strcpy(hnum, "\2000}");
+		    sprintf(hnum, "%c0}", InternalCodeChar);
 		} else {
 		    strcat(hnum, "{");
 		    currentA = t;
@@ -1637,7 +1642,8 @@ encodeTags(char *html)
 		    sprintf(hnum, "%c%d<", InternalCodeChar, currentSel->seqno);
 		    stringAndString(&new, &l, hnum);
 		    stringAndString(&new, &l, a);
-		    stringAndString(&new, &l, "\2000>");
+		    stringAndChar(&new, &l, InternalCodeChar);
+		    stringAndString(&new, &l, "0>");
 		}
 		currentSel = 0;
 	    }
@@ -1650,7 +1656,9 @@ encodeTags(char *html)
 			stringAndString(&new, &l, " secure");
 		    if(currentForm->bymail)
 			stringAndString(&new, &l, " bymail");
-		    stringAndString(&new, &l, " implicit\2000>");
+		    stringAndString(&new, &l, " implicit");
+		    stringAndChar(&new, &l, InternalCodeChar);
+		    stringAndString(&new, &l, " 0>");
 		}
 		currentForm = 0;
 	    }
@@ -1769,8 +1777,10 @@ encodeTags(char *html)
 	    }
 	    if(t->href || action == TAGACT_FRAME)
 		stringAndString(&new, &l, name);
-	    if(t->href)
-		stringAndString(&new, &l, "\2000}");
+	    if(t->href) {
+		stringAndChar(&new, &l, InternalCodeChar);
+		stringAndString(&new, &l, "0}");
+	    }
 	    stringAndChar(&new, &l, '\r');
 	    continue;
 
@@ -1962,7 +1972,8 @@ encodeTags(char *html)
     }				/* loop over html string */
 
     if(currentA) {
-	stringAndString(&new, &l, "\2000}");
+	stringAndChar(&new, &l, InternalCodeChar);
+	stringAndString(&new, &l, "0}");
 	currentA = 0;
     }
 
@@ -2127,7 +2138,7 @@ findField(const char *line, int ftype, int n,
 	s = line;
 	while((c = *s) != '\n') {
 	    ++s;
-	    if(c != (char)InternalCodeChar)
+	    if(c != InternalCodeChar)
 		continue;
 	    j = strtol(s, (char **)&s, 10);
 	    if(!ftype) {
@@ -2263,7 +2274,7 @@ lineHasTag(const char *p, const char *s)
     char c;
     int j;
     while((c = *p++) != '\n') {
-	if(c != (char)InternalCodeChar)
+	if(c != InternalCodeChar)
 	    continue;
 	j = strtol(p, (char **)&p, 10);
 	if(*p != '*')

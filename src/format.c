@@ -446,7 +446,7 @@ anchorSwap(char *buf)
 	if(ss)
 	    c = becomes[ss - from];
 
-	if(c != (char)InternalCodeChar)
+	if(c != InternalCodeChar)
 	    goto put1;
 	if(!isdigitByte(s[1]))
 	    goto put1;
@@ -454,7 +454,7 @@ anchorSwap(char *buf)
 	if(*a != '{')
 	    goto put1;
 	for(++a; *a == ' '; ++a) ;
-	if(memcmp(a, "\2000}", 3))
+	if(a[0] != InternalCodeChar || a[1] != '0' || a[2] != '}')
 	    goto put1;
 	s = a + 2;
 	continue;
@@ -495,7 +495,7 @@ anchorSwap(char *buf)
 /* prior anchor has no significance */
 	    a = 0;
 
-	    if(c == (char)InternalCodeChar) {
+	    if(c == InternalCodeChar) {
 		if(!isdigitByte(s[1]))
 		    goto normalChar;
 		n = strtol(s + 1, &ss, 10);
@@ -585,7 +585,7 @@ anchorSwap(char *buf)
 	char open, close, linkchar;
 	if(!strchr("{[(<", c))
 	    goto putc;
-	if(s[1] != (char)InternalCodeChar)
+	if(s[1] != InternalCodeChar)
 	    goto putc;
 	if(!isdigitByte(s[2]))
 	    goto putc;
@@ -612,7 +612,7 @@ anchorSwap(char *buf)
 	    d = a[n++];
 	    if(!d)
 		break;
-	    if(d != (char)InternalCodeChar)
+	    if(d != InternalCodeChar)
 		continue;
 	    while(isdigitByte(a[n]))
 		++n;
@@ -650,7 +650,7 @@ anchorSwap(char *buf)
 /* Now compress the implied linebreaks into one. */
     premode = false;
     for(s = buf; c = *s; ++s) {
-	if(c == (char)InternalCodeChar && isdigitByte(s[1])) {
+	if(c == InternalCodeChar && isdigitByte(s[1])) {
 	    n = strtol(s + 1, &s, 10);
 	    if(*s == '*') {
 		preFormatCheck(n, &pretag, &slash);
@@ -760,7 +760,7 @@ spaceNotInInput(void)
 	if(c == '\n' || c == '\r')
 	    return true;
 	if(c == '>' && t >= bl_start + 2 &&
-	   t[-1] == '0' && t[-2] == (char)InternalCodeChar)
+	   t[-1] == '0' && t[-2] == InternalCodeChar)
 	    return true;
 	if(c != '<')
 	    continue;
@@ -768,7 +768,7 @@ spaceNotInInput(void)
 	    --t;
 	if(*t == '<')
 	    continue;
-	if(t > bl_start && t[-1] == (char)InternalCodeChar)
+	if(t > bl_start && t[-1] == InternalCodeChar)
 	    return false;
     }
     return true;
@@ -1052,9 +1052,9 @@ htmlReformat(const char *buf)
 	    continue;
 	}
 	/* white space */
-	if(c != (char)InternalCodeChar) {
+	if(c != InternalCodeChar) {
 	    for(s = h + 1; *s; ++s)
-		if(isspaceByte(*s) || *s == (char)InternalCodeChar)
+		if(isspaceByte(*s) || *s == InternalCodeChar)
 		    break;
 	    nh = s;
 	    appendPrintableChunk(h, nh - h, premode);
@@ -1082,7 +1082,7 @@ htmlReformat(const char *buf)
 	    nh = h;
 	    continue;
 	}
-	if(c != (char)InternalCodeChar)
+	if(c != InternalCodeChar)
 	    continue;
 /* Does this start a new hyperlink? */
 	for(s = h + 1; isdigitByte(*s); ++s) ;
@@ -1353,7 +1353,7 @@ andTranslate(const char *s, bool invisible)
     new = initString(&l);
 
     while(c = *s) {
-	if(c == (uchar) InternalCodeChar && !invisible) {
+	if(c == InternalCodeChar && !invisible) {
 	    const char *t = s + 1;
 	    while(isdigitByte(*t))
 		++t;
@@ -1435,7 +1435,7 @@ andTranslate(const char *s, bool invisible)
 	    c = ' ';
 	if(strchr("\r\n\f", c) && !premode)
 	    c = ' ';
-	if(c == (uchar) InternalCodeChar)
+	if(c == InternalCodeChar)
 	    c = ' ';
 	s += j - 1;
 	j = 1;

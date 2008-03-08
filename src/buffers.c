@@ -46,7 +46,7 @@ static char icmd;		/* input command, usually the same as cmd */
 /* If a rendered line contains a hyperlink, the link is indicated
  * by a code that is stored inline.
  * If the hyperlink is number 17 on the list of hyperlinks for this window,
- * it is indicated by 0x80 17 { text }.
+ * it is indicated by InternalCodeChar 17 { text }.
  * The "text" is what you see on the page, what you click on.
  * {Click here for more information}.
  * And the braces tell you it's a hyperlink.
@@ -55,8 +55,8 @@ static char icmd;		/* input command, usually the same as cmd */
  * I'm assuming these chars don't/won't appear on the rendered page.
  * Yeah, sometimes nonascii chars appear, especially if the page is in
  * a European language, but I just assume a rendered page will not contain
- * the sequence: 0x80 number {
- * In fact I assume the rendered text won't contain 0x80 at all.
+ * the sequence: InternalCodeChar number {
+ * In fact I assume the rendered text won't contain InternalCodeChar at all.
  * So I use this char to demark encoded constructs within the lines.
  * And why do I encode things right in the text?
  * Well it took me a few versions to reach this point.
@@ -89,7 +89,7 @@ removeHiddenNumbers(pst p)
 
     s = t = p;
     while((c = *s) != '\n') {
-	if(c != (uchar) InternalCodeChar) {
+	if(c != InternalCodeChar) {
 	  addchar:
 	    *t++ = c;
 	    ++s;
@@ -2330,18 +2330,20 @@ substituteText(const char *line)
 
 	    if(cw->browseMode) {
 		char search[20];
+		char searchend[4];
 		findInputField(p, 1, whichField, &total, &realtotal, &tagno);
 		if(!tagno) {
 		    fieldNumProblem(0, 'i', whichField, total, realtotal);
 		    continue;
 		}
 		sprintf(search, "%c%d<", InternalCodeChar, tagno);
+		sprintf(searchend, "%c0>", InternalCodeChar);
 /* Ok, if the line contains a null, this ain't gonna work. */
 		s = strstr(p, search);
 		if(!s)
 		    continue;
 		s = strchr(s, '<') + 1;
-		t = strstr(s, "\2000>");
+		t = strstr(s, searchend);
 		if(!t)
 		    continue;
 		j = replaceText(s, t - s, rhs, true, nth, g_mode, ln);
@@ -3116,7 +3118,7 @@ showLinks(void)
 	jMyContext();
 	line = (char *)fetchLine(endRange, -1);
 	for(p = line; (c = *p) != '\n'; ++p) {
-	    if(c != (char)InternalCodeChar)
+	    if(c != InternalCodeChar)
 		continue;
 	    if(!isdigitByte(p[1]))
 		continue;
@@ -3135,7 +3137,7 @@ showLinks(void)
 /* find the closing brace */
 /* It might not be there, could be on the next line. */
 	    for(s = p + 1; (c = *s) != '\n'; ++s)
-		if(c == (char)InternalCodeChar && s[1] == '0' && s[2] == '}')
+		if(c == InternalCodeChar && s[1] == '0' && s[2] == '}')
 		    break;
 /* Ok, everything between p and s exclusive is the description */
 	    if(!h)
@@ -4586,6 +4588,7 @@ locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
     int ln, n;
     char *p, *s, *t, c;
     char search[20];
+    char searchend[4];
 
     if(parsePage) {
 	foreachback(ic, inputChangesPending) {
@@ -4600,11 +4603,12 @@ locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
     }
     /* still rendering the page */
     sprintf(search, "%c%d<", InternalCodeChar, tagno);
+    sprintf(searchend, "%c0>", InternalCodeChar);
     n = strlen(search);
     for(ln = 1; ln <= cw->dol; ++ln) {
 	p = (char *)fetchLine(ln, -1);
 	for(s = p; (c = *s) != '\n'; ++s) {
-	    if(c != (char)InternalCodeChar)
+	    if(c != InternalCodeChar)
 		continue;
 	    if(!memcmp(s, search, n))
 		break;
@@ -4612,7 +4616,7 @@ locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
 	if(c == '\n')
 	    continue;		/* not here, try next line */
 	s = strchr(s, '<') + 1;
-	t = strstr(s, "\2000>");
+	t = strstr(s, searchend);
 	if(!t)
 	    i_printfExit(MSG_NoClosingLine, ln);
 	*ln_p = ln;
