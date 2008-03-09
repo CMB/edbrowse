@@ -1878,12 +1878,13 @@ selectLanguage(void)
     if(!*s)
 	return;
 
-if(strstr(s, "utf8")) is_utf8 = true;
+    if(strstrCI(s, "utf8") || strstrCI(s, "utf-8"))
+	is_utf8 = true;
 
-if (!setlocale (LC_CTYPE, "")) {
-fprintf(stderr, 
-"Can't set the specified locale.  Check LANG, LC_CTYPE, LC_ALL.\n");
-}
+    if(!setlocale(LC_CTYPE, "")) {
+	fprintf(stderr,
+	   "Can't set the specified locale.  Check LANG, LC_CTYPE, LC_ALL.\n");
+    }
 
     strncpy(buf, s, 7);
     buf[7] = 0;
