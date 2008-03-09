@@ -9,6 +9,9 @@ These become the indexes for the messages in message.c.
 The array of messages is selected by the language.
 *********************************************************************/
 
+
+
+
 enum {
     MSG_EOF,
     MSG_NoFile,

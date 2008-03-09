@@ -1412,6 +1412,15 @@ andTranslate(const char *s, bool invisible)
 	    s += j;
 	    if(!r[1]) {		/* replace with a single character */
 		c = *r;
+		if(c & 0x80 && is_utf8) {
+		    int unicode[2];
+		    static char utfbuf[4];
+		    unicode[0] = (uchar) c;
+		    unicode[1] = 0;
+		    sprintf(utfbuf, "%ls", &unicode);
+		    r = utfbuf;
+		    goto putw;
+		}
 		--s;
 		goto putc;
 	    }
@@ -1427,6 +1436,7 @@ andTranslate(const char *s, bool invisible)
 		alnum = 2;
 	    } else
 		alnum = 0;
+	  putw:
 	    stringAndString(&new, &l, r);
 	    continue;
 	}

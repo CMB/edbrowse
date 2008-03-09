@@ -13,21 +13,21 @@
 /* Static variables for this file. */
 
 /* The valid edbrowse commands. */
-static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^<";
+static const char valid_cmd[] = "aAbBcdDefghHijJklLmMnpqrstuvwXz=^<";
 /* Commands that can be done in browse mode. */
-static const char browse_cmd[] = "AbBdDefghHijJklmMnpqsuvwXz=^<";
+static const char browse_cmd[] = "AbBdDefghHijJklLmMnpqsuvwXz=^<";
 /* Commands for sql mode. */
-static const char sql_cmd[] = "AadDefghHiklmnpqrsvwXz=^<";
+static const char sql_cmd[] = "AadDefghHiklLmnpqrsvwXz=^<";
 /* Commands for directory mode. */
-static const char dir_cmd[] = "AdDefghHklmnpqsvwXz=^<";
+static const char dir_cmd[] = "AdDefghHklLmnpqsvwXz=^<";
 /* Commands that work at line number 0, in an empty file. */
 static const char zero_cmd[] = "aAbefhHMqruw=^<";
 /* Commands that expect a space afterward. */
 static const char spaceplus_cmd[] = "befrw";
 /* Commands that should have no text after them. */
-static const char nofollow_cmd[] = "aAcdDhHjlmnptuX=";
+static const char nofollow_cmd[] = "aAcdDhHjlLmnptuX=";
 /* Commands that can be done after a g// global directive. */
-static const char global_cmd[] = "dDijJlmnpstX";
+static const char global_cmd[] = "dDijJlLmnpstX";
 
 static struct ebWindow preWindow, undoWindow;
 static int startRange, endRange;	/* as in 57,89p */
@@ -233,20 +233,20 @@ displayLine(int n)
 
     if(cmd == 'n')
 	printf("%d ", n);
-    if(endMarks == 2 || endMarks && cmd == 'l')
+    if(endMarks == 2 || endMarks && (cmd == 'l' || cmd == 'L'))
 	printf("^");
 
     while((c = *s++) != '\n') {
 	bool expand = false;
 	if(c == 0 || c == '\r' || c == '\x1b')
 	    expand = true;
-	if(cmd == 'l') {
+	if(cmd == 'l' || cmd == 'L') {
 /* show tabs and backspaces, ed style */
 	    if(c == '\b')
 		c = '<';
 	    if(c == '\t')
 		c = '>';
-	    if(!isprintByte(c))
+	    if(c < ' ' || c == 0x7f || c >= 0x80 && cmd == 'L')
 		expand = true;
 	}			/* list */
 	if(expand)
@@ -260,7 +260,7 @@ displayLine(int n)
     if(cnt >= 500)
 	printf("...");
     printf("%s", dirSuffix(n));
-    if(endMarks == 2 || endMarks && cmd == 'l')
+    if(endMarks == 2 || endMarks && (cmd == 'l' || cmd == 'L'))
 	printf("$");
     nl();
 
@@ -3478,7 +3478,7 @@ runCommand(const char *line)
 	return true;
     }
 
-    if(strchr("lpn", cmd)) {
+    if(strchr("Llpn", cmd)) {
 	for(i = startRange; i <= endRange; ++i) {
 	    displayLine(i);
 	    cw->dot = i;

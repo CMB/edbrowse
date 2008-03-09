@@ -7,6 +7,9 @@
 
 #include "eb.h"
 
+#include "locale.h"
+#include "wchar.h"
+
 /* Arrays of messages, one array for each language. */
 
 static const char *englishMessages[] = {
@@ -1863,6 +1866,8 @@ static const char *brazilianPortugueseMessages[] = {
 static const char **messageArray = englishMessages;
 static int messageArrayLength = sizeof (englishMessages) / sizeof (char *);
 
+bool is_utf8;
+
 void
 selectLanguage(void)
 {
@@ -1872,6 +1877,13 @@ selectLanguage(void)
 	return;
     if(!*s)
 	return;
+
+if(strstr(s, "utf8")) is_utf8 = true;
+
+if (!setlocale (LC_CTYPE, "")) {
+fprintf(stderr, 
+"Can't set the specified locale.  Check LANG, LC_CTYPE, LC_ALL.\n");
+}
 
     strncpy(buf, s, 7);
     buf[7] = 0;
