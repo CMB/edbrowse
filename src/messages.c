@@ -1856,7 +1856,7 @@ static const char *brazilianPortugueseMessages[] = {
     "não posso replicar para um arquivo binário",
     "linhas subject e reply são obrigatórias",
     "aviso: não há ID da mensagem a referenciar",
-    0,
+    "Desculpe; o cabeçalho da carta não está disponível.\nComece com uma carta não formatada, escolha browse e depois reply all.",
 };
 
 /* English by default */
