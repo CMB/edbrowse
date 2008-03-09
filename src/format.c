@@ -408,38 +408,47 @@ void
 anchorSwap(char *buf)
 {
     char c, d, *s, *ss, *w, *a;
-    const char *z;
     bool premode, pretag, state_braces, state_text, state_atext;
     bool strong, change, slash;
     int n, cnt;
     char tag[20];
 
-    static const char couples[] =
-       "\xc2\xa2\xc2\xa5\xc2\xa9\xc2\xab\xc2\xae\xc2\xb1\xc2\xba\xc2\xbb\xc2\xbf\xc3\x85\xc3\x94\xc3\x96\xc3\x97\xc3\x99\xc3\x9c\xc3\xa0\xc3\xa6\xc5\x93";
     static const char from[] =
        "\x1b\x95\x99\x9c\x9d\x91\x92\x93\x94\xa0\xad\x96\x97\x85\xa6\xc2";
     static const char becomes[] = "_*'`'`'`' ----- ";
 
 /* Transliterate a few characters.  One of them is 0xa0 to space,
  * so we need to do this now, before the anchors swap with whitespace.
- * Also get rid of hyperlinks with absolutely nothing to click on. */
-
-/* Exception for some characters, when they are part of an utf-8 
- * composed character (example \xc3\xa0 = 'à'), 
- * the string 'couples' contains these "couples" of characters.
- * When a character is part of one of these couples, we must not
- * transliterate it.
- */
+ * Watch out for utf8 - don't translate the a0 in c3a0.  That is a grave.
+ * But a0 by itself is breakspace; turn it into space.
+ * And c2a0 is a0 is breakspace.
+ * Then get rid of hyperlinks with absolutely nothing to click on. */
 
     for(s = w = buf; c = *s; ++s) {
 	d = s[1];
-	for(z = couples; *z; z += 2) {
-	    if(c == z[0] && d == z[1]) {
-		*w++ = c;
-		c = d;
-		++s;
-		goto put1;
+/* utf8 test */
+	if((c & 0xc0) == 0xc0 && (d & 0xc0) == 0x80) {
+	    unsigned int uni = 0;
+	    if((c & 0x3c) == 0) {
+/* fits in 8 bits */
+		uni = ((uchar) c << 6) | (d & 0x3f);
+		ss = strchr(from, (char)uni);
+		if(ss) {
+		    c = becomes[ss - from];
+		    ++s;
+		    goto put1;
+		}
 	    }
+/* copy the utf8 sequence */
+	    *w++ = c;
+	    ++s;
+	    c <<= 1;
+	    while((c & 0x80) && ((d = *s) & 0xc0) == 0x80) {
+		*w++ = d;
+		++s;
+	    }
+	    --s;
+	    continue;
 	}
 
 	ss = strchr(from, c);
