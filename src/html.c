@@ -1658,7 +1658,7 @@ encodeTags(char *html)
 			stringAndString(&new, &l, " bymail");
 		    stringAndString(&new, &l, " implicit");
 		    stringAndChar(&new, &l, InternalCodeChar);
-		    stringAndString(&new, &l, " 0>");
+		    stringAndString(&new, &l, "0>");
 		}
 		currentForm = 0;
 	    }
