@@ -267,7 +267,8 @@ The output and error messages have been "internationalized",
 so that edbrowse can support most European languages.&nbsp;
 Set the environment variable LANG to interact with edbrowse in another language.&nbsp;
 Supported languages are shown below.&nbsp;
-If you can help in this effort, please let me know.
+At present we are restricted to ISO8859-1 characters, i.e. indoeuropean languages.&nbsp;
+If you can help in this ongoing translation effort, please let me know.
 
 <P>
 English: LANG=en (this is the default)
@@ -282,6 +283,12 @@ including <A HREF=edbdoc_fr.html>documentation</A>
 Brazilian Portuguese: LANG=pt_br by
 <A HREF=mailto:clever92000@yahoo.com.br>
 Cleverson</A>
+
+<P>
+Accented letters are printed as 8-bit bytes, i.e. ISO8859-1,
+unless the string utf8 or utf-8 appears in $LANG,
+whence the nonascii characters are generated using utf8.&nbsp;
+LANG=fr-FR.UTF-8 is a common settting in France.
 
 <H3 align=center> <A NAME=guide> Quick Reference Guide </A> </H3>
 
