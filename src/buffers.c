@@ -3207,6 +3207,28 @@ showLinks(void)
     return a;
 }				/* showLinks */
 
+static void
+readyUndo(void)
+{
+    struct ebWindow *pw = &preWindow;
+    if(globSub)
+	return;
+    pw->dot = cw->dot;
+    pw->dol = cw->dol;
+    memcpy(pw->labels, cw->labels, 26 * sizeof (int));
+    pw->binMode = cw->binMode;
+    pw->nlMode = cw->nlMode;
+    pw->dirMode = cw->dirMode;
+    if(pw->map) {
+	if(!cw->map || !stringEqual(pw->map, cw->map)) {
+	    free(pw->map);
+	    pw->map = 0;
+	}
+    }
+    if(cw->map && !pw->map)
+	pw->map = cloneString(cw->map);
+}				/* readyUndo */
+
 /* Run the entered edbrowse command.
  * This is indirectly recursive, as in g/x/d
  * Pass in the ed command, and return success or failure.
@@ -3966,6 +3988,7 @@ runCommand(const char *line)
 		    scmd = '=';
 		}
 		if(c == '*') {
+		    readyUndo();
 		    jSyncup();
 		    if(!infPush(tagno, &allocatedLine))
 			return false;
@@ -4170,24 +4193,8 @@ runCommand(const char *line)
 	return false;
     }
 
-    if(!globSub) {		/* get ready for subsequent undo */
-	struct ebWindow *pw = &preWindow;
-	pw->dot = cw->dot;
-	pw->dol = cw->dol;
-	memcpy(pw->labels, cw->labels, 26 * sizeof (int));
-	pw->binMode = cw->binMode;
-	pw->nlMode = cw->nlMode;
-	pw->dirMode = cw->dirMode;
-	if(pw->map) {
-	    if(!cw->map || !stringEqual(pw->map, cw->map)) {
-		free(pw->map);
-		pw->map = 0;
-	    }
-	}
-	if(cw->map && !pw->map)
-	    pw->map = cloneString(cw->map);
-    }
-    /* data saved for undo */
+    readyUndo();
+
     if(cmd == 'g' || cmd == 'v') {
 	return doGlobal(line);
     }
@@ -4260,7 +4267,7 @@ runCommand(const char *line)
     if(cmd == 'j' || cmd == 'J') {
 	return joinText();
     }
-    /* j */
+
     if(cmd == 'r') {
 	if(cx)
 	    return readContext(cx);
@@ -4319,7 +4326,7 @@ runCommand(const char *line)
 	    goto redirect;
 	return j;
     }
-    /* s */
+
     setError(MSG_CNYI, icmd);
     return (globSub = false);
 }				/* runCommand */
@@ -4661,7 +4668,8 @@ updateFieldInBuffer(int tagno, const char *newtext, int notify, bool required)
 	    displayLine(ln);
 	if(notify == 2)
 	    i_printf(MSG_LineUpdated, ln);
-	cw->firstOpMode = undoable = true;
+	cw->firstOpMode = true;
+	undoable = true;
 	return;
     }
 
