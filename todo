@@ -19,3 +19,5 @@ what does all.tags("object") mean?
 options.length = 0, js objects gone, but <option> tags still exist, and point to those objects
 attachEvent("onclick", doSomething);
 getAttribute setAttribute
+put account: in reply function
+read charset in html meta and convert to or from utf8
