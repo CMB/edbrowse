@@ -13,21 +13,21 @@
 /* Static variables for this file. */
 
 /* The valid edbrowse commands. */
-static const char valid_cmd[] = "aAbBcdDefghHijJklLmMnpqrstuvwXz=^<";
+static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^<";
 /* Commands that can be done in browse mode. */
-static const char browse_cmd[] = "AbBdDefghHijJklLmMnpqsuvwXz=^<";
+static const char browse_cmd[] = "AbBdDefghHijJklmMnpqsuvwXz=^<";
 /* Commands for sql mode. */
-static const char sql_cmd[] = "AadDefghHiklLmnpqrsvwXz=^<";
+static const char sql_cmd[] = "AadDefghHiklmnpqrsvwXz=^<";
 /* Commands for directory mode. */
-static const char dir_cmd[] = "AdDefghHklLmnpqsvwXz=^<";
+static const char dir_cmd[] = "AdDefghHklmnpqsvwXz=^<";
 /* Commands that work at line number 0, in an empty file. */
 static const char zero_cmd[] = "aAbefhHMqruw=^<";
 /* Commands that expect a space afterward. */
 static const char spaceplus_cmd[] = "befrw";
 /* Commands that should have no text after them. */
-static const char nofollow_cmd[] = "aAcdDhHjlLmnptuX=";
+static const char nofollow_cmd[] = "aAcdDhHjlmnptuX=";
 /* Commands that can be done after a g// global directive. */
-static const char global_cmd[] = "dDijJlLmnpstX";
+static const char global_cmd[] = "dDijJlmnpstX";
 
 static struct ebWindow preWindow, undoWindow;
 static int startRange, endRange;	/* as in 57,89p */
@@ -233,20 +233,20 @@ displayLine(int n)
 
     if(cmd == 'n')
 	printf("%d ", n);
-    if(endMarks == 2 || endMarks && (cmd == 'l' || cmd == 'L'))
+    if(endMarks == 2 || endMarks && cmd == 'l')
 	printf("^");
 
     while((c = *s++) != '\n') {
 	bool expand = false;
 	if(c == 0 || c == '\r' || c == '\x1b')
 	    expand = true;
-	if(cmd == 'l' || cmd == 'L') {
+	if(cmd == 'l') {
 /* show tabs and backspaces, ed style */
 	    if(c == '\b')
 		c = '<';
 	    if(c == '\t')
 		c = '>';
-	    if(c < ' ' || c == 0x7f || c >= 0x80 && cmd == 'L')
+	    if(c < ' ' || c == 0x7f || c >= 0x80 && listNA)
 		expand = true;
 	}			/* list */
 	if(expand)
@@ -260,7 +260,7 @@ displayLine(int n)
     if(cnt >= 500)
 	printf("...");
     printf("%s", dirSuffix(n));
-    if(endMarks == 2 || endMarks && (cmd == 'l' || cmd == 'L'))
+    if(endMarks == 2 || endMarks && cmd == 'l')
 	printf("$");
     nl();
 
@@ -2867,6 +2867,13 @@ twoLetter(const char *line, const char **runThis)
 	binaryDetect ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(binaryDetect + MSG_BinaryIgnore);
+	return true;
+    }
+
+    if(stringEqual(line, "lna")) {
+	listNA ^= 1;
+	if(helpMessagesOn || debugLevel >= 1)
+	    i_puts(listNA + MSG_ListControl);
 	return true;
     }
 

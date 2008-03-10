@@ -626,6 +626,8 @@ static const char *englishMessages[] = {
     "subject and reply lines are required",
     "warning, there is no message ID to reference",
     "Sorry, email headers are not available.\nYou must start with an unformatted email message, browse, then reply all.",
+    "l expands control chars into hex",
+    "l expands control and nonascii chars into hex",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
@@ -1243,6 +1245,8 @@ static const char *frenchMessages[] = {
     "lignes 'subject' et 'reply' obligatoires",
     "attention, pas d'identificateur ID de message pour le référencer",
     "Désolé, pas d'en-têtes de couurier.\nVous devez commencer avec un courrier non formaté, le consulter, puis répondre à tous.",
+    0,
+    0,
 };
 
 /* Translation by Cleverson: clever92000@yahoo.com.br */
@@ -1860,6 +1864,8 @@ static const char *brazilianPortugueseMessages[] = {
     "linhas subject e reply são obrigatórias",
     "aviso: não há ID da mensagem a referenciar",
     "Desculpe; o cabeçalho da carta não está disponível.\nComece com uma carta não formatada, escolha browse e depois reply all.",
+    0,
+    0,
 };
 
 /* English by default */

@@ -626,4 +626,6 @@ enum {
     MSG_ReSubjectReply,
     MSG_ReNoID,
     MSG_ReNoInfo,
+    MSG_ListControl,
+    MSG_ListNA,
 };

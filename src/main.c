@@ -19,7 +19,7 @@ char EMPTYSTRING[] = "";
 int debugLevel = 1;
 int webTimeout = 20, mailTimeout = 0;
 bool ismc, browseLocal, zapMail, unformatMail, passMail, errorExit;
-bool isInteractive, inInput;
+bool isInteractive, inInput, listNA;
 volatile bool intFlag;
 int fileSize, maxFileSize = 50000000;
 int localAccount, maxAccount;
