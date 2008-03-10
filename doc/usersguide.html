@@ -303,8 +303,7 @@ p: print the current line
 4,7p: print lines 4 through 7
 'a,'bp: print a range of lines, marked with labels a and b
 kb: mark the current line as b
-l: list the current line, showing control chars in hex
-L: list the current line, showing control and nonascii chars in hex
+l: list the current line, showing invisible chars and end markers
 n: print the current line with its line number
 =: print the number of lines in the file
 z22: print the next 22 lines
@@ -369,6 +368,7 @@ bd: binary detection on files (toggle)
 eo: end markers off
 el: show end markers ^$ when a line is listed
 ep: show end markers when a line is listed or printed
+lna: expand all nonascii chars into hex when a line is listed (toggle)
 pb: play buffer
 ft: show the title of the current web page
 fd: show the description of the current web page
@@ -907,7 +907,7 @@ Sorry, but I like hex better than octal.&nbsp;
 I know it's not standard, but there it is.&nbsp;
 Use the three character sequence ~bd to enter the nonascii character 0xbd,
 which is the code for 1/2.&nbsp;
-Similarly, if you list a line with the capital L command, the 1/2 character
+Similarly, if you list a line with lna active, the 1/2 character
 is displayed as ~bd.&nbsp;
 All nonascii and most control characters
 are entered and displayed in this manner.&nbsp;
