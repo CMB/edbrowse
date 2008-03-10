@@ -202,6 +202,7 @@ Les sorties et messages d'erreur ont été "internationalisés",
 afin que Edbrowse accepte la plupart des langues européennes.&nbsp;
 Positionnez la variable d'environnement LANG pour interagir avec Edbrowse dans une autre langue.&nbsp;
 Les langues acceptées sont listées ci-dessous.&nbsp;
+Pour l'instant, nous nous sommes limités aux caractères ISO8859-1, c'est-à-dire les langues indo européennes.&nbsp;
 Si vous pouvez participer à cet effort, prière de me le faire savoir.
 
 <p>Anglais: LANG=en (c'est la langue par défaut)</p>
@@ -209,6 +210,8 @@ Si vous pouvez participer à cet effort, prière de me le faire savoir.
 avec la <a href="edbdoc_fr.html">documentation</a></p>
 <p>Portuguais brésilien: LANG=pt_br par
 <a href="mailto:clever92000@yahoo.com.br">Cleverson</a></p>
+
+<p>Les lettres accentuées sont affichées comme des caractères de 8 bits, c'est-à-dire ISO8859-1, sauf si la chaîne utf8 ou utf-8 est présente dans la variable $LANG, auquel cas les caractères non-ascii sont interprétés en utf8. LANG=fr_FR.UTF-8 est d'un usage fréquent en France.</p>
 
 <h3 align="center"> <a name="guide"> Guide de référence rapide </a> </h3>
 Liste de toutes les commandes d'ed et d'edbrowse.&nbsp;
@@ -780,7 +783,6 @@ Vous devez employer la commande « e » pour obtenir un nouveau tampon ASCII.&
 <p>
 Pour la plupart d'entre nous, il n'importe pas vraiment si les données sont considérées binaires ou ASCII.&nbsp;
 Dans l'un ou l'autre cas, vous pouvez afficher et éditer les données, et les sauvegarder dans un fichier.&nbsp;
-Either way you can display and edit the data, and write it to a file.
 </p>
 <p>
 Ce programme essaie « de se comporter correctement » sous DOS/Windows.&nbsp;
