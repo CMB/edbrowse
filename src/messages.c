@@ -1236,13 +1236,13 @@ static const char *frenchMessages[] = {
     "impossible de convertir le pdf en html : assurez-vous d'avoir pdftohtml installé, et essayez de le lancer sur %s",
     "seule la séquence `auth login' de sendmail est supportée jusqu'à présent",
     "Séquence smtp nom utilisateur/mot de passe interrompue <%s>",
-    "impossible de rÃ©pondre en mode rÃ©pertoire",
-    "impossible de rÃ©pondre en mode base de donnÃ©es",
-    "impossible de rÃ©pondre Ã  un fichier vide",
-    "impossible de rÃ©pondre Ã  un fichier binaire",
+    "impossible de répondre en mode répertoire",
+    "impossible de répondre en mode base de données",
+    "impossible de répondre à un fichier vide",
+    "impossible de répondre à un fichier binaire",
     "lignes 'subject' et 'reply' obligatoires",
-    "attention, pas d'identificateur ID de message pour le rÃ©fÃ©rencer",
-    "DÃ©solÃ©, pas d'en-tÃªtes de couurier.\nVous devez commencer avec un courrier non formatÃ©, le consulter, puis rÃ©pondre Ã  tous.",
+    "attention, pas d'identificateur ID de message pour le référencer",
+    "Désolé, pas d'en-têtes de couurier.\nVous devez commencer avec un courrier non formaté, le consulter, puis répondre à tous.",
 };
 
 /* Translation by Cleverson: clever92000@yahoo.com.br */
@@ -1881,10 +1881,13 @@ selectLanguage(void)
     if(strstrCI(s, "utf8") || strstrCI(s, "utf-8"))
 	is_utf8 = true;
 
+/* I thought I needed this; guess I don't, for now. */
+#if 0
     if(!setlocale(LC_CTYPE, "")) {
 	fprintf(stderr,
 	   "Can't set the specified locale.  Check LANG, LC_CTYPE, LC_ALL.\n");
     }
+#endif
 
     strncpy(buf, s, 7);
     buf[7] = 0;
@@ -1915,6 +1918,9 @@ getString(int msg)
 {
     const char **a = messageArray;
     const char *s;
+    char *t, c;
+    static char utfbuf[1000];
+
     if(msg >= messageArrayLength)
 	a = englishMessages;
     s = a[msg];
@@ -1922,7 +1928,22 @@ getString(int msg)
 	s = englishMessages[msg];
     if(!s)
 	s = "spurious message";
-    return s;
+
+    if(!is_utf8)
+	return s;
+
+/* We have to convert it. */
+    for(t = utfbuf; c = *s; ++s) {
+	if(c >= 0) {
+	    *t++ = c;
+	    continue;
+	}
+	*t++ = 0xc0 | ((uchar) c >> 6);
+	*t++ = 0x80 | (c & 0x3f);
+    }
+    *t = 0;
+
+    return utfbuf;
 }				/* getString */
 
 /*********************************************************************
