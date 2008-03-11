@@ -145,7 +145,7 @@ mailtimer = 180
 #  stockage des spams. C'est un fichier dans ma corbeille
 #  ainsi je suis sûr qu'il est nettoyé chaque semaine
 
-spamcan = /home/eklhad/.recycle/spamcan
+spamcan = /home/eklhad/.trash/spamcan
 
 # -----------------------------------------------------------------------
 

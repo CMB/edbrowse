@@ -361,7 +361,7 @@ db: set debug level [0-7]
 cd: change directory
 bl: break line into sentences and phrases
 dr: directory is readonly
-dw: directory is writable, and d moves files to your recycle bin
+dw: directory is writable, and d moves files to your trash bin
 dx: directory is writable, and d deletes files
 hf: show hidden files in directory listing (toggle)
 bd: binary detection on files (toggle)
@@ -1056,22 +1056,23 @@ there is no undo capability.&nbsp;
 When you make a change it is made.&nbsp;
 With this in mind, I borrowed a good idea from Microsoft, which, as you might expect, originated with Apple.&nbsp;
 The deleted file isn't actually deleted;
-it is moved to your recycle bin,
-located in $HOME/.recycle.&nbsp;
+it is moved to your trash bin,
+located in $HOME/.trash.&nbsp;
+(This is consistent with the Mac world.)&nbsp;
 So if you accidentally type ,d and remove all your files,
-you can recover them from your recycle bin.&nbsp;
+you can recover them from your trash bin.&nbsp;
 You may want to set up a cron job that removes
-all the files from your recycle bin once a week.&nbsp;
+all the files from your trash bin once a week.&nbsp;
 This directory is created mode 700, so nobody else can look at your deleted files.&nbsp;
 If you create this directory yourself, please make it 700.&nbsp;
-After all, some of your files might be private.
+After all, some of your deleted files might be private.
 
 <P>
 Because this operation is a move, rather than a true delete,
 there are a few restrictions based on your operating system.&nbsp;
 If your OS can move directories,
 this program will be able to delete a subdirectory as easily as a file.&nbsp;
-The entire subtree is moved to your recycle bin.&nbsp;
+The entire subtree is moved to your trash bin.&nbsp;
 Make sure your cleanup cron job is capable of removing directory trees, not just files.
 
 <P>
@@ -1081,7 +1082,7 @@ In this case you might want to issue the dx command,
 which makes directories writable, like dw, but actually deletes the files.&nbsp;
 You'll need this if you're trying to free up space on the disk.&nbsp;
 Note that symbolic links are always deleted;
-there isn't much point in moving a link to the recycle bin.
+there isn't much point in moving a link to the trash bin.
 
 <P>
 "What's the point of all this?" you may ask.&nbsp;
@@ -2830,7 +2831,7 @@ Other fields might hold phone/fax numbers, street address, etc.&nbsp;
 It's up to you.
 
 <P>
-spamcan = /home/eklhad/.recycle/save-spam
+spamcan = /home/eklhad/.trash/save-spam
 <P>
 There is no perfect spam filter.&nbsp;
 But I can't live without one,
