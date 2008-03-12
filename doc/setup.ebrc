@@ -327,8 +327,9 @@ export bookmarks=$ebbm
 so you can access your bookmarks from anywhere.
 I can also put an alias in your $shellfns file
 alias ebm='edbrowse \$bookmarks'
-so you can type in ebm and edet or access your bookmarks from anywhere."
-question="Would you like me to do this"
+so you can type in ebm and edet or access your bookmarks from anywhere.
+(You will need to log out and log back in for this alias to take effect.)"
+question="Would you like me to create this alias"
 defans=y
 responseyn
 bmvar=$answer
@@ -379,8 +380,9 @@ export adbook=$ebad
 so you can access your address book from anywhere.
 I can also put an alias in your $shellfns file
 alias eab='edbrowse \$adbook'
-so you can type in eab and edet or access your email addresses from anywhere."
-question="Would you like me to do this"
+so you can type in eab and edet or access your email addresses from anywhere.
+(You will need to log out and log back in for this alias to take effect.)"
+question="Would you like me to create this alias"
 defans=y
 responseyn
 advar=$answer
