@@ -1413,11 +1413,10 @@ andTranslate(const char *s, bool invisible)
 	    if(!r[1]) {		/* replace with a single character */
 		c = *r;
 		if(c & 0x80 && is_utf8) {
-		    int unicode[2];
 		    static char utfbuf[4];
-		    unicode[0] = (uchar) c;
-		    unicode[1] = 0;
-		    sprintf(utfbuf, "%ls", &unicode);
+		    utfbuf[0] = (0xc0 | ((uchar) c >> 6));
+		    utfbuf[1] = (0x80 | (c & 0x3f));
+		    utfbuf[2] = 0;
 		    r = utfbuf;
 		    goto putw;
 		}
