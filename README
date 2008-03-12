@@ -40,6 +40,11 @@ which you can read using your favorite editor.
 Of course we hope edbrowse will eventually become your
 favorite editor, whence you can browse the documentation directly.
 
+The doc directory also includes a sample config file, and a script to help you
+set up your own, customized config file.
+Run setup.ebrc and answer the questions.
+(This assumes you are using bash.)
+
 ------------------------------------------------------------
 
 Ok, I'm going to assume you've read the documentation.
