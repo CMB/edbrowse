@@ -1245,10 +1245,10 @@ static const char *frenchMessages[] = {
     "impossible de répondre à un fichier binaire",
     "lignes 'subject' et 'reply' obligatoires",
     "attention, pas d'identificateur ID de message pour le référencer",
-    "Désolé, pas d'en-têtes de couurier.\nVous devez commencer avec un courrier non formaté, le consulter, puis répondre à tous.",
-    0,
-    0,
-    0,
+    "Désolé, pas d'en-têtes de courrier.\nVous devez commencer avec un courrier non formaté, le consulter, puis répondre à tous.",
+    "l affiche tous les caractères de contrôle en hexadécimal",
+    "l affiche tous les caractères non-ascii et de contrôle en hexadécimal",
+    "les fonctions de recherche/remplacement ne fonctionnent pas avec des caractères utf8, cette fonctionnalité est absente de la librairie pcre",
 };
 
 /* Translation by Cleverson: clever92000@yahoo.com.br */
