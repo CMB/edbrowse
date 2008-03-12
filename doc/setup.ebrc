@@ -443,7 +443,7 @@ else
 echo "Ok, you can get a certificate file later."
 fi
 fi
-Echo "Later on, when you are logged in as root, you may want to move this
+echo "Later on, when you are logged in as root, you may want to move this
 to $lynxcert, so that your certificates can be shared among
 edbrowse, lynx, and other browsers."
 fi
