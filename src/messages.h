@@ -628,4 +628,5 @@ enum {
     MSG_ReNoInfo,
     MSG_ListControl,
     MSG_ListNA,
+    MSG_PcreUtf8,
 };

@@ -628,6 +628,7 @@ static const char *englishMessages[] = {
     "Sorry, email headers are not available.\nYou must start with an unformatted email message, browse, then reply all.",
     "l expands control chars into hex",
     "l expands control and nonascii chars into hex",
+    "search/substitution functions will not support utf8 characters, your pcre library lacks this functionality",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
@@ -1247,6 +1248,7 @@ static const char *frenchMessages[] = {
     "Désolé, pas d'en-têtes de couurier.\nVous devez commencer avec un courrier non formaté, le consulter, puis répondre à tous.",
     0,
     0,
+    0,
 };
 
 /* Translation by Cleverson: clever92000@yahoo.com.br */
@@ -1864,6 +1866,7 @@ static const char *brazilianPortugueseMessages[] = {
     "linhas subject e reply são obrigatórias",
     "aviso: não há ID da mensagem a referenciar",
     "Desculpe; o cabeçalho da carta não está disponível.\nComece com uma carta não formatada, escolha browse e depois reply all.",
+    0,
     0,
     0,
 };

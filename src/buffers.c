@@ -1783,6 +1783,31 @@ static int re_opt;
 static int re_vector[11 * 3];
 static pcre *re_cc;		/* compiled */
 
+static void
+pcre_optset(bool ci)
+{
+/* Do we need PCRE_NO_AUTO_CAPTURE? */
+    re_opt = 0;
+    if(ci)
+	re_opt |= PCRE_CASELESS;
+    if(is_utf8) {
+	static bool utf8warn = false;
+	int where;
+/* I tried calling pcre_config, but it makes my program blow up, literally.
+ * Maybe I should call pcre_version first, and if it is high enough,
+ * then call pcre_config.   IDK   */
+#if 0
+	pcre_config(PCRE_CONFIG_UTF8, &where);
+	if(where) {
+	    re_opt |= PCRE_UTF8;
+	} else if(!utf8warn) {
+	    i_puts(MSG_PcreUtf8);
+	    utf8warn = true;
+	}
+#endif
+    }
+}				/* pcre_optset */
+
 /* Get the start or end of a range.
  * Pass the line containing the address. */
 static bool
@@ -1825,11 +1850,7 @@ getRangePart(const char *line, int *lineno, const char **split)
 	}
 
 	/* second delimiter */
-	/* Earlier versions of pcre don't support this. */
-	/* re_opt = PCRE_NO_AUTO_CAPTURE; */
-	re_opt = 0;
-	if(ci)
-	    re_opt |= PCRE_CASELESS;
+	pcre_optset(ci);
 	re_cc = pcre_compile(re, re_opt, &re_error, &re_offset, 0);
 	if(!re_cc) {
 	    setError(MSG_RexpError, re_error);
@@ -1927,9 +1948,7 @@ doGlobal(const char *line)
 	t[6] = ' ';
 
 /* Find the lines that match the pattern. */
-    re_opt = 0;
-    if(ci)
-	re_opt |= PCRE_CASELESS;
+    pcre_optset(ci);
     re_cc = pcre_compile(re, re_opt, &re_error, &re_offset, 0);
     if(!re_cc) {
 	setError(MSG_RexpError, re_error);
@@ -2289,9 +2308,7 @@ substituteText(const char *line)
 	if(nth == 0 && !g_mode)
 	    nth = 1;
 
-	re_opt = 0;
-	if(ci)
-	    re_opt |= PCRE_CASELESS;
+	pcre_optset(ci);
 	re_cc = pcre_compile(lhs, re_opt, &re_error, &re_offset, 0);
 	if(!re_cc) {
 	    setError(MSG_RexpError, re_error);
