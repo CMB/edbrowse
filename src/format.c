@@ -1412,7 +1412,7 @@ andTranslate(const char *s, bool invisible)
 	    s += j;
 	    if(!r[1]) {		/* replace with a single character */
 		c = *r;
-		if(c & 0x80 && is_utf8) {
+		if(c & 0x80 && cons_utf8) {
 		    static char utfbuf[4];
 		    utfbuf[0] = (0xc0 | ((uchar) c >> 6));
 		    utfbuf[1] = (0x80 | (c & 0x3f));

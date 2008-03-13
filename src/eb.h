@@ -178,7 +178,7 @@ extern int debugLevel;		/* 0 to 9 */
 extern int webTimeout, mailTimeout;
 extern int browseLine;		/* line number, for error reporting */
 extern bool ismc;		/* Is the program running as a mail client? */
-extern bool is_utf8;		/* should we send error messages out as utf8? */
+extern bool cons_utf8;		/* does the console expect utf8? */
 extern bool zapMail;		/* just get rid of the mail */
 extern bool js_redirects;	/* window.location = new_url */
 extern uchar browseLocal;	/* browsing a local file */
@@ -321,6 +321,9 @@ struct ebWindow {
     bool binMode;		/* binary file */
     bool nlMode;		/* newline at the end */
     bool rnlMode;
+/* Two text modes; these are incompatible with binMode */
+    bool utf8Mode;
+    bool iso8859Mode;
     bool browseMode;		/* browsing html */
     bool changeMode;		/* something has changed in this file */
     bool dirMode;		/* directory mode */

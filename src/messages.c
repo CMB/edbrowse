@@ -1875,7 +1875,7 @@ static const char *brazilianPortugueseMessages[] = {
 static const char **messageArray = englishMessages;
 static int messageArrayLength = sizeof (englishMessages) / sizeof (char *);
 
-bool is_utf8;
+bool cons_utf8;
 
 void
 selectLanguage(void)
@@ -1888,7 +1888,7 @@ selectLanguage(void)
 	return;
 
     if(strstrCI(s, "utf8") || strstrCI(s, "utf-8"))
-	is_utf8 = true;
+	cons_utf8 = true;
 
 /* I thought I needed this; guess I don't, for now. */
 #if 0
@@ -1938,7 +1938,7 @@ getString(int msg)
     if(!s)
 	s = "spurious message";
 
-    if(!is_utf8)
+    if(!cons_utf8)
 	return s;
 
 /* We have to convert it. */

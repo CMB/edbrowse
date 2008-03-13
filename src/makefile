@@ -4,13 +4,20 @@
 #  Note, some have reported seg-faults with this program when -O is used.
 #  This is a problem with gcc version 2.95 or less.
 #  Since performance is not critical here, I leave it out.
-#
+
 #  The -I flags assume smjs is installed in /usr/local
 #  You may also need -I/usr/include/pcre or -I/usr/local/include/pcre
-#
+
 #  If smjs comes compiled on your distribution,
 #  you may need -DMOZILLA_1_8_BRANCH
 #  This issue has cropped up on certain flavors of debian.
+
+#  Set -DPCREUTF8 if your pcre library has utf8 capabilities,
+#  and your console expects utf8 (check $LANG).
+#  This will allow . in a regular expression to stand for
+#  one accented letter, even if that letter is represented by two bytes.
+#  But not all pcre packages have this feature, and the program blows
+#  up if you try to use it, and it isn't there.
 
 #  Allow for symbolic debugging.
 DEBUGFLAGS=-g -ggdb
