@@ -1648,7 +1648,7 @@ looks_utf8_8859(const char *buf, int buflen, bool * iso_p, bool * utf8_p)
 	if(((uchar) buf[i + 1] & 0xc0) != 0x80)
 	    goto isogo;
 	c <<= 2;
-	for(j = i + 2; c < 0; ++j)
+	for(j = i + 2; c < 0; ++j, c <<= 1)
 	    if(((uchar) buf[j] & 0xc0) != 0x80)
 		goto isogo;
 	++utfcount;
