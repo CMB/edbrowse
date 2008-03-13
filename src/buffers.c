@@ -1022,24 +1022,6 @@ joinText(void)
     return true;
 }				/* joinText */
 
-/* We got some data, from a file or from the internet.
- * Count the binary characters and decide if this is, on the whole,
- * binary or text.  I allow some nonascii chars,
- * like you might see in Spanish or German, and still call it text,
- * but if there's too many such chars, I call it binary.
- * It's not an exact science. */
-static bool
-looksBinary(const char *buf, int buflen)
-{
-    int i, bincount = 0;
-    for(i = 0; i < buflen; ++i) {
-	char c = buf[i];
-	if(c <= 0)
-	    ++bincount;
-    }
-    return (bincount * 4 - 10 >= buflen);
-}				/* looksBinary */
-
 /* Read a file, or url, into the current buffer.
  * Post/get data is passed, via the second parameter, if it's a URL. */
 bool
@@ -1049,6 +1031,7 @@ readFile(const char *filename, const char *post)
     int readSize;		/* should agree with fileSize */
     int fh;			/* file handle */
     bool rc;			/* return code */
+    bool is8859, isutf8;
     char *nopound;
 
     serverData = 0;
@@ -1231,6 +1214,10 @@ readFile(const char *filename, const char *post)
 	}
 	fileSize = j;
 #endif
+/* Classify this incoming text as ascii or 8859 or utf8 */
+	looks_utf8_8859(rbuf, fileSize, &is8859, &isutf8);
+	debugPrint(3, "text type is %s",
+	   (isutf8 ? "utf8" : (is8859 ? "8859" : "ascii")));
     } else if(binaryDetect & !cw->binMode) {
 	i_puts(MSG_BinaryData);
 	cw->binMode = true;

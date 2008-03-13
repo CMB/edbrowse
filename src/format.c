@@ -1605,3 +1605,64 @@ cutDuplicateEmails(char *tolist, char *cclist, const char *reply)
 	}
     }
 }				/* cutDuplicateEmails */
+
+/*********************************************************************
+We got some data, from a file or from the internet.
+Count the binary characters and decide if this is, on the whole,
+binary or text.  I allow some nonascii chars,
+like you might see in Spanish or German, and still call it text,
+but if there's too many such chars, I call it binary.
+It's not an exact science.
+*********************************************************************/
+
+bool
+looksBinary(const char *buf, int buflen)
+{
+    int i, bincount = 0;
+    for(i = 0; i < buflen; ++i) {
+	char c = buf[i];
+	if(c <= 0)
+	    ++bincount;
+    }
+    return (bincount * 4 - 10 >= buflen);
+}				/* looksBinary */
+
+void
+looks_utf8_8859(const char *buf, int buflen, bool * iso_p, bool * utf8_p)
+{
+    int utfcount = 0, isocount = 0;
+    int i, j, bothcount;
+
+    for(i = 0; i < buflen; ++i) {
+	char c = buf[i];
+	if(c >= 0)
+	    continue;
+/* This is the start of the nonascii sequence. */
+/* No second bit, it has to be iso. */
+	if(!(c & 0x40)) {
+	  isogo:
+	    ++isocount;
+	    continue;
+	}
+/* Next byte has to start with 10 to be utf8, else it's iso */
+	if(((uchar) buf[i + 1] & 0xc0) != 0x80)
+	    goto isogo;
+	c <<= 2;
+	for(j = i + 2; c < 0; ++j)
+	    if(((uchar) buf[j] & 0xc0) != 0x80)
+		goto isogo;
+	++utfcount;
+	i = j - 1;
+    }
+
+    *iso_p = *utf8_p = false;
+
+    bothcount = isocount + utfcount;
+    if(!bothcount)
+	return;			/* ascii */
+    bothcount *= 6;
+    if(utfcount * 7 >= bothcount)
+	*utf8_p = true;
+    if(isocount * 7 >= bothcount)
+	*iso_p = true;
+}				/* looks_utf8_8859 */

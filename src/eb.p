@@ -144,6 +144,8 @@ char * htmlReformat(const char *buf) ;
 char * andTranslate(const char *s, bool invisible) ;
 void extractEmailAddresses(char *line) ;
 void cutDuplicateEmails(char *tolist, char *cclist, const char *reply) ;
+bool looksBinary(const char *buf, int buflen) ;
+void looks_utf8_8859(const char *buf, int buflen, bool *iso_p, bool *utf8_p) ;
 
 /* sourcefile=cookies.c */
 bool domainSecurityCheck(const char *server, const char *domain) ;
