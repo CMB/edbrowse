@@ -330,7 +330,9 @@ These are the only charsets that are currently supported.&nbsp;
 Similarly, the contents of a buffer, be it a local document or an internet website,
 are displayed as 8-bit bytes or two-byte sequences,
 according to your locale.&nbsp;
-If the file is read into edbrowse, and it is currently in the "other" charset,
+If a file is read into edbrowse,
+i.e. read into an empty buffer,
+and it is currently in the "other" charset,
 it is converted on the fly, before you ever see it.&nbsp;
 Thus it will look normal to you.&nbsp;
 If I did everything right, you shouldn't notice any difference.

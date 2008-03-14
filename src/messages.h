@@ -629,4 +629,6 @@ enum {
     MSG_ListControl,
     MSG_ListNA,
     MSG_PcreUtf8,
+    MSG_Conv8859,
+    MSG_ConvUtf8,
 };
