@@ -1253,10 +1253,10 @@ static const char *frenchMessages[] = {
     "l affiche tous les caractères de contrôle en hexadécimal",
     "l affiche tous les caractères non-ascii et de contrôle en hexadécimal",
     "les fonctions de recherche/remplacement ne fonctionnent pas avec des caractères utf8, cette fonctionnalité est absente de la librairie pcre",
-    0,
-    0,
-    0,
-    0,
+    "converti en utf8",
+    "converti en iso8859",
+    "ne convertissez pas de iso8859 vers utf8",
+    "automatiquement converti de iso8859 en utf8",
 };
 
 /* Translation by Cleverson: clever92000@yahoo.com.br */
