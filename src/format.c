@@ -1666,3 +1666,93 @@ looks_utf8_8859(const char *buf, int buflen, bool * iso_p, bool * utf8_p)
     if(isocount * 7 >= bothcount)
 	*iso_p = true;
 }				/* looks_utf8_8859 */
+
+/*********************************************************************
+Convert a string from iso 8859 to utf8, or vice versa.
+In each case a new string is allocated.
+Don't forget to free it when you're done.
+*********************************************************************/
+
+void
+iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
+{
+    int i, j;
+    int nacount = 0;
+    char c;
+    char *outbuf;
+
+    if(!inbuflen) {
+	*outbuf_p = EMPTYSTRING;
+	*outbuflen_p = 0;
+	return;
+    }
+
+/* count chars, so we can allocate */
+    for(i = 0; i < inbuflen; ++i) {
+	c = inbuf[i];
+	if(c < 0)
+	    ++nacount;
+    }
+
+    outbuf = allocMem(inbuflen + nacount + 1);
+    for(i = j = 0; i < inbuflen; ++i) {
+	c = inbuf[i];
+	if(c >= 0) {
+	    outbuf[j++] = c;
+	    continue;
+	}
+	outbuf[j++] = ((uchar) c >> 6) | 0xc0;
+	outbuf[j++] = (c & 0x3f) | 0x80;
+    }
+    outbuf[j] = 0;		/* just for fun */
+
+    *outbuf_p = outbuf;
+    *outbuflen_p = j;
+}				/* iso2utf */
+
+void
+utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
+{
+    int i, j;
+    char c;
+    char *outbuf;
+
+    if(!inbuflen) {
+	*outbuf_p = EMPTYSTRING;
+	*outbuflen_p = 0;
+	return;
+    }
+
+    outbuf = allocMem(inbuflen + 1);
+    for(i = j = 0; i < inbuflen; ++i) {
+	c = inbuf[i];
+
+/* regular chars and nonascii chars that aren't utf8 pass through. */
+/* There shouldn't be any of the latter */
+	if(((uchar) c & 0xc0) != 0xc0) {
+	    outbuf[j++] = c;
+	    continue;
+	}
+
+/* Convertable into 8 bit */
+	if(((uchar) c & 0xfc) == 0xc0 && ((uchar) inbuf[i + 1] & 0xc0) == 0x80) {
+	    outbuf[j++] = ((uchar) c << 6) | (inbuf[i + 1] & 0x3f);
+	    ++i;
+	    continue;
+	}
+
+/* Higher unicodes, more than 2 bytes, are converted into 0x80 */
+	c <<= 1;
+	++i;
+	for(++i; c < 0; ++i, c <<= 1) {
+	    if(((uchar) outbuf[i] & 0xc0) != 0x80)
+		break;
+	}
+	outbuf[j++] = 0x80;
+	--i;
+    }
+    outbuf[j] = 0;		/* just for fun */
+
+    *outbuf_p = outbuf;
+    *outbuflen_p = j;
+}				/* utf2iso */

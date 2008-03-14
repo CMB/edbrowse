@@ -1203,6 +1203,7 @@ readFile(const char *filename, const char *post)
   gotdata:
 
     if(!looksBinary(rbuf, fileSize)) {
+	char *tbuf;
 /* looks like text.  In DOS, we should have compressed crlf.
  * Let's do that now. */
 #ifdef DOSLIKE
@@ -1218,6 +1219,24 @@ readFile(const char *filename, const char *post)
 	looks_utf8_8859(rbuf, fileSize, &is8859, &isutf8);
 	debugPrint(3, "text type is %s",
 	   (isutf8 ? "utf8" : (is8859 ? "8859" : "ascii")));
+	if(cons_utf8 && is8859) {
+	    debugPrint(2, "converting to utf8");
+	    iso2utf(rbuf, fileSize, &tbuf, &fileSize);
+	    nzFree(rbuf);
+	    rbuf = tbuf;
+	}
+	if(!cons_utf8 && isutf8) {
+	    utf2iso(rbuf, fileSize, &tbuf, &fileSize);
+	    debugPrint(2, "converting to iso8859");
+	    nzFree(rbuf);
+	    rbuf = tbuf;
+	}
+	if(cmd == 'e' || cmd == 'b') {
+	    if(isutf8)
+		cw->utf8Mode = true;
+	    if(is8859)
+		cw->iso8859Mode = true;
+	}
     } else if(binaryDetect & !cw->binMode) {
 	i_puts(MSG_BinaryData);
 	cw->binMode = true;
@@ -1236,63 +1255,116 @@ static bool
 writeFile(const char *name, int mode)
 {
     int i, fh;
+
     if(memEqualCI(name, "file://", 7))
 	name += 7;
+
     if(!*name) {
 	setError(MSG_MissingFileName);
 	return false;
     }
+
     if(isURL(name)) {
 	setError(MSG_NoWriteURL);
 	return false;
     }
+
     if(isSQL(name)) {
 	setError(MSG_WriteDB);
 	return false;
     }
+
     if(!cw->dol) {
 	setError(MSG_WriteEmpty);
 	return false;
     }
+
 /* mode should be TRUNC or APPEND */
     mode |= O_WRONLY | O_CREAT;
     if(cw->binMode)
 	mode |= O_BINARY;
+
     fh = open(name, mode, 0666);
     if(fh < 0) {
 	setError(MSG_NoCreate2, name);
 	return false;
     }
+
+    if(name == cw->fileName) {
+/* should we locale convert back? */
+	if(cw->iso8859Mode && cons_utf8)
+	    debugPrint(2, "converting to iso8859");
+	if(cw->utf8Mode && !cons_utf8)
+	    debugPrint(2, "converting to utf8");
+    }
+
     fileSize = 0;
     for(i = startRange; i <= endRange; ++i) {
 	pst p = fetchLine(i, (cw->browseMode ? 1 : -1));
 	int len = pstLength(p);
 	char *suf = dirSuffix(i);
+	char *tp;
+	int tlen;
+	bool alloc_p = cw->browseMode;
+	bool rc = true;
+
 	if(!suf[0]) {
 	    if(i == cw->dol && cw->nlMode)
 		--len;
-	    if(write(fh, p, len) < len) {
-	      badwrite:
-		setError(MSG_NoWrite2, name);
-		close(fh);
-		return false;
+
+	    if(name == cw->fileName) {
+		if(cw->iso8859Mode && cons_utf8) {
+		    utf2iso((char *)p, len, &tp, &tlen);
+		    if(alloc_p)
+			free(p);
+		    alloc_p = true;
+		    p = tp;
+		    if(write(fh, p, tlen) < tlen)
+			rc = false;
+		    goto endline;
+		}
+
+		if(cw->utf8Mode && !cons_utf8) {
+		    iso2utf((char *)p, len, &tp, &tlen);
+		    if(alloc_p)
+			free(p);
+		    alloc_p = true;
+		    p = tp;
+		    if(write(fh, p, tlen) < tlen)
+			rc = false;
+		    goto endline;
+		}
 	    }
-	    fileSize += len;
-	} else {
-/* must write this line with the suffix on the end */
-	    --len;
+
 	    if(write(fh, p, len) < len)
-		goto badwrite;
-	    fileSize += len;
-	    strcat(suf, "\n");
-	    len = strlen(suf);
-	    if(write(fh, suf, len) < len)
-		goto badwrite;
-	    fileSize += len;
+		rc = false;
+	    goto endline;
 	}
-	if(cw->browseMode)
+
+/* must write this line with the suffix on the end */
+	--len;
+	if(write(fh, p, len) < len) {
+	  badwrite:
+	    rc = false;
+	    goto endline;
+	}
+	fileSize += len;
+	strcat(suf, "\n");
+	len = strlen(suf);
+	if(write(fh, suf, len) < len)
+	    goto badwrite;
+
+      endline:
+	if(alloc_p)
 	    free(p);
+	if(!rc) {
+	    setError(MSG_NoWrite2, name);
+	    close(fh);
+	    return false;
+	}
+	fileSize += len;
     }				/* loop over lines */
+
     close(fh);
 /* This is not an undoable operation, nor does it change data.
  * In fact the data is "no longer modified" if we have written all of it. */
@@ -4488,6 +4560,8 @@ browseCurrentBuffer(void)
 /* expand pdf using pdftohtml */
 /* http://rpmfind.net/linux/RPM/suse/updates/10.0/i386/rpm/i586/pdftohtml-0.36-130.9.i586.html */
     if(bmode == 3) {
+	bool is8859, isutf8;
+	char *tbuf;
 	char *cmd;
 	int fh =
 	   open(edbrowseTempPDF, O_CREAT | O_TRUNC | O_WRONLY | O_BINARY, 0666);
@@ -4517,6 +4591,19 @@ browseCurrentBuffer(void)
 	rc = fileIntoMemory(edbrowseTempHTML, &rawbuf, &rawsize);
 	if(!rc)
 	    return false;
+	looks_utf8_8859(rawbuf, rawsize, &is8859, &isutf8);
+	if(cons_utf8 && is8859) {
+	    debugPrint(2, "converting to utf8");
+	    iso2utf(rawbuf, rawsize, &tbuf, &rawsize);
+	    nzFree(rawbuf);
+	    rawbuf = tbuf;
+	}
+	if(!cons_utf8 && isutf8) {
+	    utf2iso(rawbuf, rawsize, &tbuf, &rawsize);
+	    debugPrint(2, "converting to iso8859");
+	    nzFree(rawbuf);
+	    rawbuf = tbuf;
+	}
 	bmode = 2;
     }
 
