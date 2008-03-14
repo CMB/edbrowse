@@ -1,5 +1,11 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.3.4:
+Convert between iso8859-1 and utf8 on the fly, according to the contents
+of the file and the value of $LANG.
+This takes place automatically as files are read and written;
+the user shouldn't notice a thing.
+
 3.3.3:
 New reply feature, maintains the thread for discussion lists.
 Move docs to a doc directory, and source to an src directory.
