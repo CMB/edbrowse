@@ -631,6 +631,8 @@ static const char *englishMessages[] = {
     "search/substitution functions will not support utf8 characters, your pcre library lacks this functionality",
     "converting to iso8859",
     "converting to utf8",
+    "do not convert between iso8859 and utf8",
+    "automatically convert between iso8859 and utf8",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
@@ -1251,6 +1253,8 @@ static const char *frenchMessages[] = {
     "l affiche tous les caractères de contrôle en hexadécimal",
     "l affiche tous les caractères non-ascii et de contrôle en hexadécimal",
     "les fonctions de recherche/remplacement ne fonctionnent pas avec des caractères utf8, cette fonctionnalité est absente de la librairie pcre",
+    0,
+    0,
     0,
     0,
 };
@@ -1875,13 +1879,15 @@ static const char *brazilianPortugueseMessages[] = {
     0,
     0,
     0,
+    0,
+    0,
 };
 
 /* English by default */
 static const char **messageArray = englishMessages;
 static int messageArrayLength = sizeof (englishMessages) / sizeof (char *);
 
-bool cons_utf8;
+bool cons_utf8, iuconv = true;
 
 void
 selectLanguage(void)
@@ -2108,11 +2114,9 @@ There may be a way to set locale in libpcre; I don't know.
 Anyways, here are the nonascii letters, upper and lower.
 *********************************************************************/
 
-static const char upperMore[] =
-   "©ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞßÿ";
+static const char upperMore[] = "©ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞßÿ";
 
-static const char lowerMore[] =
-   "©àáâãäåæçèéêëìíîïğñòóôõöøùúûüışßÿ";
+static const char lowerMore[] = "©àáâãäåæçèéêëìíîïğñòóôõöøùúûüışßÿ";
 
 static const char letterMore[] =
    "©ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞ©àáâãäåæçèéêëìíîïğñòóôõöøùúûüışßÿ";

@@ -1215,32 +1215,34 @@ readFile(const char *filename, const char *post)
 	}
 	fileSize = j;
 #endif
+	if(iuconv) {
 /* Classify this incoming text as ascii or 8859 or utf8 */
-	looks_utf8_8859(rbuf, fileSize, &is8859, &isutf8);
-	debugPrint(3, "text type is %s",
-	   (isutf8 ? "utf8" : (is8859 ? "8859" : "ascii")));
-	if(cons_utf8 && is8859) {
-	    if(debugLevel >= 1)
-		i_puts(MSG_ConvUtf8);
-	    iso2utf(rbuf, fileSize, &tbuf, &fileSize);
-	    nzFree(rbuf);
-	    rbuf = tbuf;
-	}
-	if(!cons_utf8 && isutf8) {
-	    if(debugLevel >= 1)
-		i_puts(MSG_Conv8859);
-	    utf2iso(rbuf, fileSize, &tbuf, &fileSize);
-	    nzFree(rbuf);
-	    rbuf = tbuf;
-	}
-	if(!cw->dol) {
-	    if(isutf8) {
-		cw->utf8Mode = true;
-		debugPrint(3, "setting utf8 mode");
+	    looks_utf8_8859(rbuf, fileSize, &is8859, &isutf8);
+	    debugPrint(3, "text type is %s",
+	       (isutf8 ? "utf8" : (is8859 ? "8859" : "ascii")));
+	    if(cons_utf8 && is8859) {
+		if(debugLevel >= 1)
+		    i_puts(MSG_ConvUtf8);
+		iso2utf(rbuf, fileSize, &tbuf, &fileSize);
+		nzFree(rbuf);
+		rbuf = tbuf;
 	    }
-	    if(is8859) {
-		cw->iso8859Mode = true;
-		debugPrint(3, "setting 8859 mode");
+	    if(!cons_utf8 && isutf8) {
+		if(debugLevel >= 1)
+		    i_puts(MSG_Conv8859);
+		utf2iso(rbuf, fileSize, &tbuf, &fileSize);
+		nzFree(rbuf);
+		rbuf = tbuf;
+	    }
+	    if(!cw->dol) {
+		if(isutf8) {
+		    cw->utf8Mode = true;
+		    debugPrint(3, "setting utf8 mode");
+		}
+		if(is8859) {
+		    cw->iso8859Mode = true;
+		    debugPrint(3, "setting 8859 mode");
+		}
 	    }
 	}
     } else if(binaryDetect & !cw->binMode) {
@@ -1296,7 +1298,7 @@ writeFile(const char *name, int mode)
 	return false;
     }
 
-    if(name == cw->fileName) {
+    if(name == cw->fileName && iuconv) {
 /* should we locale convert back? */
 	if(cw->iso8859Mode && cons_utf8)
 	    if(debugLevel >= 1)
@@ -1320,7 +1322,7 @@ writeFile(const char *name, int mode)
 	    if(i == cw->dol && cw->nlMode)
 		--len;
 
-	    if(name == cw->fileName) {
+	    if(name == cw->fileName && iuconv) {
 		if(cw->iso8859Mode && cons_utf8) {
 		    utf2iso((char *)p, len, &tp, &tlen);
 		    if(alloc_p)
@@ -2930,6 +2932,13 @@ twoLetter(const char *line, const char **runThis)
 	allowRedirection ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(allowRedirection + MSG_RedirectionOff);
+	return true;
+    }
+
+    if(stringEqual(line, "iu")) {
+	iuconv ^= 1;
+	if(helpMessagesOn || debugLevel >= 1)
+	    i_puts(iuconv + MSG_IUConvertOff);
 	return true;
     }
 
@@ -4599,18 +4608,20 @@ browseCurrentBuffer(void)
 	rc = fileIntoMemory(edbrowseTempHTML, &rawbuf, &rawsize);
 	if(!rc)
 	    return false;
-	looks_utf8_8859(rawbuf, rawsize, &is8859, &isutf8);
-	if(cons_utf8 && is8859) {
-	    debugPrint(3, "converting to utf8");
-	    iso2utf(rawbuf, rawsize, &tbuf, &rawsize);
-	    nzFree(rawbuf);
-	    rawbuf = tbuf;
-	}
-	if(!cons_utf8 && isutf8) {
-	    utf2iso(rawbuf, rawsize, &tbuf, &rawsize);
-	    debugPrint(3, "converting to iso8859");
-	    nzFree(rawbuf);
-	    rawbuf = tbuf;
+	if(iuconv) {
+	    looks_utf8_8859(rawbuf, rawsize, &is8859, &isutf8);
+	    if(cons_utf8 && is8859) {
+		debugPrint(3, "converting to utf8");
+		iso2utf(rawbuf, rawsize, &tbuf, &rawsize);
+		nzFree(rawbuf);
+		rawbuf = tbuf;
+	    }
+	    if(!cons_utf8 && isutf8) {
+		utf2iso(rawbuf, rawsize, &tbuf, &rawsize);
+		debugPrint(3, "converting to iso8859");
+		nzFree(rawbuf);
+		rawbuf = tbuf;
+	    }
 	}
 	bmode = 2;
     }
