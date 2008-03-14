@@ -846,6 +846,7 @@ fi
 echo "#  autosetup 6"
 ) >> $ebcf
 
+level=6
 fi
 
 if [ $level = 6 ]
