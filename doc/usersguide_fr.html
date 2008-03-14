@@ -198,12 +198,16 @@ Une expérience des navigateurs d'Internet et de la terminologie associée est �
 
 <h3 align=center> <a name=lang> Autres langues </a> </h3>
 
-Les sorties et messages d'erreur ont été "internationalisés", 
+<p>D'abord, quelques mots sur les jeux de caractères. L'anglais est facilement géré par un flot d'octets, une lettre par octet. De plus, chaque lettre tient sur 7 bits; le huitième bit, non utilisé, est mis à 0. Cependant, les <A HREF=http://en.wikipedia.org/wiki/Indo-European_languages>langages indo-européens</A> comportent plus de caractères, comme ñ (espagnol), è (français), et ö (allemand). Ceux-ci peuvent tenir sur un octet, en mettant le 8ème bit à 1, selon le standard <A HREF="http://fr.wikipedia.org/wiki/Iso_8859-1">ISO8859-1</A>. Néanmoins, un autre standard arrive, au moins dans le monde Unix/Linux. Ce jeu de caractères, connu sous le nom de UTF-8, code les caractères européens en séquences de deux octets. Ainsi, dans votre ordinateur, ñ est représenté par un ou deux octets. C'est transparent pour vous; vous voyez la même lettre sur l'écran, et vous entendez le même son (si votre lecteur d'écran envoie ces lettres à votre synthétiseur). Une façon simple de savoir sur quel système vous êtes est de faire "echo $LANG". Si la réponse contient la chaîne utf8, ou utf-8, en minuscules ou majuscules, votre console utilise utf8, et attend des séquences de 2 octets. Vos fichiers contiendront ces séquences, sans que vous en soyez (probablement) informé.</p>
+
+<p>Il y aurait beaucoup plus à dire sur les jeux de caractères : ceci est juste une brève introduction au sujet. Je n'ai pas besoin d'aller plus loin, parce que Edbrowse ne supporte actuellement que ces deux systèmes . Le chinois, par exemple, requiert des séquences de 3 ou 4 octets, intégrées dans unicode. Edbrowse, pour l'heure, ne peut gérer ce niveau de complexité.</p>
+
+<p>Les sorties et messages d'erreur ont été "internationalisés", 
 afin que Edbrowse accepte la plupart des langues européennes.&nbsp;
 Positionnez la variable d'environnement LANG pour interagir avec Edbrowse dans une autre langue.&nbsp;
 Les langues acceptées sont listées ci-dessous.&nbsp;
 Pour l'instant, nous nous sommes limités aux caractères ISO8859-1, c'est-à-dire les langues indo européennes.&nbsp;
-Si vous pouvez participer à cet effort, prière de me le faire savoir.
+Si vous pouvez participer à cet effort, prière de me le faire savoir.</p>
 
 <p>Anglais: LANG=en (c'est la langue par défaut)</p>
 <p>Français: LANG=fr par <a href="mailto:erwinb@no-log.org">Erwin Bliesenick</a>
@@ -211,7 +215,11 @@ avec la <a href="edbdoc_fr.html">documentation</a></p>
 <p>Portuguais brésilien: LANG=pt_br par
 <a href="mailto:clever92000@yahoo.com.br">Cleverson</a></p>
 
-<p>Les lettres accentuées sont affichées comme des caractères de 8 bits, c'est-à-dire ISO8859-1, sauf si la chaîne utf8 ou utf-8 est présente dans la variable $LANG, auquel cas les caractères non-ascii sont interprétés en utf8. LANG=fr_FR.UTF-8 est d'un usage fréquent en France.</p>
+<p>Quand un message d'erreur est affiché, les lettres accentuées sont affichées comme des octets de 8 bits, c'est-à-dire en ISO8859-1, à moins que la chaîne utf8 ou utf-8 soit présente dans $LANG, auquel cas les caractères non-ascii sont générés en utf8. LANG=fr_FR.UTF-8 est un réglage commun en France. Seuls ces jeux de caractères sont actuellement supportés. De même, le contenu d'un tampon, qu'il soit un fichier local ou un site internet, est affiché en séquences de 8 bits ou en séquences de 2 octets, conformément à votre environnement local. Si Edbrowse lit un fichier, c'est-à-dire qu'il le charge dans un tampon vide, et qu'il soit codé dans "l'autre" jeu de caractères, il est converti à la volée, bien avant que vous vous en aperceviez. Ainsi, il aura l'air normal. Si j'ai tout fait correctement, vous ne verrez aucune différence. (Utilisez la commande iu pour désactiver cette fonctionnalité.</p>
+
+<p>Quand vous sauvegardez vos données dans le même fichier, c'est-à-dire si vous fait quelques ajouts ou modifications, je reconvertis le fichier dans son jeu de caractères original. Ainsi, vous pouvez renvoyer le fichier modifié à votre correspondant, et ce fichier sera dans son jeu de caractères, comme il l'escompte. Cependant, si vous sauvegardez vos données, ou une partie de vos donnés, sous un nouveau nom de fichier, je resterais dans le jeu de carctères utilisé par votre ordinateur.</p>
+
+<p>Ces conversions ne devraient jamais intervenir sur des fichiers zip, ou des exécutables, ou d'autres types de données binaires. Si vous voyez les mots "conversion en iso8859" ou "conversion en utf8", il y a un problème. N'essayez pas de lancer l'exécutable converti; cela ne marchera pas.</p>
 
 <h3 align="center"> <a name="guide"> Guide de référence rapide </a> </h3>
 Liste de toutes les commandes d'ed et d'edbrowse.&nbsp;
