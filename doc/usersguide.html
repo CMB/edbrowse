@@ -346,6 +346,16 @@ and it will be in his charset, as he expects.&nbsp;
 However, if you write the data, or any portion of that data, to any other file,
 I will leave it in the charset that is used by your computer.
 
+<P>
+These conversions should never take place on zip files, or executable files,
+or other forms of binary data.&nbsp;
+If you see the words
+"converting to iso8859"
+or "converting to utf8",
+and the file is something other than international text,
+we have a problem.&nbsp;
+Don't try to run the converted executable; it won't work.
+
 <H3 align=center> <A NAME=guide> Quick Reference Guide </A> </H3>
 
 Here are the ed and edbrowse commands, all in one place.&nbsp;
