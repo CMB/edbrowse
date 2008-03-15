@@ -731,7 +731,7 @@ altText(const char *base)
     if(recount >= 2)
 	return 0;
     strncpy(buf, base, sizeof (buf) - 1);
-    spaceCrunch(buf, true, true);
+    spaceCrunch(buf, true, false);
     len = strlen(buf);
     if(len && !isalnumByte(buf[len - 1]))
 	buf[--len] = 0;

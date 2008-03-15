@@ -1328,7 +1328,7 @@ encodeTags(char *html)
 			    *y = ' ';
 		    browseError(MSG_OptionComma);
 		}
-		spaceCrunch(a, true, true);
+		spaceCrunch(a, true, false);
 		*ptr = a;
 
 		if(currentTitle) {
