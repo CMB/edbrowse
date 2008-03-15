@@ -1859,21 +1859,11 @@ pcre_optset(bool ci)
     re_opt = 0;
     if(ci)
 	re_opt |= PCRE_CASELESS;
-    if(cons_utf8) {
-	static bool utf8warn = false;
-	int where;
-/* I tried calling pcre_config, but it makes my program blow up, literally.
- * Maybe I should call pcre_version first, and if it is high enough,
- * then call pcre_config.   IDK   */
-#ifdef PCREUTF8
-	pcre_config(PCRE_CONFIG_UTF8, &where);
-	if(where) {
+    if(cons_utf8 && !cw->binMode) {
+	const char *s = getenv("PCREUTF8");
+	if(s && *s) {
 	    re_opt |= PCRE_UTF8;
-	} else if(!utf8warn) {
-	    i_puts(MSG_PcreUtf8);
-	    utf8warn = true;
 	}
-#endif
     }
 }				/* pcre_optset */
 

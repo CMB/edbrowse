@@ -12,13 +12,6 @@
 #  you may need -DMOZILLA_1_8_BRANCH
 #  This issue has cropped up on certain flavors of debian.
 
-#  Set -DPCREUTF8 if your pcre library has utf8 capabilities,
-#  and your console expects utf8 (check $LANG).
-#  This will allow . in a regular expression to stand for
-#  one accented letter, even if that letter is represented by two bytes.
-#  But not all pcre packages have this feature, and the program blows
-#  up if you try to use it, and it isn't there.
-
 #  Allow for symbolic debugging.
 DEBUGFLAGS=-g -ggdb
 STRIP=

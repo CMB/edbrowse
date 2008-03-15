@@ -282,7 +282,7 @@ known as
 <A HREF=http://en.wikipedia.org/wiki/Utf8>
 utf8</A>,
 packs the same European letters into two-byte sequences.&nbsp;
-Thus, within your computer, &ntilde; is represented by one or two bytes.&nbsp;
+Thus, within your computer, &ntilde; is represented by either one or two bytes.&nbsp;
 This is transparent to you; you see the same letter on the screen,
 and you hear the same sounds (if your screen reader passes these letters to a speech synthesizer).&nbsp;
 A quick way to tell which system you are on is to echo $LANG.&nbsp;
@@ -303,6 +303,7 @@ such as "search string not found",
 have been internationalized,
 so that edbrowse can support most European languages.&nbsp;
 Set the environment variable LANG to interact with edbrowse in your home language.&nbsp;
+(It's probably already set.)&nbsp;
 Supported languages are shown below.&nbsp;
 At present we are restricted to ISO8859-1 characters,
 facilitating many (though by no means all) of the indo-european languages,
@@ -360,6 +361,27 @@ or "converting to utf8",
 and the file is something other than international text,
 we have a problem.&nbsp;
 Don't try to run the converted executable; it won't work.
+
+<P>
+If your world is utf8, the search function can lead to some confusion.&nbsp;
+Consider the Spanish word ni&ntilde;o, for a boy child.&nbsp;
+If you search for ni.o, you may not find this line of text.&nbsp;
+The dot stands for one character, and should match &ntilde;, but this accented letter takes up two bytes.&nbsp;
+Ironically, you have to search for ni..o, and you will find what you are looking for.&nbsp;
+Needless to say, this is very confusing.
+
+<P>
+Search and substitute is performed by the pcre library,
+and fortunately for us, the latest version supports utf8.&nbsp;
+In other words, I can pass pcre an option that tells it to treat certain two-byte sequences as single letters,
+and it will behave the way you want it to.&nbsp;
+Unfortunately, most pcre packages do not have this capability built in,
+and if you try to use it, and it isn't there, searches simply don't work.&nbsp;
+Therefore, I don't try to activate the utf8 feature in searches and substitutions,
+unless you set the environment variable PCREUTF8 to any nonempty string, such as PCREUTF8=on.&nbsp;
+This allows you to activate the feature, if your computer supports it.&nbsp;
+Some day I may reverse the convention, so that it is on by default.&nbsp;
+For now you have to turn it on.
 
 <H3 align=center> <A NAME=guide> Quick Reference Guide </A> </H3>
 
