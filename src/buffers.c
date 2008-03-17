@@ -1846,9 +1846,6 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 
 /* regexp variables */
 static int re_count;
-static const char *re_error;
-static int re_offset;
-static int re_opt;
 static int re_vector[11 * 3];
 static pcre *re_cc;		/* compiled */
 
@@ -1856,11 +1853,16 @@ static void
 regexpCompile(const char *re, bool ci)
 {
     static char try8 = 0;	/* 1 is utf8 on, -1 is utf8 off */
+    const char *re_error;
+    int re_offset;
+    int re_opt;
+
   top:
 /* Do we need PCRE_NO_AUTO_CAPTURE? */
     re_opt = 0;
     if(ci)
 	re_opt |= PCRE_CASELESS;
+
     if(cons_utf8 && !cw->binMode && try8 >= 0) {
 	if(try8 == 0) {
 	    const char *s = getenv("PCREUTF8");
@@ -1872,12 +1874,16 @@ regexpCompile(const char *re, bool ci)
 	try8 = 1;
 	re_opt |= PCRE_UTF8;
     }
+
     re_cc = pcre_compile(re, re_opt, &re_error, &re_offset, 0);
     if(!re_cc && try8 > 0 && strstr(re_error, "PCRE_UTF8 support")) {
 	i_puts(MSG_PcreUtf8);
 	try8 = -1;
 	goto top;
     }
+
+    if(!re_cc)
+	setError(MSG_RexpError, re_error);
 }				/* regexpCompile */
 
 /* Get the start or end of a range.
@@ -1923,10 +1929,8 @@ getRangePart(const char *line, int *lineno, const char **split)
 
 	/* second delimiter */
 	regexpCompile(re, ci);
-	if(!re_cc) {
-	    setError(MSG_RexpError, re_error);
+	if(!re_cc)
 	    return false;
-	}
 /* We should probably study the pattern, if the file is large.
  * But then again, it's probably not worth it,
  * since the expressions are simple, and the lines are short. */
@@ -2020,10 +2024,8 @@ doGlobal(const char *line)
 
 /* Find the lines that match the pattern. */
     regexpCompile(re, ci);
-    if(!re_cc) {
-	setError(MSG_RexpError, re_error);
+    if(!re_cc)
 	return false;
-    }
     for(i = startRange; i <= endRange; ++i) {
 	char *subject = (char *)fetchLine(i, 1);
 	re_count =
@@ -2379,10 +2381,8 @@ substituteText(const char *line)
 	    nth = 1;
 
 	regexpCompile(lhs, ci);
-	if(!re_cc) {
-	    setError(MSG_RexpError, re_error);
+	if(!re_cc)
 	    return -1;
-	}
     } else {
 
 	subPrint = 0;
