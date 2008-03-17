@@ -1853,19 +1853,32 @@ static int re_vector[11 * 3];
 static pcre *re_cc;		/* compiled */
 
 static void
-pcre_optset(bool ci)
+regexpCompile(const char *re, bool ci)
 {
+    static char try8 = 0;	/* 1 is utf8 on, -1 is utf8 off */
+  top:
 /* Do we need PCRE_NO_AUTO_CAPTURE? */
     re_opt = 0;
     if(ci)
 	re_opt |= PCRE_CASELESS;
-    if(cons_utf8 && !cw->binMode) {
-	const char *s = getenv("PCREUTF8");
-	if(s && *s) {
-	    re_opt |= PCRE_UTF8;
+    if(cons_utf8 && !cw->binMode && try8 >= 0) {
+	if(try8 == 0) {
+	    const char *s = getenv("PCREUTF8");
+	    if(s && stringEqual(s, "off")) {
+		try8 = -1;
+		goto top;
+	    }
 	}
+	try8 = 1;
+	re_opt |= PCRE_UTF8;
     }
-}				/* pcre_optset */
+    re_cc = pcre_compile(re, re_opt, &re_error, &re_offset, 0);
+    if(!re_cc && try8 > 0 && strstr(re_error, "PCRE_UTF8 support")) {
+	i_puts(MSG_PcreUtf8);
+	try8 = -1;
+	goto top;
+    }
+}				/* regexpCompile */
 
 /* Get the start or end of a range.
  * Pass the line containing the address. */
@@ -1909,8 +1922,7 @@ getRangePart(const char *line, int *lineno, const char **split)
 	}
 
 	/* second delimiter */
-	pcre_optset(ci);
-	re_cc = pcre_compile(re, re_opt, &re_error, &re_offset, 0);
+	regexpCompile(re, ci);
 	if(!re_cc) {
 	    setError(MSG_RexpError, re_error);
 	    return false;
@@ -2007,8 +2019,7 @@ doGlobal(const char *line)
 	t[6] = ' ';
 
 /* Find the lines that match the pattern. */
-    pcre_optset(ci);
-    re_cc = pcre_compile(re, re_opt, &re_error, &re_offset, 0);
+    regexpCompile(re, ci);
     if(!re_cc) {
 	setError(MSG_RexpError, re_error);
 	return false;
@@ -2367,8 +2378,7 @@ substituteText(const char *line)
 	if(nth == 0 && !g_mode)
 	    nth = 1;
 
-	pcre_optset(ci);
-	re_cc = pcre_compile(lhs, re_opt, &re_error, &re_offset, 0);
+	regexpCompile(lhs, ci);
 	if(!re_cc) {
 	    setError(MSG_RexpError, re_error);
 	    return -1;

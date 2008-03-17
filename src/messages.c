@@ -628,7 +628,7 @@ static const char *englishMessages[] = {
     "Sorry, email headers are not available.\nYou must start with an unformatted email message, browse, then reply all.",
     "l expands control chars into hex",
     "l expands control and nonascii chars into hex",
-    "search/substitution functions will not support utf8 characters, your pcre library lacks this functionality",
+    "Warning: search/substitution functions will not support utf8 characters,\nbecause your pcre library lacks this functionality.\nexport PCREUTF8=off to disable this feature and suppress this warning message.",
     "converting to iso8859",
     "converting to utf8",
     "do not convert between iso8859 and utf8",

@@ -6,12 +6,10 @@ why is there an extra blank line after preformatted section
 &nbsp:
 find host fails for gvm1ghzxnlx0(+%##*vposzwx.watchfly.com
 document.myFlash
-enpty file submit
 makeIt('1','IE')
 <a href="faq.html#something">something</a> <h4 id="something">heading 4</h4>
 window.screenLeft window.screenTop window.screenX window.screenY window.outerWidth window.outerHeight
 newlines in text areas in mailed form - or should it be mime
-test uploaded file
 onload and onunload in body seem to run under document, not the body subobject
 call javaSetsTagBool when js checks or updates a checkbox or radio button
 what does all.tags("object") mean?
@@ -20,3 +18,5 @@ options.length = 0, js objects gone, but <option> tags still exist, and point to
 attachEvent("onclick", doSomething);
 getAttribute setAttribute
 put account: in reply function
+utf8 convert mail body and mail subject/from
+Specify charset in outgoing mail

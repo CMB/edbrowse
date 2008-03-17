@@ -375,13 +375,11 @@ Search and substitute is performed by the pcre library,
 and fortunately for us, the latest version supports utf8.&nbsp;
 In other words, I can pass pcre an option that tells it to treat certain two-byte sequences as single letters,
 and it will behave the way you want it to.&nbsp;
-Unfortunately, most pcre packages do not have this capability built in,
-and if you try to use it, and it isn't there, searches simply don't work.&nbsp;
-Therefore, I don't try to activate the utf8 feature in searches and substitutions,
-unless you set the environment variable PCREUTF8 to any nonempty string, such as PCREUTF8=on.&nbsp;
-This allows you to activate the feature, if your computer supports it.&nbsp;
-Some day I may reverse the convention, so that it is on by default.&nbsp;
-For now you have to turn it on.
+Searching for ni.o will work again.&nbsp;
+Unfortunately, some older pcre packages do not have this capability built in.&nbsp;
+If this is the case, you will receive a warning message,
+then pcre will revert back to its original one-byte-per-letter behavior.&nbsp;
+To disable the utf8 feature, and suppress this warning message, set the environment variable PCREUTF8=off.
 
 <H3 align=center> <A NAME=guide> Quick Reference Guide </A> </H3>
 
