@@ -1887,7 +1887,7 @@ static const char *brazilianPortugueseMessages[] = {
 static const char **messageArray = englishMessages;
 static int messageArrayLength = sizeof (englishMessages) / sizeof (char *);
 
-bool cons_utf8, iuconv = true;
+bool cons_utf8, iuConvert = true;
 
 void
 selectLanguage(void)

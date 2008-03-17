@@ -1628,7 +1628,7 @@ looksBinary(const char *buf, int buflen)
 }				/* looksBinary */
 
 void
-looks_utf8_8859(const char *buf, int buflen, bool * iso_p, bool * utf8_p)
+looks_8859_utf8(const char *buf, int buflen, bool * iso_p, bool * utf8_p)
 {
     int utfcount = 0, isocount = 0;
     int i, j, bothcount;
@@ -1665,7 +1665,7 @@ looks_utf8_8859(const char *buf, int buflen, bool * iso_p, bool * utf8_p)
 	*utf8_p = true;
     if(isocount * 7 >= bothcount)
 	*iso_p = true;
-}				/* looks_utf8_8859 */
+}				/* looks_8859_utf8 */
 
 /*********************************************************************
 Convert a string from iso 8859 to utf8, or vice versa.
@@ -1756,3 +1756,24 @@ utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
     *outbuf_p = outbuf;
     *outbuflen_p = j;
 }				/* utf2iso */
+
+void
+iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
+{
+    bool is8859, isutf8;
+
+    *outbuf_p = 0;
+    *outbuflen_p = 0;
+    if(!iuConvert)
+	return;
+
+    looks_8859_utf8(inbuf, inbuflen, &is8859, &isutf8);
+    if(cons_utf8 && is8859) {
+	debugPrint(3, "converting to utf8");
+	iso2utf(inbuf, inbuflen, outbuf_p, outbuflen_p);
+    }
+    if(!cons_utf8 && isutf8) {
+	debugPrint(3, "converting to iso8859");
+	utf2iso(inbuf, inbuflen, outbuf_p, outbuflen_p);
+    }
+}				/* iuReformat */

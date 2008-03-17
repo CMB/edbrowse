@@ -179,7 +179,7 @@ extern int webTimeout, mailTimeout;
 extern int browseLine;		/* line number, for error reporting */
 extern bool ismc;		/* Is the program running as a mail client? */
 extern bool cons_utf8;		/* does the console expect utf8? */
-extern bool iuconv;		/* perform iso utf8 conversions automatically */
+extern bool iuConvert;		/* perform iso utf8 conversions automatically */
 extern bool zapMail;		/* just get rid of the mail */
 extern bool js_redirects;	/* window.location = new_url */
 extern uchar browseLocal;	/* browsing a local file */

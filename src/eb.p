@@ -145,9 +145,10 @@ char * andTranslate(const char *s, bool invisible) ;
 void extractEmailAddresses(char *line) ;
 void cutDuplicateEmails(char *tolist, char *cclist, const char *reply) ;
 bool looksBinary(const char *buf, int buflen) ;
-void looks_utf8_8859(const char *buf, int buflen, bool * iso_p, bool * utf8_p) ;
+void looks_8859_utf8(const char *buf, int buflen, bool * iso_p, bool * utf8_p) ;
 void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
 void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
+void iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
 
 /* sourcefile=cookies.c */
 bool domainSecurityCheck(const char *server, const char *domain) ;

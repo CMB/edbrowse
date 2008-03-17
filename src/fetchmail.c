@@ -345,6 +345,8 @@ fetchMail(int account)
 	bool delflag = false;	/* delete this mail */
 	int exact_l;
 	char *exact = initString(&exact_l);	/* the exact message */
+	int exactf_l;
+	char *exactf = 0;	/* utf8 formatted */
 	int displine;
 
 	if(zapMail)
@@ -425,8 +427,16 @@ fetchMail(int account)
 	    exact_l = k;
 	    exact[k] = 0;
 
-	    if(!addTextToBuffer((pst) exact, exact_l, 0))
-		showErrorAbort();
+	    iuReformat(exact, exact_l, &exactf, &exactf_l);
+
+	    if(exactf) {
+		if(!addTextToBuffer((pst) exactf, exactf_l, 0))
+		    showErrorAbort();
+	    } else {
+		if(!addTextToBuffer((pst) exact, exact_l, 0))
+		    showErrorAbort();
+	    }
+
 	    if(!unformatMail) {
 		browseCurrentBuffer();
 		if(!passMail) {
@@ -627,6 +637,7 @@ fetchMail(int account)
 	}
 	/* deleted */
 	nzFree(exact);
+	nzFree(exactf);
     }				/* loop over mail messages */
 
     if(zapMail)

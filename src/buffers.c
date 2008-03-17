@@ -1215,9 +1215,9 @@ readFile(const char *filename, const char *post)
 	}
 	fileSize = j;
 #endif
-	if(iuconv) {
+	if(iuConvert) {
 /* Classify this incoming text as ascii or 8859 or utf8 */
-	    looks_utf8_8859(rbuf, fileSize, &is8859, &isutf8);
+	    looks_8859_utf8(rbuf, fileSize, &is8859, &isutf8);
 	    debugPrint(3, "text type is %s",
 	       (isutf8 ? "utf8" : (is8859 ? "8859" : "ascii")));
 	    if(cons_utf8 && is8859) {
@@ -1298,7 +1298,7 @@ writeFile(const char *name, int mode)
 	return false;
     }
 
-    if(name == cw->fileName && iuconv) {
+    if(name == cw->fileName && iuConvert) {
 /* should we locale convert back? */
 	if(cw->iso8859Mode && cons_utf8)
 	    if(debugLevel >= 1)
@@ -1322,7 +1322,7 @@ writeFile(const char *name, int mode)
 	    if(i == cw->dol && cw->nlMode)
 		--len;
 
-	    if(name == cw->fileName && iuconv) {
+	    if(name == cw->fileName && iuConvert) {
 		if(cw->iso8859Mode && cons_utf8) {
 		    utf2iso((char *)p, len, &tp, &tlen);
 		    if(alloc_p)
@@ -2926,9 +2926,9 @@ twoLetter(const char *line, const char **runThis)
     }
 
     if(stringEqual(line, "iu")) {
-	iuconv ^= 1;
+	iuConvert ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
-	    i_puts(iuconv + MSG_IUConvertOff);
+	    i_puts(iuConvert + MSG_IUConvertOff);
 	return true;
     }
 
@@ -4567,8 +4567,8 @@ browseCurrentBuffer(void)
 /* expand pdf using pdftohtml */
 /* http://rpmfind.net/linux/RPM/suse/updates/10.0/i386/rpm/i586/pdftohtml-0.36-130.9.i586.html */
     if(bmode == 3) {
-	bool is8859, isutf8;
 	char *tbuf;
+	int tlen;
 	char *cmd;
 	int fh =
 	   open(edbrowseTempPDF, O_CREAT | O_TRUNC | O_WRONLY | O_BINARY, 0666);
@@ -4598,20 +4598,11 @@ browseCurrentBuffer(void)
 	rc = fileIntoMemory(edbrowseTempHTML, &rawbuf, &rawsize);
 	if(!rc)
 	    return false;
-	if(iuconv) {
-	    looks_utf8_8859(rawbuf, rawsize, &is8859, &isutf8);
-	    if(cons_utf8 && is8859) {
-		debugPrint(3, "converting to utf8");
-		iso2utf(rawbuf, rawsize, &tbuf, &rawsize);
-		nzFree(rawbuf);
-		rawbuf = tbuf;
-	    }
-	    if(!cons_utf8 && isutf8) {
-		utf2iso(rawbuf, rawsize, &tbuf, &rawsize);
-		debugPrint(3, "converting to iso8859");
-		nzFree(rawbuf);
-		rawbuf = tbuf;
-	    }
+	iuReformat(rawbuf, rawsize, &tbuf, &tlen);
+	if(tbuf) {
+	    nzFree(rawbuf);
+	    rawbuf = tbuf;
+	    rawsize = tlen;
 	}
 	bmode = 2;
     }
