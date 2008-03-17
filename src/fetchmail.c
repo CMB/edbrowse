@@ -15,7 +15,7 @@ struct MHINFO {
     struct MHINFO *next, *prev;
     struct listHead components;
     char *start, *end;
-    char subject[MHLINE];
+    char subject[MHLINE + 4];
     char to[MHLINE];
     char from[MHLINE];
     char reply[MHLINE];
@@ -999,6 +999,20 @@ isoDecode(char *vl, char **vrp)
     *vrp = vr;
 }				/* isoDecode */
 
+/* mail header reformat, to/from utf8 */
+mhReformat(char *line)
+{
+    char *tbuf;
+    int tlen = strlen(line);
+    iuReformat(line, tlen, &tbuf, &tlen);
+    if(!tbuf)
+	return;
+    if(tlen >= MHLINE)
+	tbuf[MHLINE - 1] = 0;
+    strcpy(line, tbuf);
+    nzFree(tbuf);
+}				/* mhReformat */
+
 static void
 extractLessGreater(char *s)
 {
@@ -1103,6 +1117,7 @@ headerGlean(char *start, char *end)
  * I'll just use ... */
 	    if(t < end - 1 && (t[1] == ' ' || t[1] == '\t'))
 		strcat(w->subject, "...");
+	    mhReformat(w->subject);
 	    continue;
 	}
 
@@ -1133,6 +1148,7 @@ headerGlean(char *start, char *end)
 		continue;
 	    isoDecode(vl, &vr);
 	    strncpy(w->from, vl, vr - vl);
+	    mhReformat(w->from);
 	    continue;
 	}
 
