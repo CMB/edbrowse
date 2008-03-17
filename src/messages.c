@@ -1252,11 +1252,11 @@ static const char *frenchMessages[] = {
     "Désolé, pas d'en-têtes de courrier.\nVous devez commencer avec un courrier non formaté, le consulter, puis répondre à tous.",
     "l affiche tous les caractères de contrôle en hexadécimal",
     "l affiche tous les caractères non-ascii et de contrôle en hexadécimal",
-    "les fonctions de recherche/remplacement ne fonctionnent pas avec des caractères utf8, cette fonctionnalité est absente de la librairie pcre",
+    "Attention : les fonctions de recherche/remplacement ne fonctionneront pas avec les caractères utf8,\nparce que cette fonctionnalité est absente de la librairie pcre.\nExportez PCREUT8=off pour désactiver cette fonctionnalité et supprimer ce message d'avertissement",
     "converti en utf8",
     "converti en iso8859",
-    "ne convertissez pas de iso8859 vers utf8",
-    "automatiquement converti de iso8859 en utf8",
+    "pas de conversion entre iso8859 et utf8",
+    "conversion automatique entre iso8859 et utf8",
 };
 
 /* Translation by Cleverson: clever92000@yahoo.com.br */
