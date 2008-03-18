@@ -1874,13 +1874,13 @@ static const char *brazilianPortugueseMessages[] = {
     "linhas subject e reply são obrigatórias",
     "aviso: não há ID da mensagem a referenciar",
     "Desculpe; o cabeçalho da carta não está disponível.\nComece com uma carta não formatada, escolha browse e depois reply all.",
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
+    "l expande caracteres de controle para hexadecimais",
+    "l expande caracteres de controle e não-ASCII para hexadecimais",
+    "Atenção: as funções buscar e substituir não aceitarão caracteres UTF8\nporque a biblioteca PCRE que você tem instalada não suporta essa funcionalidade.\nExporte PCREUTF8=off para desabilitar esse recurso e suprimir este aviso.",
+    "convertendo para iso8859",
+    "convertendo para utf8",
+    "não converta entre iso8859 e utf8",
+    "converte automaticamente entre iso8859 e utf8",
 };
 
 /* English by default */
