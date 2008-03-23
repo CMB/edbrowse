@@ -1168,12 +1168,16 @@ The entire subtree is moved to your trash bin.&nbsp;
 Make sure your cleanup cron job is capable of removing directory trees, not just files.
 
 <P>
-Depending on your OS, you may not be able to move files across file systems.&nbsp;
-From /disk2 to /disk1, or from the D drive to the C drive.&nbsp;
-In this case you might want to issue the dx command,
-which makes directories writable, like dw, but actually deletes the files.&nbsp;
-You'll need this if you're trying to free up space on the disk.&nbsp;
-Note that symbolic links are always deleted;
+If the trash bin is on another file system,
+the file is copied, rather than moved.&nbsp;
+It's practically the same; though the file will have your permissions, and a current time stamp.&nbsp;
+Directories cannot be copied in this way.&nbsp;
+You must copy the directory tree yourself, then delete it,
+using cp -r and rm -r.
+
+<P>
+Note that the dx command, wherein files are truly deleted, is the only way to free up space on the disk.&nbsp;
+Symbolic links and special files are always deleted;
 there isn't much point in moving a link to the trash bin.
 
 <P>
