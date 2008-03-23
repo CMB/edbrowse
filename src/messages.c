@@ -1259,8 +1259,8 @@ static const char *frenchMessages[] = {
     "converti en iso8859",
     "pas de conversion entre iso8859 et utf8",
     "conversion automatique entre iso8859 et utf8",
-    0,
-    0,
+    "impossible de copier un répertoire dans la corbeille sur un autre système de fichiers;n utilisez cpio -p ou cp -r à partir du shell",
+    "impossible de supprimer un répertoire; utilisez rm -r à partir du shell",
 };
 
 /* Translation by Cleverson: clever92000@yahoo.com.br */
@@ -1885,8 +1885,8 @@ static const char *brazilianPortugueseMessages[] = {
     "convertendo para utf8",
     "não converta entre iso8859 e utf8",
     "converte automaticamente entre iso8859 e utf8",
-    0,
-    0,
+    "Não posso copiar uma árvore de diretórios para uma lixeira em outro sistema de arquivos;\nUse cpio -p ou cp -r a partir do shell",
+    "Não posso apagar uma árvore de diretórios; use rm -r a partir do shell",
 };
 
 /* English by default */
