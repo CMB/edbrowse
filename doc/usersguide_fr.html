@@ -857,13 +857,11 @@ Si votre OS peut déplacer des répertoires, ce programme pourra supprimer un so
 Le sous-arbre entier est déplacé dans la corbeille.&nbsp;
 Assurez-vous que le cron de nettoyage est capable d'enlever des répertoires, et pas seulement des fichiers.&nbsp;
 </p>
-<p>
-Selon votre OS, il n'est pas toujours possible de déplacer des fichiers à travers des systèmes de fichiers.&nbsp;
-De /disk2 à /disk1, ou du lecteur D au lecteur C.&nbsp;
-Dans ce cas, tapez la commande « dx », qui autorise l'écriture dans le répertoire, « dw », et supprime réellement les fichiers.&nbsp;
-Vous en aurez besoin de ceci si vous essayez de faire de la place sur le disque.&nbsp;
-Noter que les liens symboliques sont toujours supprimés ; il n'y a pas beaucoup de sens à déplacer un lien symbolique dans la corbeille.&nbsp;
-</p>
+
+<p>Si la corbeille est sur un autre système de fichiers, le fichier est copié, plutôt que déplacé. Pratiquement, c'est la même chose; ainsi, le fichier aura les mêmes permissions, et l'heure courante de création. Les répertoires ne peuvent être copiés par ce moyen. Vous devrez copier un répertoire par vous-même, puis le supprimer, en utlisatnt cp -r et rm - r.</p>
+
+<p>Notez que la commande dx, qui supprime réellement des fichiers, est le seul moyen de faire de la place sur le disque. Les liens symboliques et les fichiers spéciaux sont toujours supprimés : il n'y a pas beaucoup de sens à déplacer un lien symbolique dans la corbeille.&nbsp;</p>
+
 <p>
 « Pourquoi tout ceci ? » pourriez-vous demander.&nbsp;
 « Qu'est-ce qui ne va pas avec le shell? » 
