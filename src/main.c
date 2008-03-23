@@ -88,7 +88,7 @@ updateConfig(void)
 {
     int fh = open(configFile, O_WRONLY | O_TRUNC, 0);
     if(fh < 0) {
-	debugPrint(0, "warning: cannot update config file");
+	i_puts(MSG_ConfigUpdate);
 	return;
     }
     if(write(fh, cfgcopy, cfglen) < cfglen)
