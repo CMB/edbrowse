@@ -698,6 +698,26 @@ fileIntoMemory(const char *filename, char **data, int *len)
     return true;
 }				/* fileIntoMemory */
 
+/* inverse of the above */
+bool
+memoryOutToFile(const char *filename, const char *data, int len,
+/* specify the error messages */
+   int msgcreate, int msgwrite)
+{
+    int fh = open(filename, O_CREAT | O_TRUNC | O_WRONLY | O_BINARY, 0666);
+    if(fh < 0) {
+	setError(msgcreate, filename, errno);
+	return false;
+    }
+    if(write(fh, data, len) < len) {
+	setError(msgwrite, filename, errno);
+	close(fh);
+	return false;
+    }
+    close(fh);
+    return true;
+}				/* memoryOutToFile */
+
 /* shift string to upper, lower, or mixed case */
 /* action is u, l, or m. */
 void

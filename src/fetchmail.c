@@ -919,7 +919,8 @@ isoDecode(char *vl, char **vrp)
 	goto finish;
     start += 2;
     if(!memEqualCI(start, "iso-", 4) &&
-       !memEqualCI(start, "utf-", 4) && !memEqualCI(start, "windows-", 4))
+       !memEqualCI(start, "utf-", 4) &&
+       !memEqualCI(start, "gb", 2) && !memEqualCI(start, "windows-", 8))
 	goto restart;
     s = strchr(start, '?');
     if(!s || s > vr - 5 || s[2] != '?')
@@ -1000,6 +1001,7 @@ isoDecode(char *vl, char **vrp)
 }				/* isoDecode */
 
 /* mail header reformat, to/from utf8 */
+static void
 mhReformat(char *line)
 {
     char *tbuf;

@@ -894,21 +894,11 @@ httpConnect(const char *from, const char *url)
 	    strcpy(suffix, ".gz");
 	strcpy(u, suffix);
 	debugPrint(3, "uncompressing the web page with method %s", suffix);
-	fh =
-	   open(edbrowseTempFile, O_WRONLY | O_BINARY | O_CREAT | O_TRUNC,
-	   0666);
-	if(fh < 0) {
-	    setError(MSG_TempNoCreate, edbrowseTempFile);
+	if(!memoryOutToFile(edbrowseTempFile, serverData, serverDataLen,
+	   MSG_TempNoCreate, MSG_TempNoWrite)) {
 	    *u = 0;
 	    goto abort;
 	}
-	if(write(fh, serverData, serverDataLen) < serverDataLen) {
-	    setError(MSG_TempNoWrite, edbrowseTempFile);
-	    close(fh);
-	    *u = 0;
-	    goto abort;
-	}
-	close(fh);
 	*u = 0;
 	nzFree(serverData);
 	serverData = 0;
@@ -925,6 +915,7 @@ httpConnect(const char *from, const char *url)
 	    return false;
 	}
 	serverData = allocMem(n + 2);
+/* fileIntoMemory would be better here, but I have to parameterize the error messages first */
 	fh = open(edbrowseTempFile, O_RDONLY | O_BINARY);
 	if(fh < 0) {
 	    setError(MSG_TempNoAccess, edbrowseTempFile);
@@ -946,11 +937,9 @@ httpConnect(const char *from, const char *url)
     }
 
     return true;
-
   nohead:
     i_puts(MSG_HTTPHeader);
     return true;
-
   abort:
     nzFree(serverData);
     serverData = 0;
@@ -1036,14 +1025,12 @@ ftpConnect(const char *url)
     int c;
     static const char npf[] = "not a plain file.";
     const int npfsize = strlen(npf);
-
     serverData = 0;
     serverDataLen = 0;
     fileSize = -1;
     if(debugLevel >= 1)
 	i_puts(MSG_FTPDownload);
     dirmode = false;
-
   top:cmd = initString(&cmd_l);
     if(dirmode) {
 	stringAndString(&cmd, &cmd_l, "ncftpls -l ");
@@ -1065,7 +1052,6 @@ ftpConnect(const char *url)
     stringAndChar(&cmd, &cmd_l, '"');
     stringAndString(&cmd, &cmd_l, " 2>&1");
     debugPrint(3, "%s", cmd);
-
     f = popen(cmd, "r");
     if(!f) {
 	setError(MSG_TempNoSystem, cmd, errno);
@@ -1106,7 +1092,6 @@ ftpConnect(const char *url)
 
     rc = pclose(f);
     nzFree(cmd);
-
     if(out_l) {			/* should never happen */
 	puts(out);
 	nzFree(out);
@@ -1152,7 +1137,6 @@ allIPs(void)
     int ln;			/* line number */
     int ftype, j, k, nf;
     char *p;
-
     for(ln = 1; ln <= cw->dol; ++ln) {
 	p = (char *)fetchLine(ln, -1);
 	ftype = 0;		/* input stuff doesn't work */

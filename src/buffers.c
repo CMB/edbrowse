@@ -4580,19 +4580,11 @@ browseCurrentBuffer(void)
 	char *tbuf;
 	int tlen;
 	char *cmd;
-	int fh =
-	   open(edbrowseTempPDF, O_CREAT | O_TRUNC | O_WRONLY | O_BINARY, 0666);
-	if(fh < 0) {
-	    setError(MSG_TempNoCreate2, edbrowseTempPDF, errno);
+	if(!memoryOutToFile(edbrowseTempPDF, rawbuf, rawsize,
+	   MSG_TempNoCreate2, MSG_TempNoWrite)) {
 	    nzFree(rawbuf);
 	    return false;
 	}
-	if(write(fh, rawbuf, rawsize) < rawsize) {
-	    setError(MSG_TempNoWrite, edbrowseTempPDF);
-	    nzFree(rawbuf);
-	    return false;
-	}
-	close(fh);
 	nzFree(rawbuf);
 	unlink(edbrowseTempHTML);
 	j = strlen(edbrowseTempPDF);

@@ -206,6 +206,7 @@ unsigned pstLength(pst s) ;
 pst clonePstring(pst s) ;
 void copyPstring(pst s, const pst t) ;
 bool fileIntoMemory(const char *filename, char **data, int *len) ;
+bool memoryOutToFile(const char *filename, const char *data, int len, int msgcreate, int msgwrite) ;
 void caseShift(char *s, char action) ;
 char fileTypeByName(const char *name, bool showlink) ;
 char fileTypeByHandle(int fd) ;

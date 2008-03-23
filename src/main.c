@@ -1424,7 +1424,6 @@ runEbFunction(const char *line)
 bool
 bufferToProgram(const char *cmd, const char *suffix, bool trailPercent)
 {
-    FILE *f;
     char *buf = 0;
     int buflen, n;
     int size1, size2;
@@ -1432,7 +1431,7 @@ bufferToProgram(const char *cmd, const char *suffix, bool trailPercent)
 
     if(!trailPercent) {
 /* pipe the buffer into the program */
-	f = popen(cmd, "w");
+	FILE *f = popen(cmd, "w");
 	if(!f) {
 	    setError(MSG_NoSpawn, cmd, errno);
 	    return false;
@@ -1451,19 +1450,16 @@ bufferToProgram(const char *cmd, const char *suffix, bool trailPercent)
 /* assume it's the same data */
 	    *u = 0;
 	} else {
-	    f = fopen(edbrowseTempFile, "w");
-	    if(!f) {
-		setError(MSG_TempNoCreate2, edbrowseTempFile, errno);
+	    if(!unfoldBuffer(context, false, &buf, &buflen)) {
+		*u = 0;
+		return false;	/* should never happen */
+	    }
+	    if(!memoryOutToFile(edbrowseTempFile, buf, buflen,
+	       MSG_TempNoCreate2, MSG_NoWrite2)) {
 		*u = 0;
 		return false;
 	    }
 	    *u = 0;
-	    if(!unfoldBuffer(context, false, &buf, &buflen)) {
-		fclose(f);
-		return false;	/* should never happen */
-	    }
-	    n = fwrite(buf, buflen, 1, f);
-	    fclose(f);
 	}
 	system(cmd);
     }
