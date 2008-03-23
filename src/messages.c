@@ -130,9 +130,9 @@ static const char *englishMessages[] = {
     "Your limit of 1 million lines has been reached.\nSave your files, then exit and restart this program.",
     "absolute path name too long, limit %d chars",
     "directories are readonly, type dw to enable directory writes",
-    "could not create .recycle under your home directory, to hold the deleted files",
+    "could not create .trash under your home directory, to hold the deleted files",
     "could not remove file %s",
-    "Could not move %s to the recycle bin, set dx mode to actually remove the file",
+    "Could not move %s to the trash bin, set dx mode to actually remove the file",
     "destination lies inside the block to be moved or copied",
     "no change",
     "cannot join one line",
@@ -633,6 +633,8 @@ static const char *englishMessages[] = {
     "converting to utf8",
     "do not convert between iso8859 and utf8",
     "automatically convert between iso8859 and utf8",
+    "cannot copy a directory tree to your trash bin on another file system;\nuse cpio -p or cp -r from the shell",
+    "cannot delete a directory tree; use rm -r from the shell",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
@@ -754,7 +756,7 @@ static const char *frenchMessages[] = {
     "Vous avez atteint la limite d'un million de lignes.\nSauvegardez vos fichiers, puis sortez et redémarrez le programme.",
     "chemin du répertoire trop long, la limite est de %d caractères",
     "répertoires en lecture seule, tapez dw pour autoriser l'écriture",
-    "impossible de créer le fichier corbeille .recycle, pour contenir vos fichiers effacés",
+    "impossible de créer le fichier corbeille .trash, pour contenir vos fichiers effacés",
     "effacement du fichier %s impossible",
     "impossible de mettre %s à la corbeille, passez en mode dx pour l'effacer",
     "destination à l'intérieur du bloc à déplacer ou à copier",
@@ -1257,6 +1259,8 @@ static const char *frenchMessages[] = {
     "converti en iso8859",
     "pas de conversion entre iso8859 et utf8",
     "conversion automatique entre iso8859 et utf8",
+    0,
+    0,
 };
 
 /* Translation by Cleverson: clever92000@yahoo.com.br */
@@ -1378,7 +1382,7 @@ static const char *brazilianPortugueseMessages[] = {
     "limite de 1 milhão de linhas alcansado.\nSalve os arquivos, saia e reinicie o programa.",
     "caminho absoluto comprido demais; o limite é de %d caracteres",
     "os diretórios são somente leitura; digite dw para ativar a escrita em diretórios",
-    "não foi possível criar o .recycle no seu diretório home para armazenar arquivos apagados",
+    "não foi possível criar o .trash no seu diretório home para armazenar arquivos apagados",
     "não foi possível remover o arquivo %s",
     "não foi possível mover %s para a lixeira; ative o modo dx para remover permanentemente o arquivo",
     "local de destino fica dentro do bloco a copiar ou mover",
@@ -1881,6 +1885,8 @@ static const char *brazilianPortugueseMessages[] = {
     "convertendo para utf8",
     "não converta entre iso8859 e utf8",
     "converte automaticamente entre iso8859 e utf8",
+    0,
+    0,
 };
 
 /* English by default */

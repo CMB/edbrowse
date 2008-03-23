@@ -861,14 +861,17 @@ static bool
 delFiles(void)
 {
     int ln, cnt;
+
     if(!dirWrite) {
 	setError(MSG_DirNoWrite);
 	return false;
     }
+
     if(dirWrite == 1 && !recycleBin) {
 	setError(MSG_NoRecycle);
 	return false;
     }
+
     ln = startRange;
     cnt = endRange - startRange + 1;
     while(cnt--) {
@@ -883,8 +886,16 @@ delFiles(void)
 	    free(file);
 	    return false;
 	}
+
 	ftype = dirSuffix(ln);
-	if(dirWrite == 2 || *ftype == '@') {
+	if(dirWrite == 2 && *ftype == '/') {
+	    setError(MSG_NoDirDelete);
+	    free(file);
+	    return false;
+	}
+
+	if(dirWrite == 2 || *ftype && strchr("@<*^|", *ftype)) {
+	  unlink:
 	    if(unlink(path)) {
 		setError(MSG_NoRemove, file);
 		free(file);
@@ -894,14 +905,38 @@ delFiles(void)
 	    char bin[ABSPATH];
 	    sprintf(bin, "%s/%s", recycleBin, file);
 	    if(rename(path, bin)) {
+		if(errno == EXDEV) {
+		    char *rmbuf;
+		    int rmlen;
+		    if(*ftype == '/') {
+			setError(MSG_CopyMoveDir);
+			free(file);
+			return false;
+		    }
+		    if(!fileIntoMemory(path, &rmbuf, &rmlen)) {
+			free(file);
+			return false;
+		    }
+		    if(!memoryOutToFile(bin, rmbuf, rmlen,
+		       MSG_TempNoCreate2, MSG_NoWrite2)) {
+			free(file);
+			nzFree(rmbuf);
+			return false;
+		    }
+		    nzFree(rmbuf);
+		    goto unlink;
+		}
+
 		setError(MSG_NoMoveToTrash, file);
 		free(file);
 		return false;
 	    }
 	}
+
 	free(file);
 	delText(ln, ln);
     }
+
     return true;
 }				/* delFiles */
 

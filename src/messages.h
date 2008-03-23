@@ -633,4 +633,6 @@ enum {
     MSG_ConvUtf8,
     MSG_IUConvertOff,
     MSG_IUConvertOn,
+    MSG_CopyMoveDir,
+    MSG_NoDirDelete,
 };
