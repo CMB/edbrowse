@@ -1256,14 +1256,14 @@ readFile(const char *filename, const char *post)
 	    debugPrint(3, "text type is %s",
 	       (isutf8 ? "utf8" : (is8859 ? "8859" : "ascii")));
 	    if(cons_utf8 && is8859) {
-		if(debugLevel >= 1)
+		if(debugLevel >= 2 || debugLevel == 1 && !isURL(filename))
 		    i_puts(MSG_ConvUtf8);
 		iso2utf(rbuf, fileSize, &tbuf, &fileSize);
 		nzFree(rbuf);
 		rbuf = tbuf;
 	    }
 	    if(!cons_utf8 && isutf8) {
-		if(debugLevel >= 1)
+		if(debugLevel >= 2 || debugLevel == 1 && !isURL(filename))
 		    i_puts(MSG_Conv8859);
 		utf2iso(rbuf, fileSize, &tbuf, &fileSize);
 		nzFree(rbuf);
