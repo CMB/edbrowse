@@ -733,6 +733,28 @@ Karl Dahlke > eklhad
 subjfilter {
 }
 
+#  Function to read the last spam message.
+function+lspam {
+e /home/eklhad/.trash/spamcan
+?={70}?+,\$w2
+e2
+b
+1z20
+}
+
+#  Back up to the previous spam message.
+function +bspam {
+e1
+?={70}?X
+-kb
+?={70}?X
++s/^[RD]/&/
+.,'bw2
+e2
+b
+1z20
+}
+
 #  Sometimes javascript does nothing more than deliver advertisements,
 #  and edbrowse javascript is not the greatest,
 #  so turn it off for certain domains.
@@ -906,7 +928,7 @@ w
 q
 !
 
-echo "Congratulations, your config file %ebcf is complete."
+echo "Congratulations, your config file $ebcf is complete."
 
 fi
 
