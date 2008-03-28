@@ -145,7 +145,7 @@ mailtimer = 180
 #  stockage des spams. C'est un fichier dans ma corbeille
 #  ainsi je suis sûr qu'il est nettoyé chaque semaine
 
-spamcan = /home/eklhad/.trash/spamcan
+spamcan = /home/eklhad/.Trash/spamcan
 
 # -----------------------------------------------------------------------
 
@@ -286,7 +286,7 @@ function+ud {
 
 function:uw {
 #  traite l'apostrophe
-,s/�/'/g
+,s/½/'/g
 #  élimine tout ce qui non-assi
 #  Désolé d'être aussi centré sur l'Anglais
 #  Cela va vous gêner si vous lisez un document Word en espagnol (et en français),

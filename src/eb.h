@@ -136,6 +136,11 @@ typedef uchar *pst;		/* perl string */
 #define COLOR_DIALOG_TEXT 0
 #define G_BFU_FONT_SIZE 0
 
+/* .trash is small or capital t, on different systems */
+#ifndef TRASHDIR
+#define TRASHDIR ".Trash"
+#endif
+
 /* the version of edbrowse */
 extern const char *version;
 extern const char eol[];	/* internet end of line */

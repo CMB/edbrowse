@@ -523,7 +523,7 @@ ipblack = $ebip
 
 #  Write spam messages here.  I use a file in my trash bin,
 #  so I know it gets cleaned out every week.
-spamcan = $HOME/.trash/spamcan
+spamcan = $HOME/.Trash/spamcan
 
 #  Function to write a bookmark to your list of favorites.
 #  Best to use this function every time, because it appends.
@@ -735,7 +735,7 @@ subjfilter {
 
 #  Function to read the last spam message.
 function+lspam {
-e /home/eklhad/.trash/spamcan
+e /home/eklhad/.Trash/spamcan
 ?={70}?+,\$w2
 e2
 b

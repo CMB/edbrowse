@@ -995,7 +995,7 @@ main(int argc, char **argv)
     sprintf(configFile, "%s/.ebrc", home);
 
     recycleBin = allocMem(strlen(home) + 8);
-    sprintf(recycleBin, "%s/.trash", home);
+    sprintf(recycleBin, "%s/%s", home, TRASHDIR);
     edbrowseTempFile = allocMem(strlen(recycleBin) + 8 + 6);
 /* The extra 6 is for the suffix */
     sprintf(edbrowseTempFile, "%s/eb_tmp", recycleBin);
