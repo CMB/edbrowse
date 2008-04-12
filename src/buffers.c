@@ -4581,8 +4581,8 @@ static struct inputChange *ic;
 bool
 browseCurrentBuffer(void)
 {
-    char *rawbuf, *newbuf;
-    int rawsize, j;
+    char *rawbuf, *newbuf, *tbuf;
+    int rawsize, tlen, j;
     bool rc, remote = false, do_ip = false, ispdf = false;
     bool save_ch = cw->changeMode;
     uchar bmode = 0;
@@ -4612,8 +4612,6 @@ browseCurrentBuffer(void)
 /* expand pdf using pdftohtml */
 /* http://rpmfind.net/linux/RPM/suse/updates/10.0/i386/rpm/i586/pdftohtml-0.36-130.9.i586.html */
     if(bmode == 3) {
-	char *tbuf;
-	int tlen;
 	char *cmd;
 	if(!memoryOutToFile(edbrowseTempPDF, rawbuf, rawsize,
 	   MSG_TempNoCreate2, MSG_TempNoWrite)) {
@@ -4662,6 +4660,7 @@ browseCurrentBuffer(void)
 
     if(bmode == 1) {
 	newbuf = emailParse(rawbuf);
+	j = strlen(newbuf);
 	do_ip = true;
 	if(!ipbFile)
 	    do_ip = false;
@@ -4671,8 +4670,15 @@ browseCurrentBuffer(void)
 /* double browse, mail then html */
 	    bmode = 2;
 	    rawbuf = newbuf;
-	    rawsize = strlen(rawbuf);
+	    rawsize = j;
 	    prepareForBrowse(rawbuf, rawsize);
+	} else {
+/* plain mail could need utf8 conversion, after qp decode */
+	    iuReformat(newbuf, j, &tbuf, &tlen);
+	    if(tbuf) {
+		nzFree(newbuf);
+		newbuf = tbuf;
+	    }
 	}
     }
 
