@@ -2277,8 +2277,6 @@ lineHasTag(const char *p, const char *s)
 	if(c != InternalCodeChar)
 	    continue;
 	j = strtol(p, (char **)&p, 10);
-	if(*p != '*')
-	    continue;
 	t = list[j];
 	if(t->action != TAGACT_A)
 	    continue;
