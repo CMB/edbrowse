@@ -241,6 +241,7 @@ serverPutGet(const char *line, bool secure)
 	return false;
     if(!serverGetLine(secure))
 	return false;
+    return true;
 }				/* serverPutGet */
 
 void
