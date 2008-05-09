@@ -541,7 +541,6 @@ encodeAttachment(const char *file, int ismail, bool webform,
 	}			/* .signature */
     }
 
-    /* primary email message */
     /* Infer content type from the filename */
     ct = 0;
     s = strrchr(file, '.');
@@ -595,98 +594,102 @@ encodeAttachment(const char *file, int ismail, bool webform,
        file, buflen, nacount, nullcount, longline);
     nacount += nullcount;
 
-/* Criteria for base64 encode.
- * But, some web servers won't take qp encode, so if this is a web form,
- * and we would normally qp encode, do base 64. */
+/* Set the type of attachment */
+    if(buflen > 20 && nacount * 5 > buflen) {
+	if(!ct)
+	    ct = "application/octet-stream";	/* default type for binary */
+    }
+    if(!ct)
+	ct = "text/plain";
 
-    if(buflen > 20 && nacount * 5 > buflen ||
-       webform && (nacount * 20 > buflen || nullcount || longline)) {
+/* Criteria for base64 encode.
+ * files uploaded from a web form need not be encoded, unless they contain
+ * nulls, which is a quirk of my slapped together software. */
+
+    if(!webform && (buflen > 20 && nacount * 5 > buflen) ||
+       webform && nullcount) {
 	if(ismail) {
 	    setError(MSG_MailBinary, file);
 	    goto freefail;
 	}
-
 	s = base64Encode(buf, buflen, true);
 	nzFree(buf);
 	buf = s;
-	if(!ct)
-	    ct = "application/octet-stream";	/* default type */
 	ce = "base64";
 	goto success;
     }
 
-    if(!ct)
-	ct = "text/plain";
-
+    if(!webform) {
 /* Switch to unix newlines - we'll switch back to dos later. */
-    v = buf + buflen;
-    for(s = t = buf; s < v; ++s) {
-	c = *s;
-	if(c == '\r' && s < v - 1 && s[1] == '\n')
-	    continue;
-	*t++ = c;
-    }
-    buflen = t - buf;
+	v = buf + buflen;
+	for(s = t = buf; s < v; ++s) {
+	    c = *s;
+	    if(c == '\r' && s < v - 1 && s[1] == '\n')
+		continue;
+	    *t++ = c;
+	}
+	buflen = t - buf;
 
 /* Do we need to use quoted-printable? */
 /* Perhaps this hshould read (nacount > 0) */
-    if(nacount * 20 > buflen || nullcount || longline) {
-	char *newbuf;
-	int l, colno = 0, space = 0;
+	if(nacount * 20 > buflen || nullcount || longline) {
+	    char *newbuf;
+	    int l, colno = 0, space = 0;
 
-	newbuf = initString(&l);
-	v = buf + buflen;
-	for(s = buf; s < v; ++s) {
-	    c = *s;
+	    newbuf = initString(&l);
+	    v = buf + buflen;
+	    for(s = buf; s < v; ++s) {
+		c = *s;
 /* do we have to =expand this character? */
-	    if(c < '\n' && c != '\t' ||
-	       c == '=' ||
-	       c == '\xff' ||
-	       (c == ' ' || c == '\t') && s < v - 1 && s[1] == '\n') {
-		char expand[4];
-		sprintf(expand, "=%02X", (uchar) c);
-		stringAndString(&newbuf, &l, expand);
-		colno += 3;
-	    } else {
-		stringAndChar(&newbuf, &l, c);
-		++colno;
-	    }
-	    if(c == '\n') {
-		colno = space = 0;
-		continue;
-	    }
-	    if(c == ' ' || c == '\t')
-		space = l;
-	    if(colno < 72)
-		continue;
-	    if(s == v - 1)
-		continue;
+		if(c < '\n' && c != '\t' ||
+		   c == '=' ||
+		   c == '\xff' ||
+		   (c == ' ' || c == '\t') && s < v - 1 && s[1] == '\n') {
+		    char expand[4];
+		    sprintf(expand, "=%02X", (uchar) c);
+		    stringAndString(&newbuf, &l, expand);
+		    colno += 3;
+		} else {
+		    stringAndChar(&newbuf, &l, c);
+		    ++colno;
+		}
+		if(c == '\n') {
+		    colno = space = 0;
+		    continue;
+		}
+		if(c == ' ' || c == '\t')
+		    space = l;
+		if(colno < 72)
+		    continue;
+		if(s == v - 1)
+		    continue;
 /* If newline's coming up anyways, don't force another one. */
-	    if(s[1] == '\n')
-		continue;
-	    i = l;
-	    if(!space || space == i) {
-		stringAndString(&newbuf, &l, "=\n");
-		colno = space = 0;
-		continue;
-	    }
-	    colno = i - space;
-	    stringAndString(&newbuf, &l, "**");	/* make room */
-	    while(i > space) {
-		newbuf[i + 1] = newbuf[i - 1];
-		--i;
-	    }
-	    newbuf[space] = '=';
-	    newbuf[space + 1] = '\n';
-	    space = 0;
-	}			/* loop over characters */
+		if(s[1] == '\n')
+		    continue;
+		i = l;
+		if(!space || space == i) {
+		    stringAndString(&newbuf, &l, "=\n");
+		    colno = space = 0;
+		    continue;
+		}
+		colno = i - space;
+		stringAndString(&newbuf, &l, "**");	/* make room */
+		while(i > space) {
+		    newbuf[i + 1] = newbuf[i - 1];
+		    --i;
+		}
+		newbuf[space] = '=';
+		newbuf[space + 1] = '\n';
+		space = 0;
+	    }			/* loop over characters */
 
-	nzFree(buf);
-	buf = newbuf;
-	ce = "quoted-printable";
-	goto success;
+	    nzFree(buf);
+	    buf = newbuf;
+	    ce = "quoted-printable";
+	    goto success;
+	}
     }
-    /* quoted printable */
+
     buf[buflen] = 0;
     ce = (nacount ? "8bit" : "7bit");
 
@@ -758,7 +761,7 @@ appendAttachment(const char *s, char **out, int *l)
 char *
 makeBoundary(void)
 {
-    static char boundary[60];
+    static char boundary[24];
     sprintf(boundary, "nextpart-eb-%06d", rand() % 1000000);
     return boundary;
 }				/* makeBoundary */

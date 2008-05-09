@@ -109,6 +109,7 @@ void loadBlacklist(void) ;
 bool onBlacklist1(IP32bit tip) ;
 void fetchMail(int account) ;
 bool emailTest(void) ;
+void unpackUploadedFile(const char *post, const char *boundary, char **postb, int *postb_l) ;
 char * emailParse(char *buf) ;
 bool setupReply(bool all) ;
 

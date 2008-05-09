@@ -347,9 +347,10 @@ httpConnect(const char *from, const char *url)
     const char *portloc;
     IP32bit hip;		/* host IP */
     const char *host, *post, *s;
+    char *postb;
     char *hdr;			/* http header */
     char *u;
-    int l, n;
+    int l, n, postb_l;
     bool isprox, rc, secure, newurl;
     int hsock;			/* http socket */
     int hct;			/* content type */
@@ -566,24 +567,29 @@ httpConnect(const char *from, const char *url)
 	free(u);
     }
 
+    postb = 0;
     if(post) {
 	if(strncmp(post, "`mfd~", 5)) {
 	    stringAndString(&hdr, &l,
 	       "Content-Type: application/x-www-form-urlencoded\r\n");
 	} else {
+	    char thisbound[24];
 	    post += 5;
 	    stringAndString(&hdr, &l,
 	       "Content-Type: multipart/form-data; boundary=");
 	    s = strchr(post, '\r');
 	    stringAndBytes(&hdr, &l, post, s - post);
-	    post = s + 2;
 	    stringAndString(&hdr, &l, eol);
+	    memcpy(thisbound, post, s - post);
+	    thisbound[s - post] = 0;
+	    post = s + 2;
+	    unpackUploadedFile(post, thisbound, &postb, &postb_l);
 	}
 	stringAndString(&hdr, &l, "Content-Length: ");
-	stringAndNum(&hdr, &l, strlen(post));
+	stringAndNum(&hdr, &l, postb ? postb_l : strlen(post));
 	stringAndString(&hdr, &l, eol);
     }
-    /* post */
+
     sendCookies(&hdr, &l, url, secure);
 
 /* Here's the blank line that ends the header. */
@@ -598,8 +604,13 @@ httpConnect(const char *from, const char *url)
 	}
     }
 
-    if(post)
-	stringAndString(&hdr, &l, post);
+    if(post) {
+	if(postb)
+	    stringAndBytes(&hdr, &l, postb, postb_l);
+	else
+	    stringAndString(&hdr, &l, post);
+	nzFree(postb);
+    }
 
     if(secure)
 	n = ssl_write(hdr, l);

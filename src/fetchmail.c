@@ -837,6 +837,59 @@ unpackQP(struct MHINFO *w)
     *r = 0;
 }				/* unpackQP */
 
+/* Use the above machinery to unpack a string. */
+static char *
+unpack64inline(char *start, char *end)
+{
+    struct MHINFO m;
+    m.start = start;
+    m.end = end;
+    m.error64 = false;
+    unpack64(&m);
+    return m.end;
+}				/* unpack64inline */
+
+void
+unpackUploadedFile(const char *post, const char *boundary,
+   char **postb, int *postb_l)
+{
+    static const char message64[] = "Content-Transfer-Encoding: base64";
+    const int boundlen = strlen(boundary);
+    const int m64len = strlen(message64);
+    char *post2;
+    char *b1, *b2, *b3, *b4;	/* boundary points */
+
+    *postb = 0;
+    *postb_l = 0;
+    if(!strstr(post, message64))
+	return;
+
+    post2 = cloneString(post);
+    b2 = strstr(post2, boundary);
+    while(true) {
+	b1 = b2 + boundlen;
+	if(*b1 != '\r')
+	    break;
+	b1 += 2;
+	b1 = strstr(b1, "Content-Transfer");
+	b2 = strstr(b1, boundary);
+	if(memcmp(b1, message64, m64len))
+	    continue;
+	b1 += m64len - 6;
+	strcpy(b1, "8bit\r\n\r\n");
+	b1 += 8;
+	b1[0] = b1[1] = ' ';
+	b3 = b2 - 4;
+	b4 = unpack64inline(b1, b3);
+	strcpy(b4, b3);
+	b2 = b4 + 4;
+    }
+
+    b1 += strlen(b1);
+    *postb = post2;
+    *postb_l = b1 - post2;
+}				/* unpackUploadedFile */
+
 /* Look for the name of the attachment and boundary */
 static void
 ctExtras(struct MHINFO *w, const char *s, const char *t)
