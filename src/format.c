@@ -1180,6 +1180,7 @@ andTranslate(const char *s, bool invisible)
 	"half\0\xbd",
 	"frac34\0\xbe",
 	"iquest\0\xbf",
+	"rsaquo\0*",
 	"Agrave\0\xc0",
 	"Aacute\0\xc1",
 	"Acirc\0\xc2",
