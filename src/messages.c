@@ -1937,9 +1937,8 @@ selectLanguage(void)
     }
 
     fprintf(stderr, "Sorry, language %s is not implemented\n", buf);
-    exit(1);
-}
-    /* selectLanguage */
+}     /* selectLanguage */
+
 static const char *
 getString(int msg)
 {
