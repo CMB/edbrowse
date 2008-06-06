@@ -2211,7 +2211,7 @@ replaceText(const char *line, int len, const char *rhs,
 		goto longvar;
 	    memcpy(r, line + re_vector[0], span);
 	    r[span] = 0;
-	    i_caseShift((unsigned char *)r, rhs[0]);
+	    caseShift((unsigned char *)r, rhs[0]);
 	    r += span;
 	    if(!global)
 		break;
