@@ -12,6 +12,16 @@ The array of messages is selected by the language.
 
 
 
+
+
+
+
+
+
+
+
+
+
 enum {
     MSG_EOF,
     MSG_NoFile,
