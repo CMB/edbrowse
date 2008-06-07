@@ -130,7 +130,7 @@ static const char *englishMessages[] = {
     "Your limit of 1 million lines has been reached.\nSave your files, then exit and restart this program.",
     "absolute path name too long, limit %d chars",
     "directories are readonly, type dw to enable directory writes",
-    "could not create " TRASHDIR " under your home directory, to hold the deleted files",
+    "could not create .Trash under your home directory, to hold the deleted files",
     "could not remove file %s",
     "Could not move %s to the trash bin, set dx mode to actually remove the file",
     "destination lies inside the block to be moved or copied",
@@ -756,7 +756,7 @@ static const char *frenchMessages[] = {
     "Vous avez atteint la limite d'un million de lignes.\nSauvegardez vos fichiers, puis sortez et redémarrez le programme.",
     "chemin du répertoire trop long, la limite est de %d caractères",
     "répertoires en lecture seule, tapez dw pour autoriser l'écriture",
-    "impossible de créer le fichier corbeille " TRASHDIR ", pour contenir vos fichiers effacés",
+    "impossible de créer le fichier corbeille .Trash, pour contenir vos fichiers effacés",
     "effacement du fichier %s impossible",
     "impossible de mettre %s à la corbeille, passez en mode dx pour l'effacer",
     "destination à l'intérieur du bloc à déplacer ou à copier",
@@ -1382,7 +1382,7 @@ static const char *brazilianPortugueseMessages[] = {
     "limite de 1 milhão de linhas alcansado.\nSalve os arquivos, saia e reinicie o programa.",
     "caminho absoluto comprido demais; o limite é de %d caracteres",
     "os diretórios são somente leitura; digite dw para ativar a escrita em diretórios",
-    "não foi possível criar o " TRASHDIR " no seu diretório home para armazenar arquivos apagados",
+    "não foi possível criar o .Trash no seu diretório home para armazenar arquivos apagados",
     "não foi possível remover o arquivo %s",
     "não foi possível mover %s para a lixeira; ative o modo dx para remover permanentemente o arquivo",
     "local de destino fica dentro do bloco a copiar ou mover",
@@ -1889,11 +1889,44 @@ static const char *brazilianPortugueseMessages[] = {
     "Não posso apagar uma árvore de diretórios; use rm -r a partir do shell",
 };
 
+/*********************************************************************
+The above are in 8859-1; this one is in 8859-2.
+With different iso8859 codepages being used in one file,
+it is not possible to reliably convert this file, messages.c, to and from utf8.
+If your base system is utf8, and you are editing this with edbrowse,
+be sure to disable utf8 conversion with the iu command
+BEFORE you edit this file.
+Otherwise you could screw it up!
+And it may not be possible to edit this file in other editors like vi.
+It may try to make some utf8 conversion for you, and it can't get them all right.
+Do this instead.
+LANG=en_us vi messages.c
+I suppose I should turn all these tables into utf8.
+They are iso8859 for historical reasons.
+*********************************************************************/
+
+/* Translation by Jan Mura: jan.mura@volny.cz */
+static const char *czechMessages[] = {
+    "konec souboru",
+    "¾ádný soubor",
+    "NON",
+    "globální nahrazení",
+    "lokální nahrazení",
+    "bez ohledu na velikost písmen",
+    "s ohledem na velikost písmen",
+    "adresáø jen pro ètení",
+    "adresáø pro zápis",
+    "adresáø pro zápis a mazání",
+    "bez HTTP pøesmìrování",
+    "HTTP pøesmìrování",
+};
+
 /* English by default */
 static const char **messageArray = englishMessages;
 static int messageArrayLength = sizeof (englishMessages) / sizeof (char *);
 
 bool cons_utf8, iuConvert = true;
+char type8859 = 1;
 
 void
 selectLanguage(void)
@@ -1936,15 +1969,23 @@ selectLanguage(void)
 	return;
     }
 
+    if(!strncmp(buf, "cs_cz", 5)) {
+	messageArray = czechMessages;
+	messageArrayLength = sizeof (czechMessages) / sizeof (char *);
+	type8859 = 2;
+	return;
+    }
+
     fprintf(stderr, "Sorry, language %s is not implemented\n", buf);
-}     /* selectLanguage */
+}				/* selectLanguage */
 
 static const char *
 getString(int msg)
 {
     const char **a = messageArray;
     const char *s;
-    char *t, c;
+    char *t;
+    int t_len;
     static char utfbuf[1000];
 
     if(msg >= messageArrayLength)
@@ -1959,16 +2000,9 @@ getString(int msg)
 	return s;
 
 /* We have to convert it. */
-    for(t = utfbuf; c = *s; ++s) {
-	if(c >= 0) {
-	    *t++ = c;
-	    continue;
-	}
-	*t++ = 0xc0 | ((uchar) c >> 6);
-	*t++ = 0x80 | (c & 0x3f);
-    }
-    *t = 0;
-
+    iso2utf(s, strlen(s), &t, &t_len);
+    strcpy(utfbuf, t);
+    nzFree(t);
     return utfbuf;
 }				/* getString */
 
