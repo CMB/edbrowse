@@ -401,6 +401,27 @@ isoEncode(char *start, char *end)
     return t;
 }				/* isoEncode */
 
+/*********************************************************************
+Return a string that defines the charset of the outgoing mail.
+This just looks at your language setting - reaaly dumb.
+It should interrogate each file/attachment.
+Well, this will get us started.
+*********************************************************************/
+
+static char *
+charsetString(const char *ct)
+{
+    static char buf[24];
+    buf[0] = 0;
+    if(stringEqual(ct, "text/plain") || stringEqual(ct, "text/html")) {
+	if(cons_utf8)
+	    strcpy(buf, "; charset=utf-8");
+	else
+	    sprintf(buf, "; charset=iso-8859-%d", type8859);
+    }
+    return buf;
+}				/* charsetString */
+
 /* Read a file into memory, mime encode it,
  * and return the type of encoding and the encoded data.
  * Last three parameters are result parameters.
@@ -1040,8 +1061,8 @@ sendMail(int account, const char **recipients, const char *body,
     if(!mustmime) {
 /* no mime components required, we can just send the mail. */
 	sprintf(serverLine,
-	   "Content-type: %s%sContent-Transfer-Encoding: %s%s%s", ct, eol, ce,
-	   eol, eol);
+	   "Content-Type: %s%s%sContent-Transfer-Encoding: %s%s%s", ct,
+	   charsetString(ct), eol, ce, eol, eol);
 	stringAndString(&out, &j, serverLine);
     } else {
 	sprintf(serverLine,
@@ -1053,8 +1074,8 @@ sendMail(int account, const char **recipients, const char *body,
 this format, some or all of this message may not be legible.\r\n\r\n--");
 	stringAndString(&out, &j, boundary);
 	sprintf(serverLine,
-	   "%sContent-type: %s%sContent-Transfer-Encoding: %s%s%s", eol, ct,
-	   eol, ce, eol, eol);
+	   "%sContent-Type: %s%sContent-Transfer-Encoding: %s%s%s", eol, ct,
+	   charsetString(ct), eol, ce, eol, eol);
 	stringAndString(&out, &j, serverLine);
     }
 
@@ -1067,8 +1088,8 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 	for(i = 0; s = attachments[i]; ++i) {
 	    if(!encodeAttachment(s, 0, false, &ct, &ce, &encoded))
 		return false;
-	    sprintf(serverLine, "%s--%s%sContent-Type: %s", eol, boundary, eol,
-	       ct);
+	    sprintf(serverLine, "%s--%s%sContent-Type: %s%s", eol, boundary,
+	       eol, ct, charsetString(ct));
 	    stringAndString(&out, &j, serverLine);
 /* If the filename has a quote in it, forget it. */
 /* Also, suppress filename if this is an alternate presentation. */
