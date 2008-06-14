@@ -276,24 +276,34 @@ These can still fit within single bytes,
 by setting the 8<font size=3><sup>th</sup></font> bit to 1, according to the
 <A HREF=http://en.wikipedia.org/wiki/ISO_8859>
 ISO8859-1</A> standard.&nbsp;
-However, another standard is taking over, at least in the Unix/Linux world.&nbsp;
-This charset,
-known as
+Still other languages, such as Czech and Hungarian, fit within the
+<A HREF=http://en.wikipedia.org/wiki/ISO/IEC_8859-2>
+iso8859-2</A> standard,
+which assigns different characters to the bytes above 127.&nbsp;
+And there is iso8859-3, and so on.
+
+<P>
+But what if you want to write one paragraph in French and one in Czech?&nbsp;
+You either switch from iso8859-1 to iso8859-2 in mid document,
+or we come up with a new standard that represents all letters in all languages simultaneously.&nbsp;
+This charset, which obviously will not fit into a single byte,
+is known as
 <A HREF=http://en.wikipedia.org/wiki/Utf8>
 utf8</A>,
-packs the same European letters into two-byte sequences.&nbsp;
-Thus, within your computer, &ntilde; is represented by either one or two bytes.&nbsp;
+and it is growing in popularity.&nbsp;
+Thus, within your computer, &ntilde; is represented by two bytes.&nbsp;
 This is transparent to you; you see the same letter on the screen,
 and you hear the same sounds (if your screen reader passes these letters to a speech synthesizer).&nbsp;
 A quick way to tell which system you are on is to echo $LANG.&nbsp;
 If it contains the string utf8, or utf-8,
 in upper or lower case,
 your console is using utf8, and it expects two-byte sequences.&nbsp;
-Your files will contain these underlying sequences, and you (probably) aren't even aware of it.
+Your files will contain these underlying sequences, and you (probably) aren't even aware of it.&nbsp;
+Older (pre utf8) systems store each character in a single byte, with an iso8859-x codepage doing the translation.
 
 <P>
-There's much more to say about charsets; this is merely a brief introduction to the subject.&nbsp;
-I need not go further, because edbrowse only suppports these two systems at this time.&nbsp;
+There's much more to say about charsets; this is merely a brief introduction.&nbsp;
+I need not go further, because edbrowse only suppports iso8859 &#8660; utf8 at this time.&nbsp;
 Chinese, for example, requires 3 and 4 byte sequences, which map into unicode.&nbsp;
 Edbrowse just doesn't handle this level of complexity at this time.
 
@@ -305,10 +315,7 @@ so that edbrowse can support most European languages.&nbsp;
 Set the environment variable LANG to interact with edbrowse in your home language.&nbsp;
 (It's probably already set.)&nbsp;
 Supported languages are shown below.&nbsp;
-At present we are restricted to ISO8859-1 characters,
-facilitating many (though by no means all) of the indo-european languages,
-as described above.&nbsp;
-If you can help translate edbrowse into these languages,
+If you can translate edbrowse into additional languages,
 please let me know.
 
 <P>
@@ -326,12 +333,16 @@ Brazilian Portuguese: LANG=pt_br by
 Cleverson</A>
 
 <P>
+Czech: LANG=cs_cz by
+<A HREF=mailto:jan.mura@volny.cz>
+Jan Mura</A>
+
+<P>
 When an output or error message is displayed,
-accented letters are printed as 8-bit bytes, i.e. ISO8859-1,
+accented letters are printed as 8-bit bytes, i.e. ISO8859-x,
 unless the string utf8 or utf-8 appears in $LANG,
 whence the nonascii characters are generated using utf8.&nbsp;
 LANG=fr-FR.UTF-8 is a common settting in France.&nbsp;
-These are the only charsets that are currently supported.&nbsp;
 Similarly, the contents of a buffer, be it a local document or an internet website,
 are displayed as 8-bit bytes or two-byte sequences,
 according to your locale.&nbsp;
