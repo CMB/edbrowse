@@ -81,6 +81,7 @@ void selectLanguage(void) ;
 void i_puts(int msg) ;
 void i_printf(int msg, ...) ;
 void i_printfExit(int msg, ...) ;
+void i_stringAndMessage(char **s, int *l, int messageNum) ;
 void setError(int msg, ...) ;
 void showError(void) ;
 void showErrorConditional(char cmd) ;

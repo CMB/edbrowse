@@ -645,4 +645,6 @@ enum {
     MSG_IUConvertOn,
     MSG_CopyMoveDir,
     MSG_NoDirDelete,
+    MSG_LibcurlNoInit,
+    MSG_FTPEmptyDir,
 };

@@ -645,6 +645,8 @@ static const char *englishMessages[] = {
     "automatically convert between iso8859 and utf8",
     "cannot copy a directory tree to your trash bin on another file system;\nuse cpio -p or cp -r from the shell",
     "cannot delete a directory tree; use rm -r from the shell",
+    "Failed to initialize libcurl.",
+    "This FTP directory listing is empty.",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
@@ -1271,6 +1273,8 @@ static const char *frenchMessages[] = {
     "conversion automatique entre iso8859 et utf8",
     "impossible de copier un répertoire dans la corbeille sur un autre système de fichiers;n utilisez cpio -p ou cp -r à partir du shell",
     "impossible de supprimer un répertoire; utilisez rm -r à partir du shell",
+    0,
+    0,
 };
 
 /* Translation by Cleverson: clever92000@yahoo.com.br */
@@ -1897,6 +1901,8 @@ static const char *brazilianPortugueseMessages[] = {
     "converte automaticamente entre iso8859 e utf8",
     "Não posso copiar uma árvore de diretórios para uma lixeira em outro sistema de arquivos;\nUse cpio -p ou cp -r a partir do shell",
     "Não posso apagar uma árvore de diretórios; use rm -r a partir do shell",
+    0,
+    0,
 };
 
 /* Translation by Jan Mura: jan.mura@volny.cz */
@@ -2035,6 +2041,14 @@ i_printfExit(int msg, ...)
     va_end(p);
     ebClose(1);
 }				/* i_printfExit */
+
+/* i_stringAndMessage: concatenate a message to an existing string. */
+void
+i_stringAndMessage(char **s, int *l, int messageNum)
+{
+    const char *messageText = getString(messageNum);
+    stringAndString(s, l, messageText);
+}				/* i_stringAndMessage */
 
 /*********************************************************************
 The following error display functions are specific to edbrowse,
