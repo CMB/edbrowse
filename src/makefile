@@ -40,7 +40,7 @@ ESQLDFLAGS = $(STRIP) -Xlinker -rpath -Xlinker $(INFORMIXDIR)/lib:$(INFORMIXDIR)
 #  You can use the target jslink below.
 #  Some folks need to add -lcrypto to this list.
 
-LIBS = -lpcre -lm -lssl -lsmjs
+LIBS = -lpcre -lm -lssl -lsmjs -lcurl
 
 #  Make the dynamically linked executable program by default.
 #  Edbrowse executable.

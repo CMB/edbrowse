@@ -335,7 +335,7 @@ static const char *englishMessages[] = {
     "ftp could not change directory (timed out)",
     "ftp malformed url",
     "ftp usage error",
-    "ftp error in login config file",
+    "ftp bad login or password",
     "ftp library initialization failed",
     "ftp session initialization failed",
     "ftp unexpected error %d",
@@ -646,7 +646,7 @@ static const char *englishMessages[] = {
     "cannot copy a directory tree to your trash bin on another file system;\nuse cpio -p or cp -r from the shell",
     "cannot delete a directory tree; use rm -r from the shell",
     "Failed to initialize libcurl.",
-    "This FTP directory listing is empty.",
+    "This ftp directory listing is empty.",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
@@ -963,7 +963,7 @@ static const char *frenchMessages[] = {
     "ftp : ne peut changer de répertoire (délai dépassé)",
     "ftp : url mal formée",
     "ftp : erreur d'utilisation",
-    "ftp : erreur d'authentification dans le fichier de configuration",
+0,
     "ftp : échec de l'initialisation de la librairie",
     "ftp : échec de la session d'initialisation",
     "ftp : erreur inattendue %d",
@@ -1591,7 +1591,7 @@ static const char *brazilianPortugueseMessages[] = {
     "não consegui trocar de diretório FTP (tempo esgotado)",
     "URL FTP mal-formada",
     "erro no uso do FTP",
-    "erro de FTP no arquivo de configuração do Login",
+0,
     "falha na inicialização da biblioteca de FTP",
     "falha a iniciar sessão de FTP",
     "erro de FTP inesperado %d",
@@ -1901,8 +1901,8 @@ static const char *brazilianPortugueseMessages[] = {
     "converte automaticamente entre iso8859 e utf8",
     "Não posso copiar uma árvore de diretórios para uma lixeira em outro sistema de arquivos;\nUse cpio -p ou cp -r a partir do shell",
     "Não posso apagar uma árvore de diretórios; use rm -r a partir do shell",
-    0,
-    0,
+    "Falha ao inicializar a biblioteca libcurl.",
+    "Esta listagem do diretório FTP está vazia.",
 };
 
 /* Translation by Jan Mura: jan.mura@volny.cz */

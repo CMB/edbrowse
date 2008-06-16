@@ -335,7 +335,7 @@ enum {
     MSG_FTPCDTime,
     MSG_FTPBadURL,
     MSG_FTPUsage,
-    MSG_FTPConfig,
+    MSG_FTPPassword,
     MSG_FTPLibrary,
     MSG_FTPSession,
     MSG_FTPUnexpected,

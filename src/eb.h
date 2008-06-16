@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <curl/curl.h>
 #ifdef DOSLIKE
 #include <io.h>
 #else
@@ -174,6 +175,7 @@ struct DBTABLE {
 };
 
 /* various globals */
+extern CURL *curl_handle;
 extern int debugLevel;		/* 0 to 9 */
 extern int webTimeout, mailTimeout;
 extern int browseLine;		/* line number, for error reporting */
@@ -222,7 +224,6 @@ extern bool allowRedirection;	/* from http code 301, or http refresh */
 extern bool sendReferrer;	/* in the http header */
 extern bool allowJS;		/* javascript on */
 extern bool helpMessagesOn;	/* no need to type h */
-extern char ftpMode;
 extern bool showHiddenFiles;	/* during directory scan */
 extern uchar dirWrite;		/* directory write mode, e.g. rename files */
 extern uchar endMarks;		/* do we print ^ $ at the start and end of lines? */

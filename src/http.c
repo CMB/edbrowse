@@ -11,8 +11,11 @@
 
 #include <time.h>
 
+CURL *curl_handle = NULL;
 char *serverData;
 int serverDataLen;
+
+static bool ftpConnect(const char *url);
 
 /* Read from a socket, 100K at a time. */
 #define CHUNKSIZE 100000
@@ -78,6 +81,23 @@ readSocket(int secure, int fh)
 
     return true;
 }				/* readSocket */
+
+/* Callback used by libcurl. Writes data to serverData, as readSocket does. */
+size_t
+eb_curl_callback(char *incoming, size_t size, size_t nitems, void *unused)
+{
+    size_t num_bytes = nitems * size;
+    int dots1, dots2;
+    dots1 = serverDataLen / CHUNKSIZE;
+    stringAndBytes(&serverData, &serverDataLen, incoming, num_bytes);
+    dots2 = serverDataLen / CHUNKSIZE;
+    if(dots1 < dots2) {
+	for(; dots1 < dots2; ++dots1)
+	    putchar('.');
+	fflush(stdout);
+    }
+    return num_bytes;
+}
 
 /* Pull a keyword: attribute out of an internet header. */
 char *
@@ -964,44 +984,74 @@ ftpls(char *line)
 {
     int l = strlen(line);
     int j;
+    if(l && line[l - 1] == '\r')
+	line[--l] = 0;
+
 /* blank line becomes paragraph break */
-    if(!l || !memcmp(line, "total ", 6) && stringIsNum(line + 6) > 0) {
+    if(!l || memEqualCI(line, "total ", 6) && stringIsNum(line + 6)) {
 	stringAndString(&serverData, &serverDataLen, "<P>\n");
 	return;
     }
+    stringAndString(&serverData, &serverDataLen, "<br>");
+
     for(j = 0; line[j]; ++j)
 	if(!strchr("-rwxdls", line[j]))
 	    break;
+
     if(j == 10 && line[j] == ' ') {	/* long list */
 	int fsize, nlinks;
 	char user[42], group[42];
-	char *q;
-	sscanf(line + j, " %d %40s %40s %d", &nlinks, user, group, &fsize);
+	char month[8];
+	int day;
+	char *q, *t;
+	sscanf(line + j, " %d %40s %40s %d %3s %d",
+	   &nlinks, user, group, &fsize, month + 1, &day);
 	q = strchr(line, ':');
 	if(q) {
 	    for(++q; isdigitByte(*q) || *q == ':'; ++q) ;
 	    while(*q == ' ')
 		++q;
-	    if(*q) {		/* file name */
-		char qc = '"';
-		if(strchr(q, qc))
-		    qc = '\'';
-		stringAndString(&serverData, &serverDataLen, "<br><A HREF=x");
-		serverData[serverDataLen - 1] = qc;
-		stringAndString(&serverData, &serverDataLen, q);
-		stringAndChar(&serverData, &serverDataLen, qc);
-		stringAndChar(&serverData, &serverDataLen, '>');
-		stringAndString(&serverData, &serverDataLen, q);
-		stringAndString(&serverData, &serverDataLen, "</A>");
-		if(line[0] == 'd')
-		    stringAndChar(&serverData, &serverDataLen, '/');
-		stringAndString(&serverData, &serverDataLen, ": ");
-		stringAndNum(&serverData, &serverDataLen, fsize);
-		stringAndChar(&serverData, &serverDataLen, '\n');
-		return;
+	} else {
+/* old files won't have the time, but instead, they have the year. */
+/* bad news for us; no good/easy way to glom onto this one. */
+	    month[0] = month[4] = ' ';
+	    month[5] = 0;
+	    q = strstr(line, month);
+	    if(q) {
+		q += 8;
+		while(*q == ' ')
+		    ++q;
+		while(isdigitByte(*q))
+		    ++q;
+		while(*q == ' ')
+		    ++q;
 	    }
 	}
+
+	if(q && *q) {
+	    char qc = '"';
+	    if(strchr(q, qc))
+		qc = '\'';
+	    stringAndString(&serverData, &serverDataLen, "<A HREF=x");
+	    serverData[serverDataLen - 1] = qc;
+	    t = strstr(q, " -> ");
+	    if(t)
+		stringAndBytes(&serverData, &serverDataLen, q, t - q);
+	    else
+		stringAndString(&serverData, &serverDataLen, q);
+	    stringAndChar(&serverData, &serverDataLen, qc);
+	    stringAndChar(&serverData, &serverDataLen, '>');
+	    stringAndString(&serverData, &serverDataLen, q);
+	    stringAndString(&serverData, &serverDataLen, "</A>");
+	    if(line[0] == 'd')
+		stringAndChar(&serverData, &serverDataLen, '/');
+	    stringAndString(&serverData, &serverDataLen, ": ");
+	    stringAndNum(&serverData, &serverDataLen, fsize);
+	    stringAndChar(&serverData, &serverDataLen, '\n');
+	    return;
+	}
     }
+
     if(!strpbrk(line, "<>&")) {
 	stringAndString(&serverData, &serverDataLen, line);
     } else {
@@ -1020,111 +1070,132 @@ ftpls(char *line)
 		stringAndChar(&serverData, &serverDataLen, c);
 	}
     }
+
     stringAndChar(&serverData, &serverDataLen, '\n');
 }				/* ftpls */
 
+/* parse_directory_listing: convert an FTP-style listing to html. */
+/* Repeatedly calls ftpls to parse each line of the data. */
+void
+parse_directory_listing()
+{
+    char *incomingData = serverData;
+    int incomingLen = serverDataLen;
+    serverData = initString(&serverDataLen);
+    stringAndString(&serverData, &serverDataLen, "<html>\n<body>\n");
+    char *s, *t;
+
+    if(!incomingLen) {
+	i_stringAndMessage(&serverData, &serverDataLen, MSG_FTPEmptyDir);
+    } else {
+
+	s = incomingData;
+	while(s < incomingData + incomingLen) {
+	    t = strchr(s, '\n');
+	    if(!t || t >= incomingData + incomingLen)
+		break;		/* should never happen */
+	    *t = 0;
+	    ftpls(s);
+	    s = t + 1;
+	}
+    }
+
+    stringAndString(&serverData, &serverDataLen, "</body></html>\n");
+    nzFree(incomingData);
+}				/* parse_directory_listing */
+
+void
+curl_ftp_setError(CURLcode curlret)
+{
+    switch (curlret) {
+    case CURLE_COULDNT_CONNECT:
+    case CURLE_FTP_CANT_GET_HOST:
+	setError(MSG_FTPConnect);
+	break;
+
+/* These all look like session initiation failures. */
+    case CURLE_FTP_WEIRD_SERVER_REPLY:
+    case CURLE_FTP_WEIRD_PASS_REPLY:
+    case CURLE_FTP_WEIRD_PASV_REPLY:
+    case CURLE_FTP_WEIRD_227_FORMAT:
+    case CURLE_FTP_COULDNT_SET_ASCII:
+    case CURLE_FTP_COULDNT_SET_BINARY:
+    case CURLE_FTP_PORT_FAILED:
+	setError(MSG_FTPSession);
+	break;
+
+    case CURLE_FTP_USER_PASSWORD_INCORRECT:
+	setError(MSG_FTPPassword);
+	break;
+
+    default:
+	setError(MSG_FTPTransfer);
+	break;
+    }
+}				/* curl_ftp_setError */
+
 /* Like httpConnect, but for ftp */
-/* Basically, a system call to ncftpget */
-bool
+static bool
 ftpConnect(const char *url)
 {
-    FILE *f;
-    char *cmd, *out;
-    int cmd_l, out_l;
-    int rc;
-    bool dirmode;
-    int c;
-    static const char npf[] = "not a plain file.";
-    const int npfsize = strlen(npf);
-    serverData = 0;
-    serverDataLen = 0;
-    fileSize = -1;
-    if(debugLevel >= 1)
+    const int protLength = 6;	/* length of "ftp://" */
+    char *urlcopy, *out;
+    int urlcopy_l, out_l;
+    bool transfer_success = false;
+    bool has_slash;
+    serverData = initString(&serverDataLen);
+    urlcopy = initString(&urlcopy_l);
+    stringAndString(&urlcopy, &urlcopy_l, url);
+
+/* libcurl appends an implicit slash to URLs like "ftp://foo.com".
+* Be explicit, so that edbrowse knows that we have a directory. */
+
+    if(!strchr(urlcopy + protLength, '/'))
+	stringAndChar(&urlcopy, &urlcopy_l, '/');
+
+
+    has_slash = urlcopy[urlcopy_l - 1] == '/';
+    if(debugLevel >= 2)
 	i_puts(MSG_FTPDownload);
-    dirmode = false;
-  top:cmd = initString(&cmd_l);
-    if(dirmode) {
-	stringAndString(&cmd, &cmd_l, "ncftpls -l ");
-    } else {
-	stringAndString(&cmd, &cmd_l, "ncftpget -r 1 -v -z ");
-	if(debugLevel >= 4)
-	    stringAndString(&cmd, &cmd_l, "-d stdout ");
-    }
-    if(ftpMode) {
-	char mode[4];
-	sprintf(mode, "-%c ", ftpMode);
-	stringAndString(&cmd, &cmd_l, mode);
-    }
-/* Quote the url, in case there are spaces in the name. */
-    stringAndChar(&cmd, &cmd_l, '"');
-    stringAndString(&cmd, &cmd_l, url);
-    if(dirmode)
-	stringAndChar(&cmd, &cmd_l, '/');
-    stringAndChar(&cmd, &cmd_l, '"');
-    stringAndString(&cmd, &cmd_l, " 2>&1");
-    debugPrint(3, "%s", cmd);
-    f = popen(cmd, "r");
-    if(!f) {
-	setError(MSG_TempNoSystem, cmd, errno);
-	nzFree(cmd);
-	return false;
-    }
-    out = initString(&out_l);
-    if(dirmode) {
-	serverData = initString(&serverDataLen);
-	stringAndString(&serverData, &serverDataLen, "<html>\n");
-    }
 
-    while((c = getc(f)) != EOF) {
-	if(c == '\r')
-	    c = '\n';
-	if(c == '\n') {
-	    if(dirmode)
-		ftpls(out);
+    CURLcode curlret = curl_easy_setopt(curl_handle, CURLOPT_URL, urlcopy);
+    curlret = curl_easy_perform(curl_handle);
+
+    if(curlret == CURLE_FTP_COULDNT_RETR_FILE) {
+	if(has_slash == true)	/* Was a directory. */
+	    transfer_success = false;
+	else {			/* try appending a slash. */
+	    stringAndChar(&urlcopy, &urlcopy_l, '/');
+	    curlret = curl_easy_setopt(curl_handle, CURLOPT_URL, urlcopy);
+	    curlret = curl_easy_perform(curl_handle);
+	    if(curlret != CURLE_OK)
+		transfer_success = false;
 	    else {
-		if(!out_l)
-		    continue;
-		if(out_l > npfsize && stringEqual(out + out_l - npfsize, npf)) {
-		    pclose(f);
-		    nzFree(cmd);
-		    nzFree(out);
-		    dirmode = true;
-		    goto top;
-		}
-/* Don't print the ETA messages */
-		if(!strstr(out, " ETA: "))
-		    puts(out);
+		parse_directory_listing();
+		transfer_success = true;
 	    }
-	    nzFree(out);
-	    out = initString(&out_l);
-	} else
-	    stringAndChar(&out, &out_l, c);
-    }
+	}
+    } else if(curlret == CURLE_OK) {
+	if(has_slash == true)
+	    parse_directory_listing();
+	transfer_success = true;
+    } else
+	transfer_success = false;
 
-    rc = pclose(f);
-    nzFree(cmd);
-    if(out_l) {			/* should never happen */
-	puts(out);
-	nzFree(out);
-    }
+    if(serverDataLen >= CHUNKSIZE)
+	nl();			/* We printed dots, so we terminate them with newline */
 
-    if(rc) {
-	if(!(rc & 0xff))
-	    rc >>= 8;
-	if(rc > 0 && rc <= 11)
-	    setError(MSG_FTPConnect - 1 + rc);
-	else
-	    setError(MSG_FTPUnexpected, rc);
-	return false;
+    if(transfer_success == false) {
+	curl_ftp_setError(curlret);
+	nzFree(serverData);
+	serverData = 0;
+	serverDataLen = 0;
     }
-    i_puts(dirmode + MSG_Success);
-    if(dirmode) {		/* need a final slash */
-	int l = strlen(url);
-	changeFileName = allocMem(l + 2);
-	strcpy(changeFileName, url);
-	strcat(changeFileName, "/");
-    }
-    return true;
+    if(transfer_success == true && !stringEqual(url, urlcopy))
+	changeFileName = urlcopy;
+    else
+	nzFree(urlcopy);
+    return transfer_success;
 }				/* ftpConnect */
 
 
@@ -1205,3 +1276,25 @@ allIPs(void)
     for(k = 0; k < domtotal; ++k)
 	nzFree(domlist[k]);
 }				/* allIPs */
+
+/* Clean up libcurl's state. */
+static void
+my_curl_cleanup(void)
+{
+    curl_easy_cleanup(curl_handle);
+    curl_global_cleanup();
+}				/* my_curl_cleanup */
+
+
+void
+my_curl_init(void)
+{
+    CURLcode curl_init_status = curl_global_init(CURL_GLOBAL_ALL);
+    if(curl_init_status != 0)
+	i_printfExit(MSG_LibcurlNoInit);
+    curl_handle = curl_easy_init();
+    if(curl_handle == NULL)
+	i_printfExit(MSG_LibcurlNoInit);
+    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, eb_curl_callback);
+    atexit(my_curl_cleanup);
+}				/* my_curl_init */

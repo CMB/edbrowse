@@ -3006,20 +3006,21 @@ twoLetter(const char *line, const char **runThis)
     }
 
     if(line[0] == 'f' && line[1] == 'm' &&
-       line[2] && strchr("pad", line[2]) && !line[3]) {
-	ftpMode = 0;
-	if(line[2] == 'p')
-	    ftpMode = 'F';
-	if(line[2] == 'a')
-	    ftpMode = 'E';
-	if(helpMessagesOn || debugLevel >= 1) {
-	    if(ftpMode == 'F')
+       line[2] && strchr("pa", line[2]) && !line[3]) {
+	bool doHelp = helpMessagesOn || debugLevel >= 1;
+/* Can't support passive/active mode with libcurl, or at least not easily. */
+	if(line[2] == 'p') {
+	    curl_easy_setopt(curl_handle, CURLOPT_FTPPORT, NULL);
+	    if(doHelp)
 		i_puts(MSG_PassiveMode);
-	    if(ftpMode == 'E')
+	} else {
+	    curl_easy_setopt(curl_handle, CURLOPT_FTPPORT, "-");
+	    if(doHelp)
 		i_puts(MSG_ActiveMode);
-	    if(ftpMode == 0)
-		i_puts(MSG_PassActMode);
 	}
+/* See "man curl_easy_setopt.3" for info on CURLOPT_FTPPORT.  Supplying
+* "-" makes libcurl select the best IP address for active ftp.
+*/
 	return true;
     }
 

@@ -297,6 +297,17 @@ isURL(const char *url)
     return j;
 }				/* isURL */
 
+/* non-FTP URLs are always browsable.  FTP URLs are browsable if they end with
+* a slash. */
+bool
+isBrowseableURL(const char *url)
+{
+    if(isURL(url))
+	return (!memEqualCI(url, "ftp://", 6)) || (url[strlen(url) - 1] == '/');
+    else
+	return false;
+}				/* isBrowseableURL */
+
 /* Helper functions to return pieces of the URL.
  * Makes a copy, so you can have your 0 on the end.
  * Return 0 for an error, and "" if that piece is missing. */

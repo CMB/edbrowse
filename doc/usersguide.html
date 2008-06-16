@@ -482,7 +482,6 @@ tn: send dos-style newlines on lines in textareas (toggle)
 iu: automatically convert between iso8859 and utf8 (toggle)
 fma: ftp mode active
 fmp: ftp mode passive
-fmd: ftp mode default, passive then active
 rf: refresh the web page or directory listing
 et: edit this web page as pure text
 vs: verify ssl connections (toggle)
@@ -2426,22 +2425,12 @@ ftp://ftp.random.com/tarball.tar.gz
 and the file will be fetched.&nbsp;
 It doesn't matter whether you type in the url yourself,
 or it is a hyperlink on a web page.&nbsp;
-The file is retrieved, and placed in a local file of the same name.&nbsp;
-You will ssee the words:
-<P>
-ftp download
-<br>
-some stats on the size of the file and the bits per second
-<br>
-success
-
-<P>
+The file is retrieved, and placed in a new buffer.&nbsp;
+Type w/ to save it locally, which is what a traditional ftp client would do.&nbsp;
 Of course the download could fail, in which case you will receive an error message.&nbsp;
 If it was simply interrupted,
 due to some internet glitch,
-you can issue the command again,
-and edbrowse will resume the download from where it left off.&nbsp;
-This can save time when fetching a large file.
+you can always issue the command again and hope for better luck.
 
 <P>
 By default, edbrowse uses the account name "anonymous" and the password
@@ -2473,27 +2462,7 @@ can be either active or passive.&nbsp;
 One works well when the client is behind a router,
 and the other works well when the server is behind a router.&nbsp;
 You can specify ftp mode active by entering the command `fma',
-or ftp mode passive by `fmp'.&nbsp;
-The command `fmd' sets the ftp mode to a default,
-which tries to establish a passive connection first,
-and then an active connection as a fallback.&nbsp;
-This is a reasonable default, so you should probably leave this alone.
-
-<P>
-Edbrowse doesn't actually establish the ftp connections,
-rather, it invokes the program ncftpget to fetch the file,
-and ncftpls to list the directory.&nbsp;
-These programs are distributed with most Unix systems.&nbsp;
-If you don't have these programs, please visit
-<A HREF=http://www.ncftp.com>ncftp.com</A>.
-
-<P>
-Once again, review the differences.&nbsp;
-Http pulls a file into a buffer in memory, i.e. an edbrowse session,
-while ftp copies the file directly to disk.&nbsp;
-Also, ftp does not print dots every 100K to indicate progress,
-so you just have to wait until it's done.&nbsp;
-(Depending on your operating system, you could switch to another virtual console/window and check on the length of the local file.)
+or ftp mode passive by `fmp'.
 
 <H3 align=center> <A NAME=proxy> Proxy Servers </A> </H3>
 

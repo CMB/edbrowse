@@ -12,6 +12,7 @@
 /* Define the globals that are declared in eb.h. */
 /* See eb.h for descriptive comments. */
 
+
 const char *version = "3.3.4";
 char *userAgents[10], *currentAgent, *currentReferrer;
 const char eol[] = "\r\n";
@@ -35,7 +36,6 @@ bool caseInsensitive, searchStringsAll;
 bool textAreaDosNewlines = true, undoable;
 bool allowRedirection = true, allowJS = true, sendReferrer = false;
 bool binaryDetect = true;
-char ftpMode;
 bool showHiddenFiles, helpMessagesOn;
 uchar dirWrite, endMarks;
 int context = 1;
@@ -1131,6 +1131,7 @@ main(int argc, char **argv)
     }
 
     cookiesFromJar();
+    my_curl_init();
 
     signal(SIGINT, catchSig);
     siginterrupt(SIGINT, 1);
@@ -1162,13 +1163,11 @@ main(int argc, char **argv)
 	    cw->fileName = changeFileName;
 	    changeFileName = 0;
 	}
-	if(cw->fileName && memEqualCI(cw->fileName, "ftp://", 6)) {
-	    nzFree(cw->fileName);
-	    cw->fileName = 0;
-	}
+
 	cw->firstOpMode = cw->changeMode = false;
 /* Browse the text if it's a url */
-	if(rc && !(cw->binMode | cw->dirMode) && cw->dol && isURL(cw->fileName)) {
+	if(rc && !(cw->binMode | cw->dirMode) && cw->dol &&
+	   isBrowseableURL(cw->fileName)) {
 	    if(runCommand("b"))
 		debugPrint(1, "%d", fileSize);
 	    else

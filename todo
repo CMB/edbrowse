@@ -1,3 +1,4 @@
+chunked transfer encoding
 every attribute in the html tag needs to become a property in the corresponding object
 dynamic domain objects are not implemented yet
 onclick in <form>
@@ -8,6 +9,7 @@ find host fails for gvm1ghzxnlx0(+%##*vposzwx.watchfly.com
 document.myFlash
 makeIt('1','IE')
 <a href="faq.html#something">something</a> <h4 id="something">heading 4</h4>
+<a id=something> instead of name
 window.screenLeft window.screenTop window.screenX window.screenY window.outerWidth window.outerHeight
 newlines in text areas in mailed form - or should it be mime
 onload and onunload in body seem to run under document, not the body subobject
@@ -20,3 +22,5 @@ getAttribute setAttribute
 put account: in reply function
 utf8 convert mail body and mail subject/from
 Specify charset in outgoing mail
+http://1saleaday.com cvv code
+http://support.microsoft.com/kb/318754
