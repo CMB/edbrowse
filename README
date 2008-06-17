@@ -1,25 +1,6 @@
 edbrowse, a line oriented editor browser.
-
 Written and maintained by Karl Dahlke, eklhad@gmail.com
-
-This package, including source and documentation, is released to you
-under the general public license.
-Basically, this means the software is free, and you can do anything you like
-with it; but at some time in your life, you should really read
-all the dreary, legal details.
-http://www.fsf.org/licensing/licenses/gpl.html
-
-OpenSSL exception:
-
-As a special exception, I hereby grant permission to link
-the code of this program with the OpenSSL library
-(or with modified versions of OpenSSL that use the same license as OpenSSL),
-and distribute linked combinations including the two.
-You must obey the GNU General Public License in all respects
-for all of the code used other than OpenSSL.
-If you modify this program, you may extend this exception to your version of the
-program, but you are not obligated to do so.
-If you do not wish to do so, delete this exception statement from your version.
+See COPYING for licensing agreements.
 
 ------------------------------------------------------------
 
