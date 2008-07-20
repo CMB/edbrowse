@@ -1075,7 +1075,7 @@ sendMail(int account, const char **recipients, const char *body,
 this format, some or all of this message may not be legible.\r\n\r\n--");
 	stringAndString(&out, &j, boundary);
 	sprintf(serverLine,
-	   "%sContent-Type: %s%sContent-Transfer-Encoding: %s%s%s", eol, ct,
+	   "%sContent-Type: %s%s%sContent-Transfer-Encoding: %s%s%s", eol, ct,
 	   charsetString(ct, ce), eol, ce, eol, eol);
 	stringAndString(&out, &j, serverLine);
     }
