@@ -390,7 +390,8 @@ Searching for ni.o will work again.&nbsp;
 Unfortunately, some older pcre packages do not have this capability built in.&nbsp;
 If this is the case, you will receive a warning message,
 then pcre will revert back to its original one-byte-per-letter behavior.&nbsp;
-To disable the utf8 feature, and suppress this warning message, set the environment variable PCREUTF8=off.
+To disable the utf8 feature permanently, and suppress this warning message, set the environment variable PCREUTF8=off.&nbsp;
+If you want to disable utf8 search and substitute temporarily, use the u8 command.
 
 <H3 align=center> <A NAME=guide> Quick Reference Guide </A> </H3>
 
@@ -419,6 +420,7 @@ ci: searches and substitutions are case insensitive
 cs: searches and substitutions are case sensitive
 sg: substitution strings are global across sessions
 sl: substitution strings are local to their sessions
+u8: search and substitute uses utf8 character sequences (toggle)
 lc: convert line to lower case
 mc: convert line to mixed case
 uc: convert line to upper case
