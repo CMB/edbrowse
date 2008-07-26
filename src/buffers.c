@@ -1883,6 +1883,8 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 static int re_count;
 static int re_vector[11 * 3];
 static pcre *re_cc;		/* compiled */
+static bool re_utf8 = true;
+
 
 static void
 regexpCompile(const char *re, bool ci)
@@ -1898,16 +1900,18 @@ regexpCompile(const char *re, bool ci)
     if(ci)
 	re_opt |= PCRE_CASELESS;
 
-    if(cons_utf8 && !cw->binMode && try8 >= 0) {
-	if(try8 == 0) {
-	    const char *s = getenv("PCREUTF8");
-	    if(s && stringEqual(s, "off")) {
-		try8 = -1;
-		goto top;
+    if(re_utf8) {
+	if(cons_utf8 && !cw->binMode && try8 >= 0) {
+	    if(try8 == 0) {
+		const char *s = getenv("PCREUTF8");
+		if(s && stringEqual(s, "off")) {
+		    try8 = -1;
+		    goto top;
+		}
 	    }
+	    try8 = 1;
+	    re_opt |= PCRE_UTF8;
 	}
-	try8 = 1;
-	re_opt |= PCRE_UTF8;
     }
 
     re_cc = pcre_compile(re, re_opt, &re_error, &re_offset, 0);
@@ -1915,6 +1919,9 @@ regexpCompile(const char *re, bool ci)
 	i_puts(MSG_PcreUtf8);
 	try8 = -1;
 	goto top;
+    }
+    if(!re_cc && try8 > 0 && strstr(re_error, "invalid UTF-8 string")) {
+	i_puts(MSG_BadUtf8String);
     }
 
     if(!re_cc)
@@ -3036,6 +3043,13 @@ twoLetter(const char *line, const char **runThis)
 	showHiddenFiles ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(showHiddenFiles + MSG_HiddenOff);
+	return true;
+    }
+
+    if(stringEqual(line, "u8")) {
+	re_utf8 ^= 1;
+	if(helpMessagesOn || debugLevel >= 1)
+	    i_puts(re_utf8 + MSG_ReAscii);
 	return true;
     }
 

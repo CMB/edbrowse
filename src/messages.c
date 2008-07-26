@@ -647,6 +647,9 @@ static const char *englishMessages[] = {
     "cannot delete a directory tree; use rm -r from the shell",
     "Failed to initialize libcurl.",
     "This ftp directory listing is empty.",
+    "search and substitute using ascii",
+    "search and substitute using utf8",
+    "Warning: you may need to (temporarily) disable utf8 search and substitute\nwith the u8 command for this to work properly.",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
@@ -963,7 +966,7 @@ static const char *frenchMessages[] = {
     "ftp : ne peut changer de répertoire (délai dépassé)",
     "ftp : url mal formée",
     "ftp : erreur d'utilisation",
-0,
+    0,
     "ftp : échec de l'initialisation de la librairie",
     "ftp : échec de la session d'initialisation",
     "ftp : erreur inattendue %d",
@@ -1273,6 +1276,9 @@ static const char *frenchMessages[] = {
     "conversion automatique entre iso8859 et utf8",
     "impossible de copier un répertoire dans la corbeille sur un autre système de fichiers;n utilisez cpio -p ou cp -r à partir du shell",
     "impossible de supprimer un répertoire; utilisez rm -r à partir du shell",
+    0,
+    0,
+    0,
     0,
     0,
 };
@@ -1591,7 +1597,7 @@ static const char *brazilianPortugueseMessages[] = {
     "não consegui trocar de diretório FTP (tempo esgotado)",
     "URL FTP mal-formada",
     "erro no uso do FTP",
-0,
+    "FTP - usuário ou senha incorreto",
     "falha na inicialização da biblioteca de FTP",
     "falha a iniciar sessão de FTP",
     "erro de FTP inesperado %d",
@@ -1903,9 +1909,13 @@ static const char *brazilianPortugueseMessages[] = {
     "Não posso apagar uma árvore de diretórios; use rm -r a partir do shell",
     "Falha ao inicializar a biblioteca libcurl.",
     "Esta listagem do diretório FTP está vazia.",
+    0,
+    0,
+    0,
 };
 
 /* Translation by Jan Mura: jan.mura@volny.cz */
+/* I'm afraid we didn't get very far on this one. */
 static const char *czechMessages[] = {
     "konec souboru",
     "žádný soubor",

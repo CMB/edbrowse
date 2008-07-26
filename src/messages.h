@@ -647,4 +647,7 @@ enum {
     MSG_NoDirDelete,
     MSG_LibcurlNoInit,
     MSG_FTPEmptyDir,
+    MSG_ReAscii,
+    MSG_ReUtf8,
+    MSG_BadUtf8String,
 };
