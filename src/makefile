@@ -76,7 +76,7 @@ edbrowseinf: $(EBOBJS) tcp.o dbops.o dbinfx.o
 	esql $(ESQLDFLAGS) -o edbrowseinf $(EBOBJS) tcp.o dbops.o dbinfx.o $(LIBS)
 
 edbrowseodbc: $(EBOBJS) tcp.o dbops.o dbodbc.o
-	cc $(LFLAGS) -o edbrowseodbc $(EBOBJS) tcp.o dbops.o dbodbc.o $(LIBS)
+	cc $(LFLAGS) -o edbrowseodbc $(EBOBJS) tcp.o dbops.o dbodbc.o $(LIBS) -lodbc
 
 #  Build function prototypes.
 #  mkproto is my program, not a general unix utility.

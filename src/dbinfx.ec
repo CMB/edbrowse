@@ -57,7 +57,8 @@ static short translevel;
 static bool badtrans;
 
 /* Through globals, make error info available to the application. */
-int rv_lastStatus, rv_vendorStatus, rv_stmtOffset;
+int rv_lastStatus, rv_stmtOffset;
+long rv_vendorStatus;
 char *rv_badToken;
 
 static void debugStatement(void)
@@ -90,63 +91,8 @@ void sql_exception(int errnum)
 	exclist = list;
 } /* sql_exception */
 
-/* text descriptions corresponding to our generic SQL error codes */
-static char *sqlErrorList[] = {0,
-	"miscelaneous SQL error",
-	"syntax error in SQL statement",
-	"filename cannot be used by SQL",
-	"cannot convert/compare the columns/constants in the SQL statement",
-	"bad string subscripting",
-	"bad use of the rowid construct",
-	"bad use of a blob column",
-	"bad use of aggregate operators or columns",
-	"bad use of a view",
-	"bad use of a serial column",
-	"bad use of a temp table",
-	"operation cannot cross databases",
-	"database is fucked up",
-	"query interrupted by user",
-	"could not connect to the database",
-	"database has not yet been selected",
-	"table not found",
-	"duplicate table",
-	"ambiguous table",
-	"column not found",
-	"duplicate column",
-	"ambiguous column",
-	"index not found",
-	"duplicate index",
-	"constraint not found",
-	"duplicate constraint",
-	"stored procedure not found",
-	"duplicate stored procedure",
-	"synonym not found",
-	"duplicate synonym",
-	"table has no primary or unique key",
-	"duplicate primary or unique key",
-	"cursor not specified, or cursor is not available",
-	"duplicate cursor",
-	"the database lacks the resources needed to complete this query",
-	"check constrain violated",
-	"referential integrity violated",
-	"cannot manage or complete the transaction",
-	"long transaction, too much log data generated",
-	"this operation must be run inside a transaction",
-	"cannot open, read, write, close, or otherwise manage a blob",
-	"row, table, page, or database is already locked, or cannot be locked",
-	"inserting null into a not null column",
-	"no permission to modify the database in this way",
-	"no current row established",
-	"many rows were found where one was expected",
-	"cannot union these select statements together",
-	"cannot access or write the audit trail",
-	"could not run SQL or gather data from a remote host",
-	"where clause is semantically unmanageable",
-	"deadlock detected",
-0};
-
-/* map Informix errors to our own exception codes, as defined in c_sql.h. */
-static struct ERRORMAP {
+/* map Informix errors to our own exception codes, as defined in dbapi.h. */
+static const struct ERRORMAP {
 	short infcode;
 	short excno;
 } errormap[] = {
@@ -510,7 +456,7 @@ static struct ERRORMAP {
 
 static int errTranslate(int code)
 {
-	struct ERRORMAP *e;
+	const struct ERRORMAP *e;
 
 	for(e=errormap; e->infcode; ++e) {
 		if(e->infcode == code)
@@ -523,11 +469,14 @@ static bool errorTrap(void)
 {
 short i;
 
-rv_lastStatus = rv_vendorStatus = 0; /* innocent until proven guilty */
+/* innocent until proven guilty */
+rv_lastStatus = 0;
+rv_vendorStatus = 0;
 rv_stmtOffset = 0;
 rv_badToken = 0;
 if(ENGINE_ERRCODE >= 0) return false; /* no problem */
 
+        /* log the SQL statement that elicitted the error */
 showStatement();
 rv_vendorStatus = -ENGINE_ERRCODE;
 rv_lastStatus = errTranslate(rv_vendorStatus);
@@ -536,15 +485,14 @@ rv_badToken = sqlca.sqlerrm;
 if(!rv_badToken[0]) rv_badToken = 0;
 
 /* if the application didn't trap for this exception, blow up! */
-if(exclist) {
-for(i=0; exclist[i]; ++i) {
+if(exclist)
+for(i=0; exclist[i]; ++i)
 if(exclist[i] == rv_lastStatus) {
 exclist = 0; /* we've spent that exception */
 return true;
 }
-}
-}
 
+/* Remember, errorPrint() should not return. */
 errorPrint("2SQL error %d, %s", rv_vendorStatus, sqlErrorList[rv_lastStatus]);
 return true; /* make the compiler happy */
 } /* errorTrap */
@@ -605,6 +553,7 @@ memcpy(rv_type, o->rv_type, NUMRETS);
 return o;
 } /* findCursor */
 
+/* This doesn't close/free anything; it simply puts variables in an initial state. */
 /* part of the disconnect() procedure */
 static void clearAllCursors(void)
 {
@@ -705,11 +654,13 @@ void sql_begTrans(void)
 {
 	rv_lastStatus = 0;
 	checkConnect();
-		stmt_text = "begin work";
-		debugStatement();
+stmt_text = 0;
+
 	/* count the nesting level of transactions. */
 	if(!translevel) {
 		badtrans = false;
+		stmt_text = "begin work";
+		debugStatement();
 		$begin work;
 		if(errorTrap()) return;
 	}
@@ -722,6 +673,7 @@ static void endTrans(bool commit)
 {
 	rv_lastStatus = 0;
 	checkConnect();
+stmt_text = 0;
 
 	if(translevel == 0)
 		errorPrint("2end transaction without a matching begTrans()");
@@ -866,9 +818,9 @@ int rv_numRets; /* number of returned values */
 char rv_type[NUMRETS+1]; /* datatypes of returned values */
 char rv_name[NUMRETS+1][COLNAMELEN]; /* column names */
 LF  rv_data[NUMRETS]; /* the returned values */
-int rv_lastNrows, rv_lastRowid, rv_lastSerial;
 /* Temp area to read the Informix values, as strings */
 static char retstring[NUMRETS][STRINGLEN+4];
+long rv_lastNrows, rv_lastRowid, rv_lastSerial;
 static va_list sqlargs;
 
 static void retsSetup(struct sqlda *desc)
@@ -1072,17 +1024,6 @@ sprintf(q, "%ld.%02d", l/100, l%100);
 
 if(!first) va_end(sqlargs);
 } /* retsCopy */
-
-/* convert column name into column index */
-int findcol_byname(const char *name)
-{
-	int i;
-	for(i=0; rv_name[i][0]; ++i)
-		if(stringEqual(name, rv_name[i])) break;
-	if(!rv_name[i][0])
-		errorPrint("2Column %s not found in the columns or aliases of your select statement", name);
-	return i;
-} /* findcol_byname */
 
 /* make sure we got one return value, and it is integer compatible */
 static long oneRetValue(void)
@@ -1512,7 +1453,8 @@ sql_free(cid);
 
 /* fetch row n from the open cursor.
  * Flag can be used to fetch first, last, next, or previous. */
-bool fetchInternal(int cid, long n, int flag, bool remember)
+static bool
+fetchInternal(int cid, long n, int flag, bool remember)
 {
 $char *internal_sname, *internal_cname;
 $long nextrow, lastrow;
@@ -1821,169 +1763,4 @@ o->fl[i] = o->fl[i-1];
 o->fl[i] = cloneString(sql_mkunld('\177'));
 } /* sql_cursorInsLine */
 
-
-/*********************************************************************
-run the analog of /bin/comm on two open cursors,
-rather than two Unix files.
-This assumes a common unique key that we use to sync up the rows.
-The cursors should be sorted by this key.
-*********************************************************************/
-
-void cursor_comm(
-const char *stmt1, const char *stmt2, /* the two select statements */
-const char *orderby, /* which fetched column is the unique key */
-fnptr f, /* call this function for differences */
-char delim) /* sql_mkunld() delimiter, or call mkinsupd if delim = 0 */
-{
-short cid1, cid2; /* the cursor ID numbers */
-char *line1, *line2, *s; /* the two fetched rows */
-void *blob1, *blob2; /* one blob per table */
-int blob1size, blob2size;
-bool eof1, eof2, get1, get2;
-int sortval1, sortval2;
-char sortstring1[80], sortstring2[80];
-int sortcol;
-char sorttype;
-int passkey1, passkey2;
-static const char sortnull[] = "cursor_comm, sortval%d is null";
-static const char sortlong[] = "cursor_comm cannot key on strings longer than %d";
-static const char noblob[] = "sorry, cursor_comm cannot handle blobs yet";
-
-cid1 = sql_prepOpen(stmt1);
-cid2 = sql_prepOpen(stmt2);
-
-sortcol = findcol_byname(orderby);
-sorttype = rv_type[sortcol];
-if(charInList("NDIS", sorttype) < 0)
-errorPrint("2cursor_com(), column %s has bad type %c", orderby, sorttype);
-if(sorttype == 'S')
-passkey1 = (int)sortstring1, passkey2 = (int)sortstring2;
-
-eof1 = eof2 = false;
-get1 = get2 = true;
-rv_blobFile = 0; /* in case the cursor has a blob */
-line1 = line2 = 0;
-blob1 = blob2 = 0;
-
-while(true) {
-if(get1) { /* fetch first row */
-eof1 = !sql_fetchNext(cid1, 0);
-nzFree(line1);
-line1 = 0;
-nzFree(blob1);
-blob1 = 0;
-if(!eof1) {
-if(sorttype == 'S') {
-s = rv_data[sortcol].ptr;
-if(isnullstring(s)) errorPrint(sortnull, 1);
-if(strlen(s) >= sizeof(sortstring1))
-errorPrint(sortlong, sizeof(sortstring1));
-strcpy(sortstring1, s);
-} else {
-passkey1 = sortval1 = rv_data[sortcol].l;
-if(isnull(sortval1))
-errorPrint(sortnull, 1);
-}
-line1 = cloneString(delim ? sql_mkunld(delim) : sql_mkinsupd());
-if(rv_blobLoc) {
-blob1 = rv_blobLoc;
-blob1size = rv_blobSize;
-errorPrint(noblob);
-}
-} /* not eof */
-} /* looking for first line */
-
-if(get2) { /* fetch second row */
-eof2 = !sql_fetchNext(cid2, 0);
-nzFree(line2);
-line2 = 0;
-nzFree(blob2);
-blob2 = 0;
-if(!eof2) {
-if(sorttype == 'S') {
-s = rv_data[sortcol].ptr;
-if(isnullstring(s)) errorPrint(sortnull, 2);
-if(strlen(s) >= sizeof(sortstring2))
-errorPrint(sortlong, sizeof(sortstring2));
-strcpy(sortstring2, rv_data[sortcol].ptr);
-} else {
-passkey2 = sortval2 = rv_data[sortcol].l;
-if(isnull(sortval2))
-errorPrint(sortnull, 2);
-}
-line2 = cloneString(delim ? sql_mkunld(delim) : sql_mkinsupd());
-if(rv_blobLoc) {
-blob2 = rv_blobLoc;
-blob2size = rv_blobSize;
-errorPrint(noblob);
-}
-} /* not eof */
-} /* looking for second line */
-
-if(eof1 & eof2) break; /* done */
-get1 = get2 = false;
-
-/* in cid2, but not in cid1 */
-if(eof1 || !eof2 &&
-(sorttype == 'S' && strcmp(sortstring1, sortstring2) > 0 ||
-sorttype != 'S' && sortval1 > sortval2)) {
-(*f)('>', line1, line2, passkey2);
-get2 = true;
-continue;
-}
-
-/* in cid1, but not in cid2 */
-if(eof2 || !eof1 &&
-(sorttype == 'S' && strcmp(sortstring1, sortstring2) < 0 ||
-sorttype != 'S' && sortval1 < sortval2)) {
-(*f)('<', line1, line2, passkey1);
-get1 = true;
-continue;
-} /* insert case */
-
-get1 = get2 = true;
-/* perhaps the lines are equal */
-if(stringEqual(line1, line2)) continue;
-
-/* lines are different between the two cursors */
-(*f)('*', line1, line2, passkey2);
-} /* loop over parallel cursors */
-
-nzFree(line1);
-nzFree(line2);
-nzFree(blob1);
-nzFree(blob2);
-sql_closeFree(cid1);
-sql_closeFree(cid2);
-} /* cursor_comm */
-
-/*********************************************************************
-Get the primary key for a table.
-In informix, you can use system tables to get this information.
-There's a way to do it in odbc, but I don't remember.
-*********************************************************************/
-
-void
-getPrimaryKey(char *tname, int *part1, int *part2)
-{
-int p1, p2, rc;
-char *s = strchr(tname, ':');
-*part1 = *part2 = 0;
-if(!s) {
-rc = sql_select("select part1, part2 \
-from sysconstraints c, systables t, sysindexes i \
-where tabname = %S and t.tabid = c.tabid \
-and constrtype = 'P' and c.idxname = i.idxname",
-tname, &p1, &p2);
-} else {
-*s = 0;
-rc = sql_select("select part1, part2 \
-from %s:sysconstraints c, %s:systables t, %s:sysindexes i \
-where tabname = %S and t.tabid = c.tabid \
-and constrtype = 'P' and c.idxname = i.idxname",
-tname, tname, tname, s+1, &p1, &p2);
-*s = ':';
-}
-if(rc) *part1 = p1, *part2 = p2;
-} /* getPrimaryKey */
 

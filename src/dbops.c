@@ -10,6 +10,63 @@
 const char *sql_debuglog = "ebsql.log";	/* log of debug prints */
 const char *sql_database;	/* name of current database */
 
+/* text descriptions corresponding to our generic SQL error codes */
+/* This has yet to be internationalized. */
+const char *sqlErrorList[] = { 0,
+    "miscelaneous SQL error",
+    "syntax error in SQL statement",
+    "filename cannot be used by SQL",
+    "cannot convert/compare the columns/constants in the SQL statement",
+    "bad string subscripting",
+    "bad use of the rowid construct",
+    "bad use of a blob column",
+    "bad use of aggregate operators or columns",
+    "bad use of a view",
+    "bad use of a serial column",
+    "bad use of a temp table",
+    "operation cannot cross databases",
+    "database is fucked up",
+    "query interrupted by user",
+    "could not connect to the database",
+    "database has not yet been selected",
+    "table not found",
+    "duplicate table",
+    "ambiguous table",
+    "column not found",
+    "duplicate column",
+    "ambiguous column",
+    "index not found",
+    "duplicate index",
+    "constraint not found",
+    "duplicate constraint",
+    "stored procedure not found",
+    "duplicate stored procedure",
+    "synonym not found",
+    "duplicate synonym",
+    "table has no primary or unique key",
+    "duplicate primary or unique key",
+    "cursor not specified, or cursor is not available",
+    "duplicate cursor",
+    "the database lacks the resources needed to complete this query",
+    "check constrain violated",
+    "referential integrity violated",
+    "cannot manage or complete the transaction",
+    "long transaction, too much log data generated",
+    "this operation must be run inside a transaction",
+    "cannot open, read, write, close, or otherwise manage a blob",
+    "row, table, page, or database is already locked, or cannot be locked",
+    "inserting null into a not null column",
+    "no permission to modify the database in this way",
+    "no current row established",
+    "many rows were found where one was expected",
+    "cannot union these select statements together",
+    "cannot access or write the audit trail",
+    "could not run SQL or gather data from a remote host",
+    "where clause is semantically unmanageable",
+    "deadlock detected",
+    0
+};
+
 char *
 lineFormat(const char *line, ...)
 {
@@ -1316,6 +1373,148 @@ its serial number may have changed from 0 to something real */
 
 
 /*********************************************************************
+run the analog of /bin/comm on two open cursors,
+rather than two Unix files.
+This assumes a common unique key that we use to sync up the rows.
+The cursors should be sorted by this key.
+*********************************************************************/
+
+static void
+cursor_comm(const char *stmt1, const char *stmt2,	/* the two select statements */
+   const char *orderby,		/* which fetched column is the unique key */
+   fnptr f,			/* call this function for differences */
+   char delim)
+{				/* sql_mkunld() delimiter, or call mkinsupd if delim = 0 */
+    short cid1, cid2;		/* the cursor ID numbers */
+    char *line1, *line2, *s;	/* the two fetched rows */
+    void *blob1, *blob2;	/* one blob per table */
+    int blob1size, blob2size;
+    bool eof1, eof2, get1, get2;
+    int sortval1, sortval2;
+    char sortstring1[80], sortstring2[80];
+    int sortcol;
+    char sorttype;
+    int passkey1, passkey2;
+    static const char sortnull[] = "cursor_comm, sortval%d is null";
+    static const char sortlong[] =
+       "cursor_comm cannot key on strings longer than %d";
+    static const char noblob[] = "sorry, cursor_comm cannot handle blobs yet";
+
+    cid1 = sql_prepOpen(stmt1);
+    cid2 = sql_prepOpen(stmt2);
+
+    sortcol = findColByName(orderby);
+    sorttype = rv_type[sortcol];
+    if(charInList("NDIS", sorttype) < 0)
+	errorPrint("2cursor_com(), column %s has bad type %c", orderby,
+	   sorttype);
+    if(sorttype == 'S')
+	passkey1 = (int)sortstring1, passkey2 = (int)sortstring2;
+
+    eof1 = eof2 = false;
+    get1 = get2 = true;
+    rv_blobFile = 0;		/* in case the cursor has a blob */
+    line1 = line2 = 0;
+    blob1 = blob2 = 0;
+
+    while(true) {
+	if(get1) {		/* fetch first row */
+	    eof1 = !sql_fetchNext(cid1, 0);
+	    nzFree(line1);
+	    line1 = 0;
+	    nzFree(blob1);
+	    blob1 = 0;
+	    if(!eof1) {
+		if(sorttype == 'S') {
+		    s = rv_data[sortcol].ptr;
+		    if(isnullstring(s))
+			errorPrint(sortnull, 1);
+		    if(strlen(s) >= sizeof (sortstring1))
+			errorPrint(sortlong, sizeof (sortstring1));
+		    strcpy(sortstring1, s);
+		} else {
+		    passkey1 = sortval1 = rv_data[sortcol].l;
+		    if(isnull(sortval1))
+			errorPrint(sortnull, 1);
+		}
+		line1 = cloneString(delim ? sql_mkunld(delim) : sql_mkinsupd());
+		if(rv_blobLoc) {
+		    blob1 = rv_blobLoc;
+		    blob1size = rv_blobSize;
+		    errorPrint(noblob);
+		}
+	    }			/* not eof */
+	}
+	/* looking for first line */
+	if(get2) {		/* fetch second row */
+	    eof2 = !sql_fetchNext(cid2, 0);
+	    nzFree(line2);
+	    line2 = 0;
+	    nzFree(blob2);
+	    blob2 = 0;
+	    if(!eof2) {
+		if(sorttype == 'S') {
+		    s = rv_data[sortcol].ptr;
+		    if(isnullstring(s))
+			errorPrint(sortnull, 2);
+		    if(strlen(s) >= sizeof (sortstring2))
+			errorPrint(sortlong, sizeof (sortstring2));
+		    strcpy(sortstring2, rv_data[sortcol].ptr);
+		} else {
+		    passkey2 = sortval2 = rv_data[sortcol].l;
+		    if(isnull(sortval2))
+			errorPrint(sortnull, 2);
+		}
+		line2 = cloneString(delim ? sql_mkunld(delim) : sql_mkinsupd());
+		if(rv_blobLoc) {
+		    blob2 = rv_blobLoc;
+		    blob2size = rv_blobSize;
+		    errorPrint(noblob);
+		}
+	    }			/* not eof */
+	}
+	/* looking for second line */
+	if(eof1 & eof2)
+	    break;		/* done */
+	get1 = get2 = false;
+
+/* in cid2, but not in cid1 */
+	if(eof1 || !eof2 &&
+	   (sorttype == 'S' && strcmp(sortstring1, sortstring2) > 0 ||
+	   sorttype != 'S' && sortval1 > sortval2)) {
+	    (*f) ('>', line1, line2, passkey2);
+	    get2 = true;
+	    continue;
+	}
+
+/* in cid1, but not in cid2 */
+	if(eof2 || !eof1 &&
+	   (sorttype == 'S' && strcmp(sortstring1, sortstring2) < 0 ||
+	   sorttype != 'S' && sortval1 < sortval2)) {
+	    (*f) ('<', line1, line2, passkey1);
+	    get1 = true;
+	    continue;
+	}
+	/* insert case */
+	get1 = get2 = true;
+/* perhaps the lines are equal */
+	if(stringEqual(line1, line2))
+	    continue;
+
+/* lines are different between the two cursors */
+	(*f) ('*', line1, line2, passkey2);
+    }				/* loop over parallel cursors */
+
+    nzFree(line1);
+    nzFree(line2);
+    nzFree(blob1);
+    nzFree(blob2);
+    sql_closeFree(cid1);
+    sql_closeFree(cid2);
+}				/* cursor_comm */
+
+
+/*********************************************************************
 Sync up two tables, or corresponding sections of two tables.
 These are usually equischema tables in parallel databases or machines.
 This isn't used by edbrowse; it's just something I wrote,
@@ -1329,6 +1528,21 @@ Hey - why have one standard, when you can have two?
 static const char *synctable;	/* table being sync-ed */
 static const char *synckeycol;	/* key column */
 static const char *sync_clause;	/* additional clause, to sync only part of the table */
+
+/* convert column name into column index */
+int
+findColByName(const char *name)
+{
+    int i;
+    for(i = 0; rv_name[i][0]; ++i)
+	if(stringEqual(name, rv_name[i]))
+	    break;
+    if(!rv_name[i][0])
+	errorPrint
+	   ("2Column %s not found in the columns or aliases of your select statement",
+	   name);
+    return i;
+}				/* findColByName */
 
 static int
 syncup_comm_fn(char action, char *line1, char *line2, int key)
@@ -1388,3 +1602,33 @@ syncup_table(const char *table1, const char *table2,	/* the two tables */
 
     cursor_comm(stmt1, stmt2, keycol, (fnptr) syncup_comm_fn, 0);
 }				/* syncup_table */
+
+
+/*********************************************************************
+Get the primary key for a table.
+In informix, you can use system tables to get this information.
+There's a way to do it in odbc, but I don't remember.
+*********************************************************************/
+
+void
+getPrimaryKey(char *tname, int *part1, int *part2)
+{
+    int p1, p2, rc;
+    char *s = strchr(tname, ':');
+    *part1 = *part2 = 0;
+    if(!s) {
+	rc = sql_select("select part1, part2 \
+from sysconstraints c, systables t, sysindexes i \
+where tabname = %S and t.tabid = c.tabid \
+and constrtype = 'P' and c.idxname = i.idxname", tname, &p1, &p2);
+    } else {
+	*s = 0;
+	rc = sql_select("select part1, part2 \
+from %s:sysconstraints c, %s:systables t, %s:sysindexes i \
+where tabname = %S and t.tabid = c.tabid \
+and constrtype = 'P' and c.idxname = i.idxname", tname, tname, tname, s + 1, &p1, &p2);
+	*s = ':';
+    }
+    if(rc)
+	*part1 = p1, *part2 = p2;
+}				/* getPrimaryKey */

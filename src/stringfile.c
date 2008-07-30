@@ -298,6 +298,29 @@ clipString(char *s)
     s[len + 1] = 0;
 }				/* clipString */
 
+void
+leftClipString(char *s)
+{
+    char *t;
+    if(!s)
+	return;
+    for(t = s; *t; ++t)
+	if(!isspace(*t))
+	    break;
+    if(t > s)
+	strcpy(s, t);
+}				/* leftClipString */
+
+/* shift string one to the right */
+void
+shiftRight(char *s, char first)
+{
+    int l = strlen(s);
+    for(; l >= 0; --l)
+	s[l + 1] = s[l];
+    s[0] = first;
+}				/* shiftRight */
+
 char *
 Cify(const char *s, int n)
 {
@@ -850,6 +873,17 @@ fileSizeByName(const char *name)
     return buf.st_size;
 }				/* fileSizeByName */
 
+int
+fileSizeByHandle(int fd)
+{
+    struct stat buf;
+    if(fstat(fd, &buf)) {
+/* should never happen */
+	return -1;
+    }
+    return buf.st_size;
+}				/* fileSizeByHandle */
+
 time_t
 fileTimeByName(const char *name)
 {
@@ -859,7 +893,7 @@ fileTimeByName(const char *name)
 	return -1;
     }
     return buf.st_mtime;
-}				/* fileSizeByName */
+}				/* fileTimeByName */
 
 #ifndef DOSLIKE
 
@@ -1317,6 +1351,20 @@ efopen(const char *name, const char *mode)
 	i_printfExit(MSG_InvalidFopen, mode);
     return 0;
 }				/* efopen */
+
+int
+eopen(const char *name, int mode, int perms)
+{
+    int fd;
+    fd = open(name, mode, perms);
+    if(fd >= 0)
+	return fd;
+    if(mode & O_WRONLY)
+	i_printfExit(MSG_CreateFail, name);
+    else
+	i_printfExit(MSG_OpenFail, name);
+    return -1;
+}				/* eopen */
 
 void
 appendFile(const char *fname, const char *message, ...)
