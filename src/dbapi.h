@@ -178,7 +178,7 @@ void sql_mkload(const char *line, char delim);
 void sql_cursorUpdLine(int cid, const char *line);
 void sql_cursorDelLine(int cid, int rownum);
 void sql_cursorInsLine(int cid, int rownum);
-void getPrimaryKey(char *tname, int *part1, int *part2);
+void getPrimaryKey(const char *tname, int *part1, int *part2);
 
 /* sourcefile=dbops.c */
 char *lineFormat(const char *line, ...);

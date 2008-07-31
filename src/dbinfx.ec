@@ -1764,3 +1764,31 @@ o->fl[i] = cloneString(sql_mkunld('\177'));
 } /* sql_cursorInsLine */
 
 
+/*********************************************************************
+Get the primary key for a table.
+In informix, you can use system tables to get this information.
+There's a way to do it in odbc, but I don't remember.
+*********************************************************************/
+
+void
+getPrimaryKey(const char *tname, int *part1, int *part2)
+{
+    int p1, p2, rc;
+    char *s = strchr(tname, ':');
+    *part1 = *part2 = 0;
+    if(!s) {
+	rc = sql_select("select part1, part2 \
+from sysconstraints c, systables t, sysindexes i \
+where tabname = %S and t.tabid = c.tabid \
+and constrtype = 'P' and c.idxname = i.idxname", tname, &p1, &p2);
+    } else {
+	*s = 0;
+	rc = sql_select("select part1, part2 \
+from %s:sysconstraints c, %s:systables t, %s:sysindexes i \
+where tabname = %S and t.tabid = c.tabid \
+and constrtype = 'P' and c.idxname = i.idxname", tname, tname, tname, s + 1, &p1, &p2);
+	*s = ':';
+    }
+    if(rc)
+	*part1 = p1, *part2 = p2;
+}				/* getPrimaryKey */

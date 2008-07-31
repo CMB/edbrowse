@@ -1073,8 +1073,7 @@ prepare(SQLHSTMT h, const char *stmt)
     if(isnullstring(stmt))
 	errorPrint("2null SQL statement");
     stmt_text = stmt;
-    if(sql_debug)
-	appendFileNF(sql_debuglog, stmt);
+    debugStatement();
     hstmt = h;			/* set working statement handle */
     cleanStatement();
 
@@ -1624,3 +1623,39 @@ sql_fetchAbs(int cid, long rownum, ...)
     retsFromOdbc();
     return rowfound;
 }				/* sql_fetchAbs */
+
+
+void
+getPrimaryKey(const char *tname, int *part1, int *part2)
+{
+    char schemaName[128 + 1];
+    char rgbValue[20];
+    SQLLEN pcbValue;
+
+    *part1 = *part2 = 0;
+    hstmt = hstmt1;
+    cleanStatement();
+    stmt_text = "get primary key";
+    debugStatement();
+    rc = SQLPrimaryKeys(hstmt,
+       NULL, SQL_NTS, schemaName, SQL_NTS, (char *)tname, SQL_NTS);
+    if(rc)
+	goto done;
+
+/* Because all we need is the ordinal position, we'll bind column 5 */
+    rc = SQLBindCol(hstmt, 5, SQL_C_CHAR, (SQLPOINTER) rgbValue, 20, &pcbValue);
+    if(rc)
+	goto done;
+
+/* I'm only grabbing the first column in a multi-column key */
+    if(SQLFetch(hstmt))
+	goto done;
+    *part1 = pcbValue;
+    if(SQLFetch(hstmt))
+	goto done;
+    *part2 = pcbValue;
+
+  done:
+    errorTrap(0);
+    return;
+}				/* getPrimaryKey */
