@@ -215,7 +215,7 @@ program = trplayer
 # Accès à la base de données : spécifie le nom de la base,
 # le nom d'utilisateur et le mot de passe
 
-database = nom_base,nom_utilisateur,mot_de_passe
+datasource = nom_base,nom_utilisateur,mot_de_passe
 
 #  extraits de la table clients de la base nom_base
 #  consultez la documentation de edbrowse pour en savoir plus

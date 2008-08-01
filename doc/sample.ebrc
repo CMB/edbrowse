@@ -177,8 +177,8 @@ program = trplayer
 }
 
 
-#  Database access - specify the database, login, and password.
-database = retail,mylogin,mypassword
+#  Database access - specify the datasource, login, and password.
+datasource = retail,mylogin,mypassword
 
 #  Sections of the customers table in the retail database.
 #  See the edbrowse documentation for more details.
