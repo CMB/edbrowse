@@ -653,6 +653,7 @@ static const char *englishMessages[] = {
     "primary key comprises more than 2 columns",
     "cannot determine the next value for the serial key(0)",
     "Table names are in buffer %d\n",
+    "no datasource specified",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
@@ -1279,6 +1280,7 @@ static const char *frenchMessages[] = {
     "conversion automatique entre iso8859 et utf8",
     "impossible de copier un répertoire dans la corbeille sur un autre système de fichiers;n utilisez cpio -p ou cp -r à partir du shell",
     "impossible de supprimer un répertoire; utilisez rm -r à partir du shell",
+    0,
     0,
     0,
     0,
@@ -1915,6 +1917,7 @@ static const char *brazilianPortugueseMessages[] = {
     "Não posso apagar uma árvore de diretórios; use rm -r a partir do shell",
     "Falha ao inicializar a biblioteca libcurl.",
     "Esta listagem do diretório FTP está vazia.",
+    0,
     0,
     0,
     0,
