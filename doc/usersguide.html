@@ -488,6 +488,7 @@ rf: refresh the web page or directory listing
 et: edit this web page as pure text
 vs: verify ssl connections (toggle)
 ip: show referenced ip numbers, usually for saved mail messages
+ds=source,login,password: set the data source
 sc: show columns
 sm: send mail [account number]
 re: reply to a mail message
@@ -3979,8 +3980,11 @@ if you are tapping into the retail database, where the customers table resides.
 datasource = retail,mylogin,mypassword
 
 <P>
-Although this cannot be changed on the fly (yet),
-you might be able to access other databases by vectoring through this one.&nbsp;
+This can be changed at run time by the ds= command.&nbsp;
+Make sure you do not refer to any old rows in buffers after you have switched to a new data source.
+
+<P>
+In some cases you can access other databases without changing the data source.&nbsp;
 For instance, you can read the parts table in the inventory database by calling up inventory:parts].&nbsp;
 This is standard sql syntax for looking at tables in another database;
 I just pass it through.

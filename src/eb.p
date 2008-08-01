@@ -6,6 +6,7 @@ const char * mailRedirect(const char *to, const char *from, const char *reply, c
 bool javaOK(const char *url) ;
 void ebClose(int n) ;
 void eeCheck(void) ;
+void setDataSource(char *v) ;
 int main(int argc, char **argv) ;
 bool runEbFunction(const char *line) ;
 bool bufferToProgram(const char *cmd, const char *suffix, bool trailPercent) ;

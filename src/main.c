@@ -598,17 +598,7 @@ readConfigFile(void)
 	    continue;
 
 	case 27:
-	    dbarea = v;
-	    v = strchr(v, ',');
-	    if(!v)
-		continue;
-	    *v++ = 0;
-	    dblogin = v;
-	    v = strchr(v, ',');
-	    if(!v)
-		continue;
-	    *v++ = 0;
-	    dbpw = v;
+	    setDataSource(v);
 	    continue;
 
 	case 28:		/* proxy */
@@ -953,6 +943,27 @@ eeCheck(void)
     if(errorExit)
 	ebClose(1);
 }
+
+void
+setDataSource(char *v)
+{
+    dbarea = dblogin = dbpw = 0;
+    if(!v)
+	return;
+    if(!*v)
+	return;
+    dbarea = v;
+    v = strchr(v, ',');
+    if(!v)
+	return;
+    *v++ = 0;
+    dblogin = v;
+    v = strchr(v, ',');
+    if(!v)
+	return;
+    *v++ = 0;
+    dbpw = v;
+}				/* setDataSource */
 
 /* I'm not going to expand wild card arguments here.
  * I don't need to on Unix, and on Windows there is a

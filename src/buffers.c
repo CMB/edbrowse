@@ -3053,6 +3053,12 @@ twoLetter(const char *line, const char **runThis)
 	return true;
     }
 
+    if(!strncmp(line, "ds=", 3)) {
+	dbClose();
+	setDataSource(cloneString(line + 3));
+	return true;
+    }
+
     if(stringEqual(line, "tn")) {
 	textAreaDosNewlines ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
