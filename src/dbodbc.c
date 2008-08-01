@@ -1655,7 +1655,6 @@ sql_fetchAbs(int cid, long rownum, ...)
 void
 getPrimaryKey(const char *tname, int *part1, int *part2, int *part3)
 {
-    char schemaName[128 + 1];
     int keyindex;
     SQLLEN pcbValue;
 
@@ -1669,8 +1668,6 @@ getPrimaryKey(const char *tname, int *part1, int *part2, int *part3)
 	goto abort;
 
 /* Because all we need is the ordinal position, we'll bind column 5 */
-    stmt_text = "primary key bind";
-    debugStatement();
     rc =
        SQLBindCol(hstmt, 5, SQL_INTEGER, (SQLPOINTER) & keyindex, 0, &pcbValue);
     if(rc)
@@ -1706,3 +1703,43 @@ getPrimaryKey(const char *tname, int *part1, int *part2, int *part3)
     SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
     return;
 }				/* getPrimaryKey */
+
+bool
+showTables(void)
+{
+    char tabname[40];
+    char tabtype[40];
+    SQLLEN tabnameOut, tabtypeOut;
+    char *buf;
+    int buflen, cx;
+
+    newStatement();
+    stmt_text = "get tables";
+    debugStatement();
+    rc = SQLTables(hstmt,
+       NULL, SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS);
+    if(rc)
+	goto abort;
+
+    SQLBindCol(hstmt, 3, SQL_CHAR, (SQLPOINTER) & tabname, sizeof (tabname),
+       &tabnameOut);
+    SQLBindCol(hstmt, 4, SQL_CHAR, (SQLPOINTER) & tabtype, sizeof (tabtype),
+       &tabtypeOut);
+
+    buf = initString(&buflen);
+    while(SQLFetch(hstmt) == SQL_SUCCESS) {
+	char tabline[100];
+	sprintf(tabline, "%s|%s\n", tabname, tabtype);
+	stringAndString(&buf, &buflen, tabline);
+    }
+
+    cx = sideBuffer(0, buf, buflen, 0, false);
+    nzFree(buf);
+    i_printf(MSG_ShowTables, cx);
+    SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+    return true;
+
+  abort:
+    SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+    return false;
+}				/* showTables */

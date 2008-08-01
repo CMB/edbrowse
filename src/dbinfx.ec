@@ -1781,3 +1781,9 @@ and constrtype = 'P' and c.idxname = i.idxname", tname, tname, tname, s + 1, &p1
     if(rc)
 	*part1 = p1, *part2 = p2;
 }				/* getPrimaryKey */
+
+bool
+showTables(void)
+{
+puts("Not implemented in Informix");
+}				/* showTables */

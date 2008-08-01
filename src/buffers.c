@@ -2783,13 +2783,19 @@ twoLetter(const char *line, const char **runThis)
 	return 2;
     }
 
-    if(stringEqual(line, "sc")) {
+    if(stringEqual(line, "shc")) {
 	if(!cw->sqlMode) {
 	    setError(MSG_NoDB);
 	    return false;
 	}
 	showColumns();
 	return true;
+    }
+
+    if(stringEqual(line, "sht")) {
+	if(!ebConnect())
+	    return false;
+	return showTables();
     }
 
     if(stringEqual(line, "ub") || stringEqual(line, "et")) {

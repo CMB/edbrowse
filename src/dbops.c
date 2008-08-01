@@ -666,7 +666,7 @@ stringMoney(const char *s)
 }				/* stringMoney */
 
 /* Make sure edbrowse is connected to the database */
-static bool
+bool
 ebConnect(void)
 {
     const short exclist[] = { EXCSQLMISC, EXCNOCONNECT, 0 };

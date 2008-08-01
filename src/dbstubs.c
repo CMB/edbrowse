@@ -11,7 +11,7 @@
 bool
 sqlReadRows(const char *filename, char **bufptr)
 {
-    setError(316);
+    setError(MSG_DBNotCompiled);
     *bufptr = EMPTYSTRING;
     return false;
 }				/* sqlReadRows */
@@ -27,6 +27,11 @@ showColumns(void)
 }				/* showColumns */
 
 bool
+showTables(void)
+{
+}				/* showTables */
+
+bool
 sqlDelRows(int start, int end)
 {
 }				/* sqlDelRows */
@@ -40,3 +45,10 @@ bool
 sqlAddRows(int ln)
 {
 }				/* sqlAddRows */
+
+bool
+ebConnect(void)
+{
+    setError(MSG_DBNotCompiled);
+    return false;
+}				/* ebConnect */

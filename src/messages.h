@@ -652,4 +652,5 @@ enum {
     MSG_BadUtf8String,
     MSG_DBManyKeyCol,
     MSG_DBNextSerial,
+    MSG_ShowTables,
 };
