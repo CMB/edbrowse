@@ -52,11 +52,11 @@ In this case the calling routine should clean up as best it can and return.
 static short odbc_version;
 static long cursors_under_commit, cursors_under_rollback;
 static long getdata_opts;
+static long bookmarkBits;
 
 static SQLHENV henv = SQL_NULL_HENV;	/* environment handle */
 static SQLHDBC hdbc = SQL_NULL_HDBC;	/* identify connect session */
 static SQLHSTMT hstmt = SQL_NULL_HSTMT;	/* current statement */
-static SQLHSTMT hstmt1 = SQL_NULL_HSTMT;	/* handle for single statements, such as sql_exec() */
 static const char *stmt_text = 0;	/* text of the SQL statement */
 static SQLRETURN rc;
 static const short *exclist;	/* list of error codes trapped by the application */
@@ -74,13 +74,6 @@ debugStatement(void)
     if(sql_debug && stmt_text)
 	appendFileNF(sql_debuglog, stmt_text);
 }				/* debugStatement */
-
-static void
-debugExtra(const char *s)
-{
-    if(sql_debug)
-	appendFileNF(sql_debuglog, s);
-}				/* debugExtra */
 
 /* Append the SQL statement to the debug log.  This is not strictly necessary
  * if sql_debug is set, since the statement has already been appended. */
@@ -216,7 +209,7 @@ errorTrap(char *cxerr)
     while(true) {
 	rc = SQLError(henv, hdbc, hstmt,
 	   errcodes, &rv_vendorStatus, msgtext, sizeof (msgtext), &waste);
-	if(rc == SQL_NO_DATA_FOUND) {
+	if(rc == SQL_NO_DATA) {
 	    if(firstError)
 		errorPrint
 		   ("@ODBC command failed, but SQLError() provided no additional information");
@@ -260,6 +253,15 @@ cleanStatement(void)
     SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
 }				/* cleanStatement */
 
+static void
+newStatement(void)
+{
+    rc = SQLAllocStmt(hdbc, &hstmt);
+    if(rc)
+	errorPrint("@could not alloc singleton ODBC statement handle");
+    cleanStatement();
+}				/* newStatement */
+
 
 /*********************************************************************
 The OCURS structure given below maintains an open SQL cursor.
@@ -291,6 +293,7 @@ findNewCursor(void)
     for(o = ocurs, i = 0; i < NUMCURSORS; ++i, ++o) {
 	if(o->flag != CURSOR_NONE)
 	    continue;
+/* hstmt should always be null at this point, but let's check */
 	if(o->hstmt == SQL_NULL_HSTMT) {
 	    o->cid = 6000 + i;
 	    rc = SQLAllocStmt(hdbc, &o->hstmt);
@@ -354,7 +357,6 @@ disconnect(void)
     rc = SQLDisconnect(hdbc);
     if(errorTrap(0))
 	return true;
-    hstmt1 = SQL_NULL_HSTMT;	/* Disconnect frees all handles */
     clearAllCursors();		/* those handles are freed as well */
     translevel = 0;
     sql_database = 0;
@@ -373,12 +375,14 @@ void
 sql_connect(const char *db, const char *login, const char *pw)
 {
     short waste;
+    char constring[200];
+    char outstring[200];
+    short outstringlen;
+    char *s;
 
-    if(isnullstring(db)) {
-	db = getenv("DBNAME");
-	if(isnullstring(db))
-	    errorPrint("2sql_connect receives no database, check $DBNAME");
-    }
+    if(isnullstring(db))
+	errorPrint
+	   ("2sql_connect receives no data source, check your edbrowse config file");
 
     /* first disconnect the old one */
     if(disconnect())
@@ -409,11 +413,21 @@ sql_connect(const char *db, const char *login, const char *pw)
     }
 
     /* connect to the database */
-    stmt_text = "connect";
+    sprintf(constring, "DSN=%s", db);
+    if(login) {
+	s = constring + strlen(constring);
+	sprintf(s, ";UID=%s", login);
+    }
+    if(pw) {
+	s = constring + strlen(constring);
+	sprintf(s, ";PWD=%s", pw);
+    }
+
+    stmt_text = constring;
     debugStatement();
-    /* Guess odbc doesn't believe in const */
-    rc = SQLConnect(hdbc, (char *)db, SQL_NTS,
-       (char *)login, SQL_NTS, (char *)pw, SQL_NTS);
+    rc = SQLDriverConnect(hdbc, NULL,
+       constring, SQL_NTS,
+       outstring, sizeof (outstring), &outstringlen, SQL_DRIVER_NOPROMPT);
     if(errorTrap(0))
 	return;
     sql_database = db;
@@ -459,15 +473,9 @@ sql_connect(const char *db, const char *login, const char *pw)
        &waste);
     getdata_opts = 0;
     SQLGetInfo(hdbc, SQL_GETDATA_EXTENSIONS, &getdata_opts, 4, &waste);
+    bookmarkBits = false;
+    SQLGetInfo(hdbc, SQL_BOOKMARK_PERSISTENCE, &bookmarkBits, 4, &waste);
 
-    /* Allocate a statement handle.  This handle survives for the duration
-     * of the connection, and is used for single SQL directives
-     * such as sql_exec() or sql_select().
-     * Note that this handle allocation must take place after
-     * the database connect statement above. */
-    rc = SQLAllocStmt(hdbc, &hstmt1);
-    if(rc)
-	errorPrint("@could not alloc singleton ODBC statement handle");
     exclist = 0;
 }				/* sql_connect */
 
@@ -543,8 +551,8 @@ endTrans(bool commit)
 	badtrans = true;
 	if(!translevel) {	/* bottom level */
 	    stmt_text = "rollback work";
-	    rc = SQLTransact(SQL_NULL_HENV, hdbc, SQL_ROLLBACK);
 	    debugStatement();
+	    rc = SQLTransact(SQL_NULL_HENV, hdbc, SQL_ROLLBACK);
 	    if(rc)
 		++translevel;
 	    errorTrap(0);
@@ -572,8 +580,15 @@ endTrans(bool commit)
 
 	for(i = 0; i < NUMCURSORS; ++i) {
 	    o = ocurs + i;
-	    if(o->flag > newstate)
-		o->flag = newstate;
+	    if(o->flag <= newstate)
+		continue;
+	    o->flag = newstate;
+	    if(newstate > CURSOR_NONE)
+		continue;
+	    if(o->hstmt == SQL_NULL_HSTMT)
+		continue;
+	    SQLFreeHandle(SQL_HANDLE_STMT, o->hstmt);
+	    o->hstmt = SQL_NULL_HSTMT;
 	}
 
 	/* back to singleton transactions */
@@ -603,10 +618,10 @@ sql_deferConstraints(void)
     stmt_text = "defere constraints";
     debugStatement();
     /* is there a way to do this through ODBC? */
-    hstmt = hstmt1;
-    cleanStatement();
+    newStatement();
     rc = SQLExecDirect(hstmt, (char *)stmt_text, SQL_NTS);
     errorTrap(0);
+    SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
     exclist = 0;
 }				/* sql_deferConstraints */
 
@@ -671,8 +686,7 @@ sql_blobInsert(const char *tabname, const char *colname, int rowid,
        tabname, colname, (length ? "?" : "NULL"), rowid);
     stmt_text = blobcmd;
     debugStatement();
-    hstmt = hstmt1;
-    cleanStatement();
+    newStatement();
     rv_lastNrows = 0;
 
     output_length = length;
@@ -689,10 +703,13 @@ sql_blobInsert(const char *tabname, const char *colname, int rowid,
 	   SQL_C_BINARY, SQL_LONGVARCHAR, length, 0,
 	   offset, length, &output_length);
     }
-    if(errorTrap(0))
+    if(errorTrap(0)) {
+	SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 	return;
+    }
 
     rc = SQLExecDirect(hstmt, blobcmd, SQL_NTS);
+    SQLRowCount(hstmt, &rv_lastNrows);
 
     if(isfile) {
 	if(rc != SQL_NEED_DATA) {
@@ -700,9 +717,10 @@ sql_blobInsert(const char *tabname, const char *colname, int rowid,
 	    if(rc == SQL_SUCCESS)
 		errorPrint("@blobInsert expected SQL_NEED_DATA");
 	    errorTrap(0);
+	    SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 	    return;
 	}
-	/* return code other than need-more-data */
+
 	output_length = 0;
 	rc = SQLParamData(hstmt, (void **)&output_length);
 	if((char *)output_length != blobcmd) {
@@ -725,6 +743,7 @@ sql_blobInsert(const char *tabname, const char *colname, int rowid,
 	    if(rc) {
 		close(fd);
 		errorTrap(0);
+		SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 		return;
 	    }
 	}			/* loop reading the file */
@@ -735,13 +754,15 @@ sql_blobInsert(const char *tabname, const char *colname, int rowid,
 	 * this call completes the execution of the SQL statement. */
 	rc = SQLParamData(hstmt, (void **)&output_length);
     }
-    /* blob is drawn from a file */
-    if(errorTrap(0))
+
+    if(errorTrap(0)) {
+	SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 	return;
-    rc = SQLRowCount(hstmt, &rv_lastNrows);
-    errorTrap(0);
+    }
+
     if(sql_debug)
 	appendFile(sql_debuglog, "%d rows affected", rv_lastNrows);
+    SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
     exclist = 0;
 }				/* sql_blobInsert */
 
@@ -756,18 +777,8 @@ The prefix rv_ on the following global variables indicates returned values.
 /* Where to stash the retrieved values */
 static va_list sqlargs;
 
-int rv_numRets;
-char rv_type[NUMRETS + 1];
-/* names of returned data, usually SQL column names */
-char rv_name[NUMRETS + 1][COLNAMELEN];
-LF rv_data[NUMRETS];		/* the returned values */
 /* Temp area to read the Informix values, as strings */
 static char retstring[NUMRETS][STRINGLEN + 4];
-long rv_lastNrows, rv_lastSerial, rv_lastRowid;
-void *rv_blobLoc;		/* location of blob in memory */
-int rv_blobSize;
-const char *rv_blobFile;
-bool rv_blobAppend;
 static bool everything_null;
 
 static void
@@ -1032,7 +1043,7 @@ oneRetValue(void *pre_x, ...)
     if(rv_numRets != 1)
 	errorPrint("2SQL statement has %d return values, 1 value expected",
 	   rv_numRets);
-    if(!strchr("MNDIC", coltype))
+    if(!strchr("MNFDIC", coltype))
 	errorPrint
 	   ("2SQL statement returns a value whose type is not compatible with a 4-byte integer");
 
@@ -1050,6 +1061,8 @@ oneRetValue(void *pre_x, ...)
 	*x = &n;
 	retsFromOdbc();
     }
+
+    SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
     return n;
 }				/* oneRetValue */
 
@@ -1088,6 +1101,7 @@ prepare(SQLHSTMT h, const char *stmt)
 
     rv_numRets = 0;
     memset(rv_type, 0, NUMRETS);
+    memset(rv_nullable, 0, NUMRETS);
     rv_lastNrows = 0;
 
     rc = SQLPrepare(hstmt, (char *)stmt, SQL_NTS);
@@ -1127,6 +1141,8 @@ Count(*) becomes decimal(15,0).  So be careful.
 #define SQL_MONEY 100
 	if(coltype == SQL_DECIMAL && (colprec != 15 || colscale != 0))
 	    coltype = SQL_MONEY;
+
+	rv_nullable[i] = (nullable != SQL_NO_NULLS);
 
 	switch (coltype) {
 	case SQL_BIT:
@@ -1212,10 +1228,9 @@ static bool
 execInternal(const char *stmt, int mode)
 {
     bool notfound = false;
-    SQLINTEGER rowcnt;
-    short rowstat[2];
 
-    if(!prepare(hstmt1, stmt))
+    newStatement();
+    if(!prepare(hstmt, stmt))
 	return false;		/* error */
 
     if(!rv_numRets) {
@@ -1237,23 +1252,24 @@ execInternal(const char *stmt, int mode)
     if(!rc) {			/* statement succeeded */
 	/* fetch the data, or get a count of the rows affected */
 	if(rv_numRets) {
-	    rc = SQLExtendedFetch(hstmt, (ushort) SQL_FD_FETCH_NEXT, 1,
-	       &rowcnt, rowstat);
-	    if(rc == SQL_NO_DATA_FOUND)
+	    stmt_text = "fetch";
+	    debugStatement();
+	    rc = SQLFetchScroll(hstmt, (ushort) SQL_FD_FETCH_NEXT, 1);
+	    if(rc == SQL_NO_DATA) {
 		rc = SQL_SUCCESS;
-	    if(!rowcnt)
 		notfound = true;
-	    else
+	    } else
 		everything_null = false;
 	} else {
 	    rc = SQLRowCount(hstmt, &rv_lastNrows);
-	    if(sql_debug && rv_lastNrows)
+	    if(sql_debug)
 		appendFile(sql_debuglog, "%d rows affected", rv_lastNrows);
 	}
     }
-    /* successful query */
+
     if(errorTrap(0))
 	return false;
+
     return !notfound;
 }				/* execInternal */
 
@@ -1267,6 +1283,7 @@ void
 sql_execNF(const char *stmt)
 {
     execInternal(stmt, 1);
+    SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
     exclist = 0;
 }				/* sql_execNF */
 
@@ -1277,6 +1294,7 @@ sql_exec(const char *stmt, ...)
     va_start(sqlargs, stmt);
     stmt = lineFormatStack(stmt, 0, &sqlargs);
     execInternal(stmt, 1);
+    SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
     exclist = 0;
     va_end(sqlargs);
 }				/* sql_exec */
@@ -1291,6 +1309,7 @@ sql_select(const char *stmt, ...)
     stmt = lineFormatStack(stmt, 0, &sqlargs);
     rowfound = execInternal(stmt, 2);
     retsFromOdbc();
+    SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
     return rowfound;
 }				/* sql_select */
 
@@ -1302,6 +1321,7 @@ sql_selectNF(const char *stmt, ...)
     va_start(sqlargs, stmt);
     rowfound = execInternal(stmt, 2);
     retsFromOdbc();
+    SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
     return rowfound;
 }				/* sql_selectNF */
 
@@ -1314,6 +1334,7 @@ sql_selectOne(const char *stmt, ...)
     stmt = lineFormatStack(stmt, 0, &sqlargs);
     rowfound = execInternal(stmt, 2);
     if(!rowfound) {
+	SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 	exclist = 0;
 	va_end(sqlargs);
 	return nullint;
@@ -1344,6 +1365,7 @@ sql_proc(const char *stmt, ...)
     stmt = lineFormatStack(stmt, 0, &sqlargs);
     rowfound = sql_procNF(stmt);
     retsFromOdbc();
+    SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
     return rowfound;
 }				/* sql_proc */
 
@@ -1356,6 +1378,7 @@ sql_procOne(const char *stmt, ...)
     stmt = lineFormatStack(stmt, 0, &sqlargs);
     rowfound = sql_procNF(stmt);
     if(!rowfound) {
+	SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 	exclist = 0;
 	va_end(sqlargs);
 	return 0;
@@ -1377,6 +1400,8 @@ prepareCursor(const char *stmt, bool scrollflag)
     va_end(sqlargs);
 
     hstmt = o->hstmt;
+    if(sql_debug)
+	appendFile(sql_debuglog, "new cursor %d", o->cid);
     rc = SQLSetStmtOption(hstmt, SQL_CURSOR_TYPE,
        scrollflag ? SQL_CURSOR_STATIC : SQL_CURSOR_FORWARD_ONLY);
     if(errorTrap(0))
@@ -1424,6 +1449,7 @@ sql_open(int cid)
 	errorPrint("2cannot open cursor %d, already opened", cid);
 
     stmt_text = "open";
+    debugStatement();
     hstmt = o->hstmt;
     rc = SQLExecute(hstmt);
     if(errorTrap(0))
@@ -1448,11 +1474,12 @@ sql_prepOpen(const char *stmt, ...)
     sql_open(n);
     if(rv_lastStatus) {
 	o->flag = CURSOR_NONE;	/* back to square 0 */
+	SQLFreeHandle(SQL_HANDLE_STMT, o->hstmt);
+	o->hstmt = SQL_NULL_HSTMT;
 	rv_numRets = 0;
 	memset(rv_type, 0, sizeof (rv_type));
 	n = -1;
     }
-    /* open failed */
     exclist = 0;
     return n;
 }				/* sql_prepOpen */
@@ -1465,8 +1492,9 @@ sql_close(int cid)
 	errorPrint("2cannot close cursor %d, not yet opened", cid);
 
     stmt_text = "close";
+    debugStatement();
     hstmt = o->hstmt;
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
+    rc = SQLCloseCursor(hstmt);
     if(errorTrap(0))
 	return;
     o->flag = CURSOR_PREPARED;
@@ -1481,13 +1509,15 @@ sql_free(int cid)
 	errorPrint("2cannot free cursor %d, not yet closed", cid);
 
     stmt_text = "free";
+    debugStatement();
     hstmt = o->hstmt;
-    rc = SQLFreeStmt(hstmt, SQL_UNBIND);
-    if(errorTrap(0))
-	return;
+    rc = SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
     o->flag = CURSOR_NONE;
+    o->hstmt = SQL_NULL_HSTMT;
     rv_numRets = 0;
     memset(rv_type, 0, sizeof (rv_type));
+/* free should never fail */
+    errorTrap(0);
     exclist = 0;
 }				/* sql_free */
 
@@ -1508,8 +1538,6 @@ static bool
 fetchInternal(int cid, long n, int flag)
 {
     long nextrow, lastrow;
-    SQLINTEGER rowcnt;
-    short rowstat[2];
     struct OCURS *o = findCursor(cid);
 
     everything_null = true;
@@ -1561,14 +1589,13 @@ fetchInternal(int cid, long n, int flag)
     }
 
     stmt_text = "fetch";
+    debugStatement();
     hstmt = o->hstmt;
-    rc = SQLExtendedFetch(hstmt, (ushort) flag, 1, &rowcnt, rowstat);
-    if(rc == SQL_NO_DATA_FOUND)
-	rc = SQL_SUCCESS;
+    rc = SQLFetchScroll(hstmt, (ushort) flag, nextrow);
+    if(rc == SQL_NO_DATA)
+	return false;
     if(errorTrap(0))
 	return false;
-    if(!rowcnt)
-	return false;		/* not found */
     o->rownum = nextrow;
     everything_null = false;
     return true;
@@ -1626,36 +1653,56 @@ sql_fetchAbs(int cid, long rownum, ...)
 
 
 void
-getPrimaryKey(const char *tname, int *part1, int *part2)
+getPrimaryKey(const char *tname, int *part1, int *part2, int *part3)
 {
     char schemaName[128 + 1];
-    char rgbValue[20];
+    int keyindex;
     SQLLEN pcbValue;
 
-    *part1 = *part2 = 0;
-    hstmt = hstmt1;
-    cleanStatement();
+    *part1 = *part2 = *part3 = 0;
+    newStatement();
     stmt_text = "get primary key";
     debugStatement();
     rc = SQLPrimaryKeys(hstmt,
-       NULL, SQL_NTS, schemaName, SQL_NTS, (char *)tname, SQL_NTS);
+       NULL, SQL_NTS, NULL, SQL_NTS, (char *)tname, SQL_NTS);
     if(rc)
-	goto done;
+	goto abort;
 
 /* Because all we need is the ordinal position, we'll bind column 5 */
-    rc = SQLBindCol(hstmt, 5, SQL_C_CHAR, (SQLPOINTER) rgbValue, 20, &pcbValue);
+    stmt_text = "primary key bind";
+    debugStatement();
+    rc =
+       SQLBindCol(hstmt, 5, SQL_INTEGER, (SQLPOINTER) & keyindex, 0, &pcbValue);
     if(rc)
-	goto done;
+	goto abort;
 
-/* I'm only grabbing the first column in a multi-column key */
-    if(SQLFetch(hstmt))
+/* I'm only grabbing the first 2 columns in a multi-column key */
+    rc = SQLFetch(hstmt);
+    if(rc == SQL_NO_DATA)
 	goto done;
-    *part1 = pcbValue;
-    if(SQLFetch(hstmt))
-	goto done;
-    *part2 = pcbValue;
+    if(rc)
+	goto abort;
+    *part1 = keyindex;
 
-  done:
+    rc = SQLFetch(hstmt);
+    if(rc == SQL_NO_DATA)
+	goto done;
+    if(rc)
+	goto abort;
+    *part2 = keyindex;
+
+    rc = SQLFetch(hstmt);
+    if(rc == SQL_NO_DATA)
+	goto done;
+    if(rc)
+	goto abort;
+    *part3 = keyindex;
+
+    goto done;
+
+  abort:
     errorTrap(0);
+  done:
+    SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
     return;
 }				/* getPrimaryKey */

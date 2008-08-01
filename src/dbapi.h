@@ -51,6 +51,7 @@ extern const char *sql_database;	/* name of current database */
 fetch, or any other function that has multiple returns. */
 extern int rv_numRets;		/* number of returned values */
 extern char rv_type[NUMRETS + 1];	/* datatypes of returned values */
+extern bool rv_nullable[NUMRETS];	/* can the columns take nulls */
 extern char rv_name[NUMRETS + 1][COLNAMELEN];	/* column names */
 extern LF rv_data[NUMRETS];	/* the returned values */
 
@@ -178,7 +179,7 @@ void sql_mkload(const char *line, char delim);
 void sql_cursorUpdLine(int cid, const char *line);
 void sql_cursorDelLine(int cid, int rownum);
 void sql_cursorInsLine(int cid, int rownum);
-void getPrimaryKey(const char *tname, int *part1, int *part2);
+void getPrimaryKey(const char *tname, int *part1, int *part2, int *part3);
 
 /* sourcefile=dbops.c */
 char *lineFormat(const char *line, ...);

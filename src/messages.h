@@ -650,4 +650,6 @@ enum {
     MSG_ReAscii,
     MSG_ReUtf8,
     MSG_BadUtf8String,
+    MSG_DBManyKeyCol,
+    MSG_DBNextSerial,
 };

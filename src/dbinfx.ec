@@ -740,11 +740,6 @@ Future versions of our line formatting software may support a %blob directive,
 which makes sense only when the formatted string is destined for SQL.
 *********************************************************************/
 
-/* information about the blob being fetched */
-const char *rv_blobFile;
-bool rv_blobAppend;
-void *rv_blobLoc; /* location of blob in memory */
-int rv_blobSize; /* size of blob in bytes */
 static loc_t blobstruct; /* Informix structure to manage the blob */
 
 /* insert a blob into the database */
@@ -813,14 +808,8 @@ into our own 4-byte representations.
 The same for time intervals, money, etc.
 *********************************************************************/
 
-/* Arrays that hold the return values from a select statement. */
-int rv_numRets; /* number of returned values */
-char rv_type[NUMRETS+1]; /* datatypes of returned values */
-char rv_name[NUMRETS+1][COLNAMELEN]; /* column names */
-LF  rv_data[NUMRETS]; /* the returned values */
 /* Temp area to read the Informix values, as strings */
 static char retstring[NUMRETS][STRINGLEN+4];
-long rv_lastNrows, rv_lastRowid, rv_lastSerial;
 static va_list sqlargs;
 
 static void retsSetup(struct sqlda *desc)
@@ -1767,15 +1756,15 @@ o->fl[i] = cloneString(sql_mkunld('\177'));
 /*********************************************************************
 Get the primary key for a table.
 In informix, you can use system tables to get this information.
-There's a way to do it in odbc, but I don't remember.
+I haven't yet expanded this to a 3 part key.
 *********************************************************************/
 
 void
-getPrimaryKey(const char *tname, int *part1, int *part2)
+getPrimaryKey(const char *tname, int *part1, int *part2, int *part3)
 {
     int p1, p2, rc;
     char *s = strchr(tname, ':');
-    *part1 = *part2 = 0;
+    *part1 = *part2 = *part3 = 0;
     if(!s) {
 	rc = sql_select("select part1, part2 \
 from sysconstraints c, systables t, sysindexes i \

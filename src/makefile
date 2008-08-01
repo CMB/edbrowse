@@ -31,7 +31,9 @@ CFLAGS = -I/usr/local/js/src -I/usr/local/js/src/Linux_All_DBG.OBJ -DXP_UNIX -DX
 LFLAGS = $(STRIP)
 
 #  ESQL C load flags
-ESQLDFLAGS = $(STRIP) -Xlinker -rpath -Xlinker $(INFORMIXDIR)/lib:$(INFORMIXDIR)/lib/esql
+#ESQLDFLAGS = $(STRIP) -Xlinker -rpath -Xlinker $(INFORMIXDIR)/lib:$(INFORMIXDIR)/lib/esql
+#  but it's better to put those two directories into /etc/ld.so.conf and then run ldconfig
+ESQLDFLAGS = $(STRIP)
 
 #  Libraries for edbrowse.
 #  I assume you have linked libjs.so into /usr/lib/libsmjs.so

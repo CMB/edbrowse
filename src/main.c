@@ -13,7 +13,7 @@
 /* See eb.h for descriptive comments. */
 
 
-const char *version = "3.3.4";
+const char *version = "3.4.1";
 char *userAgents[10], *currentAgent, *currentReferrer;
 const char eol[] = "\r\n";
 char EMPTYSTRING[] = "";
@@ -166,7 +166,7 @@ readConfigFile(void)
 	"tname", "tshort", "cols", "keycol",
 	"adbook", "ipblack", "maildir", "agent",
 	"jar", "nojs", "spamcan",
-	"webtimer", "mailtimer", "certfile", "database", "proxy",
+	"webtimer", "mailtimer", "certfile", "datasource", "proxy",
 	0
     };
 

@@ -7,8 +7,20 @@
 #include "eb.h"
 #include "dbapi.h"
 
-const char *sql_debuglog = "ebsql.log";	/* log of debug prints */
+const char *sql_debuglog = "/tmp/ebsql.log";	/* log of debug prints */
 const char *sql_database;	/* name of current database */
+int rv_numRets;
+char rv_type[NUMRETS + 1];
+bool rv_nullable[NUMRETS];
+/* names of returned data, usually SQL column names */
+char rv_name[NUMRETS + 1][COLNAMELEN];
+LF rv_data[NUMRETS];		/* the returned values */
+long rv_lastNrows, rv_lastSerial, rv_lastRowid;
+void *rv_blobLoc;		/* location of blob in memory */
+int rv_blobSize;
+const char *rv_blobFile;
+bool rv_blobAppend;
+
 
 /* text descriptions corresponding to our generic SQL error codes */
 /* This has yet to be internationalized. */
@@ -802,7 +814,7 @@ static bool
 setTable(void)
 {
     static const short exclist[] = { EXCNOTABLE, EXCNOCOLUMN, EXCSQLMISC, 0 };
-    int cid, nc, i, part1, part2;
+    int cid, nc, i, part1, part2, part3;
     const char *s = cw->fileName;
     const char *t = strchr(s, ']');
     if(t - s >= sizeof (myTab))
@@ -866,13 +878,16 @@ setTable(void)
 	    td->cols[i] = cloneString(rv_name[i]);
 	sql_free(cid);
 
-	getPrimaryKey(myTab, &part1, &part2);
+	getPrimaryKey(myTab, &part1, &part2, &part3);
 	if(part1 > nc)
 	    part1 = 0;
 	if(part2 > nc)
 	    part2 = 0;
+	if(part3 > nc)
+	    part3 = 0;
 	td->key1 = part1;
 	td->key2 = part2;
+	td->key3 = part3;
     }
 
     s = strpbrk(td->types, "BT");
@@ -904,7 +919,7 @@ showColumns(void)
 
     for(i = 0; i < td->ncols; ++i) {
 	printf("%d ", i + 1);
-	if(td->key1 == i + 1 || td->key2 == i + 1)
+	if(td->key1 == i + 1 || td->key2 == i + 1 || td->key3 == i + 1)
 	    printf("*");
 	printf("%s ", td->cols[i]);
 	c = td->types[i];
@@ -1070,7 +1085,12 @@ keyCountCheck(void)
 	setError(MSG_DBNoKeyCol);
 	return false;
     }
-    return (td->key2 ? 2 : 1);
+    if(!td->key2)
+	return 1;
+    if(!td->key3)
+	return 2;
+    setError(MSG_DBManyKeyCol);
+    return 0;
 }				/* keyCountCheck */
 
 /* Typical error conditions for insert update delete */
@@ -1258,18 +1278,23 @@ bool
 sqlAddRows(int ln)
 {
     char *u1, *u2;		/* pieces of the insert statement */
+    char *u3;			/* line with pipes */
     char *unld, *s;
-    int u1len, u2len;
-    int j, l, rowid;
+    int u1len, u2len, u3len;
+    int j, l, nkeys;
     double dv;
     char inp[256];
+    bool rc;
 
     if(!setTable())
 	return false;
+    nkeys = keyCountCheck();
 
     while(1) {
 	u1 = initString(&u1len);
 	u2 = initString(&u2len);
+	u3 = initString(&u3len);
+
 	for(j = 0; j < td->ncols; ++j) {
 	  reenter:
 	    if(strchr("BT", td->types[j]))
@@ -1286,13 +1311,17 @@ sqlAddRows(int ln)
 	    if(stringEqual(inp, ".")) {
 		nzFree(u1);
 		nzFree(u2);
+		nzFree(u3);
 		return true;
 	    }
 
-/* For now, a null field is always excepted. */
-/* Someday we may want to check this against the not-null constraint. */
-	    if(inp[0] == 0)
+	    if(inp[0] == 0) {
+/* I thought it was a good idea to prevent nulls from going into not-null
+ * columns, but then I remembered  not null default value,
+ * where the database converts null into something real.
+ * I want to allow this. */
 		goto goodfield;
+	    }
 
 /* verify the integrity of the entered field */
 	    if(strchr(inp, '|')) {
@@ -1337,24 +1366,44 @@ sqlAddRows(int ln)
 	    }
 
 	  goodfield:
+
+/* turn 0 into next serial number */
+	    if(j == td->key1 - 1 && td->types[j] == 'N' &&
+	       stringEqual(inp, "0")) {
+		int nextkey = sql_selectOne("select max(%s) from %s",
+		   td->cols[j], td->name);
+		if(isnull(nextkey)) {
+		    i_puts(MSG_DBNextSerial);
+		    goto reenter;
+		}
+		sprintf(inp, "%d", nextkey + 1);
+	    }
+
 	    if(*u1)
 		stringAndChar(&u1, &u1len, ',');
 	    stringAndString(&u1, &u1len, td->cols[j]);
+
 	    if(*u2)
 		stringAndChar(&u2, &u2len, ',');
 	    stringAndString(&u2, &u2len, lineFormat("%S", inp));
+
+	    stringAndString(&u3, &u3len, inp);
+	    stringAndChar(&u3, &u3len, '|');
 	}
+
 	sql_exclist(insupdExceptions);
 	sql_exec("insert into %s (%s) values (%s)", td->name, u1, u2);
 	nzFree(u1);
 	nzFree(u2);
 	if(!insupdError(1, 1)) {
+	    nzFree(u3);
 	    printf("Error: ");
 	    showError();
 	    continue;
 	}
-/* Fetch the row just entered;
-its serial number may have changed from 0 to something real */
+#if 0
+/* Fetch the row just entered. */
+/* Don't know how to do this without rowid. */
 	rowid = rv_lastRowid;
 	buildSelectClause();
 	sql_select("%s where rowid = %d", scl, rowid, 0);
@@ -1362,7 +1411,15 @@ its serial number may have changed from 0 to something real */
 	unld = sql_mkunld('|');
 	l = strlen(unld);
 	unld[l - 1] = '\n';	/* overwrite the last pipe */
-	if(!addTextToBuffer((pst) unld, l, ln))
+#else
+	unld = u3;
+	l = strlen(unld);
+	unld[l - 1] = '\n';	/* overwrite the last pipe */
+#endif
+
+	rc = addTextToBuffer((pst) unld, l, ln);
+	nzFree(u3);
+	if(!rc)
 	    return false;
 	++ln;
     }

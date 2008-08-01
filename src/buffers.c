@@ -1219,7 +1219,7 @@ readFile(const char *filename, const char *post)
 	}			/* loop fixing files in the directory scan */
 	return true;
     }
-    /* reading a directory */
+
     nopound = cloneString(filename);
     rbuf = strchr(nopound, '#');
     if(rbuf)
@@ -3046,7 +3046,7 @@ twoLetter(const char *line, const char **runThis)
 	return true;
     }
 
-    if(stringEqual(line, "u8")) {
+    if(stringEqual(line, "su8")) {
 	re_utf8 ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(re_utf8 + MSG_ReAscii);
@@ -4423,36 +4423,6 @@ runCommand(const char *line)
 	    return readContext(cx);
 	if(first) {
 	    if(cw->sqlMode && !isSQL(line)) {
-		j = 0;		/* count the dashes */
-		s = strchr(line, '=');
-		if(s) {
-		    const char *q;
-		    for(q = line; q < s; ++q)
-			if(!isalnumByte(*q))
-			    goto notwhere;
-		    ++s;
-		} else {
-		    s = line;
-		}
-		if(stringEqual(s, "*"))
-		    goto sqlwhere;
-		for(; *s; ++s) {
-		    if(*s == '-' && s > line && s[1]) {
-			++j;
-			continue;
-		    }
-		    if(isdigitByte(*s))
-			continue;
-		    if(*s == '/')
-			continue;
-		    goto notwhere;
-		}
-		if(j > 1) {
-		  notwhere:
-		    setError(MSG_readText);
-		    return false;
-		}
-	      sqlwhere:
 		strcpy(newline, cw->fileName);
 		strcpy(strchr(newline, ']') + 1, line);
 		line = newline;

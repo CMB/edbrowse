@@ -391,7 +391,7 @@ Unfortunately, some older pcre packages do not have this capability built in.&nb
 If this is the case, you will receive a warning message,
 then pcre will revert back to its original one-byte-per-letter behavior.&nbsp;
 To disable the utf8 feature permanently, and suppress this warning message, set the environment variable PCREUTF8=off.&nbsp;
-If you want to disable utf8 search and substitute temporarily, use the u8 command.
+If you want to disable utf8 search and substitute temporarily, use the su8 command.
 
 <H3 align=center> <A NAME=guide> Quick Reference Guide </A> </H3>
 
@@ -420,7 +420,7 @@ ci: searches and substitutions are case insensitive
 cs: searches and substitutions are case sensitive
 sg: substitution strings are global across sessions
 sl: substitution strings are local to their sessions
-u8: search and substitute uses utf8 character sequences (toggle)
+su8: search and substitute uses utf8 character sequences (toggle)
 lc: convert line to lower case
 mc: convert line to mixed case
 uc: convert line to upper case
@@ -3811,18 +3811,16 @@ Like everything else in edbrowse, you'll get use to it once you play with it.
 <H3 align=center> <A NAME=sqlb> Building edbrowse with Database Access </A> </H3>
 
 If you simply type make, you get edbrowse, with no database interface.&nbsp;
-Two other targets support database access.&nbsp;
-Run either `make edbrowseodbc' or make `edbrowseinf'.&nbsp;
-The former uses odbc to access just about any sql database,
-and the latter uses the
-<A HREF=http://www.informix.com>Informix</A> interface.&nbsp;
-If you would like to test the odbc interface,
-or write a new interface, e.g. for Oracle or mysql,
-I will be eternally grateful.&nbsp;
+A separate target supports database access through odbc.&nbsp;
+Run `make edbrowseodbc' to link edbrowse with odbc.&nbsp;
+This assumes you have the unixODBC and unixODBC-devel packages installed on your machine.&nbsp;
+Another target, edbrowseinf, provides a direct link to an
+<A HREF=http://www.informix.com>Informix database</A>.&nbsp;
+This works, but is not generally supported.&nbsp;
+Other database specific edbrowse connectors could be built.&nbsp;
 You are basically implementing the interface described in dbapi.h,
 using the C database development toolkit provided by the vendor.&nbsp;
-The easiest way to proceed is to copy one of the two files that is already there,
-dbinfx.ec or dbodbc.c, and make changes as necessary.
+For now, I will concentrate on the odbc interface.
 
 <H3 align=center> <A NAME=rtb> Reading Tables </A> </H3>
 
@@ -3858,7 +3856,7 @@ The output might look like this.
 The first column is a unique number that designates this particular customer.&nbsp;
 After all, two customers could have the same first and last name,
 and even the same birthdate.&nbsp;
-Serial numbers are <em>always</em> a good idea,
+Serial numbers are always a good idea,
 and that usually becomes the primary key.&nbsp;
 This is indicated by a star just before the column name.&nbsp;
 If edbrowse changes or deletes a record, the primary key is used.&nbsp;
@@ -3867,7 +3865,11 @@ and that each record appears at most once in an editing session.
 
 <P>
 Note that edbrowse can support a primary key with two columns, such as a serial number and a modifier.&nbsp;
-I actually have some tables at work that look like this.
+I actually have some tables at work that look like this.&nbsp;
+However, more than two key columns are not supported.&nbsp;
+If the primary key comprises more than 2 columns, or if the table has no primary key,
+I will not be able to update or delete.&nbsp;
+Rows in the table are readonly.
 
 <P>
 The table syntax is more than just an identifier and a right bracket.&nbsp;
@@ -3966,16 +3968,19 @@ You can switch to session 9 and save the file, or throw it away.
 
 <P>
 To do anything with the database, your config file must specify
-the name of the database, the login, and the password.&nbsp;
-(The last two can sometimes be omitted, if they are inferred from your identity on the computer.)&nbsp;
+the name of the data source, the login, and the password.&nbsp;
+Data source must match one of the entries in your .odbc.ini files.&nbsp;
+Login and password can sometimes be omitted, if they are inferred from your identity on the computer,
+or they are set in the data source in your .odbc.ini file.&nbsp;
 Here is how the line might look
 if you are tapping into the retail database, where the customers table resides.
 
 <P>
-database = retail,mylogin,mypassword
+datasource = retail,mylogin,mypassword
 
 <P>
-Although this cannot be changed on the fly, you can access other databases by vectoring through this one.&nbsp;
+Although this cannot be changed on the fly (yet),
+you might be able to access other databases by vectoring through this one.&nbsp;
 For instance, you can read the parts table in the inventory database by calling up inventory:parts].&nbsp;
 This is standard sql syntax for looking at tables in another database;
 I just pass it through.
@@ -3996,6 +4001,18 @@ no matter what field you are on.&nbsp;
 The rows that were entered successfully will be present in your buffer,
 and the current line is the last entered row.&nbsp;
 Note that blobs cannot be entered at this time.
+
+<P>
+A row appears as you typed it; and this may differ from the actual values in the database.&nbsp;
+for instance, you might put a null into a field that is "default 3".&nbsp;
+Within the database, the value is 3, but there is nothing in that field in your buffer.&nbsp;
+Another field might truncate a floating point number, according to the precision of that column.&nbsp;
+Another field might be type serial, and turn 0 into the next serial number.&nbsp;
+There are many ways data can be modified as it enters the database.&nbsp;
+It would be better to refresh each row as it is inserted,
+so you could see exactly what is there,
+but this is not implemented yet.&nbsp;
+remember, you can always type `rf' to get an empty buffer, and then reread the rows you just inserted.
 
 <P>
 Use the substitute command to update a row.&nbsp;
