@@ -4013,11 +4013,21 @@ for instance, you might put a null into a field that is "default 3".&nbsp;
 Within the database, the value is 3, but there is nothing in that field in your buffer.&nbsp;
 Another field might truncate a floating point number, according to the precision of that column.&nbsp;
 Another field might be type serial, and turn 0 into the next serial number.&nbsp;
+And then there are triggers.&nbsp;
 There are many ways data can be modified as it enters the database.&nbsp;
 It would be better to refresh each row as it is inserted,
 so you could see exactly what is there,
 but this is not implemented yet.&nbsp;
 remember, you can always type `rf' to get an empty buffer, and then reread the rows you just inserted.
+
+<P>
+If the first column of the primary key is an integer, and you enter a 0,
+I select the next number in sequence.&nbsp;
+Some databases do this internally; some don't.&nbsp;
+I thought it would be convenient if I did it at the front end.&nbsp;
+There is a possible race condition here, if you and somebody else glom onto the same serial number,
+but it's not likely,
+and it will create a "duplicate key" error in any case.
 
 <P>
 Use the substitute command to update a row.&nbsp;
