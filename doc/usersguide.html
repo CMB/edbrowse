@@ -407,14 +407,24 @@ p: print the current line
 'a,'bp: print a range of lines, marked with labels a and b
 kb: mark the current line as b
 l: list the current line, showing invisible chars and end markers
+eo: end markers off
+el: show end markers ^$ when a line is listed
+ep: show end markers when a line is listed or printed
+lna: expand all nonascii chars into hex when a line is listed (toggle)
 n: print the current line with its line number
-=: print the number of lines in the file
 z22: print the next 22 lines
+z: print another 22 lines
+=: print the number of lines in the file
 X: make this the current line (a no-op)
 s/x/y/: replace x with y on the current line
+s/x/y: replace x with y and print the result
+s//y/: use the last substitution string, in this case x
+s/x/%/: use the last replacement string
+s: repeat the previous substitute command
 s/x/y/2: replace the second instance of x with y on the current line
 4,7s/x/y/g: replace all instances of x with y, on lines 4 through 7
 /x/: look for the line containing x
+/x: same as /x/
 /x/i: look for the line containing x or X
 ci: searches and substitutions are case insensitive
 cs: searches and substitutions are case sensitive
@@ -424,6 +434,7 @@ su8: search and substitute uses utf8 character sequences (toggle)
 lc: convert line to lower case
 mc: convert line to mixed case
 uc: convert line to upper case
+s/x/uc: convert x to X on the current line
 h: help, explain the last question mark
 f: print the name of the current file
 f foo: set the file name to foo
@@ -438,6 +449,10 @@ w/: write to the lass component of the filename
 d: delete the current line
 1,$d: delete all the lines, 1 through eof
 D: delete the current line and print the next line
+dr: directory is readonly
+dw: directory is writable, and d moves files to your trash bin
+dx: directory is writable, and d deletes files
+hf: show hidden files in directory listing (toggle)
 u: undo the last command
 i: insert text before the current line, end with a period
 c: change the current line, enter a new block of text, end with period
@@ -454,6 +469,18 @@ b: brouse the current file, which is assumed to be in html
 b foo.html: edit the file foo.html and browse it
 b url: fetch url from the internet and browse it
 ub: unbrowse a file
+ft: show the title of the current web page
+fd: show the description of the current web page
+fk: show the keywords of the current web page
+hr: http redirection (toggle)
+js: allow javascript (toggle)
+sr: send referrer (toggle)
+tn: send dos-style newlines on lines in textareas (toggle)
+fma: ftp mode active
+fmp: ftp mode passive
+rf: refresh the web page or directory listing
+et: edit this web page as pure text
+vs: verify ssl connections (toggle)
 g: go to the link on the current line
 g2: go to the second link on the current line
 ^: the back key, go back to the web page you were looking at before
@@ -464,36 +491,16 @@ i3?: describe the third input field on the current line
 db: set debug level [0-7]
 cd: change directory
 bl: break line into sentences and phrases
-dr: directory is readonly
-dw: directory is writable, and d moves files to your trash bin
-dx: directory is writable, and d deletes files
-hf: show hidden files in directory listing (toggle)
 bd: binary detection on files (toggle)
-eo: end markers off
-el: show end markers ^$ when a line is listed
-ep: show end markers when a line is listed or printed
-lna: expand all nonascii chars into hex when a line is listed (toggle)
-pb: play buffer
-ft: show the title of the current web page
-fd: show the description of the current web page
-fk: show the keywords of the current web page
-hr: http redirection (toggle)
-js: allow javascript (toggle)
-sr: send referrer (toggle)
-tn: send dos-style newlines on lines in textareas (toggle)
+pb: play buffer (audio)
 iu: automatically convert between iso8859 and utf8 (toggle)
-fma: ftp mode active
-fmp: ftp mode passive
-rf: refresh the web page or directory listing
-et: edit this web page as pure text
-vs: verify ssl connections (toggle)
-ip: show referenced ip numbers, usually for saved mail messages
 ds=source,login,password: set the data source
 shc: show columns
 sht: show tables
 sm: send mail [account number]
 re: reply to a mail message
 rea: reply to all
+ip: show referenced ip numbers, usually for saved mail messages
 </font></PRE>
 
 <H3 align=center> <A NAME=tips> Tips for Avoiding Line Numbers </A> </H3>
