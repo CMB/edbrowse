@@ -241,6 +241,15 @@ fetchmail.c:
 Fetch mail (pop3).  Decode attachments.
 Browse mail files, separate mime components.
 
+messages.h:
+Symbolic constants for the warning/error messages of edbrowse.
+
+messages.c:
+Strings corresponding to these error messages,
+in various languages.
+Also some international print routines to display the correct string,
+according to your locale.
+
 jsdom.c:
 Document object model under javascript.
 Build objects for the hyperlinks, forms, elements, etc.
@@ -262,6 +271,20 @@ Connect edbrowse to odbc.
 
 dbinfx.ec:
 Connect edbrowse directly to Informix.
+
+------------------------------------------------------------
+
+Error conventions.
+Unix commands return 0 for ok, and a negative number for a problem.
+I return true for success and false for error.
+The error message is in a buffer, which you can see by typing h,
+in the /bin/ed fashion.
+Sometimes the error is displayed no matter what,
+like when you are reading or writing files.
+error messages are created according to your locale, i.e. in your language,
+if a translation is available.
+Some error messages in the database world have not yet been internationalized.
+Some are beyond my control, as they come from odbc or its native driver.
 
 ------------------------------------------------------------
 
