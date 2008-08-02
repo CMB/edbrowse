@@ -807,7 +807,7 @@ buildWhereClause(void)
 static bool
 setTable(void)
 {
-    static const short exclist[] = { EXCNOTABLE, EXCNOCOLUMN, EXCSQLMISC, 0 };
+    static const short exclist[] = { EXCNOTABLE, EXCNOCOLUMN, 0 };
     int cid, nc, i, part1, part2, part3;
     const char *s = cw->fileName;
     const char *t = strchr(s, ']');
@@ -1088,7 +1088,7 @@ keyCountCheck(void)
 }				/* keyCountCheck */
 
 /* Typical error conditions for insert update delete */
-static const short insupdExceptions[] = { EXCSQLMISC,
+static const short insupdExceptions[] = {
     EXCVIEWUSE, EXCREFINT, EXCITEMLOCK, EXCPERMISSION,
     EXCDEADLOCK, EXCCHECK, EXCTIMEOUT, EXCNOTNULLCOLUMN, 0
 };

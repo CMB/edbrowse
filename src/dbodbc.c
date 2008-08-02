@@ -41,10 +41,11 @@ we would be doing something wrong.
 /*********************************************************************
 The status variable rc holds the return code from an ODBC call.
 This is then used by the function errorTrap() below.
-If rc != 0, errorTrap() aborts the program, or performs
-a recovery longjmp, as directed by the generic error function errorPrint().
-errorTrap() returns true if an SQL error occurred, but that error
-was trapped by the application.
+If rc != 0, errorTrap() prints a message:
+the generic type of error from our translation, and the message it gets from odbc.
+It may skip this however, if you have trapped for this type of error.
+This lets the application print a message that is shorter,
+and easier to understand, and has the potential to be internationalized.
 In this case the calling routine should clean up as best it can and return.
 *********************************************************************/
 
@@ -210,9 +211,11 @@ errorTrap(char *cxerr)
 	rc = SQLError(henv, hdbc, hstmt,
 	   errcodes, &rv_vendorStatus, msgtext, sizeof (msgtext), &waste);
 	if(rc == SQL_NO_DATA) {
-	    if(firstError)
-		errorPrint
-		   ("@ODBC command failed, but SQLError() provided no additional information");
+	    if(firstError) {
+		printf
+		   ("ODBC command failed, but SQLError() provided no additional information\n");
+		return true;
+	    }
 	    return false;
 	}
 
@@ -239,10 +242,9 @@ errorTrap(char *cxerr)
 		return true;
 	    }
 
-    /* Remember, errorPrint() should not return. */
-    errorPrint("2ODBC error %s, %s, driver %s.",
+    printf("ODBC error %s, %s, driver %s\n",
        errcodes, sqlErrorList[rv_lastStatus], msgtext);
-    return true;		/* make the compiler happy */
+    return true;
 }				/* errorTrap */
 
 static void
@@ -595,7 +597,7 @@ endTrans(bool commit)
 	rc = SQLSetConnectOption(hdbc, SQL_AUTOCOMMIT, SQL_AUTOCOMMIT_ON);
 	errorTrap(0);
     }
-    /* just closed out the top level transaction */
+
     exclist = 0;
 }				/* endTrans */
 
