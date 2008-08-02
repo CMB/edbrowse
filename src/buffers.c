@@ -3059,8 +3059,8 @@ twoLetter(const char *line, const char **runThis)
 	return true;
     }
 
-    if(line[0] == 'd' && line[1] == 's' && (line[2] == 0 || line[2] == ' ')) {
-	if(!line[2] || !line[3]) {
+    if(!strncmp(line, "ds=", 3)) {
+	if(!line[3]) {
 	    if(!dbarea || !*dbarea) {
 		i_puts(MSG_DBNoSource);
 	    } else {

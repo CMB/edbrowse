@@ -669,19 +669,13 @@ stringMoney(const char *s)
 bool
 ebConnect(void)
 {
-    const short exclist[] = { EXCSQLMISC, EXCNOCONNECT, 0 };
     if(sql_database)
 	return true;
     if(!dbarea) {
 	setError(MSG_DBUnspecified);
 	return false;
     }
-    sql_exclist(exclist);
     sql_connect(dbarea, dblogin, dbpw);
-    if(rv_lastStatus) {
-	setError(MSG_DBConnect, rv_vendorStatus);
-	return false;
-    }
     if(!sql_database)
 	errorPrint("@sql connected, but database not set");
     return true;
