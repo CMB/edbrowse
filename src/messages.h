@@ -654,4 +654,5 @@ enum {
     MSG_DBNextSerial,
     MSG_ShowTables,
     MSG_DBNoSource,
+    MSG_DBConnecting,
 };

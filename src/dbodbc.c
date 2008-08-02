@@ -385,6 +385,8 @@ sql_connect(const char *db, const char *login, const char *pw)
     if(isnullstring(db))
 	errorPrint
 	   ("2sql_connect receives no data source, check your edbrowse config file");
+if(debugLevel >= 1)
+i_printf(MSG_DBConnecting, db);
 
     /* first disconnect the old one */
     if(disconnect())
