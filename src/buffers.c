@@ -3928,7 +3928,7 @@ runCommand(const char *line)
 	line = dirline;
 	first = *line;
     }
-    /* g in directory mode */
+
     if(cmd == 'e') {
 	if(cx) {
 	    if(!cxCompare(cx))
@@ -3943,7 +3943,8 @@ runCommand(const char *line)
 /* more e to come */
     }
 
-    if(cmd == 'g') {		/* see if it's a go command */
+    /* see if it's a go command */
+    if(cmd == 'g' && !(cw->sqlMode | cw->binMode)) {
 	char *p, *h;
 	int tagno;
 	bool click, dclick, over;
@@ -4029,7 +4030,17 @@ runCommand(const char *line)
 	    }
 	    if(nogo)
 		return true;
-	}			/* go command */
+	}
+
+	/* go command */
+	/* Check to see if g means run an sql command. */
+	if(!first) {
+	    j = goSelect(&startRange);
+	    if(j >= 0) {
+		cw->dot = startRange;
+		return j ? true : false;
+	    }
+	}
     }
 
     if(cmd == 's') {

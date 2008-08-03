@@ -52,3 +52,9 @@ ebConnect(void)
     setError(MSG_DBNotCompiled);
     return false;
 }				/* ebConnect */
+
+int
+goSelect(int *startLine)
+{
+    return -1;
+}				/* goSelect */

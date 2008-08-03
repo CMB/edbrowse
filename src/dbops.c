@@ -1653,3 +1653,9 @@ syncup_table(const char *table1, const char *table2,	/* the two tables */
 
     cursor_comm(stmt1, stmt2, keycol, (fnptr) syncup_comm_fn, 0);
 }				/* syncup_table */
+
+int
+goSelect(int *startLine)
+{
+    return -1;
+}				/* goSelect */
