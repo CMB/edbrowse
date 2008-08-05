@@ -1211,18 +1211,20 @@ Run individual select or execute statements, using the above internal routine.
 
 /* pointer to vararg list; most of these are vararg functions */
 /* execute a stand-alone statement with no % formatting of the string */
-void sql_execNF(const char *stmt)
+bool sql_execNF(const char *stmt)
 {
-	execInternal(stmt, 1);
+	return execInternal(stmt, 1);
 } /* sql_execNF */
 
 /* execute a stand-alone statement with % formatting */
-void sql_exec(const char *stmt, ...)
+bool sql_exec(const char *stmt, ...)
 {
+bool ok;
 	va_start(sqlargs, stmt);
 	stmt = lineFormatStack(stmt, 0, &sqlargs);
-	execInternal(stmt, 1);
+	ok = execInternal(stmt, 1);
 	va_end(sqlargs);
+return ok;
 } /* sql_exec */
 
 /* run a select statement with no % formatting of the string */

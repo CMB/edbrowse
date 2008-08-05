@@ -244,6 +244,7 @@ errorTrap(char *cxerr)
 
     printf("ODBC error %s, %s, driver %s\n",
        errcodes, sqlErrorList[rv_lastStatus], msgtext);
+    setError(MSG_DBUnexpected, rv_vendorStatus);
     return true;
 }				/* errorTrap */
 
@@ -385,8 +386,8 @@ sql_connect(const char *db, const char *login, const char *pw)
     if(isnullstring(db))
 	errorPrint
 	   ("2sql_connect receives no data source, check your edbrowse config file");
-if(debugLevel >= 1)
-i_printf(MSG_DBConnecting, db);
+    if(debugLevel >= 1)
+	i_printf(MSG_DBConnecting, db);
 
     /* first disconnect the old one */
     if(disconnect())
@@ -1100,7 +1101,8 @@ prepare(SQLHSTMT h, const char *stmt)
 	/* delete or update */
 	if(!strstr(stmt, "where") && !strstr(stmt, "WHERE")) {
 	    showStatement();
-	    errorPrint("2Old Mcdonald bug");
+	    setError(MSG_DBNoWhere);
+	    return false;
 	}
 
     rv_numRets = 0;
@@ -1274,6 +1276,8 @@ execInternal(const char *stmt, int mode)
     if(errorTrap(0))
 	return false;
 
+    if(!rv_numRets)
+	return true;
     return !notfound;
 }				/* execInternal */
 
@@ -1283,24 +1287,27 @@ Run individual select or execute statements, using the above internal routine.
 *********************************************************************/
 
 /* execute a stand-alone statement with no % formatting of the string */
-void
+bool
 sql_execNF(const char *stmt)
 {
-    execInternal(stmt, 1);
+    bool ok = execInternal(stmt, 1);
     SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
     exclist = 0;
+    return ok;
 }				/* sql_execNF */
 
 /* execute a stand-alone statement with % formatting */
-void
+bool
 sql_exec(const char *stmt, ...)
 {
+    bool ok;
     va_start(sqlargs, stmt);
     stmt = lineFormatStack(stmt, 0, &sqlargs);
-    execInternal(stmt, 1);
+    ok = execInternal(stmt, 1);
     SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
     exclist = 0;
     va_end(sqlargs);
+    return ok;
 }				/* sql_exec */
 
 /* run a select statement with % formatting */
@@ -1413,11 +1420,6 @@ prepareCursor(const char *stmt, bool scrollflag)
 
     if(!prepare(hstmt, stmt))
 	return -1;
-    if(!rv_numRets) {
-	showStatement();
-	errorPrint("2statement passed to sql_prepare has no returns");
-    }
-
     o->numrets = rv_numRets;
     memcpy(o->rv_type, rv_type, NUMRETS);
     o->flag = CURSOR_PREPARED;
@@ -1451,6 +1453,8 @@ sql_open(int cid)
     struct OCURS *o = findCursor(cid);
     if(o->flag == CURSOR_OPENED)
 	errorPrint("2cannot open cursor %d, already opened", cid);
+    if(!o->numrets)
+	errorPrint("2cursor is being opened with no returns");
 
     stmt_text = "open";
     debugStatement();

@@ -3568,7 +3568,7 @@ runCommand(const char *line)
 	return (globSub = false);
     }
     if(cw->sqlMode && !strchr(sql_cmd, cmd)) {
-	setError(MSG_BadRange, icmd);
+	setError(MSG_DBCommand, icmd);
 	return (globSub = false);
     }
     if(cw->browseMode && !strchr(browse_cmd, cmd)) {
@@ -3949,6 +3949,25 @@ runCommand(const char *line)
 	int tagno;
 	bool click, dclick, over;
 	bool jsh, jsgo, jsdead;
+
+	/* Check to see if g means run an sql command. */
+	if(!first) {
+	    char *rbuf;
+	    j = goSelect(&startRange, &rbuf);
+	    if(j >= 0) {
+		cmd = 'e';	/* for autoprint of errors */
+		cw->dot = startRange;
+		if(*rbuf) {
+		    readyUndo();
+		    addTextToBuffer((pst) rbuf, strlen(rbuf), cw->dot);
+		    nzFree(rbuf);
+		    cw->dot = startRange;
+		}
+		return j ? true : false;
+	    }
+	}
+
+/* Now try to go to a hyperlink */
 	s = line;
 	j = 0;
 	if(first)
@@ -4030,16 +4049,6 @@ runCommand(const char *line)
 	    }
 	    if(nogo)
 		return true;
-	}
-
-	/* go command */
-	/* Check to see if g means run an sql command. */
-	if(!first) {
-	    j = goSelect(&startRange);
-	    if(j >= 0) {
-		cw->dot = startRange;
-		return j ? true : false;
-	    }
 	}
     }
 

@@ -54,7 +54,8 @@ ebConnect(void)
 }				/* ebConnect */
 
 int
-goSelect(int *startLine)
+goSelect(int *startLine, char **rbuf)
 {
+    *rbuf = EMPTYSTRING;
     return -1;
 }				/* goSelect */

@@ -676,8 +676,11 @@ ebConnect(void)
 	return false;
     }
     sql_connect(dbarea, dblogin, dbpw);
-    if(!sql_database)
-	errorPrint("@sql connected, but database not set");
+    if(!sql_database) {
+	setError(MSG_DBConnect, rv_vendorStatus);
+	return false;
+    }
+
     return true;
 }				/* ebConnect */
 
@@ -695,12 +698,6 @@ static char *wcl;		/* where clause */
 static int wcllen;
 static char wherecol[COLNAMELEN + 2];
 static struct DBTABLE *td;
-
-static void
-unexpected(void)
-{
-    setError(MSG_DBUnexpected, rv_vendorStatus);
-}				/* unexpected */
 
 static void
 buildSelectClause(void)
@@ -835,8 +832,6 @@ setTable(void)
 		    setError(MSG_DBNoTable, td->name);
 		else if(rv_lastStatus == EXCNOCOLUMN)
 		    setError(MSG_DBBadColumn);
-		else
-		    unexpected();
 		return false;
 	    }
 	    td->types = cloneString(rv_type);
@@ -850,8 +845,6 @@ setTable(void)
 	if(rv_lastStatus) {
 	    if(rv_lastStatus == EXCNOTABLE)
 		setError(MSG_DBNoTable, myTab);
-	    else
-		unexpected();
 	    return false;
 	}
 	td = newTableDescriptor(myTab);
@@ -905,11 +898,14 @@ showColumns(void)
 
     if(!setTable())
 	return;
-    printf("table %s", td->name);
+    i_printf(MSG_Table);
+    printf(" %s", td->name);
     if(!stringEqual(td->name, td->shortname))
 	printf(" [%s]", td->shortname);
     i = sql_selectOne("select count(*) from %s", td->name);
-    printf(", %d rows\n", i);
+    printf(", %d ", i);
+    i_printf(i == 1 ? MSG_Row : MSG_Rows);
+    nl();
 
     for(i = 0; i < td->ncols; ++i) {
 	printf("%d ", i + 1);
@@ -953,12 +949,73 @@ showColumns(void)
     }
 }				/* showColumns */
 
+/* Select rows of data and put them into the text buffer */
+static bool
+rowsIntoBuffer(int cid, const char *types, char **bufptr, int *lcnt)
+{
+    char *rbuf, *unld, *u, *v, *s, *end;
+    int rbuflen;
+    bool rc = false;
+
+    *bufptr = EMPTYSTRING;
+    *lcnt = 0;
+    rbuf = initString(&rbuflen);
+
+    while(sql_fetchNext(cid, 0)) {
+	unld = sql_mkunld('\177');
+	if(strchr(unld, '|')) {
+	    setError(MSG_DBPipes);
+	    goto abort;
+	}
+	if(strchr(unld, '\n')) {
+	    setError(MSG_DBNewline);
+	    goto abort;
+	}
+	for(s = unld; *s; ++s)
+	    if(*s == '\177')
+		*s = '|';
+	s[-1] = '\n';		/* overwrite the last pipe */
+
+/* look for blob column */
+	if(s = strpbrk(types, "BT")) {
+	    int bfi = s - types;	/* blob field index */
+	    int cx = 0;		/* context, where to put the blob */
+	    int j;
+
+	    u = unld;
+	    for(j = 0; j < bfi; ++j)
+		u = strchr(u, '|') + 1;
+	    v = strpbrk(u, "|\n");
+	    end = v + strlen(v);
+	    if(rv_blobSize) {
+		cx = sideBuffer(0, rv_blobLoc, rv_blobSize, 0, false);
+		nzFree(rv_blobLoc);
+	    }
+	    sprintf(myTab, "<%d>", cx);
+	    if(!cx)
+		myTab[0] = 0;
+	    j = strlen(myTab);
+/* unld is pretty long; I'm just going to assume there is enough room for this */
+	    memmove(u + j, v, end - v);
+	    u[j + (end - v)] = 0;
+	    memcpy(u, myTab, j);
+	}
+
+	stringAndString(&rbuf, &rbuflen, unld);
+	++*lcnt;
+    }
+    rc = true;
+
+  abort:
+    sql_closeFree(cid);
+    *bufptr = rbuf;
+    return rc;
+}				/* rowsIntoBuffer */
+
 bool
 sqlReadRows(const char *filename, char **bufptr)
 {
-    int cid;
-    char *rbuf, *unld, *s;
-    int rlen;
+    int cid, lcnt;
 
     *bufptr = EMPTYSTRING;
     if(!ebConnect())
@@ -966,68 +1023,21 @@ sqlReadRows(const char *filename, char **bufptr)
     if(!setTable())
 	return false;
 
-    rbuf = initString(&rlen);
     myWhere = strchr(filename, ']') + 1;
-    if(*myWhere) {
-	if(!buildWhereClause())
-	    return false;
-	buildSelectClause();
-	rv_blobFile = 0;
-	cid = sql_prepOpen("%s %0s", scl, wcl);
-	nzFree(scl);
-	nzFree(wcl);
-	while(sql_fetchNext(cid, 0)) {
-	    unld = sql_mkunld('\177');
-	    if(strchr(unld, '|')) {
-		setError(MSG_DBPipes);
-		goto abort;
-	    }
-	    if(strchr(unld, '\n')) {
-		setError(MSG_DBNewline);
-		goto abort;
-	    }
-	    for(s = unld; *s; ++s)
-		if(*s == '\177')
-		    *s = '|';
-	    s[-1] = '\n';	/* overwrite the last pipe */
+    if(!*myWhere)
+	return true;
 
-/* look for blob column */
-	    if(s = strpbrk(td->types, "BT")) {
-		int bfi = s - td->types;	/* blob field index */
-		int cx = 0;	/* context, where to put the blob */
-		int j;
-		char *u, *v, *end;
-		u = unld;
-		for(j = 0; j < bfi; ++j)
-		    u = strchr(u, '|') + 1;
-		v = strpbrk(u, "|\n");
-		end = v + strlen(v);
-		if(rv_blobSize) {
-		    cx = sideBuffer(0, rv_blobLoc, rv_blobSize, 0, false);
-		    nzFree(rv_blobLoc);
-		}
-		sprintf(myTab, "<%d>", cx);
-		if(!cx)
-		    myTab[0] = 0;
-		j = strlen(myTab);
-/* unld is pretty long; I'm just going to assume there is enough room for this */
-		memmove(u + j, v, end - v);
-		u[j + (end - v)] = 0;
-		memcpy(u, myTab, j);
-	    }
+    if(!buildWhereClause())
+	return false;
+    buildSelectClause();
+    rv_blobFile = 0;
+    cid = sql_prepOpen("%s %0s", scl, wcl);
+    nzFree(scl);
+    nzFree(wcl);
+    if(cid < 0)
+	return false;
 
-	    stringAndString(&rbuf, &rlen, unld);
-	}
-	sql_closeFree(cid);
-    }
-
-    *bufptr = rbuf;
-    return true;
-
-  abort:
-    nzFree(rbuf);
-    sql_closeFree(cid);
-    return false;
+    return rowsIntoBuffer(cid, td->types, bufptr, &lcnt);
 }				/* sqlReadRows */
 
 static char *lineFields[MAXTCOLS];
@@ -1655,7 +1665,105 @@ syncup_table(const char *table1, const char *table2,	/* the two tables */
 }				/* syncup_table */
 
 int
-goSelect(int *startLine)
+goSelect(int *startLine, char **rbuf)
 {
-    return -1;
+    int lineno = *startLine;
+    pst line;
+    char *cmd, *s;
+    int cmdlen;
+    int i, j, l, action, cid;
+    bool rc;
+    static const char *actionWords[] = {
+	"select", "insert", "update", "delete", "execute",
+	0
+    };
+    static const actionCodes[] = {
+	MSG_Selected, MSG_Inserted, MSG_Updated, MSG_Deleted, MSG_ProcExec
+    };
+
+    *rbuf = EMPTYSTRING;
+
+/* Make sure first line begins with ] */
+    line = fetchLine(lineno, -1);
+    if(!line || line[0] != ']')
+	return -1;
+
+    j = pstLength(line);
+    cmd = initString(&cmdlen);
+    stringAndBytes(&cmd, &cmdlen, line, j);
+    cmd[0] = ' ';
+
+/* Try to infer action from the first word of the command. */
+    action = -1;
+    for(s = cmd; *s == ' ' || *s == '\t'; ++s) ;
+    for(i = 0; actionWords[i]; ++i) {
+	l = strlen(actionWords[i]);
+	if(memEqualCI(s, actionWords[i], l) && isspace(s[l])) {
+	    action = actionCodes[i];
+	    break;
+	}
+    }
+
+    while(j == 1 || line[j - 2] != ';') {
+	if(++lineno > cw->dol || !(line = fetchLine(lineno, -1))) {
+	    setError(MSG_UnterminatedSelect);
+	    nzFree(cmd);
+	    return 0;
+	}
+	if(line[0] == ']') {
+	    --lineno;
+	    break;
+	}
+	j = pstLength(line);
+	stringAndBytes(&cmd, &cmdlen, line, j);
+    }
+
+    if(!ebConnect()) {
+	nzFree(cmd);
+	return 0;
+    }
+
+    rv_blobFile = 0;
+
+    if(action == MSG_Selected) {
+	cid = sql_prepOpen(cmd);
+	nzFree(cmd);
+	if(cid < 0)
+	    return 0;
+      grabrows:
+	*startLine = lineno;
+	rc = rowsIntoBuffer(cid, rv_type, rbuf, &j);
+      printrows:
+	printf("%d ", j);
+	i_printf(j == 1 ? MSG_Row : MSG_Rows);
+	printf(" ");
+	i_printf(action);
+	nl();
+	return rc;
+    }
+
+    if(action == MSG_ProcExec) {
+	cid = sql_prepare(cmd);
+	if(cid < 0) {
+	    nzFree(cmd);
+	    return 0;
+	}
+	if(rv_numRets) {
+	    nzFree(cmd);
+	    sql_open(cid);
+	    action = MSG_Selected;
+	    goto grabrows;
+	}
+	sql_free(cid);
+    }
+
+    rc = sql_execNF(cmd);
+    nzFree(cmd);
+    j = rv_lastNrows;
+    if(rc)
+	*startLine = lineno;
+    if(action >= MSG_Selected && action <= MSG_Deleted)
+	goto printrows;
+    i_puts(action == MSG_ProcExec ? MSG_ProcExec : MSG_OK);
+    return 1;
 }				/* goSelect */

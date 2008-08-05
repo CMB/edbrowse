@@ -661,16 +661,10 @@ static const char *englishMessages[] = {
     "inserted",
     "updated",
     "deleted",
-    "loaded",
-    "unloaded",
     "procedure executed",
-    "created",
-    "dropped",
-    "altered",
     "table",
-    "column",
-    "synonym",
-    "index",
+    "sql statement is not terminated by a final semicolon, or a right bracket on the following line",
+    "update or delete statement with no where clause",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */

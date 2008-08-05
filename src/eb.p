@@ -275,5 +275,5 @@ bool sqlDelRows(int start, int end) ;
 bool sqlUpdateRow(pst source, int slen, pst dest, int dlen) ;
 bool sqlAddRows(int ln) ;
 bool ebConnect(void) ;
-int goSelect(int *startLine) ;
+int goSelect(int *startLine, char **rbuf) ;
 

@@ -119,7 +119,10 @@ blind, script, accessible">
 <LI><A HREF=#rtb> Reading Tables </A>
 <LI><A HREF=#insupd> Insert, Update, Delete </A>
 <LI><A HREF=#td> Table Descriptors </A>
+<LI><A HREF=#gosql> Go SQL </A>
 </UL>
+
+<P><HR><P>
 
 <H3 align=center> <A NAME=auth> Author </A> </H3>
 
@@ -501,6 +504,7 @@ sm: send mail [account number]
 re: reply to a mail message
 rea: reply to all
 ip: show referenced ip numbers, usually for saved mail messages
+<foo arg1 arg2 ... invoke the function foo, defined in your .ebrc file
 </font></PRE>
 
 <H3 align=center> <A NAME=tips> Tips for Avoiding Line Numbers </A> </H3>
@@ -3819,7 +3823,7 @@ Like everything else in edbrowse, you'll get use to it once you play with it.
 
 <H3 align=center> <A NAME=sqlb> Building edbrowse with Database Access </A> </H3>
 
-If you simply type make, you get edbrowse, with no database interface.&nbsp;
+If you simply type make, you get edbrowse, with no database functionality.&nbsp;
 A separate target supports database access through odbc.&nbsp;
 Run `make edbrowseodbc' to link edbrowse with odbc.&nbsp;
 This assumes you have the unixODBC and unixODBC-devel packages installed on your machine.&nbsp;
@@ -3870,14 +3874,15 @@ and that usually becomes the primary key.&nbsp;
 This is indicated by a star just before the column name.&nbsp;
 If edbrowse changes or deletes a record, the primary key is used.&nbsp;
 I assume, at all times, that the key determines a unique record in the database,
-and that each record appears at most once in an editing session.
+and that each record appears at most once in an editing session.&nbsp;
+You could read customer 37 in twice, thus having two copies in your buffer, but don't do it!
 
 <P>
 Note that edbrowse can support a primary key with two columns, such as a serial number and a modifier.&nbsp;
 I actually have some tables at work that look like this.&nbsp;
 However, more than two key columns are not supported.&nbsp;
 If the primary key comprises more than 2 columns, or if the table has no primary key,
-I will not be able to update or delete.&nbsp;
+you will not be able to update or delete.&nbsp;
 Rows in the table are readonly.
 
 <P>
@@ -3978,7 +3983,7 @@ You can switch to session 9 and save the file, or throw it away.
 <P>
 To do anything with the database, your config file must specify
 the name of the data source, the login, and the password.&nbsp;
-Data source must match one of the entries in your .odbc.ini files.&nbsp;
+Data source must match one of the entries in your .odbc.ini file.&nbsp;
 Login and password can sometimes be omitted, if they are inferred from your identity on the computer,
 or they are set in the data source in your .odbc.ini file.&nbsp;
 Here is how the line might look
@@ -3989,7 +3994,7 @@ datasource = retail,mylogin,mypassword
 
 <P>
 This can be changed at run time by the ds= command.&nbsp;
-Make sure you do not refer to any old rows in buffers after you have switched to a new data source.
+Make sure you do not refer to any old rows in buffer after you have switched to a new data source.
 
 <P>
 In some cases you can access other databases without changing the data source.&nbsp;
@@ -4096,11 +4101,39 @@ table {
 <P>
 When inserting a row through one of these descriptors,
 remember that you are only specifying a subset of the columns in the table.&nbsp;
-The other columns will be null, or they will take on their default values,
+The other columns will be null, or they will take on their default values
 as specified by the schema.&nbsp;
 If you receive a Not-Null error, it could be due to one of the other columns,
 which requires an entered value.&nbsp;
 It is usually safer to insert a row using the complete table.
+
+<H3 align=center> <A NAME=gosql> Go SQL </A> </H3>
+
+If you know the trick, you can feed sql statements directly to the database,
+similar to the isql program that ships with odbc.&nbsp;
+Within a text buffer (not a table buffer),
+place a right bracket at the beginning of a line, then write your sql statement.&nbsp;
+Your statement can run across many lines, but it must have a semicolon at the end of the last line,
+or a leading right bracket at the begining of the following line.&nbsp;
+Type g by itself to go, thus sending the statement to the database.&nbsp;
+This is similar to g on a web page, which goes to a hyperlink.&nbsp;
+You will be told of any errors,
+or the number of rows modified.&nbsp;
+If you have typed a select statement,
+the fetched rows will appear just below the statement,
+with pipes delimiting the columns.&nbsp;
+All this happens in the current buffer.&nbsp;
+You can delete what you don't need (it's just text),
+or save the data to a file and import it into a spreadsheet.&nbsp;
+Canned queries can be saved in a file for future use.&nbsp;
+Call them up, m odify parameters, and go again, like a qbe screen.
+
+<P>
+] select * from customers, address
+<br>
+where custnum = addrnum and addrtype = "HOME"
+<br>
+and custnum between 500 and 600;
 
 <H3 align=center> <A NAME=end> Wrap up </A> </H3>
 
