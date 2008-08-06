@@ -2652,6 +2652,7 @@ twoLetter(const char *line, const char **runThis)
 	    return false;
 	}
 	currentAgent = t;
+	curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, currentAgent);
 	if(helpMessagesOn || debugLevel >= 1)
 	    puts(currentAgent);
 	return true;
@@ -3039,6 +3040,7 @@ twoLetter(const char *line, const char **runThis)
 
     if(stringEqual(line, "vs")) {
 	verifyCertificates ^= 1;
+	curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, verifyCertificates);
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(verifyCertificates + MSG_CertifyOff);
 	ssl_verify_setting();
