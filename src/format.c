@@ -1061,7 +1061,7 @@ htmlReformat(const char *buf)
 	    }
 	    continue;
 	}
-	/* white space */
+
 	if(c != InternalCodeChar) {
 	    for(s = h + 1; *s; ++s)
 		if(isspaceByte(*s) || *s == InternalCodeChar)
@@ -1071,7 +1071,6 @@ htmlReformat(const char *buf)
 	    continue;
 	}
 
-	/* word */
 	/* It's a tag */
 	tagno = strtol(h + 1, (char **)&nh, 10);
 	c = *nh++;
@@ -1384,8 +1383,7 @@ andTranslate(const char *s, bool invisible)
 		continue;
 	    }			/* tag */
 	}
-	/* code */
-	j = 1;
+
 	if(c != '&')
 	    goto putc;
 
@@ -1414,6 +1412,7 @@ andTranslate(const char *s, bool invisible)
 	    s += j;
 	    if(!r[1]) {		/* replace with a single character */
 		c = *r;
+onechar:
 		if(c & 0x80 && cons_utf8) {
 		    static char utfbuf[4];
 		    utfbuf[0] = (0xc0 | ((uchar) c >> 6));
@@ -1441,7 +1440,7 @@ andTranslate(const char *s, bool invisible)
 	    stringAndString(&new, &l, r);
 	    continue;
 	}
-	/* match */
+
 	if(andbuf[0] != '#')
 	    goto putc;
 	n = stringIsNum(andbuf + 1);
@@ -1457,8 +1456,8 @@ andTranslate(const char *s, bool invisible)
 	    c = ' ';
 	if(c == InternalCodeChar)
 	    c = ' ';
-	s += j - 1;
-	j = 1;
+	s += j;
+goto onechar;
 
       putc:
 	if(isalnumByte(c)) {
