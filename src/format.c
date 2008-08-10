@@ -1412,11 +1412,12 @@ andTranslate(const char *s, bool invisible)
 	    s += j;
 	    if(!r[1]) {		/* replace with a single character */
 		c = *r;
-onechar:
 		if(c & 0x80 && cons_utf8) {
 		    static char utfbuf[4];
-		    utfbuf[0] = (0xc0 | ((uchar) c >> 6));
-		    utfbuf[1] = (0x80 | (c & 0x3f));
+		    n = (uchar) c;
+		  n_utf8:
+		    utfbuf[0] = (0xc0 | (n >> 6));
+		    utfbuf[1] = (0x80 | (n & 0x3f));
 		    utfbuf[2] = 0;
 		    r = utfbuf;
 		    goto putw;
@@ -1446,7 +1447,13 @@ onechar:
 	n = stringIsNum(andbuf + 1);
 	if(n < 0)
 	    goto putc;
-	if(n > 255)
+	if(n > 0x7ff)
+	    goto putc;
+	if(n > 0x7f && cons_utf8) {
+	    s += j;
+	    goto n_utf8;
+	}
+	if(n > 0xff)
 	    goto putc;
 	c = n;
 /* don't allow nulls */
@@ -1456,8 +1463,7 @@ onechar:
 	    c = ' ';
 	if(c == InternalCodeChar)
 	    c = ' ';
-	s += j;
-goto onechar;
+	s += j - 1;
 
       putc:
 	if(isalnumByte(c)) {
