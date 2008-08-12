@@ -30,7 +30,7 @@ we would be doing something wrong.
 
 enum {
     VENDOR_NONE,
-    VENDOR_SQLLITE,
+    VENDOR_SQLITE,
     VENDOR_MYSQL,
     VENDOR_POSTGRESQL,
     VENDOR_INFORMIX,
@@ -500,8 +500,8 @@ sql_connect(const char *db, const char *login, const char *pw)
     exclist = snorkErrors;
     sql_execNF("identify vendor");
     current_vendor = VENDOR_NONE;
-    if(strstrCI(errorText, "[sqllite]"))
-	current_vendor = VENDOR_SQLLITE;
+    if(strstrCI(errorText, "[sqlite]"))
+	current_vendor = VENDOR_SQLITE;
     if(strstrCI(errorText, "[mysql]"))
 	current_vendor = VENDOR_MYSQL;
     if(strstrCI(errorText, "[postgresql]"))
@@ -1189,7 +1189,7 @@ Count(*) becomes decimal(15,0).  So be careful.
 		coltype = SQL_MONEY;
 	}
 
-	if(current_vendor == VENDOR_SQLLITE) {
+	if(current_vendor == VENDOR_SQLITE) {
 /* Every column looks like a text blob, but it is really a string. */
 	    coltype = SQL_CHAR;
 	    colprec = STRINGLEN;
