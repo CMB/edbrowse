@@ -1198,8 +1198,8 @@ sqlUpdateRow(pst source, int slen, pst dest, int dlen)
     char *d2;			/* clone of dest */
     char *s, *t;
     int j, l1, l2, nkeys, key1, key2;
-    char *u1, *u2;		/* pieces of the update statement */
-    int u1len, u2len;
+    char *u1;			/* column=value of the update statement */
+    int u1len;
 
 /* compare all the way out to newline, so we know both strings end at the same time */
     if(slen == dlen && !memcmp(source, dest, slen + 1))
@@ -1222,7 +1222,6 @@ sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 
     j = 0;
     u1 = initString(&u1len);
-    u2 = initString(&u2len);
     s = (char *)source;
 
     while(1) {
@@ -1243,12 +1242,12 @@ sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 		goto abort;
 	    }
 	    if(*u1)
-		stringAndChar(&u1, &u1len, ',');
+		stringAndString(&u1, &u1len, ", ");
 	    stringAndString(&u1, &u1len, td->cols[j]);
-	    if(*u2)
-		stringAndChar(&u2, &u2len, ',');
-	    stringAndString(&u2, &u2len, lineFormat("%S", lineFields[j]));
+	    stringAndString(&u1, &u1len, " = ");
+	    stringAndString(&u1, &u1len, lineFormat("%S", lineFields[j]));
 	}
+
 	if(*t == '\n')
 	    break;
 	s = t + 1;
@@ -1257,24 +1256,22 @@ sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 
     sql_exclist(insupdExceptions);
     if(nkeys == 1)
-	sql_exec("update %s set(%s) = (%s) where %s = %S",
-	   td->name, u1, u2, td->cols[key1], lineFields[key1]);
+	sql_exec("update %s set %s where %s = %S",
+	   td->name, u1, td->cols[key1], lineFields[key1]);
     else
-	sql_exec("update %s set(%s) = (%s) where %s = %S and %s = %S",
-	   td->name, u1, u2,
+	sql_exec("update %s set %s where %s = %S and %s = %S",
+	   td->name, u1,
 	   td->cols[key1], lineFields[key1], td->cols[key2], lineFields[key2]);
     if(!insupdError(2, 1))
 	goto abort;
 
     nzFree(d2);
     nzFree(u1);
-    nzFree(u2);
     return true;
 
   abort:
     nzFree(d2);
     nzFree(u1);
-    nzFree(u2);
     return false;
 }				/* sqlUpdateRow */
 
