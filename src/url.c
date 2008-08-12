@@ -512,7 +512,6 @@ fetchHistory(const char *prev, const char *next)
     int i;
     int from = -1;
 /* zero is a reset */
-    debugPrint(4, "fetch hist %s : %s", prev, next);
     if(prev == 0) {
 	for(i = 0; i < n_fetch; ++i)
 	    free(histURL[i]);

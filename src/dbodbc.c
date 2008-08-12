@@ -7,16 +7,6 @@ Why mess with statement handles and parameter bindings when you can write:
 sql_select("select this, that from table1, table2 where keycolumn = %d",
 27, &this, &that);
 
-More important, this API automatically aborts (or longjumps) if an error
-occurs, unless that error has been specifically trapped by the program.
-This minimizes application-level error-leg programming,
-thereby reducing the code by as much as 1/3.
-To accomplish this, the errorPrint() function,
-supplied by the application, must never return.
-We assume it passes the error message
-to stderr and to a logfile,
-and then exits, or longjumps to a recovery point.
-
 Note that this API works within the context of our own C programming
 environment.
 
@@ -36,6 +26,22 @@ we would be doing something wrong.
 
 #include "eb.h"
 #include "dbapi.h"
+
+
+enum {
+    VENDOR_NONE,
+    VENDOR_SQLLITE,
+    VENDOR_MYSQL,
+    VENDOR_POSTGRESQL,
+    VENDOR_INFORMIX,
+    VENDOR_MSSQL,
+    VENDOR_SYBASE,
+    VENDOR_ORACLE,
+    VENDOR_DB2,
+};
+static int current_vendor;
+
+#define SQL_MONEY 100
 
 
 /*********************************************************************
@@ -72,8 +78,12 @@ char *rv_badToken;
 static void
 debugStatement(void)
 {
-    if(sql_debug && stmt_text)
+    if(!stmt_text)
+	return;
+    if(sql_debug)
 	appendFileNF(sql_debuglog, stmt_text);
+    if(sql_debug2)
+	puts(stmt_text);
 }				/* debugStatement */
 
 /* Append the SQL statement to the debug log.  This is not strictly necessary
@@ -81,7 +91,9 @@ debugStatement(void)
 static void
 showStatement(void)
 {
-    if(!sql_debug && stmt_text)
+    if(!stmt_text)
+	return;
+    if(!sql_debug)
 	appendFileNF(sql_debuglog, stmt_text);
 }				/* showStatement */
 
@@ -182,12 +194,13 @@ errTranslate(const char *code)
     return EXCSQLMISC;
 }				/* errTranslate */
 
+static char errorText[200];
+
 static bool
-errorTrap(char *cxerr)
+errorTrap(const char *cxerr)
 {
     short i, waste;
     char errcodes[6];
-    char msgtext[200];
     bool firstError;
 
     /* innocent until proven guilty */
@@ -209,7 +222,7 @@ errorTrap(char *cxerr)
     firstError = true;
     while(true) {
 	rc = SQLError(henv, hdbc, hstmt,
-	   errcodes, &rv_vendorStatus, msgtext, sizeof (msgtext), &waste);
+	   errcodes, &rv_vendorStatus, errorText, sizeof (errorText), &waste);
 	if(rc == SQL_NO_DATA) {
 	    if(firstError) {
 		printf
@@ -243,7 +256,7 @@ errorTrap(char *cxerr)
 	    }
 
     printf("ODBC error %s, %s, driver %s\n",
-       errcodes, sqlErrorList[rv_lastStatus], msgtext);
+       errcodes, sqlErrorList[rv_lastStatus], errorText);
     setError(MSG_DBUnexpected, rv_vendorStatus);
     return true;
 }				/* errorTrap */
@@ -382,6 +395,7 @@ sql_connect(const char *db, const char *login, const char *pw)
     char outstring[200];
     short outstringlen;
     char *s;
+    static short snorkErrors[] = { EXCSYNTAX, EXCSQLMISC, 0 };
 
     if(isnullstring(db))
 	errorPrint
@@ -440,10 +454,7 @@ sql_connect(const char *db, const char *login, const char *pw)
 
     /* Set the persistent connect/statement options.
      * Note that some of these merely reassert the default,
-     * but it's good documentation to spell it out here.
-     * Marked items fail under Informix CLI on NT,
-     * but they are only trying to set the default.
-     * Except TXN_ISOLATION.  Don't know if this will cause a problem. */
+     * but it's good documentation to spell it out here. */
     stmt_text = "noscan on";
     rc = SQLSetConnectOption(hdbc, SQL_NOSCAN, SQL_NOSCAN_ON);
     stmt_text = "repeatable read";
@@ -480,6 +491,25 @@ sql_connect(const char *db, const char *login, const char *pw)
     SQLGetInfo(hdbc, SQL_GETDATA_EXTENSIONS, &getdata_opts, 4, &waste);
     bookmarkBits = false;
     SQLGetInfo(hdbc, SQL_BOOKMARK_PERSISTENCE, &bookmarkBits, 4, &waste);
+
+    exclist = 0;
+
+/* Time to find out who the vendor is, so we can have vendor specific tweaks. */
+/* Generating an error is the only way I could think of to do this. */
+    errorText[0] = 0;
+    exclist = snorkErrors;
+    sql_execNF("identify vendor");
+    current_vendor = VENDOR_NONE;
+    if(strstrCI(errorText, "[sqllite]"))
+	current_vendor = VENDOR_SQLLITE;
+    if(strstrCI(errorText, "[mysql]"))
+	current_vendor = VENDOR_MYSQL;
+    if(strstrCI(errorText, "[postgresql]"))
+	current_vendor = VENDOR_POSTGRESQL;
+    if(strstrCI(errorText, "[informix]"))
+	current_vendor = VENDOR_INFORMIX;
+    if(sql_debug && current_vendor)
+	appendFile(sql_debuglog, "vendor is %d", current_vendor);
 
     exclist = 0;
 }				/* sql_connect */
@@ -767,6 +797,8 @@ sql_blobInsert(const char *tabname, const char *colname, int rowid,
 
     if(sql_debug)
 	appendFile(sql_debuglog, "%d rows affected", rv_lastNrows);
+    if(sql_debug2)
+	printf("%d rows affected\n", rv_lastNrows);
     SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
     exclist = 0;
 }				/* sql_blobInsert */
@@ -782,7 +814,7 @@ The prefix rv_ on the following global variables indicates returned values.
 /* Where to stash the retrieved values */
 static va_list sqlargs;
 
-/* Temp area to read the Informix values, as strings */
+/* Temp area to read the values as strings */
 static char retstring[NUMRETS][STRINGLEN + 4];
 static bool everything_null;
 
@@ -1048,7 +1080,7 @@ oneRetValue(void *pre_x, ...)
     if(rv_numRets != 1)
 	errorPrint("2SQL statement has %d return values, 1 value expected",
 	   rv_numRets);
-    if(!strchr("MNFDIC", coltype))
+    if(!strchr("MNFDICS", coltype))
 	errorPrint
 	   ("2SQL statement returns a value whose type is not compatible with a 4-byte integer");
 
@@ -1058,6 +1090,14 @@ oneRetValue(void *pre_x, ...)
 	*x = &f;
 	retsFromOdbc();
 	n = f;
+    } else if(coltype == 'S') {
+	*x = retstring[0];
+	retsFromOdbc();
+	if(!stringIsNum(retstring[0]))
+	    errorPrint
+	       ("2SQL statement returns a string %s that cannot be converted into a 4-byte integer",
+	       retstring[0]);
+	n = atoi(retstring[0]);
     } else if(coltype == 'C') {
 	*x = &c;
 	retsFromOdbc();
@@ -1142,11 +1182,18 @@ However, some aggregate expressions also come back as decimal.
 Count(*) becomes decimal(15,0).  So be careful.
 *********************************************************************/
 
-	if(coltype == SQL_VARCHAR && colprec == 24 && colscale == 0)
-	    coltype = SQL_TIME;
-#define SQL_MONEY 100
-	if(coltype == SQL_DECIMAL && (colprec != 15 || colscale != 0))
-	    coltype = SQL_MONEY;
+	if(current_vendor == VENDOR_INFORMIX) {
+	    if(coltype == SQL_VARCHAR && colprec == 24 && colscale == 0)
+		coltype = SQL_TIME;
+	    if(coltype == SQL_DECIMAL && (colprec != 15 || colscale != 0))
+		coltype = SQL_MONEY;
+	}
+
+	if(current_vendor == VENDOR_SQLLITE) {
+/* Every column looks like a text blob, but it is really a string. */
+	    coltype = SQL_CHAR;
+	    colprec = STRINGLEN;
+	}
 
 	rv_nullable[i] = (nullable != SQL_NO_NULLS);
 
@@ -1186,10 +1233,9 @@ Count(*) becomes decimal(15,0).  So be careful.
 	    rv_type[i] = 'S';
 	    if(colprec == 1)
 		rv_type[i] = 'C';
-	    if(colprec > STRINGLEN) {
-		showStatement();
-		errorPrint("2column %s exceeds %d characters", rv_name[i],
-		   STRINGLEN);
+	    if(colprec > STRINGLEN && sql_debug) {
+		appendFile(sql_debuglog, "column %s exceeds %d characters",
+		   rv_name[i], STRINGLEN);
 	    }
 	    break;
 
@@ -1270,6 +1316,8 @@ execInternal(const char *stmt, int mode)
 	    rc = SQLRowCount(hstmt, &rv_lastNrows);
 	    if(sql_debug)
 		appendFile(sql_debuglog, "%d rows affected", rv_lastNrows);
+	    if(sql_debug2)
+		printf("%d rows affected\n", rv_lastNrows);
 	}
     }
 
@@ -1413,6 +1461,8 @@ prepareCursor(const char *stmt, bool scrollflag)
     hstmt = o->hstmt;
     if(sql_debug)
 	appendFile(sql_debuglog, "new cursor %d", o->cid);
+    if(sql_debug2)
+	printf("new cursor %d\n", o->cid);
     rc = SQLSetStmtOption(hstmt, SQL_CURSOR_TYPE,
        scrollflag ? SQL_CURSOR_STATIC : SQL_CURSOR_FORWARD_ONLY);
     if(errorTrap(0))
