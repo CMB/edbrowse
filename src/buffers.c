@@ -2979,6 +2979,7 @@ twoLetter(const char *line, const char **runThis)
 
     if(stringEqual(line, "hr")) {
 	allowRedirection ^= 1;
+	curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, allowRedirection);
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(allowRedirection + MSG_RedirectionOff);
 	return true;
@@ -2993,6 +2994,8 @@ twoLetter(const char *line, const char **runThis)
 
     if(stringEqual(line, "sr")) {
 	sendReferrer ^= 1;
+/* In case of redirect, let libcurl send URL of redirecting page. */
+	curl_easy_setopt(curl_handle, CURLOPT_AUTOREFERER, sendReferrer);
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(sendReferrer + MSG_RefererOff);
 	return true;
