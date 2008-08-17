@@ -665,6 +665,8 @@ static const char *englishMessages[] = {
     "table",
     "sql statement is not terminated by a final semicolon, or a right bracket on the following line",
     "update or delete statement with no where clause",
+    "remote access denied",
+    "Authorization required to access %s",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */

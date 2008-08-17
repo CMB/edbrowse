@@ -665,4 +665,6 @@ enum {
     MSG_Table,
     MSG_UnterminatedSelect,
     MSG_DBNoWhere,
+    MSG_RemoteAccessDenied,
+    MSG_AuthRequired,
 };
