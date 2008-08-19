@@ -2979,7 +2979,9 @@ twoLetter(const char *line, const char **runThis)
 
     if(stringEqual(line, "hr")) {
 	allowRedirection ^= 1;
+/* We're doing this manually for now.
 	curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, allowRedirection);
+*/
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(allowRedirection + MSG_RedirectionOff);
 	return true;

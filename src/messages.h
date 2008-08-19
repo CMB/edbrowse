@@ -667,4 +667,5 @@ enum {
     MSG_DBNoWhere,
     MSG_RemoteAccessDenied,
     MSG_AuthRequired,
+    MSG_NoMem,
 };

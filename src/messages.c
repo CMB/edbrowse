@@ -667,6 +667,7 @@ static const char *englishMessages[] = {
     "update or delete statement with no where clause",
     "remote access denied",
     "Authorization required to access %s",
+    "operation failed because memory could not be allocated",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
