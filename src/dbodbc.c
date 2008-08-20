@@ -201,7 +201,7 @@ errorTrap(const char *cxerr)
 {
     short i, waste;
     char errcodes[6];
-    bool firstError;
+    bool firstError, errorFound;
 
     /* innocent until proven guilty */
     rv_lastStatus = 0;
@@ -220,6 +220,8 @@ errorTrap(const char *cxerr)
 
     /* get error info from ODBC */
     firstError = true;
+    errorFound = false;
+
     while(true) {
 	rc = SQLError(henv, hdbc, hstmt,
 	   errcodes, &rv_vendorStatus, errorText, sizeof (errorText), &waste);
@@ -229,7 +231,7 @@ errorTrap(const char *cxerr)
 		   ("ODBC command failed, but SQLError() provided no additional information\n");
 		return true;
 	    }
-	    return false;
+	    return errorFound;
 	}
 
 	/* Skip past the ERROR-IN-ROW errors. */
@@ -239,26 +241,30 @@ errorTrap(const char *cxerr)
 	firstError = false;
 	if(cxerr && stringEqual(cxerr, errcodes))
 	    continue;
-	break;
-    }
 
-    rv_lastStatus = errTranslate(errcodes);
+	if(errorFound)
+	    continue;
+	errorFound = true;
+	rv_lastStatus = errTranslate(errcodes);
 
-    /* Don't know how to get statement ofset or invalid token from ODBC.
-       /* I can get them from Informix; see dbinfx.ec */
+	/* Don't know how to get statement ofset or invalid token from ODBC.
+	   /* I can get them from Informix; see dbinfx.ec */
 
-    /* if the application didn't trap for this exception, blow up! */
-    if(exclist)
-	for(i = 0; exclist[i]; ++i)
-	    if(exclist[i] == rv_lastStatus) {
+	/* if the application didn't trap for this exception, blow up! */
+	if(exclist) {
+	    for(i = 0; exclist[i]; ++i)
+		if(exclist[i] == rv_lastStatus)
+		    break;
+	    if(exclist[i]) {
 		exclist = 0;	/* we've spent that exception */
-		return true;
+		continue;
 	    }
+	}
 
-    printf("ODBC error %s, %s, driver %s\n",
-       errcodes, sqlErrorList[rv_lastStatus], errorText);
-    setError(MSG_DBUnexpected, rv_vendorStatus);
-    return true;
+	printf("ODBC error %s, %s, driver %s\n",
+	   errcodes, sqlErrorList[rv_lastStatus], errorText);
+	setError(MSG_DBUnexpected, rv_vendorStatus);
+    }
 }				/* errorTrap */
 
 static void
@@ -309,17 +315,14 @@ findNewCursor(void)
     for(o = ocurs, i = 0; i < NUMCURSORS; ++i, ++o) {
 	if(o->flag != CURSOR_NONE)
 	    continue;
-/* hstmt should always be null at this point, but let's check */
-	if(o->hstmt == SQL_NULL_HSTMT) {
-	    o->cid = 6000 + i;
-	    rc = SQLAllocStmt(hdbc, &o->hstmt);
-	    if(rc)
-		errorPrint
-		   ("@could not alloc ODBC statement handle for cursor %d",
-		   o->cid);
-	}
+	o->cid = 6000 + i;
+	rc = SQLAllocStmt(hdbc, &o->hstmt);
+	if(rc)
+	    errorPrint
+	       ("@could not alloc ODBC statement handle for cursor %d", o->cid);
 	return o;
     }
+
     errorPrint("2more than %d cursors opend concurrently", NUMCURSORS);
     return 0;			/* make the compiler happy */
 }				/* findNewCursor */
@@ -395,7 +398,7 @@ sql_connect(const char *db, const char *login, const char *pw)
     char outstring[200];
     short outstringlen;
     char *s;
-    static short snorkErrors[] = { EXCSYNTAX, EXCSQLMISC, 0 };
+    static short identErrors[] = { EXCSYNTAX, EXCSQLMISC, 0 };
 
     if(isnullstring(db))
 	errorPrint
@@ -497,8 +500,8 @@ sql_connect(const char *db, const char *login, const char *pw)
 /* Time to find out who the vendor is, so we can have vendor specific tweaks. */
 /* Generating an error is the only way I could think of to do this. */
     errorText[0] = 0;
-    exclist = snorkErrors;
-    sql_execNF("identify vendor");
+    exclist = identErrors;
+    sql_execNF(") identify vendor");
     current_vendor = VENDOR_NONE;
     if(strstrCI(errorText, "[sqlite]"))
 	current_vendor = VENDOR_SQLITE;
@@ -508,8 +511,17 @@ sql_connect(const char *db, const char *login, const char *pw)
 	current_vendor = VENDOR_POSTGRESQL;
     if(strstrCI(errorText, "[informix]"))
 	current_vendor = VENDOR_INFORMIX;
-    if(sql_debug && current_vendor)
-	appendFile(sql_debuglog, "vendor is %d", current_vendor);
+/* Microsoft has the hubris to call its server "SQL Server",
+ * as if there is no other. */
+    if(strstrCI(errorText, "[SQL Server]"))
+	current_vendor = VENDOR_MSSQL;
+
+    if(sql_debug) {
+	if(current_vendor)
+	    appendFile(sql_debuglog, "vendor is %d", current_vendor);
+	else
+	    appendFile(sql_debuglog, "vendor string is %s", errorText);
+    }
 
     exclist = 0;
 }				/* sql_connect */
@@ -1120,7 +1132,7 @@ Returns false if the prepare failed.
 *********************************************************************/
 
 static bool
-prepare(SQLHSTMT h, const char *stmt)
+prepareInternal(const char *stmt)
 {
     short i, nc, coltype, colscale, nullable, namelen;
     unsigned long colprec;
@@ -1132,7 +1144,6 @@ prepare(SQLHSTMT h, const char *stmt)
 	errorPrint("2null SQL statement");
     stmt_text = stmt;
     debugStatement();
-    hstmt = h;			/* set working statement handle */
     cleanStatement();
 
     /* look for delete with no where clause */
@@ -1262,7 +1273,7 @@ Count(*) becomes decimal(15,0).  So be careful.
 
     rv_numRets = nc;
     return true;
-}				/* prepare */
+}				/* prepareInternal */
 
 
 /*********************************************************************
@@ -1282,7 +1293,7 @@ execInternal(const char *stmt, int mode)
     bool notfound = false;
 
     newStatement();
-    if(!prepare(hstmt, stmt))
+    if(!prepareInternal(stmt))
 	return false;		/* error */
 
     if(!rv_numRets) {
@@ -1403,7 +1414,7 @@ sql_selectOne(const char *stmt, ...)
 
 /* run a stored procedure with no % formatting */
 static bool
-sql_procNF(const char *stmt)
+sql_procGo(const char *stmt)
 {
     bool rowfound;
     char *s = allocMem(20 + strlen(stmt));
@@ -1413,7 +1424,7 @@ sql_procNF(const char *stmt)
     /* if execInternal doesn't return, we have a memory leak */
     nzFree(s);
     return rowfound;
-}				/* sql_procNF */
+}				/* sql_procGo */
 
 /* run a stored procedure */
 bool
@@ -1422,7 +1433,7 @@ sql_proc(const char *stmt, ...)
     bool rowfound;
     va_start(sqlargs, stmt);
     stmt = lineFormatStack(stmt, 0, &sqlargs);
-    rowfound = sql_procNF(stmt);
+    rowfound = sql_procGo(stmt);
     retsFromOdbc();
     SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
     return rowfound;
@@ -1435,7 +1446,7 @@ sql_procOne(const char *stmt, ...)
     bool rowfound;
     va_start(sqlargs, stmt);
     stmt = lineFormatStack(stmt, 0, &sqlargs);
-    rowfound = sql_procNF(stmt);
+    rowfound = sql_procGo(stmt);
     if(!rowfound) {
 	SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 	exclist = 0;
@@ -1468,7 +1479,7 @@ prepareCursor(const char *stmt, bool scrollflag)
     if(errorTrap(0))
 	return -1;
 
-    if(!prepare(hstmt, stmt))
+    if(!prepareInternal(stmt))
 	return -1;
     o->numrets = rv_numRets;
     memcpy(o->rv_type, rv_type, NUMRETS);
@@ -1770,6 +1781,12 @@ showTables(void)
     SQLLEN tabnameOut, tabtypeOut;
     char *buf;
     int buflen, cx;
+    int truevalue = SQL_TRUE;
+
+/*
+SQLSetConnectAttr(hdbc, SQL_ATTR_METADATA_ID,
+&truevalue, SQL_IS_INTEGER);
+*/
 
     newStatement();
     stmt_text = "get tables";
