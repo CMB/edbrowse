@@ -1740,20 +1740,22 @@ goSelect(int *startLine, char **rbuf)
     }
 
     if(action == MSG_ProcExec) {
-	cid = sql_prepare(cmd);
-	if(cid < 0) {
-	    nzFree(cmd);
+	cid = sql_prepOpen(cmd);
+	nzFree(cmd);
+	if(cid < 0)
 	    return 0;
-	}
 	if(rv_numRets) {
-	    nzFree(cmd);
-	    sql_open(cid);
 	    action = MSG_Selected;
 	    goto grabrows;
 	}
-	sql_free(cid);
+	sql_closeFree(cid);
+	*startLine = lineno;
+	i_puts(MSG_ProcExec);
+	return 1;
     }
 
+/* Don't know what kind of sql command this is. */
+/* Run it anyways. */
     rc = sql_execNF(cmd);
     nzFree(cmd);
     j = rv_lastNrows;
@@ -1761,6 +1763,6 @@ goSelect(int *startLine, char **rbuf)
 	*startLine = lineno;
     if(action >= MSG_Selected && action <= MSG_Deleted)
 	goto printrows;
-    i_puts(action == MSG_ProcExec ? MSG_ProcExec : MSG_OK);
+    i_puts(MSG_OK);
     return 1;
 }				/* goSelect */
