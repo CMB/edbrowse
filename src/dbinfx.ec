@@ -510,11 +510,9 @@ char cname[8]; /* cursor name */
 struct sqlda *desc;
 char rv_type[NUMRETS];
 long rownum;
-short alloc;
 short cid; /* cursor ID */
 char flag;
 char numRets;
-char **fl; /* array of fetched lines */
 } ocurs[NUMCURSORS];
 
 /* values for struct OCURS.flag */
@@ -564,12 +562,6 @@ static void clearAllCursors(void)
 		if(o->flag == CURSOR_NONE) continue;
 		o->flag = CURSOR_NONE;
 o->rownum = 0;
-		if(o->fl) {
-			for(j=0; j<o->alloc; ++j)
-				nzFree(o->fl[j]);
-			nzFree(o->fl);
-			o->fl = 0;
-		}
 	} /* loop over cursors */
 
 	translevel = 0;
@@ -1331,7 +1323,6 @@ return -1;
 o->numRets = rv_numRets;
 memcpy(o->rv_type, rv_type, NUMRETS);
 o->flag = CURSOR_PREPARED;
-o->fl = 0; /* just to make sure */
 return o->cid;
 } /* prepareCursor */
 
@@ -1366,11 +1357,6 @@ debugExtra("open");
 $open :internal_cname;
 if(!errorTrap()) o->flag = CURSOR_OPENED;
 o->rownum = 0;
-if(o->fl)
-for(i=0; i<o->alloc; ++i) {
-nzFree(o->fl[i]);
-o->fl[i] = 0;
-}
 exclist = 0;
 } /* sql_open */
 
@@ -1406,7 +1392,8 @@ o->flag = CURSOR_PREPARED;
 exclist = 0;
 } /* sql_close */
 
-void sql_free( int cid)
+void
+sql_free( int cid)
 {
 $char *internal_sname, *internal_cname;
 struct OCURS *o = findCursor(cid);
@@ -1421,14 +1408,6 @@ nzFree(o->desc);
 rv_numRets = 0;
 memset(rv_name, 0, sizeof(rv_name));
 memset(rv_type, 0, sizeof(rv_type));
-if(o->fl) { /* free any cached lines */
-short i;
-for(i=0; i<o->alloc; ++i)
-nzFree(o->fl[i]);
-nzFree(o->fl);
-o->fl = 0;
-o->alloc = 0;
-}
 exclist = 0;
 } /* sql_free */
 
@@ -1475,27 +1454,9 @@ if(flag == 2 && nextrow) --nextrow;
 }
 if(flag == 4) { /* fetch the last row */
 nextrow = nullint; /* we just lost track */
-if(o->fl && o->flag == CURSOR_PREPARED) {
-/* I'll assume you've read in all the rows, cursor is closed */
-for(nextrow=o->alloc-1; nextrow>=0; --nextrow)
-if(o->fl[nextrow]) break;
-++nextrow;
-}
 }
 
 if(!nextrow) goto fetchZero;
-
-/* see if we have cached this row */
-if(isnotnull(nextrow) && o->fl &&
-nextrow <= o->alloc && o->fl[nextrow-1]) {
-sql_mkload(o->fl[nextrow-1], '\177');
-/* don't run retsCleanup() here */
-rv_blobLoc = 0;
-rv_blobSize = nullint;
-o->rownum = nextrow;
-exclist = 0;
-return true;
-} /* bringing row out of cache */
 
 if(o->flag != CURSOR_OPENED)
 errorPrint("2cannot fetch from cursor %d, not yet opened", cid);
@@ -1545,9 +1506,6 @@ exclist = 0;
 if(ENGINE_ERRCODE == 100) return false; /* not found */
 o->rownum = nextrow;
 
-/* remember the unload image of this line */
-if(remember)
-sql_cursorUpdLine(cid, cloneString(sql_mkunld('\177')));
 return true;
 } /* fetchInternal */
 
@@ -1597,164 +1555,6 @@ bool sql_fetchAbs(int cid, long rownum, ...)
 } /* sql_fetchAbs */
 
 
-/* the inverse of sql_mkunld() */
-void sql_mkload(const char *line, char delim)
-{
-char *s, *t;
-int data;
-short i;
-
-for(i = 0, s = (char*)line; *s; ++i, *t=delim, s = t+1) {
-t = strchr(s, delim);
-if(!t) errorPrint("2sql load line does not end in a delimiter");
-*t = 0;
-if(i >= rv_numRets)
-errorPrint("2sql load line contains more than %d fields", rv_numRets);
-
-switch(rv_type[i]) {
-case 'N':
-if(!*s) { data = nullint; break; }
-data = strtol(s, &s, 10);
-if(*s) errorPrint("2sql load, cannot convert string to integer");
-break;
-
-case 'S':
-if((unsigned)strlen(s) > STRINGLEN)
-errorPrint("2sql load line has a string that is too long");
-strcpy(retstring[i], s);
-data = (int) retstring[i];
-if(!*s) data = 0;
-break;
-
-case 'F':
-rv_data[i].f = *s ? atof(s) : nullfloat;
-continue;
-
-case 'D':
-data = stringDate(s,0);
-if(data == -1)
-errorPrint("2sql load, cannot convert string to date");
-break;
-
-case 'C':
-data = *s;
-if(data && s[1])
-errorPrint("2sql load, character field contains more than one character");
-break;
-
-case 'I':
-data = stringTime(s);
-if(data == -1)
-errorPrint("2sql load, cannot convert string to time interval");
-break;
-
-default:
-errorPrint("2sql load cannot convert into type %c", rv_type[i]);
-} /* switch on type */
-
-rv_data[i].l = data;
-} /* loop over fields in line */
-
-if(i != rv_numRets)
-errorPrint("2sql load line contains %d fields, %d expected", i, rv_numRets);
-} /* sql_mkload */
-
-
-/*********************************************************************
-We maintain our own cache of fetched lines.
-Why?  You might ask.
-After all, Informix already maintains a cache of fetched lines.
-That's what the open cursor is for.
-Looks like serious wheel reinvention to me.
-Perhaps, but you can't change the data in the cache that Informix maintains.
-This is something Powerbuild et al discovered over a decade ago.
-Consider a simple spreadsheet application.
-You update the value in one of the cells, thereby updating the row
-in the database.  Now scroll down to the next page, and then back again.
-If you fetch from the open cursor you will get the old data, before the
-change was made, even though the new data is safely ensconsed in the database.
-Granted one could reopen the cursor and fetch the new data,
-but this can be slow for certain queries (sometimes a couple minutes).
-In other words, rebuilding the cursor is not really an option.
-So we are forced to retain a copy of the data in our program and change it
-whenever we update the database.
-Unfortunately the following 3 routines were developed separately,
-and they are wildly inconsistent.  Some take a row number while
-others assume you are modifying the current row as stored in o->rownum.
-Some accept a line of tex, the unload image of the fetch data, while
-others build the line of text from the fetched data in rv_data[].
-I apologize for this confusion; clearly a redesign is called for.
-*********************************************************************/
-
-/* update the text of a fetched line,
- * so we get this same text again when we refetch the line later.
- * These text changes corespond to the database changes that form an update.
- * We assume the line has been allocated using malloc(). */
-void sql_cursorUpdLine(int cid, const char *line)
-{
-struct OCURS *o = findCursor(cid);
-int n = o->rownum-1;
-
-if(n >= CACHELIMIT)
-errorPrint("2SQL cursor caches too many lines, limit %d", CACHELIMIT);
-
-if(n >= o->alloc) {
-/* running off the end, allocate 128 at a time */
-short oldalloc = o->alloc;
-o->alloc = n + 128;
-if(!oldalloc)
-o->fl = (char **) allocMem(o->alloc*sizeof(char*));
-else
-o->fl = (char**) reallocMem((void*)o->fl, o->alloc*sizeof(char*));
-memset(o->fl+oldalloc, 0, (o->alloc-oldalloc)*sizeof(char*));
-} /* allocating more space */
-
-nzFree(o->fl[n]);
-o->fl[n] = (char*)line;
-} /* sql_cursorUpdLine */
-
-void sql_cursorDelLine(int cid, int rownum)
-{
-struct OCURS *o = findCursor(cid);
-o->rownum = rownum;
---rownum;
-if(rownum >= o->alloc || !o->fl[rownum])
-errorPrint("2cursorDelLine(%d)", rownum);
-nzFree(o->fl[rownum]);
-if(rownum < o->alloc-1)
-memcpy(o->fl+rownum, o->fl+rownum+1, (o->alloc-rownum-1)*sizeof(char *));
-o->fl[o->alloc-1] = 0;
-/* back up the row number if we deleted the last row */
-if(!o->fl[rownum]) --o->rownum;
-} /* sql_cursorDelLine */
-
-void sql_cursorInsLine(int cid, int rownum)
-{
-struct OCURS *o = findCursor(cid);
-short i;
-
-/* must insert a row within or immediately following the current data */
-if(rownum > o->alloc)
-errorPrint("2cursorInsLine(%d)", rownum);
-/* newly inserted row becomes the current row */
-o->rownum = rownum+1;
-
-if(!o->alloc || o->fl[o->alloc-1]) { /* need to make room */
-o->alloc += 128;
-if(!o->fl)
-o->fl = (char **) allocMem(o->alloc*sizeof(char*));
-else
-o->fl = (char**) reallocMem((void*)o->fl, o->alloc*sizeof(char*));
-memset(o->fl+o->alloc-128, 0, 128*sizeof(char*));
-} /* allocating more space */
-
-/* move the rest of the lines down */
-for(i=o->alloc-1; i>rownum; --i)
-o->fl[i] = o->fl[i-1];
-o->fl[i] = cloneString(sql_mkunld('\177'));
-} /* sql_cursorInsLine */
-
-
 /*********************************************************************
 Get the primary key for a table.
 In informix, you can use system tables to get this information.
@@ -1787,5 +1587,5 @@ and constrtype = 'P' and c.idxname = i.idxname", tname, tname, tname, s + 1, &p1
 bool
 showTables(void)
 {
-puts("Not implemented in Informix");
+puts("Not implemented in Informix, but certainly doable through systables");
 }				/* showTables */

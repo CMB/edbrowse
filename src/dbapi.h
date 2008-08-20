@@ -148,8 +148,8 @@ Function prototypes.
 
 void sql_exclist(const short *list);
 void sql_exception(int errnum);
-void sql_disconnect(void);
 void sql_connect(const char *db, const char *login, const char *pw);
+void sql_disconnect(void);
 void sql_begTrans(void);
 void sql_commitWork(void);
 void sql_rollbackWork(void);
@@ -176,10 +176,6 @@ bool sql_fetchPrev(int cid, ...);
 bool sql_fetchAbs(int cid, long rownum, ...);
 void sql_blobInsert(const char *tabname, const char *colname, int rowid,
    const char *filename, void *offset, int length);
-void sql_mkload(const char *line, char delim);
-void sql_cursorUpdLine(int cid, const char *line);
-void sql_cursorDelLine(int cid, int rownum);
-void sql_cursorInsLine(int cid, int rownum);
 void getPrimaryKey(const char *tname, int *part1, int *part2, int *part3);
 
 /* sourcefile=dbops.c */
