@@ -29,17 +29,17 @@ we would be doing something wrong.
 
 
 enum {
-    VENDOR_NONE,
-    VENDOR_SQLITE,
-    VENDOR_MYSQL,
-    VENDOR_POSTGRESQL,
-    VENDOR_INFORMIX,
-    VENDOR_MSSQL,
-    VENDOR_SYBASE,
-    VENDOR_ORACLE,
-    VENDOR_DB2,
+    DRIVER_NONE,
+    DRIVER_SQLITE,
+    DRIVER_MYSQL,
+    DRIVER_POSTGRESQL,
+    DRIVER_INFORMIX,
+    DRIVER_TDS,
+    DRIVER_SYBASE,
+    DRIVER_ORACLE,
+    DRIVER_DB2,
 };
-static int current_vendor;
+static int current_driver;
 
 #define SQL_MONEY 100
 
@@ -396,9 +396,8 @@ sql_connect(const char *db, const char *login, const char *pw)
     short waste;
     char constring[200];
     char outstring[200];
-    short outstringlen;
+    char drivername[40];
     char *s;
-    static short identErrors[] = { EXCSYNTAX, EXCSQLMISC, 0 };
 
     if(isnullstring(db))
 	errorPrint
@@ -449,7 +448,7 @@ sql_connect(const char *db, const char *login, const char *pw)
     debugStatement();
     rc = SQLDriverConnect(hdbc, NULL,
        constring, SQL_NTS,
-       outstring, sizeof (outstring), &outstringlen, SQL_DRIVER_NOPROMPT);
+       outstring, sizeof (outstring), &waste, SQL_DRIVER_NOPROMPT);
     if(errorTrap(0))
 	return;
     sql_database = db;
@@ -497,30 +496,25 @@ sql_connect(const char *db, const char *login, const char *pw)
 
     exclist = 0;
 
-/* Time to find out who the vendor is, so we can have vendor specific tweaks. */
-/* Generating an error is the only way I could think of to do this. */
-    errorText[0] = 0;
-    exclist = identErrors;
-    sql_execNF(") identify vendor");
-    current_vendor = VENDOR_NONE;
-    if(strstrCI(errorText, "[sqlite]"))
-	current_vendor = VENDOR_SQLITE;
-    if(strstrCI(errorText, "[mysql]"))
-	current_vendor = VENDOR_MYSQL;
-    if(strstrCI(errorText, "[postgresql]"))
-	current_vendor = VENDOR_POSTGRESQL;
-    if(strstrCI(errorText, "[informix]"))
-	current_vendor = VENDOR_INFORMIX;
-/* Microsoft has the hubris to call its server "SQL Server",
- * as if there is no other. */
-    if(strstrCI(errorText, "[SQL Server]"))
-	current_vendor = VENDOR_MSSQL;
+/* Time to find out what the driver is, so we can have driver specific tweaks. */
+    SQLGetInfo(hdbc, SQL_DRIVER_NAME, drivername, sizeof (drivername), &waste);
+    current_driver = DRIVER_NONE;
+    if(stringEqual(drivername, "libsqliteodbc.so"))
+	current_driver = DRIVER_SQLITE;
+    if(stringEqual(drivername, "libmyodbc.so"))
+	current_driver = DRIVER_MYSQL;
+    if(stringEqual(drivername, "libodbcpsql.so"))
+	current_driver = DRIVER_POSTGRESQL;
+    if(stringEqual(drivername, "iclis09b.so"))
+	current_driver = DRIVER_INFORMIX;
+    if(stringEqual(drivername, "libtdsodbc.so"))
+	current_driver = DRIVER_TDS;
 
     if(sql_debug) {
-	if(current_vendor)
-	    appendFile(sql_debuglog, "vendor is %d", current_vendor);
+	if(current_driver)
+	    appendFile(sql_debuglog, "driver is %d", current_driver);
 	else
-	    appendFile(sql_debuglog, "vendor string is %s", errorText);
+	    appendFile(sql_debuglog, "driver string is %s", drivername);
     }
 
     exclist = 0;
@@ -1193,14 +1187,14 @@ However, some aggregate expressions also come back as decimal.
 Count(*) becomes decimal(15,0).  So be careful.
 *********************************************************************/
 
-	if(current_vendor == VENDOR_INFORMIX) {
+	if(current_driver == DRIVER_INFORMIX) {
 	    if(coltype == SQL_VARCHAR && colprec == 24 && colscale == 0)
 		coltype = SQL_TIME;
 	    if(coltype == SQL_DECIMAL && (colprec != 15 || colscale != 0))
 		coltype = SQL_MONEY;
 	}
 
-	if(current_vendor == VENDOR_SQLITE) {
+	if(current_driver == DRIVER_SQLITE) {
 /* Every column looks like a text blob, but it is really a string. */
 	    coltype = SQL_CHAR;
 	    colprec = STRINGLEN;
