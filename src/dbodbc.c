@@ -1784,7 +1784,8 @@ showTables(void)
 {
     char tabname[40];
     char tabtype[40];
-    SQLLEN tabnameOut, tabtypeOut;
+    char tabowner[40];
+    SQLLEN tabnameOut, tabtypeOut, tabownerOut;
     char *buf;
     int buflen, cx;
     int truevalue = SQL_TRUE;
@@ -1802,6 +1803,8 @@ SQLSetConnectAttr(hdbc, SQL_ATTR_METADATA_ID,
     if(rc)
 	goto abort;
 
+    SQLBindCol(hstmt, 2, SQL_CHAR, (SQLPOINTER) & tabowner, sizeof (tabowner),
+       &tabownerOut);
     SQLBindCol(hstmt, 3, SQL_CHAR, (SQLPOINTER) & tabname, sizeof (tabname),
        &tabnameOut);
     SQLBindCol(hstmt, 4, SQL_CHAR, (SQLPOINTER) & tabtype, sizeof (tabtype),
@@ -1809,8 +1812,8 @@ SQLSetConnectAttr(hdbc, SQL_ATTR_METADATA_ID,
 
     buf = initString(&buflen);
     while(SQLFetch(hstmt) == SQL_SUCCESS) {
-	char tabline[100];
-	sprintf(tabline, "%s|%s\n", tabname, tabtype);
+	char tabline[140];
+	sprintf(tabline, "%s.%s|%s\n", tabowner, tabname, tabtype);
 	stringAndString(&buf, &buflen, tabline);
     }
 

@@ -100,7 +100,7 @@ char *
 lineFormatStack(const char *line,	/* the sprintf-like formatting string */
    LF * argv,			/* pointer to array of values */
    va_list * parmv_p)
-{				/* pointers to parameters on the stack */
+{
     va_list parmv = 0;
     short i, len, maxlen, len_given, flags;
     long n;
@@ -699,6 +699,51 @@ static int wcllen;
 static char wherecol[COLNAMELEN + 2];
 static struct DBTABLE *td;
 
+/* put quotes around a column value */
+static void
+pushQuoted(char **s, int *slen, const char *value, int colno)
+{
+    char quotemark = 0;
+    char coltype = td->types[colno];
+    if(coltype != 'F' && coltype != 'N') {
+/* Microsoft insists on single quote. */
+	quotemark = '\'';
+	if(strchr(value, quotemark))
+	    quotemark = '"';
+    }
+    if(quotemark)
+	stringAndChar(s, slen, quotemark);
+    stringAndString(s, slen, value);
+    if(quotemark)
+	stringAndChar(s, slen, quotemark);
+}				/* pushQuoted */
+
+static char *lineFields[MAXTCOLS];
+
+static char *
+keysQuoted(void)
+{
+    char *u;
+    int ulen;
+    int key1 = td->key1, key2 = td->key2;
+    if(!key1)
+	return 0;
+    u = initString(&ulen);
+    --key1;
+    stringAndString(&u, &ulen, "where ");
+    stringAndString(&u, &ulen, td->cols[key1]);
+    stringAndString(&u, &ulen, " = ");
+    pushQuoted(&u, &ulen, lineFields[key1], key1);
+    if(!key2)
+	return u;
+    --key2;
+    stringAndString(&u, &ulen, " and ");
+    stringAndString(&u, &ulen, td->cols[key2]);
+    stringAndString(&u, &ulen, " = ");
+    pushQuoted(&u, &ulen, lineFields[key2], key2);
+    return u;
+}				/* keysQuoted */
+
 static void
 buildSelectClause(void)
 {
@@ -717,8 +762,7 @@ buildSelectClause(void)
 static bool
 buildWhereClause(void)
 {
-    int i, l, n;
-    char coltype;
+    int i, l, n, colno;
     const char *w = myWhere;
     const char *e;
 
@@ -733,8 +777,8 @@ buildWhereClause(void)
 	    setError(MSG_DBNoKey);
 	    return false;
 	}
-	n = td->key1;
-	e = td->cols[n - 1];
+	colno = td->key1;
+	e = td->cols[colno - 1];
 	l = strlen(e);
 	if(l > COLNAMELEN) {
 	    setError(MSG_DBColumnLong, e, COLNAMELEN);
@@ -743,37 +787,37 @@ buildWhereClause(void)
 	strcpy(wherecol, e);
 	e = w - 1;
     } else if(isdigit(*w)) {
-	n = strtol(w, (char **)&w, 10);
+	colno = strtol(w, (char **)&w, 10);
 	if(w != e) {
 	    setError(MSG_DBSyntax);
 	    return false;
 	}
-	if(n == 0 || n > td->ncols) {
-	    setError(MSG_DBColRange, n);
+	if(colno == 0 || colno > td->ncols) {
+	    setError(MSG_DBColRange, colno);
 	    return false;
 	}
 	goto setcol_n;
     } else {
-	n = 0;
+	colno = 0;
 	if(e - w <= COLNAMELEN) {
 	    strncpy(wherecol, w, e - w);
 	    wherecol[e - w] = 0;
 	    for(i = 0; i < td->ncols; ++i) {
 		if(!strstr(td->cols[i], wherecol))
 		    continue;
-		if(n) {
+		if(colno) {
 		    setError(MSG_DBManyColumns, wherecol);
 		    return false;
 		}
-		n = i + 1;
+		colno = i + 1;
 	    }
 	}
-	if(!n) {
+	if(!colno) {
 	    setError(MSG_DBNoColumn, wherecol);
 	    return false;
 	}
       setcol_n:
-	w = td->cols[n - 1];
+	w = td->cols[colno - 1];
 	l = strlen(w);
 	if(l > COLNAMELEN) {
 	    setError(MSG_DBColumnLong, w, COLNAMELEN);
@@ -781,8 +825,6 @@ buildWhereClause(void)
 	}
 	strcpy(wherecol, w);
     }
-
-    coltype = td->types[n - 1];
 
     stringAndString(&wcl, &wcllen, "where ");
     stringAndString(&wcl, &wcllen, wherecol);
@@ -799,19 +841,8 @@ buildWhereClause(void)
     } else if(w[strlen(w) - 1] == '*') {
 	stringAndString(&wcl, &wcllen, lineFormat(" matches %S", w));
     } else {
-	char quotemark = 0;
 	stringAndString(&wcl, &wcllen, " = ");
-	if(coltype != 'F' && coltype != 'N') {
-/* Microsoft insists on single quote. */
-	    quotemark = '\'';
-	    if(strchr(w, quotemark))
-		quotemark = '"';
-	}
-	if(quotemark)
-	    stringAndChar(&wcl, &wcllen, quotemark);
-	stringAndString(&wcl, &wcllen, w);
-	if(quotemark)
-	    stringAndChar(&wcl, &wcllen, quotemark);
+	pushQuoted(&wcl, &wcllen, w, colno - 1);
     }
 
     return true;
@@ -1055,8 +1086,6 @@ sqlReadRows(const char *filename, char **bufptr)
     return rowsIntoBuffer(cid, td->types, bufptr, &lcnt);
 }				/* sqlReadRows */
 
-static char *lineFields[MAXTCOLS];
-
 /* Split a line at pipe boundaries, and make sure the field count is correct */
 static bool
 intoFields(char *line)
@@ -1165,14 +1194,12 @@ insupdError(int action, int rcnt)
 bool
 sqlDelRows(int start, int end)
 {
-    int nkeys, ndel, key1, key2, ln;
+    int nkeys, ndel, ln;
 
     if(!setTable())
 	return false;
 
     nkeys = keyCountCheck();
-    key1 = td->key1 - 1;
-    key2 = td->key2 - 1;
     if(!nkeys)
 	return false;
 
@@ -1188,16 +1215,13 @@ sqlDelRows(int start, int end)
  * I have to write the one-line-at-a-time code anyways,
  * I'll just use that for now. */
     while(ndel--) {
+	char *wherekeys;
 	char *line = (char *)fetchLine(ln, 0);
 	intoFields(line);
+	wherekeys = keysQuoted();
 	sql_exclist(insupdExceptions);
-	if(nkeys == 1)
-	    sql_exec("delete from %s where %s = %S",
-	       td->name, td->cols[key1], lineFields[key1]);
-	else
-	    sql_exec("delete from %s where %s = %S and %s = %S",
-	       td->name, td->cols[key1], lineFields[key1],
-	       td->cols[key2], lineFields[key2]);
+	sql_exec("delete from %s %s", td->name, wherekeys);
+	nzFree(wherekeys);
 	nzFree(line);
 	if(!insupdError(0, 1))
 	    return false;
@@ -1211,6 +1235,7 @@ bool
 sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 {
     char *d2;			/* clone of dest */
+    char *wherekeys;
     char *s, *t;
     int j, l1, l2, nkeys, key1, key2;
     char *u1;			/* column=value of the update statement */
@@ -1224,10 +1249,10 @@ sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 	return false;
 
     nkeys = keyCountCheck();
-    key1 = td->key1 - 1;
-    key2 = td->key2 - 1;
     if(!nkeys)
 	return false;
+    key1 = td->key1 - 1;
+    key2 = td->key2 - 1;
 
     d2 = (char *)clonePstring(dest);
     if(!intoFields(d2)) {
@@ -1260,7 +1285,7 @@ sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 		stringAndString(&u1, &u1len, ", ");
 	    stringAndString(&u1, &u1len, td->cols[j]);
 	    stringAndString(&u1, &u1len, " = ");
-	    stringAndString(&u1, &u1len, lineFormat("%S", lineFields[j]));
+	    pushQuoted(&u1, &u1len, lineFields[j], j);
 	}
 
 	if(*t == '\n')
@@ -1269,14 +1294,10 @@ sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 	++j;
     }
 
+    wherekeys = keysQuoted();
     sql_exclist(insupdExceptions);
-    if(nkeys == 1)
-	sql_exec("update %s set %s where %s = %S",
-	   td->name, u1, td->cols[key1], lineFields[key1]);
-    else
-	sql_exec("update %s set %s where %s = %S and %s = %S",
-	   td->name, u1,
-	   td->cols[key1], lineFields[key1], td->cols[key2], lineFields[key2]);
+    sql_exec("update %s set %s %s", td->name, u1, wherekeys);
+    nzFree(wherekeys);
     if(!insupdError(2, 1))
 	goto abort;
 
@@ -1401,7 +1422,7 @@ sqlAddRows(int ln)
 
 	    if(*u2)
 		stringAndChar(&u2, &u2len, ',');
-	    stringAndString(&u2, &u2len, lineFormat("%S", inp));
+	    pushQuoted(&u2, &u2len, inp, j);
 
 	    stringAndString(&u3, &u3len, inp);
 	    stringAndChar(&u3, &u3len, '|');
