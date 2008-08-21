@@ -668,4 +668,8 @@ enum {
     MSG_RemoteAccessDenied,
     MSG_AuthRequired,
     MSG_NoMem,
+    MSG_CurlVersion,
+    MSG_Timeout,
+    MSG_CurlSendData,
+    MSG_CurlCatchAll,
 };

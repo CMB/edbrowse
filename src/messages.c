@@ -668,6 +668,10 @@ static const char *englishMessages[] = {
     "remote access denied",
     "Authorization required to access %s",
     "operation failed because memory could not be allocated",
+    "Your version of libcurl is older than version %u.%u.%u.  You must upgrade libcurl in order to use edbrowse.",
+    "operation timed out",
+    "cannot send data to the server",
+    "the curl library returned the following error message while performing the requested operation: %s",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
