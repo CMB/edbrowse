@@ -718,6 +718,7 @@ static bool
 buildWhereClause(void)
 {
     int i, l, n;
+    char coltype;
     const char *w = myWhere;
     const char *e;
 
@@ -732,7 +733,8 @@ buildWhereClause(void)
 	    setError(MSG_DBNoKey);
 	    return false;
 	}
-	e = td->cols[td->key1 - 1];
+	n = td->key1;
+	e = td->cols[n - 1];
 	l = strlen(e);
 	if(l > COLNAMELEN) {
 	    setError(MSG_DBColumnLong, e, COLNAMELEN);
@@ -780,6 +782,8 @@ buildWhereClause(void)
 	strcpy(wherecol, w);
     }
 
+    coltype = td->types[n - 1];
+
     stringAndString(&wcl, &wcllen, "where ");
     stringAndString(&wcl, &wcllen, wherecol);
     ++e;
@@ -795,7 +799,19 @@ buildWhereClause(void)
     } else if(w[strlen(w) - 1] == '*') {
 	stringAndString(&wcl, &wcllen, lineFormat(" matches %S", w));
     } else {
-	stringAndString(&wcl, &wcllen, lineFormat(" = %S", w));
+	char quotemark = 0;
+	stringAndString(&wcl, &wcllen, " = ");
+	if(coltype != 'F' && coltype != 'N') {
+/* Microsoft insists on single quote. */
+	    quotemark = '\'';
+	    if(strchr(w, quotemark))
+		quotemark = '"';
+	}
+	if(quotemark)
+	    stringAndChar(&wcl, &wcllen, quotemark);
+	stringAndString(&wcl, &wcllen, w);
+	if(quotemark)
+	    stringAndChar(&wcl, &wcllen, quotemark);
     }
 
     return true;
@@ -996,8 +1012,7 @@ rowsIntoBuffer(int cid, const char *types, char **bufptr, int *lcnt)
 		myTab[0] = 0;
 	    j = strlen(myTab);
 /* unld is pretty long; I'm just going to assume there is enough room for this */
-	    memmove(u + j, v, end - v);
-	    u[j + (end - v)] = 0;
+	    memmove(u + j, v, end + 1 - v);
 	    memcpy(u, myTab, j);
 	}
 
@@ -1418,7 +1433,7 @@ sqlAddRows(int ln)
 	unld[l - 1] = '\n';	/* overwrite the last pipe */
 #endif
 
-	rc = addTextToBuffer((pst) unld, l, ln);
+	rc = addTextToBuffer((pst) unld, l, ln, false);
 	nzFree(u3);
 	if(!rc)
 	    return false;

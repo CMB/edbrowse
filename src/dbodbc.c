@@ -41,6 +41,12 @@ enum {
 };
 static int current_driver;
 
+/* Some drivers, Microsoft in particular,
+ * provide no information until you actually run the query.
+ * Prepare is not enough.
+ * The openfirst variable tells us whether we are running in that mode. */
+static bool openfirst = false;
+
 #define SQL_MONEY 100
 
 
@@ -268,20 +274,11 @@ errorTrap(const char *cxerr)
 }				/* errorTrap */
 
 static void
-cleanStatement(void)
-{
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-    SQLFreeStmt(hstmt, SQL_UNBIND);
-    SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
-}				/* cleanStatement */
-
-static void
 newStatement(void)
 {
     rc = SQLAllocStmt(hdbc, &hstmt);
     if(rc)
 	errorPrint("@could not alloc singleton ODBC statement handle");
-    cleanStatement();
 }				/* newStatement */
 
 
@@ -507,8 +504,10 @@ sql_connect(const char *db, const char *login, const char *pw)
 	current_driver = DRIVER_POSTGRESQL;
     if(stringEqual(drivername, "iclis09b.so"))
 	current_driver = DRIVER_INFORMIX;
-    if(stringEqual(drivername, "libtdsodbc.so"))
+    if(stringEqual(drivername, "libtdsodbc.so")) {
 	current_driver = DRIVER_TDS;
+	openfirst = true;
+    }
 
     if(sql_debug) {
 	if(current_driver)
@@ -1138,7 +1137,6 @@ prepareInternal(const char *stmt)
 	errorPrint("2null SQL statement");
     stmt_text = stmt;
     debugStatement();
-    cleanStatement();
 
     /* look for delete with no where clause */
     skipWhite(&stmt);
@@ -1155,7 +1153,10 @@ prepareInternal(const char *stmt)
     memset(rv_nullable, 0, NUMRETS);
     rv_lastNrows = 0;
 
-    rc = SQLPrepare(hstmt, (char *)stmt, SQL_NTS);
+    if(openfirst)
+	rc = SQLExecDirect(hstmt, (char *)stmt, SQL_NTS);
+    else
+	rc = SQLPrepare(hstmt, (char *)stmt, SQL_NTS);
     if(errorTrap(0))
 	return false;
 
@@ -1213,11 +1214,10 @@ Count(*) becomes decimal(15,0).  So be careful.
 	    break;
 
 	case SQL_TIMESTAMP:
-	    /* We only process datetime year to minute,
-	     * for databases other than Informix,
-	     * which don't have a date type. */
-	    if(colprec != 4)
-		errorPrint("@timestamp field must be year to minute");
+/* I don't know what to do with these; just make them strings. */
+	    rv_type[i] = 'S';
+	    break;
+
 	case SQL_DATE:
 	    rv_type[i] = 'D';
 	    break;
@@ -1297,14 +1297,14 @@ execInternal(const char *stmt, int mode)
 	}
 	notfound = true;
     } else {			/* end no return values */
-
 	if(!(mode & 2)) {
 	    showStatement();
 	    errorPrint("2SQL statement returns %d values", rv_numRets);
 	}
     }
 
-    rc = SQLExecute(hstmt);
+    if(!openfirst)
+	rc = SQLExecute(hstmt);
 
     if(!rc) {			/* statement succeeded */
 	/* fetch the data, or get a count of the rows affected */
@@ -1477,7 +1477,8 @@ prepareCursor(const char *stmt, bool scrollflag)
 	return -1;
     o->numrets = rv_numRets;
     memcpy(o->rv_type, rv_type, NUMRETS);
-    o->flag = CURSOR_PREPARED;
+    o->flag = (openfirst ? CURSOR_OPENED : CURSOR_PREPARED);
+    o->rownum = 0;
     return o->cid;
 }				/* prepareCursor */
 
@@ -1488,6 +1489,8 @@ sql_prepare(const char *stmt, ...)
     va_start(sqlargs, stmt);
     n = prepareCursor(stmt, false);
     exclist = 0;
+    if(n < 0)
+	SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
     return n;
 }				/* sql_prepare */
 
@@ -1498,6 +1501,8 @@ sql_prepareScrolling(const char *stmt, ...)
     va_start(sqlargs, stmt);
     n = prepareCursor(stmt, true);
     exclist = 0;
+    if(n < 0)
+	SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
     return n;
 }				/* sql_prepareScrolling */
 
@@ -1507,7 +1512,7 @@ sql_open(int cid)
     short i;
     struct OCURS *o = findCursor(cid);
     if(o->flag == CURSOR_OPENED)
-	errorPrint("2cannot open cursor %d, already opened", cid);
+	return;			/* already open */
     if(!o->numrets)
 	errorPrint("2cursor is being opened with no returns");
 
@@ -1530,8 +1535,13 @@ sql_prepOpen(const char *stmt, ...)
 
     va_start(sqlargs, stmt);
     n = prepareCursor(stmt, false);
-    if(n < 0)
+    if(n < 0) {
+	SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 	return n;
+    }
+
+    if(openfirst)
+	goto done;
 
     o = findCursor(n);
     sql_open(n);
@@ -1543,6 +1553,8 @@ sql_prepOpen(const char *stmt, ...)
 	memset(rv_type, 0, sizeof (rv_type));
 	n = -1;
     }
+
+  done:
     exclist = 0;
     return n;
 }				/* sql_prepOpen */
@@ -1569,7 +1581,7 @@ sql_free(int cid)
 {
     struct OCURS *o = findCursor(cid);
     if(o->flag == CURSOR_OPENED)
-	errorPrint("2cannot free cursor %d, not yet closed", cid);
+	sql_close(cid);
 
     stmt_text = "free";
     debugStatement();

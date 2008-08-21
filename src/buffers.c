@@ -732,7 +732,7 @@ addToMap(int start, int end, int destl)
 
 /* Add a block of text into the buffer; uses addToMap(). */
 bool
-addTextToBuffer(const pst inbuf, int length, int destl)
+addTextToBuffer(const pst inbuf, int length, int destl, bool onside)
 {
     int i, j, linecount = 0;
     int start, end;
@@ -748,7 +748,7 @@ addTextToBuffer(const pst inbuf, int length, int destl)
 	++linecount;		/* last line wasn't counted */
 	if(destl == cw->dol) {
 	    cw->nlMode = true;
-	    if(cmd != 'b' && !cw->binMode && !ismc)
+	    if(cmd != 'b' && !cw->binMode && !ismc && !onside)
 		i_puts(MSG_NoTrailing);
 	}
     }				/* missing newline */
@@ -1286,7 +1286,7 @@ readFile(const char *filename, const char *post)
     }
 
   intext:
-    rc = addTextToBuffer((const pst)rbuf, fileSize, endRange);
+    rc = addTextToBuffer((const pst)rbuf, fileSize, endRange, false);
     free(rbuf);
     if(cw->sqlMode)
 	undoable = false;
@@ -2571,7 +2571,8 @@ substituteText(const char *line)
 /* Becomes many lines, this is the tricky case. */
 		save_nlMode = cw->nlMode;
 		delText(ln, ln);
-		addTextToBuffer((pst) replaceLine, replaceLineLen + 1, ln - 1);
+		addTextToBuffer((pst) replaceLine, replaceLineLen + 1, ln - 1,
+		   false);
 		cw->nlMode = save_nlMode;
 		endRange += linecount;
 		ln += linecount;
@@ -3904,7 +3905,7 @@ runCommand(const char *line)
 	w->prev = cw;
 	cw = w;
 	cs->lw = w;
-	rc = addTextToBuffer((pst) a, strlen(a), 0);
+	rc = addTextToBuffer((pst) a, strlen(a), 0, false);
 	nzFree(a);
 	undoable = cw->changeMode = false;
 	fileSize = apparentSize(context, false);
@@ -3967,7 +3968,7 @@ runCommand(const char *line)
 		cw->dot = startRange;
 		if(*rbuf) {
 		    readyUndo();
-		    addTextToBuffer((pst) rbuf, strlen(rbuf), cw->dot);
+		    addTextToBuffer((pst) rbuf, strlen(rbuf), cw->dot, false);
 		    nzFree(rbuf);
 		    cw->dot = startRange;
 		}
@@ -4261,7 +4262,7 @@ runCommand(const char *line)
 	    q = allocMem(ql + 1);
 	    sprintf(q, "to:%s\nSubject:%s\n%s", addr, subj ? subj : "Hello",
 	       body ? body : "");
-	    j = addTextToBuffer((pst) q, ql, 0);
+	    j = addTextToBuffer((pst) q, ql, 0, false);
 	    nzFree(q);
 	    nzFree(addr);
 	    nzFree(subj);
@@ -4573,7 +4574,7 @@ sideBuffer(int cx, const char *text, int textlen,
 	cw->binMode = looksBinary(text, textlen);
     }
     if(textlen) {
-	rc = addTextToBuffer((pst) text, textlen, 0);
+	rc = addTextToBuffer((pst) text, textlen, 0, true);
 	if(!rc)
 	    i_printf(MSG_BufferPreload, cx);
 	if(autobrowse) {
@@ -4739,7 +4740,7 @@ browseCurrentBuffer(void)
     memcpy(cw->r_labels, cw->labels, sizeof (cw->labels));
     memset(cw->labels, 0, sizeof (cw->labels));
     j = strlen(newbuf);
-    rc = addTextToBuffer((pst) newbuf, j, 0);
+    rc = addTextToBuffer((pst) newbuf, j, 0, false);
     free(newbuf);
     cw->firstOpMode = undoable = false;
     cw->changeMode = save_ch;

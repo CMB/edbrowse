@@ -235,7 +235,7 @@ writeAttachment(struct MHINFO *w)
 	} else {
 	    cxSwitch(cx, false);
 	    i_printf(MSG_SessionX, cx);
-	    if(!addTextToBuffer((pst) w->start, w->end - w->start, 0))
+	    if(!addTextToBuffer((pst) w->start, w->end - w->start, 0, false))
 		i_printf(MSG_AttNoCopy, cx);
 	    else if(w->cfn[0])
 		cw->fileName = cloneString(w->cfn);
@@ -430,10 +430,10 @@ fetchMail(int account)
 	    iuReformat(exact, exact_l, &exactf, &exactf_l);
 
 	    if(exactf) {
-		if(!addTextToBuffer((pst) exactf, exactf_l, 0))
+		if(!addTextToBuffer((pst) exactf, exactf_l, 0, false))
 		    showErrorAbort();
 	    } else {
-		if(!addTextToBuffer((pst) exact, exact_l, 0))
+		if(!addTextToBuffer((pst) exact, exact_l, 0, false))
 		    showErrorAbort();
 	    }
 
@@ -1956,7 +1956,7 @@ setupReply(bool all)
 
     rc = true;
     if(j)
-	rc = addTextToBuffer((unsigned char *)out, j, 1);
+	rc = addTextToBuffer((unsigned char *)out, j, 1, false);
     nzFree(out);
     cw->browseMode = false;
     return rc;
