@@ -71,6 +71,8 @@ http://www.openssl.org/source/
 You also need libcurl, which is included in almost every Linux distro.
 This is used for ftp, http, and https.
 Check for /usr/include/curl/curl.h
+Edbrowse requires version 7.18.1 (or later).  If you compiled with a version
+prior to 7.18.1, the program will inform you that you need to upgrade.
 
 Finally, you need the Spider Monkey javascript engine from Mozilla.org
 (I got smart and decided not to reinvent all this js machinery.)
