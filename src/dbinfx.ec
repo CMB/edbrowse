@@ -1562,7 +1562,7 @@ I haven't yet expanded this to a 3 part key.
 *********************************************************************/
 
 void
-getPrimaryKey(const char *tname, int *part1, int *part2, int *part3)
+getPrimaryKey(char *tname, int *part1, int *part2, int *part3)
 {
     int p1, p2, rc;
     char *s = strchr(tname, ':');

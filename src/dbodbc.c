@@ -1728,17 +1728,25 @@ sql_fetchAbs(int cid, long rownum, ...)
 
 
 void
-getPrimaryKey(const char *tname, int *part1, int *part2, int *part3)
+getPrimaryKey(char *tname, int *part1, int *part2, int *part3)
 {
     int keyindex;
     SQLLEN pcbValue;
+    char *dot;
 
     *part1 = *part2 = *part3 = 0;
     newStatement();
     stmt_text = "get primary key";
     debugStatement();
+    dot = strchr(tname, '.');
+    if(dot)
+	*dot++ = 0;
+
     rc = SQLPrimaryKeys(hstmt,
-       NULL, SQL_NTS, NULL, SQL_NTS, (char *)tname, SQL_NTS);
+       NULL, SQL_NTS,
+       (dot ? tname : NULL), SQL_NTS, (dot ? dot : tname), SQL_NTS);
+    if(dot)
+	dot[-1] = '.';
     if(rc)
 	goto abort;
 

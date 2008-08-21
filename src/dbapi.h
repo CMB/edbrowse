@@ -176,7 +176,7 @@ bool sql_fetchPrev(int cid, ...);
 bool sql_fetchAbs(int cid, long rownum, ...);
 void sql_blobInsert(const char *tabname, const char *colname, int rowid,
    const char *filename, void *offset, int length);
-void getPrimaryKey(const char *tname, int *part1, int *part2, int *part3);
+void getPrimaryKey(char *tname, int *part1, int *part2, int *part3);
 
 /* sourcefile=dbops.c */
 char *lineFormat(const char *line, ...);
