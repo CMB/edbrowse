@@ -492,7 +492,7 @@ function submitFunction(me) {
 if(document.questionnaire != me) fail(123);
 var where = prompt("Enter m for mail, w for web, a to autosubmit, x to abort.", "x");
 me.action =
-(where == 'm' ? "mailto:karl@eklhad.net" : "http://localhost:1200/foobar");
+(where == 'm' ? "mailto:eklhad@gmail.com" : "http://localhost:1200/foobar");
 if(where == 'a') me.submit();
 if(where != 'm' && where != 'w') return false;
 return true;

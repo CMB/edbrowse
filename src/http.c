@@ -5,85 +5,36 @@
  *
  * Modified by Karl Dahlke for integration with edbrowse,
  * which is also released under the GPL.
+ *
+ * Modified by Chris Brannon to allow cooperation with libcurl.
  */
 
 #include "eb.h"
 
 #include <time.h>
 
+#define HTTP_MUST_AUTHENTICATE 401
+
 CURL *curl_handle = NULL;
 char *serverData;
 int serverDataLen;
 
+static void curl_setError(CURLcode curlret, const char *url);
 static bool ftpConnect(const char *url);
+static bool read_credentials(char *buffer);
+static void init_header_parser(void);
+static size_t curl_header_callback(char *header_line, size_t size, size_t nmemb,
+   void *unused);
+static char *get_redirect_location(void);
+static int curl_debug_handler(CURL * handle, curl_infotype info_desc,
+   char *data, size_t size, void *unused);
+static const char *message_for_response_code(int code);
 
 /* Read from a socket, 100K at a time. */
 #define CHUNKSIZE 100000
-static bool
-readSocket(int secure, int fh)
-{
-    struct CHUNK {
-	struct CHUNK *next;
-	char data[CHUNKSIZE];
-    };
-    struct CHUNK *chunklist = 0, *lastchunk = 0, *p, *q;
-    int n, len = 0;
-    char *data;
-    bool isprintByte = false;
 
-    while(true) {
-	p = allocMem(sizeof (struct CHUNK));
-	if(secure)
-	    n = ssl_readFully(p->data, CHUNKSIZE);
-	else
-	    n = tcp_readFully(fh, p->data, CHUNKSIZE);
-	if(n < 0) {
-	    setError(intFlag ? MSG_Interrupted : MSG_WebRead);
-	    free(p);
-	    for(p = chunklist; p; p = q) {
-		q = p->next;
-		free(p);
-	    }
-	    return false;
-	}			/* error */
-	len += n;
-	if(n) {
-	    if(lastchunk)
-		lastchunk->next = p;
-	    else
-		chunklist = p;
-	    lastchunk = p;
-	} else
-	    free(p);
-	if(n < CHUNKSIZE)
-	    break;
-	printf(".");
-	fflush(stdout);
-	isprintByte = true;
-    }				/* loop reading data */
-    if(isprintByte)
-	nl();
-
-/* Put it all together */
-    serverData = data = allocMem(len + 1);
-    serverDataLen = len;
-    debugPrint(4, "%d bytes read from the socket", len);
-    p = chunklist;
-    while(len) {
-	int piece = (len < CHUNKSIZE ? len : CHUNKSIZE);
-	memcpy(data, p->data, piece);
-	data += piece;
-	len -= piece;
-	q = p->next;
-	free(p);
-	p = q;
-    }
-
-    return true;
-}				/* readSocket */
-
-/* Callback used by libcurl. Writes data to serverData, as readSocket does. */
-size_t
+/* Callback used by libcurl. Writes data to serverData. */
+static size_t
 eb_curl_callback(char *incoming, size_t size, size_t nitems, void *unused)
 {
     size_t num_bytes = nitems * size;
@@ -99,8 +50,35 @@ eb_curl_callback(char *incoming, size_t size, size_t nitems, void *unused)
     return num_bytes;
 }
 
+
+/* We want to be able to abort transfers when SIGINT is received. 
+ * During data transfers, libcurl ignores EINTR.  So there's no obvious way
+ * to abort a transfer on SIGINT.
+ * However, libcurl does call a function periodically, to indicate the
+ * progress of the transfer.  If the progress function returns a non-zero
+ * value, then libcurl aborts the transfer.  The nice thing about libcurl
+ * is that it uses timeouts when reading and writing.  It won't block
+ * forever in some system call.
+ * We can be certain that libcurl will, in fact, call the progress function
+ * periodically.
+ * Note: libcurl doesn't start calling the progress function until after the
+ * connection is made.  So it can block indefinitely during connect().
+ * All of the progress arguments to the function are unused. */
+
+static int
+curl_progress(void *unused, double dl_total, double dl_now,
+   double ul_total, double ul_now)
+{
+    int ret = 0;
+    if(intFlag) {
+	intFlag = false;
+	ret = 1;
+    }
+    return ret;
+}				/* curl_progress */
+
 /* Pull a keyword: attribute out of an internet header. */
-char *
+static char *
 extractHeaderItem(const char *head, const char *end,
    const char *item, const char **ptr)
 {
@@ -129,6 +107,7 @@ extractHeaderItem(const char *head, const char *end,
     return h;
 }				/* extractHeaderItem */
 
+/* This is a global function; it is called from cookies.c */
 char *
 extractHeaderParam(const char *str, const char *item)
 {
@@ -357,73 +336,94 @@ refreshDelay(int sec, const char *u)
     return false;
 }				/* refreshDelay */
 
+static char hexdigits[] = "0123456789abcdef";
+#define ESCAPED_CHAR_LENGTH 3
+
+/*
+ * Function: copy_and_sanitize
+ * Arguments:
+ ** start: pointer to start of input string
+  ** end: pointer to end of input string.
+ * Return value: A new string or NULL if memory allocation failed.
+ * This function copies its input to a dynamically-allocated buffer,
+ * while performing the following transformation.  Change backslash to
+ * slash, and percent-escape any blank, non-printing, or non-ASCII
+ * characters.
+ * All characters in the area between start and end, not including end,
+ * are copied or transformed.
+
+ * This function is used to sanitize user-supplied URLs.  */
+
+char *
+copy_and_sanitize(const char *start, const char *end)
+{
+    int bytes_to_alloc = end - start + 1;
+    char *new_copy = NULL;
+    const char *in_pointer = NULL;
+    char *out_pointer = NULL;
+    for(in_pointer = start; in_pointer < end; in_pointer++)
+	if(*in_pointer <= 32)
+	    bytes_to_alloc += (ESCAPED_CHAR_LENGTH - 1);
+    new_copy = allocMem(bytes_to_alloc);
+    if(new_copy) {
+	out_pointer = new_copy;
+	for(in_pointer = start; in_pointer < end; in_pointer++) {
+	    if(*in_pointer == '\\')
+		*out_pointer++ = '/';
+	    else if(*in_pointer <= 32) {
+		*out_pointer++ = '%';
+		*out_pointer++ = hexdigits[(uchar)(*in_pointer & 0xf0) >> 4];
+		*out_pointer++ = hexdigits[(*in_pointer & 0x0f)];
+	    } else
+		*out_pointer++ = *in_pointer;
+	}
+	*out_pointer = '\0';
+    }
+    return new_copy;
+}				/* copy_and_sanitize */
+
 int hcode;			/* example, 404 */
 char herror[32];		/* example, file not found */
 
 bool
 httpConnect(const char *from, const char *url)
 {
-    int port;			/* usually 80 */
-    const char *portloc;
-    IP32bit hip;		/* host IP */
-    const char *host, *post, *s;
-    char *postb;
-    char *hdr;			/* http header */
-    char *u;
-    int l, n, postb_l;
-    bool isprox, rc, secure, newurl;
-    int hsock;			/* http socket */
-    int hct;			/* content type */
-    int hce;			/* content encoding */
-    char *ref, *loc;		/* refresh= location= */
-    int delay;			/* before we refresh the page */
-    int recount = 0;		/* count redirections */
+    char *referrer = NULL;
+    CURLcode curlret = CURLE_OK;
+    struct curl_slist *custom_headers = NULL;
     char user[MAXUSERPASS], pass[MAXUSERPASS];
+    char creds_buf[MAXUSERPASS * 2 + 1];	/* creds abr. for credentials */
+    int creds_len = 0;
+    char *creds_ptr = NULL;
+    bool still_fetching = true;
+    char *temp_url = NULL;
+    const char *host;
     struct MIMETYPE *mt;
     const char *prot;
     char *cmd;
     char suffix[12];
+    const char *post, *s;
+    char *postb;
+    char *urlcopy = NULL;
+    int postb_l;
+    bool transfer_status = false;
+    int redirect_count = 0;
+    bool name_changed = false;
 
-    if(!isURL(url)) {
-	setError(MSG_BadURL, url);
-	return false;
-    }
-
-    n = fetchHistory(from, url);
+    int n = fetchHistory(from, url);
     if(n < 0)
 	return false;		/* infinite loop */
-    if(n == false) {
-      already:
+    if(n == 0) {
 	serverData = EMPTYSTRING;
 	serverDataLen = 0;
 	return true;		/* success, because it's already fetched */
     }
-    newurl = true;
 
-  restart:
-    hct = CT_HTML;		/* the default */
-    hce = ENC_PLAIN;
-    isprox = isProxyURL(url);
+    serverData = NULL;
+    serverDataLen = 0;
+    creds_buf[0] = '\0';
+
     prot = getProtURL(url);
-    secure = stringEqualCI(prot, "https");
-    host = getHostURL(url);
-    if(!host)
-	i_printfExit(MSG_EmptyHost);
-    if(proxy_host) {
-	if(secure) {
-	    setError(MSG_SSLProxyNYI);
-	    return false;
-	}
-	hip = tcp_name_ip(proxy_host);
-    } else {
-	hip = tcp_name_ip(host);
-    }
-    if(hip == -1) {
-	setError((intFlag ? MSG_Interrupted : MSG_IdentifyHost), host);
-	return false;
-    }
-    debugPrint(4, "%s -> %s",
-       (proxy_host ? proxy_host : host), tcp_ip_dots(hip));
 
 /* See if the protocol is a recognized stream */
     if(stringEqualCI(prot, "http") || stringEqualCI(prot, "https")) {
@@ -456,526 +456,255 @@ httpConnect(const char *from, const char *url)
 
 /* Pull user password out of the url */
     user[0] = pass[0] = 0;
-    if(newurl) {
-	s = getUserURL(url);
-	if(s) {
-	    if(strlen(s) >= sizeof (user) - 2) {
-		setError(MSG_UserNameLong, sizeof (user));
-		return false;
-	    }
-	    strcpy(user, s);
-	}
-	s = getPassURL(url);
-	if(s) {
-	    if(strlen(s) >= sizeof (pass) - 2) {
-		setError(MSG_PasswordLong, sizeof (pass));
-		return false;
-	    }
-	    strcpy(pass, s);
-	}
-/* Don't add the authentication record yet;
- * because I don't know what the method is.
- * If I assume it's basic, and it's not, I'm sending the password
- * (essentialy) in the clear, and the user is assuming it's always
- * encrypted.  So just keep it around, and deploy it if necessary. */
-    }
-    newurl = false;
-
-    getPortLocURL(url, &portloc, &port);
-    hsock = tcp_connect(hip, (proxy_host ? proxy_port : port), webTimeout);
-    if(hsock < 0) {
-	setError((intFlag ? MSG_Interrupted : MSG_WebConnect), host);
-	return false;
-    }
-    if(proxy_host)
-	debugPrint(4, "connected to port %d/%d", proxy_port, port);
-    else
-	debugPrint(4, "connected to port %d", port);
-    if(secure) {
-	n = ssl_newbind(hsock);
-	if(n < 0) {
-	    if(n == -999)
-		setError(MSG_NoCertify, host);
-	    else
-		setError(MSG_WebConnectSecure, host, n);
+    s = getUserURL(url);
+    if(s) {
+	if(strlen(s) >= sizeof(user) - 2) {
+	    setError(MSG_UserNameLong, sizeof (user));
 	    return false;
 	}
-	debugPrint(4, "secure connection established");
+	strcpy(user, s);
+    }
+    s = getPassURL(url);
+    if(s) {
+	if(strlen(s) >= sizeof (pass) - 2) {
+	    setError(MSG_PasswordLong, sizeof (pass));
+	    return false;
+	}
+	strcpy(pass, s);
     }
 
+/* "Expect:" header causes some servers to lose.  Disable it. */
+    custom_headers = curl_slist_append(custom_headers, "Expect:");
     post = strchr(url, '\1');
-    if(post)
-	post++;
-
-    hdr = initString(&l);
-    stringAndString(&hdr, &l, post ? "POST " : "GET ");
-    if(proxy_host) {
-	stringAndString(&hdr, &l, prot);
-	stringAndString(&hdr, &l, "://");
-	stringAndString(&hdr, &l, host);
-/* Some proxy servers won't accept :80 after the hostname.  Dunno why. */
-	if(secure || port != 80) {
-	    stringAndChar(&hdr, &l, ':');
-	    stringAndNum(&hdr, &l, port);
-	}
-    }
-    stringAndChar(&hdr, &l, '/');
-
-    s = getDataURL(url);
-    while(true) {
-	char c, buf[4];
-	if(post && s == post - 1)
-	    break;
-	c = *s;
-	if(!c)
-	    break;
-	if(c == '#')
-	    break;
-	if(c == '\\')
-	    c = '/';
-	if(c <= ' ') {
-	    sprintf(buf, "%%%02X", (unsigned char)c);
-	    stringAndString(&hdr, &l, buf);
-	} else
-	    stringAndChar(&hdr, &l, c);
-	++s;
-    }
-    stringAndString(&hdr, &l, " HTTP/1.0\r\n");
-
-    stringAndString(&hdr, &l, "Host: ");
-    stringAndString(&hdr, &l, host);
-    if(portloc) {		/* port specified */
-	stringAndChar(&hdr, &l, ':');
-	stringAndNum(&hdr, &l, port);
-    }
-    stringAndString(&hdr, &l, eol);
-
-    stringAndString(&hdr, &l, "User-Agent: ");
-    stringAndString(&hdr, &l, currentAgent);
-    stringAndString(&hdr, &l, eol);
-
-    if(sendReferrer && currentReferrer) {
-	const char *post2 = strchr(currentReferrer, '\1');
-	const char *q = strchr(currentReferrer, '"');
-/* I just can't handle quote in the referring url */
-	if(!q || post2 && q > post2) {
-/* I always thought referrer had 4 r's, but not here. */
-	    stringAndString(&hdr, &l, "Referer: \"");
-	    if(!post2)
-		post2 = currentReferrer + strlen(currentReferrer);
-	    if(post2 - currentReferrer >= 7 && !memcmp(post2 - 7, ".browse", 7))
-		post2 -= 7;
-	    stringAndBytes(&hdr, &l, currentReferrer, post2 - currentReferrer);
-	    stringAndChar(&hdr, &l, '"');
-	    stringAndString(&hdr, &l, eol);
-	    cw->referrer = cloneString(currentReferrer);
-	    cw->referrer[post2 - currentReferrer] = 0;
-	}
-    }
-    stringAndString(&hdr, &l, "Accept: */*\r\n");
-    stringAndString(&hdr, &l, (isprox ? "Proxy-Connection: " : "Connection: "));
-/* Keep-Alive feature not yet implemented */
-    stringAndString(&hdr, &l, "close\r\n");
-
-/* Web caching not yet implemented. */
-    stringAndString(&hdr, &l,
-       "Pragma: no-cache\r\nCache-Control: no-cache\r\n");
-    stringAndString(&hdr, &l, "Accept-Encoding: gzip, compress\r\n");
-    stringAndString(&hdr, &l, "Accept-Language: en\r\n");
-    if(u = getAuthString(url)) {
-	stringAndString(&hdr, &l, u);
-	free(u);
-    }
-
     postb = 0;
     if(post) {
-	if(strncmp(post, "`mfd~", 5)) {
-	    stringAndString(&hdr, &l,
-	       "Content-Type: application/x-www-form-urlencoded\r\n");
-	} else {
+	urlcopy = copy_and_sanitize(url, post);
+	post++;
+
+	if(strncmp(post, "`mfd~", 5)) ;	/* No need to do anything, not multipart. */
+
+	else {
+	    int multipart_header_len = 0;
+	    char *multipart_header = initString(&multipart_header_len);
 	    char thisbound[24];
 	    post += 5;
-	    stringAndString(&hdr, &l,
+
+	    stringAndString(&multipart_header, &multipart_header_len,
 	       "Content-Type: multipart/form-data; boundary=");
 	    s = strchr(post, '\r');
-	    stringAndBytes(&hdr, &l, post, s - post);
-	    stringAndString(&hdr, &l, eol);
+	    stringAndBytes(&multipart_header, &multipart_header_len, post,
+	       s - post);
+	    custom_headers =
+	       curl_slist_append(custom_headers, multipart_header);
 	    memcpy(thisbound, post, s - post);
 	    thisbound[s - post] = 0;
 	    post = s + 2;
 	    unpackUploadedFile(post, thisbound, &postb, &postb_l);
 	}
-	stringAndString(&hdr, &l, "Content-Length: ");
-	stringAndNum(&hdr, &l, postb ? postb_l : strlen(post));
-	stringAndString(&hdr, &l, eol);
+	curlret = curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS,
+	   (postb_l ? postb : post));
+	if(curlret != CURLE_OK)
+	    goto curl_fail;;
+	curlret = curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDSIZE,
+	   postb_l ? postb_l : strlen(post));
+	if(curlret != CURLE_OK)
+	    goto curl_fail;;
+    } else {
+	urlcopy = copy_and_sanitize(url, url + strlen(url));
+	curlret = curl_easy_setopt(curl_handle, CURLOPT_HTTPGET, 1);
+	if(curlret != CURLE_OK)
+	    goto curl_fail;;
     }
 
-    sendCookies(&hdr, &l, url, secure);
 
-/* Here's the blank line that ends the header. */
-    stringAndString(&hdr, &l, eol);
+    if(sendReferrer && currentReferrer) {
+	const char *post2 = strchr(currentReferrer, '\1');
+	const char *q = strchr(currentReferrer, '"');
 
-    if(debugLevel >= 4) {
-/* print the header to be sent. */
-	for(u = hdr; *u; ++u) {
-	    char c = *u;
-	    if(c != '\r')
-		putchar(c);
+/* CMB: I don't believe issues with quote in URL still exist... */
+/* I just can't handle quote in the referring url */
+	if(!q || post2 && q > post2) {
+	    if(!post2)
+		post2 = currentReferrer + strlen(currentReferrer);
+	    if(post2 - currentReferrer >= 7 && !memcmp(post2 - 7, ".browse", 7))
+		post2 -= 7;
+	    cw->referrer = cloneString(currentReferrer);
+	    cw->referrer[post2 - currentReferrer] = 0;
+	    referrer = cw->referrer;
 	}
-    }
+    } else
+	referrer = NULL;
 
-    if(post) {
-	if(postb)
-	    stringAndBytes(&hdr, &l, postb, postb_l);
-	else
-	    stringAndString(&hdr, &l, post);
-	nzFree(postb);
-    }
+    curlret = curl_easy_setopt(curl_handle, CURLOPT_REFERER, referrer);
+    if(curlret != CURLE_OK)
+	goto curl_fail;;
+    curlret = curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, custom_headers);
+    if(curlret != CURLE_OK)
+	goto curl_fail;;
+    curlret = curl_easy_setopt(curl_handle, CURLOPT_URL, urlcopy);
+    if(curlret != CURLE_OK)
+	goto curl_fail;;
 
-    if(secure)
-	n = ssl_write(hdr, l);
+    /* If we have a username and password, then tell libcurl about it.
+     * libcurl won't send it to the server unless server gave a 401 response.
+     * Libcurl selects the most secure form of auth provided by server. */
+
+    if(user[0] && pass[0]) {
+	strcpy(creds_buf, user);
+	creds_len = strlen(creds_buf);
+	creds_buf[creds_len] = ':';
+	strcpy(creds_buf + creds_len + 1, pass);
+	creds_ptr = creds_buf;
+    } else if(getUserPass(urlcopy, creds_buf, false))
+	creds_ptr = creds_buf;
     else
-	n = tcp_write(hsock, hdr, l);
-    debugPrint(4, "http header sent, %d/%d bytes", n, l);
-    free(hdr);
-    if(n < l) {
-	setError(intFlag ? MSG_Interrupted : MSG_WebSend);
-	if(secure)
-	    ssl_done();
-	close(hsock);
-	return false;
-    }
+	creds_ptr = NULL;
 
-    rc = readSocket(secure, hsock);
-    if(secure)
-	ssl_done();
-    close(hsock);
-    if(!rc)
-	goto abort;
+    curlret = curl_easy_setopt(curl_handle, CURLOPT_USERPWD, creds_ptr);
+    if(curlret != CURLE_OK)
+	goto curl_fail;;
 
-/* Parse the http header, at the start of the data stream. */
-    if(serverDataLen < 16)
-	goto nohead;		/* too short */
-    u = serverData;
-    if((*u++ | 0x20) != 'h')
-	goto nohead;
-    if((*u++ | 0x20) != 't')
-	goto nohead;
-    if((*u++ | 0x20) != 't')
-	goto nohead;
-    if((*u++ | 0x20) != 'p')
-	goto nohead;
-    if(*u++ != '/')
-	goto nohead;
-    while(isdigitByte(*u) || *u == '.')
-	++u;
-    if(*u != ' ')
-	goto nohead;
-    while(*u == ' ')
-	++u;
-    if(!isdigitByte(*u))
-	goto nohead;
-    hcode = strtol(u, &u, 10);
-    while(*u == ' ')
-	++u;
-    hdr = u;
-    while(*u != '\r' && *u != '\n')
-	++u;
-    n = u - hdr;
-    if(n >= sizeof (herror))
-	n = sizeof (herror) - 1;
-    strncpy(herror, hdr, n);
-    herror[n] = 0;
-    debugPrint(3, "http code %d %s", hcode, herror);
-    hdr = 0;
-/* set hdr if we find our empty line */
-    while(u < serverData + serverDataLen) {
-	char c = *u;
-	char d = 0;
-	if(u < serverData + serverDataLen - 1)
-	    d = u[1];
-	if(!c)
-	    break;
-	if(c == '\n' && d == '\n') {
-	    hdr = u + 2;
-	    break;
-	}
-	if(c == '\r' && d == '\n' &&
-	   u <= serverData + serverDataLen - 4 &&
-	   u[2] == '\r' && u[3] == '\n') {
-	    hdr = u + 4;
-	    break;
-	}
-	++u;
-    }
-    if(!hdr)
-	goto nohead;
+/* We are ready to make a transfer.  Here is where it gets complicated.
+ * At the top of the loop, we perform the HTTP request.  It may fail entirely
+ * (I.E., libcurl returns an indicator other than CURLE_OK).
+ * We may be redirected.  Edbrowse needs finer control over the redirection
+ * process than libcurl gives us.
+ * Decide whether to accept the redirection, using the following criteria.
+ * Does user permit redirects?  Will we exceed maximum allowable redirects?
+ * Is the destination in the fetch history?
+ * We may be asked for authentication.  In that case, grab username and
+ * password from the user.  If the server accepts the username and password,
+ * then add it to the list of authentication records.  */
 
-    if(debugLevel >= 4) {
-/* print the header just received. */
-	for(u = serverData; u < hdr; ++u) {
-	    char c = *u;
-	    if(c != '\r')
-		putchar(c);
-	}
-    }
+    still_fetching = true;
+    serverData = initString(&serverDataLen);
 
-/* We need to gather the cookies before we redirect. */
-    s = serverData;
-    while(u = extractHeaderItem(s, hdr, "Set-Cookie", &s)) {
-	rc = receiveCookie(url, u);
-	nzFree(u);
-	debugPrint(3, rc ? "accepted" : "rejected");
-    }
+    while(still_fetching == true) {
+	char *redir = NULL;
+	int histNum = 0;
+	init_header_parser();
+	curlret = curl_easy_perform(curl_handle);
+	if(serverDataLen >= CHUNKSIZE)
+	    nl();		/* We printed dots, so we terminate them with newline */
+	if(curlret != CURLE_OK)
+	    goto curl_fail;;
+	curl_easy_getinfo(curl_handle, CURLINFO_RESPONSE_CODE, &hcode);
+	if(curlret != CURLE_OK)
+	    goto curl_fail;;
 
-    if(hcode == 401) {		/* authorization requested */
-	int authmeth = 1;	/* basic method by default */
-	if(u = extractHeaderItem(serverData, hdr, "WWW-Authenticate", 0)) {
-	    if(!memEqualCI(u, "basic", 5) || isalnumByte(u[5])) {
-		setError(MSG_BadAuthMethod, u);
-		nzFree(u);
-		goto abort;
-	    }
-	    if(!(user[0] | pass[0])) {
-		s = strstr(u, "realm=");
-		if(s) {
-		    char q = 0;
-		    char *v = 0;
-		    s += 6;
-		    if(isquote(*s))
-			q = *s++;
-		    if(q)
-			v = strchr(s, q);
-		    if(v)
-			*v = 0;
-		    puts(s);
-		}
-	    }
-	    nzFree(u);
-	}
-	if(!(user[0] | pass[0])) {
-	    if(!isInteractive) {
-		setError(MSG_Authorize2);
-		goto abort;
-	    }
-	    i_puts(MSG_WebAuthorize);
-	  getlogin:
-	    i_printf(MSG_UserName);
-	    fflush(stdout);
-	    fflush(stdin);
-	    if(!fgets(user, sizeof (user), stdin))
-		ebClose(0);
-	    n = strlen(user);
-	    if(n >= sizeof (user) - 1) {
-		i_printf(MSG_UserNameLong, sizeof (user) - 2);
-		goto getlogin;
-	    }
-	    if(n && user[n - 1] == '\n')
-		user[--n] = 0;
-	    if(stringEqual(user, "x")) {
-		setError(MSG_LoginAbort);
-		goto abort;
-	    }
-	    i_printf(MSG_Password);
-	    fflush(stdout);
-	    fflush(stdin);
-	    if(!fgets(pass, sizeof (pass), stdin))
-		ebClose(0);
-	    n = strlen(pass);
-	    if(n >= sizeof (pass) - 1) {
-		i_printf(MSG_PasswordLong, sizeof (pass) - 2);
-		goto getlogin;
-	    }
-	    if(n && pass[n - 1] == '\n')
-		pass[--n] = 0;
-	    if(stringEqual(pass, "x")) {
-		setError(MSG_LoginAbort);
-		goto abort;
-	    }
-	}
-	intFlag = false;
-	if(!addWebAuthorization(url, 1, user, pass, false))
-	    goto abort;
-	nzFree(serverData);
-	serverData = 0;
-	serverDataLen = 0;
-	goto restart;
-    }
-    /* 401 authentication */
-    if(u = extractHeaderItem(serverData, hdr, "Content-Encoding", 0)) {
-	hce = -1;
-	if(stringEqualCI(u, "compress"))
-	    hce = ENC_COMPRESS;
-	if(stringEqualCI(u, "gzip"))
-	    hce = ENC_GZIP;
-	if(stringEqualCI(u, "7bit"))
-	    hce = 0;
-	if(stringEqualCI(u, "8bit"))
-	    hce = 0;
-	if(hce < 0) {
-	    i_printf(MSG_CompressUnrecognized, u);
-	    hce = 0;
-	}
-	nzFree(u);
-	if(hce && (u = extractHeaderItem(serverData, hdr, "Content-type", 0))) {
-/* If this isn't text, to be rendered, then don't uncompress it */
-	    if(!memEqualCI(u, "text", 4) &&
-	       !memEqualCI(u, "application/x-javascript", 24))
-		hce = 0;
-	    free(u);
-	}
-    }
+	redir = get_redirect_location();
+	if(redir)
+	    redir = resolveURL(urlcopy, redir);
+	debugPrint(3, "http code %d %s", hcode, herror);
 
-    /* compressed */
-    /* Look for http redirection.  Note,
-     * meta http-equiv redirection does not occur unless and until
-     * the page is browsed, i.e. its html interpreted. */
-    delay = 0;
-    ref = loc = u = 0;
-    if((hcode >= 301 && hcode <= 303 || hcode == 200) && allowRedirection) {
-	if(hcode == 200) {
-	    ref = extractHeaderItem(serverData, hdr, "refresh", 0);
-	    if(ref) {
-		if(parseRefresh(ref, &delay)) {
-		    u = ref;
-		} else {
-		    free(ref);
-		    ref = 0;
-		}
-	    }
-	} else {
-	    loc = extractHeaderItem(serverData, hdr, "location", 0);
-	    if(!loc[0])
-		loc = 0;
-	    if(!loc) {
+	if(hcode >= 301 && hcode <= 303 && allowRedirection) {
+	    still_fetching = false;
+	    if(redir == NULL) {
+		/* Redirected, but we don't know where to go. */
 		i_printf(MSG_RedirectNoURL, hcode);
-		if(hcode >= 301 && hcode <= 303)
-		    hcode = 200;
-	    } else
-		u = loc;
-	}
-	if(u) {
-	    unpercentURL(u);
-	    if(refreshDelay(delay, u)) {
-		n = fetchHistory(url, u);
-		if(n < 0) {
-		    free(u);
-		    goto abort;
-		}		/* infinite loop */
-		if(n == false) {
-/* success, because it's already fetched */
-		    free(u);
-		    goto already;
-		}
-		if(recount >= 10) {
-		    free(u);
-		    i_puts(MSG_RedirectMany);
-		    goto gotFile;
-		}
-/* Redirection looks valid, let's run with it. */
-		++recount;
-		free(serverData);
-		serverData = 0;
-		serverDataLen = 0;
-/* trying to plug a subtle memory leak */
-		if(recount > 2)
-		    free((void *)from);
-		from = url;
-		url = resolveURL(from, u);
-		nzFree(u);
-		changeFileName = (char *)url;
-		debugPrint(2, "redirect %s", url);
-		newurl = true;
-		goto restart;
+		transfer_status = true;
 	    } else {
-		n = hdr - serverData;
-		if(n >= strlen(u) + 36) {
-		    char rbuf[36];
-		    sprintf(rbuf, "<A HREF=%s>Refresh[%d]</A><br>\n", u, delay);
-		    l = strlen(rbuf);
-		    hdr -= l;
-		    memcpy(hdr, rbuf, l);
-		}		/* enough room */
-		free(u);
+		creds_buf[0] = '\0';
+		temp_url = urlcopy;
+		urlcopy = redir;
+		unpercentURL(urlcopy);
+		histNum = fetchHistory(temp_url, urlcopy);
+
+		if(redirect_count >= 10) {
+		    i_puts(MSG_RedirectMany);
+		    transfer_status = true;
+		} else if(histNum < 0)
+		    transfer_status = false;	/* transfer failed, infinite redirect. */
+		else if(histNum == false) {
+		    nzFree(serverData);
+		    serverData = NULL;
+		    serverDataLen = 0;
+		    transfer_status = true;	/* Success.  Page already fetched. */
+		} else {	/* redirection looks good. */
+/* Convert POST request to GET request after redirection. */
+curl_easy_setopt(curl_handle, CURLOPT_HTTPGET, 1);
+
+		    if(getUserPass(urlcopy, creds_buf, false))
+			creds_ptr = creds_buf;
+		    else
+			creds_ptr = NULL;
+
+		    curlret =
+		       curl_easy_setopt(curl_handle, CURLOPT_USERPWD,
+		       creds_ptr);
+		    if(curlret != CURLE_OK) {
+			nzFree(temp_url);
+			goto curl_fail;
+		    }
+
+		    if(sendReferrer) {
+			curlret = curl_easy_setopt(curl_handle, CURLOPT_REFERER,
+			   urlcopy);
+			if(curlret != CURLE_OK) {
+			    nzFree(temp_url);
+			    goto curl_fail;
+			}
+			nzFree(cw->referrer);
+			cw->referrer = cloneString(urlcopy);
+		    }
+		    nzFree(temp_url);
+
+		    curlret =
+		       curl_easy_setopt(curl_handle, CURLOPT_URL, urlcopy);
+		    if(curlret != CURLE_OK)
+			goto curl_fail;;
+
+		    nzFree(serverData);
+		    serverData = EMPTYSTRING;
+		    serverDataLen = 0;
+		    redirect_count += 1;
+		    still_fetching = true;
+		    name_changed = true;
+		    debugPrint(2, "redirect %s", urlcopy);
+		}
 	    }
-	}			/* redirection present */
-    }
-    /* looking for redirection */
-    if(hcode != 200)
-	i_printf(MSG_HTTPError, hcode, herror);
-
-  gotFile:
-/* Don't need the header any more */
-    n = hdr - serverData;
-    serverDataLen -= n;
-    memcpy(serverData, serverData + n, serverDataLen);
-
-    if(!serverDataLen)
-	return true;
-
-    if(hce) {			/* data is compressed */
-	int fh;
-	char *scmd;
-	char suffix[4];
-	suffix[0] = 0;
-	u = edbrowseTempFile + strlen(edbrowseTempFile);
-	if(hce == ENC_COMPRESS)
-	    strcpy(suffix, ".Z");
-	if(hce == ENC_GZIP)
-	    strcpy(suffix, ".gz");
-	strcpy(u, suffix);
-	debugPrint(3, "uncompressing the web page with method %s", suffix);
-	if(!memoryOutToFile(edbrowseTempFile, serverData, serverDataLen,
-	   MSG_TempNoCreate, MSG_TempNoWrite)) {
-	    *u = 0;
-	    goto abort;
 	}
-	*u = 0;
+
+	else if(hcode == 401) {
+	    i_printf(MSG_AuthRequired, urlcopy);
+	    nl();
+	    bool got_creds = read_credentials(creds_buf);
+	    if(got_creds) {
+		addWebAuthorization(urlcopy, 1, creds_buf, false);
+		curl_easy_setopt(curl_handle, CURLOPT_USERPWD, creds_buf);
+		nzFree(serverData);
+		serverData = EMPTYSTRING;
+		serverDataLen = 0;
+	    } else {		/* User aborted the login process. */
+		still_fetching = false;
+		transfer_status = false;
+	    }
+	}
+	/* authenticate? */
+	else {			/* not redirect, not 401 */
+	    still_fetching = false;
+	    transfer_status = true;
+	}
+    }
+
+  curl_fail:
+    if(curlret != CURLE_OK)
+	curl_setError(curlret, urlcopy);
+
+    if(transfer_status == false) {
 	nzFree(serverData);
-	serverData = 0;
+	serverData = NULL;
 	serverDataLen = 0;
-	unlink(edbrowseTempFile);
-	scmd = allocMem(2 * strlen(edbrowseTempFile) + 20);
-	sprintf(scmd, "zcat %s%s > %s",
-	   edbrowseTempFile, suffix, edbrowseTempFile);
-	system(scmd);
-	free(scmd);
-	n = fileSizeByName(edbrowseTempFile);
-	if(n <= 0) {
-	    setError(MSG_TempNoUncompress);
-	    return false;
-	}
-	serverData = allocMem(n + 2);
-/* fileIntoMemory would be better here, but I have to parameterize the error messages first */
-	fh = open(edbrowseTempFile, O_RDONLY | O_BINARY);
-	if(fh < 0) {
-	    setError(MSG_TempNoAccess, edbrowseTempFile);
-	    goto abort;
-	}
-	if(read(fh, serverData, n) < n) {
-	    setError(MSG_TempNoRead, edbrowseTempFile);
-	    close(fh);
-	    goto abort;
-	}
-	close(fh);
-	serverDataLen = n;
-	serverData[n] = 0;
-/* doesn't hurt to clean house, now that everything worked. */
-	strcpy(u, suffix);
-	unlink(edbrowseTempFile);
-	*u = 0;
-	unlink(edbrowseTempFile);
+    } else {
+	if(hcode != 200)
+	    i_printf(MSG_HTTPError, hcode, message_for_response_code(hcode));
+	if(name_changed)
+	    changeFileName = urlcopy;
+	else
+	    nzFree(urlcopy);	/* Don't need it anymore. */
     }
 
-    return true;
-  nohead:
-    i_puts(MSG_HTTPHeader);
-    return true;
-  abort:
-    nzFree(serverData);
-    serverData = 0;
-    serverDataLen = 0;
-    return false;
+    return transfer_status;
 }				/* httpConnect */
 
 /* Format a line from an ftp ls. */
@@ -1104,15 +833,56 @@ parse_directory_listing()
     nzFree(incomingData);
 }				/* parse_directory_listing */
 
-void
-curl_ftp_setError(CURLcode curlret)
+static void
+curl_setError(CURLcode curlret, const char *url)
 {
+    const char *host = NULL, *protocol = NULL;
+    protocol = getProtURL(url);
+    host = getHostURL(url);
+
     switch (curlret) {
+
+    case CURLE_UNSUPPORTED_PROTOCOL:
+	setError(MSG_WebProtBad, protocol);
+	break;
+    case CURLE_URL_MALFORMAT:
+	setError(MSG_BadURL, url);
+	break;
+    case CURLE_COULDNT_RESOLVE_HOST:
+	setError(MSG_IdentifyHost, host);
+	break;
+    case CURLE_REMOTE_ACCESS_DENIED:
+	setError(MSG_RemoteAccessDenied);
+	break;
+    case CURLE_TOO_MANY_REDIRECTS:
+	setError(MSG_RedirectMany);
+	break;
+
+    case CURLE_OPERATION_TIMEDOUT:
+	setError(MSG_Timeout);
+	break;
+    case CURLE_PEER_FAILED_VERIFICATION:
+    case CURLE_SSL_CACERT:
+	setError(MSG_NoCertify, host);
+	break;
+
+    case CURLE_GOT_NOTHING:
+    case CURLE_RECV_ERROR:
+	setError(MSG_WebRead);
+	break;
+    case CURLE_SEND_ERROR:
+	setError(MSG_CurlSendData);
+	break;
     case CURLE_COULDNT_CONNECT:
+	setError(MSG_WebConnect, host);
+	break;
     case CURLE_FTP_CANT_GET_HOST:
 	setError(MSG_FTPConnect);
 	break;
 
+    case CURLE_ABORTED_BY_CALLBACK:
+	setError(MSG_Interrupted);
+	break;
 /* These all look like session initiation failures. */
     case CURLE_FTP_WEIRD_SERVER_REPLY:
     case CURLE_FTP_WEIRD_PASS_REPLY:
@@ -1128,19 +898,23 @@ curl_ftp_setError(CURLcode curlret)
 	setError(MSG_FTPPassword);
 	break;
 
-    default:
+    case CURLE_FTP_COULDNT_RETR_FILE:
 	setError(MSG_FTPTransfer);
 	break;
+
+    default:
+	setError(MSG_CurlCatchAll, curl_easy_strerror(curlret));
+	break;
     }
-}				/* curl_ftp_setError */
+}				/* curl_setError */
 
 /* Like httpConnect, but for ftp */
 static bool
 ftpConnect(const char *url)
 {
     const int protLength = 6;	/* length of "ftp://" */
-    char *urlcopy, *out;
-    int urlcopy_l, out_l;
+    char *urlcopy = NULL;
+    int urlcopy_l = 0;
     bool transfer_success = false;
     bool has_slash;
     serverData = initString(&serverDataLen);
@@ -1159,6 +933,8 @@ ftpConnect(const char *url)
 	i_puts(MSG_FTPDownload);
 
     CURLcode curlret = curl_easy_setopt(curl_handle, CURLOPT_URL, urlcopy);
+    if(curlret != CURLE_OK)
+	goto ftp_transfer_fail;
     curlret = curl_easy_perform(curl_handle);
 
     if(curlret == CURLE_FTP_COULDNT_RETR_FILE) {
@@ -1167,6 +943,9 @@ ftpConnect(const char *url)
 	else {			/* try appending a slash. */
 	    stringAndChar(&urlcopy, &urlcopy_l, '/');
 	    curlret = curl_easy_setopt(curl_handle, CURLOPT_URL, urlcopy);
+	    if(curlret != CURLE_OK)
+		goto ftp_transfer_fail;
+
 	    curlret = curl_easy_perform(curl_handle);
 	    if(curlret != CURLE_OK)
 		transfer_success = false;
@@ -1185,8 +964,10 @@ ftpConnect(const char *url)
     if(serverDataLen >= CHUNKSIZE)
 	nl();			/* We printed dots, so we terminate them with newline */
 
+  ftp_transfer_fail:
     if(transfer_success == false) {
-	curl_ftp_setError(curlret);
+	if(curlret != CURLE_OK)
+	    curl_setError(curlret, urlcopy);
 	nzFree(serverData);
 	serverData = 0;
 	serverDataLen = 0;
@@ -1195,6 +976,7 @@ ftpConnect(const char *url)
 	changeFileName = urlcopy;
     else
 	nzFree(urlcopy);
+
     return transfer_success;
 }				/* ftpConnect */
 
@@ -1285,16 +1067,317 @@ my_curl_cleanup(void)
     curl_global_cleanup();
 }				/* my_curl_cleanup */
 
-
 void
 my_curl_init(void)
 {
+    const unsigned int major = 7;
+    const unsigned int minor = 15;
+    const unsigned int patch = 5;
+    const unsigned int least_acceptable_version =
+       (major << 16) | (minor << 8) | patch;
+    curl_version_info_data *version_data = NULL;
     CURLcode curl_init_status = curl_global_init(CURL_GLOBAL_ALL);
     if(curl_init_status != 0)
 	i_printfExit(MSG_LibcurlNoInit);
     curl_handle = curl_easy_init();
     if(curl_handle == NULL)
 	i_printfExit(MSG_LibcurlNoInit);
+    version_data = curl_version_info(CURLVERSION_NOW);
+    if(version_data->version_num < least_acceptable_version)
+	i_printfExit(MSG_CurlVersion, major, minor, patch);
+
+/* Lots of these setopt calls shouldn't fail.  They just diddle a struct. */
     curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, eb_curl_callback);
+    curl_easy_setopt(curl_handle, CURLOPT_HEADERFUNCTION, curl_header_callback);
+    if(debugLevel >= 4)
+	curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1);
+    curl_easy_setopt(curl_handle, CURLOPT_DEBUGFUNCTION, curl_debug_handler);
+    curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 0);
+    curl_easy_setopt(curl_handle, CURLOPT_PROGRESSFUNCTION, curl_progress);
+    curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT, webTimeout);
+    curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, currentAgent);
+
+/*
+ * This next setting tells libcurl to use any available authentication type.
+ * It will use the strongest authentication supported by the server.
+*/
+    curl_easy_setopt(curl_handle, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
+
+/* The next three setopt calls could allocate or perform file I/O. */
+    curl_init_status = curl_easy_setopt(curl_handle, CURLOPT_CAINFO, sslCerts);
+    if(curl_init_status != CURLE_OK)
+	goto libcurl_init_fail;
+    curl_init_status =
+       curl_easy_setopt(curl_handle, CURLOPT_COOKIEFILE, cookieFile);
+    if(curl_init_status != CURLE_OK)
+	goto libcurl_init_fail;
+    curl_init_status =
+       curl_easy_setopt(curl_handle, CURLOPT_COOKIEJAR, cookieFile);
+    if(curl_init_status != CURLE_OK)
+	goto libcurl_init_fail;
+    curl_easy_setopt(curl_handle, CURLOPT_PROXY, "");	/* No proxies for now. */
     atexit(my_curl_cleanup);
+
+  libcurl_init_fail:
+    if(curl_init_status != CURLE_OK)
+	i_printfExit(MSG_LibcurlNoInit);
 }				/* my_curl_init */
+
+
+/*
+ * There's no easy way to get at the server's response message from libcurl.
+ * So here are some tables and a function for translating response codes to
+ * messages.
+*/
+
+static const char *response_codes_1xx[] = {
+    "Continue",
+    "Switching Protocols"
+};
+
+static const char *response_codes_2xx[] = {
+    "OK",
+    "Created" "Accepted",
+    "Non-Authoritative Information",
+    "No Content",
+    "Reset Content",
+    "Partial Content"
+};
+
+static const char *response_codes_3xx[] = {
+    "Multiple Choices",
+    "Moved Permanently",
+    "Found",
+    "See Other",
+    "Not Modified",
+    "Use Proxy",
+    "(Unused)",
+    "Temporary Redirect"
+};
+
+static const char *response_codes_4xx[] = {
+    "Bad Request",
+    "Unauthorized",
+    "Payment Required",
+    "Forbidden",
+    "Not Found",
+    "Method Not Allowed",
+    "Not Acceptable",
+    "Proxy Authentication Required",
+    "Request Timeout",
+    "Conflict",
+    "Gone",
+    "Length Required",
+    "Precondition Failed",
+    "Request Entity Too Large",
+    "Request-URI Too Long",
+    "Unsupported Media Type",
+    "Requested Range Not Satisfiable",
+    "Expectation Failed"
+};
+
+static const char *response_codes_5xx[] = {
+    "Internal Server Error",
+    "Not Implemented",
+    "Bad Gateway",
+    "Service Unavailable",
+    "Gateway Timeout",
+    "HTTP Version Not Supported"
+};
+
+static const char *unknown_http_response =
+   "Unknown response when accessing webpage.";
+
+static int max_codes[] = {
+    0,
+    sizeof (response_codes_1xx) / sizeof (char *),
+    sizeof (response_codes_2xx) / sizeof (char *),
+    sizeof (response_codes_3xx) / sizeof (char *),
+    sizeof (response_codes_4xx) / sizeof (char *),
+    sizeof (response_codes_5xx) / sizeof (char *)
+};
+
+static const char **responses[] = {
+    NULL, response_codes_1xx, response_codes_2xx, response_codes_3xx,
+    response_codes_4xx, response_codes_5xx
+};
+
+static const char *
+message_for_response_code(int code)
+{
+    const char *message = NULL;
+    if(code < 100 || code > 599)
+	message = unknown_http_response;
+    else {
+	int primary = code / 100;	/* Yields int in interval [1,6] */
+	int subcode = code % 100;
+	if(subcode >= max_codes[primary])
+	    message = unknown_http_response;
+	else
+	    message = responses[primary][subcode];
+    }
+    return message;
+}				/* message_for_response_code */
+
+/*
+ * Function: prompt_and_read
+ * Arguments:
+  ** prompt: prompt that user should see.
+  ** buffer: buffer into which the data should be stored.
+  ** max_length: maximum allowable length of input.
+ ** error_msg: message to display if input exceeds maximum length.
+ * Note: prompt and error_message should be message constants from messages.h.
+ * Return value: none.  buffer contains input on return. */
+
+
+/* We need to read two things from the user while authenticating: a username
+ * and a password.  Here, the task of prompting and reading is encapsulated
+ * in a function, and we call that function twice.
+ * After the call, the buffer contains the user's input, without a newline.
+ * The return value is the length of the string in buffer. */
+static int
+prompt_and_read(int prompt, char *buffer, int buffer_length, int error_message)
+{
+    bool reading = true;
+    int n = 0;
+    while(reading) {
+	i_printf(prompt);
+	fflush(stdout);
+	if(!fgets(buffer, buffer_length, stdin))
+	    ebClose(0);
+	n = strlen(buffer);
+	if(n && buffer[n - 1] == '\n')
+	    buffer[--n] = '\0';	/* replace newline with NUL */
+	if(n >= (MAXUSERPASS - 1)) {
+	    i_printf(error_message, MAXUSERPASS - 2);
+	    nl();
+	} else
+	    reading = false;
+    }
+    return n;
+}				/* prompt_and_read */
+
+/*
+ * Function: read_credentials
+ * Arguments:
+ ** buffer: buffer in which to place username and password.
+ * Return value: true if credentials were read, false otherwise.
+
+* Behavior: read a username and password from the user.  Store them in
+ * the buffer, separated by a colon.
+ * This function returns false in two situations.
+ * 1. The program is not being run interactively.  The error message is
+ * set to indicate this.
+ * 2. The user aborted the login process by typing x"x".
+ * Again, the error message reflects this condition.
+*/
+
+static bool
+read_credentials(char *buffer)
+{
+    int input_length = 0;
+    bool got_creds = false;
+
+    if(!isInteractive)
+	setError(MSG_Authorize2);
+    else {
+	i_puts(MSG_WebAuthorize);
+	input_length =
+	   prompt_and_read(MSG_UserName, buffer, MAXUSERPASS, MSG_UserNameLong);
+	if(!stringEqual(buffer, "x")) {
+	    char *password_ptr = buffer + input_length + 1;
+	    prompt_and_read(MSG_Password, password_ptr, MAXUSERPASS,
+	       MSG_PasswordLong);
+	    if(!stringEqual(password_ptr, "x")) {
+		got_creds = true;
+		*(password_ptr - 1) = ':';	/* separate user and password with colon. */
+	    }
+	}
+
+	if(!got_creds)
+	    setError(MSG_LoginAbort);
+    }
+
+    return got_creds;
+}				/* read_credentials */
+
+static char *location_url = NULL;
+
+/*
+ * This code reads a stream of header lines from libcurl.
+ * It can go away one of these days, when we're sure that everyone is using
+ * version 7.18.2 or greater of libcurl.
+*/
+/* Call this before every HTTP request. */
+static void
+init_header_parser(void)
+{
+    nzFree(location_url);
+    location_url = NULL;
+}				/* init_header_parser */
+
+static const char *loc_field = "Location:";
+static size_t loc_field_length = 9;	/* length of string "Location:" */
+
+/* Callback used by libcurl.
+ * Right now, it just extracts Location: headers. */
+static size_t
+curl_header_callback(char *header_line, size_t size, size_t nmemb, void *unused)
+{
+    size_t bytes_in_line = size * nmemb;
+    const char *last_pos = header_line + bytes_in_line;
+
+    /* If we're still looking for a location: header, and this line is long
+     * enough to be one, and the line starts with "Location: ", then proceed.
+     */
+
+    if((location_url == NULL) && (bytes_in_line > loc_field_length) &&
+       memEqualCI(header_line, loc_field, loc_field_length)) {
+	const char *start = header_line + loc_field_length;
+	const char *end = last_pos - 1;
+
+/* Make start point to first non-whitespace char after Location: or to
+ * last_pos if no such char exists. */
+	while(isspaceByte(*start) && (start < last_pos))
+	    start++;
+
+/* end points to start of trailing whitespace if it exists.  Otherwise,
+ * it is last_pos. */
+	while((end >= start) && isspaceByte(*end))
+	    end--;
+	end++;
+
+	if(start < end)
+	    location_url = pullString1(start, end);
+    }
+    return bytes_in_line;
+}				/* curl_header_callback */
+
+/* Return the location associated with the last redirect, or NULL if none. */
+static char *
+get_redirect_location(void)
+{
+    return location_url;
+}				/* get_redirect_location */
+
+/* Print incoming and outgoing headers.
+ * Incoming headers are prefixed with curl<, and outgoing headers are
+ * prefixed with curl> 
+ * Hope this isn't an unfriendly convention.
+ * We may support more of the curl_infotype values soon. */
+
+static int
+curl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
+   size_t size, void *unused)
+{
+
+    if(info_desc == CURLINFO_HEADER_OUT) {
+	printf("curl> ");
+	fwrite(data, 1, size, stdout);
+/* Note that data is not NUL-terminated, hence fwrite. */
+    } else if(info_desc == CURLINFO_HEADER_IN) {
+	printf("curl< ");
+	fwrite(data, 1, size, stdout);
+    } else;			/* Do nothing.  We don't care about this piece of data. */
+    return 0;
+}				/* curl_debug_handler */

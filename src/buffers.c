@@ -2642,6 +2642,10 @@ twoLetter(const char *line, const char **runThis)
 
     if(line[0] == 'd' && line[1] == 'b' && isdigitByte(line[2]) && !line[3]) {
 	debugLevel = line[2] - '0';
+	if(debugLevel >= 4)
+	    curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1);
+	else
+	    curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 0);
 	return true;
     }
 
@@ -3086,13 +3090,14 @@ twoLetter(const char *line, const char **runThis)
 	setDataSource(cloneString(line + 3));
 	return true;
     }
-
+#if 0
     if(stringEqual(line, "tn")) {
 	textAreaDosNewlines ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(textAreaDosNewlines + MSG_AreaUnix);
 	return true;
     }
+#endif
 
     if(stringEqual(line, "eo")) {
 	endMarks = 0;

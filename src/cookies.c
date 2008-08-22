@@ -4,6 +4,7 @@
  * This file is part of the Links project, released under GPL
  *
  * Modified by Karl Dahlke for integration with edbrowse.
+ * Modified by Chris Brannon to allow cooperation with libcurl.
  */
 
 #include "eb.h"
@@ -17,6 +18,61 @@ struct cookie {
     time_t expires;		/* zero means undefined */
     bool secure;
 };
+
+static int
+count_tabs(const char *the_string)
+{
+    int str_index = 0, num_tabs = 0;
+    for(str_index = 0; the_string[str_index] != '\0'; str_index++)
+	if(the_string[str_index] == '\t')
+	    num_tabs++;
+    return num_tabs;
+}				/* count_tabs */
+
+#define FIELDS_PER_COOKIE_LINE 7
+
+static struct cookie *
+cookie_from_netscape_line(char *cookie_line)
+{
+    struct cookie *new_cookie = NULL;
+    if(cookie_line && cookie_line[0]) {
+/* Only parse the line if it is not a comment and it has the requisite number
+ * of tabs.  Comment lines begin with a leading # symbol.
+ * Syntax checking is rudimentary, because these lines are
+ * machine-generated. */
+	if(cookie_line[0] != '#' &&
+	   count_tabs(cookie_line) == FIELDS_PER_COOKIE_LINE - 1) {
+	    new_cookie = allocZeroMem(sizeof (struct cookie));
+	    char *start = cookie_line;
+	    char *end = strchr(cookie_line, '\t');
+	    new_cookie->domain = pullString1(start, end);
+	    start = end + 1;
+/* Ignore the second field of the line. */
+	    while(*start != '\t')
+		start++;
+	    start++;		/* skip tab */
+	    end = strchr(start, '\t');
+	    new_cookie->path = pullString1(start, end);
+	    start = end + 1;
+	    if(*start == 'T' || *start == 't')
+		new_cookie->secure = true;
+	    else
+		new_cookie->secure = false;
+	    start = strchr(start, '\t') + 1;
+	    new_cookie->expires = strtol(start, &end, 10);
+/* Now end points to the tab following the expiration time. */
+	    start = end + 1;
+	    end = strchr(start, '\t');
+	    new_cookie->name = pullString1(start, end);
+	    start = end + 1;
+/* strcspn gives count of non-newline characters in string, which is the
+ * length of the final field.  Either CR or LF is considered a newline. */
+	    new_cookie->value = pullString(start, strcspn(start, "\r\n"));
+	}
+    }
+
+    return new_cookie;
+}				/* cookie_from_netscape_line */
 
 static void
 freeCookie(struct cookie *c)
@@ -49,32 +105,25 @@ acceptCookie(struct cookie *c)
     addToListBack(&cookies, c);
 }				/* acceptCookie */
 
-static void
-cookieIntoJar(const struct cookie *c)
+
+/* Tell libcurl about a new cookie.  Called when setting cookies from
+ * JavaScript.
+ * The function is pretty simple.  Construct a line of the form used by
+ * the Netscape cookie file format, and pass that to libcurl. */
+static CURLcode
+cookieForLibcurl(const struct cookie *c)
 {
-    FILE *f;
-    if(!cookieFile) {
-	static bool warn = false;
-	if(warn)
-	    return;
-	i_puts(MSG_NoJar);
-	warn = true;
-	return;
-    }
-    if(c->expires <= time(0))
-	return;			/* not persistent, or out of date */
-    f = fopen(cookieFile, "a");
-    if(!f)
-	return;
 /* Netscape format */
 /* I have no clue what the second argument is suppose to be, */
 /* I'm always calling it false. */
-    fprintf(f, "%s\tFALSE\t%s\t%s\t%u\t%s\t%s\n",
-       c->domain, c->path,
+    char *cookLine =
+       allocMem(strlen(c->path) + strlen(c->domain) + strlen(c->name) +
+       strlen(c->value) + 48);
+    sprintf(cookLine, "%s\tFALSE\t%s\t%s\t%u\t%s\t%s\n", c->domain, c->path,
        c->secure ? "TRUE" : "FALSE", (unsigned)c->expires, c->name, c->value);
-    fclose(f);
-    debugPrint(3, "into jar");
-}				/* cookieIntoJar */
+    debugPrint(3, "cookie for libcurl");
+    curl_easy_setopt(curl_handle, CURLOPT_COOKIELIST, cookLine);
+}				/* cookieForLibcurl */
 
 /* Should this server really specify this domain in a cookie? */
 /* Domain must be the trailing substring of server. */
@@ -179,8 +228,9 @@ receiveCookie(const char *url, const char *str)
 	nzFree(s);
     }
 
-    acceptCookie(c);
-    cookieIntoJar(c);
+    cookieForLibcurl(c);
+    freeCookie(c);
+    nzFree(c);
     return true;
 }				/* receiveCookie */
 
@@ -194,6 +244,7 @@ cookiesFromJar(void)
     char *cbuf, *s, *t;
     FILE *f;
     int n, cnt, expired, displaced;
+    char *cbuf_end;
     time_t now;
     struct cookie *c;
 
@@ -202,47 +253,35 @@ cookiesFromJar(void)
     if(!fileIntoMemory(cookieFile, &cbuf, &n))
 	showErrorAbort();
     cbuf[n] = 0;
+    cbuf_end = cbuf + n;
     time(&now);
 
     cnt = expired = displaced = 0;
     s = cbuf;
-    while(*s) {
-	++cnt;
-	c = allocZeroMem(sizeof (struct cookie));
-	t = strchr(s, '\t');
-	*t = 0;
-	c->domain = cloneString(s);
-	s = t + 1;
-	t = strchr(s, '\t');
-	s = t + 1;
-	t = strchr(s, '\t');
-	*t = 0;
-	c->path = cloneString(s);
-	s = t + 1;
-	t = strchr(s, '\t');
-	c->secure = (*s == 'T');
-	s = t + 1;
-	t = strchr(s, '\t');
-	*t = 0;
-	c->expires = (time_t) atol(s);
-	s = t + 1;
-	t = strchr(s, '\t');
-	*t = 0;
-	c->name = cloneString(s);
-	s = t + 1;
-	t = strchr(s, '\n');
-	*t = 0;
-	c->value = cloneString(s);
-	s = t + 1;
 
-	if(c->expires < now) {
-	    freeCookie(c);
-	    nzFree(c);
-	    ++expired;
-	} else {
-	    acceptCookie(c);
-	    displaced += displacedCookie;
+    while(s < cbuf_end) {
+	t = s + strcspn(s, "\r\n");
+/* t points to the first newline past s.  If there is no newline in s,
+ * then it points to the NUL byte at end of s. */
+	*t = '\0';
+	c = cookie_from_netscape_line(s);
+
+	if(c) {			/* Got a valid cookie line. */
+	    cnt++;
+	    if(c->expires < now) {
+		freeCookie(c);
+		nzFree(c);
+		++expired;
+	    } else {
+		acceptCookie(c);
+		displaced += displacedCookie;
+	    }
 	}
+
+	s = t + 1;		/* Get ready to read more lines. */
+/* Skip over blank lines, if necessary.  */
+	while(s < cbuf_end && (*s == '\r' || *s == '\n'))
+	    s++;
     }
 
     debugPrint(3, "%d persistent cookies, %d expired, %d displaced",
@@ -287,14 +326,19 @@ isPathPrefix(const char *d, const char *s)
     return !memcmp(d, s, dl);
 }				/* isPathPrefix */
 
+
+
 void
 sendCookies(char **s, int *l, const char *url, bool issecure)
 {
     const char *server = getHostURL(url);
     const char *data = getDataURL(url);
     int nc = 0;			/* new cookie */
-    struct cookie *c, *d;
+    struct cookie *c = NULL;
     time_t now;
+    struct curl_slist *known_cookies = NULL;
+    struct curl_slist *cursor = NULL;
+    curl_easy_getinfo(curl_handle, CURLINFO_COOKIELIST, &known_cookies);
 
     if(!url || !server || !data)
 	return;
@@ -305,19 +349,26 @@ sendCookies(char **s, int *l, const char *url, bool issecure)
 	data = "/";
     time(&now);
 
-    foreach(c, cookies) {
+/* Can't use foreach here, since known_cookies is just a pointer. */
+    cursor = known_cookies;
+
+/* The code at the top of the loop guards against a memory leak.
+ * Otherwise, structs could become inaccessible after continue statements. */
+    while(cursor != NULL) {
+	if(c != NULL) {		/* discard un-freed cookie structs */
+	    freeCookie(c);
+	    nzFree(c);
+	}
+	c = cookie_from_netscape_line(cursor->data);
+	cursor = cursor->next;
+	if(c == NULL)		/* didn't read a cookie line. */
+	    continue;
 	if(!isInDomain(c->domain, server))
 	    continue;
 	if(!isPathPrefix(c->path, data))
 	    continue;
-	if(c->expires && c->expires < now) {
-	    d = c;
-	    c = c->prev;
-	    delFromList(d);
-	    freeCookie(d);
-	    nzFree(d);
+	if(c->expires && c->expires < now)
 	    continue;
-	}
 	if(c->secure && !issecure)
 	    continue;
 /* We're good to go. */
@@ -331,6 +382,13 @@ sendCookies(char **s, int *l, const char *url, bool issecure)
 	debugPrint(3, "send cookie %s=%s", c->name, c->value);
     }
 
+    if(c != NULL) {
+	freeCookie(c);
+	nzFree(c);
+    }
+
+    if(known_cookies != NULL)
+	curl_slist_free_all(known_cookies);
     if(nc)
 	stringAndString(s, l, eol);
 }				/* sendCookies */

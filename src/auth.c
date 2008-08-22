@@ -18,12 +18,10 @@ static const char *const realmDesc[] = {
 struct httpAuth {
     struct httpAuth *next;
     struct httpAuth *prev;
-    char user[MAXUSERPASS];
-    char password[MAXUSERPASS];
 /* These strings are allocated. */
     char *host;
     char *directory;
-    char *user_password_encoded;
+    char *user_password;
     int port;
     bool proxy;
     uchar realm;
@@ -31,61 +29,44 @@ struct httpAuth {
 
 static struct listHead authlist = { &authlist, &authlist };
 
-/* This string is included in the outgoing http header.
- * It could include both a proxy and a host authorization.
- * Not that I understand any of the proxy stuff. */
-char *
-getAuthString(const char *url)
+bool
+getUserPass(const char *url, char *creds, bool find_proxy)
 {
     const char *host = getHostURL(url);
     int port = getPortURL(url);
     const char *dir, *dirend;
     struct httpAuth *a;
-    char *r = NULL;
+    struct httpAuth *found = NULL;
     int l, d1len, d2len;
 
-    if(isProxyURL(url)) {
-	foreach(a, authlist) {
-	    if(a->proxy && stringEqualCI(a->host, host) && a->port == port) {
-		r = initString(&l);
-		stringAndString(&r, &l, "Proxy-Authorization: ");
-		stringAndString(&r, &l, realmDesc[a->realm]);
-		stringAndString(&r, &l, a->user_password_encoded);
-		stringAndString(&r, &l, eol);
-	    }
-	}
-
-/* Skip past the proxy directive */
-	url = getDataURL(url);
-	host = getHostURL(url);
-	port = getPortURL(url);
-    }
-    /* proxy */
     getDirURL(url, &dir, &dirend);
     d2len = dirend - dir;
 
     foreach(a, authlist) {
-	if(!a->proxy && stringEqualCI(a->host, host) && a->port == port) {
-	    d1len = strlen(a->directory);
-	    if(d1len > d2len)
-		continue;
-	    if(memcmp(a->directory, dir, d1len))
-		continue;
-	    if(!r)
-		r = initString(&l);
-	    stringAndString(&r, &l, "Authorization: ");
-	    stringAndString(&r, &l, realmDesc[a->realm]);
-	    stringAndString(&r, &l, a->user_password_encoded);
-	    stringAndString(&r, &l, eol);
+	if(found == NULL && a->proxy == find_proxy &&
+	   stringEqualCI(a->host, host) && a->port == port) {
+	    if(!a->proxy) {
+/* Directory match not done for proxy records. */
+		d1len = strlen(a->directory);
+		if(d1len > d2len)
+		    continue;
+		if(memcmp(a->directory, dir, d1len))
+		    continue;
+		found = a;
+	    } else		/* not proxy */
+		found = a;
 	}
     }
 
-    return r;
-}				/* getAuthString */
+    if(found)
+	strcpy(creds, found->user_password);
+
+    return (found != NULL);
+}				/* getUserPass */
 
 bool
 addWebAuthorization(const char *url,
-   int realm, const char *user, const char *password, bool proxy)
+   int realm, const char *credentials, bool proxy)
 {
     struct httpAuth *a;
     const char *host;
@@ -118,7 +99,7 @@ addWebAuthorization(const char *url,
 	   stringEqualCI(a->host, host) &&
 	   (proxy ||
 	   dl == strlen(a->directory) && !memcmp(a->directory, dir, dl))) {
-	    nzFree(a->user_password_encoded);
+	    nzFree(a->user_password);
 	    break;
 	}
     }
@@ -134,18 +115,11 @@ addWebAuthorization(const char *url,
     a->port = port;
     if(!a->host)
 	a->host = cloneString(host);
-    strcpy(a->user, user);
-    strcpy(a->password, password);
     if(dir && !a->directory)
 	a->directory = pullString1(dir, dirend);
 
-/* Now compute the user password encoded */
-    p = allocMem(strlen(user) + strlen(password) + 2);
-    strcpy(p, user);
-    strcat(p, ":");
-    strcat(p, password);
-    a->user_password_encoded = base64Encode(p, strlen(p), false);
-    free(p);
+    a->user_password = cloneString(credentials);
     debugPrint(3, "%s authorization for %s%s",
        updated ? "updated" : "new", a->host, a->directory);
+    return true;
 }				/* addWebAuthorization */

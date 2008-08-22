@@ -65,19 +65,17 @@ char * decodePostData(const char *data, const char *name, int seqno) ;
 void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p) ;
 
 /* sourcefile=auth.c */
-char * getAuthString(const char *url) ;
-bool addWebAuthorization(const char *url, int realm, const char *user, const char *password, bool proxy) ;
+bool getUserPass(const char *url, char *creds, bool find_proxy) ;
+bool addWebAuthorization(const char *url, int realm, const char *credentials, bool proxy) ;
 
 /* sourcefile=http.c */
-size_t eb_curl_callback(char *incoming, size_t size, size_t nitems, void *unused) ;
-char * extractHeaderItem(const char *head, const char *end, const char *item, const char **ptr) ;
 char * extractHeaderParam(const char *str, const char *item) ;
 time_t parseHeaderDate(const char *date) ;
 bool parseRefresh(char *ref, int *delay_p) ;
 bool refreshDelay(int sec, const char *u) ;
+char * copy_and_sanitize(const char *start, const char *end) ;
 bool httpConnect(const char *from, const char *url) ;
 void parse_directory_listing() ;
-void curl_ftp_setError(CURLcode curlret) ;
 void allIPs(void) ;
 void my_curl_init(void) ;
 
