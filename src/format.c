@@ -29,10 +29,6 @@ prepareForBrowse(char *h, int h_len)
 		--j;
 	    continue;
 	}
-	if(h[i] == (char)0xe2 && i < h_len - 1 && h[i + 1] == (char)0x80) {
-	    ++i;
-	    continue;
-	}
 	if(h[i] == InternalCodeChar)
 	    h[i] = InternalCodeCharAlternate;
 	h[j++] = h[i];
