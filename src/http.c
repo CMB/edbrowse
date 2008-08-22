@@ -372,7 +372,7 @@ copy_and_sanitize(const char *start, const char *end)
 		*out_pointer++ = '/';
 	    else if(*in_pointer <= 32) {
 		*out_pointer++ = '%';
-		*out_pointer++ = hexdigits[(uchar)(*in_pointer & 0xf0) >> 4];
+		*out_pointer++ = hexdigits[(uchar) (*in_pointer & 0xf0) >> 4];
 		*out_pointer++ = hexdigits[(*in_pointer & 0x0f)];
 	    } else
 		*out_pointer++ = *in_pointer;
@@ -458,7 +458,7 @@ httpConnect(const char *from, const char *url)
     user[0] = pass[0] = 0;
     s = getUserURL(url);
     if(s) {
-	if(strlen(s) >= sizeof(user) - 2) {
+	if(strlen(s) >= sizeof (user) - 2) {
 	    setError(MSG_UserNameLong, sizeof (user));
 	    return false;
 	}
@@ -622,7 +622,7 @@ httpConnect(const char *from, const char *url)
 		    transfer_status = true;	/* Success.  Page already fetched. */
 		} else {	/* redirection looks good. */
 /* Convert POST request to GET request after redirection. */
-curl_easy_setopt(curl_handle, CURLOPT_HTTPGET, 1);
+		    curl_easy_setopt(curl_handle, CURLOPT_HTTPGET, 1);
 
 		    if(getUserPass(urlcopy, creds_buf, false))
 			creds_ptr = creds_buf;
@@ -1360,24 +1360,45 @@ get_redirect_location(void)
     return location_url;
 }				/* get_redirect_location */
 
+/* Print text, discarding the unnecessary carriage return character. */
+static void
+prettify_network_text(const char *text, size_t size, FILE * destination)
+{
+    int i;
+    for(i = 0; i < size; i++) {
+	if(text[i] != '\r')
+	    fputc(text[i], destination);
+    }
+}				/* prettify_network_text */
+
 /* Print incoming and outgoing headers.
  * Incoming headers are prefixed with curl<, and outgoing headers are
  * prefixed with curl> 
- * Hope this isn't an unfriendly convention.
  * We may support more of the curl_infotype values soon. */
 
 static int
 curl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
    size_t size, void *unused)
 {
+    bool is_blank_line = true;
+    static bool curlon = true;
+    int i = 0;
+
+    for(i = 0; i < size; i++)
+	if((data[i] != '\r') && (data[i] != '\n')) {
+	    is_blank_line = false;
+	    break;
+	}
 
     if(info_desc == CURLINFO_HEADER_OUT) {
-	printf("curl> ");
-	fwrite(data, 1, size, stdout);
-/* Note that data is not NUL-terminated, hence fwrite. */
+	printf("curl>\n");
+	prettify_network_text(data, size, stdout);
     } else if(info_desc == CURLINFO_HEADER_IN) {
-	printf("curl< ");
-	fwrite(data, 1, size, stdout);
+	if(curlon)
+	    printf("curl<\n");
+	prettify_network_text(data, size, stdout);
+	curlon = is_blank_line;
     } else;			/* Do nothing.  We don't care about this piece of data. */
+
     return 0;
 }				/* curl_debug_handler */
