@@ -496,7 +496,8 @@ sql_connect(const char *db, const char *login, const char *pw)
 /* Time to find out what the driver is, so we can have driver specific tweaks. */
     SQLGetInfo(hdbc, SQL_DRIVER_NAME, drivername, sizeof (drivername), &waste);
     current_driver = DRIVER_NONE;
-    if(stringEqual(drivername, "libsqliteodbc.so"))
+    if(stringEqual(drivername, "libsqliteodbc.so") ||
+       stringEqual(drivername, "sqlite3odbc.so"))
 	current_driver = DRIVER_SQLITE;
     if(stringEqual(drivername, "libmyodbc.so"))
 	current_driver = DRIVER_MYSQL;
