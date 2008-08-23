@@ -39,7 +39,7 @@ ESQLDFLAGS = $(STRIP)
 #  I assume you have linked libjs.so into /usr/lib/libsmjs.so
 #  so that -lsmjs will suffice.
 #  Some distros, e.g. Debian, already do this for you.
-#  You can use the target jslink below.
+#  Or you can use the target jslink below.
 #  Some folks need to add -lcrypto to this list.
 
 LIBS = -lpcre -lm -lssl -lsmjs -lcurl
@@ -68,11 +68,12 @@ install:
 #  This has to be done as root.
 jslink:
 	[ -f /usr/lib/libsmjs.so ] || ln -s /usr/local/js/src/Linux_All_DBG.OBJ/libjs.so /usr/lib/libsmjs.so
+	[ -f /usr/lib/libsmjs.a ] || ln -s /usr/local/js/src/Linux_All_DBG.OBJ/libjs.a /usr/lib/libsmjs.a
 
 dbinfx.o : dbinfx.ec
 	esql -c dbinfx.ec
 
-dbinfx.o dbops.o : dbapi.h eb.h
+dbinfx.o dbops.o : dbapi.h eb.h eb.p
 
 edbrowseinf: $(EBOBJS) tcp.o dbops.o dbinfx.o
 	esql $(ESQLDFLAGS) -o edbrowseinf $(EBOBJS) tcp.o dbops.o dbinfx.o $(LIBS)
@@ -87,10 +88,10 @@ proto:
 	sendmail.c fetchmail.c html.c \
 	format.c cookies.c stringfile.c jsdom.c jsloc.c dbstubs.c >eb.p
 
-#  I've had no luck getting this to work - can you help?
-edbrowse.static: $(EBOBJS) tcp.o
-	cc --static $(LFLAGS) -o edbrowse.static tcp.o $(EBOBJS) $(LIBS)
+#  This doesn't build on my system, because I don't have libcurl.a.
+edbrowse.static: $(EBOBJS) tcp.o dbops.o dbodbc.o
+	cc --static $(LFLAGS) -o edbrowse.static $(EBOBJS) tcp.o dbops.o dbodbc.o $(LIBS) -lodbc
 
 clean:
-	rm -f *.o edbrowse edbrowseinf edbrowseodbc
+	rm -f *.o edbrowse edbrowseinf edbrowseodbc edbrowse.static
 
