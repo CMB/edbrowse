@@ -2798,6 +2798,15 @@ twoLetter(const char *line, const char **runThis)
 	return true;
     }
 
+    if(stringEqual(line, "shf")) {
+	if(!cw->sqlMode) {
+	    setError(MSG_NoDB);
+	    return false;
+	}
+	showForeign();
+	return true;
+    }
+
     if(stringEqual(line, "sht")) {
 	if(!ebConnect())
 	    return false;

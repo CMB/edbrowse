@@ -1812,11 +1812,11 @@ SQLSetConnectAttr(hdbc, SQL_ATTR_METADATA_ID,
     if(rc)
 	goto abort;
 
-    SQLBindCol(hstmt, 2, SQL_CHAR, (SQLPOINTER) & tabowner, sizeof (tabowner),
+    SQLBindCol(hstmt, 2, SQL_CHAR, (SQLPOINTER) tabowner, sizeof (tabowner),
        &tabownerOut);
-    SQLBindCol(hstmt, 3, SQL_CHAR, (SQLPOINTER) & tabname, sizeof (tabname),
+    SQLBindCol(hstmt, 3, SQL_CHAR, (SQLPOINTER) tabname, sizeof (tabname),
        &tabnameOut);
-    SQLBindCol(hstmt, 4, SQL_CHAR, (SQLPOINTER) & tabtype, sizeof (tabtype),
+    SQLBindCol(hstmt, 4, SQL_CHAR, (SQLPOINTER) tabtype, sizeof (tabtype),
        &tabtypeOut);
 
     buf = initString(&buflen);
@@ -1836,3 +1836,52 @@ SQLSetConnectAttr(hdbc, SQL_ATTR_METADATA_ID,
     SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
     return false;
 }				/* showTables */
+
+/* display foreign keys, from this table to others */
+bool
+fetchForeign(char *tname)
+{
+    char farschema[40], fartab[40];
+    char farcol[40];
+    char nearcol[40];
+    SQLLEN nearcolOut, farschemaOut, fartabOut, farcolOut;
+    char *dot;
+
+    newStatement();
+    stmt_text = "foreign keys";
+    debugStatement();
+
+    dot = strchr(tname, '.');
+    if(dot)
+	*dot++ = 0;
+
+    rc = SQLForeignKeys(hstmt,
+       NULL, SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS,
+       NULL, SQL_NTS,
+       (dot ? tname : NULL), SQL_NTS, (dot ? dot : tname), SQL_NTS);
+    if(rc)
+	goto abort;
+
+    SQLBindCol(hstmt, 2, SQL_CHAR, (SQLPOINTER) farschema, sizeof (farschema),
+       &farschemaOut);
+    SQLBindCol(hstmt, 3, SQL_CHAR, (SQLPOINTER) fartab, sizeof (fartab),
+       &fartabOut);
+    SQLBindCol(hstmt, 4, SQL_CHAR, (SQLPOINTER) farcol, sizeof (farcol),
+       &farcolOut);
+    SQLBindCol(hstmt, 8, SQL_CHAR, (SQLPOINTER) nearcol, sizeof (nearcol),
+       &nearcolOut);
+
+    while(SQLFetch(hstmt) == SQL_SUCCESS) {
+	printf("%s > ", nearcol);
+	if(farschema[0])
+	    printf("%s.", farschema);
+	printf("%s.%s\n", fartab, farcol);
+    }
+
+    SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+    return true;
+
+  abort:
+    SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+    return false;
+}				/* fetchForeign */

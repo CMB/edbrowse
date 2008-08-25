@@ -996,6 +996,14 @@ showColumns(void)
     }
 }				/* showColumns */
 
+void
+showForeign(void)
+{
+    if(!setTable())
+	return;
+    fetchForeign(td->name);
+}				/* showForeign */
+
 /* Select rows of data and put them into the text buffer */
 static bool
 rowsIntoBuffer(int cid, const char *types, char **bufptr, int *lcnt)
