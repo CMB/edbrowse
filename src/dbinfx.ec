@@ -1589,3 +1589,10 @@ showTables(void)
 {
 puts("Not implemented in Informix, but certainly doable through systables");
 }				/* showTables */
+
+/* This can also be done by catalogs; it's on my list of things to do. */
+bool
+fetchForeign(char *tname)
+{
+i_puts(MSG_NYI);
+} /* fetchForeign */

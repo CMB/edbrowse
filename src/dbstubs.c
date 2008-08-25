@@ -26,6 +26,11 @@ showColumns(void)
 {
 }				/* showColumns */
 
+void
+showForeign(void)
+{
+}				/* showForeign */
+
 bool
 showTables(void)
 {

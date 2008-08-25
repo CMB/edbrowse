@@ -268,6 +268,7 @@ bool handlerPresent(void *ev, const char *name) ;
 bool sqlReadRows(const char *filename, char **bufptr) ;
 void dbClose(void) ;
 void showColumns(void) ;
+void showForeign(void) ;
 bool showTables(void) ;
 bool sqlDelRows(int start, int end) ;
 bool sqlUpdateRow(pst source, int slen, pst dest, int dlen) ;
