@@ -1001,6 +1001,7 @@ showForeign(void)
 {
     if(!setTable())
 	return;
+    i_printf(MSG_Fkeys, td->name);
     fetchForeign(td->name);
 }				/* showForeign */
 
@@ -1734,17 +1735,6 @@ goSelect(int *startLine, char **rbuf)
     stringAndBytes(&cmd, &cmdlen, line, j);
     cmd[0] = ' ';
 
-/* Try to infer action from the first word of the command. */
-    action = -1;
-    for(s = cmd; *s == ' ' || *s == '\t'; ++s) ;
-    for(i = 0; actionWords[i]; ++i) {
-	l = strlen(actionWords[i]);
-	if(memEqualCI(s, actionWords[i], l) && isspace(s[l])) {
-	    action = actionCodes[i];
-	    break;
-	}
-    }
-
     while(j == 1 || line[j - 2] != ';') {
 	if(++lineno > cw->dol || !(line = fetchLine(lineno, -1))) {
 	    setError(MSG_UnterminatedSelect);
@@ -1757,6 +1747,17 @@ goSelect(int *startLine, char **rbuf)
 	}
 	j = pstLength(line);
 	stringAndBytes(&cmd, &cmdlen, line, j);
+    }
+
+/* Try to infer action from the first word of the command. */
+    action = -1;
+    for(s = cmd; isspaceByte(*s); ++s) ;
+    for(i = 0; actionWords[i]; ++i) {
+	l = strlen(actionWords[i]);
+	if(memEqualCI(s, actionWords[i], l) && isspace(s[l])) {
+	    action = actionCodes[i];
+	    break;
+	}
     }
 
     if(!ebConnect()) {

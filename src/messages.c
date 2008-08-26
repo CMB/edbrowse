@@ -672,6 +672,7 @@ static const char *englishMessages[] = {
     "operation timed out",
     "cannot send data to the server",
     "the curl library returned the following error message while performing the requested operation: %s",
+    "foreign keys for %s\n",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */

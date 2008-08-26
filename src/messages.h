@@ -672,4 +672,5 @@ enum {
     MSG_Timeout,
     MSG_CurlSendData,
     MSG_CurlCatchAll,
+    MSG_Fkeys,
 };

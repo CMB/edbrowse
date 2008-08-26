@@ -3981,9 +3981,14 @@ runCommand(const char *line)
 		cmd = 'e';	/* for autoprint of errors */
 		cw->dot = startRange;
 		if(*rbuf) {
+		    int savedol = cw->dol;
 		    readyUndo();
 		    addTextToBuffer((pst) rbuf, strlen(rbuf), cw->dot, false);
 		    nzFree(rbuf);
+		    if(cw->dol > savedol) {
+			cw->labels[0] = startRange + 1;
+			cw->labels[1] = startRange + cw->dol - savedol;
+		    }
 		    cw->dot = startRange;
 		}
 		return j ? true : false;
