@@ -28,7 +28,7 @@ static const char *emptyParms[] = { 0 };
 static jsval emptyArgs[] = { 0 };
 
 static void
-url_initialize(const char *url, bool readonly, bool exclude_href);
+  url_initialize(const char *url, bool readonly, bool exclude_href);
 
 const char *
 stringize(long v)
@@ -99,7 +99,7 @@ static JSBool
 loc_reload(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
    jsval * rval)
 {
-    const char *s = firstURL();
+    const char *s = cw->firstURL;
     if(s && isURL(s))
 	gotoLocation(cloneString(s), 0, true);
     else

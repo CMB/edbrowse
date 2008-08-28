@@ -811,7 +811,7 @@ createJavaContext(void)
     establish_property_string(jdoc, "referrer", cw->referrer, true);
     establish_property_url(jdoc, "URL", cw->fileName, true);
     establish_property_url(jdoc, "location", cw->fileName, false);
-    establish_property_url(jwin, "location", firstURL(), false);
+    establish_property_url(jwin, "location", cw->firstURL, false);
     establish_property_string(jdoc, "domain", getHostURL(cw->fileName), false);
 
 /* create arrays under document */

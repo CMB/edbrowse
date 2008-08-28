@@ -494,6 +494,7 @@ freeWindow(struct ebWindow *w)
     freeTags(w->tags);
     freeWindowLines(w->map);
     nzFree(w->fileName);
+    nzFree(w->firstURL);
     nzFree(w->referrer);
     nzFree(w->baseDirName);
     free(w);
@@ -3633,12 +3634,6 @@ runCommand(const char *line)
 	}			/* was there something after m or t */
     }
 
-    /* m or t */
-    /* Any command other than a lone b resets history */
-    if(cmd != 'b' || first) {
-	fetchHistory(0, 0);	/* reset history */
-    }
-
 /* env variable and wild card expansion */
     if(strchr("brewf", cmd) && first && !isURL(line) && !isSQL(line)) {
 	if(cmd != 'r' || !cw->sqlMode) {
@@ -4290,6 +4285,7 @@ runCommand(const char *line)
 		i_puts(MSG_MailHowto);
 	} else {
 	    cw->fileName = cloneString(line);
+	    cw->firstURL = cloneString(line);
 	    if(isSQL(line))
 		cw->sqlMode = true;
 	    if(icmd == 'g' && !nogo && isURL(line))
@@ -4315,6 +4311,9 @@ runCommand(const char *line)
 	}
 	if(noStack) {
 	    w->prev = cw->prev;
+	    nzFree(w->firstURL);
+	    w->firstURL = cw->firstURL;
+	    cw->firstURL = 0;
 	    cxQuit(context, 1);
 	} else {
 	    w->prev = cw;
@@ -4367,10 +4366,6 @@ runCommand(const char *line)
 	    if(!refreshDelay(newloc_d, newlocation)) {
 		nzFree(newlocation);
 		newlocation = 0;
-	    } else if(fetchHistory(cw->fileName, newlocation) < 0) {
-		nzFree(newlocation);
-		newlocation = 0;
-		showError();
 	    } else {
 	      redirect:
 		noStack = newloc_rf;

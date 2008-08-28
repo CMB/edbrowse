@@ -115,8 +115,6 @@ typedef uchar *pst;		/* perl string */
 #define MAXTTYLINE 256
 /* Longest line that can take the substitute command */
 #define REPLACELINELEN 50000
-/* How many pages can we fetch, through frames etc. */
-#define MAXFETCH 100
 /* The longest string, in certain contexts. */
 #define MAXSTRLEN 1024
 /* How about user login and password? */
@@ -318,6 +316,7 @@ struct ebWindow {
 /* remember dot and dol for the raw text, when in browse mode */
     int r_dot, r_dol;
     char *fileName;		/* name of file or url */
+    char *firstURL;		/* before http redirection */
     char *referrer;
     char *baseDirName;		/* when scanning a directory */
     char *ft, *fd, *fk;		/* title, description, keywords */

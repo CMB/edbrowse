@@ -410,15 +410,6 @@ httpConnect(const char *from, const char *url)
     int redirect_count = 0;
     bool name_changed = false;
 
-    int n = fetchHistory(from, url);
-    if(n < 0)
-	return false;		/* infinite loop */
-    if(n == 0) {
-	serverData = EMPTYSTRING;
-	serverDataLen = 0;
-	return true;		/* success, because it's already fetched */
-    }
-
     serverData = NULL;
     serverDataLen = 0;
     creds_buf[0] = '\0';
@@ -581,7 +572,6 @@ httpConnect(const char *from, const char *url)
 
     while(still_fetching == true) {
 	char *redir = NULL;
-	int histNum = 0;
 	init_header_parser();
 	curlret = curl_easy_perform(curl_handle);
 	if(serverDataLen >= CHUNKSIZE)
@@ -608,18 +598,10 @@ httpConnect(const char *from, const char *url)
 		temp_url = urlcopy;
 		urlcopy = redir;
 		unpercentURL(urlcopy);
-		histNum = fetchHistory(temp_url, urlcopy);
 
 		if(redirect_count >= 10) {
 		    i_puts(MSG_RedirectMany);
 		    transfer_status = true;
-		} else if(histNum < 0)
-		    transfer_status = false;	/* transfer failed, infinite redirect. */
-		else if(histNum == false) {
-		    nzFree(serverData);
-		    serverData = NULL;
-		    serverDataLen = 0;
-		    transfer_status = true;	/* Success.  Page already fetched. */
 		} else {	/* redirection looks good. */
 /* Convert POST request to GET request after redirection. */
 		    curl_easy_setopt(curl_handle, CURLOPT_HTTPGET, 1);

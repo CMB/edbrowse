@@ -55,8 +55,6 @@ void getDirURL(const char *url, const char **start_p, const char **end_p) ;
 bool getPortLocURL(const char *url, const char **portloc, int *port) ;
 int getPortURL(const char *url) ;
 bool isProxyURL(const char *url) ;
-int fetchHistory(const char *prev, const char *next) ;
-const char * firstURL(void) ;
 char * resolveURL(const char *base, const char *rel) ;
 bool sameURL(const char *s, const char *t) ;
 char * altText(const char *base) ;

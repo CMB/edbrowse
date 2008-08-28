@@ -502,64 +502,6 @@ isProxyURL(const char *url)
     return ((url[0] | 0x20) == 'p');
 }
 
-/* Don't let a web page fetch itself. */
-static char *histURL[MAXFETCH];
-static int histFrom[MAXFETCH];
-static int n_fetch;
-int
-fetchHistory(const char *prev, const char *next)
-{
-    int i;
-    int from = -1;
-/* zero is a reset */
-    if(prev == 0) {
-	for(i = 0; i < n_fetch; ++i)
-	    free(histURL[i]);
-	n_fetch = 0;
-	if(!next)
-	    return false;
-    } else {
-	if(memEqualCI(prev, "http://", 7))
-	    prev += 7;
-	for(i = 0; i < n_fetch; ++i)
-	    if(stringEqual(prev, histURL[i])) {
-		from = i;
-		break;
-	    }
-    }
-    if(n_fetch >= MAXFETCH) {
-	setError(MSG_WebFetchMany);
-	return -1;
-    }
-/* Have we seen this one before? */
-    if(memEqualCI(next, "http://", 7))
-	next += 7;
-    for(i = 0; i < n_fetch; ++i)
-	if(stringEqual(next, histURL[i]))
-	    break;
-    if(i == n_fetch) {		/* new */
-	histURL[i] = cloneString(next);
-	histFrom[i] = from;
-	++n_fetch;
-	return true;
-    }
-/* Oops, we've already fetched this page. */
-    while(from >= 0 && from != i)
-	from = histFrom[from];
-    if(from < 0)
-	return false;
-    setError(MSG_WebFetchSelf);
-    return -1;
-}				/* FetchHistory */
-
-const char *
-firstURL(void)
-{
-    if(!n_fetch)
-	return 0;
-    return histURL[0];
-}				/* firstURL */
-
 static void
 squashDirectories(char *url)
 {

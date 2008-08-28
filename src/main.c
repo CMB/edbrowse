@@ -1162,8 +1162,8 @@ main(int argc, char **argv)
 	if(cx == 1)
 	    runEbFunction("init");
 	changeFileName = 0;
-	fetchHistory(0, 0);	/* reset history */
 	cw->fileName = cloneString(file);
+	cw->firstURL = cloneString(file);
 	if(isSQL(file))
 	    cw->sqlMode = true;
 	rc = readFile(file, "");
