@@ -673,4 +673,6 @@ enum {
     MSG_CurlSendData,
     MSG_CurlCatchAll,
     MSG_Fkeys,
+    MSG_FetchBlobOff,
+    MSG_FetchBlobOn,
 };

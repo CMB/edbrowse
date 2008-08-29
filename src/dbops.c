@@ -924,14 +924,6 @@ setTable(void)
 	td->key3 = part3;
     }
 
-    s = strpbrk(td->types, "BT");
-    if(s)
-	s = strpbrk(s + 1, "BT");
-    if(s) {
-	setError(MSG_DBManyBlobs);
-	return false;
-    }
-
     cw->table = td;
     return true;
 }				/* setTable */
@@ -1033,7 +1025,7 @@ rowsIntoBuffer(int cid, const char *types, char **bufptr, int *lcnt)
 	s[-1] = '\n';		/* overwrite the last pipe */
 
 /* look for blob column */
-	if(s = strpbrk(types, "BT")) {
+	if(rv_blobLoc && (s = strpbrk(types, "BT"))) {
 	    int bfi = s - types;	/* blob field index */
 	    int cx = 0;		/* context, where to put the blob */
 	    int j;
@@ -1043,10 +1035,8 @@ rowsIntoBuffer(int cid, const char *types, char **bufptr, int *lcnt)
 		u = strchr(u, '|') + 1;
 	    v = strpbrk(u, "|\n");
 	    end = v + strlen(v);
-	    if(rv_blobSize) {
-		cx = sideBuffer(0, rv_blobLoc, rv_blobSize, 0, false);
-		nzFree(rv_blobLoc);
-	    }
+	    cx = sideBuffer(0, rv_blobLoc, rv_blobSize, 0, false);
+	    nzFree(rv_blobLoc);
 	    sprintf(myTab, "<%d>", cx);
 	    if(!cx)
 		myTab[0] = 0;

@@ -117,6 +117,7 @@ blind, script, accessible">
 <UL>
 <LI><A HREF=#sqlb> Building edbrowse with Database Access </A>
 <LI><A HREF=#rtb> Reading Tables </A>
+<LI><A HREF=#dsource> Data Source </A>
 <LI><A HREF=#insupd> Insert, Update, Delete </A>
 <LI><A HREF=#td> Table Descriptors </A>
 <LI><A HREF=#gosql> Go SQL </A>
@@ -500,6 +501,7 @@ ds=source,login,password: set the data source
 sht: show tables
 shc: show columns (and primary key) for the current table
 shf: show foreign keys for the current table
+fbc: fetch blob columns (toggle)
 sm: send mail [account number]
 re: reply to a mail message
 rea: reply to all
@@ -3949,7 +3951,7 @@ customers]birth=01/01/1960-12/31/1960
 Fetch the customers who were born in 1960.
 
 <P>
-It is sometimes best to edit with a blank template, i.e. without a where clause.&nbsp;
+It is usually best to edit with a blank template, i.e. without a where clause.&nbsp;
 Then, you can read in whatever rows you like.&nbsp;
 Type an r before any of the strings shown above to read rows into your buffer.&nbsp;
 Note, you cannot read data from different tables into the same buffer,
@@ -3984,6 +3986,14 @@ You can switch to session 9 and save the file, or throw it away.
 2139|Fred|Flintstone|08/21/1969|M|foo@bar.bar.com|&lt;9&gt;
 
 <P>
+Binary columns are not fetched by default.&nbsp;
+You usually don't want them anyways.&nbsp;
+To fetch binary columns, use the fbc command.&nbsp;
+It is not possible to fetch more than one binary column at a time,
+so make sure your select only grabs one such column.
+
+<H3 align=center> <A NAME=dsource> Data source </A> </H3>
+
 To do anything with the database, your config file must specify
 the name of the data source, the login, and the password.&nbsp;
 Data source must match one of the entries in your .odbc.ini file.&nbsp;
@@ -4007,6 +4017,10 @@ I just pass it through.
 
 <H3 align=center> <A NAME=insupd> Insert, Update, Delete </A> </H3>
 
+Now that we have run a few selects, let's modify some data.&nbsp;
+These operations are known as insert, update, and delete in the database world.
+
+<P>
 Adding database rows is substantially different from adding text.&nbsp;
 Since a row may contain a dozen fields, and you may not remember what goes where,
 edbrowse prompts you for each field in turn.&nbsp;

@@ -3100,14 +3100,13 @@ twoLetter(const char *line, const char **runThis)
 	setDataSource(cloneString(line + 3));
 	return true;
     }
-#if 0
-    if(stringEqual(line, "tn")) {
-	textAreaDosNewlines ^= 1;
+
+    if(stringEqual(line, "fbc")) {
+	fetchBlobColumns ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
-	    i_puts(textAreaDosNewlines + MSG_AreaUnix);
+	    i_puts(MSG_FetchBlobOff + fetchBlobColumns);
 	return true;
     }
-#endif
 
     if(stringEqual(line, "eo")) {
 	endMarks = 0;

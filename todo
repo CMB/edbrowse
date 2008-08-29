@@ -21,3 +21,4 @@ attachEvent("onclick", doSomething);
 getAttribute setAttribute
 put account: in reply function
 http://www.npr.org/templates/dmg/dmg.php?getProgramStream=true&NPRMediaPref=RM
+old mcdonald detection doesn't work any more

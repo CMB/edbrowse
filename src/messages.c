@@ -673,6 +673,8 @@ static const char *englishMessages[] = {
     "cannot send data to the server",
     "the curl library returned the following error message while performing the requested operation: %s",
     "foreign keys for %s\n",
+    "do not fetch blob columns",
+    "fetch blob columns",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */

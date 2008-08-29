@@ -2880,7 +2880,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 			goto fail;
 		    continue;
 		}		/* attach */
-		if(!unfoldBuffer(cx, textAreaDosNewlines, &cxbuf, &cxlen))
+		if(!unfoldBuffer(cx, true, &cxbuf, &cxlen))
 		    goto fail;
 		for(j = 0; j < cxlen; ++j)
 		    if(cxbuf[j] == 0) {

@@ -30,10 +30,11 @@ struct MIMETYPE mimetypes[MAXMIME];
 static int maxTables;
 static struct DBTABLE dbtables[MAXDBT];
 char *dbarea, *dblogin, *dbpw;	/* to log into the database */
+bool fetchBlobColumns;
 char *proxy_host;
 int proxy_port;
 bool caseInsensitive, searchStringsAll;
-bool textAreaDosNewlines = true, undoable;
+bool undoable;
 bool allowRedirection = true, allowJS = true, sendReferrer = false;
 bool binaryDetect = true;
 bool showHiddenFiles, helpMessagesOn;

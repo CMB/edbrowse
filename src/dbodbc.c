@@ -837,6 +837,8 @@ retsFromOdbc(void)
     long input_length, output_length;
     char tbuf[20];		/* temp buf, for dates and times */
     double fmoney;		/* float version of money */
+    int blobcount = 0;
+    bool fbc = fetchBlobColumns;
 
     /* no blobs unless proven otherwise */
     rv_blobLoc = 0;
@@ -846,6 +848,18 @@ retsFromOdbc(void)
 	errorPrint("@calling retsFromOdbc() with no returns pending");
 
     stmt_text = "retsFromOdbc";
+    debugStatement();
+
+/* count the blobs */
+    if(fbc)
+	for(i = 0; i < rv_numRets; ++i)
+	    if(rv_type[i] == 'B' || rv_type[i] == 'T')
+		++blobcount;
+    if(blobcount > 1) {
+	i_puts(MSG_DBManyBlobs);
+	fbc = false;
+    }
+
     for(i = 0; i < rv_numRets; ++i) {
 	if(!indata) {
 	    q = va_arg(sqlargs, void *);
@@ -925,7 +939,7 @@ retsFromOdbc(void)
 	    errorPrint("@retsFromOdbc, rv_type[%d] = %c", i, rv_type[i]);
 	}			/* switch */
 
-	if(everything_null) {
+	if(everything_null || c_type == SQL_C_BINARY && !fbc) {
 	    rc = SQL_SUCCESS;
 	    output_length = SQL_NULL_DATA;
 	} else {
@@ -1192,8 +1206,10 @@ Count(*) becomes decimal(15,0).  So be careful.
 	if(current_driver == DRIVER_INFORMIX) {
 	    if(coltype == SQL_VARCHAR && colprec == 24 && colscale == 0)
 		coltype = SQL_TIME;
+#if 0
 	    if(coltype == SQL_DECIMAL && (colprec != 15 || colscale != 0))
 		coltype = SQL_MONEY;
+#endif
 	}
 
 	if(current_driver == DRIVER_SQLITE) {
