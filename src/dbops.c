@@ -1796,8 +1796,9 @@ goSelect(int *startLine, char **rbuf)
     j = rv_lastNrows;
     if(rc)
 	*startLine = lineno;
-    if(action >= MSG_Selected && action <= MSG_Deleted)
+    if(action >= MSG_Selected && action <= MSG_Deleted && (j || rc))
 	goto printrows;
-    i_puts(MSG_OK);
-    return 1;
+    if(rc)
+	i_puts(MSG_OK);
+    return rc;
 }				/* goSelect */
