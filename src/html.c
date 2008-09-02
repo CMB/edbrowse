@@ -992,6 +992,7 @@ findOpenTag(const char *name)
     bool closing = topTag->slash;
     bool match;
     const char *desc = topTag->info->desc;
+
     foreachback(t, htmlStack) {
 	if(t == topTag)
 	    continue;		/* last one doesn't count */
@@ -1257,16 +1258,13 @@ encodeTags(char *html)
 	topAttrib = t->attrib = j ? pullString(attrib, j) : EMPTYSTRING;
 
 	open = 0;
-	if(ti->nest) {
+	if(ti->nest && slash) {
 	    open = findOpenTag(ti->name);
-	    if(slash) {
-		if(!open)
-		    continue;	/* unbalanced </ul> means nothing */
-		open->balanced = t->balanced = true;
-		if(open->jv)
-		    establish_innerHTML(open->jv, open->inner, save_h, false);
-	    } else
-		open = 0;
+	    if(!open)
+		continue;	/* unbalanced </ul> means nothing */
+	    open->balanced = t->balanced = true;
+	    if(open->jv)
+		establish_innerHTML(open->jv, open->inner, save_h, false);
 	}
 
 	if(slash && ti->bits & TAG_NOSLASH)
