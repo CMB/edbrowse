@@ -1118,6 +1118,48 @@ htmlReformat(const char *buf)
 
 
 /*********************************************************************
+Convert a 31 bit unicode character into utf8.
+*********************************************************************/
+
+static int
+uni2utf8(unsigned int unichar, unsigned char *outbuf)
+{
+    int n = 0;
+    if((unichar >= 0) && (unichar <= 0x7f)) {
+	outbuf[n++] = (unsigned char)(unichar & 0x7f);
+    } else if((unichar >= 0x80) && (unichar <= 0x7ff)) {
+	outbuf[n++] = 0xc0 | (unsigned char)((unichar >> 6) & 0x1f);
+	outbuf[n++] = 0x80 | (unsigned char)(unichar & 0x3f);
+    } else if((unichar >= 0x800) && (unichar <= 0xffff)) {
+	outbuf[n++] = 0xe0 | (unsigned char)((unichar >> 12) & 0xf);
+	outbuf[n++] = 0x80 | (unsigned char)((unichar >> 6) & 0x3f);
+	outbuf[n++] = 0x80 | (unsigned char)(unichar & 0x3f);
+    } else if((unichar >= 0x10000) && (unichar <= 0x1fffff)) {
+	outbuf[n++] = 0xf0 | (unsigned char)((unichar >> 18) & 7);
+	outbuf[n++] = 0x80 | (unsigned char)((unichar >> 12) & 0x3f);
+	outbuf[n++] = 0x80 | (unsigned char)((unichar >> 6) & 0x3f);
+	outbuf[n++] = 0x80 | (unsigned char)(unichar & 0x3f);
+    } else if((unichar >= 0x200000) && (unichar <= 0x3ffffff)) {
+	outbuf[n++] = 0xf8 | ((unichar >> 24) & 3);
+	outbuf[n++] = 0x80 | (unsigned char)((unichar >> 18) & 0x3f);
+	outbuf[n++] = 0x80 | (unsigned char)((unichar >> 12) & 0x3f);
+	outbuf[n++] = 0x80 | (unsigned char)((unichar >> 6) & 0x3f);
+	outbuf[n++] = 0x80 | (unsigned char)(unichar & 0x3f);
+    } else if((unichar >= 0x4000000) && (unichar <= 0x7fffffff)) {
+	outbuf[n++] = 0xfc | (unsigned char)((unichar >> 30) & 1);
+	outbuf[n++] = 0x80 | (unsigned char)((unichar >> 24) & 0x3f);
+	outbuf[n++] = 0x80 | (unsigned char)((unichar >> 18) & 0x3f);
+	outbuf[n++] = 0x80 | (unsigned char)((unichar >> 12) & 0x3f);
+	outbuf[n++] = 0x80 | (unsigned char)((unichar >> 6) & 0x3f);
+	outbuf[n++] = 0x80 | (unsigned char)(unichar & 0x3f);
+    } else
+	n = -1;			/* character in range 0x80000000 - 0xffffffff ... invalid? */
+
+    return n;
+}				/* uni2utf8 */
+
+
+/*********************************************************************
 And-convert the string; you know, &nbsp; &lt; etc.
 This is the routine that makes it possible for me to read, and write,
 my math site.  http://www.mathreference.com/accessible.html
@@ -1409,12 +1451,10 @@ andTranslate(const char *s, bool invisible)
 	    if(!r[1]) {		/* replace with a single character */
 		c = *r;
 		if(c & 0x80 && cons_utf8) {
-		    static char utfbuf[4];
+		    static char utfbuf[8];
 		    n = (uchar) c;
 		  n_utf8:
-		    utfbuf[0] = (0xc0 | (n >> 6));
-		    utfbuf[1] = (0x80 | (n & 0x3f));
-		    utfbuf[2] = 0;
+		    uni2utf8(n, utfbuf);
 		    r = utfbuf;
 		    goto putw;
 		}
@@ -1440,7 +1480,10 @@ andTranslate(const char *s, bool invisible)
 
 	if(andbuf[0] != '#')
 	    goto putc;
-	n = stringIsNum(andbuf + 1);
+	if(andbuf[1] == 'x' || andbuf[1] == 'X') {
+	    n = strtol(andbuf + 2, 0, 16);
+	} else
+	    n = stringIsNum(andbuf + 1);
 	if(n < 0)
 	    goto putc;
 	if(n > 0x7ff)
@@ -1451,6 +1494,8 @@ andTranslate(const char *s, bool invisible)
 	}
 	if(n > 0xff)
 	    goto putc;
+/* This line assumes iso8859-1; if you're anything else, you're screwed! */
+/* I need to fix this some day, but most everybody is utf8 anyways. */
 	c = n;
 /* don't allow nulls */
 	if(c == 0)
