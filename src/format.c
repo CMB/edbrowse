@@ -1486,8 +1486,6 @@ andTranslate(const char *s, bool invisible)
 	    n = stringIsNum(andbuf + 1);
 	if(n < 0)
 	    goto putc;
-	if(n > 0x7ff)
-	    goto putc;
 	if(n > 0x7f && cons_utf8) {
 	    s += j;
 	    goto n_utf8;
