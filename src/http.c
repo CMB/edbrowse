@@ -634,7 +634,7 @@ httpConnect(const char *from, const char *url)
 		    curlret =
 		       curl_easy_setopt(curl_handle, CURLOPT_URL, urlcopy);
 		    if(curlret != CURLE_OK)
-			goto curl_fail;;
+			goto curl_fail;
 
 		    nzFree(serverData);
 		    serverData = EMPTYSTRING;
@@ -1330,7 +1330,7 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb, void *unused)
 	end++;
 
 	if(start < end)
-	    location_url = pullString1(start, end);
+	    location_url = copy_and_sanitize(start, end);
     }
     return bytes_in_line;
 }				/* curl_header_callback */
