@@ -190,7 +190,7 @@ static const struct tagInfo elements[] = {
     {"DL", "a definition list", TAGACT_NOP, 3, 5, 1},
     {"HR", "a horizontal line", TAGACT_HR, 0, 5, 5},
     {"FORM", "a form", TAGACT_FORM, 1, 0, 1},
-    {"BUTTON", "a button", TAGACT_BUTTON, 0, 0, 5},
+    {"BUTTON", "a button", TAGACT_INPUT, 0, 0, 5},
     {"FRAME", "a frame", TAGACT_FRAME, 0, 2, 5},
     {"IFRAME", "a frame", TAGACT_FRAME, 0, 2, 5},
     {"MAP", "an image map", TAGACT_MAP, 0, 2, 5},
@@ -676,8 +676,12 @@ htmlInput(void)
 	    browseError(MSG_InputType, s);
 	    n = INP_TEXT;
 	}
+    } else if(stringEqual(topTag->info->name, "BUTTON")) {
+	n = INP_BUTTON;
     }
+
     topTag->itype = n;
+
     if(htmlAttrPresent(topAttrib, "readonly"))
 	topTag->rdonly = true;
     s = htmlAttrVal(topAttrib, "maxlength");
