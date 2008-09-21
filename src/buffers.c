@@ -4713,24 +4713,27 @@ browseCurrentBuffer(void)
     if(bmode == 1) {
 	newbuf = emailParse(rawbuf);
 	j = strlen(newbuf);
+
 	do_ip = true;
 	if(!ipbFile)
 	    do_ip = false;
 	if(passMail)
 	    do_ip = false;
+
+/* mail could need utf8 conversion, after qp decode */
+	iuReformat(newbuf, j, &tbuf, &tlen);
+	if(tbuf) {
+	    nzFree(newbuf);
+	    newbuf = tbuf;
+	    j = tlen;
+	}
+
 	if(memEqualCI(newbuf, "<html>\n", 7) && allowRedirection) {
 /* double browse, mail then html */
 	    bmode = 2;
 	    rawbuf = newbuf;
 	    rawsize = j;
 	    prepareForBrowse(rawbuf, rawsize);
-	} else {
-/* plain mail could need utf8 conversion, after qp decode */
-	    iuReformat(newbuf, j, &tbuf, &tlen);
-	    if(tbuf) {
-		nzFree(newbuf);
-		newbuf = tbuf;
-	    }
 	}
     }
 
