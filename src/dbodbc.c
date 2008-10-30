@@ -35,7 +35,6 @@ enum {
     DRIVER_POSTGRESQL,
     DRIVER_INFORMIX,
     DRIVER_TDS,
-    DRIVER_SYBASE,
     DRIVER_ORACLE,
     DRIVER_DB2,
 };
@@ -1875,6 +1874,8 @@ fetchForeign(char *tname)
        NULL, SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS,
        NULL, SQL_NTS,
        (dot ? tname : NULL), SQL_NTS, (dot ? dot : tname), SQL_NTS);
+    if(dot)
+	dot[-1] = '.';
     if(rc)
 	goto abort;
 
