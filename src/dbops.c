@@ -882,6 +882,9 @@ setTable(void)
 		return false;
 	    }
 	    td->types = cloneString(rv_type);
+	    nc = rv_numRets;
+	    td->nullable = allocMem(nc);
+	    memcpy(td->nullable, rv_nullable, nc);
 	    sql_free(cid);
 	}
 
@@ -908,6 +911,8 @@ setTable(void)
 	td->types = cloneString(rv_type);
 	td->types[nc] = 0;
 	td->ncols = nc;
+	td->nullable = allocMem(nc);
+	memcpy(td->nullable, rv_nullable, nc);
 	for(i = 0; i < nc; ++i)
 	    td->cols[i] = cloneString(rv_name[i]);
 	sql_free(cid);
@@ -950,6 +955,8 @@ showColumns(void)
 	printf("%d ", i + 1);
 	if(td->key1 == i + 1 || td->key2 == i + 1 || td->key3 == i + 1)
 	    printf("*");
+	if(td->nullable[i])
+	    printf("+");
 	printf("%s ", td->cols[i]);
 	c = td->types[i];
 	switch (c) {

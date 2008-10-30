@@ -180,6 +180,7 @@ struct DBTABLE {
     char ncols;
     unsigned char key1, key2, key3;
     char *types;
+    char *nullable;
 };
 
 /* various globals */
