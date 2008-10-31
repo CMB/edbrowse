@@ -705,6 +705,12 @@ pushQuoted(char **s, int *slen, const char *value, int colno)
 {
     char quotemark = 0;
     char coltype = td->types[colno];
+
+    if(!value || !*value) {
+	stringAndString(s, slen, "NULL");
+	return;
+    }
+
     if(coltype != 'F' && coltype != 'N') {
 /* Microsoft insists on single quote. */
 	quotemark = '\'';
