@@ -19,6 +19,19 @@ struct cookie {
     bool secure;
 };
 
+/* In versions prior to 7.17.0, libcurl did not copy the strings that you
+ * gave it.  In versions >= 7.17.0, it does copy most strings, with
+ * exceptions described in the manual.
+ * safe_curl_free frees memory if libcurl's version is 7.17.0 or greater.
+*/
+
+#define COPYING_VERSION 0x071700
+void safe_curl_free(char *the_string) {
+    curl_version_info_data *version_data = curl_version_info(CURLVERSION_NOW);
+    if(version_data->version_num >= COPYING_VERSION)
+        free(the_string);
+} /* safe_curl_free */
+
 static int
 count_tabs(const char *the_string)
 {
@@ -123,6 +136,7 @@ cookieForLibcurl(const struct cookie *c)
        c->secure ? "TRUE" : "FALSE", (unsigned)c->expires, c->name, c->value);
     debugPrint(3, "cookie for libcurl");
     curl_easy_setopt(curl_handle, CURLOPT_COOKIELIST, cookLine);
+    safe_curl_free(cookLine);
 }				/* cookieForLibcurl */
 
 /* Should this server really specify this domain in a cookie? */

@@ -495,16 +495,16 @@ httpConnect(const char *from, const char *url)
 	curlret = curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS,
 	   (postb_l ? postb : post));
 	if(curlret != CURLE_OK)
-	    goto curl_fail;;
+	    goto curl_fail;
 	curlret = curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDSIZE,
 	   postb_l ? postb_l : strlen(post));
 	if(curlret != CURLE_OK)
-	    goto curl_fail;;
+	    goto curl_fail;
     } else {
 	urlcopy = copy_and_sanitize(url, url + strlen(url));
 	curlret = curl_easy_setopt(curl_handle, CURLOPT_HTTPGET, 1);
 	if(curlret != CURLE_OK)
-	    goto curl_fail;;
+	    goto curl_fail;
     }
 
 
@@ -528,13 +528,13 @@ httpConnect(const char *from, const char *url)
 
     curlret = curl_easy_setopt(curl_handle, CURLOPT_REFERER, referrer);
     if(curlret != CURLE_OK)
-	goto curl_fail;;
+	goto curl_fail;
     curlret = curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, custom_headers);
     if(curlret != CURLE_OK)
-	goto curl_fail;;
+	goto curl_fail;
     curlret = curl_easy_setopt(curl_handle, CURLOPT_URL, urlcopy);
     if(curlret != CURLE_OK)
-	goto curl_fail;;
+	goto curl_fail;
 
     /* If we have a username and password, then tell libcurl about it.
      * libcurl won't send it to the server unless server gave a 401 response.
@@ -553,7 +553,7 @@ httpConnect(const char *from, const char *url)
 
     curlret = curl_easy_setopt(curl_handle, CURLOPT_USERPWD, creds_ptr);
     if(curlret != CURLE_OK)
-	goto curl_fail;;
+	goto curl_fail;
 
 /* We are ready to make a transfer.  Here is where it gets complicated.
  * At the top of the loop, we perform the HTTP request.  It may fail entirely
@@ -577,10 +577,10 @@ httpConnect(const char *from, const char *url)
 	if(serverDataLen >= CHUNKSIZE)
 	    nl();		/* We printed dots, so we terminate them with newline */
 	if(curlret != CURLE_OK)
-	    goto curl_fail;;
+	    goto curl_fail;
 	curl_easy_getinfo(curl_handle, CURLINFO_RESPONSE_CODE, &hcode);
 	if(curlret != CURLE_OK)
-	    goto curl_fail;;
+	    goto curl_fail;
 
 	redir = get_redirect_location();
 	if(redir)

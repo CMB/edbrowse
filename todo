@@ -5,7 +5,7 @@ onclick in <form>
 http deflate
 why is there an extra blank line after preformatted section
 &nbsp:
-find host fails for gvm1ghzxnlx0(+%##*vposzwx.watchfly.com
+find host fails for gvm1ghzxnlx0(+%##*vposzwx.watchfly.com because # in domain name??
 document.myFlash
 makeIt('1','IE')
 <a href="faq.html#something">something</a> <h4 id="something">heading 4</h4>
@@ -21,4 +21,3 @@ attachEvent("onclick", doSomething);
 getAttribute setAttribute
 put account: in reply function
 http://www.npr.org/templates/dmg/dmg.php?getProgramStream=true&NPRMediaPref=RM
-old mcdonald detection doesn't work any more

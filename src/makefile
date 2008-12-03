@@ -88,9 +88,9 @@ proto:
 	sendmail.c fetchmail.c html.c \
 	format.c cookies.c stringfile.c jsdom.c jsloc.c dbstubs.c >eb.p
 
-#  This doesn't build on my system, because I don't have libcurl.a.
+STATICLIBS = -lodbc -lpcre -lm -lsmjs -lcurl -lssl -lc -lcrypto -lpthread -lm -ldl -lrt
 edbrowse.static: $(EBOBJS) tcp.o dbops.o dbodbc.o
-	cc --static $(LFLAGS) -o edbrowse.static $(EBOBJS) tcp.o dbops.o dbodbc.o $(LIBS) -lodbc
+	cc --static $(LFLAGS) -o edbrowse.static $(EBOBJS) tcp.o dbops.o dbodbc.o $(STATICLIBS)
 
 clean:
 	rm -f *.o edbrowse edbrowseinf edbrowseodbc edbrowse.static
