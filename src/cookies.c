@@ -25,7 +25,7 @@ struct cookie {
  * safe_curl_free frees memory if libcurl's version is 7.17.0 or greater.
 */
 
-#define COPYING_VERSION 0x071700
+#define COPYING_VERSION 0x071100
 void safe_curl_free(char *the_string) {
     curl_version_info_data *version_data = curl_version_info(CURLVERSION_NOW);
     if(version_data->version_num >= COPYING_VERSION)
