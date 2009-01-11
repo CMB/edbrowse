@@ -1,5 +1,8 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.4.3:
+Hotmail smtp protocol.    outport = ^587
+
 3.4.1:
 Access to databases through odbc.
 Modify rows in a table by using the edit commands you already know.

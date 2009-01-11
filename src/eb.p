@@ -94,10 +94,11 @@ void i_caseShift(unsigned char *s, char action) ;
 /* sourcefile=sendmail.c */
 bool loadAddressBook(void) ;
 const char * reverseAlias(const char *reply) ;
-bool serverPutLine(const char *buf, bool secure) ;
-bool serverGetLine(bool secure) ;
-void serverClose(bool secure) ;
-bool mailConnect(const char *host, int port, bool secure) ;
+bool serverPutLine(const char *buf) ;
+bool serverGetLine(void) ;
+void serverPutGetError(const char *line) ;
+void serverClose(void) ;
+bool mailConnect(const char *host, int port, int secure) ;
 char * base64Encode(const char *inbuf, int inlen, bool lines) ;
 char * qpEncode(const char *line) ;
 bool encodeAttachment(const char *file, int ismail, bool webform, const char **type_p, const char **enc_p, char **data_p) ;
@@ -154,6 +155,7 @@ void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 void iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
 
 /* sourcefile=cookies.c */
+void safe_curl_free(char *the_string) ;
 bool domainSecurityCheck(const char *server, const char *domain) ;
 bool receiveCookie(const char *url, const char *str) ;
 void cookiesFromJar(void) ;

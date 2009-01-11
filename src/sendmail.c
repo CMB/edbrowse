@@ -15,6 +15,8 @@ char serverLine[MAXTTYLINE];
 static char spareLine[MAXTTYLINE];
 int mssock;			/* mail server socket */
 static bool doSignature;
+static bool ssl_on;
+static const char *mailhost;
 static char subjectLine[200];
 
 static struct ALIAS {
@@ -175,7 +177,7 @@ Print the lines if the debug level calls for it.
 *********************************************************************/
 
 bool
-serverPutLine(const char *buf, bool secure)
+serverPutLine(const char *buf)
 {
     int n, len = strlen(buf);
     char c;
@@ -187,7 +189,7 @@ serverPutLine(const char *buf, bool secure)
 		putchar(c);
 	}
     }
-    if(secure)
+    if(ssl_on)
 	n = ssl_write(buf, len);
     else
 	n = tcp_write(mssock, buf, len);
@@ -199,7 +201,7 @@ serverPutLine(const char *buf, bool secure)
 }				/* serverPutLine */
 
 bool
-serverGetLine(bool secure)
+serverGetLine(void)
 {
     int n, len, slen;
     char c;
@@ -208,7 +210,7 @@ serverGetLine(bool secure)
     strcpy(serverLine, spareLine);
     s = strchr(serverLine, '\n');
     if(!s) {
-	if(secure)
+	if(ssl_on)
 	    len = ssl_read(serverLine + slen, sizeof (serverLine) - 1 - slen);
 	else
 	    len =
@@ -235,36 +237,45 @@ serverGetLine(bool secure)
 }				/* serverGetLine */
 
 static bool
-serverPutGet(const char *line, bool secure)
+serverPutGet(const char *line)
 {
-    if(!serverPutLine(line, secure))
+    if(!serverPutLine(line))
 	return false;
-    if(!serverGetLine(secure))
+    if(!serverGetLine())
 	return false;
     return true;
 }				/* serverPutGet */
 
 void
-serverClose(bool secure)
+serverPutGetError(const char *line)
 {
-    serverPutLine("quit\r\n", secure);
+    if(!serverPutGet(line))
+	showErrorAbort();
+}				/* serverPutGetError */
+
+void
+serverClose(void)
+{
+    serverPutLine("quit\r\n");
     endhostent();
     sleep(2);
-    if(secure)
+    if(ssl_on)
 	ssl_done();
     close(mssock);
 }				/* serverClose */
 
 /* Connect to the mail server */
 bool
-mailConnect(const char *host, int port, bool secure)
+mailConnect(const char *host, int port, int secure)
 {
+    ssl_on = false;
     IP32bit ip = tcp_name_ip(host);
     if(ip == NULL_IP) {
 	setError((intFlag ? MSG_Interrupted : MSG_MailLocate), host);
 	return false;
     }
     debugPrint(4, "%s -> %s", host, tcp_ip_dots(ip));
+    mailhost = host;
     mssock = tcp_connect(ip, port, mailTimeout);
     if(mssock < 0) {
 	setError(intFlag ? MSG_Interrupted : MSG_MailConnect);
@@ -272,7 +283,7 @@ mailConnect(const char *host, int port, bool secure)
     }
     debugPrint(4, "connected to port %d", port);
     spareLine[0] = 0;
-    if(secure) {
+    if(secure & 1) {
 	int n = ssl_newbind(mssock);
 	if(n < 0) {
 	    if(n == -999)
@@ -282,6 +293,7 @@ mailConnect(const char *host, int port, bool secure)
 	    return false;
 	}
 	debugPrint(4, "secure connection established");
+	ssl_on = true;
     }
     return true;
 }				/* mailConnect */
@@ -920,10 +932,10 @@ sendMail(int account, const char **recipients, const char *body,
 	nzFree(encoded);
 	return false;
     }
-    if(!serverGetLine(ao->outssl))
+    if(!serverGetLine())
 	goto mailfail;
     while(memEqualCI(serverLine, "220-", 4)) {
-	if(!serverGetLine(ao->outssl))
+	if(!serverGetLine())
 	    goto mailfail;
     }
     if(!memEqualCI(serverLine, "220 ", 4)) {
@@ -932,10 +944,10 @@ sendMail(int account, const char **recipients, const char *body,
     }
 
     sprintf(serverLine, "%s %s%s", (a->outssl ? "ehlo" : "Helo"), smlogin, eol);
-    if(!serverPutLine(serverLine, ao->outssl))
+    if(!serverPutLine(serverLine))
 	goto mailfail;
   get250:
-    if(!serverGetLine(ao->outssl))
+    if(!serverGetLine())
 	goto mailfail;
     if(!memEqualCI(serverLine, "250", 3) ||
        serverLine[3] != ' ' && serverLine[3] != '-') {
@@ -947,8 +959,30 @@ sendMail(int account, const char **recipients, const char *body,
 
     if(ao->outssl) {
 	char *b;
+	int nb;
+
+	if(!ssl_on) {
+/* haven't yet switched over to ssl */
+	    if(!serverPutGet("starttls\r\n"))
+		goto mailfail;
+	    if(!memEqualCI(serverLine, "220 ", 4)) {
+		setError(MSG_MailBadPrompt, serverLine);
+		goto mailfail;
+	    }
+	    nb = ssl_newbind(mssock);
+	    if(nb < 0) {
+		if(nb == -999)
+		    setError(MSG_NoCertify, mailhost);
+		else
+		    setError(MSG_WebConnectSecure, mailhost, nb);
+		goto mailfail;
+	    }
+	    debugPrint(4, "secure connection established");
+	    ssl_on = true;
+	}
+
 /* login authentication is the only thing I support right now. */
-	if(!serverPutGet("auth login\r\n", true))
+	if(!serverPutGet("auth login\r\n"))
 	    goto mailfail;
 	if(!memEqualCI(serverLine, "334 ", 4)) {
 	    setError(MSG_AuthLoginOnly);
@@ -957,7 +991,7 @@ sendMail(int account, const char **recipients, const char *body,
 	b = base64Encode(login, strlen(login), false);
 	sprintf(serverLine, "%s%s", b, eol);
 	nzFree(b);
-	if(!serverPutGet(serverLine, true))
+	if(!serverPutGet(serverLine))
 	    goto mailfail;
 	if(!memEqualCI(serverLine, "334 ", 4)) {
 	    setError(MSG_AuthLoginOnly);
@@ -966,7 +1000,7 @@ sendMail(int account, const char **recipients, const char *body,
 	b = base64Encode(pass, strlen(pass), false);
 	sprintf(serverLine, "%s%s", b, eol);
 	nzFree(b);
-	if(!serverPutGet(serverLine, true))
+	if(!serverPutGet(serverLine))
 	    goto mailfail;
 	if(!memEqualCI(serverLine, "235 ", 4)) {
 	    setError(MSG_SmtpNotComplete, serverLine);
@@ -975,7 +1009,7 @@ sendMail(int account, const char **recipients, const char *body,
     }
 
     sprintf(serverLine, "mail from: <%s>%s", reply, eol);
-    if(!serverPutGet(serverLine, ao->outssl))
+    if(!serverPutGet(serverLine))
 	goto mailfail;
     if(!memEqualCI(serverLine, "250 ", 4)) {
 	setError(MSG_MailReject, reply);
@@ -984,7 +1018,7 @@ sendMail(int account, const char **recipients, const char *body,
 
     for(j = 0; s = recipients[j]; ++j) {
 	sprintf(serverLine, "rcpt to: <%s>%s", s, eol);
-	if(!serverPutGet(serverLine, ao->outssl))
+	if(!serverPutGet(serverLine))
 	    goto mailfail;
 	if(!memEqualCI(serverLine, "250 ", 4)) {
 	    setError(MSG_MailReject, s);
@@ -992,7 +1026,7 @@ sendMail(int account, const char **recipients, const char *body,
 	}
     }
 
-    if(!serverPutGet("data\r\n", ao->outssl))
+    if(!serverPutGet("data\r\n"))
 	goto mailfail;
     if(!memEqualCI(serverLine, "354 ", 4)) {
 	setError(MSG_MailNotReady, serverLine);
@@ -1114,12 +1148,12 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
     /* mime format */
     /* A dot alone ends the transmission */
     stringAndString(&out, &j, ".\r\n");
-    if(!serverPutLine(out, ao->outssl))
+    if(!serverPutLine(out))
 	goto mailfail;
     nzFree(out);
     out = 0;
 
-    if(!serverGetLine(ao->outssl))
+    if(!serverGetLine())
 	goto mailfail;
     if(!memEqualCI(serverLine, "250 ", 4) &&
 /* do these next two lines make any sense? */
@@ -1129,7 +1163,7 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 	goto mailfail;
     }
 
-    serverClose(ao->outssl);
+    serverClose();
     return true;
 
   mailfail:

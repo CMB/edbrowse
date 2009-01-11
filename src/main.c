@@ -13,7 +13,7 @@
 /* See eb.h for descriptive comments. */
 
 
-const char *version = "3.4.2";
+const char *version = "3.4.3";
 char *userAgents[10], *currentAgent, *currentReferrer;
 const char eol[] = "\r\n";
 char EMPTYSTRING[] = "";
@@ -458,13 +458,15 @@ readConfigFile(void)
 
 	case 6:
 	    if(*v == '*')
-		act->inssl = true, ++v;
+		act->inssl = 1, ++v;
 	    act->inport = atoi(v);
 	    continue;
 
 	case 7:
 	    if(*v == '*')
-		act->outssl = true, ++v;
+		act->outssl = 1, ++v;
+	    if(*v == '^')
+		act->outssl = 2, ++v;
 	    act->outport = atoi(v);
 	    continue;
 
