@@ -132,7 +132,7 @@ Karl Dahlke
 
 <H3 align=center> <A NAME=copy> Copyright Notice </A> </H3>
 
-This program is copyright (C) (C) Karl Dahlke, 2000-2008.&nbsp;
+This program is copyright (C) (C) Karl Dahlke, 2000-2009.&nbsp;
 It is made available by the author under the terms of the GNU General Public License (GPL),
 as articulated by the Free Software Foundation.&nbsp;
 It may be used for any purpose, and redistributed, provided this copyright notice is included.
@@ -253,7 +253,7 @@ via an application that is entirely compatible with the linear nature of speech 
 <P>
 I find this approach superior to the "quick fix"
 of pasting an adaptor onto a preexisting screen browser (lynx)
-or graphical browser (Netscape).&nbsp;
+or graphical browser (Explorer).&nbsp;
 Of course that's just my opinion.&nbsp;
 To be fair, many blind users, even totally blind users, are satisfied with their auditory screen scrapers.&nbsp;
 I'm glad it works for them, but this approach is an unending source of frustration for me.&nbsp;
@@ -339,7 +339,7 @@ Cleverson</A>
 <P>
 Czech: LANG=cs_cz by
 <A HREF=mailto:jan.mura@volny.cz>
-Jan Mura</A>
+Jan Mura</A> (work in progress)
 
 <P>
 When an output or error message is displayed,
@@ -553,10 +553,10 @@ The move command is then 'a,'bm'c - with absolutely no line numbers.&nbsp;
 (This is standard ed fair, though most people never take advantage of it.)
 
 <P>
-To look for links on a web page, search for the right brace.&nbsp;
-Yes, you may stumble across a literal right brace in the text, but this doesn't happen very often.&nbsp;
+To look for links on a web page, search for the left brace.&nbsp;
+Yes, you may stumble across a literal left brace in the text, but this doesn't happen very often.&nbsp;
 You might access a particular link by typing /{Next}/g.&nbsp;
-Similarly, you can look for input fields by searching for the greater than sign.&nbsp;
+Similarly, you can look for input fields by searching for the less than sign.&nbsp;
 (This will make sense as you read about the representation of web pages.)&nbsp;
 And of course, multiple operations can be scripted, a feature unique to this browser.
 
@@ -902,7 +902,8 @@ that a paragraph from file bar would fit perfectly right here.&nbsp;
 Here is how it might look.&nbsp;
 Lines beginning with &lt; are the user's input,
 and lines beginning with &gt; form the program's responses.&nbsp;
-The # sign delimits my injected comments.
+The # sign delimits my injected comments,
+which would not normally appear in the middle of a line.
 
 <P><PRE><font size=3 face=Arial,Helvetica,sans-serif>&lt; e2   # switch to session 2
 &gt; new session
@@ -940,7 +941,7 @@ The following moves the data from one file to another.
 &gt; This is the start of the cool paragraph that you want to move.
 &lt; ka  # mark the paragraph
 &lt; /end/
-&gt; This is the end of the cool paragraph that you want to copy.
+&gt; This is the end of the cool paragraph that you want to move.
 &lt; kb
 &lt; 'a,'bw3
 &gt; 3279
@@ -965,7 +966,7 @@ This is similar to f, by itself, which tells you the current file.
 <H3 align=center> <A NAME=usage> Usage </A> </H3>
 
 type `edbrowse -h' to produce the usage message.&nbsp;
-You will see the -m option, used in several different ways.&nbsp;
+You will see the -m option used in several different ways.&nbsp;
 Try to ignore this for now.&nbsp;
 The -m option causes edbrowse to run as an interactive mail client,
 rather than an editor.&nbsp;
@@ -984,7 +985,8 @@ Remember, the debug level can be changed on the fly by using the dbx command (x 
 <P>
 The -e option causes edbrowse to exit when it encounters an error.&nbsp;
 This is usually used by batch scripts.&nbsp;
-If there is a problem, you don't want to march on, executing the rest of the edbrowse commands.
+If there is a problem, you don't want to march on, executing the rest of the edbrowse commands.&nbsp;
+Note that set -e has the same effect in a bash script.
 
 <P>
 Use -c to suppress processing of, and edit, the .ebrc configuration file.&nbsp;
@@ -1001,7 +1003,7 @@ Note that -c must be the first option.
 
 <P>
 The arguments are the files to edit.&nbsp;
-Edbrowse reads these files into corresponding sessions,
+Edbrowse reads these files into corresponding sessions
 and starts you off in session 1.&nbsp;
 If there are no arguments, you start in session 1,
 but there is no text and no associated file.
@@ -1119,8 +1121,7 @@ treating your international files as text files.
 If you speak an Asian language, and you are running Windows,
 and binary detection is disabled,
 <em>don't</em> use this program to manipulate binary files,
-as they will get corrupted!&nbsp;
-Better still, say goodbye to Windows and start using a real operating system.
+as they will get corrupted!
 
 <H3 align=center> <A NAME=dir> Directory Scan, File Manager </A> </H3>
 
@@ -1319,7 +1320,7 @@ places where the line will definitely be cut.&nbsp;
 The only white space that is preserved is the tabs or spaces
 at the beginning of the line, or after each return character.&nbsp;
 This is a modest attemp to keep indented text indented,
-if that makes any sense?
+if that makes any sense.
 
 <P>
 I use this feature in two different ways.&nbsp;
@@ -1460,7 +1461,7 @@ Still, I should implement it some day.
 Instead of invoking `e filename', you can invoke `e http://this.that.com/file.html',
 and the editor will retrieve the named file using the http protocol.&nbsp;
 The source (i.e. raw html) is made available for edit.&nbsp;
-You can modify it and save it on your local machine.&nbsp;
+You can modify it or save it on your local machine.&nbsp;
 Because the text was retrieve from another machine,
 it cannot be written back to that machine,
 hence the `w' command will not work.&nbsp;

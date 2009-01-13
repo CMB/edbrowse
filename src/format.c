@@ -1454,7 +1454,7 @@ andTranslate(const char *s, bool invisible)
 		    static char utfbuf[8];
 		    n = (uchar) c;
 		  n_utf8:
-		    uni2utf8(n, utfbuf);
+		    uni2utf8(n, (uchar *) utfbuf);
 		    r = utfbuf;
 		    goto putw;
 		}

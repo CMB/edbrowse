@@ -162,9 +162,9 @@ void cookiesFromJar(void) ;
 void sendCookies(char **s, int *l, const char *url, bool issecure) ;
 
 /* sourcefile=stringfile.c */
-void * allocMem(unsigned n) ;
-void * allocZeroMem(unsigned n) ;
-void * reallocMem(void *p, unsigned n) ;
+void * allocMem(size_t n) ;
+void * allocZeroMem(size_t n) ;
+void * reallocMem(void *p, size_t n) ;
 void nzFree(void *s) ;
 uchar fromHex(char d, char e) ;
 char * appendString(char *s, const char *p) ;

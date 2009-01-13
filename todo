@@ -1,8 +1,7 @@
-chunked transfer encoding
+resolveURL with /?foobar
 every attribute in the html tag needs to become a property in the corresponding object
 dynamic domain objects are not implemented yet
 onclick in <form>
-http deflate
 why is there an extra blank line after preformatted section
 &nbsp:
 find host fails for gvm1ghzxnlx0(+%##*vposzwx.watchfly.com because # in domain name??

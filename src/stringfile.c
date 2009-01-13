@@ -33,7 +33,7 @@ If we're out of memory, the program aborts.  No error legs.
 *********************************************************************/
 
 void *
-allocMem(unsigned n)
+allocMem(size_t n)
 {
     void *s;
     if(!n)
@@ -44,7 +44,7 @@ allocMem(unsigned n)
 }				/* allocMem */
 
 void *
-allocZeroMem(unsigned n)
+allocZeroMem(size_t n)
 {
     void *s;
     if(!n)
@@ -55,7 +55,7 @@ allocZeroMem(unsigned n)
 }				/* allocZeroMem */
 
 void *
-reallocMem(void *p, unsigned n)
+reallocMem(void *p, size_t n)
 {
     void *s;
     if(!n)

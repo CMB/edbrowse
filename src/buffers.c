@@ -1364,7 +1364,7 @@ writeFile(const char *name, int mode)
 		    if(alloc_p)
 			free(p);
 		    alloc_p = true;
-		    p = tp;
+		    p = (pst) tp;
 		    if(write(fh, p, tlen) < tlen)
 			rc = false;
 		    goto endline;
@@ -1375,7 +1375,7 @@ writeFile(const char *name, int mode)
 		    if(alloc_p)
 			free(p);
 		    alloc_p = true;
-		    p = tp;
+		    p = (pst) tp;
 		    if(write(fh, p, tlen) < tlen)
 			rc = false;
 		    goto endline;
@@ -2219,7 +2219,7 @@ replaceText(const char *line, int len, const char *rhs,
 		goto longvar;
 	    memcpy(r, line + re_vector[0], span);
 	    r[span] = 0;
-	    caseShift((unsigned char *)r, rhs[0]);
+	    caseShift(r, rhs[0]);
 	    r += span;
 	    if(!global)
 		break;
