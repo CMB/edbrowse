@@ -292,7 +292,7 @@ mailConnect(const char *host, int port, int secure)
 		setError(MSG_WebConnectSecure, host, n);
 	    return false;
 	}
-	debugPrint(4, "secure connection established");
+	debugPrint(3, "secure connection established");
 	ssl_on = true;
     }
     return true;
@@ -961,7 +961,7 @@ sendMail(int account, const char **recipients, const char *body,
 	char *b;
 	int nb;
 
-	if(!ssl_on) {
+	if(a->outssl == 2) {
 /* haven't yet switched over to ssl */
 	    if(!serverPutGet("starttls\r\n"))
 		goto mailfail;
@@ -977,7 +977,7 @@ sendMail(int account, const char **recipients, const char *body,
 		    setError(MSG_WebConnectSecure, mailhost, nb);
 		goto mailfail;
 	    }
-	    debugPrint(4, "secure connection established");
+	    debugPrint(3, "secure connection established");
 	    ssl_on = true;
 	}
 

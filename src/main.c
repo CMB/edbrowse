@@ -463,10 +463,12 @@ readConfigFile(void)
 	    continue;
 
 	case 7:
-	    if(*v == '*')
-		act->outssl = 1, ++v;
+	    if(*v == '+')
+		act->outssl = 4, ++v;
 	    if(*v == '^')
 		act->outssl = 2, ++v;
+	    if(*v == '*')
+		act->outssl = 1, ++v;
 	    act->outport = atoi(v);
 	    continue;
 

@@ -2888,14 +2888,19 @@ A star in front of the port number,
 e.g. outport *465,
 means the socket is to be encrypted, for security.&nbsp;
 When the smtp port is encrypted, login authentication is assumed.&nbsp;
-No other authentication method is implemented at this time,
-nor is authentication possible outside the context of an encrypted stream.
+No other authentication method is implemented at this time.
 
 <P>
 An arrow in front of the port number,
 e.g. outport ^587,
 encrypts the socket, but only after an initial handshake in the clear.&nbsp;
 This is the hotmail protocol, and it is as secure as *465; just different.
+
+<P>
+Use +587 to authenticate yourself without encryption.&nbsp;
+This is sometimes done when you are directly connected to the mail server,
+and traffic is not flowing across the internet;
+but the server still wants to make sure you are you.
 
 <P>
 login = eklhad
