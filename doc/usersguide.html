@@ -1757,11 +1757,11 @@ yet z will not appear in your directory scan until you type rf.
 A link to another web page is enclosed in braces, like this:
 
 <P>
-{Recent reports} suggest a connection between autism and intestinal bacteria.
+{Recent reports} suggest a connection between health and intestinal bacteria.
 
 <P>
 Behind the scenes, "recent reports" is linked to
-www.pecanbread.com/BTVCautismchapter.html,
+http://www.sciam.com/article.cfm?id=jeremy-nicholsons-gut-instincts,
 but you don't see that unless you activate the link
 or view the raw html.
 
@@ -1809,8 +1809,7 @@ as long as it "looks" like a valid url.&nbsp;
 If your friend sends you an interesting url via email,
 and you save it to a text file,
 you can "go" to that link,
-even though the file is not html,
-and you've never issued a browse command.
+even though the file is not html and you've never issued a browse command.
 
 <H3 align=center> <A NAME=ilink> Internal Links </A> </H3>
 
@@ -2627,7 +2626,7 @@ This has no meaning in edbrowse.&nbsp;
 Other websites bring up multiple windows,
 and let you control the contents of subwindows using icons in a master window.&nbsp;
 This would be very difficult to simulate in a command-line environment -
-so we don't try.
+so I don't try.
 
 <P>
 As a rough approximation, I expect to implement about half of javascript,
@@ -2639,7 +2638,7 @@ you can turn javascript off via the `js' command.&nbsp;
 This is useful when you are casually surfing the net, looking for information,
 and you know you're not going to need javascript.&nbsp;
 You can also disable javascript for specific domains.&nbsp;
-This will be discussed later, when we describe the edbrowse config file.
+This will be discussed later, when I describe the edbrowse config file.
 
 <H3 align=center> <A NAME=valid> Validating Forms </A> </H3>
 
@@ -2781,7 +2780,7 @@ This is true on Windows as well, so make sure HOME is set.
 The config file is line oriented.&nbsp;
 Lines begining with # are comments, and are ignored.&nbsp;
 Blank lines are also ignored.&nbsp;
-All other lines fall into one of 5 categories.
+All other lines fall into one of 6 categories.
 
 <OL>
 <P><LI> Define an option, using the keyword=value syntax.
@@ -2791,6 +2790,7 @@ or from another script.
 <P><LI> Establish an email account.&nbsp;
 This will be described later, when we talk about the email client.
 <P><LI> A mail filtering rule.&nbsp;
+<P><LI> Describe a table in an sql database.
 </OL>
 
 <H3 align=center> <A NAME=keyval> Keyword = Value </A> </H3>
@@ -2865,7 +2865,7 @@ The above directive will also drop javascript from subdomains such as www.space.
 
 <P>
 You can include a path or partial path after the domain, as in space.com/popups.&nbsp;
-This will block the popup ads that you don't want to see, and often generate edbrowse errors in any case.&nbsp;
+This will block the popup ads that you don't want to see (they often generate edbrowse errors in any case).&nbsp;
 Subdomains are not considered when a path is given; the domain must match exactly.
 
 <P>
@@ -3587,7 +3587,7 @@ There is a reason for this falderal.&nbsp;
 When you are running edbrowse as a fetchmail client, there is a time limit, imposed by your pop3 server.&nbsp;
 You have about 20 seconds to decide the fate of each message.&nbsp;
 Throw it away, skip it, save it to a file, etc.&nbsp;
-If you doddle, the mail server hangs up and you have to start all over again.&nbsp;
+If you dawdle, the mail server hangs up and you have to start all over again.&nbsp;
 This is not the time to interact with your message;
 this is not the time to fill out forms or follow hyperlinks to other interesting websites.&nbsp;
 If you are that interested, save the message to a file and move on.
@@ -3960,7 +3960,7 @@ Fetch the customers who were born in 1960.
 
 <P>
 It is usually best to edit with a blank template, i.e. without a where clause.&nbsp;
-Then, you can read in whatever rows you like.&nbsp;
+Then you can read in whatever rows you like.&nbsp;
 Type an r before any of the strings shown above to read rows into your buffer.&nbsp;
 Note, you cannot read data from different tables into the same buffer,
 but you can switch to another editing session to look at another table,
