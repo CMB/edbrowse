@@ -6,16 +6,14 @@
 
 # Allow for symbolic debugging.
 DEBUGFLAGS=-g -ggdb
-STRIP=
 ifeq ($(EBDEBUG),) # debugging turned off
 DEBUGFLAGS=
-STRIP=-s
 endif
 
-CFLAGS = -I/usr/include -I/usr/include/php/ext/pcre/pcrelib -I/opt/local/include/js -DSYSBSD -DXP_UNIX -DX86_LINUX $(DEBUGFLAGS)
+CFLAGS = -I/usr/include -I/opt/local/include -I/opt/local/include/js -DSYSBSD -DXP_UNIX -DX86_LINUX $(DEBUGFLAGS)
 
 # Normal load flags, plus flags for macports
-LFLAGS = $(STRIP) -L/usr/lib -L/opt/local/lib
+LFLAGS = -L/usr/lib -L/opt/local/lib
 
 # Libraries for edbrowse.
 # I assume you have linked libjs.so into /opt/local/lib/libjs.a
@@ -54,5 +52,5 @@ proto:
 	format.c cookies.c stringfile.c jsdom.c jsloc.c dbstubs.c >eb.p
 
 clean:
- rm -f *.o edbrowse edbrowseodbc
+	rm -f *.o edbrowse edbrowseodbc
 
