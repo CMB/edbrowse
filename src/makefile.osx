@@ -1,0 +1,58 @@
+# This is the makefile for edbrowse under OS X
+
+# Flags for gcc compilation.
+#  Performance is not vital here, and -O is buggy, so I leave it out.
+# The -I flags assume smjs is installed in /opt/local/include/js via macports
+
+# Allow for symbolic debugging.
+DEBUGFLAGS=-g -ggdb
+STRIP=
+ifeq ($(EBDEBUG),) # debugging turned off
+DEBUGFLAGS=
+STRIP=-s
+endif
+
+CFLAGS = -I/usr/include -I/usr/include/php/ext/pcre/pcrelib -I/opt/local/include/js -DSYSBSD -DXP_UNIX -DX86_LINUX $(DEBUGFLAGS)
+
+# Normal load flags, plus flags for macports
+LFLAGS = $(STRIP) -L/usr/lib -L/opt/local/lib
+
+# Libraries for edbrowse.
+# I assume you have linked libjs.so into /opt/local/lib/libjs.a
+# so that -ljs will suffice.
+# -lcrypto is necessary on OS X to provide some ssl functions
+LIBS = -lpcre -lm -lssl -ljs -lcurl -lcrypto
+
+# Make the dynamically linked edbrowse executable by default.
+all: edbrowse
+
+# edbrowse objects
+EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
+	html.o format.o cookies.o stringfile.o jsdom.o jsloc.o messages.o
+
+# Header file dependencies.
+$(EBOBJS) : eb.h eb.p messages.h tcp.h
+
+edbrowse: $(EBOBJS) tcp.o dbstubs.o
+	cc $(LFLAGS) -o edbrowse $(EBOBJS) tcp.o dbstubs.o $(LIBS)
+
+# You probably need to be root to do this.
+install:
+	install edbrowse /usr/local/bin
+
+#  odbc stuff
+dbodbc.o dbops.o : dbapi.h eb.h eb.p
+
+edbrowseodbc: $(EBOBJS) tcp.o dbops.o dbodbc.o
+	cc $(LFLAGS) -o edbrowseodbc $(EBOBJS) tcp.o dbops.o dbodbc.o $(LIBS) -lodbc
+
+# Build function prototypes.
+# mkproto is my program, not a general unix utility.
+proto:
+	mkproto -g main.c buffers.c url.c auth.c http.c messages.c \
+	sendmail.c fetchmail.c html.c \
+	format.c cookies.c stringfile.c jsdom.c jsloc.c dbstubs.c >eb.p
+
+clean:
+ rm -f *.o edbrowse edbrowseodbc
+

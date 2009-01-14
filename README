@@ -90,6 +90,7 @@ Make edbrowseodbc, rather than edbrowse.
 
 Now return to your edbrowse src directory.
 To build edbrowse - guess what - you type make.
+(Mac users type make -f makefile.osx.)
 Then you send me mail when it doesn't work.  :-)
 Not a bad idea to read through the makefile before running make.
 It's pretty simple.

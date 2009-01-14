@@ -73,7 +73,7 @@ jslink:
 dbinfx.o : dbinfx.ec
 	esql -c dbinfx.ec
 
-dbinfx.o dbops.o : dbapi.h eb.h eb.p
+dbodbc.o dbinfx.o dbops.o : dbapi.h eb.h eb.p
 
 edbrowseinf: $(EBOBJS) tcp.o dbops.o dbinfx.o
 	esql $(ESQLDFLAGS) -o edbrowseinf $(EBOBJS) tcp.o dbops.o dbinfx.o $(LIBS)

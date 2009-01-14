@@ -23,7 +23,7 @@ The array of messages is selected by the language.
 
 
 enum {
-    MSG_EOF,
+    MSG_EndFile,
     MSG_NoFile,
     MSG_None,
     MSG_SubGlobal,

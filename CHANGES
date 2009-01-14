@@ -2,6 +2,7 @@ Here are some changes introduced by recent versions of edbrowse.
 
 3.4.3:
 Hotmail smtp protocol.    outport = ^587
+Minor tweaks for compilation under OS X.
 
 3.4.1:
 Access to databases through odbc.

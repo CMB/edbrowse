@@ -305,7 +305,7 @@ inputLine(void)
     if(!fgets((char *)line, sizeof (line), stdin)) {
 	if(intFlag)
 	    goto top;
-	i_puts(MSG_EOF);
+	i_puts(MSG_EndFile);
 	ebClose(1);
     }
     inInput = false;
