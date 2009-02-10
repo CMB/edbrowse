@@ -258,7 +258,8 @@ serverClose(void)
 {
     serverPutLine("quit\r\n");
     endhostent();
-    sleep(2);
+/* the other side has to have time to process the quit command, before we simply hang up. */
+    usleep(400000);
     if(ssl_on)
 	ssl_done();
     close(mssock);
