@@ -788,6 +788,7 @@ createJavaContext(void)
     establish_property_bool(jwin, "toolbar", true, false);
     establish_property_bool(jwin, "resizable", true, false);
     establish_property_bool(jwin, "directories", false, false);
+    establish_property_string(jwin, "name", "unspecifiedFrame", false);
 
 /* Other classes that we'll need. */
     for(i = 0; domClasses[i].class; ++i) {
