@@ -281,7 +281,7 @@ setter_loc(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 	t = resolveURL(cw->fileName, ss);
 	nzFree(ss);
 /* This call frees t, or takes it over, so you should not free it here. */
-	gotoLocation(t, 0, true);
+	gotoLocation(t, (allowRedirection ? 0 : 99), true);
     }
 /* Return false to stop javascript. */
 /* After all, we're trying to move to a new web page. */
