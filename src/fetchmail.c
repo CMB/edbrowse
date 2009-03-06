@@ -1936,7 +1936,7 @@ setupReply(bool all)
     if(t[1] == '>') {
 	i_puts(MSG_ReNoID);
     } else {
-	stringAndString(&out, &j, "references: <");
+	stringAndString(&out, &j, "References: <");
 	if(*s != '>') {
 	    stringAndBytes(&out, &j, s, t - s);
 	    stringAndString(&out, &j, "> <");
