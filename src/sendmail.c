@@ -815,6 +815,7 @@ sendMail(int account, const char **recipients, const char *body,
     int nat, cx, i, j;
     char *out = 0;
     bool mustmime = false;
+    bool firstgreet = true;
     bool firstrec;
     const char *ct, *ce;
     char *encoded = 0;
@@ -944,6 +945,7 @@ sendMail(int account, const char **recipients, const char *body,
 	goto mailfail;
     }
 
+  sayhello:
     sprintf(serverLine, "%s %s%s", (a->outssl ? "ehlo" : "Helo"), smlogin, eol);
     if(!serverPutLine(serverLine))
 	goto mailfail;
@@ -962,7 +964,7 @@ sendMail(int account, const char **recipients, const char *body,
 	char *b;
 	int nb;
 
-	if(a->outssl == 2) {
+	if(a->outssl == 2 && firstgreet) {
 /* haven't yet switched over to ssl */
 	    if(!serverPutGet("starttls\r\n"))
 		goto mailfail;
@@ -980,6 +982,10 @@ sendMail(int account, const char **recipients, const char *body,
 	    }
 	    debugPrint(3, "secure connection established");
 	    ssl_on = true;
+
+/* We have to send EHLO after starttls, per RFC 2487 */
+	    firstgreet = false;
+	    goto sayhello;
 	}
 
 /* login authentication is the only thing I support right now. */
