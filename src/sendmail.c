@@ -1086,9 +1086,9 @@ sendMail(int account, const char **recipients, const char *body,
     if(fromiso != from)
 	nzFree(fromiso);
     if(refline) {
-	s = refline + strlen(refline);
-	if(s > refline && s[-1] == '\n')
-	    --s;
+	s = strchr(refline, '\n');
+	if(!s)			/* should never happen */
+	    s = refline + strlen(refline);
 	stringAndBytes(&out, &j, refline, s - refline);
 	stringAndString(&out, &j, eol);
     }
