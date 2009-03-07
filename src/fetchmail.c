@@ -1855,6 +1855,11 @@ setupReply(bool all)
 	    continue;
 	}
 
+	if(memEqualCI(p, "references:", 11)) {
+	    linetype[j] = 'v';
+	    continue;
+	}
+
 	if(memEqualCI(p, "reply to ", 9)) {
 	    linetype[j] = 'r';
 	    repln = j;
@@ -1878,19 +1883,36 @@ setupReply(bool all)
     }
 
 /* delete the lines we don't need */
-    for(j = 6; j >= 1; --j) {
-	if(!strchr("wfta", linetype[j]))
+    linetype[j] = 0;
+    for(--j; j >= 1; --j) {
+	if(strchr("srv", linetype[j]))
 	    continue;
 	delText(j, j);
 	strcpy(linetype + j, linetype + j + 1);
     }
 
 /* move reply to 1, if it isn't already there */
-    if(linetype[1] != 'r') {
+    repln = strchr(linetype, 'r') - linetype;
+    subln = strchr(linetype, 's') - linetype;
+    if(repln != 1) {
 	char *map = cw->map;
 	char swap[LNWIDTH];
 	char *q1 = map + LNWIDTH;
-	char *q2 = map + LNWIDTH * 2;
+	char *q2 = map + LNWIDTH * repln;
+	memcpy(swap, q1, LNWIDTH);
+	memcpy(q1, q2, LNWIDTH);
+	memcpy(q2, swap, LNWIDTH);
+	if(subln == 1)
+	    subln = repln;
+	repln = 1;
+    }
+
+    j = strlen(linetype) - 1;
+    if(j != subln) {
+	char *map = cw->map;
+	char swap[LNWIDTH];
+	char *q1 = map + LNWIDTH * j;
+	char *q2 = map + LNWIDTH * subln;
 	memcpy(swap, q1, LNWIDTH);
 	memcpy(q1, q2, LNWIDTH);
 	memcpy(q2, swap, LNWIDTH);
