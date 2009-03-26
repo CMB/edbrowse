@@ -2677,6 +2677,7 @@ twoLetter(const char *line, const char **runThis)
 	if(wasbrowse && cw->browseMode) {
 	    cw->iplist = 0;
 	    ub = false;
+cw->browseMode = false;
 	    goto et_go;
 	}
 	return rc;
@@ -2861,7 +2862,7 @@ twoLetter(const char *line, const char **runThis)
 	cw->mailInfo = 0;
 	if(ub)
 	    fileSize = apparentSize(context, false);
-	return true;
+	return rc;
     }
 
     if(stringEqual(line, "ip")) {
