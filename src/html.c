@@ -254,6 +254,7 @@ struct htmlTag {
     bool bymail:1;		/* send by mail, rather than http */
     bool submitted:1;
     bool handler:1;
+    char subsup; /* span turned into sup or sub */
     uchar itype;		/* input type = */
     short ninp;			/* number of nonhidden inputs */
     char *attrib;
@@ -1601,8 +1602,20 @@ encodeTags(char *html)
 		   domLink("Span", topTag->name, topTag->id, 0, 0,
 		   "spans", jdoc, false);
 		get_js_events();
-	    }
+	    a = htmlAttrVal(topAttrib, "class");
+if(!a) goto nop;
+caseShift(a, 'l');
+if(stringEqual(a, "sup"))
+action = TAGACT_SUP;
+if(stringEqual(a, "sub"))
+action = TAGACT_SUB;
+nzFree(a);
+} else if(open && open->subsup)
+action = open->subsup;
+if(action == TAGACT_SPAN)
 	    goto nop;
+t->subsup = action;
+goto subsup;
 
 	case TAGACT_BR:
 	    if(lastact == TAGACT_TD)
@@ -1711,6 +1724,7 @@ encodeTags(char *html)
 
 	case TAGACT_SUP:
 	case TAGACT_SUB:
+subsup:
 	    if(!retainTag)
 		continue;
 	    t->retain = true;
