@@ -33,6 +33,7 @@ If you do not wish to do so, delete this exception statement from your version.
 #define MAXHOSTNAMELEN  256
 #define setErrnoNT() (errno = WSAGetLastError())
 #else
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <netdb.h>

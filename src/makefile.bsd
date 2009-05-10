@@ -2,13 +2,13 @@
 
 #  Flags for compilation.
 #  I know - I set the Linux flag here, but it seems to work.
-CFLAGS = -I/usr/pkg/include -DXP_UNIX -DX86_LINUX
+CFLAGS = -I/usr/local/include -I/usr/local/include/js -DSYSBSD -DXP_UNIX
 
 #  Tell the dynamic linker to look in the pkg area.
 LFLAGS = -s -Wl,--rpath -Wl,/usr/pkg/lib
 
 #  Libraries for edbrowse.
-LIBS = -L /usr/pkg/lib -lpcre -lm -lssl -ljs
+LIBS = -L /usr/local/lib -lpcre -lm -lssl -ljs -lcrypto -lpthread -lcurl
 
 #  Make the dynamically linked executable program by default.
 #  Edbrowse executable.
@@ -22,8 +22,8 @@ EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
 $(EBOBJS) : eb.h eb.p messages.h
 main.o tcp.o http.o sendmail.o: tcp.h
 
-edbrowse: $(EBOBJS) tcp.o
-	cc $(LFLAGS) -o edbrowse tcp.o $(EBOBJS) $(LIBS)
+edbrowse: $(EBOBJS) tcp.o dbstubs.o
+	cc $(LFLAGS) -o edbrowse tcp.o dbstubs.o $(EBOBJS) $(LIBS)
 
 #  Build function prototypes.
 proto:
