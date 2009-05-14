@@ -3108,8 +3108,8 @@ infPush(int tagno, char **post_string)
 	}
     }
 
-/* if no action, the default is the current location */
-    if(!action) {
+/* if no action, or action is "#", the default is the current location */
+    if(!action || stringEqual(action, "#")) {
 	action = getBaseHref(form->seqno);
     }
 
