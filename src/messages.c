@@ -125,7 +125,7 @@ static const char *englishMessages[] = {
     "?\tprint this help message.\nq\tquit this program.\nx\texit without changing anything on the mail server.\nspace\tread more of this mail message.\nn\tmove on to the next mail message.\nd\tdelete this message.\nj\tjunk this subject for ten days.\nJ\tjunk this subject for a year.\nw\twrite this message to a file and delete it.\nk\tkeep this message in a file, but don't delete it.\nu\twrite this message unformatted to a file, and delete it.",
     "cannot create file %s\n",
     "cannot write to file %s\n",
-    "mail save, %d bytes",
+    "mail saved, %d bytes",
     " appended",
     "this page is finished, please use your back key or quit",
     "Sorry, innerText update not yet implemented.",
