@@ -357,6 +357,7 @@ static char hexdigits[] = "0123456789abcdef";
 char *
 copy_and_sanitize(const char *start, const char *end)
 {
+/* Excise hash fragment */
     int bytes_to_alloc = end - start + 1;
     char *new_copy = NULL;
     const char *in_pointer = NULL;
@@ -366,6 +367,7 @@ copy_and_sanitize(const char *start, const char *end)
 	    bytes_to_alloc += (ESCAPED_CHAR_LENGTH - 1);
     new_copy = allocMem(bytes_to_alloc);
     if(new_copy) {
+	char *frag, *params;
 	out_pointer = new_copy;
 	for(in_pointer = start; in_pointer < end; in_pointer++) {
 	    if(*in_pointer == '\\')
@@ -378,6 +380,15 @@ copy_and_sanitize(const char *start, const char *end)
 		*out_pointer++ = *in_pointer;
 	}
 	*out_pointer = '\0';
+/* excise #hash, required by some web servers */
+	frag = strchr(new_copy, '#');
+	if(frag) {
+	    params = strchr(new_copy, '?');
+	    if(params && params > frag)
+		strcpy(frag, params);
+	    else
+		*frag = 0;
+	}
     }
     return new_copy;
 }				/* copy_and_sanitize */
