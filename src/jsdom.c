@@ -1113,6 +1113,8 @@ Yeah, it makes my head spin too.
 	    JS_DefineElement(jcx, alist, length, vv, NULL, NULL, attr);
 	    if(symname && !dupname)
 		establish_property_object(alist, symname, v);
+	    if(idname && (!symname || !stringEqual(symname, idname)))
+		establish_property_object(alist, idname, v);
 	}			/* list indicated */
     }
 
