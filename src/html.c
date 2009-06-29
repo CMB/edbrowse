@@ -1076,6 +1076,24 @@ onloadGo(void *obj, const char *jsrc, const char *tagname)
     toPreamble(t->seqno, buf, jsrc, 0);
 }				/* onloadGo */
 
+/* Given a tag with an id attribute whose value is foo, generate a label
+ * <a name="foo">.  If the tag has no id attribute, this function is a no-op.
+*/
+
+static void
+htmlLabelID(char **browseText, int *browseTextLength)
+{
+    char buf[16];
+    char *id = htmlAttrVal(topAttrib, "id");
+    if(id) {
+	struct htmlTag *t = newTag("a");
+	int tagnum = t->seqno;
+	t->name = id;
+	sprintf(buf, "%c%d*", InternalCodeChar, tagnum);
+	stringAndString(browseText, browseTextLength, buf);
+    }
+}				/* htmlLabelID */
+
 /* Always returns a string, even if errors were found.
  * Internet web pages often contain errors!
  * This routine mucks with the passed-in string, and frees it
@@ -1364,6 +1382,9 @@ encodeTags(char *html)
 	    new[offset] = 0;
 	    currentTitle = currentOpt = 0;
 	}
+
+/* Generate an html label for this tag if necessary. */
+	htmlLabelID(&new, &l);
 
 	switch (action) {
 	case TAGACT_INPUT:
