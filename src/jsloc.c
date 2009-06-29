@@ -121,7 +121,7 @@ loc_replace(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
 	t = resolveURL(cw->fileName, ss);
 	nzFree(ss);
 /* This call frees t, or takes it over, so you should not free it here. */
-	gotoLocation(t, 0, true);
+	gotoLocation(t, (allowRedirection ? 0 : 99), true);
 	return JS_FALSE;
     }
     JS_ReportError(jcx,
