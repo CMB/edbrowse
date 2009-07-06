@@ -81,7 +81,7 @@ isWinLoc(void)
 	return true;
     }
 /* This call frees t, or takes it over, so you should not free it here. */
-    gotoLocation(uo_href, 0, true);
+    gotoLocation(uo_href, (allowRedirection ? 0 : 99), false);
     uo_href = 0;
     return false;
 }				/* isWinLoc */
@@ -101,7 +101,7 @@ loc_reload(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
 {
     const char *s = cw->firstURL;
     if(s && isURL(s))
-	gotoLocation(cloneString(s), 0, true);
+	gotoLocation(cloneString(s), (allowRedirection ? 0 : 99), true);
     else
 	JS_ReportError(jcx, "location.reload() cannot find a url to refresh");
     return JS_FALSE;
@@ -281,7 +281,7 @@ setter_loc(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 	t = resolveURL(cw->fileName, ss);
 	nzFree(ss);
 /* This call frees t, or takes it over, so you should not free it here. */
-	gotoLocation(t, (allowRedirection ? 0 : 99), true);
+	gotoLocation(t, (allowRedirection ? 0 : 99), false);
     }
 /* Return false to stop javascript. */
 /* After all, we're trying to move to a new web page. */

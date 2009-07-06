@@ -428,6 +428,11 @@ httpConnect(const char *from, const char *url)
     prot = getProtURL(url);
 
 /* See if the protocol is a recognized stream */
+    if(!prot) {
+	setError(MSG_WebProtBad, "(?)");
+	return false;
+    }
+
     if(stringEqualCI(prot, "http") || stringEqualCI(prot, "https")) {
 	;			/* ok for now */
     } else if(stringEqualCI(prot, "ftp")) {
