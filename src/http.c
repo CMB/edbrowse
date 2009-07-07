@@ -803,8 +803,8 @@ ftpls(char *line)
 
 /* parse_directory_listing: convert an FTP-style listing to html. */
 /* Repeatedly calls ftpls to parse each line of the data. */
-void
-parse_directory_listing()
+static void
+parse_directory_listing(void)
 {
     char *incomingData = serverData;
     int incomingLen = serverDataLen;
@@ -837,6 +837,10 @@ curl_setError(CURLcode curlret, const char *url)
     const char *host = NULL, *protocol = NULL;
     protocol = getProtURL(url);
     host = getHostURL(url);
+
+/* this should never happen */
+    if(!host)
+	host = EMPTYSTRING;
 
     switch (curlret) {
 

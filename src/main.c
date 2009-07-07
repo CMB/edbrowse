@@ -1092,9 +1092,6 @@ main(int argc, char **argv)
 	i_printfExit(MSG_Usage);
     }				/* options */
 
-    if(debugLevel >= 4)
-	curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1);
-
     if(tcp_init() < 0)
 	debugPrint(4, "tcp failure, could not identify this machine");
     else

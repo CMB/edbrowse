@@ -73,7 +73,6 @@ bool parseRefresh(char *ref, int *delay_p) ;
 bool refreshDelay(int sec, const char *u) ;
 char * copy_and_sanitize(const char *start, const char *end) ;
 bool httpConnect(const char *from, const char *url) ;
-void parse_directory_listing() ;
 void allIPs(void) ;
 void my_curl_init(void) ;
 
