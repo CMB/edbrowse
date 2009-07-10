@@ -2625,18 +2625,22 @@ Implement various two letter commands.
 Most of these set and clear modes.
 Return 1 or 0 for success or failure as usual.
 But return 2 if there is a new command to run.
-The second parameter is a result parameter, the new command.
+The second parameter is a result parameter, the new command to run.
+In rare cases we might allocate a new (longer) command line to run,
+like rf (refresh), which could be a long url.
 *********************************************************************/
+
+static char *allocatedLine = 0;
 
 static int
 twoLetter(const char *line, const char **runThis)
 {
-    static char newline[MAXTTYLINE];
+    static char shortline[60];
     char c;
     bool rc, ub;
-    int i;
+    int i, n;
 
-    *runThis = newline;
+    *runThis = shortline;
 
     if(stringEqual(line, "qt"))
 	ebClose(0);
@@ -2677,7 +2681,7 @@ twoLetter(const char *line, const char **runThis)
 	if(wasbrowse && cw->browseMode) {
 	    cw->iplist = 0;
 	    ub = false;
-cw->browseMode = false;
+	    cw->browseMode = false;
 	    goto et_go;
 	}
 	return rc;
@@ -2689,13 +2693,13 @@ cw->browseMode = false;
 	while(*t == '^')
 	    ++t;
 	if(!*t) {
-	    sprintf(newline, "^%d", t - line);
+	    sprintf(shortline, "^%d", t - line);
 	    return 2;
 	}
     }
 
     if(line[0] == 'm' && (i = stringIsNum(line + 1)) >= 0) {
-	sprintf(newline, "^M%d", i);
+	sprintf(shortline, "^M%d", i);
 	return 2;
     }
 
@@ -2786,8 +2790,10 @@ cw->browseMode = false;
 	if(cw->browseMode)
 	    cmd = 'b';
 	noStack = true;
-	sprintf(newline, "%c %s", cmd, cw->fileName);
-	debrowseSuffix(newline);
+	allocatedLine = allocMem(strlen(cw->fileName) + 3);
+	sprintf(allocatedLine, "%c %s", cmd, cw->fileName);
+	debrowseSuffix(allocatedLine);
+	*runThis = allocatedLine;
 	return 2;
     }
 
@@ -2880,7 +2886,7 @@ cw->browseMode = false;
 	}
 	return true;
     }
-    /* ip */
+
     if(stringEqual(line, "f/") || stringEqual(line, "w/")) {
 	char *t;
 	cmd = line[0];
@@ -2898,7 +2904,10 @@ cw->browseMode = false;
 	    setError(MSG_YesSlash);
 	    return false;
 	}
-	sprintf(newline, "%c `%s", cmd, t);
+	allocatedLine = allocMem(strlen(t) + 4);
+/* ` prevents wildcard expansion, which normally happens on an f command */
+	sprintf(allocatedLine, "%c `%s", cmd, t);
+	*runThis = allocatedLine;
 	return 2;
     }
 
@@ -3447,7 +3456,6 @@ runCommand(const char *line)
     int tagno;
     const char *s;
     static char newline[MAXTTYLINE];
-    static char *allocatedLine = 0;
 
     if(allocatedLine) {
 	nzFree(allocatedLine);
