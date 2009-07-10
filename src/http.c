@@ -402,21 +402,21 @@ httpConnect(const char *from, const char *url)
     char *referrer = NULL;
     CURLcode curlret = CURLE_OK;
     struct curl_slist *custom_headers = NULL;
+    struct curl_slist *tmp_headers = NULL;
     char user[MAXUSERPASS], pass[MAXUSERPASS];
     char creds_buf[MAXUSERPASS * 2 + 1];	/* creds abr. for credentials */
     int creds_len = 0;
     char *creds_ptr = NULL;
     bool still_fetching = true;
-    char *temp_url = NULL;
     const char *host;
     struct MIMETYPE *mt;
     const char *prot;
     char *cmd;
     char suffix[12];
     const char *post, *s;
-    char *postb;
+    char *postb = NULL;
     char *urlcopy = NULL;
-    int postb_l;
+    int postb_l = 0;
     bool transfer_status = false;
     int redirect_count = 0;
     bool name_changed = false;
@@ -481,7 +481,12 @@ httpConnect(const char *from, const char *url)
     }
 
 /* "Expect:" header causes some servers to lose.  Disable it. */
-    custom_headers = curl_slist_append(custom_headers, "Expect:");
+    tmp_headers = curl_slist_append(custom_headers, "Expect:");
+    /* Check for failure to allocate. */
+    if(tmp_headers == NULL)
+	i_printfExit(MSG_NoMem);
+    custom_headers = tmp_headers;
+
     post = strchr(url, '\1');
     postb = 0;
     if(post) {
@@ -501,8 +506,13 @@ httpConnect(const char *from, const char *url)
 	    s = strchr(post, '\r');
 	    stringAndBytes(&multipart_header, &multipart_header_len, post,
 	       s - post);
-	    custom_headers =
-	       curl_slist_append(custom_headers, multipart_header);
+	    tmp_headers = curl_slist_append(custom_headers, multipart_header);
+	    if(tmp_headers == NULL)
+		i_printfExit(MSG_NoMem);
+	    custom_headers = tmp_headers;
+	    /* curl_slist_append made a copy of multipart_header. */
+	    nzFree(multipart_header);
+
 	    memcpy(thisbound, post, s - post);
 	    thisbound[s - post] = 0;
 	    post = s + 2;
@@ -535,6 +545,7 @@ httpConnect(const char *from, const char *url)
 		post2 = currentReferrer + strlen(currentReferrer);
 	    if(post2 - currentReferrer >= 7 && !memcmp(post2 - 7, ".browse", 7))
 		post2 -= 7;
+	    nzFree(cw->referrer);
 	    cw->referrer = cloneString(currentReferrer);
 	    cw->referrer[post2 - currentReferrer] = 0;
 	    referrer = cw->referrer;
@@ -598,68 +609,52 @@ httpConnect(const char *from, const char *url)
 	if(curlret != CURLE_OK)
 	    goto curl_fail;
 
-	redir = get_redirect_location();
-	if(redir)
-	    redir = resolveURL(urlcopy, redir);
 	debugPrint(3, "http code %d %s", hcode, herror);
 
 	if(hcode >= 301 && hcode <= 303 && allowRedirection) {
+	    redir = get_redirect_location();
+	    if(redir)
+		redir = resolveURL(urlcopy, redir);
 	    still_fetching = false;
 	    if(redir == NULL) {
 		/* Redirected, but we don't know where to go. */
 		i_printf(MSG_RedirectNoURL, hcode);
 		transfer_status = true;
-	    } else {
+	    } else if(redirect_count >= 10) {
+		i_puts(MSG_RedirectMany);
+		transfer_status = true;
+		nzFree(redir);
+	    } else {		/* redirection looks good. */
 		creds_buf[0] = '\0';
-		temp_url = urlcopy;
+		nzFree(urlcopy);
 		urlcopy = redir;
 		unpercentURL(urlcopy);
 
-		if(redirect_count >= 10) {
-		    i_puts(MSG_RedirectMany);
-		    transfer_status = true;
-		} else {	/* redirection looks good. */
 /* Convert POST request to GET request after redirection. */
-		    curl_easy_setopt(curl_handle, CURLOPT_HTTPGET, 1);
+		curl_easy_setopt(curl_handle, CURLOPT_HTTPGET, 1);
 
-		    if(getUserPass(urlcopy, creds_buf, false))
-			creds_ptr = creds_buf;
-		    else
-			creds_ptr = NULL;
+		if(getUserPass(urlcopy, creds_buf, false))
+		    creds_ptr = creds_buf;
+		else
+		    creds_ptr = NULL;
 
-		    curlret =
-		       curl_easy_setopt(curl_handle, CURLOPT_USERPWD,
-		       creds_ptr);
-		    if(curlret != CURLE_OK) {
-			nzFree(temp_url);
-			goto curl_fail;
-		    }
-
-		    if(sendReferrer) {
-			curlret = curl_easy_setopt(curl_handle, CURLOPT_REFERER,
-			   urlcopy);
-			if(curlret != CURLE_OK) {
-			    nzFree(temp_url);
-			    goto curl_fail;
-			}
-			nzFree(cw->referrer);
-			cw->referrer = cloneString(urlcopy);
-		    }
-		    nzFree(temp_url);
-
-		    curlret =
-		       curl_easy_setopt(curl_handle, CURLOPT_URL, urlcopy);
-		    if(curlret != CURLE_OK)
-			goto curl_fail;
-
-		    nzFree(serverData);
-		    serverData = EMPTYSTRING;
-		    serverDataLen = 0;
-		    redirect_count += 1;
-		    still_fetching = true;
-		    name_changed = true;
-		    debugPrint(2, "redirect %s", urlcopy);
+		curlret =
+		   curl_easy_setopt(curl_handle, CURLOPT_USERPWD, creds_ptr);
+		if(curlret != CURLE_OK) {
+		    goto curl_fail;
 		}
+
+		curlret = curl_easy_setopt(curl_handle, CURLOPT_URL, urlcopy);
+		if(curlret != CURLE_OK)
+		    goto curl_fail;
+
+		nzFree(serverData);
+		serverData = EMPTYSTRING;
+		serverDataLen = 0;
+		redirect_count += 1;
+		still_fetching = true;
+		name_changed = true;
+		debugPrint(2, "redirect %s", urlcopy);
 	    }
 	}
 
@@ -686,6 +681,8 @@ httpConnect(const char *from, const char *url)
     }
 
   curl_fail:
+    if(custom_headers)
+	curl_slist_free_all(custom_headers);
     if(curlret != CURLE_OK)
 	curl_setError(curlret, urlcopy);
 
@@ -693,6 +690,7 @@ httpConnect(const char *from, const char *url)
 	nzFree(serverData);
 	serverData = NULL;
 	serverDataLen = 0;
+	nzFree(urlcopy);	/* Free it on transfer failure. */
     } else {
 	if(hcode != 200)
 	    i_printf(MSG_HTTPError, hcode, message_for_response_code(hcode));
@@ -702,6 +700,7 @@ httpConnect(const char *from, const char *url)
 	    nzFree(urlcopy);	/* Don't need it anymore. */
     }
 
+    nzFree(postb);
     return transfer_status;
 }				/* httpConnect */
 
@@ -1073,8 +1072,8 @@ void
 my_curl_init(void)
 {
     const unsigned int major = 7;
-    const unsigned int minor = 15;
-    const unsigned int patch = 5;
+    const unsigned int minor = 17;
+    const unsigned int patch = 0;
     const unsigned int least_acceptable_version =
        (major << 16) | (minor << 8) | patch;
     curl_version_info_data *version_data = NULL;

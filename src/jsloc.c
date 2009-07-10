@@ -896,24 +896,10 @@ Compile and call event handlers.
 bool
 handlerGo(void *obj, const char *name)
 {
-    jsval v, rval;
+    jsval rval;
     bool rc;
-    JSObject *fo;		/* function object */
-    JSFunction *f;
-    JSBool found;
-    JS_HasProperty(jcx, obj, name, &found);
-    if(!found)
-	return false;
-    JS_GetProperty(jcx, obj, name, &v);
-    if(!JSVAL_IS_OBJECT(v))
-	return false;
-    fo = JSVAL_TO_OBJECT(v);
-    if(!JS_ObjectIsFunction(jcx, fo))
-	return false;
-    f = JS_ValueToFunction(jcx, v);
-    JS_CallFunction(jcx, obj, f, 0, emptyArgs, &rval);
-    rc = true;
-    if(JSVAL_IS_BOOLEAN(rval))
+    rc = JS_CallFunctionName(jcx, obj, name, 0, emptyArgs, &rval);
+    if(rc && JSVAL_IS_BOOLEAN(rval))
 	rc = JSVAL_TO_BOOLEAN(rval);
     JS_GC(jcx);
     return rc;
