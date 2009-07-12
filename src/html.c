@@ -1924,6 +1924,8 @@ encodeTags(char *html)
 			}
 			js_line = 1;
 			js_file = t->href;
+			nzFree(changeFileName);
+			changeFileName = NULL;
 		    }
 		}		/* fetch from the net */
 		if(javatext) {
