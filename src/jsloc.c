@@ -898,6 +898,10 @@ handlerGo(void *obj, const char *name)
 {
     jsval rval;
     bool rc;
+    JSBool found;
+    JS_HasProperty(jcx, obj, name, &found);
+    if(!found)
+	return false;
     rc = JS_CallFunctionName(jcx, obj, name, 0, emptyArgs, &rval);
     if(rc && JSVAL_IS_BOOLEAN(rval))
 	rc = JSVAL_TO_BOOLEAN(rval);
