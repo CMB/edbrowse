@@ -57,7 +57,6 @@ static int radioChecked_l;
 static char *preamble;
 static int preamble_l;
 
-static void htmlName(void);
 
 /* Switch from the linked list of tags to an array. */
 static void
@@ -431,7 +430,6 @@ htmlMeta(void)
     char **ptr;
     void *e;
 
-    htmlName();
     topTag->jv = e =
        domLink("Meta", topTag->name, topTag->id, 0, 0, "metas", jdoc, false);
     name = topTag->name;
@@ -527,6 +525,7 @@ formControl(bool namecheck)
     int itype = topTag->itype;
     int isradio = itype == INP_RADIO;
     int isselect = (itype == INP_SELECT) * 2;
+    char *myname = (topTag->name ? topTag->name : topTag->id);
 
     if(currentForm) {
 	topTag->controller = currentForm;
@@ -534,8 +533,7 @@ formControl(bool namecheck)
     } else if(itype != INP_BUTTON)
 	browseError(MSG_NotInForm2, topTag->info->desc);
 
-    htmlName();
-    if(namecheck && !topTag->name)
+    if(namecheck && !myname)
 	browseError(MSG_FieldNoName, topTag->info->desc);
 
     if(fo) {
@@ -575,7 +573,6 @@ static void
 htmlImage(void)
 {
     char *a;
-    htmlName();
     htmlHref("src");
     topTag->jv =
        domLink("Image", topTag->name, topTag->id, "src", topTag->href,
@@ -598,7 +595,6 @@ htmlForm(void)
     if(topTag->slash)
 	return;
     currentForm = topTag;
-    htmlName();
     htmlHref("action");
 
     a = htmlAttrVal(topAttrib, "method");
@@ -669,6 +665,7 @@ htmlInput(void)
 {
     int n = INP_TEXT;
     int len;
+    char *myname = (topTag->name ? topTag->name : topTag->id);
     char *s = htmlAttrVal(topAttrib, "type");
     if(s && *s) {
 	caseShift(s, 'l');
@@ -700,8 +697,7 @@ htmlInput(void)
     topTag->value = s;
     if(n >= INP_RADIO && htmlAttrPresent(topAttrib, "checked")) {
 	char namebuf[200];
-	if(n == INP_RADIO && topTag->name &&
-	   strlen(topTag->name) < sizeof (namebuf) - 3) {
+	if(n == INP_RADIO && myname && strlen(myname) < sizeof (namebuf) - 3) {
 	    if(!radioChecked) {
 		radioChecked = initString(&radioChecked_l);
 		stringAndChar(&radioChecked, &radioChecked_l, '|');
@@ -1293,6 +1289,10 @@ encodeTags(char *html)
 	if(slash && ti->bits & TAG_NOSLASH)
 	    continue;		/* negated version means nothing */
 
+/* just about any tag can have a name or id */
+	if(!slash)
+	    htmlName();
+
 /* Does this tag force the closure of an anchor? */
 	if(currentA && (action != TAGACT_A || !slash)) {
 	    if(open && open->clickable)
@@ -1436,7 +1436,6 @@ encodeTags(char *html)
 		    a_href = true;
 		currentA = 0;
 	    } else {
-		htmlName();
 		htmlHref("href");
 		topTag->jv =
 		   domLink("Anchor", topTag->name, topTag->id, "href",
@@ -1473,14 +1472,12 @@ encodeTags(char *html)
 	    continue;
 
 	case TAGACT_HEAD:
-	    htmlName();
 	    topTag->jv =
 	       domLink("Head", topTag->name, topTag->id, 0, 0,
 	       "heads", jdoc, false);
 	    goto plainWithElements;
 
 	case TAGACT_BODY:
-	    htmlName();
 	    topTag->jv =
 	       domLink("Body", topTag->name, topTag->id, 0, 0,
 	       "bodies", jdoc, false);
@@ -1547,7 +1544,6 @@ encodeTags(char *html)
 
 	case TAGACT_TABLE:
 	    if(!slash) {
-		htmlName();
 		topTag->jv = to =
 		   domLink("Table", topTag->name, topTag->id, 0, 0,
 		   "tables", jdoc, false);
@@ -1573,7 +1569,6 @@ encodeTags(char *html)
 		++inrow;
 	    tdfirst = true;
 	    if((!slash) && (open = findOpenTag("table")) && open->jv) {
-		htmlName();
 		topTag->jv = to =
 		   domLink("Trow", topTag->name, topTag->id, 0, 0,
 		   "rows", open->jv, false);
@@ -1598,7 +1593,6 @@ encodeTags(char *html)
 		stringAndChar(&new, &l, '|');
 	    }
 	    if((open = findOpenTag("tr")) && open->jv) {
-		htmlName();
 		topTag->jv = to =
 		   domLink("Cell", topTag->name, topTag->id, 0, 0,
 		   "cells", open->jv, false);
@@ -1608,7 +1602,6 @@ encodeTags(char *html)
 
 	case TAGACT_DIV:
 	    if(!slash) {
-		htmlName();
 		topTag->jv =
 		   domLink("Div", topTag->name, topTag->id, 0, 0,
 		   "divs", jdoc, false);
@@ -1618,7 +1611,6 @@ encodeTags(char *html)
 
 	case TAGACT_SPAN:
 	    if(!slash) {
-		htmlName();
 		topTag->jv =
 		   domLink("Span", topTag->name, topTag->id, 0, 0,
 		   "spans", jdoc, false);
@@ -1784,7 +1776,6 @@ encodeTags(char *html)
 
 	case TAGACT_AREA:
 	case TAGACT_FRAME:
-	    htmlName();
 	    if(action == TAGACT_FRAME) {
 		htmlHref("src");
 		topTag->jv =

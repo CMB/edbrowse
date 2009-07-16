@@ -1089,7 +1089,10 @@ Yeah, it makes my head spin too.
 	}
 	vv = OBJECT_TO_JSVAL(v);
 
-	if(symname && !dupname) {
+/* if no name, then use id as name */
+	if(!symname && idname) {
+	    JS_DefineProperty(jcx, owner, idname, vv, NULL, NULL, attr);
+	} else if(symname && !dupname) {
 	    JS_DefineProperty(jcx, owner, symname, vv, NULL, NULL, attr);
 	    if(stringEqual(symname, "action"))
 		establish_property_bool(v, "actioncrash", true, true);
