@@ -406,7 +406,6 @@ httpConnect(const char *from, const char *url)
     char user[MAXUSERPASS], pass[MAXUSERPASS];
     char creds_buf[MAXUSERPASS * 2 + 1];	/* creds abr. for credentials */
     int creds_len = 0;
-    char *creds_ptr = NULL;
     bool still_fetching = true;
     const char *host;
     struct MIMETYPE *mt;
@@ -572,13 +571,14 @@ httpConnect(const char *from, const char *url)
 	creds_len = strlen(creds_buf);
 	creds_buf[creds_len] = ':';
 	strcpy(creds_buf + creds_len + 1, pass);
-	creds_ptr = creds_buf;
-    } else if(getUserPass(urlcopy, creds_buf, false))
-	creds_ptr = creds_buf;
-    else
-	creds_ptr = NULL;
+    } else
+	getUserPass(urlcopy, creds_buf, false);
 
-    curlret = curl_easy_setopt(curl_handle, CURLOPT_USERPWD, creds_ptr);
+/*
+ * If the URL didn't have user and password, and getUserPass failed,
+ * then creds_buf == "".
+ */
+    curlret = curl_easy_setopt(curl_handle, CURLOPT_USERPWD, creds_buf);
     if(curlret != CURLE_OK)
 	goto curl_fail;
 
@@ -633,13 +633,10 @@ httpConnect(const char *from, const char *url)
 /* Convert POST request to GET request after redirection. */
 		curl_easy_setopt(curl_handle, CURLOPT_HTTPGET, 1);
 
-		if(getUserPass(urlcopy, creds_buf, false))
-		    creds_ptr = creds_buf;
-		else
-		    creds_ptr = NULL;
+		getUserPass(urlcopy, creds_buf, false);
 
 		curlret =
-		   curl_easy_setopt(curl_handle, CURLOPT_USERPWD, creds_ptr);
+		   curl_easy_setopt(curl_handle, CURLOPT_USERPWD, creds_buf);
 		if(curlret != CURLE_OK) {
 		    goto curl_fail;
 		}
