@@ -4748,8 +4748,7 @@ browseCurrentBuffer(void)
 
     if(bmode == 2) {
 	cw->jsdead = !javaOK(cw->fileName);
-	if(!cw->jsdead)
-	    cw->jsc = createJavaContext();
+	cw->jsc = createJavaContext();
 	nzFree(newlocation);	/* should already be 0 */
 	newlocation = 0;
 	newbuf = htmlParse(rawbuf, remote);
