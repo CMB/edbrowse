@@ -422,7 +422,7 @@ httpConnect(const char *from, const char *url)
 
     serverData = NULL;
     serverDataLen = 0;
-    creds_buf[0] = '\0';
+    strcpy(creds_buf, ":");	/* Flush stale username and password. */
 
     prot = getProtURL(url);
 
@@ -625,7 +625,7 @@ httpConnect(const char *from, const char *url)
 		transfer_status = true;
 		nzFree(redir);
 	    } else {		/* redirection looks good. */
-		creds_buf[0] = '\0';
+		strcpy(creds_buf, ":");	/* Flush stale data. */
 		nzFree(urlcopy);
 		urlcopy = redir;
 		unpercentURL(urlcopy);
