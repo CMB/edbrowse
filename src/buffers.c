@@ -4051,6 +4051,8 @@ runCommand(const char *line)
 	    setError(-1);
 	    rc = false;
 	    if(jsgo) {
+/* javascript might update fields */
+		readyUndo();
 		jSyncup();
 /* The program might depend on the mouseover code running first */
 		if(over) {
