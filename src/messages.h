@@ -675,4 +675,5 @@ enum {
     MSG_Fkeys,
     MSG_FetchBlobOff,
     MSG_FetchBlobOn,
+    MSG_SSLConnectError,
 };
