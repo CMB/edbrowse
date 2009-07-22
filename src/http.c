@@ -18,6 +18,7 @@
 CURL *curl_handle = NULL;
 char *serverData;
 int serverDataLen;
+static char errorText[CURL_ERROR_SIZE + 1];
 
 static void curl_setError(CURLcode curlret, const char *url);
 static bool ftpConnect(const char *url);
@@ -407,6 +408,7 @@ httpConnect(const char *from, const char *url)
     char creds_buf[MAXUSERPASS * 2 + 1];	/* creds abr. for credentials */
     int creds_len = 0;
     bool still_fetching = true;
+    int ssl_version;
     const char *host;
     struct MIMETYPE *mt;
     const char *prot;
@@ -595,14 +597,31 @@ httpConnect(const char *from, const char *url)
  * then add it to the list of authentication records.  */
 
     still_fetching = true;
+    ssl_version = CURL_SSLVERSION_DEFAULT;
     serverData = initString(&serverDataLen);
 
     while(still_fetching == true) {
 	char *redir = NULL;
+	curl_easy_setopt(curl_handle, CURLOPT_SSLVERSION, ssl_version);
 	init_header_parser();
 	curlret = curl_easy_perform(curl_handle);
 	if(serverDataLen >= CHUNKSIZE)
 	    nl();		/* We printed dots, so we terminate them with newline */
+	if(curlret == CURLE_SSL_CONNECT_ERROR) {
+/* all this would be unnecessary if curl sent the proper hello message */
+/* try the next version */
+	    if(ssl_version == CURL_SSLVERSION_DEFAULT) {
+		ssl_version = CURL_SSLVERSION_SSLv3;
+		debugPrint(3, "stepping back to sslv3");
+		continue;
+	    }
+	    if(ssl_version == CURL_SSLVERSION_SSLv3) {
+		ssl_version = CURL_SSLVERSION_TLSv1;
+		debugPrint(3, "stepping back to tlsv1");
+		continue;
+	    }
+/* probably shouldn't step down to SSLv2; it is considered to be insecure */
+	}
 	if(curlret != CURLE_OK)
 	    goto curl_fail;
 	curl_easy_getinfo(curl_handle, CURLINFO_RESPONSE_CODE, &hcode);
@@ -637,9 +656,8 @@ httpConnect(const char *from, const char *url)
 
 		curlret =
 		   curl_easy_setopt(curl_handle, CURLOPT_USERPWD, creds_buf);
-		if(curlret != CURLE_OK) {
+		if(curlret != CURLE_OK)
 		    goto curl_fail;
-		}
 
 		curlret = curl_easy_setopt(curl_handle, CURLOPT_URL, urlcopy);
 		if(curlret != CURLE_OK)
@@ -652,6 +670,11 @@ httpConnect(const char *from, const char *url)
 		still_fetching = true;
 		name_changed = true;
 		debugPrint(2, "redirect %s", urlcopy);
+
+/* after redirection, go back to default ssl version. */
+/* It might be a completely different server. */
+/* Some day we might want to cache which domains require which ssl versions */
+		ssl_version = CURL_SSLVERSION_DEFAULT;
 	    }
 	}
 
@@ -900,6 +923,9 @@ curl_setError(CURLcode curlret, const char *url)
 	setError(MSG_FTPTransfer);
 	break;
 
+    case CURLE_SSL_CONNECT_ERROR:
+	setError(MSG_SSLConnectError, errorText);
+	break;
     default:
 	setError(MSG_CurlCatchAll, curl_easy_strerror(curlret));
 	break;
@@ -1094,6 +1120,7 @@ my_curl_init(void)
     curl_easy_setopt(curl_handle, CURLOPT_PROGRESSFUNCTION, curl_progress);
     curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT, webTimeout);
     curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, currentAgent);
+    curl_easy_setopt(curl_handle, CURLOPT_SSLVERSION, CURL_SSLVERSION_DEFAULT);
 
 /*
  * This next setting tells libcurl to use any available authentication type.
@@ -1101,7 +1128,12 @@ my_curl_init(void)
 */
     curl_easy_setopt(curl_handle, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
 
-/* The next three setopt calls could allocate or perform file I/O. */
+/* The next few setopt calls could allocate or perform file I/O. */
+    errorText[0] = '\0';
+    curl_init_status =
+       curl_easy_setopt(curl_handle, CURLOPT_ERRORBUFFER, errorText);
+    if(curl_init_status != CURLE_OK)
+	goto libcurl_init_fail;
     curl_init_status = curl_easy_setopt(curl_handle, CURLOPT_CAINFO, sslCerts);
     if(curl_init_status != CURLE_OK)
 	goto libcurl_init_fail;
