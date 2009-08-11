@@ -1290,6 +1290,7 @@ andTranslate(const char *s, bool invisible)
 	"Utilde\0U",
 	"edot\0e",
 	"nbsp\0 ",
+	"shy\0-",
 	"frac13\01/3",
 	"frac23\02/3",
 	"plusmn\0+-",
