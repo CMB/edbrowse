@@ -732,6 +732,7 @@ keysQuoted(void)
     char *u;
     int ulen;
     int key1 = td->key1, key2 = td->key2;
+    int key3 = td->key3;
     if(!key1)
 	return 0;
     u = initString(&ulen);
@@ -742,11 +743,20 @@ keysQuoted(void)
     pushQuoted(&u, &ulen, lineFields[key1], key1);
     if(!key2)
 	return u;
+
     --key2;
     stringAndString(&u, &ulen, " and ");
     stringAndString(&u, &ulen, td->cols[key2]);
     stringAndString(&u, &ulen, " = ");
     pushQuoted(&u, &ulen, lineFields[key2], key2);
+    if(!key3)
+	return u;
+
+    --key3;
+    stringAndString(&u, &ulen, " and ");
+    stringAndString(&u, &ulen, td->cols[key3]);
+    stringAndString(&u, &ulen, " = ");
+    pushQuoted(&u, &ulen, lineFields[key3], key3);
     return u;
 }				/* keysQuoted */
 
@@ -858,7 +868,7 @@ static bool
 setTable(void)
 {
     static const short exclist[] = { EXCNOTABLE, EXCNOCOLUMN, 0 };
-    int cid, nc, i, part1, part2, part3;
+    int cid, nc, i, part1, part2, part3, part4;
     const char *s = cw->fileName;
     const char *t = strchr(s, ']');
     if(t - s >= sizeof (myTab))
@@ -923,16 +933,19 @@ setTable(void)
 	    td->cols[i] = cloneString(rv_name[i]);
 	sql_free(cid);
 
-	getPrimaryKey(myTab, &part1, &part2, &part3);
+	getPrimaryKey(myTab, &part1, &part2, &part3, &part4);
 	if(part1 > nc)
 	    part1 = 0;
 	if(part2 > nc)
 	    part2 = 0;
 	if(part3 > nc)
 	    part3 = 0;
+	if(part4 > nc)
+	    part4 = 0;
 	td->key1 = part1;
 	td->key2 = part2;
 	td->key3 = part3;
+	td->key4 = part4;
     }
 
     cw->table = td;
@@ -959,7 +972,8 @@ showColumns(void)
 
     for(i = 0; i < td->ncols; ++i) {
 	printf("%d ", i + 1);
-	if(td->key1 == i + 1 || td->key2 == i + 1 || td->key3 == i + 1)
+	if(td->key1 == i + 1 || td->key2 == i + 1 || td->key3 == i + 1 ||
+	   td->key4 == i + 1)
 	    printf("*");
 	if(td->nullable[i])
 	    printf("+");
@@ -1149,6 +1163,8 @@ keyCountCheck(void)
 	return 1;
     if(!td->key3)
 	return 2;
+    if(!td->key4)
+	return 3;
     setError(MSG_DBManyKeyCol);
     return 0;
 }				/* keyCountCheck */

@@ -1744,13 +1744,13 @@ sql_fetchAbs(int cid, long rownum, ...)
 
 
 void
-getPrimaryKey(char *tname, int *part1, int *part2, int *part3)
+getPrimaryKey(char *tname, int *part1, int *part2, int *part3, int *part4)
 {
     int keyindex;
     SQLLEN pcbValue;
     char *dot;
 
-    *part1 = *part2 = *part3 = 0;
+    *part1 = *part2 = *part3 = *part4 = 0;
     newStatement();
     stmt_text = "get primary key";
     debugStatement();
@@ -1793,6 +1793,13 @@ getPrimaryKey(char *tname, int *part1, int *part2, int *part3)
     if(rc)
 	goto abort;
     *part3 = keyindex;
+
+    rc = SQLFetch(hstmt);
+    if(rc == SQL_NO_DATA)
+	goto done;
+    if(rc)
+	goto abort;
+    *part4 = keyindex;
 
     goto done;
 

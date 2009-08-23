@@ -1561,12 +1561,13 @@ In informix, you can use system tables to get this information.
 I haven't yet expanded this to a 3 part key.
 *********************************************************************/
 
+/* The prototype looks right; but this function only returns the first 2 key columns */
 void
-getPrimaryKey(char *tname, int *part1, int *part2, int *part3)
+getPrimaryKey(char *tname, int *part1, int *part2, int *part3, int *part4)
 {
     int p1, p2, rc;
     char *s = strchr(tname, ':');
-    *part1 = *part2 = *part3 = 0;
+    *part1 = *part2 = *part3 = *part4 = 0;
     if(!s) {
 	rc = sql_select("select part1, part2 \
 from sysconstraints c, systables t, sysindexes i \
