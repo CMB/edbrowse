@@ -248,7 +248,7 @@ parseURL(const char *url, const char **proto, int *prlen, const char **user, int
 	}
 	p = q + 1;
     }
-    /* @ */
+
     q = p + strcspn(p, ":?#/\1");
     if(host)
 	*host = p;
@@ -257,13 +257,15 @@ parseURL(const char *url, const char **proto, int *prlen, const char **user, int
     if(*q == ':') {		/* port specified */
 	int n;
 	const char *cc, *pp = q + strcspn(q, "/?#\1");
-	n = strtol(q + 1, (char **)&cc, 10);
-	if(cc != pp || !isdigitByte(q[1])) {
-	    setError(MSG_BadPort);
-	    return -1;
+	if(pp > q + 1) {
+	    n = strtol(q + 1, (char **)&cc, 10);
+	    if(cc != pp || !isdigitByte(q[1])) {
+		setError(MSG_BadPort);
+		return -1;
+	    }
+	    if(port)
+		*port = n;
 	}
-	if(port)
-	    *port = n;
 	if(portloc)
 	    *portloc = q;
 	q = pp;			/* up to the slash */

@@ -353,16 +353,19 @@ static char hexdigits[] = "0123456789abcdef";
  * All characters in the area between start and end, not including end,
  * are copied or transformed.
 
+ * Get rid of :/   curl can't handle it.
+
  * This function is used to sanitize user-supplied URLs.  */
 
 char *
 copy_and_sanitize(const char *start, const char *end)
 {
-/* Excise hash fragment */
     int bytes_to_alloc = end - start + 1;
     char *new_copy = NULL;
     const char *in_pointer = NULL;
     char *out_pointer = NULL;
+    const char *portloc = NULL;
+
     for(in_pointer = start; in_pointer < end; in_pointer++)
 	if(*in_pointer <= 32)
 	    bytes_to_alloc += (ESCAPED_CHAR_LENGTH - 1);
@@ -390,7 +393,14 @@ copy_and_sanitize(const char *start, const char *end)
 	    else
 		*frag = 0;
 	}
+
+	getPortLocURL(new_copy, &portloc, 0);
+	if(portloc && !isdigit(portloc[1])) {
+	    const char *s = portloc + strcspn(portloc, "/?#\1");
+	    strcpy((char *)portloc, s);
+	}
     }
+
     return new_copy;
 }				/* copy_and_sanitize */
 

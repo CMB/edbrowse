@@ -1392,6 +1392,7 @@ andTranslate(const char *s, bool invisible)
 	"#8838\0subset of",
 	"#8839\0superset of",
 	"#9658\0*",
+	"#9837\0flat",
 	0
     };
 
