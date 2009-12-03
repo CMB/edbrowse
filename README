@@ -341,3 +341,50 @@ I mean it really looks hacked together.
 Well - I wrote it in my spare time, because I needed this tool desperately.
 No careful methodology, just "Gitter Duhn".
 
+------------------------------------------------------------
+
+Edbrowse really needs a complete rewrite.
+Today, it takes html text and tags, and builds
+javascript objects to go along with those tags; and it builds the screen,
+(I'll call it a screen, it's really a text buffer),
+in parallel, at the same time.
+But what it should do is not build the screen at all on the first pass.
+Text would simply be turned into a string
+and put in as an attribute in whatever object we are working on at the time,
+or the document object if no tag has appeard.
+All internal.
+Then you run the javascript, and it creates more objects, perhaps,
+creates lists dynamically,
+builds entirely new paragraphs, images, links, whatever.
+Then pass 3, render the screen by traversing the tree of objects
+depth first.
+Now, if anything changes, through some onclick code,
+you have a new tree of objects,
+so Simply rerender the screen.
+Maybe this is what standard browsers do; I don't know.
+But there's something we should do that they don't.
+Keep a copy of the old screen and run diff.
+If one or two lines have changed,
+or if a menu has changed behind the scenes, report that to the user.
+It's something a sighted person would notice right away,
+but I would be left in the dark.
+If there are many changes, just say "entire screen has changed".
+Anyways, this is the kind of rewrite that needs to happen.
+But I *way* don't have the time.
+And even though I can see the design in my head, I'm not sure I have the skills.
+Maybe I underestimate myself, but it looks really complicated.
+
+We also have to ask if this would be a good time to switch from C to C++.
+There are pros and cons here, the major con being that I'd have to learn C++,
+something I've been avoiding for 25 years.    :-)
+But all that code dedicated to growing strings dynamically,
+and freeing them without memory leaks, etc, etc, has become a royal pain.
+The C++ string library would solve most of this.
+
+I just wish someone would pay me to do all this stuff.
+An NSF grant or something.
+God knows they fund sillier things.
+But I have no idea how to win a grant.
+So in lieu of that, I just don't have the time that
+would be required to take some of the next big steps.
+
