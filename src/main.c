@@ -125,7 +125,7 @@ junkSubject(const char *s, char key)
     n = cfglen + l;
     new = allocMem(n);
     memcpy(new, cfgcopy, subjstart);
-    sprintf(new + subjstart, "%d`%s > x\n", exp, s);
+    sprintf(new + subjstart, "%ld`%s > x\n", exp, s);
     memcpy(new + subjstart + l, cfgcopy + subjstart, cfglen - subjstart);
     nzFree(cfgcopy);
     cfgcopy = new;

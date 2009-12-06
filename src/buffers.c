@@ -2693,7 +2693,7 @@ twoLetter(const char *line, const char **runThis)
 	while(*t == '^')
 	    ++t;
 	if(!*t) {
-	    sprintf(shortline, "^%d", t - line);
+	    sprintf(shortline, "^%ld", t - line);
 	    return 2;
 	}
     }
