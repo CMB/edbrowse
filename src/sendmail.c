@@ -10,9 +10,10 @@
 #include <time.h>
 
 #define MAXRECAT 100		/* max number of recipients or attachments */
+#define MAXMSLINE 1024		/* max mail server line */
 
-char serverLine[MAXTTYLINE];
-static char spareLine[MAXTTYLINE];
+char serverLine[MAXMSLINE];
+static char spareLine[MAXMSLINE];
 int mssock;			/* mail server socket */
 static bool doSignature;
 static bool ssl_on;
@@ -208,8 +209,13 @@ serverGetLine(void)
     char *s;
     slen = strlen(spareLine);
     strcpy(serverLine, spareLine);
+  top:
     s = strchr(serverLine, '\n');
-    if(!s) {
+    while(!s) {
+	if(slen + 1 == sizeof (serverLine)) {
+	    setError(MSG_MailResponseLong);
+	    return false;
+	}
 	if(ssl_on)
 	    len = ssl_read(serverLine + slen, sizeof (serverLine) - 1 - slen);
 	else
@@ -222,11 +228,7 @@ serverGetLine(void)
 	}
 	slen += len;
 	serverLine[slen] = 0;
-    }
-    s = strchr(serverLine, '\n');
-    if(!s) {
-	setError(MSG_MailResponseLong);
-	return false;
+	s = strchr(serverLine, '\n');
     }
     strcpy(spareLine, s + 1);
     *s = 0;
