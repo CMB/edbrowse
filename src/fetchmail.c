@@ -458,9 +458,9 @@ fetchMail(int account)
 		    nl();
 		} else if(!nattach &&	/* drop empty mail message */
 		   cw->dol -
-		   (lastMailInfo->subject != 0) -
-		   (lastMailInfo->from != 0) -
-		   (lastMailInfo->reply != 0) <= 1) {
+		   (strlen(lastMailInfo->subject) != 0) -
+		   (strlen(lastMailInfo->from) != 0) -
+		   (strlen(lastMailInfo->reply) != 0) <= 1) {
 		    redirect = "x";
 		    i_puts(MSG_Empty);
 		}
