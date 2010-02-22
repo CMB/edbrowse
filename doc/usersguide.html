@@ -767,7 +767,8 @@ s/doghouse/dog-\nhouse/
 Only the first 500 characters of a line are displayed.&nbsp;
 The rest of the line is in the buffer, and can even be modified via a substitute command,
 but if you want to see it, you will need to split it,
-as in the doghouse example above.
+as in the doghouse example above.&nbsp;
+You can change the number of characters displayed by setting the linelength parameter in your config file.
 
 <P><LI>
 a+ adds text, like a, but also adds the line you last typed,
@@ -2808,7 +2809,7 @@ or from another script.
 <P><LI> Establish an email account.&nbsp;
 This will be described later, when we talk about the email client.
 <P><LI> A mail filtering rule.&nbsp;
-<P><LI> Describe a table in an sql database.
+<P><LI> Describe a table or a view in an sql database.
 </OL>
 
 <H3 align=center> <A NAME=keyval> Keyword = Value </A> </H3>
@@ -2868,6 +2869,14 @@ Sorry, there seems to be no way to interrupt a socket call,
 other than control backslash (quit), which kills the entire program.&nbsp;
 That's why these timers are here - so you don't hang forever.&nbsp;
 The defaults are 20 and 0 respectively.
+
+<P>
+linelength = 1000
+<P>
+Change the length of a printed line.&nbsp;
+The default is 500, and the minimum is 80.&nbsp;
+A line that exceeds its length is faithfully represented internally,
+but is truncated on the display, as indicated by trailing dots...
 
 <P>
 nojs = space.com

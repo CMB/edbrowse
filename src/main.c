@@ -168,7 +168,7 @@ readConfigFile(void)
 	"adbook", "ipblack", "maildir", "agent",
 	"jar", "nojs", "spamcan",
 	"webtimer", "mailtimer", "certfile", "datasource", "proxy",
-	0
+	"linelength", 0
     };
 
     if(!fileTypeByName(configFile, false))
@@ -614,6 +614,12 @@ readConfigFile(void)
 		*v++ = 0;
 		proxy_port = atoi(v);
 	    }
+	    continue;
+
+	case 29:		/* linelength */
+	    displayLength = atoi(v);
+	    if(displayLength < 80)
+		displayLength = 80;
 	    continue;
 
 	default:

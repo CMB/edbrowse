@@ -10,6 +10,8 @@
  * and the pcre-devel package. */
 #include <pcre.h>
 
+int displayLength = 500;
+
 /* Static variables for this file. */
 
 /* The valid edbrowse commands. */
@@ -222,7 +224,7 @@ dirSuffix(int n)
     return dirSuffixContext(n, context);
 }				/* dirSuffix */
 
-/* Display a line to the screen, but no more than 500 chars. */
+/* Display a line to the screen, with a limit on output length. */
 void
 displayLine(int n)
 {
@@ -253,11 +255,11 @@ displayLine(int n)
 	    printf("~%02X", c), cnt += 3;
 	else
 	    printf("%c", c), ++cnt;
-	if(cnt >= 500)
+	if(cnt >= displayLength)
 	    break;
     }				/* loop over line */
 
-    if(cnt >= 500)
+    if(cnt >= displayLength)
 	printf("...");
     printf("%s", dirSuffix(n));
     if(endMarks == 2 || endMarks && cmd == 'l')
