@@ -648,16 +648,20 @@ bool
 linesComing(int n)
 {
     int need = textLinesCount + n;
+#if 0
     if(need > LNMAX) {
 	setError(MSG_LineLimit);
 	return false;
     }
+#endif
     if(need > textLinesMax) {
 	int newmax = textLinesMax * 3 / 2;
 	if(need > newmax)
 	    newmax = need + 8192;
+#if 0
 	if(newmax > LNMAX)
 	    newmax = LNMAX;
+#endif
 	if(textLinesMax) {
 	    debugPrint(4, "textLines realloc %d", newmax);
 	    textLines = reallocMem(textLines, newmax * sizeof (pst));

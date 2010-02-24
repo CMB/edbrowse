@@ -701,11 +701,13 @@ fileIntoMemory(const char *filename, char **data, int *len)
 	close(fh);
 	return false;
     }				/* should never hapen */
+#if 0
     if(length > maxFileSize) {
 	setError(MSG_LargeFile);
 	close(fh);
 	return false;
     }
+#endif
     buf = allocMem(length + 2);
     n = 0;
     if(length)
