@@ -23,7 +23,7 @@ static const char sql_cmd[] = "AadDefghHiklmnpqrsvwXz=^<";
 /* Commands for directory mode. */
 static const char dir_cmd[] = "AdDefghHklmnpqsvwXz=^<";
 /* Commands that work at line number 0, in an empty file. */
-static const char zero_cmd[] = "aAbefhHMqruwz=^<";
+static const char zero_cmd[] = "aAbefhHMqruw=^<";
 /* Commands that expect a space afterward. */
 static const char spaceplus_cmd[] = "befrw";
 /* Commands that should have no text after them. */
