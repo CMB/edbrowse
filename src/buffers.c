@@ -23,7 +23,7 @@ static const char sql_cmd[] = "AadDefghHiklmnpqrsvwXz=^<";
 /* Commands for directory mode. */
 static const char dir_cmd[] = "AdDefghHklmnpqsvwXz=^<";
 /* Commands that work at line number 0, in an empty file. */
-static const char zero_cmd[] = "aAbefhHMqruw=^<";
+static const char zero_cmd[] = "aAbefhHMqruwz=^<";
 /* Commands that expect a space afterward. */
 static const char spaceplus_cmd[] = "befrw";
 /* Commands that should have no text after them. */
@@ -3667,6 +3667,7 @@ runCommand(const char *line)
 	startRange = endRange + 1;
 	endRange = startRange;
 	if(startRange > cw->dol) {
+	    startRange = endRange = 0;
 	    setError(MSG_LineHigh);
 	    return false;
 	}
