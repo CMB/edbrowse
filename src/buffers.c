@@ -706,6 +706,11 @@ addToMap(int start, int end, int destl)
 {
     char *newmap;
     int i, j;
+/* sanity check */
+    if(destl < 0)
+	destl = 0;
+    if(destl > cw->dol)
+	destl = cw->dol;
     int nlines = end - start;
     if(nlines == 0)
 	i_printfExit(MSG_EmptyPiece);
