@@ -115,13 +115,12 @@ acceptCookie(struct cookie *c)
     addToListBack(&cookies, c);
 }				/* acceptCookie */
 
-
-/* Tell libcurl about a new cookie.  Called when setting cookies from
- * JavaScript.
- * The function is pretty simple.  Construct a line of the form used by
- * the Netscape cookie file format, and pass that to libcurl. */
-static CURLcode
-cookieForLibcurl(const struct cookie *c)
+/*
+ * Construct a cookie line of the form used by Netscape's file format,
+ * from a cookie c.  Returns dynamically-allocated memory, which the
+ * caller must free. */
+static char *
+netscapeCookieLine(const struct cookie *c)
 {
 /* Netscape format */
 /*
@@ -138,14 +137,26 @@ cookieForLibcurl(const struct cookie *c)
 	tailstr = "TRUE";
     else
 	tailstr = "FALSE";
-
     sprintf(cookLine, "%s\t%s\t%s\t%s\t%u\t%s\t%s\n",
        c->domain, tailstr,
        c->path, c->secure ? "TRUE" : "FALSE", (unsigned)c->expires,
        c->name, c->value);
+    return cookLine;
+}
+
+
+/* Tell libcurl about a new cookie.  Called when setting cookies from
+ * JavaScript.
+ * The function is pretty simple.  Construct a line of the form used by
+ * the Netscape cookie file format, and pass that to libcurl. */
+static CURLcode
+cookieForLibcurl(const struct cookie *c)
+{
+    char *cookLine = netscapeCookieLine(c);
     debugPrint(3, "cookie for libcurl");
-    curl_easy_setopt(curl_handle, CURLOPT_COOKIELIST, cookLine);
+    CURLcode ret = curl_easy_setopt(curl_handle, CURLOPT_COOKIELIST, cookLine);
     nzFree(cookLine);
+    return ret;
 }				/* cookieForLibcurl */
 
 /* Should this server really specify this domain in a cookie? */
@@ -329,12 +340,11 @@ cookiesFromJar(void)
     f = fopen(cookieFile, "w");
     if(!f)
 	i_printfExit(MSG_NoRebCookie, cookieFile);
-    foreach(c, cookies)
-       fprintf(f, "%s\t%s\t%s\t%s\t%u\t%s\t%s\n",
-       c->domain,
-       c->tail ? "TRUE" : "FALSE",
-       c->path,
-       c->secure ? "TRUE" : "FALSE", (unsigned)c->expires, c->name, c->value);
+    foreach(c, cookies) {
+	char *cookLine = netscapeCookieLine(c);
+	fputs(cookLine, f);
+	nzFree(cookLine);
+    }
     fclose(f);
 }				/* cookiesFromJar */
 
