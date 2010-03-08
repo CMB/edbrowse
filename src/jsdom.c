@@ -38,19 +38,19 @@ my_ErrorReporter(JSContext * cx, const char *message, JSErrorReport * report)
     char *prefix, *tmp;
 
     if(debugLevel < 2)
-	return;
+	goto done;
     if(ismc)
-	return;
+	goto done;
 
     if(!report) {
 	fprintf(gErrFile, "%s\n", message);
-	return;
+	goto done;
     }
 
 /* Conditionally ignore reported warnings. */
     if(JSREPORT_IS_WARNING(report->flags)) {
 	if(browseLocal)
-	    return;
+	    goto done;
     }
 
     prefix = NULL;
@@ -76,6 +76,9 @@ my_ErrorReporter(JSContext * cx, const char *message, JSErrorReport * report)
 
     if(prefix)
 	JS_free(cx, prefix);
+
+  done:
+    report->flags = 0;
 }				/* my_ErrorReporter */
 
 

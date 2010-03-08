@@ -15,6 +15,9 @@ struct cookie {
 /* These are allocated */
     char *name, *value;
     char *server, *path, *domain;
+    bool tail;
+/* tail is needed for libcurl, to tell it to tail-match. */
+/* Why doesn't it just look for the damned dot at the front of the domain? */
     time_t expires;		/* zero means undefined */
     bool secure;
 };
@@ -47,10 +50,12 @@ cookie_from_netscape_line(char *cookie_line)
 	    char *end = strchr(cookie_line, '\t');
 	    new_cookie->domain = pullString1(start, end);
 	    start = end + 1;
-/* Ignore the second field of the line. */
-	    while(*start != '\t')
-		start++;
-	    start++;		/* skip tab */
+	    end = strchr(start, '\t');
+	    if((*start == 't') || (*start == 'T'))
+		new_cookie->tail = true;
+	    else
+		new_cookie->tail = false;
+	    start = end + 1;
 	    end = strchr(start, '\t');
 	    new_cookie->path = pullString1(start, end);
 	    start = end + 1;
@@ -68,6 +73,11 @@ cookie_from_netscape_line(char *cookie_line)
 /* strcspn gives count of non-newline characters in string, which is the
  * length of the final field.  Either CR or LF is considered a newline. */
 	    new_cookie->value = pullString(start, strcspn(start, "\r\n"));
+/* Whenever new_cookie->tail is true, there's going to be a dot at the front of the
+ * domain name.  Libcurl even puts one there when it parses set-cookie
+ * headers.  But let's be sure. */
+	    if(new_cookie->tail && (new_cookie->domain[0] != '.'))
+		new_cookie->domain = prependString(new_cookie->domain, ".");
 	}
     }
 
@@ -114,13 +124,25 @@ static CURLcode
 cookieForLibcurl(const struct cookie *c)
 {
 /* Netscape format */
-/* I have no clue what the second argument is suppose to be, */
-/* I'm always calling it false. */
+/*
+ * The second field of a cookie file entry is not documented anywhere.
+ * It's been a great mystery since 2001.  But if you look at the libcurl
+ * source, you'll see that they use it.  A value of TRUE indicates that
+ * the domain field should be tail-matched, and a value of FALSE indicates
+ * that it should not. */
+    const char *tailstr;
     char *cookLine =
        allocMem(strlen(c->path) + strlen(c->domain) + strlen(c->name) +
-       strlen(c->value) + 48);
-    sprintf(cookLine, "%s\tFALSE\t%s\t%s\t%u\t%s\t%s\n", c->domain, c->path,
-       c->secure ? "TRUE" : "FALSE", (unsigned)c->expires, c->name, c->value);
+       strlen(c->value) + 128);
+    if(c->tail)
+	tailstr = "TRUE";
+    else
+	tailstr = "FALSE";
+
+    sprintf(cookLine, "%s\t%s\t%s\t%s\t%u\t%s\t%s\n",
+       c->domain, tailstr,
+       c->path, c->secure ? "TRUE" : "FALSE", (unsigned)c->expires,
+       c->name, c->value);
     debugPrint(3, "cookie for libcurl");
     curl_easy_setopt(curl_handle, CURLOPT_COOKIELIST, cookLine);
     nzFree(cookLine);
@@ -168,6 +190,7 @@ receiveCookie(const char *url, const char *str)
 
     debugPrint(3, "%s", str);
 
+
     server = getHostURL(url);
     if(server == 0 || !*server)
 	return false;
@@ -181,6 +204,7 @@ receiveCookie(const char *url, const char *str)
 	return false;
 
     c = allocZeroMem(sizeof (struct cookie));
+    c->tail = false;
     c->name = pullString1(str, q);
     ++q;
     if(p - q > 0)
@@ -215,13 +239,23 @@ receiveCookie(const char *url, const char *str)
 	    c->path = prependString(c->path, "/");
     }
 
-    if(!(c->domain = extractHeaderParam(str, "domain")))
+    if(!(c->domain = extractHeaderParam(str, "domain"))) {
 	c->domain = cloneString(server);
-    if(c->domain[0] == '.')
-	strcpy(c->domain, c->domain + 1);
-    if(!domainSecurityCheck(server, c->domain)) {
-	nzFree(c->domain);
-	c->domain = cloneString(server);
+    } else {
+/* Is this safe for tail-matching? */
+	const char *domtemp = c->domain;
+	if(domtemp[0] == '.')
+	    domtemp++;
+	if(!domainSecurityCheck(server, domtemp)) {
+	    nzFree(c->domain);
+	    c->domain = cloneString(server);
+	} else {
+/* It's safe to do tail-matching with this domain. */
+	    c->tail = true;
+/* Guarantee that it does in fact start with dot, prepending if necessary.. */
+	    if(c->domain[0] != '.')
+		c->domain = prependString(c->domain, ".");
+	}
     }
 
     if(s = extractHeaderParam(str, "secure")) {
@@ -296,8 +330,10 @@ cookiesFromJar(void)
     if(!f)
 	i_printfExit(MSG_NoRebCookie, cookieFile);
     foreach(c, cookies)
-       fprintf(f, "%s\tFALSE\t%s\t%s\t%u\t%s\t%s\n",
-       c->domain, c->path,
+       fprintf(f, "%s\t%s\t%s\t%s\t%u\t%s\t%s\n",
+       c->domain,
+       c->tail ? "TRUE" : "FALSE",
+       c->path,
        c->secure ? "TRUE" : "FALSE", (unsigned)c->expires, c->name, c->value);
     fclose(f);
 }				/* cookiesFromJar */
