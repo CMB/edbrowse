@@ -1086,6 +1086,9 @@ Yeah, it makes my head spin too.
 /* self-referencing - hope this is ok */
 		establish_property_object(v, "options", v);
 		establish_property_number(v, "selectedIndex", -1, false);
+// not the normal pathway; we have to create our own element methods here.
+		JS_DefineFunction(jcx, v, "focus", nullFunction, 0, PROP_FIXED);
+		JS_DefineFunction(jcx, v, "blur", nullFunction, 0, PROP_FIXED);
 	    }
 	} else {
 	    v = JS_NewObject(jcx, cp, NULL, owner);
