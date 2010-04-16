@@ -504,11 +504,62 @@ isProxyURL(const char *url)
     return ((url[0] | 0x20) == 'p');
 }
 
+/*
+ * hasPrefix: return true if s has a prefix of p, false otherwise.
+ */
+static bool
+hasPrefix(char *s, char *p)
+{
+    bool ret = false;
+    if(!p[0])
+	ret = true;		/* Empty string is a prefix of all strings. */
+    else {
+	size_t slen = strlen(s);
+	size_t plen = strlen(p);
+	ret = (plen <= slen) && !strncmp(p, s, plen);
+    }
+    return ret;
+}				/* hasPrefix */
+
+/*
+ * copyPathSegment: copy everything from *src, starting with the leftmost
+ * character (a slash), and ending with either the next slash (not included)
+ * or the end of the string.
+ * Advance *src to point to the character succeeding the copied text.
+ */
+static void
+copyPathSegment(char **src, char **dest, int *destlen)
+{
+    int spanlen = strcspn(*src + 1, "/") + 1;
+    stringAndBytes(dest, destlen, *src, spanlen);
+    *src = *src + spanlen;
+}				/* copyPathSegment */
+
+/*
+ * Remove the rightmost component of a path,
+ * including the preceding slash, if any.
+ */
+static void
+snipLastSegment(char **path, int *pathLen)
+{
+    char *rightmostSlash = strrchr(*path, '/');
+    if(rightmostSlash == NULL)
+	rightmostSlash = *path;
+    *rightmostSlash = '\0';
+    *pathLen = rightmostSlash - *path;
+}				/* snipLastSegment */
+
 static void
 squashDirectories(char *url)
 {
     char *dd = (char *)getDataURL(url);
     char *s, *t, *end;
+    char *inPath = NULL;
+    char *outPath;
+    size_t outPathLen = 0;
+    char *rest = NULL;
+
+    outPath = initString(&outPathLen);
     if(memEqualCI(url, "javascript:", 11))
 	return;
     if(!dd || dd == url)
@@ -521,25 +572,36 @@ squashDirectories(char *url)
     if(*dd != '/')
 	i_printfExit(MSG_BadSlash, url);
     end = dd + strcspn(dd, "?#\1");
-    while(true) {
-	s = strstr(dd, "/./");
-	if(s && s < end) {
-	    strcpy(s, s + 2);
-	    continue;
-	}
-	s = strstr(dd, "/../");
-	if(!s)
-	    break;
-	if(s > end)
-	    break;
-	if(s == dd) {
-	    strcpy(s, s + 3);
-	    continue;
-	}
-	for(t = s - 1; *t != '/'; --t) ;
-	s += 3;
-	strcpy(t, s);
+    rest = cloneString(end);
+    inPath = pullString1(dd, end);
+    s = inPath;
+
+/* The following algorithm is straight out of RFC 3986, section 5.2.4. */
+/* We can ignore several steps because of a loop invariant: */
+/* After the test, *s is always a slash. */
+    while(*s) {
+	if(hasPrefix(s, "/./"))
+	    s += 2;		/* Point s at 2nd slash */
+	else if(!strcmp(s, "/.")) {
+	    s[1] = '\0';
+	    /* We'll copy the segment "/" on the next iteration. */
+	    /* And that will be the final iteration of the loop. */
+	} else if(hasPrefix(s, "/../")) {
+	    s += 3;		/* Point s at 2nd slash */
+	    snipLastSegment(&outPath, &outPathLen);
+	} else if(!strcmp(s, "/..")) {
+	    s[1] = '\0';
+	    snipLastSegment(&outPath, &outPathLen);
+	    /* As above, copy "/" on the next and final iteration. */
+	} else
+	    copyPathSegment(&s, &outPath, &outPathLen);
     }
+    *dd = '\0';
+    strcat(url, outPath);
+    strcat(url, rest);
+    nzFree(inPath);
+    nzFree(outPath);
+    nzFree(rest);
 }				/* squashDirectories */
 
 char *
