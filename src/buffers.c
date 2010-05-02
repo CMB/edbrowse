@@ -2709,11 +2709,6 @@ twoLetter(const char *line, const char **runThis)
 	}
     }
 
-    if(line[0] == 'm' && (i = stringIsNum(line + 1)) >= 0) {
-	sprintf(shortline, "^M%d", i);
-	return 2;
-    }
-
     if(line[0] == 'c' && line[1] == 'd') {
 	c = line[2];
 	if(!c || isspaceByte(c)) {
@@ -3509,6 +3504,7 @@ runCommand(const char *line)
 	    return false;
 	}
     }
+
     if(first == ',') {
 	didRange = true;
 	++line;
@@ -3517,12 +3513,14 @@ runCommand(const char *line)
 	    startRange = 0;
 	endRange = cw->dol;
     }
+
     if(first == ';') {
 	didRange = true;
 	++line;
 	startRange = cw->dot;
 	endRange = cw->dol;
     }
+
     if(first == 'j' || first == 'J') {
 	didRange = true;
 	endRange = startRange + 1;
@@ -3531,10 +3529,12 @@ runCommand(const char *line)
 	    return false;
 	}
     }
+
     if(first == '=') {
 	didRange = true;
 	startRange = endRange = cw->dol;
     }
+
     if(first == 'w' || first == 'v' || first == 'g' &&
        line[1] && strchr(valid_delim, line[1])) {
 	didRange = true;
@@ -3571,6 +3571,7 @@ runCommand(const char *line)
 	sprintf(newline, "s/.*/%cc/", first);
 	line = newline;
     }
+
 /* Breakline is actually a substitution of lines. */
     if(stringEqual(line, "bl")) {
 	if(cw->dirMode) {
@@ -3610,20 +3611,25 @@ runCommand(const char *line)
 	setError(MSG_DirCommand, icmd);
 	return (globSub = false);
     }
+
     if(cw->sqlMode && !strchr(sql_cmd, cmd)) {
 	setError(MSG_DBCommand, icmd);
 	return (globSub = false);
     }
+
     if(cw->browseMode && !strchr(browse_cmd, cmd)) {
 	setError(MSG_BrowseCommand, icmd);
 	return (globSub = false);
     }
+
     if(startRange == 0 && !strchr(zero_cmd, cmd)) {
 	setError(MSG_AtLine0);
 	return (globSub = false);
     }
+
     while(isspaceByte(first))
 	postSpace = true, first = *++line;
+
     if(strchr(spaceplus_cmd, cmd) && !postSpace && first) {
 	s = line;
 	while(isdigitByte(*s))
@@ -3633,6 +3639,7 @@ runCommand(const char *line)
 	    return (globSub = false);
 	}
     }
+
     if(globSub && !strchr(global_cmd, cmd)) {
 	setError(MSG_GlobalCommand, icmd);
 	return (globSub = false);
@@ -3700,7 +3707,7 @@ runCommand(const char *line)
 	showError();
 	return true;
     }
-    /* h */
+
     if(cmd == 'H') {
 	if(helpMessagesOn ^= 1)
 	    if(debugLevel >= 1)
@@ -3727,11 +3734,11 @@ runCommand(const char *line)
 	printf("%d\n", endRange);
 	return true;
     }
-    /* = */
+
     if(cmd == 'B') {
 	return balanceLine(line);
     }
-    /* B */
+
     if(cmd == 'u') {
 	struct ebWindow *uw = &undoWindow;
 	char *swapmap;
@@ -3748,7 +3755,7 @@ runCommand(const char *line)
 	swapmap = uw->map, uw->map = cw->map, cw->map = swapmap;
 	return true;
     }
-    /* u */
+
     if(cmd == 'k') {
 	if(!islowerByte(first) || line[1]) {
 	    setError(MSG_EnterKAZ);
@@ -3868,7 +3875,7 @@ runCommand(const char *line)
 	}
 	return writeFile(line, writeMode);
     }
-    /* w */
+
     if(cmd == '^') {		/* back key, pop the stack */
 	if(first && !cx) {
 	    setError(MSG_ArrowAfter);
