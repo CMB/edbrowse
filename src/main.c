@@ -37,6 +37,7 @@ bool caseInsensitive, searchStringsAll;
 bool undoable;
 bool allowRedirection = true, allowJS = true, sendReferrer = false;
 bool binaryDetect = true;
+bool inputReadLine;
 bool showHiddenFiles, helpMessagesOn;
 uchar dirWrite, endMarks;
 int context = 1;

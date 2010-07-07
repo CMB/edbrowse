@@ -10,6 +10,8 @@
  * and the pcre-devel package. */
 #include <pcre.h>
 
+#include <readline/readline.h>
+
 int displayLength = 500;
 
 /* Static variables for this file. */
@@ -298,13 +300,26 @@ pst
 inputLine(void)
 {
     static uchar line[MAXTTYLINE];
-    int i, j;
+    int i, j, len;
     uchar c, d, e;
+    static char *last_rl;
+    uchar *s;
 
   top:
     intFlag = false;
     inInput = true;
-    if(!fgets((char *)line, sizeof (line), stdin)) {
+    nzFree(last_rl);
+    last_rl = 0;
+    s = 0;
+
+    if(inputReadLine && isInteractive) {
+	last_rl = readline("");
+	s = (uchar *) last_rl;
+    } else {
+	s = (uchar *) fgets((char *)line, sizeof (line), stdin);
+    }
+
+    if(!s) {
 	if(intFlag)
 	    goto top;
 	i_puts(MSG_EndFile);
@@ -314,24 +329,30 @@ inputLine(void)
     intFlag = false;
 
     i = j = 0;
-    while(i < sizeof (line) - 1 && (c = line[i]) != '\n') {
+    if(last_rl) {
+	len = strlen(s);
+    } else {
+	len = sizeof (line) - 1;
+    }
+
+    while(i < len && (c = s[i]) != '\n') {
 /* A bug in my keyboard causes nulls to be entered from time to time. */
 	if(c == 0)
 	    c = ' ';
 	if(c != '~') {
 	  addchar:
-	    line[j++] = c;
+	    s[j++] = c;
 	    ++i;
 	    continue;
 	}
-	d = line[i + 1];
+	d = s[i + 1];
 	if(d == '~') {
 	    ++i;
 	    goto addchar;
 	}
 	if(!isxdigit(d))
 	    goto addchar;
-	e = line[i + 2];
+	e = s[i + 2];
 	if(!isxdigit(e))
 	    goto addchar;
 	c = fromHex(d, e);
@@ -340,8 +361,9 @@ inputLine(void)
 	i += 2;
 	goto addchar;
     }				/* loop over input chars */
-    line[j] = '\n';
-    return line;
+    s[j] = '\n';
+// in either case the line is not null terminated; hope that's ok
+    return s;
 }				/* inputLine */
 
 static struct {
@@ -3045,6 +3067,13 @@ twoLetter(const char *line, const char **runThis)
 	binaryDetect ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(binaryDetect + MSG_BinaryIgnore);
+	return true;
+    }
+
+    if(stringEqual(line, "rl")) {
+	inputReadLine ^= 1;
+	if(helpMessagesOn || debugLevel >= 1)
+	    i_puts(inputReadLine + MSG_InputTTY);
 	return true;
     }
 

@@ -676,6 +676,8 @@ static const char *englishMessages[] = {
     "do not fetch blob columns",
     "fetch blob columns",
     "SSL connect error in libcurl: %s",
+    "input tty",
+    "input readline()",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
@@ -1333,6 +1335,8 @@ static const char *frenchMessages[] = {
     "ne pas extraire de colonnes blob",
     "extraction de colonnes blob",
     0,
+    0,
+    0,
 };
 
 /* Translation by Cleverson: clever92000@yahoo.com.br */
@@ -1989,6 +1993,8 @@ static const char *brazilianPortugueseMessages[] = {
     "chaves estrangeiras para %s\n",
     "não pegar colunas de blob",
     "pegar colunas de blob",
+    0,
+    0,
     0,
 };
 

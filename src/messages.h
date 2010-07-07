@@ -676,4 +676,6 @@ enum {
     MSG_FetchBlobOff,
     MSG_FetchBlobOn,
     MSG_SSLConnectError,
+    MSG_InputTTY,
+    MSG_InputReadLine,
 };

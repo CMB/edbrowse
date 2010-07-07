@@ -42,7 +42,7 @@ ESQLDFLAGS = $(STRIP)
 #  Or you can use the target jslink below.
 #  Some folks need to add -lcrypto to this list.
 
-LIBS = -lpcre -lm -lssl -lsmjs -lcurl
+LIBS = -lpcre -lm -lssl -lsmjs -lcurl -lreadline
 
 #  Make the dynamically linked executable program by default.
 #  Edbrowse executable.
