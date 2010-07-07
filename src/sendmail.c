@@ -178,10 +178,42 @@ Print the lines if the debug level calls for it.
 *********************************************************************/
 
 bool
-serverPutLine(const char *buf)
+mailPutLine(const char *buf, bool realdot)
 {
-    int n, len = strlen(buf);
+    int n, j, len = strlen(buf);
     char c;
+    static char last_nl = 0;
+    int dotcount = 0;
+    char *dotbuf = 0;
+    char *s;
+
+    s = strstr(buf, "\n.");
+    if(s && realdot && buf + len - s == 4)
+	s = 0;
+    if(last_nl && buf[0] == '.' || s) {
+// have to dot stuff
+// count dots first
+	if(last_nl && buf[0] == '.')
+	    ++dotcount;
+	for(n = 1; n < len; ++n)
+	    if(buf[n] == '.' && buf[n - 1] == '\n')
+		++dotcount;
+	dotbuf = allocMem(len + dotcount + 1);
+	j = 0;
+	if(last_nl && buf[0] == '.')
+	    dotbuf[j++] = '.';
+	for(n = 0; n < len; ++n) {
+	    c = buf[n];
+	    if(c == '.' && n && buf[n - 1] == '\n' &&
+	       (!realdot || len - n != 3))
+		dotbuf[j++] = '.';
+	    dotbuf[j++] = c;
+	}
+	dotbuf[j] = 0;
+	buf = dotbuf;
+	len = j;
+    }
+
     if(debugLevel >= 4) {
 	printf("> ");
 	for(n = 0; n < len; ++n) {
@@ -190,19 +222,30 @@ serverPutLine(const char *buf)
 		putchar(c);
 	}
     }
+
+    if(len) {
+	if(buf[len - 1] == '\n')
+	    last_nl = 1;
+	else
+	    last_nl = 0;
+    }
+
     if(ssl_on)
 	n = ssl_write(buf, len);
     else
 	n = tcp_write(mssock, buf, len);
+
+    nzFree(dotbuf);
+
     if(n < len) {
 	setError(MSG_MailWrite);
 	return false;
     }
     return true;
-}				/* serverPutLine */
+}				/* mailPutLine */
 
 bool
-serverGetLine(void)
+mailGetLine(void)
 {
     int n, len, slen;
     char c;
@@ -236,36 +279,36 @@ serverGetLine(void)
 	*--s = 0;
     debugPrint(4, "< %s", serverLine);
     return true;
-}				/* serverGetLine */
+}				/* mailGetLine */
 
 static bool
-serverPutGet(const char *line)
+mailPutGet(const char *line)
 {
-    if(!serverPutLine(line))
+    if(!mailPutLine(line, false))
 	return false;
-    if(!serverGetLine())
+    if(!mailGetLine())
 	return false;
     return true;
-}				/* serverPutGet */
+}				/* mailPutGet */
 
 void
-serverPutGetError(const char *line)
+mailPutGetError(const char *line)
 {
-    if(!serverPutGet(line))
+    if(!mailPutGet(line))
 	showErrorAbort();
-}				/* serverPutGetError */
+}				/* mailPutGetError */
 
 void
-serverClose(void)
+mailClose(void)
 {
-    serverPutLine("quit\r\n");
+    mailPutLine("quit\r\n", false);
     endhostent();
 /* the other side has to have time to process the quit command, before we simply hang up. */
     usleep(400000);
     if(ssl_on)
 	ssl_done();
     close(mssock);
-}				/* serverClose */
+}				/* mailClose */
 
 /* Connect to the mail server */
 bool
@@ -936,10 +979,10 @@ sendMail(int account, const char **recipients, const char *body,
 	nzFree(encoded);
 	return false;
     }
-    if(!serverGetLine())
+    if(!mailGetLine())
 	goto mailfail;
     while(memEqualCI(serverLine, "220-", 4)) {
-	if(!serverGetLine())
+	if(!mailGetLine())
 	    goto mailfail;
     }
     if(!memEqualCI(serverLine, "220 ", 4)) {
@@ -949,10 +992,10 @@ sendMail(int account, const char **recipients, const char *body,
 
   sayhello:
     sprintf(serverLine, "%s %s%s", (a->outssl ? "ehlo" : "Helo"), smlogin, eol);
-    if(!serverPutLine(serverLine))
+    if(!mailPutLine(serverLine, false))
 	goto mailfail;
   get250:
-    if(!serverGetLine())
+    if(!mailGetLine())
 	goto mailfail;
     if(!memEqualCI(serverLine, "250", 3) ||
        serverLine[3] != ' ' && serverLine[3] != '-') {
@@ -968,7 +1011,7 @@ sendMail(int account, const char **recipients, const char *body,
 
 	if(a->outssl == 2 && firstgreet) {
 /* haven't yet switched over to ssl */
-	    if(!serverPutGet("starttls\r\n"))
+	    if(!mailPutGet("starttls\r\n"))
 		goto mailfail;
 	    if(!memEqualCI(serverLine, "220 ", 4)) {
 		setError(MSG_MailBadPrompt, serverLine);
@@ -991,7 +1034,7 @@ sendMail(int account, const char **recipients, const char *body,
 	}
 
 /* login authentication is the only thing I support right now. */
-	if(!serverPutGet("auth login\r\n"))
+	if(!mailPutGet("auth login\r\n"))
 	    goto mailfail;
 	if(!memEqualCI(serverLine, "334 ", 4)) {
 	    setError(MSG_AuthLoginOnly);
@@ -1000,7 +1043,7 @@ sendMail(int account, const char **recipients, const char *body,
 	b = base64Encode(login, strlen(login), false);
 	sprintf(serverLine, "%s%s", b, eol);
 	nzFree(b);
-	if(!serverPutGet(serverLine))
+	if(!mailPutGet(serverLine))
 	    goto mailfail;
 	if(!memEqualCI(serverLine, "334 ", 4)) {
 	    setError(MSG_AuthLoginOnly);
@@ -1009,7 +1052,7 @@ sendMail(int account, const char **recipients, const char *body,
 	b = base64Encode(pass, strlen(pass), false);
 	sprintf(serverLine, "%s%s", b, eol);
 	nzFree(b);
-	if(!serverPutGet(serverLine))
+	if(!mailPutGet(serverLine))
 	    goto mailfail;
 	if(!memEqualCI(serverLine, "235 ", 4)) {
 	    setError(MSG_SmtpNotComplete, serverLine);
@@ -1018,7 +1061,7 @@ sendMail(int account, const char **recipients, const char *body,
     }
 
     sprintf(serverLine, "mail from: <%s>%s", reply, eol);
-    if(!serverPutGet(serverLine))
+    if(!mailPutGet(serverLine))
 	goto mailfail;
     if(!memEqualCI(serverLine, "250 ", 4)) {
 	setError(MSG_MailReject, reply);
@@ -1027,7 +1070,7 @@ sendMail(int account, const char **recipients, const char *body,
 
     for(j = 0; s = recipients[j]; ++j) {
 	sprintf(serverLine, "rcpt to: <%s>%s", s, eol);
-	if(!serverPutGet(serverLine))
+	if(!mailPutGet(serverLine))
 	    goto mailfail;
 	if(!memEqualCI(serverLine, "250 ", 4)) {
 	    setError(MSG_MailReject, s);
@@ -1035,7 +1078,7 @@ sendMail(int account, const char **recipients, const char *body,
 	}
     }
 
-    if(!serverPutGet("data\r\n"))
+    if(!mailPutGet("data\r\n"))
 	goto mailfail;
     if(!memEqualCI(serverLine, "354 ", 4)) {
 	setError(MSG_MailNotReady, serverLine);
@@ -1157,12 +1200,12 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
     /* mime format */
     /* A dot alone ends the transmission */
     stringAndString(&out, &j, ".\r\n");
-    if(!serverPutLine(out))
+    if(!mailPutLine(out, true))
 	goto mailfail;
     nzFree(out);
     out = 0;
 
-    if(!serverGetLine())
+    if(!mailGetLine())
 	goto mailfail;
     if(!memEqualCI(serverLine, "250 ", 4) &&
 /* do these next two lines make any sense? */
@@ -1172,7 +1215,7 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 	goto mailfail;
     }
 
-    serverClose();
+    mailClose();
     return true;
 
   mailfail:

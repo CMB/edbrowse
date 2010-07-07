@@ -1064,6 +1064,7 @@ allIPs(void)
 			ip = tcp_name_ip(dom);
 		    if(ip != NULL_IP) {
 /* could be a repeat */
+			debugPrint(3, "becomes %s", tcp_ip_dots(ip));
 			for(k = 0; k < iptotal; ++k)
 			    if(iplist[k] == ip)
 				break;

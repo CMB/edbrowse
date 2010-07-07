@@ -295,27 +295,27 @@ fetchMail(int account)
 
     if(!mailConnect(host, a->inport, a->inssl))
 	showErrorAbort();
-    if(!serverGetLine())
+    if(!mailGetLine())
 	showErrorAbort();
     if(memcmp(serverLine, "+OK ", 4))
 	i_printfExit(MSG_BadPopIntro, serverLine);
     sprintf(serverLine, "user %s%s", login, eol);
-    serverPutGetError(serverLine);
+    mailPutGetError(serverLine);
     if(pass) {			/* I think this is always required */
 	sprintf(serverLine, "pass %s%s", pass, eol);
-	serverPutGetError(serverLine);
+	mailPutGetError(serverLine);
     }				/* password */
     if(memcmp(serverLine, "+OK", 3))
 	i_printfExit(MSG_PopNotComplete, serverLine);
 
 /* How many mail messages? */
-    serverPutGetError("stat\r\n");
+    mailPutGetError("stat\r\n");
     if(memcmp(serverLine, "+OK ", 4))
 	i_printfExit(MSG_NoStatusMailBox, serverLine);
     nmsgs = atoi(serverLine + 4);
     if(!nmsgs) {
 	i_puts(MSG_NoMail);
-	serverClose();
+	mailClose();
 	exit(0);
     }
 
@@ -362,7 +362,7 @@ fetchMail(int account)
 	    cxSwitch(1, false);
 /* Now grab the entire message */
 	    sprintf(serverLine, "retr %d%s", m, eol);
-	    if(!serverPutLine(serverLine))
+	    if(!mailPutLine(serverLine, false))
 		showErrorAbort();
 	    retr1 = true;
 	    while(true) {
@@ -409,8 +409,12 @@ fetchMail(int account)
 	    }
 	    exact_l = j;
 
-/* get rid of the dos returns */
+/* get rid of the dos returns, and dot strip */
 	    for(j = k = 0; j < exact_l; ++j) {
+		if(!j && exact[j] == '.')
+		    continue;
+		if(j && exact[j] == '.' && exact[j - 1] == '\n')
+		    continue;
 		if(exact[j] == '\r' && j < exact_l - 1 && exact[j + 1] == '\n')
 		    continue;
 		exact[k++] = exact[j];
@@ -498,7 +502,7 @@ fetchMail(int account)
 			switch (key) {
 			case 'q':
 			    i_puts(MSG_Quit);
-			    serverClose();
+			    mailClose();
 			case 'x':
 			    exit(0);
 			case 'n':
@@ -619,9 +623,9 @@ fetchMail(int account)
  * So if you didn't mean to delete, type x to exit abruptly,
  * then fetch your mail again. */
 	    sprintf(serverLine, "dele %d%s", m, eol);
-	    if(!serverPutLine(serverLine))
+	    if(!mailPutLine(serverLine, false))
 		showErrorAbort();
-	    if(!serverGetLine())
+	    if(!mailGetLine())
 		i_printfExit(MSG_MailTimeOver);
 	    if(memcmp(serverLine, "+OK", 3))
 		i_printfExit(MSG_UnableDelMail, serverLine);
@@ -633,7 +637,7 @@ fetchMail(int account)
 
     if(zapMail)
 	printf("%d\n", nmsgs);
-    serverClose();
+    mailClose();
     exit(0);
 }				/* fetchMail */
 
