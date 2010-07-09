@@ -1156,7 +1156,8 @@ my_curl_init(void)
        curl_easy_setopt(curl_handle, CURLOPT_COOKIEJAR, cookieFile);
     if(curl_init_status != CURLE_OK)
 	goto libcurl_init_fail;
-    curl_easy_setopt(curl_handle, CURLOPT_PROXY, "");	/* No proxies for now. */
+    if(proxy_host)
+	curl_easy_setopt(curl_handle, CURLOPT_PROXY, proxy_host);
     atexit(my_curl_cleanup);
 
   libcurl_init_fail:

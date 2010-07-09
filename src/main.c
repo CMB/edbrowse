@@ -32,7 +32,6 @@ static struct DBTABLE dbtables[MAXDBT];
 char *dbarea, *dblogin, *dbpw;	/* to log into the database */
 bool fetchBlobColumns;
 char *proxy_host;
-int proxy_port;
 bool caseInsensitive, searchStringsAll;
 bool undoable;
 bool allowRedirection = true, allowJS = true, sendReferrer = false;
@@ -609,12 +608,6 @@ readConfigFile(void)
 
 	case 28:		/* proxy */
 	    proxy_host = v;
-	    proxy_port = 80;
-	    v = strchr(v, ':');
-	    if(v) {
-		*v++ = 0;
-		proxy_port = atoi(v);
-	    }
 	    continue;
 
 	case 29:		/* linelength */

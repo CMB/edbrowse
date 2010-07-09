@@ -228,7 +228,6 @@ extern struct MIMETYPE mimetypes[];
 extern char *dbarea, *dblogin, *dbpw;	/* to log into the database */
 extern bool fetchBlobColumns;
 extern char *proxy_host;
-extern int proxy_port;
 extern bool caseInsensitive, searchStringsAll;
 extern bool undoable;		/* an undoable operation is taking place */
 extern bool allowRedirection;	/* from http code 301, or http refresh */
