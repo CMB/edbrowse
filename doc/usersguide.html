@@ -2538,8 +2538,11 @@ port 3128 by default.
 
 <p>
 If you do not include a proxy directive in your config file,
-you can still specify proxy servers through environment variables.&nbsp;
+you can still specify proxy servers through the environment variables http_proxy, ftp_proxy, and all_proxy.&nbsp;
 See the libcurl documentation for more details.
+
+<P>
+Setting proxy to the empty string in your config file will disable proxy services, even if the aforementioned environment variables are set.
 
 <H3 align=center> <A NAME=frame> Frames </A> </H3>
 
