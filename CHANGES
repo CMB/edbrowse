@@ -1,5 +1,10 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.4.5:
+Dot stuffing in emails.
+Support for readline() on input.
+Support for proxies through .ebrc or the environment.
+
 3.4.4:
 Fixed a cookie bug; tail matching never took place.
 Thus a cookie would never propagate to a subdomain.  Bad news.
