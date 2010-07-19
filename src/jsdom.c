@@ -700,7 +700,7 @@ case 'span': return document.spans; \n\
 case 'head': return document.heads; \n\
 case 'meta': return document.metas; \n\
 case 'body': return document.bodies; \n\
-default: alert('all.tags default ' + s); return new Array(); }} \n\
+default: /* alert('all.tags default ' + s); */ return new Array(); }} \n\
 \n\
 document.getElementById = function(s) { \n\
 return document.idMaster[s]; } \n\
@@ -712,7 +712,7 @@ document.createElement = function(s) { \n\
 switch(s.toLowerCase()) { \n\
 case 'link': return new Link();\n\
 case 'image': case 'img': return new Image();\n\
-default: alert('createElement default ' + s); return new Object(); }} \n\
+default: /* alert('createElement default ' + s); */ return new Object(); }} \n\
 \n\
 URL.prototype.indexOf = function(s) { \n\
 return this.toString().indexOf(s); }\n\
