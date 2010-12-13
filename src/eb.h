@@ -268,31 +268,36 @@ extern char *edbrowseTempHTML;
 extern pst *textLines;
 extern int textLinesMax, textLinesCount;	/* size of textLines array */
 
-/* If a file has 30 lines, it is represented by 30 numbers,
- * indexes into textLines[] above.
- * Should we use an array of numbers, or a string of numbers
- * represented by decimal digits?
- * Both are painful, in different ways.
- * Consider inserting a block of text, a very common operation.
- * In a list, we would have to slide all the following numbers down.
- * Granted, that's better than moving all those lines of text,
- * but it's still a pain to program, and somewhat inefficient.
- * If we use strings, we take the original string of numbers,
- * break it at the insert point, and make a new string
- * by concatenating these two pieces with the new block.
- * The same issues arise when deleting text near the top of a file.
- * This and other considerations push me towards strings.
- * I currently use 6 characters for a line number,
- * a seventh for the g// flag.
- * 8th is reserved,
- * and 9 and 10 hold the directory suffix.
- * You know, the slash that we put on the end of a directory,
- * or the | on the end of a fifo etc.
- * Thus the following definitions. */
-#define LNMAX 1000000
+/*********************************************************************
+If a file has 30 lines, it is represented by 30 numbers,
+indexes into textLines[] above.
+Should we use an array of numbers, or a string of numbers
+represented by decimal digits?
+Both are painful, in different ways.
+Consider inserting a block of text, a very common operation.
+In a list, we would have to slide all the following numbers down.
+Granted, that's better than moving all those lines of text,
+but it's still a pain to program, and somewhat inefficient.
+If we use strings, we take the original string of numbers,
+break it at the insert point, and make a new string
+by concatenating these two pieces with the new block.
+The same issues arise when deleting text near the top of a file.
+This and other considerations push me towards strings.
+I currently use chars 0 through 6 for the line number,
+7 for the g// flag,
+and 8 for the directory suffix.
+You know, the slash that we put on the end of a directory,
+or the | on the end of a fifo etc.
+9 is unused, I think.
+Thus the following definitions.
+*********************************************************************/
+
+#define LNMAX 10000000
 #define LNWIDTH 10
 #define LNSPACE "          "
-#define LNFORMAT "%06d    "
+#define LNFORMAT "%07d   "
+#define LNGLOB 7
+#define LNDIR 8
 
 struct listHead {
     void *next;

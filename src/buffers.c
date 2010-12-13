@@ -208,7 +208,7 @@ dirSuffixContext(int n, int cx)
     struct ebWindow *lw = sessionList[cx].lw;
     suffix[0] = 0;
     if(lw->dirMode) {
-	char *s = lw->map + LNWIDTH * n + 8;
+	char *s = lw->map + LNWIDTH * n + LNDIR;
 	suffix[0] = s[0];
 	if(suffix[0] == ' ')
 	    suffix[0] = 0;
@@ -431,7 +431,7 @@ freeWindowLines(char *map)
 static int
 qscmp(const void *s, const void *t)
 {
-    return memcmp(s, t, 6);
+    return memcmp(s, t, LNGLOB);
 }				/* qscmp */
 
 /* Free any lines not used by the snapshot of the current session. */
@@ -468,7 +468,7 @@ then free them.
     s = map + LNWIDTH;
     t = cmap2 + LNWIDTH;
     while(*s && *t) {
-	diff = memcmp(s, t, 6);
+	diff = memcmp(s, t, LNGLOB);
 	if(!diff) {
 	    s += LNWIDTH;
 	    t += LNWIDTH;
@@ -670,20 +670,16 @@ bool
 linesComing(int n)
 {
     int need = textLinesCount + n;
-#if 0
     if(need > LNMAX) {
 	setError(MSG_LineLimit);
 	return false;
     }
-#endif
     if(need > textLinesMax) {
 	int newmax = textLinesMax * 3 / 2;
 	if(need > newmax)
 	    newmax = need + 8192;
-#if 0
 	if(newmax > LNMAX)
 	    newmax = LNMAX;
-#endif
 	if(textLinesMax) {
 	    debugPrint(4, "textLines realloc %d", newmax);
 	    textLines = reallocMem(textLines, newmax * sizeof (pst));
@@ -1223,7 +1219,7 @@ readFile(const char *filename, const char *post)
 	    ftype = fileTypeByName(abspath, true);
 	    if(!ftype)
 		continue;
-	    s = cw->map + (endRange + 1 + j - start) * LNWIDTH + 8;
+	    s = cw->map + (endRange + 1 + j - start) * LNWIDTH + LNDIR;
 	    if(isupperByte(ftype)) {	/* symbolic link */
 		if(!cw->dirMode)
 		    *t = '@', *++t = '\n';
@@ -2096,7 +2092,7 @@ doGlobal(const char *line)
 
 /* clean up any previous stars */
     for(t = cw->map + LNWIDTH; *t; t += LNWIDTH)
-	t[6] = ' ';
+	t[LNGLOB] = ' ';
 
 /* Find the lines that match the pattern. */
     regexpCompile(re, ci);
@@ -2115,7 +2111,7 @@ doGlobal(const char *line)
 	}
 	if(re_count < 0 && cmd == 'v' || re_count >= 0 && cmd == 'g') {
 	    ++gcnt;
-	    cw->map[i * LNWIDTH + 6] = '*';
+	    cw->map[i * LNWIDTH + LNGLOB] = '*';
 	}
     }				/* loop over line */
     pcre_free(re_cc);
@@ -2136,7 +2132,7 @@ doGlobal(const char *line)
     while(gcnt && change) {
 	change = false;		/* kinda like bubble sort */
 	for(i = 1; i <= cw->dol; ++i) {
-	    t = cw->map + i * LNWIDTH + 6;
+	    t = cw->map + i * LNWIDTH + LNGLOB;
 	    if(*t != '*')
 		continue;
 	    if(intFlag)
@@ -2598,8 +2594,8 @@ substituteText(const char *line)
 		textLines[textLinesCount] = allocMem(replaceLineLen + 1);
 		memcpy(textLines[textLinesCount], replaceLine,
 		   replaceLineLen + 1);
-		sprintf(newnum, "%06d", textLinesCount);
-		memcpy(cw->map + ln * LNWIDTH, newnum, 6);
+		sprintf(newnum, LNFORMAT, textLinesCount);
+		memcpy(cw->map + ln * LNWIDTH, newnum, LNGLOB);
 		++textLinesCount;
 	    } else {
 /* Becomes many lines, this is the tricky case. */
