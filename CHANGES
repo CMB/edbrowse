@@ -1,5 +1,8 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.4.6:
+Fix file corruption bug for large files with more than a million lines.
+
 3.4.5:
 Dot stuffing in emails.
 Support for readline() on input.

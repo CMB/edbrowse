@@ -1,5 +1,8 @@
 #  This is the makefile for edbrowse.
 
+prefix = /usr/local
+bindir = $(prefix)/bin
+
 #  Flags for gcc compilation.
 #  Note, some have reported seg-faults with this program when -O is used.
 #  This is a problem with gcc version 2.95 or less.
@@ -25,7 +28,7 @@ CFLAGS = -I/usr/local/js/src -I/usr/local/js/src/Linux_All_DBG.OBJ -DXP_UNIX -DX
 #  If the smjs library is already installed by your linux distribution,
 #  e.g. Debian, use the following flags.
 #
-#CFLAGS = -I/usr/include/smjs -DXP_UNIX -DX86_LINUX $(DEBUGFLAGS)
+#CFLAGS = -I/usr/include/js -DXP_UNIX -DX86_LINUX $(DEBUGFLAGS)
 
 #  Normal load flags
 LFLAGS = $(STRIP)
@@ -36,13 +39,13 @@ LFLAGS = $(STRIP)
 ESQLDFLAGS = $(STRIP)
 
 #  Libraries for edbrowse.
-#  I assume you have linked libjs.so into /usr/lib/libsmjs.so
-#  so that -lsmjs will suffice.
+#  I assume you have linked libjs.so into /usr/lib/libjs.so
+#  so that -ljs will suffice.
 #  Some distros, e.g. Debian, already do this for you.
 #  Or you can use the target jslink below.
 #  Some folks need to add -lcrypto to this list.
 
-LIBS = -lpcre -lm -lssl -lsmjs -lcurl -lreadline
+LIBS = -lpcre -lm -lssl -ljs -lcurl -lreadline
 
 #  Make the dynamically linked executable program by default.
 #  Edbrowse executable.
@@ -60,24 +63,29 @@ edbrowse: $(EBOBJS) tcp.o dbstubs.o
 
 #  You probably need to be root to do this.
 install:
-	install edbrowse /usr/local/bin
+	install -Dm755 edbrowse $(bindir)/edbrowse
 
 #  If you had to build the javascript library yourself,
 #  link it into /usr/lib.
 #  If it's already there, do nothing.
 #  This has to be done as root.
 jslink:
-	[ -f /usr/lib/libsmjs.so ] || ln -s /usr/local/js/src/Linux_All_DBG.OBJ/libjs.so /usr/lib/libsmjs.so
-	[ -f /usr/lib/libsmjs.a ] || ln -s /usr/local/js/src/Linux_All_DBG.OBJ/libjs.a /usr/lib/libsmjs.a
+	[ -f /usr/lib/libjs.so ] || ln -s /usr/local/js/src/Linux_All_DBG.OBJ/libjs.so /usr/lib/libjs.so
+	[ -f /usr/lib/libjs.a ] || ln -s /usr/local/js/src/Linux_All_DBG.OBJ/libjs.a /usr/lib/libjs.a
 
+#  Database files.
+dbodbc.o dbinfx.o dbops.o : dbapi.h eb.h eb.p
+
+#  native Informix library for database access.
+#  Others could be built, e.g. Oracle, but odbc is the most general.
 dbinfx.o : dbinfx.ec
 	esql -c dbinfx.ec
 
-dbodbc.o dbinfx.o dbops.o : dbapi.h eb.h eb.p
-
+#  Informix executable
 edbrowseinf: $(EBOBJS) tcp.o dbops.o dbinfx.o
 	esql $(ESQLDFLAGS) -o edbrowseinf $(EBOBJS) tcp.o dbops.o dbinfx.o $(LIBS)
 
+#  odbc access
 edbrowseodbc: $(EBOBJS) tcp.o dbops.o dbodbc.o
 	cc $(LFLAGS) -o edbrowseodbc $(EBOBJS) tcp.o dbops.o dbodbc.o $(LIBS) -lodbc
 
@@ -88,7 +96,7 @@ proto:
 	sendmail.c fetchmail.c html.c \
 	format.c cookies.c stringfile.c jsdom.c jsloc.c dbstubs.c >eb.p
 
-STATICLIBS = -lodbc -lpcre -lm -lsmjs -lcurl -lssl -lc -lcrypto -lpthread -lm -ldl -lrt
+STATICLIBS = -lodbc -lpcre -lm -ljs -lcurl -lssl -lc -lcrypto -lpthread -lm -ldl -lrt
 edbrowse.static: $(EBOBJS) tcp.o dbops.o dbodbc.o
 	cc --static $(LFLAGS) -o edbrowse.static $(EBOBJS) tcp.o dbops.o dbodbc.o $(STATICLIBS)
 
