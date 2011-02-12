@@ -2590,7 +2590,7 @@ substituteText(const char *line)
 	    replaceLine[replaceLineLen] = '\n';
 	    if(!linecount) {
 /* normal substitute */
-		char newnum[LNWIDTH];
+		char newnum[LNWIDTH+1];
 		textLines[textLinesCount] = allocMem(replaceLineLen + 1);
 		memcpy(textLines[textLinesCount], replaceLine,
 		   replaceLineLen + 1);
