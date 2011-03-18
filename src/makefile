@@ -4,15 +4,11 @@ prefix = /usr/local
 bindir = $(prefix)/bin
 
 #  Flags for gcc compilation.
-#  Note, some have reported seg-faults with this program when -O is used.
-#  This is a problem with gcc version 2.95 or less.
-#  Since performance is not critical here, I leave it out.
+#  This assumes js and js-devel have been installed.
+#  These are available packages on fedora, and most other distros.
+#  You also need pcre-devel and openssl-devel
 
-#  The -I flags assume smjs is installed in /usr/local
-#  You may also need -I/usr/include/pcre or -I/usr/local/include/pcre
-
-#  If smjs comes compiled on your distribution,
-#  you may need -DMOZILLA_1_8_BRANCH
+#  Early adopters have occasionally needed -DMOZILLA_1_8_BRANCH
 #  This issue has cropped up on certain flavors of debian.
 
 #  Allow for symbolic debugging.
@@ -23,12 +19,7 @@ DEBUGFLAGS=
 STRIP=-s
 endif
 
-CFLAGS = -I/usr/local/js/src -I/usr/local/js/src/Linux_All_DBG.OBJ -DXP_UNIX -DX86_LINUX $(DEBUGFLAGS)
-
-#  If the smjs library is already installed by your linux distribution,
-#  e.g. Debian, use the following flags.
-#
-#CFLAGS = -I/usr/include/js -DXP_UNIX -DX86_LINUX $(DEBUGFLAGS)
+CFLAGS = -DXP_UNIX -DX86_LINUX $(DEBUGFLAGS)
 
 #  Normal load flags
 LFLAGS = $(STRIP)
@@ -39,13 +30,10 @@ LFLAGS = $(STRIP)
 ESQLDFLAGS = $(STRIP)
 
 #  Libraries for edbrowse.
-#  I assume you have linked libjs.so into /usr/lib/libjs.so
-#  so that -ljs will suffice.
-#  Some distros, e.g. Debian, already do this for you.
-#  Or you can use the target jslink below.
-#  Some folks need to add -lcrypto to this list.
+#  This assumes the javascript library is in /lib/libjs.so
+#  This is the case for fedora and debian.
 
-LIBS = -lpcre -lm -lssl -ljs -lcurl -lreadline
+LIBS = -lpcre -lm -lssl -ljs -lcurl -lreadline -lcrypto
 
 #  Make the dynamically linked executable program by default.
 #  Edbrowse executable.

@@ -674,6 +674,7 @@ clonePstring(pst s)
     return t;
 }				/* clonePstring */
 
+// Strings are assumed distinct, hence the use of memcpy.
 void
 copyPstring(pst s, const pst t)
 {

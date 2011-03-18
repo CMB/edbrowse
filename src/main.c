@@ -365,7 +365,7 @@ readConfigFile(void)
 		    filters[n_filters].expire = exp;
 		    if(exp <= nowday) {
 			cfgmodify = true;
-			memcpy(cfglp, cfgnlp, cfgcopy + cfglen - cfgnlp);
+			memmove(cfglp, cfgnlp, cfgcopy + cfglen - cfgnlp);
 			cfglen -= (cfgnlp - cfglp);
 			cfgnlp = cfglp;
 			continue;
@@ -1134,10 +1134,10 @@ main(int argc, char **argv)
 	    i_printfExit(MSG_MinOneRecBefAtt);
 	body = *atlist;
 	if(nat)
-	    memcpy(atlist, atlist + 1, sizeof (char *) * nat);
+	    memmove(atlist, atlist + 1, sizeof (char *) * nat);
 	atlist[nat] = 0;
 	nrec = atlist - argv;
-	memcpy(reclist, reclist + 1, sizeof (char *) * nrec);
+	memmove(reclist, reclist + 1, sizeof (char *) * nrec);
 	atlist[-1] = 0;
 	if(sendMail(account, (const char **)reclist, body, 1,
 	   (const char **)atlist, 0, nalt, true))

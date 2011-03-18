@@ -492,8 +492,8 @@ anchorSwap(char *buf)
 	    if(w && a && !premode &&
 	       ((state_braces & !state_atext) ||
 	       ((!state_braces) & !state_text))) {
-		memcpy(a, w, s - w);
-		memcpy(a + (s - w), tag, n);
+		memmove(a, w, s - w);
+		memmove(a + (s - w), tag, n);
 		change = true;
 		w = 0;
 	    }
@@ -636,7 +636,7 @@ anchorSwap(char *buf)
 	if(*a != close)
 	    goto putc;
 	++s;
-	memcpy(w, s, a - s);
+	memmove(w, s, a - s);
 	w += a - s;
 	s = a;
 	ss = 0;

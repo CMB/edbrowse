@@ -593,7 +593,7 @@ encodeAttachment(const char *file, int ismail, bool webform,
 		break;
 	buflen -= (v - buf);
 	if(buflen)
-	    memcpy(buf, v, buflen);
+	    memmove(buf, v, buflen);
 	buf[buflen] = 0;
 
 	if(doSignature) {	/* Append .signature file. */

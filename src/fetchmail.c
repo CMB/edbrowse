@@ -384,7 +384,7 @@ fetchMail(int account)
 			++j;
 		    ++j;
 		    nr -= j;
-		    memcpy(retrbuf, retrbuf + j, nr);
+		    memmove(retrbuf, retrbuf + j, nr);
 		    retr1 = false;
 		}
 		if(nr)
@@ -1034,7 +1034,7 @@ isoDecode(char *vl, char **vrp)
     start = t;
     len = vr - s;
     if(len)
-	memcpy(t, s, len);
+	memmove(t, s, len);
     vr = t + len;
     goto restart;
 
@@ -1157,7 +1157,7 @@ headerGlean(char *start, char *end)
 		++j;
 		while(q + j < vr && q[j] == ' ')
 		    ++j;
-		memcpy(q, q + j, vr - q - j);
+		memmove(q, q + j, vr - q - j);
 		vr -= j;
 		--q;		/* try again */
 	    }

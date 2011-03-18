@@ -1,3 +1,4 @@
+Get the messages from files in /usr/share/edbrowse/locale/country/blah, like other programs do
 resolveURL with /?foobar
 every attribute in the html tag needs to become a property in the corresponding object
 onclick in <form>
