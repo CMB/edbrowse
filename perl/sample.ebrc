@@ -1,0 +1,186 @@
+#  .ebrc file, configure edbrowse.
+#  This file contains passwords - make sure it is not readable by others.
+
+#  The pop3 account format is,
+#  pop3server:login:password:returnmail:smtp
+
+#  My primary mail account, through my isp.
+mail.comcast.net:cdahlke179212:x:cdahlke179212@comcast.net:smtp.comcast.net
+
+#  My personal email account.
+*mail.comcast.net:eklhad:x:eklhad@comcast.net:smtp.comcast.net
+
+#  My wife's account.
+#  Sometimes she doesn't log on for a week, so I check it once in a while.
+mail.comcast.net:kwnre:x:kwnre@comcast.net:smtp.comcast.net
+
+#  Mail that looks like it came from my other web sites.
+mail.comcast.net:eklhad:x:webmaster@mathreference.com:smtp.comcast.net
+mail.comcast.net:eklhad:x:webmaster@scrapsayings.com:smtp.comcast.net
+
+#  You should probably use one server, your ISP's local mail server,
+#  to transmit all your outgoing mail.
+#  Your ISP trusts you, and nobody else does,
+#  and there's no password in the SMTP protocol,
+#  so you may find that your far mailbox, in another time zone,
+#  will let you get mail (with your password), but not send mail.
+#  So send everything through your local mail server.
+#  The entry with the leading * is assumed to be the local mail account.
+#  If you tell this program to send mail via another account,
+#  The mail will "look" like it came from that other account,
+#  and replies will go back to that other account,
+#  but the local server is still used to send the mail.
+#  The sm feature in edbrowse uses your local mail server.
+
+#  Your full name is sent with every outgoing email,
+#  so the recipient knows who you are.
+fullname = Karl Dahlke
+
+#  Now for some internal parameters.
+#  Give the full pathname for your address book.
+#  This file contains lines of the form alias:email,
+#  which makes it easier to specify recipients when sending mail.
+addressbook = /home/eklhad/progs/ebsys/adbook
+
+#  A file keeps track of junk subjects,
+#  mail that you don't want to see any more.
+junkfile = /home/eklhad/progs/ebsys/junk
+
+#  A file specifies annoying advertisements (usually),
+#  that you don't want to read again and again.
+annoyfile = /home/eklhad/progs/ebsys/annoy
+
+#  Move to your standard email directory when this program
+#  is run as a mail client.
+#  This and all subsequent parameters are optional.
+cd = /home/eklhad/mbox
+
+#  Here's the first filter rule.
+#  Each morning I receive the "word of the day", with definition and etimology,
+#  from Merriam Webster.
+#  It's really quite interesting, but I often want to read it at my leisure,
+#  not while I'm plowing through my mail messages.
+#  So I dump it into a file "wod".
+#  I use to do this manually, almost a reflex action,
+#  but now the filtering rule does it for me.
+#  Keep in mind, if I haven't read my mail for three days,
+#  there will be three of these.
+#  That's ok - they all get appended onto the wod file.
+#  I'll read them all, then delete the file.
+from = word@m-w.com > wod
+
+#  Regular updates from nasa science news and space.com.
+#  These are definitely to be read at leisure.
+from = spaceupdate@space.com > scom
+from = snglist@snglist.msfc.nasa.gov > nasa
+
+#  Now for the lies.
+#  Some websites won't even let you in unless you use Explorer or Netscape.
+#  So lie about who you are.
+#  Tell them you're Explorer, and they'll let you in the door.
+#  At that point the site may or may not work with edbrowse.
+#  Might not, if it uses javascript all over the place.
+#  But it's worth a try.  At least you're in.
+#  Here are the lies.
+#  Activate the first lie with ua1, the second lie with ua2, etc.
+#  Type ua0 to go back to User-Agent edbrowse
+agent = Lynx/2.8.4rel.1 libwww-FM/2.14
+agent = Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; Win 9x 4.90)
+
+#  Predefined command sets.
+#  The set called init is run at startup.
+#  This is used to set global flags, as you prefer.
+#cmdlist = init
+#< ci
+
+#  Add a link to your web book
+cmdlist = wb
+< w+ /home/eklhad/progs/ebsys/webbook
+
+#  Undos and unword a file.
+#  The leading + means the command set will stop if it encounters an error.
+cmdlist = +ud
+< ,s/\r$//
+
+cmdlist = uw
+< ,s/’/'/g
+#  Strip out nonascii stuff.
+#  Sorry to be so English-centric.
+#  This will mess you up if you're reading a Spanish word document,
+#  and you lose your nonascii letters.
+< ,s/[\0-\11\13\14\16-\37\200-\377]//g
+#  After the above, there'll be lots of blank lines.
+< g/^ *$/ d
+#  Break lines at return boundaries.
+< ,bl
+#  Strip off trailing junk.
+< /^ !"#\$%&'()\*/,$d
+
+#  Web express shortcuts.
+#  Type @ for the list of shortcuts.
+#  They will be printed in the order they appear in this file.
+
+#  Search engines first.
+#  Type @gg elephant to look up elephant on google.
+#  In the case of google, the post processing commands will be given first,
+#  since they are applied to google in various countries.
+cmdlist = gg_post
+< g/^Your browser may not have a PDF reader available.$/d
+< /^{search Next}$/+,$d
+< 1,/Search took [\d.]+ seconds/d
+< /^Did you mean:$/,/^Did you mean:$/+2m$
+< 1,/^Categor[iesy]+:|/d
+< 1,/{See your message here...}/d
+<1,/^|Sponsored Link$/d
+< 1g/./d
+< 1g/./d
+< 1g/^$/d
+< /^Did you mean:$/,$m0
+
+#  Access google, for the world, and for a couple of countries.
+shortcut = gg
+desc = google search
+#  in the following url, $1 is replaced by your keywords
+#  We may support multiple parameters, eventually, but not right now.
+url = www.google.com/search?q=$1&hl=n&btnG=Google+Search&meta=
+#  And the post processing commands.
+< gg_post
+
+shortcut = ggca
+desc = google search in Canada
+url = www.google.ca/search?q=$1&hl=n&btnG=Google+Search&meta=cr%3dcountryCA
+< gg_post
+
+shortcut = mw
+desc = merriam webster dictionary lookup
+#  The * means post method, whereas ? indicates the get method.
+url = www.m-w.com/cgi-bin/dictionary*book=Dictionary&va=$1
+< /^{Get the Word of the Day/,$d
+< 1,/^Click on the Collegiate Thesaurus tab to look up the current word/+2d
+< 1,/^<>|<Go>$/-d
+< 1,/^One entry found for/+d
+< 1,/^Suggestions for/-d
+
+shortcut = dict
+desc = dictionary.com lookup
+url = www.dictionary.com/search?q=$1&db=%2a
+#  No post-processing yet.
+
+shortcut = yf
+desc = stock quotes from yahoo finance
+url = finance.yahoo.com/q?s=$1&Get+Quotes&d=v1
+< 1,/^Symbol|Last Trade|Change/d
+< /^Get a snapshot of today's market action/,$d
+< ,S/}|\(\d\)/}\n$1/
+#  First field is date, drop it
+< ,S/.*?|//
+#  third and following fields aren't important
+< ,S/|/#/2
+< ,S/#.*//
+< ,S/|/, /g
+< ,S/\+/up /
+< ,S/-/down /
+< ,S/ 0\.00$/ no change/
+< g/^\d/ -,.J
+< g/{[\w ,.-]+},*$/ d
+
