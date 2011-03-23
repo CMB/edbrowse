@@ -83,3 +83,20 @@ In other words it doesn't unbrowse.
 
 imap support.
 
+If edbrowse is started via an ebpager symlink, it should run in
+"pager" mode.  Think of all the Unix commands which use a pager.
+For instance, wouldn't it be nice to read manpages with edbrowse, instead
+of the default "less"?
+Grep commandline archives for ebpager to get the implementation ideas.
+
+edbrowse should be able to automatically uncompress .gz and .bz2 files.
+For that matter, it would be nice to be able to browse tar and zip archives,
+as though they were directories.  You can do that in emacs, and it's useful.
+
+It should be possible to apply Unix filters to edbrowse buffers.
+Let's call this the !| command.
+!| foo does the following:
+* write the current buffer to tempfile1,
+* Call foo < tempfile1 > tempfile2,
+* Read tempfile2, clobbering the buffer.
+
