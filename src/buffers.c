@@ -1327,7 +1327,10 @@ readFile(const char *filename, const char *post)
 static bool
 writeFile(const char *name, int mode)
 {
-    int i, fh;
+    int i;
+    FILE *fh;
+    char *modeString;
+    int modeString_l;
 
     if(memEqualCI(name, "file://", 7))
 	name += 7;
@@ -1353,12 +1356,18 @@ writeFile(const char *name, int mode)
     }
 
 /* mode should be TRUNC or APPEND */
-    mode |= O_WRONLY | O_CREAT;
+    modeString = initString(&modeString_l);
+    if(mode & O_APPEND)
+	stringAndChar(&modeString, &modeString_l, 'a');
+    else
+	stringAndChar(&modeString, &modeString_l, 'w');
     if(cw->binMode)
-	mode |= O_BINARY;
+	stringAndChar(&modeString, &modeString_l, 'b');
 
-    fh = open(name, mode, 0666);
-    if(fh < 0) {
+    fh = fopen(name, modeString);
+    nzFree(modeString);
+
+    if(fh == NULL) {
 	setError(MSG_NoCreate2, name);
 	return false;
     }
@@ -1394,7 +1403,7 @@ writeFile(const char *name, int mode)
 			free(p);
 		    alloc_p = true;
 		    p = (pst) tp;
-		    if(write(fh, p, tlen) < tlen)
+		    if(fwrite(p, 1, tlen, fh) < tlen)
 			rc = false;
 		    goto endline;
 		}
@@ -1405,20 +1414,20 @@ writeFile(const char *name, int mode)
 			free(p);
 		    alloc_p = true;
 		    p = (pst) tp;
-		    if(write(fh, p, tlen) < tlen)
+		    if(fwrite(p, 1, tlen, fh) < tlen)
 			rc = false;
 		    goto endline;
 		}
 	    }
 
-	    if(write(fh, p, len) < len)
+	    if(fwrite(p, 1, len, fh) < len)
 		rc = false;
 	    goto endline;
 	}
 
 /* must write this line with the suffix on the end */
 	--len;
-	if(write(fh, p, len) < len) {
+	if(fwrite(p, 1, len, fh) < len) {
 	  badwrite:
 	    rc = false;
 	    goto endline;
@@ -1426,7 +1435,7 @@ writeFile(const char *name, int mode)
 	fileSize += len;
 	strcat(suf, "\n");
 	len = strlen(suf);
-	if(write(fh, suf, len) < len)
+	if(fwrite(suf, 1, len, fh) < len)
 	    goto badwrite;
 
       endline:
@@ -1434,13 +1443,13 @@ writeFile(const char *name, int mode)
 	    free(p);
 	if(!rc) {
 	    setError(MSG_NoWrite2, name);
-	    close(fh);
+	    fclose(fh);
 	    return false;
 	}
 	fileSize += len;
     }				/* loop over lines */
 
-    close(fh);
+    fclose(fh);
 /* This is not an undoable operation, nor does it change data.
  * In fact the data is "no longer modified" if we have written all of it. */
     if(startRange == 1 && endRange == cw->dol)
