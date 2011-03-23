@@ -12,7 +12,7 @@ mail.comcast.net:cdahlke179212:x:cdahlke179212@comcast.net:smtp.comcast.net
 
 #  My wife's account.
 #  Sometimes she doesn't log on for a week, so I check it once in a while.
-mail.comcast.net:kwnre:x:kwnre@comcast.net:smtp.comcast.net
+mail.comcast.net:kdwife:x:kdwife@comcast.net:smtp.comcast.net
 
 #  Mail that looks like it came from my other web sites.
 mail.comcast.net:eklhad:x:webmaster@mathreference.com:smtp.comcast.net
