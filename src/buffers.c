@@ -3486,15 +3486,16 @@ readyUndo(void)
 bool
 runCommand(const char *line)
 {
-    int i, j, n, writeMode;
-    struct ebWindow *w;
-    void *ev;			/* event variables */
-    bool nogo, rc;
+    int i, j, n;
+    int writeMode = O_TRUNC;
+    struct ebWindow *w = NULL;
+    void *ev = NULL;			/* event variables */
+    bool nogo = true, rc = true;
     bool postSpace = false, didRange = false;
     char first;
     int cx = 0;			/* numeric suffix as in s/x/y/3 or w2 */
     int tagno;
-    const char *s;
+    const char *s = NULL;
     static char newline[MAXTTYLINE];
 
     if(allocatedLine) {
@@ -3637,7 +3638,6 @@ runCommand(const char *line)
     }
 
     first = *line;
-    writeMode = O_TRUNC;
     if(cmd == 'w' && first == '+')
 	writeMode = O_APPEND, first = *++line;
 
