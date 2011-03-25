@@ -682,12 +682,50 @@ copyPstring(pst s, const pst t)
     memcpy(s, t, len);
 }				/* copyPstring */
 
+/*
+ * fdIntoMemory reads data from a file descriptor, until EOF is reached.
+ * It works even if we don't know the size beforehand.
+ * We can now use it to read /proc files, pipes, and stdin.
+ * This solves an outstanding issue, and it is needed for forthcoming
+ * functionality, such as edpager.
+ */
+bool
+fdIntoMemory(int fd, char **data, int *len)
+{
+    int length, n;
+    const int CHUNKSIZE = 8192;
+    char *chunk, *buf;
+
+    chunk = allocZeroMem(CHUNKSIZE);
+    buf = initString(&length);
+
+    n = 0;
+    do {
+	n = read(fd, chunk, CHUNKSIZE);
+	if(n < 0) {
+	    nzFree(buf);
+	    nzFree(chunk);
+	    *data = EMPTYSTRING;
+	    setError(MSG_NoRead, "file descriptor");
+	    return false;
+	}
+
+	if(n > 0)
+	    stringAndBytes(&buf, &length, chunk, n);
+    } while(n != 0);
+
+    nzFree(chunk);
+    *data = buf;
+    *len = length;
+    return true;
+}				/* fdIntoMemory */
+
 bool
 fileIntoMemory(const char *filename, char **data, int *len)
 {
-    int length, n, fh;
-    char *buf;
+    int fh;
     char ftype = fileTypeByName(filename, false);
+    bool ret;
     if(ftype && ftype != 'f') {
 	setError(MSG_RegularFile, filename);
 	return false;
@@ -697,31 +735,13 @@ fileIntoMemory(const char *filename, char **data, int *len)
 	setError(MSG_NoOpen, filename);
 	return false;
     }
-    length = fileSizeByName(filename);
-    if(length < 0) {
-	close(fh);
-	return false;
-    }				/* should never hapen */
-#if 0
-    if(length > maxFileSize) {
-	setError(MSG_LargeFile);
-	close(fh);
-	return false;
-    }
-#endif
-    buf = allocMem(length + 2);
-    n = 0;
-    if(length)
-	n = read(fh, buf, length);
-    close(fh);			/* don't need that any more */
-    if(n < length) {
+
+    ret = fdIntoMemory(fh, data, len);
+    if(ret == false)
 	setError(MSG_NoRead2, filename);
-	free(buf);
-	return false;
-    }
-    *data = buf;
-    *len = length;
-    return true;
+
+    close(fh);
+    return ret;
 }				/* fileIntoMemory */
 
 /* inverse of the above */
