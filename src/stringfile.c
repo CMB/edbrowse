@@ -715,6 +715,7 @@ fdIntoMemory(int fd, char **data, int *len)
     } while(n != 0);
 
     nzFree(chunk);
+    buf = reallocMem(buf, length + 2);
     *data = buf;
     *len = length;
     return true;
