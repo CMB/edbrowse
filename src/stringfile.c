@@ -706,6 +706,7 @@ fdIntoMemory(int fd, char **data, int *len)
 	    nzFree(buf);
 	    nzFree(chunk);
 	    *data = EMPTYSTRING;
+	    *len = 0;
 	    setError(MSG_NoRead, "file descriptor");
 	    return false;
 	}
