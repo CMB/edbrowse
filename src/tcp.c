@@ -34,6 +34,8 @@ If you do not wish to do so, delete this exception statement from your version.
 #define setErrnoNT() (errno = WSAGetLastError())
 #else
 #include <sys/types.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <netdb.h>
@@ -209,6 +211,7 @@ static int
 makeSocket(void)
 {
     int s;			/* file descriptor for socket */
+    int success = 0;
     s = socket(AF_INET, SOCK_STREAM, 0);
     if(s != -1) {
 	/* set some options, then return the socket number */
@@ -221,6 +224,14 @@ makeSocket(void)
 	 * May as well discard any pending data and close it quickly. */
 	ling.l_onoff = 0;
 	ling.l_linger = 0;
+#ifndef _WIN32
+/* What's the Windows equivalent of FD_CLOEXEC, and how do we set it? */
+	success = fcntl(s, F_SETFD, FD_CLOEXEC);
+	if(success == -1) {
+	    setErrnoNT();
+	    return -1;
+	}
+#endif
 	setsockopt(s, SOL_SOCKET, SO_LINGER, (char *)&ling, sizeof (ling));
 	setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *)&yes, sizeof (yes));
 	/* I feel better setting REUSEPORT, but this option isn't available

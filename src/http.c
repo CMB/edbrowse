@@ -11,6 +11,8 @@
 
 #include "eb.h"
 
+#include <unistd.h>
+#include <fcntl.h>
 #include <time.h>
 
 #define HTTP_MUST_AUTHENTICATE 401
@@ -1094,6 +1096,23 @@ allIPs(void)
 	nzFree(domlist[k]);
 }				/* allIPs */
 
+/* Set the FD_CLOEXEC flag on a socket newly-created by libcurl.
+ * Let's not leak libcurl's sockets to child processes created by the
+ * ! (escape-to-shell) command.
+ * This is a callback.  It returns 0 on success, 1 on failure, per the
+ * libcurl docs.
+ */
+static int
+my_curl_safeSocket(void *clientp, curl_socket_t socketfd, curlsocktype purpose)
+{
+    int success = fcntl(socketfd, F_SETFD, FD_CLOEXEC);
+    if(success == -1)
+	success = 1;
+    else
+	success = 0;
+    return success;
+}
+
 /* Clean up libcurl's state. */
 static void
 my_curl_cleanup(void)
@@ -1122,6 +1141,8 @@ my_curl_init(void)
 	i_printfExit(MSG_CurlVersion, major, minor, patch);
 
 /* Lots of these setopt calls shouldn't fail.  They just diddle a struct. */
+    curl_easy_setopt(curl_handle, CURLOPT_SOCKOPTFUNCTION, my_curl_safeSocket);
+
     curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, eb_curl_callback);
     curl_easy_setopt(curl_handle, CURLOPT_HEADERFUNCTION, curl_header_callback);
     if(debugLevel >= 4)
