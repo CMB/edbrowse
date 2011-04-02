@@ -182,7 +182,7 @@ build_url(int exception, const char *e)
     new_url =
        JS_smprintf("%s%s%s%s%s%s%s", prot, slashes, host, pathslash, pathname,
        search, hash);
-    v = STRING_TO_JSVAL(JS_NewStringCopyZ(jcx, new_url));
+    v = STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, new_url));
     JS_SetProperty(jcx, uo, "href", &v);
 /* I want control over this string */
     uo_href = cloneString(new_url);
@@ -212,7 +212,7 @@ build_host(int exception, const char *hostname, int port)
 	strcpy(urlbuffer, hostname);
     if(strlen(urlbuffer) >= sizeof (urlbuffer))
 	i_printfExit(MSG_PortTooLong);
-    v = STRING_TO_JSVAL(JS_NewStringCopyZ(jcx, urlbuffer));
+    v = STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, urlbuffer));
     JS_SetProperty(jcx, uo, "host", &v);
     setter_suspend = false;
 }				/* build_host */
@@ -225,7 +225,7 @@ loc_def_set(const char *name, const char *s,
     JSBool found;
     jsval vv;
     if(s)
-	vv = STRING_TO_JSVAL(JS_NewStringCopyZ(jcx, s));
+	vv = STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, s));
     else
 	vv = JS_GetEmptyStringValue(jcx);
     JS_HasProperty(jcx, uo, name, &found);
@@ -256,7 +256,7 @@ loc_def_set_part(const char *name, const char *s, int n,
     JSBool found;
     jsval vv;
     if(s)
-	vv = STRING_TO_JSVAL(JS_NewStringCopyN(jcx, s, n));
+	vv = STRING_TO_JSVAL(our_JS_NewStringCopyN(jcx, s, n));
     else
 	vv = JS_GetEmptyStringValue(jcx);
     JS_HasProperty(jcx, uo, name, &found);
@@ -402,7 +402,7 @@ setter_loc_host(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 	n = s - e;
     else
 	n = strlen(e);
-    v = STRING_TO_JSVAL(JS_NewStringCopyN(jcx, e, n));
+    v = STRING_TO_JSVAL(our_JS_NewStringCopyN(jcx, e, n));
     JS_SetProperty(jcx, uo, "hostname", &v);
     if(s) {
 	v = INT_TO_JSVAL(atoi(s + 1));
@@ -597,7 +597,7 @@ getter_cookie(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 	    *s = 0;
     }
 
-    *vp = STRING_TO_JSVAL(JS_NewStringCopyZ(jcx, cook));
+    *vp = STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, cook));
     nzFree(cook);
     return JS_TRUE;
 }				/* getter_cookie */
@@ -661,7 +661,7 @@ establish_property_string(void *jv, const char *name, const char *value,
 	my_setter = setter_cookie;
     }
     JS_DefineProperty(jcx, obj, name,
-       ((value && *value) ? STRING_TO_JSVAL(JS_NewStringCopyZ(jcx, value))
+       ((value && *value) ? STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, value))
        : JS_GetEmptyStringValue(jcx)), my_getter, my_setter, attr);
 }				/* establish_property_string */
 
@@ -746,7 +746,7 @@ set_property_string(void *jv, const char *name, const char *value)
     JSObject *obj = jv;
     jsval vv;
     setter_suspend = true;
-    vv = ((value && *value) ? STRING_TO_JSVAL(JS_NewStringCopyZ(jcx, value))
+    vv = ((value && *value) ? STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, value))
        : JS_GetEmptyStringValue(jcx));
     JS_SetProperty(jcx, obj, name, &vv);
     setter_suspend = false;

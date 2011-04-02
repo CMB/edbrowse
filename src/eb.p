@@ -235,6 +235,8 @@ void appendFile(const char *fname, const char *message, ...) ;
 void appendFileNF(const char *filename, const char *msg) ;
 
 /* sourcefile=jsdom.c */
+JSString *our_JS_NewStringCopyN(JSContext *cx, const char *s, size_t n) ;
+JSString *our_JS_NewStringCopyZ(JSContext *cx, const char *s) ;
 void * createJavaContext(void) ;
 void freeJavaContext(void *jsc) ;
 void establish_innerHTML(void *jv, const char *start, const char *end, bool is_ta) ;

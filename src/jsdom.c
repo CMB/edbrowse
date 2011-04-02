@@ -81,6 +81,40 @@ my_ErrorReporter(JSContext * cx, const char *message, JSErrorReport * report)
     report->flags = 0;
 }				/* my_ErrorReporter */
 
+JSString *
+our_JS_NewStringCopyN(JSContext * cx, const char *s, size_t n)
+{
+    char *converted = NULL;
+    int converted_l = 0;
+    const char *outbytes = s;
+    int outbytes_l = n;
+    JSString *forSpidermonkey = NULL;
+
+    if(!JS_CStringsAreUTF8())
+/* Fixme this is too simple.  We need to decode UTF8 to JSCHAR, for proper
+ * unicode handling.  E.G., JS C strings are not UTF8, but the user has
+ * a UTF8 locale. */
+	return JS_NewStringCopyN(jcx, s, n);
+
+    if(!cons_utf8) {
+/* The string should not be UTF8, because of edbrowse's conversion. */
+	iso2utf(s, n, &converted, &converted_l);
+	outbytes = converted;
+	outbytes_l = converted_l;
+    }
+
+    forSpidermonkey = JS_NewStringCopyN(jcx, outbytes, outbytes_l);
+    nzFree(converted);
+
+    return forSpidermonkey;
+}				/* our_JS_NewStringCopyN */
+
+JSString *
+our_JS_NewStringCopyZ(JSContext * cx, const char *s)
+{
+    size_t len = strlen(s);
+    return our_JS_NewStringCopyN(jcx, s, len);
+}				/* our_JS_NewStringCopyZ */
 
 /*********************************************************************
 When an element is created without a name, it is not linked to its
@@ -260,7 +294,7 @@ win_prompt(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
 	answer = inbuf;
     if(!answer)
 	answer = "";
-    *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(jcx, answer));
+    *rval = STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, answer));
     return JS_TRUE;
 }				/* win_prompt */
 
@@ -887,7 +921,7 @@ createJavaContext(void)
 /* For the name, how about the program without its options? */
 	len = strcspn(mt->program, " \t");
 	JS_DefineProperty(jcx, po, "name",
-	   STRING_TO_JSVAL(JS_NewStringCopyN(jcx, mt->program, len)),
+	   STRING_TO_JSVAL(our_JS_NewStringCopyN(jcx, mt->program, len)),
 	   0, 0, PROP_FIXED);
     }
 
@@ -953,12 +987,12 @@ establish_innerHTML(void *jv, const char *start, const char *end, bool is_ta)
     if(!start)
 	start = end = EMPTYSTRING;
     JS_DefineProperty(jcx, obj, "innerHTML",
-       STRING_TO_JSVAL(JS_NewStringCopyN(jcx, start, end - start)),
+       STRING_TO_JSVAL(our_JS_NewStringCopyN(jcx, start, end - start)),
        NULL, (is_ta ? setter_innerText : setter_innerHTML),
        JSPROP_ENUMERATE | JSPROP_PERMANENT);
     if(is_ta) {
 	JS_DefineProperty(jcx, obj, "innerText",
-	   STRING_TO_JSVAL(JS_NewStringCopyN(jcx, start, end - start)),
+	   STRING_TO_JSVAL(our_JS_NewStringCopyN(jcx, start, end - start)),
 	   NULL, setter_innerText, JSPROP_ENUMERATE | JSPROP_PERMANENT);
     }
 
