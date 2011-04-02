@@ -248,7 +248,7 @@ extern char replaceLine[];
 extern char *currentReferrer;
 extern char *home;		/* home directory */
 extern char *recycleBin;	/* holds deleted files */
-extern char *configFile, *sigFile;
+extern char *configFile, *sigFile, *sigFileEnd;
 extern char *cookieFile;	/* persistent cookies */
 extern char *spamCan;		/* dump spam emails */
 extern char *edbrowseTempFile;

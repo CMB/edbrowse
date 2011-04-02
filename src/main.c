@@ -43,7 +43,7 @@ int context = 1;
 uchar linePending[MAXTTYLINE];
 char *changeFileName, *mailDir;
 char *addressFile, *ipbFile;
-char *home, *recycleBin, *configFile, *sigFile;
+char *home, *recycleBin, *configFile, *sigFile, *sigFileEnd;
 char *cookieFile, *spamCan;
 char *edbrowseTempFile, *edbrowseTempPDF, *edbrowseTempHTML;
 pst *textLines;
@@ -1026,8 +1026,9 @@ main(int argc, char **argv)
 	}
     }
 
-    sigFile = allocMem(strlen(home) + 12);
+    sigFile = allocMem(strlen(home) + 20);
     sprintf(sigFile, "%s/.signature", home);
+    sigFileEnd = sigFile + strlen(sigFile);
 
     {
 	static char agent0[32] = "edbrowse/";

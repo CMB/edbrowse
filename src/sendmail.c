@@ -19,6 +19,7 @@ static bool doSignature;
 static bool ssl_on;
 static const char *mailhost;
 static char subjectLine[200];
+static int mailAccount;
 
 static struct ALIAS {
     char name[16];
@@ -597,7 +598,13 @@ encodeAttachment(const char *file, int ismail, bool webform,
 	buf[buflen] = 0;
 
 	if(doSignature) {	/* Append .signature file. */
+/* Try account specific .signature file, then fall back to .signature */
+	    sprintf(sigFileEnd, "%d", mailAccount);
 	    c = fileTypeByName(sigFile, false);
+	    if(!c) {
+		*sigFileEnd = 0;
+		c = fileTypeByName(sigFile, false);
+	    }
 	    if(c != 0) {
 		int fd, n;
 		if(c != 'f') {
@@ -867,6 +874,7 @@ sendMail(int account, const char **recipients, const char *body,
 
     if(!validAccount(account))
 	return false;
+    mailAccount = account;
     localMail = accounts + localAccount - 1;
 
     a = accounts + account - 1;
