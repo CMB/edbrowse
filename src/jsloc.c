@@ -481,7 +481,14 @@ url_initialize(const char *url, bool readonly, bool exclude_href)
 	    n = pl - s;
 	else
 	    n = strlen(s);
+    } else {
+/* If we have foo.html#?bla, then ?bla is not the query.
+ * We need to set s to NULL and n to 0, lest we feed invalid data to
+ * spidermonkey. */
+	s = NULL;
+	n = 0;
     }
+
     loc_def_set_part("search", s, n, setter_loc_search, attr);
 
     setter_suspend = false;
