@@ -3326,9 +3326,16 @@ via the `sm' command.&nbsp;
 Your email accounts are described in your <A HREF=#cfg>config file</A>.
 
 <P>
-The contents of your .signature file, in your home directory, are automatically appended.&nbsp;
-This is standard behavior for Unix mail clients.
-
+Most mail clients can automatically append a signature to outgoing email
+messages; this one is no exception.&nbsp;
+In fact, you may have a different signature for each of your mail accounts.&nbsp;
+Thus, you can use one signature for work email,
+and another for personal email.&nbsp;
+When sending mail from account N, edbrowse first checks for a file named
+.signatureN, in your home directory.&nbsp;
+E.G., when sending from account 2, edbrowse looks for .signature2.&nbsp;
+If that file is not found, edbrowse looks for a file named .signature in
+your home directory, appending its contents if it is found.&nbsp;
 <P>
 The recipients, attachments, and subject must appear at the top of your file.&nbsp;
 The sm command is picky, so observe the following syntax carefully.
