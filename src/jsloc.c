@@ -7,7 +7,6 @@
 
 #include "eb.h"
 
-#include "jsapi.h"
 /* jsprf.h is not publically visible on some systems,
 so I can't #include it here.
 Instead, I'll declare the needed prototype myself, and hope it is consistent
