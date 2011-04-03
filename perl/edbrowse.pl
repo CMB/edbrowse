@@ -9,9 +9,13 @@ use Time::Local;
 =head1 Author
 
 	Karl Dahlke
-	eklhad@comcast.net
-	248-524-1004 (during regular business hours)
-	http://www.eklhad.net/linux/app
+	eklhad@gmail.com
+
+=HEAD1 Current Maintainer
+
+Chris Brannon
+	chris@the-brannons.com
+	http://the-brannons.com/edbrowse
 
 =head1 Copyright Notice
 
@@ -27,15 +31,18 @@ This program, and its associated documentation, are becoming quite large.
 Therefore the documentation has been moved to a separate html file.
 Please visit:
 
-http://www.eklhad.net/linux/app/edbdoc.html
+http://the-brannons.com/edbrowse/usersguide.html
+
+Realize that this documentation covers the C version of edbrowse.  Development
+of the Perl version stopped years ago, and there have been significant changes.
 
 If you have lynx on hand, you can run:
 
-lynx -dump http://www.eklhad.net/linux/app/edbdoc.html > edbdoc.txt
+lynx -dump http://the-brannons.com/edbrowse/usersguide.html > usersguide.txt
 
 If you are using lynx to download the actual program, do this:
 
-lynx -source www.eklhad.net/linux/app/edbrowse >edbrowse
+lynx -source 'http://the-brannons.com/edbrowse/edbrowse.pl' > edbrowse.pl
 
 =cut
 
@@ -266,7 +273,7 @@ if(! -d $rbin) {
 $rbin = "" unless mkdir $rbin, 0700;
 }
 #  Config file for this browser.
-#  Sample file is available at http://www.eklhad.net/linux/app/sample.perl.ebrc
+#  Sample file is available at http://the-brannons.com/edbrowse/sample.perl.ebrc
 $rcFile = "$home/.ebrc";
 #  Last http header, normally deleted before you read the web page.
 $ebhttp = "$rbin/eb.http";
