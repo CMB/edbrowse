@@ -1175,13 +1175,17 @@ Yeah, it makes my head spin too.
     if(symname)
 	establish_property_string(v, "name", symname, true);
     if(idname) {
-/* v.id becomes idname, and idMaster.idname becomes v */
-	establish_property_string(v, "id", idname, true);
+/* v.id becomes idname, and idMaster.idname becomes v
+ * In case of forms, v.id should remain undefined.  So we can have
+ * a form field named "id". */
+	if(strcmp(classname, "Form") != 0)
+	    establish_property_string(v, "id", idname, true);
 	JS_GetProperty(jcx, jdoc, "idMaster", &listv);
 	master = JSVAL_TO_OBJECT(listv);
 	establish_property_object(master, idname, v);
     } else {
-	establish_property_string(v, "id", EMPTYSTRING, true);
+	if(strcmp(classname, "Form") != 0)
+	    establish_property_string(v, "id", EMPTYSTRING, true);
     }
 
     if(href && href_url) {
