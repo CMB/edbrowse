@@ -42,6 +42,7 @@ uchar dirWrite, endMarks;
 int context = 1;
 uchar linePending[MAXTTYLINE];
 char *changeFileName, *mailDir;
+char *mailUnread, *mailStash;
 char *addressFile, *ipbFile;
 char *home, *recycleBin, *configFile, *sigFile, *sigFileEnd;
 char *cookieFile, *spamCan;
@@ -543,6 +544,14 @@ readConfigFile(void)
 	    mailDir = v;
 	    if(fileTypeByName(v, false) != 'd')
 		i_printfExit(MSG_ERBC_NotDir, v);
+	    mailUnread = allocMem(strlen(v) + 12);
+	    sprintf(mailUnread, "%s/unread", v);
+/* We need the unread directory, else we can't fetch mail. */
+/* Create it if it isn't there. */
+	    if(fileTypeByName(mailUnread, false) != 'd') {
+		if(mkdir(mailUnread, 0700))
+		    i_printfExit(MSG_ERBC_NotDir, mailUnread);
+	    }
 	    continue;
 
 	case 20:
@@ -1012,6 +1021,7 @@ main(int argc, char **argv)
 
     recycleBin = allocMem(strlen(home) + 8);
     sprintf(recycleBin, "%s/.Trash", home);
+
     edbrowseTempFile = allocMem(strlen(recycleBin) + 8 + 6);
 /* The extra 6 is for the suffix */
     sprintf(edbrowseTempFile, "%s/eb_tmp", recycleBin);
@@ -1019,10 +1029,24 @@ main(int argc, char **argv)
     sprintf(edbrowseTempPDF, "%s/eb_pdf", recycleBin);
     edbrowseTempHTML = allocMem(strlen(recycleBin) + 13);
     sprintf(edbrowseTempHTML, "%s/eb_pdf.html", recycleBin);
+
     if(fileTypeByName(recycleBin, false) != 'd') {
 	if(mkdir(recycleBin, 0700)) {
+/* Don't want to abort here; we might be on a readonly filesystem.
+ * Don't have a Trash directory and can't creat one; yet we should move on. */
 	    free(recycleBin);
 	    recycleBin = 0;
+	}
+    }
+
+    if(recycleBin) {
+	mailStash = allocMem(strlen(recycleBin) + 12);
+	sprintf(mailStash, "%s/rawmail", recycleBin);
+	if(fileTypeByName(mailStash, false) != 'd') {
+	    if(mkdir(mailStash, 0700)) {
+		free(mailStash);
+		mailStash = 0;
+	    }
 	}
     }
 

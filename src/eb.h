@@ -224,6 +224,10 @@ extern void *jdloc;		/* javascript document.location */
 extern int maxAccount;		/* how many email accounts specified */
 extern int localAccount;	/* this is the smtp server for outgoing mail */
 extern char *mailDir;		/* move to this directory when fetching mail */
+extern char *mailUnread; /* place to hold fetched but unread mail */
+/* Keep a copy of unformatted mail that you probably won't need again,
+ * but you never know. Should probably live somewhere under .Trash */
+extern char *mailStash;
 extern struct MACCOUNT accounts[];	/* all the email accounts */
 extern int maxMime;		/* how many mime types specified */
 extern struct MIMETYPE mimetypes[];
