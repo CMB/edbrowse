@@ -19,7 +19,7 @@ const char eol[] = "\r\n";
 char EMPTYSTRING[] = "";
 int debugLevel = 1;
 int webTimeout = 20, mailTimeout = 0;
-bool ismc, browseLocal, zapMail, unformatMail, passMail, errorExit;
+bool ismc, browseLocal, unformatMail, passMail, errorExit;
 bool isInteractive, inInput, listNA;
 volatile bool intFlag;
 int fileSize, maxFileSize = 50000000;
@@ -1109,8 +1109,6 @@ main(int argc, char **argv)
 		ismc = true;	/* running as a mail client */
 		allowJS = false;	/* no javascript in mail client */
 		++argv, --argc;	/* we're going to break out */
-		if(argc && stringEqual(argv[0], "-Zap"))
-		    ++argv, --argc, zapMail = true;
 		break;
 	    }
 	}

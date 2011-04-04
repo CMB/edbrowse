@@ -280,10 +280,8 @@ fetchMail(int account)
     const char *host = a->inurl;
     int nmsgs, m, j, k;
 
-    if(!isInteractive) {
-	if(!zapMail)
-	    i_printfExit(MSG_FetchNotBackgnd);
-    }
+    if(!isInteractive)
+	i_printfExit(MSG_FetchNotBackgnd);
 
     if(!mailDir)
 	i_printfExit(MSG_NoMailDir);
@@ -319,15 +317,13 @@ fetchMail(int account)
 	exit(0);
     }
 
-    if(!(zapMail | passMail)) {
+    if(!passMail) {
 /* We look up a lot of hosts; make a tcp connect */
 	sethostent(1);
 /* the conect will drop when the program exits */
     }
 
     i_printf(MSG_MessagesX, nmsgs);
-    if(zapMail && nmsgs > 300)
-	nmsgs = 300;
 
     for(m = 1; m <= nmsgs; ++m) {
 	const char *redirect = 0;	/* send mail elsewhere */
@@ -340,262 +336,255 @@ fetchMail(int account)
 	char *exactf = 0;	/* utf8 formatted */
 	int displine;
 	int stashNumber = -1;
-
-	if(zapMail)
-	    delflag = true;
-	else {			/* read the next message */
-	    char retrbuf[5000];
-	    bool retr1;
+	char retrbuf[5000];
+	bool retr1;
 /* We need to clear out the editor, from the last message,
  * then read in this one, in its entirety.
  * This is probably a waste, since the user might delete a megabyte message
  * after seeing only the first paragraph, or even the subject,
  * but as for programming, it's easier to read the whole thing in right now. */
-	    if(lastMailInfo)
-		freeMailInfo(lastMailInfo);
-	    lastMailInfo = 0;
-	    nzFree(lastMailText);
-	    lastMailText = 0;
-	    if(sessionList[1].lw)
-		cxQuit(1, 2);
-	    cs = 0;
-	    linesReset();
-	    cxSwitch(1, false);
+	if(lastMailInfo)
+	    freeMailInfo(lastMailInfo);
+	lastMailInfo = 0;
+	nzFree(lastMailText);
+	lastMailText = 0;
+	if(sessionList[1].lw)
+	    cxQuit(1, 2);
+	cs = 0;
+	linesReset();
+	cxSwitch(1, false);
 /* Now grab the entire message */
-	    sprintf(serverLine, "retr %d%s", m, eol);
-	    if(!mailPutLine(serverLine, false))
-		showErrorAbort();
-	    retr1 = true;
-	    while(true) {
-		int nr;
-		if(a->inssl)
-		    nr = ssl_read(retrbuf, sizeof (retrbuf));
-		else
-		    nr = tcp_read(mssock, retrbuf, sizeof (retrbuf));
-		if(nr <= 0)
-		    i_printfExit(MSG_ErrorReadMess, errno);
-		if(retr1) {
+	sprintf(serverLine, "retr %d%s", m, eol);
+	if(!mailPutLine(serverLine, false))
+	    showErrorAbort();
+	retr1 = true;
+	while(true) {
+	    int nr;
+	    if(a->inssl)
+		nr = ssl_read(retrbuf, sizeof (retrbuf));
+	    else
+		nr = tcp_read(mssock, retrbuf, sizeof (retrbuf));
+	    if(nr <= 0)
+		i_printfExit(MSG_ErrorReadMess, errno);
+	    if(retr1) {
 /* add null, to make it easy to print the error message, if necessary */
-		    if(nr < sizeof (retrbuf))
-			retrbuf[nr] = 0;
-		    if(memcmp(retrbuf, "+OK", 3))
-			i_printfExit(MSG_ErrorFetchMess, m, retrbuf);
-		    j = 3;
-		    while(retrbuf[j] != '\n')
-			++j;
+		if(nr < sizeof (retrbuf))
+		    retrbuf[nr] = 0;
+		if(memcmp(retrbuf, "+OK", 3))
+		    i_printfExit(MSG_ErrorFetchMess, m, retrbuf);
+		j = 3;
+		while(retrbuf[j] != '\n')
 		    ++j;
-		    nr -= j;
-		    memmove(retrbuf, retrbuf + j, nr);
-		    retr1 = false;
-		}
-		if(nr)
-		    stringAndBytes(&exact, &exact_l, retrbuf, nr);
-/* . by itself on a line ends the transmission */
-		j = exact_l - 1;
-		if(j < 0)
-		    continue;
-		if(exact[j] != '\n')
-		    continue;
-		--j;
-		if(j >= 0 && exact[j] == '\r')
-		    --j;
-		if(j < 0)
-		    continue;
-		if(exact[j] != '.')
-		    continue;
-		if(!j)
-		    break;
-		if(exact[j - 1] == '\n')
-		    break;
+		++j;
+		nr -= j;
+		memmove(retrbuf, retrbuf + j, nr);
+		retr1 = false;
 	    }
-	    exact_l = j;
+	    if(nr)
+		stringAndBytes(&exact, &exact_l, retrbuf, nr);
+/* . by itself on a line ends the transmission */
+	    j = exact_l - 1;
+	    if(j < 0)
+		continue;
+	    if(exact[j] != '\n')
+		continue;
+	    --j;
+	    if(j >= 0 && exact[j] == '\r')
+		--j;
+	    if(j < 0)
+		continue;
+	    if(exact[j] != '.')
+		continue;
+	    if(!j)
+		break;
+	    if(exact[j - 1] == '\n')
+		break;
+	}
+	exact_l = j;
 
 /* get rid of the dos returns, and dot strip */
-	    for(j = k = 0; j < exact_l; ++j) {
-		if(!j && exact[j] == '.')
-		    continue;
-		if(j && exact[j] == '.' && exact[j - 1] == '\n')
-		    continue;
-		if(exact[j] == '\r' && j < exact_l - 1 && exact[j + 1] == '\n')
-		    continue;
-		exact[k++] = exact[j];
+	for(j = k = 0; j < exact_l; ++j) {
+	    if(!j && exact[j] == '.')
+		continue;
+	    if(j && exact[j] == '.' && exact[j - 1] == '\n')
+		continue;
+	    if(exact[j] == '\r' && j < exact_l - 1 && exact[j + 1] == '\n')
+		continue;
+	    exact[k++] = exact[j];
+	}
+	exact_l = k;
+	exact[k] = 0;
+
+	iuReformat(exact, exact_l, &exactf, &exactf_l);
+
+	if(exactf) {
+	    if(!addTextToBuffer((pst) exactf, exactf_l, 0, false))
+		showErrorAbort();
+	} else {
+	    if(!addTextToBuffer((pst) exact, exact_l, 0, false))
+		showErrorAbort();
+	}
+
+	if(!unformatMail) {
+	    browseCurrentBuffer();
+	    if(!passMail) {
+		mailIsBlack = onBlacklist();
+		redirect = mailRedirect(lastMailInfo->to,
+		   lastMailInfo->from, lastMailInfo->reply,
+		   lastMailInfo->subject);
 	    }
-	    exact_l = k;
-	    exact[k] = 0;
-
-	    iuReformat(exact, exact_l, &exactf, &exactf_l);
-
-	    if(exactf) {
-		if(!addTextToBuffer((pst) exactf, exactf_l, 0, false))
-		    showErrorAbort();
-	    } else {
-		if(!addTextToBuffer((pst) exact, exact_l, 0, false))
-		    showErrorAbort();
-	    }
-
-	    if(!unformatMail) {
-		browseCurrentBuffer();
-		if(!passMail) {
-		    mailIsBlack = onBlacklist();
-		    redirect = mailRedirect(lastMailInfo->to,
-		       lastMailInfo->from, lastMailInfo->reply,
-		       lastMailInfo->subject);
+	    if(redirect) {
+		key = 'w';
+		if(*redirect == '-')
+		    ++redirect, key = 'u';
+		if(stringEqual(redirect, "x"))
+		    i_puts(MSG_Junk);
+		else
+		    printf("> %s\n", redirect);
+	    } else if((mailIsSpam | mailIsBlack) && spamCan) {
+		redirect = spamCan;
+		key = 'u';
+		i_printf(MSG_Spam);
+		if(lastMailInfo->from[0]) {
+		    i_printf(MSG_From);
+		    printf("%s", lastMailInfo->from);
+		} else if(lastMailInfo->reply[0]) {
+		    i_printf(MSG_From);
+		    printf("%s", lastMailInfo->reply);
 		}
-		if(redirect) {
-		    key = 'w';
-		    if(*redirect == '-')
-			++redirect, key = 'u';
-		    if(stringEqual(redirect, "x"))
-			i_puts(MSG_Junk);
-		    else
-			printf("> %s\n", redirect);
-		} else if((mailIsSpam | mailIsBlack) && spamCan) {
-		    redirect = spamCan;
-		    key = 'u';
-		    i_printf(MSG_Spam);
-		    if(lastMailInfo->from[0]) {
-			i_printf(MSG_From);
-			printf("%s", lastMailInfo->from);
-		    } else if(lastMailInfo->reply[0]) {
-			i_printf(MSG_From);
-			printf("%s", lastMailInfo->reply);
-		    }
-		    nl();
-		} else if(!nattach &&	/* drop empty mail message */
-		   cw->dol -
-		   (strlen(lastMailInfo->subject) != 0) -
-		   (strlen(lastMailInfo->from) != 0) -
-		   (strlen(lastMailInfo->reply) != 0) <= 1) {
-		    redirect = "x";
-		    i_puts(MSG_Empty);
-		}
+		nl();
+	    } else if(!nattach &&	/* drop empty mail message */
+	       cw->dol -
+	       (strlen(lastMailInfo->subject) != 0) -
+	       (strlen(lastMailInfo->from) != 0) -
+	       (strlen(lastMailInfo->reply) != 0) <= 1) {
+		redirect = "x";
+		i_puts(MSG_Empty);
 	    }
-	    if(redirect)
-		delflag = true;
+	}
+	if(redirect)
+	    delflag = true;
 
 /* display the next page of mail and get a command from the keyboard */
-	    displine = 1;
-	    while(true) {
-		if(!delflag) {	/* show next page */
-		  nextpage:
-		    if(displine <= cw->dol) {
-			for(j = 0; j < 20 && displine <= cw->dol;
-			   ++j, ++displine) {
-			    char *showline = (char *)fetchLine(displine, 1);
-			    k = pstLength((pst) showline);
-			    showline[--k] = 0;
-			    printf("%s\n", showline);
-			    nzFree(showline);
-			}
+	displine = 1;
+	while(true) {
+	    if(!delflag) {	/* show next page */
+	      nextpage:
+		if(displine <= cw->dol) {
+		    for(j = 0; j < 20 && displine <= cw->dol; ++j, ++displine) {
+			char *showline = (char *)fetchLine(displine, 1);
+			k = pstLength((pst) showline);
+			showline[--k] = 0;
+			printf("%s\n", showline);
+			nzFree(showline);
 		    }
 		}
+	    }
 
 /* get key command */
-		while(true) {
-		    if(!delflag) {
+	    while(true) {
+		if(!delflag) {
 /* interactive prompt depends on whether there is more text or not */
-			printf("%c ", displine > cw->dol ? '?' : '*');
-			fflush(stdout);
-			key = getLetter("qx? nwkudijJ");
-			printf("\b\b\b");
-			fflush(stdout);
+		    printf("%c ", displine > cw->dol ? '?' : '*');
+		    fflush(stdout);
+		    key = getLetter("qx? nwkudijJ");
+		    printf("\b\b\b");
+		    fflush(stdout);
 
-			switch (key) {
-			case 'q':
-			    i_puts(MSG_Quit);
-			    mailClose();
-			case 'x':
-			    exit(0);
-			case 'n':
-			    i_puts(MSG_Next);
-			    goto afterinput;
-			case 'd':
-			    i_puts(MSG_Delete);
-			    delflag = true;
-			    goto afterinput;
-			case 'i':
-			    i_puts(MSG_IPDelete);
-			    if(!cw->iplist || cw->iplist[0] == -1) {
-				if(passMail)
-				    i_puts(MSG_POption);
-				else
-				    i_puts(ipbFile ? MSG_None :
-				       MSG_NoBlackList);
-			    } else {
-				IP32bit addr;
-				for(k = 0; (addr = cw->iplist[k]) != NULL_IP;
-				   ++k) {
-				    puts(tcp_ip_dots(addr));
-				    if(nipblack == MAXIPBLACK)
-					continue;
-				    ipblacklist[nipblack] = addr;
-				    ipblackmask[nipblack] = 0xffffffff;
-				    ipblackcomp[nipblack] = false;
-				    ++nipblack;
-				}
-			    }
-			    delflag = true;
-			    goto afterinput;
-			case 'j':
-			case 'J':
-			    i_puts(MSG_Junk);
-			    if(!junkSubject(lastMailInfo->subject, key))
-				continue;
-			    delflag = true;
-			    goto afterinput;
-			case ' ':
-			    if(displine > cw->dol)
-				i_puts(MSG_EndMessage);
-			    goto nextpage;
-			case '?':
-			    i_puts(MSG_MailHelp);
-			    continue;
-			case 'k':
-			case 'w':
-			case 'u':
-			    break;
-			default:
-			    i_puts(MSG_NYI);
-			    continue;
-			}	/* switch */
-		    }
-
-		    /* delflag or not */
-		    /* At this point we're saving the mail somewhere. */
-		    if(key != 'k')
+		    switch (key) {
+		    case 'q':
+			i_puts(MSG_Quit);
+			mailClose();
+		    case 'x':
+			exit(0);
+		    case 'n':
+			i_puts(MSG_Next);
+			goto afterinput;
+		    case 'd':
+			i_puts(MSG_Delete);
 			delflag = true;
-		    atname = redirect;
-		  savemail:
-		    if(!atname)
-			atname = getFileName(0, false);
-		    if(!stringEqual(atname, "x")) {
-			char exists = fileTypeByName(atname, false);
-			int fsize;	/* file size */
-			int fh =
-			   open(atname, O_WRONLY | O_TEXT | O_CREAT | O_APPEND,
-			   0666);
-			if(fh < 0) {
-			    i_printf(MSG_NoCreate, atname);
+			goto afterinput;
+		    case 'i':
+			i_puts(MSG_IPDelete);
+			if(!cw->iplist || cw->iplist[0] == -1) {
+			    if(passMail)
+				i_puts(MSG_POption);
+			    else
+				i_puts(ipbFile ? MSG_None : MSG_NoBlackList);
+			} else {
+			    IP32bit addr;
+			    for(k = 0; (addr = cw->iplist[k]) != NULL_IP; ++k) {
+				puts(tcp_ip_dots(addr));
+				if(nipblack == MAXIPBLACK)
+				    continue;
+				ipblacklist[nipblack] = addr;
+				ipblackmask[nipblack] = 0xffffffff;
+				ipblackcomp[nipblack] = false;
+				++nipblack;
+			    }
+			}
+			delflag = true;
+			goto afterinput;
+		    case 'j':
+		    case 'J':
+			i_puts(MSG_Junk);
+			if(!junkSubject(lastMailInfo->subject, key))
+			    continue;
+			delflag = true;
+			goto afterinput;
+		    case ' ':
+			if(displine > cw->dol)
+			    i_puts(MSG_EndMessage);
+			goto nextpage;
+		    case '?':
+			i_puts(MSG_MailHelp);
+			continue;
+		    case 'k':
+		    case 'w':
+		    case 'u':
+			break;
+		    default:
+			i_puts(MSG_NYI);
+			continue;
+		    }		/* switch */
+		}
+
+		/* delflag or not */
+		/* At this point we're saving the mail somewhere. */
+		if(key != 'k')
+		    delflag = true;
+		atname = redirect;
+	      savemail:
+		if(!atname)
+		    atname = getFileName(0, false);
+		if(!stringEqual(atname, "x")) {
+		    char exists = fileTypeByName(atname, false);
+		    int fsize;	/* file size */
+		    int fh =
+		       open(atname, O_WRONLY | O_TEXT | O_CREAT | O_APPEND,
+		       0666);
+		    if(fh < 0) {
+			i_printf(MSG_NoCreate, atname);
+			goto savemail;
+		    }
+		    if(exists)
+			write(fh,
+			   "======================================================================\n",
+			   71);
+		    if(key == 'u' || unformatMail) {
+			if(write(fh, exact, exact_l) < exact_l) {
+			  badsave:
+			    i_printf(MSG_NoWrite, atname);
+			    close(fh);
 			    goto savemail;
 			}
-			if(exists)
-			    write(fh,
-			       "======================================================================\n",
-			       71);
-			if(key == 'u' || unformatMail) {
-			    if(write(fh, exact, exact_l) < exact_l) {
-			      badsave:
-				i_printf(MSG_NoWrite, atname);
-				close(fh);
-				goto savemail;
-			    }
-			    close(fh);
-			    fsize = exact_l;
-			} else {
+			close(fh);
+			fsize = exact_l;
+		    } else {
 
-			    if(mailStash) {
-				char *rmf;	/* raw mail file */
-				int rmfh;	/* file handle to same */
+			if(mailStash) {
+			    char *rmf;	/* raw mail file */
+			    int rmfh;	/* file handle to same */
 /* I want a fairly easy filename, in case I want to go look at the original.
  * Not a 30 character message ID that I am forced to cut&paste.
  * 4 or 5 digits would be nice.
@@ -606,69 +595,67 @@ fetchMail(int account)
  * It's good to have a cron job empty the trash early Sunday morning.
 */
 
-				k = strlen(mailStash);
-				rmf = allocMem(k + 12);
+			    k = strlen(mailStash);
+			    rmf = allocMem(k + 12);
 /* Try 20 times, then give up. */
-				for(j = 0; j < 20; ++j) {
-				    int rn = rand() % 100000;	/* random number */
-				    sprintf(rmf, "%s/%05d.eml", mailStash, rn);
-				    if(fileTypeByName(rmf, false))
-					continue;
+			    for(j = 0; j < 20; ++j) {
+				int rn = rand() % 100000;	/* random number */
+				sprintf(rmf, "%s/%05d.eml", mailStash, rn);
+				if(fileTypeByName(rmf, false))
+				    continue;
 /* dump the original mail into the file */
-				    rmfh =
-				       open(rmf,
-				       O_WRONLY | O_TEXT | O_CREAT | O_APPEND,
-				       0666);
-				    if(rmfh < 0)
-					break;
-				    if(write(rmfh, exact, exact_l) < exact_l) {
-					close(rmfh);
-					unlink(rmf);
-					break;
-				    }
+				rmfh =
+				   open(rmf,
+				   O_WRONLY | O_TEXT | O_CREAT | O_APPEND,
+				   0666);
+				if(rmfh < 0)
+				    break;
+				if(write(rmfh, exact, exact_l) < exact_l) {
 				    close(rmfh);
-/* written successfully, remember the stash number */
-				    stashNumber = rn;
+				    unlink(rmf);
 				    break;
 				}
+				close(rmfh);
+/* written successfully, remember the stash number */
+				stashNumber = rn;
+				break;
 			    }
-			    /* stashing the original */
-			    fsize = 0;
-			    for(j = 1; j <= cw->dol; ++j) {
-				char *showline = (char *)fetchLine(j, 1);
-				int len = pstLength((pst) showline);
-				if(write(fh, showline, len) < len)
-				    goto badsave;
-				nzFree(showline);
-				fsize += len;
-			    }	/* loop over lines */
-
-			    if(stashNumber >= 0) {
-				char addstash[60];
-				sprintf(addstash, "\nOriginal %05d\n",
-				   stashNumber);
-				k = strlen(addstash);
-				if(write(fh, addstash, k) < k)
-				    goto badsave;
-				fsize += k;
-			    }
-
-			    close(fh);
-			    if(nattach)
-				writeAttachments(lastMailInfo);
-			}	/* unformat or format */
-			if(atname != spamCan) {
-			    i_printf(MSG_MailSaved, fsize);
-			    if(exists)
-				i_printf(MSG_Appended);
-			    nl();
 			}
-		    }		/* saving to a real file */
-		    goto afterinput;
+			/* stashing the original */
+			fsize = 0;
+			for(j = 1; j <= cw->dol; ++j) {
+			    char *showline = (char *)fetchLine(j, 1);
+			    int len = pstLength((pst) showline);
+			    if(write(fh, showline, len) < len)
+				goto badsave;
+			    nzFree(showline);
+			    fsize += len;
+			}	/* loop over lines */
 
-		}		/* key commands */
-	    }			/* paging through the message */
-	}			/* interactive or zap */
+			if(stashNumber >= 0) {
+			    char addstash[60];
+			    sprintf(addstash, "\nOriginal %05d\n", stashNumber);
+			    k = strlen(addstash);
+			    if(write(fh, addstash, k) < k)
+				goto badsave;
+			    fsize += k;
+			}
+
+			close(fh);
+			if(nattach)
+			    writeAttachments(lastMailInfo);
+		    }		/* unformat or format */
+		    if(atname != spamCan) {
+			i_printf(MSG_MailSaved, fsize);
+			if(exists)
+			    i_printf(MSG_Appended);
+			nl();
+		    }
+		}		/* saving to a real file */
+		goto afterinput;
+
+	    }			/* key commands */
+	}			/* paging through the message */
       afterinput:
 
 	if(delflag) {
@@ -688,8 +675,6 @@ fetchMail(int account)
 	nzFree(exactf);
     }				/* loop over mail messages */
 
-    if(zapMail)
-	printf("%d\n", nmsgs);
     mailClose();
     exit(0);
 }				/* fetchMail */

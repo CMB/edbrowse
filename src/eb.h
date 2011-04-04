@@ -195,7 +195,6 @@ extern bool ismc;		/* Is the program running as a mail client? */
 extern bool cons_utf8;		/* does the console expect utf8? */
 extern bool iuConvert;		/* perform iso utf8 conversions automatically */
 extern char type8859;		/* 1 through 15 */
-extern bool zapMail;		/* just get rid of the mail */
 extern bool js_redirects;	/* window.location = new_url */
 extern uchar browseLocal;	/* browsing a local file */
 extern bool parsePage;		/* parsing the html page, and any java therein */
