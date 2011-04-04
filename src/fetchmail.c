@@ -339,6 +339,7 @@ fetchMail(int account)
 	int exactf_l;
 	char *exactf = 0;	/* utf8 formatted */
 	int displine;
+	int stashNumber = -1;
 
 	if(zapMail)
 	    delflag = true;
@@ -591,6 +592,47 @@ fetchMail(int account)
 			    close(fh);
 			    fsize = exact_l;
 			} else {
+
+			    if(mailStash) {
+				char *rmf;	/* raw mail file */
+				int rmfh;	/* file handle to same */
+/* I want a fairly easy filename, in case I want to go look at the original.
+ * Not a 30 character message ID that I am forced to cut&paste.
+ * 4 or 5 digits would be nice.
+ * So the filename looks like /home/foo/.Trash/rawmail/36921.eml
+ * Note that eml is a standard suffix for a mail file.
+ * I pick the digits randomly.
+ * Please don't accumulate 100,000 emails before you empty your trash.
+ * It's good to have a cron job empty the trash early Sunday morning.
+*/
+
+				k = strlen(mailStash);
+				rmf = allocMem(k + 12);
+/* Try 20 times, then give up. */
+				for(j = 0; j < 20; ++j) {
+				    int rn = rand() % 100000;	/* random number */
+				    sprintf(rmf, "%s/%05d.eml", mailStash, rn);
+				    if(fileTypeByName(rmf, false))
+					continue;
+/* dump the original mail into the file */
+				    rmfh =
+				       open(rmf,
+				       O_WRONLY | O_TEXT | O_CREAT | O_APPEND,
+				       0666);
+				    if(rmfh < 0)
+					break;
+				    if(write(rmfh, exact, exact_l) < exact_l) {
+					close(rmfh);
+					unlink(rmf);
+					break;
+				    }
+				    close(rmfh);
+/* written successfully, remember the stash number */
+				    stashNumber = rn;
+				    break;
+				}
+			    }
+			    /* stashing the original */
 			    fsize = 0;
 			    for(j = 1; j <= cw->dol; ++j) {
 				char *showline = (char *)fetchLine(j, 1);
@@ -600,6 +642,17 @@ fetchMail(int account)
 				nzFree(showline);
 				fsize += len;
 			    }	/* loop over lines */
+
+			    if(stashNumber >= 0) {
+				char addstash[60];
+				sprintf(addstash, "\nOriginal %05d\n",
+				   stashNumber);
+				k = strlen(addstash);
+				if(write(fh, addstash, k) < k)
+				    goto badsave;
+				fsize += k;
+			    }
+
 			    close(fh);
 			    if(nattach)
 				writeAttachments(lastMailInfo);
