@@ -991,6 +991,7 @@ main(int argc, char **argv)
 {
     int cx, account;
     bool rc, doConfig = true;
+    bool fetchOnly = false;
 
 /* In case this is being piped over to a synthesizer, or whatever. */
     if(fileTypeByHandle(fileno(stdout)) != 'f')
@@ -1099,7 +1100,9 @@ main(int argc, char **argv)
 	    ++s, unformatMail = true;
 	if(*s == 'p')
 	    ++s, passMail = true;
-	if(*s == 'm' && isdigitByte(s[1])) {
+	if((*s == 'm' || *s == 'f') && isdigitByte(s[1])) {
+	    if(*s == 'f')
+		fetchOnly = true;
 	    if(!maxAccount)
 		i_printfExit(MSG_NoMailAcc);
 	    account = strtol(s + 1, &s, 10);
@@ -1137,8 +1140,12 @@ main(int argc, char **argv)
 	char **reclist, **atlist;
 	char *s, *body;
 	int nat, nalt, nrec;
-	if(!argc)
-	    fetchMail(account);
+
+	if(!argc) {
+	    fetchMail(account, fetchOnly);
+	    exit(0);
+	}
+
 	if(argc == 1)
 	    i_printfExit(MSG_MinOneRec);
 /* I don't know that argv[argc] is 0, or that I can set it to 0,

@@ -109,7 +109,7 @@ bool sendMailCurrent(int sm_account, bool dosig) ;
 /* sourcefile=fetchmail.c */
 void loadBlacklist(void) ;
 bool onBlacklist1(IP32bit tip) ;
-void fetchMail(int account) ;
+void fetchMail(int account, bool fetch) ;
 bool emailTest(void) ;
 void unpackUploadedFile(const char *post, const char *boundary, char **postb, int *postb_l) ;
 char * emailParse(char *buf) ;
