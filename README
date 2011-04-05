@@ -114,55 +114,16 @@ There - now the lawyers are happy.
 Blind people could care less about indenting their code.
 In fact we would rather not.  It's a real nuisance!
 But in deference to my sighted colleagues, I have run all
-the source through indent(1), using the following settings.
+the source through indent(1), using the settings in tools/indent.pro.
 Braces are in the style of the linux kernel, which I like.
 We don't waste time (especially on a braile display)
 consuming an extra line just for the left brace.
-If you modify this code, please use the following as your .indent.pro.
+If you modify this code, please use the ebindent script, found in the tools
+directory of the edbrowse source tree, to insure that modified files still
+adhere to this style.
+For instance, if you change src/main.c, just run
+../tools/ebindent main.c # Assuming that the working directory is src
 Thank you for your understanding.
-
-// leave blanklines alone!
--nsob
--ncdb
--nbad
--nbap
--nbbb
-// Measure levels of indenting - use 8 spaces = one tab (standard)
--ut
--ts8
--i4
--bli0
--cbi0
--nlp
-// I really want -ci0, but that doesn't work!
-// So I'm settling for ci3, which acts like -lp when an if statement
-// is involved, and those are the ones that are usually long anyways.
--ci3
--ip0
--pi0
--cli0
--di2
-// Braces are set by the coding standards of the linux kernel
--br
--brs
--cdw
--ce
--bs
-// Breaking long lines.
--l80
--hnl
--psl
--nbbo
-// Inserting spaces - usually I don't want it
--nprs
--npcs
--ncs
-// can't prevent the space in switch (x)
--nsaf
--nsai
--nsaw
-// the space in while(x--) ; is a good thing
--ss
 
 ------------------------------------------------------------
 
