@@ -126,7 +126,7 @@ stripWhite(char *s)
     char *u;
     skipWhite(&t);
     if(t > s)
-	strcpy(s, t);
+	strmove(s, t);
     u = s + strlen(s);
     while(u > s && isspaceByte(u[-1]))
 	--u;
@@ -156,6 +156,13 @@ spaceCrunch(char *s, bool onespace, bool unprint)
 	--j;			/* drop trailing space */
     s[j] = 0;
 }				/* spaceCrunch */
+
+/* Like strcpy, but able to cope with overlapping strings. */
+char *
+strmove(char *dest, const char *src)
+{
+    return memmove(dest, src, strlen(src) + 1);
+}				/* strmove */
 
 /* OO has a lot of unnecessary overhead, and a few inconveniences,
  * but I really miss it right now.  The following
@@ -308,7 +315,7 @@ leftClipString(char *s)
 	if(!isspace(*t))
 	    break;
     if(t > s)
-	strcpy(s, t);
+	strmove(s, t);
 }				/* leftClipString */
 
 /* shift string one to the right */

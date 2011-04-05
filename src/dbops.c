@@ -259,7 +259,7 @@ lineFormatStack(const char *line,	/* the sprintf-like formatting string */
 /* extra code to prevent %09s from printing out all zeros
 when the argument is null (empty string) */
 	    if(!*(char *)n && fmt[1] == '0')
-		strcpy(fmt + 1, fmt + 2);
+		strmove(fmt + 1, fmt + 2);
 /* fall through */
 	default:
 	    sprintf(q, fmt, n);
@@ -470,10 +470,10 @@ stringDate(const char *s, bool yearfirst)
     delim = yearfirst ? '-' : '/';
     t = strchr(buf, delim);
     if(t)
-	strcpy(t, t + 1);
+	strmove(t, t + 1);
     t = strchr(buf, delim);
     if(t)
-	strcpy(t, t + 1);
+	strmove(t, t + 1);
     l = strlen(buf);
     if(l != 8)
 	return -4;
@@ -508,11 +508,11 @@ dateString(date d, int flags)
     else
 	sprintf(buf, "%02d/%02d/%04d", month, day, year);
     if(flags & DTCRUNCH)
-	strcpy(buf + 6, buf + 8);
+	strmove(buf + 6, buf + 8);
     if(flags & YEARFIRST) {
 	strncpy(swap, buf, 6);
 	swap[2] = swap[5] = 0;
-	strcpy(buf, buf + 6);
+	strmove(buf, buf + 6);
 	if(flags & DTDELIMIT)
 	    strcat(buf, "-");
 	strcat(buf, swap);
@@ -522,9 +522,9 @@ dateString(date d, int flags)
     } else if(!(flags & DTDELIMIT)) {
 	char *s;
 	s = strchr(buf, '/');
-	strcpy(s, s + 1);
+	strmove(s, s + 1);
 	s = strchr(buf, '/');
-	strcpy(s, s + 1);
+	strmove(s, s + 1);
     }
     return buf;
 }				/* dateString */
@@ -557,11 +557,11 @@ timeString(interval seconds, int flags)
     if(!(flags & DTAMPM))
 	buf[8] = 0;
     if(flags & DTCRUNCH)
-	strcpy(buf + 5, buf + 8);
+	strmove(buf + 5, buf + 8);
     if(!(flags & DTDELIMIT)) {
-	strcpy(buf + 2, buf + 3);
+	strmove(buf + 2, buf + 3);
 	if(buf[4] == ':')
-	    strcpy(buf + 4, buf + 5);
+	    strmove(buf + 4, buf + 5);
     }
     return buf;
 }				/* timeString */
@@ -598,9 +598,9 @@ stringTime(const char *t)
     if(l < 4 || l > 8)
 	return -4;
     if(buf[2] == ':')
-	strcpy(buf + 2, buf + 3);
+	strmove(buf + 2, buf + 3);
     if(buf[4] == ':')
-	strcpy(buf + 4, buf + 5);
+	strmove(buf + 4, buf + 5);
     l = strlen(buf);
     if(l != 4 && l != 6)
 	return -4;

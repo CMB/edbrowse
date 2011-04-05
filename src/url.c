@@ -69,7 +69,7 @@ unpercentURL(char *url)
 	if(w[-2] != ':' && w[-2] != '/')
 	    break;
     }
-    strcpy(w, u);
+    strmove(w, u);
 }				/* unpercentURL */
 
 /* Decide if it looks like a web url. */
@@ -752,7 +752,7 @@ altText(const char *base)
     if(len && !isalnumByte(buf[len - 1]))
 	buf[--len] = 0;
     while(len && !isalnumByte(buf[0]))
-	strcpy(buf, buf + 1), --len;
+	strmove(buf, buf + 1), --len;
     if(len > 10) {
 /* see if it's a phrase/sentence or a pathname/url */
 /* Do this by counting spaces */
@@ -794,7 +794,7 @@ altText(const char *base)
 	    s = ss;
 	}
 	if(s)
-	    strcpy(buf, s + 1);
+	    strmove(buf, s + 1);
     }				/* more than ten characters */
     ++recount;
 /* If we don't have enough letters, forget it */

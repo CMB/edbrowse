@@ -313,7 +313,7 @@ parseRefresh(char *ref, int *delay_p)
 	    ++u;
 	else
 	    qc = 0;
-	strcpy(ref, u);
+	strmove(ref, u);
 	u = ref + strlen(ref);
 	if(u > ref && u[-1] == qc)
 	    u[-1] = 0;
@@ -391,7 +391,7 @@ copy_and_sanitize(const char *start, const char *end)
 	if(frag) {
 	    params = strchr(new_copy, '?');
 	    if(params && params > frag)
-		strcpy(frag, params);
+		strmove(frag, params);
 	    else
 		*frag = 0;
 	}
@@ -399,7 +399,7 @@ copy_and_sanitize(const char *start, const char *end)
 	getPortLocURL(new_copy, &portloc, 0);
 	if(portloc && !isdigit(portloc[1])) {
 	    const char *s = portloc + strcspn(portloc, "/?#\1");
-	    strcpy((char *)portloc, s);
+	    strmove((char *)portloc, s);
 	}
     }
 

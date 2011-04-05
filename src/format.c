@@ -306,7 +306,7 @@ htmlAttrVal(const char *e, const char *name)
  * Are we really suppose to do this? */
     for(b = a; *b == ' '; b++) ;
     if(b > a)
-	strcpy(a, b);
+	strmove(a, b);
     for(b = a + strlen(a) - 1; b >= a && *b == ' '; b--)
 	*b = 0;
     return a;
@@ -1442,7 +1442,7 @@ andTranslate(const char *s, bool invisible)
 /* remove leading zeros */
 	if(andbuf[0] == '#')
 	    while(andbuf[1] == '0')
-		strcpy(andbuf + 1, andbuf + 2);
+		strmove(andbuf + 1, andbuf + 2);
 
       lookup:
 	debugPrint(6, "meta %s", andbuf);
@@ -1596,7 +1596,7 @@ cutDuplicateEmail(char *line, const char *dup, int duplen)
 	    return;		/* should never happen */
 	if(duplen == s - line && memEqualCI(line, dup, duplen)) {
 	    ++s;
-	    strcpy(line, s);
+	    strmove(line, s);
 	    continue;
 	}
 	line = s + 1;

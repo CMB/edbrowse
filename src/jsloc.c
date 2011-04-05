@@ -590,7 +590,7 @@ getter_cookie(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 	    secure = true;
 	sendCookies(&cook, &cook_l, url, secure);
 	if(memEqualCI(cook, "cookie: ", 8)) {	/* should often happen */
-	    strcpy(cook, cook + 8);
+	    strmove(cook, cook + 8);
 	}
 	if(s = strstr(cook, "\r\n"))
 	    *s = 0;

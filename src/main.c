@@ -1150,7 +1150,7 @@ main(int argc, char **argv)
 		break;
 	    if(*s == '-')
 		++nalt;
-	    strcpy(s, s + 1);
+	    strmove(s, s + 1);
 	}
 	atlist = argv + argc - nat - 1;
 	if(atlist <= argv)

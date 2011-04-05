@@ -845,7 +845,7 @@ delText(int start, int end)
     if(end == cw->dol)
 	cw->nlMode = false;
     j = end - start + 1;
-    strcpy(cw->map + start * LNWIDTH, cw->map + (end + 1) * LNWIDTH);
+    strmove(cw->map + start * LNWIDTH, cw->map + (end + 1) * LNWIDTH);
 /* move the labels */
     for(i = 0; i < 26; ++i) {
 	int ln = cw->labels[i];
@@ -4555,7 +4555,7 @@ runCommand(const char *line)
 	if(first) {
 	    if(cw->sqlMode && !isSQL(line)) {
 		strcpy(newline, cw->fileName);
-		strcpy(strchr(newline, ']') + 1, line);
+		strmove(strchr(newline, ']') + 1, line);
 		line = newline;
 	    }
 	    j = readFile(line, "");

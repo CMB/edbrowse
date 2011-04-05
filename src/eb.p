@@ -171,6 +171,7 @@ char * prependString(char *s, const char *p) ;
 void skipWhite(const char **s) ;
 void stripWhite(char *s) ;
 void spaceCrunch(char *s, bool onespace, bool unprint) ;
+char * strmove(char *dest, const char *src) ;
 char * initString(int *l) ;
 void stringAndString(char **s, int *l, const char *t) ;
 void stringAndBytes(char **s, int *l, const char *t, int cnt) ;

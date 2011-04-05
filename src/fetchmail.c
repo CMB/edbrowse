@@ -914,7 +914,7 @@ unpackUploadedFile(const char *post, const char *boundary,
 	b1[0] = b1[1] = ' ';
 	b3 = b2 - 4;
 	b4 = unpack64inline(b1, b3);
-	strcpy(b4, b3);
+	strmove(b4, b3);
 	b2 = b4 + 4;
     }
 
@@ -1109,7 +1109,7 @@ extractLessGreater(char *s)
     vr = strchr(s, '>');
     if(vl && vr && vl < vr) {
 	*vr = 0;
-	strcpy(s, vl + 1);
+	strmove(s, vl + 1);
     }
 }				/* extractLessGreater */
 
@@ -1352,7 +1352,7 @@ headerGlean(char *start, char *end)
     if(!w->reply[0])
 	strcpy(w->reply, w->from);
     if(w->from[0] == '"') {
-	strcpy(w->from, w->from + 1);
+	strmove(w->from, w->from + 1);
 	q = strchr(w->from, '"');
 	if(q)
 	    *q = 0;
@@ -1930,7 +1930,7 @@ setupReply(bool all)
 	if(strchr("srv", linetype[j]))
 	    continue;
 	delText(j, j);
-	strcpy(linetype + j, linetype + j + 1);
+	strmove(linetype + j, linetype + j + 1);
     }
 
 /* move reply to 1, if it isn't already there */

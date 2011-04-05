@@ -1229,7 +1229,7 @@ encodeTags(char *html)
 	    if(*s == '\n')
 		++s;
 	    if(s > currentTA->value)
-		strcpy(currentTA->value, s);
+		strmove(currentTA->value, s);
 	    a = currentTA->value;
 	    a += strlen(a);
 	    while(a > currentTA->value && (a[-1] == ' ' || a[-1] == '\t'))
@@ -1756,7 +1756,7 @@ encodeTags(char *html)
 	       stringEqual(a, "rd") ||
 	       stringEqual(a, "nd") || stringEqual(a, "st"))) {
 		a -= 2, l -= 2;
-		strcpy(a, a + 2);
+		strmove(a, a + 2);
 		continue;
 	    }
 	    while(isdigitByte(*a))
@@ -1768,7 +1768,7 @@ encodeTags(char *html)
 /* ok, we can trash the original ( or [ */
 	  unparen:
 	    a = new + open->lic + j - 1;
-	    strcpy(a, a + 1);
+	    strmove(a, a + 1);
 	    --l;
 	    if(j == 2)
 		stringAndChar(&new, &l, ' ');
