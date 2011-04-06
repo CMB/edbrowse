@@ -3559,11 +3559,11 @@ in the unformatted message.&nbsp;
 When you use the w command to write a formatted message to a file, edbrowse
 now writes an unformatted copy for you.&nbsp;
 These copies are placed in the directory $HOME/.Trash/rawmail,
-with file names ending in the extension &quot;.eml&quot;.
+with file names consisting of 5 digit numbers.&nbsp;
 When you save a formatted message, you'll notice some text like
-&quot;original 12345&quot; at the end of the file.&nbsp;
+&quot;Unformatted 12345&quot; at the end of the file.&nbsp;
 This tells you where to find the original, unformatted message:
-$HOME/.Trash/rawmail/12345.eml.
+$HOME/.Trash/rawmail/12345.
 As mentioned previously, it's a good idea to run a weekly cron job to clean
 out the trash bin; if that cron job removes subdirectories, it will insure
 that raw mail does not accumulate indefinitely.&nbsp;

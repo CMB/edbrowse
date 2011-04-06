@@ -636,8 +636,7 @@ fetchMail(int account, bool fetch)
 /* I want a fairly easy filename, in case I want to go look at the original.
  * Not a 30 character message ID that I am forced to cut&paste.
  * 4 or 5 digits would be nice.
- * So the filename looks like /home/foo/.Trash/rawmail/36921.eml
- * Note that eml is a standard suffix for a mail file.
+ * So the filename looks like /home/foo/.Trash/rawmail/36921
  * I pick the digits randomly.
  * Please don't accumulate 100,000 emails before you empty your trash.
  * It's good to have a cron job empty the trash early Sunday morning.
@@ -648,7 +647,7 @@ fetchMail(int account, bool fetch)
 /* Try 20 times, then give up. */
 			    for(j = 0; j < 20; ++j) {
 				int rn = rand() % 100000;	/* random number */
-				sprintf(rmf, "%s/%05d.eml", mailStash, rn);
+				sprintf(rmf, "%s/%05d", mailStash, rn);
 				if(fileTypeByName(rmf, false))
 				    continue;
 /* dump the original mail into the file */
@@ -682,7 +681,7 @@ fetchMail(int account, bool fetch)
 
 			if(stashNumber >= 0) {
 			    char addstash[60];
-			    sprintf(addstash, "\nOriginal %05d\n", stashNumber);
+			    sprintf(addstash, "\nUnformatted %05d\n", stashNumber);
 			    k = strlen(addstash);
 			    if(write(fh, addstash, k) < k)
 				goto badsave;
