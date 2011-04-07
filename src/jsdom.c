@@ -107,13 +107,29 @@ our_JS_NewStringCopyN(JSContext * cx, const char *s, size_t n)
 
     return forSpidermonkey;
 }				/* our_JS_NewStringCopyN */
-
 JSString *
 our_JS_NewStringCopyZ(JSContext * cx, const char *s)
 {
     size_t len = strlen(s);
     return our_JS_NewStringCopyN(jcx, s, len);
 }				/* our_JS_NewStringCopyZ */
+
+char *
+transcode_get_js_bytes(JSString *s)
+{
+    char *converted = NULL;
+    int converted_l = 0;
+    const char *origbytes = JS_GetStringBytes(s);
+
+    if(!JS_CStringsAreUTF8())
+	return cloneString(origbytes);
+
+    if(cons_utf8)
+	return cloneString(origbytes);
+
+    utf2iso(origbytes, strlen(origbytes), &converted, &converted_l);
+    return converted;
+}			/* our_JS_GetTranscodedBytes */
 
 /*********************************************************************
 When an element is created without a name, it is not linked to its
@@ -156,7 +172,7 @@ window_ctor(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
 	newloc = JS_GetStringBytes(str);
     }
     if(argc > 1 && (str = JS_ValueToString(jcx, argv[1]))) {
-	winname = JS_GetStringBytes(str);
+	winname = transcode_get_js_bytes(str);
     }
 /* third argument is attributes, like window size and location, that we don't care about. */
     javaOpensWindow(newloc, winname);
@@ -241,13 +257,15 @@ static JSBool
 win_alert(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
    jsval * rval)
 {
-    const char *msg;
+    char *msg;
     JSString *str;
     if(argc > 0 && (str = JS_ValueToString(jcx, argv[0]))) {
-	msg = JS_GetStringBytes(str);
+	msg = transcode_get_js_bytes(str);
     }
-    if(msg)
+    if(msg) {
 	puts(msg);
+	nzFree(msg);
+    }
     return JS_TRUE;
 }				/* win_alert */
 
@@ -255,22 +273,20 @@ static JSBool
 win_prompt(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
    jsval * rval)
 {
-    const char *msg = 0;
-    const char *answer = 0;
+    char *msg = EMPTYSTRING;
+    char *answer = EMPTYSTRING;
     JSString *str;
     char inbuf[80];
     char *s;
     char c;
 
     if(argc > 0 && (str = JS_ValueToString(jcx, argv[0]))) {
-	msg = JS_GetStringBytes(str);
+	msg = transcode_get_js_bytes(str);
     }
     if(argc > 1 && (str = JS_ValueToString(jcx, argv[1]))) {
-	answer = JS_GetStringBytes(str);
+	answer = transcode_get_js_bytes(str);
     }
 
-    if(!msg)
-	msg = "";
     printf("%s", msg);
 /* If it doesn't end in space or question mark, print a colon */
     c = 'x';
@@ -289,10 +305,10 @@ win_prompt(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
     s = inbuf + strlen(inbuf);
     if(s > inbuf && s[-1] == '\n')
 	*--s = 0;
-    if(inbuf[0])
+    if(inbuf[0]) {
+	nzFree(answer);		/* Don't need the default answer anymore. */
 	answer = inbuf;
-    if(!answer)
-	answer = "";
+    }
     *rval = STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, answer));
     return JS_TRUE;
 }				/* win_prompt */
@@ -301,7 +317,7 @@ static JSBool
 win_confirm(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
    jsval * rval)
 {
-    const char *msg = 0;
+    char *msg = EMPTYSTRING;
     JSString *str;
     char inbuf[80];
     char *s;
@@ -309,11 +325,9 @@ win_confirm(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
     bool first = true;
 
     if(argc > 0 && (str = JS_ValueToString(jcx, argv[0]))) {
-	msg = JS_GetStringBytes(str);
+	msg = transcode_get_js_bytes(str);
     }
 
-    if(!msg)
-	msg = "";
     while(true) {
 	printf("%s", msg);
 	c = 'x';
@@ -340,6 +354,7 @@ win_confirm(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
 	*rval = JSVAL_TRUE;
     else
 	*rval = JSVAL_FALSE;
+    nzFree(msg);
     return JS_TRUE;
 }				/* win_confirm */
 
@@ -465,13 +480,14 @@ static void
 dwrite1(uintN argc, jsval * argv, bool newline)
 {
     int i;
-    const char *msg;
+    char *msg;
     JSString *str;
     for(i = 0; i < argc; ++i) {
 	if((str = JS_ValueToString(jcx, argv[i])) &&
-	   (msg = JS_GetStringBytes(str)))
+	   (msg = transcode_get_js_bytes(str))) {
 	    dwrite2(msg);
-/* I assume I don't have to free msg?? */
+	nzFree(msg);
+	}
     }
     if(newline)
 	dwrite2("\n");

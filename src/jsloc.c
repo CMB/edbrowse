@@ -774,13 +774,15 @@ set_property_bool(void *jv, const char *name, int value)
 }				/* set_property_bool */
 
 /* These get routines assume the property exists, and of the right type. */
-const char *
+char *
 get_property_url(void *jv, bool doaction)
 {
     JSObject *obj = jv;
     JSObject *lo;		/* location object */
     jsval v;
     const char *s;
+    char *out_str = NULL;
+    int out_str_l;
     JSBool found = false;
     if(!obj)
 	return 0;
@@ -816,18 +818,42 @@ get_property_url(void *jv, bool doaction)
 	JS_GetProperty(jcx, lo, "href", &v);
     }
     s = stringize(v);
-    return s;
+    if(!JS_CStringsAreUTF8()) {
+	out_str = cloneString(s);
+    } else {
+	if(cons_utf8) {
+	    out_str = cloneString(s);
+	} else {
+	    utf2iso(s, strlen(s), &out_str, &out_str_l);
+	}
+    }
+    return out_str;
 }				/* get_property_url */
 
-const char *
+char *
 get_property_string(void *jv, const char *name)
 {
     JSObject *obj = jv;
     jsval v;
+    const char *s = NULL;
+    char *out_str = NULL;
+    char *converted;
+    int converted_l;
     if(!obj)
 	return 0;
     JS_GetProperty(jcx, obj, name, &v);
-    return stringize(v);
+    s =  stringize(v);
+    if(!JS_CStringsAreUTF8()) {
+	out_str = cloneString(s);
+    } else {
+	if(cons_utf8) {
+	    out_str = cloneString(s);
+	} else {
+	    utf2iso(s, strlen(s), &converted, &converted_l);
+	    out_str = converted;
+	}
+    }
+    return out_str;
 }				/* get_property_string */
 
 bool
@@ -841,7 +867,7 @@ get_property_bool(void *jv, const char *name)
     return JSVAL_TO_BOOLEAN(v);
 }				/* get_property_bool */
 
-const char *
+char *
 get_property_option(void *jv)
 {
     JSObject *obj = jv;

@@ -953,7 +953,7 @@ jSyncup(void)
 	if(itype == INP_SELECT) {
 	    locateOptions(t, (value ? value : t->value), 0, 0, true);
 	    if(!t->multiple)
-		value = cloneString(get_property_option(eo));
+		value = get_property_option(eo);
 	}
 
 	if(itype == INP_TA) {
@@ -2224,11 +2224,11 @@ findField(const char *line, int ftype, int n,
 	    *evp = t->jv;
 	if(href && t->jv) {
 /* defer to the java variable for the reference */
-	    const char *jh = get_property_url(t->jv, false);
+	    char *jh = get_property_url(t->jv, false);
 	    if(jh) {
 		if(!*href || !stringEqual(*href, jh)) {
 		    nzFree(*href);
-		    *href = cloneString(jh);
+		    *href = jh;
 		}
 	    }
 	}
@@ -2688,7 +2688,7 @@ fetchTextVar(const struct htmlTag *t)
     void *jv = t->jv;
     char *v;
     if(jv) {
-	return cloneString(get_property_string(jv, "value"));
+	return get_property_string(jv, "value");
     }
     if(t->itype > INP_HIDDEN) {
 	v = getFieldFromBuffer(t->seqno);
@@ -3113,13 +3113,14 @@ infPush(int tagno, char **post_string)
     action = form->href;
 /* But we defer to the java variable */
     if(form->jv) {
-	const char *jh = get_property_url(form->jv, true);
+	char *jh = get_property_url(form->jv, true);
 	if(jh && (!action || !stringEqual(jh, action))) {
 /* Tie action to the form tag, to plug a small memory leak */
 	    nzFree(form->href);
 	    form->href = resolveURL(getBaseHref(form->seqno), jh);
 	    action = form->href;
 	}
+	nzFree(jh);
     }
 
 /* if no action, or action is "#", the default is the current location */

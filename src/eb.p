@@ -238,6 +238,7 @@ void appendFileNF(const char *filename, const char *msg) ;
 /* sourcefile=jsdom.c */
 JSString *our_JS_NewStringCopyN(JSContext *cx, const char *s, size_t n) ;
 JSString *our_JS_NewStringCopyZ(JSContext *cx, const char *s) ;
+char * transcode_get_js_bytes(JSString *s) ;
 void * createJavaContext(void) ;
 void freeJavaContext(void *jsc) ;
 void establish_innerHTML(void *jv, const char *start, const char *end, bool is_ta) ;
@@ -257,10 +258,10 @@ void establish_property_url(void *jv, const char *name, const char *url, bool re
 void set_property_string(void *jv, const char *name, const char *value) ;
 void set_property_number(void *jv, const char *name, int value) ;
 void set_property_bool(void *jv, const char *name, int value) ;
-const char * get_property_url(void *jv, bool doaction) ;
-const char * get_property_string(void *jv, const char *name) ;
+char * get_property_url(void *jv, bool doaction) ;
+char * get_property_string(void *jv, const char *name) ;
 bool get_property_bool(void *jv, const char *name) ;
-const char * get_property_option(void *jv) ;
+char * get_property_option(void *jv) ;
 void * establish_js_option(void *ev, int idx) ;
 bool handlerGo(void *obj, const char *name) ;
 void handlerSet(void *ev, const char *name, const char *code) ;
