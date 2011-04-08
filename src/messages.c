@@ -122,7 +122,7 @@ static const char *englishMessages[] = {
     "%d messages\n",
     "spam",
     " from ",
-    "?\tprint this help message.\nq\tquit this program.\nx\texit without changing anything on the mail server.\nspace\tread more of this mail message.\nn\tmove on to the next mail message.\nd\tdelete this message.\nj\tjunk this subject for ten days.\nJ\tjunk this subject for a year.\nw\twrite this message to a file and delete it.\nk\tkeep this message in a file, but don't delete it.\nu\twrite this message unformatted to a file, and delete it.",
+    "?\tprint this help message.\nq\tquit this program.\nspace\tread more of this mail message.\nn\tmove on to the next mail message.\nd\tdelete this message.\nj\tjunk this subject for ten days.\nJ\tjunk this subject for a year.\nw\twrite this message to a file and delete it.\nu\twrite this message unformatted to a file, and delete it.",
     "cannot create file %s\n",
     "cannot write to file %s\n",
     "mail saved, %d bytes",
@@ -571,7 +571,7 @@ static const char *englishMessages[] = {
     "%s is not a directory",
     "no mail accounts specified, please check your .ebrc config file",
     "invalid account number, please use 1 through %d",
-    "edbrowse  -v    (show version)\nedbrowse -h (this message)\nedbrowse -c (edit config file)\nedbrowse  [-e] [-d#] -[u|p]m#    (read your mail)\nedbrowse [-e] [-d#] -f# (fetch mail) \nedbrowse  [-e] [-d#] -m# address1 address2 ... file [+attachments]\nedbrowse  [-e] [-d#] file1 file2 ...",
+    "edbrowse  -v    (show version)\nedbrowse -h (this message)\nedbrowse -c (edit config file)\nedbrowse [-e] [-d#] -f[#] (fetch mail) \nedbrowse  [-e] [-d#] -[p]m    (read pending mail)\nedbrowse  [-e] [-d#] -[p]fm[#]    (fetch mail and read pending mail)\nedbrowse  [-e] [-d#] -m[#] address1 address2 ... file [+attachments]\nedbrowse  [-e] [-d#] file1 file2 ...",
     "please specify at least one recipient and the file to send",
     "please specify at least one recipient and the file to send, before your attachments",
     "too many files open simultaneously, limit %d",
@@ -678,6 +678,8 @@ static const char *englishMessages[] = {
     "SSL connect error in libcurl: %s",
     "input tty",
     "input readline()",
+    "nothing pending",
+    "%d pending\n",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
@@ -1337,6 +1339,8 @@ static const char *frenchMessages[] = {
     0,
     0,
     0,
+    0,
+    0,
 };
 
 /* Translation by Cleverson: clever92000@yahoo.com.br */
@@ -1993,6 +1997,8 @@ static const char *brazilianPortugueseMessages[] = {
     "chaves estrangeiras para %s\n",
     "não pegar colunas de blob",
     "pegar colunas de blob",
+    0,
+    0,
     0,
     0,
     0,

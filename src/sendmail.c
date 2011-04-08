@@ -303,7 +303,6 @@ void
 mailClose(void)
 {
     mailPutLine("quit\r\n", false);
-    endhostent();
 /* the other side has to have time to process the quit command, before we simply hang up. */
     usleep(400000);
     if(ssl_on)

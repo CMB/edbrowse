@@ -19,7 +19,7 @@ const char eol[] = "\r\n";
 char EMPTYSTRING[] = "";
 int debugLevel = 1;
 int webTimeout = 20, mailTimeout = 0;
-bool ismc, browseLocal, unformatMail, passMail, errorExit;
+bool ismc, browseLocal, passMail, errorExit;
 bool isInteractive, inInput, listNA;
 volatile bool intFlag;
 int fileSize, maxFileSize = 50000000;
@@ -640,6 +640,11 @@ readConfigFile(void)
 	    continue;
 	}
 
+	if(stringEqual(s, "nofetch") && mailblock == 1) {
+	    act->nofetch = 1;
+	    continue;
+	}
+
 	if(*s == '\x82' && s[1] == 0) {
 	    if(mailblock == 1) {
 		++maxAccount;
@@ -991,7 +996,7 @@ main(int argc, char **argv)
 {
     int cx, account;
     bool rc, doConfig = true;
-    bool fetchOnly = false;
+    bool dofetch = false, domail = false;
 
 /* In case this is being piped over to a synthesizer, or whatever. */
     if(fileTypeByHandle(fileno(stdout)) != 'f')
@@ -1080,41 +1085,57 @@ main(int argc, char **argv)
     for(; argc && argv[0][0] == '-'; ++argv, --argc) {
 	char *s = *argv;
 	++s;
+
 	if(stringEqual(s, "v")) {
 	    puts(version);
 	    exit(0);
 	}
+
 	if(stringEqual(s, "d")) {
 	    debugLevel = 4;
 	    continue;
 	}
+
 	if(*s == 'd' && isdigitByte(s[1]) && !s[2]) {
 	    debugLevel = s[1] - '0';
 	    continue;
 	}
+
 	if(stringEqual(s, "e")) {
 	    errorExit = true;
 	    continue;
 	}
-	if(*s == 'u')
-	    ++s, unformatMail = true;
+
 	if(*s == 'p')
 	    ++s, passMail = true;
-	if((*s == 'm' || *s == 'f') && isdigitByte(s[1])) {
-	    if(*s == 'f')
-		fetchOnly = true;
+
+	if(*s == 'm' || *s == 'f') {
 	    if(!maxAccount)
 		i_printfExit(MSG_NoMailAcc);
-	    account = strtol(s + 1, &s, 10);
-	    if(account == 0 || account > maxAccount)
-		i_printfExit(MSG_BadAccNb, maxAccount);
+	    if(*s == 'f') {
+		account = 0;
+		dofetch = true;
+		++s;
+		if(*s == 'm')
+		    domail = true, ++s;
+	    } else {
+		domail = true;
+		++s;
+	    }
+	    if(isdigitByte(*s)) {
+		account = strtol(s, &s, 10);
+		if(account == 0 || account > maxAccount)
+		    i_printfExit(MSG_BadAccNb, maxAccount);
+	    }
 	    if(!*s) {
 		ismc = true;	/* running as a mail client */
 		allowJS = false;	/* no javascript in mail client */
-		++argv, --argc;	/* we're going to break out */
-		break;
+		++argv, --argc;
+		if(!argc || !dofetch)
+		    break;
 	    }
 	}
+
 	i_printfExit(MSG_Usage);
     }				/* options */
 
@@ -1142,10 +1163,37 @@ main(int argc, char **argv)
 	int nat, nalt, nrec;
 
 	if(!argc) {
-	    fetchMail(account, fetchOnly);
+/* This is fetch / read mode */
+	    if(dofetch) {
+		if(account) {
+		    fetchMail(account);
+		} else {
+		    int i, j;
+		    for(i = 1; i <= maxAccount; ++i) {
+/* did we set this to nofetch in the config file? */
+			if(accounts[i - 1].nofetch)
+			    continue;
+/* don't fetch from a different account that has the same host an dlogin */
+			for(j = 1; j < i; ++j)
+			    if(stringEqual(accounts[i - 1].inurl,
+			       accounts[j - 1].inurl) &&
+			       stringEqual(accounts[i - 1].login,
+			       accounts[j - 1].login))
+				break;
+			if(j == i)
+			    fetchMail(i);
+		    }
+		}
+	    }
+
+	    if(domail) {
+		scanMail();
+	    }
+
 	    exit(0);
 	}
 
+/* now in sendmail mode */
 	if(argc == 1)
 	    i_printfExit(MSG_MinOneRec);
 /* I don't know that argv[argc] is 0, or that I can set it to 0,

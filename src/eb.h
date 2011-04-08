@@ -168,6 +168,7 @@ struct MACCOUNT {		/* pop3 account */
     char *inurl, *outurl;
     int inport, outport;
     uchar inssl, outssl;
+    char nofetch;
 };
 
 struct MIMETYPE {
@@ -199,7 +200,6 @@ extern bool js_redirects;	/* window.location = new_url */
 extern uchar browseLocal;	/* browsing a local file */
 extern bool parsePage;		/* parsing the html page, and any java therein */
 extern bool htmlAttrVal_nl;	/* allow nl in the attribute of an html tag */
-extern bool unformatMail;	/* suppress formatting */
 extern bool passMail;		/* pass mail across the filters */
 extern bool errorExit;		/* exit on any error, for scripting purposes */
 extern bool isInteractive;
@@ -223,7 +223,7 @@ extern void *jdloc;		/* javascript document.location */
 extern int maxAccount;		/* how many email accounts specified */
 extern int localAccount;	/* this is the smtp server for outgoing mail */
 extern char *mailDir;		/* move to this directory when fetching mail */
-extern char *mailUnread; /* place to hold fetched but unread mail */
+extern char *mailUnread;	/* place to hold fetched but unread mail */
 /* Keep a copy of unformatted mail that you probably won't need again,
  * but you never know. Should probably live somewhere under .Trash */
 extern char *mailStash;

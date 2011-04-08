@@ -272,45 +272,65 @@ writeAttachments(struct MHINFO *w)
 }				/* writeAttachments */
 
 /* find the last mail in the unread directory */
-static int unreadNumber;
+static int unreadMax, unreadMin, unreadCount;
+static int unreadBase;		/* find min larger than base */
+
 static void
-lastUnread(void)
+unreadStats(void)
 {
     const char *f;
     int n;
 
-    unreadNumber = 0;
+    unreadMax = 0;
+    unreadMin = 0;
+    unreadCount = 0;
 
     while(f = nextScanFile(mailUnread)) {
 	if(!stringIsNum(f))
 	    continue;
 	n = atoi(f);
-	if(n > unreadNumber)
-	    unreadNumber = n;
+	if(n > unreadMax)
+	    unreadMax = n;
+	if(n > unreadBase) {
+	    if(!unreadMin || n < unreadMin)
+		unreadMin = n;
+	    ++unreadCount;
+	}
     }
-}				/* lastUnread */
+}				/* unreadStats */
+
+static char *umf;		/* unread mail file */
+static char *umf_end;
+static int umfd;		/* file descriptor for the above */
+/* string to hold the mail message, and then its length */
+static char *mailstring;
+static int mailstring_l;
+/* convert mail message to/from utf8 if need be. */
+/* This isn't really right, cause it should be done per mime component. */
+static char *mailu8;
+static int mailu8_l;
 
 void
-fetchMail(int account, bool fetch)
+fetchMail(int account)
 {
     const struct MACCOUNT *a = accounts + account - 1;
     const char *login = a->login;
     const char *pass = a->password;
     const char *host = a->inurl;
     int nmsgs, m, j, k;
-    char *umf;			/* unread mail file */
-    char *umf_end;
-
-    if(!isInteractive)
-	i_printfExit(MSG_FetchNotBackgnd);
 
     if(!mailDir)
 	i_printfExit(MSG_NoMailDir);
     if(chdir(mailDir))
 	i_printfExit(MSG_NoDirChange, mailDir);
 
-    if(!loadAddressBook())
-	showErrorAbort();
+    if(!umf) {
+	umf = allocMem(strlen(mailUnread) + 12);
+	sprintf(umf, "%s/", mailUnread);
+	umf_end = umf + strlen(umf);
+    }
+    unreadBase = 0;
+    unreadStats();
 
     if(!mailConnect(host, a->inport, a->inssl))
 	showErrorAbort();
@@ -318,6 +338,7 @@ fetchMail(int account, bool fetch)
 	showErrorAbort();
     if(memcmp(serverLine, "+OK ", 4)) {
 	i_printf(MSG_BadPopIntro, serverLine);
+	mailClose();
 	return;
     }
     sprintf(serverLine, "user %s%s", login, eol);
@@ -328,6 +349,7 @@ fetchMail(int account, bool fetch)
     }				/* password */
     if(memcmp(serverLine, "+OK", 3)) {
 	i_printf(MSG_PopNotComplete, serverLine);
+	mailClose();
 	return;
     }
 
@@ -335,6 +357,7 @@ fetchMail(int account, bool fetch)
     mailPutGetError("stat\r\n");
     if(memcmp(serverLine, "+OK ", 4)) {
 	i_printf(MSG_NoStatusMailBox, serverLine);
+	mailClose();
 	return;
     }
     nmsgs = atoi(serverLine + 4);
@@ -343,34 +366,147 @@ fetchMail(int account, bool fetch)
 	mailClose();
 	return;
     }
+    i_printf(MSG_MessagesX, nmsgs);
 
-    if(!passMail) {
-/* We look up a lot of hosts; make a tcp connect */
-	sethostent(1);
-/* the conect will drop when the program exits */
-    }
+    for(m = 1; m <= nmsgs; ++m) {
+	char retrbuf[5000];
+	bool retr1;
 
-    if(fetch) {
-	umf = allocMem(strlen(mailUnread) + 8);
+/* Grab the message */
+	sprintf(serverLine, "retr %d%s", m, eol);
+	if(!mailPutLine(serverLine, false))
+	    showErrorAbort();
+
+	mailstring = initString(&mailstring_l);
+	retr1 = true;
+	while(true) {
+	    int nr;
+	    if(a->inssl)
+		nr = ssl_read(retrbuf, sizeof (retrbuf));
+	    else
+		nr = tcp_read(mssock, retrbuf, sizeof (retrbuf));
+	    if(nr <= 0) {
+		i_printf(MSG_ErrorReadMess, errno);
+		mailClose();
+		nzFree(mailstring);
+		return;
+	    }
+
+	    if(retr1) {
+/* add null, to make it easy to print the error message if necessary */
+		if(nr < sizeof (retrbuf))
+		    retrbuf[nr] = 0;
+		if(memcmp(retrbuf, "+OK", 3)) {
+		    i_printf(MSG_ErrorFetchMess, m, retrbuf);
+		    mailClose();
+		    nzFree(mailstring);
+		    return;
+		}
+
+		j = 3;		/* skip past ok */
+		while(retrbuf[j] != '\n')
+		    ++j;
+		++j;
+		nr -= j;
+		memmove(retrbuf, retrbuf + j, nr);
+		retr1 = false;
+	    }
+
+	    if(nr)
+		stringAndBytes(&mailstring, &mailstring_l, retrbuf, nr);
+
+/* . by itself on a line ends the transmission */
+	    j = mailstring_l - 1;
+	    if(j < 0)
+		continue;
+	    if(mailstring[j] != '\n')
+		continue;
+	    --j;
+	    if(j >= 0 && mailstring[j] == '\r')
+		--j;
+	    if(j < 0)
+		continue;
+	    if(mailstring[j] != '.')
+		continue;
+	    if(!j)
+		break;
+	    if(mailstring[j - 1] == '\n')
+		break;
+	}
+	mailstring_l = j;
+
+/* get rid of the dos returns, and dot strip */
+	for(j = k = 0; j < mailstring_l; ++j) {
+	    if(!j && mailstring[j] == '.')
+		continue;
+	    if(j && mailstring[j] == '.' && mailstring[j - 1] == '\n')
+		continue;
+	    if(mailstring[j] == '\r' && j < mailstring_l - 1 &&
+	       mailstring[j + 1] == '\n')
+		continue;
+	    mailstring[k++] = mailstring[j];
+	}
+	mailstring_l = k;
+	mailstring[k] = 0;
+
+/* got the file, save it in unread */
+	sprintf(umf_end, "%d", unreadMax + m);
+	umfd = open(umf, O_WRONLY | O_TEXT | O_CREAT, 0666);
+	if(umfd < 0)
+	    i_printfExit(MSG_NoCreate, umf);
+	if(write(umfd, mailstring, mailstring_l) < mailstring_l)
+	    i_printfExit(MSG_NoWrite, umf);
+	close(umfd);
+	nzFree(mailstring);
+	mailstring = 0;
+
+	sprintf(serverLine, "dele %d%s", m, eol);
+	if(!mailPutLine(serverLine, false))
+	    showErrorAbort();
+	if(!mailGetLine())
+	    i_printfExit(MSG_MailTimeOver);
+	if(memcmp(serverLine, "+OK", 3))
+	    i_printfExit(MSG_UnableDelMail, serverLine);
+    }				/* loop over mail messages */
+
+    mailClose();
+}				/* fetchMail */
+
+void
+scanMail(void)
+{
+    int nmsgs, m, j, k;
+
+    if(!isInteractive)
+	i_printfExit(MSG_FetchNotBackgnd);
+    if(!mailDir)
+	i_printfExit(MSG_NoMailDir);
+    if(chdir(mailDir))
+	i_printfExit(MSG_NoDirChange, mailDir);
+
+    if(!umf) {
+	umf = allocMem(strlen(mailUnread) + 12);
 	sprintf(umf, "%s/", mailUnread);
 	umf_end = umf + strlen(umf);
-	lastUnread();
     }
-    i_printf(MSG_MessagesX, nmsgs);
+
+/* How many mail messages? */
+    unreadBase = 0;
+    unreadStats();
+    nmsgs = unreadCount;
+    if(!nmsgs) {
+	i_puts(MSG_NoUnread);
+	exit(0);
+    }
+    i_printf(MSG_UnreadX, nmsgs);
 
     for(m = 1; m <= nmsgs; ++m) {
 	const char *redirect = 0;	/* send mail elsewhere */
 	char key;
 	const char *atname;	/* name of attachment */
 	bool delflag = false;	/* delete this mail */
-	int exact_l;
-	char *exact = initString(&exact_l);	/* the exact message */
-	int exactf_l;
-	char *exactf = 0;	/* utf8 formatted */
 	int displine;
 	int stashNumber = -1;
-	char retrbuf[5000];
-	bool retr1;
 
 /* We need to clear out the editor, from the last message,
  * then read in this one, in its entirety.
@@ -391,122 +527,58 @@ fetchMail(int account, bool fetch)
 	cxSwitch(1, false);
 
 /* Now grab the entire message */
-	sprintf(serverLine, "retr %d%s", m, eol);
-	if(!mailPutLine(serverLine, false))
+	unreadStats();
+	sprintf(umf_end, "%d", unreadMin);
+	if(!fileIntoMemory(umf, &mailstring, &mailstring_l))
 	    showErrorAbort();
-	retr1 = true;
-	while(true) {
-	    int nr;
-	    if(a->inssl)
-		nr = ssl_read(retrbuf, sizeof (retrbuf));
-	    else
-		nr = tcp_read(mssock, retrbuf, sizeof (retrbuf));
-	    if(nr <= 0) {
-		i_printf(MSG_ErrorReadMess, errno);
-		return;
-	    }
-	    if(retr1) {
-/* add null, to make it easy to print the error message if necessary */
-		if(nr < sizeof (retrbuf))
-		    retrbuf[nr] = 0;
-		if(memcmp(retrbuf, "+OK", 3)) {
-		    i_printf(MSG_ErrorFetchMess, m, retrbuf);
-		    return;
-		}
-		j = 3;
-		while(retrbuf[j] != '\n')
-		    ++j;
-		++j;
-		nr -= j;
-		memmove(retrbuf, retrbuf + j, nr);
-		retr1 = false;
-	    }
-	    if(nr)
-		stringAndBytes(&exact, &exact_l, retrbuf, nr);
-/* . by itself on a line ends the transmission */
-	    j = exact_l - 1;
-	    if(j < 0)
-		continue;
-	    if(exact[j] != '\n')
-		continue;
-	    --j;
-	    if(j >= 0 && exact[j] == '\r')
-		--j;
-	    if(j < 0)
-		continue;
-	    if(exact[j] != '.')
-		continue;
-	    if(!j)
-		break;
-	    if(exact[j - 1] == '\n')
-		break;
-	}
-	exact_l = j;
+	unreadBase = unreadMin;
 
-/* get rid of the dos returns, and dot strip */
-	for(j = k = 0; j < exact_l; ++j) {
-	    if(!j && exact[j] == '.')
-		continue;
-	    if(j && exact[j] == '.' && exact[j - 1] == '\n')
-		continue;
-	    if(exact[j] == '\r' && j < exact_l - 1 && exact[j + 1] == '\n')
-		continue;
-	    exact[k++] = exact[j];
-	}
-	exact_l = k;
-	exact[k] = 0;
+	iuReformat(mailstring, mailstring_l, &mailu8, &mailu8_l);
 
-	iuReformat(exact, exact_l, &exactf, &exactf_l);
-
-	if(exactf) {
-	    if(!addTextToBuffer((pst) exactf, exactf_l, 0, false))
+	if(mailu8) {
+	    if(!addTextToBuffer((pst) mailu8, mailu8_l, 0, false))
 		showErrorAbort();
 	} else {
-	    if(!addTextToBuffer((pst) exact, exact_l, 0, false))
+	    if(!addTextToBuffer((pst) mailstring, mailstring_l, 0, false))
 		showErrorAbort();
 	}
 
-	if(!unformatMail) {
-	    browseCurrentBuffer();
-	    if(!passMail) {
-		mailIsBlack = onBlacklist();
-		redirect = mailRedirect(lastMailInfo->to,
-		   lastMailInfo->from, lastMailInfo->reply,
-		   lastMailInfo->subject);
-	    }
-	    if(redirect) {
-		key = 'w';
-		if(*redirect == '-')
-		    ++redirect, key = 'u';
-		if(stringEqual(redirect, "x"))
-		    i_puts(MSG_Junk);
-		else
-		    printf("> %s\n", redirect);
-	    } else if((mailIsSpam | mailIsBlack) && spamCan) {
-		redirect = spamCan;
-		key = 'u';
-		i_printf(MSG_Spam);
-		if(lastMailInfo->from[0]) {
-		    i_printf(MSG_From);
-		    printf("%s", lastMailInfo->from);
-		} else if(lastMailInfo->reply[0]) {
-		    i_printf(MSG_From);
-		    printf("%s", lastMailInfo->reply);
-		}
-		nl();
-	    } else if(!nattach &&	/* drop empty mail message */
-	       cw->dol -
-	       (strlen(lastMailInfo->subject) != 0) -
-	       (strlen(lastMailInfo->from) != 0) -
-	       (strlen(lastMailInfo->reply) != 0) <= 1) {
-		redirect = "x";
-		i_puts(MSG_Empty);
-	    }
+	browseCurrentBuffer();
+
+	if(!passMail) {
+	    mailIsBlack = onBlacklist();
+	    redirect = mailRedirect(lastMailInfo->to,
+	       lastMailInfo->from, lastMailInfo->reply, lastMailInfo->subject);
 	}
 
-	if(redirect || fetch)
-	    delflag = true;
-	key = 0;
+	if(redirect) {
+	    key = 'w';
+	    if(*redirect == '-')
+		++redirect, key = 'u';
+	    if(stringEqual(redirect, "x"))
+		i_puts(MSG_Junk);
+	    else
+		printf("> %s\n", redirect);
+	} else if((mailIsSpam | mailIsBlack) && spamCan) {
+	    redirect = spamCan;
+	    key = 'u';
+	    i_printf(MSG_Spam);
+	    if(lastMailInfo->from[0]) {
+		i_printf(MSG_From);
+		printf("%s", lastMailInfo->from);
+	    } else if(lastMailInfo->reply[0]) {
+		i_printf(MSG_From);
+		printf("%s", lastMailInfo->reply);
+	    }
+	    nl();
+	} else if(!nattach &&	/* drop empty mail message */
+	   cw->dol -
+	   (strlen(lastMailInfo->subject) != 0) -
+	   (strlen(lastMailInfo->from) != 0) -
+	   (strlen(lastMailInfo->reply) != 0) <= 1) {
+	    redirect = "x";
+	    i_puts(MSG_Empty);
+	}
 
 /* display the next page of mail and get a command from the keyboard */
 	displine = 1;
@@ -530,23 +602,24 @@ fetchMail(int account, bool fetch)
 /* interactive prompt depends on whether there is more text or not */
 		    printf("%c ", displine > cw->dol ? '?' : '*');
 		    fflush(stdout);
-		    key = getLetter("qx? nwkudijJ");
+		    key = getLetter("q? nwudijJ");
 		    printf("\b\b\b");
 		    fflush(stdout);
 
 		    switch (key) {
 		    case 'q':
 			i_puts(MSG_Quit);
-			mailClose();
-		    case 'x':
 			exit(0);
+
 		    case 'n':
 			i_puts(MSG_Next);
 			goto afterinput;
+
 		    case 'd':
 			i_puts(MSG_Delete);
 			delflag = true;
 			goto afterinput;
+
 		    case 'i':
 			i_puts(MSG_IPDelete);
 			if(!cw->iplist || cw->iplist[0] == -1) {
@@ -568,6 +641,7 @@ fetchMail(int account, bool fetch)
 			}
 			delflag = true;
 			goto afterinput;
+
 		    case 'j':
 		    case 'J':
 			i_puts(MSG_Junk);
@@ -575,17 +649,20 @@ fetchMail(int account, bool fetch)
 			    continue;
 			delflag = true;
 			goto afterinput;
+
 		    case ' ':
 			if(displine > cw->dol)
 			    i_puts(MSG_EndMessage);
 			goto nextpage;
+
 		    case '?':
 			i_puts(MSG_MailHelp);
 			continue;
-		    case 'k':
+
 		    case 'w':
 		    case 'u':
 			break;
+
 		    default:
 			i_puts(MSG_NYI);
 			continue;
@@ -593,14 +670,8 @@ fetchMail(int account, bool fetch)
 		}
 
 		/* At this point we're saving the mail somewhere. */
-		if(key != 'k')
-		    delflag = true;
+		delflag = true;
 		atname = redirect;
-		if(!atname && fetch) {
-		    sprintf(umf_end, "%d", unreadNumber + m);
-		    atname = umf;
-		    key = 'u';	/* save unformatted */
-		}
 
 	      savemail:
 		if(!atname)
@@ -619,15 +690,15 @@ fetchMail(int account, bool fetch)
 			write(fh,
 			   "======================================================================\n",
 			   71);
-		    if(key == 'u' || unformatMail) {
-			if(write(fh, exact, exact_l) < exact_l) {
+		    if(key == 'u') {
+			if(write(fh, mailstring, mailstring_l) < mailstring_l) {
 			  badsave:
 			    i_printf(MSG_NoWrite, atname);
 			    close(fh);
 			    goto savemail;
 			}
 			close(fh);
-			fsize = exact_l;
+			fsize = mailstring_l;
 		    } else {
 
 			if(mailStash) {
@@ -657,7 +728,8 @@ fetchMail(int account, bool fetch)
 				   0666);
 				if(rmfh < 0)
 				    break;
-				if(write(rmfh, exact, exact_l) < exact_l) {
+				if(write(rmfh, mailstring,
+				   mailstring_l) < mailstring_l) {
 				    close(rmfh);
 				    unlink(rmf);
 				    break;
@@ -668,7 +740,7 @@ fetchMail(int account, bool fetch)
 				break;
 			    }
 			}
-			/* stashing the original */
+
 			fsize = 0;
 			for(j = 1; j <= cw->dol; ++j) {
 			    char *showline = (char *)fetchLine(j, 1);
@@ -681,7 +753,8 @@ fetchMail(int account, bool fetch)
 
 			if(stashNumber >= 0) {
 			    char addstash[60];
-			    sprintf(addstash, "\nUnformatted %05d\n", stashNumber);
+			    sprintf(addstash, "\nUnformatted %05d\n",
+			       stashNumber);
 			    k = strlen(addstash);
 			    if(write(fh, addstash, k) < k)
 				goto badsave;
@@ -689,12 +762,13 @@ fetchMail(int account, bool fetch)
 			}
 
 			close(fh);
+
 			if(nattach)
 			    writeAttachments(lastMailInfo);
 		    }		/* unformat or format */
 
 /* print "mail saved" message */
-		    if(atname != spamCan && atname != umf) {
+		    if(atname != spamCan) {
 			i_printf(MSG_MailSaved, fsize);
 			if(exists)
 			    i_printf(MSG_Appended);
@@ -705,28 +779,19 @@ fetchMail(int account, bool fetch)
 
 	    }			/* key commands */
 	}			/* paging through the message */
-      afterinput:
 
-	if(delflag) {
-/* Remember, it isn't really gone until you quit the session.
- * So if you didn't mean to delete, type x to exit abruptly,
- * then fetch your mail again. */
-	    sprintf(serverLine, "dele %d%s", m, eol);
-	    if(!mailPutLine(serverLine, false))
-		showErrorAbort();
-	    if(!mailGetLine())
-		i_printfExit(MSG_MailTimeOver);
-	    if(memcmp(serverLine, "+OK", 3))
-		i_printfExit(MSG_UnableDelMail, serverLine);
-	}
-	/* deleted */
-	nzFree(exact);
-	nzFree(exactf);
+      afterinput:
+	if(delflag)
+	    unlink(umf);
+
+	nzFree(mailstring);
+	mailstring = 0;
+	nzFree(mailu8);
+	mailu8 = 0;
     }				/* loop over mail messages */
 
-    mailClose();
     exit(0);
-}				/* fetchMail */
+}				/* scanMail */
 
 /* Here are the common keywords for mail header lines.
  * These are in alphabetical order, so you can stick more in as you find them.
