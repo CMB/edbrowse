@@ -257,7 +257,7 @@ static JSBool
 win_alert(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
    jsval * rval)
 {
-    char *msg;
+    char *msg = NULL;
     JSString *str;
     if(argc > 0 && (str = JS_ValueToString(jcx, argv[0]))) {
 	msg = transcode_get_js_bytes(str);
