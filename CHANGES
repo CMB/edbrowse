@@ -1,5 +1,10 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.4.7:
+memcpy and strcpy are no longer called on overlapping regions.
+Files with unknown length, such as those under /proc, are now readable.
+Miscellaneous fixes.
+
 3.4.6:
 Fix file corruption bug for large files with more than a million lines.
 
