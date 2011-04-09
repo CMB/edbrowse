@@ -3645,54 +3645,26 @@ and just like the real world, the offensive team will always have the upper hand
 
 <H3 align=center> <A NAME=mailfmt> Formatted Mail </A> </H3>
 
-By default, incoming mail is formatted for readability.&nbsp;
-If you want to save a copy of the mail, exactly as it was received (unformatted),
-type  u  at the interactive prompt.&nbsp;
-If you don't want the formatting at all, use the -u option on the command line,
-as in `e -um1'.&nbsp;
-This is occasionally necessary,
-if a bug in my formatting routine causes edbrowse to blow up.&nbsp;
-You still want to get your mail,
-(and send me a copy so I can fix the bug),
-so use the -u option to bypass formatting.
+When your mail is retrieved, it is saved in the directory of unread
+messages without any formatting applied.&nbsp;
+In other words, it is a faithful copy of the message, as it existed on
+the server.&nbsp;
+When you read it by invoking edbrowse with the -m option,
+edbrowse displays it, after applying various formatting rules.&nbsp;
+You can save the message, in either its raw or formatted state.&nbsp;
+Selecting `w' at the interactive mail prompt writes the formatted version
+to disk, while selecting `u' saves the unformatted version.
 
 <P>
 When an html mail message is rendered, javascript is disabled.&nbsp;
-Thus the mail appears sooner, and the mail client is less likely to crash due to a bug in the javascript machinery.&nbsp;
+A bug in the JavaScript machinery cannot crash the client, and malicious
+JavaScript cannot cause problems.&nbsp;
 There really isn't much loss here, because you couldn't activate the links or fill out the form anyways.&nbsp;
 If you want to "interact" with this email message,
 you have to save it unformatted to a file,
 finish your email session, edit that file,
 and type b to browse.&nbsp;
 Now the html is active, as though you were looking at a web page on somebody's site.
-
-<P>
-There is a reason for this falderal.&nbsp;
-When you are running edbrowse as a fetchmail client, there is a time limit, imposed by your pop3 server.&nbsp;
-You have about 20 seconds to decide the fate of each message.&nbsp;
-Throw it away, skip it, save it to a file, etc.&nbsp;
-If you dawdle, the mail server hangs up and you have to start all over again.&nbsp;
-This is not the time to interact with your message;
-this is not the time to fill out forms or follow hyperlinks to other interesting websites.&nbsp;
-If you are that interested, save the message to a file and move on.
-
-<P>
-Your sighted friend, running Outlook Express,
-doesn't have to worry about this, because every message is saved to a file automatically.&nbsp;
-When he scans his mail, he is actually looking at files that have been transferred to his computer
-some time in the past.&nbsp;
-He is not in the middle of a pop3 session, and there are no time limits.&nbsp;
-This may be a better approach; I don't know.&nbsp;
-Someday I may add a feature to grab all your messages and copy them to local files in your mail directory.&nbsp;
-You could then use edbrowse in directory mode to step through each file in turn.&nbsp;
-Personally, I get a lot of silly little emails, and spam too,
-so I am happy to delete the majority of my messages as they come,
-in real time,
-and save the few that are interesting.&nbsp;
-Other filtering options can simplify this process.&nbsp;
-For instance, mail from my friend Dorothy will always be saved in a particular place,
-because I always want to read that at my leisure.&nbsp;
-this is described in the next section.
 
 <H3 align=center> <A NAME=filter> Mail Filtering </A> </H3>
 
