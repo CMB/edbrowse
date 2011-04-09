@@ -107,7 +107,8 @@ blind, script, accessible">
 <UL>
 <LI><A HREF=#sm> Send Mail </A>
 <LI><A HREF=#smc> Send Mail Client </A>
-<LI><A HREF=#fmc> Fetch Mail Client </A>
+<LI><A HREF=#retrmail> Retrieving Mail </A>
+<LI><A HREF=#imr> Interactive Mail Reader </A>
 <LI><A HREF=#mailfmt> Formatted Mail </A>
 <LI><A HREF=#filter> Mail Filtering </A>
 <LI><A HREF=#reply> Mail Reply </A>
@@ -994,10 +995,10 @@ This is similar to f, by itself, which tells you the current file.
 <H3 align=center> <A NAME=usage> Usage </A> </H3>
 
 type `edbrowse -h' to produce the usage message.&nbsp;
-You will see the -m option used in several different ways.&nbsp;
-Try to ignore this for now.&nbsp;
-The -m option causes edbrowse to run as an interactive mail client,
-rather than an editor.&nbsp;
+You will see the -f, -fm, and -m options used in several different ways;
+just ignore them for now.&nbsp;
+These three options cause edbrowse to act as a mail retriever or interactive
+mail client.&nbsp;
 This will be discussed later.
 
 <P>
@@ -3514,14 +3515,35 @@ alias workmail="e -m3"
 alias mail="echo use mymail, wifemail, or workmail"
 </font></PRE>
 
-<H3 align=center> <A NAME=fmc> Fetch Mail Client </A> </H3>
+<H3 align=center> <A NAME=retrmail> Retrieving Mail </A> </H3>
 
-If edbrowse is run with the -m1 option, and no other arguments,
-it is an interactive fetch mail client,
-retrieving mail from your first pop3 account.&nbsp;
+If edbrowse is invoked with the -f option, it will fetch mail from all
+accounts, except the ones that you have marked nofetch.&nbsp;
+Alternatively, you may specify a number following -f, in order to fetch
+mail from a single account.&nbsp;
+For instance, -f1 will fetch mail from your first pop3 account,
+ignoring all the rest.&nbsp;
+When it has finished retrieving mail, the program prints the
+total number of messages that it retrieved.&nbsp;
+Fetched messages are stored in a directory named unread/, relative to
+the directory specified with the maildir setting in your .ebrc file.&nbsp;
+You may read them, as described in the next section.
+
+<H3 align=center> <A NAME=imr> Interactive Mail Reader </A> </H3>
+
+If edbrowse is run with the -m option, and no other arguments,
+it is an interactive mail reader,
+allowing you to examine mail from your directory of unread messages.&nbsp;
+If you wish to retrieve and read in one step, you can combine the -f
+and -m options.&nbsp;
+In edbrowse version 3.4.6 and earlier, fetching and reading were not separate
+operations; -m performed both.&nbsp;
+Existing users beware, this is a notable change to the interface!
+
+<P>
 The first thing it tells you is how many messages you have.&nbsp;
 If there are no messages it says "No mail", and exits.&nbsp;
-If there are messages, it retrieves each one in turn.&nbsp;
+If there are unread messages, it shows each one in turn.&nbsp;
 For each message, it displays some header information (such as subject
 and sender) and the first page of text, and then presents a prompt.&nbsp;
 A '?' prompt means the message is complete --
@@ -3531,7 +3553,6 @@ Keys have the following meaning.
 
 <P><PRE><font size=3 face=Arial,Helvetica,sans-serif>?	summary of key commands
 q	quit the program
-x	abort the program, deleted mail is not really deleted
 space	display more text
 n	read the next message
 d	delete this message
@@ -3539,12 +3560,11 @@ i	show referenced ip addresses, then delete this message
 j	junk this message, and any messages with this subject, for 10 days
 J	junk this subject for a year
 w	write this message to a file and delete it
-k	keep this message in a file, but don't delete it
 u	write this message unformatted to a file and delete it
 </font></PRE>
 
 <P>
-The last three commands, k w and u, require a filename, which you enter.&nbsp;
+The last two commands, w and u, require a filename, which you enter.&nbsp;
 The reserved filename "x" is essentially /dev/null,
 whence the mail message is discarded.&nbsp;
 You can save the mail message to x (discard) and still save the attachments.&nbsp;

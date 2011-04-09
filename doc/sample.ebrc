@@ -93,6 +93,18 @@ from = Karl Dahlke
 reply = eklhad@comcast.net
 }
 
+# A completely-ficticious send-only address.  We should not try to fetch
+# from this account when -f is called to fetch from all accounts.
+mail {
+inserver = mail.the-brannons.com
+outserver = mail.the-brannons.com
+from = CMB's Announcements
+reply = noreply@the-brannons.com
+login = announcements
+password = rhinoceros
+nofetch
+}
+
 #  That's all the mail accounts.
 #  Here is my address book.
 #  Format    is alias:email:other fields.
