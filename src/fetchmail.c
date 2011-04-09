@@ -310,7 +310,8 @@ static int mailstring_l;
 static char *mailu8;
 static int mailu8_l;
 
-void
+/* Returns number of messages fetched */
+int
 fetchMail(int account)
 {
     const struct MACCOUNT *a = accounts + account - 1;
@@ -318,6 +319,7 @@ fetchMail(int account)
     const char *pass = a->password;
     const char *host = a->inurl;
     int nmsgs, m, j, k;
+    int nfetch = 0;		/* number of messages actually fetched */
 
     if(!mailDir)
 	i_printfExit(MSG_NoMailDir);
@@ -339,7 +341,7 @@ fetchMail(int account)
     if(memcmp(serverLine, "+OK ", 4)) {
 	i_printf(MSG_BadPopIntro, serverLine);
 	mailClose();
-	return;
+	return nfetch;
     }
     sprintf(serverLine, "user %s%s", login, eol);
     mailPutGetError(serverLine);
@@ -350,7 +352,7 @@ fetchMail(int account)
     if(memcmp(serverLine, "+OK", 3)) {
 	i_printf(MSG_PopNotComplete, serverLine);
 	mailClose();
-	return;
+	return nfetch;
     }
 
 /* How many mail messages? */
@@ -358,15 +360,13 @@ fetchMail(int account)
     if(memcmp(serverLine, "+OK ", 4)) {
 	i_printf(MSG_NoStatusMailBox, serverLine);
 	mailClose();
-	return;
+	return nfetch;
     }
     nmsgs = atoi(serverLine + 4);
     if(!nmsgs) {
-	i_puts(MSG_NoMail);
 	mailClose();
-	return;
+	return nfetch;
     }
-    i_printf(MSG_MessagesX, nmsgs);
 
     for(m = 1; m <= nmsgs; ++m) {
 	char retrbuf[5000];
@@ -389,7 +389,7 @@ fetchMail(int account)
 		i_printf(MSG_ErrorReadMess, errno);
 		mailClose();
 		nzFree(mailstring);
-		return;
+		return nfetch;
 	    }
 
 	    if(retr1) {
@@ -400,7 +400,7 @@ fetchMail(int account)
 		    i_printf(MSG_ErrorFetchMess, m, retrbuf);
 		    mailClose();
 		    nzFree(mailstring);
-		    return;
+		    return nfetch;
 		}
 
 		j = 3;		/* skip past ok */
@@ -457,6 +457,7 @@ fetchMail(int account)
 	if(write(umfd, mailstring, mailstring_l) < mailstring_l)
 	    i_printfExit(MSG_NoWrite, umf);
 	close(umfd);
+	++nfetch;
 	nzFree(mailstring);
 	mailstring = 0;
 
@@ -470,6 +471,7 @@ fetchMail(int account)
     }				/* loop over mail messages */
 
     mailClose();
+    return nfetch;
 }				/* fetchMail */
 
 void
@@ -495,10 +497,12 @@ scanMail(void)
     unreadStats();
     nmsgs = unreadCount;
     if(!nmsgs) {
-	i_puts(MSG_NoUnread);
+	i_puts(MSG_NoMail);
 	exit(0);
     }
-    i_printf(MSG_UnreadX, nmsgs);
+    i_printf(MSG_MessagesX, nmsgs);
+
+    loadAddressBook();
 
     for(m = 1; m <= nmsgs; ++m) {
 	const char *redirect = 0;	/* send mail elsewhere */
@@ -552,6 +556,7 @@ scanMail(void)
 	}
 
 	if(redirect) {
+	    delflag = true;
 	    key = 'w';
 	    if(*redirect == '-')
 		++redirect, key = 'u';
@@ -571,13 +576,6 @@ scanMail(void)
 		printf("%s", lastMailInfo->reply);
 	    }
 	    nl();
-	} else if(!nattach &&	/* drop empty mail message */
-	   cw->dol -
-	   (strlen(lastMailInfo->subject) != 0) -
-	   (strlen(lastMailInfo->from) != 0) -
-	   (strlen(lastMailInfo->reply) != 0) <= 1) {
-	    redirect = "x";
-	    i_puts(MSG_Empty);
 	}
 
 /* display the next page of mail and get a command from the keyboard */

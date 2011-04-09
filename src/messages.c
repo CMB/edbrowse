@@ -678,8 +678,6 @@ static const char *englishMessages[] = {
     "SSL connect error in libcurl: %s",
     "input tty",
     "input readline()",
-    "nothing pending",
-    "%d pending\n",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
@@ -1339,8 +1337,6 @@ static const char *frenchMessages[] = {
     0,
     0,
     0,
-    0,
-    0,
 };
 
 /* Translation by Cleverson: clever92000@yahoo.com.br */
@@ -1997,8 +1993,6 @@ static const char *brazilianPortugueseMessages[] = {
     "chaves estrangeiras para %s\n",
     "não pegar colunas de blob",
     "pegar colunas de blob",
-    0,
-    0,
     0,
     0,
     0,

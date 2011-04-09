@@ -1165,8 +1165,9 @@ main(int argc, char **argv)
 	if(!argc) {
 /* This is fetch / read mode */
 	    if(dofetch) {
+		int nfetch = 0;
 		if(account) {
-		    fetchMail(account);
+		    nfetch = fetchMail(account);
 		} else {
 		    int i, j;
 		    for(i = 1; i <= maxAccount; ++i) {
@@ -1181,8 +1182,14 @@ main(int argc, char **argv)
 			       accounts[j - 1].login))
 				break;
 			if(j == i)
-			    fetchMail(i);
+			    nfetch += fetchMail(i);
 		    }
+		}
+		if(!domail) {
+		    if(nfetch)
+			i_printf(MSG_MessagesX, nfetch);
+		    else
+			i_puts(MSG_NoMail);
 		}
 	    }
 
