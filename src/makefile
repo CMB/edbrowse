@@ -11,18 +11,21 @@ bindir = $(prefix)/bin
 #  Early adopters have occasionally needed -DMOZILLA_1_8_BRANCH
 #  This issue has cropped up on certain flavors of debian.
 
-#  Allow for symbolic debugging.
-DEBUGFLAGS=-g -ggdb
-STRIP=
-ifeq ($(EBDEBUG),) # debugging turned off
-DEBUGFLAGS=
-STRIP=-s
-endif
+JS_CPPFLAGS = -DXP_UNIX -DX86_LINUX -I/usr/include/js
 
-CFLAGS = -DXP_UNIX -DX86_LINUX $(DEBUGFLAGS)
+# C preprocessor flags.  CPPFLAGS is used in the %.o: %.c implicit rule,
+# available in GNU make.
+CPPFLAGS = $(JS_CPPFLAGS)
+
+# By default, we strip the executables.
+# Override this behavior on the command line, by setting STRIP to the
+# empty string.  E.G., in order to build executables with debugging symbols,
+# CFLAGS='-g -ggdb' make STRIP=''
+
+STRIP=-s
 
 #  Normal load flags
-LFLAGS = $(STRIP)
+LDFLAGS += $(STRIP)
 
 #  ESQL C load flags
 #ESQLDFLAGS = $(STRIP) -Xlinker -rpath -Xlinker $(INFORMIXDIR)/lib:$(INFORMIXDIR)/lib/esql
@@ -33,7 +36,10 @@ ESQLDFLAGS = $(STRIP)
 #  This assumes the javascript library is in /lib/libjs.so
 #  This is the case for fedora and debian.
 
-LIBS = -lpcre -lm -lssl -ljs -lcurl -lreadline -lcrypto
+# Override JSLIB on the command-line, if your distro uses a different name.
+# E.G., make JSLIB=-lmozjs
+JSLIB = -ljs
+LDLIBS = -lpcre -lm -lssl $(JSLIB) -lcurl -lreadline -lcrypto
 
 #  Make the dynamically linked executable program by default.
 #  Edbrowse executable.
@@ -46,8 +52,10 @@ EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
 #  Header file dependencies.
 $(EBOBJS) : eb.h eb.p messages.h tcp.h
 
+# The implicit linking rule isn't good enough, because we don't have an
+# edbrowse.o object, and it expects one.
 edbrowse: $(EBOBJS) tcp.o dbstubs.o
-	cc $(LFLAGS) -o edbrowse $(EBOBJS) tcp.o dbstubs.o $(LIBS)
+	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 #  You probably need to be root to do this.
 install:
@@ -71,11 +79,12 @@ dbinfx.o : dbinfx.ec
 
 #  Informix executable
 edbrowseinf: $(EBOBJS) tcp.o dbops.o dbinfx.o
-	esql $(ESQLDFLAGS) -o edbrowseinf $(EBOBJS) tcp.o dbops.o dbinfx.o $(LIBS)
+	esql $(ESQLDFLAGS) -o edbrowseinf $(EBOBJS) tcp.o dbops.o dbinfx.o $(LDLIBS)
 
 #  odbc access
+edbrowseodbc: LDLIBS += -lodbc
 edbrowseodbc: $(EBOBJS) tcp.o dbops.o dbodbc.o
-	cc $(LFLAGS) -o edbrowseodbc $(EBOBJS) tcp.o dbops.o dbodbc.o $(LIBS) -lodbc
+	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 #  Build function prototypes.
 #  mkproto is my program, not a general unix utility.
