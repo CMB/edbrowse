@@ -1177,7 +1177,7 @@ andTranslate(const char *s, bool invisible)
     int l, n, j;
     uchar c, d;
     uchar alnum = 0;		/* was last char an alphanumeric */
-    bool premode;
+    bool premode = false;
     char andbuf[16];
 
     static const char *const andwords[] = {
