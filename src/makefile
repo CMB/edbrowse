@@ -87,11 +87,16 @@ edbrowseodbc: $(EBOBJS) tcp.o dbops.o dbodbc.o
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 #  Build function prototypes.
-#  mkproto is my program, not a general unix utility.
-proto:
-	mkproto -g main.c buffers.c url.c auth.c http.c messages.c \
+#  mkproto is Karl's program,
+# with source in ../tools/mkproto.c.
+proto: ../tools/mkproto
+	../tools/mkproto -g main.c buffers.c url.c auth.c http.c messages.c \
 	sendmail.c fetchmail.c html.c \
 	format.c cookies.c stringfile.c jsdom.c jsloc.c dbstubs.c >eb.p
+
+# Can't think of a better way to insure that mkproto is built:
+../tools/mkproto: ../tools/mkproto.c
+	$(MAKE) --directory=../tools
 
 STATICLIBS = -lodbc -lpcre -lm -ljs -lcurl -lssl -lc -lcrypto -lpthread -lm -ldl -lrt
 edbrowse.static: $(EBOBJS) tcp.o dbops.o dbodbc.o
