@@ -155,7 +155,6 @@ void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 void iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
 
 /* sourcefile=cookies.c */
-void safe_curl_free(char *the_string) ;
 bool domainSecurityCheck(const char *server, const char *domain) ;
 bool receiveCookie(const char *url, const char *str) ;
 void cookiesFromJar(void) ;
@@ -237,8 +236,8 @@ void appendFile(const char *fname, const char *message, ...) ;
 void appendFileNF(const char *filename, const char *msg) ;
 
 /* sourcefile=jsdom.c */
-JSString *our_JS_NewStringCopyN(JSContext *cx, const char *s, size_t n) ;
-JSString *our_JS_NewStringCopyZ(JSContext *cx, const char *s) ;
+JSString * our_JS_NewStringCopyN(JSContext * cx, const char *s, size_t n) ;
+JSString * our_JS_NewStringCopyZ(JSContext * cx, const char *s) ;
 char * transcode_get_js_bytes(JSString *s) ;
 void * createJavaContext(void) ;
 void freeJavaContext(void *jsc) ;
