@@ -77,10 +77,6 @@ This is bad htmo, but it happens.
 Are these methods not yet implemented?
 history.go history.back history.forward
 
-re on an html email leaves the internal codes in
-38{link0}  
-In other words it doesn't unbrowse.
-
 imap support.
 
 If edbrowse is started via an ebpager symlink, it should run in

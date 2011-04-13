@@ -2073,7 +2073,6 @@ setupReply(bool all)
     }
 
     if(!cw->mailInfo) {
-	cw->browseMode = false;
 	if(all) {
 	    setError(MSG_ReNoInfo);
 	    return false;
@@ -2125,6 +2124,5 @@ setupReply(bool all)
     if(j)
 	rc = addTextToBuffer((unsigned char *)out, j, 1, false);
     nzFree(out);
-    cw->browseMode = false;
     return rc;
 }				/* setupReply */

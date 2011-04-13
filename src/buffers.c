@@ -2707,7 +2707,6 @@ twoLetter(const char *line, const char **runThis)
     }
 
     if(stringEqual(line, "re") || stringEqual(line, "rea")) {
-	bool wasbrowse = cw->browseMode;
 	freeUndoLines(cw->map);
 	undoWindow.map = 0;
 	nzFree(preWindow.map);
@@ -2716,7 +2715,7 @@ twoLetter(const char *line, const char **runThis)
 	cmd = 'e';		/* so error messages are printed */
 	rc = setupReply(line[2] == 'a');
 	cw->firstOpMode = undoable = false;
-	if(wasbrowse && cw->browseMode) {
+	if(rc && cw->browseMode) {
 	    cw->iplist = 0;
 	    ub = false;
 	    cw->browseMode = false;
