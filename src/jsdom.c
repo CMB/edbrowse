@@ -115,7 +115,7 @@ our_JS_NewStringCopyZ(JSContext * cx, const char *s)
 }				/* our_JS_NewStringCopyZ */
 
 char *
-transcode_get_js_bytes(JSString *s)
+transcode_get_js_bytes(JSString * s)
 {
     char *converted = NULL;
     int converted_l = 0;
@@ -129,7 +129,7 @@ transcode_get_js_bytes(JSString *s)
 
     utf2iso(origbytes, strlen(origbytes), &converted, &converted_l);
     return converted;
-}			/* our_JS_GetTranscodedBytes */
+}				/* our_JS_GetTranscodedBytes */
 
 /*********************************************************************
 When an element is created without a name, it is not linked to its
@@ -486,7 +486,7 @@ dwrite1(uintN argc, jsval * argv, bool newline)
 	if((str = JS_ValueToString(jcx, argv[i])) &&
 	   (msg = transcode_get_js_bytes(str))) {
 	    dwrite2(msg);
-	nzFree(msg);
+	    nzFree(msg);
 	}
     }
     if(newline)

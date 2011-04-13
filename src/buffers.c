@@ -2599,7 +2599,7 @@ substituteText(const char *line)
 	    replaceLine[replaceLineLen] = '\n';
 	    if(!linecount) {
 /* normal substitute */
-		char newnum[LNWIDTH+1];
+		char newnum[LNWIDTH + 1];
 		textLines[textLinesCount] = allocMem(replaceLineLen + 1);
 		memcpy(textLines[textLinesCount], replaceLine,
 		   replaceLineLen + 1);
@@ -3489,7 +3489,7 @@ runCommand(const char *line)
     int i, j, n;
     int writeMode = O_TRUNC;
     struct ebWindow *w = NULL;
-    void *ev = NULL;			/* event variables */
+    void *ev = NULL;		/* event variables */
     bool nogo = true, rc = true;
     bool postSpace = false, didRange = false;
     char first;

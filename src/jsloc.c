@@ -842,7 +842,7 @@ get_property_string(void *jv, const char *name)
     if(!obj)
 	return 0;
     JS_GetProperty(jcx, obj, name, &v);
-    s =  stringize(v);
+    s = stringize(v);
     if(!JS_CStringsAreUTF8()) {
 	out_str = cloneString(s);
     } else {
