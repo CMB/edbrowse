@@ -1365,7 +1365,7 @@ runEbFunction(const char *line)
 	    goto fail;
 	}
     for(j = 0; ebScript[j]; ++j)
-	if(stringEqual(linecopy, ebScriptName[j] + 1))
+	if(stringEqualCI(linecopy, ebScriptName[j] + 1))
 	    break;
     if(!ebScript[j]) {
 	setError(MSG_NoSuchFunction, linecopy);

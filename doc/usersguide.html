@@ -3086,6 +3086,13 @@ A macro can fetch web pages from the internet,
 fill out forms, submit requests, and send mail.
 
 <P>
+Unlike many things in the Unix world, macro names are case-insensitive.&nbsp;
+Thus: dostuff, DoStuff, doStuff, ad nauseum, are all equivalent.&nbsp;
+Also, if you define a macro with the same name multiple times,
+the first definition wins.&nbsp;
+Edbrowse silently ignores subsequent definitions.
+
+<P>
 Normally, edbrowse marches along, whether a command succeeds or not.&nbsp;
 However, you can tell a macro to stop if it encounters an error
 by using this syntax.
