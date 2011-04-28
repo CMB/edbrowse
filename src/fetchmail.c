@@ -31,6 +31,7 @@ struct MHINFO {
     bool andOthers;
     bool doAttach;
     bool atimage;
+    bool pgp;
     uchar error64;
     bool ne;			/* non english */
 };
@@ -208,6 +209,8 @@ writeAttachment(struct MHINFO *w)
     const char *atname;
     if((ismc | ignoreImages) && w->atimage)
 	return;			/* image ignored */
+    if(w->pgp)
+	return;			/* Ignore PGP signatures. */
     if(w->error64 == BAD64)
 	i_printf(MSG_Abbreviated);
     if(w->start == w->end) {
@@ -1416,6 +1419,8 @@ headerGlean(char *start, char *end)
 
 	if(memEqualCI(s, "content-type:", q - s)) {
 	    linetype = 'c';
+	    if(memEqualCI(vl, "application/pgp-signature", 25))
+		w->pgp = true;
 	    if(memEqualCI(vl, "text", 4))
 		w->ct = CT_RICH;
 	    if(memEqualCI(vl, "text/html", 9))
