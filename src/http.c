@@ -21,6 +21,7 @@ CURL *curl_handle = NULL;
 char *serverData;
 int serverDataLen;
 static char errorText[CURL_ERROR_SIZE + 1];
+static char *httpLanguage;
 
 static void curl_setError(CURLcode curlret, const char *url);
 static bool ftpConnect(const char *url);
@@ -499,6 +500,12 @@ httpConnect(const char *from, const char *url)
     if(tmp_headers == NULL)
 	i_printfExit(MSG_NoMem);
     custom_headers = tmp_headers;
+    if(httpLanguage) {
+	custom_headers = curl_slist_append(custom_headers, httpLanguage);
+	/* Check for failure to allocate. */
+	if(custom_headers == NULL)
+	    i_printfExit(MSG_NoMem);
+    }
 
     post = strchr(url, '\1');
     postb = 0;
@@ -1095,6 +1102,18 @@ allIPs(void)
     for(k = 0; k < domtotal; ++k)
 	nzFree(domlist[k]);
 }				/* allIPs */
+
+/* If the user has asked for locale-specific responses, then build an
+ * appropriate Accept-Language: header. */
+void
+setHTTPLanguage(const char *lang)
+{
+    int httpLanguage_l;
+
+    httpLanguage = initString(&httpLanguage_l);
+    stringAndString(&httpLanguage, &httpLanguage_l, "Accept-Language: ");
+    stringAndString(&httpLanguage, &httpLanguage_l, lang);
+}				/* setHTTPLanguage */
 
 /* Set the FD_CLOEXEC flag on a socket newly-created by libcurl.
  * Let's not leak libcurl's sockets to child processes created by the

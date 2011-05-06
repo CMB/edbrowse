@@ -169,7 +169,7 @@ readConfigFile(void)
 	"adbook", "ipblack", "maildir", "agent",
 	"jar", "nojs", "spamcan",
 	"webtimer", "mailtimer", "certfile", "datasource", "proxy",
-	"linelength", 0
+	"linelength", "localizeweb", 0
     };
 
     if(!fileTypeByName(configFile, false))
@@ -623,6 +623,12 @@ readConfigFile(void)
 	    displayLength = atoi(v);
 	    if(displayLength < 80)
 		displayLength = 80;
+	    continue;
+
+	case 30:		/* localizeweb */
+/* We should probably allow autodetection of language. */
+/* E.G., the keyword auto indicates that you want autodetection. */
+	    setHTTPLanguage(v);
 	    continue;
 
 	default:

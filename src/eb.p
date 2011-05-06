@@ -74,6 +74,7 @@ bool refreshDelay(int sec, const char *u) ;
 char * copy_and_sanitize(const char *start, const char *end) ;
 bool httpConnect(const char *from, const char *url) ;
 void allIPs(void) ;
+void setHTTPLanguage(const char *lang) ;
 void my_curl_init(void) ;
 
 /* sourcefile=messages.c */
@@ -238,7 +239,7 @@ void appendFileNF(const char *filename, const char *msg) ;
 /* sourcefile=jsdom.c */
 JSString * our_JS_NewStringCopyN(JSContext * cx, const char *s, size_t n) ;
 JSString * our_JS_NewStringCopyZ(JSContext * cx, const char *s) ;
-char * transcode_get_js_bytes(JSString *s) ;
+char * transcode_get_js_bytes(JSString * s) ;
 void * createJavaContext(void) ;
 void freeJavaContext(void *jsc) ;
 void establish_innerHTML(void *jv, const char *start, const char *end, bool is_ta) ;
