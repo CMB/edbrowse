@@ -5,6 +5,7 @@
  */
 
 #include "eb.h"
+#include <signal.h>
 
 /* If this include file is missing, you need the pcre package,
  * and the pcre-devel package. */
@@ -1597,12 +1598,16 @@ shellEscape(const char *line)
 	    setError(MSG_SessionBackground);
 	    return false;
 	}
+/* Ignoring of SIGPIPE propagates across fork-exec. */
+/* So stop ignoring it for the duration of system(). */
+	signal(SIGPIPE, SIG_DFL);
 #ifdef DOSLIKE
 	system(line);		/* don't know how to spawn a shell here */
 #else
 	sprintf(subshell, "exec %s -i", sh);
 	system(subshell);
 #endif
+	signal(SIGPIPE, SIG_IGN);
 	i_puts(MSG_OK);
 	return true;
     }
@@ -1685,7 +1690,9 @@ shellEscape(const char *line)
 /* Run the command.  Note that this routine returns success
  * even if the shell command failed.
  * Edbrowse succeeds if it is *able* to run the system command. */
+	signal(SIGPIPE, SIG_DFL);
     system(newline);
+	signal(SIGPIPE, SIG_IGN);
     i_puts(MSG_OK);
     free(newline);
     return true;

@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
+#include <signal.h>
 
 #define HTTP_MUST_AUTHENTICATE 401
 
@@ -454,7 +455,10 @@ httpConnect(const char *from, const char *url)
     } else if(mt = findMimeByProtocol(prot)) {
       mimeProcess:
 	cmd = pluginCommand(mt, url, 0);
+/* Stop ignoring SIGPIPE for the duration of system(): */
+	signal(SIGPIPE, SIG_DFL);
 	system(cmd);
+	signal(SIGPIPE, SIG_IGN);
 	nzFree(cmd);
 	return true;
     } else {
