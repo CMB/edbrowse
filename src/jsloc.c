@@ -36,7 +36,7 @@ stringize(long v)
     int n;
     jsdouble d;
     if(JSVAL_IS_STRING(v)) {
-	return JS_GetStringBytes(JSVAL_TO_STRING(v));
+	return our_JSEncodeString(JSVAL_TO_STRING(v));
     }
     if(JSVAL_IS_INT(v)) {
 	n = JSVAL_TO_INT(v);
@@ -266,7 +266,7 @@ loc_def_set_part(const char *name, const char *s, int n,
 }				/* loc_def_set_part */
 
 static JSBool
-setter_loc(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
+setter_loc(JSContext * cx, JSObject * obj, jsid id, jsval * vp, jsbool strict)
 {
     const char *s = stringize(*vp);
     if(!s) {
@@ -288,7 +288,8 @@ setter_loc(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 }				/* setter_loc */
 
 static JSBool
-setter_loc_href(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
+setter_loc_href(JSContext * cx, JSObject * obj, jsid id, jsval * vp,
+   jsbool strict)
 {
     const char *url = 0;
     if(setter_suspend)
@@ -310,7 +311,8 @@ setter_loc_href(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 }				/* setter_loc_href */
 
 static JSBool
-setter_loc_hash(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
+setter_loc_hash(JSContext * cx, JSObject * obj, jsid id, jsval * vp,
+   jsbool strict)
 {
     const char *e;
     if(setter_suspend)
@@ -322,7 +324,8 @@ setter_loc_hash(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 }				/* setter_loc_hash */
 
 static JSBool
-setter_loc_search(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
+setter_loc_search(JSContext * cx, JSObject * obj, jsid id, jsval * vp,
+   jsbool strict)
 {
     const char *e;
     if(setter_suspend)
@@ -334,7 +337,8 @@ setter_loc_search(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 }				/* setter_loc_search */
 
 static JSBool
-setter_loc_prot(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
+setter_loc_prot(JSContext * cx, JSObject * obj, jsid id, jsval * vp,
+   jsbool strict)
 {
     const char *e;
     if(setter_suspend)
@@ -346,7 +350,8 @@ setter_loc_prot(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 }				/* setter_loc_prot */
 
 static JSBool
-setter_loc_pathname(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
+setter_loc_pathname(JSContext * cx, JSObject * obj, jsid id, jsval * vp,
+   jsbool strict)
 {
     const char *e;
     if(setter_suspend)
@@ -358,7 +363,8 @@ setter_loc_pathname(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 }				/* setter_loc_pathname */
 
 static JSBool
-setter_loc_hostname(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
+setter_loc_hostname(JSContext * cx, JSObject * obj, jsid id, jsval * vp,
+   jsbool strict)
 {
     const char *e;
     if(setter_suspend)
@@ -371,7 +377,8 @@ setter_loc_hostname(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 }				/* setter_loc_hostname */
 
 static JSBool
-setter_loc_port(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
+setter_loc_port(JSContext * cx, JSObject * obj, jsid id, jsval * vp,
+   jsbool strict)
 {
     int port;
     if(setter_suspend)
@@ -384,7 +391,8 @@ setter_loc_port(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 }				/* setter_loc_port */
 
 static JSBool
-setter_loc_host(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
+setter_loc_host(JSContext * cx, JSObject * obj, jsid id, jsval * vp,
+   jsbool strict)
 {
     const char *e, *s;
     int n;
@@ -529,7 +537,7 @@ That requires a special setter function to pass the new value back to the text.
 *********************************************************************/
 
 static JSBool
-setter_value(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
+setter_value(JSContext * cx, JSObject * obj, jsid id, jsval * vp, jsbool strict)
 {
     const char *val;
     if(setter_suspend)
@@ -545,7 +553,8 @@ setter_value(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 }				/* setter_value */
 
 static JSBool
-setter_checked(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
+setter_checked(JSContext * cx, JSObject * obj, jsid id, jsval * vp,
+   jsbool strict)
 {
     JSBool b;
     if(setter_suspend)
@@ -555,7 +564,8 @@ setter_checked(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 }				/* setter_checked */
 
 static JSBool
-setter_selected(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
+setter_selected(JSContext * cx, JSObject * obj, jsid id, jsval * vp,
+   jsbool strict)
 {
     JSBool b;
     if(setter_suspend)
@@ -565,7 +575,8 @@ setter_selected(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 }				/* setter_selected */
 
 static JSBool
-setter_selidx(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
+setter_selidx(JSContext * cx, JSObject * obj, jsid id, jsval * vp,
+   jsbool strict)
 {
     int n;
     if(setter_suspend)
@@ -575,7 +586,7 @@ setter_selidx(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 }				/* setter_selidx */
 
 static JSBool
-getter_cookie(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
+getter_cookie(JSContext * cx, JSObject * obj, jsid id, jsval * vp)
 {
     int cook_l;
     char *cook = initString(&cook_l);
@@ -602,7 +613,8 @@ getter_cookie(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 }				/* getter_cookie */
 
 static JSBool
-setter_cookie(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
+setter_cookie(JSContext * cx, JSObject * obj, jsid id, jsval * vp,
+   jsbool strict)
 {
     const char *host = getHostURL(cw->fileName);
     if(!host) {
@@ -616,7 +628,8 @@ setter_cookie(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
 }				/* setter_cookie */
 
 static JSBool
-setter_domain(JSContext * cx, JSObject * obj, jsval id, jsval * vp)
+setter_domain(JSContext * cx, JSObject * obj, jsid id, jsval * vp,
+   jsbool strict)
 {
     const char *hostname = getHostURL(cw->fileName);
     const char *dom = 0;
@@ -640,7 +653,7 @@ requiring no knowledge of smjs.
 *********************************************************************/
 
 static JSBool(*my_getter) (JSContext *, JSObject *, jsval, jsval *);
-static JSBool(*my_setter) (JSContext *, JSObject *, jsval, jsval *);
+static JSBool(*my_setter) (JSContext *, JSObject *, jsid, jsval *, jsbool);
 
 void
 establish_property_string(void *jv, const char *name, const char *value,

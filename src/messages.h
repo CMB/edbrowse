@@ -678,4 +678,5 @@ enum {
     MSG_SSLConnectError,
     MSG_InputTTY,
     MSG_InputReadLine,
+    MSG_JSFailure,
 };
