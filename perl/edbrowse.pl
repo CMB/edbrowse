@@ -274,7 +274,7 @@ $rbin = "" unless mkdir $rbin, 0700;
 }
 #  Config file for this browser.
 #  Sample file is available at http://the-brannons.com/edbrowse/sample.perl.ebrc
-$rcFile = "$home/.ebrc";
+$rcFile = "$home/.ebprc";
 #  Last http header, normally deleted before you read the web page.
 $ebhttp = "$rbin/eb.http";
 truncate $ebhttp, 0;
@@ -6703,7 +6703,7 @@ sub sendMail($$$)
 {
 my ($tolist, $main, $atlist) = @_;
 length $outmailserver or
-$errorMsg = "No mail server specified - check your $home/.ebrc file", return 0;
+$errorMsg = "No mail server specified - check your $home/.ebprc file", return 0;
 
 my $proto = 'smtp';
 my $reply = $replyAddress[$whichMail];
@@ -6741,7 +6741,7 @@ $who = $real;
 next;
 }
 length $addressFile or
-$errorMsg = "No address book specified - check your $home/.ebrc file", return 0;
+$errorMsg = "No address book specified - check your $home/.ebprc file", return 0;
 $errorMsg = "alias $who not found in your address book";
 return 0;
 }
@@ -6951,7 +6951,7 @@ my $unformat = length $1;
 my $account = $2;
 shift @ARGV;
 $#inmailserver >= 0 or
-dieq "there are no mail accounts in your .ebrc config file.";
+dieq "there are no mail accounts in your .ebprc config file.";
 $account <= $#inmailserver or
 dieq "account designator $account is out of range.";
 $whichMail = $account;
@@ -6996,7 +6996,7 @@ exit 0;
 }  # send mail
 
 #  Move to the mail directory.
-length $mailDir or dieq "mailbox directory not specified in your .ebrc file.";
+length $mailDir or dieq "mailbox directory not specified in your .ebprc file.";
 chdir $mailDir or dieq "Cannot change directory to $mailDir.";
 
 #  Now fetch the mail and process it,
@@ -7228,7 +7228,7 @@ redo;
 
 if($key eq 'J') {
 print "No subject to junk\n", redo if $mailSubject eq "";
-print "No junkfile specified in your .ebrc file\n", redo unless length $junkFile;
+print "No junkfile specified in your .ebprc file\n", redo unless length $junkFile;
 print "junk\n";
 markSubject($mailSubject);
 $delFlag = 1;
@@ -7236,7 +7236,7 @@ last dispInput;
 }  # J
 
 if($key eq 'A') {
-print "No addressbook specified in your .ebrc file\n", redo unless length $addressFile;
+print "No addressbook specified in your .ebprc file\n", redo unless length $addressFile;
 print "Cannot establish sender's name and/or email address.", redo unless length $mailFrom and length $mailReply;
 open FH, ">>$addressFile"
 or dieq "Cannot append to $addressFile.";
