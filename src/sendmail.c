@@ -62,6 +62,7 @@ loadAddressBook(void)
 		setError(MSG_ABNoAlias, ln);
 	      freefail:
 		nzFree(buf);
+		nads = 0;
 		return false;
 	    }
 	    while(t[-1] == ' ' || t[-1] == '\t')
