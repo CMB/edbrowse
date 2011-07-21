@@ -194,7 +194,7 @@ $browse_cmd = "AbBdefghHIjJklmnpqsuvwz=^@<";
 #  Commands for directory mode.
 $dir_cmd = "AbdefghHklnpqsvwz=^@<";
 #  Commands that work at line number 0, in an empty file.
-$zero_cmd = "aAbefhHqruw=^@<";
+$zero_cmd = "aAbefhHqruwz=^@<";
 #  Commands that expect a space afterward.
 $spaceplus_cmd = "befrw";
 #  Commands that should have no text after them.
