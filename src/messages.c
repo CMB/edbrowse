@@ -411,7 +411,7 @@ static const char *englishMessages[] = {
     "file is too large, limit 40MB",
     "cannot read the contents of %s",
     "cannot access %s",
-    "environement variable %s not set",
+    "environment variable %s not set",
     "cannot expand * ? or [] prior to the last /",
     "%s is not an accessible directory",
     "shell pattern is too long",
