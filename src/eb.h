@@ -215,11 +215,11 @@ extern int hcode;		/* http code, like 404 file not found */
 extern char herror[];		/* html error */
 extern char errorMsg[];		/* generated error message */
 extern char serverLine[];	/* lines to and from the mail server */
-extern void *jcx;		/* javascript context */
-extern void *jwin;		/* javascript window object */
-extern void *jdoc;		/* javascript document object */
-extern void *jwloc;		/* javascript window.location */
-extern void *jdloc;		/* javascript document.location */
+extern JSContext *jcx;		/* javascript context */
+extern JSObject *jwin;		/* javascript window object */
+extern JSObject *jdoc;		/* javascript document object */
+extern JSObject *jwloc;		/* javascript window.location */
+extern JSObject *jdloc;		/* javascript document.location */
 extern int maxAccount;		/* how many email accounts specified */
 extern int localAccount;	/* this is the smtp server for outgoing mail */
 extern char *mailDir;		/* move to this directory when fetching mail */

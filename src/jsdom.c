@@ -21,11 +21,11 @@ JS_smprintf(const char *fmt, ...);
 #define PROP_FIXED (JSPROP_ENUMERATE|JSPROP_READONLY|JSPROP_PERMANENT)
 
 
-void *jcx;			/* really JSContext */
-void *jwin;			/* window object, really JSObject */
-void *jdoc;			/* window.document, really JSObject */
-void *jwloc;			/* window.location, really JSObject */
-void *jdloc;			/* document.location, really JSObject */
+JSContext *jcx;			/* really JSContext */
+JSObject *jwin;			/* window object, really JSObject */
+JSObject *jdoc;			/* window.document, really JSObject */
+JSObject *jwloc;			/* window.location, really JSObject */
+JSObject *jdloc;			/* document.location, really JSObject */
 static size_t gStackChunkSize = 8192;
 static FILE *gOutFile, *gErrFile;
 static const char *emptyParms[] = { 0 };
@@ -119,6 +119,7 @@ our_JSEncodeString(JSString *str)
 {
 size_t encodedLength = JS_GetStringEncodingLength(jcx, str);
 char *buffer = allocMem(encodedLength + 1);
+buffer[encodedLength] = '\0';
   size_t result = JS_EncodeStringToBuffer(str, buffer, encodedLength);
 if(result == (size_t) -1)
 i_printfExit(MSG_JSFailure);
@@ -167,8 +168,8 @@ Start with window and document.
 
 static JSClass window_class = {
     "Window",
-    JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JSCLASS_HAS_PRIVATE|JSCLASS_GLOBAL_FLAGS,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
 
@@ -337,7 +338,6 @@ win_confirm(JSContext * cx, uintN argc, jsval * vp)
     char *msg = EMPTYSTRING;
     JSString *str;
     char inbuf[80];
-    char *s;
     char c;
     bool first = true;
 
@@ -378,7 +378,7 @@ win_confirm(JSContext * cx, uintN argc, jsval * vp)
 static JSClass timer_class = {
     "Timer",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
 
@@ -393,6 +393,7 @@ setTimeout(uintN argc, jsval * argv, bool isInterval)
     char fname[48];		/* function name */
     const char *fstr;		/* function string */
     const char *methname = (isInterval ? "setInterval" : "setTimeout");
+char *s = NULL;
 
     if(!parsePage) {
 	JS_ReportError(jcx,
@@ -420,7 +421,9 @@ setTimeout(uintN argc, jsval * argv, bool isInterval)
 	if(fo) {
 /* Extract the function name, which requires several steps */
 	    JSFunction *f = JS_ValueToFunction(jcx, OBJECT_TO_JSVAL(fo));
-	    const char *s = JS_GetFunctionName(f);
+	     JSString *jss = JS_GetFunctionId(f);
+if (jss)
+s = JS_EncodeString(jcx, jss);
 /* Remember that unnamed functions are named anonymous. */
 	    if(!s || !*s || stringEqual(s, "anonymous"))
 		s = "javascript";
@@ -465,23 +468,23 @@ win_intv(JSContext * cx, uintN argc, jsval * vp)
 }				/* win_intv */
 
 static JSFunctionSpec window_methods[] = {
-    {"alert", win_alert, 1, 0, 0},
-    {"prompt", win_prompt, 2, 0, 0},
-    {"confirm", win_confirm, 1, 0, 0},
-    {"setTimeout", win_sto, 2, 0, 0},
-    {"setInterval", win_intv, 2, 0, 0},
-    {"open", win_open, 3, 0, 0},
-    {"close", win_close, 0, 0, 0},
-    {"focus", nullFunction, 0, 0, 0},
-    {"blur", nullFunction, 0, 0, 0},
-    {"scroll", nullFunction, 0, 0, 0},
+    {"alert", win_alert, 1, 0},
+    {"prompt", win_prompt, 2, 0},
+    {"confirm", win_confirm, 1, 0},
+    {"setTimeout", win_sto, 2, 0},
+    {"setInterval", win_intv, 2, 0},
+    {"open", win_open, 3, 0},
+    {"close", win_close, 0, 0},
+    {"focus", nullFunction, 0, 0},
+    {"blur", nullFunction, 0, 0},
+    {"scroll", nullFunction, 0, 0},
     {0}
 };
 
 static JSClass doc_class = {
     "Document",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
 
@@ -522,8 +525,7 @@ doc_write(JSContext * cx, uintN argc, jsval * vp)
 }				/* doc_write */
 
 static JSBool
-setter_innerHTML(JSContext * cx, JSObject * obj, jsid id, jsval * vp,
-   jsbool strict)
+setter_innerHTML(JSContext * cx, JSObject * obj, jsid id, JSBool strict, jsval * vp)
 {
     const char *s = stringize(*vp);
     if(s && strlen(s)) {
@@ -537,8 +539,7 @@ setter_innerHTML(JSContext * cx, JSObject * obj, jsid id, jsval * vp,
 }				/* setter_innerHTML */
 
 static JSBool
-setter_innerText(JSContext * cx, JSObject * obj, jsid id, jsval * vp,
-   jsbool strict)
+setter_innerText(JSContext * cx, JSObject * obj, jsid id, JSBool strict, jsval * vp)
 {
     jsval v = *vp;
     char *s;
@@ -561,32 +562,32 @@ doc_writeln(JSContext * cx, uintN argc, jsval * vp)
 }				/* doc_writeln */
 
 static JSFunctionSpec doc_methods[] = {
-    {"focus", nullFunction, 0, 0, 0},
-    {"blur", nullFunction, 0, 0, 0},
-    {"open", nullFunction, 0, 0, 0},
-    {"close", nullFunction, 0, 0, 0},
-    {"write", doc_write, 0, 0, 0},
-    {"writeln", doc_writeln, 0, 0, 0},
+    {"focus", nullFunction, 0, 0},
+    {"blur", nullFunction, 0, 0},
+    {"open", nullFunction, 0, 0},
+    {"close", nullFunction, 0, 0},
+    {"write", doc_write, 0, 0},
+    {"writeln", doc_writeln, 0, 0},
     {0}
 };
 
 static JSClass element_class = {
     "Element",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
 
 static JSFunctionSpec element_methods[] = {
-    {"focus", nullFunction, 0, 0, 0},
-    {"blur", nullFunction, 0, 0, 0},
+    {"focus", nullFunction, 0, 0},
+    {"blur", nullFunction, 0, 0},
     {0}
 };
 
 static JSClass form_class = {
     "Form",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
 
@@ -600,51 +601,50 @@ form_submit(JSContext * cx, uintN argc, jsval * vp)
 }				/* form_submit */
 
 static JSBool
-form_reset(JSContext * cx, JSObject * obj, uintN argc, jsval * argv,
-   jsval * rval)
+form_reset(JSContext * cx, uintN argc, jsval * vp)
 {
     JSObject *this = JS_THIS_OBJECT(cx, vp);
-    javaSubmitsForm(obj, true);
+    javaSubmitsForm(this, true);
     JS_SET_RVAL(cx, vp, JSVAL_VOID);
     return JS_TRUE;
 }				/* form_reset */
 
 static JSFunctionSpec form_methods[] = {
-    {"submit", form_submit, 0, 0, 0},
-    {"reset", form_reset, 0, 0, 0},
+    {"submit", form_submit, 0, 0},
+    {"reset", form_reset, 0, 0},
     {0}
 };
 
 static JSClass body_class = {
     "Body",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
 
 static JSFunctionSpec body_methods[] = {
-    {"setAttribute", setAttribute, 2, 0, 0},
-    {"appendChild", appendChild, 1, 0, 0},
+    {"setAttribute", setAttribute, 2, 0},
+    {"appendChild", appendChild, 1, 0},
     {0}
 };
 
 static JSClass head_class = {
     "Head",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
 
 static JSFunctionSpec head_methods[] = {
-    {"setAttribute", setAttribute, 2, 0, 0},
-    {"appendChild", appendChild, 1, 0, 0},
+    {"setAttribute", setAttribute, 2, 0},
+    {"appendChild", appendChild, 1, 0},
     {0}
 };
 
 static JSClass meta_class = {
     "Meta",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
 
@@ -652,89 +652,89 @@ static JSClass meta_class = {
 static JSClass link_class = {
     "Link",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
 
 static JSFunctionSpec link_methods[] = {
-    {"setAttribute", setAttribute, 2, 0, 0},
+    {"setAttribute", setAttribute, 2, 0},
     {0}
 };
 
 static JSClass image_class = {
     "Image",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
 
 static JSClass frame_class = {
     "Frame",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
 
 static JSClass anchor_class = {
     "Anchor",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
 
 static JSClass table_class = {
     "Table",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
 
 static JSClass trow_class = {
     "Trow",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
 
 static JSClass cell_class = {
     "Cell",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
 
 static JSClass div_class = {
     "Div",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
 
 static JSClass span_class = {
     "Span",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
 
 static JSClass area_class = {
     "Area",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
 
 static JSClass option_class = {
     "Option",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
 
 struct DOMCLASS {
     JSClass *class;
     JSFunctionSpec *methods;
-      jsnative constructor;
+      JSNative constructor;
     int nargs;
 };
 
@@ -836,7 +836,8 @@ createJavaContext(void)
     JS_SetOptions(jcx, JSOPTION_VAROBJFIX);
 
 /* Create the Window object, which is the global object in DOM. */
-    jwin = JS_NewObject(jcx, &window_class, NULL, NULL);
+//    jwin = JS_NewObject(jcx, &window_class, NULL, NULL);
+jwin = JS_NewCompartmentAndGlobalObject(jcx, &window_class, NULL);
     if(!jwin)
 	i_printfExit(MSG_JavaWindowError);
     JS_InitClass(jcx, jwin, 0, &window_class, window_ctor, 3,
