@@ -20,6 +20,7 @@ char * pluginCommand(const struct MIMETYPE *m, const char *file, const char *suf
 pst fetchLine(int n, int show) ;
 int currentBufferSize(void) ;
 void displayLine(int n) ;
+void initializeReadline(void) ;
 pst inputLine(void) ;
 void freeUndoLines(const char *cmap) ;
 bool cxCompare(int cx) ;
@@ -239,6 +240,7 @@ void appendFileNF(const char *filename, const char *msg) ;
 /* sourcefile=jsdom.c */
 JSString * our_JS_NewStringCopyN(JSContext * cx, const char *s, size_t n) ;
 JSString * our_JS_NewStringCopyZ(JSContext * cx, const char *s) ;
+char * our_JSEncodeString(JSString *str) ;
 char * transcode_get_js_bytes(JSString * s) ;
 void * createJavaContext(void) ;
 void freeJavaContext(void *jsc) ;

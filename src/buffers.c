@@ -281,6 +281,26 @@ printDot(void)
 	i_puts(MSG_Empty);
 }				/* printDot */
 
+/* By default, readline's filename completion appends a single space
+ * character to a filename when there are no alternative completions.
+ * Since the r, w, and e commands treat spaces literally, this default
+ * causes tab completion to behave unintuitively in edbrowse.
+ * Solution: write our own completion function,
+ * which wraps readline's filename completer.  */
+
+static char *
+edbrowse_completion(const char *text, int state)
+{
+    rl_completion_append_character = '\0';
+    return rl_filename_completion_function(text, state);
+}				/* edbrowse_completion */
+
+void
+initializeReadline(void)
+{
+    rl_completion_entry_function = edbrowse_completion;
+}				/* initializeReadline */
+
 /* Get a line from standard in.  Need not be a terminal.
  * Each input line is limited to 255 chars.
  * On Unix cooked mode, that's as long as a line can be anyways.

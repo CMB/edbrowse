@@ -1011,6 +1011,7 @@ main(int argc, char **argv)
     selectLanguage();
 
     ttySaveSettings();
+    initializeReadline();
 
 /* Let's everybody use my malloc and free routines */
     pcre_malloc = allocMem;
