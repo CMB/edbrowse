@@ -1710,9 +1710,9 @@ shellEscape(const char *line)
 /* Run the command.  Note that this routine returns success
  * even if the shell command failed.
  * Edbrowse succeeds if it is *able* to run the system command. */
-	signal(SIGPIPE, SIG_DFL);
+    signal(SIGPIPE, SIG_DFL);
     system(newline);
-	signal(SIGPIPE, SIG_IGN);
+    signal(SIGPIPE, SIG_IGN);
     i_puts(MSG_OK);
     free(newline);
     return true;

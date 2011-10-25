@@ -24,8 +24,8 @@ JS_smprintf(const char *fmt, ...);
 JSContext *jcx;			/* really JSContext */
 JSObject *jwin;			/* window object, really JSObject */
 JSObject *jdoc;			/* window.document, really JSObject */
-JSObject *jwloc;			/* window.location, really JSObject */
-JSObject *jdloc;			/* document.location, really JSObject */
+JSObject *jwloc;		/* window.location, really JSObject */
+JSObject *jdloc;		/* document.location, really JSObject */
 static size_t gStackChunkSize = 8192;
 static FILE *gOutFile, *gErrFile;
 static const char *emptyParms[] = { 0 };
@@ -115,16 +115,16 @@ our_JS_NewStringCopyZ(JSContext * cx, const char *s)
 }				/* our_JS_NewStringCopyZ */
 
 char *
-our_JSEncodeString(JSString *str)
+our_JSEncodeString(JSString * str)
 {
-size_t encodedLength = JS_GetStringEncodingLength(jcx, str);
-char *buffer = allocMem(encodedLength + 1);
-buffer[encodedLength] = '\0';
-  size_t result = JS_EncodeStringToBuffer(str, buffer, encodedLength);
-if(result == (size_t) -1)
-i_printfExit(MSG_JSFailure);
+    size_t encodedLength = JS_GetStringEncodingLength(jcx, str);
+    char *buffer = allocMem(encodedLength + 1);
+    buffer[encodedLength] = '\0';
+    size_t result = JS_EncodeStringToBuffer(str, buffer, encodedLength);
+    if(result == (size_t) - 1)
+	i_printfExit(MSG_JSFailure);
     return buffer;
-} /* our_JSEncodeString */
+}				/* our_JSEncodeString */
 
 char *
 transcode_get_js_bytes(JSString * s)
@@ -169,7 +169,7 @@ Start with window and document.
 
 static JSClass window_class = {
     "Window",
-    JSCLASS_HAS_PRIVATE|JSCLASS_GLOBAL_FLAGS,
+    JSCLASS_HAS_PRIVATE | JSCLASS_GLOBAL_FLAGS,
     JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 };
@@ -190,7 +190,7 @@ window_ctor(JSContext * cx, uintN argc, jsval * vp)
     }
 /* third argument is attributes, like window size and location, that we don't care about. */
     javaOpensWindow(newloc, winname);
-    if (newloc)
+    if(newloc)
 	nzFree(newloc);
 
     if(!parsePage)
@@ -398,7 +398,7 @@ setTimeout(uintN argc, jsval * argv, bool isInterval)
     const char *fstr;		/* function string */
     const char *methname = (isInterval ? "setInterval" : "setTimeout");
     char *allocatedName = NULL;
-char *s = NULL;
+    char *s = NULL;
 
     if(!parsePage) {
 	JS_ReportError(jcx,
@@ -426,9 +426,9 @@ char *s = NULL;
 	if(fo) {
 /* Extract the function name, which requires several steps */
 	    JSFunction *f = JS_ValueToFunction(jcx, OBJECT_TO_JSVAL(fo));
-	     JSString *jss = JS_GetFunctionId(f);
-if (jss)
-allocatedName = our_JSEncodeString(jss);
+	    JSString *jss = JS_GetFunctionId(f);
+	    if(jss)
+		allocatedName = our_JSEncodeString(jss);
 	    s = allocatedName;
 /* Remember that unnamed functions are named anonymous. */
 	    if(!s || !*s || stringEqual(s, "anonymous"))
@@ -437,7 +437,7 @@ allocatedName = our_JSEncodeString(jss);
 	    if(len > sizeof (fname) - 4)
 		len = sizeof (fname) - 4;
 	    strncpy(fname, s, len);
-		nzFree(allocatedName);
+	    nzFree(allocatedName);
 	    fname[len] = 0;
 	    strcat(fname, "()");
 	    fstr = fname;
@@ -532,7 +532,8 @@ doc_write(JSContext * cx, uintN argc, jsval * vp)
 }				/* doc_write */
 
 static JSBool
-setter_innerHTML(JSContext * cx, JSObject * obj, jsid id, JSBool strict, jsval * vp)
+setter_innerHTML(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
+   jsval * vp)
 {
     const char *s = stringize(*vp);
     if(s && strlen(s)) {
@@ -546,7 +547,8 @@ setter_innerHTML(JSContext * cx, JSObject * obj, jsid id, JSBool strict, jsval *
 }				/* setter_innerHTML */
 
 static JSBool
-setter_innerText(JSContext * cx, JSObject * obj, jsid id, JSBool strict, jsval * vp)
+setter_innerText(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
+   jsval * vp)
 {
     jsval v = *vp;
     char *s;
@@ -741,7 +743,7 @@ static JSClass option_class = {
 struct DOMCLASS {
     JSClass *class;
     JSFunctionSpec *methods;
-      JSNative constructor;
+    JSNative constructor;
     int nargs;
 };
 
@@ -844,7 +846,7 @@ createJavaContext(void)
 
 /* Create the Window object, which is the global object in DOM. */
 //    jwin = JS_NewObject(jcx, &window_class, NULL, NULL);
-jwin = JS_NewCompartmentAndGlobalObject(jcx, &window_class, NULL);
+    jwin = JS_NewCompartmentAndGlobalObject(jcx, &window_class, NULL);
     if(!jwin)
 	i_printfExit(MSG_JavaWindowError);
     JS_InitClass(jcx, jwin, 0, &window_class, window_ctor, 3,
