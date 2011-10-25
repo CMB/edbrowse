@@ -1,5 +1,13 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.4.8:
+* Edbrowse now requires version 1.8.5 (or higher) of Spidermonkey.
+* When completing filenames with readline, a trailing space is no longer added.
+* Updated French translation of the User's Guide, thanks to Erwin Bliesenick.
+* Edbrowse now supports localized HTTP responses; see the User's Guide.
+* In the Edbrowse scripting language, function names are now
+  case-insensitive.
+
 3.4.7:
 memcpy and strcpy are no longer called on overlapping regions.
 Files with unknown length, such as those under /proc, are now readable.

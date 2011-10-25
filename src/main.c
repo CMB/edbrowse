@@ -13,7 +13,7 @@
 /* See eb.h for descriptive comments. */
 
 
-const char *version = "3.4.7";
+const char *version = "3.4.8";
 char *userAgents[10], *currentAgent, *currentReferrer;
 const char eol[] = "\r\n";
 char EMPTYSTRING[] = "";

@@ -78,6 +78,8 @@ prior to 7.17.0, the program will inform you that you need to upgrade.
 Finally, you need the Spider Monkey javascript engine from Mozilla.org
 (I got smart and decided not to reinvent all this js machinery.)
 ftp://ftp.mozilla.org/pub/mozilla.org/js/
+As of edbrowse version 3.4.8,
+we now require version 1.8.5 -- or higher -- of Spidermonkey.
 Donwload a package and expand it in /usr/local.
 It will create a directory js.
 Go into js/src and run
