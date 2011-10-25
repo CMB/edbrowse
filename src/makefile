@@ -59,7 +59,7 @@ edbrowse: $(EBOBJS) tcp.o dbstubs.o
 
 #  You probably need to be root to do this.
 install:
-	install -Dm755 edbrowse $(bindir)/edbrowse
+	install -Dm755 edbrowse $(DESTDIR)$(bindir)/edbrowse
 
 #  If you had to build the javascript library yourself,
 #  link it into /usr/lib.
