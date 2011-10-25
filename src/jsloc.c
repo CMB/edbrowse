@@ -33,10 +33,14 @@ const char *
 stringize(jsval v)
 {
     static char buf[24];
+    static char *dynamic;
     int n;
     jsdouble d;
     if(JSVAL_IS_STRING(v)) {
-	return (const char *)our_JSEncodeString(JSVAL_TO_STRING(v));
+	if(dynamic)
+	    JS_free(jcx, dynamic);
+	dynamic = our_JSEncodeString(JSVAL_TO_STRING(v));
+	return dynamic;
     }
     if(JSVAL_IS_INT(v)) {
 	n = JSVAL_TO_INT(v);

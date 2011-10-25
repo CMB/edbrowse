@@ -131,15 +131,16 @@ transcode_get_js_bytes(JSString * s)
 {
     char *converted = NULL;
     int converted_l = 0;
-    const char *origbytes = our_JSEncodeString(s);
+    char *origbytes = our_JSEncodeString(s);
 
     if(!JS_CStringsAreUTF8())
-	return cloneString(origbytes);
+	return origbytes;
 
     if(cons_utf8)
-	return cloneString(origbytes);
+	return origbytes;
 
     utf2iso(origbytes, strlen(origbytes), &converted, &converted_l);
+    nzFree(origbytes);
     return converted;
 }				/* our_JS_GetTranscodedBytes */
 
@@ -176,7 +177,7 @@ static JSClass window_class = {
 static JSBool
 window_ctor(JSContext * cx, uintN argc, jsval * vp)
 {
-    const char *newloc = 0;
+    char *newloc = 0;
     const char *winname = 0;
     JSString *str;
     jsval *argv = JS_ARGV(cx, vp);
@@ -189,6 +190,9 @@ window_ctor(JSContext * cx, uintN argc, jsval * vp)
     }
 /* third argument is attributes, like window size and location, that we don't care about. */
     javaOpensWindow(newloc, winname);
+    if (newloc)
+	nzFree(newloc);
+
     if(!parsePage)
 	return JS_FALSE;
     establish_property_object(newwin, "opener", jwin);
@@ -393,6 +397,7 @@ setTimeout(uintN argc, jsval * argv, bool isInterval)
     char fname[48];		/* function name */
     const char *fstr;		/* function string */
     const char *methname = (isInterval ? "setInterval" : "setTimeout");
+    char *allocatedName = NULL;
 char *s = NULL;
 
     if(!parsePage) {
@@ -423,7 +428,8 @@ char *s = NULL;
 	    JSFunction *f = JS_ValueToFunction(jcx, OBJECT_TO_JSVAL(fo));
 	     JSString *jss = JS_GetFunctionId(f);
 if (jss)
-s = JS_EncodeString(jcx, jss);
+allocatedName = our_JSEncodeString(jss);
+	    s = allocatedName;
 /* Remember that unnamed functions are named anonymous. */
 	    if(!s || !*s || stringEqual(s, "anonymous"))
 		s = "javascript";
@@ -431,6 +437,7 @@ s = JS_EncodeString(jcx, jss);
 	    if(len > sizeof (fname) - 4)
 		len = sizeof (fname) - 4;
 	    strncpy(fname, s, len);
+		nzFree(allocatedName);
 	    fname[len] = 0;
 	    strcat(fname, "()");
 	    fstr = fname;
@@ -842,9 +849,6 @@ jwin = JS_NewCompartmentAndGlobalObject(jcx, &window_class, NULL);
 	i_printfExit(MSG_JavaWindowError);
     JS_InitClass(jcx, jwin, 0, &window_class, window_ctor, 3,
        NULL, window_methods, NULL, NULL);
-/* Ok, but the global object was created before the class,
- * so it doesn't have its methods yet. */
-    JS_DefineFunctions(jcx, jwin, window_methods);
 
 /* Math, Date, Number, String, etc */
     if(!JS_InitStandardClasses(jcx, jwin))
