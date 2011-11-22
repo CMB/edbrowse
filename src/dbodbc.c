@@ -1746,7 +1746,7 @@ sql_fetchAbs(int cid, long rownum, ...)
 void
 getPrimaryKey(char *tname, int *part1, int *part2, int *part3, int *part4)
 {
-    int keyindex;
+    char colname[COLNAMELEN];
     SQLLEN pcbValue;
     char *dot;
 
@@ -1766,40 +1766,41 @@ getPrimaryKey(char *tname, int *part1, int *part2, int *part3, int *part4)
     if(rc)
 	goto abort;
 
-/* Because all we need is the ordinal position, we'll bind column 5 */
+/* bind column 4, the name of the key column */
     rc =
-       SQLBindCol(hstmt, 5, SQL_INTEGER, (SQLPOINTER) & keyindex, 0, &pcbValue);
+       SQLBindCol(hstmt, 4, SQL_CHAR, (SQLPOINTER) & colname, sizeof (colname),
+       &pcbValue);
     if(rc)
 	goto abort;
 
-/* I'm only grabbing the first 2 columns in a multi-column key */
+/* I'm only grabbing the first 4 columns in a multi-column key */
     rc = SQLFetch(hstmt);
     if(rc == SQL_NO_DATA)
 	goto done;
     if(rc)
 	goto abort;
-    *part1 = keyindex;
-
-    rc = SQLFetch(hstmt);
-    if(rc == SQL_NO_DATA)
-	goto done;
-    if(rc)
-	goto abort;
-    *part2 = keyindex;
+    *part1 = findColByName(colname) + 1;
 
     rc = SQLFetch(hstmt);
     if(rc == SQL_NO_DATA)
 	goto done;
     if(rc)
 	goto abort;
-    *part3 = keyindex;
+    *part2 = findColByName(colname) + 1;
 
     rc = SQLFetch(hstmt);
     if(rc == SQL_NO_DATA)
 	goto done;
     if(rc)
 	goto abort;
-    *part4 = keyindex;
+    *part3 = findColByName(colname) + 1;
+
+    rc = SQLFetch(hstmt);
+    if(rc == SQL_NO_DATA)
+	goto done;
+    if(rc)
+	goto abort;
+    *part4 = findColByName(colname) + 1;
 
     goto done;
 
