@@ -1374,6 +1374,10 @@ encodeTags(char *html)
 			   false);
 			establish_property_bool(ov, "defaultSelected",
 			   v->checked, true);
+			if(v->checked && !currentSel->multiple) {
+			    set_property_number(ev, "selectedIndex", v->lic);
+			    set_property_string(ev, "value", v->value);
+			}
 		    }		/* select has corresponding java variables */
 		}		/* option */
 	    }
