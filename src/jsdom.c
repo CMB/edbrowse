@@ -852,6 +852,10 @@ createJavaContext(void)
     JS_InitClass(jcx, jwin, 0, &window_class, window_ctor, 3,
        NULL, window_methods, NULL, NULL);
 
+/* Ok, but the global object was created before the class,
+ * so it doesn't have its methods yet. */
+    JS_DefineFunctions(jcx, jwin, window_methods);
+
 /* Math, Date, Number, String, etc */
     if(!JS_InitStandardClasses(jcx, jwin))
 	i_printfExit(MSG_JavaClassError);
