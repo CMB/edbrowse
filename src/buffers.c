@@ -1119,6 +1119,7 @@ readFile(const char *filename, const char *post)
     bool rc;			/* return code */
     bool is8859, isutf8;
     char *nopound;
+char filetype;
 
     serverData = 0;
     serverDataLen = 0;
@@ -1195,9 +1196,10 @@ readFile(const char *filename, const char *post)
     }
 
   fromdisk:
+    filetype = fileTypeByName(filename, false);
 /* reading a file from disk */
     fileSize = 0;
-    if(fileTypeByName(filename, false) == 'd') {
+    if(filetype == 'd') {
 /* directory scan */
 	int len, j, start, end;
 	cw->baseDirName = cloneString(filename);
@@ -1273,7 +1275,7 @@ readFile(const char *filename, const char *post)
 
     nopound = cloneString(filename);
     rbuf = strchr(nopound, '#');
-    if(rbuf)
+    if (rbuf && !filetype)
 	*rbuf = 0;
     rc = fileIntoMemory(nopound, &rbuf, &fileSize);
     nzFree(nopound);
