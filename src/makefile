@@ -78,11 +78,13 @@ dbinfx.o : dbinfx.ec
 	esql -c dbinfx.ec
 
 #  Informix executable
+edbrowseinf: CFLAGS += -DHAVE_SQL
 edbrowseinf: $(EBOBJS) tcp.o dbops.o dbinfx.o
 	esql $(ESQLDFLAGS) -o edbrowseinf $(EBOBJS) tcp.o dbops.o dbinfx.o $(LDLIBS)
 
 #  odbc access
 edbrowseodbc: LDLIBS += -lodbc
+edbrowseodbc: CFLAGS += -DHAVE_SQL
 edbrowseodbc: $(EBOBJS) tcp.o dbops.o dbodbc.o
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 

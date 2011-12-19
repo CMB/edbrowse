@@ -399,6 +399,9 @@ isSQL(const char *s)
     char c;
     const char *c1 = 0, *c2 = 0;
     c = *s;
+#ifndef HAVE_SQL
+    return false;
+#endif
     if(isURL(s))
 	return false;
     if(!isalphaByte(c))
