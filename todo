@@ -96,3 +96,24 @@ Let's call this the !| command.
 * Call foo < tempfile1 > tempfile2,
 * Read tempfile2, clobbering the buffer.
 
+Allow username and password to be included in an edbrowse script
+as if they were typed in, for authorization websites.
+
+There is currently no way to select multiple files in directory mode,
+like you can in most graphical file managers.
+Perhaps km is special, marking multiple lines.
+0km would clear the marks.
+'mp would print the lines selected.
+'m!mv '. /somewhere/else
+might move all the chosen files to another directory.
+So you could do things with all the lines, or if in directory mode,
+with all the files.
+Not sure about this one.
+
+Spreadsheet mode - this is much like database mode.
+Read in a spreadsheet as a table.
+Modify a cell with a simple substitute command.
+Unlike odbc, the change is local, until you write the file back out.
+Could also have table directives in .ebrc to look at only certain columns in the spreadsheet,
+because some of these, like tables, have hundreds of columns
+and are just unmanageable unless you slice them.
