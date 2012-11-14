@@ -105,7 +105,7 @@ lineFormatStack(const char *line,	/* the sprintf-like formatting string */
     short i, len, maxlen, len_given, flags;
     long n;
     double dn;			/* double number */
-    char *q, pdir, inquote;
+    char *q, *r, pdir, inquote;
     const char *t, *perc;
     char fmt[12];
 
@@ -252,6 +252,15 @@ lineFormatStack(const char *line,	/* the sprintf-like formatting string */
 	    break;
 	case 'f':
 	    sprintf(q, fmt, dn);
+/* show float as an integer, if it is an integer, and it usually is */
+	    r = strchr(q, '.');
+	    if(r) {
+		while(*++r == '0') ;
+		if(!*r) {
+		    r = strchr(q, '.');
+		    *r = 0;
+		}
+	    }
 	    break;
 	case 's':
 	    if(n == (int)lfbuf)
