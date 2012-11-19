@@ -99,9 +99,8 @@ static const char lfoverflow[] = "@lineFormat(), line is too long, limit %d";
 char *
 lineFormatStack(const char *line,	/* the sprintf-like formatting string */
    LF * argv,			/* pointer to array of values */
-   va_list * parmv_p)
+   va_list * parmv)
 {
-    va_list parmv = 0;
     short i, len, maxlen, len_given, flags;
     long n;
     double dn;			/* double number */
@@ -109,8 +108,6 @@ lineFormatStack(const char *line,	/* the sprintf-like formatting string */
     const char *t, *perc;
     char fmt[12];
 
-    if(parmv_p)
-	parmv = *parmv_p;
     if(parmv && argv || !parmv && !argv)
 	errorPrint
 	   ("@exactly one of the last two arguments to lineFormatStack should be null");
@@ -164,12 +161,12 @@ lineFormatStack(const char *line,	/* the sprintf-like formatting string */
 /* get the next vararg */
 	if(pdir == 'f') {
 	    if(parmv)
-		dn = va_arg(parmv, double);
+		dn = va_arg(*parmv, double);
 	    else
 		dn = argv->f;
 	} else {
 	    if(parmv)
-		n = va_arg(parmv, int);
+		n = va_arg(*parmv, int);
 	    else
 		n = argv->l;
 	}
@@ -286,8 +283,6 @@ See lineFormat() above for a typical example.
 Note that the calling function may wish to process additional arguments
 before calling va_end. */
 
-    if(parmv)
-	*parmv_p = parmv;
     return lfbuf;
 }				/* lineFormatStack */
 
