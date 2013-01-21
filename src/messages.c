@@ -2727,6 +2727,13 @@ selectLanguage(void)
 	return;
     }
 
+    if(!strncmp(buf, "pl_pl", 5)) {
+	messageArray = polishMessages;
+	messageArrayLength = sizeof (polishMessages) / sizeof (char *);
+	type8859 = 2;
+	return;
+    }
+
     if(!strncmp(buf, "cs_cz", 5)) {
 	messageArray = czechMessages;
 	messageArrayLength = sizeof (czechMessages) / sizeof (char *);
