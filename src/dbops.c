@@ -90,7 +90,7 @@ lineFormat(const char *line, ...)
     return s;
 }				/* lineFormat */
 
-#define LFBUFSIZE 4000
+#define LFBUFSIZE 100000
 static char lfbuf[LFBUFSIZE];	/* line formatting buffer */
 static const char selfref[] =
    "@lineFormat attempts to expand within its own static buffer";

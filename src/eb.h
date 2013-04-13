@@ -127,7 +127,7 @@ typedef uchar *pst;		/* perl string */
 #define MAXMIME 40
 /* number of db tables */
 #define MAXDBT 100
-#define MAXTCOLS 20
+#define MAXTCOLS 40
 /* How many sessions open concurrently */
 #define MAXSESSION 1000
 /* Allocation increment for a growing string, that we don't expect

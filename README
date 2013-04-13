@@ -90,6 +90,9 @@ ln -s `pwd`/libjs.so /usr/lib/libsmjs.so
 
 If you want database access, you need unixODBC and unixODBC-devel.
 Make edbrowseodbc, rather than edbrowse.
+You may want to run make clean first,
+because edbrowseodbc has some conditional compilation that won't happen
+if you run make edbrowse and make edbrowseodbc sequentially.
 
 Now return to your edbrowse src directory.
 To build edbrowse - guess what - you type make.

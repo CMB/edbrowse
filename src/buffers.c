@@ -1809,7 +1809,7 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 		if(d == '|')
 		    ondeck = false, was_ques = true;
 		if(d == '(')
-		    ++paren, ondeck = false, was_ques = true;
+		    ++paren, ondeck = false, was_ques = false;
 		if(d == ')')
 		    --paren;
 		if(paren < 0) {
