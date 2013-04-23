@@ -28,6 +28,11 @@ struct {
     "telnet", 23, false, false, false}, {
     "tn3270", 0, false, false, false}, {
     "javascript", 0, true, false, false}, {
+"git", 0, false, false, false}, {
+"svn", 0, false, false, false}, {
+"gopher", 70, false, false, false}, {
+"magnet", 0, false, false, false}, {
+"irc", 0, false, false, false}, {
     NULL, 0}
 };
 
