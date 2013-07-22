@@ -1302,6 +1302,7 @@ andTranslate(const char *s, bool invisible)
 	"trade\0(TM)",
 	"hellip\0...",
 	"#275\0`",
+	"#773\0overbar",
 	"#913\0Alpha",
 	"#914\0Beta",
 	"#915\0Gamma",
