@@ -1369,6 +1369,7 @@ andTranslate(const char *s, bool invisible)
 	"#8594\0arrow",
 	"#8595\0down arrow",
 	"#8660\0double arrow",
+	"#8661\0updown arrow",
 	"#8704\0every",
 	"#8706\0d",
 	"#8707\0some",
