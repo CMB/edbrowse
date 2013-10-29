@@ -408,7 +408,7 @@ copy_and_sanitize(const char *start, const char *end)
     return new_copy;
 }				/* copy_and_sanitize */
 
-int hcode;			/* example, 404 */
+long hcode;			/* example, 404 */
 char herror[32];		/* example, file not found */
 
 bool
@@ -651,7 +651,7 @@ httpConnect(const char *from, const char *url)
 	if(curlret != CURLE_OK)
 	    goto curl_fail;
 
-	debugPrint(3, "http code %d %s", hcode, herror);
+	debugPrint(3, "http code %ld %s", hcode, herror);
 
 	if(hcode >= 301 && hcode <= 303 && allowRedirection) {
 	    redir = get_redirect_location();
