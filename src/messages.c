@@ -7,6 +7,8 @@
 
 #include "eb.h"
 
+#include <locale.h>
+
 /*********************************************************************
 Message strings are in utf8.
 If your system expects iso8859-x, don't let edbrowse convert
@@ -2699,13 +2701,17 @@ selectLanguage(void)
     if(strstrCI(s, "utf8") || strstrCI(s, "utf-8"))
 	cons_utf8 = true;
 
-/* I thought I needed this; guess I don't, for now. */
-#if 0
-    if(!setlocale(LC_CTYPE, "")) {
-	fprintf(stderr,
-	   "Can't set the specified locale.  Check LANG, LC_CTYPE, LC_ALL.\n");
-    }
-#endif
+/* We roll our own international messages in this file, so you wouldn't think
+ * we need setlocale, but pcre needs the locale for expressions like \w,
+ * and for ranges like [A-z],
+ * and to convert to upper or lower case etc.
+ * So I set LC_ALL, which covers both LC_CTYPE and LC_COLLATE.
+ * Note however that your environment does not affect the order of files
+ * in a directory listing.
+ * I do the sort myself, using strcmp, rather than strcoll.
+ * See sortedDirList() in stringfile.c */
+
+    setlocale(LC_ALL, "");
 
     strncpy(buf, s, 7);
     buf[7] = 0;
