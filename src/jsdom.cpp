@@ -746,7 +746,7 @@ static JSClass option_class = {
 };
 
 struct DOMCLASS {
-    JSClass *objClass;
+    JSClass *obj_class;
     JSFunctionSpec *methods;
     JSNative constructor;
     int nargs;
@@ -886,8 +886,8 @@ createJavaContext(void)
     establish_property_string((JSObject *) jwin, "name", "unspecifiedFrame", eb_false);
 
 /* Other classes that we'll need. */
-    for(i = 0; domClasses[i].objClass; ++i) {
-	JS_InitClass(jcx, (JSObject *) jwin, 0, domClasses[i].objClass,
+    for(i = 0; domClasses[i].obj_class; ++i) {
+	JS_InitClass(jcx, (JSObject *) jwin, 0, domClasses[i].obj_class,
 	   domClasses[i].constructor, domClasses[i].nargs,
 	   NULL, domClasses[i].methods, NULL, NULL);
     }
@@ -1115,7 +1115,7 @@ domLink(const char *classname,	/* instantiate this class */
 	return 0;
 
 /* find the class */
-    for(i = 0; cp = domClasses[i].objClass; ++i)
+    for(i = 0; cp = domClasses[i].obj_class; ++i)
 	if(stringEqual(cp->name, classname))
 	    break;
 
