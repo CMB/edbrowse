@@ -5,6 +5,9 @@
  * No other file need know about the javascript API,
  * and no other file should include jsapi.h. */
 
+#ifndef JS_H
+#define JS_H
+
 #include <jsapi.h>
 
 extern JSContext *jcx;		/* javascript context */
@@ -19,3 +22,4 @@ char * our_JSEncodeString(JSString *str) ;
 const char * stringize(jsval v) ;
 void initLocationClass(void) ;
 
+#endif

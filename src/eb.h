@@ -6,6 +6,11 @@
 #ifndef EB_H
 #define EB_H 1
 
+/* needed when compiling under c++ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* the symbol DOSLIKE is used to conditionally compile those constructs
  * that are common to DOS and NT, but not typical of Unix. */
 #ifdef MSDOS
@@ -377,5 +382,9 @@ extern void *jdoc;		/* javascript document object */
 
 /* Symbolic constants for language independent messages */
 #include "messages.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
