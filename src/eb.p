@@ -242,7 +242,7 @@ void * createJavaContext(void) ;
 void freeJavaContext(void *jsc) ;
 void establish_innerHTML(void *jv, const char *start, const char *end, eb_bool is_ta) ;
 void jMyContext(void) ;
-eb_bool javaParseExecute(void *this, const char *str, const char *filename, int lineno) ;
+eb_bool javaParseExecute(void *obj, const char *str, const char *filename, int lineno) ;
 void * domLink(const char *classname, const char *symname, const char *idname, const char *href, const char *href_url, const char *list, void *owner, int radiosel) ;
 
 /* sourcefile=jsloc.c */
