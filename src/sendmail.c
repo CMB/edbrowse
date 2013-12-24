@@ -15,8 +15,8 @@
 char serverLine[MAXMSLINE];
 static char spareLine[MAXMSLINE];
 int mssock;			/* mail server socket */
-static bool doSignature;
-static bool ssl_on;
+static eb_bool doSignature;
+static eb_bool ssl_on;
 static const char *mailhost;
 static char subjectLine[200];
 static int mailAccount;
@@ -29,25 +29,25 @@ static int nads;		/* number of addresses */
 static time_t adbooktime;
 
 /* read and/or refresh the address book */
-bool
+eb_bool
 loadAddressBook(void)
 {
     char *buf, *bufend, *v, *last, *s, *t;
-    bool cmt = false;
+    eb_bool cmt = eb_false;
     char state = 0, c;
     int j, buflen, ln = 1;
     time_t mtime;
 
     if(!addressFile ||
        (mtime = fileTimeByName(addressFile)) == -1 || mtime <= adbooktime)
-	return true;
+	return eb_true;
 
     debugPrint(3, "loading address book");
     nzFree(addressList);
     addressList = 0;
     nads = 0;
     if(!fileIntoMemory(addressFile, &buf, &buflen))
-	return false;
+	return eb_false;
     bufend = buf + buflen;
 
     for(s = t = last = buf; s < bufend; ++s) {
@@ -55,7 +55,7 @@ loadAddressBook(void)
 	if(cmt) {
 	    if(c != '\n')
 		continue;
-	    cmt = false;
+	    cmt = eb_false;
 	}
 	if(c == ':') {		/* delimiter */
 	    if(state == 0) {
@@ -63,7 +63,7 @@ loadAddressBook(void)
 	      freefail:
 		nzFree(buf);
 		nads = 0;
-		return false;
+		return eb_false;
 	    }
 	    while(t[-1] == ' ' || t[-1] == '\t')
 		--t;
@@ -75,7 +75,7 @@ loadAddressBook(void)
 	    c = '#';		/* extra fields are ignored */
 	}			/* : */
 	if(c == '#') {
-	    cmt = true;
+	    cmt = eb_true;
 	    continue;
 	}
 	if(c == '\n') {
@@ -156,7 +156,7 @@ loadAddressBook(void)
     /* aliases are present */
     nzFree(buf);
     adbooktime = mtime;
-    return true;
+    return eb_true;
 }				/* loadAddressBook */
 
 const char *
@@ -179,8 +179,8 @@ Put and get lines from the mail server.
 Print the lines if the debug level calls for it.
 *********************************************************************/
 
-bool
-mailPutLine(const char *buf, bool realdot)
+eb_bool
+mailPutLine(const char *buf, eb_bool realdot)
 {
     int n, j, len = strlen(buf);
     char c;
@@ -241,12 +241,12 @@ mailPutLine(const char *buf, bool realdot)
 
     if(n < len) {
 	setError(MSG_MailWrite);
-	return false;
+	return eb_false;
     }
-    return true;
+    return eb_true;
 }				/* mailPutLine */
 
-bool
+eb_bool
 mailGetLine(void)
 {
     int n, len, slen;
@@ -259,7 +259,7 @@ mailGetLine(void)
     while(!s) {
 	if(slen + 1 == sizeof (serverLine)) {
 	    setError(MSG_MailResponseLong);
-	    return false;
+	    return eb_false;
 	}
 	if(ssl_on)
 	    len = ssl_read(serverLine + slen, sizeof (serverLine) - 1 - slen);
@@ -269,7 +269,7 @@ mailGetLine(void)
 	       sizeof (serverLine) - 1 - slen);
 	if(len <= 0) {
 	    setError(MSG_MailRead);
-	    return false;
+	    return eb_false;
 	}
 	slen += len;
 	serverLine[slen] = 0;
@@ -280,17 +280,17 @@ mailGetLine(void)
     if(s > serverLine && s[-1] == '\r')
 	*--s = 0;
     debugPrint(4, "< %s", serverLine);
-    return true;
+    return eb_true;
 }				/* mailGetLine */
 
-static bool
+static eb_bool
 mailPutGet(const char *line)
 {
-    if(!mailPutLine(line, false))
-	return false;
+    if(!mailPutLine(line, eb_false))
+	return eb_false;
     if(!mailGetLine())
-	return false;
-    return true;
+	return eb_false;
+    return eb_true;
 }				/* mailPutGet */
 
 void
@@ -303,7 +303,7 @@ mailPutGetError(const char *line)
 void
 mailClose(void)
 {
-    mailPutLine("quit\r\n", false);
+    mailPutLine("quit\r\n", eb_false);
 /* the other side has to have time to process the quit command, before we simply hang up. */
     usleep(400000);
     if(ssl_on)
@@ -312,21 +312,21 @@ mailClose(void)
 }				/* mailClose */
 
 /* Connect to the mail server */
-bool
+eb_bool
 mailConnect(const char *host, int port, int secure)
 {
-    ssl_on = false;
+    ssl_on = eb_false;
     IP32bit ip = tcp_name_ip(host);
     if(ip == NULL_IP) {
 	setError((intFlag ? MSG_Interrupted : MSG_MailLocate), host);
-	return false;
+	return eb_false;
     }
     debugPrint(4, "%s -> %s", host, tcp_ip_dots(ip));
     mailhost = host;
     mssock = tcp_connect(ip, port, mailTimeout);
     if(mssock < 0) {
 	setError(intFlag ? MSG_Interrupted : MSG_MailConnect);
-	return false;
+	return eb_false;
     }
     debugPrint(4, "connected to port %d", port);
     spareLine[0] = 0;
@@ -337,18 +337,18 @@ mailConnect(const char *host, int port, int secure)
 		setError(MSG_NoCertify, host);
 	    else
 		setError(MSG_WebConnectSecure, host, n);
-	    return false;
+	    return eb_false;
 	}
 	debugPrint(3, "secure connection established");
-	ssl_on = true;
+	ssl_on = eb_true;
     }
-    return true;
+    return eb_true;
 }				/* mailConnect */
 
 static char base64_chars[] =
    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 char *
-base64Encode(const char *inbuf, int inlen, bool lines)
+base64Encode(const char *inbuf, int inlen, eb_bool lines)
 {
     char *out, *outstr;
     uchar *in = (uchar *) inbuf;
@@ -445,7 +445,7 @@ isoEncode(char *start, char *end)
 
     if(nacount * 4 >= count && count > 8) {
 	code = 'B';
-	s = base64Encode(start, end - start, false);
+	s = base64Encode(start, end - start, eb_false);
 	goto package;
     }
 
@@ -489,13 +489,13 @@ charsetString(const char *ct, const char *ce)
  * In fact ismail indicates the line that holds the subject.
  * If ismail is negative, then -ismail indicates the subject line,
  * and the string file is not the filename, but rather, the mail to send. */
-bool
-encodeAttachment(const char *file, int ismail, bool webform,
+eb_bool
+encodeAttachment(const char *file, int ismail, eb_bool webform,
    const char **type_p, const char **enc_p, char **data_p)
 {
     char *buf;
     char c;
-    bool longline;
+    eb_bool longline;
     char *s, *t, *v;
     char *ct, *ce;		/* content type, content encoding */
     int buflen, i, cx;
@@ -510,8 +510,8 @@ encodeAttachment(const char *file, int ismail, bool webform,
 
 	if(!ismc && (cx = stringIsNum(file)) >= 0) {
 	    static char newfilename[16];
-	    if(!unfoldBuffer(cx, false, &buf, &buflen))
-		return false;
+	    if(!unfoldBuffer(cx, eb_false, &buf, &buflen))
+		return eb_false;
 	    if(!buflen) {
 		if(webform) {
 		  empty:
@@ -529,7 +529,7 @@ encodeAttachment(const char *file, int ismail, bool webform,
 		file = sessionList[cx].lw->fileName;
 	} else {
 	    if(!fileIntoMemory(file, &buf, &buflen))
-		return false;
+		return eb_false;
 	    if(!buflen) {
 		if(webform)
 		    goto empty;
@@ -600,10 +600,10 @@ encodeAttachment(const char *file, int ismail, bool webform,
 	if(doSignature) {	/* Append .signature file. */
 /* Try account specific .signature file, then fall back to .signature */
 	    sprintf(sigFileEnd, "%d", mailAccount);
-	    c = fileTypeByName(sigFile, false);
+	    c = fileTypeByName(sigFile, eb_false);
 	    if(!c) {
 		*sigFileEnd = 0;
-		c = fileTypeByName(sigFile, false);
+		c = fileTypeByName(sigFile, eb_false);
 	    }
 	    if(c != 0) {
 		int fd, n;
@@ -654,7 +654,7 @@ encodeAttachment(const char *file, int ismail, bool webform,
 
 /* Count the nonascii characters */
     nacount = nullcount = nlcount = 0;
-    longline = false;
+    longline = eb_false;
     s = 0;
     for(i = 0; i < buflen; ++i) {
 	c = buf[i];
@@ -667,16 +667,16 @@ encodeAttachment(const char *file, int ismail, bool webform,
 	++nlcount;
 	t = buf + i;
 	if(s && t - s > 120)
-	    longline = true;
+	    longline = eb_true;
 	if(!s && i > 120)
-	    longline = true;
+	    longline = eb_true;
 	s = t;
     }
     t = buf + i;
     if(s && t - s > 120)
-	longline = true;
+	longline = eb_true;
     if(!s && i > 120)
-	longline = true;
+	longline = eb_true;
     debugPrint(6, "attaching %s length %d nonascii %d nulls %d longline %d",
        file, buflen, nacount, nullcount, longline);
     nacount += nullcount;
@@ -699,7 +699,7 @@ encodeAttachment(const char *file, int ismail, bool webform,
 	    setError(MSG_MailBinary, file);
 	    goto freefail;
 	}
-	s = base64Encode(buf, buflen, true);
+	s = base64Encode(buf, buflen, eb_true);
 	nzFree(buf);
 	buf = s;
 	ce = "base64";
@@ -785,11 +785,11 @@ encodeAttachment(const char *file, int ismail, bool webform,
     *enc_p = ce;
     *type_p = ct;
     *data_p = buf;
-    return true;
+    return eb_true;
 
   freefail:
     nzFree(buf);
-    return false;
+    return eb_false;
 }				/* encodeAttachment */
 
 static char *
@@ -854,10 +854,10 @@ makeBoundary(void)
 }				/* makeBoundary */
 
 /* Send mail to the smtp server. */
-bool
+eb_bool
 sendMail(int account, const char **recipients, const char *body,
    int subjat, const char **attachments, const char *refline,
-   int nalt, bool dosig)
+   int nalt, eb_bool dosig)
 {
     char *from, *fromiso, *reply, *login, *smlogin, *pass;
     const struct MACCOUNT *a, *ao, *localMail;
@@ -866,14 +866,14 @@ sendMail(int account, const char **recipients, const char *body,
     char *t;
     int nat, cx, i, j;
     char *out = 0;
-    bool mustmime = false;
-    bool firstgreet = true;
-    bool firstrec;
+    eb_bool mustmime = eb_false;
+    eb_bool firstgreet = eb_true;
+    eb_bool firstrec;
     const char *ct, *ce;
     char *encoded = 0;
 
     if(!validAccount(account))
-	return false;
+	return eb_false;
     mailAccount = account;
     localMail = accounts + localAccount - 1;
 
@@ -896,14 +896,14 @@ sendMail(int account, const char **recipients, const char *body,
 	    ++nat;
     }
     if(nat)
-	mustmime = true;
+	mustmime = eb_true;
     if(nalt && nalt < nat) {
 	setError(MSG_AttAlternate);
-	return false;
+	return eb_false;
     }
 
     if(!loadAddressBook())
-	return false;
+	return eb_false;
 
 /* set copy flags */
     for(j = 0; s = recipients[j]; ++j) {
@@ -912,7 +912,7 @@ sendMail(int account, const char **recipients, const char *body,
 	    cc = *s++;
 	if(j == MAXRECAT) {
 	    setError(MSG_RecipMany, MAXRECAT);
-	    return false;
+	    return eb_false;
 	}
 	recipients[j] = s;
 	reccc[j] = cc;
@@ -939,53 +939,53 @@ sendMail(int account, const char **recipients, const char *body,
 	}
 	if(!addressFile) {
 	    setError(MSG_ABMissing);
-	    return false;
+	    return eb_false;
 	}
 	setError(MSG_ABNoAlias2, s);
-	return false;
+	return eb_false;
     }				/* recipients */
 
     if(!j) {
 	setError(MSG_RecipNone);
-	return false;
+	return eb_false;
     }
 
 /* verify attachments are readable */
     for(j = 0; s = attachments[j]; ++j) {
 	if(!ismc && (cx = stringIsNum(s)) >= 0) {
 	    if(!cxCompare(cx) || !cxActive(cx))
-		return false;
+		return eb_false;
 	    if(!sessionList[cx].lw->dol) {
 		setError(MSG_AttSessionEmpty, cx);
-		return false;
+		return eb_false;
 	    }
 	} else {
-	    char ftype = fileTypeByName(s, false);
+	    char ftype = fileTypeByName(s, eb_false);
 	    if(!ftype) {
 		setError(MSG_AttAccess, s);
-		return false;
+		return eb_false;
 	    }
 	    if(ftype != 'f') {
 		setError(MSG_AttRegular, s);
-		return false;
+		return eb_false;
 	    }
 	    if(!fileSizeByName(s)) {
 		setError(MSG_AttEmpty2, s);
-		return false;
+		return eb_false;
 	    }
 	}
     }				/* loop over attachments */
 
-    if(!encodeAttachment(body, subjat, false, &ct, &ce, &encoded))
-	return false;
+    if(!encodeAttachment(body, subjat, eb_false, &ct, &ce, &encoded))
+	return eb_false;
     if(ce[0] == 'q')
-	mustmime = true;
+	mustmime = eb_true;
 
     boundary = makeBoundary();
 
     if(!mailConnect(ao->outurl, ao->outport, ao->outssl)) {
 	nzFree(encoded);
-	return false;
+	return eb_false;
     }
     if(!mailGetLine())
 	goto mailfail;
@@ -1000,7 +1000,7 @@ sendMail(int account, const char **recipients, const char *body,
 
   sayhello:
     sprintf(serverLine, "%s %s%s", (a->outssl ? "ehlo" : "Helo"), smlogin, eol);
-    if(!mailPutLine(serverLine, false))
+    if(!mailPutLine(serverLine, eb_false))
 	goto mailfail;
   get250:
     if(!mailGetLine())
@@ -1034,10 +1034,10 @@ sendMail(int account, const char **recipients, const char *body,
 		goto mailfail;
 	    }
 	    debugPrint(3, "secure connection established");
-	    ssl_on = true;
+	    ssl_on = eb_true;
 
 /* We have to send EHLO after starttls, per RFC 2487 */
-	    firstgreet = false;
+	    firstgreet = eb_false;
 	    goto sayhello;
 	}
 
@@ -1048,7 +1048,7 @@ sendMail(int account, const char **recipients, const char *body,
 	    setError(MSG_AuthLoginOnly);
 	    goto mailfail;
 	}
-	b = base64Encode(login, strlen(login), false);
+	b = base64Encode(login, strlen(login), eb_false);
 	sprintf(serverLine, "%s%s", b, eol);
 	nzFree(b);
 	if(!mailPutGet(serverLine))
@@ -1057,7 +1057,7 @@ sendMail(int account, const char **recipients, const char *body,
 	    setError(MSG_AuthLoginOnly);
 	    goto mailfail;
 	}
-	b = base64Encode(pass, strlen(pass), false);
+	b = base64Encode(pass, strlen(pass), eb_false);
 	sprintf(serverLine, "%s%s", b, eol);
 	nzFree(b);
 	if(!mailPutGet(serverLine))
@@ -1096,35 +1096,35 @@ sendMail(int account, const char **recipients, const char *body,
 /* Build the outgoing mail, and send it in one go, as one string. */
     out = initString(&j);
 
-    firstrec = true;
+    firstrec = eb_true;
     for(i = 0; s = recipients[i]; ++i) {
 	if(reccc[i])
 	    continue;
 	stringAndString(&out, &j, firstrec ? "To:" : ",\r\n  ");
 	stringAndString(&out, &j, s);
-	firstrec = false;
+	firstrec = eb_false;
     }
     if(!firstrec)
 	stringAndString(&out, &j, eol);
 
-    firstrec = true;
+    firstrec = eb_true;
     for(i = 0; s = recipients[i]; ++i) {
 	if(reccc[i] != '^')
 	    continue;
 	stringAndString(&out, &j, firstrec ? "CC:" : ",\r\n  ");
 	stringAndString(&out, &j, s);
-	firstrec = false;
+	firstrec = eb_false;
     }
     if(!firstrec)
 	stringAndString(&out, &j, eol);
 
-    firstrec = true;
+    firstrec = eb_true;
     for(i = 0; s = recipients[i]; ++i) {
 	if(reccc[i] != '?')
 	    continue;
 	stringAndString(&out, &j, firstrec ? "BCC:" : ",\r\n  ");
 	stringAndString(&out, &j, s);
-	firstrec = false;
+	firstrec = eb_false;
     }
     if(!firstrec)
 	stringAndString(&out, &j, eol);
@@ -1181,8 +1181,8 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 
     if(mustmime) {
 	for(i = 0; s = attachments[i]; ++i) {
-	    if(!encodeAttachment(s, 0, false, &ct, &ce, &encoded))
-		return false;
+	    if(!encodeAttachment(s, 0, eb_false, &ct, &ce, &encoded))
+		return eb_false;
 	    sprintf(serverLine, "%s--%s%sContent-Type: %s%s", eol, boundary,
 	       eol, ct, charsetString(ct, ce));
 	    stringAndString(&out, &j, serverLine);
@@ -1208,7 +1208,7 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
     /* mime format */
     /* A dot alone ends the transmission */
     stringAndString(&out, &j, ".\r\n");
-    if(!mailPutLine(out, true))
+    if(!mailPutLine(out, eb_true))
 	goto mailfail;
     nzFree(out);
     out = 0;
@@ -1224,31 +1224,31 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
     }
 
     mailClose();
-    return true;
+    return eb_true;
 
   mailfail:
     nzFree(encoded);
     nzFree(out);
     close(mssock);
-    return false;
+    return eb_false;
 }				/* sendMail */
 
-bool
+eb_bool
 validAccount(int n)
 {
     if(!maxAccount) {
 	setError(MSG_MailAccountsNone);
-	return false;
+	return eb_false;
     }
     if(n <= 0 || n > maxAccount) {
 	setError(MSG_MailAccountBad, n, maxAccount);
-	return false;
+	return eb_false;
     }
-    return true;
+    return eb_true;
 }				/* validAccount */
 
-bool
-sendMailCurrent(int sm_account, bool dosig)
+eb_bool
+sendMailCurrent(int sm_account, eb_bool dosig)
 {
     const char *reclist[MAXRECAT + 1];
     char *recmem;
@@ -1261,32 +1261,32 @@ sendMailCurrent(int sm_account, bool dosig)
     int nrec = 0, nat = 0, nalt = 0;
     int account = localAccount;
     int j;
-    bool rc = false;
-    bool subj = false;
+    eb_bool rc = eb_false;
+    eb_bool subj = eb_false;
 
     if(cw->browseMode) {
 	setError(MSG_MailBrowse);
-	return false;
+	return eb_false;
     }
     if(cw->sqlMode) {
 	setError(MSG_MailDB);
-	return false;
+	return eb_false;
     }
     if(cw->dirMode) {
 	setError(MSG_MailDir);
-	return false;
+	return eb_false;
     }
     if(cw->binMode) {
 	setError(MSG_MailBinary2);
-	return false;
+	return eb_false;
     }
     if(!cw->dol) {
 	setError(MSG_MailEmpty);
-	return false;
+	return eb_false;
     }
 
     if(!validAccount(account))
-	return false;
+	return eb_false;
 
     recmem = initString(&lr);
     atmem = initString(&la);
@@ -1380,7 +1380,7 @@ sendMailCurrent(int sm_account, bool dosig)
 		setError(MSG_SubjectEmpty2);
 		goto done;
 	    }
-	    subj = true;
+	    subj = eb_true;
 	}
 
 	break;

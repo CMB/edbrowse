@@ -29,7 +29,7 @@ static const char *emptyParms[] = { 0 };
 static jsval emptyArgs[] = { 0 };
 
 static void
-  url_initialize(const char *url, bool readonly, bool exclude_href);
+  url_initialize(const char *url, eb_bool readonly, eb_bool exclude_href);
 
 const char *
 stringize(jsval v)
@@ -73,22 +73,22 @@ static JSClass url_class = {
 static char urlbuffer[512];
 static JSObject *uo;		/* the url object */
 static char *uo_href;
-static bool setter_suspend;
+static eb_bool setter_suspend;
 
 /* Are we modifying window.location? */
 /*Return false if we are, because that will put a stop to javascript. */
-static bool
+static eb_bool
 isWinLoc(void)
 {
     if(uo != jwloc && uo != jdloc) {
 	nzFree(uo_href);
 	uo_href = 0;
-	return true;
+	return eb_true;
     }
 /* This call frees t, or takes it over, so you should not free it here. */
-    gotoLocation(uo_href, (allowRedirection ? 0 : 99), false);
+    gotoLocation(uo_href, (allowRedirection ? 0 : 99), eb_false);
     uo_href = 0;
-    return false;
+    return eb_false;
 }				/* isWinLoc */
 
 /* Converting to a string just pulls out the href property */
@@ -107,7 +107,7 @@ loc_reload(JSContext * cx, uintN argc, jsval * vp)
 {
     const char *s = cw->firstURL;
     if(s && isURL(s))
-	gotoLocation(cloneString(s), (allowRedirection ? 0 : 99), true);
+	gotoLocation(cloneString(s), (allowRedirection ? 0 : 99), eb_true);
     else
 	JS_ReportError(jcx, "location.reload() cannot find a url to refresh");
     return JS_FALSE;
@@ -127,7 +127,7 @@ loc_replace(JSContext * cx, uintN argc, jsval * vp)
 	t = resolveURL(cw->fileName, ss);
 	nzFree(ss);
 /* This call frees t, or takes it over, so you should not free it here. */
-	gotoLocation(t, (allowRedirection ? 0 : 99), true);
+	gotoLocation(t, (allowRedirection ? 0 : 99), eb_true);
 	return JS_FALSE;
     }
     JS_ReportError(jcx,
@@ -145,7 +145,7 @@ build_url(int exception, const char *e)
     static const char *const noslashes[] = {
 	"mailto", "telnet", "javascript", 0
     };
-    setter_suspend = true;
+    setter_suspend = eb_true;
 /* I'm a little worried about the first one being freed while I'm
  * getting the next one.
  * I just don't know that much about the js heap. */
@@ -193,7 +193,7 @@ build_url(int exception, const char *e)
 /* I want control over this string */
     uo_href = cloneString(new_url);
     JS_smprintf_free(new_url);
-    setter_suspend = false;
+    setter_suspend = eb_false;
 }				/* build_url */
 
 /* Rebuild host, because hostname or port changed. */
@@ -202,7 +202,7 @@ build_host(int exception, const char *hostname, int port)
 {
     jsval v;
     const char *oldhost;
-    setter_suspend = true;
+    setter_suspend = eb_true;
     if(exception == 1) {
 	JS_GetProperty(jcx, uo, "port", &v);
 	port = JSVAL_TO_INT(v);
@@ -220,7 +220,7 @@ build_host(int exception, const char *hostname, int port)
 	i_printfExit(MSG_PortTooLong);
     v = STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, urlbuffer));
     JS_SetProperty(jcx, uo, "host", &v);
-    setter_suspend = false;
+    setter_suspend = eb_false;
 }				/* build_host */
 
 /* define or set a local property */
@@ -290,7 +290,7 @@ setter_loc(JSContext * cx, JSObject * obj, jsid id, JSBool strict, jsval * vp)
 	t = resolveURL(cw->fileName, ss);
 	nzFree(ss);
 /* This call frees t, or takes it over, so you should not free it here. */
-	gotoLocation(t, (allowRedirection ? 0 : 99), false);
+	gotoLocation(t, (allowRedirection ? 0 : 99), eb_false);
     }
 /* Return false to stop javascript. */
 /* After all, we're trying to move to a new web page. */
@@ -308,7 +308,7 @@ setter_loc_href(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
     if(!url)
 	return JS_TRUE;
     uo = obj;
-    url_initialize(url, false, true);
+    url_initialize(url, eb_false, eb_true);
     uo_href = cloneString(url);
     if(uo == jwloc || uo == jdloc) {
 	char *t;
@@ -413,7 +413,7 @@ setter_loc_host(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
     uo = obj;
     build_url(2, e);
 /* and we have to update hostname and port */
-    setter_suspend = true;
+    setter_suspend = eb_true;
     s = strchr(e, ':');
     if(s)
 	n = s - e;
@@ -425,12 +425,12 @@ setter_loc_host(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
 	v = INT_TO_JSVAL(atoi(s + 1));
 	JS_SetProperty(jcx, uo, "port", &v);
     }
-    setter_suspend = false;
+    setter_suspend = eb_false;
     return isWinLoc();
 }				/* setter_loc_pathname */
 
 static void
-url_initialize(const char *url, bool readonly, bool exclude_href)
+url_initialize(const char *url, eb_bool readonly, eb_bool exclude_href)
 {
     int n, port;
     const char *data;
@@ -440,7 +440,7 @@ url_initialize(const char *url, bool readonly, bool exclude_href)
     if(readonly)
 	attr |= JSPROP_READONLY;
 
-    setter_suspend = true;
+    setter_suspend = eb_true;
 
 /* Store the url in location.href */
     if(!exclude_href) {
@@ -508,7 +508,7 @@ url_initialize(const char *url, bool readonly, bool exclude_href)
 
     loc_def_set_part("search", s, n, setter_loc_search, attr);
 
-    setter_suspend = false;
+    setter_suspend = eb_false;
 }				/* url_initialize */
 
 static JSBool
@@ -526,7 +526,7 @@ url_ctor(JSContext * cx, uintN argc, jsval * vp)
 	    url = s;
     }				/* string argument */
     uo = obj;
-    url_initialize(url, false, false);
+    url_initialize(url, eb_false, eb_false);
     return JS_TRUE;
 }				/* url_ctor */
 
@@ -605,14 +605,14 @@ getter_cookie(JSContext * cx, JSObject * obj, jsid id, jsval * vp)
     int cook_l;
     char *cook = initString(&cook_l);
     const char *url = cw->fileName;
-    bool secure = false;
+    eb_bool secure = eb_false;
     const char *proto;
     char *s;
 
     if(url) {
 	proto = getProtURL(url);
 	if(proto && stringEqualCI(proto, "https"))
-	    secure = true;
+	    secure = eb_true;
 	sendCookies(&cook, &cook_l, url, secure);
 	if(memEqualCI(cook, "cookie: ", 8)) {	/* should often happen */
 	    strmove(cook, cook + 8);
@@ -671,7 +671,7 @@ static JSBool(*my_setter) (JSContext *, JSObject *, jsid, JSBool, jsval *);
 
 void
 establish_property_string(void *jv, const char *name, const char *value,
-   bool readonly)
+   eb_bool readonly)
 {
     JSObject *obj = jv;
     jsuint attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
@@ -698,7 +698,7 @@ establish_property_string(void *jv, const char *name, const char *value,
 
 void
 establish_property_number(void *jv, const char *name, int value,
-   bool readonly)
+   eb_bool readonly)
 {
     JSObject *obj = jv;
     jsuint attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
@@ -712,7 +712,7 @@ establish_property_number(void *jv, const char *name, int value,
 }				/* establish_property_number */
 
 void
-establish_property_bool(void *jv, const char *name, bool value, bool readonly)
+establish_property_bool(void *jv, const char *name, eb_bool value, eb_bool readonly)
 {
     jsuint attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
     if(readonly)
@@ -745,7 +745,7 @@ establish_property_object(void *parent, const char *name, void *child)
 
 void
 establish_property_url(void *jv, const char *name,
-   const char *url, bool readonly)
+   const char *url, eb_bool readonly)
 {
     JSObject *obj = jv;
     jsuint attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
@@ -761,7 +761,7 @@ establish_property_url(void *jv, const char *name,
        OBJECT_TO_JSVAL(uo), NULL, my_setter, attr);
     if(!url)
 	url = EMPTYSTRING;
-    url_initialize(url, readonly, false);
+    url_initialize(url, readonly, eb_false);
     if(my_setter == setter_loc) {
 	if(obj == jwin)
 	    jwloc = uo;
@@ -777,11 +777,11 @@ set_property_string(void *jv, const char *name, const char *value)
 {
     JSObject *obj = jv;
     jsval vv;
-    setter_suspend = true;
+    setter_suspend = eb_true;
     vv = ((value && *value) ? STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, value))
        : JS_GetEmptyStringValue(jcx));
     JS_SetProperty(jcx, obj, name, &vv);
-    setter_suspend = false;
+    setter_suspend = eb_false;
 }				/* set_property_string */
 
 void
@@ -789,10 +789,10 @@ set_property_number(void *jv, const char *name, int value)
 {
     JSObject *obj = jv;
     jsval vv;
-    setter_suspend = true;
+    setter_suspend = eb_true;
     vv = INT_TO_JSVAL(value);
     JS_SetProperty(jcx, obj, name, &vv);
-    setter_suspend = false;
+    setter_suspend = eb_false;
 }				/* set_property_number */
 
 void
@@ -800,15 +800,15 @@ set_property_bool(void *jv, const char *name, int value)
 {
     JSObject *obj = jv;
     jsval vv;
-    setter_suspend = true;
+    setter_suspend = eb_true;
     vv = (value ? JSVAL_TRUE : JSVAL_FALSE);
     JS_SetProperty(jcx, obj, name, &vv);
-    setter_suspend = false;
+    setter_suspend = eb_false;
 }				/* set_property_bool */
 
 /* These get routines assume the property exists, and of the right type. */
 char *
-get_property_url(void *jv, bool doaction)
+get_property_url(void *jv, eb_bool doaction)
 {
     JSObject *obj = jv;
     JSObject *lo;		/* location object */
@@ -816,7 +816,7 @@ get_property_url(void *jv, bool doaction)
     const char *s;
     char *out_str = NULL;
     int out_str_l;
-    JSBool found = false;
+    JSBool found = eb_false;
     if(!obj)
 	return 0;
     if(!doaction) {
@@ -889,13 +889,13 @@ get_property_string(void *jv, const char *name)
     return out_str;
 }				/* get_property_string */
 
-bool
+eb_bool
 get_property_bool(void *jv, const char *name)
 {
     JSObject *obj = jv;
     jsval v;
     if(!obj)
-	return false;
+	return eb_false;
     JS_GetProperty(jcx, obj, name, &v);
     return JSVAL_TO_BOOLEAN(v);
 }				/* get_property_bool */
@@ -958,15 +958,15 @@ establish_js_option(void *ev, int idx)
 Compile and call event handlers.
 *********************************************************************/
 
-bool
+eb_bool
 handlerGo(void *obj, const char *name)
 {
     jsval rval;
-    bool rc;
+    eb_bool rc;
     JSBool found;
     JS_HasProperty(jcx, obj, name, &found);
     if(!found)
-	return false;
+	return eb_false;
     rc = JS_CallFunctionName(jcx, obj, name, 0, emptyArgs, &rval);
     if(rc && JSVAL_IS_BOOLEAN(rval))
 	rc = JSVAL_TO_BOOLEAN(rval);
@@ -1005,13 +1005,13 @@ link_onunload_onclick(void *jv)
     JS_DefineProperty(jcx, obj, "onclick", v, 0, 0, PROP_FIXED);
 }				/* link_onunload_onclick */
 
-bool
+eb_bool
 handlerPresent(void *ev, const char *name)
 {
     JSObject *obj = ev;
     JSBool found = JS_FALSE;
     if(!obj)
-	return false;
+	return eb_false;
     JS_HasProperty(jcx, obj, name, &found);
     return found;
 }				/* handlerPresent */

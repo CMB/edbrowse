@@ -44,7 +44,7 @@ static int current_driver;
  * provide no information until you actually run the query.
  * Prepare is not enough.
  * The openfirst variable tells us whether we are running in that mode. */
-static bool openfirst = false;
+static eb_bool openfirst = eb_false;
 
 #define SQL_MONEY 100
 
@@ -73,7 +73,7 @@ static const char *stmt_text = 0;	/* text of the SQL statement */
 static SQLRETURN rc;
 static const short *exclist;	/* list of error codes trapped by the application */
 static short translevel;
-static bool badtrans;
+static eb_bool badtrans;
 
 /* Through globals, make error info available to the application. */
 int rv_lastStatus, rv_stmtOffset;
@@ -201,12 +201,12 @@ errTranslate(const char *code)
 
 static char errorText[200];
 
-static bool
+static eb_bool
 errorTrap(const char *cxerr)
 {
     short i, waste;
     char errcodes[6];
-    bool firstError, errorFound;
+    eb_bool firstError, errorFound;
 
     /* innocent until proven guilty */
     rv_lastStatus = 0;
@@ -214,7 +214,7 @@ errorTrap(const char *cxerr)
     rv_stmtOffset = 0;
     rv_badToken = 0;
     if(!rc)
-	return false;		/* no problem */
+	return eb_false;		/* no problem */
 
     /* log the SQL statement that elicitted the error */
     showStatement();
@@ -224,17 +224,17 @@ errorTrap(const char *cxerr)
 	   ("@ODBC fails to recognize one of the handles (env, connect, stmt)");
 
     /* get error info from ODBC */
-    firstError = true;
-    errorFound = false;
+    firstError = eb_true;
+    errorFound = eb_false;
 
-    while(true) {
+    while(eb_true) {
 	rc = SQLError(henv, hdbc, hstmt,
 	   errcodes, &rv_vendorStatus, errorText, sizeof (errorText), &waste);
 	if(rc == SQL_NO_DATA) {
 	    if(firstError) {
 		printf
 		   ("ODBC command failed, but SQLError() provided no additional information\n");
-		return true;
+		return eb_true;
 	    }
 	    return errorFound;
 	}
@@ -243,13 +243,13 @@ errorTrap(const char *cxerr)
 	if(stringEqual(errcodes, "01S01"))
 	    continue;
 
-	firstError = false;
+	firstError = eb_false;
 	if(cxerr && stringEqual(cxerr, errcodes))
 	    continue;
 
 	if(errorFound)
 	    continue;
-	errorFound = true;
+	errorFound = eb_true;
 	rv_lastStatus = errTranslate(errcodes);
 
 	/* Don't know how to get statement ofset or invalid token from ODBC.
@@ -358,24 +358,24 @@ Connect and disconect to SQL databases.
 
 /* disconnect from the database.  Return true if
  * an error occurs that is trapped by the application. */
-static bool
+static eb_bool
 disconnect(void)
 {
     stmt_text = 0;
     hstmt = SQL_NULL_HSTMT;
 
     if(!sql_database)
-	return false;		/* already disconnected */
+	return eb_false;		/* already disconnected */
 
     stmt_text = "disconnect";
     debugStatement();
     rc = SQLDisconnect(hdbc);
     if(errorTrap(0))
-	return true;
+	return eb_true;
     clearAllCursors();		/* those handles are freed as well */
     translevel = 0;
     sql_database = 0;
-    return false;
+    return eb_false;
 }				/* disconnect */
 
 /* API level disconnect */
@@ -487,7 +487,7 @@ sql_connect(const char *db, const char *login, const char *pw)
        &waste);
     getdata_opts = 0;
     SQLGetInfo(hdbc, SQL_GETDATA_EXTENSIONS, &getdata_opts, 4, &waste);
-    bookmarkBits = false;
+    bookmarkBits = eb_false;
     SQLGetInfo(hdbc, SQL_BOOKMARK_PERSISTENCE, &bookmarkBits, 4, &waste);
 
     exclist = 0;
@@ -506,7 +506,7 @@ sql_connect(const char *db, const char *login, const char *pw)
 	current_driver = DRIVER_INFORMIX;
     if(stringEqual(drivername, "libtdsodbc.so")) {
 	current_driver = DRIVER_TDS;
-	openfirst = true;
+	openfirst = eb_true;
     }
 
     if(sql_debug) {
@@ -550,7 +550,7 @@ sql_begTrans(void)
 
     /* count the nesting level of transactions. */
     if(!translevel) {
-	badtrans = false;
+	badtrans = eb_false;
 	stmt_text = "begin work";
 	debugStatement();
 	rc = SQLSetConnectOption(hdbc, SQL_AUTOCOMMIT, SQL_AUTOCOMMIT_OFF);
@@ -564,7 +564,7 @@ sql_begTrans(void)
 
 /* end a transaction */
 static void
-endTrans(bool commit)
+endTrans(eb_bool commit)
 {
     checkConnect();
     stmt_text = 0;
@@ -588,7 +588,7 @@ endTrans(bool commit)
 	    errorTrap(0);
 	}
     } else {			/* success or failure */
-	badtrans = true;
+	badtrans = eb_true;
 	if(!translevel) {	/* bottom level */
 	    stmt_text = "rollback work";
 	    debugStatement();
@@ -596,7 +596,7 @@ endTrans(bool commit)
 	    if(rc)
 		++translevel;
 	    errorTrap(0);
-	    badtrans = false;
+	    badtrans = eb_false;
 	}
     }				/* success or failure */
 
@@ -642,12 +642,12 @@ endTrans(bool commit)
 void
 sql_commitWork(void)
 {
-    endTrans(true);
+    endTrans(eb_true);
 }
 void
 sql_rollbackWork(void)
 {
-    endTrans(false);
+    endTrans(eb_false);
 }
 
 void
@@ -690,7 +690,7 @@ sql_blobInsert(const char *tabname, const char *colname, int rowid,
 {
     char blobcmd[100];
     SQLINTEGER output_length;
-    bool isfile;
+    eb_bool isfile;
     int fd;
 
     /* basic sanity checks */
@@ -706,9 +706,9 @@ sql_blobInsert(const char *tabname, const char *colname, int rowid,
     if(strlen(tabname) + strlen(colname) + 42 >= sizeof (blobcmd))
 	errorPrint("@internal blobInsert command too long");
 
-    isfile = true;
+    isfile = eb_true;
     if(isnullstring(filename)) {
-	isfile = false;
+	isfile = eb_false;
 	if(!offset)
 	    errorPrint("2blobInsert is given null filename and null buffer");
     } else {
@@ -716,7 +716,7 @@ sql_blobInsert(const char *tabname, const char *colname, int rowid,
 	fd = eopen(filename, O_RDONLY | O_BINARY, 0);
 	length = fileSizeByHandle(fd);
 	if(length == 0) {
-	    isfile = false;
+	    isfile = eb_false;
 	    close(fd);
 	}
     }
@@ -821,7 +821,7 @@ static va_list sqlargs;
 
 /* Temp area to read the values as strings */
 static char retstring[NUMRETS][STRINGLEN + 4];
-static bool everything_null;
+static eb_bool everything_null;
 
 static void
 retsFromOdbc(void)
@@ -829,7 +829,7 @@ retsFromOdbc(void)
     void *q, *q1;
     int i, l;
     int fd, flags;
-    bool yearfirst, indata = false;
+    eb_bool yearfirst, indata = eb_false;
     long dt;			/* temporarily hold date or time */
     char *s;
     short c_type;		/* C data type */
@@ -837,7 +837,7 @@ retsFromOdbc(void)
     char tbuf[20];		/* temp buf, for dates and times */
     double fmoney;		/* float version of money */
     int blobcount = 0;
-    bool fbc = fetchBlobColumns;
+    eb_bool fbc = fetchBlobColumns;
 
     /* no blobs unless proven otherwise */
     rv_blobLoc = 0;
@@ -856,7 +856,7 @@ retsFromOdbc(void)
 		++blobcount;
     if(blobcount > 1) {
 	i_puts(MSG_DBManyBlobs);
-	fbc = false;
+	fbc = eb_false;
     }
 
     for(i = 0; i < rv_numRets; ++i) {
@@ -865,7 +865,7 @@ retsFromOdbc(void)
 	    if(!q) {
 		if(i)
 		    break;
-		indata = true;
+		indata = eb_true;
 	    }
 	}
 	if(indata) {
@@ -970,9 +970,9 @@ retsFromOdbc(void)
 	    break;
 
 	case 'D':
-	    yearfirst = false;
+	    yearfirst = eb_false;
 	    if(s[4] == '-')
-		yearfirst = true;
+		yearfirst = eb_true;
 	    dt = stringDate(s, yearfirst);
 	    if(dt < 0)
 		errorPrint("@database holds invalid date %s", s);
@@ -1049,7 +1049,7 @@ retsFromOdbc(void)
 		flags = O_WRONLY | O_BINARY | O_CREAT | O_APPEND;
 	    fd = eopen(rv_blobFile, flags, 0666);
 	    rc = SQL_SUCCESS;
-	    while(true) {
+	    while(eb_true) {
 		int outbytes;
 		l = output_length;
 		if(l > sizeof (blobbuf))
@@ -1138,15 +1138,15 @@ available to the rest of the C routines in this file, and to the application.
 Returns false if the prepare failed.
 *********************************************************************/
 
-static bool
+static eb_bool
 prepareInternal(const char *stmt)
 {
     short i, nc, coltype, colscale, nullable, namelen;
     unsigned long colprec;
-    bool blobpresent = false;
+    eb_bool blobpresent = eb_false;
 
     checkConnect();
-    everything_null = true;
+    everything_null = eb_true;
     if(isnullstring(stmt))
 	errorPrint("2null SQL statement");
     stmt_text = stmt;
@@ -1159,7 +1159,7 @@ prepareInternal(const char *stmt)
 	if(!strstr(stmt, "where") && !strstr(stmt, "WHERE")) {
 	    showStatement();
 	    setError(MSG_DBNoWhere);
-	    return false;
+	    return eb_false;
 	}
 
     rv_numRets = 0;
@@ -1172,12 +1172,12 @@ prepareInternal(const char *stmt)
     else
 	rc = SQLPrepare(hstmt, (char *)stmt, SQL_NTS);
     if(errorTrap(0))
-	return false;
+	return eb_false;
 
     /* gather column headings and types */
     rc = SQLNumResultCols(hstmt, &nc);
     if(errorTrap(0))
-	return false;
+	return eb_false;
 
     if(nc > NUMRETS) {
 	showStatement();
@@ -1189,7 +1189,7 @@ prepareInternal(const char *stmt)
 	   rv_name[i], COLNAMELEN, &namelen,
 	   &coltype, &colprec, &colscale, &nullable);
 	if(errorTrap("01004"))
-	    return false;
+	    return eb_false;
 
 /*********************************************************************
 The following is an Informix kludge,
@@ -1268,7 +1268,7 @@ Count(*) becomes decimal(15,0).  So be careful.
 		showStatement();
 		errorPrint("2Statement selects more than one blob column");
 	    }
-	    blobpresent = true;
+	    blobpresent = eb_true;
 	    rv_type[i] = (coltype == SQL_LONGVARCHAR ? 'T' : 'B');
 	    break;
 
@@ -1282,7 +1282,7 @@ Count(*) becomes decimal(15,0).  So be careful.
     }				/* loop over returns */
 
     rv_numRets = nc;
-    return true;
+    return eb_true;
 }				/* prepareInternal */
 
 
@@ -1297,21 +1297,21 @@ A mode variable says whether execution or selection or both are allowed.
 Return true if data was successfully fetched.
 *********************************************************************/
 
-static bool
+static eb_bool
 execInternal(const char *stmt, int mode)
 {
-    bool notfound = false;
+    eb_bool notfound = eb_false;
 
     newStatement();
     if(!prepareInternal(stmt))
-	return false;		/* error */
+	return eb_false;		/* error */
 
     if(!rv_numRets) {
 	if(!(mode & 1)) {
 	    showStatement();
 	    errorPrint("2SQL select statement returns no values");
 	}
-	notfound = true;
+	notfound = eb_true;
     } else {			/* end no return values */
 	if(!(mode & 2)) {
 	    showStatement();
@@ -1330,9 +1330,9 @@ execInternal(const char *stmt, int mode)
 	    rc = SQLFetchScroll(hstmt, (ushort) SQL_FD_FETCH_NEXT, 1);
 	    if(rc == SQL_NO_DATA) {
 		rc = SQL_SUCCESS;
-		notfound = true;
+		notfound = eb_true;
 	    } else
-		everything_null = false;
+		everything_null = eb_false;
 	} else {
 	    rc = SQLRowCount(hstmt, &rv_lastNrows);
 	    if(sql_debug)
@@ -1343,10 +1343,10 @@ execInternal(const char *stmt, int mode)
     }
 
     if(errorTrap(0))
-	return false;
+	return eb_false;
 
     if(!rv_numRets)
-	return true;
+	return eb_true;
     return !notfound;
 }				/* execInternal */
 
@@ -1356,20 +1356,20 @@ Run individual select or execute statements, using the above internal routine.
 *********************************************************************/
 
 /* execute a stand-alone statement with no % formatting of the string */
-bool
+eb_bool
 sql_execNF(const char *stmt)
 {
-    bool ok = execInternal(stmt, 1);
+    eb_bool ok = execInternal(stmt, 1);
     SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
     exclist = 0;
     return ok;
 }				/* sql_execNF */
 
 /* execute a stand-alone statement with % formatting */
-bool
+eb_bool
 sql_exec(const char *stmt, ...)
 {
-    bool ok;
+    eb_bool ok;
     va_start(sqlargs, stmt);
     stmt = lineFormatStack(stmt, 0, &sqlargs);
     ok = execInternal(stmt, 1);
@@ -1381,10 +1381,10 @@ sql_exec(const char *stmt, ...)
 
 /* run a select statement with % formatting */
 /* return true if the row was found */
-bool
+eb_bool
 sql_select(const char *stmt, ...)
 {
-    bool rowfound;
+    eb_bool rowfound;
     va_start(sqlargs, stmt);
     stmt = lineFormatStack(stmt, 0, &sqlargs);
     rowfound = execInternal(stmt, 2);
@@ -1394,10 +1394,10 @@ sql_select(const char *stmt, ...)
 }				/* sql_select */
 
 /* run a select statement with no % formatting of the string */
-bool
+eb_bool
 sql_selectNF(const char *stmt, ...)
 {
-    bool rowfound;
+    eb_bool rowfound;
     va_start(sqlargs, stmt);
     rowfound = execInternal(stmt, 2);
     retsFromOdbc();
@@ -1409,7 +1409,7 @@ sql_selectNF(const char *stmt, ...)
 int
 sql_selectOne(const char *stmt, ...)
 {
-    bool rowfound;
+    eb_bool rowfound;
     va_start(sqlargs, stmt);
     stmt = lineFormatStack(stmt, 0, &sqlargs);
     rowfound = execInternal(stmt, 2);
@@ -1423,10 +1423,10 @@ sql_selectOne(const char *stmt, ...)
 }				/* sql_selectOne */
 
 /* run a stored procedure with no % formatting */
-static bool
+static eb_bool
 sql_procGo(const char *stmt)
 {
-    bool rowfound;
+    eb_bool rowfound;
     char *s = allocMem(20 + strlen(stmt));
     strcpy(s, "execute procedure ");
     strcat(s, stmt);
@@ -1437,10 +1437,10 @@ sql_procGo(const char *stmt)
 }				/* sql_procGo */
 
 /* run a stored procedure */
-bool
+eb_bool
 sql_proc(const char *stmt, ...)
 {
-    bool rowfound;
+    eb_bool rowfound;
     va_start(sqlargs, stmt);
     stmt = lineFormatStack(stmt, 0, &sqlargs);
     rowfound = sql_procGo(stmt);
@@ -1453,7 +1453,7 @@ sql_proc(const char *stmt, ...)
 int
 sql_procOne(const char *stmt, ...)
 {
-    bool rowfound;
+    eb_bool rowfound;
     va_start(sqlargs, stmt);
     stmt = lineFormatStack(stmt, 0, &sqlargs);
     rowfound = sql_procGo(stmt);
@@ -1473,7 +1473,7 @@ Prepare, open, close, and free SQL cursors.
 
 /* prepare a cursor; return the ID number of that cursor */
 static int
-prepareCursor(const char *stmt, bool scrollflag)
+prepareCursor(const char *stmt, eb_bool scrollflag)
 {
     struct OCURS *o = findNewCursor();
     stmt = lineFormatStack(stmt, 0, &sqlargs);
@@ -1503,7 +1503,7 @@ sql_prepare(const char *stmt, ...)
 {
     int n;
     va_start(sqlargs, stmt);
-    n = prepareCursor(stmt, false);
+    n = prepareCursor(stmt, eb_false);
     exclist = 0;
     if(n < 0)
 	SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
@@ -1515,7 +1515,7 @@ sql_prepareScrolling(const char *stmt, ...)
 {
     int n;
     va_start(sqlargs, stmt);
-    n = prepareCursor(stmt, true);
+    n = prepareCursor(stmt, eb_true);
     exclist = 0;
     if(n < 0)
 	SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
@@ -1550,7 +1550,7 @@ sql_prepOpen(const char *stmt, ...)
     struct OCURS *o;
 
     va_start(sqlargs, stmt);
-    n = prepareCursor(stmt, false);
+    n = prepareCursor(stmt, eb_false);
     if(n < 0) {
 	SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 	return n;
@@ -1625,20 +1625,20 @@ sql_closeFree(int cid)
 
 /* fetch row n from the open cursor.
  * Flag can be used to fetch first, last, next, or previous. */
-static bool
+static eb_bool
 fetchInternal(int cid, long n, int flag)
 {
     long nextrow, lastrow;
     struct OCURS *o = findCursor(cid);
 
-    everything_null = true;
+    everything_null = eb_true;
 
     /* don't do the fetch if we're looking for row 0 absolute,
      * that just nulls out the return values */
     if(flag == SQL_FD_FETCH_ABSOLUTE && !n) {
 	o->rownum = 0;
       fetchZero:
-	return false;
+	return eb_false;
     }
 
     lastrow = nextrow = o->rownum;
@@ -1684,58 +1684,58 @@ fetchInternal(int cid, long n, int flag)
     hstmt = o->hstmt;
     rc = SQLFetchScroll(hstmt, (ushort) flag, nextrow);
     if(rc == SQL_NO_DATA)
-	return false;
+	return eb_false;
     if(errorTrap(0))
-	return false;
+	return eb_false;
     o->rownum = nextrow;
-    everything_null = false;
-    return true;
+    everything_null = eb_false;
+    return eb_true;
 }				/* fetchInternal */
 
-bool
+eb_bool
 sql_fetchFirst(int cid, ...)
 {
-    bool rowfound;
+    eb_bool rowfound;
     va_start(sqlargs, cid);
     rowfound = fetchInternal(cid, 0L, SQL_FD_FETCH_FIRST);
     retsFromOdbc();
     return rowfound;
 }				/* sql_fetchFirst */
 
-bool
+eb_bool
 sql_fetchLast(int cid, ...)
 {
-    bool rowfound;
+    eb_bool rowfound;
     va_start(sqlargs, cid);
     rowfound = fetchInternal(cid, 0L, SQL_FD_FETCH_LAST);
     retsFromOdbc();
     return rowfound;
 }				/* sql_fetchLast */
 
-bool
+eb_bool
 sql_fetchNext(int cid, ...)
 {
-    bool rowfound;
+    eb_bool rowfound;
     va_start(sqlargs, cid);
     rowfound = fetchInternal(cid, 0L, SQL_FD_FETCH_NEXT);
     retsFromOdbc();
     return rowfound;
 }				/* sql_fetchNext */
 
-bool
+eb_bool
 sql_fetchPrev(int cid, ...)
 {
-    bool rowfound;
+    eb_bool rowfound;
     va_start(sqlargs, cid);
     rowfound = fetchInternal(cid, 0L, SQL_FD_FETCH_PREV);
     retsFromOdbc();
     return rowfound;
 }				/* sql_fetchPrev */
 
-bool
+eb_bool
 sql_fetchAbs(int cid, long rownum, ...)
 {
-    bool rowfound;
+    eb_bool rowfound;
     va_start(sqlargs, rownum);
     rowfound = fetchInternal(cid, rownum, SQL_FD_FETCH_ABSOLUTE);
     retsFromOdbc();
@@ -1811,7 +1811,7 @@ getPrimaryKey(char *tname, int *part1, int *part2, int *part3, int *part4)
     return;
 }				/* getPrimaryKey */
 
-bool
+eb_bool
 showTables(void)
 {
     char tabname[40];
@@ -1849,19 +1849,19 @@ SQLSetConnectAttr(hdbc, SQL_ATTR_METADATA_ID,
 	stringAndString(&buf, &buflen, tabline);
     }
 
-    cx = sideBuffer(0, buf, buflen, 0, false);
+    cx = sideBuffer(0, buf, buflen, 0, eb_false);
     nzFree(buf);
     i_printf(MSG_ShowTables, cx);
     SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
-    return true;
+    return eb_true;
 
   abort:
     SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
-    return false;
+    return eb_false;
 }				/* showTables */
 
 /* display foreign keys, from this table to others */
-bool
+eb_bool
 fetchForeign(char *tname)
 {
     char farschema[40], fartab[40];
@@ -1904,9 +1904,9 @@ fetchForeign(char *tname)
     }
 
     SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
-    return true;
+    return eb_true;
 
   abort:
     SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
-    return false;
+    return eb_false;
 }				/* fetchForeign */

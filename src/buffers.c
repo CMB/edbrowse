@@ -40,9 +40,9 @@ static int destLine;		/* as in 57,89m226 */
 static int last_z = 1;
 static char cmd, icmd, scmd;
 static uchar subPrint;		/* print lines after substitutions */
-static bool noStack;		/* don't stack up edit sessions */
-static bool globSub;		/* in the midst of a g// command */
-static bool inscript;		/* run from inside an edbrowse function */
+static eb_bool noStack;		/* don't stack up edit sessions */
+static eb_bool globSub;		/* in the midst of a g// command */
+static eb_bool inscript;		/* run from inside an edbrowse function */
 static int lastq, lastqq;
 static char icmd;		/* input command, usually the same as cmd */
 
@@ -169,7 +169,7 @@ fetchLine(int n, int show)
 }				/* fetchLine */
 
 static int
-apparentSize(int cx, bool browsing)
+apparentSize(int cx, eb_bool browsing)
 {
     char c;
     int i, ln, size;
@@ -242,9 +242,9 @@ displayLine(int n)
 	printf("^");
 
     while((c = *s++) != '\n') {
-	bool expand = false;
+	eb_bool expand = eb_false;
 	if(c == 0 || c == '\r' || c == '\x1b')
-	    expand = true;
+	    expand = eb_true;
 	if(cmd == 'l') {
 /* show tabs and backspaces, ed style */
 	    if(c == '\b')
@@ -252,7 +252,7 @@ displayLine(int n)
 	    if(c == '\t')
 		c = '>';
 	    if(c < ' ' || c == 0x7f || c >= 0x80 && listNA)
-		expand = true;
+		expand = eb_true;
 	}			/* list */
 	if(expand)
 	    printf("~%02X", c), cnt += 3;
@@ -327,8 +327,8 @@ inputLine(void)
     uchar *s;
 
   top:
-    intFlag = false;
-    inInput = true;
+    intFlag = eb_false;
+    inInput = eb_true;
     nzFree(last_rl);
     last_rl = 0;
     s = 0;
@@ -346,8 +346,8 @@ inputLine(void)
 	i_puts(MSG_EndFile);
 	ebClose(1);
     }
-    inInput = false;
-    intFlag = false;
+    inInput = eb_false;
+    intFlag = eb_false;
 
     i = j = 0;
     if(last_rl) {
@@ -389,7 +389,7 @@ inputLine(void)
 
 static struct {
     char lhs[MAXRE], rhs[MAXRE];
-    bool lhs_yes, rhs_yes;
+    eb_bool lhs_yes, rhs_yes;
 } globalSubs;
 
 static void
@@ -551,33 +551,33 @@ This is how the user edits multiple sessions, or browses multiple
 web pages, simultaneously.
 *********************************************************************/
 
-bool
+eb_bool
 cxCompare(int cx)
 {
     if(cx == 0) {
 	setError(MSG_Session0);
-	return false;
+	return eb_false;
     }
     if(cx >= MAXSESSION) {
 	setError(MSG_SessionHigh, cx, MAXSESSION - 1);
-	return false;
+	return eb_false;
     }
     if(cx != context)
-	return true;		/* ok */
+	return eb_true;		/* ok */
     setError(MSG_SessionCurrent, cx);
-    return false;
+    return eb_false;
 }				/*cxCompare */
 
 /* is a context active? */
-bool
+eb_bool
 cxActive(int cx)
 {
     if(cx <= 0 || cx >= MAXSESSION)
 	i_printfExit(MSG_SessionOutRange, cx);
     if(sessionList[cx].lw)
-	return true;
+	return eb_true;
     setError(MSG_SessionInactive, cx);
-    return false;
+    return eb_false;
 }				/* cxActive */
 
 static void
@@ -589,7 +589,7 @@ cxInit(int cx)
     sessionList[cx].fw = sessionList[cx].lw = lw;
 }				/* cxInit */
 
-bool
+eb_bool
 cxQuit(int cx, int action)
 {
     struct ebWindow *w = sessionList[cx].lw;
@@ -604,11 +604,11 @@ cxQuit(int cx, int action)
 	setError(MSG_ExpectW);
 	if(cx != context)
 	    setError(MSG_ExpectWX, cx);
-	return false;
+	return eb_false;
     }
 
     if(!action)
-	return true;		/* just a test */
+	return eb_true;		/* just a test */
 
     if(cx == context) {
 /* Don't need to retain the undo lines. */
@@ -631,21 +631,21 @@ cxQuit(int cx, int action)
     if(cx == context)
 	cw = 0;
 
-    return true;
+    return eb_true;
 }				/* cxQuit */
 
 /* Switch to another edit session.
  * This assumes cxCompare has succeeded - we're moving to a different context.
  * Pass the context number and an interactive flag. */
 void
-cxSwitch(int cx, bool interactive)
+cxSwitch(int cx, eb_bool interactive)
 {
-    bool created = false;
+    eb_bool created = eb_false;
     struct ebWindow *nw = sessionList[cx].lw;	/* the new window */
     if(!nw) {
 	cxInit(cx);
 	nw = sessionList[cx].lw;
-	created = true;
+	created = eb_true;
     } else {
 	saveSubstitutionStrings();
 	restoreSubstitutionStrings(nw);
@@ -653,7 +653,7 @@ cxSwitch(int cx, bool interactive)
 
     if(cw) {
 	freeUndoLines(cw->map);
-	cw->firstOpMode = false;
+	cw->firstOpMode = eb_false;
     }
     cw = nw;
     cs = sessionList + cx;
@@ -687,13 +687,13 @@ linesReset(void)
     textLinesCount = textLinesMax = 0;
 }				/* linesReset */
 
-bool
+eb_bool
 linesComing(int n)
 {
     int need = textLinesCount + n;
     if(need > LNMAX) {
 	setError(MSG_LineLimit);
-	return false;
+	return eb_false;
     }
     if(need > textLinesMax) {
 	int newmax = textLinesMax * 3 / 2;
@@ -712,18 +712,18 @@ linesComing(int n)
     /* overflow requires realloc */
     /* We now have room for n new lines, but you have to add n
      * to textLines Count, once you have brought in the lines. */
-    return true;
+    return eb_true;
 }				/* linesComing */
 
 /* This function is called for web redirection, by the refresh command,
  * or by window.location = new_url. */
 static char *newlocation;
 static int newloc_d;		/* possible delay */
-static bool newloc_rf;		/* refresh the buffer */
-bool js_redirects;
+static eb_bool newloc_rf;		/* refresh the buffer */
+eb_bool js_redirects;
 
 void
-gotoLocation(char *url, int delay, bool rf)
+gotoLocation(char *url, int delay, eb_bool rf)
 {
     if(newlocation && delay >= newloc_d) {
 	nzFree(url);
@@ -734,7 +734,7 @@ gotoLocation(char *url, int delay, bool rf)
     newloc_d = delay;
     newloc_rf = rf;
     if(!delay)
-	js_redirects = true;
+	js_redirects = eb_true;
 }				/* gotoLocation */
 
 /* Adjust the map of line numbers -- we have inserted text.
@@ -776,14 +776,14 @@ addToMap(int start, int end, int destl)
 	strcat(newmap, cw->map + j);
     nzFree(cw->map);
     cw->map = newmap;
-    cw->firstOpMode = undoable = true;
+    cw->firstOpMode = undoable = eb_true;
     if(!cw->browseMode)
-	cw->changeMode = true;
+	cw->changeMode = eb_true;
 }				/* addToMap */
 
 /* Add a block of text into the buffer; uses addToMap(). */
-bool
-addTextToBuffer(const pst inbuf, int length, int destl, bool onside)
+eb_bool
+addTextToBuffer(const pst inbuf, int length, int destl, eb_bool onside)
 {
     int i, j, linecount = 0;
     int start, end;
@@ -791,14 +791,14 @@ addTextToBuffer(const pst inbuf, int length, int destl, bool onside)
 	if(inbuf[i] == '\n')
 	    ++linecount;
     if(!linesComing(linecount + 1))
-	return false;
+	return eb_false;
     if(destl == cw->dol)
-	cw->nlMode = false;
+	cw->nlMode = eb_false;
     if(inbuf[length - 1] != '\n') {
 /* doesn't end in newline */
 	++linecount;		/* last line wasn't counted */
 	if(destl == cw->dol) {
-	    cw->nlMode = true;
+	    cw->nlMode = eb_true;
 	    if(cmd != 'b' && !cw->binMode && !ismc && !onside)
 		i_puts(MSG_NoTrailing);
 	}
@@ -823,12 +823,12 @@ addTextToBuffer(const pst inbuf, int length, int destl, bool onside)
     }				/* loop breaking inbuf into lines */
     textLinesCount = end;
     addToMap(start, end, destl);
-    return true;
+    return eb_true;
 }				/* addTextToBuffer */
 
 /* Pass input lines straight into the buffer, until the user enters . */
 
-static bool
+static eb_bool
 inputLinesIntoBuffer(void)
 {
     int start = textLinesCount;
@@ -840,7 +840,7 @@ inputLinesIntoBuffer(void)
 	line = inputLine();
     while(line[0] != '.' || line[1] != '\n') {
 	if(!linesComing(1))
-	    return false;
+	    return eb_false;
 	textLines[end++] = clonePstring(line);
 	line = inputLine();
     }
@@ -848,13 +848,13 @@ inputLinesIntoBuffer(void)
 	cw->dot = endRange;
 	if(!cw->dot && cw->dol)
 	    cw->dot = 1;
-	return true;
+	return eb_true;
     }
     if(endRange == cw->dol)
-	cw->nlMode = false;
+	cw->nlMode = eb_false;
     textLinesCount = end;
     addToMap(start, end, endRange);
-    return true;
+    return eb_true;
 }				/* inputLinesIntoBuffer */
 
 /* Delete a block of text. */
@@ -864,7 +864,7 @@ delText(int start, int end)
 {
     int i, j;
     if(end == cw->dol)
-	cw->nlMode = false;
+	cw->nlMode = eb_false;
     j = end - start + 1;
     strmove(cw->map + start * LNWIDTH, cw->map + (end + 1) * LNWIDTH);
 /* move the labels */
@@ -887,9 +887,9 @@ delText(int start, int end)
 	free(cw->map);
 	cw->map = 0;
     }
-    cw->firstOpMode = undoable = true;
+    cw->firstOpMode = undoable = eb_true;
     if(!cw->browseMode)
-	cw->changeMode = true;
+	cw->changeMode = eb_true;
 }				/* delText */
 
 /* Delete files from a directory as you delete lines.
@@ -908,19 +908,19 @@ makeAbsPath(char *f)
     return path;
 }				/* makeAbsPath */
 
-static bool
+static eb_bool
 delFiles(void)
 {
     int ln, cnt;
 
     if(!dirWrite) {
 	setError(MSG_DirNoWrite);
-	return false;
+	return eb_false;
     }
 
     if(dirWrite == 1 && !recycleBin) {
 	setError(MSG_NoRecycle);
-	return false;
+	return eb_false;
     }
 
     ln = startRange;
@@ -935,14 +935,14 @@ delFiles(void)
 	path = makeAbsPath(file);
 	if(!path) {
 	    free(file);
-	    return false;
+	    return eb_false;
 	}
 
 	ftype = dirSuffix(ln);
 	if(dirWrite == 2 && *ftype == '/') {
 	    setError(MSG_NoDirDelete);
 	    free(file);
-	    return false;
+	    return eb_false;
 	}
 
 	if(dirWrite == 2 || *ftype && strchr("@<*^|", *ftype)) {
@@ -950,7 +950,7 @@ delFiles(void)
 	    if(unlink(path)) {
 		setError(MSG_NoRemove, file);
 		free(file);
-		return false;
+		return eb_false;
 	    }
 	} else {
 	    char bin[ABSPATH];
@@ -962,17 +962,17 @@ delFiles(void)
 		    if(*ftype == '/') {
 			setError(MSG_CopyMoveDir);
 			free(file);
-			return false;
+			return eb_false;
 		    }
 		    if(!fileIntoMemory(path, &rmbuf, &rmlen)) {
 			free(file);
-			return false;
+			return eb_false;
 		    }
 		    if(!memoryOutToFile(bin, rmbuf, rmlen,
 		       MSG_TempNoCreate2, MSG_NoWrite2)) {
 			free(file);
 			nzFree(rmbuf);
-			return false;
+			return eb_false;
 		    }
 		    nzFree(rmbuf);
 		    goto unlink;
@@ -980,7 +980,7 @@ delFiles(void)
 
 		setError(MSG_NoMoveToTrash, file);
 		free(file);
-		return false;
+		return eb_false;
 	    }
 	}
 
@@ -988,12 +988,12 @@ delFiles(void)
 	delText(ln, ln);
     }
 
-    return true;
+    return eb_true;
 }				/* delFiles */
 
 /* Move or copy a block of text. */
 /* Uses range variables, hence no parameters. */
-static bool
+static eb_bool
 moveCopy(void)
 {
     int sr = startRange;
@@ -1009,25 +1009,25 @@ moveCopy(void)
 
     if(dl > sr && dl < er) {
 	setError(MSG_DestInBlock);
-	return false;
+	return eb_false;
     }
     if(cmd == 'm' && (dl == er || dl == sr)) {
 	if(globSub)
 	    setError(MSG_NoChange);
-	return false;
+	return eb_false;
     }
 
     if(cmd == 't') {
 	if(!linesComing(n_lines))
-	    return false;
+	    return eb_false;
 	for(i = sr; i < er; ++i)
 	    textLines[textLinesCount++] = fetchLine(i, 0);
 	addToMap(textLinesCount - n_lines, textLinesCount, destLine);
-	return true;
+	return eb_true;
     }
     /* copy */
     if(destLine == cw->dol || endRange == cw->dol)
-	cw->nlMode = false;
+	cw->nlMode = eb_false;
 /* All we really need do is rearrange the map. */
     newmap = allocMem((cw->dol + 1) * LNWIDTH + 1);
     strcpy(newmap, map);
@@ -1067,24 +1067,24 @@ moveCopy(void)
 
     cw->dot = endRange;
     cw->dot += (dl < sr ? -diff : diff);
-    cw->firstOpMode = undoable = true;
+    cw->firstOpMode = undoable = eb_true;
     if(!cw->browseMode)
-	cw->changeMode = true;
-    return true;
+	cw->changeMode = eb_true;
+    return eb_true;
 }				/* moveCopy */
 
 /* Join lines from startRange to endRange. */
-static bool
+static eb_bool
 joinText(void)
 {
     int j, size;
     pst newline, t;
     if(startRange == endRange) {
 	setError(MSG_Join1);
-	return false;
+	return eb_false;
     }
     if(!linesComing(1))
-	return false;
+	return eb_false;
     size = 0;
     for(j = startRange; j <= endRange; ++j)
 	size += pstLength(fetchLine(j, -1));
@@ -1105,19 +1105,19 @@ joinText(void)
     ++textLinesCount;
     delText(startRange + 1, endRange);
     cw->dot = startRange;
-    return true;
+    return eb_true;
 }				/* joinText */
 
 /* Read a file, or url, into the current buffer.
  * Post/get data is passed, via the second parameter, if it's a URL. */
-bool
+eb_bool
 readFile(const char *filename, const char *post)
 {
     char *rbuf;			/* read buffer */
     int readSize;		/* should agree with fileSize */
     int fh;			/* file handle */
-    bool rc;			/* return code */
-    bool is8859, isutf8;
+    eb_bool rc;			/* return code */
+    eb_bool is8859, isutf8;
     char *nopound;
 char filetype;
 
@@ -1128,7 +1128,7 @@ char filetype;
 	filename += 7;
 	if(!*filename) {
 	    setError(MSG_MissingFileName);
-	    return false;
+	    return eb_false;
 	}
 	goto fromdisk;
     }
@@ -1136,10 +1136,10 @@ char filetype;
     if(isURL(filename)) {
 	const char *domain = getHostURL(filename);
 	if(!domain)
-	    return false;	/* some kind of error */
+	    return eb_false;	/* some kind of error */
 	if(!*domain) {
 	    setError(MSG_DomainEmpty);
-	    return false;
+	    return eb_false;
 	}
 
 	rc = httpConnect(0, filename);
@@ -1148,7 +1148,7 @@ char filetype;
 /* The error could have occured after redirection */
 	    nzFree(changeFileName);
 	    changeFileName = 0;
-	    return false;
+	    return eb_false;
 	}
 
 /* We got some data.  Any warnings along the way have been printed,
@@ -1159,7 +1159,7 @@ char filetype;
 	if(fileSize == 0) {	/* empty file */
 	    nzFree(rbuf);
 	    cw->dot = endRange;
-	    return true;
+	    return eb_true;
 	}
 
 	goto gotdata;
@@ -1169,34 +1169,34 @@ char filetype;
 	const char *t1, *t2;
 	if(!cw->sqlMode) {
 	    setError(MSG_DBOtherFile);
-	    return false;
+	    return eb_false;
 	}
 	t1 = strchr(cw->fileName, ']');
 	t2 = strchr(filename, ']');
 	if(t1 - cw->fileName != t2 - filename ||
 	   memcmp(cw->fileName, filename, t2 - filename)) {
 	    setError(MSG_DBOtherTable);
-	    return false;
+	    return eb_false;
 	}
 	rc = sqlReadRows(filename, &rbuf);
 	if(!rc) {
 	    nzFree(rbuf);
 	    if(!cw->dol && cmd != 'r') {
-		cw->sqlMode = false;
+		cw->sqlMode = eb_false;
 		nzFree(cw->fileName);
 		cw->fileName = 0;
 	    }
-	    return false;
+	    return eb_false;
 	}
 	serverData = rbuf;
 	fileSize = strlen(rbuf);
 	if(rbuf == EMPTYSTRING)
-	    return true;
+	    return eb_true;
 	goto intext;
     }
 
   fromdisk:
-    filetype = fileTypeByName(filename, false);
+    filetype = fileTypeByName(filename, eb_false);
 /* reading a file from disk */
     fileSize = 0;
     if(filetype == 'd') {
@@ -1210,15 +1210,15 @@ char filetype;
 /* Understand that the empty string now means / */
 /* get the files, or fail if there is a problem */
 	if(!sortedDirList(filename, &start, &end))
-	    return false;
+	    return eb_false;
 	if(!cw->dol) {
-	    cw->dirMode = true;
+	    cw->dirMode = eb_true;
 	    i_puts(MSG_DirMode);
 	}
 	if(start == end) {	/* empty directory */
 	    cw->dot = endRange;
 	    fileSize = 0;
-	    return true;
+	    return eb_true;
 	}
 
 	addToMap(start, end, endRange);
@@ -1239,7 +1239,7 @@ char filetype;
 	    fileSize += len + 1;
 	    if(!abspath)
 		continue;	/* should never happen */
-	    ftype = fileTypeByName(abspath, true);
+	    ftype = fileTypeByName(abspath, eb_true);
 	    if(!ftype)
 		continue;
 	    s = cw->map + (endRange + 1 + j - start) * LNWIDTH + LNDIR;
@@ -1270,7 +1270,7 @@ char filetype;
 		*s++ = c;
 	    ++fileSize;
 	}			/* loop fixing files in the directory scan */
-	return true;
+	return eb_true;
     }
 
     nopound = cloneString(filename);
@@ -1280,12 +1280,12 @@ char filetype;
     rc = fileIntoMemory(nopound, &rbuf, &fileSize);
     nzFree(nopound);
     if(!rc)
-	return false;
+	return eb_false;
     serverData = rbuf;
     if(fileSize == 0) {		/* empty file */
 	free(rbuf);
 	cw->dot = endRange;
-	return true;
+	return eb_true;
     }
     /* empty */
   gotdata:
@@ -1324,30 +1324,30 @@ char filetype;
 	    }
 	    if(!cw->dol) {
 		if(isutf8) {
-		    cw->utf8Mode = true;
+		    cw->utf8Mode = eb_true;
 		    debugPrint(3, "setting utf8 mode");
 		}
 		if(is8859) {
-		    cw->iso8859Mode = true;
+		    cw->iso8859Mode = eb_true;
 		    debugPrint(3, "setting 8859 mode");
 		}
 	    }
 	}
     } else if(binaryDetect & !cw->binMode) {
 	i_puts(MSG_BinaryData);
-	cw->binMode = true;
+	cw->binMode = eb_true;
     }
 
   intext:
-    rc = addTextToBuffer((const pst)rbuf, fileSize, endRange, false);
+    rc = addTextToBuffer((const pst)rbuf, fileSize, endRange, eb_false);
     free(rbuf);
     if(cw->sqlMode)
-	undoable = false;
+	undoable = eb_false;
     return rc;
 }				/* readFile */
 
 /* Write a range to a file. */
-static bool
+static eb_bool
 writeFile(const char *name, int mode)
 {
     int i;
@@ -1360,22 +1360,22 @@ writeFile(const char *name, int mode)
 
     if(!*name) {
 	setError(MSG_MissingFileName);
-	return false;
+	return eb_false;
     }
 
     if(isURL(name)) {
 	setError(MSG_NoWriteURL);
-	return false;
+	return eb_false;
     }
 
     if(isSQL(name)) {
 	setError(MSG_WriteDB);
-	return false;
+	return eb_false;
     }
 
     if(!cw->dol) {
 	setError(MSG_WriteEmpty);
-	return false;
+	return eb_false;
     }
 
 /* mode should be TRUNC or APPEND */
@@ -1392,7 +1392,7 @@ writeFile(const char *name, int mode)
 
     if(fh == NULL) {
 	setError(MSG_NoCreate2, name);
-	return false;
+	return eb_false;
     }
 
     if(name == cw->fileName && iuConvert) {
@@ -1412,8 +1412,8 @@ writeFile(const char *name, int mode)
 	char *suf = dirSuffix(i);
 	char *tp;
 	int tlen;
-	bool alloc_p = cw->browseMode;
-	bool rc = true;
+	eb_bool alloc_p = cw->browseMode;
+	eb_bool rc = eb_true;
 
 	if(!suf[0]) {
 	    if(i == cw->dol && cw->nlMode)
@@ -1424,10 +1424,10 @@ writeFile(const char *name, int mode)
 		    utf2iso((char *)p, len, &tp, &tlen);
 		    if(alloc_p)
 			free(p);
-		    alloc_p = true;
+		    alloc_p = eb_true;
 		    p = (pst) tp;
 		    if(fwrite(p, 1, tlen, fh) < tlen)
-			rc = false;
+			rc = eb_false;
 		    goto endline;
 		}
 
@@ -1435,16 +1435,16 @@ writeFile(const char *name, int mode)
 		    iso2utf((char *)p, len, &tp, &tlen);
 		    if(alloc_p)
 			free(p);
-		    alloc_p = true;
+		    alloc_p = eb_true;
 		    p = (pst) tp;
 		    if(fwrite(p, 1, tlen, fh) < tlen)
-			rc = false;
+			rc = eb_false;
 		    goto endline;
 		}
 	    }
 
 	    if(fwrite(p, 1, len, fh) < len)
-		rc = false;
+		rc = eb_false;
 	    goto endline;
 	}
 
@@ -1452,7 +1452,7 @@ writeFile(const char *name, int mode)
 	--len;
 	if(fwrite(p, 1, len, fh) < len) {
 	  badwrite:
-	    rc = false;
+	    rc = eb_false;
 	    goto endline;
 	}
 	fileSize += len;
@@ -1467,7 +1467,7 @@ writeFile(const char *name, int mode)
 	if(!rc) {
 	    setError(MSG_NoWrite2, name);
 	    fclose(fh);
-	    return false;
+	    return eb_false;
 	}
 	fileSize += len;
     }				/* loop over lines */
@@ -1476,28 +1476,28 @@ writeFile(const char *name, int mode)
 /* This is not an undoable operation, nor does it change data.
  * In fact the data is "no longer modified" if we have written all of it. */
     if(startRange == 1 && endRange == cw->dol)
-	cw->changeMode = false;
-    return true;
+	cw->changeMode = eb_false;
+    return eb_true;
 }				/* writeFile */
 
-static bool
+static eb_bool
 readContext(int cx)
 {
     struct ebWindow *lw;
     int i, start, end, fardol;
     if(!cxCompare(cx))
-	return false;
+	return eb_false;
     if(!cxActive(cx))
-	return false;
+	return eb_false;
     fileSize = 0;
     lw = sessionList[cx].lw;
     fardol = lw->dol;
     if(!fardol)
-	return true;
+	return eb_true;
     if(!linesComing(fardol))
-	return false;
+	return eb_false;
     if(cw->dol == endRange)
-	cw->nlMode = false;
+	cw->nlMode = eb_false;
     start = end = textLinesCount;
     for(i = 1; i <= fardol; ++i) {
 	pst p = fetchLineContext(i, (lw->dirMode ? -1 : 1), cx);
@@ -1521,16 +1521,16 @@ readContext(int cx)
     if(lw->nlMode) {
 	--fileSize;
 	if(cw->dol == endRange)
-	    cw->nlMode = true;
+	    cw->nlMode = eb_true;
     }
     if(binaryDetect & !cw->binMode && lw->binMode) {
-	cw->binMode = true;
+	cw->binMode = eb_true;
 	i_puts(MSG_BinaryData);
     }
-    return true;
+    return eb_true;
 }				/* readContext */
 
-static bool
+static eb_bool
 writeContext(int cx)
 {
     struct ebWindow *lw;
@@ -1541,11 +1541,11 @@ writeContext(int cx)
     if(!startRange)
 	fardol = 0;
     if(!linesComing(fardol))
-	return false;
+	return eb_false;
     if(!cxCompare(cx))
-	return false;
+	return eb_false;
     if(cxActive(cx) && !cxQuit(cx, 2))
-	return false;
+	return eb_false;
 
     cxInit(cx);
     lw = sessionList[cx].lw;
@@ -1574,13 +1574,13 @@ writeContext(int cx)
 	lw->map = newmap;
 	lw->binMode = cw->binMode;
 	if(cw->nlMode && endRange == cw->dol) {
-	    lw->nlMode = true;
+	    lw->nlMode = eb_true;
 	    --fileSize;
 	}
     }				/* nonempty range */
     lw->dot = lw->dol = fardol;
 
-    return true;
+    return eb_true;
 }				/* writeContext */
 
 static void
@@ -1597,7 +1597,7 @@ debrowseSuffix(char *s)
     }
 }				/* debrowseSuffix */
 
-static bool
+static eb_bool
 shellEscape(const char *line)
 {
     char *newline, *s;
@@ -1618,7 +1618,7 @@ shellEscape(const char *line)
 /* interactive shell */
 	if(!isInteractive) {
 	    setError(MSG_SessionBackground);
-	    return false;
+	    return eb_false;
 	}
 /* Ignoring of SIGPIPE propagates across fork-exec. */
 /* So stop ignoring it for the duration of system(). */
@@ -1631,7 +1631,7 @@ shellEscape(const char *line)
 #endif
 	signal(SIGPIPE, SIG_IGN);
 	i_puts(MSG_OK);
-	return true;
+	return eb_true;
     }
 
 /* Make substitutions within the command line. */
@@ -1666,7 +1666,7 @@ shellEscape(const char *line)
 		    ++n;
 		if(n > cw->dol || n == 0) {
 		    setError(MSG_OutOfRange, key);
-		    return false;
+		    return eb_false;
 		}
 	      frombuf:
 		++t;
@@ -1678,7 +1678,7 @@ shellEscape(const char *line)
 		    if(perl2c((char *)p)) {
 			free(p);
 			setError(MSG_ShellNull);
-			return false;
+			return eb_false;
 		    }
 		    strcpy(s, (char *)p);
 		    s += strlen(s);
@@ -1691,7 +1691,7 @@ shellEscape(const char *line)
 		n = cw->labels[key - 'a'];
 		if(!n) {
 		    setError(MSG_NoLabel, key);
-		    return false;
+		    return eb_false;
 		}
 		goto frombuf;
 	    }
@@ -1717,7 +1717,7 @@ shellEscape(const char *line)
     signal(SIGPIPE, SIG_IGN);
     i_puts(MSG_OK);
     free(newline);
-    return true;
+    return eb_true;
 }				/* shellEscape */
 
 /* Valid delimiters for search/substitute.
@@ -1734,8 +1734,8 @@ static const char valid_laddr[] = "0123456789-'.$+/?";
  * A pointer to the second delimiter is returned, along with the
  * (possibly reformatted) regular expression. */
 
-static bool
-regexpCheck(const char *line, bool isleft, bool ebmuck,
+static eb_bool
+regexpCheck(const char *line, eb_bool isleft, eb_bool ebmuck,
    char **rexp, const char **split)
 {				/* result parameters */
     static char re[MAXRE + 20];
@@ -1743,9 +1743,9 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
     char *e = re;
     char c, d;
 /* Remember whether a char is "on deck", ready to be modified by * etc. */
-    bool ondeck = false;
-    bool was_ques = true;	/* previous modifier was ? */
-    bool cc = false;		/* are we in a [...] character class */
+    eb_bool ondeck = eb_false;
+    eb_bool was_ques = eb_true;	/* previous modifier was ? */
+    eb_bool cc = eb_false;		/* are we in a [...] character class */
     int mod;			/* length of modifier */
     int paren = 0;		/* nesting level of parentheses */
 /* We wouldn't be here if the line was empty. */
@@ -1754,7 +1754,7 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
     *rexp = re;
     if(!strchr(valid_delim, delim)) {
 	setError(MSG_BadDelimit);
-	return false;
+	return eb_false;
     }
     start = line;
 
@@ -1764,34 +1764,34 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 	    if(c == delim || c == 0) {
 		if(!cw->lhs_yes) {
 		    setError(MSG_NoSearchString);
-		    return false;
+		    return eb_false;
 		}
 		strcpy(re, cw->lhs);
 		*split = line;
-		return true;
+		return eb_true;
 	    }
 /* Interpret lead * or lone [ as literal */
 	    if(strchr("*?+", c) || c == '[' && !line[1]) {
 		*e++ = '\\';
 		*e++ = c;
 		++line;
-		ondeck = true;
+		ondeck = eb_true;
 	    }
 	} else if(c == '%' && (line[1] == delim || line[1] == 0)) {
 	    if(!cw->rhs_yes) {
 		setError(MSG_NoReplaceString);
-		return false;
+		return eb_false;
 	    }
 	    strcpy(re, cw->rhs);
 	    *split = line + 1;
-	    return true;
+	    return eb_true;
 	}
     }
     /* ebmuck tricks */
     while(c = *line) {
 	if(e >= re + MAXRE - 3) {
 	    setError(MSG_RexpLong);
-	    return false;
+	    return eb_false;
 	}
 	d = line[1];
 
@@ -1799,22 +1799,22 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 	    line += 2;
 	    if(d == 0) {
 		setError(MSG_LineBackslash);
-		return false;
+		return eb_false;
 	    }
-	    ondeck = true;
-	    was_ques = false;
+	    ondeck = eb_true;
+	    was_ques = eb_false;
 /* I can't think of any reason to remove the escaping \ from any character,
  * except ()|, where we reverse the sense of escape. */
 	    if(ebmuck && isleft && !cc && (d == '(' || d == ')' || d == '|')) {
 		if(d == '|')
-		    ondeck = false, was_ques = true;
+		    ondeck = eb_false, was_ques = eb_true;
 		if(d == '(')
-		    ++paren, ondeck = false, was_ques = false;
+		    ++paren, ondeck = eb_false, was_ques = eb_false;
 		if(d == ')')
 		    --paren;
 		if(paren < 0) {
 		    setError(MSG_UnexpectedRight);
-		    return false;
+		    return eb_false;
 		}
 		*e++ = d;
 		continue;
@@ -1847,7 +1847,7 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 	if(c == '$' && !isleft && isdigitByte(d)) {
 	    if(d == '0' || isdigitByte(line[2])) {
 		setError(MSG_RexpDollar);
-		return false;
+		return eb_false;
 	    }
 	}
 	/* dollar digit on the right */
@@ -1868,11 +1868,11 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 
 	if(cc) {		/* character class */
 	    if(c == ']')
-		cc = false;
+		cc = eb_false;
 	    continue;
 	}
 	if(c == '[')
-	    cc = true;
+	    cc = eb_true;
 
 /* Skip all these checks for javascript,
  * it probably has the expression right anyways. */
@@ -1882,8 +1882,8 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 /* Modifiers must have a preceding character.
  * Except ? which can reduce the greediness of the others. */
 	if(c == '?' && !was_ques) {
-	    ondeck = false;
-	    was_ques = true;
+	    ondeck = eb_false;
+	    was_ques = eb_true;
 	    continue;
 	}
 
@@ -1911,14 +1911,14 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 	    if(!ondeck) {
 		*e = 0;
 		setError(MSG_RexpModifier, e - mod - 1);
-		return false;
+		return eb_false;
 	    }
-	    ondeck = false;
+	    ondeck = eb_false;
 	    continue;
 	}
 	/* modifier */
-	ondeck = true;
-	was_ques = false;
+	ondeck = eb_true;
+	was_ques = eb_false;
     }				/* loop over chars in the pattern */
     *e = 0;
 
@@ -1927,35 +1927,35 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
     if(ebmuck) {
 	if(cc) {
 	    setError(MSG_NoBracket);
-	    return false;
+	    return eb_false;
 	}
 	if(paren) {
 	    setError(MSG_NoParen);
-	    return false;
+	    return eb_false;
 	}
 
 	if(isleft) {
-	    cw->lhs_yes = true;
+	    cw->lhs_yes = eb_true;
 	    strcpy(cw->lhs, re);
 	} else {
-	    cw->rhs_yes = true;
+	    cw->rhs_yes = eb_true;
 	    strcpy(cw->rhs, re);
 	}
     }
 
     debugPrint(7, "%s regexp %s", (isleft ? "search" : "replace"), re);
-    return true;
+    return eb_true;
 }				/* regexpCheck */
 
 /* regexp variables */
 static int re_count;
 static int re_vector[11 * 3];
 static pcre *re_cc;		/* compiled */
-static bool re_utf8 = true;
+static eb_bool re_utf8 = eb_true;
 
 
 static void
-regexpCompile(const char *re, bool ci)
+regexpCompile(const char *re, eb_bool ci)
 {
     static char try8 = 0;	/* 1 is utf8 on, -1 is utf8 off */
     const char *re_error;
@@ -1998,7 +1998,7 @@ regexpCompile(const char *re, bool ci)
 
 /* Get the start or end of a range.
  * Pass the line containing the address. */
-static bool
+static eb_bool
 getRangePart(const char *line, int *lineno, const char **split)
 {				/* result parameters */
     int ln = cw->dot;		/* this is where we start */
@@ -2016,36 +2016,36 @@ getRangePart(const char *line, int *lineno, const char **split)
 	ln = cw->labels[line[1] - 'a'];
 	if(!ln) {
 	    setError(MSG_NoLabel, line[1]);
-	    return false;
+	    return eb_false;
 	}
 	line += 2;
     } else if(first == '/' || first == '?') {
 
 	char *re;		/* regular expression */
-	bool ci = caseInsensitive;
+	eb_bool ci = caseInsensitive;
 	char incr;		/* forward or back */
 /* Don't look through an empty buffer. */
 	if(cw->dol == 0) {
 	    setError(MSG_EmptyBuffer);
-	    return false;
+	    return eb_false;
 	}
-	if(!regexpCheck(line, true, true, &re, &line))
-	    return false;
+	if(!regexpCheck(line, eb_true, eb_true, &re, &line))
+	    return eb_false;
 	if(*line == first) {
 	    ++line;
 	    if(*line == 'i')
-		ci = true, ++line;
+		ci = eb_true, ++line;
 	}
 
 	/* second delimiter */
 	regexpCompile(re, ci);
 	if(!re_cc)
-	    return false;
+	    return eb_false;
 /* We should probably study the pattern, if the file is large.
  * But then again, it's probably not worth it,
  * since the expressions are simple, and the lines are short. */
 	incr = (first == '/' ? 1 : -1);
-	while(true) {
+	while(eb_true) {
 	    char *subject;
 	    ln += incr;
 	    if(ln > cw->dol)
@@ -2060,14 +2060,14 @@ getRangePart(const char *line, int *lineno, const char **split)
 	    if(re_count < -1) {
 		pcre_free(re_cc);
 		setError(MSG_RexpError2, ln);
-		return (globSub = false);
+		return (globSub = eb_false);
 	    }
 	    if(re_count >= 0)
 		break;
 	    if(ln == cw->dot) {
 		pcre_free(re_cc);
 		setError(MSG_NotFound);
-		return false;
+		return eb_false;
 	    }
 	}			/* loop over lines */
 	pcre_free(re_cc);
@@ -2086,27 +2086,27 @@ getRangePart(const char *line, int *lineno, const char **split)
 
     if(ln > cw->dol) {
 	setError(MSG_LineHigh);
-	return false;
+	return eb_false;
     }
     if(ln < 0) {
 	setError(MSG_LineLow);
-	return false;
+	return eb_false;
     }
 
     *lineno = ln;
     *split = line;
-    return true;
+    return eb_true;
 }				/* getRangePart */
 
 /* Apply a regular expression to each line, and then execute
  * a command for each matching, or nonmatching, line.
  * This is the global feature, g/re/p, which gives us the word grep. */
-static bool
+static eb_bool
 doGlobal(const char *line)
 {
     int gcnt = 0;		/* global count */
-    bool ci = caseInsensitive;
-    bool change;
+    eb_bool ci = caseInsensitive;
+    eb_bool change;
     char delim = *line;
     char *t;
     char *re;			/* regular expression */
@@ -2114,18 +2114,18 @@ doGlobal(const char *line)
 
     if(!delim) {
 	setError(MSG_RexpMissing, icmd);
-	return false;
+	return eb_false;
     }
 
-    if(!regexpCheck(line, true, true, &re, &line))
-	return false;
+    if(!regexpCheck(line, eb_true, eb_true, &re, &line))
+	return eb_false;
     if(*line != delim) {
 	setError(MSG_NoDelimit);
-	return false;
+	return eb_false;
     }
     ++line;
     if(*line == 'i')
-	++line, ci = true;
+	++line, ci = eb_true;
     skipWhite(&line);
 
 /* clean up any previous stars */
@@ -2135,7 +2135,7 @@ doGlobal(const char *line)
 /* Find the lines that match the pattern. */
     regexpCompile(re, ci);
     if(!re_cc)
-	return false;
+	return eb_false;
     for(i = startRange; i <= endRange; ++i) {
 	char *subject = (char *)fetchLine(i, 1);
 	re_count =
@@ -2145,7 +2145,7 @@ doGlobal(const char *line)
 	if(re_count < -1) {
 	    pcre_free(re_cc);
 	    setError(MSG_RexpError2, i);
-	    return false;
+	    return eb_false;
 	}
 	if(re_count < 0 && cmd == 'v' || re_count >= 0 && cmd == 'g') {
 	    ++gcnt;
@@ -2156,26 +2156,26 @@ doGlobal(const char *line)
 
     if(!gcnt) {
 	setError((cmd == 'v') + MSG_NoMatchG);
-	return false;
+	return eb_false;
     }
 
 /* apply the subcommand to every line with a star */
-    globSub = true;
+    globSub = eb_true;
     setError(-1);
     if(!*line)
 	line = "p";
     origdot = cw->dot;
     yesdot = nodot = 0;
-    change = true;
+    change = eb_true;
     while(gcnt && change) {
-	change = false;		/* kinda like bubble sort */
+	change = eb_false;		/* kinda like bubble sort */
 	for(i = 1; i <= cw->dol; ++i) {
 	    t = cw->map + i * LNWIDTH + LNGLOB;
 	    if(*t != '*')
 		continue;
 	    if(intFlag)
 		goto done;
-	    change = true, --gcnt;
+	    change = eb_true, --gcnt;
 	    *t = ' ';
 	    cw->dot = i;	/* so we can run the command at this line */
 	    if(runCommand(line)) {
@@ -2194,7 +2194,7 @@ doGlobal(const char *line)
     }				/* loop making changes */
   done:
 
-    globSub = false;
+    globSub = eb_false;
 /* yesdot could be 0, even on success, if all lines are deleted via g/re/d */
     if(yesdot || !cw->dol) {
 	cw->dot = yesdot;
@@ -2240,7 +2240,7 @@ static char *replaceLineEnd;
 static int replaceLineLen;
 static int
 replaceText(const char *line, int len, const char *rhs,
-   bool ebmuck, int nth, bool global, int ln)
+   eb_bool ebmuck, int nth, eb_bool global, int ln)
 {
     int offset = 0, lastoffset, instance = 0;
     int span;
@@ -2249,7 +2249,7 @@ replaceText(const char *line, int len, const char *rhs,
     const char *s = line, *s_end, *t;
     char c, d;
 
-    while(true) {
+    while(eb_true) {
 /* find the next match */
 	re_count = pcre_exec(re_cc, 0, line, len, offset, 0, re_vector, 33);
 	if(re_count < -1) {
@@ -2376,9 +2376,9 @@ replaceText(const char *line, int len, const char *rhs,
     }				/* loop matching the regular expression */
 
     if(!instance)
-	return false;
+	return eb_false;
     if(!global &&instance < nth)
-	return false;
+	return eb_false;
 
 /* We got a match, copy the last span. */
     s_end = line + len;
@@ -2389,7 +2389,7 @@ replaceText(const char *line, int len, const char *rhs,
     r += span;
     replaceLineEnd = r;
     replaceLineLen = r - replaceLine;
-    return true;
+    return eb_true;
 
   longvar:
     setError(MSG_SubLong, REPLACELINELEN);
@@ -2401,7 +2401,7 @@ replaceText(const char *line, int len, const char *rhs,
  * If so, we'll call infReplace().
  * Also, we might be indirectory mode, whence we must rename the file.
  * This is a complicated function!
- * The return can be true or false, with the usual meaning,
+ * The return can be eb_true or eb_false, with the usual meaning,
  * but also a return of -1, which is failure,
  * and an indication that we need to abort any g// in progress.
  * It's a serious problem. */
@@ -2410,10 +2410,10 @@ static int
 substituteText(const char *line)
 {
     int whichField = 0;
-    bool bl_mode = false;	/* running the bl command */
-    bool g_mode = false;	/* s/x/y/g */
-    bool ci = caseInsensitive;
-    bool save_nlMode;
+    eb_bool bl_mode = eb_false;	/* running the bl command */
+    eb_bool g_mode = eb_false;	/* s/x/y/g */
+    eb_bool ci = caseInsensitive;
+    eb_bool save_nlMode;
     char c, *s, *t;
     int nth = 0;		/* s/x/y/7 */
     int lastSubst = 0;		/* last successful substitution */
@@ -2425,7 +2425,7 @@ substituteText(const char *line)
     subPrint = 1;		/* default is to print the last line substituted */
     re_cc = 0;
     if(stringEqual(line, "`bl"))
-	bl_mode = true, breakLineSetup();
+	bl_mode = eb_true, breakLineSetup();
 
     if(!bl_mode) {
 /* watch for s2/x/y/ for the second input field */
@@ -2441,14 +2441,14 @@ substituteText(const char *line)
 	    return -1;
 	}
 
-	if(!regexpCheck(line, true, true, &re, &line))
+	if(!regexpCheck(line, eb_true, eb_true, &re, &line))
 	    return -1;
 	strcpy(lhs, re);
 	if(!*line) {
 	    setError(MSG_NoDelimit);
 	    return -1;
 	}
-	if(!regexpCheck(line, false, true, &re, &line))
+	if(!regexpCheck(line, eb_false, eb_true, &re, &line))
 	    return -1;
 	strcpy(rhs, re);
 
@@ -2457,12 +2457,12 @@ substituteText(const char *line)
 	    subPrint = 0;
 	    while(c = *line) {
 		if(c == 'g') {
-		    g_mode = true;
+		    g_mode = eb_true;
 		    ++line;
 		    continue;
 		}
 		if(c == 'i') {
-		    ci = true;
+		    ci = eb_true;
 		    ++line;
 		    continue;
 		}
@@ -2542,9 +2542,9 @@ substituteText(const char *line)
 		t = strstr(s, searchend);
 		if(!t)
 		    continue;
-		j = replaceText(s, t - s, rhs, true, nth, g_mode, ln);
+		j = replaceText(s, t - s, rhs, eb_true, nth, g_mode, ln);
 	    } else {
-		j = replaceText(p, len - 1, rhs, true, nth, g_mode, ln);
+		j = replaceText(p, len - 1, rhs, eb_true, nth, g_mode, ln);
 	    }
 	    if(j < 0)
 		goto abort;
@@ -2599,7 +2599,7 @@ substituteText(const char *line)
 	    if(!dest)
 		goto abort;
 	    if(!stringEqual(src, dest)) {
-		if(fileTypeByName(dest, true)) {
+		if(fileTypeByName(dest, eb_true)) {
 		    setError(MSG_DestFileExists);
 		    goto abort;
 		}
@@ -2640,7 +2640,7 @@ substituteText(const char *line)
 		save_nlMode = cw->nlMode;
 		delText(ln, ln);
 		addTextToBuffer((pst) replaceLine, replaceLineLen + 1, ln - 1,
-		   false);
+		   eb_false);
 		cw->nlMode = save_nlMode;
 		endRange += linecount;
 		ln += linecount;
@@ -2657,9 +2657,9 @@ substituteText(const char *line)
 	if(subPrint == 2)
 	    displayLine(ln);
 	lastSubst = ln;
-	cw->firstOpMode = undoable = true;
+	cw->firstOpMode = undoable = eb_true;
 	if(!cw->browseMode)
-	    cw->changeMode = true;
+	    cw->changeMode = eb_true;
     }				/* loop over lines in the range */
     if(re_cc)
 	pcre_free(re_cc);
@@ -2674,12 +2674,12 @@ substituteText(const char *line)
 	    if(!errorMsg[0])
 		setError(bl_mode + MSG_NoMatch);
 	}
-	return false;
+	return eb_false;
     }
     cw->dot = lastSubst;
     if(subPrint == 1 && !globSub)
 	printDot();
-    return true;
+    return eb_true;
 
   abort:
     if(re_cc)
@@ -2704,7 +2704,7 @@ twoLetter(const char *line, const char **runThis)
 {
     static char shortline[60];
     char c;
-    bool rc, ub;
+    eb_bool rc, ub;
     int i, n;
 
     *runThis = shortline;
@@ -2718,7 +2718,7 @@ twoLetter(const char *line, const char **runThis)
 	    curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1);
 	else
 	    curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 0);
-	return true;
+	return eb_true;
     }
 
     if(line[0] == 'u' && line[1] == 'a' && isdigitByte(line[2]) && !line[3]) {
@@ -2726,13 +2726,13 @@ twoLetter(const char *line, const char **runThis)
 	cmd = 'e';
 	if(!t) {
 	    setError(MSG_NoAgent, line[2]);
-	    return false;
+	    return eb_false;
 	}
 	currentAgent = t;
 	curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, currentAgent);
 	if(helpMessagesOn || debugLevel >= 1)
 	    puts(currentAgent);
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "re") || stringEqual(line, "rea")) {
@@ -2740,14 +2740,14 @@ twoLetter(const char *line, const char **runThis)
 	undoWindow.map = 0;
 	nzFree(preWindow.map);
 	preWindow.map = 0;
-	cw->firstOpMode = undoable = false;
+	cw->firstOpMode = undoable = eb_false;
 	cmd = 'e';		/* so error messages are printed */
 	rc = setupReply(line[2] == 'a');
-	cw->firstOpMode = undoable = false;
+	cw->firstOpMode = undoable = eb_false;
 	if(rc && cw->browseMode) {
 	    cw->iplist = 0;
-	    ub = false;
-	    cw->browseMode = false;
+	    ub = eb_false;
+	    cw->browseMode = eb_false;
 	    goto et_go;
 	}
 	return rc;
@@ -2776,17 +2776,17 @@ twoLetter(const char *line, const char **runThis)
 	      pwd:
 		if(!getcwd(cwdbuf, sizeof (cwdbuf))) {
 		    setError(c ? MSG_CDGetError : MSG_CDSetError);
-		    return false;
+		    return eb_false;
 		}
 		puts(cwdbuf);
-		return true;
+		return eb_true;
 	    }
 	    if(!envFile(t, &t))
-		return false;
+		return eb_false;
 	    if(!chdir(t))
 		goto pwd;
 	    setError(MSG_CDInvalid);
-	    return false;
+	    return eb_false;
 	}
     }
 
@@ -2796,22 +2796,22 @@ twoLetter(const char *line, const char **runThis)
 	    const struct MIMETYPE *mt;
 	    char *cmd;
 	    const char *suffix = 0;
-	    bool trailPercent = false;
+	    eb_bool trailPercent = eb_false;
 	    if(!cw->dol) {
 		setError(MSG_AudioEmpty);
-		return false;
+		return eb_false;
 	    }
 	    if(cw->browseMode) {
 		setError(MSG_AudioBrowse);
-		return false;
+		return eb_false;
 	    }
 	    if(cw->dirMode) {
 		setError(MSG_AudioDir);
-		return false;
+		return eb_false;
 	    }
 	    if(cw->sqlMode) {
 		setError(MSG_AudioDB);
-		return false;
+		return eb_false;
 	    }
 	    if(c == '.') {
 		suffix = line + 3;
@@ -2820,21 +2820,21 @@ twoLetter(const char *line, const char **runThis)
 		    suffix = strrchr(cw->fileName, '.');
 		if(!suffix) {
 		    setError(MSG_NoSuffix);
-		    return false;
+		    return eb_false;
 		}
 		++suffix;
 	    }
 	    if(strlen(suffix) > 5) {
 		setError(MSG_SuffixLong);
-		return false;
+		return eb_false;
 	    }
 	    mt = findMimeBySuffix(suffix);
 	    if(!mt) {
 		setError(MSG_SuffixBad, suffix);
-		return false;
+		return eb_false;
 	    }
 	    if(mt->program[strlen(mt->program) - 1] == '%')
-		trailPercent = true;
+		trailPercent = eb_true;
 	    cmd = pluginCommand(mt, 0, suffix);
 	    rc = bufferToProgram(cmd, suffix, trailPercent);
 	    nzFree(cmd);
@@ -2846,11 +2846,11 @@ twoLetter(const char *line, const char **runThis)
 	cmd = 'e';
 	if(!cw->fileName) {
 	    setError(MSG_NoRefresh);
-	    return false;
+	    return eb_false;
 	}
 	if(cw->browseMode)
 	    cmd = 'b';
-	noStack = true;
+	noStack = eb_true;
 	allocatedLine = allocMem(strlen(cw->fileName) + 3);
 	sprintf(allocatedLine, "%c %s", cmd, cw->fileName);
 	debrowseSuffix(allocatedLine);
@@ -2861,41 +2861,41 @@ twoLetter(const char *line, const char **runThis)
     if(stringEqual(line, "shc")) {
 	if(!cw->sqlMode) {
 	    setError(MSG_NoDB);
-	    return false;
+	    return eb_false;
 	}
 	showColumns();
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "shf")) {
 	if(!cw->sqlMode) {
 	    setError(MSG_NoDB);
-	    return false;
+	    return eb_false;
 	}
 	showForeign();
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "sht")) {
 	if(!ebConnect())
-	    return false;
+	    return eb_false;
 	return showTables();
     }
 
     if(stringEqual(line, "ub") || stringEqual(line, "et")) {
 	ub = (line[0] == 'u');
-	rc = true;
+	rc = eb_true;
 	cmd = 'e';
 	if(!cw->browseMode) {
 	    setError(MSG_NoBrowse);
-	    return false;
+	    return eb_false;
 	}
 	freeUndoLines(cw->map);
 	undoWindow.map = 0;
 	nzFree(preWindow.map);
 	preWindow.map = 0;
-	cw->firstOpMode = undoable = false;
-	cw->browseMode = false;
+	cw->firstOpMode = undoable = eb_false;
+	cw->browseMode = eb_false;
 	cw->iplist = 0;
 	if(ub) {
 	    debrowseSuffix(cw->fileName);
@@ -2928,7 +2928,7 @@ twoLetter(const char *line, const char **runThis)
 	nzFree(cw->mailInfo);
 	cw->mailInfo = 0;
 	if(ub)
-	    fileSize = apparentSize(context, false);
+	    fileSize = apparentSize(context, eb_false);
 	return rc;
     }
 
@@ -2945,7 +2945,7 @@ twoLetter(const char *line, const char **runThis)
 		puts(tcp_ip_dots(ip));
 	    }
 	}
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "f/") || stringEqual(line, "w/")) {
@@ -2953,17 +2953,17 @@ twoLetter(const char *line, const char **runThis)
 	cmd = line[0];
 	if(!cw->fileName) {
 	    setError(MSG_NoRefresh);
-	    return false;
+	    return eb_false;
 	}
 	t = strrchr(cw->fileName, '/');
 	if(!t) {
 	    setError(MSG_NoSlash);
-	    return false;
+	    return eb_false;
 	}
 	++t;
 	if(!*t) {
 	    setError(MSG_YesSlash);
-	    return false;
+	    return eb_false;
 	}
 	allocatedLine = allocMem(strlen(t) + 4);
 /* ` prevents wildcard expansion, which normally happens on an f command */
@@ -2979,7 +2979,7 @@ twoLetter(const char *line, const char **runThis)
 	cmd = 'e';
 	if(!cw->browseMode) {
 	    setError(MSG_NoBrowse);
-	    return false;
+	    return eb_false;
 	}
 	if(line[1] == 't')
 	    s = cw->ft, t = MSG_NoTitle;
@@ -2991,16 +2991,16 @@ twoLetter(const char *line, const char **runThis)
 	    puts(s);
 	else
 	    i_puts(t);
-	return true;
+	return eb_true;
     }
 
     if(line[0] == 's' && line[1] == 'm') {
 	const char *t = line + 2;
-	bool dosig = true;
+	eb_bool dosig = eb_true;
 	int account = 0;
 	cmd = 'e';
 	if(*t == '-') {
-	    dosig = false;
+	    dosig = eb_false;
 	    ++t;
 	}
 	if(isdigitByte(*t))
@@ -3010,57 +3010,57 @@ twoLetter(const char *line, const char **runThis)
 	    return sendMailCurrent(account, dosig);
 	} else {
 	    setError(MSG_SMBadChar);
-	    return false;
+	    return eb_false;
 	}
     }
 
     if(stringEqual(line, "sg")) {
-	searchStringsAll = true;
+	searchStringsAll = eb_true;
 	if(helpMessagesOn)
 	    i_puts(MSG_SubGlobal);
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "sl")) {
-	searchStringsAll = false;
+	searchStringsAll = eb_false;
 	if(helpMessagesOn)
 	    i_puts(MSG_SubLocal);
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "ci")) {
-	caseInsensitive = true;
+	caseInsensitive = eb_true;
 	if(helpMessagesOn)
 	    i_puts(MSG_CaseIns);
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "cs")) {
-	caseInsensitive = false;
+	caseInsensitive = eb_false;
 	if(helpMessagesOn)
 	    i_puts(MSG_CaseSen);
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "dr")) {
 	dirWrite = 0;
 	if(helpMessagesOn)
 	    i_puts(MSG_DirReadonly);
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "dw")) {
 	dirWrite = 1;
 	if(helpMessagesOn)
 	    i_puts(MSG_DirWritable);
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "dx")) {
 	dirWrite = 2;
 	if(helpMessagesOn)
 	    i_puts(MSG_DirX);
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "hr")) {
@@ -3070,14 +3070,14 @@ twoLetter(const char *line, const char **runThis)
 */
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(allowRedirection + MSG_RedirectionOff);
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "iu")) {
 	iuConvert ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(iuConvert + MSG_IUConvertOff);
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "sr")) {
@@ -3086,40 +3086,40 @@ twoLetter(const char *line, const char **runThis)
 	curl_easy_setopt(curl_handle, CURLOPT_AUTOREFERER, sendReferrer);
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(sendReferrer + MSG_RefererOff);
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "js")) {
 	allowJS ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(allowJS + MSG_JavaOff);
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "bd")) {
 	binaryDetect ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(binaryDetect + MSG_BinaryIgnore);
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "rl")) {
 	inputReadLine ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(inputReadLine + MSG_InputTTY);
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "lna")) {
 	listNA ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(listNA + MSG_ListControl);
-	return true;
+	return eb_true;
     }
 
     if(line[0] == 'f' && line[1] == 'm' &&
        line[2] && strchr("pa", line[2]) && !line[3]) {
-	bool doHelp = helpMessagesOn || debugLevel >= 1;
+	eb_bool doHelp = helpMessagesOn || debugLevel >= 1;
 /* Can't support passive/active mode with libcurl, or at least not easily. */
 	if(line[2] == 'p') {
 	    curl_easy_setopt(curl_handle, CURLOPT_FTPPORT, NULL);
@@ -3133,7 +3133,7 @@ twoLetter(const char *line, const char **runThis)
 /* See "man curl_easy_setopt.3" for info on CURLOPT_FTPPORT.  Supplying
 * "-" makes libcurl select the best IP address for active ftp.
 */
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "vs")) {
@@ -3143,21 +3143,21 @@ twoLetter(const char *line, const char **runThis)
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(verifyCertificates + MSG_CertifyOff);
 	ssl_verify_setting();
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "hf")) {
 	showHiddenFiles ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(showHiddenFiles + MSG_HiddenOff);
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "su8")) {
 	re_utf8 ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(re_utf8 + MSG_ReAscii);
-	return true;
+	return eb_true;
     }
 
     if(!strncmp(line, "ds=", 3)) {
@@ -3172,39 +3172,39 @@ twoLetter(const char *line, const char **runThis)
 		    printf(",%s", dbpw);
 		nl();
 	    }
-	    return true;
+	    return eb_true;
 	}
 	dbClose();
 	setDataSource(cloneString(line + 3));
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "fbc")) {
 	fetchBlobColumns ^= 1;
 	if(helpMessagesOn || debugLevel >= 1)
 	    i_puts(MSG_FetchBlobOff + fetchBlobColumns);
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "eo")) {
 	endMarks = 0;
 	if(helpMessagesOn)
 	    i_puts(MSG_MarkOff);
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "el")) {
 	endMarks = 1;
 	if(helpMessagesOn)
 	    i_puts(MSG_MarkList);
-	return true;
+	return eb_true;
     }
 
     if(stringEqual(line, "ep")) {
 	endMarks = 2;
 	if(helpMessagesOn)
 	    i_puts(MSG_MarkOn);
-	return true;
+	return eb_true;
     }
 
     *runThis = line;
@@ -3218,12 +3218,12 @@ unbalanced(char c, char d, int ln, int *back_p, int *for_p)
 {				/* result parameters */
     char *t, *open;
     char *p = (char *)fetchLine(ln, 1);
-    bool change;
+    eb_bool change;
     int backward, forward;
 
-    change = true;
+    change = eb_true;
     while(change) {
-	change = false;
+	change = eb_false;
 	open = 0;
 	for(t = p; *t != '\n'; ++t) {
 	    if(*t == c)
@@ -3231,7 +3231,7 @@ unbalanced(char c, char d, int ln, int *back_p, int *for_p)
 	    if(*t == d && open) {
 		*open = 0;
 		*t = 0;
-		change = true;
+		change = eb_true;
 		open = 0;
 	    }
 	}
@@ -3251,7 +3251,7 @@ unbalanced(char c, char d, int ln, int *back_p, int *for_p)
 }				/* unbalanced */
 
 /* Find the line that balances the unbalanced punctuation. */
-static bool
+static eb_bool
 balanceLine(const char *line)
 {
     char c, d;			/* open and close */
@@ -3266,7 +3266,7 @@ balanceLine(const char *line)
     if(c = *line) {
 	if(!strchr(alllist, c) || line[1]) {
 	    setError(MSG_BalanceChar, alllist);
-	    return false;
+	    return eb_false;
 	}
 	if(t = strchr(openlist, c)) {
 	    d = closelist[t - openlist];
@@ -3281,12 +3281,12 @@ balanceLine(const char *line)
 	if(direction > 0) {
 	    if((level = forward) == 0) {
 		setError(MSG_BalanceNoOpen, c);
-		return false;
+		return eb_false;
 	    }
 	} else {
 	    if((level = backward) == 0) {
 		setError(MSG_BalanceNoOpen, d);
-		return false;
+		return eb_false;
 	    }
 	}
     } else {
@@ -3298,7 +3298,7 @@ balanceLine(const char *line)
 	    unbalanced(c, d, endRange, &backward, &forward);
 	    if(backward && forward) {
 		setError(MSG_BalanceAmbig, c, d, c, d);
-		return false;
+		return eb_false;
 	    }
 	    level = backward + forward;
 	    if(!level)
@@ -3310,7 +3310,7 @@ balanceLine(const char *line)
 	}
 	if(!level) {
 	    setError(MSG_BalanceNothing);
-	    return false;
+	    return eb_false;
 	}
     }				/* explicit character passed in, or look for one */
 
@@ -3324,33 +3324,33 @@ balanceLine(const char *line)
 	   direction < 0 && forward >= level) {
 	    cw->dot = i;
 	    printDot();
-	    return true;
+	    return eb_true;
 	}
 	level += (forward - backward) * direction;
     }				/* loop over lines */
 
     setError(MSG_Unbalanced, selected);
-    return false;
+    return eb_false;
 }				/* balanceLine */
 
 /* Unfold the buffer into one long, allocated string. */
-bool
-unfoldBuffer(int cx, bool cr, char **data, int *len)
+eb_bool
+unfoldBuffer(int cx, eb_bool cr, char **data, int *len)
 {
     char *buf;
     int l, ln;
     struct ebWindow *w;
-    int size = apparentSize(cx, false);
+    int size = apparentSize(cx, eb_false);
     if(size < 0)
-	return false;
+	return eb_false;
     w = sessionList[cx].lw;
     if(w->browseMode) {
 	setError(MSG_SessionBrowse, cx);
-	return false;
+	return eb_false;
     }
     if(w->dirMode) {
 	setError(MSG_SessionDir, cx);
-	return false;
+	return eb_false;
     }
     if(cr)
 	size += w->dol;
@@ -3377,7 +3377,7 @@ unfoldBuffer(int cx, bool cr, char **data, int *len)
     }
     *len = size;
     (*data)[size] = 0;
-    return true;
+    return eb_true;
 }				/* unfoldBuffer */
 
 static char *
@@ -3385,7 +3385,7 @@ showLinks(void)
 {
     int a_l;
     char *a = initString(&a_l);
-    bool click, dclick;
+    eb_bool click, dclick;
     char c, *p, *s, *t, *q, *line, *h;
     int j, k = 0, tagno;
     void *ev;
@@ -3511,15 +3511,15 @@ readyUndo(void)
  * We assume it has been turned into a C string.
  * This means no embeded nulls.
  * If you want to use null in a search or substitute, use \0. */
-bool
+eb_bool
 runCommand(const char *line)
 {
     int i, j, n;
     int writeMode = O_TRUNC;
     struct ebWindow *w = NULL;
     void *ev = NULL;		/* event variables */
-    bool nogo = true, rc = true;
-    bool postSpace = false, didRange = false;
+    eb_bool nogo = eb_true, rc = eb_true;
+    eb_bool postSpace = eb_false, didRange = eb_false;
     char first;
     int cx = 0;			/* numeric suffix as in s/x/y/3 or w2 */
     int tagno;
@@ -3532,7 +3532,7 @@ runCommand(const char *line)
     }
     nzFree(currentReferrer);
     currentReferrer = cloneString(cw->fileName);
-    js_redirects = false;
+    js_redirects = eb_false;
 
     cmd = icmd = 'p';
     skipWhite(&line);
@@ -3542,13 +3542,13 @@ runCommand(const char *line)
 /* Allow things like comment, or shell escape, but not if we're
  * in the midst of a global substitute, as in g/x/ !echo hello world */
 	if(first == '#')
-	    return true;
+	    return eb_true;
 	if(first == '!')
 	    return shellEscape(line + 1);
 
 /* Watch for successive q commands. */
 	lastq = lastqq, lastqq = 0;
-	noStack = false;
+	noStack = eb_false;
 
 /* special 2 letter commands - most of these change operational modes */
 	j = twoLetter(line, &line);
@@ -3560,16 +3560,16 @@ runCommand(const char *line)
 /* Just hit return to read the next line. */
     first = *line;
     if(first == 0) {
-	didRange = true;
+	didRange = eb_true;
 	++startRange, ++endRange;
 	if(endRange > cw->dol) {
 	    setError(MSG_EndBuffer);
-	    return false;
+	    return eb_false;
 	}
     }
 
     if(first == ',') {
-	didRange = true;
+	didRange = eb_true;
 	++line;
 	startRange = 1;
 	if(cw->dol == 0)
@@ -3578,29 +3578,29 @@ runCommand(const char *line)
     }
 
     if(first == ';') {
-	didRange = true;
+	didRange = eb_true;
 	++line;
 	startRange = cw->dot;
 	endRange = cw->dol;
     }
 
     if(first == 'j' || first == 'J') {
-	didRange = true;
+	didRange = eb_true;
 	endRange = startRange + 1;
 	if(endRange > cw->dol) {
 	    setError(MSG_EndJoin);
-	    return false;
+	    return eb_false;
 	}
     }
 
     if(first == '=') {
-	didRange = true;
+	didRange = eb_true;
 	startRange = endRange = cw->dol;
     }
 
     if(first == 'w' || first == 'v' || first == 'g' &&
        line[1] && strchr(valid_delim, line[1])) {
-	didRange = true;
+	didRange = eb_true;
 	startRange = 1;
 	if(cw->dol == 0)
 	    startRange = 0;
@@ -3609,7 +3609,7 @@ runCommand(const char *line)
 
     if(!didRange) {
 	if(!getRangePart(line, &startRange, &line))
-	    return (globSub = false);
+	    return (globSub = eb_false);
 	endRange = startRange;
 	if(line[0] == ',') {
 	    ++line;
@@ -3617,13 +3617,13 @@ runCommand(const char *line)
 	    first = *line;
 	    if(first && strchr(valid_laddr, first)) {
 		if(!getRangePart(line, &endRange, &line))
-		    return (globSub = false);
+		    return (globSub = eb_false);
 	    }
 	}
     }
     if(endRange < startRange) {
 	setError(MSG_BadRange);
-	return false;
+	return eb_false;
     }
 
 /* change uc into a substitute command, converting the whole line */
@@ -3639,15 +3639,15 @@ runCommand(const char *line)
     if(stringEqual(line, "bl")) {
 	if(cw->dirMode) {
 	    setError(MSG_BreakDir);
-	    return false;
+	    return eb_false;
 	}
 	if(cw->sqlMode) {
 	    setError(MSG_BreakDB);
-	    return false;
+	    return eb_false;
 	}
 	if(cw->browseMode) {
 	    setError(MSG_BreakBrowse);
-	    return false;
+	    return eb_false;
 	}
 	line = "s`bl";
     }
@@ -3662,7 +3662,7 @@ runCommand(const char *line)
 
     if(!strchr(valid_cmd, cmd)) {
 	setError(MSG_UnknownCommand, cmd);
-	return (globSub = false);
+	return (globSub = eb_false);
     }
 
     first = *line;
@@ -3671,26 +3671,26 @@ runCommand(const char *line)
 
     if(cw->dirMode && !strchr(dir_cmd, cmd)) {
 	setError(MSG_DirCommand, icmd);
-	return (globSub = false);
+	return (globSub = eb_false);
     }
 
     if(cw->sqlMode && !strchr(sql_cmd, cmd)) {
 	setError(MSG_DBCommand, icmd);
-	return (globSub = false);
+	return (globSub = eb_false);
     }
 
     if(cw->browseMode && !strchr(browse_cmd, cmd)) {
 	setError(MSG_BrowseCommand, icmd);
-	return (globSub = false);
+	return (globSub = eb_false);
     }
 
     if(startRange == 0 && !strchr(zero_cmd, cmd)) {
 	setError(MSG_AtLine0);
-	return (globSub = false);
+	return (globSub = eb_false);
     }
 
     while(isspaceByte(first))
-	postSpace = true, first = *++line;
+	postSpace = eb_true, first = *++line;
 
     if(strchr(spaceplus_cmd, cmd) && !postSpace && first) {
 	s = line;
@@ -3698,13 +3698,13 @@ runCommand(const char *line)
 	    ++s;
 	if(*s) {
 	    setError(MSG_NoSpaceAfter);
-	    return (globSub = false);
+	    return (globSub = eb_false);
 	}
     }
 
     if(globSub && !strchr(global_cmd, cmd)) {
 	setError(MSG_GlobalCommand, icmd);
-	return (globSub = false);
+	return (globSub = eb_false);
     }
 
 /* move/copy destination, the third address */
@@ -3714,10 +3714,10 @@ runCommand(const char *line)
 	} else {
 	    if(!strchr(valid_laddr, first)) {
 		setError(MSG_BadDest);
-		return (globSub = false);
+		return (globSub = eb_false);
 	    }
 	    if(!getRangePart(line, &destLine, &line))
-		return (globSub = false);
+		return (globSub = eb_false);
 	    first = *line;
 	}			/* was there something after m or t */
     }
@@ -3726,7 +3726,7 @@ runCommand(const char *line)
     if(strchr("brewf", cmd) && first && !isURL(line) && !isSQL(line)) {
 	if(cmd != 'r' || !cw->sqlMode) {
 	    if(!envFile(line, &line))
-		return false;
+		return eb_false;
 	    first = *line;
 	}
     }
@@ -3743,7 +3743,7 @@ runCommand(const char *line)
 	if(startRange > cw->dol) {
 	    startRange = endRange = 0;
 	    setError(MSG_LineHigh);
-	    return false;
+	    return eb_false;
 	}
 	cmd = 'p';
 	endRange += last_z - 1;
@@ -3762,24 +3762,24 @@ runCommand(const char *line)
 
     if(first && strchr(nofollow_cmd, cmd)) {
 	setError(MSG_TextAfter, icmd);
-	return (globSub = false);
+	return (globSub = eb_false);
     }
 
     if(cmd == 'h') {
 	showError();
-	return true;
+	return eb_true;
     }
 
     if(cmd == 'H') {
 	if(helpMessagesOn ^= 1)
 	    if(debugLevel >= 1)
 		i_puts(MSG_HelpOn);
-	return true;
+	return eb_true;
     }
 
     if(cmd == 'X') {
 	cw->dot = endRange;
-	return true;
+	return eb_true;
     }
 
     if(strchr("Llpn", cmd)) {
@@ -3789,12 +3789,12 @@ runCommand(const char *line)
 	    if(intFlag)
 		break;
 	}
-	return true;
+	return eb_true;
     }
 
     if(cmd == '=') {
 	printf("%d\n", endRange);
-	return true;
+	return eb_true;
     }
 
     if(cmd == 'B') {
@@ -3806,7 +3806,7 @@ runCommand(const char *line)
 	char *swapmap;
 	if(!cw->firstOpMode) {
 	    setError(MSG_NoUndo);
-	    return false;
+	    return eb_false;
 	}
 /* swap, so we can undo our undo, if need be */
 	i = uw->dot, uw->dot = cw->dot, cw->dot = i;
@@ -3815,20 +3815,20 @@ runCommand(const char *line)
 	    i = uw->labels[j], uw->labels[j] = cw->labels[j], cw->labels[j] = i;
 	}
 	swapmap = uw->map, uw->map = cw->map, cw->map = swapmap;
-	return true;
+	return eb_true;
     }
 
     if(cmd == 'k') {
 	if(!islowerByte(first) || line[1]) {
 	    setError(MSG_EnterKAZ);
-	    return false;
+	    return eb_false;
 	}
 	if(startRange < endRange) {
 	    setError(MSG_RangeLabel);
-	    return false;
+	    return eb_false;
 	}
 	cw->labels[first - 'a'] = endRange;
-	return true;
+	return eb_true;
     }
 
     /* k */
@@ -3837,7 +3837,7 @@ runCommand(const char *line)
 	cx = stringIsNum(line);
 	if(!cx) {
 	    setError((cmd == '^') ? MSG_Backup0 : MSG_Session0);
-	    return false;
+	    return eb_false;
 	}
 	if(cx < 0)
 	    cx = 0;
@@ -3846,40 +3846,40 @@ runCommand(const char *line)
     if(cmd == 'q') {
 	if(cx) {
 	    if(!cxCompare(cx))
-		return false;
+		return eb_false;
 	    if(!cxActive(cx))
-		return false;
+		return eb_false;
 	} else {
 	    cx = context;
 	    if(first) {
 		setError(MSG_QAfter);
-		return false;
+		return eb_false;
 	    }
 	}
 	saveSubstitutionStrings();
 	if(!cxQuit(cx, 2))
-	    return false;
+	    return eb_false;
 	if(cx != context)
-	    return true;
+	    return eb_true;
 /* look around for another active session */
-	while(true) {
+	while(eb_true) {
 	    if(++cx == MAXSESSION)
 		cx = 1;
 	    if(cx == context)
 		ebClose(0);
 	    if(!sessionList[cx].lw)
 		continue;
-	    cxSwitch(cx, true);
-	    return true;
+	    cxSwitch(cx, eb_true);
+	    return eb_true;
 	}			/* loop over sessions */
     }
 
     if(cmd == 'f') {
 	if(cx) {
 	    if(!cxCompare(cx))
-		return false;
+		return eb_false;
 	    if(!cxActive(cx))
-		return false;
+		return eb_false;
 	    s = sessionList[cx].lw->fileName;
 	    if(s)
 		printf("%s", s);
@@ -3888,16 +3888,16 @@ runCommand(const char *line)
 	    if(sessionList[cx].lw->binMode)
 		i_printf(MSG_BinaryBrackets);
 	    nl();
-	    return true;
+	    return eb_true;
 	}			/* another session */
 	if(first) {
 	    if(cw->dirMode) {
 		setError(MSG_DirRename);
-		return false;
+		return eb_false;
 	    }
 	    if(cw->sqlMode) {
 		setError(MSG_TableRename);
-		return false;
+		return eb_false;
 	    }
 	    nzFree(cw->fileName);
 	    cw->fileName = cloneString(line);
@@ -3910,14 +3910,14 @@ runCommand(const char *line)
 	if(cw->binMode)
 	    i_printf(MSG_BinaryBrackets);
 	nl();
-	return true;
+	return eb_true;
     }
 
     if(cmd == 'w') {
 	if(cx) {		/* write to another buffer */
 	    if(writeMode == O_APPEND) {
 		setError(MSG_BufferAppend);
-		return false;
+		return eb_false;
 	    }
 	    return writeContext(cx);
 	}
@@ -3925,15 +3925,15 @@ runCommand(const char *line)
 	    line = cw->fileName;
 	if(!line) {
 	    setError(MSG_NoFileSpecified);
-	    return false;
+	    return eb_false;
 	}
 	if(cw->dirMode && stringEqual(line, cw->fileName)) {
 	    setError(MSG_NoDirWrite);
-	    return false;
+	    return eb_false;
 	}
 	if(cw->sqlMode && stringEqual(line, cw->fileName)) {
 	    setError(MSG_NoDBWrite);
-	    return false;
+	    return eb_false;
 	}
 	return writeFile(line, writeMode);
     }
@@ -3941,7 +3941,7 @@ runCommand(const char *line)
     if(cmd == '^') {		/* back key, pop the stack */
 	if(first && !cx) {
 	    setError(MSG_ArrowAfter);
-	    return false;
+	    return eb_false;
 	}
 	if(!cx)
 	    cx = 1;
@@ -3949,64 +3949,64 @@ runCommand(const char *line)
 	    struct ebWindow *prev = cw->prev;
 	    if(!prev) {
 		setError(MSG_NoPrevious);
-		return false;
+		return eb_false;
 	    }
 	    saveSubstitutionStrings();
 	    if(!cxQuit(context, 1))
-		return false;
+		return eb_false;
 	    sessionList[context].lw = cw = prev;
 	    restoreSubstitutionStrings(cw);
 	    --cx;
 	}
 	printDot();
-	return true;
+	return eb_true;
     }
 
     if(cmd == 'M') {		/* move this to another session */
 	if(first && !cx) {
 	    setError(MSG_MAfter);
-	    return false;
+	    return eb_false;
 	}
 	if(!first) {
 	    setError(MSG_NoDestSession);
-	    return false;
+	    return eb_false;
 	}
 	if(!cw->prev) {
 	    setError(MSG_NoBackup);
-	    return false;
+	    return eb_false;
 	}
 	if(!cxCompare(cx))
-	    return false;
+	    return eb_false;
 	if(cxActive(cx) && !cxQuit(cx, 2))
-	    return false;
+	    return eb_false;
 /* Magic with pointers, hang on to your hat. */
 	sessionList[cx].fw = sessionList[cx].lw = cw;
 	cs->lw = cw->prev;
 	cw->prev = 0;
 	cw = cs->lw;
 	printDot();
-	return true;
+	return eb_true;
     }
     /* M */
     if(cmd == 'A') {
 	char *a;
 	if(!cxQuit(context, 0))
-	    return false;
+	    return eb_false;
 	if(!(a = showLinks()))
-	    return false;
+	    return eb_false;
 	freeUndoLines(cw->map);
 	undoWindow.map = 0;
 	nzFree(preWindow.map);
 	preWindow.map = 0;
-	cw->firstOpMode = cw->changeMode = false;
+	cw->firstOpMode = cw->changeMode = eb_false;
 	w = createWindow();
 	w->prev = cw;
 	cw = w;
 	cs->lw = w;
-	rc = addTextToBuffer((pst) a, strlen(a), 0, false);
+	rc = addTextToBuffer((pst) a, strlen(a), 0, eb_false);
 	nzFree(a);
-	undoable = cw->changeMode = false;
-	fileSize = apparentSize(context, false);
+	undoable = cw->changeMode = eb_false;
+	fileSize = apparentSize(context, eb_false);
 	return rc;
     }
     /* A */
@@ -4020,7 +4020,7 @@ runCommand(const char *line)
 	char *p, *dirline, *endline;
 	if(endRange > startRange) {
 	    setError(MSG_RangeG);
-	    return false;
+	    return eb_false;
 	}
 	p = (char *)fetchLine(endRange, -1);
 	j = pstLength((pst) p);
@@ -4030,7 +4030,7 @@ runCommand(const char *line)
 	p[j] = '\n';
 	cmd = 'e';
 	if(!dirline)
-	    return false;
+	    return eb_false;
 /* I don't think we need to make a copy here. */
 	line = dirline;
 	first = *line;
@@ -4039,13 +4039,13 @@ runCommand(const char *line)
     if(cmd == 'e') {
 	if(cx) {
 	    if(!cxCompare(cx))
-		return false;
-	    cxSwitch(cx, true);
-	    return true;
+		return eb_false;
+	    cxSwitch(cx, eb_true);
+	    return eb_true;
 	}
 	if(!first) {
 	    i_printf(MSG_SessionX, context);
-	    return true;
+	    return eb_true;
 	}
 /* more e to come */
     }
@@ -4054,8 +4054,8 @@ runCommand(const char *line)
     if(cmd == 'g' && !(cw->sqlMode | cw->binMode)) {
 	char *p, *h;
 	int tagno;
-	bool click, dclick, over;
-	bool jsh, jsgo, jsdead;
+	eb_bool click, dclick, over;
+	eb_bool jsh, jsgo, jsdead;
 
 	/* Check to see if g means run an sql command. */
 	if(!first) {
@@ -4067,7 +4067,7 @@ runCommand(const char *line)
 		if(*rbuf) {
 		    int savedol = cw->dol;
 		    readyUndo();
-		    addTextToBuffer((pst) rbuf, strlen(rbuf), cw->dot, false);
+		    addTextToBuffer((pst) rbuf, strlen(rbuf), cw->dot, eb_false);
 		    nzFree(rbuf);
 		    if(cw->dol > savedol) {
 			cw->labels[0] = startRange + 1;
@@ -4075,7 +4075,7 @@ runCommand(const char *line)
 		    }
 		    cw->dot = startRange;
 		}
-		return j ? true : false;
+		return j ? eb_true : eb_false;
 	    }
 	}
 
@@ -4087,17 +4087,17 @@ runCommand(const char *line)
 	if(j >= 0 && !*s) {
 	    if(cw->sqlMode) {
 		setError(MSG_DBG);
-		return false;
+		return eb_false;
 	    }
-	    jsh = jsgo = nogo = false;
+	    jsh = jsgo = nogo = eb_false;
 	    jsdead = cw->jsdead;
 	    if(!cw->jsc)
-		jsdead = true;
-	    click = dclick = over = false;
+		jsdead = eb_true;
+	    click = dclick = over = eb_false;
 	    cmd = 'b';
 	    if(endRange > startRange) {
 		setError(MSG_RangeG);
-		return false;
+		return eb_false;
 	    }
 	    p = (char *)fetchLine(endRange, -1);
 	    jMyContext();
@@ -4105,7 +4105,7 @@ runCommand(const char *line)
 	    debugPrint(5, "findField returns %d, %s", tagno, h);
 	    if(!h) {
 		fieldNumProblem(1, 'g', j, n, n);
-		return false;
+		return eb_false;
 	    }
 	    jsh = memEqualCI(h, "javascript:", 11);
 	    if(tagno) {
@@ -4114,7 +4114,7 @@ runCommand(const char *line)
 		dclick = tagHandler(tagno, "ondblclick");
 	    }
 	    if(click)
-		jsgo = true;
+		jsgo = eb_true;
 	    jsgo |= jsh;
 	    nogo = stringEqual(h, "#");
 	    nogo |= jsh;
@@ -4125,12 +4125,12 @@ runCommand(const char *line)
 		    i_puts(MSG_NJNoAction);
 		else
 		    i_puts(MSG_NJGoing);
-		jsgo = jsh = false;
+		jsgo = jsh = eb_false;
 	    }
 	    line = allocatedLine = h;
 	    first = *line;
 	    setError(-1);
-	    rc = false;
+	    rc = eb_false;
 	    if(jsgo) {
 /* javascript might update fields */
 		readyUndo();
@@ -4152,17 +4152,17 @@ runCommand(const char *line)
 		if(newlocation)
 		    goto redirect;
 		if(!rc)
-		    return true;
+		    return eb_true;
 	    }
 	    if(jsh) {
 		rc = javaParseExecute(jwin, h, 0, 0);
 		jsdw();
 		if(newlocation)
 		    goto redirect;
-		return true;
+		return eb_true;
 	    }
 	    if(nogo)
-		return true;
+		return eb_true;
 	}
     }
 
@@ -4195,11 +4195,11 @@ runCommand(const char *line)
 	if(c && (strchr(valid_delim, c) || cmd == 'i' && strchr("*<?=", c))) {
 	    if(!cw->browseMode && (cmd == 'i' || cx)) {
 		setError(MSG_NoBrowse);
-		return false;
+		return eb_false;
 	    }
 	    if(endRange > startRange && cmd == 'i') {
 		setError(MSG_RangeI, c);
-		return false;
+		return eb_false;
 	    }
 	    if(cmd == 'i' && strchr("?=<*", c)) {
 		char *p;
@@ -4219,37 +4219,37 @@ runCommand(const char *line)
 		debugPrint(5, "findField returns %d.%d", n, tagno);
 		if(!tagno) {
 		    fieldNumProblem((c == '*' ? 2 : 0), 'i', cx, n, realtotal);
-		    return false;
+		    return eb_false;
 		}
 		if(scmd == '?') {
 		    infShow(tagno, line);
-		    return true;
+		    return eb_true;
 		}
 		if(c == '<') {
-		    bool fromfile = false;
+		    eb_bool fromfile = eb_false;
 		    if(globSub) {
 			setError(MSG_IG);
-			return (globSub = false);
+			return (globSub = eb_false);
 		    }
 		    skipWhite(&line);
 		    if(!*line) {
 			setError(MSG_NoFileSpecified);
-			return false;
+			return eb_false;
 		    }
 		    n = stringIsNum(line);
 		    if(n >= 0) {
 			char *p;
 			int plen, dol;
 			if(!cxCompare(n) || !cxActive(n))
-			    return false;
+			    return eb_false;
 			dol = sessionList[n].lw->dol;
 			if(!dol) {
 			    setError(MSG_BufferXEmpty, n);
-			    return false;
+			    return eb_false;
 			}
 			if(dol > 1) {
 			    setError(MSG_BufferXLines, n);
-			    return false;
+			    return eb_false;
 			}
 			p = (char *)fetchLineContext(1, 1, n);
 			plen = pstLength((pst) p);
@@ -4260,37 +4260,37 @@ runCommand(const char *line)
 			nzFree(p);
 		    } else {
 			int fd;
-			fromfile = true;
+			fromfile = eb_true;
 			if(!envFile(line, &line))
-			    return false;
+			    return eb_false;
 			fd = open(line, O_RDONLY | O_TEXT);
 			if(fd < 0) {
 			    setError(MSG_NoOpen, line);
-			    return false;
+			    return eb_false;
 			}
 			n = read(fd, newline, sizeof (newline));
 			close(fd);
 			if(n < 0) {
 			    setError(MSG_NoRead, line);
-			    return false;
+			    return eb_false;
 			}
 		    }
 		    for(j = 0; j < n; ++j) {
 			if(newline[j] == 0) {
 			    setError(MSG_InputNull, line);
-			    return false;
+			    return eb_false;
 			}
 			if(newline[j] == '\r' && !fromfile &&
 			   j < n - 1 && newline[j + 1] != '\n') {
 			    setError(MSG_InputCR);
-			    return false;
+			    return eb_false;
 			}
 			if(newline[j] == '\r' || newline[j] == '\n')
 			    break;
 		    }
 		    if(j == sizeof (newline)) {
 			setError(MSG_FirstLineLong, line);
-			return false;
+			return eb_false;
 		    }
 		    newline[j] = 0;
 		    line = newline;
@@ -4300,12 +4300,12 @@ runCommand(const char *line)
 		    readyUndo();
 		    jSyncup();
 		    if(!infPush(tagno, &allocatedLine))
-			return false;
+			return eb_false;
 		    if(newlocation)
 			goto redirect;
 /* No url means it was a reset button */
 		    if(!allocatedLine)
-			return true;
+			return eb_true;
 		    line = allocatedLine;
 		    first = *line;
 		    cmd = 'b';
@@ -4314,7 +4314,7 @@ runCommand(const char *line)
 		cmd = 's';
 	} else {
 	    setError(MSG_TextAfter, icmd);
-	    return false;
+	    return eb_false;
 	}
     }
 
@@ -4323,7 +4323,7 @@ runCommand(const char *line)
 	if(cw->fileName && !noStack && sameURL(line, cw->fileName)) {
 	    if(stringEqual(line, cw->fileName)) {
 		setError(MSG_AlreadyInBuffer);
-		return false;
+		return eb_false;
 	    }
 /* Same url, but a different #section */
 	    s = strchr(line, '#');
@@ -4332,7 +4332,7 @@ runCommand(const char *line)
 		if(!cw->dol)
 		    cw->dot = 0;
 		printDot();
-		return true;
+		return eb_true;
 	    }
 	    line = s;
 	    first = '#';
@@ -4342,12 +4342,12 @@ runCommand(const char *line)
 /* Different URL, go get it. */
 /* did you make changes that you didn't write? */
 	if(!cxQuit(context, 0))
-	    return false;
+	    return eb_false;
 	freeUndoLines(cw->map);
 	undoWindow.map = 0;
 	nzFree(preWindow.map);
 	preWindow.map = 0;
-	cw->firstOpMode = cw->changeMode = false;
+	cw->firstOpMode = cw->changeMode = eb_false;
 	startRange = endRange = 0;
 	changeFileName = 0;	/* should already be zero */
 	w = createWindow();
@@ -4367,7 +4367,7 @@ runCommand(const char *line)
 	    q = allocMem(ql + 1);
 	    sprintf(q, "to:%s\nSubject:%s\n%s", addr, subj ? subj : "Hello",
 	       body ? body : "");
-	    j = addTextToBuffer((pst) q, ql, 0, false);
+	    j = addTextToBuffer((pst) q, ql, 0, eb_false);
 	    nzFree(q);
 	    nzFree(addr);
 	    nzFree(subj);
@@ -4378,13 +4378,13 @@ runCommand(const char *line)
 	    cw->fileName = cloneString(line);
 	    cw->firstURL = cloneString(line);
 	    if(isSQL(line))
-		cw->sqlMode = true;
+		cw->sqlMode = eb_true;
 	    if(icmd == 'g' && !nogo && isURL(line))
 		debugPrint(2, "*%s", line);
 	    j = readFile(line, "");
 	}
-	w->firstOpMode = w->changeMode = false;
-	undoable = false;
+	w->firstOpMode = w->changeMode = eb_false;
+	undoable = eb_false;
 	cw = cs->lw;
 /* Don't push a new session if we were trying to read a url,
  * and didn't get anything.  This is a feature that I'm
@@ -4413,7 +4413,7 @@ runCommand(const char *line)
 	if(!w->prev)
 	    cs->fw = w;
 	if(!j)
-	    return false;
+	    return eb_false;
 	if(changeFileName) {
 	    nzFree(w->fileName);
 	    w->fileName = changeFileName;
@@ -4425,7 +4425,7 @@ runCommand(const char *line)
 	if(cw->binMode && !stringIsPDF(cw->fileName))
 	    cmd = 'e';
 	if(cmd == 'e')
-	    return true;
+	    return eb_true;
     }
 
   browse:
@@ -4433,11 +4433,11 @@ runCommand(const char *line)
 	if(!cw->browseMode) {
 	    if(cw->binMode && !stringIsPDF(cw->fileName)) {
 		setError(MSG_BrowseBinary);
-		return false;
+		return eb_false;
 	    }
 	    if(!cw->dol) {
 		setError(MSG_BrowseEmpty);
-		return false;
+		return eb_false;
 	    }
 	    if(fileSize >= 0) {
 		debugPrint(1, "%d", fileSize);
@@ -4445,12 +4445,12 @@ runCommand(const char *line)
 	    }
 	    if(!browseCurrentBuffer()) {
 		if(icmd == 'b')
-		    return false;
-		return true;
+		    return eb_false;
+		return eb_true;
 	    }
 	} else if(!first) {
 	    setError(MSG_BrowseAlready);
-	    return false;
+	    return eb_false;
 	}
 
 	if(newlocation) {
@@ -4468,7 +4468,7 @@ runCommand(const char *line)
 		first = *line;
 		if(intFlag) {
 		    i_puts(MSG_RedirectionInterrupted);
-		    return true;
+		    return eb_true;
 		}
 		goto rebrowse;
 	    }
@@ -4477,14 +4477,14 @@ runCommand(const char *line)
 /* Jump to the #section, if specified in the url */
 	s = strchr(line, '#');
 	if(!s)
-	    return true;
+	    return eb_true;
 	++s;
 /* Sometimes there's a 3 in the midst of a long url,
  * probably with post data.  It really screws things up.
  * Here is a kludge to avoid this problem.
  * Some day I need to figure this out. */
 	if(strlen(s) > 24)
-	    return true;
+	    return eb_true;
 /* Print the file size before we print the line. */
 	if(fileSize >= 0) {
 	    debugPrint(1, "%d", fileSize);
@@ -4495,11 +4495,11 @@ runCommand(const char *line)
 	    if(lineHasTag(p, s)) {
 		cw->dot = i;
 		printDot();
-		return true;
+		return eb_true;
 	    }
 	}
 	setError(MSG_NoLable2, s);
-	return false;
+	return eb_false;
     }
 
     readyUndo();
@@ -4521,7 +4521,7 @@ runCommand(const char *line)
 	}
 	if(cw->browseMode) {
 	    setError(MSG_BrowseI);
-	    return false;
+	    return eb_false;
 	}
 	cmd = 'a';
 	--startRange, --endRange;
@@ -4536,7 +4536,7 @@ runCommand(const char *line)
     if(cmd == 'a') {
 	if(inscript) {
 	    setError(MSG_InsertFunction);
-	    return false;
+	    return eb_false;
 	}
 	if(cw->sqlMode) {
 	    j = cw->dol;
@@ -4567,7 +4567,7 @@ runCommand(const char *line)
 	j = 1;
       afterdelete:
 	if(!j)
-	    globSub = false;
+	    globSub = eb_false;
 	else if(cmd == 'D')
 	    printDot();
 	return j;
@@ -4592,14 +4592,14 @@ runCommand(const char *line)
 	    return j;
 	}
 	setError(MSG_NoFileSpecified);
-	return false;
+	return eb_false;
     }
 
     if(cmd == 's') {
 	j = substituteText(line);
 	if(j < 0) {
-	    globSub = false;
-	    j = false;
+	    globSub = eb_false;
+	    j = eb_false;
 	}
 	if(newlocation)
 	    goto redirect;
@@ -4607,14 +4607,14 @@ runCommand(const char *line)
     }
 
     setError(MSG_CNYI, icmd);
-    return (globSub = false);
+    return (globSub = eb_false);
 }				/* runCommand */
 
-bool
-edbrowseCommand(const char *line, bool script)
+eb_bool
+edbrowseCommand(const char *line, eb_bool script)
 {
-    bool rc;
-    globSub = intFlag = false;
+    eb_bool rc;
+    globSub = intFlag = eb_false;
     inscript = script;
     fileSize = -1;
     skipWhite(&line);
@@ -4645,7 +4645,7 @@ edbrowseCommand(const char *line, bool script)
 	uw->binMode = pw->binMode;
 	uw->nlMode = pw->nlMode;
 	uw->dirMode = pw->dirMode;
-	undoable = false;
+	undoable = eb_false;
     }
     return rc;
 }				/* edbrowseCommand */
@@ -4653,10 +4653,10 @@ edbrowseCommand(const char *line, bool script)
 /* Take some text, usually empty, and put it in a side buffer. */
 int
 sideBuffer(int cx, const char *text, int textlen,
-   const char *bufname, bool autobrowse)
+   const char *bufname, eb_bool autobrowse)
 {
     int svcx = context;
-    bool rc;
+    eb_bool rc;
     if(cx) {
 	cxQuit(cx, 2);
     } else {
@@ -4668,7 +4668,7 @@ sideBuffer(int cx, const char *text, int textlen,
 	    return 0;
 	}
     }
-    cxSwitch(cx, false);
+    cxSwitch(cx, eb_false);
     if(bufname) {
 	cw->fileName = cloneString(bufname);
 	debrowseSuffix(cw->fileName);
@@ -4679,7 +4679,7 @@ sideBuffer(int cx, const char *text, int textlen,
 	cw->binMode = looksBinary(text, textlen);
     }
     if(textlen) {
-	rc = addTextToBuffer((pst) text, textlen, 0, true);
+	rc = addTextToBuffer((pst) text, textlen, 0, eb_true);
 	if(!rc)
 	    i_printf(MSG_BufferPreload, cx);
 	if(autobrowse) {
@@ -4690,13 +4690,13 @@ sideBuffer(int cx, const char *text, int textlen,
  * and if we call more javascript, well, I don't think
  * any of that code is reentrant.
  * Smells like a disaster in the making. */
-	    allowJS = false;
+	    allowJS = eb_false;
 	    browseCurrentBuffer();
-	    allowJS = true;
+	    allowJS = eb_true;
 	}			/* browse the side window */
     }
     /* back to original context */
-    cxSwitch(svcx, false);
+    cxSwitch(svcx, eb_false);
     return cx;
 }				/* sideBuffer */
 
@@ -4722,13 +4722,13 @@ static struct listHead inputChangesPending = {
 };
 static struct inputChange *ic;
 
-bool
+eb_bool
 browseCurrentBuffer(void)
 {
     char *rawbuf, *newbuf, *tbuf;
     int rawsize, tlen, j;
-    bool rc, remote = false, do_ip = false, ispdf = false;
-    bool save_ch = cw->changeMode;
+    eb_bool rc, remote = eb_false, do_ip = eb_false, ispdf = eb_false;
+    eb_bool save_ch = cw->changeMode;
     uchar bmode = 0;
 
     if(cw->fileName) {
@@ -4747,11 +4747,11 @@ browseCurrentBuffer(void)
 	bmode = 2;
     else {
 	setError(MSG_Unbrowsable);
-	return false;
+	return eb_false;
     }
 
-    if(!unfoldBuffer(context, false, &rawbuf, &rawsize))
-	return false;		/* should never happen */
+    if(!unfoldBuffer(context, eb_false, &rawbuf, &rawsize))
+	return eb_false;		/* should never happen */
 
 /* expand pdf using pdftohtml */
 /* http://rpmfind.net/linux/RPM/suse/updates/10.0/i386/rpm/i586/pdftohtml-0.36-130.9.i586.html */
@@ -4760,7 +4760,7 @@ browseCurrentBuffer(void)
 	if(!memoryOutToFile(edbrowseTempPDF, rawbuf, rawsize,
 	   MSG_TempNoCreate2, MSG_TempNoWrite)) {
 	    nzFree(rawbuf);
-	    return false;
+	    return eb_false;
 	}
 	nzFree(rawbuf);
 	unlink(edbrowseTempHTML);
@@ -4772,11 +4772,11 @@ browseCurrentBuffer(void)
 	nzFree(cmd);
 	if(fileSizeByName(edbrowseTempHTML) <= 0) {
 	    setError(MSG_NoPDF, edbrowseTempPDF);
-	    return false;
+	    return eb_false;
 	}
 	rc = fileIntoMemory(edbrowseTempHTML, &rawbuf, &rawsize);
 	if(!rc)
-	    return false;
+	    return eb_false;
 	iuReformat(rawbuf, rawsize, &tbuf, &tlen);
 	if(tbuf) {
 	    nzFree(rawbuf);
@@ -4795,7 +4795,7 @@ browseCurrentBuffer(void)
 	undoWindow.map = 0;
 	nzFree(preWindow.map);
 	preWindow.map = 0;
-	cw->firstOpMode = false;
+	cw->firstOpMode = eb_false;
 
 /* There shouldn't be anything in the input pending list, but clear
  * it out, just to be safe. */
@@ -4806,11 +4806,11 @@ browseCurrentBuffer(void)
 	newbuf = emailParse(rawbuf);
 	j = strlen(newbuf);
 
-	do_ip = true;
+	do_ip = eb_true;
 	if(!ipbFile)
-	    do_ip = false;
+	    do_ip = eb_false;
 	if(passMail)
-	    do_ip = false;
+	    do_ip = eb_false;
 
 /* mail could need utf8 conversion, after qp decode */
 	iuReformat(newbuf, j, &tbuf, &tlen);
@@ -4837,9 +4837,9 @@ browseCurrentBuffer(void)
 	newbuf = htmlParse(rawbuf, remote);
     }
 
-    cw->browseMode = true;
+    cw->browseMode = eb_true;
     cw->rnlMode = cw->nlMode;
-    cw->nlMode = false;
+    cw->nlMode = eb_false;
     cw->r_dot = cw->dot, cw->r_dol = cw->dol;
     cw->dot = cw->dol = 0;
     cw->r_map = cw->map;
@@ -4847,9 +4847,9 @@ browseCurrentBuffer(void)
     memcpy(cw->r_labels, cw->labels, sizeof (cw->labels));
     memset(cw->labels, 0, sizeof (cw->labels));
     j = strlen(newbuf);
-    rc = addTextToBuffer((pst) newbuf, j, 0, false);
+    rc = addTextToBuffer((pst) newbuf, j, 0, eb_false);
     free(newbuf);
-    cw->firstOpMode = undoable = false;
+    cw->firstOpMode = undoable = eb_false;
     cw->changeMode = save_ch;
     cw->iplist = 0;
 
@@ -4860,23 +4860,23 @@ browseCurrentBuffer(void)
     }
     if(!rc) {
 	fileSize = -1;
-	return false;
+	return eb_false;
     }				/* should never happen */
-    fileSize = apparentSize(context, true);
+    fileSize = apparentSize(context, eb_true);
 
     if(bmode == 2) {
 /* apply any input changes pending */
 	foreach(ic, inputChangesPending)
-	   updateFieldInBuffer(ic->tagno, ic->value, 0, false);
+	   updateFieldInBuffer(ic->tagno, ic->value, 0, eb_false);
 	freeList(&inputChangesPending);
     }
 
     if(do_ip & ismc)
 	allIPs();
-    return true;
+    return eb_true;
 }				/* browseCurrentBuffer */
 
-static bool
+static eb_bool
 locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
 {
     int ln, n;
@@ -4891,9 +4891,9 @@ locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
 	    *s_p = ic->value;
 	    *t_p = ic->value + strlen(ic->value);
 /* we don't need to set the others in this special case */
-	    return true;
+	    return eb_true;
 	}
-	return false;
+	return eb_false;
     }
     /* still rendering the page */
     sprintf(search, "%c%d<", InternalCodeChar, tagno);
@@ -4917,16 +4917,16 @@ locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
 	*p_p = p;
 	*s_p = s;
 	*t_p = t;
-	return true;
+	return eb_true;
     }
 
-    return false;
+    return eb_false;
 }				/* locateTagInBuffer */
 
 /* Update an input field in the current buffer.
  * The input field may not be here, if you've deleted some lines. */
 void
-updateFieldInBuffer(int tagno, const char *newtext, int notify, bool required)
+updateFieldInBuffer(int tagno, const char *newtext, int notify, eb_bool required)
 {
     int ln, idx, n, plen;
     char *p, *s, *t, *new;
@@ -4955,8 +4955,8 @@ updateFieldInBuffer(int tagno, const char *newtext, int notify, bool required)
 	    displayLine(ln);
 	if(notify == 2)
 	    i_printf(MSG_LineUpdated, ln);
-	cw->firstOpMode = true;
-	undoable = true;
+	cw->firstOpMode = eb_true;
+	undoable = eb_true;
 	return;
     }
 

@@ -2685,7 +2685,7 @@ static const char *polishMessages[] = {
 static const char **messageArray = englishMessages;
 static int messageArrayLength = sizeof (englishMessages) / sizeof (char *);
 
-bool cons_utf8, iuConvert = true;
+eb_bool cons_utf8, iuConvert = eb_true;
 char type8859 = 1;
 
 void
@@ -2699,7 +2699,7 @@ selectLanguage(void)
 	return;
 
     if(strstrCI(s, "utf8") || strstrCI(s, "utf-8"))
-	cons_utf8 = true;
+	cons_utf8 = eb_true;
 
 /* We roll our own international messages in this file, so you wouldn't think
  * we need setlocale, but pcre needs the locale for expressions like \w,
@@ -2936,16 +2936,16 @@ static const char lowerMore[] = "";
 
 static const char letterMore[] = "";
 
-static bool
+static eb_bool
 i_isalphaByte(unsigned char c)
 {
     if(isalphaByte(c))
-	return true;
-    if(c == false)
+	return eb_true;
+    if(c == eb_false)
 	return 0;
     if(strchr(letterMore, c))
-	return true;
-    return false;
+	return eb_true;
+    return eb_false;
 }				/* i_isalphaByte */
 
 /* assumes the arg is a letter */
@@ -2980,7 +2980,7 @@ i_caseShift(unsigned char *s, char action)
     unsigned char c;
 /* The McDonalds conversion is very English - should we do it in all languages? */
     int mc = 0;
-    bool ws = true;
+    eb_bool ws = eb_true;
 
     for(; c = *s; ++s) {
 	if(action == 'u') {
@@ -3011,11 +3011,11 @@ i_caseShift(unsigned char *s, char action)
 	    } else
 		mc = 0;
 	    *s = c;
-	    ws = false;
+	    ws = eb_false;
 	    continue;
 	}
 
-	ws = true, mc = 0;
+	ws = eb_true, mc = 0;
     }				/* loop */
 }				/* caseShift */
 

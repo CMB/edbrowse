@@ -135,22 +135,22 @@ stripWhite(char *s)
 
 /* compress white space */
 void
-spaceCrunch(char *s, bool onespace, bool unprint)
+spaceCrunch(char *s, eb_bool onespace, eb_bool unprint)
 {
     int i, j;
     char c;
-    bool space = true;
+    eb_bool space = eb_true;
     for(i = j = 0; c = s[i]; ++i) {
 	if(isspaceByte(c)) {
 	    if(!onespace)
 		continue;
 	    if(!space)
-		s[j++] = ' ', space = true;
+		s[j++] = ' ', space = eb_true;
 	    continue;
 	}
 	if(unprint && !isprintByte(c))
 	    continue;
-	s[j++] = c, space = false;
+	s[j++] = c, space = eb_false;
     }
     if(space && j)
 	--j;			/* drop trailing space */
@@ -374,17 +374,17 @@ stringIsNum(const char *s)
     return n;
 }				/* stringIsNum */
 
-bool
+eb_bool
 stringIsFloat(const char *s, double *dp)
 {
     const char *t;
     *dp = strtod(s, (char **)&t);
     if(*t)
-	return false;		/* extra stuff at the end */
-    return true;
+	return eb_false;		/* extra stuff at the end */
+    return eb_true;
 }				/* stringIsFloat */
 
-bool
+eb_bool
 stringIsPDF(const char *s)
 {
     int j = 0;
@@ -393,17 +393,17 @@ stringIsPDF(const char *s)
     return j >= 5 && stringEqual(s + j - 4, ".pdf");
 }				/* stringIsPDF */
 
-bool
+eb_bool
 isSQL(const char *s)
 {
     char c;
     const char *c1 = 0, *c2 = 0;
     c = *s;
 #ifndef HAVE_SQL
-    return false;
+    return eb_false;
 #endif
     if(isURL(s))
-	return false;
+	return eb_false;
     if(!isalphaByte(c))
 	goto no;
     for(++s; c = *s; ++s) {
@@ -423,12 +423,12 @@ isSQL(const char *s)
 	}
     }
   no:
-    return false;
+    return eb_false;
   yes:
-    return true;
+    return eb_true;
 }				/* isSQL */
 
-bool
+eb_bool
 memEqualCI(const char *s, const char *t, int len)
 {
     char c, d;
@@ -439,10 +439,10 @@ memEqualCI(const char *s, const char *t, int len)
 	if(islowerByte(d))
 	    d = toupper(d);
 	if(c != d)
-	    return false;
+	    return eb_false;
 	++s, ++t;
     }
-    return true;
+    return eb_true;
 }				/* memEqualCI */
 
 char *
@@ -457,7 +457,7 @@ strstrCI(const char *base, const char *search)
     return 0;
 }				/* strstrCI */
 
-bool
+eb_bool
 stringEqualCI(const char *s, const char *t)
 {
     char c, d;
@@ -467,14 +467,14 @@ stringEqualCI(const char *s, const char *t)
 	if(islowerByte(d))
 	    d = toupper(d);
 	if(c != d)
-	    return false;
+	    return eb_false;
 	++s, ++t;
     }
     if(*s)
-	return false;
+	return eb_false;
     if(*t)
-	return false;
-    return true;
+	return eb_false;
+    return eb_true;
 }				/* stringEqualCI */
 
 int
@@ -523,7 +523,7 @@ charInList(const char *list, char c)
 
 /* In an empty list, next and prev point back to the list, not to 0. */
 /* We also allow zero. */
-bool
+eb_bool
 listIsEmpty(const struct listHead * l)
 {
     return l->next == l || l->next == 0;
@@ -585,15 +585,15 @@ freeList(struct listHead *l)
 }				/* freeList */
 
 /* like isalnumByte, but allows _ and - */
-bool
+eb_bool
 isA(char c)
 {
     if(isalnumByte(c))
-	return true;
+	return eb_true;
     return (c == '_' || c == '-');
 }				/* isA */
 
-bool
+eb_bool
 isquote(char c)
 {
     return c == '"' || c == '\'';
@@ -701,7 +701,7 @@ copyPstring(pst s, const pst t)
  * This solves an outstanding issue, and it is needed for forthcoming
  * functionality, such as edpager.
  */
-bool
+eb_bool
 fdIntoMemory(int fd, char **data, int *len)
 {
     int length, n;
@@ -720,7 +720,7 @@ fdIntoMemory(int fd, char **data, int *len)
 	    *data = EMPTYSTRING;
 	    *len = 0;
 	    setError(MSG_NoRead, "file descriptor");
-	    return false;
+	    return eb_false;
 	}
 
 	if(n > 0)
@@ -731,27 +731,27 @@ fdIntoMemory(int fd, char **data, int *len)
     buf = reallocMem(buf, length + 2);
     *data = buf;
     *len = length;
-    return true;
+    return eb_true;
 }				/* fdIntoMemory */
 
-bool
+eb_bool
 fileIntoMemory(const char *filename, char **data, int *len)
 {
     int fh;
-    char ftype = fileTypeByName(filename, false);
-    bool ret;
+    char ftype = fileTypeByName(filename, eb_false);
+    eb_bool ret;
     if(ftype && ftype != 'f') {
 	setError(MSG_RegularFile, filename);
-	return false;
+	return eb_false;
     }
     fh = open(filename, O_RDONLY | O_BINARY);
     if(fh < 0) {
 	setError(MSG_NoOpen, filename);
-	return false;
+	return eb_false;
     }
 
     ret = fdIntoMemory(fh, data, len);
-    if(ret == false)
+    if(ret == eb_false)
 	setError(MSG_NoRead2, filename);
 
     close(fh);
@@ -759,7 +759,7 @@ fileIntoMemory(const char *filename, char **data, int *len)
 }				/* fileIntoMemory */
 
 /* inverse of the above */
-bool
+eb_bool
 memoryOutToFile(const char *filename, const char *data, int len,
 /* specify the error messages */
    int msgcreate, int msgwrite)
@@ -767,15 +767,15 @@ memoryOutToFile(const char *filename, const char *data, int len,
     int fh = open(filename, O_CREAT | O_TRUNC | O_WRONLY | O_BINARY, 0666);
     if(fh < 0) {
 	setError(msgcreate, filename, errno);
-	return false;
+	return eb_false;
     }
     if(write(fh, data, len) < len) {
 	setError(msgwrite, filename, errno);
 	close(fh);
-	return false;
+	return eb_false;
     }
     close(fh);
-    return true;
+    return eb_true;
 }				/* memoryOutToFile */
 
 /* shift string to upper, lower, or mixed case */
@@ -785,7 +785,7 @@ caseShift(char *s, char action)
 {
     char c;
     int mc = 0;
-    bool ws = true;
+    eb_bool ws = eb_true;
 
     for(; c = *s; ++s) {
 	if(action == 'u') {
@@ -814,10 +814,10 @@ caseShift(char *s, char action)
 	    } else
 		mc = 0;
 	    *s = c;
-	    ws = false;
+	    ws = eb_false;
 	    continue;
 	}
-	ws = true, mc = 0;
+	ws = eb_true, mc = 0;
     }				/* loop */
 }				/* caseShift */
 
@@ -834,10 +834,10 @@ is ported to other operating systems.
  * But the link feature is Unix specific. */
 
 char
-fileTypeByName(const char *name, bool showlink)
+fileTypeByName(const char *name, eb_bool showlink)
 {
     struct stat buf;
-    bool islink = false;
+    eb_bool islink = eb_false;
     char c;
     int mode;
     if(lstat(name, &buf)) {
@@ -846,7 +846,7 @@ fileTypeByName(const char *name, bool showlink)
     }
     mode = buf.st_mode & S_IFMT;
     if(mode == S_IFLNK) {	/* symbolic link */
-	islink = true;
+	islink = eb_true;
 /* If this fails, I'm guessing it's just a file. */
 	if(stat(name, &buf))
 	    return (showlink ? 'F' : 0);
@@ -960,7 +960,7 @@ ttyRestoreSettings(void)
  * min=0 time>0:  return 1 char, or 0 if the timer expires.
  * min=0 time=0:  nonblocking, return whatever chars have been received. */
 static void
-ttyRaw(int charcount, int timeout, bool isecho)
+ttyRaw(int charcount, int timeout, eb_bool isecho)
 {
     termstruct buf = savettybuf;	/* structure copy */
     buf.c_cc[VMIN] = charcount;
@@ -977,7 +977,7 @@ getche(void)
 {
     char c;
     fflush(stdout);
-    ttyRaw(1, 0, true);
+    ttyRaw(1, 0, eb_true);
     read(0, &c, 1);
     ttyRestoreSettings();
     return c;
@@ -988,7 +988,7 @@ getch(void)
 {
     char c;
     fflush(stdout);
-    ttyRaw(1, 0, false);
+    ttyRaw(1, 0, eb_false);
     read(0, &c, 1);
     ttyRestoreSettings();
     return c;
@@ -1000,7 +1000,7 @@ char
 getLetter(const char *s)
 {
     char c;
-    while(true) {
+    while(eb_true) {
 	c = getch();
 	if(strchr(s, c))
 	    break;
@@ -1013,7 +1013,7 @@ getLetter(const char *s)
 
 /* loop through the files in a directory */
 /* Hides the differences between DOS, Unix, and NT. */
-static bool dirstart = true;
+static eb_bool dirstart = eb_true;
 
 char *
 nextScanFile(const char *base)
@@ -1021,10 +1021,10 @@ nextScanFile(const char *base)
     char *s;
 #ifdef DOSLIKE
     static char global[] = "/*.*";
-    bool rc;
+    eb_bool rc;
     short len;
     char *p;
-    bool allocate = false;
+    eb_bool allocate = eb_false;
 #ifdef MSDOS
     static struct _find_t dta;
 #else
@@ -1042,7 +1042,7 @@ nextScanFile(const char *base)
 	    len = strlen(base) - 1;
 	    p = allocMem(len + 6);
 	    strcpy(p, base);
-	    allocate = true;
+	    allocate = eb_true;
 	    if(p[len] == '/' || p[len] == '\\')
 		p[len] = 0;
 	    strcat(p, global);
@@ -1051,10 +1051,10 @@ nextScanFile(const char *base)
 #ifdef MSDOS
 	rc = _dos_findfirst(p, (showHiddenFiles ? 077 : 073), &dta);
 #else
-	rc = false;
+	rc = eb_false;
 	handle = _findfirst(p, &dta);
 	if(handle < 0)
-	    rc = true;
+	    rc = eb_true;
 #endif
 	if(allocate)
 	    nzFree(p);
@@ -1072,7 +1072,7 @@ nextScanFile(const char *base)
 #endif
 
 #ifdef DOSLIKE
-    while(true) {
+    while(eb_true) {
 /* read the next file */
 	if(!dirStart) {
 #ifdef MSDOS
@@ -1080,7 +1080,7 @@ nextScanFile(const char *base)
 #else
 	    rc = _findnext(handle, &dta);
 #endif
-	    dirstart = false;
+	    dirstart = eb_false;
 	}
 	if(rc)
 	    break;
@@ -1116,18 +1116,18 @@ nextScanFile(const char *base)
 }				/* nextScanFile */
 
 /* Sorted directory list.  Uses textLines[]. */
-bool
+eb_bool
 sortedDirList(const char *dir, int *start, int *end)
 {
     char *f;
     int j;
-    bool change;
+    eb_bool change;
 
     *start = *end = textLinesCount;
 
     while(f = nextScanFile(dir)) {
 	if(!linesComing(1))
-	    return false;
+	    return eb_false;
 	textLines[textLinesCount] = allocMem(strlen(f) + 3);
 	strcpy((char *)textLines[textLinesCount], f);
 	textLinesCount++;
@@ -1135,23 +1135,23 @@ sortedDirList(const char *dir, int *start, int *end)
 
     *end = textLinesCount;
     if(*end == *start)
-	return true;
+	return eb_true;
 
 /* Bubble sort, the list shouldn't be too long. */
-    change = true;
+    change = eb_true;
     while(change) {
-	change = false;
+	change = eb_false;
 	for(j = *start; j < *end - 1; ++j) {
 	    if(strcmp((char *)textLines[j], (char *)textLines[j + 1]) > 0) {
 		pst swap = textLines[j];
 		textLines[j] = textLines[j + 1];
 		textLines[j + 1] = swap;
-		change = true;
+		change = eb_true;
 	    }
 	}
     }
 
-    return true;
+    return eb_true;
 }				/* sortedDirList */
 
 /* Expand environment variables, then wild cards.
@@ -1160,7 +1160,7 @@ sortedDirList(const char *dir, int *start, int *end)
  * Neither the original line nore the new line is allocated.
  * They are static char buffers that are just plain long enough. */
 
-bool
+eb_bool
 envFile(const char *line, const char **expanded)
 {
     static char line1[MAXTTYLINE];
@@ -1168,7 +1168,7 @@ envFile(const char *line, const char **expanded)
     const char *s, *value, *basedir;
     char *t, *dollar, *cut, *file;
     char c;
-    bool cc, badBrackets;
+    eb_bool cc, badBrackets;
     int filecount;
     char re[MAXRE + 20];
     const char *re_error;
@@ -1179,20 +1179,20 @@ envFile(const char *line, const char **expanded)
 /* ` supresses this stuff */
     if(*line == '`') {
 	*expanded = line + 1;
-	return true;
+	return eb_true;
     }
 
 /* quick check, nothing to do */
     if(!strpbrk(line, "$[*?") && line[0] != '~') {
 	*expanded = line;
-	return true;
+	return eb_true;
     }
 
 /* first the env variables */
     s = line;
     t = line1;
     dollar = 0;
-    while(true) {
+    while(eb_true) {
 	if(t >= line1 + sizeof (line1))
 	    goto longvar;
 	c = *s;
@@ -1209,7 +1209,7 @@ envFile(const char *line, const char **expanded)
 	    value = getenv(dollar + 1);
 	    if(!value) {
 		setError(MSG_NoEnvVar, dollar + 1);
-		return false;
+		return eb_false;
 	    }
 	    if(dollar + strlen(value) >= line1 + sizeof (line1) - 1)
 		goto longvar;
@@ -1239,34 +1239,34 @@ envFile(const char *line, const char **expanded)
     }
     if(!dollar) {		/* nothing meta */
 	*expanded = line1;
-	return true;
+	return eb_true;
     }
     if(cut && dollar < cut) {
 	setError(MSG_EarlyExpand);
-	return false;
+	return eb_false;
     }
 
 /* Make sure its a directory, and build a perl regexp for the pattern. */
     if(cut) {
 	*cut = 0;
-	if(cut > line1 && fileTypeByName(line1, false) != 'd') {
+	if(cut > line1 && fileTypeByName(line1, eb_false) != 'd') {
 	    setError(MSG_NoAccessDir, line1);
-	    return false;
+	    return eb_false;
 	}
     }
 
     s = cut ? cut + 1 : line1;
     t = re;
     *t++ = '^';
-    cc = badBrackets = false;
+    cc = badBrackets = eb_false;
     while(c = *s) {
 	if(t >= re + sizeof (re) - 3) {
 	    setError(MSG_ShellPatternLong);
-	    return false;
+	    return eb_false;
 	}
 	if(c == '\\') {
 	    setError(MSG_ExpandBackslash);
-	    return false;
+	    return eb_false;
 	}
 /* things we need to escape */
 	if(strchr("().+|", c))
@@ -1278,13 +1278,13 @@ envFile(const char *line, const char **expanded)
 	*t++ = c;
 	if(c == '[') {
 	    if(cc)
-		badBrackets = true;
-	    cc = true;
+		badBrackets = eb_true;
+	    cc = eb_true;
 	}
 	if(c == ']') {
 	    if(!cc)
-		badBrackets = true;
-	    cc = false;
+		badBrackets = eb_true;
+	    cc = eb_false;
 	}
 	++s;
     }				/* loop over shell pattern */
@@ -1292,18 +1292,18 @@ envFile(const char *line, const char **expanded)
     *t = 0;
     if(badBrackets | cc) {
 	setError(MSG_ShellSyntax);
-	return false;
+	return eb_false;
     }
 
     debugPrint(7, "shell regexp %s", re);
     re_cc = pcre_compile(re, 0, &re_error, &re_offset, 0);
     if(!re_cc) {
 	setError(MSG_ShellCompile, re_error);
-	return false;
+	return eb_false;
     }
 
     filecount = 0;
-    cc = false;			/* long flag */
+    cc = eb_false;			/* long flag */
     basedir = 0;
     if(cut) {
 	if(cut == line1)
@@ -1318,7 +1318,7 @@ envFile(const char *line, const char **expanded)
 	if(re_count < -1) {
 	    pcre_free(re_cc);
 	    setError(MSG_ShellExpand);
-	    return false;
+	    return eb_false;
 	}
 	if(re_count < 0)
 	    continue;
@@ -1326,7 +1326,7 @@ envFile(const char *line, const char **expanded)
 	if(filecount > 1)
 	    continue;
 	if((cut ? strlen(line1) : 0) + strlen(file) >= sizeof (line2) - 2)
-	    cc = true;
+	    cc = eb_true;
 	else if(cut)
 	    sprintf(line2, "%s/%s", line1, file);
 	else
@@ -1335,17 +1335,17 @@ envFile(const char *line, const char **expanded)
     pcre_free(re_cc);
     if(filecount != 1) {
 	setError((filecount > 0) + MSG_ShellNoMatch);
-	return false;
+	return eb_false;
     }
     if(cc)
 	goto longvar;
 
     *expanded = line2;
-    return true;
+    return eb_true;
 
   longvar:
     setError(MSG_ShellLineLong);
-    return false;
+    return eb_false;
 }				/* envFile */
 
 static struct utsname utsbuf;

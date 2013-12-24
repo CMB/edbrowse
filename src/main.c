@@ -19,9 +19,9 @@ const char eol[] = "\r\n";
 char EMPTYSTRING[] = "";
 int debugLevel = 1;
 int webTimeout = 20, mailTimeout = 0;
-bool ismc, browseLocal, passMail, errorExit;
-bool isInteractive, inInput, listNA;
-volatile bool intFlag;
+eb_bool ismc, browseLocal, passMail, errorExit;
+eb_bool isInteractive, inInput, listNA;
+volatile eb_bool intFlag;
 int fileSize, maxFileSize = 50000000;
 int localAccount, maxAccount;
 struct MACCOUNT accounts[MAXACCOUNT];
@@ -30,14 +30,14 @@ struct MIMETYPE mimetypes[MAXMIME];
 static int maxTables;
 static struct DBTABLE dbtables[MAXDBT];
 char *dbarea, *dblogin, *dbpw;	/* to log into the database */
-bool fetchBlobColumns;
+eb_bool fetchBlobColumns;
 char *proxy_host;
-bool caseInsensitive, searchStringsAll;
-bool undoable;
-bool allowRedirection = true, allowJS = true, sendReferrer = false;
-bool binaryDetect = true;
-bool inputReadLine;
-bool showHiddenFiles, helpMessagesOn;
+eb_bool caseInsensitive, searchStringsAll;
+eb_bool undoable;
+eb_bool allowRedirection = eb_true, allowJS = eb_true, sendReferrer = eb_false;
+eb_bool binaryDetect = eb_true;
+eb_bool inputReadLine;
+eb_bool showHiddenFiles, helpMessagesOn;
 uchar dirWrite, endMarks;
 int context = 1;
 uchar linePending[MAXTTYLINE];
@@ -98,7 +98,7 @@ updateConfig(void)
     close(fh);
 }				/* updateConfig */
 
-bool
+eb_bool
 junkSubject(const char *s, char key)
 {
     int l, n;
@@ -106,15 +106,15 @@ junkSubject(const char *s, char key)
     long exp = nowday;
     if(!s || !*s) {
 	i_puts(MSG_NoSubject);
-	return false;
+	return eb_false;
     }
     if(!cfgcopy) {
 	i_puts(MSG_NoConfig);
-	return false;
+	return eb_false;
     }
     if(!subjstart) {
 	i_puts(MSG_NoSubjFilter);
-	return false;
+	return eb_false;
     }
     if(key == 'j')
 	exp += 10;
@@ -138,7 +138,7 @@ junkSubject(const char *s, char key)
 	filters[n_filters].redirect = "x";
 	++n_filters;
     }
-    return true;
+    return eb_true;
 }				/* junkSubject */
 
 /* This routine succeeds, or aborts via i_printfExit */
@@ -149,9 +149,9 @@ readConfigFile(void)
     char *cfglp, *cfgnlp;
     int buflen, n;
     char c, ftype;
-    bool cmt = false;
-    bool startline = true;
-    bool cfgmodify = false;
+    eb_bool cmt = eb_false;
+    eb_bool startline = eb_true;
+    eb_bool cfgmodify = eb_false;
     uchar mailblock = 0, mimeblock = 0, tabblock = 0;
     int nest, ln, j;
     int sn = 0;			/* script number */
@@ -172,7 +172,7 @@ readConfigFile(void)
 	"linelength", "localizeweb", 0
     };
 
-    if(!fileTypeByName(configFile, false))
+    if(!fileTypeByName(configFile, eb_false))
 	return;			/* config file not present */
     if(!fileIntoMemory(configFile, &buf, &buflen))
 	showErrorAbort();
@@ -195,10 +195,10 @@ readConfigFile(void)
 	if(cmt) {
 	    if(c != '\n')
 		continue;
-	    cmt = false;
+	    cmt = eb_false;
 	}
 	if(c == '#' && startline) {
-	    cmt = true;
+	    cmt = eb_true;
 	    goto putc;
 	}
 	if(c == '\n') {
@@ -307,7 +307,7 @@ readConfigFile(void)
 	    *t++ = c;
 	    v = t;
 	    ++ln;
-	    startline = true;
+	    startline = eb_true;
 	    continue;
 	}
 	if(c == ' ' || c == '\t') {
@@ -316,7 +316,7 @@ readConfigFile(void)
 	} else {
 	    if(lidx < sizeof (last) - 1)
 		last[lidx++] = c;
-	    startline = false;
+	    startline = eb_false;
 	}
       putc:
 	*t++ = c;
@@ -365,7 +365,7 @@ readConfigFile(void)
 		    s = v + 1;
 		    filters[n_filters].expire = exp;
 		    if(exp <= nowday) {
-			cfgmodify = true;
+			cfgmodify = eb_true;
 			memmove(cfglp, cfgnlp, cfgcopy + cfglen - cfgnlp);
 			cfglen -= (cfgnlp - cfglp);
 			cfgnlp = cfglp;
@@ -475,7 +475,7 @@ readConfigFile(void)
 
 	case 8:
 	    if(*v == '<')
-		mt->stream = true, ++v;
+		mt->stream = eb_true, ++v;
 	    mt->type = v;
 	    continue;
 
@@ -528,27 +528,27 @@ readConfigFile(void)
 
 	case 17:
 	    addressFile = v;
-	    ftype = fileTypeByName(v, false);
+	    ftype = fileTypeByName(v, eb_false);
 	    if(ftype && ftype != 'f')
 		i_printfExit(MSG_ERBC_AbNotFile, v);
 	    continue;
 
 	case 18:
 	    ipbFile = v;
-	    ftype = fileTypeByName(v, false);
+	    ftype = fileTypeByName(v, eb_false);
 	    if(ftype && ftype != 'f')
 		i_printfExit(MSG_ERBC_IPNotFile, v);
 	    continue;
 
 	case 19:
 	    mailDir = v;
-	    if(fileTypeByName(v, false) != 'd')
+	    if(fileTypeByName(v, eb_false) != 'd')
 		i_printfExit(MSG_ERBC_NotDir, v);
 	    mailUnread = allocMem(strlen(v) + 12);
 	    sprintf(mailUnread, "%s/unread", v);
 /* We need the unread directory, else we can't fetch mail. */
 /* Create it if it isn't there. */
-	    if(fileTypeByName(mailUnread, false) != 'd') {
+	    if(fileTypeByName(mailUnread, eb_false) != 'd') {
 		if(mkdir(mailUnread, 0700))
 		    i_printfExit(MSG_ERBC_NotDir, mailUnread);
 	    }
@@ -565,7 +565,7 @@ readConfigFile(void)
 
 	case 21:
 	    cookieFile = v;
-	    ftype = fileTypeByName(v, false);
+	    ftype = fileTypeByName(v, eb_false);
 	    if(ftype && ftype != 'f')
 		i_printfExit(MSG_ERBC_JarNotFile, v);
 	    j = open(v, O_WRONLY | O_APPEND | O_CREAT, 0600);
@@ -587,7 +587,7 @@ readConfigFile(void)
 
 	case 23:
 	    spamCan = v;
-	    ftype = fileTypeByName(v, false);
+	    ftype = fileTypeByName(v, eb_false);
 	    if(ftype && ftype != 'f')
 		i_printfExit(MSG_ERBC_TrashNotFile, v);
 	    continue;
@@ -602,7 +602,7 @@ readConfigFile(void)
 
 	case 26:
 	    sslCerts = v;
-	    ftype = fileTypeByName(v, false);
+	    ftype = fileTypeByName(v, eb_false);
 	    if(ftype && ftype != 'f')
 		i_printfExit(MSG_ERBC_SSLNoFile, v);
 	    j = open(v, O_RDONLY);
@@ -866,7 +866,7 @@ mailRedirect(const char *to, const char *from,
 	    if(slen < 16 || mlen < 16)
 		break;		/* too short */
 	    j = k = 0;
-	    while(true) {
+	    while(eb_true) {
 		char c = subj[j];
 		char d = m[k];
 		if(isupperByte(c))
@@ -899,18 +899,18 @@ mailRedirect(const char *to, const char *from,
 Are we ok to parse and execute javascript?
 *********************************************************************/
 
-bool
+eb_bool
 javaOK(const char *url)
 {
     int j, hl, dl;
     const char *h, *d, *q, *path;
     if(!allowJS)
-	return false;
+	return eb_false;
     if(!url)
-	return true;
+	return eb_true;
     h = getHostURL(url);
     if(!h)
-	return true;
+	return eb_true;
     hl = strlen(h);
     path = getDataURL(url);
     for(j = 0; j < javaDisCount; ++j) {
@@ -931,21 +931,21 @@ javaOK(const char *url)
 		continue;
 	    if(strncmp(q, path, strlen(q)))
 		continue;
-	    return false;
+	    return eb_false;
 	}			/* domain/path was specified */
 	if(hl == dl)
-	    return false;
+	    return eb_false;
 	if(h[hl - dl - 1] == '.')
-	    return false;
+	    return eb_false;
     }
-    return true;
+    return eb_true;
 }				/* javaOK */
 
 /* Catch interrupt and react appropriately. */
 static void
 catchSig(int n)
 {
-    intFlag = true;
+    intFlag = eb_true;
     if(inInput)
 	i_puts(MSG_EnterInterrupt);
 /* If we were reading from a file, or socket, this signal should
@@ -1001,8 +1001,8 @@ int
 main(int argc, char **argv)
 {
     int cx, account;
-    bool rc, doConfig = true;
-    bool dofetch = false, domail = false;
+    eb_bool rc, doConfig = eb_true;
+    eb_bool dofetch = eb_false, domail = eb_false;
 
 /* In case this is being piped over to a synthesizer, or whatever. */
     if(fileTypeByHandle(fileno(stdout)) != 'f')
@@ -1025,7 +1025,7 @@ main(int argc, char **argv)
 /* I require this, though I'm not sure what this means for non-Unix OS's */
     if(!home)
 	i_printfExit(MSG_NotHome);
-    if(fileTypeByName(home, false) != 'd')
+    if(fileTypeByName(home, eb_false) != 'd')
 	i_printfExit(MSG_NotDir, home);
 
 /* See sample.ebrc in this directory for a sample config file. */
@@ -1043,7 +1043,7 @@ main(int argc, char **argv)
     edbrowseTempHTML = allocMem(strlen(recycleBin) + 13);
     sprintf(edbrowseTempHTML, "%s/eb_pdf.html", recycleBin);
 
-    if(fileTypeByName(recycleBin, false) != 'd') {
+    if(fileTypeByName(recycleBin, eb_false) != 'd') {
 	if(mkdir(recycleBin, 0700)) {
 /* Don't want to abort here; we might be on a readonly filesystem.
  * Don't have a Trash directory and can't creat one; yet we should move on. */
@@ -1055,7 +1055,7 @@ main(int argc, char **argv)
     if(recycleBin) {
 	mailStash = allocMem(strlen(recycleBin) + 12);
 	sprintf(mailStash, "%s/rawmail", recycleBin);
-	if(fileTypeByName(mailStash, false) != 'd') {
+	if(fileTypeByName(mailStash, eb_false) != 'd') {
 	    if(mkdir(mailStash, 0700)) {
 		free(mailStash);
 		mailStash = 0;
@@ -1081,7 +1081,7 @@ main(int argc, char **argv)
 	    *argv = configFile;
 	else
 	    ++argv, --argc;
-	doConfig = false;
+	doConfig = eb_false;
     } else {
 	readConfigFile();
 	if(maxAccount && !localAccount)
@@ -1109,24 +1109,24 @@ main(int argc, char **argv)
 	}
 
 	if(stringEqual(s, "e")) {
-	    errorExit = true;
+	    errorExit = eb_true;
 	    continue;
 	}
 
 	if(*s == 'p')
-	    ++s, passMail = true;
+	    ++s, passMail = eb_true;
 
 	if(*s == 'm' || *s == 'f') {
 	    if(!maxAccount)
 		i_printfExit(MSG_NoMailAcc);
 	    if(*s == 'f') {
 		account = 0;
-		dofetch = true;
+		dofetch = eb_true;
 		++s;
 		if(*s == 'm')
-		    domail = true, ++s;
+		    domail = eb_true, ++s;
 	    } else {
-		domail = true;
+		domail = eb_true;
 		++s;
 	    }
 	    if(isdigitByte(*s)) {
@@ -1135,8 +1135,8 @@ main(int argc, char **argv)
 		    i_printfExit(MSG_BadAccNb, maxAccount);
 	    }
 	    if(!*s) {
-		ismc = true;	/* running as a mail client */
-		allowJS = false;	/* no javascript in mail client */
+		ismc = eb_true;	/* running as a mail client */
+		allowJS = eb_false;	/* no javascript in mail client */
 		++argv, --argc;
 		if(!argc || !dofetch)
 		    break;
@@ -1232,7 +1232,7 @@ main(int argc, char **argv)
 	memmove(reclist, reclist + 1, sizeof (char *) * nrec);
 	atlist[-1] = 0;
 	if(sendMail(account, (const char **)reclist, body, 1,
-	   (const char **)atlist, 0, nalt, true))
+	   (const char **)atlist, 0, nalt, eb_true))
 	    exit(0);
 	showError();
 	exit(1);
@@ -1252,14 +1252,14 @@ main(int argc, char **argv)
 	++cx;
 	if(cx == MAXSESSION)
 	    i_printfExit(MSG_ManyOpen, MAXSESSION);
-	cxSwitch(cx, false);
+	cxSwitch(cx, eb_false);
 	if(cx == 1)
 	    runEbFunction("init");
 	changeFileName = 0;
 	cw->fileName = cloneString(file);
 	cw->firstURL = cloneString(file);
 	if(isSQL(file))
-	    cw->sqlMode = true;
+	    cw->sqlMode = eb_true;
 	rc = readFile(file, "");
 	if(fileSize >= 0)
 	    debugPrint(1, "%d", fileSize);
@@ -1272,7 +1272,7 @@ main(int argc, char **argv)
 	    changeFileName = 0;
 	}
 
-	cw->firstOpMode = cw->changeMode = false;
+	cw->firstOpMode = cw->changeMode = eb_false;
 /* Browse the text if it's a url */
 	if(rc && !(cw->binMode | cw->dirMode) && cw->dol &&
 	   isBrowseableURL(cw->fileName)) {
@@ -1285,22 +1285,22 @@ main(int argc, char **argv)
     }				/* loop over files */
     if(!cx) {			/* no files */
 	++cx;
-	cxSwitch(cx, false);
+	cxSwitch(cx, eb_false);
 	runEbFunction("init");
 	i_puts(MSG_Ready);
     }
     if(cx > 1)
-	cxSwitch(1, false);
-    undoable = false;
+	cxSwitch(1, eb_false);
+    undoable = eb_false;
 
-    while(true) {
+    while(eb_true) {
 	uchar saveline[MAXTTYLINE];
 	pst p = inputLine();
 	copyPstring(saveline, p);
 	if(perl2c((char *)p))
 	    i_puts(MSG_EnterNull);
 	else
-	    edbrowseCommand((char *)p, false);
+	    edbrowseCommand((char *)p, eb_false);
 	copyPstring(linePending, saveline);
     }				/* infinite loop */
 }				/* main */
@@ -1312,7 +1312,7 @@ balance(const char *ip, int direction)
     int nest = 0;
     uchar code;
 
-    while(true) {
+    while(eb_true) {
 	if(direction > 0) {
 	    ip = strchr(ip, '\n') + 1;
 	} else {
@@ -1337,7 +1337,7 @@ balance(const char *ip, int direction)
 }				/* balance */
 
 /* Run an edbrowse function, as defined in the config file. */
-bool
+eb_bool
 runEbFunction(const char *line)
 {
     char *linecopy = cloneString(line);
@@ -1349,13 +1349,13 @@ runEbFunction(const char *line)
     int j, l, nest;
     const char *ip;		/* think instruction pointer */
     const char *endl;		/* end of line to be processed */
-    bool nofail, ok;
+    eb_bool nofail, ok;
     uchar code;
     char stack[MAXNEST];
     int loopcnt[MAXNEST];
 
 /* Separate function name and arguments */
-    spaceCrunch(linecopy, true, false);
+    spaceCrunch(linecopy, eb_true, eb_false);
     if(linecopy[0] == 0) {
 	setError(MSG_NoFunction);
 	goto fail;
@@ -1383,7 +1383,7 @@ runEbFunction(const char *line)
     ip = ebScript[j] + 1;
     nofail = (ebScriptName[j][0] == '+');
     nest = 0;
-    ok = true;
+    ok = eb_true;
 
 /* collect arguments */
     j = 0;
@@ -1428,12 +1428,12 @@ runEbFunction(const char *line)
 		continue;
 	    }
 	    if(ucontrol == 'W' || ucontrol == 'U') {
-		bool jump = ok;
+		eb_bool jump = ok;
 		if(islowerByte(control))
-		    jump ^= true;
+		    jump ^= eb_true;
 		if(ucontrol == 'U')
-		    jump ^= true;
-		ok = true;
+		    jump ^= eb_true;
+		ok = eb_true;
 		if(jump)
 		    ip = start;
 		else
@@ -1446,7 +1446,7 @@ runEbFunction(const char *line)
 
 	if(code == 0x81) {
 	    const char *skip = balance(ip, 1);
-	    bool jump;
+	    eb_bool jump;
 	    char control = ip[1];
 	    char ucontrol = toupper(control);
 	    stack[++nest] = control;
@@ -1465,8 +1465,8 @@ runEbFunction(const char *line)
 /* if or while, test on ok */
 	    jump = ok;
 	    if(isupperByte(control))
-		jump ^= true;
-	    ok = true;
+		jump ^= eb_true;
+	    ok = eb_true;
 	    if(jump)
 		goto ahead;
 	    goto nextline;
@@ -1509,7 +1509,7 @@ runEbFunction(const char *line)
 
 /* Here we go! */
 	debugPrint(3, "< %s", new);
-	ok = edbrowseCommand(new, true);
+	ok = edbrowseCommand(new, eb_true);
 	free(new);
 
       nextline:
@@ -1520,16 +1520,16 @@ runEbFunction(const char *line)
 	goto fail;
 
     nzFree(linecopy);
-    return true;
+    return eb_true;
 
   fail:
     nzFree(linecopy);
-    return false;
+    return eb_false;
 }				/* runEbFunction */
 
 /* Send the contents of the current buffer to a running program */
-bool
-bufferToProgram(const char *cmd, const char *suffix, bool trailPercent)
+eb_bool
+bufferToProgram(const char *cmd, const char *suffix, eb_bool trailPercent)
 {
     char *buf = 0;
     int buflen, n;
@@ -1541,11 +1541,11 @@ bufferToProgram(const char *cmd, const char *suffix, bool trailPercent)
 	FILE *f = popen(cmd, "w");
 	if(!f) {
 	    setError(MSG_NoSpawn, cmd, errno);
-	    return false;
+	    return eb_false;
 	}
-	if(!unfoldBuffer(context, false, &buf, &buflen)) {
+	if(!unfoldBuffer(context, eb_false, &buf, &buflen)) {
 	    pclose(f);
-	    return false;	/* should never happen */
+	    return eb_false;	/* should never happen */
 	}
 	n = fwrite(buf, buflen, 1, f);
 	pclose(f);
@@ -1557,14 +1557,14 @@ bufferToProgram(const char *cmd, const char *suffix, bool trailPercent)
 /* assume it's the same data */
 	    *u = 0;
 	} else {
-	    if(!unfoldBuffer(context, false, &buf, &buflen)) {
+	    if(!unfoldBuffer(context, eb_false, &buf, &buflen)) {
 		*u = 0;
-		return false;	/* should never happen */
+		return eb_false;	/* should never happen */
 	    }
 	    if(!memoryOutToFile(edbrowseTempFile, buf, buflen,
 	       MSG_TempNoCreate2, MSG_NoWrite2)) {
 		*u = 0;
-		return false;
+		return eb_false;
 	    }
 	    *u = 0;
 	}
@@ -1572,7 +1572,7 @@ bufferToProgram(const char *cmd, const char *suffix, bool trailPercent)
     }
 
     nzFree(buf);
-    return true;
+    return eb_true;
 }				/* bufferToProgram */
 
 struct DBTABLE *
@@ -1659,14 +1659,14 @@ pluginCommand(const struct MIMETYPE *m, const char *file, const char *suffix)
     int len, suflen;
     const char *s;
     char *cmd, *t;
-    bool trailPercent = false;
+    eb_bool trailPercent = eb_false;
 
 /* leave rooom for space quote quote null */
     len = strlen(m->program) + 4;
     if(file) {
 	len += strlen(file);
     } else if(m->program[strlen(m->program) - 1] == '%') {
-	trailPercent = true;
+	trailPercent = eb_true;
 	len += strlen(edbrowseTempFile) + 6;
     }
 

@@ -271,7 +271,7 @@ win_close(JSContext * cx, uintN argc, jsval * vp)
 {
 /* It's too confusing to just close the window */
     i_puts(MSG_PageDone);
-    cw->jsdead = true;
+    cw->jsdead = eb_true;
     JS_SET_RVAL(cx, vp, JSVAL_VOID);
     return JS_TRUE;
 }				/* win_close */
@@ -345,13 +345,13 @@ win_confirm(JSContext * cx, uintN argc, jsval * vp)
     JSString *str;
     char inbuf[80];
     char c;
-    bool first = true;
+    eb_bool first = eb_true;
 
     if(argc > 0 && (str = JS_ValueToString(jcx, argv[0]))) {
 	msg = transcode_get_js_bytes(str);
     }
 
-    while(true) {
+    while(eb_true) {
 	printf("%s", msg);
 	c = 'x';
 	if(*msg)
@@ -363,7 +363,7 @@ win_confirm(JSContext * cx, uintN argc, jsval * vp)
 	}
 	if(!first)
 	    printf("[y|n] ");
-	first = false;
+	first = eb_false;
 	fflush(stdout);
 	if(!fgets(inbuf, sizeof (inbuf), stdin))
 	    exit(1);
@@ -390,7 +390,7 @@ static JSClass timer_class = {
 
 /* Set a timer or an interval */
 static JSObject *
-setTimeout(uintN argc, jsval * argv, bool isInterval)
+setTimeout(uintN argc, jsval * argv, eb_bool isInterval)
 {
     jsval v0, v1;
     JSObject *fo = 0;		/* function object */
@@ -464,7 +464,7 @@ static JSBool
 win_sto(JSContext * cx, uintN argc, jsval * vp)
 {
     jsval *argv = JS_ARGV(cx, vp);
-    JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(setTimeout(argc, argv, false)));
+    JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(setTimeout(argc, argv, eb_false)));
     return JS_TRUE;
 }				/* win_sto */
 
@@ -472,7 +472,7 @@ static JSBool
 win_intv(JSContext * cx, uintN argc, jsval * vp)
 {
     jsval *argv = JS_ARGV(cx, vp);
-    JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(setTimeout(argc, argv, true)));
+    JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(setTimeout(argc, argv, eb_true)));
     return JS_TRUE;
 }				/* win_intv */
 
@@ -508,7 +508,7 @@ dwrite2(const char *s)
 }				/* dwrite2 */
 
 static void
-dwrite1(uintN argc, jsval * argv, bool newline)
+dwrite1(uintN argc, jsval * argv, eb_bool newline)
 {
     int i;
     char *msg;
@@ -528,7 +528,7 @@ static JSBool
 doc_write(JSContext * cx, uintN argc, jsval * vp)
 {
     jsval *argv = JS_ARGV(cx, vp);
-    dwrite1(argc, argv, false);
+    dwrite1(argc, argv, eb_false);
     JS_SET_RVAL(cx, vp, JSVAL_VOID);
     return JS_TRUE;
 }				/* doc_write */
@@ -567,7 +567,7 @@ static JSBool
 doc_writeln(JSContext * cx, uintN argc, jsval * vp)
 {
     jsval *argv = JS_ARGV(cx, vp);
-    dwrite1(argc, argv, true);
+    dwrite1(argc, argv, eb_true);
     JS_SET_RVAL(cx, vp, JSVAL_VOID);
     return JS_TRUE;
 }				/* doc_writeln */
@@ -606,7 +606,7 @@ static JSBool
 form_submit(JSContext * cx, uintN argc, jsval * vp)
 {
     JSObject *this = JS_THIS_OBJECT(cx, vp);
-    javaSubmitsForm(this, false);
+    javaSubmitsForm(this, eb_false);
     JS_SET_RVAL(cx, vp, JSVAL_VOID);
     return JS_TRUE;
 }				/* form_submit */
@@ -615,7 +615,7 @@ static JSBool
 form_reset(JSContext * cx, uintN argc, jsval * vp)
 {
     JSObject *this = JS_THIS_OBJECT(cx, vp);
-    javaSubmitsForm(this, true);
+    javaSubmitsForm(this, eb_true);
     JS_SET_RVAL(cx, vp, JSVAL_VOID);
     return JS_TRUE;
 }				/* form_reset */
@@ -870,17 +870,17 @@ createJavaContext(void)
 /* Some visual attributes of the window.
  * These are just guesses.
  * Better to have something, than to leave them undefined. */
-    establish_property_number(jwin, "height", 768, true);
-    establish_property_number(jwin, "width", 1024, true);
-    establish_property_string(jwin, "status", 0, false);
-    establish_property_string(jwin, "defaultStatus", 0, false);
-    establish_property_bool(jwin, "returnValue", true, false);
-    establish_property_bool(jwin, "menubar", true, false);
-    establish_property_bool(jwin, "scrollbars", true, false);
-    establish_property_bool(jwin, "toolbar", true, false);
-    establish_property_bool(jwin, "resizable", true, false);
-    establish_property_bool(jwin, "directories", false, false);
-    establish_property_string(jwin, "name", "unspecifiedFrame", false);
+    establish_property_number(jwin, "height", 768, eb_true);
+    establish_property_number(jwin, "width", 1024, eb_true);
+    establish_property_string(jwin, "status", 0, eb_false);
+    establish_property_string(jwin, "defaultStatus", 0, eb_false);
+    establish_property_bool(jwin, "returnValue", eb_true, eb_false);
+    establish_property_bool(jwin, "menubar", eb_true, eb_false);
+    establish_property_bool(jwin, "scrollbars", eb_true, eb_false);
+    establish_property_bool(jwin, "toolbar", eb_true, eb_false);
+    establish_property_bool(jwin, "resizable", eb_true, eb_false);
+    establish_property_bool(jwin, "directories", eb_false, eb_false);
+    establish_property_string(jwin, "name", "unspecifiedFrame", eb_false);
 
 /* Other classes that we'll need. */
     for(i = 0; domClasses[i].class; ++i) {
@@ -899,13 +899,13 @@ createJavaContext(void)
 	i_printfExit(MSG_JavaObjError);
     establish_property_object(jwin, "document", jdoc);
 
-    establish_property_string(jdoc, "bgcolor", "white", false);
-    establish_property_string(jdoc, "cookie", 0, false);
-    establish_property_string(jdoc, "referrer", cw->referrer, true);
-    establish_property_url(jdoc, "URL", cw->fileName, true);
-    establish_property_url(jdoc, "location", cw->fileName, false);
-    establish_property_url(jwin, "location", cw->firstURL, false);
-    establish_property_string(jdoc, "domain", getHostURL(cw->fileName), false);
+    establish_property_string(jdoc, "bgcolor", "white", eb_false);
+    establish_property_string(jdoc, "cookie", 0, eb_false);
+    establish_property_string(jdoc, "referrer", cw->referrer, eb_true);
+    establish_property_url(jdoc, "URL", cw->fileName, eb_true);
+    establish_property_url(jdoc, "location", cw->fileName, eb_false);
+    establish_property_url(jwin, "location", cw->firstURL, eb_false);
+    establish_property_string(jdoc, "domain", getHostURL(cw->fileName), eb_false);
 
 /* create arrays under document */
     for(i = 0; itemname = docarrays[i]; ++i)
@@ -923,25 +923,25 @@ createJavaContext(void)
     establish_property_object(jwin, "navigator", nav);
 
 /* attributes of the navigator */
-    establish_property_string(nav, "appName", "edbrowse", true);
-    establish_property_string(nav, "appCode Name", "edbrowse C/SMJS", true);
+    establish_property_string(nav, "appName", "edbrowse", eb_true);
+    establish_property_string(nav, "appCode Name", "edbrowse C/SMJS", eb_true);
 /* Use X11 to indicate unix/linux.  Sort of a standard */
     sprintf(verx11, "%s%s", version, "-X11");
-    establish_property_string(nav, "appVersion", version, true);
-    establish_property_string(nav, "userAgent", currentAgent, true);
-    establish_property_string(nav, "oscpu", currentOS(), true);
-    establish_property_string(nav, "platform", currentMachine(), true);
-    establish_property_string(nav, "product", "smjs", true);
-    establish_property_string(nav, "productSub", "1.5", true);
-    establish_property_string(nav, "vendor", "eklhad", true);
-    establish_property_string(nav, "vendorSub", version, true);
+    establish_property_string(nav, "appVersion", version, eb_true);
+    establish_property_string(nav, "userAgent", currentAgent, eb_true);
+    establish_property_string(nav, "oscpu", currentOS(), eb_true);
+    establish_property_string(nav, "platform", currentMachine(), eb_true);
+    establish_property_string(nav, "product", "smjs", eb_true);
+    establish_property_string(nav, "productSub", "1.5", eb_true);
+    establish_property_string(nav, "vendor", "eklhad", eb_true);
+    establish_property_string(nav, "vendorSub", version, eb_true);
 /* We need to locale-ize the next one */
-    establish_property_string(nav, "userLanguage", "english", true);
-    establish_property_string(nav, "language", "english", true);
+    establish_property_string(nav, "userLanguage", "english", eb_true);
+    establish_property_string(nav, "language", "english", eb_true);
     JS_DefineFunction(jcx, nav, "javaEnabled", falseFunction, 0, PROP_FIXED);
     JS_DefineFunction(jcx, nav, "taintEnabled", falseFunction, 0, PROP_FIXED);
-    establish_property_bool(nav, "cookieEnabled", true, true);
-    establish_property_bool(nav, "onLine", true, true);
+    establish_property_bool(nav, "cookieEnabled", eb_true, eb_true);
+    establish_property_bool(nav, "onLine", eb_true, eb_true);
 
 /* Build the array of mime types and plugins,
  * according to the entries in the config file. */
@@ -961,18 +961,18 @@ createJavaContext(void)
 	mov = OBJECT_TO_JSVAL(mo);
 	JS_DefineElement(jcx, navmt, i, mov, NULL, NULL, PROP_FIXED);
 	establish_property_object(mo, "enabledPlugin", po);
-	establish_property_string(mo, "type", mt->type, true);
+	establish_property_string(mo, "type", mt->type, eb_true);
 	establish_property_object(navmt, mt->type, mo);
-	establish_property_string(mo, "description", mt->desc, true);
-	establish_property_string(mo, "suffixes", mt->suffix, true);
+	establish_property_string(mo, "description", mt->desc, eb_true);
+	establish_property_string(mo, "suffixes", mt->suffix, eb_true);
 /* I don't really have enough information, from the config file, to fill
  * in the attributes of the plugin object.
  * I'm just going to fake it.
  * Description will be the same as that of the mime type,
  * and the filename will be the program to run.
  * No idea if this is right or not. */
-	establish_property_string(po, "description", mt->desc, true);
-	establish_property_string(po, "filename", mt->program, true);
+	establish_property_string(po, "description", mt->desc, eb_true);
+	establish_property_string(po, "filename", mt->program, eb_true);
 /* For the name, how about the program without its options? */
 	len = strcspn(mt->program, " \t");
 	JS_DefineProperty(jcx, po, "name",
@@ -982,35 +982,35 @@ createJavaContext(void)
 
     screen = JS_NewObject(jcx, 0, 0, jwin);
     establish_property_object(jwin, "screen", screen);
-    establish_property_number(screen, "height", 768, true);
-    establish_property_number(screen, "width", 1024, true);
-    establish_property_number(screen, "availHeight", 768, true);
-    establish_property_number(screen, "availWidth", 1024, true);
-    establish_property_number(screen, "availTop", 0, true);
-    establish_property_number(screen, "availLeft", 0, true);
+    establish_property_number(screen, "height", 768, eb_true);
+    establish_property_number(screen, "width", 1024, eb_true);
+    establish_property_number(screen, "availHeight", 768, eb_true);
+    establish_property_number(screen, "availWidth", 1024, eb_true);
+    establish_property_number(screen, "availTop", 0, eb_true);
+    establish_property_number(screen, "availLeft", 0, eb_true);
 
     del = JS_NewObject(jcx, 0, 0, jdoc);
     establish_property_object(jdoc, "body", del);
     establish_property_object(jdoc, "documentElement", del);
-    establish_property_number(del, "clientHeight", 768, true);
-    establish_property_number(del, "clientWidth", 1024, true);
-    establish_property_number(del, "offsetHeight", 768, true);
-    establish_property_number(del, "offsetWidth", 1024, true);
-    establish_property_number(del, "scrollHeight", 768, true);
-    establish_property_number(del, "scrollWidth", 1024, true);
-    establish_property_number(del, "scrollTop", 0, true);
-    establish_property_number(del, "scrollLeft", 0, true);
+    establish_property_number(del, "clientHeight", 768, eb_true);
+    establish_property_number(del, "clientWidth", 1024, eb_true);
+    establish_property_number(del, "offsetHeight", 768, eb_true);
+    establish_property_number(del, "offsetWidth", 1024, eb_true);
+    establish_property_number(del, "scrollHeight", 768, eb_true);
+    establish_property_number(del, "scrollWidth", 1024, eb_true);
+    establish_property_number(del, "scrollTop", 0, eb_true);
+    establish_property_number(del, "scrollLeft", 0, eb_true);
 
     hist = JS_NewObject(jcx, 0, 0, jwin);
     establish_property_object(jwin, "history", hist);
 
 /* attributes of history */
-    establish_property_string(hist, "current", cw->fileName, true);
+    establish_property_string(hist, "current", cw->fileName, eb_true);
 /* There's no history in edbrowse. */
 /* Only the current file is known, hence length is 1. */
-    establish_property_number(hist, "length", 1, true);
-    establish_property_string(hist, "next", 0, true);
-    establish_property_string(hist, "previous", 0, true);
+    establish_property_number(hist, "length", 1, eb_true);
+    establish_property_string(hist, "next", 0, eb_true);
+    establish_property_string(hist, "previous", 0, eb_true);
     JS_DefineFunction(jcx, hist, "back", nullFunction, 0, PROP_FIXED);
     JS_DefineFunction(jcx, hist, "forward", nullFunction, 0, PROP_FIXED);
     JS_DefineFunction(jcx, hist, "go", nullFunction, 0, PROP_FIXED);
@@ -1030,7 +1030,7 @@ freeJavaContext(void *jsc)
 }				/* freeJavaContext */
 
 void
-establish_innerHTML(void *jv, const char *start, const char *end, bool is_ta)
+establish_innerHTML(void *jv, const char *start, const char *end, eb_bool is_ta)
 {
     JSObject *obj = jv, *o;
     jsval v;
@@ -1074,11 +1074,11 @@ jMyContext(void)
 	jwin = jdoc = jwloc = jdloc = 0;
 }				/* jMyContext */
 
-bool
+eb_bool
 javaParseExecute(void *this, const char *str, const char *filename, int lineno)
 {
     JSBool ok;
-    bool rc;
+    eb_bool rc;
     jsval rval;
 
 /* Sometimes Mac puts these three chars at the start of a text file. */
@@ -1088,7 +1088,7 @@ javaParseExecute(void *this, const char *str, const char *filename, int lineno)
     debugPrint(6, "javascript:\n%s", str);
     ok = JS_EvaluateScript(jcx, this, str, strlen(str),
        filename, lineno, &rval);
-    rc = true;
+    rc = eb_true;
     if(JSVAL_IS_BOOLEAN(rval))
 	rc = JSVAL_TO_BOOLEAN(rval);
     JS_GC(jcx);
@@ -1105,7 +1105,7 @@ domLink(const char *classname,	/* instantiate this class */
     jsval vv, listv;
     jsuint length, attr = PROP_FIXED;
     JSClass *cp;
-    bool dupname = false;
+    eb_bool dupname = eb_false;
     int i;
 
     if(cw->jsdead)
@@ -1160,7 +1160,7 @@ Yeah, it makes my head spin too.
 		JS_GetProperty(jcx, owner, symname, &vv);
 		v = JSVAL_TO_OBJECT(vv);
 	    } else {
-		dupname = true;
+		dupname = eb_true;
 	    }
 	}
     }
@@ -1170,11 +1170,11 @@ Yeah, it makes my head spin too.
 	if(radiosel) {
 	    v = JS_NewArrayObject(jcx, 0, NULL);
 	    if(radiosel == 1) {
-		establish_property_string(v, "type", "radio", true);
+		establish_property_string(v, "type", "radio", eb_true);
 	    } else {
 /* self-referencing - hope this is ok */
 		establish_property_object(v, "options", v);
-		establish_property_number(v, "selectedIndex", -1, false);
+		establish_property_number(v, "selectedIndex", -1, eb_false);
 // not the normal pathway; we have to create our own element methods here.
 		JS_DefineFunction(jcx, v, "focus", nullFunction, 0, PROP_FIXED);
 		JS_DefineFunction(jcx, v, "blur", nullFunction, 0, PROP_FIXED);
@@ -1190,7 +1190,7 @@ Yeah, it makes my head spin too.
 	} else if(symname && !dupname) {
 	    JS_DefineProperty(jcx, owner, symname, vv, NULL, NULL, attr);
 	    if(stringEqual(symname, "action"))
-		establish_property_bool(v, "actioncrash", true, true);
+		establish_property_bool(v, "actioncrash", eb_true, eb_true);
 
 /* link to document.all */
 	    JS_GetProperty(jcx, jdoc, "all", &listv);
@@ -1228,23 +1228,23 @@ Yeah, it makes my head spin too.
     }
 
     if(symname)
-	establish_property_string(v, "name", symname, true);
+	establish_property_string(v, "name", symname, eb_true);
     if(idname) {
 /* v.id becomes idname, and idMaster.idname becomes v
  * In case of forms, v.id should remain undefined.  So we can have
  * a form field named "id". */
 	if(strcmp(classname, "Form") != 0)
-	    establish_property_string(v, "id", idname, true);
+	    establish_property_string(v, "id", idname, eb_true);
 	JS_GetProperty(jcx, jdoc, "idMaster", &listv);
 	master = JSVAL_TO_OBJECT(listv);
 	establish_property_object(master, idname, v);
     } else {
 	if(strcmp(classname, "Form") != 0)
-	    establish_property_string(v, "id", EMPTYSTRING, true);
+	    establish_property_string(v, "id", EMPTYSTRING, eb_true);
     }
 
     if(href && href_url) {
-	establish_property_url(v, href, href_url, false);
+	establish_property_url(v, href, href_url, eb_false);
     }
 
     if(cp == &element_class) {

@@ -73,9 +73,10 @@ typedef unsigned long ulong;
 typedef unsigned char uchar;
 
 /* We use uchar for boolean fields. */
-typedef uchar bool;
-#define true 1
-#define false 0
+/* The type is eb_bool, an edbrowse bool, so as not to conflict with C++. */
+typedef uchar eb_bool;
+#define eb_true 1
+#define eb_false 0
 
 typedef ushort idNameCode;
 
@@ -172,7 +173,7 @@ struct MACCOUNT {		/* pop3 account */
 struct MIMETYPE {
     char *type, *desc;
     char *suffix, *prot, *program;
-    bool stream;
+    eb_bool stream;
 };
 
 struct DBTABLE {
@@ -190,22 +191,22 @@ extern int debugLevel;		/* 0 to 9 */
 extern int displayLength;	/* when printing a line */
 extern int webTimeout, mailTimeout;
 extern int browseLine;		/* line number, for error reporting */
-extern bool ismc;		/* Is the program running as a mail client? */
-extern bool cons_utf8;		/* does the console expect utf8? */
-extern bool iuConvert;		/* perform iso utf8 conversions automatically */
+extern eb_bool ismc;		/* Is the program running as a mail client? */
+extern eb_bool cons_utf8;		/* does the console expect utf8? */
+extern eb_bool iuConvert;		/* perform iso utf8 conversions automatically */
 extern char type8859;		/* 1 through 15 */
-extern bool js_redirects;	/* window.location = new_url */
+extern eb_bool js_redirects;	/* window.location = new_url */
 extern uchar browseLocal;	/* browsing a local file */
-extern bool parsePage;		/* parsing the html page, and any java therein */
-extern bool htmlAttrVal_nl;	/* allow nl in the attribute of an html tag */
-extern bool passMail;		/* pass mail across the filters */
-extern bool errorExit;		/* exit on any error, for scripting purposes */
-extern bool isInteractive;
-extern volatile bool intFlag;	/* set this when interrupt signal is caught */
-extern bool binaryDetect;
-extern bool inputReadLine;
-extern bool listNA;		/* list nonascii chars */
-extern bool inInput;		/* reading line from standard in */
+extern eb_bool parsePage;		/* parsing the html page, and any java therein */
+extern eb_bool htmlAttrVal_nl;	/* allow nl in the attribute of an html tag */
+extern eb_bool passMail;		/* pass mail across the filters */
+extern eb_bool errorExit;		/* exit on any error, for scripting purposes */
+extern eb_bool isInteractive;
+extern volatile eb_bool intFlag;	/* set this when interrupt signal is caught */
+extern eb_bool binaryDetect;
+extern eb_bool inputReadLine;
+extern eb_bool listNA;		/* list nonascii chars */
+extern eb_bool inInput;		/* reading line from standard in */
 extern int fileSize;		/* when reading/writing files */
 extern int maxFileSize;		/* max size of an editable file */
 extern int mssock;		/* mail server socket */
@@ -224,15 +225,15 @@ extern struct MACCOUNT accounts[];	/* all the email accounts */
 extern int maxMime;		/* how many mime types specified */
 extern struct MIMETYPE mimetypes[];
 extern char *dbarea, *dblogin, *dbpw;	/* to log into the database */
-extern bool fetchBlobColumns;
+extern eb_bool fetchBlobColumns;
 extern char *proxy_host;
-extern bool caseInsensitive, searchStringsAll;
-extern bool undoable;		/* an undoable operation is taking place */
-extern bool allowRedirection;	/* from http code 301, or http refresh */
-extern bool sendReferrer;	/* in the http header */
-extern bool allowJS;		/* javascript on */
-extern bool helpMessagesOn;	/* no need to type h */
-extern bool showHiddenFiles;	/* during directory scan */
+extern eb_bool caseInsensitive, searchStringsAll;
+extern eb_bool undoable;		/* an undoable operation is taking place */
+extern eb_bool allowRedirection;	/* from http code 301, or http refresh */
+extern eb_bool sendReferrer;	/* in the http header */
+extern eb_bool allowJS;		/* javascript on */
+extern eb_bool helpMessagesOn;	/* no need to type h */
+extern eb_bool showHiddenFiles;	/* during directory scan */
 extern uchar dirWrite;		/* directory write mode, e.g. rename files */
 extern uchar endMarks;		/* do we print ^ $ at the start and end of lines? */
 extern int context;		/* which session (buffer) are we in? */
@@ -334,19 +335,19 @@ struct ebWindow {
  * Number 0 means the label is not set. */
     int labels[26], r_labels[26];
 /* Yeah, these could be bit fields in the structure :1; but who cares. */
-    bool lhs_yes, rhs_yes;
-    bool binMode;		/* binary file */
-    bool nlMode;		/* newline at the end */
-    bool rnlMode;
+    eb_bool lhs_yes, rhs_yes;
+    eb_bool binMode;		/* binary file */
+    eb_bool nlMode;		/* newline at the end */
+    eb_bool rnlMode;
 /* Two text modes; these are incompatible with binMode */
-    bool utf8Mode;
-    bool iso8859Mode;
-    bool browseMode;		/* browsing html */
-    bool changeMode;		/* something has changed in this file */
-    bool dirMode;		/* directory mode */
-    bool firstOpMode;		/* first change has been made, undo is possible */
-    bool jsdead;		/* javascript is dead, for this window */
-    bool sqlMode;		/* accessing a table */
+    eb_bool utf8Mode;
+    eb_bool iso8859Mode;
+    eb_bool browseMode;		/* browsing html */
+    eb_bool changeMode;		/* something has changed in this file */
+    eb_bool dirMode;		/* directory mode */
+    eb_bool firstOpMode;		/* first change has been made, undo is possible */
+    eb_bool jsdead;		/* javascript is dead, for this window */
+    eb_bool sqlMode;		/* accessing a table */
     char *dw;			/* document.write string */
     int dw_l;			/* length of the above */
     void *tags;			/* array of html tags, when browsing */

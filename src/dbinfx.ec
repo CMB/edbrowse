@@ -54,7 +54,7 @@ In this case the calling routine should clean up as best it can and return.
 static const char *stmt_text = 0; /* text of the SQL statement */
 static const short *exclist; /* list of error codes trapped by the application */
 static short translevel;
-static bool badtrans;
+static eb_bool badtrans;
 
 /* Through globals, make error info available to the application. */
 int rv_lastStatus, rv_stmtOffset;
@@ -465,7 +465,7 @@ static int errTranslate(int code)
 	return EXCSQLMISC;
 } /* errTranslate */
 
-static bool errorTrap(void)
+static eb_bool errorTrap(void)
 {
 short i;
 
@@ -474,7 +474,7 @@ rv_lastStatus = 0;
 rv_vendorStatus = 0;
 rv_stmtOffset = 0;
 rv_badToken = 0;
-if(ENGINE_ERRCODE >= 0) return false; /* no problem */
+if(ENGINE_ERRCODE >= 0) return eb_false; /* no problem */
 
         /* log the SQL statement that elicitted the error */
 showStatement();
@@ -489,12 +489,12 @@ if(exclist)
 for(i=0; exclist[i]; ++i)
 if(exclist[i] == rv_lastStatus) {
 exclist = 0; /* we've spent that exception */
-return true;
+return eb_true;
 }
 
 /* Remember, errorPrint() should not return. */
 errorPrint("2SQL error %d, %s", rv_vendorStatus, sqlErrorList[rv_lastStatus]);
-return true; /* make the compiler happy */
+return eb_true; /* make the compiler happy */
 } /* errorTrap */
 
 
@@ -565,7 +565,7 @@ o->rownum = 0;
 	} /* loop over cursors */
 
 	translevel = 0;
-	badtrans = false;
+	badtrans = eb_false;
 } /* clearAllCursors */
 
 
@@ -650,7 +650,7 @@ stmt_text = 0;
 
 	/* count the nesting level of transactions. */
 	if(!translevel) {
-		badtrans = false;
+		badtrans = eb_false;
 		stmt_text = "begin work";
 		debugStatement();
 		$begin work;
@@ -661,7 +661,7 @@ stmt_text = 0;
 } /* sql_begTrans */
 
 /* end a transaction */
-static void endTrans(bool commit)
+static void endTrans(eb_bool commit)
 {
 	rv_lastStatus = 0;
 	checkConnect();
@@ -684,12 +684,12 @@ stmt_text = 0;
 	} else { /* success or failure */
 			stmt_text = "rollback work";
 			debugStatement();
-		badtrans = true;
+		badtrans = eb_true;
 		if(!translevel) { /* bottom level */
 			$rollback work;
 			if(ENGINE_ERRCODE) --translevel;
 			errorTrap();
-			badtrans = false;
+			badtrans = eb_false;
 		}
 	} /* success or failure */
 
@@ -701,8 +701,8 @@ stmt_text = 0;
 	exclist = 0;
 } /* endTrans */
 
-void sql_commitWork(void) { endTrans(true); }
-void sql_rollbackWork(void) { endTrans(false); }
+void sql_commitWork(void) { endTrans(eb_true); }
+void sql_rollbackWork(void) { endTrans(eb_false); }
 
 void sql_deferConstraints(void)
 {
@@ -807,7 +807,7 @@ static va_list sqlargs;
 static void retsSetup(struct sqlda *desc)
 {
 short i;
-bool blobpresent = false;
+eb_bool blobpresent = eb_false;
 struct sqlvar_struct   *v;
 
 for(i=0; (unsigned)i< NUMRETS; ++i) {
@@ -848,7 +848,7 @@ case 'B':
 case 'T':
 if(blobpresent)
 errorPrint("2Cannot select more than one blob at a time");
-blobpresent = true;
+blobpresent = eb_true;
 v->sqltype = CLOCATORTYPE;
 v->sqllen = sizeof(blobstruct);
 v->sqldata = (char*) &blobstruct;
@@ -876,7 +876,7 @@ errorPrint("@bad character %c in retsSetup", rv_type[i]);
 static void retsCleanup(void)
 {
 short i, l;
-bool yearfirst;
+eb_bool yearfirst;
 
 /* no blobs unless proven otherwise */
 rv_blobLoc = 0;
@@ -886,8 +886,8 @@ for(i=0; i<rv_numRets; ++i) {
 clipString(retstring[i]);
 switch(rv_type[i]) {
 case 'D':
-yearfirst = false;
-if(retstring[i][4] == '-') yearfirst = true;
+yearfirst = eb_false;
+if(retstring[i][4] == '-') yearfirst = eb_true;
 rv_data[i].l = stringDate(retstring[i],yearfirst);
 break;
 
@@ -951,7 +951,7 @@ errorPrint("@bad character %c in retsCleanup", rv_type[i]);
 } /* loop over columsn fetched */
 } /* retsCleanup */
 
-void retsCopy(bool allstrings, void *first, ...)
+void retsCopy(eb_bool allstrings, void *first, ...)
 {
 void *q;
 int i;
@@ -1140,17 +1140,17 @@ A mode variable says whether execution or selection or both are allowed.
 Return true if data was successfully fetched.
 *********************************************************************/
 
-static bool execInternal(const char *stmt, int mode)
+static eb_bool execInternal(const char *stmt, int mode)
 {
 struct sqlda *desc;
 $static char singlestatement[] = "single_use_stmt";
 $static char singlecursor[] = "single_use_cursor";
 int i;
-bool notfound = false;
+eb_bool notfound = eb_false;
 short errorcode = 0;
 
 desc = prepare(stmt, singlestatement);
-if(!desc) return false; /* error */
+if(!desc) return eb_false; /* error */
 
 if(!rv_numRets) {
 if(!(mode&1)) {
@@ -1158,7 +1158,7 @@ showStatement();
 errorPrint("2SQL select statement returns no values");
 }
 $execute :singlestatement;
-notfound = true;
+notfound = eb_true;
 } else { /* end no return values */
 
 if(!(mode&2)) {
@@ -1173,7 +1173,7 @@ errorcode = rv_vendorStatus;
 } else {
 /* select or execute ran properly */
 /* error 100 means not found in Informix */
-if(ENGINE_ERRCODE == 100) notfound = true;
+if(ENGINE_ERRCODE == 100) notfound = eb_true;
 /* set "last" parameters, in case the application is interested */
 rv_lastNrows = sqlca.sqlerrd[2];
 rv_lastRowid = sqlca.sqlerrd[5];
@@ -1189,7 +1189,7 @@ retsCleanup();
 if(errorcode) {
 rv_vendorStatus = errorcode;
 rv_lastStatus = errTranslate(rv_vendorStatus);
-return false;
+return eb_false;
 }
 
 exclist = 0;
@@ -1203,15 +1203,15 @@ Run individual select or execute statements, using the above internal routine.
 
 /* pointer to vararg list; most of these are vararg functions */
 /* execute a stand-alone statement with no % formatting of the string */
-bool sql_execNF(const char *stmt)
+eb_bool sql_execNF(const char *stmt)
 {
 	return execInternal(stmt, 1);
 } /* sql_execNF */
 
 /* execute a stand-alone statement with % formatting */
-bool sql_exec(const char *stmt, ...)
+eb_bool sql_exec(const char *stmt, ...)
 {
-bool ok;
+eb_bool ok;
 	va_start(sqlargs, stmt);
 	stmt = lineFormatStack(stmt, 0, &sqlargs);
 	ok = execInternal(stmt, 1);
@@ -1221,30 +1221,30 @@ return ok;
 
 /* run a select statement with no % formatting of the string */
 /* return true if the row was found */
-bool sql_selectNF(const char *stmt, ...)
+eb_bool sql_selectNF(const char *stmt, ...)
 {
-	bool rc;
+	eb_bool rc;
 	va_start(sqlargs, stmt);
 	rc = execInternal(stmt, 2);
-	retsCopy(false, 0);
+	retsCopy(eb_false, 0);
 	return rc;
 } /* sql_selectNF */
 
 /* run a select statement with % formatting */
-bool sql_select(const char *stmt, ...)
+eb_bool sql_select(const char *stmt, ...)
 {
-	bool rc;
+	eb_bool rc;
 	va_start(sqlargs, stmt);
 	stmt = lineFormatStack(stmt, 0, &sqlargs);
 	rc = execInternal(stmt, 2);
-	retsCopy(false, 0);
+	retsCopy(eb_false, 0);
 	return rc;
 } /* sql_select */
 
 /* run a select statement with one return value */
 int sql_selectOne(const char *stmt, ...)
 {
-	bool rc;
+	eb_bool rc;
 	va_start(sqlargs, stmt);
 	stmt = lineFormatStack(stmt, 0, &sqlargs);
 	rc = execInternal(stmt, 2);
@@ -1253,9 +1253,9 @@ int sql_selectOne(const char *stmt, ...)
 } /* sql_selectOne */
 
 /* run a stored procedure with no % formatting */
-static bool sql_procNF(const char *stmt)
+static eb_bool sql_procNF(const char *stmt)
 {
-	bool rc;
+	eb_bool rc;
 	char *s = allocMem(20+strlen(stmt));
 	strcpy(s, "execute procedure ");
 	strcat(s, stmt);
@@ -1266,20 +1266,20 @@ static bool sql_procNF(const char *stmt)
 } /* sql_procNF */
 
 /* run a stored procedure */
-bool sql_proc(const char *stmt, ...)
+eb_bool sql_proc(const char *stmt, ...)
 {
-	bool rc;
+	eb_bool rc;
 	va_start(sqlargs, stmt);
 	stmt = lineFormatStack(stmt, 0, &sqlargs);
 	rc = sql_procNF(stmt);
-	if(rv_numRets) retsCopy(false, 0);
+	if(rv_numRets) retsCopy(eb_false, 0);
 	return rc;
 } /* sql_proc */
 
 /* run a stored procedure with one return */
 int sql_procOne(const char *stmt, ...)
 {
-	bool rc;
+	eb_bool rc;
 	va_start(sqlargs, stmt);
 	stmt = lineFormatStack(stmt, 0, &sqlargs);
 	rc = sql_procNF(stmt);
@@ -1293,7 +1293,7 @@ Prepare, open, close, and free SQL cursors.
 *********************************************************************/
 
 /* prepare a cursor; return the ID number of that cursor */
-static int prepareCursor(const char *stmt, bool scrollflag)
+static int prepareCursor(const char *stmt, eb_bool scrollflag)
 {
 $char *internal_sname, *internal_cname;
 struct OCURS *o = findNewCursor();
@@ -1330,7 +1330,7 @@ int sql_prepare(const char *stmt, ...)
 {
 	int n;
 	va_start(sqlargs, stmt);
-	n = prepareCursor(stmt, false);
+	n = prepareCursor(stmt, eb_false);
 	exclist = 0;
 	return n;
 } /* sql_prepare */
@@ -1339,7 +1339,7 @@ int sql_prepareScrolling(const char *stmt, ...)
 {
 	int n;
 	va_start(sqlargs, stmt);
-	n = prepareCursor(stmt, true);
+	n = prepareCursor(stmt, eb_true);
 	exclist = 0;
 	return n;
 } /* sql_prepareScrolling */
@@ -1364,7 +1364,7 @@ int sql_prepOpen(const char *stmt, ...)
 {
 int n;
 va_start(sqlargs, stmt);
-n = prepareCursor(stmt, false);
+n = prepareCursor(stmt, eb_false);
 if(n < 0) return n;
 sql_open(n);
 if(rv_lastStatus) {
@@ -1423,8 +1423,8 @@ sql_free(cid);
 
 /* fetch row n from the open cursor.
  * Flag can be used to fetch first, last, next, or previous. */
-static bool
-fetchInternal(int cid, long n, int flag, bool remember)
+static eb_bool
+fetchInternal(int cid, long n, int flag, eb_bool remember)
 {
 $char *internal_sname, *internal_cname;
 $long nextrow, lastrow;
@@ -1442,7 +1442,7 @@ o->rownum = 0;
 fetchZero:
 retsCleanup();
 exclist = 0;
-return false;
+return eb_false;
 }
 
 lastrow = nextrow = o->rownum;
@@ -1501,56 +1501,56 @@ errorPrint("@fetchInternal() receives bad flag %d", flag);
 } /* switch */
 retsCleanup();
 
-if(errorTrap()) return false;
+if(errorTrap()) return eb_false;
 exclist = 0;
-if(ENGINE_ERRCODE == 100) return false; /* not found */
+if(ENGINE_ERRCODE == 100) return eb_false; /* not found */
 o->rownum = nextrow;
 
-return true;
+return eb_true;
 } /* fetchInternal */
 
-bool sql_fetchFirst(int cid, ...)
+eb_bool sql_fetchFirst(int cid, ...)
 {
-	bool rc;
+	eb_bool rc;
 	va_start(sqlargs, cid);
-	rc = fetchInternal(cid, 0L, 3, false);
-	retsCopy(false, 0);
+	rc = fetchInternal(cid, 0L, 3, eb_false);
+	retsCopy(eb_false, 0);
 	return rc;
 } /* sql_fetchFirst */
 
-bool sql_fetchLast(int cid, ...)
+eb_bool sql_fetchLast(int cid, ...)
 {
-	bool rc;
+	eb_bool rc;
 	va_start(sqlargs, cid);
-	rc = fetchInternal(cid, 0L, 4, false);
-	retsCopy(false, 0);
+	rc = fetchInternal(cid, 0L, 4, eb_false);
+	retsCopy(eb_false, 0);
 	return rc;
 } /* sql_fetchLast */
 
-bool sql_fetchNext(int cid, ...)
+eb_bool sql_fetchNext(int cid, ...)
 {
-	bool rc;
+	eb_bool rc;
 	va_start(sqlargs, cid);
-	rc = fetchInternal(cid, 0L, 1, false);
-	retsCopy(false, 0);
+	rc = fetchInternal(cid, 0L, 1, eb_false);
+	retsCopy(eb_false, 0);
 	return rc;
 } /* sql_fetchNext */
 
-bool sql_fetchPrev(int cid, ...)
+eb_bool sql_fetchPrev(int cid, ...)
 {
-	bool rc;
+	eb_bool rc;
 	va_start(sqlargs, cid);
-	rc = fetchInternal(cid, 0L, 2, false);
-	retsCopy(false, 0);
+	rc = fetchInternal(cid, 0L, 2, eb_false);
+	retsCopy(eb_false, 0);
 	return rc;
 } /* sql_fetchPrev */
 
-bool sql_fetchAbs(int cid, long rownum, ...)
+eb_bool sql_fetchAbs(int cid, long rownum, ...)
 {
-	bool rc;
+	eb_bool rc;
 	va_start(sqlargs, rownum);
-	rc = fetchInternal(cid, rownum, 6, false);
-	retsCopy(false, 0);
+	rc = fetchInternal(cid, rownum, 6, eb_false);
+	retsCopy(eb_false, 0);
 	return rc;
 } /* sql_fetchAbs */
 
@@ -1585,14 +1585,14 @@ and constrtype = 'P' and c.idxname = i.idxname", tname, tname, tname, s + 1, &p1
 	*part1 = p1, *part2 = p2;
 }				/* getPrimaryKey */
 
-bool
+eb_bool
 showTables(void)
 {
 puts("Not implemented in Informix, but certainly doable through systables");
 }				/* showTables */
 
 /* This can also be done by catalogs; it's on my list of things to do. */
-bool
+eb_bool
 fetchForeign(char *tname)
 {
 i_puts(MSG_NYI);

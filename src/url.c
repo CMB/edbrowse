@@ -10,33 +10,33 @@
 struct {
     char *prot;
     int port;
-    bool free_syntax;
-    bool need_slashes;
-    bool need_slash_after_host;
+    eb_bool free_syntax;
+    eb_bool need_slashes;
+    eb_bool need_slash_after_host;
 } protocols[] = {
     {
-    "file", 0, true, true, false}, {
-    "http", 80, false, true, true}, {
-    "https", 443, false, true, true}, {
-    "proxy", 3128, false, true, true}, {
-    "ftp", 21, false, true, true}, {
-    "rtsp", 554, false, true, true}, {
-    "pnm", 7070, false, true, true}, {
-    "finger", 79, false, true, true}, {
-    "smb", 139, false, true, true}, {
-    "mailto", 0, false, false, false}, {
-    "telnet", 23, false, false, false}, {
-    "tn3270", 0, false, false, false}, {
-    "javascript", 0, true, false, false}, {
-"git", 0, false, false, false}, {
-"svn", 0, false, false, false}, {
-"gopher", 70, false, false, false}, {
-"magnet", 0, false, false, false}, {
-"irc", 0, false, false, false}, {
+    "file", 0, eb_true, eb_true, eb_false}, {
+    "http", 80, eb_false, eb_true, eb_true}, {
+    "https", 443, eb_false, eb_true, eb_true}, {
+    "proxy", 3128, eb_false, eb_true, eb_true}, {
+    "ftp", 21, eb_false, eb_true, eb_true}, {
+    "rtsp", 554, eb_false, eb_true, eb_true}, {
+    "pnm", 7070, eb_false, eb_true, eb_true}, {
+    "finger", 79, eb_false, eb_true, eb_true}, {
+    "smb", 139, eb_false, eb_true, eb_true}, {
+    "mailto", 0, eb_false, eb_false, eb_false}, {
+    "telnet", 23, eb_false, eb_false, eb_false}, {
+    "tn3270", 0, eb_false, eb_false, eb_false}, {
+    "javascript", 0, eb_true, eb_false, eb_false}, {
+"git", 0, eb_false, eb_false, eb_false}, {
+"svn", 0, eb_false, eb_false, eb_false}, {
+"gopher", 70, eb_false, eb_false, eb_false}, {
+"magnet", 0, eb_false, eb_false, eb_false}, {
+"irc", 0, eb_false, eb_false, eb_false}, {
     NULL, 0}
 };
 
-static bool free_syntax;
+static eb_bool free_syntax;
 
 static int
 protocolByName(const char *p, int l)
@@ -78,7 +78,7 @@ unpercentURL(char *url)
 }				/* unpercentURL */
 
 /* Decide if it looks like a web url. */
-static bool
+static eb_bool
 httpDefault(const char *url)
 {
     static const char *const domainSuffix[] = {
@@ -104,25 +104,25 @@ httpDefault(const char *url)
 	if(*s == '.' && s[-1] != '.' && s[1] != '.')
 	    ++n, lastdot = s;
     if(n < 2)
-	return false;
+	return eb_false;
 /* All digits, like an ip address, is ok. */
     if(n == 3) {
 	for(s = url; s < end; ++s)
 	    if(!isdigitByte(*s) && *s != '.')
 		break;
 	if(s == end)
-	    return true;
+	    return eb_true;
     }
 /* Look for standard domain suffix */
     ++lastdot;
     len = end - lastdot;
     for(n = 0; domainSuffix[n]; ++n)
 	if(memEqualCI(lastdot, domainSuffix[n], len) && !domainSuffix[n][len])
-	    return true;
+	    return eb_true;
 /* www.anything.xx is ok */
     if(len == 2 && memEqualCI(url, "www.", 4))
-	return true;
-    return false;
+	return eb_true;
+    return eb_false;
 }				/* httpDefault */
 
 static int
@@ -160,7 +160,7 @@ parseURL(const char *url, const char **proto, int *prlen, const char **user, int
 	*dalen = 0;
     if(post)
 	*post = NULL;
-    free_syntax = false;
+    free_syntax = eb_false;
 
     if(!url)
 	return -1;
@@ -178,7 +178,7 @@ parseURL(const char *url, const char **proto, int *prlen, const char **user, int
 	while(isspaceByte(*q))
 	    ++q;
 	if(!*q)
-	    return false;
+	    return eb_false;
 	a = protocolByName(url, p - url);
     }
     if(a >= 0) {
@@ -223,14 +223,14 @@ parseURL(const char *url, const char **proto, int *prlen, const char **user, int
     }
 
     if(a < 0)
-	return false;
+	return eb_false;
 
     if(free_syntax = protocols[a].free_syntax) {
 	if(data)
 	    *data = p;
 	if(dalen)
 	    *dalen = strlen(p);
-	return true;
+	return eb_true;
     }
 
     q = p + strcspn(p, "@?#/\1");
@@ -292,27 +292,27 @@ parseURL(const char *url, const char **proto, int *prlen, const char **user, int
 	*dalen = q - p;
     if(post)
 	*post = *q ? q + 1 : NULL;
-    return true;
+    return eb_true;
 }				/* parseURL */
 
-bool
+eb_bool
 isURL(const char *url)
 {
     int j = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     if(j < 0)
-	return false;
+	return eb_false;
     return j;
 }				/* isURL */
 
 /* non-FTP URLs are always browsable.  FTP URLs are browsable if they end with
 * a slash. */
-bool
+eb_bool
 isBrowseableURL(const char *url)
 {
     if(isURL(url))
 	return (!memEqualCI(url, "ftp://", 6)) || (url[strlen(url) - 1] == '/');
     else
-	return false;
+	return eb_false;
 }				/* isBrowseableURL */
 
 /* Helper functions to return pieces of the URL.
@@ -480,15 +480,15 @@ getDirURL(const char *url, const char **start_p, const char **end_p)
     *end_p = myslash + 1;
 }				/* getDirURL */
 
-bool
+eb_bool
 getPortLocURL(const char *url, const char **portloc, int *port)
 {
     int rc = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, portloc, port, 0, 0, 0);
     if(rc <= 0)
-	return false;
+	return eb_false;
     if(free_syntax)
-	return false;
-    return true;
+	return eb_false;
+    return eb_true;
 }				/* getPortLocURL */
 
 int
@@ -503,7 +503,7 @@ getPortURL(const char *url)
     return port;
 }				/* getPortURL */
 
-bool
+eb_bool
 isProxyURL(const char *url)
 {
     return ((url[0] | 0x20) == 'p');
@@ -512,12 +512,12 @@ isProxyURL(const char *url)
 /*
  * hasPrefix: return true if s has a prefix of p, false otherwise.
  */
-static bool
+static eb_bool
 hasPrefix(char *s, char *p)
 {
-    bool ret = false;
+    eb_bool ret = eb_false;
     if(!p[0])
-	ret = true;		/* Empty string is a prefix of all strings. */
+	ret = eb_true;		/* Empty string is a prefix of all strings. */
     else {
 	size_t slen = strlen(s);
 	size_t plen = strlen(p);
@@ -710,7 +710,7 @@ resolveURL(const char *base, const char *rel)
 }				/* resolveURL */
 
 /* This routine could be, should be, more sophisticated */
-bool
+eb_bool
 sameURL(const char *s, const char *t)
 {
     const char *u, *v;
@@ -728,7 +728,7 @@ sameURL(const char *s, const char *t)
 	v -= 7;
     l = u - s;
     if(l != v - t)
-	return false;
+	return eb_false;
     return !memcmp(s, t, l);
 }				/* sameURL */
 
@@ -752,7 +752,7 @@ altText(const char *base)
     if(recount >= 2)
 	return 0;
     strncpy(buf, base, sizeof (buf) - 1);
-    spaceCrunch(buf, true, false);
+    spaceCrunch(buf, eb_true, eb_false);
     len = strlen(buf);
     if(len && !isalnumByte(buf[len - 1]))
 	buf[--len] = 0;

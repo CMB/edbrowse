@@ -8,12 +8,12 @@
 #include "eb.h"
 
 
-bool
+eb_bool
 sqlReadRows(const char *filename, char **bufptr)
 {
     setError(MSG_DBNotCompiled);
     *bufptr = EMPTYSTRING;
-    return false;
+    return eb_false;
 }				/* sqlReadRows */
 
 void
@@ -31,31 +31,31 @@ showForeign(void)
 {
 }				/* showForeign */
 
-bool
+eb_bool
 showTables(void)
 {
 }				/* showTables */
 
-bool
+eb_bool
 sqlDelRows(int start, int end)
 {
 }				/* sqlDelRows */
 
-bool
+eb_bool
 sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 {
 }				/* sqlUpdateRow */
 
-bool
+eb_bool
 sqlAddRows(int ln)
 {
 }				/* sqlAddRows */
 
-bool
+eb_bool
 ebConnect(void)
 {
     setError(MSG_DBNotCompiled);
-    return false;
+    return eb_false;
 }				/* ebConnect */
 
 int

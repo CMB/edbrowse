@@ -11,7 +11,7 @@ const char *sql_debuglog = "/tmp/ebsql.log";	/* log of debug prints */
 const char *sql_database;	/* name of current database */
 int rv_numRets;
 char rv_type[NUMRETS + 1];
-bool rv_nullable[NUMRETS];
+eb_bool rv_nullable[NUMRETS];
 /* names of returned data, usually SQL column names */
 char rv_name[NUMRETS + 1][COLNAMELEN];
 LF rv_data[NUMRETS];		/* the returned values */
@@ -19,7 +19,7 @@ long rv_lastNrows, rv_lastSerial, rv_lastRowid;
 void *rv_blobLoc;		/* location of blob in memory */
 int rv_blobSize;
 const char *rv_blobFile;
-bool rv_blobAppend;
+eb_bool rv_blobAppend;
 
 
 /* text descriptions corresponding to our generic SQL error codes */
@@ -380,16 +380,16 @@ Date time functions.
 
 static char ndays[] = { 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
-bool
+eb_bool
 isLeapYear(int year)
 {
     if(year % 4)
-	return false;
+	return eb_false;
     if(year % 100)
-	return true;
+	return eb_true;
     if(year % 400)
-	return false;
-    return true;
+	return eb_false;
+    return eb_true;
 }				/* isLeapYear */
 
 /* convert year, month, and day into a date. */
@@ -453,7 +453,7 @@ dateDecode(date d, int *yp, int *mp, int *dp)
 /* convert a string into a date */
 /* return -4 for bad format */
 date
-stringDate(const char *s, bool yearfirst)
+stringDate(const char *s, eb_bool yearfirst)
 {
     short year, month, day, i, l;
     char delim;
@@ -576,7 +576,7 @@ interval
 stringTime(const char *t)
 {
     short h, m, s;
-    bool ampm = false;
+    eb_bool ampm = eb_false;
     char c;
     char buf[12];
     short i, l;
@@ -592,7 +592,7 @@ stringTime(const char *t)
     strncpy(buf, t, l);
     buf[l] = 0;
     if(buf[l - 1] == 'M' && buf[l - 3] == ' ') {
-	ampm = true;
+	ampm = eb_true;
 	c = buf[l - 2];
 	if(c != 'A' && c != 'P')
 	    return -4;
@@ -670,22 +670,22 @@ stringMoney(const char *s)
 }				/* stringMoney */
 
 /* Make sure edbrowse is connected to the database */
-bool
+eb_bool
 ebConnect(void)
 {
     if(sql_database)
-	return true;
+	return eb_true;
     if(!dbarea) {
 	setError(MSG_DBUnspecified);
-	return false;
+	return eb_false;
     }
     sql_connect(dbarea, dblogin, dbpw);
     if(!sql_database) {
 	setError(MSG_DBConnect, rv_vendorStatus);
-	return false;
+	return eb_false;
     }
 
-    return true;
+    return eb_true;
 }				/* ebConnect */
 
 void
@@ -779,7 +779,7 @@ buildSelectClause(void)
     stringAndString(&scl, &scllen, td->name);
 }				/* buildSelectClause */
 
-static bool
+static eb_bool
 buildWhereClause(void)
 {
     int i, l, n, colno;
@@ -789,20 +789,20 @@ buildWhereClause(void)
     wcl = initString(&wcllen);
     wherecol[0] = 0;
     if(stringEqual(w, "*"))
-	return true;
+	return eb_true;
 
     e = strchr(w, '=');
     if(!e) {
 	if(!td->key1) {
 	    setError(MSG_DBNoKey);
-	    return false;
+	    return eb_false;
 	}
 	colno = td->key1;
 	e = td->cols[colno - 1];
 	l = strlen(e);
 	if(l > COLNAMELEN) {
 	    setError(MSG_DBColumnLong, e, COLNAMELEN);
-	    return false;
+	    return eb_false;
 	}
 	strcpy(wherecol, e);
 	e = w - 1;
@@ -810,11 +810,11 @@ buildWhereClause(void)
 	colno = strtol(w, (char **)&w, 10);
 	if(w != e) {
 	    setError(MSG_DBSyntax);
-	    return false;
+	    return eb_false;
 	}
 	if(colno == 0 || colno > td->ncols) {
 	    setError(MSG_DBColRange, colno);
-	    return false;
+	    return eb_false;
 	}
 	goto setcol_n;
     } else {
@@ -827,21 +827,21 @@ buildWhereClause(void)
 		    continue;
 		if(colno) {
 		    setError(MSG_DBManyColumns, wherecol);
-		    return false;
+		    return eb_false;
 		}
 		colno = i + 1;
 	    }
 	}
 	if(!colno) {
 	    setError(MSG_DBNoColumn, wherecol);
-	    return false;
+	    return eb_false;
 	}
       setcol_n:
 	w = td->cols[colno - 1];
 	l = strlen(w);
 	if(l > COLNAMELEN) {
 	    setError(MSG_DBColumnLong, w, COLNAMELEN);
-	    return false;
+	    return eb_false;
 	}
 	strcpy(wherecol, w);
     }
@@ -865,10 +865,10 @@ buildWhereClause(void)
 	pushQuoted(&wcl, &wcllen, w, colno - 1);
     }
 
-    return true;
+    return eb_true;
 }				/* buildWhereClause */
 
-static bool
+static eb_bool
 setTable(void)
 {
     static const short exclist[] = { EXCNOTABLE, EXCNOCOLUMN, 0 };
@@ -884,7 +884,7 @@ setTable(void)
 
     td = cw->table;
     if(td)
-	return true;
+	return eb_true;
 
 /* haven't glommed onto this table yet */
     td = findTableDescriptor(myTab);
@@ -899,7 +899,7 @@ setTable(void)
 		    setError(MSG_DBNoTable, td->name);
 		else if(rv_lastStatus == EXCNOCOLUMN)
 		    setError(MSG_DBBadColumn);
-		return false;
+		return eb_false;
 	    }
 	    td->types = cloneString(rv_type);
 	    nc = rv_numRets;
@@ -915,12 +915,12 @@ setTable(void)
 	if(rv_lastStatus) {
 	    if(rv_lastStatus == EXCNOTABLE)
 		setError(MSG_DBNoTable, myTab);
-	    return false;
+	    return eb_false;
 	}
 	td = newTableDescriptor(myTab);
 	if(!td) {
 	    sql_free(cid);
-	    return false;
+	    return eb_false;
 	}
 	nc = rv_numRets;
 	if(nc > MAXTCOLS) {
@@ -953,7 +953,7 @@ setTable(void)
     }
 
     cw->table = td;
-    return true;
+    return eb_true;
 }				/* setTable */
 
 void
@@ -1029,12 +1029,12 @@ showForeign(void)
 }				/* showForeign */
 
 /* Select rows of data and put them into the text buffer */
-static bool
+static eb_bool
 rowsIntoBuffer(int cid, const char *types, char **bufptr, int *lcnt)
 {
     char *rbuf, *unld, *u, *v, *s, *end;
     int rbuflen;
-    bool rc = false;
+    eb_bool rc = eb_false;
 
     *bufptr = EMPTYSTRING;
     *lcnt = 0;
@@ -1066,7 +1066,7 @@ rowsIntoBuffer(int cid, const char *types, char **bufptr, int *lcnt)
 		u = strchr(u, '|') + 1;
 	    v = strpbrk(u, "|\n");
 	    end = v + strlen(v);
-	    cx = sideBuffer(0, rv_blobLoc, rv_blobSize, 0, false);
+	    cx = sideBuffer(0, rv_blobLoc, rv_blobSize, 0, eb_false);
 	    nzFree(rv_blobLoc);
 	    sprintf(myTab, "<%d>", cx);
 	    if(!cx)
@@ -1080,7 +1080,7 @@ rowsIntoBuffer(int cid, const char *types, char **bufptr, int *lcnt)
 	stringAndString(&rbuf, &rbuflen, unld);
 	++*lcnt;
     }
-    rc = true;
+    rc = eb_true;
 
   abort:
     sql_closeFree(cid);
@@ -1088,36 +1088,36 @@ rowsIntoBuffer(int cid, const char *types, char **bufptr, int *lcnt)
     return rc;
 }				/* rowsIntoBuffer */
 
-bool
+eb_bool
 sqlReadRows(const char *filename, char **bufptr)
 {
     int cid, lcnt;
 
     *bufptr = EMPTYSTRING;
     if(!ebConnect())
-	return false;
+	return eb_false;
     if(!setTable())
-	return false;
+	return eb_false;
 
     myWhere = strchr(filename, ']') + 1;
     if(!*myWhere)
-	return true;
+	return eb_true;
 
     if(!buildWhereClause())
-	return false;
+	return eb_false;
     buildSelectClause();
     rv_blobFile = 0;
     cid = sql_prepOpen("%s %0s", scl, wcl);
     nzFree(scl);
     nzFree(wcl);
     if(cid < 0)
-	return false;
+	return eb_false;
 
     return rowsIntoBuffer(cid, td->types, bufptr, &lcnt);
 }				/* sqlReadRows */
 
 /* Split a line at pipe boundaries, and make sure the field count is correct */
-static bool
+static eb_bool
 intoFields(char *line)
 {
     char *s = line;
@@ -1135,25 +1135,25 @@ intoFields(char *line)
 	if(j < td->ncols)
 	    continue;
 	setError(MSG_DBAddField);
-	return false;
+	return eb_false;
     }
 
     if(j == td->ncols)
-	return true;
+	return eb_true;
     setError(MSG_DBLostField);
-    return false;
+    return eb_false;
 }				/* intoFields */
 
-static bool
+static eb_bool
 rowCountCheck(int action, int cnt1)
 {
     int cnt2 = rv_lastNrows;
 
     if(cnt1 == cnt2)
-	return true;
+	return eb_true;
 
     setError(MSG_DBDeleteCount + action, cnt1, cnt2);
-    return false;
+    return eb_false;
 }				/* rowCountCheck */
 
 static int
@@ -1161,7 +1161,7 @@ keyCountCheck(void)
 {
     if(!td->key1) {
 	setError(MSG_DBNoKeyCol);
-	return false;
+	return eb_false;
     }
     if(!td->key2)
 	return 1;
@@ -1179,7 +1179,7 @@ static const short insupdExceptions[] = {
     EXCDEADLOCK, EXCCHECK, EXCTIMEOUT, EXCNOTNULLCOLUMN, 0
 };
 
-static bool
+static eb_bool
 insupdError(int action, int rcnt)
 {
     int rc = rv_lastStatus;
@@ -1213,33 +1213,33 @@ insupdError(int action, int rcnt)
 	    break;
 	default:
 	    setError(MSG_DBMisc, rv_vendorStatus);
-	    return false;
+	    return eb_false;
 	}
 
 	setError(msg);
-	return false;
+	return eb_false;
     }
 
     return rowCountCheck(action, rcnt);
 }				/* insupdError */
 
-bool
+eb_bool
 sqlDelRows(int start, int end)
 {
     int nkeys, ndel, ln;
 
     if(!setTable())
-	return false;
+	return eb_false;
 
     nkeys = keyCountCheck();
     if(!nkeys)
-	return false;
+	return eb_false;
 
     ndel = end - start + 1;
     ln = start;
     if(ndel > 100) {
 	setError(MSG_DBMassDelete);
-	return false;
+	return eb_false;
     }
 
 /* We could delete all the rows with one statement, using an in(list),
@@ -1256,14 +1256,14 @@ sqlDelRows(int start, int end)
 	nzFree(wherekeys);
 	nzFree(line);
 	if(!insupdError(0, 1))
-	    return false;
+	    return eb_false;
 	delText(ln, ln);
     }
 
-    return true;
+    return eb_true;
 }				/* sqlDelRows */
 
-bool
+eb_bool
 sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 {
     char *d2;			/* clone of dest */
@@ -1275,21 +1275,21 @@ sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 
 /* compare all the way out to newline, so we know both strings end at the same time */
     if(slen == dlen && !memcmp(source, dest, slen + 1))
-	return true;
+	return eb_true;
 
     if(!setTable())
-	return false;
+	return eb_false;
 
     nkeys = keyCountCheck();
     if(!nkeys)
-	return false;
+	return eb_false;
     key1 = td->key1 - 1;
     key2 = td->key2 - 1;
 
     d2 = (char *)clonePstring(dest);
     if(!intoFields(d2)) {
 	nzFree(d2);
-	return false;
+	return eb_false;
     }
 
     j = 0;
@@ -1335,15 +1335,15 @@ sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 
     nzFree(d2);
     nzFree(u1);
-    return true;
+    return eb_true;
 
   abort:
     nzFree(d2);
     nzFree(u1);
-    return false;
+    return eb_false;
 }				/* sqlUpdateRow */
 
-bool
+eb_bool
 sqlAddRows(int ln)
 {
     char *u1, *u2;		/* pieces of the insert statement */
@@ -1353,10 +1353,10 @@ sqlAddRows(int ln)
     int j, l, nkeys;
     double dv;
     char inp[256];
-    bool rc;
+    eb_bool rc;
 
     if(!setTable())
-	return false;
+	return eb_false;
     nkeys = keyCountCheck();
 
     while(1) {
@@ -1381,7 +1381,7 @@ sqlAddRows(int ln)
 		nzFree(u1);
 		nzFree(u2);
 		nzFree(u3);
-		return true;
+		return eb_true;
 	    }
 
 	    if(inp[0] == 0) {
@@ -1421,7 +1421,7 @@ sqlAddRows(int ln)
 		}
 		break;
 	    case 'D':
-		if(stringDate(inp, false) < 0) {
+		if(stringDate(inp, eb_false) < 0) {
 		    puts("date expected");
 		    goto reenter;
 		}
@@ -1486,15 +1486,15 @@ sqlAddRows(int ln)
 	unld[l - 1] = '\n';	/* overwrite the last pipe */
 #endif
 
-	rc = addTextToBuffer((pst) unld, l, ln, false);
+	rc = addTextToBuffer((pst) unld, l, ln, eb_false);
 	nzFree(u3);
 	if(!rc)
-	    return false;
+	    return eb_false;
 	++ln;
     }
 
 /* This pointis not reached; make the compilerhappy */
-    return true;
+    return eb_true;
 }				/* sqlAddRows */
 
 
@@ -1515,7 +1515,7 @@ cursor_comm(const char *stmt1, const char *stmt2,	/* the two select statements *
     char *line1, *line2, *s;	/* the two fetched rows */
     void *blob1, *blob2;	/* one blob per table */
     int blob1size, blob2size;
-    bool eof1, eof2, get1, get2;
+    eb_bool eof1, eof2, get1, get2;
     int sortval1, sortval2;
     char sortstring1[80], sortstring2[80];
     int sortcol;
@@ -1537,13 +1537,13 @@ cursor_comm(const char *stmt1, const char *stmt2,	/* the two select statements *
     if(sorttype == 'S')
 	passkey1 = (int)sortstring1, passkey2 = (int)sortstring2;
 
-    eof1 = eof2 = false;
-    get1 = get2 = true;
+    eof1 = eof2 = eb_false;
+    get1 = get2 = eb_true;
     rv_blobFile = 0;		/* in case the cursor has a blob */
     line1 = line2 = 0;
     blob1 = blob2 = 0;
 
-    while(true) {
+    while(eb_true) {
 	if(get1) {		/* fetch first row */
 	    eof1 = !sql_fetchNext(cid1, 0);
 	    nzFree(line1);
@@ -1602,14 +1602,14 @@ cursor_comm(const char *stmt1, const char *stmt2,	/* the two select statements *
 	/* looking for second line */
 	if(eof1 & eof2)
 	    break;		/* done */
-	get1 = get2 = false;
+	get1 = get2 = eb_false;
 
 /* in cid2, but not in cid1 */
 	if(eof1 || !eof2 &&
 	   (sorttype == 'S' && strcmp(sortstring1, sortstring2) > 0 ||
 	   sorttype != 'S' && sortval1 > sortval2)) {
 	    (*f) ('>', line1, line2, passkey2);
-	    get2 = true;
+	    get2 = eb_true;
 	    continue;
 	}
 
@@ -1618,11 +1618,11 @@ cursor_comm(const char *stmt1, const char *stmt2,	/* the two select statements *
 	   (sorttype == 'S' && strcmp(sortstring1, sortstring2) < 0 ||
 	   sorttype != 'S' && sortval1 < sortval2)) {
 	    (*f) ('<', line1, line2, passkey1);
-	    get1 = true;
+	    get1 = eb_true;
 	    continue;
 	}
 	/* insert case */
-	get1 = get2 = true;
+	get1 = get2 = eb_true;
 /* perhaps the lines are equal */
 	if(stringEqual(line1, line2))
 	    continue;
@@ -1737,7 +1737,7 @@ goSelect(int *startLine, char **rbuf)
     char *cmd, *s;
     int cmdlen;
     int i, j, l, action, cid;
-    bool rc;
+    eb_bool rc;
     static const char *actionWords[] = {
 	"select", "insert", "update", "delete", "execute",
 	0
