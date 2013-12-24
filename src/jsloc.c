@@ -7,6 +7,8 @@
 
 #include "eb.h"
 
+#include "js.h"
+
 /* jsprf.h is not publically visible on some systems,
 so I can't #include it here.
 Instead, I'll declare the needed prototype myself, and hope it is consistent
@@ -668,9 +670,10 @@ static JSBool(*my_getter) (JSContext *, JSObject *, jsid, jsval *);
 static JSBool(*my_setter) (JSContext *, JSObject *, jsid, JSBool, jsval *);
 
 void
-establish_property_string(JSObject * obj, const char *name, const char *value,
+establish_property_string(void *jv, const char *name, const char *value,
    bool readonly)
 {
+    JSObject *obj = jv;
     jsuint attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
     jsval v;
     if(readonly)
@@ -694,9 +697,10 @@ establish_property_string(JSObject * obj, const char *name, const char *value,
 }				/* establish_property_string */
 
 void
-establish_property_number(JSObject * obj, const char *name, int value,
+establish_property_number(void *jv, const char *name, int value,
    bool readonly)
 {
+    JSObject *obj = jv;
     jsuint attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
     if(readonly)
 	attr |= JSPROP_READONLY;

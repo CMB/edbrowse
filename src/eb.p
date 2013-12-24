@@ -238,10 +238,6 @@ void appendFile(const char *fname, const char *message, ...) ;
 void appendFileNF(const char *filename, const char *msg) ;
 
 /* sourcefile=jsdom.c */
-JSString * our_JS_NewStringCopyN(JSContext * cx, const char *s, size_t n) ;
-JSString * our_JS_NewStringCopyZ(JSContext * cx, const char *s) ;
-char * our_JSEncodeString(JSString *str) ;
-char * transcode_get_js_bytes(JSString * s) ;
 void * createJavaContext(void) ;
 void freeJavaContext(void *jsc) ;
 void establish_innerHTML(void *jv, const char *start, const char *end, bool is_ta) ;
@@ -250,10 +246,8 @@ bool javaParseExecute(void *this, const char *str, const char *filename, int lin
 void * domLink(const char *classname, const char *symname, const char *idname, const char *href, const char *href_url, const char *list, void *owner, int radiosel) ;
 
 /* sourcefile=jsloc.c */
-const char * stringize(jsval v) ;
-void initLocationClass(void) ;
-void establish_property_string(JSObject *obj, const char *name, const char *value, bool readonly) ;
-void establish_property_number(JSObject *obj, const char *name, int value, bool readonly) ;
+void establish_property_string(void *jv, const char *name, const char *value, bool readonly) ;
+void establish_property_number(void *jv, const char *name, int value, bool readonly) ;
 void establish_property_bool(void *jv, const char *name, bool value, bool readonly) ;
 void * establish_property_array(void *jv, const char *name) ;
 void establish_property_object(void *parent, const char *name, void *child) ;

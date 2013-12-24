@@ -51,6 +51,7 @@ EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
 
 #  Header file dependencies.
 $(EBOBJS) : eb.h eb.p messages.h tcp.h
+jsdom.o jsloc.o : js.h
 
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.

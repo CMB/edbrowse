@@ -10,6 +10,8 @@
 
 #include "eb.h"
 
+#include "js.h"
+
 /* jsprf.h is not publically visible on some systems,
 so I can't #include it here.
 Instead, I'll declare the needed prototype myself, and hope it is consistent
@@ -22,8 +24,8 @@ JS_smprintf(const char *fmt, ...);
 
 
 JSContext *jcx;			/* really JSContext */
-JSObject *jwin;			/* window object, really JSObject */
-JSObject *jdoc;			/* window.document, really JSObject */
+void *jwin;			/* window object, really JSObject */
+void *jdoc;			/* window.document, really JSObject */
 JSObject *jwloc;		/* window.location, really JSObject */
 JSObject *jdloc;		/* document.location, really JSObject */
 static size_t gStackChunkSize = 8192;
@@ -126,7 +128,7 @@ our_JSEncodeString(JSString * str)
     return buffer;
 }				/* our_JSEncodeString */
 
-char *
+static char *
 transcode_get_js_bytes(JSString * s)
 {
     char *converted = NULL;

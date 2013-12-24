@@ -39,8 +39,6 @@
 
 #include "tcp.h"
 
-#include <jsapi.h>
-
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif
@@ -215,11 +213,6 @@ extern long hcode;		/* http code, like 404 file not found */
 extern char herror[];		/* html error */
 extern char errorMsg[];		/* generated error message */
 extern char serverLine[];	/* lines to and from the mail server */
-extern JSContext *jcx;		/* javascript context */
-extern JSObject *jwin;		/* javascript window object */
-extern JSObject *jdoc;		/* javascript document object */
-extern JSObject *jwloc;		/* javascript window.location */
-extern JSObject *jdloc;		/* javascript document.location */
 extern int maxAccount;		/* how many email accounts specified */
 extern int localAccount;	/* this is the smtp server for outgoing mail */
 extern char *mailDir;		/* move to this directory when fetching mail */
@@ -369,6 +362,13 @@ struct ebSession {
 };
 extern struct ebSession sessionList[];
 extern struct ebSession *cs;	/* current session */
+
+
+/* A few global variables that point to java objects.
+ * These are blind pointers, so we can encapsulate all the javascript. */
+
+extern void *jwin;		/* javascript window object */
+extern void *jdoc;		/* javascript document object */
 
 
 /* function prototypes */
