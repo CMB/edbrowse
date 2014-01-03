@@ -847,6 +847,8 @@ get_property_url(void *jv, eb_bool doaction)
 	JS_GetProperty(jcx, lo, "href", &v);
     }
     s = stringize(v);
+/* we assume that the console can handle whatever is in the string,
+so no UTF8 check */
 	out_str = cloneString(s);
     return out_str;
 }				/* get_property_url */
@@ -858,12 +860,11 @@ get_property_string(void *jv, const char *name)
     jsval v;
     const char *s = NULL;
     char *out_str = NULL;
-    char *converted;
-    int converted_l;
     if(!obj)
 	return 0;
     JS_GetProperty(jcx, obj, name, &v);
     s = stringize(v);
+/* assume either the string is ascii or the console is UTF8 */
 	    out_str = cloneString(s);
     return out_str;
 }				/* get_property_string */
