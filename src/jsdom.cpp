@@ -25,6 +25,8 @@ JS_smprintf(const char *fmt, ...);
 #define PROP_FIXED (JSPROP_ENUMERATE|JSPROP_READONLY|JSPROP_PERMANENT)
 
 
+JSRuntime *jrt; /* our js runtime, global so we can call the gc from jsloc
+functions as well */
 JSContext *jcx;			/* really JSContext */
 void *jwin;			/* window object, really JSObject */
 void *jdoc;			/* window.document, really JSObject */
@@ -824,7 +826,6 @@ return 'Sorry, edbrowse does not maintain a browsing history.'; } \
 void *
 createJavaContext(void)
 {
-    static JSRuntime *jrt;
     JSObject *o, *nav, *screen, *hist, *del;
 /* navigator mime types and plugins */
     JSObject *navmt, *navpi;

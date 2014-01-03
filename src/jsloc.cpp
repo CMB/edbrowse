@@ -29,7 +29,8 @@ with lots of interacting properties and setter functions.
 *********************************************************************/
 
 static const char *emptyParms[] = { 0 };
-static jsval emptyArgs[] = { 0 };
+// can we just have a generic empty value class
+static jsval emptyArgs[] = { jsval() };
 
 static void
   url_initialize(const char *url, eb_bool readonly, eb_bool exclude_href);
@@ -40,7 +41,7 @@ stringize(jsval v)
     static char buf[24];
     static char *dynamic;
     int n;
-    jsdouble d;
+    double d;
     if(JSVAL_IS_STRING(v)) {
 	if(dynamic)
 	    JS_free(jcx, dynamic);
@@ -68,8 +69,13 @@ stringize(jsval v)
 static JSClass url_class = {
     "URL",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
+    JS_PropertyStub,
+ JS_DeletePropertyStub,
+JS_PropertyStub,
+ JS_StrictPropertyStub,
+    JS_EnumerateStub,
+ JS_ResolveStub,
+ JS_ConvertStub,
 };
 
 /* To builld path names, host names, etc. */
@@ -96,7 +102,7 @@ isWinLoc(void)
 
 /* Converting to a string just pulls out the href property */
 static JSBool
-loc_toString(JSContext * cx, uintN argc, jsval * vp)
+loc_toString(JSContext * cx, unsigned int argc, jsval * vp)
 {
     JSObject *obj = JS_THIS_OBJECT(cx, vp);
     jsval rval = JS_RVAL(cx, vp);
@@ -106,7 +112,7 @@ loc_toString(JSContext * cx, uintN argc, jsval * vp)
 }				/* loc_toString */
 
 static JSBool
-loc_reload(JSContext * cx, uintN argc, jsval * vp)
+loc_reload(JSContext * cx, unsigned int argc, jsval * vp)
 {
     const char *s = cw->firstURL;
     if(s && isURL(s))
@@ -117,7 +123,7 @@ loc_reload(JSContext * cx, uintN argc, jsval * vp)
 }				/* loc_reload */
 
 static JSBool
-loc_replace(JSContext * cx, uintN argc, jsval * vp)
+loc_replace(JSContext * cx, unsigned int argc, jsval * vp)
 {
     const char *s;
     char *ss, *t;
@@ -229,8 +235,8 @@ build_host(int exception, const char *hostname, int port)
 /* define or set a local property */
 static void
 loc_def_set(const char *name, const char *s,
-   JSBool(*setter) (JSContext *, JSObject *, jsid, JSBool, jsval *),
-   jsuint attr)
+JSStrictPropertyOp setter,
+   unsigned attr)
 {
     JSBool found;
     jsval vv;
@@ -248,8 +254,8 @@ loc_def_set(const char *name, const char *s,
 /* Like the above, but using an integer, this is for port only. */
 static void
 loc_def_set_n(const char *name, int port,
-   JSBool(*setter) (JSContext *, JSObject *, jsid, JSBool, jsval *),
-   jsuint attr)
+JSStrictPropertyOp setter,
+   unsigned attr)
 {
     JSBool found;
     jsval vv = INT_TO_JSVAL(port);
@@ -262,8 +268,8 @@ loc_def_set_n(const char *name, int port,
 
 static void
 loc_def_set_part(const char *name, const char *s, int n,
-   JSBool(*setter) (JSContext *, JSObject *, jsid, JSBool, jsval *),
-   jsuint attr)
+   JSStrictPropertyOp setter,
+   unsigned attr)
 {
     JSBool found;
     jsval vv;
@@ -279,9 +285,9 @@ loc_def_set_part(const char *name, const char *s, int n,
 }				/* loc_def_set_part */
 
 static JSBool
-setter_loc(JSContext * cx, JSObject * obj, jsid id, JSBool strict, jsval * vp)
+setter_loc(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
 {
-    const char *s = stringize(*vp);
+    const char *s = stringize(vp);
     if(!s) {
 	JS_ReportError(jcx,
 	   "window.location is assigned something that I don't understand");
@@ -301,13 +307,12 @@ setter_loc(JSContext * cx, JSObject * obj, jsid id, JSBool strict, jsval * vp)
 }				/* setter_loc */
 
 static JSBool
-setter_loc_href(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
-   jsval * vp)
+setter_loc_href(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
 {
     const char *url = 0;
     if(setter_suspend)
 	return JS_TRUE;
-    url = stringize(*vp);
+    url = stringize(vp);
     if(!url)
 	return JS_TRUE;
     uo = obj;
@@ -324,65 +329,60 @@ setter_loc_href(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
 }				/* setter_loc_href */
 
 static JSBool
-setter_loc_hash(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
-   jsval * vp)
+setter_loc_hash(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
 {
     const char *e;
     if(setter_suspend)
 	return JS_TRUE;
-    e = stringize(*vp);
+    e = stringize(vp);
     uo = obj;
     build_url(5, e);
     return isWinLoc();
 }				/* setter_loc_hash */
 
 static JSBool
-setter_loc_search(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
-   jsval * vp)
+setter_loc_search(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
 {
     const char *e;
     if(setter_suspend)
 	return JS_TRUE;
-    e = stringize(*vp);
+    e = stringize(vp);
     uo = obj;
     build_url(4, e);
     return isWinLoc();
 }				/* setter_loc_search */
 
 static JSBool
-setter_loc_prot(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
-   jsval * vp)
+setter_loc_prot(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
 {
     const char *e;
     if(setter_suspend)
 	return JS_TRUE;
-    e = stringize(*vp);
+    e = stringize(vp);
     uo = obj;
     build_url(1, e);
     return isWinLoc();
 }				/* setter_loc_prot */
 
 static JSBool
-setter_loc_pathname(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
-   jsval * vp)
+setter_loc_pathname(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
 {
     const char *e;
     if(setter_suspend)
 	return JS_TRUE;
-    e = stringize(*vp);
+    e = stringize(vp);
     uo = obj;
     build_url(3, e);
     return isWinLoc();
 }				/* setter_loc_pathname */
 
 static JSBool
-setter_loc_hostname(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
-   jsval * vp)
+setter_loc_hostname(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
 {
     const char *e;
     if(setter_suspend)
 	return JS_TRUE;
-    e = stringize(*vp);
+    e = stringize(vp);
     uo = obj;
     build_host(1, e, 0);
     build_url(0, 0);
@@ -390,13 +390,12 @@ setter_loc_hostname(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
 }				/* setter_loc_hostname */
 
 static JSBool
-setter_loc_port(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
-   jsval * vp)
+setter_loc_port(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
 {
     int port;
     if(setter_suspend)
 	return JS_TRUE;
-    port = JSVAL_TO_INT(*vp);
+    port = JSVAL_TO_INT(vp);
     uo = obj;
     build_host(2, 0, port);
     build_url(0, 0);
@@ -404,15 +403,14 @@ setter_loc_port(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
 }				/* setter_loc_port */
 
 static JSBool
-setter_loc_host(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
-   jsval * vp)
+setter_loc_host(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
 {
     const char *e, *s;
     int n;
     jsval v;
     if(setter_suspend)
 	return JS_TRUE;
-    e = stringize(*vp);
+    e = stringize(vp);
     uo = obj;
     build_url(2, e);
 /* and we have to update hostname and port */
@@ -439,7 +437,7 @@ url_initialize(const char *url, eb_bool readonly, eb_bool exclude_href)
     const char *data;
     const char *s;
     const char *pl;
-    jsuint attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
+    unsigned attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
     if(readonly)
 	attr |= JSPROP_READONLY;
 
@@ -515,7 +513,7 @@ url_initialize(const char *url, eb_bool readonly, eb_bool exclude_href)
 }				/* url_initialize */
 
 static JSBool
-url_ctor(JSContext * cx, uintN argc, jsval * vp)
+url_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 {
     const char *url = NULL;
     const char *s;
@@ -554,12 +552,12 @@ That requires a special setter function to pass the new value back to the text.
 *********************************************************************/
 
 static JSBool
-setter_value(JSContext * cx, JSObject * obj, jsid id, JSBool strict, jsval * vp)
+setter_value(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
 {
     const char *val;
     if(setter_suspend)
 	return JS_TRUE;
-    val = stringize(*vp);
+    val = stringize(vp);
     if(!val) {
 	JS_ReportError(jcx,
 	   "input.value is assigned something other than a string; this can cause problems when you submit the form.");
@@ -570,40 +568,37 @@ setter_value(JSContext * cx, JSObject * obj, jsid id, JSBool strict, jsval * vp)
 }				/* setter_value */
 
 static JSBool
-setter_checked(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
-   jsval * vp)
+setter_checked(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
 {
     JSBool b;
     if(setter_suspend)
 	return JS_TRUE;
-    b = JSVAL_TO_BOOLEAN(*vp);
+    b = JSVAL_TO_BOOLEAN(vp);
     return JS_TRUE;
 }				/* setter_checked */
 
 static JSBool
-setter_selected(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
-   jsval * vp)
+setter_selected(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
 {
     JSBool b;
     if(setter_suspend)
 	return JS_TRUE;
-    b = JSVAL_TO_BOOLEAN(*vp);
+    b = JSVAL_TO_BOOLEAN(vp);
     return JS_TRUE;
 }				/* setter_selected */
 
 static JSBool
-setter_selidx(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
-   jsval * vp)
+setter_selidx(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
 {
     int n;
     if(setter_suspend)
 	return JS_TRUE;
-    n = JSVAL_TO_INT(*vp);
+    n = JSVAL_TO_INT(vp);
     return JS_TRUE;
 }				/* setter_selidx */
 
 static JSBool
-getter_cookie(JSContext * cx, JSObject * obj, jsid id, jsval * vp)
+getter_cookie(JSContext * cx, JS::Handle<JSObject *> obj, JS::Handle<jsid> id, JS::MutableHandle<jsval> vp)
 {
     int cook_l;
     char *cook = initString(&cook_l);
@@ -624,20 +619,19 @@ getter_cookie(JSContext * cx, JSObject * obj, jsid id, jsval * vp)
 	    *s = 0;
     }
 
-    *vp = STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, cook));
+    vp .set( STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, cook)));
     nzFree(cook);
     return JS_TRUE;
 }				/* getter_cookie */
 
 static JSBool
-setter_cookie(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
-   jsval * vp)
+setter_cookie(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
 {
     const char *host = getHostURL(cw->fileName);
     if(!host) {
 	JS_ReportError(jcx, "cannot set cookie, ill-defined domain");
     } else {
-	const char *s = stringize(*vp);
+	const char *s = stringize(vp);
 	if(!receiveCookie(cw->fileName, s))
 	    JS_ReportError(jcx, "unable to set cookie %s", s);
     }
@@ -645,14 +639,13 @@ setter_cookie(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
 }				/* setter_cookie */
 
 static JSBool
-setter_domain(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
-   jsval * vp)
+setter_domain(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
 {
     const char *hostname = getHostURL(cw->fileName);
     const char *dom = 0;
     if(!hostname)
 	goto out;		/* local file, don't care */
-    dom = stringize(*vp);
+    dom = stringize(vp);
     if(dom && strlen(dom) && domainSecurityCheck(hostname, dom))
 	goto out;
     if(!dom)
@@ -669,15 +662,15 @@ Convenient set property routines that can be invoked from edbrowse,
 requiring no knowledge of smjs.
 *********************************************************************/
 
-static JSBool(*my_getter) (JSContext *, JSObject *, jsid, jsval *);
-static JSBool(*my_setter) (JSContext *, JSObject *, jsid, JSBool, jsval *);
+static JSPropertyOp my_getter;
+static JSStrictPropertyOp my_setter;
 
 void
 establish_property_string(void *jv, const char *name, const char *value,
    eb_bool readonly)
 {
     JSObject *obj = (JSObject *) jv;
-    jsuint attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
+    unsigned attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
     jsval v;
     if(readonly)
 	attr |= JSPROP_READONLY;
@@ -704,7 +697,7 @@ establish_property_number(void *jv, const char *name, int value,
    eb_bool readonly)
 {
     JSObject *obj = (JSObject *) jv;
-    jsuint attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
+    unsigned attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
     if(readonly)
 	attr |= JSPROP_READONLY;
     my_setter = NULL;
@@ -717,7 +710,7 @@ establish_property_number(void *jv, const char *name, int value,
 void
 establish_property_bool(void *jv, const char *name, eb_bool value, eb_bool readonly)
 {
-    jsuint attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
+    unsigned attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
     if(readonly)
 	attr |= JSPROP_READONLY;
     JSObject *obj = (JSObject *) jv;
@@ -751,7 +744,7 @@ establish_property_url(void *jv, const char *name,
    const char *url, eb_bool readonly)
 {
     JSObject *obj = (JSObject *) jv;
-    jsuint attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
+    unsigned attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
     if(readonly)
 	attr |= JSPROP_READONLY;
 
@@ -839,7 +832,7 @@ get_property_url(void *jv, eb_bool doaction)
     if(!found)
 	return 0;
     if(!JSVAL_IS_STRING(v)) {
-	if(!JSVAL_IS_OBJECT(v)) {
+	if(!v.isObject()){
 	  badobj:
 	    JS_ReportError(jcx,
 	       "url object is assigned something that I don't understand; I may not be able to fetch the next web page.");
@@ -935,8 +928,13 @@ dynamic option lists under js control.
 static JSClass option_class = {
     "Option",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
+    JS_PropertyStub,
+JS_DeletePropertyStub,
+JS_PropertyStub,
+JS_StrictPropertyStub,
+    JS_EnumerateStub,
+JS_ResolveStub,
+JS_ConvertStub,
 };
 void *
 establish_js_option(void *ev, int idx)
@@ -973,7 +971,7 @@ handlerGo(void *obj, const char *name)
     rc = JS_CallFunctionName(jcx, (JSObject *) obj, name, 0, emptyArgs, &rval);
     if(rc && JSVAL_IS_BOOLEAN(rval))
 	rc = JSVAL_TO_BOOLEAN(rval);
-    JS_GC(jcx);
+    JS_GC(jrt);
     return rc;
 }				/* handlerGo */
 

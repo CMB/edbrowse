@@ -16,6 +16,7 @@
 /* now we can include our jsapi */
 #include <jsapi.h>
 /* globals */
+extern JSRuntime *jrt; /* javascript runtime */
 extern JSContext *jcx;		/* javascript context */
 extern JSObject *jwloc;		/* javascript window.location */
 extern JSObject *jdloc;		/* javascript document.location */
