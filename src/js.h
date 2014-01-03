@@ -8,8 +8,14 @@
 #ifndef JS_H
 #define JS_H
 
+#include <limits>
+/* work around a bug where the standard UINT32_MAX isn't defined, I really hope this is correct */
+#ifndef UINT32_MAX
+#define UINT32_MAX std::numeric_limits<uint32_t>::max()
+#endif
+/* now we can include our jsapi */
 #include <jsapi.h>
-
+/* globals */
 extern JSContext *jcx;		/* javascript context */
 extern JSObject *jwloc;		/* javascript window.location */
 extern JSObject *jdloc;		/* javascript document.location */
