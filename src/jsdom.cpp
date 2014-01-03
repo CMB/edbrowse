@@ -525,10 +525,10 @@ doc_write(JSContext * cx, unsigned int argc, jsval * vp)
 }				/* doc_write */
 
 static JSBool
-setter_innerHTML(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
-   jsval * vp)
+setter_innerHTML(JSContext * cx, JS::Handle<JSObject *> obj, JS::Handle<jsid> id, JSBool strict,
+   JS::MutableHandle<jsval> vp)
 {
-    const char *s = stringize(*vp);
+    const char *s = stringize(vp);
     if(s && strlen(s)) {
 	dwrite2(parsePage ? "<hr>\n" : "<html>\n");
 	dwrite2(s);
@@ -540,14 +540,13 @@ setter_innerHTML(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
 }				/* setter_innerHTML */
 
 static JSBool
-setter_innerText(JSContext * cx, JSObject * obj, jsid id, JSBool strict,
-   jsval * vp)
+setter_innerText(JSContext * cx, JS::Handle<JSObject *> obj, JS::Handle<jsid> id, JSBool strict,
+   JS::MutableHandle<jsval> vp)
 {
-    jsval v = *vp;
     char *s;
-    if(!JSVAL_IS_STRING(v))
+    if(!JSVAL_IS_STRING(vp))
 	return JS_FALSE;
-    s = our_JSEncodeString(JSVAL_TO_STRING(v));
+    s = our_JSEncodeString(JSVAL_TO_STRING(vp));
     nzFree(s);
     i_puts(MSG_InnerText);
 /* The string has already been updated in the object. */
@@ -833,7 +832,7 @@ createJavaContext(void)
 
     if(!jrt) {
 /* 4 meg js space - should this be configurable? */
-	jrt = JS_NewRuntime(4L * 1024L * 1024L);
+	jrt = JS_NewRuntime(4L * 1024L * 1024L, JS_NO_HELPER_THREADS);
 	if(!jrt)
 	    i_printfExit(MSG_JavaMemError);
 	gOutFile = stdout;
@@ -847,8 +846,7 @@ createJavaContext(void)
     JS_SetOptions(jcx, JSOPTION_VAROBJFIX);
 
 /* Create the Window object, which is the global object in DOM. */
-//    jwin = JS_NewObject(jcx, &window_class, NULL, NULL);
-    jwin = JS_NewCompartmentAndGlobalObject(jcx, &window_class, NULL);
+    jwin = JS_NewGlobalObject(jcx, &window_class, NULL);
     if(!jwin)
 	i_printfExit(MSG_JavaWindowError);
     JS_InitClass(jcx, (JSObject *) jwin, 0, &window_class, window_ctor, 3,
@@ -1063,7 +1061,9 @@ jMyContext(void)
     jsval oval;
     jcx = (JSContext *) cw->jsc;
     if(jcx) {
-	jwin = JS_GetGlobalObject(jcx);
+/* apparently the concept of a context having a global object is becoming
+obsolete, but the following is currently supported */
+	jwin = JS_GetGlobalForScopeChain(jcx);
 	JS_GetProperty(jcx, (JSObject *) jwin, "document", &oval);
 	jdoc = JSVAL_TO_OBJECT(oval);
 	JS_GetProperty(jcx, (JSObject *) jwin, "location", &oval);
@@ -1091,7 +1091,8 @@ javaParseExecute(void *obj, const char *str, const char *filename, int lineno)
     rc = eb_true;
     if(JSVAL_IS_BOOLEAN(rval))
 	rc = JSVAL_TO_BOOLEAN(rval);
-    JS_GC(jcx);
+/* GC is now done based on the runtime not the current context */
+    JS_GC(jrt);
     return rc;
 }				/* javaParseExecute */
 
