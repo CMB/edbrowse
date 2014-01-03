@@ -1121,41 +1121,41 @@ htmlReformat(const char *buf)
 Convert a 31 bit unicode character into utf8.
 *********************************************************************/
 
-static int
+static void
 uni2utf8(unsigned int unichar, unsigned char *outbuf)
 {
     int n = 0;
-    if((unichar >= 0) && (unichar <= 0x7f)) {
-	outbuf[n++] = (unsigned char)(unichar & 0x7f);
-    } else if((unichar >= 0x80) && (unichar <= 0x7ff)) {
-	outbuf[n++] = 0xc0 | (unsigned char)((unichar >> 6) & 0x1f);
-	outbuf[n++] = 0x80 | (unsigned char)(unichar & 0x3f);
-    } else if((unichar >= 0x800) && (unichar <= 0xffff)) {
-	outbuf[n++] = 0xe0 | (unsigned char)((unichar >> 12) & 0xf);
-	outbuf[n++] = 0x80 | (unsigned char)((unichar >> 6) & 0x3f);
-	outbuf[n++] = 0x80 | (unsigned char)(unichar & 0x3f);
-    } else if((unichar >= 0x10000) && (unichar <= 0x1fffff)) {
-	outbuf[n++] = 0xf0 | (unsigned char)((unichar >> 18) & 7);
-	outbuf[n++] = 0x80 | (unsigned char)((unichar >> 12) & 0x3f);
-	outbuf[n++] = 0x80 | (unsigned char)((unichar >> 6) & 0x3f);
-	outbuf[n++] = 0x80 | (unsigned char)(unichar & 0x3f);
-    } else if((unichar >= 0x200000) && (unichar <= 0x3ffffff)) {
-	outbuf[n++] = 0xf8 | ((unichar >> 24) & 3);
-	outbuf[n++] = 0x80 | (unsigned char)((unichar >> 18) & 0x3f);
-	outbuf[n++] = 0x80 | (unsigned char)((unichar >> 12) & 0x3f);
-	outbuf[n++] = 0x80 | (unsigned char)((unichar >> 6) & 0x3f);
-	outbuf[n++] = 0x80 | (unsigned char)(unichar & 0x3f);
-    } else if((unichar >= 0x4000000) && (unichar <= 0x7fffffff)) {
-	outbuf[n++] = 0xfc | (unsigned char)((unichar >> 30) & 1);
-	outbuf[n++] = 0x80 | (unsigned char)((unichar >> 24) & 0x3f);
-	outbuf[n++] = 0x80 | (unsigned char)((unichar >> 18) & 0x3f);
-	outbuf[n++] = 0x80 | (unsigned char)((unichar >> 12) & 0x3f);
-	outbuf[n++] = 0x80 | (unsigned char)((unichar >> 6) & 0x3f);
-	outbuf[n++] = 0x80 | (unsigned char)(unichar & 0x3f);
-    } else
-	n = -1;			/* character in range 0x80000000 - 0xffffffff ... invalid? */
 
-    return n;
+    if(unichar <= 0x7f) {
+	outbuf[n++] = unichar;
+    } else if(unichar <= 0x7ff) {
+	outbuf[n++] = 0xc0 | ((unichar >> 6) & 0x1f);
+	outbuf[n++] = 0x80 | (unichar & 0x3f);
+    } else if(unichar <= 0xffff) {
+	outbuf[n++] = 0xe0 | ((unichar >> 12) & 0xf);
+	outbuf[n++] = 0x80 | ((unichar >> 6) & 0x3f);
+	outbuf[n++] = 0x80 | (unichar & 0x3f);
+    } else if(unichar <= 0x1fffff) {
+	outbuf[n++] = 0xf0 | ((unichar >> 18) & 7);
+	outbuf[n++] = 0x80 | ((unichar >> 12) & 0x3f);
+	outbuf[n++] = 0x80 | ((unichar >> 6) & 0x3f);
+	outbuf[n++] = 0x80 | (unichar & 0x3f);
+    } else if(unichar <= 0x3ffffff) {
+	outbuf[n++] = 0xf8 | ((unichar >> 24) & 3);
+	outbuf[n++] = 0x80 | ((unichar >> 18) & 0x3f);
+	outbuf[n++] = 0x80 | ((unichar >> 12) & 0x3f);
+	outbuf[n++] = 0x80 | ((unichar >> 6) & 0x3f);
+	outbuf[n++] = 0x80 | (unichar & 0x3f);
+    } else if(unichar <= 0x7fffffff) {
+	outbuf[n++] = 0xfc | ((unichar >> 30) & 1);
+	outbuf[n++] = 0x80 | ((unichar >> 24) & 0x3f);
+	outbuf[n++] = 0x80 | ((unichar >> 18) & 0x3f);
+	outbuf[n++] = 0x80 | ((unichar >> 12) & 0x3f);
+	outbuf[n++] = 0x80 | ((unichar >> 6) & 0x3f);
+	outbuf[n++] = 0x80 | (unichar & 0x3f);
+    }
+
+    outbuf[n] = 0;
 }				/* uni2utf8 */
 
 
