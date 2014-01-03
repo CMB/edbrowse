@@ -847,15 +847,7 @@ get_property_url(void *jv, eb_bool doaction)
 	JS_GetProperty(jcx, lo, "href", &v);
     }
     s = stringize(v);
-    if(!JS_CStringsAreUTF8()) {
 	out_str = cloneString(s);
-    } else {
-	if(cons_utf8) {
-	    out_str = cloneString(s);
-	} else {
-	    utf2iso(s, strlen(s), &out_str, &out_str_l);
-	}
-    }
     return out_str;
 }				/* get_property_url */
 
@@ -872,16 +864,7 @@ get_property_string(void *jv, const char *name)
 	return 0;
     JS_GetProperty(jcx, obj, name, &v);
     s = stringize(v);
-    if(!JS_CStringsAreUTF8()) {
-	out_str = cloneString(s);
-    } else {
-	if(cons_utf8) {
 	    out_str = cloneString(s);
-	} else {
-	    utf2iso(s, strlen(s), &converted, &converted_l);
-	    out_str = converted;
-	}
-    }
     return out_str;
 }				/* get_property_string */
 
