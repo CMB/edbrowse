@@ -11,11 +11,10 @@ bindir = $(prefix)/bin
 #  Early adopters have occasionally needed -DMOZILLA_1_8_BRANCH
 #  This issue has cropped up on certain flavors of debian.
 
-JS_CPPFLAGS = -DXP_UNIX -DX86_LINUX -I/usr/include/js
+JS_CXXFLAGS =-I/usr/include/mozjs
 
-# C preprocessor flags.  CPPFLAGS is used in the %.o: %.c implicit rule,
-# available in GNU make.
-CPPFLAGS = $(JS_CPPFLAGS)
+# we need to only use the js flags when building with c++, so use CXXFLAGS
+CXXFLAGS = $(JS_CXXFLAGS)
 
 # By default, we strip the executables.
 # Override this behavior on the command line, by setting STRIP to the
@@ -38,8 +37,8 @@ ESQLDFLAGS = $(STRIP)
 
 # Override JSLIB on the command-line, if your distro uses a different name.
 # E.G., make JSLIB=-lmozjs
-JSLIB = -lmozjs185
-LDLIBS = -lpcre -lm -lssl $(JSLIB) -lcurl -lreadline -lcrypto
+JSLIB = -lmozjs
+LDLIBS = -lpcre -lm -lssl $(JSLIB) -lcurl -lreadline -lcrypto -lstdc++
 
 #  Make the dynamically linked executable program by default.
 #  Edbrowse executable.
