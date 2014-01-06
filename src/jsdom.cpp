@@ -28,10 +28,10 @@ JS_smprintf(const char *fmt, ...);
 JSRuntime *jrt; /* our js runtime, global so we can call the gc from jsloc
 functions as well */
 JSContext *jcx;			/* really JSContext */
-void *jwin;			/* window object, really JSObject */
-void *jdoc;			/* window.document, really JSObject */
-JSObject *jwloc;		/* window.location, really JSObject */
-JSObject *jdloc;		/* document.location, really JSObject */
+void *jwin = NULL;			/* window object, really JSObject */
+void *jdoc = NULL;			/* window.document, really JSObject */
+JSObject *jwloc = NULL;		/* window.location, really JSObject */
+JSObject *jdloc = NULL;		/* document.location, really JSObject */
 static size_t gStackChunkSize = 8192;
 static FILE *gOutFile, *gErrFile;
 static const char *emptyParms[] = { 0 };
@@ -154,6 +154,8 @@ JS_StrictPropertyStub,
     JS_EnumerateStub,
 JS_ResolveStub,
 JS_ConvertStub,
+NULL,
+JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSBool
@@ -161,9 +163,9 @@ window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 {
     char *newloc = 0;
     const char *winname = 0;
-    JSString *str;
+JS::RootedString str(jcx);
     jsval *argv = JS_ARGV(cx, vp);
-    JSObject *newwin = JS_NewObjectForConstructor(cx, NULL, vp);
+    JS::RootedObject newwin(cx, JS_NewObjectForConstructor(cx, NULL, vp));
     if(argc > 0 && (str = JS_ValueToString(jcx, argv[0]))) {
 	newloc = our_JSEncodeString(str);
     }
@@ -174,8 +176,7 @@ window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
     javaOpensWindow(newloc, winname);
     if(newloc)
 	nzFree(newloc);
-
-    if(!parsePage)
+     if(!parsePage)
 	return JS_FALSE;
     establish_property_object(newwin, "opener", (JSObject *) jwin);
     JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(newwin));
@@ -187,8 +188,8 @@ static JSBool
 win_open(JSContext * cx, unsigned int argc, jsval * vp)
 {
     jsval *argv = JS_ARGV(cx, vp);
-    JSObject *newwin = JS_New(jcx,
-JS_NewObject(jcx, &window_class, NULL, (JSObject *) jwin), argc, argv);
+    JS::RootedObject newwin(jcx, JS_New(jcx,
+JS_NewObject(jcx, &window_class, NULL, (JSObject *) jwin), argc, argv));
     JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(newwin));
     return JS_TRUE;
 }				/* win_open */
@@ -218,7 +219,7 @@ trueFunction(JSContext * cx, unsigned int argc, jsval * vp)
 static JSBool
 setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
 {
-    JSObject *obj = JS_THIS_OBJECT(cx, vp);
+    JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
     jsval *argv = JS_ARGV(cx, vp);
     if(argc != 2 || !JSVAL_IS_STRING(argv[0])) {
 	JS_ReportError(jcx, "unexpected arguments to setAttribute()");
@@ -233,13 +234,12 @@ setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
 static JSBool
 appendChild(JSContext * cx, unsigned int argc, jsval * vp)
 {
-    JSObject *elar;		/* elements array */
     unsigned length;
-    jsval v;
+jsval v;
     jsval *argv = JS_ARGV(cx, vp);
-    JSObject *obj = JS_THIS_OBJECT(cx, vp);
+    JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
     JS_GetProperty(jcx, obj, "elements", &v);
-    elar = JSVAL_TO_OBJECT(v);
+    JS::RootedObject elar(cx, JSVAL_TO_OBJECT(v));
     JS_GetArrayLength(jcx, elar, &length);
     JS_DefineElement(jcx, elar, length,
        (argc > 0 ? argv[0] : JSVAL_NULL), NULL, NULL, JSPROP_ENUMERATE);
@@ -261,7 +261,7 @@ win_alert(JSContext * cx, unsigned int argc, jsval * vp)
 {
     jsval *argv = JS_ARGV(cx, vp);
     char *msg = NULL;
-    JSString *str;
+JS::RootedString str(jcx);
     if(argc > 0 && (str = JS_ValueToString(jcx, argv[0]))) {
 	msg = transcode_get_js_bytes(str);
     }
@@ -279,7 +279,7 @@ win_prompt(JSContext * cx, unsigned int argc, jsval * vp)
     jsval *argv = JS_ARGV(cx, vp);
     char *msg = EMPTYSTRING;
     char *answer = EMPTYSTRING;
-    JSString *str;
+JS::RootedString str(jcx);
     char inbuf[80];
     char *s;
     char c;
@@ -322,7 +322,7 @@ win_confirm(JSContext * cx, unsigned int argc, jsval * vp)
 {
     jsval *argv = JS_ARGV(cx, vp);
     char *msg = EMPTYSTRING;
-    JSString *str;
+JS::RootedString str(jcx);
     char inbuf[80];
     char c;
     eb_bool first = eb_true;
@@ -371,15 +371,17 @@ JS_StrictPropertyStub,
     JS_EnumerateStub,
 JS_ResolveStub,
 JS_ConvertStub,
+NULL,
+JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 /* Set a timer or an interval */
 static JSObject *
 setTimeout(unsigned int argc, jsval * argv, eb_bool isInterval)
 {
-    jsval v0, v1;
-    JSObject *fo = 0;		/* function object */
-    JSObject *to;		/* tag object */
+    JS::RootedValue v0(jcx), v1(jcx);
+JSObject *fo = NULL; /* function object */
+JSObject *to = NULL; /* tag object */
     int n;			/* number of milliseconds */
     char fname[48];		/* function name */
     const char *fstr;		/* function string */
@@ -399,8 +401,9 @@ setTimeout(unsigned int argc, jsval * argv, eb_bool isInterval)
     v0 = argv[0];
     v1 = argv[1];
     n = JSVAL_TO_INT(v1);
-
-    if(JSVAL_IS_STRING(v0) ||
+JS_AddObjectRoot(jcx, &fo);
+JS_AddObjectRoot(jcx, &to);
+     if(JSVAL_IS_STRING(v0) ||
 v0.isObject() &&
        JS_ValueToObject(jcx, v0, &fo) && JS_ObjectIsFunction(jcx, fo)) {
 
@@ -413,7 +416,7 @@ v0.isObject() &&
 	if(fo) {
 /* Extract the function name, which requires several steps */
 	    JSFunction *f = JS_ValueToFunction(jcx, OBJECT_TO_JSVAL(fo));
-	    JSString *jss = JS_GetFunctionId(f);
+	    JS::RootedString  jss(jcx, JS_GetFunctionId(f));
 	    if(jss)
 		allocatedName = our_JSEncodeString(jss);
 	    s = allocatedName;
@@ -438,6 +441,8 @@ v0.isObject() &&
 	}
 
 	javaSetsTimeout(n, fstr, to, isInterval);
+JS_RemoveObjectRoot(jcx, &fo);
+JS_RemoveObjectRoot(jcx, &to);
 	return to;
     }
 
@@ -486,6 +491,8 @@ JS_StrictPropertyStub,
     JS_EnumerateStub,
 JS_ResolveStub,
 JS_ConvertStub,
+NULL,
+JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static void
@@ -503,7 +510,7 @@ dwrite1(unsigned int argc, jsval * argv, eb_bool newline)
 {
     int i;
     char *msg;
-    JSString *str;
+JS::RootedString str(jcx);
     for(i = 0; i < argc; ++i) {
 	if((str = JS_ValueToString(jcx, argv[i])) &&
 	   (msg = transcode_get_js_bytes(str))) {
@@ -582,6 +589,8 @@ JS_StrictPropertyStub,
     JS_EnumerateStub,
 JS_ResolveStub,
 JS_ConvertStub,
+NULL,
+JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSFunctionSpec element_methods[] = {
@@ -600,12 +609,14 @@ JS_StrictPropertyStub,
     JS_EnumerateStub,
 JS_ResolveStub,
 JS_ConvertStub,
+NULL,
+JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSBool
 form_submit(JSContext * cx, unsigned int argc, jsval * vp)
 {
-    JSObject *obj = JS_THIS_OBJECT(cx, vp);
+    JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
     javaSubmitsForm(obj, eb_false);
     JS_SET_RVAL(cx, vp, JSVAL_VOID);
     return JS_TRUE;
@@ -614,7 +625,7 @@ form_submit(JSContext * cx, unsigned int argc, jsval * vp)
 static JSBool
 form_reset(JSContext * cx, unsigned int argc, jsval * vp)
 {
-    JSObject *obj = JS_THIS_OBJECT(cx, vp);
+    JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
     javaSubmitsForm(obj, eb_true);
     JS_SET_RVAL(cx, vp, JSVAL_VOID);
     return JS_TRUE;
@@ -631,6 +642,8 @@ static JSClass body_class = {
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
+NULL,
+JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSFunctionSpec body_methods[] = {
@@ -644,6 +657,8 @@ static JSClass head_class = {
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
+NULL,
+JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSFunctionSpec head_methods[] = {
@@ -657,6 +672,8 @@ static JSClass meta_class = {
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
+NULL,
+JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 /* Don't be confused; this is for <link>, not <a> */
@@ -665,6 +682,7 @@ static JSClass link_class = {
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
+NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSFunctionSpec link_methods[] = {
@@ -677,6 +695,7 @@ static JSClass image_class = {
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
+NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSClass frame_class = {
@@ -684,6 +703,7 @@ static JSClass frame_class = {
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
+NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSClass anchor_class = {
@@ -691,6 +711,7 @@ static JSClass anchor_class = {
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
+NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSClass table_class = {
@@ -698,6 +719,7 @@ static JSClass table_class = {
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
+NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSClass trow_class = {
@@ -705,6 +727,7 @@ static JSClass trow_class = {
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
+NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSClass cell_class = {
@@ -712,6 +735,7 @@ static JSClass cell_class = {
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
+NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSClass div_class = {
@@ -719,6 +743,7 @@ static JSClass div_class = {
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
+NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSClass span_class = {
@@ -726,6 +751,7 @@ static JSClass span_class = {
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
+NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSClass area_class = {
@@ -733,6 +759,7 @@ static JSClass area_class = {
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
+NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSClass option_class = {
@@ -740,6 +767,7 @@ static JSClass option_class = {
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
+NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 struct DOMCLASS {
@@ -821,9 +849,7 @@ return 'Sorry, edbrowse does not maintain a browsing history.'; } \
 void *
 createJavaContext(void)
 {
-    JSObject *o, *nav, *screen, *hist, *del;
 /* navigator mime types and plugins */
-    JSObject *navmt, *navpi;
     const char *itemname;
     int i;
     char verx11[20];
@@ -846,19 +872,20 @@ createJavaContext(void)
     JS_SetOptions(jcx, JSOPTION_VAROBJFIX);
 
 /* Create the Window object, which is the global object in DOM. */
-    jwin = JS_NewGlobalObject(jcx, &window_class, NULL);
+JS_AddObjectRoot(jcx, (JSObject **) &jwin);
+jwin = JS_NewGlobalObject(jcx, &window_class, NULL);
     if(!jwin)
 	i_printfExit(MSG_JavaWindowError);
-    JS_InitClass(jcx, (JSObject *) jwin, 0, &window_class, window_ctor, 3,
+/* Math, Date, Number, String, etc */
+    if(!JS_InitStandardClasses(jcx, (JSObject *) jwin))
+	i_printfExit(MSG_JavaClassError);
+/* initialise the window class */
+    JS_InitClass(jcx, (JSObject *) jwin, NULL, &window_class, window_ctor, 3,
        NULL, window_methods, NULL, NULL);
-
 /* Ok, but the global object was created before the class,
  * so it doesn't have its methods yet. */
     JS_DefineFunctions(jcx, (JSObject *) jwin, window_methods);
 
-/* Math, Date, Number, String, etc */
-    if(!JS_InitStandardClasses(jcx, (JSObject *) jwin))
-	i_printfExit(MSG_JavaClassError);
 
     establish_property_object((JSObject *) jwin, "window", (JSObject *) jwin);
     establish_property_object((JSObject *) jwin, "self", (JSObject *) jwin);
@@ -893,6 +920,8 @@ createJavaContext(void)
     JS_InitClass(jcx, (JSObject *) jwin, 0, &doc_class, NULL, 0,
        NULL, doc_methods, NULL, NULL);
     jdoc = JS_NewObject(jcx, &doc_class, NULL, (JSObject *) jwin);
+/* not sure if we need this gc root but play safe */
+JS_AddObjectRoot(jcx, (JSObject **) &jdoc);
     if(!(JSObject *) jdoc)
 	i_printfExit(MSG_JavaObjError);
     establish_property_object((JSObject *) jwin, "document", (JSObject *) jdoc);
@@ -912,12 +941,13 @@ createJavaContext(void)
 /* Some arrays are under window */
     establish_property_array((JSObject *) jwin, "frames");
 
+JS::RootedObject o(jcx);
     o = JS_NewObject(jcx, 0, 0, (JSObject *) jdoc);
     establish_property_object((JSObject *) jdoc, "idMaster", o);
     o = JS_NewObject(jcx, 0, 0, (JSObject *) jdoc);
     establish_property_object((JSObject *) jdoc, "all", o);
 
-    nav = JS_NewObject(jcx, 0, 0, (JSObject *) jwin);
+JS::RootedObject nav(jcx, JS_NewObject(jcx, 0, 0, (JSObject *) jwin));
     establish_property_object((JSObject *) jwin, "navigator", nav);
 
 /* attributes of the navigator */
@@ -943,13 +973,13 @@ createJavaContext(void)
 
 /* Build the array of mime types and plugins,
  * according to the entries in the config file. */
-    navpi = (JSObject *) establish_property_array(nav, "plugins");
-    navmt = (JSObject *) establish_property_array(nav, "mimeTypes");
+JS::RootedObject navpi(jcx, (JSObject *) establish_property_array(nav, "plugins"));
+JS::RootedObject navmt(jcx, (JSObject *) establish_property_array(nav, "mimeTypes"));
     mt = mimetypes;
     for(i = 0; i < maxMime; ++i, ++mt) {
 /* po is the plugin object and mo is the mime object */
-	JSObject *mo, *po;
-	jsval mov, pov;
+	JS::RootedObject mo(jcx), po(jcx);
+	JS::RootedValue mov(jcx), pov(jcx);
 	int len;
 
 	po = JS_NewObject(jcx, 0, 0, nav);
@@ -978,7 +1008,7 @@ createJavaContext(void)
 	   0, 0, PROP_FIXED);
     }
 
-    screen = JS_NewObject(jcx, 0, 0, (JSObject *) jwin);
+JS::RootedObject screen(jcx, JS_NewObject(jcx, 0, 0, (JSObject *) jwin));
     establish_property_object((JSObject *) jwin, "screen", screen);
     establish_property_number(screen, "height", 768, eb_true);
     establish_property_number(screen, "width", 1024, eb_true);
@@ -987,7 +1017,7 @@ createJavaContext(void)
     establish_property_number(screen, "availTop", 0, eb_true);
     establish_property_number(screen, "availLeft", 0, eb_true);
 
-    del = JS_NewObject(jcx, 0, 0, (JSObject *) jdoc);
+JS::RootedObject del(jcx, JS_NewObject(jcx, 0, 0, (JSObject *) jdoc));
     establish_property_object((JSObject *) jdoc, "body", del);
     establish_property_object((JSObject *) jdoc, "documentElement", del);
     establish_property_number(del, "clientHeight", 768, eb_true);
@@ -999,7 +1029,7 @@ createJavaContext(void)
     establish_property_number(del, "scrollTop", 0, eb_true);
     establish_property_number(del, "scrollLeft", 0, eb_true);
 
-    hist = JS_NewObject(jcx, 0, 0, (JSObject *) jwin);
+JS::RootedObject hist(jcx, JS_NewObject(jcx, 0, 0, (JSObject *) jwin));
     establish_property_object((JSObject *) jwin, "history", hist);
 
 /* attributes of history */
@@ -1030,8 +1060,8 @@ freeJavaContext(void *jsc)
 void
 establish_innerHTML(void *jv, const char *start, const char *end, eb_bool is_ta)
 {
-    JSObject *obj = (JSObject *) jv, *o;
-    jsval v;
+    JS::RootedObject obj(jcx, (JSObject *) jv), o(jcx);
+JS::RootedValue v(jcx);
 
     if(!obj)
 	return;
@@ -1058,9 +1088,12 @@ establish_innerHTML(void *jv, const char *start, const char *end, eb_bool is_ta)
 void
 jMyContext(void)
 {
-    jsval oval;
     jcx = (JSContext *) cw->jsc;
     if(jcx) {
+/* need to declare this after we've switched contexts so we can set up the
+correct rooting */
+jsval oval;
+JS_AddValueRoot(jcx, &oval);
 /* apparently the concept of a context having a global object is becoming
 obsolete, but the following is currently supported */
 	jwin = JS_GetGlobalForScopeChain(jcx);
@@ -1070,8 +1103,9 @@ obsolete, but the following is currently supported */
 	jwloc = JSVAL_TO_OBJECT(oval);
 	JS_GetProperty(jcx, (JSObject *) jdoc, "location", &oval);
 	jdloc = JSVAL_TO_OBJECT(oval);
+JS_RemoveValueRoot(jcx, &oval);
     } else
-	jwin = jdoc = jwloc = jdloc = 0;
+	jwin = jdoc = jwloc = jdloc = NULL;
 }				/* jMyContext */
 
 eb_bool
@@ -1102,8 +1136,9 @@ domLink(const char *classname,	/* instantiate this class */
    const char *symname, const char *idname, const char *href, const char *href_url, const char *list,	/* next member of this array */
    void *owner, int radiosel)
 {
-    JSObject *v = 0, *w, *alist = 0, *master;
-    jsval vv, listv;
+    JS::RootedObject w(jcx), alist(jcx), master(jcx);
+    jsval  vv, listv;
+JSObject *v = NULL; /* we'll add a gc root for this and then remove it before we return */
     unsigned length, attr = PROP_FIXED;
     JSClass *cp;
     eb_bool dupname = eb_false;
@@ -1112,6 +1147,7 @@ domLink(const char *classname,	/* instantiate this class */
     if(cw->jsdead)
 	return 0;
 
+JS_AddObjectRoot(jcx, &v);
 /* find the class */
     for(i = 0; cp = domClasses[i].obj_class; ++i)
 	if(stringEqual(cp->name, classname))
@@ -1252,6 +1288,6 @@ Yeah, it makes my head spin too.
 /* link back to the form that owns the element */
 	establish_property_object(v, "form", (JSObject *) owner);
     }
-
+JS_RemoveObjectRoot(jcx, &v);
     return v;
 }				/* domLink */
