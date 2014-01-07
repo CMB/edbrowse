@@ -154,7 +154,6 @@ build_url(int exception, const char *e)
 {
 JSAutoCompartment ac(jcx, (JSObject *) jwin);
 jsval v;
-JS_AddValueRoot(jcx, &v);
     const char *prot, *slashes, *host, *pathname, *pathslash, *search, *hash;
     char *new_url;
     static const char *const noslashes[] = {
@@ -209,7 +208,6 @@ JS_AddValueRoot(jcx, &v);
     uo_href = cloneString(new_url);
     JS_smprintf_free(new_url);
     setter_suspend = eb_false;
-JS_RemoveValueRoot(jcx, &v);
 }				/* build_url */
 
 /* Rebuild host, because hostname or port changed. */
@@ -220,7 +218,6 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
     jsval v;
     const char *oldhost;
     setter_suspend = eb_true;
-JS_AddValueRoot(jcx, &v);
     if(exception == 1) {
 	JS_GetProperty(jcx, uo, "port", &v);
 	port = JSVAL_TO_INT(v);
@@ -239,7 +236,6 @@ JS_AddValueRoot(jcx, &v);
     v = STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, urlbuffer));
     JS_SetProperty(jcx, uo, "host", &v);
     setter_suspend = eb_false;
-JS_RemoveValueRoot(jcx, &v);
 }				/* build_host */
 
 /* define or set a local property */
@@ -251,7 +247,6 @@ JSStrictPropertyOp setter,
 JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JSBool found;
     jsval vv;
-JS_AddValueRoot(jcx, &vv);
     if(s)
 	vv = STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, s));
     else
@@ -261,7 +256,6 @@ JS_AddValueRoot(jcx, &vv);
 	JS_SetProperty(jcx, uo, name, &vv);
     else
 	JS_DefineProperty(jcx, uo, name, vv, NULL, setter, attr);
-JS_RemoveValueRoot(jcx, &vv);
 }				/* loc_def_set */
 
 /* Like the above, but using an integer, this is for port only. */
@@ -274,13 +268,11 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 
     JSBool found;
     jsval vv = INT_TO_JSVAL(port);
-JS_AddValueRoot(jcx, &vv);
     JS_HasProperty(jcx, uo, name, &found);
     if(found)
 	JS_SetProperty(jcx, uo, name, &vv);
     else
 	JS_DefineProperty(jcx, uo, name, vv, NULL, setter, attr);
-JS_RemoveValueRoot(jcx, &vv);
 }				/* loc_def_set_n */
 
 static void
@@ -291,7 +283,6 @@ loc_def_set_part(const char *name, const char *s, int n,
 JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JSBool found;
     jsval vv;
-JS_AddValueRoot(jcx, &vv);
     if(s)
 	vv = STRING_TO_JSVAL(our_JS_NewStringCopyN(jcx, s, n));
     else
@@ -301,7 +292,6 @@ JS_AddValueRoot(jcx, &vv);
 	JS_SetProperty(jcx, uo, name, &vv);
     else
 	JS_DefineProperty(jcx, uo, name, vv, NULL, setter, attr);
-JS_RemoveValueRoot(jcx, &vv);
 }				/* loc_def_set_part */
 
 static JSBool
@@ -539,8 +529,6 @@ url_ctor(JSContext * cx, unsigned int argc, jsval * vp)
     const char *s;
     jsval *argv;
     JSObject *obj;
-/* probably overly paranoid GC rooting */
-JS_AddObjectRoot(jcx, &obj);
     obj = JS_THIS_OBJECT(cx, vp);
     argv = JS_ARGV(cx, vp);
     if(argc && JSVAL_IS_STRING(*argv)) {
@@ -549,8 +537,6 @@ JS_AddObjectRoot(jcx, &obj);
 	    url = s;
     }				/* string argument */
     uo = obj;
-JS_AddObjectRoot(jcx, &uo);
-JS_RemoveObjectRoot(jcx, &obj);
     url_initialize(url, eb_false, eb_false);
     return JS_TRUE;
 }				/* url_ctor */

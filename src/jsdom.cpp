@@ -380,8 +380,7 @@ static JSObject *
 setTimeout(unsigned int argc, jsval * argv, eb_bool isInterval)
 {
     JS::RootedValue v0(jcx), v1(jcx);
-JSObject *fo = NULL; /* function object */
-JSObject *to = NULL; /* tag object */
+JSObject *fo = NULL, *to = NULL;
     int n;			/* number of milliseconds */
     char fname[48];		/* function name */
     const char *fstr;		/* function string */
@@ -401,14 +400,13 @@ JSObject *to = NULL; /* tag object */
     v0 = argv[0];
     v1 = argv[1];
     n = JSVAL_TO_INT(v1);
-JS_AddObjectRoot(jcx, &fo);
-JS_AddObjectRoot(jcx, &to);
      if(JSVAL_IS_STRING(v0) ||
 v0.isObject() &&
        JS_ValueToObject(jcx, v0, &fo) && JS_ObjectIsFunction(jcx, fo)) {
 
 /* build the tag object and link it to window */
 	to = JS_NewObject(jcx, &timer_class, NULL, (JSObject *) jwin);
+JS_AddObjectRoot(jcx, &to);
 	v1 = OBJECT_TO_JSVAL(to);
 	JS_DefineProperty(jcx, (JSObject *) jwin, fakePropName(), v1,
 	   NULL, NULL, JSPROP_READONLY | JSPROP_PERMANENT);
@@ -441,9 +439,8 @@ v0.isObject() &&
 	}
 
 	javaSetsTimeout(n, fstr, to, isInterval);
-JS_RemoveObjectRoot(jcx, &fo);
 JS_RemoveObjectRoot(jcx, &to);
-	return to;
+return to;
     }
 
   badarg:
@@ -870,6 +867,8 @@ createJavaContext(void)
 	i_printfExit(MSG_JavaContextError);
     JS_SetErrorReporter(jcx, my_ErrorReporter);
     JS_SetOptions(jcx, JSOPTION_VAROBJFIX);
+/* DEBUG: enable gc every allocation */
+JS_SetGCZeal(jcx, 2, 1);
 
 /* Create the Window object, which is the global object in DOM. */
 jwin = JS_NewGlobalObject(jcx, &window_class, NULL);
@@ -923,8 +922,6 @@ JS_SetGlobalObject(jcx, (JSObject *) jwin);
     JS_InitClass(jcx, (JSObject *) jwin, 0, &doc_class, NULL, 0,
        NULL, doc_methods, NULL, NULL);
     jdoc = JS_NewObject(jcx, &doc_class, NULL, (JSObject *) jwin);
-/* not sure if we need this gc root but play safe */
-JS_AddObjectRoot(jcx, (JSObject **) &jdoc);
     if(!(JSObject *) jdoc)
 	i_printfExit(MSG_JavaObjError);
     establish_property_object((JSObject *) jwin, "document", (JSObject *) jdoc);
@@ -1093,11 +1090,8 @@ void
 jMyContext(void)
 {
     jcx = (JSContext *) cw->jsc;
-    if(jcx) {
-/* need to declare this after we've switched contexts so we can set up the
-correct rooting */
 jsval oval;
-JS_AddValueRoot(jcx, &oval);
+    if(jcx) {
 /* due to the way compartments now work we need to retrieve the value for jwin as well */
 	jwin = cw->jsw;
 if (!jwin)
@@ -1109,7 +1103,6 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 	jwloc = JSVAL_TO_OBJECT(oval);
 	JS_GetProperty(jcx, (JSObject *) jdoc, "location", &oval);
 	jdloc = JSVAL_TO_OBJECT(oval);
-JS_RemoveValueRoot(jcx, &oval);
     } else
 	jwin = jdoc = jwloc = jdloc = NULL;
 }				/* jMyContext */
@@ -1145,8 +1138,9 @@ domLink(const char *classname,	/* instantiate this class */
 {
 JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JS::RootedObject w(jcx), alist(jcx), master(jcx);
+JS::RootedObject owner_root(jcx, (JSObject *) owner);
+JS::RootedObject v(jcx);
     jsval  vv, listv;
-JSObject *v = NULL; /* we'll add a gc root for this and then remove it before we return */
     unsigned length, attr = PROP_FIXED;
     JSClass *cp;
     eb_bool dupname = eb_false;
@@ -1155,7 +1149,6 @@ JSObject *v = NULL; /* we'll add a gc root for this and then remove it before we
     if(cw->jsdead)
 	return 0;
 
-JS_AddObjectRoot(jcx, &v);
 /* find the class */
     for(i = 0; cp = domClasses[i].obj_class; ++i)
 	if(stringEqual(cp->name, classname))
@@ -1163,7 +1156,7 @@ JS_AddObjectRoot(jcx, &v);
 
     if(symname) {
 	JSBool found;
-	JS_HasProperty(jcx, (JSObject *) owner, symname, &found);
+	JS_HasProperty(jcx, owner_root, symname, &found);
 	if(found) {
 
 /*********************************************************************
@@ -1188,13 +1181,13 @@ Yeah, it makes my head spin too.
 *********************************************************************/
 
 	    if(stringEqual(symname, "action")) {
-		JSObject *ao;	/* action object */
-		JS_GetProperty(jcx, (JSObject *) owner, symname, &vv);
+JS::RootedObject ao(jcx);	/* action object */
+		JS_GetProperty(jcx, owner_root, symname, &vv);
 		ao = JSVAL_TO_OBJECT(vv);
 /* actioncrash tells me if we've already had this collision */
 		JS_HasProperty(jcx, ao, "actioncrash", &found);
 		if(!found) {
-		    JS_DeleteProperty(jcx, (JSObject *) owner, symname);
+		    JS_DeleteProperty(jcx, owner_root, symname);
 /* gc will clean this up later */
 /* advance, as though this were not found */
 		    goto afterfound;
@@ -1202,7 +1195,7 @@ Yeah, it makes my head spin too.
 	    }
 
 	    if(radiosel == 1) {
-		JS_GetProperty(jcx, (JSObject *) owner, symname, &vv);
+		JS_GetProperty(jcx, owner_root, symname, &vv);
 		v = JSVAL_TO_OBJECT(vv);
 	    } else {
 		dupname = eb_true;
@@ -1225,15 +1218,15 @@ Yeah, it makes my head spin too.
 		JS_DefineFunction(jcx, v, "blur", nullFunction, 0, PROP_FIXED);
 	    }
 	} else {
-	    v = JS_NewObject(jcx, cp, NULL, (JSObject *) owner);
+	    v = JS_NewObject(jcx, cp, NULL, owner_root);
 	}
 	vv = OBJECT_TO_JSVAL(v);
 
 /* if no name, then use id as name */
 	if(!symname && idname) {
-	    JS_DefineProperty(jcx, (JSObject *) owner, idname, vv, NULL, NULL, attr);
+	    JS_DefineProperty(jcx, owner_root, idname, vv, NULL, NULL, attr);
 	} else if(symname && !dupname) {
-	    JS_DefineProperty(jcx, (JSObject *) owner, symname, vv, NULL, NULL, attr);
+	    JS_DefineProperty(jcx, owner_root, symname, vv, NULL, NULL, attr);
 	    if(stringEqual(symname, "action"))
 		establish_property_bool(v, "actioncrash", eb_true, eb_true);
 
@@ -1243,12 +1236,12 @@ Yeah, it makes my head spin too.
 	    establish_property_object(master, symname, v);
 	} else {
 /* tie this to something, to protect it from gc */
-	    JS_DefineProperty(jcx, (JSObject *) owner, fakePropName(), vv,
+	    JS_DefineProperty(jcx, owner_root, fakePropName(), vv,
 	       NULL, NULL, JSPROP_READONLY | JSPROP_PERMANENT);
 	}
 
 	if(list) {
-	    JS_GetProperty(jcx, (JSObject *) owner, list, &listv);
+	    JS_GetProperty(jcx, owner_root, list, &listv);
 	    alist = JSVAL_TO_OBJECT(listv);
 	}
 	if(alist) {
@@ -1266,7 +1259,7 @@ Yeah, it makes my head spin too.
 /* w becomes the object associated with this radio button */
 /* v is, by assumption, an array */
 	JS_GetArrayLength(jcx, v, &length);
-	w = JS_NewObject(jcx, &element_class, NULL, (JSObject *) owner);
+	w = JS_NewObject(jcx, &element_class, NULL, owner_root);
 	vv = OBJECT_TO_JSVAL(w);
 	JS_DefineElement(jcx, v, length, vv, NULL, NULL, attr);
 	v = w;
@@ -1294,8 +1287,8 @@ Yeah, it makes my head spin too.
 
     if(cp == &element_class) {
 /* link back to the form that owns the element */
-	establish_property_object(v, "form", (JSObject *) owner);
+	establish_property_object(v, "form", owner_root);
     }
-JS_RemoveObjectRoot(jcx, &v);
-    return v;
+JSObject *ret = v;
+    return ret;
 }				/* domLink */
