@@ -867,9 +867,6 @@ createJavaContext(void)
 	i_printfExit(MSG_JavaContextError);
     JS_SetErrorReporter(jcx, my_ErrorReporter);
     JS_SetOptions(jcx, JSOPTION_VAROBJFIX);
-/* DEBUG: enable gc every allocation */
-JS_SetGCZeal(jcx, 2, 1);
-
 /* Create the Window object, which is the global object in DOM. */
 jwin = JS_NewGlobalObject(jcx, &window_class, NULL);
     if(!jwin)
