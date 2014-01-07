@@ -4832,6 +4832,8 @@ browseCurrentBuffer(void)
     if(bmode == 2) {
 	cw->jsdead = !javaOK(cw->fileName);
 	cw->jsc = createJavaContext();
+/* jwin has been updated by above call so store new value for the future */
+cw->jsw = jwin;
 	nzFree(newlocation);	/* should already be 0 */
 	newlocation = 0;
 	newbuf = htmlParse(rawbuf, remote);

@@ -358,6 +358,7 @@ struct ebWindow {
     void *tags;			/* array of html tags, when browsing */
     IP32bit *iplist;		/* ip addresses referenced by this page */
     void *jsc;			/* js context, if in browse mode, and running javascript */
+void *jsw; /* js global window object if we have a js context */
     struct DBTABLE *table;	/* if in sqlMode */
 };
 extern struct ebWindow *cw;	/* current window */

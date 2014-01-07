@@ -165,7 +165,7 @@ window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
     const char *winname = 0;
 JS::RootedString str(jcx);
     jsval *argv = JS_ARGV(cx, vp);
-    JS::RootedObject newwin(cx, JS_NewObjectForConstructor(cx, NULL, vp));
+    JS::RootedObject newwin(cx, JS_NewObjectForConstructor(cx, &window_class, vp));
     if(argc > 0 && (str = JS_ValueToString(jcx, argv[0]))) {
 	newloc = our_JSEncodeString(str);
     }
@@ -872,10 +872,13 @@ createJavaContext(void)
     JS_SetOptions(jcx, JSOPTION_VAROBJFIX);
 
 /* Create the Window object, which is the global object in DOM. */
-JS_AddObjectRoot(jcx, (JSObject **) &jwin);
 jwin = JS_NewGlobalObject(jcx, &window_class, NULL);
     if(!jwin)
 	i_printfExit(MSG_JavaWindowError);
+/* enter the compartment for this object for the duration of this function */
+JSAutoCompartment ac(jcx, (JSObject *) jwin);
+/* now set the jwin object as global */
+JS_SetGlobalObject(jcx, (JSObject *) jwin);
 /* Math, Date, Number, String, etc */
     if(!JS_InitStandardClasses(jcx, (JSObject *) jwin))
 	i_printfExit(MSG_JavaClassError);
@@ -1060,6 +1063,7 @@ freeJavaContext(void *jsc)
 void
 establish_innerHTML(void *jv, const char *start, const char *end, eb_bool is_ta)
 {
+JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JS::RootedObject obj(jcx, (JSObject *) jv), o(jcx);
 JS::RootedValue v(jcx);
 
@@ -1094,9 +1098,11 @@ jMyContext(void)
 correct rooting */
 jsval oval;
 JS_AddValueRoot(jcx, &oval);
-/* apparently the concept of a context having a global object is becoming
-obsolete, but the following is currently supported */
-	jwin = JS_GetGlobalForScopeChain(jcx);
+/* due to the way compartments now work we need to retrieve the value for jwin as well */
+	jwin = cw->jsw;
+if (!jwin)
+i_printfExit(MSG_JavaWindowError);
+JSAutoCompartment ac(jcx, (JSObject *) jwin);
 	JS_GetProperty(jcx, (JSObject *) jwin, "document", &oval);
 	jdoc = JSVAL_TO_OBJECT(oval);
 	JS_GetProperty(jcx, (JSObject *) jwin, "location", &oval);
@@ -1114,6 +1120,7 @@ javaParseExecute(void *obj, const char *str, const char *filename, int lineno)
     JSBool ok;
     eb_bool rc;
     jsval rval;
+JSAutoCompartment ac(jcx, (JSObject *) obj);
 
 /* Sometimes Mac puts these three chars at the start of a text file. */
     if(!strncmp(str, "\xef\xbb\xbf", 3))
@@ -1136,6 +1143,7 @@ domLink(const char *classname,	/* instantiate this class */
    const char *symname, const char *idname, const char *href, const char *href_url, const char *list,	/* next member of this array */
    void *owner, int radiosel)
 {
+JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JS::RootedObject w(jcx), alist(jcx), master(jcx);
     jsval  vv, listv;
 JSObject *v = NULL; /* we'll add a gc root for this and then remove it before we return */
