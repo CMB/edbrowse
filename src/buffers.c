@@ -42,7 +42,7 @@ static char cmd, icmd, scmd;
 static uchar subPrint;		/* print lines after substitutions */
 static eb_bool noStack;		/* don't stack up edit sessions */
 static eb_bool globSub;		/* in the midst of a g// command */
-static eb_bool inscript;		/* run from inside an edbrowse function */
+static eb_bool inscript;	/* run from inside an edbrowse function */
 static int lastq, lastqq;
 static char icmd;		/* input command, usually the same as cmd */
 
@@ -719,7 +719,7 @@ linesComing(int n)
  * or by window.location = new_url. */
 static char *newlocation;
 static int newloc_d;		/* possible delay */
-static eb_bool newloc_rf;		/* refresh the buffer */
+static eb_bool newloc_rf;	/* refresh the buffer */
 eb_bool js_redirects;
 
 void
@@ -1119,7 +1119,7 @@ readFile(const char *filename, const char *post)
     eb_bool rc;			/* return code */
     eb_bool is8859, isutf8;
     char *nopound;
-char filetype;
+    char filetype;
 
     serverData = 0;
     serverDataLen = 0;
@@ -1275,7 +1275,7 @@ char filetype;
 
     nopound = cloneString(filename);
     rbuf = strchr(nopound, '#');
-    if (rbuf && !filetype)
+    if(rbuf && !filetype)
 	*rbuf = 0;
     rc = fileIntoMemory(nopound, &rbuf, &fileSize);
     nzFree(nopound);
@@ -1745,7 +1745,7 @@ regexpCheck(const char *line, eb_bool isleft, eb_bool ebmuck,
 /* Remember whether a char is "on deck", ready to be modified by * etc. */
     eb_bool ondeck = eb_false;
     eb_bool was_ques = eb_true;	/* previous modifier was ? */
-    eb_bool cc = eb_false;		/* are we in a [...] character class */
+    eb_bool cc = eb_false;	/* are we in a [...] character class */
     int mod;			/* length of modifier */
     int paren = 0;		/* nesting level of parentheses */
 /* We wouldn't be here if the line was empty. */
@@ -2168,7 +2168,7 @@ doGlobal(const char *line)
     yesdot = nodot = 0;
     change = eb_true;
     while(gcnt && change) {
-	change = eb_false;		/* kinda like bubble sort */
+	change = eb_false;	/* kinda like bubble sort */
 	for(i = 1; i <= cw->dol; ++i) {
 	    t = cw->map + i * LNWIDTH + LNGLOB;
 	    if(*t != '*')
@@ -4067,7 +4067,8 @@ runCommand(const char *line)
 		if(*rbuf) {
 		    int savedol = cw->dol;
 		    readyUndo();
-		    addTextToBuffer((pst) rbuf, strlen(rbuf), cw->dot, eb_false);
+		    addTextToBuffer((pst) rbuf, strlen(rbuf), cw->dot,
+		       eb_false);
 		    nzFree(rbuf);
 		    if(cw->dol > savedol) {
 			cw->labels[0] = startRange + 1;
@@ -4751,7 +4752,7 @@ browseCurrentBuffer(void)
     }
 
     if(!unfoldBuffer(context, eb_false, &rawbuf, &rawsize))
-	return eb_false;		/* should never happen */
+	return eb_false;	/* should never happen */
 
 /* expand pdf using pdftohtml */
 /* http://rpmfind.net/linux/RPM/suse/updates/10.0/i386/rpm/i586/pdftohtml-0.36-130.9.i586.html */
@@ -4833,7 +4834,7 @@ browseCurrentBuffer(void)
 	cw->jsdead = !javaOK(cw->fileName);
 	cw->jsc = createJavaContext();
 /* jwin has been updated by above call so store new value for the future */
-cw->jsw = jwin;
+	cw->jsw = jwin;
 	nzFree(newlocation);	/* should already be 0 */
 	newlocation = 0;
 	newbuf = htmlParse(rawbuf, remote);
@@ -4928,7 +4929,8 @@ locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
 /* Update an input field in the current buffer.
  * The input field may not be here, if you've deleted some lines. */
 void
-updateFieldInBuffer(int tagno, const char *newtext, int notify, eb_bool required)
+updateFieldInBuffer(int tagno, const char *newtext, int notify,
+   eb_bool required)
 {
     int ln, idx, n, plen;
     char *p, *s, *t, *new;

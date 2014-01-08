@@ -1,4 +1,4 @@
-/* jsloc.c
+/* jsloc.cpp
 * Javascript support, the URL class and the location object.
  * The cookie string, and other things with get/set side effects.
 * Copyright (c) Karl Dahlke, 2008
@@ -18,7 +18,9 @@ extern
 JS_PUBLIC_API(char *)
 JS_smprintf(const char *fmt, ...);
 /* same goes for this one */
-extern JS_PUBLIC_API(void) JS_smprintf_free(char *mem);
+extern
+JS_PUBLIC_API(void)
+JS_smprintf_free(char *mem);
 
 #define PROP_FIXED (JSPROP_ENUMERATE|JSPROP_READONLY|JSPROP_PERMANENT)
 
@@ -70,12 +72,12 @@ static JSClass url_class = {
     "URL",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub,
- JS_DeletePropertyStub,
-JS_PropertyStub,
- JS_StrictPropertyStub,
+    JS_DeletePropertyStub,
+    JS_PropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub,
- JS_ResolveStub,
- JS_ConvertStub,
+    JS_ResolveStub,
+    JS_ConvertStub,
 };
 
 /* To builld path names, host names, etc. */
@@ -89,7 +91,7 @@ static eb_bool setter_suspend;
 static eb_bool
 isWinLoc(void)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     if(uo != jwloc && uo != jdloc) {
 	nzFree(uo_href);
 	uo_href = 0;
@@ -105,7 +107,7 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 static JSBool
 loc_toString(JSContext * cx, unsigned int argc, jsval * vp)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
     jsval rval = JS_RVAL(cx, vp);
     JS_GetProperty(jcx, obj, "href", &rval);
@@ -116,7 +118,7 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 static JSBool
 loc_reload(JSContext * cx, unsigned int argc, jsval * vp)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     const char *s = cw->firstURL;
     if(s && isURL(s))
 	gotoLocation(cloneString(s), (allowRedirection ? 0 : 99), eb_true);
@@ -128,7 +130,7 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 static JSBool
 loc_replace(JSContext * cx, unsigned int argc, jsval * vp)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     const char *s;
     char *ss, *t;
     jsval *argv = JS_ARGV(cx, vp);
@@ -152,8 +154,8 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 static void
 build_url(int exception, const char *e)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
-jsval v;
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    jsval v;
     const char *prot, *slashes, *host, *pathname, *pathslash, *search, *hash;
     char *new_url;
     static const char *const noslashes[] = {
@@ -214,7 +216,7 @@ jsval v;
 static void
 build_host(int exception, const char *hostname, int port)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     jsval v;
     const char *oldhost;
     setter_suspend = eb_true;
@@ -241,10 +243,9 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 /* define or set a local property */
 static void
 loc_def_set(const char *name, const char *s,
-JSStrictPropertyOp setter,
-   unsigned attr)
+   JSStrictPropertyOp setter, unsigned attr)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JSBool found;
     jsval vv;
     if(s)
@@ -261,10 +262,9 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 /* Like the above, but using an integer, this is for port only. */
 static void
 loc_def_set_n(const char *name, int port,
-JSStrictPropertyOp setter,
-   unsigned attr)
+   JSStrictPropertyOp setter, unsigned attr)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
 
     JSBool found;
     jsval vv = INT_TO_JSVAL(port);
@@ -277,10 +277,9 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 
 static void
 loc_def_set_part(const char *name, const char *s, int n,
-   JSStrictPropertyOp setter,
-   unsigned attr)
+   JSStrictPropertyOp setter, unsigned attr)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JSBool found;
     jsval vv;
     if(s)
@@ -295,7 +294,8 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 }				/* loc_def_set_part */
 
 static JSBool
-setter_loc(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
+setter_loc(JSContext * cx, JS::Handle < JSObject * >obj, JS::Handle < jsid > id,
+   JSBool strict, JS::MutableHandle < JS::Value > vp)
 {
     const char *s = stringize(vp);
     if(!s) {
@@ -317,7 +317,8 @@ setter_loc(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool
 }				/* setter_loc */
 
 static JSBool
-setter_loc_href(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
+setter_loc_href(JSContext * cx, JS::Handle < JSObject * >obj,
+   JS::Handle < jsid > id, JSBool strict, JS::MutableHandle < JS::Value > vp)
 {
     const char *url = 0;
     if(setter_suspend)
@@ -339,7 +340,8 @@ setter_loc_href(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, J
 }				/* setter_loc_href */
 
 static JSBool
-setter_loc_hash(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
+setter_loc_hash(JSContext * cx, JS::Handle < JSObject * >obj,
+   JS::Handle < jsid > id, JSBool strict, JS::MutableHandle < JS::Value > vp)
 {
     const char *e;
     if(setter_suspend)
@@ -351,7 +353,8 @@ setter_loc_hash(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, J
 }				/* setter_loc_hash */
 
 static JSBool
-setter_loc_search(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
+setter_loc_search(JSContext * cx, JS::Handle < JSObject * >obj,
+   JS::Handle < jsid > id, JSBool strict, JS::MutableHandle < JS::Value > vp)
 {
     const char *e;
     if(setter_suspend)
@@ -363,7 +366,8 @@ setter_loc_search(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id,
 }				/* setter_loc_search */
 
 static JSBool
-setter_loc_prot(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
+setter_loc_prot(JSContext * cx, JS::Handle < JSObject * >obj,
+   JS::Handle < jsid > id, JSBool strict, JS::MutableHandle < JS::Value > vp)
 {
     const char *e;
     if(setter_suspend)
@@ -375,7 +379,8 @@ setter_loc_prot(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, J
 }				/* setter_loc_prot */
 
 static JSBool
-setter_loc_pathname(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
+setter_loc_pathname(JSContext * cx, JS::Handle < JSObject * >obj,
+   JS::Handle < jsid > id, JSBool strict, JS::MutableHandle < JS::Value > vp)
 {
     const char *e;
     if(setter_suspend)
@@ -387,7 +392,8 @@ setter_loc_pathname(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> i
 }				/* setter_loc_pathname */
 
 static JSBool
-setter_loc_hostname(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
+setter_loc_hostname(JSContext * cx, JS::Handle < JSObject * >obj,
+   JS::Handle < jsid > id, JSBool strict, JS::MutableHandle < JS::Value > vp)
 {
     const char *e;
     if(setter_suspend)
@@ -400,7 +406,8 @@ setter_loc_hostname(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> i
 }				/* setter_loc_hostname */
 
 static JSBool
-setter_loc_port(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
+setter_loc_port(JSContext * cx, JS::Handle < JSObject * >obj,
+   JS::Handle < jsid > id, JSBool strict, JS::MutableHandle < JS::Value > vp)
 {
     int port;
     if(setter_suspend)
@@ -413,7 +420,8 @@ setter_loc_port(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, J
 }				/* setter_loc_port */
 
 static JSBool
-setter_loc_host(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
+setter_loc_host(JSContext * cx, JS::Handle < JSObject * >obj,
+   JS::Handle < jsid > id, JSBool strict, JS::MutableHandle < JS::Value > vp)
 {
     const char *e, *s;
     int n;
@@ -549,7 +557,7 @@ static JSFunctionSpec url_methods[] = {
 void
 initLocationClass(void)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JS_InitClass(jcx, (JSObject *) jwin, NULL, &url_class, url_ctor, 1,
        NULL, url_methods, NULL, NULL);
 }				/* initLocationClass */
@@ -563,7 +571,8 @@ That requires a special setter function to pass the new value back to the text.
 *********************************************************************/
 
 static JSBool
-setter_value(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
+setter_value(JSContext * cx, JS::Handle < JSObject * >obj,
+   JS::Handle < jsid > id, JSBool strict, JS::MutableHandle < JS::Value > vp)
 {
     const char *val;
     if(setter_suspend)
@@ -579,7 +588,8 @@ setter_value(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBo
 }				/* setter_value */
 
 static JSBool
-setter_checked(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
+setter_checked(JSContext * cx, JS::Handle < JSObject * >obj,
+   JS::Handle < jsid > id, JSBool strict, JS::MutableHandle < JS::Value > vp)
 {
     JSBool b;
     if(setter_suspend)
@@ -589,7 +599,8 @@ setter_checked(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JS
 }				/* setter_checked */
 
 static JSBool
-setter_selected(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
+setter_selected(JSContext * cx, JS::Handle < JSObject * >obj,
+   JS::Handle < jsid > id, JSBool strict, JS::MutableHandle < JS::Value > vp)
 {
     JSBool b;
     if(setter_suspend)
@@ -599,7 +610,8 @@ setter_selected(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, J
 }				/* setter_selected */
 
 static JSBool
-setter_selidx(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
+setter_selidx(JSContext * cx, JS::Handle < JSObject * >obj,
+   JS::Handle < jsid > id, JSBool strict, JS::MutableHandle < JS::Value > vp)
 {
     int n;
     if(setter_suspend)
@@ -609,7 +621,8 @@ setter_selidx(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSB
 }				/* setter_selidx */
 
 static JSBool
-getter_cookie(JSContext * cx, JS::Handle<JSObject *> obj, JS::Handle<jsid> id, JS::MutableHandle<jsval> vp)
+getter_cookie(JSContext * cx, JS::Handle < JSObject * >obj,
+   JS::Handle < jsid > id, JS::MutableHandle < jsval > vp)
 {
     int cook_l;
     char *cook = initString(&cook_l);
@@ -630,13 +643,14 @@ getter_cookie(JSContext * cx, JS::Handle<JSObject *> obj, JS::Handle<jsid> id, J
 	    *s = 0;
     }
 
-    vp .set( STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, cook)));
+    vp.set(STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, cook)));
     nzFree(cook);
     return JS_TRUE;
 }				/* getter_cookie */
 
 static JSBool
-setter_cookie(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
+setter_cookie(JSContext * cx, JS::Handle < JSObject * >obj,
+   JS::Handle < jsid > id, JSBool strict, JS::MutableHandle < JS::Value > vp)
 {
     const char *host = getHostURL(cw->fileName);
     if(!host) {
@@ -650,7 +664,8 @@ setter_cookie(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSB
 }				/* setter_cookie */
 
 static JSBool
-setter_domain(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JSBool strict, JS::MutableHandle<JS::Value> vp)
+setter_domain(JSContext * cx, JS::Handle < JSObject * >obj,
+   JS::Handle < jsid > id, JSBool strict, JS::MutableHandle < JS::Value > vp)
 {
     const char *hostname = getHostURL(cw->fileName);
     const char *dom = 0;
@@ -680,7 +695,7 @@ void
 establish_property_string(void *jv, const char *name, const char *value,
    eb_bool readonly)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JSObject *obj = (JSObject *) jv;
     unsigned attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
     jsval v;
@@ -708,7 +723,7 @@ void
 establish_property_number(void *jv, const char *name, int value,
    eb_bool readonly)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JSObject *obj = (JSObject *) jv;
     unsigned attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
     if(readonly)
@@ -721,9 +736,10 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 }				/* establish_property_number */
 
 void
-establish_property_bool(void *jv, const char *name, eb_bool value, eb_bool readonly)
+establish_property_bool(void *jv, const char *name, eb_bool value,
+   eb_bool readonly)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     unsigned attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
     if(readonly)
 	attr |= JSPROP_READONLY;
@@ -740,7 +756,7 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 void *
 establish_property_array(void *jv, const char *name)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JSObject *obj = (JSObject *) jv;
     JSObject *a = JS_NewArrayObject(jcx, 0, NULL);
     establish_property_object(obj, name, a);
@@ -750,7 +766,7 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 void
 establish_property_object(void *parent, const char *name, void *child)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JS_DefineProperty(jcx, (JSObject *) parent, name,
        OBJECT_TO_JSVAL(((JSObject *) child)), 0, 0, PROP_FIXED);
 }				/* establish_property_object */
@@ -759,7 +775,7 @@ void
 establish_property_url(void *jv, const char *name,
    const char *url, eb_bool readonly)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JSObject *obj = (JSObject *) jv;
     unsigned attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
     if(readonly)
@@ -788,7 +804,7 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 void
 set_property_string(void *jv, const char *name, const char *value)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JSObject *obj = (JSObject *) jv;
     jsval vv;
     setter_suspend = eb_true;
@@ -801,7 +817,7 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 void
 set_property_number(void *jv, const char *name, int value)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JSObject *obj = (JSObject *) jv;
     jsval vv;
     setter_suspend = eb_true;
@@ -813,7 +829,7 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 void
 set_property_bool(void *jv, const char *name, int value)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JSObject *obj = (JSObject *) jv;
     jsval vv;
     setter_suspend = eb_true;
@@ -826,7 +842,7 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 char *
 get_property_url(void *jv, eb_bool doaction)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JSObject *obj = (JSObject *) jv;
     JSObject *lo;		/* location object */
     jsval v;
@@ -853,7 +869,7 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
     if(!found)
 	return 0;
     if(!JSVAL_IS_STRING(v)) {
-	if(!v.isObject()){
+	if(!v.isObject()) {
 	  badobj:
 	    JS_ReportError(jcx,
 	       "url object is assigned something that I don't understand; I may not be able to fetch the next web page.");
@@ -870,14 +886,14 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
     s = stringize(v);
 /* we assume that the console can handle whatever is in the string,
 so no UTF8 check */
-	out_str = cloneString(s);
+    out_str = cloneString(s);
     return out_str;
 }				/* get_property_url */
 
 char *
 get_property_string(void *jv, const char *name)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JSObject *obj = (JSObject *) jv;
     jsval v;
     const char *s = NULL;
@@ -887,14 +903,14 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JS_GetProperty(jcx, obj, name, &v);
     s = stringize(v);
 /* assume either the string is ascii or the console is UTF8 */
-	    out_str = cloneString(s);
+    out_str = cloneString(s);
     return out_str;
 }				/* get_property_string */
 
 eb_bool
 get_property_bool(void *jv, const char *name)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JSObject *obj = (JSObject *) jv;
     jsval v;
     if(!obj)
@@ -906,7 +922,7 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 char *
 get_property_option(void *jv)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JSObject *obj = (JSObject *) jv;
     jsval v;
     JSObject *oa;		/* option array */
@@ -937,18 +953,18 @@ static JSClass option_class = {
     "Option",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub,
-JS_DeletePropertyStub,
-JS_PropertyStub,
-JS_StrictPropertyStub,
+    JS_DeletePropertyStub,
+    JS_PropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub,
-JS_ResolveStub,
-JS_ConvertStub,
+    JS_ResolveStub,
+    JS_ConvertStub,
 };
 void *
 establish_js_option(void *ev, int idx)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
-    JSObject *so = (JSObject *) ev;		/* select object */
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSObject *so = (JSObject *) ev;	/* select object */
     jsval vv;
     JSObject *oa;		/* option array */
     JSObject *oo;		/* option object */
@@ -971,7 +987,7 @@ Compile and call event handlers.
 eb_bool
 handlerGo(void *obj, const char *name)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     jsval rval;
     eb_bool rc;
     JSBool found;
@@ -988,13 +1004,13 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 void
 handlerSet(void *ev, const char *name, const char *code)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JSObject *obj = (JSObject *) ev;
     char *newcode;
     JSBool found;
     if(!obj)
 	return;
-    newcode = (char *) allocMem(strlen(code) + 60);
+    newcode = (char *)allocMem(strlen(code) + 60);
     strcpy(newcode, "with(document) { ");
     JS_HasProperty(jcx, obj, "form", &found);
     if(found)
@@ -1011,7 +1027,7 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 void
 link_onunload_onclick(void *jv)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JSObject *obj = (JSObject *) jv;
     jsval v;
     JS_GetProperty(jcx, obj, "onunload", &v);
@@ -1021,7 +1037,7 @@ JSAutoCompartment ac(jcx, (JSObject *) jwin);
 eb_bool
 handlerPresent(void *ev, const char *name)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JSObject *obj = (JSObject *) ev;
     JSBool found = JS_FALSE;
     if(!obj)

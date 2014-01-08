@@ -25,11 +25,11 @@ JS_smprintf(const char *fmt, ...);
 #define PROP_FIXED (JSPROP_ENUMERATE|JSPROP_READONLY|JSPROP_PERMANENT)
 
 
-JSRuntime *jrt; /* our js runtime, global so we can call the gc from jsloc
-functions as well */
+JSRuntime *jrt;			/* our js runtime, global so we can call the gc from jsloc
+				   functions as well */
 JSContext *jcx;			/* really JSContext */
-void *jwin = NULL;			/* window object, really JSObject */
-void *jdoc = NULL;			/* window.document, really JSObject */
+void *jwin = NULL;		/* window object, really JSObject */
+void *jdoc = NULL;		/* window.document, really JSObject */
 JSObject *jwloc = NULL;		/* window.location, really JSObject */
 JSObject *jdloc = NULL;		/* document.location, really JSObject */
 static size_t gStackChunkSize = 8192;
@@ -92,7 +92,7 @@ our_JS_NewStringCopyN(JSContext * cx, const char *s, size_t n)
 /* Fixme this is too simple.  We need to decode UTF8 to JSCHAR, for proper
  * unicode handling.  E.G., JS C strings are not UTF8, but the user has
  * a UTF8 locale. */
-	return JS_NewStringCopyN(jcx, s, n);
+    return JS_NewStringCopyN(jcx, s, n);
 }				/* our_JS_NewStringCopyN */
 JSString *
 our_JS_NewStringCopyZ(JSContext * cx, const char *s)
@@ -105,7 +105,7 @@ char *
 our_JSEncodeString(JSString * str)
 {
     size_t encodedLength = JS_GetStringEncodingLength(jcx, str);
-    char *buffer = (char *) allocMem(encodedLength + 1);
+    char *buffer = (char *)allocMem(encodedLength + 1);
     buffer[encodedLength] = '\0';
     size_t result = JS_EncodeStringToBuffer(jcx, str, buffer, encodedLength);
     if(result == (size_t) - 1)
@@ -118,7 +118,7 @@ transcode_get_js_bytes(JSString * s)
 {
 /* again, assume that the UTF8 mess will hopefully be ok,
 we really should switch to unicode capable js functions at some stage */
-return our_JSEncodeString(s);
+    return our_JSEncodeString(s);
 }				/* our_JS_GetTranscodedBytes */
 
 /*********************************************************************
@@ -148,14 +148,14 @@ static JSClass window_class = {
     "Window",
     JSCLASS_HAS_PRIVATE | JSCLASS_GLOBAL_FLAGS,
     JS_PropertyStub,
-JS_DeletePropertyStub,
-JS_PropertyStub,
-JS_StrictPropertyStub,
+    JS_DeletePropertyStub,
+    JS_PropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub,
-JS_ResolveStub,
-JS_ConvertStub,
-NULL,
-JSCLASS_NO_OPTIONAL_MEMBERS
+    JS_ResolveStub,
+    JS_ConvertStub,
+    NULL,
+    JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSBool
@@ -163,9 +163,10 @@ window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 {
     char *newloc = 0;
     const char *winname = 0;
-JS::RootedString str(jcx);
+    JS::RootedString str(jcx);
     jsval *argv = JS_ARGV(cx, vp);
-    JS::RootedObject newwin(cx, JS_NewObjectForConstructor(cx, &window_class, vp));
+    JS::RootedObject newwin(cx, JS_NewObjectForConstructor(cx, &window_class,
+       vp));
     if(argc > 0 && (str = JS_ValueToString(jcx, argv[0]))) {
 	newloc = our_JSEncodeString(str);
     }
@@ -176,7 +177,7 @@ JS::RootedString str(jcx);
     javaOpensWindow(newloc, winname);
     if(newloc)
 	nzFree(newloc);
-     if(!parsePage)
+    if(!parsePage)
 	return JS_FALSE;
     establish_property_object(newwin, "opener", (JSObject *) jwin);
     JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(newwin));
@@ -189,7 +190,7 @@ win_open(JSContext * cx, unsigned int argc, jsval * vp)
 {
     jsval *argv = JS_ARGV(cx, vp);
     JS::RootedObject newwin(jcx, JS_New(jcx,
-JS_NewObject(jcx, &window_class, NULL, (JSObject *) jwin), argc, argv));
+       JS_NewObject(jcx, &window_class, NULL, (JSObject *) jwin), argc, argv));
     JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(newwin));
     return JS_TRUE;
 }				/* win_open */
@@ -235,7 +236,7 @@ static JSBool
 appendChild(JSContext * cx, unsigned int argc, jsval * vp)
 {
     unsigned length;
-jsval v;
+    jsval v;
     jsval *argv = JS_ARGV(cx, vp);
     JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
     JS_GetProperty(jcx, obj, "elements", &v);
@@ -261,7 +262,7 @@ win_alert(JSContext * cx, unsigned int argc, jsval * vp)
 {
     jsval *argv = JS_ARGV(cx, vp);
     char *msg = NULL;
-JS::RootedString str(jcx);
+    JS::RootedString str(jcx);
     if(argc > 0 && (str = JS_ValueToString(jcx, argv[0]))) {
 	msg = transcode_get_js_bytes(str);
     }
@@ -279,7 +280,7 @@ win_prompt(JSContext * cx, unsigned int argc, jsval * vp)
     jsval *argv = JS_ARGV(cx, vp);
     char *msg = EMPTYSTRING;
     char *answer = EMPTYSTRING;
-JS::RootedString str(jcx);
+    JS::RootedString str(jcx);
     char inbuf[80];
     char *s;
     char c;
@@ -322,7 +323,7 @@ win_confirm(JSContext * cx, unsigned int argc, jsval * vp)
 {
     jsval *argv = JS_ARGV(cx, vp);
     char *msg = EMPTYSTRING;
-JS::RootedString str(jcx);
+    JS::RootedString str(jcx);
     char inbuf[80];
     char c;
     eb_bool first = eb_true;
@@ -365,14 +366,14 @@ static JSClass timer_class = {
     "Timer",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub,
-JS_DeletePropertyStub,
-JS_PropertyStub,
-JS_StrictPropertyStub,
+    JS_DeletePropertyStub,
+    JS_PropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub,
-JS_ResolveStub,
-JS_ConvertStub,
-NULL,
-JSCLASS_NO_OPTIONAL_MEMBERS
+    JS_ResolveStub,
+    JS_ConvertStub,
+    NULL,
+    JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 /* Set a timer or an interval */
@@ -380,7 +381,7 @@ static JSObject *
 setTimeout(unsigned int argc, jsval * argv, eb_bool isInterval)
 {
     JS::RootedValue v0(jcx), v1(jcx);
-JSObject *fo = NULL, *to = NULL;
+    JSObject *fo = NULL, *to = NULL;
     int n;			/* number of milliseconds */
     char fname[48];		/* function name */
     const char *fstr;		/* function string */
@@ -400,13 +401,13 @@ JSObject *fo = NULL, *to = NULL;
     v0 = argv[0];
     v1 = argv[1];
     n = JSVAL_TO_INT(v1);
-     if(JSVAL_IS_STRING(v0) ||
-v0.isObject() &&
+    if(JSVAL_IS_STRING(v0) ||
+       v0.isObject() &&
        JS_ValueToObject(jcx, v0, &fo) && JS_ObjectIsFunction(jcx, fo)) {
 
 /* build the tag object and link it to window */
 	to = JS_NewObject(jcx, &timer_class, NULL, (JSObject *) jwin);
-JS_AddObjectRoot(jcx, &to);
+	JS_AddObjectRoot(jcx, &to);
 	v1 = OBJECT_TO_JSVAL(to);
 	JS_DefineProperty(jcx, (JSObject *) jwin, fakePropName(), v1,
 	   NULL, NULL, JSPROP_READONLY | JSPROP_PERMANENT);
@@ -414,14 +415,14 @@ JS_AddObjectRoot(jcx, &to);
 	if(fo) {
 /* Extract the function name, which requires several steps */
 	    JSFunction *f = JS_ValueToFunction(jcx, OBJECT_TO_JSVAL(fo));
-	    JS::RootedString  jss(jcx, JS_GetFunctionId(f));
+	    JS::RootedString jss(jcx, JS_GetFunctionId(f));
 	    if(jss)
 		allocatedName = our_JSEncodeString(jss);
 	    s = allocatedName;
 /* Remember that unnamed functions are named anonymous. */
 	    if(!s || !*s || stringEqual(s, "anonymous"))
 /* avoid compiler warning about string conversion */
-		s = (char *) string("javascript").c_str();
+		s = (char *)string("javascript").c_str();
 	    int len = strlen(s);
 	    if(len > sizeof (fname) - 4)
 		len = sizeof (fname) - 4;
@@ -439,8 +440,8 @@ JS_AddObjectRoot(jcx, &to);
 	}
 
 	javaSetsTimeout(n, fstr, to, isInterval);
-JS_RemoveObjectRoot(jcx, &to);
-return to;
+	JS_RemoveObjectRoot(jcx, &to);
+	return to;
     }
 
   badarg:
@@ -475,21 +476,21 @@ static JSFunctionSpec window_methods[] = {
     JS_FS("focus", nullFunction, 0, 0),
     JS_FS("blur", nullFunction, 0, 0),
     JS_FS("scroll", nullFunction, 0, 0),
-JS_FS_END
+    JS_FS_END
 };
 
 static JSClass doc_class = {
     "Document",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub,
-JS_DeletePropertyStub,
-JS_PropertyStub,
-JS_StrictPropertyStub,
+    JS_DeletePropertyStub,
+    JS_PropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub,
-JS_ResolveStub,
-JS_ConvertStub,
-NULL,
-JSCLASS_NO_OPTIONAL_MEMBERS
+    JS_ResolveStub,
+    JS_ConvertStub,
+    NULL,
+    JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static void
@@ -507,7 +508,7 @@ dwrite1(unsigned int argc, jsval * argv, eb_bool newline)
 {
     int i;
     char *msg;
-JS::RootedString str(jcx);
+    JS::RootedString str(jcx);
     for(i = 0; i < argc; ++i) {
 	if((str = JS_ValueToString(jcx, argv[i])) &&
 	   (msg = transcode_get_js_bytes(str))) {
@@ -529,8 +530,8 @@ doc_write(JSContext * cx, unsigned int argc, jsval * vp)
 }				/* doc_write */
 
 static JSBool
-setter_innerHTML(JSContext * cx, JS::Handle<JSObject *> obj, JS::Handle<jsid> id, JSBool strict,
-   JS::MutableHandle<jsval> vp)
+setter_innerHTML(JSContext * cx, JS::Handle < JSObject * >obj,
+   JS::Handle < jsid > id, JSBool strict, JS::MutableHandle < jsval > vp)
 {
     const char *s = stringize(vp);
     if(s && strlen(s)) {
@@ -544,8 +545,8 @@ setter_innerHTML(JSContext * cx, JS::Handle<JSObject *> obj, JS::Handle<jsid> id
 }				/* setter_innerHTML */
 
 static JSBool
-setter_innerText(JSContext * cx, JS::Handle<JSObject *> obj, JS::Handle<jsid> id, JSBool strict,
-   JS::MutableHandle<jsval> vp)
+setter_innerText(JSContext * cx, JS::Handle < JSObject * >obj,
+   JS::Handle < jsid > id, JSBool strict, JS::MutableHandle < jsval > vp)
 {
     char *s;
     if(!JSVAL_IS_STRING(vp))
@@ -573,41 +574,41 @@ static JSFunctionSpec doc_methods[] = {
     JS_FS("close", nullFunction, 0, 0),
     JS_FS("write", doc_write, 0, 0),
     JS_FS("writeln", doc_writeln, 0, 0),
-JS_FS_END
+    JS_FS_END
 };
 
 static JSClass element_class = {
     "Element",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub,
-JS_DeletePropertyStub,
-JS_PropertyStub,
-JS_StrictPropertyStub,
+    JS_DeletePropertyStub,
+    JS_PropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub,
-JS_ResolveStub,
-JS_ConvertStub,
-NULL,
-JSCLASS_NO_OPTIONAL_MEMBERS
+    JS_ResolveStub,
+    JS_ConvertStub,
+    NULL,
+    JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSFunctionSpec element_methods[] = {
     JS_FS("focus", nullFunction, 0, 0),
     JS_FS("blur", nullFunction, 0, 0),
-JS_FS_END
+    JS_FS_END
 };
 
 static JSClass form_class = {
     "Form",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub,
-JS_DeletePropertyStub,
-JS_PropertyStub,
-JS_StrictPropertyStub,
+    JS_DeletePropertyStub,
+    JS_PropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub,
-JS_ResolveStub,
-JS_ConvertStub,
-NULL,
-JSCLASS_NO_OPTIONAL_MEMBERS
+    JS_ResolveStub,
+    JS_ConvertStub,
+    NULL,
+    JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSBool
@@ -631,140 +632,154 @@ form_reset(JSContext * cx, unsigned int argc, jsval * vp)
 static JSFunctionSpec form_methods[] = {
     JS_FS("submit", form_submit, 0, 0),
     JS_FS("reset", form_reset, 0, 0),
-JS_FS_END
+    JS_FS_END
 };
 
 static JSClass body_class = {
     "Body",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
-NULL,
-JSCLASS_NO_OPTIONAL_MEMBERS
+    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
+       JS_StrictPropertyStub,
+    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
+    NULL,
+    JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSFunctionSpec body_methods[] = {
     JS_FS("setAttribute", setAttribute, 2, 0),
     JS_FS("appendChild", appendChild, 1, 0),
-JS_FS_END
+    JS_FS_END
 };
 
 static JSClass head_class = {
     "Head",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
-NULL,
-JSCLASS_NO_OPTIONAL_MEMBERS
+    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
+       JS_StrictPropertyStub,
+    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
+    NULL,
+    JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSFunctionSpec head_methods[] = {
     JS_FS("setAttribute", setAttribute, 2, 0),
     JS_FS("appendChild", appendChild, 1, 0),
-JS_FS_END
+    JS_FS_END
 };
 
 static JSClass meta_class = {
     "Meta",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
-NULL,
-JSCLASS_NO_OPTIONAL_MEMBERS
+    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
+       JS_StrictPropertyStub,
+    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
+    NULL,
+    JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 /* Don't be confused; this is for <link>, not <a> */
 static JSClass link_class = {
     "Link",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
-NULL, JSCLASS_NO_OPTIONAL_MEMBERS
+    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
+       JS_StrictPropertyStub,
+    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
+    NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSFunctionSpec link_methods[] = {
     JS_FS("setAttribute", setAttribute, 2, 0),
-JS_FS_END
+    JS_FS_END
 };
 
 static JSClass image_class = {
     "Image",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
-NULL, JSCLASS_NO_OPTIONAL_MEMBERS
+    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
+       JS_StrictPropertyStub,
+    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
+    NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSClass frame_class = {
     "Frame",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
-NULL, JSCLASS_NO_OPTIONAL_MEMBERS
+    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
+       JS_StrictPropertyStub,
+    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
+    NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSClass anchor_class = {
     "Anchor",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
-NULL, JSCLASS_NO_OPTIONAL_MEMBERS
+    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
+       JS_StrictPropertyStub,
+    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
+    NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSClass table_class = {
     "Table",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
-NULL, JSCLASS_NO_OPTIONAL_MEMBERS
+    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
+       JS_StrictPropertyStub,
+    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
+    NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSClass trow_class = {
     "Trow",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
-NULL, JSCLASS_NO_OPTIONAL_MEMBERS
+    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
+       JS_StrictPropertyStub,
+    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
+    NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSClass cell_class = {
     "Cell",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
-NULL, JSCLASS_NO_OPTIONAL_MEMBERS
+    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
+       JS_StrictPropertyStub,
+    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
+    NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSClass div_class = {
     "Div",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
-NULL, JSCLASS_NO_OPTIONAL_MEMBERS
+    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
+       JS_StrictPropertyStub,
+    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
+    NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSClass span_class = {
     "Span",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
-NULL, JSCLASS_NO_OPTIONAL_MEMBERS
+    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
+       JS_StrictPropertyStub,
+    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
+    NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSClass area_class = {
     "Area",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
-NULL, JSCLASS_NO_OPTIONAL_MEMBERS
+    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
+       JS_StrictPropertyStub,
+    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
+    NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 static JSClass option_class = {
     "Option",
     JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, 
-NULL, JSCLASS_NO_OPTIONAL_MEMBERS
+    JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
+       JS_StrictPropertyStub,
+    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
+    NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 struct DOMCLASS {
@@ -868,13 +883,13 @@ createJavaContext(void)
     JS_SetErrorReporter(jcx, my_ErrorReporter);
     JS_SetOptions(jcx, JSOPTION_VAROBJFIX);
 /* Create the Window object, which is the global object in DOM. */
-jwin = JS_NewGlobalObject(jcx, &window_class, NULL);
+    jwin = JS_NewGlobalObject(jcx, &window_class, NULL);
     if(!jwin)
 	i_printfExit(MSG_JavaWindowError);
 /* enter the compartment for this object for the duration of this function */
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
 /* now set the jwin object as global */
-JS_SetGlobalObject(jcx, (JSObject *) jwin);
+    JS_SetGlobalObject(jcx, (JSObject *) jwin);
 /* Math, Date, Number, String, etc */
     if(!JS_InitStandardClasses(jcx, (JSObject *) jwin))
 	i_printfExit(MSG_JavaClassError);
@@ -898,13 +913,16 @@ JS_SetGlobalObject(jcx, (JSObject *) jwin);
     establish_property_number((JSObject *) jwin, "width", 1024, eb_true);
     establish_property_string((JSObject *) jwin, "status", 0, eb_false);
     establish_property_string((JSObject *) jwin, "defaultStatus", 0, eb_false);
-    establish_property_bool((JSObject *) jwin, "returnValue", eb_true, eb_false);
+    establish_property_bool((JSObject *) jwin, "returnValue", eb_true,
+       eb_false);
     establish_property_bool((JSObject *) jwin, "menubar", eb_true, eb_false);
     establish_property_bool((JSObject *) jwin, "scrollbars", eb_true, eb_false);
     establish_property_bool((JSObject *) jwin, "toolbar", eb_true, eb_false);
     establish_property_bool((JSObject *) jwin, "resizable", eb_true, eb_false);
-    establish_property_bool((JSObject *) jwin, "directories", eb_false, eb_false);
-    establish_property_string((JSObject *) jwin, "name", "unspecifiedFrame", eb_false);
+    establish_property_bool((JSObject *) jwin, "directories", eb_false,
+       eb_false);
+    establish_property_string((JSObject *) jwin, "name", "unspecifiedFrame",
+       eb_false);
 
 /* Other classes that we'll need. */
     for(i = 0; domClasses[i].obj_class; ++i) {
@@ -925,11 +943,15 @@ JS_SetGlobalObject(jcx, (JSObject *) jwin);
 
     establish_property_string((JSObject *) jdoc, "bgcolor", "white", eb_false);
     establish_property_string((JSObject *) jdoc, "cookie", 0, eb_false);
-    establish_property_string((JSObject *) jdoc, "referrer", cw->referrer, eb_true);
+    establish_property_string((JSObject *) jdoc, "referrer", cw->referrer,
+       eb_true);
     establish_property_url((JSObject *) jdoc, "URL", cw->fileName, eb_true);
-    establish_property_url((JSObject *) jdoc, "location", cw->fileName, eb_false);
-    establish_property_url((JSObject *) jwin, "location", cw->firstURL, eb_false);
-    establish_property_string((JSObject *) jdoc, "domain", getHostURL(cw->fileName), eb_false);
+    establish_property_url((JSObject *) jdoc, "location", cw->fileName,
+       eb_false);
+    establish_property_url((JSObject *) jwin, "location", cw->firstURL,
+       eb_false);
+    establish_property_string((JSObject *) jdoc, "domain",
+       getHostURL(cw->fileName), eb_false);
 
 /* create arrays under document */
     for(i = 0; itemname = docarrays[i]; ++i)
@@ -938,13 +960,13 @@ JS_SetGlobalObject(jcx, (JSObject *) jwin);
 /* Some arrays are under window */
     establish_property_array((JSObject *) jwin, "frames");
 
-JS::RootedObject o(jcx);
+    JS::RootedObject o(jcx);
     o = JS_NewObject(jcx, 0, 0, (JSObject *) jdoc);
     establish_property_object((JSObject *) jdoc, "idMaster", o);
     o = JS_NewObject(jcx, 0, 0, (JSObject *) jdoc);
     establish_property_object((JSObject *) jdoc, "all", o);
 
-JS::RootedObject nav(jcx, JS_NewObject(jcx, 0, 0, (JSObject *) jwin));
+    JS::RootedObject nav(jcx, JS_NewObject(jcx, 0, 0, (JSObject *) jwin));
     establish_property_object((JSObject *) jwin, "navigator", nav);
 
 /* attributes of the navigator */
@@ -970,8 +992,10 @@ JS::RootedObject nav(jcx, JS_NewObject(jcx, 0, 0, (JSObject *) jwin));
 
 /* Build the array of mime types and plugins,
  * according to the entries in the config file. */
-JS::RootedObject navpi(jcx, (JSObject *) establish_property_array(nav, "plugins"));
-JS::RootedObject navmt(jcx, (JSObject *) establish_property_array(nav, "mimeTypes"));
+    JS::RootedObject navpi(jcx, (JSObject *) establish_property_array(nav,
+       "plugins"));
+    JS::RootedObject navmt(jcx, (JSObject *) establish_property_array(nav,
+       "mimeTypes"));
     mt = mimetypes;
     for(i = 0; i < maxMime; ++i, ++mt) {
 /* po is the plugin object and mo is the mime object */
@@ -1005,7 +1029,7 @@ JS::RootedObject navmt(jcx, (JSObject *) establish_property_array(nav, "mimeType
 	   0, 0, PROP_FIXED);
     }
 
-JS::RootedObject screen(jcx, JS_NewObject(jcx, 0, 0, (JSObject *) jwin));
+    JS::RootedObject screen(jcx, JS_NewObject(jcx, 0, 0, (JSObject *) jwin));
     establish_property_object((JSObject *) jwin, "screen", screen);
     establish_property_number(screen, "height", 768, eb_true);
     establish_property_number(screen, "width", 1024, eb_true);
@@ -1014,7 +1038,7 @@ JS::RootedObject screen(jcx, JS_NewObject(jcx, 0, 0, (JSObject *) jwin));
     establish_property_number(screen, "availTop", 0, eb_true);
     establish_property_number(screen, "availLeft", 0, eb_true);
 
-JS::RootedObject del(jcx, JS_NewObject(jcx, 0, 0, (JSObject *) jdoc));
+    JS::RootedObject del(jcx, JS_NewObject(jcx, 0, 0, (JSObject *) jdoc));
     establish_property_object((JSObject *) jdoc, "body", del);
     establish_property_object((JSObject *) jdoc, "documentElement", del);
     establish_property_number(del, "clientHeight", 768, eb_true);
@@ -1026,7 +1050,7 @@ JS::RootedObject del(jcx, JS_NewObject(jcx, 0, 0, (JSObject *) jdoc));
     establish_property_number(del, "scrollTop", 0, eb_true);
     establish_property_number(del, "scrollLeft", 0, eb_true);
 
-JS::RootedObject hist(jcx, JS_NewObject(jcx, 0, 0, (JSObject *) jwin));
+    JS::RootedObject hist(jcx, JS_NewObject(jcx, 0, 0, (JSObject *) jwin));
     establish_property_object((JSObject *) jwin, "history", hist);
 
 /* attributes of history */
@@ -1057,9 +1081,9 @@ freeJavaContext(void *jsc)
 void
 establish_innerHTML(void *jv, const char *start, const char *end, eb_bool is_ta)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JS::RootedObject obj(jcx, (JSObject *) jv), o(jcx);
-JS::RootedValue v(jcx);
+    JS::RootedValue v(jcx);
 
     if(!obj)
 	return;
@@ -1087,13 +1111,13 @@ void
 jMyContext(void)
 {
     jcx = (JSContext *) cw->jsc;
-jsval oval;
+    jsval oval;
     if(jcx) {
 /* due to the way compartments now work we need to retrieve the value for jwin as well */
 	jwin = cw->jsw;
-if (!jwin)
-i_printfExit(MSG_JavaWindowError);
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+	if(!jwin)
+	    i_printfExit(MSG_JavaWindowError);
+	JSAutoCompartment ac(jcx, (JSObject *) jwin);
 	JS_GetProperty(jcx, (JSObject *) jwin, "document", &oval);
 	jdoc = JSVAL_TO_OBJECT(oval);
 	JS_GetProperty(jcx, (JSObject *) jwin, "location", &oval);
@@ -1110,7 +1134,7 @@ javaParseExecute(void *obj, const char *str, const char *filename, int lineno)
     JSBool ok;
     eb_bool rc;
     jsval rval;
-JSAutoCompartment ac(jcx, (JSObject *) obj);
+    JSAutoCompartment ac(jcx, (JSObject *) obj);
 
 /* Sometimes Mac puts these three chars at the start of a text file. */
     if(!strncmp(str, "\xef\xbb\xbf", 3))
@@ -1133,11 +1157,11 @@ domLink(const char *classname,	/* instantiate this class */
    const char *symname, const char *idname, const char *href, const char *href_url, const char *list,	/* next member of this array */
    void *owner, int radiosel)
 {
-JSAutoCompartment ac(jcx, (JSObject *) jwin);
+    JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JS::RootedObject w(jcx), alist(jcx), master(jcx);
-JS::RootedObject owner_root(jcx, (JSObject *) owner);
-JS::RootedObject v(jcx);
-    jsval  vv, listv;
+    JS::RootedObject owner_root(jcx, (JSObject *) owner);
+    JS::RootedObject v(jcx);
+    jsval vv, listv;
     unsigned length, attr = PROP_FIXED;
     JSClass *cp;
     eb_bool dupname = eb_false;
@@ -1178,7 +1202,7 @@ Yeah, it makes my head spin too.
 *********************************************************************/
 
 	    if(stringEqual(symname, "action")) {
-JS::RootedObject ao(jcx);	/* action object */
+		JS::RootedObject ao(jcx);	/* action object */
 		JS_GetProperty(jcx, owner_root, symname, &vv);
 		ao = JSVAL_TO_OBJECT(vv);
 /* actioncrash tells me if we've already had this collision */
@@ -1286,6 +1310,6 @@ JS::RootedObject ao(jcx);	/* action object */
 /* link back to the form that owns the element */
 	establish_property_object(v, "form", owner_root);
     }
-JSObject *ret = v;
+    JSObject *ret = v;
     return ret;
 }				/* domLink */
