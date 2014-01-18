@@ -1078,7 +1078,7 @@ eb_bool
 javaParseExecute(void *this, const char *str, const char *filename, int lineno)
 {
     JSBool ok;
-    eb_bool rc;
+    eb_bool rc = eb_false;
     jsval rval;
 
 /* Sometimes Mac puts these three chars at the start of a text file. */
@@ -1088,9 +1088,11 @@ javaParseExecute(void *this, const char *str, const char *filename, int lineno)
     debugPrint(6, "javascript:\n%s", str);
     ok = JS_EvaluateScript(jcx, this, str, strlen(str),
        filename, lineno, &rval);
-    rc = eb_true;
-    if(JSVAL_IS_BOOLEAN(rval))
-	rc = JSVAL_TO_BOOLEAN(rval);
+    if(ok) {
+	rc = eb_true;
+	if(JSVAL_IS_BOOLEAN(rval))
+	    rc = JSVAL_TO_BOOLEAN(rval);
+    }
     JS_GC(jcx);
     return rc;
 }				/* javaParseExecute */
