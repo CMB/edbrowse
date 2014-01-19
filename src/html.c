@@ -584,6 +584,7 @@ htmlImage(void)
     a = htmlAttrVal(topAttrib, "alt");
     if(a)
 	establish_property_string(topTag->jv, "alt", a, eb_true);
+    nzFree(a);
 }				/* htmlImage */
 
 static void
