@@ -240,15 +240,22 @@ htmlAttrVal(const char *e, const char *name)
     char *b;
     int l = 0;			/* length */
     char f;
-    if(!e)
-	return a;
+
+    if(!e) {
+      out:
+	nzFree(a);
+	return NULL;
+    }
+
   top:
     while(isspaceByte(*e))
 	e++;
     if(!*e)
-	return 0;
+	goto out;
     if(*e == '>' || *e == '<')
-	return 0;
+	goto out;
+
+/* case insensitive match on name */
     n = name;
     while(*n && !((*e ^ *n) & 0xdf))
 	e++, n++;
@@ -263,20 +270,19 @@ htmlAttrVal(const char *e, const char *name)
     while(isspaceByte(*e))
 	e++;
     if(!isquote(*e)) {
+/* no quotes, the attribute value is just the word */
 	while(*e && !isspaceByte(*e) && *e != '>' && *e != '<') {
 	    if(!f)
 		valChar(&a, &l, *e);
 	    e++;
 	}
     } else {
-	char uu = *e;
+	char uu = *e;		/* holds " or ' */
       a:
 	e++;
 	while(*e != uu) {
-	    if(!*e) {
-		nzFree(a);
-		return NULL;
-	    }
+	    if(!*e)
+		goto out;
 	    if(!f && *e != '\r') {
 		if(*e != '\t' && *e != '\n')
 		    valChar(&a, &l, *e);
