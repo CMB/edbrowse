@@ -2035,6 +2035,7 @@ encodeTags(char *html)
 		goto next_onload;
 	    jsrc = htmlAttrVal(t->attrib, "onunload");
 	    onloadGo(ev, jsrc, t->info->name);
+	    nzFree(jsrc);
 
 	  next_onload:
 	    if(t == lasttag)
