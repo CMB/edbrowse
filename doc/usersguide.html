@@ -4660,13 +4660,13 @@ If you like music as much as I do, mpg123 is the greatest thing since sliced bre
 especially when combined with the following alias.
 
 <P>
-alias mplay="mpg123 -q -C"
+alias mpgplay="mpg123 -q -C"
 
 <P>
 If you have purchased all 27 Mozart piano concertos by Murray Perahia,
 perhaps the best musical investment I've ever made,
 and if they are given filenames like Moz-pc01-1.mp3,
-then you can play them all with mplay Moz-pc*.&nbsp;
+then you can play them all with mpgplay Moz-pc*.&nbsp;
 Sit back and revel in the music, or just let it play in the background while you do your work.&nbsp;
 I like to let this run in console 11, with console 12 reserved for superuser functions (logged in as root).&nbsp;
 Simple keystrokes let you restart the song (in this case songs are movements of concertos),
@@ -4717,26 +4717,22 @@ program = mpg123 -q -
 
 <H3 align=center> <A NAME=saud> Streaming Audio </A> </H3>
 
-The only command line program I know of for playing streaming audio is trplayer,
-and that is a legacy binary without source.&nbsp;
-No kidding - no source.&nbsp;
-And the binary is no longer compatible with modern versions of glib, so you need a compatibility library to bridge the gap.&nbsp;
-You can get trplayer and the compatibility libraries
-<A href=http://www.eklhad.net/trplayer.zip>here</A>.&nbsp;
-Install these in /usr/bin and /usr/lib,
-and then write the following shell script wrapper.
+To listen to streaming audio, or even streaming video, install mplayer on your system.&nbsp;
+This is included in some distributions, but not in others.&nbsp;
+In particular, it is not part of fedora, unless you include
+<A href=http://www.fclose.com/1493/mplayer-on-fedora/>
+these repositories</A>,
+and then run yum install mplayer.&nbsp;
+The manual page for mplayer is very long; I'm not going to describe its full functionality here.
 
 <P>
-#  redirect trplayer with the compat library
-<br>
-export LD_LIBRARY_PATH=/usr/lib/old-tr-libs
-<br>
-exec /usr/bin/trplayer $@
+Here is an assortment of
+<A href=http://apps.bmcginty.hopto.org/cgi-bin/radio.cgi>
+radio stations</A>.&nbsp;
+Select one, write its url to a file like music70, then run
 
 <P>
-Even with all this in place, I don't know of a single website that I can listen to.&nbsp;
-They either don't work with trplayer, or they are all on flash or some other system.&nbsp;
-Somebody needs to write a new command-line client that supports all flavors of streaming audio.
+mplayer -quiet -playlist music70
 
 <H3 align=center> <A NAME=podc> Podcast </A> </H3>
 
@@ -4762,6 +4758,8 @@ rss.sciam.com/sciam/60-second-space
 rss.sciam.com/sciam/60-second-tech
 <br>
 www.nature.com/nature/podcast/rss/nature.xml
+<br>
+www.nasa.gov/rss/NASAcast_podcast.rss
 
 <P>
 With this set up, I then use a bash script that I found, well, from somewhere,
