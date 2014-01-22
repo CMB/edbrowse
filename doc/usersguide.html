@@ -4409,18 +4409,21 @@ It's a good start.
 
 There are many screen readers for many operating systems, but only one linear adapter,
 the Jupiter Speech System,
-which is
-<A href=https://github.com/eklhad/acsint.git>
-available from github</A>.&nbsp;
+which is available from github.
+
+<P>
+git clone https://github.com/eklhad/acsint
+
+<P>
 This is specific to Linux, and has not been ported to any other operating system.&nbsp;
-The user-space program should compile on any unix-like platform;
-the trick is porting the device driver,
+The user-space program should compile on any unix-like platform,
+but the trick is porting the device driver,
 which requires an in-depth knowledge of the OS internals.
 
 <P>
 Jupiter is unique among all adapters in that it does not (by default) transform the words or icons on the screen into speech or braille.&nbsp;
 It is not typically used as a screen reader.&nbsp;
-It is capable of reading screen memory
+Yes, it is capable of reading screen memory
 and interacting with certain curses programs,
 but it typically runs in linear mode,
 capturing all tty output like a paper teletype and making it available to the blind user through speech.&nbsp;
@@ -4451,7 +4454,7 @@ Switch to console 7 and you will be reading the tty buffer associated with that 
 i.e. the output of the programs that have been run from that console.&nbsp;
 If you use screen(1) to maintain parallel sessions,
 the output of all your sessions will intermix in the tty buffer,
-and the result will be very confusing.&nbsp;
+and the result will be confusing.&nbsp;
 I therefore recommend 12 or 24 virtual text-based consoles
 to manage your parallel sessions.
 
