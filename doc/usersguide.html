@@ -4719,20 +4719,60 @@ program = mpg123 -q -
 
 To listen to streaming audio, or even streaming video, install mplayer on your system.&nbsp;
 This is included in some distributions, but not in others.&nbsp;
-In particular, it is not part of fedora, unless you include
+In particular, it is not part of fedora, unless you bring in
 <A href=http://www.fclose.com/1493/mplayer-on-fedora/>
 these repositories</A>,
-and then run yum install mplayer.&nbsp;
-The manual page for mplayer is very long; I'm not going to describe its full functionality here.
+and then run yum install mplayer.
+
+<P>
+The manual page for mplayer is quite long; I'm not going to describe its full functionality here.&nbsp;
+The simplest imvocation is mplayer -quiet foo.mp3.&nbsp;
+Yes, you can use it just like mpg123, but it doesn't have as many interactive features,
+such as pause via signal 10 from another process,
+so you probably want to stick with mpg123 for local music.
+
+<P>
+To play nicely with edbrowse, put something like this in your .ebrc file.
+
+<P>
+mime {
+<br>
+#  the < forces it to be a stream, hence the url is passed to the program
+<br>
+type = <audio/x-pn-realaudio
+<br>
+desc = streaming audio
+<br>
+suffix = rm,ra,ram,pls
+<br>
+protocol = rtsp,pnm,sdp
+<br>
+program = /usr/bin/mplayer -quiet
+<br>
+}
 
 <P>
 Here is an assortment of
 <A href=http://apps.bmcginty.hopto.org/cgi-bin/radio.cgi>
 radio stations</A>.&nbsp;
-Select one, write its url to a file like music70, then run
+Select one,
+and you will reach a file with just one line, the url for the station.&nbsp;
+If it presents a standard protocol such as rtsp, or a standard suffix such as .pls, then just type g for go, and listen to the music.&nbsp;
+Type q when finished.&nbsp;
+If you like the station then make it an alias, like this.
 
 <P>
-mplayer -quiet -playlist music70
+alias play70='mplayer -quiet "http://www.181.fm/tunein.pls?station=181-70s&amp;style=mp3&amp;description=Super%2070s"'
+
+<P>
+This station was selected from the aforementioned website, and it's very good.&nbsp;
+If you had to live within one decade, musically,
+you would choose the 70's hands down.&nbsp;
+From easy listening to pop to soft rock to classic rock to hard rock, and of course progressive rock,
+it's a Cambrian Explosion of talent and creativity.&nbsp;
+This station has a great variety and no commercials; I could let it run all day.&nbsp;
+Then there's 60's, 80's, classical, jazz, sports, even other languages,
+so enjoy.
 
 <H3 align=center> <A NAME=podc> Podcast </A> </H3>
 
