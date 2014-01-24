@@ -1169,6 +1169,7 @@ domLink(const char *classname,	/* instantiate this class */
     JSClass *cp;
     eb_bool dupname = eb_false;
     int i;
+JS::RootedValue rvv(jcx);
 
     if(cw->jsdead)
 	return 0;
@@ -1207,7 +1208,8 @@ Yeah, it makes my head spin too.
 	    if(stringEqual(symname, "action")) {
 		JS::RootedObject ao(jcx);	/* action object */
 		JS_GetProperty(jcx, owner_root, symname, &vv);
-		ao = JSVAL_TO_OBJECT(vv);
+rvv = vv;
+		ao = JSVAL_TO_OBJECT(rvv);
 /* actioncrash tells me if we've already had this collision */
 		JS_HasProperty(jcx, ao, "actioncrash", &found);
 		if(!found) {
@@ -1220,7 +1222,8 @@ Yeah, it makes my head spin too.
 
 	    if(radiosel == 1) {
 		JS_GetProperty(jcx, owner_root, symname, &vv);
-		v = JSVAL_TO_OBJECT(vv);
+rvv = vv;
+		v = JSVAL_TO_OBJECT(rvv);
 	    } else {
 		dupname = eb_true;
 	    }
@@ -1244,13 +1247,13 @@ Yeah, it makes my head spin too.
 	} else {
 	    v = JS_NewObject(jcx, cp, NULL, owner_root);
 	}
-	vv = OBJECT_TO_JSVAL(v);
+	rvv = OBJECT_TO_JSVAL(v);
 
 /* if no name, then use id as name */
 	if(!symname && idname) {
-	    JS_DefineProperty(jcx, owner_root, idname, vv, NULL, NULL, attr);
+	    JS_DefineProperty(jcx, owner_root, idname, rvv, NULL, NULL, attr);
 	} else if(symname && !dupname) {
-	    JS_DefineProperty(jcx, owner_root, symname, vv, NULL, NULL, attr);
+	    JS_DefineProperty(jcx, owner_root, symname, rvv, NULL, NULL, attr);
 	    if(stringEqual(symname, "action"))
 		establish_property_bool(v, "actioncrash", eb_true, eb_true);
 
@@ -1260,7 +1263,7 @@ Yeah, it makes my head spin too.
 	    establish_property_object(master, symname, v);
 	} else {
 /* tie this to something, to protect it from gc */
-	    JS_DefineProperty(jcx, owner_root, fakePropName(), vv,
+	    JS_DefineProperty(jcx, owner_root, fakePropName(), rvv,
 	       NULL, NULL, JSPROP_READONLY | JSPROP_PERMANENT);
 	}
 
@@ -1270,7 +1273,7 @@ Yeah, it makes my head spin too.
 	}
 	if(alist) {
 	    JS_GetArrayLength(jcx, alist, &length);
-	    JS_DefineElement(jcx, alist, length, vv, NULL, NULL, attr);
+	    JS_DefineElement(jcx, alist, length, rvv, NULL, NULL, attr);
 	    if(symname && !dupname)
 		establish_property_object(alist, symname, v);
 	    if(idname && (!symname || !stringEqual(symname, idname)))
@@ -1284,8 +1287,8 @@ Yeah, it makes my head spin too.
 /* v is, by assumption, an array */
 	JS_GetArrayLength(jcx, v, &length);
 	w = JS_NewObject(jcx, &element_class, NULL, owner_root);
-	vv = OBJECT_TO_JSVAL(w);
-	JS_DefineElement(jcx, v, length, vv, NULL, NULL, attr);
+	rvv = OBJECT_TO_JSVAL(w);
+	JS_DefineElement(jcx, v, length, rvv, NULL, NULL, attr);
 	v = w;
     }
 
