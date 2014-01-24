@@ -327,6 +327,7 @@ setter_loc_href(JSContext * cx, JS::Handle < JSObject * >obj,
     if(!url)
 	return JS_TRUE;
     uo = obj;
+JS_AddObjectRoot(jcx, &uo);
     url_initialize(url, eb_false, eb_true);
     uo_href = cloneString(url);
     if(uo == jwloc || uo == jdloc) {
@@ -348,6 +349,7 @@ setter_loc_hash(JSContext * cx, JS::Handle < JSObject * >obj,
 	return JS_TRUE;
     e = stringize(vp);
     uo = obj;
+JS_AddObjectRoot(jcx, &uo);
     build_url(5, e);
     return isWinLoc();
 }				/* setter_loc_hash */
@@ -361,6 +363,7 @@ setter_loc_search(JSContext * cx, JS::Handle < JSObject * >obj,
 	return JS_TRUE;
     e = stringize(vp);
     uo = obj;
+JS_AddObjectRoot(jcx, &uo);
     build_url(4, e);
     return isWinLoc();
 }				/* setter_loc_search */
@@ -374,6 +377,7 @@ setter_loc_prot(JSContext * cx, JS::Handle < JSObject * >obj,
 	return JS_TRUE;
     e = stringize(vp);
     uo = obj;
+JS_AddObjectRoot(jcx, &uo);
     build_url(1, e);
     return isWinLoc();
 }				/* setter_loc_prot */
@@ -387,6 +391,7 @@ setter_loc_pathname(JSContext * cx, JS::Handle < JSObject * >obj,
 	return JS_TRUE;
     e = stringize(vp);
     uo = obj;
+JS_AddObjectRoot(jcx, &uo);
     build_url(3, e);
     return isWinLoc();
 }				/* setter_loc_pathname */
@@ -400,6 +405,7 @@ setter_loc_hostname(JSContext * cx, JS::Handle < JSObject * >obj,
 	return JS_TRUE;
     e = stringize(vp);
     uo = obj;
+JS_AddObjectRoot(jcx, &uo);
     build_host(1, e, 0);
     build_url(0, 0);
     return isWinLoc();
@@ -414,6 +420,7 @@ setter_loc_port(JSContext * cx, JS::Handle < JSObject * >obj,
 	return JS_TRUE;
     port = JSVAL_TO_INT(vp);
     uo = obj;
+JS_AddObjectRoot(jcx, &uo);
     build_host(2, 0, port);
     build_url(0, 0);
     return isWinLoc();
@@ -430,6 +437,7 @@ setter_loc_host(JSContext * cx, JS::Handle < JSObject * >obj,
 	return JS_TRUE;
     e = stringize(vp);
     uo = obj;
+JS_AddObjectRoot(jcx, &uo);
     build_url(2, e);
 /* and we have to update hostname and port */
     setter_suspend = eb_true;
@@ -545,6 +553,7 @@ url_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	    url = s;
     }				/* string argument */
     uo = obj;
+JS_AddObjectRoot(jcx, &uo);
     url_initialize(url, eb_false, eb_false);
     return JS_TRUE;
 }				/* url_ctor */
@@ -786,6 +795,7 @@ establish_property_url(void *jv, const char *name,
     if(stringEqual(name, "location"))
 	my_setter = setter_loc;
     uo = JS_NewObject(jcx, &url_class, NULL, obj);
+JS_AddObjectRoot(jcx, &uo);
     JS_DefineProperty(jcx, obj, name,
        OBJECT_TO_JSVAL(uo), NULL, my_setter, attr);
     if(!url)

@@ -886,6 +886,7 @@ createJavaContext(void)
     jwin = JS_NewGlobalObject(jcx, &window_class, NULL);
     if(!jwin)
 	i_printfExit(MSG_JavaWindowError);
+JS_AddObjectRoot(jcx, (JSObject **) &jwin);
 /* enter the compartment for this object for the duration of this function */
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
 /* now set the jwin object as global */
