@@ -8,19 +8,8 @@
 #include "eb.h"
 
 #include "js.h"
+#include <string>
 using namespace std;
-
-/* jsprf.h is not publically visible on some systems,
-so I can't #include it here.
-Instead, I'll declare the needed prototype myself, and hope it is consistent
-with whatever smjs you are using. */
-extern
-JS_PUBLIC_API(char *)
-JS_smprintf(const char *fmt, ...);
-/* same goes for this one */
-extern
-JS_PUBLIC_API(void)
-JS_smprintf_free(char *mem);
 
 #define PROP_FIXED (JSPROP_ENUMERATE|JSPROP_READONLY|JSPROP_PERMANENT)
 
@@ -157,8 +146,8 @@ build_url(int exception, const char *e)
 {
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
     jsval v;
-    const char *prot, *slashes, *host, *pathname, *pathslash, *search, *hash;
     char *new_url;
+string tmp, url_str;
     static const char *const noslashes[] = {
 	"mailto", "telnet", "javascript", 0
     };
@@ -167,49 +156,48 @@ build_url(int exception, const char *e)
  * getting the next one.
  * I just don't know that much about the js heap. */
     if(exception == 1)
-	prot = e;
+	url_str.assign(e);
     else {
 	JS_GetProperty(jcx, uo, "protocol", &v);
-	prot = stringize(v);
+	url_str.assign(stringize(v));
     }
-    slashes = EMPTYSTRING;
-    if(stringInListCI(noslashes, prot) < 0)
-	slashes = "//";
+    if(stringInListCI(noslashes, url_str.c_str()) < 0)
+url_str += "//";
     if(exception == 2)
-	host = e;
+url_str += string(e);
     else {
 	JS_GetProperty(jcx, uo, "host", &v);
-	host = stringize(v);
+	url_str += string(stringize(v));
     }
-    if(exception == 3)
-	pathname = e;
+string pathname;
+    if(exception == 3) {
+pathname = string(e);
+url_str += pathname;
+}
     else {
 	JS_GetProperty(jcx, uo, "pathname", &v);
-	pathname = stringize(v);
+pathname = string(stringize(v));
+url_str += pathname;
     }
-    pathslash = EMPTYSTRING;
     if(pathname[0] != '/')
-	pathslash = "/";
+url_str += "/";
     if(exception == 4)
-	search = e;
+url_str += string(e);
     else {
 	JS_GetProperty(jcx, uo, "search", &v);
-	search = stringize(v);
+	url_str += string(stringize(v));
     }
     if(exception == 5)
-	hash = e;
+	url_str += string(e);
     else {
 	JS_GetProperty(jcx, uo, "hash", &v);
-	hash = stringize(v);
+	url_str += string(stringize(v));
     }
-    new_url =
-       JS_smprintf("%s%s%s%s%s%s%s", prot, slashes, host, pathslash, pathname,
-       search, hash);
+    new_url = (char *)  url_str.c_str();
     v = STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, new_url));
     JS_SetProperty(jcx, uo, "href", &v);
 /* I want control over this string */
     uo_href = cloneString(new_url);
-    JS_smprintf_free(new_url);
     setter_suspend = eb_false;
 }				/* build_url */
 
