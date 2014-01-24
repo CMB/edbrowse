@@ -544,18 +544,17 @@ url_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 {
     const char *url = NULL;
     const char *s;
-    jsval *argv;
-    JSObject *obj;
-    obj = JS_THIS_OBJECT(cx, vp);
-    argv = JS_ARGV(cx, vp);
-    if(argc && JSVAL_IS_STRING(*argv)) {
-	s = stringize(argv[0]);
+    JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
+JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+    if(args.length() > 0 && JSVAL_IS_STRING(args[0])) {
+	s = stringize(args[0]);
 	if(strlen(s))
 	    url = s;
     }				/* string argument */
     uo = obj;
 JS_AddObjectRoot(jcx, &uo);
     url_initialize(url, eb_false, eb_false);
+args.rval().set(JSVAL_VOID);
     return JS_TRUE;
 }				/* url_ctor */
 
@@ -706,9 +705,9 @@ establish_property_string(void *jv, const char *name, const char *value,
    eb_bool readonly)
 {
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
-    JSObject *obj = (JSObject *) jv;
+JS::RootedObject obj(jcx, (JSObject *) jv);
     unsigned attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
-    jsval v;
+JS::RootedValue v(jcx);
     if(readonly)
 	attr |= JSPROP_READONLY;
     my_getter = NULL;
@@ -734,7 +733,7 @@ establish_property_number(void *jv, const char *name, int value,
    eb_bool readonly)
 {
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
-    JSObject *obj = (JSObject *) jv;
+JS::RootedObject obj(jcx, (JSObject *) jv);
     unsigned attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
     if(readonly)
 	attr |= JSPROP_READONLY;
@@ -753,7 +752,7 @@ establish_property_bool(void *jv, const char *name, eb_bool value,
     unsigned attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
     if(readonly)
 	attr |= JSPROP_READONLY;
-    JSObject *obj = (JSObject *) jv;
+JS::RootedObject obj(jcx, (JSObject *) jv);
     my_setter = 0;
     if(stringEqual(name, "checked"))
 	my_setter = setter_checked;
@@ -767,10 +766,10 @@ void *
 establish_property_array(void *jv, const char *name)
 {
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
-    JSObject *obj = (JSObject *) jv;
-    JSObject *a = JS_NewArrayObject(jcx, 0, NULL);
+    JS::RootedObject obj(jcx, (JSObject *) jv);
+    JS::RootedObject a(jcx, JS_NewArrayObject(jcx, 0, NULL));
     establish_property_object(obj, name, a);
-    return a;
+    return (JSObject *) a;
 }				/* establish_property_array */
 
 void

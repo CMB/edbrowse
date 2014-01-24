@@ -164,13 +164,15 @@ window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
     char *newloc = 0;
     const char *winname = 0;
     JS::RootedString str(jcx);
-    jsval *argv = JS_ARGV(cx, vp);
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+JSObject &callee = args.callee();
+jsval callee_val = JS::ObjectValue(callee);
     JS::RootedObject newwin(cx, JS_NewObjectForConstructor(cx, &window_class,
-       vp));
-    if(argc > 0 && (str = JS_ValueToString(jcx, argv[0]))) {
+       &callee_val));
+    if(args.length() > 0 && (str = JS_ValueToString(jcx, args[0]))) {
 	newloc = our_JSEncodeString(str);
     }
-    if(argc > 1 && (str = JS_ValueToString(jcx, argv[1]))) {
+    if(args.length() > 1 && (str = JS_ValueToString(jcx, args[1]))) {
 	winname = transcode_get_js_bytes(str);
     }
 /* third argument is attributes, like window size and location, that we don't care about. */
@@ -180,7 +182,7 @@ window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
     if(!parsePage)
 	return JS_FALSE;
     establish_property_object(newwin, "opener", (JSObject *) jwin);
-    JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(newwin));
+    args.rval().set(OBJECT_TO_JSVAL(newwin));
     return JS_TRUE;
 }				/* window_ctor */
 
@@ -188,10 +190,11 @@ window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 static JSBool
 win_open(JSContext * cx, unsigned int argc, jsval * vp)
 {
-    jsval *argv = JS_ARGV(cx, vp);
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     JS::RootedObject newwin(jcx, JS_New(jcx,
-       JS_NewObject(jcx, &window_class, NULL, (JSObject *) jwin), argc, argv));
-    JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(newwin));
+JS_NewObject(jcx, &window_class, NULL, (JSObject *) jwin), args.length(),
+args.array()));
+args.rval().set(OBJECT_TO_JSVAL(newwin));
     return JS_TRUE;
 }				/* win_open */
 
@@ -199,21 +202,24 @@ win_open(JSContext * cx, unsigned int argc, jsval * vp)
 static JSBool
 nullFunction(JSContext * cx, unsigned int argc, jsval * vp)
 {
-    JS_SET_RVAL(cx, vp, JSVAL_VOID);
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+args.rval().set(JSVAL_VOID);
     return JS_TRUE;
 }				/* nullFunction */
 
 static JSBool
 falseFunction(JSContext * cx, unsigned int argc, jsval * vp)
 {
-    JS_SET_RVAL(cx, vp, JSVAL_FALSE);
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+args.rval().set(JSVAL_FALSE);
     return JS_TRUE;
 }				/* falseFunction */
 
 static JSBool
 trueFunction(JSContext * cx, unsigned int argc, jsval * vp)
 {
-    JS_SET_RVAL(cx, vp, JSVAL_TRUE);
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+args.rval().set(JSVAL_TRUE);
     return JS_TRUE;
 }				/* trueFunction */
 
@@ -221,14 +227,14 @@ static JSBool
 setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
 {
     JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
-    jsval *argv = JS_ARGV(cx, vp);
-    if(argc != 2 || !JSVAL_IS_STRING(argv[0])) {
+JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+    if(args.length() != 2 || !JSVAL_IS_STRING(args[0])) {
 	JS_ReportError(jcx, "unexpected arguments to setAttribute()");
     } else {
-	const char *prop = stringize(argv[0]);
-	JS_DefineProperty(jcx, obj, prop, argv[1], NULL, NULL, PROP_FIXED);
+	const char *prop = stringize(args[0]);
+	JS_DefineProperty(jcx, obj, prop, args[1], NULL, NULL, PROP_FIXED);
     }
-    JS_SET_RVAL(cx, vp, JSVAL_VOID);
+args.rval().set( JSVAL_VOID);
     return JS_TRUE;
 }				/* setAttribute */
 
@@ -237,13 +243,15 @@ appendChild(JSContext * cx, unsigned int argc, jsval * vp)
 {
     unsigned length;
     jsval v;
-    jsval *argv = JS_ARGV(cx, vp);
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
     JS_GetProperty(jcx, obj, "elements", &v);
     JS::RootedObject elar(cx, JSVAL_TO_OBJECT(v));
     JS_GetArrayLength(jcx, elar, &length);
     JS_DefineElement(jcx, elar, length,
-       (argc > 0 ? argv[0] : JSVAL_NULL), NULL, NULL, JSPROP_ENUMERATE);
+       (args.length() > 0 ? args[0] : JSVAL_NULL), NULL, NULL, JSPROP_ENUMERATE);
+// think we need to return something if we return JS_TRUE
+args.rval().set(JSVAL_VOID);
     return JS_TRUE;
 }				/* appendChild */
 
@@ -253,31 +261,32 @@ win_close(JSContext * cx, unsigned int argc, jsval * vp)
 /* It's too confusing to just close the window */
     i_puts(MSG_PageDone);
     cw->jsdead = eb_true;
-    JS_SET_RVAL(cx, vp, JSVAL_VOID);
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+args.rval().set(JSVAL_VOID);
     return JS_TRUE;
 }				/* win_close */
 
 static JSBool
 win_alert(JSContext * cx, unsigned int argc, jsval * vp)
 {
-    jsval *argv = JS_ARGV(cx, vp);
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     char *msg = NULL;
     JS::RootedString str(jcx);
-    if(argc > 0 && (str = JS_ValueToString(jcx, argv[0]))) {
+    if(args.length() > 0 && (str = JS_ValueToString(jcx, args[0]))) {
 	msg = transcode_get_js_bytes(str);
     }
     if(msg) {
 	puts(msg);
 	nzFree(msg);
     }
-    JS_SET_RVAL(cx, vp, JSVAL_VOID);
+args.rval().set(JSVAL_VOID);
     return JS_TRUE;
 }				/* win_alert */
 
 static JSBool
 win_prompt(JSContext * cx, unsigned int argc, jsval * vp)
 {
-    jsval *argv = JS_ARGV(cx, vp);
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     char *msg = EMPTYSTRING;
     char *answer = EMPTYSTRING;
     JS::RootedString str(jcx);
@@ -285,10 +294,10 @@ win_prompt(JSContext * cx, unsigned int argc, jsval * vp)
     char *s;
     char c;
 
-    if(argc > 0 && (str = JS_ValueToString(jcx, argv[0]))) {
+    if(args.length() > 0 && (str = JS_ValueToString(jcx, args[0]))) {
 	msg = transcode_get_js_bytes(str);
     }
-    if(argc > 1 && (str = JS_ValueToString(jcx, argv[1]))) {
+    if(args.length() > 1 && (str = JS_ValueToString(jcx, args[1]))) {
 	answer = transcode_get_js_bytes(str);
     }
 
@@ -314,21 +323,21 @@ win_prompt(JSContext * cx, unsigned int argc, jsval * vp)
 	nzFree(answer);		/* Don't need the default answer anymore. */
 	answer = inbuf;
     }
-    JS_SET_RVAL(cx, vp, STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, answer)));
+    args.rval().set(STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, answer)));
     return JS_TRUE;
 }				/* win_prompt */
 
 static JSBool
 win_confirm(JSContext * cx, unsigned int argc, jsval * vp)
 {
-    jsval *argv = JS_ARGV(cx, vp);
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     char *msg = EMPTYSTRING;
     JS::RootedString str(jcx);
     char inbuf[80];
     char c;
     eb_bool first = eb_true;
 
-    if(argc > 0 && (str = JS_ValueToString(jcx, argv[0]))) {
+    if(args.length() > 0 && (str = JS_ValueToString(jcx, args[0]))) {
 	msg = transcode_get_js_bytes(str);
     }
 
@@ -355,9 +364,9 @@ win_confirm(JSContext * cx, unsigned int argc, jsval * vp)
 
     c = tolower(c);
     if(c == 'y')
-	JS_SET_RVAL(cx, vp, JSVAL_TRUE);
+	args.rval().set(JSVAL_TRUE);
     else
-	JS_SET_RVAL(cx, vp, JSVAL_FALSE);
+	args.rval().set(JSVAL_FALSE);
     nzFree(msg);
     return JS_TRUE;
 }				/* win_confirm */
@@ -452,16 +461,16 @@ setTimeout(unsigned int argc, jsval * argv, eb_bool isInterval)
 static JSBool
 win_sto(JSContext * cx, unsigned int argc, jsval * vp)
 {
-    jsval *argv = JS_ARGV(cx, vp);
-    JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(setTimeout(argc, argv, eb_false)));
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+args.rval().set(OBJECT_TO_JSVAL(setTimeout(args.length(), args.array(), eb_false)));
     return JS_TRUE;
 }				/* win_sto */
 
 static JSBool
 win_intv(JSContext * cx, unsigned int argc, jsval * vp)
 {
-    jsval *argv = JS_ARGV(cx, vp);
-    JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(setTimeout(argc, argv, eb_true)));
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+args.rval().set(OBJECT_TO_JSVAL(setTimeout(args.length(), args.array(), eb_true)));
     return JS_TRUE;
 }				/* win_intv */
 
@@ -523,9 +532,9 @@ dwrite1(unsigned int argc, jsval * argv, eb_bool newline)
 static JSBool
 doc_write(JSContext * cx, unsigned int argc, jsval * vp)
 {
-    jsval *argv = JS_ARGV(cx, vp);
-    dwrite1(argc, argv, eb_false);
-    JS_SET_RVAL(cx, vp, JSVAL_VOID);
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+    dwrite1(args.length(), args.array(), eb_false);
+args.rval().set(JSVAL_VOID);
     return JS_TRUE;
 }				/* doc_write */
 
@@ -561,9 +570,9 @@ setter_innerText(JSContext * cx, JS::Handle < JSObject * >obj,
 static JSBool
 doc_writeln(JSContext * cx, unsigned int argc, jsval * vp)
 {
-    jsval *argv = JS_ARGV(cx, vp);
-    dwrite1(argc, argv, eb_true);
-    JS_SET_RVAL(cx, vp, JSVAL_VOID);
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+    dwrite1(args.length(), args.array(), eb_true);
+args.rval().set(JSVAL_VOID);
     return JS_TRUE;
 }				/* doc_writeln */
 
@@ -616,7 +625,8 @@ form_submit(JSContext * cx, unsigned int argc, jsval * vp)
 {
     JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
     javaSubmitsForm(obj, eb_false);
-    JS_SET_RVAL(cx, vp, JSVAL_VOID);
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+args.rval().set(JSVAL_VOID);
     return JS_TRUE;
 }				/* form_submit */
 
@@ -625,7 +635,8 @@ form_reset(JSContext * cx, unsigned int argc, jsval * vp)
 {
     JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
     javaSubmitsForm(obj, eb_true);
-    JS_SET_RVAL(cx, vp, JSVAL_VOID);
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+args.rval().set(JSVAL_VOID);
     return JS_TRUE;
 }				/* form_reset */
 
