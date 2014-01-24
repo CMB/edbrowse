@@ -98,10 +98,10 @@ loc_toString(JSContext * cx, unsigned int argc, jsval * vp)
 {
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
-JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-jsval rval;
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+    jsval rval;
     JS_GetProperty(jcx, obj, "href", &rval);
-args.rval().set(rval);
+    args.rval().set(rval);
     return JS_TRUE;
 }				/* loc_toString */
 
@@ -123,7 +123,7 @@ loc_replace(JSContext * cx, unsigned int argc, jsval * vp)
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
     const char *s;
     char *ss, *t;
-JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     if(args.length() > 0 && JSVAL_IS_STRING(args[0])) {
 	s = stringize(args[0]);
 /* I have to copy the string, just so I can run unpercent */
@@ -147,7 +147,7 @@ build_url(int exception, const char *e)
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
     jsval v;
     char *new_url;
-string tmp, url_str;
+    string tmp, url_str;
     static const char *const noslashes[] = {
 	"mailto", "telnet", "javascript", 0
     };
@@ -162,27 +162,26 @@ string tmp, url_str;
 	url_str.assign(stringize(v));
     }
     if(stringInListCI(noslashes, url_str.c_str()) < 0)
-url_str += "//";
+	url_str += "//";
     if(exception == 2)
-url_str += string(e);
+	url_str += string(e);
     else {
 	JS_GetProperty(jcx, uo, "host", &v);
 	url_str += string(stringize(v));
     }
-string pathname;
+    string pathname;
     if(exception == 3) {
-pathname = string(e);
-url_str += pathname;
-}
-    else {
+	pathname = string(e);
+	url_str += pathname;
+    } else {
 	JS_GetProperty(jcx, uo, "pathname", &v);
-pathname = string(stringize(v));
-url_str += pathname;
+	pathname = string(stringize(v));
+	url_str += pathname;
     }
     if(pathname[0] != '/')
-url_str += "/";
+	url_str += "/";
     if(exception == 4)
-url_str += string(e);
+	url_str += string(e);
     else {
 	JS_GetProperty(jcx, uo, "search", &v);
 	url_str += string(stringize(v));
@@ -193,7 +192,7 @@ url_str += string(e);
 	JS_GetProperty(jcx, uo, "hash", &v);
 	url_str += string(stringize(v));
     }
-    new_url = (char *)  url_str.c_str();
+    new_url = (char *)url_str.c_str();
     v = STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, new_url));
     JS_SetProperty(jcx, uo, "href", &v);
 /* I want control over this string */
@@ -316,7 +315,7 @@ setter_loc_href(JSContext * cx, JS::Handle < JSObject * >obj,
     if(!url)
 	return JS_TRUE;
     uo = obj;
-JS_AddObjectRoot(jcx, &uo);
+    JS_AddObjectRoot(jcx, &uo);
     url_initialize(url, eb_false, eb_true);
     uo_href = cloneString(url);
     if(uo == jwloc || uo == jdloc) {
@@ -338,7 +337,7 @@ setter_loc_hash(JSContext * cx, JS::Handle < JSObject * >obj,
 	return JS_TRUE;
     e = stringize(vp);
     uo = obj;
-JS_AddObjectRoot(jcx, &uo);
+    JS_AddObjectRoot(jcx, &uo);
     build_url(5, e);
     return isWinLoc();
 }				/* setter_loc_hash */
@@ -352,7 +351,7 @@ setter_loc_search(JSContext * cx, JS::Handle < JSObject * >obj,
 	return JS_TRUE;
     e = stringize(vp);
     uo = obj;
-JS_AddObjectRoot(jcx, &uo);
+    JS_AddObjectRoot(jcx, &uo);
     build_url(4, e);
     return isWinLoc();
 }				/* setter_loc_search */
@@ -366,7 +365,7 @@ setter_loc_prot(JSContext * cx, JS::Handle < JSObject * >obj,
 	return JS_TRUE;
     e = stringize(vp);
     uo = obj;
-JS_AddObjectRoot(jcx, &uo);
+    JS_AddObjectRoot(jcx, &uo);
     build_url(1, e);
     return isWinLoc();
 }				/* setter_loc_prot */
@@ -380,7 +379,7 @@ setter_loc_pathname(JSContext * cx, JS::Handle < JSObject * >obj,
 	return JS_TRUE;
     e = stringize(vp);
     uo = obj;
-JS_AddObjectRoot(jcx, &uo);
+    JS_AddObjectRoot(jcx, &uo);
     build_url(3, e);
     return isWinLoc();
 }				/* setter_loc_pathname */
@@ -394,7 +393,7 @@ setter_loc_hostname(JSContext * cx, JS::Handle < JSObject * >obj,
 	return JS_TRUE;
     e = stringize(vp);
     uo = obj;
-JS_AddObjectRoot(jcx, &uo);
+    JS_AddObjectRoot(jcx, &uo);
     build_host(1, e, 0);
     build_url(0, 0);
     return isWinLoc();
@@ -409,7 +408,7 @@ setter_loc_port(JSContext * cx, JS::Handle < JSObject * >obj,
 	return JS_TRUE;
     port = JSVAL_TO_INT(vp);
     uo = obj;
-JS_AddObjectRoot(jcx, &uo);
+    JS_AddObjectRoot(jcx, &uo);
     build_host(2, 0, port);
     build_url(0, 0);
     return isWinLoc();
@@ -426,7 +425,7 @@ setter_loc_host(JSContext * cx, JS::Handle < JSObject * >obj,
 	return JS_TRUE;
     e = stringize(vp);
     uo = obj;
-JS_AddObjectRoot(jcx, &uo);
+    JS_AddObjectRoot(jcx, &uo);
     build_url(2, e);
 /* and we have to update hostname and port */
     setter_suspend = eb_true;
@@ -533,16 +532,16 @@ url_ctor(JSContext * cx, unsigned int argc, jsval * vp)
     const char *url = NULL;
     const char *s;
     JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
-JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     if(args.length() > 0 && JSVAL_IS_STRING(args[0])) {
 	s = stringize(args[0]);
 	if(strlen(s))
 	    url = s;
     }				/* string argument */
     uo = obj;
-JS_AddObjectRoot(jcx, &uo);
+    JS_AddObjectRoot(jcx, &uo);
     url_initialize(url, eb_false, eb_false);
-args.rval().set(JSVAL_VOID);
+    args.rval().set(JSVAL_VOID);
     return JS_TRUE;
 }				/* url_ctor */
 
@@ -693,9 +692,9 @@ establish_property_string(void *jv, const char *name, const char *value,
    eb_bool readonly)
 {
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
-JS::RootedObject obj(jcx, (JSObject *) jv);
+    JS::RootedObject obj(jcx, (JSObject *) jv);
     unsigned attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
-JS::RootedValue v(jcx);
+    JS::RootedValue v(jcx);
     if(readonly)
 	attr |= JSPROP_READONLY;
     my_getter = NULL;
@@ -721,7 +720,7 @@ establish_property_number(void *jv, const char *name, int value,
    eb_bool readonly)
 {
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
-JS::RootedObject obj(jcx, (JSObject *) jv);
+    JS::RootedObject obj(jcx, (JSObject *) jv);
     unsigned attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
     if(readonly)
 	attr |= JSPROP_READONLY;
@@ -740,7 +739,7 @@ establish_property_bool(void *jv, const char *name, eb_bool value,
     unsigned attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
     if(readonly)
 	attr |= JSPROP_READONLY;
-JS::RootedObject obj(jcx, (JSObject *) jv);
+    JS::RootedObject obj(jcx, (JSObject *) jv);
     my_setter = 0;
     if(stringEqual(name, "checked"))
 	my_setter = setter_checked;
@@ -763,8 +762,8 @@ establish_property_array(void *jv, const char *name)
 void
 establish_property_object(void *parent, const char *name, void *child)
 {
-JS::RootedObject parent_root(jcx, (JSObject *) parent);
-JS::RootedObject child_root(jcx, (JSObject *) child);
+    JS::RootedObject parent_root(jcx, (JSObject *) parent);
+    JS::RootedObject child_root(jcx, (JSObject *) child);
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JS_DefineProperty(jcx, parent_root, name,
        OBJECT_TO_JSVAL((child_root)), 0, 0, PROP_FIXED);
@@ -775,7 +774,7 @@ establish_property_url(void *jv, const char *name,
    const char *url, eb_bool readonly)
 {
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
-JS::RootedObject obj(jcx, (JSObject *) jv);
+    JS::RootedObject obj(jcx, (JSObject *) jv);
     unsigned attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
     if(readonly)
 	attr |= JSPROP_READONLY;
@@ -785,7 +784,7 @@ JS::RootedObject obj(jcx, (JSObject *) jv);
     if(stringEqual(name, "location"))
 	my_setter = setter_loc;
     uo = JS_NewObject(jcx, &url_class, NULL, obj);
-JS_AddObjectRoot(jcx, &uo);
+    JS_AddObjectRoot(jcx, &uo);
     JS_DefineProperty(jcx, obj, name,
        OBJECT_TO_JSVAL(uo), NULL, my_setter, attr);
     if(!url)
@@ -805,7 +804,7 @@ void
 set_property_string(void *jv, const char *name, const char *value)
 {
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
-JS::RootedObject obj(jcx, (JSObject *) jv);
+    JS::RootedObject obj(jcx, (JSObject *) jv);
     jsval vv;
     setter_suspend = eb_true;
     vv = ((value && *value) ? STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, value))
@@ -988,7 +987,7 @@ eb_bool
 handlerGo(void *obj, const char *name)
 {
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
-JS::RootedObject obj_root(jcx, (JSObject *) obj);
+    JS::RootedObject obj_root(jcx, (JSObject *) obj);
     jsval rval;
     eb_bool rc;
     JSBool found;
@@ -1005,8 +1004,8 @@ JS::RootedObject obj_root(jcx, (JSObject *) obj);
 void
 handlerSet(void *ev, const char *name, const char *code)
 {
-if (!ev)
-return;
+    if(!ev)
+	return;
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JS::RootedObject obj(jcx, (JSObject *) ev);
     char *newcode;
@@ -1029,7 +1028,7 @@ void
 link_onunload_onclick(void *jv)
 {
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
-JS::RootedObject obj(jcx, (JSObject *) jv);
+    JS::RootedObject obj(jcx, (JSObject *) jv);
     jsval v;
     JS_GetProperty(jcx, obj, "onunload", &v);
     JS_DefineProperty(jcx, obj, "onclick", v, 0, 0, PROP_FIXED);
@@ -1038,10 +1037,10 @@ JS::RootedObject obj(jcx, (JSObject *) jv);
 eb_bool
 handlerPresent(void *ev, const char *name)
 {
-if (!ev)
-return eb_false;
+    if(!ev)
+	return eb_false;
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
-JS::RootedObject obj(jcx, (JSObject *) ev);
+    JS::RootedObject obj(jcx, (JSObject *) ev);
     JSBool found = JS_FALSE;
     JS_HasProperty(jcx, obj, name, &found);
     return found;

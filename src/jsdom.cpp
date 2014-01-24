@@ -32,7 +32,7 @@ static jsval emptyArgs[] = { jsval() };
 static void
 my_ErrorReporter(JSContext * cx, const char *message, JSErrorReport * report)
 {
-stringstream prefix(stringstream::in | stringstream::out);
+    stringstream prefix(stringstream::in | stringstream::out);
     if(debugLevel < 2)
 	goto done;
     if(ismc)
@@ -52,14 +52,15 @@ stringstream prefix(stringstream::in | stringstream::out);
     if(report->filename)
 	prefix << report->filename << ":";
     if(report->lineno)
-prefix << report->lineno << ": ";
+	prefix << report->lineno << ": ";
     if(JSREPORT_IS_WARNING(report->flags))
-	prefix << (JSREPORT_IS_STRICT(report->flags) ? "strict " : "") << "warning: ";
+	prefix << (JSREPORT_IS_STRICT(report->
+	   flags) ? "strict " : "") << "warning: ";
     fprintf(gErrFile, "%s%s\n", prefix.str().c_str(), message);
 
   done:
-if (report)
-    report->flags = 0;
+    if(report)
+	report->flags = 0;
 }				/* my_ErrorReporter */
 
 JSString *
@@ -141,8 +142,8 @@ window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
     const char *winname = 0;
     JS::RootedString str(jcx);
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-JSObject &callee = args.callee();
-jsval callee_val = JS::ObjectValue(callee);
+    JSObject & callee = args.callee();
+    jsval callee_val = JS::ObjectValue(callee);
     JS::RootedObject newwin(cx, JS_NewObjectForConstructor(cx, &window_class,
        &callee_val));
     if(args.length() > 0 && (str = JS_ValueToString(jcx, args[0]))) {
@@ -168,9 +169,9 @@ win_open(JSContext * cx, unsigned int argc, jsval * vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     JS::RootedObject newwin(jcx, JS_New(jcx,
-JS_NewObject(jcx, &window_class, NULL, (JSObject *) jwin), args.length(),
-args.array()));
-args.rval().set(OBJECT_TO_JSVAL(newwin));
+       JS_NewObject(jcx, &window_class, NULL, (JSObject *) jwin), args.length(),
+       args.array()));
+    args.rval().set(OBJECT_TO_JSVAL(newwin));
     return JS_TRUE;
 }				/* win_open */
 
@@ -179,7 +180,7 @@ static JSBool
 nullFunction(JSContext * cx, unsigned int argc, jsval * vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-args.rval().set(JSVAL_VOID);
+    args.rval().set(JSVAL_VOID);
     return JS_TRUE;
 }				/* nullFunction */
 
@@ -187,7 +188,7 @@ static JSBool
 falseFunction(JSContext * cx, unsigned int argc, jsval * vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-args.rval().set(JSVAL_FALSE);
+    args.rval().set(JSVAL_FALSE);
     return JS_TRUE;
 }				/* falseFunction */
 
@@ -195,7 +196,7 @@ static JSBool
 trueFunction(JSContext * cx, unsigned int argc, jsval * vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-args.rval().set(JSVAL_TRUE);
+    args.rval().set(JSVAL_TRUE);
     return JS_TRUE;
 }				/* trueFunction */
 
@@ -203,14 +204,14 @@ static JSBool
 setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
 {
     JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
-JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     if(args.length() != 2 || !JSVAL_IS_STRING(args[0])) {
 	JS_ReportError(jcx, "unexpected arguments to setAttribute()");
     } else {
 	const char *prop = stringize(args[0]);
 	JS_DefineProperty(jcx, obj, prop, args[1], NULL, NULL, PROP_FIXED);
     }
-args.rval().set( JSVAL_VOID);
+    args.rval().set(JSVAL_VOID);
     return JS_TRUE;
 }				/* setAttribute */
 
@@ -225,9 +226,10 @@ appendChild(JSContext * cx, unsigned int argc, jsval * vp)
     JS::RootedObject elar(cx, JSVAL_TO_OBJECT(v));
     JS_GetArrayLength(jcx, elar, &length);
     JS_DefineElement(jcx, elar, length,
-       (args.length() > 0 ? args[0] : JSVAL_NULL), NULL, NULL, JSPROP_ENUMERATE);
+       (args.length() > 0 ? args[0] : JSVAL_NULL), NULL, NULL,
+       JSPROP_ENUMERATE);
 // think we need to return something if we return JS_TRUE
-args.rval().set(JSVAL_VOID);
+    args.rval().set(JSVAL_VOID);
     return JS_TRUE;
 }				/* appendChild */
 
@@ -238,7 +240,7 @@ win_close(JSContext * cx, unsigned int argc, jsval * vp)
     i_puts(MSG_PageDone);
     cw->jsdead = eb_true;
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-args.rval().set(JSVAL_VOID);
+    args.rval().set(JSVAL_VOID);
     return JS_TRUE;
 }				/* win_close */
 
@@ -255,7 +257,7 @@ win_alert(JSContext * cx, unsigned int argc, jsval * vp)
 	puts(msg);
 	nzFree(msg);
     }
-args.rval().set(JSVAL_VOID);
+    args.rval().set(JSVAL_VOID);
     return JS_TRUE;
 }				/* win_alert */
 
@@ -438,7 +440,8 @@ static JSBool
 win_sto(JSContext * cx, unsigned int argc, jsval * vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-args.rval().set(OBJECT_TO_JSVAL(setTimeout(args.length(), args.array(), eb_false)));
+    args.rval().set(OBJECT_TO_JSVAL(setTimeout(args.length(), args.array(),
+       eb_false)));
     return JS_TRUE;
 }				/* win_sto */
 
@@ -446,7 +449,8 @@ static JSBool
 win_intv(JSContext * cx, unsigned int argc, jsval * vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-args.rval().set(OBJECT_TO_JSVAL(setTimeout(args.length(), args.array(), eb_true)));
+    args.rval().set(OBJECT_TO_JSVAL(setTimeout(args.length(), args.array(),
+       eb_true)));
     return JS_TRUE;
 }				/* win_intv */
 
@@ -510,7 +514,7 @@ doc_write(JSContext * cx, unsigned int argc, jsval * vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     dwrite1(args.length(), args.array(), eb_false);
-args.rval().set(JSVAL_VOID);
+    args.rval().set(JSVAL_VOID);
     return JS_TRUE;
 }				/* doc_write */
 
@@ -548,7 +552,7 @@ doc_writeln(JSContext * cx, unsigned int argc, jsval * vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     dwrite1(args.length(), args.array(), eb_true);
-args.rval().set(JSVAL_VOID);
+    args.rval().set(JSVAL_VOID);
     return JS_TRUE;
 }				/* doc_writeln */
 
@@ -602,7 +606,7 @@ form_submit(JSContext * cx, unsigned int argc, jsval * vp)
     JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
     javaSubmitsForm(obj, eb_false);
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-args.rval().set(JSVAL_VOID);
+    args.rval().set(JSVAL_VOID);
     return JS_TRUE;
 }				/* form_submit */
 
@@ -612,7 +616,7 @@ form_reset(JSContext * cx, unsigned int argc, jsval * vp)
     JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
     javaSubmitsForm(obj, eb_true);
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-args.rval().set(JSVAL_VOID);
+    args.rval().set(JSVAL_VOID);
     return JS_TRUE;
 }				/* form_reset */
 
@@ -626,7 +630,7 @@ static JSClass body_class = {
     "Body",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
-       JS_StrictPropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
     NULL,
     JSCLASS_NO_OPTIONAL_MEMBERS
@@ -642,7 +646,7 @@ static JSClass head_class = {
     "Head",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
-       JS_StrictPropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
     NULL,
     JSCLASS_NO_OPTIONAL_MEMBERS
@@ -658,7 +662,7 @@ static JSClass meta_class = {
     "Meta",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
-       JS_StrictPropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
     NULL,
     JSCLASS_NO_OPTIONAL_MEMBERS
@@ -669,7 +673,7 @@ static JSClass link_class = {
     "Link",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
-       JS_StrictPropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
     NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
@@ -683,7 +687,7 @@ static JSClass image_class = {
     "Image",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
-       JS_StrictPropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
     NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
@@ -692,7 +696,7 @@ static JSClass frame_class = {
     "Frame",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
-       JS_StrictPropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
     NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
@@ -701,7 +705,7 @@ static JSClass anchor_class = {
     "Anchor",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
-       JS_StrictPropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
     NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
@@ -710,7 +714,7 @@ static JSClass table_class = {
     "Table",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
-       JS_StrictPropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
     NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
@@ -719,7 +723,7 @@ static JSClass trow_class = {
     "Trow",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
-       JS_StrictPropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
     NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
@@ -728,7 +732,7 @@ static JSClass cell_class = {
     "Cell",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
-       JS_StrictPropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
     NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
@@ -737,7 +741,7 @@ static JSClass div_class = {
     "Div",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
-       JS_StrictPropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
     NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
@@ -746,7 +750,7 @@ static JSClass span_class = {
     "Span",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
-       JS_StrictPropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
     NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
@@ -755,7 +759,7 @@ static JSClass area_class = {
     "Area",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
-       JS_StrictPropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
     NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
@@ -764,7 +768,7 @@ static JSClass option_class = {
     "Option",
     JSCLASS_HAS_PRIVATE,
     JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
-       JS_StrictPropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
     NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
@@ -852,7 +856,7 @@ createJavaContext(void)
     const char *itemname;
     int i;
     char verx11[20];
-jsval rval;
+    jsval rval;
     struct MIMETYPE *mt;
 
     if(!jrt) {
@@ -873,7 +877,7 @@ jsval rval;
     jwin = JS_NewGlobalObject(jcx, &window_class, NULL);
     if(!jwin)
 	i_printfExit(MSG_JavaWindowError);
-JS_AddObjectRoot(jcx, (JSObject **) &jwin);
+    JS_AddObjectRoot(jcx, (JSObject **) & jwin);
 /* enter the compartment for this object for the duration of this function */
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
 /* now set the jwin object as global */
@@ -1131,11 +1135,11 @@ javaParseExecute(void *obj, const char *str, const char *filename, int lineno)
     debugPrint(6, "javascript:\n%s", str);
     ok = JS_EvaluateScript(jcx, (JSObject *) obj, str, strlen(str),
        filename, lineno, &rval);
-if (ok) {
-    rc = eb_true;
-    if(JSVAL_IS_BOOLEAN(rval))
-	rc = JSVAL_TO_BOOLEAN(rval);
-}
+    if(ok) {
+	rc = eb_true;
+	if(JSVAL_IS_BOOLEAN(rval))
+	    rc = JSVAL_TO_BOOLEAN(rval);
+    }
 /* GC is now done based on the runtime not the current context */
     JS_GC(jrt);
     return rc;
@@ -1156,7 +1160,7 @@ domLink(const char *classname,	/* instantiate this class */
     JSClass *cp;
     eb_bool dupname = eb_false;
     int i;
-JS::RootedValue rvv(jcx);
+    JS::RootedValue rvv(jcx);
 
     if(cw->jsdead)
 	return 0;
@@ -1195,7 +1199,7 @@ Yeah, it makes my head spin too.
 	    if(stringEqual(symname, "action")) {
 		JS::RootedObject ao(jcx);	/* action object */
 		JS_GetProperty(jcx, owner_root, symname, &vv);
-rvv = vv;
+		rvv = vv;
 		ao = JSVAL_TO_OBJECT(rvv);
 /* actioncrash tells me if we've already had this collision */
 		JS_HasProperty(jcx, ao, "actioncrash", &found);
@@ -1209,7 +1213,7 @@ rvv = vv;
 
 	    if(radiosel == 1) {
 		JS_GetProperty(jcx, owner_root, symname, &vv);
-rvv = vv;
+		rvv = vv;
 		v = JSVAL_TO_OBJECT(rvv);
 	    } else {
 		dupname = eb_true;
