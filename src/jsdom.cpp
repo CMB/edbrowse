@@ -865,7 +865,7 @@ createJavaContext(void)
     const char *itemname;
     int i;
     char verx11[20];
-    jsval rval;
+jsval rval;
     struct MIMETYPE *mt;
 
     if(!jrt) {

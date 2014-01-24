@@ -109,9 +109,10 @@ loc_toString(JSContext * cx, unsigned int argc, jsval * vp)
 {
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
     JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
-    jsval rval = JS_RVAL(cx, vp);
+JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+jsval rval;
     JS_GetProperty(jcx, obj, "href", &rval);
-    JS_SET_RVAL(cx, vp, rval);
+args.rval().set(rval);
     return JS_TRUE;
 }				/* loc_toString */
 
@@ -133,9 +134,9 @@ loc_replace(JSContext * cx, unsigned int argc, jsval * vp)
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
     const char *s;
     char *ss, *t;
-    jsval *argv = JS_ARGV(cx, vp);
-    if(argc > 0 && JSVAL_IS_STRING(argv[0])) {
-	s = stringize(argv[0]);
+JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+    if(args.length() > 0 && JSVAL_IS_STRING(args[0])) {
+	s = stringize(args[0]);
 /* I have to copy the string, just so I can run unpercent */
 	ss = cloneString(s);
 	unpercentURL(ss);
@@ -775,9 +776,11 @@ establish_property_array(void *jv, const char *name)
 void
 establish_property_object(void *parent, const char *name, void *child)
 {
+JS::RootedObject parent_root(jcx, (JSObject *) parent);
+JS::RootedObject child_root(jcx, (JSObject *) child);
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
-    JS_DefineProperty(jcx, (JSObject *) parent, name,
-       OBJECT_TO_JSVAL(((JSObject *) child)), 0, 0, PROP_FIXED);
+    JS_DefineProperty(jcx, parent_root, name,
+       OBJECT_TO_JSVAL((child_root)), 0, 0, PROP_FIXED);
 }				/* establish_property_object */
 
 void
@@ -785,7 +788,7 @@ establish_property_url(void *jv, const char *name,
    const char *url, eb_bool readonly)
 {
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
-    JSObject *obj = (JSObject *) jv;
+JS::RootedObject obj(jcx, (JSObject *) jv);
     unsigned attr = JSPROP_ENUMERATE | JSPROP_PERMANENT;
     if(readonly)
 	attr |= JSPROP_READONLY;
@@ -815,7 +818,7 @@ void
 set_property_string(void *jv, const char *name, const char *value)
 {
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
-    JSObject *obj = (JSObject *) jv;
+JS::RootedObject obj(jcx, (JSObject *) jv);
     jsval vv;
     setter_suspend = eb_true;
     vv = ((value && *value) ? STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, value))
@@ -998,13 +1001,14 @@ eb_bool
 handlerGo(void *obj, const char *name)
 {
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
+JS::RootedObject obj_root(jcx, (JSObject *) obj);
     jsval rval;
     eb_bool rc;
     JSBool found;
-    JS_HasProperty(jcx, (JSObject *) obj, name, &found);
+    JS_HasProperty(jcx, obj_root, name, &found);
     if(!found)
 	return eb_false;
-    rc = JS_CallFunctionName(jcx, (JSObject *) obj, name, 0, emptyArgs, &rval);
+    rc = JS_CallFunctionName(jcx, obj_root, name, 0, emptyArgs, &rval);
     if(rc && JSVAL_IS_BOOLEAN(rval))
 	rc = JSVAL_TO_BOOLEAN(rval);
     JS_GC(jrt);
@@ -1014,12 +1018,12 @@ handlerGo(void *obj, const char *name)
 void
 handlerSet(void *ev, const char *name, const char *code)
 {
+if (!ev)
+return;
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
-    JSObject *obj = (JSObject *) ev;
+    JS::RootedObject obj(jcx, (JSObject *) ev);
     char *newcode;
     JSBool found;
-    if(!obj)
-	return;
     newcode = (char *)allocMem(strlen(code) + 60);
     strcpy(newcode, "with(document) { ");
     JS_HasProperty(jcx, obj, "form", &found);
@@ -1038,7 +1042,7 @@ void
 link_onunload_onclick(void *jv)
 {
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
-    JSObject *obj = (JSObject *) jv;
+JS::RootedObject obj(jcx, (JSObject *) jv);
     jsval v;
     JS_GetProperty(jcx, obj, "onunload", &v);
     JS_DefineProperty(jcx, obj, "onclick", v, 0, 0, PROP_FIXED);
@@ -1047,11 +1051,11 @@ link_onunload_onclick(void *jv)
 eb_bool
 handlerPresent(void *ev, const char *name)
 {
+if (!ev)
+return eb_false;
     JSAutoCompartment ac(jcx, (JSObject *) jwin);
-    JSObject *obj = (JSObject *) ev;
+JS::RootedObject obj(jcx, (JSObject *) ev);
     JSBool found = JS_FALSE;
-    if(!obj)
-	return eb_false;
     JS_HasProperty(jcx, obj, name, &found);
     return found;
 }				/* handlerPresent */
