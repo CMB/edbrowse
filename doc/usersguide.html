@@ -125,6 +125,18 @@ blind, script, accessible">
 <LI><A HREF=#gosql> Go SQL </A>
 </UL>
 
+<H4> Chapter 9, Other Command Line Utilities </H4>
+
+<UL>
+<LI><A HREF=#adapt> A Linear Speech Adapter </A>
+<LI><A HREF=#txt> Texting </A>
+<LI><A HREF=#wifi> Setting up Wifi </A>
+<LI><A HREF=#irc> IRC Client </A>
+<LI><A HREF=#mpg> Play the Music </A>
+<LI><A HREF=#saud> Streaming Audio </A>
+<LI><A HREF=#podc> Podcast </A>
+</UL>
+
 <P><HR><P>
 
 <H3 align=center> <A NAME="maint"> Maintainer </A> </H3>
@@ -4393,7 +4405,421 @@ It doesn't address the speech adapter, or other common applications such as spre
 but it does provide a high quality text editor and a fair browser and mail client.&nbsp;
 It's a good start.
 
+<H3 align=center> <A NAME=adapt> A Linear Speech Adapter </A> </H3>
+
+There are many screen readers for many operating systems, but only one linear adapter,
+the Jupiter Speech System,
+which is available from github.
+
+<P>
+git clone https://github.com/eklhad/acsint
+
+<P>
+This is specific to Linux, and has not been ported to any other operating system.&nbsp;
+The user-space program should compile on any unix-like platform,
+but the trick is porting the device driver,
+which requires an in-depth knowledge of the OS internals.
+
+<P>
+Jupiter is unique among all adapters in that it does not (by default) transform the words or icons on the screen into speech or braille.&nbsp;
+It is not typically used as a screen reader.&nbsp;
+Yes, it is capable of reading screen memory
+and interacting with certain curses programs,
+but it typically runs in linear mode,
+capturing all tty output like a paper teletype and making it available to the blind user through speech.&nbsp;
+The buffer is 64K, and could represent several hours of work,
+depending on the nature and quantity of output during that time.&nbsp;
+Or it could represent just a few seconds of output, if a program prints "hello world" in an infinite loop.
+
+<P>
+I call this a linear adapter, rather than a screen reader,
+because it maintains a linear buffer of tty output,
+and allows the blind user to move about within this buffer and read the accumulated text.&nbsp;
+this is perfect if you spend most of your day in bash, edbrowse, sic, and other command line programs.&nbsp;
+You might wonder exactly what happened two hours ago,
+when you typed rm *.&nbsp;
+Were you in the right directory?&nbsp;
+Did you accidentally delete something important?&nbsp;
+Use the search function to find rm * in the tty log,
+then read the line before to see what directory you were in,
+then read the line after to review the computer's response,
+exactly as it took place
+two hours ago (assuming not a lot of output between then and now).
+
+<P>
+The tty buffers are maintained per console -
+thus Jupiter is most effective when combined with the 12 virtual consoles that come standard in Linux,
+accessible by alt F1 through alt F12.&nbsp;
+Switch to console 7 and you will be reading the tty buffer associated with that console,
+i.e. the output of the programs that have been run from that console.&nbsp;
+If you use screen(1) to maintain parallel sessions,
+the output of all your sessions will intermix in the tty buffer,
+and the result will be confusing.&nbsp;
+I therefore recommend 12 or 24 virtual text-based consoles
+to manage your parallel sessions.
+
+<H3 align=center> <A NAME=txt> Texting </A> </H3>
+
+My three kids are often not near their computers,
+but I like to stay in touch with them in real time,
+and texting is the perfect way to do that.&nbsp;
+We happen to be on sprint, which works really well.&nbsp;
+If my daughters number is 2485551111,
+then I text her by sending email to
+
+<P>
+2485551111@messaging.sprintpcs.com
+
+<P>
+Because of the way edbrowse works, every mail out has to have a subject,
+I just use a letter or short word.&nbsp;
+Then the body of the message, which is my text,
+but it is cut off at 120 characters, so be brief.&nbsp;
+Use sm- to supress the .signature file.&nbsp;
+It would probably be cut off anyways.
+
+<P>
+When she replies it could come from the same address,
+or sometimes from this address if she has a smart phone.
+
+<P>
+2485551111@pm.sprint.com
+
+<P>
+So these are good lines to have in your address book.
+
+<P>
+#  text to my daughter Beth and get replies therefrom
+<br>
+btxt:2485551111@messaging.sprintpcs.com
+<br>
+bpm:2485551111@pm.sprint.com
+
+<P>
+I believe AT&amp;T has a similarly easy email/texting interface.
+
+<P>
+If all you have is a cell number and don't know the carrier
+you might start with
+<A href=http://www.txtdrop.com>
+txtdrop.com</A>.&nbsp;
+It's an easy, edbrowse friendly site.&nbsp;
+If that works and they reply then you've got a handle on it.
+
+<H3 align=center> <A NAME=wifi> Setting up Wifi </A> </H3>
+
+wifi can be seriously annoying, because all the setup procedures are graphical.&nbsp;
+Select the SSID from a dropdown list, set up passwords from a screen,
+and so on.&nbsp;
+Hey, I don't even have X on my computer.&nbsp;
+What am I suppose to do?&nbsp;
+I spent two months finding a solution, and I have sort of put all my eggs
+in that basket.&nbsp;
+It's a little usb wifi stick, Ralink Tenda 2870/3070, no larger than a cigarette lighter.&nbsp;
+I have about 4 of them, and I can pop them onto any computer or laptop.&nbsp;
+I don't care what wifi device might be built into the machine; I don't use it.&nbsp;
+I don't build the linux modules for them either, only rt3070.ko.&nbsp;
+That driver comes standard with linux, but oops, it doesn't support
+any of the command line features that I want.&nbsp;
+In other words, you can't set wep or wpa passwords with command line tools.&nbsp;
+Don't ask me why?!&nbsp;
+I got the source and made a few changes,
+and it has worked for me since the 2.6 kernels, and through 3.12.&nbsp;
+You can grab
+<A href=http://www.eklhad.net/rt3070.zip>
+my Ralink source here</A>.&nbsp;
+If you have kernel sources then you can just type make to get rt3070sta.ko.&nbsp;
+Install this module and plug in the usb wifi and you have the interface ra0.&nbsp;
+Run ifconfig or iwconfig and see.
+
+<P>
+Then I have little scripts in /etc/sysconfig/network-scripts for the wifi channels I typically connect to.&nbsp;
+Here is the one for my home wifi.
+
+<P>
+#  wifi-home, connect to my home wifi
+<br>
+#  This is invoked with one argument, usually ra0
+<br>
+iwconfig $1 nick `hostname` mode managed
+<br>
+iwpriv $1 set NetworkType=Infra
+<br>
+iwpriv $1 set AuthMode=WPA2PSK
+<br>
+iwpriv $1 set EncrypType=AES
+<br>
+#  Use wpa_passphrase to build the encoded password
+<br>
+iwpriv $1 set WPAPSK=hex-encoded-password
+<br>
+iwpriv $1 set SSID="my home ssid"
+
+<P>
+Then wifi-current is just a link to wifi-home or whatever I am using.&nbsp;
+Then /sbin/ifup-local calls wifi-current on ra0.&nbsp;
+Course this part may be fedora specific.&nbsp;
+With all that in place, connect to wifi like this.
+
+<P>
+ifup ra0
+
+<P>
+And yet one time in five it does not work, I don't know why.&nbsp;
+I just wait 30 seconds,
+ifdown ra0,
+wait 30 seconds,
+ifup ra0,
+And then it usually works.&nbsp;
+On rare occasions I have had to unload and reload the module.&nbsp;
+so it's a tad finicky,
+but once connected, you're good.
+
+<P>
+In a hotel etc with my laptop I can usually bring up ra0 like I was home,
+it won't connect of course,
+but then iwlist shows me what is there, all in command mode,
+and if one of them is public then I can tweak a public wifi script
+and reconnect using that.&nbsp;
+I'm on the air through the public wifi.
+
+<H3 align=center> <A NAME=irc> IRC </A> </H3>
+
+Internet Relay Chat, or IRC,
+is a system that lets you send small text messages to other members of a group.&nbsp;
+It is a convenient way to participate in an on-line discussion forum.&nbsp;
+Of course you have to know the server and the channel,
+like calling a particular conference line for a multiwiay phone conversation.
+
+<P>
+I use a simple, command line IRC client called sic.&nbsp;
+There is one line in the original source that I changed
+to make it a little more user friendly.&nbsp;
+The line prints out date and time for every message,
+and we don't really want to read that every time.&nbsp;
+You can get my sic source
+<A href=http://www.eklhad.net/sic-1.1.tar.gz>here</A>.
+
+<P>
+If you use this program straight out of the box it can be very confusing.&nbsp;
+Suppose you are typing a message to a friend,
+and suddenly his message comes rolling
+out at you.&nbsp;
+You read it, but don't remember what you typed,
+because what you typed so far is above the message from him that you just read,
+and you are now typing the other half of your message after his message to you.&nbsp;
+It's all interleaved and very confusing.&nbsp;
+This is one time where the linear mode fails us.&nbsp;
+Of course this is nicely separated in the sighted world.&nbsp;
+They are in separate windows on the screen.&nbsp;
+You type in the bottom and incoming messages roll in at the top.&nbsp;
+I always try to simulate this separation in some other way.&nbsp;
+In this case you can separate input and output by consoles,
+but only if you know your way around linux.&nbsp;
+First make a fifo specifically for sic.
+
+<P>
+mkfifo -m 666 /etc/sicfifo
+
+<P>
+Then in your .bashrc file, have these functions
+for sic input and sic output.&nbsp;
+These tap into the Speakup group,
+which has become a more general forum for screen readers, adapters, and modified utilities.
+
+<P>
+alias sicinput="cat >/etc/sicfifo"
+<br>
+alias sicoutput="sic -h irc.freenode.net -p 6667 -n YourLogin < /etc/sicfifo"
+
+<P>
+Now do this, and no you don't need to be root.&nbsp;
+Switch to console 9 and run sicinput.&nbsp;
+Switch to console 10 and run sicoutput.&nbsp;
+Of course the latter is tailored to the server that runs the Speakup chat,
+using your login on that server.&nbsp;
+On the input side you need to enter
+
+<P>
+:m nickserv identify password
+<br>
+:j #speakup
+
+<P>
+The first authenticates you to the server, and the second joins the speakup list.&nbsp;
+Now you're in.&nbsp;
+Type your messages in on console 9, and read messages from the group on console 10.&nbsp;
+Type control D on console 9 when done.
+
+<P>
+When running sic, you always have to specify the port, even if it is the default 6667.
+
+<H3 align=center> <A NAME=mpg> Play the Music </A> </H3>
+
+If you like music as much as I do, mpg123 is the greatest thing since sliced bread,
+especially when combined with the following alias.
+
+<P>
+alias mpgplay="mpg123 -q -C"
+
+<P>
+If you have purchased all 27 Mozart piano concertos by Murray Perahia,
+perhaps the best musical investment I've ever made,
+and if they are given filenames like Moz-pc01-1.mp3,
+then you can play them all with mpgplay Moz-pc*.&nbsp;
+Sit back and revel in the music, or just let it play in the background while you do your work.&nbsp;
+I like to let this run in console 11, with console 12 reserved for superuser functions (logged in as root).&nbsp;
+Simple keystrokes let you restart the song (in this case songs are movements of concertos),
+go back a song, go forward a song, pause the music, etc.&nbsp;
+Beyond this, the author was kind enough to add a feature for me,
+wherein the music pauses when mpg123 receives a signal from another process.&nbsp;
+If your version does not have this feature,
+you can grab my source
+<A href=http://www.eklhad.net/mpgsrc.bz2>here</A>.&nbsp;
+With this in place,
+my jupiter adapter binds the three keys at the upper right of the keyboard to
+"increase volume", "decrease volume", and "pause music", just like the Mac.&nbsp;
+I can be in any console, in any application, and adjust the volume of my music,
+or pause it altogether if I have to concentrate on my work or answer the phone,
+using the three keys at the upper right.&nbsp;
+No X, no screen, just play the music and adjust it in real time.&nbsp;
+Here are the Jupiter key bindings that control the music.
+
+<P>
+sysrq | aumix -v-2
+<br>
+scroll | aumix -v+2
+<br>
+pause | killall -q -s10 mpg123
+
+<P>
+If you want to play a virtual jukebox / radio, using a smart shuffle play with memory,
+then
+<A href=http://www.eklhad.net/jbrad.pl>this perl script</A>
+may be helpful.
+
+<P>
+Edbrowse and mpg123 can play nicely together via the pb or pb.mp3 commands,
+if this is in your .ebrc file.
+
+<P>
+mime {
+<br>
+type = audio/mp3
+<br>
+desc = audio file in mp3 format
+<br>
+suffix = mp3
+<br>
+program = mpg123 -q -
+<br>
+}
+
+<H3 align=center> <A NAME=saud> Streaming Audio </A> </H3>
+
+To listen to streaming audio, or even streaming video, install mplayer on your system.&nbsp;
+This is included in some distributions, but not in others.&nbsp;
+In particular, it is not part of fedora, unless you bring in
+<A href=http://www.fclose.com/1493/mplayer-on-fedora/>
+these repositories</A>,
+and then run yum install mplayer.
+
+<P>
+The manual page for mplayer is quite long; I'm not going to describe its full functionality here.&nbsp;
+The simplest imvocation is mplayer -quiet foo.mp3.&nbsp;
+Yes, you can use it just like mpg123, but it doesn't have as many interactive features,
+such as pause via signal 10 from another process,
+so you probably want to stick with mpg123 for local music.
+
+<P>
+To play nicely with edbrowse, put something like this in your .ebrc file.
+
+<P>
+mime {
+<br>
+#  the &lt; forces it to be a stream, hence the url is passed to the program
+<br>
+type = &lt;audio/x-pn-realaudio
+<br>
+desc = streaming audio
+<br>
+suffix = rm,ra,ram,pls
+<br>
+protocol = rtsp,pnm,sdp
+<br>
+program = /usr/bin/mplayer -quiet
+<br>
+}
+
+<P>
+Here is an assortment of
+<A href=http://apps.bmcginty.hopto.org/cgi-bin/radio.cgi>
+radio stations</A>.&nbsp;
+Select one,
+and you will reach a file with just one line, the url for the station.&nbsp;
+If it presents a standard protocol such as rtsp, or a standard suffix such as .pls, then just type g for go, and listen to the music.&nbsp;
+Type q when finished.&nbsp;
+If you like the station then make it an alias, like this.
+
+<P>
+alias play70='mplayer -quiet "http://www.181.fm/tunein.pls?station=181-70s&amp;style=mp3&amp;description=Super%2070s"'
+
+<P>
+This station was selected from the aforementioned website, and it's very good.&nbsp;
+If I had to live within one decade, musically,
+I would choose the 70's hands down.&nbsp;
+From easy listening to pop to soft rock to classic rock to hard rock, and of course progressive rock,
+it's a Cambrian Explosion of talent and creativity.&nbsp;
+This station has a great variety and few commercials;
+and similarly for many other stations on the site.&nbsp;
+60's, 80's, classical, jazz, sports, even other languages,
+so enjoy.
+
+<H3 align=center> <A NAME=podc> Podcast </A> </H3>
+
+Create a directory in your home directory called .podcast,
+and within that directory create a file called pod.conf that contains the podcasts you are interested in.&nbsp;
+Each line is a url of a web page that holds current podcasts.&nbsp;
+These web pages should have a certain xml format that is machine readable.&nbsp;
+In fact they often end in .xml, rather than .html.&nbsp;
+Finding the podcast page is not always easy.&nbsp;
+Sometimes you have to roam around the website to find it.&nbsp;
+Here is my pod.conf file,
+reading podcasts from Nature and Scientific American.
+
+<P>
+www.sciam.com/podcast/sciam_podcast_r_d.xml
+<br>
+www.sciam.com/podcast/sciam_podcast_r.xml
+<br>
+rss.sciam.com/sciam/60-second-psych
+<br>
+rss.sciam.com/sciam/60-second-space
+<br>
+rss.sciam.com/sciam/60-second-tech
+<br>
+www.nature.com/nature/podcast/rss/nature.xml
+<br>
+www.nasa.gov/rss/NASAcast_podcast.rss
+
+<P>
+With this set up, I then use a bash script that I found, well, from somewhere,
+to fetch the new podcasts that I have not yet listened to.&nbsp;
+You can get the script
+<A href=http://www.eklhad.net/podgo>here</A>.
+
+<P>
+Every couple of years a website may change its files,
+establishing a new naming convention,
+and at that point all the podcasts look like they are new.&nbsp;
+The next invocation of podgo fetches them all, and it's kind of annoying.&nbsp;
+Just delete them and move on, it doesn't happen very often.
+
+<P>
+Please <A href=mailto:eklhad@gmail.com>
+send email</A> if you know of any additional command line utilities,
+or if you can offer enhancements to the above.
+
 <P>
 <A HREF=#top>Back to top</A>
-
 </BODY></font>

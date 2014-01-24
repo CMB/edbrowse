@@ -1661,7 +1661,7 @@ pluginCommand(const struct MIMETYPE *m, const char *file, const char *suffix)
     char *cmd, *t;
     eb_bool trailPercent = eb_false;
 
-/* leave rooom for space quote quote null */
+/* leave room for space quote quote null */
     len = strlen(m->program) + 4;
     if(file) {
 	len += strlen(file);

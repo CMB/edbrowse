@@ -679,6 +679,7 @@ htmlInput(void)
 	n = INP_BUTTON;
     }
 
+    nzFree(s);
     topTag->itype = n;
 
     if(htmlAttrPresent(topAttrib, "readonly"))
@@ -1846,6 +1847,8 @@ encodeTags(char *html)
  * You can turn this feature off, but I don't think you'd want to. */
 		if(a = htmlAttrVal(topAttrib, "alt"))
 		    stringAndString(&new, &l, a);
+		nzFree(a);
+		a = NULL;
 		continue;
 	    }
 	    if(!retainTag)
@@ -2032,6 +2035,7 @@ encodeTags(char *html)
 		goto next_onload;
 	    jsrc = htmlAttrVal(t->attrib, "onunload");
 	    onloadGo(ev, jsrc, t->info->name);
+	    nzFree(jsrc);
 
 	  next_onload:
 	    if(t == lasttag)
