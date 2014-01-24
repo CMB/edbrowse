@@ -8,19 +8,11 @@
  * ftp://ftp.mozilla.org/pub/mozilla.org/js/js-1.5.tar.gz
 */
 
-#include <string>
+#include <sstream>
 #include "eb.h"
 
 #include "js.h"
 using namespace std;
-
-/* jsprf.h is not publically visible on some systems,
-so I can't #include it here.
-Instead, I'll declare the needed prototype myself, and hope it is consistent
-with whatever smjs you are using. */
-extern
-JS_PUBLIC_API(char *)
-JS_smprintf(const char *fmt, ...);
 
 #define PROP_FIXED (JSPROP_ENUMERATE|JSPROP_READONLY|JSPROP_PERMANENT)
 
@@ -40,8 +32,7 @@ static jsval emptyArgs[] = { jsval() };
 static void
 my_ErrorReporter(JSContext * cx, const char *message, JSErrorReport * report)
 {
-    char *prefix, *tmp;
-
+stringstream prefix(stringstream::in | stringstream::out);
     if(debugLevel < 2)
 	goto done;
     if(ismc)
@@ -58,31 +49,16 @@ my_ErrorReporter(JSContext * cx, const char *message, JSErrorReport * report)
 	    goto done;
     }
 
-    prefix = NULL;
     if(report->filename)
-	prefix = JS_smprintf("%s:", report->filename);
-    if(report->lineno) {
-	tmp = prefix;
-	prefix = JS_smprintf("%s%u: ", tmp ? tmp : "", report->lineno);
-	if(tmp)
-	    JS_free(cx, tmp);
-    }
-    if(JSREPORT_IS_WARNING(report->flags)) {
-	tmp = prefix;
-	prefix = JS_smprintf("%s%swarning: ",
-	   tmp ? tmp : "", JSREPORT_IS_STRICT(report->flags) ? "strict " : "");
-	if(tmp)
-	    JS_free(cx, tmp);
-    }
-
-    if(prefix)
-	fputs(prefix, gErrFile);
-    fprintf(gErrFile, "%s\n", message);
-
-    if(prefix)
-	JS_free(cx, prefix);
+	prefix << report->filename << ":";
+    if(report->lineno)
+prefix << report->lineno << ": ";
+    if(JSREPORT_IS_WARNING(report->flags))
+	prefix << (JSREPORT_IS_STRICT(report->flags) ? "strict " : "") << "warning: ";
+    fprintf(gErrFile, "%s%s\n", prefix.str().c_str(), message);
 
   done:
+if (report)
     report->flags = 0;
 }				/* my_ErrorReporter */
 
