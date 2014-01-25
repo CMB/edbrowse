@@ -316,6 +316,11 @@ Thus the following definitions.
 (e) != (void*)&(l); \
 (e) = ((struct listHead *)e)->prev)
 
+/* Forward declaration, real declaration in js.h. */
+    struct ebWindowJSState;
+/* Another forward declaration, opaque outside html.c. */
+struct htmlTag;
+
 /* an edbrowse window */
     struct ebWindow {
 /* windows stack up as you open new files or follow hyperlinks.
@@ -355,10 +360,9 @@ Thus the following definitions.
 	eb_bool sqlMode;	/* accessing a table */
 	char *dw;		/* document.write string */
 	int dw_l;		/* length of the above */
-	void *tags;		/* array of html tags, when browsing */
+	struct htmlTag **tags;		/* array of html tags, when browsing */
+	struct ebWindowJSState *jss;
 	IP32bit *iplist;	/* ip addresses referenced by this page */
-	void *jsc;		/* js context, if in browse mode, and running javascript */
-	void *jsw;		/* js global window object if we have a js context */
 	struct DBTABLE *table;	/* if in sqlMode */
     };
     extern struct ebWindow *cw;	/* current window */
@@ -369,14 +373,6 @@ Thus the following definitions.
     };
     extern struct ebSession sessionList[];
     extern struct ebSession *cs;	/* current session */
-
-
-/* A few global variables that point to java objects.
- * These are blind pointers, so we can encapsulate all the javascript. */
-
-    extern void *jwin;		/* javascript window object */
-    extern void *jdoc;		/* javascript document object */
-
 
 /* function prototypes */
 #include "eb.p"

@@ -15,18 +15,23 @@
 #endif
 /* now we can include our jsapi */
 #include <jsapi.h>
+
+typedef JS::Heap<JSObject *> HeapRootedObject;
+
+struct ebWindowJSState {
+    JSContext *jcx;		/* javascript context */
+    HeapRootedObject  jwin;		/* Window (AKA the global object) */
+    HeapRootedObject  jdoc;		/* document object */
+    HeapRootedObject jwloc;		/* javascript window.location */
+    HeapRootedObject jdloc;		/* javascript document.location */
+    HeapRootedObject uo;			/* javascript url object. */
+};
+
 /* globals */
 extern JSRuntime *jrt; /* javascript runtime */
 extern JSContext *jcx;		/* javascript context */
-extern JSObject *jwloc;		/* javascript window.location */
-extern JSObject *jdloc;		/* javascript document.location */
 
 /* Prototypes of functions that are only used by the javascript layer. */
 /* These can refer to javascript types in the javascript api. */
-JSString * our_JS_NewStringCopyN(JSContext * cx, const char *s, size_t n) ;
-JSString * our_JS_NewStringCopyZ(JSContext * cx, const char *s) ;
-char * our_JSEncodeString(JSString *str) ;
-const char * stringize(jsval v) ;
-void initLocationClass(void) ;
-
+#include "ebjs.p"
 #endif

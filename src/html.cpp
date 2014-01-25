@@ -5,6 +5,7 @@
  */
 
 #include "eb.h"
+#include "js.h"
 
 /* Close an open anchor when you see this tag. */
 #define TAG_CLOSEA 1
@@ -68,7 +69,7 @@ buildTagArray(void)
 	return;
     if(tagArray)
 	nzFree(tagArray);
-    tagArray = allocMem(sizeof (struct htmlTag *) * ((ntags + 32) & ~31));
+    tagArray = (struct htmlTag **) allocMem(sizeof (struct htmlTag *) * ((ntags + 32) & ~31));
     cw->tags = tagArray;
     foreach(t, htmlStack)
        tagArray[j++] = t;
@@ -230,7 +231,7 @@ static const struct tagInfo elements[] = {
 
 struct htmlTag {
     struct htmlTag *next, *prev;
-    void *jv;			/* corresponding java variable */
+    HeapRootedObject jv;			/* corresponding java variable */
     int seqno;
     int ln;			/* line number */
     int lic;			/* list item count, highly overloaded */
@@ -278,11 +279,12 @@ freeTag(struct htmlTag *e)
     nzFree(e->id);
     nzFree(e->value);
     nzFree(e->href);
+    e->jv.~HeapRootedObject();
     free(e);
 }				/* freeTag */
 
 void
-freeTags(void *a)
+freeTags(struct htmlTag **a)
 {
     int n;
     struct ebWindow *w;
@@ -320,7 +322,8 @@ freeTags(void *a)
 static void
 get_js_event(const char *name)
 {
-    void *ev = topTag->jv;
+    JSAutoCompartment ac(jcx, cw->jss->jwin);
+    JS::RootedObject ev(jcx, topTag->jv);
     char *s;
 
     int action = topTag->action;
@@ -365,7 +368,8 @@ static eb_bool strayClick;
 static void
 get_js_events(void)
 {
-    void *ev = topTag->jv;
+    JSAutoCompartment ac(jcx, cw->jss->jwin);
+    JS::RootedObject ev(jcx, topTag->jv);
     int j;
     const char *t;
     int action = topTag->action;
@@ -401,7 +405,7 @@ get_js_events(void)
 eb_bool
 tagHandler(int seqno, const char *name)
 {
-    const struct htmlTag **list = cw->tags;
+    struct htmlTag **list = cw->tags;
     const struct htmlTag *t = list[seqno];
     return t->handler | handlerPresent(t->jv, name);
 }				/* tagHandler */
@@ -412,7 +416,7 @@ getBaseHref(int n)
     const struct htmlTag *t, **list;
     if(parsePage)
 	return basehref;
-    list = cw->tags;
+    list = (const struct htmlTag **) cw->tags;
     if(n < 0) {
 	for(n = 0; list[n]; ++n) ;
     }
@@ -428,7 +432,8 @@ htmlMeta(void)
 {
     char *name, *content, *heq;
     char **ptr;
-    void *e;
+    JS::RootedObject e(jcx);
+    JS::RootedObject jdoc(jcx, cw->jss->jdoc);
 
     topTag->jv = e =
        domLink("Meta", topTag->name, topTag->id, 0, 0, "metas", jdoc, eb_false);
@@ -519,13 +524,15 @@ htmlHref(const char *desc)
 static void
 formControl(eb_bool namecheck)
 {
-    void *fo = 0;		/* form object */
-    void *e;			/* the new element */
+    JSAutoCompartment ac(jcx, cw->jss->jwin);
+    JS::RootedObject fo(jcx, NULL);
+    JS::RootedObject e(jcx);			/* the new element */
     const char *typedesc;
     int itype = topTag->itype;
     int isradio = itype == INP_RADIO;
     int isselect = (itype == INP_SELECT) * 2;
     char *myname = (topTag->name ? topTag->name : topTag->id);
+    JS::RootedObject jdoc(jcx, cw->jss->jdoc);
 
     if(currentForm) {
 	topTag->controller = currentForm;
@@ -573,6 +580,7 @@ static void
 htmlImage(void)
 {
     char *a;
+    JS::RootedObject jdoc(jcx, cw->jss->jdoc);
     htmlHref("src");
     topTag->jv =
        domLink("Image", topTag->name, topTag->id, "src", topTag->href,
@@ -590,8 +598,10 @@ htmlImage(void)
 static void
 htmlForm(void)
 {
+    JSAutoCompartment ac(jcx, cw->jss->jwin);
     char *a;
-    void *fv;			/* form variable in javascript */
+    JS::RootedObject fv(jcx, NULL);			/* form variable in javascript */
+    JS::RootedObject jdoc(jcx, cw->jss->jdoc);
 
     if(topTag->slash)
 	return;
@@ -722,7 +732,7 @@ htmlInput(void)
 static void
 makeButton(void)
 {
-    struct htmlTag *t = allocZeroMem(sizeof (struct htmlTag));
+    struct htmlTag *t = (struct htmlTag *) allocZeroMem(sizeof (struct htmlTag));
     addToListBack(&htmlStack, t);
     t->seqno = ntags++;
     t->info = elements + 2;
@@ -736,19 +746,19 @@ static char *
 displayOptions(const struct htmlTag *sel)
 {
     const struct htmlTag *t;
-    char *new;
+    char *outstr;
     int l;
-    new = initString(&l);
+    outstr = initString(&l);
     foreach(t, htmlStack) {
 	if(t->controller != sel)
 	    continue;
 	if(!t->checked)
 	    continue;
 	if(l)
-	    stringAndChar(&new, &l, ',');
-	stringAndString(&new, &l, t->name);
+	    stringAndChar(&outstr, &l, ',');
+	stringAndString(&outstr, &l, t->name);
     }
-    return new;
+    return outstr;
 }				/* displayOptions */
 
 static struct htmlTag *
@@ -807,7 +817,8 @@ locateOptions(const struct htmlTag *sel, const char *input,
     char *display = 0, *value = 0;
     int disp_l, val_l;
     int len = strlen(input);
-    void *ev = sel->jv;
+    JSAutoCompartment ac(jcx, cw->jss->jwin);
+    JS::RootedObject ev(jcx, sel->jv);
     int n, pmc, cnt;
     const char *s, *e;		/* start and end of an option */
     char *iopt;			/* individual option */
@@ -816,7 +827,7 @@ locateOptions(const struct htmlTag *sel, const char *input,
 	display = initString(&disp_l);
     if(val_p)
 	value = initString(&val_l);
-    iopt = allocMem(len + 1);
+    iopt = (char *) allocMem(len + 1);
 
     if(setcheck) {
 /* Uncheck all existing options, then check the ones selected. */
@@ -916,7 +927,8 @@ void
 jSyncup(void)
 {
     const struct htmlTag *t, **list;
-    void *eo;			/* element object */
+    JSAutoCompartment ac(jcx, cw->jss->jwin);
+    JS::RootedObject eo(jcx, NULL);			/* element object */
     int itype, j, cx;
     char *value, *cxbuf;
 
@@ -929,7 +941,7 @@ jSyncup(void)
     jMyContext();
     buildTagArray();
 
-    list = cw->tags;
+    list = (const struct htmlTag **) cw->tags;
     while(t = *list++) {
 	if(t->action != TAGACT_INPUT)
 	    continue;
@@ -1038,7 +1050,7 @@ newTag(const char *name)
     if(!ti->name)
 	return 0;
     action = ti->action;
-    t = allocZeroMem(sizeof (struct htmlTag));
+    t = (struct htmlTag *) allocZeroMem(sizeof (struct htmlTag));
     t->action = action;
     t->info = ti;
     t->seqno = ntags++;
@@ -1050,8 +1062,9 @@ newTag(const char *name)
 }				/* newTag */
 
 static void
-onloadGo(void *obj, const char *jsrc, const char *tagname)
+onloadGo(JS::HandleObject obj, const char *jsrc, const char *tagname)
 {
+    JSAutoCompartment ac(jcx, cw->jss->jwin);
     struct htmlTag *t;
     char buf[32];
 
@@ -1111,7 +1124,7 @@ encodeTags(char *html)
     char *save_h;
     char *h = html;
     char *a;			/* for a specific attribute */
-    char *new;			/* the new string */
+    char *newstr;			/* the new string */
     char *javatext;
     int js_nl;			/* number of newlines in javascript */
     const char *name, *attrib, *end;
@@ -1138,14 +1151,17 @@ encodeTags(char *html)
     int nopt;			/* number of options */
     int intable = 0, inrow = 0;
     eb_bool tdfirst;
-    void *to;			/* table object */
-    void *ev;			/* generic event variable */
+    JS::RootedObject to(jcx, NULL);			/* table object */
+    JSAutoCompartment ac(jcx, cw->jss->jwin);
+    JS::RootedObject ev(jcx, NULL);			/* generic event variable */
+    JS::RootedObject jwin(jcx, cw->jss->jwin);
+    JS::RootedObject jdoc(jcx, cw->jss->jdoc);
 
     currentA = currentForm = currentSel = currentOpt = currentTitle =
        currentTA = 0;
     initList(&htmlStack);
     tagArray = 0;
-    new = initString(&l);
+    newstr = initString(&l);
     preamble = 0;
     ntags = 0;
 
@@ -1169,7 +1185,7 @@ encodeTags(char *html)
 		}
 		if(lastact == TAGACT_TD && c == ' ')
 		    goto nextchar;
-		stringAndChar(&new, &l, c);
+		stringAndChar(&newstr, &l, c);
 		if(!isspaceByte(c)) {
 		    a_text = eb_true;
 		    lastact = 0;
@@ -1222,7 +1238,7 @@ encodeTags(char *html)
 	    currentTA->action = TAGACT_INPUT;
 	    currentTA->itype = INP_TA;
 	    currentTA->balanced = eb_true;
-	    s = currentTA->value = andTranslate(new + offset, eb_true);
+	    s = currentTA->value = andTranslate(newstr + offset, eb_true);
 /* Text starts at the next line boundary */
 	    while(*s == '\t' || *s == ' ')
 		++s;
@@ -1245,16 +1261,16 @@ encodeTags(char *html)
 		establish_property_string(currentTA->jv, dfvl, currentTA->value,
 		   eb_true);
 	    }
-	    l -= strlen(new + offset);
-	    new[offset] = 0;
+	    l -= strlen(newstr + offset);
+	    newstr[offset] = 0;
 	    j = sideBuffer(0, currentTA->value, -1, 0, eb_false);
 	    if(j) {
 		currentTA->lic = j;
 		sprintf(hnum, "%c%d<buffer %d%c0>",
 		   InternalCodeChar, currentTA->seqno, j, InternalCodeChar);
-		stringAndString(&new, &l, hnum);
+		stringAndString(&newstr, &l, hnum);
 	    } else
-		stringAndString(&new, &l, "<buffer ?>");
+		stringAndString(&newstr, &l, "<buffer ?>");
 	    currentTA = 0;
 	    if(slash)
 		continue;
@@ -1264,7 +1280,7 @@ encodeTags(char *html)
 	if(!action)
 	    continue;		/* tag not recognized */
 
-	topTag = t = allocZeroMem(sizeof (struct htmlTag));
+	topTag = t = (struct htmlTag *) allocZeroMem(sizeof (struct htmlTag));
 	addToListBack(&htmlStack, t);
 	t->seqno = ntags;
 	sprintf(hnum, "%c%d", InternalCodeChar, ntags);
@@ -1304,8 +1320,8 @@ encodeTags(char *html)
 	       ti->bits & TAG_CLOSEA && (a_text || action <= TAGACT_OPTION)) {
 		browseError(MSG_InAnchor, ti->desc);
 	      forceCloseAnchor:
-		stringAndChar(&new, &l, InternalCodeChar);
-		stringAndString(&new, &l, "0}");
+		stringAndChar(&newstr, &l, InternalCodeChar);
+		stringAndString(&newstr, &l, "0}");
 		currentA->balanced = eb_true;
 		currentA = 0;
 /* if/when the </a> comes along, it will be unbalanced, and we'll ignore it. */
@@ -1342,7 +1358,7 @@ encodeTags(char *html)
 		ptr = &v->name;
 
 	    if(ptr) {
-		a = andTranslate(new + offset, eb_true);
+		a = andTranslate(newstr + offset, eb_true);
 		stripWhite(a);
 		if(currentOpt && strchr(a, ',') && currentSel->multiple) {
 		    char *y;
@@ -1368,7 +1384,7 @@ encodeTags(char *html)
 		    }
 
 		    if(ev = currentSel->jv) {	/* element variable */
-			void *ov = establish_js_option(ev, v->lic);
+			JS::RootedObject ov(jcx, establish_js_option(ev, v->lic));
 			v->jv = ov;
 			establish_property_string(ov, "text", v->name, eb_true);
 			establish_property_string(ov, "value", v->value, eb_true);
@@ -1384,13 +1400,13 @@ encodeTags(char *html)
 		}		/* option */
 	    }
 	    /* ptr is nonzero */
-	    l -= strlen(new + offset);
-	    new[offset] = 0;
+	    l -= strlen(newstr + offset);
+	    newstr[offset] = 0;
 	    currentTitle = currentOpt = 0;
 	}
 
 /* Generate an html label for this tag if necessary. */
-	htmlLabelID(&new, &l);
+	htmlLabelID(&newstr, &l);
 
 	switch (action) {
 	case TAGACT_INPUT:
@@ -1406,24 +1422,24 @@ encodeTags(char *html)
 		    currentForm->submitted = eb_true;
 	    }
 	    strcat(hnum, "<");
-	    stringAndString(&new, &l, hnum);
+	    stringAndString(&newstr, &l, hnum);
 	    if(t->itype < INP_RADIO) {
 		if(t->value[0])
-		    stringAndString(&new, &l, t->value);
+		    stringAndString(&newstr, &l, t->value);
 		else if(t->itype == INP_SUBMIT || t->itype == INP_IMAGE)
-		    stringAndString(&new, &l, "Go");
+		    stringAndString(&newstr, &l, "Go");
 		else if(t->itype == INP_RESET)
-		    stringAndString(&new, &l, "Reset");
+		    stringAndString(&newstr, &l, "Reset");
 	    } else
-		stringAndChar(&new, &l, t->checked ? '+' : '-');
+		stringAndChar(&newstr, &l, t->checked ? '+' : '-');
 	    if(currentForm && (t->itype == INP_SUBMIT || t->itype == INP_IMAGE)) {
 		if(currentForm->secure)
-		    stringAndString(&new, &l, " secure");
+		    stringAndString(&newstr, &l, " secure");
 		if(currentForm->bymail)
-		    stringAndString(&new, &l, " bymail");
+		    stringAndString(&newstr, &l, " bymail");
 	    }
-	    stringAndChar(&new, &l, InternalCodeChar);
-	    stringAndString(&new, &l, "0>");
+	    stringAndChar(&newstr, &l, InternalCodeChar);
+	    stringAndString(&newstr, &l, "0>");
 	    goto endtag;
 
 	case TAGACT_TITLE:
@@ -1531,7 +1547,7 @@ encodeTags(char *html)
 		strcat(hnum, "* ");
 	    if(j > 0)
 		sprintf(hnum + 1, "%d. ", j);
-	    stringAndString(&new, &l, hnum);
+	    stringAndString(&newstr, &l, hnum);
 	    continue;
 
 	case TAGACT_DT:
@@ -1593,10 +1609,10 @@ encodeTags(char *html)
 	    if(tdfirst)
 		tdfirst = eb_false;
 	    else if(retainTag) {
-		while(l && new[l - 1] == ' ')
+		while(l && newstr[l - 1] == ' ')
 		    --l;
-		new[l] = 0;
-		stringAndChar(&new, &l, '|');
+		newstr[l] = 0;
+		stringAndChar(&newstr, &l, '|');
 	    }
 	    if((open = findOpenTag("tr")) && open->jv) {
 		topTag->jv = to =
@@ -1660,7 +1676,7 @@ encodeTags(char *html)
 	    }
 	    if(currentA)
 		c = ' ';
-	    stringAndChar(&new, &l, c);
+	    stringAndChar(&newstr, &l, c);
 	    goto endtag;
 
 	case TAGACT_FORM:
@@ -1675,10 +1691,10 @@ encodeTags(char *html)
 		    currentSel->retain = eb_true;
 /* Crank out the input tag */
 		    sprintf(hnum, "%c%d<", InternalCodeChar, currentSel->seqno);
-		    stringAndString(&new, &l, hnum);
-		    stringAndString(&new, &l, a);
-		    stringAndChar(&new, &l, InternalCodeChar);
-		    stringAndString(&new, &l, "0>");
+		    stringAndString(&newstr, &l, hnum);
+		    stringAndString(&newstr, &l, a);
+		    stringAndChar(&newstr, &l, InternalCodeChar);
+		    stringAndString(&newstr, &l, "0>");
 		}
 		currentSel = 0;
 	    }
@@ -1686,14 +1702,14 @@ encodeTags(char *html)
 		if(retainTag && currentForm->href && !currentForm->submitted) {
 		    makeButton();
 		    sprintf(hnum, " %c%d<Go", InternalCodeChar, ntags - 1);
-		    stringAndString(&new, &l, hnum);
+		    stringAndString(&newstr, &l, hnum);
 		    if(currentForm->secure)
-			stringAndString(&new, &l, " secure");
+			stringAndString(&newstr, &l, " secure");
 		    if(currentForm->bymail)
-			stringAndString(&new, &l, " bymail");
-		    stringAndString(&new, &l, " implicit");
-		    stringAndChar(&new, &l, InternalCodeChar);
-		    stringAndString(&new, &l, "0>");
+			stringAndString(&newstr, &l, " bymail");
+		    stringAndString(&newstr, &l, " implicit");
+		    stringAndChar(&newstr, &l, InternalCodeChar);
+		    stringAndString(&newstr, &l, "0>");
 		}
 		currentForm = 0;
 	    }
@@ -1738,7 +1754,7 @@ encodeTags(char *html)
 	case TAGACT_HR:
 	    if(!retainTag)
 		continue;
-	    stringAndString(&new, &l,
+	    stringAndString(&newstr, &l,
 	       "\r--------------------------------------------------------------------------------\r");
 	    continue;
 
@@ -1751,11 +1767,11 @@ encodeTags(char *html)
 	    j = (action == TAGACT_SUP ? 2 : 1);
 	    if(!slash) {
 		t->lic = l;
-		stringAndString(&new, &l, (j == 2 ? "^(" : "["));
+		stringAndString(&newstr, &l, (j == 2 ? "^(" : "["));
 		continue;
 	    }
 /* backup, and see if we can get rid of the parentheses or brackets */
-	    a = new + open->lic + j;
+	    a = newstr + open->lic + j;
 	    if(j == 2 && isalphaByte(*a) && !a[1])
 		goto unparen;
 	    if(j == 2 && isalnumByte(a[-3]) && (stringEqual(a, "th") ||
@@ -1769,15 +1785,15 @@ encodeTags(char *html)
 		++a;
 	    if(!*a)
 		goto unparen;
-	    stringAndChar(&new, &l, (j == 2 ? ')' : ']'));
+	    stringAndChar(&newstr, &l, (j == 2 ? ')' : ']'));
 	    continue;
 /* ok, we can trash the original ( or [ */
 	  unparen:
-	    a = new + open->lic + j - 1;
+	    a = newstr + open->lic + j - 1;
 	    strmove(a, a + 1);
 	    --l;
 	    if(j == 2)
-		stringAndChar(&new, &l, ' ');
+		stringAndChar(&newstr, &l, ' ');
 	    continue;
 
 	case TAGACT_AREA:
@@ -1797,7 +1813,7 @@ encodeTags(char *html)
 	    get_js_events();
 	    if(!retainTag)
 		continue;
-	    stringAndString(&new, &l,
+	    stringAndString(&newstr, &l,
 	       action == TAGACT_FRAME ? "\rFrame " : "\r");
 	    name = t->name;
 	    if(!name)
@@ -1806,17 +1822,17 @@ encodeTags(char *html)
 		name = (action == TAGACT_FRAME ? "???" : "area");
 	    if(t->href) {
 		strcat(hnum, "{");
-		stringAndString(&new, &l, hnum);
+		stringAndString(&newstr, &l, hnum);
 		t->action = TAGACT_A;
 		t->balanced = eb_true;
 	    }
 	    if(t->href || action == TAGACT_FRAME)
-		stringAndString(&new, &l, name);
+		stringAndString(&newstr, &l, name);
 	    if(t->href) {
-		stringAndChar(&new, &l, InternalCodeChar);
-		stringAndString(&new, &l, "0}");
+		stringAndChar(&newstr, &l, InternalCodeChar);
+		stringAndString(&newstr, &l, "0}");
 	    }
-	    stringAndChar(&new, &l, '\r');
+	    stringAndChar(&newstr, &l, '\r');
 	    continue;
 
 	case TAGACT_MUSIC:
@@ -1846,7 +1862,7 @@ encodeTags(char *html)
  * to put in an alt tag, then it's worth reading.
  * You can turn this feature off, but I don't think you'd want to. */
 		if(a = htmlAttrVal(topAttrib, "alt"))
-		    stringAndString(&new, &l, a);
+		    stringAndString(&newstr, &l, a);
 		nzFree(a);
 		a = NULL;
 		continue;
@@ -1869,7 +1885,7 @@ encodeTags(char *html)
 		s = altText(t->href);
 	    if(!s)
 		s = "image";
-	    stringAndString(&new, &l, s);
+	    stringAndString(&newstr, &l, s);
 	    a_text = eb_true;
 	    continue;
 
@@ -1950,7 +1966,7 @@ encodeTags(char *html)
 			debugPrint(4, "<<\n%s\n>>", cw->dw + 10);
 			stringAndString(&cw->dw, &cw->dw_l, "</docwrite>");
 			afterlen = strlen(h) + strlen(cw->dw);
-			after = allocMem(afterlen + 1);
+			after = (char *) allocMem(afterlen + 1);
 			strcpy(after, cw->dw);
 			strcat(after, h);
 			nzFree(cw->dw);
@@ -1997,7 +2013,7 @@ encodeTags(char *html)
 	    else
 		hnum[0] = 0;
 	}
-	stringAndString(&new, &l, hnum);
+	stringAndString(&newstr, &l, hnum);
       endtag:
 	lastact = action;
 	if(strayClick) {
@@ -2006,13 +2022,13 @@ encodeTags(char *html)
 	    topTag->href = cloneString("#");
 	    currentA = topTag;
 	    sprintf(hnum, "%c%d{", InternalCodeChar, topTag->seqno);
-	    stringAndString(&new, &l, hnum);
+	    stringAndString(&newstr, &l, hnum);
 	}
     }				/* loop over html string */
 
     if(currentA) {
-	stringAndChar(&new, &l, InternalCodeChar);
-	stringAndString(&new, &l, "0}");
+	stringAndChar(&newstr, &l, InternalCodeChar);
+	stringAndString(&newstr, &l, "0}");
 	currentA = 0;
     }
 
@@ -2022,7 +2038,7 @@ encodeTags(char *html)
 	const struct htmlTag *lasttag;
 	onloadGo(jwin, 0, "window");
 	onloadGo(jdoc, 0, "document");
-	lasttag = htmlStack.prev;
+	lasttag = (const struct htmlTag *) htmlStack.prev;
 	foreach(t, htmlStack) {
 	    char *jsrc;
 	    ev = t->jv;
@@ -2094,17 +2110,17 @@ encodeTags(char *html)
     radioChecked = 0;
     basehref = 0;
     if(preamble) {
-	h = allocMem(preamble_l + l + 2);
+	h = (char *) allocMem(preamble_l + l + 2);
 	strcpy(h, preamble);
 	h[preamble_l] = '\f';
-	strcpy(h + preamble_l + 1, new);
+	strcpy(h + preamble_l + 1, newstr);
 	nzFree(preamble);
 	preamble = 0;
-	nzFree(new);
-	new = h;
+	nzFree(newstr);
+	newstr = h;
     }
 
-    return new;
+    return newstr;
 }				/* encodeTags */
 
 void
@@ -2156,9 +2172,9 @@ htmlParse(char *buf, int remote)
 
 void
 findField(const char *line, int ftype, int n,
-   int *total, int *realtotal, int *tagno, char **href, void **evp)
+   int *total, int *realtotal, int *tagno, char **href, const struct htmlTag **tagp)
 {
-    const struct htmlTag *t, **list = cw->tags;
+    const struct htmlTag *t, **list = (const struct htmlTag **) cw->tags;
     int nt = 0;			/* number of fields total */
     int nrt = 0;		/* the real total, for input fields */
     int nm = 0;			/* number match */
@@ -2171,8 +2187,8 @@ findField(const char *line, int ftype, int n,
 
     if(href)
 	*href = 0;
-    if(evp)
-	*evp = 0;
+    if(tagp)
+	*tagp = 0;
 
     if(cw->browseMode) {
 	s = line;
@@ -2229,8 +2245,8 @@ findField(const char *line, int ftype, int n,
 	t = list[nm];
 	if(href)
 	    *href = cloneString(t->href);
-	if(evp)
-	    *evp = t->jv;
+	if(tagp)
+	    *tagp = t;
 	if(href && t->jv) {
 /* defer to the java variable for the reference */
 	    char *jh = get_property_url(t->jv, eb_false);
@@ -2310,7 +2326,7 @@ findInputField(const char *line, int ftype, int n, int *total, int *realtotal,
 eb_bool
 lineHasTag(const char *p, const char *s)
 {
-    const struct htmlTag *t, **list = cw->tags;
+    const struct htmlTag *t, **list = (const struct htmlTag **) cw->tags;
     char c;
     int j;
     while((c = *p++) != '\n') {
@@ -2411,7 +2427,7 @@ htmlTest(void)
 void
 infShow(int tagno, const char *search)
 {
-    const struct htmlTag **list = cw->tags;
+    const struct htmlTag **list = (const struct htmlTag **) cw->tags;
     const struct htmlTag *t = list[tagno], *v;
     const char *s;
     int j, cnt;
@@ -2472,7 +2488,7 @@ infShow(int tagno, const char *search)
 eb_bool
 infReplace(int tagno, const char *newtext, int notify)
 {
-    const struct htmlTag **list = cw->tags;
+    const struct htmlTag **list = (const struct htmlTag **) cw->tags;
     const struct htmlTag *t = list[tagno], *v;
     const struct htmlTag *form = t->controller;
     char *display;
@@ -2614,7 +2630,7 @@ resetVar(struct htmlTag *t)
     int itype = t->itype;
     const char *w = t->value;
     eb_bool bval;
-    void *jv = t->jv;
+    JS::RootedObject jv(jcx,  t->jv);
 
 /* This is a kludge - option looks like INP_SELECT */
     if(t->action == TAGACT_OPTION)
@@ -2694,7 +2710,8 @@ formReset(const struct htmlTag *form)
 static char *
 fetchTextVar(const struct htmlTag *t)
 {
-    void *jv = t->jv;
+    JSAutoCompartment ac(jcx, cw->jss->jwin);
+    JS::RootedObject jv(jcx, t->jv);
     char *v;
     if(jv) {
 	return get_property_string(jv, "value");
@@ -2711,7 +2728,8 @@ fetchTextVar(const struct htmlTag *t)
 static eb_bool
 fetchBoolVar(const struct htmlTag *t)
 {
-    void *jv = t->jv;
+    JSAutoCompartment ac(jcx, cw->jss->jwin);
+    JS::RootedObject jv(jcx, t->jv);
     int checked;
     if(jv) {
 	return get_property_bool(jv,
@@ -2830,10 +2848,12 @@ static eb_bool
 formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
    char **post, int *l)
 {
-    const struct htmlTag **list = cw->tags, *t;
+    const struct htmlTag **list = (const struct htmlTag **) cw->tags, *t;
     int itype;
     int j;
-    char *name, *value;
+    char *name, *dynamicvalue = NULL;
+    const char *value;
+/* dynamicvalue needs to be freed with nzFree. */
     const char *boundary;
     char fsep = '&';		/* field separator */
     eb_bool noname = eb_false, rc;
@@ -2870,7 +2890,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 	    if(t->itype != INP_IMAGE)
 		goto success;
 	    namelen = strlen(name);
-	    nx = allocMem(namelen + 3);
+	    nx = (char *) allocMem(namelen + 3);
 	    strcpy(nx, name);
 	    strcpy(nx + namelen, ".x");
 	    postNameVal(nx, "0", fsep, eb_false, boundary, post, l);
@@ -2899,9 +2919,10 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
  * fetchTextVar allows for this possibility.
  * I didn't allow for it in the above, the value of a radio button;
  * hope that's not a problem. */
-	    value = fetchTextVar(t);
-	    postNameVal(name, value, fsep, eb_false, boundary, post, l);
-	    nzFree(value);
+	    dynamicvalue = fetchTextVar(t);
+	    postNameVal(name, dynamicvalue, fsep, eb_false, boundary, post, l);
+	    nzFree(dynamicvalue);
+	    dynamicvalue = NULL;
 	    continue;
 	}
 
@@ -2955,18 +2976,18 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 			v->checked = v->rchecked;
 		display = displayOptions(t);
 	    }
-	    rc = locateOptions(t, display, 0, &value, eb_false);
+	    rc = locateOptions(t, display, 0, &dynamicvalue, eb_false);
 	    nzFree(display);
 	    if(!rc)
 		goto fail;	/* this should never happen */
 /* option could have an empty value, usually the null choice,
  * before you have made a selection. */
-	    if(!*value) {
-		postNameVal(name, value, fsep, eb_false, boundary, post, l);
+	    if(!*dynamicvalue) {
+		postNameVal(name, dynamicvalue, fsep, eb_false, boundary, post, l);
 		continue;
 	    }
 /* Step through the options */
-	    for(s = value; *s; s = e) {
+	    for(s = dynamicvalue; *s; s = e) {
 		char more;
 		e = 0;
 		if(t->multiple)
@@ -2978,23 +2999,25 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 		if(more)
 		    ++e;
 	    }
-	    nzFree(value);
+	    nzFree(dynamicvalue);
+	    dynamicvalue = NULL;
 	    continue;
 	}
 
 	if(itype == INP_FILE) {	/* the only one left */
-	    value = fetchTextVar(t);
-	    if(!value)
+	    dynamicvalue = fetchTextVar(t);
+	    if(!dynamicvalue)
 		continue;
-	    if(!*value)
+	    if(!*dynamicvalue)
 		continue;
 	    if(!(form->post & form->mime)) {
 		setError(MSG_FilePost);
-		nzFree(value);
+		nzFree(dynamicvalue);
 		goto fail;
 	    }
-	    rc = postNameVal(name, value, fsep, 3, boundary, post, l);
-	    nzFree(value);
+	    rc = postNameVal(name, dynamicvalue, fsep, 3, boundary, post, l);
+	    nzFree(dynamicvalue);
+	    dynamicvalue = NULL;
 	    if(rc)
 		continue;
 	    goto fail;
@@ -3220,7 +3243,7 @@ infPush(int tagno, char **post_string)
 	    newlen += 11 + (name ? strlen(name) : 1);
 	++newlen;		/* null */
 	++newlen;		/* encodeAttachment might append another nl */
-	q = allocMem(newlen);
+	q = (char *) allocMem(newlen);
 	if(subj)
 	    sprintf(q, "subject:%s\n", subj);
 	else
@@ -3245,7 +3268,7 @@ infPush(int tagno, char **post_string)
 
 /* I don't have any reverse pointers, so I'm just going to scan the list */
 static struct htmlTag *
-tagFromJavaVar(void *v)
+tagFromJavaVar(JS::HandleObject v)
 {
     struct htmlTag **list = cw->tags;
     struct htmlTag *t;
@@ -3261,7 +3284,7 @@ tagFromJavaVar(void *v)
 
 /* Javascript has changed an input field */
 void
-javaSetsTagVar(void *v, const char *val)
+javaSetsTagVar(JS::HandleObject v, const char *val)
 {
     struct htmlTag *t;
     buildTagArray();
@@ -3281,7 +3304,7 @@ javaSetsTagVar(void *v, const char *val)
 
 /* Return false to stop javascript, due to a url redirect */
 void
-javaSubmitsForm(void *v, eb_bool reset)
+javaSubmitsForm(JS::HandleObject v, eb_bool reset)
 {
     char *post;
     eb_bool rc;
@@ -3336,7 +3359,7 @@ javaOpensWindow(const char *href, const char *name)
 }				/* javaOpensWindow */
 
 void
-javaSetsTimeout(int n, const char *jsrc, void *to, eb_bool isInterval)
+javaSetsTimeout(int n, const char *jsrc, JS::HandleObject to, eb_bool isInterval)
 {
     struct htmlTag *t = newTag("a");
     char timedesc[48];
@@ -3353,3 +3376,9 @@ javaSetsTimeout(int n, const char *jsrc, void *to, eb_bool isInterval)
     t->href = cloneString("#");
     toPreamble(t->seqno, timedesc, jsrc, 0);
 }				/* javaSetsTimeout */
+
+eb_bool
+handlerGoBrowse(const struct htmlTag *t, const char *name)
+{
+    return handlerGo(t->jv, name);
+}			/* handlerGoBrowse */

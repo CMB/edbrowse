@@ -529,7 +529,7 @@ static void
 freeWindow(struct ebWindow *w)
 {
 /* The next few are designed to do nothing if not in browseMode */
-    freeJavaContext(w->jsc);
+    freeJavaContext(w->jss);
     freeWindowLines(w->r_map);
     nzFree(w->dw);
     nzFree(w->ft);
@@ -2915,8 +2915,8 @@ twoLetter(const char *line, const char **runThis)
 	cw->r_map = 0;
 	freeTags(cw->tags);
 	cw->tags = 0;
-	freeJavaContext(cw->jsc);
-	cw->jsc = 0;
+	freeJavaContext(cw->jss);
+	cw->jss = 0;
 	nzFree(cw->dw);
 	cw->dw = 0;
 	nzFree(cw->ft);
@@ -3388,7 +3388,7 @@ showLinks(void)
     eb_bool click, dclick;
     char c, *p, *s, *t, *q, *line, *h;
     int j, k = 0, tagno;
-    void *ev;
+    const struct htmlTag *tag;
 
     if(cw->browseMode && endRange) {
 	jMyContext();
@@ -3403,7 +3403,7 @@ showLinks(void)
 		continue;
 	    p = s;
 	    ++k;
-	    findField(line, 0, k, 0, 0, &tagno, &h, &ev);
+	    findField(line, 0, k, 0, 0, &tagno, &h, &tag);
 	    if(tagno != j)
 		continue;	/* should never happen */
 
@@ -3517,7 +3517,7 @@ runCommand(const char *line)
     int i, j, n;
     int writeMode = O_TRUNC;
     struct ebWindow *w = NULL;
-    void *ev = NULL;		/* event variables */
+    const struct htmlTag *tag = NULL;		/* event variables */
     eb_bool nogo = eb_true, rc = eb_true;
     eb_bool postSpace = eb_false, didRange = eb_false;
     char first;
@@ -4092,7 +4092,7 @@ runCommand(const char *line)
 	    }
 	    jsh = jsgo = nogo = eb_false;
 	    jsdead = cw->jsdead;
-	    if(!cw->jsc)
+	    if(!isJSAlive())
 		jsdead = eb_true;
 	    click = dclick = over = eb_false;
 	    cmd = 'b';
@@ -4101,8 +4101,8 @@ runCommand(const char *line)
 		return eb_false;
 	    }
 	    p = (char *)fetchLine(endRange, -1);
-	    jMyContext();
-	    findField(p, 0, j, &n, 0, &tagno, &h, &ev);
+	jMyContext();
+	    findField(p, 0, j, &n, 0, &tagno, &h, &tag);
 	    debugPrint(5, "findField returns %d, %s", tagno, h);
 	    if(!h) {
 		fieldNumProblem(1, 'g', j, n, n);
@@ -4138,7 +4138,7 @@ runCommand(const char *line)
 		jSyncup();
 /* The program might depend on the mouseover code running first */
 		if(over) {
-		    rc = handlerGo(ev, "onmouseover");
+		    rc = handlerGoBrowse(tag, "onmouseover");
 		    jsdw();
 		    if(newlocation)
 			goto redirect;
@@ -4146,9 +4146,9 @@ runCommand(const char *line)
 	    }
 /* This is the only handler where false tells the browser to do something else. */
 	    if(!rc && !jsdead)
-		set_property_string(jwin, "status", h);
+		set_global_property_string("status", h);
 	    if(jsgo && click) {
-		rc = handlerGo(ev, "onclick");
+		rc = handlerGoBrowse(tag, "onclick");
 		jsdw();
 		if(newlocation)
 		    goto redirect;
@@ -4156,7 +4156,7 @@ runCommand(const char *line)
 		    return eb_true;
 	    }
 	    if(jsh) {
-		rc = javaParseExecute(jwin, h, 0, 0);
+		rc = javaParseExecuteGlobal(h, 0, 0);
 		jsdw();
 		if(newlocation)
 		    goto redirect;
@@ -4832,9 +4832,7 @@ browseCurrentBuffer(void)
 
     if(bmode == 2) {
 	cw->jsdead = !javaOK(cw->fileName);
-	cw->jsc = createJavaContext();
-/* jwin has been updated by above call so store new value for the future */
-	cw->jsw = jwin;
+	createJavaContext(&cw->jss);
 	nzFree(newlocation);	/* should already be 0 */
 	newlocation = 0;
 	newbuf = htmlParse(rawbuf, remote);

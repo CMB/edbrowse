@@ -119,23 +119,20 @@ char * emailParse(char *buf) ;
 eb_bool setupReply(eb_bool all) ;
 
 /* sourcefile=html.c */
-void freeTags(void *a) ;
+void freeTags(struct htmlTag  **a) ;
 eb_bool tagHandler(int seqno, const char *name) ;
 void jsdw(void) ;
 void jSyncup(void) ;
 void preFormatCheck(int tagno, eb_bool * pretag, eb_bool * slash) ;
 char * htmlParse(char *buf, int remote) ;
-void findField(const char *line, int ftype, int n, int *total, int *realtotal, int *tagno, char **href, void **evp) ;
+void findField(const char *line, int ftype, int n, int *total, int *realtotal, int *tagno, char **href, const struct htmlTag **tagp) ;
 void findInputField(const char *line, int ftype, int n, int *total, int *realtotal, int *tagno) ;
 eb_bool lineHasTag(const char *p, const char *s) ;
 eb_bool htmlTest(void) ;
 void infShow(int tagno, const char *search) ;
 eb_bool infReplace(int tagno, const char *newtext, int notify) ;
 eb_bool infPush(int tagno, char **post_string) ;
-void javaSetsTagVar(void *v, const char *val) ;
-void javaSubmitsForm(void *v, eb_bool reset) ;
-void javaOpensWindow(const char *href, const char *name) ;
-void javaSetsTimeout(int n, const char *jsrc, void *to, eb_bool isInterval) ;
+eb_bool handlerGoBrowse(const struct htmlTag *t, const char *name);
 
 /* sourcefile=format.c */
 void prepareForBrowse(char *h, int h_len) ;
@@ -238,32 +235,14 @@ void appendFile(const char *fname, const char *message, ...) ;
 void appendFileNF(const char *filename, const char *msg) ;
 
 /* sourcefile=jsdom.c */
-void * createJavaContext(void) ;
-void freeJavaContext(void *jsc) ;
-void establish_innerHTML(void *jv, const char *start, const char *end, eb_bool is_ta) ;
+void createJavaContext(struct ebWindowJSState **pstate);
+void freeJavaContext(struct ebWindowJSState *state) ;
+eb_bool isJSAlive(void);
 void jMyContext(void) ;
-eb_bool javaParseExecute(void *obj, const char *str, const char *filename, int lineno) ;
-void * domLink(const char *classname, const char *symname, const char *idname, const char *href, const char *href_url, const char *list, void *owner, int radiosel) ;
+eb_bool javaParseExecuteGlobal(const char *str, const char *filename, int lineno) ;
 
 /* sourcefile=jsloc.c */
-void establish_property_string(void *jv, const char *name, const char *value, eb_bool readonly) ;
-void establish_property_number(void *jv, const char *name, int value, eb_bool readonly) ;
-void establish_property_bool(void *jv, const char *name, eb_bool value, eb_bool readonly) ;
-void * establish_property_array(void *jv, const char *name) ;
-void establish_property_object(void *parent, const char *name, void *child) ;
-void establish_property_url(void *jv, const char *name, const char *url, eb_bool readonly) ;
-void set_property_string(void *jv, const char *name, const char *value) ;
-void set_property_number(void *jv, const char *name, int value) ;
-void set_property_bool(void *jv, const char *name, int value) ;
-char * get_property_url(void *jv, eb_bool doaction) ;
-char * get_property_string(void *jv, const char *name) ;
-eb_bool get_property_bool(void *jv, const char *name) ;
-char * get_property_option(void *jv) ;
-void * establish_js_option(void *ev, int idx) ;
-eb_bool handlerGo(void *obj, const char *name) ;
-void handlerSet(void *ev, const char *name, const char *code) ;
-void link_onunload_onclick(void *jv) ;
-eb_bool handlerPresent(void *ev, const char *name) ;
+void set_global_property_string(const char *name, const char *value);
 
 /* sourcefile=dbstubs.c */
 eb_bool sqlReadRows(const char *filename, char **bufptr) ;

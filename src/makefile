@@ -14,7 +14,7 @@ bindir = $(prefix)/bin
 JS_CXXFLAGS =-I/usr/include/mozjs
 
 # we need to only use the js flags when building with c++, so use CXXFLAGS
-CXXFLAGS += $(JS_CXXFLAGS)
+CXXFLAGS += -fpermissive  $(JS_CXXFLAGS)
 
 # By default, we strip the executables.
 # Override this behavior on the command line, by setting STRIP to the
@@ -50,7 +50,7 @@ EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
 
 #  Header file dependencies.
 $(EBOBJS) : eb.h eb.p messages.h tcp.h
-jsdom.o jsloc.o : js.h
+html.o jsdom.o jsloc.o : js.h ebjs.p
 
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.
