@@ -322,8 +322,8 @@ freeTags(struct htmlTag **a)
 static void
 get_js_event(const char *name)
 {
-    JSAutoCompartment ac(jcx, cw->jss->jwin);
-    JS::RootedObject ev(jcx, topTag->jv);
+    JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
+    JS::RootedObject ev(cw->jss->jcx, topTag->jv);
     char *s;
 
     int action = topTag->action;
@@ -368,8 +368,8 @@ static eb_bool strayClick;
 static void
 get_js_events(void)
 {
-    JSAutoCompartment ac(jcx, cw->jss->jwin);
-    JS::RootedObject ev(jcx, topTag->jv);
+    JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
+    JS::RootedObject ev(cw->jss->jcx, topTag->jv);
     int j;
     const char *t;
     int action = topTag->action;
@@ -432,8 +432,8 @@ htmlMeta(void)
 {
     char *name, *content, *heq;
     char **ptr;
-    JS::RootedObject e(jcx);
-    JS::RootedObject jdoc(jcx, cw->jss->jdoc);
+    JS::RootedObject e(cw->jss->jcx);
+    JS::RootedObject jdoc(cw->jss->jcx, cw->jss->jdoc);
 
     topTag->jv = e =
        domLink("Meta", topTag->name, topTag->id, 0, 0, "metas", jdoc, eb_false);
@@ -524,15 +524,15 @@ htmlHref(const char *desc)
 static void
 formControl(eb_bool namecheck)
 {
-    JSAutoCompartment ac(jcx, cw->jss->jwin);
-    JS::RootedObject fo(jcx, NULL);
-    JS::RootedObject e(jcx);			/* the new element */
+    JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
+    JS::RootedObject fo(cw->jss->jcx, NULL);
+    JS::RootedObject e(cw->jss->jcx);			/* the new element */
     const char *typedesc;
     int itype = topTag->itype;
     int isradio = itype == INP_RADIO;
     int isselect = (itype == INP_SELECT) * 2;
     char *myname = (topTag->name ? topTag->name : topTag->id);
-    JS::RootedObject jdoc(jcx, cw->jss->jdoc);
+    JS::RootedObject jdoc(cw->jss->jcx, cw->jss->jdoc);
 
     if(currentForm) {
 	topTag->controller = currentForm;
@@ -580,7 +580,7 @@ static void
 htmlImage(void)
 {
     char *a;
-    JS::RootedObject jdoc(jcx, cw->jss->jdoc);
+    JS::RootedObject jdoc(cw->jss->jcx, cw->jss->jdoc);
     htmlHref("src");
     topTag->jv =
        domLink("Image", topTag->name, topTag->id, "src", topTag->href,
@@ -598,10 +598,10 @@ htmlImage(void)
 static void
 htmlForm(void)
 {
-    JSAutoCompartment ac(jcx, cw->jss->jwin);
+    JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
     char *a;
-    JS::RootedObject fv(jcx, NULL);			/* form variable in javascript */
-    JS::RootedObject jdoc(jcx, cw->jss->jdoc);
+    JS::RootedObject fv(cw->jss->jcx, NULL);			/* form variable in javascript */
+    JS::RootedObject jdoc(cw->jss->jcx, cw->jss->jdoc);
 
     if(topTag->slash)
 	return;
@@ -817,8 +817,8 @@ locateOptions(const struct htmlTag *sel, const char *input,
     char *display = 0, *value = 0;
     int disp_l, val_l;
     int len = strlen(input);
-    JSAutoCompartment ac(jcx, cw->jss->jwin);
-    JS::RootedObject ev(jcx, sel->jv);
+    JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
+    JS::RootedObject ev(cw->jss->jcx, sel->jv);
     int n, pmc, cnt;
     const char *s, *e;		/* start and end of an option */
     char *iopt;			/* individual option */
@@ -927,8 +927,8 @@ void
 jSyncup(void)
 {
     const struct htmlTag *t, **list;
-    JSAutoCompartment ac(jcx, cw->jss->jwin);
-    JS::RootedObject eo(jcx, NULL);			/* element object */
+    JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
+    JS::RootedObject eo(cw->jss->jcx, NULL);			/* element object */
     int itype, j, cx;
     char *value, *cxbuf;
 
@@ -938,7 +938,6 @@ jSyncup(void)
 	return;
     debugPrint(5, "jSyncup starts");
 
-    jMyContext();
     buildTagArray();
 
     list = (const struct htmlTag **) cw->tags;
@@ -1064,7 +1063,7 @@ newTag(const char *name)
 static void
 onloadGo(JS::HandleObject obj, const char *jsrc, const char *tagname)
 {
-    JSAutoCompartment ac(jcx, cw->jss->jwin);
+    JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
     struct htmlTag *t;
     char buf[32];
 
@@ -1151,11 +1150,11 @@ encodeTags(char *html)
     int nopt;			/* number of options */
     int intable = 0, inrow = 0;
     eb_bool tdfirst;
-    JS::RootedObject to(jcx, NULL);			/* table object */
-    JSAutoCompartment ac(jcx, cw->jss->jwin);
-    JS::RootedObject ev(jcx, NULL);			/* generic event variable */
-    JS::RootedObject jwin(jcx, cw->jss->jwin);
-    JS::RootedObject jdoc(jcx, cw->jss->jdoc);
+    JS::RootedObject to(cw->jss->jcx, NULL);			/* table object */
+    JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
+    JS::RootedObject ev(cw->jss->jcx, NULL);			/* generic event variable */
+    JS::RootedObject jwin(cw->jss->jcx, cw->jss->jwin);
+    JS::RootedObject jdoc(cw->jss->jcx, cw->jss->jdoc);
 
     currentA = currentForm = currentSel = currentOpt = currentTitle =
        currentTA = 0;
@@ -1384,7 +1383,7 @@ encodeTags(char *html)
 		    }
 
 		    if(ev = currentSel->jv) {	/* element variable */
-			JS::RootedObject ov(jcx, establish_js_option(ev, v->lic));
+			JS::RootedObject ov(cw->jss->jcx, establish_js_option(ev, v->lic));
 			v->jv = ov;
 			establish_property_string(ov, "text", v->name, eb_true);
 			establish_property_string(ov, "value", v->value, eb_true);
@@ -2541,7 +2540,6 @@ infReplace(int tagno, const char *newtext, int notify)
     if(!linesComing(2))
 	return eb_false;
 
-    jMyContext();
 
     if(itype == INP_SELECT) {
 	if(!locateOptions(t, newtext, 0, 0, eb_false))
@@ -2630,7 +2628,7 @@ resetVar(struct htmlTag *t)
     int itype = t->itype;
     const char *w = t->value;
     eb_bool bval;
-    JS::RootedObject jv(jcx,  t->jv);
+    JS::RootedObject jv(cw->jss->jcx,  t->jv);
 
 /* This is a kludge - option looks like INP_SELECT */
     if(t->action == TAGACT_OPTION)
@@ -2710,8 +2708,8 @@ formReset(const struct htmlTag *form)
 static char *
 fetchTextVar(const struct htmlTag *t)
 {
-    JSAutoCompartment ac(jcx, cw->jss->jwin);
-    JS::RootedObject jv(jcx, t->jv);
+    JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
+    JS::RootedObject jv(cw->jss->jcx, t->jv);
     char *v;
     if(jv) {
 	return get_property_string(jv, "value");
@@ -2728,8 +2726,8 @@ fetchTextVar(const struct htmlTag *t)
 static eb_bool
 fetchBoolVar(const struct htmlTag *t)
 {
-    JSAutoCompartment ac(jcx, cw->jss->jwin);
-    JS::RootedObject jv(jcx, t->jv);
+    JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
+    JS::RootedObject jv(cw->jss->jcx, t->jv);
     int checked;
     if(jv) {
 	return get_property_bool(jv,

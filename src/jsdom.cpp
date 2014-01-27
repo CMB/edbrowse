@@ -17,9 +17,8 @@ using namespace std;
 #define PROP_FIXED (JSPROP_ENUMERATE|JSPROP_READONLY|JSPROP_PERMANENT)
 
 
-JSRuntime *jrt;			/* our js runtime, global so we can call the gc from jsloc
+static JSRuntime *jrt;			/* our js runtime, global so we can call the gc from jsloc
 				   functions as well */
-JSContext *jcx;
 static size_t gStackChunkSize = 8192;
 static FILE *gOutFile, *gErrFile;
 static const char *emptyParms[] = { 0 };
@@ -71,22 +70,22 @@ our_JS_NewStringCopyN(JSContext * cx, const char *s, size_t n)
 /* Fixme this is too simple.  We need to decode UTF8 to JSCHAR, for proper
  * unicode handling.  E.G., JS C strings are not UTF8, but the user has
  * a UTF8 locale. */
-    return JS_NewStringCopyN(jcx, s, n);
+    return JS_NewStringCopyN(cw->jss->jcx, s, n);
 }				/* our_JS_NewStringCopyN */
 JSString *
 our_JS_NewStringCopyZ(JSContext * cx, const char *s)
 {
     size_t len = strlen(s);
-    return our_JS_NewStringCopyN(jcx, s, len);
+    return our_JS_NewStringCopyN(cw->jss->jcx, s, len);
 }				/* our_JS_NewStringCopyZ */
 
 char *
 our_JSEncodeString(JSString * str)
 {
-    size_t encodedLength = JS_GetStringEncodingLength(jcx, str);
+    size_t encodedLength = JS_GetStringEncodingLength(cw->jss->jcx, str);
     char *buffer = (char *)allocMem(encodedLength + 1);
     buffer[encodedLength] = '\0';
-    size_t result = JS_EncodeStringToBuffer(jcx, str, buffer, encodedLength);
+    size_t result = JS_EncodeStringToBuffer(cw->jss->jcx, str, buffer, encodedLength);
     if(result == (size_t) - 1)
 	i_printfExit(MSG_JSFailure);
     return buffer;
@@ -142,16 +141,16 @@ window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 {
     char *newloc = 0;
     const char *winname = 0;
-    JS::RootedString str(jcx);
+    JS::RootedString str(cx);
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     JSObject & callee = args.callee();
     jsval callee_val = JS::ObjectValue(callee);
     JS::RootedObject newwin(cx, JS_NewObjectForConstructor(cx, &window_class,
        &callee_val));
-    if(args.length() > 0 && (str = JS_ValueToString(jcx, args[0]))) {
+    if(args.length() > 0 && (str = JS_ValueToString(cx, args[0]))) {
 	newloc = our_JSEncodeString(str);
     }
-    if(args.length() > 1 && (str = JS_ValueToString(jcx, args[1]))) {
+    if(args.length() > 1 && (str = JS_ValueToString(cx, args[1]))) {
 	winname = transcode_get_js_bytes(str);
     }
 /* third argument is attributes, like window size and location, that we don't care about. */
@@ -170,8 +169,8 @@ static JSBool
 win_open(JSContext * cx, unsigned int argc, jsval * vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-    JS::RootedObject newwin(jcx, JS_New(jcx,
-       JS_NewObject(jcx, &window_class, NULL, cw->jss->jwin),
+    JS::RootedObject newwin(cx, JS_New(cx,
+       JS_NewObject(cx, &window_class, NULL, cw->jss->jwin),
        args.length(), args.array()));
     args.rval().set(OBJECT_TO_JSVAL(newwin));
     return JS_TRUE;
@@ -208,10 +207,10 @@ setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
     JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     if(args.length() != 2 || !JSVAL_IS_STRING(args[0])) {
-	JS_ReportError(jcx, "unexpected arguments to setAttribute()");
+	JS_ReportError(cx, "unexpected arguments to setAttribute()");
     } else {
 	const char *prop = stringize(args[0]);
-	JS_DefineProperty(jcx, obj, prop, args[1], NULL, NULL, PROP_FIXED);
+	JS_DefineProperty(cx, obj, prop, args[1], NULL, NULL, PROP_FIXED);
     }
     args.rval().set(JSVAL_VOID);
     return JS_TRUE;
@@ -224,10 +223,10 @@ appendChild(JSContext * cx, unsigned int argc, jsval * vp)
     jsval v;
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
-    JS_GetProperty(jcx, obj, "elements", &v);
+    JS_GetProperty(cx, obj, "elements", &v);
     JS::RootedObject elar(cx, JSVAL_TO_OBJECT(v));
-    JS_GetArrayLength(jcx, elar, &length);
-    JS_DefineElement(jcx, elar, length,
+    JS_GetArrayLength(cx, elar, &length);
+    JS_DefineElement(cx, elar, length,
        (args.length() > 0 ? args[0] : JSVAL_NULL), NULL, NULL,
        JSPROP_ENUMERATE);
 // think we need to return something if we return JS_TRUE
@@ -251,8 +250,8 @@ win_alert(JSContext * cx, unsigned int argc, jsval * vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     char *msg = NULL;
-    JS::RootedString str(jcx);
-    if(args.length() > 0 && (str = JS_ValueToString(jcx, args[0]))) {
+    JS::RootedString str(cx);
+    if(args.length() > 0 && (str = JS_ValueToString(cx, args[0]))) {
 	msg = transcode_get_js_bytes(str);
     }
     if(msg) {
@@ -269,15 +268,15 @@ win_prompt(JSContext * cx, unsigned int argc, jsval * vp)
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     char *msg = EMPTYSTRING;
     char *answer = EMPTYSTRING;
-    JS::RootedString str(jcx);
+    JS::RootedString str(cx);
     char inbuf[80];
     char *s;
     char c;
 
-    if(args.length() > 0 && (str = JS_ValueToString(jcx, args[0]))) {
+    if(args.length() > 0 && (str = JS_ValueToString(cx, args[0]))) {
 	msg = transcode_get_js_bytes(str);
     }
-    if(args.length() > 1 && (str = JS_ValueToString(jcx, args[1]))) {
+    if(args.length() > 1 && (str = JS_ValueToString(cx, args[1]))) {
 	answer = transcode_get_js_bytes(str);
     }
 
@@ -303,7 +302,7 @@ win_prompt(JSContext * cx, unsigned int argc, jsval * vp)
 	nzFree(answer);		/* Don't need the default answer anymore. */
 	answer = inbuf;
     }
-    args.rval().set(STRING_TO_JSVAL(our_JS_NewStringCopyZ(jcx, answer)));
+    args.rval().set(STRING_TO_JSVAL(our_JS_NewStringCopyZ(cx, answer)));
     return JS_TRUE;
 }				/* win_prompt */
 
@@ -312,12 +311,12 @@ win_confirm(JSContext * cx, unsigned int argc, jsval * vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     char *msg = EMPTYSTRING;
-    JS::RootedString str(jcx);
+    JS::RootedString str(cx);
     char inbuf[80];
     char c;
     eb_bool first = eb_true;
 
-    if(args.length() > 0 && (str = JS_ValueToString(jcx, args[0]))) {
+    if(args.length() > 0 && (str = JS_ValueToString(cx, args[0]))) {
 	msg = transcode_get_js_bytes(str);
     }
 
@@ -369,8 +368,8 @@ static JSClass timer_class = {
 static JSObject *
 setTimeout(unsigned int argc, jsval * argv, eb_bool isInterval)
 {
-    JS::RootedValue v0(jcx), v1(jcx);
-    JS::RootedObject fo(jcx, NULL), to(jcx, NULL);
+    JS::RootedValue v0(cw->jss->jcx), v1(cw->jss->jcx);
+    JS::RootedObject fo(cw->jss->jcx, NULL), to(cw->jss->jcx, NULL);
     int n;			/* number of milliseconds */
     char fname[48];		/* function name */
     const char *fstr;		/* function string */
@@ -379,7 +378,7 @@ setTimeout(unsigned int argc, jsval * argv, eb_bool isInterval)
     char *s = NULL;
 
     if(!parsePage) {
-	JS_ReportError(jcx,
+	JS_ReportError(cw->jss->jcx,
 	   "cannot use %s() to delay the execution of a function", methname);
 	return NULL;
     }
@@ -392,18 +391,18 @@ setTimeout(unsigned int argc, jsval * argv, eb_bool isInterval)
     n = JSVAL_TO_INT(v1);
     if(JSVAL_IS_STRING(v0) ||
        v0.isObject() &&
-       JS_ValueToObject(jcx, v0, fo.address()) && JS_ObjectIsFunction(jcx, fo)) {
+       JS_ValueToObject(cw->jss->jcx, v0, fo.address()) && JS_ObjectIsFunction(cw->jss->jcx, fo)) {
 
 /* build the tag object and link it to window */
-	to = JS_NewObject(jcx, &timer_class, NULL, cw->jss->jwin);
+	to = JS_NewObject(cw->jss->jcx, &timer_class, NULL, cw->jss->jwin);
 	v1 = OBJECT_TO_JSVAL(to);
-	JS_DefineProperty(jcx, cw->jss->jwin, fakePropName(), v1,
+	JS_DefineProperty(cw->jss->jcx, cw->jss->jwin, fakePropName(), v1,
 	   NULL, NULL, JSPROP_READONLY | JSPROP_PERMANENT);
 
 	if(fo) {
 /* Extract the function name, which requires several steps */
-	    JSFunction *f = JS_ValueToFunction(jcx, OBJECT_TO_JSVAL(fo));
-	    JS::RootedString jss(jcx, JS_GetFunctionId(f));
+	    JSFunction *f = JS_ValueToFunction(cw->jss->jcx, OBJECT_TO_JSVAL(fo));
+	    JS::RootedString jss(cw->jss->jcx, JS_GetFunctionId(f));
 	    if(jss)
 		allocatedName = our_JSEncodeString(jss);
 	    s = allocatedName;
@@ -423,7 +422,7 @@ setTimeout(unsigned int argc, jsval * argv, eb_bool isInterval)
 	} else {
 /* compile the function from the string */
 	    fstr = stringize(v0);
-	    JS_CompileFunction(jcx, to, "onclick", 0, emptyParms,	/* no named parameters */
+	    JS_CompileFunction(cw->jss->jcx, to, "onclick", 0, emptyParms,	/* no named parameters */
 	       fstr, strlen(fstr), "onclick", 1);
 	}
 
@@ -432,7 +431,7 @@ setTimeout(unsigned int argc, jsval * argv, eb_bool isInterval)
     }
 
   badarg:
-    JS_ReportError(jcx, "invalid arguments to %s()", methname);
+    JS_ReportError(cw->jss->jcx, "invalid arguments to %s()", methname);
     return NULL;
 }				/* setTimeout */
 
@@ -497,9 +496,9 @@ dwrite1(unsigned int argc, jsval * argv, eb_bool newline)
 {
     int i;
     char *msg;
-    JS::RootedString str(jcx);
+    JS::RootedString str(cw->jss->jcx);
     for(i = 0; i < argc; ++i) {
-	if((str = JS_ValueToString(jcx, argv[i])) &&
+	if((str = JS_ValueToString(cw->jss->jcx, argv[i])) &&
 	   (msg = transcode_get_js_bytes(str))) {
 	    dwrite2(msg);
 	    nzFree(msg);
@@ -870,59 +869,57 @@ createJavaContext(struct ebWindowJSState **pstate)
 	gErrFile = stderr;
     }
 
-    jcx = JS_NewContext(jrt, gStackChunkSize);
-    if(!jcx)
+    state->jcx = JS_NewContext(jrt, gStackChunkSize);
+    if(!state->jcx)
 	i_printfExit(MSG_JavaContextError);
-    JS_SetErrorReporter(jcx, my_ErrorReporter);
-    JS_SetOptions(jcx, JSOPTION_VAROBJFIX);
-    state->jcx = jcx;
+    JS_SetErrorReporter(state->jcx, my_ErrorReporter);
+    JS_SetOptions(state->jcx, JSOPTION_VAROBJFIX);
 /* Create the Window object, which is the global object in DOM. */
-    state->jwin = JS_NewGlobalObject(jcx, &window_class, NULL);
+    state->jwin = JS_NewGlobalObject(state->jcx, &window_class, NULL);
     if(!state->jwin)
 	i_printfExit(MSG_JavaWindowError);
 
 /* enter the compartment for this object for the duration of this function */
-    JSAutoCompartment ac(jcx, state->jwin);
-/* now set the jwin object as global */
-    JS_SetGlobalObject(jcx, state->jwin);
-    JS::RootedObject jwin(jcx, state->jwin);
+    JSAutoCompartment ac(state->jcx, state->jwin);
+/* now set the state->jwin object as global */
+    JS_SetGlobalObject(state->jcx, state->jwin);
 /* Math, Date, Number, String, etc */
-    if(!JS_InitStandardClasses(jcx, jwin))
+    if(!JS_InitStandardClasses(state->jcx, state->jwin))
 	i_printfExit(MSG_JavaClassError);
 /* initialise the window class */
-    JS_InitClass(jcx, jwin, NULL, &window_class, window_ctor, 3,
+    JS_InitClass(state->jcx, state->jwin, NULL, &window_class, window_ctor, 3,
        NULL, window_methods, NULL, NULL);
 /* Ok, but the global object was created before the class,
  * so it doesn't have its methods yet. */
-    JS_DefineFunctions(jcx, jwin, window_methods);
+    JS_DefineFunctions(state->jcx, state->jwin, window_methods);
 
 
-    establish_property_object(jwin, "window", jwin);
-    establish_property_object(jwin, "self", jwin);
-    establish_property_object(jwin, "parent", jwin);
-    establish_property_object(jwin, "top", jwin);
+    establish_property_object(state->jwin, "window", state->jwin);
+    establish_property_object(state->jwin, "self", state->jwin);
+    establish_property_object(state->jwin, "parent", state->jwin);
+    establish_property_object(state->jwin, "top", state->jwin);
 
 /* Some visual attributes of the window.
  * These are just guesses.
  * Better to have something, than to leave them undefined. */
-    establish_property_number(jwin, "height", 768, eb_true);
-    establish_property_number(jwin, "width", 1024, eb_true);
-    establish_property_string(jwin, "status", 0, eb_false);
-    establish_property_string(jwin, "defaultStatus", 0, eb_false);
-    establish_property_bool(jwin, "returnValue", eb_true,
+    establish_property_number(state->jwin, "height", 768, eb_true);
+    establish_property_number(state->jwin, "width", 1024, eb_true);
+    establish_property_string(state->jwin, "status", 0, eb_false);
+    establish_property_string(state->jwin, "defaultStatus", 0, eb_false);
+    establish_property_bool(state->jwin, "returnValue", eb_true,
        eb_false);
-    establish_property_bool(jwin, "menubar", eb_true, eb_false);
-    establish_property_bool(jwin, "scrollbars", eb_true, eb_false);
-    establish_property_bool(jwin, "toolbar", eb_true, eb_false);
-    establish_property_bool(jwin, "resizable", eb_true, eb_false);
-    establish_property_bool(jwin, "directories", eb_false,
+    establish_property_bool(state->jwin, "menubar", eb_true, eb_false);
+    establish_property_bool(state->jwin, "scrollbars", eb_true, eb_false);
+    establish_property_bool(state->jwin, "toolbar", eb_true, eb_false);
+    establish_property_bool(state->jwin, "resizable", eb_true, eb_false);
+    establish_property_bool(state->jwin, "directories", eb_false,
        eb_false);
-    establish_property_string(jwin, "name", "unspecifiedFrame",
+    establish_property_string(state->jwin, "name", "unspecifiedFrame",
        eb_false);
 
 /* Other classes that we'll need. */
     for(i = 0; domClasses[i].obj_class; ++i) {
-	JS_InitClass(jcx, jwin, 0, domClasses[i].obj_class,
+	JS_InitClass(state->jcx, state->jwin, 0, domClasses[i].obj_class,
 	   domClasses[i].constructor, domClasses[i].nargs,
 	   NULL, domClasses[i].methods, NULL, NULL);
     }
@@ -930,41 +927,40 @@ createJavaContext(struct ebWindowJSState **pstate)
     initLocationClass();
 
 /* document under window */
-    JS_InitClass(jcx, jwin, 0, &doc_class, NULL, 0,
+    JS_InitClass(state->jcx, state->jwin, 0, &doc_class, NULL, 0,
        NULL, doc_methods, NULL, NULL);
-    state->jdoc = JS_NewObject(jcx, &doc_class, NULL, jwin);
+    state->jdoc = JS_NewObject(state->jcx, &doc_class, NULL, state->jwin);
     if(!state->jdoc)
 	i_printfExit(MSG_JavaObjError);
-    JS::RootedObject jdoc(jcx, state->jdoc);
-    establish_property_object(jwin, "document", jdoc);
+    establish_property_object(state->jwin, "document", state->jdoc);
 
-    establish_property_string(jdoc, "bgcolor", "white", eb_false);
-    establish_property_string(jdoc, "cookie", 0, eb_false);
-    establish_property_string(jdoc, "referrer", cw->referrer,
+    establish_property_string(state->jdoc, "bgcolor", "white", eb_false);
+    establish_property_string(state->jdoc, "cookie", 0, eb_false);
+    establish_property_string(state->jdoc, "referrer", cw->referrer,
        eb_true);
-    establish_property_url(jdoc, "URL", cw->fileName, eb_true);
-    establish_property_url(jdoc, "location", cw->fileName,
+    establish_property_url(state->jdoc, "URL", cw->fileName, eb_true);
+    establish_property_url(state->jdoc, "location", cw->fileName,
        eb_false);
-    establish_property_url(jwin, "location", cw->firstURL,
+    establish_property_url(state->jwin, "location", cw->firstURL,
        eb_false);
-    establish_property_string(jdoc, "domain",
+    establish_property_string(state->jdoc, "domain",
        getHostURL(cw->fileName), eb_false);
 
 /* create arrays under document */
     for(i = 0; itemname = docarrays[i]; ++i)
-	establish_property_array(jdoc, itemname);
+	establish_property_array(state->jdoc, itemname);
 
 /* Some arrays are under window */
-    establish_property_array(jwin, "frames");
+    establish_property_array(state->jwin, "frames");
 
-    JS::RootedObject o(jcx);
-    o = JS_NewObject(jcx, 0, 0, jdoc);
-    establish_property_object(jdoc, "idMaster", o);
-    o = JS_NewObject(jcx, 0, 0, jdoc);
-    establish_property_object(jdoc, "all", o);
+    JS::RootedObject o(state->jcx);
+    o = JS_NewObject(state->jcx, 0, 0, state->jdoc);
+    establish_property_object(state->jdoc, "idMaster", o);
+    o = JS_NewObject(state->jcx, 0, 0, state->jdoc);
+    establish_property_object(state->jdoc, "all", o);
 
-    JS::RootedObject nav(jcx, JS_NewObject(jcx, 0, 0, jwin));
-    establish_property_object(jwin, "navigator", nav);
+    JS::RootedObject nav(state->jcx, JS_NewObject(state->jcx, 0, 0, state->jwin));
+    establish_property_object(state->jwin, "navigator", nav);
 
 /* attributes of the navigator */
     establish_property_string(nav, "appName", "edbrowse", eb_true);
@@ -982,30 +978,30 @@ createJavaContext(struct ebWindowJSState **pstate)
 /* We need to locale-ize the next one */
     establish_property_string(nav, "userLanguage", "english", eb_true);
     establish_property_string(nav, "language", "english", eb_true);
-    JS_DefineFunction(jcx, nav, "javaEnabled", falseFunction, 0, PROP_FIXED);
-    JS_DefineFunction(jcx, nav, "taintEnabled", falseFunction, 0, PROP_FIXED);
+    JS_DefineFunction(state->jcx, nav, "javaEnabled", falseFunction, 0, PROP_FIXED);
+    JS_DefineFunction(state->jcx, nav, "taintEnabled", falseFunction, 0, PROP_FIXED);
     establish_property_bool(nav, "cookieEnabled", eb_true, eb_true);
     establish_property_bool(nav, "onLine", eb_true, eb_true);
 
 /* Build the array of mime types and plugins,
  * according to the entries in the config file. */
-    JS::RootedObject navpi(jcx, establish_property_array(nav,
+    JS::RootedObject navpi(state->jcx, establish_property_array(nav,
        "plugins"));
-    JS::RootedObject navmt(jcx, establish_property_array(nav,
+    JS::RootedObject navmt(state->jcx, establish_property_array(nav,
        "mimeTypes"));
     mt = mimetypes;
     for(i = 0; i < maxMime; ++i, ++mt) {
 /* po is the plugin object and mo is the mime object */
-	JS::RootedObject mo(jcx), po(jcx);
-	JS::RootedValue mov(jcx), pov(jcx);
+	JS::RootedObject mo(state->jcx), po(state->jcx);
+	JS::RootedValue mov(state->jcx), pov(state->jcx);
 	int len;
 
-	po = JS_NewObject(jcx, 0, 0, nav);
+	po = JS_NewObject(state->jcx, 0, 0, nav);
 	pov = OBJECT_TO_JSVAL(po);
-	JS_DefineElement(jcx, navpi, i, pov, NULL, NULL, PROP_FIXED);
-	mo = JS_NewObject(jcx, 0, 0, nav);
+	JS_DefineElement(state->jcx, navpi, i, pov, NULL, NULL, PROP_FIXED);
+	mo = JS_NewObject(state->jcx, 0, 0, nav);
 	mov = OBJECT_TO_JSVAL(mo);
-	JS_DefineElement(jcx, navmt, i, mov, NULL, NULL, PROP_FIXED);
+	JS_DefineElement(state->jcx, navmt, i, mov, NULL, NULL, PROP_FIXED);
 	establish_property_object(mo, "enabledPlugin", po);
 	establish_property_string(mo, "type", mt->type, eb_true);
 	establish_property_object(navmt, mt->type, mo);
@@ -1021,13 +1017,13 @@ createJavaContext(struct ebWindowJSState **pstate)
 	establish_property_string(po, "filename", mt->program, eb_true);
 /* For the name, how about the program without its options? */
 	len = strcspn(mt->program, " \t");
-	JS_DefineProperty(jcx, po, "name",
-	   STRING_TO_JSVAL(our_JS_NewStringCopyN(jcx, mt->program, len)),
+	JS_DefineProperty(state->jcx, po, "name",
+	   STRING_TO_JSVAL(our_JS_NewStringCopyN(state->jcx, mt->program, len)),
 	   0, 0, PROP_FIXED);
     }
 
-    JS::RootedObject screen(jcx, JS_NewObject(jcx, 0, 0, jwin));
-    establish_property_object(jwin, "screen", screen);
+    JS::RootedObject screen(state->jcx, JS_NewObject(state->jcx, 0, 0, state->jwin));
+    establish_property_object(state->jwin, "screen", screen);
     establish_property_number(screen, "height", 768, eb_true);
     establish_property_number(screen, "width", 1024, eb_true);
     establish_property_number(screen, "availHeight", 768, eb_true);
@@ -1035,9 +1031,9 @@ createJavaContext(struct ebWindowJSState **pstate)
     establish_property_number(screen, "availTop", 0, eb_true);
     establish_property_number(screen, "availLeft", 0, eb_true);
 
-    JS::RootedObject del(jcx, JS_NewObject(jcx, 0, 0, jdoc));
-    establish_property_object(jdoc, "body", del);
-    establish_property_object(jdoc, "documentElement", del);
+    JS::RootedObject del(state->jcx, JS_NewObject(state->jcx, 0, 0, state->jdoc));
+    establish_property_object(state->jdoc, "body", del);
+    establish_property_object(state->jdoc, "documentElement", del);
     establish_property_number(del, "clientHeight", 768, eb_true);
     establish_property_number(del, "clientWidth", 1024, eb_true);
     establish_property_number(del, "offsetHeight", 768, eb_true);
@@ -1047,8 +1043,8 @@ createJavaContext(struct ebWindowJSState **pstate)
     establish_property_number(del, "scrollTop", 0, eb_true);
     establish_property_number(del, "scrollLeft", 0, eb_true);
 
-    JS::RootedObject hist(jcx, JS_NewObject(jcx, 0, 0, jwin));
-    establish_property_object(jwin, "history", hist);
+    JS::RootedObject hist(state->jcx, JS_NewObject(state->jcx, 0, 0, state->jwin));
+    establish_property_object(state->jwin, "history", hist);
 
 /* attributes of history */
     establish_property_string(hist, "current", cw->fileName, eb_true);
@@ -1057,15 +1053,14 @@ createJavaContext(struct ebWindowJSState **pstate)
     establish_property_number(hist, "length", 1, eb_true);
     establish_property_string(hist, "next", 0, eb_true);
     establish_property_string(hist, "previous", 0, eb_true);
-    JS_DefineFunction(jcx, hist, "back", nullFunction, 0, PROP_FIXED);
-    JS_DefineFunction(jcx, hist, "forward", nullFunction, 0, PROP_FIXED);
-    JS_DefineFunction(jcx, hist, "go", nullFunction, 0, PROP_FIXED);
+    JS_DefineFunction(state->jcx, hist, "back", nullFunction, 0, PROP_FIXED);
+    JS_DefineFunction(state->jcx, hist, "forward", nullFunction, 0, PROP_FIXED);
+    JS_DefineFunction(state->jcx, hist, "go", nullFunction, 0, PROP_FIXED);
 
 /* Set up some things in javascript */
-    JS_EvaluateScript(jcx, jwin, initScript, strlen(initScript),
+    JS_EvaluateScript(state->jcx, state->jwin, initScript, strlen(initScript),
        "initScript", 1, &rval);
 
-    return state;
 }				/* createJavaContext */
 
 void
@@ -1081,9 +1076,9 @@ freeJavaContext(struct ebWindowJSState *state)
 void
 establish_innerHTML(JS::HandleObject jv, const char *start, const char *end, eb_bool is_ta)
 {
-    JSAutoCompartment ac(jcx, cw->jss->jwin);
-    JS::RootedObject obj(jcx, (JSObject *) jv), o(jcx);
-    JS::RootedValue v(jcx);
+    JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
+    JS::RootedObject obj(cw->jss->jcx, (JSObject *) jv), o(cw->jss->jcx);
+    JS::RootedValue v(cw->jss->jcx);
 
     if(!obj)
 	return;
@@ -1091,27 +1086,22 @@ establish_innerHTML(JS::HandleObject jv, const char *start, const char *end, eb_
 /* null start means the pointer has been corrupted by a document.write() call */
     if(!start)
 	start = end = EMPTYSTRING;
-    JS_DefineProperty(jcx, obj, "innerHTML",
-       STRING_TO_JSVAL(our_JS_NewStringCopyN(jcx, start, end - start)),
+    JS_DefineProperty(cw->jss->jcx, obj, "innerHTML",
+       STRING_TO_JSVAL(our_JS_NewStringCopyN(cw->jss->jcx, start, end - start)),
        NULL, (is_ta ? setter_innerText : setter_innerHTML),
        JSPROP_ENUMERATE | JSPROP_PERMANENT);
     if(is_ta) {
-	JS_DefineProperty(jcx, obj, "innerText",
-	   STRING_TO_JSVAL(our_JS_NewStringCopyN(jcx, start, end - start)),
+	JS_DefineProperty(cw->jss->jcx, obj, "innerText",
+	   STRING_TO_JSVAL(our_JS_NewStringCopyN(cw->jss->jcx, start, end - start)),
 	   NULL, setter_innerText, JSPROP_ENUMERATE | JSPROP_PERMANENT);
     }
 
 /* Anything with an innerHTML might also have a style. */
-    o = JS_NewObject(jcx, 0, 0, obj);
+    o = JS_NewObject(cw->jss->jcx, 0, 0, obj);
     v = OBJECT_TO_JSVAL(o);
-    JS_DefineProperty(jcx, obj, "style", v, NULL, NULL, JSPROP_ENUMERATE);
+    JS_DefineProperty(cw->jss->jcx, obj, "style", v, NULL, NULL, JSPROP_ENUMERATE);
 }				/* establish_innerHTML */
 
-void
-jMyContext(void)
-{
-    jcx = cw->jss->jcx;
-}				/* jMyContext */
 
 eb_bool
 javaParseExecute(JS::HandleObject obj, const char *str, const char *filename, int lineno)
@@ -1119,29 +1109,27 @@ javaParseExecute(JS::HandleObject obj, const char *str, const char *filename, in
     JSBool ok;
     eb_bool rc = eb_false;
     jsval rval;
-    JSAutoCompartment ac(jcx, obj);
+    JSAutoCompartment ac(cw->jss->jcx, obj);
 
 /* Sometimes Mac puts these three chars at the start of a text file. */
     if(!strncmp(str, "\xef\xbb\xbf", 3))
 	str += 3;
 
     debugPrint(6, "javascript:\n%s", str);
-    ok = JS_EvaluateScript(jcx, obj, str, strlen(str),
+    ok = JS_EvaluateScript(cw->jss->jcx, obj, str, strlen(str),
        filename, lineno, &rval);
     if(ok) {
 	rc = eb_true;
 	if(JSVAL_IS_BOOLEAN(rval))
 	    rc = JSVAL_TO_BOOLEAN(rval);
     }
-/* GC is now done based on the runtime not the current context */
-    JS_GC(jrt);
     return rc;
 }				/* javaParseExecute */
 
 eb_bool
 javaParseExecuteGlobal(const char *str, const char *filename, int lineno)
 {
-	JSAutoCompartment ac(jcx, cw->jss->jwin);
+	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
     return javaParseExecute(cw->jss->jwin, str, filename, lineno);
 }			/* javaParseExecuteGlobal */
 
@@ -1151,16 +1139,16 @@ domLink(const char *classname,	/* instantiate this class */
    const char *symname, const char *idname, const char *href, const char *href_url, const char *list,	/* next member of this array */
    JS::HandleObject owner, int radiosel)
 {
-    JSAutoCompartment ac(jcx, cw->jss->jwin);
-    JS::RootedObject w(jcx), alist(jcx), master(jcx);
-    JS::RootedObject owner_root(jcx, (JSObject *) owner);
-    JS::RootedObject v(jcx);
+    JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
+    JS::RootedObject w(cw->jss->jcx), alist(cw->jss->jcx), master(cw->jss->jcx);
+    JS::RootedObject owner_root(cw->jss->jcx, (JSObject *) owner);
+    JS::RootedObject v(cw->jss->jcx);
     jsval vv, listv;
     unsigned length, attr = PROP_FIXED;
     JSClass *cp;
     eb_bool dupname = eb_false;
     int i;
-    JS::RootedValue rvv(jcx);
+    JS::RootedValue rvv(cw->jss->jcx);
 
     if(cw->jsdead)
 	return 0;
@@ -1172,7 +1160,7 @@ domLink(const char *classname,	/* instantiate this class */
 
     if(symname) {
 	JSBool found;
-	JS_HasProperty(jcx, owner_root, symname, &found);
+	JS_HasProperty(cw->jss->jcx, owner_root, symname, &found);
 	if(found) {
 
 /*********************************************************************
@@ -1197,14 +1185,14 @@ Yeah, it makes my head spin too.
 *********************************************************************/
 
 	    if(stringEqual(symname, "action")) {
-		JS::RootedObject ao(jcx);	/* action object */
-		JS_GetProperty(jcx, owner_root, symname, &vv);
+		JS::RootedObject ao(cw->jss->jcx);	/* action object */
+		JS_GetProperty(cw->jss->jcx, owner_root, symname, &vv);
 		rvv = vv;
 		ao = JSVAL_TO_OBJECT(rvv);
 /* actioncrash tells me if we've already had this collision */
-		JS_HasProperty(jcx, ao, "actioncrash", &found);
+		JS_HasProperty(cw->jss->jcx, ao, "actioncrash", &found);
 		if(!found) {
-		    JS_DeleteProperty(jcx, owner_root, symname);
+		    JS_DeleteProperty(cw->jss->jcx, owner_root, symname);
 /* gc will clean this up later */
 /* advance, as though this were not found */
 		    goto afterfound;
@@ -1212,7 +1200,7 @@ Yeah, it makes my head spin too.
 	    }
 
 	    if(radiosel == 1) {
-		JS_GetProperty(jcx, owner_root, symname, &vv);
+		JS_GetProperty(cw->jss->jcx, owner_root, symname, &vv);
 		rvv = vv;
 		v = JSVAL_TO_OBJECT(rvv);
 	    } else {
@@ -1224,7 +1212,7 @@ Yeah, it makes my head spin too.
   afterfound:
     if(!v) {
 	if(radiosel) {
-	    v = JS_NewArrayObject(jcx, 0, NULL);
+	    v = JS_NewArrayObject(cw->jss->jcx, 0, NULL);
 	    if(radiosel == 1) {
 		establish_property_string(v, "type", "radio", eb_true);
 	    } else {
@@ -1232,39 +1220,39 @@ Yeah, it makes my head spin too.
 		establish_property_object(v, "options", v);
 		establish_property_number(v, "selectedIndex", -1, eb_false);
 // not the normal pathway; we have to create our own element methods here.
-		JS_DefineFunction(jcx, v, "focus", nullFunction, 0, PROP_FIXED);
-		JS_DefineFunction(jcx, v, "blur", nullFunction, 0, PROP_FIXED);
+		JS_DefineFunction(cw->jss->jcx, v, "focus", nullFunction, 0, PROP_FIXED);
+		JS_DefineFunction(cw->jss->jcx, v, "blur", nullFunction, 0, PROP_FIXED);
 	    }
 	} else {
-	    v = JS_NewObject(jcx, cp, NULL, owner_root);
+	    v = JS_NewObject(cw->jss->jcx, cp, NULL, owner_root);
 	}
 	rvv = OBJECT_TO_JSVAL(v);
 
 /* if no name, then use id as name */
 	if(!symname && idname) {
-	    JS_DefineProperty(jcx, owner_root, idname, rvv, NULL, NULL, attr);
+	    JS_DefineProperty(cw->jss->jcx, owner_root, idname, rvv, NULL, NULL, attr);
 	} else if(symname && !dupname) {
-	    JS_DefineProperty(jcx, owner_root, symname, rvv, NULL, NULL, attr);
+	    JS_DefineProperty(cw->jss->jcx, owner_root, symname, rvv, NULL, NULL, attr);
 	    if(stringEqual(symname, "action"))
 		establish_property_bool(v, "actioncrash", eb_true, eb_true);
 
 /* link to document.all */
-	    JS_GetProperty(jcx, cw->jss->jdoc, "all", &listv);
+	    JS_GetProperty(cw->jss->jcx, cw->jss->jdoc, "all", &listv);
 	    master = JSVAL_TO_OBJECT(listv);
 	    establish_property_object(master, symname, v);
 	} else {
 /* tie this to something, to protect it from gc */
-	    JS_DefineProperty(jcx, owner_root, fakePropName(), rvv,
+	    JS_DefineProperty(cw->jss->jcx, owner_root, fakePropName(), rvv,
 	       NULL, NULL, JSPROP_READONLY | JSPROP_PERMANENT);
 	}
 
 	if(list) {
-	    JS_GetProperty(jcx, owner_root, list, &listv);
+	    JS_GetProperty(cw->jss->jcx, owner_root, list, &listv);
 	    alist = JSVAL_TO_OBJECT(listv);
 	}
 	if(alist) {
-	    JS_GetArrayLength(jcx, alist, &length);
-	    JS_DefineElement(jcx, alist, length, rvv, NULL, NULL, attr);
+	    JS_GetArrayLength(cw->jss->jcx, alist, &length);
+	    JS_DefineElement(cw->jss->jcx, alist, length, rvv, NULL, NULL, attr);
 	    if(symname && !dupname)
 		establish_property_object(alist, symname, v);
 	    if(idname && (!symname || !stringEqual(symname, idname)))
@@ -1276,10 +1264,10 @@ Yeah, it makes my head spin too.
 /* drop down to the element within the radio array, and return that element */
 /* w becomes the object associated with this radio button */
 /* v is, by assumption, an array */
-	JS_GetArrayLength(jcx, v, &length);
-	w = JS_NewObject(jcx, &element_class, NULL, owner_root);
+	JS_GetArrayLength(cw->jss->jcx, v, &length);
+	w = JS_NewObject(cw->jss->jcx, &element_class, NULL, owner_root);
 	rvv = OBJECT_TO_JSVAL(w);
-	JS_DefineElement(jcx, v, length, rvv, NULL, NULL, attr);
+	JS_DefineElement(cw->jss->jcx, v, length, rvv, NULL, NULL, attr);
 	v = w;
     }
 
@@ -1291,7 +1279,7 @@ Yeah, it makes my head spin too.
  * a form field named "id". */
 	if(strcmp(classname, "Form") != 0)
 	    establish_property_string(v, "id", idname, eb_true);
-	JS_GetProperty(jcx, cw->jss->jdoc, "idMaster", &listv);
+	JS_GetProperty(cw->jss->jcx, cw->jss->jdoc, "idMaster", &listv);
 	master = JSVAL_TO_OBJECT(listv);
 	establish_property_object(master, idname, v);
     } else {

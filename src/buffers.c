@@ -2933,7 +2933,6 @@ twoLetter(const char *line, const char **runThis)
     }
 
     if(stringEqual(line, "ip")) {
-	jMyContext();
 	sethostent(1);
 	allIPs();
 	endhostent();
@@ -3391,7 +3390,6 @@ showLinks(void)
     const struct htmlTag *tag;
 
     if(cw->browseMode && endRange) {
-	jMyContext();
 	line = (char *)fetchLine(endRange, -1);
 	for(p = line; (c = *p) != '\n'; ++p) {
 	    if(c != InternalCodeChar)
@@ -4101,7 +4099,6 @@ runCommand(const char *line)
 		return eb_false;
 	    }
 	    p = (char *)fetchLine(endRange, -1);
-	jMyContext();
 	    findField(p, 0, j, &n, 0, &tagno, &h, &tag);
 	    debugPrint(5, "findField returns %d, %s", tagno, h);
 	    if(!h) {

@@ -27,9 +27,6 @@ struct ebWindowJSState {
     HeapRootedObject uo;			/* javascript url object. */
 };
 
-/* globals */
-extern JSRuntime *jrt; /* javascript runtime */
-extern JSContext *jcx;		/* javascript context */
 
 /* Prototypes of functions that are only used by the javascript layer. */
 /* These can refer to javascript types in the javascript api. */
