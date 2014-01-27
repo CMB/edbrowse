@@ -237,9 +237,6 @@ loc_def_set(const char *name, const char *s,
     JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
     JSBool found;
     jsval vv;
-    static int cc;
-    cc++;
-    printf("%d\n", cc);
     if(s)
 	vv = STRING_TO_JSVAL(our_JS_NewStringCopyZ(cw->jss->jcx, s));
     else
