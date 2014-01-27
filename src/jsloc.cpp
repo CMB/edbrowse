@@ -112,7 +112,8 @@ loc_reload(JSContext * cx, unsigned int argc, jsval * vp)
     if(s && isURL(s))
 	gotoLocation(cloneString(s), (allowRedirection ? 0 : 99), eb_true);
     else
-	JS_ReportError(cw->jss->jcx, "location.reload() cannot find a url to refresh");
+	JS_ReportError(cw->jss->jcx,
+	   "location.reload() cannot find a url to refresh");
     return JS_FALSE;
 }				/* loc_reload */
 
@@ -247,7 +248,8 @@ loc_def_set(const char *name, const char *s,
     if(found)
 	JS_SetProperty(cw->jss->jcx, cw->jss->uo, name, &vv);
     else
-	JS_DefineProperty(cw->jss->jcx, cw->jss->uo, name, vv, NULL, setter, attr);
+	JS_DefineProperty(cw->jss->jcx, cw->jss->uo, name, vv, NULL, setter,
+	   attr);
 }				/* loc_def_set */
 
 /* Like the above, but using an integer, this is for port only. */
@@ -263,7 +265,8 @@ loc_def_set_n(const char *name, int port,
     if(found)
 	JS_SetProperty(cw->jss->jcx, cw->jss->uo, name, &vv);
     else
-	JS_DefineProperty(cw->jss->jcx, cw->jss->uo, name, vv, NULL, setter, attr);
+	JS_DefineProperty(cw->jss->jcx, cw->jss->uo, name, vv, NULL, setter,
+	   attr);
 }				/* loc_def_set_n */
 
 static void
@@ -281,7 +284,8 @@ loc_def_set_part(const char *name, const char *s, int n,
     if(found)
 	JS_SetProperty(cw->jss->jcx, cw->jss->uo, name, &vv);
     else
-	JS_DefineProperty(cw->jss->jcx, cw->jss->uo, name, vv, NULL, setter, attr);
+	JS_DefineProperty(cw->jss->jcx, cw->jss->uo, name, vv, NULL, setter,
+	   attr);
 }				/* loc_def_set_part */
 
 static JSBool
@@ -682,8 +686,8 @@ static JSPropertyOp my_getter;
 static JSStrictPropertyOp my_setter;
 
 void
-establish_property_string(JS::HandleObject jv, const char *name, const char *value,
-   eb_bool readonly)
+establish_property_string(JS::HandleObject jv, const char *name,
+   const char *value, eb_bool readonly)
 {
     JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
     JS::RootedObject obj(cw->jss->jcx, (JSObject *) jv);
@@ -754,7 +758,8 @@ establish_property_array(JS::HandleObject jv, const char *name)
 }				/* establish_property_array */
 
 void
-establish_property_object(JS::HandleObject parent, const char *name, JS::HandleObject child)
+establish_property_object(JS::HandleObject parent, const char *name,
+   JS::HandleObject child)
 {
     JS::RootedObject parent_root(cw->jss->jcx, (JSObject *) parent);
     JS::RootedObject child_root(cw->jss->jcx, (JSObject *) child);
@@ -788,19 +793,22 @@ establish_property_url(JS::HandleObject jv, const char *name,
 	    cw->jss->jwloc = cw->jss->uo;
 	else
 	    cw->jss->jdloc = cw->jss->uo;
-	JS_DefineFunction(cw->jss->jcx, cw->jss->uo, "reload", loc_reload, 0, PROP_FIXED);
-	JS_DefineFunction(cw->jss->jcx, cw->jss->uo, "replace", loc_replace, 1, PROP_FIXED);
+	JS_DefineFunction(cw->jss->jcx, cw->jss->uo, "reload", loc_reload, 0,
+	   PROP_FIXED);
+	JS_DefineFunction(cw->jss->jcx, cw->jss->uo, "replace", loc_replace, 1,
+	   PROP_FIXED);
     }				/* location object */
 }				/* establish_property_url */
 
 void
-set_property_string(JSObject *jv, const char *name, const char *value)
+set_property_string(JSObject * jv, const char *name, const char *value)
 {
     JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
     JS::RootedObject obj(cw->jss->jcx, jv);
     jsval vv;
     setter_suspend = eb_true;
-    vv = ((value && *value) ? STRING_TO_JSVAL(our_JS_NewStringCopyZ(cw->jss->jcx, value))
+    vv = ((value &&
+       *value) ? STRING_TO_JSVAL(our_JS_NewStringCopyZ(cw->jss->jcx, value))
        : JS_GetEmptyStringValue(cw->jss->jcx));
     JS_SetProperty(cw->jss->jcx, obj, name, &vv);
     setter_suspend = eb_false;
@@ -922,8 +930,8 @@ get_property_option(JS::HandleObject jv)
 {
     JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
     JS::RootedValue v(cw->jss->jcx);
-    JS::RootedObject oa(cw->jss->jcx, NULL);		/* option array */
-    JS::RootedObject oo(cw->jss->jcx, NULL);		/* option object */
+    JS::RootedObject oa(cw->jss->jcx, NULL);	/* option array */
+    JS::RootedObject oo(cw->jss->jcx, NULL);	/* option object */
     int n;
 
     if(!jv)

@@ -51,7 +51,7 @@ static int ntags;		/* number of tags in this page */
 static char *topAttrib;
 static char *basehref;
 static struct htmlTag *currentForm;	/* the open form */
-eb_bool parsePage;			/* parsing html */
+eb_bool parsePage;		/* parsing html */
 int browseLine;			/* for error reporting */
 static char *radioChecked;
 static int radioChecked_l;
@@ -69,7 +69,9 @@ buildTagArray(void)
 	return;
     if(tagArray)
 	nzFree(tagArray);
-    tagArray = (struct htmlTag **) allocMem(sizeof (struct htmlTag *) * ((ntags + 32) & ~31));
+    tagArray =
+       (struct htmlTag **)allocMem(sizeof (struct htmlTag *) * ((ntags +
+       32) & ~31));
     cw->tags = tagArray;
     foreach(t, htmlStack)
        tagArray[j++] = t;
@@ -231,7 +233,7 @@ static const struct tagInfo elements[] = {
 
 struct htmlTag {
     struct htmlTag *next, *prev;
-    HeapRootedObject jv;			/* corresponding java variable */
+    HeapRootedObject jv;	/* corresponding java variable */
     int seqno;
     int ln;			/* line number */
     int lic;			/* list item count, highly overloaded */
@@ -244,7 +246,7 @@ struct htmlTag {
     eb_bool retain:1;
     eb_bool multiple:1;
     eb_bool rdonly:1;
-    eb_bool clickable:1;		/* but not an input field */
+    eb_bool clickable:1;	/* but not an input field */
     eb_bool secure:1;
     eb_bool checked:1;
     eb_bool rchecked:1;		/* for reset */
@@ -279,7 +281,7 @@ freeTag(struct htmlTag *e)
     nzFree(e->id);
     nzFree(e->value);
     nzFree(e->href);
-    e->jv.~HeapRootedObject();
+    e->jv. ~ HeapRootedObject();
     free(e);
 }				/* freeTag */
 
@@ -416,7 +418,7 @@ getBaseHref(int n)
     const struct htmlTag *t, **list;
     if(parsePage)
 	return basehref;
-    list = (const struct htmlTag **) cw->tags;
+    list = (const struct htmlTag **)cw->tags;
     if(n < 0) {
 	for(n = 0; list[n]; ++n) ;
     }
@@ -526,7 +528,7 @@ formControl(eb_bool namecheck)
 {
     JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
     JS::RootedObject fo(cw->jss->jcx, NULL);
-    JS::RootedObject e(cw->jss->jcx);			/* the new element */
+    JS::RootedObject e(cw->jss->jcx);	/* the new element */
     const char *typedesc;
     int itype = topTag->itype;
     int isradio = itype == INP_RADIO;
@@ -600,7 +602,7 @@ htmlForm(void)
 {
     JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
     char *a;
-    JS::RootedObject fv(cw->jss->jcx, NULL);			/* form variable in javascript */
+    JS::RootedObject fv(cw->jss->jcx, NULL);	/* form variable in javascript */
     JS::RootedObject jdoc(cw->jss->jcx, cw->jss->jdoc);
 
     if(topTag->slash)
@@ -732,7 +734,7 @@ htmlInput(void)
 static void
 makeButton(void)
 {
-    struct htmlTag *t = (struct htmlTag *) allocZeroMem(sizeof (struct htmlTag));
+    struct htmlTag *t = (struct htmlTag *)allocZeroMem(sizeof (struct htmlTag));
     addToListBack(&htmlStack, t);
     t->seqno = ntags++;
     t->info = elements + 2;
@@ -827,7 +829,7 @@ locateOptions(const struct htmlTag *sel, const char *input,
 	display = initString(&disp_l);
     if(val_p)
 	value = initString(&val_l);
-    iopt = (char *) allocMem(len + 1);
+    iopt = (char *)allocMem(len + 1);
 
     if(setcheck) {
 /* Uncheck all existing options, then check the ones selected. */
@@ -928,7 +930,7 @@ jSyncup(void)
 {
     const struct htmlTag *t, **list;
     JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
-    JS::RootedObject eo(cw->jss->jcx, NULL);			/* element object */
+    JS::RootedObject eo(cw->jss->jcx, NULL);	/* element object */
     int itype, j, cx;
     char *value, *cxbuf;
 
@@ -940,7 +942,7 @@ jSyncup(void)
 
     buildTagArray();
 
-    list = (const struct htmlTag **) cw->tags;
+    list = (const struct htmlTag **)cw->tags;
     while(t = *list++) {
 	if(t->action != TAGACT_INPUT)
 	    continue;
@@ -1049,7 +1051,7 @@ newTag(const char *name)
     if(!ti->name)
 	return 0;
     action = ti->action;
-    t = (struct htmlTag *) allocZeroMem(sizeof (struct htmlTag));
+    t = (struct htmlTag *)allocZeroMem(sizeof (struct htmlTag));
     t->action = action;
     t->info = ti;
     t->seqno = ntags++;
@@ -1123,7 +1125,7 @@ encodeTags(char *html)
     char *save_h;
     char *h = html;
     char *a;			/* for a specific attribute */
-    char *newstr;			/* the new string */
+    char *newstr;		/* the new string */
     char *javatext;
     int js_nl;			/* number of newlines in javascript */
     const char *name, *attrib, *end;
@@ -1150,9 +1152,9 @@ encodeTags(char *html)
     int nopt;			/* number of options */
     int intable = 0, inrow = 0;
     eb_bool tdfirst;
-    JS::RootedObject to(cw->jss->jcx, NULL);			/* table object */
+    JS::RootedObject to(cw->jss->jcx, NULL);	/* table object */
     JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
-    JS::RootedObject ev(cw->jss->jcx, NULL);			/* generic event variable */
+    JS::RootedObject ev(cw->jss->jcx, NULL);	/* generic event variable */
     JS::RootedObject jwin(cw->jss->jcx, cw->jss->jwin);
     JS::RootedObject jdoc(cw->jss->jcx, cw->jss->jdoc);
 
@@ -1279,7 +1281,7 @@ encodeTags(char *html)
 	if(!action)
 	    continue;		/* tag not recognized */
 
-	topTag = t = (struct htmlTag *) allocZeroMem(sizeof (struct htmlTag));
+	topTag = t = (struct htmlTag *)allocZeroMem(sizeof (struct htmlTag));
 	addToListBack(&htmlStack, t);
 	t->seqno = ntags;
 	sprintf(hnum, "%c%d", InternalCodeChar, ntags);
@@ -1383,10 +1385,12 @@ encodeTags(char *html)
 		    }
 
 		    if(ev = currentSel->jv) {	/* element variable */
-			JS::RootedObject ov(cw->jss->jcx, establish_js_option(ev, v->lic));
+			JS::RootedObject ov(cw->jss->jcx,
+			   establish_js_option(ev, v->lic));
 			v->jv = ov;
 			establish_property_string(ov, "text", v->name, eb_true);
-			establish_property_string(ov, "value", v->value, eb_true);
+			establish_property_string(ov, "value", v->value,
+			   eb_true);
 			establish_property_bool(ov, "selected", v->checked,
 			   eb_false);
 			establish_property_bool(ov, "defaultSelected",
@@ -1965,7 +1969,7 @@ encodeTags(char *html)
 			debugPrint(4, "<<\n%s\n>>", cw->dw + 10);
 			stringAndString(&cw->dw, &cw->dw_l, "</docwrite>");
 			afterlen = strlen(h) + strlen(cw->dw);
-			after = (char *) allocMem(afterlen + 1);
+			after = (char *)allocMem(afterlen + 1);
 			strcpy(after, cw->dw);
 			strcat(after, h);
 			nzFree(cw->dw);
@@ -2037,7 +2041,7 @@ encodeTags(char *html)
 	const struct htmlTag *lasttag;
 	onloadGo(jwin, 0, "window");
 	onloadGo(jdoc, 0, "document");
-	lasttag = (const struct htmlTag *) htmlStack.prev;
+	lasttag = (const struct htmlTag *)htmlStack.prev;
 	foreach(t, htmlStack) {
 	    char *jsrc;
 	    ev = t->jv;
@@ -2109,7 +2113,7 @@ encodeTags(char *html)
     radioChecked = 0;
     basehref = 0;
     if(preamble) {
-	h = (char *) allocMem(preamble_l + l + 2);
+	h = (char *)allocMem(preamble_l + l + 2);
 	strcpy(h, preamble);
 	h[preamble_l] = '\f';
 	strcpy(h + preamble_l + 1, newstr);
@@ -2171,9 +2175,10 @@ htmlParse(char *buf, int remote)
 
 void
 findField(const char *line, int ftype, int n,
-   int *total, int *realtotal, int *tagno, char **href, const struct htmlTag **tagp)
+   int *total, int *realtotal, int *tagno, char **href,
+   const struct htmlTag **tagp)
 {
-    const struct htmlTag *t, **list = (const struct htmlTag **) cw->tags;
+    const struct htmlTag *t, **list = (const struct htmlTag **)cw->tags;
     int nt = 0;			/* number of fields total */
     int nrt = 0;		/* the real total, for input fields */
     int nm = 0;			/* number match */
@@ -2325,7 +2330,7 @@ findInputField(const char *line, int ftype, int n, int *total, int *realtotal,
 eb_bool
 lineHasTag(const char *p, const char *s)
 {
-    const struct htmlTag *t, **list = (const struct htmlTag **) cw->tags;
+    const struct htmlTag *t, **list = (const struct htmlTag **)cw->tags;
     char c;
     int j;
     while((c = *p++) != '\n') {
@@ -2426,7 +2431,7 @@ htmlTest(void)
 void
 infShow(int tagno, const char *search)
 {
-    const struct htmlTag **list = (const struct htmlTag **) cw->tags;
+    const struct htmlTag **list = (const struct htmlTag **)cw->tags;
     const struct htmlTag *t = list[tagno], *v;
     const char *s;
     int j, cnt;
@@ -2487,7 +2492,7 @@ infShow(int tagno, const char *search)
 eb_bool
 infReplace(int tagno, const char *newtext, int notify)
 {
-    const struct htmlTag **list = (const struct htmlTag **) cw->tags;
+    const struct htmlTag **list = (const struct htmlTag **)cw->tags;
     const struct htmlTag *t = list[tagno], *v;
     const struct htmlTag *form = t->controller;
     char *display;
@@ -2628,7 +2633,7 @@ resetVar(struct htmlTag *t)
     int itype = t->itype;
     const char *w = t->value;
     eb_bool bval;
-    JS::RootedObject jv(cw->jss->jcx,  t->jv);
+    JS::RootedObject jv(cw->jss->jcx, t->jv);
 
 /* This is a kludge - option looks like INP_SELECT */
     if(t->action == TAGACT_OPTION)
@@ -2846,7 +2851,7 @@ static eb_bool
 formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
    char **post, int *l)
 {
-    const struct htmlTag **list = (const struct htmlTag **) cw->tags, *t;
+    const struct htmlTag **list = (const struct htmlTag **)cw->tags, *t;
     int itype;
     int j;
     char *name, *dynamicvalue = NULL;
@@ -2888,7 +2893,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 	    if(t->itype != INP_IMAGE)
 		goto success;
 	    namelen = strlen(name);
-	    nx = (char *) allocMem(namelen + 3);
+	    nx = (char *)allocMem(namelen + 3);
 	    strcpy(nx, name);
 	    strcpy(nx + namelen, ".x");
 	    postNameVal(nx, "0", fsep, eb_false, boundary, post, l);
@@ -2952,7 +2957,8 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 		if(j && cxbuf[j - 1] == '\r')
 		    --j;
 		cxbuf[j] = 0;
-		rc = postNameVal(name, cxbuf, fsep, eb_false, boundary, post, l);
+		rc =
+		   postNameVal(name, cxbuf, fsep, eb_false, boundary, post, l);
 		nzFree(cxbuf);
 		if(rc)
 		    continue;
@@ -2981,7 +2987,8 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 /* option could have an empty value, usually the null choice,
  * before you have made a selection. */
 	    if(!*dynamicvalue) {
-		postNameVal(name, dynamicvalue, fsep, eb_false, boundary, post, l);
+		postNameVal(name, dynamicvalue, fsep, eb_false, boundary, post,
+		   l);
 		continue;
 	    }
 /* Step through the options */
@@ -3241,7 +3248,7 @@ infPush(int tagno, char **post_string)
 	    newlen += 11 + (name ? strlen(name) : 1);
 	++newlen;		/* null */
 	++newlen;		/* encodeAttachment might append another nl */
-	q = (char *) allocMem(newlen);
+	q = (char *)allocMem(newlen);
 	if(subj)
 	    sprintf(q, "subject:%s\n", subj);
 	else
@@ -3357,7 +3364,8 @@ javaOpensWindow(const char *href, const char *name)
 }				/* javaOpensWindow */
 
 void
-javaSetsTimeout(int n, const char *jsrc, JS::HandleObject to, eb_bool isInterval)
+javaSetsTimeout(int n, const char *jsrc, JS::HandleObject to,
+   eb_bool isInterval)
 {
     struct htmlTag *t = newTag("a");
     char timedesc[48];
@@ -3379,4 +3387,4 @@ eb_bool
 handlerGoBrowse(const struct htmlTag *t, const char *name)
 {
     return handlerGo(t->jv, name);
-}			/* handlerGoBrowse */
+}				/* handlerGoBrowse */
