@@ -61,7 +61,7 @@ my_ErrorReporter(JSContext * cx, const char *message, JSErrorReport * report)
 eb_bool
 isJSAlive(void)
 {
-return (cw->jss != NULL) && (cw->jss->jcx != NULL);
+    return (cw->jss != NULL) && (cw->jss->jcx != NULL);
 }				/* isJSAlive */
 
 JSString *
