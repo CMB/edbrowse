@@ -91,9 +91,6 @@ make JS_CXXFLAGS=-I/usr/local/include/mozjs-24 JSLIB=-lmozjs-24 edbrowse
 
 If you want database access, you need unixODBC and unixODBC-devel.
 Make edbrowseodbc, rather than edbrowse.
-You may want to run make clean first,
-because edbrowseodbc has some conditional compilation that won't happen
-if you run make edbrowse and make edbrowseodbc sequentially.
 
 If you're a developer and you want to use the symbolic debugger,
 set EBDEBUG=on before you run make.

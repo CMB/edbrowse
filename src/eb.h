@@ -196,6 +196,7 @@ extern "C" {
     extern int displayLength;	/* when printing a line */
     extern int webTimeout, mailTimeout;
     extern int browseLine;	/* line number, for error reporting */
+    extern eb_bool sqlPresent;	/* Was edbrowse compiled with SQL built in? */
     extern eb_bool ismc;	/* Is the program running as a mail client? */
     extern eb_bool cons_utf8;	/* does the console expect utf8? */
     extern eb_bool iuConvert;	/* perform iso utf8 conversions automatically */

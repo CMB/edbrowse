@@ -7,6 +7,7 @@
 
 #include "eb.h"
 
+eb_bool sqlPresent = eb_false;
 
 eb_bool
 sqlReadRows(const char *filename, char **bufptr)

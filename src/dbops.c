@@ -7,6 +7,8 @@
 #include "eb.h"
 #include "dbapi.h"
 
+eb_bool sqlPresent = eb_true;
+
 const char *sql_debuglog = "/tmp/ebsql.log";	/* log of debug prints */
 const char *sql_database;	/* name of current database */
 int rv_numRets;

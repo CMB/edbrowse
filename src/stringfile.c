@@ -399,13 +399,16 @@ isSQL(const char *s)
     char c;
     const char *c1 = 0, *c2 = 0;
     c = *s;
-#ifndef HAVE_SQL
-    return eb_false;
-#endif
+
+    if(!sqlPresent)
+	goto no;
+
     if(isURL(s))
-	return eb_false;
+	goto no;
+
     if(!isalphaByte(c))
 	goto no;
+
     for(++s; c = *s; ++s) {
 	if(c == '_')
 	    continue;
@@ -422,8 +425,10 @@ isSQL(const char *s)
 	    goto yes;
 	}
     }
+
   no:
     return eb_false;
+
   yes:
     return eb_true;
 }				/* isSQL */
