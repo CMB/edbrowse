@@ -1,5 +1,12 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.5.1:
+Mozilla javascript version 2.4 and above supports only a C++ interface,
+so if we want to keep using moz js, then we must follow along.
+Edbrowse 3.5.1 converts the javascript layer from C to C++.
+These are the files jsdom.cpp, jsloc.cpp, and html.cpp (use to be .c).
+No doubt other files will convert to C++ in the future.
+
 3.4.10:
 Polish translations, courtesy of Wojciech Gac.
 

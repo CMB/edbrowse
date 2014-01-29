@@ -1,4 +1,4 @@
-#  .ebrc: the configuration file for edbrowse (version 2.2 or above)
+#  .ebrc: the configuration file for edbrowse (version 3.4.8 or above)
 #  This is a sample file.
 #  This file contains passwords - make sure it is not readable by others.
 #  chmod 600 .ebrc
@@ -9,6 +9,8 @@
 #  Access this account via -m1.
 #  The next account is -m2, and so on.
 mail {
+# Do not fetch from this account when -f is used to fetch from all accounts.
+nofetch
 #  The pop3 server and the smtp server, they need not be the same.
 inserver = mail.comcast.net
 outserver = smtp.comcast.net
@@ -39,6 +41,8 @@ reply = eklhad@comcast.net
 #  My wife's account.
 #  I check on it once in a while, with her permission of course.
 mail {
+#  I totally shouldn't be fetching from this account by default.
+nofetch
 inserver = mail.comcast.net
 outserver = smtp.comcast.net
 login = kdwife
@@ -63,6 +67,7 @@ reply = karl.dahlke@my-work-domain.com
 #  Mail that looks like it came from my other web sites.
 #  Let's start with the math site.
 mail {
+nofetch
 inserver = mail.comcast.net
 outserver = mail.comcast.net
 login = eklhad
@@ -73,6 +78,7 @@ reply = webmaster@mathreference.com
 }
 
 mail {
+nofetch
 inserver = mail.comcast.net
 outserver = mail.comcast.net
 login = eklhad
@@ -82,43 +88,30 @@ from = Karl and Wendy Dahlke
 reply = webmaster@scrapsayings.com
 }
 
-#  An email associated with my private domain, independent of my ISP
-#  This is forwarded to my ISP.
+#  a gmail account, most people have one of these now adays.
 mail {
-inserver = mail.comcast.net
-outserver = mail.comcast.net
+inserver = pop.gmail.com
+outserver = smtp.gmail.com
+#  This is for secure email over ssl
+inport = *995
+outport = *465
 login = eklhad
-password = zebra
-from = Karl Dahlke
-reply = eklhad@comcast.net
-}
-
-# A completely-ficticious send-only address.  We should not try to fetch
-# from this account when -f is called to fetch from all accounts.
-mail {
-inserver = mail.the-brannons.com
-outserver = mail.the-brannons.com
-from = CMB's Announcements
-reply = noreply@the-brannons.com
-login = announcements
 password = rhinoceros
-nofetch
+from = Karl Dahlke
+reply = eklhad@gmail.com
 }
 
 #  That's all the mail accounts.
 #  Here is my address book.
-#  Format    is alias:email:other fields.
+#  Format    is alias:email:other fields that we don't care about
 adbook=/home/eklhad/outside/adbook
 
 #  Move to this directory when fetching mail.
 maildir = /home/eklhad/mbox
 
-#  ip addresses on the blacklist
-ipblack=/home/eklhad/outside/ipblack
-
 #  The cookie jar - where we store the http cookies.
 #  This file contains passwords, make sure it is 0600.
-#  Do not hand edit this file, unless you know what you are doing!
+#  Do not hand edit the cookie file, unless you know what you are doing!
 jar = /home/eklhad/outside/cookies
 
 #  file of ssl certificates
@@ -183,9 +176,9 @@ mime {
 #  the < forces it to be a stream, hence the url is passed to the program
 type = <audio/x-pn-realaudio
 desc = streaming audio
-suffix = rm,ra,ram
-protocol = rtsp,pnm
-program = trplayer
+suffix = rm,ra,ram,pls
+protocol = rtsp,pnm,sdp
+program = /usr/bin/mplayer -quiet
 }
 
 
@@ -227,7 +220,7 @@ nojs = paypal.com
 #  Every time you fetch a web page from the internet,
 #  your browser identifies itself to the host.
 #  This is done automatically.
-#  Edbrose identifies itself as "edbrowse/2.1.3",
+#  Edbrose identifies itself as "edbrowse/3.4.8",
 #  where the number after the slash indicates the current version of edbrowse.
 #  All well and good, but some websites have no respect for edbrowse,
 #  or lynx for that matter.
@@ -244,141 +237,30 @@ agent = Lynx/2.8.4rel.1 libwww-FM/2.14
 agent = Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; Win 9x 4.90)
 
 #  Ok, we're ready to write our first script.
-#  Let's start out with something simple.
-#  undos and unword a file.
-#  No doubt a Windows expert could help me with the latter.
-function+ud {
+#  Let's start out with something simple, undos a file.
+function+undos {
 ,s/\r$//
-}
-
-function:uw {
-#  Fix the apostrophe
-,s/’/'/g
-#  Strip out nonascii stuff.
-#  Sorry to be so English-centric.
-#  This will mess you up if you're reading a Spanish word document,
-#  and you lose your nonascii letters.
-,s/[\0-\11\13\14\16-\37\200-\377]//g
-#  After the above, there'll be lots of blank lines.
-g/^ *$/ d
-#  Break lines at return boundaries.
-,bl
-#  Strip off trailing junk.
-/^ !"#\$%&'()\*/,$d
 }
 
 #  How about a function to access google.
 #  That's something everybody does all the time.
-#  I went to the home page, put in some keywords, set db2,
-#  and pressed search.
-#  That gave me the url.
-#  Here it is, with ~0 embedded.
+#  This is not guaranteed to be up-to-date;
+#  Google changes its web interface from time to time.
+#  In fact any web-accessing script requires maintenance,
+#  as the website in question evolves.
 #  ~0 stands for all the arguments, in other words, the rest of the line.
 #  So   <gg elephants tigers   will call up google,
-#  looking for "elephants tigers".
+#  looking for elephants and tigers together.
 function+gg {
-b www.google.com/search?q=~0&hl=n&btnG=Google+Search&meta=
-#  Ok, we got the web page back.
-#  How do we know?  Go back and look at the function line.
-#  The + means stop if there are any errors.
-#  We're still here, so I guess there weren't any errors.
-#  Google has returned its results.
-#  But there's lots of text that I don't care to read.
-#  So I wrote a google cleanup function.
-#  Let's call it now.
-#  It's ok that this function hasn't been defined yet;
-#  forward references are allowed.
-<ggc
+b http://www.google.com
+/<>/ i=~0
++i1*
+/^1/+
 }
 
-#  The google cleanup function.
-#  This is called when you access google (above),
-#  but you may want to call it again, when you ask for the next ten results,
-#  and the next ten results, etc.
-#  That's why I made it a separate function.
-#  Look at the function definition and note the : instead of +
-#  This means the function will march on, even if there are errors.
-#  This lets us delete certain lines, if they are there.
-#  And if they're not there, we get an error, and march on.
-#  No big deal.
-function:ggc {
-#  get rid of pdf warnings
-g/^Your browser may not have a PDF reader available.$/d
-g/^{Similar pages}$/d
-#  trailing lines, after "search next", can go away
-/^{search Next}$/+,$d
-#  initial lines and stats can go away
-1,/Search took [\d.]+ seconds/d
-#  move the "did you mean" line to the end; we need to keep this one
-/^Did you mean:$/,/^Did you mean:$/+2m$
-#  more stuff at the start that we don't need
-1,/^Categor[iesy]+: *|/d
-1,/{See your message here...}/d
-1,/^|Sponsored Link$/d
-#  First two nonblank lines and first blank line can go away
-1g/./d
-1g/./d
-1g/^$/d
-#  put the "did you mean" line back to the top, if it's there
-/^Did you mean:$/,$m0
-}
-
-#  mariam-webster dictionary lookup
+#  mariam-webster dictionary lookup, ~1 is parameter 1, the word to look up.
+#  <mw elephant
 function+mw {
-#  You can't see it, unless you list the line, but there is
-#  a control a between dictionary and book.
-#  This indicates post method, rather than get method.
-b www.m-w.com/cgi-bin/dictionarybook=Dictionary&va=~1
-<mwc
-}
-
-function:mwc {
-/^{Get the Word of the Day/,$d
-1,/^Click on the Collegiate Thesaurus tab to look up the current word/+2d
-1,/^<>| *<Go>$/-d
-1,/^One entry found for/+d
-1,/^Suggestions for/-d
-}
-
-#  Clean up an article from www.space.com.
-#  Now you're ready for the big time.
-#  if(*) means proceed if the previous command succeeded.
-#  if(?) means proceed if the previous command failed.
-#  Get it ... ? as in the question mark of an error.
-#  Similarly for while(*), until(*), etc.
-#  There is also a loop(n) construct, to repeat something n times.
-function:sca {
-#  stuff at the end can go
-/^{Add these headlines to your site}$/,$d
-#  All the stuff at the top, before the word posted, can go
-1,/^posted/d
-if(*) {
-#  now the top line is the date, don't need it
-1g/ 20\d\d$/d
-#  Now a blank line
-1g/^$/d
-}
-#  We don't care about the section called images, which is inserted
-#  after the first paragraph of the article.
-/^| *Images\|More Stories$/d
-if(*) {
-#  delete some sections before this line, and after it.
-?^|SCIENCE TUESDAY\||TECH WEDNESDAY$?,-d
-.,/{>>Uplink your views}/d
-if(*){
-d
-} else {
-.,/^| *More Stories$/d
-.,/^| *Related SPACE.com STORIES$/d
-.,/^| *Related Links$/d
-.,/^| *Multimedia$/d
-until(?) {
-d
-.g/^|* *{.*}$/d
-}
-}
-#  Now print the article
-,p
-}
+b http://www.merriam-webster.com/dictionary/~1
 }
 

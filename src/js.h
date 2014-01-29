@@ -1,7 +1,7 @@
 /* js.h, a laywer between edbrowse and the javascript engine.
  * This is a form of encapsulation, and it has proven to be vital,
  * since Mozilla js changes quite often, and those changes
- * can be combined to this file, jsdom.c and jsloc.c.
+ * can be comfined to jsdom.cpp, jsloc.cpp, and html.cpp.
  * No other file need know about the javascript API,
  * and no other file should include jsapi.h. */
 

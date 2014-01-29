@@ -34,15 +34,10 @@ No need to repeat all that here.
 You're here because you want to compile the program, or modify the source
 in some way.  Great!
 
-I haven't developed a configure script, and I really need to do that,
-but I just don't have the time.
-So I'm hoping this entire package will build on any Unix platform as is.
-That's wildly optimistic, but there it is.
-(I haven't heard too many problems in this regard.)
+I haven't developed a configure script, and I should do that some day,
+but meantime just type make and hope for the best.
 
 As you may know, edbrowse was originally a perl script.
-(Perl is a fantastic prototyping language, but not always the best choice
-for serious software.)
 As such, it was only natural to use perl regular expressions for
 my search/substitute functions in the editor.
 And once you've experienced the power of perl regexp, you'll never
@@ -72,21 +67,27 @@ http://www.openssl.org/source/
 You also need libcurl, which is included in almost every Linux distro.
 This is used for ftp, http, and https.
 Check for /usr/include/curl/curl.h
-Edbrowse requires version 7.17.0 (or later).  If you compiled with a version
+Edbrowse requires version 7.17.0 or later.  If you compiled with a version
 prior to 7.17.0, the program will inform you that you need to upgrade.
 
 Finally, you need the Spider Monkey javascript engine from Mozilla.org
-(I got smart and decided not to reinvent all this js machinery.)
 ftp://ftp.mozilla.org/pub/mozilla.org/js/
-As of edbrowse version 3.4.8,
-we now require version 1.8.5 -- or higher -- of Spidermonkey.
-Donwload a package and expand it in /usr/local.
-It will create a directory js.
-Go into js/src and run
-gmake -f Makefile.ref
-This should build everything you need.
-cd Linux_All_DBG.OBJ
-ln -s `pwd`/libjs.so /usr/lib/libsmjs.so
+Edbrowse 3.4.7 or less requires Mozilla js version 1.5.
+Edbrowse 3.4.8 requires Mozilla js version 1.8.5.
+Edbrowse 3.5.1 requires Mozilla js version 2.4.
+If this is not available in your distribution, download,
+expand, cd js/src, ./configure, make, and make install.
+https://ftp.mozilla.org/pub/mozilla.org/js/mozjs-24.2.0.tar.bz2
+Lots of warning messages in the build, don't worry about those.
+This creats /usr/local/lib/libmozjs-24.so, and with /usr/local/lib
+already in my /etc/ld.so.conf, I thought I'd be fine,
+but I had to run ldconfig again anyways, not sure why.
+Back in your edbrowse/src directory,
+you may need to set some flags on the command line
+if you had to install Mozilla js as above.
+This works for me.
+
+make JS_CXXFLAGS=-I/usr/local/include/mozjs-24 JSLIB=-lmozjs-24 edbrowse
 
 If you want database access, you need unixODBC and unixODBC-devel.
 Make edbrowseodbc, rather than edbrowse.
@@ -94,14 +95,7 @@ You may want to run make clean first,
 because edbrowseodbc has some conditional compilation that won't happen
 if you run make edbrowse and make edbrowseodbc sequentially.
 
-Now return to your edbrowse src directory.
-To build edbrowse - guess what - you type make.
-(Mac users type make -f makefile.osx.)
-Then you send me mail when it doesn't work.  :-)
-Not a bad idea to read through the makefile before running make.
-It's pretty simple.
-
-If you're a developer, and you want to use the symbolic debugger,
+If you're a developer and you want to use the symbolic debugger,
 set EBDEBUG=on before you run make.
 
 If it compiles,
@@ -128,7 +122,6 @@ directory of the edbrowse source tree, to insure that modified files still
 adhere to this style.
 For instance, if you change src/main.c, just run
 ../tools/ebindent main.c # Assuming that the working directory is src
-Thank you for your understanding.
 
 ------------------------------------------------------------
 
@@ -192,7 +185,7 @@ Handles https connections as well,
 and 301/302 redirection.
 Uncompresses html data if necessary.
 
-html.c:
+html.cpp:
 Render the html tags and format the text.
 Update input fields.
 Submit/reset forms.
@@ -220,12 +213,12 @@ in various languages.
 Also some international print routines to display the correct string,
 according to your locale.
 
-jsdom.c:
+jsdom.cpp:
 Document object model under javascript.
 Build objects for the hyperlinks, forms, elements, etc.
 Includes basic methods like alert() prompt() window.open() etc.
 
-jsloc.c:
+jsloc.cpp:
 The location object, and other objects (like document.cookie)
 with strange side effects.
 
@@ -269,8 +262,8 @@ Yet it is also carried into the html tags in html.c,
 so that it can be sent when you push the submit button.
 This is a second copy of the data.
 As if that weren't bad enough, I now need a third copy for javascript.
-When js accesses form.fullname, it needs to find,
-and in bizarre cases change, the text that you entered.
+When js accesses form.fullname.value, it needs to find,
+and in some cases change, the text that you entered.
 I believe the first representation, in your editor, must be separate
 from the second and third (which I have managed to merge together).
 Remember that an input field could be an antire text area,
@@ -285,7 +278,7 @@ So I'm stuck with something almost as bad.
 As part of the browse command, the field data, whether set up by html
 or modified by javascript, must be copied into your editor text.
 Then you can change it to your heart's content, but when you submit the form,
-or run any javascript, for any reason, all that text has to be carried
+or run any javascript for any reason, all that text has to be carried
 back to the javascript world.
 This is accomplished by jSyncup() in html.c.
 When javascript is done, any changes it has made to the fields have
@@ -300,17 +293,16 @@ in, but javascript has changed it to Barney Rubble, and you need
 to be notified.
 Edbrowse does this for you.
 
+Line 357 has been updated.
+
 ------------------------------------------------------------
 
-To look at all this source, some 30,000 lines,
-you wouldn't know I was a professional programmer with 25 years experience.
-I mean it really looks hacked together.
-Well - I wrote it in my spare time, because I needed this tool desperately.
+Yes, some of this code looks like it was written, well,
+in my spare time; and it was, because I needed this tool desperately.
 No careful methodology, just "Gitter Duhn".
 
-------------------------------------------------------------
-
-Edbrowse really needs a complete rewrite.
+Along with some cleanup, and even some modest enhancements,
+edbrowse really needs a complete rewrite.
 Today, it takes html text and tags, and builds
 javascript objects to go along with those tags; and it builds the screen,
 (I'll call it a screen, it's really a text buffer),
@@ -318,16 +310,19 @@ in parallel, at the same time.
 But what it should do is not build the screen at all on the first pass.
 Text would simply be turned into a string
 and put in as an attribute in whatever object we are working on at the time,
-or the document object if no tag has appeard.
+or the document object if no tag has appeared yet.
 All internal.
-Then you run the javascript, and it creates more objects, perhaps,
+Then you run the javascript, and it perhaps creates more objects,
 creates lists dynamically,
-builds entirely new paragraphs, images, links, whatever.
+builds entirely new paragraphs, images, links, whatever it does.
 Then pass 3, render the screen by traversing the tree of objects
 depth first.
-Now, if anything changes, through some onclick code,
+That is your text buffer.
+
+Now, if anything changes, through some onclick code perhaps,
 you have a new tree of objects,
 so Simply rerender the screen.
+In our case that builds a new text buffer.
 Maybe this is what standard browsers do; I don't know.
 But there's something we should do that they don't.
 Keep a copy of the old screen and run diff.
@@ -335,23 +330,12 @@ If one or two lines have changed,
 or if a menu has changed behind the scenes, report that to the user.
 It's something a sighted person would notice right away,
 but I would be left in the dark.
-If there are many changes, just say "entire screen has changed".
+If there are many changes, just say "entire buffer has changed".
 Anyways, this is the kind of rewrite that needs to happen.
-But I *way* don't have the time.
-And even though I can see the design in my head, I'm not sure I have the skills.
-Maybe I underestimate myself, but it looks really complicated.
 
-We also have to ask if this would be a good time to switch from C to C++.
-There are pros and cons here, the major con being that I'd have to learn C++,
-something I've been avoiding for 25 years.    :-)
-But all that code dedicated to growing strings dynamically,
-and freeing them without memory leaks, etc, etc, has become a royal pain.
-The C++ string library would solve most of this.
-
-I just wish someone would pay me to do all this stuff.
-An NSF grant or something.
-God knows they fund sillier things.
-But I have no idea how to win a grant.
-So in lieu of that, I just don't have the time that
-would be required to take some of the next big steps.
+In parallel, we are moving from C to C++, as mandated by mozjs 24.
+All that code dedicated to growing strings dynamically,
+and freeing them without memory leaks, etc, etc, has become a royal pain,
+and will be much nicer with string objects.
+Also my list macros will become array methods.
 
