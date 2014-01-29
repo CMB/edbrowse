@@ -8,7 +8,7 @@
  * ftp://ftp.mozilla.org/pub/mozilla.org/js/js-1.5.tar.gz
 */
 
-#include <sstream>
+#include <iostream>
 #include "eb.h"
 
 #include "js.h"
@@ -20,21 +20,19 @@ using namespace std;
 static JSRuntime *jrt;		/* our js runtime, global so we can call the gc from jsloc
 				   functions as well */
 static size_t gStackChunkSize = 8192;
-static FILE *gOutFile, *gErrFile;
 static const char *emptyParms[] = { 0 };
 static jsval emptyArgs[] = { jsval() };
 
 static void
 my_ErrorReporter(JSContext * cx, const char *message, JSErrorReport * report)
 {
-    stringstream prefix(stringstream::in | stringstream::out);
     if(debugLevel < 2)
 	goto done;
     if(ismc)
 	goto done;
 
     if(!report) {
-	fprintf(gErrFile, "%s\n", message);
+	cerr << message <<endl;
 	goto done;
     }
 
@@ -45,13 +43,10 @@ my_ErrorReporter(JSContext * cx, const char *message, JSErrorReport * report)
     }
 
     if(report->filename)
-	prefix << report->filename << ":";
+	cerr << report->filename << ": ";
     if(report->lineno)
-	prefix << report->lineno << ": ";
-    if(JSREPORT_IS_WARNING(report->flags))
-	prefix << (JSREPORT_IS_STRICT(report->flags) ? "strict " : "") <<
-	   "warning: ";
-    fprintf(gErrFile, "%s%s\n", prefix.str().c_str(), message);
+	cerr << report->lineno << ": ";
+    cerr << message << endl;
 
   done:
     if(report)
@@ -868,8 +863,6 @@ createJavaContext(struct ebWindowJSState **pstate)
 	jrt = JS_NewRuntime(4L * 1024L * 1024L, JS_NO_HELPER_THREADS);
 	if(!jrt)
 	    i_printfExit(MSG_JavaMemError);
-	gOutFile = stdout;
-	gErrFile = stderr;
     }
 
     state->jcx = JS_NewContext(jrt, gStackChunkSize);
