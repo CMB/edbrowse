@@ -293,7 +293,8 @@ I currently use chars 0 through 6 for the line number,
 and 8 for the directory suffix.
 You know, the slash that we put on the end of a directory,
 or the | on the end of a fifo etc.
-9 is unused, I think.
+9 is used if the file is a symbolic link to a special file,
+like @/ symbolic link to a directory.
 Thus the following definitions.
 *********************************************************************/
 

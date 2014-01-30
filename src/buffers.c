@@ -2688,7 +2688,7 @@ substituteText(const char *line)
   abort:
     if(re_cc)
 	pcre_free(re_cc);
-    if(replaceString && !bl_mode)
+    if(replaceString && replaceString != replaceLine)
 	nzFree(replaceString);
     return -1;
 }				/* substituteText */
