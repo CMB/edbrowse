@@ -945,11 +945,14 @@ appendPrintableChunk(const char *chunk, int len, eb_bool premode)
 }				/* appendPrintableChunk */
 
 /* Break up a line using the above routines.
- * The buffer for the new text must be supplied.
+ * The new lines are put in a fixed array.
  * Return false (fail) if we ran out of room.
- * This function is called from bufsup.c, implementing the bl command,
+ * This function is called from buffers.c, implementing the bl command,
  * and is only in this file because it shares the above routines and variables
  * with the html reformatting, which really has to be here. */
+
+char replaceLine[REPLACELINELEN];
+
 eb_bool
 breakLine(const char *line, int len, int *newlen)
 {

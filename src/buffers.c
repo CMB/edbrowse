@@ -2232,30 +2232,34 @@ fieldNumProblem(int desc, char c, int n, int nt, int nrt)
 /* Perform a substitution on a given line.
  * The lhs has been compiled, and the rhs is passed in for replacement.
  * Refer to the static variable re_cc for the compiled lhs.
- * The replacement line is static, with a fixed length.
- * Return 0 for no match, 1 for a replacement, and -1 for a real problem. */
+ * Return true for a replacement, false for no replace, and -1 for a problem. */
 
-char replaceLine[REPLACELINELEN];
-static char *replaceLineEnd;
-static int replaceLineLen;
+static char *replaceString;
+static int replaceStringLength;
+static char *replaceStringEnd;
+
 static int
 replaceText(const char *line, int len, const char *rhs,
    eb_bool ebmuck, int nth, eb_bool global, int ln)
 {
     int offset = 0, lastoffset, instance = 0;
     int span;
-    char *r = replaceLine;
-    char *r_end = replaceLine + REPLACELINELEN - 8;
+    char *r;
+    int rlen;
     const char *s = line, *s_end, *t;
     char c, d;
+
+    r = initString(&rlen);
 
     while(eb_true) {
 /* find the next match */
 	re_count = pcre_exec(re_cc, 0, line, len, offset, 0, re_vector, 33);
 	if(re_count < -1) {
 	    setError(MSG_RexpError2, ln);
+	    nzFree(r);
 	    return -1;
 	}
+
 	if(re_count < 0)
 	    break;
 	++instance;		/* found another match */
@@ -2263,71 +2267,64 @@ replaceText(const char *line, int len, const char *rhs,
 	offset = re_vector[1];	/* ready for next iteration */
 	if(offset == lastoffset && (nth > 1 || global)) {
 	    setError(MSG_ManyEmptyStrings);
+	    nzFree(r);
 	    return -1;
 	}
+
 	if(!global &&instance != nth)
 	    continue;
 
 /* copy up to the match point */
 	s_end = line + re_vector[0];
 	span = s_end - s;
-	if(r + span >= r_end)
-	    goto longvar;
-	memcpy(r, s, span);
-	r += span;
+	stringAndBytes(&r, &rlen, s, span);
 	s = line + offset;
 
 /* Now copy over the rhs */
 /* Special case lc mc uc */
 	if(ebmuck && (rhs[0] == 'l' || rhs[0] == 'm' || rhs[0] == 'u') &&
 	   rhs[1] == 'c' && rhs[2] == 0) {
+	    int savelen = rlen;
 	    span = re_vector[1] - re_vector[0];
-	    if(r + span + 1 > r_end)
-		goto longvar;
-	    memcpy(r, line + re_vector[0], span);
-	    r[span] = 0;
-	    caseShift(r, rhs[0]);
-	    r += span;
+	    stringAndBytes(&r, &rlen, line + re_vector[0], span);
+	    caseShift(r + savelen, rhs[0]);
 	    if(!global)
 		break;
 	    continue;
 	}
 
-	/* case shift */
 	/* copy rhs, watching for $n */
 	t = rhs;
 	while(c = *t) {
-	    if(r >= r_end)
-		goto longvar;
 	    d = t[1];
 	    if(c == '\\') {
 		t += 2;
 		if(d == '$') {
-		    *r++ = d;
+		    stringAndChar(&r, &rlen, d);
 		    continue;
 		}
 		if(d == 'n') {
-		    *r++ = '\n';
+		    stringAndChar(&r, &rlen, '\n');
 		    continue;
 		}
 		if(d == 't') {
-		    *r++ = '\t';
+		    stringAndChar(&r, &rlen, '\t');
 		    continue;
 		}
 		if(d == 'b') {
-		    *r++ = '\b';
+		    stringAndChar(&r, &rlen, '\b');
 		    continue;
 		}
 		if(d == 'r') {
-		    *r++ = '\r';
+		    stringAndChar(&r, &rlen, '\r');
 		    continue;
 		}
 		if(d == 'f') {
-		    *r++ = '\f';
+		    stringAndChar(&r, &rlen, '\f');
 		    continue;
 		}
 		if(d == 'a') {
-		    *r++ = '\a';
+		    stringAndChar(&r, &rlen, '\a');
 		    continue;
 		}
 		if(d >= '0' && d <= '7') {
@@ -2342,14 +2339,15 @@ replaceText(const char *line, int len, const char *rhs,
 			    octal = 8 * octal + d - '0';
 			}
 		    }
-		    *r++ = octal;
+		    stringAndChar(&r, &rlen, octal);
 		    continue;
 		}		/* octal */
 		if(!ebmuck)
-		    *r++ = '\\';
-		*r++ = d;
+		    stringAndChar(&r, &rlen, '\\');
+		stringAndChar(&r, &rlen, d);
 		continue;
-	    }			/* backslash */
+	    }
+	    /* backslash */
 	    if(c == '$' && isdigitByte(d)) {
 		int y, z;
 		t += 2;
@@ -2361,13 +2359,11 @@ replaceText(const char *line, int len, const char *rhs,
 		if(y < 0)
 		    continue;
 		span = z - y;
-		if(r + span >= r_end)
-		    goto longvar;
-		memcpy(r, line + y, span);
-		r += span;
+		stringAndBytes(&r, &rlen, line + y, span);
 		continue;
 	    }
-	    *r++ = c;
+
+	    stringAndChar(&r, &rlen, c);
 	    ++t;
 	}
 
@@ -2375,25 +2371,24 @@ replaceText(const char *line, int len, const char *rhs,
 	    break;
     }				/* loop matching the regular expression */
 
-    if(!instance)
+    if(!instance) {
+	nzFree(r);
 	return eb_false;
-    if(!global &&instance < nth)
+    }
+
+    if(!global &&instance < nth) {
+	nzFree(r);
 	return eb_false;
+    }
 
 /* We got a match, copy the last span. */
     s_end = line + len;
     span = s_end - s;
-    if(r + span >= r_end)
-	goto longvar;
-    memcpy(r, s, span);
-    r += span;
-    replaceLineEnd = r;
-    replaceLineLen = r - replaceLine;
-    return eb_true;
+    stringAndBytes(&r, &rlen, s, span);
 
-  longvar:
-    setError(MSG_SubLong, REPLACELINELEN);
-    return -1;
+    replaceString = r;
+    replaceStringLength = rlen;
+    return eb_true;
 }				/* replaceText */
 
 /* Substitute text on the lines in startRange through endRange.
@@ -2421,6 +2416,8 @@ substituteText(const char *line)
     int ln;			/* line number */
     int j, linecount, slashcount, nullcount, tagno, total, realtotal;
     char lhs[MAXRE], rhs[MAXRE];
+
+    replaceString = 0;
 
     subPrint = 1;		/* default is to print the last line substituted */
     re_cc = 0;
@@ -2502,6 +2499,8 @@ substituteText(const char *line)
 	setError(-1);
 
     for(ln = startRange; ln <= endRange && !intFlag; ++ln) {
+	replaceString = 0;
+
 	char *p = (char *)fetchLine(ln, -1);
 	int len = pstLength((pst) p);
 
@@ -2517,11 +2516,10 @@ substituteText(const char *line)
 /* perhaps no changes were made */
 	    if(newlen == len && !memcmp(p, replaceLine, len))
 		continue;
-	    replaceLineLen = newlen;
-	    replaceLineEnd = replaceLine + newlen;
+	    replaceString = replaceLine;
 /* But the regular substitute doesn't have the \n on the end.
  * We need to make this one conform. */
-	    --replaceLineEnd, --replaceLineLen;
+	    replaceStringLength = newlen - 1;
 	} else {
 
 	    if(cw->browseMode) {
@@ -2553,8 +2551,9 @@ substituteText(const char *line)
 	}
 
 /* Did we split this line into many lines? */
+	replaceStringEnd = replaceString + replaceStringLength;
 	linecount = slashcount = nullcount = 0;
-	for(t = replaceLine; t < replaceLineEnd; ++t) {
+	for(t = replaceString; t < replaceStringEnd; ++t) {
 	    c = *t;
 	    if(c == '\n')
 		++linecount;
@@ -2563,6 +2562,7 @@ substituteText(const char *line)
 	    if(c == '/')
 		++slashcount;
 	}
+
 	if(!linesComing(linecount + 1))
 	    goto abort;
 
@@ -2571,13 +2571,15 @@ substituteText(const char *line)
 		setError(MSG_ReplaceNewline);
 		goto abort;
 	    }
+
 	    if(nullcount) {
 		setError(MSG_ReplaceNull);
 		goto abort;
 	    }
-	    *replaceLineEnd = '\n';
-	    if(!sqlUpdateRow((pst) p, len - 1, (pst) replaceLine,
-	       replaceLineEnd - replaceLine))
+
+	    *replaceStringEnd = '\n';
+	    if(!sqlUpdateRow((pst) p, len - 1, (pst) replaceString,
+	       replaceStringLength))
 		goto abort;
 	}
 
@@ -2594,8 +2596,8 @@ substituteText(const char *line)
 	    if(!t)
 		goto abort;
 	    strcpy(src, t);
-	    *replaceLineEnd = 0;
-	    dest = makeAbsPath(replaceLine);
+	    *replaceStringEnd = 0;
+	    dest = makeAbsPath(replaceString);
 	    if(!dest)
 		goto abort;
 	    if(!stringEqual(src, dest)) {
@@ -2619,19 +2621,19 @@ substituteText(const char *line)
 		setError(MSG_InputNewline2);
 		goto abort;
 	    }
-	    replaceLine[replaceLineLen] = 0;
+	    *replaceStringEnd = 0;
 /* We're managing our own printing, so leave notify = 0 */
-	    if(!infReplace(tagno, replaceLine, 0))
+	    if(!infReplace(tagno, replaceString, 0))
 		goto abort;
 	} else {
 
-	    replaceLine[replaceLineLen] = '\n';
+	    *replaceStringEnd = '\n';
 	    if(!linecount) {
 /* normal substitute */
 		char newnum[LNWIDTH + 1];
-		textLines[textLinesCount] = allocMem(replaceLineLen + 1);
-		memcpy(textLines[textLinesCount], replaceLine,
-		   replaceLineLen + 1);
+		textLines[textLinesCount] = allocMem(replaceStringLength + 1);
+		memcpy(textLines[textLinesCount], replaceString,
+		   replaceStringLength + 1);
 		sprintf(newnum, LNFORMAT, textLinesCount);
 		memcpy(cw->map + ln * LNWIDTH, newnum, LNGLOB);
 		++textLinesCount;
@@ -2639,15 +2641,14 @@ substituteText(const char *line)
 /* Becomes many lines, this is the tricky case. */
 		save_nlMode = cw->nlMode;
 		delText(ln, ln);
-		addTextToBuffer((pst) replaceLine, replaceLineLen + 1, ln - 1,
-		   eb_false);
+		addTextToBuffer((pst) replaceString, replaceStringLength + 1,
+		   ln - 1, eb_false);
 		cw->nlMode = save_nlMode;
 		endRange += linecount;
 		ln += linecount;
 /* There's a quirk when adding newline to the end of a buffer
  * that had no newline at the end before. */
-		if(cw->nlMode &&
-		   ln == cw->dol && replaceLine[replaceLineLen - 1] == '\n') {
+		if(cw->nlMode && ln == cw->dol && replaceStringEnd[-1] == '\n') {
 		    delText(ln, ln);
 		    --ln, --endRange;
 		}
@@ -2660,7 +2661,10 @@ substituteText(const char *line)
 	cw->firstOpMode = undoable = eb_true;
 	if(!cw->browseMode)
 	    cw->changeMode = eb_true;
+	if(replaceString != replaceLine)
+	    nzFree(replaceString);
     }				/* loop over lines in the range */
+
     if(re_cc)
 	pcre_free(re_cc);
 
@@ -2684,6 +2688,8 @@ substituteText(const char *line)
   abort:
     if(re_cc)
 	pcre_free(re_cc);
+    if(replaceString && !bl_mode)
+	nzFree(replaceString);
     return -1;
 }				/* substituteText */
 
@@ -3515,7 +3521,7 @@ runCommand(const char *line)
     int i, j, n;
     int writeMode = O_TRUNC;
     struct ebWindow *w = NULL;
-    const struct htmlTag *tag = NULL;		/* event variables */
+    const struct htmlTag *tag = NULL;	/* event variables */
     eb_bool nogo = eb_true, rc = eb_true;
     eb_bool postSpace = eb_false, didRange = eb_false;
     char first;
