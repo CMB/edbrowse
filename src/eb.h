@@ -288,22 +288,23 @@ break it at the insert point, and make a new string
 by concatenating these two pieces with the new block.
 The same issues arise when deleting text near the top of a file.
 This and other considerations push me towards strings.
-I currently use chars 0 through 6 for the line number,
-7 for the g// flag,
-and 8 for the directory suffix.
+I currently use chars 0 through 7 for the line number,
+8 for the g// flag,
+and 9 for the directory suffix.
 You know, the slash that we put on the end of a directory,
 or the | on the end of a fifo etc.
-9 is used if the file is a symbolic link to a special file,
+10 is used if the file is a symbolic link to a special file,
 like @/ symbolic link to a directory.
 Thus the following definitions.
+Actually all of these, other than LNWIDTH, could move over to buffers.c.
 *********************************************************************/
 
-#define LNMAX 10000000
-#define LNWIDTH 10
-#define LNSPACE "          "
-#define LNFORMAT "%07d   "
-#define LNGLOB 7
-#define LNDIR 8
+#define LNMAX 100000000
+#define LNWIDTH 11
+#define LNSPACE "           "
+#define LNFORMAT "%08d   "
+#define LNGLOB 8
+#define LNDIR 9
 
     struct listHead {
 	void *next;
