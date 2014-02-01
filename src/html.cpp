@@ -72,7 +72,7 @@ buildTagArray(void)
     tagArray =
        (struct htmlTag **)allocMem(sizeof (struct htmlTag *) * ((ntags +
        32) & ~31));
-    cw->tags = tagArray;
+    cw->jss->tags = tagArray;
     foreach(t, htmlStack)
        tagArray[j++] = t;
     tagArray[j] = 0;
@@ -286,39 +286,44 @@ freeTag(struct htmlTag *e)
 }				/* freeTag */
 
 void
-freeTags(struct htmlTag **a)
+freeTags( struct ebWindow *w)
 {
     int n;
-    struct ebWindow *w;
     struct htmlTag *t, **e;
+    struct ebWindow *side;
 
-    if(!(e = a))
-	return;			/* no tags */
+/* if not browsing ... */
+    if(!w->jss)
+	return;
+
+    if(!(e = w->jss->tags))
+	return;
 
 /* drop empty textarea buffers created by this session */
-    for(e = a; t = *e; ++e) {
+    for(e = w->jss->tags; t = *e; ++e) {
 	if(t->action != TAGACT_INPUT)
 	    continue;
 	if(t->itype != INP_TA)
 	    continue;
 	if(!(n = t->lic))
 	    continue;
-	if(!(w = sessionList[n].lw))
+	if(!(side = sessionList[n].lw))
 	    continue;
-	if(w->fileName)
+	if(side->fileName)
 	    continue;
-	if(w->dol)
+	if(side->dol)
 	    continue;
-	if(w != sessionList[n].fw)
+	if(side != sessionList[n].fw)
 	    continue;
 /* We could have added a line, then deleted it */
-	w->changeMode = eb_false;
+	side->changeMode = eb_false;
 	cxQuit(n, 2);
     }				/* loop over tags */
 
-    for(e = a; t = *e; ++e)
+    for(e = w->jss->tags; t = *e; ++e)
 	freeTag(t);
-    free(a);
+    free(w->jss->tags);
+    w->jss->tags = 0;
 }				/* freeTags */
 
 static void
@@ -407,7 +412,7 @@ get_js_events(void)
 eb_bool
 tagHandler(int seqno, const char *name)
 {
-    struct htmlTag **list = cw->tags;
+    struct htmlTag **list = cw->jss->tags;
     const struct htmlTag *t = list[seqno];
     return t->handler | handlerPresent(t->jv, name);
 }				/* tagHandler */
@@ -418,7 +423,7 @@ getBaseHref(int n)
     const struct htmlTag *t, **list;
     if(parsePage)
 	return basehref;
-    list = (const struct htmlTag **)cw->tags;
+    list = (const struct htmlTag **)cw->jss->tags;
     if(n < 0) {
 	for(n = 0; list[n]; ++n) ;
     }
@@ -767,7 +772,7 @@ static struct htmlTag *
 locateOptionByName(const struct htmlTag *sel, const char *name, int *pmc,
    eb_bool exact)
 {
-    struct htmlTag **list = cw->tags, *t, *em = 0, *pm = 0;
+    struct htmlTag **list = cw->jss->tags, *t, *em = 0, *pm = 0;
     int pmcount = 0;		/* partial match count */
     const char *s;
     while(t = *list++) {
@@ -790,14 +795,14 @@ locateOptionByName(const struct htmlTag *sel, const char *name, int *pmc,
 	return em;
     if(pmcount == 1)
 	return pm;
-    *pmc = pmcount;
+    *pmc = (pmcount > 0);
     return 0;
 }				/* locateOptionByName */
 
 static struct htmlTag *
 locateOptionByNum(const struct htmlTag *sel, int n)
 {
-    struct htmlTag **list = cw->tags, *t;
+    struct htmlTag **list = cw->jss->tags, *t;
     int cnt = 0;
     while(t = *list++) {
 	if(t->controller != sel)
@@ -835,7 +840,7 @@ locateOptions(const struct htmlTag *sel, const char *input,
 /* Uncheck all existing options, then check the ones selected. */
 	if(ev)
 	    set_property_number(ev, "selectedIndex", -1);
-	list = cw->tags;
+	list = cw->jss->tags;
 	while(t = *list++)
 	    if(t->controller == sel && t->name) {
 		t->checked = eb_false;
@@ -942,7 +947,7 @@ jSyncup(void)
 
     buildTagArray();
 
-    list = (const struct htmlTag **)cw->tags;
+    list = (const struct htmlTag **)cw->jss->tags;
     while(t = *list++) {
 	if(t->action != TAGACT_INPUT)
 	    continue;
@@ -2178,7 +2183,7 @@ findField(const char *line, int ftype, int n,
    int *total, int *realtotal, int *tagno, char **href,
    const struct htmlTag **tagp)
 {
-    const struct htmlTag *t, **list = (const struct htmlTag **)cw->tags;
+    const struct htmlTag *t, **list = 0;
     int nt = 0;			/* number of fields total */
     int nrt = 0;		/* the real total, for input fields */
     int nm = 0;			/* number match */
@@ -2194,7 +2199,11 @@ findField(const char *line, int ftype, int n,
     if(tagp)
 	*tagp = 0;
 
+    if(cw->jss)
+	list = (const struct htmlTag **)cw->jss->tags;
+
     if(cw->browseMode) {
+
 	s = line;
 	while((c = *s) != '\n') {
 	    ++s;
@@ -2330,7 +2339,7 @@ findInputField(const char *line, int ftype, int n, int *total, int *realtotal,
 eb_bool
 lineHasTag(const char *p, const char *s)
 {
-    const struct htmlTag *t, **list = (const struct htmlTag **)cw->tags;
+    const struct htmlTag *t, **list = (const struct htmlTag **)cw->jss->tags;
     char c;
     int j;
     while((c = *p++) != '\n') {
@@ -2431,7 +2440,7 @@ htmlTest(void)
 void
 infShow(int tagno, const char *search)
 {
-    const struct htmlTag **list = (const struct htmlTag **)cw->tags;
+    const struct htmlTag **list = (const struct htmlTag **)cw->jss->tags;
     const struct htmlTag *t = list[tagno], *v;
     const char *s;
     int j, cnt;
@@ -2492,7 +2501,7 @@ infShow(int tagno, const char *search)
 eb_bool
 infReplace(int tagno, const char *newtext, int notify)
 {
-    const struct htmlTag **list = (const struct htmlTag **)cw->tags;
+    const struct htmlTag **list = (const struct htmlTag **)cw->jss->tags;
     const struct htmlTag *t = list[tagno], *v;
     const struct htmlTag *form = t->controller;
     char *display;
@@ -2670,7 +2679,7 @@ resetVar(struct htmlTag *t)
 static void
 formReset(const struct htmlTag *form)
 {
-    struct htmlTag **list = cw->tags, *t, *sel = 0;
+    struct htmlTag **list = cw->jss->tags, *t, *sel = 0;
     int itype;
 
     while(t = *list++) {
@@ -2851,7 +2860,7 @@ static eb_bool
 formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
    char **post, int *l)
 {
-    const struct htmlTag **list = (const struct htmlTag **)cw->tags, *t;
+    const struct htmlTag **list = (const struct htmlTag **)cw->jss->tags, *t;
     int itype;
     int j;
     char *name, *dynamicvalue = NULL;
@@ -2973,7 +2982,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 	    char *display = getFieldFromBuffer(t->seqno);
 	    char *s, *e;
 	    if(!display) {	/* off the air */
-		struct htmlTag *v, **vl = cw->tags;
+		struct htmlTag *v, **vl = cw->jss->tags;
 /* revert back to reset state */
 		while(v = *vl++)
 		    if(v->controller == t)
@@ -3058,7 +3067,7 @@ which calls this routine.  Happens all the time.
 eb_bool
 infPush(int tagno, char **post_string)
 {
-    struct htmlTag **list = cw->tags;
+    struct htmlTag **list = cw->jss->tags;
     struct htmlTag *t = list[tagno];
     struct htmlTag *form;
     int itype;
@@ -3275,7 +3284,7 @@ infPush(int tagno, char **post_string)
 static struct htmlTag *
 tagFromJavaVar(JS::HandleObject v)
 {
-    struct htmlTag **list = cw->tags;
+    struct htmlTag **list = cw->jss->tags;
     struct htmlTag *t;
     if(!list)
 	i_printfExit(MSG_NullListInform);

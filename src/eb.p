@@ -119,7 +119,7 @@ char * emailParse(char *buf) ;
 eb_bool setupReply(eb_bool all) ;
 
 /* sourcefile=html.c */
-void freeTags(struct htmlTag  **a) ;
+void freeTags(struct ebWindow *w);
 eb_bool tagHandler(int seqno, const char *name) ;
 void jsdw(void) ;
 void jSyncup(void) ;

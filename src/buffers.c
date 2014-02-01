@@ -528,15 +528,15 @@ then free them.
 static void
 freeWindow(struct ebWindow *w)
 {
-/* The next few are designed to do nothing if not in browseMode */
+    freeTags(w);
     freeJavaContext(w->jss);
+/* The next few are designed to do nothing if not in browseMode */
     freeWindowLines(w->r_map);
     nzFree(w->dw);
     nzFree(w->ft);
     nzFree(w->fd);
     nzFree(w->fk);
     nzFree(w->mailInfo);
-    freeTags(w->tags);
     freeWindowLines(w->map);
     nzFree(w->fileName);
     nzFree(w->firstURL);
@@ -2919,8 +2919,7 @@ twoLetter(const char *line, const char **runThis)
 	    freeWindowLines(cw->r_map);
 	}
 	cw->r_map = 0;
-	freeTags(cw->tags);
-	cw->tags = 0;
+	freeTags(cw);
 	freeJavaContext(cw->jss);
 	cw->jss = 0;
 	nzFree(cw->dw);

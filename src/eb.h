@@ -363,7 +363,6 @@ struct htmlTag;
 	eb_bool sqlMode;	/* accessing a table */
 	char *dw;		/* document.write string */
 	int dw_l;		/* length of the above */
-	struct htmlTag **tags;		/* array of html tags, when browsing */
 	struct ebWindowJSState *jss;
 	IP32bit *iplist;	/* ip addresses referenced by this page */
 	struct DBTABLE *table;	/* if in sqlMode */

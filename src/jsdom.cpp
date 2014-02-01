@@ -865,6 +865,7 @@ createJavaContext(struct ebWindowJSState **pstate)
 	    i_printfExit(MSG_JavaMemError);
     }
 
+    state->tags = 0;
     state->jcx = JS_NewContext(jrt, gStackChunkSize);
     if(!state->jcx)
 	i_printfExit(MSG_JavaContextError);
