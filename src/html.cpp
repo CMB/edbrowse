@@ -73,8 +73,6 @@ buildTagArray(void)
     if(!parsePage)
 	return;
 
-    if(tagArray)
-	nzFree(tagArray);
     tagArray =
        (struct htmlTag **)allocMem(sizeof (struct htmlTag *) * ((ntags +
        32) & ~31));
@@ -756,22 +754,37 @@ makeButton(void)
 static char *
 displayOptions(const struct htmlTag *sel)
 {
+    struct htmlTag **list;
+    const struct htmlTag *t;
     char *outstr;
     int l;
 
     outstr = initString(&l);
 
-    for(tagListIterator iter = htmlStack.begin(); iter != htmlStack.end();
-       iter++) {
-	const struct htmlTag *t = *iter;
-	if(t->controller != sel)
-	    continue;
-	if(!t->checked)
-	    continue;
-	if(l)
-	    stringAndChar(&outstr, &l, ',');
-	stringAndString(&outstr, &l, t->name);
+    if(parsePage) {
+	for(tagListIterator iter = htmlStack.begin(); iter != htmlStack.end();
+	   iter++) {
+	    t = *iter;
+	    if(t->controller != sel)
+		continue;
+	    if(!t->checked)
+		continue;
+	    if(l)
+		stringAndChar(&outstr, &l, ',');
+	    stringAndString(&outstr, &l, t->name);
+	}
+    } else {
+	for(list = cw->jss->tags; t = *list; ++list) {
+	    if(t->controller != sel)
+		continue;
+	    if(!t->checked)
+		continue;
+	    if(l)
+		stringAndChar(&outstr, &l, ',');
+	    stringAndString(&outstr, &l, t->name);
+	}
     }
+
     return outstr;
 }				/* displayOptions */
 
@@ -2191,6 +2204,8 @@ htmlParse(char *buf, int remote)
     buf = newbuf;
 
     parsePage = eb_false;
+    htmlStack.clear();
+    tagArray = 0;
 
 /* In case one of the onload functions called document.write() */
     jsdw();
@@ -2711,7 +2726,7 @@ formReset(const struct htmlTag *form)
 	    resetVar(t);
 	    continue;
 	}
-	/* option */
+
 	if(t->action != TAGACT_INPUT)
 	    continue;
 
