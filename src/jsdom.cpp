@@ -8,13 +8,9 @@
  * ftp://ftp.mozilla.org/pub/mozilla.org/js/js-1.5.tar.gz
 */
 
-#include <iostream>
 #include "eb.h"
-
 #include "js.h"
-using namespace std;
-
-#define PROP_FIXED (JSPROP_ENUMERATE|JSPROP_READONLY|JSPROP_PERMANENT)
+#include <iostream>
 
 
 static JSRuntime *jrt;		/* our js runtime, global so we can call the gc from jsloc

@@ -8,10 +8,6 @@
 #include "eb.h"
 
 #include "js.h"
-#include <string>
-using namespace std;
-
-#define PROP_FIXED (JSPROP_ENUMERATE|JSPROP_READONLY|JSPROP_PERMANENT)
 
 
 /*********************************************************************

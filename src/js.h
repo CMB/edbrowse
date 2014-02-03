@@ -18,6 +18,12 @@
 
 typedef JS::Heap<JSObject *> HeapRootedObject;
 
+#define PROP_FIXED (JSPROP_ENUMERATE|JSPROP_READONLY|JSPROP_PERMANENT)
+
+#include <string>
+
+using namespace std;
+
 struct ebWindowJSState {
     JSContext *jcx;		/* javascript context */
     HeapRootedObject  jwin;		/* Window (AKA the global object) */
@@ -29,7 +35,7 @@ struct ebWindowJSState {
  * and used thereafter for hyperlinks, fill-out forms, etc.
  * This is not true javascript, but I'm putting it here
  * for encapsulation purposes.
- * It is managed only by html.cpp, and will become a C++ vector some day. */
+ * It is managed only by html.cpp, and could become a C++ vector some day. */
     struct htmlTag **tags;
 };
 

@@ -6,6 +6,9 @@
 
 #include "eb.h"
 #include "js.h"
+#include <iterator>
+#include <algorithm>
+#include <list>
 
 /* Close an open anchor when you see this tag. */
 #define TAG_CLOSEA 1
@@ -45,7 +48,9 @@ static const char *const inp_types[] = {
 static const char dfvl[] = "defaultValue";
 static const char dfck[] = "defaultChecked";
 
-static struct listHead htmlStack;
+static list < struct htmlTag *>htmlStack;
+typedef list < struct htmlTag *>::iterator tagListIterator;
+typedef list < struct htmlTag *>::reverse_iterator tagListBackIterator;
 static struct htmlTag **tagArray, *topTag;
 static int ntags;		/* number of tags in this page */
 static char *topAttrib;
@@ -63,19 +68,19 @@ static int preamble_l;
 static void
 buildTagArray(void)
 {
-    int j = 0;
-    struct htmlTag *t;
+    struct htmlTag **last;
+
     if(!parsePage)
 	return;
+
     if(tagArray)
 	nzFree(tagArray);
     tagArray =
        (struct htmlTag **)allocMem(sizeof (struct htmlTag *) * ((ntags +
        32) & ~31));
     cw->jss->tags = tagArray;
-    foreach(t, htmlStack)
-       tagArray[j++] = t;
-    tagArray[j] = 0;
+    last = copy(htmlStack.begin(), htmlStack.end(), tagArray);
+    *last = 0;
 }				/* buildTagArray */
 
 static eb_bool
@@ -232,7 +237,6 @@ static const struct tagInfo elements[] = {
 };
 
 struct htmlTag {
-    struct htmlTag *next, *prev;
     HeapRootedObject jv;	/* corresponding java variable */
     int seqno;
     int ln;			/* line number */
@@ -286,7 +290,7 @@ freeTag(struct htmlTag *e)
 }				/* freeTag */
 
 void
-freeTags( struct ebWindow *w)
+freeTags(struct ebWindow *w)
 {
     int n;
     struct htmlTag *t, **e;
@@ -740,7 +744,7 @@ static void
 makeButton(void)
 {
     struct htmlTag *t = (struct htmlTag *)allocZeroMem(sizeof (struct htmlTag));
-    addToListBack(&htmlStack, t);
+    htmlStack.push_back(t);
     t->seqno = ntags++;
     t->info = elements + 2;
     t->action = TAGACT_INPUT;
@@ -752,11 +756,14 @@ makeButton(void)
 static char *
 displayOptions(const struct htmlTag *sel)
 {
-    const struct htmlTag *t;
     char *outstr;
     int l;
+
     outstr = initString(&l);
-    foreach(t, htmlStack) {
+
+    for(tagListIterator iter = htmlStack.begin(); iter != htmlStack.end();
+       iter++) {
+	const struct htmlTag *t = *iter;
 	if(t->controller != sel)
 	    continue;
 	if(!t->checked)
@@ -1014,7 +1021,9 @@ findOpenTag(const char *name)
     eb_bool match;
     const char *desc = topTag->info->desc;
 
-    foreachback(t, htmlStack) {
+    for(tagListBackIterator r_iter = htmlStack.rbegin();
+       r_iter != htmlStack.rend(); r_iter++) {
+	t = *r_iter;
 	if(t == topTag)
 	    continue;		/* last one doesn't count */
 	if(t->balanced)
@@ -1063,7 +1072,7 @@ newTag(const char *name)
     t->balanced = eb_true;
     if(stringEqual(name, "a"))
 	t->clickable = eb_true;
-    addToListBack(&htmlStack, t);
+    htmlStack.push_back(t);
     return t;
 }				/* newTag */
 
@@ -1162,10 +1171,11 @@ encodeTags(char *html)
     JS::RootedObject ev(cw->jss->jcx, NULL);	/* generic event variable */
     JS::RootedObject jwin(cw->jss->jcx, cw->jss->jwin);
     JS::RootedObject jdoc(cw->jss->jcx, cw->jss->jdoc);
+    tagListBackIterator r_iter;
 
     currentA = currentForm = currentSel = currentOpt = currentTitle =
        currentTA = 0;
-    initList(&htmlStack);
+    htmlStack.clear();
     tagArray = 0;
     newstr = initString(&l);
     preamble = 0;
@@ -1287,7 +1297,7 @@ encodeTags(char *html)
 	    continue;		/* tag not recognized */
 
 	topTag = t = (struct htmlTag *)allocZeroMem(sizeof (struct htmlTag));
-	addToListBack(&htmlStack, t);
+	htmlStack.push_back(t);
 	t->seqno = ntags;
 	sprintf(hnum, "%c%d", InternalCodeChar, ntags);
 	++ntags;
@@ -1531,7 +1541,9 @@ encodeTags(char *html)
 	case TAGACT_LI:
 /* Look for the open UL or OL */
 	    j = -1;
-	    foreachback(v, htmlStack) {
+	    for(r_iter = htmlStack.rbegin(); r_iter != htmlStack.rend();
+	       r_iter++) {
+		v = *r_iter;
 		if(v->balanced || !v->info->nest)
 		    continue;
 		if(v->slash)
@@ -1559,16 +1571,18 @@ encodeTags(char *html)
 	    continue;
 
 	case TAGACT_DT:
-	foreachback(v, htmlStack) {
-	    if(v->balanced || !v->info->nest)
-		continue;
-	    if(v->slash)
-		continue;	/* should never happen */
-	    s = v->info->name;
-	    if(stringEqual(s, "DL"))
-		break;
-	}
-	    if(v == (struct htmlTag *)&htmlStack)
+	    for(r_iter = htmlStack.rbegin(); r_iter != htmlStack.rend();
+	       r_iter++) {
+		v = *r_iter;
+		if(v->balanced || !v->info->nest)
+		    continue;
+		if(v->slash)
+		    continue;	/* should never happen */
+		s = v->info->name;
+		if(stringEqual(s, "DL"))
+		    break;
+	    }
+	    if(r_iter == htmlStack.rend())
 		browseError(MSG_NotInList, ti->desc);
 	    goto nop;
 
@@ -1983,7 +1997,9 @@ encodeTags(char *html)
 			nzFree(html);
 			html = h = after;
 /* After the realloc, the inner pointers are no longer valid. */
-			foreach(z, htmlStack) z->inner = 0;
+			for(tagListIterator iter = htmlStack.begin();
+			   iter != htmlStack.end(); iter++)
+			    (*iter)->inner = 0;
 		    }		/* document.write */
 		}
 	    }
@@ -2043,27 +2059,27 @@ encodeTags(char *html)
 /* Run the various onload functions */
 /* Turn the onunload functions into hyperlinks */
     if(!cw->jsdead && !onload_done) {
-	const struct htmlTag *lasttag;
+	struct htmlTag *stoptag = *(htmlStack.rbegin());
 	onloadGo(jwin, 0, "window");
 	onloadGo(jdoc, 0, "document");
-	lasttag = (const struct htmlTag *)htmlStack.prev;
-	foreach(t, htmlStack) {
+
+	for(tagListIterator iter = htmlStack.begin(); iter != htmlStack.end();
+	   iter++) {
 	    char *jsrc;
-	    ev = t->jv;
-/* in case the option has disappeared */
+	    t = *iter;
+/* but stop when you reach stoptag */
+	    if(t == stoptag)
+		break;
 	    if(t->action == TAGACT_OPTION)
-		goto next_onload;
+		continue;
+	    ev = t->jv;
 	    if(!ev)
-		goto next_onload;
+		continue;
 	    if(t->slash)
-		goto next_onload;
+		continue;
 	    jsrc = htmlAttrVal(t->attrib, "onunload");
 	    onloadGo(ev, jsrc, t->info->name);
 	    nzFree(jsrc);
-
-	  next_onload:
-	    if(t == lasttag)
-		break;
 	}			/* loop over tags */
     }
     onload_done = eb_true;
@@ -2078,7 +2094,10 @@ encodeTags(char *html)
     }
 
     if(browseLocal == 1) {	/* no errors yet */
-	foreach(t, htmlStack) {
+	for(tagListIterator iter = htmlStack.begin(); iter != htmlStack.end();
+	   iter++) {
+	    tagListIterator iter2;
+	    t = *iter;
 	    browseLine = t->ln;
 	    if(t->info->nest && !t->slash && !t->balanced) {
 		browseError(MSG_TagNotClosed, t->info->desc);
@@ -2096,7 +2115,8 @@ encodeTags(char *html)
 	    if(h[1] == 0)
 		continue;
 	    a = h + 1;		/* this is what we're looking for */
-	    foreach(v, htmlStack) {
+	    for(iter2 = htmlStack.begin(); iter2 != htmlStack.end(); iter2++) {
+		v = *iter2;
 		if(v->action != TAGACT_A)
 		    continue;	/* not achor */
 		if(!v->name)
@@ -2104,7 +2124,7 @@ encodeTags(char *html)
 		if(stringEqual(a, v->name))
 		    break;
 	    }
-	    if(v == (struct htmlTag *)&htmlStack) {	/* end of list */
+	    if(iter2 == htmlStack.end()) {
 		browseError(MSG_NoLable2, a);
 		break;
 	    }
