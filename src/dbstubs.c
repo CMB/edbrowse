@@ -9,59 +9,49 @@
 
 eb_bool sqlPresent = eb_false;
 
-eb_bool
-sqlReadRows(const char *filename, char **bufptr)
+eb_bool sqlReadRows(const char *filename, char **bufptr)
 {
-    setError(MSG_DBNotCompiled);
-    *bufptr = EMPTYSTRING;
-    return eb_false;
+	setError(MSG_DBNotCompiled);
+	*bufptr = EMPTYSTRING;
+	return eb_false;
 }				/* sqlReadRows */
 
-void
-dbClose(void)
+void dbClose(void)
 {
 }				/* dbClose */
 
-void
-showColumns(void)
+void showColumns(void)
 {
 }				/* showColumns */
 
-void
-showForeign(void)
+void showForeign(void)
 {
 }				/* showForeign */
 
-eb_bool
-showTables(void)
+eb_bool showTables(void)
 {
 }				/* showTables */
 
-eb_bool
-sqlDelRows(int start, int end)
+eb_bool sqlDelRows(int start, int end)
 {
 }				/* sqlDelRows */
 
-eb_bool
-sqlUpdateRow(pst source, int slen, pst dest, int dlen)
+eb_bool sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 {
 }				/* sqlUpdateRow */
 
-eb_bool
-sqlAddRows(int ln)
+eb_bool sqlAddRows(int ln)
 {
 }				/* sqlAddRows */
 
-eb_bool
-ebConnect(void)
+eb_bool ebConnect(void)
 {
-    setError(MSG_DBNotCompiled);
-    return eb_false;
+	setError(MSG_DBNotCompiled);
+	return eb_false;
 }				/* ebConnect */
 
-int
-goSelect(int *startLine, char **rbuf)
+int goSelect(int *startLine, char **rbuf)
 {
-    *rbuf = EMPTYSTRING;
-    return -1;
+	*rbuf = EMPTYSTRING;
+	return -1;
 }				/* goSelect */

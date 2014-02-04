@@ -107,18 +107,15 @@ There - now the lawyers are happy.
 
 ------------------------------------------------------------
 
-Blind people could care less about indenting their code.
-In fact we would rather not.  It's a real nuisance!
-But in deference to my sighted colleagues, I have run all
-the source through indent(1), using the settings in tools/indent.pro.
-Braces are in the style of the linux kernel, which I like.
-We don't waste time (especially on a braile display)
-consuming an extra line just for the left brace.
-If you modify this code, please use the ebindent script, found in the tools
-directory of the edbrowse source tree, to insure that modified files still
-adhere to this style.
-For instance, if you change src/main.c, just run
-../tools/ebindent main.c # Assuming that the working directory is src
+The code in this project is indented via the script Lindent,
+which is in the tools directory, and is taken from the Linux kernel source.
+In other words, the indenting style is the same as the Linux kernel.
+If you modify some source, you may want to run it through
+../tools/Lindent before the commit.
+An exception is eb.h.
+The extern "C" { }, mandated by C++, indents everything for no reason.
+So I maintain this file by hand.
+Most of it is flush with the left, and it doesn't change very often.
 
 ------------------------------------------------------------
 

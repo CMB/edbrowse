@@ -33,9 +33,9 @@
 /* useful C data types */
 /* long and float together */
 typedef union {
-    long l;
-    double f;
-    void *ptr;
+	long l;
+	double f;
+	void *ptr;
 } LF;
 
 typedef void (*fnptr) ();	/* function pointer */
@@ -67,7 +67,6 @@ extern void *rv_blobLoc;	/* point to blob in memory */
 extern int rv_blobSize;		/* size of blob fetched */
 extern const char *rv_blobFile;
 extern eb_bool rv_blobAppend;
-
 
 /*********************************************************************
 The ODBC error codes are strings (somewhat inconvenient),
@@ -141,7 +140,6 @@ the application can direct error recovery at a high level.
 /* text descriptions corresponding to our generic SQL error codes */
 extern const char *sqlErrorList[];
 
-
 /*********************************************************************
 Function prototypes.
 *********************************************************************/
@@ -175,7 +173,7 @@ eb_bool sql_fetchNext(int cid, ...);
 eb_bool sql_fetchPrev(int cid, ...);
 eb_bool sql_fetchAbs(int cid, long rownum, ...);
 void sql_blobInsert(const char *tabname, const char *colname, int rowid,
-   const char *filename, void *offset, int length);
+		    const char *filename, void *offset, int length);
 void getPrimaryKey(char *tname, int *part1, int *part2, int *part3, int *part4);
 
 /* sourcefile=dbops.c */
@@ -193,4 +191,4 @@ interval stringTime(const char *t);
 char *moneyString(money m);
 money stringMoney(const char *s);
 void syncup_table(const char *table1, const char *table2,
-   const char *keycol, const char *otherclause);
+		  const char *keycol, const char *otherclause);
