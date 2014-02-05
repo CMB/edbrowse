@@ -92,29 +92,29 @@ void loadBlacklist(void)
 						static const IP32bit masklist[]
 						    = {
 							0xffffffff, 0xfeffffff,
-							    0xfcffffff,
-							    0xf8ffffff,
+							0xfcffffff,
+							0xf8ffffff,
 							0xf0ffffff, 0xe0ffffff,
-							    0xc0ffffff,
-							    0x80ffffff,
+							0xc0ffffff,
+							0x80ffffff,
 							0x00ffffff, 0x00feffff,
-							    0x00fcffff,
-							    0x00f8ffff,
+							0x00fcffff,
+							0x00f8ffff,
 							0x00f0ffff, 0x00e0ffff,
-							    0x00c0ffff,
-							    0x0080ffff,
+							0x00c0ffff,
+							0x0080ffff,
 							0x0000ffff, 0x0000feff,
-							    0x0000fcff,
-							    0x0000f8ff,
+							0x0000fcff,
+							0x0000f8ff,
 							0x0000f0ff, 0x0000e0ff,
-							    0x0000c0ff,
-							    0x000080ff,
+							0x0000c0ff,
+							0x000080ff,
 							0x000000ff, 0x000000fe,
-							    0x000000fc,
-							    0x000000f8,
+							0x000000fc,
+							0x000000f8,
 							0x000000f0, 0x000000e0,
-							    0x000000c0,
-							    0x00000080,
+							0x000000c0,
+							0x00000080,
 							0
 						};
 						ipmask = masklist[32 - bits];
@@ -542,7 +542,6 @@ void scanMail(void)
 		if (sessionList[1].lw)
 			cxQuit(1, 2);
 		cs = 0;
-		linesReset();
 		cxSwitch(1, eb_false);
 
 /* Now grab the entire message */
@@ -720,11 +719,10 @@ savemail:
 					char exists =
 					    fileTypeByName(atname, eb_false);
 					int fsize;	/* file size */
-					int fh =
-					    open(atname,
-						 O_WRONLY | O_TEXT | O_CREAT |
-						 O_APPEND,
-						 0666);
+					int fh = open(atname,
+						      O_WRONLY | O_TEXT |
+						      O_CREAT | O_APPEND,
+						      0666);
 					if (fh < 0) {
 						i_printf(MSG_NoCreate, atname);
 						goto savemail;
@@ -1598,7 +1596,7 @@ static struct MHINFO *headerGlean(char *start, char *end)
 			} else if ((q = strrchr(q, '.'))) {
 				static const char *const imagelist[] = {
 					"gif", "jpg", "tif", "bmp", "asc",
-					    "png", 0
+					"png", 0
 				};
 /* the asc isn't an image, it's a signature card. */
 /* Similarly for the winmail.dat */
@@ -2123,13 +2121,13 @@ eb_bool setupReply(eb_bool all)
 	repln = strchr(linetype, 'r') - linetype;
 	subln = strchr(linetype, 's') - linetype;
 	if (repln != 1) {
-		char *map = cw->map;
-		char swap[LNWIDTH];
-		char *q1 = map + LNWIDTH;
-		char *q2 = map + LNWIDTH * repln;
-		memcpy(swap, q1, LNWIDTH);
-		memcpy(q1, q2, LNWIDTH);
-		memcpy(q2, swap, LNWIDTH);
+		struct lineMap *map = cw->map;
+		struct lineMap swap;
+		struct lineMap *q1 = map + 1;
+		struct lineMap *q2 = map + repln;
+		swap = *q1;
+		*q1 = *q2;
+		*q2 = swap;
 		if (subln == 1)
 			subln = repln;
 		repln = 1;
@@ -2137,13 +2135,13 @@ eb_bool setupReply(eb_bool all)
 
 	j = strlen(linetype) - 1;
 	if (j != subln) {
-		char *map = cw->map;
-		char swap[LNWIDTH];
-		char *q1 = map + LNWIDTH * j;
-		char *q2 = map + LNWIDTH * subln;
-		memcpy(swap, q1, LNWIDTH);
-		memcpy(q1, q2, LNWIDTH);
-		memcpy(q2, swap, LNWIDTH);
+		struct lineMap *map = cw->map;
+		struct lineMap swap;
+		struct lineMap *q1 = map + j;
+		struct lineMap *q2 = map + subln;
+		swap = *q1;
+		*q1 = *q2;
+		*q2 = swap;
 	}
 
 	if (!cw->mailInfo) {

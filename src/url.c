@@ -545,7 +545,7 @@ static void squashDirectories(char *url)
 	char *s, *t, *end;
 	char *inPath = NULL;
 	char *outPath;
-	size_t outPathLen = 0;
+	int outPathLen = 0;
 	char *rest = NULL;
 
 	outPath = initString(&outPathLen);

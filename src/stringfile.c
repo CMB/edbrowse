@@ -1051,42 +1051,40 @@ char *nextScanFile(const char *base)
 	return 0;
 }				/* nextScanFile */
 
-/* Sorted directory list.  Uses textLines[]. */
-eb_bool sortedDirList(const char *dir, int *start, int *end)
+static int qscmp(const void *s, const void *t)
+{
+	return strcmp(((struct lineMap *)s)->text, ((struct lineMap *)t)->text);
+}				/* qscmp */
+
+eb_bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
 {
 	char *f;
-	int j;
-	eb_bool change;
+	int linecount = 0, cap;
+	struct lineMap *t, *map;
 
-	*start = *end = textLinesCount;
+	cap = 128;
+	map = t = allocZeroMem(cap * LMSIZE);
 
 	while (f = nextScanFile(dir)) {
-		if (!linesComing(1))
-			return eb_false;
-		textLines[textLinesCount] = allocMem(strlen(f) + 3);
-		strcpy((char *)textLines[textLinesCount], f);
-		textLinesCount++;
+		if (linecount == cap) {
+			cap *= 2;
+			map = reallocMem(map, cap * LMSIZE);
+			t = map + linecount;
+		}
+/* leave room for @ / newline */
+		t->text = allocMem(strlen(f) + 3);
+		strcpy((char *)t->text, f);
+		t->ds1 = t->ds2 = 0;
+		++t, ++linecount;
 	}
 
-	*end = textLinesCount;
-	if (*end == *start)
+	*count_p = linecount;
+	*map_p = map;
+
+	if (!linecount)
 		return eb_true;
 
-/* Bubble sort, the list shouldn't be too long. */
-	change = eb_true;
-	while (change) {
-		change = eb_false;
-		for (j = *start; j < *end - 1; ++j) {
-			if (strcmp
-			    ((char *)textLines[j],
-			     (char *)textLines[j + 1]) > 0) {
-				pst swap = textLines[j];
-				textLines[j] = textLines[j + 1];
-				textLines[j + 1] = swap;
-				change = eb_true;
-			}
-		}
-	}
+	qsort(map, linecount, LMSIZE, qscmp);
 
 	return eb_true;
 }				/* sortedDirList */
