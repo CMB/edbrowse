@@ -67,7 +67,7 @@ JSString *our_JS_NewStringCopyZ(JSContext * cx, const char *s)
 	return our_JS_NewStringCopyN(cw->jss->jcx, s, len);
 }				/* our_JS_NewStringCopyZ */
 
-char *our_JSEncodeString(JSString * str)
+char *our_JSEncodeString(js::HandleString str)
 {
 	size_t encodedLength = JS_GetStringEncodingLength(cw->jss->jcx, str);
 	char *buffer = (char *)allocMem(encodedLength + 1);
@@ -79,7 +79,7 @@ char *our_JSEncodeString(JSString * str)
 	return buffer;
 }				/* our_JSEncodeString */
 
-static char *transcode_get_js_bytes(JSString * s)
+static char *transcode_get_js_bytes(js::HandleString s)
 {
 /* again, assume that the UTF8 mess will hopefully be ok,
 we really should switch to unicode capable js functions at some stage */
@@ -187,12 +187,14 @@ static JSBool setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	js::RootedValue v1(cx), v2(cx);
 	if (args.length() != 2 || !JSVAL_IS_STRING(args[0])) {
 		JS_ReportError(cx, "unexpected arguments to setAttribute()");
 	} else {
-		const char *prop = stringize(args[0]);
-		JS_DefineProperty(cx, obj, prop, args[1], NULL, NULL,
-				  PROP_FIXED);
+		v1 = args[0];
+		v2 = args[1];
+		const char *prop = stringize(v1);
+		JS_DefineProperty(cx, obj, prop, v2, NULL, NULL, PROP_FIXED);
 	}
 	args.rval().set(JSVAL_VOID);
 	return JS_TRUE;
@@ -201,10 +203,10 @@ static JSBool setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
 static JSBool appendChild(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	unsigned length;
-	jsval v;
+	js::RootedValue v(cx);
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
-	JS_GetProperty(cx, obj, "elements", &v);
+	JS_GetProperty(cx, obj, "elements", v.address());
 	JS::RootedObject elar(cx, JSVAL_TO_OBJECT(v));
 	JS_GetArrayLength(cx, elar, &length);
 	JS_DefineElement(cx, elar, length,
@@ -381,8 +383,10 @@ static JSObject *setTimeout(unsigned int argc, jsval * argv, eb_bool isInterval)
 
 		if (fo) {
 /* Extract the function name, which requires several steps */
-			JSFunction *f = JS_ValueToFunction(cw->jss->jcx,
-							   OBJECT_TO_JSVAL(fo));
+			js::RootedFunction f(cw->jss->jcx,
+					     JS_ValueToFunction(cw->jss->jcx,
+								OBJECT_TO_JSVAL
+								(fo)));
 			JS::RootedString jss(cw->jss->jcx, JS_GetFunctionId(f));
 			if (jss)
 				allocatedName = our_JSEncodeString(jss);
@@ -517,7 +521,8 @@ setter_innerText(JSContext * cx, JS::Handle < JSObject * >obj,
 	char *s;
 	if (!JSVAL_IS_STRING(vp))
 		return JS_FALSE;
-	s = our_JSEncodeString(JSVAL_TO_STRING(vp));
+	js::RootedString jstr(cx, JSVAL_TO_STRING(vp));
+	s = our_JSEncodeString(jstr);
 	nzFree(s);
 	i_puts(MSG_InnerText);
 /* The string has already been updated in the object. */
@@ -965,6 +970,7 @@ void createJavaContext(struct ebWindowJSState **pstate)
 /* po is the plugin object and mo is the mime object */
 		JS::RootedObject mo(state->jcx), po(state->jcx);
 		JS::RootedValue mov(state->jcx), pov(state->jcx);
+		js::RootedString jstr(state->jcx);
 		int len;
 
 		po = JS_NewObject(state->jcx, 0, 0, nav);
@@ -990,10 +996,12 @@ void createJavaContext(struct ebWindowJSState **pstate)
 		establish_property_string(po, "filename", mt->program, eb_true);
 /* For the name, how about the program without its options? */
 		len = strcspn(mt->program, " \t");
-		JS_DefineProperty(state->jcx, po, "name",
-				  STRING_TO_JSVAL(our_JS_NewStringCopyN
-						  (state->jcx, mt->program,
-						   len)), 0, 0, PROP_FIXED);
+		js::RootedValue po_name_v(state->jcx,
+					  STRING_TO_JSVAL(our_JS_NewStringCopyN
+							  (state->jcx,
+							   mt->program, len)));
+		JS_DefineProperty(state->jcx, po, "name", po_name_v, 0, 0,
+				  PROP_FIXED);
 	}
 
 	JS::RootedObject screen(state->jcx, JS_NewObject(state->jcx, 0, 0,
@@ -1056,7 +1064,7 @@ establish_innerHTML(JS::HandleObject jv, const char *start, const char *end,
 		    eb_bool is_ta)
 {
 	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
-	JS::RootedObject obj(cw->jss->jcx, (JSObject *) jv), o(cw->jss->jcx);
+	JS::RootedObject obj(cw->jss->jcx, jv), o(cw->jss->jcx);
 	JS::RootedValue v(cw->jss->jcx);
 
 	if (!obj)
@@ -1065,17 +1073,14 @@ establish_innerHTML(JS::HandleObject jv, const char *start, const char *end,
 /* null start means the pointer has been corrupted by a document.write() call */
 	if (!start)
 		start = end = EMPTYSTRING;
-	JS_DefineProperty(cw->jss->jcx, obj, "innerHTML",
-			  STRING_TO_JSVAL(our_JS_NewStringCopyN
-					  (cw->jss->jcx, start, end - start)),
-			  NULL, (is_ta ? setter_innerText : setter_innerHTML),
+	v = STRING_TO_JSVAL(our_JS_NewStringCopyN
+			    (cw->jss->jcx, start, end - start));
+	JS_DefineProperty(cw->jss->jcx, obj, "innerHTML", v, NULL,
+			  (is_ta ? setter_innerText : setter_innerHTML),
 			  JSPROP_ENUMERATE | JSPROP_PERMANENT);
 	if (is_ta) {
-		JS_DefineProperty(cw->jss->jcx, obj, "innerText",
-				  STRING_TO_JSVAL(our_JS_NewStringCopyN
-						  (cw->jss->jcx, start,
-						   end - start)), NULL,
-				  setter_innerText,
+		JS_DefineProperty(cw->jss->jcx, obj, "innerText", v,
+				  NULL, setter_innerText,
 				  JSPROP_ENUMERATE | JSPROP_PERMANENT);
 	}
 
@@ -1092,8 +1097,8 @@ javaParseExecute(JS::HandleObject obj, const char *str, const char *filename,
 {
 	JSBool ok;
 	eb_bool rc = eb_false;
-	jsval rval;
 	JSAutoCompartment ac(cw->jss->jcx, obj);
+	js::RootedValue rval(cw->jss->jcx);
 
 /* Sometimes Mac puts these three chars at the start of a text file. */
 	if (!strncmp(str, "\xef\xbb\xbf", 3))
@@ -1101,7 +1106,7 @@ javaParseExecute(JS::HandleObject obj, const char *str, const char *filename,
 
 	debugPrint(6, "javascript:\n%s", str);
 	ok = JS_EvaluateScript(cw->jss->jcx, obj, str, strlen(str),
-			       filename, lineno, &rval);
+			       filename, lineno, rval.address());
 	if (ok) {
 		rc = eb_true;
 		if (JSVAL_IS_BOOLEAN(rval))
@@ -1125,14 +1130,13 @@ JSObject *domLink(const char *classname,	/* instantiate this class */
 	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
 	JS::RootedObject w(cw->jss->jcx), alist(cw->jss->jcx),
 	    master(cw->jss->jcx);
-	JS::RootedObject owner_root(cw->jss->jcx, (JSObject *) owner);
+	JS::RootedObject owner_root(cw->jss->jcx, owner);
 	JS::RootedObject v(cw->jss->jcx);
-	jsval vv, listv;
 	unsigned length, attr = PROP_FIXED;
 	JSClass *cp;
 	eb_bool dupname = eb_false;
 	int i;
-	JS::RootedValue rvv(cw->jss->jcx);
+	JS::RootedValue vv(cw->jss->jcx), listv(cw->jss->jcx);
 
 	if (cw->jsdead)
 		return 0;
@@ -1171,9 +1175,8 @@ Yeah, it makes my head spin too.
 			if (stringEqual(symname, "action")) {
 				JS::RootedObject ao(cw->jss->jcx);	/* action object */
 				JS_GetProperty(cw->jss->jcx, owner_root,
-					       symname, &vv);
-				rvv = vv;
-				ao = JSVAL_TO_OBJECT(rvv);
+					       symname, vv.address());
+				ao = JSVAL_TO_OBJECT(vv);
 /* actioncrash tells me if we've already had this collision */
 				JS_HasProperty(cw->jss->jcx, ao, "actioncrash",
 					       &found);
@@ -1188,9 +1191,8 @@ Yeah, it makes my head spin too.
 
 			if (radiosel == 1) {
 				JS_GetProperty(cw->jss->jcx, owner_root,
-					       symname, &vv);
-				rvv = vv;
-				v = JSVAL_TO_OBJECT(rvv);
+					       symname, vv.address());
+				v = JSVAL_TO_OBJECT(vv);
 			} else {
 				dupname = eb_true;
 			}
@@ -1218,38 +1220,39 @@ afterfound:
 		} else {
 			v = JS_NewObject(cw->jss->jcx, cp, NULL, owner_root);
 		}
-		rvv = OBJECT_TO_JSVAL(v);
+		vv = OBJECT_TO_JSVAL(v);
 
 /* if no name, then use id as name */
 		if (!symname && idname) {
-			JS_DefineProperty(cw->jss->jcx, owner_root, idname, rvv,
+			JS_DefineProperty(cw->jss->jcx, owner_root, idname, vv,
 					  NULL, NULL, attr);
 		} else if (symname && !dupname) {
 			JS_DefineProperty(cw->jss->jcx, owner_root, symname,
-					  rvv, NULL, NULL, attr);
+					  vv, NULL, NULL, attr);
 			if (stringEqual(symname, "action"))
 				establish_property_bool(v, "actioncrash",
 							eb_true, eb_true);
 
 /* link to document.all */
 			JS_GetProperty(cw->jss->jcx, cw->jss->jdoc, "all",
-				       &listv);
+				       listv.address());
 			master = JSVAL_TO_OBJECT(listv);
 			establish_property_object(master, symname, v);
 		} else {
 /* tie this to something, to protect it from gc */
 			JS_DefineProperty(cw->jss->jcx, owner_root,
-					  fakePropName(), rvv, NULL, NULL,
+					  fakePropName(), vv, NULL, NULL,
 					  JSPROP_READONLY | JSPROP_PERMANENT);
 		}
 
 		if (list) {
-			JS_GetProperty(cw->jss->jcx, owner_root, list, &listv);
+			JS_GetProperty(cw->jss->jcx, owner_root, list,
+				       listv.address());
 			alist = JSVAL_TO_OBJECT(listv);
 		}
 		if (alist) {
 			JS_GetArrayLength(cw->jss->jcx, alist, &length);
-			JS_DefineElement(cw->jss->jcx, alist, length, rvv, NULL,
+			JS_DefineElement(cw->jss->jcx, alist, length, vv, NULL,
 					 NULL, attr);
 			if (symname && !dupname)
 				establish_property_object(alist, symname, v);
@@ -1266,9 +1269,8 @@ afterfound:
 		JS_GetArrayLength(cw->jss->jcx, v, &length);
 		w = JS_NewObject(cw->jss->jcx, &element_class, NULL,
 				 owner_root);
-		rvv = OBJECT_TO_JSVAL(w);
-		JS_DefineElement(cw->jss->jcx, v, length, rvv, NULL, NULL,
-				 attr);
+		vv = OBJECT_TO_JSVAL(w);
+		JS_DefineElement(cw->jss->jcx, v, length, vv, NULL, NULL, attr);
 		v = w;
 	}
 
@@ -1280,7 +1282,8 @@ afterfound:
  * a form field named "id". */
 		if (strcmp(classname, "Form") != 0)
 			establish_property_string(v, "id", idname, eb_true);
-		JS_GetProperty(cw->jss->jcx, cw->jss->jdoc, "idMaster", &listv);
+		JS_GetProperty(cw->jss->jcx, cw->jss->jdoc, "idMaster",
+			       listv.address());
 		master = JSVAL_TO_OBJECT(listv);
 		establish_property_object(master, idname, v);
 	} else {
