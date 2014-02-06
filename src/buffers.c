@@ -1003,8 +1003,6 @@ unlink:
 
 		free(file);
 		delText(ln, ln);
-		undoCompare();
-		cw->firstOpMode = eb_false;
 	}
 
 	return eb_true;
@@ -2663,7 +2661,7 @@ static int substituteText(const char *line)
 				mptr->text = allocMem(replaceStringLength + 1);
 				memcpy(mptr->text, replaceString,
 				       replaceStringLength + 1);
-				if (cw->dirMode) {
+				if (cw->dirMode || cw->sqlMode) {
 					undoCompare();
 					cw->firstOpMode = eb_false;
 				}
@@ -4591,10 +4589,14 @@ redirect:
 	if (cmd == 'd' || cmd == 'D') {
 		if (cw->dirMode) {
 			j = delFiles();
+			undoCompare();
+			cw->firstOpMode = eb_false;
 			goto afterdelete;
 		}
 		if (cw->sqlMode) {
 			j = sqlDelRows(startRange, endRange);
+			undoCompare();
+			cw->firstOpMode = eb_false;
 			goto afterdelete;
 		}
 		delText(startRange, endRange);
