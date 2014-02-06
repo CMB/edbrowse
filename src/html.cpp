@@ -75,7 +75,7 @@ static void buildTagArray(void)
 	    (struct htmlTag **)allocMem(sizeof(struct htmlTag *) * ((ntags +
 								     32) &
 								    ~31));
-	cw->jss->tags = tagArray;
+	cw->tags = tagArray;
 	last = copy(htmlStack.begin(), htmlStack.end(), tagArray);
 	*last = 0;
 }				/* buildTagArray */
@@ -288,14 +288,11 @@ void freeTags(struct ebWindow *w)
 	struct ebWindow *side;
 
 /* if not browsing ... */
-	if (!w->jss)
-		return;
-
-	if (!(e = w->jss->tags))
+	if (!(e = w->tags))
 		return;
 
 /* drop empty textarea buffers created by this session */
-	for (e = w->jss->tags; t = *e; ++e) {
+	for (; t = *e; ++e) {
 		if (t->action != TAGACT_INPUT)
 			continue;
 		if (t->itype != INP_TA)
@@ -315,10 +312,10 @@ void freeTags(struct ebWindow *w)
 		cxQuit(n, 2);
 	}			/* loop over tags */
 
-	for (e = w->jss->tags; t = *e; ++e)
+	for (e = w->tags; t = *e; ++e)
 		freeTag(t);
-	free(w->jss->tags);
-	w->jss->tags = 0;
+	free(w->tags);
+	w->tags = 0;
 }				/* freeTags */
 
 static void get_js_event(const char *name)
@@ -407,7 +404,7 @@ static void get_js_events(void)
 
 eb_bool tagHandler(int seqno, const char *name)
 {
-	struct htmlTag **list = cw->jss->tags;
+	struct htmlTag **list = cw->tags;
 	const struct htmlTag *t = list[seqno];
 	return t->handler | handlerPresent(t->jv, name);
 }				/* tagHandler */
@@ -417,7 +414,7 @@ static char *getBaseHref(int n)
 	const struct htmlTag *t, **list;
 	if (parsePage)
 		return basehref;
-	list = (const struct htmlTag **)cw->jss->tags;
+	list = (const struct htmlTag **)cw->tags;
 	if (n < 0) {
 		for (n = 0; list[n]; ++n) ;
 	}
@@ -764,7 +761,7 @@ static char *displayOptions(const struct htmlTag *sel)
 			stringAndString(&outstr, &l, t->name);
 		}
 	} else {
-		for (list = cw->jss->tags; t = *list; ++list) {
+		for (list = cw->tags; t = *list; ++list) {
 			if (t->controller != sel)
 				continue;
 			if (!t->checked)
@@ -782,7 +779,7 @@ static struct htmlTag *locateOptionByName(const struct htmlTag *sel,
 					  const char *name, int *pmc,
 					  eb_bool exact)
 {
-	struct htmlTag **list = cw->jss->tags, *t, *em = 0, *pm = 0;
+	struct htmlTag **list = cw->tags, *t, *em = 0, *pm = 0;
 	int pmcount = 0;	/* partial match count */
 	const char *s;
 	while (t = *list++) {
@@ -811,7 +808,7 @@ static struct htmlTag *locateOptionByName(const struct htmlTag *sel,
 
 static struct htmlTag *locateOptionByNum(const struct htmlTag *sel, int n)
 {
-	struct htmlTag **list = cw->jss->tags, *t;
+	struct htmlTag **list = cw->tags, *t;
 	int cnt = 0;
 	while (t = *list++) {
 		if (t->controller != sel)
@@ -849,7 +846,7 @@ locateOptions(const struct htmlTag *sel, const char *input,
 /* Uncheck all existing options, then check the ones selected. */
 		if (ev)
 			set_property_number(ev, "selectedIndex", -1);
-		list = cw->jss->tags;
+		list = cw->tags;
 		while (t = *list++)
 			if (t->controller == sel && t->name) {
 				t->checked = eb_false;
@@ -956,7 +953,7 @@ void jSyncup(void)
 
 	buildTagArray();
 
-	list = (const struct htmlTag **)cw->jss->tags;
+	list = (const struct htmlTag **)cw->tags;
 	while (t = *list++) {
 		if (t->action != TAGACT_INPUT)
 			continue;
@@ -1416,42 +1413,36 @@ forceCloseAnchor:
 					}
 
 					if (ev = currentSel->jv) {	/* element variable */
-						JS::RootedObject ov(cw->jss->
-								    jcx,
+						JS::RootedObject ov(cw->
+								    jss->jcx,
 								    establish_js_option
 								    (ev,
 								     v->lic));
 						v->jv = ov;
 						establish_property_string(ov,
 									  "text",
-									  v->
-									  name,
+									  v->name,
 									  eb_true);
 						establish_property_string(ov,
 									  "value",
-									  v->
-									  value,
+									  v->value,
 									  eb_true);
 						establish_property_bool(ov,
 									"selected",
-									v->
-									checked,
+									v->checked,
 									eb_false);
 						establish_property_bool(ov,
 									"defaultSelected",
-									v->
-									checked,
+									v->checked,
 									eb_true);
 						if (v->checked
 						    && !currentSel->multiple) {
 							set_property_number(ev,
 									    "selectedIndex",
-									    v->
-									    lic);
+									    v->lic);
 							set_property_string(ev,
 									    "value",
-									    v->
-									    value);
+									    v->value);
 						}
 					}	/* select has corresponding java variables */
 				}	/* option */
@@ -2321,7 +2312,7 @@ findField(const char *line, int ftype, int n,
 		*tagp = 0;
 
 	if (cw->jss)
-		list = (const struct htmlTag **)cw->jss->tags;
+		list = (const struct htmlTag **)cw->tags;
 
 	if (cw->browseMode) {
 
@@ -2459,8 +2450,7 @@ findInputField(const char *line, int ftype, int n, int *total, int *realtotal,
 
 eb_bool lineHasTag(const char *p, const char *s)
 {
-	const struct htmlTag *t, **list =
-	    (const struct htmlTag **)cw->jss->tags;
+	const struct htmlTag *t, **list = (const struct htmlTag **)cw->tags;
 	char c;
 	int j;
 	while ((c = *p++) != '\n') {
@@ -2559,7 +2549,7 @@ eb_bool htmlTest(void)
 /* Show an input field */
 void infShow(int tagno, const char *search)
 {
-	const struct htmlTag **list = (const struct htmlTag **)cw->jss->tags;
+	const struct htmlTag **list = (const struct htmlTag **)cw->tags;
 	const struct htmlTag *t = list[tagno], *v;
 	const char *s;
 	int j, cnt;
@@ -2619,7 +2609,7 @@ void infShow(int tagno, const char *search)
 /* Update an input field. */
 eb_bool infReplace(int tagno, const char *newtext, int notify)
 {
-	const struct htmlTag **list = (const struct htmlTag **)cw->jss->tags;
+	const struct htmlTag **list = (const struct htmlTag **)cw->tags;
 	const struct htmlTag *t = list[tagno], *v;
 	const struct htmlTag *form = t->controller;
 	char *display;
@@ -2670,8 +2660,6 @@ eb_bool infReplace(int tagno, const char *newtext, int notify)
 	}
 
 /* Two lines, clear the "other" radio button, and set this one. */
-	if (!linesComing(2))
-		return eb_false;
 
 	if (itype == INP_SELECT) {
 		if (!locateOptions(t, newtext, 0, 0, eb_false))
@@ -2796,7 +2784,7 @@ static void resetVar(struct htmlTag *t)
 
 static void formReset(const struct htmlTag *form)
 {
-	struct htmlTag **list = cw->jss->tags, *t, *sel = 0;
+	struct htmlTag **list = cw->tags, *t, *sel = 0;
 	int itype;
 
 	while (t = *list++) {
@@ -2977,8 +2965,7 @@ static eb_bool
 formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 	   char **post, int *l)
 {
-	const struct htmlTag **list =
-	    (const struct htmlTag **)cw->jss->tags, *t;
+	const struct htmlTag **list = (const struct htmlTag **)cw->tags, *t;
 	int itype;
 	int j;
 	char *name, *dynamicvalue = NULL;
@@ -3103,7 +3090,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 			char *display = getFieldFromBuffer(t->seqno);
 			char *s, *e;
 			if (!display) {	/* off the air */
-				struct htmlTag *v, **vl = cw->jss->tags;
+				struct htmlTag *v, **vl = cw->tags;
 /* revert back to reset state */
 				while (v = *vl++)
 					if (v->controller == t)
@@ -3190,7 +3177,7 @@ which calls this routine.  Happens all the time.
 
 eb_bool infPush(int tagno, char **post_string)
 {
-	struct htmlTag **list = cw->jss->tags;
+	struct htmlTag **list = cw->tags;
 	struct htmlTag *t = list[tagno];
 	struct htmlTag *form;
 	int itype;
@@ -3409,7 +3396,7 @@ eb_bool infPush(int tagno, char **post_string)
 /* I don't have any reverse pointers, so I'm just going to scan the list */
 static struct htmlTag *tagFromJavaVar(JS::HandleObject v)
 {
-	struct htmlTag **list = cw->jss->tags;
+	struct htmlTag **list = cw->tags;
 	struct htmlTag *t;
 	if (!list)
 		i_printfExit(MSG_NullListInform);

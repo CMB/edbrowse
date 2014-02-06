@@ -381,9 +381,8 @@ static JSObject *setTimeout(unsigned int argc, jsval * argv, eb_bool isInterval)
 
 		if (fo) {
 /* Extract the function name, which requires several steps */
-			JSFunction *f =
-			    JS_ValueToFunction(cw->jss->jcx,
-					       OBJECT_TO_JSVAL(fo));
+			JSFunction *f = JS_ValueToFunction(cw->jss->jcx,
+							   OBJECT_TO_JSVAL(fo));
 			JS::RootedString jss(cw->jss->jcx, JS_GetFunctionId(f));
 			if (jss)
 				allocatedName = our_JSEncodeString(jss);
@@ -841,7 +840,6 @@ void createJavaContext(struct ebWindowJSState **pstate)
 			i_printfExit(MSG_JavaMemError);
 	}
 
-	state->tags = 0;
 	state->jcx = JS_NewContext(jrt, gStackChunkSize);
 	if (!state->jcx)
 		i_printfExit(MSG_JavaContextError);

@@ -1,6 +1,6 @@
 edbrowse, a line oriented editor browser.
 Maintained by Chris Brannon, chris@the-brannons.com
-Written and previously maintained by Karl Dahlke, eklhad@gmail.com
+Written and maintained by Karl Dahlke, eklhad@gmail.com
 See COPYING for licensing agreements.
 
 ------------------------------------------------------------
@@ -130,7 +130,7 @@ Debug levels:
 5: url resolution
 6: free and alloc text lines, show javascript
 7: reformatted regular expressions, breakline chunks.
-8: not used
+8: text lines freed, debug garbage collection
 9: not used
 
 ------------------------------------------------------------

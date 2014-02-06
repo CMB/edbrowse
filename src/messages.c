@@ -2705,7 +2705,7 @@ void selectLanguage(void)
  * Note however that your environment does not affect the order of files
  * in a directory listing.
  * I do the sort myself, using strcmp, rather than strcoll.
- * See sortedDirList() in stringfile.c */
+ * See qscmp() in stringfile.c */
 
 	setlocale(LC_ALL, "");
 

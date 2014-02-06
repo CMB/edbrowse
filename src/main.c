@@ -12,7 +12,7 @@
 /* Define the globals that are declared in eb.h. */
 /* See eb.h for descriptive comments. */
 
-const char *version = "3.4.10";
+const char *version = "3.5.1";
 char *userAgents[10], *currentAgent, *currentReferrer;
 const char eol[] = "\r\n";
 char EMPTYSTRING[] = "";
@@ -46,8 +46,6 @@ char *addressFile, *ipbFile;
 char *home, *recycleBin, *configFile, *sigFile, *sigFileEnd;
 char *cookieFile, *spamCan;
 char *edbrowseTempFile, *edbrowseTempPDF, *edbrowseTempHTML;
-pst *textLines;
-int textLinesMax, textLinesCount;
 struct ebWindow *cw;
 struct ebSession sessionList[MAXSESSION], *cs;
 
@@ -1176,8 +1174,8 @@ int main(int argc, char **argv)
 /* don't fetch from a different account that has the same host an dlogin */
 						for (j = 1; j < i; ++j)
 							if (stringEqual
-							    (accounts[i - 1].
-							     inurl,
+							    (accounts
+							     [i - 1].inurl,
 							     accounts[j -
 								      1].inurl)
 							    &&

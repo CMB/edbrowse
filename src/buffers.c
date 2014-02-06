@@ -34,7 +34,6 @@ static const char nofollow_cmd[] = "aAcdDhHjlmnptuX=";
 /* Commands that can be done after a g// global directive. */
 static const char global_cmd[] = "dDijJlmnpstX";
 
-static struct ebWindow preWindow, undoWindow;
 static int startRange, endRange;	/* as in 57,89p */
 static int destLine;		/* as in 57,89m226 */
 static int last_z = 1;
@@ -135,7 +134,7 @@ addchar:
 static pst fetchLineContext(int n, int show, int cx)
 {
 	struct ebWindow *lw = sessionList[cx].lw;
-	char *map, *t;
+	struct lineMap *map, *t;
 	int dol, idx;
 	unsigned len;
 	pst p;			/* the resulting copy of the string */
@@ -147,13 +146,10 @@ static pst fetchLineContext(int n, int show, int cx)
 	if (n <= 0 || n > dol)
 		i_printfExit(MSG_InvalidLineNb, n);
 
-	t = map + LNWIDTH * n;
-	idx = atoi(t);
-	if (!textLines[idx])
-		i_printfExit(MSG_LineNull, n, idx);
+	t = map + n;
 	if (show < 0)
-		return textLines[idx];
-	p = clonePstring(textLines[idx]);
+		return t->text;
+	p = clonePstring(t->text);
 	if (show && lw->browseMode)
 		removeHiddenNumbers(p);
 	return p;
@@ -200,15 +196,12 @@ static char *dirSuffixContext(int n, int cx)
 {
 	static char suffix[4];
 	struct ebWindow *lw = sessionList[cx].lw;
+
 	suffix[0] = 0;
 	if (lw->dirMode) {
-		char *s = lw->map + LNWIDTH * n + LNDIR;
-		suffix[0] = s[0];
-		if (suffix[0] == ' ')
-			suffix[0] = 0;
-		suffix[1] = s[1];
-		if (suffix[1] == ' ')
-			suffix[1] = 0;
+		struct lineMap *s = lw->map + n;
+		suffix[0] = s->ds1;
+		suffix[1] = s->ds2;
 		suffix[2] = 0;
 	}
 	return suffix;
@@ -413,111 +406,178 @@ static struct ebWindow *createWindow(void)
 	return nw;
 }				/* createWindow */
 
-static void freeWindowLines(char *map)
+/* for debugging */
+static void print_pst(pst p)
 {
-	char *t;
+	do
+		printf("%c", *p);
+	while (*p++ != '\n');
+}				/* print_pst */
+
+static void freeLine(struct lineMap *t)
+{
+	if (debugLevel >= 8) {
+		printf("out ");
+		print_pst(t->text);
+	}
+	free(t->text);
+}				/* freeLine */
+
+static void freeWindowLines(struct lineMap *map)
+{
+	struct lineMap *t;
 	int cnt = 0;
-	if (map) {
-		for (t = map + LNWIDTH; *t; t += LNWIDTH) {
-			int ln = atoi(t);
-			if (textLines[ln]) {
-				free(textLines[ln]);
-				++cnt;
-				textLines[ln] = 0;
-			}
+
+	if (t = map) {
+		for (++t; t->text; ++t) {
+			freeLine(t);
+			++cnt;
 		}
 		free(map);
 	}
+
 	debugPrint(6, "freeWindowLines = %d", cnt);
 }				/* freeWindowLines */
+
+/*********************************************************************
+Garbage collection for text lines.
+There is an undo window that holds a snapshot of the buffer as it was before.
+not a copy of all the text, but a copy of map,
+and dot and dollar and some other things.
+This starts out with map = 0.
+The u command swaps undoWindow and current window (cw).
+Thus another u undoes your undo.
+You can step back through all your changes,
+popping a stack like a modern editor. Sorry.
+Just don't screw up more than once,
+and don't save your file til you're sure it's ok.
+No autosave feature here, I never liked that anyways.
+So at the start of every command not under g//, set madeChanges = false.
+If we're about to change something in the buffer, set madeChanges = true.
+But if madeChanges was false, i.e. this is the first change coming,
+call undoPush().
+This pushes the undo window off the cliff,
+and that means we have to free the text first.
+Call undoCompare().
+This finds any lines in the undo window that aren't in cw and frees them.
+That is a quicksort on both maps and then a comm -23.
+Then it frees undoWindow.map just to make sure we don't free things twice.
+Then undoPush copies cw onto undoWindow, ready for the u command.
+Return, and the calling function makes its change.
+But we call undoCompare at other times, like switching buffers,
+pop the window stack, browse, or quit.
+These make undo impossible, so free the lines in the undo window.
+*********************************************************************/
+
+static eb_bool madeChanges;
+static struct ebWindow undoWindow;
 
 /* quick sort compare */
 static int qscmp(const void *s, const void *t)
 {
-	return memcmp(s, t, LNGLOB);
+	return memcmp(s, t, sizeof(char *));
 }				/* qscmp */
 
-/* Free any lines not used by the snapshot of the current session. */
-void freeUndoLines(const char *cmap)
+/* Free undo lines not used by the current session. */
+static void undoCompare(void)
 {
-	char *map = undoWindow.map;
-	char *cmap2;
-	char *s, *t;
+	const struct lineMap *cmap = cw->map;
+	struct lineMap *map = undoWindow.map;
+	struct lineMap *cmap2;
+	struct lineMap *s, *t;
 	int diff, ln, cnt = 0;
 
-	if (!map) {
-		debugPrint(6, "freeUndoLines = null");
+	if (!cmap) {
+		debugPrint(6, "undoCompare no current map");
+		freeWindowLines(undoWindow.map);
+		undoWindow.map = 0;
 		return;
 	}
 
-	if (!cmap) {
-		debugPrint(6, "freeUndoLines = win");
-		freeWindowLines(map);
-		undoWindow.map = 0;
+	if (!map) {
+		debugPrint(6, "undoCompare no undo map");
 		return;
 	}
 
 /* sort both arrays, run comm, and find out which lines are not needed any more,
 then free them.
- * Use quick sort; some files are 100,000 lines long.
+ * Use quick sort; some files are a million lines long.
  * I have to copy the second array, so I can sort it.
  * The first I can sort in place, cause it's going to get thrown away. */
 
-	cmap2 = cloneString(cmap);
-	qsort(map + LNWIDTH, (strlen(map) / LNWIDTH) - 1, LNWIDTH, qscmp);
-	qsort(cmap2 + LNWIDTH, (strlen(cmap2) / LNWIDTH) - 1, LNWIDTH, qscmp);
+	cmap2 = allocMem((cw->dol + 2) * LMSIZE);
+	memcpy(cmap2, cmap, (cw->dol + 2) * LMSIZE);
+	debugPrint(8, "qsort %d %d", undoWindow.dol, cw->dol);
+	qsort(map + 1, undoWindow.dol, LMSIZE, qscmp);
+	qsort(cmap2 + 1, cw->dol, LMSIZE, qscmp);
 
-	s = map + LNWIDTH;
-	t = cmap2 + LNWIDTH;
-	while (*s && *t) {
-		diff = memcmp(s, t, LNGLOB);
+	s = map + 1;
+	t = cmap2 + 1;
+	while (s->text && t->text) {
+		diff = memcmp(s, t, sizeof(char *));
 		if (!diff) {
-			s += LNWIDTH;
-			t += LNWIDTH;
+			++s, ++t;
 			continue;
 		}
 		if (diff > 0) {
-			t += LNWIDTH;
+			++t;
 			continue;
 		}
-/* This line isn't being used any more. */
-		ln = atoi(s);
-		if (textLines[ln]) {
-			free(textLines[ln]);
-			textLines[ln] = 0;
-			++cnt;
-		}
-		s += LNWIDTH;
+		freeLine(s);
+		++s;
+		++cnt;
 	}
 
-	while (*s) {
-		ln = atoi(s);
-		if (textLines[ln]) {
-			free(textLines[ln]);
-			textLines[ln] = 0;
-			++cnt;
-		}
-		s += LNWIDTH;
+	while (s->text) {
+		freeLine(s);
+		++s;
+		++cnt;
 	}
 
 	free(cmap2);
 	free(map);
 	undoWindow.map = 0;
-	debugPrint(6, "freeUndoLines = %d", cnt);
-}				/* freeUndoLines */
+	debugPrint(6, "undoCompare strip %d", cnt);
+}				/* undoCompare */
+
+static void undoPush(void)
+{
+	struct ebWindow *uw;
+
+	if (madeChanges)
+		return;
+	madeChanges = eb_true;
+
+	cw->firstOpMode = eb_true;
+	if (!cw->browseMode)
+		cw->changeMode = eb_true;
+
+	undoCompare();
+
+	uw = &undoWindow;
+	uw->dot = cw->dot;
+	uw->dol = cw->dol;
+	memcpy(uw->labels, cw->labels, 26 * sizeof(int));
+	uw->binMode = cw->binMode;
+	uw->nlMode = cw->nlMode;
+	uw->dirMode = cw->dirMode;
+	if (cw->map) {
+		uw->map = allocMem((cw->dol + 2) * LMSIZE);
+		memcpy(uw->map, cw->map, (cw->dol + 2) * LMSIZE);
+	}
+}				/* undoPush */
 
 static void freeWindow(struct ebWindow *w)
 {
 	freeTags(w);
 	freeJavaContext(w->jss);
-/* The next few are designed to do nothing if not in browseMode */
+	freeWindowLines(w->map);
 	freeWindowLines(w->r_map);
 	nzFree(w->dw);
 	nzFree(w->ft);
 	nzFree(w->fd);
 	nzFree(w->fk);
 	nzFree(w->mailInfo);
-	freeWindowLines(w->map);
 	nzFree(w->fileName);
 	nzFree(w->firstURL);
 	nzFree(w->referrer);
@@ -588,10 +648,7 @@ eb_bool cxQuit(int cx, int action)
 
 	if (cx == context) {
 /* Don't need to retain the undo lines. */
-		freeWindowLines(undoWindow.map);
-		undoWindow.map = 0;
-		nzFree(preWindow.map);
-		preWindow.map = 0;
+		undoCompare();
 	}
 
 	if (action == 2) {
@@ -627,7 +684,7 @@ void cxSwitch(int cx, eb_bool interactive)
 	}
 
 	if (cw) {
-		freeUndoLines(cw->map);
+		undoCompare();
 		cw->firstOpMode = eb_false;
 	}
 	cw = nw;
@@ -646,47 +703,6 @@ void cxSwitch(int cx, eb_bool interactive)
  * when the first arg is a url and there is a second arg. */
 	startRange = endRange = cw->dot;
 }				/* cxSwitch */
-
-/* Make sure we have room to store another n lines. */
-
-void linesReset(void)
-{
-	int j;
-	if (!textLines)
-		return;
-	for (j = 0; j < textLinesCount; ++j)
-		nzFree(textLines[j]);
-	nzFree(textLines);
-	textLines = 0;
-	textLinesCount = textLinesMax = 0;
-}				/* linesReset */
-
-eb_bool linesComing(int n)
-{
-	int need = textLinesCount + n;
-	if (need > LNMAX) {
-		setError(MSG_LineLimit);
-		return eb_false;
-	}
-	if (need > textLinesMax) {
-		int newmax = textLinesMax * 3 / 2;
-		if (need > newmax)
-			newmax = need + 8192;
-		if (newmax > LNMAX)
-			newmax = LNMAX;
-		if (textLinesMax) {
-			debugPrint(4, "textLines realloc %d", newmax);
-			textLines = reallocMem(textLines, newmax * sizeof(pst));
-		} else {
-			textLines = allocMem(newmax * sizeof(pst));
-		}
-		textLinesMax = newmax;
-	}
-	/* overflow requires realloc */
-	/* We now have room for n new lines, but you have to add n
-	 * to textLines Count, once you have brought in the lines. */
-	return eb_true;
-}				/* linesComing */
 
 /* This function is called for web redirection, by the refresh command,
  * or by window.location = new_url. */
@@ -709,59 +725,76 @@ void gotoLocation(char *url, int delay, eb_bool rf)
 		js_redirects = eb_true;
 }				/* gotoLocation */
 
+static struct lineMap *newpiece;
+
+/* for debugging */
+static void show_newpiece(int cnt)
+{
+	const struct lineMap *t = newpiece;
+	const char *s;
+	printf("newpiece %d\n", cnt);
+	while (cnt) {
+		for (s = t->text; *s != '\n'; ++s)
+			printf("%c", *s);
+		printf("\n");
+		++t, --cnt;
+	}
+}				/* show_newpiece */
+
 /* Adjust the map of line numbers -- we have inserted text.
  * Also shift the downstream labels.
  * Pass the string containing the new line numbers, and the dest line number. */
-static void addToMap(int start, int end, int destl)
+static void addToMap(int nlines, int destl)
 {
-	char *newmap;
-	int i, j;
-/* sanity check */
-	if (destl < 0)
-		destl = 0;
-	if (destl > cw->dol)
-		destl = cw->dol;
-	int nlines = end - start;
+	struct lineMap *newmap;
+	int i, ln;
+	int svdol = cw->dol;
+
 	if (nlines == 0)
 		i_printfExit(MSG_EmptyPiece);
+
+	undoPush();
+
+/* adjust labels */
 	for (i = 0; i < 26; ++i) {
-		int ln = cw->labels[i];
+		ln = cw->labels[i];
 		if (ln <= destl)
 			continue;
 		cw->labels[i] += nlines;
 	}
 	cw->dot = destl + nlines;
 	cw->dol += nlines;
-	newmap = allocMem((cw->dol + 1) * LNWIDTH + 1);
-	if (cw->map)
-		strcpy(newmap, cw->map);
+
+	newmap = allocMem((cw->dol + 2) * LMSIZE);
+	if (destl)
+		memcpy(newmap, cw->map, (destl + 1) * LMSIZE);
 	else
-		strcpy(newmap, LNSPACE);
-	i = j = (destl + 1) * LNWIDTH;	/* insert new piece here */
-	while (start < end) {
-		sprintf(newmap + i, LNFORMAT, start);
-		++start;
-		i += LNWIDTH;
-	}
-	if (cw->map)
-		strcat(newmap, cw->map + j);
+		memset(newmap, 0, LMSIZE);
+/* insert new piece here */
+	memcpy(newmap + destl + 1, newpiece, nlines * LMSIZE);
+/* put on the last piece */
+	if (destl < svdol)
+		memcpy(newmap + destl + nlines + 1, cw->map + destl + 1,
+		       (svdol - destl + 1) * LMSIZE);
+	else
+		memset(newmap + destl + nlines + 1, 0, LMSIZE);
+
 	nzFree(cw->map);
 	cw->map = newmap;
-	cw->firstOpMode = undoable = eb_true;
-	if (!cw->browseMode)
-		cw->changeMode = eb_true;
+	free(newpiece);
+	newpiece = 0;
 }				/* addToMap */
 
 /* Add a block of text into the buffer; uses addToMap(). */
 eb_bool addTextToBuffer(const pst inbuf, int length, int destl, eb_bool onside)
 {
 	int i, j, linecount = 0;
-	int start, end;
+	struct lineMap *t;
+
 	for (i = 0; i < length; ++i)
 		if (inbuf[i] == '\n')
 			++linecount;
-	if (!linesComing(linecount + 1))
-		return eb_false;
+
 	if (destl == cw->dol)
 		cw->nlMode = eb_false;
 	if (inbuf[length - 1] != '\n') {
@@ -772,8 +805,9 @@ eb_bool addTextToBuffer(const pst inbuf, int length, int destl, eb_bool onside)
 			if (cmd != 'b' && !cw->binMode && !ismc && !onside)
 				i_puts(MSG_NoTrailing);
 		}
-	}			/* missing newline */
-	start = end = textLinesCount;
+	}
+	/* missing newline */
+	newpiece = t = allocZeroMem(linecount * LMSIZE);
 	i = 0;
 	while (i < length) {	/* another line */
 		j = i;
@@ -782,17 +816,17 @@ eb_bool addTextToBuffer(const pst inbuf, int length, int destl, eb_bool onside)
 				break;
 		if (inbuf[i - 1] == '\n') {
 /* normal line */
-			textLines[end] = allocMem(i - j);
+			t->text = allocMem(i - j);
 		} else {
 /* last line with no nl */
-			textLines[end] = allocMem(i - j + 1);
-			textLines[end][i - j] = '\n';
+			t->text = allocMem(i - j + 1);
+			t->text[i - j] = '\n';
 		}
-		memcpy(textLines[end], inbuf + j, i - j);
-		++end;
+		memcpy(t->text, inbuf + j, i - j);
+		++t;
 	}			/* loop breaking inbuf into lines */
-	textLinesCount = end;
-	addToMap(start, end, destl);
+
+	addToMap(linecount, destl);
 	return eb_true;
 }				/* addTextToBuffer */
 
@@ -800,44 +834,61 @@ eb_bool addTextToBuffer(const pst inbuf, int length, int destl, eb_bool onside)
 
 static eb_bool inputLinesIntoBuffer(void)
 {
-	int start = textLinesCount;
-	int end = start;
 	pst line;
+	int linecount = 0, cap;
+	struct lineMap *t;
+
+	cap = 128;
+	newpiece = t = allocZeroMem(cap * LMSIZE);
+
 	if (linePending[0])
 		line = linePending;
 	else
 		line = inputLine();
+
 	while (line[0] != '.' || line[1] != '\n') {
-		if (!linesComing(1))
-			return eb_false;
-		textLines[end++] = clonePstring(line);
+		if (linecount == cap) {
+			cap *= 2;
+			newpiece = reallocMem(newpiece, cap * LMSIZE);
+			t = newpiece + linecount;
+		}
+		t->text = clonePstring(line);
+		t->ds1 = t->ds2 = 0;
+		++t, ++linecount;
 		line = inputLine();
 	}
-	if (end == start) {	/* no lines entered */
+
+	if (!linecount) {	/* no lines entered */
+		free(newpiece);
+		newpiece = 0;
 		cw->dot = endRange;
 		if (!cw->dot && cw->dol)
 			cw->dot = 1;
 		return eb_true;
 	}
+
 	if (endRange == cw->dol)
 		cw->nlMode = eb_false;
-	textLinesCount = end;
-	addToMap(start, end, endRange);
+	addToMap(linecount, endRange);
 	return eb_true;
 }				/* inputLinesIntoBuffer */
 
 /* Delete a block of text. */
-
 void delText(int start, int end)
 {
-	int i, j;
+	int i, j, ln;
+
+	undoPush();
+
 	if (end == cw->dol)
 		cw->nlMode = eb_false;
 	j = end - start + 1;
-	strmove(cw->map + start * LNWIDTH, cw->map + (end + 1) * LNWIDTH);
+	memmove(cw->map + start, cw->map + end + 1,
+		(cw->dol - end + 1) * LMSIZE);
+
 /* move the labels */
 	for (i = 0; i < 26; ++i) {
-		int ln = cw->labels[i];
+		ln = cw->labels[i];
 		if (ln < start)
 			continue;
 		if (ln <= end) {
@@ -846,6 +897,7 @@ void delText(int start, int end)
 		}
 		cw->labels[i] -= j;
 	}
+
 	cw->dol -= j;
 	cw->dot = start;
 	if (cw->dot > cw->dol)
@@ -855,9 +907,6 @@ void delText(int start, int end)
 		free(cw->map);
 		cw->map = 0;
 	}
-	cw->firstOpMode = undoable = eb_true;
-	if (!cw->browseMode)
-		cw->changeMode = eb_true;
 }				/* delText */
 
 /* Delete files from a directory as you delete lines.
@@ -954,6 +1003,8 @@ unlink:
 
 		free(file);
 		delText(ln, ln);
+		undoCompare();
+		cw->firstOpMode = eb_false;
 	}
 
 	return eb_true;
@@ -966,13 +1017,13 @@ static eb_bool moveCopy(void)
 	int sr = startRange;
 	int er = endRange + 1;
 	int dl = destLine + 1;
-	int i_sr = sr * LNWIDTH;	/* indexes into map */
-	int i_er = er * LNWIDTH;
-	int i_dl = dl * LNWIDTH;
+	int i_sr = sr * LMSIZE;	/* indexes into map */
+	int i_er = er * LMSIZE;
+	int i_dl = dl * LMSIZE;
 	int n_lines = er - sr;
-	char *map = cw->map;
-	char *newmap;
-	int lowcut, highcut, diff, i;
+	struct lineMap *map = cw->map;
+	struct lineMap *newmap, *t;
+	int lowcut, highcut, diff, i, ln;
 
 	if (dl > sr && dl < er) {
 		setError(MSG_DestInBlock);
@@ -984,26 +1035,28 @@ static eb_bool moveCopy(void)
 		return eb_false;
 	}
 
+	undoPush();
+
 	if (cmd == 't') {
-		if (!linesComing(n_lines))
-			return eb_false;
-		for (i = sr; i < er; ++i)
-			textLines[textLinesCount++] = fetchLine(i, 0);
-		addToMap(textLinesCount - n_lines, textLinesCount, destLine);
+		newpiece = t = allocZeroMem(n_lines * LMSIZE);
+		for (i = sr; i < er; ++i, ++t)
+			t->text = fetchLine(i, 0);
+		addToMap(n_lines, destLine);
 		return eb_true;
 	}
-	/* copy */
+
 	if (destLine == cw->dol || endRange == cw->dol)
 		cw->nlMode = eb_false;
+
 /* All we really need do is rearrange the map. */
-	newmap = allocMem((cw->dol + 1) * LNWIDTH + 1);
-	strcpy(newmap, map);
+	newmap = allocMem((cw->dol + 2) * LMSIZE);
+	memcpy(newmap, map, (cw->dol + 2) * LMSIZE);
 	if (dl < sr) {
-		memcpy(newmap + i_dl, map + i_sr, i_er - i_sr);
-		memcpy(newmap + i_dl + i_er - i_sr, map + i_dl, i_sr - i_dl);
+		memcpy(newmap + dl, map + sr, i_er - i_sr);
+		memcpy(newmap + dl + er - sr, map + dl, i_sr - i_dl);
 	} else {
-		memcpy(newmap + i_sr, map + i_er, i_dl - i_er);
-		memcpy(newmap + i_sr + i_dl - i_er, map + i_sr, i_er - i_sr);
+		memcpy(newmap + sr, map + er, i_dl - i_er);
+		memcpy(newmap + sr + dl - er, map + sr, i_er - i_sr);
 	}
 	free(cw->map);
 	cw->map = newmap;
@@ -1019,7 +1072,7 @@ static eb_bool moveCopy(void)
 		diff = dl - er;
 	}
 	for (i = 0; i < 26; ++i) {
-		int ln = cw->labels[i];
+		ln = cw->labels[i];
 		if (ln < lowcut)
 			continue;
 		if (ln >= highcut)
@@ -1034,9 +1087,6 @@ static eb_bool moveCopy(void)
 
 	cw->dot = endRange;
 	cw->dot += (dl < sr ? -diff : diff);
-	cw->firstOpMode = undoable = eb_true;
-	if (!cw->browseMode)
-		cw->changeMode = eb_true;
 	return eb_true;
 }				/* moveCopy */
 
@@ -1045,12 +1095,12 @@ static eb_bool joinText(void)
 {
 	int j, size;
 	pst newline, t;
+
 	if (startRange == endRange) {
 		setError(MSG_Join1);
 		return eb_false;
 	}
-	if (!linesComing(1))
-		return eb_false;
+
 	size = 0;
 	for (j = startRange; j <= endRange; ++j)
 		size += pstLength(fetchLine(j, -1));
@@ -1066,10 +1116,13 @@ static eb_bool joinText(void)
 				--t;
 		}
 	}
-	textLines[textLinesCount] = newline;
-	sprintf(cw->map + startRange * LNWIDTH, LNFORMAT, textLinesCount);
-	++textLinesCount;
-	delText(startRange + 1, endRange);
+
+	delText(startRange, endRange);
+
+	newpiece = allocZeroMem(LMSIZE);
+	newpiece->text = newline;
+	addToMap(1, startRange - 1);
+
 	cw->dot = startRange;
 	return eb_true;
 }				/* joinText */
@@ -1085,6 +1138,7 @@ eb_bool readFile(const char *filename, const char *post)
 	eb_bool is8859, isutf8;
 	char *nopound;
 	char filetype;
+	struct lineMap *mptr;
 
 	serverData = 0;
 	serverDataLen = 0;
@@ -1166,7 +1220,7 @@ fromdisk:
 	fileSize = 0;
 	if (filetype == 'd') {
 /* directory scan */
-		int len, j, start, end;
+		int len, j, linecount;
 		cw->baseDirName = cloneString(filename);
 /* get rid of trailing slash */
 		len = strlen(cw->baseDirName);
@@ -1174,25 +1228,26 @@ fromdisk:
 			cw->baseDirName[len - 1] = 0;
 /* Understand that the empty string now means / */
 /* get the files, or fail if there is a problem */
-		if (!sortedDirList(filename, &start, &end))
+		if (!sortedDirList(filename, &newpiece, &linecount))
 			return eb_false;
 		if (!cw->dol) {
 			cw->dirMode = eb_true;
 			i_puts(MSG_DirMode);
 		}
-		if (start == end) {	/* empty directory */
+		if (!linecount) {	/* empty directory */
 			cw->dot = endRange;
 			fileSize = 0;
+			free(newpiece);
+			newpiece = 0;
 			return eb_true;
 		}
 
-		addToMap(start, end, endRange);
-
 /* change 0 to nl and count bytes */
 		fileSize = 0;
-		for (j = start; j < end; ++j) {
-			char *s, c, ftype;
-			pst t = textLines[j];
+		mptr = newpiece;
+		for (j = 0; j < linecount; ++j, ++mptr) {
+			char c, ftype;
+			pst t = mptr->text;
 			char *abspath = makeAbsPath((char *)t);
 			while (*t) {
 				if (*t == '\n')
@@ -1200,20 +1255,18 @@ fromdisk:
 				++t;
 			}
 			*t = '\n';
-			len = t - textLines[j];
+			len = t - mptr->text;
 			fileSize += len + 1;
 			if (!abspath)
 				continue;	/* should never happen */
 			ftype = fileTypeByName(abspath, eb_true);
 			if (!ftype)
 				continue;
-			s = cw->map + (endRange + 1 + j - start) * LNWIDTH +
-			    LNDIR;
 			if (isupperByte(ftype)) {	/* symbolic link */
 				if (!cw->dirMode)
 					*t = '@', *++t = '\n';
 				else
-					*s++ = '@';
+					mptr->ds1 = '@';
 				++fileSize;
 			}
 			ftype = tolower(ftype);
@@ -1232,10 +1285,15 @@ fromdisk:
 				continue;
 			if (!cw->dirMode)
 				*t = c, *++t = '\n';
+			else if (mptr->ds1)
+				mptr->ds2 = c;
 			else
-				*s++ = c;
+				mptr->ds1 = c;
 			++fileSize;
 		}		/* loop fixing files in the directory scan */
+
+		addToMap(linecount, endRange);
+
 		return eb_true;
 	}
 
@@ -1451,22 +1509,23 @@ endline:
 static eb_bool readContext(int cx)
 {
 	struct ebWindow *lw;
-	int i, start, end, fardol;
+	int i, fardol;
+	struct lineMap *t;
+
 	if (!cxCompare(cx))
 		return eb_false;
 	if (!cxActive(cx))
 		return eb_false;
+
 	fileSize = 0;
 	lw = sessionList[cx].lw;
 	fardol = lw->dol;
 	if (!fardol)
 		return eb_true;
-	if (!linesComing(fardol))
-		return eb_false;
 	if (cw->dol == endRange)
 		cw->nlMode = eb_false;
-	start = end = textLinesCount;
-	for (i = 1; i <= fardol; ++i) {
+	newpiece = t = allocZeroMem(fardol * LMSIZE);
+	for (i = 1; i <= fardol; ++i, ++t) {
 		pst p = fetchLineContext(i, (lw->dirMode ? -1 : 1), cx);
 		int len = pstLength(p);
 		pst q;
@@ -1480,11 +1539,11 @@ static eb_bool readContext(int cx)
 			len = strlen(q);
 			p = (pst) q;
 		}
-		textLines[end++] = p;
+		t->text = p;
 		fileSize += len;
 	}			/* loop over lines in the "other" context */
-	textLinesCount = end;
-	addToMap(start, end, endRange);
+
+	addToMap(fardol, endRange);
 	if (lw->nlMode) {
 		--fileSize;
 		if (cw->dol == endRange)
@@ -1500,14 +1559,13 @@ static eb_bool readContext(int cx)
 static eb_bool writeContext(int cx)
 {
 	struct ebWindow *lw;
-	int i, j, len;
-	char *newmap;
+	int i, len;
+	struct lineMap *newmap, *t;
 	pst p;
 	int fardol = endRange - startRange + 1;
+
 	if (!startRange)
 		fardol = 0;
-	if (!linesComing(fardol))
-		return eb_false;
 	if (!cxCompare(cx))
 		return eb_false;
 	if (cxActive(cx) && !cxQuit(cx, 2))
@@ -1517,12 +1575,10 @@ static eb_bool writeContext(int cx)
 	lw = sessionList[cx].lw;
 	fileSize = 0;
 	if (startRange) {
-		newmap = allocMem((fardol + 1) * LNWIDTH + 1);
-		strcpy(newmap, LNSPACE);
-		for (i = startRange, j = 1; i <= endRange; ++i, ++j) {
+		newmap = t = allocZeroMem((fardol + 2) * LMSIZE);
+		for (i = startRange, ++t; i <= endRange; ++i, ++t) {
 			p = fetchLine(i, (cw->dirMode ? -1 : 1));
 			len = pstLength(p);
-			sprintf(newmap + j * LNWIDTH, LNFORMAT, textLinesCount);
 			if (cw->dirMode) {
 				pst q;
 				char *suf = dirSuffix(i);
@@ -1534,7 +1590,7 @@ static eb_bool writeContext(int cx)
 				len = strlen((char *)q);
 				p = q;
 			}
-			textLines[textLinesCount++] = p;
+			t->text = p;
 			fileSize += len;
 		}
 		lw->map = newmap;
@@ -1543,9 +1599,9 @@ static eb_bool writeContext(int cx)
 			lw->nlMode = eb_true;
 			--fileSize;
 		}
-	}			/* nonempty range */
-	lw->dot = lw->dol = fardol;
+	}
 
+	lw->dot = lw->dol = fardol;
 	return eb_true;
 }				/* writeContext */
 
@@ -2072,7 +2128,7 @@ static eb_bool doGlobal(const char *line)
 	eb_bool ci = caseInsensitive;
 	eb_bool change;
 	char delim = *line;
-	char *t;
+	struct lineMap *t;
 	char *re;		/* regular expression */
 	int i, origdot, yesdot, nodot;
 
@@ -2093,8 +2149,8 @@ static eb_bool doGlobal(const char *line)
 	skipWhite(&line);
 
 /* clean up any previous stars */
-	for (t = cw->map + LNWIDTH; *t; t += LNWIDTH)
-		t[LNGLOB] = ' ';
+	for (t = cw->map + 1; t->text; ++t)
+		t->gflag = eb_false;
 
 /* Find the lines that match the pattern. */
 	regexpCompile(re, ci);
@@ -2113,7 +2169,7 @@ static eb_bool doGlobal(const char *line)
 		}
 		if (re_count < 0 && cmd == 'v' || re_count >= 0 && cmd == 'g') {
 			++gcnt;
-			cw->map[i * LNWIDTH + LNGLOB] = '*';
+			cw->map[i].gflag = eb_true;
 		}
 	}			/* loop over line */
 	pcre_free(re_cc);
@@ -2134,19 +2190,19 @@ static eb_bool doGlobal(const char *line)
 	while (gcnt && change) {
 		change = eb_false;	/* kinda like bubble sort */
 		for (i = 1; i <= cw->dol; ++i) {
-			t = cw->map + i * LNWIDTH + LNGLOB;
-			if (*t != '*')
+			t = cw->map + i;
+			if (!t->gflag)
 				continue;
 			if (intFlag)
 				goto done;
 			change = eb_true, --gcnt;
-			*t = ' ';
+			t->gflag = eb_false;
 			cw->dot = i;	/* so we can run the command at this line */
 			if (runCommand(line)) {
 				yesdot = cw->dot;
 /* try this line again, in case we deleted or moved it somewhere else */
 				if (undoable)
-					--i, t -= LNWIDTH;
+					--i;
 			} else {
 /* error in subcommand might turn global flag off */
 				if (!globSub) {
@@ -2156,8 +2212,8 @@ static eb_bool doGlobal(const char *line)
 			}	/* subcommand succeeds or fails */
 		}		/* loop over lines */
 	}			/* loop making changes */
-done:
 
+done:
 	globSub = eb_false;
 /* yesdot could be 0, even on success, if all lines are deleted via g/re/d */
 	if (yesdot || !cw->dol) {
@@ -2380,6 +2436,7 @@ static int substituteText(const char *line)
 	int ln;			/* line number */
 	int j, linecount, slashcount, nullcount, tagno, total, realtotal;
 	char lhs[MAXRE], rhs[MAXRE];
+	struct lineMap *mptr;
 
 	replaceString = 0;
 
@@ -2463,9 +2520,11 @@ static int substituteText(const char *line)
 		setError(-1);
 
 	for (ln = startRange; ln <= endRange && !intFlag; ++ln) {
+		char *p;
+
 		replaceString = 0;
 
-		char *p = (char *)fetchLine(ln, -1);
+		p = (char *)fetchLine(ln, -1);
 		int len = pstLength((pst) p);
 
 		if (bl_mode) {
@@ -2489,6 +2548,7 @@ static int substituteText(const char *line)
 			if (cw->browseMode) {
 				char search[20];
 				char searchend[4];
+				undoPush();
 				findInputField(p, 1, whichField, &total,
 					       &realtotal, &tagno);
 				if (!tagno) {
@@ -2531,9 +2591,6 @@ static int substituteText(const char *line)
 			if (c == '/')
 				++slashcount;
 		}
-
-		if (!linesComing(linecount + 1))
-			goto abort;
 
 		if (cw->sqlMode) {
 			if (linecount) {
@@ -2594,19 +2651,22 @@ static int substituteText(const char *line)
 /* We're managing our own printing, so leave notify = 0 */
 			if (!infReplace(tagno, replaceString, 0))
 				goto abort;
+			undoCompare();
+			cw->firstOpMode = eb_false;
 		} else {
 
 			*replaceStringEnd = '\n';
 			if (!linecount) {
 /* normal substitute */
-				char newnum[LNWIDTH + 1];
-				textLines[textLinesCount] =
-				    allocMem(replaceStringLength + 1);
-				memcpy(textLines[textLinesCount], replaceString,
+				undoPush();
+				mptr = cw->map + ln;
+				mptr->text = allocMem(replaceStringLength + 1);
+				memcpy(mptr->text, replaceString,
 				       replaceStringLength + 1);
-				sprintf(newnum, LNFORMAT, textLinesCount);
-				memcpy(cw->map + ln * LNWIDTH, newnum, LNGLOB);
-				++textLinesCount;
+				if (cw->dirMode) {
+					undoCompare();
+					cw->firstOpMode = eb_false;
+				}
 			} else {
 /* Becomes many lines, this is the tricky case. */
 				save_nlMode = cw->nlMode;
@@ -2630,9 +2690,6 @@ static int substituteText(const char *line)
 		if (subPrint == 2)
 			displayLine(ln);
 		lastSubst = ln;
-		cw->firstOpMode = undoable = eb_true;
-		if (!cw->browseMode)
-			cw->changeMode = eb_true;
 		if (replaceString != replaceLine)
 			nzFree(replaceString);
 	}			/* loop over lines in the range */
@@ -2715,14 +2772,10 @@ static int twoLetter(const char *line, const char **runThis)
 	}
 
 	if (stringEqual(line, "re") || stringEqual(line, "rea")) {
-		freeUndoLines(cw->map);
-		undoWindow.map = 0;
-		nzFree(preWindow.map);
-		preWindow.map = 0;
+		undoCompare();
 		cw->firstOpMode = undoable = eb_false;
 		cmd = 'e';	/* so error messages are printed */
 		rc = setupReply(line[2] == 'a');
-		cw->firstOpMode = undoable = eb_false;
 		if (rc && cw->browseMode) {
 			cw->iplist = 0;
 			ub = eb_false;
@@ -2870,10 +2923,7 @@ pwd:
 			setError(MSG_NoBrowse);
 			return eb_false;
 		}
-		freeUndoLines(cw->map);
-		undoWindow.map = 0;
-		nzFree(preWindow.map);
-		preWindow.map = 0;
+		undoCompare();
 		cw->firstOpMode = undoable = eb_false;
 		cw->browseMode = eb_false;
 		cw->iplist = 0;
@@ -2884,15 +2934,14 @@ pwd:
 			memcpy(cw->labels, cw->r_labels, sizeof(cw->labels));
 			freeWindowLines(cw->map);
 			cw->map = cw->r_map;
+			cw->r_map = 0;
 		} else {
 et_go:
-			for (i = 1; i <= cw->dol; ++i) {
-				int ln = atoi(cw->map + i * LNWIDTH);
-				removeHiddenNumbers(textLines[ln]);
-			}
+			for (i = 1; i <= cw->dol; ++i)
+				removeHiddenNumbers(cw->map[i].text);
 			freeWindowLines(cw->r_map);
+			cw->r_map = 0;
 		}
-		cw->r_map = 0;
 		freeTags(cw);
 		freeJavaContext(cw->jss);
 		cw->jss = 0;
@@ -3459,27 +3508,6 @@ static char *showLinks(void)
 	return a;
 }				/* showLinks */
 
-static void readyUndo(void)
-{
-	struct ebWindow *pw = &preWindow;
-	if (globSub)
-		return;
-	pw->dot = cw->dot;
-	pw->dol = cw->dol;
-	memcpy(pw->labels, cw->labels, 26 * sizeof(int));
-	pw->binMode = cw->binMode;
-	pw->nlMode = cw->nlMode;
-	pw->dirMode = cw->dirMode;
-	if (pw->map) {
-		if (!cw->map || !stringEqual(pw->map, cw->map)) {
-			free(pw->map);
-			pw->map = 0;
-		}
-	}
-	if (cw->map && !pw->map)
-		pw->map = cloneString(cw->map);
-}				/* readyUndo */
-
 /* Run the entered edbrowse command.
  * This is indirectly recursive, as in g/x/d
  * Pass in the ed command, and return success or failure.
@@ -3513,10 +3541,13 @@ eb_bool runCommand(const char *line)
 	first = *line;
 
 	if (!globSub) {
+		madeChanges = eb_false;
+
 /* Allow things like comment, or shell escape, but not if we're
  * in the midst of a global substitute, as in g/x/ !echo hello world */
 		if (first == '#')
 			return eb_true;
+
 		if (first == '!')
 			return shellEscape(line + 1);
 
@@ -3777,7 +3808,7 @@ eb_bool runCommand(const char *line)
 
 	if (cmd == 'u') {
 		struct ebWindow *uw = &undoWindow;
-		char *swapmap;
+		struct lineMap *swapmap;
 		if (!cw->firstOpMode) {
 			setError(MSG_NoUndo);
 			return eb_false;
@@ -3806,7 +3837,6 @@ eb_bool runCommand(const char *line)
 		return eb_true;
 	}
 
-	/* k */
 	/* Find suffix, as in 27,59w2 */
 	if (!postSpace) {
 		cx = stringIsNum(line);
@@ -3962,17 +3992,14 @@ eb_bool runCommand(const char *line)
 		printDot();
 		return eb_true;
 	}
-	/* M */
+
 	if (cmd == 'A') {
 		char *a;
 		if (!cxQuit(context, 0))
 			return eb_false;
 		if (!(a = showLinks()))
 			return eb_false;
-		freeUndoLines(cw->map);
-		undoWindow.map = 0;
-		nzFree(preWindow.map);
-		preWindow.map = 0;
+		undoCompare();
 		cw->firstOpMode = cw->changeMode = eb_false;
 		w = createWindow();
 		w->prev = cw;
@@ -3984,12 +4011,11 @@ eb_bool runCommand(const char *line)
 		fileSize = apparentSize(context, eb_false);
 		return rc;
 	}
-	/* A */
+
 	if (cmd == '<') {	/* run a function */
 		return runEbFunction(line);
 	}
 
-	/* < */
 	/* go to a file in a directory listing */
 	if (cmd == 'g' && cw->dirMode && !first) {
 		char *p, *dirline, *endline;
@@ -4041,7 +4067,6 @@ eb_bool runCommand(const char *line)
 				cw->dot = startRange;
 				if (*rbuf) {
 					int savedol = cw->dol;
-					readyUndo();
 					addTextToBuffer((pst) rbuf,
 							strlen(rbuf), cw->dot,
 							eb_false);
@@ -4113,7 +4138,7 @@ eb_bool runCommand(const char *line)
 			rc = eb_false;
 			if (jsgo) {
 /* javascript might update fields */
-				readyUndo();
+				undoCompare();
 				jSyncup();
 /* The program might depend on the mouseover code running first */
 				if (over) {
@@ -4185,6 +4210,7 @@ eb_bool runCommand(const char *line)
 				setError(MSG_RangeI, c);
 				return eb_false;
 			}
+
 			if (cmd == 'i' && strchr("?=<*", c)) {
 				char *p;
 				int realtotal;
@@ -4208,10 +4234,15 @@ eb_bool runCommand(const char *line)
 							cx, n, realtotal);
 					return eb_false;
 				}
+
 				if (scmd == '?') {
 					infShow(tagno, line);
 					return eb_true;
 				}
+
+				undoPush();
+				cw->firstOpMode = eb_false;
+
 				if (c == '<') {
 					eb_bool fromfile = eb_false;
 					if (globSub) {
@@ -4298,20 +4329,32 @@ eb_bool runCommand(const char *line)
 					line = newline;
 					scmd = '=';
 				}
+
+				if (scmd == '=') {
+					rc = infReplace(tagno, line, 1);
+					if (newlocation)
+						goto redirect;
+					if (rc)
+						undoCompare();
+					return rc;
+				}
+
 				if (c == '*') {
-					readyUndo();
 					jSyncup();
 					if (!infPush(tagno, &allocatedLine))
 						return eb_false;
 					if (newlocation)
 						goto redirect;
 /* No url means it was a reset button */
-					if (!allocatedLine)
+					if (!allocatedLine) {
+						undoCompare();
 						return eb_true;
+					}
 					line = allocatedLine;
 					first = *line;
 					cmd = 'b';
 				}
+
 			} else
 				cmd = 's';
 		} else {
@@ -4345,10 +4388,7 @@ rebrowse:
 /* did you make changes that you didn't write? */
 		if (!cxQuit(context, 0))
 			return eb_false;
-		freeUndoLines(cw->map);
-		undoWindow.map = 0;
-		nzFree(preWindow.map);
-		preWindow.map = 0;
+		undoCompare();
 		cw->firstOpMode = cw->changeMode = eb_false;
 		startRange = endRange = 0;
 		changeFileName = 0;	/* should already be zero */
@@ -4504,8 +4544,6 @@ redirect:
 		return eb_false;
 	}
 
-	readyUndo();
-
 	if (cmd == 'g' || cmd == 'v') {
 		return doGlobal(line);
 	}
@@ -4515,12 +4553,6 @@ redirect:
 	}
 
 	if (cmd == 'i') {
-		if (scmd == '=') {
-			rc = infReplace(tagno, line, 1);
-			if (newlocation)
-				goto redirect;
-			return rc;
-		}
 		if (cw->browseMode) {
 			setError(MSG_BrowseI);
 			return eb_false;
@@ -4629,23 +4661,7 @@ eb_bool edbrowseCommand(const char *line, eb_bool script)
 		eeCheck();
 	}
 	if (undoable) {
-		struct ebWindow *pw = &preWindow;
-		struct ebWindow *uw = &undoWindow;
-		debugPrint(6, "undoable");
-		uw->dot = pw->dot;
-		uw->dol = pw->dol;
-		if (uw->map && pw->map && stringEqual(uw->map, pw->map)) {
-			free(pw->map);
-		} else {
-			debugPrint(6, "success freeUndo");
-			freeUndoLines(pw->map);
-			uw->map = pw->map;
-		}
-		pw->map = 0;
-		memcpy(uw->labels, pw->labels, 26 * sizeof(int));
-		uw->binMode = pw->binMode;
-		uw->nlMode = pw->nlMode;
-		uw->dirMode = pw->dirMode;
+/* I don't know if this has any purpose any more */
 		undoable = eb_false;
 	}
 	return rc;
@@ -4792,10 +4808,7 @@ eb_bool browseCurrentBuffer(void)
 /* No harm in running this code in mail client, but no help either,
  * and it begs for bugs, so leave it out. */
 	if (!ismc) {
-		freeUndoLines(cw->map);
-		undoWindow.map = 0;
-		nzFree(preWindow.map);
-		preWindow.map = 0;
+		undoCompare();
 		cw->firstOpMode = eb_false;
 
 /* There shouldn't be anything in the input pending list, but clear
@@ -4932,7 +4945,6 @@ updateFieldInBuffer(int tagno, const char *newtext, int notify,
 {
 	int ln, idx, n, plen;
 	char *p, *s, *t, *new;
-	char newidx[LNWIDTH + 1];
 
 	if (parsePage) {	/* we don't even have the buffer yet */
 		ic = allocMem(sizeof(struct inputChange) + strlen(newtext));
@@ -4948,17 +4960,12 @@ updateFieldInBuffer(int tagno, const char *newtext, int notify,
 		memcpy(new, p, s - p);
 		strcpy(new + (s - p), newtext);
 		memcpy(new + strlen(new), t, plen - (t - p));
-		idx = textLinesCount++;
-		sprintf(newidx, LNFORMAT, idx);
-		memcpy(cw->map + ln * LNWIDTH, newidx, LNWIDTH);
-		textLines[idx] = (pst) new;
+		cw->map[ln].text = new;
 /* In case a javascript routine updates a field that you weren't expecting */
 		if (notify == 1)
 			displayLine(ln);
 		if (notify == 2)
 			i_printf(MSG_LineUpdated, ln);
-		cw->firstOpMode = eb_true;
-		undoable = eb_true;
 		return;
 	}
 
