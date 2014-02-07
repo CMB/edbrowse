@@ -10,6 +10,7 @@
 
 #include "eb.h"
 #include "js.h"
+#include <jsfriendapi.h>
 #include <iostream>
 
 static JSRuntime *jrt;		/* our js runtime, global so we can call the gc from jsloc
@@ -21,6 +22,9 @@ static jsval emptyArgs[] = { jsval() };
 static void
 my_ErrorReporter(JSContext * cx, const char *message, JSErrorReport * report)
 {
+	if (report && report->errorNumber == JSMSG_OUT_OF_MEMORY)
+		i_printfExit(MSG_JSAllocFailure);
+
 	if (debugLevel < 2)
 		goto done;
 	if (ismc)

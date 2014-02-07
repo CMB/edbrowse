@@ -679,6 +679,7 @@ static const char *englishMessages[] = {
 	"input tty",
 	"input readline()",
 	"JavaScript failure",
+	"JavaScript out of memory"
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
