@@ -194,6 +194,7 @@ struct DBTABLE {
 extern CURL *curl_handle;
 extern int debugLevel;		/* 0 to 9 */
 extern int displayLength;	/* when printing a line */
+extern int jsPool;	/* size of js pool in megabytes */
 extern int webTimeout, mailTimeout;
 extern int browseLine;		/* line number, for error reporting */
 extern eb_bool sqlPresent;	/* Was edbrowse compiled with SQL built in? */

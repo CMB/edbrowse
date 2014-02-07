@@ -13,6 +13,8 @@
 #include <jsfriendapi.h>
 #include <iostream>
 
+int jsPool = 32;		/* size of js memory space in megabytes */
+
 static JSRuntime *jrt;		/* our js runtime, global so we can call the gc from jsloc
 				   functions as well */
 static size_t gStackChunkSize = 8192;
@@ -844,7 +846,8 @@ void createJavaContext(struct ebWindowJSState **pstate)
 
 	if (!jrt) {
 /* 4 meg js space - should this be configurable? */
-		jrt = JS_NewRuntime(4L * 1024L * 1024L, JS_NO_HELPER_THREADS);
+		jrt =
+		    JS_NewRuntime(jsPool * 1024L * 1024L, JS_NO_HELPER_THREADS);
 		if (!jrt)
 			i_printfExit(MSG_JavaMemError);
 	}

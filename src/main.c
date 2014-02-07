@@ -162,7 +162,8 @@ static void readConfigFile(void)
 		"adbook", "ipblack", "maildir", "agent",
 		"jar", "nojs", "spamcan",
 		"webtimer", "mailtimer", "certfile", "datasource", "proxy",
-		"linelength", "localizeweb", 0
+		"linelength", "localizeweb", "jspool",
+		0
 	};
 
 	if (!fileTypeByName(configFile, eb_false))
@@ -627,6 +628,14 @@ putc:
 /* We should probably allow autodetection of language. */
 /* E.G., the keyword auto indicates that you want autodetection. */
 			setHTTPLanguage(v);
+			continue;
+
+		case 31:	/* jspool */
+			jsPool = atoi(v);
+			if (jsPool < 2)
+				jsPool = 2;
+			if (jsPool > 1000)
+				jsPool = 1000;
 			continue;
 
 		default:
@@ -1181,12 +1190,10 @@ int main(int argc, char **argv)
 							    &&
 							    stringEqual(accounts
 									[i -
-									 1].
-									login,
+									 1].login,
 									accounts
 									[j -
-									 1].
-									login))
+									 1].login))
 								break;
 						if (j == i)
 							nfetch += fetchMail(i);

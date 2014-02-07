@@ -3071,6 +3071,16 @@ This will block the popup ads that you don't want to see, which often generate e
 Subdomains are not considered when a path is given; the domain must match exactly.
 
 <P>
+jspool = 32
+
+<P>
+Allocate this many megabytes for javascript use.&nbsp;
+The default is 32 meg, as shown above.&nbsp;
+The minimum is 2 and the maximum is 1000.&nbsp;
+A couple of youtube pages will consume 4 meg of javascript, so don't aim low unless you are just using edbrowse to edit files.&nbsp;
+If you spend all day browsing, you better aim high, because edbrowse could uncerimoniously exit if it runs out of javascript space.
+
+<P>
 inserver = pop3.some-domain.com
 <br>
 inport = 110
