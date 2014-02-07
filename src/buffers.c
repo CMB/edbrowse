@@ -417,7 +417,7 @@ static void print_pst(pst p)
 static void freeLine(struct lineMap *t)
 {
 	if (debugLevel >= 8) {
-		printf("out ");
+		printf("free ");
 		print_pst(t->text);
 	}
 	free(t->text);

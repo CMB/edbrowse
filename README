@@ -116,6 +116,12 @@ An exception is eb.h.
 The extern "C" { }, mandated by C++, indents everything for no reason.
 So I maintain this file by hand.
 Most of it is flush with the left, and it doesn't change very often.
+messages.h is also in manual mode.
+It has some blank lines at the top that keep
+the enum symbols in sync with the messages in messages.c.
+The symbol at line 200 in messages.h corresponds to the message at line 200
+in messages.c.
+Running through indent would break this.
 
 ------------------------------------------------------------
 
