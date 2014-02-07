@@ -23,7 +23,7 @@ static void
 my_ErrorReporter(JSContext * cx, const char *message, JSErrorReport * report)
 {
 	if (report && report->errorNumber == JSMSG_OUT_OF_MEMORY)
-		i_printfExit(MSG_JSAllocFailure);
+		i_printfExit(MSG_JSFailure);
 
 	if (debugLevel < 2)
 		goto done;
