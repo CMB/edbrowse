@@ -429,6 +429,7 @@ static void htmlMeta(void)
 {
 	char *name, *content, *heq;
 	char **ptr;
+	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
 	JS::RootedObject e(cw->jss->jcx);
 	JS::RootedObject jdoc(cw->jss->jcx, cw->jss->jdoc);
 
@@ -577,6 +578,7 @@ static void formControl(eb_bool namecheck)
 static void htmlImage(void)
 {
 	char *a;
+	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
 	JS::RootedObject jdoc(cw->jss->jcx, cw->jss->jdoc);
 	htmlHref("src");
 	topTag->jv =
@@ -1161,8 +1163,8 @@ static char *encodeTags(char *html)
 	int nopt;		/* number of options */
 	int intable = 0, inrow = 0;
 	eb_bool tdfirst;
-	JS::RootedObject to(cw->jss->jcx, NULL);	/* table object */
 	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
+	JS::RootedObject to(cw->jss->jcx, NULL);	/* table object */
 	JS::RootedObject ev(cw->jss->jcx, NULL);	/* generic event variable */
 	JS::RootedObject jwin(cw->jss->jcx, cw->jss->jwin);
 	JS::RootedObject jdoc(cw->jss->jcx, cw->jss->jdoc);
@@ -2747,6 +2749,7 @@ static void resetVar(struct htmlTag *t)
 	int itype = t->itype;
 	const char *w = t->value;
 	eb_bool bval;
+	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
 	JS::RootedObject jv(cw->jss->jcx, t->jv);
 
 /* This is a kludge - option looks like INP_SELECT */
