@@ -1,7 +1,7 @@
 <HTML>
 <FONT face=Arial,Helvetica,sans-serif size=4>
 <HEAD>
-<TITLE> Edbrowse Article </TITLE>
+<TITLE> The Command Line Philosophy </TITLE>
 <LINK REL="SHORTCUT ICON" href="x.ico">
 </HEAD>
 <BODY bgcolor=white text=black link=red vlink=red alink=navy>
@@ -37,20 +37,16 @@ I believe there is, but certain critical applications must be rewritten from the
 To this end, I have developed a combination editor/browser called edbrowse, which is 100% text based.&nbsp;
 Output is measured and conserved like a precious commodity
 as it passes through the narrow channel of speech or braille.&nbsp;
-Edbrowse gives the blind user exactly what he asks for; no more and no less.&nbsp;
+Edbrowse gives the blind user exactly what he asks for, no more and no less.&nbsp;
 Sighted users also find its unique features helpful in certain situations, which will be described below.&nbsp;
-This open source program is in the public domain,
-at <A HREF=http://edbrowse.sourceforge.net>
-edbrowse.sourceforge.net</A>,
-and is included in <A HREF=http://www.grml.org>grml</A>,
-and <A HREF=http://www.puppylinux.org>puppy linux</A>.&nbsp;
-As edbrowse grows in popularity, I'm sure it will be folded into other distributions 
-and ported to other operating systems.&nbsp;
-Edbrowse is known to work on most flavors of Unix, and OS X,
-while an early perl version (with limited functionality) runs on virtually any computer.
+This open source program is in the
+<A href=http://www.the-brannons.com/edbrowse>
+public domain</A>,
+and is bundled in several Linux distributions.&nbsp;
+An early perl version (with limited functionality) runs on virtually any computer.
 
 <P>
-This has implications for software developers  everywhere.&nbsp;
+This has implications for software development in general.&nbsp;
 When a program or utility is "web based",
 i.e. accessible through a browser,
 with some common sense restrictions on the underlying html and javascript,
@@ -174,14 +170,31 @@ To this end, I modified the Linux tty driver to create similar sounds using the 
 When the computer sends text to the screen, soft clicking sounds accompany the nonspace characters,
 while a longer swoop indicates a new line,
 as though the print head was swinging back to the left.&nbsp;
-You can try <A HREF=http://www.eklhad.net/linux/jupiter/pcclicks.zip>this module</A> on your own computer,
-if your linux kernel is 2.6.26 or higher.&nbsp;
+These modules are available from the drivers directory in the following project.
+
+<P>
+git clone https://github.com/eklhad/acsint
+
+<P>
 The chirps and clicks are subtle, and are easily ignored by those around me;
 yet they form an important part of my audio interface.&nbsp;
 Like the systems of yesteryear,
 my tty tells me when the computer has responded to my commands,
 and the quantity and format of that response,
 even before my synthesizer has spoken a word.
+
+<P>
+This project also contains a linear speech adapter, the only one of its kind.&nbsp;
+Like the paper teletype, this adapter retains a log of all tty output,
+and allows the user to review that log,
+reading the entered commands and the computers responses.&nbsp;
+All other adapters,
+whether on MS-dos, Windows, Mac-OS, or Linux,
+read the words or icons on the screen.&nbsp;
+My adapter can read screen memory as well, but it typically runs in linear mode, which is optimal for the command line interface.&nbsp;
+This adapter, and various applications such as edbrowse, all work together to present a new
+(i.e. old) paradigm,
+a paper teletype inside your computer.
 
 <P>
 Over the next few years, universities around the country
@@ -196,7 +209,7 @@ The dialog continues.
 When I began my career at AT&T Bell Labs,
 I learned to use the standard Unix text editor, which is simply called ed.&nbsp;
 This is a command line program, consistent with the interface of its day.&nbsp;
-If you want to see the 7<font size=3><sup>th</sup></font> line in a file, type 7 and hit return.&nbsp;
+If you want to see the seventh line in a file, type 7 and hit return.&nbsp;
 To find the line containing the string "xyz", type /xyz/.&nbsp;
 Lines can be changed, deleted, moved, or copied using this program,
 but you only see one line at a time.&nbsp;
@@ -311,7 +324,7 @@ Fire up your favorite browser, be it edbrowse or lynx or firefox,
 and manage your print jobs through an interface that has been optimized for your particular needs.
 
 <P>
-Another example of web based system administration is file sharing,
+Another example of web based system administration is samba file sharing,
 which is accessible through http://localhost:901 on some computers.&nbsp;
 Turning to network administration,
 most off-the-shelf routers can now be configured through html.&nbsp;
@@ -385,7 +398,7 @@ but a self-contained edbrowse script is easier to write and maintain.&nbsp;
 This is why grml,
 a distribution aimed at system administrators,
 was the first to include edbrowse in its standard release.&nbsp;
-I am confident that other distributions will follow suit.
+Others, such as debian, and even Free BSD, now offer edbrowse in their distributions.
 
 <H3 align=center> Summary </H3>
 
@@ -401,7 +414,8 @@ with the user's needs in mind.&nbsp;
 Once these critical applications are transformed,
 other utilities can be modified to leverage these clients,
 as illustrated by an emerging suite of web based tools and services.&nbsp;
-These efforts should be funded at the federal level, with a non-profit corporation taking the lead.&nbsp;
+These efforts should be funded at the federal level,
+but sadly, they have received little support from government or industry to date.&nbsp;
 When everyone has access to computers, laptops, and the internet,
 we all benefit.&nbsp;
 Sir Bert Massie, Chairman of the Disability Rights Commission,
