@@ -1233,17 +1233,17 @@ afterfound:
 		if (!symname && idname) {
 /*********************************************************************
 This function call makes a direct link from the owner, usually the form,
-to this tag under the name given by the id attribute.
-This seemed at one time to be necessary; now it seems to cause trouble,
-example www.startpage.com, where id=submit
-displaces the form.submit() function.
-I'm commenting it out for now, and will delete it altogether when
-we're sure we don't need it any more, under any circumstance.
-Maybe we should still do this sometimes, in some situations, IDK.
-			JS_DefineProperty(cw->jss->jcx, owner_root, idname, vv,
-					  NULL, NULL, attr);
+to this tag under the name given by the id attribute,
+if there is no name attribute.
+Some websites use this link to get to the form element, but,
+it should not displace the submit or reset functions, or the action parameter.
+Example www.startpage.com, where id=submit
 *********************************************************************/
-			;
+			if (!stringEqual(idname, "submit") &&
+			    !stringEqual(idname, "reset") &&
+			    !stringEqual(idname, "action"))
+				JS_DefineProperty(cw->jss->jcx, owner_root,
+						  idname, vv, NULL, NULL, attr);
 		} else if (symname && !dupname) {
 			JS_DefineProperty(cw->jss->jcx, owner_root, symname,
 					  vv, NULL, NULL, attr);
