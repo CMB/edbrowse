@@ -230,15 +230,16 @@ if (l > 2000) {
 alert("You cant go over Limit of 2000 Characters!");
 }
     }
-document.writeln("<form method=POST \
-name=questionnaire \
-onsubmit='return submitFunction(questionnaire)' \
-onreset='return resetFunction()' \
-onload=formLoad(this.name) onunload=formUnload(this.name)>");
-// The rest of the form you'll see in straight html
+</script>
+
+<form method=POST name=questionnaire
+onsubmit='return submitFunction(questionnaire)'
+onreset='return resetFunction()'
+onload=formLoad(this.name) onunload=formUnload(this.name)>
+
+<script>
 // Let javascript generate another javascript tag
 document.writeln("<script language=JavaScript>document.writeln('Subject: ');</" + "script>");
-
 </script>
 
 <input type='hidden' name='id' value='eklhad'>
