@@ -5,6 +5,17 @@ See COPYING for licensing agreements.
 
 ------------------------------------------------------------
 
+Disclaimer: this software is provided as-is,
+with no guarantee that it will perform as expected.
+It might trash your precious files.
+It might send bad data across the Internet,
+causing you to buy a $37,000 elephant instead of
+$37 worth of printer supplies.
+It may delete all the rows in your mysql customer table.
+Use this program at your own risk.
+
+------------------------------------------------------------
+
 Netscape and Explorer are graphical browsers.
 Lynx and Links are screen browsers.
 This is a command line browser; the only one of its kind.
@@ -75,7 +86,7 @@ ftp://ftp.mozilla.org/pub/mozilla.org/js/
 Edbrowse 3.4.7 or less requires Mozilla js version 1.5.
 Edbrowse 3.4.8 requires Mozilla js version 1.8.5.
 Edbrowse 3.5.1 requires Mozilla js version 2.4.
-If this is not available in your distribution, download,
+If this is not available in your distribution, download into /usr/local,
 expand, cd js/src, ./configure, make, and make install.
 https://ftp.mozilla.org/pub/mozilla.org/js/mozjs-24.2.0.tar.bz2
 Lots of warning messages in the build, don't worry about those.
@@ -85,7 +96,7 @@ but I had to run ldconfig again anyways, not sure why.
 Back in your edbrowse/src directory,
 you may need to set some flags on the command line
 if you had to install Mozilla js as above.
-This works for me.
+The following works for me.
 
 make JS_CXXFLAGS=-I/usr/local/include/mozjs-24 JSLIB=-lmozjs-24 edbrowse
 
@@ -94,16 +105,6 @@ Make edbrowseodbc, rather than edbrowse.
 
 If you're a developer and you want to use the symbolic debugger,
 set EBDEBUG=on before you run make.
-
-If it compiles,
-there is no guarantee that this program will perform as expected.
-It might trash your precious files.
-It might send bad data across the Internet,
-causing you to buy a $37,000 elephant instead of
-$37 worth of printer supplies.
-No guarantees whatsoever.
-Use this program at your own risk.
-There - now the lawyers are happy.
 
 ------------------------------------------------------------
 
@@ -302,7 +303,7 @@ in my spare time; and it was, because I needed this tool desperately.
 No careful methodology, just "Gitter Duhn".
 
 Along with some cleanup, and even some modest enhancements,
-edbrowse really needs a complete rewrite.
+edbrowse really needs a rewrite.
 Today, it takes html text and tags, and builds
 javascript objects to go along with those tags; and it builds the screen,
 (I'll call it a screen, it's really a text buffer),
@@ -332,10 +333,25 @@ It's something a sighted person would notice right away,
 but I would be left in the dark.
 If there are many changes, just say "entire buffer has changed".
 Anyways, this is the kind of rewrite that needs to happen.
+Think of this as version 4.1.
 
 In parallel, we are moving from C to C++, as mandated by mozjs 24.
 All that code dedicated to growing strings dynamically,
 and freeing them without memory leaks, etc, etc, has become a royal pain,
 and will be much nicer with string objects.
 Also my list macros will become array methods.
+Version 4.2.
+
+After this, enhance the DOM with the createElement methods.
+This lets javascript create its own tables, paragraphs, lists, images, etc,
+and yes, some websites do indeed do this.
+Version 4.3.
+
+Then, stop turning html tags into javascript objects by hand;
+that is reinventing the wheel.
+When you run into <P>, simply call createElement("paragraph"),
+or something along those lines.
+We have to implement all this in DOM JS eventually, so once this is done,
+why not take advantage of it.
+Version 4.4.
 
