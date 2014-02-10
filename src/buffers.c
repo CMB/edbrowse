@@ -548,7 +548,7 @@ static void undoPush(void)
 		return;
 	madeChanges = eb_true;
 
-	cw->firstOpMode = eb_true;
+	cw->undoable = eb_true;
 	if (!cw->browseMode)
 		cw->changeMode = eb_true;
 
@@ -685,7 +685,7 @@ void cxSwitch(int cx, eb_bool interactive)
 
 	if (cw) {
 		undoCompare();
-		cw->firstOpMode = eb_false;
+		cw->undoable = eb_false;
 	}
 	cw = nw;
 	cs = sessionList + cx;
@@ -1366,8 +1366,6 @@ gotdata:
 intext:
 	rc = addTextToBuffer((const pst)rbuf, fileSize, endRange, eb_false);
 	free(rbuf);
-	if (cw->sqlMode)
-		undoable = eb_false;
 	return rc;
 }				/* readFile */
 
@@ -2199,7 +2197,6 @@ static eb_bool doGlobal(const char *line)
 			if (runCommand(line)) {
 				yesdot = cw->dot;
 /* try this line again, in case we deleted or moved it somewhere else */
-				if (undoable)
 					--i;
 			} else {
 /* error in subcommand might turn global flag off */
@@ -2650,7 +2647,7 @@ static int substituteText(const char *line)
 			if (!infReplace(tagno, replaceString, 0))
 				goto abort;
 			undoCompare();
-			cw->firstOpMode = eb_false;
+			cw->undoable = eb_false;
 		} else {
 
 			*replaceStringEnd = '\n';
@@ -2663,7 +2660,7 @@ static int substituteText(const char *line)
 				       replaceStringLength + 1);
 				if (cw->dirMode || cw->sqlMode) {
 					undoCompare();
-					cw->firstOpMode = eb_false;
+					cw->undoable = eb_false;
 				}
 			} else {
 /* Becomes many lines, this is the tricky case. */
@@ -2771,7 +2768,7 @@ static int twoLetter(const char *line, const char **runThis)
 
 	if (stringEqual(line, "re") || stringEqual(line, "rea")) {
 		undoCompare();
-		cw->firstOpMode = undoable = eb_false;
+		cw->undoable = eb_false;
 		cmd = 'e';	/* so error messages are printed */
 		rc = setupReply(line[2] == 'a');
 		if (rc && cw->browseMode) {
@@ -2922,7 +2919,7 @@ pwd:
 			return eb_false;
 		}
 		undoCompare();
-		cw->firstOpMode = undoable = eb_false;
+		cw->undoable = eb_false;
 		cw->browseMode = eb_false;
 		cw->iplist = 0;
 		if (ub) {
@@ -3807,7 +3804,7 @@ eb_bool runCommand(const char *line)
 	if (cmd == 'u') {
 		struct ebWindow *uw = &undoWindow;
 		struct lineMap *swapmap;
-		if (!cw->firstOpMode) {
+		if (!cw->undoable) {
 			setError(MSG_NoUndo);
 			return eb_false;
 		}
@@ -3998,14 +3995,14 @@ eb_bool runCommand(const char *line)
 		if (!(a = showLinks()))
 			return eb_false;
 		undoCompare();
-		cw->firstOpMode = cw->changeMode = eb_false;
+		cw->undoable = cw->changeMode = eb_false;
 		w = createWindow();
 		w->prev = cw;
 		cw = w;
 		cs->lw = w;
 		rc = addTextToBuffer((pst) a, strlen(a), 0, eb_false);
 		nzFree(a);
-		undoable = cw->changeMode = eb_false;
+		cw->changeMode = eb_false;
 		fileSize = apparentSize(context, eb_false);
 		return rc;
 	}
@@ -4239,7 +4236,7 @@ eb_bool runCommand(const char *line)
 				}
 
 				undoPush();
-				cw->firstOpMode = eb_false;
+				cw->undoable = eb_false;
 
 				if (c == '<') {
 					eb_bool fromfile = eb_false;
@@ -4387,7 +4384,7 @@ rebrowse:
 		if (!cxQuit(context, 0))
 			return eb_false;
 		undoCompare();
-		cw->firstOpMode = cw->changeMode = eb_false;
+		cw->undoable = cw->changeMode = eb_false;
 		startRange = endRange = 0;
 		changeFileName = 0;	/* should already be zero */
 		w = createWindow();
@@ -4423,8 +4420,7 @@ rebrowse:
 				debugPrint(2, "*%s", line);
 			j = readFile(line, "");
 		}
-		w->firstOpMode = w->changeMode = eb_false;
-		undoable = eb_false;
+		w->undoable = w->changeMode = eb_false;
 		cw = cs->lw;
 /* Don't push a new session if we were trying to read a url,
  * and didn't get anything.  This is a feature that I'm
@@ -4590,13 +4586,13 @@ redirect:
 		if (cw->dirMode) {
 			j = delFiles();
 			undoCompare();
-			cw->firstOpMode = eb_false;
+			cw->undoable = eb_false;
 			goto afterdelete;
 		}
 		if (cw->sqlMode) {
 			j = sqlDelRows(startRange, endRange);
 			undoCompare();
-			cw->firstOpMode = eb_false;
+			cw->undoable = eb_false;
 			goto afterdelete;
 		}
 		delText(startRange, endRange);
@@ -4661,10 +4657,6 @@ eb_bool edbrowseCommand(const char *line, eb_bool script)
 		if (!script)
 			showErrorConditional(cmd);
 		eeCheck();
-	}
-	if (undoable) {
-/* I don't know if this has any purpose any more */
-		undoable = eb_false;
 	}
 	return rc;
 }				/* edbrowseCommand */
@@ -4811,7 +4803,7 @@ eb_bool browseCurrentBuffer(void)
  * and it begs for bugs, so leave it out. */
 	if (!ismc) {
 		undoCompare();
-		cw->firstOpMode = eb_false;
+		cw->undoable = eb_false;
 
 /* There shouldn't be anything in the input pending list, but clear
  * it out, just to be safe. */
@@ -4865,7 +4857,7 @@ eb_bool browseCurrentBuffer(void)
 	j = strlen(newbuf);
 	rc = addTextToBuffer((pst) newbuf, j, 0, eb_false);
 	free(newbuf);
-	cw->firstOpMode = undoable = eb_false;
+	cw->undoable = eb_false;
 	cw->changeMode = save_ch;
 	cw->iplist = 0;
 

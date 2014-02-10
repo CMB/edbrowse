@@ -235,7 +235,6 @@ extern char *dbarea, *dblogin, *dbpw;	/* to log into the database */
 extern eb_bool fetchBlobColumns;
 extern char *proxy_host;
 extern eb_bool caseInsensitive, searchStringsAll;
-extern eb_bool undoable;	/* an undoable operation is taking place */
 extern eb_bool allowRedirection;	/* from http code 301, or http refresh */
 extern eb_bool sendReferrer;	/* in the http header */
 extern eb_bool allowJS;		/* javascript on */
@@ -324,7 +323,7 @@ struct ebWindow {
 	eb_bool browseMode;	/* browsing html */
 	eb_bool changeMode;	/* something has changed in this file */
 	eb_bool dirMode;	/* directory mode */
-	eb_bool firstOpMode;	/* first change has been made, undo is possible */
+	eb_bool undoable;	/* undo is possible */
 	eb_bool jsdead;		/* javascript is dead, for this window */
 	eb_bool sqlMode;	/* accessing a table */
 	char *dw;		/* document.write string */

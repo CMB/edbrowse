@@ -32,7 +32,6 @@ char *dbarea, *dblogin, *dbpw;	/* to log into the database */
 eb_bool fetchBlobColumns;
 char *proxy_host;
 eb_bool caseInsensitive, searchStringsAll;
-eb_bool undoable;
 eb_bool allowRedirection = eb_true, allowJS = eb_true, sendReferrer = eb_false;
 eb_bool binaryDetect = eb_true;
 eb_bool inputReadLine;
@@ -1278,7 +1277,7 @@ int main(int argc, char **argv)
 			changeFileName = 0;
 		}
 
-		cw->firstOpMode = cw->changeMode = eb_false;
+		cw->undoable = cw->changeMode = eb_false;
 /* Browse the text if it's a url */
 		if (rc && !(cw->binMode | cw->dirMode) && cw->dol &&
 		    isBrowseableURL(cw->fileName)) {
@@ -1297,7 +1296,6 @@ int main(int argc, char **argv)
 	}
 	if (cx > 1)
 		cxSwitch(1, eb_false);
-	undoable = eb_false;
 
 	while (eb_true) {
 		uchar saveline[MAXTTYLINE];
