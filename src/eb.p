@@ -255,7 +255,6 @@ void appendFileNF(const char *filename, const char *msg);
 /* sourcefile=jsdom.c */
 void createJavaContext(struct ebWindowJSState **pstate);
 void freeJavaContext(struct ebWindowJSState *state);
-eb_bool isJSAlive(void);
 eb_bool javaParseExecuteGlobal(const char *str, const char *filename,
 			       int lineno);
 

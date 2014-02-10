@@ -2197,7 +2197,7 @@ static eb_bool doGlobal(const char *line)
 			if (runCommand(line)) {
 				yesdot = cw->dot;
 /* try this line again, in case we deleted or moved it somewhere else */
-					--i;
+				--i;
 			} else {
 /* error in subcommand might turn global flag off */
 				if (!globSub) {
@@ -4089,9 +4089,7 @@ eb_bool runCommand(const char *line)
 				return eb_false;
 			}
 			jsh = jsgo = nogo = eb_false;
-			jsdead = cw->jsdead;
-			if (!isJSAlive())
-				jsdead = eb_true;
+			jsdead = !isJSAlive;
 			click = dclick = over = eb_false;
 			cmd = 'b';
 			if (endRange > startRange) {

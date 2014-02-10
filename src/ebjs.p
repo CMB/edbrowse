@@ -8,7 +8,6 @@ void javaSubmitsForm(JS::HandleObject v, eb_bool reset);
 void javaOpensWindow(const char *href, const char *name);
 
 /* sourcefile=jsdom.cpp */
-eb_bool isJSAlive(void);
 JSString *our_JS_NewStringCopyN(JSContext * cx, const char *s, size_t n);
 JSString *our_JS_NewStringCopyZ(JSContext * cx, const char *s);
 char *our_JSEncodeString(js::HandleString str);

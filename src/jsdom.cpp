@@ -54,11 +54,6 @@ done:
 		report->flags = 0;
 }				/* my_ErrorReporter */
 
-eb_bool isJSAlive(void)
-{
-	return (cw->jss != NULL) && (cw->jss->jcx != NULL);
-}				/* isJSAlive */
-
 JSString *our_JS_NewStringCopyN(JSContext * cx, const char *s, size_t n)
 {
 /* Fixme this is too simple.  We need to decode UTF8 to JSCHAR, for proper
@@ -845,7 +840,7 @@ void createJavaContext(struct ebWindowJSState **pstate)
 	*pstate = state;
 
 	if (!jrt) {
-/* 4 meg js space - should this be configurable? */
+/* space configurable by jsPool; default is 32 meg */
 		jrt =
 		    JS_NewRuntime(jsPool * 1024L * 1024L, JS_NO_HELPER_THREADS);
 		if (!jrt)

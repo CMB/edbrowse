@@ -1009,8 +1009,6 @@ eb_bool handlerGo(JS::HandleObject obj, const char *name)
 
 void handlerSet(JS::HandleObject ev, const char *name, const char *code)
 {
-	if (!ev)
-		return;
 	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
 	JS::RootedObject obj(cw->jss->jcx, ev);
 	char *newcode;

@@ -98,11 +98,6 @@ static char *hrefVal(const char *e, const char *name)
 	return a;
 }				/* hrefVal */
 
-static char *targetVal(const char *e)
-{
-	return htmlAttrVal(e, "target");
-}				/* targetVal */
-
 static void toPreamble(int tagno, const char *msg, const char *j, const char *h)
 {
 	int l;
@@ -320,16 +315,15 @@ void freeTags(struct ebWindow *w)
 
 static void get_js_event(const char *name)
 {
-	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
-	JS::RootedObject ev(cw->jss->jcx, topTag->jv);
 	char *s;
-
 	int action = topTag->action;
 	int itype = topTag->itype;
+
 	if (!(s = htmlAttrVal(topAttrib, name)))
 		return;		/* not there */
-	if (ev)
-		handlerSet(ev, name, s);
+
+	if (topTag->jv && isJSAlive)
+		handlerSet(topTag->jv, name, s);
 	nzFree(s);
 
 /* This code is only here to print warnings if js is disabled
@@ -367,8 +361,6 @@ static eb_bool strayClick;
 
 static void get_js_events(void)
 {
-	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
-	JS::RootedObject ev(cw->jss->jcx, topTag->jv);
 	int j;
 	const char *t;
 	int action = topTag->action;
@@ -377,23 +369,27 @@ static void get_js_events(void)
 	for (j = 0; t = handlers[j]; ++j)
 		get_js_event(t);
 
-	if (!ev)
+	if (!topTag->jv)
+		return;
+	if (!isJSAlive)
 		return;
 
 /* Some warnings about some handlers that we just don't "handle" */
-	if (handlerPresent(ev, "onkeypress") ||
-	    handlerPresent(ev, "onkeyup") || handlerPresent(ev, "onkeydown"))
+	if (handlerPresent(topTag->jv, "onkeypress") ||
+	    handlerPresent(topTag->jv, "onkeyup")
+	    || handlerPresent(topTag->jv, "onkeydown"))
 		browseError(MSG_JSKeystroke);
-	if (handlerPresent(ev, "onfocus") || handlerPresent(ev, "onblur"))
+	if (handlerPresent(topTag->jv, "onfocus")
+	    || handlerPresent(topTag->jv, "onblur"))
 		browseError(MSG_JSFocus);
-	if (handlerPresent(ev, "ondblclick"))
+	if (handlerPresent(topTag->jv, "ondblclick"))
 		runningError(MSG_Doubleclick);
-	if (handlerPresent(ev, "onclick")) {
+	if (handlerPresent(topTag->jv, "onclick")) {
 		if ((action == TAGACT_A || action == TAGACT_AREA || action == TAGACT_FRAME) && topTag->href || action == TAGACT_INPUT && (itype <= INP_SUBMIT || itype >= INP_RADIO)) ;	/* ok */
 		else
 			strayClick = eb_true;
 	}
-	if (handlerPresent(ev, "onchange")) {
+	if (handlerPresent(topTag->jv, "onchange")) {
 		if (action != TAGACT_INPUT && action != TAGACT_SELECT
 		    || itype == INP_TA)
 			browseError(MSG_StrayOnchange);
@@ -406,7 +402,13 @@ eb_bool tagHandler(int seqno, const char *name)
 {
 	struct htmlTag **list = cw->tags;
 	const struct htmlTag *t = list[seqno];
-	return t->handler | handlerPresent(t->jv, name);
+	if (t->handler)
+		return eb_true;
+	if (!t->jv)
+		return eb_false;
+	if (!isJSAlive)
+		return eb_false;
+	return handlerPresent(t->jv, name);
 }				/* tagHandler */
 
 static char *getBaseHref(int n)
@@ -429,19 +431,21 @@ static void htmlMeta(void)
 {
 	char *name, *content, *heq;
 	char **ptr;
-	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
-	JS::RootedObject e(cw->jss->jcx);
-	JS::RootedObject jdoc(cw->jss->jcx, cw->jss->jdoc);
 
-	topTag->jv = e =
-	    domLink("Meta", topTag->name, topTag->id, 0, 0, "metas", jdoc,
-		    eb_false);
 	name = topTag->name;
 	content = htmlAttrVal(topAttrib, "content");
 	if (content == EMPTYSTRING)
 		content = 0;
-	if (e)
-		establish_property_string(e, "content", content, eb_true);
+
+	if (isJSAlive) {
+		topTag->jv =
+		    domLink("Meta", name, topTag->id, 0, 0, "metas",
+			    cw->jss->jdoc, eb_false);
+		if (topTag->jv)
+			establish_property_string(topTag->jv, "content",
+						  content, eb_true);
+	}
+
 	heq = htmlAttrVal(topAttrib, "http-equiv");
 	if (heq == EMPTYSTRING)
 		heq = 0;
@@ -487,7 +491,7 @@ static void htmlMeta(void)
 			content = 0;
 		}
 	}
-	/* name */
+
 	nzFree(content);
 	nzFree(heq);
 }				/* htmlMeta */
@@ -521,44 +525,47 @@ static void htmlHref(const char *desc)
 
 static void formControl(eb_bool namecheck)
 {
-	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
-	JS::RootedObject fo(cw->jss->jcx, NULL);
-	JS::RootedObject e(cw->jss->jcx);	/* the new element */
 	const char *typedesc;
 	int itype = topTag->itype;
 	int isradio = itype == INP_RADIO;
 	int isselect = (itype == INP_SELECT) * 2;
 	char *myname = (topTag->name ? topTag->name : topTag->id);
-	JS::RootedObject jdoc(cw->jss->jcx, cw->jss->jdoc);
 
 	if (currentForm) {
 		topTag->controller = currentForm;
-		fo = currentForm->jv;
 	} else if (itype != INP_BUTTON)
 		browseError(MSG_NotInForm2, topTag->info->desc);
 
 	if (namecheck && !myname)
 		browseError(MSG_FieldNoName, topTag->info->desc);
 
-	if (fo) {
-		topTag->jv = e =
-		    domLink("Element", topTag->name, topTag->id, 0, 0,
-			    "elements", fo, isradio | isselect);
-	} else {
-		topTag->jv = e =
-		    domLink("Element", topTag->name, topTag->id, 0, 0, 0,
-			    jdoc, isradio | isselect);
+	if (isJSAlive) {
+		if (currentForm && currentForm->jv) {
+			topTag->jv =
+			    domLink("Element", topTag->name, topTag->id, 0, 0,
+				    "elements", currentForm->jv,
+				    isradio | isselect);
+		} else {
+			topTag->jv =
+			    domLink("Element", topTag->name, topTag->id, 0, 0,
+				    0, cw->jss->jdoc, isradio | isselect);
+		}
 	}
+
 	get_js_events();
-	if (!e)
+
+	if (!topTag->jv)
+		return;
+	if (!isJSAlive)
 		return;
 
 	if (itype <= INP_RADIO) {
-		establish_property_string(e, "value", topTag->value, eb_false);
+		establish_property_string(topTag->jv, "value", topTag->value,
+					  eb_false);
 		if (itype != INP_FILE) {
 /* No default value on file, for security reasons */
-			establish_property_string(e, dfvl, topTag->value,
-						  eb_true);
+			establish_property_string(topTag->jv, dfvl,
+						  topTag->value, eb_true);
 		}		/* not file */
 	}
 
@@ -566,12 +573,13 @@ static void formControl(eb_bool namecheck)
 		typedesc = topTag->multiple ? "select-multiple" : "select-one";
 	else
 		typedesc = inp_types[itype];
-	establish_property_string(e, "type", typedesc, eb_true);
+	establish_property_string(topTag->jv, "type", typedesc, eb_true);
 
 	if (itype >= INP_RADIO) {
-		establish_property_bool(e, "checked", topTag->checked,
+		establish_property_bool(topTag->jv, "checked", topTag->checked,
 					eb_false);
-		establish_property_bool(e, dfck, topTag->checked, eb_true);
+		establish_property_bool(topTag->jv, dfck, topTag->checked,
+					eb_true);
 	}
 }				/* formControl */
 
@@ -579,11 +587,10 @@ static void htmlImage(void)
 {
 	char *a;
 	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
-	JS::RootedObject jdoc(cw->jss->jcx, cw->jss->jdoc);
 	htmlHref("src");
 	topTag->jv =
 	    domLink("Image", topTag->name, topTag->id, "src", topTag->href,
-		    "images", jdoc, eb_false);
+		    "images", cw->jss->jdoc, eb_false);
 	get_js_events();
 /* don't know if javascript ever looks at alt.  Probably not. */
 	if (!topTag->jv)
@@ -599,7 +606,6 @@ static void htmlForm(void)
 	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
 	char *a;
 	JS::RootedObject fv(cw->jss->jcx, NULL);	/* form variable in javascript */
-	JS::RootedObject jdoc(cw->jss->jcx, cw->jss->jdoc);
 
 	if (topTag->slash)
 		return;
@@ -643,7 +649,7 @@ static void htmlForm(void)
 
 	topTag->jv = fv =
 	    domLink("Form", topTag->name, topTag->id, "action", topTag->href,
-		    "forms", jdoc, eb_false);
+		    "forms", cw->jss->jdoc, eb_false);
 	if (!fv)
 		return;
 	get_js_events();
@@ -1166,8 +1172,6 @@ static char *encodeTags(char *html)
 	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
 	JS::RootedObject to(cw->jss->jcx, NULL);	/* table object */
 	JS::RootedObject ev(cw->jss->jcx, NULL);	/* generic event variable */
-	JS::RootedObject jwin(cw->jss->jcx, cw->jss->jwin);
-	JS::RootedObject jdoc(cw->jss->jcx, cw->jss->jdoc);
 	tagListBackIterator r_iter;
 
 	currentA = currentForm = currentSel = currentOpt = currentTitle =
@@ -1399,7 +1403,9 @@ forceCloseAnchor:
 
 				if (currentTitle) {
 					if (!cw->jsdead)
-						establish_property_string(jdoc,
+						establish_property_string(cw->
+									  jss->
+									  jdoc,
 									  "title",
 									  a,
 									  eb_true);
@@ -1415,36 +1421,42 @@ forceCloseAnchor:
 					}
 
 					if (ev = currentSel->jv) {	/* element variable */
-						JS::RootedObject ov(cw->
-								    jss->jcx,
+						JS::RootedObject ov(cw->jss->
+								    jcx,
 								    establish_js_option
 								    (ev,
 								     v->lic));
 						v->jv = ov;
 						establish_property_string(ov,
 									  "text",
-									  v->name,
+									  v->
+									  name,
 									  eb_true);
 						establish_property_string(ov,
 									  "value",
-									  v->value,
+									  v->
+									  value,
 									  eb_true);
 						establish_property_bool(ov,
 									"selected",
-									v->checked,
+									v->
+									checked,
 									eb_false);
 						establish_property_bool(ov,
 									"defaultSelected",
-									v->checked,
+									v->
+									checked,
 									eb_true);
 						if (v->checked
 						    && !currentSel->multiple) {
 							set_property_number(ev,
 									    "selectedIndex",
-									    v->lic);
+									    v->
+									    lic);
 							set_property_string(ev,
 									    "value",
-									    v->value);
+									    v->
+									    value);
 						}
 					}	/* select has corresponding java variables */
 				}	/* option */
@@ -1516,8 +1528,8 @@ forceCloseAnchor:
 				htmlHref("href");
 				topTag->jv =
 				    domLink("Anchor", topTag->name, topTag->id,
-					    "href", topTag->href, "links", jdoc,
-					    eb_false);
+					    "href", topTag->href, "links",
+					    cw->jss->jdoc, eb_false);
 				get_js_events();
 				if (t->href) {
 					a_href = eb_true;
@@ -1552,13 +1564,13 @@ forceCloseAnchor:
 		case TAGACT_HEAD:
 			topTag->jv =
 			    domLink("Head", topTag->name, topTag->id, 0, 0,
-				    "heads", jdoc, eb_false);
+				    "heads", cw->jss->jdoc, eb_false);
 			goto plainWithElements;
 
 		case TAGACT_BODY:
 			topTag->jv =
 			    domLink("Body", topTag->name, topTag->id, 0, 0,
-				    "bodies", jdoc, eb_false);
+				    "bodies", cw->jss->jdoc, eb_false);
 plainWithElements:
 			if (t->jv)
 				establish_property_array(t->jv, "elements");
@@ -1629,7 +1641,8 @@ plainTag:
 			if (!slash) {
 				topTag->jv = to =
 				    domLink("Table", topTag->name, topTag->id,
-					    0, 0, "tables", jdoc, eb_false);
+					    0, 0, "tables", cw->jss->jdoc,
+					    eb_false);
 				get_js_events();
 /* create the array of rows under the table */
 				if (to)
@@ -1688,7 +1701,7 @@ plainTag:
 			if (!slash) {
 				topTag->jv =
 				    domLink("Div", topTag->name, topTag->id, 0,
-					    0, "divs", jdoc, eb_false);
+					    0, "divs", cw->jss->jdoc, eb_false);
 				get_js_events();
 			}
 			goto nop;
@@ -1697,7 +1710,8 @@ plainTag:
 			if (!slash) {
 				topTag->jv =
 				    domLink("Span", topTag->name, topTag->id, 0,
-					    0, "spans", jdoc, eb_false);
+					    0, "spans", cw->jss->jdoc,
+					    eb_false);
 				get_js_events();
 				a = htmlAttrVal(topAttrib, "class");
 				if (!a)
@@ -1876,14 +1890,14 @@ unparen:
 				htmlHref("src");
 				topTag->jv =
 				    domLink("Frame", topTag->name, 0, "src",
-					    topTag->href, "frames", jwin,
-					    eb_false);
+					    topTag->href, "frames",
+					    cw->jss->jwin, eb_false);
 			} else {
 				htmlHref("href");
 				topTag->jv =
 				    domLink("Area", topTag->name, topTag->id,
-					    "href", topTag->href, "areas", jdoc,
-					    eb_false);
+					    "href", topTag->href, "areas",
+					    cw->jss->jdoc, eb_false);
 			}
 			topTag->clickable = eb_true;
 			get_js_events();
@@ -2058,8 +2072,9 @@ unparen:
 					}
 					debugPrint(3, "execute %s at %d",
 						   js_file, js_line);
-					javaParseExecute(jwin, javatext,
-							 js_file, js_line);
+					javaParseExecute(cw->jss->jwin,
+							 javatext, js_file,
+							 js_line);
 					debugPrint(3, "execution complete");
 
 /* See if the script has produced html, via document.write() */
@@ -2153,8 +2168,8 @@ endtag:
 /* Turn the onunload functions into hyperlinks */
 	if (!cw->jsdead && !onload_done) {
 		struct htmlTag *stoptag = *(htmlStack.rbegin());
-		onloadGo(jwin, 0, "window");
-		onloadGo(jdoc, 0, "document");
+		onloadGo(cw->jss->jwin, 0, "window");
+		onloadGo(cw->jss->jdoc, 0, "document");
 
 		for (tagListIterator iter = htmlStack.begin();
 		     iter != htmlStack.end(); iter++) {

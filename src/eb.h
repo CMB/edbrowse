@@ -119,7 +119,7 @@ typedef uchar *pst;		/* perl string */
 #define MAXRE 400
 /* How long can an entered line be? */
 #define MAXTTYLINE 256
-/* Longest line that can take the substitute command */
+/* Longest line that can take the breakline command */
 #define REPLACELINELEN 50000
 /* The longest string, in certain contexts. */
 #define MAXSTRLEN 1024
@@ -204,7 +204,7 @@ extern eb_bool iuConvert;	/* perform iso utf8 conversions automatically */
 extern char type8859;		/* 1 through 15 */
 extern eb_bool js_redirects;	/* window.location = new_url */
 extern uchar browseLocal;	/* browsing a local file */
-extern eb_bool parsePage;	/* parsing the html page, and any java therein */
+extern eb_bool parsePage;	/* parsing the html page and any js therein */
 extern eb_bool htmlAttrVal_nl;	/* allow nl in the attribute of an html tag */
 extern eb_bool passMail;	/* pass mail across the filters */
 extern eb_bool errorExit;	/* exit on any error, for scripting purposes */
@@ -333,6 +333,8 @@ struct ebWindow {
 	struct DBTABLE *table;	/* if in sqlMode */
 };
 extern struct ebWindow *cw;	/* current window */
+
+#define isJSAlive (cw->jss != NULL && allowJS)
 
 /* An edit session */
 struct ebSession {
