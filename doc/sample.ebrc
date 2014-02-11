@@ -222,11 +222,7 @@ nojs = paypal.com
 #  This is done automatically.
 #  Edbrose identifies itself as "edbrowse/3.4.8",
 #  where the number after the slash indicates the current version of edbrowse.
-#  All well and good, but some websites have no respect for edbrowse,
-#  or lynx for that matter.
-#  They won't let you in the door unless you look like Explorere or Netscape.
-#  Clickbank.com, a major credit card processor, is one example.
-#  So what do we do?  We lie!
+#  All well and good, but some websites have no respect for edbrowse.
 #  You can specify different agents in this config file,
 #  and activate them with the `ua' (user agent) command.
 #  With the following lines in your config file,
