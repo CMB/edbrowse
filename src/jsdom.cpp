@@ -1131,7 +1131,6 @@ JSObject *domLink(const char *classname,	/* instantiate this class */
 	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
 	JS::RootedObject w(cw->jss->jcx), alist(cw->jss->jcx),
 	    master(cw->jss->jcx);
-	JS::RootedObject owner_root(cw->jss->jcx, owner);
 	JS::RootedObject v(cw->jss->jcx);
 	unsigned length, attr = PROP_FIXED;
 	JSClass *cp;
@@ -1146,7 +1145,7 @@ JSObject *domLink(const char *classname,	/* instantiate this class */
 
 	if (symname) {
 		JSBool found;
-		JS_HasProperty(cw->jss->jcx, owner_root, symname, &found);
+		JS_HasProperty(cw->jss->jcx, owner, symname, &found);
 		if (found) {
 
 /*********************************************************************
@@ -1172,7 +1171,7 @@ Yeah, it makes my head spin too.
 
 			if (stringEqual(symname, "action")) {
 				JS::RootedObject ao(cw->jss->jcx);	/* action object */
-				JS_GetProperty(cw->jss->jcx, owner_root,
+				JS_GetProperty(cw->jss->jcx, owner,
 					       symname, vv.address());
 				ao = JSVAL_TO_OBJECT(vv);
 /* actioncrash tells me if we've already had this collision */
@@ -1180,7 +1179,7 @@ Yeah, it makes my head spin too.
 					       &found);
 				if (!found) {
 					JS_DeleteProperty(cw->jss->jcx,
-							  owner_root, symname);
+							  owner, symname);
 /* gc will clean this up later */
 /* advance, as though this were not found */
 					goto afterfound;
@@ -1188,7 +1187,7 @@ Yeah, it makes my head spin too.
 			}
 
 			if (radiosel == 1) {
-				JS_GetProperty(cw->jss->jcx, owner_root,
+				JS_GetProperty(cw->jss->jcx, owner,
 					       symname, vv.address());
 				v = JSVAL_TO_OBJECT(vv);
 			} else {
@@ -1216,7 +1215,7 @@ afterfound:
 						  nullFunction, 0, PROP_FIXED);
 			}
 		} else {
-			v = JS_NewObject(cw->jss->jcx, cp, NULL, owner_root);
+			v = JS_NewObject(cw->jss->jcx, cp, NULL, owner);
 		}
 		vv = OBJECT_TO_JSVAL(v);
 
@@ -1233,10 +1232,10 @@ Example www.startpage.com, where id=submit
 			if (!stringEqual(idname, "submit") &&
 			    !stringEqual(idname, "reset") &&
 			    !stringEqual(idname, "action"))
-				JS_DefineProperty(cw->jss->jcx, owner_root,
+				JS_DefineProperty(cw->jss->jcx, owner,
 						  idname, vv, NULL, NULL, attr);
 		} else if (symname && !dupname) {
-			JS_DefineProperty(cw->jss->jcx, owner_root, symname,
+			JS_DefineProperty(cw->jss->jcx, owner, symname,
 					  vv, NULL, NULL, attr);
 			if (stringEqual(symname, "action"))
 				establish_property_bool(v, "actioncrash",
@@ -1249,13 +1248,13 @@ Example www.startpage.com, where id=submit
 			establish_property_object(master, symname, v);
 		} else {
 /* tie this to something, to protect it from gc */
-			JS_DefineProperty(cw->jss->jcx, owner_root,
+			JS_DefineProperty(cw->jss->jcx, owner,
 					  fakePropName(), vv, NULL, NULL,
 					  JSPROP_READONLY | JSPROP_PERMANENT);
 		}
 
 		if (list) {
-			JS_GetProperty(cw->jss->jcx, owner_root, list,
+			JS_GetProperty(cw->jss->jcx, owner, list,
 				       listv.address());
 			alist = JSVAL_TO_OBJECT(listv);
 		}
@@ -1277,7 +1276,7 @@ Example www.startpage.com, where id=submit
 /* v is, by assumption, an array */
 		JS_GetArrayLength(cw->jss->jcx, v, &length);
 		w = JS_NewObject(cw->jss->jcx, &element_class, NULL,
-				 owner_root);
+				 owner);
 		vv = OBJECT_TO_JSVAL(w);
 		JS_DefineElement(cw->jss->jcx, v, length, vv, NULL, NULL, attr);
 		v = w;
@@ -1307,7 +1306,7 @@ Example www.startpage.com, where id=submit
 
 	if (cp == &element_class) {
 /* link back to the form that owns the element */
-		establish_property_object(v, "form", owner_root);
+		establish_property_object(v, "form", owner);
 	}
 	JSObject *ret = v;
 	return ret;
