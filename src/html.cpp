@@ -274,7 +274,7 @@ static void freeTag(struct htmlTag *e)
 	nzFree(e->id);
 	nzFree(e->value);
 	nzFree(e->href);
-	if (e->jv && isJSAlive) {
+	if (e->jv && cw->jss) {
 		JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
 		e->jv. ~ HeapRootedObject();
 	}
