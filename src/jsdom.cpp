@@ -24,10 +24,10 @@ static jsval emptyArgs[] = { jsval() };
 static void
 my_ErrorReporter(JSContext * cx, const char *message, JSErrorReport * report)
 {
-	if (report && report->errorNumber == JSMSG_OUT_OF_MEMORY)
-		i_printfExit(MSG_JavaMemError);
-
-	if (debugLevel < 2)
+	if (report && report->errorNumber == JSMSG_OUT_OF_MEMORY ||
+	    message && strstr(message, "out of memory"))
+		i_puts(MSG_JavaMemError);
+	else if (debugLevel < 2)
 		goto done;
 	if (ismc)
 		goto done;
@@ -836,33 +836,50 @@ void createJavaContext(struct ebWindowJSState **pstate)
 	char verx11[20];
 	jsval rval;
 	struct MIMETYPE *mt;
-	*pstate = state;
 
 	if (!jrt) {
 /* space configurable by jsPool; default is 32 meg */
 		jrt =
 		    JS_NewRuntime(jsPool * 1024L * 1024L, JS_NO_HELPER_THREADS);
-		if (!jrt)
-			i_printfExit(MSG_JavaMemError);
+	}
+	if (!jrt) {
+		i_puts(MSG_JavaMemError);
+		delete state;
+		return;
 	}
 
 	state->jcx = JS_NewContext(jrt, gStackChunkSize);
-	if (!state->jcx)
-		i_printfExit(MSG_JavaContextError);
+	if (!state->jcx) {
+		i_puts(MSG_JavaContextError);
+		delete state;
+		return;
+	}
+
+/* It's looking good. */
+	*pstate = state;
 	JS_SetErrorReporter(state->jcx, my_ErrorReporter);
 	JS_SetOptions(state->jcx, JSOPTION_VAROBJFIX);
+
 /* Create the Window object, which is the global object in DOM. */
 	state->jwin = JS_NewGlobalObject(state->jcx, &window_class, NULL);
-	if (!state->jwin)
-		i_printfExit(MSG_JavaWindowError);
+	if (!state->jwin) {
+		i_puts(MSG_JavaWindowError);
+drop_cx:
+		*pstate = 0;
+		JS_DestroyContext(state->jcx);
+		delete state;
+		return;
+	}
 
 /* enter the compartment for this object for the duration of this function */
 	JSAutoCompartment ac(state->jcx, state->jwin);
 /* now set the state->jwin object as global */
 	JS_SetGlobalObject(state->jcx, state->jwin);
 /* Math, Date, Number, String, etc */
-	if (!JS_InitStandardClasses(state->jcx, state->jwin))
-		i_printfExit(MSG_JavaClassError);
+	if (!JS_InitStandardClasses(state->jcx, state->jwin)) {
+		i_puts(MSG_JavaClassError);
+		goto drop_cx;
+	}
 /* initialise the window class */
 	JS_InitClass(state->jcx, state->jwin, NULL, &window_class, window_ctor,
 		     3, NULL, window_methods, NULL, NULL);
@@ -870,6 +887,7 @@ void createJavaContext(struct ebWindowJSState **pstate)
  * so it doesn't have its methods yet. */
 	JS_DefineFunctions(state->jcx, state->jwin, window_methods);
 
+/* We're going to want to error check these calls */
 	establish_property_object(state->jwin, "window", state->jwin);
 	establish_property_object(state->jwin, "self", state->jwin);
 	establish_property_object(state->jwin, "parent", state->jwin);
@@ -905,8 +923,10 @@ void createJavaContext(struct ebWindowJSState **pstate)
 	JS_InitClass(state->jcx, state->jwin, 0, &doc_class, NULL, 0,
 		     NULL, doc_methods, NULL, NULL);
 	state->jdoc = JS_NewObject(state->jcx, &doc_class, NULL, state->jwin);
-	if (!state->jdoc)
-		i_printfExit(MSG_JavaObjError);
+	if (!state->jdoc) {
+		i_puts(MSG_JavaObjError);
+		goto drop_cx;
+	}
 	establish_property_object(state->jwin, "document", state->jdoc);
 
 	establish_property_string(state->jdoc, "bgcolor", "white", eb_false);
@@ -1275,8 +1295,7 @@ Example www.startpage.com, where id=submit
 /* w becomes the object associated with this radio button */
 /* v is, by assumption, an array */
 		JS_GetArrayLength(cw->jss->jcx, v, &length);
-		w = JS_NewObject(cw->jss->jcx, &element_class, NULL,
-				 owner);
+		w = JS_NewObject(cw->jss->jcx, &element_class, NULL, owner);
 		vv = OBJECT_TO_JSVAL(w);
 		JS_DefineElement(cw->jss->jcx, v, length, vv, NULL, NULL, attr);
 		v = w;
