@@ -267,20 +267,6 @@ static const char *const handlers[] = {
 	0
 };
 
-static void freeTag(struct htmlTag *e)
-{
-	nzFree(e->attrib);
-	nzFree(e->name);
-	nzFree(e->id);
-	nzFree(e->value);
-	nzFree(e->href);
-	if (e->jv && cw->jss) {
-		JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
-		e->jv. ~ HeapRootedObject();
-	}
-	free(e);
-}				/* freeTag */
-
 void freeTags(struct ebWindow *w)
 {
 	int n;
@@ -312,8 +298,19 @@ void freeTags(struct ebWindow *w)
 		cxQuit(n, 2);
 	}			/* loop over tags */
 
-	for (e = w->tags; t = *e; ++e)
-		freeTag(t);
+	for (e = w->tags; t = *e; ++e) {
+		nzFree(t->attrib);
+		nzFree(t->name);
+		nzFree(t->id);
+		nzFree(t->value);
+		nzFree(t->href);
+		if (t->jv && w->jss) {
+			JSAutoCompartment ac(w->jss->jcx, w->jss->jwin);
+			t->jv. ~ HeapRootedObject();
+		}
+		free(t);
+	}
+
 	free(w->tags);
 	w->tags = 0;
 }				/* freeTags */
