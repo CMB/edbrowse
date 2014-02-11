@@ -222,7 +222,6 @@ static JSBool win_close(JSContext * cx, unsigned int argc, jsval * vp)
 {
 /* It's too confusing to just close the window */
 	i_puts(MSG_PageDone);
-	cw->jsdead = eb_true;
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	args.rval().set(JSVAL_VOID);
 	return JS_TRUE;
@@ -1139,9 +1138,6 @@ JSObject *domLink(const char *classname,	/* instantiate this class */
 	eb_bool dupname = eb_false;
 	int i;
 	JS::RootedValue vv(cw->jss->jcx), listv(cw->jss->jcx);
-
-	if (cw->jsdead)
-		return 0;
 
 /* find the class */
 	for (i = 0; cp = domClasses[i].obj_class; ++i)

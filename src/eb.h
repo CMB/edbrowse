@@ -324,7 +324,6 @@ struct ebWindow {
 	eb_bool changeMode;	/* something has changed in this file */
 	eb_bool dirMode;	/* directory mode */
 	eb_bool undoable;	/* undo is possible */
-	eb_bool jsdead;		/* javascript is dead, for this window */
 	eb_bool sqlMode;	/* accessing a table */
 	char *dw;		/* document.write string */
 	int dw_l;		/* length of the above */
