@@ -1118,6 +1118,8 @@ javaParseExecute(JS::HandleObject obj, const char *str, const char *filename,
 {
 	JSBool ok;
 	eb_bool rc = eb_false;
+/* switch to the compartment of obj,
+ * though I think this is always the compartment of jwin */
 	JSAutoCompartment ac(cw->jss->jcx, obj);
 	js::RootedValue rval(cw->jss->jcx);
 
@@ -1139,7 +1141,6 @@ javaParseExecute(JS::HandleObject obj, const char *str, const char *filename,
 eb_bool
 javaParseExecuteGlobal(const char *str, const char *filename, int lineno)
 {
-	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
 	return javaParseExecute(cw->jss->jwin, str, filename, lineno);
 }				/* javaParseExecuteGlobal */
 
