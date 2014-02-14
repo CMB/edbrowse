@@ -679,6 +679,7 @@ static const char *englishMessages[] = {
 	"input tty",
 	"input readline()",
 	"JavaScript failure",
+"Unrecoverable JavaScript error in this session",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
@@ -1339,6 +1340,7 @@ static const char *frenchMessages[] = {
 	0,
 	0,
 	0,
+0,
 };
 
 /* Translation by Cleverson: clever92000@yahoo.com.br */
@@ -1999,6 +2001,7 @@ static const char *brazilianPortugueseMessages[] = {
 	0,
 	0,
 	0,
+0,
 };
 
 /* Translation by Jan Mura: jan.mura@volny.cz */
@@ -2016,6 +2019,7 @@ static const char *czechMessages[] = {
 	"adresář pro zápis a mazání",
 	"bez HTTP přesměrování",
 	"HTTP přesměrování",
+0,
 };
 
 /* Translation by Wojciech Gac: wojciech.s.gac@gmail.com */
@@ -2676,6 +2680,7 @@ static const char *polishMessages[] = {
 	"konsola wejścia (tty)",
 	"wejście readline()",
 	"awaria JavaScript"
+0,
 };
 
 /* English by default */
