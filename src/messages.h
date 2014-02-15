@@ -7,20 +7,20 @@
 Symbolic constants for message numbers.
 These become the indexes for the messages in message.c.
 The array of messages is selected by the language.
+
+This file and messages.c line up.
+In other words, the constant at line 100 of messages.h corresponds
+to the English string at line 100 of messages.c.
+to keep this alignment, even if you run this file through indent,
+this comment block is just the right size.
+*
+*
+*
+*
+*
+*
+*
 *********************************************************************/
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 enum {
 	MSG_EndFile,
