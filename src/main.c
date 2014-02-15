@@ -21,7 +21,7 @@ int webTimeout = 20, mailTimeout = 0;
 eb_bool ismc, browseLocal, passMail, errorExit;
 eb_bool isInteractive, inInput, listNA;
 volatile eb_bool intFlag;
-int fileSize, maxFileSize = 50000000;
+int fileSize;
 int localAccount, maxAccount;
 struct MACCOUNT accounts[MAXACCOUNT];
 int maxMime;

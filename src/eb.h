@@ -215,7 +215,6 @@ extern eb_bool inputReadLine;
 extern eb_bool listNA;		/* list nonascii chars */
 extern eb_bool inInput;		/* reading line from standard in */
 extern int fileSize;		/* when reading/writing files */
-extern int maxFileSize;		/* max size of an editable file */
 extern int mssock;		/* mail server socket */
 extern long hcode;		/* http code, like 404 file not found */
 extern char herror[];		/* html error */
