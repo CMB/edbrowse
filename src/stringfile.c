@@ -10,17 +10,8 @@
 #include <dos.h>
 #else
 #include <dirent.h>
-#ifdef SYSBSD
 #include <termios.h>
-typedef struct termios termstruct;
-#define TTY_GET_COMMAND TIOCGETA
-#define TTY_SET_COMMAND TIOCSETA
-#else
-#include <termio.h>
-typedef struct termio termstruct;
-#define TTY_GET_COMMAND TCGETA
-#define TTY_SET_COMMAND TCSETA
-#endif
+#include <unistd.h>
 #include <sys/utsname.h>
 #endif
 #include <pcre.h>
@@ -877,12 +868,12 @@ time_t fileTimeByName(const char *name)
 
 #ifndef DOSLIKE
 
-static termstruct savettybuf;
+static struct termios savettybuf;
 void ttySaveSettings(void)
 {
 	isInteractive = isatty(0);
 	if (isInteractive) {
-		if (ioctl(0, TTY_GET_COMMAND, &savettybuf))
+		if (tcgetattr(0, &savettybuf))
 			i_printfExit(MSG_IoctlError);
 	}
 }				/* ttySaveSettings */
@@ -890,7 +881,7 @@ void ttySaveSettings(void)
 static void ttyRestoreSettings(void)
 {
 	if (isInteractive)
-		ioctl(0, TTY_SET_COMMAND, &savettybuf);
+		tcsetattr(0, TCSANOW, &savettybuf);
 }				/* ttyRestoreSettings */
 
 /* put the tty in raw mode.
@@ -902,13 +893,13 @@ static void ttyRestoreSettings(void)
  * min=0 time=0:  nonblocking, return whatever chars have been received. */
 static void ttyRaw(int charcount, int timeout, eb_bool isecho)
 {
-	termstruct buf = savettybuf;	/* structure copy */
+	struct termios buf = savettybuf;	/* structure copy */
 	buf.c_cc[VMIN] = charcount;
 	buf.c_cc[VTIME] = timeout;
 	buf.c_lflag &= ~(ICANON | ECHO);
 	if (isecho)
 		buf.c_lflag |= ECHO;
-	ioctl(0, TTY_SET_COMMAND, &buf);
+	tcsetattr(0, TCSANOW, &buf);
 }				/* ttyRaw */
 
 /* simulate MSDOS getche() system call */
