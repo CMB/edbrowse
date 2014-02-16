@@ -754,7 +754,7 @@ static void addToMap(int nlines, int destl)
 		i_printfExit(MSG_EmptyPiece);
 
 	if (sizeof(int) == 4) {
-		if (nlines > 170000000 - cw->dol)
+		if (nlines > MAXLINES - cw->dol)
 			i_printfExit(MSG_LineLimit);
 	}
 
@@ -800,7 +800,7 @@ eb_bool addTextToBuffer(const pst inbuf, int length, int destl, eb_bool onside)
 		if (inbuf[i] == '\n') {
 			++linecount;
 			if (sizeof(int) == 4) {
-				if (linecount + cw->dol > 170000000)
+				if (linecount + cw->dol > MAXLINES)
 					i_printfExit(MSG_LineLimit);
 			}
 		}

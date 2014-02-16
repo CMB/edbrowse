@@ -327,6 +327,16 @@ struct ebWindow {
 };
 extern struct ebWindow *cw;	/* current window */
 
+/*********************************************************************
+Temporary cap on the number of lines, so the integer index into cw->map
+doesn't overflow. This is basically signed int over LMSIZE.
+The former is 2^31 on most machines,
+the latter is at most 12 on a 64-bit machine.
+If ints are larger then I don't even use this constant.
+*********************************************************************/
+
+#define MAXLINES 170000000
+
 #define isJSAlive (cw->jss != NULL && allowJS)
 
 /* An edit session */

@@ -63,6 +63,15 @@ static int radioChecked_l;
 static char *preamble;
 static int preamble_l;
 
+/* paranoia check on the number of tags */
+static void tagCountCheck(void)
+{
+	if (sizeof(int) == 4) {
+		if (ntags > MAXLINES)
+			i_printfExit(MSG_LineLimit);
+	}
+}				/* tagCountCheck */
+
 /* Switch from the linked list of tags to an array. */
 static void buildTagArray(void)
 {
@@ -751,6 +760,7 @@ static void makeButton(void)
 	    (struct htmlTag *)allocZeroMem(sizeof(struct htmlTag));
 	htmlStack.push_back(t);
 	t->seqno = ntags++;
+	tagCountCheck();
 	t->info = elements + 2;
 	t->action = TAGACT_INPUT;
 	t->controller = currentForm;
@@ -1084,6 +1094,7 @@ static struct htmlTag *newTag(const char *name)
 	t->action = action;
 	t->info = ti;
 	t->seqno = ntags++;
+	tagCountCheck();
 	t->balanced = eb_true;
 	if (stringEqual(name, "a"))
 		t->clickable = eb_true;
@@ -1443,6 +1454,7 @@ nextchar:
 		t->seqno = ntags;
 		sprintf(hnum, "%c%d", InternalCodeChar, ntags);
 		++ntags;
+		tagCountCheck();
 		t->info = ti;
 		t->slash = slash;
 		if (!slash)
