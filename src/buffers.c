@@ -753,6 +753,11 @@ static void addToMap(int nlines, int destl)
 	if (nlines == 0)
 		i_printfExit(MSG_EmptyPiece);
 
+	if (sizeof(int) == 4) {
+		if (nlines > 170000000 - cw->dol)
+			i_printfExit(MSG_LineLimit);
+	}
+
 	undoPush();
 
 /* adjust labels */
@@ -792,8 +797,13 @@ eb_bool addTextToBuffer(const pst inbuf, int length, int destl, eb_bool onside)
 	struct lineMap *t;
 
 	for (i = 0; i < length; ++i)
-		if (inbuf[i] == '\n')
+		if (inbuf[i] == '\n') {
 			++linecount;
+			if (sizeof(int) == 4) {
+				if (linecount + cw->dol > 170000000)
+					i_printfExit(MSG_LineLimit);
+			}
+		}
 
 	if (destl == cw->dol)
 		cw->nlMode = eb_false;
