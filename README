@@ -113,16 +113,10 @@ which is in the tools directory, and is taken from the Linux kernel source.
 In other words, the indenting style is the same as the Linux kernel.
 If you modify some source, you may want to run it through
 ../tools/Lindent before the commit.
-An exception is eb.h.
+An exception is eb.p.
 The extern "C" { }, mandated by C++, indents everything for no reason.
 So I maintain this file by hand.
-Most of it is flush with the left, and it doesn't change very often.
-messages.h is also in manual mode.
-It has some blank lines at the top that keep
-the enum symbols in sync with the messages in messages.c.
-The symbol at line 200 in messages.h corresponds to the message at line 200
-in messages.c.
-Running through indent would break this.
+It is flush with the left, and it doesn't change very often.
 
 ------------------------------------------------------------
 
