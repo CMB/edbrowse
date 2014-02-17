@@ -6,11 +6,6 @@
 #ifndef EB_H
 #define EB_H 1
 
-/* needed when compiling under c++ */
-#ifdef __cplusplus
-extern "C"{
-#endif
-
 /* the symbol DOSLIKE is used to conditionally compile those constructs
  * that are common to DOS and NT, but not typical of Unix. */
 #ifdef MSDOS
@@ -189,7 +184,7 @@ struct DBTABLE {
 extern CURL *curl_handle;
 extern int debugLevel;		/* 0 to 9 */
 extern int displayLength;	/* when printing a line */
-extern int jsPool;	/* size of js pool in megabytes */
+extern int jsPool;		/* size of js pool in megabytes */
 extern int webTimeout, mailTimeout;
 extern int browseLine;		/* line number, for error reporting */
 extern eb_bool sqlPresent;	/* Was edbrowse compiled with SQL built in? */
@@ -275,9 +270,9 @@ struct htmlTag;
 /* A pointer to the text of a line, and other line attributes */
 struct lineMap {
 	pst text;
-	char ds1, ds2;	/* directory suffix */
-	eb_bool gflag;	/* for g// */
-	char filler;	/* C is going to pad the structure anyways */
+	char ds1, ds2;		/* directory suffix */
+	eb_bool gflag;		/* for g// */
+	char filler;		/* C is going to pad the structure anyways */
 };
 #define LMSIZE sizeof(struct lineMap)
 
@@ -352,7 +347,4 @@ extern struct ebSession *cs;	/* current session */
 /* Symbolic constants for language independent messages */
 #include "messages.h"
 
-#ifdef __cplusplus
-}
-#endif
 #endif

@@ -1,4 +1,9 @@
-/* This file is machine-generated, do not hand edit. */
+/* eb.p: edbrowse function prototypes.
+ * This file is included by C and C++ source, thus the following lines. */
+
+#ifdef __cplusplus
+extern "C"{
+#endif
 
 /* sourcefile=main.c */
 eb_bool junkSubject(const char *s, char key);
@@ -272,3 +277,7 @@ eb_bool sqlUpdateRow(pst source, int slen, pst dest, int dlen);
 eb_bool sqlAddRows(int ln);
 eb_bool ebConnect(void);
 int goSelect(int *startLine, char **rbuf);
+
+#ifdef __cplusplus
+}
+#endif
