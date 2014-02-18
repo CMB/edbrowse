@@ -546,11 +546,16 @@ static JSFunctionSpec url_methods[] = {
 	{0}
 };
 
-void initLocationClass(void)
+eb_bool initLocationClass(void)
 {
-	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
-	JS_InitClass(cw->jss->jcx, cw->jss->jwin, NULL, &url_class, url_ctor, 1,
-		     NULL, url_methods, NULL, NULL);
+SWITCH_COMPARTMENT(eb_false);
+	if (JS_InitClass(cw->jss->jcx, cw->jss->jwin, NULL, &url_class, url_ctor, 1,
+		     NULL, url_methods, NULL, NULL) == NULL)
+{
+javaSessionFail();
+return eb_false;
+}
+return eb_true;
 }				/* initLocationClass */
 
 /*********************************************************************

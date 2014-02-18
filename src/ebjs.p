@@ -22,7 +22,7 @@ JSObject *domLink(const char *classname, const char *symname,
 
 /* sourcefile=jsloc.cpp */
 const char *stringize(js::HandleValue v);
-void initLocationClass(void);
+eb_bool initLocationClass(void);
 void establish_property_string(JS::HandleObject jv, const char *name,
 			       const char *value, eb_bool readonly);
 void establish_property_number(JS::HandleObject jv, const char *name, int value,
