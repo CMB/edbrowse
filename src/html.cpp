@@ -313,10 +313,14 @@ void freeTags(struct ebWindow *w)
 		nzFree(t->id);
 		nzFree(t->value);
 		nzFree(t->href);
+
+/* We probably don't need to do this at all,
+ * since j context is soon to be destroyed. */
 		if (t->jv && w->jss) {
 			JSAutoCompartment ac(w->jss->jcx, w->jss->jwin);
 			t->jv. ~ HeapRootedObject();
 		}
+
 		free(t);
 	}
 

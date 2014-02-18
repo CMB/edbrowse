@@ -679,7 +679,7 @@ static const char *englishMessages[] = {
 	"input tty",
 	"input readline()",
 	"JavaScript failure",
-"Unrecoverable JavaScript error in this session",
+	"Unrecoverable JavaScript error in this session",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
@@ -1340,7 +1340,7 @@ static const char *frenchMessages[] = {
 	0,
 	0,
 	0,
-0,
+	0,
 };
 
 /* Translation by Cleverson: clever92000@yahoo.com.br */
@@ -1997,11 +1997,11 @@ static const char *brazilianPortugueseMessages[] = {
 	"chaves estrangeiras para %s\n",
 	"não pegar colunas de blob",
 	"pegar colunas de blob",
-	0,
-	0,
-	0,
-	0,
-0,
+	"Erro de conexão SSL na libcurl: %s",
+	"TTY de entrada",
+	"linha de entrada()",
+	"Falha de Javascript",
+	"Erro não-recuperável de Javascript nesta sessão",
 };
 
 /* Translation by Jan Mura: jan.mura@volny.cz */
@@ -2019,7 +2019,7 @@ static const char *czechMessages[] = {
 	"adresář pro zápis a mazání",
 	"bez HTTP přesměrování",
 	"HTTP přesměrování",
-0,
+	0,
 };
 
 /* Translation by Wojciech Gac: wojciech.s.gac@gmail.com */
