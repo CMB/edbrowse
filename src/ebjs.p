@@ -47,3 +47,5 @@ eb_bool handlerGo(JS::HandleObject obj, const char *name);
 void handlerSet(JS::HandleObject ev, const char *name, const char *code);
 void link_onunload_onclick(JS::HandleObject jv);
 eb_bool handlerPresent(JS::HandleObject ev, const char *name);
+/* print a message and destroy the js set up for a session */
+void javaSessionFail();

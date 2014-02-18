@@ -46,14 +46,6 @@ even though it is usually good practice to do so.
 #define SWITCH_COMPARTMENT(retval) if (cw->jss == NULL) return retval; \
 JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin)
 
-/* the do while here allows this to be used conventionally */
-#define JSTEST(exp, failure, retval) do if  ((exp) == (failure)) { \
-i_puts(MSG_JSSessionFail); \
-JS_DestroyContext(cw->jss->jcx); \
-delete cw->jss; \
-cw->jss = NULL; \
-return retval; } while(0)
-
 /* Prototypes of functions that are only used by the javascript layer. */
 /* These can refer to javascript types in the javascript api. */
 #include "ebjs.p"

@@ -54,6 +54,15 @@ done:
 		report->flags = 0;
 }				/* my_ErrorReporter */
 
+/* clean up if javascript fails */
+void javaSessionFail()
+{
+i_puts(MSG_JSSessionFail);
+JS_DestroyContext(cw->jss->jcx);
+delete cw->jss;
+cw->jss = NULL;
+}
+
 JSString *our_JS_NewStringCopyN(JSContext * cx, const char *s, size_t n)
 {
 /* Fixme this is too simple.  We need to decode UTF8 to JSCHAR, for proper
@@ -76,7 +85,7 @@ char *our_JSEncodeString(js::HandleString str)
 	size_t result =
 	    JS_EncodeStringToBuffer(cw->jss->jcx, str, buffer, encodedLength);
 	if (result == (size_t) - 1)
-		i_printfExit(MSG_JSFailure);
+javaSessionFail();
 	return buffer;
 }				/* our_JSEncodeString */
 
@@ -133,6 +142,11 @@ static JSBool window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::RootedObject newwin(cx,
 				JS_NewObjectForConstructor(cx, &window_class,
 							   &callee_val));
+if ((JSObject *) newwin == NULL)
+{
+javaSessionFail();
+return JS_FALSE;
+}
 	if (args.length() > 0 && (str = JS_ValueToString(cx, args[0]))) {
 		newloc = our_JSEncodeString(str);
 	}
@@ -154,9 +168,16 @@ static JSBool window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 static JSBool win_open(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-	JS::RootedObject newwin(cx, JS_New(cx,
+JS::RootedObject obj(cx,
 					   JS_NewObject(cx, &window_class, NULL,
-							cw->jss->jwin),
+							cw->jss->jwin));
+if ((JSObject *) obj == NULL)
+{
+javaSessionFail();
+return JS_FALSE;
+}
+	JS::RootedObject newwin(cx, JS_New(cx,
+obj,
 					   args.length(), args.array()));
 	args.rval().set(OBJECT_TO_JSVAL(newwin));
 	return JS_TRUE;
