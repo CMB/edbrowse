@@ -1176,9 +1176,9 @@ static void htmlOption(struct htmlTag *sel, struct htmlTag *v, const char *a)
 }				/* htmlOption */
 
 static char *javatext;
-static void htmlScript(char **html_p, char **h_p)
+static void htmlScript(char * &html, char * &h)
 {
-	char *a = 0, *w = 0, *h;
+	char *a = 0, *w = 0;
 	struct htmlTag *t = topTag;	// shorthand
 	int js_line;
 	char *js_file;
@@ -1252,7 +1252,6 @@ static void htmlScript(char **html_p, char **h_p)
 		debugPrint(3, "docwrite %d bytes", cw->dw_l);
 		debugPrint(4, "<<\n%s\n>>", cw->dw + 10);
 		stringAndString(&cw->dw, &cw->dw_l, "</docwrite>");
-		h = *h_p;
 		afterlen = strlen(h) + strlen(cw->dw);
 		after = (char *)allocMem(afterlen + 1);
 		strcpy(after, cw->dw);
@@ -1260,15 +1259,15 @@ static void htmlScript(char **html_p, char **h_p)
 		nzFree(cw->dw);
 		cw->dw = 0;
 		cw->dw_l = 0;
-		nzFree(*html_p);
-		*html_p = *h_p = after;
+		nzFree(html);
+		html = h = after;
 
 /* After the realloc, the inner pointers are no longer valid. */
 		for (tagListIterator iter = htmlStack.begin();
 		     iter != htmlStack.end(); iter++)
 			(*iter)->inner = 0;
 	}
-	/* document.write */
+
 done:
 	nzFree(javatext);
 	javatext = 0;
@@ -2108,7 +2107,7 @@ unparen:
 				continue;
 			}
 
-			htmlScript(&html, &h);
+			htmlScript(html, h);
 			continue;
 
 		case TAGACT_OBJ:
