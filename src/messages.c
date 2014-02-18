@@ -2679,7 +2679,7 @@ static const char *polishMessages[] = {
 	"błąd połączenia SSL w libcurl: %s",
 	"konsola wejścia (tty)",
 	"wejście readline()",
-	"awaria JavaScript"
+	"awaria JavaScript",
 0,
 };
 
