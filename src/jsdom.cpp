@@ -992,7 +992,10 @@ return;
 	}
 
 	if (!initLocationClass())
+{
+javaSessionFail();
 return;
+}
 
 /* document under window */
 	if (JS_InitClass(state->jcx, state->jwin, 0, &doc_class, NULL, 0,
