@@ -159,6 +159,8 @@ return JS_FALSE;
 	if (!parsePage)
 		return JS_FALSE;
 	establish_property_object(newwin, "opener", cw->jss->jwin);
+if (cw->jss == NULL)
+return JS_FALSE;
 	args.rval().set(OBJECT_TO_JSVAL(newwin));
 	return JS_TRUE;
 }				/* window_ctor */
@@ -453,6 +455,8 @@ return NULL;
 			strcat(fname, "()");
 			fstr = fname;
 			establish_property_object(to, "onclick", fo);
+if (cw->jss == NULL)
+return NULL;
 		} else {
 /* compile the function from the string */
 			fstr = stringize(v0);
@@ -957,7 +961,7 @@ return;
 javaSessionFail();
 return;
 }
-/* We're going to want to error check these calls */
+/* if js dies these'll just silently return */
 	establish_property_object(state->jwin, "window", state->jwin);
 	establish_property_object(state->jwin, "self", state->jwin);
 	establish_property_object(state->jwin, "parent", state->jwin);
@@ -978,7 +982,9 @@ return;
 	establish_property_bool(state->jwin, "directories", eb_false, eb_false);
 	establish_property_string(state->jwin, "name", "unspecifiedFrame",
 				  eb_false);
-
+/* now check if js is still alive */
+if (cw->jss == NULL)
+return;
 /* Other classes that we'll need. */
 	for (i = 0; domClasses[i].obj_class; ++i) {
 		if (JS_InitClass(state->jcx, state->jwin, 0,
@@ -1031,7 +1037,7 @@ return;
 /* Some arrays are under window */
 	if (establish_property_array(state->jwin, "frames") == NULL)
 return;
-
+/* we definitely have js at this stage */
 	JS::RootedObject o(state->jcx);
 	o = JS_NewObject(state->jcx, 0, 0, state->jdoc);
 if ((JSObject *) o == NULL)
@@ -1040,6 +1046,8 @@ javaSessionFail();
 return;
 }
 	establish_property_object(state->jdoc, "idMaster", o);
+/* but not here */
+if (cw->jss == NULL) return;
 	o = JS_NewObject(state->jcx, 0, 0, state->jdoc);
 if ((JSObject *) o == NULL)
 {
@@ -1047,6 +1055,7 @@ javaSessionFail();
 return;
 }
 	establish_property_object(state->jdoc, "all", o);
+if (cw->jss == NULL) return;
 
 	JS::RootedObject nav(state->jcx, JS_NewObject(state->jcx, 0, 0,
 						      state->jwin));
@@ -1056,11 +1065,13 @@ javaSessionFail();
 return;
 }
 	establish_property_object(state->jwin, "navigator", nav);
+if (cw->jss == NULL) return;
 
 /* attributes of the navigator */
 	establish_property_string(nav, "appName", "edbrowse", eb_true);
 	establish_property_string(nav, "appCode Name", "edbrowse C/SMJS",
 				  eb_true);
+if (cw->jss == NULL) return;
 /* Use X11 to indicate unix/linux.  Sort of a standard */
 	sprintf(verx11, "%s%s", version, "-X11");
 	establish_property_string(nav, "appVersion", version, eb_true);
@@ -1074,6 +1085,7 @@ return;
 /* We need to locale-ize the next one */
 	establish_property_string(nav, "userLanguage", "english", eb_true);
 	establish_property_string(nav, "language", "english", eb_true);
+if (cw->jss == NULL) return;
 	if ((JS_DefineFunction(state->jcx, nav, "javaEnabled", falseFunction, 0,
 			  PROP_FIXED) == NULL) ||
 	(JS_DefineFunction(state->jcx, nav, "taintEnabled", falseFunction, 0,
@@ -1084,6 +1096,7 @@ return;
 }
 	establish_property_bool(nav, "cookieEnabled", eb_true, eb_true);
 	establish_property_bool(nav, "onLine", eb_true, eb_true);
+if (cw->jss == NULL) return;
 
 /* Build the array of mime types and plugins,
  * according to the entries in the config file. */
@@ -1148,6 +1161,7 @@ return;
  * No idea if this is right or not. */
 		establish_property_string(po, "description", mt->desc, eb_true);
 		establish_property_string(po, "filename", mt->program, eb_true);
+if (cw->jss == NULL) return;
 /* For the name, how about the program without its options? */
 		len = strcspn(mt->program, " \t");
 		js::RootedValue po_name_v(state->jcx,
@@ -1176,6 +1190,7 @@ return;
 	establish_property_number(screen, "availWidth", 1024, eb_true);
 	establish_property_number(screen, "availTop", 0, eb_true);
 	establish_property_number(screen, "availLeft", 0, eb_true);
+if (cw->jss == NULL) return;
 
 	JS::RootedObject del(state->jcx, JS_NewObject(state->jcx, 0, 0,
 						      state->jdoc));
@@ -1194,6 +1209,7 @@ return;
 	establish_property_number(del, "scrollWidth", 1024, eb_true);
 	establish_property_number(del, "scrollTop", 0, eb_true);
 	establish_property_number(del, "scrollLeft", 0, eb_true);
+if (cw->jss == NULL) return;
 
 	JS::RootedObject hist(state->jcx, JS_NewObject(state->jcx, 0, 0,
 						       state->jwin));
@@ -1211,6 +1227,7 @@ return;
 	establish_property_number(hist, "length", 1, eb_true);
 	establish_property_string(hist, "next", 0, eb_true);
 	establish_property_string(hist, "previous", 0, eb_true);
+if (cw->jss == NULL) return;
 	if ((JS_DefineFunction(state->jcx, hist, "back", nullFunction, 0,
 			  PROP_FIXED) == NULL)
 	|| (JS_DefineFunction(state->jcx, hist, "forward", nullFunction, 0,
@@ -1231,13 +1248,14 @@ void freeJavaContext(struct ebWindowJSState *state)
 {
 	if (state == NULL)
 return;
-if (state->jcx != NULL)
+JSContext *oldcontext = state->jcx;
+delete state; // clear the heap rooted things in state first
+if (oldcontext != NULL)
 {
-if (js::GetContextCompartment((const JSContext *) state->jcx) != NULL)
-JS_LeaveCompartment(state->jcx, NULL);
-		JS_DestroyContext(state->jcx);
+if (js::GetContextCompartment((const JSContext *) oldcontext) != NULL)
+JS_LeaveCompartment(oldcontext, NULL);
+		JS_DestroyContext(oldcontext);
 }
-		delete state;
 }				/* freeJavaContext */
 
 void
@@ -1405,11 +1423,13 @@ return NULL;
 			if (radiosel == 1) {
 				establish_property_string(v, "type", "radio",
 							  eb_true);
+if (cw->jss == NULL) return NULL;
 			} else {
 /* self-referencing - hope this is ok */
 				establish_property_object(v, "options", v);
 				establish_property_number(v, "selectedIndex",
 							  -1, eb_false);
+if (cw->jss == NULL) return NULL;
 // not the normal pathway; we have to create our own element methods here.
 				if (JS_DefineFunction(cw->jss->jcx, v, "focus",
 						  nullFunction, 0, PROP_FIXED) == NULL)
@@ -1448,6 +1468,7 @@ return NULL;
 			if (stringEqual(symname, "action"))
 				establish_property_bool(v, "actioncrash",
 							eb_true, eb_true);
+if (cw->jss == NULL) return NULL;
 
 /* link to document.all */
 			if (JS_GetProperty(cw->jss->jcx, cw->jss->jdoc, "all",
@@ -1455,6 +1476,7 @@ return NULL;
 return NULL;
 			master = JSVAL_TO_OBJECT(listv);
 			establish_property_object(master, symname, v);
+if (cw->jss == NULL) return NULL;
 		} else {
 /* tie this to something, to protect it from gc */
 			if (JS_DefineProperty(cw->jss->jcx, owner,
@@ -1476,9 +1498,11 @@ return NULL;
 return NULL;
 			if (symname && !dupname)
 				establish_property_object(alist, symname, v);
+if (cw->jss == NULL) return NULL;
 			if (idname
 			    && (!symname || !stringEqual(symname, idname)))
 				establish_property_object(alist, idname, v);
+if (cw->jss == NULL) return NULL;
 		}		/* list indicated */
 	}
 
@@ -1498,30 +1522,36 @@ return NULL;
 
 	if (symname)
 		establish_property_string(v, "name", symname, eb_true);
+if (cw->jss == NULL) return NULL;
 	if (idname) {
 /* v.id becomes idname, and idMaster.idname becomes v
  * In case of forms, v.id should remain undefined.  So we can have
  * a form field named "id". */
 		if (strcmp(classname, "Form") != 0)
 			establish_property_string(v, "id", idname, eb_true);
+if (cw->jss == NULL) return NULL;
 		if (JS_GetProperty(cw->jss->jcx, cw->jss->jdoc, "idMaster",
 			       listv.address()) == JS_FALSE)
 return NULL;
 		master = JSVAL_TO_OBJECT(listv);
 		establish_property_object(master, idname, v);
+if (cw->jss == NULL) return NULL;
 	} else {
 		if (strcmp(classname, "Form") != 0)
 			establish_property_string(v, "id", EMPTYSTRING,
 						  eb_true);
+if (cw->jss == NULL) return NULL;
 	}
 
 	if (href && href_url) {
 		establish_property_url(v, href, href_url, eb_false);
+if (cw->jss == NULL) return NULL;
 	}
 
 	if (cp == &element_class) {
 /* link back to the form that owns the element */
 		establish_property_object(v, "form", owner);
+if (cw->jss == NULL) return NULL;
 	}
 	JSObject *ret = v;
 	return ret;
