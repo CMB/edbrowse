@@ -841,7 +841,7 @@ javaSessionFail();
 return NULL;
 }
 	establish_property_object(jv, name, a);
-if (cw->jss == NULL) return NULL;
+if (cw->js_failed) return NULL;
 	return (JSObject *) a;
 }				/* establish_property_array */
 
@@ -885,7 +885,7 @@ return;
 		url = EMPTYSTRING;
 	url_initialize(url, readonly, eb_false);
 // js could have died so check for this
-if (cw->jss == NULL)
+if (cw->js_failed)
 return;
 	if (my_setter == setter_loc) {
 		if (jv == cw->jss->jwin)

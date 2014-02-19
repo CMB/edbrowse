@@ -2949,7 +2949,7 @@ et_go:
 		}
 		freeTags(cw);
 		freeJavaContext(cw->jss);
-		cw->jss = 0;
+		cw->jss = NULL;
 		nzFree(cw->dw);
 		cw->dw = 0;
 		nzFree(cw->ft);
@@ -4851,6 +4851,12 @@ eb_bool browseCurrentBuffer(void)
 		nzFree(newlocation);	/* should already be 0 */
 		newlocation = 0;
 		newbuf = htmlParse(rawbuf, remote);
+/* I think we need to check here if something borke with js */
+if (cw->jss != NULL && cw->js_failed)
+{
+freeJavaContext(cw->jss);
+cw->jss = NULL;
+}
 	}
 
 	cw->browseMode = eb_true;

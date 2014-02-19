@@ -317,6 +317,7 @@ struct ebWindow {
 	char *dw;		/* document.write string */
 	int dw_l;		/* length of the above */
 	struct ebWindowJSState *jss;
+eb_bool js_failed;
 	IP32bit *iplist;	/* ip addresses referenced by this page */
 	struct DBTABLE *table;	/* if in sqlMode */
 };
@@ -332,7 +333,7 @@ If ints are larger then I don't even use this constant.
 
 #define MAXLINES 170000000
 
-#define isJSAlive (cw->jss != NULL && allowJS)
+#define isJSAlive (cw->jss != NULL && allowJS  && !cw->js_failed)
 
 /* An edit session */
 struct ebSession {

@@ -44,7 +44,7 @@ Thus you can't put retval in parentheses,
 even though it is usually good practice to do so.
 *********************************************************************/
 
-#define SWITCH_COMPARTMENT(retval) if (cw->jss == NULL) return retval; \
+#define SWITCH_COMPARTMENT(retval) if (cw->js_failed || cw->jss == NULL) return retval; \
 JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin)
 
 /* Prototypes of functions that are only used by the javascript layer. */
