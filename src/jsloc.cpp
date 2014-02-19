@@ -841,6 +841,7 @@ javaSessionFail();
 return NULL;
 }
 	establish_property_object(jv, name, a);
+if (cw->jss == NULL) return NULL;
 	return (JSObject *) a;
 }				/* establish_property_array */
 
