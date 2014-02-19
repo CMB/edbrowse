@@ -16,6 +16,8 @@ function fail(n) { alert("failed "+n); close(); }
 
 var popwin = new Window("http://www.moreAndMoreCrap.com/BuyNow.html", "obnoxious_ad", "width=72");
 
+var memhog = new Array();
+
 var n, j;
 // for loop with break and continue
 for(n=0, j=1; j<=20; ++j) {
@@ -400,6 +402,8 @@ dog <input type=checkbox name=dog id=hound checked onclick=alert('rover')>
 cat <input type=checkbox name=cat onclick="alert('fluffy'); if(this.checked&&questionnaire.dog.checked) alert('chased by dog');" value=meow>
 bird <input type=checkbox name=bird>
 rabbit <input type=checkbox name=rabbit>
+<br>
+<input type=button name=hog value="memory hog" onclick="for(var i=0; i<1200000; ++i) memhog[i] = {};">
 <br>Message Body:
 <textarea name='body' rows='6' cols='50'>
 Type your brilliant thoughts here.
