@@ -58,8 +58,7 @@ done:
 void javaSessionFail()
 {
 i_puts(MSG_JSSessionFail);
-JS_DestroyContext(cw->jss->jcx);
-delete cw->jss;
+freeJavaContext(cw->jss);
 cw->jss = NULL;
 }
 
@@ -907,6 +906,7 @@ void createJavaContext(struct ebWindowJSState **pstate)
 	if (!jrt) {
 		i_puts(MSG_JavaMemError);
 		delete state;
+*pstate = NULL;
 		return;
 	}
 
@@ -914,6 +914,7 @@ void createJavaContext(struct ebWindowJSState **pstate)
 	if (!state->jcx) {
 		i_puts(MSG_JavaContextError);
 		delete state;
+*pstate = NULL;
 		return;
 	}
 
@@ -927,7 +928,7 @@ void createJavaContext(struct ebWindowJSState **pstate)
 	if (!state->jwin) {
 		i_puts(MSG_JavaWindowError);
 drop_cx:
-		*pstate = 0;
+		*pstate = NULL;
 		JS_DestroyContext(state->jcx);
 		delete state;
 		return;
@@ -1225,9 +1226,8 @@ javaSessionFail();
 void freeJavaContext(struct ebWindowJSState *state)
 {
 	if (state) {
-		JSContext *oldcontext = state->jcx;
+		JS_DestroyContext(state->jcx);
 		delete state;
-		JS_DestroyContext(oldcontext);
 	}
 }				/* freeJavaContext */
 
