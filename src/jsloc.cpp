@@ -74,7 +74,7 @@ static eb_bool setter_suspend;
 /*Return false if we are, because that will put a stop to javascript. */
 static eb_bool isWinLoc(void)
 {
-	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
+SWITCH_COMPARTMENT(eb_false);
 	if (cw->jss->uo != cw->jss->jwloc && cw->jss->uo != cw->jss->jdloc) {
 		nzFree(uo_href);
 		uo_href = 0;
@@ -89,7 +89,7 @@ static eb_bool isWinLoc(void)
 /* Converting to a string just pulls out the href property */
 static JSBool loc_toString(JSContext * cx, unsigned int argc, jsval * vp)
 {
-	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
+SWITCH_COMPARTMENT(JS_FALSE);
 	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	js::RootedValue rval(cw->jss->jcx);
@@ -100,7 +100,7 @@ static JSBool loc_toString(JSContext * cx, unsigned int argc, jsval * vp)
 
 static JSBool loc_reload(JSContext * cx, unsigned int argc, jsval * vp)
 {
-	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
+SWITCH_COMPARTMENT(JS_FALSE);
 	const char *s = cw->firstURL;
 	if (s && isURL(s))
 		gotoLocation(cloneString(s), (allowRedirection ? 0 : 99),
@@ -113,7 +113,7 @@ static JSBool loc_reload(JSContext * cx, unsigned int argc, jsval * vp)
 
 static JSBool loc_replace(JSContext * cx, unsigned int argc, jsval * vp)
 {
-	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
+SWITCH_COMPARTMENT(JS_FALSE);
 	const char *s;
 	char *ss, *t;
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
@@ -137,7 +137,7 @@ static JSBool loc_replace(JSContext * cx, unsigned int argc, jsval * vp)
 /* Put a url together from its pieces, after something has changed. */
 static void build_url(int exception, const char *e)
 {
-	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
+SWITCH_COMPARTMENT();
 	JS::RootedObject uo(cw->jss->jcx, cw->jss->uo);
 	js::RootedValue v(cw->jss->jcx);
 	char *new_url;
@@ -197,7 +197,7 @@ static void build_url(int exception, const char *e)
 /* Rebuild host, because hostname or port changed. */
 static void build_host(int exception, const char *hostname, int port)
 {
-	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
+SWITCH_COMPARTMENT();
 	js::RootedValue v(cw->jss->jcx);
 	const char *oldhost;
 	setter_suspend = eb_true;
@@ -227,7 +227,7 @@ static void
 loc_def_set(const char *name, const char *s,
 	    JSStrictPropertyOp setter, unsigned attr)
 {
-	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
+SWITCH_COMPARTMENT();
 	JSBool found;
 	js::RootedValue vv(cw->jss->jcx);
 	if (s)
@@ -247,7 +247,7 @@ static void
 loc_def_set_n(const char *name, int port,
 	      JSStrictPropertyOp setter, unsigned attr)
 {
-	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
+SWITCH_COMPARTMENT();
 
 	JSBool found;
 	js::RootedValue vv(cw->jss->jcx, INT_TO_JSVAL(port));
@@ -263,7 +263,7 @@ static void
 loc_def_set_part(const char *name, const char *s, int n,
 		 JSStrictPropertyOp setter, unsigned attr)
 {
-	JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin);
+SWITCH_COMPARTMENT();
 	JSBool found;
 	js::RootedValue vv(cw->jss->jcx);
 	if (s)
