@@ -15,6 +15,7 @@
 #endif
 /* now we can include our jsapi */
 #include <jsapi.h>
+#include <jsfriendapi.h>
 
 typedef JS::Heap < JSObject * >HeapRootedObject;
 

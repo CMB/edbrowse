@@ -1226,12 +1226,18 @@ return;
 javaSessionFail();
 }				/* createJavaContext */
 
+// free java context and associated state
 void freeJavaContext(struct ebWindowJSState *state)
 {
-	if (state) {
+	if (state == NULL)
+return;
+if (state->jcx != NULL)
+{
+if (js::GetContextCompartment((const JSContext *) state->jcx) != NULL)
+JS_LeaveCompartment(state->jcx, NULL);
 		JS_DestroyContext(state->jcx);
+}
 		delete state;
-	}
 }				/* freeJavaContext */
 
 void
