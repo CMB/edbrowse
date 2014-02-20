@@ -431,6 +431,7 @@ rabbit <input type=checkbox name=rabbit>
 <br>
 Amount of objects to create <input type="text" id="fill_amount" name="fill_amount" value="2000000" />
 <input type=button name=hog value="memory hog" onclick=memfill()>
+<input type=button name=mclear value="memory clear" onclick="memhog.length = 0">
 <br>Message Body:
 <textarea name='body' rows='6' cols='50'>
 Type your brilliant thoughts here.
