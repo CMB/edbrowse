@@ -19,6 +19,16 @@ var popwin = new Window("http://www.moreAndMoreCrap.com/BuyNow.html", "obnoxious
 var memhog = new Array();
 
 var n, j;
+
+function memfill()
+{
+for(n=0; n<120; ++n) {
+alert(n);
+for(j=0; j<10000; ++j)
+memhog[n*10000+j] = {};
+}
+}
+
 // for loop with break and continue
 for(n=0, j=1; j<=20; ++j) {
 n += j*j;
@@ -403,7 +413,7 @@ cat <input type=checkbox name=cat onclick="alert('fluffy'); if(this.checked&&que
 bird <input type=checkbox name=bird>
 rabbit <input type=checkbox name=rabbit>
 <br>
-<input type=button name=hog value="memory hog" onclick="for(var i=0; i<1200000; ++i) memhog[i] = {};">
+<input type=button name=hog value="memory hog" onclick=memfill()>
 <br>Message Body:
 <textarea name='body' rows='6' cols='50'>
 Type your brilliant thoughts here.
