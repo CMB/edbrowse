@@ -1,3 +1,7 @@
+<html>
+<head>
+<title>Edbrowse js regression test</title>
+</head>
 <body onload=onlfunc() onunload=onunlfunc()>
 <script language="JavaScript">
 /* This is the javascript regression test for edbrowse.
@@ -22,11 +26,23 @@ var n, j;
 
 function memfill()
 {
-for(n=0; n<120; ++n) {
-alert(n);
-for(j=0; j<10000; ++j)
-memhog[n*10000+j] = {};
+// allow a user specifyable amount of objects to create
+// use the document.getElementById and element interface here
+var amount = parseInt(document.getElementById("fill_amount").value, 10);
+if (amount <= 0)
+{
+alert("You must provide a positive integer when specifying the number of objects to create");
+return;
 }
+for (n=0; n < amount; ++n)
+{
+// exercise a bit of math
+if ((n % 10000) == 0)
+alert(Math.floor(n/10000));
+// fill the array
+memhog[n] = {};
+}
+alert("Array successfully created with " + amount + " objects");
 }
 
 // for loop with break and continue
@@ -118,7 +134,7 @@ if(typeof(a[8]) != udef || a.length != 6) fail(33);
 if(a[5]+a[0] != "indigored") fail(34);
 
 //escape unescape
-alpha = "This 3rd-line is ©me!";
+alpha = "This 3rd-line is Â©me!";
 if(unescape(escape(alpha)) != alpha) fail(36);
 
 // function with a static variable
@@ -413,6 +429,7 @@ cat <input type=checkbox name=cat onclick="alert('fluffy'); if(this.checked&&que
 bird <input type=checkbox name=bird>
 rabbit <input type=checkbox name=rabbit>
 <br>
+Amount of objects to create <input type="text" id="fill_amount" name="fill_amount" value="2000000" />
 <input type=button name=hog value="memory hog" onclick=memfill()>
 <br>Message Body:
 <textarea name='body' rows='6' cols='50'>
