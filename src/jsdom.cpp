@@ -1307,13 +1307,9 @@ eb_bool
 javaParseExecute(JS::HandleObject obj, const char *str, const char *filename,
 		 int lineno)
 {
+	SWITCH_COMPARTMENT(eb_false);
 	JSBool ok;
 	eb_bool rc = eb_false;
-/* switch to the compartment of obj,
- * though I think this is always the compartment of jwin */
-if (cw->js_failed || (cw->jss == NULL))
-return eb_false;
-	JSAutoCompartment ac(cw->jss->jcx, obj);
 	js::RootedValue rval(cw->jss->jcx);
 
 /* Sometimes Mac puts these three chars at the start of a text file. */

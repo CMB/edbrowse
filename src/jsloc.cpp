@@ -1143,6 +1143,7 @@ eb_bool handlerGo(JS::HandleObject obj, const char *name)
 	JS_HasProperty(cw->jss->jcx, obj, name, &found);
 	if (!found)
 		return eb_false;
+	debugPrint(6, "handle %s", name);
 	rc = JS_CallFunctionName(cw->jss->jcx, obj, name, 0, emptyArgs,
 				 rval.address());
 	if (rc && JSVAL_IS_BOOLEAN(rval))
