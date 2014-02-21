@@ -3541,6 +3541,12 @@ eb_bool runCommand(const char *line)
 	currentReferrer = cloneString(cw->fileName);
 	js_redirects = eb_false;
 
+/* In case the last command broke javascript in some way. */
+	if (cw->jss != NULL && cw->js_failed) {
+		freeJavaContext(cw->jss);
+		cw->jss = NULL;
+	}
+
 	cmd = icmd = 'p';
 	skipWhite(&line);
 	first = *line;
@@ -4851,12 +4857,6 @@ eb_bool browseCurrentBuffer(void)
 		nzFree(newlocation);	/* should already be 0 */
 		newlocation = 0;
 		newbuf = htmlParse(rawbuf, remote);
-/* I think we need to check here if something borke with js */
-if (cw->jss != NULL && cw->js_failed)
-{
-freeJavaContext(cw->jss);
-cw->jss = NULL;
-}
 	}
 
 	cw->browseMode = eb_true;
