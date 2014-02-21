@@ -260,6 +260,13 @@ alert("You cant go over Limit of 2000 Characters!");
     }
 </script>
 
+<noscript>
+<OL>
+<LI>This is a regression test without javascript.
+</OL>
+<P>
+</noscript>
+
 <form method=POST name=questionnaire
 action=http://localhost:1500/origact
 onsubmit='return submitFunction(questionnaire)'

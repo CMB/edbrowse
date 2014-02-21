@@ -58,10 +58,8 @@ static char *basehref;
 static struct htmlTag *currentForm;	/* the open form */
 eb_bool parsePage;		/* parsing html */
 int browseLine;			/* for error reporting */
-static char *radioChecked;
-static int radioChecked_l;
-static char *preamble;
-static int preamble_l;
+static string radioChecked;
+static string preamble;
 
 /* paranoia check on the number of tags */
 static void tagCountCheck(void)
@@ -111,38 +109,36 @@ static char *hrefVal(const char *e, const char *name)
 
 static void toPreamble(int tagno, const char *msg, const char *j, const char *h)
 {
-	int l;
-	char buf[120];
-	sprintf(buf, "\r%c%d{%s", InternalCodeChar, tagno, msg);
+	char buf[8];
+	char fn[40], *s;
+
+	sprintf(buf, "\r%c%d{", InternalCodeChar, tagno);
+	preamble += buf;
+	preamble += msg;
+
 	if (h) {
-		strcat(buf, ": ");
-		strcat(buf, h);
+		preamble += ": ";
+		preamble += h;
 	} else if (j) {
-		char fn[40];
-		char *s;
 		skipWhite(&j);
 		if (memEqualCI(j, "javascript:", 11))
 			j += 11;
 		skipWhite(&j);
 		if (isalphaByte(*j) || *j == '_') {
-			fn[0] = ':';
-			fn[1] = ' ';
-			for (s = fn + 2; isalnumByte(*j) || *j == '_'; ++j) {
+			preamble += ": ";
+			for (s = fn; isalnumByte(*j) || *j == '_'; ++j) {
 				if (s < fn + sizeof(fn) - 3)
 					*s++ = *j;
 			}
 			strcpy(s, "()");
 			skipWhite(&j);
 			if (*j == '(')
-				strcat(buf, fn);
+				preamble += fn;
 		}
 	}
-	l = strlen(buf);
-	buf[l++] = InternalCodeChar;
-	strcpy(buf + l, "0}\r");
-	if (!preamble)
-		preamble = initString(&preamble_l);
-	stringAndString(&preamble, &preamble_l, buf);
+
+	sprintf(buf, "%c0}\r", InternalCodeChar);
+	preamble += buf;
 }				/* toPreamble */
 
 struct tagInfo {
@@ -663,8 +659,7 @@ static void htmlForm(void)
 		}
 	}
 
-	nzFree(radioChecked);
-	radioChecked = 0;
+	radioChecked.clear();
 
 	if (!isJSAlive)
 		return;
@@ -737,18 +732,14 @@ static void htmlInput(void)
 		char namebuf[200];
 		if (n == INP_RADIO && myname
 		    && strlen(myname) < sizeof(namebuf) - 3) {
-			if (!radioChecked) {
-				radioChecked = initString(&radioChecked_l);
-				stringAndChar(&radioChecked, &radioChecked_l,
-					      '|');
-			}
+			if (!radioChecked.length())
+				radioChecked = "|";
 			sprintf(namebuf, "|%s|", topTag->name);
-			if (strstr(radioChecked, namebuf)) {
+			if (radioChecked.find(namebuf) != string::npos) {
 				browseError(MSG_RadioMany);
 				return;
 			}
-			stringAndString(&radioChecked, &radioChecked_l,
-					namebuf + 1);
+			radioChecked += namebuf + 1;
 		}		/* radio name */
 		topTag->rchecked = eb_true;
 		topTag->checked = eb_true;
@@ -776,10 +767,7 @@ static char *displayOptions(const struct htmlTag *sel)
 {
 	struct htmlTag **list;
 	const struct htmlTag *t;
-	char *outstr;
-	int l;
-
-	outstr = initString(&l);
+	string options;
 
 	if (parsePage) {
 		for (tagListIterator iter = htmlStack.begin();
@@ -789,9 +777,9 @@ static char *displayOptions(const struct htmlTag *sel)
 				continue;
 			if (!t->checked)
 				continue;
-			if (l)
-				stringAndChar(&outstr, &l, ',');
-			stringAndString(&outstr, &l, t->name);
+			if (options.length())
+				options += ',';
+			options += t->name;
 		}
 	} else {
 		for (list = cw->tags; t = *list; ++list) {
@@ -799,13 +787,13 @@ static char *displayOptions(const struct htmlTag *sel)
 				continue;
 			if (!t->checked)
 				continue;
-			if (l)
-				stringAndChar(&outstr, &l, ',');
-			stringAndString(&outstr, &l, t->name);
+			if (options.length())
+				options += ',';
+			options += t->name;
 		}
 	}
 
-	return outstr;
+	return cloneString(options.c_str());
 }				/* displayOptions */
 
 static struct htmlTag *locateOptionByName(const struct htmlTag *sel,
@@ -860,17 +848,12 @@ locateOptions(const struct htmlTag *sel, const char *input,
 	      char **disp_p, char **val_p, eb_bool setcheck)
 {
 	struct htmlTag *t, **list;
-	char *display = 0, *value = 0;
-	int disp_l, val_l;
+	string display, value;
 	int len = strlen(input);
 	int n, pmc, cnt;
 	const char *s, *e;	/* start and end of an option */
 	char *iopt;		/* individual option */
 
-	if (disp_p)
-		display = initString(&disp_l);
-	if (val_p)
-		value = initString(&val_l);
 	iopt = (char *)allocMem(len + 1);
 
 	if (setcheck) {
@@ -922,16 +905,18 @@ locateOptions(const struct htmlTag *sel, const char *input,
 			goto fail;
 		}
 
-		if (value) {
-			if (val_l)
-				stringAndChar(&value, &val_l, '\1');
-			stringAndString(&value, &val_l, t->value);
+		if (val_p) {
+			if (value.length())
+				value += '\1';
+			value += t->value;
 		}
-		if (display) {
-			if (disp_l)
-				stringAndChar(&display, &disp_l, ',');
-			stringAndString(&display, &disp_l, t->name);
+
+		if (disp_p) {
+			if (display.length())
+				display += ',';
+			display += t->name;
 		}
+
 		if (setcheck) {
 			t->checked = eb_true;
 			if (t->jv && isJSAlive) {
@@ -944,17 +929,19 @@ locateOptions(const struct htmlTag *sel, const char *input,
 		}
 	}			/* loop over multiple options */
 
-	if (value)
-		*val_p = value;
-	if (display)
-		*disp_p = display;
+	if (val_p)
+		*val_p = cloneString(value.c_str());
+	if (disp_p)
+		*disp_p = cloneString(display.c_str());
 	free(iopt);
 	return eb_true;
 
 fail:
 	free(iopt);
-	nzFree(value);
-	nzFree(display);
+	if (val_p)
+		*val_p = 0;
+	if (disp_p)
+		*disp_p = 0;
 	return eb_false;
 }				/* locateOptions */
 
@@ -1176,7 +1163,7 @@ static void htmlOption(struct htmlTag *sel, struct htmlTag *v, const char *a)
 }				/* htmlOption */
 
 static char *javatext;
-static void htmlScript(char * &html, char * &h)
+static void htmlScript(char *&html, char *&h)
 {
 	char *a = 0, *w = 0;
 	struct htmlTag *t = topTag;	// shorthand
@@ -1325,7 +1312,7 @@ static char *encodeTags(char *html)
 	htmlStack.clear();
 	tagArray = 0;
 	newstr = initString(&l);
-	preamble = 0;
+	preamble.clear();
 	ntags = 0;
 
 /* first tag is a base tag, from the filename */
@@ -1509,8 +1496,12 @@ forceCloseAnchor:
 			retainTag = eb_false;
 		if (invisible)
 			retainTag = eb_false;
-		if (ti->bits & TAG_INVISIBLE)
+		if (ti->bits & TAG_INVISIBLE) {
 			invisible = !slash;
+/* special case for noscript with no js */
+			if (stringEqual(ti->name, "NOSCRIPT") && !cw->jss)
+				invisible = eb_false;
+		}
 
 		strayClick = eb_false;
 
@@ -2237,18 +2228,15 @@ endtag:
 	/* clean up */
 	browseLine = 0;
 	nzFree(html);
-	nzFree(radioChecked);
-	radioChecked = 0;
+	radioChecked.clear();
 	basehref = 0;
-	if (preamble) {
-		h = (char *)allocMem(preamble_l + l + 2);
-		strcpy(h, preamble);
-		h[preamble_l] = '\f';
-		strcpy(h + preamble_l + 1, newstr);
-		nzFree(preamble);
-		preamble = 0;
+
+	if (preamble.length()) {
+		preamble += '\f';
+		preamble += newstr;
 		nzFree(newstr);
-		newstr = h;
+		newstr = cloneString(preamble.c_str());
+		preamble.clear();
 	}
 
 	return newstr;
