@@ -2860,24 +2860,25 @@ static eb_bool fetchBoolVar(const struct htmlTag *t)
 /* Some information on posting forms can be found here.
  * http://www.w3.org/TR/REC-html40/interact/forms.html */
 
-static void postDelimiter(char fsep, const char *boundary, char **post, int *l)
+static string post;
+static const char *boundary;
+
+static void postDelimiter(char fsep)
 {
-	char *p = *post;
-	char c = p[*l - 1];
+	char c = post[post.length() - 1];
 	if (c == '?' || c == '\1')
 		return;
 	if (fsep == '-') {
-		stringAndString(post, l, "--");
-		stringAndString(post, l, boundary);
-		stringAndChar(post, l, '\r');
+		post += "--";
+		post += boundary;
+		post += '\r';
 		fsep = '\n';
 	}
-	stringAndChar(post, l, fsep);
+	post += fsep;
 }				/* postDelimiter */
 
 static eb_bool
-postNameVal(const char *name, const char *val,
-	    char fsep, uchar isfile, const char *boundary, char **post, int *l)
+postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 {
 	char *enc;
 	const char *ct, *ce;	/* content type, content encoding */
@@ -2889,23 +2890,22 @@ postNameVal(const char *name, const char *val,
 	if (!*name && !*val)
 		return eb_true;
 
-	postDelimiter(fsep, boundary, post, l);
+	postDelimiter(fsep);
 	switch (fsep) {
 	case '&':
 		enc = encodePostData(name);
-		stringAndString(post, l, enc);
-		stringAndChar(post, l, '=');
+		post += enc;
+		post += '=';
 		nzFree(enc);
 		break;
 	case '\n':
-		stringAndString(post, l, name);
-		stringAndString(post, l, "=\r\n");
+		post += name;
+		post += "=\r\n";
 		break;
 	case '-':
-		stringAndString(post, l,
-				"Content-Disposition: form-data; name=\"");
-		stringAndString(post, l, name);
-		stringAndChar(post, l, '"');
+		post += "Content-Disposition: form-data; name=\"";
+		post += name;
+		post += '"';
 /* I'm leaving nl off, in case we need ; filename */
 		break;
 	}			/* switch */
@@ -2916,19 +2916,19 @@ postNameVal(const char *name, const char *val,
 	switch (fsep) {
 	case '&':
 		enc = encodePostData(val);
-		stringAndString(post, l, enc);
+		post += enc;
 		nzFree(enc);
 		break;
 	case '\n':
-		stringAndString(post, l, val);
-		stringAndString(post, l, eol);
+		post += val;
+		post += eol;
 		break;
 	case '-':
 		if (isfile) {
 			if (isfile & 2) {
-				stringAndString(post, l, "; filename=\"");
-				stringAndString(post, l, val);
-				stringAndChar(post, l, '"');
+				post += "; filename=\"";
+				post += val;
+				post += '"';
 			}
 			if (!encodeAttachment(val, 0, eb_true, &ct, &ce, &enc))
 				return eb_false;
@@ -2945,13 +2945,13 @@ postNameVal(const char *name, const char *val,
 					break;
 				}
 		}
-		stringAndString(post, l, "\r\nContent-Type: ");
-		stringAndString(post, l, ct);
-		stringAndString(post, l, "\r\nContent-Transfer-Encoding: ");
-		stringAndString(post, l, ce);
-		stringAndString(post, l, "\r\n\r\n");
-		stringAndString(post, l, val);
-		stringAndString(post, l, eol);
+		post += "\r\nContent-Type: ";
+		post += ct;
+		post += "\r\nContent-Transfer-Encoding: ";
+		post += ce;
+		post += "\r\n\r\n";
+		post += val;
+		post += eol;
 		if (isfile)
 			nzFree(enc);
 		break;
@@ -2961,16 +2961,14 @@ postNameVal(const char *name, const char *val,
 }				/* postNameVal */
 
 static eb_bool
-formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
-	   char **post, int *l)
+formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 {
 	const struct htmlTag **list = (const struct htmlTag **)cw->tags, *t;
 	int itype;
 	int j;
 	char *name, *dynamicvalue = NULL;
-	const char *value;
 /* dynamicvalue needs to be freed with nzFree. */
-	const char *boundary;
+	const char *value;
 	char fsep = '&';	/* field separator */
 	eb_bool noname = eb_false, rc;
 	eb_bool bval;
@@ -2980,9 +2978,9 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 	if (form->mime) {
 		fsep = '-';
 		boundary = makeBoundary();
-		stringAndString(post, l, "`mfd~");
-		stringAndString(post, l, boundary);
-		stringAndString(post, l, eol);
+		post += "`mfd~";
+		post += boundary;
+		post += eol;
 	}
 
 	while (t = *list++) {
@@ -3009,9 +3007,9 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 			nx = (char *)allocMem(namelen + 3);
 			strcpy(nx, name);
 			strcpy(nx + namelen, ".x");
-			postNameVal(nx, "0", fsep, eb_false, boundary, post, l);
+			postNameVal(nx, "0", fsep, eb_false);
 			nx[namelen + 1] = 'y';
-			postNameVal(nx, "0", fsep, eb_false, boundary, post, l);
+			postNameVal(nx, "0", fsep, eb_false);
 			nzFree(nx);
 			goto success;
 		}
@@ -3036,8 +3034,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
  * I didn't allow for it in the above, the value of a radio button;
  * hope that's not a problem. */
 			dynamicvalue = fetchTextVar(t);
-			postNameVal(name, dynamicvalue, fsep, eb_false,
-				    boundary, post, l);
+			postNameVal(name, dynamicvalue, fsep, eb_false);
 			nzFree(dynamicvalue);
 			dynamicvalue = NULL;
 			continue;
@@ -3055,8 +3052,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 /* do this as an attachment */
 					sprintf(cxstring, "%d", cx);
 					if (!postNameVal
-					    (name, cxstring, fsep, 1, boundary,
-					     post, l))
+					    (name, cxstring, fsep, 1))
 						goto fail;
 					continue;
 				}	/* attach */
@@ -3073,15 +3069,14 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 				if (j && cxbuf[j - 1] == '\r')
 					--j;
 				cxbuf[j] = 0;
-				rc = postNameVal(name, cxbuf, fsep, eb_false,
-						 boundary, post, l);
+				rc = postNameVal(name, cxbuf, fsep, eb_false);
 				nzFree(cxbuf);
 				if (rc)
 					continue;
 				goto fail;
 			}
 
-			postNameVal(name, 0, fsep, eb_false, boundary, post, l);
+			postNameVal(name, 0, fsep, eb_false);
 			continue;
 		}
 
@@ -3104,8 +3099,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 /* option could have an empty value, usually the null choice,
  * before you have made a selection. */
 			if (!*dynamicvalue) {
-				postNameVal(name, dynamicvalue, fsep, eb_false,
-					    boundary, post, l);
+				postNameVal(name, dynamicvalue, fsep, eb_false);
 				continue;
 			}
 /* Step through the options */
@@ -3117,8 +3111,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 				if (!e)
 					e = s + strlen(s);
 				more = *e, *e = 0;
-				postNameVal(name, s, fsep, eb_false, boundary,
-					    post, l);
+				postNameVal(name, s, fsep, eb_false);
 				if (more)
 					++e;
 			}
@@ -3138,8 +3131,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 				nzFree(dynamicvalue);
 				goto fail;
 			}
-			rc = postNameVal(name, dynamicvalue, fsep, 3, boundary,
-					 post, l);
+			rc = postNameVal(name, dynamicvalue, fsep, 3);
 			nzFree(dynamicvalue);
 			dynamicvalue = NULL;
 			if (rc)
@@ -3150,13 +3142,13 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit,
 		i_printfExit(MSG_UnexSubmitForm);
 
 success:
-		postNameVal(name, value, fsep, eb_false, boundary, post, l);
+		postNameVal(name, value, fsep, eb_false);
 	}			/* loop over tags */
 
 	if (form->mime) {	/* the last boundary */
-		stringAndString(post, l, "--");
-		stringAndString(post, l, boundary);
-		stringAndString(post, l, "--\r\n");
+		post += "--";
+		post += boundary;
+		post += "--\r\n";
 	}
 
 	i_puts(MSG_FormSubmit);
@@ -3180,9 +3172,11 @@ eb_bool infPush(int tagno, char **post_string)
 	struct htmlTag *t = list[tagno];
 	struct htmlTag *form;
 	int itype;
-	char *post, *section;
-	int l, actlen;
+	int actlen;
 	const char *action = 0;
+	const char *sec1;
+	const char *sec2;
+	const char *post_c;
 	const char *prot;
 	eb_bool rc;
 
@@ -3328,40 +3322,38 @@ eb_bool infPush(int tagno, char **post_string)
 		return eb_false;
 	}
 
-	post = initString(&l);
-	stringAndString(&post, &l, action);
-	section = strchr(post, '#');
-	if (section) {
-		i_printf(MSG_SectionIgnored, section);
-		*section = 0;
-		l = strlen(post);
+	post = action;
+	sec1 = strchr(action, '#');
+	if (sec1) {
+		i_printf(MSG_SectionIgnored, sec1);
+		post.resize(sec1 - action);
 	}
-	section = strpbrk(post, "?\1");
-	if (section) {
-		if (*section == '\1' || !(form->bymail | form->post)) {
-			debugPrint(3,
-				   "the url already specifies some data, which will be overwritten by the data in this form");
-			*section = 0;
-			l = strlen(post);
-		}
+	sec2 = strpbrk(action, "?\1");
+	if (sec2 > sec1)
+		sec2 = 0;
+	if (sec2 && (*sec2 == '\1' || !(form->bymail | form->post))) {
+		debugPrint(3,
+			   "the url already specifies some data, which will be overwritten by the data in this form");
+		post.resize(sec2 - action);
 	}
 
-	stringAndChar(&post, &l, (form->post ? '\1' : '?'));
-	actlen = l;
+	post += (form->post ? '\1' : '?');
+	actlen = post.length();
 
-	if (!formSubmit(form, t, &post, &l)) {
-		nzFree(post);
+	if (!formSubmit(form, t)) {
+		post.clear();
 		return eb_false;
 	}
 
-	debugPrint(3, "%s %s", form->post ? "post" : "get", post + actlen);
+	post_c = post.c_str();
+	debugPrint(3, "%s %s", form->post ? "post" : "get", post_c + actlen);
 
 /* Handle the mail method here and now. */
 	if (form->bymail) {
 		char *addr, *subj, *q;
 		const char *tolist[2], *atlist[2];
 		const char *name = form->name;
-		int newlen = l - actlen;	/* the new string could be longer than post */
+		int newlen = post.length() - actlen;	/* the new string could be longer than post */
 		decodeMailURL(action, &addr, &subj, 0);
 		tolist[0] = addr;
 		tolist[1] = 0;
@@ -3379,8 +3371,8 @@ eb_bool infPush(int tagno, char **post_string)
 		else
 			sprintf(q, "subject:html form(%s)\n",
 				name ? name : "?");
-		strcpy(q + strlen(q), post + actlen);
-		nzFree(post);
+		strcpy(q + strlen(q), post_c + actlen);
+		post.clear();
 		i_printf(MSG_MailSending, addr);
 		sleep(1);
 		rc = sendMail(localAccount, tolist, q, -1, atlist, 0, 0,
@@ -3394,7 +3386,8 @@ eb_bool infPush(int tagno, char **post_string)
 		return rc;
 	}
 
-	*post_string = post;
+	*post_string = cloneString(post_c);
+	post.clear();
 	return eb_true;
 }				/* infPush */
 
