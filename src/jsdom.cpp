@@ -255,7 +255,6 @@ return JS_FALSE;
 javaSessionFail();
 return JS_FALSE;
 }
-// think we need to return something if we return JS_TRUE
 	args.rval().set(JSVAL_VOID);
 	return JS_TRUE;
 }				/* appendChild */
@@ -822,17 +821,85 @@ struct DOMCLASS {
 	JSNative constructor;
 	int nargs;
 };
+// set of constructors
+static JSBool element_ctor(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	JSObject & callee = args.callee();
+	jsval callee_val = JS::ObjectValue(callee);
+	JS::RootedObject newobj(cx,
+				JS_NewObjectForConstructor(cx, &element_class,
+							   &callee_val));
+if ((JSObject *) newobj == NULL)
+{
+javaSessionFail();
+return JS_FALSE;
+}
+	args.rval().set(OBJECT_TO_JSVAL(newobj));
+	return JS_TRUE;
+}
+
+static JSBool link_ctor(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	JSObject & callee = args.callee();
+	jsval callee_val = JS::ObjectValue(callee);
+	JS::RootedObject newobj(cx,
+				JS_NewObjectForConstructor(cx, &link_class,
+							   &callee_val));
+if ((JSObject *) newobj == NULL)
+{
+javaSessionFail();
+return JS_FALSE;
+}
+	args.rval().set(OBJECT_TO_JSVAL(newobj));
+	return JS_TRUE;
+}
+
+static JSBool image_ctor(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	JSObject & callee = args.callee();
+	jsval callee_val = JS::ObjectValue(callee);
+	JS::RootedObject newobj(cx,
+				JS_NewObjectForConstructor(cx, &image_class,
+							   &callee_val));
+if ((JSObject *) newobj == NULL)
+{
+javaSessionFail();
+return JS_FALSE;
+}
+	args.rval().set(OBJECT_TO_JSVAL(newobj));
+	return JS_TRUE;
+}
+
+static JSBool anchor_ctor(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	JSObject & callee = args.callee();
+	jsval callee_val = JS::ObjectValue(callee);
+	JS::RootedObject newobj(cx,
+				JS_NewObjectForConstructor(cx, &anchor_class,
+							   &callee_val));
+if ((JSObject *) newobj == NULL)
+{
+javaSessionFail();
+return JS_FALSE;
+}
+	args.rval().set(OBJECT_TO_JSVAL(newobj));
+	return JS_TRUE;
+}
 
 static struct DOMCLASS domClasses[] = {
-	{&element_class, element_methods, nullFunction, 0},
+	{&element_class, element_methods, element_ctor, 0},
 	{&form_class, form_methods},
 	{&body_class, body_methods},
 	{&head_class, head_methods},
 	{&meta_class},
-	{&link_class, link_methods, nullFunction, 0},
-	{&image_class, 0, nullFunction, 1},
+	{&link_class, link_methods, link_ctor, 0},
+	{&image_class, 0, image_ctor, 1},
 	{&frame_class},
-	{&anchor_class, 0, nullFunction, 1},
+	{&anchor_class, 0, anchor_ctor, 1},
 	{&table_class},
 	{&div_class},
 	{&area_class},
