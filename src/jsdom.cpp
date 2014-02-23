@@ -15,9 +15,8 @@
 
 int jsPool = 32;		/* size of js memory space in megabytes */
 
-static JSRuntime *jrt;		/* our js runtime, global so we can call the gc from jsloc
-				   functions as well */
-static size_t gStackChunkSize = 8192;
+static JSRuntime *jrt;		/* our js runtime environment */
+static const size_t gStackChunkSize = 8192;
 static const char *emptyParms[] = { 0 };
 static jsval emptyArgs[] = { jsval() };
 
