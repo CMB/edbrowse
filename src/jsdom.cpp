@@ -986,7 +986,7 @@ void createJavaContext(struct ebWindowJSState **pstate)
 *pstate = NULL;
 		return;
 	}
-
+JSAutoRequest autoreq(state->jcx);
 /* It's looking good. */
 	*pstate = state;
 	JS_SetErrorReporter(state->jcx, my_ErrorReporter);

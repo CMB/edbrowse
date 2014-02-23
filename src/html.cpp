@@ -313,6 +313,7 @@ void freeTags(struct ebWindow *w)
 /* We probably don't need to do this at all,
  * since j context is soon to be destroyed. */
 		if (t->jv && w->jss) {
+JSAutoRequest autoreq(w->jss->jcx);
 			JSAutoCompartment ac(w->jss->jcx, w->jss->jwin);
 			t->jv. ~ HeapRootedObject();
 		}

@@ -45,6 +45,7 @@ even though it is usually good practice to do so.
 *********************************************************************/
 
 #define SWITCH_COMPARTMENT(retval) if (cw->js_failed || cw->jss == NULL) return retval; \
+JSAutoRequest autoreq(cw->jss->jcx); \
 JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin)
 
 /* Prototypes of functions that are only used by the javascript layer. */
