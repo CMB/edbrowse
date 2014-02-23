@@ -1449,7 +1449,10 @@ Yeah, it makes my head spin too.
 				JS::RootedObject ao(cw->jss->jcx);	/* action object */
 				if (JS_GetProperty(cw->jss->jcx, owner,
 					       symname, vv.address()) == JS_FALSE)
+{
+javaSessionFail();
 return NULL;
+}
 				ao = JSVAL_TO_OBJECT(vv);
 /* actioncrash tells me if we've already had this collision */
 				JS_HasProperty(cw->jss->jcx, ao, "actioncrash",
@@ -1457,7 +1460,10 @@ return NULL;
 				if (!found) {
 					if (JS_DeleteProperty(cw->jss->jcx,
 							  owner, symname) == JS_FALSE)
+{
+javaSessionFail();
 return NULL;
+}
 /* gc will clean this up later */
 /* advance, as though this were not found */
 					goto afterfound;
@@ -1467,7 +1473,10 @@ return NULL;
 			if (radiosel == 1) {
 				if (JS_GetProperty(cw->jss->jcx, owner,
 					       symname, vv.address()) == JS_FALSE)
+{
+javaSessionFail();
 return NULL;
+}
 				v = JSVAL_TO_OBJECT(vv);
 			} else {
 				dupname = eb_true;
@@ -1480,7 +1489,10 @@ afterfound:
 		if (radiosel) {
 			v = JS_NewArrayObject(cw->jss->jcx, 0, NULL);
 if ((JSObject *) v == NULL)
+{
+javaSessionFail();
 return NULL;
+}
 			if (radiosel == 1) {
 				establish_property_string(v, "type", "radio",
 							  eb_true);
@@ -1494,15 +1506,24 @@ if (cw->js_failed) return NULL;
 // not the normal pathway; we have to create our own element methods here.
 				if (JS_DefineFunction(cw->jss->jcx, v, "focus",
 						  nullFunction, 0, PROP_FIXED) == NULL)
+{
+javaSessionFail();
 return NULL;
+}
 				if (JS_DefineFunction(cw->jss->jcx, v, "blur",
 						  nullFunction, 0, PROP_FIXED) == NULL)
+{
+javaSessionFail();
 return NULL;
+}
 			}
 		} else {
 			v = JS_NewObject(cw->jss->jcx, cp, NULL, owner);
 if (v == NULL)
+{
+javaSessionFail();
 return NULL;
+}
 		}
 		vv = OBJECT_TO_JSVAL(v);
 
@@ -1521,11 +1542,17 @@ Example www.startpage.com, where id=submit
 			    !stringEqual(idname, "action"))
 				if (JS_DefineProperty(cw->jss->jcx, owner,
 						  idname, vv, NULL, NULL, attr) == JS_FALSE)
+{
+javaSessionFail();
 return NULL;
+}
 		} else if (symname && !dupname) {
 			if (JS_DefineProperty(cw->jss->jcx, owner, symname,
 					  vv, NULL, NULL, attr) == JS_FALSE)
+{
+javaSessionFail();
 return NULL;
+}
 			if (stringEqual(symname, "action"))
 				establish_property_bool(v, "actioncrash",
 							eb_true, eb_true);
@@ -1534,7 +1561,10 @@ if (cw->js_failed) return NULL;
 /* link to document.all */
 			if (JS_GetProperty(cw->jss->jcx, cw->jss->jdoc, "all",
 				       listv.address()) == JS_FALSE)
+{
+javaSessionFail();
 return NULL;
+}
 			master = JSVAL_TO_OBJECT(listv);
 			establish_property_object(master, symname, v);
 if (cw->js_failed) return NULL;
@@ -1543,20 +1573,29 @@ if (cw->js_failed) return NULL;
 			if (JS_DefineProperty(cw->jss->jcx, owner,
 					  fakePropName(), vv, NULL, NULL,
 					  JSPROP_READONLY | JSPROP_PERMANENT) == JS_FALSE)
+{
+javaSessionFail();
 return NULL;
+}
 		}
 
 		if (list) {
 			if (JS_GetProperty(cw->jss->jcx, owner, list,
 				       listv.address()) == JS_FALSE)
+{
+javaSessionFail();
 return NULL;
+}
 			alist = JSVAL_TO_OBJECT(listv);
 		}
 		if (alist) {
 			JS_GetArrayLength(cw->jss->jcx, alist, &length);
 			if (JS_DefineElement(cw->jss->jcx, alist, length, vv, NULL,
 					 NULL, attr) == JS_FALSE)
+{
+javaSessionFail();
 return NULL;
+}
 			if (symname && !dupname)
 				establish_property_object(alist, symname, v);
 if (cw->js_failed) return NULL;
@@ -1574,10 +1613,16 @@ if (cw->js_failed) return NULL;
 		JS_GetArrayLength(cw->jss->jcx, v, &length);
 		w = JS_NewObject(cw->jss->jcx, &element_class, NULL, owner);
 if ((JSObject *) w == NULL)
+{
+javaSessionFail();
 return NULL;
+}
 		vv = OBJECT_TO_JSVAL(w);
 		if (JS_DefineElement(cw->jss->jcx, v, length, vv, NULL, NULL, attr) == JS_FALSE)
+{
+javaSessionFail();
 return NULL;
+}
 		v = w;
 	}
 
@@ -1593,7 +1638,10 @@ if (cw->js_failed) return NULL;
 if (cw->js_failed) return NULL;
 		if (JS_GetProperty(cw->jss->jcx, cw->jss->jdoc, "idMaster",
 			       listv.address()) == JS_FALSE)
+{
+javaSessionFail();
 return NULL;
+}
 		master = JSVAL_TO_OBJECT(listv);
 		establish_property_object(master, idname, v);
 if (cw->js_failed) return NULL;
