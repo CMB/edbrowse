@@ -4884,7 +4884,6 @@ eb_bool browseCurrentBuffer(void)
 		fileSize = -1;
 		return eb_false;
 	}			/* should never happen */
-	fileSize = apparentSize(context, eb_true);
 
 	if (bmode == 2) {
 /* apply any input changes pending */
@@ -4892,6 +4891,8 @@ eb_bool browseCurrentBuffer(void)
 		    updateFieldInBuffer(ic->tagno, ic->value, 0, eb_false);
 		freeList(&inputChangesPending);
 	}
+
+	fileSize = apparentSize(context, eb_true);
 
 	if (do_ip & ismc)
 		allIPs();
