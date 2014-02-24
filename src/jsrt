@@ -45,6 +45,10 @@ memhog[n] = {};
 alert("Array successfully created with " + amount + " objects");
 }
 
+function memshow()
+{
+alert("memhog contains " + memhog.length + " elements");
+}
 // for loop with break and continue
 for(n=0, j=1; j<=20; ++j) {
 n += j*j;
@@ -439,6 +443,8 @@ rabbit <input type=checkbox name=rabbit>
 Amount of objects to create <input type="text" id="fill_amount" name="fill_amount" value="2000000" />
 <input type=button name=hog value="memory hog" onclick=memfill()>
 <input type=button name=mclear value="memory clear" onclick="memhog.length = 0">
+<br>
+<input type="button" onclick="memshow()" name="mshow" value="show memory length">
 <br>Message Body:
 <textarea name='body' rows='6' cols='50'>
 Type your brilliant thoughts here.
