@@ -313,7 +313,7 @@ void freeTags(struct ebWindow *w)
 /* We probably don't need to do this at all,
  * since j context is soon to be destroyed. */
 		if (t->jv && w->jss) {
-JSAutoRequest autoreq(w->jss->jcx);
+			JSAutoRequest autoreq(w->jss->jcx);
 			JSAutoCompartment ac(w->jss->jcx, w->jss->jwin);
 			t->jv. ~ HeapRootedObject();
 		}
@@ -1124,7 +1124,7 @@ onloadGo(JS::HandleObject obj, const char *jsrc, const char *tagname)
  * <a name="foo">.  If the tag has no id attribute, this function is a no-op.
 */
 
-static void htmlLabelID(char **browseText, int *browseTextLength)
+static void htmlLabelID(string & newstr)
 {
 	char buf[16];
 	char *id = htmlAttrVal(topAttrib, "id");
@@ -1133,7 +1133,7 @@ static void htmlLabelID(char **browseText, int *browseTextLength)
 		int tagnum = t->seqno;
 		t->name = id;
 		sprintf(buf, "%c%d*", InternalCodeChar, tagnum);
-		stringAndString(browseText, browseTextLength, buf);
+		newstr += buf;
 	}
 }				/* htmlLabelID */
 
@@ -1280,7 +1280,7 @@ static char *encodeTags(char *html)
 	char *save_h;
 	char *h = html;
 	char *a;		/* for a specific attribute */
-	char *newstr;		/* the new string */
+	string newstr;		/* the new string */
 	int js_nl;		/* number of newlines in javascript */
 	const char *name, *attrib, *end;
 	char tagname[12];
@@ -1312,7 +1312,6 @@ static char *encodeTags(char *html)
 	    currentTA = 0;
 	htmlStack.clear();
 	tagArray = 0;
-	newstr = initString(&l);
 	preamble.clear();
 	ntags = 0;
 
@@ -1337,7 +1336,7 @@ putc:
 				}
 				if (lastact == TAGACT_TD && c == ' ')
 					goto nextchar;
-				stringAndChar(&newstr, &l, c);
+				newstr += c;
 				if (!isspaceByte(c)) {
 					a_text = eb_true;
 					lastact = 0;
@@ -1391,7 +1390,8 @@ nextchar:
 			currentTA->itype = INP_TA;
 			currentTA->balanced = eb_true;
 			s = currentTA->value =
-			    andTranslate(newstr + offset, eb_true);
+			    andTranslate(newstr.substr(offset).c_str(),
+					 eb_true);
 /* Text starts at the next line boundary */
 			while (*s == '\t' || *s == ' ')
 				++s;
@@ -1419,17 +1419,16 @@ nextchar:
 							  currentTA->value,
 							  eb_true);
 			}
-			l -= strlen(newstr + offset);
-			newstr[offset] = 0;
+			newstr.resize(offset);
 			j = sideBuffer(0, currentTA->value, -1, 0, eb_false);
 			if (j) {
 				currentTA->lic = j;
 				sprintf(hnum, "%c%d<buffer %d%c0>",
 					InternalCodeChar, currentTA->seqno, j,
 					InternalCodeChar);
-				stringAndString(&newstr, &l, hnum);
+				newstr += hnum;
 			} else
-				stringAndString(&newstr, &l, "<buffer ?>");
+				newstr += "<buffer ?>";
 			currentTA = 0;
 			if (slash)
 				continue;
@@ -1484,8 +1483,8 @@ nextchar:
 						      TAGACT_OPTION)) {
 				browseError(MSG_InAnchor, ti->desc);
 forceCloseAnchor:
-				stringAndChar(&newstr, &l, InternalCodeChar);
-				stringAndString(&newstr, &l, "0}");
+				newstr += InternalCodeChar;
+				newstr += "0}";
 				currentA->balanced = eb_true;
 				currentA = 0;
 /* if/when the </a> comes along, it will be unbalanced, and we'll ignore it. */
@@ -1527,7 +1526,8 @@ forceCloseAnchor:
 				ptr = &v->name;
 
 			if (ptr) {
-				a = andTranslate(newstr + offset, eb_true);
+				a = andTranslate(newstr.substr(offset).c_str(),
+						 eb_true);
 				stripWhite(a);
 				if (currentOpt && strchr(a, ',')
 				    && currentSel->multiple) {
@@ -1549,13 +1549,12 @@ forceCloseAnchor:
 					htmlOption(currentSel, currentOpt, a);
 			}
 
-			l -= strlen(newstr + offset);
-			newstr[offset] = 0;
+			newstr.resize(offset);
 			currentTitle = currentOpt = 0;
 		}
 
 /* Generate an html label for this tag if necessary. */
-		htmlLabelID(&newstr, &l);
+		htmlLabelID(newstr);
 
 		switch (action) {
 		case TAGACT_INPUT:
@@ -1572,28 +1571,27 @@ forceCloseAnchor:
 					currentForm->submitted = eb_true;
 			}
 			strcat(hnum, "<");
-			stringAndString(&newstr, &l, hnum);
+			newstr += hnum;
 			if (t->itype < INP_RADIO) {
 				if (t->value[0])
-					stringAndString(&newstr, &l, t->value);
+					newstr += t->value;
 				else if (t->itype == INP_SUBMIT
 					 || t->itype == INP_IMAGE)
-					stringAndString(&newstr, &l, "Go");
+					newstr += "Go";
 				else if (t->itype == INP_RESET)
-					stringAndString(&newstr, &l, "Reset");
+					newstr += "Reset";
 			} else
-				stringAndChar(&newstr, &l,
-					      t->checked ? '+' : '-');
+				newstr += (t->checked ? '+' : '-');
 			if (currentForm
 			    && (t->itype == INP_SUBMIT
 				|| t->itype == INP_IMAGE)) {
 				if (currentForm->secure)
-					stringAndString(&newstr, &l, " secure");
+					newstr += " secure";
 				if (currentForm->bymail)
-					stringAndString(&newstr, &l, " bymail");
+					newstr += " bymail";
 			}
-			stringAndChar(&newstr, &l, InternalCodeChar);
-			stringAndString(&newstr, &l, "0>");
+			newstr += InternalCodeChar;
+			newstr += "0>";
 			goto endtag;
 
 		case TAGACT_TITLE:
@@ -1601,7 +1599,7 @@ forceCloseAnchor:
 				continue;
 			if (cw->ft)
 				browseError(MSG_ManyTitles);
-			offset = l;
+			offset = newstr.length();
 			currentTitle = t;
 			continue;
 
@@ -1645,7 +1643,7 @@ forceCloseAnchor:
 
 		case TAGACT_TA:
 			currentTA = t;
-			offset = l;
+			offset = newstr.length();
 			t->itype = INP_TA;
 			formControl(eb_true);
 			continue;
@@ -1711,7 +1709,7 @@ plainTag:
 				strcat(hnum, "* ");
 			if (j > 0)
 				sprintf(hnum + 1, "%d. ", j);
-			stringAndString(&newstr, &l, hnum);
+			newstr += hnum;
 			continue;
 
 		case TAGACT_DT:
@@ -1780,10 +1778,11 @@ plainTag:
 			if (tdfirst)
 				tdfirst = eb_false;
 			else if (retainTag) {
+				l = newstr.length();
 				while (l && newstr[l - 1] == ' ')
 					--l;
-				newstr[l] = 0;
-				stringAndChar(&newstr, &l, '|');
+				newstr.resize(l);
+				newstr += '|';
 			}
 			if (isJSAlive && (open = findOpenTag("tr")) && open->jv) {
 				topTag->jv =
@@ -1849,7 +1848,7 @@ nop:
 			}
 			if (currentA)
 				c = ' ';
-			stringAndChar(&newstr, &l, c);
+			newstr += c;
 			goto endtag;
 
 		case TAGACT_FORM:
@@ -1866,11 +1865,10 @@ doneSelect:
 /* Crank out the input tag */
 					sprintf(hnum, "%c%d<", InternalCodeChar,
 						currentSel->seqno);
-					stringAndString(&newstr, &l, hnum);
-					stringAndString(&newstr, &l, a);
-					stringAndChar(&newstr, &l,
-						      InternalCodeChar);
-					stringAndString(&newstr, &l, "0>");
+					newstr += hnum;
+					newstr += a;
+					newstr += InternalCodeChar;
+					newstr += "0>";
 				}
 				currentSel = 0;
 			}
@@ -1880,18 +1878,14 @@ doneSelect:
 					makeButton();
 					sprintf(hnum, " %c%d<Go",
 						InternalCodeChar, ntags - 1);
-					stringAndString(&newstr, &l, hnum);
+					newstr += hnum;
 					if (currentForm->secure)
-						stringAndString(&newstr, &l,
-								" secure");
+						newstr += " secure";
 					if (currentForm->bymail)
-						stringAndString(&newstr, &l,
-								" bymail");
-					stringAndString(&newstr, &l,
-							" implicit");
-					stringAndChar(&newstr, &l,
-						      InternalCodeChar);
-					stringAndString(&newstr, &l, "0>");
+						newstr += " bymail";
+					newstr += " implicit";
+					newstr += InternalCodeChar;
+					newstr += "0>";
 				}
 				currentForm = 0;
 			}
@@ -1921,7 +1915,7 @@ doneSelect:
 				continue;
 			}
 			currentOpt = t;
-			offset = l;
+			offset = newstr.length();
 			t->controller = currentSel;
 			t->lic = nopt++;
 			t->value = htmlAttrVal(topAttrib, "value");
@@ -1937,8 +1931,8 @@ doneSelect:
 		case TAGACT_HR:
 			if (!retainTag)
 				continue;
-			stringAndString(&newstr, &l,
-					"\r------------------------------------------------------------\r");
+			newstr +=
+			    "\r----------------------------------------\r";
 			continue;
 
 		case TAGACT_SUP:
@@ -1949,36 +1943,35 @@ subsup:
 			t->retain = eb_true;
 			j = (action == TAGACT_SUP ? 2 : 1);
 			if (!slash) {
-				t->lic = l;
-				stringAndString(&newstr, &l,
-						(j == 2 ? "^(" : "["));
+				t->lic = newstr.length();
+				newstr += (j == 2 ? "^(" : "[");
 				continue;
 			}
 /* backup, and see if we can get rid of the parentheses or brackets */
-			a = newstr + open->lic + j;
-			if (j == 2 && isalphaByte(*a) && !a[1])
+			l = open->lic + j;
+			s = newstr.substr(l).c_str();
+			if (j == 2 && isalphaByte(s[0]) && !s[1])
 				goto unparen;
-			if (j == 2 && isalnumByte(a[-3])
-			    && (stringEqual(a, "th") || stringEqual(a, "rd")
-				|| stringEqual(a, "nd")
-				|| stringEqual(a, "st"))) {
-				a -= 2, l -= 2;
-				strmove(a, a + 2);
+			if (j == 2 && isalnumByte(newstr[l - 3])
+			    && (stringEqual(s, "th") || stringEqual(s, "rd")
+				|| stringEqual(s, "nd")
+				|| stringEqual(s, "st"))) {
+				newstr.erase(l - 2, 2);
 				continue;
 			}
-			while (isdigitByte(*a))
-				++a;
-			if (!*a)
+			while (isdigitByte(*s))
+				++s;
+			if (!*s)
 				goto unparen;
-			stringAndChar(&newstr, &l, (j == 2 ? ')' : ']'));
+			newstr += (j == 2 ? ')' : ']');
 			continue;
+
 /* ok, we can trash the original ( or [ */
 unparen:
-			a = newstr + open->lic + j - 1;
-			strmove(a, a + 1);
-			--l;
+			l = open->lic + j;
+			newstr.erase(l - 1, 1);
 			if (j == 2)
-				stringAndChar(&newstr, &l, ' ');
+				newstr += ' ';
 			continue;
 
 		case TAGACT_AREA:
@@ -2004,9 +1997,7 @@ unparen:
 			get_js_events();
 			if (!retainTag)
 				continue;
-			stringAndString(&newstr, &l,
-					action ==
-					TAGACT_FRAME ? "\rFrame " : "\r");
+			newstr += (action == TAGACT_FRAME ? "\rFrame " : "\r");
 			name = t->name;
 			if (!name)
 				name = altText(t->href);
@@ -2015,17 +2006,17 @@ unparen:
 				    (action == TAGACT_FRAME ? "???" : "area");
 			if (t->href) {
 				strcat(hnum, "{");
-				stringAndString(&newstr, &l, hnum);
+				newstr += hnum;
 				t->action = TAGACT_A;
 				t->balanced = eb_true;
 			}
 			if (t->href || action == TAGACT_FRAME)
-				stringAndString(&newstr, &l, name);
+				newstr += name;
 			if (t->href) {
-				stringAndChar(&newstr, &l, InternalCodeChar);
-				stringAndString(&newstr, &l, "0}");
+				newstr += InternalCodeChar;
+				newstr += "0}";
 			}
-			stringAndChar(&newstr, &l, '\r');
+			newstr += '\r';
 			continue;
 
 		case TAGACT_MUSIC:
@@ -2056,7 +2047,7 @@ unparen:
  * to put in an alt tag, then it's worth reading.
  * You can turn this feature off, but I don't think you'd want to. */
 				if (a = htmlAttrVal(topAttrib, "alt"))
-					stringAndString(&newstr, &l, a);
+					newstr += a;
 				nzFree(a);
 				a = NULL;
 				continue;
@@ -2079,7 +2070,7 @@ unparen:
 				s = altText(t->href);
 			if (!s)
 				s = "image";
-			stringAndString(&newstr, &l, s);
+			newstr += s;
 			a_text = eb_true;
 			continue;
 
@@ -2132,7 +2123,7 @@ unparen:
 			else
 				hnum[0] = 0;
 		}
-		stringAndString(&newstr, &l, hnum);
+		newstr += hnum;
 endtag:
 		lastact = action;
 		if (strayClick) {
@@ -2141,13 +2132,13 @@ endtag:
 			topTag->href = cloneString("#");
 			currentA = topTag;
 			sprintf(hnum, "%c%d{", InternalCodeChar, topTag->seqno);
-			stringAndString(&newstr, &l, hnum);
+			newstr += hnum;
 		}
 	}			/* loop over html string */
 
 	if (currentA) {
-		stringAndChar(&newstr, &l, InternalCodeChar);
-		stringAndString(&newstr, &l, "0}");
+		newstr += InternalCodeChar;
+		newstr += "0}";
 		currentA = 0;
 	}
 
@@ -2234,13 +2225,11 @@ endtag:
 
 	if (preamble.length()) {
 		preamble += '\f';
-		preamble += newstr;
-		nzFree(newstr);
-		newstr = cloneString(preamble.c_str());
+		newstr.insert(0, preamble);
 		preamble.clear();
 	}
 
-	return newstr;
+	return cloneString(newstr.c_str());
 }				/* encodeTags */
 
 void preFormatCheck(int tagno, eb_bool * pretag, eb_bool * slash)
