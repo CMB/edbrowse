@@ -36,7 +36,7 @@ static int curl_debug_handler(CURL * handle, curl_infotype info_desc,
 static const char *message_for_response_code(int code);
 
 /* Read from a socket, 100K at a time. */
-#define CHUNKSIZE 100000
+#define CHUNKSIZE 1000000
 
 /* Callback used by libcurl. Writes data to serverData. */
 static size_t
