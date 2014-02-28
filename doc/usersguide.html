@@ -136,6 +136,7 @@ blind, script, accessible">
 <LI><A HREF=#mpg> Play the Music </A>
 <LI><A HREF=#saud> Streaming Audio </A>
 <LI><A HREF=#podc> Podcast </A>
+<LI><A HREF=#youtube> Youtube </A>
 </UL>
 
 <P><HR><P>
@@ -4846,6 +4847,22 @@ establishing a new naming convention,
 and at that point all the podcasts look like they are new.&nbsp;
 The next invocation of podgo fetches them all, and it's kind of annoying.&nbsp;
 Just delete them and move on, it doesn't happen very often.
+
+<H3 align=center> <A NAME=youtube> Youtube </A> </H3>
+
+Search for something on youtube, then note the url of the page.&nbsp;
+Pass this as an argument to clive (perl version) or cclive (c version), as you prefer.&nbsp;
+This will download the video as a file, in one of several formats.&nbsp;
+From here you can probably convert it to mp3 using ffmpeg.
+
+<P>
+ffmpeg -i foobar.3gpp foobar.mp3
+
+<P>
+Then pllay the mp3 file with mpg123.&nbsp;
+This is a recurring theme, as we saw with podcasts above.&nbsp;
+download the file, convert it to mp3, and use mpg123, which has nice features like pause,
+fast forward, rewind, etc.
 
 <P>
 Please <A href=mailto:eklhad@gmail.com>
