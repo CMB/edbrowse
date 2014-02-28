@@ -24,6 +24,7 @@ blind, script, accessible">
 <LI><A HREF=#maint> Maintainer </A>
 <LI><A HREF=#auth> Author </A>
 <LI><A HREF=#copy> Copyright Notice </A>
+<LI><A HREF=#disclaim> Disclaimer </A>
 <LI><A HREF=#ack> Acknowledgements </A>
 <LI><A HREF=#phil> Philosophy </A>
 <LI><A HREF=#curve> Learning Curve </A>
@@ -167,6 +168,19 @@ for all of the code used other than OpenSSL.&nbsp;
 If you modify this program, you may extend this exception to your version of the
 program, but you are not obligated to do so.&nbsp;
 If you do not wish to do so, delete this exception statement from your version.
+
+<H3 align=center> <A NAME=disclaim> Disclaimer </A> </H3>
+
+Edbrowse is provided as-is,
+with no implied warranty of fitness for any particular purpose.&nbsp;
+It might trash your precious files.&nbsp;
+It might send bad data across the Internet,
+causing you to buy a $37,000 elephant instead of
+$37 worth of printer supplies.&nbsp;
+It may delete all the rows in your mysql customer table.&nbsp;
+This is a spare-time project written by a couple of volunteers,
+that (understandably) cannot attain the quality and rigor of corporate or government software.&nbsp;
+By using this program, you agree to use it as-is.
 
 <H3 align=center> <A NAME=ack> Acknowledgements </A> </H3>
 
@@ -2824,13 +2838,16 @@ so I don't try.
 
 <P>
 As a rough approximation, I expect to implement about half of javascript,
-the half that will satisfy 95% of the websites we care about.&nbsp;
-So you may see warning messages about this or that feature not supported.&nbsp;
-If you are tired of wading through these messages,
-or if a bug in my javascript interpreter causes edbrowse to crash completely,
-you can turn javascript off via the `js' command.&nbsp;
-This is useful when you are casually surfing the net, looking for information,
-and you know you're not going to need javascript.&nbsp;
+hoping that will satisfy most of the websites we care about.&nbsp;
+This is still a work in progress.&nbsp;
+If you submit a form, or go to a hyperlink, and nothing happens, absolutely nothing,
+then the web page is probably trying to use javascript features that are not yet implemented.&nbsp;
+Raise the debug level to 2 or higher and push the button again to see the javascript errors.&nbsp;
+Then, if you wish, disable javascript with the js command and try again.&nbsp;
+However, the website may not behave properly or as expected with javascript disabled.&nbsp;
+See the disclaimer at the top of this users guide.
+
+<P>
 You can also disable javascript for specific domains.&nbsp;
 This will be discussed later in the edbrowse config file.
 
