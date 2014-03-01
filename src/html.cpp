@@ -70,7 +70,19 @@ static void tagCountCheck(void)
 	}
 }				/* tagCountCheck */
 
-/* Switch from the linked list of tags to an array. */
+/*********************************************************************
+Switch from the linked list of tags to an array.
+The tag pointers are transferred from the linked list htmlStack to tagArray[],
+and then to cw->tags[].
+But this might happen more than once.
+Halfway through the parse phase, javascript might set one of the input
+variables,thus calling javaSetsTagVar().
+This finds the tag via cw->tags, so it has to be built.
+But at the end of the parse phase it is built again, for the last time.
+That's why tagArray is freed first, from the prior build if any,
+then rebuilt from the linked list.
+*********************************************************************/
+
 static void buildTagArray(void)
 {
 	struct htmlTag **last;
@@ -681,8 +693,9 @@ void jsdw(void)
 	int side;
 	if (!cw->dw)
 		return;
+/* replace the <docwrite> tag with <html> */
 	memcpy(cw->dw + 3, "<html>\n", 7);
-	side = sideBuffer(0, cw->dw + 10, -1, cw->fileName, eb_true);
+	side = sideBuffer(0, cw->dw + 3, -1, cw->fileName, eb_true);
 	if (side) {
 		i_printf(MSG_SideBufferX, side);
 	} else {
