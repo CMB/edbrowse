@@ -2748,7 +2748,9 @@ void selectLanguage(void)
 		return;
 	}
 
+/* This message is really annoying if it pops up every time you invoke edbrowse.
 	fprintf(stderr, "Sorry, language %s is not implemented\n", buf);
+*/
 }				/* selectLanguage */
 
 static const char *getString(int msg)
