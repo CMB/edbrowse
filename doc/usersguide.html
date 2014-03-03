@@ -4862,7 +4862,36 @@ ffmpeg -i foobar.3gpp foobar.mp3
 Then pllay the mp3 file with mpg123.&nbsp;
 This is a recurring theme, as we saw with podcasts above.&nbsp;
 download the file, convert it to mp3, and use mpg123, which has nice features like pause,
-fast forward, rewind, etc.
+fast forward, rewind, etc.&nbsp;
+These functions may help.
+
+<P>
+# youtube search, look for something on youtube
+<br>
+function+yts {
+<br>
+b http://www.youtube.com/results?search_query=~0
+<br>
+}
+
+<P>
+#  If a link looks like what you want, don't go to it, run this
+<br>
+#  youtube extract functiohn.
+<br>
+function+yte {
+<br>
+A
+<br>
+1s/^.*?href=//
+<br>
+s/>$//
+<br>
+!clive "'."
+<br>
+^
+<br>
+}
 
 <P>
 Please <A href=mailto:eklhad@gmail.com>
