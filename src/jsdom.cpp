@@ -24,9 +24,10 @@ static void
 my_ErrorReporter(JSContext * cx, const char *message, JSErrorReport * report)
 {
 	if (report && report->errorNumber == JSMSG_OUT_OF_MEMORY ||
-	    message && strstr(message, "out of memory"))
+	    message && strstr(message, "out of memory")) {
 		i_puts(MSG_JavaMemError);
-	else if (debugLevel < 2)
+		javaSessionFail();
+	} else if (debugLevel < 2)
 		goto done;
 	if (ismc)
 		goto done;
