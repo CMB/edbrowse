@@ -6,9 +6,8 @@
 
 #include "eb.h"
 #include "js.h"
-#include <iterator>
-#include <algorithm>
-#include <list>
+
+#include <vector>
 
 /* Close an open anchor when you see this tag. */
 #define TAG_CLOSEA 1
@@ -48,10 +47,8 @@ static const char *const inp_types[] = {
 static const char dfvl[] = "defaultValue";
 static const char dfck[] = "defaultChecked";
 
-static list < struct htmlTag *>htmlStack;
-typedef list < struct htmlTag *>::iterator tagListIterator;
-typedef list < struct htmlTag *>::reverse_iterator tagListBackIterator;
-static struct htmlTag **tagArray, *topTag;
+#define tagList (*((vector<struct htmlTag *> *)(cw->tags)))
+static struct htmlTag *topTag;
 static int ntags;		/* number of tags in this page */
 static char *topAttrib;
 static char *basehref;
@@ -69,37 +66,6 @@ static void tagCountCheck(void)
 			i_printfExit(MSG_LineLimit);
 	}
 }				/* tagCountCheck */
-
-/*********************************************************************
-Switch from the linked list of tags to an array.
-The tag pointers are transferred from the linked list htmlStack to tagArray[],
-and then to cw->tags[].
-But this might happen more than once.
-Halfway through the parse phase, javascript might set one of the input
-variables,thus calling javaSetsTagVar().
-This finds the tag via cw->tags, so it has to be built.
-But at the end of the parse phase it is built again, for the last time.
-That's why tagArray is freed first, from the prior build if any,
-then rebuilt from the linked list.
-*********************************************************************/
-
-static void buildTagArray(void)
-{
-	struct htmlTag **last;
-
-	if (!parsePage)
-		return;
-
-/* javaSetsTagVar could cause this routine to be called multiple times
- * during the html parse phase. */
-	nzFree(tagArray);
-
-	tagArray =
-	    (struct htmlTag **)allocMem(sizeof(struct htmlTag *) * (ntags + 1));
-	cw->tags = tagArray;
-	last = copy(htmlStack.begin(), htmlStack.end(), tagArray);
-	*last = 0;
-}				/* buildTagArray */
 
 static eb_bool htmlAttrPresent(const char *e, const char *name)
 {
@@ -286,16 +252,18 @@ static const char *const handlers[] = {
 
 void freeTags(struct ebWindow *w)
 {
-	int n;
-	struct htmlTag *t, **e;
+	int i1, n;
+	struct htmlTag *t;
+	vector < struct htmlTag *>*e;
 	struct ebWindow *side;
 
 /* if not browsing ... */
-	if (!(e = w->tags))
+	if (!(e = (vector < struct htmlTag * >*)(w->tags)))
 		return;
 
 /* drop empty textarea buffers created by this session */
-	for (; t = *e; ++e) {
+	for (i1 = 0; i1 < e->size(); ++i1) {
+		t = (*e)[i1];
 		if (t->action != TAGACT_INPUT)
 			continue;
 		if (t->itype != INP_TA)
@@ -315,7 +283,8 @@ void freeTags(struct ebWindow *w)
 		cxQuit(n, 2);
 	}			/* loop over tags */
 
-	for (e = w->tags; t = *e; ++e) {
+	for (i1 = 0; i1 < e->size(); ++i1) {
+		t = (*e)[i1];
 		nzFree(t->attrib);
 		nzFree(t->name);
 		nzFree(t->id);
@@ -333,7 +302,7 @@ void freeTags(struct ebWindow *w)
 		free(t);
 	}
 
-	free(w->tags);
+	delete e;
 	w->tags = 0;
 }				/* freeTags */
 
@@ -424,8 +393,7 @@ static void get_js_events(void)
 
 eb_bool tagHandler(int seqno, const char *name)
 {
-	struct htmlTag **list = cw->tags;
-	const struct htmlTag *t = list[seqno];
+	struct htmlTag *t = tagList[seqno];
 	if (t->handler)
 		return eb_true;
 	if (!t->jv)
@@ -437,17 +405,14 @@ eb_bool tagHandler(int seqno, const char *name)
 
 static char *getBaseHref(int n)
 {
-	const struct htmlTag *t, **list;
+	const struct htmlTag *t;
 	if (parsePage)
 		return basehref;
-	list = (const struct htmlTag **)cw->tags;
-	if (n < 0) {
-		for (n = 0; list[n]; ++n) ;
-	}
-	list += n;
+	if (n < 0)
+		n = tagList.size();
 	do
-		--list;
-	while ((t = *list)->action != TAGACT_BASE);
+		--n;
+	while ((t = tagList[n])->action != TAGACT_BASE);
 	return t->href;
 }				/* getBaseHref */
 
@@ -767,7 +732,7 @@ static void makeButton(void)
 {
 	struct htmlTag *t =
 	    (struct htmlTag *)allocZeroMem(sizeof(struct htmlTag));
-	htmlStack.push_back(t);
+	tagList.push_back(t);
 	t->seqno = ntags++;
 	tagCountCheck();
 	t->info = elements + 2;
@@ -779,32 +744,18 @@ static void makeButton(void)
 /* display the checked options */
 static char *displayOptions(const struct htmlTag *sel)
 {
-	struct htmlTag **list;
 	const struct htmlTag *t;
 	string options;
 
-	if (parsePage) {
-		for (tagListIterator iter = htmlStack.begin();
-		     iter != htmlStack.end(); iter++) {
-			t = *iter;
-			if (t->controller != sel)
-				continue;
-			if (!t->checked)
-				continue;
-			if (options.length())
-				options += ',';
-			options += t->name;
-		}
-	} else {
-		for (list = cw->tags; t = *list; ++list) {
-			if (t->controller != sel)
-				continue;
-			if (!t->checked)
-				continue;
-			if (options.length())
-				options += ',';
-			options += t->name;
-		}
+	for (int i1 = 0; i1 < tagList.size(); ++i1) {
+		t = tagList[i1];
+		if (t->controller != sel)
+			continue;
+		if (!t->checked)
+			continue;
+		if (options.length())
+			options += ',';
+		options += t->name;
 	}
 
 	return cloneString(options.c_str());
@@ -814,10 +765,11 @@ static struct htmlTag *locateOptionByName(const struct htmlTag *sel,
 					  const char *name, int *pmc,
 					  eb_bool exact)
 {
-	struct htmlTag **list = cw->tags, *t, *em = 0, *pm = 0;
+	struct htmlTag *t, *em = 0, *pm = 0;
 	int pmcount = 0;	/* partial match count */
 	const char *s;
-	while (t = *list++) {
+	for (int i1 = 0; i1 < tagList.size(); ++i1) {
+		t = tagList[i1];
 		if (t->controller != sel)
 			continue;
 		if (!(s = t->name))
@@ -843,9 +795,10 @@ static struct htmlTag *locateOptionByName(const struct htmlTag *sel,
 
 static struct htmlTag *locateOptionByNum(const struct htmlTag *sel, int n)
 {
-	struct htmlTag **list = cw->tags, *t;
+	struct htmlTag *t;
 	int cnt = 0;
-	while (t = *list++) {
+	for (int i1 = 0; i1 < tagList.size(); ++i1) {
+		t = tagList[i1];
 		if (t->controller != sel)
 			continue;
 		if (!t->name)
@@ -861,7 +814,7 @@ static eb_bool
 locateOptions(const struct htmlTag *sel, const char *input,
 	      char **disp_p, char **val_p, eb_bool setcheck)
 {
-	struct htmlTag *t, **list;
+	struct htmlTag *t;
 	string display, value;
 	int len = strlen(input);
 	int n, pmc, cnt;
@@ -874,14 +827,15 @@ locateOptions(const struct htmlTag *sel, const char *input,
 /* Uncheck all existing options, then check the ones selected. */
 		if (sel->jv && isJSAlive)
 			set_property_number(sel->jv, "selectedIndex", -1);
-		list = cw->tags;
-		while (t = *list++)
+		for (int i1 = 0; i1 < tagList.size(); ++i1) {
+			t = tagList[i1];
 			if (t->controller == sel && t->name) {
 				t->checked = eb_false;
 				if (t->jv && isJSAlive)
 					set_property_bool(t->jv, "selected",
 							  eb_false);
 			}
+		}
 	}
 
 	s = input;
@@ -972,7 +926,7 @@ that's the way it goes.
 
 void jSyncup(void)
 {
-	const struct htmlTag *t, **list;
+	const struct htmlTag *t;
 	int itype, j, cx;
 	char *value, *cxbuf;
 
@@ -982,10 +936,8 @@ void jSyncup(void)
 		return;
 	debugPrint(5, "jSyncup starts");
 
-	buildTagArray();
-
-	list = (const struct htmlTag **)cw->tags;
-	while (t = *list++) {
+	for (int i1 = 0; i1 < tagList.size(); ++i1) {
+		t = tagList[i1];
 		if (t->action != TAGACT_INPUT)
 			continue;
 		if (!t->jv)
@@ -1050,11 +1002,8 @@ static struct htmlTag *findOpenTag(const char *name)
 	eb_bool match;
 	const char *desc = topTag->info->desc;
 
-	for (tagListBackIterator r_iter = htmlStack.rbegin();
-	     r_iter != htmlStack.rend(); r_iter++) {
-		t = *r_iter;
-		if (t == topTag)
-			continue;	/* last one doesn't count */
+	for (int i1 = tagList.size() - 2; i1 >= 0; --i1) {
+		t = tagList[i1];
 		if (t->balanced)
 			continue;
 		if (!t->info->nest)
@@ -1103,7 +1052,7 @@ static struct htmlTag *newTag(const char *name)
 	t->balanced = eb_true;
 	if (stringEqual(name, "a"))
 		t->clickable = eb_true;
-	htmlStack.push_back(t);
+	tagList.push_back(t);
 	return t;
 }				/* newTag */
 
@@ -1264,9 +1213,10 @@ static void htmlScript(char *&html, char *&h)
 		html = h = after;
 
 /* After the realloc, the inner pointers are no longer valid. */
-		for (tagListIterator iter = htmlStack.begin();
-		     iter != htmlStack.end(); iter++)
-			(*iter)->inner = 0;
+		for (int i1 = 0; i1 < tagList.size(); ++i1) {
+			t = tagList[i1];
+			t->inner = 0;
+		}
 	}
 
 done:
@@ -1295,6 +1245,7 @@ static char *encodeTags(char *html)
 	char *a;		/* for a specific attribute */
 	string newstr;		/* the new string */
 	int js_nl;		/* number of newlines in javascript */
+	int i1, i2;		/* iterators */
 	const char *name, *attrib, *end;
 	char tagname[12];
 	const char *s;
@@ -1319,12 +1270,10 @@ static char *encodeTags(char *html)
 	int nopt;		/* number of options */
 	int intable = 0, inrow = 0;
 	eb_bool tdfirst;
-	tagListBackIterator r_iter;
 
 	currentA = currentForm = currentSel = currentOpt = currentTitle =
 	    currentTA = 0;
-	htmlStack.clear();
-	tagArray = 0;
+	cw->tags = new vector < struct htmlTag *>;
 	preamble.clear();
 	ntags = 0;
 
@@ -1453,7 +1402,7 @@ nextchar:
 
 		topTag = t =
 		    (struct htmlTag *)allocZeroMem(sizeof(struct htmlTag));
-		htmlStack.push_back(t);
+		tagList.push_back(t);
 		t->seqno = ntags;
 		sprintf(hnum, "%c%d", InternalCodeChar, ntags);
 		++ntags;
@@ -1695,9 +1644,8 @@ plainTag:
 		case TAGACT_LI:
 /* Look for the open UL or OL */
 			j = -1;
-			for (r_iter = htmlStack.rbegin();
-			     r_iter != htmlStack.rend(); r_iter++) {
-				v = *r_iter;
+			for (i1 = tagList.size() - 1; i1 >= 0; --i1) {
+				v = tagList[i1];
 				if (v->balanced || !v->info->nest)
 					continue;
 				if (v->slash)
@@ -1726,9 +1674,8 @@ plainTag:
 			continue;
 
 		case TAGACT_DT:
-			for (r_iter = htmlStack.rbegin();
-			     r_iter != htmlStack.rend(); r_iter++) {
-				v = *r_iter;
+			for (i1 = tagList.size() - 1; i1 >= 0; --i1) {
+				v = tagList[i1];
 				if (v->balanced || !v->info->nest)
 					continue;
 				if (v->slash)
@@ -1737,7 +1684,7 @@ plainTag:
 				if (stringEqual(s, "DL"))
 					break;
 			}
-			if (r_iter == htmlStack.rend())
+			if (i1 < 0)
 				browseError(MSG_NotInList, ti->desc);
 			goto nop;
 
@@ -2158,17 +2105,13 @@ endtag:
 /* Run the various onload functions */
 /* Turn the onunload functions into hyperlinks */
 	if (isJSAlive && !onload_done) {
-		struct htmlTag *stoptag = *(htmlStack.rbegin());
+		int stoptag = tagList.size() - 1;
 		onloadGo(cw->jss->jwin, 0, "window");
 		onloadGo(cw->jss->jdoc, 0, "document");
 
-		for (tagListIterator iter = htmlStack.begin();
-		     iter != htmlStack.end(); iter++) {
+		for (i1 = 0; i1 < stoptag; ++i1) {
 			char *jsrc;
-			t = *iter;
-/* but stop when you reach stoptag */
-			if (t == stoptag)
-				break;
+			t = tagList[i1];
 			if (t->action == TAGACT_OPTION)
 				continue;
 			if (!t->jv)
@@ -2192,10 +2135,8 @@ endtag:
 	}
 
 	if (browseLocal == 1) {	/* no errors yet */
-		for (tagListIterator iter = htmlStack.begin();
-		     iter != htmlStack.end(); iter++) {
-			tagListIterator iter2;
-			t = *iter;
+		for (i1 = 0; i1 < tagList.size(); ++i1) {
+			t = tagList[i1];
 			browseLine = t->ln;
 			if (t->info->nest && !t->slash && !t->balanced) {
 				browseError(MSG_TagNotClosed, t->info->desc);
@@ -2213,9 +2154,8 @@ endtag:
 			if (h[1] == 0)
 				continue;
 			a = h + 1;	/* this is what we're looking for */
-			for (iter2 = htmlStack.begin();
-			     iter2 != htmlStack.end(); iter2++) {
-				v = *iter2;
+			for (i2 = 0; i2 < tagList.size(); ++i2) {
+				v = tagList[i2];
 				if (v->action != TAGACT_A)
 					continue;	/* not achor */
 				if (!v->name)
@@ -2223,7 +2163,7 @@ endtag:
 				if (stringEqual(a, v->name))
 					break;
 			}
-			if (iter2 == htmlStack.end()) {
+			if (i2 == tagList.size()) {
 				browseError(MSG_NoLable2, a);
 				break;
 			}
@@ -2252,7 +2192,7 @@ void preFormatCheck(int tagno, eb_bool * pretag, eb_bool * slash)
 		i_printfExit(MSG_ErrCallPreFormat);
 	*pretag = *slash = eb_false;
 	if (tagno >= 0 && tagno < ntags) {
-		t = tagArray[tagno];
+		t = tagList[tagno];
 		*pretag = (t->action == TAGACT_PRE);
 		*slash = t->slash;
 	}
@@ -2270,8 +2210,6 @@ char *htmlParse(char *buf, int remote)
 	buf = encodeTags(buf);
 	debugPrint(7, "%s", buf);
 
-	buildTagArray();
-
 	newbuf = andTranslate(buf, eb_false);
 	nzFree(buf);
 	buf = newbuf;
@@ -2283,8 +2221,6 @@ char *htmlParse(char *buf, int remote)
 	buf = newbuf;
 
 	parsePage = eb_false;
-	htmlStack.clear();
-	tagArray = 0;
 
 /* In case one of the onload functions called document.write() */
 	jsdw();
@@ -2297,7 +2233,7 @@ findField(const char *line, int ftype, int n,
 	  int *total, int *realtotal, int *tagno, char **href,
 	  const struct htmlTag **tagp)
 {
-	const struct htmlTag *t, **list;
+	const struct htmlTag *t;
 	int nt = 0;		/* number of fields total */
 	int nrt = 0;		/* the real total, for input fields */
 	int nm = 0;		/* number match */
@@ -2312,8 +2248,6 @@ findField(const char *line, int ftype, int n,
 		*href = 0;
 	if (tagp)
 		*tagp = 0;
-
-	list = (const struct htmlTag **)cw->tags;
 
 	if (cw->browseMode) {
 
@@ -2344,7 +2278,7 @@ findField(const char *line, int ftype, int n,
 						nm = j;
 					continue;
 				}
-				t = list[j];
+				t = tagList[j];
 				++nrt;
 				if (ftype == 1 && t->itype <= INP_SUBMIT)
 					continue;
@@ -2368,7 +2302,7 @@ findField(const char *line, int ftype, int n,
 	if (tagno)
 		*tagno = nm;
 	if (!ftype && nm) {
-		t = list[nm];
+		t = tagList[nm];
 		if (href)
 			*href = cloneString(t->href);
 		if (tagp)
@@ -2451,14 +2385,14 @@ findInputField(const char *line, int ftype, int n, int *total, int *realtotal,
 
 eb_bool lineHasTag(const char *p, const char *s)
 {
-	const struct htmlTag *t, **list = (const struct htmlTag **)cw->tags;
+	const struct htmlTag *t;
 	char c;
 	int j;
 	while ((c = *p++) != '\n') {
 		if (c != InternalCodeChar)
 			continue;
 		j = strtol(p, (char **)&p, 10);
-		t = list[j];
+		t = tagList[j];
 		if (t->action != TAGACT_A)
 			continue;
 		if (!t->name)
@@ -2550,10 +2484,9 @@ eb_bool htmlTest(void)
 /* Show an input field */
 void infShow(int tagno, const char *search)
 {
-	const struct htmlTag **list = (const struct htmlTag **)cw->tags;
-	const struct htmlTag *t = list[tagno], *v;
+	const struct htmlTag *t = tagList[tagno], *v;
 	const char *s;
-	int j, cnt;
+	int cnt;
 	eb_bool show;
 
 	s = inp_types[t->itype];
@@ -2588,7 +2521,8 @@ void infShow(int tagno, const char *search)
 /* If a search string is given, display the options containing that string. */
 	cnt = 0;
 	show = eb_false;
-	for (j = 0; v = list[j]; ++j) {
+	for (int i1 = 0; i1 < tagList.size(); ++i1) {
+		v = tagList[i1];
 		if (v->controller != t)
 			continue;
 		if (!v->name)
@@ -2610,8 +2544,7 @@ void infShow(int tagno, const char *search)
 /* Update an input field. */
 eb_bool infReplace(int tagno, const char *newtext, int notify)
 {
-	const struct htmlTag **list = (const struct htmlTag **)cw->tags;
-	const struct htmlTag *t = list[tagno], *v;
+	const struct htmlTag *t = tagList[tagno], *v;
 	const struct htmlTag *form = t->controller;
 	char *display;
 	int itype = t->itype;
@@ -2688,7 +2621,8 @@ eb_bool infReplace(int tagno, const char *newtext, int notify)
 
 	if (itype == INP_RADIO && form && t->name && *newtext == '+') {
 /* clear the other radio button */
-		while (v = *list++) {
+		for (int i1 = 0; i1 < tagList.size(); ++i1) {
+			v = tagList[i1];
 			if (v->controller != form)
 				continue;
 			if (v->itype != INP_RADIO)
@@ -2787,10 +2721,11 @@ static void resetVar(struct htmlTag *t)
 
 static void formReset(const struct htmlTag *form)
 {
-	struct htmlTag **list = cw->tags, *t, *sel = 0;
+	struct htmlTag *t, *sel = 0;
 	int itype;
 
-	while (t = *list++) {
+	for (int i1 = 0; i1 < tagList.size(); ++i1) {
+		t = tagList[i1];
 		if (t->action == TAGACT_OPTION) {
 			if (!sel)
 				continue;
@@ -2966,7 +2901,7 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 static eb_bool
 formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 {
-	const struct htmlTag **list = (const struct htmlTag **)cw->tags, *t;
+	const struct htmlTag *t;
 	int itype;
 	int j;
 	char *name, *dynamicvalue = NULL;
@@ -2986,7 +2921,8 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 		post += eol;
 	}
 
-	while (t = *list++) {
+	for (int i1 = 0; i1 < tagList.size(); ++i1) {
+		t = tagList[i1];
 		if (t->action != TAGACT_INPUT)
 			continue;
 		if (t->controller != form)
@@ -3087,11 +3023,13 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 			char *display = getFieldFromBuffer(t->seqno);
 			char *s, *e;
 			if (!display) {	/* off the air */
-				struct htmlTag *v, **vl = cw->tags;
+				struct htmlTag *v;
 /* revert back to reset state */
-				while (v = *vl++)
+				for (int i2 = 0; i2 < tagList.size(); ++i2) {
+					v = tagList[i2];
 					if (v->controller == t)
 						v->checked = v->rchecked;
+				}
 				display = displayOptions(t);
 			}
 			rc = locateOptions(t, display, 0, &dynamicvalue,
@@ -3171,8 +3109,7 @@ which calls this routine.  Happens all the time.
 
 eb_bool infPush(int tagno, char **post_string)
 {
-	struct htmlTag **list = cw->tags;
-	struct htmlTag *t = list[tagno];
+	struct htmlTag *t = tagList[tagno];
 	struct htmlTag *form;
 	int itype;
 	int actlen;
@@ -3397,13 +3334,14 @@ eb_bool infPush(int tagno, char **post_string)
 /* I don't have any reverse pointers, so I'm just going to scan the list */
 static struct htmlTag *tagFromJavaVar(JS::HandleObject v)
 {
-	struct htmlTag **list = cw->tags;
 	struct htmlTag *t;
-	if (!list)
+	if (!cw->tags)
 		i_printfExit(MSG_NullListInform);
-	while (t = *list++)
+	for (int i1 = 0; i1 < tagList.size(); ++i1) {
+		t = tagList[i1];
 		if (t->jv == v)
 			break;
+	}
 	if (!t)
 		runningError(MSG_LostTag);
 	return t;
@@ -3412,11 +3350,7 @@ static struct htmlTag *tagFromJavaVar(JS::HandleObject v)
 /* Javascript has changed an input field */
 void javaSetsTagVar(JS::HandleObject v, const char *val)
 {
-	struct htmlTag *t;
-
-	buildTagArray();
-
-	t = tagFromJavaVar(v);
+	struct htmlTag *t = tagFromJavaVar(v);
 	if (!t)
 		return;
 /* ok, we found it */
@@ -3434,11 +3368,7 @@ void javaSubmitsForm(JS::HandleObject v, eb_bool reset)
 {
 	char *post;
 	eb_bool rc;
-	struct htmlTag *t;
-
-	buildTagArray();
-
-	t = tagFromJavaVar(v);
+	struct htmlTag *t = tagFromJavaVar(v);
 	if (!t)
 		return;
 
