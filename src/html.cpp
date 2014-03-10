@@ -49,7 +49,6 @@ static const char dfck[] = "defaultChecked";
 
 #define tagList (*((vector<struct htmlTag *> *)(cw->tags)))
 static struct htmlTag *topTag;
-static int ntags;		/* number of tags in this page */
 static char *topAttrib;
 static char *basehref;
 static struct htmlTag *currentForm;	/* the open form */
@@ -62,7 +61,7 @@ static string preamble;
 static void tagCountCheck(void)
 {
 	if (sizeof(int) == 4) {
-		if (ntags > MAXLINES)
+		if (tagList.size() > MAXLINES)
 			i_printfExit(MSG_LineLimit);
 	}
 }				/* tagCountCheck */
@@ -732,8 +731,8 @@ static void makeButton(void)
 {
 	struct htmlTag *t =
 	    (struct htmlTag *)allocZeroMem(sizeof(struct htmlTag));
+	t->seqno = tagList.size();
 	tagList.push_back(t);
-	t->seqno = ntags++;
 	tagCountCheck();
 	t->info = elements + 2;
 	t->action = TAGACT_INPUT;
@@ -1047,12 +1046,12 @@ static struct htmlTag *newTag(const char *name)
 	t = (struct htmlTag *)allocZeroMem(sizeof(struct htmlTag));
 	t->action = action;
 	t->info = ti;
-	t->seqno = ntags++;
-	tagCountCheck();
+	t->seqno = tagList.size();
 	t->balanced = eb_true;
 	if (stringEqual(name, "a"))
 		t->clickable = eb_true;
 	tagList.push_back(t);
+	tagCountCheck();
 	return t;
 }				/* newTag */
 
@@ -1248,6 +1247,7 @@ static char *encodeTags(char *html)
 	int i1, i2;		/* iterators */
 	const char *name, *attrib, *end;
 	char tagname[12];
+	int tagno;		// number of current tag
 	const char *s;
 	int j, l, namelen, lns;
 	int dw_line, dw_nest = 0;
@@ -1275,7 +1275,6 @@ static char *encodeTags(char *html)
 	    currentTA = 0;
 	cw->tags = new vector < struct htmlTag *>;
 	preamble.clear();
-	ntags = 0;
 
 /* first tag is a base tag, from the filename */
 	t = newTag("base");
@@ -1336,7 +1335,8 @@ nextchar:
 			if (stringEqualCI(ti->name, tagname))
 				break;
 		action = ti->action;
-		debugPrint(7, "tag %s %d %d %d", tagname, ntags, ln, action);
+		tagno = tagList.size();
+		debugPrint(7, "tag %s %d %d %d", tagname, tagno, ln, action);
 
 		if (currentTA) {
 /* Sometimes a textarea is used to present a chunk of html code.
@@ -1403,10 +1403,9 @@ nextchar:
 		topTag = t =
 		    (struct htmlTag *)allocZeroMem(sizeof(struct htmlTag));
 		tagList.push_back(t);
-		t->seqno = ntags;
-		sprintf(hnum, "%c%d", InternalCodeChar, ntags);
-		++ntags;
 		tagCountCheck();
+		t->seqno = tagno;
+		sprintf(hnum, "%c%d", InternalCodeChar, tagno);
 		t->info = ti;
 		t->slash = slash;
 		if (!slash)
@@ -1837,7 +1836,8 @@ doneSelect:
 				    && !currentForm->submitted) {
 					makeButton();
 					sprintf(hnum, " %c%d<Go",
-						InternalCodeChar, ntags - 1);
+						InternalCodeChar,
+						tagList.size() - 1);
 					newstr += hnum;
 					if (currentForm->secure)
 						newstr += " secure";
@@ -2191,7 +2191,8 @@ void preFormatCheck(int tagno, eb_bool * pretag, eb_bool * slash)
 	if (!parsePage)
 		i_printfExit(MSG_ErrCallPreFormat);
 	*pretag = *slash = eb_false;
-	if (tagno >= 0 && tagno < ntags) {
+/* Don't think we really need the bounds check here. */
+	if (tagno >= 0 && tagno < tagList.size()) {
 		t = tagList[tagno];
 		*pretag = (t->action == TAGACT_PRE);
 		*slash = t->slash;
