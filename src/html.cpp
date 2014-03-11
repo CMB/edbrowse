@@ -7,8 +7,6 @@
 #include "eb.h"
 #include "js.h"
 
-#include <vector>
-
 /* Close an open anchor when you see this tag. */
 #define TAG_CLOSEA 1
 /* You won't see the text between <foo> and </fooo> */
@@ -47,7 +45,6 @@ static const char *const inp_types[] = {
 static const char dfvl[] = "defaultValue";
 static const char dfck[] = "defaultChecked";
 
-#define tagList (*((vector<struct htmlTag *> *)(cw->tags)))
 static struct htmlTag *topTag;
 static char *topAttrib;
 static char *basehref;
@@ -206,38 +203,6 @@ static const struct tagInfo elements[] = {
 	{"SPAN", "an html span", TAGACT_SPAN, 1, 0, 0},
 	{"FRAMESET", "a frame set", TAGACT_JS, 3, 0, 1},
 	{NULL, NULL, 0}
-};
-
-struct htmlTag {
-	HeapRootedObject jv;	/* corresponding java variable */
-	int seqno;
-	int ln;			/* line number */
-	int lic;		/* list item count, highly overloaded */
-	int action;
-	const struct tagInfo *info;
-/* the form that owns this input tag, etc */
-	struct htmlTag *controller;
-	eb_bool slash:1;	/* as in </A> */
-	eb_bool balanced:1;	/* <foo> and </foo> */
-	eb_bool retain:1;
-	eb_bool multiple:1;
-	eb_bool rdonly:1;
-	eb_bool clickable:1;	/* but not an input field */
-	eb_bool secure:1;
-	eb_bool checked:1;
-	eb_bool rchecked:1;	/* for reset */
-	eb_bool post:1;		/* post, rather than get */
-	eb_bool javapost:1;	/* post by calling javascript */
-	eb_bool mime:1;		/* encode as mime, rather than url encode */
-	eb_bool bymail:1;	/* send by mail, rather than http */
-	eb_bool submitted:1;
-	eb_bool handler:1;
-	char subsup;		/* span turned into sup or sub */
-	uchar itype;		/* input type = */
-	short ninp;		/* number of nonhidden inputs */
-	char *attrib;
-	char *name, *id, *value, *href;
-	const char *inner;	/* for inner html */
 };
 
 static const char *const handlers[] = {
