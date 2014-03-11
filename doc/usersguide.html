@@ -287,10 +287,10 @@ Survive it, and enjoy its pleasures."
 
 This program is, at first glance, a reimplementation of /bin/ed.&nbsp;
 In fact you might issue a few ed commands and not realize that you are
-actually running my program.&nbsp;
+actually running this program.&nbsp;
 But as you proceed
 you will eventually discover some discrepancies,
-areas where my program differs from ed.&nbsp;
+areas where edbrowse differs from ed.&nbsp;
 These are discussed below.
 
 <P>
@@ -300,22 +300,13 @@ a browser embedded inside ed.&nbsp;
 You can edit a URL as easily as a local file,
 and activate browse mode to render the html tags
 in a manner that is appropriate for a command-response program such as this.&nbsp;
-In other words, I discard most of the formatting information
+In other words, we discard most of the formatting information
 and retain the links and fill-out forms.&nbsp;
 This allows blind  users to access the Internet
-through an application that is compatible with the linear nature of speech or braille.&nbsp;
-I find this approach superior to the "quick fix"
-of pasting an adaptor onto a preexisting screen browser (lynx)
-or graphical browser (Explorer).&nbsp;
-Of course that's just my opinion.&nbsp;
-To be fair, many blind users, even totally blind users, are satisfied with their auditory screen scrapers.&nbsp;
-I'm glad it works for them, but this approach is an unending source of frustration for me.&nbsp;
-Finding the cursor on the screen,
-and moving it about through a sea of words and icons;
-I just can't deal with it.&nbsp;
-If you also prefer linear applications,
-give this browser a try.&nbsp;
-If it is not included in your distribution, there is a perl version, with fewer features,
+through an application that is compatible with the linear nature of speech or braille.
+
+<P>
+If edbrowse is not included in your distribution, there is a perl version, with fewer features,
 that you can bring up right away on any computer:
 Linux, Unix, Mac, Windows, etc.&nbsp;
 Give edbrowse.pl a try, and if you like it then you can git the package and build it from source
@@ -474,7 +465,7 @@ Some websites offer their contents in multiple languages.&nbsp;
 For example, twitter.com has an English version,
 a French version, and so forth.&nbsp;
 It is possible to select the language when requesting the page.&nbsp;
-Edbrowse supports this via the localizeweb keyword of its configuration
+Edbrowse supports this via the localizeweb keyword in its configuration
 file.&nbsp;
 For instance, the following entry in .ebrc indicates that you want the
 French version, when it is available.
