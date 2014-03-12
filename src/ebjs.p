@@ -40,6 +40,7 @@ void set_property_number(JS::HandleObject jv, const char *name, int value);
 void set_property_bool(JS::HandleObject jv, const char *name, int value);
 char *get_property_url(JS::HandleObject jv, eb_bool doaction);
 char *get_property_string(JS::HandleObject jv, const char *name);
+int get_property_int(JS::HandleObject jv, const char *name);
 eb_bool get_property_bool(JS::HandleObject jv, const char *name);
 char *get_property_option(JS::HandleObject jv);
 JSObject *establish_js_option(JS::HandleObject ev, int idx);

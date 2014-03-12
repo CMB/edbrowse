@@ -1012,32 +1012,36 @@ so no UTF8 check */
 	return out_str;
 }				/* get_property_url */
 
+/* this is allocated; free it when done */
 char *get_property_string(JS::HandleObject jv, const char *name)
 {
 	SWITCH_COMPARTMENT(NULL);
 	js::RootedValue v(cw->jss->jcx);
-	const char *s = NULL;
-	char *out_str = NULL;
+	const char *s;
+	char *out_str;
 	if (JS_GetProperty(cw->jss->jcx, jv, name, v.address()) == JS_FALSE)
-{
-javaSessionFail();
 return NULL;
-}
 	s = stringize(v);
 /* assume either the string is ascii or the console is UTF8 */
 	out_str = cloneString(s);
 	return out_str;
 }				/* get_property_string */
 
+int get_property_int(JS::HandleObject jv, const char *name)
+{
+	SWITCH_COMPARTMENT(-1);
+	js::RootedValue v(cw->jss->jcx);
+	if (JS_GetProperty(cw->jss->jcx, jv, name, v.address()) == JS_FALSE)
+return -1;
+return JSVAL_TO_INT(v);
+}				/* get_property_int */
+
 eb_bool get_property_bool(JS::HandleObject jv, const char *name)
 {
 	SWITCH_COMPARTMENT(eb_false);
 	js::RootedValue v(cw->jss->jcx);
 	if (JS_GetProperty(cw->jss->jcx, jv, name, v.address()) == JS_FALSE)
-{
-javaSessionFail();
 return eb_false; // no idea what the correct thing to return here is
-}
 	return JSVAL_TO_BOOLEAN(v);
 }				/* get_property_bool */
 
@@ -1050,25 +1054,16 @@ char *get_property_option(JS::HandleObject jv)
 	int n;
 
 	if (JS_GetProperty(cw->jss->jcx, jv, "selectedIndex", v.address()) == JS_FALSE)
-{
-javaSessionFail();
 return NULL;
-}
 	n = JSVAL_TO_INT(v);
 	if (n < 0)
 		return 0;
 	if (JS_GetProperty(cw->jss->jcx, jv, "options", v.address()) == JS_FALSE)
-{
-javaSessionFail();
 return NULL;
-}
 
 	oa = JSVAL_TO_OBJECT(v);
 	if (JS_GetElement(cw->jss->jcx, oa, n, v.address()) == JS_FALSE)
-{
-javaSessionFail();
 return NULL;
-}
 	oo = JSVAL_TO_OBJECT(v);
 	return get_property_string(oo, "value");
 }				/* get_property_option */
@@ -1190,3 +1185,34 @@ eb_bool handlerPresent(JS::HandleObject ev, const char *name)
 	JS_HasProperty(cw->jss->jcx, ev, name, &found);
 	return found;
 }				/* handlerPresent */
+
+/* rebuild html tags if javascript has changed the options out from under you */
+void rebuildSelectors(void)
+{
+	int i1;
+	struct htmlTag *t;
+SWITCH_COMPARTMENT();
+	JS::RootedObject oa(cw->jss->jcx, NULL);	/* option array */
+	JS::RootedValue v(cw->jss->jcx);
+	int len; /* length of option array */
+	eb_bool changed = eb_false;
+
+	for (i1 = 0; i1 < tagList.size(); ++i1) {
+		t = tagList[i1];
+		if (!t->jv)
+			continue;
+		if (t->action != TAGACT_INPUT)
+			continue;
+		if (t->itype != INP_SELECT)
+			continue;
+
+/* there should always be an options array, if not then move on */
+		if (JS_GetProperty(cw->jss->jcx, t->jv, "options", v.address()) == JS_FALSE)
+			continue;
+		oa = JSVAL_TO_OBJECT(v);
+		len = get_property_int(oa, "length");
+		if(len < 0)
+			continue;
+	}
+
+} /* rebuildSelectors */
