@@ -1190,6 +1190,7 @@ JS::HandleObject oa, int len2)
 	int i1, i2, len1;
 	eb_bool check2;
 	char *s;
+	const char *selname;
 	bool changed = false;
 	struct htmlTag *t;
 	JS::RootedValue v(cw->jss->jcx);
@@ -1197,6 +1198,11 @@ JS::HandleObject oa, int len2)
 
 	len1 = tagList.size();
 	i1 = i2 = 0;
+	selname = sel->name;
+	if(!selname)
+		selname = "?";
+	debugPrint(4, "testing selector %s %d %d", selname, len1, len2);
+
 	while(i1 < len1 && i2 < len2) {
 	t = tagList[i1++];
 	if(t->action != TAGACT_OPTION)
@@ -1223,8 +1229,8 @@ JS::HandleObject oa, int len2)
 			t->jv = oo;
 		}
 
-		t->rchecked = get_property_bool(oo, "defaultChecked");
-		check2 = get_property_bool(oo, "checked");
+		t->rchecked = get_property_bool(oo, "defaultSelected");
+		check2 = get_property_bool(oo, "selected");
 		if(t->checked && !check2) {
 			--sel->lic;
 			t->checked = check2;
@@ -1235,7 +1241,7 @@ JS::HandleObject oa, int len2)
 			t->checked = check2;
 			changed = true;
 		}
-		s = get_property_string(oo, "name");
+		s = get_property_string(oo, "text");
 		if(s && !t->name || !stringEqual(t->name, s)) {
 			nzFree(t->name);
 			t->name = s;
@@ -1268,19 +1274,19 @@ JS::HandleObject oa, int len2)
 			oo = JSVAL_TO_OBJECT(v);
 			t = newTag("option");
 			t->jv = oo;
-			t->name = get_property_string(oo, "name");
+			t->name = get_property_string(oo, "text");
 			t->value = get_property_string(oo, "value");
-			t->checked = get_property_bool(oo, "checked");
+			t->checked = get_property_bool(oo, "selected");
 			if(t->checked)
 				++sel->lic;
-			t->rchecked = get_property_bool(oo, "defaultChecked");
+			t->rchecked = get_property_bool(oo, "defaultSelected");
 			changed = true;
 		}
 	}
 
 	if(!changed)
 return;
-		debugPrint(4, "option list %s has changed", sel->name ? sel->name : EMPTYSTRING);
+		debugPrint(4, "selector %s has changed", selname);
 
 /* If js change the menu, it should have also changed select.value
  * according to the checked options, but did it?

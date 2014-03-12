@@ -413,6 +413,9 @@ Wyoming
 <input type=number maxlength=5 name="zip code" readonly value="&#56;8888">
 <span id=almond></span>
 <table><tr></tr><tr id=pecan></tr></table>
+<!--
+Colors will change with the state, A through M or N through Z.
+-->
 <br>My favorite colors are:
 <select name=colors multiple>
 <option> red
@@ -423,7 +426,6 @@ Wyoming
 <option> indigo
 <option> violet
 <option selected> white
-<-- MSU colors -->
 </select>
 <br>Salary range:
 poverty
@@ -552,6 +554,28 @@ return confirm("All that hard work, are you sure you want to reset?");
 function newSelect(e) {
 alert(e.name + " in " + e.form.name + " has become " +
 e.options[e.selectedIndex].value + " or " + e.value);
+var olist = document.forms.questionnaire.colors.options;
+// this doesn't work because text and value are readonly variables.
+// I need to replace using new Option(), but that isn't implemented yet.
+if(e.value.match(/^[!-M]/)) {
+olist[0].text = "red";
+olist[0].value = "red";
+olist[1].text = "orange";
+olist[1].value = "orange";
+olist[2].text = "yellow";
+olist[2].value = "yellow";
+olist[3].text = "green";
+olist[3].value = "green";
+} else {
+olist[0].text = "pink";
+olist[0].value = "pink";
+olist[1].text = "tan";
+olist[1].value = "tan";
+olist[2].text = "silver";
+olist[2].value = "silver";
+olist[3].text = "gold";
+olist[3].value = "gold";
+}
 }
 
 function onlfunc() {
