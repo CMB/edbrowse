@@ -1,6 +1,8 @@
 /* This file is machine-generated, do not hand edit. */
 
 /* sourcefile=html.cpp */
+struct htmlTag *newTag(const char *name);
+char *displayOptions(const struct htmlTag *sel);
 void javaSetsTimeout(int n, const char *jsrc, JS::HandleObject to,
 		     eb_bool isInterval);
 void javaSetsTagVar(JS::HandleObject v, const char *val);
@@ -50,3 +52,4 @@ void link_onunload_onclick(JS::HandleObject jv);
 eb_bool handlerPresent(JS::HandleObject ev, const char *name);
 /* print a message and destroy the js set up for a session */
 void javaSessionFail();
+void rebuildSelectors(void);

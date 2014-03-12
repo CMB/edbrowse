@@ -1112,15 +1112,12 @@ javaSessionFail();
 return NULL;
 }
 /* option.form = select.form */
-	if (JS_GetProperty(cw->jss->jcx, ev, "form", vv.address()) == JS_FALSE)
-{
-javaSessionFail();
-return NULL;
-}
+	if (JS_GetProperty(cw->jss->jcx, ev, "form", vv.address()) == JS_TRUE) {
 	if (JS_SetProperty(cw->jss->jcx, oo, "form", vv.address()) == JS_FALSE)
 {
 javaSessionFail();
 return NULL;
+}
 }
 	return oo;
 }				/* establish_js_option */
@@ -1187,6 +1184,116 @@ eb_bool handlerPresent(JS::HandleObject ev, const char *name)
 }				/* handlerPresent */
 
 /* rebuild html tags if javascript has changed the options out from under you */
+static void rebuildSelector(struct htmlTag *sel,
+JS::HandleObject oa, int len2)
+{
+	int i1, i2, len1;
+	eb_bool check2;
+	char *s;
+	bool changed = false;
+	struct htmlTag *t;
+	JS::RootedValue v(cw->jss->jcx);
+	JS::RootedObject oo(cw->jss->jcx, NULL);	/* option object */
+
+	len1 = tagList.size();
+	i1 = i2 = 0;
+	while(i1 < len1 && i2 < len2) {
+	t = tagList[i1++];
+	if(t->action != TAGACT_OPTION)
+			continue;
+		if(t->controller != sel)
+			continue;
+
+/* find the corresponding option object */
+		if (JS_GetElement(cw->jss->jcx, oa, i2, v.address()) == JS_FALSE) {
+/* Wow this shouldn't happen. */
+/* Guess I'll just pretend the array stops here. */
+			len2 = i2;
+			--i1;
+			break;
+		}
+		oo = JSVAL_TO_OBJECT(v);
+		++i2;
+
+/* perhaps the entire object has been replaced */
+		if(t->jv != oo) {
+/* Ok, jv is a rooted variable, set to object o1, and then we set it to o2,
+ * does the assignment operator unroot o1 and then root o2?
+ * Without reading the mozilla code, I'm going to assume that it does. */
+			t->jv = oo;
+		}
+
+		t->rchecked = get_property_bool(oo, "defaultChecked");
+		check2 = get_property_bool(oo, "checked");
+		if(t->checked && !check2) {
+			--sel->lic;
+			t->checked = check2;
+			changed = true;
+		}
+		if(!t->checked && check2) {
+			++sel->lic;
+			t->checked = check2;
+			changed = true;
+		}
+		s = get_property_string(oo, "name");
+		if(s && !t->name || !stringEqual(t->name, s)) {
+			nzFree(t->name);
+			t->name = s;
+			changed = true;
+		}
+		s = get_property_string(oo, "value");
+		if(s && !t->value || !stringEqual(t->value, s)) {
+			nzFree(t->value);
+			t->value = s;
+		}
+	}
+
+/* one list or the other or both has run to the end */
+	if(i2 == len2) {
+		for(; i1<len1; ++i1) {
+			t = tagList[i1];
+			if(t->action != TAGACT_OPTION)
+					continue;
+				if(t->controller != sel)
+					continue;
+				t->jv. ~ HeapRootedObject();
+				t->jv = 0;
+				t->controller = 0;
+			changed = true;
+		}
+	} else if(i1 == len1) {
+		for(; i2<len2; ++i2) {
+			if (JS_GetElement(cw->jss->jcx, oa, i2, v.address()) == JS_FALSE)
+				break;
+			oo = JSVAL_TO_OBJECT(v);
+			t = newTag("option");
+			t->jv = oo;
+			t->name = get_property_string(oo, "name");
+			t->value = get_property_string(oo, "value");
+			t->checked = get_property_bool(oo, "checked");
+			if(t->checked)
+				++sel->lic;
+			t->rchecked = get_property_bool(oo, "defaultChecked");
+			changed = true;
+		}
+	}
+
+	if(!changed)
+return;
+		debugPrint(4, "option list %s has changed", sel->name ? sel->name : EMPTYSTRING);
+
+/* If js change the menu, it should have also changed select.value
+ * according to the checked options, but did it?
+ * Don't know, so I'm going to do it. */
+	s = displayOptions(sel);
+	if(!s)
+		s = EMPTYSTRING;
+	nzFree(sel->value);
+	sel->value = s;
+	set_property_string(sel->jv, "value", s);
+	updateFieldInBuffer(sel->seqno, s, parsePage ? 0 : 2, eb_false);
+} /* rebuildSelector */
+
 void rebuildSelectors(void)
 {
 	int i1;
@@ -1195,7 +1302,6 @@ SWITCH_COMPARTMENT();
 	JS::RootedObject oa(cw->jss->jcx, NULL);	/* option array */
 	JS::RootedValue v(cw->jss->jcx);
 	int len; /* length of option array */
-	eb_bool changed = eb_false;
 
 	for (i1 = 0; i1 < tagList.size(); ++i1) {
 		t = tagList[i1];
@@ -1213,6 +1319,7 @@ SWITCH_COMPARTMENT();
 		len = get_property_int(oa, "length");
 		if(len < 0)
 			continue;
+		rebuildSelector(t, oa, len);
 	}
 
 } /* rebuildSelectors */
