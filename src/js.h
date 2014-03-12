@@ -61,6 +61,28 @@ struct htmlTag {
 	const char *inner;	/* for inner html */
 };
 
+/* htmlTag.action */
+enum {
+	TAGACT_ZERO, TAGACT_A, TAGACT_INPUT, TAGACT_TITLE, TAGACT_TA,
+	TAGACT_BUTTON, TAGACT_SELECT, TAGACT_OPTION,
+	TAGACT_NOP, TAGACT_JS, TAGACT_H, TAGACT_SUB, TAGACT_SUP,
+	TAGACT_DW, TAGACT_BODY, TAGACT_HEAD,
+	TAGACT_MUSIC, TAGACT_IMAGE, TAGACT_BR, TAGACT_IBR, TAGACT_P,
+	TAGACT_BASE, TAGACT_META, TAGACT_PRE,
+	TAGACT_DT, TAGACT_LI, TAGACT_HR, TAGACT_TABLE, TAGACT_TR, TAGACT_TD,
+	TAGACT_DIV, TAGACT_SPAN,
+	TAGACT_FORM, TAGACT_FRAME,
+	TAGACT_MAP, TAGACT_AREA, TAGACT_SCRIPT, TAGACT_EMBED, TAGACT_OBJ,
+};
+
+/* htmlTag.itype */
+enum {
+	INP_RESET, INP_BUTTON, INP_IMAGE, INP_SUBMIT,
+	INP_HIDDEN,
+	INP_TEXT, INP_PW, INP_NUMBER, INP_FILE,
+	INP_SELECT, INP_TA, INP_RADIO, INP_CHECKBOX,
+};
+
 /* The list of html tags for the current window.
  * I don't think we ever need look at the tags in some other window. */
 #define tagList (*((vector<struct htmlTag *> *)(cw->tags)))
