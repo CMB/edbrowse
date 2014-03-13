@@ -1273,6 +1273,7 @@ JS::HandleObject oa, int len2)
 				break;
 			oo = JSVAL_TO_OBJECT(v);
 			t = newTag("option");
+			t->controller = sel;
 			t->jv = oo;
 			t->name = get_property_string(oo, "text");
 			t->value = get_property_string(oo, "value");

@@ -890,6 +890,42 @@ return JS_FALSE;
 	return JS_TRUE;
 }
 
+static JSBool option_ctor(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	char *text = 0;
+	char *value = 0;
+	JS::RootedString str(cx);
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	JSObject & callee = args.callee();
+	jsval callee_val = JS::ObjectValue(callee);
+	JS::RootedObject newopt(cx,
+				JS_NewObjectForConstructor(cx, &option_class,
+							   &callee_val));
+if ((JSObject *) newopt == NULL)
+{
+javaSessionFail();
+return JS_FALSE;
+}
+	if (args.length() > 0 && (str = JS_ValueToString(cx, args[0]))) {
+		text = our_JSEncodeString(str);
+	}
+	if (args.length() > 1 && (str = JS_ValueToString(cx, args[1]))) {
+		value = transcode_get_js_bytes(str);
+	}
+if(text) {
+	establish_property_string(newopt, "text", text, eb_true);
+nzFree(text);
+}
+if(value) {
+	establish_property_string(newopt, "value", value, eb_true);
+nzFree(value);
+}
+	establish_property_bool(newopt, "selected", eb_false, eb_false);
+	establish_property_bool(newopt, "defaultSelected", eb_false, eb_true);
+	args.rval().set(OBJECT_TO_JSVAL(newopt));
+	return JS_TRUE;
+}				/* option_ctor */
+
 static struct DOMCLASS domClasses[] = {
 	{&element_class, element_methods, element_ctor, 0},
 	{&form_class, form_methods},
@@ -906,7 +942,7 @@ static struct DOMCLASS domClasses[] = {
 	{&span_class},
 	{&trow_class},
 	{&cell_class},
-	{&option_class},
+	{&option_class, 0, option_ctor, 2},
 	{0}
 };
 

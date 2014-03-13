@@ -624,7 +624,7 @@ void jsdw(void)
 		cw->dw_l = 0;
 	}
 
-//	rebuildSelectors();
+	rebuildSelectors();
 }				/* jsdw */
 
 static void htmlInput(void)

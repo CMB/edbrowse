@@ -413,19 +413,14 @@ Wyoming
 <input type=number maxlength=5 name="zip code" readonly value="&#56;8888">
 <span id=almond></span>
 <table><tr></tr><tr id=pecan></tr></table>
-<!--
 Colors will change with the state, A through M or N through Z.
--->
 <br>My favorite colors are:
 <select name=colors multiple>
-<option> red
-<option> orange
-<option> yellow
-<option selected> green
-<option> blue
-<option> indigo
-<option> violet
-<option selected> white
+<option value=r> red
+<option value=o> orange
+<option value=y> yellow
+<option selected value=g> green
+<option selected value=w> white
 </select>
 <br>Salary range:
 poverty
@@ -555,26 +550,32 @@ function newSelect(e) {
 alert(e.name + " in " + e.form.name + " has become " +
 e.options[e.selectedIndex].value + " or " + e.value);
 var olist = document.forms.questionnaire.colors.options;
-// this doesn't work because text and value are readonly variables.
-// I need to replace using new Option(), but that isn't implemented yet.
+olist.length = 0;
+var oo; // option object
 if(e.value.match(/^[!-M]/)) {
-olist[0].text = "red";
-olist[0].value = "red";
-olist[1].text = "orange";
-olist[1].value = "orange";
-olist[2].text = "yellow";
-olist[2].value = "yellow";
-olist[3].text = "green";
-olist[3].value = "green";
+oo = new Option("red", "r");
+olist[0] = oo;
+oo = new Option("orange", "o");
+olist[1] = oo;
+oo = new Option("yellow", "y");
+olist[2] = oo;
+oo = new Option("green", "g");
+oo.selected = true;
+olist[3] = oo;
+oo = new Option("white", "w");
+oo.selected = true;
+olist[4] = oo;
 } else {
-olist[0].text = "pink";
-olist[0].value = "pink";
-olist[1].text = "tan";
-olist[1].value = "tan";
-olist[2].text = "silver";
-olist[2].value = "silver";
-olist[3].text = "gold";
-olist[3].value = "gold";
+oo = new Option("pink", "p");
+olist[0] = oo;
+oo = new Option("tan", "t");
+olist[1] = oo;
+oo = new Option("silver", "s");
+oo.selected = true;
+olist[2] = oo;
+oo = new Option("copper", "c");
+oo.selected = true;
+olist[3] = oo;
 }
 }
 
