@@ -1203,6 +1203,8 @@ JS::HandleObject oa, int len2)
 		selname = "?";
 	debugPrint(4, "testing selector %s %d %d", selname, len1, len2);
 
+	sel->lic = (sel->multiple ? 0 : -1);
+
 	while(i1 < len1 && i2 < len2) {
 	t = tagList[i1++];
 	if(t->action != TAGACT_OPTION)
@@ -1219,7 +1221,6 @@ JS::HandleObject oa, int len2)
 			break;
 		}
 		oo = JSVAL_TO_OBJECT(v);
-		++i2;
 
 /* perhaps the entire object has been replaced */
 		if(t->jv != oo) {
@@ -1231,16 +1232,14 @@ JS::HandleObject oa, int len2)
 
 		t->rchecked = get_property_bool(oo, "defaultSelected");
 		check2 = get_property_bool(oo, "selected");
-		if(t->checked && !check2) {
-			--sel->lic;
-			t->checked = check2;
-			changed = true;
+		if(check2) {
+			if(sel->multiple) ++ sel->lic;
+			else sel->lic = i2;
 		}
-		if(!t->checked && check2) {
-			++sel->lic;
-			t->checked = check2;
+		++i2;
+		if(t->checked != check2)
 			changed = true;
-		}
+		t->checked = check2;
 		s = get_property_string(oo, "text");
 		if(s && !t->name || !stringEqual(t->name, s)) {
 			nzFree(t->name);
@@ -1273,13 +1272,16 @@ JS::HandleObject oa, int len2)
 				break;
 			oo = JSVAL_TO_OBJECT(v);
 			t = newTag("option");
+			t->lic = i2;
 			t->controller = sel;
 			t->jv = oo;
 			t->name = get_property_string(oo, "text");
 			t->value = get_property_string(oo, "value");
 			t->checked = get_property_bool(oo, "selected");
-			if(t->checked)
-				++sel->lic;
+			if(t->checked) {
+				if(sel->multiple) ++ sel->lic;
+				else sel->lic = i2;
+			}
 			t->rchecked = get_property_bool(oo, "defaultSelected");
 			changed = true;
 		}
