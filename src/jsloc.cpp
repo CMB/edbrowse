@@ -1245,12 +1245,12 @@ JS::HandleObject oa, int len2)
 			nzFree(t->name);
 			t->name = s;
 			changed = true;
-		}
+		} else nzFree(s);
 		s = get_property_string(oo, "value");
 		if(s && !t->value || !stringEqual(t->value, s)) {
 			nzFree(t->value);
 			t->value = s;
-		}
+		} else nzFree(s);
 	}
 
 /* one list or the other or both has run to the end */
