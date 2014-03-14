@@ -680,6 +680,7 @@ static const char *englishMessages[] = {
 	"input readline()",
 	"JavaScript failure",
 	"Unrecoverable JavaScript error in this session",
+	"onclick handler is not accessible",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
@@ -1341,6 +1342,7 @@ static const char *frenchMessages[] = {
 	0,
 	0,
 	0,
+	"gestionnaire onclick inaccessible",
 };
 
 /* Translation by Cleverson: clever92000@yahoo.com.br */
@@ -2002,6 +2004,7 @@ static const char *brazilianPortugueseMessages[] = {
 	"linha de entrada()",
 	"Falha de Javascript",
 	"Erro não-recuperável de Javascript nesta sessão",
+	"manipulador onclick não está acessível",
 };
 
 /* Translation by Jan Mura: jan.mura@volny.cz */
@@ -2681,6 +2684,7 @@ static const char *polishMessages[] = {
 	"wejście readline()",
 	"awaria JavaScript",
 0,
+	"obsługa 'onclick' nie działa z polem tekstowym",
 };
 
 /* English by default */

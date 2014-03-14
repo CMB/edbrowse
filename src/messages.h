@@ -679,5 +679,6 @@ enum {
 	MSG_InputTTY,
 	MSG_InputReadLine,
 	MSG_JSFailure,
-MSG_JSSessionFail,
+	MSG_JSSessionFail,
+	MSG_StrayOnclick,
 };

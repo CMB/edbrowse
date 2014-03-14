@@ -324,7 +324,7 @@ static void get_js_events(void)
 	if (handlerPresent(topTag->jv, "onclick")) {
 		if ((action == TAGACT_A || action == TAGACT_AREA || action == TAGACT_FRAME) && topTag->href || action == TAGACT_INPUT && (itype <= INP_SUBMIT || itype >= INP_RADIO)) ;	/* ok */
 		else
-			strayClick = eb_true;
+			browseError(MSG_StrayOnclick);
 	}
 	if (handlerPresent(topTag->jv, "onchange")) {
 		if (action != TAGACT_INPUT && action != TAGACT_SELECT
@@ -2042,6 +2042,7 @@ unparen:
 		newstr += hnum;
 endtag:
 		lastact = action;
+#if 0
 		if (strayClick) {
 			topTag->clickable = eb_true;
 			a_text = eb_false;
@@ -2050,6 +2051,7 @@ endtag:
 			sprintf(hnum, "%c%d{", InternalCodeChar, topTag->seqno);
 			newstr += hnum;
 		}
+#endif
 	}			/* loop over html string */
 
 	if (currentA) {
