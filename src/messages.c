@@ -2850,7 +2850,7 @@ void setError(int msg, ...)
 
 /* sanity check */
 	if (strlen(errorMsg) >= sizeof(errorMsg)) {
-		i_printf(63, strlen(errorMsg));
+		i_printf(MSG_ErrorMessageLong, strlen(errorMsg));
 		puts(errorMsg);
 		exit(1);
 	}
@@ -2861,7 +2861,7 @@ void showError(void)
 	if (errorMsg[0])
 		puts(errorMsg);
 	else
-		i_puts(106);
+		i_puts(MSG_NoErrors);
 }				/* showError */
 
 void showErrorConditional(char cmd)
@@ -2869,7 +2869,7 @@ void showErrorConditional(char cmd)
 	if (helpMessagesOn || strchr(showerror_cmd, cmd))
 		showError();
 	else
-		printf("?\n");
+		puts("?");
 }				/* showErrorConditional */
 
 void showErrorAbort(void)
@@ -2885,10 +2885,10 @@ void browseError(int msg, ...)
 	if (browseLocal != 1)
 		return;
 	if (browseLine) {
-		i_printf(64, browseLine);
+		i_printf(MSG_LineX, browseLine);
 		cw->labels[4] = browseLine;
 	} else
-		i_printf(65);
+		i_printf(MSG_BrowseError);
 	va_start(p, msg);
 	vprintf(getString(msg), p);
 	va_end(p);
@@ -2903,7 +2903,7 @@ void runningError(int msg, ...)
 	if (ismc)
 		return;
 	if (browseLine) {
-		i_printf(64, browseLine);
+		i_printf(MSG_LineX, browseLine);
 		cw->labels[4] = browseLine;
 	}
 	va_start(p, msg);
