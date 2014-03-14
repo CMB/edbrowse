@@ -1027,14 +1027,14 @@ return NULL;
 	return out_str;
 }				/* get_property_string */
 
-int get_property_int(JS::HandleObject jv, const char *name)
+int get_property_number(JS::HandleObject jv, const char *name)
 {
 	SWITCH_COMPARTMENT(-1);
 	js::RootedValue v(cw->jss->jcx);
 	if (JS_GetProperty(cw->jss->jcx, jv, name, v.address()) == JS_FALSE)
 return -1;
 return JSVAL_TO_INT(v);
-}				/* get_property_int */
+}				/* get_property_number */
 
 eb_bool get_property_bool(JS::HandleObject jv, const char *name)
 {
@@ -1301,6 +1301,9 @@ return;
 	sel->value = s;
 	set_property_string(sel->jv, "value", s);
 	updateFieldInBuffer(sel->seqno, s, parsePage ? 0 : 2, eb_false);
+
+	if(!sel->multiple)
+		set_property_number(sel->jv, "selectedIndex", sel->lic);
 } /* rebuildSelector */
 
 void rebuildSelectors(void)
@@ -1325,7 +1328,7 @@ SWITCH_COMPARTMENT();
 		if (JS_GetProperty(cw->jss->jcx, t->jv, "options", v.address()) == JS_FALSE)
 			continue;
 		oa = JSVAL_TO_OBJECT(v);
-		len = get_property_int(oa, "length");
+		len = get_property_number(oa, "length");
 		if(len < 0)
 			continue;
 		rebuildSelector(t, oa, len);
