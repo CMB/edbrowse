@@ -296,8 +296,8 @@ Yes, some of this code looks like it was written, well,
 in my spare time; and it was, because I needed this tool desperately.
 No careful methodology, just "Gitter Duhn".
 
-Along with some cleanup, and even some modest enhancements,
-edbrowse really needs a rewrite.
+Along with some cleanup, and even some modest enhancements, edbrowse
+really needs a rewrite, at least with respect to browsing and javascript.
 Today, it takes html text and tags, and builds
 javascript objects to go along with those tags; and it builds the screen,
 (I'll call it a screen, it's really a text buffer),
@@ -339,6 +339,7 @@ Version 4.2.
 After this, enhance the DOM with the createElement methods.
 This lets javascript create its own tables, paragraphs, lists, images, etc,
 and yes, some websites do indeed do this.
+https://developer.mozilla.org/en/docs/Traversing_an_HTML_table_with_JavaScript_and_DOM_Interfaces
 Version 4.3.
 
 Then, stop turning html tags into javascript objects by hand;
@@ -348,4 +349,9 @@ or something along those lines.
 We have to implement all this in DOM JS eventually, so once this is done,
 why not take advantage of it.
 Version 4.4.
+
+The beginning of this new approach can bee seen in rebuildSelector() in jsloc.cpp.
+If javascript rebuilds a dropdown list of options, that is detected,
+and mapped back into html tags, and the user is notified.
+See jsrt states and colors for this feature.
 
