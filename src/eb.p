@@ -77,6 +77,9 @@ eb_bool addWebAuthorization(const char *url, int realm, const char *credentials,
 			    eb_bool proxy);
 
 /* sourcefile=http.c */
+size_t
+eb_curl_callback(char *incoming, size_t size, size_t nitems,
+		 struct eb_curl_callback_data *data);
 char *extractHeaderParam(const char *str, const char *item);
 time_t parseHeaderDate(const char *date);
 eb_bool parseRefresh(char *ref, int *delay_p);
@@ -86,6 +89,7 @@ eb_bool httpConnect(const char *from, const char *url);
 void allIPs(void);
 void setHTTPLanguage(const char *lang);
 void my_curl_init(void);
+void ebcurl_setError(CURLcode curlret, const char *url);
 
 /* sourcefile=messages.c */
 void selectLanguage(void);

@@ -324,15 +324,149 @@ static int mailstring_l;
 static char *mailu8;
 static int mailu8_l;
 
+static struct eb_curl_callback_data callback_data = {
+	&mailstring, &mailstring_l
+};
+
+static CURL *newFetchmailHandle(const char *mailbox, const char *username,
+				const char *password)
+{
+	CURLcode res;
+	CURL *handle = curl_easy_init();
+	if (!handle)
+		i_printfExit(MSG_LibcurlNoInit);
+
+	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, eb_curl_callback);
+	curl_easy_setopt(handle, CURLOPT_WRITEDATA, &callback_data);
+	res = curl_easy_setopt(handle, CURLOPT_CAINFO, sslCerts);
+	if (res != CURLE_OK)
+		i_printfExit(MSG_LibcurlNoInit);
+
+	curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, verifyCertificates);
+	res = curl_easy_setopt(handle, CURLOPT_USERNAME, username);
+	if (res != CURLE_OK) {
+		ebcurl_setError(res, mailbox);
+		showErrorAbort();
+	}
+
+	res = curl_easy_setopt(handle, CURLOPT_PASSWORD, password);
+	if (res != CURLE_OK) {
+		ebcurl_setError(res, mailbox);
+		showErrorAbort();
+	}
+
+	return handle;
+}				/* newFetchmailHandle */
+
+static char *get_mailbox_url(const struct MACCOUNT *account)
+{
+	const char *scheme = "pop3";
+	char *url = NULL;
+
+	if (account->inssl)
+		scheme = "pop3s";
+
+	if (asprintf
+	    (&url, "%s://%s:%d/", scheme, account->inurl,
+	     account->inport) == -1) {
+/* The byte count is a little white lie / guess, we don't know
+ * how much asprintf *really* requested. */
+		i_printfExit(MSG_MemAllocError,
+			     strlen(scheme) + strlen(account->inurl) + 8);
+	}
+	return url;
+}				/* get_mailbox_url */
+
+static CURLcode fetchOneMessage(CURL * handle, const char *message_url,
+				int message_number)
+{
+	CURLcode res = CURLE_OK;
+
+	res = curl_easy_setopt(handle, CURLOPT_URL, message_url);
+	if (res != CURLE_OK)
+		return res;
+	res = curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, NULL);
+	if (res != CURLE_OK)
+		return res;
+	res = curl_easy_setopt(handle, CURLOPT_NOBODY, 0L);
+	if (res != CURLE_OK)
+		return res;
+
+	res = curl_easy_perform(handle);
+	if (res != CURLE_OK)
+		return res;
+
+/* Remove DOS newlines. */
+	int j, k;
+	for (j = k = 0; j < mailstring_l; j++) {
+		if (mailstring[j] == '\r' && j < mailstring_l - 1
+		    && mailstring[j + 1] == '\n')
+			continue;
+		mailstring[k++] = mailstring[j];
+	}
+
+/* got the file, save it in unread */
+	sprintf(umf_end, "%d", unreadMax + message_number);
+	umfd = open(umf, O_WRONLY | O_TEXT | O_CREAT, 0666);
+	if (umfd < 0)
+		i_printfExit(MSG_NoCreate, umf);
+	if (write(umfd, mailstring, mailstring_l) < mailstring_l)
+		i_printfExit(MSG_NoWrite, umf);
+	close(umfd);
+
+	return res;
+}				/* fetchOneMessage */
+
+static CURLcode deleteOneMessage(CURL * handle, const char *message_url)
+{
+	CURLcode res = curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "DELE");
+
+	if (res != CURLE_OK)
+		return res;
+	res = curl_easy_setopt(handle, CURLOPT_NOBODY, 1L);
+	if (res != CURLE_OK)
+		return res;
+	res = curl_easy_setopt(handle, CURLOPT_NOBODY, 1L);
+	if (res != CURLE_OK)
+		return res;
+	res = curl_easy_perform(handle);
+
+	return res;
+}				/* deleteOneMessage */
+
+static CURLcode count_messages(CURL * handle, const char *mailbox,
+			       int *message_count)
+{
+	CURLcode res = curl_easy_setopt(handle, CURLOPT_URL, mailbox);
+	int i, num_newlines = 0;
+
+	if (res != CURLE_OK)
+		return res;
+
+	res = curl_easy_perform(handle);
+	if (res != CURLE_OK)
+		return res;
+
+	for (i = 0; i < mailstring_l; i++)
+		if (mailstring[i] == '\n')
+			num_newlines++;
+
+	*message_count = num_newlines;
+	return CURLE_OK;
+}				/* count_messages */
+
 /* Returns number of messages fetched */
 int fetchMail(int account)
 {
 	const struct MACCOUNT *a = accounts + account - 1;
 	const char *login = a->login;
 	const char *pass = a->password;
-	const char *host = a->inurl;
-	int nmsgs, m, j, k;
 	int nfetch = 0;		/* number of messages actually fetched */
+	CURLcode res_curl = CURLE_OK;
+	char *mailbox_url = get_mailbox_url(a);
+	const char *url_for_error = mailbox_url;
+	char *message_url = NULL;
+	int message_count = 0, message_number;
 
 	if (!mailDir)
 		i_printfExit(MSG_NoMailDir);
@@ -347,146 +481,43 @@ int fetchMail(int account)
 	unreadBase = 0;
 	unreadStats();
 
-	if (!mailConnect(host, a->inport, a->inssl))
-		showErrorAbort();
-	if (!mailGetLine())
-		showErrorAbort();
-	if (memcmp(serverLine, "+OK ", 4)) {
-		i_printf(MSG_BadPopIntro, serverLine);
-		mailClose();
-		return nfetch;
-	}
-	sprintf(serverLine, "user %s%s", login, eol);
-	mailPutGetError(serverLine);
-	if (pass) {		/* I think this is always required */
-		sprintf(serverLine, "pass %s%s", pass, eol);
-		mailPutGetError(serverLine);
-	}			/* password */
-	if (memcmp(serverLine, "+OK", 3)) {
-		i_printf(MSG_PopNotComplete, serverLine);
-		mailClose();
-		return nfetch;
-	}
+	mailstring = initString(&mailstring_l);
+	CURL *mail_handle = newFetchmailHandle(mailbox_url, login, pass);
+	res_curl = count_messages(mail_handle, mailbox_url, &message_count);
+	if (res_curl != CURLE_OK)
+		goto fetchmail_cleanup;
 
-/* How many mail messages? */
-	mailPutGetError("stat\r\n");
-	if (memcmp(serverLine, "+OK ", 4)) {
-		i_printf(MSG_NoStatusMailBox, serverLine);
-		mailClose();
-		return nfetch;
-	}
-	nmsgs = atoi(serverLine + 4);
-	if (!nmsgs) {
-		mailClose();
-		return nfetch;
-	}
-
-	for (m = 1; m <= nmsgs; ++m) {
-		char retrbuf[5000];
-		eb_bool retr1;
-
-/* Grab the message */
-		sprintf(serverLine, "retr %d%s", m, eol);
-		if (!mailPutLine(serverLine, eb_false))
-			showErrorAbort();
-
-		mailstring = initString(&mailstring_l);
-		retr1 = eb_true;
-		while (eb_true) {
-			int nr;
-			if (a->inssl)
-				nr = ssl_read(retrbuf, sizeof(retrbuf));
-			else
-				nr = tcp_read(mssock, retrbuf, sizeof(retrbuf));
-			if (nr <= 0) {
-				i_printf(MSG_ErrorReadMess, errno);
-				mailClose();
-				nzFree(mailstring);
-				return nfetch;
-			}
-
-			if (retr1) {
-/* add null, to make it easy to print the error message if necessary */
-				if (nr < sizeof(retrbuf))
-					retrbuf[nr] = 0;
-				if (memcmp(retrbuf, "+OK", 3)) {
-					i_printf(MSG_ErrorFetchMess, m,
-						 retrbuf);
-					mailClose();
-					nzFree(mailstring);
-					return nfetch;
-				}
-
-				j = 3;	/* skip past ok */
-				while (retrbuf[j] != '\n')
-					++j;
-				++j;
-				nr -= j;
-				memmove(retrbuf, retrbuf + j, nr);
-				retr1 = eb_false;
-			}
-
-			if (nr)
-				stringAndBytes(&mailstring, &mailstring_l,
-					       retrbuf, nr);
-
-/* . by itself on a line ends the transmission */
-			j = mailstring_l - 1;
-			if (j < 0)
-				continue;
-			if (mailstring[j] != '\n')
-				continue;
-			--j;
-			if (j >= 0 && mailstring[j] == '\r')
-				--j;
-			if (j < 0)
-				continue;
-			if (mailstring[j] != '.')
-				continue;
-			if (!j)
-				break;
-			if (mailstring[j - 1] == '\n')
-				break;
+	for (message_number = 1; message_number <= message_count;
+	     message_number++) {
+		if (asprintf(&message_url, "%s%u", mailbox_url, message_number)
+		    == -1) {
+/* Again, the byte count in the error message is a bit of a fib. */
+			i_printfExit(MSG_MemAllocError,
+				     strlen(mailbox_url) + 11);
 		}
-		mailstring_l = j;
-
-/* get rid of the dos returns, and dot strip */
-		for (j = k = 0; j < mailstring_l; ++j) {
-			if (!j && mailstring[j] == '.')
-				continue;
-			if (j && mailstring[j] == '.'
-			    && mailstring[j - 1] == '\n')
-				continue;
-			if (mailstring[j] == '\r' && j < mailstring_l - 1 &&
-			    mailstring[j + 1] == '\n')
-				continue;
-			mailstring[k++] = mailstring[j];
-		}
-		mailstring_l = k;
-		mailstring[k] = 0;
-
-/* got the file, save it in unread */
-		sprintf(umf_end, "%d", unreadMax + m);
-		umfd = open(umf, O_WRONLY | O_TEXT | O_CREAT, 0666);
-		if (umfd < 0)
-			i_printfExit(MSG_NoCreate, umf);
-		if (write(umfd, mailstring, mailstring_l) < mailstring_l)
-			i_printfExit(MSG_NoWrite, umf);
-		close(umfd);
-		++nfetch;
 		nzFree(mailstring);
-		mailstring = 0;
+		mailstring = initString(&mailstring_l);
+		res_curl =
+		    fetchOneMessage(mail_handle, message_url, message_number);
+		if (res_curl != CURLE_OK)
+			goto fetchmail_cleanup;
+		nfetch++;
+		res_curl = deleteOneMessage(mail_handle, message_url);
+		if (res_curl != CURLE_OK)
+			goto fetchmail_cleanup;
+		nzFree(message_url);
+		message_url = NULL;
+	}
 
-		sprintf(serverLine, "dele %d%s", m, eol);
-		if (!mailPutLine(serverLine, eb_false))
-			showErrorAbort();
-		if (!mailGetLine())
-			i_printfExit(MSG_MailTimeOver);
-		if (memcmp(serverLine, "+OK", 3))
-			i_printfExit(MSG_UnableDelMail, serverLine);
-	}			/* loop over mail messages */
-
-	mailClose();
+fetchmail_cleanup:
+	if (message_url)
+		url_for_error = message_url;
+	ebcurl_setError(res_curl, url_for_error);
+	curl_easy_cleanup(mail_handle);
+	nzFree(message_url);
+	nzFree(mailbox_url);
+	nzFree(mailstring);
+	mailstring = initString(&mailstring_l);
 	return nfetch;
 }				/* fetchMail */
 
@@ -2198,3 +2229,5 @@ eb_bool setupReply(eb_bool all)
 	nzFree(out);
 	return rc;
 }				/* setupReply */
+
+/* Callback used by libcurl. Writes data to mailstring. */

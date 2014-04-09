@@ -24,7 +24,10 @@ int serverDataLen;
 static char errorText[CURL_ERROR_SIZE + 1];
 static char *httpLanguage;
 
-static void curl_setError(CURLcode curlret, const char *url);
+static struct eb_curl_callback_data callback_data = {
+	&serverData, &serverDataLen
+};
+
 static eb_bool ftpConnect(const char *url);
 static eb_bool read_credentials(char *buffer);
 static void init_header_parser(void);
@@ -39,14 +42,15 @@ static const char *message_for_response_code(int code);
 #define CHUNKSIZE 1000000
 
 /* Callback used by libcurl. Writes data to serverData. */
-static size_t
-eb_curl_callback(char *incoming, size_t size, size_t nitems, void *unused)
+size_t
+eb_curl_callback(char *incoming, size_t size, size_t nitems,
+		 struct eb_curl_callback_data *data)
 {
 	size_t num_bytes = nitems * size;
 	int dots1, dots2;
-	dots1 = serverDataLen / CHUNKSIZE;
-	stringAndBytes(&serverData, &serverDataLen, incoming, num_bytes);
-	dots2 = serverDataLen / CHUNKSIZE;
+	dots1 = *(data->length) / CHUNKSIZE;
+	stringAndBytes(data->buffer, data->length, incoming, num_bytes);
+	dots2 = *(data->length) / CHUNKSIZE;
 	if (dots1 < dots2) {
 		for (; dots1 < dots2; ++dots1)
 			putchar('.');
@@ -736,7 +740,7 @@ curl_fail:
 	if (custom_headers)
 		curl_slist_free_all(custom_headers);
 	if (curlret != CURLE_OK)
-		curl_setError(curlret, urlcopy);
+		ebcurl_setError(curlret, urlcopy);
 
 	if (transfer_status == eb_false) {
 		nzFree(serverData);
@@ -885,7 +889,7 @@ static void parse_directory_listing(void)
 	nzFree(incomingData);
 }				/* parse_directory_listing */
 
-static void curl_setError(CURLcode curlret, const char *url)
+void ebcurl_setError(CURLcode curlret, const char *url)
 {
 	const char *host = NULL, *protocol = NULL;
 	protocol = getProtURL(url);
@@ -964,7 +968,7 @@ static void curl_setError(CURLcode curlret, const char *url)
 		setError(MSG_CurlCatchAll, curl_easy_strerror(curlret));
 		break;
 	}
-}				/* curl_setError */
+}				/* ebcurl_setError */
 
 /* Like httpConnect, but for ftp */
 static eb_bool ftpConnect(const char *url)
@@ -1024,7 +1028,7 @@ static eb_bool ftpConnect(const char *url)
 ftp_transfer_fail:
 	if (transfer_success == eb_false) {
 		if (curlret != CURLE_OK)
-			curl_setError(curlret, urlcopy);
+			ebcurl_setError(curlret, urlcopy);
 		nzFree(serverData);
 		serverData = 0;
 		serverDataLen = 0;
@@ -1176,6 +1180,7 @@ void my_curl_init(void)
 			 my_curl_safeSocket);
 
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, eb_curl_callback);
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &callback_data);
 	curl_easy_setopt(curl_handle, CURLOPT_HEADERFUNCTION,
 			 curl_header_callback);
 	if (debugLevel >= 4)

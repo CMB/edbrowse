@@ -157,6 +157,11 @@ extern char EMPTYSTRING[];	/* use this whenever you would use "" */
  * Anyways, this array holds up to 10 user agent strings. */
 extern char *userAgents[10], *currentAgent;
 
+struct eb_curl_callback_data {
+	char **buffer;
+	int *length;
+};
+
 struct MACCOUNT {		/* pop3 account */
 	char *login, *password, *from, *reply;
 	char *inurl, *outurl;
