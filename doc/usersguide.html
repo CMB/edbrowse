@@ -2595,15 +2595,15 @@ you can always issue the command again and hope for better luck.
 
 <P>
 By default, edbrowse uses the account name "anonymous" and the password
-"some-user@edbrowse.net" for ftp connections.&nbsp;
+"ftp@example.com" for ftp connections.&nbsp;
 However, you can override this in the url,
 and some web pages take advantage of this feature.&nbsp;
-For example, let's say you want to access the file /etc/passwd on whatever.localdomain.&nbsp;
+For example, let's say you want to access the file /opt/foobar on whatever.localdomain.&nbsp;
 This file isn't readable by anonymous users.&nbsp;
 You have to log in as a real person.&nbsp;
 Within edbrowse, you might use the command:
 <P>
-e ftp://chris:xxx@whatever.localdomain/etc/passwd
+e ftp://chris:xxx@whatever.localdomain/opt/foobar
 
 <P>
 The ftp connection will be made as user "Chris", with password "XXX".
