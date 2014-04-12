@@ -18,6 +18,11 @@ struct {
 	"file", 0, eb_true, eb_true, eb_false}, {
 	"http", 80, eb_false, eb_true, eb_true}, {
 	"https", 443, eb_false, eb_true, eb_true}, {
+	"pop3", 110, eb_false, eb_true, eb_true}, {
+	"pop3s", 995, eb_false, eb_true, eb_true}, {
+	"smtp", 25, eb_false, eb_true, eb_true}, {
+	"submission", 587, eb_false, eb_true, eb_true}, {
+	"smtps", 465, eb_false, eb_true, eb_true}, {
 	"proxy", 3128, eb_false, eb_true, eb_true}, {
 	"ftp", 21, eb_false, eb_true, eb_true}, {
 	"rtsp", 554, eb_false, eb_true, eb_true}, {

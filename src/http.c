@@ -34,8 +34,6 @@ static void init_header_parser(void);
 static size_t curl_header_callback(char *header_line, size_t size, size_t nmemb,
 				   void *unused);
 static char *get_redirect_location(void);
-static int curl_debug_handler(CURL * handle, curl_infotype info_desc,
-			      char *data, size_t size, void *unused);
 static const char *message_for_response_code(int code);
 
 /* Read from a socket, 100K at a time. */
@@ -954,7 +952,7 @@ void ebcurl_setError(CURLcode curlret, const char *url)
 		break;
 
 	case CURLE_FTP_USER_PASSWORD_INCORRECT:
-		setError(MSG_FTPPassword);
+		setError(MSG_LogPass);
 		break;
 
 	case CURLE_FTP_COULDNT_RETR_FILE:
@@ -964,6 +962,11 @@ void ebcurl_setError(CURLcode curlret, const char *url)
 	case CURLE_SSL_CONNECT_ERROR:
 		setError(MSG_SSLConnectError, errorText);
 		break;
+
+	case CURLE_LOGIN_DENIED:
+		setError(MSG_LogPass);
+		break;
+
 	default:
 		setError(MSG_CurlCatchAll, curl_easy_strerror(curlret));
 		break;
@@ -1160,7 +1163,7 @@ static void my_curl_cleanup(void)
 void my_curl_init(void)
 {
 	const unsigned int major = 7;
-	const unsigned int minor = 17;
+	const unsigned int minor = 29;
 	const unsigned int patch = 0;
 	const unsigned int least_acceptable_version =
 	    (major << 16) | (minor << 8) | patch;
@@ -1186,7 +1189,7 @@ void my_curl_init(void)
 	if (debugLevel >= 4)
 		curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1);
 	curl_easy_setopt(curl_handle, CURLOPT_DEBUGFUNCTION,
-			 curl_debug_handler);
+			 ebcurl_debug_handler);
 	curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 0);
 	curl_easy_setopt(curl_handle, CURLOPT_PROGRESSFUNCTION, curl_progress);
 	curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT, webTimeout);
@@ -1478,29 +1481,25 @@ prettify_network_text(const char *text, size_t size, FILE * destination)
  * prefixed with curl> 
  * We may support more of the curl_infotype values soon. */
 
-static int
-curl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
+int
+ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
 		   size_t size, void *unused)
 {
-	eb_bool is_blank_line = eb_true;
-	static eb_bool curlon = eb_true;
-	int i = 0;
-
-	for (i = 0; i < size; i++)
-		if ((data[i] != '\r') && (data[i] != '\n')) {
-			is_blank_line = eb_false;
-			break;
-		}
+	static eb_bool last_curlin = eb_false;
 
 	if (info_desc == CURLINFO_HEADER_OUT) {
 		printf("curl>\n");
 		prettify_network_text(data, size, stdout);
 	} else if (info_desc == CURLINFO_HEADER_IN) {
-		if (curlon)
+		if (!last_curlin)
 			printf("curl<\n");
 		prettify_network_text(data, size, stdout);
-		curlon = is_blank_line;
 	} else;			/* Do nothing.  We don't care about this piece of data. */
 
+	if (info_desc == CURLINFO_HEADER_IN)
+		last_curlin = eb_true;
+	else if(info_desc)
+		last_curlin = eb_false;
+
 	return 0;
-}				/* curl_debug_handler */
+}				/* ebcurl_debug_handler */

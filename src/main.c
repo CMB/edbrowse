@@ -657,6 +657,11 @@ nokeyword:
 			continue;
 		}
 
+		if (stringEqual(s, "nocert") && mailblock == 1) {
+			act->nocert = 1;
+			continue;
+		}
+
 		if (*s == '\x82' && s[1] == 0) {
 			if (mailblock == 1) {
 				++maxAccount;

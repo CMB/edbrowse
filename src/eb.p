@@ -90,6 +90,8 @@ void allIPs(void);
 void setHTTPLanguage(const char *lang);
 void my_curl_init(void);
 void ebcurl_setError(CURLcode curlret, const char *url);
+int ebcurl_debug_handler(CURL * handle, curl_infotype info_desc,
+			      char *data, size_t size, void *unused);
 
 /* sourcefile=messages.c */
 void selectLanguage(void);

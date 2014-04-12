@@ -329,7 +329,7 @@ static struct eb_curl_callback_data callback_data = {
 };
 
 static CURL *newFetchmailHandle(const char *mailbox, const char *username,
-				const char *password)
+				const char *password, int do_certs)
 {
 	CURLcode res;
 	CURL *handle = curl_easy_init();
@@ -338,11 +338,15 @@ static CURL *newFetchmailHandle(const char *mailbox, const char *username,
 
 	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, eb_curl_callback);
 	curl_easy_setopt(handle, CURLOPT_WRITEDATA, &callback_data);
+	if (debugLevel >= 4)
+		curl_easy_setopt(handle, CURLOPT_VERBOSE, 1);
+	curl_easy_setopt(handle, CURLOPT_DEBUGFUNCTION,
+			 ebcurl_debug_handler);
 	res = curl_easy_setopt(handle, CURLOPT_CAINFO, sslCerts);
 	if (res != CURLE_OK)
 		i_printfExit(MSG_LibcurlNoInit);
 
-	curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, verifyCertificates);
+	curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, do_certs);
 	res = curl_easy_setopt(handle, CURLOPT_USERNAME, username);
 	if (res != CURLE_OK) {
 		ebcurl_setError(res, mailbox);
@@ -404,6 +408,7 @@ static CURLcode fetchOneMessage(CURL * handle, const char *message_url,
 			continue;
 		mailstring[k++] = mailstring[j];
 	}
+	mailstring_l = k;
 
 /* got the file, save it in unread */
 	sprintf(umf_end, "%d", unreadMax + message_number);
@@ -438,7 +443,8 @@ static CURLcode count_messages(CURL * handle, const char *mailbox,
 			       int *message_count)
 {
 	CURLcode res = curl_easy_setopt(handle, CURLOPT_URL, mailbox);
-	int i, num_newlines = 0;
+	int i, num_messages = 0;
+	eb_bool last_nl = eb_true;
 
 	if (res != CURLE_OK)
 		return res;
@@ -447,11 +453,17 @@ static CURLcode count_messages(CURL * handle, const char *mailbox,
 	if (res != CURLE_OK)
 		return res;
 
-	for (i = 0; i < mailstring_l; i++)
-		if (mailstring[i] == '\n')
-			num_newlines++;
+	for (i = 0; i < mailstring_l; i++) {
+		if (mailstring[i] == '\n' || mailstring[i] == '\r') {
+			last_nl = eb_true;
+			continue;
+		}
+		if(last_nl && isdigit(mailstring[i]))
+			num_messages++;
+		last_nl = eb_false;
+	}
 
-	*message_count = num_newlines;
+	*message_count = num_messages;
 	return CURLE_OK;
 }				/* count_messages */
 
@@ -482,7 +494,7 @@ int fetchMail(int account)
 	unreadStats();
 
 	mailstring = initString(&mailstring_l);
-	CURL *mail_handle = newFetchmailHandle(mailbox_url, login, pass);
+	CURL *mail_handle = newFetchmailHandle(mailbox_url, login, pass, !a->nocert);
 	res_curl = count_messages(mail_handle, mailbox_url, &message_count);
 	if (res_curl != CURLE_OK)
 		goto fetchmail_cleanup;
@@ -512,7 +524,10 @@ int fetchMail(int account)
 fetchmail_cleanup:
 	if (message_url)
 		url_for_error = message_url;
-	ebcurl_setError(res_curl, url_for_error);
+	if(res_curl != CURLE_OK) {
+		ebcurl_setError(res_curl, url_for_error);
+		showError();
+	}
 	curl_easy_cleanup(mail_handle);
 	nzFree(message_url);
 	nzFree(mailbox_url);

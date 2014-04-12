@@ -167,7 +167,7 @@ struct MACCOUNT {		/* pop3 account */
 	char *inurl, *outurl;
 	int inport, outport;
 	uchar inssl, outssl;
-	char nofetch;
+	char nofetch, nocert;
 };
 
 struct MIMETYPE {
