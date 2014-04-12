@@ -1895,7 +1895,7 @@ static const char *brazilianPortugueseMessages[] = {
 	"%s não é um diretório",
 	"nenhuma conta de e-mail especificada; confira por favor o arquivo de configuração .ebrc",
 	"número de conta inválido; por favor use 1 até %d",
-	"edbrowse  -v    (mostra versão)\nedbrowse -h (esta mensagem)\nedbrowse -c (edita arquivo de configuração)\nedbrowse  [-e] [-d#] -[p]m#    (lê e-mail) \nedbrowse  [-e] [-d#] -m# endereco1 endereco2 ... arquivo [+anexos]\nedbrowse  [-e] [-d#] arquivo1 arquivo2 ...",
+	"edbrowse -v (mostra a versão)\nedbrowse -h (esta mensagem)\nedbrowse -c (edita arquivo de configuração)\nedbrowse [-e] [-d#] -f[#] (recebe cartas)\nedbrowse [-e] [-d#] -[p]m (lê cartas pendentes)\nedbrowse [-e] [-d#] -[p]fm[#] (recebe cartas e lê as cartas pendentes)\nedbrowse [-e] [-d#] -m[#] endereço1 endereço2 ... arquivo [+anexos]\nedbrowse [-e] [-d#] arquivo1 arquivo2 ...",
 	"por favor especifique ao menos um destinatário e o arquivo a enviar",
 	"por favor especifique ao menos um destinatário e o arquivo a enviar, antes dos anexos",
 	"demais arquivos abertos ao mesmo tempo; o limite é %d",
