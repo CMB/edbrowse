@@ -465,7 +465,8 @@ eb_bool httpConnect(const char *from, const char *url)
 
 	if (stringEqualCI(prot, "http") || stringEqualCI(prot, "https")) {
 		;		/* ok for now */
-	} else if (stringEqualCI(prot, "ftp")) {
+	} else if (stringEqualCI(prot, "ftp") ||
+	stringEqualCI(prot, "sftp")) {
 		return ftpConnect(url, user, pass);
 	} else if (mt = findMimeByProtocol(prot)) {
 mimeProcess:
@@ -974,7 +975,7 @@ void ebcurl_setError(CURLcode curlret, const char *url)
 /* Like httpConnect, but for ftp */
 static eb_bool ftpConnect(const char *url, const char *user, const char *pass)
 {
-	const int protLength = 6;	/* length of "ftp://" */
+	int protLength = 6;	/* length of "ftp://" */
 	char *urlcopy = NULL;
 	int urlcopy_l = 0;
 	eb_bool transfer_success = eb_false;
@@ -982,6 +983,9 @@ static eb_bool ftpConnect(const char *url, const char *user, const char *pass)
 	CURLcode curlret = CURLE_OK;
 	char creds_buf[MAXUSERPASS * 2 + 1];
 	size_t creds_len = 0;
+
+/* adjust for sftp, added somewhat after the fact. */
+	if(tolower(url[0]) == 's') ++protLength;
 
 	if (user[0] && pass[0]) {
 		strcpy(creds_buf, user);
@@ -1016,8 +1020,10 @@ static eb_bool ftpConnect(const char *url, const char *user, const char *pass)
 	curlret = curl_easy_perform(curl_handle);
 
 /* Should we run this code on any error condition? */
+/* The SSH error pops up under sftp. */
 	if (curlret == CURLE_FTP_COULDNT_RETR_FILE ||
-	curlret == CURLE_REMOTE_FILE_NOT_FOUND) {
+	curlret == CURLE_REMOTE_FILE_NOT_FOUND ||
+	curlret == CURLE_SSH) {
 		if (has_slash == eb_true)	/* Was a directory. */
 			transfer_success = eb_false;
 		else {		/* try appending a slash. */
