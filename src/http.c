@@ -28,7 +28,7 @@ static struct eb_curl_callback_data callback_data = {
 	&serverData, &serverDataLen
 };
 
-static eb_bool ftpConnect(const char *url);
+static eb_bool ftpConnect(const char *url, const char *user, const char *pass);
 static eb_bool read_credentials(char *buffer);
 static void init_header_parser(void);
 static size_t curl_header_callback(char *header_line, size_t size, size_t nmemb,
@@ -438,6 +438,25 @@ eb_bool httpConnect(const char *from, const char *url)
 	serverDataLen = 0;
 	strcpy(creds_buf, ":");	/* Flush stale username and password. */
 
+/* Pull user password out of the url */
+	user[0] = pass[0] = 0;
+	s = getUserURL(url);
+	if (s) {
+		if (strlen(s) >= sizeof(user) - 2) {
+			setError(MSG_UserNameLong, sizeof(user));
+			return eb_false;
+		}
+		strcpy(user, s);
+	}
+	s = getPassURL(url);
+	if (s) {
+		if (strlen(s) >= sizeof(pass) - 2) {
+			setError(MSG_PasswordLong, sizeof(pass));
+			return eb_false;
+		}
+		strcpy(pass, s);
+	}
+
 	prot = getProtURL(url);
 
 /* See if the protocol is a recognized stream */
@@ -449,7 +468,7 @@ eb_bool httpConnect(const char *from, const char *url)
 	if (stringEqualCI(prot, "http") || stringEqualCI(prot, "https")) {
 		;		/* ok for now */
 	} else if (stringEqualCI(prot, "ftp")) {
-		return ftpConnect(url);
+		return ftpConnect(url, user, pass);
 	} else if (mt = findMimeByProtocol(prot)) {
 mimeProcess:
 		cmd = pluginCommand(mt, url, 0);
@@ -475,25 +494,6 @@ mimeProcess:
 		suffix[post - s] = 0;
 		if ((mt = findMimeBySuffix(suffix)) && mt->stream)
 			goto mimeProcess;
-	}
-
-/* Pull user password out of the url */
-	user[0] = pass[0] = 0;
-	s = getUserURL(url);
-	if (s) {
-		if (strlen(s) >= sizeof(user) - 2) {
-			setError(MSG_UserNameLong, sizeof(user));
-			return eb_false;
-		}
-		strcpy(user, s);
-	}
-	s = getPassURL(url);
-	if (s) {
-		if (strlen(s) >= sizeof(pass) - 2) {
-			setError(MSG_PasswordLong, sizeof(pass));
-			return eb_false;
-		}
-		strcpy(pass, s);
 	}
 
 /* "Expect:" header causes some servers to lose.  Disable it. */
@@ -974,13 +974,30 @@ void ebcurl_setError(CURLcode curlret, const char *url)
 }				/* ebcurl_setError */
 
 /* Like httpConnect, but for ftp */
-static eb_bool ftpConnect(const char *url)
+static eb_bool ftpConnect(const char *url, const char *user, const char *pass)
 {
 	const int protLength = 6;	/* length of "ftp://" */
 	char *urlcopy = NULL;
 	int urlcopy_l = 0;
 	eb_bool transfer_success = eb_false;
 	eb_bool has_slash;
+	CURLcode curlret = CURLE_OK;
+	char creds_buf[MAXUSERPASS * 2 + 1];
+	size_t creds_len = 0;
+
+	if (user[0] && pass[0]) {
+		strcpy(creds_buf, user);
+		creds_len = strlen(creds_buf);
+		creds_buf[creds_len] = ':';
+		strcpy(creds_buf + creds_len + 1, pass);
+	} else {
+		strcpy(creds_buf, "anonymous:ftp@example.com");
+	}
+
+	curlret = curl_easy_setopt(curl_handle, CURLOPT_USERPWD, creds_buf);
+	if (curlret != CURLE_OK)
+		goto ftp_transfer_fail;
+
 	serverData = initString(&serverDataLen);
 	urlcopy = initString(&urlcopy_l);
 	stringAndString(&urlcopy, &urlcopy_l, url);
@@ -995,7 +1012,7 @@ static eb_bool ftpConnect(const char *url)
 	if (debugLevel >= 2)
 		i_puts(MSG_FTPDownload);
 
-	CURLcode curlret = curl_easy_setopt(curl_handle, CURLOPT_URL, urlcopy);
+	curlret = curl_easy_setopt(curl_handle, CURLOPT_URL, urlcopy);
 	if (curlret != CURLE_OK)
 		goto ftp_transfer_fail;
 	curlret = curl_easy_perform(curl_handle);
