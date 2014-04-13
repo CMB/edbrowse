@@ -25,7 +25,9 @@ struct {
 	"smtps", 465, eb_false, eb_true, eb_true}, {
 	"proxy", 3128, eb_false, eb_true, eb_true}, {
 	"ftp", 21, eb_false, eb_true, eb_true}, {
-	"sftp", 21, eb_false, eb_true, eb_true}, {
+	"sftp", 22, eb_false, eb_true, eb_true}, {
+	"ftps", 990, eb_false, eb_true, eb_true}, {
+	"tftp", 69, eb_false, eb_true, eb_true}, {
 	"rtsp", 554, eb_false, eb_true, eb_true}, {
 	"pnm", 7070, eb_false, eb_true, eb_true}, {
 	"finger", 79, eb_false, eb_true, eb_true}, {

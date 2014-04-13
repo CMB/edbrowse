@@ -466,6 +466,8 @@ eb_bool httpConnect(const char *from, const char *url)
 	if (stringEqualCI(prot, "http") || stringEqualCI(prot, "https")) {
 		;		/* ok for now */
 	} else if (stringEqualCI(prot, "ftp") ||
+	stringEqualCI(prot, "ftps") ||
+	stringEqualCI(prot, "tftp") ||
 	stringEqualCI(prot, "sftp")) {
 		return ftpConnect(url, user, pass);
 	} else if (mt = findMimeByProtocol(prot)) {
@@ -975,7 +977,7 @@ void ebcurl_setError(CURLcode curlret, const char *url)
 /* Like httpConnect, but for ftp */
 static eb_bool ftpConnect(const char *url, const char *user, const char *pass)
 {
-	int protLength = 6;	/* length of "ftp://" */
+	int protLength;	/* length of "ftp://" */
 	char *urlcopy = NULL;
 	int urlcopy_l = 0;
 	eb_bool transfer_success = eb_false;
@@ -984,15 +986,14 @@ static eb_bool ftpConnect(const char *url, const char *user, const char *pass)
 	char creds_buf[MAXUSERPASS * 2 + 1];
 	size_t creds_len = 0;
 
-/* adjust for sftp, added somewhat after the fact. */
-	if(tolower(url[0]) == 's') ++protLength;
+	protLength = strchr(url, ':') - url + 3;
 
 	if (user[0] && pass[0]) {
 		strcpy(creds_buf, user);
 		creds_len = strlen(creds_buf);
 		creds_buf[creds_len] = ':';
 		strcpy(creds_buf + creds_len + 1, pass);
-	} else {
+	} else if (memEqualCI(url, "ftp", 3)) {
 		strcpy(creds_buf, "anonymous:ftp@example.com");
 	}
 
