@@ -16,8 +16,6 @@
 #include <time.h>
 #include <signal.h>
 
-#define HTTP_MUST_AUTHENTICATE 401
-
 CURL *curl_handle = NULL;
 char *serverData;
 int serverDataLen;
@@ -1017,7 +1015,9 @@ static eb_bool ftpConnect(const char *url, const char *user, const char *pass)
 		goto ftp_transfer_fail;
 	curlret = curl_easy_perform(curl_handle);
 
-	if (curlret == CURLE_FTP_COULDNT_RETR_FILE) {
+/* Should we run this code on any error condition? */
+	if (curlret == CURLE_FTP_COULDNT_RETR_FILE ||
+	curlret == CURLE_REMOTE_FILE_NOT_FOUND) {
 		if (has_slash == eb_true)	/* Was a directory. */
 			transfer_success = eb_false;
 		else {		/* try appending a slash. */
