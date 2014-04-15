@@ -1897,7 +1897,7 @@ unparen:
 				htmlHref("src");
 				if (isJSAlive)
 					topTag->jv =
-					    domLink("Frame", topTag->name, 0,
+					    domLink("Frame", topTag->name, topTag->id,
 						    "src", topTag->href,
 						    "frames", cw->jss->jwin,
 						    eb_false);
