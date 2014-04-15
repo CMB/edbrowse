@@ -128,6 +128,7 @@ static const struct tagInfo elements[] = {
 	{"BR", "a line break", TAGACT_BR, 0, 1, 4},
 	{"P", "a paragraph", TAGACT_NOP, 0, 2, 5},
 	{"DIV", "a divided section", TAGACT_DIV, 3, 5, 0},
+	{"MAP", "a map of images", TAGACT_NOP, 3, 5, 0},
 	{"HTML", "html", TAGACT_NOP, 0, 0, 0},
 	{"BLOCKQUOTE", "a quoted paragraph", TAGACT_NOP, 1, 10, 1},
 	{"H1", "a level 1 header", TAGACT_NOP, 1, 10, 1},
@@ -1914,12 +1915,17 @@ unparen:
 			if (!retainTag)
 				continue;
 			newstr += (action == TAGACT_FRAME ? "\rFrame " : "\r");
-			name = t->name;
-			if (!name)
-				name = altText(t->href);
-			if (!name)
-				name =
-				    (action == TAGACT_FRAME ? "???" : "area");
+			a = 0;
+			if (action == TAGACT_AREA)
+				a = htmlAttrVal(topAttrib, "alt");
+			s = a;
+			if (!s) {
+				s = t->name;
+				if (!s)
+					s = altText(t->href);
+			}
+			if (!s)
+				s = (action == TAGACT_FRAME ? "???" : "area");
 			if (t->href) {
 				strcat(hnum, "{");
 				newstr += hnum;
@@ -1927,7 +1933,8 @@ unparen:
 				t->balanced = eb_true;
 			}
 			if (t->href || action == TAGACT_FRAME)
-				newstr += name;
+				newstr += s;
+			nzFree(a);
 			if (t->href) {
 				newstr += InternalCodeChar;
 				newstr += "0}";
