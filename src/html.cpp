@@ -104,20 +104,59 @@ struct tagInfo {
 	ushort bits;		/* a bunch of boolean attributes */
 };
 
+/*********************************************************************
+Nestability of a tag.
+
+nest = 0:
+Like <input>, where </input> doesn't make any sense.
+</input> is silently tolerated without error,
+but stuff between <input> and </input> isn't really bound up
+as objects under the input tag.
+Some conventions require the close, like <frame></frame>,
+but even here there should be nothing in between, and if there is
+it is a mistake, and is not bound to the frame tag.
+
+nest = 1:
+Like <p> here is a paragraph </p>.
+Semantically there should not be a paragraph inside a paragraph,
+so if you run into another <p> that implicitly closes the previous <p>.
+In other words <p> implies </p><p>.
+Web pages usually close paragraphs properly, but not always lists.
+<ol> <li> item 1 <li> item 2 <li> item 3 </ol>.
+
+nest = 3:
+Strict nesting, like <b> bold text </b>.
+this should close properly, and not out of sequence like <b> <p> </b>.
+
+Closing a tag </foo>:
+If 0 then we don't care.
+If 1 or 3 then back up and find the first open, unbalanced, tag of the same type.
+Close the open tag and all open tags in between.
+
+Opening a tag <foo>:
+If 0 then we don't care.
+If 1 or 3 then push the tag and leave it unbalanced,
+but if 1, back up and find the first unbalanced tag of any type.
+If it is the same type then close off that tag.
+This solves the <li> item 1 <li> item 2 problem,
+but not <li> stuff <p> more stuff <li>
+so it's just not a perfect solution.
+*********************************************************************/
+
 static const struct tagInfo elements[] = {
 	{"BASE", "base reference for relative URLs", TAGACT_BASE, 0, 0, 5},
-	{"A", "an anchor", TAGACT_A, 1, 0, 1},
+	{"A", "an anchor", TAGACT_A, 3, 0, 1},
 	{"INPUT", "an input item", TAGACT_INPUT, 0, 0, 5},
-	{"TITLE", "the title", TAGACT_TITLE, 1, 0, 1},
-	{"TEXTAREA", "an input text area", TAGACT_TA, 1, 0, 1},
-	{"SELECT", "an option list", TAGACT_SELECT, 1, 0, 1},
+	{"TITLE", "the title", TAGACT_TITLE, 3, 0, 1},
+	{"TEXTAREA", "an input text area", TAGACT_TA, 3, 0, 1},
+	{"SELECT", "an option list", TAGACT_SELECT, 3, 0, 1},
 	{"OPTION", "a select option", TAGACT_OPTION, 0, 0, 5},
 	{"SUB", "a subscript", TAGACT_SUB, 3, 0, 0},
 	{"SUP", "a superscript", TAGACT_SUP, 3, 0, 0},
 	{"FONT", "a font", TAGACT_NOP, 3, 0, 0},
 	{"CENTER", "centered text", TAGACT_NOP, 3, 0, 0},
 	{"DOCWRITE", "document.write() text", TAGACT_DW, 0, 0, 0},
-	{"CAPTION", "a caption", TAGACT_NOP, 1, 5, 0},
+	{"CAPTION", "a caption", TAGACT_NOP, 3, 5, 0},
 	{"HEAD", "the html header information", TAGACT_HEAD, 1, 0, 5},
 	{"BODY", "the html body", TAGACT_BODY, 1, 0, 5},
 	{"BGSOUND", "background music", TAGACT_MUSIC, 0, 0, 5},
@@ -126,7 +165,7 @@ static const struct tagInfo elements[] = {
 	{"IMG", "an image", TAGACT_IMAGE, 0, 0, 4},
 	{"IMAGE", "an image", TAGACT_IMAGE, 0, 0, 4},
 	{"BR", "a line break", TAGACT_BR, 0, 1, 4},
-	{"P", "a paragraph", TAGACT_NOP, 0, 2, 5},
+	{"P", "a paragraph", TAGACT_NOP, 1, 2, 5},
 	{"DIV", "a divided section", TAGACT_DIV, 3, 5, 0},
 	{"MAP", "a map of images", TAGACT_NOP, 3, 5, 0},
 	{"HTML", "html", TAGACT_NOP, 0, 0, 0},
@@ -137,9 +176,9 @@ static const struct tagInfo elements[] = {
 	{"H4", "a level 4 header", TAGACT_NOP, 1, 10, 1},
 	{"H5", "a level 5 header", TAGACT_NOP, 1, 10, 1},
 	{"H6", "a level 6 header", TAGACT_NOP, 1, 10, 1},
-	{"DT", "a term", TAGACT_DT, 0, 2, 5},
-	{"DD", "a definition", TAGACT_DT, 0, 1, 5},
-	{"LI", "a list item", TAGACT_LI, 0, 1, 5},
+	{"DT", "a term", TAGACT_DT, 1, 2, 5},
+	{"DD", "a definition", TAGACT_DT, 1, 1, 5},
+	{"LI", "a list item", TAGACT_LI, 1, 1, 5},
 	{"UL", "a bullet list", TAGACT_NOP, 3, 5, 1},
 	{"DIR", "a directory list", TAGACT_NOP, 3, 5, 1},
 	{"MENU", "a menu", TAGACT_NOP, 3, 5, 1},
@@ -148,6 +187,8 @@ static const struct tagInfo elements[] = {
 	{"HR", "a horizontal line", TAGACT_HR, 0, 5, 5},
 	{"FORM", "a form", TAGACT_FORM, 1, 0, 1},
 	{"BUTTON", "a button", TAGACT_INPUT, 0, 0, 5},
+/* we traditionally write </frame>,
+ * but it really isn't meaningful to put anything at all in between. Thus nest = 0. */
 	{"FRAME", "a frame", TAGACT_FRAME, 0, 2, 5},
 	{"IFRAME", "a frame", TAGACT_FRAME, 0, 2, 5},
 	{"MAP", "an image map", TAGACT_MAP, 0, 2, 5},
@@ -155,33 +196,33 @@ static const struct tagInfo elements[] = {
 	{"TABLE", "a table", TAGACT_TABLE, 3, 10, 1},
 	{"TR", "a table row", TAGACT_TR, 3, 5, 1},
 	{"TD", "a table entry", TAGACT_TD, 3, 0, 1},
-	{"TH", "a table heading", TAGACT_TD, 1, 0, 1},
-	{"PRE", "a preformatted section", TAGACT_PRE, 1, 1, 0},
-	{"LISTING", "a listing", TAGACT_PRE, 1, 1, 0},
-	{"XMP", "an example", TAGACT_PRE, 1, 1, 0},
-	{"FIXED", "a fixed presentation", TAGACT_NOP, 1, 1, 0},
-	{"CODE", "a block of code", TAGACT_NOP, 1, 0, 0},
-	{"SAMP", "a block of sample text", TAGACT_NOP, 1, 0, 0},
-	{"ADDRESS", "an address block", TAGACT_NOP, 1, 1, 0},
-	{"STYLE", "a style block", TAGACT_NOP, 1, 0, 2},
+	{"TH", "a table heading", TAGACT_TD, 3, 0, 1},
+	{"PRE", "a preformatted section", TAGACT_PRE, 3, 1, 0},
+	{"LISTING", "a listing", TAGACT_PRE, 3, 1, 0},
+	{"XMP", "an example", TAGACT_PRE, 3, 1, 0},
+	{"FIXED", "a fixed presentation", TAGACT_NOP, 3, 1, 0},
+	{"CODE", "a block of code", TAGACT_NOP, 3, 0, 0},
+	{"SAMP", "a block of sample text", TAGACT_NOP, 3, 0, 0},
+	{"ADDRESS", "an address block", TAGACT_NOP, 3, 1, 0},
+	{"STYLE", "a style block", TAGACT_NOP, 0, 0, 2},
 	{"SCRIPT", "a script", TAGACT_SCRIPT, 0, 0, 1},
-	{"NOSCRIPT", "no script section", TAGACT_NOP, 1, 0, 3},
-	{"NOFRAMES", "no frames section", TAGACT_NOP, 1, 0, 3},
+	{"NOSCRIPT", "no script section", TAGACT_NOP, 3, 0, 3},
+	{"NOFRAMES", "no frames section", TAGACT_NOP, 3, 0, 3},
 	{"EMBED", "embedded html", TAGACT_MUSIC, 0, 0, 5},
-	{"NOEMBED", "no embed section", TAGACT_NOP, 1, 0, 3},
+	{"NOEMBED", "no embed section", TAGACT_NOP, 3, 0, 3},
 	{"OBJECT", "an html object", TAGACT_OBJ, 0, 0, 3},
-	{"EM", "emphasized text", TAGACT_JS, 1, 0, 0},
-	{"LABEL", "a label", TAGACT_JS, 1, 0, 0},
-	{"STRIKE", "emphasized text", TAGACT_JS, 1, 0, 0},
-	{"S", "emphasized text", TAGACT_JS, 1, 0, 0},
-	{"STRONG", "emphasized text", TAGACT_JS, 1, 0, 0},
-	{"B", "bold text", TAGACT_JS, 1, 0, 0},
-	{"I", "italicized text", TAGACT_JS, 1, 0, 0},
-	{"U", "underlined text", TAGACT_JS, 1, 0, 0},
-	{"DFN", "definition text", TAGACT_JS, 1, 0, 0},
-	{"Q", "quoted text", TAGACT_JS, 1, 0, 0},
-	{"ABBR", "an abbreviation", TAGACT_JS, 1, 0, 0},
-	{"SPAN", "an html span", TAGACT_SPAN, 1, 0, 0},
+	{"EM", "emphasized text", TAGACT_JS, 3, 0, 0},
+	{"LABEL", "a label", TAGACT_JS, 3, 0, 0},
+	{"STRIKE", "emphasized text", TAGACT_JS, 3, 0, 0},
+	{"S", "emphasized text", TAGACT_JS, 3, 0, 0},
+	{"STRONG", "emphasized text", TAGACT_JS, 3, 0, 0},
+	{"B", "bold text", TAGACT_JS, 3, 0, 0},
+	{"I", "italicized text", TAGACT_JS, 3, 0, 0},
+	{"U", "underlined text", TAGACT_JS, 3, 0, 0},
+	{"DFN", "definition text", TAGACT_JS, 3, 0, 0},
+	{"Q", "quoted text", TAGACT_JS, 3, 0, 0},
+	{"ABBR", "an abbreviation", TAGACT_JS, 3, 0, 0},
+	{"SPAN", "an html span", TAGACT_SPAN, 3, 0, 0},
 	{"FRAMESET", "a frame set", TAGACT_JS, 3, 0, 1},
 	{NULL, NULL, 0}
 };
@@ -951,6 +992,7 @@ void jSyncup(void)
 }				/* jSyncup */
 
 /* Find the <foo> tag to match </foo> */
+/* If name is null then find the most recent open tag. */
 static struct htmlTag *findOpenTag(const char *name)
 {
 	struct htmlTag *t;
@@ -967,12 +1009,15 @@ static struct htmlTag *findOpenTag(const char *name)
 		if (t->slash)
 			continue;	/* unbalanced slash, should never happen */
 /* Now we have an unbalanced open tag */
+		if (!name)
+			return t;
 		match = stringEqualCI(t->info->name, name);
 /* I expect tags to nest perfectly, like labeled parentheses */
 		if (closing) {
 			if (match)
 				return t;
-			browseError(MSG_TagNest, desc, t->info->desc);
+			if (t->info->nest & 2)
+				browseError(MSG_TagNest, desc, t->info->desc);
 			continue;
 		}
 		if (!match)
@@ -1374,13 +1419,26 @@ nextchar:
 
 		open = 0;
 		if (ti->nest && slash) {
+			t->balanced = eb_true;
 			open = findOpenTag(ti->name);
 			if (!open)
 				continue;	/* unbalanced </ul> means nothing */
-			open->balanced = t->balanced = eb_true;
+			open->balanced = eb_true;
 			if (open->jv && isJSAlive)
 				establish_innerHTML(open->jv, open->inner,
 						    save_h, eb_false);
+/* and mark everything in between */
+			for (i2 = open->seqno; i2 < tagno; ++i2) {
+				v = tagList[i2];
+				if (v->info->nest)
+					v->balanced = eb_true;
+			}
+		}
+
+		if (ti->nest == 1 && !slash) {
+			open = findOpenTag(0);
+			if (open && open->info == ti)
+				open->balanced = eb_true;
 		}
 
 		if (slash && ti->bits & TAG_NOSLASH)
@@ -1897,10 +1955,10 @@ unparen:
 				htmlHref("src");
 				if (isJSAlive)
 					topTag->jv =
-					    domLink("Frame", topTag->name, topTag->id,
-						    "src", topTag->href,
-						    "frames", cw->jss->jwin,
-						    eb_false);
+					    domLink("Frame", topTag->name,
+						    topTag->id, "src",
+						    topTag->href, "frames",
+						    cw->jss->jwin, eb_false);
 			} else {
 				htmlHref("href");
 				if (isJSAlive)
