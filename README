@@ -42,8 +42,8 @@ Run setup.ebrc and answer the questions.
 
 Ok, I'm going to assume you've read the documentation.
 No need to repeat all that here.
-You're here because you want to compile the program, or modify the source
-in some way.  Great!
+You're here because you want to compile and/or package the program,
+or modify the source in some way.  Great!
 
 I haven't developed a configure script, and I should do that some day,
 but meantime just type make and hope for the best.
@@ -56,6 +56,7 @@ go back to ed.  So I use the perl compatible regular expression
 library, /lib/libpcre.so.0, available on most Linux systems.
 If you don't have this file, check your installation disks.
 the pcre and pcre-devel packages might be there, just not installed.
+You need version 8.10 or higher.
 If you can't find them there, you can get the pcre source here.
 
 ftp://ftp.sourceforge.net/pub/sourceforge/pcre/
@@ -66,20 +67,11 @@ so you'll have to adjust the source, the -I path, or make a link.
 Yeah I know, that's something a configure script should do for you,
 but I'm just not there yet.
 
-We assume you have the ssl libraries installed, for secure connections.
-You just can't buy anything on the Net without secure connections,
-so I make no effort to "work around" these libraries.
-You just have to have them, period.
-If you don't have /lib/libssl.so.2, you'll need to install the library,
-or build the package from source.
-
-http://www.openssl.org/source/
-
 You also need libcurl, which is included in almost every Linux distro.
 This is used for ftp, http, and https.
 Check for /usr/include/curl/curl.h
-Edbrowse requires version 7.17.0 or later.  If you compiled with a version
-prior to 7.17.0, the program will inform you that you need to upgrade.
+Edbrowse requires version 7.29.0 or later.  If you compiled with a version
+prior to 7.29.0, the program will inform you that you need to upgrade.
 
 Finally, you need the Spider Monkey javascript engine from Mozilla.org
 ftp://ftp.mozilla.org/pub/mozilla.org/js/
@@ -102,6 +94,8 @@ make JS_CXXFLAGS=-I/usr/local/include/mozjs-24 JSLIB=-lmozjs-24 edbrowse
 
 If you want database access, you need unixODBC and unixODBC-devel.
 Make edbrowseodbc, rather than edbrowse.
+ODBC has been very stable for a long time.
+unixODBC version 2.2.14 seems to satisfy edbrowseodbc.
 
 If you're a developer and you want to use the symbolic debugger,
 set EBDEBUG=on before you run make.
