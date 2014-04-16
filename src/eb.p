@@ -131,6 +131,7 @@ eb_bool sendMailCurrent(int sm_account, eb_bool dosig);
 void loadBlacklist(void);
 eb_bool onBlacklist1(IP32bit tip);
 int fetchMail(int account);
+int fetchAllMail(void);
 void scanMail(void);
 eb_bool emailTest(void);
 void unpackUploadedFile(const char *post, const char *boundary, char **postb,

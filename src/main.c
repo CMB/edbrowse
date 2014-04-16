@@ -1179,29 +1179,7 @@ int main(int argc, char **argv)
 				if (account) {
 					nfetch = fetchMail(account);
 				} else {
-					int i, j;
-					for (i = 1; i <= maxAccount; ++i) {
-/* did we set this to nofetch in the config file? */
-						if (accounts[i - 1].nofetch)
-							continue;
-/* don't fetch from a different account that has the same host an dlogin */
-						for (j = 1; j < i; ++j)
-							if (stringEqual
-							    (accounts
-							     [i - 1].inurl,
-							     accounts[j -
-								      1].inurl)
-							    &&
-							    stringEqual(accounts
-									[i -
-									 1].login,
-									accounts
-									[j -
-									 1].login))
-								break;
-						if (j == i)
-							nfetch += fetchMail(i);
-					}
+					nfetch = fetchAllMail();
 				}
 				if (!domail) {
 					if (nfetch)

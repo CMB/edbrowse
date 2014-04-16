@@ -340,8 +340,7 @@ static CURL *newFetchmailHandle(const char *mailbox, const char *username,
 	curl_easy_setopt(handle, CURLOPT_WRITEDATA, &callback_data);
 	if (debugLevel >= 4)
 		curl_easy_setopt(handle, CURLOPT_VERBOSE, 1);
-	curl_easy_setopt(handle, CURLOPT_DEBUGFUNCTION,
-			 ebcurl_debug_handler);
+	curl_easy_setopt(handle, CURLOPT_DEBUGFUNCTION, ebcurl_debug_handler);
 	res = curl_easy_setopt(handle, CURLOPT_CAINFO, sslCerts);
 	if (res != CURLE_OK)
 		i_printfExit(MSG_LibcurlNoInit);
@@ -458,7 +457,7 @@ static CURLcode count_messages(CURL * handle, const char *mailbox,
 			last_nl = eb_true;
 			continue;
 		}
-		if(last_nl && isdigit(mailstring[i]))
+		if (last_nl && isdigit(mailstring[i]))
 			num_messages++;
 		last_nl = eb_false;
 	}
@@ -494,7 +493,8 @@ int fetchMail(int account)
 	unreadStats();
 
 	mailstring = initString(&mailstring_l);
-	CURL *mail_handle = newFetchmailHandle(mailbox_url, login, pass, !a->nocert);
+	CURL *mail_handle =
+	    newFetchmailHandle(mailbox_url, login, pass, !a->nocert);
 	res_curl = count_messages(mail_handle, mailbox_url, &message_count);
 	if (res_curl != CURLE_OK)
 		goto fetchmail_cleanup;
@@ -524,7 +524,7 @@ int fetchMail(int account)
 fetchmail_cleanup:
 	if (message_url)
 		url_for_error = message_url;
-	if(res_curl != CURLE_OK) {
+	if (res_curl != CURLE_OK) {
 		ebcurl_setError(res_curl, url_for_error);
 		showError();
 	}
@@ -535,6 +535,37 @@ fetchmail_cleanup:
 	mailstring = initString(&mailstring_l);
 	return nfetch;
 }				/* fetchMail */
+
+/* fetch from all accounts except those with nofetch set */
+int fetchAllMail(void)
+{
+	int i, j;
+	const struct MACCOUNT *a, *b;
+	int nfetch = 0;
+
+	for (i = 1; i <= maxAccount; ++i) {
+		a = accounts + i - 1;
+/* did we set this to nofetch in the config file? */
+		if (a->nofetch)
+			continue;
+
+/* don't fetch from an earlier account that has the same host an dlogin */
+		for (j = 1; j < i; ++j) {
+			b = accounts + j - 1;
+			if (!b->nofetch &&
+			    stringEqual(a->inurl, b->inurl) &&
+			    stringEqual(a->login, b->login))
+				break;
+		}
+		if (j < i)
+			continue;
+
+		debugPrint(3, "fetch from %d %s", i, a->inurl);
+		nfetch += fetchMail(i);
+	}
+
+	return nfetch;
+}				/* fetchAllMail */
 
 void scanMail(void)
 {
