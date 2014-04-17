@@ -291,6 +291,7 @@ void freeTags(struct ebWindow *w)
 		nzFree(t->id);
 		nzFree(t->value);
 		nzFree(t->href);
+		nzFree(t->classname);
 
 /* We probably don't need to do this at all,
  * since j context is soon to be destroyed. */
@@ -488,12 +489,16 @@ static void htmlName(void)
 {
 	char *name = htmlAttrVal(topAttrib, "name");
 	char *id = htmlAttrVal(topAttrib, "id");
+	char *classname = htmlAttrVal(topAttrib, "class");
 	if (name == EMPTYSTRING)
 		name = 0;
 	topTag->name = name;
 	if (id == EMPTYSTRING)
 		id = 0;
 	topTag->id = id;
+	if (classname == EMPTYSTRING)
+		classname = 0;
+	topTag->classname = classname;
 }				/* htmlName */
 
 static void htmlHref(const char *desc)

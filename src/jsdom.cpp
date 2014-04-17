@@ -1396,6 +1396,7 @@ void domLink(const char *classname,	/* instantiate this class */
 	const char *symname = topTag->name;
 	const char *idname = topTag->id;
 	const char *href_url = topTag->href;
+	const char *htmlclass = topTag->classname;
 
 /* find the class */
 	for (i = 0; cp = domClasses[i].obj_class; ++i)
@@ -1616,6 +1617,12 @@ Example www.startpage.com, where id=submit
 	if (cp == &element_class) {
 /* link back to the form that owns the element */
 		establish_property_object(v, "form", owner);
+		if (cw->js_failed)
+			return;
+	}
+
+	if (htmlclass) {
+		establish_property_string(v, "className", htmlclass, eb_false);
 		if (cw->js_failed)
 			return;
 	}
