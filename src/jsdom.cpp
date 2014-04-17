@@ -57,8 +57,8 @@ done:
 /* clean up if javascript fails */
 void javaSessionFail()
 {
-i_puts(MSG_JSSessionFail);
-cw->js_failed = eb_true;
+	i_puts(MSG_JSSessionFail);
+	cw->js_failed = eb_true;
 }
 
 JSString *our_JS_NewStringCopyN(JSContext * cx, const char *s, size_t n)
@@ -83,7 +83,7 @@ char *our_JSEncodeString(js::HandleString str)
 	size_t result =
 	    JS_EncodeStringToBuffer(cw->jss->jcx, str, buffer, encodedLength);
 	if (result == (size_t) - 1)
-javaSessionFail();
+		javaSessionFail();
 	return buffer;
 }				/* our_JSEncodeString */
 
@@ -140,11 +140,10 @@ static JSBool window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::RootedObject newwin(cx,
 				JS_NewObjectForConstructor(cx, &window_class,
 							   &callee_val));
-if ((JSObject *) newwin == NULL)
-{
-javaSessionFail();
-return JS_FALSE;
-}
+	if ((JSObject *) newwin == NULL) {
+		javaSessionFail();
+		return JS_FALSE;
+	}
 	if (args.length() > 0 && (str = JS_ValueToString(cx, args[0]))) {
 		newloc = our_JSEncodeString(str);
 	}
@@ -158,8 +157,8 @@ return JS_FALSE;
 	if (!parsePage)
 		return JS_FALSE;
 	establish_property_object(newwin, "opener", cw->jss->jwin);
-if (cw->js_failed)
-return JS_FALSE;
+	if (cw->js_failed)
+		return JS_FALSE;
 	args.rval().set(OBJECT_TO_JSVAL(newwin));
 	return JS_TRUE;
 }				/* window_ctor */
@@ -168,17 +167,15 @@ return JS_FALSE;
 static JSBool win_open(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-JS::RootedObject obj(cx,
-					   JS_NewObject(cx, &window_class, NULL,
-							cw->jss->jwin));
-if ((JSObject *) obj == NULL)
-{
-javaSessionFail();
-return JS_FALSE;
-}
+	JS::RootedObject obj(cx,
+			     JS_NewObject(cx, &window_class, NULL,
+					  cw->jss->jwin));
+	if ((JSObject *) obj == NULL) {
+		javaSessionFail();
+		return JS_FALSE;
+	}
 	JS::RootedObject newwin(cx, JS_New(cx,
-obj,
-					   args.length(), args.array()));
+					   obj, args.length(), args.array()));
 	args.rval().set(OBJECT_TO_JSVAL(newwin));
 	return JS_TRUE;
 }				/* win_open */
@@ -216,11 +213,11 @@ static JSBool setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
 		v1 = args[0];
 		v2 = args[1];
 		const char *prop = stringize(v1);
-		if (JS_DefineProperty(cx, obj, prop, v2, NULL, NULL, PROP_FIXED) == JS_FALSE)
-{
-javaSessionFail();
-return JS_FALSE;
-}
+		if (JS_DefineProperty(cx, obj, prop, v2, NULL, NULL, PROP_FIXED)
+		    == JS_FALSE) {
+			javaSessionFail();
+			return JS_FALSE;
+		}
 	}
 	args.rval().set(JSVAL_VOID);
 	return JS_TRUE;
@@ -232,29 +229,25 @@ static JSBool appendChild(JSContext * cx, unsigned int argc, jsval * vp)
 	js::RootedValue v(cx);
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
-	if (JS_GetProperty(cx, obj, "elements", v.address()) == JS_FALSE)
-{
-javaSessionFail();
-return JS_FALSE;
-}
+	if (JS_GetProperty(cx, obj, "elements", v.address()) == JS_FALSE) {
+		javaSessionFail();
+		return JS_FALSE;
+	}
 	JS::RootedObject elar(cx, JSVAL_TO_OBJECT(v));
-if ((JSObject *) elar == NULL)
-{
-javaSessionFail();
-return JS_FALSE;
-}
-	if (JS_GetArrayLength(cx, elar, &length) == JS_FALSE)
-{
-javaSessionFail();
-return JS_FALSE;
-}
+	if ((JSObject *) elar == NULL) {
+		javaSessionFail();
+		return JS_FALSE;
+	}
+	if (JS_GetArrayLength(cx, elar, &length) == JS_FALSE) {
+		javaSessionFail();
+		return JS_FALSE;
+	}
 	if (JS_DefineElement(cx, elar, length,
-			 (args.length() > 0 ? args[0] : JSVAL_NULL), NULL, NULL,
-			 JSPROP_ENUMERATE) == JS_FALSE)
-{
-javaSessionFail();
-return JS_FALSE;
-}
+			     (args.length() > 0 ? args[0] : JSVAL_NULL), NULL,
+			     NULL, JSPROP_ENUMERATE) == JS_FALSE) {
+		javaSessionFail();
+		return JS_FALSE;
+	}
 	args.rval().set(JSVAL_VOID);
 	return JS_TRUE;
 }				/* appendChild */
@@ -417,19 +410,16 @@ static JSObject *setTimeout(unsigned int argc, jsval * argv, eb_bool isInterval)
 /* build the tag object and link it to window */
 		to = JS_NewObject(cw->jss->jcx, &timer_class, NULL,
 				  cw->jss->jwin);
-if ((JSObject *) to == NULL)
-{
-javaSessionFail();
-return NULL;
-}
+		if ((JSObject *) to == NULL) {
+abort:
+			javaSessionFail();
+			return NULL;
+		}
 		v1 = OBJECT_TO_JSVAL(to);
-		if (JS_DefineProperty(cw->jss->jcx, cw->jss->jwin, fakePropName(),
-				  v1, NULL, NULL,
-				  JSPROP_READONLY | JSPROP_PERMANENT) == JS_FALSE)
-{
-javaSessionFail();
-return NULL;
-}
+		if (JS_DefineProperty
+		    (cw->jss->jcx, cw->jss->jwin, fakePropName(), v1, NULL,
+		     NULL, JSPROP_READONLY | JSPROP_PERMANENT) == JS_FALSE)
+			goto abort;
 		if (fo) {
 /* Extract the function name, which requires several steps */
 			js::RootedFunction f(cw->jss->jcx,
@@ -453,17 +443,19 @@ return NULL;
 			strcat(fname, "()");
 			fstr = fname;
 			establish_property_object(to, "onclick", fo);
-if (cw->js_failed)
-return NULL;
+			if (cw->js_failed)
+				return NULL;
 		} else {
 /* compile the function from the string */
 			fstr = stringize(v0);
-if (			JS_CompileFunction(cw->jss->jcx, to, "onclick", 0, emptyParms,	/* no named parameters */
-					   fstr, strlen(fstr), "onclick", 1) == NULL)
-{
-	JS_ReportError(cw->jss->jcx, "error compiling function in %s()", methname);
-return NULL;
-}
+			if (JS_CompileFunction(cw->jss->jcx, to, "onclick", 0, emptyParms,	/* no named parameters */
+					       fstr, strlen(fstr), "onclick",
+					       1) == NULL) {
+				JS_ReportError(cw->jss->jcx,
+					       "error compiling function in %s()",
+					       methname);
+				return NULL;
+			}
 		}
 
 		javaSetsTimeout(n, fstr, to, isInterval);
@@ -478,11 +470,10 @@ badarg:
 static JSBool win_sto(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-JS::RootedObject obj(cw->jss->jcx,
-setTimeout(args.length(), args.array(),
-						   eb_false));
-if ((JSObject *) obj == NULL)
-return JS_FALSE;
+	JS::RootedObject obj(cw->jss->jcx,
+			     setTimeout(args.length(), args.array(), eb_false));
+	if ((JSObject *) obj == NULL)
+		return JS_FALSE;
 	args.rval().set(OBJECT_TO_JSVAL(obj));
 	return JS_TRUE;
 }				/* win_sto */
@@ -490,11 +481,10 @@ return JS_FALSE;
 static JSBool win_intv(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-JS::RootedObject obj(cw->jss->jcx,
-setTimeout(args.length(), args.array(),
-						   eb_true));
-if ((JSObject *) obj == NULL)
-return JS_FALSE;
+	JS::RootedObject obj(cw->jss->jcx,
+			     setTimeout(args.length(), args.array(), eb_true));
+	if ((JSObject *) obj == NULL)
+		return JS_FALSE;
 	args.rval().set(OBJECT_TO_JSVAL(obj));
 	return JS_TRUE;
 }				/* win_intv */
@@ -830,11 +820,10 @@ static JSBool element_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::RootedObject newobj(cx,
 				JS_NewObjectForConstructor(cx, &element_class,
 							   &callee_val));
-if ((JSObject *) newobj == NULL)
-{
-javaSessionFail();
-return JS_FALSE;
-}
+	if ((JSObject *) newobj == NULL) {
+		javaSessionFail();
+		return JS_FALSE;
+	}
 	args.rval().set(OBJECT_TO_JSVAL(newobj));
 	return JS_TRUE;
 }
@@ -847,11 +836,10 @@ static JSBool link_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::RootedObject newobj(cx,
 				JS_NewObjectForConstructor(cx, &link_class,
 							   &callee_val));
-if ((JSObject *) newobj == NULL)
-{
-javaSessionFail();
-return JS_FALSE;
-}
+	if ((JSObject *) newobj == NULL) {
+		javaSessionFail();
+		return JS_FALSE;
+	}
 	args.rval().set(OBJECT_TO_JSVAL(newobj));
 	return JS_TRUE;
 }
@@ -864,11 +852,10 @@ static JSBool image_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::RootedObject newobj(cx,
 				JS_NewObjectForConstructor(cx, &image_class,
 							   &callee_val));
-if ((JSObject *) newobj == NULL)
-{
-javaSessionFail();
-return JS_FALSE;
-}
+	if ((JSObject *) newobj == NULL) {
+		javaSessionFail();
+		return JS_FALSE;
+	}
 	args.rval().set(OBJECT_TO_JSVAL(newobj));
 	return JS_TRUE;
 }
@@ -881,11 +868,10 @@ static JSBool anchor_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::RootedObject newobj(cx,
 				JS_NewObjectForConstructor(cx, &anchor_class,
 							   &callee_val));
-if ((JSObject *) newobj == NULL)
-{
-javaSessionFail();
-return JS_FALSE;
-}
+	if ((JSObject *) newobj == NULL) {
+		javaSessionFail();
+		return JS_FALSE;
+	}
 	args.rval().set(OBJECT_TO_JSVAL(newobj));
 	return JS_TRUE;
 }
@@ -901,25 +887,24 @@ static JSBool option_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::RootedObject newopt(cx,
 				JS_NewObjectForConstructor(cx, &option_class,
 							   &callee_val));
-if ((JSObject *) newopt == NULL)
-{
-javaSessionFail();
-return JS_FALSE;
-}
+	if ((JSObject *) newopt == NULL) {
+		javaSessionFail();
+		return JS_FALSE;
+	}
 	if (args.length() > 0 && (str = JS_ValueToString(cx, args[0]))) {
 		text = our_JSEncodeString(str);
 	}
 	if (args.length() > 1 && (str = JS_ValueToString(cx, args[1]))) {
 		value = transcode_get_js_bytes(str);
 	}
-if(text) {
-	establish_property_string(newopt, "text", text, eb_true);
-nzFree(text);
-}
-if(value) {
-	establish_property_string(newopt, "value", value, eb_true);
-nzFree(value);
-}
+	if (text) {
+		establish_property_string(newopt, "text", text, eb_true);
+		nzFree(text);
+	}
+	if (value) {
+		establish_property_string(newopt, "value", value, eb_true);
+		nzFree(value);
+	}
 	establish_property_bool(newopt, "selected", eb_false, eb_false);
 	establish_property_bool(newopt, "defaultSelected", eb_false, eb_true);
 	args.rval().set(OBJECT_TO_JSVAL(newopt));
@@ -1012,7 +997,7 @@ void createJavaContext(struct ebWindowJSState **pstate)
 	if (!jrt) {
 		i_puts(MSG_JavaMemError);
 		delete state;
-*pstate = NULL;
+		*pstate = NULL;
 		return;
 	}
 
@@ -1020,10 +1005,10 @@ void createJavaContext(struct ebWindowJSState **pstate)
 	if (!state->jcx) {
 		i_puts(MSG_JavaContextError);
 		delete state;
-*pstate = NULL;
+		*pstate = NULL;
 		return;
 	}
-JSAutoRequest autoreq(state->jcx);
+	JSAutoRequest autoreq(state->jcx);
 /* It's looking good. */
 	*pstate = state;
 	JS_SetErrorReporter(state->jcx, my_ErrorReporter);
@@ -1045,23 +1030,20 @@ JSAutoRequest autoreq(state->jcx);
 /* Math, Date, Number, String, etc */
 	if (!JS_InitStandardClasses(state->jcx, state->jwin)) {
 		i_puts(MSG_JavaClassError);
-javaSessionFail();
-return;
+abort:
+		javaSessionFail();
+		return;
 	}
 /* initialise the window class */
-	if (JS_InitClass(state->jcx, state->jwin, NULL, &window_class, window_ctor,
-		     3, NULL, window_methods, NULL, NULL) == NULL)
-{
-javaSessionFail();
-return;
-}
+	if (JS_InitClass
+	    (state->jcx, state->jwin, NULL, &window_class, window_ctor, 3, NULL,
+	     window_methods, NULL, NULL) == NULL)
+		goto abort;
 /* Ok, but the global object was created before the class,
  * so it doesn't have its methods yet. */
-	if (JS_DefineFunctions(state->jcx, state->jwin, window_methods) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
+	if (JS_DefineFunctions(state->jcx, state->jwin, window_methods) ==
+	    JS_FALSE)
+		goto abort;
 /* if js dies these'll just silently return */
 	establish_property_object(state->jwin, "window", state->jwin);
 	establish_property_object(state->jwin, "self", state->jwin);
@@ -1084,39 +1066,30 @@ return;
 	establish_property_string(state->jwin, "name", "unspecifiedFrame",
 				  eb_false);
 /* now check if js is still alive */
-if (cw->js_failed)
-return;
+	if (cw->js_failed)
+		return;
 /* Other classes that we'll need. */
 	for (i = 0; domClasses[i].obj_class; ++i) {
 		if (JS_InitClass(state->jcx, state->jwin, 0,
-			     domClasses[i].obj_class, domClasses[i].constructor,
-			     domClasses[i].nargs, NULL, domClasses[i].methods,
-			     NULL, NULL) == NULL)
-{
-javaSessionFail();
-return;
-}
+				 domClasses[i].obj_class,
+				 domClasses[i].constructor, domClasses[i].nargs,
+				 NULL, domClasses[i].methods, NULL,
+				 NULL) == NULL)
+			goto abort;
 	}
 
 	if (!initLocationClass())
-{
-javaSessionFail();
-return;
-}
+		goto abort;
 
 /* document under window */
 	if (JS_InitClass(state->jcx, state->jwin, 0, &doc_class, NULL, 0,
-		     NULL, doc_methods, NULL, NULL) == NULL)
-{
-javaSessionFail();
-return;
-}
+			 NULL, doc_methods, NULL, NULL) == NULL)
+		goto abort;
 
 	state->jdoc = JS_NewObject(state->jcx, &doc_class, NULL, state->jwin);
 	if (!state->jdoc) {
 		i_puts(MSG_JavaObjError);
-javaSessionFail();
-return;
+		goto abort;
 	}
 	establish_property_object(state->jwin, "document", state->jdoc);
 
@@ -1131,49 +1104,43 @@ return;
 				  getHostURL(cw->fileName), eb_false);
 
 /* create arrays under document */
-	for (i = 0; itemname = docarrays[i]; ++i)
-{
+	for (i = 0; itemname = docarrays[i]; ++i) {
 		if (establish_property_array(state->jdoc, itemname) == NULL)
-return;
-}
+			return;
+	}
 /* Some arrays are under window */
 	if (establish_property_array(state->jwin, "frames") == NULL)
-return;
+		return;
 /* we definitely have js at this stage */
 	JS::RootedObject o(state->jcx);
 	o = JS_NewObject(state->jcx, 0, 0, state->jdoc);
-if ((JSObject *) o == NULL)
-{
-javaSessionFail();
-return;
-}
+	if ((JSObject *) o == NULL)
+		goto abort;
 	establish_property_object(state->jdoc, "idMaster", o);
 /* but not here */
-if (cw->js_failed) return;
+	if (cw->js_failed)
+		return;
 	o = JS_NewObject(state->jcx, 0, 0, state->jdoc);
-if ((JSObject *) o == NULL)
-{
-javaSessionFail();
-return;
-}
+	if ((JSObject *) o == NULL)
+		goto abort;
 	establish_property_object(state->jdoc, "all", o);
-if (cw->js_failed) return;
+	if (cw->js_failed)
+		return;
 
 	JS::RootedObject nav(state->jcx, JS_NewObject(state->jcx, 0, 0,
 						      state->jwin));
-if ((JSObject *) nav == NULL)
-{
-javaSessionFail();
-return;
-}
+	if ((JSObject *) nav == NULL)
+		goto abort;
 	establish_property_object(state->jwin, "navigator", nav);
-if (cw->js_failed) return;
+	if (cw->js_failed)
+		return;
 
 /* attributes of the navigator */
 	establish_property_string(nav, "appName", "edbrowse", eb_true);
 	establish_property_string(nav, "appCode Name", "edbrowse C/SMJS",
 				  eb_true);
-if (cw->js_failed) return;
+	if (cw->js_failed)
+		return;
 /* Use X11 to indicate unix/linux.  Sort of a standard */
 	sprintf(verx11, "%s%s", version, "-X11");
 	establish_property_string(nav, "appVersion", version, eb_true);
@@ -1187,35 +1154,29 @@ if (cw->js_failed) return;
 /* We need to locale-ize the next one */
 	establish_property_string(nav, "userLanguage", "english", eb_true);
 	establish_property_string(nav, "language", "english", eb_true);
-if (cw->js_failed) return;
+	if (cw->js_failed)
+		return;
 	if ((JS_DefineFunction(state->jcx, nav, "javaEnabled", falseFunction, 0,
-			  PROP_FIXED) == NULL) ||
-	(JS_DefineFunction(state->jcx, nav, "taintEnabled", falseFunction, 0,
-			  PROP_FIXED) == NULL))
-{
-javaSessionFail();
-return;
-}
+			       PROP_FIXED) == NULL) ||
+	    (JS_DefineFunction
+	     (state->jcx, nav, "taintEnabled", falseFunction, 0,
+	      PROP_FIXED) == NULL))
+		goto abort;
 	establish_property_bool(nav, "cookieEnabled", eb_true, eb_true);
 	establish_property_bool(nav, "onLine", eb_true, eb_true);
-if (cw->js_failed) return;
+	if (cw->js_failed)
+		return;
 
 /* Build the array of mime types and plugins,
  * according to the entries in the config file. */
 	JS::RootedObject navpi(state->jcx, establish_property_array(nav,
 								    "plugins"));
-if ((JSObject *) navpi == NULL)
-{
-javaSessionFail();
-return;
-}
+	if ((JSObject *) navpi == NULL)
+		goto abort;
 	JS::RootedObject navmt(state->jcx, establish_property_array(nav,
 								    "mimeTypes"));
-if ((JSObject *) navmt == NULL)
-{
-javaSessionFail();
-return;
-}
+	if ((JSObject *) navmt == NULL)
+		goto abort;
 	mt = mimetypes;
 	for (i = 0; i < maxMime; ++i, ++mt) {
 /* po is the plugin object and mo is the mime object */
@@ -1225,31 +1186,19 @@ return;
 		int len;
 
 		po = JS_NewObject(state->jcx, 0, 0, nav);
-if ((JSObject *) po == NULL)
-{
-javaSessionFail();
-return;
-}
+		if ((JSObject *) po == NULL)
+			goto abort;
 		pov = OBJECT_TO_JSVAL(po);
 		if (JS_DefineElement(state->jcx, navpi, i, pov, NULL, NULL,
-				 PROP_FIXED) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
+				     PROP_FIXED) == JS_FALSE)
+			goto abort;
 		mo = JS_NewObject(state->jcx, 0, 0, nav);
-if ((JSObject *) mo == NULL)
-{
-javaSessionFail();
-return;
-}
+		if ((JSObject *) mo == NULL)
+			goto abort;
 		mov = OBJECT_TO_JSVAL(mo);
 		if (JS_DefineElement(state->jcx, navmt, i, mov, NULL, NULL,
-				 PROP_FIXED) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
+				     PROP_FIXED) == JS_FALSE)
+			goto abort;
 		establish_property_object(mo, "enabledPlugin", po);
 		establish_property_string(mo, "type", mt->type, eb_true);
 		establish_property_object(navmt, mt->type, mo);
@@ -1263,7 +1212,8 @@ return;
  * No idea if this is right or not. */
 		establish_property_string(po, "description", mt->desc, eb_true);
 		establish_property_string(po, "filename", mt->program, eb_true);
-if (cw->js_failed) return;
+		if (cw->js_failed)
+			return;
 /* For the name, how about the program without its options? */
 		len = strcspn(mt->program, " \t");
 		js::RootedValue po_name_v(state->jcx,
@@ -1271,20 +1221,14 @@ if (cw->js_failed) return;
 							  (state->jcx,
 							   mt->program, len)));
 		if (JS_DefineProperty(state->jcx, po, "name", po_name_v, 0, 0,
-				  PROP_FIXED) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
+				      PROP_FIXED) == JS_FALSE)
+			goto abort;
 	}
 
 	JS::RootedObject screen(state->jcx, JS_NewObject(state->jcx, 0, 0,
 							 state->jwin));
-if ((JSObject *) screen == NULL)
-{
-javaSessionFail();
-return;
-}
+	if ((JSObject *) screen == NULL)
+		goto abort;
 	establish_property_object(state->jwin, "screen", screen);
 	establish_property_number(screen, "height", 768, eb_true);
 	establish_property_number(screen, "width", 1024, eb_true);
@@ -1292,15 +1236,13 @@ return;
 	establish_property_number(screen, "availWidth", 1024, eb_true);
 	establish_property_number(screen, "availTop", 0, eb_true);
 	establish_property_number(screen, "availLeft", 0, eb_true);
-if (cw->js_failed) return;
+	if (cw->js_failed)
+		return;
 
 	JS::RootedObject del(state->jcx, JS_NewObject(state->jcx, 0, 0,
 						      state->jdoc));
-if ((JSObject *) del == NULL)
-{
-javaSessionFail();
-return;
-}
+	if ((JSObject *) del == NULL)
+		goto abort;
 	establish_property_object(state->jdoc, "body", del);
 	establish_property_object(state->jdoc, "documentElement", del);
 	establish_property_number(del, "clientHeight", 768, eb_true);
@@ -1311,15 +1253,13 @@ return;
 	establish_property_number(del, "scrollWidth", 1024, eb_true);
 	establish_property_number(del, "scrollTop", 0, eb_true);
 	establish_property_number(del, "scrollLeft", 0, eb_true);
-if (cw->js_failed) return;
+	if (cw->js_failed)
+		return;
 
 	JS::RootedObject hist(state->jcx, JS_NewObject(state->jcx, 0, 0,
 						       state->jwin));
-if ((JSObject *) hist == NULL)
-{
-javaSessionFail();
-return;
-}
+	if ((JSObject *) hist == NULL)
+		goto abort;
 	establish_property_object(state->jwin, "history", hist);
 
 /* attributes of history */
@@ -1329,42 +1269,44 @@ return;
 	establish_property_number(hist, "length", 1, eb_true);
 	establish_property_string(hist, "next", 0, eb_true);
 	establish_property_string(hist, "previous", 0, eb_true);
-if (cw->js_failed) return;
+	if (cw->js_failed)
+		return;
 	if ((JS_DefineFunction(state->jcx, hist, "back", nullFunction, 0,
-			  PROP_FIXED) == NULL)
-	|| (JS_DefineFunction(state->jcx, hist, "forward", nullFunction, 0,
-			  PROP_FIXED) == NULL)
-|| 	(JS_DefineFunction(state->jcx, hist, "go", nullFunction, 0, PROP_FIXED) == NULL))
-{
-javaSessionFail();
-return;
-}
+			       PROP_FIXED) == NULL)
+	    || (JS_DefineFunction(state->jcx, hist, "forward", nullFunction, 0,
+				  PROP_FIXED) == NULL)
+	    ||
+	    (JS_DefineFunction
+	     (state->jcx, hist, "go", nullFunction, 0, PROP_FIXED) == NULL))
+		goto abort;
+
 /* Set up some things in javascript */
 	if (JS_EvaluateScript(state->jcx, state->jwin, initScript,
-			  strlen(initScript), "initScript", 1, &rval) == JS_FALSE)
-javaSessionFail();
+			      strlen(initScript), "initScript", 1,
+			      &rval) == JS_FALSE)
+		goto abort;
 }				/* createJavaContext */
 
 // free java context and associated state
 void freeJavaContext(struct ebWindowJSState *state)
 {
 	if (state == NULL)
-return;
-JSContext *oldcontext = state->jcx;
-delete state; // clear the heap rooted things in state first
-if (oldcontext != NULL)
-{
-if (js::GetContextCompartment((const JSContext *) oldcontext) != NULL)
-JS_LeaveCompartment(oldcontext, NULL);
+		return;
+	JSContext *oldcontext = state->jcx;
+	delete state;		// clear the heap rooted things in state first
+	if (oldcontext != NULL) {
+		if (js::GetContextCompartment((const JSContext *)oldcontext) !=
+		    NULL)
+			JS_LeaveCompartment(oldcontext, NULL);
 		JS_DestroyContext(oldcontext);
-}
+	}
 }				/* freeJavaContext */
 
 void
 establish_innerHTML(JS::HandleObject jv, const char *start, const char *end,
 		    eb_bool is_ta)
 {
-SWITCH_COMPARTMENT();
+	SWITCH_COMPARTMENT();
 	JS::RootedObject o(cw->jss->jcx);
 	JS::RootedValue v(cw->jss->jcx);
 
@@ -1374,36 +1316,34 @@ SWITCH_COMPARTMENT();
 	v = STRING_TO_JSVAL(our_JS_NewStringCopyN
 			    (cw->jss->jcx, start, end - start));
 	if (JS_DefineProperty(cw->jss->jcx, jv, "innerHTML", v, NULL,
-			  (is_ta ? setter_innerText : setter_innerHTML),
-			  JSPROP_ENUMERATE | JSPROP_PERMANENT) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
+			      (is_ta ? setter_innerText : setter_innerHTML),
+			      JSPROP_ENUMERATE | JSPROP_PERMANENT) == JS_FALSE)
+	{
+		javaSessionFail();
+		return;
+	}
 	if (is_ta) {
 		if (JS_DefineProperty(cw->jss->jcx, jv, "innerText", v,
-				  NULL, setter_innerText,
-				  JSPROP_ENUMERATE | JSPROP_PERMANENT) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
+				      NULL, setter_innerText,
+				      JSPROP_ENUMERATE | JSPROP_PERMANENT) ==
+		    JS_FALSE) {
+			javaSessionFail();
+			return;
+		}
 	}
 
 /* Anything with an innerHTML might also have a style. */
 	o = JS_NewObject(cw->jss->jcx, 0, 0, jv);
-if ((JSObject *) o == NULL)
-{
-javaSessionFail();
-return;
-}
+	if ((JSObject *) o == NULL) {
+		javaSessionFail();
+		return;
+	}
 	v = OBJECT_TO_JSVAL(o);
 	if (JS_DefineProperty(cw->jss->jcx, jv, "style", v, NULL, NULL,
-			  JSPROP_ENUMERATE) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
+			      JSPROP_ENUMERATE) == JS_FALSE) {
+		javaSessionFail();
+		return;
+	}
 }				/* establish_innerHTML */
 
 eb_bool
@@ -1437,19 +1377,25 @@ javaParseExecuteGlobal(const char *str, const char *filename, int lineno)
 }				/* javaParseExecuteGlobal */
 
 /* link a frame, span, anchor, etc to the document object model */
-JSObject *domLink(const char *classname,	/* instantiate this class */
-		  const char *symname, const char *idname, const char *href, const char *href_url, const char *list,	/* next member of this array */
-		  JS::HandleObject owner, int radiosel)
+void domLink(const char *classname,	/* instantiate this class */
+	     const char *href, const char *list,	/* next member of this array */
+	     JS::HandleObject owner, int radiosel)
 {
-SWITCH_COMPARTMENT(NULL);
+	SWITCH_COMPARTMENT();
+
 	JS::RootedObject w(cw->jss->jcx), alist(cw->jss->jcx),
 	    master(cw->jss->jcx);
 	JS::RootedObject v(cw->jss->jcx);
 	unsigned length, attr = PROP_FIXED;
 	JSClass *cp;
+	JS::RootedValue vv(cw->jss->jcx), listv(cw->jss->jcx);
 	eb_bool dupname = eb_false;
 	int i;
-	JS::RootedValue vv(cw->jss->jcx), listv(cw->jss->jcx);
+
+/* some strings from the html tag */
+	const char *symname = topTag->name;
+	const char *idname = topTag->id;
+	const char *href_url = topTag->href;
 
 /* find the class */
 	for (i = 0; cp = domClasses[i].obj_class; ++i)
@@ -1485,22 +1431,19 @@ Yeah, it makes my head spin too.
 			if (stringEqual(symname, "action")) {
 				JS::RootedObject ao(cw->jss->jcx);	/* action object */
 				if (JS_GetProperty(cw->jss->jcx, owner,
-					       symname, vv.address()) == JS_FALSE)
-{
-javaSessionFail();
-return NULL;
-}
+						   symname,
+						   vv.address()) == JS_FALSE)
+					goto abort;
 				ao = JSVAL_TO_OBJECT(vv);
 /* actioncrash tells me if we've already had this collision */
 				JS_HasProperty(cw->jss->jcx, ao, "actioncrash",
 					       &found);
 				if (!found) {
 					if (JS_DeleteProperty(cw->jss->jcx,
-							  owner, symname) == JS_FALSE)
-{
-javaSessionFail();
-return NULL;
-}
+							      owner,
+							      symname) ==
+					    JS_FALSE)
+						goto abort;
 /* gc will clean this up later */
 /* advance, as though this were not found */
 					goto afterfound;
@@ -1509,11 +1452,9 @@ return NULL;
 
 			if (radiosel == 1) {
 				if (JS_GetProperty(cw->jss->jcx, owner,
-					       symname, vv.address()) == JS_FALSE)
-{
-javaSessionFail();
-return NULL;
-}
+						   symname,
+						   vv.address()) == JS_FALSE)
+					goto abort;
 				v = JSVAL_TO_OBJECT(vv);
 			} else {
 				dupname = eb_true;
@@ -1525,42 +1466,34 @@ afterfound:
 	if (!v) {
 		if (radiosel) {
 			v = JS_NewArrayObject(cw->jss->jcx, 0, NULL);
-if ((JSObject *) v == NULL)
-{
-javaSessionFail();
-return NULL;
-}
+			if ((JSObject *) v == NULL)
+				goto abort;
 			if (radiosel == 1) {
 				establish_property_string(v, "type", "radio",
 							  eb_true);
-if (cw->js_failed) return NULL;
+				if (cw->js_failed)
+					return;
 			} else {
 /* self-referencing - hope this is ok */
 				establish_property_object(v, "options", v);
 				establish_property_number(v, "selectedIndex",
 							  -1, eb_false);
-if (cw->js_failed) return NULL;
+				if (cw->js_failed)
+					return;
 // not the normal pathway; we have to create our own element methods here.
 				if (JS_DefineFunction(cw->jss->jcx, v, "focus",
-						  nullFunction, 0, PROP_FIXED) == NULL)
-{
-javaSessionFail();
-return NULL;
-}
+						      nullFunction, 0,
+						      PROP_FIXED) == NULL)
+					goto abort;
 				if (JS_DefineFunction(cw->jss->jcx, v, "blur",
-						  nullFunction, 0, PROP_FIXED) == NULL)
-{
-javaSessionFail();
-return NULL;
-}
+						      nullFunction, 0,
+						      PROP_FIXED) == NULL)
+					goto abort;
 			}
 		} else {
 			v = JS_NewObject(cw->jss->jcx, cp, NULL, owner);
-if (v == NULL)
-{
-javaSessionFail();
-return NULL;
-}
+			if (v == NULL)
+				goto abort;
 		}
 		vv = OBJECT_TO_JSVAL(v);
 
@@ -1578,68 +1511,57 @@ Example www.startpage.com, where id=submit
 			    !stringEqual(idname, "reset") &&
 			    !stringEqual(idname, "action"))
 				if (JS_DefineProperty(cw->jss->jcx, owner,
-						  idname, vv, NULL, NULL, attr) == JS_FALSE)
-{
-javaSessionFail();
-return NULL;
-}
+						      idname, vv, NULL, NULL,
+						      attr) == JS_FALSE)
+					goto abort;
 		} else if (symname && !dupname) {
 			if (JS_DefineProperty(cw->jss->jcx, owner, symname,
-					  vv, NULL, NULL, attr) == JS_FALSE)
-{
-javaSessionFail();
-return NULL;
-}
+					      vv, NULL, NULL, attr) == JS_FALSE)
+				goto abort;
 			if (stringEqual(symname, "action"))
 				establish_property_bool(v, "actioncrash",
 							eb_true, eb_true);
-if (cw->js_failed) return NULL;
+			if (cw->js_failed)
+				return;
 
 /* link to document.all */
 			if (JS_GetProperty(cw->jss->jcx, cw->jss->jdoc, "all",
-				       listv.address()) == JS_FALSE)
-{
-javaSessionFail();
-return NULL;
-}
+					   listv.address()) == JS_FALSE)
+				goto abort;
 			master = JSVAL_TO_OBJECT(listv);
 			establish_property_object(master, symname, v);
-if (cw->js_failed) return NULL;
+			if (cw->js_failed)
+				return;
 		} else {
 /* tie this to something, to protect it from gc */
 			if (JS_DefineProperty(cw->jss->jcx, owner,
-					  fakePropName(), vv, NULL, NULL,
-					  JSPROP_READONLY | JSPROP_PERMANENT) == JS_FALSE)
-{
-javaSessionFail();
-return NULL;
-}
+					      fakePropName(), vv, NULL, NULL,
+					      JSPROP_READONLY |
+					      JSPROP_PERMANENT) == JS_FALSE)
+				goto abort;
 		}
 
 		if (list) {
 			if (JS_GetProperty(cw->jss->jcx, owner, list,
-				       listv.address()) == JS_FALSE)
-{
-javaSessionFail();
-return NULL;
-}
+					   listv.address()) == JS_FALSE)
+				goto abort;
 			alist = JSVAL_TO_OBJECT(listv);
 		}
 		if (alist) {
 			JS_GetArrayLength(cw->jss->jcx, alist, &length);
-			if (JS_DefineElement(cw->jss->jcx, alist, length, vv, NULL,
-					 NULL, attr) == JS_FALSE)
-{
-javaSessionFail();
-return NULL;
-}
+			if (JS_DefineElement
+			    (cw->jss->jcx, alist, length, vv, NULL, NULL,
+			     attr) == JS_FALSE)
+				goto abort;
 			if (symname && !dupname)
 				establish_property_object(alist, symname, v);
-if (cw->js_failed) return NULL;
+			if (cw->js_failed)
+				return;
 			if (idname
 			    && (!symname || !stringEqual(symname, idname)))
 				establish_property_object(alist, idname, v);
-if (cw->js_failed) return NULL;
+			if (cw->js_failed)
+				return;
 		}		/* list indicated */
 	}
 
@@ -1649,56 +1571,59 @@ if (cw->js_failed) return NULL;
 /* v is, by assumption, an array */
 		JS_GetArrayLength(cw->jss->jcx, v, &length);
 		w = JS_NewObject(cw->jss->jcx, &element_class, NULL, owner);
-if ((JSObject *) w == NULL)
-{
-javaSessionFail();
-return NULL;
-}
+		if ((JSObject *) w == NULL)
+			goto abort;
 		vv = OBJECT_TO_JSVAL(w);
-		if (JS_DefineElement(cw->jss->jcx, v, length, vv, NULL, NULL, attr) == JS_FALSE)
-{
-javaSessionFail();
-return NULL;
-}
+		if (JS_DefineElement
+		    (cw->jss->jcx, v, length, vv, NULL, NULL, attr) == JS_FALSE)
+			goto abort;
 		v = w;
 	}
 
 	if (symname)
 		establish_property_string(v, "name", symname, eb_true);
-if (cw->js_failed) return NULL;
+	if (cw->js_failed)
+		return;
 	if (idname) {
 /* v.id becomes idname, and idMaster.idname becomes v
  * In case of forms, v.id should remain undefined.  So we can have
  * a form field named "id". */
 		if (strcmp(classname, "Form") != 0)
 			establish_property_string(v, "id", idname, eb_true);
-if (cw->js_failed) return NULL;
+		if (cw->js_failed)
+			return;
 		if (JS_GetProperty(cw->jss->jcx, cw->jss->jdoc, "idMaster",
-			       listv.address()) == JS_FALSE)
-{
-javaSessionFail();
-return NULL;
-}
+				   listv.address()) == JS_FALSE)
+			goto abort;
 		master = JSVAL_TO_OBJECT(listv);
 		establish_property_object(master, idname, v);
-if (cw->js_failed) return NULL;
+		if (cw->js_failed)
+			return;
 	} else {
 		if (strcmp(classname, "Form") != 0)
 			establish_property_string(v, "id", EMPTYSTRING,
 						  eb_true);
-if (cw->js_failed) return NULL;
+		if (cw->js_failed)
+			return;
 	}
 
 	if (href && href_url) {
 		establish_property_url(v, href, href_url, eb_false);
-if (cw->js_failed) return NULL;
+		if (cw->js_failed)
+			return;
 	}
 
 	if (cp == &element_class) {
 /* link back to the form that owns the element */
 		establish_property_object(v, "form", owner);
-if (cw->js_failed) return NULL;
+		if (cw->js_failed)
+			return;
 	}
-	JSObject *ret = v;
-	return ret;
+
+	topTag->jv = v;
+	makeParentNode(topTag);
+	return;
+
+abort:
+	javaSessionFail();
 }				/* domLink */

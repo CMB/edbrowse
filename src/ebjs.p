@@ -1,6 +1,7 @@
 /* This file is machine-generated, do not hand edit. */
 
 /* sourcefile=html.cpp */
+void makeParentNode(const struct htmlTag *t);
 struct htmlTag *newTag(const char *name);
 char *displayOptions(const struct htmlTag *sel);
 void javaSetsTimeout(int n, const char *jsrc, JS::HandleObject to,
@@ -18,9 +19,8 @@ void establish_innerHTML(JS::HandleObject jv, const char *start,
 void jMyContext(void);
 eb_bool javaParseExecute(JS::HandleObject obj, const char *str,
 			 const char *filename, int lineno);
-JSObject *domLink(const char *classname, const char *symname,
-		  const char *idname, const char *href, const char *href_url,
-		  const char *list, JS::HandleObject owner, int radiosel);
+void domLink(const char *classname, const char *href, const char *list,
+		  JS::HandleObject owner, int radiosel);
 
 /* sourcefile=jsloc.cpp */
 const char *stringize(js::HandleValue v);

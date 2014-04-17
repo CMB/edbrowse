@@ -13,6 +13,8 @@
 #define TAG_INVISIBLE 2
 /* sometimes </foo> means nothing. */
 #define TAG_NOSLASH 4
+/* This tag should become a corresponding js object in the tree. */
+#define TAG_JSOBJ 8
 
 static const char *const inp_types[] = {
 	"reset", "button", "image", "submit",
@@ -25,7 +27,7 @@ static const char *const inp_types[] = {
 static const char dfvl[] = "defaultValue";
 static const char dfck[] = "defaultChecked";
 
-static struct htmlTag *topTag;
+struct htmlTag *topTag;
 static char *topAttrib;
 static char *basehref;
 static struct htmlTag *currentForm;	/* the open form */
@@ -141,62 +143,75 @@ If it is the same type then close off that tag.
 This solves the <li> item 1 <li> item 2 problem,
 but not <li> stuff <p> more stuff <li>
 so it's just not a perfect solution.
+
+Parent node:
+Open a tag that corresponds to an object,
+and if a js object is created, back up to the first open tag
+above it that corresponds to an object,
+and if there is indeed a js object for that tag, create the parent link.
+
+children:
+A post scan derives children from parents.
+So if I got the parent logic wrong, and I probably did,
+I can fix it, and then the children will be fixed as well.
+It's a normal form kind of thing.
+Not yet implemented.
 *********************************************************************/
 
 static const struct tagInfo elements[] = {
 	{"BASE", "base reference for relative URLs", TAGACT_BASE, 0, 0, 5},
-	{"A", "an anchor", TAGACT_A, 3, 0, 1},
-	{"INPUT", "an input item", TAGACT_INPUT, 0, 0, 5},
-	{"TITLE", "the title", TAGACT_TITLE, 3, 0, 1},
-	{"TEXTAREA", "an input text area", TAGACT_TA, 3, 0, 1},
-	{"SELECT", "an option list", TAGACT_SELECT, 3, 0, 1},
-	{"OPTION", "a select option", TAGACT_OPTION, 0, 0, 5},
+	{"A", "an anchor", TAGACT_A, 3, 0, 9},
+	{"INPUT", "an input item", TAGACT_INPUT, 0, 0, 13},
+	{"TITLE", "the title", TAGACT_TITLE, 3, 0, 9},
+	{"TEXTAREA", "an input text area", TAGACT_TA, 3, 0, 9},
+	{"SELECT", "an option list", TAGACT_SELECT, 3, 0, 9},
+	{"OPTION", "a select option", TAGACT_OPTION, 0, 0, 13},
 	{"SUB", "a subscript", TAGACT_SUB, 3, 0, 0},
 	{"SUP", "a superscript", TAGACT_SUP, 3, 0, 0},
 	{"FONT", "a font", TAGACT_NOP, 3, 0, 0},
 	{"CENTER", "centered text", TAGACT_NOP, 3, 0, 0},
 	{"DOCWRITE", "document.write() text", TAGACT_DW, 0, 0, 0},
 	{"CAPTION", "a caption", TAGACT_NOP, 3, 5, 0},
-	{"HEAD", "the html header information", TAGACT_HEAD, 1, 0, 5},
-	{"BODY", "the html body", TAGACT_BODY, 1, 0, 5},
+	{"HEAD", "the html header information", TAGACT_HEAD, 1, 0, 13},
+	{"BODY", "the html body", TAGACT_BODY, 1, 0, 13},
 	{"BGSOUND", "background music", TAGACT_MUSIC, 0, 0, 5},
 	{"AUDIO", "audio passage", TAGACT_MUSIC, 0, 0, 5},
-	{"META", "a meta tag", TAGACT_META, 0, 0, 4},
-	{"IMG", "an image", TAGACT_IMAGE, 0, 0, 4},
-	{"IMAGE", "an image", TAGACT_IMAGE, 0, 0, 4},
+	{"META", "a meta tag", TAGACT_META, 0, 0, 12},
+	{"IMG", "an image", TAGACT_IMAGE, 0, 0, 12},
+	{"IMAGE", "an image", TAGACT_IMAGE, 0, 0, 12},
 	{"BR", "a line break", TAGACT_BR, 0, 1, 4},
-	{"P", "a paragraph", TAGACT_NOP, 1, 2, 5},
-	{"DIV", "a divided section", TAGACT_DIV, 3, 5, 0},
-	{"MAP", "a map of images", TAGACT_NOP, 3, 5, 0},
+	{"P", "a paragraph", TAGACT_NOP, 1, 2, 13},
+	{"DIV", "a divided section", TAGACT_DIV, 3, 5, 8},
+	{"MAP", "a map of images", TAGACT_NOP, 3, 5, 8},
 	{"HTML", "html", TAGACT_NOP, 0, 0, 0},
-	{"BLOCKQUOTE", "a quoted paragraph", TAGACT_NOP, 1, 10, 1},
-	{"H1", "a level 1 header", TAGACT_NOP, 1, 10, 1},
-	{"H2", "a level 2 header", TAGACT_NOP, 1, 10, 1},
-	{"H3", "a level 3 header", TAGACT_NOP, 1, 10, 1},
-	{"H4", "a level 4 header", TAGACT_NOP, 1, 10, 1},
-	{"H5", "a level 5 header", TAGACT_NOP, 1, 10, 1},
-	{"H6", "a level 6 header", TAGACT_NOP, 1, 10, 1},
-	{"DT", "a term", TAGACT_DT, 1, 2, 5},
-	{"DD", "a definition", TAGACT_DT, 1, 1, 5},
-	{"LI", "a list item", TAGACT_LI, 1, 1, 5},
-	{"UL", "a bullet list", TAGACT_NOP, 3, 5, 1},
-	{"DIR", "a directory list", TAGACT_NOP, 3, 5, 1},
-	{"MENU", "a menu", TAGACT_NOP, 3, 5, 1},
-	{"OL", "a numbered list", TAGACT_NOP, 3, 5, 1},
-	{"DL", "a definition list", TAGACT_NOP, 3, 5, 1},
+	{"BLOCKQUOTE", "a quoted paragraph", TAGACT_NOP, 1, 10, 9},
+	{"H1", "a level 1 header", TAGACT_NOP, 1, 10, 9},
+	{"H2", "a level 2 header", TAGACT_NOP, 1, 10, 9},
+	{"H3", "a level 3 header", TAGACT_NOP, 1, 10, 9},
+	{"H4", "a level 4 header", TAGACT_NOP, 1, 10, 9},
+	{"H5", "a level 5 header", TAGACT_NOP, 1, 10, 9},
+	{"H6", "a level 6 header", TAGACT_NOP, 1, 10, 9},
+	{"DT", "a term", TAGACT_DT, 1, 2, 13},
+	{"DD", "a definition", TAGACT_DT, 1, 1, 13},
+	{"LI", "a list item", TAGACT_LI, 1, 1, 13},
+	{"UL", "a bullet list", TAGACT_NOP, 3, 5, 9},
+	{"DIR", "a directory list", TAGACT_NOP, 3, 5, 9},
+	{"MENU", "a menu", TAGACT_NOP, 3, 5, 9},
+	{"OL", "a numbered list", TAGACT_NOP, 3, 5, 9},
+	{"DL", "a definition list", TAGACT_NOP, 3, 5, 9},
 	{"HR", "a horizontal line", TAGACT_HR, 0, 5, 5},
-	{"FORM", "a form", TAGACT_FORM, 1, 0, 1},
-	{"BUTTON", "a button", TAGACT_INPUT, 0, 0, 5},
+	{"FORM", "a form", TAGACT_FORM, 1, 0, 9},
+	{"BUTTON", "a button", TAGACT_INPUT, 0, 0, 13},
 /* we traditionally write </frame>,
  * but it really isn't meaningful to put anything at all in between. Thus nest = 0. */
-	{"FRAME", "a frame", TAGACT_FRAME, 0, 2, 5},
-	{"IFRAME", "a frame", TAGACT_FRAME, 0, 2, 5},
-	{"MAP", "an image map", TAGACT_MAP, 0, 2, 5},
-	{"AREA", "an image map area", TAGACT_AREA, 0, 0, 1},
-	{"TABLE", "a table", TAGACT_TABLE, 3, 10, 1},
-	{"TR", "a table row", TAGACT_TR, 3, 5, 1},
-	{"TD", "a table entry", TAGACT_TD, 3, 0, 1},
-	{"TH", "a table heading", TAGACT_TD, 3, 0, 1},
+	{"FRAME", "a frame", TAGACT_FRAME, 0, 2, 13},
+	{"IFRAME", "a frame", TAGACT_FRAME, 0, 2, 13},
+	{"MAP", "an image map", TAGACT_MAP, 0, 2, 13},
+	{"AREA", "an image map area", TAGACT_AREA, 0, 0, 9},
+	{"TABLE", "a table", TAGACT_TABLE, 3, 10, 9},
+	{"TR", "a table row", TAGACT_TR, 3, 5, 9},
+	{"TD", "a table entry", TAGACT_TD, 3, 0, 9},
+	{"TH", "a table heading", TAGACT_TD, 3, 0, 9},
 	{"PRE", "a preformatted section", TAGACT_PRE, 3, 1, 0},
 	{"LISTING", "a listing", TAGACT_PRE, 3, 1, 0},
 	{"XMP", "an example", TAGACT_PRE, 3, 1, 0},
@@ -413,9 +428,7 @@ static void htmlMeta(void)
 		content = 0;
 
 	if (isJSAlive) {
-		topTag->jv =
-		    domLink("Meta", name, topTag->id, 0, 0, "metas",
-			    cw->jss->jdoc, eb_false);
+		domLink("Meta", 0, "metas", cw->jss->jdoc, eb_false);
 		if (topTag->jv)
 			establish_property_string(topTag->jv, "content",
 						  content, eb_true);
@@ -516,14 +529,11 @@ static void formControl(eb_bool namecheck)
 
 	if (isJSAlive) {
 		if (currentForm && currentForm->jv) {
-			topTag->jv =
-			    domLink("Element", topTag->name, topTag->id, 0, 0,
-				    "elements", currentForm->jv,
-				    isradio | isselect);
+			domLink("Element", 0, "elements", currentForm->jv,
+				isradio | isselect);
 		} else {
-			topTag->jv =
-			    domLink("Element", topTag->name, topTag->id, 0, 0,
-				    0, cw->jss->jdoc, isradio | isselect);
+			domLink("Element", 0, 0, cw->jss->jdoc,
+				isradio | isselect);
 		}
 	}
 
@@ -567,9 +577,7 @@ static void htmlImage(void)
 	if (!isJSAlive)
 		return;
 
-	topTag->jv =
-	    domLink("Image", topTag->name, topTag->id, "src", topTag->href,
-		    "images", cw->jss->jdoc, eb_false);
+	domLink("Image", "src", "images", cw->jss->jdoc, eb_false);
 
 	get_js_events();
 
@@ -628,9 +636,7 @@ static void htmlForm(void)
 	if (!isJSAlive)
 		return;
 
-	topTag->jv =
-	    domLink("Form", topTag->name, topTag->id, "action", topTag->href,
-		    "forms", cw->jss->jdoc, eb_false);
+	domLink("Form", "action", "forms", cw->jss->jdoc, eb_false);
 	if (!topTag->jv)
 		return;
 
@@ -1032,6 +1038,41 @@ static struct htmlTag *findOpenTag(const char *name)
 	return NULL;
 }				/* findOpenTag */
 
+void makeParentNode(const struct htmlTag *t)
+{
+	const struct htmlTag *v;
+	int i;
+
+/* there should always be an object on t */
+	if (!t->jv)
+		return;
+
+/* this test should also pass */
+	if (!(t->info->bits & TAG_JSOBJ))
+		return;
+
+	for (i = t->seqno - 1; i >= 0; --i) {
+		v = tagList[i];
+		if ((v->info->bits & TAG_JSOBJ) &&
+		    v->info->nest && !v->balanced)
+			break;
+	}
+
+	if (i < 0) {
+/* nothing open, link to document */
+		debugPrint(5, "parent %s > document", t->info->name);
+		establish_property_object(t->jv, "parentNode", cw->jss->jdoc);
+		return;
+	}
+
+/* parent tag should also have a js object */
+	if (!v->jv)
+		return;
+
+	debugPrint(5, "parent %s > %s", t->info->name, v->info->name);
+	establish_property_object(t->jv, "parentNode", v->jv);
+}				/* makeParentNode */
+
 struct htmlTag *newTag(const char *name)
 {
 	struct htmlTag *t;
@@ -1119,6 +1160,8 @@ static void htmlOption(struct htmlTag *sel, struct htmlTag *v, const char *a)
 	establish_property_string(v->jv, "value", v->value, eb_true);
 	establish_property_bool(v->jv, "selected", v->checked, eb_false);
 	establish_property_bool(v->jv, "defaultSelected", v->checked, eb_true);
+	debugPrint(5, "parent OPTION > SELECT");
+	establish_property_object(v->jv, "parentNode", sel->jv);
 
 	if (v->checked && !sel->multiple) {
 		set_property_number(sel->jv, "selectedIndex", v->lic);
@@ -1588,11 +1631,8 @@ forceCloseAnchor:
 			} else {
 				htmlHref("href");
 				if (isJSAlive)
-					topTag->jv =
-					    domLink("Anchor", topTag->name,
-						    topTag->id, "href",
-						    topTag->href, "links",
-						    cw->jss->jdoc, eb_false);
+					domLink("Anchor", "href", "links",
+						cw->jss->jdoc, eb_false);
 				get_js_events();
 				if (t->href) {
 					a_href = eb_true;
@@ -1626,18 +1666,14 @@ forceCloseAnchor:
 
 		case TAGACT_HEAD:
 			if (isJSAlive)
-				topTag->jv =
-				    domLink("Head", topTag->name, topTag->id, 0,
-					    0, "heads", cw->jss->jdoc,
-					    eb_false);
+				domLink("Head", 0, "heads", cw->jss->jdoc,
+					eb_false);
 			goto plainWithElements;
 
 		case TAGACT_BODY:
 			if (isJSAlive)
-				topTag->jv =
-				    domLink("Body", topTag->name, topTag->id, 0,
-					    0, "bodies", cw->jss->jdoc,
-					    eb_false);
+				domLink("Body", 0, "bodies", cw->jss->jdoc,
+					eb_false);
 plainWithElements:
 			if (t->jv)
 				establish_property_array(t->jv, "elements");
@@ -1704,10 +1740,8 @@ plainTag:
 
 		case TAGACT_TABLE:
 			if (!slash && isJSAlive) {
-				topTag->jv =
-				    domLink("Table", topTag->name, topTag->id,
-					    0, 0, "tables", cw->jss->jdoc,
-					    eb_false);
+				domLink("Table", 0, "tables", cw->jss->jdoc,
+					eb_false);
 				get_js_events();
 /* create the array of rows under the table */
 				if (topTag->jv)
@@ -1732,9 +1766,7 @@ plainTag:
 			tdfirst = eb_true;
 			if ((!slash) && isJSAlive
 			    && (open = findOpenTag("table")) && open->jv) {
-				topTag->jv =
-				    domLink("Trow", topTag->name, topTag->id, 0,
-					    0, "rows", open->jv, eb_false);
+				domLink("Trow", 0, "rows", open->jv, eb_false);
 				get_js_events();
 				if (topTag->jv)
 					establish_property_array(topTag->jv,
@@ -1759,18 +1791,15 @@ plainTag:
 				newstr += '|';
 			}
 			if (isJSAlive && (open = findOpenTag("tr")) && open->jv) {
-				topTag->jv =
-				    domLink("Cell", topTag->name, topTag->id, 0,
-					    0, "cells", open->jv, eb_false);
+				domLink("Cell", 0, "cells", open->jv, eb_false);
 				get_js_events();
 			}
 			goto endtag;
 
 		case TAGACT_DIV:
 			if (!slash && isJSAlive) {
-				topTag->jv =
-				    domLink("Div", topTag->name, topTag->id, 0,
-					    0, "divs", cw->jss->jdoc, eb_false);
+				domLink("Div", 0, "divs", cw->jss->jdoc,
+					eb_false);
 				get_js_events();
 			}
 			goto nop;
@@ -1778,10 +1807,8 @@ plainTag:
 		case TAGACT_SPAN:
 			if (!slash) {
 				if (isJSAlive)
-					topTag->jv =
-					    domLink("Span", topTag->name,
-						    topTag->id, 0, 0, "spans",
-						    cw->jss->jdoc, eb_false);
+					domLink("Span", 0, "spans",
+						cw->jss->jdoc, eb_false);
 				get_js_events();
 				a = htmlAttrVal(topAttrib, "class");
 				if (!a)
@@ -1954,19 +1981,13 @@ unparen:
 			if (action == TAGACT_FRAME) {
 				htmlHref("src");
 				if (isJSAlive)
-					topTag->jv =
-					    domLink("Frame", topTag->name,
-						    topTag->id, "src",
-						    topTag->href, "frames",
-						    cw->jss->jwin, eb_false);
+					domLink("Frame", "src", "frames",
+						cw->jss->jwin, eb_false);
 			} else {
 				htmlHref("href");
 				if (isJSAlive)
-					topTag->jv =
-					    domLink("Area", topTag->name,
-						    topTag->id, "href",
-						    topTag->href, "areas",
-						    cw->jss->jdoc, eb_false);
+					domLink("Area", "href", "areas",
+						cw->jss->jdoc, eb_false);
 			}
 			topTag->clickable = eb_true;
 			get_js_events();

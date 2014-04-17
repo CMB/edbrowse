@@ -83,9 +83,11 @@ enum {
 	INP_SELECT, INP_TA, INP_RADIO, INP_CHECKBOX,
 };
 
-/* The list of html tags for the current window.
- * I don't think we ever need look at the tags in some other window. */
+/* The list of html tags for the current window. */
 #define tagList (*((vector<struct htmlTag *> *)(cw->tags)))
+
+/* Last tag in the above list. */
+extern struct htmlTag *topTag;
 
 struct ebWindowJSState {
 	JSContext *jcx;		/* javascript context */
