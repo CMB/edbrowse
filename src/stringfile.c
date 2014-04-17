@@ -338,6 +338,36 @@ int stringIsNum(const char *s)
 	return n;
 }				/* stringIsNum */
 
+eb_bool stringIsDate(const char *s)
+{
+	if (!isdigit(*s))
+		return eb_false;
+	++s;
+	if (isdigit(*s))
+		++s;
+	if (*s++ != '/')
+		return eb_false;
+	if (!isdigit(*s))
+		return eb_false;
+	++s;
+	if (isdigit(*s))
+		++s;
+	if (*s++ != '/')
+		return eb_false;
+	if (!isdigit(*s))
+		return eb_false;
+	++s;
+	if (isdigit(*s))
+		++s;
+	if (isdigit(*s))
+		++s;
+	if (isdigit(*s))
+		++s;
+	if (*s)
+		return eb_false;
+	return eb_true;
+}				/* stringIsDate */
+
 eb_bool stringIsFloat(const char *s, double *dp)
 {
 	const char *t;

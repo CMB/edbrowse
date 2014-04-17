@@ -215,6 +215,7 @@ char *Cify(const char *s, int n);
 char *pullString(const char *s, int l);
 char *pullString1(const char *s, const char *t);
 int stringIsNum(const char *s);
+eb_bool stringIsDate(const char *s);
 eb_bool stringIsFloat(const char *s, double *dp);
 eb_bool stringIsPDF(const char *s);
 eb_bool isSQL(const char *s);

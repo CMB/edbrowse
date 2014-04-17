@@ -765,6 +765,22 @@ static void buildSelectClause(void)
 	stringAndString(&scl, &scllen, td->name);
 }				/* buildSelectClause */
 
+static char date2buf[24];
+static eb_bool dateBetween(const char *s)
+{
+	char *e;
+
+	if (strlen(s) >= 24)
+		return eb_false;
+
+	strcpy(date2buf, s);
+	e = strchr(date2buf, '-');
+	if (!e)
+		return eb_false;
+	*e = 0;
+	return stringIsDate(date2buf) | stringIsDate(e + 1);
+}				/* dateBetween */
+
 static eb_bool buildWhereClause(void)
 {
 	int i, l, n, colno;
@@ -844,6 +860,12 @@ setcol_n:
 		stringAndNum(&wcl, &wcllen, i);
 		stringAndString(&wcl, &wcllen, " and ");
 		stringAndNum(&wcl, &wcllen, n);
+	} else if (dateBetween(w)) {
+		stringAndString(&wcl, &wcllen, " between \"");
+		stringAndString(&wcl, &wcllen, date2buf);
+		stringAndString(&wcl, &wcllen, "\" and \"");
+		stringAndString(&wcl, &wcllen, date2buf + strlen(date2buf) + 1);
+		stringAndChar(&wcl, &wcllen, '"');
 	} else if (w[strlen(w) - 1] == '*') {
 		stringAndString(&wcl, &wcllen, lineFormat(" matches %S", w));
 	} else {
@@ -1726,7 +1748,7 @@ int goSelect(int *startLine, char **rbuf)
 	};
 	static const actionCodes[] = {
 		MSG_Selected, MSG_Inserted, MSG_Updated, MSG_Deleted,
-		    MSG_ProcExec
+		MSG_ProcExec
 	};
 
 	*rbuf = EMPTYSTRING;
