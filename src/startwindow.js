@@ -72,3 +72,57 @@ history.toString = function() {
 return "Sorry, edbrowse does not maintain a browsing history.";
 } 
 
+/* This is our addEventListener function. */
+/* first arg is a string like click, second arg is a js handler */
+/* Third arg is not used, cause I don't understand it. */
+function event$$listen(ev, handler, notused)
+{
+ev = "on" + ev;
+var evarray = ev + "$$array"; // array of handlers
+var evorig = ev + "$$orig"; // original handler from html
+if(!this[evarray]) {
+/* attaching the first handler */
+var a = new Array();
+/* was there already a function from before? */
+if(this[ev]) {
+this[evorig] = this[ev];
+this[ev] = undefined;
+}
+this[evarray] = a;
+this[ev] = function(){
+var a = this[evarray]; /* should be an array */
+if(this[evorig]) this[evorig]();
+for(var i = 0; i<a.length; ++i) a[i]();
+};
+}
+this[evarray].push(handler);
+}
+
+/* to use this, set element.addEventListener = event$$listen
+ * Or maybe URL.prototype.addEventListener = event$$listen
+ * to cover all the hyperlinks in one go.
+ * I don't know, this is very experimental, and not activated yet.
+ * For grins let's put in the "other" standard. */
+
+function event$$attach(ev, handler)
+{
+var evarray = ev + "$$array"; // array of handlers
+var evorig = ev + "$$orig"; // original handler from html
+if(!this[evarray]) {
+/* attaching the first handler */
+var a = new Array();
+/* was there already a function from before? */
+if(this[ev]) {
+this[evorig] = this[ev];
+this[ev] = undefined;
+}
+this[evarray] = a;
+this[ev] = function(){
+var a = this[evarray]; /* should be an array */
+if(this[evorig]) this[evorig]();
+for(var i = 0; i<a.length; ++i) a[i]();
+};
+}
+this[evarray].push(handler);
+}
+
