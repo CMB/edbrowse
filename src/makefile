@@ -52,9 +52,12 @@ EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
 $(EBOBJS) : eb.h eb.p messages.h tcp.h
 html.o jsdom.o jsloc.o : js.h ebjs.p
 
+startwindow.c: startwindow.js
+	../tools/buildstartwindow
+
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.
-edbrowse: $(EBOBJS) tcp.o dbstubs.o
+edbrowse: $(EBOBJS) tcp.o startwindow.o dbstubs.o
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 #  You probably need to be root to do this.
@@ -78,17 +81,17 @@ dbinfx.o : dbinfx.ec
 	esql -c dbinfx.ec
 
 #  Informix executable
-edbrowseinf: $(EBOBJS) tcp.o dbops.o dbinfx.o
-	esql $(ESQLDFLAGS) -o edbrowseinf $(EBOBJS) tcp.o dbops.o dbinfx.o $(LDLIBS)
+edbrowseinf: $(EBOBJS) tcp.o startwindow.o dbops.o dbinfx.o
+	esql $(ESQLDFLAGS) -o edbrowseinf $(EBOBJS) tcp.o startwindow.o dbops.o dbinfx.o $(LDLIBS)
 
 #  odbc access
 edbrowseodbc: LDLIBS += -lodbc
-edbrowseodbc: $(EBOBJS) tcp.o dbops.o dbodbc.o
+edbrowseodbc: $(EBOBJS) tcp.o startwindow.o dbops.o dbodbc.o
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 STATICLIBS = -lodbc -lpcre -lm -ljs -lcurl -lssl -lc -lcrypto -lpthread -lm -ldl -lrt
-edbrowse.static: $(EBOBJS) tcp.o dbops.o dbodbc.o
-	cc --static $(LFLAGS) -o edbrowse.static $(EBOBJS) tcp.o dbops.o dbodbc.o $(STATICLIBS)
+edbrowse.static: $(EBOBJS) tcp.o startwindow.o dbops.o dbodbc.o
+	cc --static $(LFLAGS) -o edbrowse.static $(EBOBJS) tcp.o startwindow.o dbops.o dbodbc.o $(STATICLIBS)
 
 clean:
 	rm -f *.o edbrowse edbrowseinf edbrowseodbc edbrowse.static

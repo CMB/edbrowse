@@ -936,55 +936,13 @@ static const char *docarrays[] = {
 	"forms", "images", "areas", "metas", 0
 };
 
-/* Some things are just easier in javascript */
-static const char initScript[] = "document.all.tags = function(s) { \n\
-switch(s.toLowerCase()) { \n\
-case 'form': return document.forms; \n\
-case 'table': return document.tables; \n\
-case 'div': return document.divs; \n\
-case 'a': return document.links; \n\
-case 'img': case 'image': return document.images; \n\
-case 'span': return document.spans; \n\
-case 'head': return document.heads; \n\
-case 'meta': return document.metas; \n\
-case 'body': return document.bodies; \n\
-default: /* alert('all.tags default ' + s); */ return new Array(); }} \n\
-\n\
-document.getElementById = function(s) { \n\
-return document.idMaster[s]; } \n\
-\n\
-document.getElementsByTagName = function(s) { \n\
-return document.all.tags(s); }\n\
-\n\
-document.createElement = function(s) { \n\
-switch(s.toLowerCase()) { \n\
-case 'link': return new Link();\n\
-case 'image': case 'img': return new Image();\n\
-default: /* alert('createElement default ' + s); */ return new Object(); }} \n\
-\n\
-URL.prototype.indexOf = function(s) { \n\
-return this.toString().indexOf(s); }\n\
-URL.prototype.lastIndexOf = function(s) { \n\
-return this.toString().lastIndexOf(s); }\n\
-URL.prototype.substring = function(from, to) { \n\
-return this.toString().substring(from, to); }\n\
-URL.prototype.toLowerCase = function() { \n\
-return this.toString().toLowerCase(); }\n\
-URL.prototype.toUpperCase = function() { \n\
-return this.toString().toUpperCase(); }\n\
-URL.prototype.match = function(s) { \n\
-return this.toString().match(s); }\n\
-\n\
-history.toString = function() { \n\
-return 'Sorry, edbrowse does not maintain a browsing history.'; } \
-";
-
 void createJavaContext(struct ebWindowJSState **pstate)
 {
 	struct ebWindowJSState *state = new ebWindowJSState;
 /* navigator mime types and plugins */
 	const char *itemname;
 	int i;
+	extern const char startWindowJS[];
 	char verx11[20];
 	jsval rval;
 	struct MIMETYPE *mt;
@@ -1281,8 +1239,8 @@ abort:
 		goto abort;
 
 /* Set up some things in javascript */
-	if (JS_EvaluateScript(state->jcx, state->jwin, initScript,
-			      strlen(initScript), "initScript", 1,
+	if (JS_EvaluateScript(state->jcx, state->jwin, startWindowJS,
+			      strlen(startWindowJS), "startwindow", 1,
 			      &rval) == JS_FALSE)
 		goto abort;
 }				/* createJavaContext */

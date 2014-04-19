@@ -211,6 +211,12 @@ jsloc.cpp:
 The location object, and other objects (like document.cookie)
 with strange side effects.
 
+startwindow.js:
+Javascript that is run at the start of each session.
+This creates certain support methods that client js will need.
+It is converted into a const string in startwindow.c,
+thus startwindow.c is not a source file.
+
 jsrt:
 This is the javascript regression test for edbrowse.
 It exercises some of the javascript DOM interactions.
