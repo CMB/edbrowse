@@ -412,7 +412,7 @@ Wyoming
 </select>
 <input type=number maxlength=5 name="zip code" readonly value="&#56;8888">
 <span id=almond></span>
-<table><tr></tr><tr id=pecan class=filbert></tr></table>
+<table class=filbert><tr></tr><tr id=pecan></tr></table>
 Colors will change with the state, A through M or N through Z.
 <br>My favorite colors are:
 <select name=colors multiple>
@@ -515,7 +515,7 @@ if(document.getElementById("hound").name != "dog") fail(110);
 if(document.getElementById("almond") != document.spans[0]) fail(111);
 // I'm not sure of any of this table row stuff
 if(document.getElementById("pecan") != document.tables[0].rows[1]) fail(112);
-if(document.getElementById("pecan").className != "filbert") fail(115);
+if(document.getElementById("pecan").parentNode.className != "filbert") fail(115);
 if(document.all.tags("FORM")[0] != document.questionnaire) fail(113);
 if(document.all.tags("span").length != 1) fail(114);
 
