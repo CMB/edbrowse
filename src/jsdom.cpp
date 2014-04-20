@@ -828,6 +828,38 @@ static JSBool element_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	return JS_TRUE;
 }
 
+static JSBool body_ctor(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	JSObject & callee = args.callee();
+	jsval callee_val = JS::ObjectValue(callee);
+	JS::RootedObject newobj(cx,
+				JS_NewObjectForConstructor(cx, &body_class,
+							   &callee_val));
+	if ((JSObject *) newobj == NULL) {
+		javaSessionFail();
+		return JS_FALSE;
+	}
+	args.rval().set(OBJECT_TO_JSVAL(newobj));
+	return JS_TRUE;
+}
+
+static JSBool form_ctor(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	JSObject & callee = args.callee();
+	jsval callee_val = JS::ObjectValue(callee);
+	JS::RootedObject newobj(cx,
+				JS_NewObjectForConstructor(cx, &form_class,
+							   &callee_val));
+	if ((JSObject *) newobj == NULL) {
+		javaSessionFail();
+		return JS_FALSE;
+	}
+	args.rval().set(OBJECT_TO_JSVAL(newobj));
+	return JS_TRUE;
+}
+
 static JSBool link_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
@@ -913,8 +945,8 @@ static JSBool option_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 
 static struct DOMCLASS domClasses[] = {
 	{&element_class, element_methods, element_ctor, 0},
-	{&form_class, form_methods},
-	{&body_class, body_methods},
+	{&form_class, form_methods, form_ctor},
+	{&body_class, body_methods, body_ctor},
 	{&head_class, head_methods},
 	{&meta_class},
 	{&link_class, link_methods, link_ctor, 0},

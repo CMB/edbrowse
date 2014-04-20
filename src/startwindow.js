@@ -134,4 +134,12 @@ this[evarray].push(handler);
 
 document.addEventListener = window.addEventListener;
 document.attachEvent = window.attachEvent;
+Body.prototype.addEventListener = window.addEventListener;
+Body.prototype.attachEvent = window.attachEvent;
+Form.prototype.addEventListener = window.addEventListener;
+Form.prototype.attachEvent = window.attachEvent;
+Element.prototype.addEventListener = window.addEventListener;
+Element.prototype.attachEvent = window.attachEvent;
+Anchor.prototype.addEventListener = window.addEventListener;
+Anchor.prototype.attachEvent = window.attachEvent;
 
