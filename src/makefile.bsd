@@ -1,14 +1,20 @@
 #  This is the makefile for edbrowse under BSD Unix.
 
-#  Flags for compilation.
-#  I know - I set the Linux flag here, but it seems to work.
-CFLAGS = -I/usr/local/include -I/usr/local/include/js -DSYSBSD -DXP_UNIX
+#  Flags for gcc compilation.
+JS_CXXFLAGS =-I/usr/include/mozjs-24
+
+# we need to only use the js flags when building with c++, so use CXXFLAGS
+CXXFLAGS += $(JS_CXXFLAGS)
 
 #  Tell the dynamic linker to look in the pkg area.
 LFLAGS = -s -Wl,--rpath -Wl,/usr/pkg/lib
 
+# Override JSLIB on the command-line, if your distro uses a different name.
+# E.G., make JSLIB=-lmozjs
+JSLIB = -lmozjs-24
+
 #  Libraries for edbrowse.
-LIBS = -L /usr/local/lib -lpcre -lm -lssl -lmozjs185 -lcrypto -pthread -lcurl -lreadline
+LDLIBS = -lpcre -lm -lssl $(JSLIB) -lcurl -lreadline -lcrypto -lstdc++
 
 #  Make the dynamically linked executable program by default.
 #  Edbrowse executable.
@@ -19,19 +25,11 @@ EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
 	html.o format.o cookies.o stringfile.o jsdom.o jsloc.o messages.o
 
 #  Header file dependencies.
-$(EBOBJS) : eb.h eb.p messages.h
-main.o tcp.o http.o sendmail.o: tcp.h
+$(EBOBJS) : eb.h eb.p messages.h tcp.h
 
-edbrowse: $(EBOBJS) tcp.o dbstubs.o
-	cc $(LFLAGS) -o edbrowse tcp.o dbstubs.o $(EBOBJS) $(LIBS)
+startwindow.c: startwindow.js
+	../tools/buildstartwindow
 
-#  Build function prototypes.
-proto:
-	mkproto -g main.c buffers.c url.c auth.c http.c messages.c \
-	sendmail.c fetchmail.c html.c \
-	format.c cookies.c stringfile.c jsdom.c jsloc.c dbstubs.c >eb.p
-
-#  I've had no luck getting this to work - can you help?
-edbrowse.static: $(EBOBJS) tcp.o
-	cc --static $(LFLAGS) -o edbrowse.static tcp.o $(EBOBJS) $(LIBS)
+edbrowse: $(EBOBJS) tcp.o startwindow.o dbstubs.o
+	cc $(LFLAGS) -o edbrowse tcp.o startwindow.o dbstubs.o $(EBOBJS) $(LIBS)
 
