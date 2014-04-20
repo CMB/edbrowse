@@ -2,7 +2,7 @@
 <head>
 <title>Edbrowse js regression test</title>
 </head>
-<body onload=onlfunc() onunload=onunlfunc()>
+<body onload=bodyLoad() onunload=bodyUnload()>
 <script language="JavaScript">
 /* This is the javascript regression test for edbrowse.
 It attempts to exercise all the implemented features of javascript,
@@ -580,16 +580,16 @@ olist[3] = oo;
 }
 }
 
-function onlfunc() {
-alert("page loading");
-}
-function onunlfunc() {
+function bodyLoad() { alert("body loading"); }
+function bodyUnload() {
 if(confirm("Care to visit MathReference.com"))
 new Window("http://www.mathreference.com");
 else alert("ok, never mind");
 }
 function formLoad(name) { onlv++; alert("form " + name + " loading"); }
 function formUnload(name) { alert("form " + name + " unloading"); }
+function docLoad() { alert("doc loader attached"); }
+document.attachEvent("onload", docLoad);
 var onlv = 77;
 
 setTimeout("joker()", 750);

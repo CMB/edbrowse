@@ -72,10 +72,20 @@ history.toString = function() {
 return "Sorry, edbrowse does not maintain a browsing history.";
 } 
 
-/* This is our addEventListener function. */
-/* first arg is a string like click, second arg is a js handler */
-/* Third arg is not used, cause I don't understand it. */
-function event$$listen(ev, handler, notused)
+/*********************************************************************
+This is our addEventListener function.
+It is bound to window, which is ok because window has such a function
+to listen to load and unload.
+Later on we will bind it to document and to other elements via
+element.addEventListener = addEventListener
+Or maybe URL.prototype.addEventListener = addEventListener
+to cover all the hyperlinks in one go.
+All this is very experimental and mostly not activated yet.
+first arg is a string like click, second arg is a js handler,
+Third arg is not used cause I don't understand it.
+*********************************************************************/
+
+function addEventListener(ev, handler, notused)
 {
 ev = "on" + ev;
 var evarray = ev + "$$array"; // array of handlers
@@ -98,13 +108,9 @@ for(var i = 0; i<a.length; ++i) a[i]();
 this[evarray].push(handler);
 }
 
-/* to use this, set element.addEventListener = event$$listen
- * Or maybe URL.prototype.addEventListener = event$$listen
- * to cover all the hyperlinks in one go.
- * I don't know, this is very experimental, and not activated yet.
- * For grins let's put in the "other" standard. */
+/* For grins let's put in the other standard. */
 
-function event$$attach(ev, handler)
+function attachEvent(ev, handler)
 {
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
@@ -125,4 +131,7 @@ for(var i = 0; i<a.length; ++i) a[i]();
 }
 this[evarray].push(handler);
 }
+
+document.addEventListener = window.addEventListener;
+document.attachEvent = window.attachEvent;
 
