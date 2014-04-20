@@ -408,16 +408,10 @@ Needless to say, this is very confusing.
 <P>
 Search and substitute is performed by the pcre library,
 and fortunately for us, the latest version supports utf8.&nbsp;
-In other words, I can pass pcre an option that tells it to treat certain two-byte sequences as single letters,
-and it will behave the way you want it to.&nbsp;
-Searching for ni.o will work again.&nbsp;
-Unfortunately, some older pcre packages do not have this capability built in.&nbsp;
-If this is the case, you will receive a warning message,
-then pcre will revert back to its original one-byte-per-letter behavior.&nbsp;
-To disable the utf8 feature permanently, and suppress this warning message, set the environment variable PCREUTF8=off.&nbsp;
-If you want to disable utf8 search and substitute temporarily, use the su8 command.&nbsp;
-Once again, this paragraph describes older systems;
-your distribution is probably up to date, and you can search for ni&ntilde;o via ni.o as usual.
+I pass pcre an option that tells it to treat certain two-byte sequences as single letters,
+and it behaves the way you want it to.&nbsp;
+Searching for ni.o works again.&nbsp;
+If you want to disable utf8 search and substitute temporarily, use the su8 command.
 
 <P>
 Some websites offer their contents in multiple languages.&nbsp;
