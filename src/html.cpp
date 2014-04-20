@@ -1677,7 +1677,7 @@ forceCloseAnchor:
 
 		case TAGACT_BODY:
 			if (isJSAlive)
-				domLink("body", 0, "bodies", cw->jss->jdoc,
+				domLink("Body", 0, "bodies", cw->jss->jdoc,
 					eb_false);
 plainWithElements:
 			if (t->jv)

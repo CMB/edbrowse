@@ -1197,23 +1197,6 @@ abort:
 	if (cw->js_failed)
 		return;
 
-	JS::RootedObject del(state->jcx, JS_NewObject(state->jcx, 0, 0,
-						      state->jdoc));
-	if ((JSObject *) del == NULL)
-		goto abort;
-	establish_property_object(state->jdoc, "body", del);
-	establish_property_object(state->jdoc, "documentElement", del);
-	establish_property_number(del, "clientHeight", 768, eb_true);
-	establish_property_number(del, "clientWidth", 1024, eb_true);
-	establish_property_number(del, "offsetHeight", 768, eb_true);
-	establish_property_number(del, "offsetWidth", 1024, eb_true);
-	establish_property_number(del, "scrollHeight", 768, eb_true);
-	establish_property_number(del, "scrollWidth", 1024, eb_true);
-	establish_property_number(del, "scrollTop", 0, eb_true);
-	establish_property_number(del, "scrollLeft", 0, eb_true);
-	if (cw->js_failed)
-		return;
-
 	JS::RootedObject hist(state->jcx, JS_NewObject(state->jcx, 0, 0,
 						       state->jwin));
 	if ((JSObject *) hist == NULL)
@@ -1587,6 +1570,25 @@ Example www.startpage.com, where id=submit
 
 	topTag->jv = v;
 	makeParentNode(topTag);
+	if (cw->js_failed)
+		return;
+
+	if (stringEqual(classname, "Body")) {
+/* here are a few attributes that come in with the body */
+		establish_property_object(cw->jss->jdoc, "body", v);
+		establish_property_object(cw->jss->jdoc, "documentElement", v);
+		establish_property_number(v, "clientHeight", 768, eb_true);
+		establish_property_number(v, "clientWidth", 1024, eb_true);
+		establish_property_number(v, "offsetHeight", 768, eb_true);
+		establish_property_number(v, "offsetWidth", 1024, eb_true);
+		establish_property_number(v, "scrollHeight", 768, eb_true);
+		establish_property_number(v, "scrollWidth", 1024, eb_true);
+		establish_property_number(v, "scrollTop", 0, eb_true);
+		establish_property_number(v, "scrollLeft", 0, eb_true);
+		if (cw->js_failed)
+			return;
+	}
+
 	return;
 
 abort:
