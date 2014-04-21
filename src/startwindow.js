@@ -215,8 +215,12 @@ var h=today.getHours();
 var m=today.getMinutes();
 var s=today.getSeconds();
 // add a zero in front of numbers<10
+if(h < 10) h = "0" + h;
 if(m < 10) m = "0" + m;
 if(s < 10) s = "0" + s;
 alert("[" + h + ":" + m + ":" + s + "] " + obj);
 }
+console.info = console.log;
+console.warn = console.log;
+console.error = console.log;
 
