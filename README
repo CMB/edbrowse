@@ -72,6 +72,8 @@ This is used for ftp, http, and https.
 Check for /usr/include/curl/curl.h
 Edbrowse requires version 7.29.0 or later.  If you compiled with a version
 prior to 7.29.0, the program will inform you that you need to upgrade.
+If you have to compile curl from source, be sure to specify
+--ENABLE-VERSION-SYMBOLS (or some such) at the configure script.
 
 Finally, you need the Spider Monkey javascript engine from Mozilla.org
 ftp://ftp.mozilla.org/pub/mozilla.org/js/
