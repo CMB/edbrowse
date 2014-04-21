@@ -1305,20 +1305,6 @@ longvar:
 	return eb_false;
 }				/* envFile */
 
-static struct utsname utsbuf;
-
-const char *currentOS(void)
-{
-	uname(&utsbuf);
-	return utsbuf.sysname;
-}				/* currentOS */
-
-const char *currentMachine(void)
-{
-	uname(&utsbuf);
-	return utsbuf.machine;
-}				/* currentMachine */
-
 FILE *efopen(const char *name, const char *mode)
 {
 	FILE *f;

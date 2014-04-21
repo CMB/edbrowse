@@ -2,13 +2,19 @@
 
 set -e
 
+#  some items we will need for navigator.
+kname=`uname -s`
+plat=`uname -i`
+ebv=`sed <main.c -e '/^const.*version/!d' -e 's/";$//' -e 's/.*"//'`
+
 (
 echo "/* startwindow.c: this file is machine generated; */"
 echo "/* please edit startwindow.js instead. */"
 echo
 echo "const char startWindowJS[] = \"\\"
 
-sed <startwindow.js -e 's/["\\]/\\&/g' -e 's/$/\\n\\/'
+sed <startwindow.js -e 's/["\\]/\\&/g' -e 's/$/\\n\\/' \
+-e "s/\$ebv/$ebv/g" -e "s/\$kname/$kname/g" -e "s/\$plat/$plat/g"
 
 echo "\";";
 ) > startwindow.c

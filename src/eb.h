@@ -194,6 +194,7 @@ extern int webTimeout, mailTimeout;
 extern int browseLine;		/* line number, for error reporting */
 extern eb_bool sqlPresent;	/* Was edbrowse compiled with SQL built in? */
 extern eb_bool ismc;		/* Is the program running as a mail client? */
+extern int eb_lang;		/* edbrowse language, determined by $LANG */
 extern eb_bool cons_utf8;	/* does the console expect utf8? */
 extern eb_bool iuConvert;	/* perform iso utf8 conversions automatically */
 extern char type8859;		/* 1 through 15 */

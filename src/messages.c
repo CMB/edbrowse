@@ -2691,6 +2691,7 @@ static const char *polishMessages[] = {
 static const char **messageArray = englishMessages;
 static int messageArrayLength = sizeof(englishMessages) / sizeof(char *);
 
+int eb_lang = 1; /* default English */
 eb_bool cons_utf8, iuConvert = eb_true;
 char type8859 = 1;
 
@@ -2726,12 +2727,14 @@ void selectLanguage(void)
 		return;		/* english is default */
 
 	if (!strncmp(buf, "fr", 2)) {
+		eb_lang = 2;
 		messageArray = frenchMessages;
 		messageArrayLength = sizeof(frenchMessages) / sizeof(char *);
 		return;
 	}
 
 	if (!strncmp(buf, "pt_br", 5)) {
+		eb_lang = 3;
 		messageArray = brazilianPortugueseMessages;
 		messageArrayLength =
 		    sizeof(brazilianPortugueseMessages) / sizeof(char *);
@@ -2739,18 +2742,21 @@ void selectLanguage(void)
 	}
 
 	if (!strncmp(buf, "pl_pl", 5)) {
+		eb_lang = 4;
 		messageArray = polishMessages;
 		messageArrayLength = sizeof(polishMessages) / sizeof(char *);
 		type8859 = 2;
 		return;
 	}
 
+#if 0
 	if (!strncmp(buf, "cs_cz", 5)) {
 		messageArray = czechMessages;
 		messageArrayLength = sizeof(czechMessages) / sizeof(char *);
 		type8859 = 2;
 		return;
 	}
+#endif
 
 /* This message is really annoying if it pops up every time you invoke edbrowse.
 	fprintf(stderr, "Sorry, language %s is not implemented\n", buf);

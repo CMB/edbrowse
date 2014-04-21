@@ -9,9 +9,47 @@ Please take advantage of this machinery and put functions here,
 even prototypes and getter / setter support functions,
 whenever it makes sense to do so.
 The classes are created first, so that you can write meaningful prototypes here.
-see URL below.
+see URL.prototype below.
 *********************************************************************/
 
+/* Some visual attributes of the window.
+ * These are just guesses.
+ * Better to have something than nothing at all. */
+height = 768;
+width = 1024;
+status = 0;
+defaultStatus = 0;
+returnValue = true;
+menubar = true;
+scrollbars = true;
+toolbar = true;
+resizable = true;
+directories = false;
+name = "unspecifiedFrame";
+
+screen = new Object;
+screen.height = 768;
+screen.width = 1024;
+screen.availHeight = 768;
+screen.availWidth = 1024;
+screen.availTop = 0;
+screen.availLeft = 0;
+
+/* some base arrays - lists of things */
+frames = new Array;
+document.heads = new Array;
+document.bodies = new Array;
+document.links = new Array;
+document.tables = new Array;
+document.divs = new Array;
+document.spans = new Array;
+document.forms = new Array;
+document.images = new Array;
+document.areas = new Array;
+document.metas = new Array;
+
+document.idMaster = new Object;
+document.all = new Object;
 document.all.tags = function(s) { 
 switch(s.toLowerCase()) { 
 case "form": return document.forms; 
@@ -67,10 +105,6 @@ return this.toString().toUpperCase();
 URL.prototype.match = function(s) { 
 return this.toString().match(s);
 }
-
-history.toString = function() { 
-return "Sorry, edbrowse does not maintain a browsing history.";
-} 
 
 /*********************************************************************
 This is our addEventListener function.
@@ -142,4 +176,34 @@ Element.prototype.addEventListener = window.addEventListener;
 Element.prototype.attachEvent = window.attachEvent;
 Anchor.prototype.addEventListener = window.addEventListener;
 Anchor.prototype.attachEvent = window.attachEvent;
+
+/* navigator; some parameters are filled in by the buildstartwindow script. */
+navigator.appName = "edbrowse";
+navigator["appCode Name"] = "edbrowse C/mozjs";
+navigator.appVersion = "$ebv";
+navigator.userAgent = "edbrowse/$ebv";
+navigator.oscpu = "$kname";
+navigator.platform = "$plat";
+/* not sure what product is about */
+navigator.product = "mozjs";
+navigator.productSub = "2.4";
+navigator.vendor = "Karl Dahlke";
+navigator.vendorSub = "$ebv";
+/* language is determined in C, at runtime, by $LANG */
+navigator.javaEnabled = function() { return false; }
+navigator.taintEnabled = function() { return false; }
+navigator.cookieEnabled = true;
+navigator.onLine = true;
+
+/* There's no history in edbrowse. */
+/* Only the current file is known, hence length is 1. */
+history.length = 1;
+history.next = "";
+history.previous = "";
+history.back = function() { return null; }
+history.forward = function() { return null; }
+history.go = function() { return null; }
+history.toString = function() {
+ return "Sorry, edbrowse does not maintain a browsing history.";
+} 
 

@@ -258,8 +258,6 @@ char getLetter(const char *s);
 char *nextScanFile(const char *base);
 eb_bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p);
 eb_bool envFile(const char *line, const char **expanded);
-const char *currentOS(void);
-const char *currentMachine(void);
 FILE *efopen(const char *name, const char *mode);
 int eopen(const char *name, int mode, int perms);
 void appendFile(const char *fname, const char *message, ...);

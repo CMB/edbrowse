@@ -963,11 +963,6 @@ static struct DOMCLASS domClasses[] = {
 	{0}
 };
 
-static const char *docarrays[] = {
-	"heads", "bodies", "links", "tables", "divs", "spans",
-	"forms", "images", "areas", "metas", 0
-};
-
 void createJavaContext(struct ebWindowJSState **pstate)
 {
 	struct ebWindowJSState *state = new ebWindowJSState;
@@ -975,9 +970,11 @@ void createJavaContext(struct ebWindowJSState **pstate)
 	const char *itemname;
 	int i;
 	extern const char startWindowJS[];
-	char verx11[20];
 	jsval rval;
 	struct MIMETYPE *mt;
+	const char *languages[] = { 0,
+		"english", "french", "portuguese", "polish"
+	};
 
 	if (!jrt) {
 /* space configurable by jsPool; default is 32 meg */
@@ -1040,24 +1037,6 @@ abort:
 	establish_property_object(state->jwin, "parent", state->jwin);
 	establish_property_object(state->jwin, "top", state->jwin);
 
-/* Some visual attributes of the window.
- * These are just guesses.
- * Better to have something, than to leave them undefined. */
-	establish_property_number(state->jwin, "height", 768, eb_true);
-	establish_property_number(state->jwin, "width", 1024, eb_true);
-	establish_property_string(state->jwin, "status", 0, eb_false);
-	establish_property_string(state->jwin, "defaultStatus", 0, eb_false);
-	establish_property_bool(state->jwin, "returnValue", eb_true, eb_false);
-	establish_property_bool(state->jwin, "menubar", eb_true, eb_false);
-	establish_property_bool(state->jwin, "scrollbars", eb_true, eb_false);
-	establish_property_bool(state->jwin, "toolbar", eb_true, eb_false);
-	establish_property_bool(state->jwin, "resizable", eb_true, eb_false);
-	establish_property_bool(state->jwin, "directories", eb_false, eb_false);
-	establish_property_string(state->jwin, "name", "unspecifiedFrame",
-				  eb_false);
-/* now check if js is still alive */
-	if (cw->js_failed)
-		return;
 /* Other classes that we'll need. */
 	for (i = 0; domClasses[i].obj_class; ++i) {
 		if (JS_InitClass(state->jcx, state->jwin, 0,
@@ -1093,30 +1072,6 @@ abort:
 	establish_property_string(state->jdoc, "domain",
 				  getHostURL(cw->fileName), eb_false);
 
-/* create arrays under document */
-	for (i = 0; itemname = docarrays[i]; ++i) {
-		if (establish_property_array(state->jdoc, itemname) == NULL)
-			return;
-	}
-/* Some arrays are under window */
-	if (establish_property_array(state->jwin, "frames") == NULL)
-		return;
-/* we definitely have js at this stage */
-	JS::RootedObject o(state->jcx);
-	o = JS_NewObject(state->jcx, 0, 0, state->jdoc);
-	if ((JSObject *) o == NULL)
-		goto abort;
-	establish_property_object(state->jdoc, "idMaster", o);
-/* but not here */
-	if (cw->js_failed)
-		return;
-	o = JS_NewObject(state->jcx, 0, 0, state->jdoc);
-	if ((JSObject *) o == NULL)
-		goto abort;
-	establish_property_object(state->jdoc, "all", o);
-	if (cw->js_failed)
-		return;
-
 	JS::RootedObject nav(state->jcx, JS_NewObject(state->jcx, 0, 0,
 						      state->jwin));
 	if ((JSObject *) nav == NULL)
@@ -1124,36 +1079,10 @@ abort:
 	establish_property_object(state->jwin, "navigator", nav);
 	if (cw->js_failed)
 		return;
-
-/* attributes of the navigator */
-	establish_property_string(nav, "appName", "edbrowse", eb_true);
-	establish_property_string(nav, "appCode Name", "edbrowse C/SMJS",
+/* most of the navigator is in startwindow.js; the language items are here. */
+	establish_property_string(nav, "userLanguage", languages[eb_lang],
 				  eb_true);
-	if (cw->js_failed)
-		return;
-/* Use X11 to indicate unix/linux.  Sort of a standard */
-	sprintf(verx11, "%s%s", version, "-X11");
-	establish_property_string(nav, "appVersion", version, eb_true);
-	establish_property_string(nav, "userAgent", currentAgent, eb_true);
-	establish_property_string(nav, "oscpu", currentOS(), eb_true);
-	establish_property_string(nav, "platform", currentMachine(), eb_true);
-	establish_property_string(nav, "product", "smjs", eb_true);
-	establish_property_string(nav, "productSub", "1.5", eb_true);
-	establish_property_string(nav, "vendor", "eklhad", eb_true);
-	establish_property_string(nav, "vendorSub", version, eb_true);
-/* We need to locale-ize the next one */
-	establish_property_string(nav, "userLanguage", "english", eb_true);
-	establish_property_string(nav, "language", "english", eb_true);
-	if (cw->js_failed)
-		return;
-	if ((JS_DefineFunction(state->jcx, nav, "javaEnabled", falseFunction, 0,
-			       PROP_FIXED) == NULL) ||
-	    (JS_DefineFunction
-	     (state->jcx, nav, "taintEnabled", falseFunction, 0,
-	      PROP_FIXED) == NULL))
-		goto abort;
-	establish_property_bool(nav, "cookieEnabled", eb_true, eb_true);
-	establish_property_bool(nav, "onLine", eb_true, eb_true);
+	establish_property_string(nav, "language", languages[eb_lang], eb_true);
 	if (cw->js_failed)
 		return;
 
@@ -1215,45 +1144,17 @@ abort:
 			goto abort;
 	}
 
-	JS::RootedObject screen(state->jcx, JS_NewObject(state->jcx, 0, 0,
-							 state->jwin));
-	if ((JSObject *) screen == NULL)
-		goto abort;
-	establish_property_object(state->jwin, "screen", screen);
-	establish_property_number(screen, "height", 768, eb_true);
-	establish_property_number(screen, "width", 1024, eb_true);
-	establish_property_number(screen, "availHeight", 768, eb_true);
-	establish_property_number(screen, "availWidth", 1024, eb_true);
-	establish_property_number(screen, "availTop", 0, eb_true);
-	establish_property_number(screen, "availLeft", 0, eb_true);
-	if (cw->js_failed)
-		return;
-
 	JS::RootedObject hist(state->jcx, JS_NewObject(state->jcx, 0, 0,
 						       state->jwin));
 	if ((JSObject *) hist == NULL)
 		goto abort;
 	establish_property_object(state->jwin, "history", hist);
-
-/* attributes of history */
 	establish_property_string(hist, "current", cw->fileName, eb_true);
-/* There's no history in edbrowse. */
-/* Only the current file is known, hence length is 1. */
-	establish_property_number(hist, "length", 1, eb_true);
-	establish_property_string(hist, "next", 0, eb_true);
-	establish_property_string(hist, "previous", 0, eb_true);
 	if (cw->js_failed)
 		return;
-	if ((JS_DefineFunction(state->jcx, hist, "back", nullFunction, 0,
-			       PROP_FIXED) == NULL)
-	    || (JS_DefineFunction(state->jcx, hist, "forward", nullFunction, 0,
-				  PROP_FIXED) == NULL)
-	    ||
-	    (JS_DefineFunction
-	     (state->jcx, hist, "go", nullFunction, 0, PROP_FIXED) == NULL))
-		goto abort;
+/* Since there is no history in edbrowse, the rest is left to startwindow.js */
 
-/* Set up some things in javascript */
+/* the js window/document setup script */
 	if (JS_EvaluateScript(state->jcx, state->jwin, startWindowJS,
 			      strlen(startWindowJS), "startwindow", 1,
 			      &rval) == JS_FALSE)
