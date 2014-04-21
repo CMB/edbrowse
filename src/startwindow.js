@@ -207,3 +207,16 @@ history.toString = function() {
  return "Sorry, edbrowse does not maintain a browsing history.";
 } 
 
+/* The web console, just the log method for now, and only one arg. */
+console = new Object;
+console.log = function(obj) {
+var today=new Date();
+var h=today.getHours();
+var m=today.getMinutes();
+var s=today.getSeconds();
+// add a zero in front of numbers<10
+if(m < 10) m = "0" + m;
+if(s < 10) s = "0" + s;
+alert("[" + h + ":" + m + ":" + s + "] " + obj);
+}
+
