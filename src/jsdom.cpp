@@ -895,6 +895,22 @@ static JSBool link_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	return JS_TRUE;
 }
 
+static JSBool script_ctor(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	JSObject & callee = args.callee();
+	jsval callee_val = JS::ObjectValue(callee);
+	JS::RootedObject newobj(cx,
+				JS_NewObjectForConstructor(cx, &script_class,
+							   &callee_val));
+	if ((JSObject *) newobj == NULL) {
+		javaSessionFail();
+		return JS_FALSE;
+	}
+	args.rval().set(OBJECT_TO_JSVAL(newobj));
+	return JS_TRUE;
+}
+
 static JSBool image_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
@@ -979,7 +995,7 @@ static struct DOMCLASS domClasses[] = {
 	{&trow_class},
 	{&cell_class},
 	{&option_class, 0, option_ctor, 2},
-	{&script_class},
+	{&script_class, 0, script_ctor},
 	{0}
 };
 
