@@ -2282,6 +2282,8 @@ char *htmlParse(char *buf, int remote)
 /* In case one of the onload functions called document.write() */
 	jsdw();
 
+	set_property_string(cw->jss->jdoc, "readyState", "complete");
+
 	return buf;
 }				/* htmlParse */
 

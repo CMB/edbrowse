@@ -27,6 +27,7 @@ resizable = true;
 directories = false;
 name = "unspecifiedFrame";
 document.bgcolor = "white";
+document.readyState = "loading";
 
 screen = new Object;
 screen.height = 768;

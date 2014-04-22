@@ -202,16 +202,6 @@ static JSBool trueFunction(JSContext * cx, unsigned int argc, jsval * vp)
 	return JS_TRUE;
 }				/* trueFunction */
 
-static JSBool readyState(JSContext * cx, unsigned int argc, jsval * vp)
-{
-	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-	js::RootedValue v(cx);
-	v = STRING_TO_JSVAL(our_JS_NewStringCopyZ
-			    (cx, (parsePage ? "loading" : "complete")));
-	args.rval().set(v);
-	return JS_TRUE;
-}				/* readyState */
-
 static JSBool setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
@@ -1108,11 +1098,6 @@ abort:
 				  getHostURL(cw->fileName), eb_false);
 	if (cw->js_failed)
 		return;
-
-	if (JS_DefineFunction
-	    (state->jcx, state->jdoc, "readyState", readyState, 0,
-	     PROP_FIXED) == NULL)
-		goto abort;
 
 	JS::RootedObject nav(state->jcx, JS_NewObject(state->jcx, 0, 0,
 						      state->jwin));
