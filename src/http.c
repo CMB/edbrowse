@@ -31,7 +31,6 @@ static eb_bool read_credentials(char *buffer);
 static void init_header_parser(void);
 static size_t curl_header_callback(char *header_line, size_t size, size_t nmemb,
 				   void *unused);
-static char *get_redirect_location(void);
 static const char *message_for_response_code(int code);
 
 /* Read from a socket, 100K at a time. */
@@ -316,7 +315,7 @@ eb_bool parseRefresh(char *ref, int *delay_p)
 		if (u > ref && u[-1] == qc)
 			u[-1] = 0;
 		if (delay)
-			debugPrint(2, "delay %d", delay);
+			debugPrint(3, "delay %d %s", delay, ref);
 		*delay_p = delay;
 		return eb_true;
 	}
@@ -407,6 +406,8 @@ char *copy_and_sanitize(const char *start, const char *end)
 
 long hcode;			/* example, 404 */
 char herror[32];		/* example, file not found */
+extern char *newlocation;
+extern int newloc_d;
 
 eb_bool httpConnect(const char *from, const char *url)
 {
@@ -466,9 +467,8 @@ eb_bool httpConnect(const char *from, const char *url)
 	if (stringEqualCI(prot, "http") || stringEqualCI(prot, "https")) {
 		;		/* ok for now */
 	} else if (stringEqualCI(prot, "ftp") ||
-	stringEqualCI(prot, "ftps") ||
-	stringEqualCI(prot, "tftp") ||
-	stringEqualCI(prot, "sftp")) {
+		   stringEqualCI(prot, "ftps") ||
+		   stringEqualCI(prot, "tftp") || stringEqualCI(prot, "sftp")) {
 		return ftpConnect(url, user, pass);
 	} else if (mt = findMimeByProtocol(prot)) {
 mimeProcess:
@@ -658,8 +658,18 @@ mimeProcess:
 
 		debugPrint(3, "http code %ld %s", hcode, herror);
 
+/* refresh header is an alternate form of redirection */
+		if (newlocation && newloc_d >= 0) {
+			if (!refreshDelay(newloc_d, newlocation)) {
+				nzFree(newlocation);
+				newlocation = 0;
+			} else {
+				hcode = 302;
+			}
+		}
+
 		if (hcode >= 301 && hcode <= 303 && allowRedirection) {
-			redir = get_redirect_location();
+			redir = newlocation;
 			if (redir)
 				redir = resolveURL(urlcopy, redir);
 			still_fetching = eb_false;
@@ -740,6 +750,9 @@ curl_fail:
 		curl_slist_free_all(custom_headers);
 	if (curlret != CURLE_OK)
 		ebcurl_setError(curlret, urlcopy);
+
+	nzFree(newlocation);
+	newlocation = 0;
 
 	if (transfer_status == eb_false) {
 		nzFree(serverData);
@@ -977,7 +990,7 @@ void ebcurl_setError(CURLcode curlret, const char *url)
 /* Like httpConnect, but for ftp */
 static eb_bool ftpConnect(const char *url, const char *user, const char *pass)
 {
-	int protLength;	/* length of "ftp://" */
+	int protLength;		/* length of "ftp://" */
 	char *urlcopy = NULL;
 	int urlcopy_l = 0;
 	eb_bool transfer_success = eb_false;
@@ -1023,8 +1036,7 @@ static eb_bool ftpConnect(const char *url, const char *user, const char *pass)
 /* Should we run this code on any error condition? */
 /* The SSH error pops up under sftp. */
 	if (curlret == CURLE_FTP_COULDNT_RETR_FILE ||
-	curlret == CURLE_REMOTE_FILE_NOT_FOUND ||
-	curlret == CURLE_SSH) {
+	    curlret == CURLE_REMOTE_FILE_NOT_FOUND || curlret == CURLE_SSH) {
 		if (has_slash == eb_true)	/* Was a directory. */
 			transfer_success = eb_false;
 		else {		/* try appending a slash. */
@@ -1432,8 +1444,6 @@ static eb_bool read_credentials(char *buffer)
 	return got_creds;
 }				/* read_credentials */
 
-static char *location_url = NULL;
-
 /*
  * This code reads a stream of header lines from libcurl.
  * It can go away one of these days, when we're sure that everyone is using
@@ -1442,12 +1452,15 @@ static char *location_url = NULL;
 /* Call this before every HTTP request. */
 static void init_header_parser(void)
 {
-	nzFree(location_url);
-	location_url = NULL;
+/* this should already be 0 */
+	nzFree(newlocation);
+	newlocation = NULL;
 }				/* init_header_parser */
 
 static const char *loc_field = "Location:";
 static size_t loc_field_length = 9;	/* length of string "Location:" */
+static const char *refresh_field = "Refresh:";
+static size_t refresh_field_length = 8;	/* length of string "Refresh:" */
 
 /* Callback used by libcurl.
  * Right now, it just extracts Location: headers. */
@@ -1455,13 +1468,13 @@ static size_t
 curl_header_callback(char *header_line, size_t size, size_t nmemb, void *unused)
 {
 	size_t bytes_in_line = size * nmemb;
-	const char *last_pos = header_line + bytes_in_line;
+	char *last_pos = header_line + bytes_in_line;
 
 	/* If we're still looking for a location: header, and this line is long
 	 * enough to be one, and the line starts with "Location: ", then proceed.
 	 */
 
-	if ((location_url == NULL) && (bytes_in_line > loc_field_length) &&
+	if ((newlocation == NULL) && (bytes_in_line > loc_field_length) &&
 	    memEqualCI(header_line, loc_field, loc_field_length)) {
 		const char *start = header_line + loc_field_length;
 		const char *end = last_pos - 1;
@@ -1478,16 +1491,41 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb, void *unused)
 		end++;
 
 		if (start < end)
-			location_url = copy_and_sanitize(start, end);
+			newlocation = copy_and_sanitize(start, end);
+		newloc_d = -1;
 	}
+
+	if ((bytes_in_line > refresh_field_length) &&
+	    memEqualCI(header_line, refresh_field, refresh_field_length)) {
+/* want to use parseRefresh, but that has to end in null */
+		char *start = header_line + loc_field_length;
+		char *end = last_pos - 1;
+		int delay;
+
+/* Make start point to first non-whitespace char after Refresh: or to
+ * last_pos if no such char exists. */
+		while (isspaceByte(*start) && (start < last_pos))
+			start++;
+
+/* end points to start of trailing whitespace if it exists.  Otherwise,
+ * it is last_pos. */
+		while ((end >= start) && isspaceByte(*end))
+			end--;
+		end++;
+
+		if (start < end) {
+			memmove(header_line, start, end - start);
+			header_line[end - start] = 0;	/* now null terminated */
+			if (parseRefresh(header_line, &delay)) {
+				unpercentURL(header_line);
+				gotoLocation(cloneString(header_line), delay,
+					     eb_true);
+			}
+		}
+	}
+
 	return bytes_in_line;
 }				/* curl_header_callback */
-
-/* Return the location associated with the last redirect, or NULL if none. */
-static char *get_redirect_location(void)
-{
-	return location_url;
-}				/* get_redirect_location */
 
 /* Print text, discarding the unnecessary carriage return character. */
 static void
@@ -1507,7 +1545,7 @@ prettify_network_text(const char *text, size_t size, FILE * destination)
 
 int
 ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
-		   size_t size, void *unused)
+		     size_t size, void *unused)
 {
 	static eb_bool last_curlin = eb_false;
 
@@ -1522,7 +1560,7 @@ ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
 
 	if (info_desc == CURLINFO_HEADER_IN)
 		last_curlin = eb_true;
-	else if(info_desc)
+	else if (info_desc)
 		last_curlin = eb_false;
 
 	return 0;

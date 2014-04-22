@@ -706,8 +706,8 @@ void cxSwitch(int cx, eb_bool interactive)
 
 /* This function is called for web redirection, by the refresh command,
  * or by window.location = new_url. */
-static char *newlocation;
-static int newloc_d;		/* possible delay */
+char *newlocation;
+int newloc_d;			/* possible delay */
 static eb_bool newloc_rf;	/* refresh the buffer */
 eb_bool js_redirects;
 
@@ -4881,10 +4881,10 @@ eb_bool browseCurrentBuffer(void)
 		strcat(cw->fileName, ".browse");
 	}
 	if (!rc) {
+/* should never happen */
 		fileSize = -1;
 		return eb_false;
-	}			/* should never happen */
-
+	}
 	if (bmode == 2) {
 /* apply any input changes pending */
 		foreach(ic, inputChangesPending)
