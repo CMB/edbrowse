@@ -202,6 +202,16 @@ static JSBool trueFunction(JSContext * cx, unsigned int argc, jsval * vp)
 	return JS_TRUE;
 }				/* trueFunction */
 
+static JSBool readyState(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	js::RootedValue v(cx);
+	v = STRING_TO_JSVAL(our_JS_NewStringCopyZ
+			    (cx, (parsePage ? "loading" : "complete")));
+	args.rval().set(v);
+	return JS_TRUE;
+}				/* readyState */
+
 static JSBool setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
@@ -1072,7 +1082,6 @@ abort:
 	}
 	establish_property_object(state->jwin, "document", state->jdoc);
 
-	establish_property_string(state->jdoc, "bgcolor", "white", eb_false);
 	establish_property_string(state->jdoc, "cookie", 0, eb_false);
 	establish_property_string(state->jdoc, "referrer", cw->referrer,
 				  eb_true);
@@ -1081,6 +1090,13 @@ abort:
 	establish_property_url(state->jwin, "location", cw->firstURL, eb_false);
 	establish_property_string(state->jdoc, "domain",
 				  getHostURL(cw->fileName), eb_false);
+	if (cw->js_failed)
+		return;
+
+	if (JS_DefineFunction
+	    (state->jcx, state->jdoc, "readyState", readyState, 0,
+	     PROP_FIXED) == NULL)
+		goto abort;
 
 	JS::RootedObject nav(state->jcx, JS_NewObject(state->jcx, 0, 0,
 						      state->jwin));

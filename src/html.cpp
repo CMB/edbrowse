@@ -1643,7 +1643,7 @@ forceCloseAnchor:
 			} else {
 				htmlHref("href");
 				if (isJSAlive)
-					domLink("Anchor", "href", "links",
+					domLink("Anchor", "href", "anchors",
 						cw->jss->jdoc, eb_false);
 				get_js_events();
 				if (t->href) {
@@ -1678,13 +1678,13 @@ forceCloseAnchor:
 
 		case TAGACT_HEAD:
 			if (isJSAlive)
-				domLink("Head", 0, "heads", cw->jss->jdoc,
+				domLink("Head", 0, 0, cw->jss->jdoc,
 					eb_false);
 			goto plainWithElements;
 
 		case TAGACT_BODY:
 			if (isJSAlive)
-				domLink("Body", 0, "bodies", cw->jss->jdoc,
+				domLink("Body", 0, 0, cw->jss->jdoc,
 					eb_false);
 plainWithElements:
 			if (t->jv)

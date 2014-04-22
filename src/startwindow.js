@@ -26,6 +26,7 @@ toolbar = true;
 resizable = true;
 directories = false;
 name = "unspecifiedFrame";
+document.bgcolor = "white";
 
 screen = new Object;
 screen.height = 768;
@@ -37,9 +38,10 @@ screen.availLeft = 0;
 
 /* some base arrays - lists of things */
 frames = new Array;
-document.heads = new Array;
-document.bodies = new Array;
+document.anchors = new Array;
 document.links = new Array;
+document.applets = new Array;
+document.embeds = new Array;
 document.tables = new Array;
 document.divs = new Array;
 document.spans = new Array;
@@ -56,12 +58,11 @@ switch(s.toLowerCase()) {
 case "form": return document.forms; 
 case "table": return document.tables; 
 case "div": return document.divs; 
-case "a": return document.links; 
+case "a": return document.anchors; 
+case "link": return document.link; 
 case "img": case "image": return document.images; 
 case "span": return document.spans; 
-case "head": return document.heads; 
 case "meta": return document.metas; 
-case "body": return document.bodies; 
 default:
 /* Should print an error and bail out, but I want js to march on. */
  /* alert("all.tags default " + s); */
@@ -81,7 +82,7 @@ return document.all.tags(s);
 document.createElement = function(s) { 
 var c;
 switch(s.toLowerCase()) { 
-case "link": c = new Link(); document.links.push(c); return c;
+case "anchor": c = new Anchor(); document.anchors.push(c); return c;
 case "image": case "img": c = new Image(); document.images.push(c); return c;
 case "script": c = new Script(); document.scripts.push(c); return c;
 default:
