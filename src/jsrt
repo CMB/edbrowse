@@ -533,6 +533,36 @@ if(typeof ilo.a != "object") fail(120);
 if(ilo.b != 24) fail(121);
 if(ilo.a.id.value != "eklhad") fail(122);
 
+/* the URL class, it's about a thousand lines of code just to make this one work. */
+uo = new URL("local-file"); // url object
+if(uo.href != "local-file") fail(130);
+if(uo.host != "" || uo.pathname != "/") fail(131);
+new_path = "https://this.that.com:777/dir/ectory?search=k&l=english#middle";
+uo.href = new_path;
+if(uo != new_path) fail(132);
+if(uo.protocol != "https:" ||
+uo.hostname != "this.that.com" ||
+uo.host != "this.that.com:777" ||
+uo.port != 777 ||
+uo.pathname != "/dir/ectory" ||
+uo.search != "?search=k&l=english" ||
+uo.hash != "#middle") fail(133);
+uo.port = 888;
+new_path = new_path.replace(/777/, "888");
+if(uo != new_path) fail(134);
+uo.protocol = "ftp:";
+new_path = new_path.replace(/https/, "ftp");
+if(uo != new_path) fail(135);
+uo.pathname = "otherplace";
+new_path = new_path.replace(/dir.ectory/, "otherplace");
+if(uo != new_path) fail(136);
+uo.host = "otherplace.org:221";
+new_path = new_path.replace(/this.*888/, "otherplace.org:221");
+if(uo != new_path) fail(137);
+uo.hash = "#end";
+new_path = new_path.replace(/middle/, "end");
+if(uo != new_path) fail(138);
+
 function submitFunction(me) {
 if(document.questionnaire != me) fail(123);
 var where = prompt("Enter m for mail, w for web, a to autosubmit, x to abort.", "x");

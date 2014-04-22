@@ -20,8 +20,13 @@ static const char *emptyParms[] = { 0 };
 static jsval emptyArgs[] = { jsval() };
 
 static void
-url_initialize(const char *url, eb_bool readonly, eb_bool exclude_href);
+url_initialize(JS::Handle < JSObject * >uo, const char *url, eb_bool readonly,
+	       eb_bool exclude_href);
 
+/* This returns the string equivalent of the js value, but use with care.
+ * It's only good til the next call to stringize, then it will be trashed
+ * by the next string.
+ * If you want the result longer than that, you better copy it. */
 const char *stringize(js::HandleValue v)
 {
 	static char buf[24];
@@ -55,7 +60,7 @@ const char *stringize(js::HandleValue v)
 
 static JSClass url_class = {
 	"URL",
-	JSCLASS_HAS_PRIVATE,
+	JSCLASS_HAS_PRIVATE | JSCLASS_GLOBAL_FLAGS,
 	JS_PropertyStub,
 	JS_DeletePropertyStub,
 	JS_PropertyStub,
@@ -63,19 +68,22 @@ static JSClass url_class = {
 	JS_EnumerateStub,
 	JS_ResolveStub,
 	JS_ConvertStub,
+	NULL,
+	JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 /* To builld path names, host names, etc. */
 static char urlbuffer[512];
-static char *uo_href;
+static char *uo_href;		/*url object . href */
 static eb_bool setter_suspend;
 
-/* Are we modifying window.location? */
-/*Return false if we are, because that will put a stop to javascript. */
-static eb_bool isWinLoc(void)
+/* Are we modifying window.location?
+ *Return false if we are, because that will put a stop to javascript.
+ * uo is the url object. */
+static eb_bool isWinLoc(JS::Handle < JSObject * >uo)
 {
-SWITCH_COMPARTMENT(eb_false);
-	if (cw->jss->uo != cw->jss->jwloc && cw->jss->uo != cw->jss->jdloc) {
+	SWITCH_COMPARTMENT(eb_false);
+	if (uo != cw->jss->jwloc && uo != cw->jss->jdloc) {
 		nzFree(uo_href);
 		uo_href = 0;
 		return eb_true;
@@ -89,19 +97,20 @@ SWITCH_COMPARTMENT(eb_false);
 /* Converting to a string just pulls out the href property */
 static JSBool loc_toString(JSContext * cx, unsigned int argc, jsval * vp)
 {
-SWITCH_COMPARTMENT(JS_FALSE);
-	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
+	SWITCH_COMPARTMENT(JS_FALSE);
+	JS::RootedObject uo(cx, JS_THIS_OBJECT(cx, vp));
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	js::RootedValue rval(cw->jss->jcx);
-	if (JS_GetProperty(cw->jss->jcx, obj, "href", rval.address()) == JS_FALSE)
-return JS_FALSE;
+	if (JS_GetProperty(cw->jss->jcx, uo, "href", rval.address()) ==
+	    JS_FALSE)
+		return JS_FALSE;
 	args.rval().set(rval);
 	return JS_TRUE;
 }				/* loc_toString */
 
 static JSBool loc_reload(JSContext * cx, unsigned int argc, jsval * vp)
 {
-SWITCH_COMPARTMENT(JS_FALSE);
+	SWITCH_COMPARTMENT(JS_FALSE);
 	const char *s = cw->firstURL;
 	if (s && isURL(s))
 		gotoLocation(cloneString(s), (allowRedirection ? 0 : 99),
@@ -114,7 +123,7 @@ SWITCH_COMPARTMENT(JS_FALSE);
 
 static JSBool loc_replace(JSContext * cx, unsigned int argc, jsval * vp)
 {
-SWITCH_COMPARTMENT(JS_FALSE);
+	SWITCH_COMPARTMENT(JS_FALSE);
 	const char *s;
 	char *ss, *t;
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
@@ -136,215 +145,214 @@ SWITCH_COMPARTMENT(JS_FALSE);
 }				/* loc_replace */
 
 /* Put a url together from its pieces, after something has changed. */
-static void build_url(int exception, const char *e)
+static void build_url(JS::Handle < JSObject * >uo, int component, const char *e)
 {
-SWITCH_COMPARTMENT();
-	JS::RootedObject uo(cw->jss->jcx, cw->jss->uo);
+	SWITCH_COMPARTMENT();
 	js::RootedValue v(cw->jss->jcx);
 	char *new_url;
-	string tmp, url_str;
+	string url_str, pathname;
 	static const char *const noslashes[] = {
 		"mailto", "telnet", "javascript", 0
 	};
+
 	setter_suspend = eb_true;
-/* I'm a little worried about the first one being freed while I'm
- * getting the next one.
- * I just don't know that much about the js heap. */
-	if (exception == 1)
+	e = cloneString(e);
+
+	if (component == 1)
 		url_str.assign(e);
 	else {
-		if (JS_GetProperty(cw->jss->jcx, uo, "protocol", v.address()) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
+		if (JS_GetProperty(cw->jss->jcx, uo, "protocol", v.address()) ==
+		    JS_FALSE) {
+abort:
+			setter_suspend = eb_false;
+			nzFree((void *)e);
+			javaSessionFail();
+			return;
+		}
 		url_str.assign(stringize(v));
 	}
-	if (stringInListCI(noslashes, url_str.c_str()) < 0)
+	if (url_str.length() && stringInListCI(noslashes, url_str.c_str()) < 0)
 		url_str += "//";
-	if (exception == 2)
+
+	if (component == 2)
 		url_str += string(e);
 	else {
-		if (JS_GetProperty(cw->jss->jcx, uo, "host", v.address()) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
+		if (JS_GetProperty(cw->jss->jcx, uo, "host", v.address()) ==
+		    JS_FALSE)
+			goto abort;
 		url_str += string(stringize(v));
 	}
-	string pathname;
-	if (exception == 3) {
+
+	if (component == 3)
 		pathname = string(e);
-		url_str += pathname;
-	} else {
-		if (JS_GetProperty(cw->jss->jcx, uo, "pathname", v.address()) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
+	else {
+		if (JS_GetProperty(cw->jss->jcx, uo, "pathname", v.address()) ==
+		    JS_FALSE)
+			goto abort;
 		pathname = string(stringize(v));
-		url_str += pathname;
 	}
 	if (pathname[0] != '/')
 		url_str += "/";
-	if (exception == 4)
+	url_str += pathname;
+
+	if (component == 4)
 		url_str += string(e);
 	else {
-		if (JS_GetProperty(cw->jss->jcx, uo, "search", v.address()) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
+		if (JS_GetProperty(cw->jss->jcx, uo, "search", v.address()) ==
+		    JS_FALSE)
+			goto abort;
 		url_str += string(stringize(v));
 	}
-	if (exception == 5)
+
+	if (component == 5)
 		url_str += string(e);
 	else {
-		if (JS_GetProperty(cw->jss->jcx, uo, "hash", v.address()) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
+		if (JS_GetProperty(cw->jss->jcx, uo, "hash", v.address()) ==
+		    JS_FALSE)
+			goto abort;
 		url_str += string(stringize(v));
 	}
+
 	new_url = (char *)url_str.c_str();
 	v = STRING_TO_JSVAL(our_JS_NewStringCopyZ(cw->jss->jcx, new_url));
 	if (JS_SetProperty(cw->jss->jcx, uo, "href", v.address()) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
+		goto abort;
+
 /* I want control over this string */
 	uo_href = cloneString(new_url);
 	setter_suspend = eb_false;
+	nzFree((void *)e);
 }				/* build_url */
 
 /* Rebuild host, because hostname or port changed. */
-static void build_host(int exception, const char *hostname, int port)
+static void build_host(JS::Handle < JSObject * >uo, int component,
+		       const char *hostname, int port)
 {
-SWITCH_COMPARTMENT();
+	SWITCH_COMPARTMENT();
 	js::RootedValue v(cw->jss->jcx);
 	const char *oldhost;
+	eb_bool hadcolon = eb_false;
+
 	setter_suspend = eb_true;
-	if (exception == 1) {
-		if(JS_GetProperty(cw->jss->jcx, cw->jss->uo, "port", v.address()) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
+
+	if (JS_GetProperty(cw->jss->jcx, uo, "host", v.address()) == JS_FALSE)
+		goto abort;
+	oldhost = stringize(v);
+	if (strchr(oldhost, ':'))
+		hadcolon = eb_true;
+
+	if (component == 1) {
+		if (JS_GetProperty(cw->jss->jcx, uo, "port", v.address()) ==
+		    JS_FALSE) {
+abort:
+			setter_suspend = eb_false;
+			javaSessionFail();
+			return;
+		}
 		port = JSVAL_TO_INT(v);
 	} else {
-		if(JS_GetProperty(cw->jss->jcx, cw->jss->uo, "hostname",
-			       v.address()) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
+		if (JS_GetProperty(cw->jss->jcx, uo, "hostname",
+				   v.address()) == JS_FALSE)
+			goto abort;
 		hostname = stringize(v);
 	}
-	if(JS_GetProperty(cw->jss->jcx, cw->jss->uo, "host", v.address()) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
-	oldhost = stringize(v);
-	if (exception == 2 || strchr(oldhost, ':'))
+
+	if (component == 2 || hadcolon)
 		sprintf(urlbuffer, "%s:%d", hostname, port);
 	else
 		strcpy(urlbuffer, hostname);
 	if (strlen(urlbuffer) >= sizeof(urlbuffer))
 		i_printfExit(MSG_PortTooLong);
 	v = STRING_TO_JSVAL(our_JS_NewStringCopyZ(cw->jss->jcx, urlbuffer));
-	if(JS_SetProperty(cw->jss->jcx, cw->jss->uo, "host", v.address()) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
+	if (JS_SetProperty(cw->jss->jcx, uo, "host", v.address()) == JS_FALSE)
+		goto abort;
+
 	setter_suspend = eb_false;
 }				/* build_host */
 
 /* define or set a local property */
 static void
-loc_def_set(const char *name, const char *s,
+loc_def_set(JS::Handle < JSObject * >uo, const char *name, const char *s,
 	    JSStrictPropertyOp setter, unsigned attr)
 {
-SWITCH_COMPARTMENT();
+	SWITCH_COMPARTMENT();
 	JSBool found;
 	js::RootedValue vv(cw->jss->jcx);
+
 	if (s)
 		vv = STRING_TO_JSVAL(our_JS_NewStringCopyZ(cw->jss->jcx, s));
 	else
 		vv = JS_GetEmptyStringValue(cw->jss->jcx);
-	JS_HasProperty(cw->jss->jcx, cw->jss->uo, name, &found);
-	if (found)
-		if (JS_SetProperty(cw->jss->jcx, cw->jss->uo, name, vv.address()) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
-	else
-		if (JS_DefineProperty(cw->jss->jcx, cw->jss->uo, name, vv, NULL,
-				  setter, attr) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
+	JS_HasProperty(cw->jss->jcx, uo, name, &found);
+	if (found) {
+		if (JS_SetProperty(cw->jss->jcx, uo, name, vv.address()) ==
+		    JS_FALSE) {
+abort:
+			javaSessionFail();
+			return;
+		}
+	} else {
+		if (JS_DefineProperty(cw->jss->jcx, uo, name, vv, NULL,
+				      setter, attr) == JS_FALSE)
+			goto abort;
+	}
 }				/* loc_def_set */
 
 /* Like the above, but using an integer, this is for port only. */
 static void
-loc_def_set_n(const char *name, int port,
+loc_def_set_n(JS::Handle < JSObject * >uo, const char *name, int port,
 	      JSStrictPropertyOp setter, unsigned attr)
 {
-SWITCH_COMPARTMENT();
-
+	SWITCH_COMPARTMENT();
 	JSBool found;
 	js::RootedValue vv(cw->jss->jcx, INT_TO_JSVAL(port));
-	JS_HasProperty(cw->jss->jcx, cw->jss->uo, name, &found);
-	if (found)
-		if (JS_SetProperty(cw->jss->jcx, cw->jss->uo, name, vv.address()) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
-	else
-		if (JS_DefineProperty(cw->jss->jcx, cw->jss->uo, name, vv, NULL,
-				  setter, attr) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
+
+	JS_HasProperty(cw->jss->jcx, uo, name, &found);
+	if (found) {
+		if (JS_SetProperty(cw->jss->jcx, uo, name, vv.address()) ==
+		    JS_FALSE) {
+abort:
+			javaSessionFail();
+			return;
+		}
+	} else {
+		if (JS_DefineProperty(cw->jss->jcx, uo, name, vv, NULL,
+				      setter, attr) == JS_FALSE)
+			goto abort;
+	}
 }				/* loc_def_set_n */
 
+/* string s of length n */
 static void
-loc_def_set_part(const char *name, const char *s, int n,
-		 JSStrictPropertyOp setter, unsigned attr)
+loc_def_set_part(JS::Handle < JSObject * >uo, const char *name, const char *s,
+		 int n, JSStrictPropertyOp setter, unsigned attr)
 {
-SWITCH_COMPARTMENT();
+	SWITCH_COMPARTMENT();
 	JSBool found;
 	js::RootedValue vv(cw->jss->jcx);
+
 	if (s)
 		vv = STRING_TO_JSVAL(our_JS_NewStringCopyN(cw->jss->jcx, s, n));
 	else
 		vv = JS_GetEmptyStringValue(cw->jss->jcx);
-	JS_HasProperty(cw->jss->jcx, cw->jss->uo, name, &found);
-	if (found)
-		if (JS_SetProperty(cw->jss->jcx, cw->jss->uo, name, vv.address()) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
-	else
-		if (JS_DefineProperty(cw->jss->jcx, cw->jss->uo, name, vv, NULL,
-				  setter, attr) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
+
+	JS_HasProperty(cw->jss->jcx, uo, name, &found);
+	if (found) {
+		if (JS_SetProperty(cw->jss->jcx, uo, name, vv.address()) ==
+		    JS_FALSE) {
+abort:
+			javaSessionFail();
+			return;
+		}
+	} else {
+		if (JS_DefineProperty(cw->jss->jcx, uo, name, vv, NULL,
+				      setter, attr) == JS_FALSE)
+			goto abort;
+	}
 }				/* loc_def_set_part */
 
 static JSBool
-setter_loc(JSContext * cx, JS::Handle < JSObject * >obj, JS::Handle < jsid > id,
+setter_loc(JSContext * cx, JS::Handle < JSObject * >uo, JS::Handle < jsid > id,
 	   JSBool strict, JS::MutableHandle < JS::Value > vp)
 {
 	const char *s = stringize(vp);
@@ -367,7 +375,7 @@ setter_loc(JSContext * cx, JS::Handle < JSObject * >obj, JS::Handle < jsid > id,
 }				/* setter_loc */
 
 static JSBool
-setter_loc_href(JSContext * cx, JS::Handle < JSObject * >obj,
+setter_loc_href(JSContext * cx, JS::Handle < JSObject * >uo,
 		JS::Handle < jsid > id, JSBool strict,
 		JS::MutableHandle < JS::Value > vp)
 {
@@ -377,21 +385,20 @@ setter_loc_href(JSContext * cx, JS::Handle < JSObject * >obj,
 	url = stringize(vp);
 	if (!url)
 		return JS_TRUE;
-	cw->jss->uo = obj;
-	url_initialize(url, eb_false, eb_true);
 	uo_href = cloneString(url);
-	if (cw->jss->uo == cw->jss->jwloc || cw->jss->uo == cw->jss->jdloc) {
+	url_initialize(uo, uo_href, eb_false, eb_true);
+	if (uo == cw->jss->jwloc || uo == cw->jss->jdloc) {
 		char *t;
 		unpercentURL(uo_href);
 		t = resolveURL(cw->fileName, uo_href);
 		nzFree(uo_href);
 		uo_href = t;
 	}
-	return isWinLoc();
+	return isWinLoc(uo);
 }				/* setter_loc_href */
 
 static JSBool
-setter_loc_hash(JSContext * cx, JS::Handle < JSObject * >obj,
+setter_loc_hash(JSContext * cx, JS::Handle < JSObject * >uo,
 		JS::Handle < jsid > id, JSBool strict,
 		JS::MutableHandle < JS::Value > vp)
 {
@@ -399,13 +406,12 @@ setter_loc_hash(JSContext * cx, JS::Handle < JSObject * >obj,
 	if (setter_suspend)
 		return JS_TRUE;
 	e = stringize(vp);
-	cw->jss->uo = obj;
-	build_url(5, e);
-	return isWinLoc();
+	build_url(uo, 5, e);
+	return isWinLoc(uo);
 }				/* setter_loc_hash */
 
 static JSBool
-setter_loc_search(JSContext * cx, JS::Handle < JSObject * >obj,
+setter_loc_search(JSContext * cx, JS::Handle < JSObject * >uo,
 		  JS::Handle < jsid > id, JSBool strict,
 		  JS::MutableHandle < JS::Value > vp)
 {
@@ -413,13 +419,12 @@ setter_loc_search(JSContext * cx, JS::Handle < JSObject * >obj,
 	if (setter_suspend)
 		return JS_TRUE;
 	e = stringize(vp);
-	cw->jss->uo = obj;
-	build_url(4, e);
-	return isWinLoc();
+	build_url(uo, 4, e);
+	return isWinLoc(uo);
 }				/* setter_loc_search */
 
 static JSBool
-setter_loc_prot(JSContext * cx, JS::Handle < JSObject * >obj,
+setter_loc_prot(JSContext * cx, JS::Handle < JSObject * >uo,
 		JS::Handle < jsid > id, JSBool strict,
 		JS::MutableHandle < JS::Value > vp)
 {
@@ -427,13 +432,12 @@ setter_loc_prot(JSContext * cx, JS::Handle < JSObject * >obj,
 	if (setter_suspend)
 		return JS_TRUE;
 	e = stringize(vp);
-	cw->jss->uo = obj;
-	build_url(1, e);
-	return isWinLoc();
+	build_url(uo, 1, e);
+	return isWinLoc(uo);
 }				/* setter_loc_prot */
 
 static JSBool
-setter_loc_pathname(JSContext * cx, JS::Handle < JSObject * >obj,
+setter_loc_pathname(JSContext * cx, JS::Handle < JSObject * >uo,
 		    JS::Handle < jsid > id, JSBool strict,
 		    JS::MutableHandle < JS::Value > vp)
 {
@@ -441,13 +445,12 @@ setter_loc_pathname(JSContext * cx, JS::Handle < JSObject * >obj,
 	if (setter_suspend)
 		return JS_TRUE;
 	e = stringize(vp);
-	cw->jss->uo = obj;
-	build_url(3, e);
-	return isWinLoc();
+	build_url(uo, 3, e);
+	return isWinLoc(uo);
 }				/* setter_loc_pathname */
 
 static JSBool
-setter_loc_hostname(JSContext * cx, JS::Handle < JSObject * >obj,
+setter_loc_hostname(JSContext * cx, JS::Handle < JSObject * >uo,
 		    JS::Handle < jsid > id, JSBool strict,
 		    JS::MutableHandle < JS::Value > vp)
 {
@@ -455,14 +458,13 @@ setter_loc_hostname(JSContext * cx, JS::Handle < JSObject * >obj,
 	if (setter_suspend)
 		return JS_TRUE;
 	e = stringize(vp);
-	cw->jss->uo = obj;
-	build_host(1, e, 0);
-	build_url(0, 0);
-	return isWinLoc();
+	build_host(uo, 1, e, 0);
+	build_url(uo, 0, 0);
+	return isWinLoc(uo);
 }				/* setter_loc_hostname */
 
 static JSBool
-setter_loc_port(JSContext * cx, JS::Handle < JSObject * >obj,
+setter_loc_port(JSContext * cx, JS::Handle < JSObject * >uo,
 		JS::Handle < jsid > id, JSBool strict,
 		JS::MutableHandle < JS::Value > vp)
 {
@@ -470,14 +472,13 @@ setter_loc_port(JSContext * cx, JS::Handle < JSObject * >obj,
 	if (setter_suspend)
 		return JS_TRUE;
 	port = JSVAL_TO_INT(vp);
-	cw->jss->uo = obj;
-	build_host(2, 0, port);
-	build_url(0, 0);
-	return isWinLoc();
+	build_host(uo, 2, 0, port);
+	build_url(uo, 0, 0);
+	return isWinLoc(uo);
 }				/* setter_loc_port */
 
 static JSBool
-setter_loc_host(JSContext * cx, JS::Handle < JSObject * >obj,
+setter_loc_host(JSContext * cx, JS::Handle < JSObject * >uo,
 		JS::Handle < jsid > id, JSBool strict,
 		JS::MutableHandle < JS::Value > vp)
 {
@@ -487,8 +488,8 @@ setter_loc_host(JSContext * cx, JS::Handle < JSObject * >obj,
 	if (setter_suspend)
 		return JS_TRUE;
 	e = stringize(vp);
-	cw->jss->uo = obj;
-	build_url(2, e);
+	e = cloneString(e);
+	build_url(uo, 2, e);
 /* and we have to update hostname and port */
 	setter_suspend = eb_true;
 	s = strchr(e, ':');
@@ -497,19 +498,27 @@ setter_loc_host(JSContext * cx, JS::Handle < JSObject * >obj,
 	else
 		n = strlen(e);
 	v = STRING_TO_JSVAL(our_JS_NewStringCopyN(cw->jss->jcx, e, n));
-	if (JS_SetProperty(cw->jss->jcx, cw->jss->uo, "hostname", v.address()) == JS_FALSE)
-return JS_FALSE;
+	if (JS_SetProperty(cw->jss->jcx, uo, "hostname", v.address()) ==
+	    JS_FALSE) {
+abort:
+		setter_suspend = eb_false;
+		nzFree((void *)e);
+		return JS_FALSE;
+	}
 	if (s) {
 		v = INT_TO_JSVAL(atoi(s + 1));
-		if (JS_SetProperty(cw->jss->jcx, cw->jss->uo, "port", v.address()) == JS_FALSE)
-return JS_FALSE;
+		if (JS_SetProperty(cw->jss->jcx, uo, "port", v.address()) ==
+		    JS_FALSE)
+			goto abort;
 	}
 	setter_suspend = eb_false;
-	return isWinLoc();
-}				/* setter_loc_pathname */
+	nzFree((void *)e);
+	return isWinLoc(uo);
+}				/* setter_loc_host */
 
 static void
-url_initialize(const char *url, eb_bool readonly, eb_bool exclude_href)
+url_initialize(JS::Handle < JSObject * >uo, const char *url, eb_bool readonly,
+	       eb_bool exclude_href)
 {
 	int n, port;
 	const char *data;
@@ -522,9 +531,8 @@ url_initialize(const char *url, eb_bool readonly, eb_bool exclude_href)
 	setter_suspend = eb_true;
 
 /* Store the url in location.href */
-	if (!exclude_href) {
-		loc_def_set("href", url, setter_loc_href, attr);
-	}
+	if (!exclude_href)
+		loc_def_set(uo, "href", url, setter_loc_href, attr);
 
 /* Now make a property for each piece of the url. */
 	if (s = getProtURL(url)) {
@@ -533,21 +541,21 @@ url_initialize(const char *url, eb_bool readonly, eb_bool exclude_href)
 			i_printfExit(MSG_ProtTooLong);
 		s = urlbuffer;
 	}
-	loc_def_set("protocol", s, setter_loc_prot, attr);
+	loc_def_set(uo, "protocol", s, setter_loc_prot, attr);
 
 	data = getDataURL(url);
 	s = 0;
 	if (data)
 		s = strchr(data, '#');
-	loc_def_set("hash", s, setter_loc_hash, attr);
+	loc_def_set(uo, "hash", s, setter_loc_hash, attr);
 
 	s = getHostURL(url);
 	if (s && !*s)
 		s = 0;
-	loc_def_set("hostname", s, setter_loc_hostname, attr);
+	loc_def_set(uo, "hostname", s, setter_loc_hostname, attr);
 
 	getPortLocURL(url, &pl, &port);
-	loc_def_set_n("port", port, setter_loc_port, attr);
+	loc_def_set_n(uo, "port", port, setter_loc_port, attr);
 
 	if (s) {		/* this was hostname */
 		strcpy(urlbuffer, s);
@@ -557,7 +565,7 @@ url_initialize(const char *url, eb_bool readonly, eb_bool exclude_href)
 			i_printfExit(MSG_PortTooLong);
 		s = urlbuffer;
 	}
-	loc_def_set("host", s, setter_loc_host, attr);
+	loc_def_set(uo, "host", s, setter_loc_host, attr);
 
 	s = 0;
 	n = 0;
@@ -568,7 +576,7 @@ url_initialize(const char *url, eb_bool readonly, eb_bool exclude_href)
 		if (!n)
 			s = "/", n = 1;
 	}
-	loc_def_set_part("pathname", s, n, setter_loc_pathname, attr);
+	loc_def_set_part(uo, "pathname", s, n, setter_loc_pathname, attr);
 
 	s = 0;
 	if (data && (s = strpbrk(data, "?\1")) &&
@@ -585,26 +593,33 @@ url_initialize(const char *url, eb_bool readonly, eb_bool exclude_href)
 		n = 0;
 	}
 
-	loc_def_set_part("search", s, n, setter_loc_search, attr);
+	loc_def_set_part(uo, "search", s, n, setter_loc_search, attr);
 
 	setter_suspend = eb_false;
 }				/* url_initialize */
 
 static JSBool url_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 {
-	const char *url = NULL;
+	const char *url = EMPTYSTRING;
 	const char *s;
-	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	JSObject & callee = args.callee();
+	jsval callee_val = JS::ObjectValue(callee);
+	JS::RootedObject uo(cx,
+			    JS_NewObjectForConstructor(cx, &url_class,
+						       &callee_val));
+	if ((JSObject *) uo == NULL) {
+		javaSessionFail();
+		return JS_FALSE;
+	}
 	if (args.length() > 0 && JSVAL_IS_STRING(args[0])) {
 		js::RootedValue url_v(cw->jss->jcx, args[0]);
 		s = stringize(url_v);
 		if (strlen(s))
 			url = s;
 	}			/* string argument */
-	cw->jss->uo = obj;
-	url_initialize(url, eb_false, eb_false);
-	args.rval().set(JSVAL_VOID);
+	url_initialize(uo, url, eb_false, eb_false);
+	args.rval().set(OBJECT_TO_JSVAL(uo));
 	return JS_TRUE;
 }				/* url_ctor */
 
@@ -615,11 +630,12 @@ static JSFunctionSpec url_methods[] = {
 
 eb_bool initLocationClass(void)
 {
-SWITCH_COMPARTMENT(eb_false);
-	if (JS_InitClass(cw->jss->jcx, cw->jss->jwin, NULL, &url_class, url_ctor, 1,
-		     NULL, url_methods, NULL, NULL) == NULL)
-return eb_false;
-return eb_true;
+	SWITCH_COMPARTMENT(eb_false);
+	if (JS_InitClass
+	    (cw->jss->jcx, cw->jss->jwin, NULL, &url_class, url_ctor, 1, NULL,
+	     url_methods, NULL, NULL) == NULL)
+		return eb_false;
+	return eb_true;
 }				/* initLocationClass */
 
 /*********************************************************************
@@ -722,12 +738,11 @@ setter_cookie(JSContext * cx, JS::Handle < JSObject * >obj,
 			       "cannot set cookie, ill-defined domain");
 	} else {
 		const char *s = stringize(vp);
-		if (!receiveCookie(cw->fileName, s))
-{
+		if (!receiveCookie(cw->fileName, s)) {
 			JS_ReportError(cw->jss->jcx, "unable to set cookie %s",
 				       s);
-return JS_FALSE; // cause exception to be thrown in js
-}
+			return JS_FALSE;	// cause exception to be thrown in js
+		}
 	}
 	return JS_TRUE;
 }				/* setter_cookie */
@@ -749,7 +764,7 @@ setter_domain(JSContext * cx, JS::Handle < JSObject * >obj,
 	JS_ReportError(cw->jss->jcx,
 		       "document.domain is being set to an insecure string <%s>",
 		       dom);
-return JS_FALSE;
+	return JS_FALSE;
 out:
 	return JS_TRUE;
 }				/* setter_domain */
@@ -788,8 +803,8 @@ establish_property_string(JS::HandleObject jv, const char *name,
 		v = JS_GetEmptyStringValue(cw->jss->jcx);
 	}
 	if (JS_DefineProperty(cw->jss->jcx, obj, name, v, my_getter, my_setter,
-			  attr) == JS_FALSE)
-javaSessionFail();
+			      attr) == JS_FALSE)
+		javaSessionFail();
 }				/* establish_property_string */
 
 void
@@ -806,8 +821,8 @@ establish_property_number(JS::HandleObject jv, const char *name, int value,
 		my_setter = setter_selidx;
 	js::RootedValue value_jv(cw->jss->jcx, INT_TO_JSVAL(value));
 	if (JS_DefineProperty(cw->jss->jcx, obj, name,
-			  value_jv, NULL, my_setter, attr) == JS_FALSE)
-javaSessionFail();
+			      value_jv, NULL, my_setter, attr) == JS_FALSE)
+		javaSessionFail();
 }				/* establish_property_number */
 
 void
@@ -825,9 +840,9 @@ establish_property_bool(JS::HandleObject jv, const char *name, eb_bool value,
 	if (stringEqual(name, "selected"))
 		my_setter = setter_selected;
 	if (JS_DefineProperty(cw->jss->jcx, obj, name,
-			  (value ? JSVAL_TRUE : JSVAL_FALSE), NULL, my_setter,
-			  attr) == JS_FALSE)
-javaSessionFail();
+			      (value ? JSVAL_TRUE : JSVAL_FALSE), NULL,
+			      my_setter, attr) == JS_FALSE)
+		javaSessionFail();
 }				/* establish_property_bool */
 
 JSObject *establish_property_array(JS::HandleObject jv, const char *name)
@@ -835,13 +850,13 @@ JSObject *establish_property_array(JS::HandleObject jv, const char *name)
 	SWITCH_COMPARTMENT(NULL);
 	JS::RootedObject a(cw->jss->jcx,
 			   JS_NewArrayObject(cw->jss->jcx, 0, NULL));
-if ((JSObject *) a == NULL)
-{
-javaSessionFail();
-return NULL;
-}
+	if ((JSObject *) a == NULL) {
+		javaSessionFail();
+		return NULL;
+	}
 	establish_property_object(jv, name, a);
-if (cw->js_failed) return NULL;
+	if (cw->js_failed)
+		return NULL;
 	return (JSObject *) a;
 }				/* establish_property_array */
 
@@ -852,8 +867,8 @@ establish_property_object(JS::HandleObject parent, const char *name,
 	SWITCH_COMPARTMENT();
 	js::RootedValue child_v(cw->jss->jcx, OBJECT_TO_JSVAL(child));
 	if (JS_DefineProperty(cw->jss->jcx, parent, name,
-			  child_v, 0, 0, PROP_FIXED) == JS_FALSE)
-javaSessionFail();
+			      child_v, 0, 0, PROP_FIXED) == JS_FALSE)
+		javaSessionFail();
 }				/* establish_property_object */
 
 void
@@ -869,34 +884,39 @@ establish_property_url(JS::HandleObject jv, const char *name,
 	my_setter = 0;
 	if (stringEqual(name, "location"))
 		my_setter = setter_loc;
-	cw->jss->uo = JS_NewObject(cw->jss->jcx, &url_class, NULL, jv);
-if ((JSObject *) cw->jss->uo == NULL)
-{
-javaSessionFail();
-return;
-}
-	js::RootedValue uo_v(cw->jss->jcx, OBJECT_TO_JSVAL(cw->jss->uo));
-	if (JS_DefineProperty(cw->jss->jcx, jv, name, uo_v, NULL, my_setter, attr) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
+	js::RootedObject uo(cw->jss->jcx,
+			    JS_NewObject(cw->jss->jcx, &url_class, NULL, jv));
+	if ((JSObject *) uo == NULL) {
+abort:
+		javaSessionFail();
+		return;
+	}
+
+	js::RootedValue uo_v(cw->jss->jcx, OBJECT_TO_JSVAL(uo));
+	if (JS_DefineProperty
+	    (cw->jss->jcx, jv, name, uo_v, NULL, my_setter, attr) == JS_FALSE)
+		goto abort;
+
 	if (!url)
 		url = EMPTYSTRING;
-	url_initialize(url, readonly, eb_false);
+	url_initialize(uo, url, readonly, eb_false);
 // js could have died so check for this
-if (cw->js_failed)
-return;
+	if (cw->js_failed)
+		return;
+
 	if (my_setter == setter_loc) {
 		if (jv == cw->jss->jwin)
-			cw->jss->jwloc = cw->jss->uo;
+			cw->jss->jwloc = uo;
 		else
-			cw->jss->jdloc = cw->jss->uo;
-		if ((JS_DefineFunction(cw->jss->jcx, cw->jss->uo, "reload",
-				  loc_reload, 0, PROP_FIXED) == JS_FALSE) ||
-		(JS_DefineFunction(cw->jss->jcx, cw->jss->uo, "replace",
-				  loc_replace, 1, PROP_FIXED) == JS_FALSE))
-javaSessionFail();
+			cw->jss->jdloc = uo;
+
+		if ((JS_DefineFunction(cw->jss->jcx, uo, "reload",
+				       loc_reload, 0, PROP_FIXED) == JS_FALSE)
+		    ||
+		    (JS_DefineFunction
+		     (cw->jss->jcx, uo, "replace", loc_replace, 1,
+		      PROP_FIXED) == JS_FALSE))
+			goto abort;
 	}			/* location object */
 }				/* establish_property_url */
 
@@ -912,14 +932,14 @@ void set_property_string(js::HandleObject jv, const char *name,
 							       value))
 	      : JS_GetEmptyStringValue(cw->jss->jcx));
 	if (JS_SetProperty(cw->jss->jcx, obj, name, vv.address()) == JS_FALSE)
-javaSessionFail();
+		javaSessionFail();
 	setter_suspend = eb_false;
 }				/* set_property_string */
 
 void set_global_property_string(const char *name, const char *value)
 {
-if (cw->jss != NULL)
-	set_property_string(cw->jss->jwin, name, value);
+	if (cw->jss != NULL)
+		set_property_string(cw->jss->jwin, name, value);
 }				/* set_global_property_string */
 
 void set_property_number(JS::HandleObject jv, const char *name, int value)
@@ -930,7 +950,7 @@ void set_property_number(JS::HandleObject jv, const char *name, int value)
 	setter_suspend = eb_true;
 	vv = INT_TO_JSVAL(value);
 	if (JS_SetProperty(cw->jss->jcx, obj, name, vv.address()) == JS_FALSE)
-javaSessionFail();
+		javaSessionFail();
 	setter_suspend = eb_false;
 }				/* set_property_number */
 
@@ -942,7 +962,7 @@ void set_property_bool(JS::HandleObject jv, const char *name, int value)
 	setter_suspend = eb_true;
 	vv = (value ? JSVAL_TRUE : JSVAL_FALSE);
 	if (JS_SetProperty(cw->jss->jcx, obj, name, vv.address()) == JS_FALSE)
-javaSessionFail();
+		javaSessionFail();
 	setter_suspend = eb_false;
 }				/* set_property_bool */
 
@@ -959,33 +979,34 @@ char *get_property_url(JS::HandleObject jv, eb_bool doaction)
 	if (!doaction) {
 		JS_HasProperty(cw->jss->jcx, jv, "href", &found);
 		if (found)
-			if (JS_GetProperty(cw->jss->jcx, jv, "href", v.address()) == JS_FALSE)
-{
-javaSessionFail();
-return NULL;
-}
+			if (JS_GetProperty
+			    (cw->jss->jcx, jv, "href",
+			     v.address()) == JS_FALSE) {
+abort:
+				javaSessionFail();
+				return NULL;
+			}
+
 		if (!found) {
 			JS_HasProperty(cw->jss->jcx, jv, "src", &found);
-			if (found)
+			if (found) {
 				if (JS_GetProperty(cw->jss->jcx, jv, "src",
-					       v.address()) == JS_FALSE)
-{
-javaSessionFail();
-return NULL;
-}
+						   v.address()) == JS_FALSE)
+					goto abort;
+			}
 		}
 	} else {
 		JS_HasProperty(cw->jss->jcx, jv, "action", &found);
-		if (found)
+		if (found) {
 			if (JS_GetProperty(cw->jss->jcx, jv, "action",
-				       v.address()) == JS_FALSE)
-{
-javaSessionFail();
-return NULL;
-}
+					   v.address()) == JS_FALSE)
+				goto abort;
+		}
 	}
+
 	if (!found)
 		return NULL;
+
 	if (!JSVAL_IS_STRING(v)) {
 		if (!v.isObject()) {
 badobj:
@@ -999,11 +1020,9 @@ badobj:
 			return NULL;
 		if (!JS_InstanceOf(cw->jss->jcx, lo, &url_class, emptyArgs))
 			goto badobj;
-		if (JS_GetProperty(cw->jss->jcx, lo, "href", v.address()) == JS_FALSE)
-{
-javaSessionFail();
-return NULL;
-}
+		if (JS_GetProperty(cw->jss->jcx, lo, "href", v.address()) ==
+		    JS_FALSE)
+			goto abort;
 	}
 	s = stringize(v);
 /* we assume that the console can handle whatever is in the string,
@@ -1020,7 +1039,7 @@ char *get_property_string(JS::HandleObject jv, const char *name)
 	const char *s;
 	char *out_str;
 	if (JS_GetProperty(cw->jss->jcx, jv, name, v.address()) == JS_FALSE)
-return NULL;
+		return NULL;
 	s = stringize(v);
 /* assume either the string is ascii or the console is UTF8 */
 	out_str = cloneString(s);
@@ -1032,8 +1051,8 @@ int get_property_number(JS::HandleObject jv, const char *name)
 	SWITCH_COMPARTMENT(-1);
 	js::RootedValue v(cw->jss->jcx);
 	if (JS_GetProperty(cw->jss->jcx, jv, name, v.address()) == JS_FALSE)
-return -1;
-return JSVAL_TO_INT(v);
+		return -1;
+	return JSVAL_TO_INT(v);
 }				/* get_property_number */
 
 eb_bool get_property_bool(JS::HandleObject jv, const char *name)
@@ -1041,7 +1060,7 @@ eb_bool get_property_bool(JS::HandleObject jv, const char *name)
 	SWITCH_COMPARTMENT(eb_false);
 	js::RootedValue v(cw->jss->jcx);
 	if (JS_GetProperty(cw->jss->jcx, jv, name, v.address()) == JS_FALSE)
-return eb_false; // no idea what the correct thing to return here is
+		return eb_false;	// no idea what the correct thing to return here is
 	return JSVAL_TO_BOOLEAN(v);
 }				/* get_property_bool */
 
@@ -1053,17 +1072,19 @@ char *get_property_option(JS::HandleObject jv)
 	JS::RootedObject oo(cw->jss->jcx, NULL);	/* option object */
 	int n;
 
-	if (JS_GetProperty(cw->jss->jcx, jv, "selectedIndex", v.address()) == JS_FALSE)
-return NULL;
+	if (JS_GetProperty(cw->jss->jcx, jv, "selectedIndex", v.address()) ==
+	    JS_FALSE)
+		return NULL;
 	n = JSVAL_TO_INT(v);
 	if (n < 0)
 		return 0;
-	if (JS_GetProperty(cw->jss->jcx, jv, "options", v.address()) == JS_FALSE)
-return NULL;
+	if (JS_GetProperty(cw->jss->jcx, jv, "options", v.address()) ==
+	    JS_FALSE)
+		return NULL;
 
 	oa = JSVAL_TO_OBJECT(v);
 	if (JS_GetElement(cw->jss->jcx, oa, n, v.address()) == JS_FALSE)
-return NULL;
+		return NULL;
 	oo = JSVAL_TO_OBJECT(v);
 	return get_property_string(oo, "value");
 }				/* get_property_option */
@@ -1092,33 +1113,27 @@ JSObject *establish_js_option(JS::HandleObject ev, int idx)
 	js::RootedValue vv(cw->jss->jcx);
 	js::RootedObject oa(cw->jss->jcx);	/* option array */
 	js::RootedObject oo(cw->jss->jcx);	/* option object */
-	if (JS_GetProperty(cw->jss->jcx, ev, "options", vv.address()) == JS_FALSE)
-{
-javaSessionFail();
-return NULL;
-}
+	if (JS_GetProperty(cw->jss->jcx, ev, "options", vv.address()) ==
+	    JS_FALSE) {
+abort:
+		javaSessionFail();
+		return NULL;
+	}
 	oa = JSVAL_TO_OBJECT(vv);
 	oo = JS_NewObject(cw->jss->jcx, &option_class, NULL, ev);
-if ((JSObject *) oo == NULL)
-{
-javaSessionFail();
-return NULL;
-}
+	if ((JSObject *) oo == NULL)
+		goto abort;
 	vv = OBJECT_TO_JSVAL(oo);
 	if (JS_DefineElement(cw->jss->jcx, oa, idx, vv, NULL, NULL,
-			 JSPROP_ENUMERATE) == JS_FALSE)
-{
-javaSessionFail();
-return NULL;
-}
+			     JSPROP_ENUMERATE) == JS_FALSE)
+		goto abort;
 /* option.form = select.form */
 	if (JS_GetProperty(cw->jss->jcx, ev, "form", vv.address()) == JS_TRUE) {
-	if (JS_SetProperty(cw->jss->jcx, oo, "form", vv.address()) == JS_FALSE)
-{
-javaSessionFail();
-return NULL;
-}
-}
+		if (JS_SetProperty(cw->jss->jcx, oo, "form", vv.address()) ==
+		    JS_FALSE)
+			goto abort;
+	}
+
 	return oo;
 }				/* establish_js_option */
 
@@ -1166,13 +1181,15 @@ void link_onunload_onclick(JS::HandleObject jv)
 {
 	SWITCH_COMPARTMENT();
 	JS::RootedValue v(cw->jss->jcx);
-	if (JS_GetProperty(cw->jss->jcx, jv, "onunload", v.address()) == JS_FALSE)
-{
-javaSessionFail();
-return;
-}
-	if (JS_DefineProperty(cw->jss->jcx, jv, "onclick", v, 0, 0, PROP_FIXED) == JS_FALSE)
-javaSessionFail();
+	if (JS_GetProperty(cw->jss->jcx, jv, "onunload", v.address()) ==
+	    JS_FALSE) {
+abort:
+		javaSessionFail();
+		return;
+	}
+	if (JS_DefineProperty(cw->jss->jcx, jv, "onclick", v, 0, 0, PROP_FIXED)
+	    == JS_FALSE)
+		goto abort;
 }				/* link_onunload_onclick */
 
 eb_bool handlerPresent(JS::HandleObject ev, const char *name)
@@ -1184,8 +1201,7 @@ eb_bool handlerPresent(JS::HandleObject ev, const char *name)
 }				/* handlerPresent */
 
 /* rebuild html tags if javascript has changed the options out from under you */
-static void rebuildSelector(struct htmlTag *sel,
-JS::HandleObject oa, int len2)
+static void rebuildSelector(struct htmlTag *sel, JS::HandleObject oa, int len2)
 {
 	int i1, i2, len1;
 	eb_bool check2;
@@ -1199,21 +1215,22 @@ JS::HandleObject oa, int len2)
 	len1 = tagList.size();
 	i1 = i2 = 0;
 	selname = sel->name;
-	if(!selname)
+	if (!selname)
 		selname = "?";
 	debugPrint(4, "testing selector %s %d %d", selname, len1, len2);
 
 	sel->lic = (sel->multiple ? 0 : -1);
 
-	while(i1 < len1 && i2 < len2) {
-	t = tagList[i1++];
-	if(t->action != TAGACT_OPTION)
+	while (i1 < len1 && i2 < len2) {
+		t = tagList[i1++];
+		if (t->action != TAGACT_OPTION)
 			continue;
-		if(t->controller != sel)
+		if (t->controller != sel)
 			continue;
 
 /* find the corresponding option object */
-		if (JS_GetElement(cw->jss->jcx, oa, i2, v.address()) == JS_FALSE) {
+		if (JS_GetElement(cw->jss->jcx, oa, i2, v.address()) ==
+		    JS_FALSE) {
 /* Wow this shouldn't happen. */
 /* Guess I'll just pretend the array stops here. */
 			len2 = i2;
@@ -1223,7 +1240,7 @@ JS::HandleObject oa, int len2)
 		oo = JSVAL_TO_OBJECT(v);
 
 /* perhaps the entire object has been replaced */
-		if(t->jv != oo) {
+		if (t->jv != oo) {
 /* Ok, jv is a rooted variable, set to object o1, and then we set it to o2,
  * does the assignment operator unroot o1 and then root o2?
  * Without reading the mozilla code, I'm going to assume that it does. */
@@ -1232,43 +1249,48 @@ JS::HandleObject oa, int len2)
 
 		t->rchecked = get_property_bool(oo, "defaultSelected");
 		check2 = get_property_bool(oo, "selected");
-		if(check2) {
-			if(sel->multiple) ++ sel->lic;
-			else sel->lic = i2;
+		if (check2) {
+			if (sel->multiple)
+				++sel->lic;
+			else
+				sel->lic = i2;
 		}
 		++i2;
-		if(t->checked != check2)
+		if (t->checked != check2)
 			changed = true;
 		t->checked = check2;
 		s = get_property_string(oo, "text");
-		if(s && !t->name || !stringEqual(t->name, s)) {
+		if (s && !t->name || !stringEqual(t->name, s)) {
 			nzFree(t->name);
 			t->name = s;
 			changed = true;
-		} else nzFree(s);
+		} else
+			nzFree(s);
 		s = get_property_string(oo, "value");
-		if(s && !t->value || !stringEqual(t->value, s)) {
+		if (s && !t->value || !stringEqual(t->value, s)) {
 			nzFree(t->value);
 			t->value = s;
-		} else nzFree(s);
+		} else
+			nzFree(s);
 	}
 
 /* one list or the other or both has run to the end */
-	if(i2 == len2) {
-		for(; i1<len1; ++i1) {
+	if (i2 == len2) {
+		for (; i1 < len1; ++i1) {
 			t = tagList[i1];
-			if(t->action != TAGACT_OPTION)
-					continue;
-				if(t->controller != sel)
-					continue;
-				t->jv. ~ HeapRootedObject();
-				t->jv = 0;
-				t->controller = 0;
+			if (t->action != TAGACT_OPTION)
+				continue;
+			if (t->controller != sel)
+				continue;
+			t->jv. ~ HeapRootedObject();
+			t->jv = 0;
+			t->controller = 0;
 			changed = true;
 		}
-	} else if(i1 == len1) {
-		for(; i2<len2; ++i2) {
-			if (JS_GetElement(cw->jss->jcx, oa, i2, v.address()) == JS_FALSE)
+	} else if (i1 == len1) {
+		for (; i2 < len2; ++i2) {
+			if (JS_GetElement(cw->jss->jcx, oa, i2, v.address()) ==
+			    JS_FALSE)
 				break;
 			oo = JSVAL_TO_OBJECT(v);
 			t = newTag("option");
@@ -1278,42 +1300,44 @@ JS::HandleObject oa, int len2)
 			t->name = get_property_string(oo, "text");
 			t->value = get_property_string(oo, "value");
 			t->checked = get_property_bool(oo, "selected");
-			if(t->checked) {
-				if(sel->multiple) ++ sel->lic;
-				else sel->lic = i2;
+			if (t->checked) {
+				if (sel->multiple)
+					++sel->lic;
+				else
+					sel->lic = i2;
 			}
 			t->rchecked = get_property_bool(oo, "defaultSelected");
 			changed = true;
 		}
 	}
 
-	if(!changed)
-return;
-		debugPrint(4, "selector %s has changed", selname);
+	if (!changed)
+		return;
+	debugPrint(4, "selector %s has changed", selname);
 
 /* If js change the menu, it should have also changed select.value
  * according to the checked options, but did it?
  * Don't know, so I'm going to do it. */
 	s = displayOptions(sel);
-	if(!s)
+	if (!s)
 		s = EMPTYSTRING;
 	nzFree(sel->value);
 	sel->value = s;
 	set_property_string(sel->jv, "value", s);
 	updateFieldInBuffer(sel->seqno, s, parsePage ? 0 : 2, eb_false);
 
-	if(!sel->multiple)
+	if (!sel->multiple)
 		set_property_number(sel->jv, "selectedIndex", sel->lic);
-} /* rebuildSelector */
+}				/* rebuildSelector */
 
 void rebuildSelectors(void)
 {
 	int i1;
 	struct htmlTag *t;
-SWITCH_COMPARTMENT();
+	SWITCH_COMPARTMENT();
 	JS::RootedObject oa(cw->jss->jcx, NULL);	/* option array */
 	JS::RootedValue v(cw->jss->jcx);
-	int len; /* length of option array */
+	int len;		/* length of option array */
 
 	for (i1 = 0; i1 < tagList.size(); ++i1) {
 		t = tagList[i1];
@@ -1325,13 +1349,14 @@ SWITCH_COMPARTMENT();
 			continue;
 
 /* there should always be an options array, if not then move on */
-		if (JS_GetProperty(cw->jss->jcx, t->jv, "options", v.address()) == JS_FALSE)
+		if (JS_GetProperty(cw->jss->jcx, t->jv, "options", v.address())
+		    == JS_FALSE)
 			continue;
 		oa = JSVAL_TO_OBJECT(v);
 		len = get_property_number(oa, "length");
-		if(len < 0)
+		if (len < 0)
 			continue;
 		rebuildSelector(t, oa, len);
 	}
 
-} /* rebuildSelectors */
+}				/* rebuildSelectors */

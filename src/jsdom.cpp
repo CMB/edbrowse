@@ -710,6 +710,15 @@ static JSClass link_class = {
 	NULL, JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
+static JSClass script_class = {
+	"Script",
+	JSCLASS_HAS_PRIVATE,
+	JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
+	JS_StrictPropertyStub,
+	JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
+	NULL, JSCLASS_NO_OPTIONAL_MEMBERS
+};
+
 static JSFunctionSpec link_methods[] = {
 	JS_FS("setAttribute", setAttribute, 2, 0),
 	JS_FS_END
@@ -960,6 +969,7 @@ static struct DOMCLASS domClasses[] = {
 	{&trow_class},
 	{&cell_class},
 	{&option_class, 0, option_ctor, 2},
+	{&script_class},
 	{0}
 };
 
@@ -1463,7 +1473,7 @@ Example www.startpage.com, where id=submit
 /* v.id becomes idname, and idMaster.idname becomes v
  * In case of forms, v.id should remain undefined.  So we can have
  * a form field named "id". */
-		if (strcmp(classname, "Form") != 0)
+		if (!stringEqual(classname, "Form"))
 			establish_property_string(v, "id", idname, eb_true);
 		if (cw->js_failed)
 			return;
@@ -1474,13 +1484,18 @@ Example www.startpage.com, where id=submit
 		establish_property_object(master, idname, v);
 		if (cw->js_failed)
 			return;
-	} else {
-		if (strcmp(classname, "Form") != 0)
+	}
+
+/* I use to set id = "" if no id tag, but I'm not sure why. */
+#if 0
+	if (!idname) {
+		if (!stringEqual(classname, "Form"))
 			establish_property_string(v, "id", EMPTYSTRING,
 						  eb_true);
 		if (cw->js_failed)
 			return;
 	}
+#endif
 
 	if (href && href_url) {
 		establish_property_url(v, href, href_url, eb_false);

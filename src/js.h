@@ -98,7 +98,6 @@ struct ebWindowJSState {
 	HeapRootedObject jdoc;	/* document object */
 	HeapRootedObject jwloc;	/* javascript window.location */
 	HeapRootedObject jdloc;	/* javascript document.location */
-	HeapRootedObject uo;	/* javascript url object. */
 };
 
 /*********************************************************************

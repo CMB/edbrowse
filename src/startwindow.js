@@ -47,6 +47,7 @@ document.forms = new Array;
 document.images = new Array;
 document.areas = new Array;
 document.metas = new Array;
+document.scripts = new Array;
 
 document.idMaster = new Object;
 document.all = new Object;
@@ -78,9 +79,11 @@ return document.all.tags(s);
 }
 
 document.createElement = function(s) { 
+var c;
 switch(s.toLowerCase()) { 
-case "link": return new Link();
-case "image": case "img": return new Image();
+case "link": c = new Link(); document.links.push(c); return c;
+case "image": case "img": c = new Image(); document.images.push(c); return c;
+case "script": c = new Script(); document.scripts.push(c); return c;
 default:
 /* alert("createElement default " + s); */
 return new Object();

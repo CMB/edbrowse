@@ -1187,8 +1187,14 @@ static void htmlScript(char *&html, char *&h)
 	if (intFlag)
 		goto done;
 
+/* Create the script object. */
 	htmlHref("src");
+	domLink("Script", "src", "scripts", cw->jss->jdoc, eb_false);
 	a = htmlAttrVal(topAttrib, "language");
+	if (a)
+		establish_property_string(t->jv, "language", a, eb_true);
+	if (!isJSAlive)
+		goto done;
 /* If no language is specified, javascript is default. */
 	if (a && (!memEqualCI(a, "javascript", 10) || isalphaByte(a[10])))
 		goto done;
@@ -1228,7 +1234,7 @@ static void htmlScript(char *&html, char *&h)
 			changeFileName = NULL;
 		}
 	}
-	/* fetch from the net */
+
 	if (!javatext)
 		goto done;
 
@@ -1243,6 +1249,7 @@ static void htmlScript(char *&html, char *&h)
 	debugPrint(3, "execute %s at %d", js_file, js_line);
 	javaParseExecute(cw->jss->jwin, javatext, js_file, js_line);
 	debugPrint(3, "execution complete");
+	establish_property_string(t->jv, "data", javatext, eb_true);
 
 /* See if the script has produced html via document.write() */
 	if (cw->dw) {
