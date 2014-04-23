@@ -159,7 +159,7 @@ Not yet implemented.
 *********************************************************************/
 
 static const struct tagInfo elements[] = {
-	{"BASE", "base reference for relative URLs", TAGACT_BASE, 0, 0, 5},
+	{"BASE", "base reference for relative URLs", TAGACT_BASE, 0, 0, 13},
 	{"A", "an anchor", TAGACT_A, 3, 0, 9},
 	{"INPUT", "an input item", TAGACT_INPUT, 0, 0, 13},
 	{"TITLE", "the title", TAGACT_TITLE, 3, 0, 9},
@@ -1684,8 +1684,7 @@ forceCloseAnchor:
 
 		case TAGACT_BODY:
 			if (isJSAlive)
-				domLink("Body", 0, 0, cw->jss->jdoc,
-					eb_false);
+				domLink("Body", 0, 0, cw->jss->jdoc, eb_false);
 plainWithElements:
 			if (t->jv)
 				establish_property_array(t->jv, "elements");
@@ -2048,10 +2047,12 @@ unparen:
 
 		case TAGACT_BASE:
 			htmlHref("href");
-			if (!t->href)
-				continue;
-			basehref = t->href;
-			debugPrint(3, "base href %s", basehref);
+			if (t->href) {
+				basehref = t->href;
+				debugPrint(3, "base href %s", basehref);
+			}
+			domLink("Base", "href", "bases", cw->jss->jdoc,
+				eb_false);
 			continue;
 
 		case TAGACT_IMAGE:
