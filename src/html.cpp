@@ -1678,7 +1678,7 @@ forceCloseAnchor:
 
 		case TAGACT_HEAD:
 			if (isJSAlive)
-				domLink("Head", 0, 0, cw->jss->jdoc,
+				domLink("Head", 0, "heads", cw->jss->jdoc,
 					eb_false);
 			goto plainWithElements;
 

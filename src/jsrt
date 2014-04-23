@@ -1,5 +1,5 @@
 <html>
-<head>
+<head id=boom>
 <title>Edbrowse js regression test</title>
 </head>
 <body onload=bodyLoad() onunload=bodyUnload()>
@@ -565,6 +565,8 @@ if(uo != new_path) fail(138);
 
 if(document.readyState != "loading") fail(140);
 if(!document.title.match(/regression/)) fail(141);
+if(document.head.id != "boom") fail(142);
+if(document.getElementsByTagName("head")[0].id != "boom") fail(143);
 
 function submitFunction(me) {
 if(document.questionnaire != me) fail(123);

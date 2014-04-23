@@ -853,6 +853,22 @@ static JSBool body_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	return JS_TRUE;
 }
 
+static JSBool head_ctor(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	JSObject & callee = args.callee();
+	jsval callee_val = JS::ObjectValue(callee);
+	JS::RootedObject newobj(cx,
+				JS_NewObjectForConstructor(cx, &head_class,
+							   &callee_val));
+	if ((JSObject *) newobj == NULL) {
+		javaSessionFail();
+		return JS_FALSE;
+	}
+	args.rval().set(OBJECT_TO_JSVAL(newobj));
+	return JS_TRUE;
+}
+
 static JSBool form_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
@@ -1552,6 +1568,10 @@ Example www.startpage.com, where id=submit
 		establish_property_number(v, "scrollLeft", 0, eb_true);
 		if (cw->js_failed)
 			return;
+	}
+
+	if (stringEqual(classname, "Head")) {
+		establish_property_object(cw->jss->jdoc, "head", v);
 	}
 
 	return;

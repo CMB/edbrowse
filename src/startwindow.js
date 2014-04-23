@@ -41,6 +41,7 @@ screen.availLeft = 0;
 /* some base arrays - lists of things */
 frames = new Array;
 document.anchors = new Array;
+document.heads = new Array;
 document.links = new Array;
 document.applets = new Array;
 document.embeds = new Array;
@@ -61,13 +62,13 @@ case "form": return document.forms;
 case "table": return document.tables; 
 case "div": return document.divs; 
 case "a": return document.anchors; 
-case "link": return document.link; 
+case "link": return document.links; 
+case "head": return document.heads; 
 case "img": case "image": return document.images; 
 case "span": return document.spans; 
 case "meta": return document.metas; 
 default:
-/* Should print an error and bail out, but I want js to march on. */
- /* alert("all.tags default " + s); */
+ alert("all.tags default " + s);
 return new Array();
 } 
 } 
