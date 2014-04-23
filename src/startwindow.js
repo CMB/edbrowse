@@ -26,6 +26,7 @@ toolbar = true;
 resizable = true;
 directories = false;
 name = "unspecifiedFrame";
+
 document.bgcolor = "white";
 document.readyState = "loading";
 

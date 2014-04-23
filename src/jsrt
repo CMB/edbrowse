@@ -563,7 +563,8 @@ uo.hash = "#end";
 new_path = new_path.replace(/middle/, "end");
 if(uo != new_path) fail(138);
 
-if(document.readyState() != "loading") fail(139);
+if(document.readyState != "loading") fail(140);
+if(!document.title.match(/regression/)) fail(141);
 
 function submitFunction(me) {
 if(document.questionnaire != me) fail(123);
