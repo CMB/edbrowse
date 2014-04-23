@@ -1247,9 +1247,12 @@ static void htmlScript(char *&html, char *&h)
 		js_file = w + 1;
 	}
 	debugPrint(3, "execute %s at %d", js_file, js_line);
+/* mark this script as having been executed */
+	establish_property_bool(t->jv, "exec$$ed", eb_true, eb_true);
+	establish_property_string(t->jv, "data", javatext, eb_true);
+/* now run the script */
 	javaParseExecute(cw->jss->jwin, javatext, js_file, js_line);
 	debugPrint(3, "execution complete");
-	establish_property_string(t->jv, "data", javatext, eb_true);
 
 /* See if the script has produced html via document.write() */
 	if (cw->dw) {
