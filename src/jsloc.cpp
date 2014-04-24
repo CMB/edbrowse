@@ -94,20 +94,6 @@ static eb_bool isWinLoc(JS::Handle < JSObject * >uo)
 	return eb_false;
 }				/* isWinLoc */
 
-/* Converting to a string just pulls out the href property */
-static JSBool loc_toString(JSContext * cx, unsigned int argc, jsval * vp)
-{
-	SWITCH_COMPARTMENT(JS_FALSE);
-	JS::RootedObject uo(cx, JS_THIS_OBJECT(cx, vp));
-	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-	js::RootedValue rval(cw->jss->jcx);
-	if (JS_GetProperty(cw->jss->jcx, uo, "href", rval.address()) ==
-	    JS_FALSE)
-		return JS_FALSE;
-	args.rval().set(rval);
-	return JS_TRUE;
-}				/* loc_toString */
-
 static JSBool loc_reload(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	SWITCH_COMPARTMENT(JS_FALSE);
@@ -622,11 +608,6 @@ static JSBool url_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	args.rval().set(OBJECT_TO_JSVAL(uo));
 	return JS_TRUE;
 }				/* url_ctor */
-
-static JSFunctionSpec url_methods[] = {
-	{"toString", loc_toString, 0, 0},
-	{0}
-};
 
 eb_bool initLocationClass(void)
 {
