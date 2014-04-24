@@ -172,173 +172,6 @@ const char *reverseAlias(const char *reply)
 	return 0;		/* not found */
 }				/* reverseAlias */
 
-/*********************************************************************
-Put and get lines from the mail server.
-Print the lines if the debug level calls for it.
-*********************************************************************/
-
-eb_bool mailPutLine(const char *buf, eb_bool realdot)
-{
-	int n, j, len = strlen(buf);
-	char c;
-	static char last_nl = 0;
-	int dotcount = 0;
-	char *dotbuf = 0;
-	char *s;
-
-	s = strstr(buf, "\n.");
-	if (s && realdot && buf + len - s == 4)
-		s = 0;
-	if (last_nl && buf[0] == '.' || s) {
-// have to dot stuff
-// count dots first
-		if (last_nl && buf[0] == '.')
-			++dotcount;
-		for (n = 1; n < len; ++n)
-			if (buf[n] == '.' && buf[n - 1] == '\n')
-				++dotcount;
-		dotbuf = allocMem(len + dotcount + 1);
-		j = 0;
-		if (last_nl && buf[0] == '.')
-			dotbuf[j++] = '.';
-		for (n = 0; n < len; ++n) {
-			c = buf[n];
-			if (c == '.' && n && buf[n - 1] == '\n' &&
-			    (!realdot || len - n != 3))
-				dotbuf[j++] = '.';
-			dotbuf[j++] = c;
-		}
-		dotbuf[j] = 0;
-		buf = dotbuf;
-		len = j;
-	}
-
-	if (debugLevel >= 4) {
-		printf("> ");
-		for (n = 0; n < len; ++n) {
-			c = buf[n];
-			if (c != '\r')
-				putchar(c);
-		}
-	}
-
-	if (len) {
-		if (buf[len - 1] == '\n')
-			last_nl = 1;
-		else
-			last_nl = 0;
-	}
-
-	if (ssl_on)
-		n = ssl_write(buf, len);
-	else
-		n = tcp_write(mssock, buf, len);
-
-	nzFree(dotbuf);
-
-	if (n < len) {
-		setError(MSG_MailWrite);
-		return eb_false;
-	}
-	return eb_true;
-}				/* mailPutLine */
-
-eb_bool mailGetLine(void)
-{
-	int n, len, slen;
-	char c;
-	char *s;
-	slen = strlen(spareLine);
-	strcpy(serverLine, spareLine);
-top:
-	s = strchr(serverLine, '\n');
-	while (!s) {
-		if (slen + 1 == sizeof(serverLine)) {
-			setError(MSG_MailResponseLong);
-			return eb_false;
-		}
-		if (ssl_on)
-			len =
-			    ssl_read(serverLine + slen,
-				     sizeof(serverLine) - 1 - slen);
-		else
-			len =
-			    tcp_read(mssock, serverLine + slen,
-				     sizeof(serverLine) - 1 - slen);
-		if (len <= 0) {
-			setError(MSG_MailRead);
-			return eb_false;
-		}
-		slen += len;
-		serverLine[slen] = 0;
-		s = strchr(serverLine, '\n');
-	}
-	strcpy(spareLine, s + 1);
-	*s = 0;
-	if (s > serverLine && s[-1] == '\r')
-		*--s = 0;
-	debugPrint(4, "< %s", serverLine);
-	return eb_true;
-}				/* mailGetLine */
-
-static eb_bool mailPutGet(const char *line)
-{
-	if (!mailPutLine(line, eb_false))
-		return eb_false;
-	if (!mailGetLine())
-		return eb_false;
-	return eb_true;
-}				/* mailPutGet */
-
-void mailPutGetError(const char *line)
-{
-	if (!mailPutGet(line))
-		showErrorAbort();
-}				/* mailPutGetError */
-
-void mailClose(void)
-{
-	mailPutLine("quit\r\n", eb_false);
-/* the other side has to have time to process the quit command, before we simply hang up. */
-	usleep(400000);
-	if (ssl_on)
-		ssl_done();
-	close(mssock);
-}				/* mailClose */
-
-/* Connect to the mail server */
-eb_bool mailConnect(const char *host, int port, int secure)
-{
-	ssl_on = eb_false;
-	IP32bit ip = tcp_name_ip(host);
-	if (ip == NULL_IP) {
-		setError((intFlag ? MSG_Interrupted : MSG_MailLocate), host);
-		return eb_false;
-	}
-	debugPrint(4, "%s -> %s", host, tcp_ip_dots(ip));
-	mailhost = host;
-	mssock = tcp_connect(ip, port, mailTimeout);
-	if (mssock < 0) {
-		setError(intFlag ? MSG_Interrupted : MSG_MailConnect);
-		return eb_false;
-	}
-	debugPrint(4, "connected to port %d", port);
-	spareLine[0] = 0;
-	if (secure & 1) {
-		int n = ssl_newbind(mssock);
-		if (n < 0) {
-			if (n == -999)
-				setError(MSG_NoCertify, host);
-			else
-				setError(MSG_WebConnectSecure, host, n);
-			return eb_false;
-		}
-		debugPrint(3, "secure connection established");
-		ssl_on = eb_true;
-	}
-	return eb_true;
-}				/* mailConnect */
-
 static char base64_chars[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 char *base64Encode(const char *inbuf, int inlen, eb_bool lines)
@@ -823,8 +656,6 @@ static void appendAttachment(const char *s, char **out, int *l)
 		if (n)
 			memcpy(serverLine, s, n);
 		serverLine[n] = 0;
-		if (n == 1 && serverLine[0] == '.')	/* can't allow this */
-			strcpy(serverLine, " .");
 		strcat(serverLine, eol);
 		stringAndString(out, l, serverLine);
 		if (*t)
@@ -842,6 +673,173 @@ char *makeBoundary(void)
 	return boundary;
 }				/* makeBoundary */
 
+struct smtp_upload {
+	const char *data;
+/* These really need to be size_t, not int!
+ * fixme when edbrowse uses size_t consistently */
+	int length;
+	int pos;
+};
+
+static size_t smtp_upload_callback(char *buffer_for_curl, size_t size,
+				   size_t nmem, struct smtp_upload *upload)
+{
+	size_t out_buffer_size = size * nmem;
+	size_t remaining = upload->length - upload->pos;
+	size_t to_send;
+
+	if (upload->pos >= upload->length)
+		return 0;
+
+	if (out_buffer_size < remaining)
+		to_send = out_buffer_size;
+	else
+		to_send = remaining;
+
+	memcpy(buffer_for_curl, upload->data + upload->pos, to_send);
+	size_t cur_pos = upload->pos + to_send;
+	upload->pos = cur_pos;
+	return to_send;
+}				/* smtp_upload_callback */
+
+static char *buildSMTPURL(const struct MACCOUNT *account)
+{
+	char *url = NULL;
+	const char *scheme;
+	const char *smlogin = strchr(account->login, '\\');
+
+	if (smlogin)
+		++smlogin;
+	else
+		smlogin = account->login;
+
+	if (account->outssl & 1)
+		scheme = "smtps";
+	else
+		scheme = "smtp";
+
+	if (asprintf
+	    (&url, "%s://%s:%d/%s", scheme, account->outurl, account->outport,
+	     smlogin) == -1)
+		i_printfExit(MSG_NoMem);
+
+	return url;
+}				/* buildSMTPURL */
+
+static struct curl_slist *buildRecipientSList(const char **recipients)
+{
+	struct curl_slist *recipient_slist = NULL;
+	const char **r;
+
+	for (r = recipients; *r; r++) {
+		recipient_slist = curl_slist_append(recipient_slist, *r);
+		if (recipient_slist == NULL)
+			i_printfExit(MSG_NoMem);
+	}
+
+	return recipient_slist;
+}				/* buildRecipientSList */
+
+static CURL *newSendmailHandle(const struct MACCOUNT *account,
+			       const char *outurl, const char *reply,
+			       struct curl_slist *recipients)
+{
+	int do_certs = verifyCertificates && !account->nocert;
+	CURLcode res = CURLE_OK;
+	CURL *handle = curl_easy_init();
+	if (!handle) {
+		setError(MSG_LibcurlNoInit);
+		return NULL;
+	}
+
+	res = curl_easy_setopt(handle, CURLOPT_URL, outurl);
+	if (res != CURLE_OK) {
+		goto new_handle_cleanup;
+	}
+
+	if (debugLevel >= 4)
+		curl_easy_setopt(handle, CURLOPT_VERBOSE, 1);
+	curl_easy_setopt(handle, CURLOPT_DEBUGFUNCTION, ebcurl_debug_handler);
+	res = curl_easy_setopt(handle, CURLOPT_CAINFO, sslCerts);
+	if (res != CURLE_OK) {
+		goto new_handle_cleanup;
+	}
+
+	curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, do_certs);
+
+	if (account->outssl == 2)
+		curl_easy_setopt(handle, CURLOPT_USE_SSL, CURLUSESSL_ALL);
+
+	if (account->outssl) {
+		res =
+		    curl_easy_setopt(handle, CURLOPT_USERNAME, account->login);
+		if (res != CURLE_OK) {
+			goto new_handle_cleanup;
+		}
+
+		res =
+		    curl_easy_setopt(handle, CURLOPT_PASSWORD,
+				     account->password);
+		if (res != CURLE_OK) {
+			goto new_handle_cleanup;
+		}
+	}
+
+	res = curl_easy_setopt(handle, CURLOPT_MAIL_FROM, reply);
+	if (res != CURLE_OK) {
+		goto new_handle_cleanup;
+	}
+
+	res = curl_easy_setopt(handle, CURLOPT_MAIL_RCPT, recipients);
+	if (res != CURLE_OK) {
+		goto new_handle_cleanup;
+	}
+
+new_handle_cleanup:
+	if (res != CURLE_OK) {
+		ebcurl_setError(res, outurl);
+		curl_easy_cleanup(handle);
+		handle = NULL;
+	}
+
+	return handle;
+}				/* newSendmailHandle */
+
+static eb_bool
+sendMailSMTP(const struct MACCOUNT *account, const char *reply,
+	     const char **recipients, const char *message)
+{
+	CURLcode res = CURLE_OK;
+	eb_bool smtp_success = eb_false;
+	char *smtp_url = buildSMTPURL(account);
+	struct curl_slist *recipient_slist = buildRecipientSList(recipients);
+	struct smtp_upload upload = {
+		.data = message,.length = strlen(message),.pos = 0
+	};
+	CURL *handle =
+	    newSendmailHandle(account, smtp_url, reply, recipient_slist);
+
+	if (!handle)
+		goto smtp_cleanup;
+
+	curl_easy_setopt(handle, CURLOPT_READFUNCTION, smtp_upload_callback);
+	curl_easy_setopt(handle, CURLOPT_READDATA, &upload);
+	curl_easy_setopt(handle, CURLOPT_UPLOAD, 1L);
+
+	res = curl_easy_perform(handle);
+	if (res == CURLE_OK)
+		smtp_success = eb_true;
+
+smtp_cleanup:
+	if (res != CURLE_OK)
+		ebcurl_setError(res, smtp_url);
+	if (handle)
+		curl_easy_cleanup(handle);
+	curl_slist_free_all(recipient_slist);
+	nzFree(smtp_url);
+	return smtp_success;
+}				/* sendMailSMTP */
+
 /* Send mail to the smtp server. */
 eb_bool
 sendMail(int account, const char **recipients, const char *body,
@@ -855,6 +853,7 @@ sendMail(int account, const char **recipients, const char *body,
 	char *t;
 	int nat, cx, i, j;
 	char *out = 0;
+	eb_bool sendmail_success = eb_false;
 	eb_bool mustmime = eb_false;
 	eb_bool firstgreet = eb_true;
 	eb_bool firstrec;
@@ -870,13 +869,6 @@ sendMail(int account, const char **recipients, const char *body,
 	from = a->from;
 	reply = a->reply;
 	ao = a->outssl ? a : localMail;
-	login = ao->login;
-	smlogin = strchr(login, '\\');
-	if (smlogin)
-		++smlogin;
-	else
-		smlogin = login;
-	pass = ao->password;
 	doSignature = dosig;
 
 	nat = 0;		/* number of attachments */
@@ -972,119 +964,7 @@ sendMail(int account, const char **recipients, const char *body,
 
 	boundary = makeBoundary();
 
-	if (!mailConnect(ao->outurl, ao->outport, ao->outssl)) {
-		nzFree(encoded);
-		return eb_false;
-	}
-	if (!mailGetLine())
-		goto mailfail;
-	while (memEqualCI(serverLine, "220-", 4)) {
-		if (!mailGetLine())
-			goto mailfail;
-	}
-	if (!memEqualCI(serverLine, "220 ", 4)) {
-		setError(MSG_MailBadPrompt, serverLine);
-		goto mailfail;
-	}
-
-sayhello:
-	sprintf(serverLine, "%s %s%s", (a->outssl ? "ehlo" : "Helo"), smlogin,
-		eol);
-	if (!mailPutLine(serverLine, eb_false))
-		goto mailfail;
-get250:
-	if (!mailGetLine())
-		goto mailfail;
-	if (!memEqualCI(serverLine, "250", 3) ||
-	    serverLine[3] != ' ' && serverLine[3] != '-') {
-		setError(MSG_MailWhat, login);
-		goto mailfail;
-	}
-	if (serverLine[3] == '-')
-		goto get250;
-
-	if (ao->outssl) {
-		char *b;
-		int nb;
-
-		if (a->outssl == 2 && firstgreet) {
-/* haven't yet switched over to ssl */
-			if (!mailPutGet("starttls\r\n"))
-				goto mailfail;
-			if (!memEqualCI(serverLine, "220 ", 4)) {
-				setError(MSG_MailBadPrompt, serverLine);
-				goto mailfail;
-			}
-			nb = ssl_newbind(mssock);
-			if (nb < 0) {
-				if (nb == -999)
-					setError(MSG_NoCertify, mailhost);
-				else
-					setError(MSG_WebConnectSecure, mailhost,
-						 nb);
-				goto mailfail;
-			}
-			debugPrint(3, "secure connection established");
-			ssl_on = eb_true;
-
-/* We have to send EHLO after starttls, per RFC 2487 */
-			firstgreet = eb_false;
-			goto sayhello;
-		}
-
-/* login authentication is the only thing I support right now. */
-		if (!mailPutGet("auth login\r\n"))
-			goto mailfail;
-		if (!memEqualCI(serverLine, "334 ", 4)) {
-			setError(MSG_AuthLoginOnly);
-			goto mailfail;
-		}
-		b = base64Encode(login, strlen(login), eb_false);
-		sprintf(serverLine, "%s%s", b, eol);
-		nzFree(b);
-		if (!mailPutGet(serverLine))
-			goto mailfail;
-		if (!memEqualCI(serverLine, "334 ", 4)) {
-			setError(MSG_AuthLoginOnly);
-			goto mailfail;
-		}
-		b = base64Encode(pass, strlen(pass), eb_false);
-		sprintf(serverLine, "%s%s", b, eol);
-		nzFree(b);
-		if (!mailPutGet(serverLine))
-			goto mailfail;
-		if (!memEqualCI(serverLine, "235 ", 4)) {
-			setError(MSG_SmtpNotComplete, serverLine);
-			goto mailfail;
-		}
-	}
-
-	sprintf(serverLine, "mail from: <%s>%s", reply, eol);
-	if (!mailPutGet(serverLine))
-		goto mailfail;
-	if (!memEqualCI(serverLine, "250 ", 4)) {
-		setError(MSG_MailReject, reply);
-		goto mailfail;
-	}
-
-	for (j = 0; s = recipients[j]; ++j) {
-		sprintf(serverLine, "rcpt to: <%s>%s", s, eol);
-		if (!mailPutGet(serverLine))
-			goto mailfail;
-		if (!memEqualCI(serverLine, "250 ", 4)) {
-			setError(MSG_MailReject, s);
-			goto mailfail;
-		}
-	}
-
-	if (!mailPutGet("data\r\n"))
-		goto mailfail;
-	if (!memEqualCI(serverLine, "354 ", 4)) {
-		setError(MSG_MailNotReady, serverLine);
-		goto mailfail;
-	}
-
-/* Build the outgoing mail, and send it in one go, as one string. */
+/* Build the outgoing mail, as one string. */
 	out = initString(&j);
 
 	firstrec = eb_true;
@@ -1202,31 +1082,10 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 	}
 
 	/* mime format */
-	/* A dot alone ends the transmission */
-	stringAndString(&out, &j, ".\r\n");
-	if (!mailPutLine(out, eb_true))
-		goto mailfail;
+
+	sendmail_success = sendMailSMTP(ao, reply, recipients, out);
 	nzFree(out);
-	out = 0;
-
-	if (!mailGetLine())
-		goto mailfail;
-	if (!memEqualCI(serverLine, "250 ", 4) &&
-/* do these next two lines make any sense? */
-	    !strstrCI(serverLine, "message accepted") &&
-	    !strstrCI(serverLine, "message received")) {
-		setError(MSG_MailNotSent, serverLine);
-		goto mailfail;
-	}
-
-	mailClose();
-	return eb_true;
-
-mailfail:
-	nzFree(encoded);
-	nzFree(out);
-	close(mssock);
-	return eb_false;
+	return sendmail_success;
 }				/* sendMail */
 
 eb_bool validAccount(int n)
