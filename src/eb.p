@@ -115,8 +115,6 @@ eb_bool mailGetLine(void);
 void mailPutGetError(const char *line);
 void mailClose(void);
 eb_bool mailConnect(const char *host, int port, int secure);
-char *base64Encode(const char *inbuf, int inlen, eb_bool lines);
-char *qpEncode(const char *line);
 eb_bool encodeAttachment(const char *file, int ismail, eb_bool webform,
 			 const char **type_p, const char **enc_p,
 			 char **data_p);
@@ -262,6 +260,10 @@ FILE *efopen(const char *name, const char *mode);
 int eopen(const char *name, int mode, int perms);
 void appendFile(const char *fname, const char *message, ...);
 void appendFileNF(const char *filename, const char *msg);
+int tcp_isDots(const char *s);
+IP32bit tcp_name_ip(const char *name);
+IP32bit tcp_dots_ip(const char *s);
+char *tcp_ip_dots(IP32bit ip);
 
 /* sourcefile=jsdom.c */
 void createJavaContext(struct ebWindowJSState **pstate);

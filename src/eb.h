@@ -32,8 +32,6 @@
 #include <unistd.h>
 #endif
 
-#include "tcp.h"
-
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif
@@ -73,7 +71,9 @@ typedef uchar eb_bool;
 #define eb_true 1
 #define eb_false 0
 
-typedef ushort idNameCode;
+typedef unsigned int IP32bit;
+#define NULL_IP (IP32bit)(-1)
+#define ABSPATH 256
 
 #define stringEqual !strcmp
 
@@ -188,6 +188,8 @@ struct DBTABLE {
 /* various globals */
 extern CURL *curl_handle;
 extern int debugLevel;		/* 0 to 9 */
+extern char *sslCerts;		/* ssl certificates to validate the secure server */
+extern int verifyCertificates;	/* is a certificate required for the ssl connection? */
 extern int displayLength;	/* when printing a line */
 extern int jsPool;		/* size of js pool in megabytes */
 extern int webTimeout, mailTimeout;
@@ -213,7 +215,6 @@ extern eb_bool inInput;		/* reading line from standard in */
 extern int fileSize;		/* when reading/writing files */
 extern int mssock;		/* mail server socket */
 extern long hcode;		/* http code, like 404 file not found */
-extern char herror[];		/* html error */
 extern char errorMsg[];		/* generated error message */
 extern char serverLine[];	/* lines to and from the mail server */
 extern int maxAccount;		/* how many email accounts specified */

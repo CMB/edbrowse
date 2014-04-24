@@ -174,7 +174,7 @@ const char *reverseAlias(const char *reply)
 
 static char base64_chars[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-char *base64Encode(const char *inbuf, int inlen, eb_bool lines)
+static char *base64Encode(const char *inbuf, int inlen, eb_bool lines)
 {
 	char *out, *outstr;
 	uchar *in = (uchar *) inbuf;
@@ -222,7 +222,7 @@ char *base64Encode(const char *inbuf, int inlen, eb_bool lines)
 	return outstr;
 }				/* base64Encode */
 
-char *qpEncode(const char *line)
+static char *qpEncode(const char *line)
 {
 	char *newbuf;
 	int l;

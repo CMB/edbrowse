@@ -17,6 +17,8 @@ char *userAgents[10], *currentAgent, *currentReferrer;
 const char eol[] = "\r\n";
 char EMPTYSTRING[] = "";
 int debugLevel = 1;
+char *sslCerts;
+int verifyCertificates = 1;
 int webTimeout = 20, mailTimeout = 0;
 eb_bool ismc, browseLocal, passMail, errorExit;
 eb_bool isInteractive, inInput, listNA;
@@ -1149,19 +1151,12 @@ int main(int argc, char **argv)
 		i_printfExit(MSG_Usage);
 	}			/* options */
 
-	if (tcp_init() < 0)
-		debugPrint(4, "tcp failure, could not identify this machine");
-	else
-		debugPrint(4, "host info established for %s, %s",
-			   tcp_thisMachineName, tcp_thisMachineDots);
-
 	if (!sslCerts) {
 		verifyCertificates = 0;
 		if (doConfig)
 			if (debugLevel >= 1)
 				i_puts(MSG_NoCertFile);
 	}
-	ssl_init();
 
 	srand(time(0));
 

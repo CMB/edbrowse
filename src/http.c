@@ -405,7 +405,7 @@ char *copy_and_sanitize(const char *start, const char *end)
 }				/* copy_and_sanitize */
 
 long hcode;			/* example, 404 */
-char herror[32];		/* example, file not found */
+static char herror[32];		/* example, file not found */
 extern char *newlocation;
 extern int newloc_d;
 

@@ -3175,7 +3175,6 @@ et_go:
 				 verifyCertificates);
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(verifyCertificates + MSG_CertifyOff);
-		ssl_verify_setting();
 		return eb_true;
 	}
 
