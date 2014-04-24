@@ -60,7 +60,7 @@ const char *stringize(js::HandleValue v)
 
 static JSClass url_class = {
 	"URL",
-	JSCLASS_HAS_PRIVATE | JSCLASS_GLOBAL_FLAGS,
+	JSCLASS_HAS_PRIVATE,
 	JS_PropertyStub,
 	JS_DeletePropertyStub,
 	JS_PropertyStub,
@@ -633,7 +633,7 @@ eb_bool initLocationClass(void)
 	SWITCH_COMPARTMENT(eb_false);
 	if (JS_InitClass
 	    (cw->jss->jcx, cw->jss->jwin, NULL, &url_class, url_ctor, 1, NULL,
-	     url_methods, NULL, NULL) == NULL)
+	     NULL, NULL, NULL) == NULL)
 		return eb_false;
 	return eb_true;
 }				/* initLocationClass */

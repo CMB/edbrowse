@@ -97,6 +97,9 @@ return new Object();
 } 
 } 
 
+URL.prototype.toString = function() { 
+return this.href;
+}
 URL.prototype.indexOf = function(s) { 
 return this.toString().indexOf(s);
 }
@@ -114,6 +117,9 @@ return this.toString().toUpperCase();
 }
 URL.prototype.match = function(s) { 
 return this.toString().match(s);
+}
+URL.prototype.replace = function(s, t) { 
+return this.toString().replace(s, t);
 }
 
 /*********************************************************************
