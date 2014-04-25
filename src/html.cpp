@@ -329,22 +329,26 @@ static void get_js_event(const char *name)
 		    || action == TAGACT_FRAME || action == TAGACT_INPUT
 		    && (itype >= INP_RADIO || itype <= INP_SUBMIT)
 		    || action == TAGACT_OPTION) {
-			topTag->handler = eb_true;
+			topTag->onclick = eb_true;
 			if (currentForm && action == TAGACT_INPUT
 			    && itype == INP_BUTTON)
 				currentForm->submitted = eb_true;
 		}
 	}
-	if (stringEqual(name, "onsubmit") || stringEqual(name, "onreset")) {
+	if (stringEqual(name, "onsubmit")) {
 		if (action == TAGACT_FORM)
-			topTag->handler = eb_true;
+			topTag->onsubmit = eb_true;
+	}
+	if (stringEqual(name, "onreset")) {
+		if (action == TAGACT_FORM)
+			topTag->onreset = eb_true;
 	}
 	if (stringEqual(name, "onchange")) {
 		if (action == TAGACT_INPUT || action == TAGACT_SELECT) {
 			if (itype == INP_TA)
 				runningError(MSG_OnchangeText);
 			else if (itype > INP_HIDDEN && itype <= INP_SELECT) {
-				topTag->handler = eb_true;
+				topTag->onchange = eb_true;
 				if (currentForm)
 					currentForm->submitted = eb_true;
 			}
@@ -396,8 +400,16 @@ static void get_js_events(void)
 eb_bool tagHandler(int seqno, const char *name)
 {
 	struct htmlTag *t = tagList[seqno];
-	if (t->handler)
+/* check the htnl tag attributes first */
+	if (t->onclick && stringEqual(name, "onclick"))
 		return eb_true;
+	if (t->onsubmit && stringEqual(name, "onsubmit"))
+		return eb_true;
+	if (t->onreset && stringEqual(name, "onreset"))
+		return eb_true;
+	if (t->onchange && stringEqual(name, "onchange"))
+		return eb_true;
+
 	if (!t->jv)
 		return eb_false;
 	if (!isJSAlive)

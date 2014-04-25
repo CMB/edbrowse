@@ -52,7 +52,10 @@ struct htmlTag {
 	eb_bool mime:1;		/* encode as mime, rather than url encode */
 	eb_bool bymail:1;	/* send by mail, rather than http */
 	eb_bool submitted:1;
-	eb_bool handler:1;
+	eb_bool onclick:1;
+	eb_bool onsubmit:1;
+	eb_bool onreset:1;
+	eb_bool onchange:1;
 	char subsup;		/* span turned into sup or sub */
 	uchar itype;		/* input type = */
 	short ninp;		/* number of nonhidden inputs */
