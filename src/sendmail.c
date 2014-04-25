@@ -1,7 +1,7 @@
 /* sendmail.c
  * Send mail using the smtp protocol.
  * Send the contents of a file, or the current edbrowse buffer.
- * Copyright (c) Karl Dahlke, 2008
+ * Copyright (c) Karl Dahlke, 2014
  * This file is part of the edbrowse project, released under GPL.
  */
 
@@ -18,7 +18,7 @@ int mssock;			/* mail server socket */
 static eb_bool doSignature;
 static eb_bool ssl_on;
 static const char *mailhost;
-static char subjectLine[200];
+static char subjectLine[400];
 static int mailAccount;
 
 static struct ALIAS {
@@ -391,27 +391,13 @@ empty:
 		v = s;
 		while (s > t && isspaceByte(s[-1]))
 			--s;
-		if (s == t) {
-			setError(MSG_SubjectEmpty);
-			goto freefail;
-		}
 		if (s - t >= sizeof(subjectLine)) {
 			setError(MSG_SubjectLong, sizeof(subjectLine) - 1);
 			goto freefail;
 		}
-		memcpy(subjectLine, t, s - t);
+		if (s > t)
+			memcpy(subjectLine, t, s - t);
 		subjectLine[s - t] = 0;
-		t = subjectLine + (s - t);
-		s = isoEncode(subjectLine, t);
-		if (s) {
-			if (strlen(s) >= sizeof(subjectLine)) {
-				setError(MSG_SubjectLong,
-					 sizeof(subjectLine) - 1);
-				goto freefail;
-			}
-			strcpy(subjectLine, s);
-			nzFree(s);
-		}
 		debugPrint(6, "subject = %s", subjectLine);
 /* Blank lines after subject are optional, and ignored. */
 		for (t = buf + buflen; v < t; ++v)
@@ -1018,8 +1004,10 @@ sendMail(int account, const char **recipients, const char *body,
 	}
 	sprintf(serverLine, "User-Agent: %s%s", currentAgent, eol);
 	stringAndString(&out, &j, serverLine);
-	sprintf(serverLine, "Subject: %s%s", subjectLine, eol);
-	stringAndString(&out, &j, serverLine);
+	if (subjectLine[0]) {
+		sprintf(serverLine, "Subject: %s%s", subjectLine, eol);
+		stringAndString(&out, &j, serverLine);
+	}
 	sprintf(serverLine,
 		"Date: %s%sMessage-ID: <%s.%s>%sMime-Version: 1.0%s",
 		mailTimeString(), eol, messageTimeID(), reply, eol, eol);
@@ -1230,10 +1218,6 @@ eb_bool sendMailCurrent(int sm_account, eb_bool dosig)
 		if (memEqualCI(line, "subject:", 8)) {
 			while (*line == ' ' || *line == '\t')
 				++line;
-			if (*line == '\n') {
-				setError(MSG_SubjectEmpty2);
-				goto done;
-			}
 			subj = eb_true;
 		}
 

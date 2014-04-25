@@ -99,9 +99,6 @@ Make edbrowseodbc, rather than edbrowse.
 ODBC has been very stable for a long time.
 unixODBC version 2.2.14 seems to satisfy edbrowseodbc.
 
-If you're a developer and you want to use the symbolic debugger,
-set EBDEBUG=on before you run make.
-
 ------------------------------------------------------------
 
 The code in this project is indented via the script Lindent,
@@ -158,12 +155,6 @@ Decide if it's a proxy url.
 Watch for infinite loops during url redirection.
 Resolve relative url into absolute url
 based on the location of the current web page.
-
-tcp.c:
-Place a wrapper around the tcp calls.
-Hides the differences between Unix and Windows.
-Yes, I want to port this program to Windows.
-Can you help??
 
 format.c:
 Parse html tags and comments.

@@ -1,20 +1,11 @@
-This program is copyright (C) (C) Karl Dahlke, 2000-2008.
+This program is copyright (C) Karl Dahlke, 2000-2014.
 It is made available by the author under the terms of the GNU General Public
 License (GPL), as articulated by the Free Software Foundation.
 http://www.fsf.org/licensing/licenses/gpl.html
 It may be used for any purpose, and redistributed,
 provided this copyright notice is included.
 
-As a special exception, I hereby grant permission to link the code of this
-program with the OpenSSL library (or with modified versions of OpenSSL that use
-the same license as OpenSSL), and distribute linked combinations including the two.
-You must obey the GNU General Public License in all respects for all of the
-code used other than OpenSSL. If you modify this program,
-you may extend this exception to your version of the program,
-but you are not obligated to do so. If you do not wish to do so,
-delete this exception statement from your version.
-
-This program uses libsmjs.so for javascript, and libcurl.so for http/ftp access.
+This program uses libmozjs.so for javascript, and libcurl.so for http/ftp access.
 These are released under the Mozilla public license (mpl).
 I didn't change any of the source; I merely link to these libraries.
 However, if you wish to release a version of edbrowse with these shared

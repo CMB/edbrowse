@@ -159,17 +159,6 @@ It is made available by the authors under the terms of the GNU General Public Li
 as articulated by the Free Software Foundation.&nbsp;
 It may be used for any purpose, and redistributed, provided this copyright notice is included.
 
-<P>
-As a special exception, I hereby grant permission to link
-the code of this program with the OpenSSL library
-(or with modified versions of OpenSSL that use the same license as OpenSSL),
-and distribute linked combinations including the two.&nbsp;
-You must obey the GNU General Public License in all respects
-for all of the code used other than OpenSSL.&nbsp;
-If you modify this program, you may extend this exception to your version of the
-program, but you are not obligated to do so.&nbsp;
-If you do not wish to do so, delete this exception statement from your version.
-
 <H3 align=center> <A NAME=disclaim> Disclaimer </A> </H3>
 
 Edbrowse is provided as-is,
@@ -4447,9 +4436,10 @@ then I text her by sending email to
 2485551111@messaging.sprintpcs.com
 
 <P>
-Because of the way edbrowse works, every mail out has to have a subject,
-I just use a letter or short word.&nbsp;
-Then the body of the message, which is my text,
+Because of the way edbrowse works, every mail out has to have a subject line,
+but if there are no words after "subject:" then the generated email has no subject.&nbsp;
+This is appropriate when sending a text.&nbsp;
+The body of the message contains the text,
 but it is cut off at 120 characters, so be brief.&nbsp;
 Use sm- to supress the .signature file.&nbsp;
 It would probably be cut off anyways.

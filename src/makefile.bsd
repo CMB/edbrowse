@@ -25,11 +25,11 @@ EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
 	html.o format.o cookies.o stringfile.o jsdom.o jsloc.o messages.o
 
 #  Header file dependencies.
-$(EBOBJS) : eb.h eb.p messages.h tcp.h
+$(EBOBJS) : eb.h eb.p messages.h
 
 startwindow.c: startwindow.js
 	../tools/buildstartwindow
 
-edbrowse: $(EBOBJS) tcp.o startwindow.o dbstubs.o
-	cc $(LFLAGS) -o edbrowse tcp.o startwindow.o dbstubs.o $(EBOBJS) $(LIBS)
+edbrowse: $(EBOBJS) startwindow.o dbstubs.o
+	cc $(LFLAGS) -o edbrowse startwindow.o dbstubs.o $(EBOBJS) $(LIBS)
 
