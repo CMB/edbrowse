@@ -42,6 +42,7 @@ screen.availLeft = 0;
 frames = new Array;
 document.anchors = new Array;
 document.heads = new Array;
+document.htmls = new Array;
 document.bases = new Array;
 document.links = new Array;
 document.applets = new Array;
@@ -55,25 +56,29 @@ document.areas = new Array;
 document.metas = new Array;
 document.scripts = new Array;
 
+/* map html tags to the above arrays */
+document.tag$$map = {
+form: document.forms, 
+table: document.tables, 
+div: document.divs, 
+a: document.anchors, 
+link: document.links, 
+head: document.heads, 
+html: document.htmls, 
+base: document.bases, 
+image: document.images, 
+img: document.images, 
+span: document.spans, 
+meta: document.metas, 
+script: document.scripts, 
+};
+
 document.idMaster = new Object;
 document.all = new Object;
 document.all.tags = function(s) { 
-switch(s.toLowerCase()) { 
-case "form": return document.forms; 
-case "table": return document.tables; 
-case "div": return document.divs; 
-case "a": return document.anchors; 
-case "link": return document.links; 
-case "head": return document.heads; 
-case "base": return document.bases; 
-case "img": case "image": return document.images; 
-case "span": return document.spans; 
-case "meta": return document.metas; 
-case "script": return document.scripts; 
-default:
- alert("all.tags default " + s);
-return new Array();
-} 
+/* should I do something different if the tag is not defined,
+ * or just return undefined anyways? */
+return document.tag$$map[s.toLowerCase()];
 } 
 
 document.getElementById = function(s) { 
@@ -239,4 +244,15 @@ alert("[" + h + ":" + m + ":" + s + "] " + obj);
 console.info = console.log;
 console.warn = console.log;
 console.error = console.log;
+
+/* My own function to return the next script that has not been run
+ * and is ready to run. Easier to do this here than in C. */
+document.script$$pending = function() {
+for(var i=0; i<document.scripts.length; ++i) {
+var s = document.scripts[i];
+if(s.exec$$ed) continue; // already run
+if(s.src || s.data) return s;
+}
+return null;
+}
 
