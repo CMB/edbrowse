@@ -594,7 +594,7 @@ static JSBool url_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::RootedObject uo(cx,
 			    JS_NewObjectForConstructor(cx, &url_class,
 						       &callee_val));
-	if ((JSObject *) uo == NULL) {
+	if (uo == NULL) {
 		javaSessionFail();
 		return JS_FALSE;
 	}
@@ -831,14 +831,14 @@ JSObject *establish_property_array(JS::HandleObject jv, const char *name)
 	SWITCH_COMPARTMENT(NULL);
 	JS::RootedObject a(cw->jss->jcx,
 			   JS_NewArrayObject(cw->jss->jcx, 0, NULL));
-	if ((JSObject *) a == NULL) {
+	if (a == NULL) {
 		javaSessionFail();
 		return NULL;
 	}
 	establish_property_object(jv, name, a);
 	if (cw->js_failed)
 		return NULL;
-	return (JSObject *) a;
+	return a;
 }				/* establish_property_array */
 
 void
@@ -867,7 +867,7 @@ establish_property_url(JS::HandleObject jv, const char *name,
 		my_setter = setter_loc;
 	js::RootedObject uo(cw->jss->jcx,
 			    JS_NewObject(cw->jss->jcx, &url_class, NULL, jv));
-	if ((JSObject *) uo == NULL) {
+	if (uo == NULL) {
 abort:
 		javaSessionFail();
 		return;
@@ -1070,10 +1070,32 @@ char *get_property_option(JS::HandleObject jv)
 	return get_property_string(oo, "value");
 }				/* get_property_option */
 
+/* run various functions with various returns. */
+/* handlerGo (below) is a special case of this, returning bool */
+JSObject *run_function_object(JS::HandleObject obj, const char *name)
+{
+	SWITCH_COMPARTMENT(eb_false);
+	js::RootedValue rval(cw->jss->jcx);
+	js::RootedObject o(cw->jss->jcx);
+	JSBool found;
+	eb_bool rc;
+
+	JS_HasProperty(cw->jss->jcx, obj, name, &found);
+	if (!found)
+		return NULL;
+
+	debugPrint(6, "function %s", name);
+	rc = JS_CallFunctionName(cw->jss->jcx, obj, name, 0, emptyArgs,
+				 rval.address());
+	if (rc)
+		return JSVAL_TO_OBJECT(rval);
+	return NULL;
+}				/* run_function_object */
+
 /*********************************************************************
 Manage the array of options under an html select.
-This will explode into a lot of code, if we ever implement
-dynamic option lists under js control.
+These options can change under javascript, dynamically,
+and the new dropdown list is mapped back to html tags via rebuildSelectors().
 *********************************************************************/
 
 static JSClass option_class = {
@@ -1102,7 +1124,7 @@ abort:
 	}
 	oa = JSVAL_TO_OBJECT(vv);
 	oo = JS_NewObject(cw->jss->jcx, &option_class, NULL, ev);
-	if ((JSObject *) oo == NULL)
+	if (oo == NULL)
 		goto abort;
 	vv = OBJECT_TO_JSVAL(oo);
 	if (JS_DefineElement(cw->jss->jcx, oa, idx, vv, NULL, NULL,
@@ -1128,9 +1150,11 @@ eb_bool handlerGo(JS::HandleObject obj, const char *name)
 	js::RootedValue rval(cw->jss->jcx);
 	eb_bool rc;
 	JSBool found;
+
 	JS_HasProperty(cw->jss->jcx, obj, name, &found);
 	if (!found)
 		return eb_false;
+
 	debugPrint(6, "handle %s", name);
 	rc = JS_CallFunctionName(cw->jss->jcx, obj, name, 0, emptyArgs,
 				 rval.address());

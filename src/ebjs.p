@@ -45,6 +45,7 @@ char *get_property_string(JS::HandleObject jv, const char *name);
 int get_property_number(JS::HandleObject jv, const char *name);
 eb_bool get_property_bool(JS::HandleObject jv, const char *name);
 char *get_property_option(JS::HandleObject jv);
+JSObject *run_function_object(JS::HandleObject obj, const char *name);
 JSObject *establish_js_option(JS::HandleObject ev, int idx);
 eb_bool handlerGo(JS::HandleObject obj, const char *name);
 void handlerSet(JS::HandleObject ev, const char *name, const char *code);
