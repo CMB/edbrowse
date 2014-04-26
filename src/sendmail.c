@@ -398,6 +398,21 @@ empty:
 		if (s > t)
 			memcpy(subjectLine, t, s - t);
 		subjectLine[s - t] = 0;
+		if (subjectLine[0]) {
+			char *subjiso =
+			    isoEncode(subjectLine,
+				      subjectLine + strlen(subjectLine));
+			if (subjiso) {
+				if (strlen(subjiso) >= sizeof(subjectLine)) {
+					nzFree(subjiso);
+					setError(MSG_SubjectLong,
+						 sizeof(subjectLine) - 1);
+					goto freefail;
+				}
+				strcpy(subjectLine, subjiso);
+				nzFree(subjiso);
+			}
+		}
 		debugPrint(6, "subject = %s", subjectLine);
 /* Blank lines after subject are optional, and ignored. */
 		for (t = buf + buflen; v < t; ++v)
