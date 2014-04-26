@@ -1083,6 +1083,7 @@ abort:
 	}
 	establish_property_object(state->jwin, "document", state->jdoc);
 
+	establish_property_string(state->jdoc, "cookie", 0, eb_false);
 	establish_property_string(state->jdoc, "referrer", cw->referrer,
 				  eb_true);
 	establish_property_url(state->jdoc, "URL", cw->fileName, eb_true);

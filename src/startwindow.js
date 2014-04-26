@@ -28,7 +28,6 @@ directories = false;
 name = "unspecifiedFrame";
 
 document.bgcolor = "white";
-document.cookie = "";
 document.readyState = "loading";
 
 screen = new Object;
