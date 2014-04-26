@@ -12,7 +12,6 @@
 #include <dirent.h>
 #include <termios.h>
 #include <unistd.h>
-#include <sys/utsname.h>
 #endif
 #include <pcre.h>
 #include <netdb.h>

@@ -206,15 +206,10 @@ Anchor.prototype.attachEvent = window.attachEvent;
 /* navigator; some parameters are filled in by the buildstartwindow script. */
 navigator.appName = "edbrowse";
 navigator["appCode Name"] = "edbrowse C/mozjs";
-navigator.appVersion = "$ebv";
-navigator.userAgent = "edbrowse/$ebv";
-navigator.oscpu = "$kname";
-navigator.platform = "$plat";
 /* not sure what product is about */
 navigator.product = "mozjs";
 navigator.productSub = "2.4";
 navigator.vendor = "Karl Dahlke";
-navigator.vendorSub = "$ebv";
 /* language is determined in C, at runtime, by $LANG */
 navigator.javaEnabled = function() { return false; }
 navigator.taintEnabled = function() { return false; }

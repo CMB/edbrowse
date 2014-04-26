@@ -12,6 +12,7 @@
 #include "js.h"
 #include <jsfriendapi.h>
 #include <iostream>
+#include <sys/utsname.h>
 
 int jsPool = 32;		/* size of js memory space in megabytes */
 
@@ -990,12 +991,13 @@ void createJavaContext(struct ebWindowJSState **pstate)
 /* navigator mime types and plugins */
 	const char *itemname;
 	int i;
-	extern const char startWindowJS[];
 	jsval rval;
 	struct MIMETYPE *mt;
 	const char *languages[] = { 0,
 		"english", "french", "portuguese", "polish"
 	};
+	struct utsname ubuf;
+	extern const char startWindowJS[];
 
 	if (!jrt) {
 /* space configurable by jsPool; default is 32 meg */
@@ -1101,10 +1103,16 @@ abort:
 	establish_property_object(state->jwin, "navigator", nav);
 	if (cw->js_failed)
 		return;
-/* most of the navigator is in startwindow.js; the language items are here. */
+/* some of the navigator is in startwindow.js; the runtime properties are here. */
 	establish_property_string(nav, "userLanguage", languages[eb_lang],
 				  eb_true);
 	establish_property_string(nav, "language", languages[eb_lang], eb_true);
+	establish_property_string(nav, "appVersion", version, eb_true);
+	establish_property_string(nav, "vendorSub", version, eb_true);
+	establish_property_string(nav, "userAgent", currentAgent, eb_true);
+	uname(&ubuf);
+	establish_property_string(nav, "oscpu", ubuf.sysname, eb_true);
+	establish_property_string(nav, "platform", ubuf.machine, eb_true);
 	if (cw->js_failed)
 		return;
 
