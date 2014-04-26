@@ -140,7 +140,7 @@ static JSBool window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::RootedObject newwin(cx,
 				JS_NewObjectForConstructor(cx, &window_class,
 							   &callee_val));
-	if ((JSObject *) newwin == NULL) {
+	if (newwin == NULL) {
 		javaSessionFail();
 		return JS_FALSE;
 	}
@@ -152,33 +152,13 @@ static JSBool window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	}
 /* third argument is attributes, like window size and location, that we don't care about. */
 	javaOpensWindow(newloc, winname);
-	if (newloc)
-		nzFree(newloc);
-	if (!parsePage)
-		return JS_FALSE;
+	nzFree(newloc);
 	establish_property_object(newwin, "opener", cw->jss->jwin);
 	if (cw->js_failed)
 		return JS_FALSE;
 	args.rval().set(OBJECT_TO_JSVAL(newwin));
 	return JS_TRUE;
 }				/* window_ctor */
-
-/* window.open() instantiates a new window object */
-static JSBool win_open(JSContext * cx, unsigned int argc, jsval * vp)
-{
-	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-	JS::RootedObject obj(cx,
-			     JS_NewObject(cx, &window_class, NULL,
-					  cw->jss->jwin));
-	if ((JSObject *) obj == NULL) {
-		javaSessionFail();
-		return JS_FALSE;
-	}
-	JS::RootedObject newwin(cx, JS_New(cx,
-					   obj, args.length(), args.array()));
-	args.rval().set(OBJECT_TO_JSVAL(newwin));
-	return JS_TRUE;
-}				/* win_open */
 
 /* for window.focus etc */
 static JSBool nullFunction(JSContext * cx, unsigned int argc, jsval * vp)
@@ -234,7 +214,7 @@ static JSBool appendChild(JSContext * cx, unsigned int argc, jsval * vp)
 		return JS_FALSE;
 	}
 	JS::RootedObject elar(cx, JSVAL_TO_OBJECT(v));
-	if ((JSObject *) elar == NULL) {
+	if (elar == NULL) {
 		javaSessionFail();
 		return JS_FALSE;
 	}
@@ -410,7 +390,7 @@ static JSObject *setTimeout(unsigned int argc, jsval * argv, eb_bool isInterval)
 /* build the tag object and link it to window */
 		to = JS_NewObject(cw->jss->jcx, &timer_class, NULL,
 				  cw->jss->jwin);
-		if ((JSObject *) to == NULL) {
+		if (to == NULL) {
 abort:
 			javaSessionFail();
 			return NULL;
@@ -472,7 +452,7 @@ static JSBool win_sto(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	JS::RootedObject obj(cw->jss->jcx,
 			     setTimeout(args.length(), args.array(), eb_false));
-	if ((JSObject *) obj == NULL)
+	if (obj == NULL)
 		return JS_FALSE;
 	args.rval().set(OBJECT_TO_JSVAL(obj));
 	return JS_TRUE;
@@ -483,7 +463,7 @@ static JSBool win_intv(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	JS::RootedObject obj(cw->jss->jcx,
 			     setTimeout(args.length(), args.array(), eb_true));
-	if ((JSObject *) obj == NULL)
+	if (obj == NULL)
 		return JS_FALSE;
 	args.rval().set(OBJECT_TO_JSVAL(obj));
 	return JS_TRUE;
@@ -495,7 +475,6 @@ static JSFunctionSpec window_methods[] = {
 	JS_FS("confirm", win_confirm, 1, 0),
 	JS_FS("setTimeout", win_sto, 2, 0),
 	JS_FS("setInterval", win_intv, 2, 0),
-	JS_FS("open", win_open, 3, 0),
 	JS_FS("close", win_close, 0, 0),
 	JS_FS("focus", nullFunction, 0, 0),
 	JS_FS("blur", nullFunction, 0, 0),
@@ -829,7 +808,7 @@ static JSBool element_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::RootedObject newobj(cx,
 				JS_NewObjectForConstructor(cx, &element_class,
 							   &callee_val));
-	if ((JSObject *) newobj == NULL) {
+	if (newobj == NULL) {
 		javaSessionFail();
 		return JS_FALSE;
 	}
@@ -845,7 +824,7 @@ static JSBool body_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::RootedObject newobj(cx,
 				JS_NewObjectForConstructor(cx, &body_class,
 							   &callee_val));
-	if ((JSObject *) newobj == NULL) {
+	if (newobj == NULL) {
 		javaSessionFail();
 		return JS_FALSE;
 	}
@@ -861,7 +840,7 @@ static JSBool head_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::RootedObject newobj(cx,
 				JS_NewObjectForConstructor(cx, &head_class,
 							   &callee_val));
-	if ((JSObject *) newobj == NULL) {
+	if (newobj == NULL) {
 		javaSessionFail();
 		return JS_FALSE;
 	}
@@ -877,7 +856,7 @@ static JSBool form_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::RootedObject newobj(cx,
 				JS_NewObjectForConstructor(cx, &form_class,
 							   &callee_val));
-	if ((JSObject *) newobj == NULL) {
+	if (newobj == NULL) {
 		javaSessionFail();
 		return JS_FALSE;
 	}
@@ -893,7 +872,7 @@ static JSBool link_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::RootedObject newobj(cx,
 				JS_NewObjectForConstructor(cx, &link_class,
 							   &callee_val));
-	if ((JSObject *) newobj == NULL) {
+	if (newobj == NULL) {
 		javaSessionFail();
 		return JS_FALSE;
 	}
@@ -909,7 +888,7 @@ static JSBool script_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::RootedObject newobj(cx,
 				JS_NewObjectForConstructor(cx, &script_class,
 							   &callee_val));
-	if ((JSObject *) newobj == NULL) {
+	if (newobj == NULL) {
 		javaSessionFail();
 		return JS_FALSE;
 	}
@@ -925,7 +904,7 @@ static JSBool image_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::RootedObject newobj(cx,
 				JS_NewObjectForConstructor(cx, &image_class,
 							   &callee_val));
-	if ((JSObject *) newobj == NULL) {
+	if (newobj == NULL) {
 		javaSessionFail();
 		return JS_FALSE;
 	}
@@ -941,7 +920,7 @@ static JSBool anchor_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::RootedObject newobj(cx,
 				JS_NewObjectForConstructor(cx, &anchor_class,
 							   &callee_val));
-	if ((JSObject *) newobj == NULL) {
+	if (newobj == NULL) {
 		javaSessionFail();
 		return JS_FALSE;
 	}
@@ -960,7 +939,7 @@ static JSBool option_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::RootedObject newopt(cx,
 				JS_NewObjectForConstructor(cx, &option_class,
 							   &callee_val));
-	if ((JSObject *) newopt == NULL) {
+	if (newopt == NULL) {
 		javaSessionFail();
 		return JS_FALSE;
 	}
@@ -1104,7 +1083,6 @@ abort:
 	}
 	establish_property_object(state->jwin, "document", state->jdoc);
 
-	establish_property_string(state->jdoc, "cookie", 0, eb_false);
 	establish_property_string(state->jdoc, "referrer", cw->referrer,
 				  eb_true);
 	establish_property_url(state->jdoc, "URL", cw->fileName, eb_true);
@@ -1117,7 +1095,7 @@ abort:
 
 	JS::RootedObject nav(state->jcx, JS_NewObject(state->jcx, 0, 0,
 						      state->jwin));
-	if ((JSObject *) nav == NULL)
+	if (nav == NULL)
 		goto abort;
 	establish_property_object(state->jwin, "navigator", nav);
 	if (cw->js_failed)
@@ -1133,11 +1111,11 @@ abort:
  * according to the entries in the config file. */
 	JS::RootedObject navpi(state->jcx, establish_property_array(nav,
 								    "plugins"));
-	if ((JSObject *) navpi == NULL)
+	if (navpi == NULL)
 		goto abort;
 	JS::RootedObject navmt(state->jcx, establish_property_array(nav,
 								    "mimeTypes"));
-	if ((JSObject *) navmt == NULL)
+	if (navmt == NULL)
 		goto abort;
 	mt = mimetypes;
 	for (i = 0; i < maxMime; ++i, ++mt) {
@@ -1148,14 +1126,14 @@ abort:
 		int len;
 
 		po = JS_NewObject(state->jcx, 0, 0, nav);
-		if ((JSObject *) po == NULL)
+		if (po == NULL)
 			goto abort;
 		pov = OBJECT_TO_JSVAL(po);
 		if (JS_DefineElement(state->jcx, navpi, i, pov, NULL, NULL,
 				     PROP_FIXED) == JS_FALSE)
 			goto abort;
 		mo = JS_NewObject(state->jcx, 0, 0, nav);
-		if ((JSObject *) mo == NULL)
+		if (mo == NULL)
 			goto abort;
 		mov = OBJECT_TO_JSVAL(mo);
 		if (JS_DefineElement(state->jcx, navmt, i, mov, NULL, NULL,
@@ -1189,7 +1167,7 @@ abort:
 
 	JS::RootedObject hist(state->jcx, JS_NewObject(state->jcx, 0, 0,
 						       state->jwin));
-	if ((JSObject *) hist == NULL)
+	if (hist == NULL)
 		goto abort;
 	establish_property_object(state->jwin, "history", hist);
 	establish_property_string(hist, "current", cw->fileName, eb_true);
@@ -1251,7 +1229,7 @@ establish_innerHTML(JS::HandleObject jv, const char *start, const char *end,
 
 /* Anything with an innerHTML might also have a style. */
 	o = JS_NewObject(cw->jss->jcx, 0, 0, jv);
-	if ((JSObject *) o == NULL) {
+	if (o == NULL) {
 		javaSessionFail();
 		return;
 	}
@@ -1384,7 +1362,7 @@ afterfound:
 	if (!v) {
 		if (radiosel) {
 			v = JS_NewArrayObject(cw->jss->jcx, 0, NULL);
-			if ((JSObject *) v == NULL)
+			if (v == NULL)
 				goto abort;
 			if (radiosel == 1) {
 				establish_property_string(v, "type", "radio",
@@ -1489,7 +1467,7 @@ Example www.startpage.com, where id=submit
 /* v is, by assumption, an array */
 		JS_GetArrayLength(cw->jss->jcx, v, &length);
 		w = JS_NewObject(cw->jss->jcx, &element_class, NULL, owner);
-		if ((JSObject *) w == NULL)
+		if (w == NULL)
 			goto abort;
 		vv = OBJECT_TO_JSVAL(w);
 		if (JS_DefineElement

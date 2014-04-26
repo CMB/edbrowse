@@ -28,6 +28,7 @@ directories = false;
 name = "unspecifiedFrame";
 
 document.bgcolor = "white";
+document.cookie = "";
 document.readyState = "loading";
 
 screen = new Object;
@@ -101,6 +102,11 @@ default:
 return new Object();
 } 
 } 
+
+/* window.open is the same as new window, just pass the args through */
+function open() {
+return Window.apply(this, arguments);
+}
 
 URL.prototype.toString = function() { 
 return this.href;
