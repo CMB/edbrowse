@@ -670,9 +670,13 @@ has changed anything.
 Every js activity should start with jSyncup() and end with jsdw().
 *********************************************************************/
 
+static void scriptsPending(void);
 void jsdw(void)
 {
 	int side;
+
+/* Are there other scripts waiting to run? */
+	scriptsPending();
 
 	if (cw->dw) {
 /* replace the <docwrite> tag with <html> */
@@ -1296,17 +1300,113 @@ done:
 	nzFree(a);
 }				/* htmlScript */
 
-/* Always returns a string, even if errors were found.
- * Internet web pages often contain errors!
- * This routine mucks with the passed-in string, and frees it
- * when finished.  Thus the argument is not const.
- * The produced string contains only these tags.
- * Input field open and close.
- * Hyperlink open and close.
- * Internal anchor.
- * Preformat open and close.
- * Try to keep this list up to date.
- * We want a handle on what tags are hanging around during formatting. */
+static void objectScript(JS::Handle < JSObject * >obj)
+{
+	char *lang = 0;
+	const char *w = 0;
+	char *jsrc = 0, *jtext = 0;
+
+	if (!isJSAlive)
+		return;
+	if (intFlag)
+		return;
+
+/* can't be some other language */
+	lang = get_property_string(obj, "language");
+	if (lang
+	    && (!memEqualCI(lang, "javascript", 10) || isalphaByte(lang[10])))
+		goto done;
+
+	jsrc = get_property_string(obj, "src");
+	if (jsrc) {
+		char *h;
+		unpercentURL(jsrc);
+		h = resolveURL(getBaseHref(-1), jsrc);
+		if (h) {
+			nzFree(jsrc);
+			jsrc = h;
+		}
+
+		if (!javaOK(jsrc))
+			goto done;
+		debugPrint(2, "java source %s", jsrc);
+
+		if (browseLocal && !isURL(jsrc)) {
+			if (!fileIntoMemory(jsrc, &serverData, &serverDataLen)) {
+				runningError(MSG_GetLocalJS, errorMsg);
+				goto done;
+			}
+			jtext = serverData;
+			prepareForBrowse(jtext, serverDataLen);
+			goto execute;
+		}
+
+		if (!httpConnect(getBaseHref(-1), jsrc)) {
+			runningError(MSG_GetJS2, errorMsg);
+			goto done;
+		}
+
+		if (hcode != 200) {
+			nzFree(serverData);
+			runningError(MSG_GetJS, jsrc, hcode);
+			goto done;
+		}
+
+		jtext = serverData;
+		prepareForBrowse(jtext, serverDataLen);
+		goto execute;
+	}
+
+	jtext = get_property_string(obj, "data");
+	if (!jtext)
+		goto done;
+	debugPrint(2, "java source dynamic");
+	prepareForBrowse(jtext, strlen(jtext));
+
+execute:
+	w = "script";
+	if (jsrc) {
+		establish_property_string(obj, "data", jtext, eb_true);
+		if (w = strrchr(jsrc, '/')) {
+/* Trailing slash doesn't count */
+			if (w[1] == 0 && w > jsrc)
+				for (--w; w >= jsrc && *w != '/'; --w) ;
+			++w;
+		} else
+			w = jsrc;
+	}
+
+	debugPrint(3, "execute %s", w);
+	javaParseExecute(cw->jss->jwin, jtext, w, 0);
+	debugPrint(3, "execution complete");
+
+done:
+	nzFree(jtext);
+	nzFree(jsrc);
+	nzFree(lang);
+	nzFree(changeFileName);
+	changeFileName = NULL;
+/* mark this script as having been executed, even if it didn't run properly */
+	establish_property_bool(obj, "exec$$ed", eb_true, eb_true);
+}				/* objectScript */
+
+/* runs scripts that have ben dynamically created */
+static void scriptsPending(void)
+{
+	SWITCH_COMPARTMENT();
+	JS::RootedObject obj(cw->jss->jcx);
+	while (obj = run_function_object(cw->jss->jdoc, "script$$pending"))
+		objectScript(obj);
+}				/* scriptsPending */
+
+/*********************************************************************
+Encode the html tags - parse the web page.
+Always returns a string, even if errors were found.
+Internet web pages often contain errors!
+This routine mucks with the passed-in string, and frees it
+when finished.  Thus the argument is not const.
+*********************************************************************/
+
 static char *encodeTags(char *html)
 {
 	const struct tagInfo *ti;
@@ -2121,6 +2221,7 @@ unparen:
 			}
 
 			htmlScript(html, h);
+			scriptsPending();
 			continue;
 
 		case TAGACT_OBJ:
