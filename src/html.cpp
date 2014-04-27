@@ -2176,10 +2176,16 @@ unparen:
 /* I'm going to assume that if the web designer took the time
  * to put in an alt tag, then it's worth reading.
  * You can turn this feature off, but I don't think you'd want to. */
-				if (a = htmlAttrVal(topAttrib, "alt"))
-					newstr += a;
-				nzFree(a);
-				a = NULL;
+				if (a = htmlAttrVal(topAttrib, "alt")) {
+					s = altText(a);
+					nzFree(a);
+					a = NULL;
+					if (s) {
+						newstr += '[';
+						newstr += s;
+						newstr += ']';
+					}
+				}
 				continue;
 			}
 			if (!retainTag)
