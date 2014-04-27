@@ -1074,7 +1074,7 @@ char *get_property_option(JS::HandleObject jv)
 /* handlerGo (below) is a special case of this, returning bool */
 JSObject *run_function_object(JS::HandleObject obj, const char *name)
 {
-	SWITCH_COMPARTMENT(eb_false);
+	SWITCH_COMPARTMENT(NULL);
 	js::RootedValue rval(cw->jss->jcx);
 	js::RootedObject o(cw->jss->jcx);
 	JSBool found;
