@@ -83,17 +83,12 @@ char *our_JSEncodeString(js::HandleString str)
 	buffer[encodedLength] = '\0';
 	size_t result =
 	    JS_EncodeStringToBuffer(cw->jss->jcx, str, buffer, encodedLength);
-	if (result == (size_t) - 1)
+	if (result == (size_t) - 1) {
 		javaSessionFail();
+		buffer[0] = 0;
+	}
 	return buffer;
 }				/* our_JSEncodeString */
-
-static char *transcode_get_js_bytes(js::HandleString s)
-{
-/* again, assume that the UTF8 mess will hopefully be ok,
-we really should switch to unicode capable js functions at some stage */
-	return our_JSEncodeString(s);
-}				/* our_JS_GetTranscodedBytes */
 
 /*********************************************************************
 When an element is created without a name, it is not linked to its
@@ -149,7 +144,7 @@ static JSBool window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 		newloc = our_JSEncodeString(str);
 	}
 	if (args.length() > 1 && (str = JS_ValueToString(cx, args[1]))) {
-		winname = transcode_get_js_bytes(str);
+		winname = our_JSEncodeString(str);
 	}
 /* third argument is attributes, like window size and location, that we don't care about. */
 	javaOpensWindow(newloc, winname);
@@ -248,7 +243,7 @@ static JSBool win_alert(JSContext * cx, unsigned int argc, jsval * vp)
 	char *msg = NULL;
 	JS::RootedString str(cx);
 	if (args.length() > 0 && (str = JS_ValueToString(cx, args[0]))) {
-		msg = transcode_get_js_bytes(str);
+		msg = our_JSEncodeString(str);
 	}
 	if (msg) {
 		puts(msg);
@@ -269,10 +264,10 @@ static JSBool win_prompt(JSContext * cx, unsigned int argc, jsval * vp)
 	char c;
 
 	if (args.length() > 0 && (str = JS_ValueToString(cx, args[0]))) {
-		msg = transcode_get_js_bytes(str);
+		msg = our_JSEncodeString(str);
 	}
 	if (args.length() > 1 && (str = JS_ValueToString(cx, args[1]))) {
-		answer = transcode_get_js_bytes(str);
+		answer = our_JSEncodeString(str);
 	}
 
 	printf("%s", msg);
@@ -311,7 +306,7 @@ static JSBool win_confirm(JSContext * cx, unsigned int argc, jsval * vp)
 	eb_bool first = eb_true;
 
 	if (args.length() > 0 && (str = JS_ValueToString(cx, args[0]))) {
-		msg = transcode_get_js_bytes(str);
+		msg = our_JSEncodeString(str);
 	}
 
 	while (eb_true) {
@@ -513,7 +508,7 @@ static void dwrite1(unsigned int argc, jsval * argv, eb_bool newline)
 	JS::RootedString str(cw->jss->jcx);
 	for (i = 0; i < argc; ++i) {
 		if ((str = JS_ValueToString(cw->jss->jcx, argv[i])) &&
-		    (msg = transcode_get_js_bytes(str))) {
+		    (msg = our_JSEncodeString(str))) {
 			dwrite2(msg);
 			nzFree(msg);
 		}
@@ -948,7 +943,7 @@ static JSBool option_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 		text = our_JSEncodeString(str);
 	}
 	if (args.length() > 1 && (str = JS_ValueToString(cx, args[1]))) {
-		value = transcode_get_js_bytes(str);
+		value = our_JSEncodeString(str);
 	}
 	if (text) {
 		establish_property_string(newopt, "text", text, eb_true);
