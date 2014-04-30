@@ -1345,7 +1345,7 @@ static const char *frenchMessages[] = {
 	"gestionnaire onclick inaccessible",
 };
 
-/* Translation by Cleverson: clever92000@yahoo.com.br */
+/* Translation by Cleverson Casarin: clcaul@gmail.com */
 static const char *brazilianPortugueseMessages[] = {
 	"Fim do arquivo",
 	"nenhum arquivo",
@@ -2005,24 +2005,6 @@ static const char *brazilianPortugueseMessages[] = {
 	"Falha de Javascript",
 	"Erro não-recuperável de Javascript nesta sessão",
 	"manipulador onclick não está acessível",
-};
-
-/* Translation by Jan Mura: jan.mura@volny.cz */
-/* I'm afraid we didn't get very far on this one. */
-static const char *czechMessages[] = {
-	"konec souboru",
-	"žádný soubor",
-	"NON",
-	"globální nahrazení",
-	"lokální nahrazení",
-	"bez ohledu na velikost písmen",
-	"s ohledem na velikost písmen",
-	"adresář jen pro čtení",
-	"adresář pro zápis",
-	"adresář pro zápis a mazání",
-	"bez HTTP přesměrování",
-	"HTTP přesměrování",
-	0,
 };
 
 /* Translation by Wojciech Gac: wojciech.s.gac@gmail.com */
@@ -2748,15 +2730,6 @@ void selectLanguage(void)
 		type8859 = 2;
 		return;
 	}
-
-#if 0
-	if (!strncmp(buf, "cs_cz", 5)) {
-		messageArray = czechMessages;
-		messageArrayLength = sizeof(czechMessages) / sizeof(char *);
-		type8859 = 2;
-		return;
-	}
-#endif
 
 /* This message is really annoying if it pops up every time you invoke edbrowse.
 	fprintf(stderr, "Sorry, language %s is not implemented\n", buf);
