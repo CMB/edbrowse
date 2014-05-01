@@ -499,14 +499,12 @@ mimeProcess:
 
 /* "Expect:" header causes some servers to lose.  Disable it. */
 	tmp_headers = curl_slist_append(custom_headers, "Expect:");
-	/* Check for failure to allocate. */
 	if (tmp_headers == NULL)
 		i_printfExit(MSG_NoMem);
 	custom_headers = tmp_headers;
 	if (httpLanguage) {
 		custom_headers =
 		    curl_slist_append(custom_headers, httpLanguage);
-		/* Check for failure to allocate. */
 		if (custom_headers == NULL)
 			i_printfExit(MSG_NoMem);
 	}
@@ -562,24 +560,16 @@ mimeProcess:
 
 	if (sendReferrer && currentReferrer) {
 		const char *post2 = strchr(currentReferrer, '\1');
-		const char *q = strchr(currentReferrer, '"');
-
-/* CMB: I don't believe issues with quote in URL still exist... */
-/* I just can't handle quote in the referring url */
-		if (!q || post2 && q > post2) {
-			if (!post2)
-				post2 =
-				    currentReferrer + strlen(currentReferrer);
-			if (post2 - currentReferrer >= 7
-			    && !memcmp(post2 - 7, ".browse", 7))
-				post2 -= 7;
-			nzFree(cw->referrer);
-			cw->referrer = cloneString(currentReferrer);
-			cw->referrer[post2 - currentReferrer] = 0;
-			referrer = cw->referrer;
-		}
-	} else
-		referrer = NULL;
+		if (!post2)
+			post2 = currentReferrer + strlen(currentReferrer);
+		if (post2 - currentReferrer >= 7
+		    && !memcmp(post2 - 7, ".browse", 7))
+			post2 -= 7;
+		nzFree(cw->referrer);
+		cw->referrer = cloneString(currentReferrer);
+		cw->referrer[post2 - currentReferrer] = 0;
+		referrer = cw->referrer;
+	}
 
 	curlret = curl_easy_setopt(curl_handle, CURLOPT_REFERER, referrer);
 	if (curlret != CURLE_OK)

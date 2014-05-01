@@ -34,7 +34,7 @@ char *dbarea, *dblogin, *dbpw;	/* to log into the database */
 eb_bool fetchBlobColumns;
 char *proxy_host;
 eb_bool caseInsensitive, searchStringsAll;
-eb_bool allowRedirection = eb_true, allowJS = eb_true, sendReferrer = eb_false;
+eb_bool allowRedirection = eb_true, allowJS = eb_true, sendReferrer = eb_true;
 eb_bool binaryDetect = eb_true;
 eb_bool inputReadLine;
 eb_bool showHiddenFiles, helpMessagesOn;
