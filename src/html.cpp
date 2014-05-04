@@ -7,15 +7,6 @@
 #include "eb.h"
 #include "js.h"
 
-/* Close an open anchor when you see this tag. */
-#define TAG_CLOSEA 1
-/* You won't see the text between <foo> and </fooo> */
-#define TAG_INVISIBLE 2
-/* sometimes </foo> means nothing. */
-#define TAG_NOSLASH 4
-/* This tag should become a corresponding js object in the tree. */
-#define TAG_JSOBJ 8
-
 static const char *const inp_types[] = {
 	"reset", "button", "image", "submit",
 	"hidden",
@@ -97,17 +88,8 @@ static void toPreamble(int tagno, const char *msg, const char *j, const char *h)
 	preamble += buf;
 }				/* toPreamble */
 
-struct tagInfo {
-	const char *name;
-	const char *desc;
-	int action;
-	uchar nest;		/* must nest, like parentheses */
-	uchar para;		/* paragraph and line breaks */
-	ushort bits;		/* a bunch of boolean attributes */
-};
-
 /*********************************************************************
-Nestability of a tag.
+Comments on struct tagInfo member nest, the nestability of a tag.
 
 nest = 0:
 Like <input>, where </input> doesn't make any sense.
@@ -157,6 +139,15 @@ I can fix it, and then the children will be fixed as well.
 It's a normal form kind of thing.
 Not yet implemented.
 *********************************************************************/
+
+/* Close an open anchor when you see this tag. */
+#define TAG_CLOSEA 1
+/* You won't see the text between <foo> and </fooo> */
+#define TAG_INVISIBLE 2
+/* sometimes </foo> means nothing. */
+#define TAG_NOSLASH 4
+/* This tag should become a corresponding js object in the tree. */
+#define TAG_JSOBJ 8
 
 static const struct tagInfo elements[] = {
 	{"BASE", "base reference for relative URLs", TAGACT_BASE, 0, 0, 13},
@@ -1177,6 +1168,7 @@ static void htmlOption(struct htmlTag *sel, struct htmlTag *v, const char *a)
 	v->jv = establish_js_option(sel->jv, v->lic);
 	establish_property_string(v->jv, "text", v->name, eb_true);
 	establish_property_string(v->jv, "value", v->value, eb_true);
+	establish_property_string(v->jv, "nodeName", "OPTION", eb_true);
 	establish_property_bool(v->jv, "selected", v->checked, eb_false);
 	establish_property_bool(v->jv, "defaultSelected", v->checked, eb_true);
 	debugPrint(5, "parent OPTION > SELECT");

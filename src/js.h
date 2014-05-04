@@ -26,6 +26,16 @@ typedef JS::Heap < JSObject * >HeapRootedObject;
 
 using namespace std;
 
+/* The information on an html tag */
+struct tagInfo {
+	const char *name;
+	const char *desc;
+	int action;
+	uchar nest;		/* must nest, like parentheses */
+	uchar para;		/* paragraph and line breaks */
+	ushort bits;		/* a bunch of boolean attributes */
+};
+
 /* The structure for an html tag.
  * These tags are at times compared with js objects, or even created by js objects,
  * so the structure should be visible to the js machinery. */

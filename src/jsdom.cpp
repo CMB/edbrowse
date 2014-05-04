@@ -963,6 +963,7 @@ static JSBool option_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 		establish_property_string(newopt, "value", value, eb_true);
 		nzFree(value);
 	}
+	establish_property_string(newopt, "nodeName", "OPTION", eb_true);
 	establish_property_bool(newopt, "selected", eb_false, eb_false);
 	establish_property_bool(newopt, "defaultSelected", eb_false, eb_true);
 	args.rval().set(OBJECT_TO_JSVAL(newopt));
@@ -1382,6 +1383,9 @@ afterfound:
 			if (radiosel == 1) {
 				establish_property_string(v, "type", "radio",
 							  eb_true);
+/* don't know what to do here, should nodeName be input? */
+				establish_property_string(v, "nodeName", "RADIO",
+							  eb_true);
 				if (cw->js_failed)
 					return;
 			} else {
@@ -1544,6 +1548,10 @@ Example www.startpage.com, where id=submit
 
 	topTag->jv = v;
 	makeParentNode(topTag);
+	if (cw->js_failed)
+		return;
+
+	establish_property_string(v, "nodeName", topTag->info->name, eb_true);
 	if (cw->js_failed)
 		return;
 
