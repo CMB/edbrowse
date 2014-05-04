@@ -76,7 +76,7 @@ enum {
 	TAGACT_MUSIC, TAGACT_IMAGE, TAGACT_BR, TAGACT_IBR, TAGACT_P,
 	TAGACT_BASE, TAGACT_META, TAGACT_PRE,
 	TAGACT_DT, TAGACT_LI, TAGACT_HR, TAGACT_TABLE, TAGACT_TR, TAGACT_TD,
-	TAGACT_DIV, TAGACT_SPAN,
+	TAGACT_DIV, TAGACT_SPAN, TAGACT_HTML,
 	TAGACT_FORM, TAGACT_FRAME,
 	TAGACT_MAP, TAGACT_AREA, TAGACT_SCRIPT, TAGACT_EMBED, TAGACT_OBJ,
 };
@@ -113,7 +113,7 @@ Thus you can't put retval in parentheses,
 even though it is usually good practice to do so.
 *********************************************************************/
 
-#define SWITCH_COMPARTMENT(retval) if (cw->js_failed || cw->jss == NULL) return retval; \
+#define SWITCH_COMPARTMENT(retval) if (!isJSAlive) return retval; \
 JSAutoRequest autoreq(cw->jss->jcx); \
 JSAutoCompartment ac(cw->jss->jcx, cw->jss->jwin)
 

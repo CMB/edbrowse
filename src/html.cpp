@@ -183,7 +183,7 @@ static const struct tagInfo elements[] = {
 	{"P", "a paragraph", TAGACT_NOP, 1, 2, 13},
 	{"DIV", "a divided section", TAGACT_DIV, 3, 5, 8},
 	{"MAP", "a map of images", TAGACT_NOP, 3, 5, 8},
-	{"HTML", "html", TAGACT_NOP, 0, 0, 0},
+	{"HTML", "html", TAGACT_HTML, 1, 0, 13},
 	{"BLOCKQUOTE", "a quoted paragraph", TAGACT_NOP, 1, 10, 9},
 	{"H1", "a level 1 header", TAGACT_NOP, 1, 10, 9},
 	{"H2", "a level 2 header", TAGACT_NOP, 1, 10, 9},
@@ -440,12 +440,10 @@ static void htmlMeta(void)
 	if (content == EMPTYSTRING)
 		content = 0;
 
-	if (isJSAlive) {
-		domLink("Meta", 0, "metas", cw->jss->jdoc, eb_false);
-		if (topTag->jv)
-			establish_property_string(topTag->jv, "content",
-						  content, eb_true);
-	}
+	domLink("Meta", 0, "metas", cw->jss->jdoc, eb_false);
+	if (topTag->jv)
+		establish_property_string(topTag->jv, "content",
+					  content, eb_true);
 
 	heq = htmlAttrVal(topAttrib, "http-equiv");
 	if (heq == EMPTYSTRING)
@@ -1757,9 +1755,8 @@ forceCloseAnchor:
 				currentA = 0;
 			} else {
 				htmlHref("href");
-				if (isJSAlive)
-					domLink("Anchor", "href", "anchors",
-						cw->jss->jdoc, eb_false);
+				domLink("Anchor", "href", "anchors",
+					cw->jss->jdoc, eb_false);
 				get_js_events();
 				if (t->href) {
 					a_href = eb_true;
@@ -1791,17 +1788,18 @@ forceCloseAnchor:
 			formControl(eb_true);
 			continue;
 
+		case TAGACT_HTML:
+			domLink("Html", 0, "htmls", cw->jss->jdoc, eb_false);
+			goto endtag;
+
 		case TAGACT_HEAD:
-			if (isJSAlive)
-				domLink("Head", 0, "heads", cw->jss->jdoc,
-					eb_false);
+			domLink("Head", 0, "heads", cw->jss->jdoc, eb_false);
 			goto plainWithElements;
 
 		case TAGACT_BODY:
-			if (isJSAlive)
-				domLink("Body", 0, 0, cw->jss->jdoc, eb_false);
+			domLink("Body", 0, "bodies", cw->jss->jdoc, eb_false);
 plainWithElements:
-			if (t->jv)
+			if (t->jv && !t->slash)
 				establish_property_array(t->jv, "elements");
 /* fall through */
 
@@ -1932,9 +1930,8 @@ plainTag:
 
 		case TAGACT_SPAN:
 			if (!slash) {
-				if (isJSAlive)
-					domLink("Span", 0, "spans",
-						cw->jss->jdoc, eb_false);
+				domLink("Span", 0, "spans",
+					cw->jss->jdoc, eb_false);
 				get_js_events();
 				a = htmlAttrVal(topAttrib, "class");
 				if (!a)
@@ -2106,14 +2103,12 @@ unparen:
 		case TAGACT_FRAME:
 			if (action == TAGACT_FRAME) {
 				htmlHref("src");
-				if (isJSAlive)
-					domLink("Frame", "src", "frames",
-						cw->jss->jwin, eb_false);
+				domLink("Frame", "src", "frames",
+					cw->jss->jwin, eb_false);
 			} else {
 				htmlHref("href");
-				if (isJSAlive)
-					domLink("Area", "href", "areas",
-						cw->jss->jdoc, eb_false);
+				domLink("Area", "href", "areas",
+					cw->jss->jdoc, eb_false);
 			}
 			topTag->clickable = eb_true;
 			get_js_events();

@@ -639,3 +639,4 @@ document.writeln("<P>Some extra html in another buffer.");
 </script>
 
 </body>
+</html>

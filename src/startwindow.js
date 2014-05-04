@@ -42,6 +42,7 @@ screen.availLeft = 0;
 frames = new Array;
 document.anchors = new Array;
 document.heads = new Array;
+document.bodies = new Array;
 document.htmls = new Array;
 document.bases = new Array;
 document.links = new Array;
@@ -64,6 +65,7 @@ div: document.divs,
 a: document.anchors, 
 link: document.links, 
 head: document.heads, 
+body: document.bodies, 
 html: document.htmls, 
 base: document.bases, 
 image: document.images, 

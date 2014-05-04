@@ -649,6 +649,16 @@ static JSFunctionSpec body_methods[] = {
 	JS_FS_END
 };
 
+static JSClass html_class = {
+	"Html",
+	JSCLASS_HAS_PRIVATE,
+	JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub,
+	JS_StrictPropertyStub,
+	JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
+	NULL,
+	JSCLASS_NO_OPTIONAL_MEMBERS
+};
+
 static JSClass head_class = {
 	"Head",
 	JSCLASS_HAS_PRIVATE,
@@ -963,6 +973,7 @@ static struct DOMCLASS domClasses[] = {
 	{&element_class, element_methods, element_ctor, 0},
 	{&form_class, form_methods, form_ctor},
 	{&body_class, body_methods, body_ctor},
+	{&html_class},
 	{&head_class, head_methods},
 	{&meta_class},
 	{&link_class, link_methods, link_ctor, 0},
@@ -1536,10 +1547,13 @@ Example www.startpage.com, where id=submit
 	if (cw->js_failed)
 		return;
 
+	if (stringEqual(classname, "Html")) {
+		establish_property_object(cw->jss->jdoc, "documentElement", v);
+	}
+
 	if (stringEqual(classname, "Body")) {
 /* here are a few attributes that come in with the body */
 		establish_property_object(cw->jss->jdoc, "body", v);
-		establish_property_object(cw->jss->jdoc, "documentElement", v);
 		establish_property_number(v, "clientHeight", 768, eb_true);
 		establish_property_number(v, "clientWidth", 1024, eb_true);
 		establish_property_number(v, "offsetHeight", 768, eb_true);
@@ -1548,8 +1562,6 @@ Example www.startpage.com, where id=submit
 		establish_property_number(v, "scrollWidth", 1024, eb_true);
 		establish_property_number(v, "scrollTop", 0, eb_true);
 		establish_property_number(v, "scrollLeft", 0, eb_true);
-		if (cw->js_failed)
-			return;
 	}
 
 	if (stringEqual(classname, "Head")) {
