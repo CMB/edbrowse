@@ -854,6 +854,22 @@ static JSBool head_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	return JS_TRUE;
 }
 
+static JSBool div_ctor(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	JSObject & callee = args.callee();
+	jsval callee_val = JS::ObjectValue(callee);
+	JS::RootedObject newobj(cx,
+				JS_NewObjectForConstructor(cx, &div_class,
+							   &callee_val));
+	if (newobj == NULL) {
+		javaSessionFail();
+		return JS_FALSE;
+	}
+	args.rval().set(OBJECT_TO_JSVAL(newobj));
+	return JS_TRUE;
+}
+
 static JSBool form_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
@@ -982,7 +998,7 @@ static struct DOMCLASS domClasses[] = {
 	{&frame_class},
 	{&anchor_class, 0, anchor_ctor, 1},
 	{&table_class},
-	{&div_class},
+	{&div_class, 0, div_ctor},
 	{&area_class},
 	{&span_class},
 	{&trow_class},
