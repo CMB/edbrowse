@@ -4129,8 +4129,8 @@ eb_bool runCommand(const char *line)
 			jsgo |= jsh;
 			nogo = stringEqual(h, "#");
 			nogo |= jsh;
-			debugPrint(5, "go%d nogo%d jsh%d dead%d", jsgo, nogo,
-				   jsh, jsdead);
+			debugPrint(5, "go %d nogo %d jsh %d dead %d", jsgo,
+				   nogo, jsh, jsdead);
 			debugPrint(5, "click %d dclick %d over %d", click,
 				   dclick, over);
 			if (jsgo & jsdead) {
@@ -4532,7 +4532,7 @@ redirect:
  * probably with post data.  It really screws things up.
  * Here is a kludge to avoid this problem.
  * Some day I need to figure this out. */
-		if (strlen(s) > 24)
+		if (strpbrk(line, "?\1"))
 			return eb_true;
 /* Print the file size before we print the line. */
 		if (fileSize >= 0) {
