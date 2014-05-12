@@ -88,7 +88,7 @@ static eb_bool httpDefault(const char *url)
 {
 	static const char *const domainSuffix[] = {
 		"com", "biz", "info", "net", "org", "gov", "edu", "us", "uk",
-		    "au",
+		"au",
 		"ca", "de", "jp", "nz", 0
 	};
 	int n, len;
@@ -607,26 +607,20 @@ char *resolveURL(const char *base, const char *rel)
 	const char *s, *p;
 	char *q;
 	int l;
+
 	if (!base)
 		base = EMPTYSTRING;
 	n = allocMem(strlen(base) + strlen(rel) + 12);
 	debugPrint(5, "resolve(%s|%s)", base, rel);
+
 	if (rel[0] == '#') {
-/* # alone means do nothing. */
-		if (!rel[1]) {
-			strcpy(n, rel);
+/* this is always an anchor for the current document, don't resolve. */
+		strcpy(n, rel);
 out_n:
-			debugPrint(5, "= %s", n);
-			return n;
-		}
-/* We could have changed the base url via the <base> tag,
- * so this #ref could actually refer to some other web page.
- * Best to run through standard procedure. */
-		strcpy(n, base);
-		for (q = n; *q && *q != '\1' && *q != '#'; q++) ;
-		strcpy(q, rel);
-		goto out_n;
+		debugPrint(5, "= %s", n);
+		return n;
 	}
+
 	if (rel[0] == '?' || rel[0] == '\1') {
 		strcpy(n, base);
 		for (q = n; *q && *q != '\1' && *q != '#' && *q != '?'; q++) ;
@@ -766,7 +760,7 @@ retry:
 /* get rid of trailing .html */
 			static const char *const suffix[] = {
 				"html", "htm", "shtml", "shtm", "php", "asp",
-				    "cgi", "rm",
+				"cgi", "rm",
 				"ram",
 				"gif", "jpg", "bmp",
 				0
