@@ -14,7 +14,7 @@ LFLAGS = -s -Wl,--rpath -Wl,/usr/pkg/lib
 JSLIB = -lmozjs-24
 
 #  Libraries for edbrowse.
-LDLIBS = -lpcre -lm -lssl $(JSLIB) -lcurl -lreadline -lcrypto -lstdc++
+LDLIBS = -lpcre -lm -lssl $(JSLIB) -lcurl -lreadline -lncurses -lcrypto -lstdc++
 
 #  Make the dynamically linked executable program by default.
 #  Edbrowse executable.
