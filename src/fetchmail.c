@@ -33,13 +33,12 @@ struct MHINFO {
 	eb_bool atimage;
 	eb_bool pgp;
 	uchar error64;
-	eb_bool ne;		/* non english */
 };
 
 static int nattach;		/* number of attachments */
 static int nimages;		/* number of attached images */
 static char *firstAttach;	/* name of first file */
-static eb_bool mailIsHtml, mailIsSpam, mailIsBlack;
+static eb_bool mailIsHtml, mailIsBlack;
 static char *fm;		/* formatted mail string */
 static int fm_l;
 static struct MHINFO *lastMailInfo;
@@ -659,7 +658,7 @@ void scanMail(void)
 				i_puts(MSG_Junk);
 			else
 				printf("> %s\n", redirect);
-		} else if ((mailIsSpam | mailIsBlack) && spamCan) {
+		} else if (mailIsBlack && spamCan) {
 			redirect = spamCan;
 			key = 'u';
 			i_printf(MSG_Spam);
@@ -1795,8 +1794,6 @@ textonly:
 	}
 	w->start = start = s;
 
-	w->ne = eb_false;
-
 	return w;
 }				/* headerGlean */
 
@@ -2049,17 +2046,10 @@ char *emailParse(char *buf)
 	struct MHINFO *w, *v;
 	nattach = nimages = 0;
 	firstAttach = 0;
-	mailIsHtml = mailIsSpam = ignoreImages = eb_false;
+	mailIsHtml = ignoreImages = eb_false;
 	fm = initString(&fm_l);
 	w = headerGlean(buf, buf + strlen(buf));
 	mailIsHtml = (mailTextType(w) == CT_HTML);
-	if (w->ne)
-		mailIsSpam = eb_true;
-	else if (w->ct == CT_ALT) {
-		foreach(v, w->components)
-		    if (v->ne)
-			mailIsSpam = eb_true;
-	}
 	if (mailIsHtml)
 		stringAndString(&fm, &fm_l, "<html>\n");
 	formatMail(w, eb_true);
