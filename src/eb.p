@@ -70,6 +70,7 @@ char *encodePostData(const char *s);
 char *decodePostData(const char *data, const char *name, int seqno);
 void decodeMailURL(const char *url, char **addr_p, char **subj_p,
 		   char **body_p);
+CURLcode setCurlURL(CURL *h, const char *url);
 
 /* sourcefile=auth.c */
 eb_bool getUserPass(const char *url, char *creds, eb_bool find_proxy);

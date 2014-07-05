@@ -578,7 +578,7 @@ mimeProcess:
 	    curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, custom_headers);
 	if (curlret != CURLE_OK)
 		goto curl_fail;
-	curlret = curl_easy_setopt(curl_handle, CURLOPT_URL, urlcopy);
+	curlret = setCurlURL(curl_handle, urlcopy);
 	if (curlret != CURLE_OK)
 		goto curl_fail;
 
@@ -690,9 +690,7 @@ mimeProcess:
 				if (curlret != CURLE_OK)
 					goto curl_fail;
 
-				curlret =
-				    curl_easy_setopt(curl_handle, CURLOPT_URL,
-						     urlcopy);
+				curlret = setCurlURL(curl_handle, urlcopy);
 				if (curlret != CURLE_OK)
 					goto curl_fail;
 
@@ -1018,7 +1016,7 @@ static eb_bool ftpConnect(const char *url, const char *user, const char *pass)
 	if (debugLevel >= 2)
 		i_puts(MSG_FTPDownload);
 
-	curlret = curl_easy_setopt(curl_handle, CURLOPT_URL, urlcopy);
+	curlret = setCurlURL(curl_handle, urlcopy);
 	if (curlret != CURLE_OK)
 		goto ftp_transfer_fail;
 	curlret = curl_easy_perform(curl_handle);
@@ -1031,8 +1029,7 @@ static eb_bool ftpConnect(const char *url, const char *user, const char *pass)
 			transfer_success = eb_false;
 		else {		/* try appending a slash. */
 			stringAndChar(&urlcopy, &urlcopy_l, '/');
-			curlret =
-			    curl_easy_setopt(curl_handle, CURLOPT_URL, urlcopy);
+			curlret = setCurlURL(curl_handle, urlcopy);
 			if (curlret != CURLE_OK)
 				goto ftp_transfer_fail;
 
@@ -1250,8 +1247,6 @@ void my_curl_init(void)
 	curl_init_status = curl_easy_setopt(curl_handle, CURLOPT_ENCODING, "");
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
-	if (proxy_host)
-		curl_easy_setopt(curl_handle, CURLOPT_PROXY, proxy_host);
 	atexit(my_curl_cleanup);
 
 libcurl_init_fail:

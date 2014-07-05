@@ -943,3 +943,75 @@ void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p)
 	if (body_p)
 		*body_p = decodePostData(url, "body", 0);
 }				/* decodeMailURL */
+
+/*********************************************************************
+Given a protocol and a domain, find the proxy server
+to mediate your request.
+This is the C version, using entries in .ebrc.
+There is a javascript version of the same name, that we will support later.
+This is a beginning, and it can be used even when javascript is disabled.
+A return of null means DIRECT, and this is the default
+if we don't match any of the proxy entries.
+*********************************************************************/
+
+static const char *findProxyInternal(const char *prot, const char *domain)
+{
+	struct PXENT *px = proxyEntries;
+	int i;
+
+/* first match wins */
+	for (i = 0; i < maxproxy; ++i, ++px) {
+
+		if (px->prot) {
+			char *s = px->prot;
+			char *t;
+			int rc;
+			while (*s) {
+				t = strchr(s, '|');
+				if (t)
+					*t = 0;
+				rc = stringEqualCI(s, prot);
+				if (t)
+					*t = '|';
+				if (rc)
+					goto domain;
+				if (!t)
+					break;
+				s = t + 1;
+			}
+			continue;
+		}
+
+domain:
+		if (px->domain) {
+			int l1 = strlen(px->domain);
+			int l2 = strlen(domain);
+			if (l1 > l2)
+				continue;
+			l2 -= l1;
+			if (!stringEqualCI(px->domain, domain + l2))
+				continue;
+			if (l2 && domain[l2 - 1] != '.')
+				continue;
+		}
+
+		debugPrint(3, "proxy %s", px->proxy);
+		return px->proxy;
+	}
+
+	return 0;
+}				/* findProxyInternal */
+
+const char *findProxyForURL(const char *url)
+{
+	return findProxyInternal(getProtURL(url), getHostURL(url));
+}				/* findProxyForURL */
+
+CURLcode setCurlURL(CURL * h, const char *url)
+{
+	const char *proxy = findProxyForURL(url);
+	if (!proxy)
+		proxy = "";
+	curl_easy_setopt(h, CURLOPT_PROXY, proxy);
+	return curl_easy_setopt(h, CURLOPT_URL, url);
+}				/* setCurlURL */

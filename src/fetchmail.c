@@ -384,7 +384,7 @@ static CURLcode fetchOneMessage(CURL * handle, const char *message_url,
 {
 	CURLcode res = CURLE_OK;
 
-	res = curl_easy_setopt(handle, CURLOPT_URL, message_url);
+	res = setCurlURL(handle, message_url);
 	if (res != CURLE_OK)
 		return res;
 	res = curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, NULL);
@@ -440,7 +440,7 @@ static CURLcode deleteOneMessage(CURL * handle, const char *message_url)
 static CURLcode count_messages(CURL * handle, const char *mailbox,
 			       int *message_count)
 {
-	CURLcode res = curl_easy_setopt(handle, CURLOPT_URL, mailbox);
+	CURLcode res = setCurlURL(handle, mailbox);
 	int i, num_messages = 0;
 	eb_bool last_nl = eb_true;
 

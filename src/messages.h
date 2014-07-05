@@ -577,7 +577,7 @@ enum {
 	MSG_ManyOpen,
 	MSG_InvalidSession,
 	MSG_InvalidLineNb,
-	MSG_NotUsed38,
+	MSG_ERBC_NoPROXY,
 	MSG_SessionOutRange,
 	MSG_DoubleInit,
 	MSG_QuitNoActive,

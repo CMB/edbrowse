@@ -2656,23 +2656,38 @@ proxy servers that hide your IP address from the websites that you browse.
 <P>
 If you wish to use a proxy server for http traffic, simply set the proxy
 option in your configuration file.&nbsp;
-Provide the hostname and port, separated by a colon.&nbsp;
+Provide the proxy's hostname and port, separated by a colon.&nbsp;
 For example:
 <P>
-proxy = proxy.campus.edu:3128
+proxy = http * proxy.campus.edu:3128
 
 <p>
+All http traffic, for any domain (indicated by *), is routed through proxy.campus.edu on port 3128.&nbsp;
 Note that proxies often listen on ports other than port 80.&nbsp;
 Squid is a proxy server that comes bundled with some Linux distributions, and it uses
 port 3128 by default.
 
 <p>
-If you do not include a proxy directive in your config file,
-you can still specify proxy servers through the environment variables http_proxy, ftp_proxy, and all_proxy.&nbsp;
-See the libcurl documentation for more details.
+Protocol and domain can be specified, or either can be replaced with a * for any protocol or any domain.&nbsp;
+A missing domain is treated as a * (all domains),
+and a missing protocol and domain matches everything.&nbsp;
+Such an entry should be last in the list of proxies in your config file,
+since proxies beyond this point have no meaning.
 
 <P>
-Setting proxy to the empty string in your config file will disable proxy services, even if the aforementioned environment variables are set.
+The word DIRECT in the third position is a direct connection, with no proxy server.&nbsp;
+These are usually placed at the top of the list, to access certain internal domains;
+then the proxy server is specified for all others.
+
+<P>
+proxy = http|https hr.mycompany.com DIRECT
+<br>
+proxy = http|https|ftp * proxy.mycompany.com
+
+<P>
+As shown in this example, different protocols can be separated by pipes.&nbsp;
+Beware, placing a * in the protocol field embrases all protocols, including ftp, pop3, and smtp.&nbsp;
+Mail will attempt to pass through this proxy, just like web traffic.
 
 <H3 align=center> <A NAME=frame> Frames </A> </H3>
 

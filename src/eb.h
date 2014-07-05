@@ -119,6 +119,8 @@ typedef uchar *pst;		/* perl string */
 #define MAXACCOUNT 100
 /* Number of mime types */
 #define MAXMIME 40
+/* Number of proxy entries */
+#define MAXPROXY 200
 /* number of db tables */
 #define MAXDBT 100
 #define MAXTCOLS 40
@@ -169,12 +171,24 @@ struct MACCOUNT {		/* pop3 account */
 	uchar inssl, outssl;
 	char nofetch, nocert;
 };
+extern struct MACCOUNT accounts[];	/* all the email accounts */
+extern int maxAccount;		/* how many email accounts specified */
+
+struct PXENT { /* proxy entry */
+	char *prot; /* null means any */
+	char *domain; /* null means any */
+	char *proxy; /* null means direct */
+};
+extern struct PXENT proxyEntries[];
+extern int maxproxy;
 
 struct MIMETYPE {
 	char *type, *desc;
 	char *suffix, *prot, *program;
 	eb_bool stream;
 };
+extern struct MIMETYPE mimetypes[];
+extern int maxMime;		/* how many mime types specified */
 
 struct DBTABLE {
 	char *name, *shortname;
@@ -217,19 +231,14 @@ extern int mssock;		/* mail server socket */
 extern long hcode;		/* http code, like 404 file not found */
 extern char errorMsg[];		/* generated error message */
 extern char serverLine[];	/* lines to and from the mail server */
-extern int maxAccount;		/* how many email accounts specified */
 extern int localAccount;	/* this is the smtp server for outgoing mail */
 extern char *mailDir;		/* move to this directory when fetching mail */
 extern char *mailUnread;	/* place to hold fetched but unread mail */
 /* Keep a copy of unformatted mail that you probably won't need again,
  * but you never know. Should probably live somewhere under .Trash */
 extern char *mailStash;
-extern struct MACCOUNT accounts[];	/* all the email accounts */
-extern int maxMime;		/* how many mime types specified */
-extern struct MIMETYPE mimetypes[];
 extern char *dbarea, *dblogin, *dbpw;	/* to log into the database */
 extern eb_bool fetchBlobColumns;
-extern char *proxy_host;
 extern eb_bool caseInsensitive, searchStringsAll;
 extern eb_bool allowRedirection;	/* from http code 301, or http refresh */
 extern eb_bool sendReferrer;	/* in the http header */

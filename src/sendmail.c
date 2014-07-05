@@ -399,9 +399,9 @@ empty:
 			memcpy(subjectLine, t, s - t);
 		subjectLine[s - t] = 0;
 		if (subjectLine[0]) {
-			char *subjiso =
-			    isoEncode(subjectLine,
-				      subjectLine + strlen(subjectLine));
+			char *subjiso = isoEncode(subjectLine,
+						  subjectLine +
+						  strlen(subjectLine));
 			if (subjiso) {
 				if (strlen(subjiso) >= sizeof(subjectLine)) {
 					nzFree(subjiso);
@@ -753,7 +753,7 @@ static CURL *newSendmailHandle(const struct MACCOUNT *account,
 		return NULL;
 	}
 
-	res = curl_easy_setopt(handle, CURLOPT_URL, outurl);
+	res = setCurlURL(handle, outurl);
 	if (res != CURLE_OK) {
 		goto new_handle_cleanup;
 	}

@@ -181,6 +181,12 @@ protocol = rtsp,pnm,sdp
 program = /usr/bin/mplayer -quiet
 }
 
+#  Proxy servers, scan through these entries in order.
+#  Three fields: protocol domain server
+#  mycompany.com allows direct access to their hr machine;
+#  all other requests go through their proxy.
+proxy = http|https hr.mycompany.com direct
+proxy = http|https|ftp * proxy.mycompany.com
 
 #  Database access - specify the datasource, login, and password.
 datasource = retail,mylogin,mypassword

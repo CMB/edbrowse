@@ -28,11 +28,12 @@ int localAccount, maxAccount;
 struct MACCOUNT accounts[MAXACCOUNT];
 int maxMime;
 struct MIMETYPE mimetypes[MAXMIME];
+int maxproxy;
+struct PXENT proxyEntries[MAXPROXY];
 static int maxTables;
 static struct DBTABLE dbtables[MAXDBT];
 char *dbarea, *dblogin, *dbpw;	/* to log into the database */
 eb_bool fetchBlobColumns;
-char *proxy_host;
 eb_bool caseInsensitive, searchStringsAll;
 eb_bool allowRedirection = eb_true, allowJS = eb_true, sendReferrer = eb_true;
 eb_bool binaryDetect = eb_true;
@@ -153,6 +154,7 @@ static void readConfigFile(void)
 	char last[24];
 	int lidx = 0;
 	struct MACCOUNT *act;
+	struct PXENT *px;
 	struct MIMETYPE *mt;
 	struct DBTABLE *td;
 	static const char *const keywords[] = {
@@ -616,7 +618,27 @@ putc:
 			continue;
 
 		case 28:	/* proxy */
-			proxy_host = v;
+			if (maxproxy == MAXPROXY)
+				i_printfExit(MSG_ERBC_NoPROXY, MAXPROXY);
+			px = proxyEntries + maxproxy;
+			maxproxy++;
+			spaceCrunch(v, eb_true, eb_true);
+			q = strchr(v, ' ');
+			if (q) {
+				*q = 0;
+				if (!stringEqual(v, "*"))
+					px->prot = v;
+				v = q + 1;
+				q = strchr(v, ' ');
+				if (q) {
+					*q = 0;
+					if (!stringEqual(v, "*"))
+						px->domain = v;
+					v = q + 1;
+				}
+			}
+			if (!stringEqualCI(v, "direct"))
+				px->proxy = v;
 			continue;
 
 		case 29:	/* linelength */
