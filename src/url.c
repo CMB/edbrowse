@@ -995,7 +995,6 @@ domain:
 				continue;
 		}
 
-		debugPrint(3, "proxy %s", px->proxy);
 		return px->proxy;
 	}
 
@@ -1012,6 +1011,8 @@ CURLcode setCurlURL(CURL * h, const char *url)
 	const char *proxy = findProxyForURL(url);
 	if (!proxy)
 		proxy = "";
+	else
+		debugPrint(3, "proxy %s", proxy);
 	curl_easy_setopt(h, CURLOPT_PROXY, proxy);
 	return curl_easy_setopt(h, CURLOPT_URL, url);
 }				/* setCurlURL */
