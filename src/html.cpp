@@ -1196,9 +1196,15 @@ static void htmlScript(char *&html, char *&h)
 /* Create the script object. */
 	htmlHref("src");
 	domLink("Script", "src", "scripts", cw->jss->jdoc, eb_false);
+
+	a = htmlAttrVal(topAttrib, "type");
+	if (a)
+		establish_property_string(t->jv, "type", a, eb_true);
+
 	a = htmlAttrVal(topAttrib, "language");
 	if (a)
 		establish_property_string(t->jv, "language", a, eb_true);
+
 	if (!isJSAlive)
 		goto done;
 /* If no language is specified, javascript is default. */
