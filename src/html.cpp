@@ -159,6 +159,7 @@ static const struct tagInfo elements[] = {
 	{"OPTION", "a select option", TAGACT_OPTION, 0, 0, 13},
 	{"SUB", "a subscript", TAGACT_SUB, 3, 0, 0},
 	{"SUP", "a superscript", TAGACT_SUP, 3, 0, 0},
+	{"OVB", "an overbar", TAGACT_OVB, 3, 0, 0},
 	{"FONT", "a font", TAGACT_NOP, 3, 0, 0},
 	{"CENTER", "centered text", TAGACT_NOP, 3, 0, 0},
 	{"DOCWRITE", "document.write() text", TAGACT_DW, 0, 0, 0},
@@ -1939,6 +1940,8 @@ plainTag:
 					action = TAGACT_SUP;
 				if (stringEqual(a, "sub"))
 					action = TAGACT_SUB;
+				if (stringEqual(a, "ovb"))
+					action = TAGACT_OVB;
 				nzFree(a);
 			} else if (open && open->subsup)
 				action = open->subsup;
@@ -2058,18 +2061,39 @@ doneSelect:
 			    "\r----------------------------------------\r";
 			continue;
 
+/* This is strictly for rendering math pages written with my particular css.
+ * <span class=sup> becomes TAGACT_SUP, which means superscript.
+* sub is subscript and ovb is overbar.
+ * Sorry to put my little quirks into this program, but hey,
+ * it's my program. */
 		case TAGACT_SUP:
 		case TAGACT_SUB:
+		case TAGACT_OVB:
 subsup:
 			if (!retainTag)
 				continue;
 			t->retain = eb_true;
-			j = (action == TAGACT_SUP ? 2 : 1);
-			if (!slash) {
+			if (action == TAGACT_SUB)
+				j = 1;
+			if (action == TAGACT_SUP)
+				j = 2;
+			if (action == TAGACT_OVB)
+				j = 3;
+
+			if (!slash) {	// open
+				static const char *openstring[] = { 0,
+					"[", "^(", "`"
+				};
 				t->lic = newstr.length();
-				newstr += (j == 2 ? "^(" : "[");
+				newstr += openstring[j];
 				continue;
 			}
+
+			if (j == 3) {
+				newstr += "'";
+				continue;
+			}
+
 /* backup, and see if we can get rid of the parentheses or brackets */
 			l = open->lic + j;
 			s = newstr.substr(l).c_str();
