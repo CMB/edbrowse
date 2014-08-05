@@ -156,7 +156,7 @@ wikipedia article</A> for a history of edbrowse, and an overview of its features
 
 <H3 align=center> <A NAME=copy> Copyright Notice </A> </H3>
 
-This program is copyright &copy; Karl Dahlke (and other authors and contributers), 2000-2014.&nbsp;
+This program is copyright &copy; Karl Dahlke (and other authors and contributors), 2000-2014.&nbsp;
 It is made available by the authors under the terms of the GNU General Public License (GPL),
 as articulated by the Free Software Foundation.&nbsp;
 It may be used for any purpose, and redistributed, provided this copyright notice is included.
@@ -327,7 +327,7 @@ Older pre-utf8 systems store each character in a single byte, with an iso8859 co
 
 <P>
 There's much more to say about charsets; this is merely a brief introduction.&nbsp;
-I need not go further, because edbrowse only suppports iso8859 &#8660; utf8 at this time.&nbsp;
+I need not go further, because edbrowse only supports iso8859 &#8660; utf8 at this time.&nbsp;
 Chinese, for example, requires 3 and 4 byte sequences, which map into unicode.&nbsp;
 Edbrowse doesn't handle this level of complexity at this time.
 
@@ -363,7 +363,7 @@ When an output or error message is displayed,
 accented letters are printed using single bytes, vectoring through an iso8859 page,
 unless the string utf8 or utf-8 appears in $LANG,
 whence the nonascii characters are generated using utf8.&nbsp;
-LANG=fr-FR.UTF-8 is a common settting in France.&nbsp;
+LANG=fr-FR.UTF-8 is a common setting in France.&nbsp;
 Similarly, the contents of a buffer, be it a local document or an internet website,
 are displayed as single bytes or two-byte sequences,
 according to $LANG.&nbsp;
@@ -579,7 +579,7 @@ v/x/ p: print every line that does not have an x
 <br>
 B: find the line with the balancing brace
 <br>
-b: brouse the current file, which is assumed to be in html
+b: browse the current file, which is assumed to be in html
 <br>
 b foo.html: edit the file foo.html and browse it
 <br>
@@ -801,7 +801,7 @@ Thus .. is always the physical parent directory.
 
 <P>
 environment variables are expanded before the cd command is applied, including the leading ~.&nbsp;
-Thuse cd ~/work takes you to the work directory under your home directory.
+Thus cd ~/work takes you to the work directory under your home directory.
 
 <P>
 This command does not change any filenames that may be active.&nbsp;
@@ -838,7 +838,7 @@ making it easy to edit files in your home directory
 such as ~/.profile.
 
 <P>
-Shell metta characters are also expanded, provided the result is one file name.&nbsp;
+Shell meta characters are also expanded, provided the result is one file name.&nbsp;
 You can read or write a file by typing a minimal portion of its name.&nbsp;
 Neither $variables nor stars are expanded for files on the command line,
 as this expansion is already done for you by the Unix shell.&nbsp;
@@ -1044,9 +1044,9 @@ Warning, the program contains a bug regarding the undo command.&nbsp;
 If you switch to another session, then switch back,
 you cannot undo your last edit.&nbsp;
 You'd think this would be easy to fix,
-but it is trickier than it seems, so I haven't gotten rround to it.&nbsp;
+but it is trickier than it seems, so I haven't gotten around to it.&nbsp;
 I just wanted you to know.&nbsp;
-Make sure everything is copasetic before you switch to another session.
+Make sure everything is copacetic before you switch to another session.
 
 <P>
 Let's run through a cut&amp;paste example.&nbsp;
@@ -1222,7 +1222,7 @@ The first is translated by my software, the second and third by perl regular exp
 <P>
 Embedded escape characters are always displayed in hex,
 whether the line is listed or not.&nbsp;
-Most terminals and terminal emulaters, including the Linux console,
+Most terminals and terminal emulators, including the Linux console,
 interpret various escape sequences as control commands.&nbsp;
 Thus an errant escape sequence from a binary file could send your terminal into an unexpected state,
 making recovery difficult.&nbsp;
@@ -1318,7 +1318,7 @@ You can't visit any of the underlying files, because they are just words.&nbsp;
 You must edit a directory in its own session
 or read a directory into an empty session
 if you want to access the underlying files.&nbsp;
-Note that you can write the buffer to another editting session,
+Note that you can write the buffer to another editing session,
 and in that session the words are just words.&nbsp;
 This distinction is important as we start to edit the text.
 
@@ -1478,11 +1478,11 @@ The `bl' command breaks the current line into sentences and phrases,
 each about 70 characters long.&nbsp;
 It also compresses white space and strips white space from the end of the line.&nbsp;
 If the line contains return characters,
-these are turned into line separaters -
+these are turned into line separators -
 places where the line will definitely be cut.&nbsp;
 The only white space that is preserved is the tabs or spaces
 at the beginning of the line, or after each return character.&nbsp;
-This is a modest attemp to keep indented text indented,
+This is a modest attempt to keep indented text indented,
 if that makes any sense.
 
 <P>
@@ -1495,7 +1495,7 @@ But I don't want to count punctuation marks and say,
 "I think we need a break after the third comma
 and the period following that and then at the next comma",
 issuing the s punctuation commands along the way.&nbsp;
-Oh I like the s commands well enough - they put you in complete contrl -
+Oh I like the s commands well enough - they put you in complete control -
 but it's easier to type bl - and bl usually does the right thing.&nbsp;
 Also, bl compresses accidental double spaces,
 a typo that I will never hear if I simply read the line as a whole.
@@ -1541,7 +1541,7 @@ The following commands do a pretty good job of cleaning up a typical Microsoft W
 
 <P>
 <PRE><font size=3 face=Arial,Helvetica,sans-serif>e whatever.doc or whatever.wps
-# change filename, so you don't accidently overwrite the microsoft document
+# change filename, so you don't accidentally overwrite the microsoft document
 f _
 ,s/[~80-~ff~00-~0c~0e-~1f]//g  # strip out non ascii control/formatting codes
 g/^\s*$/d  # these blank lines use to contain non ascii codes
@@ -1678,7 +1678,7 @@ Sometimes the initial url is the "public" location of the web page,
 and subsequent redirections occur inside the company.&nbsp;
 In this case you'll want to retain the public url,
 which will always work, even if the company relocates its web server.&nbsp;
-Use youre best judgment.
+Use your best judgment.
 
 <H3 align=center> <A NAME=browse> Browse Mode </A> </H3>
 
@@ -1719,7 +1719,7 @@ the first syntax error is displayed,
 whence you can return to the html source and fix it.&nbsp;
 Type `ub' to undo the browse conversion.&nbsp;
 This takes you back to the raw html text under its original filename.&nbsp;
-Now you can coorect the error and try the `b' command again.&nbsp;
+Now you can correct the error and try the `b' command again.&nbsp;
 For your convenience, the label 'e is set to the line containing the error.&nbsp;
 Repeat this process until `b' runs without errors.
 
@@ -1838,8 +1838,8 @@ Even 17a3b3 is not ambiguous;
 it is a translation of 17 times a[3] times b[3].
 
 <P>
-Superscripts, as indicated by &lt;span class=sup&gt;, are enclosed in parentheses, with a preceeding arrow.&nbsp;
-The parentheses are omited if the superscript is a number.&nbsp;
+Superscripts, as indicated by &lt;span class=sup&gt;, are enclosed in parentheses, with a preceding arrow.&nbsp;
+The parentheses are omitted if the superscript is a number.&nbsp;
 Thus x cubed looks like x^3,
 while x to the n-1 power looks like x^(n-1).
 
@@ -1856,7 +1856,7 @@ one character on the screen,
 while edbrowse turns it into the word theta.&nbsp;
 I also put spaces around the word
 if its neighbors are also words.&nbsp;
-This is illustrated by the circumfrence of a circle, which is 2 times pi times r.&nbsp;
+This is illustrated by the circumference of a circle, which is 2 times pi times r.&nbsp;
 These three tokens are usually squashed together,
 and there is no confusion in the sighted world,
 where pi is a separate Greek letter.&nbsp;
@@ -1870,7 +1870,7 @@ To avoid this, edbrowse inserts spaces, giving 2 pi r.
 These translations are designed to work with the pages of the
 <A HREF=http://www.mathreference.com> Math Reference Project</A>,
 an archive of advanced mathematics
-that atemps to be both sighted and blind friendly at the same time.
+that attempts to be both sighted and blind friendly at the same time.
 
 <H3 align=center> <A NAME=title> Title, Description, Keywords </A> </H3>
 
@@ -1951,7 +1951,7 @@ If there is no alternate phrase,
 the filename of the hyperlink reference is used.&nbsp;
 This name can be surprisingly helpful,
 or it can be utterly useless, as in "index.html".&nbsp;
-If this name canot be determined,
+If this name cannot be determined,
 the generic link {image} is used.&nbsp;
 In this case you will have to go to the web page to find out what it contains.
 
@@ -1961,7 +1961,7 @@ as in [girl with a long red braid].
 
 <P>
 To follow a link, enter the `g' (go) command.&nbsp;
-Yes, `g' also initiates a global substitue command,
+Yes, `g' also initiates a global substitute command,
 but only when it is followed by a regular expression.&nbsp;
 By itself, g follows the link on the current line,
 g2 follows the second link on the current line,
@@ -2115,7 +2115,7 @@ M4
 </font></PRE>
 
 <P>
-Now sessions 2 3 and 4 are the subpages about plains trains and automobiels respectively.&nbsp;
+Now sessions 2 3 and 4 are the subpages about plains trains and automobiles respectively.&nbsp;
 You can fill out forms or follow hyperlinks in any of them,
 or stay in session 1 and do something else.
 
@@ -2154,7 +2154,7 @@ For example, a search engine might present the following form.
 Advanced parsing: &lt;-&gt;
 Language: &lt;en&gt;
 Search now: &lt;GO&gt;
-Cleaar form: &lt;RESET&gt;
+Clear form: &lt;RESET&gt;
 </font></PRE>
 
 <P>
@@ -2271,7 +2271,7 @@ No problem -- use the substitute command.&nbsp;
 You can write this as i/x/y/ or s/x/y/ -- as you prefer.&nbsp;
 Remember, you may need to specify a field, as in s3/x/y/.&nbsp;
 The usual substitution syntax is honored.&nbsp;
-Don't overgenralize the g suffix.&nbsp;
+Don't overgeneralize the g suffix.&nbsp;
 s3/x/y/g changes every x to y in the third input field, but does not affect the other fields on the current line.
 
 <P>
@@ -2375,7 +2375,7 @@ Each web address will be surrounded by &lt;a&gt; and &lt;/a&gt; tags,
 ready to be pasted into a bookmark file, if that is what you wish.&nbsp;
 These addresses exist in a new editing session; the previous session has been pushed onto the stack.&nbsp;
 You can add these to your bookmark file via w+ $bookmarks,
-assumeing you have set the environment variable bookmarks appropriately.&nbsp;
+assuming you have set the environment variable bookmarks appropriately.&nbsp;
 They will be appended at the end;
 you can move them to a more appropriate place in the file later on, when you're not "on line".&nbsp;
 For those with dial up connections,
@@ -2427,7 +2427,7 @@ This is useful when you want to bookmark the current page,
 rather than some other page pointed to by a link.
 
 <P>
-If the current page is the result of a form submition, the filename
+If the current page is the result of a form submission, the filename
 may include your input fields after the question mark.&nbsp;
 If it does, that's a feature, not a bug.&nbsp;
 This exact URL, with the data at the end, can be stored as a bookmark
@@ -2455,7 +2455,7 @@ One last warning about adding links to your bookmark file.&nbsp;
 Let's say you've issued the A command, and tweaked the description just a bit.&nbsp;
 Now the link is just write, and you want to save it.&nbsp;
 You accidentally type `w $bookmarks', forgetting the plus.&nbsp;
-Instead of apending the link to the end, you have clobbered your entire bookmark file.&nbsp;
+Instead of appending the link to the end, you have clobbered your entire bookmark file.&nbsp;
 Years of accumulated links are gone.&nbsp;
 To avoid this disastrous typo, create a macro to append to your bookmark file.&nbsp;
 I know, we haven't talked about user defined macros yet, but we will.&nbsp;
@@ -2478,12 +2478,12 @@ that are defined in your config file.
 Some websites serve cookies,
 which your browser is expected to retain
 and pass back during subsequent exchanges.&nbsp;
-In fact many websites simply won't work without cooky support.&nbsp;
+In fact many websites simply won't work without cookie support.&nbsp;
 Therefore edbrowse always accepts cookies.
 
 <P>
 Note that only Netscape-style cookies are supported.&nbsp;
-However, this is the most common flavor of cooky.&nbsp;
+However, this is the most common flavor of cookie.&nbsp;
 It will probably meet your needs.
 
 <P>
@@ -2566,7 +2566,7 @@ Please don't fall for all those phishing email scams
 that tell you your login has expired, and would you please log in again using this convenient form.&nbsp;
 The mail is forged to look legitimate,
 and the form actually sends your secret password to a thief,
-who then rades your account.&nbsp;
+who then raids your account.&nbsp;
 A reputable company will
 never ask you to login through an email form.&nbsp;
 They will always tell you to go back to the website and log in there.
@@ -2620,7 +2620,7 @@ and it is located on a Unix-like server, you will receive the listing as an
 html file with hyperlinks.  You can visit the directory members just as
 though you were exploring a website.&nbsp;
 If the server does not run some
-flavore of Unix, you will receive the directory listing in plain
+flavour of Unix, you will receive the directory listing in plain
 text.
 
 <P>
@@ -2686,7 +2686,7 @@ proxy = http|https|ftp * proxy.mycompany.com
 
 <P>
 As shown in this example, different protocols can be separated by pipes.&nbsp;
-Beware, placing a * in the protocol field embrases all protocols, including ftp, pop3, and smtp.&nbsp;
+Beware, placing a * in the protocol field embraces all protocols, including ftp, pop3, and smtp.&nbsp;
 Mail will attempt to pass through this proxy, just like web traffic.
 
 <H3 align=center> <A NAME=frame> Frames </A> </H3>
@@ -2817,7 +2817,7 @@ When a web page asks for user input,
 it often includes a
 "validate&amp;submit" function.&nbsp;
 This function checks your entries:
-have you filled in all the riquired fields -
+have you filled in all the required fields -
 is there an @ sign in your email address -
 are there 5 digits in your zip code -
 and so on.&nbsp;
@@ -2941,7 +2941,7 @@ This bypasses initialization, and places you in the editor,
 with the config file preloaded.&nbsp;
 Make your corrections, write the file,
 quit, and invoke edbrowse again.&nbsp;
-Repeate these steps until there are no errors,
+Repeat these steps until there are no errors,
 and you see the words "edbrowse ready".
 
 <P>
@@ -2952,7 +2952,7 @@ This is true on Windows as well, so make sure HOME is set.
 
 <P>
 The config file is line oriented.&nbsp;
-Lines begining with # are comments, and are ignored.&nbsp;
+Lines beginning with # are comments, and are ignored.&nbsp;
 Blank lines are also ignored.&nbsp;
 All other lines fall into one of 6 categories.
 
@@ -3058,7 +3058,7 @@ Allocate this many megabytes for javascript use.&nbsp;
 The default is 32 meg, as shown above.&nbsp;
 The minimum is 2 and the maximum is 1000.&nbsp;
 A couple of youtube pages will consume 4 meg of javascript, so don't aim low unless you are just using edbrowse to edit files.&nbsp;
-If you spend all day browsing, you better aim high, because edbrowse could uncerimoniously exit if it runs out of javascript space.
+If you spend all day browsing, you better aim high, because edbrowse could unceremoniously exit if it runs out of javascript space.
 
 <P>
 inserver = pop3.some-domain.com
@@ -3195,13 +3195,13 @@ I suppose it sorts them or something.
 Every time you fetch a web page from the internet,
 your browser identifies itself to the host.&nbsp;
 This is done automatically.&nbsp;
-Edbrose identifies itself as "edbrowse/2.2.9",
+Edbrowse identifies itself as "edbrowse/2.2.9",
 where the number after the slash indicates the current version of edbrowse.
 
 <P>
 All well and good, but some websites have no respect for edbrowse,
 and no concern for Internet accessibility.&nbsp;
-They won't even let you in the door unless you look like Explorere or Netscape or one of the major players.&nbsp;
+They won't even let you in the door unless you look like Explorer or Netscape or one of the major players.&nbsp;
 StartPage.com,
 a front end to Google,
 is one example.
@@ -3229,7 +3229,7 @@ that force us to lie.
 This feature was written pre-javascript,
 and is not 100% compatible with the navigator object.&nbsp;
 Navigator.userAgent returns the correct string, according to the agent you select,
-but other aspectss of the navigator object do not change with the agent,
+but other aspects of the navigator object do not change with the agent,
 and they should.
 
 <H3 align=center> <A NAME=script> Edbrowse Functions </A> </H3>
@@ -3993,7 +3993,7 @@ If the image has a recognizable suffix, such as gif, I discard it automatically.
 If you really want these images, you'll have to save the email unformatted, and browse it later.
 
 <P>
-When brousing an email inside the editor,
+When browsing an email inside the editor,
 edbrowse offers you all the attachments, be they images or not.&nbsp;
 You can discard a single attachment by entering x,
 or all the image attachments by entering capital X.
@@ -4106,7 +4106,7 @@ e customers]
 This allows you to bring in the entire table,
 or portions thereof, one row per line, with fields delimited by pipes.&nbsp;
 If the result looks like a bunch of numbers and pipes,
-and you have forgottten the structure of the table,
+and you have forgotten the structure of the table,
 use the shc (show columns) command.&nbsp;
 The output might look like this.
 
@@ -4381,7 +4381,7 @@ similar to the isql program that ships with odbc.&nbsp;
 Within a text buffer (not a table buffer),
 place a right bracket at the beginning of a line, then write your sql statement.&nbsp;
 Your statement can run across many lines, but it must have a semicolon at the end of the last line,
-or a leading right bracket at the begining of the following line.&nbsp;
+or a leading right bracket at the beginning of the following line.&nbsp;
 Type g by itself to go, thus sending the statement to the database.&nbsp;
 This is similar to g on a web page, which goes to a hyperlink.&nbsp;
 Edbrowse reports any errors,
@@ -4494,7 +4494,7 @@ but if there are no words after "subject:" then the generated email has no subje
 This is appropriate when sending a text.&nbsp;
 The body of the message contains the text,
 but it is cut off at 120 characters, so be brief.&nbsp;
-Use sm- to supress the .signature file.&nbsp;
+Use sm- to suppress the .signature file.&nbsp;
 It would probably be cut off anyways.
 
 <P>
@@ -4611,7 +4611,7 @@ Internet Relay Chat, or IRC,
 is a system that lets you send small text messages to other members of a group.&nbsp;
 It is a convenient way to participate in an on-line discussion forum.&nbsp;
 Of course you have to know the server and the channel,
-like calling a particular conference line for a multiwiay phone conversation.
+like calling a particular conference line for a multiway phone conversation.
 
 <P>
 I use a simple, command line IRC client called sic.&nbsp;
@@ -4747,7 +4747,7 @@ and then run yum install mplayer.
 
 <P>
 The manual page for mplayer is quite long; I'm not going to describe its full functionality here.&nbsp;
-The simplest imvocation is mplayer -quiet foo.mp3.&nbsp;
+The simplest invocation is mplayer -quiet foo.mp3.&nbsp;
 Yes, you can use it just like mpg123, but it doesn't have as many interactive features,
 such as pause via signal 10 from another process,
 so you probably want to stick with mpg123 for local music.
@@ -4844,7 +4844,7 @@ From here you can probably convert it to mp3 using ffmpeg.
 ffmpeg -i foobar.3gpp foobar.mp3
 
 <P>
-Then pllay the mp3 file with mpg123.&nbsp;
+Then play the mp3 file with mpg123.&nbsp;
 This is a recurring theme, as we saw with podcasts above.&nbsp;
 download the file, convert it to mp3, and use mpg123, which has nice features like pause,
 fast forward, rewind, etc.&nbsp;
@@ -4862,7 +4862,7 @@ b http://www.youtube.com/results?search_query=~0
 <P>
 #  If a link looks like what you want, don't go to it, run this
 <br>
-#  youtube extract functiohn.
+#  youtube extract function.
 <br>
 function+yte {
 <br>
