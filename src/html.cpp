@@ -3533,7 +3533,7 @@ eb_bool infPush(int tagno, char **post_string)
 /* I don't have any reverse pointers, so I'm just going to scan the list */
 static struct htmlTag *tagFromJavaVar(JS::HandleObject v)
 {
-	struct htmlTag *t;
+	struct htmlTag *t = 0;
 	if (!cw->tags)
 		i_printfExit(MSG_NullListInform);
 	for (int i1 = 0; i1 < tagList.size(); ++i1) {
