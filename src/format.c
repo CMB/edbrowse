@@ -958,7 +958,7 @@ eb_bool breakLine(const char *line, int len, int *newlen)
 	if (lspace < 2)
 		lspace = 2;	/* should never happen */
 	if (!len + pre_cr)
-		lspace == 3;
+		lspace = 3;
 	bl_start = bl_cursor = replaceLine;
 	bl_end = replaceLine + REPLACELINELEN - 8;
 	bl_overflow = eb_false;
