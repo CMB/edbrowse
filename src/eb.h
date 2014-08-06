@@ -42,16 +42,6 @@
 #define O_SYNC 0
 #endif
 
-/* Some error constants that aren't defined in older versions of libcurl. 
- * I'm not too worried about them, because the catch-all handles so many
- * things..  Plus, everyone will eventually be using the latest libcurl. */
-#ifndef CURLE_PEER_FAILED_VERIFICATION
-#define CURLE_PEER_FAILED_VERIFICATION -1
-#endif
-#ifndef CURLE_REMOTE_ACCESS_DENIED
-#define CURLE_REMOTE_ACCESS_DENIED -2
-#endif
-
 /* WARNING:  the following typedef is pseudo-standard in C.
  * Some systems will define ushort in sys/types.h, others will not.
  * Unfortunately there is no #define symbol to key on;
