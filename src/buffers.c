@@ -5,6 +5,7 @@
  */
 
 #include "eb.h"
+#include <netdb.h>
 #include <signal.h>
 
 /* If this include file is missing, you need the pcre package,

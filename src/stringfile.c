@@ -6,6 +6,7 @@
 #include "eb.h"
 
 #include <sys/stat.h>
+#include <arpa/inet.h>
 #ifdef DOSLIKE
 #include <dos.h>
 #else
@@ -15,9 +16,6 @@
 #endif
 #include <pcre.h>
 #include <netdb.h>
-
-/* for some reason this prototype is missing */
-extern char *inet_ntoa(struct in_addr);
 
 /*********************************************************************
 Allocate and manage memory.

@@ -6,6 +6,7 @@
 
 #include "eb.h"
 
+#include <sys/stat.h>
 #include <signal.h>
 #include <pcre.h>
 
