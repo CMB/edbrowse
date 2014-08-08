@@ -47,7 +47,7 @@ static int lastq, lastqq;
 static char icmd;		/* input command, usually the same as cmd */
 
 /*********************************************************************
-/* If a rendered line contains a hyperlink, the link is indicated
+ * If a rendered line contains a hyperlink, the link is indicated
  * by a code that is stored inline.
  * If the hyperlink is number 17 on the list of hyperlinks for this window,
  * it is indicated by InternalCodeChar 17 { text }.
