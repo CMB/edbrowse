@@ -1221,10 +1221,13 @@ void my_curl_init(void)
 			 CURL_SSLVERSION_DEFAULT);
 
 /*
- * This next setting tells libcurl to use any available authentication type.
- * It will use the strongest authentication supported by the server.
+* tell libcurl to pick the strongest method from basic, digest and ntlm authentication
+* don't use any auth method as it will prefer Negotiate to NTLM,
+* and it looks like in most cases microsoft IIS says it supports both and libcurl
+* doesn't fall back to NTLM when it discovers that Negotiate isn't set up on a system
 */
-	curl_easy_setopt(curl_handle, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
+	curl_easy_setopt(curl_handle, CURLOPT_HTTPAUTH,
+			 CURLAUTH_BASIC | CURLAUTH_DIGEST | CURLAUTH_NTLM);
 
 /* The next few setopt calls could allocate or perform file I/O. */
 	errorText[0] = '\0';
