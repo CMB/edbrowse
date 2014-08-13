@@ -74,7 +74,7 @@ CURLcode setCurlURL(CURL *h, const char *url);
 
 /* sourcefile=auth.c */
 eb_bool getUserPass(const char *url, char *creds, eb_bool find_proxy);
-eb_bool addWebAuthorization(const char *url, int realm, const char *credentials,
+eb_bool addWebAuthorization(const char *url, const char *credentials,
 			    eb_bool proxy);
 
 /* sourcefile=http.c */

@@ -8,13 +8,6 @@
 
 #include "eb.h"
 
-#define REALM_BASIC 1
-#define REALM_MD5 2
-
-static const char *const realmDesc[] = {
-	"", "Basic ", "Digest "
-};
-
 struct httpAuth {
 	struct httpAuth *next;
 	struct httpAuth *prev;
@@ -24,7 +17,6 @@ struct httpAuth {
 	char *user_password;
 	int port;
 	eb_bool proxy;
-	uchar realm;
 };
 
 static struct listHead authlist = { &authlist, &authlist };
@@ -65,7 +57,7 @@ eb_bool getUserPass(const char *url, char *creds, eb_bool find_proxy)
 
 eb_bool
 addWebAuthorization(const char *url,
-		    int realm, const char *credentials, eb_bool proxy)
+		    const char *credentials, eb_bool proxy)
 {
 	struct httpAuth *a;
 	const char *host;
@@ -94,7 +86,6 @@ addWebAuthorization(const char *url,
 	foreach(a, authlist) {
 		if (a->proxy == proxy &&
 		    a->port == port &&
-		    a->realm == realm &&
 		    stringEqualCI(a->host, host) &&
 		    (proxy ||
 		     dl == strlen(a->directory)
@@ -111,7 +102,6 @@ addWebAuthorization(const char *url,
 	}
 
 	a->proxy = proxy;
-	a->realm = realm;
 	a->port = port;
 	if (!a->host)
 		a->host = cloneString(host);

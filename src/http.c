@@ -714,7 +714,7 @@ mimeProcess:
 			nl();
 			eb_bool got_creds = read_credentials(creds_buf);
 			if (got_creds) {
-				addWebAuthorization(urlcopy, 1, creds_buf,
+				addWebAuthorization(urlcopy, creds_buf,
 						    eb_false);
 				curl_easy_setopt(curl_handle, CURLOPT_USERPWD,
 						 creds_buf);
