@@ -70,6 +70,7 @@ char *encodePostData(const char *s);
 char *decodePostData(const char *data, const char *name, int seqno);
 void decodeMailURL(const char *url, char **addr_p, char **subj_p,
 		   char **body_p);
+void addNovsHost(char *host);
 CURLcode setCurlURL(CURL *h, const char *url);
 
 /* sourcefile=auth.c */

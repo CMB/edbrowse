@@ -328,7 +328,7 @@ static struct eb_curl_callback_data callback_data = {
 };
 
 static CURL *newFetchmailHandle(const char *mailbox, const char *username,
-				const char *password, int do_certs)
+				const char *password)
 {
 	CURLcode res;
 	CURL *handle = curl_easy_init();
@@ -344,7 +344,6 @@ static CURL *newFetchmailHandle(const char *mailbox, const char *username,
 	if (res != CURLE_OK)
 		i_printfExit(MSG_LibcurlNoInit);
 
-	curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, do_certs);
 	res = curl_easy_setopt(handle, CURLOPT_USERNAME, username);
 	if (res != CURLE_OK) {
 		ebcurl_setError(res, mailbox);
@@ -493,7 +492,7 @@ int fetchMail(int account)
 
 	mailstring = initString(&mailstring_l);
 	CURL *mail_handle =
-	    newFetchmailHandle(mailbox_url, login, pass, !a->nocert);
+	    newFetchmailHandle(mailbox_url, login, pass);
 	res_curl = count_messages(mail_handle, mailbox_url, &message_count);
 	if (res_curl != CURLE_OK)
 		goto fetchmail_cleanup;

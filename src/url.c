@@ -1006,6 +1006,46 @@ const char *findProxyForURL(const char *url)
 	return findProxyInternal(getProtURL(url), getHostURL(url));
 }				/* findProxyForURL */
 
+static char **novs_hosts;
+size_t novs_hosts_avail;
+size_t novs_hosts_max;
+
+void addNovsHost(char *host)
+{
+	if (novs_hosts_max == 0) {
+		novs_hosts_max = 32;
+		novs_hosts = allocZeroMem(novs_hosts_max);
+	} else if (novs_hosts_avail >= novs_hosts_max) {
+		novs_hosts_max *= 2;
+		novs_hosts = reallocMem(novs_hosts, novs_hosts_max);
+	}
+	novs_hosts[novs_hosts_avail++] = host;
+}				/* addNovsHost */
+
+/* Return true if the cert for this host should be verified. */
+static eb_bool mustVerifyHost(const char *host)
+{
+	size_t this_host_len = strlen(host);
+	size_t i;
+
+	if (!verifyCertificates)
+		return eb_false;
+
+	for (i = 0; i < novs_hosts_avail; i++) {
+		size_t l1 = strlen(novs_hosts[i]);
+		size_t l2 = this_host_len;
+		if (l1 > l2)
+			continue;
+		l2 -= l1;
+		if (!stringEqualCI(novs_hosts[i], host + l2))
+			continue;
+		if (l2 && host[l2 - 1] != '.')
+			continue;
+		return eb_false;
+	}
+	return eb_true;
+}				/* mustVerifyHost */
+
 CURLcode setCurlURL(CURL * h, const char *url)
 {
 	const char *proxy = findProxyForURL(url);
@@ -1013,6 +1053,9 @@ CURLcode setCurlURL(CURL * h, const char *url)
 		proxy = "";
 	else
 		debugPrint(3, "proxy %s", proxy);
+	const char *host = getHostURL(url);
 	curl_easy_setopt(h, CURLOPT_PROXY, proxy);
+	curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER,
+			 mustVerifyHost(host));
 	return curl_easy_setopt(h, CURLOPT_URL, url);
 }				/* setCurlURL */

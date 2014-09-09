@@ -745,7 +745,6 @@ static CURL *newSendmailHandle(const struct MACCOUNT *account,
 			       const char *outurl, const char *reply,
 			       struct curl_slist *recipients)
 {
-	int do_certs = verifyCertificates && !account->nocert;
 	CURLcode res = CURLE_OK;
 	CURL *handle = curl_easy_init();
 	if (!handle) {
@@ -765,8 +764,6 @@ static CURL *newSendmailHandle(const struct MACCOUNT *account,
 	if (res != CURLE_OK) {
 		goto new_handle_cleanup;
 	}
-
-	curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, do_certs);
 
 	if (account->outssl == 2)
 		curl_easy_setopt(handle, CURLOPT_USE_SSL, CURLUSESSL_ALL);

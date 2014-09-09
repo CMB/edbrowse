@@ -2537,7 +2537,9 @@ Some browsers don't have this feature at all, so it's not the end of the world,
 but in general it's a good idea to verify your secure connections,
 unless it prevents you from getting to a website whose authenticity you accept at face value.&nbsp;
 In that case you can use the vs command to turn the feature off.&nbsp;
-This is a toggle command; type vs again to turn the feature on.
+This is a toggle command; type vs again to turn the feature on.&nbsp;
+For another method of disabling verification on a site-by-site basis,
+see the novs directive in the configuration file.
 
 <P>
 Never send sensitive information,
@@ -3071,6 +3073,15 @@ A couple of youtube pages will consume 4 meg of javascript, so don't aim low unl
 If you spend all day browsing, you better aim high, because edbrowse could unceremoniously exit if it runs out of javascript space.
 
 <P>
+novs = somesite.com
+<P>
+Indicate hostnames for which SSL certificate verification should never
+be performed.&nbsp;
+This directive is useful for sites that use self-signed certificates,
+since these cannot be verified.&nbsp;
+It should probably not be used for anything serious, such as a site that
+is going to receive your credit card number.
+<P>
 inserver = pop3.some-domain.com
 <br>
 inport = 110
@@ -3108,12 +3119,6 @@ but the server still wants to make sure you are you.
 nofetch
 <P>
 Do not fetch mail from this account through the -f option.
-
-<P>
-nocert
-<P>
-This account uses secure connections, i.e. pop3s or smtps,
-but there is no certificate for the secure server.
 
 <P>
 login = eklhad

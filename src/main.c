@@ -166,7 +166,7 @@ static void readConfigFile(void)
 		"adbook", "ipblack", "maildir", "agent",
 		"jar", "nojs", "spamcan",
 		"webtimer", "mailtimer", "certfile", "datasource", "proxy",
-		"linelength", "localizeweb", "jspool",
+		"linelength", "localizeweb", "jspool", "novs",
 		0
 	};
 
@@ -662,6 +662,15 @@ putc:
 				jsPool = 1000;
 			continue;
 
+		case 32:
+			if (*v == '.')
+				++v;
+			q = strchr(v, '.');
+			if (!q || q[1] == 0)
+				i_printfExit(MSG_ERBC_DomainDot, ln, v);
+			addNovsHost(v);
+			continue;
+
 		default:
 			i_printfExit(MSG_ERBC_KeywordNYI, ln, s);
 		}		/* switch */
@@ -679,11 +688,6 @@ nokeyword:
 
 		if (stringEqual(s, "nofetch") && mailblock == 1) {
 			act->nofetch = 1;
-			continue;
-		}
-
-		if (stringEqual(s, "nocert") && mailblock == 1) {
-			act->nocert = 1;
 			continue;
 		}
 
