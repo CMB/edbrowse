@@ -1055,7 +1055,7 @@ CURLcode setCurlURL(CURL * h, const char *url)
 		debugPrint(3, "proxy %s", proxy);
 	const char *host = getHostURL(url);
 	curl_easy_setopt(h, CURLOPT_PROXY, proxy);
-	curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER,
+	curl_easy_setopt(h, CURLOPT_SSL_VERIFYPEER,
 			 mustVerifyHost(host));
 	return curl_easy_setopt(h, CURLOPT_URL, url);
 }				/* setCurlURL */
