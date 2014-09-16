@@ -1014,10 +1014,10 @@ void addNovsHost(char *host)
 {
 	if (novs_hosts_max == 0) {
 		novs_hosts_max = 32;
-		novs_hosts = allocZeroMem(novs_hosts_max);
+		novs_hosts = allocZeroMem(novs_hosts_max * sizeof(char *));
 	} else if (novs_hosts_avail >= novs_hosts_max) {
 		novs_hosts_max *= 2;
-		novs_hosts = reallocMem(novs_hosts, novs_hosts_max);
+		novs_hosts = reallocMem(novs_hosts, novs_hosts_max * sizeof(char *));
 	}
 	novs_hosts[novs_hosts_avail++] = host;
 }				/* addNovsHost */
