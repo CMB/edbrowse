@@ -1054,8 +1054,9 @@ CURLcode setCurlURL(CURL * h, const char *url)
 	else
 		debugPrint(3, "proxy %s", proxy);
 	const char *host = getHostURL(url);
+	unsigned long verify = mustVerifyHost(host);
 	curl_easy_setopt(h, CURLOPT_PROXY, proxy);
-	curl_easy_setopt(h, CURLOPT_SSL_VERIFYPEER,
-			 mustVerifyHost(host));
+	curl_easy_setopt(h, CURLOPT_SSL_VERIFYPEER, verify);
+	curl_easy_setopt(h, CURLOPT_SSL_VERIFYHOST, verify);
 	return curl_easy_setopt(h, CURLOPT_URL, url);
 }				/* setCurlURL */
