@@ -58,6 +58,7 @@ void loadBlacklist(void)
 		return;
 	if (!fileIntoMemory(ipbFile, &buf, &buflen))
 		showErrorAbort();
+	buf[buflen] = 0;
 	s = buf;
 	while (*s) {
 		t = strchr(s, '\n');
