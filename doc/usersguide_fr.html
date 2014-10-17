@@ -25,7 +25,6 @@ securité, ssl, aveugle, script, accessible, accessibilité">
 <li><a href="#copy"> Copyright </a></li>
 <li><a href="#ack"> Remerciements </a></li>
 <li><a href="#over"> Vue d'ensemble </a></li>
-<li><a HREF="#curve"> Courbe d'apprentissage </a></li>
 <li><a href="#lang"> Autres langues </a></li>
 </ul>
 
@@ -147,34 +146,6 @@ Il peut être utilisé dans n'importe quel but, et redistribué,
 à condition d'y adjoindre le présent copyright. 
 
 <h3 align="center"> <a name="ack"> Remerciements </a> </h3>
-
-Ce programme emprunte du code et des concepts de construction au 
-<a href="http://atrey.karlin.mff.cuni.cz/%7Eclock/twibright/links/">projet Links</a>,
-lequel est également librement disponible sous les termes de la GPL. 
-Merci aux auteurs pour tout leur travail difficile. 
-
-<p>
-Leur écriture technique est bien meilleure que la mienne. 
-Regardez svp certaines de ces pages Web ; vous ne le regretterez pas. 
-</p>
-
-<p>
-<a href="http://www.mcli.dist.maricopa.edu/tut/">Écrire en HTML </a><br>
-<a href="http://www.htmlcodetutorial.com/">Un tutoriel de code HTML </a><br>
-<a href="http://www.htmlgoodies.com/tutors/">Ainsi vous voulez écrire un peu d'HTML… </a><br>
-<a href="http://hotwired.lycos.com/webmonkey/javascript/tutorials/tutorial1.html">
-Javascript pour Webmasters </a><br>
-<a href="http://safari.oreilly.com/">Javascript, le guide définitif </a>
-</p>
-
-<p>
-Ce paquet exige le Spider Monkey Javascript, licencié par Mozilla sous MPL.&nbsp;
-Disponible
-<a href="ftp://ftp.mozilla.org/pub/mozilla.org/js/js-1.5.tar.gz">ici</a>.&nbsp;
-Les programmeurs et les mainteneurs de ce paquet devraient tirer profit de la
-<a href="http://developer.mozilla.org/en/docs/Category:JSAPI_Reference">
-documentation en ligne</a>.
-</p>
 
 <p><A HREF=mailto:chris@the-brannons.com>
 Chris Brannon</A> a écrit ou modifié au moins 20% du code,
@@ -460,7 +431,6 @@ fbc : chercher colonnes blob
 sm : envoyer le courrier [le numéro de compte] 
 re : répondre à un courriel
 rea : répondre à tous
-ip : afficher numéro IP, souvent des courriels sauvegardés
 <foo arg1 arg2 ... : appel de la fonction foo, définie dans le fichier de configuration ,ebrc
 
 </font></pre>
@@ -2849,7 +2819,7 @@ Les autres lignes tombent dans une de ces 5 catégories.&nbsp;
 
 </p>
 <ol>
-<p><li> Définition d'une option, en utilisant la syntaxe « mot-clé=valeur».&nbsp;</p></li>
+<p><li> Définition d'une option, en utilisant la syntaxe « mot-clé=valeur».&nbsp;</li></P>
 <p><li> Définition un script edbrowse qui peut être appelé de la ligne de commande, 
 ou par un autre script.&nbsp;</li></p>
 
@@ -3055,61 +3025,6 @@ en ce qui concerne edbrowse.&nbsp;
 D'autres champs pourraient contenir des numéros de fax, de téléphone, 
 l'adresse postale, etc.&nbsp;
 C'est à vous d'en décider.&nbsp;
-</p>
-
-<p>
-spamcan = /home/eklhad/.Trash/spams
-</p>
-
-<p>
-Il n'y a aucun filtre parfait de spams.&nbsp;
-Mais je ne peux pas vivre sans un filtre, ainsi j'ai écrit un bloqueur simple d'IP. 
-(présenté ci-dessous). Quand un spam est reçu, edbrowse affiche la ligne 
-« spam de tel et tel», et sauvegarde le courrier dans ce fichier.&nbsp;
-Si vous reconnaissez le nom de l'expéditeur, qui pourrait être un ami, 
-vous pouvez appeler ce fichier, trouver le courrier, et le lire.&nbsp;
-Ceci ne devrait pas se produire, car il n'y a aucune raison particulière de bloquer 
-l'adresse IP de l'ordinateur d'un ami, mais hé,hé, prudence est mère de sûreté.&nbsp;
-</p>
-
-<p>
-ipblack = /home/eklhad/.ebsys/ip-blacklist
-</p>
-
-<p>
-Un fichier texte contient les adresses d'IP des sites connus comme pornographiques/spammeurs.&nbsp;
-La syntaxe est habituelle : les nombres sont séparés par des points, 
-avec un indicateur facultatif de masque de la forme /xx à la fin.&nbsp;
-Si le fichier contient les deux lignes suivantes, n'importe quelle adresse IP 
-qui commence par 192.168, ou 10.11.12.13, est interdite.&nbsp;
-</p>
-
-<p>
-192.168.0.0/16
-<br>
-10.11.12.13
-</p>
-
-<p>
-Si un courrier contient des références à un site Web listé dans le fichier de spams, 
-on considère ce courrier électronique comme un spam.&nbsp;
-Soyons clairs ; je ne bloque pas le courrier électronique provenant de certaines sources.&nbsp;
-Après tout, l'ordinateur de votre ami peut très bien vous envoyer des virus 
-ou des programmes espions.&nbsp;
-J'examine plutôt le courrier électronique contenant certaines URLs dans son corps.&nbsp;
-Si le bouton qui affiche « médicaments bon marché pour vous » mène à un site Web interdit, 
-vous ne verrez jamais le courrier électronique.&nbsp;
-</p>
-
-<p>
-Notez, j'emploie exactement la même liste noire dans mon pare-feu.&nbsp;
-Un script shell y lit les adresses et lance les commandes de blocage appropriées.&nbsp;
-Mon fichier a environ 2000 entrées.&nbsp;
-C'est grand, mais maniable.&nbsp;
-Si la liste devient beaucoup plus grande, je peux recompiler le noyau 
-avec l'option « large ip tables ».&nbsp;
-Cette option rend les contrôles plus efficaces quand il y a beaucoup de règles.&nbsp;
-Je suppose qu'elles sont triées.&nbsp;
 </p>
 
 <h3 align="center"> <a name="agent"> Agent utilisateur </a> </h3>
@@ -3710,9 +3625,6 @@ q 	quitte le programme
 espace	affiche plus de texte
 n 	lit le prochain message
 d 	efface ce message
-i	montre les numéros IP, puis supprime ce message
-j 	balance ce message à la poubelle, et tous les messages avec le même sujet, pendant 10 jours
-J 	balance ce message à la poubelle, et tous les messages avec le même sujet, pendant 1 an
 w	sauvegarde ce message dans un fichier, puis le supprime
 u 	sauvegarde ce message non formaté dans un fichier et le supprime
 </font></pre>
@@ -3739,73 +3651,6 @@ Ceci vous indique où trouver l'original, le message non formaté : $HOME/.Trash
 Comme indiqué auparavant, c'est une bonne idée de lancer un cron par semaine pour vider la 
 corbeille; si cette tâche cron est capable d'effacer les sous-répertoires, vous êtes certain 
 de ne pas accumuler les courriers non formatés.
-</p>
-
-<p>
-La commande de mise à la poubelle ajoute une règle de filtre à votre fichier de configuration, 
-qui balancera à la poubelle tous les messages ayant le même sujet.&nbsp;
-C'est utile quand vous ne voulez pas lire un fil de discussion dans une liste de diffusion.&nbsp;
-Utilisez la commande « j » de mise à la poubelle pendant dix jours.&nbsp; Si le sujet revient 
-après deux mois, vous pourriez être intéressé.
-Utilisez la commande « J » de mise à la poubelle pendant un an. Ceci est typiquement employé 
-pour des sujets de spam, tels que « médicaments bon marché ».&nbsp;
-</p>
-
-<p>
-Utilisez la commande « I » quand le courrier est d'évidence un spam ou porno.&nbsp;
-Vous verrez les adresses IP, que vous pourrez ajouter à votre liste noire.&nbsp;
-Ceci n'est pas fait automatiquement, parce que je crois en une certaine quantité 
-de contrôle manuel du processus.&nbsp;
-Par exemple, si vous, en tant que être humain, notez que vous avez bloqué 7 adresses 
-commençant par 10.16.29, vous pouvez vouloir vous débarrasser de ces 7 règles 
-et les remplacer par la règle unique 10.16.29.0/24.&nbsp;
-Il y a un léger risque à le faire, puisqu'une adresse valide pourrait être nichée 
-parmi tous ces sites spammeurs.&nbsp;Mais c'est peu probable.&nbsp;
-En fait, dans un excès de défiance, j'exclus parfois un bloc entier à deux octets.&nbsp;
-C'est 65536 sites Web qui sont verrouillés hors de mon ordinateur, 
-pour le mail ou la navigation.&nbsp;Un peu excessif peut-être, mais je déteste 
-vraiment toute cette saloperie de spam et de logiciels espions !
-</p>
-
-<p>
-Si une de ces 65536 adresses s'avère être valide, 
-employez un point d'exclamation pour inverser le sens, comme ceci.&nbsp;
-</p>
-
-<p>
-10.5.33.177!
-<br>
-10.5.0.0/16
-</p>
-
-<p>
-Consulter les numéros IP en temps réel peut ralentir le processus de récupération de courrier.&nbsp;
-Vous pouvez neutraliser tout le processus, en effaçant ou commentant la ligne « ipblack= » 
-dans votre fichier de configuration.&nbsp;
-</p>
-
-<p>
-Le filtrage IP ne fonctionne que pour les hyperliens.&nbsp;
-Si un mail contient un formulaire de saisie en ligne qui renvoie à un site interdit, 
-je ne le détecte pas.&nbsp;
-Il le faudrait pourtant - car ce sont les mails les plus dangereux.&nbsp;
-Ils se font passer pour votre banque, et envoient ensuite vos numéros de compte 
-à un voleur en Russie.&nbsp;
-Alors oui, cette forme de blocage d'IP, est sur ma liste de choses amusantes à faire.&nbsp;
-</p>
-
-<p>
-Comme le filtrage de spams par mots-clés, le blocage d'IP n'est pas une panacée.&nbsp;
-Par exemple, le plus stupide des spammeurs peut lancer une redirection HTTP à aucun coût.&nbsp;
-Soudainement le domaine dans le mail ne reflète pas la destination réelle.&nbsp;
-Je pourrais ajouter au logiciel la récupération du code HTML de la page et 
-déterminer ainsi s'il y a redirection, 
-mais cela ralentirait vraiment le processus interactif de courrier.&nbsp;
-Par ailleurs, un spammeur peut employer Javascript pour construire l'URL de destination 
-à la volée, et comme vous le savez, il n'y a aucune manière de prévoir les actions 
-d'un programme Javascript et de prédéterminer l'URL de destination.&nbsp;
-Et ainsi, la course aux armements continue, et comme dans le monde réel, 
-les attaquants auront toujours le dessus.&nbsp;
 </p>
 
 <h3 align="center"> <a name="mailfmt"> Courrier formaté </a> </h3>
@@ -3969,12 +3814,6 @@ placez un point d'exclamation au début, c'est-à-dire !fred.
 </p>
 
 <p>
-Notez que le filtrage de courrier se produit avant la détection de spams.&nbsp;
-Ainsi le courrier de votre ami, ou professionnel, sera toujours archivé dans un fichier, 
-même s'il référence un site Web interdit.&nbsp;
-</p>
-
-<p>
 Si un mail est redirigé sur un fichier, et qu'il possède des pièces jointes, 
 edbrowse demandera que faire avec ces pièces jointes, comme si vous aviez employé 
 la commande « w » pour sauvegarder le courrier.&nbsp;
@@ -3996,7 +3835,6 @@ et toutes les pièces jointes en tapant X majuscule.
 
 <p>
 Employez l'option « -p » pour désactiver les filtres, comme dans « e -pm1 ».&nbsp;
-Ceci désactive aussi la détection de spams.&nbsp;
 Je l'ai implémenté en regardant le courrier d'autres personnes, tel celui de mon épouse.&nbsp;
 Je ne veux pas que son courrier parte n'importe où parce qu'il correspond à 
 l'une des règles de mon filtre.&nbsp;

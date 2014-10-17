@@ -121,12 +121,6 @@ maildir = /home/eklhad/mbox
 
 # -----------------------------------------------------------------------
 
-#  addresses ip en liste noire
-
-ipblack=/home/eklhad/outside/ipblack
-
-# -----------------------------------------------------------------------
-
 #  récipient des cookies - où sont stockés les cookies http .
 #  Ce fichier contient des motes de passe, mettez-le en 0600
 #  ne touchez pas à ce fichier, sauf si vous savez ce que vous faites
@@ -143,10 +137,6 @@ mailtimer = 180
 # -----------------------------------------------------------------------
 
 #  stockage des spams. C'est un fichier dans ma corbeille
-#  ainsi je suis sûr qu'il est nettoyé chaque semaine
-
-spamcan = /home/eklhad/.Trash/spamcan
-
 # -----------------------------------------------------------------------
 
 #  redirection des mails à partir de l'expéditeur ou du compte de destination

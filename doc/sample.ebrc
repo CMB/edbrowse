@@ -123,10 +123,6 @@ webtimer = 30
 #  wait 3 minutes for a response from a mail server
 mailtimer = 180
 
-#  Write spam messages here.  I use a file in my trash bin,
-#  so I know it gets cleaned out every week.
-spamcan = /home/eklhad/.Trash/spamcan
-
 #  Redirect mail based on the sender, or the destination account.
 fromfilter {
 fred flintstone > fredmail

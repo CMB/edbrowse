@@ -45,9 +45,9 @@ int context = 1;
 uchar linePending[MAXTTYLINE];
 char *changeFileName, *mailDir;
 char *mailUnread, *mailStash;
-char *addressFile, *ipbFile;
+char *addressFile;
 char *home, *recycleBin, *configFile, *sigFile, *sigFileEnd;
-char *cookieFile, *spamCan;
+char *cookieFile;
 char *edbrowseTempFile, *edbrowseTempPDF, *edbrowseTempHTML;
 struct ebWindow *cw;
 struct ebSession sessionList[MAXSESSION], *cs;
@@ -84,70 +84,14 @@ static void setNowDay(void)
 	nowday = now;
 }				/* setNowDay */
 
-static void updateConfig(void)
-{
-	int fh = open(configFile, O_WRONLY | O_TRUNC, 0);
-	if (fh < 0) {
-		i_puts(MSG_ConfigUpdate);
-		return;
-	}
-	if (write(fh, cfgcopy, cfglen) < cfglen)
-		i_printfExit(MSG_ERBC_NoWrite);
-	close(fh);
-}				/* updateConfig */
-
-eb_bool junkSubject(const char *s, char key)
-{
-	int l, n;
-	char *new;
-	long exp = nowday;
-	if (!s || !*s) {
-		i_puts(MSG_NoSubject);
-		return eb_false;
-	}
-	if (!cfgcopy) {
-		i_puts(MSG_NoConfig);
-		return eb_false;
-	}
-	if (!subjstart) {
-		i_puts(MSG_NoSubjFilter);
-		return eb_false;
-	}
-	if (key == 'j')
-		exp += 10;
-	if (key == 'J')
-		exp += 365;
-	l = strlen(s) + 10;
-	if (exp > 9999)
-		++l;
-	n = cfglen + l;
-	new = allocMem(n);
-	memcpy(new, cfgcopy, subjstart);
-	sprintf(new + subjstart, "%ld`%s > x\n", exp, s);
-	memcpy(new + subjstart + l, cfgcopy + subjstart, cfglen - subjstart);
-	nzFree(cfgcopy);
-	cfgcopy = new;
-	cfglen = n;
-	updateConfig();
-	if (n_filters < MAXFILTER - 1) {
-		filters[n_filters].type = 4;
-		filters[n_filters].match = cloneString(s);
-		filters[n_filters].redirect = "x";
-		++n_filters;
-	}
-	return eb_true;
-}				/* junkSubject */
-
 /* This routine succeeds, or aborts via i_printfExit */
 static void readConfigFile(void)
 {
 	char *buf, *s, *t, *v, *q;
-	char *cfglp, *cfgnlp;
 	int buflen, n;
 	char c, ftype;
 	eb_bool cmt = eb_false;
 	eb_bool startline = eb_true;
-	eb_bool cfgmodify = eb_false;
 	uchar mailblock = 0, mimeblock = 0, tabblock = 0;
 	int nest, ln, j;
 	int sn = 0;		/* script number */
@@ -158,13 +102,14 @@ static void readConfigFile(void)
 	struct PXENT *px;
 	struct MIMETYPE *mt;
 	struct DBTABLE *td;
+
 	static const char *const keywords[] = {
 		"inserver", "outserver", "login", "password", "from", "reply",
 		"inport", "outport",
 		"type", "desc", "suffix", "protocol", "program",
 		"tname", "tshort", "cols", "keycol",
-		"adbook", "ipblack", "maildir", "agent",
-		"jar", "nojs", "spamcan",
+		"adbook", "xyz@xyz", "maildir", "agent",
+		"jar", "nojs", "xyz@xyz",
 		"webtimer", "mailtimer", "certfile", "datasource", "proxy",
 		"linelength", "localizeweb", "jspool", "novs",
 		0
@@ -177,9 +122,6 @@ static void readConfigFile(void)
 /* An extra newline won't hurt. */
 	if (buflen && buf[buflen - 1] != '\n')
 		buf[buflen++] = '\n';
-/* make copy */
-	cfgcopy = allocMem(buflen + 1);
-	memcpy(cfgcopy, buf, (cfglen = buflen));
 
 /* Undos, uncomment, watch for nulls */
 /* Encode mail{ as hex 81 m, and other encodings. */
@@ -190,15 +132,18 @@ static void readConfigFile(void)
 			i_printfExit(MSG_ERBC_Nulls, ln);
 		if (c == '\r' && s[1] == '\n')
 			continue;
+
 		if (cmt) {
 			if (c != '\n')
 				continue;
 			cmt = eb_false;
 		}
+
 		if (c == '#' && startline) {
 			cmt = eb_true;
 			goto putc;
 		}
+
 		if (c == '\n') {
 			last[lidx] = 0;
 			lidx = 0;
@@ -239,8 +184,6 @@ static void readConfigFile(void)
 				*v = '\x81';
 				v[1] = 's';
 				t = v + 2;
-				if (!subjstart)
-					subjstart = s + 1 - buf;
 			}
 			if (stringEqual(last, "if(*){")) {
 				*v = '\x81';
@@ -302,12 +245,14 @@ static void readConfigFile(void)
 				strcpy(v, last + 6);
 				t = v + strlen(v);
 			}
+
 			*t++ = c;
 			v = t;
 			++ln;
 			startline = eb_true;
 			continue;
 		}
+
 		if (c == ' ' || c == '\t') {
 			if (startline)
 				continue;
@@ -316,6 +261,7 @@ static void readConfigFile(void)
 				last[lidx++] = c;
 			startline = eb_false;
 		}
+
 putc:
 		*t++ = c;
 	}
@@ -326,8 +272,7 @@ putc:
 	nest = 0;
 	stack[0] = ' ';
 
-	for (s = buf, cfglp = cfgcopy; *s; s = t + 1, cfglp = cfgnlp, ++ln) {
-		cfgnlp = strchr(cfglp, '\n') + 1;
+	for (s = buf; *s; s = t + 1, ++ln) {
 		t = strchr(s, '\n');
 		if (t == s)
 			continue;	/* empty line */
@@ -356,24 +301,8 @@ putc:
 				i_printfExit(MSG_ERBC_MatchNowh, ln, s);
 			if (n_filters == MAXFILTER - 1)
 				i_printfExit(MSG_ERBC_Filters, ln);
-			filters[n_filters].redirect = v;
-			if (mailblock >= 2) {
-				long exp = strtol(s, &v, 10);
-				if (exp > 0 && *v == '`' && v[1]) {
-					s = v + 1;
-					filters[n_filters].expire = exp;
-					if (exp <= nowday) {
-						cfgmodify = eb_true;
-						memmove(cfglp, cfgnlp,
-							cfgcopy + cfglen -
-							cfgnlp);
-						cfglen -= (cfgnlp - cfglp);
-						cfgnlp = cfglp;
-						continue;
-					}	/* filter rule out of date */
-				}
-			}
 			filters[n_filters].match = s;
+			filters[n_filters].redirect = v;
 			filters[n_filters].type = mailblock;
 			++n_filters;
 			continue;
@@ -433,37 +362,37 @@ putc:
 			i_printfExit(MSG_ERBC_NoAttr, ln, s);
 
 		switch (n) {
-		case 0:
+		case 0:	/* inserver */
 			act->inurl = v;
 			continue;
 
-		case 1:
+		case 1:	/* outserver */
 			act->outurl = v;
 			continue;
 
-		case 2:
+		case 2:	/* login */
 			act->login = v;
 			continue;
 
-		case 3:
+		case 3:	/* password */
 			act->password = v;
 			continue;
 
-		case 4:
+		case 4:	/* from */
 			act->from = v;
 			continue;
 
-		case 5:
+		case 5:	/* reply */
 			act->reply = v;
 			continue;
 
-		case 6:
+		case 6:	/* inport */
 			if (*v == '*')
 				act->inssl = 1, ++v;
 			act->inport = atoi(v);
 			continue;
 
-		case 7:
+		case 7:	/* outport */
 			if (*v == '+')
 				act->outssl = 4, ++v;
 			if (*v == '^')
@@ -473,37 +402,37 @@ putc:
 			act->outport = atoi(v);
 			continue;
 
-		case 8:
+		case 8:	/* type */
 			if (*v == '<')
 				mt->stream = eb_true, ++v;
 			mt->type = v;
 			continue;
 
-		case 9:
+		case 9:	/* desc */
 			mt->desc = v;
 			continue;
 
-		case 10:
+		case 10:	/* suffix */
 			mt->suffix = v;
 			continue;
 
-		case 11:
+		case 11:	/* protocol */
 			mt->prot = v;
 			continue;
 
-		case 12:
+		case 12:	/* program */
 			mt->program = v;
 			continue;
 
-		case 13:
+		case 13:	/* tname */
 			td->name = v;
 			continue;
 
-		case 14:
+		case 14:	/* tshort */
 			td->shortname = v;
 			continue;
 
-		case 15:
+		case 15:	/* cols */
 			while (*v) {
 				if (td->ncols == MAXTCOLS)
 					i_printfExit(MSG_ERBC_ManyCols, ln,
@@ -517,7 +446,7 @@ putc:
 			}
 			continue;
 
-		case 16:
+		case 16:	/* keycol */
 			if (!isdigitByte(*v))
 				i_printfExit(MSG_ERBC_KeyNotNb, ln);
 			td->key1 = strtol(v, &v, 10);
@@ -528,21 +457,14 @@ putc:
 					     td->ncols);
 			continue;
 
-		case 17:
+		case 17:	/* adbook */
 			addressFile = v;
 			ftype = fileTypeByName(v, eb_false);
 			if (ftype && ftype != 'f')
 				i_printfExit(MSG_ERBC_AbNotFile, v);
 			continue;
 
-		case 18:
-			ipbFile = v;
-			ftype = fileTypeByName(v, eb_false);
-			if (ftype && ftype != 'f')
-				i_printfExit(MSG_ERBC_IPNotFile, v);
-			continue;
-
-		case 19:
+		case 19:	/* maildir */
 			mailDir = v;
 			if (fileTypeByName(v, eb_false) != 'd')
 				i_printfExit(MSG_ERBC_NotDir, v);
@@ -557,7 +479,7 @@ putc:
 			}
 			continue;
 
-		case 20:
+		case 20:	/* agent */
 			for (j = 0; j < 10; ++j)
 				if (!userAgents[j])
 					break;
@@ -566,7 +488,7 @@ putc:
 			userAgents[j] = v;
 			continue;
 
-		case 21:
+		case 21:	/* jar */
 			cookieFile = v;
 			ftype = fileTypeByName(v, eb_false);
 			if (ftype && ftype != 'f')
@@ -577,7 +499,7 @@ putc:
 			close(j);
 			continue;
 
-		case 22:
+		case 22:	/* nojs */
 			if (javaDisCount == MAXNOJS)
 				i_printfExit(MSG_ERBC_NoJS, MAXNOJS);
 			if (*v == '.')
@@ -588,22 +510,15 @@ putc:
 			javaDis[javaDisCount++] = v;
 			continue;
 
-		case 23:
-			spamCan = v;
-			ftype = fileTypeByName(v, eb_false);
-			if (ftype && ftype != 'f')
-				i_printfExit(MSG_ERBC_TrashNotFile, v);
-			continue;
-
-		case 24:
+		case 24:	/* webtimer */
 			webTimeout = atoi(v);
 			continue;
 
-		case 25:
+		case 25:	/* mailtimer */
 			mailTimeout = atoi(v);
 			continue;
 
-		case 26:
+		case 26:	/* certfile */
 			sslCerts = v;
 			ftype = fileTypeByName(v, eb_false);
 			if (ftype && ftype != 'f')
@@ -614,7 +529,7 @@ putc:
 			close(j);
 			continue;
 
-		case 27:
+		case 27:	/* datasource */
 			setDataSource(v);
 			continue;
 
@@ -662,7 +577,7 @@ putc:
 				jsPool = 1000;
 			continue;
 
-		case 32:
+		case 32:	/* novs */
 			if (*v == '.')
 				++v;
 			q = strchr(v, '.');
@@ -847,9 +762,6 @@ putback:
 
 	if (mailblock | mimeblock)
 		i_printfExit(MSG_ERBC_MNotClosed);
-
-	if (cfgmodify)
-		updateConfig();
 }				/* readConfigFile */
 
 /*********************************************************************
@@ -1186,8 +1098,6 @@ int main(int argc, char **argv)
 	}
 
 	srand(time(0));
-
-	loadBlacklist();
 
 	if (ismc) {
 		char **reclist, **atlist;

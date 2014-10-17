@@ -449,16 +449,6 @@ edbrowse, lynx, and other browsers."
 fi
 echo
 
-echo "I need a file to store IP addresses that usually generate spam.
-This file can be empty for now; as long as it exists.
-We'll worry about how to populate it later."
-question="List of suspect IP addresses"
-defans=$ebdir/ipblack
-response
-ebip=$answer
-touch $ebip
-echo
-
 echo "When edbrowse fetches your mail, it automatically moves to a directory
 that you can think of as your in-box."
 question="Enter mail directory"
@@ -517,13 +507,6 @@ jar = $ebcook
 
 #  secure certificates for https
 certfile = $ebcert
-
-#  ip addresses in the blacklist
-ipblack = $ebip
-
-#  Write spam messages here.  I use a file in my trash bin,
-#  so I know it gets cleaned out every week.
-spamcan = $HOME/.Trash/spamcan
 
 #  Function to write a bookmark to your list of favorites.
 #  Best to use this function every time, because it appends.

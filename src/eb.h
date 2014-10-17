@@ -241,7 +241,6 @@ extern int context;		/* which session (buffer) are we in? */
 extern uchar linePending[];
 extern char *changeFileName;
 extern char *addressFile;	/* your address book */
-extern char *ipbFile;		/* file holding ip blacklist */
 extern char *serverData;
 extern int serverDataLen;
 extern char replaceLine[];
@@ -250,7 +249,6 @@ extern char *home;		/* home directory */
 extern char *recycleBin;	/* holds deleted files */
 extern char *configFile, *sigFile, *sigFileEnd;
 extern char *cookieFile;	/* persistent cookies */
-extern char *spamCan;		/* dump spam emails */
 extern char *edbrowseTempFile;
 extern char *edbrowseTempPDF;
 extern char *edbrowseTempHTML;
@@ -324,7 +322,6 @@ struct ebWindow {
 	int dw_l;		/* length of the above */
 	struct ebWindowJSState *jss;
 eb_bool js_failed;
-	IP32bit *iplist;	/* ip addresses referenced by this page */
 	struct DBTABLE *table;	/* if in sqlMode */
 };
 extern struct ebWindow *cw;	/* current window */

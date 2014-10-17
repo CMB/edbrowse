@@ -38,134 +38,11 @@ struct MHINFO {
 static int nattach;		/* number of attachments */
 static int nimages;		/* number of attached images */
 static char *firstAttach;	/* name of first file */
-static eb_bool mailIsHtml, mailIsBlack;
+static eb_bool mailIsHtml;
 static char *fm;		/* formatted mail string */
 static int fm_l;
 static struct MHINFO *lastMailInfo;
 static char *lastMailText;
-#define MAXIPBLACK 3000
-static IP32bit ipblacklist[MAXIPBLACK];
-static IP32bit ipblackmask[MAXIPBLACK];
-static eb_bool ipblackcomp[MAXIPBLACK];
-static int nipblack;
-
-void loadBlacklist(void)
-{
-	char *buf;
-	int buflen;
-	char *s, *t;
-	if (!ipbFile)
-		return;
-	if (!fileIntoMemory(ipbFile, &buf, &buflen))
-		showErrorAbort();
-	buf[buflen] = 0;
-	s = buf;
-	while (*s) {
-		t = strchr(s, '\n');
-		if (!t)
-			t = s + strlen(s);
-		else
-			*t++ = 0;
-		while (isspaceByte(*s))
-			++s;
-		if (isdigitByte(*s)) {
-			IP32bit ip;
-			IP32bit ipmask;
-			char dotstop = 0;
-			char *q = strpbrk(s, "/!");
-			if (q)
-				dotstop = *q, *q++ = 0;
-			ip = tcp_dots_ip(s);
-			if (ip != -1) {
-				ipmask = 0xffffffff;
-				if (q) {
-					int bits;
-					if (dotstop == '!')
-						bits = 0;
-					else {
-						bits = atoi(q);
-						q = strchr(q, '!');
-						if (q)
-							dotstop = '!';
-					}
-					if (bits > 0 && bits < 32) {
-						static const IP32bit masklist[]
-						    = {
-							0xffffffff, 0xfeffffff,
-							0xfcffffff,
-							0xf8ffffff,
-							0xf0ffffff, 0xe0ffffff,
-							0xc0ffffff,
-							0x80ffffff,
-							0x00ffffff, 0x00feffff,
-							0x00fcffff,
-							0x00f8ffff,
-							0x00f0ffff, 0x00e0ffff,
-							0x00c0ffff,
-							0x0080ffff,
-							0x0000ffff, 0x0000feff,
-							0x0000fcff,
-							0x0000f8ff,
-							0x0000f0ff, 0x0000e0ff,
-							0x0000c0ff,
-							0x000080ff,
-							0x000000ff, 0x000000fe,
-							0x000000fc,
-							0x000000f8,
-							0x000000f0, 0x000000e0,
-							0x000000c0,
-							0x00000080,
-							0
-						};
-						ipmask = masklist[32 - bits];
-					}
-				}
-				if (ipmask)
-					ip &= ipmask;
-				if (nipblack == MAXIPBLACK)
-					i_printfExit(MSG_ManyIP, MAXIPBLACK);
-				ipblacklist[nipblack] = ip;
-				ipblackmask[nipblack] = ipmask;
-				ipblackcomp[nipblack] = (dotstop == '!');
-				++nipblack;
-			}
-		}
-		s = t;
-	}
-	nzFree(buf);
-	debugPrint(3, "%d ip addresses in blacklist", nipblack);
-}				/* loadBlacklist */
-
-eb_bool onBlacklist1(IP32bit tip)
-{
-	IP32bit blip;		/* black ip */
-	IP32bit mask;
-	int j;
-	for (j = 0; j < nipblack; ++j) {
-		eb_bool comp = ipblackcomp[j];
-		blip = ipblacklist[j];
-		mask = ipblackmask[j];
-		if ((tip ^ blip) & mask)
-			continue;
-		if (comp)
-			return eb_false;
-		debugPrint(3, "blocked by rule %d", j + 1);
-		return eb_true;
-	}
-	return eb_false;
-}				/* onBlacklist1 */
-
-static eb_bool onBlacklist(void)
-{
-	IP32bit *ipp = cw->iplist;
-	IP32bit tip;		/* test ip */
-	if (!ipp)
-		return eb_false;
-	while ((tip = *ipp++) != NULL_IP)
-		if (onBlacklist1(tip))
-			return eb_true;
-	return eb_false;
-}				/* onBlacklist */
 
 static void freeMailInfo(struct MHINFO *w)
 {
@@ -642,7 +519,6 @@ void scanMail(void)
 		browseCurrentBuffer();
 
 		if (!passMail) {
-			mailIsBlack = onBlacklist();
 			redirect = mailRedirect(lastMailInfo->to,
 						lastMailInfo->from,
 						lastMailInfo->reply,
@@ -658,18 +534,6 @@ void scanMail(void)
 				i_puts(MSG_Junk);
 			else
 				printf("> %s\n", redirect);
-		} else if (mailIsBlack && spamCan) {
-			redirect = spamCan;
-			key = 'u';
-			i_printf(MSG_Spam);
-			if (lastMailInfo->from[0]) {
-				i_printf(MSG_From);
-				printf("%s", lastMailInfo->from);
-			} else if (lastMailInfo->reply[0]) {
-				i_printf(MSG_From);
-				printf("%s", lastMailInfo->reply);
-			}
-			nl();
 		}
 
 /* display the next page of mail and get a command from the keyboard */
@@ -699,7 +563,7 @@ nextpage:
 					printf("%c ",
 					       displine > cw->dol ? '?' : '*');
 					fflush(stdout);
-					key = getLetter("q? nwudijJ");
+					key = getLetter("q? nwud");
 					printf("\b\b\b");
 					fflush(stdout);
 
@@ -714,54 +578,6 @@ nextpage:
 
 					case 'd':
 						i_puts(MSG_Delete);
-						delflag = eb_true;
-						goto afterinput;
-
-					case 'i':
-						i_puts(MSG_IPDelete);
-						if (!cw->iplist
-						    || cw->iplist[0] == -1) {
-							if (passMail)
-								i_puts
-								    (MSG_POption);
-							else
-								i_puts(ipbFile ?
-								       MSG_None
-								       :
-								       MSG_NoBlackList);
-						} else {
-							IP32bit addr;
-							for (k = 0;
-							     (addr =
-							      cw->iplist[k]) !=
-							     NULL_IP; ++k) {
-								puts(tcp_ip_dots
-								     (addr));
-								if (nipblack ==
-								    MAXIPBLACK)
-									continue;
-								ipblacklist
-								    [nipblack] =
-								    addr;
-								ipblackmask
-								    [nipblack] =
-								    0xffffffff;
-								ipblackcomp
-								    [nipblack] =
-								    eb_false;
-								++nipblack;
-							}
-						}
-						delflag = eb_true;
-						goto afterinput;
-
-					case 'j':
-					case 'J':
-						i_puts(MSG_Junk);
-						if (!junkSubject
-						    (lastMailInfo->subject,
-						     key))
-							continue;
 						delflag = eb_true;
 						goto afterinput;
 
@@ -916,12 +732,10 @@ badsave:
 					}	/* unformat or format */
 
 /* print "mail saved" message */
-					if (atname != spamCan) {
 						i_printf(MSG_MailSaved, fsize);
 						if (exists)
 							i_printf(MSG_Appended);
 						nl();
-					}
 				}	/* saving to a real file */
 				goto afterinput;
 

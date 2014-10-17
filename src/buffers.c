@@ -2783,7 +2783,6 @@ static int twoLetter(const char *line, const char **runThis)
 		cmd = 'e';	/* so error messages are printed */
 		rc = setupReply(line[2] == 'a');
 		if (rc && cw->browseMode) {
-			cw->iplist = 0;
 			ub = eb_false;
 			cw->browseMode = eb_false;
 			goto et_go;
@@ -2932,7 +2931,6 @@ pwd:
 		undoCompare();
 		cw->undoable = eb_false;
 		cw->browseMode = eb_false;
-		cw->iplist = 0;
 		if (ub) {
 			debrowseSuffix(cw->fileName);
 			cw->nlMode = cw->rnlMode;
@@ -2964,21 +2962,6 @@ et_go:
 		if (ub)
 			fileSize = apparentSize(context, eb_false);
 		return rc;
-	}
-
-	if (stringEqual(line, "ip")) {
-		sethostent(1);
-		allIPs();
-		endhostent();
-		if (!cw->iplist || cw->iplist[0] == -1) {
-			i_puts(MSG_None);
-		} else {
-			IP32bit ip;
-			for (i = 0; (ip = cw->iplist[i]) != NULL_IP; ++i) {
-				puts(tcp_ip_dots(ip));
-			}
-		}
-		return eb_true;
 	}
 
 	if (stringEqual(line, "f/") || stringEqual(line, "w/")) {
@@ -4750,7 +4733,7 @@ eb_bool browseCurrentBuffer(void)
 {
 	char *rawbuf, *newbuf, *tbuf;
 	int rawsize, tlen, j;
-	eb_bool rc, remote = eb_false, do_ip = eb_false, ispdf = eb_false;
+	eb_bool rc, remote = eb_false, ispdf = eb_false;
 	eb_bool save_ch = cw->changeMode;
 	uchar bmode = 0;
 
@@ -4826,12 +4809,6 @@ eb_bool browseCurrentBuffer(void)
 		newbuf = emailParse(rawbuf);
 		j = strlen(newbuf);
 
-		do_ip = eb_true;
-		if (!ipbFile)
-			do_ip = eb_false;
-		if (passMail)
-			do_ip = eb_false;
-
 /* mail could need utf8 conversion, after qp decode */
 		iuReformat(newbuf, j, &tbuf, &tlen);
 		if (tbuf) {
@@ -4871,7 +4848,6 @@ eb_bool browseCurrentBuffer(void)
 	free(newbuf);
 	cw->undoable = eb_false;
 	cw->changeMode = save_ch;
-	cw->iplist = 0;
 
 	if (cw->fileName) {
 		j = strlen(cw->fileName);
@@ -4891,9 +4867,6 @@ eb_bool browseCurrentBuffer(void)
 	}
 
 	fileSize = apparentSize(context, eb_true);
-
-	if (do_ip & ismc)
-		allIPs();
 	return eb_true;
 }				/* browseCurrentBuffer */
 

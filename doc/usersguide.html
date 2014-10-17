@@ -176,54 +176,6 @@ By using this program, you agree to use it as-is.
 
 <H3 align=center> <A NAME=ack> Acknowledgements </A> </H3>
 
-<!--
-Some of this belongs in README, and is already there.
-Others suffer from linkrot, and one link already led to
-a complaint that his material was online without his permission
-and I shouldn't point to it, blah blah blah.
-The first reference to links is so many versions ago
-it doesn't even make sense any more.
-These references are for developers, not users, and shouldn't be here.
-I'm commenting them out, in case you still want to see them.
-
-This program borrows some code and design concepts from the
-<A HREF=http://atrey.karlin.mff.cuni.cz/~clock/twibright/links/>
-links project</A>,
-which is also freely available under the terms of the GPL.&nbsp;
-My thanks to the authors for all their hard work.
-
-<P>
-Here are some excellent online tutorials on html and javascript.
-
-<P>
-<A HREF=http://www.mcli.dist.maricopa.edu/tut/>
-Writing html
-</A>
-<br><A HREF=http://www.htmlcodetutorial.com>
-An html Code Tutorial
-</A>
-<br><A HREF=http://www.htmlgoodies.com/tutors/>
-So You Want to Write some html...
-</A>
-<br><A HREF=http://hotwired.lycos.com/webmonkey/javascript/tutorials/tutorial1.html>
-Javascript for Webmasters
-</A>
-<br><A HREF=http://safari.oreilly.com>
-Javascript, the Definitive Guide
-</A>
-
-<P>
-This package requires Spider Monkey Javascript, released by Mozilla under the MPL.&nbsp;
-You can
-<A HREF=ftp://ftp.mozilla.org/pub/mozilla.org/js/js-1.5.tar.gz>
-download it here</A>.&nbsp;
-Programmers and maintainers of this package should take advantage of the
-<a href=http://developer.mozilla.org/en/docs/Category:JSAPI_Reference>
-online documentation</A>.&nbsp;
-This package is routinely shipped with most Linux distributions.&nbsp;
-Look for /usr/lib/libmozjs*.
--->
-
 <A HREF=mailto:chris@the-brannons.com>
 Chris Brannon</A> wrote or modified at least 20% of the code,
 and provided valuable ideas for the overall design.
@@ -666,8 +618,6 @@ sm: send mail [account number]
 re: reply to a mail message
 <br>
 rea: reply to all
-<br>
-ip: show referenced ip numbers, usually for saved mail messages
 <br>
 <foo arg1 arg2 ... invoke the function foo, defined in your .ebrc file
 
@@ -3155,56 +3105,6 @@ Only the first two fields in the address book are significant
 as far as edbrowse is concerned.&nbsp;
 Other fields might hold phone/fax numbers, street address, anything you like.
 
-<!--
-<P>
-spamcan = /home/eklhad/.Trash/save-spam
-<P>
-There is no perfect spam filter.&nbsp;
-But I can't live without one,
-so I wrote a simple ip blocker.&nbsp;
-(This is discussed below.)&nbsp;
-When spam is received,
-edbrowse prints the line "spam from such and so",
-and saves the mail in this file.&nbsp;
-If you recognize the name, spam from your friend,
-you can call up this file, find the email, and read it.&nbsp;
-This should not happen, as there is no particular reason to block the ip address of your friend's computer,
-but hey, better safe than sorry.
-
-<P>
-ipblack = /home/eklhad/.ebsys/ip-blacklist
-<P>
-A line oriented text file holds the ip addresses of known porn/spam sites.&nbsp;
-The syntax is the usual: numbers separated by dots,
-with an optional /xx netmask indicator at the end.&nbsp;
-If the file contains the following two lines,
-any ip address that starts with 192.168,
-or 10.11.12.13, are forbidden addresses.
-<P>
-192.168.0.0/16
-<br>
-10.11.12.13
-
-<P>
-If an email refers to a website that resolves to any of these addresses it is considered spam,
-and flagged as such.&nbsp;
-Let's be clear; I am not blocking email that comes from certain sources.&nbsp;
-After all, your friend's computer may well be sending you viruses or spyware.&nbsp;
-Rather, I screen email that has certain urls in its body.&nbsp;
-If the button that says "cheap meds for you" leads to a forbidden website,
-you'll never see the email.
-
-<P>
-Note, I use the very same blacklist in my firewall.&nbsp;
-A shell script reads in the addresses and issues the appropriate iptables commands.&nbsp;
-My file has some 2,000 entries.&nbsp;
-This is large, but manageable.&nbsp;
-If the list gets much larger, I may rebuild the kernel
-with the "large ip tables" option enabled.&nbsp;
-This makes packet matching more efficient when there are many rules.&nbsp;
-I suppose it sorts them or something.
--->
-
 <H3 align=center> <A NAME=agent> User Agent </A> </H3>
 
 Every time you fetch a web page from the internet,
@@ -3753,8 +3653,6 @@ q	quit the program
 space	display more text
 n	read the next message
 d	delete this message
-j	junk this message, and any messages with this subject, for 10 days
-J	junk this subject for a year
 w	write this message to a file and delete it
 u	write this message unformatted to a file and delete it
 </font></PRE>
@@ -3783,63 +3681,6 @@ $HOME/.Trash/rawmail/12345.
 As mentioned previously, it's a good idea to run a weekly cron job to clean
 out the trash bin; if that cron job removes subdirectories, it will insure
 that raw mail does not accumulate indefinitely.&nbsp;
-
-<P>
-The junk command adds a filter rule to your config file,
-sending any message with this subject to oblivion.&nbsp;
-This is useful when you don't want to read a particular discussion thread in a mailing list.&nbsp;
-Use the j command to junk it for ten days.&nbsp;
-If the subject pops up again in two months, you might be interested.&nbsp;
-Use the capital J command to junk a subject for a year.&nbsp;
-This is typically used for spam subjects, such as
-"Cheap meds for you."
-
-<!--
-<P>
-Issue the i command when the mail is obviously porn/spam.&nbsp;
-You will see the ip addresses, which you can add to your blacklist file.&nbsp;
-This is not done automatically, because I believe in a certain amount of manual control over the process.&nbsp;
-For example, if you, as a human, notice that you have blocked out
-7 addresses starting with 10.16.29,
-you may want to get rid of those rules and replace them with the single rule 10.16.29.0/24.&nbsp;
-There is a slight risk in doing this,
-since a valid address might be nestled in amongst all these spam sites.&nbsp;
-But it's not likely.&nbsp;
-In fact, I sometimes take a leap of faith and exclude an entire two-byte block.&nbsp;
-That's 65,536 websites that are locked out of my computer, for email or browsing.&nbsp;
-A bit heavy handed perhaps, but I really hate all this spam and spyware crap!
-
-<P>
-If one of those 65,536 addresses turns out to be valid,
-use a bang to negate the sense of the address, like this.
-
-<P>
-10.5.33.177!
-<br>
-10.5.0.0/16
-
-<P>
-Doing these ip lookups in real-time can slow the process of fetching your mail.&nbsp;
-You can disable the whole thing by omiting, or commenting out, the ipblack= line in your config file.
-
-<P>
-IP filtering only works for hyperlinks.&nbsp;
-If an email has an online form that is submitted to a forbidden site, I don't detect that.&nbsp;
-I should though - as these are the most dangerous emails of all.&nbsp;
-They pretend to come from your bank, then send your account numbers to a thief in Russia.&nbsp;
-So yes, this form of ip blocking is on my list of fun things to do.
-
-<P>
-Like spam keywording, ip blocking is no panacea.&nbsp;
-For example, a spammer with half a brain can sign up for http redirection at no cost.&nbsp;
-Suddenly the domain in the email does not reflect the true destination at all.&nbsp;
-I could add software to pull down the html page and test for redirection,
-but that would <em>really</em> slow down the interactive mail process.&nbsp;
-Beyond this, a spammer can use javascript to assemble his destination url on the fly,
-and as you know, there is no way to anticipate the actions of a javascript program and pre-determine the destination url.&nbsp;
-And so, the arms race continues,
-and just like the real world, the offensive team will always have the upper hand.
--->
 
 <H3 align=center> <A NAME=mailfmt> Formatted Mail </A> </H3>
 
@@ -3986,15 +3827,6 @@ This is the same convention as the from filter.&nbsp;
 If you don't want mail from Fred to be redirected,
 but you still want to use the alias fred when sending mail,
 place an exclamation mark at the start, i.e. !fred.
-
-<!--
-<P>
-Note that mail filtering occurs before spam detection.&nbsp;
-Thus mail from your friend,
-or to your business,
-will always be saved in a file,
-even if it references a forbidden website.
--->
 
 <P>
 If an email is redirected to a file, and it includes attachments,
