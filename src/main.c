@@ -935,6 +935,22 @@ void setDataSource(char *v)
 	dbpw = v;
 }				/* setDataSource */
 
+void eb_curl_global_init(void)
+{
+	const unsigned int major = 7;
+	const unsigned int minor = 29;
+	const unsigned int patch = 0;
+	const unsigned int least_acceptable_version =
+	    (major << 16) | (minor << 8) | patch;
+	curl_version_info_data *version_data = NULL;
+	CURLcode curl_init_status = curl_global_init(CURL_GLOBAL_ALL);
+	if (curl_init_status != 0)
+		i_printfExit(MSG_LibcurlNoInit);
+	version_data = curl_version_info(CURLVERSION_NOW);
+	if (version_data->version_num < least_acceptable_version)
+		i_printfExit(MSG_CurlVersion, major, minor, patch);
+}			/* eb_curl_global_init */
+
 /* I'm not going to expand wild card arguments here.
  * I don't need to on Unix, and on Windows there is a
  * setargv.obj, or something like that, that performs the expansion.
@@ -947,6 +963,8 @@ int main(int argc, char **argv)
 	int cx, account;
 	eb_bool rc, doConfig = eb_true;
 	eb_bool dofetch = eb_false, domail = eb_false;
+
+	eb_curl_global_init();
 
 /* In case this is being piped over to a synthesizer, or whatever. */
 	if (fileTypeByHandle(fileno(stdout)) != 'f')
