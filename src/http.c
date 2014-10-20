@@ -16,7 +16,7 @@
 #include <time.h>
 #include <signal.h>
 
-CURL *curl_handle = NULL;
+CURL *http_curl_handle = NULL;
 char *serverData;
 int serverDataLen;
 static char errorText[CURL_ERROR_SIZE + 1];
@@ -543,17 +543,19 @@ mimeProcess:
 			post = s + 2;
 			unpackUploadedFile(post, thisbound, &postb, &postb_l);
 		}
-		curlret = curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS,
+		curlret = curl_easy_setopt(http_curl_handle, CURLOPT_POSTFIELDS,
 					   (postb_l ? postb : post));
 		if (curlret != CURLE_OK)
 			goto curl_fail;
-		curlret = curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDSIZE,
-					   postb_l ? postb_l : strlen(post));
+		curlret =
+		    curl_easy_setopt(http_curl_handle, CURLOPT_POSTFIELDSIZE,
+				     postb_l ? postb_l : strlen(post));
 		if (curlret != CURLE_OK)
 			goto curl_fail;
 	} else {
 		urlcopy = copy_and_sanitize(url, url + strlen(url));
-		curlret = curl_easy_setopt(curl_handle, CURLOPT_HTTPGET, 1);
+		curlret =
+		    curl_easy_setopt(http_curl_handle, CURLOPT_HTTPGET, 1);
 		if (curlret != CURLE_OK)
 			goto curl_fail;
 	}
@@ -571,14 +573,15 @@ mimeProcess:
 		referrer = cw->referrer;
 	}
 
-	curlret = curl_easy_setopt(curl_handle, CURLOPT_REFERER, referrer);
+	curlret = curl_easy_setopt(http_curl_handle, CURLOPT_REFERER, referrer);
 	if (curlret != CURLE_OK)
 		goto curl_fail;
 	curlret =
-	    curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, custom_headers);
+	    curl_easy_setopt(http_curl_handle, CURLOPT_HTTPHEADER,
+			     custom_headers);
 	if (curlret != CURLE_OK)
 		goto curl_fail;
-	curlret = setCurlURL(curl_handle, urlcopy);
+	curlret = setCurlURL(http_curl_handle, urlcopy);
 	if (curlret != CURLE_OK)
 		goto curl_fail;
 
@@ -598,7 +601,8 @@ mimeProcess:
  * If the URL didn't have user and password, and getUserPass failed,
  * then creds_buf == "".
  */
-	curlret = curl_easy_setopt(curl_handle, CURLOPT_USERPWD, creds_buf);
+	curlret =
+	    curl_easy_setopt(http_curl_handle, CURLOPT_USERPWD, creds_buf);
 	if (curlret != CURLE_OK)
 		goto curl_fail;
 
@@ -620,9 +624,10 @@ mimeProcess:
 
 	while (still_fetching == eb_true) {
 		char *redir = NULL;
-		curl_easy_setopt(curl_handle, CURLOPT_SSLVERSION, ssl_version);
+		curl_easy_setopt(http_curl_handle, CURLOPT_SSLVERSION,
+				 ssl_version);
 		init_header_parser();
-		curlret = curl_easy_perform(curl_handle);
+		curlret = curl_easy_perform(http_curl_handle);
 		if (serverDataLen >= CHUNKSIZE)
 			nl();	/* We printed dots, so we terminate them with newline */
 		if (curlret == CURLE_SSL_CONNECT_ERROR) {
@@ -642,7 +647,8 @@ mimeProcess:
 		}
 		if (curlret != CURLE_OK)
 			goto curl_fail;
-		curl_easy_getinfo(curl_handle, CURLINFO_RESPONSE_CODE, &hcode);
+		curl_easy_getinfo(http_curl_handle, CURLINFO_RESPONSE_CODE,
+				  &hcode);
 		if (curlret != CURLE_OK)
 			goto curl_fail;
 
@@ -678,19 +684,19 @@ mimeProcess:
 				unpercentURL(urlcopy);
 
 /* Convert POST request to GET request after redirection. */
-				curl_easy_setopt(curl_handle, CURLOPT_HTTPGET,
-						 1);
+				curl_easy_setopt(http_curl_handle,
+						 CURLOPT_HTTPGET, 1);
 
 				getUserPass(urlcopy, creds_buf, eb_false);
 
 				curlret =
-				    curl_easy_setopt(curl_handle,
+				    curl_easy_setopt(http_curl_handle,
 						     CURLOPT_USERPWD,
 						     creds_buf);
 				if (curlret != CURLE_OK)
 					goto curl_fail;
 
-				curlret = setCurlURL(curl_handle, urlcopy);
+				curlret = setCurlURL(http_curl_handle, urlcopy);
 				if (curlret != CURLE_OK)
 					goto curl_fail;
 
@@ -716,8 +722,8 @@ mimeProcess:
 			if (got_creds) {
 				addWebAuthorization(urlcopy, creds_buf,
 						    eb_false);
-				curl_easy_setopt(curl_handle, CURLOPT_USERPWD,
-						 creds_buf);
+				curl_easy_setopt(http_curl_handle,
+						 CURLOPT_USERPWD, creds_buf);
 				nzFree(serverData);
 				serverData = EMPTYSTRING;
 				serverDataLen = 0;
@@ -998,7 +1004,8 @@ static eb_bool ftpConnect(const char *url, const char *user, const char *pass)
 		strcpy(creds_buf, "anonymous:ftp@example.com");
 	}
 
-	curlret = curl_easy_setopt(curl_handle, CURLOPT_USERPWD, creds_buf);
+	curlret =
+	    curl_easy_setopt(http_curl_handle, CURLOPT_USERPWD, creds_buf);
 	if (curlret != CURLE_OK)
 		goto ftp_transfer_fail;
 
@@ -1016,10 +1023,10 @@ static eb_bool ftpConnect(const char *url, const char *user, const char *pass)
 	if (debugLevel >= 2)
 		i_puts(MSG_FTPDownload);
 
-	curlret = setCurlURL(curl_handle, urlcopy);
+	curlret = setCurlURL(http_curl_handle, urlcopy);
 	if (curlret != CURLE_OK)
 		goto ftp_transfer_fail;
-	curlret = curl_easy_perform(curl_handle);
+	curlret = curl_easy_perform(http_curl_handle);
 
 /* Should we run this code on any error condition? */
 /* The SSH error pops up under sftp. */
@@ -1029,11 +1036,11 @@ static eb_bool ftpConnect(const char *url, const char *user, const char *pass)
 			transfer_success = eb_false;
 		else {		/* try appending a slash. */
 			stringAndChar(&urlcopy, &urlcopy_l, '/');
-			curlret = setCurlURL(curl_handle, urlcopy);
+			curlret = setCurlURL(http_curl_handle, urlcopy);
 			if (curlret != CURLE_OK)
 				goto ftp_transfer_fail;
 
-			curlret = curl_easy_perform(curl_handle);
+			curlret = curl_easy_perform(http_curl_handle);
 			if (curlret != CURLE_OK)
 				transfer_success = eb_false;
 			else {
@@ -1098,34 +1105,35 @@ my_curl_safeSocket(void *clientp, curl_socket_t socketfd, curlsocktype purpose)
 /* Clean up libcurl's state. */
 static void my_curl_cleanup(void)
 {
-	curl_easy_cleanup(curl_handle);
+	curl_easy_cleanup(http_curl_handle);
 	curl_global_cleanup();
 }				/* my_curl_cleanup */
 
-void my_curl_init(void)
+void http_curl_init(void)
 {
 	CURLcode curl_init_status = CURLE_OK;
-	curl_handle = curl_easy_init();
-	if (curl_handle == NULL)
+	http_curl_handle = curl_easy_init();
+	if (http_curl_handle == NULL)
 		i_printfExit(MSG_LibcurlNoInit);
 
 /* Lots of these setopt calls shouldn't fail.  They just diddle a struct. */
-	curl_easy_setopt(curl_handle, CURLOPT_SOCKOPTFUNCTION,
+	curl_easy_setopt(http_curl_handle, CURLOPT_SOCKOPTFUNCTION,
 			 my_curl_safeSocket);
-
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, eb_curl_callback);
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &callback_data);
-	curl_easy_setopt(curl_handle, CURLOPT_HEADERFUNCTION,
+	curl_easy_setopt(http_curl_handle, CURLOPT_WRITEFUNCTION,
+			 eb_curl_callback);
+	curl_easy_setopt(http_curl_handle, CURLOPT_WRITEDATA, &callback_data);
+	curl_easy_setopt(http_curl_handle, CURLOPT_HEADERFUNCTION,
 			 curl_header_callback);
 	if (debugLevel >= 4)
-		curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1);
-	curl_easy_setopt(curl_handle, CURLOPT_DEBUGFUNCTION,
+		curl_easy_setopt(http_curl_handle, CURLOPT_VERBOSE, 1);
+	curl_easy_setopt(http_curl_handle, CURLOPT_DEBUGFUNCTION,
 			 ebcurl_debug_handler);
-	curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 0);
-	curl_easy_setopt(curl_handle, CURLOPT_PROGRESSFUNCTION, curl_progress);
-	curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT, webTimeout);
-	curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, currentAgent);
-	curl_easy_setopt(curl_handle, CURLOPT_SSLVERSION,
+	curl_easy_setopt(http_curl_handle, CURLOPT_NOPROGRESS, 0);
+	curl_easy_setopt(http_curl_handle, CURLOPT_PROGRESSFUNCTION,
+			 curl_progress);
+	curl_easy_setopt(http_curl_handle, CURLOPT_CONNECTTIMEOUT, webTimeout);
+	curl_easy_setopt(http_curl_handle, CURLOPT_USERAGENT, currentAgent);
+	curl_easy_setopt(http_curl_handle, CURLOPT_SSLVERSION,
 			 CURL_SSLVERSION_DEFAULT);
 
 /*
@@ -1134,28 +1142,29 @@ void my_curl_init(void)
 * and it looks like in most cases microsoft IIS says it supports both and libcurl
 * doesn't fall back to NTLM when it discovers that Negotiate isn't set up on a system
 */
-	curl_easy_setopt(curl_handle, CURLOPT_HTTPAUTH,
+	curl_easy_setopt(http_curl_handle, CURLOPT_HTTPAUTH,
 			 CURLAUTH_BASIC | CURLAUTH_DIGEST | CURLAUTH_NTLM);
 
 /* The next few setopt calls could allocate or perform file I/O. */
 	errorText[0] = '\0';
 	curl_init_status =
-	    curl_easy_setopt(curl_handle, CURLOPT_ERRORBUFFER, errorText);
+	    curl_easy_setopt(http_curl_handle, CURLOPT_ERRORBUFFER, errorText);
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
 	curl_init_status =
-	    curl_easy_setopt(curl_handle, CURLOPT_CAINFO, sslCerts);
+	    curl_easy_setopt(http_curl_handle, CURLOPT_CAINFO, sslCerts);
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
 	curl_init_status =
-	    curl_easy_setopt(curl_handle, CURLOPT_COOKIEFILE, cookieFile);
+	    curl_easy_setopt(http_curl_handle, CURLOPT_COOKIEFILE, cookieFile);
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
 	curl_init_status =
-	    curl_easy_setopt(curl_handle, CURLOPT_COOKIEJAR, cookieFile);
+	    curl_easy_setopt(http_curl_handle, CURLOPT_COOKIEJAR, cookieFile);
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
-	curl_init_status = curl_easy_setopt(curl_handle, CURLOPT_ENCODING, "");
+	curl_init_status =
+	    curl_easy_setopt(http_curl_handle, CURLOPT_ENCODING, "");
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
 	atexit(my_curl_cleanup);
@@ -1163,7 +1172,7 @@ void my_curl_init(void)
 libcurl_init_fail:
 	if (curl_init_status != CURLE_OK)
 		i_printfExit(MSG_LibcurlNoInit);
-}				/* my_curl_init */
+}				/* http_curl_init */
 
 /*
  * There's no easy way to get at the server's response message from libcurl.

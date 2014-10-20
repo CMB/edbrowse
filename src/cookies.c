@@ -150,7 +150,7 @@ static CURLcode cookieForLibcurl(const struct cookie *c)
 	char *cookLine = netscapeCookieLine(c);
 	debugPrint(3, "cookie for libcurl");
 	CURLcode ret =
-	    curl_easy_setopt(curl_handle, CURLOPT_COOKIELIST, cookLine);
+	    curl_easy_setopt(http_curl_handle, CURLOPT_COOKIELIST, cookLine);
 	nzFree(cookLine);
 	return ret;
 }				/* cookieForLibcurl */
@@ -373,7 +373,8 @@ void sendCookies(char **s, int *l, const char *url, eb_bool issecure)
 	time_t now;
 	struct curl_slist *known_cookies = NULL;
 	struct curl_slist *cursor = NULL;
-	curl_easy_getinfo(curl_handle, CURLINFO_COOKIELIST, &known_cookies);
+	curl_easy_getinfo(http_curl_handle, CURLINFO_COOKIELIST,
+			  &known_cookies);
 
 	if (!url || !server || !data)
 		return;

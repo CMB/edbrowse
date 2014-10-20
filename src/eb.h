@@ -190,7 +190,7 @@ struct DBTABLE {
 };
 
 /* various globals */
-extern CURL *curl_handle;
+extern CURL *http_curl_handle;
 extern int debugLevel;		/* 0 to 9 */
 extern char *sslCerts;		/* ssl certificates to validate the secure server */
 extern int verifyCertificates;	/* is a certificate required for the ssl connection? */

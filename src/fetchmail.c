@@ -213,6 +213,7 @@ static CURL *newFetchmailHandle(const char *mailbox, const char *username,
 	if (!handle)
 		i_printfExit(MSG_LibcurlNoInit);
 
+	curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, mailTimeout);
 	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, eb_curl_callback);
 	curl_easy_setopt(handle, CURLOPT_WRITEDATA, &callback_data);
 	if (debugLevel >= 4)
@@ -369,8 +370,7 @@ int fetchMail(int account)
 	unreadStats();
 
 	mailstring = initString(&mailstring_l);
-	CURL *mail_handle =
-	    newFetchmailHandle(mailbox_url, login, pass);
+	CURL *mail_handle = newFetchmailHandle(mailbox_url, login, pass);
 	res_curl = count_messages(mail_handle, mailbox_url, &message_count);
 	if (res_curl != CURLE_OK)
 		goto fetchmail_cleanup;
@@ -732,10 +732,10 @@ badsave:
 					}	/* unformat or format */
 
 /* print "mail saved" message */
-						i_printf(MSG_MailSaved, fsize);
-						if (exists)
-							i_printf(MSG_Appended);
-						nl();
+					i_printf(MSG_MailSaved, fsize);
+					if (exists)
+						i_printf(MSG_Appended);
+					nl();
 				}	/* saving to a real file */
 				goto afterinput;
 

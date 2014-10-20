@@ -2756,9 +2756,9 @@ static int twoLetter(const char *line, const char **runThis)
 	    && !line[3]) {
 		debugLevel = line[2] - '0';
 		if (debugLevel >= 4)
-			curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1);
+			curl_easy_setopt(http_curl_handle, CURLOPT_VERBOSE, 1);
 		else
-			curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 0);
+			curl_easy_setopt(http_curl_handle, CURLOPT_VERBOSE, 0);
 		return eb_true;
 	}
 
@@ -2771,7 +2771,8 @@ static int twoLetter(const char *line, const char **runThis)
 			return eb_false;
 		}
 		currentAgent = t;
-		curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, currentAgent);
+		curl_easy_setopt(http_curl_handle, CURLOPT_USERAGENT,
+				 currentAgent);
 		if (helpMessagesOn || debugLevel >= 1)
 			puts(currentAgent);
 		return eb_true;
@@ -3082,7 +3083,7 @@ et_go:
 	if (stringEqual(line, "hr")) {
 		allowRedirection ^= 1;
 /* We're doing this manually for now.
-	curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, allowRedirection);
+	curl_easy_setopt(http_curl_handle, CURLOPT_FOLLOWLOCATION, allowRedirection);
 */
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(allowRedirection + MSG_RedirectionOff);
@@ -3099,7 +3100,7 @@ et_go:
 	if (stringEqual(line, "sr")) {
 		sendReferrer ^= 1;
 /* In case of redirect, let libcurl send URL of redirecting page. */
-		curl_easy_setopt(curl_handle, CURLOPT_AUTOREFERER,
+		curl_easy_setopt(http_curl_handle, CURLOPT_AUTOREFERER,
 				 sendReferrer);
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(sendReferrer + MSG_RefererOff);
@@ -3139,11 +3140,13 @@ et_go:
 		eb_bool doHelp = helpMessagesOn || debugLevel >= 1;
 /* Can't support passive/active mode with libcurl, or at least not easily. */
 		if (line[2] == 'p') {
-			curl_easy_setopt(curl_handle, CURLOPT_FTPPORT, NULL);
+			curl_easy_setopt(http_curl_handle, CURLOPT_FTPPORT,
+					 NULL);
 			if (doHelp)
 				i_puts(MSG_PassiveMode);
 		} else {
-			curl_easy_setopt(curl_handle, CURLOPT_FTPPORT, "-");
+			curl_easy_setopt(http_curl_handle, CURLOPT_FTPPORT,
+					 "-");
 			if (doHelp)
 				i_puts(MSG_ActiveMode);
 		}

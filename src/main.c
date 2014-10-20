@@ -935,7 +935,7 @@ void setDataSource(char *v)
 	dbpw = v;
 }				/* setDataSource */
 
-void eb_curl_global_init(void)
+static void eb_curl_global_init(void)
 {
 	const unsigned int major = 7;
 	const unsigned int minor = 29;
@@ -964,14 +964,13 @@ int main(int argc, char **argv)
 	eb_bool rc, doConfig = eb_true;
 	eb_bool dofetch = eb_false, domail = eb_false;
 
-	eb_curl_global_init();
-
 /* In case this is being piped over to a synthesizer, or whatever. */
 	if (fileTypeByHandle(fileno(stdout)) != 'f')
 		setlinebuf(stdout);
 
 	selectLanguage();
 
+	eb_curl_global_init();
 	ttySaveSettings();
 	initializeReadline();
 
@@ -1178,7 +1177,7 @@ int main(int argc, char **argv)
 	}
 
 	cookiesFromJar();
-	my_curl_init();
+	http_curl_init();
 
 	signal(SIGINT, catchSig);
 	siginterrupt(SIGINT, 1);
