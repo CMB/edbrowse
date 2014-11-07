@@ -1789,6 +1789,7 @@ Most people never read technical web pages, but if you do...
 <P>
 A subscript, as indicated by html tags, is enclosed in brackets.&nbsp;
 Thus x&lt;span class=sub&gt;n&lt;/span&gt; becomes x[n].&nbsp;
+(span.sub should render the subscript properly in your css file - lower and in a smaller font.)&nbsp;
 This transformation is not done if the subscript is a one or two digit number.&nbsp;
 Thus x subscript 1 is rendered x1, just like your professor would say it.&nbsp;
 This is not ambiguous, as you might first think;
@@ -1801,7 +1802,8 @@ it is a translation of 17 times a[3] times b[3].
 Superscripts, as indicated by &lt;span class=sup&gt;, are enclosed in parentheses, with a preceding arrow.&nbsp;
 The parentheses are omitted if the superscript is a number.&nbsp;
 Thus x cubed looks like x^3,
-while x to the n-1 power looks like x^(n-1).
+while x to the n-1 power looks like x^(n-1).&nbsp;
+Again, your css file should define span.sup.
 
 <P>
 There are, sad to say, three different ways to encode mathematical symbols
@@ -1830,7 +1832,8 @@ To avoid this, edbrowse inserts spaces, giving 2 pi r.
 These translations are designed to work with the pages of the
 <A HREF=http://www.mathreference.com> Math Reference Project</A>,
 an archive of advanced mathematics
-that attempts to be both sighted and blind friendly at the same time.
+that attempts to be both sighted and blind friendly at the same time.&nbsp;
+An <A href=http://book.mathreference.com>online textbook</A> is included.
 
 <H3 align=center> <A NAME=title> Title, Description, Keywords </A> </H3>
 
