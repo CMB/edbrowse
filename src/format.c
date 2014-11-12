@@ -1038,7 +1038,7 @@ char *htmlReformat(const char *buf)
 			for (s = h + 1; isspaceByte(*s); ++s) ;
 			nh = s;
 			appendSpaceChunk(h, nh - h, premode);
-			if (lspace == 3 || lspace == 2 &&
+			if (lspace == 3 || (lspace == 2 || premode) &&
 			    (bl_cursor - bl_start) >=
 			    (bl_end - bl_start) * 2 / 3) {
 				if (bl_cursor > bl_start)
