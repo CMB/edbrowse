@@ -1253,7 +1253,7 @@ return 1;
 sub hideNumber($)
 {
 my $n = shift;
-$n =~ y/0-9/\x85-\x8f/;
+$n =~ y/0-9/\x85-\x8e/;
 return $n;
 } # hideNumber
 
@@ -4304,7 +4304,7 @@ $$tbuf =~ s/Had\strouble\sresolving\sdest\snear\sword\s(<[\w_;:\/'"().,-]+>\s)?a
 #  I don't expect any overstrikes, but just in case ...
 $$tbuf =~ s/[^<>"'&\n]\10//g;
 #  Get rid of any other backspaces.
-$$tbuf =~ y/\10/ /d;
+$$tbuf =~ y/\10/ /;
 
 #  Make sure there aren't any \x80 characters to begin with.
 $$tbuf =~ y/\x80/\x81/;
