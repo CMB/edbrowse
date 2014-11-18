@@ -19,8 +19,7 @@ LFLAGS = -L/usr/lib -L/opt/local/lib
 # Libraries for edbrowse.
 # I assume you have linked libjs.so into /opt/local/lib/libjs.a
 # so that -ljs will suffice.
-# -lcrypto is necessary on OS X to provide some ssl functions
-LIBS = -lpcre -lm -lssl -ljs -lcurl -lcrypto
+LIBS = -lpcre -lm -lssl -ljs -lcurl
 
 # Make the dynamically linked edbrowse executable by default.
 all: edbrowse
