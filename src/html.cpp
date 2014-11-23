@@ -1669,8 +1669,9 @@ forceCloseAnchor:
 				ptr = &v->name;
 
 			if (ptr) {
-				a = andTranslate(newstr.substr(offset).c_str(),
-						 eb_true);
+				string piece = newstr.substr(offset);
+				char *piece1 = cloneString(piece.c_str());
+				a = andTranslate(piece1, eb_true);
 				stripWhite(a);
 				if (currentOpt && strchr(a, ',')
 				    && currentSel->multiple) {
@@ -1682,6 +1683,12 @@ forceCloseAnchor:
 				}
 				spaceCrunch(a, eb_true, eb_false);
 				*ptr = a;
+
+				if (ptr == &cw->ft) {
+					spaceCrunch(piece1, eb_true, eb_true);
+					cw->fto = piece1;
+				} else
+					nzFree(piece1);
 
 				if (currentTitle && isJSAlive)
 					establish_property_string(cw->jss->jdoc,

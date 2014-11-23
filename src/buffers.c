@@ -576,6 +576,7 @@ static void freeWindow(struct ebWindow *w)
 	freeWindowLines(w->r_map);
 	nzFree(w->dw);
 	nzFree(w->ft);
+	nzFree(w->fto);
 	nzFree(w->fd);
 	nzFree(w->fk);
 	nzFree(w->mailInfo);
@@ -2954,6 +2955,8 @@ et_go:
 		cw->dw = 0;
 		nzFree(cw->ft);
 		cw->ft = 0;
+		nzFree(cw->fto);
+		cw->fto = 0;
 		nzFree(cw->fd);
 		cw->fd = 0;
 		nzFree(cw->fk);
@@ -3468,28 +3471,36 @@ static char *showLinks(void)
 			stringAndString(&a, &a_l, "\n</a>\n");
 		}		/* loop looking for hyperlinks */
 	}
-	/* browse mode */
+
 	if (!a_l) {		/* nothing found yet */
 		if (!cw->fileName) {
 			setError(MSG_NoFileName);
 			return 0;
 		}
+
 		h = cloneString(cw->fileName);
 		debrowseSuffix(h);
 		stringAndString(&a, &a_l, "<a href=");
 		stringAndString(&a, &a_l, h);
 		stringAndString(&a, &a_l, ">\n");
-		s = (char *)getDataURL(h);
-		if (!s || !*s)
-			s = h;
-		t = s + strcspn(s, "\1?#");
-		if (t > s && t[-1] == '/')
-			--t;
-		*t = 0;
-		q = strrchr(s, '/');
-		if (q && q < t)
-			s = q + 1;
-		stringAndBytes(&a, &a_l, s, t - s);
+/* get text from the html title if you can */
+		s = cw->fto;
+		if (s && *s) {
+			stringAndString(&a, &a_l, s);
+		} else {
+/* no title - getting the text from the url, very kludgy */
+			s = (char *)getDataURL(h);
+			if (!s || !*s)
+				s = h;
+			t = s + strcspn(s, "\1?#");
+			if (t > s && t[-1] == '/')
+				--t;
+			*t = 0;
+			q = strrchr(s, '/');
+			if (q && q < t)
+				s = q + 1;
+			stringAndBytes(&a, &a_l, s, t - s);
+		}
 		stringAndString(&a, &a_l, "\n</a>\n");
 		nzFree(h);
 	}
