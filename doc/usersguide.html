@@ -4551,10 +4551,7 @@ I like to let this run in console 11, with console 12 reserved for superuser fun
 Simple keystrokes let you restart the song (in this case songs are movements of concertos),
 go back a song, go forward a song, pause the music, etc.&nbsp;
 Beyond this, the author was kind enough to add a feature for me,
-wherein the music pauses when mpg123 receives a signal from another process.&nbsp;
-If your version does not have this feature,
-you can grab my source
-<A href=http://www.eklhad.net/mpgsrc.bz2>here</A>.&nbsp;
+wherein the music pauses when mpg123 receives signal 10 from another process.&nbsp;
 With this in place,
 my jupiter adapter binds the three keys at the upper right of the keyboard to
 "increase volume", "decrease volume", and "pause music", just like the Mac.&nbsp;
@@ -4565,9 +4562,9 @@ No X, no screen, just play the music and adjust it in real time.&nbsp;
 Here are the Jupiter key bindings that control the music.
 
 <P>
-sysrq | aumix -v-2
+sysrq|amixer -q set Master 1-
 <br>
-scroll | aumix -v+2
+scroll|amixer -q set Master 1+
 <br>
 pause | killall -q -s10 mpg123
 
