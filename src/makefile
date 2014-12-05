@@ -77,5 +77,9 @@ edbrowseodbc: $(EBOBJS) startwindow.o dbops.o dbodbc.o
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 clean:
-	rm -f *.o edbrowse edbrowseinf edbrowseodbc
+	rm -f *.o edbrowse edbrowseinf edbrowseodbc js_hw_moz
+
+#  some hello world targets, just for testing
+js_hw_moz : js_hw_moz.cpp
+	gcc $(JS_CXXFLAGS) js_hw_moz.cpp $(JSLIB) -lstdc++ -o js_hw_moz
 
