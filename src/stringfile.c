@@ -679,15 +679,15 @@ void copyPstring(pst s, const pst t)
 eb_bool fdIntoMemory(int fd, char **data, int *len)
 {
 	int length, n;
-	const int CHUNKSIZE = 8192;
+	const int blocksize = 8192;
 	char *chunk, *buf;
 
-	chunk = allocZeroMem(CHUNKSIZE);
+	chunk = allocZeroMem(blocksize);
 	buf = initString(&length);
 
 	n = 0;
 	do {
-		n = read(fd, chunk, CHUNKSIZE);
+		n = read(fd, chunk, blocksize);
 		if (n < 0) {
 			nzFree(buf);
 			nzFree(chunk);

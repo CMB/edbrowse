@@ -273,6 +273,8 @@ static CURLcode fetchOneMessage(CURL * handle, const char *message_url,
 		return res;
 
 	res = curl_easy_perform(handle);
+	if (mailstring_l >= CHUNKSIZE)
+		nl();		/* We printed dots, so we terminate them with newline */
 	if (res != CURLE_OK)
 		return res;
 

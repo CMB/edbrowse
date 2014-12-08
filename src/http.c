@@ -33,9 +33,6 @@ static size_t curl_header_callback(char *header_line, size_t size, size_t nmemb,
 				   void *unused);
 static const char *message_for_response_code(int code);
 
-/* Read from a socket, 100K at a time. */
-#define CHUNKSIZE 1000000
-
 /* Callback used by libcurl. Writes data to serverData. */
 size_t
 eb_curl_callback(char *incoming, size_t size, size_t nitems,

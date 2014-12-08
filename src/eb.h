@@ -119,6 +119,8 @@ typedef uchar *pst;		/* perl string */
 /* Allocation increment for a growing string, that we don't expect
  * to get too large.  This must be a power of 2. */
 #define ALLOC_GR        0x100
+/* print a dot on download for each chunk of this size */
+#define CHUNKSIZE 1000000
 
 /* alignments */
 #define AL_LEFT		0
