@@ -55,15 +55,28 @@ typedef unsigned long ulong;
  * me of the uncola, a char that isn't really a char. */
 typedef unsigned char uchar;
 
-/* We use uchar for boolean fields. */
-/* The type is eb_bool, an edbrowse bool, so as not to conflict with C++. */
+/* We use uchar for boolean fields.
+ * The type is eb_bool, an edbrowse bool, so as not to conflict with C++.
+ * When you convert edbrowse back to C, please put these symbols back to
+ * the more readable bool, true, false. */
 typedef uchar eb_bool;
-#define eb_true 1
 #define eb_false 0
+#define eb_true 1
 
 typedef unsigned int IP32bit;
 #define NULL_IP (IP32bit)(-1)
-#define ABSPATH 256
+
+/*********************************************************************
+Include the header file that connects edbrowse to the js process.
+This is a series of enums, and the interprocess message structure,
+and most importantly, the type jsobjtype,
+which is an opaque number that corresponds to an object in the javascript world.
+Edbrowse uses this number to connect an html tag, such as <input>,
+with its corresponding js object.
+These object numbers are passed back and forth to connect edbrowse and js.
+*********************************************************************/
+
+#include "ebjs.h"
 
 #define stringEqual !strcmp
 
@@ -95,6 +108,8 @@ typedef uchar *pst;		/* perl string */
 #define InternalCodeChar '\2'
 #define InternalCodeCharAlternate '\1'
 
+/* How long can an absolute path be? */
+#define ABSPATH 256
 /* How long can a regular expression be? */
 #define MAXRE 400
 /* How long can an entered line be? */
@@ -166,10 +181,10 @@ struct MACCOUNT {		/* pop3 account */
 extern struct MACCOUNT accounts[];	/* all the email accounts */
 extern int maxAccount;		/* how many email accounts specified */
 
-struct PXENT { /* proxy entry */
-	char *prot; /* null means any */
-	char *domain; /* null means any */
-	char *proxy; /* null means direct */
+struct PXENT {			/* proxy entry */
+	char *prot;		/* null means any */
+	char *domain;		/* null means any */
+	char *proxy;		/* null means direct */
 };
 extern struct PXENT proxyEntries[];
 extern int maxproxy;
@@ -297,7 +312,7 @@ struct ebWindow {
 	char *referrer;
 	char *baseDirName;	/* when scanning a directory */
 	char *ft, *fd, *fk;	/* title, description, keywords */
-	char *fto; /* original title, before andTranslate */
+	char *fto;		/* original title, before andTranslate */
 	char *mailInfo;
 	char lhs[MAXRE], rhs[MAXRE];	/* remembered substitution strings */
 	struct lineMap *map, *r_map;
@@ -324,7 +339,13 @@ struct ebWindow {
 	char *dw;		/* document.write string */
 	int dw_l;		/* length of the above */
 	struct ebWindowJSState *jss;
-eb_bool js_failed;
+/* The javascript window object corresponding to this edbrowse window.
+ * If this is null then javascript is not operational for this window.
+ * We could still be browsing however, without javascript.
+ * Refer to browseMode to test for that. */
+	jsobjtype winobj;
+	jsobjtype docobj;	/* window.document */
+	eb_bool js_failed;	/* temporary */
 	struct DBTABLE *table;	/* if in sqlMode */
 };
 extern struct ebWindow *cw;	/* current window */
