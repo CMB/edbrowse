@@ -1,5 +1,15 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.5.2:
+The blacklist feature is now gone.
+It wasn't really used,
+as there are more effective ways to fight spam these days.
+Also, there was the possibility that reading an empty blacklist file could
+lead to a crash.
+
+This release contains a few additional minor bugfixes, the most significant
+of which involved the rendering preformatted sections when browsing html.
+
 3.5.1:
 Mozilla javascript version 2.4 and above supports only a C++ interface,
 so if we want to keep using moz js, then we must follow along.
