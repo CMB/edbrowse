@@ -40,6 +40,7 @@ enum ej_lowstat {
 	EJ_LOW_SYNTAX,
 	EJ_LOW_MEMORY,
 	EJ_LOW_EXEC,
+	EJ_LOW_RUNTIME,
 	EJ_LOW_OTHER,
 };
 
@@ -61,7 +62,8 @@ typedef void *jsobjtype;
 
 struct EJ_MSG {
 	int magic;		/* sanity check */
-	jsobjtype winobj;	/* window object to set the context */
+	jsobjtype cx;		/* javascript context */
+	jsobjtype winobj;	/* window object */
 	jsobjtype obj;		/* an object somewhere in the window tree */
 	enum ej_highstat highstat;
 	enum ej_lowstat lowstat;
@@ -69,6 +71,7 @@ struct EJ_MSG {
 	int proplength;
 	enum ej_proptype proptype;
 	int n;			/* an overloaded integer */
+	int side;		/* length of side effects string */
 };
 
 #endif

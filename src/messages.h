@@ -106,7 +106,7 @@ enum {
 	MSG_Delete,
 	MSG_IPDelete,
 	MSG_POption,
-	MSG_NotUsed109,
+	MSG_JSEngineRun,
 	MSG_EndMessage,
 	MSG_NYI,
 	MSG_FileName,
