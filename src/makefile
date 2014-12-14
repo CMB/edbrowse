@@ -79,7 +79,11 @@ edbrowseodbc: $(EBOBJS) startwindow.o dbops.o dbodbc.o
 clean:
 	rm -f *.o edbrowse edbrowseinf edbrowseodbc js_hw_moz
 
-#  some hello world targets, just for testing
-js_hw_moz : js_hw_moz.cpp
-	gcc $(JS_CXXFLAGS) js_hw_moz.cpp $(JSLIB) -lstdc++ -o js_hw_moz
+#  some hello world targets, for testing and debugging
+
+js_hello_moz : js_hello_moz.cpp
+	gcc $(JS_CXXFLAGS) js_hello_moz.cpp $(JSLIB) -lstdc++ -o js_hello_moz
+
+js_hello_v8 : js_hello_v8.cpp
+	gcc js_hello_v8.cpp -lv8 -lstdc++ -o js_hello_v8
 
