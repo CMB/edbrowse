@@ -62,7 +62,7 @@ typedef void *jsobjtype;
 
 struct EJ_MSG {
 	int magic;		/* sanity check */
-	jsobjtype cx;		/* javascript context */
+	jsobjtype jcx;		/* javascript context */
 	jsobjtype winobj;	/* window object */
 	jsobjtype obj;		/* an object somewhere in the window tree */
 	enum ej_highstat highstat;

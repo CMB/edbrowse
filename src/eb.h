@@ -339,10 +339,11 @@ struct ebWindow {
 	char *dw;		/* document.write string */
 	int dw_l;		/* length of the above */
 	struct ebWindowJSState *jss;
-/* The javascript window object corresponding to this edbrowse window.
+/* The javascript context and window corresponding to this edbrowse buffer.
  * If this is null then javascript is not operational for this window.
  * We could still be browsing however, without javascript.
  * Refer to browseMode to test for that. */
+	jsobjtype jcx;
 	jsobjtype winobj;
 	jsobjtype docobj;	/* window.document */
 	eb_bool js_failed;	/* temporary */
