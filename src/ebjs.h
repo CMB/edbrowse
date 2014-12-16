@@ -22,9 +22,9 @@ enum ej_cmd {
 	EJ_CMD_GETPROP,
 	EJ_CMD_SETPROP,
 	EJ_CMD_DELPROP,
+	EJ_CMD_HASPROP,
 	EJ_CMD_GETAREL,
 	EJ_CMD_SETAREL,
-	EJ_CMD_INSTANCE,
 };
 
 enum ej_highstat {
@@ -45,7 +45,7 @@ enum ej_lowstat {
 };
 
 enum ej_proptype {
-	EJ_PROP_UNDEFINED,
+	EJ_PROP_NONE,
 	EJ_PROP_STRING,
 	EJ_PROP_BOOL,
 	EJ_PROP_INT,
@@ -53,7 +53,7 @@ enum ej_proptype {
 	EJ_PROP_OBJECT,
 	EJ_PROP_ARRAY,
 	EJ_PROP_FUNCTION,
-	EJ_PROP_URL,
+	EJ_PROP_INSTANCE,
 };
 
 /* Opaque indicator of an object that can be shared
@@ -62,6 +62,7 @@ typedef void *jsobjtype;
 
 struct EJ_MSG {
 	int magic;		/* sanity check */
+	int cmd;
 	jsobjtype jcx;		/* javascript context */
 	jsobjtype winobj;	/* window object */
 	jsobjtype obj;		/* an object somewhere in the window tree */
@@ -72,6 +73,7 @@ struct EJ_MSG {
 	enum ej_proptype proptype;
 	int n;			/* an overloaded integer */
 	int side;		/* length of side effects string */
+	int msglen;		/* error message from JS */
 };
 
 #endif
