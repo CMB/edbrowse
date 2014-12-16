@@ -120,7 +120,7 @@ enum {
 	MSG_AttNoWrite,
 	MSG_NoMail,
 	MSG_MessagesX,
-	MSG_NotUsed123,
+	MSG_JSEngineSync,
 	MSG_From,
 	MSG_MailHelp,
 	MSG_NoCreate,

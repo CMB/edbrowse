@@ -41,6 +41,7 @@ enum ej_lowstat {
 	EJ_LOW_MEMORY,
 	EJ_LOW_EXEC,
 	EJ_LOW_RUNTIME,
+	EJ_LOW_SYNC,
 	EJ_LOW_OTHER,
 };
 

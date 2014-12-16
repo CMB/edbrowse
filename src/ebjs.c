@@ -250,8 +250,9 @@ static int writeToJS(const void *data_p, int n)
 static char *propval;		/* property value, allocated */
 static enum ej_proptype proptype;
 
-/* Read the message header from js. */
-static int readHeader(void)
+/* Read the entire message from js, then take action.
+ * Thus messages will remain in sync. */
+static int readMessage(void)
 {
 	int l, rc;
 	char *msg;		/* message from js */
@@ -263,6 +264,7 @@ static int readHeader(void)
 	if (head.magic != EJ_MAGIC) {
 /* this should never happen */
 		js_shutdown();
+		i_puts(MSG_JSEngineSync);
 		markAllDead();
 		return -1;
 	}
@@ -278,6 +280,8 @@ static int readHeader(void)
 			i_puts(MSG_JavaMemError);
 		if (head.lowstat == EJ_LOW_RUNTIME)
 			i_puts(MSG_JSEngineRun);
+		if (head.lowstat == EJ_LOW_SYNC)
+			i_puts(MSG_JSEngineSync);
 		markAllDead();
 		return -1;
 	}
@@ -327,7 +331,7 @@ static int readHeader(void)
 	}
 
 	return 0;
-}				/* readHeader */
+}				/* readMessage */
 
 static int writeHeader(void)
 {
@@ -409,6 +413,8 @@ void freeJavaContext1(struct ebWindow *w)
 int javaParseExecute(jsobjtype obj, const char *str, const char *filename,
 		     int lineno)
 {
+	int rc;
+
 	if (!allowJS || !cw->winobj || !obj)
 		return -1;
 
@@ -422,13 +428,15 @@ int javaParseExecute(jsobjtype obj, const char *str, const char *filename,
 	head.obj = obj;		/* this, in js */
 	head.proplength = strlen(str);
 	head.n = lineno;
-	jsSourceFile = filename;
 	if (writeHeader())
 		return -1;
 /* and send the script to execute */
 	if (writeToJS(str, head.proplength))
 		return -1;
-	if (readHeader())
+	jsSourceFile = filename;
+	rc = readHeader();
+	jsSourceFile = 0;
+	if (rc)
 		return -1;
 	ack5();
 
@@ -444,11 +452,11 @@ enum ej_proptype has_property(jsobjtype obj, const char *name)
 	debugPrint(5, "> has %s", name);
 
 	head.cmd = EJ_CMD_HASPROP;
-	head.proplength = strlen(name);
+	head.n = strlen(name);
 	head.obj = obj;
 	if (writeHeader())
 		return EJ_PROP_NONE;
-	if (writeToJs(name, head.proplength))
+	if (writeToJS(name, head.n))
 		return EJ_PROP_NONE;
 	if (readHeader())
 		return EJ_PROP_NONE;
@@ -465,10 +473,10 @@ void delete_property(jsobjtype obj, const char *name)
 
 	head.cmd = EJ_CMD_DELPROP;
 	head.obj = obj;
-	head.proplength = strlen(name);
+	head.n = strlen(name);
 	if (writeHeader())
 		return;
-	if (writeToJs(name, head.proplength))
+	if (writeToJS(name, head.n))
 		return;
 	if (readHeader())
 		return;
@@ -485,11 +493,11 @@ static int get_property(jsobjtype obj, const char *name)
 	debugPrint(5, "> get %s", name);
 
 	head.cmd = EJ_CMD_GETPROP;
-	head.proplength = strlen(name);
+	head.n = strlen(name);
 	head.obj = obj;
 	if (writeHeader())
 		return -1;
-	if (writeToJs(name, head.proplength))
+	if (writeToJS(name, head.n))
 		return -1;
 	if (readHeader())
 		return -1;
@@ -611,9 +619,9 @@ static int set_property(jsobjtype obj, const char *name,
 	head.n = strlen(name);
 	if (writeHeader())
 		return -1;
-	if (writeToJs(name, strlen(name)))
+	if (writeToJS(name, head.n))
 		return -1;
-	if (writeToJs(value, strlen(value)))
+	if (writeToJS(value, strlen(value)))
 		return -1;
 	if (readHeader())
 		return -1;
@@ -658,7 +666,6 @@ int set_property_object(jsobjtype parent, const char *name, jsobjtype child)
 jsobjtype instantiate_array(jsobjtype parent, const char *name)
 {
 	jsobjtype p = 0;
-	int l;
 
 	if (!allowJS || !cw->winobj || !parent)
 		return 0;
@@ -668,26 +675,22 @@ jsobjtype instantiate_array(jsobjtype parent, const char *name)
 	head.cmd = EJ_CMD_SETPROP;
 	head.obj = parent;
 	head.proptype = EJ_PROP_ARRAY;
+	head.proplength = 0;
 	head.n = strlen(name);
 	if (writeHeader())
 		return 0;
-	if (writeToJs(name, head.n))
+	if (writeToJS(name, head.n))
 		return 0;
 	if (readHeader())
 		return 0;
 	ack5();
 
-	l = head.proplength;
-	if (!l)
-		return 0;
-	propval = allocMem(l + 1);
-	if (readFromJS(propval, l)) {
+	if (propval) {
+		sscanf(propval, "%p", &p);
 		free(propval);
-		return 0;
+		propval = 0;
 	}
-	propval[l] = 0;
-	sscanf(propval, "%p", &p);
-	free(propval);
+
 	return p;
 }				/* instantiate_array */
 
@@ -708,7 +711,7 @@ static int set_array_element(jsobjtype array, int idx,
 	head.n = idx;
 	if (writeHeader())
 		return -1;
-	if (writeToJs(value, head.proplength))
+	if (writeToJS(value, head.proplength))
 		return -1;
 	if (readHeader())
 		return -1;
@@ -730,7 +733,6 @@ int set_array_element_object(jsobjtype array, int idx, jsobjtype child)
 jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname)
 {
 	jsobjtype p = 0;
-	int l;
 
 	if (!allowJS || !cw->winobj || !parent)
 		return 0;
@@ -747,25 +749,20 @@ jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname)
 	head.n = strlen(name);
 	if (writeHeader())
 		return 0;
-	if (writeToJs(name, head.n))
+	if (writeToJS(name, head.n))
 		return 0;
-	if (writeToJs(classname, head.proplength))
+	if (writeToJS(classname, head.proplength))
 		return 0;
 	if (readHeader())
 		return 0;
 	ack5();
 
-	l = head.proplength;
-	if (!l)
-		return 0;
-	propval = allocMem(l + 1);
-	if (readFromJS(propval, l)) {
+	if (propval) {
+		sscanf(propval, "%p", &p);
 		free(propval);
-		return 0;
+		propval = 0;
 	}
-	propval[l] = 0;
-	sscanf(propval, "%p", &p);
-	free(propval);
+
 	return p;
 }				/* instantiate */
 

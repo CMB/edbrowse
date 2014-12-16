@@ -120,7 +120,7 @@ static const char *englishMessages[] = {
 	"cannot write to file %s, attachment is discarded\n",
 	"no mail",
 	"%d messages\n",
-	0,
+	"Javascript interprocess messages are out of sync.",
 	" from ",
 	"?\tprint this help message.\nq\tquit this program.\nspace\tread more of this mail message.\nn\tmove on to the next mail message.\nd\tdelete this message.\nw\twrite this message to a file and delete it.\nu\twrite this message unformatted to a file, and delete it.",
 	"cannot create file %s\n",
