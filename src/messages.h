@@ -182,7 +182,7 @@ enum {
 	MSG_NotModifiedG,
 	MSG_Interrupted,
 	MSG_NoMatch,
-	MSG_NotUsed185,
+	MSG_JSEngineVars,
 	MSG_NoAgent,
 	MSG_CDGetError,
 	MSG_CDSetError,

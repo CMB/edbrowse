@@ -23,6 +23,7 @@ void setupJavaDom(void);
 jsobjtype instantiate_url(jsobjtype parent, const char *name, const char *url);
 /* And I added 1 to createJavaContext() and freeJavaContext() so they
  * don't conflict with prototypes in eb.p. */
+void freeJavaContext1(struct ebWindow *w);
 
 /* If connection is lost, mark all js sessions as dead. */
 static void markAllDead(void)
@@ -146,6 +147,7 @@ n{ new window() that may open a new edbrowse buffer }
 t{ timer or interval calling a js function }
 v{ javascript changes the value of an input field }
 o{ change the list of options in a select list }
+c{set cookie}
 i{ innnerHtml or innerText }
 f{ form submit or reset }
 Any or all of these could be coded in the side effects string.
@@ -169,6 +171,7 @@ static void processEffects(void)
  * unless there is a spurious null in the string. */
 		if (!v)
 			break;
+		*v = 0;
 
 		switch (c) {
 		case 'w':	/* document.write */
@@ -177,19 +180,19 @@ static void processEffects(void)
 				stringAndString(&cw->dw, &cw->dw_l,
 						"<docwrite>");
 			}
-			stringAndBytes(&cw->dw, &cw->dw_l, s, v - s);
+			stringAndString(&cw->dw, &cw->dw_l, s);
 			break;
 
 		case 'n':	/* new window */
 /* url on one line, name of window on next line */
 			t = strchr(s, '\n');
-			*t = *v = 0;
+			*t = 0;
 			javaOpensWindow(s, t + 1);
 			break;
 
 		case 'v':	/* value = "foo" */
 			t = strchr(s, '=');
-			*t = *v = 0;
+			*t = 0;
 			sscanf(s, "%p", &p);
 			javaSetsTagVar(p, t + 1);
 			break;
@@ -202,6 +205,12 @@ static void processEffects(void)
 			v[-2] = 0;
 			sscanf(t, "%p", &p);
 			javaSetsTimeout(n, s, p, v[-1] - '0');
+			break;
+
+		case 'c':	/* cookie */
+/* Javascript does some modest syntax checking on the cookie before
+ * passing it back to us, so I'm just going to assume it works. */
+			receiveCookie(cw->fileName, s);
 			break;
 
 		}		/* switch */
@@ -328,6 +337,17 @@ static int readMessage(void)
 			return -1;
 		}
 		propval[l] = 0;
+	}
+
+	if (head.highstat == EJ_HIGH_CX_FAIL) {
+		if (head.lowstat == EJ_LOW_VARS)
+			i_puts(MSG_JSEngineVars);
+		if (head.lowstat == EJ_LOW_CLOSE)
+			i_puts(MSG_PageDone);
+		else
+			i_puts(MSG_JSSessionFail);
+		freeJavaContext1(cw);
+/* should I free and zero the property at this point? */
 	}
 
 	return 0;
@@ -1036,6 +1056,32 @@ jsobjtype new_js_object(void)
 	return instantiate(cw->winobj, s, 0);
 }				/* new_js_object */
 
+/* set document.cookie to the cookies relevant to this url */
+static void docCookie(jsobjtype d)
+{
+	int cook_l;
+	char *cook = initString(&cook_l);
+	const char *url = cw->fileName;
+	eb_bool secure = eb_false;
+	const char *proto;
+	char *s;
+
+	if (url) {
+		proto = getProtURL(url);
+		if (proto && stringEqualCI(proto, "https"))
+			secure = eb_true;
+		sendCookies(&cook, &cook_l, url, secure);
+		if (memEqualCI(cook, "cookie: ", 8)) {	/* should often happen */
+			strmove(cook, cook + 8);
+		}
+		if (s = strstr(cook, "\r\n"))
+			*s = 0;
+	}
+
+	set_property_string(d, "cookie", cook);
+	nzFree(cook);
+}				/* docCookie */
+
 #include <sys/utsname.h>
 
 /* After createJavaContext, set up the document object and other variables
@@ -1133,8 +1179,14 @@ void setupJavaDom(void)
 	set_property_string(hist, "current", cw->fileName);
 /* Since there is no history in edbrowse, the rest is left to startwindow.js */
 
-/* the js window/document setup script */
+/* cookies for the url */
+	docCookie(d);
+
+/* the js window/document setup script.
+ * These are all the things that do not depend on the platform,
+ * OS, configurations, etc. */
 	javaParseExecute(w, startWindowJS, "StartWindow", 1);
+
 }				/* setupJavaDom */
 
 /* create a new url with constructor */

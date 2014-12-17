@@ -127,7 +127,7 @@ static const char *englishMessages[] = {
 	"cannot write to file %s\n",
 	"mail saved, %d bytes",
 	" appended",
-	"this page is finished, please use your back key or quit",
+	"This page is finished, please use your back key or quit.",
 	"Sorry, innerText update not yet implemented.",
 	"no errors",
 	"proxy authentication for a non-proxy url",
@@ -182,7 +182,7 @@ static const char *englishMessages[] = {
 	"none of the marked lines were successfully modified",
 	"operation interrupted",
 	"no match",
-	0,
+	"Javascript objects are missing or misconfigured.",
 	"agent number %c is not defined",
 	"could not print new directory",
 	"could not establish current directory",
@@ -679,7 +679,7 @@ static const char *englishMessages[] = {
 	"input tty",
 	"input readline()",
 	0,
-	"Unrecoverable JavaScript error in this session",
+	"Unrecoverable JavaScript error in this session, javascript is closed.",
 	"onclick handler is not accessible",
 };
 

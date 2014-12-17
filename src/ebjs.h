@@ -38,11 +38,12 @@ enum ej_highstat {
 enum ej_lowstat {
 	EJ_LOW_OK,
 	EJ_LOW_SYNTAX,
+	EJ_LOW_CLOSE,
+	EJ_LOW_VARS,
 	EJ_LOW_MEMORY,
 	EJ_LOW_EXEC,
 	EJ_LOW_RUNTIME,
 	EJ_LOW_SYNC,
-	EJ_LOW_OTHER,
 };
 
 enum ej_proptype {
