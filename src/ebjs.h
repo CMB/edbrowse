@@ -69,7 +69,7 @@ typedef void *jsobjtype;
 
 struct EJ_MSG {
 	int magic;		/* sanity check */
-	int cmd;
+	enum ej_cmd cmd;
 	jsobjtype jcx;		/* javascript context */
 	jsobjtype winobj;	/* window object */
 	jsobjtype docobj;	/* document object */

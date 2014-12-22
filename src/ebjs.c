@@ -219,6 +219,15 @@ static void processEffects(void)
 			javaSubmitsForm(p, (c == 'r'));
 			break;
 
+		case 'i':
+			c = *s++;
+/* h = inner html, t = inner text */
+			t = strchr(s, '|');
+			*t++ = 0;
+			sscanf(t, "%p", &p);
+/* do something with object p and innerhtml t */
+			break;
+
 		}		/* switch */
 
 /* skip past end marker + newline */
