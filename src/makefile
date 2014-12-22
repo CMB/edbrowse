@@ -72,12 +72,15 @@ edbrowseinf: $(EBOBJS) startwindow.o dbops.o dbinfx.o
 	esql $(ESQLDFLAGS) -o edbrowseinf $(EBOBJS) startwindow.o dbops.o dbinfx.o $(LDLIBS)
 
 #  odbc access
-edbrowseodbc: LDLIBS += -lodbc
-edbrowseodbc: $(EBOBJS) startwindow.o dbops.o dbodbc.o
+edbrowse-odbc: LDLIBS += -lodbc
+edbrowse-odbc: $(EBOBJS) startwindow.o dbops.o dbodbc.o
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 clean:
-	rm -f *.o edbrowse edbrowseinf edbrowseodbc js_hw_moz
+	rm -f *.o edbrowse edbrowseinf edbrowse-odbc edbrowse-js js_hw_moz
+
+edbrowse-js : jseng-moz.o
+	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 #  some hello world targets, for testing and debugging
 

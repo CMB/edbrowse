@@ -16,6 +16,7 @@ Since there are no function declarations here, we don't need the extern "C" {}
 #define EJ_MAGIC 0xac97
 
 enum ej_cmd {
+	EJ_CMD_NONE,
 	EJ_CMD_CREATE,
 	EJ_CMD_DESTROY,
 	EJ_CMD_SCRIPT,
@@ -39,6 +40,10 @@ enum ej_lowstat {
 	EJ_LOW_OK,
 	EJ_LOW_SYNTAX,
 	EJ_LOW_CLOSE,
+	EJ_LOW_CX,
+	EJ_LOW_WIN,
+	EJ_LOW_DOC,
+	EJ_LOW_STD,
 	EJ_LOW_VARS,
 	EJ_LOW_MEMORY,
 	EJ_LOW_EXEC,
@@ -67,6 +72,7 @@ struct EJ_MSG {
 	int cmd;
 	jsobjtype jcx;		/* javascript context */
 	jsobjtype winobj;	/* window object */
+	jsobjtype docobj;	/* document object */
 	jsobjtype obj;		/* an object somewhere in the window tree */
 	enum ej_highstat highstat;
 	enum ej_lowstat lowstat;
@@ -76,6 +82,7 @@ struct EJ_MSG {
 	int n;			/* an overloaded integer */
 	int side;		/* length of side effects string */
 	int msglen;		/* error message from JS */
+	int lineno;		/* line number */
 };
 
 #endif

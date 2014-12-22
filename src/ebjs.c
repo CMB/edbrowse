@@ -213,6 +213,12 @@ static void processEffects(void)
 			receiveCookie(cw->fileName, s);
 			break;
 
+		case 'f':
+			c = *s++;
+			sscanf(s, "%p", &p);
+			javaSubmitsForm(p, (c == 'r'));
+			break;
+
 		}		/* switch */
 
 /* skip past end marker + newline */
@@ -320,7 +326,8 @@ static int readMessage(void)
 		if (debugLevel >= 3) {
 /* print message, this will be in English, and mostly for our debugging */
 			if (jsSourceFile)
-				printf("%s line %d: ", jsSourceFile, head.n);
+				printf("%s line %d: ", jsSourceFile,
+				       head.lineno);
 			printf("%s\n", msg);
 		}
 		free(msg);
@@ -342,6 +349,12 @@ static int readMessage(void)
 	if (head.highstat == EJ_HIGH_CX_FAIL) {
 		if (head.lowstat == EJ_LOW_VARS)
 			i_puts(MSG_JSEngineVars);
+		if (head.lowstat == EJ_LOW_CX)
+			i_puts(MSG_JavaContextError);
+		if (head.lowstat == EJ_LOW_WIN)
+			i_puts(MSG_JavaWindowError);
+		if (head.lowstat == EJ_LOW_DOC)
+			i_puts(MSG_JavaObjError);
 		if (head.lowstat == EJ_LOW_CLOSE)
 			i_puts(MSG_PageDone);
 		else
@@ -358,6 +371,7 @@ static int writeHeader(void)
 	head.magic = EJ_MAGIC;
 	head.jcx = cw->jcx;
 	head.winobj = cw->winobj;
+	head.docobj = cw->docobj;
 	return writeToJS(&head, sizeof(head));
 }				/* writeHeader */
 
@@ -383,6 +397,7 @@ void createJavaContext1(void)
 
 	debugPrint(5, "> create context for session %d", cs - sessionList);
 
+	memset(&head, 0, sizeof(head));
 	head.cmd = EJ_CMD_CREATE;
 	if (writeHeader())
 		return;
@@ -396,6 +411,7 @@ void createJavaContext1(void)
 /* Copy the context pointer back to edbrowse. */
 	cw->jcx = head.jcx;
 	cw->winobj = head.winobj;
+	cw->docobj = head.docobj;
 
 	setupJavaDom();
 }				/* createJavaContext */
@@ -421,6 +437,7 @@ void freeJavaContext1(struct ebWindow *w)
 	head.cmd = EJ_CMD_DESTROY;
 	head.jcx = w->jcx;
 	head.winobj = w->winobj;
+	head.docobj = w->docobj;
 	if (writeToJS(&head, sizeof(head)))
 		return;
 	if (readHeader())
@@ -447,7 +464,7 @@ int javaParseExecute(jsobjtype obj, const char *str, const char *filename,
 	head.cmd = EJ_CMD_SCRIPT;
 	head.obj = obj;		/* this, in js */
 	head.proplength = strlen(str);
-	head.n = lineno;
+	head.lineno = lineno;
 	if (writeHeader())
 		return -1;
 /* and send the script to execute */
@@ -599,7 +616,7 @@ static int get_array_element(jsobjtype obj, int idx)
 	debugPrint(5, "> get [%d]", idx);
 
 	head.cmd = EJ_CMD_GETAREL;
-	head.proplength = idx;
+	head.n = idx;
 	head.obj = obj;
 	if (writeHeader())
 		return -1;
