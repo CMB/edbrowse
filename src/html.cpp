@@ -5,7 +5,12 @@
  */
 
 #include "eb.h"
-#include "js.h"
+#include <vector>
+#include <string>
+using namespace std;
+
+/* The list of html tags for the current window. */
+#define tagList (*((vector<struct htmlTag *> *)(cw->tags)))
 
 static const char *const inp_types[] = {
 	"reset", "button", "image", "submit",
@@ -284,15 +289,6 @@ void freeTags(struct ebWindow *w)
 		nzFree(t->value);
 		nzFree(t->href);
 		nzFree(t->classname);
-
-/* We probably don't need to do this at all,
- * since j context is soon to be destroyed. */
-		if (t->jv && w->jss) {
-			JSAutoRequest autoreq(w->jss->jcx);
-			JSAutoCompartment ac(w->jss->jcx, w->jss->jwin);
-			t->jv. ~ HeapRootedObject();
-		}
-
 		free(t);
 	}
 
@@ -1111,7 +1107,7 @@ struct htmlTag *newTag(const char *name)
 
 /* This is only called if js is alive */
 static void
-onloadGo(JS::HandleObject obj, const char *jsrc, const char *tagname)
+onloadGo(jsobjtype obj, const char *jsrc, const char *tagname)
 {
 	struct htmlTag *t;
 	char buf[32];
@@ -3538,7 +3534,7 @@ eb_bool infPush(int tagno, char **post_string)
 }				/* infPush */
 
 /* I don't have any reverse pointers, so I'm just going to scan the list */
-static struct htmlTag *tagFromJavaVar(JS::HandleObject v)
+static struct htmlTag *tagFromJavaVar(jsobjtype v)
 {
 	struct htmlTag *t = 0;
 	if (!cw->tags)
@@ -3554,7 +3550,7 @@ static struct htmlTag *tagFromJavaVar(JS::HandleObject v)
 }				/* tagFromJavaVar */
 
 /* Javascript has changed an input field */
-void javaSetsTagVar(JS::HandleObject v, const char *val)
+void javaSetsTagVar(jsobjtype v, const char *val)
 {
 	struct htmlTag *t = tagFromJavaVar(v);
 	if (!t)
@@ -3570,7 +3566,7 @@ void javaSetsTagVar(JS::HandleObject v, const char *val)
 }				/* javaSetsTagVar */
 
 /* Return false to stop javascript, due to a url redirect */
-void javaSubmitsForm(JS::HandleObject v, eb_bool reset)
+void javaSubmitsForm(jsobjtype v, eb_bool reset)
 {
 	char *post;
 	eb_bool rc;
@@ -3621,7 +3617,7 @@ void javaOpensWindow(const char *href, const char *name)
 }				/* javaOpensWindow */
 
 void
-javaSetsTimeout(int n, const char *jsrc, JS::HandleObject to,
+javaSetsTimeout(int n, const char *jsrc, jsobjtype to,
 		eb_bool isInterval)
 {
 	struct htmlTag *t = newTag("a");

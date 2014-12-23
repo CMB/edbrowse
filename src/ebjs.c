@@ -11,22 +11,9 @@
 
 #include <signal.h>
 
-/* This block is temporary, for stand alone compilation purposes */
-static struct htmlTag {
-	jsobjtype jv;		/* corresponding js object */
-	struct htmlTag *controller;
-	char *name, *id, *classname, *href, *value;
-	int action, lic, seqno, itype;
-	eb_bool checked, rchecked, multiple;
-	struct {
-		char *name;
-	} *info;
-} *topTag, *tagList[3];
 void setupJavaDom(void);
 jsobjtype instantiate_url(jsobjtype parent, const char *name, const char *url);
-/* And I added 1 to createJavaContext() and freeJavaContext() so they
- * don't conflict with prototypes in eb.p. */
-void freeJavaContext1(struct ebWindow *w);
+void freeJavaContext(struct ebWindow *w);
 static int numTags = 3;
 #define INP_SELECT 5
 #define TAGACT_INPUT 33
@@ -386,7 +373,7 @@ static int readMessage(void)
 			i_puts(MSG_PageDone);
 		else
 			i_puts(MSG_JSSessionFail);
-		freeJavaContext1(cw);
+		freeJavaContext(cw);
 /* should I free and zero the property at this point? */
 	}
 
@@ -417,7 +404,7 @@ static void ack5(void)
 
 /* Create a js context for the current window.
  * The corresponding js context will be stored in cw->jcx. */
-void createJavaContext1(void)
+void createJavaContext(void)
 {
 	if (!allowJS)
 		return;
@@ -453,7 +440,7 @@ writeHeader() function above,
 * whibuilds the message assuming cw.
 *********************************************************************/
 
-void freeJavaContext1(struct ebWindow *w)
+void freeJavaContext(struct ebWindow *w)
 {
 	if (!w->winobj)
 		return;

@@ -283,10 +283,6 @@ struct listHead {
 (e) != (void*)&(l); \
 (e) = ((struct listHead *)e)->prev)
 
-/* Forward declaration, real declaration in js.h. */
-struct ebWindowJSState;
-/* Another forward declaration, opaque outside html.c. */
-struct htmlTag;
 
 /* A pointer to the text of a line, and other line attributes */
 struct lineMap {
@@ -338,7 +334,6 @@ struct ebWindow {
 	eb_bool sqlMode;	/* accessing a table */
 	char *dw;		/* document.write string */
 	int dw_l;		/* length of the above */
-	struct ebWindowJSState *jss;
 /* The javascript context and window corresponding to this edbrowse buffer.
  * If this is null then javascript is not operational for this window.
  * We could still be browsing however, without javascript.
@@ -361,7 +356,7 @@ If ints are larger then I don't even use this constant.
 
 #define MAXLINES 170000000
 
-#define isJSAlive (cw->jss != NULL && allowJS  && !cw->js_failed)
+#define isJSAlive (cw->jcx != NULL && allowJS  && !cw->js_failed)
 
 /* An edit session */
 struct ebSession {
@@ -369,6 +364,83 @@ struct ebSession {
 };
 extern struct ebSession sessionList[];
 extern struct ebSession *cs;	/* current session */
+
+/* The information on an html tag */
+struct tagInfo {
+	const char *name;
+	const char *desc;
+	int action;
+	uchar nest;		/* must nest, like parentheses */
+	uchar para;		/* paragraph and line breaks */
+	ushort bits;		/* a bunch of boolean attributes */
+};
+
+/* The structure for an html tag.
+ * These tags are at times compared with js objects, or even created by js objects,
+ * so the structure should be visible to the js machinery. */
+struct htmlTag {
+	jsobjtype jv;	/* corresponding java variable */
+	int seqno;
+	int ln;			/* line number */
+	int lic;		/* list item count, highly overloaded */
+	int action;
+	const struct tagInfo *info;
+/* the form that owns this input tag, etc */
+	struct htmlTag *controller;
+	eb_bool slash:1;	/* as in </A> */
+	eb_bool balanced:1;	/* <foo> and </foo> */
+	eb_bool retain:1;
+	eb_bool multiple:1;
+	eb_bool rdonly:1;
+	eb_bool clickable:1;	/* but not an input field */
+	eb_bool secure:1;
+	eb_bool checked:1;
+	eb_bool rchecked:1;	/* for reset */
+	eb_bool post:1;		/* post, rather than get */
+	eb_bool javapost:1;	/* post by calling javascript */
+	eb_bool mime:1;		/* encode as mime, rather than url encode */
+	eb_bool bymail:1;	/* send by mail, rather than http */
+	eb_bool submitted:1;
+	eb_bool onclick:1;
+	eb_bool onsubmit:1;
+	eb_bool onreset:1;
+	eb_bool onchange:1;
+	char subsup;		/* span turned into sup or sub */
+	uchar itype;		/* input type = */
+	short ninp;		/* number of nonhidden inputs */
+	char *attrib;
+	char *name, *id, *value, *href;
+/* class=foo becomes className = "foo" when you carry from html to javascript,
+ * don't ask me why. */
+	char *classname;
+	const char *inner;	/* for inner html */
+};
+
+/* htmlTag.action */
+enum {
+	TAGACT_ZERO, TAGACT_A, TAGACT_INPUT, TAGACT_TITLE, TAGACT_TA,
+	TAGACT_BUTTON, TAGACT_SELECT, TAGACT_OPTION,
+	TAGACT_NOP, TAGACT_JS, TAGACT_H, TAGACT_SUB, TAGACT_SUP, TAGACT_OVB,
+	TAGACT_DW, TAGACT_BODY, TAGACT_HEAD,
+	TAGACT_MUSIC, TAGACT_IMAGE, TAGACT_BR, TAGACT_IBR, TAGACT_P,
+	TAGACT_BASE, TAGACT_META, TAGACT_PRE,
+	TAGACT_DT, TAGACT_LI, TAGACT_HR, TAGACT_TABLE, TAGACT_TR, TAGACT_TD,
+	TAGACT_DIV, TAGACT_SPAN, TAGACT_HTML,
+	TAGACT_FORM, TAGACT_FRAME,
+	TAGACT_MAP, TAGACT_AREA, TAGACT_SCRIPT, TAGACT_EMBED, TAGACT_OBJ,
+};
+
+/* htmlTag.itype */
+enum {
+	INP_RESET, INP_BUTTON, INP_IMAGE, INP_SUBMIT,
+	INP_HIDDEN,
+	INP_TEXT, INP_PW, INP_NUMBER, INP_FILE,
+	INP_SELECT, INP_TA, INP_RADIO, INP_CHECKBOX,
+};
+
+
+/* Last tag in the list parsed from html */
+extern struct htmlTag *topTag;
 
 /* function prototypes */
 #include "eb.p"

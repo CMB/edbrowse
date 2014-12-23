@@ -10,8 +10,6 @@ bindir = $(prefix)/bin
 
 JS_CXXFLAGS =-I/usr/include/mozjs-24
 
-# we need to only use the js flags when building with c++, so use CXXFLAGS
-CXXFLAGS += $(JS_CXXFLAGS)
 
 # By default, we strip the executables.
 # Override this behavior on the command line, by setting STRIP to the
@@ -34,18 +32,18 @@ ESQLDFLAGS = $(STRIP)
 # Override JSLIB on the command-line, if your distro uses a different name.
 # E.G., make JSLIB=-lmozjs
 JSLIB = -lmozjs-24
-LDLIBS = -lpcre $(JSLIB) -lcurl -lreadline -lncurses -lstdc++
+LDLIBS = -lpcre -lcurl -lreadline -lncurses -lstdc++
 
 #  Make the dynamically linked executable program by default.
-all: edbrowse
+all: edbrowse edbrowse-js
 
 #  edbrowse objects
 EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
-	html.o format.o cookies.o stringfile.o jsdom.o jsloc.o messages.o
+	html.o format.o cookies.o stringfile.o messages.o
 
 #  Header file dependencies.
 $(EBOBJS) : eb.h eb.p messages.h
-html.o jsdom.o jsloc.o : js.h ebjs.p
+html.o : ebjs.h
 
 startwindow.c: startwindow.js
 	../tools/buildstartwindow
@@ -79,8 +77,11 @@ edbrowse-odbc: $(EBOBJS) startwindow.o dbops.o dbodbc.o
 clean:
 	rm -f *.o edbrowse edbrowseinf edbrowse-odbc edbrowse-js js_hw_moz
 
+jseng-moz.o: jseng-moz.cpp
+	$(CXX) -c $(CXXFLAGS) $(JS_CXXFLAGS) $^ -o $@
+
 edbrowse-js : jseng-moz.o
-	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
+	$(LINK.o) $^ $(LOADLIBES) $(JSLIB) -lstdc++ -o $@
 
 #  some hello world targets, for testing and debugging
 

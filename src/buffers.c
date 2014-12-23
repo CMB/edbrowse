@@ -571,7 +571,7 @@ static void undoPush(void)
 static void freeWindow(struct ebWindow *w)
 {
 	freeTags(w);
-	freeJavaContext(w->jss);
+	freeJavaContext(w);
 	freeWindowLines(w->map);
 	freeWindowLines(w->r_map);
 	nzFree(w->dw);
@@ -2949,8 +2949,8 @@ et_go:
 			cw->r_map = 0;
 		}
 		freeTags(cw);
-		freeJavaContext(cw->jss);
-		cw->jss = NULL;
+		freeJavaContext(cw);
+		cw->jcx = NULL;
 		nzFree(cw->dw);
 		cw->dw = 0;
 		nzFree(cw->ft);
@@ -3537,9 +3537,9 @@ eb_bool runCommand(const char *line)
 	js_redirects = eb_false;
 
 /* In case the last command broke javascript in some way. */
-	if (cw->jss != NULL && cw->js_failed) {
-		freeJavaContext(cw->jss);
-		cw->jss = NULL;
+	if (cw->jcx != NULL && cw->js_failed) {
+		freeJavaContext(cw);
+		cw->jcx = NULL;
 	}
 
 	cmd = icmd = 'p';
@@ -4842,7 +4842,7 @@ eb_bool browseCurrentBuffer(void)
 
 	if (bmode == 2) {
 		if (javaOK(cw->fileName))
-			createJavaContext(&cw->jss);
+			createJavaContext();
 		nzFree(newlocation);	/* should already be 0 */
 		newlocation = 0;
 		newbuf = htmlParse(rawbuf, remote);

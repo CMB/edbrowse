@@ -919,6 +919,10 @@ static JSBool c##_ctor(JSContext * cx, unsigned int argc, jsval * vp) \
 	return JS_TRUE; \
 }
 
+#define generic_class_ctor(c, name) \
+generic_class(c, name) \
+generic_ctor(c)
+
 /* window class is diffferent, because the flags must be global */
 static JSClass window_class = {
 	"Window",
@@ -970,11 +974,6 @@ static JSBool window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	return JS_TRUE;
 }				/* window_ctor */
 
-
-#define generic_class_ctor(c, name) \
-generic_class(c, name) \
-generic_ctor(c)
-
 /* All the other dom classes and constructors.
  * If a constructor is not in this list, it is coming later,
  * because it does something special. */
@@ -1002,11 +1001,8 @@ generic_class(document, "Document")
 /* see below */
     generic_class(timer, "Timer")
 /* instantiated through window.setTimout() */
-
-
 #define PROP_STD (JSPROP_ENUMERATE | JSPROP_PERMANENT)
 #define PROP_READONLY (JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY)
-
 /* text and value can be passed as args to the constructor */
 static JSBool option_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 {
