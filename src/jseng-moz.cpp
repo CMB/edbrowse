@@ -970,52 +970,39 @@ static JSBool window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	return JS_TRUE;
 }				/* window_ctor */
 
+
+#define generic_class_ctor(c, name) \
+generic_class(c, name) \
+generic_ctor(c)
+
 /* All the other dom classes and constructors.
  * If a constructor is not in this list, it is coming later,
  * because it does something special. */
-
 generic_class(document, "Document")
-    generic_class(html, "Html")
-    generic_ctor(html)
-    generic_class(head, "Head")
-    generic_ctor(head)
-    generic_class(meta, "Meta")
-    generic_ctor(meta)
-    generic_class(link, "Link")
-    generic_ctor(link)
-    generic_class(body, "Body")
-    generic_ctor(body)
-    generic_class(form, "Form")
-    generic_ctor(form)
-    generic_class(element, "Element")
-    generic_ctor(element)
-    generic_class(image, "Image")
-    generic_ctor(image)
-    generic_class(frame, "Frame")
-    generic_ctor(frame)
-    generic_class(anchor, "Anchor")
-    generic_ctor(anchor)
-    generic_class(table, "Table")
-    generic_ctor(table)
-    generic_class(div, "Div")
-    generic_ctor(div)
-    generic_class(area, "Area")
-    generic_ctor(area)
-    generic_class(span, "Span")
-    generic_ctor(span)
-    generic_class(trow, "Trow")
-    generic_ctor(trow)
-    generic_class(cell, "Cell")
-    generic_ctor(cell)
+    generic_class_ctor(html, "Html")
+    generic_class_ctor(head, "Head")
+    generic_class_ctor(meta, "Meta")
+    generic_class_ctor(link, "Link")
+    generic_class_ctor(body, "Body")
+    generic_class_ctor(form, "Form")
+    generic_class_ctor(element, "Element")
+    generic_class_ctor(image, "Image")
+    generic_class_ctor(frame, "Frame")
+    generic_class_ctor(anchor, "Anchor")
+    generic_class_ctor(table, "Table")
+    generic_class_ctor(div, "Div")
+    generic_class_ctor(area, "Area")
+    generic_class_ctor(span, "Span")
+    generic_class_ctor(trow, "Trow")
+    generic_class_ctor(cell, "Cell")
     generic_class(option, "Option")
 /* see below */
-    generic_class(script, "Script")
-    generic_ctor(script)
+    generic_class_ctor(script, "Script")
     generic_class(url, "URL")
 /* see below */
     generic_class(timer, "Timer")
 /* instantiated through window.setTimout() */
-    ;				/* put indent back on the track */
+
 
 #define PROP_STD (JSPROP_ENUMERATE | JSPROP_PERMANENT)
 #define PROP_READONLY (JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY)
