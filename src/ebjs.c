@@ -14,16 +14,34 @@
 /* This block is temporary, for stand alone compilation purposes */
 static struct htmlTag {
 	jsobjtype jv;		/* corresponding js object */
-	char *name, *id, *classname, *href;
+	struct htmlTag *controller;
+	char *name, *id, *classname, *href, *value;
+	int action, lic, seqno, itype;
+	eb_bool checked, rchecked, multiple;
 	struct {
 		char *name;
 	} *info;
-} *topTag;
+} *topTag, *tagList[3];
 void setupJavaDom(void);
 jsobjtype instantiate_url(jsobjtype parent, const char *name, const char *url);
 /* And I added 1 to createJavaContext() and freeJavaContext() so they
  * don't conflict with prototypes in eb.p. */
 void freeJavaContext1(struct ebWindow *w);
+static int numTags = 3;
+#define INP_SELECT 5
+#define TAGACT_INPUT 33
+#define TAGACT_OPTION 34
+static struct htmlTag *newTag(const char *s)
+{
+	return tagList[1];
+}
+
+static char *displayOptions(const struct htmlTag *w)
+{
+	return w->value;
+}
+
+/* end block for stand-alone compilation tests */
 
 /* If connection is lost, mark all js sessions as dead. */
 static void markAllDead(void)
@@ -1275,3 +1293,160 @@ char *get_property_url(jsobjtype owner, eb_bool action)
 		return 0;
 	return get_property_string(uo, "href");
 }				/* get_property_url */
+
+/*********************************************************************
+Javascript sometimes builds or rebuilds a submenu, based upon your selection
+in a primary menu. These new options must map back to html tags,
+and then to the dropdown list as you interact with the form.
+This is tested in jsrt - select a state,
+whereupon the colors below, that you have to choose from, can change.
+
+Someday the entire page will be rerendered based upon the js tree,
+which could be modified in almost any way, but today I only look at
+changing menus, because that is the high runner case.
+Besides, it use to seg fault when I didn't watch for this.
+*********************************************************************/
+
+static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
+{
+	int i1, i2, len1;
+	eb_bool check2;
+	char *s;
+	const char *selname;
+	eb_bool changed = eb_false;
+	struct htmlTag *t;
+	jsobjtype oo;		/* option object */
+
+	len1 = numTags;
+	i1 = i2 = 0;
+	selname = sel->name;
+	if (!selname)
+		selname = "?";
+	debugPrint(4, "testing selector %s %d %d", selname, len1, len2);
+
+	sel->lic = (sel->multiple ? 0 : -1);
+
+	while (i1 < len1 && i2 < len2) {
+/* there is more to both lists */
+		t = tagList[i1++];
+		if (t->action != TAGACT_OPTION)
+			continue;
+		if (t->controller != sel)
+			continue;
+
+/* find the corresponding option object */
+		if ((oo = get_array_element_object(oa, i2)) == NULL) {
+/* Wow this shouldn't happen. */
+/* Guess I'll just pretend the array stops here. */
+			len2 = i2;
+			--i1;
+			break;
+		}
+
+		t->jv = oo;	/* should already equal oo */
+		t->rchecked = get_property_bool(oo, "defaultSelected");
+		check2 = get_property_bool(oo, "selected");
+		if (check2) {
+			if (sel->multiple)
+				++sel->lic;
+			else
+				sel->lic = i2;
+		}
+		++i2;
+		if (t->checked != check2)
+			changed = eb_true;
+		t->checked = check2;
+		s = get_property_string(oo, "text");
+		if (s && !t->name || !stringEqual(t->name, s)) {
+			nzFree(t->name);
+			t->name = s;
+			changed = eb_true;
+		} else
+			nzFree(s);
+		s = get_property_string(oo, "value");
+		if (s && !t->value || !stringEqual(t->value, s)) {
+			nzFree(t->value);
+			t->value = s;
+		} else
+			nzFree(s);
+	}
+
+/* one list or the other or both has run to the end */
+	if (i2 == len2) {
+		for (; i1 < len1; ++i1) {
+			t = tagList[i1];
+			if (t->action != TAGACT_OPTION)
+				continue;
+			if (t->controller != sel)
+				continue;
+/* option is gone in js, disconnect this option tag from its select */
+			t->jv = 0;
+			t->controller = 0;
+			changed = eb_true;
+		}
+	} else if (i1 == len1) {
+		for (; i2 < len2; ++i2) {
+			if ((oo = get_array_element_object(oa, i2)) == NULL)
+				break;
+			t = newTag("option");
+			t->lic = i2;
+			t->controller = sel;
+			t->jv = oo;
+			t->name = get_property_string(oo, "text");
+			t->value = get_property_string(oo, "value");
+			t->checked = get_property_bool(oo, "selected");
+			if (t->checked) {
+				if (sel->multiple)
+					++sel->lic;
+				else
+					sel->lic = i2;
+			}
+			t->rchecked = get_property_bool(oo, "defaultSelected");
+			changed = eb_true;
+		}
+	}
+
+	if (!changed)
+		return;
+	debugPrint(4, "selector %s has changed", selname);
+
+/* If js change the menu, it should have also changed select.value
+ * according to the checked options, but did it?
+ * Don't know, so I'm going to do it here. */
+	s = displayOptions(sel);
+	if (!s)
+		s = EMPTYSTRING;
+	nzFree(sel->value);
+	sel->value = s;
+	set_property_string(sel->jv, "value", s);
+	updateFieldInBuffer(sel->seqno, s, parsePage ? 0 : 2, eb_false);
+
+	if (!sel->multiple)
+		set_property_number(sel->jv, "selectedIndex", sel->lic);
+}				/* rebuildSelector */
+
+void rebuildSelectors(void)
+{
+	int i1;
+	struct htmlTag *t;
+	jsobjtype oa;		/* option array */
+	int len;		/* length of option array */
+
+	for (i1 = 0; i1 < numTags; ++i1) {
+		t = tagList[i1];
+		if (!t->jv)
+			continue;
+		if (t->action != TAGACT_INPUT)
+			continue;
+		if (t->itype != INP_SELECT)
+			continue;
+
+/* there should always be an options array, if not then move on */
+		if ((oa = get_property_object(t->jv, "options")) == NULL)
+			continue;
+		if ((len = get_property_number(oa, "length")) < 0)
+			continue;
+		rebuildSelector(t, oa, len);
+	}
+
+}				/* rebuildSelectors */
