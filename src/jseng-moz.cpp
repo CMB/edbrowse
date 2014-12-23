@@ -41,7 +41,7 @@ Exit codes are as follows:
 #include <jsapi.h>
 #include <jsfriendapi.h>
 
-/* And some C header files. This program is a bit of a hibrid, C and C++ */
+/* And some C header files. This program is a bit of a hybrid, C and C++ */
 #include <string.h>
 #include <ctype.h>
 #include <malloc.h>
@@ -591,9 +591,6 @@ int main(int argc, char **argv)
 
 	if (jsPool < 2)
 		jsPool = 2;
-/* shouldn't need more than 2 gig of js heap */
-	if (jsPool > 2000)
-		jsPool = 2000;
 
 	js_start();
 
