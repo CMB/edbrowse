@@ -11,7 +11,8 @@ along with the GPL, general public license.
 The interface between this process and edbrowse is defined in ebjs.h.
 There should be no other local header files common to both.
 
-Exit codes are as follows.
+Exit codes are as follows:
+0 terminate normally, as directed by edbrowse
 1. bad arguments
 2 cannot read or write to edbrowse
 3 messages are out of sync
@@ -601,6 +602,9 @@ int main(int argc, char **argv)
 		head.highstat = EJ_HIGH_OK;
 		head.lowstat = EJ_LOW_OK;
 
+		if (head.cmd == EJ_CMD_EXIT)
+			exit(0);
+
 		if (head.cmd == EJ_CMD_CREATE) {
 /* this one is special */
 			createJavaContext();
@@ -1014,6 +1018,7 @@ generic_class(document, "Document")
 /* see below */
     generic_class(timer, "Timer")
 /* instantiated through window.setTimout() */
+    ;				/* put indent back on the track */
 
 #define PROP_STD (JSPROP_ENUMERATE | JSPROP_PERMANENT)
 #define PROP_READONLY (JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY)
@@ -1721,6 +1726,10 @@ set_property_string(js::HandleObject parent, const char *name,
 
 	if (stringEqual(name, "value"))
 		my_setter = setter_value;
+	if (stringEqual(name, "innerHTML"))
+		my_setter = setter_innerHTML;
+	if (stringEqual(name, "innerText"))
+		my_setter = setter_innerText;
 	if (stringEqual(name, "domain") && *parent.address() == docobj)
 		my_setter = setter_domain;
 	if (stringEqual(name, "cookie") && *parent.address() == docobj)
@@ -2593,8 +2602,8 @@ static void processMessage(void)
 		break;
 
 	default:
-		cerr << "Unexpected message command " << head.
-		    cmd << " from edbrowse\n";
+		cerr << "Unexpected message command " << head.cmd <<
+		    " from edbrowse\n";
 		exit(6);
 	}
 }				/* processMessage */

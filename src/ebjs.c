@@ -124,7 +124,7 @@ static void js_start(void)
 
 /* Shut down the js process, although if we got here,
  * it's probably dead anyways. */
-static void js_shutdown(void)
+static void js_kill(void)
 {
 	if (!js_pid)
 		return;
@@ -133,7 +133,7 @@ static void js_shutdown(void)
 	close(pipe_out[1]);
 	kill(js_pid, SIGTERM);
 	js_pid = 0;
-}				/* js_shutdown */
+}				/* js_kill */
 
 /* String description of side effects, as a result of running js code. */
 static char *effects;
@@ -250,7 +250,7 @@ static int readFromJS(void *data_p, int n)
 	if (rc == n)
 		return 0;
 /* Oops - can't read from the process any more */
-	js_shutdown();
+	js_kill();
 /* this call will print an error message for you */
 	markAllDead();
 	return -1;
@@ -265,7 +265,7 @@ static int writeToJS(const void *data_p, int n)
 	if (rc == n)
 		return 0;
 /* Oops - can't write to the process any more */
-	js_shutdown();
+	js_kill();
 /* this call will print an error message for you */
 	markAllDead();
 	return -1;
@@ -287,14 +287,14 @@ static int readMessage(void)
 
 	if (head.magic != EJ_MAGIC) {
 /* this should never happen */
-		js_shutdown();
+		js_kill();
 		i_puts(MSG_JSEngineSync);
 		markAllDead();
 		return -1;
 	}
 
 	if (head.highstat >= EJ_HIGH_HEAP_FAIL) {
-		js_shutdown();
+		js_kill();
 /* perhaps a helpful message, before we close down js sessions */
 		if (head.highstat == EJ_HIGH_PROC_FAIL)
 			allowJS = eb_false;
@@ -454,6 +454,17 @@ void freeJavaContext1(struct ebWindow *w)
 	ack5();
 	w->jcx = w->winobj = 0;
 }				/* freeJavaContext */
+
+void js_shutdown(void)
+{
+	debugPrint(5, "> js shutdown");
+	head.magic = EJ_MAGIC;
+	head.cmd = EJ_CMD_EXIT;
+	head.jcx = 0;
+	head.winobj = 0;
+	head.docobj = 0;
+	writeToJS(&head, sizeof(head));
+}				/* js_shutdown */
 
 /* Run some javascript code under the current window */
 int javaParseExecute(jsobjtype obj, const char *str, const char *filename,
