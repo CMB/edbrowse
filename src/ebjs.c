@@ -792,7 +792,7 @@ jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname)
 		return 0;
 
 	debugPrint(5, "> instantiate %s %s", name,
-		   (classname ? classname : "generic"));
+		   (classname ? classname : "object"));
 
 	head.cmd = EJ_CMD_SETPROP;
 	head.obj = parent;
@@ -1040,7 +1040,7 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 		length = get_property_number(io, "length");
 		if (length < 0)
 			return;
-		w = instantiate(owner, fakePropName(), "element");
+		w = instantiate(owner, fakePropName(), "Element");
 		if (w == NULL)
 			return;
 		set_array_element_object(io, length, w);

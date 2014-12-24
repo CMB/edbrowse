@@ -990,6 +990,7 @@ generic_class(document, Document)
     generic_class_ctor(meta, Meta)
     generic_class_ctor(link, Link)
     generic_class_ctor(body, Body)
+    generic_class_ctor(base, Base)
     generic_class_ctor(form, Form)
     generic_class_ctor(element, Element)
     generic_class_ctor(image, Image)
@@ -2165,9 +2166,9 @@ abort:
 
 /* compile the function from the string */
 			fstr = stringize(v0);
-			if (JS_CompileFunction(jcx, to, "onclick", 0, emptyParms,	/* no named parameters */
-					       fstr, strlen(fstr), "onclick",
-					       1) == NULL) {
+			if (JS_CompileFunction
+			    (jcx, to, "onclick", 0, emptyParms, fstr,
+			     strlen(fstr), "onclick", 1) == NULL) {
 				JS_ReportError(jcx,
 					       "error compiling function in %s()",
 					       methname);
@@ -2260,6 +2261,7 @@ static struct {
 	{&meta_class, meta_ctor},
 	{&link_class, link_ctor, link_methods, 0},
 	{&body_class, body_ctor, body_methods},
+	{&base_class, base_ctor},
 	{&form_class, form_ctor, form_methods},
 	{&element_class, element_ctor, element_methods, 0},
 	{&image_class, image_ctor, NULL, 1},
@@ -2419,6 +2421,17 @@ childreturn:
 	case EJ_PROP_ARRAY:
 		childroot = JS_NewArrayObject(jcx, 0, NULL);
 		goto childreturn;
+
+	case EJ_PROP_FUNCTION:
+		if (!propval || !*propval) {
+/* null or empty function, link to native null function */
+			JS_NewFunction(jcx, nullFunction, 0, 0, parent,
+				       membername);
+		} else {
+			JS_CompileFunction(jcx, parent, name, 0, emptyParms,
+					   propval, strlen(propval), name, 1);
+		}
+		break;
 
 	default:
 		cerr << "Unexpected property type " << proptype <<
