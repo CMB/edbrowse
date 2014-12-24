@@ -450,6 +450,8 @@ void freeJavaContext(struct ebWindow *w)
 
 void js_shutdown(void)
 {
+	if (!js_pid)		/* js not running */
+		return;
 	debugPrint(5, "> js shutdown");
 	head.magic = EJ_MAGIC;
 	head.cmd = EJ_CMD_EXIT;
@@ -885,7 +887,7 @@ static const char *fakePropName(void)
 	static char fakebuf[24];
 	static int idx = 0;
 	++idx;
-	sprintf(fakebuf, "gc$$hold%d", idx);
+	sprintf(fakebuf, "gc$$%d", idx);
 	return fakebuf;
 }				/*fakePropName */
 

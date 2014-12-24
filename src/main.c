@@ -906,6 +906,7 @@ static void catchSig(int n)
 void ebClose(int n)
 {
 	dbClose();
+	js_shutdown();
 	exit(n);
 }				/* ebClose */
 
@@ -949,7 +950,7 @@ static void eb_curl_global_init(void)
 	version_data = curl_version_info(CURLVERSION_NOW);
 	if (version_data->version_num < least_acceptable_version)
 		i_printfExit(MSG_CurlVersion, major, minor, patch);
-}			/* eb_curl_global_init */
+}				/* eb_curl_global_init */
 
 /* I'm not going to expand wild card arguments here.
  * I don't need to on Unix, and on Windows there is a

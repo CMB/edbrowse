@@ -47,6 +47,7 @@ Exit codes are as follows:
 #include <malloc.h>
 #include <unistd.h>
 #include <memory.h>
+#include <signal.h>
 
 using namespace std;
 
@@ -594,6 +595,10 @@ int main(int argc, char **argv)
 
 	js_start();
 
+/* edbrowse catches interrupt, this process ignores it. */
+/* Use quit to terminate, or kill from another console. */
+	signal(SIGINT, SIG_IGN);
+
 	while (true) {
 		readMessage();
 		head.highstat = EJ_HIGH_OK;
@@ -716,6 +721,7 @@ static void readMessage(void)
 
 	if (cmd == EJ_CMD_HASPROP ||
 	    cmd == EJ_CMD_GETPROP ||
+	    cmd == EJ_CMD_CALL ||
 	    cmd == EJ_CMD_SETPROP || cmd == EJ_CMD_DELPROP) {
 		if (head.n)
 			membername = readString(head.n);
@@ -843,7 +849,7 @@ static const char *fakePropName(void)
 	static char fakebuf[24];
 	static int idx = 0;
 	++idx;
-	sprintf(fakebuf, "gc$$keep%d", idx);
+	sprintf(fakebuf, "cg$$%d", idx);
 	return fakebuf;
 }				/*fakePropName */
 
@@ -2550,6 +2556,8 @@ static void processMessage(void)
 		}
 		head.n = rc;
 		nzFree(runscript);
+		runscript = 0;
+		head.proplength = 0;
 		writeHeader();
 		break;
 
