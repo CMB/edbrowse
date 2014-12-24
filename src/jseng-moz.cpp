@@ -645,7 +645,6 @@ static void readFromEb(void *data_p, int n)
 	if (rc == n)
 		return;
 /* Oops - can't read from the process any more */
-	cerr << "js cannot communicate with edbrowse\n";
 	exit(2);
 }				/* readFromEb */
 
@@ -984,7 +983,7 @@ static JSBool window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 /* All the other dom classes and constructors.
  * If a constructor is not in this list, it is coming later,
  * because it does something special. */
-generic_class(document, Document)
+generic_class_ctor(document, Document)
     generic_class_ctor(html, Html)
     generic_class_ctor(head, Head)
     generic_class_ctor(meta, Meta)
@@ -1941,7 +1940,7 @@ static JSBool doc_writeln(JSContext * cx, unsigned int argc, jsval * vp)
 	return JS_TRUE;
 }				/* doc_writeln */
 
-static JSFunctionSpec doc_methods[] = {
+static JSFunctionSpec document_methods[] = {
 	JS_FS("focus", nullFunction, 0, 0),
 	JS_FS("blur", nullFunction, 0, 0),
 	JS_FS("open", nullFunction, 0, 0),
@@ -2254,8 +2253,7 @@ static struct {
 	JSFunctionSpec *methods;
 	int nargs;
 } const domClasses[] = {
-/* the document class has to be first */
-	{&document_class},
+	{&document_class, document_ctor, document_methods},
 	{&html_class, html_ctor},
 	{&head_class, head_ctor, head_methods},
 	{&meta_class, meta_ctor},
@@ -2329,7 +2327,7 @@ no_std:
 		goto no_win;
 
 /* Other classes that we'll need. */
-	for (i = 1; domClasses[i].obj_class; ++i) {
+	for (i = 0; domClasses[i].obj_class; ++i) {
 		if (JS_InitClass
 		    (jcx, winobj, 0, domClasses[i].obj_class,
 		     domClasses[i].constructor, domClasses[i].nargs, NULL,
@@ -2338,19 +2336,15 @@ no_std:
 	}
 
 /* document under window */
-	if (JS_InitClass(jcx, winobj, 0, &document_class, NULL, 0,
-			 NULL, doc_methods, NULL, NULL) == NULL) {
+	JS::RootedObject d(jcx,
+			   JS_NewObject(jcx, &document_class, NULL, winobj));
+	if (!d) {
 no_doc:
 		head.highstat = EJ_HIGH_HEAP_FAIL;
 		head.lowstat = EJ_LOW_DOC;
 		JS_DestroyContext(jcx);
 		return;
 	}
-
-	JS::RootedObject d(jcx,
-			   JS_NewObject(jcx, &document_class, NULL, winobj));
-	if (!d)
-		goto no_doc;
 	docobj = *d.address();
 	js::RootedValue v(jcx, OBJECT_TO_JSVAL(d));
 	if (JS_SetProperty(jcx, winobj, "document", v.address()) == JS_FALSE)

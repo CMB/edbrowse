@@ -909,6 +909,9 @@ void domLink(const char *classname,	/* instantiate this class */
 	const char *href_url = topTag->href;
 	const char *htmlclass = topTag->classname;
 
+	debugPrint(5, "domLink %s.%d name %s",
+		   classname, radiosel, (symname ? symname : EMPTYSTRING));
+
 	if (symname && has_property(owner, symname)) {
 /*********************************************************************
 This could be a duplicate name.
