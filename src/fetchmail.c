@@ -2,7 +2,6 @@
  * Get mail using the pop3 protocol.
  * Format the mail in ascii, or in html.
  * Unpack attachments.
- * Copyright (c) Karl Dahlke, 2008
  * This file is part of the edbrowse project, released under GPL.
  */
 

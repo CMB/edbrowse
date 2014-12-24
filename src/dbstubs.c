@@ -1,7 +1,6 @@
 /* dbstubs.c
  * Stubs for the database functions.
  * After all, most people will compile this without database access.
- * Copyright (c) Karl Dahlke, 2008
  * This file is part of the edbrowse project, released under GPL.
  */
 

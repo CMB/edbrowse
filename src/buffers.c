@@ -1,6 +1,5 @@
 /* buffers.c
  * Text buffer support routines, manage text and edit sessions.
- * Copyright (c) Karl Dahlke, 2008
  * This file is part of the edbrowse project, released under GPL.
  */
 
@@ -3535,12 +3534,6 @@ eb_bool runCommand(const char *line)
 	nzFree(currentReferrer);
 	currentReferrer = cloneString(cw->fileName);
 	js_redirects = eb_false;
-
-/* In case the last command broke javascript in some way. */
-	if (cw->jcx != NULL && cw->js_failed) {
-		freeJavaContext(cw);
-		cw->jcx = NULL;
-	}
 
 	cmd = icmd = 'p';
 	skipWhite(&line);

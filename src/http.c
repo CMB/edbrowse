@@ -1,12 +1,6 @@
 /* http.c
  * HTTP protocol client implementation
- * (c) 2002 Mikulas Patocka
- * This file is part of the Links project, released under GPL.
- *
- * Modified by Karl Dahlke for integration with edbrowse,
- * which is also released under the GPL.
- *
- * Modified by Chris Brannon to allow cooperation with libcurl.
+ * This file is part of the edbrowse project, released under GPL.
  */
 
 #include "eb.h"

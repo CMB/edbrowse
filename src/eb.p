@@ -74,6 +74,7 @@ void setupJavaDom(void) ;
 jsobjtype instantiate_url(jsobjtype parent, const char *name, const char *url) ;
 char *get_property_url(jsobjtype owner, eb_bool action) ;
 void rebuildSelectors(void) ;
+void handlerSet(jsobjtype ev, const char *name, const char *code);
 
 /* sourcefile=fetchmail.c */
 int fetchMail(int account) ;

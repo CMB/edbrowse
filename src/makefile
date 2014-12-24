@@ -42,8 +42,7 @@ EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
 	html.o format.o cookies.o stringfile.o messages.o
 
 #  Header file dependencies.
-$(EBOBJS) : eb.h eb.p messages.h
-html.o : ebjs.h
+$(EBOBJS) : eb.h eb.p messages.h ebjs.h
 
 startwindow.c: startwindow.js
 	../tools/buildstartwindow

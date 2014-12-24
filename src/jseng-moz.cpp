@@ -2460,10 +2460,29 @@ set_array_element_object(JS::HandleObject parent, int idx,
 static ej_proptype find_proptype(JS::HandleObject parent, const char *name)
 {
 	js::RootedValue v(jcx);
+	JS::RootedObject child(jcx);
+	unsigned length;
+
 	if (JS_GetProperty(jcx, parent, name, v.address()) == JS_FALSE)
 		return EJ_PROP_NONE;
 	if (JSVAL_IS_STRING(v))
 		return EJ_PROP_STRING;
+	if (JSVAL_IS_INT(v))
+		return EJ_PROP_INT;
+	if (JSVAL_IS_DOUBLE(v))
+		return EJ_PROP_FLOAT;
+	if (JSVAL_IS_BOOLEAN(v))
+		return EJ_PROP_BOOL;
+
+	if (v.isObject()) {
+		child = JSVAL_TO_OBJECT(v);
+		if (JS_ObjectIsFunction(jcx, child))
+			return EJ_PROP_FUNCTION;
+/* is there a better way to test for array? */
+		if (JS_GetArrayLength(jcx, child, &length) == JS_TRUE)
+			return EJ_PROP_ARRAY;
+		return EJ_PROP_OBJECT;
+	}
 
 	return EJ_PROP_NONE;	/* don't know */
 }				/* find_proptype */

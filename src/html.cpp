@@ -1,16 +1,16 @@
 /* html.c
  * Parse html tags.
- * Copyright (c) Karl Dahlke, 2008
  * This file is part of the edbrowse project, released under GPL.
  */
 
 #include "eb.h"
-#include <vector>
+
 #include <string>
+
 using namespace std;
 
-/* The list of html tags for the current window. */
-#define tagList (*((vector<struct htmlTag *> *)(cw->tags)))
+#define handlerPresent(obj, name) (has_property(obj, name) == EJ_PROP_FUNCTION)
+#define tagList (cw->tags)
 
 static const char *const inp_types[] = {
 	"reset", "button", "image", "submit",
@@ -36,10 +36,24 @@ static string preamble;
 static void tagCountCheck(void)
 {
 	if (sizeof(int) == 4) {
-		if (tagList.size() > MAXLINES)
+		if (cw->numTags > MAXLINES)
 			i_printfExit(MSG_LineLimit);
 	}
 }				/* tagCountCheck */
+
+static void pushTag(struct htmlTag *t)
+{
+	int a = cw->allocTags;
+	if (cw->numTags == a) {
+/* make more room */
+		a = a / 2 * 3;
+		cw->tags =
+		    (struct htmlTag **)reallocMem(cw->tags, a * sizeof(t));
+		cw->allocTags = a;
+	}
+	tagList[cw->numTags++] = t;
+	tagCountCheck();
+}				/* pushTag */
 
 static eb_bool htmlAttrPresent(const char *e, const char *name)
 {
@@ -252,16 +266,16 @@ void freeTags(struct ebWindow *w)
 {
 	int i1, n;
 	struct htmlTag *t;
-	vector < struct htmlTag *>*e;
+	struct htmlTag **e;
 	struct ebWindow *side;
 
 /* if not browsing ... */
-	if (!(e = (vector < struct htmlTag * >*)(w->tags)))
+	if (!(e = w->tags))
 		return;
 
 /* drop empty textarea buffers created by this session */
-	for (i1 = 0; i1 < e->size(); ++i1) {
-		t = (*e)[i1];
+	for (i1 = 0; i1 < w->numTags; ++i1, ++e) {
+		t = *e;
 		if (t->action != TAGACT_INPUT)
 			continue;
 		if (t->itype != INP_TA)
@@ -281,8 +295,9 @@ void freeTags(struct ebWindow *w)
 		cxQuit(n, 2);
 	}			/* loop over tags */
 
-	for (i1 = 0; i1 < e->size(); ++i1) {
-		t = (*e)[i1];
+	e = w->tags;
+	for (i1 = 0; i1 < w->numTags; ++i1, ++e) {
+		t = *e;
 		nzFree(t->attrib);
 		nzFree(t->name);
 		nzFree(t->id);
@@ -292,8 +307,9 @@ void freeTags(struct ebWindow *w)
 		free(t);
 	}
 
-	delete e;
+	free(w->tags);
 	w->tags = 0;
+	w->numTags = w->allocTags = 0;
 }				/* freeTags */
 
 static void get_js_event(const char *name)
@@ -411,7 +427,7 @@ static char *getBaseHref(int n)
 	if (parsePage)
 		return basehref;
 	if (n < 0)
-		n = tagList.size();
+		n = cw->numTags;
 	do
 		--n;
 	while ((t = tagList[n])->action != TAGACT_BASE);
@@ -428,10 +444,9 @@ static void htmlMeta(void)
 	if (content == EMPTYSTRING)
 		content = 0;
 
-	domLink("Meta", 0, "metas", cw->jss->jdoc, eb_false);
+	domLink("Meta", 0, "metas", cw->docobj, eb_false);
 	if (topTag->jv)
-		establish_property_string(topTag->jv, "content",
-					  content, eb_true);
+		set_property_string(topTag->jv, "content", content);
 
 	heq = htmlAttrVal(topAttrib, "http-equiv");
 	if (heq == EMPTYSTRING)
@@ -535,7 +550,7 @@ static void formControl(eb_bool namecheck)
 			domLink("Element", 0, "elements", currentForm->jv,
 				isradio | isselect);
 		} else {
-			domLink("Element", 0, 0, cw->jss->jdoc,
+			domLink("Element", 0, 0, cw->docobj,
 				isradio | isselect);
 		}
 	}
@@ -548,12 +563,10 @@ static void formControl(eb_bool namecheck)
 		return;
 
 	if (itype <= INP_RADIO) {
-		establish_property_string(topTag->jv, "value", topTag->value,
-					  eb_false);
+		set_property_string(topTag->jv, "value", topTag->value);
 		if (itype != INP_FILE) {
 /* No default value on file, for security reasons */
-			establish_property_string(topTag->jv, dfvl,
-						  topTag->value, eb_true);
+			set_property_string(topTag->jv, dfvl, topTag->value);
 		}		/* not file */
 	}
 
@@ -561,13 +574,11 @@ static void formControl(eb_bool namecheck)
 		typedesc = topTag->multiple ? "select-multiple" : "select-one";
 	else
 		typedesc = inp_types[itype];
-	establish_property_string(topTag->jv, "type", typedesc, eb_true);
+	set_property_string(topTag->jv, "type", typedesc);
 
 	if (itype >= INP_RADIO) {
-		establish_property_bool(topTag->jv, "checked", topTag->checked,
-					eb_false);
-		establish_property_bool(topTag->jv, dfck, topTag->checked,
-					eb_true);
+		set_property_bool(topTag->jv, "checked", topTag->checked);
+		set_property_bool(topTag->jv, dfck, topTag->checked);
 	}
 }				/* formControl */
 
@@ -580,7 +591,7 @@ static void htmlImage(void)
 	if (!isJSAlive)
 		return;
 
-	domLink("Image", "src", "images", cw->jss->jdoc, eb_false);
+	domLink("Image", "src", "images", cw->docobj, eb_false);
 
 	get_js_events();
 
@@ -589,7 +600,7 @@ static void htmlImage(void)
 		return;
 	a = htmlAttrVal(topAttrib, "alt");
 	if (a)
-		establish_property_string(topTag->jv, "alt", a, eb_true);
+		set_property_string(topTag->jv, "alt", a);
 	nzFree(a);
 }				/* htmlImage */
 
@@ -639,13 +650,13 @@ static void htmlForm(void)
 	if (!isJSAlive)
 		return;
 
-	domLink("Form", "action", "forms", cw->jss->jdoc, eb_false);
+	domLink("Form", "action", "forms", cw->docobj, eb_false);
 	if (!topTag->jv)
 		return;
 
 	get_js_events();
 
-	establish_property_array(topTag->jv, "elements");
+	instantiate_array(topTag->jv, "elements");
 }				/* htmlForm */
 
 /*********************************************************************
@@ -742,9 +753,8 @@ static void makeButton(void)
 {
 	struct htmlTag *t =
 	    (struct htmlTag *)allocZeroMem(sizeof(struct htmlTag));
-	t->seqno = tagList.size();
-	tagList.push_back(t);
-	tagCountCheck();
+	t->seqno = cw->numTags;
+	pushTag(t);
 	t->info = elements + 2;
 	t->action = TAGACT_INPUT;
 	t->controller = currentForm;
@@ -757,7 +767,7 @@ char *displayOptions(const struct htmlTag *sel)
 	const struct htmlTag *t;
 	string options;
 
-	for (int i1 = 0; i1 < tagList.size(); ++i1) {
+	for (int i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->controller != sel)
 			continue;
@@ -778,7 +788,7 @@ static struct htmlTag *locateOptionByName(const struct htmlTag *sel,
 	struct htmlTag *t, *em = 0, *pm = 0;
 	int pmcount = 0;	/* partial match count */
 	const char *s;
-	for (int i1 = 0; i1 < tagList.size(); ++i1) {
+	for (int i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->controller != sel)
 			continue;
@@ -807,7 +817,7 @@ static struct htmlTag *locateOptionByNum(const struct htmlTag *sel, int n)
 {
 	struct htmlTag *t;
 	int cnt = 0;
-	for (int i1 = 0; i1 < tagList.size(); ++i1) {
+	for (int i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->controller != sel)
 			continue;
@@ -837,7 +847,7 @@ locateOptions(const struct htmlTag *sel, const char *input,
 /* Uncheck all existing options, then check the ones selected. */
 		if (sel->jv && isJSAlive)
 			set_property_number(sel->jv, "selectedIndex", -1);
-		for (int i1 = 0; i1 < tagList.size(); ++i1) {
+		for (int i1 = 0; i1 < cw->numTags; ++i1) {
 			t = tagList[i1];
 			if (t->controller == sel && t->name) {
 				t->checked = eb_false;
@@ -946,7 +956,7 @@ void jSyncup(void)
 		return;
 	debugPrint(5, "jSyncup starts");
 
-	for (int i1 = 0; i1 < tagList.size(); ++i1) {
+	for (int i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->action != TAGACT_INPUT)
 			continue;
@@ -1013,7 +1023,7 @@ static struct htmlTag *findOpenTag(const char *name)
 	eb_bool match;
 	const char *desc = topTag->info->desc;
 
-	for (int i1 = tagList.size() - 2; i1 >= 0; --i1) {
+	for (int i1 = cw->numTags - 2; i1 >= 0; --i1) {
 		t = tagList[i1];
 		if (t->balanced)
 			continue;
@@ -1068,7 +1078,7 @@ void makeParentNode(const struct htmlTag *t)
 	if (i < 0) {
 /* nothing open, link to document */
 		debugPrint(5, "parent %s > document", t->info->name);
-		establish_property_object(t->jv, "parentNode", cw->jss->jdoc);
+		set_property_object(t->jv, "parentNode", cw->docobj);
 		return;
 	}
 
@@ -1077,7 +1087,7 @@ void makeParentNode(const struct htmlTag *t)
 		return;
 
 	debugPrint(5, "parent %s > %s", t->info->name, v->info->name);
-	establish_property_object(t->jv, "parentNode", v->jv);
+	set_property_object(t->jv, "parentNode", v->jv);
 }				/* makeParentNode */
 
 struct htmlTag *newTag(const char *name)
@@ -1096,18 +1106,16 @@ struct htmlTag *newTag(const char *name)
 	t = (struct htmlTag *)allocZeroMem(sizeof(struct htmlTag));
 	t->action = action;
 	t->info = ti;
-	t->seqno = tagList.size();
+	t->seqno = cw->numTags;
 	t->balanced = eb_true;
 	if (stringEqual(name, "a"))
 		t->clickable = eb_true;
-	tagList.push_back(t);
-	tagCountCheck();
+	pushTag(t);
 	return t;
 }				/* newTag */
 
 /* This is only called if js is alive */
-static void
-onloadGo(jsobjtype obj, const char *jsrc, const char *tagname)
+static void onloadGo(jsobjtype obj, const char *jsrc, const char *tagname)
 {
 	struct htmlTag *t;
 	char buf[32];
@@ -1163,13 +1171,13 @@ static void htmlOption(struct htmlTag *sel, struct htmlTag *v, const char *a)
 		return;
 
 	v->jv = establish_js_option(sel->jv, v->lic);
-	establish_property_string(v->jv, "text", v->name, eb_true);
-	establish_property_string(v->jv, "value", v->value, eb_true);
-	establish_property_string(v->jv, "nodeName", "OPTION", eb_true);
-	establish_property_bool(v->jv, "selected", v->checked, eb_false);
-	establish_property_bool(v->jv, "defaultSelected", v->checked, eb_true);
+	set_property_string(v->jv, "text", v->name);
+	set_property_string(v->jv, "value", v->value);
+	set_property_string(v->jv, "nodeName", "OPTION");
+	set_property_bool(v->jv, "selected", v->checked);
+	set_property_bool(v->jv, "defaultSelected", v->checked);
 	debugPrint(5, "parent OPTION > SELECT");
-	establish_property_object(v->jv, "parentNode", sel->jv);
+	set_property_object(v->jv, "parentNode", sel->jv);
 
 	if (v->checked && !sel->multiple) {
 		set_property_number(sel->jv, "selectedIndex", v->lic);
@@ -1192,15 +1200,15 @@ static void htmlScript(char *&html, char *&h)
 
 /* Create the script object. */
 	htmlHref("src");
-	domLink("Script", "src", "scripts", cw->jss->jdoc, eb_false);
+	domLink("Script", "src", "scripts", cw->docobj, eb_false);
 
 	a = htmlAttrVal(topAttrib, "type");
 	if (a)
-		establish_property_string(t->jv, "type", a, eb_true);
+		set_property_string(t->jv, "type", a);
 
 	a = htmlAttrVal(topAttrib, "language");
 	if (a)
-		establish_property_string(t->jv, "language", a, eb_true);
+		set_property_string(t->jv, "language", a);
 
 	if (!isJSAlive)
 		goto done;
@@ -1257,10 +1265,10 @@ static void htmlScript(char *&html, char *&h)
 	}
 	debugPrint(3, "execute %s at %d", js_file, js_line);
 /* mark this script as having been executed */
-	establish_property_bool(t->jv, "exec$$ed", eb_true, eb_true);
-	establish_property_string(t->jv, "data", javatext, eb_true);
+	set_property_bool(t->jv, "exec$$ed", eb_true);
+	set_property_string(t->jv, "data", javatext);
 /* now run the script */
-	javaParseExecute(cw->jss->jwin, javatext, js_file, js_line);
+	javaParseExecute(cw->winobj, javatext, js_file, js_line);
 	debugPrint(3, "execution complete");
 
 /* See if the script has produced html via document.write() */
@@ -1281,7 +1289,7 @@ static void htmlScript(char *&html, char *&h)
 		html = h = after;
 
 /* After the realloc, the inner pointers are no longer valid. */
-		for (int i1 = 0; i1 < tagList.size(); ++i1) {
+		for (int i1 = 0; i1 < cw->numTags; ++i1) {
 			t = tagList[i1];
 			t->inner = 0;
 		}
@@ -1359,7 +1367,7 @@ static void objectScript(JS::Handle < JSObject * >obj)
 execute:
 	w = "script";
 	if (jsrc) {
-		establish_property_string(obj, "data", jtext, eb_true);
+		set_property_string(obj, "data", jtext);
 		if (w = strrchr(jsrc, '/')) {
 /* Trailing slash doesn't count */
 			if (w[1] == 0 && w > jsrc)
@@ -1370,7 +1378,7 @@ execute:
 	}
 
 	debugPrint(3, "execute %s", w);
-	javaParseExecute(cw->jss->jwin, jtext, w, 0);
+	javaParseExecute(cw->winobj, jtext, w, 0);
 	debugPrint(3, "execution complete");
 
 done:
@@ -1380,15 +1388,13 @@ done:
 	nzFree(changeFileName);
 	changeFileName = NULL;
 /* mark this script as having been executed, even if it didn't run properly */
-	establish_property_bool(obj, "exec$$ed", eb_true, eb_true);
+	set_property_bool(obj, "exec$$ed", eb_true);
 }				/* objectScript */
 
 /* runs scripts that have ben dynamically created */
 static void scriptsPending(void)
 {
-	SWITCH_COMPARTMENT();
-	JS::RootedObject obj(cw->jss->jcx);
-	while (obj = run_function_object(cw->jss->jdoc, "script$$pending"))
+	while (obj = run_function_object(cw->docobj, "script$$pending"))
 		objectScript(obj);
 }				/* scriptsPending */
 
@@ -1438,7 +1444,11 @@ static char *encodeTags(char *html)
 
 	currentA = currentForm = currentSel = currentOpt = currentTitle =
 	    currentTA = 0;
-	cw->tags = new vector < struct htmlTag *>;
+	cw->numTags = 0;
+	cw->allocTags = 512;
+	cw->tags =
+	    (struct htmlTag **)allocMem(cw->allocTags *
+					sizeof(struct htmlTag *));
 	preamble.clear();
 
 /* first tag is a base tag, from the filename */
@@ -1500,7 +1510,7 @@ nextchar:
 			if (stringEqualCI(ti->name, tagname))
 				break;
 		action = ti->action;
-		tagno = tagList.size();
+		tagno = cw->numTags;
 		debugPrint(7, "tag %s %d %d %d", tagname, tagno, ln, action);
 
 		if (currentTA) {
@@ -1538,13 +1548,10 @@ nextchar:
 				establish_innerHTML(currentTA->jv,
 						    currentTA->inner, save_h,
 						    eb_true);
-				establish_property_string(currentTA->jv,
-							  "value",
-							  currentTA->value,
-							  eb_false);
-				establish_property_string(currentTA->jv, dfvl,
-							  currentTA->value,
-							  eb_true);
+				set_property_string(currentTA->jv, "value",
+						    currentTA->value);
+				set_property_string(currentTA->jv, dfvl,
+						    currentTA->value);
 			}
 			newstr.resize(offset);
 			j = sideBuffer(0, currentTA->value, -1, 0, eb_false);
@@ -1567,8 +1574,7 @@ nextchar:
 
 		topTag = t =
 		    (struct htmlTag *)allocZeroMem(sizeof(struct htmlTag));
-		tagList.push_back(t);
-		tagCountCheck();
+		pushTag(t);
 		t->seqno = tagno;
 		sprintf(hnum, "%c%d", InternalCodeChar, tagno);
 		t->info = ti;
@@ -1687,9 +1693,8 @@ forceCloseAnchor:
 					nzFree(piece1);
 
 				if (currentTitle && isJSAlive)
-					establish_property_string(cw->jss->jdoc,
-								  "title", a,
-								  eb_true);
+					set_property_string(cw->docobj, "title",
+							    a);
 
 				if (currentOpt)
 					htmlOption(currentSel, currentOpt, a);
@@ -1758,7 +1763,7 @@ forceCloseAnchor:
 			} else {
 				htmlHref("href");
 				domLink("Anchor", "href", "anchors",
-					cw->jss->jdoc, eb_false);
+					cw->docobj, eb_false);
 				get_js_events();
 				if (t->href) {
 					a_href = eb_true;
@@ -1791,18 +1796,18 @@ forceCloseAnchor:
 			continue;
 
 		case TAGACT_HTML:
-			domLink("Html", 0, "htmls", cw->jss->jdoc, eb_false);
+			domLink("Html", 0, "htmls", cw->docobj, eb_false);
 			goto endtag;
 
 		case TAGACT_HEAD:
-			domLink("Head", 0, "heads", cw->jss->jdoc, eb_false);
+			domLink("Head", 0, "heads", cw->docobj, eb_false);
 			goto plainWithElements;
 
 		case TAGACT_BODY:
-			domLink("Body", 0, "bodies", cw->jss->jdoc, eb_false);
+			domLink("Body", 0, "bodies", cw->docobj, eb_false);
 plainWithElements:
 			if (t->jv && !t->slash)
-				establish_property_array(t->jv, "elements");
+				instantiate_array(t->jv, "elements");
 /* fall through */
 
 		case TAGACT_JS:
@@ -1820,7 +1825,7 @@ plainTag:
 		case TAGACT_LI:
 /* Look for the open UL or OL */
 			j = -1;
-			for (i1 = tagList.size() - 1; i1 >= 0; --i1) {
+			for (i1 = cw->numTags - 1; i1 >= 0; --i1) {
 				v = tagList[i1];
 				if (v->balanced || !v->info->nest)
 					continue;
@@ -1850,7 +1855,7 @@ plainTag:
 			continue;
 
 		case TAGACT_DT:
-			for (i1 = tagList.size() - 1; i1 >= 0; --i1) {
+			for (i1 = cw->numTags - 1; i1 >= 0; --i1) {
 				v = tagList[i1];
 				if (v->balanced || !v->info->nest)
 					continue;
@@ -1866,13 +1871,12 @@ plainTag:
 
 		case TAGACT_TABLE:
 			if (!slash && isJSAlive) {
-				domLink("Table", 0, "tables", cw->jss->jdoc,
+				domLink("Table", 0, "tables", cw->docobj,
 					eb_false);
 				get_js_events();
 /* create the array of rows under the table */
 				if (topTag->jv)
-					establish_property_array(topTag->jv,
-								 "rows");
+					instantiate_array(topTag->jv, "rows");
 			}
 			if (slash)
 				--intable;
@@ -1895,8 +1899,7 @@ plainTag:
 				domLink("Trow", 0, "rows", open->jv, eb_false);
 				get_js_events();
 				if (topTag->jv)
-					establish_property_array(topTag->jv,
-								 "cells");
+					instantiate_array(topTag->jv, "cells");
 			}
 			goto nop;
 
@@ -1924,8 +1927,7 @@ plainTag:
 
 		case TAGACT_DIV:
 			if (!slash && isJSAlive) {
-				domLink("Div", 0, "divs", cw->jss->jdoc,
-					eb_false);
+				domLink("Div", 0, "divs", cw->docobj, eb_false);
 				get_js_events();
 			}
 			goto nop;
@@ -1933,7 +1935,7 @@ plainTag:
 		case TAGACT_SPAN:
 			if (!slash) {
 				domLink("Span", 0, "spans",
-					cw->jss->jdoc, eb_false);
+					cw->docobj, eb_false);
 				get_js_events();
 				a = htmlAttrVal(topAttrib, "class");
 				if (!a)
@@ -2006,7 +2008,7 @@ doneSelect:
 					makeButton();
 					sprintf(hnum, " %c%d<Go",
 						InternalCodeChar,
-						tagList.size() - 1);
+						cw->numTags - 1);
 					newstr += hnum;
 					if (currentForm->secure)
 						newstr += " secure";
@@ -2129,11 +2131,11 @@ unparen:
 			if (action == TAGACT_FRAME) {
 				htmlHref("src");
 				domLink("Frame", "src", "frames",
-					cw->jss->jwin, eb_false);
+					cw->winobj, eb_false);
 			} else {
 				htmlHref("href");
 				domLink("Area", "href", "areas",
-					cw->jss->jdoc, eb_false);
+					cw->docobj, eb_false);
 			}
 			topTag->clickable = eb_true;
 			get_js_events();
@@ -2186,8 +2188,7 @@ unparen:
 				basehref = t->href;
 				debugPrint(3, "base href %s", basehref);
 			}
-			domLink("Base", "href", "bases", cw->jss->jdoc,
-				eb_false);
+			domLink("Base", "href", "bases", cw->docobj, eb_false);
 			continue;
 
 		case TAGACT_IMAGE:
@@ -2304,9 +2305,9 @@ endtag:
 /* Run the various onload functions */
 /* Turn the onunload functions into hyperlinks */
 	if (isJSAlive && !onload_done) {
-		int stoptag = tagList.size() - 1;
-		onloadGo(cw->jss->jwin, 0, "window");
-		onloadGo(cw->jss->jdoc, 0, "document");
+		int stoptag = cw->numTags - 1;
+		onloadGo(cw->winobj, 0, "window");
+		onloadGo(cw->docobj, 0, "document");
 
 		for (i1 = 0; i1 < stoptag; ++i1) {
 			char *jsrc;
@@ -2334,7 +2335,7 @@ endtag:
 	}
 
 	if (browseLocal == 1) {	/* no errors yet */
-		for (i1 = 0; i1 < tagList.size(); ++i1) {
+		for (i1 = 0; i1 < cw->numTags; ++i1) {
 			t = tagList[i1];
 			browseLine = t->ln;
 			if (t->info->nest && !t->slash && !t->balanced) {
@@ -2353,7 +2354,7 @@ endtag:
 			if (h[1] == 0)
 				continue;
 			a = h + 1;	/* this is what we're looking for */
-			for (i2 = 0; i2 < tagList.size(); ++i2) {
+			for (i2 = 0; i2 < cw->numTags; ++i2) {
 				v = tagList[i2];
 				if (v->action != TAGACT_A)
 					continue;	/* not achor */
@@ -2362,7 +2363,7 @@ endtag:
 				if (stringEqual(a, v->name))
 					break;
 			}
-			if (i2 == tagList.size()) {
+			if (i2 == cw->numTags) {
 				browseError(MSG_NoLable2, a);
 				break;
 			}
@@ -2391,7 +2392,7 @@ void preFormatCheck(int tagno, eb_bool * pretag, eb_bool * slash)
 		i_printfExit(MSG_ErrCallPreFormat);
 	*pretag = *slash = eb_false;
 /* Don't think we really need the bounds check here. */
-	if (tagno >= 0 && tagno < tagList.size()) {
+	if (tagno >= 0 && tagno < cw->numTags) {
 		t = tagList[tagno];
 		*pretag = (t->action == TAGACT_PRE);
 		*slash = t->slash;
@@ -2425,7 +2426,7 @@ char *htmlParse(char *buf, int remote)
 /* In case one of the onload functions called document.write() */
 	jsdw();
 
-	set_property_string(cw->jss->jdoc, "readyState", "complete");
+	set_property_string(cw->docobj, "readyState", "complete");
 
 	return buf;
 }				/* htmlParse */
@@ -2723,7 +2724,7 @@ void infShow(int tagno, const char *search)
 /* If a search string is given, display the options containing that string. */
 	cnt = 0;
 	show = eb_false;
-	for (int i1 = 0; i1 < tagList.size(); ++i1) {
+	for (int i1 = 0; i1 < cw->numTags; ++i1) {
 		v = tagList[i1];
 		if (v->controller != t)
 			continue;
@@ -2823,7 +2824,7 @@ eb_bool infReplace(int tagno, const char *newtext, int notify)
 
 	if (itype == INP_RADIO && form && t->name && *newtext == '+') {
 /* clear the other radio button */
-		for (int i1 = 0; i1 < tagList.size(); ++i1) {
+		for (int i1 = 0; i1 < cw->numTags; ++i1) {
 			v = tagList[i1];
 			if (v->controller != form)
 				continue;
@@ -2926,7 +2927,7 @@ static void formReset(const struct htmlTag *form)
 	struct htmlTag *t, *sel = 0;
 	int itype;
 
-	for (int i1 = 0; i1 < tagList.size(); ++i1) {
+	for (int i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->action == TAGACT_OPTION) {
 			if (!sel)
@@ -3123,7 +3124,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 		post += eol;
 	}
 
-	for (int i1 = 0; i1 < tagList.size(); ++i1) {
+	for (int i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->action != TAGACT_INPUT)
 			continue;
@@ -3227,7 +3228,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 			if (!display) {	/* off the air */
 				struct htmlTag *v;
 /* revert back to reset state */
-				for (int i2 = 0; i2 < tagList.size(); ++i2) {
+				for (int i2 = 0; i2 < cw->numTags; ++i2) {
 					v = tagList[i2];
 					if (v->controller == t)
 						v->checked = v->rchecked;
@@ -3539,7 +3540,7 @@ static struct htmlTag *tagFromJavaVar(jsobjtype v)
 	struct htmlTag *t = 0;
 	if (!cw->tags)
 		i_printfExit(MSG_NullListInform);
-	for (int i1 = 0; i1 < tagList.size(); ++i1) {
+	for (int i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->jv == v)
 			break;
@@ -3616,9 +3617,7 @@ void javaOpensWindow(const char *href, const char *name)
 	toPreamble(t->seqno, "Popup", 0, name);
 }				/* javaOpensWindow */
 
-void
-javaSetsTimeout(int n, const char *jsrc, jsobjtype to,
-		eb_bool isInterval)
+void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, eb_bool isInterval)
 {
 	struct htmlTag *t = newTag("a");
 	char timedesc[48];

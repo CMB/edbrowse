@@ -11,25 +11,6 @@
 
 #include <signal.h>
 
-void setupJavaDom(void);
-jsobjtype instantiate_url(jsobjtype parent, const char *name, const char *url);
-void freeJavaContext(struct ebWindow *w);
-static int numTags = 3;
-#define INP_SELECT 5
-#define TAGACT_INPUT 33
-#define TAGACT_OPTION 34
-static struct htmlTag *newTag(const char *s)
-{
-	return tagList[1];
-}
-
-static char *displayOptions(const struct htmlTag *w)
-{
-	return w->value;
-}
-
-/* end block for stand-alone compilation tests */
-
 /* If connection is lost, mark all js sessions as dead. */
 static void markAllDead(void)
 {
@@ -1304,7 +1285,7 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 	struct htmlTag *t;
 	jsobjtype oo;		/* option object */
 
-	len1 = numTags;
+	len1 = cw->numTags;
 	i1 = i2 = 0;
 	selname = sel->name;
 	if (!selname)
@@ -1315,7 +1296,7 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 
 	while (i1 < len1 && i2 < len2) {
 /* there is more to both lists */
-		t = tagList[i1++];
+		t = cw->tags[i1++];
 		if (t->action != TAGACT_OPTION)
 			continue;
 		if (t->controller != sel)
@@ -1361,7 +1342,7 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 /* one list or the other or both has run to the end */
 	if (i2 == len2) {
 		for (; i1 < len1; ++i1) {
-			t = tagList[i1];
+			t = cw->tags[i1];
 			if (t->action != TAGACT_OPTION)
 				continue;
 			if (t->controller != sel)
@@ -1419,8 +1400,8 @@ void rebuildSelectors(void)
 	jsobjtype oa;		/* option array */
 	int len;		/* length of option array */
 
-	for (i1 = 0; i1 < numTags; ++i1) {
-		t = tagList[i1];
+	for (i1 = 0; i1 < cw->numTags; ++i1) {
+		t = cw->tags[i1];
 		if (!t->jv)
 			continue;
 		if (t->action != TAGACT_INPUT)
@@ -1437,3 +1418,18 @@ void rebuildSelectors(void)
 	}
 
 }				/* rebuildSelectors */
+
+void handlerSet(jsobjtype ev, const char *name, const char *code)
+{
+	enum ej_proptype hasform = has_property(ev, "form");
+	char *newcode = allocMem(strlen(code) + 60);
+	strcpy(newcode, "with(document) { ");
+	if (hasform)
+		strcat(newcode, "with(this.form) { ");
+	strcat(newcode, code);
+	if (hasform)
+		strcat(newcode, " }");
+	strcat(newcode, " }");
+	set_property_function(ev, name, newcode);
+	nzFree(newcode);
+}				/* handlerSet */

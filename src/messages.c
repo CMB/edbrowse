@@ -1,7 +1,6 @@
 /* messages.c
  * Error, warning, and info messages, in your host language,
  * as determined by the variable $LANG.
- * Copyright (c) Karl Dahlke, 2008
  * This file is part of the edbrowse project, released under GPL.
  */
 

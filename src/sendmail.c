@@ -1,7 +1,6 @@
 /* sendmail.c
  * Send mail using the smtp protocol.
  * Send the contents of a file, or the current edbrowse buffer.
- * Copyright (c) Karl Dahlke, 2014
  * This file is part of the edbrowse project, released under GPL.
  */
 

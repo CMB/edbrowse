@@ -1,8 +1,6 @@
 /* url.c
- * (c) 2002 Mikulas Patocka
- * This file is part of the Links project, released under GPL.
- *
- * Modified by Karl Dahlke for integration with edbrowse.
+ * Separate a url into pieces, turn a relative file into an absolute url.
+ * This file is part of the edbrowse project, released under GPL.
  */
 
 #include "eb.h"
