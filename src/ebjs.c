@@ -682,6 +682,8 @@ static int set_property(jsobjtype obj, const char *name,
 
 int set_property_string(jsobjtype obj, const char *name, const char *value)
 {
+	if (value == NULL)
+		value = EMPTYSTRING;
 	return set_property(obj, name, value, EJ_PROP_STRING);
 }				/* set_property_string */
 

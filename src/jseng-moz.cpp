@@ -722,6 +722,7 @@ static void readMessage(void)
 	}
 
 	if (cmd == EJ_CMD_SETPROP || cmd == EJ_CMD_SETAREL) {
+		proptype = head.proptype;
 		if (head.proplength)
 			propval = readString(head.proplength);
 	}
@@ -977,29 +978,29 @@ static JSBool window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 /* All the other dom classes and constructors.
  * If a constructor is not in this list, it is coming later,
  * because it does something special. */
-generic_class(document, "Document")
-    generic_class_ctor(html, "Html")
-    generic_class_ctor(head, "Head")
-    generic_class_ctor(meta, "Meta")
-    generic_class_ctor(link, "Link")
-    generic_class_ctor(body, "Body")
-    generic_class_ctor(form, "Form")
-    generic_class_ctor(element, "Element")
-    generic_class_ctor(image, "Image")
-    generic_class_ctor(frame, "Frame")
-    generic_class_ctor(anchor, "Anchor")
-    generic_class_ctor(table, "Table")
-    generic_class_ctor(div, "Div")
-    generic_class_ctor(area, "Area")
-    generic_class_ctor(span, "Span")
-    generic_class_ctor(trow, "Trow")
-    generic_class_ctor(cell, "Cell")
-    generic_class(option, "Option")
-/* see below */
-    generic_class_ctor(script, "Script")
-    generic_class(url, "URL")
-/* see below */
-    generic_class(timer, "Timer")
+generic_class(document, Document)
+    generic_class_ctor(html, Html)
+    generic_class_ctor(head, Head)
+    generic_class_ctor(meta, Meta)
+    generic_class_ctor(link, Link)
+    generic_class_ctor(body, Body)
+    generic_class_ctor(form, Form)
+    generic_class_ctor(element, Element)
+    generic_class_ctor(image, Image)
+    generic_class_ctor(frame, Frame)
+    generic_class_ctor(anchor, Anchor)
+    generic_class_ctor(table, Table)
+    generic_class_ctor(div, Div)
+    generic_class_ctor(area, Area)
+    generic_class_ctor(span, Span)
+    generic_class_ctor(trow, Trow)
+    generic_class_ctor(cell, Cell)
+    generic_class(option, Option)
+/* constructor below */
+    generic_class_ctor(script, Script)
+    generic_class(url, URL)
+/* constructor below */
+    generic_class(timer, Timer)
 /* instantiated through window.setTimout() */
 #define PROP_STD (JSPROP_ENUMERATE | JSPROP_PERMANENT)
 #define PROP_READONLY (JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY)
@@ -2246,6 +2247,8 @@ static struct {
 	JSFunctionSpec *methods;
 	int nargs;
 } const domClasses[] = {
+/* the document class has to be first */
+	{&document_class},
 	{&html_class, html_ctor},
 	{&head_class, head_ctor, head_methods},
 	{&meta_class, meta_ctor},
@@ -2318,7 +2321,7 @@ no_std:
 		goto no_win;
 
 /* Other classes that we'll need. */
-	for (i = 0; domClasses[i].obj_class; ++i) {
+	for (i = 1; domClasses[i].obj_class; ++i) {
 		if (JS_InitClass
 		    (jcx, winobj, 0, domClasses[i].obj_class,
 		     domClasses[i].constructor, domClasses[i].nargs, NULL,
@@ -2377,7 +2380,7 @@ static void set_property_generic(js::HandleObject parent, const char *name)
 		break;
 
 	case EJ_PROP_OBJECT:
-		scanf(propval, "%p", &child);
+		sscanf(propval, "%p", &child);
 		childroot = child;
 		set_property_object(parent, name, childroot);
 		break;
@@ -2622,7 +2625,7 @@ static void processMessage(void)
 
 	case EJ_CMD_SETAREL:
 		if (propval) {
-			scanf(propval, "%p", &chp);
+			sscanf(propval, "%p", &chp);
 			child = chp;
 			set_array_element_object(parent, head.n, child);
 			nzFree(propval);
