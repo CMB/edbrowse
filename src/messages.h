@@ -1,5 +1,4 @@
 /* messages.h
- * Copyright (c) Karl Dahlke, 2014
  * This file is part of the edbrowse project, released under GPL.
  */
 
@@ -13,6 +12,7 @@ In other words, the constant at line 100 of messages.h corresponds
 to the English string at line 100 of messages.c.
 to keep this alignment, even if you run this file through indent,
 this comment block is just the right size.
+*
 *
 *
 *
@@ -259,7 +259,7 @@ enum {
 	MSG_NoLable2,
 	MSG_BrowseI,
 	MSG_InsertFunction,
-	MSG_NotUsed262,
+	MSG_JSEngineRW,
 	MSG_CNYI,
 	MSG_XOutOfRange,
 	MSG_OptMatchNone,

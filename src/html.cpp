@@ -1119,7 +1119,7 @@ static void onloadGo(jsobjtype obj, const char *jsrc, const char *tagname)
 {
 	struct htmlTag *t;
 	char buf[32];
-jsobjtype fn;
+	jsobjtype fn;
 
 /* The first one is easy - one line of code. */
 	run_function_bool(obj, "onload");
@@ -1135,8 +1135,8 @@ jsobjtype fn;
 	t->jv = obj;
 	t->href = cloneString("#");
 /* make the onunload function a clickable function */
-if(fn = get_property_object(obj, "onunload"))
-set_property_object(obj, "onclick", fn);
+	if (fn = get_property_object(obj, "onunload"))
+		set_property_object(obj, "onclick", fn);
 	sprintf(buf, "on close %s", tagname);
 	caseShift(buf, 'm');
 	toPreamble(t->seqno, buf, jsrc, 0);
@@ -1397,7 +1397,7 @@ done:
 /* runs scripts that have ben dynamically created */
 static void scriptsPending(void)
 {
-jsobjtype obj;
+	jsobjtype obj;
 
 	while (obj = run_function_object(cw->docobj, "script$$pending"))
 		objectScript(obj);
@@ -1551,8 +1551,8 @@ nextchar:
 			*a = 0;
 			if (currentTA->jv && isJSAlive) {
 				establish_inner(currentTA->jv,
-						    currentTA->inner, save_h,
-						    eb_true);
+						currentTA->inner, save_h,
+						eb_true);
 				set_property_string(currentTA->jv, "value",
 						    currentTA->value);
 				set_property_string(currentTA->jv, dfvl,
@@ -1600,7 +1600,7 @@ nextchar:
 			open->balanced = eb_true;
 			if (open->jv && isJSAlive)
 				establish_inner(open->jv, open->inner,
-						    save_h, eb_false);
+						save_h, eb_false);
 /* and mark everything in between */
 			for (i2 = open->seqno; i2 < tagno; ++i2) {
 				v = tagList[i2];
@@ -3386,7 +3386,8 @@ eb_bool infPush(int tagno, char **post_string)
 			else {
 				rc = eb_true;
 				if (form->jv)
-					rc = run_function_bool(form->jv, "onreset");
+					rc = run_function_bool(form->jv,
+							       "onreset");
 				jsdw();
 				if (!rc)
 					return eb_true;

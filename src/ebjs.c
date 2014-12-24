@@ -18,12 +18,13 @@ static void markAllDead(void)
 	struct ebWindow *w;
 	eb_bool killed = eb_false;
 
-	for (cx = 1; cx <= MAXSESSION; ++cx) {
+	for (cx = 1; cx < MAXSESSION; ++cx) {
 		w = sessionList[cx].lw;
 		if (!w)
 			continue;
 		if (w->winobj) {
 			w->winobj = 0;
+			w->docobj = 0;
 			w->jcx = 0;
 			killed = eb_true;
 		}
@@ -31,6 +32,7 @@ static void markAllDead(void)
 			w = w->prev;
 			if (w->winobj) {
 				w->winobj = 0;
+				w->docobj = 0;
 				w->jcx = 0;
 				killed = eb_true;
 			}
@@ -99,7 +101,7 @@ static void js_start(void)
 	sprintf(arg2, "%d", pipe_in[1]);
 	sprintf(arg3, "%d", jsPool);
 	debugPrint(5, "spawning edbrowse-js %s %s %s", arg1, arg2, arg3);
-	execlp("edbrowse-js", arg1, arg2, arg3, 0);
+	execlp("edbrowse-js", "edbrowse-js", arg1, arg2, arg3, 0);
 
 /* oops, process did not exec */
 /* write a message from this child, saying js would not exec */
@@ -239,8 +241,8 @@ static int readFromJS(void *data_p, int n)
 	if (rc == n)
 		return 0;
 /* Oops - can't read from the process any more */
+	i_puts(MSG_JSEngineRW);
 	js_kill();
-/* this call will print an error message for you */
 	markAllDead();
 	return -1;
 }				/* readFromJS */

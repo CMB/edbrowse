@@ -121,8 +121,8 @@ Debug levels:
 3: show each url through redirection,
    cookies, http codes, form data, and sql statements logged.
 4: show the socket connections, and the http headers in and out
-5: url resolution
-6: free and alloc text lines, show javascript
+5: messages to and from the javascript process
+6: url resolution, show javascript to be executed
 7: reformatted regular expressions, breakline chunks.
 8: text lines freed, debug garbage collection
 9: not used

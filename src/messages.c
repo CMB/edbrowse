@@ -1,6 +1,7 @@
 /* messages.c
  * Error, warning, and info messages, in your host language,
  * as determined by the variable $LANG.
+ * Messages can be generated in iso-8859-1, but utf8 is recommended.
  * This file is part of the edbrowse project, released under GPL.
  */
 
@@ -42,7 +43,7 @@ static const char *englishMessages[] = {
 	"watching for binary files",
 	"passive mode",
 	"active mode",
-	"Javascript engine has failed; all current javascript sessions have been closed",
+	"Javascript engine has failed; all current javascript sessions have been closed.",
 	"don't verify ssl connections (less secure)",
 	"verify ssl connections",
 	"don't show hidden files in directory mode",
@@ -258,7 +259,7 @@ static const char *englishMessages[] = {
 	"label %s is not found",
 	"i not available in browse mode",
 	"cannot run an insert command from an edbrowse function",
-	0,
+	"Unable to communicate with edbrowse-js, javascript is closed.",
 	"command %c not yet implemented",
 	"%d is out of range",
 	"no options contain the string %s",

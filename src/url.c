@@ -609,13 +609,13 @@ char *resolveURL(const char *base, const char *rel)
 	if (!base)
 		base = EMPTYSTRING;
 	n = allocMem(strlen(base) + strlen(rel) + 12);
-	debugPrint(5, "resolve(%s|%s)", base, rel);
+	debugPrint(6, "resolve(%s|%s)", base, rel);
 
 	if (rel[0] == '#') {
 /* this is always an anchor for the current document, don't resolve. */
 		strcpy(n, rel);
 out_n:
-		debugPrint(5, "= %s", n);
+		debugPrint(6, "= %s", n);
 		return n;
 	}
 
@@ -722,7 +722,7 @@ char *altText(const char *base)
 	int len, n;
 	int recount = 0;
 	char *s;
-	debugPrint(5, "altText(%s)", base);
+	debugPrint(6, "altText(%s)", base);
 	if (!base)
 		return 0;
 	if (stringEqual(base, "#"))
