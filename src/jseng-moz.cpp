@@ -2347,7 +2347,8 @@ no_doc:
 	}
 	docobj = *d.address();
 	js::RootedValue v(jcx, OBJECT_TO_JSVAL(d));
-	if (JS_SetProperty(jcx, winobj, "document", v.address()) == JS_FALSE)
+	if (JS_DefineProperty
+	    (jcx, winobj, "document", v, NULL, NULL, PROP_READONLY) == JS_FALSE)
 		goto no_doc;
 
 }				/* createJavaContext */
