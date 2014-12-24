@@ -4148,7 +4148,7 @@ eb_bool runCommand(const char *line)
 			}
 /* This is the only handler where false tells the browser to do something else. */
 			if (!rc && !jsdead)
-				set_global_property_string("status", h);
+				set_property_string(cw->winobj, "status", h);
 			if (jsgo && click) {
 				rc = handlerGoBrowse(tag, "onclick");
 				jsdw();
@@ -4158,7 +4158,7 @@ eb_bool runCommand(const char *line)
 					return eb_true;
 			}
 			if (jsh) {
-				rc = javaParseExecuteGlobal(h, 0, 0);
+				javaParseExecute(cw->winobj, h, 0, 0);
 				jsdw();
 				if (newlocation)
 					goto redirect;

@@ -2457,14 +2457,11 @@ set_array_element_object(JS::HandleObject parent, int idx,
 	}
 }				/* set_array_element_object */
 
-static ej_proptype find_proptype(JS::HandleObject parent, const char *name)
+static ej_proptype val_proptype(JS::HandleValue v)
 {
-	js::RootedValue v(jcx);
 	JS::RootedObject child(jcx);
 	unsigned length;
 
-	if (JS_GetProperty(jcx, parent, name, v.address()) == JS_FALSE)
-		return EJ_PROP_NONE;
 	if (JSVAL_IS_STRING(v))
 		return EJ_PROP_STRING;
 	if (JSVAL_IS_INT(v))
@@ -2485,7 +2482,42 @@ static ej_proptype find_proptype(JS::HandleObject parent, const char *name)
 	}
 
 	return EJ_PROP_NONE;	/* don't know */
+}				/* val_proptype */
+
+static ej_proptype find_proptype(JS::HandleObject parent, const char *name)
+{
+	js::RootedValue v(jcx);
+	if (JS_GetProperty(jcx, parent, name, v.address()) == JS_FALSE)
+		return EJ_PROP_NONE;
+	return val_proptype(v);
 }				/* find_proptype */
+
+/* run a javascript function and return the result.
+ * If the result is an object then the pointer, as a string, is returned.
+ * The string is always allocated, you must free it. */
+static char *run_function(JS::HandleObject parent, const char *name)
+{
+	js::RootedValue v(jcx);
+	JSBool found;
+	bool rc;
+	const char *s;
+
+	proptype = EJ_PROP_NONE;
+	JS_HasProperty(jcx, parent, name, &found);
+	if (!found)
+		return NULL;
+
+	rc = JS_CallFunctionName(jcx, parent, name, 0, emptyArgs, v.address());
+	if (!rc)
+		return NULL;
+
+	proptype = val_proptype(v);
+	if (v.isObject())
+		s = pointerString(JSVAL_TO_OBJECT(v));
+	else
+		s = stringize(v);
+	return cloneString(s);
+}				/* run_function */
 
 /* process each message from edbrowse and respond appropriately */
 static void processMessage(void)
@@ -2598,6 +2630,21 @@ static void processMessage(void)
 		}
 		head.proplength = 0;
 		writeHeader();
+		break;
+
+	case EJ_CMD_CALL:
+		propval = run_function(parent, membername);
+		nzFree(membername);
+		membername = 0;
+		head.proplength = head.n = 0;
+		if (propval)
+			head.proplength = strlen(propval);
+		head.proptype = proptype;
+		writeHeader();
+		if (propval)
+			writeToEb(propval, head.proplength);
+		nzFree(propval);
+		propval = 0;
 		break;
 
 	default:

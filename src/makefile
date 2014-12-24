@@ -43,13 +43,14 @@ EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
 
 #  Header file dependencies.
 $(EBOBJS) : eb.h eb.p messages.h ebjs.h
+ebjs.o : ebjs.h messages.h
 
 startwindow.c: startwindow.js
 	../tools/buildstartwindow
 
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.
-edbrowse: $(EBOBJS) startwindow.o dbstubs.o
+edbrowse: $(EBOBJS) ebjs.o startwindow.o dbstubs.o
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 #  You probably need to be root to do this.
@@ -65,12 +66,12 @@ dbinfx.o : dbinfx.ec
 	esql -c dbinfx.ec
 
 #  Informix executable
-edbrowseinf: $(EBOBJS) startwindow.o dbops.o dbinfx.o
-	esql $(ESQLDFLAGS) -o edbrowseinf $(EBOBJS) startwindow.o dbops.o dbinfx.o $(LDLIBS)
+edbrowseinf: $(EBOBJS) ebjs.o startwindow.o dbops.o dbinfx.o
+	esql $(ESQLDFLAGS) -o edbrowseinf $(EBOBJS) ebjs.o startwindow.o dbops.o dbinfx.o $(LDLIBS)
 
 #  odbc access
 edbrowse-odbc: LDLIBS += -lodbc
-edbrowse-odbc: $(EBOBJS) startwindow.o dbops.o dbodbc.o
+edbrowse-odbc: $(EBOBJS) ebjs.o startwindow.o dbops.o dbodbc.o
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 clean:

@@ -1,4 +1,8 @@
-/* This file is machine-generated, do not hand edit. */
+/* Until we can switch edbrowse all the way back to C, we need this. */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* sourcefile=auth.c */
 eb_bool getUserPass(const char *url, char *creds, eb_bool find_proxy) ;
@@ -75,6 +79,10 @@ jsobjtype instantiate_url(jsobjtype parent, const char *name, const char *url) ;
 char *get_property_url(jsobjtype owner, eb_bool action) ;
 void rebuildSelectors(void) ;
 void handlerSet(jsobjtype ev, const char *name, const char *code);
+jsobjtype run_function_object(jsobjtype obj, const char *name);
+eb_bool run_function_bool(jsobjtype obj, const char *name);
+jsobjtype establish_js_option(jsobjtype obj, int idx);
+void establish_inner(jsobjtype obj, const char *start, const char *end, eb_bool isText);
 
 /* sourcefile=fetchmail.c */
 int fetchMail(int account) ;
@@ -279,3 +287,6 @@ const char *findProxyForURL(const char *url) ;
 void addNovsHost(char *host) ;
 CURLcode setCurlURL(CURL * h, const char *url) ;
 
+#ifdef __cplusplus
+}
+#endif

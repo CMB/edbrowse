@@ -58,6 +58,8 @@ static void js_start(void)
 /* doesn't hurt to do this more than once */
 	signal(SIGPIPE, SIG_IGN);
 
+	debugPrint(5, "setting of communication channels for javascript");
+
 	if (pipe(pipe_in)) {
 		i_puts(MSG_JSEnginePipe);
 		allowJS = eb_false;
@@ -96,6 +98,7 @@ static void js_start(void)
 	sprintf(arg1, "%d", pipe_out[0]);
 	sprintf(arg2, "%d", pipe_in[1]);
 	sprintf(arg3, "%d", jsPool);
+	debugPrint(5, "spawning edbrowse-js %s %s %s", arg1, arg2, arg3);
 	execlp("edbrowse-js", arg1, arg2, arg3, 0);
 
 /* oops, process did not exec */
@@ -390,13 +393,15 @@ void createJavaContext(void)
 	if (!allowJS)
 		return;
 
+	js_start();
+
 	debugPrint(5, "> create context for session %d", cs - sessionList);
 
 	memset(&head, 0, sizeof(head));
 	head.cmd = EJ_CMD_CREATE;
 	if (writeHeader())
 		return;
-	if (readHeader())
+	if (readMessage())
 		return;
 	ack5();
 
@@ -435,7 +440,7 @@ void freeJavaContext(struct ebWindow *w)
 	head.docobj = w->docobj;
 	if (writeToJS(&head, sizeof(head)))
 		return;
-	if (readHeader())
+	if (readMessage())
 		return;
 	ack5();
 	w->jcx = w->winobj = 0;
@@ -477,7 +482,7 @@ int javaParseExecute(jsobjtype obj, const char *str, const char *filename,
 	if (writeToJS(str, head.proplength))
 		return -1;
 	jsSourceFile = filename;
-	rc = readHeader();
+	rc = readMessage();
 	jsSourceFile = 0;
 	if (rc)
 		return -1;
@@ -501,7 +506,7 @@ enum ej_proptype has_property(jsobjtype obj, const char *name)
 		return EJ_PROP_NONE;
 	if (writeToJS(name, head.n))
 		return EJ_PROP_NONE;
-	if (readHeader())
+	if (readMessage())
 		return EJ_PROP_NONE;
 	ack5();
 	return head.proptype;
@@ -521,7 +526,7 @@ void delete_property(jsobjtype obj, const char *name)
 		return;
 	if (writeToJS(name, head.n))
 		return;
-	if (readHeader())
+	if (readMessage())
 		return;
 	ack5();
 }				/* delete_property */
@@ -542,7 +547,7 @@ static int get_property(jsobjtype obj, const char *name)
 		return -1;
 	if (writeToJS(name, head.n))
 		return -1;
-	if (readHeader())
+	if (readMessage())
 		return -1;
 	ack5();
 	return 0;
@@ -626,7 +631,7 @@ static int get_array_element(jsobjtype obj, int idx)
 	head.obj = obj;
 	if (writeHeader())
 		return -1;
-	if (readHeader())
+	if (readMessage())
 		return -1;
 	ack5();
 	return 0;
@@ -666,7 +671,7 @@ static int set_property(jsobjtype obj, const char *name,
 		return -1;
 	if (writeToJS(value, strlen(value)))
 		return -1;
-	if (readHeader())
+	if (readMessage())
 		return -1;
 	ack5();
 
@@ -724,7 +729,7 @@ jsobjtype instantiate_array(jsobjtype parent, const char *name)
 		return 0;
 	if (writeToJS(name, head.n))
 		return 0;
-	if (readHeader())
+	if (readMessage())
 		return 0;
 	ack5();
 
@@ -756,7 +761,7 @@ static int set_array_element(jsobjtype array, int idx,
 		return -1;
 	if (writeToJS(value, head.proplength))
 		return -1;
-	if (readHeader())
+	if (readMessage())
 		return -1;
 	ack5();
 
@@ -796,7 +801,7 @@ jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname)
 		return 0;
 	if (writeToJS(classname, head.proplength))
 		return 0;
-	if (readHeader())
+	if (readMessage())
 		return 0;
 	ack5();
 
@@ -816,6 +821,27 @@ int set_property_function(jsobjtype parent, const char *name, const char *body)
 	return set_property(parent, name, body, EJ_PROP_FUNCTION);
 /* should this really return the function created, like instantiate()? */
 }				/* set_property_function */
+
+static int run_function(jsobjtype obj, const char *name)
+{
+	propval = 0;		/* should already be 0 */
+	if (!allowJS || !cw->winobj || !obj)
+		return -1;
+
+	debugPrint(5, "> call %s()", name);
+
+	head.cmd = EJ_CMD_CALL;
+	head.n = strlen(name);
+	head.obj = obj;
+	if (writeHeader())
+		return -1;
+	if (writeToJS(name, head.n))
+		return -1;
+	if (readMessage())
+		return -1;
+	ack5();
+	return 0;
+}				/* run_function */
 
 /* Everything beyond this point belongs in a dom file, perhaps not here. */
 
@@ -989,7 +1015,7 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 		if (list)
 			alist = get_property_object(owner, list);
 		if (alist) {
-			length = get_property_int(alist, "length");
+			length = get_property_number(alist, "length");
 			if (length < 0)
 				return;
 			set_array_element_object(alist, length, io);
@@ -1433,3 +1459,69 @@ void handlerSet(jsobjtype ev, const char *name, const char *code)
 	set_property_function(ev, name, newcode);
 	nzFree(newcode);
 }				/* handlerSet */
+
+/* function should return an object */
+jsobjtype run_function_object(jsobjtype obj, const char *name)
+{
+	run_function(obj, name);
+	if (!propval)
+		return NULL;
+	if (head.proptype == EJ_PROP_OBJECT || head.proptype == EJ_PROP_ARRAY) {
+		jsobjtype p;
+		sscanf(propval, "%p", &p);
+		nzFree(propval);
+		return p;
+	}
+/* wrong type, just return NULL */
+	nzFree(propval);
+	return NULL;
+}				/* run_function_object */
+
+/* function should return a boolean */
+eb_bool run_function_bool(jsobjtype obj, const char *name)
+{
+	run_function(obj, name);
+	if (!propval)
+		return eb_false;
+	if (head.proptype == EJ_PROP_BOOL) {
+		eb_bool rc = (propval[0] == '1');
+		nzFree(propval);
+		return rc;
+	}
+/* wrong type, just return false */
+	nzFree(propval);
+	return eb_false;
+}				/* run_function_bool */
+
+jsobjtype establish_js_option(jsobjtype obj, int idx)
+{
+	jsobjtype oa;		/* option array */
+	jsobjtype oo;		/* option object */
+	jsobjtype fo;		/* form object */
+
+	if ((oa = get_property_object(obj, "options")) == NULL)
+		return NULL;
+	if ((oo = instantiate(obj, fakePropName(), "Option")) == NULL)
+		return NULL;
+	set_array_element_object(oa, idx, oo);
+
+/* option.form = select.form */
+	fo = get_property_object(obj, "form");
+	if (fo)
+		set_property_object(oo, "form", fo);
+
+	return oo;
+}				/* establish_js_option */
+
+void establish_inner(jsobjtype obj, const char *start, const char *end,
+		     eb_bool isText)
+{
+	const char *s = EMPTYSTRING;
+	const char *name = (isText ? "innerText" : "innerHTML");
+	if (start)
+		s = pullString(start, end - start);
+	set_property_string(obj, name, s);
+	nzFree((char *)s);
+/* Anything with an innerHTML might also have a style. */
+	instantiate(obj, "style", 0);
+}				/* establish_inner */

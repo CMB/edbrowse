@@ -17,6 +17,7 @@ char *userAgents[10], *currentAgent, *currentReferrer;
 const char eol[] = "\r\n";
 char EMPTYSTRING[] = "";
 int debugLevel = 1;
+int jsPool = 32;
 char *sslCerts;
 int verifyCertificates = 1;
 int webTimeout = 20, mailTimeout = 0;

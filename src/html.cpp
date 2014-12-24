@@ -1119,9 +1119,10 @@ static void onloadGo(jsobjtype obj, const char *jsrc, const char *tagname)
 {
 	struct htmlTag *t;
 	char buf[32];
+jsobjtype fn;
 
 /* The first one is easy - one line of code. */
-	handlerGo(obj, "onload");
+	run_function_bool(obj, "onload");
 
 	if (!handlerPresent(obj, "onunload"))
 		return;
@@ -1133,7 +1134,9 @@ static void onloadGo(jsobjtype obj, const char *jsrc, const char *tagname)
 	t = newTag("a");
 	t->jv = obj;
 	t->href = cloneString("#");
-	link_onunload_onclick(obj);
+/* make the onunload function a clickable function */
+if(fn = get_property_object(obj, "onunload"))
+set_property_object(obj, "onclick", fn);
 	sprintf(buf, "on close %s", tagname);
 	caseShift(buf, 'm');
 	toPreamble(t->seqno, buf, jsrc, 0);
@@ -1301,7 +1304,7 @@ done:
 	nzFree(a);
 }				/* htmlScript */
 
-static void objectScript(JS::Handle < JSObject * >obj)
+static void objectScript(jsobjtype obj)
 {
 	char *lang = 0;
 	const char *w = 0;
@@ -1394,6 +1397,8 @@ done:
 /* runs scripts that have ben dynamically created */
 static void scriptsPending(void)
 {
+jsobjtype obj;
+
 	while (obj = run_function_object(cw->docobj, "script$$pending"))
 		objectScript(obj);
 }				/* scriptsPending */
@@ -1545,7 +1550,7 @@ nextchar:
 				--a;
 			*a = 0;
 			if (currentTA->jv && isJSAlive) {
-				establish_innerHTML(currentTA->jv,
+				establish_inner(currentTA->jv,
 						    currentTA->inner, save_h,
 						    eb_true);
 				set_property_string(currentTA->jv, "value",
@@ -1594,7 +1599,7 @@ nextchar:
 				continue;	/* unbalanced </ul> means nothing */
 			open->balanced = eb_true;
 			if (open->jv && isJSAlive)
-				establish_innerHTML(open->jv, open->inner,
+				establish_inner(open->jv, open->inner,
 						    save_h, eb_false);
 /* and mark everything in between */
 			for (i2 = open->seqno; i2 < tagno; ++i2) {
@@ -1644,7 +1649,7 @@ forceCloseAnchor:
 		if (ti->bits & TAG_INVISIBLE) {
 			invisible = !slash;
 /* special case for noscript with no js */
-			if (stringEqual(ti->name, "NOSCRIPT") && !cw->jss)
+			if (stringEqual(ti->name, "NOSCRIPT") && !cw->jcx)
 				invisible = eb_false;
 		}
 
@@ -2848,7 +2853,7 @@ eb_bool infReplace(int tagno, const char *newtext, int notify)
 			runningError(MSG_NJNoOnclick);
 		else {
 			jSyncup();
-			handlerGo(t->jv, "onclick");
+			run_function_bool(t->jv, "onclick");
 			jsdw();
 			if (js_redirects)
 				return eb_true;
@@ -2861,7 +2866,7 @@ eb_bool infReplace(int tagno, const char *newtext, int notify)
 			runningError(MSG_NJNoOnchange);
 		else {
 			jSyncup();
-			handlerGo(t->jv, "onchange");
+			run_function_bool(t->jv, "onchange");
 			jsdw();
 			if (js_redirects)
 				return eb_true;
@@ -3356,7 +3361,7 @@ eb_bool infPush(int tagno, char **post_string)
 		else {
 			rc = eb_true;
 			if (t->jv)
-				rc = handlerGo(t->jv, "onclick");
+				rc = run_function_bool(t->jv, "onclick");
 			jsdw();
 			if (!rc)
 				return eb_true;
@@ -3381,7 +3386,7 @@ eb_bool infPush(int tagno, char **post_string)
 			else {
 				rc = eb_true;
 				if (form->jv)
-					rc = handlerGo(form->jv, "onreset");
+					rc = run_function_bool(form->jv, "onreset");
 				jsdw();
 				if (!rc)
 					return eb_true;
@@ -3400,7 +3405,7 @@ eb_bool infPush(int tagno, char **post_string)
 		else {
 			rc = eb_true;
 			if (form->jv)
-				rc = handlerGo(form->jv, "onsubmit");
+				rc = run_function_bool(form->jv, "onsubmit");
 			jsdw();
 			if (!rc)
 				return eb_true;
@@ -3641,5 +3646,5 @@ eb_bool handlerGoBrowse(const struct htmlTag *t, const char *name)
 		return eb_true;
 	if (!t->jv)
 		return eb_true;
-	return handlerGo(t->jv, name);
+	return run_function_bool(t->jv, name);
 }				/* handlerGoBrowse */
