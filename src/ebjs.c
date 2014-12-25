@@ -269,12 +269,11 @@ static enum ej_proptype proptype;
  * Thus messages will remain in sync. */
 static int readMessage(void)
 {
-	int l, rc;
-	char *msg;		/* message from js */
+	int l;
+	char *msg;		/* error message from js */
 
-	rc = readFromJS(&head, sizeof(head));
-	if (rc)
-		return rc;	/* read failed */
+	if (readFromJS(&head, sizeof(head)) < 0)
+		return -1;	/* read failed */
 
 	if (head.magic != EJ_MAGIC) {
 /* this should never happen */
@@ -341,6 +340,7 @@ static int readMessage(void)
 		propval = allocMem(l + 1);
 		if (readFromJS(propval, l)) {
 			free(propval);
+			propval = 0;
 			return -1;
 		}
 		propval[l] = 0;

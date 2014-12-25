@@ -1530,15 +1530,53 @@ url_initialize(JS::HandleObject uo, const char *url, bool exclude_href)
 static const char *emptyParms[] = { 0 };
 static jsval emptyArgs[] = { jsval() };
 
+/* determine js type from js value */
+static ej_proptype val_proptype(JS::HandleValue v)
+{
+	JS::RootedObject child(jcx);
+	unsigned length;
+
+	if (JSVAL_IS_STRING(v))
+		return EJ_PROP_STRING;
+	if (JSVAL_IS_INT(v))
+		return EJ_PROP_INT;
+	if (JSVAL_IS_DOUBLE(v))
+		return EJ_PROP_FLOAT;
+	if (JSVAL_IS_BOOLEAN(v))
+		return EJ_PROP_BOOL;
+
+	if (v.isObject()) {
+		child = JSVAL_TO_OBJECT(v);
+		if (JS_ObjectIsFunction(jcx, child))
+			return EJ_PROP_FUNCTION;
+/* is there a better way to test for array? */
+		if (JS_GetArrayLength(jcx, child, &length) == JS_TRUE)
+			return EJ_PROP_ARRAY;
+		return EJ_PROP_OBJECT;
+	}
+
+	return EJ_PROP_NONE;	/* don't know */
+}				/* val_proptype */
+
+static ej_proptype find_proptype(JS::HandleObject parent, const char *name)
+{
+	js::RootedValue v(jcx);
+	if (JS_GetProperty(jcx, parent, name, v.address()) == JS_FALSE)
+		return EJ_PROP_NONE;
+	return val_proptype(v);
+}				/* find_proptype */
+
 /* Use stringize() to return a property as a string, if it is
  * string compatible. The string is allocated, free it when done. */
 static char *get_property_string(JS::HandleObject parent, const char *name)
 {
 	js::RootedValue v(jcx);
 	const char *s;
+	proptype = EJ_PROP_NONE;
 	if (JS_GetProperty(jcx, parent, name, v.address()) == JS_FALSE)
 		return NULL;
 
+	proptype = val_proptype(v);
 	if (v.isObject()) {
 /* special code here to return the object pointer */
 /* That's what edbrowse is going to want. */
@@ -2474,41 +2512,6 @@ set_array_element_object(JS::HandleObject parent, int idx,
 	}
 }				/* set_array_element_object */
 
-static ej_proptype val_proptype(JS::HandleValue v)
-{
-	JS::RootedObject child(jcx);
-	unsigned length;
-
-	if (JSVAL_IS_STRING(v))
-		return EJ_PROP_STRING;
-	if (JSVAL_IS_INT(v))
-		return EJ_PROP_INT;
-	if (JSVAL_IS_DOUBLE(v))
-		return EJ_PROP_FLOAT;
-	if (JSVAL_IS_BOOLEAN(v))
-		return EJ_PROP_BOOL;
-
-	if (v.isObject()) {
-		child = JSVAL_TO_OBJECT(v);
-		if (JS_ObjectIsFunction(jcx, child))
-			return EJ_PROP_FUNCTION;
-/* is there a better way to test for array? */
-		if (JS_GetArrayLength(jcx, child, &length) == JS_TRUE)
-			return EJ_PROP_ARRAY;
-		return EJ_PROP_OBJECT;
-	}
-
-	return EJ_PROP_NONE;	/* don't know */
-}				/* val_proptype */
-
-static ej_proptype find_proptype(JS::HandleObject parent, const char *name)
-{
-	js::RootedValue v(jcx);
-	if (JS_GetProperty(jcx, parent, name, v.address()) == JS_FALSE)
-		return EJ_PROP_NONE;
-	return val_proptype(v);
-}				/* find_proptype */
-
 /* run a javascript function and return the result.
  * If the result is an object then the pointer, as a string, is returned.
  * The string is always allocated, you must free it. */
@@ -2590,8 +2593,11 @@ static void processMessage(void)
 		nzFree(membername);
 		membername = 0;
 		head.n = head.proplength = 0;
-		if (propval)
+		head.proptype = EJ_PROP_NONE;
+		if (propval) {
 			head.proplength = strlen(propval);
+			head.proptype = proptype;
+		}
 		writeHeader();
 		if (propval)
 			writeToEb(propval, head.proplength);
