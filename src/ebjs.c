@@ -1079,7 +1079,7 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 		instantiate_url(io, href, href_url);
 	}
 
-	if (stringEqual(classname, "element")) {
+	if (stringEqual(classname, "Element")) {
 /* link back to the form that owns the element */
 		set_property_object(io, "form", owner);
 	}
