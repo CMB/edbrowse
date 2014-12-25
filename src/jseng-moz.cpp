@@ -1746,10 +1746,19 @@ set_property_string(js::HandleObject parent, const char *name,
 
 	JS_HasProperty(jcx, parent, name, &found);
 	if (found) {
-		setter_suspend = true;
-		if (JS_SetProperty(jcx, parent, name, v.address()) == JS_FALSE)
-			misconfigure();
-		setter_suspend = false;
+		if (JS_GetClass(parent) == &url_class &&
+		    stringEqual(name, "href")) {
+			const char *vv = value;
+			if (!vv)
+				vv = emptyString;
+			url_initialize(parent, vv, false);
+		} else {
+			setter_suspend = true;
+			if (JS_SetProperty(jcx, parent, name, v.address()) ==
+			    JS_FALSE)
+				misconfigure();
+			setter_suspend = false;
+		}
 		return;
 	}
 
@@ -2450,6 +2459,11 @@ static void set_property_generic(js::HandleObject parent, const char *name)
 			misconfigure();
 			break;
 		}
+		if (cp == &url_class) {
+/* the constructor didn't run, so create all the pieces under url */
+			url_initialize(childroot, "", false);
+		}
+
 childreturn:
 		set_property_object(parent, name, childroot);
 		propval = cloneString(pointerString(*childroot.address()));

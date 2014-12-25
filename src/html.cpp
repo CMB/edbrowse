@@ -444,7 +444,7 @@ static void htmlMeta(void)
 	if (content == EMPTYSTRING)
 		content = 0;
 
-	domLink("Meta", 0, "metas", cw->docobj, eb_false);
+	domLink("Meta", 0, "metas", cw->docobj, 0);
 	if (topTag->jv)
 		set_property_string(topTag->jv, "content", content);
 
@@ -591,7 +591,7 @@ static void htmlImage(void)
 	if (!isJSAlive)
 		return;
 
-	domLink("Image", "src", "images", cw->docobj, eb_false);
+	domLink("Image", "src", "images", cw->docobj, 0);
 
 	get_js_events();
 
@@ -650,7 +650,7 @@ static void htmlForm(void)
 	if (!isJSAlive)
 		return;
 
-	domLink("Form", "action", "forms", cw->docobj, eb_false);
+	domLink("Form", "action", "forms", cw->docobj, 0);
 	if (!topTag->jv)
 		return;
 
@@ -1203,7 +1203,7 @@ static void htmlScript(char *&html, char *&h)
 
 /* Create the script object. */
 	htmlHref("src");
-	domLink("Script", "src", "scripts", cw->docobj, eb_false);
+	domLink("Script", "src", "scripts", cw->docobj, 0);
 
 	a = htmlAttrVal(topAttrib, "type");
 	if (a)
@@ -1768,7 +1768,7 @@ forceCloseAnchor:
 			} else {
 				htmlHref("href");
 				domLink("Anchor", "href", "anchors",
-					cw->docobj, eb_false);
+					cw->docobj, 0);
 				get_js_events();
 				if (t->href) {
 					a_href = eb_true;
@@ -1801,15 +1801,15 @@ forceCloseAnchor:
 			continue;
 
 		case TAGACT_HTML:
-			domLink("Html", 0, "htmls", cw->docobj, eb_false);
+			domLink("Html", 0, "htmls", cw->docobj, 0);
 			goto endtag;
 
 		case TAGACT_HEAD:
-			domLink("Head", 0, "heads", cw->docobj, eb_false);
+			domLink("Head", 0, "heads", cw->docobj, 0);
 			goto plainWithElements;
 
 		case TAGACT_BODY:
-			domLink("Body", 0, "bodies", cw->docobj, eb_false);
+			domLink("Body", 0, "bodies", cw->docobj, 0);
 plainWithElements:
 			if (t->jv && !t->slash)
 				instantiate_array(t->jv, "elements");
@@ -1876,8 +1876,7 @@ plainTag:
 
 		case TAGACT_TABLE:
 			if (!slash && isJSAlive) {
-				domLink("Table", 0, "tables", cw->docobj,
-					eb_false);
+				domLink("Table", 0, "tables", cw->docobj, 0);
 				get_js_events();
 /* create the array of rows under the table */
 				if (topTag->jv)
@@ -1901,7 +1900,7 @@ plainTag:
 			tdfirst = eb_true;
 			if ((!slash) && isJSAlive
 			    && (open = findOpenTag("table")) && open->jv) {
-				domLink("Trow", 0, "rows", open->jv, eb_false);
+				domLink("Trow", 0, "rows", open->jv, 0);
 				get_js_events();
 				if (topTag->jv)
 					instantiate_array(topTag->jv, "cells");
@@ -1925,14 +1924,14 @@ plainTag:
 				newstr += '|';
 			}
 			if (isJSAlive && (open = findOpenTag("tr")) && open->jv) {
-				domLink("Cell", 0, "cells", open->jv, eb_false);
+				domLink("Cell", 0, "cells", open->jv, 0);
 				get_js_events();
 			}
 			goto endtag;
 
 		case TAGACT_DIV:
 			if (!slash && isJSAlive) {
-				domLink("Div", 0, "divs", cw->docobj, eb_false);
+				domLink("Div", 0, "divs", cw->docobj, 0);
 				get_js_events();
 			}
 			goto nop;
@@ -1940,7 +1939,7 @@ plainTag:
 		case TAGACT_SPAN:
 			if (!slash) {
 				domLink("Span", 0, "spans",
-					cw->docobj, eb_false);
+					cw->docobj, 0);
 				get_js_events();
 				a = htmlAttrVal(topAttrib, "class");
 				if (!a)
@@ -2136,11 +2135,11 @@ unparen:
 			if (action == TAGACT_FRAME) {
 				htmlHref("src");
 				domLink("Frame", "src", "frames",
-					cw->winobj, eb_false);
+					cw->winobj, 0);
 			} else {
 				htmlHref("href");
 				domLink("Area", "href", "areas",
-					cw->docobj, eb_false);
+					cw->docobj, 0);
 			}
 			topTag->clickable = eb_true;
 			get_js_events();
@@ -2193,7 +2192,7 @@ unparen:
 				basehref = t->href;
 				debugPrint(3, "base href %s", basehref);
 			}
-			domLink("Base", "href", "bases", cw->docobj, eb_false);
+			domLink("Base", "href", "bases", cw->docobj, 0);
 			continue;
 
 		case TAGACT_IMAGE:
