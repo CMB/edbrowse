@@ -375,17 +375,30 @@ static int writeHeader(void)
 	return writeToJS(&head, sizeof(head));
 }				/* writeHeader */
 
+static const char *debugString(const char *v)
+{
+	if (!v)
+		return EMPTYSTRING;
+	if (strlen(v) > 100)
+		return "long";
+	return v;
+}				/* debugString */
+
 /* If debug is at least 5, show a simple acknowledgement or error
  * from the js process. */
 static void ack5(void)
 {
 	if (debugLevel < 5)
 		return;
-	printf("< ");
+	printf("<");
 	if (head.highstat)
-		printf("%d|%d\n", head.highstat, head.lowstat);
+		printf(" error %d|%d", head.highstat, head.lowstat);
+	if (propval)
+		printf(" %s\n", debugString(propval));
+	else if (head.cmd == EJ_CMD_HASPROP)
+		printf(" %d\n", head.proptype);
 	else
-		puts("ok");
+		puts(" ok");
 }				/* ack5 */
 
 /* Create a js context for the current window.
@@ -662,7 +675,7 @@ static int set_property(jsobjtype obj, const char *name,
 	if (!allowJS || !cw->winobj || !obj)
 		return -1;
 
-	debugPrint(5, "> set %s", name);
+	debugPrint(5, "> set %s=%s", name, debugString(value));
 
 	head.cmd = EJ_CMD_SETPROP;
 	head.obj = obj;
@@ -756,7 +769,7 @@ static int set_array_element(jsobjtype array, int idx,
 	if (!allowJS || !cw->winobj || !array)
 		return -1;
 
-	debugPrint(5, "> set [%d]", idx);
+	debugPrint(5, "> set [%d]=%s", idx, debugString(value));
 
 	head.cmd = EJ_CMD_SETAREL;
 	head.obj = array;
