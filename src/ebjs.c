@@ -849,6 +849,18 @@ static int run_function(jsobjtype obj, const char *name)
 	return 0;
 }				/* run_function */
 
+int get_arraylength(jsobjtype a)
+{
+	head.cmd = EJ_CMD_ARLEN;
+	head.obj = a;
+	if (writeHeader())
+		return -1;
+	if (readMessage())
+		return -1;
+	ack5();
+	return head.n;
+}				/* get_arraylength */
+
 /* Everything beyond this point belongs in a dom file, perhaps not here. */
 
 /* The object is a select-one field in the form, and this function returns
@@ -1024,7 +1036,7 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 		if (list)
 			alist = get_property_object(owner, list);
 		if (alist) {
-			length = get_property_number(alist, "length");
+			length = get_arraylength(alist);
 			if (length < 0)
 				return;
 			set_array_element_object(alist, length, io);
@@ -1040,7 +1052,7 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 /* w becomes the object associated with this radio button */
 /* io is, by assumption, an array */
 		jsobjtype w;
-		length = get_property_number(io, "length");
+		length = get_arraylength(io);
 		if (length < 0)
 			return;
 		w = instantiate(owner, fakePropName(), "Element");
@@ -1447,7 +1459,7 @@ void rebuildSelectors(void)
 /* there should always be an options array, if not then move on */
 		if ((oa = get_property_object(t->jv, "options")) == NULL)
 			continue;
-		if ((len = get_property_number(oa, "length")) < 0)
+		if ((len = get_arraylength(oa)) < 0)
 			continue;
 		rebuildSelector(t, oa, len);
 	}

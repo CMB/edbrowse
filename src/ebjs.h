@@ -27,6 +27,7 @@ enum ej_cmd {
 	EJ_CMD_HASPROP,
 	EJ_CMD_GETAREL,
 	EJ_CMD_SETAREL,
+	EJ_CMD_ARLEN,
 	EJ_CMD_CALL,
 };
 

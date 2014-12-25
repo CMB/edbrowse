@@ -2551,6 +2551,7 @@ static void processMessage(void)
 	js::RootedValue v(jcx);
 	const char *s;
 	bool rc, setret;
+	unsigned len;
 
 	switch (head.cmd) {
 	case EJ_CMD_SCRIPT:
@@ -2653,6 +2654,15 @@ static void processMessage(void)
 			nzFree(propval);
 			propval = 0;
 		}
+		head.proplength = 0;
+		writeHeader();
+		break;
+
+	case EJ_CMD_ARLEN:
+		if (JS_GetArrayLength(jcx, parent, &len) == JS_FALSE)
+			head.n = -1;
+		else
+			head.n = len;
 		head.proplength = 0;
 		writeHeader();
 		break;
