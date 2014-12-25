@@ -1195,8 +1195,9 @@ abort:
 
 	q = hostname;
 	if (component == 2 || hadcolon) {
-		q += ':';
-		q += port;
+		char portstring[12];
+		sprintf(portstring, ":%d", port);
+		q += portstring;
 	}
 	newhost = q.c_str();
 	v = STRING_TO_JSVAL(JS_NewStringCopyZ(jcx, newhost));
@@ -1474,6 +1475,7 @@ url_initialize(JS::HandleObject uo, const char *url, bool exclude_href)
 		s = q.c_str();
 	}
 	loc_def_set(uo, "protocol", s, setter_loc_prot);
+	q.clear();
 
 	data = getDataURL(url);
 	s = 0;
@@ -1492,12 +1494,14 @@ url_initialize(JS::HandleObject uo, const char *url, bool exclude_href)
 	if (s) {		/* this was hostname */
 		q = s;
 		if (pl) {
-			q += ':';
-			q += port;
+			char portstring[12];
+			sprintf(portstring, ":%d", port);
+			q += portstring;
 		}
 		s = q.c_str();
 	}
 	loc_def_set(uo, "host", s, setter_loc_host);
+	q.clear();
 
 	s = 0;
 	n = 0;
@@ -2147,6 +2151,7 @@ static JSObject *setTimeout(unsigned int argc, jsval * argv, bool isInterval)
 	JS::RootedValue v0(jcx), v1(jcx);
 	JS::RootedObject fo(jcx), to(jcx);
 	int n;			/* number of milliseconds */
+	char nstring[20];
 	char fname[48];		/* function name */
 	const char *fstr;	/* function string */
 	const char *methname = (isInterval ? "setInterval" : "setTimeout");
@@ -2231,14 +2236,13 @@ abort:
 			fstr = fname;
 		}
 
-		effects += "t{";	// }
-		effects += n;
-		effects += '|';
+		sprintf(nstring, "t{%d|", n);	// }
+		effects += nstring;
 		effects += fstr;
 		effects += '|';
 		effects += pointerString(to);
 		effects += '|';
-		effects += isInterval;
+		effects += (isInterval ? '1' : '0');
 		endeffect();
 
 		return to;
