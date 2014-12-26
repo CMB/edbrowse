@@ -1321,7 +1321,7 @@ static void objectScript(jsobjtype obj)
 	    && (!memEqualCI(lang, "javascript", 10) || isalphaByte(lang[10])))
 		goto done;
 
-	jsrc = get_property_string(obj, "src");
+	jsrc = get_property_url(obj, eb_false);
 	if (jsrc) {
 		char *h;
 		unpercentURL(jsrc);
@@ -1938,8 +1938,7 @@ plainTag:
 
 		case TAGACT_SPAN:
 			if (!slash) {
-				domLink("Span", 0, "spans",
-					cw->docobj, 0);
+				domLink("Span", 0, "spans", cw->docobj, 0);
 				get_js_events();
 				a = htmlAttrVal(topAttrib, "class");
 				if (!a)
@@ -2138,8 +2137,7 @@ unparen:
 					cw->winobj, 0);
 			} else {
 				htmlHref("href");
-				domLink("Area", "href", "areas",
-					cw->docobj, 0);
+				domLink("Area", "href", "areas", cw->docobj, 0);
 			}
 			topTag->clickable = eb_true;
 			get_js_events();

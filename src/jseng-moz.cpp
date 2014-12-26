@@ -1541,8 +1541,9 @@ static jsval emptyArgs[] = { jsval() };
 static ej_proptype val_proptype(JS::HandleValue v)
 {
 	JS::RootedObject child(jcx);
-	unsigned length;
 
+	if (v.isNullOrUndefined())
+		return EJ_PROP_NONE;
 	if (JSVAL_IS_STRING(v))
 		return EJ_PROP_STRING;
 	if (JSVAL_IS_INT(v))
@@ -1556,8 +1557,7 @@ static ej_proptype val_proptype(JS::HandleValue v)
 		child = JSVAL_TO_OBJECT(v);
 		if (JS_ObjectIsFunction(jcx, child))
 			return EJ_PROP_FUNCTION;
-/* is there a better way to test for array? */
-		if (JS_GetArrayLength(jcx, child, &length) == JS_TRUE)
+		if (JS_IsArrayObject(jcx, child))
 			return EJ_PROP_ARRAY;
 		return EJ_PROP_OBJECT;
 	}
@@ -1584,6 +1584,9 @@ static char *get_property_string(JS::HandleObject parent, const char *name)
 		return NULL;
 
 	proptype = val_proptype(v);
+	if (proptype == EJ_PROP_NONE)
+		return NULL;
+
 	if (v.isObject()) {
 /* special code here to return the object pointer */
 /* That's what edbrowse is going to want. */
@@ -2539,20 +2542,20 @@ set_array_element_object(JS::HandleObject parent, int idx,
 static char *run_function(JS::HandleObject parent, const char *name)
 {
 	js::RootedValue v(jcx);
-	JSBool found;
 	bool rc;
+	JSBool found;
 	const char *s;
 
 	proptype = EJ_PROP_NONE;
 	JS_HasProperty(jcx, parent, name, &found);
 	if (!found)
 		return NULL;
-
 	rc = JS_CallFunctionName(jcx, parent, name, 0, emptyArgs, v.address());
 	if (!rc)
 		return NULL;
-
 	proptype = val_proptype(v);
+	if (proptype == EJ_PROP_NONE)
+		return NULL;
 	if (v.isObject())
 		s = pointerString(JSVAL_TO_OBJECT(v));
 	else
