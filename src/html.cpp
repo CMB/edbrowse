@@ -794,9 +794,10 @@ char *displayOptions(const struct htmlTag *sel)
 	const struct htmlTag *t;
 	char *options;
 int options_l;
+int i1;
 options = initString(&options_l);
 
-	for (int i1 = 0; i1 < cw->numTags; ++i1) {
+	for (i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->controller != sel)
 			continue;
@@ -817,7 +818,8 @@ static struct htmlTag *locateOptionByName(const struct htmlTag *sel,
 	struct htmlTag *t, *em = 0, *pm = 0;
 	int pmcount = 0;	/* partial match count */
 	const char *s;
-	for (int i1 = 0; i1 < cw->numTags; ++i1) {
+int i1;
+	for (i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->controller != sel)
 			continue;
@@ -845,8 +847,8 @@ static struct htmlTag *locateOptionByName(const struct htmlTag *sel,
 static struct htmlTag *locateOptionByNum(const struct htmlTag *sel, int n)
 {
 	struct htmlTag *t;
-	int cnt = 0;
-	for (int i1 = 0; i1 < cw->numTags; ++i1) {
+	int cnt = 0, i1;
+	for (i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->controller != sel)
 			continue;
@@ -866,7 +868,7 @@ locateOptions(const struct htmlTag *sel, const char *input,
 	struct htmlTag *t;
 	string display, value;
 	int len = strlen(input);
-	int n, pmc, cnt;
+	int n, pmc, cnt, i1;
 	const char *s, *e;	/* start and end of an option */
 	char *iopt;		/* individual option */
 
@@ -876,7 +878,7 @@ locateOptions(const struct htmlTag *sel, const char *input,
 /* Uncheck all existing options, then check the ones selected. */
 		if (sel->jv && isJSAlive)
 			set_property_number(sel->jv, "selectedIndex", -1);
-		for (int i1 = 0; i1 < cw->numTags; ++i1) {
+		for (i1 = 0; i1 < cw->numTags; ++i1) {
 			t = tagList[i1];
 			if (t->controller == sel && t->name) {
 				t->checked = eb_false;
@@ -978,6 +980,7 @@ void jSyncup(void)
 	const struct htmlTag *t;
 	int itype, j, cx;
 	char *value, *cxbuf;
+int i1;
 
 	if (parsePage)
 		return;		/* not necessary */
@@ -985,7 +988,7 @@ void jSyncup(void)
 		return;
 	debugPrint(5, "jSyncup starts");
 
-	for (int i1 = 0; i1 < cw->numTags; ++i1) {
+	for (i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->action != TAGACT_INPUT)
 			continue;
@@ -1051,8 +1054,9 @@ static struct htmlTag *findOpenTag(const char *name)
 	eb_bool closing = topTag->slash;
 	eb_bool match;
 	const char *desc = topTag->info->desc;
+int i1;
 
-	for (int i1 = cw->numTags - 2; i1 >= 0; --i1) {
+	for (i1 = cw->numTags - 2; i1 >= 0; --i1) {
 		t = tagList[i1];
 		if (t->balanced)
 			continue;
@@ -1306,6 +1310,7 @@ static void htmlScript(char *&html, char *&h)
 /* See if the script has produced html via document.write() */
 	if (cw->dw) {
 		int afterlen;	/* after we fold in this string */
+int i1;
 		char *after;
 		debugPrint(3, "docwrite %d bytes", cw->dw_l);
 		debugPrint(4, "<<\n%s\n>>", cw->dw + 10);
@@ -1321,7 +1326,7 @@ static void htmlScript(char *&html, char *&h)
 		html = h = after;
 
 /* After the realloc, the inner pointers are no longer valid. */
-		for (int i1 = 0; i1 < cw->numTags; ++i1) {
+		for (i1 = 0; i1 < cw->numTags; ++i1) {
 			t = tagList[i1];
 			t->inner = 0;
 		}
@@ -2723,7 +2728,7 @@ void infShow(int tagno, const char *search)
 {
 	const struct htmlTag *t = tagList[tagno], *v;
 	const char *s;
-	int cnt;
+	int cnt, i1;
 	eb_bool show;
 
 	s = inp_types[t->itype];
@@ -2758,7 +2763,7 @@ void infShow(int tagno, const char *search)
 /* If a search string is given, display the options containing that string. */
 	cnt = 0;
 	show = eb_false;
-	for (int i1 = 0; i1 < cw->numTags; ++i1) {
+	for (i1 = 0; i1 < cw->numTags; ++i1) {
 		v = tagList[i1];
 		if (v->controller != t)
 			continue;
@@ -2858,7 +2863,8 @@ eb_bool infReplace(int tagno, const char *newtext, int notify)
 
 	if (itype == INP_RADIO && form && t->name && *newtext == '+') {
 /* clear the other radio button */
-		for (int i1 = 0; i1 < cw->numTags; ++i1) {
+int i1;
+		for (i1 = 0; i1 < cw->numTags; ++i1) {
 			v = tagList[i1];
 			if (v->controller != form)
 				continue;
@@ -2959,9 +2965,9 @@ static void resetVar(struct htmlTag *t)
 static void formReset(const struct htmlTag *form)
 {
 	struct htmlTag *t, *sel = 0;
-	int itype;
+	int itype, i1;
 
-	for (int i1 = 0; i1 < cw->numTags; ++i1) {
+	for (i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->action == TAGACT_OPTION) {
 			if (!sel)
@@ -3141,6 +3147,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 	const struct htmlTag *t;
 	int itype;
 	int j;
+int i1;
 	char *name, *dynamicvalue = NULL;
 /* dynamicvalue needs to be freed with nzFree. */
 	const char *value;
@@ -3158,7 +3165,7 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 		post += eol;
 	}
 
-	for (int i1 = 0; i1 < cw->numTags; ++i1) {
+	for (i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->action != TAGACT_INPUT)
 			continue;
@@ -3261,8 +3268,9 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 			char *s, *e;
 			if (!display) {	/* off the air */
 				struct htmlTag *v;
+int i2;
 /* revert back to reset state */
-				for (int i2 = 0; i2 < cw->numTags; ++i2) {
+				for (i2 = 0; i2 < cw->numTags; ++i2) {
 					v = tagList[i2];
 					if (v->controller == t)
 						v->checked = v->rchecked;
@@ -3570,9 +3578,10 @@ eb_bool infPush(int tagno, char **post_string)
 static struct htmlTag *tagFromJavaVar(jsobjtype v)
 {
 	struct htmlTag *t = 0;
+int i1;
 	if (!cw->tags)
 		i_printfExit(MSG_NullListInform);
-	for (int i1 = 0; i1 < cw->numTags; ++i1) {
+	for (i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->jv == v)
 			break;
