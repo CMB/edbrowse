@@ -4,7 +4,8 @@
  */
 
 #include "eb.h"
-
+#include <string>
+using namespace std;
 
 
 #define handlerPresent(obj, name) (has_property(obj, name) == EJ_PROP_FUNCTION)
@@ -87,19 +88,19 @@ static void toPreamble(int tagno, const char *msg, const char *j, const char *h)
 	char fn[40], *s;
 
 	sprintf(buf, "\r%c%d{", InternalCodeChar, tagno);
-stringAndString(&preamble , &preamble _L, buf);
-stringAndString(&preamble , &preamble _L, msg);
+stringAndString(&preamble, &preamble_l, buf);
+stringAndString(&preamble, &preamble_l, msg);
 
 	if (h) {
-stringAndString(&preamble , &preamble _L, ": ");
-stringAndString(&preamble , &preamble _L, h);
+stringAndString(&preamble, &preamble_l, ": ");
+stringAndString(&preamble, &preamble_l, h);
 	} else if (j) {
 		skipWhite(&j);
 		if (memEqualCI(j, "javascript:", 11))
 			j += 11;
 		skipWhite(&j);
 		if (isalphaByte(*j) || *j == '_') {
-stringAndString(&preamble , &preamble _L, ": ");
+stringAndString(&preamble, &preamble_l, ": ");
 			for (s = fn; isalnumByte(*j) || *j == '_'; ++j) {
 				if (s < fn + sizeof(fn) - 3)
 					*s++ = *j;
@@ -107,12 +108,12 @@ stringAndString(&preamble , &preamble _L, ": ");
 			strcpy(s, "()");
 			skipWhite(&j);
 			if (*j == '(')
-stringAndString(&preamble , &preamble _L, fn);
+stringAndString(&preamble, &preamble_l, fn);
 		}
 	}
 
 	sprintf(buf, "%c0}\r", InternalCodeChar);
-stringAndString(&preamble , &preamble _L, buf);
+stringAndString(&preamble, &preamble_l, buf);
 }				/* toPreamble */
 
 /*********************************************************************
@@ -765,7 +766,7 @@ if (strstr(radioChecked, namebuf)) {
 				browseError(MSG_RadioMany);
 				return;
 			}
-stringAndString(&radioChecked , &radioChecked _L, namebuf + 1);
+stringAndString(&radioChecked, &radioChecked_l, namebuf + 1);
 		}		/* radio name */
 		topTag->rchecked = eb_true;
 		topTag->checked = eb_true;
@@ -2407,9 +2408,10 @@ radioChecked = initString(&radioChecked_l);
 	basehref = 0;
 
 	if (preamble_l) {
-stringAndChar(&preamble , &preamble _L, '\f');
+stringAndChar(&preamble, &preamble_l, '\f');
 		newstr.insert(0, preamble);
-		preamble.clear();
+nzFree(preamble);
+preamble = initString(&preamble_l);
 	}
 
 	return cloneString(newstr.c_str());
