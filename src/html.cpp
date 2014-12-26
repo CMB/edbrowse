@@ -792,7 +792,9 @@ static void makeButton(void)
 char *displayOptions(const struct htmlTag *sel)
 {
 	const struct htmlTag *t;
-	string options;
+	char *options;
+int options_l;
+options = initString(&options_l);
 
 	for (int i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
@@ -800,12 +802,12 @@ char *displayOptions(const struct htmlTag *sel)
 			continue;
 		if (!t->checked)
 			continue;
-		if (options.length())
-			options += ',';
-		options += t->name;
+		if (options_l)
+stringAndChar(&options, &options_l, ',');
+stringAndString(&options, &options_l, t->name);
 	}
 
-	return cloneString(options.c_str());
+return options;
 }				/* displayOptions */
 
 static struct htmlTag *locateOptionByName(const struct htmlTag *sel,
