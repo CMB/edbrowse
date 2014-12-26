@@ -1,5 +1,12 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.5.3:
+Write a separate process, edbrowse-js, to handle all the javascript objects.
+This process and only this process interacts with the js library,
+be it mozilla or v8 or whatever.
+Edbrowse implements the document object model at a higher level,
+and communicates with edbrowse-js for the corresponding javascript objects.
+
 3.5.2:
 The blacklist feature is now gone.
 It wasn't really used,

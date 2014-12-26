@@ -238,6 +238,7 @@ static int readFromJS(void *data_p, int n)
 	if (n == 0)
 		return 0;
 	rc = read(pipe_in[0], data_p, n);
+	debugPrint(7, "js read %d\n", rc);
 	if (rc == n)
 		return 0;
 /* Oops - can't read from the process any more */

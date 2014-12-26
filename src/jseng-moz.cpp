@@ -603,6 +603,7 @@ int main(int argc, char **argv)
 		readMessage();
 		head.highstat = EJ_HIGH_OK;
 		head.lowstat = EJ_LOW_OK;
+		head.side = head.msglen = 0;
 
 		if (head.cmd == EJ_CMD_EXIT)
 			exit(0);
@@ -615,6 +616,7 @@ int main(int argc, char **argv)
 				head.winobj = winobj;
 				head.docobj = docobj;
 			}
+			head.n = head.proplength = 0;
 			writeHeader();
 			continue;
 		}
@@ -626,6 +628,7 @@ int main(int argc, char **argv)
 		if (head.cmd == EJ_CMD_DESTROY) {
 /* don't enter the compartment of a context you want to destroy */
 			JS_DestroyContext(jcx);
+			head.n = head.proplength = 0;
 			writeHeader();
 			continue;
 		}
@@ -2656,6 +2659,7 @@ static void processMessage(void)
 		if (child) {
 			propval = cloneString(pointerString(*child.address()));
 			head.proplength = strlen(propval);
+			head.proptype = EJ_PROP_OBJECT;
 		}
 		writeHeader();
 		if (propval)
