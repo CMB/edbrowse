@@ -2410,10 +2410,29 @@ no_doc:
 
 }				/* createJavaContext */
 
+static JSClass *classByName(const char *classname)
+{
+	JSClass *cp = 0;
+	int i;
+
+	if (!classname)
+		return cp;	/* generic object */
+
+	for (i = 0; cp = domClasses[i].obj_class; ++i)
+		if (stringEqual(cp->name, classname))
+			break;
+	if (!cp) {
+		cerr << "Unexpected class name " << propval <<
+		    " from edbrowse\n";
+		exit(8);
+	}
+	return cp;
+}				/* classByName */
+
 /* based on propval and proptype */
 static void set_property_generic(js::HandleObject parent, const char *name)
 {
-	int i, n;
+	int n;
 	double d;
 	JSObject *child;
 	JS::RootedObject childroot(jcx);
@@ -2446,20 +2465,9 @@ static void set_property_generic(js::HandleObject parent, const char *name)
 		break;
 
 	case EJ_PROP_INSTANCE:
-		cp = 0;
-		if (propval) {
-/* find the class */
-			for (i = 0; cp = domClasses[i].obj_class; ++i)
-				if (stringEqual(cp->name, propval))
-					break;
-			if (!cp) {
-				cerr << "Unexpected class name " << propval <<
-				    " from edbrowse\n";
-				exit(8);
-			}
-			nzFree(propval);
-			propval = 0;
-		}
+		cp = classByName(propval);
+		nzFree(propval);
+		propval = 0;
 		childroot = JS_NewObject(jcx, cp, NULL, parent);
 		if (!childroot) {
 			misconfigure();
@@ -2574,8 +2582,9 @@ static void processMessage(void)
 	JSObject *chp;
 	js::RootedValue v(jcx);
 	const char *s;
-	bool rc, setret;
-	unsigned len;
+	bool rc;		/* return code */
+	bool setret;		/* does setting a property produce a return? */
+	unsigned len;		/* array length */
 
 	switch (head.cmd) {
 	case EJ_CMD_SCRIPT:
@@ -2639,6 +2648,7 @@ static void processMessage(void)
 		set_property_generic(parent, membername);
 		nzFree(membername);
 		membername = 0;
+propreturn:
 		head.n = head.proplength = 0;
 		if (setret) {
 			if (propval)
@@ -2672,16 +2682,27 @@ static void processMessage(void)
 		break;
 
 	case EJ_CMD_SETAREL:
-		if (propval) {
+		setret = false;
+		if (head.proptype == EJ_PROP_INSTANCE) {
+			JSClass *cp = classByName(propval);
+			nzFree(propval);
+			propval = 0;
+			child = JS_NewObject(jcx, cp, NULL, parent);
+			if (!child)
+				misconfigure();
+			else
+				set_array_element_object(parent, head.n, child);
+			setret = true;
+			propval = cloneString(pointerString(*child.address()));
+		}
+		if (head.proptype == EJ_PROP_OBJECT && propval) {
 			sscanf(propval, "%p", &chp);
 			child = chp;
 			set_array_element_object(parent, head.n, child);
 			nzFree(propval);
 			propval = 0;
 		}
-		head.proplength = 0;
-		writeHeader();
-		break;
+		goto propreturn;
 
 	case EJ_CMD_ARLEN:
 		if (JS_GetArrayLength(jcx, parent, &len) == JS_FALSE)

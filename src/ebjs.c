@@ -775,7 +775,9 @@ static int set_array_element(jsobjtype array, int idx,
 	head.cmd = EJ_CMD_SETAREL;
 	head.obj = array;
 	head.proptype = proptype;
-	head.proplength = strlen(value);
+	head.proplength = 0;
+	if (value)
+		head.proplength = strlen(value);
 	head.n = idx;
 	if (writeHeader())
 		return -1;
@@ -794,6 +796,19 @@ int set_array_element_object(jsobjtype array, int idx, jsobjtype child)
 	sprintf(buf, "%p", child);
 	return set_array_element(array, idx, buf, EJ_PROP_OBJECT);
 }				/* set_array_element_object */
+
+jsobjtype instantiate_array_element(jsobjtype array, int idx,
+				    const char *classname)
+{
+	jsobjtype p = 0;
+	set_array_element(array, idx, classname, EJ_PROP_INSTANCE);
+	if (!propval)
+		return p;
+	sscanf(propval, "%p", &p);
+	nzFree(propval);
+	propval = 0;
+	return p;
+}				/* instantiate_array_element */
 
 /* Instantiate a new object from a given class.
  * Return is NULL if there is a js disaster.
@@ -1069,10 +1084,9 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 		length = get_arraylength(io);
 		if (length < 0)
 			return;
-		w = instantiate(owner, fakePropName(), "Element");
+		w = instantiate_array_element(io, length, "Element");
 		if (w == NULL)
 			return;
-		set_array_element_object(io, length, w);
 		io = w;
 	}
 
@@ -1128,16 +1142,6 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 	}
 
 }				/* domLink */
-
-/* Create and return a generic js object.
- * This is tied to window through a fake property name,
- * so it will not be thrown away by gc.
- * Could be NULL if there is a disaster in the js process. */
-jsobjtype new_js_object(void)
-{
-	const char *s = fakePropName();
-	return instantiate(cw->winobj, s, 0);
-}				/* new_js_object */
 
 /* set document.cookie to the cookies relevant to this url */
 static void docCookie(jsobjtype d)
@@ -1229,12 +1233,10 @@ void setupJavaDom(void)
 	for (i = 0; i < maxMime; ++i, ++mt) {
 		int len;
 /* po is the plugin object and mo is the mime object */
-		jsobjtype po = new_js_object();
-		jsobjtype mo = new_js_object();
+		jsobjtype po = instantiate_array_element(navpi, i, 0);
+		jsobjtype mo = instantiate_array_element(navmt, i, 0);
 		if (po == NULL || mo == NULL)
 			return;
-		set_array_element_object(navpi, i, po);
-		set_array_element_object(navmt, i, mo);
 		set_property_object(mo, "enabledPlugin", po);
 		set_property_string(mo, "type", mt->type);
 		set_property_object(navmt, mt->type, mo);
@@ -1535,9 +1537,8 @@ jsobjtype establish_js_option(jsobjtype obj, int idx)
 
 	if ((oa = get_property_object(obj, "options")) == NULL)
 		return NULL;
-	if ((oo = instantiate(obj, fakePropName(), "Option")) == NULL)
+	if ((oo = instantiate_array_element(oa, idx, "Option")) == NULL)
 		return NULL;
-	set_array_element_object(oa, idx, oo);
 
 /* option.form = select.form */
 	fo = get_property_object(obj, "form");
