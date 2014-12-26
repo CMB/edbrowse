@@ -137,7 +137,6 @@ w{ document.write() strings that fold back into html }
 n{ new window() that may open a new edbrowse buffer }
 t{ timer or interval calling a js function }
 v{ javascript changes the value of an input field }
-o{ change the list of options in a select list }
 c{set cookie}
 i{ innnerHtml or innerText }
 f{ form submit or reset }
