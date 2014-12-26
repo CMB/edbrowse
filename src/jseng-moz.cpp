@@ -1011,7 +1011,7 @@ generic_class_ctor(document, Document)
 /* constructor below */
     generic_class(timer, Timer)
 /* instantiated through window.setTimout() */
-#define PROP_STD (JSPROP_ENUMERATE | JSPROP_PERMANENT)
+#define PROP_STD (JSPROP_ENUMERATE)
 #define PROP_READONLY (JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY)
 /* text and value can be passed as args to the constructor */
 static JSBool option_ctor(JSContext * cx, unsigned int argc, jsval * vp)
@@ -1038,7 +1038,7 @@ static JSBool option_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	}
 	str = JS_NewStringCopyZ(cx, "OPTION");
 	v = STRING_TO_JSVAL(str);
-	JS_DefineProperty(cx, newopt, "nodeName", v, NULL, NULL, PROP_READONLY);
+	JS_DefineProperty(cx, newopt, "nodeName", v, NULL, NULL, PROP_STD);
 	v = JSVAL_FALSE;
 	JS_DefineProperty(cx, newopt, "selected", v, NULL, NULL, PROP_STD);
 	JS_DefineProperty(cx, newopt, "defaultSelected", v, NULL, NULL,
@@ -1938,7 +1938,7 @@ static JSBool appendChild(JSContext * cx, unsigned int argc, jsval * vp)
 	}
 	if (JS_DefineElement(cx, elar, length,
 			     (args.length() > 0 ? args[0] : JSVAL_NULL),
-			     NULL, NULL, JSPROP_ENUMERATE) == JS_FALSE) {
+			     NULL, NULL, PROP_STD) == JS_FALSE) {
 		misconfigure();
 		return JS_FALSE;
 	}
@@ -2194,7 +2194,7 @@ abort:
 		v1 = OBJECT_TO_JSVAL(to);
 		if (JS_DefineProperty
 		    (jcx, winobj, fakePropName(), v1, NULL, NULL,
-		     PROP_READONLY) == JS_FALSE)
+		     PROP_STD) == JS_FALSE)
 			goto abort;
 		if (fo) {
 /* Extract the function name, which requires several steps */
