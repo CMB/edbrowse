@@ -901,6 +901,9 @@ static const char *stringize(js::HandleValue v)
 	return 0;
 }				/* stringize */
 
+#define PROP_STD (JSPROP_ENUMERATE)
+#define PROP_READONLY (JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY)
+
 /* The generic class and constructor */
 
 #define generic_class(c, name) \
@@ -972,13 +975,14 @@ static JSBool window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 		effects += "n{";	// }
 		effects += newloc;
 		effects += '\n';
-		effects += winname;
+		if (winname)
+			effects += winname;
 		endeffect();
 	}
 	nzFree(newloc);
 	nzFree(winname);
 	v = OBJECT_TO_JSVAL(winobj);
-	JS_SetProperty(cx, newwin, "opener", v.address());
+	JS_DefineProperty(cx, newwin, "opener", v, NULL, NULL, PROP_READONLY);
 	args.rval().set(OBJECT_TO_JSVAL(newwin));
 	return JS_TRUE;
 }				/* window_ctor */
@@ -1011,9 +1015,8 @@ generic_class_ctor(document, Document)
 /* constructor below */
     generic_class(timer, Timer)
 /* instantiated through window.setTimout() */
-#define PROP_STD (JSPROP_ENUMERATE)
-#define PROP_READONLY (JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY)
-/* text and value can be passed as args to the constructor */
+/* Here are a couple nonstandard constructors. */
+/* text and value can be passed as args to the option constructor */
 static JSBool option_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::RootedString str(cx);
