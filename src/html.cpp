@@ -5,9 +5,7 @@
 
 #include "eb.h"
 
-#include <string>
 
-using namespace std;
 
 #define handlerPresent(obj, name) (has_property(obj, name) == EJ_PROP_FUNCTION)
 
@@ -39,9 +37,9 @@ static struct htmlTag *currentForm;	/* the open form */
 eb_bool parsePage;		/* parsing html */
 int browseLine;			/* for error reporting */
 static jsobjtype js_reset, js_submit;
-static string radioChecked;
-static string preamble;
-
+static char *radioChecked = EMPTYSTRING;
+static char *preamble = EMPTYSTRING;
+static int radioChecked_l = 0, preamble_l = 0;
 /* paranoia check on the number of tags */
 static void tagCountCheck(void)
 {
@@ -89,19 +87,19 @@ static void toPreamble(int tagno, const char *msg, const char *j, const char *h)
 	char fn[40], *s;
 
 	sprintf(buf, "\r%c%d{", InternalCodeChar, tagno);
-	preamble += buf;
-	preamble += msg;
+stringAndString(&preamble , &preamble _L, buf);
+stringAndString(&preamble , &preamble _L, msg);
 
 	if (h) {
-		preamble += ": ";
-		preamble += h;
+stringAndString(&preamble , &preamble _L, ": ");
+stringAndString(&preamble , &preamble _L, h);
 	} else if (j) {
 		skipWhite(&j);
 		if (memEqualCI(j, "javascript:", 11))
 			j += 11;
 		skipWhite(&j);
 		if (isalphaByte(*j) || *j == '_') {
-			preamble += ": ";
+stringAndString(&preamble , &preamble _L, ": ");
 			for (s = fn; isalnumByte(*j) || *j == '_'; ++j) {
 				if (s < fn + sizeof(fn) - 3)
 					*s++ = *j;
@@ -109,12 +107,12 @@ static void toPreamble(int tagno, const char *msg, const char *j, const char *h)
 			strcpy(s, "()");
 			skipWhite(&j);
 			if (*j == '(')
-				preamble += fn;
+stringAndString(&preamble , &preamble _L, fn);
 		}
 	}
 
 	sprintf(buf, "%c0}\r", InternalCodeChar);
-	preamble += buf;
+stringAndString(&preamble , &preamble _L, buf);
 }				/* toPreamble */
 
 /*********************************************************************
@@ -646,7 +644,8 @@ static void htmlForm(void)
 		}
 	}
 
-	radioChecked.clear();
+nzFree(radioChecked);
+radioChecked = initString(&radioChecked_l);
 
 	if (!isJSAlive)
 		return;
@@ -759,14 +758,14 @@ static void htmlInput(void)
 		char namebuf[200];
 		if (n == INP_RADIO && myname
 		    && strlen(myname) < sizeof(namebuf) - 3) {
-			if (!radioChecked.length())
-				radioChecked = "|";
+			if (!radioChecked_l)
+stringAndChar(&radioChecked, &radioChecked_l, '|');
 			sprintf(namebuf, "|%s|", topTag->name);
-			if (radioChecked.find(namebuf) != string::npos) {
+if (strstr(radioChecked, namebuf)) {
 				browseError(MSG_RadioMany);
 				return;
 			}
-			radioChecked += namebuf + 1;
+stringAndString(&radioChecked , &radioChecked _L, namebuf + 1);
 		}		/* radio name */
 		topTag->rchecked = eb_true;
 		topTag->checked = eb_true;
@@ -1481,7 +1480,8 @@ static char *encodeTags(char *html)
 	cw->tags =
 	    (struct htmlTag **)allocMem(cw->allocTags *
 					sizeof(struct htmlTag *));
-	preamble.clear();
+nzFree(preamble);
+preamble = initString(&preamble_l);
 
 /* first tag is a base tag, from the filename */
 	t = newTag("base");
@@ -2402,11 +2402,12 @@ endtag:
 	/* clean up */
 	browseLine = 0;
 	nzFree(html);
-	radioChecked.clear();
+nzFree(radioChecked);
+radioChecked = initString(&radioChecked_l);
 	basehref = 0;
 
-	if (preamble.length()) {
-		preamble += '\f';
+	if (preamble_l) {
+stringAndChar(&preamble , &preamble _L, '\f');
 		newstr.insert(0, preamble);
 		preamble.clear();
 	}
