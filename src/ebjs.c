@@ -634,6 +634,19 @@ jsobjtype get_property_object(jsobjtype parent, const char *name)
 	return child;
 }				/* get_property_object */
 
+jsobjtype get_property_function(jsobjtype parent, const char *name)
+{
+	jsobjtype child = 0;
+	get_property(parent, name);
+	if (!propval)
+		return child;
+	if (proptype == EJ_PROP_FUNCTION)
+		sscanf(propval, "%p", &child);
+	free(propval);
+	propval = 0;
+	return child;
+}				/* get_property_function */
+
 /* Get an element of an array, again a string representation. */
 static int get_array_element(jsobjtype obj, int idx)
 {

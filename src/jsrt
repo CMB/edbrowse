@@ -619,8 +619,8 @@ olist[3] = oo;
 
 function bodyLoad() { alert("body loading"); }
 function bodyUnload() {
-if(confirm("Care to visit MathReference.com"))
-new Window("http://www.mathreference.com");
+if(confirm("Are you interested in discrete mathematics?"))
+new Window("http://book.mathreference.com");
 else alert("ok, never mind");
 }
 function formLoad(name) { onlv++; alert("form " + name + " loading"); }

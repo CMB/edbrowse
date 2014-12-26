@@ -61,6 +61,7 @@ int get_property_number(jsobjtype obj, const char *name) ;
 double get_property_float(jsobjtype obj, const char *name) ;
 eb_bool get_property_bool(jsobjtype obj, const char *name) ;
 jsobjtype get_property_object(jsobjtype parent, const char *name) ;
+jsobjtype get_property_function(jsobjtype parent, const char *name);
 jsobjtype get_array_element_object(jsobjtype obj, int idx) ;
 int set_property_string(jsobjtype obj, const char *name, const char *value) ;
 int set_property_number(jsobjtype obj, const char *name, int n) ;

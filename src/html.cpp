@@ -1162,7 +1162,7 @@ static void onloadGo(jsobjtype obj, const char *jsrc, const char *tagname)
 	t->jv = obj;
 	t->href = cloneString("#");
 /* make the onunload function a clickable function */
-	if (fn = get_property_object(obj, "onunload"))
+	if (fn = get_property_function(obj, "onunload"))
 		set_property_object(obj, "onclick", fn);
 	sprintf(buf, "on close %s", tagname);
 	caseShift(buf, 'm');
