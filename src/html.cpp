@@ -4,9 +4,8 @@
  */
 
 #include "eb.h"
-#include <string>
-using namespace std;
 
+using namespace std;
 
 #define handlerPresent(obj, name) (has_property(obj, name) == EJ_PROP_FUNCTION)
 
@@ -38,9 +37,11 @@ static struct htmlTag *currentForm;	/* the open form */
 eb_bool parsePage;		/* parsing html */
 int browseLine;			/* for error reporting */
 static jsobjtype js_reset, js_submit;
-static char *radioChecked = EMPTYSTRING;
-static char *preamble = EMPTYSTRING;
-static int radioChecked_l = 0, preamble_l = 0;
+static char *radioCheck;
+static int radio_l;
+static char *preamble;
+int preamble_l;
+
 /* paranoia check on the number of tags */
 static void tagCountCheck(void)
 {
@@ -88,19 +89,19 @@ static void toPreamble(int tagno, const char *msg, const char *j, const char *h)
 	char fn[40], *s;
 
 	sprintf(buf, "\r%c%d{", InternalCodeChar, tagno);
-stringAndString(&preamble, &preamble_l, buf);
-stringAndString(&preamble, &preamble_l, msg);
+	stringAndString(&preamble, &preamble_l, buf);
+	stringAndString(&preamble, &preamble_l, msg);
 
 	if (h) {
-stringAndString(&preamble, &preamble_l, ": ");
-stringAndString(&preamble, &preamble_l, h);
+		stringAndString(&preamble, &preamble_l, ": ");
+		stringAndString(&preamble, &preamble_l, h);
 	} else if (j) {
 		skipWhite(&j);
 		if (memEqualCI(j, "javascript:", 11))
 			j += 11;
 		skipWhite(&j);
 		if (isalphaByte(*j) || *j == '_') {
-stringAndString(&preamble, &preamble_l, ": ");
+			stringAndString(&preamble, &preamble_l, ": ");
 			for (s = fn; isalnumByte(*j) || *j == '_'; ++j) {
 				if (s < fn + sizeof(fn) - 3)
 					*s++ = *j;
@@ -108,12 +109,12 @@ stringAndString(&preamble, &preamble_l, ": ");
 			strcpy(s, "()");
 			skipWhite(&j);
 			if (*j == '(')
-stringAndString(&preamble, &preamble_l, fn);
+				stringAndString(&preamble, &preamble_l, fn);
 		}
 	}
 
 	sprintf(buf, "%c0}\r", InternalCodeChar);
-stringAndString(&preamble, &preamble_l, buf);
+	stringAndString(&preamble, &preamble_l, buf);
 }				/* toPreamble */
 
 /*********************************************************************
@@ -645,8 +646,8 @@ static void htmlForm(void)
 		}
 	}
 
-nzFree(radioChecked);
-radioChecked = initString(&radioChecked_l);
+	nzFree(radioCheck);
+	radioCheck = initString(&radio_l);
 
 	if (!isJSAlive)
 		return;
@@ -759,14 +760,14 @@ static void htmlInput(void)
 		char namebuf[200];
 		if (n == INP_RADIO && myname
 		    && strlen(myname) < sizeof(namebuf) - 3) {
-			if (!radioChecked_l)
-stringAndChar(&radioChecked, &radioChecked_l, '|');
+			if (!*radioCheck)
+				stringAndChar(&radioCheck, &radio_l, '|');
 			sprintf(namebuf, "|%s|", topTag->name);
-if (strstr(radioChecked, namebuf)) {
+			if (strstr(radioCheck, namebuf)) {
 				browseError(MSG_RadioMany);
 				return;
 			}
-stringAndString(&radioChecked, &radioChecked_l, namebuf + 1);
+			stringAndString(&radioCheck, &radio_l, namebuf + 1);
 		}		/* radio name */
 		topTag->rchecked = eb_true;
 		topTag->checked = eb_true;
@@ -788,27 +789,27 @@ static void makeButton(void)
 	t->itype = INP_SUBMIT;
 }				/* makeButton */
 
-/* display the checked options */
+/* display the checked options in an allocated string */
 char *displayOptions(const struct htmlTag *sel)
 {
 	const struct htmlTag *t;
-	char *options;
-int options_l;
-int i1;
-options = initString(&options_l);
+	char *opt;
+	int opt_l;
 
-	for (i1 = 0; i1 < cw->numTags; ++i1) {
+	opt = initString(&opt_l);
+
+	for (int i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->controller != sel)
 			continue;
 		if (!t->checked)
 			continue;
-		if (options_l)
-stringAndChar(&options, &options_l, ',');
-stringAndString(&options, &options_l, t->name);
+		if (*opt)
+			stringAndChar(&opt, &opt_l, ',');
+		stringAndString(&opt, &opt_l, t->name);
 	}
 
-return options;
+	return opt;
 }				/* displayOptions */
 
 static struct htmlTag *locateOptionByName(const struct htmlTag *sel,
@@ -818,8 +819,7 @@ static struct htmlTag *locateOptionByName(const struct htmlTag *sel,
 	struct htmlTag *t, *em = 0, *pm = 0;
 	int pmcount = 0;	/* partial match count */
 	const char *s;
-int i1;
-	for (i1 = 0; i1 < cw->numTags; ++i1) {
+	for (int i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->controller != sel)
 			continue;
@@ -847,8 +847,8 @@ int i1;
 static struct htmlTag *locateOptionByNum(const struct htmlTag *sel, int n)
 {
 	struct htmlTag *t;
-	int cnt = 0, i1;
-	for (i1 = 0; i1 < cw->numTags; ++i1) {
+	int cnt = 0;
+	for (int i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->controller != sel)
 			continue;
@@ -866,13 +866,16 @@ locateOptions(const struct htmlTag *sel, const char *input,
 	      char **disp_p, char **val_p, eb_bool setcheck)
 {
 	struct htmlTag *t;
-	string display, value;
+	char *disp, *val;
+	int disp_l, val_l;
 	int len = strlen(input);
-	int n, pmc, cnt, i1;
+	int i1, n, pmc, cnt;
 	const char *s, *e;	/* start and end of an option */
 	char *iopt;		/* individual option */
 
 	iopt = (char *)allocMem(len + 1);
+	disp = initString(&disp_l);
+	val = initString(&val_l);
 
 	if (setcheck) {
 /* Uncheck all existing options, then check the ones selected. */
@@ -925,15 +928,15 @@ locateOptions(const struct htmlTag *sel, const char *input,
 		}
 
 		if (val_p) {
-			if (value.length())
-				value += '\1';
-			value += t->value;
+			if (*val)
+				stringAndChar(&val, &val_l, '\1');
+			stringAndString(&val, &val_l, t->value);
 		}
 
 		if (disp_p) {
-			if (display.length())
-				display += ',';
-			display += t->name;
+			if (*disp)
+				stringAndChar(&disp, &disp_l, ',');
+			stringAndString(&disp, &disp_l, t->name);
 		}
 
 		if (setcheck) {
@@ -949,14 +952,16 @@ locateOptions(const struct htmlTag *sel, const char *input,
 	}			/* loop over multiple options */
 
 	if (val_p)
-		*val_p = cloneString(value.c_str());
+		*val_p = val;
 	if (disp_p)
-		*disp_p = cloneString(display.c_str());
+		*disp_p = disp;
 	free(iopt);
 	return eb_true;
 
 fail:
 	free(iopt);
+	nzFree(val);
+	nzFree(disp);
 	if (val_p)
 		*val_p = 0;
 	if (disp_p)
@@ -980,7 +985,6 @@ void jSyncup(void)
 	const struct htmlTag *t;
 	int itype, j, cx;
 	char *value, *cxbuf;
-int i1;
 
 	if (parsePage)
 		return;		/* not necessary */
@@ -988,7 +992,7 @@ int i1;
 		return;
 	debugPrint(5, "jSyncup starts");
 
-	for (i1 = 0; i1 < cw->numTags; ++i1) {
+	for (int i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->action != TAGACT_INPUT)
 			continue;
@@ -1054,9 +1058,8 @@ static struct htmlTag *findOpenTag(const char *name)
 	eb_bool closing = topTag->slash;
 	eb_bool match;
 	const char *desc = topTag->info->desc;
-int i1;
 
-	for (i1 = cw->numTags - 2; i1 >= 0; --i1) {
+	for (int i1 = cw->numTags - 2; i1 >= 0; --i1) {
 		t = tagList[i1];
 		if (t->balanced)
 			continue;
@@ -1179,7 +1182,7 @@ static void onloadGo(jsobjtype obj, const char *jsrc, const char *tagname)
  * <a name="foo">.  If the tag has no id attribute, this function is a no-op.
 */
 
-static void htmlLabelID(string & newstr)
+static void htmlLabelID(char **ns, int *ns_l)
 {
 	char buf[16];
 	char *id = htmlAttrVal(topAttrib, "id");
@@ -1188,7 +1191,7 @@ static void htmlLabelID(string & newstr)
 		int tagnum = t->seqno;
 		t->name = id;
 		sprintf(buf, "%c%d*", InternalCodeChar, tagnum);
-		newstr += buf;
+		stringAndString(ns, ns_l, buf);
 	}
 }				/* htmlLabelID */
 
@@ -1310,7 +1313,6 @@ static void htmlScript(char *&html, char *&h)
 /* See if the script has produced html via document.write() */
 	if (cw->dw) {
 		int afterlen;	/* after we fold in this string */
-int i1;
 		char *after;
 		debugPrint(3, "docwrite %d bytes", cw->dw_l);
 		debugPrint(4, "<<\n%s\n>>", cw->dw + 10);
@@ -1326,7 +1328,7 @@ int i1;
 		html = h = after;
 
 /* After the realloc, the inner pointers are no longer valid. */
-		for (i1 = 0; i1 < cw->numTags; ++i1) {
+		for (int i1 = 0; i1 < cw->numTags; ++i1) {
 			t = tagList[i1];
 			t->inner = 0;
 		}
@@ -1452,7 +1454,10 @@ static char *encodeTags(char *html)
 	char *save_h;
 	char *h = html;
 	char *a;		/* for a specific attribute */
-	string newstr;		/* the new string */
+	char *ns;		/* the new string */
+	int ns_l;
+#define ns_hnum() stringAndString(&ns, &ns_l, hnum)
+#define ns_ic() stringAndChar(&ns, &ns_l, InternalCodeChar)
 	int js_nl;		/* number of newlines in javascript */
 	int i1, i2;		/* iterators */
 	const char *name, *attrib, *end;
@@ -1481,6 +1486,7 @@ static char *encodeTags(char *html)
 	int intable = 0, inrow = 0;
 	eb_bool tdfirst;
 
+	ns = initString(&ns_l);
 	currentA = currentForm = currentSel = currentOpt = currentTitle =
 	    currentTA = 0;
 	cw->numTags = 0;
@@ -1488,8 +1494,7 @@ static char *encodeTags(char *html)
 	cw->tags =
 	    (struct htmlTag **)allocMem(cw->allocTags *
 					sizeof(struct htmlTag *));
-nzFree(preamble);
-preamble = initString(&preamble_l);
+	preamble = initString(&preamble_l);
 
 /* first tag is a base tag, from the filename */
 	t = newTag("base");
@@ -1512,7 +1517,7 @@ putc:
 				}
 				if (lastact == TAGACT_TD && c == ' ')
 					goto nextchar;
-				newstr += c;
+				stringAndChar(&ns, &ns_l, c);
 				if (!isspaceByte(c)) {
 					a_text = eb_true;
 					lastact = 0;
@@ -1567,8 +1572,7 @@ nextchar:
 			currentTA->itype = INP_TA;
 			currentTA->balanced = eb_true;
 			s = currentTA->value =
-			    andTranslate(newstr.substr(offset).c_str(),
-					 eb_true);
+			    andTranslate(ns + offset, eb_true);
 /* Text starts at the next line boundary */
 			while (*s == '\t' || *s == ' ')
 				++s;
@@ -1593,16 +1597,17 @@ nextchar:
 				set_property_string(currentTA->jv, dfvl,
 						    currentTA->value);
 			}
-			newstr.resize(offset);
+			ns[offset] = 0;
+			ns_l = offset;
 			j = sideBuffer(0, currentTA->value, -1, 0, eb_false);
 			if (j) {
 				currentTA->lic = j;
 				sprintf(hnum, "%c%d<buffer %d%c0>",
 					InternalCodeChar, currentTA->seqno, j,
 					InternalCodeChar);
-				newstr += hnum;
+				ns_hnum();
 			} else
-				newstr += "<buffer ?>";
+				stringAndString(&ns, &ns_l, "<buffer ?>");
 			currentTA = 0;
 			if (slash)
 				continue;
@@ -1668,8 +1673,8 @@ nextchar:
 						      TAGACT_OPTION)) {
 				browseError(MSG_InAnchor, ti->desc);
 forceCloseAnchor:
-				newstr += InternalCodeChar;
-				newstr += "0}";
+				ns_ic();
+				stringAndString(&ns, &ns_l, "0}");
 				currentA->balanced = eb_true;
 				currentA = 0;
 /* if/when the </a> comes along, it will be unbalanced, and we'll ignore it. */
@@ -1711,9 +1716,8 @@ forceCloseAnchor:
 				ptr = &v->name;
 
 			if (ptr) {
-				string piece = newstr.substr(offset);
-				char *piece1 = cloneString(piece.c_str());
-				a = andTranslate(piece1, eb_true);
+				char *piece = cloneString(ns + offset);
+				a = andTranslate(piece, eb_true);
 				stripWhite(a);
 				if (currentOpt && strchr(a, ',')
 				    && currentSel->multiple) {
@@ -1727,10 +1731,10 @@ forceCloseAnchor:
 				*ptr = a;
 
 				if (ptr == &cw->ft) {
-					spaceCrunch(piece1, eb_true, eb_true);
-					cw->fto = piece1;
+					spaceCrunch(piece, eb_true, eb_true);
+					cw->fto = piece;
 				} else
-					nzFree(piece1);
+					nzFree(piece);
 
 				if (currentTitle && isJSAlive)
 					set_property_string(cw->docobj, "title",
@@ -1740,12 +1744,13 @@ forceCloseAnchor:
 					htmlOption(currentSel, currentOpt, a);
 			}
 
-			newstr.resize(offset);
+			ns[offset] = 0;
+			ns_l = offset;
 			currentTitle = currentOpt = 0;
 		}
 
 /* Generate an html label for this tag if necessary. */
-		htmlLabelID(newstr);
+		htmlLabelID(&ns, &ns_l);
 
 		switch (action) {
 		case TAGACT_INPUT:
@@ -1762,27 +1767,28 @@ forceCloseAnchor:
 					currentForm->submitted = eb_true;
 			}
 			strcat(hnum, "<");
-			newstr += hnum;
+			ns_hnum();
 			if (t->itype < INP_RADIO) {
 				if (t->value[0])
-					newstr += t->value;
+					stringAndString(&ns, &ns_l, t->value);
 				else if (t->itype == INP_SUBMIT
 					 || t->itype == INP_IMAGE)
-					newstr += "Go";
+					stringAndString(&ns, &ns_l, "Go");
 				else if (t->itype == INP_RESET)
-					newstr += "Reset";
+					stringAndString(&ns, &ns_l, "Reset");
 			} else
-				newstr += (t->checked ? '+' : '-');
+				stringAndChar(&ns, &ns_l,
+					      (t->checked ? '+' : '-'));
 			if (currentForm
 			    && (t->itype == INP_SUBMIT
 				|| t->itype == INP_IMAGE)) {
 				if (currentForm->secure)
-					newstr += " secure";
+					stringAndString(&ns, &ns_l, " secure");
 				if (currentForm->bymail)
-					newstr += " bymail";
+					stringAndString(&ns, &ns_l, " bymail");
 			}
-			newstr += InternalCodeChar;
-			newstr += "0>";
+			ns_ic();
+			stringAndString(&ns, &ns_l, "0>");
 			goto endtag;
 
 		case TAGACT_TITLE:
@@ -1790,7 +1796,7 @@ forceCloseAnchor:
 				continue;
 			if (cw->ft)
 				browseError(MSG_ManyTitles);
-			offset = newstr.length();
+			offset = strlen(ns);
 			currentTitle = t;
 			continue;
 
@@ -1830,7 +1836,7 @@ forceCloseAnchor:
 
 		case TAGACT_TA:
 			currentTA = t;
-			offset = newstr.length();
+			offset = strlen(ns);
 			t->itype = INP_TA;
 			formControl(eb_true);
 			continue;
@@ -1891,7 +1897,7 @@ plainTag:
 				strcat(hnum, "* ");
 			if (j > 0)
 				sprintf(hnum + 1, "%d. ", j);
-			newstr += hnum;
+			ns_hnum();
 			continue;
 
 		case TAGACT_DT:
@@ -1952,11 +1958,12 @@ plainTag:
 			if (tdfirst)
 				tdfirst = eb_false;
 			else if (retainTag) {
-				l = newstr.length();
-				while (l && newstr[l - 1] == ' ')
+				l = strlen(ns);
+				while (l && ns[l - 1] == ' ')
 					--l;
-				newstr.resize(l);
-				newstr += '|';
+				ns[l] = 0;
+				ns_l = l;
+				stringAndChar(&ns, &ns_l, '|');
 			}
 			if (isJSAlive && (open = findOpenTag("tr")) && open->jv) {
 				domLink("Cell", 0, "cells", open->jv, 0);
@@ -2016,7 +2023,7 @@ nop:
 			}
 			if (currentA)
 				c = ' ';
-			newstr += c;
+			stringAndChar(&ns, &ns_l, c);
 			goto endtag;
 
 		case TAGACT_FORM:
@@ -2033,10 +2040,10 @@ doneSelect:
 /* Crank out the input tag */
 					sprintf(hnum, "%c%d<", InternalCodeChar,
 						currentSel->seqno);
-					newstr += hnum;
-					newstr += a;
-					newstr += InternalCodeChar;
-					newstr += "0>";
+					ns_hnum();
+					stringAndString(&ns, &ns_l, a);
+					ns_ic();
+					stringAndString(&ns, &ns_l, "0>");
 				}
 				currentSel = 0;
 			}
@@ -2047,14 +2054,17 @@ doneSelect:
 					sprintf(hnum, " %c%d<Go",
 						InternalCodeChar,
 						cw->numTags - 1);
-					newstr += hnum;
+					ns_hnum();
 					if (currentForm->secure)
-						newstr += " secure";
+						stringAndString(&ns, &ns_l,
+								" secure");
 					if (currentForm->bymail)
-						newstr += " bymail";
-					newstr += " implicit";
-					newstr += InternalCodeChar;
-					newstr += "0>";
+						stringAndString(&ns, &ns_l,
+								" bymail");
+					stringAndString(&ns, &ns_l,
+							" implicit");
+					ns_ic();
+					stringAndString(&ns, &ns_l, "0>");
 				}
 				currentForm = 0;
 			}
@@ -2084,7 +2094,7 @@ doneSelect:
 				continue;
 			}
 			currentOpt = t;
-			offset = newstr.length();
+			offset = strlen(ns);
 			t->controller = currentSel;
 			t->lic = nopt++;
 			t->value = htmlAttrVal(topAttrib, "value");
@@ -2100,8 +2110,8 @@ doneSelect:
 		case TAGACT_HR:
 			if (!retainTag)
 				continue;
-			newstr +=
-			    "\r----------------------------------------\r";
+			stringAndString(&ns, &ns_l,
+					"\r----------------------------------------\r");
 			continue;
 
 /* This is strictly for rendering math pages written with my particular css.
@@ -2127,41 +2137,43 @@ subsup:
 				static const char *openstring[] = { 0,
 					"[", "^(", "`"
 				};
-				t->lic = newstr.length();
-				newstr += openstring[j];
+				t->lic = strlen(ns);
+				stringAndString(&ns, &ns_l, openstring[j]);
 				continue;
 			}
 
 			if (j == 3) {
-				newstr += "'";
+				stringAndChar(&ns, &ns_l, '\'');
 				continue;
 			}
 
 /* backup, and see if we can get rid of the parentheses or brackets */
 			l = open->lic + j;
-			s = newstr.substr(l).c_str();
+			s = ns + l;
 			if (j == 2 && isalphaByte(s[0]) && !s[1])
 				goto unparen;
-			if (j == 2 && isalnumByte(newstr[l - 3])
+			if (j == 2 && isalnumByte(ns[l - 3])
 			    && (stringEqual(s, "th") || stringEqual(s, "rd")
 				|| stringEqual(s, "nd")
 				|| stringEqual(s, "st"))) {
-				newstr.erase(l - 2, 2);
+				strmove(ns + l - 2, ns + l);
+				ns_l -= 2;
 				continue;
 			}
 			while (isdigitByte(*s))
 				++s;
 			if (!*s)
 				goto unparen;
-			newstr += (j == 2 ? ')' : ']');
+			stringAndChar(&ns, &ns_l, (j == 2 ? ')' : ']'));
 			continue;
 
 /* ok, we can trash the original ( or [ */
 unparen:
 			l = open->lic + j;
-			newstr.erase(l - 1, 1);
+			strmove(ns + l - 1, ns + l);
+			--ns_l;
 			if (j == 2)
-				newstr += ' ';
+				stringAndChar(&ns, &ns_l, ' ');
 			continue;
 
 		case TAGACT_AREA:
@@ -2178,7 +2190,9 @@ unparen:
 			get_js_events();
 			if (!retainTag)
 				continue;
-			newstr += (action == TAGACT_FRAME ? "\rFrame " : "\r");
+			stringAndString(&ns, &ns_l,
+					(action ==
+					 TAGACT_FRAME ? "\rFrame " : "\r"));
 			a = 0;
 			if (action == TAGACT_AREA)
 				a = htmlAttrVal(topAttrib, "alt");
@@ -2192,18 +2206,18 @@ unparen:
 				s = (action == TAGACT_FRAME ? "???" : "area");
 			if (t->href) {
 				strcat(hnum, "{");
-				newstr += hnum;
+				ns_hnum();
 				t->action = TAGACT_A;
 				t->balanced = eb_true;
 			}
 			if (t->href || action == TAGACT_FRAME)
-				newstr += s;
+				stringAndString(&ns, &ns_l, s);
 			nzFree(a);
 			if (t->href) {
-				newstr += InternalCodeChar;
-				newstr += "0}";
+				ns_ic();
+				stringAndString(&ns, &ns_l, "0}");
 			}
-			newstr += '\r';
+			stringAndChar(&ns, &ns_l, '\r');
 			continue;
 
 		case TAGACT_MUSIC:
@@ -2239,9 +2253,9 @@ unparen:
 					nzFree(a);
 					a = NULL;
 					if (s) {
-						newstr += '[';
-						newstr += s;
-						newstr += ']';
+						stringAndChar(&ns, &ns_l, '[');
+						stringAndString(&ns, &ns_l, s);
+						stringAndChar(&ns, &ns_l, ']');
 					}
 				}
 				continue;
@@ -2264,7 +2278,7 @@ unparen:
 				s = altText(t->href);
 			if (!s)
 				s = "image";
-			newstr += s;
+			stringAndString(&ns, &ns_l, s);
 			a_text = eb_true;
 			continue;
 
@@ -2318,7 +2332,7 @@ unparen:
 			else
 				hnum[0] = 0;
 		}
-		newstr += hnum;
+		ns_hnum();
 endtag:
 		lastact = action;
 #if 0
@@ -2328,14 +2342,14 @@ endtag:
 			topTag->href = cloneString("#");
 			currentA = topTag;
 			sprintf(hnum, "%c%d{", InternalCodeChar, topTag->seqno);
-			newstr += hnum;
+			ns_hnum();
 		}
 #endif
 	}			/* loop over html string */
 
 	if (currentA) {
-		newstr += InternalCodeChar;
-		newstr += "0}";
+		ns_ic();
+		stringAndString(&ns, &ns_l, "0}");
 		currentA = 0;
 	}
 
@@ -2410,18 +2424,25 @@ endtag:
 	/* clean up */
 	browseLine = 0;
 	nzFree(html);
-nzFree(radioChecked);
-radioChecked = initString(&radioChecked_l);
+	nzFree(radioCheck);
+	radioCheck = 0;
 	basehref = 0;
 
-	if (preamble_l) {
-stringAndChar(&preamble, &preamble_l, '\f');
-		newstr.insert(0, preamble);
-nzFree(preamble);
-preamble = initString(&preamble_l);
+	if (j = strlen(preamble)) {
+		a = (char *)allocMem(strlen(ns) + j + 2);
+		strcpy(a, preamble);
+		a[j] = '\f';
+		strcpy(a + j + 1, ns);
+		nzFree(ns);
+		ns = a;
 	}
 
-	return cloneString(newstr.c_str());
+	nzFree(preamble);
+	preamble = 0;
+
+	return ns;
+#undef ns_ic
+#undef ns_hnum
 }				/* encodeTags */
 
 void preFormatCheck(int tagno, eb_bool * pretag, eb_bool * slash)
@@ -2728,7 +2749,7 @@ void infShow(int tagno, const char *search)
 {
 	const struct htmlTag *t = tagList[tagno], *v;
 	const char *s;
-	int cnt, i1;
+	int cnt;
 	eb_bool show;
 
 	s = inp_types[t->itype];
@@ -2763,7 +2784,7 @@ void infShow(int tagno, const char *search)
 /* If a search string is given, display the options containing that string. */
 	cnt = 0;
 	show = eb_false;
-	for (i1 = 0; i1 < cw->numTags; ++i1) {
+	for (int i1 = 0; i1 < cw->numTags; ++i1) {
 		v = tagList[i1];
 		if (v->controller != t)
 			continue;
@@ -2863,8 +2884,7 @@ eb_bool infReplace(int tagno, const char *newtext, int notify)
 
 	if (itype == INP_RADIO && form && t->name && *newtext == '+') {
 /* clear the other radio button */
-int i1;
-		for (i1 = 0; i1 < cw->numTags; ++i1) {
+		for (int i1 = 0; i1 < cw->numTags; ++i1) {
 			v = tagList[i1];
 			if (v->controller != form)
 				continue;
@@ -2965,9 +2985,9 @@ static void resetVar(struct htmlTag *t)
 static void formReset(const struct htmlTag *form)
 {
 	struct htmlTag *t, *sel = 0;
-	int itype, i1;
+	int itype;
 
-	for (i1 = 0; i1 < cw->numTags; ++i1) {
+	for (int i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->action == TAGACT_OPTION) {
 			if (!sel)
@@ -3041,21 +3061,22 @@ static eb_bool fetchBoolVar(const struct htmlTag *t)
 /* Some information on posting forms can be found here.
  * http://www.w3.org/TR/REC-html40/interact/forms.html */
 
-static string post;
+static char *pfs;		/* post form string */
+static int pfs_l;
 static const char *boundary;
 
 static void postDelimiter(char fsep)
 {
-	char c = post[post.length() - 1];
+	char c = pfs[strlen(pfs) - 1];
 	if (c == '?' || c == '\1')
 		return;
 	if (fsep == '-') {
-		post += "--";
-		post += boundary;
-		post += '\r';
+		stringAndString(&pfs, &pfs_l, "--");
+		stringAndString(&pfs, &pfs_l, boundary);
+		stringAndChar(&pfs, &pfs_l, '\r');
 		fsep = '\n';
 	}
-	post += fsep;
+	stringAndChar(&pfs, &pfs_l, fsep);
 }				/* postDelimiter */
 
 static eb_bool
@@ -3075,18 +3096,21 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 	switch (fsep) {
 	case '&':
 		enc = encodePostData(name);
-		post += enc;
-		post += '=';
+		stringAndString(&pfs, &pfs_l, enc);
+		stringAndChar(&pfs, &pfs_l, '=');
 		nzFree(enc);
 		break;
+
 	case '\n':
-		post += name;
-		post += "=\r\n";
+		stringAndString(&pfs, &pfs_l, name);
+		stringAndString(&pfs, &pfs_l, "=\r\n");
 		break;
+
 	case '-':
-		post += "Content-Disposition: form-data; name=\"";
-		post += name;
-		post += '"';
+		stringAndString(&pfs, &pfs_l,
+				"Content-Disposition: form-data; name=\"");
+		stringAndString(&pfs, &pfs_l, name);
+		stringAndChar(&pfs, &pfs_l, '"');
 /* I'm leaving nl off, in case we need ; filename */
 		break;
 	}			/* switch */
@@ -3097,19 +3121,21 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 	switch (fsep) {
 	case '&':
 		enc = encodePostData(val);
-		post += enc;
+		stringAndString(&pfs, &pfs_l, enc);
 		nzFree(enc);
 		break;
+
 	case '\n':
-		post += val;
-		post += eol;
+		stringAndString(&pfs, &pfs_l, val);
+		stringAndString(&pfs, &pfs_l, eol);
 		break;
+
 	case '-':
 		if (isfile) {
 			if (isfile & 2) {
-				post += "; filename=\"";
-				post += val;
-				post += '"';
+				stringAndString(&pfs, &pfs_l, "; filename=\"");
+				stringAndString(&pfs, &pfs_l, val);
+				stringAndChar(&pfs, &pfs_l, '"');
 			}
 			if (!encodeAttachment(val, 0, eb_true, &ct, &ce, &enc))
 				return eb_false;
@@ -3126,13 +3152,14 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 					break;
 				}
 		}
-		post += "\r\nContent-Type: ";
-		post += ct;
-		post += "\r\nContent-Transfer-Encoding: ";
-		post += ce;
-		post += "\r\n\r\n";
-		post += val;
-		post += eol;
+		stringAndString(&pfs, &pfs_l, "\r\nContent-Type: ");
+		stringAndString(&pfs, &pfs_l, ct);
+		stringAndString(&pfs, &pfs_l,
+				"\r\nContent-Transfer-Encoding: ");
+		stringAndString(&pfs, &pfs_l, ce);
+		stringAndString(&pfs, &pfs_l, "\r\n\r\n");
+		stringAndString(&pfs, &pfs_l, val);
+		stringAndString(&pfs, &pfs_l, eol);
 		if (isfile)
 			nzFree(enc);
 		break;
@@ -3147,7 +3174,6 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 	const struct htmlTag *t;
 	int itype;
 	int j;
-int i1;
 	char *name, *dynamicvalue = NULL;
 /* dynamicvalue needs to be freed with nzFree. */
 	const char *value;
@@ -3160,12 +3186,12 @@ int i1;
 	if (form->mime) {
 		fsep = '-';
 		boundary = makeBoundary();
-		post += "`mfd~";
-		post += boundary;
-		post += eol;
+		stringAndString(&pfs, &pfs_l, "`mfd~");
+		stringAndString(&pfs, &pfs_l, boundary);
+		stringAndString(&pfs, &pfs_l, eol);
 	}
 
-	for (i1 = 0; i1 < cw->numTags; ++i1) {
+	for (int i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->action != TAGACT_INPUT)
 			continue;
@@ -3268,9 +3294,8 @@ int i1;
 			char *s, *e;
 			if (!display) {	/* off the air */
 				struct htmlTag *v;
-int i2;
 /* revert back to reset state */
-				for (i2 = 0; i2 < cw->numTags; ++i2) {
+				for (int i2 = 0; i2 < cw->numTags; ++i2) {
 					v = tagList[i2];
 					if (v->controller == t)
 						v->checked = v->rchecked;
@@ -3332,9 +3357,9 @@ success:
 	}			/* loop over tags */
 
 	if (form->mime) {	/* the last boundary */
-		post += "--";
-		post += boundary;
-		post += "--\r\n";
+		stringAndString(&pfs, &pfs_l, "--");
+		stringAndString(&pfs, &pfs_l, boundary);
+		stringAndString(&pfs, &pfs_l, "--\r\n");
 	}
 
 	i_puts(MSG_FormSubmit);
@@ -3359,9 +3384,7 @@ eb_bool infPush(int tagno, char **post_string)
 	int itype;
 	int actlen;
 	const char *action = 0;
-	const char *sec1;
-	const char *sec2;
-	const char *post_c;
+	char *section;
 	const char *prot;
 	eb_bool rc;
 
@@ -3505,38 +3528,38 @@ eb_bool infPush(int tagno, char **post_string)
 		return eb_false;
 	}
 
-	post = action;
-	sec1 = strchr(action, '#');
-	if (sec1) {
-		i_printf(MSG_SectionIgnored, sec1);
-		post.resize(sec1 - action);
+	pfs = initString(&pfs_l);
+	stringAndString(&pfs, &pfs_l, action);
+	section = strchr(pfs, '#');
+	if (section) {
+		i_printf(MSG_SectionIgnored, section);
+		*section = 0;
+		pfs_l = section - pfs;
 	}
-	sec2 = strpbrk(action, "?\1");
-	if (sec2 > sec1)
-		sec2 = 0;
-	if (sec2 && (*sec2 == '\1' || !(form->bymail | form->post))) {
+	section = strpbrk(pfs, "?\1");
+	if (section && (*section == '\1' || !(form->bymail | form->post))) {
 		debugPrint(3,
 			   "the url already specifies some data, which will be overwritten by the data in this form");
-		post.resize(sec2 - action);
+		*section = 0;
+		pfs_l = section - pfs;
 	}
 
-	post += (form->post ? '\1' : '?');
-	actlen = post.length();
+	stringAndChar(&pfs, &pfs_l, (form->post ? '\1' : '?'));
+	actlen = strlen(pfs);
 
 	if (!formSubmit(form, t)) {
-		post.clear();
+		nzFree(pfs);
 		return eb_false;
 	}
 
-	post_c = post.c_str();
-	debugPrint(3, "%s %s", form->post ? "post" : "get", post_c + actlen);
+	debugPrint(3, "%s %s", form->post ? "post" : "get", pfs + actlen);
 
 /* Handle the mail method here and now. */
 	if (form->bymail) {
 		char *addr, *subj, *q;
 		const char *tolist[2], *atlist[2];
 		const char *name = form->name;
-		int newlen = post.length() - actlen;	/* the new string could be longer than post */
+		int newlen = strlen(pfs) - actlen;	/* the new string could be longer than post */
 		decodeMailURL(action, &addr, &subj, 0);
 		tolist[0] = addr;
 		tolist[1] = 0;
@@ -3554,8 +3577,8 @@ eb_bool infPush(int tagno, char **post_string)
 		else
 			sprintf(q, "subject:html form(%s)\n",
 				name ? name : "?");
-		strcpy(q + strlen(q), post_c + actlen);
-		post.clear();
+		strcpy(q + strlen(q), pfs + actlen);
+		nzFree(pfs);
 		i_printf(MSG_MailSending, addr);
 		sleep(1);
 		rc = sendMail(localAccount, tolist, q, -1, atlist, 0, 0,
@@ -3569,8 +3592,7 @@ eb_bool infPush(int tagno, char **post_string)
 		return rc;
 	}
 
-	*post_string = cloneString(post_c);
-	post.clear();
+	*post_string = pfs;
 	return eb_true;
 }				/* infPush */
 
@@ -3578,10 +3600,9 @@ eb_bool infPush(int tagno, char **post_string)
 static struct htmlTag *tagFromJavaVar(jsobjtype v)
 {
 	struct htmlTag *t = 0;
-int i1;
 	if (!cw->tags)
 		i_printfExit(MSG_NullListInform);
-	for (i1 = 0; i1 < cw->numTags; ++i1) {
+	for (int i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (t->jv == v)
 			break;
