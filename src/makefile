@@ -56,6 +56,7 @@ edbrowse: $(EBOBJS) ebjs.o startwindow.o dbstubs.o
 #  You probably need to be root to do this.
 install:
 	install -Dm755 edbrowse $(DESTDIR)$(bindir)/edbrowse
+	install -Dm755 edbrowse-js $(DESTDIR)$(bindir)/edbrowse-js
 
 #  Database files.
 dbodbc.o dbinfx.o dbops.o : dbapi.h eb.h eb.p
