@@ -55,13 +55,10 @@ typedef unsigned long ulong;
  * me of the uncola, a char that isn't really a char. */
 typedef unsigned char uchar;
 
-/* We use uchar for boolean fields.
- * The type is eb_bool, an edbrowse bool, so as not to conflict with C++.
- * When you convert edbrowse back to C, please put these symbols back to
- * the more readable bool, true, false. */
-typedef uchar eb_bool;
-#define eb_false 0
-#define eb_true 1
+/* We use unsigned char for boolean fields. */
+typedef uchar bool;
+#define false 0
+#define true 1
 
 typedef unsigned int IP32bit;
 #define NULL_IP (IP32bit)(-1)
@@ -192,7 +189,7 @@ extern int maxproxy;
 struct MIMETYPE {
 	char *type, *desc;
 	char *suffix, *prot, *program;
-	eb_bool stream;
+	bool stream;
 };
 extern struct MIMETYPE mimetypes[];
 extern int maxMime;		/* how many mime types specified */
@@ -215,24 +212,24 @@ extern int displayLength;	/* when printing a line */
 extern int jsPool;		/* size of js pool in megabytes */
 extern int webTimeout, mailTimeout;
 extern int browseLine;		/* line number, for error reporting */
-extern eb_bool sqlPresent;	/* Was edbrowse compiled with SQL built in? */
-extern eb_bool ismc;		/* Is the program running as a mail client? */
+extern bool sqlPresent;	/* Was edbrowse compiled with SQL built in? */
+extern bool ismc;		/* Is the program running as a mail client? */
 extern int eb_lang;		/* edbrowse language, determined by $LANG */
-extern eb_bool cons_utf8;	/* does the console expect utf8? */
-extern eb_bool iuConvert;	/* perform iso utf8 conversions automatically */
+extern bool cons_utf8;	/* does the console expect utf8? */
+extern bool iuConvert;	/* perform iso utf8 conversions automatically */
 extern char type8859;		/* 1 through 15 */
-extern eb_bool js_redirects;	/* window.location = new_url */
+extern bool js_redirects;	/* window.location = new_url */
 extern uchar browseLocal;	/* browsing a local file */
-extern eb_bool parsePage;	/* parsing the html page and any js therein */
-extern eb_bool htmlAttrVal_nl;	/* allow nl in the attribute of an html tag */
-extern eb_bool passMail;	/* pass mail across the filters */
-extern eb_bool errorExit;	/* exit on any error, for scripting purposes */
-extern eb_bool isInteractive;
-extern volatile eb_bool intFlag;	/* set this when interrupt signal is caught */
-extern eb_bool binaryDetect;
-extern eb_bool inputReadLine;
-extern eb_bool listNA;		/* list nonascii chars */
-extern eb_bool inInput;		/* reading line from standard in */
+extern bool parsePage;	/* parsing the html page and any js therein */
+extern bool htmlAttrVal_nl;	/* allow nl in the attribute of an html tag */
+extern bool passMail;	/* pass mail across the filters */
+extern bool errorExit;	/* exit on any error, for scripting purposes */
+extern bool isInteractive;
+extern volatile bool intFlag;	/* set this when interrupt signal is caught */
+extern bool binaryDetect;
+extern bool inputReadLine;
+extern bool listNA;		/* list nonascii chars */
+extern bool inInput;		/* reading line from standard in */
 extern int fileSize;		/* when reading/writing files */
 extern int mssock;		/* mail server socket */
 extern long hcode;		/* http code, like 404 file not found */
@@ -245,13 +242,13 @@ extern char *mailUnread;	/* place to hold fetched but unread mail */
  * but you never know. Should probably live somewhere under .Trash */
 extern char *mailStash;
 extern char *dbarea, *dblogin, *dbpw;	/* to log into the database */
-extern eb_bool fetchBlobColumns;
-extern eb_bool caseInsensitive, searchStringsAll;
-extern eb_bool allowRedirection;	/* from http code 301, or http refresh */
-extern eb_bool sendReferrer;	/* in the http header */
-extern eb_bool allowJS;		/* javascript on */
-extern eb_bool helpMessagesOn;	/* no need to type h */
-extern eb_bool showHiddenFiles;	/* during directory scan */
+extern bool fetchBlobColumns;
+extern bool caseInsensitive, searchStringsAll;
+extern bool allowRedirection;	/* from http code 301, or http refresh */
+extern bool sendReferrer;	/* in the http header */
+extern bool allowJS;		/* javascript on */
+extern bool helpMessagesOn;	/* no need to type h */
+extern bool showHiddenFiles;	/* during directory scan */
 extern uchar dirWrite;		/* directory write mode, e.g. rename files */
 extern uchar endMarks;		/* do we print ^ $ at the start and end of lines? */
 extern int context;		/* which session (buffer) are we in? */
@@ -287,7 +284,7 @@ struct listHead {
 struct lineMap {
 	pst text;
 	char ds1, ds2;		/* directory suffix */
-	eb_bool gflag;		/* for g// */
+	bool gflag;		/* for g// */
 	char filler;		/* C is going to pad the structure anyways */
 };
 #define LMSIZE sizeof(struct lineMap)
@@ -319,19 +316,19 @@ struct ebWindow {
  * and used thereafter for hyperlinks, fill-out forms, etc. */
 	struct htmlTag **tags;
 	int numTags, allocTags;
-	eb_bool lhs_yes:1;
-	eb_bool rhs_yes:1;
-	eb_bool binMode:1;	/* binary file */
-	eb_bool nlMode:1;	/* newline at the end */
-	eb_bool rnlMode:1;
+	bool lhs_yes:1;
+	bool rhs_yes:1;
+	bool binMode:1;	/* binary file */
+	bool nlMode:1;	/* newline at the end */
+	bool rnlMode:1;
 /* Two text modes:1; these are incompatible with binMode */
-	eb_bool utf8Mode:1;
-	eb_bool iso8859Mode:1;
-	eb_bool browseMode:1;	/* browsing html */
-	eb_bool changeMode:1;	/* something has changed in this file */
-	eb_bool dirMode:1;	/* directory mode */
-	eb_bool undoable:1;	/* undo is possible */
-	eb_bool sqlMode:1;	/* accessing a table */
+	bool utf8Mode:1;
+	bool iso8859Mode:1;
+	bool browseMode:1;	/* browsing html */
+	bool changeMode:1;	/* something has changed in this file */
+	bool dirMode:1;	/* directory mode */
+	bool undoable:1;	/* undo is possible */
+	bool sqlMode:1;	/* accessing a table */
 	char *dw;		/* document.write string */
 	int dw_l;		/* length of the above */
 /* The javascript context and window corresponding to this edbrowse buffer.
@@ -386,24 +383,24 @@ struct htmlTag {
 	const struct tagInfo *info;
 /* the form that owns this input tag */
 	struct htmlTag *controller;
-	eb_bool slash:1;	/* as in </A> */
-	eb_bool balanced:1;	/* <foo> and </foo> */
-	eb_bool retain:1;
-	eb_bool multiple:1;
-	eb_bool rdonly:1;
-	eb_bool clickable:1;	/* but not an input field */
-	eb_bool secure:1;
-	eb_bool checked:1;
-	eb_bool rchecked:1;	/* for reset */
-	eb_bool post:1;		/* post, rather than get */
-	eb_bool javapost:1;	/* post by calling javascript */
-	eb_bool mime:1;		/* encode as mime, rather than url encode */
-	eb_bool bymail:1;	/* send by mail, rather than http */
-	eb_bool submitted:1;
-	eb_bool onclick:1;
-	eb_bool onsubmit:1;
-	eb_bool onreset:1;
-	eb_bool onchange:1;
+	bool slash:1;	/* as in </A> */
+	bool balanced:1;	/* <foo> and </foo> */
+	bool retain:1;
+	bool multiple:1;
+	bool rdonly:1;
+	bool clickable:1;	/* but not an input field */
+	bool secure:1;
+	bool checked:1;
+	bool rchecked:1;	/* for reset */
+	bool post:1;		/* post, rather than get */
+	bool javapost:1;	/* post by calling javascript */
+	bool mime:1;		/* encode as mime, rather than url encode */
+	bool bymail:1;	/* send by mail, rather than http */
+	bool submitted:1;
+	bool onclick:1;
+	bool onsubmit:1;
+	bool onreset:1;
+	bool onchange:1;
 	char subsup;		/* span turned into sup or sub */
 	uchar itype;		/* input type = */
 	short ninp;		/* number of nonhidden inputs */

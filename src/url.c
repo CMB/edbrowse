@@ -8,41 +8,41 @@
 struct {
 	char *prot;
 	int port;
-	eb_bool free_syntax;
-	eb_bool need_slashes;
-	eb_bool need_slash_after_host;
+	bool free_syntax;
+	bool need_slashes;
+	bool need_slash_after_host;
 } protocols[] = {
 	{
-	"file", 0, eb_true, eb_true, eb_false}, {
-	"http", 80, eb_false, eb_true, eb_true}, {
-	"https", 443, eb_false, eb_true, eb_true}, {
-	"pop3", 110, eb_false, eb_true, eb_true}, {
-	"pop3s", 995, eb_false, eb_true, eb_true}, {
-	"smtp", 25, eb_false, eb_true, eb_true}, {
-	"submission", 587, eb_false, eb_true, eb_true}, {
-	"smtps", 465, eb_false, eb_true, eb_true}, {
-	"proxy", 3128, eb_false, eb_true, eb_true}, {
-	"ftp", 21, eb_false, eb_true, eb_true}, {
-	"sftp", 22, eb_false, eb_true, eb_true}, {
-	"ftps", 990, eb_false, eb_true, eb_true}, {
-	"tftp", 69, eb_false, eb_true, eb_true}, {
-	"rtsp", 554, eb_false, eb_true, eb_true}, {
-	"pnm", 7070, eb_false, eb_true, eb_true}, {
-	"finger", 79, eb_false, eb_true, eb_true}, {
-	"smb", 139, eb_false, eb_true, eb_true}, {
-	"mailto", 0, eb_false, eb_false, eb_false}, {
-	"telnet", 23, eb_false, eb_false, eb_false}, {
-	"tn3270", 0, eb_false, eb_false, eb_false}, {
-	"javascript", 0, eb_true, eb_false, eb_false}, {
-	"git", 0, eb_false, eb_false, eb_false}, {
-	"svn", 0, eb_false, eb_false, eb_false}, {
-	"gopher", 70, eb_false, eb_false, eb_false}, {
-	"magnet", 0, eb_false, eb_false, eb_false}, {
-	"irc", 0, eb_false, eb_false, eb_false}, {
+	"file", 0, true, true, false}, {
+	"http", 80, false, true, true}, {
+	"https", 443, false, true, true}, {
+	"pop3", 110, false, true, true}, {
+	"pop3s", 995, false, true, true}, {
+	"smtp", 25, false, true, true}, {
+	"submission", 587, false, true, true}, {
+	"smtps", 465, false, true, true}, {
+	"proxy", 3128, false, true, true}, {
+	"ftp", 21, false, true, true}, {
+	"sftp", 22, false, true, true}, {
+	"ftps", 990, false, true, true}, {
+	"tftp", 69, false, true, true}, {
+	"rtsp", 554, false, true, true}, {
+	"pnm", 7070, false, true, true}, {
+	"finger", 79, false, true, true}, {
+	"smb", 139, false, true, true}, {
+	"mailto", 0, false, false, false}, {
+	"telnet", 23, false, false, false}, {
+	"tn3270", 0, false, false, false}, {
+	"javascript", 0, true, false, false}, {
+	"git", 0, false, false, false}, {
+	"svn", 0, false, false, false}, {
+	"gopher", 70, false, false, false}, {
+	"magnet", 0, false, false, false}, {
+	"irc", 0, false, false, false}, {
 	NULL, 0}
 };
 
-static eb_bool free_syntax;
+static bool free_syntax;
 
 static int protocolByName(const char *p, int l)
 {
@@ -82,7 +82,7 @@ void unpercentURL(char *url)
 }				/* unpercentURL */
 
 /* Decide if it looks like a web url. */
-static eb_bool httpDefault(const char *url)
+static bool httpDefault(const char *url)
 {
 	static const char *const domainSuffix[] = {
 		"com", "biz", "info", "net", "org", "gov", "edu", "us", "uk",
@@ -108,14 +108,14 @@ static eb_bool httpDefault(const char *url)
 		if (*s == '.' && s[-1] != '.' && s[1] != '.')
 			++n, lastdot = s;
 	if (n < 2)
-		return eb_false;
+		return false;
 /* All digits, like an ip address, is ok. */
 	if (n == 3) {
 		for (s = url; s < end; ++s)
 			if (!isdigitByte(*s) && *s != '.')
 				break;
 		if (s == end)
-			return eb_true;
+			return true;
 	}
 /* Look for standard domain suffix */
 	++lastdot;
@@ -123,11 +123,11 @@ static eb_bool httpDefault(const char *url)
 	for (n = 0; domainSuffix[n]; ++n)
 		if (memEqualCI(lastdot, domainSuffix[n], len)
 		    && !domainSuffix[n][len])
-			return eb_true;
+			return true;
 /* www.anything.xx is ok */
 	if (len == 2 && memEqualCI(url, "www.", 4))
-		return eb_true;
-	return eb_false;
+		return true;
+	return false;
 }				/* httpDefault */
 
 static int parseURL(const char *url, const char **proto, int *prlen, const char **user, int *uslen, const char **pass, int *palen,	/* ftp protocol */
@@ -164,7 +164,7 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 		*dalen = 0;
 	if (post)
 		*post = NULL;
-	free_syntax = eb_false;
+	free_syntax = false;
 
 	if (!url)
 		return -1;
@@ -182,7 +182,7 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 		while (isspaceByte(*q))
 			++q;
 		if (!*q)
-			return eb_false;
+			return false;
 		a = protocolByName(url, p - url);
 	}
 	if (a >= 0) {
@@ -228,14 +228,14 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 	}
 
 	if (a < 0)
-		return eb_false;
+		return false;
 
 	if (free_syntax = protocols[a].free_syntax) {
 		if (data)
 			*data = p;
 		if (dalen)
 			*dalen = strlen(p);
-		return eb_true;
+		return true;
 	}
 
 	q = p + strcspn(p, "@?#/\1");
@@ -297,26 +297,26 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 		*dalen = q - p;
 	if (post)
 		*post = *q ? q + 1 : NULL;
-	return eb_true;
+	return true;
 }				/* parseURL */
 
-eb_bool isURL(const char *url)
+bool isURL(const char *url)
 {
 	int j = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 	if (j < 0)
-		return eb_false;
+		return false;
 	return j;
 }				/* isURL */
 
 /* non-FTP URLs are always browsable.  FTP URLs are browsable if they end with
 * a slash. */
-eb_bool isBrowseableURL(const char *url)
+bool isBrowseableURL(const char *url)
 {
 	if (isURL(url))
 		return (!memEqualCI(url, "ftp://", 6))
 		    || (url[strlen(url) - 1] == '/');
 	else
-		return eb_false;
+		return false;
 }				/* isBrowseableURL */
 
 /* Helper functions to return pieces of the URL.
@@ -477,14 +477,14 @@ slash:
 	*end_p = myslash + 1;
 }				/* getDirURL */
 
-eb_bool getPortLocURL(const char *url, const char **portloc, int *port)
+bool getPortLocURL(const char *url, const char **portloc, int *port)
 {
 	int rc = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, portloc, port, 0, 0, 0);
 	if (rc <= 0)
-		return eb_false;
+		return false;
 	if (free_syntax)
-		return eb_false;
-	return eb_true;
+		return false;
+	return true;
 }				/* getPortLocURL */
 
 int getPortURL(const char *url)
@@ -498,7 +498,7 @@ int getPortURL(const char *url)
 	return port;
 }				/* getPortURL */
 
-eb_bool isProxyURL(const char *url)
+bool isProxyURL(const char *url)
 {
 	return ((url[0] | 0x20) == 'p');
 }
@@ -506,11 +506,11 @@ eb_bool isProxyURL(const char *url)
 /*
  * hasPrefix: return true if s has a prefix of p, false otherwise.
  */
-static eb_bool hasPrefix(char *s, char *p)
+static bool hasPrefix(char *s, char *p)
 {
-	eb_bool ret = eb_false;
+	bool ret = false;
 	if (!p[0])
-		ret = eb_true;	/* Empty string is a prefix of all strings. */
+		ret = true;	/* Empty string is a prefix of all strings. */
 	else {
 		size_t slen = strlen(s);
 		size_t plen = strlen(p);
@@ -693,7 +693,7 @@ squash:
 }				/* resolveURL */
 
 /* This routine could be, should be, more sophisticated */
-eb_bool sameURL(const char *s, const char *t)
+bool sameURL(const char *s, const char *t)
 {
 	const char *u, *v;
 	int l;
@@ -710,7 +710,7 @@ eb_bool sameURL(const char *s, const char *t)
 		v -= 7;
 	l = u - s;
 	if (l != v - t)
-		return eb_false;
+		return false;
 	return !memcmp(s, t, l);
 }				/* sameURL */
 
@@ -733,7 +733,7 @@ retry:
 	if (recount >= 2)
 		return 0;
 	strncpy(buf, base, sizeof(buf) - 1);
-	spaceCrunch(buf, eb_true, eb_false);
+	spaceCrunch(buf, true, false);
 	len = strlen(buf);
 	if (len && !isalnumByte(buf[len - 1]))
 		buf[--len] = 0;
@@ -1021,13 +1021,13 @@ void addNovsHost(char *host)
 }				/* addNovsHost */
 
 /* Return true if the cert for this host should be verified. */
-static eb_bool mustVerifyHost(const char *host)
+static bool mustVerifyHost(const char *host)
 {
 	size_t this_host_len = strlen(host);
 	size_t i;
 
 	if (!verifyCertificates)
-		return eb_false;
+		return false;
 
 	for (i = 0; i < novs_hosts_avail; i++) {
 		size_t l1 = strlen(novs_hosts[i]);
@@ -1039,9 +1039,9 @@ static eb_bool mustVerifyHost(const char *host)
 			continue;
 		if (l2 && host[l2 - 1] != '.')
 			continue;
-		return eb_false;
+		return false;
 	}
-	return eb_true;
+	return true;
 }				/* mustVerifyHost */
 
 CURLcode setCurlURL(CURL * h, const char *url)

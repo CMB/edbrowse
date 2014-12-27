@@ -118,22 +118,22 @@ void stripWhite(char *s)
 }				/* stripWhite */
 
 /* compress white space */
-void spaceCrunch(char *s, eb_bool onespace, eb_bool unprint)
+void spaceCrunch(char *s, bool onespace, bool unprint)
 {
 	int i, j;
 	char c;
-	eb_bool space = eb_true;
+	bool space = true;
 	for (i = j = 0; c = s[i]; ++i) {
 		if (isspaceByte(c)) {
 			if (!onespace)
 				continue;
 			if (!space)
-				s[j++] = ' ', space = eb_true;
+				s[j++] = ' ', space = true;
 			continue;
 		}
 		if (unprint && !isprintByte(c))
 			continue;
-		s[j++] = c, space = eb_false;
+		s[j++] = c, space = false;
 	}
 	if (space && j)
 		--j;		/* drop trailing space */
@@ -342,24 +342,24 @@ int stringIsNum(const char *s)
 	return n;
 }				/* stringIsNum */
 
-eb_bool stringIsDate(const char *s)
+bool stringIsDate(const char *s)
 {
 	if (!isdigit(*s))
-		return eb_false;
+		return false;
 	++s;
 	if (isdigit(*s))
 		++s;
 	if (*s++ != '/')
-		return eb_false;
+		return false;
 	if (!isdigit(*s))
-		return eb_false;
+		return false;
 	++s;
 	if (isdigit(*s))
 		++s;
 	if (*s++ != '/')
-		return eb_false;
+		return false;
 	if (!isdigit(*s))
-		return eb_false;
+		return false;
 	++s;
 	if (isdigit(*s))
 		++s;
@@ -368,20 +368,20 @@ eb_bool stringIsDate(const char *s)
 	if (isdigit(*s))
 		++s;
 	if (*s)
-		return eb_false;
-	return eb_true;
+		return false;
+	return true;
 }				/* stringIsDate */
 
-eb_bool stringIsFloat(const char *s, double *dp)
+bool stringIsFloat(const char *s, double *dp)
 {
 	const char *t;
 	*dp = strtod(s, (char **)&t);
 	if (*t)
-		return eb_false;	/* extra stuff at the end */
-	return eb_true;
+		return false;	/* extra stuff at the end */
+	return true;
 }				/* stringIsFloat */
 
-eb_bool stringIsPDF(const char *s)
+bool stringIsPDF(const char *s)
 {
 	int j = 0;
 	if (s)
@@ -389,7 +389,7 @@ eb_bool stringIsPDF(const char *s)
 	return j >= 5 && stringEqual(s + j - 4, ".pdf");
 }				/* stringIsPDF */
 
-eb_bool isSQL(const char *s)
+bool isSQL(const char *s)
 {
 	char c;
 	const char *c1 = 0, *c2 = 0;
@@ -422,13 +422,13 @@ eb_bool isSQL(const char *s)
 	}
 
 no:
-	return eb_false;
+	return false;
 
 yes:
-	return eb_true;
+	return true;
 }				/* isSQL */
 
-eb_bool memEqualCI(const char *s, const char *t, int len)
+bool memEqualCI(const char *s, const char *t, int len)
 {
 	char c, d;
 	while (len--) {
@@ -438,10 +438,10 @@ eb_bool memEqualCI(const char *s, const char *t, int len)
 		if (islowerByte(d))
 			d = toupper(d);
 		if (c != d)
-			return eb_false;
+			return false;
 		++s, ++t;
 	}
-	return eb_true;
+	return true;
 }				/* memEqualCI */
 
 char *strstrCI(const char *base, const char *search)
@@ -455,7 +455,7 @@ char *strstrCI(const char *base, const char *search)
 	return 0;
 }				/* strstrCI */
 
-eb_bool stringEqualCI(const char *s, const char *t)
+bool stringEqualCI(const char *s, const char *t)
 {
 	char c, d;
 	while ((c = *s) && (d = *t)) {
@@ -464,14 +464,14 @@ eb_bool stringEqualCI(const char *s, const char *t)
 		if (islowerByte(d))
 			d = toupper(d);
 		if (c != d)
-			return eb_false;
+			return false;
 		++s, ++t;
 	}
 	if (*s)
-		return eb_false;
+		return false;
 	if (*t)
-		return eb_false;
-	return eb_true;
+		return false;
+	return true;
 }				/* stringEqualCI */
 
 int stringInList(const char *const *list, const char *s)
@@ -517,7 +517,7 @@ int charInList(const char *list, char c)
 
 /* In an empty list, next and prev point back to the list, not to 0. */
 /* We also allow zero. */
-eb_bool listIsEmpty(const struct listHead * l)
+bool listIsEmpty(const struct listHead * l)
 {
 	return l->next == l || l->next == 0;
 }				/* listIsEmpty */
@@ -572,14 +572,14 @@ void freeList(struct listHead *l)
 }				/* freeList */
 
 /* like isalnumByte, but allows _ and - */
-eb_bool isA(char c)
+bool isA(char c)
 {
 	if (isalnumByte(c))
-		return eb_true;
+		return true;
 	return (c == '_' || c == '-');
 }				/* isA */
 
-eb_bool isquote(char c)
+bool isquote(char c)
 {
 	return c == '"' || c == '\'';
 }				/* isquote */
@@ -679,7 +679,7 @@ void copyPstring(pst s, const pst t)
  * This solves an outstanding issue, and it is needed for forthcoming
  * functionality, such as edpager.
  */
-eb_bool fdIntoMemory(int fd, char **data, int *len)
+bool fdIntoMemory(int fd, char **data, int *len)
 {
 	int length, n;
 	const int blocksize = 8192;
@@ -697,7 +697,7 @@ eb_bool fdIntoMemory(int fd, char **data, int *len)
 			*data = EMPTYSTRING;
 			*len = 0;
 			setError(MSG_NoRead, "file descriptor");
-			return eb_false;
+			return false;
 		}
 
 		if (n > 0)
@@ -708,26 +708,26 @@ eb_bool fdIntoMemory(int fd, char **data, int *len)
 	buf = reallocMem(buf, length + 2);
 	*data = buf;
 	*len = length;
-	return eb_true;
+	return true;
 }				/* fdIntoMemory */
 
-eb_bool fileIntoMemory(const char *filename, char **data, int *len)
+bool fileIntoMemory(const char *filename, char **data, int *len)
 {
 	int fh;
-	char ftype = fileTypeByName(filename, eb_false);
-	eb_bool ret;
+	char ftype = fileTypeByName(filename, false);
+	bool ret;
 	if (ftype && ftype != 'f') {
 		setError(MSG_RegularFile, filename);
-		return eb_false;
+		return false;
 	}
 	fh = open(filename, O_RDONLY | O_BINARY);
 	if (fh < 0) {
 		setError(MSG_NoOpen, filename);
-		return eb_false;
+		return false;
 	}
 
 	ret = fdIntoMemory(fh, data, len);
-	if (ret == eb_false)
+	if (ret == false)
 		setError(MSG_NoRead2, filename);
 
 	close(fh);
@@ -735,22 +735,22 @@ eb_bool fileIntoMemory(const char *filename, char **data, int *len)
 }				/* fileIntoMemory */
 
 /* inverse of the above */
-eb_bool memoryOutToFile(const char *filename, const char *data, int len,
+bool memoryOutToFile(const char *filename, const char *data, int len,
 /* specify the error messages */
 			int msgcreate, int msgwrite)
 {
 	int fh = open(filename, O_CREAT | O_TRUNC | O_WRONLY | O_BINARY, 0666);
 	if (fh < 0) {
 		setError(msgcreate, filename, errno);
-		return eb_false;
+		return false;
 	}
 	if (write(fh, data, len) < len) {
 		setError(msgwrite, filename, errno);
 		close(fh);
-		return eb_false;
+		return false;
 	}
 	close(fh);
-	return eb_true;
+	return true;
 }				/* memoryOutToFile */
 
 /* shift string to upper, lower, or mixed case */
@@ -759,7 +759,7 @@ void caseShift(char *s, char action)
 {
 	char c;
 	int mc = 0;
-	eb_bool ws = eb_true;
+	bool ws = true;
 
 	for (; c = *s; ++s) {
 		if (action == 'u') {
@@ -788,10 +788,10 @@ void caseShift(char *s, char action)
 			} else
 				mc = 0;
 			*s = c;
-			ws = eb_false;
+			ws = false;
 			continue;
 		}
-		ws = eb_true, mc = 0;
+		ws = true, mc = 0;
 	}			/* loop */
 }				/* caseShift */
 
@@ -806,10 +806,10 @@ is ported to other operating systems.
  * I think this will work on Windows, not sure.
  * But the link feature is Unix specific. */
 
-char fileTypeByName(const char *name, eb_bool showlink)
+char fileTypeByName(const char *name, bool showlink)
 {
 	struct stat buf;
-	eb_bool islink = eb_false;
+	bool islink = false;
 	char c;
 	int mode;
 	if (lstat(name, &buf)) {
@@ -818,7 +818,7 @@ char fileTypeByName(const char *name, eb_bool showlink)
 	}
 	mode = buf.st_mode & S_IFMT;
 	if (mode == S_IFLNK) {	/* symbolic link */
-		islink = eb_true;
+		islink = true;
 /* If this fails, I'm guessing it's just a file. */
 		if (stat(name, &buf))
 			return (showlink ? 'F' : 0);
@@ -925,7 +925,7 @@ static void ttyRestoreSettings(void)
  * min>0 time=0:  block until min chars are received.
  * min=0 time>0:  return 1 char, or 0 if the timer expires.
  * min=0 time=0:  nonblocking, return whatever chars have been received. */
-static void ttyRaw(int charcount, int timeout, eb_bool isecho)
+static void ttyRaw(int charcount, int timeout, bool isecho)
 {
 	struct termios buf = savettybuf;	/* structure copy */
 	buf.c_cc[VMIN] = charcount;
@@ -941,7 +941,7 @@ int getche(void)
 {
 	char c;
 	fflush(stdout);
-	ttyRaw(1, 0, eb_true);
+	ttyRaw(1, 0, true);
 	read(0, &c, 1);
 	ttyRestoreSettings();
 	return c;
@@ -951,7 +951,7 @@ int getch(void)
 {
 	char c;
 	fflush(stdout);
-	ttyRaw(1, 0, eb_false);
+	ttyRaw(1, 0, false);
 	read(0, &c, 1);
 	ttyRestoreSettings();
 	return c;
@@ -962,7 +962,7 @@ int getch(void)
 char getLetter(const char *s)
 {
 	char c;
-	while (eb_true) {
+	while (true) {
 		c = getch();
 		if (strchr(s, c))
 			break;
@@ -975,17 +975,17 @@ char getLetter(const char *s)
 
 /* loop through the files in a directory */
 /* Hides the differences between DOS, Unix, and NT. */
-static eb_bool dirstart = eb_true;
+static bool dirstart = true;
 
 char *nextScanFile(const char *base)
 {
 	char *s;
 #ifdef DOSLIKE
 	static char global[] = "/*.*";
-	eb_bool rc;
+	bool rc;
 	short len;
 	char *p;
-	eb_bool allocate = eb_false;
+	bool allocate = false;
 #ifdef MSDOS
 	static struct _find_t dta;
 #else
@@ -1003,7 +1003,7 @@ char *nextScanFile(const char *base)
 			len = strlen(base) - 1;
 			p = allocMem(len + 6);
 			strcpy(p, base);
-			allocate = eb_true;
+			allocate = true;
 			if (p[len] == '/' || p[len] == '\\')
 				p[len] = 0;
 			strcat(p, global);
@@ -1012,10 +1012,10 @@ char *nextScanFile(const char *base)
 #ifdef MSDOS
 		rc = _dos_findfirst(p, (showHiddenFiles ? 077 : 073), &dta);
 #else
-		rc = eb_false;
+		rc = false;
 		handle = _findfirst(p, &dta);
 		if (handle < 0)
-			rc = eb_true;
+			rc = true;
 #endif
 		if (allocate)
 			nzFree(p);
@@ -1033,7 +1033,7 @@ char *nextScanFile(const char *base)
 #endif
 
 #ifdef DOSLIKE
-	while (eb_true) {
+	while (true) {
 /* read the next file */
 		if (!dirStart) {
 #ifdef MSDOS
@@ -1041,7 +1041,7 @@ char *nextScanFile(const char *base)
 #else
 			rc = _findnext(handle, &dta);
 #endif
-			dirstart = eb_false;
+			dirstart = false;
 		}
 		if (rc)
 			break;
@@ -1081,7 +1081,7 @@ static int qscmp(const void *s, const void *t)
 	return strcmp(((struct lineMap *)s)->text, ((struct lineMap *)t)->text);
 }				/* qscmp */
 
-eb_bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
+bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
 {
 	char *f;
 	int linecount = 0, cap;
@@ -1107,11 +1107,11 @@ eb_bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
 	*map_p = map;
 
 	if (!linecount)
-		return eb_true;
+		return true;
 
 	qsort(map, linecount, LMSIZE, qscmp);
 
-	return eb_true;
+	return true;
 }				/* sortedDirList */
 
 /* Expand environment variables, then wild cards.
@@ -1120,14 +1120,14 @@ eb_bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
  * Neither the original line nore the new line is allocated.
  * They are static char buffers that are just plain long enough. */
 
-eb_bool envFile(const char *line, const char **expanded)
+bool envFile(const char *line, const char **expanded)
 {
 	static char line1[MAXTTYLINE];
 	static char line2[MAXTTYLINE];
 	const char *s, *value, *basedir;
 	char *t, *dollar, *cut, *file;
 	char c;
-	eb_bool cc, badBrackets;
+	bool cc, badBrackets;
 	int filecount;
 	char re[MAXRE + 20];
 	const char *re_error;
@@ -1138,20 +1138,20 @@ eb_bool envFile(const char *line, const char **expanded)
 /* ` supresses this stuff */
 	if (*line == '`') {
 		*expanded = line + 1;
-		return eb_true;
+		return true;
 	}
 
 /* quick check, nothing to do */
 	if (!strpbrk(line, "$[*?") && line[0] != '~') {
 		*expanded = line;
-		return eb_true;
+		return true;
 	}
 
 /* first the env variables */
 	s = line;
 	t = line1;
 	dollar = 0;
-	while (eb_true) {
+	while (true) {
 		if (t >= line1 + sizeof(line1))
 			goto longvar;
 		c = *s;
@@ -1168,7 +1168,7 @@ eb_bool envFile(const char *line, const char **expanded)
 			value = getenv(dollar + 1);
 			if (!value) {
 				setError(MSG_NoEnvVar, dollar + 1);
-				return eb_false;
+				return false;
 			}
 			if (dollar + strlen(value) >= line1 + sizeof(line1) - 1)
 				goto longvar;
@@ -1198,34 +1198,34 @@ eb_bool envFile(const char *line, const char **expanded)
 	}
 	if (!dollar) {		/* nothing meta */
 		*expanded = line1;
-		return eb_true;
+		return true;
 	}
 	if (cut && dollar < cut) {
 		setError(MSG_EarlyExpand);
-		return eb_false;
+		return false;
 	}
 
 /* Make sure its a directory, and build a perl regexp for the pattern. */
 	if (cut) {
 		*cut = 0;
-		if (cut > line1 && fileTypeByName(line1, eb_false) != 'd') {
+		if (cut > line1 && fileTypeByName(line1, false) != 'd') {
 			setError(MSG_NoAccessDir, line1);
-			return eb_false;
+			return false;
 		}
 	}
 
 	s = cut ? cut + 1 : line1;
 	t = re;
 	*t++ = '^';
-	cc = badBrackets = eb_false;
+	cc = badBrackets = false;
 	while (c = *s) {
 		if (t >= re + sizeof(re) - 3) {
 			setError(MSG_ShellPatternLong);
-			return eb_false;
+			return false;
 		}
 		if (c == '\\') {
 			setError(MSG_ExpandBackslash);
-			return eb_false;
+			return false;
 		}
 /* things we need to escape */
 		if (strchr("().+|", c))
@@ -1237,13 +1237,13 @@ eb_bool envFile(const char *line, const char **expanded)
 		*t++ = c;
 		if (c == '[') {
 			if (cc)
-				badBrackets = eb_true;
-			cc = eb_true;
+				badBrackets = true;
+			cc = true;
 		}
 		if (c == ']') {
 			if (!cc)
-				badBrackets = eb_true;
-			cc = eb_false;
+				badBrackets = true;
+			cc = false;
 		}
 		++s;
 	}			/* loop over shell pattern */
@@ -1251,18 +1251,18 @@ eb_bool envFile(const char *line, const char **expanded)
 	*t = 0;
 	if (badBrackets | cc) {
 		setError(MSG_ShellSyntax);
-		return eb_false;
+		return false;
 	}
 
 	debugPrint(7, "shell regexp %s", re);
 	re_cc = pcre_compile(re, 0, &re_error, &re_offset, 0);
 	if (!re_cc) {
 		setError(MSG_ShellCompile, re_error);
-		return eb_false;
+		return false;
 	}
 
 	filecount = 0;
-	cc = eb_false;		/* long flag */
+	cc = false;		/* long flag */
 	basedir = 0;
 	if (cut) {
 		if (cut == line1)
@@ -1278,7 +1278,7 @@ eb_bool envFile(const char *line, const char **expanded)
 		if (re_count < -1) {
 			pcre_free(re_cc);
 			setError(MSG_ShellExpand);
-			return eb_false;
+			return false;
 		}
 		if (re_count < 0)
 			continue;
@@ -1287,7 +1287,7 @@ eb_bool envFile(const char *line, const char **expanded)
 			continue;
 		if ((cut ? strlen(line1) : 0) + strlen(file) >=
 		    sizeof(line2) - 2)
-			cc = eb_true;
+			cc = true;
 		else if (cut)
 			sprintf(line2, "%s/%s", line1, file);
 		else
@@ -1296,17 +1296,17 @@ eb_bool envFile(const char *line, const char **expanded)
 	pcre_free(re_cc);
 	if (filecount != 1) {
 		setError((filecount > 0) + MSG_ShellNoMatch);
-		return eb_false;
+		return false;
 	}
 	if (cc)
 		goto longvar;
 
 	*expanded = line2;
-	return eb_true;
+	return true;
 
 longvar:
 	setError(MSG_ShellLineLong);
-	return eb_false;
+	return false;
 }				/* envFile */
 
 FILE *efopen(const char *name, const char *mode)

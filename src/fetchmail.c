@@ -27,17 +27,17 @@ struct MHINFO {
 	char ref[MHLINE];	/* references */
 	char cfn[MHLINE];	/* content file name */
 	uchar ct, ce;		/* content type, content encoding */
-	eb_bool andOthers;
-	eb_bool doAttach;
-	eb_bool atimage;
-	eb_bool pgp;
+	bool andOthers;
+	bool doAttach;
+	bool atimage;
+	bool pgp;
 	uchar error64;
 };
 
 static int nattach;		/* number of attachments */
 static int nimages;		/* number of attached images */
 static char *firstAttach;	/* name of first file */
-static eb_bool mailIsHtml;
+static bool mailIsHtml;
 static char *fm;		/* formatted mail string */
 static int fm_l;
 static struct MHINFO *lastMailInfo;
@@ -56,12 +56,12 @@ static void freeMailInfo(struct MHINFO *w)
 	nzFree(w);
 }				/* freeMailInfo */
 
-static char *getFileName(const char *defname, eb_bool isnew)
+static char *getFileName(const char *defname, bool isnew)
 {
 	static char buf[ABSPATH];
 	int l;
 	char *p;
-	while (eb_true) {
+	while (true) {
 		i_printf(MSG_FileName);
 		if (defname)
 			printf("[%s] ", defname);
@@ -80,7 +80,7 @@ static char *getFileName(const char *defname, eb_bool isnew)
 			p = buf;
 		} else
 			defname = 0;
-		if (isnew && fileTypeByName(p, eb_false)) {
+		if (isnew && fileTypeByName(p, false)) {
 			i_printf(MSG_FileExists, p);
 			defname = 0;
 			continue;
@@ -89,7 +89,7 @@ static char *getFileName(const char *defname, eb_bool isnew)
 	}
 }				/* getFileName */
 
-static eb_bool ignoreImages;
+static bool ignoreImages;
 
 static void writeAttachment(struct MHINFO *w)
 {
@@ -108,11 +108,11 @@ static void writeAttachment(struct MHINFO *w)
 		atname = "x";
 	} else {
 		i_printf(MSG_Att);
-		atname = getFileName((w->cfn[0] ? w->cfn : 0), eb_true);
+		atname = getFileName((w->cfn[0] ? w->cfn : 0), true);
 /* X is like x, but deletes all future images */
 		if (stringEqual(atname, "X")) {
 			atname = "x";
-			ignoreImages = eb_true;
+			ignoreImages = true;
 		}
 	}
 	if (!ismc && stringEqual(atname, "e")) {
@@ -123,14 +123,14 @@ static void writeAttachment(struct MHINFO *w)
 		if (cx == MAXSESSION) {
 			i_printf(MSG_AttNoBuffer);
 		} else {
-			cxSwitch(cx, eb_false);
+			cxSwitch(cx, false);
 			i_printf(MSG_SessionX, cx);
 			if (!addTextToBuffer
-			    ((pst) w->start, w->end - w->start, 0, eb_false))
+			    ((pst) w->start, w->end - w->start, 0, false))
 				i_printf(MSG_AttNoCopy, cx);
 			else if (w->cfn[0])
 				cw->fileName = cloneString(w->cfn);
-			cxSwitch(svcx, eb_false);	/* back to where we were */
+			cxSwitch(svcx, false);	/* back to where we were */
 		}
 	} else if (!stringEqual(atname, "x")) {
 		int fh =
@@ -321,7 +321,7 @@ static CURLcode count_messages(CURL * handle, const char *mailbox,
 {
 	CURLcode res = setCurlURL(handle, mailbox);
 	int i, num_messages = 0;
-	eb_bool last_nl = eb_true;
+	bool last_nl = true;
 
 	if (res != CURLE_OK)
 		return res;
@@ -332,12 +332,12 @@ static CURLcode count_messages(CURL * handle, const char *mailbox,
 
 	for (i = 0; i < mailstring_l; i++) {
 		if (mailstring[i] == '\n' || mailstring[i] == '\r') {
-			last_nl = eb_true;
+			last_nl = true;
 			continue;
 		}
 		if (last_nl && isdigit(mailstring[i]))
 			num_messages++;
-		last_nl = eb_false;
+		last_nl = false;
 	}
 
 	*message_count = num_messages;
@@ -477,7 +477,7 @@ void scanMail(void)
 		const char *redirect = 0;	/* send mail elsewhere */
 		char key;
 		const char *atname;	/* name of attachment */
-		eb_bool delflag = eb_false;	/* delete this mail */
+		bool delflag = false;	/* delete this mail */
 		int displine;
 		int stashNumber = -1;
 
@@ -496,7 +496,7 @@ void scanMail(void)
 		if (sessionList[1].lw)
 			cxQuit(1, 2);
 		cs = 0;
-		cxSwitch(1, eb_false);
+		cxSwitch(1, false);
 
 /* Now grab the entire message */
 		unreadStats();
@@ -509,11 +509,11 @@ void scanMail(void)
 
 		if (mailu8) {
 			if (!addTextToBuffer
-			    ((pst) mailu8, mailu8_l, 0, eb_false))
+			    ((pst) mailu8, mailu8_l, 0, false))
 				showErrorAbort();
 		} else {
 			if (!addTextToBuffer
-			    ((pst) mailstring, mailstring_l, 0, eb_false))
+			    ((pst) mailstring, mailstring_l, 0, false))
 				showErrorAbort();
 		}
 
@@ -527,7 +527,7 @@ void scanMail(void)
 		}
 
 		if (redirect) {
-			delflag = eb_true;
+			delflag = true;
 			key = 'w';
 			if (*redirect == '-')
 				++redirect, key = 'u';
@@ -539,7 +539,7 @@ void scanMail(void)
 
 /* display the next page of mail and get a command from the keyboard */
 		displine = 1;
-		while (eb_true) {
+		while (true) {
 			if (!delflag) {	/* show next page */
 nextpage:
 				if (displine <= cw->dol) {
@@ -558,7 +558,7 @@ nextpage:
 			}
 
 /* get key command */
-			while (eb_true) {
+			while (true) {
 				if (!delflag) {
 /* interactive prompt depends on whether there is more text or not */
 					printf("%c ",
@@ -579,7 +579,7 @@ nextpage:
 
 					case 'd':
 						i_puts(MSG_Delete);
-						delflag = eb_true;
+						delflag = true;
 						goto afterinput;
 
 					case ' ':
@@ -602,15 +602,15 @@ nextpage:
 				}
 
 				/* At this point we're saving the mail somewhere. */
-				delflag = eb_true;
+				delflag = true;
 				atname = redirect;
 
 savemail:
 				if (!atname)
-					atname = getFileName(0, eb_false);
+					atname = getFileName(0, false);
 				if (!stringEqual(atname, "x")) {
 					char exists =
-					    fileTypeByName(atname, eb_false);
+					    fileTypeByName(atname, false);
 					int fsize;	/* file size */
 					int fh = open(atname,
 						      O_WRONLY | O_TEXT |
@@ -660,7 +660,7 @@ badsave:
 									"%s/%05d",
 									mailStash,
 									rn);
-								if (fileTypeByName(rmf, eb_false))
+								if (fileTypeByName(rmf, false))
 									continue;
 /* dump the original mail into the file */
 								rmfh =
@@ -814,7 +814,7 @@ static const char *const mhwords[] = {
 
 /* Before we render a mail message, let's make sure it looks like email.
  * This is similar to htmlTest() in html.c. */
-eb_bool emailTest(void)
+bool emailTest(void)
 {
 	int i, j, k, n;
 
@@ -846,10 +846,10 @@ eb_bool emailTest(void)
 				++k;
 		}
 		if (k >= 4 && k * 2 >= j)
-			return eb_true;
+			return true;
 	}			/* loop over lines */
 
-	return eb_false;
+	return false;
 }				/* emailTest */
 
 static uchar unb64(char c)
@@ -870,12 +870,12 @@ static uchar unb64(char c)
 static void unpack64(struct MHINFO *w)
 {
 	uchar val, leftover, mod;
-	eb_bool equals;
+	bool equals;
 	char c, *q, *r;
 /* Since this is a copy, and the unpacked version is always
  * smaller, just unpack it inline. */
 	mod = 0;
-	equals = eb_false;
+	equals = false;
 	for (q = r = w->start; q < w->end; ++q) {
 		c = *q;
 		if (isspaceByte(c))
@@ -888,7 +888,7 @@ static void unpack64(struct MHINFO *w)
 			break;
 		}
 		if (c == '=') {
-			equals = eb_true;
+			equals = true;
 			continue;
 		}
 		val = unb64(c);
@@ -949,7 +949,7 @@ static char *unpack64inline(char *start, char *end)
 	struct MHINFO m;
 	m.start = start;
 	m.end = end;
-	m.error64 = eb_false;
+	m.error64 = false;
 	unpack64(&m);
 	return m.end;
 }				/* unpack64inline */
@@ -971,7 +971,7 @@ unpackUploadedFile(const char *post, const char *boundary,
 
 	post2 = cloneString(post);
 	b2 = strstr(post2, boundary);
-	while (eb_true) {
+	while (true) {
 		b1 = b2 + boundlen;
 		if (*b1 != '\r')
 			break;
@@ -1198,7 +1198,7 @@ static struct MHINFO *headerGlean(char *start, char *end)
 	initList(&w->components);
 	w->ct = CT_OTHER;
 	w->ce = CE_8BIT;
-	w->andOthers = eb_false;
+	w->andOthers = false;
 	w->tolist = initString(&w->tolen);
 	w->cclist = initString(&w->cclen);
 	w->start = start, w->end = end;
@@ -1339,7 +1339,7 @@ static struct MHINFO *headerGlean(char *start, char *end)
 			quote = 0;
 			for (q = w->to; *q; ++q) {
 				if (*q == ',' && !quote) {
-					w->andOthers = eb_true;
+					w->andOthers = true;
 					break;
 				}
 				if (*q == '"') {
@@ -1369,14 +1369,14 @@ static struct MHINFO *headerGlean(char *start, char *end)
 			if (w->cclen)
 				stringAndChar(&w->cclist, &w->cclen, ',');
 			stringAndBytes(&w->cclist, &w->cclen, q, vr - q);
-			w->andOthers = eb_true;
+			w->andOthers = true;
 			continue;
 		}
 
 		if (memEqualCI(s, "content-type:", q - s)) {
 			linetype = 'c';
 			if (memEqualCI(vl, "application/pgp-signature", 25))
-				w->pgp = eb_true;
+				w->pgp = true;
 			if (memEqualCI(vl, "text", 4))
 				w->ct = CT_RICH;
 			if (memEqualCI(vl, "text/html", 9))
@@ -1477,12 +1477,12 @@ static struct MHINFO *headerGlean(char *start, char *end)
 		unpack64(w);
 	if (w->ce == CE_64 && w->ct == CT_OTHER || w->ct == CT_APPLIC
 	    || w->cfn[0]) {
-		w->doAttach = eb_true;
+		w->doAttach = true;
 		++nattach;
 		q = w->cfn;
 		if (*q) {	/* name present */
 			if (stringEqual(q, "winmail.dat")) {
-				w->atimage = eb_true;
+				w->atimage = true;
 				++nimages;
 			} else if ((q = strrchr(q, '.'))) {
 				static const char *const imagelist[] = {
@@ -1492,7 +1492,7 @@ static struct MHINFO *headerGlean(char *start, char *end)
 /* the asc isn't an image, it's a signature card. */
 /* Similarly for the winmail.dat */
 				if (stringInListCI(imagelist, q + 1) >= 0) {
-					w->atimage = eb_true;
+					w->atimage = true;
 					++nimages;
 				}
 			}
@@ -1505,7 +1505,7 @@ static struct MHINFO *headerGlean(char *start, char *end)
 /* loop over the mime components */
 	if (w->ct == CT_MULTI || w->ct == CT_ALT) {
 		char *lastbound = 0;
-		eb_bool endmode = eb_false;
+		bool endmode = false;
 		struct MHINFO *child;
 /* We really need the -1 here, because sometimes the boundary will
  * be the very first thing in the message body. */
@@ -1517,7 +1517,7 @@ static struct MHINFO *headerGlean(char *start, char *end)
 			}
 			q = t + 3 + w->boundlen;
 			while (*q == '-')
-				endmode = eb_true, ++q;
+				endmode = true, ++q;
 			if (*q == '\n')
 				++q;
 			debugPrint(5, "boundary found at offset %d",
@@ -1612,12 +1612,12 @@ textonly:
 	return w;
 }				/* headerGlean */
 
-static char *headerShow(struct MHINFO *w, eb_bool top)
+static char *headerShow(struct MHINFO *w, bool top)
 {
 	static char buf[(MHLINE + 30) * 4];
 	static char lastsubject[MHLINE];
 	char *s;
-	eb_bool lines = eb_false;
+	bool lines = false;
 	buf[0] = 0;
 
 	if (!(w->subject[0] | w->from[0] | w->reply[0]))
@@ -1625,7 +1625,7 @@ static char *headerShow(struct MHINFO *w, eb_bool top)
 
 	if (!top) {
 		strcpy(buf, "Message");
-		lines = eb_true;
+		lines = true;
 		if (w->from[0]) {
 			strcat(buf, " from ");
 			strcat(buf, w->from);
@@ -1674,13 +1674,13 @@ static char *headerShow(struct MHINFO *w, eb_bool top)
 /* This is at the top of the file */
 		if (w->subject[0]) {
 			sprintf(buf, "Subject: %s\n", w->subject);
-			lines = eb_true;
+			lines = true;
 		}
 		if (nattach && ismc) {
 			char atbuf[20];
 			if (lines & mailIsHtml)
 				strcat(buf, "<br>");
-			lines = eb_true;
+			lines = true;
 			if (nimages) {
 				sprintf(atbuf, "%d images\n", nimages);
 				if (nimages == 1)
@@ -1707,7 +1707,7 @@ static char *headerShow(struct MHINFO *w, eb_bool top)
 		if (w->to[0] && !ismc) {
 			if (lines & mailIsHtml)
 				strcat(buf, "<br>");
-			lines = eb_true;
+			lines = true;
 			strcat(buf, "To ");
 			strcat(buf, w->to);
 			if (w->andOthers)
@@ -1717,7 +1717,7 @@ static char *headerShow(struct MHINFO *w, eb_bool top)
 		if (w->from[0]) {
 			if (lines & mailIsHtml)
 				strcat(buf, "<br>");
-			lines = eb_true;
+			lines = true;
 			strcat(buf, "From ");
 			strcat(buf, w->from);
 			strcat(buf, "\n");
@@ -1725,7 +1725,7 @@ static char *headerShow(struct MHINFO *w, eb_bool top)
 		if (w->date[0] && !ismc) {
 			if (lines & mailIsHtml)
 				strcat(buf, "<br>");
-			lines = eb_true;
+			lines = true;
 			strcat(buf, "Mail sent ");
 			strcat(buf, w->date);
 			strcat(buf, "\n");
@@ -1733,7 +1733,7 @@ static char *headerShow(struct MHINFO *w, eb_bool top)
 		if (w->reply[0]) {
 			if (lines & mailIsHtml)
 				strcat(buf, "<br>");
-			lines = eb_true;
+			lines = true;
 			strcat(buf, "Reply to ");
 			strcat(buf, w->reply);
 			strcat(buf, "\n");
@@ -1781,7 +1781,7 @@ static int mailTextType(struct MHINFO *w)
 	return w->ct == CT_HTML ? CT_HTML : CT_TEXT;
 }				/* mailTextType */
 
-static void formatMail(struct MHINFO *w, eb_bool top)
+static void formatMail(struct MHINFO *w, bool top)
 {
 	struct MHINFO *v;
 	int ct = w->ct;
@@ -1819,7 +1819,7 @@ static void formatMail(struct MHINFO *w, eb_bool top)
 			if (end > start)
 				stringAndString(&fm, &fm_l,
 						mailIsHtml ? "<P>\n" : "\n");
-			formatMail(v, eb_false);
+			formatMail(v, false);
 		}
 
 		return;
@@ -1827,7 +1827,7 @@ static void formatMail(struct MHINFO *w, eb_bool top)
 
 	if (ct == CT_MULTI) {
 		foreach(v, w->components)
-		    formatMail(v, eb_false);
+		    formatMail(v, false);
 		return;
 	}
 
@@ -1850,7 +1850,7 @@ static void formatMail(struct MHINFO *w, eb_bool top)
 		++j;
 		if (j != best)
 			continue;
-		formatMail(v, eb_false);
+		formatMail(v, false);
 		break;
 	}
 }				/* formatMail */
@@ -1861,13 +1861,13 @@ char *emailParse(char *buf)
 	struct MHINFO *w, *v;
 	nattach = nimages = 0;
 	firstAttach = 0;
-	mailIsHtml = ignoreImages = eb_false;
+	mailIsHtml = ignoreImages = false;
 	fm = initString(&fm_l);
 	w = headerGlean(buf, buf + strlen(buf));
 	mailIsHtml = (mailTextType(w) == CT_HTML);
 	if (mailIsHtml)
 		stringAndString(&fm, &fm_l, "<html>\n");
-	formatMail(w, eb_true);
+	formatMail(w, true);
 /* Remember, we always need a nonzero buffer */
 	if (!fm_l || fm[fm_l - 1] != '\n')
 		stringAndChar(&fm, &fm_l, '\n');
@@ -1904,33 +1904,33 @@ grab the message id and reference it.
 Also, if mailing to all, stick in the other recipients.
 *********************************************************************/
 
-eb_bool setupReply(eb_bool all)
+bool setupReply(bool all)
 {
 	int subln, repln;
 	char linetype[8];
 	int j;
 	char *out, *s, *t;
-	eb_bool rc;
+	bool rc;
 
 /* basic sanity */
 	if (cw->dirMode) {
 		setError(MSG_ReDir);
-		return eb_false;
+		return false;
 	}
 
 	if (cw->sqlMode) {
 		setError(MSG_ReDB);
-		return eb_false;
+		return false;
 	}
 
 	if (!cw->dol) {
 		setError(MSG_ReEmpty);
-		return eb_false;
+		return false;
 	}
 
 	if (cw->binMode) {
 		setError(MSG_ReBinary);
-		return eb_false;
+		return false;
 	}
 
 	subln = repln = 0;
@@ -1987,7 +1987,7 @@ eb_bool setupReply(eb_bool all)
 
 	if (!subln || !repln) {
 		setError(MSG_ReSubjectReply);
-		return eb_false;
+		return false;
 	}
 
 /* delete the lines we don't need */
@@ -2029,9 +2029,9 @@ eb_bool setupReply(eb_bool all)
 	if (!cw->mailInfo) {
 		if (all) {
 			setError(MSG_ReNoInfo);
-			return eb_false;
+			return false;
 		}
-		return eb_true;	/* that's all we can do */
+		return true;	/* that's all we can do */
 	}
 
 /* Build the header lines and put them in the buffer */
@@ -2074,9 +2074,9 @@ eb_bool setupReply(eb_bool all)
 		stringAndChar(&out, &j, '\n');
 	}
 
-	rc = eb_true;
+	rc = true;
 	if (j)
-		rc = addTextToBuffer((unsigned char *)out, j, 1, eb_false);
+		rc = addTextToBuffer((unsigned char *)out, j, 1, false);
 	nzFree(out);
 	return rc;
 }				/* setupReply */

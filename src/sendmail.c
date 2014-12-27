@@ -14,8 +14,8 @@
 char serverLine[MAXMSLINE];
 static char spareLine[MAXMSLINE];
 int mssock;			/* mail server socket */
-static eb_bool doSignature;
-static eb_bool ssl_on;
+static bool doSignature;
+static bool ssl_on;
 static const char *mailhost;
 static char subjectLine[400];
 static int mailAccount;
@@ -28,24 +28,24 @@ static int nads;		/* number of addresses */
 static time_t adbooktime;
 
 /* read and/or refresh the address book */
-eb_bool loadAddressBook(void)
+bool loadAddressBook(void)
 {
 	char *buf, *bufend, *v, *last, *s, *t;
-	eb_bool cmt = eb_false;
+	bool cmt = false;
 	char state = 0, c;
 	int j, buflen, ln = 1;
 	time_t mtime;
 
 	if (!addressFile ||
 	    (mtime = fileTimeByName(addressFile)) == -1 || mtime <= adbooktime)
-		return eb_true;
+		return true;
 
 	debugPrint(3, "loading address book");
 	nzFree(addressList);
 	addressList = 0;
 	nads = 0;
 	if (!fileIntoMemory(addressFile, &buf, &buflen))
-		return eb_false;
+		return false;
 	bufend = buf + buflen;
 
 	for (s = t = last = buf; s < bufend; ++s) {
@@ -53,7 +53,7 @@ eb_bool loadAddressBook(void)
 		if (cmt) {
 			if (c != '\n')
 				continue;
-			cmt = eb_false;
+			cmt = false;
 		}
 		if (c == ':') {	/* delimiter */
 			if (state == 0) {
@@ -61,7 +61,7 @@ eb_bool loadAddressBook(void)
 freefail:
 				nzFree(buf);
 				nads = 0;
-				return eb_false;
+				return false;
 			}
 			while (t[-1] == ' ' || t[-1] == '\t')
 				--t;
@@ -73,7 +73,7 @@ freefail:
 			c = '#';	/* extra fields are ignored */
 		}		/* : */
 		if (c == '#') {
-			cmt = eb_true;
+			cmt = true;
 			continue;
 		}
 		if (c == '\n') {
@@ -155,7 +155,7 @@ freefail:
 	/* aliases are present */
 	nzFree(buf);
 	adbooktime = mtime;
-	return eb_true;
+	return true;
 }				/* loadAddressBook */
 
 const char *reverseAlias(const char *reply)
@@ -173,7 +173,7 @@ const char *reverseAlias(const char *reply)
 
 static char base64_chars[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-static char *base64Encode(const char *inbuf, int inlen, eb_bool lines)
+static char *base64Encode(const char *inbuf, int inlen, bool lines)
 {
 	char *out, *outstr;
 	uchar *in = (uchar *) inbuf;
@@ -269,7 +269,7 @@ static char *isoEncode(char *start, char *end)
 
 	if (nacount * 4 >= count && count > 8) {
 		code = 'B';
-		s = base64Encode(start, end - start, eb_false);
+		s = base64Encode(start, end - start, false);
 		goto package;
 	}
 
@@ -312,13 +312,13 @@ static char *charsetString(const char *ct, const char *ce)
  * In fact ismail indicates the line that holds the subject.
  * If ismail is negative, then -ismail indicates the subject line,
  * and the string file is not the filename, but rather, the mail to send. */
-eb_bool
-encodeAttachment(const char *file, int ismail, eb_bool webform,
+bool
+encodeAttachment(const char *file, int ismail, bool webform,
 		 const char **type_p, const char **enc_p, char **data_p)
 {
 	char *buf;
 	char c;
-	eb_bool longline;
+	bool longline;
 	char *s, *t, *v;
 	char *ct, *ce;		/* content type, content encoding */
 	int buflen, i, cx;
@@ -333,8 +333,8 @@ encodeAttachment(const char *file, int ismail, eb_bool webform,
 
 		if (!ismc && (cx = stringIsNum(file)) >= 0) {
 			static char newfilename[16];
-			if (!unfoldBuffer(cx, eb_false, &buf, &buflen))
-				return eb_false;
+			if (!unfoldBuffer(cx, false, &buf, &buflen))
+				return false;
 			if (!buflen) {
 				if (webform) {
 empty:
@@ -352,7 +352,7 @@ empty:
 				file = sessionList[cx].lw->fileName;
 		} else {
 			if (!fileIntoMemory(file, &buf, &buflen))
-				return eb_false;
+				return false;
 			if (!buflen) {
 				if (webform)
 					goto empty;
@@ -425,10 +425,10 @@ empty:
 		if (doSignature) {	/* Append .signature file. */
 /* Try account specific .signature file, then fall back to .signature */
 			sprintf(sigFileEnd, "%d", mailAccount);
-			c = fileTypeByName(sigFile, eb_false);
+			c = fileTypeByName(sigFile, false);
 			if (!c) {
 				*sigFileEnd = 0;
-				c = fileTypeByName(sigFile, eb_false);
+				c = fileTypeByName(sigFile, false);
 			}
 			if (c != 0) {
 				int fd, n;
@@ -479,7 +479,7 @@ empty:
 
 /* Count the nonascii characters */
 	nacount = nullcount = nlcount = 0;
-	longline = eb_false;
+	longline = false;
 	s = 0;
 	for (i = 0; i < buflen; ++i) {
 		c = buf[i];
@@ -492,16 +492,16 @@ empty:
 		++nlcount;
 		t = buf + i;
 		if (s && t - s > 120)
-			longline = eb_true;
+			longline = true;
 		if (!s && i > 120)
-			longline = eb_true;
+			longline = true;
 		s = t;
 	}
 	t = buf + i;
 	if (s && t - s > 120)
-		longline = eb_true;
+		longline = true;
 	if (!s && i > 120)
-		longline = eb_true;
+		longline = true;
 	debugPrint(6, "attaching %s length %d nonascii %d nulls %d longline %d",
 		   file, buflen, nacount, nullcount, longline);
 	nacount += nullcount;
@@ -524,7 +524,7 @@ empty:
 			setError(MSG_MailBinary, file);
 			goto freefail;
 		}
-		s = base64Encode(buf, buflen, eb_true);
+		s = base64Encode(buf, buflen, true);
 		nzFree(buf);
 		buf = s;
 		ce = "base64";
@@ -611,11 +611,11 @@ success:
 	*enc_p = ce;
 	*type_p = ct;
 	*data_p = buf;
-	return eb_true;
+	return true;
 
 freefail:
 	nzFree(buf);
-	return eb_false;
+	return false;
 }				/* encodeAttachment */
 
 static char *mailTimeString(void)
@@ -803,12 +803,12 @@ new_handle_cleanup:
 	return handle;
 }				/* newSendmailHandle */
 
-static eb_bool
+static bool
 sendMailSMTP(const struct MACCOUNT *account, const char *reply,
 	     const char **recipients, const char *message)
 {
 	CURLcode res = CURLE_OK;
-	eb_bool smtp_success = eb_false;
+	bool smtp_success = false;
 	char *smtp_url = buildSMTPURL(account);
 	struct curl_slist *recipient_slist = buildRecipientSList(recipients);
 	struct smtp_upload upload = {
@@ -826,7 +826,7 @@ sendMailSMTP(const struct MACCOUNT *account, const char *reply,
 
 	res = curl_easy_perform(handle);
 	if (res == CURLE_OK)
-		smtp_success = eb_true;
+		smtp_success = true;
 
 smtp_cleanup:
 	if (res != CURLE_OK)
@@ -839,10 +839,10 @@ smtp_cleanup:
 }				/* sendMailSMTP */
 
 /* Send mail to the smtp server. */
-eb_bool
+bool
 sendMail(int account, const char **recipients, const char *body,
 	 int subjat, const char **attachments, const char *refline,
-	 int nalt, eb_bool dosig)
+	 int nalt, bool dosig)
 {
 	char *from, *fromiso, *reply, *login, *smlogin, *pass;
 	const struct MACCOUNT *a, *ao, *localMail;
@@ -851,15 +851,15 @@ sendMail(int account, const char **recipients, const char *body,
 	char *t;
 	int nat, cx, i, j;
 	char *out = 0;
-	eb_bool sendmail_success = eb_false;
-	eb_bool mustmime = eb_false;
-	eb_bool firstgreet = eb_true;
-	eb_bool firstrec;
+	bool sendmail_success = false;
+	bool mustmime = false;
+	bool firstgreet = true;
+	bool firstrec;
 	const char *ct, *ce;
 	char *encoded = 0;
 
 	if (!validAccount(account))
-		return eb_false;
+		return false;
 	mailAccount = account;
 	localMail = accounts + localAccount - 1;
 
@@ -875,14 +875,14 @@ sendMail(int account, const char **recipients, const char *body,
 			++nat;
 	}
 	if (nat)
-		mustmime = eb_true;
+		mustmime = true;
 	if (nalt && nalt < nat) {
 		setError(MSG_AttAlternate);
-		return eb_false;
+		return false;
 	}
 
 	if (!loadAddressBook())
-		return eb_false;
+		return false;
 
 /* set copy flags */
 	for (j = 0; s = recipients[j]; ++j) {
@@ -891,7 +891,7 @@ sendMail(int account, const char **recipients, const char *body,
 			cc = *s++;
 		if (j == MAXRECAT) {
 			setError(MSG_RecipMany, MAXRECAT);
-			return eb_false;
+			return false;
 		}
 		recipients[j] = s;
 		reccc[j] = cc;
@@ -918,82 +918,82 @@ sendMail(int account, const char **recipients, const char *body,
 		}
 		if (!addressFile) {
 			setError(MSG_ABMissing);
-			return eb_false;
+			return false;
 		}
 		setError(MSG_ABNoAlias2, s);
-		return eb_false;
+		return false;
 	}			/* recipients */
 
 	if (!j) {
 		setError(MSG_RecipNone);
-		return eb_false;
+		return false;
 	}
 
 /* verify attachments are readable */
 	for (j = 0; s = attachments[j]; ++j) {
 		if (!ismc && (cx = stringIsNum(s)) >= 0) {
 			if (!cxCompare(cx) || !cxActive(cx))
-				return eb_false;
+				return false;
 			if (!sessionList[cx].lw->dol) {
 				setError(MSG_AttSessionEmpty, cx);
-				return eb_false;
+				return false;
 			}
 		} else {
-			char ftype = fileTypeByName(s, eb_false);
+			char ftype = fileTypeByName(s, false);
 			if (!ftype) {
 				setError(MSG_AttAccess, s);
-				return eb_false;
+				return false;
 			}
 			if (ftype != 'f') {
 				setError(MSG_AttRegular, s);
-				return eb_false;
+				return false;
 			}
 			if (!fileSizeByName(s)) {
 				setError(MSG_AttEmpty2, s);
-				return eb_false;
+				return false;
 			}
 		}
 	}			/* loop over attachments */
 
-	if (!encodeAttachment(body, subjat, eb_false, &ct, &ce, &encoded))
-		return eb_false;
+	if (!encodeAttachment(body, subjat, false, &ct, &ce, &encoded))
+		return false;
 	if (ce[0] == 'q')
-		mustmime = eb_true;
+		mustmime = true;
 
 	boundary = makeBoundary();
 
 /* Build the outgoing mail, as one string. */
 	out = initString(&j);
 
-	firstrec = eb_true;
+	firstrec = true;
 	for (i = 0; s = recipients[i]; ++i) {
 		if (reccc[i])
 			continue;
 		stringAndString(&out, &j, firstrec ? "To:" : ",\r\n  ");
 		stringAndString(&out, &j, s);
-		firstrec = eb_false;
+		firstrec = false;
 	}
 	if (!firstrec)
 		stringAndString(&out, &j, eol);
 
-	firstrec = eb_true;
+	firstrec = true;
 	for (i = 0; s = recipients[i]; ++i) {
 		if (reccc[i] != '^')
 			continue;
 		stringAndString(&out, &j, firstrec ? "CC:" : ",\r\n  ");
 		stringAndString(&out, &j, s);
-		firstrec = eb_false;
+		firstrec = false;
 	}
 	if (!firstrec)
 		stringAndString(&out, &j, eol);
 
-	firstrec = eb_true;
+	firstrec = true;
 	for (i = 0; s = recipients[i]; ++i) {
 		if (reccc[i] != '?')
 			continue;
 		stringAndString(&out, &j, firstrec ? "BCC:" : ",\r\n  ");
 		stringAndString(&out, &j, s);
-		firstrec = eb_false;
+		firstrec = false;
 	}
 	if (!firstrec)
 		stringAndString(&out, &j, eol);
@@ -1055,8 +1055,8 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 	if (mustmime) {
 		for (i = 0; s = attachments[i]; ++i) {
 			if (!encodeAttachment
-			    (s, 0, eb_false, &ct, &ce, &encoded))
-				return eb_false;
+			    (s, 0, false, &ct, &ce, &encoded))
+				return false;
 			sprintf(serverLine, "%s--%s%sContent-Type: %s%s", eol,
 				boundary, eol, ct, charsetString(ct, ce));
 			stringAndString(&out, &j, serverLine);
@@ -1088,20 +1088,20 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 	return sendmail_success;
 }				/* sendMail */
 
-eb_bool validAccount(int n)
+bool validAccount(int n)
 {
 	if (!maxAccount) {
 		setError(MSG_MailAccountsNone);
-		return eb_false;
+		return false;
 	}
 	if (n <= 0 || n > maxAccount) {
 		setError(MSG_MailAccountBad, n, maxAccount);
-		return eb_false;
+		return false;
 	}
-	return eb_true;
+	return true;
 }				/* validAccount */
 
-eb_bool sendMailCurrent(int sm_account, eb_bool dosig)
+bool sendMailCurrent(int sm_account, bool dosig)
 {
 	const char *reclist[MAXRECAT + 1];
 	char *recmem;
@@ -1114,32 +1114,32 @@ eb_bool sendMailCurrent(int sm_account, eb_bool dosig)
 	int nrec = 0, nat = 0, nalt = 0;
 	int account = localAccount;
 	int j;
-	eb_bool rc = eb_false;
-	eb_bool subj = eb_false;
+	bool rc = false;
+	bool subj = false;
 
 	if (cw->browseMode) {
 		setError(MSG_MailBrowse);
-		return eb_false;
+		return false;
 	}
 	if (cw->sqlMode) {
 		setError(MSG_MailDB);
-		return eb_false;
+		return false;
 	}
 	if (cw->dirMode) {
 		setError(MSG_MailDir);
-		return eb_false;
+		return false;
 	}
 	if (cw->binMode) {
 		setError(MSG_MailBinary2);
-		return eb_false;
+		return false;
 	}
 	if (!cw->dol) {
 		setError(MSG_MailEmpty);
-		return eb_false;
+		return false;
 	}
 
 	if (!validAccount(account))
-		return eb_false;
+		return false;
 
 	recmem = initString(&lr);
 	atmem = initString(&la);
@@ -1230,7 +1230,7 @@ eb_bool sendMailCurrent(int sm_account, eb_bool dosig)
 		if (memEqualCI(line, "subject:", 8)) {
 			while (*line == ' ' || *line == '\t')
 				++line;
-			subj = eb_true;
+			subj = true;
 		}
 
 		break;

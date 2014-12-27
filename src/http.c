@@ -20,8 +20,8 @@ static struct eb_curl_callback_data callback_data = {
 	&serverData, &serverDataLen
 };
 
-static eb_bool ftpConnect(const char *url, const char *user, const char *pass);
-static eb_bool read_credentials(char *buffer);
+static bool ftpConnect(const char *url, const char *user, const char *pass);
+static bool read_credentials(char *buffer);
 static void init_header_parser(void);
 static size_t curl_header_callback(char *header_line, size_t size, size_t nmemb,
 				   void *unused);
@@ -65,7 +65,7 @@ curl_progress(void *unused, double dl_total, double dl_now,
 {
 	int ret = 0;
 	if (intFlag) {
-		intFlag = eb_false;
+		intFlag = false;
 		ret = 1;
 	}
 	return ret;
@@ -281,7 +281,7 @@ fail:
 	return 0;
 }				/* parseHeaderDate */
 
-eb_bool parseRefresh(char *ref, int *delay_p)
+bool parseRefresh(char *ref, int *delay_p)
 {
 	int delay = 0;
 	char *u = ref;
@@ -308,22 +308,22 @@ eb_bool parseRefresh(char *ref, int *delay_p)
 		if (delay)
 			debugPrint(3, "delay %d %s", delay, ref);
 		*delay_p = delay;
-		return eb_true;
+		return true;
 	}
 	i_printf(MSG_GarbledRefresh, ref);
 	*delay_p = 0;
-	return eb_false;
+	return false;
 }				/* parseRefresh */
 
 /* Return true if we waited for the duration, false if interrupted.
  * I don't know how to do this in Windows. */
-eb_bool refreshDelay(int sec, const char *u)
+bool refreshDelay(int sec, const char *u)
 {
 /* the value 15 seconds is somewhat arbitrary */
 	if (sec < 15)
-		return eb_true;
+		return true;
 	i_printf(MSG_RedirectDelayed, u, sec);
-	return eb_false;
+	return false;
 }				/* refreshDelay */
 
 static char hexdigits[] = "0123456789abcdef";
@@ -400,7 +400,7 @@ static char herror[32];		/* example, file not found */
 extern char *newlocation;
 extern int newloc_d;
 
-eb_bool httpConnect(const char *from, const char *url)
+bool httpConnect(const char *from, const char *url)
 {
 	char *referrer = NULL;
 	CURLcode curlret = CURLE_OK;
@@ -409,7 +409,7 @@ eb_bool httpConnect(const char *from, const char *url)
 	char user[MAXUSERPASS], pass[MAXUSERPASS];
 	char creds_buf[MAXUSERPASS * 2 + 1];	/* creds abr. for credentials */
 	int creds_len = 0;
-	eb_bool still_fetching = eb_true;
+	bool still_fetching = true;
 	int ssl_version;
 	const char *host;
 	struct MIMETYPE *mt;
@@ -420,9 +420,9 @@ eb_bool httpConnect(const char *from, const char *url)
 	char *postb = NULL;
 	char *urlcopy = NULL;
 	int postb_l = 0;
-	eb_bool transfer_status = eb_false;
+	bool transfer_status = false;
 	int redirect_count = 0;
-	eb_bool name_changed = eb_false;
+	bool name_changed = false;
 
 	serverData = NULL;
 	serverDataLen = 0;
@@ -434,7 +434,7 @@ eb_bool httpConnect(const char *from, const char *url)
 	if (s) {
 		if (strlen(s) >= sizeof(user) - 2) {
 			setError(MSG_UserNameLong, sizeof(user));
-			return eb_false;
+			return false;
 		}
 		strcpy(user, s);
 	}
@@ -442,7 +442,7 @@ eb_bool httpConnect(const char *from, const char *url)
 	if (s) {
 		if (strlen(s) >= sizeof(pass) - 2) {
 			setError(MSG_PasswordLong, sizeof(pass));
-			return eb_false;
+			return false;
 		}
 		strcpy(pass, s);
 	}
@@ -452,7 +452,7 @@ eb_bool httpConnect(const char *from, const char *url)
 /* See if the protocol is a recognized stream */
 	if (!prot) {
 		setError(MSG_WebProtBad, "(?)");
-		return eb_false;
+		return false;
 	}
 
 	if (stringEqualCI(prot, "http") || stringEqualCI(prot, "https")) {
@@ -469,10 +469,10 @@ mimeProcess:
 		system(cmd);
 		signal(SIGPIPE, SIG_IGN);
 		nzFree(cmd);
-		return eb_true;
+		return true;
 	} else {
 		setError(MSG_WebProtBad, prot);
-		return eb_false;
+		return false;
 	}
 
 /* Ok, it's http, but the suffix could force a plugin */
@@ -586,7 +586,7 @@ mimeProcess:
 		creds_buf[creds_len] = ':';
 		strcpy(creds_buf + creds_len + 1, pass);
 	} else
-		getUserPass(urlcopy, creds_buf, eb_false);
+		getUserPass(urlcopy, creds_buf, false);
 
 /*
  * If the URL didn't have user and password, and getUserPass failed,
@@ -609,11 +609,11 @@ mimeProcess:
  * password from the user.  If the server accepts the username and password,
  * then add it to the list of authentication records.  */
 
-	still_fetching = eb_true;
+	still_fetching = true;
 	ssl_version = CURL_SSLVERSION_DEFAULT;
 	serverData = initString(&serverDataLen);
 
-	while (still_fetching == eb_true) {
+	while (still_fetching == true) {
 		char *redir = NULL;
 		curl_easy_setopt(http_curl_handle, CURLOPT_SSLVERSION,
 				 ssl_version);
@@ -659,14 +659,14 @@ mimeProcess:
 			redir = newlocation;
 			if (redir)
 				redir = resolveURL(urlcopy, redir);
-			still_fetching = eb_false;
+			still_fetching = false;
 			if (redir == NULL) {
 				/* Redirected, but we don't know where to go. */
 				i_printf(MSG_RedirectNoURL, hcode);
-				transfer_status = eb_true;
+				transfer_status = true;
 			} else if (redirect_count >= 10) {
 				i_puts(MSG_RedirectMany);
-				transfer_status = eb_true;
+				transfer_status = true;
 				nzFree(redir);
 			} else {	/* redirection looks good. */
 				strcpy(creds_buf, ":");	/* Flush stale data. */
@@ -678,7 +678,7 @@ mimeProcess:
 				curl_easy_setopt(http_curl_handle,
 						 CURLOPT_HTTPGET, 1);
 
-				getUserPass(urlcopy, creds_buf, eb_false);
+				getUserPass(urlcopy, creds_buf, false);
 
 				curlret =
 				    curl_easy_setopt(http_curl_handle,
@@ -695,8 +695,8 @@ mimeProcess:
 				serverData = EMPTYSTRING;
 				serverDataLen = 0;
 				redirect_count += 1;
-				still_fetching = eb_true;
-				name_changed = eb_true;
+				still_fetching = true;
+				name_changed = true;
 				debugPrint(2, "redirect %s", urlcopy);
 
 /* after redirection, go back to default ssl version. */
@@ -709,24 +709,24 @@ mimeProcess:
 		else if (hcode == 401) {
 			i_printf(MSG_AuthRequired, urlcopy);
 			nl();
-			eb_bool got_creds = read_credentials(creds_buf);
+			bool got_creds = read_credentials(creds_buf);
 			if (got_creds) {
 				addWebAuthorization(urlcopy, creds_buf,
-						    eb_false);
+						    false);
 				curl_easy_setopt(http_curl_handle,
 						 CURLOPT_USERPWD, creds_buf);
 				nzFree(serverData);
 				serverData = EMPTYSTRING;
 				serverDataLen = 0;
 			} else {	/* User aborted the login process. */
-				still_fetching = eb_false;
-				transfer_status = eb_false;
+				still_fetching = false;
+				transfer_status = false;
 			}
 		}
 		/* authenticate? */
 		else {		/* not redirect, not 401 */
-			still_fetching = eb_false;
-			transfer_status = eb_true;
+			still_fetching = false;
+			transfer_status = true;
 		}
 	}
 
@@ -739,7 +739,7 @@ curl_fail:
 	nzFree(newlocation);
 	newlocation = 0;
 
-	if (transfer_status == eb_false) {
+	if (transfer_status == false) {
 		nzFree(serverData);
 		serverData = NULL;
 		serverDataLen = 0;
@@ -973,13 +973,13 @@ void ebcurl_setError(CURLcode curlret, const char *url)
 }				/* ebcurl_setError */
 
 /* Like httpConnect, but for ftp */
-static eb_bool ftpConnect(const char *url, const char *user, const char *pass)
+static bool ftpConnect(const char *url, const char *user, const char *pass)
 {
 	int protLength;		/* length of "ftp://" */
 	char *urlcopy = NULL;
 	int urlcopy_l = 0;
-	eb_bool transfer_success = eb_false;
-	eb_bool has_slash;
+	bool transfer_success = false;
+	bool has_slash;
 	CURLcode curlret = CURLE_OK;
 	char creds_buf[MAXUSERPASS * 2 + 1];
 	size_t creds_len = 0;
@@ -1023,8 +1023,8 @@ static eb_bool ftpConnect(const char *url, const char *user, const char *pass)
 /* The SSH error pops up under sftp. */
 	if (curlret == CURLE_FTP_COULDNT_RETR_FILE ||
 	    curlret == CURLE_REMOTE_FILE_NOT_FOUND || curlret == CURLE_SSH) {
-		if (has_slash == eb_true)	/* Was a directory. */
-			transfer_success = eb_false;
+		if (has_slash == true)	/* Was a directory. */
+			transfer_success = false;
 		else {		/* try appending a slash. */
 			stringAndChar(&urlcopy, &urlcopy_l, '/');
 			curlret = setCurlURL(http_curl_handle, urlcopy);
@@ -1033,31 +1033,31 @@ static eb_bool ftpConnect(const char *url, const char *user, const char *pass)
 
 			curlret = curl_easy_perform(http_curl_handle);
 			if (curlret != CURLE_OK)
-				transfer_success = eb_false;
+				transfer_success = false;
 			else {
 				parse_directory_listing();
-				transfer_success = eb_true;
+				transfer_success = true;
 			}
 		}
 	} else if (curlret == CURLE_OK) {
-		if (has_slash == eb_true)
+		if (has_slash == true)
 			parse_directory_listing();
-		transfer_success = eb_true;
+		transfer_success = true;
 	} else
-		transfer_success = eb_false;
+		transfer_success = false;
 
 	if (serverDataLen >= CHUNKSIZE)
 		nl();		/* We printed dots, so we terminate them with newline */
 
 ftp_transfer_fail:
-	if (transfer_success == eb_false) {
+	if (transfer_success == false) {
 		if (curlret != CURLE_OK)
 			ebcurl_setError(curlret, urlcopy);
 		nzFree(serverData);
 		serverData = 0;
 		serverDataLen = 0;
 	}
-	if (transfer_success == eb_true && !stringEqual(url, urlcopy))
+	if (transfer_success == true && !stringEqual(url, urlcopy))
 		changeFileName = urlcopy;
 	else
 		nzFree(urlcopy);
@@ -1277,7 +1277,7 @@ static const char *message_for_response_code(int code)
 static int
 prompt_and_read(int prompt, char *buffer, int buffer_length, int error_message)
 {
-	eb_bool reading = eb_true;
+	bool reading = true;
 	int n = 0;
 	while (reading) {
 		i_printf(prompt);
@@ -1291,7 +1291,7 @@ prompt_and_read(int prompt, char *buffer, int buffer_length, int error_message)
 			i_printf(error_message, MAXUSERPASS - 2);
 			nl();
 		} else
-			reading = eb_false;
+			reading = false;
 	}
 	return n;
 }				/* prompt_and_read */
@@ -1311,10 +1311,10 @@ prompt_and_read(int prompt, char *buffer, int buffer_length, int error_message)
  * Again, the error message reflects this condition.
 */
 
-static eb_bool read_credentials(char *buffer)
+static bool read_credentials(char *buffer)
 {
 	int input_length = 0;
-	eb_bool got_creds = eb_false;
+	bool got_creds = false;
 
 	if (!isInteractive)
 		setError(MSG_Authorize2);
@@ -1328,7 +1328,7 @@ static eb_bool read_credentials(char *buffer)
 			prompt_and_read(MSG_Password, password_ptr, MAXUSERPASS,
 					MSG_PasswordLong);
 			if (!stringEqual(password_ptr, "x")) {
-				got_creds = eb_true;
+				got_creds = true;
 				*(password_ptr - 1) = ':';	/* separate user and password with colon. */
 			}
 		}
@@ -1415,7 +1415,7 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb, void *unused)
 			if (parseRefresh(header_line, &delay)) {
 				unpercentURL(header_line);
 				gotoLocation(cloneString(header_line), delay,
-					     eb_true);
+					     true);
 			}
 		}
 	}
@@ -1443,7 +1443,7 @@ int
 ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
 		     size_t size, void *unused)
 {
-	static eb_bool last_curlin = eb_false;
+	static bool last_curlin = false;
 
 	if (info_desc == CURLINFO_HEADER_OUT) {
 		printf("curl>\n");
@@ -1455,9 +1455,9 @@ ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
 	} else;			/* Do nothing.  We don't care about this piece of data. */
 
 	if (info_desc == CURLINFO_HEADER_IN)
-		last_curlin = eb_true;
+		last_curlin = true;
 	else if (info_desc)
-		last_curlin = eb_false;
+		last_curlin = false;
 
 	return 0;
 }				/* ebcurl_debug_handler */

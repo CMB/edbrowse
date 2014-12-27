@@ -15,11 +15,11 @@ struct cookie {
 /* These are allocated */
 	char *name, *value;
 	char *server, *path, *domain;
-	eb_bool tail;
+	bool tail;
 /* tail is needed for libcurl, to tell it to tail-match. */
 /* Why doesn't it just look for the damned dot at the front of the domain? */
 	time_t expires;		/* zero means undefined */
-	eb_bool secure;
+	bool secure;
 };
 
 static int count_tabs(const char *the_string)
@@ -50,17 +50,17 @@ static struct cookie *cookie_from_netscape_line(char *cookie_line)
 			start = end + 1;
 			end = strchr(start, '\t');
 			if ((*start == 't') || (*start == 'T'))
-				new_cookie->tail = eb_true;
+				new_cookie->tail = true;
 			else
-				new_cookie->tail = eb_false;
+				new_cookie->tail = false;
 			start = end + 1;
 			end = strchr(start, '\t');
 			new_cookie->path = pullString1(start, end);
 			start = end + 1;
 			if (*start == 'T' || *start == 't')
-				new_cookie->secure = eb_true;
+				new_cookie->secure = true;
 			else
-				new_cookie->secure = eb_false;
+				new_cookie->secure = false;
 			start = strchr(start, '\t') + 1;
 			new_cookie->expires = strtol(start, &end, 10);
 /* Now end points to the tab following the expiration time. */
@@ -95,15 +95,15 @@ static void freeCookie(struct cookie *c)
 
 static struct listHead cookies = { &cookies, &cookies };
 
-static eb_bool displacedCookie;
+static bool displacedCookie;
 static void acceptCookie(struct cookie *c)
 {
 	struct cookie *d;
-	displacedCookie = eb_false;
+	displacedCookie = false;
 	foreach(d, cookies) {
 		if (stringEqualCI(d->name, c->name) &&
 		    stringEqualCI(d->domain, c->domain)) {
-			displacedCookie = eb_true;
+			displacedCookie = true;
 			delFromList(d);
 			freeCookie(d);
 			nzFree(d);
@@ -157,20 +157,20 @@ static CURLcode cookieForLibcurl(const struct cookie *c)
 
 /* Should this server really specify this domain in a cookie? */
 /* Domain must be the trailing substring of server. */
-eb_bool domainSecurityCheck(const char *server, const char *domain)
+bool domainSecurityCheck(const char *server, const char *domain)
 {
 	int i, dl, nd;
 	dl = strlen(domain);
 /* x.com or x.y.z */
 	if (dl < 5)
-		return eb_false;
+		return false;
 	if (dl > strlen(server))
-		return eb_false;
+		return false;
 	i = strlen(server) - dl;
 	if (!stringEqualCI(server + i, domain))
-		return eb_false;
+		return false;
 	if (i && server[i - 1] != '.')
-		return eb_false;
+		return false;
 	nd = 2;			/* number of dots */
 	if (dl > 4 && domain[dl - 4] == '.') {
 		static const char *const tld[] = {
@@ -183,12 +183,12 @@ eb_bool domainSecurityCheck(const char *server, const char *domain)
 	for (i = 0; domain[i]; i++)
 		if (domain[i] == '.')
 			if (!--nd)
-				return eb_true;
-	return eb_false;
+				return true;
+	return false;
 }				/* domainSecurityCheck */
 
 /* Let's jump right into it - parse a cookie, as received from a website. */
-eb_bool receiveCookie(const char *url, const char *str)
+bool receiveCookie(const char *url, const char *str)
 {
 	struct cookie *c;
 	const char *p, *q, *server;
@@ -198,18 +198,18 @@ eb_bool receiveCookie(const char *url, const char *str)
 
 	server = getHostURL(url);
 	if (server == 0 || !*server)
-		return eb_false;
+		return false;
 
 /* Cookie starts with name=value.  If we can't get that, go home. */
 	for (p = str; *p != ';' && *p; p++) ;
 	for (q = str; *q != '='; q++)
 		if (!*q || q >= p)
-			return eb_false;
+			return false;
 	if (str == q)
-		return eb_false;
+		return false;
 
 	c = allocZeroMem(sizeof(struct cookie));
-	c->tail = eb_false;
+	c->tail = false;
 	c->name = pullString1(str, q);
 	++q;
 	if (p - q > 0)
@@ -256,7 +256,7 @@ eb_bool receiveCookie(const char *url, const char *str)
 			c->domain = cloneString(server);
 		} else {
 /* It's safe to do tail-matching with this domain. */
-			c->tail = eb_true;
+			c->tail = true;
 /* Guarantee that it does in fact start with dot, prepending if necessary.. */
 			if (c->domain[0] != '.')
 				c->domain = prependString(c->domain, ".");
@@ -264,14 +264,14 @@ eb_bool receiveCookie(const char *url, const char *str)
 	}
 
 	if (s = extractHeaderParam(str, "secure")) {
-		c->secure = eb_true;
+		c->secure = true;
 		nzFree(s);
 	}
 
 	cookieForLibcurl(c);
 	freeCookie(c);
 	nzFree(c);
-	return eb_true;
+	return true;
 }				/* receiveCookie */
 
 /* I'm assuming I can read the cookie file, process it,
@@ -341,30 +341,30 @@ void cookiesFromJar(void)
 	fclose(f);
 }				/* cookiesFromJar */
 
-static eb_bool isInDomain(const char *d, const char *s)
+static bool isInDomain(const char *d, const char *s)
 {
 	int dl = strlen(d);
 	int sl = strlen(s);
 	int j = sl - dl;
 	if (j < 0)
-		return eb_false;
+		return false;
 	if (!memEqualCI(d, s + j, dl))
-		return eb_false;
+		return false;
 	if (j && s[j - 1] != '.')
-		return eb_false;
-	return eb_true;
+		return false;
+	return true;
 }				/* isInDomain */
 
-static eb_bool isPathPrefix(const char *d, const char *s)
+static bool isPathPrefix(const char *d, const char *s)
 {
 	int dl = strlen(d);
 	int sl = strlen(s);
 	if (dl > sl)
-		return eb_false;
+		return false;
 	return !memcmp(d, s, dl);
 }				/* isPathPrefix */
 
-void sendCookies(char **s, int *l, const char *url, eb_bool issecure)
+void sendCookies(char **s, int *l, const char *url, bool issecure)
 {
 	const char *server = getHostURL(url);
 	const char *data = getDataURL(url);
