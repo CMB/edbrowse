@@ -47,6 +47,9 @@ void *reallocMem(void *p, size_t n)
 	void *s;
 	if (!n)
 		i_printfExit(MSG_ReallocP);
+/* small check against allocated strings getting huge */
+	if (n < 0)
+		i_printfExit(MSG_MemAllocError, n);
 	if (!p)
 		i_printfExit(MSG_Realloc0, n);
 	if (p == EMPTYSTRING)
@@ -155,6 +158,7 @@ char *initString(int *l)
 	return EMPTYSTRING;
 }
 
+/* String management routines realloc to one less than a power of 2 */
 void stringAndString(char **s, int *l, const char *t)
 {
 	char *p = *s;
