@@ -1229,7 +1229,7 @@ static void htmlOption(struct htmlTag *sel, struct htmlTag *v, const char *a)
 }				/* htmlOption */
 
 static char *javatext;
-static void htmlScript(char *&html, char *&h)
+static void htmlScript(char **html, char **h)
 {
 	char *a = 0, *w = 0;
 	struct htmlTag *t = topTag;	// shorthand
@@ -1324,15 +1324,15 @@ static void htmlScript(char *&html, char *&h)
 		debugPrint(3, "docwrite %d bytes", cw->dw_l);
 		debugPrint(4, "<<\n%s\n>>", cw->dw + 10);
 		stringAndString(&cw->dw, &cw->dw_l, "</docwrite>");
-		afterlen = strlen(h) + strlen(cw->dw);
+		afterlen = strlen(*h) + strlen(cw->dw);
 		after = (char *)allocMem(afterlen + 1);
 		strcpy(after, cw->dw);
-		strcat(after, h);
+		strcat(after, *h);
 		nzFree(cw->dw);
 		cw->dw = 0;
 		cw->dw_l = 0;
-		nzFree(html);
-		html = h = after;
+		nzFree(*html);
+		*html = *h = after;
 
 /* After the realloc, the inner pointers are no longer valid. */
 		for (i = 0; i < cw->numTags; ++i) {
@@ -2305,7 +2305,7 @@ unparen:
 				continue;
 			}
 
-			htmlScript(html, h);
+			htmlScript(&html, &h);
 			scriptsPending();
 			continue;
 
@@ -3301,8 +3301,9 @@ formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 			char *s, *e;
 			if (!display) {	/* off the air */
 				struct htmlTag *v;
+int i2;
 /* revert back to reset state */
-				for (int i2 = 0; i2 < cw->numTags; ++i2) {
+				for (i2 = 0; i2 < cw->numTags; ++i2) {
 					v = tagList[i2];
 					if (v->controller == t)
 						v->checked = v->rchecked;

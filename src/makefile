@@ -32,7 +32,7 @@ ESQLDFLAGS = $(STRIP)
 # Override JSLIB on the command-line, if your distro uses a different name.
 # E.G., make JSLIB=-lmozjs
 JSLIB = -lmozjs-24
-LDLIBS = -lpcre -lcurl -lreadline -lncurses -lstdc++
+LDLIBS = -lpcre -lcurl -lreadline -lncurses
 
 #  Make the dynamically linked executable program by default.
 all: edbrowse edbrowse-js
