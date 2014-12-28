@@ -1158,9 +1158,9 @@ bool envFile(const char *line, const char **expanded)
 
 	pcre *re_cc;
 
-/* ` supresses this stuff */
-	if (*line == '`') {
-		*expanded = line + 1;
+/* `~ supresses this stuff */
+	if (line[0] == '`' && line[1] == '~') {
+		*expanded = line + 2;
 		return true;
 	}
 
