@@ -49,8 +49,8 @@ Parse an html tag <tag foo=bar>
 const char *skipHtmlComment(const char *h, int *lines)
 {
 	int lns = 0;
-	eb_bool comm = h[2] == '-' && h[3] == '-';
-	eb_bool php = memEqualCI(h + 1, "?php", 4);
+	bool comm = h[2] == '-' && h[3] == '-';
+	bool php = memEqualCI(h + 1, "?php", 4);
 
 	h += comm ? 4 : 2;
 	while (*h) {
@@ -98,7 +98,7 @@ done:
 }				/* skipHtmlComment */
 
 /* an attribute character */
-static eb_bool atchr(char c)
+static bool atchr(char c)
 {
 	return (c > ' ' && c != '=' && c != '<' && c != '>');
 }				/* atchr */
@@ -114,27 +114,27 @@ end points to first character past the html tag.
 lines records the number of newlines consumed by the tag.
 *********************************************************************/
 
-eb_bool htmlAttrVal_nl;		/* allow nl in attribute values */
+bool htmlAttrVal_nl;		/* allow nl in attribute values */
 
-eb_bool
+bool
 parseTag(char *e,
 	 const char **name, int *namelen, const char **attr, const char **end,
 	 int *lines)
 {
 	int lns = 0;
 	if (*e++ != '<')
-		return eb_false;
+		return false;
 	if (name)
 		*name = e;
 	if (*e == '/')
 		e++;
 	if (!isA(*e))
-		return eb_false;
+		return false;
 	while (isA(*e) || *e == '=')
 		++e;
 	if (!isspaceByte(*e) && *e != '>' && *e != '<' && *e != '/'
 	    && *e != ':')
-		return eb_false;
+		return false;
 /* Note that name includes the leading / */
 	if (name && namelen)
 		*namelen = e - *name;
@@ -146,14 +146,14 @@ parseTag(char *e,
 	}
 /* should be the start of the first attribute, or < or > */
 	if (!atchr(*e) && *e != '>' && *e != '<')
-		return eb_false;
+		return false;
 	if (attr)
 		*attr = e;
 nextattr:
 	if (*e == '>' || *e == '<')
 		goto en;
 	if (!atchr(*e))
-		return eb_false;
+		return false;
 	while (atchr(*e))
 		++e;
 	while (isspaceByte(*e)) {
@@ -179,7 +179,7 @@ x3:
 			++e;
 		}
 		if (*e != uu)
-			return eb_false;
+			return false;
 		++e;
 		if (*e == uu) {
 /* lots of tags end with an extra quote */
@@ -204,7 +204,7 @@ en:
 		*end = e + (*e == '>');
 	if (lines)
 		*lines = lns;
-	return eb_true;
+	return true;
 }				/* parseTag */
 
 /* Don't know why he didn't use the stringAndChar() functions, but he
@@ -298,7 +298,7 @@ ea:
 		valChar(&a, &l, 0);	/* null terminate */
 	if (strchr(a, '&')) {
 		b = a;
-		a = andTranslate(b, eb_true);
+		a = andTranslate(b, true);
 		nzFree(b);
 	}
 /* strip leading and trailing spaces.
@@ -317,12 +317,12 @@ Result parameters:
 end of the script, the extracted script, and the number of newlines.
 *********************************************************************/
 
-eb_bool
+bool
 findEndScript(const char *h, const char *tagname,
-	      eb_bool is_js, char **end_p, char **new_p, int *lines)
+	      bool is_js, char **end_p, char **new_p, int *lines)
 {
 	char *end;
-	eb_bool rc = eb_true;
+	bool rc = true;
 	const char *s = h;
 	char look[12];
 	int js_nl = 0;
@@ -332,7 +332,7 @@ findEndScript(const char *h, const char *tagname,
 retry:
 	end = strstrCI(s, look);
 	if (!end) {
-		rc = eb_false;
+		rc = false;
 		browseError(MSG_CloseTag, look);
 		end = (char *)h + strlen(h);
 	} else if (is_js) {
@@ -400,8 +400,8 @@ Use cnt to count the iterations, just for debugging.
 void anchorSwap(char *buf)
 {
 	char c, d, *s, *ss, *w, *a;
-	eb_bool premode, pretag, state_braces, state_text, state_atext;
-	eb_bool strong, change, slash;
+	bool premode, pretag, state_braces, state_text, state_atext;
+	bool strong, change, slash;
 	int n, cnt;
 	char tag[20];
 
@@ -467,11 +467,11 @@ put1:
 	*w = 0;
 
 	cnt = 0;
-	change = eb_true;
+	change = true;
 	while (change) {
-		change = eb_false;
+		change = false;
 		++cnt;
-		premode = state_text = state_atext = state_braces = eb_false;
+		premode = state_text = state_atext = state_braces = false;
 /* w represents the state of whitespace */
 		w = 0;
 /* a represents the state of being in an anchor */
@@ -490,7 +490,7 @@ put1:
 			     ((!state_braces) & !state_text))) {
 				memmove(a, w, s - w);
 				memmove(a + (s - w), tag, n);
-				change = eb_true;
+				change = true;
 				w = 0;
 			}
 
@@ -525,10 +525,10 @@ put1:
 				      ((!state_braces) & state_text)))) {
 					memmove(w + n, w, s - w);
 					memcpy(w, tag, n);
-					change = eb_true;
+					change = true;
 					w += n;
 					if (d == '}')
-						state_braces = eb_false;
+						state_braces = false;
 					s = ss;
 					continue;
 				}
@@ -537,24 +537,24 @@ put1:
 				w = 0;
 
 				if (d == '{') {
-					state_braces = state_text = eb_true;
-					state_atext = eb_false;
+					state_braces = state_text = true;
+					state_atext = false;
 					a = s;
 					s = ss;
 					continue;
 				}
 
 				if (d == '}') {
-					state_braces = eb_false;
+					state_braces = false;
 					s = ss;
 					continue;
 				}
 
 				if (d == '*') {
 					if (state_braces)
-						state_atext = eb_true;
+						state_atext = true;
 					else
-						state_text = eb_true;
+						state_text = true;
 					a = s;
 					s = ss;
 					continue;
@@ -569,9 +569,9 @@ put1:
 normalChar:
 			w = 0;	/* no more whitespace */
 			if (state_braces)
-				state_atext = eb_true;
+				state_atext = true;
 			else
-				state_text = eb_true;
+				state_text = true;
 /* end of loop over the chars in the buffer */
 		}
 /* end of loop making changes */
@@ -650,7 +650,7 @@ putc:
 	debugPrint(3, "anchors unframed");
 
 /* Now compress the implied linebreaks into one. */
-	premode = eb_false;
+	premode = false;
 	for (s = buf; c = *s; ++s) {
 		if (c == InternalCodeChar && isdigitByte(s[1])) {
 			n = strtol(s + 1, &s, 10);
@@ -662,11 +662,11 @@ putc:
 		}
 		if (!isspaceByte(c))
 			continue;
-		strong = eb_false;
+		strong = false;
 		a = 0;
 		for (w = s; isspaceByte(*w); ++w) {
 			if (*w == '\n' || *w == '\f')
-				strong = eb_true;
+				strong = true;
 			if (*w == '\r' && !a)
 				a = w;
 		}
@@ -694,7 +694,7 @@ The prefix bl means breakline.
 *********************************************************************/
 
 static char *bl_start, *bl_cursor, *bl_end;
-static eb_bool bl_overflow;
+static bool bl_overflow;
 static int colno;		/* column number */
 static const int optimalLine = 80;	/* optimal line length */
 static const int cutLineAfter = 36;	/* cut sentence after this column */
@@ -744,22 +744,22 @@ static void debugChunk(const char *chunk, int len)
 static void appendOneChar(char c)
 {
 	if (bl_cursor == bl_end)
-		bl_overflow = eb_true;
+		bl_overflow = true;
 	else
 		*bl_cursor++ = c;
 }				/* appendOneChar */
 
-static eb_bool spaceNotInInput(void)
+static bool spaceNotInInput(void)
 {
 	char *t = bl_cursor;
 	char c;
 	for (--t; t >= bl_start; --t) {
 		c = *t;
 		if (c == '\n' || c == '\r')
-			return eb_true;
+			return true;
 		if (c == '>' && t >= bl_start + 2 &&
 		    t[-1] == '0' && t[-2] == InternalCodeChar)
-			return eb_true;
+			return true;
 		if (c != '<')
 			continue;
 		while (t > bl_start && isdigitByte(t[-1]))
@@ -767,12 +767,12 @@ static eb_bool spaceNotInInput(void)
 		if (*t == '<')
 			continue;
 		if (t > bl_start && t[-1] == InternalCodeChar)
-			return eb_false;
+			return false;
 	}
-	return eb_true;
+	return true;
 }				/* spaceNotInInput */
 
-static void appendSpaceChunk(const char *chunk, int len, eb_bool premode)
+static void appendSpaceChunk(const char *chunk, int len, bool premode)
 {
 	int nlc = pre_cr;	/* newline count */
 	int spc = 0;		/* space count */
@@ -805,7 +805,7 @@ static void appendSpaceChunk(const char *chunk, int len, eb_bool premode)
 		if (strchr(")\"|}", d))
 			e = c;
 		if (strchr(".?!:", e)) {
-			eb_bool ok = eb_true;
+			bool ok = true;
 /* Check for Mr. Mrs. and others. */
 			if (e == '.' && bl_cursor - bl_start > 10) {
 				static const char *const prefix[] =
@@ -820,11 +820,11 @@ static void appendSpaceChunk(const char *chunk, int len, eb_bool premode)
 				trailing[i] = 0;
 				for (i = 0; prefix[i]; ++i)
 					if (strstr(trailing, prefix[i]))
-						ok = eb_false;
+						ok = false;
 /* Check for John C. Calhoon */
 				if (isupperByte(bl_cursor[-2])
 				    && isspaceByte(bl_cursor[-3]))
-					ok = eb_false;
+					ok = false;
 			}
 			if (ok)
 				lperiod = colno, idxperiod = l;
@@ -895,7 +895,7 @@ static void appendSpaceChunk(const char *chunk, int len, eb_bool premode)
 	lspace = 1;
 }				/* appendSpaceChunk */
 
-static void appendPrintableChunk(const char *chunk, int len, eb_bool premode)
+static void appendPrintableChunk(const char *chunk, int len, bool premode)
 {
 	int i, j;
 	for (i = 0; i < len; ++i)
@@ -938,7 +938,7 @@ static void appendPrintableChunk(const char *chunk, int len, eb_bool premode)
 
 char replaceLine[REPLACELINELEN];
 
-eb_bool breakLine(const char *line, int len, int *newlen)
+bool breakLine(const char *line, int len, int *newlen)
 {
 	char c, state, newstate;
 	int i, last;
@@ -960,7 +960,7 @@ eb_bool breakLine(const char *line, int len, int *newlen)
 		lspace = 3;
 	bl_start = bl_cursor = replaceLine;
 	bl_end = replaceLine + REPLACELINELEN - 8;
-	bl_overflow = eb_false;
+	bl_overflow = false;
 	colno = 1;
 	longcut = lperiod = lcomma = lright = lany = 0;
 	last = 0;
@@ -983,9 +983,9 @@ eb_bool breakLine(const char *line, int len, int *newlen)
 /* state change here */
 		debugChunk(line + last, i - last);
 		if (state == 1)
-			appendSpaceChunk(line + last, i - last, eb_false);
+			appendSpaceChunk(line + last, i - last, false);
 		else
-			appendPrintableChunk(line + last, i - last, eb_false);
+			appendPrintableChunk(line + last, i - last, false);
 		last = i;
 		state = newstate;
 		pre_cr = 0;
@@ -994,13 +994,13 @@ eb_bool breakLine(const char *line, int len, int *newlen)
 	if (state) {		/* last token */
 		debugChunk(line + last, len - last);
 		if (state == 1)
-			appendSpaceChunk(line + last, len - last, eb_false);
+			appendSpaceChunk(line + last, len - last, false);
 		else
-			appendPrintableChunk(line + last, len - last, eb_false);
+			appendPrintableChunk(line + last, len - last, false);
 	}
 
 	if (lspace < 2) {	/* line didn't have a \r at the end */
-		appendSpaceChunk("\n", 1, eb_false);
+		appendSpaceChunk("\n", 1, false);
 	}
 	if (bl_cursor - bl_start > paraLine)
 		lspace = 4;
@@ -1018,8 +1018,8 @@ char *htmlReformat(const char *buf)
 {
 	const char *h, *nh, *s;
 	char c;
-	eb_bool premode = eb_false;
-	eb_bool pretag, slash;
+	bool premode = false;
+	bool pretag, slash;
 	char *new;
 	int l, tagno;
 
@@ -1029,7 +1029,7 @@ char *htmlReformat(const char *buf)
 	lspace = 3;
 	bl_start = bl_cursor = replaceLine;
 	bl_end = replaceLine + REPLACELINELEN - 8;
-	bl_overflow = eb_false;
+	bl_overflow = false;
 	new = initString(&l);
 
 	for (h = buf; (c = *h); h = nh) {
@@ -1086,13 +1086,13 @@ char *htmlReformat(const char *buf)
 		for (s = h + 1; isdigitByte(*s); ++s) ;
 		if (*s != '{')
 			continue;
-		appendSpaceChunk("\n", 1, eb_false);
+		appendSpaceChunk("\n", 1, false);
 		nh = h;
 	}			/* loop over text */
 
 /* close off the last line */
 	if (lspace < 2)
-		appendSpaceChunk("\n", 1, eb_true);
+		appendSpaceChunk("\n", 1, true);
 	if (bl_cursor > bl_start)
 		stringAndBytes(&new, &l, bl_start, bl_cursor - bl_start);
 /* Get rid of last space. */
@@ -1160,13 +1160,13 @@ The original string is not disturbed.
 The new string is allocated.
 *********************************************************************/
 
-char *andTranslate(const char *s, eb_bool invisible)
+char *andTranslate(const char *s, bool invisible)
 {
 	char *new;
 	int l, n, j;
 	uchar c, d;
 	uchar alnum = 0;	/* was last char an alphanumeric */
-	eb_bool premode = eb_false;
+	bool premode = false;
 	char andbuf[16];
 
 	static const char *const andwords[] = {
@@ -1399,7 +1399,7 @@ char *andTranslate(const char *s, eb_bool invisible)
 			while (isdigitByte(*t))
 				++t;
 			if (t > s + 1 && *t && strchr("{}<>*", *t)) {	/* it's a tag */
-				eb_bool separate, pretag, slash;
+				bool separate, pretag, slash;
 				n = atoi(s + 1);
 				preFormatCheck(n, &pretag, &slash);
 				separate = (*t != '*');
@@ -1569,7 +1569,7 @@ append:
 	}
 
 	*t = 0;
-	spaceCrunch(line, eb_true, eb_false);
+	spaceCrunch(line, true, false);
 	for (s = line; c = *s; ++s)
 		if (c == ' ')
 			*s = ',';
@@ -1652,7 +1652,7 @@ but if there's too many such chars, I call it binary.
 It's not an exact science.
 *********************************************************************/
 
-eb_bool looksBinary(const char *buf, int buflen)
+bool looksBinary(const char *buf, int buflen)
 {
 	int i, bincount = 0;
 	for (i = 0; i < buflen; ++i) {
@@ -1664,7 +1664,7 @@ eb_bool looksBinary(const char *buf, int buflen)
 }				/* looksBinary */
 
 void
-looks_8859_utf8(const char *buf, int buflen, eb_bool * iso_p, eb_bool * utf8_p)
+looks_8859_utf8(const char *buf, int buflen, bool * iso_p, bool * utf8_p)
 {
 	int utfcount = 0, isocount = 0;
 	int i, j, bothcount;
@@ -1691,16 +1691,16 @@ isogo:
 		i = j - 1;
 	}
 
-	*iso_p = *utf8_p = eb_false;
+	*iso_p = *utf8_p = false;
 
 	bothcount = isocount + utfcount;
 	if (!bothcount)
 		return;		/* ascii */
 	bothcount *= 6;
 	if (utfcount * 7 >= bothcount)
-		*utf8_p = eb_true;
+		*utf8_p = true;
 	if (isocount * 7 >= bothcount)
-		*iso_p = eb_true;
+		*iso_p = true;
 }				/* looks_8859_utf8 */
 
 /*********************************************************************
@@ -1844,7 +1844,7 @@ void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 void
 iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 {
-	eb_bool is8859, isutf8;
+	bool is8859, isutf8;
 
 	*outbuf_p = 0;
 	*outbuflen_p = 0;

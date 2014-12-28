@@ -6,13 +6,13 @@
 
 #include "eb.h"
 
-eb_bool sqlPresent = eb_false;
+bool sqlPresent = false;
 
-eb_bool sqlReadRows(const char *filename, char **bufptr)
+bool sqlReadRows(const char *filename, char **bufptr)
 {
 	setError(MSG_DBNotCompiled);
 	*bufptr = EMPTYSTRING;
-	return eb_false;
+	return false;
 }				/* sqlReadRows */
 
 void dbClose(void)
@@ -27,26 +27,26 @@ void showForeign(void)
 {
 }				/* showForeign */
 
-eb_bool showTables(void)
+bool showTables(void)
 {
 }				/* showTables */
 
-eb_bool sqlDelRows(int start, int end)
+bool sqlDelRows(int start, int end)
 {
 }				/* sqlDelRows */
 
-eb_bool sqlUpdateRow(pst source, int slen, pst dest, int dlen)
+bool sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 {
 }				/* sqlUpdateRow */
 
-eb_bool sqlAddRows(int ln)
+bool sqlAddRows(int ln)
 {
 }				/* sqlAddRows */
 
-eb_bool ebConnect(void)
+bool ebConnect(void)
 {
 	setError(MSG_DBNotCompiled);
-	return eb_false;
+	return false;
 }				/* ebConnect */
 
 int goSelect(int *startLine, char **rbuf)

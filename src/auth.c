@@ -16,12 +16,12 @@ struct httpAuth {
 	char *directory;
 	char *user_password;
 	int port;
-	eb_bool proxy;
+	bool proxy;
 };
 
 static struct listHead authlist = { &authlist, &authlist };
 
-eb_bool getUserPass(const char *url, char *creds, eb_bool find_proxy)
+bool getUserPass(const char *url, char *creds, bool find_proxy)
 {
 	const char *host = getHostURL(url);
 	int port = getPortURL(url);
@@ -55,22 +55,22 @@ eb_bool getUserPass(const char *url, char *creds, eb_bool find_proxy)
 	return (found != NULL);
 }				/* getUserPass */
 
-eb_bool
+bool
 addWebAuthorization(const char *url,
-		    const char *credentials, eb_bool proxy)
+		    const char *credentials, bool proxy)
 {
 	struct httpAuth *a;
 	const char *host;
 	const char *dir = 0, *dirend;
 	int port, dl;
-	eb_bool urlProx = isProxyURL(url);
-	eb_bool updated = eb_true;
+	bool urlProx = isProxyURL(url);
+	bool updated = true;
 	char *p;
 
 	if (proxy) {
 		if (!urlProx) {
 			setError(MSG_ProxyAuth);
-			return eb_false;
+			return false;
 		}
 	} else if (urlProx)
 		url = getDataURL(url);
@@ -96,7 +96,7 @@ addWebAuthorization(const char *url,
 	}
 
 	if (a == (struct httpAuth *)&authlist) {
-		updated = eb_false;
+		updated = false;
 		a = allocZeroMem(sizeof(struct httpAuth));
 		addToListFront(&authlist, a);
 	}
@@ -111,5 +111,5 @@ addWebAuthorization(const char *url,
 	a->user_password = cloneString(credentials);
 	debugPrint(3, "%s authorization for %s%s",
 		   updated ? "updated" : "new", a->host, a->directory);
-	return eb_true;
+	return true;
 }				/* addWebAuthorization */

@@ -16,7 +16,7 @@ static void markAllDead(void)
 {
 	int cx;			/* edbrowse context */
 	struct ebWindow *w;
-	eb_bool killed = eb_false;
+	bool killed = false;
 
 	for (cx = 1; cx < MAXSESSION; ++cx) {
 		w = sessionList[cx].lw;
@@ -26,7 +26,7 @@ static void markAllDead(void)
 			w->winobj = 0;
 			w->docobj = 0;
 			w->jcx = 0;
-			killed = eb_true;
+			killed = true;
 		}
 		while (w != sessionList[cx].fw) {
 			w = w->prev;
@@ -34,7 +34,7 @@ static void markAllDead(void)
 				w->winobj = 0;
 				w->docobj = 0;
 				w->jcx = 0;
-				killed = eb_true;
+				killed = true;
 			}
 		}
 	}
@@ -64,13 +64,13 @@ static void js_start(void)
 
 	if (pipe(pipe_in)) {
 		i_puts(MSG_JSEnginePipe);
-		allowJS = eb_false;
+		allowJS = false;
 		return;
 	}
 
 	if (pipe(pipe_out)) {
 		i_puts(MSG_JSEnginePipe);
-		allowJS = eb_false;
+		allowJS = false;
 		close(pipe_in[0]);
 		close(pipe_in[1]);
 		return;
@@ -79,7 +79,7 @@ static void js_start(void)
 	pid = fork();
 	if (pid < 0) {
 		i_puts(MSG_JSEngineFork);
-		allowJS = eb_false;
+		allowJS = false;
 		close(pipe_in[0]);
 		close(pipe_in[1]);
 		close(pipe_out[0]);
@@ -287,7 +287,7 @@ static int readMessage(void)
 		js_kill();
 /* perhaps a helpful message, before we close down js sessions */
 		if (head.highstat == EJ_HIGH_PROC_FAIL)
-			allowJS = eb_false;
+			allowJS = false;
 		if (head.lowstat == EJ_LOW_EXEC)
 			i_puts(MSG_JSEngineExec);
 		if (head.lowstat == EJ_LOW_MEMORY)
@@ -607,14 +607,14 @@ double get_property_float(jsobjtype obj, const char *name)
 	return n;
 }				/* get_property_float */
 
-eb_bool get_property_bool(jsobjtype obj, const char *name)
+bool get_property_bool(jsobjtype obj, const char *name)
 {
-	eb_bool n = eb_false;
+	bool n = false;
 	get_property(obj, name);
 	if (!propval)
 		return n;
 	if (stringEqual(propval, "true") || stringEqual(propval, "1"))
-		n = eb_true;
+		n = true;
 	free(propval);
 	propval = 0;
 	return n;
@@ -729,7 +729,7 @@ int set_property_float(jsobjtype obj, const char *name, double n)
 	return set_property(obj, name, buf, EJ_PROP_FLOAT);
 }				/* set_property_float */
 
-int set_property_bool(jsobjtype obj, const char *name, eb_bool n)
+int set_property_bool(jsobjtype obj, const char *name, bool n)
 {
 	char buf[8];
 	strcpy(buf, (n ? "1" : "0"));
@@ -954,7 +954,7 @@ void domLink(const char *classname,	/* instantiate this class */
 	jsobjtype alist = 0;
 	jsobjtype io = 0;	/* input object */
 	unsigned length;
-	eb_bool dupname = eb_false;
+	bool dupname = false;
 /* some strings from the html tag */
 	const char *symname = topTag->name;
 	const char *idname = topTag->id;
@@ -1007,7 +1007,7 @@ Yeah, it makes my head spin too.
 				return;
 		} else {
 /* don't know why the duplicate name */
-			dupname = eb_true;
+			dupname = true;
 		}
 	}
 
@@ -1071,7 +1071,7 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 			set_property_object(master, symname, io);
 
 			if (stringEqual(symname, "action"))
-				set_property_bool(io, "actioncrash", eb_true);
+				set_property_bool(io, "actioncrash", true);
 		}
 
 		if (list)
@@ -1161,14 +1161,14 @@ static void docCookie(jsobjtype d)
 	int cook_l;
 	char *cook = initString(&cook_l);
 	const char *url = cw->fileName;
-	eb_bool secure = eb_false;
+	bool secure = false;
 	const char *proto;
 	char *s;
 
 	if (url) {
 		proto = getProtURL(url);
 		if (proto && stringEqualCI(proto, "https"))
-			secure = eb_true;
+			secure = true;
 		sendCookies(&cook, &cook_l, url, secure);
 		if (memEqualCI(cook, "cookie: ", 8)) {	/* should often happen */
 			strmove(cook, cook + 8);
@@ -1300,7 +1300,7 @@ jsobjtype instantiate_url(jsobjtype parent, const char *name, const char *url)
  * Owner object is passed, look for obj.href, obj.src, or obj.action.
  * Return that if it's a string, or its member href if it is a url.
  * The result, coming from get_property_string, is allocated. */
-char *get_property_url(jsobjtype owner, eb_bool action)
+char *get_property_url(jsobjtype owner, bool action)
 {
 	enum ej_proptype mtype;	/* member type */
 	jsobjtype uo = 0;	/* url object */
@@ -1352,10 +1352,10 @@ Besides, it use to seg fault when I didn't watch for this.
 static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 {
 	int i1, i2, len1;
-	eb_bool check2;
+	bool check2;
 	char *s;
 	const char *selname;
-	eb_bool changed = eb_false;
+	bool changed = false;
 	struct htmlTag *t;
 	jsobjtype oo;		/* option object */
 
@@ -1396,13 +1396,13 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 		}
 		++i2;
 		if (t->checked != check2)
-			changed = eb_true;
+			changed = true;
 		t->checked = check2;
 		s = get_property_string(oo, "text");
 		if (s && !t->name || !stringEqual(t->name, s)) {
 			nzFree(t->name);
 			t->name = s;
-			changed = eb_true;
+			changed = true;
 		} else
 			nzFree(s);
 		s = get_property_string(oo, "value");
@@ -1424,7 +1424,7 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 /* option is gone in js, disconnect this option tag from its select */
 			t->jv = 0;
 			t->controller = 0;
-			changed = eb_true;
+			changed = true;
 		}
 	} else if (i1 == len1) {
 		for (; i2 < len2; ++i2) {
@@ -1444,7 +1444,7 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 					sel->lic = i2;
 			}
 			t->rchecked = get_property_bool(oo, "defaultSelected");
-			changed = eb_true;
+			changed = true;
 		}
 	}
 
@@ -1461,7 +1461,7 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 	nzFree(sel->value);
 	sel->value = s;
 	set_property_string(sel->jv, "value", s);
-	updateFieldInBuffer(sel->seqno, s, parsePage ? 0 : 2, eb_false);
+	updateFieldInBuffer(sel->seqno, s, parsePage ? 0 : 2, false);
 
 	if (!sel->multiple)
 		set_property_number(sel->jv, "selectedIndex", sel->lic);
@@ -1526,19 +1526,19 @@ jsobjtype run_function_object(jsobjtype obj, const char *name)
 }				/* run_function_object */
 
 /* function should return a boolean */
-eb_bool run_function_bool(jsobjtype obj, const char *name)
+bool run_function_bool(jsobjtype obj, const char *name)
 {
 	run_function(obj, name);
 	if (!propval)
-		return eb_false;
+		return false;
 	if (head.proptype == EJ_PROP_BOOL) {
-		eb_bool rc = (propval[0] == '1');
+		bool rc = (propval[0] == '1');
 		nzFree(propval);
 		return rc;
 	}
 /* wrong type, just return false */
 	nzFree(propval);
-	return eb_false;
+	return false;
 }				/* run_function_bool */
 
 jsobjtype establish_js_option(jsobjtype obj, int idx)
@@ -1561,7 +1561,7 @@ jsobjtype establish_js_option(jsobjtype obj, int idx)
 }				/* establish_js_option */
 
 void establish_inner(jsobjtype obj, const char *start, const char *end,
-		     eb_bool isText)
+		     bool isText)
 {
 	const char *s = EMPTYSTRING;
 	const char *name = (isText ? "innerText" : "innerHTML");

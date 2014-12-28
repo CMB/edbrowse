@@ -838,12 +838,19 @@ static char *JS_c_str(js::HandleString str)
 }				/* JS_c_str */
 
 /* represent an object pointer in ascii */
-static const char *pointerString(const JSObject * obj)
+static const char *pointer2string(const JSObject * obj)
 {
 	static char pbuf[32];
 	sprintf(pbuf, "%p", obj);
 	return pbuf;
-}				/* pointerString */
+}				/* pointer2string */
+
+static JSObject *string2pointer(const char *s)
+{
+	JSObject *p;
+	sscanf(s, "%p", &p);
+	return p;
+}				/* string2pointer */
 
 /* like the function in ebjs.c, but a different name */
 static const char *fakePropName(void)
@@ -1593,7 +1600,7 @@ static char *get_property_string(JS::HandleObject parent, const char *name)
 	if (v.isObject()) {
 /* special code here to return the object pointer */
 /* That's what edbrowse is going to want. */
-		s = pointerString(JSVAL_TO_OBJECT(v));
+		s = pointer2string(JSVAL_TO_OBJECT(v));
 	} else
 		s = stringize(v);
 	return cloneString(s);
@@ -1615,7 +1622,7 @@ setter_value(JSContext * cx, JS::HandleObject obj,
 			       "input.value is assigned something other than a string; this can cause problems when you submit the form.");
 	} else {
 		effects += "v{";	// }
-		effects += pointerString(*obj.address());
+		effects += pointer2string(*obj.address());
 		effects += '=';
 		effects += val;
 		endeffect();
@@ -2020,7 +2027,7 @@ static JSBool form_submit(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
 	effects += "f{s";	// }
-	effects += pointerString(obj);
+	effects += pointer2string(obj);
 	endeffect();
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	args.rval().set(JSVAL_VOID);
@@ -2031,7 +2038,7 @@ static JSBool form_reset(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
 	effects += "f{r";	// }
-	effects += pointerString(obj);
+	effects += pointer2string(obj);
 	endeffect();
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	args.rval().set(JSVAL_VOID);
@@ -2258,7 +2265,7 @@ abort:
 		effects += nstring;
 		effects += fstr;
 		effects += '|';
-		effects += pointerString(to);
+		effects += pointer2string(to);
 		effects += '|';
 		effects += (isInterval ? '1' : '0');
 		endeffect();
@@ -2462,7 +2469,7 @@ static void set_property_generic(js::HandleObject parent, const char *name)
 		break;
 
 	case EJ_PROP_OBJECT:
-		sscanf(propval, "%p", &child);
+		child = string2pointer(propval);
 		childroot = child;
 		set_property_object(parent, name, childroot);
 		break;
@@ -2483,7 +2490,7 @@ static void set_property_generic(js::HandleObject parent, const char *name)
 
 childreturn:
 		set_property_object(parent, name, childroot);
-		propval = cloneString(pointerString(*childroot.address()));
+		propval = cloneString(pointer2string(*childroot.address()));
 		break;
 
 	case EJ_PROP_ARRAY:
@@ -2568,7 +2575,7 @@ static char *run_function(JS::HandleObject parent, const char *name)
 	if (proptype == EJ_PROP_NONE)
 		return NULL;
 	if (v.isObject())
-		s = pointerString(JSVAL_TO_OBJECT(v));
+		s = pointer2string(JSVAL_TO_OBJECT(v));
 	else
 		s = stringize(v);
 	return cloneString(s);
@@ -2673,7 +2680,7 @@ propreturn:
 		propval = 0;	/* should already be 0 */
 		head.proplength = 0;
 		if (child) {
-			propval = cloneString(pointerString(*child.address()));
+			propval = cloneString(pointer2string(*child.address()));
 			head.proplength = strlen(propval);
 			head.proptype = EJ_PROP_OBJECT;
 		}
@@ -2696,10 +2703,10 @@ propreturn:
 			else
 				set_array_element_object(parent, head.n, child);
 			setret = true;
-			propval = cloneString(pointerString(*child.address()));
+			propval = cloneString(pointer2string(*child.address()));
 		}
 		if (head.proptype == EJ_PROP_OBJECT && propval) {
-			sscanf(propval, "%p", &chp);
+			chp = string2pointer(propval);
 			child = chp;
 			set_array_element_object(parent, head.n, child);
 			nzFree(propval);
