@@ -477,6 +477,51 @@ slash:
 	*end_p = myslash + 1;
 }				/* getDirURL */
 
+/* extract the file piece of a pathname or url */
+/* This is for debugPrint or w/, so could be chopped for convenience */
+char *getFileURL(const char *url, bool chophash)
+{
+	const char *s;
+	const char *e;
+	s = strrchr(url, '/');
+	if (s)
+		++s;
+	else
+		s = url;
+	e = 0;
+	if (isURL(url)) {
+		chophash = true;
+		e = strpbrk(s, "?\1");
+	}
+	if (!e)
+		e = s + strlen(s);
+	if (chophash) {
+		const char *hash = strchr(s, '#');
+		if (hash && hash < e)
+			e = hash;
+	}
+/* if slash at the end then back up to the prior slash */
+	if (e == s && s > url) {
+		--s;
+		while (s > url && s[-1] != '/')
+			--s;
+		if (e - s > 1)
+			--e;
+	}
+/* don't retain the .browse suffix on a url */
+	if (e - s > 7 && stringEqual(e - 7, ".browse"))
+		e -= 7;
+	if (e - s > 64)
+		e = s + 64;
+	if (e == s)
+		strcpy(hostbuf, "/");
+	else {
+		strncpy(hostbuf, s, e - s);
+		hostbuf[e - s] = 0;
+	}
+	return hostbuf;
+}				/* getFile URL */
+
 bool getPortLocURL(const char *url, const char **portloc, int *port)
 {
 	int rc = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, portloc, port, 0, 0, 0);
@@ -1015,7 +1060,8 @@ void addNovsHost(char *host)
 		novs_hosts = allocZeroMem(novs_hosts_max * sizeof(char *));
 	} else if (novs_hosts_avail >= novs_hosts_max) {
 		novs_hosts_max *= 2;
-		novs_hosts = reallocMem(novs_hosts, novs_hosts_max * sizeof(char *));
+		novs_hosts =
+		    reallocMem(novs_hosts, novs_hosts_max * sizeof(char *));
 	}
 	novs_hosts[novs_hosts_avail++] = host;
 }				/* addNovsHost */

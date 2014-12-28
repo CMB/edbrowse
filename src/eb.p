@@ -271,6 +271,7 @@ const char *getUserURL(const char *url) ;
 const char *getPassURL(const char *url) ;
 const char *getDataURL(const char *url) ;
 void getDirURL(const char *url, const char **start_p, const char **end_p) ;
+char *getFileURL(const char *url, bool chophash);
 bool getPortLocURL(const char *url, const char **portloc, int *port) ;
 int getPortURL(const char *url) ;
 bool isProxyURL(const char *url) ;

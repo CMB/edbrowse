@@ -18,9 +18,9 @@ const char eol[] = "\r\n";
 char EMPTYSTRING[] = "";
 int debugLevel = 1;
 int jsPool = 32;
+int webTimeout = 20, mailTimeout = 0;
 char *sslCerts;
 int verifyCertificates = 1;
-int webTimeout = 20, mailTimeout = 0;
 bool ismc, browseLocal, passMail, errorExit;
 bool isInteractive, inInput, listNA;
 volatile bool intFlag;
@@ -43,7 +43,7 @@ bool showHiddenFiles, helpMessagesOn;
 uchar dirWrite, endMarks;
 int context = 1;
 uchar linePending[MAXTTYLINE];
-char *changeFileName, *mailDir;
+char *changeFileName, *mailDir, *downDir;
 char *mailUnread, *mailStash;
 char *addressFile;
 char *home, *recycleBin, *configFile, *sigFile, *sigFileEnd;
@@ -103,12 +103,13 @@ static void readConfigFile(void)
 	struct MIMETYPE *mt;
 	struct DBTABLE *td;
 
+/* Order is important here: mail{}, mime{}, table{}, and other keywords */
 	static const char *const keywords[] = {
 		"inserver", "outserver", "login", "password", "from", "reply",
 		"inport", "outport",
 		"type", "desc", "suffix", "protocol", "program",
 		"tname", "tshort", "cols", "keycol",
-		"adbook", "xyz@xyz", "maildir", "agent",
+		"adbook", "downdir", "maildir", "agent",
 		"jar", "nojs", "xyz@xyz",
 		"webtimer", "mailtimer", "certfile", "datasource", "proxy",
 		"linelength", "localizeweb", "jspool", "novs",
@@ -462,6 +463,12 @@ putc:
 			ftype = fileTypeByName(v, false);
 			if (ftype && ftype != 'f')
 				i_printfExit(MSG_ERBC_AbNotFile, v);
+			continue;
+
+		case 18:	/* downdir */
+			downDir = v;
+			if (fileTypeByName(v, false) != 'd')
+				i_printfExit(MSG_ERBC_NotDir, v);
 			continue;
 
 		case 19:	/* maildir */
@@ -1463,8 +1470,7 @@ fail:
 }				/* runEbFunction */
 
 /* Send the contents of the current buffer to a running program */
-bool
-bufferToProgram(const char *cmd, const char *suffix, bool trailPercent)
+bool bufferToProgram(const char *cmd, const char *suffix, bool trailPercent)
 {
 	char *buf = 0;
 	int buflen, n;

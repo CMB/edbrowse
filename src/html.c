@@ -1301,15 +1301,8 @@ static void htmlScript(char **html, char **h)
 	if (!javatext)
 		goto done;
 
-	if (js_file)
-		w = strrchr(js_file, '/');
-	if (w) {
-/* Trailing slash doesn't count */
-		if (w[1] == 0 && w > js_file)
-			for (--w; w >= js_file && *w != '/'; --w) ;
-		js_file = w + 1;
-	}
-	debugPrint(3, "execute %s at %d", js_file, js_line);
+	debugPrint(3, "execute %s at %d", getFileURL(js_file, true), js_line);
+
 /* mark this script as having been executed */
 	set_property_bool(t->jv, "exec$$ed", true);
 	set_property_string(t->jv, "data", javatext);

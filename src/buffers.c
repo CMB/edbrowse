@@ -41,7 +41,7 @@ static char cmd, icmd, scmd;
 static uchar subPrint;		/* print lines after substitutions */
 static bool noStack;		/* don't stack up edit sessions */
 static bool globSub;		/* in the midst of a g// command */
-static bool inscript;	/* run from inside an edbrowse function */
+static bool inscript;		/* run from inside an edbrowse function */
 static int lastq, lastqq;
 static char icmd;		/* input command, usually the same as cmd */
 
@@ -709,7 +709,7 @@ void cxSwitch(int cx, bool interactive)
  * or by window.location = new_url. */
 char *newlocation;
 int newloc_d;			/* possible delay */
-static bool newloc_rf;	/* refresh the buffer */
+static bool newloc_rf;		/* refresh the buffer */
 bool js_redirects;
 
 void gotoLocation(char *url, int delay, bool rf)
@@ -2984,6 +2984,7 @@ et_go:
 			setError(MSG_YesSlash);
 			return false;
 		}
+		t = getFileURL(cw->fileName, false);
 		allocatedLine = allocMem(strlen(t) + 4);
 /* ` prevents wildcard expansion, which normally happens on an f command */
 		sprintf(allocatedLine, "%c `%s", cmd, t);
@@ -4927,8 +4928,7 @@ locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
 /* Update an input field in the current buffer.
  * The input field may not be here, if you've deleted some lines. */
 void
-updateFieldInBuffer(int tagno, const char *newtext, int notify,
-		    bool required)
+updateFieldInBuffer(int tagno, const char *newtext, int notify, bool required)
 {
 	int ln, idx, n, plen;
 	char *p, *s, *t, *new;
