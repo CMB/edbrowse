@@ -431,10 +431,10 @@ yes:
 bool memEqualCI(const char *s, const char *t, int len)
 {
 	char c, d;
-if (s == t)
-return true;
-if (!s || !t)
-return false;
+	if (s == t)
+		return true;
+	if (!s || !t)
+		return false;
 	while (len--) {
 		c = *s, d = *t;
 		if (islowerByte(c))
@@ -462,25 +462,25 @@ char *strstrCI(const char *base, const char *search)
 bool stringEqual(const char *s, const char *t)
 {
 /* check equality of strings with handling of null pointers */
-if (s == t)
-return true;
-if (!s || !t)
-return false;
-if (strcmp(s, t))
-return false;
-else
-return true;
-} /* stringEqual */
+	if (s == t)
+		return true;
+	if (!s || !t)
+		return false;
+	if (strcmp(s, t))
+		return false;
+	else
+		return true;
+}				/* stringEqual */
 
 bool stringEqualCI(const char *s, const char *t)
 {
 	char c, d;
 /* if two pointers are equal we can return */
-if (s == t)
-return true;
+	if (s == t)
+		return true;
 /* if one is NULL then the strings can't be equal */
-if (!s || !t)
-return false;
+	if (!s || !t)
+		return false;
 	while ((c = *s) && (d = *t)) {
 		if (islowerByte(c))
 			c = toupper(c);
@@ -760,7 +760,7 @@ bool fileIntoMemory(const char *filename, char **data, int *len)
 /* inverse of the above */
 bool memoryOutToFile(const char *filename, const char *data, int len,
 /* specify the error messages */
-			int msgcreate, int msgwrite)
+		     int msgcreate, int msgwrite)
 {
 	int fh = open(filename, O_CREAT | O_TRUNC | O_WRONLY | O_BINARY, 0666);
 	if (fh < 0) {
