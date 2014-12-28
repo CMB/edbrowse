@@ -219,6 +219,7 @@ eb_bool stringIsPDF(const char *s) ;
 eb_bool isSQL(const char *s) ;
 eb_bool memEqualCI(const char *s, const char *t, int len) ;
 char *strstrCI(const char *base, const char *search) ;
+eb_bool stringEqual(const char *s, const char *t) ;
 eb_bool stringEqualCI(const char *s, const char *t) ;
 int stringInList(const char *const *list, const char *s) ;
 int stringInListCI(const char *const *list, const char *s) ;

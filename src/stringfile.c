@@ -431,6 +431,10 @@ yes:
 eb_bool memEqualCI(const char *s, const char *t, int len)
 {
 	char c, d;
+if (s == t)
+return eb_true;
+if (!s || !t)
+return eb_false;
 	while (len--) {
 		c = *s, d = *t;
 		if (islowerByte(c))
@@ -455,9 +459,28 @@ char *strstrCI(const char *base, const char *search)
 	return 0;
 }				/* strstrCI */
 
+eb_bool stringEqual(const char *s, const char *t)
+{
+/* check equality of strings with handling of null pointers */
+if (s == t)
+return eb_true;
+if (!s || !t)
+return eb_false;
+if (strcmp(s, t))
+return eb_false;
+else
+return eb_true;
+} /* stringEqual */
+
 eb_bool stringEqualCI(const char *s, const char *t)
 {
 	char c, d;
+/* if two pointers are equal we can return */
+if (s == t)
+return eb_true;
+/* if one is NULL then the strings can't be equal */
+if (!s || !t)
+return eb_false;
 	while ((c = *s) && (d = *t)) {
 		if (islowerByte(c))
 			c = toupper(c);

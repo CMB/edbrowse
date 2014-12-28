@@ -78,8 +78,6 @@ These object numbers are passed back and forth to connect edbrowse and js.
 
 #include "ebjs.h"
 
-#define stringEqual !strcmp
-
 /* ctype macros, when you're passing a byte,
  * and you don't want to worry about whether it's char or uchar.
  * Call the regular routines when c is an int, from fgetc etc. */
