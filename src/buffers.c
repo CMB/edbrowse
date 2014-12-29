@@ -1170,7 +1170,7 @@ bool readFile(const char *filename, const char *post)
 			return false;
 		}
 
-		rc = httpConnect(0, filename);
+		rc = httpConnect(filename, true);
 
 		if (!rc) {
 /* The error could have occured after redirection */
@@ -4426,8 +4426,7 @@ rebrowse:
 		w->undoable = w->changeMode = false;
 		cw = cs->lw;
 /* Don't push a new session if we were trying to read a url,
- * and didn't get anything.  This is a feature that I'm
- * not sure if I really like. */
+ * and didn't get anything. */
 		if (!serverData && (isURL(line) || isSQL(line))) {
 			fileSize = -1;
 			freeWindow(w);

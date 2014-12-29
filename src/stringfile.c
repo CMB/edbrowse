@@ -996,6 +996,53 @@ char getLetter(const char *s)
 	return c;
 }				/* getLetter */
 
+/* Parameters: message, default file name, must this file be new,
+ * and can we except an input of white space,
+ * that being converted to a single space. */
+char *getFileName(int msg, const char *defname, bool isnew, bool ws)
+{
+	static char buf[ABSPATH];
+	int l;
+	char *p;
+	bool allspace;
+
+	while (true) {
+		i_printf(msg);
+		if (defname)
+			printf("[%s] ", defname);
+		if (!fgets(buf, sizeof(buf), stdin))
+			exit(0);
+		allspace = false;
+		for (p = buf; isspaceByte(*p); ++p)
+			if (*p == ' ')
+				allspace = true;
+		l = strlen(p);
+		while (l && isspaceByte(p[l - 1]))
+			--l;
+		p[l] = 0;
+		if (!l) {
+			if (ws & allspace)
+				return " ";
+			if (!defname)
+				continue;
+/* make a copy just to be safe */
+			l = strlen(defname);
+			if (l >= ABSPATH)
+				l = ABSPATH - 1;
+			strncpy(buf, defname, l);
+			buf[l] = 0;
+			p = buf;
+		} else
+			defname = 0;
+		if (isnew && fileTypeByName(p, false)) {
+			i_printf(MSG_FileExists, p);
+			defname = 0;
+			continue;
+		}
+		return p;
+	}
+}				/* getFileName */
+
 /* loop through the files in a directory */
 /* Hides the differences between DOS, Unix, and NT. */
 static bool dirstart = true;
@@ -1334,28 +1381,22 @@ longvar:
 
 /* Call the above routine if filename contains a  slash,
  * or prepend the download directory if it does not.
- * Return 1 for no slash, 2 for a slash, or -1
- * if there was an error expanding variables and stars.
  * If there is no download directory then always expand as above. */
-
-int envFileDown(const char *line, const char **expanded)
+bool envFileDown(const char *line, const char **expanded)
 {
 	static char line2[MAXTTYLINE];
-	bool rc;
 
-	if (!downDir || strchr(line, '/')) {
-		rc = envFile(line, expanded);
-		return (rc ? 2 : -1);
-	}
+	if (!downDir || strchr(line, '/'))
+		return envFile(line, expanded);
 
 	if (strlen(downDir) + strlen(line) >= sizeof(line2) - 1) {
 		setError(MSG_ShellLineLong);
-		return -1;
+		return false;
 	}
 
 	sprintf(line2, "%s/%s", downDir, line);
 	*expanded = line2;
-	return 1;
+	return true;
 }				/* envFileDown */
 
 FILE *efopen(const char *name, const char *mode)

@@ -13,6 +13,10 @@
 CURL *http_curl_handle = NULL;
 char *serverData;
 int serverDataLen;
+static int down_fd;		/* downloading file descriptor */
+static const char *down_file;	/* downloading filename */
+static int down_pid;		/* pid of the downloading child process */
+static bool down_permitted;
 static char errorText[CURL_ERROR_SIZE + 1];
 static char *httpLanguage;
 
@@ -27,13 +31,24 @@ static size_t curl_header_callback(char *header_line, size_t size, size_t nmemb,
 				   void *unused);
 static const char *message_for_response_code(int code);
 
-/* Callback used by libcurl. Writes data to serverData. */
+/* Callback used by libcurl. Appends data to serverData. */
 size_t
 eb_curl_callback(char *incoming, size_t size, size_t nitems,
 		 struct eb_curl_callback_data *data)
 {
 	size_t num_bytes = nitems * size;
-	int dots1, dots2;
+	int dots1, dots2, rc;
+
+	if (down_file) {	/* downloading */
+		rc = write(down_fd, incoming, num_bytes);
+		if (rc == num_bytes)
+			return rc;
+		i_printf(MSG_NoWrite2, down_file);
+		printf(", ");
+		i_puts(MSG_DownAbort);
+		exit(1);
+	}
+
 	dots1 = *(data->length) / CHUNKSIZE;
 	stringAndBytes(data->buffer, data->length, incoming, num_bytes);
 	dots2 = *(data->length) / CHUNKSIZE;
@@ -397,10 +412,11 @@ char *copy_and_sanitize(const char *start, const char *end)
 
 long hcode;			/* example, 404 */
 static char herror[32];		/* example, file not found */
+static char *urlcopy;
 extern char *newlocation;
 extern int newloc_d;
 
-bool httpConnect(const char *from, const char *url)
+bool httpConnect(const char *url, bool down_ok)
 {
 	char *referrer = NULL;
 	CURLcode curlret = CURLE_OK;
@@ -418,12 +434,13 @@ bool httpConnect(const char *from, const char *url)
 	char suffix[12];
 	const char *post, *s;
 	char *postb = NULL;
-	char *urlcopy = NULL;
 	int postb_l = 0;
 	bool transfer_status = false;
 	int redirect_count = 0;
 	bool name_changed = false;
 
+	down_permitted = down_ok;
+	urlcopy = NULL;
 	serverData = NULL;
 	serverDataLen = 0;
 	strcpy(creds_buf, ":");	/* Flush stale username and password. */
@@ -619,6 +636,27 @@ mimeProcess:
 				 ssl_version);
 		init_header_parser();
 		curlret = curl_easy_perform(http_curl_handle);
+
+		if (down_file) {
+/* user has directed a download of this file in the background. */
+			if (down_pid) {	/* parent */
+/* set this to null so we don't push a new buffer */
+				serverData = NULL;
+/* clear the download file in parent, so we can move on */
+				down_file = 0;
+				return false;
+			}
+/* child here, print success and exit */
+			close(down_fd);
+			if (curlret != CURLE_OK) {
+				ebcurl_setError(curlret, urlcopy);
+				showError();
+				exit(2);
+			}
+			i_puts(MSG_DownSuccess);
+			exit(0);
+		}
+
 		if (serverDataLen >= CHUNKSIZE)
 			nl();	/* We printed dots, so we terminate them with newline */
 		if (curlret == CURLE_SSL_CONNECT_ERROR) {
@@ -711,8 +749,7 @@ mimeProcess:
 			nl();
 			bool got_creds = read_credentials(creds_buf);
 			if (got_creds) {
-				addWebAuthorization(urlcopy, creds_buf,
-						    false);
+				addWebAuthorization(urlcopy, creds_buf, false);
 				curl_easy_setopt(http_curl_handle,
 						 CURLOPT_USERPWD, creds_buf);
 				nzFree(serverData);
@@ -976,7 +1013,6 @@ void ebcurl_setError(CURLcode curlret, const char *url)
 static bool ftpConnect(const char *url, const char *user, const char *pass)
 {
 	int protLength;		/* length of "ftp://" */
-	char *urlcopy = NULL;
 	int urlcopy_l = 0;
 	bool transfer_success = false;
 	bool has_slash;
@@ -984,6 +1020,7 @@ static bool ftpConnect(const char *url, const char *user, const char *pass)
 	char creds_buf[MAXUSERPASS * 2 + 1];
 	size_t creds_len = 0;
 
+	urlcopy = NULL;
 	protLength = strchr(url, ':') - url + 3;
 
 	if (user[0] && pass[0]) {
@@ -1357,6 +1394,9 @@ static const char *loc_field = "Location:";
 static size_t loc_field_length = 9;	/* length of string "Location:" */
 static const char *refresh_field = "Refresh:";
 static size_t refresh_field_length = 8;	/* length of string "Refresh:" */
+static const char *content_field = "Content-Type:";
+static size_t content_field_length = 13;	/* length of string "Content-Type:" */
+static void background_download(void);
 
 /* Callback used by libcurl.
  * Right now, it just extracts Location: headers. */
@@ -1394,13 +1434,13 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb, void *unused)
 	if ((bytes_in_line > refresh_field_length) &&
 	    memEqualCI(header_line, refresh_field, refresh_field_length)) {
 /* want to use parseRefresh, but that has to end in null */
-		char *start = header_line + loc_field_length;
+		char *start = header_line + refresh_field_length;
 		char *end = last_pos - 1;
 		int delay;
 
 /* Make start point to first non-whitespace char after Refresh: or to
  * last_pos if no such char exists. */
-		while (isspaceByte(*start) && (start < last_pos))
+		while (start < last_pos && isspaceByte(*start))
 			start++;
 
 /* end points to start of trailing whitespace if it exists.  Otherwise,
@@ -1417,6 +1457,25 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb, void *unused)
 				gotoLocation(cloneString(header_line), delay,
 					     true);
 			}
+		}
+	}
+
+	if ((bytes_in_line > content_field_length) &&
+	    memEqualCI(header_line, content_field, content_field_length)) {
+		const char *start = header_line + content_field_length;
+		while (start < last_pos && isspaceByte(*start))
+			start++;
+		if (down_permitted && last_pos - start >= 5 &&
+		    !memEqualCI(start, "text/", 5)) {
+/* Not text, see if the user wants to download in the background. */
+/* If he does, down_file will become nonzero. */
+			background_download();
+/* Now how does the parent get out of this, safely, without destroying
+ * the socket connection that the child now has with the web server?
+ * Should I call setjmp? I hate doing that.
+ * Will this unwind the stack properly? */
+			if (down_file && down_pid)
+				return -1;
 		}
 	}
 
@@ -1461,3 +1520,56 @@ ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
 
 	return 0;
 }				/* ebcurl_debug_handler */
+
+static void background_download(void)
+{
+	const char *filepart;
+	const char *answer;
+
+/* if not run from a terminal then just return. */
+	if (!isatty(0))
+		return;
+
+	filepart = getFileURL(urlcopy, true);
+top:
+	answer = getFileName(MSG_Down, filepart, false, true);
+/* space for a filename means read into memory */
+	if (stringEqual(answer, " "))
+		return;
+
+	if (stringEqual(answer, "x") || stringEqual(answer, "X")) {
+abort:
+		down_file = answer;
+		down_pid = 111;
+		setError(MSG_DownAbort);
+		return;
+	}
+
+	if (!envFileDown(answer, &answer)) {
+		showError();
+		goto top;
+	}
+
+	down_fd = creat(answer, 0666);
+	if (down_fd < 0) {
+		i_printf(MSG_NoCreate2, answer);
+		nl();
+		goto top;
+	}
+
+	down_pid = fork();
+	if (down_pid < 0)	/* should never happen */
+		goto abort;
+
+	down_file = answer;
+	if (down_pid) {		/* parent */
+		close(down_fd);
+/* the error message here isn't really an error, but a progress message */
+		setError(MSG_DownProgress);
+/* curl callback function will stop and unwind the stack */
+		return;
+	}
+
+/* child doesn't need javascript */
+	js_disconnect();
+}				/* background_download */

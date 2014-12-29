@@ -1279,7 +1279,7 @@ static void htmlScript(char **html, char **h)
 					prepareForBrowse(javatext,
 							 serverDataLen);
 				}
-			} else if (httpConnect(basehref, t->href)) {
+			} else if (httpConnect(t->href, false)) {
 				if (hcode == 200) {
 					javatext = serverData;
 					prepareForBrowse(javatext,
@@ -1381,7 +1381,7 @@ static void objectScript(jsobjtype obj)
 			goto execute;
 		}
 
-		if (!httpConnect(getBaseHref(-1), jsrc)) {
+		if (!httpConnect(jsrc, false)) {
 			runningError(MSG_GetJS2, errorMsg);
 			goto done;
 		}

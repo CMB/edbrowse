@@ -56,39 +56,6 @@ static void freeMailInfo(struct MHINFO *w)
 	nzFree(w);
 }				/* freeMailInfo */
 
-static char *getFileName(const char *defname, bool isnew)
-{
-	static char buf[ABSPATH];
-	int l;
-	char *p;
-	while (true) {
-		i_printf(MSG_FileName);
-		if (defname)
-			printf("[%s] ", defname);
-		if (!fgets(buf, sizeof(buf), stdin))
-			exit(0);
-		for (p = buf; isspaceByte(*p); ++p) ;
-		l = strlen(p);
-		while (l && isspaceByte(p[l - 1]))
-			--l;
-		p[l] = 0;
-		if (!l) {
-			if (!defname)
-				continue;
-/* make a copy just to be safe */
-			strcpy(buf, defname);
-			p = buf;
-		} else
-			defname = 0;
-		if (isnew && fileTypeByName(p, false)) {
-			i_printf(MSG_FileExists, p);
-			defname = 0;
-			continue;
-		}
-		return p;
-	}
-}				/* getFileName */
-
 static bool ignoreImages;
 
 static void writeAttachment(struct MHINFO *w)
@@ -108,7 +75,8 @@ static void writeAttachment(struct MHINFO *w)
 		atname = "x";
 	} else {
 		i_printf(MSG_Att);
-		atname = getFileName((w->cfn[0] ? w->cfn : 0), true);
+		atname = getFileName(MSG_FileName, (w->cfn[0] ? w->cfn : 0),
+				     true, false);
 /* X is like x, but deletes all future images */
 		if (stringEqual(atname, "X")) {
 			atname = "x";
@@ -508,8 +476,7 @@ void scanMail(void)
 		iuReformat(mailstring, mailstring_l, &mailu8, &mailu8_l);
 
 		if (mailu8) {
-			if (!addTextToBuffer
-			    ((pst) mailu8, mailu8_l, 0, false))
+			if (!addTextToBuffer((pst) mailu8, mailu8_l, 0, false))
 				showErrorAbort();
 		} else {
 			if (!addTextToBuffer
@@ -607,7 +574,9 @@ nextpage:
 
 savemail:
 				if (!atname)
-					atname = getFileName(0, false);
+					atname =
+					    getFileName(MSG_FileName, 0, false,
+							false);
 				if (!stringEqual(atname, "x")) {
 					char exists =
 					    fileTypeByName(atname, false);
