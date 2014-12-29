@@ -2986,8 +2986,8 @@ et_go:
 		}
 		t = getFileURL(cw->fileName, false);
 		allocatedLine = allocMem(strlen(t) + 8);
-/* `~ prevents wildcard expansion, which normally happens on an f command */
-		sprintf(allocatedLine, "%c `~%s", cmd, t);
+/* `` prevents wildcard expansion, which normally happens on an f command */
+		sprintf(allocatedLine, "%c ``%s", cmd, t);
 		*runThis = allocatedLine;
 		return 2;
 	}

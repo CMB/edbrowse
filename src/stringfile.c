@@ -1159,7 +1159,7 @@ bool envFile(const char *line, const char **expanded)
 	pcre *re_cc;
 
 /* `~ supresses this stuff */
-	if (line[0] == '`' && line[1] == '~') {
+	if (line[0] == '`' && line[1] == '`') {
 		*expanded = line + 2;
 		return true;
 	}
@@ -1331,6 +1331,32 @@ longvar:
 	setError(MSG_ShellLineLong);
 	return false;
 }				/* envFile */
+
+/* Call the above routine if filename contains a  slash,
+ * or prepend the download directory if it does not.
+ * Return 1 for no slash, 2 for a slash, or -1
+ * if there was an error expanding variables and stars.
+ * If there is no download directory then always expand as above. */
+
+int envFileDown(const char *line, const char **expanded)
+{
+	static char line2[MAXTTYLINE];
+	bool rc;
+
+	if (!downDir || strchr(line, '/')) {
+		rc = envFile(line, expanded);
+		return (rc ? 2 : -1);
+	}
+
+	if (strlen(downDir) + strlen(line) >= sizeof(line2) - 1) {
+		setError(MSG_ShellLineLong);
+		return -1;
+	}
+
+	sprintf(line2, "%s/%s", downDir, line);
+	*expanded = line2;
+	return 1;
+}				/* envFileDown */
 
 FILE *efopen(const char *name, const char *mode)
 {

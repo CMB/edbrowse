@@ -252,6 +252,7 @@ char getLetter(const char *s) ;
 char *nextScanFile(const char *base) ;
 bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p) ;
 bool envFile(const char *line, const char **expanded) ;
+int envFileDown(const char *line, const char **expanded) ;
 FILE *efopen(const char *name, const char *mode) ;
 int eopen(const char *name, int mode, int perms) ;
 void appendFile(const char *fname, const char *message, ...) ;
