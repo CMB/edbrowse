@@ -17,6 +17,8 @@ static int down_fd;		/* downloading file descriptor */
 static const char *down_file;	/* downloading filename */
 static int down_pid;		/* pid of the downloading child process */
 static bool down_permitted;
+static int down_ftp;		/* states for ftp download */
+static void background_download(void);
 static char errorText[CURL_ERROR_SIZE + 1];
 static char *httpLanguage;
 
@@ -39,6 +41,17 @@ eb_curl_callback(char *incoming, size_t size, size_t nitems,
 	size_t num_bytes = nitems * size;
 	int dots1, dots2, rc;
 
+	if (down_ftp == 1 && down_permitted) {
+/* state 1, first data block, ask the user */
+			down_ftp = 2;
+		background_download();
+		if (!down_file)
+			goto in_memory;
+/* get the parent out of the way */
+		if (down_pid)
+			return -1;
+	}
+
 	if (down_file) {	/* downloading */
 		rc = write(down_fd, incoming, num_bytes);
 		if (rc == num_bytes)
@@ -49,6 +62,7 @@ eb_curl_callback(char *incoming, size_t size, size_t nitems,
 		exit(1);
 	}
 
+in_memory:
 	dots1 = *(data->length) / CHUNKSIZE;
 	stringAndBytes(data->buffer, data->length, incoming, num_bytes);
 	dots2 = *(data->length) / CHUNKSIZE;
@@ -1048,8 +1062,10 @@ static bool ftpConnect(const char *url, const char *user, const char *pass)
 		stringAndChar(&urlcopy, &urlcopy_l, '/');
 
 	has_slash = urlcopy[urlcopy_l - 1] == '/';
-	if (debugLevel >= 2)
-		i_puts(MSG_FTPDownload);
+/* don't download a directory listing, we want to see that */
+	down_permitted = !has_slash;
+	down_file = NULL;	/* should already be null */
+	down_ftp = 1;		/* start in state 1 */
 
 	curlret = setCurlURL(http_curl_handle, urlcopy);
 	if (curlret != CURLE_OK)
@@ -1064,6 +1080,7 @@ static bool ftpConnect(const char *url, const char *user, const char *pass)
 			transfer_success = false;
 		else {		/* try appending a slash. */
 			stringAndChar(&urlcopy, &urlcopy_l, '/');
+			down_permitted = false;
 			curlret = setCurlURL(http_curl_handle, urlcopy);
 			if (curlret != CURLE_OK)
 				goto ftp_transfer_fail;
@@ -1087,6 +1104,27 @@ static bool ftpConnect(const char *url, const char *user, const char *pass)
 		nl();		/* We printed dots, so we terminate them with newline */
 
 ftp_transfer_fail:
+	if (down_file) {
+/* user has directed a download of this file in the background. */
+		if (down_pid) {	/* parent */
+/* set this to null so we don't push a new buffer */
+			serverData = NULL;
+/* clear the download file in parent, so we can move on */
+			down_file = 0;
+			nzFree(urlcopy);
+			return false;
+		}
+/* child here, print success and exit */
+		close(down_fd);
+		if (curlret != CURLE_OK) {
+			ebcurl_setError(curlret, urlcopy);
+			showError();
+			exit(2);
+		}
+		i_puts(MSG_DownSuccess);
+		exit(0);
+	}
+
 	if (transfer_success == false) {
 		if (curlret != CURLE_OK)
 			ebcurl_setError(curlret, urlcopy);
@@ -1098,6 +1136,7 @@ ftp_transfer_fail:
 		changeFileName = urlcopy;
 	else
 		nzFree(urlcopy);
+	down_ftp = 0;
 
 	return transfer_success;
 }				/* ftpConnect */
@@ -1396,7 +1435,6 @@ static const char *refresh_field = "Refresh:";
 static size_t refresh_field_length = 8;	/* length of string "Refresh:" */
 static const char *content_field = "Content-Type:";
 static size_t content_field_length = 13;	/* length of string "Content-Type:" */
-static void background_download(void);
 
 /* Callback used by libcurl.
  * Right now, it just extracts Location: headers. */
@@ -1525,14 +1563,16 @@ static void background_download(void)
 {
 	const char *filepart;
 	const char *answer;
+	int msg;
 
 /* if not run from a terminal then just return. */
 	if (!isatty(0))
 		return;
 
 	filepart = getFileURL(urlcopy, true);
+	msg = (down_ftp ? MSG_FTPDownload : MSG_Down);
 top:
-	answer = getFileName(MSG_Down, filepart, false, true);
+	answer = getFileName(msg, filepart, false, true);
 /* space for a filename means read into memory */
 	if (stringEqual(answer, " "))
 		return;

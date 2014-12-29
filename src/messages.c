@@ -506,7 +506,7 @@ static const char *englishMessages[] = {
 	0,
 	"warning: cannot update config file",
 	"help messages on",
-	"ftp download",
+	"ftp download: ",
 	"no ssl certificate file specified; secure connections cannot be verified",
 	"could not rewrite your config file; your configuration data may be lost!",
 	".ebrc: null characters at line %d",
