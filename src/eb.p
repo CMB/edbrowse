@@ -49,6 +49,7 @@ int goSelect(int *startLine, char **rbuf) ;
 void createJavaContext(void) ;
 void freeJavaContext(struct ebWindow *w) ;
 void js_shutdown(void) ;
+void js_disconnect(void);
 int javaParseExecute(jsobjtype obj, const char *str, const char *filename, int lineno) ;
 enum ej_proptype has_property(jsobjtype obj, const char *name) ;
 void delete_property(jsobjtype obj, const char *name) ;

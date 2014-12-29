@@ -474,6 +474,16 @@ void js_shutdown(void)
 	writeToJS(&head, sizeof(head));
 }				/* js_shutdown */
 
+/* After fork, the child process does not need to talk to js */
+void js_disconnect(void)
+{
+	if (!js_pid)
+		return;
+	close(pipe_in[0]);
+	close(pipe_out[1]);
+	js_pid = 0;
+}				/* js_disconnect */
+
 /* Run some javascript code under the current window */
 int javaParseExecute(jsobjtype obj, const char *str, const char *filename,
 		     int lineno)
