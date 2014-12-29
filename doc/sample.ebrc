@@ -104,15 +104,18 @@ reply = eklhad@gmail.com
 #  That's all the mail accounts.
 #  Here is my address book.
 #  Format    is alias:email:other fields that we don't care about
-adbook=/home/eklhad/outside/adbook
+adbook=/home/mylogin/outside/adbook
 
-#  Move to this directory when fetching mail.
-maildir = /home/eklhad/mbox
+#  Move to this directory when fetching mail. Should be an absolute path.
+maildir = /home/mylogin/mbox
+
+#  Place downloaded files here. Should be an absolute path.
+downdir = /home/mylogin/downloads
 
 #  The cookie jar - where we store the http cookies.
 #  This file contains passwords, make sure it is 0600.
 #  Do not hand edit the cookie file, unless you know what you are doing!
-jar = /home/eklhad/outside/cookies
+jar = /home/mylogin/outside/cookies
 
 #  file of ssl certificates
 #  If you put your file here, it will be shared with lynx, and perhaps other browsers.

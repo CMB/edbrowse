@@ -2954,7 +2954,7 @@ You'll need a file, often called a cookie jar,
 to store your cookies.&nbsp;
 The line that establishes this cookie jar might look like this.
 <P>
-jar = /home/eklhad/.ebsys/cookie-jar
+jar = /home/mylogin/.ebsys/cookie-jar
 
 <P>
 This is a simple keyword = value syntax.&nbsp;
@@ -2977,14 +2977,14 @@ Some of these are used to set up an email account.&nbsp;
 This will become clearer when we talk about the mail client.
 
 <P>
-certfile = /home/eklhad/.ebsys/ssl-certs
+certfile = /home/mylogin/.ebsys/ssl-certs
 
 <P>
 Specify the file that holds the certificates for secure connections.&nbsp;
 This was explained in the section on <A HREF=#ssl>secure connections</A>.
 
 <P>
-maildir = /home/eklhad/mbox
+maildir = /home/mylogin/mbox
 <P>
 Go to this directory when fetching mail.&nbsp;
 thus, if you save a mail message, you'll always know where it is.
@@ -3003,7 +3003,7 @@ That's why these timers are here - so you don't hang forever.&nbsp;
 The defaults are 20 and 0 respectively.
 
 <P>
-downdir = /home/eklhad/downloads
+downdir = /home/mylogin/downloads
 
 <P>
 When you access a binary file on a website, you have the option of downloading it directly to disk,
@@ -3012,10 +3012,17 @@ If you do this, the file is placed in this download directory by default.&nbsp;
 If the file name you entered has a slash, or if there is no download directory,
 the file is placed wherever you direct it.&nbsp;
 In this case, globbing is performed.&nbsp;
-For instance, you can direct an mp3 file to ~/music/country/this-song.mp3.&nbsp;
+For instance, you can direct an mp3 file to ~/music/country/Some-Song.mp3.&nbsp;
 Downloads are done in the background, which is especially useful for large files.&nbsp;
 You are notified when the download is complete.&nbsp;
 Meantime you can continue to use edbrowse.
+
+<P>
+When prompted for the filename, hit return for the default file name,
+as provided by the website,
+enter x to abort,
+enter space to read the data into memory,
+or type a different file name if you wish.
 
 <P>
 linelength = 1000
@@ -3120,7 +3127,7 @@ illegal</A> to use these lines for deceptive purposes.&nbsp;
 Make sure they identify you, and that the reply address is indeed one of your email accounts.
 
 <P>
-adbook = /home/eklhad/.ebsys/address-book
+adbook = /home/mylogin/.ebsys/address-book
 <P>
 When specifying recipients, you can use aliases instead of full email addresses.&nbsp;
 Aliases are checked against your address book,
