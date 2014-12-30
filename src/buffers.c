@@ -2820,7 +2820,7 @@ pwd:
 				puts(cwdbuf);
 				return true;
 			}
-			if (!envFile(t, &t))
+			if (!envFile(t, &t, true))
 				return false;
 			if (!chdir(t))
 				goto pwd;
@@ -3730,7 +3730,7 @@ bool runCommand(const char *line)
 /* env variable and wild card expansion */
 	if (strchr("brewf", cmd) && first && !isURL(line) && !isSQL(line)) {
 		if (cmd != 'r' || !cw->sqlMode) {
-			if (!envFile(line, &line))
+			if (!envFile(line, &line, !(cmd == 'w' || cmd == 'f')))
 				return false;
 			first = *line;
 		}
@@ -4284,7 +4284,7 @@ bool runCommand(const char *line)
 					} else {
 						int fd;
 						fromfile = true;
-						if (!envFile(line, &line))
+						if (!envFile(line, &line, true))
 							return false;
 						fd = open(line,
 							  O_RDONLY | O_TEXT);

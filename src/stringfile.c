@@ -1155,7 +1155,7 @@ bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
  * Neither the original line nore the new line is allocated.
  * They are static char buffers that are just plain long enough. */
 
-bool envFile(const char *line, const char **expanded)
+bool envFile(const char *line, const char **expanded, bool expect_file)
 {
 	static char line2[MAXTTYLINE];
 	wordexp_t w;
@@ -1205,8 +1205,8 @@ bool envFile(const char *line, const char **expanded)
 
 /* There's another problem; wordexp gives you the same pattern back again
  * even if it matches nothing. I suppose the shell does the same thing,
- * but that's not what I want here. */
-	if (access(line2, 0)) {
+ * but that's not what I want here if we're expecting a file. */
+	if (expect_file && access(line2, F_OK)) {
 		setError(MSG_ShellNoMatch);
 		return false;
 	}
@@ -1409,7 +1409,8 @@ bool envFileDown(const char *line, const char **expanded)
 	static char line2[MAXTTYLINE];
 
 	if (!downDir || strchr(line, '/'))
-		return envFile(line, expanded);
+/* we don't necessarily expect there to be a file here */
+		return envFile(line, expanded, false);
 
 	if (strlen(downDir) + strlen(line) >= sizeof(line2) - 1) {
 		setError(MSG_ShellLineLong);
