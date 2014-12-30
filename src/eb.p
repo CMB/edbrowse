@@ -251,7 +251,7 @@ int getche(void) ;
 int getch(void) ;
 char getLetter(const char *s) ;
 char *getFileName(int msg, const char *defname, bool isnew, bool ws);
-char *nextScanFile(const char *base) ;
+const char *nextScanFile(const char *base) ;
 bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p) ;
 bool envFile(const char *line, const char **expanded) ;
 bool envFileDown(const char *line, const char **expanded) ;

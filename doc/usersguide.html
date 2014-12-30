@@ -760,7 +760,8 @@ Unlike bash, edbrowse does not retrace your steps back through symbolic links.&n
 Thus .. is always the physical parent directory.
 
 <P>
-environment variables are expanded before the cd command is applied, including the leading ~.&nbsp;
+If the string contains $ [] * ? or a leading ~,
+environment variables are expanded, and globbing is performed.&nbsp;
 Thus cd ~/work takes you to the work directory under your home directory.
 
 <P>
@@ -808,8 +809,18 @@ Thus you should be able to edit *.c in any operating system
 and get all the C source files in the current directory.
 
 <P>
-Globbing of filenames can be suppressed by two leading backquotes.&nbsp;
-If you really want to read a file called *, type r ``*.
+Variable substitution and globbing of filenames can be suppressed by a leading backquote.&nbsp;
+If you really want to read a file called *, type r `*.
+
+<P>
+Expansiong is performed by wordexp(3), simulating a posix shell.&nbsp;
+Meta characters such as | &amp; ' &lt; ; etc will derail the expansion, unless escaped by a backslash.&nbsp;
+This is confusing at first, but think of it this way:
+"If I want to expand a file name using variables or stars, I have to type it in as though I were typing into the shell."&nbsp;
+Constructs such as ${foo}bar are supported,
+but command substitution $(/bin/ls) is not.&nbsp;
+I wouldn't want you to accidentally run a command, just because you were trying
+to read in a file with a rather unusual file name.
 
 <P><LI>
 Many versions of ed place a $ at the end of a listed line,

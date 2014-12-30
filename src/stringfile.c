@@ -9,11 +9,10 @@
 #ifdef DOSLIKE
 #include <dos.h>
 #else
-#include <dirent.h>
 #include <termios.h>
 #include <unistd.h>
 #endif
-#include <pcre.h>
+#include <wordexp.h>
 #include <netdb.h>
 
 /*********************************************************************
@@ -468,8 +467,7 @@ bool stringEqual(const char *s, const char *t)
 		return false;
 	if (strcmp(s, t))
 		return false;
-	else
-		return true;
+	return true;
 }				/* stringEqual */
 
 bool stringEqualCI(const char *s, const char *t)
@@ -1045,104 +1043,71 @@ char *getFileName(int msg, const char *defname, bool isnew, bool ws)
 
 /* loop through the files in a directory */
 /* Hides the differences between DOS, Unix, and NT. */
-static bool dirstart = true;
 
-char *nextScanFile(const char *base)
+const char *nextScanFile(const char *base)
 {
-	char *s;
-#ifdef DOSLIKE
-	static char global[] = "/*.*";
-	bool rc;
-	short len;
-	char *p;
-	bool allocate = false;
-#ifdef MSDOS
-	static struct _find_t dta;
-#else
-	static struct _finddata_t dta;
-	static int handle;
-#endif
-#else
-	struct dirent *de;
-	static DIR *df;
-#endif
+	static char *dirquoted;	// 'directoryName'/*
+	static wordexp_t w;
+	static int baselen, word_idx;
+	const char *s;
+	char *t;
+	int cnt;
+	static const char shellmeta[] = "\n|&;<>(){}\\#'\"~$*?";
 
-#ifdef DOSLIKE
-	if (dirstart) {
-		if (base) {
-			len = strlen(base) - 1;
-			p = allocMem(len + 6);
-			strcpy(p, base);
-			allocate = true;
-			if (p[len] == '/' || p[len] == '\\')
-				p[len] = 0;
-			strcat(p, global);
-		} else
-			p = global +1;
-#ifdef MSDOS
-		rc = _dos_findfirst(p, (showHiddenFiles ? 077 : 073), &dta);
-#else
-		rc = false;
-		handle = _findfirst(p, &dta);
-		if (handle < 0)
-			rc = true;
-#endif
-		if (allocate)
-			nzFree(p);
-	}
-#else
-	if (!df) {
+	if (!dirquoted) {
 		if (!base)
 			base = ".";
-		df = opendir(base);
-		if (!df) {
+		for (s = base, cnt = 0; *s; ++s)
+			if (strchr(shellmeta, *s))
+				++cnt;
+		baselen = s - base;
+		dirquoted = t = allocMem(baselen + cnt + 4);
+		for (s = base; *s; ++s) {
+			if (strchr(shellmeta, *s))
+				*t++ = '\\';
+			*t++ = *s;
+		}
+		if (s[-1] != '/')
+			*t++ = '/', ++baselen;
+		*t++ = '*';
+		*t++ = 0;
+
+/* this call should not fail */
+		if (wordexp(dirquoted, &w, 0)) {
 			i_puts(MSG_NoDirNoList);
+			free(dirquoted);
+			dirquoted = 0;
 			return 0;
 		}
-	}
-#endif
 
-#ifdef DOSLIKE
-	while (true) {
-/* read the next file */
-		if (!dirStart) {
-#ifdef MSDOS
-			rc = _dos_findnext(&dta);
-#else
-			rc = _findnext(handle, &dta);
-#endif
-			dirstart = false;
-		}
-		if (rc)
-			break;
-/* extract the base name */
-		s = strrchr(dta.name, '/');
-		s = s ? s + 1 : dta.name;
-/* weed out unwanted directories */
+		word_idx = 0;
+	}
+
+restart:
+	while (word_idx < w.we_wordc) {
+		s = w.we_wordv[word_idx++] + baselen;
 		if (stringEqual(s, "."))
 			continue;
 		if (stringEqual(s, ".."))
 			continue;
 		return s;
 	}			/* end loop over files in directory */
-#else
-	while (de = readdir(df)) {
-		if (de->d_ino == 0)
-			continue;
-		if (de->d_name[0] == '.') {
-			if (!showHiddenFiles)
-				continue;
-			if (de->d_name[1] == 0)
-				continue;
-			if (de->d_name[1] == '.' && de->d_name[2] == 0)
-				continue;
-		}
-		return de->d_name;
-	}			/* end loop over files in directory */
-	closedir(df);
-	df = 0;
-#endif
 
+	wordfree(&w);
+	if (showHiddenFiles) {
+		cnt = strlen(dirquoted);
+		if (dirquoted[cnt - 2] == '/') {
+/* rerun query with leading . */
+			strcpy(dirquoted + cnt - 1, ".*");
+/* last call worked; this one should too */
+			if (!wordexp(dirquoted, &w, 0)) {
+				word_idx = 0;
+				goto restart;
+			}
+		}
+	}
+	free(dirquoted);
+	dirquoted = 0;
 	return 0;
 }				/* nextScanFile */
 
@@ -1153,7 +1118,7 @@ static int qscmp(const void *s, const void *t)
 
 bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
 {
-	char *f;
+	const char *f;
 	int linecount = 0, cap;
 	struct lineMap *t, *map;
 
@@ -1192,10 +1157,66 @@ bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
 
 bool envFile(const char *line, const char **expanded)
 {
-	static char line1[MAXTTYLINE];
 	static char line2[MAXTTYLINE];
+	wordexp_t w;
+	int rc;
+
+/* ` supresses this stuff */
+	if (line[0] == '`') {
+		*expanded = line + 1;
+		return true;
+	}
+
+/* quick check, nothing to do */
+	if (!strpbrk(line, "$[*?") && line[0] != '~') {
+		*expanded = line;
+		return true;
+	}
+
+	rc = wordexp(line, &w, (WRDE_NOCMD | WRDE_UNDEF));
+
+	if (rc == WRDE_BADVAL) {
+		setError(MSG_NoEnvVar);
+		return false;
+	}
+
+	if (rc) {
+/* some other syntax error, whereup we can't expand. */
+		setError(MSG_ShellExpand);
+		return false;
+	}
+
+	if (w.we_wordc != 1) {
+		setError((w.we_wordc > 0) + MSG_ShellNoMatch);
+		wordfree(&w);
+		return false;
+	}
+
+/* looks good, if it isn't too long */
+	if (strlen(w.we_wordv[0]) >= sizeof(line2)) {
+		setError(MSG_ShellLineLong);
+		wordfree(&w);
+		return false;
+	}
+
+	strcpy(line2, w.we_wordv[0]);
+	wordfree(&w);
+	*expanded = line2;
+
+/* There's another problem; wordexp gives you the same pattern back again
+ * even if it matches nothing. I suppose the shell does the same thing,
+ * but that's not what I want here. */
+	if (access(line2, 0)) {
+		setError(MSG_ShellNoMatch);
+		return false;
+	}
+	return true;
+
+#if 0
+/* old code starts here */
 	const char *s, *value, *basedir;
-	char *t, *dollar, *cut, *file;
+	char *t, *dollar, *cut;
+	const char *file;
 	char c;
 	bool cc, badBrackets;
 	int filecount;
@@ -1205,9 +1226,9 @@ bool envFile(const char *line, const char **expanded)
 
 	pcre *re_cc;
 
-/* `~ supresses this stuff */
-	if (line[0] == '`' && line[1] == '`') {
-		*expanded = line + 2;
+/* ` supresses this stuff */
+	if (line[0] == '`') {
+		*expanded = line + 1;
 		return true;
 	}
 
@@ -1377,6 +1398,7 @@ bool envFile(const char *line, const char **expanded)
 longvar:
 	setError(MSG_ShellLineLong);
 	return false;
+#endif
 }				/* envFile */
 
 /* Call the above routine if filename contains a  slash,
