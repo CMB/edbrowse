@@ -315,6 +315,8 @@ top:
 
 	if (inputReadLine && isInteractive) {
 		last_rl = readline("");
+if (*last_rl)
+add_history(last_rl);
 		s = (uchar *) last_rl;
 	} else {
 		s = (uchar *) fgets((char *)line, sizeof(line), stdin);
