@@ -76,7 +76,7 @@ edbrowse-odbc: $(EBOBJS) ebjs.o startwindow.o dbops.o dbodbc.o
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 clean:
-	rm -f *.o edbrowse edbrowseinf edbrowse-odbc edbrowse-js js_hw_moz
+	rm -f *.o edbrowse edbrowseinf edbrowse-odbc edbrowse-js startwindow.c
 
 jseng-moz.o: jseng-moz.cpp
 	$(CXX) -c $(CXXFLAGS) $(JS_CXXFLAGS) $^ -o $@
