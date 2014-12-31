@@ -760,7 +760,7 @@ Unlike bash, edbrowse does not retrace your steps back through symbolic links.&n
 Thus .. is always the physical parent directory.
 
 <P>
-If the string contains $ [] * ? or a leading ~,
+If the string contains $ [] * ? or a leading ~/,
 environment variables are expanded, and globbing is performed.&nbsp;
 Thus cd ~/work takes you to the work directory under your home directory.
 
@@ -817,7 +817,7 @@ Expansion is performed by wordexp(3), simulating a posix shell.&nbsp;
 Meta characters such as | &amp; ' &lt; ; etc will derail the expansion, unless escaped by a backslash.&nbsp;
 This is confusing at first, but think of it this way:
 "If I want to expand a file name using variables or wild cards,
-a file name containing $ [] * ? or a leading ~,
+a file name containing $ [] * ? or a leading ~/,
 I have to type it in as though I were typing at the shell."&nbsp;
 An example might be $phones/at\&amp;t.&nbsp;
 Constructs such as ${foo}bar are supported,

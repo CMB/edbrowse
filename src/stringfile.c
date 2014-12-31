@@ -1095,7 +1095,7 @@ Seems inconsistent to me.
 Well this code covers both cases.
 *********************************************************************/
 
-	if (w.we_wordc == 1 && access(w.we_wordv[0] + baselen, 0))
+	if (w.we_wordc == 1 && access(w.we_wordv[0], 0))
 		++word_idx;
 
 	while (word_idx < w.we_wordc) {
@@ -1182,7 +1182,7 @@ bool envFile(const char *line, const char **expanded, bool expect_file)
 	}
 
 /* quick check, nothing to do */
-	if (!strpbrk(line, "$[*?") && line[0] != '~') {
+	if (!strpbrk(line, "$[*?") && (line[0] != '~' || line[1] != '/')) {
 		*expanded = line;
 		return true;
 	}
