@@ -1084,6 +1084,20 @@ const char *nextScanFile(const char *base)
 	}
 
 restart:
+
+/*********************************************************************
+special code here for an empty directory, wherein the pattern of *
+produces the single word of *
+I don't understand why .* with no match doesn't produce .*
+i.e. when searching for hidden files.
+It doesn't, at least on my system.
+Seems inconsistent to me.
+Well this code covers both cases.
+*********************************************************************/
+
+	if (w.we_wordc == 1 && access(w.we_wordv[0] + baselen, 0))
+		++word_idx;
+
 	while (word_idx < w.we_wordc) {
 		s = w.we_wordv[word_idx++] + baselen;
 		if (stringEqual(s, "."))
