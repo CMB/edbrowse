@@ -216,6 +216,7 @@ static void processEffects(void)
 			*t++ = 0;
 			sscanf(t, "%p", &p);
 /* do something with object p and innerhtml t */
+			puts("innerHTML innerText not yet implemented");
 			break;
 
 		}		/* switch */

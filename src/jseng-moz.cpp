@@ -1637,7 +1637,9 @@ setter_innerHTML(JSContext * cx, JS::HandleObject obj,
 {
 	const char *s = stringize(vp);
 	if (s && strlen(s)) {
-		effects += "i{h<!-- inner html -->\n";	// }
+		effects += "i{h";	// }
+		effects += pointer2string(obj);
+		effects += "|<!-- inner html -->\n";
 		effects += s;
 		if (s[strlen(s) - 1] != '\n')
 			effects += '\n';
