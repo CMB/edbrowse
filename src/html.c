@@ -685,6 +685,8 @@ void jsdw(void)
 	scriptsPending();
 
 	if (cw->dw) {
+		if (parsePage)
+			puts("warning: document.write() should be handled elsewhere.");
 /* replace the <docwrite> tag with <html> */
 		memcpy(cw->dw + 3, "<html>\n", 7);
 		side = sideBuffer(0, cw->dw + 3, -1, cw->fileName, true);
@@ -1487,19 +1489,9 @@ static char *encodeTags(char *html)
 	bool tdfirst;
 
 	ns = initString(&ns_l);
-	currentA = currentForm = currentSel = currentOpt = currentTitle =
-	    currentTA = 0;
-	cw->numTags = 0;
-	cw->allocTags = 512;
-	cw->tags =
-	    (struct htmlTag **)allocMem(cw->allocTags *
-					sizeof(struct htmlTag *));
 	preamble = initString(&preamble_l);
-
-/* first tag is a base tag, from the filename */
-	t = newTag("base");
-	t->href = cloneString(cw->fileName);
-	basehref = t->href;
+	currentA = currentForm = currentSel = NULL;
+	currentOpt = currentTitle = currentTA = NULL;
 
 top:
 	while (c = *h) {
@@ -2460,12 +2452,25 @@ void preFormatCheck(int tagno, bool * pretag, bool * slash)
 char *htmlParse(char *buf, int remote)
 {
 	char *newbuf;
+	struct htmlTag *t;
 
 	if (parsePage)
 		i_printfExit(MSG_HtmlNotreentrant);
 	parsePage = true;
 	if (remote >= 0)
 		browseLocal = !remote;
+
+/* reserve space for 512 tags */
+	cw->numTags = 0;
+	cw->allocTags = 512;
+	cw->tags =
+	    (struct htmlTag **)allocMem(cw->allocTags *
+					sizeof(struct htmlTag *));
+/* first tag is a base tag, from the filename */
+	t = newTag("base");
+	t->href = cloneString(cw->fileName);
+	basehref = t->href;
+
 	buf = encodeTags(buf);
 	debugPrint(7, "%s", buf);
 
