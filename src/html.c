@@ -32,7 +32,7 @@ struct htmlTag *topTag;
 static char *topAttrib;
 static char *basehref;
 static struct htmlTag *currentForm;	/* the open form */
-bool parsePage;			/* parsing html */
+static bool parsePage;		/* first scan of html */
 int browseLine;			/* for error reporting */
 static jsobjtype js_reset, js_submit;
 static char *radioCheck;
@@ -660,7 +660,6 @@ static void htmlForm(void)
 }				/* htmlForm */
 
 static void scriptsPending(void);
-static struct htmlTag *tagFromJavaVar(jsobjtype v);
 static void formReset(const struct htmlTag *form);
 
 /*********************************************************************
@@ -672,6 +671,7 @@ or perhaps, submitted the form.
 Every js activity should start with jSyncup() and end with jsdw().
 *********************************************************************/
 
+static bool jsdw_no_apply;
 void jsdw(void)
 {
 	int side;
@@ -701,7 +701,10 @@ void jsdw(void)
 		cw->dw_l = 0;
 	}
 
-	rebuildSelectors();
+	rebuildSelectors(!jsdw_no_apply);
+
+	if (!jsdw_no_apply)
+		applyInputChanges(true);
 
 	if (v = js_reset) {
 		js_reset = 0;
@@ -2438,10 +2441,7 @@ endtag:
 void preFormatCheck(int tagno, bool * pretag, bool * slash)
 {
 	const struct htmlTag *t;
-	if (!parsePage)
-		i_printfExit(MSG_ErrCallPreFormat);
 	*pretag = *slash = false;
-/* Don't think we really need the bounds check here. */
 	if (tagno >= 0 && tagno < cw->numTags) {
 		t = tagList[tagno];
 		*pretag = (t->action == TAGACT_PRE);
@@ -2485,9 +2485,11 @@ char *htmlParse(char *buf, int remote)
 	buf = newbuf;
 
 	parsePage = false;
+	jsdw_no_apply = true;	/* kludge */
 
 /* In case one of the onload functions called document.write() */
 	jsdw();
+	jsdw_no_apply = false;
 
 	set_property_string(cw->docobj, "readyState", "complete");
 
@@ -2808,7 +2810,7 @@ void infShow(int tagno, const char *search)
 }				/* infShow */
 
 /* Update an input field. */
-bool infReplace(int tagno, const char *newtext, int notify)
+bool infReplace(int tagno, const char *newtext, bool notify)
 {
 	const struct htmlTag *t = tagList[tagno], *v;
 	const struct htmlTag *form = t->controller;
@@ -2899,7 +2901,7 @@ bool infReplace(int tagno, const char *newtext, int notify)
 			if (!stringEqual(v->name, t->name))
 				continue;
 			if (fieldIsChecked(v->seqno) == true)
-				updateFieldInBuffer(v->seqno, "-", 0, false);
+				updateFieldInBuffer(v->seqno, "-", false, true);
 		}
 	}
 
@@ -3598,7 +3600,7 @@ bool infPush(int tagno, char **post_string)
 }				/* infPush */
 
 /* I don't have any reverse pointers, so I'm just going to scan the list */
-static struct htmlTag *tagFromJavaVar(jsobjtype v)
+struct htmlTag *tagFromJavaVar(jsobjtype v)
 {
 	struct htmlTag *t = 0;
 	int i;
@@ -3615,22 +3617,6 @@ static struct htmlTag *tagFromJavaVar(jsobjtype v)
 		runningError(MSG_LostTag);
 	return t;
 }				/* tagFromJavaVar */
-
-/* Javascript has changed an input field */
-void javaSetsTagVar(jsobjtype v, const char *val)
-{
-	struct htmlTag *t = tagFromJavaVar(v);
-	if (!t)
-		return;
-/* ok, we found it */
-	if (t->itype == INP_HIDDEN || t->itype == INP_RADIO)
-		return;
-	if (t->itype == INP_TA) {
-		runningError(MSG_JSTextarea);
-		return;
-	}
-	updateFieldInBuffer(t->seqno, val, parsePage ? 0 : 2, false);
-}				/* javaSetsTagVar */
 
 /* Return false to stop javascript, due to a url redirect */
 void javaSubmitsForm(jsobjtype v, bool reset)

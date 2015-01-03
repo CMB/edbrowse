@@ -2657,7 +2657,7 @@ static int substituteText(const char *line)
 			}
 			*replaceStringEnd = 0;
 /* We're managing our own printing, so leave notify = 0 */
-			if (!infReplace(tagno, replaceString, 0))
+			if (!infReplace(tagno, replaceString, false))
 				goto abort;
 			undoCompare();
 			cw->undoable = false;
@@ -4332,7 +4332,7 @@ bool runCommand(const char *line)
 				}
 
 				if (scmd == '=') {
-					rc = infReplace(tagno, line, 1);
+					rc = infReplace(tagno, line, true);
 					if (newlocation)
 						goto redirect;
 					if (rc)
@@ -4728,17 +4728,6 @@ sideBuffer(int cx, const char *text, int textlen,
  * The following is a cache of input fields that have been changed,
  * before we even had a chance to render the page. */
 
-struct inputChange {
-	struct inputChange *next, *prev;
-	int tagno;
-	char value[4];
-};
-static struct listHead inputChangesPending = {
-	&inputChangesPending, &inputChangesPending
-};
-
-static struct inputChange *ic;
-
 bool browseCurrentBuffer(void)
 {
 	char *rawbuf, *newbuf, *tbuf;
@@ -4809,10 +4798,6 @@ bool browseCurrentBuffer(void)
 	if (!ismc) {
 		undoCompare();
 		cw->undoable = false;
-
-/* There shouldn't be anything in the input pending list, but clear
- * it out, just to be safe. */
-		freeList(&inputChangesPending);
 	}
 
 	if (bmode == 1) {
@@ -4869,12 +4854,8 @@ bool browseCurrentBuffer(void)
 		fileSize = -1;
 		return false;
 	}
-	if (bmode == 2) {
-/* apply any input changes pending */
-		foreach(ic, inputChangesPending)
-		    updateFieldInBuffer(ic->tagno, ic->value, 0, false);
-		freeList(&inputChangesPending);
-	}
+	if (bmode == 2)
+		applyInputChanges(false);
 
 	fileSize = apparentSize(context, true);
 	return true;
@@ -4887,18 +4868,6 @@ locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
 	char *p, *s, *t, c;
 	char search[20];
 	char searchend[4];
-
-	if (parsePage) {
-		foreachback(ic, inputChangesPending) {
-			if (ic->tagno != tagno)
-				continue;
-			*s_p = ic->value;
-			*t_p = ic->value + strlen(ic->value);
-/* we don't need to set the others in this special case */
-			return true;
-		}
-		return false;
-	}
 
 	sprintf(search, "%c%d<", InternalCodeChar, tagno);
 	sprintf(searchend, "%c0>", InternalCodeChar);
@@ -4927,21 +4896,36 @@ locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
 	return false;
 }				/* locateTagInBuffer */
 
-/* Update an input field in the current buffer.
- * The input field may not be here, if you've deleted some lines. */
+/*********************************************************************
+Update an input field in the current buffer.
+This can be done for one of two reasons.
+First, the user has entered a value in the form, such as
+	i=foobar
+and in this case fromForm will be set to true.
+I need to find the tag in the current buffer.
+He just modified it, so it ought to be there.
+If it isn't there, print an error and do nothing.
+The second case: the value has been changed by javascript.
+	form.questionnaire.subject.value = "foobar";
+Within this case we have 3 possibilities.
+1. The tag is found in the buffer, and the line can be updated as above.
+2. The tag is not there because the user has deleted the line that contained it.
+3. The tag is not there because it has not yet been folded into the buffer.
+This is particularly the case when the page is first parsed:
+javascript runs, sets some input fields to values, but the page
+hasn't been rendered yet. The edbrowse buffer is still empty.
+Unable to distinguish between 2 and 3, I just push the change
+onto a queue, so it will be applied later, after all the html is rendered.
+This queue is the linked list inputChangesPending.
+In fact, why not always push the change onto a queue, then apply the changes later.
+It is more uniform.
+*********************************************************************/
+
 void
-updateFieldInBuffer(int tagno, const char *newtext, int notify, bool required)
+updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
 {
 	int ln, idx, n, plen;
 	char *p, *s, *t, *new;
-
-	if (parsePage) {	/* we don't even have the buffer yet */
-		ic = allocMem(sizeof(struct inputChange) + strlen(newtext));
-		ic->tagno = tagno;
-		strcpy(ic->value, newtext);
-		addToListBack(&inputChangesPending, ic);
-		return;
-	}
 
 	if (locateTagInBuffer(tagno, &ln, &p, &s, &t)) {
 		n = (plen = pstLength((pst) p)) + strlen(newtext) - (t - s);
@@ -4950,19 +4934,59 @@ updateFieldInBuffer(int tagno, const char *newtext, int notify, bool required)
 		strcpy(new + (s - p), newtext);
 		memcpy(new + strlen(new), t, plen - (t - p));
 		cw->map[ln].text = new;
-/* In case a javascript routine updates a field that you weren't expecting */
-		if (notify == 1)
-			displayLine(ln);
-		if (notify == 2)
+/* Notice that I didn't free the old text? */
+/* That string will be freed, in the prior buffer, by undoCompare(). */
+if(notify) {
+		if (fromForm)
+				displayLine(ln);
+		else
 			i_printf(MSG_LineUpdated, ln);
+}
 		return;
 	}
 
-	if (required)
+	if (fromForm)
 		i_printfExit(MSG_NoTagFound, tagno, newtext);
 }				/* updateFieldInBuffer */
 
-/* This is the inverse of the above function, fetch instead of update. */
+struct inputChange {
+	struct inputChange *next, *prev;
+	int tagno;
+	char value[4];
+};
+static struct listHead inputChangesPending = {
+	&inputChangesPending, &inputChangesPending
+};
+
+/* Javascript has changed an input field */
+void javaSetsTagVar(jsobjtype v, const char *newtext)
+{
+	struct inputChange *ic;
+	struct htmlTag *t = tagFromJavaVar(v);
+	if (!t)
+		return;
+/* ok, we found it */
+	if (t->itype == INP_HIDDEN || t->itype == INP_RADIO)
+		return;
+	if (t->itype == INP_TA) {
+		runningError(MSG_JSTextarea);
+		return;
+	}
+	ic = allocMem(sizeof(struct inputChange) + strlen(newtext));
+	ic->tagno = t->seqno;
+	strcpy(ic->value, newtext);
+	addToListBack(&inputChangesPending, ic);
+}				/* javaSetsTagVar */
+
+/* apply any input changes pending */
+void applyInputChanges(bool notify)
+{
+	struct inputChange *ic;
+	foreach(ic, inputChangesPending)
+	    updateFieldInBuffer(ic->tagno, ic->value, notify, false);
+	freeList(&inputChangesPending);
+}				/* applyInputChanges */
+
 char *getFieldFromBuffer(int tagno)
 {
 	int ln;

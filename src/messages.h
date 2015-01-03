@@ -598,7 +598,7 @@ enum {
 	MSG_NotUsed598,
 	MSG_NotUsed599,
 	MSG_BadTagCode,
-	MSG_ErrCallPreFormat,
+	MSG_NotUsed601,
 	MSG_HtmlNotreentrant,
 	MSG_UnexSubmitForm,
 	MSG_NullListInform,

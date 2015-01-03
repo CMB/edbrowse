@@ -1361,7 +1361,8 @@ changing menus, because that is the high runner case.
 Besides, it use to seg fault when I didn't watch for this.
 *********************************************************************/
 
-static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
+static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2,
+			    bool notify)
 {
 	int i1, i2, len1;
 	bool check2;
@@ -1473,13 +1474,13 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 	nzFree(sel->value);
 	sel->value = s;
 	set_property_string(sel->jv, "value", s);
-	updateFieldInBuffer(sel->seqno, s, parsePage ? 0 : 2, false);
+	updateFieldInBuffer(sel->seqno, s, notify, false);
 
 	if (!sel->multiple)
 		set_property_number(sel->jv, "selectedIndex", sel->lic);
 }				/* rebuildSelector */
 
-void rebuildSelectors(void)
+void rebuildSelectors(bool notify)
 {
 	int i1;
 	struct htmlTag *t;
@@ -1500,7 +1501,7 @@ void rebuildSelectors(void)
 			continue;
 		if ((len = get_arraylength(oa)) < 0)
 			continue;
-		rebuildSelector(t, oa, len);
+		rebuildSelector(t, oa, len, notify);
 	}
 
 }				/* rebuildSelectors */

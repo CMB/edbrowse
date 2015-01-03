@@ -23,7 +23,9 @@ bool runCommand(const char *line) ;
 bool edbrowseCommand(const char *line, bool script) ;
 int sideBuffer(int cx, const char *text, int textlen, const char *bufname, bool autobrowse) ;
 bool browseCurrentBuffer(void) ;
-void updateFieldInBuffer(int tagno, const char *newtext, int notify, bool required) ;
+void updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm) ;
+void javaSetsTagVar(jsobjtype v, const char *newtext) ;
+void applyInputChanges(bool notify);
 char *getFieldFromBuffer(int tagno) ;
 int fieldIsChecked(int tagno) ;
 
@@ -75,7 +77,7 @@ void domLink(const char *classname, const char *href, const char *list, jsobjtyp
 void setupJavaDom(void) ;
 jsobjtype instantiate_url(jsobjtype parent, const char *name, const char *url) ;
 char *get_property_url(jsobjtype owner, bool action) ;
-void rebuildSelectors(void) ;
+void rebuildSelectors(bool notify) ;
 void handlerSet(jsobjtype ev, const char *name, const char *code);
 jsobjtype run_function_object(jsobjtype obj, const char *name);
 bool run_function_bool(jsobjtype obj, const char *name);
@@ -126,9 +128,9 @@ void findInputField(const char *line, int ftype, int n, int *total, int *realtot
 bool lineHasTag(const char *p, const char *s) ;
 bool htmlTest(void) ;
 void infShow(int tagno, const char *search) ;
-bool infReplace(int tagno, const char *newtext, int notify) ;
+bool infReplace(int tagno, const char *newtext, bool notify) ;
 bool infPush(int tagno, char **post_string) ;
-void javaSetsTagVar(jsobjtype v, const char *val) ;
+struct htmlTag *tagFromJavaVar(jsobjtype v);
 void javaSubmitsForm(jsobjtype v, bool reset) ;
 void javaOpensWindow(const char *href, const char *name) ;
 void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval) ;
