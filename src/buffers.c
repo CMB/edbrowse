@@ -4855,7 +4855,7 @@ bool browseCurrentBuffer(void)
 		return false;
 	}
 	if (bmode == 2)
-		applyInputChanges(false);
+		applyInputChanges();
 
 	fileSize = apparentSize(context, true);
 	return true;
@@ -4901,7 +4901,7 @@ Update an input field in the current buffer.
 This can be done for one of two reasons.
 First, the user has entered a value in the form, such as
 	i=foobar
-and in this case fromForm will be set to true.
+In this case fromForm will be set to true.
 I need to find the tag in the current buffer.
 He just modified it, so it ought to be there.
 If it isn't there, print an error and do nothing.
@@ -4917,8 +4917,24 @@ hasn't been rendered yet. The edbrowse buffer is still empty.
 Unable to distinguish between 2 and 3, I just push the change
 onto a queue, so it will be applied later, after all the html is rendered.
 This queue is the linked list inputChangesPending.
-In fact, why not always push the change onto a queue, then apply the changes later.
+In fact, I will always push the change onto a queue, then apply the changes later.
 It is more uniform.
+With that in place, this function should never be called before the initial
+html is rendered, i.e. before there is a buffer to scan.
+That leads to the last case, wherein this function is called
+from applyInputChanges(), after js has run.
+This updates the text in the edbrowse buffer, as surely as fromForm.
+The new line replaces the old, but the old is not freed.
+This is because the old line will be freed by undoCompare(),
+when it is discovered in the undo window but not in the current window.
+But wait, what if the line is updated twice?
+That becomes a memory leak, and is also annoying in that you might get the
+message line 33 has been updated, twice.
+I deal with both these conditions by checking whether
+the corresponding lines of text in current window and undo window
+are in fact the same.
+That means no lines can be inserted into the current buffer, by javascript, when this runs.
+Perhaps some new lines at the end, but nothing in the middle, at least not yet.
 *********************************************************************/
 
 void
@@ -4926,6 +4942,7 @@ updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
 {
 	int ln, idx, n, plen;
 	char *p, *s, *t, *new;
+	bool different;
 
 	if (locateTagInBuffer(tagno, &ln, &p, &s, &t)) {
 		n = (plen = pstLength((pst) p)) + strlen(newtext) - (t - s);
@@ -4933,15 +4950,19 @@ updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
 		memcpy(new, p, s - p);
 		strcpy(new + (s - p), newtext);
 		memcpy(new + strlen(new), t, plen - (t - p));
+		different = false;
+		if (undoWindow.dol < ln ||
+		    cw->map[ln].text != undoWindow.map[ln].text) {
+			different = true;
+			free(cw->map[ln].text);
+		}
 		cw->map[ln].text = new;
-/* Notice that I didn't free the old text? */
-/* That string will be freed, in the prior buffer, by undoCompare(). */
-if(notify) {
-		if (fromForm)
+		if (notify) {
+			if (fromForm)
 				displayLine(ln);
-		else
-			i_printf(MSG_LineUpdated, ln);
-}
+			else if (!different)
+				i_printf(MSG_LineUpdated, ln);
+		}
 		return;
 	}
 
@@ -4979,11 +5000,11 @@ void javaSetsTagVar(jsobjtype v, const char *newtext)
 }				/* javaSetsTagVar */
 
 /* apply any input changes pending */
-void applyInputChanges(bool notify)
+void applyInputChanges(void)
 {
 	struct inputChange *ic;
 	foreach(ic, inputChangesPending)
-	    updateFieldInBuffer(ic->tagno, ic->value, notify, false);
+	    updateFieldInBuffer(ic->tagno, ic->value, true, false);
 	freeList(&inputChangesPending);
 }				/* applyInputChanges */
 

@@ -25,7 +25,7 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname, bool 
 bool browseCurrentBuffer(void) ;
 void updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm) ;
 void javaSetsTagVar(jsobjtype v, const char *newtext) ;
-void applyInputChanges(bool notify);
+void applyInputChanges(void);
 char *getFieldFromBuffer(int tagno) ;
 int fieldIsChecked(int tagno) ;
 
@@ -77,7 +77,7 @@ void domLink(const char *classname, const char *href, const char *list, jsobjtyp
 void setupJavaDom(void) ;
 jsobjtype instantiate_url(jsobjtype parent, const char *name, const char *url) ;
 char *get_property_url(jsobjtype owner, bool action) ;
-void rebuildSelectors(bool notify) ;
+void rebuildSelectors(void);
 void handlerSet(jsobjtype ev, const char *name, const char *code);
 jsobjtype run_function_object(jsobjtype obj, const char *name);
 bool run_function_bool(jsobjtype obj, const char *name);

@@ -32,7 +32,6 @@ struct htmlTag *topTag;
 static char *topAttrib;
 static char *basehref;
 static struct htmlTag *currentForm;	/* the open form */
-static bool parsePage;		/* first scan of html */
 int browseLine;			/* for error reporting */
 static jsobjtype js_reset, js_submit;
 static char *radioCheck;
@@ -423,7 +422,7 @@ bool tagHandler(int seqno, const char *name)
 static char *getBaseHref(int n)
 {
 	const struct htmlTag *t;
-	if (parsePage)
+	if (!cw->browseMode)
 		return basehref;
 	if (n < 0)
 		n = cw->numTags;
@@ -671,7 +670,6 @@ or perhaps, submitted the form.
 Every js activity should start with jSyncup() and end with jsdw().
 *********************************************************************/
 
-static bool jsdw_no_apply;
 void jsdw(void)
 {
 	int side;
@@ -685,7 +683,7 @@ void jsdw(void)
 	scriptsPending();
 
 	if (cw->dw) {
-		if (parsePage)
+		if (!cw->browseMode)
 			puts("warning: document.write() should be handled elsewhere.");
 /* replace the <docwrite> tag with <html> */
 		memcpy(cw->dw + 3, "<html>\n", 7);
@@ -701,10 +699,10 @@ void jsdw(void)
 		cw->dw_l = 0;
 	}
 
-	rebuildSelectors(!jsdw_no_apply);
+	rebuildSelectors();
 
-	if (!jsdw_no_apply)
-		applyInputChanges(true);
+	if (cw->browseMode)
+		applyInputChanges();
 
 	if (v = js_reset) {
 		js_reset = 0;
@@ -994,7 +992,7 @@ void jSyncup(void)
 	int itype, i, j, cx;
 	char *value, *cxbuf;
 
-	if (parsePage)
+	if (!cw->browseMode)
 		return;		/* not necessary */
 	if (!isJSAlive)
 		return;
@@ -2454,9 +2452,8 @@ char *htmlParse(char *buf, int remote)
 	char *newbuf;
 	struct htmlTag *t;
 
-	if (parsePage)
+	if (cw->tags)
 		i_printfExit(MSG_HtmlNotreentrant);
-	parsePage = true;
 	if (remote >= 0)
 		browseLocal = !remote;
 
@@ -2484,12 +2481,8 @@ char *htmlParse(char *buf, int remote)
 	nzFree(buf);
 	buf = newbuf;
 
-	parsePage = false;
-	jsdw_no_apply = true;	/* kludge */
-
 /* In case one of the onload functions called document.write() */
 	jsdw();
-	jsdw_no_apply = false;
 
 	set_property_string(cw->docobj, "readyState", "complete");
 
@@ -3642,7 +3635,7 @@ void javaOpensWindow(const char *href, const char *name)
 	unpercentURL(copy);
 	r = resolveURL(getBaseHref(-1), copy);
 	nzFree(copy);
-	if (!parsePage) {
+	if (cw->browseMode) {
 		gotoLocation(r, 0, false);
 		return;
 	}
