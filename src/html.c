@@ -1317,24 +1317,22 @@ static void htmlScript(char **html, char **h)
 	if (cw->dw) {
 		int afterlen;	/* after we fold in this string */
 		char *after;
+		int pastlen;
 		debugPrint(3, "docwrite %d bytes", cw->dw_l);
 		debugPrint(4, "<<\n%s\n>>", cw->dw + 10);
 		stringAndString(&cw->dw, &cw->dw_l, "</docwrite>");
-		afterlen = strlen(*h) + strlen(cw->dw);
+		afterlen = strlen(*html) + strlen(cw->dw);
 		after = (char *)allocMem(afterlen + 1);
-		strcpy(after, cw->dw);
+		pastlen = *h - *html;
+		memcpy(after, *html, pastlen);
+		strcpy(after + pastlen, cw->dw);
 		strcat(after, *h);
 		nzFree(cw->dw);
 		cw->dw = 0;
 		cw->dw_l = 0;
 		nzFree(*html);
-		*html = *h = after;
-
-/* After the realloc, the inner pointers are no longer valid. */
-		for (i = 0; i < cw->numTags; ++i) {
-			t = tagList[i];
-			t->inner = 0;
-		}
+		*html = after;
+		*h = after + pastlen;
 	}
 
 done:
@@ -1582,7 +1580,8 @@ nextchar:
 			*a = 0;
 			if (currentTA->jv && isJSAlive) {
 				establish_inner(currentTA->jv,
-						currentTA->inner, save_h, true);
+						html + currentTA->inner, save_h,
+						true);
 				set_property_string(currentTA->jv, "value",
 						    currentTA->value);
 				set_property_string(currentTA->jv, dfvl,
@@ -1616,7 +1615,7 @@ nextchar:
 		t->info = ti;
 		t->slash = slash;
 		if (!slash)
-			t->inner = end;
+			t->inner = end - html;
 		t->ln = browseLine;
 		t->action = action;	/* we might change this later */
 		j = end - attrib;
@@ -1630,7 +1629,7 @@ nextchar:
 				continue;	/* unbalanced </ul> means nothing */
 			open->balanced = true;
 			if (open->jv && isJSAlive)
-				establish_inner(open->jv, open->inner,
+				establish_inner(open->jv, html + open->inner,
 						save_h, false);
 /* and mark everything in between */
 			for (i2 = open->seqno; i2 < tagno; ++i2) {

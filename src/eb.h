@@ -407,7 +407,7 @@ struct htmlTag {
 /* class=foo becomes className = "foo" when you carry from html to javascript,
  * don't ask me why. */
 	char *classname;
-	const char *inner;	/* for inner html */
+	int inner;	/* for inner html */
 };
 
 /* htmlTag.action */
