@@ -41,6 +41,18 @@ void prepareForBrowse(char *h, int h_len)
 	h[j] = 0;
 }				/* prepareForBrowse */
 
+/* An input field cannot contain newline, null, or the InternalCodeChar */
+void prepareForField(char *h)
+{
+	while (*h) {
+		if (*h == 0 || *h == '\n')
+			*h = ' ';
+		if (*h == InternalCodeChar)
+			*h = InternalCodeCharAlternate;
+		++h;
+	}
+}				/* prepareForField */
+
 /*********************************************************************
 Skip past an html comment.
 Parse an html tag <tag foo=bar>
@@ -1663,8 +1675,7 @@ bool looksBinary(const char *buf, int buflen)
 	return (bincount * 4 - 10 >= buflen);
 }				/* looksBinary */
 
-void
-looks_8859_utf8(const char *buf, int buflen, bool * iso_p, bool * utf8_p)
+void looks_8859_utf8(const char *buf, int buflen, bool * iso_p, bool * utf8_p)
 {
 	int utfcount = 0, isocount = 0;
 	int i, j, bothcount;

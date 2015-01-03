@@ -182,9 +182,10 @@ static void processEffects(void)
 
 		case 'v':	/* value = "foo" */
 			t = strchr(s, '=');
-			*t = 0;
+			*t++ = 0;
 			sscanf(s, "%p", &p);
-			javaSetsTagVar(p, t + 1);
+			prepareForField(t);
+			javaSetsTagVar(p, t);
 			break;
 
 		case 't':	/* js timer */

@@ -93,6 +93,7 @@ bool setupReply(bool all) ;
 
 /* sourcefile=format.c */
 void prepareForBrowse(char *h, int h_len) ;
+void prepareForField(char *h);
 const char *skipHtmlComment(const char *h, int *lines) ;
 bool parseTag(char *e, const char **name, int *namelen, const char **attr, const char **end, int *lines) ;
 char *htmlAttrVal(const char *e, const char *name) ;

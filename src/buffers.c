@@ -4326,6 +4326,7 @@ bool runCommand(const char *line)
 						return false;
 					}
 					newline[j] = 0;
+					prepareForField(newline);
 					line = newline;
 					scmd = '=';
 				}
@@ -4898,7 +4899,7 @@ locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
 		}
 		return false;
 	}
-	/* still rendering the page */
+
 	sprintf(search, "%c%d<", InternalCodeChar, tagno);
 	sprintf(searchend, "%c0>", InternalCodeChar);
 	n = strlen(search);
