@@ -2416,7 +2416,9 @@ endtag:
 	nzFree(html);
 	nzFree(radioCheck);
 	radioCheck = 0;
-	basehref = 0;
+
+/* In case one of the onload functions called document.write() */
+	jsdw();
 
 	if (j = strlen(preamble)) {
 		a = (char *)allocMem(strlen(ns) + j + 2);
@@ -2429,6 +2431,7 @@ endtag:
 
 	nzFree(preamble);
 	preamble = 0;
+	basehref = 0;
 
 	return ns;
 #undef ns_ic
@@ -2479,9 +2482,6 @@ char *htmlParse(char *buf, int remote)
 	newbuf = htmlReformat(buf);
 	nzFree(buf);
 	buf = newbuf;
-
-/* In case one of the onload functions called document.write() */
-	jsdw();
 
 	set_property_string(cw->docobj, "readyState", "complete");
 
