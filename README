@@ -269,7 +269,7 @@ back to the javascript world.
 This is accomplished by jSyncup() in html.c.
 When javascript is done, any changes it has made to the fields have
 to be mapped back to the editor, where you can see them.
-This is done by javaSetsTagVar() in html.c.
+This is done by javaSetsTagVar() in buffers.c.
 
 You should really receive some alerts if fields
 have been changed out from under you.

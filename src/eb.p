@@ -116,7 +116,7 @@ void iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen
 /* sourcefile=html.cpp */
 void freeTags(struct ebWindow *w) ;
 bool tagHandler(int seqno, const char *name) ;
-void jsdw(void) ;
+void jSideEffects(void) ;
 char *displayOptions(const struct htmlTag *sel) ;
 void jSyncup(void) ;
 void makeParentNode(const struct htmlTag *t) ;

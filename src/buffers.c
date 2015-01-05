@@ -4144,7 +4144,7 @@ bool runCommand(const char *line)
 				if (over) {
 					rc = handlerGoBrowse(tag,
 							     "onmouseover");
-					jsdw();
+					jSideEffects();
 					if (newlocation)
 						goto redirect;
 				}
@@ -4154,7 +4154,7 @@ bool runCommand(const char *line)
 				set_property_string(cw->winobj, "status", h);
 			if (jsgo && click) {
 				rc = handlerGoBrowse(tag, "onclick");
-				jsdw();
+				jSideEffects();
 				if (newlocation)
 					goto redirect;
 				if (!rc)
@@ -4162,7 +4162,7 @@ bool runCommand(const char *line)
 			}
 			if (jsh) {
 				javaParseExecute(cw->winobj, h, 0, 0);
-				jsdw();
+				jSideEffects();
 				if (newlocation)
 					goto redirect;
 				return true;
