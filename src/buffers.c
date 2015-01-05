@@ -4855,7 +4855,7 @@ bool browseCurrentBuffer(void)
 		return false;
 	}
 	if (bmode == 2)
-		applyInputChanges();
+		jSideEffects();
 
 	fileSize = apparentSize(context, true);
 	return true;

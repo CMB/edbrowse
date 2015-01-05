@@ -701,9 +701,7 @@ void jSideEffects(void)
 	}
 
 	rebuildSelectors();
-
-	if (cw->browseMode)
-		applyInputChanges();
+	applyInputChanges();
 
 	if (v = js_reset) {
 		js_reset = 0;
@@ -2376,6 +2374,10 @@ endtag:
 		goto top;
 	}
 
+/* don't need these any more */
+#undef ns_ic
+#undef ns_hnum
+
 	if (browseLocal == 1) {	/* no errors yet */
 		for (i1 = 0; i1 < cw->numTags; ++i1) {
 			t = tagList[i1];
@@ -2418,9 +2420,6 @@ endtag:
 	nzFree(radioCheck);
 	radioCheck = 0;
 
-/* In case one of the onload functions called document.write() */
-	jSideEffects();
-
 	if (j = strlen(preamble)) {
 		a = (char *)allocMem(strlen(ns) + j + 2);
 		strcpy(a, preamble);
@@ -2431,12 +2430,24 @@ endtag:
 	}
 
 	nzFree(preamble);
-	preamble = 0;
+	preamble = initString(&preamble_l);
 	basehref = 0;
 
+/* you probably don't want to see this much debug output! */
+	debugPrint(7, "%s", ns);
+
+	a = andTranslate(ns, false);
+	nzFree(ns);
+	ns = a;
+
+	anchorSwap(ns);
+	debugPrint(7, "%s", ns);
+
+	a = htmlReformat(ns);
+	nzFree(ns);
+	ns = a;
+
 	return ns;
-#undef ns_ic
-#undef ns_hnum
 }				/* encodeTags */
 
 void preFormatCheck(int tagno, bool * pretag, bool * slash)
@@ -2471,22 +2482,10 @@ char *htmlParse(char *buf, int remote)
 	t->href = cloneString(cw->fileName);
 	basehref = t->href;
 
-	buf = encodeTags(buf);
-	debugPrint(7, "%s", buf);
-
-	newbuf = andTranslate(buf, false);
-	nzFree(buf);
-	buf = newbuf;
-	anchorSwap(buf);
-	debugPrint(7, "%s", buf);
-
-	newbuf = htmlReformat(buf);
-	nzFree(buf);
-	buf = newbuf;
+	newbuf = encodeTags(buf);
 
 	set_property_string(cw->docobj, "readyState", "complete");
-
-	return buf;
+	return newbuf;
 }				/* htmlParse */
 
 void

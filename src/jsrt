@@ -623,7 +623,8 @@ if(confirm("Are you interested in discrete mathematics?"))
 new Window("http://book.mathreference.com");
 else alert("ok, never mind");
 }
-function formLoad(name) { onlv++; alert("form " + name + " loading"); }
+function formLoad(name) { onlv++; alert("form " + name + " loading");
+document.writeln("<br>docloadline"); }
 function formUnload(name) { alert("form " + name + " unloading"); }
 function docLoad() { alert("doc loader attached"); }
 document.attachEvent("onload", docLoad);
