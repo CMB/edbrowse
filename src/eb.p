@@ -25,9 +25,10 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname, bool 
 bool browseCurrentBuffer(void) ;
 void updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm) ;
 void javaSetsTagVar(jsobjtype v, const char *newtext) ;
+void javaSetsInner(jsobjtype v, const char *newtext, char c);
 void applyInputChanges(void);
-char *getFieldFromBuffer(int tagno) ;
-int fieldIsChecked(int tagno) ;
+char *getFieldFromBuffer(int tagno);
+int fieldIsChecked(int tagno);
 
 /* sourcefile=cookies.c */
 bool domainSecurityCheck(const char *server, const char *domain) ;

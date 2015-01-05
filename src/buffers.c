@@ -4973,6 +4973,8 @@ updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
 struct inputChange {
 	struct inputChange *next, *prev;
 	int tagno;
+	char major, minor;
+	char filler1, filler2;
 	char value[4];
 };
 static struct listHead inputChangesPending = {
@@ -4986,7 +4988,6 @@ void javaSetsTagVar(jsobjtype v, const char *newtext)
 	struct htmlTag *t = tagFromJavaVar(v);
 	if (!t)
 		return;
-/* ok, we found it */
 	if (t->itype == INP_HIDDEN || t->itype == INP_RADIO)
 		return;
 	if (t->itype == INP_TA) {
@@ -4995,16 +4996,36 @@ void javaSetsTagVar(jsobjtype v, const char *newtext)
 	}
 	ic = allocMem(sizeof(struct inputChange) + strlen(newtext));
 	ic->tagno = t->seqno;
+	ic->major = 'v';
 	strcpy(ic->value, newtext);
 	addToListBack(&inputChangesPending, ic);
 }				/* javaSetsTagVar */
+
+void javaSetsInner(jsobjtype v, const char *newtext, char c)
+{
+	struct inputChange *ic;
+	struct htmlTag *t = tagFromJavaVar(v);
+	if (!t)
+		return;
+	ic = allocMem(sizeof(struct inputChange) + strlen(newtext));
+	ic->tagno = t->seqno;
+	ic->major = 'i';
+	ic->minor = c;
+	strcpy(ic->value, newtext);
+	addToListBack(&inputChangesPending, ic);
+}				/* javaSetsInner */
 
 /* apply any input changes pending */
 void applyInputChanges(void)
 {
 	struct inputChange *ic;
-	foreach(ic, inputChangesPending)
-	    updateFieldInBuffer(ic->tagno, ic->value, true, false);
+	foreach(ic, inputChangesPending) {
+		if (ic->major == 'v')
+			updateFieldInBuffer(ic->tagno, ic->value, true, false);
+		if (ic->major == 'i')
+			printf("inner%s not yet implemented\n",
+			       (ic->minor == 'h' ? "HTML" : "Text"));
+	}
 	freeList(&inputChangesPending);
 }				/* applyInputChanges */
 

@@ -215,9 +215,8 @@ static void processEffects(void)
 /* h = inner html, t = inner text */
 			t = strchr(s, '|');
 			*t++ = 0;
-			sscanf(t, "%p", &p);
-/* do something with object p and innerhtml t */
-			puts("innerHTML innerText not yet implemented");
+			sscanf(s, "%p", &p);
+			javaSetsInner(p, t, c);
 			break;
 
 		}		/* switch */
