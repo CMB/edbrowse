@@ -317,7 +317,7 @@ static const char *englishMessages[] = {
 	"cannot connect to %s",
 	"download: ",
 	"The certificate for host %s could not be verified - SSL connection aborted",
-	0,
+	"new text added at line %d\n",
 	0,
 	"web page requires authorization",
 	"login aborted",

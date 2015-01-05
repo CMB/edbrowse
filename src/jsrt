@@ -624,7 +624,7 @@ new Window("http://book.mathreference.com");
 else alert("ok, never mind");
 }
 function formLoad(name) { onlv++; alert("form " + name + " loading");
-document.writeln("<br>docloadline"); }
+document.writeln("docloadline"); }
 function formUnload(name) { alert("form " + name + " unloading"); }
 function docLoad() { alert("doc loader attached"); }
 document.attachEvent("onload", docLoad);

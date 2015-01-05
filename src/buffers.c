@@ -4829,7 +4829,6 @@ bool browseCurrentBuffer(void)
 		newbuf = htmlParse(rawbuf, remote);
 	}
 
-	cw->browseMode = true;
 	cw->rnlMode = cw->nlMode;
 	cw->nlMode = false;
 	cw->r_dot = cw->dot, cw->r_dol = cw->dol;
@@ -4849,14 +4848,19 @@ bool browseCurrentBuffer(void)
 		cw->fileName = reallocMem(cw->fileName, j + 8);
 		strcat(cw->fileName, ".browse");
 	}
+
 	if (!rc) {
 /* should never happen */
 		fileSize = -1;
+		cw->browseMode = true;
 		return false;
 	}
-	if (bmode == 2)
-		jSideEffects();
 
+	if (bmode == 2) {
+		jSideEffects();
+	}
+
+	cw->browseMode = true;
 	fileSize = apparentSize(context, true);
 	return true;
 }				/* browseCurrentBuffer */
@@ -4951,7 +4955,7 @@ updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
 		strcpy(new + (s - p), newtext);
 		memcpy(new + strlen(new), t, plen - (t - p));
 		different = false;
-		if (undoWindow.dol < ln ||
+		if (!cw->browseMode || undoWindow.dol < ln ||
 		    cw->map[ln].text != undoWindow.map[ln].text) {
 			different = true;
 			free(cw->map[ln].text);
