@@ -43,7 +43,7 @@ eb_curl_callback(char *incoming, size_t size, size_t nitems,
 
 	if (down_ftp == 1 && down_permitted) {
 /* state 1, first data block, ask the user */
-			down_ftp = 2;
+		down_ftp = 2;
 		background_download();
 		if (!down_file)
 			goto in_memory;
@@ -707,7 +707,9 @@ mimeProcess:
 			}
 		}
 
-		if (hcode >= 301 && hcode <= 303 && allowRedirection) {
+		if (allowRedirection &&
+		    (hcode >= 301 && hcode <= 303 ||
+		     hcode >= 307 && hcode <= 308)) {
 			redir = newlocation;
 			if (redir)
 				redir = resolveURL(urlcopy, redir);
@@ -727,8 +729,12 @@ mimeProcess:
 				unpercentURL(urlcopy);
 
 /* Convert POST request to GET request after redirection. */
-				curl_easy_setopt(http_curl_handle,
-						 CURLOPT_HTTPGET, 1);
+/* This should only be done for 301 through 303 */
+				if (hcode < 307)
+					curl_easy_setopt(http_curl_handle,
+							 CURLOPT_HTTPGET, 1);
+/* I think there is more work to do for 307 308,
+ * pasting the prior post string onto the new URL. Not sure about this. */
 
 				getUserPass(urlcopy, creds_buf, false);
 
