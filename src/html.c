@@ -1187,21 +1187,31 @@ static void onloadGo(jsobjtype obj, const char *jsrc, const char *tagname)
 	toPreamble(t->seqno, buf, jsrc, 0);
 }				/* onloadGo */
 
-/* Given a tag with an id attribute whose value is foo, generate a label
- * <a name="foo">.  If the tag has no id attribute, this function is a no-op.
-*/
+/*********************************************************************
+Given a tag with an id attribute whose value is foo, generate a label
+<a name="foo">, so you can jump to this tag internally via
+<A href=#foo>jump</A>.
+If the tag has no ID then generate an anchor anyways, in case
+the tag is referenced tag.innerHTML or tag.innerText.
+This should only be called by an open tag (no slash) that can closed.
+Not <br>, but <p> ... </p>
+*********************************************************************/
 
 static void htmlLabelID(char **ns, int *ns_l)
 {
+	struct htmlTag *t = newTag("a");
+	int tagnum = t->seqno;
 	char buf[16];
 	char *id = htmlAttrVal(topAttrib, "id");
-	if (id) {
-		struct htmlTag *t = newTag("a");
-		int tagnum = t->seqno;
-		t->name = id;
-		sprintf(buf, "%c%d*", InternalCodeChar, tagnum);
-		stringAndString(ns, ns_l, buf);
+	static int idnum = 0;
+	char idfake[12];
+	if (!id) {
+		sprintf(idfake, "i$d$%d", ++idnum);
+		id = cloneString(idfake);
 	}
+	t->name = id;
+	sprintf(buf, "%c%d*", InternalCodeChar, tagnum);
+	stringAndString(ns, ns_l, buf);
 }				/* htmlLabelID */
 
 static void htmlOption(struct htmlTag *sel, struct htmlTag *v, const char *a)
@@ -1742,8 +1752,10 @@ forceCloseAnchor:
 			currentTitle = currentOpt = 0;
 		}
 
-/* Generate an html label for this tag if necessary. */
-		htmlLabelID(&ns, &ns_l);
+		if (!slash && ti->nest && action != TAGACT_A) {
+/* Generate an html label for this tag. */
+			htmlLabelID(&ns, &ns_l);
+		}
 
 		switch (action) {
 		case TAGACT_INPUT:
@@ -2145,10 +2157,10 @@ subsup:
 			s = ns + l;
 			if (j == 2 && isalphaByte(s[0]) && !s[1])
 				goto unparen;
-			if (j == 2 && isalnumByte(ns[l - 3])
-			    && (stringEqual(s, "th") || stringEqual(s, "rd")
-				|| stringEqual(s, "nd")
-				|| stringEqual(s, "st"))) {
+			if (j == 2 &&
+			    (stringEqual(s, "th") || stringEqual(s, "rd")
+			     || stringEqual(s, "nd")
+			     || stringEqual(s, "st"))) {
 				strmove(ns + l - 2, ns + l);
 				ns_l -= 2;
 				continue;

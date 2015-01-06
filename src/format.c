@@ -395,25 +395,34 @@ into
 Hey, {click here}  for more information
 But of course we won't do that if the section is preformatted.
 Nor can we muck with the whitespace that might be present in an input field <>.
-State variables remember:
-Whether we are in a preformatted section
-Whether we have seen any visible text in the document
-Whether we have seen any visible text in the current hyperlink,
-	between the braces.
-Whether we are stepping through a span of whitespace.
-A tag and adjacent whitespace might be swapped, depending on state.
+Also swap 32* whitespace, pushing invisible anchors forward.
 If a change is made, the procedure is run again,
 kinda like bubble sort.
 It has the potential to be terribly inefficient,
-but that's not likely.
+but that doesn't seem to happen in practice.
 Use cnt to count the iterations, just for debugging.
+| is considered a whitespace character. Why is that?
+Html tables are mostly used for visual layout, but sometimes not.
+I use | to separate the cells of a table, but if there's nothing in them,
+or at least no text, then I get rid of the pipes.
+But every cell is going to have an invisible anchor from <td>, so that js can,
+perhaps, set innerHTML inside this cell.
+So there's something there, but nothing there.
+I push these tags past pipes, so I can clear it all away.
+One web page in ten thousand will actually set html inside a cell,
+after the fact, and when that happens the text won't be in the right place,
+it won't have the pipes around it that it should.
+I'm willing to accept that for now.
 *********************************************************************/
 
 void anchorSwap(char *buf)
 {
 	char c, d, *s, *ss, *w, *a;
-	bool premode, pretag, state_braces, state_text, state_atext;
-	bool strong, change, slash;
+	bool pretag;		// <pre>
+	bool premode;		// inside <pre> </pre>
+	bool slash;		// closing tag
+	bool change;		// made a swap somewhere
+	bool strong;		// strong whitespace, newline or paragraph
 	int n, cnt;
 	char tag[20];
 
@@ -444,7 +453,7 @@ void anchorSwap(char *buf)
 					goto put1;
 				}
 			}
-/* copy the utf8 sequence */
+/* copy the utf8 sequence as is */
 			*w++ = c;
 			++s;
 			c <<= 1;
@@ -456,6 +465,7 @@ void anchorSwap(char *buf)
 			continue;
 		}
 
+/* Now assuming iso8859-1, which is practically depricated */
 		ss = strchr(from, c);
 		if (ss)
 			c = becomes[ss - from];
@@ -470,6 +480,7 @@ void anchorSwap(char *buf)
 		for (++a; *a == ' '; ++a) ;
 		if (a[0] != InternalCodeChar || a[1] != '0' || a[2] != '}')
 			goto put1;
+/* skip past empty {} */
 		s = a + 2;
 		continue;
 
@@ -478,112 +489,73 @@ put1:
 	}
 	*w = 0;
 
+/* anchor whitespace swap preserves the length of the string */
 	cnt = 0;
 	change = true;
 	while (change) {
 		change = false;
 		++cnt;
-		premode = state_text = state_atext = state_braces = false;
+		premode = false;
 /* w represents the state of whitespace */
-		w = 0;
-/* a represents the state of being in an anchor */
-		a = 0;
+		w = NULL;
+/* a points to the prior anchor, which is swappable with following whitespace */
+		a = NULL;
 
 		for (s = buf; c = *s; ++s) {
-			if (isspaceByte(c)) {
+			if (isspaceByte(c) || c == '|') {
 				if (!w)
 					w = s;
 				continue;
 			}
 
 /* end of white space, should we swap it with prior tag? */
-			if (w && a && !premode &&
-			    ((state_braces & !state_atext) ||
-			     ((!state_braces) & !state_text))) {
+			if (w && a) {
 				memmove(a, w, s - w);
 				memmove(a + (s - w), tag, n);
 				change = true;
-				w = 0;
+				w = NULL;
 			}
 
 /* prior anchor has no significance */
-			a = 0;
+			a = NULL;
 
-			if (c == InternalCodeChar) {
-				if (!isdigitByte(s[1]))
-					goto normalChar;
-				n = strtol(s + 1, &ss, 10);
-				preFormatCheck(n, &pretag, &slash);
-				d = *ss;
-/* the following should never happen */
-				if (!strchr("{}<>*", d))
-					goto normalChar;
-				n = ss + 1 - s;
-				memcpy(tag, s, n);
-				tag[n] = 0;
+			if (c != InternalCodeChar)
+				goto normalChar;
+/* some conditions that should never happen */
+			if (!isdigitByte(s[1]))
+				goto normalChar;
+			n = strtol(s + 1, &ss, 10);
+			preFormatCheck(n, &pretag, &slash);
+			d = *ss;
+			if (!strchr("{}<>*", d))
+				goto normalChar;
+			n = ss + 1 - s;
+			memcpy(tag, s, n);
+			tag[n] = 0;
 
-				if (pretag) {
-					w = 0;
-					premode = !slash;
-					s = ss;
-					continue;
-				}
+			if (pretag) {
+				w = 0;
+				premode = !slash;
+				s = ss;
+				continue;
+			}
 
 /* We have a tag, should we swap it with prior whitespace? */
-				if (w && !premode &&
-				    (d == '}' ||
-				     d == '@' &&
-				     ((state_braces & state_atext) ||
-				      ((!state_braces) & state_text)))) {
-					memmove(w + n, w, s - w);
-					memcpy(w, tag, n);
-					change = true;
-					w += n;
-					if (d == '}')
-						state_braces = false;
-					s = ss;
-					continue;
-				}
-
-/* prior whitespace doesn't matter any more */
-				w = 0;
-
-				if (d == '{') {
-					state_braces = state_text = true;
-					state_atext = false;
-					a = s;
-					s = ss;
-					continue;
-				}
-
-				if (d == '}') {
-					state_braces = false;
-					s = ss;
-					continue;
-				}
-
-				if (d == '*') {
-					if (state_braces)
-						state_atext = true;
-					else
-						state_text = true;
-					a = s;
-					s = ss;
-					continue;
-				}
-
-/* The remaining tags are <>, for an input field. */
+			if (w && !premode && d == '}') {
+				memmove(w + n, w, s - w);
+				memcpy(w, tag, n);
+				change = true;
+				w += n;
 				s = ss;
-				c = d;
-/* end of tag processing */
+				continue;
 			}
+
+			if ((d == '*' || d == '{') && !premode)
+				a = s;
+			s = ss;
 
 normalChar:
 			w = 0;	/* no more whitespace */
-			if (state_braces)
-				state_atext = true;
-			else
-				state_text = true;
 /* end of loop over the chars in the buffer */
 		}
 /* end of loop making changes */
@@ -707,7 +679,9 @@ The prefix bl means breakline.
 
 static char *bl_start, *bl_cursor, *bl_end;
 static bool bl_overflow;
-static int colno;		/* column number */
+/* This is a virtual column number, extra spaces for tab,
+ * and skipping over invisible anchors. */
+static int colno;
 static const int optimalLine = 80;	/* optimal line length */
 static const int cutLineAfter = 36;	/* cut sentence after this column */
 static const int paraLine = 120;	/* paragraph in a line */
@@ -910,9 +884,27 @@ static void appendSpaceChunk(const char *chunk, int len, bool premode)
 static void appendPrintableChunk(const char *chunk, int len, bool premode)
 {
 	int i, j;
-	for (i = 0; i < len; ++i)
-		appendOneChar(chunk[i]);
-	colno += len;
+	bool visible = true;
+
+	for (i = 0; i < len; ++i) {
+		char c = chunk[i];
+		appendOneChar(c);
+		if (c == InternalCodeChar) {
+			visible = false;
+			continue;
+		}
+		if (visible) {
+			++colno;
+			continue;
+		}
+		if (isdigitByte(c))
+			continue;
+/* end of the tag */
+		visible = true;
+		if (c != '*')
+			++colno;
+	}
+
 	lspace = 0;
 	if (premode)
 		return;
