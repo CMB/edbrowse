@@ -624,11 +624,18 @@ new Window("http://book.mathreference.com");
 else alert("ok, never mind");
 }
 function formLoad(name) { onlv++; alert("form " + name + " loading");
-document.writeln("docloadline"); }
+var s = document.createElement("script");
+s.data = "lastScript()";
+}
 function formUnload(name) { alert("form " + name + " unloading"); }
 function docLoad() { alert("doc loader attached"); }
 document.attachEvent("onload", docLoad);
 var onlv = 77;
+
+/* last script to run automatically; loaded by the form.onload function */
+function lastScript() {
+document.writeln('<A href=custer>Last Link</A>');
+}
 
 setTimeout("joker()", 750);
 function joker()

@@ -422,8 +422,6 @@ bool tagHandler(int seqno, const char *name)
 static char *getBaseHref(int n)
 {
 	const struct htmlTag *t;
-	if (!cw->browseMode)
-		return basehref;
 	if (n < 0)
 		n = cw->numTags;
 	do
@@ -690,7 +688,10 @@ top:
 /* replace the <docwrite> tag with <html> */
 		memcpy(cw->dw, "<html>   \n", 10);
 		stringAndString(&cw->dw, &cw->dw_l, "</html>\n");
+/* I really have no idea what the base should be */
+		basehref = getBaseHref(-1);
 		post = encodeTags(cw->dw, false);
+		basehref = NULL;
 		cw->dw = 0;
 		cw->dw_l = 0;
 		if (strlen(post) > 1) {

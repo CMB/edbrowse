@@ -654,13 +654,13 @@ char *resolveURL(const char *base, const char *rel)
 	if (!base)
 		base = EMPTYSTRING;
 	n = allocMem(strlen(base) + strlen(rel) + 12);
-	debugPrint(6, "resolve(%s|%s)", base, rel);
+	debugPrint(5, "resolve(%s|%s)", base, rel);
 
 	if (rel[0] == '#') {
 /* this is always an anchor for the current document, don't resolve. */
 		strcpy(n, rel);
 out_n:
-		debugPrint(6, "= %s", n);
+		debugPrint(5, "= %s", n);
 		return n;
 	}
 
