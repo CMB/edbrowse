@@ -836,6 +836,9 @@ bool addTextToBuffer(const pst inbuf, int length, int destl, bool onside)
 			t->text[i - j] = '\n';
 		}
 		memcpy(t->text, inbuf + j, i - j);
+/* in browse mode only js can add lines to buffer */
+		if (cw->browseMode)
+			t->jsup = true;
 		++t;
 	}			/* loop breaking inbuf into lines */
 
