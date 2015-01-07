@@ -641,7 +641,7 @@ setTimeout("joker()", 750);
 function joker()
 {
 alert("times up!");
-document.writeln("<P>Some extra html in another buffer.");
+document.writeln("<P>Some extra html at the end of the buffer.");
 }
 
 </script>

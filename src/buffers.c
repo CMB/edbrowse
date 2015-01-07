@@ -2157,9 +2157,11 @@ static bool doGlobal(const char *line)
 		++line, ci = true;
 	skipWhite(&line);
 
-/* clean up any previous stars */
+/* clean up any previous global flags.
+ * Also get ready for javascript, as in g/<->/ i=+
+ * which I use in web based gmail to clear out spam etc. */
 	for (t = cw->map + 1; t->text; ++t)
-		t->gflag = false;
+		t->gflag = t->jsup = false;
 
 /* Find the lines that match the pattern. */
 	regexpCompile(re, ci);
@@ -3510,6 +3512,19 @@ static char *showLinks(void)
 	return a;
 }				/* showLinks */
 
+/* clear the js flags, in that this command could invoke js,
+ * which could in turn update some of those lines, and we need to know that. */
+static void clear_jsup(void)
+{
+	struct lineMap *t;
+	if (!isJSAlive)
+		return;
+	if (globSub)
+		return;
+	for (t = cw->map + 1; t->text; ++t)
+		t->jsup = false;
+}				/* clear_jsup */
+
 /* Run the entered edbrowse command.
  * This is indirectly recursive, as in g/x/d
  * Pass in the ed command, and return success or failure.
@@ -4139,6 +4154,7 @@ bool runCommand(const char *line)
 			if (jsgo) {
 /* javascript might update fields */
 				undoCompare();
+				clear_jsup();
 				jSyncup();
 /* The program might depend on the mouseover code running first */
 				if (over) {
@@ -4330,6 +4346,8 @@ bool runCommand(const char *line)
 					line = newline;
 					scmd = '=';
 				}
+
+				clear_jsup();
 
 				if (scmd == '=') {
 					rc = infReplace(tagno, line, true);
@@ -4633,6 +4651,7 @@ afterdelete:
 	}
 
 	if (cmd == 's') {
+		clear_jsup();
 		j = substituteText(line);
 		if (j < 0) {
 			globSub = false;
@@ -4926,7 +4945,7 @@ It is more uniform.
 With that in place, this function should never be called before the initial
 html is rendered, i.e. before there is a buffer to scan.
 That leads to the last case, wherein this function is called
-from applyInputChanges(), after js has run.
+because of the changes that are in the queue.
 This updates the text in the edbrowse buffer, as surely as fromForm.
 The new line replaces the old, but the old is not freed.
 This is because the old line will be freed by undoCompare(),
@@ -4934,11 +4953,11 @@ when it is discovered in the undo window but not in the current window.
 But wait, what if the line is updated twice?
 That becomes a memory leak, and is also annoying in that you might get the
 message line 33 has been updated, twice.
-I deal with both these conditions by checking whether
-the corresponding lines of text in current window and undo window
-are in fact the same.
-That means no lines can be inserted into the current buffer, by javascript, when this runs.
-Perhaps some new lines at the end, but nothing in the middle, at least not yet.
+I deal with both these conditions via the jsup flag.
+I don't free the line, and do print a message,
+on the first js update,
+and do free the line, and don't print a message,
+on subsequent updates, if any.
 *********************************************************************/
 
 void
@@ -4946,7 +4965,7 @@ updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
 {
 	int ln, idx, n, plen;
 	char *p, *s, *t, *new;
-	bool different;
+	bool followup;
 
 	if (locateTagInBuffer(tagno, &ln, &p, &s, &t)) {
 		n = (plen = pstLength((pst) p)) + strlen(newtext) - (t - s);
@@ -4954,17 +4973,17 @@ updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
 		memcpy(new, p, s - p);
 		strcpy(new + (s - p), newtext);
 		memcpy(new + strlen(new), t, plen - (t - p));
-		different = false;
-		if (!cw->browseMode || undoWindow.dol < ln ||
-		    cw->map[ln].text != undoWindow.map[ln].text) {
-			different = true;
+		followup = false;
+		if (!cw->browseMode || cw->map[ln].jsup) {
+			followup = true;
 			free(cw->map[ln].text);
 		}
 		cw->map[ln].text = new;
+		cw->map[ln].jsup = true;
 		if (notify) {
 			if (fromForm)
 				displayLine(ln);
-			else if (!different)
+			else if (!followup)
 				i_printf(MSG_LineUpdated, ln);
 		}
 		return;

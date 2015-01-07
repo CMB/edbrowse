@@ -210,17 +210,17 @@ extern int displayLength;	/* when printing a line */
 extern int jsPool;		/* size of js pool in megabytes */
 extern int webTimeout, mailTimeout;
 extern int browseLine;		/* line number, for error reporting */
-extern bool sqlPresent;	/* Was edbrowse compiled with SQL built in? */
+extern bool sqlPresent;		/* Was edbrowse compiled with SQL built in? */
 extern bool ismc;		/* Is the program running as a mail client? */
 extern int eb_lang;		/* edbrowse language, determined by $LANG */
-extern bool cons_utf8;	/* does the console expect utf8? */
-extern bool iuConvert;	/* perform iso utf8 conversions automatically */
+extern bool cons_utf8;		/* does the console expect utf8? */
+extern bool iuConvert;		/* perform iso utf8 conversions automatically */
 extern char type8859;		/* 1 through 15 */
 extern bool js_redirects;	/* window.location = new_url */
 extern uchar browseLocal;	/* browsing a local file */
 extern bool htmlAttrVal_nl;	/* allow nl in the attribute of an html tag */
-extern bool passMail;	/* pass mail across the filters */
-extern bool errorExit;	/* exit on any error, for scripting purposes */
+extern bool passMail;		/* pass mail across the filters */
+extern bool errorExit;		/* exit on any error, for scripting purposes */
 extern bool isInteractive;
 extern volatile bool intFlag;	/* set this when interrupt signal is caught */
 extern bool binaryDetect;
@@ -283,7 +283,7 @@ struct lineMap {
 	pst text;
 	char ds1, ds2;		/* directory suffix */
 	bool gflag;		/* for g// */
-	char filler;		/* C is going to pad the structure anyways */
+	bool jsup;		/* javascript has updated this line in the buffer */
 };
 #define LMSIZE sizeof(struct lineMap)
 
@@ -316,17 +316,17 @@ struct ebWindow {
 	int numTags, allocTags;
 	bool lhs_yes:1;
 	bool rhs_yes:1;
-	bool binMode:1;	/* binary file */
-	bool nlMode:1;	/* newline at the end */
+	bool binMode:1;		/* binary file */
+	bool nlMode:1;		/* newline at the end */
 	bool rnlMode:1;
 /* Two text modes:1; these are incompatible with binMode */
 	bool utf8Mode:1;
 	bool iso8859Mode:1;
 	bool browseMode:1;	/* browsing html */
 	bool changeMode:1;	/* something has changed in this file */
-	bool dirMode:1;	/* directory mode */
+	bool dirMode:1;		/* directory mode */
 	bool undoable:1;	/* undo is possible */
-	bool sqlMode:1;	/* accessing a table */
+	bool sqlMode:1;		/* accessing a table */
 	char *dw;		/* document.write string */
 	int dw_l;		/* length of the above */
 /* The javascript context and window corresponding to this edbrowse buffer.
@@ -381,7 +381,7 @@ struct htmlTag {
 	const struct tagInfo *info;
 /* the form that owns this input tag */
 	struct htmlTag *controller;
-	bool slash:1;	/* as in </A> */
+	bool slash:1;		/* as in </A> */
 	bool balanced:1;	/* <foo> and </foo> */
 	bool retain:1;
 	bool multiple:1;
@@ -393,7 +393,7 @@ struct htmlTag {
 	bool post:1;		/* post, rather than get */
 	bool javapost:1;	/* post by calling javascript */
 	bool mime:1;		/* encode as mime, rather than url encode */
-	bool bymail:1;	/* send by mail, rather than http */
+	bool bymail:1;		/* send by mail, rather than http */
 	bool submitted:1;
 	bool onclick:1;
 	bool onsubmit:1;
@@ -407,7 +407,7 @@ struct htmlTag {
 /* class=foo becomes className = "foo" when you carry from html to javascript,
  * don't ask me why. */
 	char *classname;
-	int inner;	/* for inner html */
+	int inner;		/* for inner html */
 };
 
 /* htmlTag.action */
