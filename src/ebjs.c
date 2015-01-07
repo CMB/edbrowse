@@ -1435,6 +1435,7 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 /* option is gone in js, disconnect this option tag from its select */
 			t->jv = 0;
 			t->controller = 0;
+			t->action = TAGACT_NOP;
 			changed = true;
 		}
 	} else if (i1 == len1) {

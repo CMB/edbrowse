@@ -2989,30 +2989,19 @@ static void resetVar(struct htmlTag *t)
 
 static void formReset(const struct htmlTag *form)
 {
-	struct htmlTag *t, *sel = 0;
+	struct htmlTag *t;
 	int i, itype;
+	char *display;
 
 	for (i = 0; i < cw->numTags; ++i) {
 		t = tagList[i];
 		if (t->action == TAGACT_OPTION) {
-			if (!sel)
-				continue;
-			if (t->controller != sel)
-				continue;
 			resetVar(t);
 			continue;
 		}
 
 		if (t->action != TAGACT_INPUT)
 			continue;
-
-		if (sel) {
-			char *display = displayOptions(sel);
-			updateFieldInBuffer(sel->seqno, display, 0, false);
-			nzFree(display);
-			sel = 0;
-		}
-
 		if (t->controller != form)
 			continue;
 		itype = t->itype;
@@ -3020,9 +3009,23 @@ static void formReset(const struct htmlTag *form)
 			resetVar(t);
 			continue;
 		}
-		sel = t;
 		if (t->jv && isJSAlive)
 			set_property_number(t->jv, "selectedIndex", -1);
+	}			/* loop over tags */
+
+/* loop again to look for select, now that options are set */
+	for (i = 0; i < cw->numTags; ++i) {
+		t = tagList[i];
+		if (t->action != TAGACT_INPUT)
+			continue;
+		if (t->controller != form)
+			continue;
+		itype = t->itype;
+		if (itype != INP_SELECT)
+			continue;
+		display = displayOptions(t);
+		updateFieldInBuffer(t->seqno, display, 0, false);
+		nzFree(display);
 	}			/* loop over tags */
 
 	i_puts(MSG_FormReset);
