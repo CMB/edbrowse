@@ -4887,8 +4887,7 @@ bool browseCurrentBuffer(void)
 	return true;
 }				/* browseCurrentBuffer */
 
-static bool
-locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
+bool locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
 {
 	int ln, n;
 	char *p, *s, *t, c;
@@ -4922,147 +4921,12 @@ locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
 	return false;
 }				/* locateTagInBuffer */
 
-/*********************************************************************
-Update an input field in the current buffer.
-This can be done for one of two reasons.
-First, the user has entered a value in the form, such as
-	i=foobar
-In this case fromForm will be set to true.
-I need to find the tag in the current buffer.
-He just modified it, so it ought to be there.
-If it isn't there, print an error and do nothing.
-The second case: the value has been changed by javascript.
-	form.questionnaire.subject.value = "foobar";
-Within this case we have 3 possibilities.
-1. The tag is found in the buffer, and the line can be updated as above.
-2. The tag is not there because the user has deleted the line that contained it.
-3. The tag is not there because it has not yet been folded into the buffer.
-This is particularly the case when the page is first parsed:
-javascript runs, sets some input fields to values, but the page
-hasn't been rendered yet. The edbrowse buffer is still empty.
-Unable to distinguish between 2 and 3, I just push the change
-onto a queue, so it will be applied later, after all the html is rendered.
-This queue is the linked list inputChangesPending.
-In fact, I will always push the change onto a queue, then apply the changes later.
-It is more uniform.
-With that in place, this function should never be called before the initial
-html is rendered, i.e. before there is a buffer to scan.
-That leads to the last case, wherein this function is called
-because of the changes that are in the queue.
-This updates the text in the edbrowse buffer, as surely as fromForm.
-The new line replaces the old, but the old is not freed.
-This is because the old line will be freed by undoCompare(),
-when it is discovered in the undo window but not in the current window.
-But wait, what if the line is updated twice?
-That becomes a memory leak, and is also annoying in that you might get the
-message line 33 has been updated, twice.
-I deal with both these conditions via the jsup flag.
-I don't free the line, and do print a message,
-on the first js update,
-and do free the line, and don't print a message,
-on subsequent updates, if any.
-*********************************************************************/
-
-void
-updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
-{
-	int ln, idx, n, plen;
-	char *p, *s, *t, *new;
-	bool followup;
-
-	if (locateTagInBuffer(tagno, &ln, &p, &s, &t)) {
-		n = (plen = pstLength((pst) p)) + strlen(newtext) - (t - s);
-		new = allocMem(n);
-		memcpy(new, p, s - p);
-		strcpy(new + (s - p), newtext);
-		memcpy(new + strlen(new), t, plen - (t - p));
-		followup = false;
-		if (!cw->browseMode || cw->map[ln].jsup) {
-			followup = true;
-			free(cw->map[ln].text);
-		}
-		cw->map[ln].text = new;
-		cw->map[ln].jsup = true;
-		if (notify) {
-			if (fromForm)
-				displayLine(ln);
-			else if (!followup)
-				i_printf(MSG_LineUpdated, ln);
-		}
-		return;
-	}
-
-	if (fromForm)
-		i_printfExit(MSG_NoTagFound, tagno, newtext);
-}				/* updateFieldInBuffer */
-
-struct inputChange {
-	struct inputChange *next, *prev;
-	int tagno;
-	char major, minor;
-	char filler1, filler2;
-	char value[4];
-};
-static struct listHead inputChangesPending = {
-	&inputChangesPending, &inputChangesPending
-};
-
-/* Javascript has changed an input field */
-void javaSetsTagVar(jsobjtype v, const char *newtext)
-{
-	struct inputChange *ic;
-	struct htmlTag *t = tagFromJavaVar(v);
-	if (!t)
-		return;
-	if (t->itype == INP_HIDDEN || t->itype == INP_RADIO)
-		return;
-	if (t->itype == INP_TA) {
-		runningError(MSG_JSTextarea);
-		return;
-	}
-	ic = allocMem(sizeof(struct inputChange) + strlen(newtext));
-	ic->tagno = t->seqno;
-	ic->major = 'v';
-	strcpy(ic->value, newtext);
-	addToListBack(&inputChangesPending, ic);
-}				/* javaSetsTagVar */
-
-void javaSetsInner(jsobjtype v, const char *newtext, char c)
-{
-	struct inputChange *ic;
-	struct htmlTag *t = tagFromJavaVar(v);
-	if (!t)
-		return;
-	ic = allocMem(sizeof(struct inputChange) + strlen(newtext));
-	ic->tagno = t->seqno;
-	ic->major = 'i';
-	ic->minor = c;
-	strcpy(ic->value, newtext);
-	addToListBack(&inputChangesPending, ic);
-}				/* javaSetsInner */
-
-/* apply any input changes pending */
-void applyInputChanges(void)
-{
-	struct inputChange *ic;
-	foreach(ic, inputChangesPending) {
-		if (ic->major == 'v')
-			updateFieldInBuffer(ic->tagno, ic->value, true, false);
-		if (ic->major == 'i')
-			printf("inner%s not yet implemented\n",
-			       (ic->minor == 'h' ? "HTML" : "Text"));
-	}
-	freeList(&inputChangesPending);
-}				/* applyInputChanges */
-
 char *getFieldFromBuffer(int tagno)
 {
 	int ln;
 	char *p, *s, *t;
-	if (locateTagInBuffer(tagno, &ln, &p, &s, &t)) {
+	if (locateTagInBuffer(tagno, &ln, &p, &s, &t))
 		return pullString1(s, t);
-	}
-	/* tag found */
 	/* line has been deleted, revert to the reset value */
 	return 0;
 }				/* getFieldFromBuffer */

@@ -130,6 +130,44 @@ static void js_kill(void)
 static char *effects;
 /* source file containing the js code */
 static const char *jsSourceFile;
+/* queue of edbrowse buffer changes produced by running js - see eb.h */
+struct listHead inputChangesPending = {
+	&inputChangesPending, &inputChangesPending
+};
+
+/* Javascript has changed an input field */
+static void javaSetsTagVar(jsobjtype v, const char *newtext)
+{
+	struct inputChange *ic;
+	struct htmlTag *t = tagFromJavaVar(v);
+	if (!t)
+		return;
+	if (t->itype == INP_HIDDEN || t->itype == INP_RADIO)
+		return;
+	if (t->itype == INP_TA) {
+		runningError(MSG_JSTextarea);
+		return;
+	}
+	ic = allocMem(sizeof(struct inputChange) + strlen(newtext));
+	ic->tagno = t->seqno;
+	ic->major = 'v';
+	strcpy(ic->value, newtext);
+	addToListBack(&inputChangesPending, ic);
+}				/* javaSetsTagVar */
+
+static void javaSetsInner(jsobjtype v, const char *newtext, char c)
+{
+	struct inputChange *ic;
+	struct htmlTag *t = tagFromJavaVar(v);
+	if (!t)
+		return;
+	ic = allocMem(sizeof(struct inputChange) + strlen(newtext));
+	ic->tagno = t->seqno;
+	ic->major = 'i';
+	ic->minor = c;
+	strcpy(ic->value, newtext);
+	addToListBack(&inputChangesPending, ic);
+}				/* javaSetsInner */
 
 /*********************************************************************
 Process the side effects of running js. These are:
@@ -228,6 +266,98 @@ static void processEffects(void)
 	free(effects);
 	effects = 0;
 }				/* processEffects */
+
+/*********************************************************************
+Update an input field in the current edbrowse buffer.
+This can be done for one of two reasons.
+First, the user has entered a value in the form, such as
+	i=foobar
+In this case fromForm will be set to true.
+I need to find the tag in the current buffer.
+He just modified it, so it ought to be there.
+If it isn't there, print an error and do nothing.
+The second case: the value has been changed by javascript.
+	form.questionnaire.subject.value = "foobar";
+Within this case we have 3 possibilities.
+1. The tag is found in the buffer, and the line can be updated as above.
+2. The tag is not there because the user has deleted the line that contained it.
+3. The tag is not there because it has not yet been folded into the buffer.
+This is particularly the case when the page is first parsed:
+javascript runs, sets some input fields to values, but the page
+hasn't been rendered yet. The edbrowse buffer is still empty.
+Unable to distinguish between 2 and 3, I just push the change
+onto a queue, so it will be applied later, after all the html is rendered.
+This queue is the linked list inputChangesPending. See eb.h.
+In fact, I will always push the change onto the queue,
+then apply the changes later. It is more uniform.
+This is the function javaSetsTagVar above, called from processEffects().
+With that in mind, updateFieldInBuffer should never be called before the
+initial html is rendered, i.e. before there is a buffer to scan.
+That leads to the last case, wherein this function is called
+because of the changes that are in the queue.
+This updates the text in the edbrowse buffer, as surely as fromForm.
+The new line replaces the old, but the old is not freed.
+This is because the old line will be freed by undoCompare(),
+when it is discovered in the undo window but not in the current window.
+See buffers.c for the undo details.
+But wait, what if the line is updated twice?
+That becomes a memory leak, and is also annoying in that you might get the
+message line 33 has been updated, twice.
+I deal with both these conditions via the jsup flag.
+I don't free the line, and do print a message,
+on the first js update,
+and do free the line, and don't print a message,
+on subsequent updates, if any.
+*********************************************************************/
+
+void
+updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
+{
+	int ln, idx, n, plen;
+	char *p, *s, *t, *new;
+	bool followup;
+
+	if (locateTagInBuffer(tagno, &ln, &p, &s, &t)) {
+		n = (plen = pstLength((pst) p)) + strlen(newtext) - (t - s);
+		new = allocMem(n);
+		memcpy(new, p, s - p);
+		strcpy(new + (s - p), newtext);
+		memcpy(new + strlen(new), t, plen - (t - p));
+		followup = false;
+		if (!cw->browseMode || cw->map[ln].jsup) {
+			followup = true;
+			free(cw->map[ln].text);
+		}
+		cw->map[ln].text = new;
+		cw->map[ln].jsup = true;
+		if (notify) {
+			if (fromForm)
+				displayLine(ln);
+			else if (!followup)
+				i_printf(MSG_LineUpdated, ln);
+		}
+		return;
+	}
+
+	if (fromForm)
+		i_printfExit(MSG_NoTagFound, tagno, newtext);
+}				/* updateFieldInBuffer */
+
+/* apply any input changes pending */
+void applyInputChanges(void)
+{
+	struct inputChange *ic;
+	foreach(ic, inputChangesPending) {
+		if (ic->major == 'x')
+			continue;
+		if (ic->major == 'v') {
+			updateFieldInBuffer(ic->tagno, ic->value, true, false);
+			continue;
+		}
+		printf("input change %c not yet implemented\n", ic->major);
+	}
+	freeList(&inputChangesPending);
+}				/* applyInputChanges */
 
 /* Read some data from the js process.
  * Close things down if there is any trouble from the read.
@@ -913,7 +1043,12 @@ int get_arraylength(jsobjtype a)
 	return head.n;
 }				/* get_arraylength */
 
-/* Everything beyond this point belongs in a dom file, perhaps not here. */
+/*********************************************************************
+Everything beyond this point is, perhaps, part of a DOM support layer
+above what has come before.
+Still, these are library-like routines that are used repeatedly
+by other files, particularly html.c.
+*********************************************************************/
 
 /* The object is a select-one field in the form, and this function returns
  * object.options[selectedIndex].value */

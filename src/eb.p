@@ -23,10 +23,7 @@ bool runCommand(const char *line) ;
 bool edbrowseCommand(const char *line, bool script) ;
 int sideBuffer(int cx, const char *text, int textlen, const char *bufname, bool autobrowse) ;
 bool browseCurrentBuffer(void) ;
-void updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm) ;
-void javaSetsTagVar(jsobjtype v, const char *newtext) ;
-void javaSetsInner(jsobjtype v, const char *newtext, char c);
-void applyInputChanges(void);
+bool locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p);
 char *getFieldFromBuffer(int tagno);
 int fieldIsChecked(int tagno);
 
@@ -49,6 +46,8 @@ bool ebConnect(void) ;
 int goSelect(int *startLine, char **rbuf) ;
 
 /* sourcefile=ebjs.c */
+void updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm) ;
+void applyInputChanges(void);
 void createJavaContext(void) ;
 void freeJavaContext(struct ebWindow *w) ;
 void js_shutdown(void) ;

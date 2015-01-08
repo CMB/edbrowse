@@ -278,6 +278,24 @@ struct listHead {
 (e) != (void*)&(l); \
 (e) = ((struct listHead *)e)->prev)
 
+/*********************************************************************
+a queue of input field values that have been changed by javascript.
+these are applied to the edbrowse buffer after js has run.
+Other changes can also accumulate in this queue, such as innerHTML.
+The major number indicates the change to be made.
+v = value in form, i is innerHTML or innerText (via minor),
+x is unspecified.
+*********************************************************************/
+
+struct inputChange {
+	struct inputChange *next, *prev;
+	int tagno;
+	char major, minor;
+	char filler1, filler2;
+	char value[4];
+};
+extern struct listHead inputChangesPending;
+
 /* A pointer to the text of a line, and other line attributes */
 struct lineMap {
 	pst text;
