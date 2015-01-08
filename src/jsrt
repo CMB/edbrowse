@@ -450,6 +450,7 @@ We'll get back to you if we like what you have to say.
 </textarea>
 <div id=album>
 </div>
+<DIV id=sphere>Surface area is 4&#960;r<span class=sup>2</span>.</DIV>
 <input type=button name=b value=calc onclick=calc(this.form)>
 <input type='text' readonly name='result' size='4'>
 <input type='reset' value='Reset' name='b0'>
@@ -519,7 +520,7 @@ if(document.getElementById("almond") != document.spans[0]) fail(111);
 if(document.getElementById("pecan") != document.tables[0].rows[1]) fail(112);
 if(document.getElementById("pecan").parentNode.className != "filbert") fail(115);
 if(document.all.tags("FORM")[0] != document.questionnaire) fail(113);
-if(document.all.tags("span").length != 1) fail(114);
+if(document.all.tags("span").length != 2) fail(114);
 
 n = 0;
 a = [29,31,37];
@@ -645,9 +646,12 @@ alert("times up!");
 document.writeln("<P>Some extra html at the end of the buffer.");
 }
 
-// test out the innerHTML feature
-albobj = document.getElementById("album");
-albobj.innerHTML = "Why don't we do it <A href=http://en.wikipedia.org/wiki/White_album>in the road</A>?";
+// test the innerHTML feature
+if(document.getElementById("sphere").innerHTML !=
+"Surface area is 4&#960;r<span class=sup>2</span>.")
+fail(145);
+document.getElementById("album").innerHTML =
+"Why don't we do it <A href=http://en.wikipedia.org/wiki/White_album>in the road</A>?";
 </script>
 
 </body>
