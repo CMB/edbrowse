@@ -4880,6 +4880,7 @@ bool browseCurrentBuffer(void)
 
 	if (bmode == 2) {
 		jSideEffects();
+		cw->dot = cw->dol;
 	}
 
 	cw->browseMode = true;
@@ -4920,6 +4921,39 @@ bool locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
 
 	return false;
 }				/* locateTagInBuffer */
+
+bool locateInvisibleAnchor(int tagno, int *ln_p, char **p_p, char **s_p,
+			   char **t_p)
+{
+	int ln, n;
+	char *p, *s, *t, c;
+	char search[20];
+
+	sprintf(search, "%c%d", InternalCodeChar, tagno);
+	n = strlen(search);
+	for (ln = 1; ln <= cw->dol; ++ln) {
+		p = (char *)fetchLine(ln, -1);
+		for (s = p; (c = *s) != '\n'; ++s) {
+			if (c != InternalCodeChar)
+				continue;
+			if (!memcmp(s, search, n))
+				break;
+		}
+		if (c == '\n')
+			continue;	/* not here, try next line */
+
+		for (t = s + 1; isdigitByte(*t); ++t) ;
+		if (*t != '*')
+			return false;
+		*ln_p = ln;
+		*p_p = p;
+		*s_p = s;
+		*t_p = t + 1;
+		return true;
+	}
+
+	return false;
+}				/* locateInvisibleAnchor */
 
 char *getFieldFromBuffer(int tagno)
 {

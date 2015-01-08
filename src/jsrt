@@ -448,7 +448,8 @@ Amount of objects to create <input type="text" id="fill_amount" name="fill_amoun
 Type your brilliant thoughts here.
 We'll get back to you if we like what you have to say.
 </textarea>
-<br>
+<div id=album>
+</div>
 <input type=button name=b value=calc onclick=calc(this.form)>
 <input type='text' readonly name='result' size='4'>
 <input type='reset' value='Reset' name='b0'>
@@ -644,6 +645,9 @@ alert("times up!");
 document.writeln("<P>Some extra html at the end of the buffer.");
 }
 
+// test out the innerHTML feature
+albobj = document.getElementById("album");
+albobj.innerHTML = "Why don't we do it <A href=http://en.wikipedia.org/wiki/White_album>in the road</A>?";
 </script>
 
 </body>

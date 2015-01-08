@@ -503,6 +503,8 @@ put1:
 
 		for (s = buf; c = *s; ++s) {
 			if (isspaceByte(c) || c == '|') {
+if(c == '\t' && !premode)
+*s = ' ';
 				if (!w)
 					w = s;
 				continue;

@@ -24,6 +24,7 @@ bool edbrowseCommand(const char *line, bool script) ;
 int sideBuffer(int cx, const char *text, int textlen, const char *bufname, bool autobrowse) ;
 bool browseCurrentBuffer(void) ;
 bool locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p);
+bool locateInvisibleAnchor(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p);
 char *getFieldFromBuffer(int tagno);
 int fieldIsChecked(int tagno);
 
