@@ -819,9 +819,10 @@ Expansion is performed by wordexp(3), simulating a posix shell.&nbsp;
 Meta characters such as | &amp; ' &lt; ; etc will derail the expansion, unless escaped by a backslash.&nbsp;
 This is confusing at first, but think of it this way:
 "If I want to expand a file name using variables or wild cards,
-a file name containing $ [] * ? or a leading ~/,
+i.e. a file name containing $ [] * ? or a leading ~/,
 I have to type it in as though I were typing at the shell."&nbsp;
 An example might be $phones/at\&amp;t.&nbsp;
+Even spaces must be escaped with backslash or put in quotes.&nbsp;
 Constructs such as ${foo}bar are supported,
 but command substitution $(/bin/ls) is not.&nbsp;
 You wouldn't want to accidentally run a command, just because you were trying

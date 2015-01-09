@@ -1052,7 +1052,7 @@ const char *nextScanFile(const char *base)
 	const char *s;
 	char *t;
 	int cnt;
-	static const char shellmeta[] = "\n|&;<>(){}\\#'\"~$*?";
+	static const char shellmeta[] = "\n\t |&;<>(){}\\#'\"~$*?";
 
 	if (!dirquoted) {
 		if (!base)
