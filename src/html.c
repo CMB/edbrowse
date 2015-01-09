@@ -673,17 +673,27 @@ Every js activity should start with jSyncup() and end with jSideEffects().
 
 void jSideEffects(void)
 {
-	int side;
 	char *post;
 	bool rc;
 	struct htmlTag *t;
 	jsobjtype v;
+	char *timers;
+	int timers_l;
+
+	timers = initString(&timers_l);
 
 top:
 /* Are there other scripts waiting to run? */
 /* Do this first, so other javascript side effects can pile up. */
 	scriptsPending();
 
+	if (preamble[0]) {
+/* This has to be timers or intervals. copy the string,
+ * as subsequent calls to encodeTags() will clear it. */
+		stringAndString(&timers, &timers_l, preamble);
+		nzFree(preamble);
+		preamble = initString(&preamble_l);
+	}
 	if (nextInnerHTML())
 		goto top;
 
@@ -707,7 +717,18 @@ top:
 		goto top;
 	}
 
+	if (timers_l) {
+/* New timers created. */
+		if (cw->browseMode)
+			i_printf(MSG_NewLines, cw->dol + 1);
+		post = htmlReformat(timers);
+		addTextToBuffer(post, strlen(post), cw->dol, false);
+		nzFree(post);
+		nzFree(timers);
+	}
+
 	rebuildSelectors();
+
 	applyInputChanges();
 
 	if (v = js_reset) {

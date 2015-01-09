@@ -242,50 +242,36 @@ Multiple Representations.
 A web form asks for your name, and you type in Fred Flintstone.
 This piece of data is part of your edbrowse buffer.
 In this sense it is merely text.
-You can make corrections with the substitute command,
-use the undo command to back up, etc.
+You can make corrections with the substitute command, etc.
 Yet it is also carried into the html tags in html.c,
 so that it can be sent when you push the submit button.
 This is a second copy of the data.
 As if that weren't bad enough, I now need a third copy for javascript.
 When js accesses form.fullname.value, it needs to find,
 and in some cases change, the text that you entered.
-I believe the first representation, in your editor, must be separate
-from the second and third (which I have managed to connect).
+These 3 representations are "separate but equal",
+there is a lot of software to keep them in sync.
 Remember that an input field could be an antire text area,
 i.e. the text in another editing session.
 When you are in that session, composing your thoughts,
 am I really going to take every textual change, every substitute,
 every delete, every insert, every undo,
 and map those changes over to the html tag that goes with this session,
-and the java variable that goes with this session?
+and the js variable that goes with this session?
 I don't think so!
 So I'm stuck with something almost as bad.
-As part of the browse command, the field data, whether set up by html
-or modified by javascript, must be copied into your editor text.
-Then you can change it to your heart's content, but when you submit the form,
-or run any javascript for any reason, all that text has to be carried
-back to the javascript world.
+When you submit the form, or run any javascript for any reason,
+all that text has to be carried into the javascript world.
 This is accomplished by jSyncup() in html.c.
-When javascript is done, any changes it has made to the fields have
+When js has run to completion, any changes it has made to the fields have
 to be mapped back to the editor, where you can see them.
-This is done by javaSetsTagVar() in buffers.c.
-
-You should really receive some alerts if fields
-have been changed out from under you.
-A sighted person would see the screen change, but you can't.
-You know that field says Fred Flintstone, that's what you typed
-in, but javascript has changed it to Barney Rubble, and you need
-to be notified.
-In some cases, edbrowse does this for you.
+This is done by jSideEffects() in html.c.
+In other words, any action that might in any way involve js
+must begin with jSyncup() and end with jSideEffects().
+The latter function notifies you if certain lines in the buffer have changed,
+e.g. js has changed one of the input fields out from under you.
 
 Line 357 has been updated.
-
-------------------------------------------------------------
-
-Yes, some of this code looks like it was written, well,
-in my spare time; and it was, because I needed this tool desperately.
-No careful methodology, just "Gitter Duhn".
 
 Along with some cleanup, and even some modest enhancements, edbrowse
 really needs a rewrite, at least with respect to browsing and javascript.
@@ -293,7 +279,7 @@ Today, it takes html text and tags, and builds
 javascript objects to go along with those tags; and it builds the screen,
 (I'll call it a screen, it's really a text buffer),
 in parallel, at the same time.
-But what it should do is not build the screen at all on the first pass.
+What it should do is not build the screen at all on the first pass.
 Words on the web page would simply be turned into a string
 and put in as an attribute in whatever object we are working on at the time,
 or the document object if no tag has appeared yet.
@@ -304,7 +290,6 @@ builds entirely new paragraphs, images, links, whatever it does.
 Then pass 3, render the screen by traversing the tree of objects
 depth first.
 That is your text buffer.
-
 Now, if anything changes, through some onclick code perhaps,
 you have a new tree of objects,
 so Simply rerender the screen.
@@ -320,7 +305,7 @@ If there are many changes, just say "entire buffer has changed".
 Anyways, this is the kind of rewrite that needs to happen.
 Think of this as version 4.1.
 
-The beginning of this new approach can bee seen in rebuildSelector() in ebjs.c.
+The beginning of this new approach can bee seen in rebuildSelectors() in ebjs.c.
 If javascript rebuilds a dropdown list of options, that is detected,
 and mapped back into html tags, and the user is notified.
 See jsrt states and colors for this feature.
@@ -338,4 +323,4 @@ or something along those lines.
 We have to implement all this in DOM JS eventually, so once this is done,
 why not take advantage of it.
 Version 4.3.
-
+Just some thoughts for the future.
