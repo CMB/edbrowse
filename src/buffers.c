@@ -5,7 +5,6 @@
 
 #include "eb.h"
 #include <netdb.h>
-#include <signal.h>
 
 /* If this include file is missing, you need the pcre package,
  * and the pcre-devel package. */
@@ -3097,6 +3096,13 @@ et_go:
 */
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(allowRedirection + MSG_RedirectionOff);
+		return true;
+	}
+
+	if (stringEqual(line, "bg")) {
+		down_bg ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(down_bg + MSG_DownForeground);
 		return true;
 	}
 

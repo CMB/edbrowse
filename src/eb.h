@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <string.h>
+#include <signal.h>
 #include <memory.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -212,6 +213,7 @@ extern int webTimeout, mailTimeout;
 extern int browseLine;		/* line number, for error reporting */
 extern bool sqlPresent;		/* Was edbrowse compiled with SQL built in? */
 extern bool ismc;		/* Is the program running as a mail client? */
+extern bool down_bg; /* download in background */
 extern int eb_lang;		/* edbrowse language, determined by $LANG */
 extern bool cons_utf8;		/* does the console expect utf8? */
 extern bool iuConvert;		/* perform iso utf8 conversions automatically */

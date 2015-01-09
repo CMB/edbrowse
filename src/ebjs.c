@@ -9,8 +9,6 @@
 
 #include "eb.h"
 
-#include <signal.h>
-
 /* If connection is lost, mark all js sessions as dead. */
 static void markAllDead(void)
 {

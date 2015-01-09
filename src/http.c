@@ -8,7 +8,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
-#include <signal.h>
 
 CURL *http_curl_handle = NULL;
 char *serverData;
@@ -17,9 +16,20 @@ static int down_fd;		/* downloading file descriptor */
 static const char *down_file;	/* downloading filename */
 static int down_pid;		/* pid of the downloading child process */
 static bool down_permitted;
-static int down_state;		/* states for ftp download */
+/* download states.
+ * -1 user aborted the download
+ * 0 in-memory download
+ * 1 download but stop and ask user if it looks binary
+* 2 disk download foreground
+* 3 disk download background parent
+* 4 disk download background child
+* 5 disk download background prefork */
+static int down_state;
+bool down_bg;			/* download in background */
+static int down_length;		/* how much data to disk so far */
 static int down_msg;
 static void background_download(void);
+static void setup_download(void);
 static char errorText[CURL_ERROR_SIZE + 1];
 static char *httpLanguage;
 
@@ -42,30 +52,38 @@ eb_curl_callback(char *incoming, size_t size, size_t nitems,
 	size_t num_bytes = nitems * size;
 	int dots1, dots2, rc;
 
-	if (down_state == 1 && down_permitted) {
+	if (down_state == 1) {
 /* state 1, first data block, ask the user */
-		down_state = 2;
-		background_download();
-		if (!down_file)
-			goto in_memory;
-/* get the parent out of the way */
-		if (down_pid)
+		setup_download();
+		if (down_state == 0)
+			goto showdots;
+		if (down_state == -1 || down_state == 5)
 			return -1;
 	}
 
-	if (down_file) {	/* downloading */
+	if (down_state == 2 || down_state == 4) {	/* to disk */
 		rc = write(down_fd, incoming, num_bytes);
-		if (rc == num_bytes)
-			return rc;
+		if (rc == num_bytes) {
+			if (down_state == 4)
+				return rc;
+			goto showdots;
+		}
+		if (down_state == 2) {
+			setError(MSG_NoWrite2, down_file);
+			return -1;
+		}
 		i_printf(MSG_NoWrite2, down_file);
 		printf(", ");
 		i_puts(MSG_DownAbort);
 		exit(1);
 	}
 
-in_memory:
+showdots:
 	dots1 = *(data->length) / CHUNKSIZE;
-	stringAndBytes(data->buffer, data->length, incoming, num_bytes);
+	if (down_state == 0)
+		stringAndBytes(data->buffer, data->length, incoming, num_bytes);
+	else
+		*(data->length) += num_bytes;
 	dots2 = *(data->length) / CHUNKSIZE;
 	if (dots1 < dots2) {
 		for (; dots1 < dots2; ++dots1)
@@ -454,7 +472,6 @@ bool httpConnect(const char *url, bool down_ok)
 	int redirect_count = 0;
 	bool name_changed = false;
 
-	down_permitted = down_ok;
 	urlcopy = NULL;
 	serverData = NULL;
 	serverDataLen = 0;
@@ -650,20 +667,28 @@ mimeProcess:
 		curl_easy_setopt(http_curl_handle, CURLOPT_SSLVERSION,
 				 ssl_version);
 		init_header_parser();
-down_state = 0;
+		down_state = 0;
+		down_file = NULL;
+		down_permitted = down_ok;
+		callback_data.length = &serverDataLen;
+
+perform:
 		curlret = curl_easy_perform(http_curl_handle);
 
-		if (down_file) {
+		if (down_state == 5) {
 /* user has directed a download of this file in the background. */
-			if (down_pid) {	/* parent */
+			background_download();
+			if (down_state == 4)
+				goto perform;
+		}
+
+		if (down_state == 3 || down_state == -1) {
 /* set this to null so we don't push a new buffer */
-				serverData = NULL;
-/* clear the download file in parent, so we can move on */
-				down_file = 0;
-				return false;
-			}
-/* child here, print success and exit */
-			close(down_fd);
+			serverData = NULL;
+			return false;
+		}
+
+		if (down_state == 4) {
 			if (curlret != CURLE_OK) {
 				ebcurl_setError(curlret, urlcopy);
 				showError();
@@ -673,8 +698,16 @@ down_state = 0;
 			exit(0);
 		}
 
-		if (serverDataLen >= CHUNKSIZE)
+		if (*(callback_data.length) >= CHUNKSIZE)
 			nl();	/* We printed dots, so we terminate them with newline */
+
+		if (down_state == 2) {
+			close(down_fd);
+			setError(MSG_DownSuccess);
+			serverData = NULL;
+			return false;
+		}
+
 		if (curlret == CURLE_SSL_CONNECT_ERROR) {
 /* all this would be unnecessary if curl sent the proper hello message */
 /* try the next version */
@@ -1069,17 +1102,52 @@ static bool ftpConnect(const char *url, const char *user, const char *pass)
 	if (!strchr(urlcopy + protLength, '/'))
 		stringAndChar(&urlcopy, &urlcopy_l, '/');
 
-	has_slash = urlcopy[urlcopy_l - 1] == '/';
-/* don't download a directory listing, we want to see that */
-	down_permitted = !has_slash;
-	down_file = NULL;	/* should already be null */
-	down_state = 1;		/* start in state 1 */
-down_msg = MSG_FTPDownload;
-
 	curlret = setCurlURL(http_curl_handle, urlcopy);
 	if (curlret != CURLE_OK)
 		goto ftp_transfer_fail;
+
+	has_slash = urlcopy[urlcopy_l - 1] == '/';
+/* don't download a directory listing, we want to see that */
+	down_state = (has_slash ? 0 : 1);
+	down_file = NULL;	/* should already be null */
+	down_msg = MSG_FTPDownload;
+	callback_data.length = &serverDataLen;
+
+perform:
 	curlret = curl_easy_perform(http_curl_handle);
+
+	if (down_state == 5) {
+/* user has directed a download of this file in the background. */
+		background_download();
+		if (down_state == 4)
+			goto perform;
+	}
+
+	if (down_state == 3 || down_state == -1) {
+/* set this to null so we don't push a new buffer */
+		serverData = NULL;
+		return false;
+	}
+
+	if (down_state == 4) {
+		if (curlret != CURLE_OK) {
+			ebcurl_setError(curlret, urlcopy);
+			showError();
+			exit(2);
+		}
+		i_puts(MSG_DownSuccess);
+		exit(0);
+	}
+
+	if (*(callback_data.length) >= CHUNKSIZE)
+		nl();		/* We printed dots, so we terminate them with newline */
+
+	if (down_state == 2) {
+		close(down_fd);
+		setError(MSG_DownSuccess);
+		serverData = NULL;
+		return false;
+	}
 
 /* Should we run this code on any error condition? */
 /* The SSH error pops up under sftp. */
@@ -1089,7 +1157,7 @@ down_msg = MSG_FTPDownload;
 			transfer_success = false;
 		else {		/* try appending a slash. */
 			stringAndChar(&urlcopy, &urlcopy_l, '/');
-			down_permitted = false;
+			down_state = 0;
 			curlret = setCurlURL(http_curl_handle, urlcopy);
 			if (curlret != CURLE_OK)
 				goto ftp_transfer_fail;
@@ -1109,31 +1177,7 @@ down_msg = MSG_FTPDownload;
 	} else
 		transfer_success = false;
 
-	if (serverDataLen >= CHUNKSIZE)
-		nl();		/* We printed dots, so we terminate them with newline */
-
 ftp_transfer_fail:
-	if (down_file) {
-/* user has directed a download of this file in the background. */
-		if (down_pid) {	/* parent */
-/* set this to null so we don't push a new buffer */
-			serverData = NULL;
-/* clear the download file in parent, so we can move on */
-			down_file = 0;
-			nzFree(urlcopy);
-			return false;
-		}
-/* child here, print success and exit */
-		close(down_fd);
-		if (curlret != CURLE_OK) {
-			ebcurl_setError(curlret, urlcopy);
-			showError();
-			exit(2);
-		}
-		i_puts(MSG_DownSuccess);
-		exit(0);
-	}
-
 	if (transfer_success == false) {
 		if (curlret != CURLE_OK)
 			ebcurl_setError(curlret, urlcopy);
@@ -1145,7 +1189,6 @@ ftp_transfer_fail:
 		changeFileName = urlcopy;
 	else
 		nzFree(urlcopy);
-	down_state = 0;
 
 	return transfer_success;
 }				/* ftpConnect */
@@ -1507,7 +1550,8 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb, void *unused)
 		}
 	}
 
-	if ((bytes_in_line > content_field_length) &&
+	if (down_state == 0 &&
+	    (bytes_in_line > content_field_length) &&
 	    memEqualCI(header_line, content_field, content_field_length)) {
 		const char *start = header_line + content_field_length;
 		while (start < last_pos && isspaceByte(*start))
@@ -1516,8 +1560,8 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb, void *unused)
 		    !memEqualCI(start, "text/", 5)) {
 /* Not text, see if the user wants to download in the background. */
 /* Set a variable, so it uses the ftp download mechanism. */
-down_state = 1;
-down_msg = MSG_Down;
+			down_state = 1;
+			down_msg = MSG_Down;
 		}
 	}
 
@@ -1563,27 +1607,30 @@ ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
 	return 0;
 }				/* ebcurl_debug_handler */
 
-static void background_download(void)
+/* At this point, down_state = 1 */
+static void setup_download(void)
 {
 	const char *filepart;
 	const char *answer;
 	int msg;
 
 /* if not run from a terminal then just return. */
-	if (!isatty(0))
+	if (!isatty(0)) {
+		down_state = 0;
 		return;
+	}
 
 	filepart = getFileURL(urlcopy, true);
 top:
 	answer = getFileName(down_msg, filepart, false, true);
 /* space for a filename means read into memory */
-	if (stringEqual(answer, " "))
+	if (stringEqual(answer, " ")) {
+		down_state = 0;	/* in memory download */
 		return;
+	}
 
 	if (stringEqual(answer, "x") || stringEqual(answer, "X")) {
-abort:
-		down_file = answer;
-		down_pid = 111;
+		down_state = -1;
 		setError(MSG_DownAbort);
 		return;
 	}
@@ -1600,19 +1647,33 @@ abort:
 		goto top;
 	}
 
-	down_pid = fork();
-	if (down_pid < 0)	/* should never happen */
-		goto abort;
-
 	down_file = answer;
+	down_state = (down_bg ? 5 : 2);
+	callback_data.length = &down_length;
+}				/* setup_download */
+
+/* At this point, down_state = 5 */
+static void background_download(void)
+{
+	down_pid = fork();
+	if (down_pid < 0) {	/* should never happen */
+		down_state = -1;
+/* perhaps a better error message here */
+		setError(MSG_DownAbort);
+		return;
+	}
+
 	if (down_pid) {		/* parent */
 		close(down_fd);
 /* the error message here isn't really an error, but a progress message */
 		setError(MSG_DownProgress);
-/* curl callback function will stop and unwind the stack */
+		down_state = 3;
 		return;
 	}
 
 /* child doesn't need javascript */
 	js_disconnect();
+/* ignore interrupt, not sure about quit and hangup */
+	signal(SIGINT, SIG_IGN);
+	down_state = 4;
 }				/* background_download */

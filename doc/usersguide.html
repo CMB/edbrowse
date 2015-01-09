@@ -595,6 +595,8 @@ bl: break line into sentences and phrases
 <br>
 bd: binary detection on files (toggle)
 <br>
+bg: download files in background (toggle)
+<br>
 rl: use readline() on input (toggle)
 <br>
 pb: play buffer (audio)
@@ -3036,7 +3038,10 @@ When prompted for the filename, hit return for the default file name,
 as provided by the website,
 enter x to abort,
 enter space to read the data into memory,
-or type a different file name if you wish.
+or type a different file name if you wish.&nbsp;
+The download takes place in real time, with progress dots,
+unless you have entered the bg command, in which case the download takes place in the background.&nbsp;
+You can continue to use edbrowse during large downloads.
 
 <P>
 linelength = 1000
