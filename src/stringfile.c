@@ -1182,7 +1182,8 @@ bool envFile(const char *line, const char **expanded, bool expect_file)
 	}
 
 /* quick check, nothing to do */
-	if (!strpbrk(line, "$[*?") && (line[0] != '~' || line[1] != '/')) {
+	if (!strpbrk(line, "$[*?") &&
+	    (line[0] != '~' || line[1] && line[1] != '/')) {
 		*expanded = line;
 		return true;
 	}
