@@ -17,7 +17,8 @@ static int down_fd;		/* downloading file descriptor */
 static const char *down_file;	/* downloading filename */
 static int down_pid;		/* pid of the downloading child process */
 static bool down_permitted;
-static int down_ftp;		/* states for ftp download */
+static int down_state;		/* states for ftp download */
+static int down_msg;
 static void background_download(void);
 static char errorText[CURL_ERROR_SIZE + 1];
 static char *httpLanguage;
@@ -41,9 +42,9 @@ eb_curl_callback(char *incoming, size_t size, size_t nitems,
 	size_t num_bytes = nitems * size;
 	int dots1, dots2, rc;
 
-	if (down_ftp == 1 && down_permitted) {
+	if (down_state == 1 && down_permitted) {
 /* state 1, first data block, ask the user */
-		down_ftp = 2;
+		down_state = 2;
 		background_download();
 		if (!down_file)
 			goto in_memory;
@@ -649,6 +650,7 @@ mimeProcess:
 		curl_easy_setopt(http_curl_handle, CURLOPT_SSLVERSION,
 				 ssl_version);
 		init_header_parser();
+down_state = 0;
 		curlret = curl_easy_perform(http_curl_handle);
 
 		if (down_file) {
@@ -1071,7 +1073,8 @@ static bool ftpConnect(const char *url, const char *user, const char *pass)
 /* don't download a directory listing, we want to see that */
 	down_permitted = !has_slash;
 	down_file = NULL;	/* should already be null */
-	down_ftp = 1;		/* start in state 1 */
+	down_state = 1;		/* start in state 1 */
+down_msg = MSG_FTPDownload;
 
 	curlret = setCurlURL(http_curl_handle, urlcopy);
 	if (curlret != CURLE_OK)
@@ -1142,7 +1145,7 @@ ftp_transfer_fail:
 		changeFileName = urlcopy;
 	else
 		nzFree(urlcopy);
-	down_ftp = 0;
+	down_state = 0;
 
 	return transfer_success;
 }				/* ftpConnect */
@@ -1512,14 +1515,9 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb, void *unused)
 		if (down_permitted && last_pos - start >= 5 &&
 		    !memEqualCI(start, "text/", 5)) {
 /* Not text, see if the user wants to download in the background. */
-/* If he does, down_file will become nonzero. */
-			background_download();
-/* Now how does the parent get out of this, safely, without destroying
- * the socket connection that the child now has with the web server?
- * Should I call setjmp? I hate doing that.
- * Will this unwind the stack properly? */
-			if (down_file && down_pid)
-				return -1;
+/* Set a variable, so it uses the ftp download mechanism. */
+down_state = 1;
+down_msg = MSG_Down;
 		}
 	}
 
@@ -1576,9 +1574,8 @@ static void background_download(void)
 		return;
 
 	filepart = getFileURL(urlcopy, true);
-	msg = (down_ftp ? MSG_FTPDownload : MSG_Down);
 top:
-	answer = getFileName(msg, filepart, false, true);
+	answer = getFileName(down_msg, filepart, false, true);
 /* space for a filename means read into memory */
 	if (stringEqual(answer, " "))
 		return;
