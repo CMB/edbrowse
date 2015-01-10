@@ -3042,7 +3042,11 @@ enter space to read the data into memory,
 or type a different file name if you wish.&nbsp;
 The download takes place in real time, with progress dots,
 unless you have entered the bg command, in which case the download takes place in the background.&nbsp;
-You can continue to use edbrowse during large downloads.
+You can continue to use edbrowse during large downloads.&nbsp;
+Warning: if you are downloading a file in the background, from a secure server
+(https, ftps, or sftp), edbrowse may produce a read error and abort the download if your openssl is earlier than version 1.0.1g.&nbsp;
+This is an ssl / fork interaction that I can't (easily) fix or circumvent.&nbsp;
+If this happens, type bg again and download in the foreground.
 
 <P>
 linelength = 1000
