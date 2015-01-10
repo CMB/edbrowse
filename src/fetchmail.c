@@ -531,7 +531,7 @@ nextpage:
 					printf("%c ",
 					       displine > cw->dol ? '?' : '*');
 					fflush(stdout);
-					key = getLetter("q? nwud");
+					key = getLetter((isimap ? "q? nwWuUasd" : "q? nwud"));
 					printf("\b\b\b");
 					fflush(stdout);
 
@@ -555,11 +555,13 @@ nextpage:
 						goto nextpage;
 
 					case '?':
-						i_puts(MSG_MailHelp);
+						i_puts(isimap ? MSG_ImapReadHelp : MSG_MailHelp);
 						continue;
 
 					case 'w':
+					case 'W':
 					case 'u':
+					case 'U':
 						break;
 
 					default:
