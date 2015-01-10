@@ -172,7 +172,7 @@ struct MACCOUNT {		/* pop3 account */
 	char *inurl, *outurl;
 	int inport, outport;
 	uchar inssl, outssl;
-	char nofetch;
+	bool nofetch, imap;
 };
 extern struct MACCOUNT accounts[];	/* all the email accounts */
 extern int maxAccount;		/* how many email accounts specified */
@@ -213,6 +213,7 @@ extern int webTimeout, mailTimeout;
 extern int browseLine;		/* line number, for error reporting */
 extern bool sqlPresent;		/* Was edbrowse compiled with SQL built in? */
 extern bool ismc;		/* Is the program running as a mail client? */
+extern bool isimap;		/* Is the program running as an imap client? */
 extern bool down_bg; /* download in background */
 extern int eb_lang;		/* edbrowse language, determined by $LANG */
 extern bool cons_utf8;		/* does the console expect utf8? */

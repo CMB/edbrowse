@@ -20,7 +20,7 @@ int jsPool = 32;
 int webTimeout = 20, mailTimeout = 0;
 char *sslCerts;
 int verifyCertificates = 1;
-bool ismc, browseLocal, passMail, errorExit;
+bool ismc, isimap, browseLocal, passMail, errorExit;
 bool isInteractive, inInput, listNA;
 volatile bool intFlag;
 int fileSize;
@@ -608,7 +608,12 @@ nokeyword:
 		}
 
 		if (stringEqual(s, "nofetch") && mailblock == 1) {
-			act->nofetch = 1;
+			act->nofetch = true;
+			continue;
+		}
+
+		if (stringEqual(s, "imap") && mailblock == 1) {
+			act->imap = act->nofetch = true;
 			continue;
 		}
 
