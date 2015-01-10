@@ -913,6 +913,7 @@ void ebClose(int n)
 {
 	dbClose();
 	js_shutdown();
+	curl_global_cleanup();
 	exit(n);
 }				/* ebClose */
 
