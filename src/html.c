@@ -834,7 +834,6 @@ static bool nextInnerText(void)
 	char *v;		/* short for ic->value */
 	int vlen;
 	struct htmlTag *t;
-	struct ebWindow *w;
 
 	foreach(ic, inputChangesPending) {
 		if (ic->major == 'i' && ic->minor == 't')
