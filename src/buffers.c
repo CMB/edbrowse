@@ -4696,8 +4696,7 @@ bool edbrowseCommand(const char *line, bool script)
 
 /* Take some text, usually empty, and put it in a side buffer. */
 int
-sideBuffer(int cx, const char *text, int textlen,
-	   const char *bufname, bool autobrowse)
+sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 {
 	int svcx = context;
 	bool rc;
@@ -4726,18 +4725,6 @@ sideBuffer(int cx, const char *text, int textlen,
 		rc = addTextToBuffer((pst) text, textlen, 0, true);
 		if (!rc)
 			i_printf(MSG_BufferPreload, cx);
-		if (autobrowse) {
-/* This is html; we need to render it.
- * I'm disabling javascript in this window.
- * Why?
- * Because this window is being created by javascript,
- * and if we call more javascript, well, I don't think
- * any of that code is reentrant.
- * Smells like a disaster in the making. */
-			allowJS = false;
-			browseCurrentBuffer();
-			allowJS = true;
-		}		/* browse the side window */
 	}
 	/* back to original context */
 	cxSwitch(svcx, false);

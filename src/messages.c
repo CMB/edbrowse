@@ -309,7 +309,7 @@ static const char *englishMessages[] = {
 	"multiple buttons present, please use %c1 through %c%d",
 	"could not read the data from the server",
 	"%s is not a url",
-	"download complete!",
+	"download complete",
 	"cannot identify %s on the network",
 	"the %s protocol is not supported by edbrowse, and is not included in the mime types in your config file",
 	"warning: could not preload <buffer %d> with its initial text\n",

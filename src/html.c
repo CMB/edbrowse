@@ -873,7 +873,7 @@ found:
 		return true;
 	if (cw->browseMode)
 		i_printf(MSG_BufferUpdated, side);
-	sideBuffer(side, v, vlen, 0, false);
+	sideBuffer(side, v, vlen, 0);
 
 	return true;
 }				/* nextInnerText */
@@ -1756,7 +1756,7 @@ nextchar:
 			}
 			ns[offset] = 0;
 			ns_l = offset;
-			j = sideBuffer(0, currentTA->value, -1, 0, false);
+			j = sideBuffer(0, currentTA->value, -1, 0);
 			if (j) {
 				currentTA->lic = j;
 				sprintf(hnum, "%c%d<buffer %d%c0>",
@@ -3122,7 +3122,7 @@ static void resetVar(struct htmlTag *t)
 	if (itype == INP_TA) {
 		int cx = t->lic;
 		if (cx)
-			sideBuffer(cx, t->value, -1, 0, false);
+			sideBuffer(cx, t->value, -1, 0);
 	} else if (itype != INP_HIDDEN && itype != INP_SELECT)
 		updateFieldInBuffer(t->seqno, w, 0, false);
 

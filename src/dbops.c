@@ -1071,8 +1071,7 @@ rowsIntoBuffer(int cid, const char *types, char **bufptr, int *lcnt)
 				u = strchr(u, '|') + 1;
 			v = strpbrk(u, "|\n");
 			end = v + strlen(v);
-			cx = sideBuffer(0, rv_blobLoc, rv_blobSize, 0,
-					false);
+			cx = sideBuffer(0, rv_blobLoc, rv_blobSize, 0);
 			nzFree(rv_blobLoc);
 			sprintf(myTab, "<%d>", cx);
 			if (!cx)

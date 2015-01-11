@@ -14,6 +14,7 @@ char *serverData;
 int serverDataLen;
 static int down_fd;		/* downloading file descriptor */
 static const char *down_file;	/* downloading filename */
+static const char *down_file2;	/* without download directory */
 static int down_pid;		/* pid of the downloading child process */
 static bool down_permitted;
 /* download states.
@@ -694,7 +695,8 @@ perform:
 				showError();
 				exit(2);
 			}
-			i_puts(MSG_DownSuccess);
+			i_printf(MSG_DownSuccess);
+			printf(": %s\n", down_file2);
 			exit(0);
 		}
 
@@ -1135,7 +1137,8 @@ perform:
 			showError();
 			exit(2);
 		}
-		i_puts(MSG_DownSuccess);
+		i_printf(MSG_DownSuccess);
+		printf(": %s\n", down_file2);
 		exit(0);
 	}
 
@@ -1647,7 +1650,15 @@ top:
 		goto top;
 	}
 
-	down_file = answer;
+	down_file = down_file2 = answer;
+	if (downDir) {
+		int l = strlen(downDir);
+		if (!strncmp(down_file2, downDir, l)) {
+			down_file2 += l;
+			if (down_file2[0] == '/')
+				++down_file2;
+		}
+	}
 	down_state = (down_bg ? 5 : 2);
 	callback_data.length = &down_length;
 }				/* setup_download */
