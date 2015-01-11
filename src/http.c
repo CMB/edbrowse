@@ -5,8 +5,7 @@
 
 #include "eb.h"
 
-#include <unistd.h>
-#include <fcntl.h>
+#include <wait.h>
 #include <time.h>
 
 CURL *http_curl_handle = NULL;
@@ -29,6 +28,15 @@ static int down_state;
 bool down_bg;			/* download in background */
 static int down_length;		/* how much data to disk so far */
 static int down_msg;
+struct BG_JOB {
+	struct BG_JOB *next, *prev;
+	int pid, state;
+	char file[4];
+};
+struct listHead down_jobs = {
+	&down_jobs, &down_jobs
+};
+
 static void background_download(void);
 static void setup_download(void);
 static char errorText[CURL_ERROR_SIZE + 1];
@@ -1675,10 +1683,19 @@ static void background_download(void)
 	}
 
 	if (down_pid) {		/* parent */
+		struct BG_JOB *job;
 		close(down_fd);
 /* the error message here isn't really an error, but a progress message */
 		setError(MSG_DownProgress);
 		down_state = 3;
+
+/* push job onto the list, for tracking and display */
+		job = allocMem(sizeof(struct BG_JOB) + strlen(down_file2));
+		job->pid = down_pid;
+		job->state = 4;
+		strcpy(job->file, down_file2);
+		addToListBack(&down_jobs, job);
+
 		return;
 	}
 
@@ -1688,3 +1705,71 @@ static void background_download(void)
 	signal(SIGINT, SIG_IGN);
 	down_state = 4;
 }				/* background_download */
+
+void bg_jobs(void)
+{
+	bool present = false, part;
+	struct BG_JOB *j;
+	int pid, status;
+
+/* gather exit status of background jobs */
+	foreach(j, down_jobs) {
+		if (j->state != 4)
+			continue;
+		pid = waitpid(j->pid, &status, WNOHANG);
+		if (!pid)
+			continue;
+		j->state = -1;
+		if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
+			j->state = 0;
+	}
+
+/* three passes */
+/* in progress */
+	part = false;
+	foreach(j, down_jobs) {
+		if (j->state != 4)
+			continue;
+		if (!part) {
+			i_printf(MSG_InProgress);
+			puts(" {");
+			part = present = true;
+		}
+		puts(j->file);
+	}
+	if (part)
+		puts("}");
+
+/* complete */
+	part = false;
+	foreach(j, down_jobs) {
+		if (j->state != 0)
+			continue;
+		if (!part) {
+			i_printf(MSG_Complete);
+			puts(" {");
+			part = present = true;
+		}
+		puts(j->file);
+	}
+	if (part)
+		puts("}");
+
+/* failed */
+	part = false;
+	foreach(j, down_jobs) {
+		if (j->state != -1)
+			continue;
+		if (!part) {
+			i_printf(MSG_Failed);
+			puts(" {");
+			part = present = true;
+		}
+		puts(j->file);
+	}
+	if (part)
+		puts("}");
+
+	if (!present)
+		i_puts(MSG_Empty);
+}				/* bg_jobs */

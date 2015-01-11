@@ -3106,6 +3106,11 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "bgl")) {
+		bg_jobs();
+		return true;
+	}
+
 	if (stringEqual(line, "iu")) {
 		iuConvert ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
@@ -4695,8 +4700,7 @@ bool edbrowseCommand(const char *line, bool script)
 }				/* edbrowseCommand */
 
 /* Take some text, usually empty, and put it in a side buffer. */
-int
-sideBuffer(int cx, const char *text, int textlen, const char *bufname)
+int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 {
 	int svcx = context;
 	bool rc;
