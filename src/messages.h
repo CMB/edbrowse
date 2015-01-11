@@ -332,7 +332,7 @@ enum {
 	MSG_FTPTransfer,
 	MSG_FTPTransferTime,
 	MSG_InProgress,
-	MSG_NotUsed335,
+	MSG_Stop,
 	MSG_FTPBadURL,
 	MSG_NotUsed337,
 	MSG_NotUsed338,

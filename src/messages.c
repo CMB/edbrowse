@@ -332,7 +332,7 @@ static const char *englishMessages[] = {
 	"ftp transfer failed",
 	"ftp transfer failed (timed out)",
 	"in progress",
-	0,
+	"stop",
 	"ftp malformed url",
 	0,
 	0,
