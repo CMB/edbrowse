@@ -412,9 +412,11 @@ int fetchAllMail(void)
 	return nfetch;
 }				/* fetchAllMail */
 
+static void presentMail(void);
+
 void scanMail(void)
 {
-	int nmsgs, m, j, k;
+	int nmsgs, m;
 
 	if (!isInteractive)
 		i_printfExit(MSG_FetchNotBackgnd);
@@ -442,30 +444,8 @@ void scanMail(void)
 	loadAddressBook();
 
 	for (m = 1; m <= nmsgs; ++m) {
-		const char *redirect = 0;	/* send mail elsewhere */
-		char key;
-		const char *atname;	/* name of attachment */
-		bool delflag = false;	/* delete this mail */
-		int displine;
-		int stashNumber = -1;
-
-/* We need to clear out the editor, from the last message,
- * then read in this one, in its entirety.
- * This is probably a waste, since the user might delete a megabyte message
- * after seeing only the first paragraph, or even the subject,
- * but as for programming, it's easier to read the whole thing in right now. */
-
-		if (lastMailInfo)
-			freeMailInfo(lastMailInfo);
-		lastMailInfo = 0;
 		nzFree(lastMailText);
 		lastMailText = 0;
-
-		if (sessionList[1].lw)
-			cxQuit(1, 2);
-		cs = 0;
-		cxSwitch(1, false);
-
 /* Now grab the entire message */
 		unreadStats();
 		sprintf(umf_end, "%d", unreadMin);
@@ -473,146 +453,169 @@ void scanMail(void)
 			showErrorAbort();
 		unreadBase = unreadMin;
 
-		iuReformat(mailstring, mailstring_l, &mailu8, &mailu8_l);
+		presentMail();
+	}			/* loop over mail messages */
 
-		if (mailu8) {
-			if (!addTextToBuffer((pst) mailu8, mailu8_l, 0, false))
-				showErrorAbort();
-		} else {
-			if (!addTextToBuffer
-			    ((pst) mailstring, mailstring_l, 0, false))
-				showErrorAbort();
-		}
+	exit(0);
+}				/* scanMail */
 
-		browseCurrentBuffer();
+/* a mail message is in mailstring, present it to the user */
+static void presentMail(void)
+{
+	int j, k;
+	const char *redirect = 0;	/* send mail elsewhere */
+	char key;
+	const char *atname;	/* name of attachment */
+	bool delflag = false;	/* delete this mail */
+	int displine;
+	int stashNumber = -1;
 
-		if (!passMail) {
-			redirect = mailRedirect(lastMailInfo->to,
-						lastMailInfo->from,
-						lastMailInfo->reply,
-						lastMailInfo->subject);
-		}
+/* clear things out from the last message */
+	if (lastMailInfo)
+		freeMailInfo(lastMailInfo);
+	lastMailInfo = 0;
 
-		if (redirect) {
-			delflag = true;
-			key = 'w';
-			if (*redirect == '-')
-				++redirect, key = 'u';
-			if (stringEqual(redirect, "x"))
-				i_puts(MSG_Junk);
-			else
-				printf("> %s\n", redirect);
-		}
+	if (sessionList[1].lw)
+		cxQuit(1, 2);
+	cs = 0;
+	cxSwitch(1, false);
+
+	iuReformat(mailstring, mailstring_l, &mailu8, &mailu8_l);
+	if (mailu8) {
+		if (!addTextToBuffer((pst) mailu8, mailu8_l, 0, false))
+			showErrorAbort();
+	} else {
+		if (!addTextToBuffer((pst) mailstring, mailstring_l, 0, false))
+			showErrorAbort();
+	}
+
+	browseCurrentBuffer();
+
+	if (!passMail) {
+		redirect = mailRedirect(lastMailInfo->to,
+					lastMailInfo->from,
+					lastMailInfo->reply,
+					lastMailInfo->subject);
+	}
+
+	if (redirect) {
+		delflag = true;
+		key = 'w';
+		if (*redirect == '-')
+			++redirect, key = 'u';
+		if (stringEqual(redirect, "x"))
+			i_puts(MSG_Junk);
+		else
+			printf("> %s\n", redirect);
+	}
 
 /* display the next page of mail and get a command from the keyboard */
-		displine = 1;
-		while (true) {
-			if (!delflag) {	/* show next page */
+	displine = 1;
+	while (true) {
+		if (!delflag) {	/* show next page */
 nextpage:
-				if (displine <= cw->dol) {
-					for (j = 0;
-					     j < 20 && displine <= cw->dol;
-					     ++j, ++displine) {
-						char *showline =
-						    (char *)fetchLine(displine,
-								      1);
-						k = pstLength((pst) showline);
-						showline[--k] = 0;
-						printf("%s\n", showline);
-						nzFree(showline);
-					}
+			if (displine <= cw->dol) {
+				for (j = 0;
+				     j < 20 && displine <= cw->dol;
+				     ++j, ++displine) {
+					char *showline =
+					    (char *)fetchLine(displine,
+							      1);
+					k = pstLength((pst) showline);
+					showline[--k] = 0;
+					printf("%s\n", showline);
+					nzFree(showline);
 				}
 			}
+		}
 
 /* get key command */
-			while (true) {
-				if (!delflag) {
+		while (true) {
+			if (!delflag) {
 /* interactive prompt depends on whether there is more text or not */
-					printf("%c ",
-					       displine > cw->dol ? '?' : '*');
-					fflush(stdout);
-					key = getLetter((isimap ? "q? nwWuUasd" : "q? nwud"));
-					printf("\b\b\b");
-					fflush(stdout);
+				printf("%c ", displine > cw->dol ? '?' : '*');
+				fflush(stdout);
+				key =
+				    getLetter((isimap ? "q? nwWuUasd" :
+					       "q? nwud"));
+				printf("\b\b\b");
+				fflush(stdout);
 
-					switch (key) {
-					case 'q':
-						i_puts(MSG_Quit);
-						exit(0);
+				switch (key) {
+				case 'q':
+					i_puts(MSG_Quit);
+					exit(0);
 
-					case 'n':
-						i_puts(MSG_Next);
-						goto afterinput;
+				case 'n':
+					i_puts(MSG_Next);
+					goto afterinput;
 
-					case 'd':
-						i_puts(MSG_Delete);
-						delflag = true;
-						goto afterinput;
+				case 'd':
+					i_puts(MSG_Delete);
+					delflag = true;
+					goto afterinput;
 
-					case ' ':
-						if (displine > cw->dol)
-							i_puts(MSG_EndMessage);
-						goto nextpage;
+				case ' ':
+					if (displine > cw->dol)
+						i_puts(MSG_EndMessage);
+					goto nextpage;
 
-					case '?':
-						i_puts(isimap ? MSG_ImapReadHelp : MSG_MailHelp);
-						continue;
+				case '?':
+					i_puts(isimap ? MSG_ImapReadHelp :
+					       MSG_MailHelp);
+					continue;
 
-					case 'w':
-					case 'W':
-					case 'u':
-					case 'U':
-						break;
+				case 'w':
+				case 'W':
+				case 'u':
+				case 'U':
+					break;
 
-					default:
-						i_puts(MSG_NYI);
-						continue;
-					}	/* switch */
-				}
+				default:
+					i_puts(MSG_NYI);
+					continue;
+				}	/* switch */
+			}
 
-				/* At this point we're saving the mail somewhere. */
-				delflag = true;
-				atname = redirect;
+			/* At this point we're saving the mail somewhere. */
+			delflag = true;
+			atname = redirect;
 
 savemail:
-				if (!atname)
-					atname =
-					    getFileName(MSG_FileName, 0, false,
-							false);
-				if (!stringEqual(atname, "x")) {
-					char exists =
-					    fileTypeByName(atname, false);
-					int fsize;	/* file size */
-					int fh = open(atname,
-						      O_WRONLY | O_TEXT |
-						      O_CREAT | O_APPEND,
-						      0666);
-					if (fh < 0) {
-						i_printf(MSG_NoCreate, atname);
+			if (!atname)
+				atname =
+				    getFileName(MSG_FileName, 0, false, false);
+			if (!stringEqual(atname, "x")) {
+				char exists = fileTypeByName(atname, false);
+				int fsize;	/* file size */
+				int fh = open(atname,
+					      O_WRONLY | O_TEXT |
+					      O_CREAT | O_APPEND,
+					      0666);
+				if (fh < 0) {
+					i_printf(MSG_NoCreate, atname);
+					goto savemail;
+				}
+				if (exists)
+					write(fh,
+					      "======================================================================\n",
+					      71);
+				if (key == 'u') {
+					if (write
+					    (fh, mailstring,
+					     mailstring_l) < mailstring_l) {
+badsave:
+						i_printf(MSG_NoWrite, atname);
+						close(fh);
 						goto savemail;
 					}
-					if (exists)
-						write(fh,
-						      "======================================================================\n",
-						      71);
-					if (key == 'u') {
-						if (write
-						    (fh, mailstring,
-						     mailstring_l) <
-						    mailstring_l) {
-badsave:
-							i_printf(MSG_NoWrite,
-								 atname);
-							close(fh);
-							goto savemail;
-						}
-						close(fh);
-						fsize = mailstring_l;
-					} else {
+					close(fh);
+					fsize = mailstring_l;
+				} else {
 
-						if (mailStash) {
-							char *rmf;	/* raw mail file */
-							int rmfh;	/* file handle to same */
+					if (mailStash) {
+						char *rmf;	/* raw mail file */
+						int rmfh;	/* file handle to same */
 /* I want a fairly easy filename, in case I want to go look at the original.
  * Not a 30 character message ID that I am forced to cut&paste.
  * 4 or 5 digits would be nice.
@@ -622,110 +625,97 @@ badsave:
  * It's good to have a cron job empty the trash early Sunday morning.
 */
 
-							k = strlen(mailStash);
-							rmf = allocMem(k + 12);
+						k = strlen(mailStash);
+						rmf = allocMem(k + 12);
 /* Try 20 times, then give up. */
-							for (j = 0; j < 20; ++j) {
-								int rn = rand() % 100000;	/* random number */
-								sprintf(rmf,
-									"%s/%05d",
-									mailStash,
-									rn);
-								if (fileTypeByName(rmf, false))
-									continue;
+						for (j = 0; j < 20; ++j) {
+							int rn = rand() % 100000;	/* random number */
+							sprintf(rmf,
+								"%s/%05d",
+								mailStash, rn);
+							if (fileTypeByName
+							    (rmf, false))
+								continue;
 /* dump the original mail into the file */
-								rmfh =
-								    open(rmf,
-									 O_WRONLY
-									 |
-									 O_TEXT
-									 |
-									 O_CREAT
-									 |
-									 O_APPEND,
-									 0666);
-								if (rmfh < 0)
-									break;
-								if (write
-								    (rmfh,
-								     mailstring,
-								     mailstring_l)
-								    <
-								    mailstring_l)
-								{
-									close
-									    (rmfh);
-									unlink
-									    (rmf);
-									break;
-								}
+							rmfh =
+							    open(rmf,
+								 O_WRONLY
+								 |
+								 O_TEXT
+								 |
+								 O_CREAT
+								 |
+								 O_APPEND,
+								 0666);
+							if (rmfh < 0)
+								break;
+							if (write
+							    (rmfh,
+							     mailstring,
+							     mailstring_l)
+							    < mailstring_l) {
 								close(rmfh);
-/* written successfully, remember the stash number */
-								stashNumber =
-								    rn;
+								unlink(rmf);
 								break;
 							}
+							close(rmfh);
+/* written successfully, remember the stash number */
+							stashNumber = rn;
+							break;
 						}
+					}
 
-						fsize = 0;
-						for (j = 1; j <= cw->dol; ++j) {
-							char *showline =
-							    (char *)fetchLine(j,
-									      1);
-							int len =
-							    pstLength((pst)
-								      showline);
-							if (write
-							    (fh, showline,
-							     len) < len)
-								goto badsave;
-							nzFree(showline);
-							fsize += len;
-						}	/* loop over lines */
+					fsize = 0;
+					for (j = 1; j <= cw->dol; ++j) {
+						char *showline =
+						    (char *)fetchLine(j,
+								      1);
+						int len = pstLength((pst)
+								    showline);
+						if (write
+						    (fh, showline, len) < len)
+							goto badsave;
+						nzFree(showline);
+						fsize += len;
+					}	/* loop over lines */
 
-						if (stashNumber >= 0) {
-							char addstash[60];
-							sprintf(addstash,
-								"\nUnformatted %05d\n",
-								stashNumber);
-							k = strlen(addstash);
-							if (write
-							    (fh, addstash,
-							     k) < k)
-								goto badsave;
-							fsize += k;
-						}
+					if (stashNumber >= 0) {
+						char addstash[60];
+						sprintf(addstash,
+							"\nUnformatted %05d\n",
+							stashNumber);
+						k = strlen(addstash);
+						if (write(fh, addstash, k) < k)
+							goto badsave;
+						fsize += k;
+					}
 
-						close(fh);
+					close(fh);
 
-						if (nattach)
-							writeAttachments
-							    (lastMailInfo);
-					}	/* unformat or format */
+					if (nattach)
+						writeAttachments(lastMailInfo);
+				}	/* unformat or format */
 
 /* print "mail saved" message */
-					i_printf(MSG_MailSaved, fsize);
-					if (exists)
-						i_printf(MSG_Appended);
-					nl();
-				}	/* saving to a real file */
-				goto afterinput;
+				i_printf(MSG_MailSaved, fsize);
+				if (exists)
+					i_printf(MSG_Appended);
+				nl();
+			}	/* saving to a real file */
+			goto afterinput;
 
-			}	/* key commands */
-		}		/* paging through the message */
+		}		/* key commands */
+	}			/* paging through the message */
 
 afterinput:
-		if (delflag)
-			unlink(umf);
+	if (delflag)
+		unlink(umf);
 
-		nzFree(mailstring);
-		mailstring = 0;
-		nzFree(mailu8);
-		mailu8 = 0;
-	}			/* loop over mail messages */
-
-	exit(0);
-}				/* scanMail */
+	nzFree(mailstring);
+	mailstring = 0;
+	nzFree(mailu8);
+	mailu8 = 0;
+}				/* presentMail */
 
 /* Here are the common keywords for mail header lines.
  * These are in alphabetical order, so you can stick more in as you find them.
