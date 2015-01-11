@@ -1654,13 +1654,13 @@ setter_innerText(JSContext * cx, JS::HandleObject obj,
 		 JS::MutableHandle < jsval > vp)
 {
 	const char *s = stringize(vp);
-	if (s && strlen(s)) {
-		effects += "i{t";	// }
-		effects += s;
-		if (s[strlen(s) - 1] != '\n')
-			effects += '\n';
-		endeffect();
-	}
+	if (!s)
+		s = emptyString;
+	effects += "i{t";	// }
+	effects += pointer2string(obj);
+	effects += '|';
+	effects += s;
+	endeffect();
 	return JS_TRUE;
 }				/* setter_innerText */
 

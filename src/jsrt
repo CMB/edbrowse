@@ -263,6 +263,12 @@ if (l > 2000) {
 alert("You cant go over Limit of 2000 Characters!");
 }
     }
+
+function newwords() {
+var b = document.forms[0].body;
+b.innerText = "Why don't you write me I'm out in the jungle I'm lonely to hear you.\nSend me a card I've been waiting so hard to be near you.\n";
+}
+
 </script>
 
 <noscript>
@@ -453,6 +459,7 @@ We'll get back to you if we like what you have to say.
 <DIV id=sphere>Surface area is 4&#960;r<span class=sup>2</span>.</DIV>
 <input type=button name=b value=calc onclick=calc(this.form)>
 <input type='text' readonly name='result' size='4'>
+<input type=button name=rw value=rewrite onclick=newwords()>
 <input type='reset' value='Reset' name='b0'>
 <input type='submit' value='Send Message' name='b1'
 onclick="alert('rock and roll')">

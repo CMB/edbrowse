@@ -89,7 +89,7 @@ enum {
 	MSG_ErrorMessageLong,
 	MSG_LineX,
 	MSG_BrowseError,
-	MSG_NoSideBuffer,
+	MSG_BufferUpdated,
 	MSG_NoOptions,
 	MSG_FormReset,
 	MSG_FormSubmit,

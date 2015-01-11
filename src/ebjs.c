@@ -539,7 +539,7 @@ void createJavaContext(void)
 
 	js_start();
 
-	debugPrint(5, "> create context for session %d", cs - sessionList);
+	debugPrint(5, "> create context for session %d", context);
 
 	memset(&head, 0, sizeof(head));
 	head.cmd = EJ_CMD_CREATE;
@@ -575,7 +575,7 @@ void freeJavaContext(struct ebWindow *w)
 	if (!w->winobj)
 		return;
 
-	debugPrint(5, "> free context session %d", cs - sessionList);
+	debugPrint(5, "> free context session %d", context);
 
 	head.magic = EJ_MAGIC;
 	head.cmd = EJ_CMD_DESTROY;

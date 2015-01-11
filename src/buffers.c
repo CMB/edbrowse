@@ -424,7 +424,7 @@ static void freeLine(struct lineMap *t)
 	free(t->text);
 }				/* freeLine */
 
-static void freeWindowLines(struct lineMap *map)
+void freeWindowLines(struct lineMap *map)
 {
 	struct lineMap *t;
 	int cnt = 0;
