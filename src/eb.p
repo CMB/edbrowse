@@ -10,7 +10,6 @@ int currentBufferSize(void) ;
 void displayLine(int n) ;
 void initializeReadline(void) ;
 pst inputLine(void) ;
-void freeWindowLines(struct lineMap *map);
 bool cxCompare(int cx) ;
 bool cxActive(int cx) ;
 bool cxQuit(int cx, int action) ;

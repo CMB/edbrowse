@@ -858,37 +858,23 @@ found:
 		return true;
 	}
 
-/* 3 parts: innerText copies over to input->value
- * if js has not already done that, the text becomes the new t->value
- * in the html tag, and the text replaces what was in the side buffer. */
+/* 2 parts: innerText copies over to input->value
+ * if js has not already done that,
+ * and the text replaces what was in the side buffer. */
 
 	v = ic->value;
 	vlen = strlen(v);
 	if (isJSAlive && t->jv)
 		set_property_string(t->jv, "valueue", v);
 
-	nzFree(t->value);
-	t->value = cloneString(v);
-
 	side = t->lic;
 	if (side <= 0 || side >= MAXSESSION || side == context)
 		return true;
-	w = sessionList[side].lw;
-	if (!w)
+	if (sessionList[side].lw == NULL)
 		return true;
-
 	if (cw->browseMode)
 		i_printf(MSG_BufferUpdated, side);
-	freeWindowLines(w->map);
-	w->dot = w->dol = 0;
-	memset(w->labels, 0, sizeof(w->labels));
-	w->map = allocZeroMem(sizeof(struct lineMap) * 2);
-	if (vlen) {
-		int svcx = context;	/* save the context */
-		cxSwitch(side, false);
-		addTextToBuffer((pst) v, vlen, 0, true);
-		cxSwitch(svcx, false);
-	}
+	sideBuffer(side, v, vlen, 0, false);
 
 	return true;
 }				/* nextInnerText */
