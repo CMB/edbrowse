@@ -13,6 +13,7 @@
 #  Le compte suivant est is -m2, et ainsi de suite.
 
 mail {
+nofetch
 #  Le serveur pop3 et le serveur smtp, pas forcément identiques.
 inserver = mail.comcast.net
 outserver = smtp.comcast.net
@@ -47,6 +48,7 @@ reply = eklhad@comcast.net
 #  je teste de temps en temps, évidemment avec sa permission
 
 mail {
+nofetch
 inserver = mail.comcast.net
 outserver = smtp.comcast.net
 login = kdwife
@@ -70,39 +72,14 @@ reply = karl.dahlke@my-work-domain.com
 }
 
 
-#  les mails qui viennent de mes autres sites web
-#  on commence par le site consacré aux maths
-
 mail {
-inserver = mail.comcast.net
-outserver = mail.comcast.net
+inserver = pop.gmail.com
+outserver = smtp.gmail.com
+secure
 login = eklhad
-password = zebra
+password = rhinoceros
 from = Karl Dahlke
-#  tout le courrier adressé à MathReference email m'est ré-expédié.
-reply = webmaster@mathreference.com
-}
-
-mail {
-inserver = mail.comcast.net
-outserver = mail.comcast.net
-login = eklhad
-password = zebra
-#  mon épouse et moi gérons ensemble ce site.
-from = Karl and Wendy Dahlke
-reply = webmaster@scrapsayings.com
-}
-
-#  un compte mail associé à mon domaine privé, indépendant de mon FAI
-#  il est redirigé par mon FAI
-
-mail {
-inserver = mail.comcast.net
-outserver = mail.comcast.net
-login = eklhad
-password = zebra
-from = Karl Dahlke
-reply = eklhad@comcast.net
+reply = eklhad@gmail.com
 }
 
 # -----------------------------------------------------------------------

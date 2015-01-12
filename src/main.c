@@ -612,6 +612,11 @@ nokeyword:
 			continue;
 		}
 
+		if (stringEqual(s, "secure") && mailblock == 1) {
+			act->secure = true;
+			continue;
+		}
+
 		if (stringEqual(s, "imap") && mailblock == 1) {
 			act->imap = act->nofetch = true;
 			continue;
@@ -633,10 +638,17 @@ nokeyword:
 					i_printfExit(MSG_ERBC_NoFrom, ln);
 				if (!act->reply)
 					i_printfExit(MSG_ERBC_NoReply, ln);
+				if (act->secure)
+					act->inssl = act->outssl = 1;
 				if (!act->inport)
-					act->inport = (act->imap ? 220 : 110);
+					if (act->secure)
+						act->inport =
+						    (act->imap ? 993 : 995);
+					else
+						act->inport =
+						    (act->imap ? 220 : 110);
 				if (!act->outport)
-					act->outport = 25;
+					act->outport = (act->secure ? 465 : 25);
 				continue;
 			}
 

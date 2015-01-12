@@ -3129,6 +3129,15 @@ and traffic is not flowing across the internet;
 but the server still wants to make sure you are you.
 
 <P>
+secure
+
+<P>
+Incoming and outgoing connections are secure.&nbsp;
+This effectively puts stars in front of the port numbers, if ports are specified.&nbsp;
+If ports are not specified, the defaults change to reflect the secure connections.&nbsp;
+Default pop3s is 995 and default smtps is 465.
+
+<P>
 nofetch
 <P>
 Do not fetch mail from this account through the -f option.
@@ -3413,8 +3422,7 @@ Here is a typical configuration for Google's gmail.
 <P><PRE><font size=3 face=Arial,Helvetica,sans-serif>mail {
   inserver = pop.gmail.com
   outserver = smtp.gmail.com
-  inport = *995
-  outport = *465
+  secure
 #  Google also supports outport = ^587
   login = somebody@gmail.com
   password = secret

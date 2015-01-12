@@ -172,7 +172,7 @@ struct MACCOUNT {		/* pop3 account */
 	char *inurl, *outurl;
 	int inport, outport;
 	uchar inssl, outssl;
-	bool nofetch, imap;
+	bool nofetch, imap, secure;
 };
 extern struct MACCOUNT accounts[];	/* all the email accounts */
 extern int maxAccount;		/* how many email accounts specified */

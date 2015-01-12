@@ -64,37 +64,11 @@ from = Karl Dahlke
 reply = karl.dahlke@my-work-domain.com
 }
 
-#  Mail that looks like it came from my other web sites.
-#  Let's start with the math site.
-mail {
-nofetch
-inserver = mail.comcast.net
-outserver = mail.comcast.net
-login = eklhad
-password = zebra
-from = Karl Dahlke
-#  All MathReference email is forwarded to me.
-reply = webmaster@mathreference.com
-}
-
-mail {
-nofetch
-inserver = mail.comcast.net
-outserver = mail.comcast.net
-login = eklhad
-password = zebra
-#  My wife and I work on this site together.
-from = Karl and Wendy Dahlke
-reply = webmaster@scrapsayings.com
-}
-
 #  a gmail account, most people have one of these now adays.
 mail {
 inserver = pop.gmail.com
 outserver = smtp.gmail.com
-#  This is for secure email over ssl
-inport = *995
-outport = *465
+secure
 login = eklhad
 password = rhinoceros
 from = Karl Dahlke
