@@ -634,7 +634,7 @@ nokeyword:
 				if (!act->reply)
 					i_printfExit(MSG_ERBC_NoReply, ln);
 				if (!act->inport)
-					act->inport = 110;
+					act->inport = (act->imap ? 220 : 110);
 				if (!act->outport)
 					act->outport = 25;
 				continue;
