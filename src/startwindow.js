@@ -98,7 +98,7 @@ switch(s.toLowerCase()) {
 case "anchor": c = new Anchor(); document.anchors.push(c); return c;
 case "image": case "img": c = new Image(); document.images.push(c); return c;
 case "script": c = new Script(); document.scripts.push(c); return c;
-case "div": c = new Div(); document.divs.push(c); return c;
+case "div": c = new Div(); d.style = new Object; document.divs.push(c); return c;
 default:
 /* alert("createElement default " + s); */
 return new Object();
