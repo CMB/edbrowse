@@ -238,7 +238,7 @@ static const struct tagInfo elements[] = {
 	{"SAMP", "a block of sample text", TAGACT_NOP, 3, 0, 0},
 	{"ADDRESS", "an address block", TAGACT_NOP, 3, 1, 0},
 	{"STYLE", "a style block", TAGACT_NOP, 0, 0, 2},
-	{"SCRIPT", "a script", TAGACT_SCRIPT, 0, 0, 1},
+	{"SCRIPT", "a script", TAGACT_SCRIPT, 0, 0, 9},
 	{"NOSCRIPT", "no script section", TAGACT_NOP, 3, 0, 3},
 	{"NOFRAMES", "no frames section", TAGACT_NOP, 3, 0, 3},
 	{"EMBED", "embedded html", TAGACT_MUSIC, 0, 0, 5},
