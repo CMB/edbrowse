@@ -1331,12 +1331,12 @@ static void docCookie(jsobjtype d)
  * and methods that are base for client side DOM. */
 void setupJavaDom(void)
 {
-	jsobjtype w = cw->winobj;
-	jsobjtype d;		/* document object */
-	jsobjtype nav;		/* navigator object */
-	jsobjtype navpi;	/* navigator plugins */
-	jsobjtype navmt;	/* navigator mime types */
-	jsobjtype hist;		/* history object */
+	jsobjtype w = cw->winobj;	// window object
+	jsobjtype d = cw->docobj;	// document object
+	jsobjtype nav;		// navigator object
+	jsobjtype navpi;	// navigator plugins
+	jsobjtype navmt;	// navigator mime types
+	jsobjtype hist;		// history object
 	struct MIMETYPE *mt;
 	struct utsname ubuf;
 	int i;
@@ -1352,11 +1352,7 @@ void setupJavaDom(void)
 	set_property_object(w, "parent", w);
 	set_property_object(w, "top", w);
 
-/* time to create window.document */
-	d = instantiate(w, "document", "Document");
-	if (d == NULL)
-		return;
-
+/* document attributes */
 	set_property_string(d, "cookie", 0);
 	set_property_string(d, "referrer", cw->referrer);
 	instantiate_url(d, "URL", cw->fileName);
