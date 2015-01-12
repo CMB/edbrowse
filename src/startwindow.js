@@ -95,10 +95,10 @@ return document.all.tags(s);
 document.createElement = function(s) { 
 var c;
 switch(s.toLowerCase()) { 
-case "anchor": c = new Anchor(); document.anchors.push(c); return c;
-case "image": case "img": c = new Image(); document.images.push(c); return c;
-case "script": c = new Script(); document.scripts.push(c); return c;
-case "div": c = new Div(); d.style = new Object; document.divs.push(c); return c;
+case "a": c = new Anchor(); return c;
+case "image": case "img": c = new Image(); return c;
+case "script": c = new Script(); return c;
+case "div": c = new Div(); d.style = new Object; return c;
 default:
 /* alert("createElement default " + s); */
 return new Object();
@@ -205,6 +205,9 @@ Element.prototype.addEventListener = window.addEventListener;
 Element.prototype.attachEvent = window.attachEvent;
 Anchor.prototype.addEventListener = window.addEventListener;
 Anchor.prototype.attachEvent = window.attachEvent;
+
+/* an array in an html document uses appendchild like push */
+Array.prototype.appendChild = function(child) { this.push(child); }
 
 /* navigator; some parameters are filled in by the buildstartwindow script. */
 navigator.appName = "edbrowse";
