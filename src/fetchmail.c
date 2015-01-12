@@ -412,7 +412,7 @@ int fetchAllMail(void)
 	return nfetch;
 }				/* fetchAllMail */
 
-static bool presentMail(void);
+static int presentMail(void);
 
 void scanMail(void)
 {
@@ -453,16 +453,17 @@ void scanMail(void)
 			showErrorAbort();
 		unreadBase = unreadMin;
 
-		presentMail();
+		if (presentMail() == 1)
+			unlink(umf);
 	}			/* loop over mail messages */
 
 	exit(0);
 }				/* scanMail */
 
 /* a mail message is in mailstring, present it to the user */
-/* Return true unless the user asks to stop, which is only meaningful in imap. */
-/* Perhaps the user wants to look at mails in another folder etc. */
-static bool presentMail(void)
+/* Return 0 for ok, 1 to delete the mail, -1 to stop.
+ * stop is only meaningful for imap. */
+static int presentMail(void)
 {
 	int j, k;
 	const char *redirect = 0;	/* send mail elsewhere */
@@ -700,15 +701,16 @@ attachOnly:
 	nl();
 
 afterinput:
-	if (delflag)
-		unlink(umf);
-
 	nzFree(mailstring);
 	mailstring = 0;
 	nzFree(mailu8);
 	mailu8 = 0;
 
-	return (key != 's');
+	if (delflag)
+		return 1;
+	if (key == 's')
+		return -1;
+	return 0;
 }				/* presentMail */
 
 /* Here are the common keywords for mail header lines.
