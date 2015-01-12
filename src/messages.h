@@ -334,7 +334,7 @@ enum {
 	MSG_InProgress,
 	MSG_Stop,
 	MSG_FTPBadURL,
-	MSG_NotUsed337,
+	MSG_NoAttachments,
 	MSG_NotUsed338,
 	MSG_NotUsed339,
 	MSG_FTPSession,

@@ -469,6 +469,7 @@ static bool presentMail(void)
 	char key = 0;
 	const char *atname;	/* name of attachment */
 	bool delflag = false;	/* delete this mail */
+	bool scanat = false;	/* scan for attachments */
 	int displine;
 	int stashNumber = -1;
 
@@ -513,205 +514,190 @@ static bool presentMail(void)
 
 /* display the next page of mail and get a command from the keyboard */
 	displine = 1;
-	while (true) {
-		if (!delflag) {	/* show next page */
-nextpage:
-			if (displine <= cw->dol) {
-				for (j = 0;
-				     j < 20 && displine <= cw->dol;
-				     ++j, ++displine) {
-					char *showline =
-					    (char *)fetchLine(displine,
-							      1);
-					k = pstLength((pst) showline);
-					showline[--k] = 0;
-					printf("%s\n", showline);
-					nzFree(showline);
+paging:
+	if (!delflag) {		/* show next page */
+		if (displine <= cw->dol) {
+			for (j = 0; j < 20 && displine <= cw->dol;
+			     ++j, ++displine) {
+				char *showline = (char *)fetchLine(displine, 1);
+				k = pstLength((pst) showline);
+				showline[--k] = 0;
+				printf("%s\n", showline);
+				nzFree(showline);
+			}
+		}
+	}
+
+/* get key command from user */
+key_command:
+	if (delflag)
+		goto writeMail;
+
+/* interactive prompt depends on whether there is more text or not */
+	printf("%c ", displine > cw->dol ? '?' : '*');
+	fflush(stdout);
+	key = getLetter((isimap ? "q? nwWuUasd" : "q? nwud"));
+	printf("\b\b\b");
+	fflush(stdout);
+
+	switch (key) {
+	case 'q':
+		i_puts(MSG_Quit);
+		exit(0);
+
+	case 'n':
+		i_puts(MSG_Next);
+		goto afterinput;
+
+	case 's':
+		i_puts(MSG_Stop);
+		goto afterinput;
+
+	case 'd':
+		i_puts(MSG_Delete);
+		delflag = true;
+		goto afterinput;
+
+	case ' ':
+		if (displine > cw->dol)
+			i_puts(MSG_EndMessage);
+		goto paging;
+
+	case '?':
+		i_puts(isimap ? MSG_ImapReadHelp : MSG_MailHelp);
+		goto key_command;
+
+	case 'a':
+		key = 'w';	/* this will scan attachments */
+		scanat = true;
+
+	case 'w':
+	case 'W':
+	case 'u':
+	case 'U':
+		break;
+
+	default:
+		i_puts(MSG_NYI);
+		goto key_command;
+	}			/* switch */
+
+/* At this point we're saving the mail somewhere. */
+writeMail:
+	if (!isimap || isupper(key))
+		delflag = true;
+	atname = redirect;
+
+	if (scanat)
+		goto attachOnly;
+
+saveMail:
+	if (!atname)
+		atname = getFileName(MSG_FileName, 0, false, false);
+	if (stringEqual(atname, "x"))
+		goto afterinput;
+
+	char exists = fileTypeByName(atname, false);
+	int fsize;		/* file size */
+	int fh = open(atname, O_WRONLY | O_TEXT | O_CREAT | O_APPEND, 0666);
+	if (fh < 0) {
+		i_printf(MSG_NoCreate, atname);
+		goto saveMail;
+	}
+	if (exists)
+		write(fh,
+		      "======================================================================\n",
+		      71);
+	if (key == 'u') {
+		if (write(fh, mailstring, mailstring_l) < mailstring_l) {
+badsave:
+			i_printf(MSG_NoWrite, atname);
+			close(fh);
+			goto saveMail;
+		}
+		close(fh);
+		fsize = mailstring_l;
+	} else {
+
+/* key = w, write the file - if pop then save the original unformatted */
+		if (!isimap && mailStash) {
+			char *rmf;	/* raw mail file */
+			int rmfh;	/* file handle to same */
+/* I want a fairly easy filename, in case I want to go look at the original.
+* Not a 30 character message ID that I am forced to cut&paste.
+* 4 or 5 digits would be nice.
+* So the filename looks like /home/foo/.Trash/rawmail/36921
+* I pick the digits randomly.
+* Please don't accumulate 100,000 emails before you empty your trash.
+* It's good to have a cron job empty the trash early Sunday morning.
+*/
+
+			k = strlen(mailStash);
+			rmf = allocMem(k + 12);
+/* Try 20 times, then give up. */
+			for (j = 0; j < 20; ++j) {
+				int rn = rand() % 100000;	/* random number */
+				sprintf(rmf, "%s/%05d", mailStash, rn);
+				if (fileTypeByName(rmf, false))
+					continue;
+/* dump the original mail into the file */
+				rmfh =
+				    open(rmf,
+					 O_WRONLY | O_TEXT | O_CREAT | O_APPEND,
+					 0666);
+				if (rmfh < 0)
+					break;
+				if (write(rmfh, mailstring, mailstring_l) <
+				    mailstring_l) {
+					close(rmfh);
+					unlink(rmf);
+					break;
 				}
+				close(rmfh);
+/* written successfully, remember the stash number */
+				stashNumber = rn;
+				break;
 			}
 		}
 
-/* get key command */
-		while (true) {
-			if (!delflag) {
-/* interactive prompt depends on whether there is more text or not */
-				printf("%c ", displine > cw->dol ? '?' : '*');
-				fflush(stdout);
-				key =
-				    getLetter((isimap ? "q? nwWuUasd" :
-					       "q? nwud"));
-				printf("\b\b\b");
-				fflush(stdout);
+		fsize = 0;
+		for (j = 1; j <= cw->dol; ++j) {
+			char *showline = (char *)fetchLine(j,
+							   1);
+			int len = pstLength((pst)
+					    showline);
+			if (write(fh, showline, len) < len)
+				goto badsave;
+			nzFree(showline);
+			fsize += len;
+		}		/* loop over lines */
 
-				switch (key) {
-				case 'q':
-					i_puts(MSG_Quit);
-					exit(0);
+		if (stashNumber >= 0) {
+			char addstash[60];
+			sprintf(addstash, "\nUnformatted %05d\n", stashNumber);
+			k = strlen(addstash);
+			if (write(fh, addstash, k) < k)
+				goto badsave;
+			fsize += k;
+		}
 
-				case 'n':
-					i_puts(MSG_Next);
-					goto afterinput;
+		close(fh);
 
-				case 's':
-					i_puts(MSG_Stop);
-					goto afterinput;
+attachOnly:
 
-				case 'd':
-					i_puts(MSG_Delete);
-					delflag = true;
-					goto afterinput;
+		if (nattach)
+			writeAttachments(lastMailInfo);
+		else if (scanat)
+			i_puts(MSG_NoAttachments);
+	}			/* unformat or format */
 
-				case ' ':
-					if (displine > cw->dol)
-						i_puts(MSG_EndMessage);
-					goto nextpage;
-
-				case '?':
-					i_puts(isimap ? MSG_ImapReadHelp :
-					       MSG_MailHelp);
-					continue;
-
-				case 'w':
-				case 'W':
-				case 'u':
-				case 'U':
-					break;
-
-				default:
-					i_puts(MSG_NYI);
-					continue;
-				}	/* switch */
-			}
-
-			/* At this point we're saving the mail somewhere. */
-			delflag = true;
-			atname = redirect;
-
-savemail:
-			if (!atname)
-				atname =
-				    getFileName(MSG_FileName, 0, false, false);
-			if (!stringEqual(atname, "x")) {
-				char exists = fileTypeByName(atname, false);
-				int fsize;	/* file size */
-				int fh = open(atname,
-					      O_WRONLY | O_TEXT |
-					      O_CREAT | O_APPEND,
-					      0666);
-				if (fh < 0) {
-					i_printf(MSG_NoCreate, atname);
-					goto savemail;
-				}
-				if (exists)
-					write(fh,
-					      "======================================================================\n",
-					      71);
-				if (key == 'u') {
-					if (write
-					    (fh, mailstring,
-					     mailstring_l) < mailstring_l) {
-badsave:
-						i_printf(MSG_NoWrite, atname);
-						close(fh);
-						goto savemail;
-					}
-					close(fh);
-					fsize = mailstring_l;
-				} else {
-
-					if (mailStash) {
-						char *rmf;	/* raw mail file */
-						int rmfh;	/* file handle to same */
-/* I want a fairly easy filename, in case I want to go look at the original.
- * Not a 30 character message ID that I am forced to cut&paste.
- * 4 or 5 digits would be nice.
- * So the filename looks like /home/foo/.Trash/rawmail/36921
- * I pick the digits randomly.
- * Please don't accumulate 100,000 emails before you empty your trash.
- * It's good to have a cron job empty the trash early Sunday morning.
-*/
-
-						k = strlen(mailStash);
-						rmf = allocMem(k + 12);
-/* Try 20 times, then give up. */
-						for (j = 0; j < 20; ++j) {
-							int rn = rand() % 100000;	/* random number */
-							sprintf(rmf,
-								"%s/%05d",
-								mailStash, rn);
-							if (fileTypeByName
-							    (rmf, false))
-								continue;
-/* dump the original mail into the file */
-							rmfh =
-							    open(rmf,
-								 O_WRONLY
-								 |
-								 O_TEXT
-								 |
-								 O_CREAT
-								 |
-								 O_APPEND,
-								 0666);
-							if (rmfh < 0)
-								break;
-							if (write
-							    (rmfh,
-							     mailstring,
-							     mailstring_l)
-							    < mailstring_l) {
-								close(rmfh);
-								unlink(rmf);
-								break;
-							}
-							close(rmfh);
-/* written successfully, remember the stash number */
-							stashNumber = rn;
-							break;
-						}
-					}
-
-					fsize = 0;
-					for (j = 1; j <= cw->dol; ++j) {
-						char *showline =
-						    (char *)fetchLine(j,
-								      1);
-						int len = pstLength((pst)
-								    showline);
-						if (write
-						    (fh, showline, len) < len)
-							goto badsave;
-						nzFree(showline);
-						fsize += len;
-					}	/* loop over lines */
-
-					if (stashNumber >= 0) {
-						char addstash[60];
-						sprintf(addstash,
-							"\nUnformatted %05d\n",
-							stashNumber);
-						k = strlen(addstash);
-						if (write(fh, addstash, k) < k)
-							goto badsave;
-						fsize += k;
-					}
-
-					close(fh);
-
-					if (nattach)
-						writeAttachments(lastMailInfo);
-				}	/* unformat or format */
-
+	if (scanat)
+		goto afterinput;
 /* print "mail saved" message */
-				i_printf(MSG_MailSaved, fsize);
-				if (exists)
-					i_printf(MSG_Appended);
-				nl();
-			}	/* saving to a real file */
-			goto afterinput;
-
-		}		/* key commands */
-	}			/* paging through the message */
+	i_printf(MSG_MailSaved, fsize);
+	if (exists)
+		i_printf(MSG_Appended);
+	nl();
 
 afterinput:
 	if (delflag)

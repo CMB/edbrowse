@@ -334,7 +334,7 @@ static const char *englishMessages[] = {
 	"in progress",
 	"stop",
 	"ftp malformed url",
-	0,
+	"no attachments",
 	0,
 	0,
 	"ftp session initialization failed",
