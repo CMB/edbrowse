@@ -208,6 +208,15 @@ Anchor.prototype.attachEvent = window.attachEvent;
 
 /* an array in an html document uses appendchild like push */
 Array.prototype.appendChild = function(child) { this.push(child); }
+/* insertBefore maps to splice, but we have to find the element. */
+/* This prototype assumes all elements are objects. */
+Array.prototype.insertBefore = function(newobj, item) {
+for(var i=0; i<this.length; ++i)
+if(this[i] == item) {
+this.splice(i-1, 0, newobj);
+return;
+}
+}
 
 /* navigator; some parameters are filled in by the buildstartwindow script. */
 navigator.appName = "edbrowse";
