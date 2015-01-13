@@ -9,6 +9,8 @@
 
 #include "eb.h"
 
+#include <stdarg.h>
+
 /* If connection is lost, mark all js sessions as dead. */
 static void markAllDead(void)
 {
@@ -1008,21 +1010,44 @@ int set_property_function(jsobjtype parent, const char *name, const char *body)
 /* should this really return the function created, like instantiate()? */
 }				/* set_property_function */
 
-static int run_function(jsobjtype obj, const char *name)
+/* call javascript function with arguments, but all args must be objects */
+static int run_function(jsobjtype obj, const char *name, int argc,
+			const jsobjtype * argv)
 {
+	int rc;
 	propval = 0;		/* should already be 0 */
 	if (!allowJS || !cw->winobj || !obj)
 		return -1;
 
-	debugPrint(5, "> call %s()", name);
+	debugPrint(5, "> call %s(%d)", name, argc);
+
+	if (argc) {
+		int i, l;
+		char oval[20];
+		propval = initString(&l);
+		for (i = 0; i < argc; ++i) {
+			sprintf(oval, "%p|", argv[i]);
+			stringAndString(&propval, &l, oval);
+		}
+	}
 
 	head.cmd = EJ_CMD_CALL;
 	head.n = strlen(name);
 	head.obj = obj;
+	head.proplength = 0;
+	if (propval)
+		head.proplength = strlen(propval);
 	if (writeHeader())
 		return -1;
 	if (writeToJS(name, head.n))
 		return -1;
+	if (propval) {
+		rc = writeToJS(propval, head.proplength);
+		nzFree(propval);
+		propval = 0;
+		if (rc)
+			return -1;
+	}
 	if (readMessage())
 		return -1;
 	ack5();
@@ -1651,10 +1676,10 @@ void handlerSet(jsobjtype ev, const char *name, const char *code)
 	nzFree(newcode);
 }				/* handlerSet */
 
-/* function should return an object */
+/* run a function with no args that returns an object */
 jsobjtype run_function_object(jsobjtype obj, const char *name)
 {
-	run_function(obj, name);
+	run_function(obj, name, 0, NULL);
 	if (!propval)
 		return NULL;
 	if (head.proptype == EJ_PROP_OBJECT || head.proptype == EJ_PROP_ARRAY) {
@@ -1668,10 +1693,10 @@ jsobjtype run_function_object(jsobjtype obj, const char *name)
 	return NULL;
 }				/* run_function_object */
 
-/* function should return a boolean */
+/* run a function with no args that returns a boolean */
 bool run_function_bool(jsobjtype obj, const char *name)
 {
-	run_function(obj, name);
+	run_function(obj, name, 0, NULL);
 	if (!propval)
 		return false;
 	if (head.proptype == EJ_PROP_BOOL) {
@@ -1683,6 +1708,30 @@ bool run_function_bool(jsobjtype obj, const char *name)
 	nzFree(propval);
 	return false;
 }				/* run_function_bool */
+
+void run_function_objargs(jsobjtype obj, const char *name, int nargs, ...)
+{
+/* lazy, limit of 20 args */
+	jsobjtype argv[20];
+	int i;
+	va_list p;
+
+	if (nargs > 20) {
+		puts("more than 20 args to a javascript function");
+		return;
+	}
+
+	va_start(p, nargs);
+	for (i = 0; i < nargs; ++i)
+		argv[i] = va_arg(p, jsobjtype);
+	va_end(p);
+
+	run_function(obj, name, nargs, argv);
+
+/* return is thrown away; this is a void function */
+	nzFree(propval);
+	propval = 0;
+}				/* run_function_objargs */
 
 jsobjtype establish_js_option(jsobjtype obj, int idx)
 {

@@ -82,6 +82,7 @@ void rebuildSelectors(void);
 void handlerSet(jsobjtype ev, const char *name, const char *code);
 jsobjtype run_function_object(jsobjtype obj, const char *name);
 bool run_function_bool(jsobjtype obj, const char *name);
+void run_function_objargs(jsobjtype obj, const char *name, int nargs, ...);
 jsobjtype establish_js_option(jsobjtype obj, int idx);
 void establish_inner(jsobjtype obj, const char *start, const char *end, bool isText);
 

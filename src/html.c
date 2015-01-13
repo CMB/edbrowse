@@ -1287,6 +1287,9 @@ void makeParentNode(const struct htmlTag *t)
 
 	debugPrint(5, "parent %s > %s", t->info->name, v->info->name);
 	set_property_object(t->jv, "parentNode", v->jv);
+
+/* and make t the next child of the parent, using the appendChild function */
+	run_function_objargs(v->jv, "appendChild", 1, t->jv);
 }				/* makeParentNode */
 
 struct htmlTag *newTag(const char *name)

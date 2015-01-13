@@ -729,7 +729,9 @@ static void readMessage(void)
 			membername = readString(head.n);
 	}
 
-	if (cmd == EJ_CMD_SETPROP || cmd == EJ_CMD_SETAREL) {
+/* property in function call is | separated list of object args */
+	if (cmd == EJ_CMD_SETPROP || cmd == EJ_CMD_SETAREL ||
+	    cmd == EJ_CMD_CALL) {
 		proptype = head.proptype;
 		if (head.proplength)
 			propval = readString(head.proplength);
@@ -2556,9 +2558,14 @@ set_array_element_object(JS::HandleObject parent, int idx,
 	}
 }				/* set_array_element_object */
 
-/* run a javascript function and return the result.
- * If the result is an object then the pointer, as a string, is returned.
- * The string is always allocated, you must free it. */
+/*********************************************************************
+run a javascript function and return the result.
+If the result is an object then the pointer, as a string, is returned.
+The string is always allocated, you must free it.
+At entry, propval, if nonzero, is a | separated list of arguments
+to the function, assuming all args are objects.
+*********************************************************************/
+
 static char *run_function(JS::HandleObject parent, const char *name)
 {
 	js::RootedValue v(jcx);
@@ -2568,9 +2575,35 @@ static char *run_function(JS::HandleObject parent, const char *name)
 
 	proptype = EJ_PROP_NONE;
 	JS_HasProperty(jcx, parent, name, &found);
-	if (!found)
+	if (!found) {
+		nzFree(propval);
+		propval = 0;
 		return NULL;
-	rc = JS_CallFunctionName(jcx, parent, name, 0, emptyArgs, v.address());
+	}
+
+	if (!propval) {
+		rc = JS_CallFunctionName(jcx, parent, name, 0, emptyArgs,
+					 v.address());
+	} else {
+		int argc = 0;
+/* lazy, a hard limit of 20 arguments */
+		jsval argv[20 + 1];
+		const char *t;
+		JSObject *o;
+		for (s = propval; *s; s = t) {
+			if (argc == 20)
+				break;
+			t = strchr(s, '|') + 1;
+			o = string2pointer(s);
+			argv[argc++] = OBJECT_TO_JSVAL(o);
+		}
+		argv[argc] = jsval();
+		nzFree(propval);
+		propval = 0;
+		rc = JS_CallFunctionName(jcx, parent, name, argc, argv,
+					 v.address());
+	}
+
 	if (!rc)
 		return NULL;
 	proptype = val_proptype(v);
