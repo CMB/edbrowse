@@ -1205,6 +1205,8 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 			io = instantiate(owner, membername, classname);
 			if (io == NULL)
 				return;
+/* not an array; needs the $kids$ array beneath it for the children */
+			instantiate_array(io, "$kids$");
 		}
 
 		if (membername == symname) {

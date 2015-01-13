@@ -9,7 +9,6 @@ Please take advantage of this machinery and put functions here,
 even prototypes and getter / setter support functions,
 whenever it makes sense to do so.
 The classes are created first, so that you can write meaningful prototypes here.
-see URL.prototype below.
 *********************************************************************/
 
 /* Some visual attributes of the window.
@@ -95,14 +94,29 @@ return document.all.tags(s);
 document.createElement = function(s) { 
 var c;
 switch(s.toLowerCase()) { 
-case "a": c = new Anchor(); return c;
-case "image": case "img": c = new Image(); return c;
-case "script": c = new Script(); return c;
-case "div": c = new Div(); d.style = new Object; return c;
+case "a":
+c = new Anchor();
+document.anchors.push(c);
+break;
+case "image":
+case "img":
+c = new Image();
+document.images.push(c);
+break;
+case "script":
+c = new Script();
+document.scripts.push(c);
+break;
+case "div":
+c = new Div();
+d.style = new Object;
+document.divs.push(c);
+break;
 default:
 /* alert("createElement default " + s); */
-return new Object();
+c = new Object();
 } 
+return c;
 } 
 
 /* window.open is the same as new window, just pass the args through */
@@ -143,7 +157,6 @@ Later on we will bind it to document and to other elements via
 element.addEventListener = addEventListener
 Or maybe URL.prototype.addEventListener = addEventListener
 to cover all the hyperlinks in one go.
-All this is very experimental and mostly not activated yet.
 first arg is a string like click, second arg is a js handler,
 Third arg is not used cause I don't understand it.
 *********************************************************************/
@@ -217,6 +230,15 @@ this.splice(i-1, 0, newobj);
 return;
 }
 }
+
+/* Of course most of the html objects are not arrays. */
+/* Still they need appendChild and insertBefore */
+Body.prototype.appendChild = function(o) { this.$kids$.appendChild(o); }
+Body.prototype.insertBefore = function(o, b) { this.$kids$.insertBefore(o, b); }
+Head.prototype.appendChild = function(o) { this.$kids$.appendChild(o); }
+Head.prototype.insertBefore = function(o, b) { this.$kids$.insertBefore(o, b); }
+Form.prototype.appendChild = function(o) { this.$kids$.appendChild(o); }
+Form.prototype.insertBefore = function(o, b) { this.$kids$.insertBefore(o, b); }
 
 /* navigator; some parameters are filled in by the buildstartwindow script. */
 navigator.appName = "edbrowse";

@@ -635,7 +635,6 @@ else alert("ok, never mind");
 function formLoad(name) { onlv++; alert("form " + name + " loading");
 var s = document.createElement("script");
 s.data = "lastScript()";
-document.scripts.appendChild(s);
 }
 function formUnload(name) { alert("form " + name + " unloading"); }
 function docLoad() { alert("doc loader attached"); }
