@@ -466,9 +466,9 @@ void scanMail(void)
 static int presentMail(void)
 {
 	int j, k;
-	const char *redirect = 0;	/* send mail elsewhere */
+	const char *redirect = NULL;	/* send mail elsewhere */
 	char key = 0;
-	const char *atname;	/* name of attachment */
+	const char *atname = NULL;	/* name of file or attachment */
 	bool delflag = false;	/* delete this mail */
 	bool scanat = false;	/* scan for attachments */
 	int displine;
@@ -503,14 +503,21 @@ static int presentMail(void)
 	}
 
 	if (redirect) {
-		delflag = true;
-		key = 'w';
-		if (*redirect == '-')
-			++redirect, key = 'u';
-		if (stringEqual(redirect, "x"))
-			i_puts(MSG_Junk);
-		else
-			printf("> %s\n", redirect);
+		if (!isimap) {
+			delflag = true;
+			key = 'w';
+			if (*redirect == '-')
+				++redirect, key = 'u';
+			if (stringEqual(redirect, "x"))
+				i_puts(MSG_Junk);
+			else
+				printf("> %s\n", redirect);
+		} else {
+			if (*redirect == '-')
+				++redirect;
+			if (stringEqual(redirect, "x"))
+				redirect = NULL;
+		}
 	}
 
 /* display the next page of mail and get a command from the keyboard */
@@ -587,14 +594,16 @@ key_command:
 writeMail:
 	if (!isimap || isupper(key))
 		delflag = true;
-	atname = redirect;
+	atname = 0;
+	if (!isimap)
+		atname = redirect;
 
 	if (scanat)
 		goto attachOnly;
 
 saveMail:
 	if (!atname)
-		atname = getFileName(MSG_FileName, 0, false, false);
+		atname = getFileName(MSG_FileName, redirect, false, false);
 	if (stringEqual(atname, "x"))
 		goto afterinput;
 
