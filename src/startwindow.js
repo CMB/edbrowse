@@ -101,6 +101,8 @@ document.all.tags = function(s) {
 return document.getElementsByTagName(s);
 }
 
+/* run queue for our script elements */
+document.script$$queue = new Array;
 document.createElement = function(s) { 
 var c;
 var t = s.toLowerCase();
@@ -114,6 +116,8 @@ c = new Image();
 break;
 case "script":
 c = new Script();
+/* add the script to the queue to be ran */
+document.script$$queue.push(c);
 break;
 case "div":
 c = new Div();
@@ -302,8 +306,8 @@ console.error = console.log;
 /* My own function to return the next script that has not been run
  * and is ready to run. Easier to do this here than in C. */
 document.script$$pending = function() {
-for(var i=0; i<document.scripts.length; ++i) {
-var s = document.scripts[i];
+for(var i=0; i<document.script$$queue.length; ++i) {
+var s = document.script$$queue[i];
 if(s.exec$$ed) continue; // already run
 if(s.src || s.data) return s;
 }
