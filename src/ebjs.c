@@ -719,6 +719,8 @@ char *get_property_string(jsobjtype obj, const char *name)
 	get_property(obj, name);
 	s = propval;
 	propval = 0;
+	if (!s && proptype == EJ_PROP_STRING)
+		s = EMPTYSTRING;
 	return s;
 }				/* get_property_string */
 
