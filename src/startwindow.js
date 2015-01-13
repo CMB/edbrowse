@@ -37,49 +37,56 @@ screen.availWidth = 1024;
 screen.availTop = 0;
 screen.availLeft = 0;
 
-/* some base arrays - lists of things */
-frames = new Array;
-document.anchors = new Array;
-document.heads = new Array;
-document.bodies = new Array;
-document.htmls = new Array;
-document.bases = new Array;
-document.links = new Array;
-document.applets = new Array;
-document.embeds = new Array;
-document.tables = new Array;
-document.divs = new Array;
-document.spans = new Array;
-document.forms = new Array;
-document.images = new Array;
-document.areas = new Array;
-document.metas = new Array;
-document.scripts = new Array;
-
-/* map html tags to the above arrays */
-document.tag$$map = {
-form: document.forms, 
-table: document.tables, 
-div: document.divs, 
-a: document.anchors, 
-link: document.links, 
-head: document.heads, 
-body: document.bodies, 
-html: document.htmls, 
-base: document.bases, 
-image: document.images, 
-img: document.images, 
-span: document.spans, 
-meta: document.metas, 
-script: document.scripts, 
-};
+/* holds our lists of tags, uses javascript's hash lookup */
+document.tag$$map = new Object;
+/* some base arrays - lists of things we'll probably need */
+document.tag$$map.form = new Array;
+document.forms = document.tag$$map.form;
+document.tag$$map.table = new Array;
+document.tables = document.tag$$map.table; 
+document.tag$$map.div = new Array;
+document.divs = document.tag$$map.div; 
+document.tag$$map.a = new Array;
+document.anchors = document.tag$$map.a; 
+document.tag$$map.link = new Array;
+document.links = document.tag$$map.link; 
+document.tag$$map.head = new Array;
+document.heads = document.tag$$map.head; 
+document.tag$$map.body = new Array;
+document.bodies = document.tag$$map.body; 
+document.tag$$map.html = new Array;
+document.htmls = document.tag$$map.html; 
+document.tag$$map.base = new Array;
+document.bases = document.tag$$map.base; 
+document.tag$$map.image = new Array;
+document.images = document.tag$$map.image; 
+document.tag$$map.img = new Array;
+document.images = document.tag$$map.img; 
+document.tag$$map.span = new Array;
+document.spans = document.tag$$map.span; 
+document.tag$$map.meta = new Array;
+document.metas = document.tag$$map.meta; 
+document.tag$$map.script = new Array;
+document.scripts = document.tag$$map.script; 
 
 document.idMaster = new Object;
-document.all = new Object;
-document.all.tags = function(s) { 
-/* should I do something different if the tag is not defined,
- * or just return undefined anyways? */
-return document.tag$$map[s.toLowerCase()];
+document.getElementsByTagName = function(s) { 
+/* this function should really return a node list, whatever one of those is
+* but I guess an array is good enough for now */
+/* apparently "*" gives you all the elements in the document */
+var ret = new Array;
+if (s === "*") {
+Object.keys(document.tag$$map).forEach(function (key) {
+ret.concat(document.tag$$map[key]);
+});
+}
+else {
+var t = s.toLowerCase();
+if (typeof(document.tag$$map[t]) !== "undefined") {
+ret = document.tag$$map[t];
+}
+}
+return ret;
 } 
 
 document.getElementById = function(s) { 
@@ -87,35 +94,43 @@ document.getElementById = function(s) {
 return document.idMaster[s]; 
 }
 
-document.getElementsByTagName = function(s) { 
-return document.all.tags(s);
+/* originally ms extension pre-DOM, we don't fully support it
+* but offer the document.all.tags method because that was here already */
+document.all = new Object;
+document.all.tags = function(s) { 
+return document.getElementsByTagName(s);
 }
 
 document.createElement = function(s) { 
 var c;
-switch(s.toLowerCase()) { 
+var t = s.toLowerCase();
+switch(t) { 
 case "a":
 c = new Anchor();
-document.anchors.push(c);
 break;
 case "image":
 case "img":
 c = new Image();
-document.images.push(c);
 break;
 case "script":
 c = new Script();
-document.scripts.push(c);
 break;
 case "div":
 c = new Div();
-d.style = new Object;
-document.divs.push(c);
 break;
 default:
 /* alert("createElement default " + s); */
-c = new Object();
+c = new Element();
 } 
+/* create an array in our tag map for this tag if it's not there
+* we don't push it if it is since we don't know where it should fit in the DOM
+*/
+if (!document.tag$$map.hasOwnProperty(t)) {
+document.tag$$map[t] = new Array;
+}
+/* ok, for some element types this perhaps doesn't make sense,
+* but for most visible ones it does and I doubt it matters much */
+c.style = new Object;
 return c;
 } 
 
@@ -239,6 +254,8 @@ Head.prototype.appendChild = function(o) { this.$kids$.appendChild(o); }
 Head.prototype.insertBefore = function(o, b) { this.$kids$.insertBefore(o, b); }
 Form.prototype.appendChild = function(o) { this.$kids$.appendChild(o); }
 Form.prototype.insertBefore = function(o, b) { this.$kids$.insertBefore(o, b); }
+Element.prototype.appendChild = function(o) { this.$kids$.appendChild(o); }
+Element.prototype.insertBefore = function(o, b) { this.$kids$.insertBefore(o, b); }
 
 /* navigator; some parameters are filled in by the buildstartwindow script. */
 navigator.appName = "edbrowse";
