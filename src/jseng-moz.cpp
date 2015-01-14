@@ -1,4 +1,5 @@
-/********************************************************************* This is the back-end process for javascript.
+/*********************************************************************
+This is the back-end process for javascript.
 This is the server, and edbrowse is the client.
 We receive interprocess messages from edbrowse,
 getting and setting properties for various DOM objects.
