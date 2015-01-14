@@ -1174,8 +1174,7 @@ bool readFile(const char *filename, const char *post)
 			return false;
 		}
 
-		rc = httpConnect(filename, true);
-
+		rc = httpConnect(filename, (cmd != 'r'));
 		if (!rc) {
 /* The error could have occured after redirection */
 			nzFree(changeFileName);
