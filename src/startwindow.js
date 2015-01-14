@@ -254,12 +254,19 @@ return;
 /* Still they need appendChild and insertBefore */
 Body.prototype.appendChild = function(o) { this.$kids$.appendChild(o); }
 Body.prototype.insertBefore = function(o, b) { this.$kids$.insertBefore(o, b); }
+Body.prototype.setAttribute = function(name, val) { this[name.toLowerCase()] = val; }
 Head.prototype.appendChild = function(o) { this.$kids$.appendChild(o); }
 Head.prototype.insertBefore = function(o, b) { this.$kids$.insertBefore(o, b); }
+Head.prototype.setAttribute = function(name, val) { this[name.toLowerCase()] = val; }
 Form.prototype.appendChild = function(o) { this.$kids$.appendChild(o); }
 Form.prototype.insertBefore = function(o, b) { this.$kids$.insertBefore(o, b); }
+Form.prototype.setAttribute = function(name, val) { this[name.toLowerCase()] = val; }
 Element.prototype.appendChild = function(o) { this.$kids$.appendChild(o); }
 Element.prototype.insertBefore = function(o, b) { this.$kids$.insertBefore(o, b); }
+Element.prototype.setAttribute = function(name, val) { this[name.toLowerCase()] = val; }
+Div.prototype.appendChild = function(o) { this.$kids$.appendChild(o); }
+Div.prototype.insertBefore = function(o, b) { this.$kids$.insertBefore(o, b); }
+Div.prototype.setAttribute = function(name, val) { this[name.toLowerCase()] = val; }
 
 /* navigator; some parameters are filled in by the buildstartwindow script. */
 navigator.appName = "edbrowse";
