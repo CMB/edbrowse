@@ -930,7 +930,9 @@ void ebClose(int n)
 {
 	dbClose();
 	js_shutdown();
-	curl_global_cleanup();
+/* We should call curl_global_cleanup() here, for clarity and completeness,
+ * but it can cause a seg fault when combined with older versions of open ssl,
+ * and the process is going to exit anyways, so don't worry about it. */
 	exit(n);
 }				/* ebClose */
 
