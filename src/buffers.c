@@ -3106,7 +3106,7 @@ et_go:
 	}
 
 	if (stringEqual(line, "bgl")) {
-		bg_jobs();
+		bg_jobs(false);
 		return true;
 	}
 

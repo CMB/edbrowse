@@ -928,6 +928,7 @@ static void catchSig(int n)
 
 void ebClose(int n)
 {
+	bg_jobs(true);
 	dbClose();
 	js_shutdown();
 /* We should call curl_global_cleanup() here, for clarity and completeness,

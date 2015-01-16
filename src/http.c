@@ -1706,9 +1706,11 @@ static void background_download(void)
 	down_state = 4;
 }				/* background_download */
 
-void bg_jobs(void)
+/* show background jobs and return the number of jobs pending */
+int bg_jobs(bool iponly)
 {
 	bool present = false, part;
+	int numback = 0;
 	struct BG_JOB *j;
 	int pid, status;
 
@@ -1730,6 +1732,7 @@ void bg_jobs(void)
 	foreach(j, down_jobs) {
 		if (j->state != 4)
 			continue;
+		++numback;
 		if (!part) {
 			i_printf(MSG_InProgress);
 			puts(" {");
@@ -1739,6 +1742,9 @@ void bg_jobs(void)
 	}
 	if (part)
 		puts("}");
+
+	if (iponly)
+		return numback;
 
 /* complete */
 	part = false;
@@ -1772,4 +1778,6 @@ void bg_jobs(void)
 
 	if (!present)
 		i_puts(MSG_Empty);
+
+	return numback;
 }				/* bg_jobs */
