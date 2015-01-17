@@ -138,6 +138,9 @@ c.style = new Object;
 return c;
 } 
 
+document.createTextNode = function(t) {
+return new TextNode(t); }
+
 /* window.open is the same as new window, just pass the args through */
 function open() {
 return Window.apply(this, arguments);

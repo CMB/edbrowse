@@ -1025,6 +1025,8 @@ generic_class_ctor(document, Document)
 /* constructor below */
     generic_class(timer, Timer)
 /* instantiated through window.setTimout() */
+    generic_class(textnode, TextNode)
+/* constructor below */
 /* Here are a couple nonstandard constructors. */
 /* text and value can be passed as args to the option constructor */
 static JSBool option_ctor(JSContext * cx, unsigned int argc, jsval * vp)
@@ -1059,6 +1061,30 @@ static JSBool option_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	args.rval().set(OBJECT_TO_JSVAL(newopt));
 	return JS_TRUE;
 }				/* option_ctor */
+
+/* text can be passed to the constructor */
+static JSBool textnode_ctor(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	JS::RootedString str(cx);
+	js::RootedValue v(cx);
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	JSObject & callee = args.callee();
+	jsval callee_val = JS::ObjectValue(callee);
+	JS::RootedObject newtext(cx,
+				 JS_NewObjectForConstructor(cx, &textnode_class,
+							    &callee_val));
+	if (newtext == NULL) {
+		misconfigure();
+		return JS_FALSE;
+	}
+	if (args.length() > 0 && (str = JS_ValueToString(cx, args[0])))
+		v = STRING_TO_JSVAL(str);
+	else
+		v = JS_GetEmptyStringValue(jcx);
+	JS_DefineProperty(cx, newtext, "text", v, NULL, NULL, PROP_STD);
+	args.rval().set(OBJECT_TO_JSVAL(newtext));
+	return JS_TRUE;
+}				/* textnode_ctor */
 
 static void url_initialize(JS::HandleObject uo, const char *url,
 			   bool exclude_href);
@@ -2346,6 +2372,7 @@ static struct {
 	{&option_class, option_ctor, NULL, 2},
 	{&script_class, script_ctor},
 	{&url_class, url_ctor},
+	{&textnode_class, textnode_ctor},
 	{0}
 };
 
