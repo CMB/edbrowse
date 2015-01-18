@@ -3530,8 +3530,6 @@ static char *showLinks(void)
 static void clear_jsup(void)
 {
 	struct lineMap *t;
-	if (!isJSAlive)
-		return;
 	if (globSub)
 		return;
 	for (t = cw->map + 1; t->text; ++t)
