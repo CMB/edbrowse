@@ -772,7 +772,7 @@ static bool nextInnerHTML(void)
 
 found:
 	ic->major = 'x';
-	tagno = ic->tagno + 1;
+	tagno = ic->tagno;
 	if (!locateInvisibleAnchor(tagno, &ln, &p, &s, &t))
 		return true;
 
@@ -1354,23 +1354,6 @@ This should only be called by an open tag (no slash) that can closed.
 Not <br>, but <p> ... </p>
 *********************************************************************/
 
-static void htmlLabelID(char **ns, int *ns_l)
-{
-	struct htmlTag *t = newTag("a");
-	int tagnum = t->seqno;
-	char buf[16];
-	char *id = htmlAttrVal(topAttrib, "id");
-	static int idnum = 0;
-	char idfake[12];
-	if (!id) {
-		sprintf(idfake, "i$d$%d", ++idnum);
-		id = cloneString(idfake);
-	}
-	t->name = id;
-	sprintf(buf, "%c%d*", InternalCodeChar, tagnum);
-	stringAndString(ns, ns_l, buf);
-}				/* htmlLabelID */
-
 static void htmlOption(struct htmlTag *sel, struct htmlTag *v, const char *a)
 {
 	if (!*a) {
@@ -1909,10 +1892,15 @@ forceCloseAnchor:
 			currentTitle = currentOpt = 0;
 		}
 
+/* If we aren't, under normal circumstances, going to inject an anchor into
+ * the edbrowse buffer for this tag, then put one in here. Any nestable tag
+ * should have an anchor, to support innerHTML. */
 		if (!slash && ti->nest &&
-		    action != TAGACT_A && action != TAGACT_TA) {
-/* Generate an html label for this tag. */
-			htmlLabelID(&ns, &ns_l);
+		    action != TAGACT_SELECT &&
+		    action != TAGACT_A &&
+		    action != TAGACT_TITLE && action != TAGACT_TA) {
+			strcat(hnum, "*");
+			ns_hnum();
 		}
 
 		switch (action) {
