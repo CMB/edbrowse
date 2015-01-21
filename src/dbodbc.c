@@ -1828,7 +1828,7 @@ SQLSetConnectAttr(hdbc, SQL_ATTR_METADATA_ID,
 		stringAndString(&buf, &buflen, tabline);
 	}
 
-	cx = sideBuffer(0, buf, buflen, 0, false);
+	cx = sideBuffer(0, buf, buflen, 0);
 	nzFree(buf);
 	i_printf(MSG_ShowTables, cx);
 	SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
