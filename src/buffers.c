@@ -3536,12 +3536,35 @@ static void clear_jsup(void)
 		t->jsup = false;
 }				/* clear_jsup */
 
-/* Run the entered edbrowse command.
- * This is indirectly recursive, as in g/x/d
- * Pass in the ed command, and return success or failure.
- * We assume it has been turned into a C string.
- * This means no embeded nulls.
- * If you want to use null in a search or substitute, use \0. */
+static bool lineHasTag(const char *p, const char *s)
+{
+	const struct htmlTag *t;
+	char c;
+	int j;
+
+	while ((c = *p++) != '\n') {
+		if (c != InternalCodeChar)
+			continue;
+		j = strtol(p, (char **)&p, 10);
+		t = tagList[j];
+		if (t->id && t->info->nest && stringEqual(t->id, s))
+			return true;
+		if (t->action == TAGACT_A && t->name && stringEqual(t->name, s))
+			return true;
+	}
+
+	return false;
+}				/* lineHasTag */
+
+/*********************************************************************
+Run the entered edbrowse command.
+This is indirectly recursive, as in g/x/d
+Pass in the ed command, and return success or failure.
+We assume it has been turned into a C string.
+This means no embeded nulls.
+If you want to use null in a search or substitute, use \0.
+*********************************************************************/
+
 bool runCommand(const char *line)
 {
 	int i, j, n;
@@ -4549,7 +4572,7 @@ redirect:
 		if (!s)
 			return true;
 		++s;
-/* Sometimes there's a 3 in the midst of a long url,
+/* Sometimes there's a # in the midst of a long url,
  * probably with post data.  It really screws things up.
  * Here is a kludge to avoid this problem.
  * Some day I need to figure this out. */

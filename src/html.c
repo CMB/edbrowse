@@ -27,7 +27,6 @@ static const char *const inp_types[] = {
 static const char dfvl[] = "defaultValue";
 static const char dfck[] = "defaultChecked";
 
-#define tagList (cw->tags)
 struct htmlTag *topTag;
 static char *topAttrib;
 static char *basehref;
@@ -2553,11 +2552,11 @@ endtag:
 			a = h + 1;	/* this is what we're looking for */
 			for (i2 = 0; i2 < cw->numTags; ++i2) {
 				v = tagList[i2];
-				if (v->action != TAGACT_A)
-					continue;	/* not achor */
-				if (!v->name)
-					continue;	/* no name */
-				if (stringEqual(a, v->name))
+				if (v->id && v->info->nest
+				    && stringEqual(v->id, a))
+					break;
+				if (v->action == TAGACT_A && v->name
+				    && stringEqual(v->name, a))
 					break;
 			}
 			if (i2 == cw->numTags) {
@@ -2795,26 +2794,6 @@ findInputField(const char *line, int ftype, int n, int *total, int *realtotal,
 {
 	findField(line, ftype, n, total, realtotal, tagno, 0, 0);
 }				/* findInputField */
-
-bool lineHasTag(const char *p, const char *s)
-{
-	const struct htmlTag *t;
-	char c;
-	int j;
-	while ((c = *p++) != '\n') {
-		if (c != InternalCodeChar)
-			continue;
-		j = strtol(p, (char **)&p, 10);
-		t = tagList[j];
-		if (t->action != TAGACT_A)
-			continue;
-		if (!t->name)
-			continue;
-		if (stringEqual(t->name, s))
-			return true;
-	}
-	return false;
-}				/* lineHasTag */
 
 /* See if there are simple tags like <p> or </font> */
 bool htmlTest(void)

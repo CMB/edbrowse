@@ -361,6 +361,11 @@ struct ebWindow {
 };
 extern struct ebWindow *cw;	/* current window */
 
+/* quickly grab a tag from the current window via its sequence number:
+ * tagList[n] */
+#define tagList (cw->tags)
+
+/* js is running in the current session */
 #define isJSAlive (cw->jcx != NULL && allowJS)
 
 /*********************************************************************

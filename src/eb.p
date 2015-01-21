@@ -127,7 +127,6 @@ void preFormatCheck(int tagno, bool * pretag, bool * slash) ;
 char *htmlParse(char *buf, int remote) ;
 void findField(const char *line, int ftype, int n, int *total, int *realtotal, int *tagno, char **href, const struct htmlTag **tagp) ;
 void findInputField(const char *line, int ftype, int n, int *total, int *realtotal, int *tagno) ;
-bool lineHasTag(const char *p, const char *s) ;
 bool htmlTest(void) ;
 void infShow(int tagno, const char *search) ;
 bool infReplace(int tagno, const char *newtext, bool notify) ;
