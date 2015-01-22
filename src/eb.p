@@ -274,6 +274,7 @@ IP32bit tcp_dots_ip(const char *s) ;
 
 /* sourcefile=url.c */
 void unpercentURL(char *url) ;
+void unpercentString(char *s) ;
 bool isURL(const char *url) ;
 bool isBrowseableURL(const char *url) ;
 const char *getProtURL(const char *url) ;

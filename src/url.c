@@ -53,7 +53,7 @@ static int protocolByName(const char *p, int l)
 	return -1;
 }				/* protocolByName */
 
-/* Unpercent the host component of a url.  Christ what a pain! */
+/* Unpercent the host component of a url, not the data component. */
 void unpercentURL(char *url)
 {
 	char c, *u, *w;
@@ -80,6 +80,24 @@ void unpercentURL(char *url)
 	}
 	strmove(w, u);
 }				/* unpercentURL */
+
+/* Unpercent an entire string. */
+void unpercentString(char *s)
+{
+	char c, *u, *w;
+	u = w = s;
+	while (c = *u) {
+		++u;
+		if (c == '%' && isxdigit(u[0]) && isxdigit(u[1])) {
+			c = fromHex(u[0], u[1]);
+			u += 2;
+		}
+		if (!c)
+			c = ' ';	/* should never happen */
+		*w++ = c;
+	}
+	*w = 0;
+}				/* unpercentString */
 
 /* Decide if it looks like a web url. */
 static bool httpDefault(const char *url)
