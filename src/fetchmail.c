@@ -8,8 +8,6 @@
 #include "eb.h"
 
 #define MHLINE 200		/* length of a mail header line */
-#define BAD64 1
-#define EXTRA64 2
 struct MHINFO {
 	struct MHINFO *next, *prev;
 	struct listHead components;
@@ -65,7 +63,7 @@ static void writeAttachment(struct MHINFO *w)
 		return;		/* image ignored */
 	if (w->pgp)
 		return;		/* Ignore PGP signatures. */
-	if (w->error64 == BAD64)
+	if (w->error64 == BAD_BASE64_DECODE)
 		i_printf(MSG_Abbreviated);
 	if (w->start == w->end) {
 		i_printf(MSG_AttEmpty);
@@ -818,67 +816,17 @@ bool emailTest(void)
 	return false;
 }				/* emailTest */
 
-static uchar unb64(char c)
+static void mail64Error(int err)
 {
-	if (isupperByte(c))
-		return c - 'A';
-	if (islowerByte(c))
-		return c - ('a' - 26);
-	if (isdigitByte(c))
-		return c - ('0' - 52);
-	if (c == '+')
-		return 62;
-	if (c == '/')
-		return 63;
-	return 64;		/* error */
-}				/* unb64 */
-
-static void unpack64(struct MHINFO *w)
-{
-	uchar val, leftover, mod;
-	bool equals;
-	char c, *q, *r;
-/* Since this is a copy, and the unpacked version is always
- * smaller, just unpack it inline. */
-	mod = 0;
-	equals = false;
-	for (q = r = w->start; q < w->end; ++q) {
-		c = *q;
-		if (isspaceByte(c))
-			continue;
-		if (equals) {
-			if (c == '=')
-				continue;
-			runningError(MSG_AttAfterChars);
-			w->error64 = EXTRA64;
-			break;
-		}
-		if (c == '=') {
-			equals = true;
-			continue;
-		}
-		val = unb64(c);
-		if (val & 64) {
-			runningError(MSG_AttBad64);
-			w->error64 = BAD64;
-			break;
-		}
-		if (mod == 0) {
-			leftover = val << 2;
-		} else if (mod == 1) {
-			*r++ = (leftover | (val >> 4));
-			leftover = val << 4;
-		} else if (mod == 2) {
-			*r++ = (leftover | (val >> 2));
-			leftover = val << 6;
-		} else {
-			*r++ = (leftover | val);
-		}
-		++mod;
-		mod &= 3;
-	}
-	w->end = r;
-}				/* unpack64 */
+	switch (err) {
+	case BAD_BASE64_DECODE:
+		runningError(MSG_AttBad64);
+		break;
+	case EXTRA_CHARS_BASE64_DECODE:
+		runningError(MSG_AttAfterChars);
+		break;
+	}			/* switch on error code */
+}			/* mail64Error */
 
 static void unpackQP(struct MHINFO *w)
 {
@@ -908,17 +856,6 @@ static void unpackQP(struct MHINFO *w)
 	w->end = r;
 	*r = 0;
 }				/* unpackQP */
-
-/* Use the above machinery to unpack a string. */
-static char *unpack64inline(char *start, char *end)
-{
-	struct MHINFO m;
-	m.start = start;
-	m.end = end;
-	m.error64 = false;
-	unpack64(&m);
-	return m.end;
-}				/* unpack64inline */
 
 void
 unpackUploadedFile(const char *post, const char *boundary,
@@ -951,7 +888,12 @@ unpackUploadedFile(const char *post, const char *boundary,
 		b1 += 8;
 		b1[0] = b1[1] = ' ';
 		b3 = b2 - 4;
-		b4 = unpack64inline(b1, b3);
+
+		b4 = b3;
+		int unpack_ret = base64Decode(b1, &b4);
+		if (unpack_ret != GOOD_BASE64_DECODE)
+			mail64Error(unpack_ret);
+		/* Should we *really* keep going at this point? */
 		strmove(b4, b3);
 		b2 = b4 + 4;
 	}
@@ -1085,7 +1027,7 @@ restart:
 			continue;
 		if (c == '=')
 			continue;
-		val = unb64(c);
+		val = base64Bits(c);
 		if (val & 64)
 			val = 0;	/* ignore errors here */
 		if (mod == 0) {
@@ -1439,8 +1381,11 @@ static struct MHINFO *headerGlean(char *start, char *end)
 
 	if (w->ce == CE_QP)
 		unpackQP(w);
-	if (w->ce == CE_64)
-		unpack64(w);
+	if (w->ce == CE_64) {
+		w->error64 = base64Decode(w->start, &w->end);
+		if (w->error64 != GOOD_BASE64_DECODE)
+			mail64Error(w->error64);
+	}
 	if (w->ce == CE_64 && w->ct == CT_OTHER || w->ct == CT_APPLIC
 	    || w->cfn[0]) {
 		w->doAttach = true;

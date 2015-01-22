@@ -1846,6 +1846,142 @@ void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 	*outbuflen_p = j;
 }				/* utf2iso */
 
+static char base64_chars[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+/*
+ * Encode some data in base64.
+ * inbuf points to the data
+ * inlen is the length of the data
+ * lines is a boolean, indicating whether to add newlines to the output.
+ * If true, newlines will be added after each group of 72 output bytes.
+ * Returns: A freshly-allocated NUL-terminated string, containing the
+ * base64 representation of the data. */
+char *base64Encode(const char *inbuf, int inlen, bool lines)
+{
+	char *out, *outstr;
+	uchar *in = (uchar *) inbuf;
+	int colno;
+	int outlen = ((inlen / 3) + 1) * 4;
+	++outlen;		/* zero on the end */
+	if (lines)
+		outlen += (inlen / 54) + 1;
+	outstr = out = allocMem(outlen);
+	colno = 0;
+	while (inlen >= 3) {
+		*out++ = base64_chars[(int)(*in >> 2)];
+		*out++ = base64_chars[(int)((*in << 4 | *(in + 1) >> 4) & 63)];
+		*out++ =
+		    base64_chars[(int)((*(in + 1) << 2 | *(in + 2) >> 6) & 63)];
+		*out++ = base64_chars[(int)(*(in + 2) & 63)];
+		inlen -= 3;
+		in += 3;
+		if (!lines)
+			continue;
+		colno += 4;
+		if (colno < 72)
+			continue;
+		*out++ = '\n';
+		colno = 0;
+	}
+	if (inlen == 1) {
+		*out++ = base64_chars[(int)(*in >> 2)];
+		*out++ = base64_chars[(int)(*in << 4 & 63)];
+		*out++ = '=';
+		*out++ = '=';
+		colno += 4;
+	}
+	if (inlen == 2) {
+		*out++ = base64_chars[(int)(*in >> 2)];
+		*out++ = base64_chars[(int)((*in << 4 | *(in + 1) >> 4) & 63)];
+		*out++ = base64_chars[(int)((*(in + 1) << 2) & 63)];
+		*out++ = '=';
+		colno += 4;
+	}
+/* finish the last line */
+	if (lines && colno)
+		*out++ = '\n';
+	*out = 0;
+	return outstr;
+}				/* base64Encode */
+
+uchar base64Bits(char c)
+{
+	if (isupperByte(c))
+		return c - 'A';
+	if (islowerByte(c))
+		return c - ('a' - 26);
+	if (isdigitByte(c))
+		return c - ('0' - 52);
+	if (c == '+')
+		return 62;
+	if (c == '/')
+		return 63;
+	return 64;		/* error */
+}				/* base64Bits */
+
+/*
+ * Decode some data in base64.
+ * This function operates on the data in-line.  It does not allocate a fresh
+ * string to hold the decoded data.  Since the data will be smaller than
+ * the base64 encoded representation, this cannot overflow buffers.
+ * If you need to preserve the input, copy it first.
+ *
+ * start points to the start of the input
+ * *end initially points to the byte just after the end of the input
+ * Returns: GOOD_BASE64_DECODE on success, BAD_BASE64_DECODE or
+ * EXTRA_CHARS_BASE64_DECODE on error.
+ * When the function returns success, *end points to the end of the decoded
+ * data.  On failure, end points to the just past the end of
+ * what was successfully decoded. */
+int base64Decode(char *start, char **end)
+{
+	char *b64_end = *end;
+	uchar val, leftover, mod;
+	bool equals;
+	int ret = GOOD_BASE64_DECODE;
+	char c, *q, *r;
+/* Since this is a copy, and the unpacked version is always
+ * smaller, just unpack it inline. */
+	mod = 0;
+	equals = false;
+	for (q = r = start; q < b64_end; ++q) {
+		c = *q;
+		if (isspaceByte(c))
+			continue;
+		if (equals) {
+			if (c == '=')
+				continue;
+			ret = EXTRA_CHARS_BASE64_DECODE;
+			break;
+		}
+		if (c == '=') {
+			equals = true;
+			continue;
+		}
+		val = base64Bits(c);
+		if (val & 64) {
+			ret = BAD_BASE64_DECODE;
+			break;
+		}
+		if (mod == 0) {
+			leftover = val << 2;
+		} else if (mod == 1) {
+			*r++ = (leftover | (val >> 4));
+			leftover = val << 4;
+		} else if (mod == 2) {
+			*r++ = (leftover | (val >> 2));
+			leftover = val << 6;
+		} else {
+			*r++ = (leftover | val);
+		}
+		++mod;
+		mod &= 3;
+	}
+	*end = r;
+	return ret;
+}				/* base64Decode */
+
 void
 iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 {

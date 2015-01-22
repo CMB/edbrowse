@@ -113,6 +113,9 @@ bool looksBinary(const char *buf, int buflen) ;
 void looks_8859_utf8(const char *buf, int buflen, bool * iso_p, bool * utf8_p) ;
 void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
 void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
+uchar base64Bits(char c);
+char *base64Encode(const char *inbuf, int inlen, bool lines);
+int base64Decode(char *start, char **end);
 void iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
 
 /* sourcefile=html.cpp */

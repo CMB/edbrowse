@@ -171,56 +171,6 @@ const char *reverseAlias(const char *reply)
 	return 0;		/* not found */
 }				/* reverseAlias */
 
-static char base64_chars[] =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-static char *base64Encode(const char *inbuf, int inlen, bool lines)
-{
-	char *out, *outstr;
-	uchar *in = (uchar *) inbuf;
-	int colno;
-	int outlen = ((inlen / 3) + 1) * 4;
-	++outlen;		/* zero on the end */
-	if (lines)
-		outlen += (inlen / 54) + 1;
-	outstr = out = allocMem(outlen);
-	colno = 0;
-	while (inlen >= 3) {
-		*out++ = base64_chars[(int)(*in >> 2)];
-		*out++ = base64_chars[(int)((*in << 4 | *(in + 1) >> 4) & 63)];
-		*out++ =
-		    base64_chars[(int)((*(in + 1) << 2 | *(in + 2) >> 6) & 63)];
-		*out++ = base64_chars[(int)(*(in + 2) & 63)];
-		inlen -= 3;
-		in += 3;
-		if (!lines)
-			continue;
-		colno += 4;
-		if (colno < 72)
-			continue;
-		*out++ = '\n';
-		colno = 0;
-	}
-	if (inlen == 1) {
-		*out++ = base64_chars[(int)(*in >> 2)];
-		*out++ = base64_chars[(int)(*in << 4 & 63)];
-		*out++ = '=';
-		*out++ = '=';
-		colno += 4;
-	}
-	if (inlen == 2) {
-		*out++ = base64_chars[(int)(*in >> 2)];
-		*out++ = base64_chars[(int)((*in << 4 | *(in + 1) >> 4) & 63)];
-		*out++ = base64_chars[(int)((*(in + 1) << 2) & 63)];
-		*out++ = '=';
-		colno += 4;
-	}
-/* finish the last line */
-	if (lines && colno)
-		*out++ = '\n';
-	*out = 0;
-	return outstr;
-}				/* base64Encode */
-
 static char *qpEncode(const char *line)
 {
 	char *newbuf;

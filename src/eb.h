@@ -461,6 +461,11 @@ enum {
 /* Last tag in the list parsed from html */
 extern struct htmlTag *topTag;
 
+/* Return codes for base64Decode() */
+#define GOOD_BASE64_DECODE 0
+#define BAD_BASE64_DECODE 1
+#define EXTRA_CHARS_BASE64_DECODE 2
+
 /* function prototypes */
 #include "eb.p"
 
