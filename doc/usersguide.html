@@ -3032,9 +3032,15 @@ If the file name you entered has a slash, or if there is no download directory,
 the path is taken relative to the current directory (assuming it is not absolute).&nbsp;
 In this case, globbing is performed.&nbsp;
 For instance, you can direct an mp3 file to ~/music/country/Some-Song.mp3.&nbsp;
-Downloads are done in the background, which is especially useful for large files.&nbsp;
+Downloads take place in the foreground, with progress dots, thus locking up edbrowse until the download is complete.&nbsp;
+If you prefer, you can run downloads in the background by issuing the bg (background) command.&nbsp;
+This is especially useful for large files.&nbsp;
 You are notified when the download is complete.&nbsp;
-Meantime you can continue to use edbrowse.
+Meantime you can continue to use edbrowse.&nbsp;
+Warning: if you are downloading a file in the background from a secure server
+(https, ftps, or sftp), edbrowse may produce CKR_DEVICE_ERROR, and abort the download, if your openssl is earlier than version 1.0.1g.&nbsp;
+This is an ssl / fork interaction that I can't easily fix or circumvent.&nbsp;
+If this happens, type bg again and download in the foreground.
 
 <P>
 When prompted for the filename, hit return for the default file name,
@@ -3042,13 +3048,13 @@ as provided by the website,
 enter x to abort,
 enter space to read the data into memory,
 or type a different file name if you wish.&nbsp;
-The download takes place in real time, with progress dots,
-unless you have entered the bg command, in which case the download takes place in the background.&nbsp;
-You can continue to use edbrowse during large downloads.&nbsp;
-Warning: if you are downloading a file in the background from a secure server
-(https, ftps, or sftp), edbrowse may produce CKR_DEVICE_ERROR, and abort the download, if your openssl is earlier than version 1.0.1g.&nbsp;
-This is an ssl / fork interaction that I can't easily fix or circumvent.&nbsp;
-If this happens, type bg again and download in the foreground.
+If the file already exists, it is overwritten.
+
+<P>
+Type bgl to list your background download jobs, including those that have run to completion.&nbsp;
+Upon exit, edbrowse will list any background downloads that are in progress.&nbsp;
+These continue to run, even after edbrowse exits,
+and they will print "download complete" messages when they finish.
 
 <P>
 linelength = 1000
