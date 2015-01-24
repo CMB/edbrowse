@@ -252,24 +252,43 @@ this.splice(i-1, 0, newobj);
 return;
 }
 }
+Array.prototype.firstChild = function() { return (this.length ? this[0] : undefined); }
+Array.prototype.lastChild = function() { return (this.length ? this[this.length-1] : undefined); }
 
 /* Of course most of the html objects are not arrays. */
 /* Still they need appendChild and insertBefore */
 Body.prototype.appendChild = function(o) { this.$kids$.appendChild(o); }
 Body.prototype.insertBefore = function(o, b) { this.$kids$.insertBefore(o, b); }
+Body.prototype.firstChild = function() { return this.$kids$.firstChild(); }
+Body.prototype.lastChild = function() { return this.$kids$.lastChild(); }
 Body.prototype.setAttribute = function(name, val) { this[name.toLowerCase()] = val; }
+Body.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
 Head.prototype.appendChild = function(o) { this.$kids$.appendChild(o); }
 Head.prototype.insertBefore = function(o, b) { this.$kids$.insertBefore(o, b); }
+Head.prototype.firstChild = function() { return this.$kids$.firstChild(); }
+Head.prototype.lastChild = function() { return this.$kids$.lastChild(); }
 Head.prototype.setAttribute = function(name, val) { this[name.toLowerCase()] = val; }
+Head.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
 Form.prototype.appendChild = function(o) { this.$kids$.appendChild(o); }
 Form.prototype.insertBefore = function(o, b) { this.$kids$.insertBefore(o, b); }
+Form.prototype.firstChild = function() { return this.$kids$.firstChild(); }
+Form.prototype.lastChild = function() { return this.$kids$.lastChild(); }
 Form.prototype.setAttribute = function(name, val) { this[name.toLowerCase()] = val; }
+Form.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
 Element.prototype.appendChild = function(o) { this.$kids$.appendChild(o); }
 Element.prototype.insertBefore = function(o, b) { this.$kids$.insertBefore(o, b); }
+Element.prototype.firstChild = function() { return this.$kids$.firstChild(); }
+Element.prototype.lastChild = function() { return this.$kids$.lastChild(); }
 Element.prototype.setAttribute = function(name, val) { this[name.toLowerCase()] = val; }
+Element.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
 Div.prototype.appendChild = function(o) { this.$kids$.appendChild(o); }
 Div.prototype.insertBefore = function(o, b) { this.$kids$.insertBefore(o, b); }
+Div.prototype.firstChild = function() { return this.$kids$.firstChild(); }
+Div.prototype.lastChild = function() { return this.$kids$.lastChild(); }
 Div.prototype.setAttribute = function(name, val) { this[name.toLowerCase()] = val; }
+Div.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
+Script.prototype.setAttribute = function(name, val) { this[name.toLowerCase()] = val; }
+Script.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
 
 /* navigator; some parameters are filled in by the buildstartwindow script. */
 navigator.appName = "edbrowse";
