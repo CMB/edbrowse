@@ -1310,7 +1310,7 @@ fromdisk:
 	}
 
 	nopound = cloneString(filename);
-	rbuf = strchr(nopound, '#');
+	rbuf = findHash(nopound);
 	if (rbuf && !filetype)
 		*rbuf = 0;
 	rc = fileIntoMemory(nopound, &rbuf, &fileSize);
@@ -3509,7 +3509,10 @@ static char *showLinks(void)
 			s = (char *)getDataURL(h);
 			if (!s || !*s)
 				s = h;
-			t = s + strcspn(s, "\1?#");
+			t = findHash(s);
+			if (t)
+				*t = 0;
+			t = s + strcspn(s, "\1?");
 			if (t > s && t[-1] == '/')
 				--t;
 			*t = 0;
@@ -4424,7 +4427,7 @@ rebrowse:
 				return false;
 			}
 /* Same url, but a different #section */
-			s = strchr(line, '#');
+			s = findHash(line);
 			if (!s) {	/* no section specified */
 				cw->dot = 1;
 				if (!cw->dol)
@@ -4568,7 +4571,7 @@ redirect:
 		}
 
 /* Jump to the #section, if specified in the url */
-		s = strchr(line, '#');
+		s = findHash(line);
 		if (!s)
 			return true;
 		++s;

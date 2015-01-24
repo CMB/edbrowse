@@ -148,6 +148,13 @@ static bool httpDefault(const char *url)
 	return false;
 }				/* httpDefault */
 
+/*********************************************************************
+From wikipedia url
+scheme://domain:port/path?query_string#fragment_id
+but I allow, at the end of this, control a followed by post data, with the
+understanding that there should not be query_string and post data simultaneously.
+*********************************************************************/
+
 static int parseURL(const char *url, const char **proto, int *prlen, const char **user, int *uslen, const char **pass, int *palen,	/* ftp protocol */
 		    const char **host, int *holen,
 		    const char **portloc, int *port,
@@ -256,6 +263,7 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 		return true;
 	}
 
+/* find the end of the domain */
 	q = p + strcspn(p, "@?#/\1");
 	if (*q == '@') {	/* user:password@host */
 		const char *pp = strchr(p, ':');
@@ -277,6 +285,7 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 		p = q + 1;
 	}
 
+/* again, look for the end of the domain */
 	q = p + strcspn(p, ":?#/\1");
 	if (host)
 		*host = p;
@@ -480,7 +489,10 @@ void getDirURL(const char *url, const char **start_p, const char **end_p)
 		if (*--dir != '/')
 			i_printfExit(MSG_BadDirSlash, url);
 	}
-	end = strpbrk(dir, "#?\1");
+	if (*dir == '#')	/* special case */
+		end = dir;
+	else
+		end = strpbrk(dir, "?\1");
 	if (!end)
 		end = dir + strlen(dir);
 	while (end > dir && end[-1] != '/')
@@ -494,6 +506,15 @@ slash:
 	*start_p = myslash;
 	*end_p = myslash + 1;
 }				/* getDirURL */
+
+/* #tag is only meaningfull after the last slash */
+char *findHash(const char *s)
+{
+	const char *t = strrchr(s, '/');
+	if (t)
+		s = t;
+	return strchr(s, '#');
+}				/* chopHash */
 
 /* extract the file piece of a pathname or url */
 /* This is for debugPrint or w/, so could be chopped for convenience */
@@ -514,17 +535,17 @@ char *getFileURL(const char *url, bool chophash)
 	if (!e)
 		e = s + strlen(s);
 	if (chophash) {
-		const char *hash = strchr(s, '#');
-		if (hash && hash < e)
-			e = hash;
+		const char *h = findHash(s);
+		if (h)
+			e = h;
 	}
 /* if slash at the end then back up to the prior slash */
 	if (e == s && s > url) {
-		--s;
+		while (s > url && s[-1] == '/')
+			--s;
+		e = s;
 		while (s > url && s[-1] != '/')
 			--s;
-		if (e - s > 1)
-			--e;
 	}
 /* don't retain the .browse suffix on a url */
 	if (e - s > 7 && stringEqual(e - 7, ".browse"))
@@ -629,7 +650,7 @@ static void squashDirectories(char *url)
 	--dd;
 	if (*dd != '/')
 		i_printfExit(MSG_BadSlash, url);
-	end = dd + strcspn(dd, "?#\1");
+	end = dd + strcspn(dd, "?\1");
 	rest = cloneString(end);
 	inPath = pullString1(dd, end);
 	s = inPath;
@@ -674,8 +695,10 @@ char *resolveURL(const char *base, const char *rel)
 	n = allocMem(strlen(base) + strlen(rel) + 12);
 	debugPrint(5, "resolve(%s|%s)", base, rel);
 
-	if (rel[0] == '#') {
-/* this is always an anchor for the current document, don't resolve. */
+	if (rel[0] == '#' && !strchr(rel, '/')) {
+/* This is an anchor for the current document, don't resolve. */
+/* I assume the base does not have a #fragment on the end; that is not part of the base. */
+/* Thus I won't get url#foo#bar */
 		strcpy(n, rel);
 out_n:
 		debugPrint(5, "= %s", n);
@@ -683,11 +706,13 @@ out_n:
 	}
 
 	if (rel[0] == '?' || rel[0] == '\1') {
+/* setting or changing get or post data */
 		strcpy(n, base);
-		for (q = n; *q && *q != '\1' && *q != '#' && *q != '?'; q++) ;
+		for (q = n; *q && *q != '\1' && *q != '?'; q++) ;
 		strcpy(q, rel);
 		goto out_n;
 	}
+
 	if (rel[0] == '/' && rel[1] == '/') {
 		if (s = strstr(base, "//")) {
 			strncpy(n, base, s - base);
@@ -697,7 +722,9 @@ out_n:
 		strcat(n, rel);
 		goto squash;
 	}
+
 	if (parseURL(rel, &s, &l, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) > 0) {
+/* has a protocol */
 		n[0] = 0;
 		if (s != rel) {
 /* It didn't have http in front of it before, put it on now. */
@@ -706,7 +733,8 @@ out_n:
 		}
 		strcat(n, rel);
 		goto squash;
-	}			/* relative is already a url */
+	}
+	/* relative is already a url */
 	s = base;
 	if (rel[0] == '/') {
 		s = getDataURL(base);
@@ -735,7 +763,7 @@ out_n:
 	for (p = 0; *s; ++s) {
 		if (*s == '/')
 			p = s;
-		if (strchr("#?\1", *s))
+		if (strchr("?\1", *s))
 			break;
 	}
 	if (!p) {
@@ -750,6 +778,7 @@ out_n:
 		n[l++] = '/';
 	}
 	strcpy(n + l, rel);
+
 squash:
 	squashDirectories(n);
 	goto out_n;
@@ -758,21 +787,37 @@ squash:
 /* This routine could be, should be, more sophisticated */
 bool sameURL(const char *s, const char *t)
 {
-	const char *u, *v;
+	const char *u, *p, *q;
 	int l;
+
+/* check for post data at the end */
+	p = strchr(s, '\1');
+	if (!p)
+		p = s + strlen(s);
+	q = strchr(t, '\1');
+	if (!q)
+		q = t + strlen(t);
+	if (!stringEqual(p, q))
+		return false;
+
+/* lop off hash */
+	if (u = findHash(s))
+		p = u;
+	if (u = findHash(t))
+		q = u;
+
 /* It's ok if one says http and the other implies it. */
 	if (memEqualCI(s, "http://", 7))
 		s += 7;
 	if (memEqualCI(t, "http://", 7))
 		t += 7;
-	u = s + strcspn(s, "#");
-	v = t + strcspn(t, "#?\1");
-	if (u - s >= 7 && stringEqual(u - 7, ".browse"))
-		u -= 7;
-	if (v - t >= 7 && stringEqual(v - 7, ".browse"))
-		v -= 7;
-	l = u - s;
-	if (l != v - t)
+
+	if (p - s >= 7 && stringEqual(p - 7, ".browse"))
+		p -= 7;
+	if (q - t >= 7 && stringEqual(q - 7, ".browse"))
+		q -= 7;
+	l = p - s;
+	if (l != q - t)
 		return false;
 	return !memcmp(s, t, l);
 }				/* sameURL */
@@ -792,6 +837,7 @@ char *altText(const char *base)
 		return 0;
 	if (memEqualCI(base, "javascript", 10))
 		return 0;
+
 retry:
 	if (recount >= 2)
 		return 0;
@@ -803,7 +849,7 @@ retry:
 	while (len && !isalnumByte(buf[0]))
 		strmove(buf, buf + 1), --len;
 	if (len > 10) {
-/* see if it's a phrase/sentence or a pathname/url */
+/* see whether it's a phrase/sentence or a pathname/url */
 /* Do this by counting spaces */
 		for (n = 0, s = buf; *s; ++s)
 			if (*s == ' ')
@@ -811,8 +857,8 @@ retry:
 		if (n * 8 >= len)
 			return buf;	/* looks like words */
 /* Ok, now we believe it's a pathname or url */
-/* Get rid of everything after ? or # */
-		s = strpbrk(buf, "#?\1");
+/* get rid of post or get data */
+		s = strpbrk(buf, "?\1");
 		if (s)
 			*s = 0;
 /* get rid of common suffix */

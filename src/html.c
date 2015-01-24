@@ -2485,16 +2485,6 @@ unparen:
 		ns_hnum();
 endtag:
 		lastact = action;
-#if 0
-		if (strayClick) {
-			topTag->clickable = true;
-			a_text = false;
-			topTag->href = cloneString("#");
-			currentA = topTag;
-			sprintf(hnum, "%c%d{", InternalCodeChar, topTag->seqno);
-			ns_hnum();
-		}
-#endif
 	}			/* loop over html string */
 
 	if (currentA) {
@@ -3661,7 +3651,7 @@ bool infPush(int tagno, char **post_string)
 
 	pfs = initString(&pfs_l);
 	stringAndString(&pfs, &pfs_l, action);
-	section = strchr(pfs, '#');
+	section = findHash(pfs, '#');
 	if (section) {
 		i_printf(MSG_SectionIgnored, section);
 		*section = 0;

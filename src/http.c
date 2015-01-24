@@ -433,14 +433,9 @@ char *copy_and_sanitize(const char *start, const char *end)
 		}
 		*out_pointer = '\0';
 /* excise #hash, required by some web servers */
-		frag = strchr(new_copy, '#');
-		if (frag) {
-			params = strchr(new_copy, '?');
-			if (params && params > frag)
-				strmove(frag, params);
-			else
+		frag = findHash(new_copy);
+		if (frag)
 				*frag = 0;
-		}
 
 		getPortLocURL(new_copy, &portloc, 0);
 		if (portloc && !isdigit(portloc[1])) {
@@ -534,7 +529,7 @@ mimeProcess:
 	}
 
 /* Ok, it's http, but the suffix could force a plugin */
-	post = url + strcspn(url, "?#\1");
+	post = url + strcspn(url, "?\1");
 	for (s = post - 1; s >= url && *s != '.' && *s != '/'; --s) ;
 	if (*s == '.') {
 		++s;
