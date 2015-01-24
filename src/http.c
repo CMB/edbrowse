@@ -453,7 +453,7 @@ static char *urlcopy;
 extern char *newlocation;
 extern int newloc_d;
 
-bool httpConnect(const char *url, bool down_ok)
+bool httpConnect(const char *url, bool down_ok, bool webpage)
 {
 	char *referrer = NULL;
 	CURLcode curlret = CURLE_OK;
@@ -842,7 +842,8 @@ curl_fail:
 		serverDataLen = 0;
 		nzFree(urlcopy);	/* Free it on transfer failure. */
 	} else {
-		if (hcode != 200)
+		if (hcode != 200 &&
+(webpage || debugLevel >= 2))
 			i_printf(MSG_HTTPError, hcode,
 				 message_for_response_code(hcode));
 		if (name_changed)

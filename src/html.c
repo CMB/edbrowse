@@ -1390,6 +1390,7 @@ static void htmlScript(char **html, char **h)
 	int js_line;
 	char *js_file;
 	int i;
+	const char *filepart;
 
 	if (!isJSAlive)
 		goto done;
@@ -1423,7 +1424,7 @@ static void htmlScript(char **html, char **h)
 		nzFree(javatext);
 		javatext = 0;
 		if (javaOK(t->href)) {
-			debugPrint(2, "java source %s", t->href);
+			debugPrint(3, "java source %s", t->href);
 			if (browseLocal && !isURL(t->href)) {
 				if (!fileIntoMemory
 				    (t->href, &serverData, &serverDataLen)) {
@@ -1433,7 +1434,7 @@ static void htmlScript(char **html, char **h)
 					prepareForBrowse(javatext,
 							 serverDataLen);
 				}
-			} else if (httpConnect(t->href, false)) {
+			} else if (httpConnect(t->href, false, false)) {
 				if (hcode == 200) {
 					javatext = serverData;
 					prepareForBrowse(javatext,
@@ -1455,13 +1456,14 @@ static void htmlScript(char **html, char **h)
 	if (!javatext)
 		goto done;
 
-	debugPrint(3, "execute %s at %d", getFileURL(js_file, true), js_line);
+	filepart = getFileURL(js_file, true);
+	debugPrint(3, "execute %s at %d", filepart, js_line);
 
 /* mark this script as having been executed */
 	set_property_bool(t->jv, "exec$$ed", true);
 	set_property_string(t->jv, "data", javatext);
 /* now run the script */
-	javaParseExecute(cw->winobj, javatext, js_file, js_line);
+	javaParseExecute(cw->winobj, javatext, filepart, js_line);
 	debugPrint(3, "execution complete");
 
 /* See if the script has produced html via document.write() */
@@ -1521,7 +1523,7 @@ static void objectScript(jsobjtype obj)
 
 		if (!javaOK(jsrc))
 			goto done;
-		debugPrint(2, "java source %s", jsrc);
+		debugPrint(3, "java source %s", jsrc);
 
 		if (browseLocal && !isURL(jsrc)) {
 			if (!fileIntoMemory(jsrc, &serverData, &serverDataLen)) {
@@ -1533,7 +1535,7 @@ static void objectScript(jsobjtype obj)
 			goto execute;
 		}
 
-		if (!httpConnect(jsrc, false)) {
+		if (!httpConnect(jsrc, false, false)) {
 			runningError(MSG_GetJS2, errorMsg);
 			goto done;
 		}
@@ -3651,7 +3653,7 @@ bool infPush(int tagno, char **post_string)
 
 	pfs = initString(&pfs_l);
 	stringAndString(&pfs, &pfs_l, action);
-	section = findHash(pfs, '#');
+	section = findHash(pfs);
 	if (section) {
 		i_printf(MSG_SectionIgnored, section);
 		*section = 0;

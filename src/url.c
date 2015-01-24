@@ -559,7 +559,7 @@ char *getFileURL(const char *url, bool chophash)
 		hostbuf[e - s] = 0;
 	}
 	return hostbuf;
-}				/* getFile URL */
+}				/* getFileURL */
 
 bool getPortLocURL(const char *url, const char **portloc, int *port)
 {

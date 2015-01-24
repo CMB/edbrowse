@@ -108,8 +108,8 @@ Debug levels:
 0: silent
 1: show the sizes of files and web pages as they are read and written
 2: show the url as you call up a web page,
-   and javascript execution errors
-3: show each url through redirection,
+and http redirection.
+3: javascript execution and errors.
    cookies, http codes, form data, and sql statements logged.
 4: show the socket connections, and the http headers in and out
 5: messages to and from the javascript process, url resolution

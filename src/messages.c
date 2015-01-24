@@ -2665,7 +2665,7 @@ static const char *polishMessages[] = {
 	"konsola wejścia (tty)",
 	"wejście readline()",
 	0,
-0,
+	0,
 	"obsługa 'onclick' nie działa z polem tekstowym",
 };
 
@@ -2673,7 +2673,7 @@ static const char *polishMessages[] = {
 static const char **messageArray = englishMessages;
 static int messageArrayLength = sizeof(englishMessages) / sizeof(char *);
 
-int eb_lang = 1; /* default English */
+int eb_lang = 1;		/* default English */
 bool cons_utf8, iuConvert = true;
 char type8859 = 1;
 
@@ -2880,6 +2880,8 @@ void runningError(int msg, ...)
 {
 	va_list p;
 	if (ismc)
+		return;
+	if (debugLevel <= 2)
 		return;
 	if (browseLine) {
 		i_printf(MSG_LineX, browseLine);
