@@ -663,5 +663,30 @@ document.getElementById("album").innerHTML =
 </script  	
 >
 
+<script src="data:text/javascript,var data_uri1_test %3d %22set%22%3b"></script>
+<script src="data:text/javascript;base64,dmFyIGRhdGFfdXJpMl90ZXN0ID0gInNldCI7Cg=="></script>
+
+<script>
+if(data_uri1_test != "set")
+fail(146);
+if(data_uri2_test != "set")
+fail(147);
+
+data_uri1_test = '';
+data_uri2_test = '';
+script_from_data = document.createElement('script');
+script_from_data.src = 'data:text/javascript,var data_uri1_test %3d %22set%22%3b';
+script_from_data = document.createElement('script');
+script_from_data.src = 'data:text/javascript;base64,dmFyIGRhdGFfdXJpMl90ZXN0ID0gInNldCI7Cg==';
+
+</script>
+
+<script>
+if(data_uri1_test != "set")
+fail(148);
+if(data_uri2_test != "set")
+fail(149);
+</script>
+
 </body>
 </html>

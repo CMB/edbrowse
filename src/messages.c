@@ -681,6 +681,7 @@ static const char *englishMessages[] = {
 	0,
 	"Unrecoverable JavaScript error in this session, javascript is closed.",
 	"onclick handler is not accessible",
+	"Unable to parse data URI containing JavaScript",
 };
 
 /* Translation by Erwin Bliesenick: erwinb@no-log.org */
@@ -1343,6 +1344,7 @@ static const char *frenchMessages[] = {
 	0,
 	0,
 	"gestionnaire onclick inaccessible",
+	0,
 };
 
 /* Translation by Cleverson Casarin: clcaul@gmail.com */
@@ -2005,6 +2007,7 @@ static const char *brazilianPortugueseMessages[] = {
 	0,
 	"Erro não-recuperável de Javascript nesta sessão",
 	"manipulador onclick não está acessível",
+	0,
 };
 
 /* Translation by Wojciech Gac: wojciech.s.gac@gmail.com */
@@ -2667,6 +2670,7 @@ static const char *polishMessages[] = {
 	0,
 	0,
 	"obsługa 'onclick' nie działa z polem tekstowym",
+	0,
 };
 
 /* English by default */

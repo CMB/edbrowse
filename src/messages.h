@@ -681,4 +681,5 @@ enum {
 	MSG_NotUsed681,
 	MSG_JSSessionFail,
 	MSG_StrayOnclick,
+	MSG_BadDataURI,
 };

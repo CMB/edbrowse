@@ -33,6 +33,7 @@ struct {
 	"mailto", 0, false, false, false}, {
 	"telnet", 23, false, false, false}, {
 	"tn3270", 0, false, false, false}, {
+	"data", 0, true, false, false}, {
 	"javascript", 0, true, false, false}, {
 	"git", 0, false, false, false}, {
 	"svn", 0, false, false, false}, {
@@ -345,6 +346,11 @@ bool isBrowseableURL(const char *url)
 	else
 		return false;
 }				/* isBrowseableURL */
+
+bool isDataURI(const char *u)
+{
+	return memEqualCI(u, "data:", 5);
+}			/* isDataURI */
 
 /* Helper functions to return pieces of the URL.
  * Makes a copy, so you can have your 0 on the end.
@@ -689,6 +695,9 @@ char *resolveURL(const char *base, const char *rel)
 	const char *s, *p;
 	char *q;
 	int l;
+
+	if (memEqualCI(rel, "data:", 5))
+		return cloneString(rel);
 
 	if (!base)
 		base = EMPTYSTRING;
@@ -1050,6 +1059,59 @@ void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p)
 	if (body_p)
 		*body_p = decodePostData(url, "body", 0);
 }				/* decodeMailURL */
+
+bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l)
+{
+	bool base64 = false;
+	const char *mediatype_start;
+	const char *data_sep;
+	const char *cp;
+	char *data_end;
+	size_t encoded_len;
+
+	*data = *mediatype = EMPTYSTRING;
+	*data_l = 0;
+
+	if (!isDataURI(uri))
+		return false;
+
+	mediatype_start = uri + 5;
+	data_sep = strchr(mediatype_start, ',');
+
+	if (!data_sep)
+		return false;
+
+	for (cp = data_sep - 1; (cp >= mediatype_start && *cp != ';'); cp--);
+
+	if (cp >= mediatype_start && memEqualCI(cp, ";base64,", 8)) {
+		base64 = true;
+		*mediatype = pullString1(mediatype_start, cp);
+	} else {
+		*mediatype = pullString1(mediatype_start, data_sep);
+	}
+
+	encoded_len = strlen(data_sep + 1);
+	*data = pullString(data_sep + 1, encoded_len);
+	data_end = *data + encoded_len;
+
+	if (!base64) {
+		unpercentString(*data);
+		*data_l = strlen(*data);
+	} else {
+		int unpack_ret = base64Decode(*data, &data_end);
+		if (unpack_ret != GOOD_BASE64_DECODE) {
+			nzFree(*mediatype);
+			*mediatype = EMPTYSTRING;
+			nzFree(*data);
+			*data = EMPTYSTRING;
+			return false;
+		}
+		*data_end = '\0';
+		*data_l = data_end - *data;
+	}
+
+	return true;
+}			/* parseDataURI */
 
 /*********************************************************************
 Given a protocol and a domain, find the proxy server

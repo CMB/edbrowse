@@ -1424,8 +1424,20 @@ static void htmlScript(char **html, char **h)
 		nzFree(javatext);
 		javatext = 0;
 		if (javaOK(t->href)) {
-			debugPrint(3, "java source %s", t->href);
-			if (browseLocal && !isURL(t->href)) {
+			bool from_data = isDataURI(t->href);
+			debugPrint(3, "java source %s",
+					!from_data ? t->href : "data URI");
+			if (from_data) {
+				char *mediatype;
+				int data_l = 0;
+				if (parseDataURI(t->href, &mediatype,
+						&javatext, &data_l)) {
+					prepareForBrowse(javatext, data_l);
+					nzFree(mediatype);
+				} else {
+					runningError(MSG_BadDataURI);
+				}
+			} else if (browseLocal && !isURL(t->href)) {
 				if (!fileIntoMemory
 				    (t->href, &serverData, &serverDataLen)) {
 					runningError(MSG_GetLocalJS, errorMsg);
@@ -1447,7 +1459,7 @@ static void htmlScript(char **html, char **h)
 				runningError(MSG_GetJS2, errorMsg);
 			}
 			js_line = 1;
-			js_file = t->href;
+			js_file = (!from_data ? t->href : "data_URI");
 			nzFree(changeFileName);
 			changeFileName = NULL;
 		}
@@ -1514,6 +1526,23 @@ static void objectScript(jsobjtype obj)
 	jsrc = get_property_url(obj, false);
 	if (jsrc) {
 		char *h;
+		if (isDataURI(jsrc)) {
+			char *mediatype;
+			int data_l;
+			if (parseDataURI(jsrc, &mediatype, &h, &data_l)) {
+				jtext = h;
+				/* Should look at charset in mediatype... */
+				nzFree(mediatype);
+				nzFree(jsrc);
+				jsrc = cloneString("script from data URI");
+				prepareForBrowse(jtext, data_l);
+				goto execute;
+			} else {
+				runningError(MSG_BadDataURI);
+				goto done;
+			}
+		}
+
 		unpercentURL(jsrc);
 		h = resolveURL(getBaseHref(-1), jsrc);
 		if (h) {

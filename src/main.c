@@ -880,6 +880,8 @@ bool javaOK(const char *url)
 		return false;
 	if (!url)
 		return true;
+	if (isDataURI(url))
+		return true;
 	h = getHostURL(url);
 	if (!h)
 		return true;
