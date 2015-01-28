@@ -455,7 +455,8 @@ Type your brilliant thoughts here.
 We'll get back to you if we like what you have to say.
 </textarea>
 <div id=album>
-</div>
+</div
+>
 <DIV id=sphere>Surface area is 4&#960;r<span class=sup>2</span>.</DIV>
 <input type=button name=b value=calc onclick=calc(this.form)>
 <input type='text' readonly name='result' size='4'>
@@ -659,7 +660,8 @@ if(document.getElementById("sphere").innerHTML !=
 fail(145);
 document.getElementById("album").innerHTML =
 "Why don't we do it <A href=http://en.wikipedia.org/wiki/White_album>in the road</A>?";
-</script>
+</script  	
+>
 
 </body>
 </html>

@@ -337,9 +337,11 @@ findEndScript(const char *h, const char *tagname,
 	bool rc = true;
 	const char *s = h;
 	char look[12];
+	int looklen;
 	int js_nl = 0;
 
-	sprintf(look, "</%s>", tagname);
+	sprintf(look, "</%s", tagname);
+	looklen = strlen(look);
 
 retry:
 	end = strstrCI(s, look);
@@ -347,6 +349,10 @@ retry:
 		rc = false;
 		browseError(MSG_CloseTag, look);
 		end = (char *)h + strlen(h);
+	} else if (isA(end[looklen])) {
+/* the tag is </scriptfoobar> or some such, skip past it */
+		s = end + looklen;
+		goto retry;
 	} else if (is_js) {
 /* Check for document.write("</script>");
  * This isn't legal javascript, but it happens all the time!
@@ -355,7 +361,7 @@ retry:
  * for a quote, and ) ; or + */
 		char c;
 		int j;
-		s = end + strlen(look);
+		s = end + looklen;
 		for (j = 0; j < 30; ++j, ++s) {
 			c = *s;
 			if (!c)
@@ -364,7 +370,7 @@ retry:
 				break;
 			if (c != '"' && c != '\'')
 				continue;
-			while (s[1] == ' ')
+			while (s[1] == ' ' || s[1] == '\t')
 				++s;
 			c = s[1];
 			if (!c)
@@ -373,6 +379,7 @@ retry:
 				goto retry;
 		}
 	}
+
 	if (end_p)
 		*end_p = end;
 	if (new_p)
@@ -503,8 +510,8 @@ put1:
 
 		for (s = buf; c = *s; ++s) {
 			if (isspaceByte(c) || c == '|') {
-if(c == '\t' && !premode)
-*s = ' ';
+				if (c == '\t' && !premode)
+					*s = ' ';
 				if (!w)
 					w = s;
 				continue;
