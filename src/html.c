@@ -1806,6 +1806,7 @@ nextchar:
 		if (!slash)
 			htmlName();
 
+#if 0
 /* Does this tag force the closure of an anchor? */
 		if (currentA && (action != TAGACT_A || !slash)) {
 			if (open && open->clickable)
@@ -1824,6 +1825,7 @@ forceCloseAnchor:
 /* if/when the </a> comes along, it will be unbalanced, and we'll ignore it. */
 			}
 		}
+#endif
 
 		retainTag = true;
 		if (ti->bits & TAG_INVISIBLE)
