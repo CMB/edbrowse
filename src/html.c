@@ -2838,6 +2838,8 @@ bool htmlTest(void)
 /* check for <!doctype */
 			if (memEqualCI(p + 1, "!doctype", 8))
 				return true;
+			if (memEqualCI(p + 1, "?xml", 4))
+				return true;
 /* If it starts with <tag, for any tag we recognize,
  * we'll call it good. */
 			for (j = 1; j < 10; ++j) {
