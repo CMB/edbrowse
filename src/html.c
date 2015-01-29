@@ -2175,8 +2175,6 @@ nop:
 				if (action == TAGACT_BR)
 					c = '\n';
 			}
-			if (currentA)
-				c = ' ';
 			stringAndChar(&ns, &ns_l, c);
 			goto endtag;
 
