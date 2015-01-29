@@ -983,6 +983,7 @@ restart:
 		goto finish;
 	start += 2;
 	if (!memEqualCI(start, "iso-", 4) &&
+	    !memEqualCI(start, "us-ascii", 8) &&
 	    !memEqualCI(start, "utf-", 4) &&
 	    !memEqualCI(start, "gb", 2) && !memEqualCI(start, "windows-", 8))
 		goto restart;
