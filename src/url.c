@@ -1066,7 +1066,6 @@ bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l)
 	const char *mediatype_start;
 	const char *data_sep;
 	const char *cp;
-	char *data_end;
 	size_t encoded_len;
 
 	*data = *mediatype = EMPTYSTRING;
@@ -1092,12 +1091,12 @@ bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l)
 
 	encoded_len = strlen(data_sep + 1);
 	*data = pullString(data_sep + 1, encoded_len);
-	data_end = *data + encoded_len;
+	unpercentString(*data);
 
 	if (!base64) {
-		unpercentString(*data);
 		*data_l = strlen(*data);
 	} else {
+		char *data_end = *data + strlen(*data);
 		int unpack_ret = base64Decode(*data, &data_end);
 		if (unpack_ret != GOOD_BASE64_DECODE) {
 			nzFree(*mediatype);
