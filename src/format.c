@@ -1397,6 +1397,9 @@ char *andTranslate(const char *s, bool invisible)
 		"#8839\0superset of",
 		"#9658\0*",
 		"#9837\0flat",
+		"#9786\0smile",
+		"#128512\0grin",
+		"#128513\0grin",
 		0
 	};
 
@@ -1445,9 +1448,16 @@ char *andTranslate(const char *s, bool invisible)
 		if (s[j] == ';')
 			++j;
 /* remove leading zeros */
-		if (andbuf[0] == '#')
+		if (andbuf[0] == '#') {
 			while (andbuf[1] == '0')
 				strmove(andbuf + 1, andbuf + 2);
+			if (andbuf[1] == 'x' || andbuf[1] == 'X') {
+				unsigned int uc;
+				uc = strtol(andbuf + 2, 0, 16);
+				if (uc <= 0x7fffffff)
+					sprintf(andbuf + 1, "%d", uc);
+			}
+		}
 
 lookup:
 		debugPrint(6, "meta %s", andbuf);
