@@ -122,7 +122,6 @@ blind, script, accessible">
 <LI><A HREF=#insupd> Insert, Update, Delete </A>
 <LI><A HREF=#td> Table Descriptors </A>
 <LI><A HREF=#gosql> Go SQL </A>
-<LI><A HREF=#end> Wrap up </A>
 </UL>
 
 <H4> Chapter 9, Other Command Line Utilities </H4>
@@ -136,6 +135,7 @@ blind, script, accessible">
 <LI><A HREF=#saud> Streaming Audio </A>
 <LI><A HREF=#podc> Podcast </A>
 <LI><A HREF=#youtube> Youtube </A>
+<LI><A HREF=#twit> Twitter </A>
 </UL>
 
 <P><HR><P>
@@ -152,11 +152,11 @@ Karl Dahlke
 <A HREF=mailto:eklhad@gmail.com>eklhad@gmail.com</A>.&nbsp;
 Please see the
 <A href=http://en.wikipedia.org/wiki/edbrowse>
-wikipedia article</A> for a history of edbrowse, and an overview of its features.
+wikipedia article</A> for a history of edbrowse and an overview of its features.
 
 <H3 align=center> <A NAME=copy> Copyright Notice </A> </H3>
 
-This program is copyright &copy; Karl Dahlke (and other authors and contributors), 2000-2014.&nbsp;
+This program is copyright &copy; Karl Dahlke (and other authors and contributors), 2000-2015.&nbsp;
 It is made available by the authors under the terms of the GNU General Public License (GPL),
 as articulated by the Free Software Foundation.&nbsp;
 It may be used for any purpose, and redistributed, provided this copyright notice is included.
@@ -282,22 +282,21 @@ This is transparent to you; you see the same letter on the screen,
 and you hear the same sounds if your screen reader passes these letters to a speech synthesizer.&nbsp;
 A quick way to tell which system you are on is to echo $LANG.&nbsp;
 If it ends in utf8 or utf-8,
-and it probably will,
+and it probably does,
 then your console is using utf8, and it expects two-byte sequences.&nbsp;
 Your files will contain these underlying sequences, and you probably aren't even aware of it.&nbsp;
 Older pre-utf8 systems store each character in a single byte, with an iso8859 codepage doing the translation.
 
 <P>
 There's much more to say about charsets; this is merely a brief introduction.&nbsp;
-I need not go further, because edbrowse only supports iso8859 &#8660; utf8 at this time.&nbsp;
+I need not go further, because edbrowse only supports iso8859-1 &#8660; utf8 at this time.&nbsp;
 Chinese, for example, requires 3 and 4 byte sequences, which map into unicode.&nbsp;
 Edbrowse doesn't handle this level of complexity at this time.
 
 <P>
 The output and error messages,
 such as "search string not found",
-have been internationalized,
-so that edbrowse can support most European languages.&nbsp;
+have been internationalized.&nbsp;
 Set the environment variable LANG to interact with edbrowse in your home language.&nbsp;
 Supported languages are shown below.&nbsp;
 If you can translate edbrowse into additional languages,
@@ -327,9 +326,9 @@ unless the string utf8 or utf-8 appears in $LANG,
 whence the nonascii characters are generated using utf8.&nbsp;
 LANG=fr-FR.UTF-8 is a common setting in France.&nbsp;
 Similarly, the contents of a buffer, be it a local document or an internet website,
-are displayed as single bytes or two-byte sequences,
+are displayed as single bytes or multi-byte sequences,
 according to $LANG.&nbsp;
-Bear in mind, utf8 has become the standard, and edbrowse may not display text or error messages through iso8859 for long.&nbsp;
+Bear in mind, utf8 has become the standard, and edbrowse may not display text or error messages through iso8859 pages for long.&nbsp;
 In other words, iso8859 is deprecated.
 
 <P>
@@ -344,11 +343,11 @@ If I did everything right, you shouldn't notice any difference.&nbsp;
 <P>
 When you write data out to the same file,
 e.g. if you have made some corrections or additions,
-I convert it back to its original single-byte iso8859 charset.&nbsp;
+edbrowse converts it back to its original single-byte iso8859 charset.&nbsp;
 Thus you can send the edited file back to your friend,
 and it will be in his charset as he expects.&nbsp;
 However, if you write the data, or any portion of that data, into a new file,
-I will leave it in the charset that is used by your computer.
+it is left in the charset that is used by your computer.
 
 <P>
 These conversions should never take place on zip files, or executable files,
@@ -371,8 +370,8 @@ Needless to say, this is very confusing.
 <P>
 Search and substitute is performed by the pcre library,
 and fortunately for us, the latest version supports utf8.&nbsp;
-I pass pcre an option that tells it to treat certain two-byte sequences as single letters,
-and it behaves the way you want it to.&nbsp;
+Edbrowse passes pcre an option that tells it to treat certain two-byte sequences as single letters,
+and thus it behaves the way you want it to.&nbsp;
 Searching for ni.o works again.&nbsp;
 If you want to disable utf8 search and substitute temporarily, use the su8 command.
 
@@ -417,7 +416,7 @@ p: print the current line
 <br>
 ---: back up three lines
 <br>
-'a,'bp: print a range of lines, marked with labels a and b
+'a,'bp: print a range of lines marked with labels a and b
 <br>
 kb: mark the current line as b
 <br>
@@ -605,8 +604,6 @@ pb: play buffer (audio)
 <br>
 iu: automatically convert between iso8859 and utf8 (toggle)
 <br>
-su8: search/substitute using utf8 (toggle)
-<br>
 ds=source,login,password: set the data source
 <br>
 sht: show tables
@@ -640,7 +637,7 @@ Haven't for years.
 If you just want to read the whole document, type ,p.&nbsp;
 That works, if you use a command line speech adapter.&nbsp;
 The whole document is in buffer, and you can read through it using the function keys on your adapter.&nbsp;
-Now I realize most people still use screen readers, so this won't work.&nbsp;
+If you use a screen reader, this won't work.&nbsp;
 Still, there's an easy way to step through screen by screen.&nbsp;
 Start with 0z24 to get the first 24 lines.&nbsp;
 Then the z command will give you the next 24, and the next 24, and so on.&nbsp;
@@ -650,21 +647,20 @@ You may want to use 22, or 23, or whatever makes sense relative to your screen.
 Another approach is to simply hit return, again and again, and proceed line by line.
 
 <P>
-Once you are use to the regular expressions, you can jump to any part of the document,
+Once you are use to regular expressions, you can jump to any part of the document,
 even a large document, in record time simply by searching for a unique text fragment.&nbsp;
 This comes with practice.&nbsp;
 Sometimes I guess wrong, and my search string is not unique.&nbsp;
 I wind up somewhere else and have to search again.&nbsp;
-This doesn't happen very often.&nbsp;
-I usually get to the right place in one or two tries.
+No matter, I usually get to the right place in one or two tries.
 
 <P>
 If you want to mark certain lines of text, please don't try to remember the line numbers.&nbsp;
 Use the k command to mark them.&nbsp;
-I usually use ka and kb to mark the start and end of a block of text,
+For example, use ka and kb to mark the start and end of a block of text,
 while kc marks the new location.&nbsp;
 The move command is then 'a,'bm'c - with absolutely no line numbers.&nbsp;
-This is standard ed fair, though most people never take advantage of it.
+This is standard ed fair.
 
 <P>
 To look for links on a web page, search for the left brace.&nbsp;
@@ -672,7 +668,7 @@ Yes, you may stumble across a literal left brace in the text, but this doesn't h
 You might access a particular link by typing /{Next}/g.&nbsp;
 Similarly, you can look for input fields by searching for the less than sign.&nbsp;
 This will make sense as you read about the representation of web pages below.&nbsp;
-And of course, multiple operations can be scripted, a feature unique to this browser.
+And of course, multiple operations can be scripted, an important feature of edbrowse.
 
 <P>
 These are just some of the tips and tricks that will make you as fast and efficient as anybody using a screen editor or browser,
@@ -731,7 +727,7 @@ as described in the perlre man page.&nbsp;
 However, if * is the first character, it is treated as a literal star.&nbsp;
 This makes sense, as there is no previous character to modify.&nbsp;
 Some versions of ed do this, some don't.&nbsp;
-I find it convenient; when I want to replace * + or ? I don't have to escape it just because it is a modifier.&nbsp;
+This is convenient; when you want to replace * + or ? you don't have to escape it just because it is a modifier.&nbsp;
 Similarly, an open bracket by itself is treated as literal.&nbsp;
 These changes to regular expressions, to look more like ed, may be confusing
 if you are a perl expert.&nbsp;
@@ -755,9 +751,7 @@ thus you can tell when a no-output command is done.
 <P><LI>
 Type `cd dirname' to change directories.&nbsp;
 The new directory is always printed.&nbsp;
-Type cd alone to find out where you are.&nbsp;
-I don't know what happens under dos
-if you type cd f:/this/that, I never tested it.
+Type cd alone to find out where you are.
 
 <P>
 Unlike bash, edbrowse does not retrace your steps back through symbolic links.&nbsp;
@@ -772,7 +766,7 @@ Thus cd ~/work takes you to the work directory under your home directory.
 This command does not change any filenames that may be active.&nbsp;
 You can edit foo, cd .., and write,
 and foo will be copied to the parent directory.&nbsp;
-That's probably not what you want, so be careful.
+That's probably not what you want, so be careful when changing directories.
 
 <P><LI>
 r operates on the current line by default,
@@ -833,13 +827,7 @@ to read in a file with a rather unusual file name.
 <P><LI>
 Many versions of ed place a $ at the end of a listed line,
 but this is not one of them, at least not by default.&nbsp;
-I use a linear speech adapter, rather than a screen reader,
-so the embedded newlines tell me exactly where the line boundaries are.&nbsp;
-The extraneous $ character just gets in my way.&nbsp;
-However, I realize most people still use screen readers,
-where trailing whitespace is indistinguishable from the blank screen,
-and a wrapped fragment is sometimes mistaken for a second line.&nbsp;
-Therefore, you can use the command `el' to place end markers around listed lines.&nbsp;
+Use the command `el' to place end markers around listed lines.&nbsp;
 Listed lines begin with ^ and end with $.&nbsp;
 Enter `ep' to place end markers around all printed lines.&nbsp;
 Use `eo' to turn end markers off.
@@ -854,8 +842,8 @@ This is because I often hit caps lock by mistake,
 or even shift q by mistake,
 and if I've forgotten about some important changes that I've made,
 those changes are gone!&nbsp;
-I know, this seems contrived, like it would never happen,
-but it has happened to me many times,
+This seems contrived, like it would never happen,
+but it does,
 so I disabled capital Q.&nbsp;
 Type qt to quit absolute.
 
@@ -898,7 +886,7 @@ This program is less tolerant of whitespace than /bin/ed.
 
 <P><LI>
 A single % on the right hand side of a substitution is replaced with the last right hand side.&nbsp;
-Some versions of ed do this, some don't; I find it a convenient feature.
+Some versions of ed do this, some don't.
 
 <P><LI>
 s, is shorthand for s/, +/,\n
@@ -932,11 +920,10 @@ Type capital H if you always want to see the error messages.
 <P><LI>
 In most versions of ed, the command z7 means .,+6p,
 making the current line +7.&nbsp;
-I think this is inconsistent, having one and only one ed command that leaves dot
+This is inconsistent, having one and only one ed command that leaves dot
 somewhere other than the last line printed.&nbsp;
 The confusion is compounded when z prints the last lines in the file,
 whence dot actually is the last line printed.&nbsp;
-So I have changed the z command slightly.&nbsp;
 In this program z7 means +,+7p,
 and the current line becomes the last line printed, just like the other commands you know and love.&nbsp;
 Without a number, z prints the previous number of lines.&nbsp;
@@ -949,8 +936,7 @@ Subsequent sections describe
 new and interesting features, completely foreign to ed.&nbsp;
 These include the simultaneous edit of multiple files
 similar to emacs and vi,
-and the ability to browse an html file and edit its fill-out form.&nbsp;
-That's why I wrote the program in the first place.
+and the ability to browse an html file and edit its fill-out form.
 
 <H3 align=center> <A NAME=brace> Balancing Braces </A> </H3>
 
@@ -982,8 +968,8 @@ which moves from line 2 back to line 1.
 
 <P>
 The B command on the else line is ambiguous -
-I don't know whether to look backwards or forwards.&nbsp;
-You must type B{ or B}.
+not knowing whether to look backwards or forwards.&nbsp;
+Type B{ or B}.
 
 <P>
 You can explicitly balance &lt;&gt;, as in multiline html tags,
@@ -1023,12 +1009,11 @@ wrapping around to session 1 if necessary.&nbsp;
 The program exits when the last session quits.
 
 <P>
-Warning, the program contains a bug regarding the undo command.&nbsp;
+Warning, the program contains a limitation regarding the undo command.&nbsp;
 If you switch to another session, then switch back,
 you cannot undo your last edit.&nbsp;
 You'd think this would be easy to fix,
 but it is trickier than it seems, so I haven't gotten around to it.&nbsp;
-I just wanted you to know.&nbsp;
 Make sure everything is copacetic before you switch to another session.
 
 <P>
@@ -1096,8 +1081,8 @@ The following moves the data from one file to another.
 </font></PRE>
 
 <P>
-An e command, by itself, tells you the current session, in case you've forgotten.&nbsp;
-This is similar to f, by itself, which tells you the current file.
+An e command, by itself, prints the current session, in case you've forgotten.&nbsp;
+This is similar to f, by itself, which prints the current file.
 
 <H3 align=center> <A NAME=usage> Usage </A> </H3>
 
@@ -1115,7 +1100,6 @@ which prints the sizes of files as they are written and read.&nbsp;
 Some people like -d2, which prints the URLs
 as you jump to new web pages or submit forms online.&nbsp;
 Unless you are a developer, you probably don't want to go any higher than that.&nbsp;
-On rare occasions you might want to set -d4, to see the http headers in and out.&nbsp;
 Remember, the debug level can be changed on the fly by using the dbx command (x between 0 and 9).
 
 <P>
@@ -1140,7 +1124,7 @@ Note that -c must be the first option.
 <P>
 The arguments are the files to edit.&nbsp;
 Edbrowse reads these files into corresponding sessions
-and starts you off in session 1.&nbsp;
+and starts in session 1.&nbsp;
 If there are no arguments, you start in session 1,
 but there is no text and no associated file.
 
@@ -1161,9 +1145,10 @@ Very convenient.
 At all times, even when entering a file name, this program scans its input
 for binary codes.&nbsp;
 Use the three character sequence ~bd to enter the nonascii character 0xbd,
-which is the code for 1/2.&nbsp;
+which is the unicode for 1/2.&nbsp;
+Assuming utf8, you will need to enter ~c2~bd for 1/2.&nbsp;
 Similarly, if you list a line with lna active, the 1/2 character
-is displayed as ~bd.&nbsp;
+is displayed as ~c2~bd.&nbsp;
 All nonascii and most control characters
 are entered and displayed in this manner.&nbsp;
 Tab and newline must be entered directly from the keyboard.&nbsp;
@@ -1171,7 +1156,7 @@ Tab and backspace are displayed as &gt; and &lt; respectively.&nbsp;
 If the following line is entered,
 
 <P>
-Hello~07 ~x is ~bd of y
+Hello~07 ~x is ~c2~bd of y
 
 <P>
 And then listed, you will see the very same text,
@@ -1181,9 +1166,6 @@ If you want to force a ~, even though there are hex digits following,
 use two tildes, ~~.
 
 <P>
-Be careful however; the above example assumes iso8859, and as mentioned earlier, utf8 is the new standard.&nbsp;
-The control g bell is still a single byte, but 1/2 is a two-byte sequence, and must be entered as
-~c2~bd.&nbsp;
 Of course characters are not usually entered in this awkward manner.&nbsp;
 There are easier ways to enter accented letters into your document, depending on your native language
 and the configuration of your system.
@@ -1193,7 +1175,7 @@ When you are entering a regular expression, you have the choice, hex or octal.&n
 This program converts ~xx, as a hex value,
 and the perl regexp machinery converts \nnn, as octal.&nbsp;
 Thus any of the following will undos a file.&nbsp;
-The first is translated by my software, the second and third by perl regular expressions.
+The first is translated by edbrowse, the second and third by perl regular expressions.
 
 <P>
 ,s/~0d$//
@@ -1209,7 +1191,7 @@ Most terminals and terminal emulators, including the Linux console,
 interpret various escape sequences as control commands.&nbsp;
 Thus an errant escape sequence from a binary file could send your terminal into an unexpected state,
 making recovery difficult.&nbsp;
-At times I have had to log out and log in again, to reset the tty.&nbsp;
+Use /usr/bin/reset to put the terminal back into a sane state.&nbsp;
 Thus it seems prudent to render escapes as ascii characters all the time.&nbsp;
 If you have no idea where that ~1b came from, it's probably a literal escape character
 in your file.
@@ -1244,11 +1226,11 @@ After that the buffer remains "binary", even if you delete all the data and read
 You must use the `e' command to get a fresh text buffer.
 
 <P>
-For the most part it doesn't really matter if the data is considered binary or text.&nbsp;
+For the most part it doesn't really matter if the data is binary or text.&nbsp;
 Either way you can display and edit the data, and write it to a file.
 
 <P>
-This program tries to "do the right thing" under DOS/Windows.&nbsp;
+Edbrowse tries to "do the right thing" under DOS/Windows.&nbsp;
 That is, it converts crlf to and from newline if it believes the file is text;
 and it leaves binary data alone.&nbsp;
 These distinctions are not relevant on Unix/Linux.
@@ -1379,7 +1361,7 @@ or rename them to something more manageable?&nbsp;
 Stars are a bit risky; you can access multiple files without realizing it.&nbsp;
 And we're not even talking about those pesky files with spaces or invisible control characters in their names.&nbsp;
 Our sighted friend calls up his file manager and simply clicks on the file he wants to view or edit or remove.&nbsp;
-Sometimes I want/need that kind of power.
+Edbrowse gives you that kind of power.
 
 <P>
 When the substitute command changes text, it renames the underlying file.&nbsp;
@@ -1411,8 +1393,8 @@ Then run !program 'x
 to invoke your program on that file.&nbsp;
 This sounds involved, but it is merely macro substitution, implemented in a few lines of code.&nbsp;
 If 'x is present in a shell escape, and is not next to any letters or digits,
-I replace it with the text on the line labeled x.&nbsp;
-Thus if your filename contains spaces, you'd better run !program "'x",
+edbrowse replaces it with the text on the line labeled x.&nbsp;
+If your filename contains spaces, you'd better run !program "'x",
 to make sure the entire file name is one argument to the running program.
 
 <P>
@@ -1518,24 +1500,11 @@ such as a table or ascii art.&nbsp;
 If you're not sure what to expect,
 i.e. you didn't write the file,
 scan through it first,
-and apply bl to the range of lines that actually represents text.&nbsp;
-Often this is the entire document (,bl).&nbsp;
-The following commands do a pretty good job of cleaning up a typical Microsoft Word document.
+and apply bl to the range of lines that actually represents text.
 
 <P>
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>e whatever.doc or whatever.wps
-# change filename, so you don't accidentally overwrite the microsoft document
-f _
-,s/[~80-~ff~00-~0c~0e-~1f]//g  # strip out non ascii control/formatting codes
-g/^\s*$/d  # these blank lines use to contain non ascii codes
-,bl  # break lines and paragraphs
-1,20p  # first couple lines are often garbage, but then the text begins.
-</font></PRE>
-
-<P>
-Of course the program catdoc does a better job of converting word documents into text.&nbsp;
-This is often bundled with xls2cvs.&nbsp;
-These are must-have programs for people who want a command line environment.
+You might be tempted to use bl to make Word documents readable, but use catdoc instead; it does a better job.&nbsp;
+This is a must-have program for people who want a command line environment.
 
 <H3 align=center> <A NAME=race> Race Conditions </A> </H3>
 
@@ -1573,9 +1542,8 @@ The window is just too small.
 
 <P>
 With this in mind, edbrowse doesn't mess with temp files at all.&nbsp;
-I just don't bother.&nbsp;
-I truncate the file and write out the data,
-and I don't expect anything to go wrong during the critical millisecond.
+It truncates the file and writes out the data,
+hoping nothing will go wrong during the critical millisecond.
 
 <P>
 Another race condition is more subtle.&nbsp;
@@ -1592,15 +1560,12 @@ then, when you are ready to write your changes,
 it checks the timestamp, and if foo has been updated in the interim,
 it issues a warning message.&nbsp;
 "File has been updated by someone else -
-do you really want to write?"
-
-<P>
+do you really want to write?"&nbsp;
 This is a good feature,
 but edbrowse doesn't have it, simply because I haven't gotten round to writing it.&nbsp;
 I'm the only user on my PC,
 and you're probably the only user on your PC too,
-so this feature is not in high demand.&nbsp;
-Still, I should implement it some day.
+so this feature is not in high demand.
 
 <P><HR><P>
 <H2 align=center> Chapter 4, Web Browser </H2>
@@ -1621,7 +1586,7 @@ or another editing session `w3'.
 Note that this is not browsing, we are simply retrieving text from
 another machine and editing it locally.&nbsp;
 The text need not be html, it could be (for instance) a plain ascii document.&nbsp;
-Many people, myself included, put various types of files, even executables,
+Many people put various types of files, even executables,
 on their websites for retrieval.&nbsp;
 Of course you wouldn't want to edit a binary file,
 but you can still use this editor to retrieve the file and save it locally,
@@ -1681,16 +1646,7 @@ If you write the transformed data, deliberately or accidentally,
 the reformatted text will be saved in a new file,
 whatever.html.browse,
 without disturbing the original html.&nbsp;
-This protects you if you are developing your own web pages.&nbsp;
-BTW, I believe blind people should write raw html,
-rather than wielding a wysiwyg web development tool such as Front Page.&nbsp;
-In fact I write all my documents in html, even short business letters.&nbsp;
-I can create headings, lists, tables, etc,
-without using a wysiwyg editor or a screen reader.&nbsp;
-This
-<A HREF=http://www.htmlcodetutorial.com>
-excellent tutorial</A>
-will get you started.
+This protects you if you are developing your own web pages.
 
 <P>
 When the browse conversion is executed, the system checks for
@@ -1743,11 +1699,8 @@ lines are cut at approximately 80 characters, give or take a few,
 usually at a sentence or phrase boundary.&nbsp;
 Thus reading line by line often reveals a sequence of sentences,
 or at least self-contained phrases within a larger sentence.&nbsp;
-I consider this the optimal way to view or edit a document --
-any document.&nbsp;
 If you read this manual raw, without doing the browse on the file,
-you'll see what I mean.&nbsp;
-Review the <A HREF=#bl>break line</A> command above.
+you'll see what I mean.
 
 <P>
 The layout of a preformatted section, &lt;pre&gt;, is honored,
@@ -1791,8 +1744,8 @@ and you'll get an error.
 <P>
 If you do want to edit the text, as pure text,
 enter the `et' command (edit as text).&nbsp;
-You will not be able to return to the html that produced this page.&nbsp;
-Nor can you follow a hyperlink or submit a fill-out form.&nbsp;
+You will not be able to return to the html that produced this page,
+nor can you follow a hyperlink or submit a fill-out form.&nbsp;
 The browsable text has become plain text, with no internet semantics.
 
 <P>
@@ -1829,27 +1782,17 @@ while x to the n-1 power looks like x^(n-1).&nbsp;
 Again, your css file should define span.sup.
 
 <P>
-There are, sad to say, three different ways to encode mathematical symbols
-in html.&nbsp;
-At present edbrowse only supports one of them,
-though it is the most common, and the most portable among all browsers.&nbsp;
-This is the unicode system,
-where the Greek letter theta is specified as
-&amp;#952;.&nbsp;
-Explorer turns this expression into &#952;,
-one character on the screen,
-while edbrowse turns it into the word theta.&nbsp;
-I also put spaces around the word
-if its neighbors are also words.&nbsp;
-This is illustrated by the circumference of a circle, which is 2 times pi times r.&nbsp;
-These three tokens are usually squashed together,
-and there is no confusion in the sighted world,
-where pi is a separate Greek letter.&nbsp;
-But if pi is spelled out,
-and the tokens are left together,
-the result is 2pir.&nbsp;
-Now pir looks like a three letter word.&nbsp;
-To avoid this, edbrowse inserts spaces, giving 2 pi r.
+Edbrowse supports the translation of certain &amp;word; constructs in html,
+such as &amp;lt; for the less than sign,
+along with &amp;#code: or &amp;#xcode; for direct inclusion of unicodes in html.&nbsp;
+The Greek letter theta can be encoded as &amp;theta;
+or &amp;#952;,
+or &amp;#x3b8;.&nbsp;
+In each case it is translated into the utf8 sequence for theta.&nbsp;
+Your screen reader should be able to render this as the word theta,
+perhaps under the direction of a configuration file.&nbsp;
+Such translations are left to the adapter;
+edbrowse merely turns html into the proper utf8 sequences.
 
 <P>
 These translations are designed to work with the pages of the
@@ -1861,7 +1804,7 @@ An <A href=http://book.mathreference.com>online textbook</A> is included.
 <H3 align=center> <A NAME=title> Title, Description, Keywords </A> </H3>
 
 While in browse mode, the commands ft, fd, and fk
-produce the title, description, and keywords of the current web page respectively.&nbsp;
+produce the title, description, and keywords of the current web file respectively.&nbsp;
 These are normally not visible to the user.&nbsp;
 The title describes the web page in 80 characters or less.&nbsp;
 The description is a more complete explanation,
@@ -1920,7 +1863,7 @@ or view the raw html.
 Of course the browsable text might also contain words inside braces,
 especially if the web page is technical in nature.&nbsp;
 Hence there is some ambiguity.&nbsp;
-However, I believe it is clear from context.&nbsp;
+However, it is often clear from context.&nbsp;
 {More information} is probably a link,
 whereas ${HOME}/.profile is probably not.
 
@@ -1967,7 +1910,7 @@ even though the file is not html and you've never issued a browse command.
 
 Although most links lead to other web pages,
 some links point to other sections within the current web page.&nbsp;
-Again, you will be able to tell by context.&nbsp;
+Again, you might be able to tell by context.&nbsp;
 Links in the table of contents are usually
 shortcuts to chapters in the current document.&nbsp;
 The same holds for links that look like:
@@ -1988,7 +1931,7 @@ Enter z10 to read the first few lines of the appendix.
 
 <H3 align=center> <A NAME=back> The Back Key </A> </H3>
 
-If you edit a new file via the `e', `b', or `g' commands,
+If you edit a new file via the `e', `b', or `g' command,
 and you already have text in the buffer,
 that text is bundled up and pushed onto an internal stack.&nbsp;
 You can pop the stack by issuing the `^' command.&nbsp;
@@ -2013,12 +1956,6 @@ the last search/replace strings for substitutions,
 the hyperlinks and forms,
 the compiled javascript,
 everything!
-
-<P>
-Unlike lynx, I don't keep a running history of every web page visited.&nbsp;
-I never really saw a need for this feature.&nbsp;
-99% of the time I simply want to back up one or two pages,
-and that's it.
 
 <P>
 The stack should not be confused with parallel edits,
@@ -2120,20 +2057,18 @@ Use the play buffer `pb' command.&nbsp;
 Normally pb uses the name of the file to infer the audio format.&nbsp;
 If the filename ends in .wav, it's a wave file, and so on.&nbsp;
 If the filename is not particularly helpful, and you know the audio format, you can specify it by typing
-pb.wav for a wave file, pb.mp3 for an mp3 file, and so on.
-
-<P>
+pb.wav for a wave file, pb.mp3 for an mp3 file, and so on.&nbsp;
 The config file (described below)
 includes mime type descriptors,
-which tell edbrowse how to play wave and mp3 files etc.&nbsp;
+which tell edbrowse how to play wave and mp3 files.&nbsp;
 These must be set up, or the pb command won't work.&nbsp;
 It will say something like,
 "I don't know how to process an mp3 file".&nbsp;
-This is consistent with other browsers, which use "plugins" to play multimedia files that are retrieved from the internet.
+This is consistent with other browsers, which use plugins to play multimedia files that are retrieved from the internet.
 
 <H3 align=center> <A NAME=input> Input Fields </A> </H3>
 
-The input fields of an on-line form are usually indicated by angle brackets.&nbsp;
+The input fields of an on-line form are indicated by angle brackets.&nbsp;
 For example, a search engine might present the following form.
 
 <P><PRE><font size=3 face=Arial,Helvetica,sans-serif>Keywords: &lt;&gt;
@@ -2235,15 +2170,16 @@ blind people don't want to wade through a menu unless they absolutely have to!
 
 <P>
 There is some ambiguity when the option is itself a number.&nbsp;
-In this case I perform three matches.&nbsp;
+In this case edbrowse performs three matches.&nbsp;
 If you type in the number exactly as it appears, that option is selected.&nbsp;
 If the number you entered is not a perfect match for one of the options, it is treated as a menu number.&nbsp;
-If it is not a valid menu number (e.g. out of range), I perform a partial match on the options, looking for those digits as a substring.&nbsp;
+If it is not a valid menu number (e.g. out of range),
+edbrowse performs a partial match on the options, looking for those digits as a substring.&nbsp;
 This may seem confusing, but it is usually what you want.
 
 <P>
 You can use i&lt;7 to pull the contents of session 7 into the current input field.&nbsp;
-Session 7 must have one line of text.&nbsp;
+Session 7 must have one line of text only.&nbsp;
 Similarly, i&lt;filename reads the contents of the file into the current input field.&nbsp;
 Again, the file should contain one line of text.&nbsp;
 The filename is expanded in the usual way.&nbsp;
@@ -2282,7 +2218,7 @@ if you were running a visual browser.&nbsp;
 You might see something like "area[7x40]", which indicates a window 7 rows by 40 columns.
 
 <P>
-The lynx implementation of the text area is particularly hideous.&nbsp;
+The lynx implementation of the text area is somewhat restricted.&nbsp;
 This is not surprising, since lynx is not an editor.&nbsp;
 You can correct small typos on the current line,
 but you can't actually edit the text you are working on.&nbsp;
@@ -2306,7 +2242,7 @@ Enter your comments: &lt;buffer 2&gt;
 In this example, session 2 was not active when browsing began.&nbsp;
 The browser allocated session 2 specifically for this input field.&nbsp;
 Type e2 to move to session 2, prepare your comments,
-and type e1 to return to the input form.&nbsp;
+then type e1 to return to the input form.&nbsp;
 On most web pages the text area starts out blank,
 whence buffer 2 will be empty,
 but this is not always the case.&nbsp;
@@ -2338,7 +2274,7 @@ In this case you will return to the on-line form.&nbsp;
 You can change the data and submit the form again, asking about another animal.
 
 <P>
-I have implemented the "get" and "post" methods,
+Edbrowse supports the "get" and "post" methods,
 the most common http protocols,
 and they seem to work on most sites.
 
@@ -2437,8 +2373,8 @@ Unfortunately the control a is not visible, and this could cause confusion.&nbsp
 When in doubt, list the line.
 
 <P>
-The text of the newly created hyperlink is the title of the current page.&nbsp;
-(This is how other browsers work.)&nbsp;
+Under the A command,
+the text of the newly created hyperlink is the title of the current page.&nbsp;
 If there is no title, the text of the link is drawn from the url,
 which is definitely suboptimal.&nbsp;
 In that case you might want to change the text of the link.&nbsp;
@@ -2462,10 +2398,7 @@ And when we do, you should write a "bookmark append" macro that looks like this.
 <P>
 Now you can type &lt;bma to add a link to your favorites,
 and you don't have to worry about typos.&nbsp;
-It's shorter than `w+ $bookmarks' anyways.&nbsp;
-We'll return to this topic when i introduce macros,
-actually functions,
-that are defined in your config file.
+It's shorter than `w+ $bookmarks' anyways.
 
 <H3 align=center> <A NAME=cook> Cookies </A> </H3>
 
@@ -2510,8 +2443,6 @@ Edbrowse will verify ssl connections
 if you supply a file of ssl certificates.&nbsp;
 This is an antispoofing measure, to make sure a hacker isn't posing as your bank,
 trying to steal your account numbers and passwords.&nbsp;
-You can grab a certificate file <A HREF=ssl-certs>here</A>,
-but I don't always keep it up to date.&nbsp;
 On some Linux distributions, you can run `cd /etc/ssl/certs ; cat * >../edbrowse-certs'
 to capture ssl certificates that are as current as your linux system.
 If you don't have or create this file,
@@ -2523,7 +2454,7 @@ unless it prevents you from getting to a website whose authenticity you accept a
 In that case you can use the vs command to turn the feature off.&nbsp;
 This is a toggle command; type vs again to turn the feature on.&nbsp;
 For another method of disabling verification on a site-by-site basis,
-see the novs directive in the configuration file.
+see the novs directive in the configuration file section below.
 
 <P>
 Never send sensitive information,
@@ -2536,11 +2467,11 @@ The submit button will have the word "secure" added to its text.
 &lt;Make your purchase now secure&gt;
 <P>
 This is similar to the lock icon that Explorer uses to tell you that your connection is secure,
-although my system is not quite as foolproof.&nbsp;
+although edbrowse is not quite as foolproof.&nbsp;
 A website could fake you out by putting the word secure in the submit text.
 
 <P>
-Note that generic buttons, besides the submit button, can also submit your form,
+Note that generic buttons, besides the submit button, can also submit your form
 through javascript.&nbsp;
 I don't know if that button is going to submit the form or not,
 and I don't want to put the word "secure" on every button on the page.&nbsp;
@@ -2639,7 +2570,7 @@ Here are just a few of them:
 <P><LI>Efficiency.&nbsp;
 The proxy server may be able to store previously-accessed webpages
 (known as caching).&nbsp;
-If your connection to the proxy is faster than your connection to the rest of the network,
+If your connection to the proxy is faster than your connection to the rest of the Internet,
 then caching insures that frequently-accessed web pages load quickly.
 <P><LI>Policies.&nbsp;
 Some firewall administrators require their users to use
@@ -2727,8 +2658,7 @@ A document, using this format, and designated with the suffix .pdf, prints the s
 That is its principle advantage.&nbsp;
 However, pdf files are often unreadable by blind individuals.&nbsp;
 Fortunately, there is a utility,
-<A HREF=http://rpmfind.net/linux/RPM/suse/updates/10.0/i386/rpm/i586/pdftohtml-0.36-130.9.i586.html>
-pdftohtml</A>,
+pdftohtml,
 that converts pdf to html.&nbsp;
 Sometimes it works well, and sometimes lines are broken in bizarre places;
 but it's better than nothing.&nbsp;
@@ -2737,8 +2667,8 @@ and then render them as text.
 
 <P>
 Note, there are also pdf to text converters that skip the middle html step,
-but I wanted to preserve the functionality of any hyperlinks that might be embedded within pdf.&nbsp;
-So I thought it worthwhile going through html, even though it adds a little complexity.
+but I wanted to preserve the functionality of any hyperlinks that might be embedded within pdf,
+so I thought it worthwhile going through html, even though it adds a little complexity.
 
 <P><HR><P>
 <H2 align=center> Chapter 5, Javascript </H2>
@@ -2789,16 +2719,14 @@ on the fly as you move your mouse around the screen.&nbsp;
 This has no meaning in edbrowse.&nbsp;
 Other websites bring up multiple windows,
 and let you control the contents of subwindows using icons in a master window.&nbsp;
-This would be very difficult to simulate in a command-line environment -
-so I don't try.
+This would be very difficult to simulate in a command-line environment.
 
 <P>
-As a rough approximation, I expect to implement about half of javascript,
-hoping that will satisfy most of the websites we care about.&nbsp;
+Some javascript is implemented, some is not.&nbsp;
 This is still a work in progress.&nbsp;
 If you submit a form, or go to a hyperlink, and nothing happens, absolutely nothing,
 then the web page is probably trying to use javascript features that are not yet implemented.&nbsp;
-Raise the debug level to 2 or higher and push the button again to see the javascript errors.&nbsp;
+Raise the debug level to 3 or higher and push the button again to see the javascript errors.&nbsp;
 Then, if you wish, disable javascript with the js command and try again.&nbsp;
 However, the website may not behave properly or as expected with javascript disabled.&nbsp;
 See the disclaimer at the top of this users guide.
@@ -2846,7 +2774,10 @@ and you select fruits,
 the second menu might contain
 "apples", "oranges", "lemons", etc.&nbsp;
 Javascript makes this possible.&nbsp;
-Unfortunately these dynamic menus are not yet supported by edbrowse.
+These dynamic menus are supported by edbrowse.&nbsp;
+You will see a message like, "Line 352 has been updated",
+where 352 contains the submenu.&nbsp;
+Type 352I? to see the newly created menu options.
 
 <H3 align=center> <A NAME=popup> Popups and Popunders </A> </H3>
 
@@ -2857,9 +2788,6 @@ although in rare cases it is a necessary aspect of the website.
 <P>
 You have a distinct advantage over all those other surfers with their graphical browsers.&nbsp;
 The popup window does not open automatically.&nbsp;
-Windows are not well defined in a command line browser anyways,
-so it would be folly to try to implement this feature,
-or any other aspect of multi-windowing for that matter.&nbsp;
 Instead, the popup appears as a hyperlink at or near the top of the page,
 and you can click on it if you like, or ignore it.&nbsp;
 This is similar to the <A HREF=#music>background music</A>, described in an earlier section.&nbsp;
@@ -2919,9 +2847,7 @@ and the first field reverts back to fruits,
 but the second menu still contains vegetables.&nbsp;
 This is because the undo feature was originally written for the text editor.&nbsp;
 It simply puts the text back the way it was, and has no capacity to "undo" the side effects of javascript code.&nbsp;
-So the moral of the story, if there is one,
-is to set and change the values of an input form directly,
-and avoid the undo command, unless you're pretty sure there are no javascript side effects associated with that field.
+To this end, the undo command is disabled for input fields.
 
 <P><HR><P>
 <H2 align=center> Chapter 6, Edbrowse Scripts and the Configuration File </H2>
@@ -2958,7 +2884,7 @@ All other lines fall into one of 6 categories.
 or from another script.
 <P><LI> An edbrowse command, that becomes part of an edbrowse script.
 <P><LI> Establish an email account.&nbsp;
-This will be described later, when we talk about the email client.
+This will be described later, under email clients.
 <P><LI> A mail filtering rule.&nbsp;
 <P><LI> Describe a table or a view in an sql database.
 </OL>
@@ -2996,7 +2922,7 @@ Some of these are used to set up an email account.&nbsp;
 This will become clearer when we talk about the mail client.
 
 <P>
-certfile = /home/mylogin/.ebsys/ssl-certs
+certfile = /etc/pki/tls/cert.pem
 
 <P>
 Specify the file that holds the certificates for secure connections.&nbsp;
@@ -3089,12 +3015,14 @@ Allocate this many megabytes for javascript use.&nbsp;
 The default is 32 meg, as shown above.&nbsp;
 The minimum is 2 and the maximum is 1000.&nbsp;
 A couple of youtube pages will consume 4 meg of javascript, so don't aim low unless you are just using edbrowse to edit files.&nbsp;
-If you spend all day browsing, you better aim high, because edbrowse could unceremoniously exit if it runs out of javascript space.
+If you spend all day browsing, you better aim high,
+because javascript could unceremoniously fail, across the board, if it runs out of space.&nbsp;
+However, edbrowse will continue to run, and the javascript engine will restart with the next browse command.
 
 <P>
 novs = somesite.com
 <P>
-Indicate hostnames for which SSL certificate verification should never
+Indicate hostnames for which SSL certificate verification should not
 be performed.&nbsp;
 This directive is useful for sites that use self-signed certificates,
 since these cannot be verified.&nbsp;
@@ -3197,9 +3125,7 @@ and no concern for Internet accessibility.&nbsp;
 They won't even let you in the door unless you look like Explorer or Netscape or one of the major players.&nbsp;
 StartPage.com,
 a front end to Google,
-is one example.
-
-<P>
+is one example.&nbsp;
 So what do we do?&nbsp;
 We lie of course.
 
@@ -3214,9 +3140,7 @@ and activate them with the `ua' (user agent) command.&nbsp;
 If the following lines are in your .ebrc file,
 you can type ua1 to pretend to bee lynx,
 and ua2 to pretend to be Mozilla.&nbsp;
-Type ua0 to resurrect the standard edbrowse identification.&nbsp;
-Let's hope there aren't too many asinine websites out there
-that force us to lie.
+Type ua0 to resurrect the standard edbrowse identification.
 
 <P>
 This feature was written pre-javascript,
@@ -3296,7 +3220,7 @@ The latter looks for a line containing foo and prints it,
 and if this succeeds it looks for a line containing bar and prints that.&nbsp;
 Let's build a more useful function, a shortcut to google.&nbsp;
 The variable ~0 represents all the arguments together.&nbsp;
-In this case ~0 is the keywords you pass to google, for your search.
+In this case ~0 is the keywords you pass to google for your search.
 <P>
 function+gg {
 &nbsp;&nbsp;b http://www.google.com
@@ -3356,7 +3280,7 @@ It then deletes the blank lines at the top.
 
 <P>
 You can use loop(100){ ... } to repeat a set of commands 100 times.&nbsp;
-I haven't used this feature very often.
+This feature is not used very often.
 
 <H3 align=center> <A NAME=init> The Init Script </A> </H3>
 
@@ -3393,7 +3317,7 @@ so let's use the config file to define some email accounts.&nbsp;
 You can define several accounts as necessary.&nbsp;
 They are implicitly numbered,
 in the order they appear in the config file.&nbsp;
-So the first mail account becomes #1, the second becomes #2, and so on.
+The first mail account becomes #1, the second becomes #2, and so on.
 
 <P>
 We already discussed the relevant keywords for an email account.&nbsp;
@@ -3419,7 +3343,7 @@ If account #1 is default, and you send mail using account #3,
 the name and reply address from account #3 will be sent to the recipient,
 and if he replies, his reply will be sent to your third email account.&nbsp;
 However, the smtp server from your default account is used to physically transmit the message.&nbsp;
-There are technical reasons for doing this,
+There are technical reasons for doing this
 having to do with security.&nbsp;
 However, if an account has its sendmail stream encrypted, then security is not an issue,
 and we can use these settings to send and receive mail.&nbsp;
@@ -3490,7 +3414,7 @@ program = unzip %
 The best documentation is an example,
 so I have provided a sample config file with fake data.&nbsp;
 It is well commented.&nbsp;
-You can download a copy <A HREF=sample.ebrc>here</A>.
+You can see a copy <A HREF=sample.ebrc>here</A>.
 
 <P><HR><P>
 <H2 align=center> Chapter 7, Mail Client </H2>
@@ -3580,8 +3504,8 @@ the alt: line can refer to a file or an edbrowse session.
 <P>
 As you may have guessed,
 the to: lines establish the recipients.&nbsp;
-Please don't specify more than a few recipients.&nbsp;
-Some servers, my mail server included,
+Please don't specify more than a few dozen recipients.&nbsp;
+Some servers
 set a hard limit of 100 on the number of recipients.&nbsp;
 If you exceed this number,
 the remaining recipients simply don't get their mail.&nbsp;
@@ -3612,11 +3536,6 @@ Note that "Reply to fred" is an alternate syntax for "to: fred".
 <P>
 Some web pages include sendmail links.&nbsp;
 They look just like other hyperlinks, but they send email to the appropriate person.&nbsp;
-Click here for
-<A HREF=http://developer.netscape.com/viewsource/husted_mailto/mailto.html>
-technical details</A>.
-
-<P>
 If you activate a sendmail link,
 you will be placed in a new editing session with the "to" and "subject" lines preloaded.&nbsp;
 If the url did not specify a subject,
@@ -3630,7 +3549,7 @@ so be sure to check before you write and send.
 <P>
 You can include attachments by placing "attach:" lines at the top of the file,
 assuming the recipient can handle these attachments.&nbsp;
-This might make sense when the sendmail link is asking for {bug reports} -
+This might make sense when the sendmail link is asking for bug reports -
 you might attach a program and/or its output.&nbsp;
 Yet this is somewhat unusual.&nbsp;
 Most sendmail links expect a few sentences of feedback, and nothing more.
@@ -3675,20 +3594,6 @@ A leading - indicates an alternate format, like this.
 <P>
 e -m1 fred ^barney hollyrock-notice -hollyrock-graphical.html
 
-<P>
-Remember, you can specify several mail accounts in your .ebrc file.&nbsp;
-The first account is indicated by index 1, as in -m1, and so on.&nbsp;
-You can make life easier with some aliases in your .bashrc file.
-<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>#  My mail, home account
-alias mymail="e -m1"
-#  My wife's account.
-alias wifemail="e -m2"
-#  My work account.
-alias workmail="e -m3"
-#  mail is obsolete
-alias mail="echo use mymail, wifemail, or workmail"
-</font></PRE>
-
 <H3 align=center> <A NAME=retrmail> Retrieving Mail </A> </H3>
 
 If edbrowse is invoked with the -f option, it will fetch mail from all
@@ -3703,16 +3608,27 @@ Fetched messages are stored in a directory named unread/, relative to
 the directory specified with the maildir setting in your .ebrc file.&nbsp;
 You may read them, as described in the next section.
 
+<P>
+Remember, you can specify several mail accounts in your .ebrc file.&nbsp;
+The first account is indicated by index 1, as in -m1, and so on.&nbsp;
+You can make life easier with some aliases in your .bashrc file.
+<P><PRE><font size=3 face=Arial,Helvetica,sans-serif>#  My mail, home account
+alias mymail="e -fm1"
+#  My wife's account.
+alias wifemail="e -pfm2"
+#  My work account.
+alias workmail="e -fm3"
+#  mail is obsolete
+alias mail="echo use mymail, wifemail, or workmail"
+</font></PRE>
+
 <H3 align=center> <A NAME=imr> Interactive Mail Reader </A> </H3>
 
 If edbrowse is run with the -m option, and no other arguments,
 it is an interactive mail reader,
 allowing you to examine mail from your directory of unread messages.&nbsp;
 If you wish to retrieve and read in one step, you can combine the -f
-and -m options.&nbsp;
-In edbrowse version 3.4.6 and earlier, fetching and reading were not separate
-operations; -m performed both.&nbsp;
-Existing users beware, this is a notable change to the interface!
+and -m options.
 
 <P>
 The first thing it tells you is how many messages you have.&nbsp;
@@ -3720,7 +3636,7 @@ If there are no messages it says "No mail", and exits.&nbsp;
 If there are unread messages, it shows each one in turn.&nbsp;
 For each message, it displays some header information (such as subject
 and sender) and the first page of text, and then presents a prompt.&nbsp;
-A '?' prompt means the message is complete --
+A '?' prompt means the message is complete -
 a '*' prompt means there is more text to read.&nbsp;
 You respond by hitting a key.&nbsp;
 Keys have the following meaning.
@@ -3736,12 +3652,11 @@ u	write this message unformatted to a file and delete it
 
 <P>
 The last two commands, w and u, require a filename, which you enter.&nbsp;
-The reserved filename "x" is essentially /dev/null,
+The reserved filename, "x" or "X", is essentially /dev/null,
 whence the mail message is discarded.&nbsp;
 You can save the mail message to x (discard) and still save the attachments.&nbsp;
 If the file is anything other than x,
-and the program cannot write to the specified file, it asks you for a new filename.&nbsp;
-Note that capital X will do the same thing.
+and edbrowse cannot write to the specified file, it asks you for a new filename.
 
 <P>
 In practice, you might save a message with w, later realizing that you
@@ -3773,11 +3688,8 @@ to disk, while selecting `u' saves the unformatted version.
 
 <P>
 When an html mail message is rendered, javascript is disabled.&nbsp;
-A bug in the JavaScript machinery cannot crash the client, and malicious
-JavaScript cannot cause problems.&nbsp;
-There really isn't much loss here, because you couldn't activate the links or fill out the form anyways.&nbsp;
-If you want to "interact" with this email message,
-you have to save it unformatted to a file,
+If you want to interact with this email message,
+you must save it unformatted to a file,
 finish your email session, edit that file,
 and type b to browse.&nbsp;
 Now the html is active, as though you were looking at a web page on somebody's site.
@@ -3826,14 +3738,14 @@ Matches are case insensitive.
 <P>
 The file name "x" is special; it discards the mail entirely.&nbsp;
 You can use this to throw away mail from people
-who are constantly harassing you or sending you spam.
+who are constantly harassing you or sending spam.
 
 <P>
 The last entry sends mail to -wod.&nbsp;
 The leading - is special;
 it means the mail should be saved to wod unformatted.&nbsp;
 This happens to be the word of the day from Merriam Webster.&nbsp;
-I like to save it unformatted, so I can browse it,
+You can save it unformatted, then browse it,
 and click on {audio} to hear the word pronounced.&nbsp;
 If an email contains hyperlinks,
 you may want to save it unformatted,
@@ -3895,7 +3807,7 @@ Consider a line in your address book that looks like fred:Fred.Flintstone@SomeDo
 When you receive email from this particular address, it is saved to the file fred.&nbsp;
 Thus you don't have to enter and maintain redundant entries in the filter.&nbsp;
 There is no need to include Fred.Flintstone@SomeDomain.com &gt; fred.&nbsp;
-It's taken care of.
+It's taken care of by your address book.
 
 <P>
 If you want to save mail from Fred unformatted, place a minus sign,
@@ -3914,9 +3826,7 @@ to save it to the default filename.&nbsp;
 If your friend's mail has some kind of logo, or background image, that you don't care about,
 just type x and it will go away.&nbsp;
 If the image has a recognizable suffix, such as gif, I discard it automatically.&nbsp;
-If you really want these images, you'll have to save the email unformatted, and browse it later.
-
-<P>
+If you really want these images, you'll have to save the email unformatted and browse it later.&nbsp;
 When browsing an email inside the editor,
 edbrowse offers you all the attachments, be they images or not.&nbsp;
 You can discard a single attachment by entering x,
@@ -3992,9 +3902,7 @@ This supports text editing, to write your reply in the body of the message.&nbsp
 If you want to start over from scratch,
 you can't just unbrowse, because it is not in browse mode.&nbsp;
 You must re-edit the saved mail message,
-browse, and reply.
-
-<P>
+browse, and reply.&nbsp;
 Like everything else in edbrowse, you'll get use to it once you play with it.
 
 <P><HR><P>
@@ -4004,7 +3912,7 @@ Like everything else in edbrowse, you'll get use to it once you play with it.
 
 If you simply type make, you get edbrowse, with no database functionality.&nbsp;
 A separate target supports database access through odbc.&nbsp;
-Run `make edbrowseodbc' to link edbrowse with odbc.&nbsp;
+Run `make edbrowse-odbc' to link edbrowse with odbc.&nbsp;
 This assumes you have the unixODBC and unixODBC-devel packages installed on your machine.&nbsp;
 Another target, edbrowseinf, provides a direct link to an
 <A HREF=http://www.informix.com>Informix database</A>.&nbsp;
@@ -4058,7 +3966,6 @@ You could read customer 37 in twice, thus having two copies in your buffer, but 
 
 <P>
 Note that edbrowse can support a primary key with two or three columns, such as a serial number and a modifier.&nbsp;
-I actually have some tables at work that look like this.&nbsp;
 However, more than three key columns are not supported.&nbsp;
 If the primary key comprises more than three columns, or if the table has no primary key,
 you will not be able to update or delete.&nbsp;
@@ -4187,7 +4094,7 @@ Make sure you do not refer to any old rows in buffer after you have switched to 
 In some cases you can access other databases without changing the data source.&nbsp;
 For instance, you can read the parts table in the inventory database by calling up inventory:parts].&nbsp;
 This is standard sql syntax for looking at tables in another database;
-I just pass it through.
+edbrowse just passes it through.
 
 <H3 align=center> <A NAME=insupd> Insert, Update, Delete </A> </H3>
 
@@ -4208,7 +4115,7 @@ Data entry stops when you enter a period all by itself,
 no matter what field you are on.&nbsp;
 The rows that were entered successfully will be present in your buffer,
 and the current line is the last entered row.&nbsp;
-Note that blobs cannot be entered at this time.
+Blobs cannot be entered at this time.
 
 <P>
 A row appears as you typed it; and this may differ from the actual values in the database.&nbsp;
@@ -4225,9 +4132,9 @@ remember, you can always type `rf' to get an empty buffer, and then reread the r
 
 <P>
 If the first column of the primary key is an integer, and you enter a 0,
-I select the next number in sequence.&nbsp;
-Some databases do this internally; some don't.&nbsp;
-I thought it would be convenient if I did it at the front end.&nbsp;
+edbrowse selects the next number in sequence.&nbsp;
+Some databases do this internally, some don't,
+thus it is done at the front end.&nbsp;
 There is a possible race condition here, if you and somebody else glom onto the same serial number,
 but it's not likely,
 and it will create a "duplicate key" error in any case.
@@ -4247,7 +4154,7 @@ There are many reasons for these update errors, including datatype mismatch
 (e.g. putting J in for sex instead of M or F).&nbsp;
 If you have any say in the database design,
 apply check constraints wherever they make sense.&nbsp;
-They will protect you from erroneous substitutions that would produce inconsistent updates.
+They will protect you from erroneous substitutions that would produce inconsistent data.
 
 <P>
 Delete works as you would expect; delete a row,
@@ -4330,20 +4237,6 @@ where custnum = addrnum and addrtype = "HOME"
 <br>
 and custnum between 500 and 600;
 
-<H3 align=center> <A NAME=end> Wrap up </A> </H3>
-
-That concludes the user's guide.&nbsp;
-As you can see, edbrowse is a difficult program to master, but an easy program to use.&nbsp;
-I believe this is the key to success for any blind user or programmer.&nbsp;
-One can certainly paste a screen reader on top of an existing 2 dimensional program
-such as emacs or lynx, and get up and running quickly,
-but to be truly competitive in the workplace, or efficient at home,
-you need a command line interface.&nbsp;
-Edbrowse is an important step in this direction.&nbsp;
-It doesn't address the speech adapter, or other common applications such as spreadsheets, finances, or audio systems,
-but it does provide a high quality text editor and a fair browser and mail client.&nbsp;
-It's a good start.
-
 <P><HR><P>
 <H2 align=center> Chapter 9, Other Command Line Utilities </H2>
 
@@ -4370,14 +4263,14 @@ and interacting with certain curses programs,
 but it typically runs in linear mode,
 capturing all tty output like a paper teletype and making it available to the blind user through speech.&nbsp;
 The buffer is 64K, and could represent several hours of work,
-depending on the nature and quantity of output during that time.&nbsp;
-Or it could represent just a few seconds of output, if a program prints "hello world" in an infinite loop.
+depending on the nature and quantity of output during that time,
+or it could represent just a few seconds of output, if a program prints "hello world" in an infinite loop.
 
 <P>
 I call this a linear adapter, rather than a screen reader,
 because it maintains a linear buffer of tty output,
 and allows the blind user to move about within this buffer and read the accumulated text.&nbsp;
-this is perfect if you spend most of your day in bash, edbrowse, sic, and other command line programs.&nbsp;
+this is perfect if you spend most of your day in bash, edbrowse, and other command line programs.&nbsp;
 You might wonder exactly what happened two hours ago,
 when you typed rm *.&nbsp;
 Were you in the right directory?&nbsp;
@@ -4512,7 +4405,7 @@ ifup ra0
 
 <P>
 And yet one time in five it does not work, I don't know why.&nbsp;
-I just wait 30 seconds,
+Wait 30 seconds,
 ifdown ra0,
 wait 30 seconds,
 ifup ra0,
@@ -4581,7 +4474,7 @@ alias sicoutput="sic -h irc.freenode.net -p 6667 -n YourLogin < /etc/sicfifo"
 Now do this, and no you don't need to be root.&nbsp;
 Switch to console 9 and run sicinput.&nbsp;
 Switch to console 10 and run sicoutput.&nbsp;
-Of course the latter is tailored to the server that runs the Speakup chat,
+The latter is tailored to the server that runs the Speakup chat,
 using your login on that server.&nbsp;
 On the input side you need to enter
 
@@ -4799,6 +4692,36 @@ s/>$//
 ^
 <br>
 }
+
+<H3 align=center> <A NAME=twit> Twitter </A> </H3>
+
+Like most social media sites, twitter is very graphical, and very difficult to use from edbrowse,
+or with any screen reader.&nbsp;
+However, twitter has a mobile friendly website.&nbsp;
+I first looked for www.twitter.mobi, but when that was not found, I discovered mobile.twitter.com.&nbsp;
+This is perfect!&nbsp;
+You can create an account (no captcha),
+then enjoy most of twitter's features.&nbsp;
+The following function logs me in quickly.
+
+<P>
+#  twitter log in
+<br>
+function+twit {
+<br>
+b https://mobile.twitter.com
+<br>
+/</ i=eklhad64
+<br>
+/</ i=password
+<br>
+/</ i*
+<br>
+}
+
+<P>
+Why not follow me on twitter, to keep up with developments in edbrowse
+and my other open source projects.
 
 <P>
 Please <A href=mailto:eklhad@gmail.com>
