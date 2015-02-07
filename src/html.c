@@ -1426,12 +1426,12 @@ static void htmlScript(char **html, char **h)
 		if (javaOK(t->href)) {
 			bool from_data = isDataURI(t->href);
 			debugPrint(3, "java source %s",
-					!from_data ? t->href : "data URI");
+				   !from_data ? t->href : "data URI");
 			if (from_data) {
 				char *mediatype;
 				int data_l = 0;
 				if (parseDataURI(t->href, &mediatype,
-						&javatext, &data_l)) {
+						 &javatext, &data_l)) {
 					prepareForBrowse(javatext, data_l);
 					nzFree(mediatype);
 				} else {
@@ -1834,27 +1834,6 @@ nextchar:
 /* just about any tag can have a name or id */
 		if (!slash)
 			htmlName();
-
-#if 0
-/* Does this tag force the closure of an anchor? */
-		if (currentA && (action != TAGACT_A || !slash)) {
-			if (open && open->clickable)
-				goto forceCloseAnchor;
-			rc = htmlAttrPresent(topAttrib, "onclick");
-			if (rc ||
-			    ti->bits & TAG_CLOSEA && (a_text
-						      || action <=
-						      TAGACT_OPTION)) {
-				browseError(MSG_InAnchor, ti->desc);
-forceCloseAnchor:
-				ns_ic();
-				stringAndString(&ns, &ns_l, "0}");
-				currentA->balanced = true;
-				currentA = 0;
-/* if/when the </a> comes along, it will be unbalanced, and we'll ignore it. */
-			}
-		}
-#endif
 
 		retainTag = true;
 		if (ti->bits & TAG_INVISIBLE)
@@ -2509,11 +2488,12 @@ unparen:
 		if (!strpbrk(hnum, "{}")) {
 			strcat(hnum, "*");
 /* Leave the meaningless tags out. */
-			if (action == TAGACT_PRE || action == TAGACT_A && topTag->name) ;	/* ok */
+			if (action == TAGACT_PRE && slash || action == TAGACT_A && topTag->name) ;	/* ok */
 			else
 				hnum[0] = 0;
 		}
 		ns_hnum();
+
 endtag:
 		lastact = action;
 	}			/* loop over html string */
