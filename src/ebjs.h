@@ -1,11 +1,11 @@
 /*********************************************************************
 ebjs.h: edbrowse javascript engine interface.
-structure and values that are passed between the two processes.
-The prefix EJ is short for edbrowse javascript.
+Contains structures and values that are passed between the two processes.
+The prefix EJ in symbolic constants is short for edbrowse javascript.
 This is the only header file shared between edbrowse and the js process.
 It does not and should not include other edbrowse files.
 It also does not reference bool true false, which are defined constants
-in edbrowse, written C, but are reserved words in the js process,
+in edbrowse, written in C, but are reserved words in the js process,
 written in C++.
 Since there are no function declarations here, we don't need the extern "C" {}
 *********************************************************************/
