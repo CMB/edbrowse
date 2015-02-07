@@ -914,8 +914,8 @@ static void htmlInput(void)
 	topTag->value = s;
 	if (n >= INP_RADIO && htmlAttrPresent(topAttrib, "checked")) {
 		char namebuf[200];
-		if (n == INP_RADIO && myname
-		    && strlen(myname) < sizeof(namebuf) - 3) {
+		if (n == INP_RADIO && myname &&
+		    radioCheck && strlen(myname) < sizeof(namebuf) - 3) {
 			if (!*radioCheck)
 				stringAndChar(&radioCheck, &radio_l, '|');
 			sprintf(namebuf, "|%s|", topTag->name);
