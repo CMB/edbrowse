@@ -435,7 +435,7 @@ char *copy_and_sanitize(const char *start, const char *end)
 /* excise #hash, required by some web servers */
 		frag = findHash(new_copy);
 		if (frag)
-				*frag = 0;
+			*frag = 0;
 
 		getPortLocURL(new_copy, &portloc, 0);
 		if (portloc && !isdigit(portloc[1])) {
@@ -842,8 +842,9 @@ curl_fail:
 		serverDataLen = 0;
 		nzFree(urlcopy);	/* Free it on transfer failure. */
 	} else {
-		if (hcode != 200 &&
-(webpage || debugLevel >= 2))
+		if (hcode != 200 && hcode != 201 &&
+		    (webpage || debugLevel >= 2) ||
+		    hcode == 201 && debugLevel >= 3)
 			i_printf(MSG_HTTPError, hcode,
 				 message_for_response_code(hcode));
 		if (name_changed)
