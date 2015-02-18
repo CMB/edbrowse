@@ -11,7 +11,7 @@
 /* Define the globals that are declared in eb.h. */
 /* See eb.h for descriptive comments. */
 
-const char *version = "3.5.3";
+const char *version = "3.5.3+";
 char *userAgents[10], *currentAgent, *currentReferrer;
 const char eol[] = "\r\n";
 char EMPTYSTRING[] = "";
@@ -129,7 +129,7 @@ static void readConfigFile(void)
 	for (s = t = v = buf; s < buf + buflen; ++s) {
 		c = *s;
 		if (c == '\0')
-			i_printfExit(MSG_ERBC_Nulls, ln);
+			i_printfExit(MSG_EBRC_Nulls, ln);
 		if (c == '\r' && s[1] == '\n')
 			continue;
 
@@ -231,15 +231,15 @@ static void readConfigFile(void)
 			    (last[8] == '+' || last[8] == ':')) {
 				q = last + 9;
 				if (*q == 0 || *q == '{' || *q == '(')
-					i_printfExit(MSG_ERBC_NoFnName, ln);
+					i_printfExit(MSG_EBRC_NoFnName, ln);
 				if (isdigitByte(*q))
-					i_printfExit(MSG_ERBC_FnDigit, ln);
+					i_printfExit(MSG_EBRC_FnDigit, ln);
 				while (isalnumByte(*q))
 					++q;
 				if (q - last - 9 > 10)
-					i_printfExit(MSG_ERBC_FnTooLong, ln);
+					i_printfExit(MSG_EBRC_FnTooLong, ln);
 				if (*q != '{' || q[1])
-					i_printfExit(MSG_ERBC_SyntaxErr, ln);
+					i_printfExit(MSG_EBRC_SyntaxErr, ln);
 				last[7] = 'f';
 				last[6] = '\x81';
 				strcpy(v, last + 6);
@@ -284,11 +284,11 @@ putc:
 		if (mailblock > 1 && !strchr("\x81\x82\x83", *s)) {
 			v = strchr(s, '>');
 			if (!v)
-				i_printfExit(MSG_ERBC_NoCondFile, ln);
+				i_printfExit(MSG_EBRC_NoCondFile, ln);
 			while (v > s && (v[-1] == ' ' || v[-1] == '\t'))
 				--v;
 			if (v == s)
-				i_printfExit(MSG_ERBC_NoMatchStr, ln);
+				i_printfExit(MSG_EBRC_NoMatchStr, ln);
 			c = *v, *v++ = 0;
 			if (c != '>') {
 				while (*v != '>')
@@ -298,9 +298,9 @@ putc:
 			while (*v == ' ' || *v == '\t')
 				++v;
 			if (!*v)
-				i_printfExit(MSG_ERBC_MatchNowh, ln, s);
+				i_printfExit(MSG_EBRC_MatchNowh, ln, s);
 			if (n_filters == MAXFILTER - 1)
-				i_printfExit(MSG_ERBC_Filters, ln);
+				i_printfExit(MSG_EBRC_Filters, ln);
 			filters[n_filters].match = s;
 			filters[n_filters].redirect = v;
 			filters[n_filters].type = mailblock;
@@ -326,28 +326,31 @@ putc:
 		n = stringInList(keywords, s);
 		if (n < 0) {
 			if (!nest)
-				i_printfExit(MSG_ERBC_BadKeyword, s, ln);
+				i_printfExit(MSG_EBRC_BadKeyword, s, ln);
 			*v = c;	/* put it back */
 			goto nokeyword;
 		}
 
+if(nest)
+				i_printfExit(MSG_EBRC_KeyInFunc, ln);
+
 		if (n < 8 && mailblock != 1)
-			i_printfExit(MSG_ERBC_MailAttrOut, ln, s);
+			i_printfExit(MSG_EBRC_MailAttrOut, ln, s);
 
 		if (n >= 8 && n < 13 && mimeblock != 1)
-			i_printfExit(MSG_ERBC_MimeAttrOut, ln, s);
+			i_printfExit(MSG_EBRC_MimeAttrOut, ln, s);
 
 		if (n >= 13 && n < 17 && tabblock != 1)
-			i_printfExit(MSG_ERBC_TableAttrOut, ln, s);
+			i_printfExit(MSG_EBRC_TableAttrOut, ln, s);
 
 		if (n >= 8 && mailblock)
-			i_printfExit(MSG_ERBC_MailAttrIn, ln, s);
+			i_printfExit(MSG_EBRC_MailAttrIn, ln, s);
 
 		if ((n < 8 || n >= 13) && mimeblock)
-			i_printfExit(MSG_ERBC_MimeAttrIn, ln, s);
+			i_printfExit(MSG_EBRC_MimeAttrIn, ln, s);
 
 		if ((n < 13 || n >= 17) && tabblock)
-			i_printfExit(MSG_ERBC_TableAttrIn, ln, s);
+			i_printfExit(MSG_EBRC_TableAttrIn, ln, s);
 
 /* act upon the keywords */
 		++v;
@@ -359,7 +362,7 @@ putc:
 		while (*v == ' ' || *v == '\t')
 			++v;
 		if (!*v)
-			i_printfExit(MSG_ERBC_NoAttr, ln, s);
+			i_printfExit(MSG_EBRC_NoAttr, ln, s);
 
 		switch (n) {
 		case 0:	/* inserver */
@@ -435,7 +438,7 @@ putc:
 		case 15:	/* cols */
 			while (*v) {
 				if (td->ncols == MAXTCOLS)
-					i_printfExit(MSG_ERBC_ManyCols, ln,
+					i_printfExit(MSG_EBRC_ManyCols, ln,
 						     MAXTCOLS);
 				td->cols[td->ncols++] = v;
 				q = strchr(v, ',');
@@ -448,12 +451,12 @@ putc:
 
 		case 16:	/* keycol */
 			if (!isdigitByte(*v))
-				i_printfExit(MSG_ERBC_KeyNotNb, ln);
+				i_printfExit(MSG_EBRC_KeyNotNb, ln);
 			td->key1 = strtol(v, &v, 10);
 			if (*v == ',' && isdigitByte(v[1]))
 				td->key2 = strtol(v + 1, &v, 10);
 			if (td->key1 > td->ncols || td->key2 > td->ncols)
-				i_printfExit(MSG_ERBC_KeyOutRange, ln,
+				i_printfExit(MSG_EBRC_KeyOutRange, ln,
 					     td->ncols);
 			continue;
 
@@ -461,26 +464,26 @@ putc:
 			addressFile = v;
 			ftype = fileTypeByName(v, false);
 			if (ftype && ftype != 'f')
-				i_printfExit(MSG_ERBC_AbNotFile, v);
+				i_printfExit(MSG_EBRC_AbNotFile, v);
 			continue;
 
 		case 18:	/* downdir */
 			downDir = v;
 			if (fileTypeByName(v, false) != 'd')
-				i_printfExit(MSG_ERBC_NotDir, v);
+				i_printfExit(MSG_EBRC_NotDir, v);
 			continue;
 
 		case 19:	/* maildir */
 			mailDir = v;
 			if (fileTypeByName(v, false) != 'd')
-				i_printfExit(MSG_ERBC_NotDir, v);
+				i_printfExit(MSG_EBRC_NotDir, v);
 			mailUnread = allocMem(strlen(v) + 12);
 			sprintf(mailUnread, "%s/unread", v);
 /* We need the unread directory, else we can't fetch mail. */
 /* Create it if it isn't there. */
 			if (fileTypeByName(mailUnread, false) != 'd') {
 				if (mkdir(mailUnread, 0700))
-					i_printfExit(MSG_ERBC_NotDir,
+					i_printfExit(MSG_EBRC_NotDir,
 						     mailUnread);
 			}
 			continue;
@@ -490,7 +493,7 @@ putc:
 				if (!userAgents[j])
 					break;
 			if (j == 10)
-				i_printfExit(MSG_ERBC_ManyAgents, ln);
+				i_printfExit(MSG_EBRC_ManyAgents, ln);
 			userAgents[j] = v;
 			continue;
 
@@ -498,21 +501,21 @@ putc:
 			cookieFile = v;
 			ftype = fileTypeByName(v, false);
 			if (ftype && ftype != 'f')
-				i_printfExit(MSG_ERBC_JarNotFile, v);
+				i_printfExit(MSG_EBRC_JarNotFile, v);
 			j = open(v, O_WRONLY | O_APPEND | O_CREAT, 0600);
 			if (j < 0)
-				i_printfExit(MSG_ERBC_JarNoWrite, v);
+				i_printfExit(MSG_EBRC_JarNoWrite, v);
 			close(j);
 			continue;
 
 		case 22:	/* nojs */
 			if (javaDisCount == MAXNOJS)
-				i_printfExit(MSG_ERBC_NoJS, MAXNOJS);
+				i_printfExit(MSG_EBRC_NoJS, MAXNOJS);
 			if (*v == '.')
 				++v;
 			q = strchr(v, '.');
 			if (!q || q[1] == 0)
-				i_printfExit(MSG_ERBC_DomainDot, ln, v);
+				i_printfExit(MSG_EBRC_DomainDot, ln, v);
 			javaDis[javaDisCount++] = v;
 			continue;
 
@@ -528,10 +531,10 @@ putc:
 			sslCerts = v;
 			ftype = fileTypeByName(v, false);
 			if (ftype && ftype != 'f')
-				i_printfExit(MSG_ERBC_SSLNoFile, v);
+				i_printfExit(MSG_EBRC_SSLNoFile, v);
 			j = open(v, O_RDONLY);
 			if (j < 0)
-				i_printfExit(MSG_ERBC_SSLNoRead, v);
+				i_printfExit(MSG_EBRC_SSLNoRead, v);
 			close(j);
 			continue;
 
@@ -541,7 +544,7 @@ putc:
 
 		case 28:	/* proxy */
 			if (maxproxy == MAXPROXY)
-				i_printfExit(MSG_ERBC_NoPROXY, MAXPROXY);
+				i_printfExit(MSG_EBRC_NoPROXY, MAXPROXY);
 			px = proxyEntries + maxproxy;
 			maxproxy++;
 			spaceCrunch(v, true, true);
@@ -588,12 +591,12 @@ putc:
 				++v;
 			q = strchr(v, '.');
 			if (!q || q[1] == 0)
-				i_printfExit(MSG_ERBC_DomainDot, ln, v);
+				i_printfExit(MSG_EBRC_DomainDot, ln, v);
 			addNovsHost(v);
 			continue;
 
 		default:
-			i_printfExit(MSG_ERBC_KeywordNYI, ln, s);
+			i_printfExit(MSG_EBRC_KeywordNYI, ln, s);
 		}		/* switch */
 
 nokeyword:
@@ -602,7 +605,7 @@ nokeyword:
 			if (localAccount == maxAccount + 1)
 				continue;
 			if (localAccount)
-				i_printfExit(MSG_ERBC_SevDefaults);
+				i_printfExit(MSG_EBRC_SevDefaults);
 			localAccount = maxAccount + 1;
 			continue;
 		}
@@ -627,17 +630,17 @@ nokeyword:
 				++maxAccount;
 				mailblock = 0;
 				if (!act->inurl)
-					i_printfExit(MSG_ERBC_NoInserver, ln);
+					i_printfExit(MSG_EBRC_NoInserver, ln);
 				if (!act->outurl)
-					i_printfExit(MSG_ERBC_NoOutserver, ln);
+					i_printfExit(MSG_EBRC_NoOutserver, ln);
 				if (!act->login)
-					i_printfExit(MSG_ERBC_NoLogin, ln);
+					i_printfExit(MSG_EBRC_NoLogin, ln);
 				if (!act->password)
-					i_printfExit(MSG_ERBC_NPasswd, ln);
+					i_printfExit(MSG_EBRC_NPasswd, ln);
 				if (!act->from)
-					i_printfExit(MSG_ERBC_NoFrom, ln);
+					i_printfExit(MSG_EBRC_NoFrom, ln);
 				if (!act->reply)
-					i_printfExit(MSG_ERBC_NoReply, ln);
+					i_printfExit(MSG_EBRC_NoReply, ln);
 				if (act->secure)
 					act->inssl = act->outssl = 1;
 				if (!act->inport)
@@ -661,13 +664,13 @@ nokeyword:
 				++maxMime;
 				mimeblock = 0;
 				if (!mt->type)
-					i_printfExit(MSG_ERBC_NoType, ln);
+					i_printfExit(MSG_EBRC_NoType, ln);
 				if (!mt->desc)
-					i_printfExit(MSG_ERBC_NDesc, ln);
+					i_printfExit(MSG_EBRC_NDesc, ln);
 				if (!mt->suffix && !mt->prot)
-					i_printfExit(MSG_ERBC_NoSuffix, ln);
+					i_printfExit(MSG_EBRC_NoSuffix, ln);
 				if (!mt->program)
-					i_printfExit(MSG_ERBC_NoProgram, ln);
+					i_printfExit(MSG_EBRC_NoProgram, ln);
 				continue;
 			}
 
@@ -675,16 +678,16 @@ nokeyword:
 				++maxTables;
 				tabblock = 0;
 				if (!td->name)
-					i_printfExit(MSG_ERBC_NoTblName, ln);
+					i_printfExit(MSG_EBRC_NoTblName, ln);
 				if (!td->shortname)
-					i_printfExit(MSG_ERBC_NoShortName, ln);
+					i_printfExit(MSG_EBRC_NoShortName, ln);
 				if (!td->ncols)
-					i_printfExit(MSG_ERBC_NColumns, ln);
+					i_printfExit(MSG_EBRC_NColumns, ln);
 				continue;
 			}
 
 			if (--nest < 0)
-				i_printfExit(MSG_ERBC_UnexpBrace, ln);
+				i_printfExit(MSG_EBRC_UnexpBrace, ln);
 			if (nest)
 				goto putback;
 /* This ends the function */
@@ -697,13 +700,13 @@ nokeyword:
 /* Does else make sense here? */
 			c = toupper(stack[nest]);
 			if (c != 'I')
-				i_printfExit(MSG_ERBC_UnexElse, ln);
+				i_printfExit(MSG_EBRC_UnexElse, ln);
 			goto putback;
 		}
 
 		if (*s != '\x81') {
 			if (!nest)
-				i_printfExit(MSG_ERBC_GarblText, ln);
+				i_printfExit(MSG_EBRC_GarblText, ln);
 			goto putback;
 		}
 
@@ -717,16 +720,16 @@ nokeyword:
 				curblock = "a filter block";
 			if (mimeblock)
 				curblock = "a mime descriptor";
-			i_printfExit(MSG_ERBC_FnNotStart, ln, curblock);
+			i_printfExit(MSG_EBRC_FnNotStart, ln, curblock);
 		}
 
 		if (!strchr("fmertsb", c) && !nest)
-			i_printfExit(MSG_ERBC_StatNotInFn, ln);
+			i_printfExit(MSG_EBRC_StatNotInFn, ln);
 
 		if (c == 'm') {
 			mailblock = 1;
 			if (maxAccount == MAXACCOUNT)
-				i_printfExit(MSG_ERBC_ManyAcc, MAXACCOUNT);
+				i_printfExit(MSG_EBRC_ManyAcc, MAXACCOUNT);
 			act = accounts + maxAccount;
 			continue;
 		}
@@ -734,7 +737,7 @@ nokeyword:
 		if (c == 'e') {
 			mimeblock = 1;
 			if (maxMime == MAXMIME)
-				i_printfExit(MSG_ERBC_ManyTypes, MAXMIME);
+				i_printfExit(MSG_EBRC_ManyTypes, MAXMIME);
 			mt = mimetypes + maxMime;
 			continue;
 		}
@@ -742,7 +745,7 @@ nokeyword:
 		if (c == 'b') {
 			tabblock = 1;
 			if (maxTables == MAXDBT)
-				i_printfExit(MSG_ERBC_ManyTables, MAXDBT);
+				i_printfExit(MSG_EBRC_ManyTables, MAXDBT);
 			td = dbtables + maxTables;
 			continue;
 		}
@@ -765,7 +768,7 @@ nokeyword:
 		if (c == 'f') {
 			stack[++nest] = c;
 			if (sn == MAXEBSCRIPT)
-				i_printfExit(MSG_ERBC_ManyFn, sn);
+				i_printfExit(MSG_EBRC_ManyFn, sn);
 			ebScriptName[sn] = s + 2;
 			t[-1] = 0;
 			ebScript[sn] = t;
@@ -773,7 +776,7 @@ nokeyword:
 		}
 
 		if (++nest >= sizeof(stack))
-			i_printfExit(MSG_ERBC_TooDeeply, ln);
+			i_printfExit(MSG_EBRC_TooDeeply, ln);
 		stack[nest] = c;
 
 putback:
@@ -781,10 +784,10 @@ putback:
 	}			/* loop over lines */
 
 	if (nest)
-		i_printfExit(MSG_ERBC_FnNotClosed, ebScriptName[sn]);
+		i_printfExit(MSG_EBRC_FnNotClosed, ebScriptName[sn]);
 
 	if (mailblock | mimeblock)
-		i_printfExit(MSG_ERBC_MNotClosed);
+		i_printfExit(MSG_EBRC_MNotClosed);
 }				/* readConfigFile */
 
 /*********************************************************************

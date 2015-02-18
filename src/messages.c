@@ -335,7 +335,7 @@ static const char *englishMessages[] = {
 	"stop",
 	"ftp malformed url",
 	"no attachments",
-	0,
+	".ebrc: keyword = value inside an edbrowse function at line %d",
 	0,
 	"ftp session initialization failed",
 	0,
