@@ -3390,7 +3390,7 @@ void selectLanguage(void)
 		return;
 	}
 
-	if (!strncmp(buf, "pl_pl", 5)) {
+	if (!strncmp(buf, "pl", 2)) {
 		eb_lang = 4;
 		messageArray = polishMessages;
 		messageArrayLength = sizeof(polishMessages) / sizeof(char *);
