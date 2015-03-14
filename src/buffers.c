@@ -2053,7 +2053,7 @@ static bool getRangePart(const char *line, int *lineno, const char **split)
 
 		char *re;	/* regular expression */
 		bool ci = caseInsensitive;
-		char incr;	/* forward or back */
+		signed char incr;	/* forward or back */
 /* Don't look through an empty buffer. */
 		if (cw->dol == 0) {
 			setError(MSG_EmptyBuffer);
