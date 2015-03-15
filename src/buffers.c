@@ -161,7 +161,6 @@ pst fetchLine(int n, int show)
 
 static int apparentSize(int cx, bool browsing)
 {
-	char c;
 	int i, ln, size;
 	struct ebWindow *w;
 	if (cx <= 0 || cx >= MAXSESSION || (w = sessionList[cx].lw) == 0) {
@@ -1988,7 +1987,7 @@ static bool re_utf8 = true;
 
 static void regexpCompile(const char *re, bool ci)
 {
-	static char try8 = 0;	/* 1 is utf8 on, -1 is utf8 off */
+	static signed char try8 = 0;	/* 1 is utf8 on, -1 is utf8 off */
 	const char *re_error;
 	int re_offset;
 	int re_opt;
