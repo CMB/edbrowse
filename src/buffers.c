@@ -3783,7 +3783,7 @@ bool runCommand(const char *line)
 /* env variable and wild card expansion */
 	if (strchr("brewf", cmd) && first && !isURL(line) && !isSQL(line)) {
 		if (cmd != 'r' || !cw->sqlMode) {
-			if (!envFile(line, &line, !(cmd == 'w' || cmd == 'f')))
+			if (!envFile(line, &line, !(cmd == 'w' || cmd == 'f' || cmd == 'e')))
 				return false;
 			first = *line;
 		}
