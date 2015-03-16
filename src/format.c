@@ -112,7 +112,7 @@ done:
 /* an attribute character */
 static bool atchr(char c)
 {
-	return (c > ' ' && c != '=' && c != '<' && c != '>');
+	return (c > ' ' && c <= 0x7f && c != '=' && c != '<' && c != '>');
 }				/* atchr */
 
 /*********************************************************************
