@@ -1196,7 +1196,7 @@ char *andTranslate(const char *s, bool invisible)
 		"mdash\0 - ",
 		"ndash\0 - ",
 		"colon\0:",
-		"apos\0`",
+		"apos\0'",
 		"star\0*",
 		"comma\0,",
 		"period\0.",
