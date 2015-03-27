@@ -831,11 +831,12 @@ bool sameURL(const char *s, const char *t)
 	return !memcmp(s, t, l);
 }				/* sameURL */
 
-/* Find some helpful text to print, in place of an image. */
-/* Text longer than 80 chars isn't helpful, so we return a static buffer. */
+/* Find some helpful text to print, in place of an image.
+ * Not sure why we would need more than 1000 chars for this,
+ * so return a static buffer. */
 char *altText(const char *base)
 {
-	static char buf[80];
+	static char buf[1000];
 	int len, n;
 	int recount = 0;
 	char *s;
