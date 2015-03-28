@@ -1568,8 +1568,14 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb, void *unused)
 		    !memEqualCI(start, "text/", 5)) {
 /* Not text, see if the user wants to download in the background. */
 /* Set a variable, so it uses the ftp download mechanism. */
-			down_state = 1;
-			down_msg = MSG_Down;
+/* But don't autodownload if it's pdf. */
+			if (last_pos - start >= 15 &&
+			    memEqualCI(start, "application/pdf", 15)) {
+				;	/* leave it alone */
+			} else {
+				down_state = 1;
+				down_msg = MSG_Down;
+			}
 		}
 	}
 
