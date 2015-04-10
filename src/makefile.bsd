@@ -14,22 +14,41 @@ LFLAGS = -s -Wl,--rpath -Wl,/usr/pkg/lib
 JSLIB = -lmozjs-24
 
 #  Libraries for edbrowse.
-LDLIBS = -lpcre -lm -lssl $(JSLIB) -lcurl -lreadline -lncurses -lstdc++
+LDLIBS = -lpcre -lcurl -lreadline -lncurses
 
 #  Make the dynamically linked executable program by default.
 #  Edbrowse executable.
-all: edbrowse
+all: edbrowse edbrowse-js
 
 #  edbrowse objects
 EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
-	html.o format.o cookies.o stringfile.o jsdom.o jsloc.o messages.o
+	html.o format.o cookies.o stringfile.o messages.o ebjs.o
 
 #  Header file dependencies.
-$(EBOBJS) : eb.h eb.p messages.h
+$(EBOBJS) : eb.h eb.p messages.h ebjs.h
 
 startwindow.c: startwindow.js
 	../tools/buildstartwindow
 
+# The implicit linking rule isn't good enough, because we don't have an
+# edbrowse.o object, and it expects one.
 edbrowse: $(EBOBJS) startwindow.o dbstubs.o
 	cc $(LFLAGS) -o edbrowse startwindow.o dbstubs.o $(EBOBJS) $(LIBS)
+
+#  Database files.
+dbodbc.o dbinfx.o dbops.o : dbapi.h eb.h eb.p
+
+#  odbc access
+edbrowse-odbc: LDLIBS += -lodbc
+edbrowse-odbc: $(EBOBJS) startwindow.o dbops.o dbodbc.o
+	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
+
+clean:
+	rm -f *.o edbrowse edbrowseinf edbrowse-odbc edbrowse-js startwindow.c
+
+jseng-moz.o: jseng-moz.cpp
+	$(CXX) -c $(CXXFLAGS) $(JS_CXXFLAGS) $^ -o $@
+
+edbrowse-js : jseng-moz.o
+	cc $^ $(LOADLIBES) $(JSLIB) -lstdc++ -o $@
 

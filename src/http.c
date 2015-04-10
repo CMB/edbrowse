@@ -28,6 +28,7 @@ static int down_state;
 bool down_bg;			/* download in background */
 static int down_length;		/* how much data to disk so far */
 static int down_msg;
+
 struct BG_JOB {
 	struct BG_JOB *next, *prev;
 	int pid, state;
@@ -40,6 +41,8 @@ struct listHead down_jobs = {
 static void background_download(void);
 static void setup_download(void);
 static char errorText[CURL_ERROR_SIZE + 1];
+static char *http_headers;
+static int http_headers_len;
 static char *httpLanguage;
 
 static struct eb_curl_callback_data callback_data = {
@@ -670,14 +673,16 @@ mimeProcess:
 		char *redir = NULL;
 		curl_easy_setopt(http_curl_handle, CURLOPT_SSLVERSION,
 				 ssl_version);
-		init_header_parser();
 		down_state = 0;
 		down_file = NULL;
 		down_permitted = down_ok;
 		callback_data.length = &serverDataLen;
 
 perform:
+		init_header_parser();
 		curlret = curl_easy_perform(http_curl_handle);
+		nzFree(http_headers);
+		http_headers = 0;
 
 		if (down_state == 5) {
 /* user has directed a download of this file in the background. */
@@ -1476,17 +1481,14 @@ static bool read_credentials(char *buffer)
 	return got_creds;
 }				/* read_credentials */
 
-/*
- * This code reads a stream of header lines from libcurl.
- * It can go away one of these days, when we're sure that everyone is using
- * version 7.18.2 or greater of libcurl.
-*/
 /* Call this before every HTTP request. */
 static void init_header_parser(void)
 {
 /* this should already be 0 */
 	nzFree(newlocation);
 	newlocation = NULL;
+	nzFree(http_headers);
+	http_headers = initString(&http_headers_len);
 }				/* init_header_parser */
 
 static const char *loc_field = "Location:";
@@ -1497,12 +1499,15 @@ static const char *content_field = "Content-Type:";
 static size_t content_field_length = 13;	/* length of string "Content-Type:" */
 
 /* Callback used by libcurl.
- * Right now, it just extracts Location: headers. */
+ * Gather all the http headers into one long string. */
 static size_t
 curl_header_callback(char *header_line, size_t size, size_t nmemb, void *unused)
 {
 	size_t bytes_in_line = size * nmemb;
 	char *last_pos = header_line + bytes_in_line;
+
+	stringAndBytes(&http_headers, &http_headers_len,
+		       header_line, bytes_in_line);
 
 	/* If we're still looking for a location: header, and this line is long
 	 * enough to be one, and the line starts with "Location: ", then proceed.
