@@ -91,7 +91,8 @@ static void readConfigFile(void)
 	char c, ftype;
 	bool cmt = false;
 	bool startline = true;
-	uchar mailblock = 0, mimeblock = 0, tabblock = 0;
+	uchar mailblock = 0;
+	bool mimeblock = false, tabblock = false;
 	int nest, ln, j;
 	int sn = 0;		/* script number */
 	char stack[MAXNEST];
@@ -102,11 +103,16 @@ static void readConfigFile(void)
 	struct MIMETYPE *mt;
 	struct DBTABLE *td;
 
-/* Order is important here: mail{}, mime{}, table{}, and other keywords */
+/* Order is important here: mail{}, mime{}, table{}, then global keywords */
+#define MAILWORDS 0
+#define MIMEWORDS 8
+#define TABLEWORDS 15
+#define GLOBALWORDS 19
 	static const char *const keywords[] = {
 		"inserver", "outserver", "login", "password", "from", "reply",
 		"inport", "outport",
 		"type", "desc", "suffix", "protocol", "program",
+		"content", "outtype",
 		"tname", "tshort", "cols", "keycol",
 		"adbook", "downdir", "maildir", "agent",
 		"jar", "nojs", "xyz@xyz",
@@ -331,25 +337,25 @@ putc:
 			goto nokeyword;
 		}
 
-if(nest)
-				i_printfExit(MSG_EBRC_KeyInFunc, ln);
+		if (nest)
+			i_printfExit(MSG_EBRC_KeyInFunc, ln);
 
-		if (n < 8 && mailblock != 1)
+		if (n < MIMEWORDS && mailblock != 1)
 			i_printfExit(MSG_EBRC_MailAttrOut, ln, s);
 
-		if (n >= 8 && n < 13 && mimeblock != 1)
+		if (n >= MIMEWORDS && n < TABLEWORDS && !mimeblock)
 			i_printfExit(MSG_EBRC_MimeAttrOut, ln, s);
 
-		if (n >= 13 && n < 17 && tabblock != 1)
+		if (n >= TABLEWORDS && n < GLOBALWORDS && !tabblock)
 			i_printfExit(MSG_EBRC_TableAttrOut, ln, s);
 
-		if (n >= 8 && mailblock)
+		if (n >= MIMEWORDS && mailblock)
 			i_printfExit(MSG_EBRC_MailAttrIn, ln, s);
 
-		if ((n < 8 || n >= 13) && mimeblock)
+		if ((n < MIMEWORDS || n >= TABLEWORDS) && mimeblock)
 			i_printfExit(MSG_EBRC_MimeAttrIn, ln, s);
 
-		if ((n < 13 || n >= 17) && tabblock)
+		if ((n < TABLEWORDS || n >= GLOBALWORDS) && tabblock)
 			i_printfExit(MSG_EBRC_TableAttrIn, ln, s);
 
 /* act upon the keywords */
@@ -427,15 +433,23 @@ if(nest)
 			mt->program = v;
 			continue;
 
-		case 13:	/* tname */
+		case 13:	/* content */
+			mt->content = v;
+			continue;
+
+		case 14:	/* outtype */
+			mt->outtype = v;
+			continue;
+
+		case 15:	/* tname */
 			td->name = v;
 			continue;
 
-		case 14:	/* tshort */
+		case 16:	/* tshort */
 			td->shortname = v;
 			continue;
 
-		case 15:	/* cols */
+		case 17:	/* cols */
 			while (*v) {
 				if (td->ncols == MAXTCOLS)
 					i_printfExit(MSG_EBRC_ManyCols, ln,
@@ -449,7 +463,7 @@ if(nest)
 			}
 			continue;
 
-		case 16:	/* keycol */
+		case 18:	/* keycol */
 			if (!isdigitByte(*v))
 				i_printfExit(MSG_EBRC_KeyNotNb, ln);
 			td->key1 = strtol(v, &v, 10);
@@ -460,20 +474,20 @@ if(nest)
 					     td->ncols);
 			continue;
 
-		case 17:	/* adbook */
+		case 19:	/* adbook */
 			addressFile = v;
 			ftype = fileTypeByName(v, false);
 			if (ftype && ftype != 'f')
 				i_printfExit(MSG_EBRC_AbNotFile, v);
 			continue;
 
-		case 18:	/* downdir */
+		case 20:	/* downdir */
 			downDir = v;
 			if (fileTypeByName(v, false) != 'd')
 				i_printfExit(MSG_EBRC_NotDir, v);
 			continue;
 
-		case 19:	/* maildir */
+		case 21:	/* maildir */
 			mailDir = v;
 			if (fileTypeByName(v, false) != 'd')
 				i_printfExit(MSG_EBRC_NotDir, v);
@@ -488,7 +502,7 @@ if(nest)
 			}
 			continue;
 
-		case 20:	/* agent */
+		case 22:	/* agent */
 			for (j = 0; j < 10; ++j)
 				if (!userAgents[j])
 					break;
@@ -497,7 +511,7 @@ if(nest)
 			userAgents[j] = v;
 			continue;
 
-		case 21:	/* jar */
+		case 23:	/* jar */
 			cookieFile = v;
 			ftype = fileTypeByName(v, false);
 			if (ftype && ftype != 'f')
@@ -508,7 +522,7 @@ if(nest)
 			close(j);
 			continue;
 
-		case 22:	/* nojs */
+		case 24:	/* nojs */
 			if (javaDisCount == MAXNOJS)
 				i_printfExit(MSG_EBRC_NoJS, MAXNOJS);
 			if (*v == '.')
@@ -519,15 +533,15 @@ if(nest)
 			javaDis[javaDisCount++] = v;
 			continue;
 
-		case 24:	/* webtimer */
+		case 26:	/* webtimer */
 			webTimeout = atoi(v);
 			continue;
 
-		case 25:	/* mailtimer */
+		case 27:	/* mailtimer */
 			mailTimeout = atoi(v);
 			continue;
 
-		case 26:	/* certfile */
+		case 28:	/* certfile */
 			sslCerts = v;
 			ftype = fileTypeByName(v, false);
 			if (ftype && ftype != 'f')
@@ -538,11 +552,11 @@ if(nest)
 			close(j);
 			continue;
 
-		case 27:	/* datasource */
+		case 29:	/* datasource */
 			setDataSource(v);
 			continue;
 
-		case 28:	/* proxy */
+		case 30:	/* proxy */
 			if (maxproxy == MAXPROXY)
 				i_printfExit(MSG_EBRC_NoPROXY, MAXPROXY);
 			px = proxyEntries + maxproxy;
@@ -566,19 +580,19 @@ if(nest)
 				px->proxy = v;
 			continue;
 
-		case 29:	/* linelength */
+		case 31:	/* linelength */
 			displayLength = atoi(v);
 			if (displayLength < 80)
 				displayLength = 80;
 			continue;
 
-		case 30:	/* localizeweb */
+		case 32:	/* localizeweb */
 /* We should probably allow autodetection of language. */
 /* E.G., the keyword auto indicates that you want autodetection. */
 			setHTTPLanguage(v);
 			continue;
 
-		case 31:	/* jspool */
+		case 33:	/* jspool */
 			jsPool = atoi(v);
 			if (jsPool < 2)
 				jsPool = 2;
@@ -586,7 +600,7 @@ if(nest)
 				jsPool = 1000;
 			continue;
 
-		case 32:	/* novs */
+		case 34:	/* novs */
 			if (*v == '.')
 				++v;
 			q = strchr(v, '.');
@@ -625,6 +639,11 @@ nokeyword:
 			continue;
 		}
 
+		if (stringEqual(s, "render") && mimeblock == 1) {
+			mt->render = true;
+			continue;
+		}
+
 		if (*s == '\x82' && s[1] == 0) {
 			if (mailblock == 1) {
 				++maxAccount;
@@ -660,9 +679,9 @@ nokeyword:
 				continue;
 			}
 
-			if (mimeblock == 1) {
+			if (mimeblock) {
 				++maxMime;
-				mimeblock = 0;
+				mimeblock = false;
 				if (!mt->type)
 					i_printfExit(MSG_EBRC_NoType, ln);
 				if (!mt->desc)
@@ -674,9 +693,9 @@ nokeyword:
 				continue;
 			}
 
-			if (tabblock == 1) {
+			if (tabblock) {
 				++maxTables;
-				tabblock = 0;
+				tabblock = false;
 				if (!td->name)
 					i_printfExit(MSG_EBRC_NoTblName, ln);
 				if (!td->shortname)
@@ -735,7 +754,7 @@ nokeyword:
 		}
 
 		if (c == 'e') {
-			mimeblock = 1;
+			mimeblock = true;
 			if (maxMime == MAXMIME)
 				i_printfExit(MSG_EBRC_ManyTypes, MAXMIME);
 			mt = mimetypes + maxMime;
@@ -743,7 +762,7 @@ nokeyword:
 		}
 
 		if (c == 'b') {
-			tabblock = 1;
+			tabblock = true;
 			if (maxTables == MAXDBT)
 				i_printfExit(MSG_EBRC_ManyTables, MAXDBT);
 			td = dbtables + maxTables;
