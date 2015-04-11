@@ -188,7 +188,8 @@ extern int maxproxy;
 struct MIMETYPE {
 	char *type, *desc;
 	char *suffix, *prot, *program;
-	char *content, *outtype;
+	char *content;
+	char outtype;
 	bool stream, render;
 };
 extern struct MIMETYPE mimetypes[];

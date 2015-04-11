@@ -164,6 +164,7 @@ bool bufferToProgram(const char *cmd, const char *suffix, bool trailPercent) ;
 struct DBTABLE *findTableDescriptor(const char *sn) ;
 struct DBTABLE *newTableDescriptor(const char *name) ;
 struct MIMETYPE *findMimeBySuffix(const char *suffix) ;
+struct MIMETYPE *findMimeByContent(const char *content) ;
 struct MIMETYPE *findMimeByProtocol(const char *prot) ;
 char *pluginCommand(const struct MIMETYPE *m, const char *file, const char *suffix) ;
 

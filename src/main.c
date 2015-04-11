@@ -438,7 +438,10 @@ putc:
 			continue;
 
 		case 14:	/* outtype */
-			mt->outtype = v;
+c = tolower(*v);
+if(c != 'h' && c != 't')
+			i_printfExit(MSG_EBRC_Outtype, ln);
+			mt->outtype = c;
 			continue;
 
 		case 15:	/* tname */
@@ -1605,8 +1608,33 @@ struct MIMETYPE *findMimeBySuffix(const char *suffix)
 		}
 	}
 
-	return 0;
+	return NULL;
 }				/* findMimeBySuffix */
+
+struct MIMETYPE *findMimeByContent(const char *content)
+{
+	int i;
+	int len = strlen(content);
+	struct MIMETYPE *m = mimetypes;
+
+	for (i = 0; i < maxMime; ++i, ++m) {
+		const char *s = m->content, *t;
+		if (!s)
+			continue;
+		while (*s) {
+			t = strchr(s, ',');
+			if (!t)
+				t = s + strlen(s);
+			if (t - s == len && memEqualCI(s, content, len))
+				return m;
+			if (*t)
+				++t;
+			s = t;
+		}
+	}
+
+	return NULL;
+}				/* findMimeByContent */
 
 struct MIMETYPE *findMimeByProtocol(const char *prot)
 {
@@ -1630,7 +1658,7 @@ struct MIMETYPE *findMimeByProtocol(const char *prot)
 		}
 	}
 
-	return 0;
+	return NULL;
 }				/* findMimeByProtocol */
 
 /* The result is allocated */

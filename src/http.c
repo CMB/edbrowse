@@ -47,12 +47,25 @@ static char *httpLanguage;
 /* http content type is used in many places, and isn't arbitrarily long
  * or case sensitive, so keep our own sanitized copy. */
 static char hct[60];
+/* and the http directed mime type, set by the above content-type
+ * or perhaps by the protocol before we even get started. */
+static struct MIMETYPE *hmt;
 extern char *newlocation;
 extern int newloc_d;
 
 static struct eb_curl_callback_data callback_data = {
 	&serverData, &serverDataLen
 };
+
+/* Call this before every HTTP request. */
+static void pre_http_headers(void)
+{
+/* this should already be 0 */
+	nzFree(newlocation);
+	newlocation = NULL;
+	nzFree(http_headers);
+	http_headers = initString(&http_headers_len);
+}				/* pre_http_headers */
 
 /*
  * Function: copy_and_sanitize
@@ -196,11 +209,13 @@ static void scan_http_headers(void)
 		nzFree(v);
 	}
 
+/* The protocol, such as rtsp, could have already set the mime type. */
+	if (!hmt && hct[0])
+		hmt = findMimeByContent(hct);
 }				/* scan_http_headers */
 
 static bool ftpConnect(const char *url, const char *user, const char *pass);
 static bool read_credentials(char *buffer);
-static void init_header_parser(void);
 static size_t curl_header_callback(char *header_line, size_t size, size_t nmemb,
 				   void *unused);
 static const char *message_for_response_code(int code);
@@ -551,7 +566,6 @@ bool httpConnect(const char *url, bool down_ok, bool webpage)
 	bool still_fetching = true;
 	int ssl_version;
 	const char *host;
-	struct MIMETYPE *mt;
 	const char *prot;
 	char *cmd;
 	char suffix[12];
@@ -600,9 +614,9 @@ bool httpConnect(const char *url, bool down_ok, bool webpage)
 		   stringEqualCI(prot, "ftps") ||
 		   stringEqualCI(prot, "tftp") || stringEqualCI(prot, "sftp")) {
 		return ftpConnect(url, user, pass);
-	} else if (mt = findMimeByProtocol(prot)) {
+	} else if (hmt = findMimeByProtocol(prot)) {
 mimeProcess:
-		cmd = pluginCommand(mt, url, 0);
+		cmd = pluginCommand(hmt, url, 0);
 /* Stop ignoring SIGPIPE for the duration of system(): */
 		signal(SIGPIPE, SIG_DFL);
 		system(cmd);
@@ -623,7 +637,7 @@ mimeProcess:
 			post = s + sizeof(suffix) - 1;
 		strncpy(suffix, s, post - s);
 		suffix[post - s] = 0;
-		if ((mt = findMimeBySuffix(suffix)) && mt->stream)
+		if ((hmt = findMimeBySuffix(suffix)) && hmt->stream)
 			goto mimeProcess;
 	}
 
@@ -762,7 +776,7 @@ mimeProcess:
 		callback_data.length = &serverDataLen;
 
 perform:
-		init_header_parser();
+		pre_http_headers();
 		curlret = curl_easy_perform(http_curl_handle);
 		scan_http_headers();
 		nzFree(http_headers);
@@ -1564,16 +1578,6 @@ static bool read_credentials(char *buffer)
 
 	return got_creds;
 }				/* read_credentials */
-
-/* Call this before every HTTP request. */
-static void init_header_parser(void)
-{
-/* this should already be 0 */
-	nzFree(newlocation);
-	newlocation = NULL;
-	nzFree(http_headers);
-	http_headers = initString(&http_headers_len);
-}				/* init_header_parser */
 
 static const char *content_field = "Content-Type:";
 static size_t content_field_length = 13;	/* length of string "Content-Type:" */

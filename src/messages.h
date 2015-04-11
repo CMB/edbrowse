@@ -93,7 +93,7 @@ enum {
 	MSG_NoOptions,
 	MSG_FormReset,
 	MSG_FormSubmit,
-	MSG_NotUsed96,
+	MSG_EBRC_Outtype,
 	MSG_Many,
 	MSG_Recommended,
 	MSG_Close,

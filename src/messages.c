@@ -93,7 +93,7 @@ static const char *englishMessages[] = {
 	"no options",
 	"form has been reset",
 	"submitting form",
-	0,
+	".ebrc: line %d, outtype should be set to t or h",
 	" many",
 	" recommended",
 	"]",
