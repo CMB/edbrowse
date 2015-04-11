@@ -44,10 +44,159 @@ static char errorText[CURL_ERROR_SIZE + 1];
 static char *http_headers;
 static int http_headers_len;
 static char *httpLanguage;
+/* http content type is used in many places, and isn't arbitrarily long
+ * or case sensitive, so keep our own sanitized copy. */
+static char hct[60];
+extern char *newlocation;
+extern int newloc_d;
 
 static struct eb_curl_callback_data callback_data = {
 	&serverData, &serverDataLen
 };
+
+/*
+ * Function: copy_and_sanitize
+ * Arguments:
+ ** start: pointer to start of input string
+  ** end: pointer to end of input string.
+ * Return value: A new string or NULL if memory allocation failed.
+ * This function copies its input to a dynamically-allocated buffer,
+ * while performing the following transformation.  Change backslash to
+ * slash, and percent-escape any blank, non-printing, or non-ASCII
+ * characters.
+ * All characters in the area between start and end, not including end,
+ * are copied or transformed.
+ * Get rid of :/   curl can't handle it.
+ * This function is used to sanitize user-supplied URLs.  */
+
+static char hexdigits[] = "0123456789abcdef";
+#define ESCAPED_CHAR_LENGTH 3
+
+static char *copy_and_sanitize(const char *start, const char *end)
+{
+	if (!end)
+		end = start + strlen(start);
+	int bytes_to_alloc = end - start + 1;
+	char *new_copy = NULL;
+	const char *in_pointer = NULL;
+	char *out_pointer = NULL;
+	const char *portloc = NULL;
+
+	for (in_pointer = start; in_pointer < end; in_pointer++)
+		if (*in_pointer <= 32)
+			bytes_to_alloc += (ESCAPED_CHAR_LENGTH - 1);
+	new_copy = allocMem(bytes_to_alloc);
+	if (new_copy) {
+		char *frag, *params;
+		out_pointer = new_copy;
+		for (in_pointer = start; in_pointer < end; in_pointer++) {
+			if (*in_pointer == '\\')
+				*out_pointer++ = '/';
+			else if (*in_pointer <= 32) {
+				*out_pointer++ = '%';
+				*out_pointer++ =
+				    hexdigits[(uchar) (*in_pointer & 0xf0) >>
+					      4];
+				*out_pointer++ =
+				    hexdigits[(*in_pointer & 0x0f)];
+			} else
+				*out_pointer++ = *in_pointer;
+		}
+		*out_pointer = '\0';
+/* excise #hash, required by some web servers */
+		frag = findHash(new_copy);
+		if (frag)
+			*frag = 0;
+
+		getPortLocURL(new_copy, &portloc, 0);
+		if (portloc && !isdigit(portloc[1])) {
+			const char *s = portloc + strcspn(portloc, "/?#\1");
+			strmove((char *)portloc, s);
+		}
+	}
+
+	return new_copy;
+}				/* copy_and_sanitize */
+
+/* string is allocated. Quotes are removed. No other processing is done.
+ * You may need to decode %xx bytes or such. */
+static char *find_http_header(const char *name)
+{
+	char *s, *t, *u, *v;
+	int namelen = strlen(name);
+
+	if (!http_headers)
+		return NULL;
+
+	for (s = http_headers; *s; s = v) {
+/* find start of next line */
+		v = strchr(s, '\n');
+		if (!v)
+			v = s + strlen(s);
+		else
+			++v;
+
+/* name: value */
+		t = strchr(s, ':');
+		if (!t || t >= v)
+			continue;
+		u = t;
+		while (u > s && isspace(u[-1]))
+			--u;
+		if (u - s != namelen)
+			continue;
+		if (!memEqualCI(s, name, namelen))
+			continue;
+
+/* This is a match */
+		++t;
+		while (t < v && isspace(*t))
+			++t;
+		u = v;
+		while (u > t && isspace(u[-1]))
+			--u;
+/* remove quotes */
+		if (u - t >= 2 && *t == u[-1] && (*t == '"' || *t == '\''))
+			++t, --u;
+		if (u == t)
+			return NULL;
+		return pullString(t, u - t);
+	}
+
+	return NULL;
+}				/* find_http_header */
+
+static void scan_http_headers(void)
+{
+	char *v;
+
+	hct[0] = 0;
+	v = find_http_header("content-type");
+	if (v) {
+		strncpy(hct, v, sizeof(hct) - 1);
+		caseShift(hct, 'l');
+		nzFree(v);
+		debugPrint(3, "content %s", hct);
+	}
+
+	if ((newlocation == NULL) && (v = find_http_header("location"))) {
+		newlocation = copy_and_sanitize(v, NULL);
+		newloc_d = -1;
+		nzFree(v);
+	}
+
+	if (v = find_http_header("refresh")) {
+		int delay;
+		if (parseRefresh(v, &delay)) {
+			unpercentURL(v);
+			gotoLocation(v, delay, true);
+/* string is passed to somewhere else, set v to null so it is not freed */
+			v = NULL;
+		}
+		nzFree(v);
+	}
+
+}				/* scan_http_headers */
 
 static bool ftpConnect(const char *url, const char *user, const char *pass);
 static bool read_credentials(char *buffer);
@@ -386,75 +535,9 @@ bool refreshDelay(int sec, const char *u)
 	return false;
 }				/* refreshDelay */
 
-static char hexdigits[] = "0123456789abcdef";
-#define ESCAPED_CHAR_LENGTH 3
-
-/*
- * Function: copy_and_sanitize
- * Arguments:
- ** start: pointer to start of input string
-  ** end: pointer to end of input string.
- * Return value: A new string or NULL if memory allocation failed.
- * This function copies its input to a dynamically-allocated buffer,
- * while performing the following transformation.  Change backslash to
- * slash, and percent-escape any blank, non-printing, or non-ASCII
- * characters.
- * All characters in the area between start and end, not including end,
- * are copied or transformed.
-
- * Get rid of :/   curl can't handle it.
-
- * This function is used to sanitize user-supplied URLs.  */
-
-char *copy_and_sanitize(const char *start, const char *end)
-{
-	int bytes_to_alloc = end - start + 1;
-	char *new_copy = NULL;
-	const char *in_pointer = NULL;
-	char *out_pointer = NULL;
-	const char *portloc = NULL;
-
-	for (in_pointer = start; in_pointer < end; in_pointer++)
-		if (*in_pointer <= 32)
-			bytes_to_alloc += (ESCAPED_CHAR_LENGTH - 1);
-	new_copy = allocMem(bytes_to_alloc);
-	if (new_copy) {
-		char *frag, *params;
-		out_pointer = new_copy;
-		for (in_pointer = start; in_pointer < end; in_pointer++) {
-			if (*in_pointer == '\\')
-				*out_pointer++ = '/';
-			else if (*in_pointer <= 32) {
-				*out_pointer++ = '%';
-				*out_pointer++ =
-				    hexdigits[(uchar) (*in_pointer & 0xf0) >>
-					      4];
-				*out_pointer++ =
-				    hexdigits[(*in_pointer & 0x0f)];
-			} else
-				*out_pointer++ = *in_pointer;
-		}
-		*out_pointer = '\0';
-/* excise #hash, required by some web servers */
-		frag = findHash(new_copy);
-		if (frag)
-			*frag = 0;
-
-		getPortLocURL(new_copy, &portloc, 0);
-		if (portloc && !isdigit(portloc[1])) {
-			const char *s = portloc + strcspn(portloc, "/?#\1");
-			strmove((char *)portloc, s);
-		}
-	}
-
-	return new_copy;
-}				/* copy_and_sanitize */
-
 long hcode;			/* example, 404 */
 static char herror[32];		/* example, file not found */
 static char *urlcopy;
-extern char *newlocation;
-extern int newloc_d;
 
 bool httpConnect(const char *url, bool down_ok, bool webpage)
 {
@@ -600,7 +683,7 @@ mimeProcess:
 		if (curlret != CURLE_OK)
 			goto curl_fail;
 	} else {
-		urlcopy = copy_and_sanitize(url, url + strlen(url));
+		urlcopy = copy_and_sanitize(url, NULL);
 		curlret =
 		    curl_easy_setopt(http_curl_handle, CURLOPT_HTTPGET, 1);
 		if (curlret != CURLE_OK)
@@ -681,6 +764,7 @@ mimeProcess:
 perform:
 		init_header_parser();
 		curlret = curl_easy_perform(http_curl_handle);
+		scan_http_headers();
 		nzFree(http_headers);
 		http_headers = 0;
 
@@ -1491,10 +1575,6 @@ static void init_header_parser(void)
 	http_headers = initString(&http_headers_len);
 }				/* init_header_parser */
 
-static const char *loc_field = "Location:";
-static size_t loc_field_length = 9;	/* length of string "Location:" */
-static const char *refresh_field = "Refresh:";
-static size_t refresh_field_length = 8;	/* length of string "Refresh:" */
 static const char *content_field = "Content-Type:";
 static size_t content_field_length = 13;	/* length of string "Content-Type:" */
 
@@ -1508,60 +1588,6 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb, void *unused)
 
 	stringAndBytes(&http_headers, &http_headers_len,
 		       header_line, bytes_in_line);
-
-	/* If we're still looking for a location: header, and this line is long
-	 * enough to be one, and the line starts with "Location: ", then proceed.
-	 */
-
-	if ((newlocation == NULL) && (bytes_in_line > loc_field_length) &&
-	    memEqualCI(header_line, loc_field, loc_field_length)) {
-		const char *start = header_line + loc_field_length;
-		const char *end = last_pos - 1;
-
-/* Make start point to first non-whitespace char after Location: or to
- * last_pos if no such char exists. */
-		while (isspaceByte(*start) && (start < last_pos))
-			start++;
-
-/* end points to start of trailing whitespace if it exists.  Otherwise,
- * it is last_pos. */
-		while ((end >= start) && isspaceByte(*end))
-			end--;
-		end++;
-
-		if (start < end)
-			newlocation = copy_and_sanitize(start, end);
-		newloc_d = -1;
-	}
-
-	if ((bytes_in_line > refresh_field_length) &&
-	    memEqualCI(header_line, refresh_field, refresh_field_length)) {
-/* want to use parseRefresh, but that has to end in null */
-		char *start = header_line + refresh_field_length;
-		char *end = last_pos - 1;
-		int delay;
-
-/* Make start point to first non-whitespace char after Refresh: or to
- * last_pos if no such char exists. */
-		while (start < last_pos && isspaceByte(*start))
-			start++;
-
-/* end points to start of trailing whitespace if it exists.  Otherwise,
- * it is last_pos. */
-		while ((end >= start) && isspaceByte(*end))
-			end--;
-		end++;
-
-		if (start < end) {
-			memmove(header_line, start, end - start);
-			header_line[end - start] = 0;	/* now null terminated */
-			if (parseRefresh(header_line, &delay)) {
-				unpercentURL(header_line);
-				gotoLocation(cloneString(header_line), delay,
-					     true);
-			}
-		}
-	}
 
 	if (down_state == 0 &&
 	    (bytes_in_line > content_field_length) &&

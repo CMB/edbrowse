@@ -146,7 +146,6 @@ char *extractHeaderParam(const char *str, const char *item) ;
 time_t parseHeaderDate(const char *date) ;
 bool parseRefresh(char *ref, int *delay_p) ;
 bool refreshDelay(int sec, const char *u) ;
-char *copy_and_sanitize(const char *start, const char *end) ;
 bool httpConnect(const char *url, bool down_ok, bool webpage);
 void ebcurl_setError(CURLcode curlret, const char *url) ;
 void setHTTPLanguage(const char *lang) ;
