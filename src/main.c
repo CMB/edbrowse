@@ -438,9 +438,9 @@ putc:
 			continue;
 
 		case 14:	/* outtype */
-c = tolower(*v);
-if(c != 'h' && c != 't')
-			i_printfExit(MSG_EBRC_Outtype, ln);
+			c = tolower(*v);
+			if (c != 'h' && c != 't')
+				i_printfExit(MSG_EBRC_Outtype, ln);
 			mt->outtype = c;
 			continue;
 
@@ -642,8 +642,8 @@ nokeyword:
 			continue;
 		}
 
-		if (stringEqual(s, "render") && mimeblock == 1) {
-			mt->render = true;
+		if (stringEqual(s, "download") && mimeblock == 1) {
+			mt->download = true;
 			continue;
 		}
 
@@ -1516,53 +1516,6 @@ fail:
 	return false;
 }				/* runEbFunction */
 
-/* Send the contents of the current buffer to a running program */
-bool bufferToProgram(const char *cmd, const char *suffix, bool trailPercent)
-{
-	char *buf = 0;
-	int buflen, n;
-	int size1, size2;
-	char *u = edbrowseTempFile + strlen(edbrowseTempFile);
-
-	if (!trailPercent) {
-/* pipe the buffer into the program */
-		FILE *f = popen(cmd, "w");
-		if (!f) {
-			setError(MSG_NoSpawn, cmd, errno);
-			return false;
-		}
-		if (!unfoldBuffer(context, false, &buf, &buflen)) {
-			pclose(f);
-			return false;	/* should never happen */
-		}
-		n = fwrite(buf, buflen, 1, f);
-		pclose(f);
-	} else {
-		sprintf(u, ".%s", suffix);
-		size1 = currentBufferSize();
-		size2 = fileSizeByName(edbrowseTempFile);
-		if (size1 == size2) {
-/* assume it's the same data */
-			*u = 0;
-		} else {
-			if (!unfoldBuffer(context, false, &buf, &buflen)) {
-				*u = 0;
-				return false;	/* should never happen */
-			}
-			if (!memoryOutToFile(edbrowseTempFile, buf, buflen,
-					     MSG_TempNoCreate2, MSG_NoWrite2)) {
-				*u = 0;
-				return false;
-			}
-			*u = 0;
-		}
-		system(cmd);
-	}
-
-	nzFree(buf);
-	return true;
-}				/* bufferToProgram */
-
 struct DBTABLE *findTableDescriptor(const char *sn)
 {
 	int i;
@@ -1585,126 +1538,3 @@ struct DBTABLE *newTableDescriptor(const char *name)
 	td->ncols = 0;		/* it's already 0 */
 	return td;
 }				/* newTableDescriptor */
-
-struct MIMETYPE *findMimeBySuffix(const char *suffix)
-{
-	int i;
-	int len = strlen(suffix);
-	struct MIMETYPE *m = mimetypes;
-
-	for (i = 0; i < maxMime; ++i, ++m) {
-		const char *s = m->suffix, *t;
-		if (!s)
-			continue;
-		while (*s) {
-			t = strchr(s, ',');
-			if (!t)
-				t = s + strlen(s);
-			if (t - s == len && memEqualCI(s, suffix, len))
-				return m;
-			if (*t)
-				++t;
-			s = t;
-		}
-	}
-
-	return NULL;
-}				/* findMimeBySuffix */
-
-struct MIMETYPE *findMimeByContent(const char *content)
-{
-	int i;
-	int len = strlen(content);
-	struct MIMETYPE *m = mimetypes;
-
-	for (i = 0; i < maxMime; ++i, ++m) {
-		const char *s = m->content, *t;
-		if (!s)
-			continue;
-		while (*s) {
-			t = strchr(s, ',');
-			if (!t)
-				t = s + strlen(s);
-			if (t - s == len && memEqualCI(s, content, len))
-				return m;
-			if (*t)
-				++t;
-			s = t;
-		}
-	}
-
-	return NULL;
-}				/* findMimeByContent */
-
-struct MIMETYPE *findMimeByProtocol(const char *prot)
-{
-	int i;
-	int len = strlen(prot);
-	struct MIMETYPE *m = mimetypes;
-
-	for (i = 0; i < maxMime; ++i, ++m) {
-		const char *s = m->prot, *t;
-		if (!s)
-			continue;
-		while (*s) {
-			t = strchr(s, ',');
-			if (!t)
-				t = s + strlen(s);
-			if (t - s == len && memEqualCI(s, prot, len))
-				return m;
-			if (*t)
-				++t;
-			s = t;
-		}
-	}
-
-	return NULL;
-}				/* findMimeByProtocol */
-
-/* The result is allocated */
-char *pluginCommand(const struct MIMETYPE *m, const char *file,
-		    const char *suffix)
-{
-	int len, suflen;
-	const char *s;
-	char *cmd, *t;
-	bool trailPercent = false;
-
-/* leave room for space quote quote null */
-	len = strlen(m->program) + 4;
-	if (file) {
-		len += strlen(file);
-	} else if (m->program[strlen(m->program) - 1] == '%') {
-		trailPercent = true;
-		len += strlen(edbrowseTempFile) + 6;
-	}
-
-	suflen = 0;
-	if (suffix) {
-		suflen = strlen(suffix);
-		for (s = m->program; *s; ++s)
-			if (*s == '*')
-				len += suflen - 1;
-	}
-
-	cmd = allocMem(len);
-	t = cmd;
-	for (s = m->program; *s; ++s) {
-		if (suffix && *s == '*') {
-			strcpy(t, suffix);
-			t += suflen;
-		} else {
-			*t++ = *s;
-		}
-	}
-	*t = 0;
-
-	if (file) {
-		sprintf(t, " \"%s\"", file);
-	} else if (trailPercent) {
-		sprintf(t - 1, " \"%s.%s\"", edbrowseTempFile, suffix);
-	}
-
-	debugPrint(3, "%s", cmd);
-	return cmd;
-}				/* pluginCommand */

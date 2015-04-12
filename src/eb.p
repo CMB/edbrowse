@@ -160,13 +160,17 @@ void ebClose(int n) ;
 void eeCheck(void) ;
 void setDataSource(char *v) ;
 bool runEbFunction(const char *line) ;
-bool bufferToProgram(const char *cmd, const char *suffix, bool trailPercent) ;
 struct DBTABLE *findTableDescriptor(const char *sn) ;
 struct DBTABLE *newTableDescriptor(const char *name) ;
-struct MIMETYPE *findMimeBySuffix(const char *suffix) ;
-struct MIMETYPE *findMimeByContent(const char *content) ;
-struct MIMETYPE *findMimeByProtocol(const char *prot) ;
-char *pluginCommand(const struct MIMETYPE *m, const char *file, const char *suffix) ;
+
+/* sourcefile=mime.c */
+const struct MIMETYPE *findMimeBySuffix(const char *suffix) ;
+const struct MIMETYPE *findMimeByURL(const char *url) ;
+const struct MIMETYPE *findMimeByFile(const char *filename) ;
+const struct MIMETYPE *findMimeByContent(const char *content) ;
+const struct MIMETYPE *findMimeByProtocol(const char *prot) ;
+char *pluginCommand(const char *file, const char *suffix) ;
+int playBuffer(const char *line);
 
 /* sourcefile=messages.c */
 void selectLanguage(void) ;

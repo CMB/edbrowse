@@ -23,7 +23,8 @@ static bool down_permitted;
 * 2 disk download foreground
 * 3 disk download background parent
 * 4 disk download background child
-* 5 disk download background prefork */
+* 5 disk download background prefork
+ * 6 mime type says this should be a stream */
 static int down_state;
 bool down_bg;			/* download in background */
 static int down_length;		/* how much data to disk so far */
@@ -47,9 +48,7 @@ static char *httpLanguage;
 /* http content type is used in many places, and isn't arbitrarily long
  * or case sensitive, so keep our own sanitized copy. */
 static char hct[60];
-/* and the http directed mime type, set by the above content-type
- * or perhaps by the protocol before we even get started. */
-static struct MIMETYPE *hmt;
+static char *hct2;
 extern char *newlocation;
 extern int newloc_d;
 
@@ -65,6 +64,8 @@ static void pre_http_headers(void)
 	newlocation = NULL;
 	nzFree(http_headers);
 	http_headers = initString(&http_headers_len);
+	hct[0] = 0;
+	hct2 = NULL;
 }				/* pre_http_headers */
 
 /*
@@ -145,9 +146,8 @@ static char *find_http_header(const char *name)
 /* find start of next line */
 		v = strchr(s, '\n');
 		if (!v)
-			v = s + strlen(s);
-		else
-			++v;
+			break;
+		++v;
 
 /* name: value */
 		t = strchr(s, ':');
@@ -179,18 +179,25 @@ static char *find_http_header(const char *name)
 	return NULL;
 }				/* find_http_header */
 
-static void scan_http_headers(void)
+static void scan_http_headers(bool fromCallback)
 {
 	char *v;
 
-	hct[0] = 0;
-	v = find_http_header("content-type");
-	if (v) {
+	if (!hct[0] && (v = find_http_header("content-type"))) {
 		strncpy(hct, v, sizeof(hct) - 1);
 		caseShift(hct, 'l');
 		nzFree(v);
 		debugPrint(3, "content %s", hct);
+		hct2 = strchr(hct, ';');
+		if (hct2)
+			*hct2++ = 0;
+/* The protocol, such as rtsp, could have already set the mime type. */
+		if (!cw->mt)
+			cw->mt = findMimeByContent(hct);
 	}
+
+	if (fromCallback)
+		return;
 
 	if ((newlocation == NULL) && (v = find_http_header("location"))) {
 		newlocation = copy_and_sanitize(v, NULL);
@@ -208,10 +215,6 @@ static void scan_http_headers(void)
 		}
 		nzFree(v);
 	}
-
-/* The protocol, such as rtsp, could have already set the mime type. */
-	if (!hmt && hct[0])
-		hmt = findMimeByContent(hct);
 }				/* scan_http_headers */
 
 static bool ftpConnect(const char *url, const char *user, const char *pass);
@@ -568,7 +571,6 @@ bool httpConnect(const char *url, bool down_ok, bool webpage)
 	const char *host;
 	const char *prot;
 	char *cmd;
-	char suffix[12];
 	const char *post, *s;
 	char *postb = NULL;
 	int postb_l = 0;
@@ -580,6 +582,7 @@ bool httpConnect(const char *url, bool down_ok, bool webpage)
 	serverData = NULL;
 	serverDataLen = 0;
 	strcpy(creds_buf, ":");	/* Flush stale username and password. */
+	cw->mt = NULL;		/* should already be null */
 
 /* Pull user password out of the url */
 	user[0] = pass[0] = 0;
@@ -601,8 +604,6 @@ bool httpConnect(const char *url, bool down_ok, bool webpage)
 	}
 
 	prot = getProtURL(url);
-
-/* See if the protocol is a recognized stream */
 	if (!prot) {
 		setError(MSG_WebProtBad, "(?)");
 		return false;
@@ -614,11 +615,12 @@ bool httpConnect(const char *url, bool down_ok, bool webpage)
 		   stringEqualCI(prot, "ftps") ||
 		   stringEqualCI(prot, "tftp") || stringEqualCI(prot, "sftp")) {
 		return ftpConnect(url, user, pass);
-	} else if (hmt = findMimeByProtocol(prot)) {
-mimeProcess:
-		cmd = pluginCommand(hmt, url, 0);
+	} else if ((cw->mt = findMimeByProtocol(prot)) && cw->mt->stream) {
+mimestream:
+		cmd = pluginCommand(url, 0);
 /* Stop ignoring SIGPIPE for the duration of system(): */
 		signal(SIGPIPE, SIG_DFL);
+		debugPrint(3, "plugin %s", cmd);
 		system(cmd);
 		signal(SIGPIPE, SIG_IGN);
 		nzFree(cmd);
@@ -629,17 +631,8 @@ mimeProcess:
 	}
 
 /* Ok, it's http, but the suffix could force a plugin */
-	post = url + strcspn(url, "?\1");
-	for (s = post - 1; s >= url && *s != '.' && *s != '/'; --s) ;
-	if (*s == '.') {
-		++s;
-		if (post >= s + sizeof(suffix))
-			post = s + sizeof(suffix) - 1;
-		strncpy(suffix, s, post - s);
-		suffix[post - s] = 0;
-		if ((hmt = findMimeBySuffix(suffix)) && hmt->stream)
-			goto mimeProcess;
-	}
+	if ((cw->mt = findMimeByURL(url)) && cw->mt->stream)
+		goto mimestream;
 
 /* "Expect:" header causes some servers to lose.  Disable it. */
 	tmp_headers = curl_slist_append(custom_headers, "Expect:");
@@ -778,9 +771,12 @@ mimeProcess:
 perform:
 		pre_http_headers();
 		curlret = curl_easy_perform(http_curl_handle);
-		scan_http_headers();
+		scan_http_headers(false);
 		nzFree(http_headers);
 		http_headers = 0;
+
+		if (down_state == 6)
+			goto mimestream;
 
 		if (down_state == 5) {
 /* user has directed a download of this file in the background. */
@@ -1579,38 +1575,29 @@ static bool read_credentials(char *buffer)
 	return got_creds;
 }				/* read_credentials */
 
-static const char *content_field = "Content-Type:";
-static size_t content_field_length = 13;	/* length of string "Content-Type:" */
-
 /* Callback used by libcurl.
  * Gather all the http headers into one long string. */
 static size_t
 curl_header_callback(char *header_line, size_t size, size_t nmemb, void *unused)
 {
 	size_t bytes_in_line = size * nmemb;
-	char *last_pos = header_line + bytes_in_line;
-
 	stringAndBytes(&http_headers, &http_headers_len,
 		       header_line, bytes_in_line);
 
-	if (down_state == 0 &&
-	    (bytes_in_line > content_field_length) &&
-	    memEqualCI(header_line, content_field, content_field_length)) {
-		const char *start = header_line + content_field_length;
-		while (start < last_pos && isspaceByte(*start))
-			start++;
-		if (down_permitted && last_pos - start >= 5 &&
-		    !memEqualCI(start, "text/", 5)) {
-/* Not text, see if the user wants to download in the background. */
-/* Set a variable, so it uses the ftp download mechanism. */
-/* But don't autodownload if it's pdf. */
-			if (last_pos - start >= 15 &&
-			    memEqualCI(start, "application/pdf", 15)) {
-				;	/* leave it alone */
-			} else {
-				down_state = 1;
-				down_msg = MSG_Down;
-			}
+	if (down_permitted && down_state == 0 && !hct[0]) {
+		scan_http_headers(true);
+		if (cw->mt && cw->mt->stream) {
+/* I don't think this ever happens, since streams are indicated by the protocol,
+ * and we wouldn't even get here, but just in case -
+ * stop the download and set the flag so we can pass this url
+ * to the program that handles this kind of stream. */
+			down_state = 6;
+			return -1;
+		}
+		if (hct[0] && !memEqualCI(hct, "text/", 5) &&
+		    (!cw->mt || cw->mt->download)) {
+			down_state = 1;
+			down_msg = MSG_Down;
 		}
 	}
 

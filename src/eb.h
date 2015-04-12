@@ -190,7 +190,7 @@ struct MIMETYPE {
 	char *suffix, *prot, *program;
 	char *content;
 	char outtype;
-	bool stream, render;
+	bool stream, download;
 };
 extern struct MIMETYPE mimetypes[];
 extern int maxMime;		/* how many mime types specified */
@@ -337,6 +337,7 @@ struct ebWindow {
  * and used thereafter for hyperlinks, fill-out forms, etc. */
 	struct htmlTag **tags;
 	int numTags, allocTags;
+	const struct MIMETYPE *mt;
 	bool lhs_yes:1;
 	bool rhs_yes:1;
 	bool binMode:1;		/* binary file */

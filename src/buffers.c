@@ -2834,55 +2834,10 @@ pwd:
 	}
 
 	if (line[0] == 'p' && line[1] == 'b') {
-		c = line[2];
-		if (!c || c == '.') {
-			const struct MIMETYPE *mt;
-			char *cmd;
-			const char *suffix = 0;
-			bool trailPercent = false;
-			if (!cw->dol) {
-				setError(MSG_AudioEmpty);
-				return false;
-			}
-			if (cw->browseMode) {
-				setError(MSG_AudioBrowse);
-				return false;
-			}
-			if (cw->dirMode) {
-				setError(MSG_AudioDir);
-				return false;
-			}
-			if (cw->sqlMode) {
-				setError(MSG_AudioDB);
-				return false;
-			}
-			if (c == '.') {
-				suffix = line + 3;
-			} else {
-				if (cw->fileName)
-					suffix = strrchr(cw->fileName, '.');
-				if (!suffix) {
-					setError(MSG_NoSuffix);
-					return false;
-				}
-				++suffix;
-			}
-			if (strlen(suffix) > 5) {
-				setError(MSG_SuffixLong);
-				return false;
-			}
-			mt = findMimeBySuffix(suffix);
-			if (!mt) {
-				setError(MSG_SuffixBad, suffix);
-				return false;
-			}
-			if (mt->program[strlen(mt->program) - 1] == '%')
-				trailPercent = true;
-			cmd = pluginCommand(mt, 0, suffix);
-			rc = bufferToProgram(cmd, suffix, trailPercent);
-			nzFree(cmd);
-			return rc;
-		}
+		rc = playBuffer(line);
+		if (rc == 2)
+			goto no_action;
+		return rc;
 	}
 
 	if (stringEqual(line, "rf")) {
@@ -3243,6 +3198,7 @@ et_go:
 		return true;
 	}
 
+no_action:
 	*runThis = line;
 	return 2;		/* no change */
 }				/* twoLetter */
@@ -3783,7 +3739,9 @@ bool runCommand(const char *line)
 /* env variable and wild card expansion */
 	if (strchr("brewf", cmd) && first && !isURL(line) && !isSQL(line)) {
 		if (cmd != 'r' || !cw->sqlMode) {
-			if (!envFile(line, &line, !(cmd == 'w' || cmd == 'f' || cmd == 'e')))
+			if (!envFile
+			    (line, &line,
+			     !(cmd == 'w' || cmd == 'f' || cmd == 'e')))
 				return false;
 			first = *line;
 		}
