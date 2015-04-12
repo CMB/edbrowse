@@ -48,7 +48,8 @@ static char *httpLanguage;
 /* http content type is used in many places, and isn't arbitrarily long
  * or case sensitive, so keep our own sanitized copy. */
 static char hct[60];
-static char *hct2;
+static char *hct2;		/* extra content info such as charset */
+int hcl;			/* http content length */
 extern char *newlocation;
 extern int newloc_d;
 
@@ -66,6 +67,7 @@ static void pre_http_headers(void)
 	http_headers = initString(&http_headers_len);
 	hct[0] = 0;
 	hct2 = NULL;
+	hcl = 0;
 }				/* pre_http_headers */
 
 /*
@@ -194,6 +196,12 @@ static void scan_http_headers(bool fromCallback)
 /* The protocol, such as rtsp, could have already set the mime type. */
 		if (!cw->mt)
 			cw->mt = findMimeByContent(hct);
+	}
+
+	if (!hcl && (v = find_http_header("content-length"))) {
+		hcl = atoi(v);
+		nzFree(v);
+		debugPrint(3, "content length %d", hcl);
 	}
 
 	if (fromCallback)
@@ -620,7 +628,6 @@ mimestream:
 		cmd = pluginCommand(url, 0);
 /* Stop ignoring SIGPIPE for the duration of system(): */
 		signal(SIGPIPE, SIG_DFL);
-		debugPrint(3, "plugin %s", cmd);
 		system(cmd);
 		signal(SIGPIPE, SIG_IGN);
 		nzFree(cmd);
