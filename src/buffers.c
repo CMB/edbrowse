@@ -927,17 +927,6 @@ void delText(int start, int end)
  * Set dw to move them to your recycle bin.
  * Set dx to delete them outright. */
 
-static char *makeAbsPath(char *f)
-{
-	static char path[ABSPATH];
-	if (strlen(cw->baseDirName) + strlen(f) > ABSPATH - 2) {
-		setError(MSG_PathNameLong, ABSPATH);
-		return 0;
-	}
-	sprintf(path, "%s/%s", cw->baseDirName, f);
-	return path;
-}				/* makeAbsPath */
-
 static bool delFiles(void)
 {
 	int ln, cnt;

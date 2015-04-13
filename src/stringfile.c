@@ -1250,6 +1250,19 @@ bool envFileDown(const char *line, const char **expanded)
 	return true;
 }				/* envFileDown */
 
+/* create the full pathname for a file that you are viewing in directory mode. */
+/* This is static, with a limit on path length. */
+char *makeAbsPath(const char *f)
+{
+	static char path[ABSPATH];
+	if (strlen(cw->baseDirName) + strlen(f) > ABSPATH - 2) {
+		setError(MSG_PathNameLong, ABSPATH);
+		return 0;
+	}
+	sprintf(path, "%s/%s", cw->baseDirName, f);
+	return path;
+}				/* makeAbsPath */
+
 FILE *efopen(const char *name, const char *mode)
 {
 	FILE *f;

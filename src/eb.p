@@ -169,8 +169,9 @@ const struct MIMETYPE *findMimeByURL(const char *url) ;
 const struct MIMETYPE *findMimeByFile(const char *filename) ;
 const struct MIMETYPE *findMimeByContent(const char *content) ;
 const struct MIMETYPE *findMimeByProtocol(const char *prot) ;
-char *pluginCommand(const char *file, const char *suffix) ;
+char *pluginCommand(const struct MIMETYPE *m, const char *infile, const char *outfile, const char *suffix);
 int playBuffer(const char *line);
+bool playServerData(void);
 
 /* sourcefile=messages.c */
 void selectLanguage(void) ;
@@ -267,6 +268,7 @@ const char *nextScanFile(const char *base) ;
 bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p) ;
 bool envFile(const char *line, const char **expanded, bool expect_file );
 bool envFileDown(const char *line, const char **expanded) ;
+char *makeAbsPath(const char *f);
 FILE *efopen(const char *name, const char *mode) ;
 int eopen(const char *name, int mode, int perms) ;
 void appendFile(const char *fname, const char *message, ...) ;

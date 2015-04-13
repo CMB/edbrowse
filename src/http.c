@@ -625,12 +625,15 @@ bool httpConnect(const char *url, bool down_ok, bool webpage)
 		return ftpConnect(url, user, pass);
 	} else if ((cw->mt = findMimeByProtocol(prot)) && cw->mt->stream) {
 mimestream:
-		cmd = pluginCommand(url, 0);
+		cmd = pluginCommand(cw->mt, url, NULL, NULL);
+		if (!cmd)
+			return false;
 /* Stop ignoring SIGPIPE for the duration of system(): */
 		signal(SIGPIPE, SIG_DFL);
 		system(cmd);
 		signal(SIGPIPE, SIG_IGN);
 		nzFree(cmd);
+		i_puts(MSG_OK);
 		return true;
 	} else {
 		setError(MSG_WebProtBad, prot);
@@ -960,6 +963,17 @@ curl_fail:
 	}
 
 	nzFree(postb);
+
+/* Check for plugin to run here */
+	if (transfer_status == true && hcode == 200 && cw->mt &&
+	    !cw->mt->stream && !cw->mt->outtype && cw->mt->program) {
+		bool rc = playServerData();
+		nzFree(serverData);
+		serverData = NULL;
+		serverDataLen = 0;
+		return rc;
+	}
+
 	return transfer_status;
 }				/* httpConnect */
 
