@@ -1130,7 +1130,7 @@ static bool joinText(void)
 
 /* Read a file, or url, into the current buffer.
  * Post/get data is passed, via the second parameter, if it's a URL. */
-bool readFile(const char *filename, const char *post)
+static bool readFile(const char *filename, const char *post)
 {
 	char *rbuf;		/* read buffer */
 	int readSize;		/* should agree with fileSize */
@@ -1215,8 +1215,8 @@ bool readFile(const char *filename, const char *post)
 	}
 
 fromdisk:
-	filetype = fileTypeByName(filename, false);
 /* reading a file from disk */
+	filetype = fileTypeByName(filename, false);
 	fileSize = 0;
 	if (filetype == 'd') {
 /* directory scan */
@@ -1311,7 +1311,9 @@ fromdisk:
 		cw->dot = endRange;
 		return true;
 	}
-	/* empty */
+	if ((cmd == 'e' || cmd == 'b') && !cw->mt)
+		cw->mt = findMimeByFile(filename);
+
 gotdata:
 
 	if (!looksBinary(rbuf, fileSize)) {
@@ -1370,6 +1372,13 @@ intext:
 	free(rbuf);
 	return rc;
 }				/* readFile */
+
+/* from the command line */
+bool readFileArgv(const char *filename)
+{
+	cmd = 'e';
+	return readFile(filename, EMPTYSTRING);
+}				/* readFileArgv */
 
 /* Write a range to a file. */
 static bool writeFile(const char *name, int mode)
@@ -4432,7 +4441,7 @@ rebrowse:
 				cw->sqlMode = true;
 			if (icmd == 'g' && !nogo && isURL(line))
 				debugPrint(2, "*%s", line);
-			j = readFile(line, "");
+			j = readFile(line, EMPTYSTRING);
 		}
 		w->undoable = w->changeMode = false;
 		cw = cs->lw;
@@ -4631,7 +4640,7 @@ afterdelete:
 				strmove(strchr(newline, ']') + 1, line);
 				line = newline;
 			}
-			j = readFile(line, "");
+			j = readFile(line, EMPTYSTRING);
 			if (!serverData)
 				fileSize = -1;
 			return j;

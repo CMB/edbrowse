@@ -17,7 +17,7 @@ void cxSwitch(int cx, bool interactive) ;
 void gotoLocation(char *url, int delay, bool rf) ;
 bool addTextToBuffer(const pst inbuf, int length, int destl, bool onside) ;
 void delText(int start, int end) ;
-bool readFile(const char *filename, const char *post) ;
+bool readFileArgv(const char *filename);
 bool unfoldBuffer(int cx, bool cr, char **data, int *len) ;
 bool runCommand(const char *line) ;
 bool edbrowseCommand(const char *line, bool script) ;

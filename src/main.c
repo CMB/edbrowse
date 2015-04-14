@@ -1257,7 +1257,7 @@ int main(int argc, char **argv)
 		cw->firstURL = cloneString(file);
 		if (isSQL(file))
 			cw->sqlMode = true;
-		rc = readFile(file, "");
+		rc = readFileArgv(file);
 		if (fileSize >= 0)
 			debugPrint(1, "%d", fileSize);
 		fileSize = -1;
