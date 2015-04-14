@@ -809,12 +809,12 @@ trprog=$answer
 echo
 
 (
-echo "#  Describe the mime types and the programs to run them.
+echo "#  Describe the mime types and the plugins to run them.
 "
 
 if [ -n "$playprog" ]
 then
-echo "mime {
+echo "plugin {
 type = audio/basic
 desc = audio file in a wave format
 suffix = wav,voc,au
@@ -826,7 +826,7 @@ fi
 
 if [ -n "$mpgprog" ]
 then
-echo "mime {
+echo "plugin {
 type = audio/mp3
 desc = audio file in mp3 format
 suffix = mp3
@@ -837,9 +837,8 @@ fi
 
 if [ -n "$trprog" ]
 then
-echo "mime {
-#  the < forces it to be a stream, hence the url is passed to the program
-type = <audio/x-pn-realaudio
+echo "plugin {
+type = audio/x-pn-realaudio
 desc = streaming audio real player
 suffix = rm,ra,ram
 protocol = rtsp,pnm

@@ -166,7 +166,7 @@ static void readConfigFile(void)
 				v[1] = 'm';
 				t = v + 2;
 			}
-			if (stringEqual(last, "mime{")) {
+			if (stringEqual(last, "plugin{")) {
 				*v = '\x81';
 				v[1] = 'e';
 				t = v + 2;
@@ -412,8 +412,6 @@ putc:
 			continue;
 
 		case 8:	/* type */
-			if (*v == '<')
-				mt->stream = true, ++v;
 			mt->type = v;
 			continue;
 
@@ -427,6 +425,7 @@ putc:
 
 		case 11:	/* protocol */
 			mt->prot = v;
+			mt->stream = true;
 			continue;
 
 		case 12:	/* program */
@@ -646,6 +645,10 @@ nokeyword:
 			mt->download = true;
 			continue;
 		}
+		if (stringEqual(s, "stream") && mimeblock == 1) {
+			mt->stream = true;
+			continue;
+		}
 
 		if (*s == '\x82' && s[1] == 0) {
 			if (mailblock == 1) {
@@ -741,7 +744,7 @@ nokeyword:
 			if (mailblock > 1)
 				curblock = "a filter block";
 			if (mimeblock)
-				curblock = "a mime descriptor";
+				curblock = "a plugin descriptor";
 			i_printfExit(MSG_EBRC_FnNotStart, ln, curblock);
 		}
 

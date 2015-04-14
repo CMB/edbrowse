@@ -3322,17 +3322,17 @@ Les types mime sont déterminés par l'extension dans le nom de fichier, ou dans
 certains cas par le protocole.&nbsp;
 Ils peuvent indiquer à edbrowse d'utiliser /usr/bin/play pour jouer fichier.wav ou 
 fichier.voc, et /usr/bin/mpg123 pour jouer fichier.mp3, et ainsi de suite.&nbsp;
-Plutôt que de tout répéter ici, je vous suggère de jeter un oeil à la section mime{…} 
+Plutôt que de tout répéter ici, je vous suggère de jeter un oeil à la section plugin{…} 
 du fichier de configuration exemple fourni.&nbsp;
 Les utilisateurs de Linux pourront probablement copier cette section dans leur 
 propre fichier de configuration.&nbsp;Elle fait généralement ce qu'il faut.&nbsp;
 Voici un exemple :
 
-<pre><font face="Arial,Helvetica,sans-serif" size="3">mime {
+<pre><font face="Arial,Helvetica,sans-serif" size="3">plugin {
 type = audio/mp3
 desc = fichier audio dans le format mp3
 suffix = mp3
-program = mpg123 -q -
+program = mpg123 -q -C %i
 }
 </font></pre>
 
@@ -3355,12 +3355,12 @@ La commande « pb » travaille sur le tampon.&nbsp;
 Par exemple, un descripteur mime pourrait ouvrir des archives compressées de type « zip ».&nbsp;
 </p>
 
-<pre><font face="Arial,Helvetica,sans-serif" size="3">mime {
+<pre><font face="Arial,Helvetica,sans-serif" size="3">plugin {
 type = data/zip
 desc = archive zip compressée
 suffix = zip
-# utilisez %, puisque le programme unzip ne peut lire des données qu'à partir d'un fichier
-program = unzip %
+# utilisez %i, puisque le programme unzip ne peut lire des données qu'à partir d'un fichier
+program = unzip %i
 }
 </font></pre>
 

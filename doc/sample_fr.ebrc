@@ -136,45 +136,30 @@ me@my-regular-dayjob.com > work
 # -----------------------------------------------------------------------
 
 #  Description des types mime et des programmes associés
-#  pour des raisons évidentes, il n'y a que l'audio qui m'importe
-
-mime {
+plugin {
 type = audio/basic
 desc = fichier audio au format wave
 suffix = wav,voc,au
-#  l'étoile est remplacée par l'extension au lancement
-program = play -t * -
+content = audio/x-wav
+program = play -q %i
 }
 
-mime {
+plugin {
 type = audio/mp3
 desc = fichier audio au format mp3
 suffix = mp3
-#program = mpg123 -q -
-#  la ligne ci-dessus fonctionne, tout dépend du player
-#  certains players mp3 ne fonctionnet pas bien
-#  lorsqu'on leur passe les données via un pipe
-#  Lorsque les données provienne d'un fichier,
-#  ils répondent mieux aux ordres clavier
-#  pour s'interrompre, revenir en arrière etc.
-#  J'ai donc inventé le caractère spécial % à la fin
-#  lequel devient un fichier temporaire avec la bonne extension
-program = mpg123 -q %
-#  et on fait la même chose que précédemment
-#program = play %
-#  Vous n'aurez donc pas besoin du "-t *"
-#  parce que le fichier temporaire a la bonne extension
-# que le player comprend
+content = audio/mpeg
+program = mpg123 -q -C %i
 }
 
-mime {
-# le < force le fichier à être un flot,
-# sans quoi c'est l'url qui est passée au programme
-type = <audio/x-pn-realaudio
+plugin {
+type = audio/x-pn-realaudio
 desc = stream audio
 suffix = rm,ra,ram
+stream
 protocol = rtsp,pnm
-program = trplayer
+content = audio/x-scpls
+program = /usr/bin/mplayer -quiet %i
 }
 
 # -----------------------------------------------------------------------

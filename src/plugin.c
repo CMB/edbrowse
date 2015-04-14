@@ -1,5 +1,5 @@
 /*********************************************************************
-mime.c: mime types and plugins.
+plugin.c: mime types and plugins.
 Run audio players, pdf converters, etc, based on suffix or content-type.
 *********************************************************************/
 
