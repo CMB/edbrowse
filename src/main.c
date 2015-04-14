@@ -43,7 +43,7 @@ uchar dirWrite, endMarks;
 int context = 1;
 uchar linePending[MAXTTYLINE];
 char *changeFileName, *mailDir, *downDir;
-char *mailUnread, *mailStash;
+char *mailUnread, *mailStash, *mailReply;
 char *addressFile;
 char *home, *recycleBin, *configFile, *sigFile, *sigFileEnd;
 char *cookieFile;
@@ -493,7 +493,7 @@ putc:
 			mailDir = v;
 			if (fileTypeByName(v, false) != 'd')
 				i_printfExit(MSG_EBRC_NotDir, v);
-			mailUnread = allocMem(strlen(v) + 12);
+			mailUnread = allocMem(strlen(v) + 20);
 			sprintf(mailUnread, "%s/unread", v);
 /* We need the unread directory, else we can't fetch mail. */
 /* Create it if it isn't there. */
@@ -502,6 +502,8 @@ putc:
 					i_printfExit(MSG_EBRC_NotDir,
 						     mailUnread);
 			}
+			mailReply = allocMem(strlen(v) + 20);
+			sprintf(mailReply, "%s/.reply", v);
 			continue;
 
 		case 22:	/* agent */

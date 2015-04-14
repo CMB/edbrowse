@@ -411,6 +411,8 @@ int fetchAllMail(void)
 }				/* fetchAllMail */
 
 static int presentMail(void);
+static void readReplyInfo(void);
+static void writeReplyInfo(const char *addstring);
 
 void scanMail(void)
 {
@@ -682,11 +684,16 @@ badsave:
 
 		if (stashNumber >= 0) {
 			char addstash[60];
-			sprintf(addstash, "\nUnformatted %05d\n", stashNumber);
+			int minor = rand() % 100000;
+			sprintf(addstash, "\nUnformatted %05d.%05d\n",
+				stashNumber, minor);
 			k = strlen(addstash);
 			if (write(fh, addstash, k) < k)
 				goto badsave;
 			fsize += k;
+/* write the mailInfo data to the mail reply file */
+			addstash[k - 1] = ':';
+			writeReplyInfo(addstash + k - 12);
 		}
 
 		close(fh);
@@ -826,7 +833,7 @@ static void mail64Error(int err)
 		runningError(MSG_AttAfterChars);
 		break;
 	}			/* switch on error code */
-}			/* mail64Error */
+}				/* mail64Error */
 
 static void unpackQP(struct MHINFO *w)
 {
@@ -1784,14 +1791,14 @@ char *emailParse(char *buf)
 /* Remember, we always need a nonzero buffer */
 	if (!fm_l || fm[fm_l - 1] != '\n')
 		stringAndChar(&fm, &fm_l, '\n');
+	cw->mailInfo =
+	    allocMem(strlen(w->ref) + strlen(w->mid) +
+		     strlen(w->tolist) + strlen(w->cclist) +
+		     strlen(w->reply) + 6);
+	sprintf(cw->mailInfo, "%s>%s>%s>%s>%s>", w->reply, w->tolist,
+		w->cclist, w->ref, w->mid);
 	if (!ismc) {
 		writeAttachments(w);
-		cw->mailInfo =
-		    allocMem(strlen(w->ref) + strlen(w->mid) +
-			     strlen(w->tolist) + strlen(w->cclist) +
-			     strlen(w->reply) + 6);
-		sprintf(cw->mailInfo, "%s>%s>%s>%s>%s>", w->reply, w->tolist,
-			w->cclist, w->ref, w->mid);
 		freeMailInfo(w);
 		nzFree(buf);
 		debugPrint(5, "mailInfo: %s", cw->mailInfo);
@@ -1939,6 +1946,8 @@ bool setupReply(bool all)
 		*q2 = swap;
 	}
 
+	readReplyInfo();
+
 	if (!cw->mailInfo) {
 		if (all) {
 			setError(MSG_ReNoInfo);
@@ -1994,4 +2003,68 @@ bool setupReply(bool all)
 	return rc;
 }				/* setupReply */
 
-/* Callback used by libcurl. Writes data to mailstring. */
+static void writeReplyInfo(const char *addstring)
+{
+	int rfh;		/* reply file handle */
+	rfh = open(mailReply, O_WRONLY | O_APPEND | O_CREAT, 0666);
+	if (rfh < 0)
+		return;
+	write(rfh, addstring, 12);
+	write(rfh, cw->mailInfo, strlen(cw->mailInfo));
+	write(rfh, "\n", 1);
+	close(rfh);
+}				/* writeReplyInfo */
+
+static void readReplyInfo(void)
+{
+	int rfh;		/* reply file handle */
+	char *p;
+	int ln, major, minor;
+	char prestring[20];
+	char *buf;
+	int buflen;
+	char *s, *t, *cut;
+
+	if (cw->mailInfo)
+		return;		/* already there */
+
+/* scan through the buffer looking for the Unformatted line,
+ * but stop if you hit an email divider. */
+	for (ln = 1; ln <= cw->dol; ++ln) {
+		p = fetchLine(ln, -1);
+		if (!memcmp
+		    (p,
+		     "======================================================================\n",
+		     71))
+			return;
+		if (pstLength((pst) p) == 24
+		    && sscanf(p, "Unformatted %d.%d", &major, &minor) == 2)
+			goto found;
+	}
+	return;
+
+found:
+/* prestring is the key */
+	sprintf(prestring, "%05d.%05d:", major, minor);
+	rfh = open(mailReply, O_RDONLY);
+	if (rfh < 0)
+		return;
+	if (!fdIntoMemory(rfh, &buf, &buflen))
+		return;
+	close(rfh);
+
+/* loop through lines looking for the key */
+	for (s = buf; *s; s = t + 1) {
+		t = strchr(s, '\n');
+		if (!t)
+			break;
+		if (memcmp(s, prestring, 12))
+			continue;
+/* key match, put this string into mailInfo */
+		s += 12;
+		cw->mailInfo = pullString(s, t - s);
+		break;
+	}
+
+	nzFree(buf);
+}				/* readReplyInfo */

@@ -39,9 +39,6 @@ const struct MIMETYPE *findMimeBySuffix(const char *suffix)
 	int len = strlen(suffix);
 	const struct MIMETYPE *m = mimetypes;
 
-	if (!pluginsOn)
-		return NULL;
-
 	for (i = 0; i < maxMime; ++i, ++m) {
 		const char *s = m->suffix, *t;
 		if (!s)
@@ -65,8 +62,6 @@ const struct MIMETYPE *findMimeByURL(const char *url)
 {
 	char suffix[12];
 	const char *post, *s;
-	if (!pluginsOn)
-		return NULL;
 	post = url + strcspn(url, "?\1");
 	for (s = post - 1; s >= url && *s != '.' && *s != '/'; --s) ;
 	if (*s != '.')
@@ -83,8 +78,6 @@ const struct MIMETYPE *findMimeByFile(const char *filename)
 {
 	char suffix[12];
 	const char *post, *s;
-	if (!pluginsOn)
-		return NULL;
 	post = filename + strlen(filename);
 	for (s = post - 1; s >= filename && *s != '.' && *s != '/'; --s) ;
 	if (*s != '.')
@@ -102,9 +95,6 @@ const struct MIMETYPE *findMimeByContent(const char *content)
 	int i;
 	int len = strlen(content);
 	const struct MIMETYPE *m = mimetypes;
-
-	if (!pluginsOn)
-		return NULL;
 
 	for (i = 0; i < maxMime; ++i, ++m) {
 		const char *s = m->content, *t;
@@ -130,9 +120,6 @@ const struct MIMETYPE *findMimeByProtocol(const char *prot)
 	int i;
 	int len = strlen(prot);
 	const struct MIMETYPE *m = mimetypes;
-
-	if (!pluginsOn)
-		return NULL;
 
 	for (i = 0; i < maxMime; ++i, ++m) {
 		const char *s = m->prot, *t;
@@ -301,11 +288,6 @@ int playBuffer(const char *line)
 
 	if (c && c != '.')
 		return 2;
-
-	if (!pluginsOn) {
-		setError(MSG_PluginsOff);
-		return 0;
-	}
 
 	if (!cw->dol) {
 		setError(cw->dirMode ? MSG_EmptyBuffer : MSG_AudioEmpty);

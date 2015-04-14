@@ -241,6 +241,7 @@ extern int localAccount;	/* this is the smtp server for outgoing mail */
 extern char *mailDir;		/* move to this directory when fetching mail */
 extern char *downDir;		/* the download directory */
 extern char *mailUnread;	/* place to hold fetched but unread mail */
+extern char *mailReply;		/* file to hold reply info for each email */
 /* Keep a copy of unformatted mail that you probably won't need again,
  * but you never know. Should probably live somewhere under .Trash */
 extern char *mailStash;

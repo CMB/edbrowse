@@ -623,7 +623,7 @@ re: reply to a mail message
 <br>
 rea: reply to all
 <br>
-<foo arg1 arg2 ... invoke the function foo, defined in your .ebrc file
+&lt;foo arg1 arg2 ... invoke the function foo, defined in your .ebrc file
 
 <H3 align=center> <A NAME=tips> Tips for Avoiding Line Numbers </A> </H3>
 
@@ -3863,8 +3863,9 @@ to make room for other email headers as follows.
 <P>
 If this email has just been browsed,
 and the unformatted data still exists within the current edbrowse session,
-re looks for the message id of the original email.&nbsp;
-This should be referenced in the reply.&nbsp;
+or if this same data is available in the database file maildir/.reply,
+then re inserts the message id of the original email.&nbsp;
+This should be part of the reply.&nbsp;
 The resulting lines might look like this.
 
 <P>
@@ -3878,17 +3879,15 @@ Subject: What's in a name?
 The reference line is not a line you should ever type in, edit, or delete.&nbsp;
 Just leave it be.&nbsp;
 If you participate in a discussion list, this line is important.&nbsp;
-It tells the server that your reply is indeed a reply,
+It tells the server that your reply is indeed a reply
 and that it should be linked to the referenced message.&nbsp;
 Using this information, the server maintains discussion threads.&nbsp;
 If you delete this line before sending your response,
 you will create a new thread, and that will only confuse and annoy
 the other participants.&nbsp;
 So - if you are going to reply to a message on a discussion list,
-take the time to save it unformatted, then browse,
-then reply.&nbsp;
-Leave the References: line alone,
-edit the body of the email, add your comments, and send.
+make sure the re command inserts the References: line, and then leave it alone.&nbsp;
+Edit the body of the email, add your comments, and send.
 
 <P>
 Sometimes the references line will have two IDs separated by white space.&nbsp;
@@ -3898,7 +3897,7 @@ Again, this helps list servers organize the emails into threads.
 
 <P>
 The command `rea' means reply to all,
-and this also uses the original email headers.&nbsp;
+and this also uses the original email data.&nbsp;
 All the recipients will appear at the top of your file.&nbsp;
 Some will be indicated by cc, if they were carbon copied.&nbsp;
 You can delete any of these recipients before sending your response.&nbsp;
@@ -3906,7 +3905,9 @@ Of course you probably don't want to delete the first line,
 as that is the reply to address.
 
 <P>
-Note that the re command takes the file out of browse mode, and turns it into a plain text file.&nbsp;
+If the email was unformatted,
+and you have typed b to browse it,
+the re command takes the file out of browse mode and turns it into a plain text file.&nbsp;
 This supports text editing, to write your reply in the body of the message.&nbsp;
 If you want to start over from scratch,
 you can't just unbrowse, because it is not in browse mode.&nbsp;

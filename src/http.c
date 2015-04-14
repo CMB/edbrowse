@@ -623,7 +623,8 @@ bool httpConnect(const char *url, bool down_ok, bool webpage)
 		   stringEqualCI(prot, "ftps") ||
 		   stringEqualCI(prot, "tftp") || stringEqualCI(prot, "sftp")) {
 		return ftpConnect(url, user, pass);
-	} else if ((cw->mt = findMimeByProtocol(prot)) && cw->mt->stream) {
+	} else if ((cw->mt = findMimeByProtocol(prot)) && pluginsOn
+		   && cw->mt->stream) {
 mimestream:
 		cmd = pluginCommand(cw->mt, url, NULL, NULL);
 		if (!cmd)
@@ -641,7 +642,7 @@ mimestream:
 	}
 
 /* Ok, it's http, but the suffix could force a plugin */
-	if ((cw->mt = findMimeByURL(url)) && cw->mt->stream)
+	if ((cw->mt = findMimeByURL(url)) && pluginsOn && cw->mt->stream)
 		goto mimestream;
 
 /* "Expect:" header causes some servers to lose.  Disable it. */
@@ -965,7 +966,7 @@ curl_fail:
 	nzFree(postb);
 
 /* Check for plugin to run here */
-	if (transfer_status == true && hcode == 200 && cw->mt &&
+	if (transfer_status && hcode == 200 && cw->mt && pluginsOn &&
 	    !cw->mt->stream && !cw->mt->outtype && cw->mt->program) {
 		bool rc = playServerData();
 		nzFree(serverData);
@@ -1607,7 +1608,7 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb, void *unused)
 
 	if (down_permitted && down_state == 0 && !hct[0]) {
 		scan_http_headers(true);
-		if (cw->mt && cw->mt->stream) {
+		if (cw->mt && cw->mt->stream && pluginsOn) {
 /* I don't think this ever happens, since streams are indicated by the protocol,
  * and we wouldn't even get here, but just in case -
  * stop the download and set the flag so we can pass this url
@@ -1616,7 +1617,7 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb, void *unused)
 			return -1;
 		}
 		if (hct[0] && !memEqualCI(hct, "text/", 5) &&
-		    (!cw->mt || cw->mt->download)) {
+		    (!pluginsOn || !cw->mt || cw->mt->download)) {
 			down_state = 1;
 			down_msg = MSG_Down;
 		}
