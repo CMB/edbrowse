@@ -3041,6 +3041,13 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "pg")) {
+		pluginsOn ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(pluginsOn + MSG_PluginsOff);
+		return true;
+	}
+
 	if (stringEqual(line, "bg")) {
 		down_bg ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)

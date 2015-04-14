@@ -603,6 +603,8 @@ rl: use readline() on input (toggle)
 <br>
 pb: play buffer (audio)
 <br>
+pg: plugins active (toggle)
+<br>
 iu: automatically convert between iso8859 and utf8 (toggle)
 <br>
 ds=source,login,password: set the data source
@@ -3393,7 +3395,10 @@ If you have pulled down a file from the internet that ends in .mp3,
 or has an http content-type of Audio/Mpeg,
 it will automatically play, and print ok when done.&nbsp;
 It is the sound or music or audio instructions associated with the website.&nbsp;
-However, if you have read such a file into memory from your own computer,
+This autoplay feature can be disabled with the pg command that turns plugins on and off.
+
+<P>
+If you have read an audio file into memory from your own computer,
 you can type `pb' to play the contents of the buffer.&nbsp;
 The data is put into a temp file under
 /tmp/.edbrowse, and them mpg123 is invoked.&nbsp;
@@ -4556,6 +4561,8 @@ desc = audio file in mp3 format
 <br>
 suffix = mp3
 <br>
+content = audio/mpeg
+<br>
 program = mpg123 -q -
 <br>
 }
@@ -4582,15 +4589,15 @@ To play nicely with edbrowse, put something like this in your .ebrc file.
 <P>
 plugin {
 <br>
-#  the &lt; forces it to be a stream, hence the url is passed to the program
-<br>
-type = &lt;audio/x-pn-realaudio
+type = audio/x-pn-realaudio
 <br>
 desc = streaming audio
 <br>
 suffix = rm,ra,ram,pls
 <br>
 protocol = rtsp,pnm,sdp
+<br>
+content = audio/x-scpls
 <br>
 program = /usr/bin/mplayer -quiet
 <br>

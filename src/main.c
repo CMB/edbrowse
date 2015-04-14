@@ -36,7 +36,7 @@ char *dbarea, *dblogin, *dbpw;	/* to log into the database */
 bool fetchBlobColumns;
 bool caseInsensitive, searchStringsAll;
 bool allowRedirection = true, allowJS = true, sendReferrer = true;
-bool binaryDetect = true;
+bool binaryDetect = true, pluginsOn = true;
 bool inputReadLine;
 bool showHiddenFiles, helpMessagesOn;
 uchar dirWrite, endMarks;

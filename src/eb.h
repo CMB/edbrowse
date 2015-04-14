@@ -251,6 +251,7 @@ extern bool allowRedirection;	/* from http code 301, or http refresh */
 extern bool sendReferrer;	/* in the http header */
 extern bool allowJS;		/* javascript on */
 extern bool helpMessagesOn;	/* no need to type h */
+extern bool pluginsOn;		/* plugins are active */
 extern bool showHiddenFiles;	/* during directory scan */
 extern uchar dirWrite;		/* directory write mode, e.g. rename files */
 extern uchar endMarks;		/* do we print ^ $ at the start and end of lines? */
