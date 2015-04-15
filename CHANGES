@@ -4,6 +4,7 @@ Here are some changes introduced by recent versions of edbrowse.
 Messages in German, thanks to Sebastian Humenda.
 Autoplay of audio files found on websites, using content-type,
 and playing audio files from directory mode.
+Use a plugin to convert pdf to html, or any other conversion you wish.
 
 3.5.3:
 Write a separate process, edbrowse-js, to handle all the javascript objects.
