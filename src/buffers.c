@@ -4736,21 +4736,19 @@ bool browseCurrentBuffer(void)
 {
 	char *rawbuf, *newbuf, *tbuf;
 	int rawsize, tlen, j;
-	bool rc, remote = false, ispdf = false;
+	bool rc, remote = false;
 	bool save_ch = cw->changeMode;
 	uchar bmode = 0;
 
-	if (cw->fileName) {
+	if (cw->fileName)
 		remote = isURL(cw->fileName);
-		ispdf = stringIsPDF(cw->fileName);
-	}
 
-/* I'm trusting the pdf suffix, and not looking inside. */
-	if (ispdf)
+	if (cw->mt && cw->mt->outtype)
 		bmode = 3;
+	else
 /* A mail message often contains lots of html tags,
  * so we need to check for email headers first. */
-	else if (!remote && emailTest())
+	if (!remote && emailTest())
 		bmode = 1;
 	else if (htmlTest())
 		bmode = 2;
@@ -4762,28 +4760,16 @@ bool browseCurrentBuffer(void)
 	if (!unfoldBuffer(context, false, &rawbuf, &rawsize))
 		return false;	/* should never happen */
 
-/* expand pdf using pdftohtml */
-/* http://rpmfind.net/linux/RPM/suse/updates/10.0/i386/rpm/i586/pdftohtml-0.36-130.9.i586.html */
 	if (bmode == 3) {
-		char *cmd;
-		if (!memoryOutToFile(edbrowseTempPDF, rawbuf, rawsize,
-				     MSG_TempNoCreate2, MSG_TempNoWrite)) {
+/* convert raw text via a plugin */
+		char *outfile = runPluginConverter(rawbuf, rawsize);
+		if (!outfile) {
 			nzFree(rawbuf);
 			return false;
 		}
 		nzFree(rawbuf);
-		unlink(edbrowseTempHTML);
-		j = strlen(edbrowseTempPDF);
-		cmd = allocMem(50 + j);
-		sprintf(cmd, "pdftohtml -i -noframes %s >/dev/null 2>&1",
-			edbrowseTempPDF);
-		system(cmd);
-		nzFree(cmd);
-		if (fileSizeByName(edbrowseTempHTML) <= 0) {
-			setError(MSG_NoPDF, edbrowseTempPDF);
-			return false;
-		}
-		rc = fileIntoMemory(edbrowseTempHTML, &rawbuf, &rawsize);
+		rc = fileIntoMemory(outfile, &rawbuf, &rawsize);
+		unlink(outfile);
 		if (!rc)
 			return false;
 		iuReformat(rawbuf, rawsize, &tbuf, &tlen);
@@ -4792,9 +4778,12 @@ bool browseCurrentBuffer(void)
 			rawbuf = tbuf;
 			rawsize = tlen;
 		}
-		bmode = 2;
+		bmode = (cw->mt->outtype == 'h' ? 2 : 0);
+		if (!allowRedirection)
+			bmode = 0;
 	}
 
+/* this shouldn't do any harm if the output is text */
 	prepareForBrowse(rawbuf, rawsize);
 
 /* No harm in running this code in mail client, but no help either,
@@ -4833,8 +4822,13 @@ bool browseCurrentBuffer(void)
 		newbuf = htmlParse(rawbuf, remote);
 	}
 
+	if (bmode == 0)
+		newbuf = rawbuf;
+
 	cw->rnlMode = cw->nlMode;
 	cw->nlMode = false;
+/* I'm gonna assume it ain't binary no more */
+	cw->binMode = false;
 	cw->r_dot = cw->dot, cw->r_dol = cw->dol;
 	cw->dot = cw->dol = 0;
 	cw->r_map = cw->map;

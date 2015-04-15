@@ -163,7 +163,7 @@ bool runEbFunction(const char *line) ;
 struct DBTABLE *findTableDescriptor(const char *sn) ;
 struct DBTABLE *newTableDescriptor(const char *name) ;
 
-/* sourcefile=mime.c */
+/* sourcefile=plugin.c */
 const struct MIMETYPE *findMimeBySuffix(const char *suffix) ;
 const struct MIMETYPE *findMimeByURL(const char *url) ;
 const struct MIMETYPE *findMimeByFile(const char *filename) ;
@@ -172,6 +172,7 @@ const struct MIMETYPE *findMimeByProtocol(const char *prot) ;
 char *pluginCommand(const struct MIMETYPE *m, const char *infile, const char *outfile, const char *suffix);
 int playBuffer(const char *line);
 bool playServerData(void);
+char *runPluginConverter(const char *buf, int buflen);
 
 /* sourcefile=messages.c */
 void selectLanguage(void) ;

@@ -12,6 +12,7 @@ Run audio players, pdf converters, etc, based on suffix or content-type.
 static const char tempbase[] = "/tmp/.edbrowse";
 static char tempin[60], tempout[60];
 static char *suffixin;		/* suffix of input file */
+static char *suffixout;		/* suffix of output file */
 static bool makeTempFilename(const char *suffix, int idx, bool output)
 {
 	if (fileTypeByName(tempbase, false) != 'd') {
@@ -455,3 +456,48 @@ bool playServerData(void)
 
 	return true;
 }				/* playServerData */
+
+/* return the name of the output file, or 0 upon failure */
+char *runPluginConverter(const char *buf, int buflen)
+{
+	const struct MIMETYPE *mt = cw->mt;
+	char *cmd;
+	const char *suffix = mt->suffix;
+
+	if (!suffix)
+		suffix = "x";
+	else {
+		static char sufbuf[12];
+		int i;
+		for (i = 0; i < sizeof(sufbuf) - 1; ++i) {
+			if (mt->suffix[i] == ',' || mt->suffix[i] == 0)
+				break;
+			sufbuf[i] = mt->suffix[i];
+		}
+		sufbuf[i] = 0;
+		suffix = sufbuf;
+	}
+
+	++tempIndex;
+	makeTempFilename(suffix, tempIndex, false);
+	suffixout = (cw->mt->outtype == 'h' ? "html" : "txt");
+	++tempIndex;
+	makeTempFilename(suffixout, tempIndex, true);
+	cmd = pluginCommand(cw->mt, tempin, tempout, suffix);
+	if (!cmd)
+		return NULL;
+	if (!memoryOutToFile(tempin, buf, buflen,
+			     MSG_TempNoCreate2, MSG_NoWrite2)) {
+		nzFree(cmd);
+		return NULL;
+	}
+
+	signal(SIGPIPE, SIG_DFL);
+	system(cmd);
+	signal(SIGPIPE, SIG_IGN);
+
+	unlink(tempin);
+	nzFree(cmd);
+
+	return tempout;
+}				/* runPluginConverter */
