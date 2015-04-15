@@ -379,7 +379,7 @@ fetchmail_cleanup:
 	return nfetch;
 }				/* fetchMail */
 
-/* fetch from all accounts except those with nofetch set */
+/* fetch from all accounts except those with nofetch or imap set */
 int fetchAllMail(void)
 {
 	int i, j;
@@ -388,8 +388,7 @@ int fetchAllMail(void)
 
 	for (i = 1; i <= maxAccount; ++i) {
 		a = accounts + i - 1;
-/* did we set this to nofetch in the config file? */
-		if (a->nofetch)
+		if (a->nofetch | a->imap)
 			continue;
 
 /* don't fetch from an earlier account that has the same host an dlogin */
