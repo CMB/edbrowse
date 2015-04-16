@@ -380,14 +380,6 @@ bool stringIsFloat(const char *s, double *dp)
 	return true;
 }				/* stringIsFloat */
 
-bool stringIsPDF(const char *s)
-{
-	int j = 0;
-	if (s)
-		j = strlen(s);
-	return j >= 5 && stringEqual(s + j - 4, ".pdf");
-}				/* stringIsPDF */
-
 bool isSQL(const char *s)
 {
 	char c;

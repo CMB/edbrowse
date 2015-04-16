@@ -166,7 +166,8 @@ static void readConfigFile(void)
 				v[1] = 'm';
 				t = v + 2;
 			}
-			if (stringEqual(last, "plugin{")) {
+			if (stringEqual(last, "plugin{") ||
+			    stringEqual(last, "mime{")) {
 				*v = '\x81';
 				v[1] = 'e';
 				t = v + 2;

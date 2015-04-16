@@ -211,9 +211,12 @@ static char *get_mailbox_url(const struct MACCOUNT *account)
 	if (account->inssl)
 		scheme = "pop3s";
 
-	if (asprintf
-	    (&url, "%s://%s:%d/", scheme, account->inurl,
-	     account->inport) == -1) {
+	if (account->imap)
+		scheme = (account->inssl ? "imaps" : "imap");
+
+	if (asprintf(&url,
+		     "%s://%s:%d/", scheme, account->inurl,
+		     account->inport) == -1) {
 /* The byte count is a little white lie / guess, we don't know
  * how much asprintf *really* requested. */
 		i_printfExit(MSG_MemAllocError,

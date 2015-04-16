@@ -4480,7 +4480,7 @@ rebrowse:
 /* Some files we just can't browse */
 		if (!cw->dol || cw->dirMode)
 			cmd = 'e';
-		if (cw->binMode && !stringIsPDF(cw->fileName))
+		if (cw->binMode && (!cw->mt || !cw->mt->outtype))
 			cmd = 'e';
 		if (cmd == 'e')
 			return true;
@@ -4489,7 +4489,7 @@ rebrowse:
 browse:
 	if (cmd == 'b') {
 		if (!cw->browseMode) {
-			if (cw->binMode && !stringIsPDF(cw->fileName)) {
+			if (cw->binMode && (!cw->mt || !cw->mt->outtype)) {
 				setError(MSG_BrowseBinary);
 				return false;
 			}
