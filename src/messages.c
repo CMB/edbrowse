@@ -333,7 +333,7 @@ static const char *englishMessages[] = {
 	0,
 	"in progress",
 	"stop",
-	"filename contains both ' and \" - I don't know how to quote it",
+	0,
 	"no attachments",
 	".ebrc: keyword = value inside an edbrowse function at line %d",
 	0,

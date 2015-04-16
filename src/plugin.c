@@ -141,26 +141,13 @@ const struct MIMETYPE *findMimeByProtocol(const char *prot)
 	return NULL;
 }				/* findMimeByProtocol */
 
-static char whichQuote(const char *s)
-{
-	char q = '\'';
-	if (!strchr(s, q))
-		return q;
-	q = '"';
-	if (!strchr(s, q))
-		return q;
-	setError(MSG_BothQuotes);
-	return 0;
-}				/* whichQuote */
-
 /* The result is allocated */
 char *pluginCommand(const struct MIMETYPE *m,
 		    const char *infile, const char *outfile, const char *suffix)
 {
-	int len;
+	int len, inlen, outlen;
 	const char *s;
 	char *cmd, *t;
-	char qi, qo;		/* quote characters */
 
 	if (!suffix)
 		suffix = EMPTYSTRING;
@@ -168,26 +155,24 @@ char *pluginCommand(const struct MIMETYPE *m,
 		infile = EMPTYSTRING;
 	if (!outfile)
 		outfile = EMPTYSTRING;
-	qi = whichQuote(infile);
-	if (!qi)
-		return NULL;
-	qo = whichQuote(outfile);
-	if (!qo)
-		return NULL;
 
 	len = 0;
 	for (s = m->program; *s; ++s) {
+#if 0
 		if (*s == '*') {
 			len += strlen(suffix);
 			continue;
 		}
+#endif
 		if (*s == '%' && s[1] == 'i') {
-			len += strlen(infile) + 2;
+			inlen = shellProtectLength(infile);
+			len += inlen;
 			++s;
 			continue;
 		}
 		if (*s == '%' && s[1] == 'o') {
-			len += strlen(outfile) + 2;
+			outlen = shellProtectLength(outfile);
+			len += outlen;
 			++s;
 			continue;
 		}
@@ -198,20 +183,22 @@ char *pluginCommand(const struct MIMETYPE *m,
 	cmd = allocMem(len);
 	t = cmd;
 	for (s = m->program; *s; ++s) {
+#if 0
 		if (*s == '*') {
 			strcpy(t, suffix);
 			t += strlen(suffix);
 			continue;
 		}
+#endif
 		if (*s == '%' && s[1] == 'i') {
-			sprintf(t, "%c%s%c", qi, infile, qi);
-			t += strlen(t);
+			shellProtect(t, infile);
+			t += inlen;
 			++s;
 			continue;
 		}
 		if (*s == '%' && s[1] == 'o') {
-			sprintf(t, "%c%s%c", qo, outfile, qo);
-			t += strlen(t);
+			shellProtect(t, outfile);
+			t += outlen;
 			++s;
 			continue;
 		}
@@ -335,7 +322,7 @@ int playBuffer(const char *line)
 		if (!dirline)
 			return 0;
 		mt = findMimeBySuffix(suffix);
-		if (!mt) {
+		if (!mt || mt->outtype | mt->stream) {
 			setError(MSG_SuffixBad, suffix);
 			return 0;
 		}
@@ -384,6 +371,11 @@ int playBuffer(const char *line)
 			sufbuf[i] = 0;
 			suffix = sufbuf;
 		}
+	}
+
+	if (mt->outtype | mt->stream) {
+		setError(MSG_SuffixBad, suffix);
+		return 0;
 	}
 
 	++tempIndex;

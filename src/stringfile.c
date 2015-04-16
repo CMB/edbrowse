@@ -1033,9 +1033,30 @@ char *getFileName(int msg, const char *defname, bool isnew, bool ws)
 	}
 }				/* getFileName */
 
+/* Protect a filename from expansion by the shell */
+static const char shellmeta[] = "\\\n\t |&;<>(){}#'\"~$*?";
+int shellProtectLength(const char *s)
+{
+	int l = 0;
+	while (*s) {
+		if (strchr(shellmeta, *s))
+			++l;
+		++l, ++s;
+	}
+	return l;
+}				/* shellProtectLength */
+
+void shellProtect(char *t, const char *s)
+{
+	while (*s) {
+		if (strchr(shellmeta, *s))
+			*t++ = '\\';
+		*t++ = *s++;
+	}
+}				/* shellProtect */
+
 /* loop through the files in a directory */
 /* Hides the differences between DOS, Unix, and NT. */
-
 const char *nextScanFile(const char *base)
 {
 	static char *dirquoted;	// 'directoryName'/*
@@ -1044,21 +1065,16 @@ const char *nextScanFile(const char *base)
 	const char *s;
 	char *t;
 	int cnt;
-	static const char shellmeta[] = "\n\t |&;<>(){}\\#'\"~$*?";
 
 	if (!dirquoted) {
 		if (!base)
 			base = ".";
-		for (s = base, cnt = 0; *s; ++s)
-			if (strchr(shellmeta, *s))
-				++cnt;
-		baselen = s - base;
-		dirquoted = t = allocMem(baselen + cnt + 4);
-		for (s = base; *s; ++s) {
-			if (strchr(shellmeta, *s))
-				*t++ = '\\';
-			*t++ = *s;
-		}
+		baselen = strlen(base);
+		s = base + baselen;
+		cnt = shellProtectLength(base);
+		dirquoted = allocMem(cnt + 4);
+		shellProtect(dirquoted, base);
+		t = dirquoted + cnt;
 		if (s[-1] != '/')
 			*t++ = '/', ++baselen;
 		*t++ = '*';

@@ -333,7 +333,7 @@ enum {
 	MSG_NotUsed333,
 	MSG_InProgress,
 	MSG_Stop,
-	MSG_BothQuotes,
+	MSG_NotUsed336,
 	MSG_NoAttachments,
 	MSG_EBRC_KeyInFunc,
 	MSG_NotUsed339,
