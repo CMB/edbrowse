@@ -167,7 +167,7 @@ type = pdf
 desc = pdf file
 suffix = pdf
 content = application/pdf
-program = pdftohtml -i -noframes %i %o >/dev/null 2>&1
+program = pdftohtml -i -noframes %i %o >/dev/null
 outtype = H
 }
 
