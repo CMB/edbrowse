@@ -4757,8 +4757,12 @@ bool browseCurrentBuffer(void)
 		return false;
 	}
 
-	if (!unfoldBuffer(context, false, &rawbuf, &rawsize))
-		return false;	/* should never happen */
+	rawbuf = NULL;
+	rawsize = 0;
+	if (bmode != 3 || remote || access(cw->fileName, 4)) {
+		if (!unfoldBuffer(context, false, &rawbuf, &rawsize))
+			return false;	/* should never happen */
+	}
 
 	if (bmode == 3) {
 /* convert raw text via a plugin */

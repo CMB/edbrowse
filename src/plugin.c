@@ -285,6 +285,7 @@ int playBuffer(const char *line)
 	const char *suffix = NULL;
 	char *buf;
 	int buflen;
+	char *infile;
 	char c = line[2];
 
 	if (c && c != '.')
@@ -387,27 +388,33 @@ int playBuffer(const char *line)
 
 	++tempIndex;
 	makeTempFilename(suffix, tempIndex, false);
-	cmd = pluginCommand(mt, tempin, 0, suffix);
+	infile = tempin;
+	if (!isURL(cw->fileName) && !access(cw->fileName, 4))
+		infile = cw->fileName;
+	cmd = pluginCommand(mt, infile, 0, suffix);
 	if (!cmd)
 		return 0;
-	if (!unfoldBuffer(context, false, &buf, &buflen)) {
-		nzFree(cmd);
-		return 0;
-	}
-	if (!memoryOutToFile(tempin, buf, buflen,
-			     MSG_TempNoCreate2, MSG_NoWrite2)) {
-		nzFree(cmd);
+	if (infile == tempin) {
+		if (!unfoldBuffer(context, false, &buf, &buflen)) {
+			nzFree(cmd);
+			return 0;
+		}
+		if (!memoryOutToFile(tempin, buf, buflen,
+				     MSG_TempNoCreate2, MSG_NoWrite2)) {
+			unlink(tempin);
+			nzFree(cmd);
+			nzFree(buf);
+			return 0;
+		}
 		nzFree(buf);
-		return 0;
 	}
-	nzFree(buf);
 
 play_command:
 	signal(SIGPIPE, SIG_DFL);
 	system(cmd);
 	signal(SIGPIPE, SIG_IGN);
 
-	if (!cw->dirMode)
+	if (!cw->dirMode && infile == tempin)
 		unlink(tempin);
 	nzFree(cmd);
 	i_puts(MSG_OK);
@@ -442,6 +449,7 @@ bool playServerData(void)
 		return false;
 	if (!memoryOutToFile(tempin, serverData, serverDataLen,
 			     MSG_TempNoCreate2, MSG_NoWrite2)) {
+		unlink(tempin);
 		nzFree(cmd);
 		return false;
 	}
@@ -465,6 +473,7 @@ char *runPluginConverter(const char *buf, int buflen)
 	const char *suffix = mt->suffix;
 	bool ispipe = !strstr(mt->program, "%o");
 	bool rc;
+	char *infile;
 
 	if (!suffix)
 		suffix = "x";
@@ -485,27 +494,35 @@ char *runPluginConverter(const char *buf, int buflen)
 	suffixout = (cw->mt->outtype == 'h' ? "html" : "txt");
 	++tempIndex;
 	makeTempFilename(suffixout, tempIndex, true);
-	cmd = pluginCommand(cw->mt, tempin, tempout, suffix);
+	infile = tempin;
+	if (!isURL(cw->fileName) && !access(cw->fileName, 4))
+		infile = cw->fileName;
+	cmd = pluginCommand(cw->mt, infile, tempout, suffix);
 	if (!cmd)
 		return NULL;
-	if (!memoryOutToFile(tempin, buf, buflen,
-			     MSG_TempNoCreate2, MSG_NoWrite2)) {
-		nzFree(cmd);
-		return NULL;
+	if (infile == tempin) {
+		if (!memoryOutToFile(tempin, buf, buflen,
+				     MSG_TempNoCreate2, MSG_NoWrite2)) {
+			unlink(tempin);
+			nzFree(cmd);
+			return NULL;
+		}
 	}
 
 	if (ispipe) {
 		FILE *p = popen(cmd, "r");
 		if (!p) {
 			setError(MSG_NoSpawn, cmd, errno);
-			unlink(tempin);
+			if (infile == tempin)
+				unlink(tempin);
 			nzFree(cmd);
 			return NULL;
 		}
 /* borrow a global data array */
 		rc = fdIntoMemory(fileno(p), &serverData, &serverDataLen);
 		fclose(p);
-		unlink(tempin);
+		if (infile == tempin)
+			unlink(tempin);
 		nzFree(cmd);
 		if (rc)
 			return "|";
@@ -518,7 +535,8 @@ char *runPluginConverter(const char *buf, int buflen)
 	system(cmd);
 	signal(SIGPIPE, SIG_IGN);
 
-	unlink(tempin);
+	if (infile == tempin)
+		unlink(tempin);
 	nzFree(cmd);
 	return tempout;
 }				/* runPluginConverter */
