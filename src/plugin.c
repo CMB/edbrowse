@@ -463,6 +463,8 @@ char *runPluginConverter(const char *buf, int buflen)
 	const struct MIMETYPE *mt = cw->mt;
 	char *cmd;
 	const char *suffix = mt->suffix;
+	bool ispipe = !strstr(mt->program, "%o");
+	bool rc;
 
 	if (!suffix)
 		suffix = "x";
@@ -492,12 +494,31 @@ char *runPluginConverter(const char *buf, int buflen)
 		return NULL;
 	}
 
+	if (ispipe) {
+		FILE *p = popen(cmd, "r");
+		if (!p) {
+			setError(MSG_NoSpawn, cmd, errno);
+			unlink(tempin);
+			nzFree(cmd);
+			return NULL;
+		}
+/* borrow a global data array */
+		rc = fdIntoMemory(fileno(p), &serverData, &serverDataLen);
+		fclose(p);
+		unlink(tempin);
+		nzFree(cmd);
+		if (rc)
+			return "|";
+		nzFree(serverData);
+		serverData = NULL;
+		return NULL;
+	}
+
 	signal(SIGPIPE, SIG_DFL);
 	system(cmd);
 	signal(SIGPIPE, SIG_IGN);
 
 	unlink(tempin);
 	nzFree(cmd);
-
 	return tempout;
 }				/* runPluginConverter */

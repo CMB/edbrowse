@@ -3413,8 +3413,19 @@ type = pdf
 desc = pdf file
 suffix = pdf
 content = application/pdf
+#  %o is the output file
 program = pdftohtml -i -noframes %i %o >/dev/null 2>&1
 outtype = H
+}
+
+plugin {
+type = Word doc
+desc = Microsoft Word document, not docx
+suffix = doc
+content = application/msword
+#  without %o, the output is piped directly into the buffer.
+program = catdoc %i
+outtype = T
 }
 </font></PRE>
 

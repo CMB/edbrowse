@@ -4768,10 +4768,16 @@ bool browseCurrentBuffer(void)
 			return false;
 		}
 		nzFree(rawbuf);
-		rc = fileIntoMemory(outfile, &rawbuf, &rawsize);
-		unlink(outfile);
-		if (!rc)
-			return false;
+		if (stringEqual(outfile, "|")) {
+			rawbuf = serverData;
+			rawsize = serverDataLen;
+			serverData = NULL;
+		} else {
+			rc = fileIntoMemory(outfile, &rawbuf, &rawsize);
+			unlink(outfile);
+			if (!rc)
+				return false;
+		}
 		iuReformat(rawbuf, rawsize, &tbuf, &tlen);
 		if (tbuf) {
 			nzFree(rawbuf);

@@ -158,6 +158,16 @@ program = pdftohtml -i -noframes %i %o >/dev/null 2>&1
 outtype = H
 }
 
+plugin {
+type = Word doc
+desc = Microsoft Word document, not docx
+suffix = doc
+content = application/msword
+#  without %o, the output is piped directly into the buffer.
+program = catdoc %i
+outtype = T
+}
+
 #  Proxy servers, scan through these entries in order.
 #  Three fields: protocol domain server
 #  mycompany.com allows direct access to their hr machine;
