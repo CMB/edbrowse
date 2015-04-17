@@ -1187,6 +1187,9 @@ int main(int argc, char **argv)
 			if (dofetch) {
 				int nfetch = 0;
 				if (account) {
+					isimap = accounts[account - 1].imap;
+					if (isimap)
+						domail = false;
 					nfetch = fetchMail(account);
 				} else {
 					nfetch = fetchAllMail();
