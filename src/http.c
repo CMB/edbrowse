@@ -583,6 +583,7 @@ bool httpConnect(const char *url, bool down_ok, bool webpage)
 	char *postb = NULL;
 	int postb_l = 0;
 	bool transfer_status = false;
+	bool proceed_unauthenticated = false;
 	int redirect_count = 0;
 	bool name_changed = false;
 
@@ -915,7 +916,7 @@ perform:
 			}
 		}
 
-		else if (hcode == 401) {
+		else if (hcode == 401 && !proceed_unauthenticated) {
 			i_printf(MSG_AuthRequired, urlcopy);
 			nl();
 			bool got_creds = read_credentials(creds_buf);
@@ -926,9 +927,9 @@ perform:
 				nzFree(serverData);
 				serverData = EMPTYSTRING;
 				serverDataLen = 0;
-			} else {	/* User aborted the login process. */
-				still_fetching = false;
-				transfer_status = false;
+			} else {
+/* User aborted the login process, try and at least get something. */
+				proceed_unauthenticated = true;
 			}
 		}
 		/* authenticate? */
