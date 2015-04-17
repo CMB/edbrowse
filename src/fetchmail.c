@@ -8,6 +8,7 @@
 #include "eb.h"
 
 #define MHLINE 200		/* length of a mail header line */
+/* headers and other information about an email */
 struct MHINFO {
 	struct MHINFO *next, *prev;
 	struct listHead components;
@@ -19,6 +20,7 @@ struct MHINFO {
 	char date[MHLINE];
 	char boundary[MHLINE];
 	int boundlen;
+/* recipients and cc recipients */
 	char *tolist, *cclist;
 	int tolen, cclen;
 	char mid[MHLINE];	/* message id */
@@ -128,7 +130,84 @@ static void writeAttachments(struct MHINFO *w)
 	}
 }				/* writeAttachments */
 
-/* find the last mail in the unread directory */
+/* folders at the top of an imap system */
+static struct FOLDER {
+	const char *name;
+	const char *path;
+	bool children;
+} *topfolders;
+static int n_folders;
+
+/* This routine mucks with the passed in string, which was allocated
+ * to receive data from the imap server. So leave it allocated. */
+static void setFolders(char *r)
+{
+	struct FOLDER *f;
+	char *s, *t;
+	char *child;
+
+	s = r;
+	while (t = strstr(s, "LIST (\\")) {
+		s = t + 7;
+		++n_folders;
+	}
+
+	topfolders = allocZeroMem(n_folders * sizeof(struct FOLDER));
+
+	f = topfolders;
+	s = r;
+	while (t = strstr(s, "LIST (\\")) {
+		s = t + 7;
+/* the null folder at the top, like /, isn't really a folder. */
+		if (!strncmp(s, "Noselect", 8))
+			continue;
+		child = strstr(s, "Children");
+/* this should always be present */
+		if (!child)
+			continue;
+		if (child[-1] == 's')	/* Haschildren */
+			f->children = true;
+		while (*child != '\\')
+			--child;
+		if (child < s)
+			child = s;
+		while (child > s && child[-1] == ' ')
+			--child;
+		*child = 0;
+		f->name = s;
+		s = child + 1;
+		t = strpbrk(s, "\r\n");
+		if (!t)
+			continue;
+		if (*--t != '"')
+			continue;
+		for (s = t - 1; s > child && *s != '"'; --s) ;
+		if (*s != '"')
+			continue;
+		f->path = ++s;
+		*t = 0;
+		s = t + 1;
+/* successfully built this folder, move on to the next one */
+		++f;
+	}
+
+	n_folders = f - topfolders;
+}				/* setFolders */
+
+/* list the folders at the top, at the start of imap or upon request */
+static void showFolders(void)
+{
+	int i;
+	struct FOLDER *f = topfolders;
+	for (i = 0; i < n_folders; ++i, ++f) {
+		printf("%s -> %s", f->name, f->path);
+		if (f->children)
+			printf(" with children");
+		nl();
+	}
+}				/* showFolders */
+
+/* find the last mail in the local unread directory */
 static int unreadMax, unreadMin, unreadCount;
 static int unreadBase;		/* find min larger than base */
 
@@ -211,7 +290,7 @@ static char *get_mailbox_url(const struct MACCOUNT *account)
 	if (account->inssl)
 		scheme = "pop3s";
 
-	if (account->imap)
+	if (isimap)
 		scheme = (account->inssl ? "imaps" : "imap");
 
 	if (asprintf(&url,
@@ -298,6 +377,13 @@ static CURLcode count_messages(CURL * handle, const char *mailbox,
 	res = curl_easy_perform(handle);
 	if (res != CURLE_OK)
 		return res;
+
+	if (isimap) {
+		setFolders(mailstring);
+		showFolders();
+		puts("imap not yet implemented");
+		exit(1);
+	}
 
 	for (i = 0; i < mailstring_l; i++) {
 		if (mailstring[i] == '\n' || mailstring[i] == '\r') {
