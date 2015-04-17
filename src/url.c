@@ -26,6 +26,7 @@ struct {
 	"proxy", 3128, false, true, true}, {
 	"ftp", 21, false, true, true}, {
 	"sftp", 22, false, true, true}, {
+	"scp", 22, false, true, true}, {
 	"ftps", 990, false, true, true}, {
 	"tftp", 69, false, true, true}, {
 	"rtsp", 554, false, true, true}, {

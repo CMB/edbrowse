@@ -508,7 +508,7 @@ enum {
 	MSG_HelpOn,
 	MSG_FTPDownload,
 	MSG_NoCertFile,
-	MSG_NotUsed511,
+	MSG_SCPDownload,
 	MSG_EBRC_Nulls,
 	MSG_EBRC_NoFnName,
 	MSG_EBRC_FnDigit,

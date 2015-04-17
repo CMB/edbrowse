@@ -621,6 +621,7 @@ bool httpConnect(const char *url, bool down_ok, bool webpage)
 		;		/* ok for now */
 	} else if (stringEqualCI(prot, "ftp") ||
 		   stringEqualCI(prot, "ftps") ||
+		   stringEqualCI(prot, "scp") ||
 		   stringEqualCI(prot, "tftp") || stringEqualCI(prot, "sftp")) {
 		return ftpConnect(url, user, pass);
 	} else if ((cw->mt = findMimeByProtocol(prot)) && pluginsOn
@@ -1198,13 +1199,15 @@ static bool ftpConnect(const char *url, const char *user, const char *pass)
 	int protLength;		/* length of "ftp://" */
 	int urlcopy_l = 0;
 	bool transfer_success = false;
-	bool has_slash;
+	bool has_slash, is_scp;
 	CURLcode curlret = CURLE_OK;
 	char creds_buf[MAXUSERPASS * 2 + 1];
 	size_t creds_len = 0;
 
 	urlcopy = NULL;
 	protLength = strchr(url, ':') - url + 3;
+/* scp is somewhat unique among the protocols handled here */
+	is_scp = memEqualCI(url, "scp", 3);
 
 	if (user[0] && pass[0]) {
 		strcpy(creds_buf, user);
@@ -1236,9 +1239,12 @@ static bool ftpConnect(const char *url, const char *user, const char *pass)
 
 	has_slash = urlcopy[urlcopy_l - 1] == '/';
 /* don't download a directory listing, we want to see that */
+/* Fetching a directory will fail in the special case of scp. */
 	down_state = (has_slash ? 0 : 1);
 	down_file = NULL;	/* should already be null */
 	down_msg = MSG_FTPDownload;
+	if (is_scp)
+		down_msg = MSG_SCPDownload;
 	callback_data.length = &serverDataLen;
 
 perform:
@@ -1282,7 +1288,7 @@ perform:
 /* The SSH error pops up under sftp. */
 	if (curlret == CURLE_FTP_COULDNT_RETR_FILE ||
 	    curlret == CURLE_REMOTE_FILE_NOT_FOUND || curlret == CURLE_SSH) {
-		if (has_slash == true)	/* Was a directory. */
+		if (has_slash | is_scp)
 			transfer_success = false;
 		else {		/* try appending a slash. */
 			stringAndChar(&urlcopy, &urlcopy_l, '/');
