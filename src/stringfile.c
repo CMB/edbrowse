@@ -1183,13 +1183,18 @@ bool envFile(const char *line, const char **expanded, bool expect_file)
 	wordexp_t w;
 	int rc;
 
-/* ` supresses this stuff */
-	if (line[0] == '`') {
+/* ` enables this stuff */
+/* allow escaping the leading ` */
+	if (line[0] == '\\' && line[1] == '`') {
 		*expanded = line + 1;
 		return true;
 	}
+	if (line[0] != '`') {
+		*expanded = line;
+		return true;
+	}
 
-	rc = wordexp(line, &w, (WRDE_NOCMD | WRDE_UNDEF));
+	rc = wordexp(line + 1, &w, (WRDE_NOCMD | WRDE_UNDEF));
 
 	if (rc == WRDE_BADVAL) {
 		setError(MSG_NoEnvVar);
