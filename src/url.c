@@ -18,6 +18,8 @@ struct {
 	"https", 443, false, true, true}, {
 	"pop3", 110, false, true, true}, {
 	"pop3s", 995, false, true, true}, {
+	"imap", 220, false, true, true}, {
+	"imaps", 993, false, true, true}, {
 	"smtp", 25, false, true, true}, {
 	"submission", 587, false, true, true}, {
 	"smtps", 465, false, true, true}, {
