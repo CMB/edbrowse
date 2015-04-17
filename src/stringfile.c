@@ -1189,13 +1189,6 @@ bool envFile(const char *line, const char **expanded, bool expect_file)
 		return true;
 	}
 
-/* quick check, nothing to do */
-	if (!strpbrk(line, "$[*?") &&
-	    (line[0] != '~' || line[1] && line[1] != '/')) {
-		*expanded = line;
-		return true;
-	}
-
 	rc = wordexp(line, &w, (WRDE_NOCMD | WRDE_UNDEF));
 
 	if (rc == WRDE_BADVAL) {
