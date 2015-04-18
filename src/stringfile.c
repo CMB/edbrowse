@@ -12,6 +12,7 @@
 #include <termios.h>
 #include <unistd.h>
 #endif
+#include <glob.h>
 #include <wordexp.h>
 #include <netdb.h>
 
@@ -1055,59 +1056,68 @@ void shellProtect(char *t, const char *s)
 	}
 }				/* shellProtect */
 
+static const char globmeta[] = "\\*?[]";
+static int globProtectLength(const char *s)
+{
+	int l = 0;
+	while (*s) {
+		if (strchr(globmeta, *s))
+			++l;
+		++l, ++s;
+	}
+	return l;
+}				/* globProtectLength */
+
+static void globProtect(char *t, const char *s)
+{
+	while (*s) {
+		if (strchr(globmeta, *s))
+			*t++ = '\\';
+		*t++ = *s++;
+	}
+}				/* globProtect */
+
 /* loop through the files in a directory */
-/* Hides the differences between DOS, Unix, and NT. */
 const char *nextScanFile(const char *base)
 {
-	static char *dirquoted;	// 'directoryName'/*
-	static wordexp_t w;
-	static int baselen, word_idx;
+	static char *dirquoted;	// directory/*
+	static glob_t g;
+	static int baselen, word_idx, cnt;
 	const char *s;
 	char *t;
-	int cnt;
+	int rc, flags;
 
 	if (!dirquoted) {
 		if (!base)
 			base = ".";
 		baselen = strlen(base);
 		s = base + baselen;
-		cnt = shellProtectLength(base);
-		dirquoted = allocMem(cnt + 4);
-		shellProtect(dirquoted, base);
+		cnt = globProtectLength(base);
+/* make room for /* */
+		dirquoted = allocMem(cnt + 3);
+		globProtect(dirquoted, base);
 		t = dirquoted + cnt;
 		if (s[-1] != '/')
 			*t++ = '/', ++baselen;
 		*t++ = '*';
 		*t++ = 0;
 
-/* this call should not fail */
-		if (wordexp(dirquoted, &w, 0)) {
+		flags = (showHiddenFiles ? GLOB_PERIOD : 0);
+		rc = glob(dirquoted, flags, NULL, &g);
+/* this call should not fail except for NOMATCH */
+		if (rc && rc != GLOB_NOMATCH) {
 			i_puts(MSG_NoDirNoList);
 			free(dirquoted);
 			dirquoted = 0;
+			globfree(&g);
 			return 0;
 		}
 
 		word_idx = 0;
 	}
 
-restart:
-
-/*********************************************************************
-special code here for an empty directory, wherein the pattern of *
-produces the single word of *
-I don't understand why .* with no match doesn't produce .*
-i.e. when searching for hidden files.
-It doesn't, at least on my system.
-Seems inconsistent to me.
-Well this code covers both cases.
-*********************************************************************/
-
-	if (w.we_wordc == 1 && access(w.we_wordv[0], 0))
-		++word_idx;
-
-	while (word_idx < w.we_wordc) {
-		s = w.we_wordv[word_idx++] + baselen;
+	while (word_idx < g.gl_pathc) {
+		s = g.gl_pathv[word_idx++] + baselen;
 		if (stringEqual(s, "."))
 			continue;
 		if (stringEqual(s, ".."))
@@ -1115,30 +1125,13 @@ Well this code covers both cases.
 		return s;
 	}			/* end loop over files in directory */
 
-	wordfree(&w);
-	if (showHiddenFiles) {
-		cnt = strlen(dirquoted);
-		if (dirquoted[cnt - 2] == '/') {
-/* rerun query with leading . */
-			strcpy(dirquoted + cnt - 1, ".*");
-/* last call worked; this one should too */
-			if (!wordexp(dirquoted, &w, 0)) {
-				word_idx = 0;
-				goto restart;
-			}
-		}
-	}
+	globfree(&g);
 	free(dirquoted);
 	dirquoted = 0;
 	return 0;
 }				/* nextScanFile */
 
-static int qscmp(const void *s, const void *t)
-{
-	return strcmp(((struct lineMap *)s)->text, ((struct lineMap *)t)->text);
-}				/* qscmp */
-
-bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
+bool sortedDirList(const char *dir, struct lineMap ** map_p, int *count_p)
 {
 	const char *f;
 	int linecount = 0, cap;
@@ -1166,7 +1159,7 @@ bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
 	if (!linecount)
 		return true;
 
-	qsort(map, linecount, LMSIZE, qscmp);
+/* glob sorts the entries, so no need to sort them here */
 
 	return true;
 }				/* sortedDirList */
