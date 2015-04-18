@@ -13,7 +13,6 @@
 #include <unistd.h>
 #endif
 #include <glob.h>
-#include <wordexp.h>
 #include <netdb.h>
 
 /*********************************************************************
@@ -1102,7 +1101,8 @@ const char *nextScanFile(const char *base)
 		*t++ = '*';
 		*t++ = 0;
 
-		flags = (showHiddenFiles ? GLOB_PERIOD : 0);
+		flags = GLOB_ERR;
+		flags |= (showHiddenFiles ? GLOB_PERIOD : 0);
 		rc = glob(dirquoted, flags, NULL, &g);
 /* this call should not fail except for NOMATCH */
 		if (rc && rc != GLOB_NOMATCH) {
@@ -1170,61 +1170,152 @@ bool sortedDirList(const char *dir, struct lineMap ** map_p, int *count_p)
  * Neither the original line nore the new line is allocated.
  * They are static char buffers that are just plain long enough. */
 
-bool envFile(const char *line, const char **expanded, bool expect_file)
+static bool envExpand(const char *line, const char **expanded)
 {
-	static char line2[MAXTTYLINE];
-	wordexp_t w;
-	int rc;
+	const char *s;
+	const char *v;
+	char *t;
+	bool inbrace;
+	int l;
+	static char varline[ABSPATH];
+	char var1[40];
 
-/* ` enables this stuff */
-/* allow escaping the leading ` */
-	if (line[0] == '\\' && line[1] == '`') {
-		*expanded = line + 1;
-		return true;
-	}
-	if (line[0] != '`') {
+/* quick check */
+	if (!strchr(line, '$')) {
 		*expanded = line;
 		return true;
 	}
 
-	rc = wordexp(line + 1, &w, (WRDE_NOCMD | WRDE_UNDEF));
+/* ok, need to crunch along */
+	t = varline;
+	for (s = line; *s; ++s) {
+		if (t - varline == ABSPATH - 1) {
+longline:
+			setError(MSG_ShellLineLong);
+			return false;
+		}
+		if (*s == '\\' && s[1] == '$') {
+/* this $ is escaped */
+			++s;
+appendchar:
+			*t++ = *s;
+			continue;
+		}
+		if (*s != '$')
+			goto appendchar;
 
-	if (rc == WRDE_BADVAL) {
-		setError(MSG_NoEnvVar);
+/* this is $, see if it is $var or ${var} */
+		inbrace = false;
+		v = s + 1;
+		if (*v == '{')
+			inbrace = true, ++v;
+		if (!isalphaByte(*v) && *v != '_')
+			goto appendchar;
+		l = 0;
+		while (isalnumByte(*v) || *v == '_') {
+			if (l == sizeof(var1) - 1)
+				goto longline;
+			var1[l++] = *v++;
+		}
+		var1[l] = 0;
+		if (inbrace) {
+			if (*v != '}')
+				goto appendchar;
+			++v;
+		}
+		s = v - 1;
+		v = getenv(var1);
+		if (!v) {
+			setError(MSG_NoEnvVar);
+			return false;
+		}
+		l = strlen(v);
+		if (t - varline + l >= ABSPATH)
+			goto longline;
+		strcpy(t, v);
+		t += l;
+	}
+	*t = 0;
+
+	*expanded = varline;
+	return true;
+}				/* envExpand */
+
+bool envFile(const char *line, const char **expanded, bool expect_file)
+{
+	static char line2[ABSPATH];
+	const char *varline;
+	const char *s;
+	glob_t g;
+	int rc, flags;
+
+/* ` disables this stuff */
+/* but `` is a literal ` */
+	if (line[0] == '`') {
+		if (line[1] != '`') {
+			*expanded = line + 1;
+			return true;
+		}
+		++line;
+	}
+
+	if (!envExpand(line, &varline))
+		return false;
+
+/* expanded the environment variables, if any, now time to glob */
+/* But first see if the user wants to glob */
+	if (varline[0] == '~') {
+		char c = varline[1];
+		if (!c)
+			goto doglob;
+		if (c == '/')
+			goto doglob;
+		if (isalphaByte(c))
+			goto doglob;
+	}
+	for (s = varline; *s; ++s)
+		if (strchr("*?[", *s) && (s == varline || s[-1] != '\\'))
+			goto doglob;
+
+noglob:
+	*expanded = varline;
+	return true;
+
+doglob:
+	flags = (GLOB_NOSORT | GLOB_TILDE_CHECK);
+	rc = glob(varline, flags, NULL, &g);
+
+	if (rc == GLOB_NOMATCH) {
+		if (!expect_file)
+			goto noglob;
+		setError(MSG_ShellNoMatch);
 		return false;
 	}
 
 	if (rc) {
 /* some other syntax error, whereup we can't expand. */
 		setError(MSG_ShellExpand);
+		globfree(&g);
 		return false;
 	}
 
-	if (w.we_wordc != 1) {
-		setError((w.we_wordc > 0) + MSG_ShellNoMatch);
-		wordfree(&w);
+	if (g.gl_pathc != 1) {
+		setError(MSG_ShellManyMatch);
+		globfree(&g);
 		return false;
 	}
 
 /* looks good, if it isn't too long */
-	if (strlen(w.we_wordv[0]) >= sizeof(line2)) {
+	s = g.gl_pathv[0];
+	if (strlen(s) >= sizeof(line2)) {
 		setError(MSG_ShellLineLong);
-		wordfree(&w);
+		globfree(&g);
 		return false;
 	}
 
-	strcpy(line2, w.we_wordv[0]);
-	wordfree(&w);
+	strcpy(line2, s);
+	globfree(&g);
 	*expanded = line2;
-
-/* There's another problem; wordexp gives you the same pattern back again
- * even if it matches nothing. I suppose the shell does the same thing,
- * but that's not what I want here if we're expecting a file. */
-	if (expect_file && access(line2, F_OK)) {
-		setError(MSG_ShellNoMatch);
-		return false;
-	}
-
 	return true;
 }				/* envFile */
 
