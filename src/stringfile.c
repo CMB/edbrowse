@@ -1226,7 +1226,7 @@ appendchar:
 		s = v - 1;
 		v = getenv(var1);
 		if (!v) {
-			setError(MSG_NoEnvVar);
+			setError(MSG_NoEnvVar, var1);
 			return false;
 		}
 		l = strlen(v);
