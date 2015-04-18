@@ -1264,6 +1264,8 @@ bool envFile(const char *line, const char **expanded, bool expect_file)
 		return false;
 
 /* expanded the environment variables, if any, now time to glob */
+
+#if 0
 /* But first see if the user wants to glob */
 	if (varline[0] == '~') {
 		char c = varline[1];
@@ -1277,28 +1279,22 @@ bool envFile(const char *line, const char **expanded, bool expect_file)
 	for (s = varline; *s; ++s)
 		if (strchr("*?[", *s) && (s == varline || s[-1] != '\\'))
 			goto doglob;
+#endif
 
-noglob:
-/* unescape the metas */
-	t = line2;
-	for (s = varline; *s; ++s) {
-		if (*s == '\\' && s[1] && strchr("*?[", s[1]))
-			++s;
-		*t++ = *s;
-	}
-	*t = 0;
-	*expanded = line2;
-	return true;
-
-doglob:
 	flags = (GLOB_NOSORT | GLOB_TILDE_CHECK);
 	rc = glob(varline, flags, NULL, &g);
 
 	if (rc == GLOB_NOMATCH) {
-		if (!expect_file)
-			goto noglob;
-		setError(MSG_ShellNoMatch);
-		return false;
+/* unescape the metas */
+		t = line2;
+		for (s = varline; *s; ++s) {
+			if (*s == '\\' && s[1] && strchr("*?[", s[1]))
+				++s;
+			*t++ = *s;
+		}
+		*t = 0;
+		*expanded = line2;
+		return true;
 	}
 
 	if (rc) {
