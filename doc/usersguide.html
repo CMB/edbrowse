@@ -760,7 +760,7 @@ Unlike bash, edbrowse does not retrace your steps back through symbolic links.&n
 Thus .. is always the physical parent directory.
 
 <P>
-If the string contains $ [] * ? or a leading ~/ or ~ by itself,
+If the string contains $ [] * ? or a leading ~,
 environment variables are expanded, and globbing is performed.&nbsp;
 Thus cd ~/work takes you to the work directory under your home directory.
 
@@ -794,12 +794,14 @@ Whenever a file is read from or written to disk,
 $var, in the filename, is replaced with the corresponding environment variable.&nbsp;
 Thus you can edit your address book at any time via `e $adbook',
 provided $adbook has been set in your environment.&nbsp;
+Constructs such as ${foo}bar are supported.&nbsp;
 Also, a leading ~/ is replaced with $HOME/,
 making it easy to edit files in your home directory
-such as ~/.profile.
+such as ~/.profile.&nbsp;
+Or use ~user for another user's home directory.
 
 <P>
-Shell meta characters are also expanded, provided the result is one file name.&nbsp;
+Shell meta characters are expanded, provided the result is one file name.&nbsp;
 You can read or write a file by typing a minimal portion of its name.&nbsp;
 Neither $variables nor stars are expanded for files on the command line,
 as this expansion is already done for you by the Unix shell.&nbsp;
@@ -809,22 +811,9 @@ Thus you should be able to edit *.c in any operating system
 and get all the C source files in the current directory.
 
 <P>
-Variable substitution and globbing of filenames can be suppressed by a leading backquote.&nbsp;
-If you really want to read a file called *, type r `*.
-
-<P>
-Expansion is performed by wordexp(3), simulating a posix shell.&nbsp;
-Meta characters such as | &amp; ' &lt; ; etc will derail the expansion, unless escaped by a backslash.&nbsp;
-This is confusing at first, but think of it this way:
-"If I want to expand a file name using variables or wild cards,
-i.e. a file name containing $ [] * ? or a leading ~/,
-I have to type it in as though I were typing at the shell."&nbsp;
-An example might be $phones/at\&amp;t.&nbsp;
-Even spaces must be escaped with backslash or put in quotes.&nbsp;
-Constructs such as ${foo}bar are supported,
-but command substitution $(/bin/ls) is not.&nbsp;
-You wouldn't want to accidentally run a command, just because you were trying
-to read in a file with a rather unusual file name.
+Variable substitution and globbing of filenames can be completely suppressed by a leading backquote.&nbsp;
+If you really want to read a file called *a?, type r `*a?.&nbsp;
+You can escape an individual shell meta character with the backslash, as in fun\*house.
 
 <P><LI>
 Many versions of ed place a $ at the end of a listed line,
