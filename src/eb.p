@@ -170,7 +170,7 @@ const struct MIMETYPE *findMimeByFile(const char *filename) ;
 const struct MIMETYPE *findMimeByContent(const char *content) ;
 const struct MIMETYPE *findMimeByProtocol(const char *prot) ;
 char *pluginCommand(const struct MIMETYPE *m, const char *infile, const char *outfile, const char *suffix);
-int playBuffer(const char *line);
+int playBuffer(const char *line, const char *playfile);
 bool playServerData(void);
 char *runPluginConverter(const char *buf, int buflen);
 

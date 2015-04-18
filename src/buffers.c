@@ -2832,7 +2832,7 @@ pwd:
 	}
 
 	if (line[0] == 'p' && line[1] == 'b') {
-		rc = playBuffer(line);
+		rc = playBuffer(line, NULL);
 		if (rc == 2)
 			goto no_action;
 		return rc;
@@ -4035,6 +4035,7 @@ bool runCommand(const char *line)
 	/* go to a file in a directory listing */
 	if (cmd == 'g' && cw->dirMode && !first) {
 		char *p, *dirline, *endline;
+		const struct MIMETYPE *gmt;	/* the go mime type */
 		if (endRange > startRange) {
 			setError(MSG_RangeG);
 			return false;
@@ -4048,6 +4049,13 @@ bool runCommand(const char *line)
 		cmd = 'e';
 		if (!dirline)
 			return false;
+		gmt = findMimeByFile(dirline);
+		if (pluginsOn && gmt) {
+			if (gmt->outtype)
+				cmd = 'b';
+			else if (!gmt->stream)
+				return playBuffer("pb", dirline);
+		}
 /* I don't think we need to make a copy here. */
 		line = dirline;
 		first = *line;

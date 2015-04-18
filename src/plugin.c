@@ -264,7 +264,7 @@ static bool bufferToProgram(const char *cmd, const char *suffix,
  * act upon it based on the program corresponding to its mine type.
  * This is called from twoLetter() in buffers.c, and should return:
 * 0 error, 1 success, 2 not a play buffer command */
-int playBuffer(const char *line)
+int playBuffer(const char *line, const char *playfile)
 {
 	const struct MIMETYPE *mt = cw->mt;
 	static char sufbuf[12];
@@ -290,43 +290,22 @@ int playBuffer(const char *line)
 		setError(MSG_AudioDB);
 		return 0;
 	}
+	if (cw->dirMode && !playfile) {
+		setError(MSG_AudioDir);
+		return 0;
+	}
 
-	if (cw->dirMode) {
-/* This is special code; play the file on the current line. */
-		char *p, *dirline;
-		int j;
-		p = (char *)fetchLine(cw->dot, -1);
-		j = pstLength((pst) p);
-		--j;
-		p[j] = 0;	/* temporary */
-		if (c == '.') {
-			suffix = line + 3;
-		} else {
-			suffix = strrchr(p, '.');
-			if (!suffix) {
-				setError(MSG_NoSuffix);
-				p[j] = '\n';
-				return 0;
-			}
-			if (strlen(suffix) > 5) {
-				setError(MSG_SuffixLong);
-				p[j] = '\n';
-				return 0;
-			}
-			++suffix;
-			strcpy(sufbuf, suffix);
-			suffix = sufbuf;
-		}
-		dirline = makeAbsPath(p);
-		p[j] = '\n';
-		if (!dirline)
-			return 0;
+	if (playfile) {
+/* play the file passed in */
+		suffix = strrchr(playfile, '.') + 1;
+		strcpy(sufbuf, suffix);
+		suffix = sufbuf;
 		mt = findMimeBySuffix(suffix);
 		if (!mt || mt->outtype | mt->stream) {
 			setError(MSG_SuffixBad, suffix);
-			return 0;
+			return false;
 		}
-		cmd = pluginCommand(mt, dirline, 0, suffix);
+		cmd = pluginCommand(mt, playfile, 0, suffix);
 		if (!cmd)
 			return 0;
 		goto play_command;
@@ -337,8 +316,13 @@ int playBuffer(const char *line)
 		if (c == '.') {
 			suffix = line + 3;
 		} else {
-			if (cw->fileName)
+			if (cw->fileName) {
+				const char *endslash;
 				suffix = strrchr(cw->fileName, '.');
+				endslash = strrchr(cw->fileName, '/');
+				if (suffix && endslash && endslash > suffix)
+					suffix = NULL;
+			}
 			if (!suffix) {
 				setError(MSG_NoSuffix);
 				return 0;
