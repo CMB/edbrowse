@@ -1246,6 +1246,7 @@ bool envFile(const char *line, const char **expanded, bool expect_file)
 	static char line2[ABSPATH];
 	const char *varline;
 	const char *s;
+	char *t;
 	glob_t g;
 	int rc, flags;
 
@@ -1278,7 +1279,15 @@ bool envFile(const char *line, const char **expanded, bool expect_file)
 			goto doglob;
 
 noglob:
-	*expanded = varline;
+/* unescape the metas */
+	t = line2;
+	for (s = varline; *s; ++s) {
+		if (*s == '\\' && s[1] && strchr("*?[", s[1]))
+			++s;
+		*t++ = *s;
+	}
+	*t = 0;
+	*expanded = line2;
 	return true;
 
 doglob:
