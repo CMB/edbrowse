@@ -1244,15 +1244,23 @@ as they will get corrupted!
 <H3 align=center> <A NAME=dir> Directory Scan, File Manager </A> </H3>
 
 If you edit a directory
-you will see a list of all the visible files in that directory,
+you will see a list of all the visible files in that directory
 in alphabetical order.&nbsp;
 Use the `hf' option to see the hidden files as well.&nbsp;
 Type g to go to one of these files or sub directories.&nbsp;
 Type ^ to return to the parent directory.&nbsp;
 This is consistent with the browser,
-where g is the go command and ^ is the back key; more on this later.&nbsp;
+where g is the go command and ^ is the back key - more on this later.&nbsp;
 Thus you can traverse an entire directory tree
 as though you were inside a file manager.
+
+<P>
+Like the browser,
+and like other file managers,
+the go command will invoke a plugin if that is indicated by the suffix of the file.&nbsp;
+An mp3 file plays, and a pdf file is rendered into readable text.&nbsp;
+Use the `pg' toggle command to disable plugins if you don't want this automatic behavior.&nbsp;
+More on plugins later.
 
 <P>
 Like `ls -F', a subdirectory is indicated by a trailing slash.&nbsp;
@@ -2042,16 +2050,22 @@ Instead of playing the song, I make it available to you through a hyperlink.
 {Background Music}
 <P>
 This always appears at or near the top of the page.&nbsp;
-Click on this link and download the wave or mp3 file,
-and play it at your convenience.&nbsp;
-Use the play buffer `pb' command.&nbsp;
+Click on this link to hear the music.&nbsp;
+It should play automatically if you have the proper plugins configured.&nbsp;
+If there is no plugin for that particular file type, or if plugins are disabled,
+then edbrowse will load the audio file into the current buffer.&nbsp;
+You can download it to a file, or play it in some other fashion.&nbsp;
+Try the play buffer `pb' command.&nbsp;
 Normally pb uses the name of the file to infer the audio format.&nbsp;
 If the filename ends in .wav, it's a wave file, and so on.&nbsp;
-If the filename is not particularly helpful, and you know the audio format, you can specify it by typing
+Failing this, edbrowse tries to infer the file type from the Content-Type attribute in the http headers.&nbsp;
+If the filename is not particularly helpful,
+and the http headers do not provide a known content type,
+and you know the audio format, you can specify it by typing
 pb.wav for a wave file, pb.mp3 for an mp3 file, and so on.&nbsp;
 The config file (described below)
 includes mime types and plugins,
-which tell edbrowse how to play wave and mp3 files.&nbsp;
+which tell edbrowse how to play various audio files.&nbsp;
 These must be set up, or the pb command won't work.&nbsp;
 It will say something like,
 "I don't know how to process an mp3 file".&nbsp;
@@ -3344,7 +3358,8 @@ as part of the fetchmail client.
 Mime types are determined by the extension of the file, or in some cases the protocol.&nbsp;
 They might tell edbrowse to use /usr/bin/play to play file.wav or file.voc,
 and /usr/bin/mpg123 to play file.mp3, and so on.&nbsp;
-Rather than repeat it all here, I suggest you look at the plugin {...} sections in the sample config file provided with this package.&nbsp;
+Rather than repeat it all here,
+you may want to look at the plugin {...} sections in the sample config file provided with this package.&nbsp;
 Linux users can probably copy this part directly into their own config file.&nbsp;
 It generally does the right thing.&nbsp;
 Here is one example.
@@ -3373,7 +3388,7 @@ you can type `pb' to play the contents of the buffer.&nbsp;
 The data is put into a temp file under
 /tmp/.edbrowse, and them mpg123 is invoked.&nbsp;
 Finally, you can play an mp3 file, or any plugin-enabled file, within directory mode.&nbsp;
-The pb command plays the file on the current line.&nbsp;
+The g (go) command plays the file on the current line.&nbsp;
 This is very efficient; no need to read the file into memory or create a temporary file under /tmp.
 
 <P>
@@ -3412,7 +3427,7 @@ type = Word doc
 desc = Microsoft Word document, not docx
 suffix = doc
 content = application/msword
-#  without %o, the output is piped directly into the buffer.
+#  without %o, the output is piped directly into the buffer, more efficient.
 program = catdoc %i
 outtype = T
 }
@@ -3509,9 +3524,7 @@ with hyperlinks and pictures etc.&nbsp;
 The primary email is in plain text,
 but the alternate attachment is in html or rich text.&nbsp;
 Unless something is amiss, the user sees the alternate presentation,
-complete with graphics and hyperlinks.
-
-<P>
+complete with graphics and hyperlinks.&nbsp;
 Like attachments,
 the alt: line can refer to a file or an edbrowse session.
 
@@ -3519,7 +3532,7 @@ the alt: line can refer to a file or an edbrowse session.
 As you may have guessed,
 the to: lines establish the recipients.&nbsp;
 Please don't specify more than a few dozen recipients.&nbsp;
-Some servers
+Some mail servers
 set a hard limit of 100 on the number of recipients.&nbsp;
 If you exceed this number,
 the remaining recipients simply don't get their mail.&nbsp;
@@ -3543,7 +3556,8 @@ fred : fred.flintstone@bedrock.us : 226 cobblestone way : 5553827
 then you can simply write "To:fred" at the top of your file.&nbsp;
 Only the first two fields in the address book are significant
 as far as edbrowse is concerned.&nbsp;
-Other fields might hold phone/fax numbers, street address, etc.
+Other fields might hold phone/fax numbers, street address, etc.&nbsp;
+That's up to you.
 <P>
 Note that "Reply to fred" is an alternate syntax for "to: fred".
 
