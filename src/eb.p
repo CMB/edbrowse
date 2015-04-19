@@ -268,7 +268,7 @@ int shellProtectLength(const char *s);
 void shellProtect(char *t, const char *s);
 const char *nextScanFile(const char *base) ;
 bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p) ;
-bool envFile(const char *line, const char **expanded, bool expect_file );
+bool envFile(const char *line, const char **expanded);
 bool envFileDown(const char *line, const char **expanded) ;
 char *makeAbsPath(const char *f);
 FILE *efopen(const char *name, const char *mode) ;

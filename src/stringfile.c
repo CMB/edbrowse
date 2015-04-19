@@ -1241,7 +1241,7 @@ appendchar:
 	return true;
 }				/* envExpand */
 
-bool envFile(const char *line, const char **expanded, bool expect_file)
+bool envFile(const char *line, const char **expanded)
 {
 	static char line2[ABSPATH];
 	const char *varline;
@@ -1264,23 +1264,6 @@ bool envFile(const char *line, const char **expanded, bool expect_file)
 		return false;
 
 /* expanded the environment variables, if any, now time to glob */
-
-#if 0
-/* But first see if the user wants to glob */
-	if (varline[0] == '~') {
-		char c = varline[1];
-		if (!c)
-			goto doglob;
-		if (c == '/')
-			goto doglob;
-		if (isalphaByte(c))
-			goto doglob;
-	}
-	for (s = varline; *s; ++s)
-		if (strchr("*?[", *s) && (s == varline || s[-1] != '\\'))
-			goto doglob;
-#endif
-
 	flags = (GLOB_NOSORT | GLOB_TILDE_CHECK);
 	rc = glob(varline, flags, NULL, &g);
 
@@ -1333,7 +1316,7 @@ bool envFileDown(const char *line, const char **expanded)
 
 	if (!downDir || strchr(line, '/'))
 /* we don't necessarily expect there to be a file here */
-		return envFile(line, expanded, false);
+		return envFile(line, expanded);
 
 	if (strlen(downDir) + strlen(line) >= sizeof(line2) - 1) {
 		setError(MSG_ShellLineLong);

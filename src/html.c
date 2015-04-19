@@ -3000,7 +3000,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 	}
 
 	if (itype == INP_FILE) {
-		if (!envFile(newtext, &newtext, true))
+		if (!envFile(newtext, &newtext))
 			return false;
 		if (newtext[0] && access(newtext, 4)) {
 			setError(MSG_FileAccess, newtext);
