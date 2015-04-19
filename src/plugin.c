@@ -210,56 +210,6 @@ char *pluginCommand(const struct MIMETYPE *m,
 	return cmd;
 }				/* pluginCommand */
 
-#if 0
-/* Send the contents of the current buffer to a running program */
-static bool bufferToProgram(const char *cmd, const char *suffix,
-			    bool trailPercent)
-{
-	char *buf = 0;
-	int buflen, n;
-	int size1, size2;
-	char *u = edbrowseTempFile + strlen(edbrowseTempFile);
-
-	if (!trailPercent) {
-/* pipe the buffer into the program */
-		FILE *f = popen(cmd, "w");
-		if (!f) {
-			setError(MSG_NoSpawn, cmd, errno);
-			return false;
-		}
-		if (!unfoldBuffer(context, false, &buf, &buflen)) {
-			pclose(f);
-			return false;	/* should never happen */
-		}
-		n = fwrite(buf, buflen, 1, f);
-		pclose(f);
-	} else {
-		sprintf(u, ".%s", suffix);
-		size1 = currentBufferSize();
-		size2 = fileSizeByName(edbrowseTempFile);
-		if (size1 == size2) {
-/* assume it's the same data */
-			*u = 0;
-		} else {
-			if (!unfoldBuffer(context, false, &buf, &buflen)) {
-				*u = 0;
-				return false;	/* should never happen */
-			}
-			if (!memoryOutToFile(edbrowseTempFile, buf, buflen,
-					     MSG_TempNoCreate2, MSG_NoWrite2)) {
-				*u = 0;
-				return false;
-			}
-			*u = 0;
-		}
-		system(cmd);
-	}
-
-	nzFree(buf);
-	return true;
-}				/* bufferToProgram */
-#endif
-
 /* play the contents of the current buffer, or otherwise
  * act upon it based on the program corresponding to its mine type.
  * This is called from twoLetter() in buffers.c, and should return:

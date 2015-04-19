@@ -47,7 +47,6 @@ char *mailUnread, *mailStash, *mailReply;
 char *addressFile;
 char *home, *recycleBin, *configFile, *sigFile, *sigFileEnd;
 char *cookieFile;
-char *edbrowseTempFile, *edbrowseTempPDF, *edbrowseTempHTML;
 struct ebWindow *cw;
 struct ebSession sessionList[MAXSESSION], *cs;
 
@@ -1056,15 +1055,6 @@ int main(int argc, char **argv)
 
 	recycleBin = allocMem(strlen(home) + 8);
 	sprintf(recycleBin, "%s/.Trash", home);
-
-	edbrowseTempFile = allocMem(strlen(recycleBin) + 8 + 6);
-/* The extra 6 is for the suffix */
-	sprintf(edbrowseTempFile, "%s/eb_tmp", recycleBin);
-	edbrowseTempPDF = allocMem(strlen(recycleBin) + 8);
-	sprintf(edbrowseTempPDF, "%s/eb_pdf", recycleBin);
-	edbrowseTempHTML = allocMem(strlen(recycleBin) + 13);
-	sprintf(edbrowseTempHTML, "%s/eb_pdf.html", recycleBin);
-
 	if (fileTypeByName(recycleBin, false) != 'd') {
 		if (mkdir(recycleBin, 0700)) {
 /* Don't want to abort here; we might be on a readonly filesystem.

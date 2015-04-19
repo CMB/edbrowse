@@ -268,9 +268,6 @@ extern char *home;		/* home directory */
 extern char *recycleBin;	/* holds deleted files */
 extern char *configFile, *sigFile, *sigFileEnd;
 extern char *cookieFile;	/* persistent cookies */
-extern char *edbrowseTempFile;
-extern char *edbrowseTempPDF;
-extern char *edbrowseTempHTML;
 
 struct listHead {
 	void *next;
