@@ -157,25 +157,37 @@ static void setFolders(char *r)
 	f = topfolders;
 	s = r;
 	while (t = strstr(s, "LIST (\\")) {
-		s = t + 7;
-/* the null folder at the top, like /, isn't really a folder. */
-		if (!strncmp(s, "Noselect", 8))
-			continue;
+		s = t + 6;
 		child = strstr(s, "Children");
 /* this should always be present */
 		if (!child)
 			continue;
 		if (child[-1] == 's')	/* Haschildren */
 			f->children = true;
+		t = child + 8;
+		while (*t == ' ')
+			++t;
 		while (*child != '\\')
 			--child;
-		if (child < s)
+		if (child < s)	/* should never happen */
 			child = s;
-		while (child > s && child[-1] == ' ')
-			--child;
-		*child = 0;
-		f->name = s;
-		s = child + 1;
+		strmove(child, t);
+		if (*s == '\\') {	/* there's a name */
+			++s;
+			t = strchr(s, ')');
+			if (!t)
+				continue;
+			while (t > s && t[-1] == ' ')
+				--t;
+			*t = 0;
+			f->name = s;
+			s = t + 1;
+/* the null folder at the top, like /, isn't really a folder. */
+			if (stringEqual(f->name, "Noselect"))
+				continue;
+		} else
+			f->name = EMPTYSTRING;
+/* now get the path */
 		t = strpbrk(s, "\r\n");
 		if (!t)
 			continue;
