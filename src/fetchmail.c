@@ -162,8 +162,8 @@ static void setFolders(char *r)
 /* this should always be present */
 		if (!child)
 			continue;
-		if (child[-1] == 's')	/* Haschildren */
-			f->children = true;
+/* HasChildren or HasNoChildren */
+		f->children = (child[-1] == 's');
 		t = child + 8;
 		while (*t == ' ')
 			++t;
