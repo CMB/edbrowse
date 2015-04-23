@@ -13,12 +13,14 @@
 #include <unistd.h>
 #endif
 #include <glob.h>
+#include <dirent.h>
 #include <netdb.h>
 
 /*********************************************************************
 Allocate and manage memory.
 Allocate and copy strings.
 If we're out of memory, the program aborts.  No error legs.
+Soooooo much easier! With 32gb of RAM, we shouldn't run out.
 *********************************************************************/
 
 void *allocMem(size_t n)
@@ -1055,6 +1057,7 @@ void shellProtect(char *t, const char *s)
 	}
 }				/* shellProtect */
 
+#if 0
 static const char globmeta[] = "\\*?[]";
 static int globProtectLength(const char *s)
 {
@@ -1075,63 +1078,52 @@ static void globProtect(char *t, const char *s)
 		*t++ = *s++;
 	}
 }				/* globProtect */
+#endif
 
 /* loop through the files in a directory */
 const char *nextScanFile(const char *base)
 {
-	static char *dirquoted;	// directory/*
-	static glob_t g;
-	static int baselen, word_idx, cnt;
+	static DIR *df;
+	struct dirent *de;
 	const char *s;
-	char *t;
-	int rc, flags;
 
-	if (!dirquoted) {
+	if (!df) {
 		if (!base)
 			base = ".";
-		baselen = strlen(base);
-		s = base + baselen;
-		cnt = globProtectLength(base);
-/* make room for /* */
-		dirquoted = allocMem(cnt + 3);
-		globProtect(dirquoted, base);
-		t = dirquoted + cnt;
-		if (s[-1] != '/')
-			*t++ = '/', ++baselen;
-		*t++ = '*';
-		*t++ = 0;
-
-		flags = GLOB_ERR;
-		flags |= (showHiddenFiles ? GLOB_PERIOD : 0);
-		rc = glob(dirquoted, flags, NULL, &g);
-/* this call should not fail except for NOMATCH */
-		if (rc && rc != GLOB_NOMATCH) {
+		df = opendir(base);
+/* directory could be unreadable */
+		if (!df) {
 			i_puts(MSG_NoDirNoList);
-			free(dirquoted);
-			dirquoted = 0;
-			globfree(&g);
 			return 0;
 		}
-
-		word_idx = 0;
 	}
 
-	while (word_idx < g.gl_pathc) {
-		s = g.gl_pathv[word_idx++] + baselen;
-		if (stringEqual(s, "."))
-			continue;
-		if (stringEqual(s, ".."))
-			continue;
+	while (de = readdir(df)) {
+		s = de->d_name;
+		if (s[0] == '.') {
+			if (stringEqual(s, "."))
+				continue;
+			if (stringEqual(s, ".."))
+				continue;
+			if (!showHiddenFiles)
+				continue;
+		}
 		return s;
 	}			/* end loop over files in directory */
 
-	globfree(&g);
-	free(dirquoted);
-	dirquoted = 0;
+	closedir(df);
+	df = 0;
 	return 0;
 }				/* nextScanFile */
 
-bool sortedDirList(const char *dir, struct lineMap ** map_p, int *count_p)
+/* compare routine for quicksort */
+static int dircmp(const void *s, const void *t)
+{
+	return strcmp(((const struct lineMap *)s)->text,
+		      ((const struct lineMap *)t)->text);
+}				/* dircmp */
+
+bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
 {
 	const char *f;
 	int linecount = 0, cap;
@@ -1159,7 +1151,8 @@ bool sortedDirList(const char *dir, struct lineMap ** map_p, int *count_p)
 	if (!linecount)
 		return true;
 
-/* glob sorts the entries, so no need to sort them here */
+/* sort the entries */
+	qsort(map, linecount, LMSIZE, dircmp);
 
 	return true;
 }				/* sortedDirList */
