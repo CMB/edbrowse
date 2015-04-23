@@ -315,7 +315,7 @@ int playBuffer(const char *line, const char *playfile)
 	++tempIndex;
 	makeTempFilename(suffix, tempIndex, false);
 	infile = tempin;
-	if (!isURL(cw->fileName) && !access(cw->fileName, 4))
+	if (!isURL(cw->fileName) && !access(cw->fileName, 4) && !cw->changeMode)
 		infile = cw->fileName;
 	cmd = pluginCommand(mt, infile, 0, suffix);
 	if (!cmd)
@@ -421,7 +421,7 @@ char *runPluginConverter(const char *buf, int buflen)
 	++tempIndex;
 	makeTempFilename(suffixout, tempIndex, true);
 	infile = tempin;
-	if (!isURL(cw->fileName) && !access(cw->fileName, 4))
+	if (!isURL(cw->fileName) && !access(cw->fileName, 4) && !cw->changeMode)
 		infile = cw->fileName;
 	cmd = pluginCommand(cw->mt, infile, tempout, suffix);
 	if (!cmd)
