@@ -353,7 +353,7 @@ bool isBrowseableURL(const char *url)
 bool isDataURI(const char *u)
 {
 	return memEqualCI(u, "data:", 5);
-}			/* isDataURI */
+}				/* isDataURI */
 
 /* Helper functions to return pieces of the URL.
  * Makes a copy, so you can have your 0 on the end.
@@ -657,6 +657,10 @@ static void squashDirectories(char *url)
 	if (strchr("#?\1", *dd))
 		return;
 	--dd;
+/* dd could point to : in bogus code such as <A href=crap:foobar> */
+/* crap: looks like a slashless protocol, perhaps unknown to us. */
+	if (*dd == ':')
+		return;
 	if (*dd != '/')
 		i_printfExit(MSG_BadSlash, url);
 	end = dd + strcspn(dd, "?\1");
@@ -1084,7 +1088,7 @@ bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l)
 	if (!data_sep)
 		return false;
 
-	for (cp = data_sep - 1; (cp >= mediatype_start && *cp != ';'); cp--);
+	for (cp = data_sep - 1; (cp >= mediatype_start && *cp != ';'); cp--) ;
 
 	if (cp >= mediatype_start && memEqualCI(cp, ";base64,", 8)) {
 		base64 = true;
@@ -1114,7 +1118,7 @@ bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l)
 	}
 
 	return true;
-}			/* parseDataURI */
+}				/* parseDataURI */
 
 /*********************************************************************
 Given a protocol and a domain, find the proxy server
