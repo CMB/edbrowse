@@ -1057,29 +1057,6 @@ void shellProtect(char *t, const char *s)
 	}
 }				/* shellProtect */
 
-#if 0
-static const char globmeta[] = "\\*?[]";
-static int globProtectLength(const char *s)
-{
-	int l = 0;
-	while (*s) {
-		if (strchr(globmeta, *s))
-			++l;
-		++l, ++s;
-	}
-	return l;
-}				/* globProtectLength */
-
-static void globProtect(char *t, const char *s)
-{
-	while (*s) {
-		if (strchr(globmeta, *s))
-			*t++ = '\\';
-		*t++ = *s++;
-	}
-}				/* globProtect */
-#endif
-
 /* loop through the files in a directory */
 const char *nextScanFile(const char *base)
 {
