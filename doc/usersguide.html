@@ -1245,7 +1245,10 @@ as they will get corrupted!
 
 If you edit a directory
 you will see a list of all the visible files in that directory
-in alphabetical order.&nbsp;
+in alphabetical order,
+according to your locale.&nbsp;
+This is the same order as /bin/ls, and is determined by your environment variable $LC_COLLATE.&nbsp;
+Set LC_COLLATE=C for traditional ascii order.&nbsp;
 Use the `hf' option to see the hidden files as well.&nbsp;
 Type g to go to one of these files or sub directories.&nbsp;
 Type ^ to return to the parent directory.&nbsp;

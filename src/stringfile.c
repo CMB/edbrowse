@@ -1096,8 +1096,8 @@ const char *nextScanFile(const char *base)
 /* compare routine for quicksort */
 static int dircmp(const void *s, const void *t)
 {
-	return strcmp(((const struct lineMap *)s)->text,
-		      ((const struct lineMap *)t)->text);
+	return strcoll(((const struct lineMap *)s)->text,
+		       ((const struct lineMap *)t)->text);
 }				/* dircmp */
 
 bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)

@@ -756,7 +756,7 @@ static const char *frenchMessages[] = {
 	"pas d'options",
 	"formulaire réinitialisé",
 	"formulaire en cours de soumission",
-	0,
+	".ebrc: ligne %d, outtype devrait être t ou h",
 	" beaucoup",
 	" recommendé",
 	"]",
@@ -767,8 +767,8 @@ static const char *frenchMessages[] = {
 	"quitter",
 	"suivant",
 	"effacement",
-	0,
-	0,
+	"greffons inactifs",
+	"greffons actifs",
 	"Environnement de travail javascript impossible à construire : javascript a été désactivé.",
 	"fin du message",
 	"pas encore implémenté",
@@ -791,7 +791,7 @@ static const char *frenchMessages[] = {
 	"courrier sauvegardé, %d octets",
 	" ajouté",
 	"page terminée, utilisez la touche retour arrière ou quittez",
-	0,
+	"impossible de créer le répertoire temporaire /tmp/.edbrowse",
 	"pas d'erreurs",
 	"authentification proxy pour une url non-proxy",
 	"session %d non active",
@@ -1419,7 +1419,7 @@ static const char *brazilianPortugueseMessages[] = {
 	"sem opções",
 	"formulário limpo",
 	"submetendo formulário",
-	0,
+	".ebrc: linha %d, outtype tem que ser definido para t ou h",
 	" muitos",
 	" recomendado",
 	"]",
@@ -1430,8 +1430,8 @@ static const char *brazilianPortugueseMessages[] = {
 	"sair",
 	"próximo",
 	"apagar",
-	0,
-	0,
+	"plug-ins inativos",
+	"plug-ins ativos",
 	"Impossível configurar o ambiente de execução Javascript, Javascript foi desabilitado.",
 	"fim da mensagem",
 	"não implementado ainda",
@@ -1454,7 +1454,7 @@ static const char *brazilianPortugueseMessages[] = {
 	"carta salva; %d bytes",
 	" adicionado",
 	"página terminou; por favor use a tecla de retorno ou saia",
-	0,
+	"não consegui criar o diretório temporário /tmp/.edbrowse",
 	"sem erros",
 	"autenticação proxy para URL não proxy",
 	"sessão %d não ativa",
@@ -2745,7 +2745,7 @@ static const char *germanMessages[] = {
 	"keine Optionen",
 	"Formularfeld zurückgesetzt",
 	"Formularfeld(er) versandt",
-	0,
+	".ebrc: Zeile %d, outtype sollte auf t oder h gesetzt sein",
 	" viele",
 	" empfohlen",
 	"]",
@@ -2756,8 +2756,8 @@ static const char *germanMessages[] = {
 	"Verlassen",
 	"Weiter",
 	"Löschen",
-	0,
-	0,
+	"Plugins inaktiv",
+	"Plugins aktiv",
 	"Unmöglich die JavaScript Runtime zu starten, JavaScript deaktiviert.",
 	"Ende der Nachricht",
 	"noch nicht implementiert",
@@ -2780,7 +2780,7 @@ static const char *germanMessages[] = {
 	"Email gespeichert, %d Bytes",
 	" angehängt",
 	"Diese Seite ist fertig. Nutzen Sie die Zurücktaste oder verlassen sie diese Seite.",
-	0,
+	"kann temporäres Verzeichnis /tmp/.edbrowse nicht anlegen",
 	"keine Fehler",
 	"Proxy-Anmeldung für eine URL ohne Proxy",
 	"Sitzung %d ist nicht aktiv",
@@ -3361,10 +3361,7 @@ void selectLanguage(void)
  * and for ranges like [A-z],
  * and to convert to upper or lower case etc.
  * So I set LC_ALL, which covers both LC_CTYPE and LC_COLLATE.
- * Note however that your environment does not affect the order of files
- * in a directory listing.
- * I do the sort myself, using strcmp, rather than strcoll.
- * I'm not sure if this is what I should be doing however.
+ * By calling strcoll, the directory scan is in the same order as ls.
  * See dircmp() in stringfile.c */
 
 	setlocale(LC_ALL, "");
