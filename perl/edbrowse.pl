@@ -14,8 +14,8 @@ use Time::Local;
 =HEAD1 Current Maintainer
 
 Chris Brannon
-	chris@the-brannons.com
-	http://the-brannons.com/edbrowse
+	maintainers@edbrowse.org
+	http://edbrowse.org
 
 =head1 Copyright Notice
 
@@ -31,18 +31,18 @@ This program, and its associated documentation, are becoming quite large.
 Therefore the documentation has been moved to a separate html file.
 Please visit:
 
-http://the-brannons.com/edbrowse/usersguide.html
+http://edbrowse.org/usersguide.html
 
 Realize that this documentation covers the C version of edbrowse.  Development
 of the Perl version stopped years ago, and there have been significant changes.
 
 If you have lynx on hand, you can run:
 
-lynx -dump http://the-brannons.com/edbrowse/usersguide.html > usersguide.txt
+lynx -dump http://edbrowse.org/usersguide.html > usersguide.txt
 
 If you are using lynx to download the actual program, do this:
 
-lynx -source 'http://the-brannons.com/edbrowse/edbrowse.pl' > edbrowse.pl
+lynx -source 'http://edbrowse.org/edbrowse.pl' > edbrowse.pl
 
 =cut
 
@@ -273,7 +273,7 @@ if(! -d $rbin) {
 $rbin = "" unless mkdir $rbin, 0700;
 }
 #  Config file for this browser.
-#  Sample file is available at http://the-brannons.com/edbrowse/sample.perl.ebrc
+#  Sample file is available at http://edbrowse.org/sample.perl.ebrc
 $rcFile = "$home/.ebprc";
 #  Last http header, normally deleted before you read the web page.
 $ebhttp = "$rbin/eb.http";
