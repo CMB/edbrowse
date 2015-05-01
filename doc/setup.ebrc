@@ -305,12 +305,6 @@ Of course this file can be viewed by any browser.
 It's just html.
 -->
 
-<A HREF=http://www.eklhad.net>
-Karl Dahlke home page
-</A>
-<A HREF=http://www.mathreference.com>
-MathReference.com
-</A>
 <A HREF=http://www.space.com>
 space.com
 </A>" > $ebbm
@@ -716,28 +710,6 @@ Karl Dahlke > eklhad
 subjfilter {
 }
 
-#  Function to read the last spam message.
-function+lspam {
-e /home/eklhad/.Trash/spamcan
-?={70}?+,\$w2
-e2
-b
-1z20
-}
-
-#  Back up to the previous spam message.
-function +bspam {
-e1
-?={70}?X
--kb
-?={70}?X
-+s/^[RD]/&/
-.,'bw2
-e2
-b
-1z20
-}
-
 #  Sometimes javascript does nothing more than deliver advertisements,
 #  and edbrowse javascript is not the greatest,
 #  so turn it off for certain domains.
@@ -760,7 +732,7 @@ if [ -n "$playloc" ]
 then
 echo "Audio player found in $playloc,
 but you can use another player if you wish."
-defans="play -t * -"
+defans="play -q %i"
 else
 echo "Leave blank if you have no player installed."
 defans=
@@ -778,7 +750,7 @@ if [ -n "$mpgloc" ]
 then
 echo "MP3 player found in $mpgloc,
 but you can use another player if you wish."
-defans="mpg123 -q -"
+defans="mpg123 -q -C %i"
 else
 echo "Leave blank if you have no mp3 player installed."
 defans=
@@ -791,14 +763,14 @@ echo
 echo "Enter the program, with parameters, that plays streaming audio.
 This is RealPlayer audio, not Windows Media or Quicktime;
 those are not supported yet."
-trloc=`whereis -b trplayer`
-trloc=${trloc/#trplayer:/}
+trloc=`whereis -b mplayer`
+trloc=${trloc/#mplayer:/}
 trloc=${trloc/# /}
 if [ -n "$trloc" ]
 then
 echo "Streaming audio player found in $trloc,
 but you can use another player if you wish."
-defans="trplayer"
+defans="mplayer -quiet %i"
 else
 echo "Leave blank if you have no streaming audio player installed."
 defans=
@@ -818,7 +790,6 @@ echo "plugin {
 type = audio/basic
 desc = audio file in a wave format
 suffix = wav,voc,au
-#  The star is replaced with the suffix at runtime
 program = $playprog
 }
 "
