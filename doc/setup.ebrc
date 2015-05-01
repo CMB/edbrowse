@@ -431,7 +431,7 @@ defans=y
 responseyn
 if [ $answer = y ]
 then
-wget -q -O $ebcert http://the-brannons.com/edbrowse/ssl-certs
+wget -q -O $ebcert http://edbrowse.org/ssl-certs
 echo "got it."
 else
 echo "Ok, you can get a certificate file later."
