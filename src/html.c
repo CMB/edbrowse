@@ -2167,6 +2167,15 @@ plainTag:
 				continue;
 
 		case TAGACT_NOP:
+/* For some reason, we wind up here on <OL> */
+			if (stringEqual(ti->name, "OL")) {
+/* look for start parameter for numbered list */
+				a = htmlAttrVal(topAttrib, "start");
+				if (a && (j = stringIsNum(a)) >= 0)
+					t->lic = j - 1;
+				nzFree(a);
+			}
+
 nop:
 			if (!retainTag)
 				continue;

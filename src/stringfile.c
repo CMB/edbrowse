@@ -332,6 +332,7 @@ char *pullString1(const char *s, const char *t)
 	return pullString(s, t - s);
 }
 
+/* return the number, if string is a number, else -1 */
 int stringIsNum(const char *s)
 {
 	int n;
