@@ -110,8 +110,6 @@ typedef uchar *pst;		/* perl string */
 #define MAXRE 400
 /* How long can an entered line be? */
 #define MAXTTYLINE 256
-/* Longest line that can take the breakline command */
-#define REPLACELINELEN 50000
 /* The longest string, in certain contexts. */
 #define MAXSTRLEN 1024
 /* How about user login and password? */
@@ -262,7 +260,7 @@ extern char *changeFileName;
 extern char *addressFile;	/* your address book */
 extern char *serverData;
 extern int serverDataLen;
-extern char replaceLine[];
+extern char *breakLineResult;
 extern char *currentReferrer;
 extern char *home;		/* home directory */
 extern char *recycleBin;	/* holds deleted files */

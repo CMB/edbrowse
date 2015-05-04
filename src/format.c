@@ -949,7 +949,8 @@ static void appendPrintableChunk(const char *chunk, int len, bool premode)
  * and is only in this file because it shares the above routines and variables
  * with the html reformatting, which really has to be here. */
 
-char replaceLine[REPLACELINELEN];
+char *breakLineResult;
+#define REFORMAT_EXTRA 4000
 
 bool breakLine(const char *line, int len, int *newlen)
 {
@@ -971,9 +972,13 @@ bool breakLine(const char *line, int len, int *newlen)
 		lspace = 2;	/* should never happen */
 	if (!len + pre_cr)
 		lspace = 3;
-	bl_start = bl_cursor = replaceLine;
-	bl_end = replaceLine + REPLACELINELEN - 8;
+
+	nzFree(breakLineResult);
+	breakLineResult = allocMem(len + REFORMAT_EXTRA);
+	bl_start = bl_cursor = breakLineResult;
+	bl_end = breakLineResult + len + REFORMAT_EXTRA - 8;
 	bl_overflow = false;
+
 	colno = 1;
 	longcut = lperiod = lcomma = lright = lany = 0;
 	last = 0;
@@ -1026,8 +1031,6 @@ void breakLineSetup(void)
 {
 	lspace = 3;
 }
-
-#define REFORMAT_EXTRA 4000
 
 char *htmlReformat(const char *buf)
 {

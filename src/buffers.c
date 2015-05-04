@@ -2549,16 +2549,22 @@ static int substituteText(const char *line)
 		if (bl_mode) {
 			int newlen;
 			if (!breakLine(p, len, &newlen)) {
-				setError(MSG_BreakLong, REPLACELINELEN);
+/* you just should never be here */
+				setError(MSG_BreakLong, 0);
+				nzFree(breakLineResult);
+				breakLineResult = 0;
 				return -1;
 			}
 /* empty line is not allowed */
 			if (!newlen)
-				replaceLine[newlen++] = '\n';
+				breakLineResult[newlen++] = '\n';
 /* perhaps no changes were made */
-			if (newlen == len && !memcmp(p, replaceLine, len))
+			if (newlen == len && !memcmp(p, breakLineResult, len)) {
+				nzFree(breakLineResult);
+				breakLineResult = 0;
 				continue;
-			replaceString = replaceLine;
+			}
+			replaceString = breakLineResult;
 /* But the regular substitute doesn't have the \n on the end.
  * We need to make this one conform. */
 			replaceStringLength = newlen - 1;
@@ -2709,8 +2715,9 @@ static int substituteText(const char *line)
 		if (subPrint == 2)
 			displayLine(ln);
 		lastSubst = ln;
-		if (replaceString != replaceLine)
-			nzFree(replaceString);
+		nzFree(replaceString);
+/* we may have just freed the result of a breakline command */
+		breakLineResult = 0;
 	}			/* loop over lines in the range */
 
 	if (re_cc)
@@ -2724,7 +2731,7 @@ static int substituteText(const char *line)
 	if (!lastSubst) {
 		if (!globSub) {
 			if (!errorMsg[0])
-				setError(bl_mode + MSG_NoMatch);
+				setError(bl_mode ? MSG_NoChange : MSG_NoMatch);
 		}
 		return false;
 	}
@@ -2736,8 +2743,9 @@ static int substituteText(const char *line)
 abort:
 	if (re_cc)
 		pcre_free(re_cc);
-	if (replaceString && replaceString != replaceLine)
-		nzFree(replaceString);
+	nzFree(replaceString);
+/* we may have just freed the result of a breakline command */
+	breakLineResult = 0;
 	return -1;
 }				/* substituteText */
 

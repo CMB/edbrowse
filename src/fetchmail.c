@@ -1822,7 +1822,7 @@ static void formatMail(struct MHINFO *w, bool top)
 			if (ct == CT_TEXT) {
 				breakLineSetup();
 				if (breakLine(start, end - start, &newlen)) {
-					start = replaceLine;
+					start = breakLineResult;
 					end = start + newlen;
 				}
 			}
