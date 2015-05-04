@@ -1027,6 +1027,8 @@ void breakLineSetup(void)
 	lspace = 3;
 }
 
+#define REFORMAT_EXTRA 4000
+
 char *htmlReformat(const char *buf)
 {
 	const char *h, *nh, *s;
@@ -1040,24 +1042,23 @@ char *htmlReformat(const char *buf)
 	colno = 1;
 	pre_cr = 0;
 	lspace = 3;
-	bl_start = bl_cursor = replaceLine;
-	bl_end = replaceLine + REPLACELINELEN - 8;
+
+	l = strlen(buf);
+/* Only a pathological web page gets longer after reformatting.
+ * Even then it isn't by much. This is a bit of a kludge.
+ * If you still overflow, even beyond the EXTRA,
+ * it won't seg fault, you'll just lose some text. */
+	new = allocMem(l + REFORMAT_EXTRA);
+	bl_start = bl_cursor = new;
+	bl_end = new + l + REFORMAT_EXTRA - 20;
 	bl_overflow = false;
-	new = initString(&l);
 
 	for (h = buf; (c = *h); h = nh) {
 		if (isspaceByte(c)) {
 			for (s = h + 1; isspaceByte(*s); ++s) ;
 			nh = s;
 			appendSpaceChunk(h, nh - h, premode);
-			if (lspace == 3 || (lspace == 2 || premode) &&
-			    (bl_cursor - bl_start) >=
-			    (bl_end - bl_start) * 2 / 3) {
-				if (bl_cursor > bl_start)
-					stringAndBytes(&new, &l, bl_start,
-						       bl_cursor - bl_start);
-				bl_cursor = bl_start;
-				lspace = 3;
+			if (lspace == 3) {
 				longcut = lperiod = lcomma = lright = lany = 0;
 				colno = 1;
 			}
@@ -1106,8 +1107,8 @@ char *htmlReformat(const char *buf)
 /* close off the last line */
 	if (lspace < 2)
 		appendSpaceChunk("\n", 1, true);
-	if (bl_cursor > bl_start)
-		stringAndBytes(&new, &l, bl_start, bl_cursor - bl_start);
+	*bl_cursor = 0;
+	l = bl_cursor - bl_start;
 /* Get rid of last space. */
 	if (l >= 2 && new[l - 1] == '\n' && new[l - 2] == ' ')
 		new[l - 2] = '\n', new[--l] = 0;
@@ -1117,7 +1118,13 @@ char *htmlReformat(const char *buf)
 	new[l] = 0;
 /* Don't allow an empty buffer */
 	if (!l)
-		stringAndChar(&new, &l, '\n');
+		new[0] = '\n', new[1] = 0, l = 1;
+
+	if (bl_overflow) {
+/* we should print a more helpful error message here */
+		strcpy(new + l, "\n???");
+		l += 4;
+	}
 
 	return new;
 }				/* htmlReformat */
