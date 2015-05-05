@@ -1,83 +1,67 @@
-Sending an attachment qp encoded, like on a csv file with long lines,
-and then receiving that file through Outlook, garbles the attachment.
-Not sure why, but I've seen it happen a lot and it's a pain.
-The quick fix here is to never qp encode, but jump straight to b64.
+Use third party software such as tidy5 to parse html and turn it into a tree
+of objects. First pass we do this in parallel with what we are doing now,
+not disturbing what is running.
+Once we are confident in the resulting tree, we understand it and it
+faithfully represents the html, we can take the next step.
 
-Get the messages from files in /usr/share/edbrowse/locale/country/blah,
-like other programs do.
-Then we wouldn't have to recompile every time a word changed,
-or we got additional support for a language.
-See messages.c.
-I might leave English hard-coded, in case those files weren't there.
+Traverse the resulting html tree to build the corresponding js objects.
+This replaces our current mechanism to create these objects,
+which happens as each html tag is encountered.
+Acting on the new tree, all js objects will be created,
+including text and comment objects, and all html attributes
+foo=bar will appear as members of the corresponging js object.
 
-Every attribute in the html tag needs to become
-a property in the corresponding object,
-not just the few tags that we anticipate.
-This is more general, and how DOM is suppose to work.
+Build a complete set of js methods for the various objects and the framework overall.
+We might need to emulate one of the browsers,
+since they have their own particular quirks.
+Don't know if we can have every method in every browser.
 
-A complete rewrite would be nice,
-with the screen rendered from the js object tree rather than from html.
-This is described in README.
+Render the text buffer from the js objects instead of from the html tags.
+If js code restructures the objects, or adds new objects,
+we can just render the buffer again.
+Right now we have no such capability, except when js rebuilds
+a dropdown list for a fill out form,
+because that happens a lot and I just couldn't live without that dynamic capability.
 
-resolveURL with /?foobar
+What is the best way to handle frames?
+They probably have to come inline, which means one text buffer
+is partitioned into sections, each section from a different url.
+We already support <base> tags within the html stream,
+so that might do what we need.
+But how does this work with the js compartments?
+Much thought and research is needed here.
 
-<form ... onclick= ... >
+Is mozjs still the best js engine to use?
+
+<form ... onclick= ... > what is that?
 
 why is there an extra blank line after preformatted sections?
 
-Bad html uses &nbsp: instead of &nbsp;  should we watch for these things?
-
-find host fails for gvm1ghzxnlx0(+%##*vposzwx.watchfly.com because # in domain name??
+Iimproper html uses &nbsp: instead of &nbsp;  should we watch for this?
+Of course if we pass html off to tidy5 we will have less control over such things.
 
 document.myFlash  what is this.
 
 makeIt('1','IE')
 
-id=name in certain tags causes a newline to appear.
-This leads to a lot of annoying blank lines.
-If easier, we could just compress them after the fact.
-
-<a id=something> instead of name=
-
-Don't recognize any of these yet.
+Don't recognize any of these yet:
 window.screenLeft window.screenTop window.screenX window.screenY window.outerWidth window.outerHeight
 
 onload and onunload in body seem to run under document, not the body subobject
-
-call javaSetsTagBool when js checks or updates a checkbox or radio button
 
 what does all.tags("object") mean?
 
 This is not implemented, but might be the same as readonly?
 <input disabled>
 
-options.length = 0,
-js objects gone, but <option> tags still exist, and point to those objects.
-This can lead to seg faults etc.
-in general, dynamic domain objects are not implemented;
-dynamic options would be most useful!
-Lots of websites build a secondary menu based on your selection
-in a primary menu.  Building the option list on the fly.
-We could implement this directly, or wait for the rewrite,
-which would render the screen from the js objects,
-and would take care of this problem + many others.
-
-attachEvent("onclick", doSomething);
-I think we know what this does; it just isn't implemented.
-
-getAttribute setAttribute
-
 Let the re command put in an account: directive
 when it sets up the headers for your reply.
 So you are sending it from the same email account it was sent to.
 
-<!-- comment >
-This is bad htmo, but it happens.
+Build a structure of messages and folders when you connect to an imap server.
 
-Are these methods not yet implemented?
-history.go history.back history.forward
-
-imap support.
+Read emails from the imap server and dispatch them using the same pop3 routine,
+or delete them or move them among folders.
 
 If edbrowse is started via an ebpager symlink, it should run in
 "pager" mode.  Think of all the Unix commands which use a pager.
@@ -88,6 +72,7 @@ Grep commandline archives for ebpager to get the implementation ideas.
 edbrowse should be able to automatically uncompress .gz and .bz2 files.
 For that matter, it would be nice to be able to browse tar and zip archives,
 as though they were directories.  You can do that in emacs, and it's useful.
+Can this be done via plugins or do we need dedicated code?
 
 It should be possible to apply Unix filters to edbrowse buffers.
 Let's call this the !| command.
@@ -108,6 +93,7 @@ Perhaps km is special, marking multiple lines.
 might move all the chosen files to another directory.
 So you could do things with all the lines, or if in directory mode,
 with all the files.
+Or in imap mode, with all those emails.
 Not sure about this one.
 
 Spreadsheet mode - this is much like database mode.
@@ -117,3 +103,14 @@ Unlike odbc, the change is local, until you write the file back out.
 Could also have table directives in .ebrc to look at only certain columns in the spreadsheet,
 because some of these, like tables, have hundreds of columns
 and are just unmanageable unless you slice them.
+
+Lots of html tags are multimedia and we just don't recognize them as such.
+http://birdweb.org/birdweb/audiosource
+Click on the screech owl and the raw html contains this,
+which if it were rendered properly I could just click and hear the owl.
+<object id='sound_button' type='application/x-shockwave-flash' data='http://birdweb.org/birdweb/sounds/musicplayer.swf?&song_url=http://birdweb.org/BIRDWEB/sounds/WESO01.mp3&b_bgcolor=ede9da&b_fgcolor=43683a&' width='19' height='17'>
+<param name='movie' value='http://birdweb.org/birdweb/sounds/musicplayer.swf?&song_url=http://birdweb.org/BIRDWEB/sounds/WESO01.mp3&b_bgcolor=ede9da&b_fgcolor=43683a&' />
+<param name='wmode' value='transparent' />
+<img src='http://birdweb.org/BIRDWEB/web_images/noflash.gif' width='19' height='17' alt='' />
+</object>
+
