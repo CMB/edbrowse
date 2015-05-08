@@ -540,8 +540,12 @@ bool parseRefresh(char *ref, int *delay_p)
 		u = ref + strlen(ref);
 		if (u > ref && u[-1] == qc)
 			u[-1] = 0;
-		if (delay)
-			debugPrint(3, "delay %d %s", delay, ref);
+		debugPrint(3, "delay %d %s", delay, ref);
+/* avoid the obvious infinite loop */
+		if (sameURL(ref, cw->fileName)) {
+			*delay_p = 0;
+			return false;
+		}
 		*delay_p = delay;
 		return true;
 	}

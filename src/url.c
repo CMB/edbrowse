@@ -806,6 +806,9 @@ bool sameURL(const char *s, const char *t)
 	const char *u, *p, *q;
 	int l;
 
+	if (!s || !t)
+		return false;
+
 /* check for post data at the end */
 	p = strchr(s, '\1');
 	if (!p)
