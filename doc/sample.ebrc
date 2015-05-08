@@ -207,7 +207,6 @@ table {
 #  unless there is a foo.space.com where you really need the javascript.
 nojs = space.com
 nojs = nasa.gov
-nojs = google.com
 nojs = paypal.com
 
 #  Every time you fetch a web page from the internet,

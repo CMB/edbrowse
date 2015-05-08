@@ -1192,6 +1192,18 @@ char *andTranslate(const char *s, bool invisible)
 	bool premode = false;
 	char andbuf[16];
 
+/*********************************************************************
+&foo; is replaced with an ascii string, or a character in iso8859-1.
+Said character is converted to utf8 if const_utf8 is true.
+This is wrong of course.
+&foo; should be replaced with a utf8 string,
+which is converted to iso8859 if necessary,
+and not sure how long we'll support the 8859 stuff anyways.
+I would rewrite this code, but we might be using tidy5 to do
+all the html translation, including this part,
+so me working on this any more is perhaps a waste of time.
+*********************************************************************/
+
 	static const char *const andwords[] = {
 		"gt\0>",
 		"lt\0<",
@@ -1303,8 +1315,8 @@ char *andTranslate(const char *s, bool invisible)
 		"edot\0e",
 		"nbsp\0 ",
 		"shy\0-",
-		"frac13\01/3",
-		"frac23\02/3",
+		"frac13\0001/3",
+		"frac23\0002/3",
 		"plusmn\0+-",
 		"laquo\0left arrow",
 		"#171\0left arrow",
