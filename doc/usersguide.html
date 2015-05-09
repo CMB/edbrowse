@@ -3209,11 +3209,12 @@ Reproduce the earlier behavior by typing &lt;hw hello world.&nbsp;
 Or search for different lines by invoking &lt;hw foo bar.&nbsp;
 The latter looks for a line containing foo and prints it,
 and if this succeeds it looks for a line containing bar and prints that.&nbsp;
-Let's build a more useful function, a shortcut to google.&nbsp;
+Now let's build a more useful function, a shortcut to google search.&nbsp;
 The variable ~0 represents all the arguments together.&nbsp;
 In this case ~0 is the keywords you pass to google for your search.
 <P>
 function+gg {
+<br>
 &nbsp;&nbsp;b http://www.google.com
 <br>
 &nbsp;&nbsp;/<>/ i=~0
@@ -3221,11 +3222,20 @@ function+gg {
 &nbsp;&nbsp;+i1*
 <br>
 &nbsp;&nbsp;/^1/+
+<br>
 }
 
 <P>
 With this in place, you simply type `&lt;gg kangaroo habitat'
-to find out where kangaroos live.
+to find out where kangaroos live.&nbsp;
+Warning: as of May 2015, google has an odd bug that causes an infinite refresh of the search page.&nbsp;
+If you keep getting the same page sizes over and over again, hit control C right away,
+as too many search queries will cause the Google server to shut you out.&nbsp;
+The same bug has been reproduced in Firefox with javascript off and user agent set to edbrowse.&nbsp;
+The mechanics of the bug are not well understood, but you can work around it by:
+running with javascript enabled, running with http redirection disabled,
+or setting your user agent to
+Lynx/2.8.4rel.1 libwww-FM/2.14.
 
 <P>
 Finally, an edbrowse function can branch,
