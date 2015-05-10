@@ -7,6 +7,8 @@ and autoplay of audio files from directory mode.
 Use a plugin to convert pdf to html, or any other conversion you wish.
 Autoconvert such files as you encounter them via the g command.
 directory listing sorted by locale, like/bin/ls.
+Automatically include references when replying to an email, re or rea commands,
+so it threads properly.
 
 3.5.3:
 Write a separate process, edbrowse-js, to handle all the javascript objects.
