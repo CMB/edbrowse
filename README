@@ -178,6 +178,11 @@ fetchmail.c:
 Fetch mail (pop3 or pop3s).  Decode attachments.
 Browse mail files, separate mime components.
 
+plugin.c:
+Determine the mime type of a file or web page and the corresponding plugin,
+if any. Launch the plugin automatically or on command.
+A plugin can play the file, like music, or render the file, like pdf.
+
 messages.h:
 Symbolic constants for the warning/error messages of edbrowse.
 
