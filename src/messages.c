@@ -3343,6 +3343,146 @@ static int messageArrayLength = sizeof(englishMessages) / sizeof(char *);
 int eb_lang = 1;		/* default English */
 bool cons_utf8, iuConvert = true;
 char type8859 = 1;
+bool helpMessagesOn;
+bool errorExit;
+
+/*********************************************************************
+Convert a string from iso 8859 to utf8, or vice versa.
+In each case a new string is allocated.
+Don't forget to free it when you're done.
+*********************************************************************/
+
+/* only 8859-1 and 8859-2 so far */
+static const int iso_unicodes[2][128] = {
+	{0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b,
+	 0x8c, 0x8d, 0x8e, 0x8f,
+	 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9a,
+	 0x9b, 0x9c, 0x9d, 0x9e, 0x9f,
+	 0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7, 0xa8, 0xa9, 0xaa,
+	 0xab, 0xac, 0xad, 0xae, 0xaf,
+	 0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xba,
+	 0xbb, 0xbc, 0xbd, 0xbe, 0xbf,
+	 0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7, 0xc8, 0xc9, 0xca,
+	 0xcb, 0xcc, 0xcd, 0xce, 0xcf,
+	 0xd0, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8, 0xd9, 0xda,
+	 0xdb, 0xdc, 0xdd, 0xde, 0xdf,
+	 0xe0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea,
+	 0xeb, 0xec, 0xed, 0xee, 0xef,
+	 0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa,
+	 0xfb, 0xfc, 0xfd, 0xfe, 0xff},
+	{0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b,
+	 0x8c, 0x8d, 0x8e, 0x8f,
+	 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9a,
+	 0x9b, 0x9c, 0x9d, 0x9e, 0x9f,
+	 0xa0, 0x104, 0x2d8, 0x141, 0xa4, 0x13d, 0x15a, 0xa7, 0xa8, 0x160,
+	 0x15e, 0x164, 0x179, 0xad, 0x17d, 0x17b,
+	 0xb0, 0x105, 0x2db, 0x142, 0xb4, 0x13e, 0x15b, 0x2c7, 0xb8, 0x161,
+	 0x15f, 0x165, 0x17a, 0x2dd, 0x17e, 0x17c,
+	 0x154, 0xc1, 0xc2, 0x102, 0xc4, 0x139, 0x106, 0xc7, 0x10c, 0xc9,
+	 0x118, 0xcb, 0x11a, 0xcd, 0xce, 0x10e,
+	 0x110, 0x143, 0x147, 0xd3, 0xd4, 0x150, 0xd6, 0xd7, 0x158, 0x16e,
+	 0xda, 0x170, 0xdc, 0xdd, 0x162, 0xdf,
+	 0x155, 0xe1, 0xe2, 0x103, 0xe4, 0x13a, 0x107, 0xe7, 0x10d, 0xe9,
+	 0x119, 0xeb, 0x11b, 0xed, 0xee, 0x10f,
+	 0x111, 0x144, 0x148, 0xf3, 0xf4, 0x151, 0xf6, 0xf7, 0x159, 0x16f,
+	 0xfa, 0x171, 0xfc, 0xfd, 0x163, 0x2d9},
+};
+
+void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
+{
+	int i, j;
+	int nacount = 0;
+	char c;
+	char *outbuf;
+	const int *isoarray = iso_unicodes[type8859 - 1];
+	int ucode;
+
+	if (!inbuflen) {
+		*outbuf_p = emptyString;
+		*outbuflen_p = 0;
+		return;
+	}
+
+/* count chars, so we can allocate */
+	for (i = 0; i < inbuflen; ++i) {
+		c = inbuf[i];
+		if (c < 0)
+			++nacount;
+	}
+
+	outbuf = allocMem(inbuflen + nacount + 1);
+	for (i = j = 0; i < inbuflen; ++i) {
+		c = inbuf[i];
+		if (c >= 0) {
+			outbuf[j++] = c;
+			continue;
+		}
+		ucode = isoarray[c & 0x7f];
+		outbuf[j++] = (ucode >> 6) | 0xc0;
+		outbuf[j++] = (ucode & 0x3f) | 0x80;
+	}
+	outbuf[j] = 0;		/* just for fun */
+
+	*outbuf_p = outbuf;
+	*outbuflen_p = j;
+}				/* iso2utf */
+
+void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
+{
+	int i, j, k;
+	char c;
+	char *outbuf;
+	const int *isoarray = iso_unicodes[type8859 - 1];
+	int ucode;
+
+	if (!inbuflen) {
+		*outbuf_p = emptyString;
+		*outbuflen_p = 0;
+		return;
+	}
+
+	outbuf = allocMem(inbuflen + 1);
+	for (i = j = 0; i < inbuflen; ++i) {
+		c = inbuf[i];
+
+/* regular chars and nonascii chars that aren't utf8 pass through. */
+/* There shouldn't be any of the latter */
+		if (((uchar) c & 0xc0) != 0xc0) {
+			outbuf[j++] = c;
+			continue;
+		}
+
+/* Convertable into 11 bit */
+		if (((uchar) c & 0xe0) == 0xc0
+		    && ((uchar) inbuf[i + 1] & 0xc0) == 0x80) {
+			ucode = c & 0x1f;
+			ucode <<= 6;
+			ucode |= (inbuf[i + 1] & 0x3f);
+			for (k = 0; k < 128; ++k)
+				if (isoarray[k] == ucode)
+					break;
+			if (k < 128) {
+				outbuf[j++] = k | 0x80;
+				++i;
+				continue;
+			}
+		}
+
+/* unicodes not found in our iso class are converted into stars */
+		c <<= 1;
+		++i;
+		for (++i; c < 0; ++i, c <<= 1) {
+			if (((uchar) outbuf[i] & 0xc0) != 0x80)
+				break;
+		}
+		outbuf[j++] = '*';
+		--i;
+	}
+	outbuf[j] = 0;		/* just for fun */
+
+	*outbuf_p = outbuf;
+	*outbuflen_p = j;
+}				/* utf2iso */
 
 void selectLanguage(void)
 {
@@ -3409,7 +3549,7 @@ void selectLanguage(void)
 */
 }				/* selectLanguage */
 
-static const char *getString(int msg)
+const char *i_getString(int msg)
 {
 	const char **a = messageArray;
 	const char *s;
@@ -3433,7 +3573,7 @@ static const char *getString(int msg)
 	strcpy(utfbuf, t);
 	nzFree(t);
 	return utfbuf;
-}				/* getString */
+}				/* i_getString */
 
 /*********************************************************************
 Internationalize the standard puts and printf.
@@ -3444,12 +3584,12 @@ The i_ prefix means international.
 
 void i_puts(int msg)
 {
-	puts(getString(msg));
+	puts(i_getString(msg));
 }				/* i_puts */
 
 void i_printf(int msg, ...)
 {
-	const char *realmsg = getString(msg);
+	const char *realmsg = i_getString(msg);
 	va_list p;
 	va_start(p, msg);
 	vprintf(realmsg, p);
@@ -3459,19 +3599,19 @@ void i_printf(int msg, ...)
 /* Print and exit.  This puts newline on, like puts. */
 void i_printfExit(int msg, ...)
 {
-	const char *realmsg = getString(msg);
+	const char *realmsg = i_getString(msg);
 	va_list p;
 	va_start(p, msg);
 	vfprintf(stderr, realmsg, p);
 	fprintf(stderr, "\n");
 	va_end(p);
-	ebClose(1);
+	ebClose(99);
 }				/* i_printfExit */
 
 /* i_stringAndMessage: concatenate a message to an existing string. */
 void i_stringAndMessage(char **s, int *l, int messageNum)
 {
-	const char *messageText = getString(messageNum);
+	const char *messageText = i_getString(messageNum);
 	stringAndString(s, l, messageText);
 }				/* i_stringAndMessage */
 
@@ -3497,7 +3637,7 @@ void setError(int msg, ...)
 	}
 
 	va_start(p, msg);
-	vsprintf(errorMsg, getString(msg), p);
+	vsprintf(errorMsg, i_getString(msg), p);
 	va_end(p);
 
 /* sanity check */
@@ -3529,43 +3669,12 @@ void showErrorAbort(void)
 	errorPrint("1%s", errorMsg);
 }				/* showErrorAbort */
 
-void browseError(int msg, ...)
+/* error exit check function */
+void eeCheck(void)
 {
-	va_list p;
-	if (ismc)
-		return;
-	if (browseLocal != 1)
-		return;
-	if (browseLine) {
-		i_printf(MSG_LineX, browseLine);
-		cw->labels[4] = browseLine;
-	} else
-		i_printf(MSG_BrowseError);
-	va_start(p, msg);
-	vprintf(getString(msg), p);
-	va_end(p);
-	nl();
-	browseLocal = 2;
-}				/* browseError */
-
-/* Javascript errors, we need to see these no matter what. */
-void runningError(int msg, ...)
-{
-	va_list p;
-	if (ismc)
-		return;
-	if (debugLevel <= 2)
-		return;
-	if (browseLine) {
-		i_printf(MSG_LineX, browseLine);
-		cw->labels[4] = browseLine;
-	}
-	va_start(p, msg);
-	vprintf(getString(msg), p);
-	va_end(p);
-	nl();
-	browseLocal = 2;
-}				/* runningError */
+	if (errorExit)
+		ebClose(1);
+}
 
 /*********************************************************************
 Now for the international version of caseShift.

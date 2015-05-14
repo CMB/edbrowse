@@ -278,7 +278,7 @@ encodeAttachment(const char *file, int ismail, bool webform,
 		buf = cloneString(file);
 		buflen = strlen(buf);
 		ismail = -ismail;
-		file = EMPTYSTRING;
+		file = emptyString;
 	} else {
 
 		if (!ismc && (cx = stringIsNum(file)) >= 0) {
@@ -288,7 +288,7 @@ encodeAttachment(const char *file, int ismail, bool webform,
 			if (!buflen) {
 				if (webform) {
 empty:
-					buf = EMPTYSTRING;
+					buf = emptyString;
 					ct = "text/plain";
 					ce = "7bit";
 					goto success;

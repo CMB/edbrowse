@@ -215,7 +215,7 @@ bool receiveCookie(const char *url, const char *str)
 	if (p - q > 0)
 		c->value = pullString1(q, p);
 	else
-		c->value = EMPTYSTRING;
+		c->value = emptyString;
 
 	c->server = cloneString(server);
 

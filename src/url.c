@@ -385,7 +385,7 @@ const char *getHostURL(const char *url)
 	if (free_syntax)
 		return 0;
 	if (!s)
-		return EMPTYSTRING;
+		return emptyString;
 	if (l >= sizeof(hostbuf)) {
 		setError(MSG_DomainLong);
 		return 0;
@@ -443,9 +443,9 @@ const char *getUserURL(const char *url)
 	if (rc <= 0)
 		return 0;
 	if (free_syntax)
-		return EMPTYSTRING;
+		return emptyString;
 	if (!s)
-		return EMPTYSTRING;
+		return emptyString;
 	if (l >= sizeof(buf)) {
 		setError(MSG_UserNameLong2);
 		return 0;
@@ -464,9 +464,9 @@ const char *getPassURL(const char *url)
 	if (rc <= 0)
 		return 0;
 	if (free_syntax)
-		return EMPTYSTRING;
+		return emptyString;
 	if (!s)
-		return EMPTYSTRING;
+		return emptyString;
 	if (l >= sizeof(buf)) {
 		setError(MSG_PasswordLong2);
 		return 0;
@@ -707,7 +707,7 @@ char *resolveURL(const char *base, const char *rel)
 		return cloneString(rel);
 
 	if (!base)
-		base = EMPTYSTRING;
+		base = emptyString;
 	n = allocMem(strlen(base) + strlen(rel) + 12);
 	debugPrint(5, "resolve(%s|%s)", base, rel);
 
@@ -934,8 +934,8 @@ char *encodePostData(const char *s)
 
 	if (!s)
 		return 0;
-	if (s == EMPTYSTRING)
-		return EMPTYSTRING;
+	if (s == emptyString)
+		return emptyString;
 	post = initString(&l);
 	while (c = *s++) {
 		if (isalnumByte(c))
@@ -1070,173 +1070,3 @@ void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p)
 	if (body_p)
 		*body_p = decodePostData(url, "body", 0);
 }				/* decodeMailURL */
-
-bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l)
-{
-	bool base64 = false;
-	const char *mediatype_start;
-	const char *data_sep;
-	const char *cp;
-	size_t encoded_len;
-
-	*data = *mediatype = EMPTYSTRING;
-	*data_l = 0;
-
-	if (!isDataURI(uri))
-		return false;
-
-	mediatype_start = uri + 5;
-	data_sep = strchr(mediatype_start, ',');
-
-	if (!data_sep)
-		return false;
-
-	for (cp = data_sep - 1; (cp >= mediatype_start && *cp != ';'); cp--) ;
-
-	if (cp >= mediatype_start && memEqualCI(cp, ";base64,", 8)) {
-		base64 = true;
-		*mediatype = pullString1(mediatype_start, cp);
-	} else {
-		*mediatype = pullString1(mediatype_start, data_sep);
-	}
-
-	encoded_len = strlen(data_sep + 1);
-	*data = pullString(data_sep + 1, encoded_len);
-	unpercentString(*data);
-
-	if (!base64) {
-		*data_l = strlen(*data);
-	} else {
-		char *data_end = *data + strlen(*data);
-		int unpack_ret = base64Decode(*data, &data_end);
-		if (unpack_ret != GOOD_BASE64_DECODE) {
-			nzFree(*mediatype);
-			*mediatype = EMPTYSTRING;
-			nzFree(*data);
-			*data = EMPTYSTRING;
-			return false;
-		}
-		*data_end = '\0';
-		*data_l = data_end - *data;
-	}
-
-	return true;
-}				/* parseDataURI */
-
-/*********************************************************************
-Given a protocol and a domain, find the proxy server
-to mediate your request.
-This is the C version, using entries in .ebrc.
-There is a javascript version of the same name, that we will support later.
-This is a beginning, and it can be used even when javascript is disabled.
-A return of null means DIRECT, and this is the default
-if we don't match any of the proxy entries.
-*********************************************************************/
-
-static const char *findProxyInternal(const char *prot, const char *domain)
-{
-	struct PXENT *px = proxyEntries;
-	int i;
-
-/* first match wins */
-	for (i = 0; i < maxproxy; ++i, ++px) {
-
-		if (px->prot) {
-			char *s = px->prot;
-			char *t;
-			int rc;
-			while (*s) {
-				t = strchr(s, '|');
-				if (t)
-					*t = 0;
-				rc = stringEqualCI(s, prot);
-				if (t)
-					*t = '|';
-				if (rc)
-					goto domain;
-				if (!t)
-					break;
-				s = t + 1;
-			}
-			continue;
-		}
-
-domain:
-		if (px->domain) {
-			int l1 = strlen(px->domain);
-			int l2 = strlen(domain);
-			if (l1 > l2)
-				continue;
-			l2 -= l1;
-			if (!stringEqualCI(px->domain, domain + l2))
-				continue;
-			if (l2 && domain[l2 - 1] != '.')
-				continue;
-		}
-
-		return px->proxy;
-	}
-
-	return 0;
-}				/* findProxyInternal */
-
-const char *findProxyForURL(const char *url)
-{
-	return findProxyInternal(getProtURL(url), getHostURL(url));
-}				/* findProxyForURL */
-
-static char **novs_hosts;
-size_t novs_hosts_avail;
-size_t novs_hosts_max;
-
-void addNovsHost(char *host)
-{
-	if (novs_hosts_max == 0) {
-		novs_hosts_max = 32;
-		novs_hosts = allocZeroMem(novs_hosts_max * sizeof(char *));
-	} else if (novs_hosts_avail >= novs_hosts_max) {
-		novs_hosts_max *= 2;
-		novs_hosts =
-		    reallocMem(novs_hosts, novs_hosts_max * sizeof(char *));
-	}
-	novs_hosts[novs_hosts_avail++] = host;
-}				/* addNovsHost */
-
-/* Return true if the cert for this host should be verified. */
-static bool mustVerifyHost(const char *host)
-{
-	size_t this_host_len = strlen(host);
-	size_t i;
-
-	if (!verifyCertificates)
-		return false;
-
-	for (i = 0; i < novs_hosts_avail; i++) {
-		size_t l1 = strlen(novs_hosts[i]);
-		size_t l2 = this_host_len;
-		if (l1 > l2)
-			continue;
-		l2 -= l1;
-		if (!stringEqualCI(novs_hosts[i], host + l2))
-			continue;
-		if (l2 && host[l2 - 1] != '.')
-			continue;
-		return false;
-	}
-	return true;
-}				/* mustVerifyHost */
-
-CURLcode setCurlURL(CURL * h, const char *url)
-{
-	const char *proxy = findProxyForURL(url);
-	if (!proxy)
-		proxy = "";
-	else
-		debugPrint(3, "proxy %s", proxy);
-	const char *host = getHostURL(url);
-	unsigned long verify = mustVerifyHost(host);
-	curl_easy_setopt(h, CURLOPT_PROXY, proxy);
-	curl_easy_setopt(h, CURLOPT_SSL_VERIFYPEER, verify);
-	curl_easy_setopt(h, CURLOPT_SSL_VERIFYHOST, verify);
-	return curl_easy_setopt(h, CURLOPT_URL, url);
-}				/* setCurlURL */

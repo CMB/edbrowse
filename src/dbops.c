@@ -1041,7 +1041,7 @@ rowsIntoBuffer(int cid, const char *types, char **bufptr, int *lcnt)
 	int rbuflen;
 	bool rc = false;
 
-	*bufptr = EMPTYSTRING;
+	*bufptr = emptyString;
 	*lcnt = 0;
 	rbuf = initString(&rbuflen);
 
@@ -1097,7 +1097,7 @@ bool sqlReadRows(const char *filename, char **bufptr)
 {
 	int cid, lcnt;
 
-	*bufptr = EMPTYSTRING;
+	*bufptr = emptyString;
 	if (!ebConnect())
 		return false;
 	if (!setTable())
@@ -1749,7 +1749,7 @@ int goSelect(int *startLine, char **rbuf)
 		MSG_ProcExec
 	};
 
-	*rbuf = EMPTYSTRING;
+	*rbuf = emptyString;
 
 /* Make sure first line begins with ] */
 	line = fetchLine(lineno, -1);

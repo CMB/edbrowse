@@ -186,7 +186,7 @@ static void setFolders(char *r)
 			if (stringEqual(f->name, "Noselect"))
 				continue;
 		} else
-			f->name = EMPTYSTRING;
+			f->name = emptyString;
 /* now get the path */
 		t = strpbrk(s, "\r\n");
 		if (!t)

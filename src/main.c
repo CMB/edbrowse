@@ -14,14 +14,14 @@
 const char *version = "3.5.4+";
 char *userAgents[10], *currentAgent, *currentReferrer;
 const char eol[] = "\r\n";
-char EMPTYSTRING[] = "";
-int debugLevel = 1;
 int jsPool = 32;
 int webTimeout = 20, mailTimeout = 0;
 char *sslCerts;
 int verifyCertificates = 1;
-bool ismc, isimap, browseLocal, passMail, errorExit;
-bool isInteractive, inInput, listNA;
+bool ismc, isimap, passMail;
+bool browseLocal;
+int browseLine;			/* line number for errors */
+bool inInput, listNA;
 volatile bool intFlag;
 int fileSize;
 int localAccount, maxAccount;
@@ -38,11 +38,10 @@ bool caseInsensitive, searchStringsAll;
 bool allowRedirection = true, allowJS = true, sendReferrer = true;
 bool binaryDetect = true, pluginsOn = true;
 bool inputReadLine;
-bool showHiddenFiles, helpMessagesOn;
 uchar dirWrite, endMarks;
 int context = 1;
 uchar linePending[MAXTTYLINE];
-char *changeFileName, *mailDir, *downDir;
+char *changeFileName, *mailDir;
 char *mailUnread, *mailStash, *mailReply;
 char *addressFile;
 char *home, *recycleBin, *configFile, *sigFile, *sigFileEnd;
@@ -968,12 +967,6 @@ void ebClose(int n)
  * and the process is going to exit anyways, so don't worry about it. */
 	exit(n);
 }				/* ebClose */
-
-void eeCheck(void)
-{
-	if (errorExit)
-		ebClose(1);
-}
 
 void setDataSource(char *v)
 {

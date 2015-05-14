@@ -16,6 +16,11 @@
 #include <dirent.h>
 #include <netdb.h>
 
+char emptyString[] = "";
+bool showHiddenFiles, isInteractive;
+int debugLevel = 1;
+char *downDir;
+
 /*********************************************************************
 Allocate and manage memory.
 Allocate and copy strings.
@@ -27,7 +32,7 @@ void *allocMem(size_t n)
 {
 	void *s;
 	if (!n)
-		return EMPTYSTRING;
+		return emptyString;
 	if (!(s = malloc(n)))
 		i_printfExit(MSG_MemAllocError, n);
 	return s;
@@ -37,7 +42,7 @@ void *allocZeroMem(size_t n)
 {
 	void *s;
 	if (!n)
-		return EMPTYSTRING;
+		return emptyString;
 	if (!(s = calloc(n, 1)))
 		i_printfExit(MSG_MemCallocError, n);
 	return s;
@@ -53,7 +58,7 @@ void *reallocMem(void *p, size_t n)
 		i_printfExit(MSG_MemAllocError, n);
 	if (!p)
 		i_printfExit(MSG_Realloc0, n);
-	if (p == EMPTYSTRING)
+	if (p == emptyString)
 		return allocMem(n);
 	if (!(s = realloc(p, n)))
 		i_printfExit(MSG_ErrorRealloc, n);
@@ -62,7 +67,7 @@ void *reallocMem(void *p, size_t n)
 
 void nzFree(void *s)
 {
-	if (s && s != EMPTYSTRING)
+	if (s && s != emptyString)
 		free(s);
 }				/* nzFree */
 
@@ -156,7 +161,7 @@ char *strmove(char *dest, const char *src)
 char *initString(int *l)
 {
 	*l = 0;
-	return EMPTYSTRING;
+	return emptyString;
 }
 
 /* String management routines realloc to one less than a power of 2 */
@@ -253,7 +258,7 @@ char *cloneString(const char *s)
 	if (!s)
 		return 0;
 	if (!*s)
-		return EMPTYSTRING;
+		return emptyString;
 	len = strlen(s) + 1;
 	t = allocMem(len);
 	strcpy(t, s);
@@ -320,7 +325,7 @@ char *pullString(const char *s, int l)
 {
 	char *t;
 	if (!l)
-		return EMPTYSTRING;
+		return emptyString;
 	t = allocMem(l + 1);
 	memcpy(t, s, l);
 	t[l] = 0;
@@ -710,7 +715,7 @@ bool fdIntoMemory(int fd, char **data, int *len)
 		if (n < 0) {
 			nzFree(buf);
 			nzFree(chunk);
-			*data = EMPTYSTRING;
+			*data = emptyString;
 			*len = 0;
 			setError(MSG_NoRead, "file descriptor");
 			return false;
@@ -1298,19 +1303,6 @@ bool envFileDown(const char *line, const char **expanded)
 	*expanded = line2;
 	return true;
 }				/* envFileDown */
-
-/* create the full pathname for a file that you are viewing in directory mode. */
-/* This is static, with a limit on path length. */
-char *makeAbsPath(const char *f)
-{
-	static char path[ABSPATH];
-	if (strlen(cw->baseDirName) + strlen(f) > ABSPATH - 2) {
-		setError(MSG_PathNameLong, ABSPATH);
-		return 0;
-	}
-	sprintf(path, "%s/%s", cw->baseDirName, f);
-	return path;
-}				/* makeAbsPath */
 
 FILE *efopen(const char *name, const char *mode)
 {

@@ -887,6 +887,19 @@ static bool inputLinesIntoBuffer(void)
 	return true;
 }				/* inputLinesIntoBuffer */
 
+/* create the full pathname for a file that you are viewing in directory mode. */
+/* This is static, with a limit on path length. */
+static char *makeAbsPath(const char *f)
+{
+	static char path[ABSPATH];
+	if (strlen(cw->baseDirName) + strlen(f) > ABSPATH - 2) {
+		setError(MSG_PathNameLong, ABSPATH);
+		return 0;
+	}
+	sprintf(path, "%s/%s", cw->baseDirName, f);
+	return path;
+}				/* makeAbsPath */
+
 /* Delete a block of text. */
 void delText(int start, int end)
 {
@@ -1209,7 +1222,7 @@ static bool readFile(const char *filename, const char *post)
 		}
 		serverData = rbuf;
 		fileSize = strlen(rbuf);
-		if (rbuf == EMPTYSTRING)
+		if (rbuf == emptyString)
 			return true;
 		goto intext;
 	}
@@ -1388,7 +1401,7 @@ intext:
 bool readFileArgv(const char *filename)
 {
 	cmd = 'e';
-	return readFile(filename, EMPTYSTRING);
+	return readFile(filename, emptyString);
 }				/* readFileArgv */
 
 /* Write a range to a file. */
@@ -3429,10 +3442,10 @@ static char *showLinks(void)
 					break;
 /* Ok, everything between p and s exclusive is the description */
 			if (!h)
-				h = EMPTYSTRING;
+				h = emptyString;
 			if (stringEqual(h, "#")) {
 				nzFree(h);
-				h = EMPTYSTRING;
+				h = emptyString;
 			}
 
 			if (memEqualCI(h, "mailto:", 7)) {
@@ -4469,7 +4482,7 @@ rebrowse:
 				cw->sqlMode = true;
 			if (icmd == 'g' && !nogo && isURL(line))
 				debugPrint(2, "*%s", line);
-			j = readFile(line, EMPTYSTRING);
+			j = readFile(line, emptyString);
 		}
 		w->undoable = w->changeMode = false;
 		cw = cs->lw;
@@ -4668,7 +4681,7 @@ afterdelete:
 				strmove(strchr(newline, ']') + 1, line);
 				line = newline;
 			}
-			j = readFile(line, EMPTYSTRING);
+			j = readFile(line, emptyString);
 			if (!serverData)
 				fileSize = -1;
 			return j;

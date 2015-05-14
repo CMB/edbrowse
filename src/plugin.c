@@ -150,11 +150,11 @@ char *pluginCommand(const struct MIMETYPE *m,
 	char *cmd, *t;
 
 	if (!suffix)
-		suffix = EMPTYSTRING;
+		suffix = emptyString;
 	if (!infile)
-		infile = EMPTYSTRING;
+		infile = emptyString;
 	if (!outfile)
-		outfile = EMPTYSTRING;
+		outfile = emptyString;
 
 	len = 0;
 	for (s = m->program; *s; ++s) {

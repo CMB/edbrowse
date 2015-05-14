@@ -11,7 +11,7 @@ bool sqlPresent = false;
 bool sqlReadRows(const char *filename, char **bufptr)
 {
 	setError(MSG_DBNotCompiled);
-	*bufptr = EMPTYSTRING;
+	*bufptr = emptyString;
 	return false;
 }				/* sqlReadRows */
 
@@ -51,6 +51,6 @@ bool ebConnect(void)
 
 int goSelect(int *startLine, char **rbuf)
 {
-	*rbuf = EMPTYSTRING;
+	*rbuf = emptyString;
 	return -1;
 }				/* goSelect */

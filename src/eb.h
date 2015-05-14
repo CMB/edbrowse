@@ -147,7 +147,7 @@ typedef uchar *pst;		/* perl string */
 /* the version of edbrowse */
 extern const char *version;
 extern const char eol[];	/* internet end of line */
-extern char EMPTYSTRING[];	/* use this whenever you would use "" */
+extern char emptyString[];	/* use this whenever you would use "" */
 
 /* Here are the strings you can send out to identify this browser.
  * Most of the time we will send out the first string, edbrowse-2.15.3.

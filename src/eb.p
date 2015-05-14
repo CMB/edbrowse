@@ -111,14 +111,13 @@ void extractEmailAddresses(char *line) ;
 void cutDuplicateEmails(char *tolist, char *cclist, const char *reply) ;
 bool looksBinary(const char *buf, int buflen) ;
 void looks_8859_utf8(const char *buf, int buflen, bool * iso_p, bool * utf8_p) ;
-void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
-void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
 uchar base64Bits(char c);
 char *base64Encode(const char *inbuf, int inlen, bool lines);
 int base64Decode(char *start, char **end);
 void iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
+bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l);
 
-/* sourcefile=html.cpp */
+/* sourcefile=html.c */
 void freeTags(struct ebWindow *w) ;
 bool tagHandler(int seqno, const char *name) ;
 void jSideEffects(void) ;
@@ -139,6 +138,8 @@ void javaSubmitsForm(jsobjtype v, bool reset) ;
 void javaOpensWindow(const char *href, const char *name) ;
 void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval) ;
 bool handlerGoBrowse(const struct htmlTag *t, const char *name) ;
+void browseError(int msg, ...) ;
+void runningError(int msg, ...) ;
 
 /* sourcefile=http.c */
 size_t eb_curl_callback(char *incoming, size_t size, size_t nitems, struct eb_curl_callback_data *data) ;
@@ -152,12 +153,14 @@ void setHTTPLanguage(const char *lang) ;
 void http_curl_init(void) ;
 int ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data, size_t size, void *unused) ;
 int bg_jobs(bool iponly);
+void addNovsHost(char *host) ;
+CURLcode setCurlURL(CURL * h, const char *url) ;
+const char *findProxyForURL(const char *url) ;
 
 /* sourcefile=main.c */
 const char *mailRedirect(const char *to, const char *from, const char *reply, const char *subj) ;
 bool javaOK(const char *url) ;
 void ebClose(int n) ;
-void eeCheck(void) ;
 void setDataSource(char *v) ;
 bool runEbFunction(const char *line) ;
 struct DBTABLE *findTableDescriptor(const char *sn) ;
@@ -175,7 +178,10 @@ bool playServerData(void);
 char *runPluginConverter(const char *buf, int buflen);
 
 /* sourcefile=messages.c */
+void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
+void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
 void selectLanguage(void) ;
+const char *i_getString(int msg);
 void i_puts(int msg) ;
 void i_printf(int msg, ...) ;
 void i_printfExit(int msg, ...) ;
@@ -184,9 +190,10 @@ void setError(int msg, ...) ;
 void showError(void) ;
 void showErrorConditional(char cmd) ;
 void showErrorAbort(void) ;
-void browseError(int msg, ...) ;
-void runningError(int msg, ...) ;
+#if 0
 void i_caseShift(unsigned char *s, char action) ;
+#endif
+void eeCheck(void) ;
 
 /* sourcefile=sendmail.c */
 bool loadAddressBook(void) ;
@@ -270,7 +277,6 @@ const char *nextScanFile(const char *base) ;
 bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p) ;
 bool envFile(const char *line, const char **expanded);
 bool envFileDown(const char *line, const char **expanded) ;
-char *makeAbsPath(const char *f);
 FILE *efopen(const char *name, const char *mode) ;
 int eopen(const char *name, int mode, int perms) ;
 void appendFile(const char *fname, const char *message, ...) ;
@@ -304,8 +310,4 @@ char *altText(const char *base) ;
 char *encodePostData(const char *s) ;
 char *decodePostData(const char *data, const char *name, int seqno) ;
 void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p) ;
-bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l);
-const char *findProxyForURL(const char *url) ;
-void addNovsHost(char *host) ;
-CURLcode setCurlURL(CURL * h, const char *url) ;
 

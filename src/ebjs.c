@@ -509,7 +509,7 @@ static int writeHeader(void)
 static const char *debugString(const char *v)
 {
 	if (!v)
-		return EMPTYSTRING;
+		return emptyString;
 	if (strlen(v) > 100)
 		return "long";
 	return v;
@@ -720,7 +720,7 @@ char *get_property_string(jsobjtype obj, const char *name)
 	s = propval;
 	propval = 0;
 	if (!s && proptype == EJ_PROP_STRING)
-		s = EMPTYSTRING;
+		s = emptyString;
 	return s;
 }				/* get_property_string */
 
@@ -854,7 +854,7 @@ static int set_property(jsobjtype obj, const char *name,
 int set_property_string(jsobjtype obj, const char *name, const char *value)
 {
 	if (value == NULL)
-		value = EMPTYSTRING;
+		value = emptyString;
 	return set_property(obj, name, value, EJ_PROP_STRING);
 }				/* set_property_string */
 
@@ -982,7 +982,7 @@ jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname)
 	head.obj = parent;
 	head.proptype = EJ_PROP_INSTANCE;
 	if (!classname)
-		classname = EMPTYSTRING;
+		classname = emptyString;
 	head.proplength = strlen(classname);
 	head.n = strlen(name);
 	if (writeHeader())
@@ -1007,7 +1007,7 @@ jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname)
 int set_property_function(jsobjtype parent, const char *name, const char *body)
 {
 	if (!body)
-		body = EMPTYSTRING;
+		body = emptyString;
 	return set_property(parent, name, body, EJ_PROP_FUNCTION);
 /* should this really return the function created, like instantiate()? */
 }				/* set_property_function */
@@ -1134,7 +1134,7 @@ void domLink(const char *classname,	/* instantiate this class */
 	const char *htmlclass = topTag->classname;
 
 	debugPrint(5, "domLink %s.%d name %s",
-		   classname, radiosel, (symname ? symname : EMPTYSTRING));
+		   classname, radiosel, (symname ? symname : emptyString));
 
 	if (symname && has_property(owner, symname)) {
 /*********************************************************************
@@ -1628,7 +1628,7 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
  * Don't know, so I'm going to do it here. */
 	s = displayOptions(sel);
 	if (!s)
-		s = EMPTYSTRING;
+		s = emptyString;
 	nzFree(sel->value);
 	sel->value = s;
 	set_property_string(sel->jv, "value", s);
@@ -1758,7 +1758,7 @@ jsobjtype establish_js_option(jsobjtype obj, int idx)
 void establish_inner(jsobjtype obj, const char *start, const char *end,
 		     bool isText)
 {
-	const char *s = EMPTYSTRING;
+	const char *s = emptyString;
 	const char *name = (isText ? "innerText" : "innerHTML");
 	if (start)
 		s = pullString(start, end - start);

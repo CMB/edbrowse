@@ -351,7 +351,7 @@ char *extractHeaderParam(const char *str, const char *item)
 		while (*s && ((uchar) * s <= ' ' || *s == '='))
 			s++;
 		if (!*s)
-			return EMPTYSTRING;
+			return emptyString;
 		lp = 0;
 		while ((uchar) s[lp] >= ' ' && s[lp] != ';')
 			lp++;
@@ -906,7 +906,7 @@ perform:
 					goto curl_fail;
 
 				nzFree(serverData);
-				serverData = EMPTYSTRING;
+				serverData = emptyString;
 				serverDataLen = 0;
 				redirect_count += 1;
 				still_fetching = true;
@@ -929,7 +929,7 @@ perform:
 				curl_easy_setopt(http_curl_handle,
 						 CURLOPT_USERPWD, creds_buf);
 				nzFree(serverData);
-				serverData = EMPTYSTRING;
+				serverData = emptyString;
 				serverDataLen = 0;
 			} else {
 /* User aborted the login process, try and at least get something. */
@@ -1120,7 +1120,7 @@ void ebcurl_setError(CURLcode curlret, const char *url)
 
 /* this should never happen */
 	if (!host)
-		host = EMPTYSTRING;
+		host = emptyString;
 
 	switch (curlret) {
 
@@ -1839,3 +1839,121 @@ int bg_jobs(bool iponly)
 
 	return numback;
 }				/* bg_jobs */
+
+static char **novs_hosts;
+size_t novs_hosts_avail;
+size_t novs_hosts_max;
+
+void addNovsHost(char *host)
+{
+	if (novs_hosts_max == 0) {
+		novs_hosts_max = 32;
+		novs_hosts = allocZeroMem(novs_hosts_max * sizeof(char *));
+	} else if (novs_hosts_avail >= novs_hosts_max) {
+		novs_hosts_max *= 2;
+		novs_hosts =
+		    reallocMem(novs_hosts, novs_hosts_max * sizeof(char *));
+	}
+	novs_hosts[novs_hosts_avail++] = host;
+}				/* addNovsHost */
+
+/* Return true if the cert for this host should be verified. */
+static bool mustVerifyHost(const char *host)
+{
+	size_t this_host_len = strlen(host);
+	size_t i;
+
+	if (!verifyCertificates)
+		return false;
+
+	for (i = 0; i < novs_hosts_avail; i++) {
+		size_t l1 = strlen(novs_hosts[i]);
+		size_t l2 = this_host_len;
+		if (l1 > l2)
+			continue;
+		l2 -= l1;
+		if (!stringEqualCI(novs_hosts[i], host + l2))
+			continue;
+		if (l2 && host[l2 - 1] != '.')
+			continue;
+		return false;
+	}
+	return true;
+}				/* mustVerifyHost */
+
+CURLcode setCurlURL(CURL * h, const char *url)
+{
+	const char *proxy = findProxyForURL(url);
+	if (!proxy)
+		proxy = "";
+	else
+		debugPrint(3, "proxy %s", proxy);
+	const char *host = getHostURL(url);
+	unsigned long verify = mustVerifyHost(host);
+	curl_easy_setopt(h, CURLOPT_PROXY, proxy);
+	curl_easy_setopt(h, CURLOPT_SSL_VERIFYPEER, verify);
+	curl_easy_setopt(h, CURLOPT_SSL_VERIFYHOST, verify);
+	return curl_easy_setopt(h, CURLOPT_URL, url);
+}				/* setCurlURL */
+
+/*********************************************************************
+Given a protocol and a domain, find the proxy server
+to mediate your request.
+This is the C version, using entries in .ebrc.
+There is a javascript version of the same name, that we will support later.
+This is a beginning, and it can be used even when javascript is disabled.
+A return of null means DIRECT, and this is the default
+if we don't match any of the proxy entries.
+*********************************************************************/
+
+static const char *findProxyInternal(const char *prot, const char *domain)
+{
+	struct PXENT *px = proxyEntries;
+	int i;
+
+/* first match wins */
+	for (i = 0; i < maxproxy; ++i, ++px) {
+
+		if (px->prot) {
+			char *s = px->prot;
+			char *t;
+			int rc;
+			while (*s) {
+				t = strchr(s, '|');
+				if (t)
+					*t = 0;
+				rc = stringEqualCI(s, prot);
+				if (t)
+					*t = '|';
+				if (rc)
+					goto domain;
+				if (!t)
+					break;
+				s = t + 1;
+			}
+			continue;
+		}
+
+domain:
+		if (px->domain) {
+			int l1 = strlen(px->domain);
+			int l2 = strlen(domain);
+			if (l1 > l2)
+				continue;
+			l2 -= l1;
+			if (!stringEqualCI(px->domain, domain + l2))
+				continue;
+			if (l2 && domain[l2 - 1] != '.')
+				continue;
+		}
+
+		return px->proxy;
+	}
+
+	return 0;
+}				/* findProxyInternal */
+
+const char *findProxyForURL(const char *url)
+{
+	return findProxyInternal(getProtURL(url), getHostURL(url));
+}				/* findProxyForURL */

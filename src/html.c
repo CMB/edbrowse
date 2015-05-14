@@ -31,12 +31,11 @@ struct htmlTag *topTag;
 static char *topAttrib;
 static char *basehref;
 static struct htmlTag *currentForm;	/* the open form */
-int browseLine;			/* for error reporting */
 static jsobjtype js_reset, js_submit;
 static char *radioCheck;
 static int radio_l;
 static char *preamble;
-int preamble_l;
+static int preamble_l;
 
 /* paranoia check on the number of tags */
 static void tagCountCheck(void)
@@ -436,7 +435,7 @@ static void htmlMeta(void)
 
 	name = topTag->name;
 	content = htmlAttrVal(topAttrib, "content");
-	if (content == EMPTYSTRING)
+	if (content == emptyString)
 		content = 0;
 
 	domLink("Meta", 0, "metas", cw->docobj, 0);
@@ -444,7 +443,7 @@ static void htmlMeta(void)
 		set_property_string(topTag->jv, "content", content);
 
 	heq = htmlAttrVal(topAttrib, "http-equiv");
-	if (heq == EMPTYSTRING)
+	if (heq == emptyString)
 		heq = 0;
 
 	if (heq && content) {
@@ -498,13 +497,13 @@ static void htmlName(void)
 	char *name = htmlAttrVal(topAttrib, "name");
 	char *id = htmlAttrVal(topAttrib, "id");
 	char *classname = htmlAttrVal(topAttrib, "class");
-	if (name == EMPTYSTRING)
+	if (name == emptyString)
 		name = 0;
 	topTag->name = name;
-	if (id == EMPTYSTRING)
+	if (id == emptyString)
 		id = 0;
 	topTag->id = id;
-	if (classname == EMPTYSTRING)
+	if (classname == emptyString)
 		classname = 0;
 	topTag->classname = classname;
 }				/* htmlName */
@@ -512,7 +511,7 @@ static void htmlName(void)
 static void htmlHref(const char *desc)
 {
 	char *h = hrefVal(topAttrib, desc);
-	if (h == EMPTYSTRING) {
+	if (h == emptyString) {
 		h = 0;
 		if (topTag->action == TAGACT_A)
 			h = cloneString("#");
@@ -910,7 +909,7 @@ static void htmlInput(void)
 /* This makes it easy to push the reset button. */
 	s = htmlAttrVal(topAttrib, "value");
 	if (!s)
-		s = EMPTYSTRING;
+		s = emptyString;
 	topTag->value = s;
 	if (n >= INP_RADIO && htmlAttrPresent(topAttrib, "checked")) {
 		char namebuf[200];
@@ -1802,7 +1801,7 @@ nextchar:
 		t->ln = browseLine;
 		t->action = action;	/* we might change this later */
 		j = end - attrib;
-		topAttrib = t->attrib = j ? pullString(attrib, j) : EMPTYSTRING;
+		topAttrib = t->attrib = j ? pullString(attrib, j) : emptyString;
 
 		open = 0;
 		if (ti->nest && slash) {
@@ -3231,9 +3230,9 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 	const char *ct, *ce;	/* content type, content encoding */
 
 	if (!name)
-		name = EMPTYSTRING;
+		name = emptyString;
 	if (!val)
-		val = EMPTYSTRING;
+		val = emptyString;
 	if (!*name && !*val)
 		return true;
 
@@ -3821,3 +3820,41 @@ bool handlerGoBrowse(const struct htmlTag *t, const char *name)
 		return true;
 	return run_function_bool(t->jv, name);
 }				/* handlerGoBrowse */
+
+void browseError(int msg, ...)
+{
+	va_list p;
+	if (ismc)
+		return;
+	if (browseLocal != 1)
+		return;
+	if (browseLine) {
+		i_printf(MSG_LineX, browseLine);
+		cw->labels[4] = browseLine;
+	} else
+		i_printf(MSG_BrowseError);
+	va_start(p, msg);
+	vprintf(i_getString(msg), p);
+	va_end(p);
+	nl();
+	browseLocal = 2;
+}				/* browseError */
+
+/* Javascript errors, we need to see these no matter what. */
+void runningError(int msg, ...)
+{
+	va_list p;
+	if (ismc)
+		return;
+	if (debugLevel <= 2)
+		return;
+	if (browseLine) {
+		i_printf(MSG_LineX, browseLine);
+		cw->labels[4] = browseLine;
+	}
+	va_start(p, msg);
+	vprintf(i_getString(msg), p);
+	va_end(p);
+	nl();
+	browseLocal = 2;
+}				/* runningError */
