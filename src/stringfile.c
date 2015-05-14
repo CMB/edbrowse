@@ -388,45 +388,6 @@ bool stringIsFloat(const char *s, double *dp)
 	return true;
 }				/* stringIsFloat */
 
-bool isSQL(const char *s)
-{
-	char c;
-	const char *c1 = 0, *c2 = 0;
-	c = *s;
-
-	if (!sqlPresent)
-		goto no;
-
-	if (isURL(s))
-		goto no;
-
-	if (!isalphaByte(c))
-		goto no;
-
-	for (++s; c = *s; ++s) {
-		if (c == '_')
-			continue;
-		if (isalnumByte(c))
-			continue;
-		if (c == ':') {
-			if (c1)
-				goto no;
-			c1 = s;
-			continue;
-		}
-		if (c == ']') {
-			c2 = s;
-			goto yes;
-		}
-	}
-
-no:
-	return false;
-
-yes:
-	return true;
-}				/* isSQL */
-
 bool memEqualCI(const char *s, const char *t, int len)
 {
 	char c, d;
