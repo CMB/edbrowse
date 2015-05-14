@@ -66,6 +66,9 @@ typedef uchar bool;
 typedef unsigned int IP32bit;
 #define NULL_IP (IP32bit)(-1)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /*********************************************************************
 Include the header file that connects edbrowse to the js process.
 This is a series of enums, and the interprocess message structure,
@@ -474,4 +477,7 @@ extern struct htmlTag *topTag;
 /* Symbolic constants for language independent messages */
 #include "messages.h"
 
+#ifdef __cplusplus
+}
+#endif
 #endif
