@@ -80,8 +80,20 @@ clean:
 jseng-moz.o: jseng-moz.cpp
 	$(CXX) -c $(CXXFLAGS) $(JS_CXXFLAGS) $^ -o $@
 
-edbrowse-js : jseng-moz.o
-	$(LINK.o) $^ $(LOADLIBES) $(JSLIB) -lstdc++ -o $@
+#  Source files shared between edbrowse and other C++ processes.
+messages++.o: messages.c
+	$(CXX) -c $(CXXFLAGS) messages.c -o $@
+
+url++.o: url.c
+	$(CXX) -c $(CXXFLAGS) url.c -o $@
+
+stringfile++.o: stringfile.c
+	$(CXX) -c $(CXXFLAGS) stringfile.c -o $@
+
+messages++.o stringfile++.o url++.o : eb.h eb.p messages.h ebjs.h
+
+edbrowse-js : jseng-moz.o messages++.o url++.o stringfile++.o
+	$(LINK.o) jseng-moz.o messages++.o url++.o stringfile++.o $(LOADLIBES) $(JSLIB) -lstdc++ -o $@
 
 #  some hello world targets, for testing and debugging
 

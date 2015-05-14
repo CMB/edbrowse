@@ -57,9 +57,11 @@ typedef unsigned long ulong;
 typedef unsigned char uchar;
 
 /* We use unsigned char for boolean fields. */
+#ifndef __cplusplus
 typedef uchar bool;
 #define false 0
 #define true 1
+#endif
 
 typedef unsigned int IP32bit;
 #define NULL_IP (IP32bit)(-1)

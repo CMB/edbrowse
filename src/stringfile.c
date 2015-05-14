@@ -65,6 +65,22 @@ void *reallocMem(void *p, size_t n)
 	return s;
 }				/* reallocMem */
 
+/* When you know the allocated thing is a string. */
+char *allocString(size_t n)
+{
+	return (char *)allocMem(n);
+}				/* allocString */
+
+char *allocZeroString(size_t n)
+{
+	return (char *)allocZeroMem(n);
+}				/* allocZeroString */
+
+char *reallocString(void *p, size_t n)
+{
+	return (char *)reallocMem(p, n);
+}				/* reallocString */
+
 void nzFree(void *s)
 {
 	if (s && s != emptyString)
@@ -86,7 +102,7 @@ char *appendString(char *s, const char *p)
 {
 	int slen = strlen(s);
 	int plen = strlen(p);
-	s = reallocMem(s, slen + plen + 1);
+	s = reallocString(s, slen + plen + 1);
 	strcpy(s + slen, p);
 	return s;
 }				/* appendstring */
@@ -95,7 +111,7 @@ char *prependString(char *s, const char *p)
 {
 	int slen = strlen(s);
 	int plen = strlen(p);
-	char *t = allocMem(slen + plen + 1);
+	char *t = allocString(slen + plen + 1);
 	strcpy(t, p);
 	strcpy(t + plen, s);
 	nzFree(s);
@@ -149,7 +165,7 @@ void spaceCrunch(char *s, bool onespace, bool unprint)
 /* Like strcpy, but able to cope with overlapping strings. */
 char *strmove(char *dest, const char *src)
 {
-	return memmove(dest, src, strlen(src) + 1);
+	return (char *)memmove(dest, src, strlen(src) + 1);
 }				/* strmove */
 
 /* OO has a lot of unnecessary overhead, and a few inconveniences,
@@ -180,7 +196,7 @@ void stringAndString(char **s, int *l, const char *t)
 		newlen |= (newlen >> 4);
 		newlen |= (newlen >> 8);
 		newlen |= (newlen >> 16);
-		p = reallocMem(p, newlen);
+		p = reallocString(p, newlen);
 		*s = p;
 	}
 	strcpy(p + oldlen, t);
@@ -201,7 +217,7 @@ void stringAndBytes(char **s, int *l, const char *t, int cnt)
 		newlen |= (newlen >> 4);
 		newlen |= (newlen >> 8);
 		newlen |= (newlen >> 16);
-		p = reallocMem(p, newlen);
+		p = reallocString(p, newlen);
 		*s = p;
 	}
 	memcpy(p + oldlen, t, cnt);
@@ -223,7 +239,7 @@ void stringAndChar(char **s, int *l, char c)
 		newlen |= (newlen >> 4);
 		newlen |= (newlen >> 8);
 		newlen |= (newlen >> 16);
-		p = reallocMem(p, newlen);
+		p = reallocString(p, newlen);
 		*s = p;
 	}
 	p[oldlen] = c;
@@ -260,14 +276,14 @@ char *cloneString(const char *s)
 	if (!*s)
 		return emptyString;
 	len = strlen(s) + 1;
-	t = allocMem(len);
+	t = allocString(len);
 	strcpy(t, s);
 	return t;
 }				/* cloneString */
 
 char *cloneMemory(const char *s, int n)
 {
-	char *t = allocMem(n);
+	char *t = allocString(n);
 	if (n)
 		memcpy(t, s, n);
 	return t;
@@ -309,7 +325,7 @@ void shiftRight(char *s, char first)
 char *Cify(const char *s, int n)
 {
 	char *u;
-	char *t = allocMem(n + 1);
+	char *t = allocString(n + 1);
 	if (n)
 		memcpy(t, s, n);
 	for (u = t; u < t + n; ++u)
@@ -326,7 +342,7 @@ char *pullString(const char *s, int l)
 	char *t;
 	if (!l)
 		return emptyString;
-	t = allocMem(l + 1);
+	t = allocString(l + 1);
 	memcpy(t, s, l);
 	t[l] = 0;
 	return t;
@@ -491,7 +507,7 @@ int charInList(const char *list, char c)
 	char *s;
 	if (!list)
 		i_printfExit(MSG_NullCharInList);
-	s = strchr(list, c);
+	s = (char *)strchr(list, c);
 	if (!s)
 		return -1;
 	return s - list;
@@ -511,37 +527,37 @@ void initList(struct listHead *l)
 
 void delFromList(void *x)
 {
-	struct listHead *xh = x;
+	struct listHead *xh = (struct listHead *)x;
 	((struct listHead *)xh->next)->prev = xh->prev;
 	((struct listHead *)xh->prev)->next = xh->next;
 }				/* delFromList */
 
 void addToListFront(struct listHead *l, void *x)
 {
-	struct listHead *xh = x;
+	struct listHead *xh = (struct listHead *)x;
 	xh->next = l->next;
 	xh->prev = l;
-	l->next = x;
-	((struct listHead *)xh->next)->prev = x;
+	l->next = (struct listHead *)x;
+	((struct listHead *)xh->next)->prev = (struct listHead *)x;
 }				/* addToListFront */
 
 void addToListBack(struct listHead *l, void *x)
 {
-	struct listHead *xh = x;
+	struct listHead *xh = (struct listHead *)x;
 	xh->prev = l->prev;
 	xh->next = l;
-	l->prev = x;
-	((struct listHead *)xh->prev)->next = x;
+	l->prev = (struct listHead *)x;
+	((struct listHead *)xh->prev)->next = (struct listHead *)x;
 }				/* addToListBack */
 
 void addAtPosition(void *p, void *x)
 {
-	struct listHead *xh = x;
-	struct listHead *ph = p;
+	struct listHead *xh = (struct listHead *)x;
+	struct listHead *ph = (struct listHead *)p;
 	xh->prev = p;
 	xh->next = ph->next;
-	ph->next = x;
-	((struct listHead *)xh->next)->prev = x;
+	ph->next = (struct listHead *)x;
+	((struct listHead *)xh->next)->prev = (struct listHead *)x;
 }				/* addAtPosition */
 
 void freeList(struct listHead *l)
@@ -642,7 +658,7 @@ pst clonePstring(pst s)
 	if (!s)
 		return s;
 	len = pstLength(s);
-	t = allocMem(len);
+	t = (pst) allocMem(len);
 	memcpy(t, s, len);
 	return t;
 }				/* clonePstring */
@@ -667,7 +683,7 @@ bool fdIntoMemory(int fd, char **data, int *len)
 	const int blocksize = 8192;
 	char *chunk, *buf;
 
-	chunk = allocZeroMem(blocksize);
+	chunk = allocZeroString(blocksize);
 	buf = initString(&length);
 
 	n = 0;
@@ -687,7 +703,7 @@ bool fdIntoMemory(int fd, char **data, int *len)
 	} while (n != 0);
 
 	nzFree(chunk);
-	buf = reallocMem(buf, length + 2);
+	buf = reallocString(buf, length + 2);
 	*data = buf;
 	*len = length;
 	return true;
@@ -961,6 +977,7 @@ char getLetter(const char *s)
 char *getFileName(int msg, const char *defname, bool isnew, bool ws)
 {
 	static char buf[ABSPATH];
+	static char spacename[] = " ";
 	int l;
 	char *p;
 	bool allspace;
@@ -981,7 +998,7 @@ char *getFileName(int msg, const char *defname, bool isnew, bool ws)
 		p[l] = 0;
 		if (!l) {
 			if (ws & allspace)
-				return " ";
+				return spacename;
 			if (!defname)
 				continue;
 /* make a copy just to be safe */
@@ -1063,8 +1080,8 @@ const char *nextScanFile(const char *base)
 /* compare routine for quicksort */
 static int dircmp(const void *s, const void *t)
 {
-	return strcoll(((const struct lineMap *)s)->text,
-		       ((const struct lineMap *)t)->text);
+	return strcoll((const char *)((const struct lineMap *)s)->text,
+		       (const char *)((const struct lineMap *)t)->text);
 }				/* dircmp */
 
 bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
@@ -1074,16 +1091,16 @@ bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
 	struct lineMap *t, *map;
 
 	cap = 128;
-	map = t = allocZeroMem(cap * LMSIZE);
+	map = t = (struct lineMap *)allocZeroMem(cap * LMSIZE);
 
 	while (f = nextScanFile(dir)) {
 		if (linecount == cap) {
 			cap *= 2;
-			map = reallocMem(map, cap * LMSIZE);
+			map = (struct lineMap *)reallocMem(map, cap * LMSIZE);
 			t = map + linecount;
 		}
 /* leave room for @ / newline */
-		t->text = allocMem(strlen(f) + 3);
+		t->text = (pst) allocMem(strlen(f) + 3);
 		strcpy((char *)t->text, f);
 		t->ds1 = t->ds2 = 0;
 		++t, ++linecount;

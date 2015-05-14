@@ -5,8 +5,8 @@
 
 #include "eb.h"
 
-struct {
-	char *prot;
+struct PROTOCOL {
+	const char prot[12];
 	int port;
 	bool free_syntax;
 	bool need_slashes;
@@ -43,15 +43,14 @@ struct {
 	"gopher", 70, false, false, false}, {
 	"magnet", 0, false, false, false}, {
 	"irc", 0, false, false, false}, {
-	NULL, 0}
-};
+"", 0},};
 
 static bool free_syntax;
 
 static int protocolByName(const char *p, int l)
 {
 	int i;
-	for (i = 0; protocols[i].prot; i++)
+	for (i = 0; protocols[i].prot[0]; i++)
 		if (memEqualCI(protocols[i].prot, p, l))
 			return i;
 	return -1;
@@ -522,8 +521,8 @@ char *findHash(const char *s)
 	const char *t = strrchr(s, '/');
 	if (t)
 		s = t;
-	return strchr(s, '#');
-}				/* chopHash */
+	return (char *)strchr(s, '#');
+}				/* findHash */
 
 /* extract the file piece of a pathname or url */
 /* This is for debugPrint or w/, so could be chopped for convenience */
@@ -597,22 +596,6 @@ bool isProxyURL(const char *url)
 }
 
 /*
- * hasPrefix: return true if s has a prefix of p, false otherwise.
- */
-static bool hasPrefix(char *s, char *p)
-{
-	bool ret = false;
-	if (!p[0])
-		ret = true;	/* Empty string is a prefix of all strings. */
-	else {
-		size_t slen = strlen(s);
-		size_t plen = strlen(p);
-		ret = (plen <= slen) && !strncmp(p, s, plen);
-	}
-	return ret;
-}				/* hasPrefix */
-
-/*
  * copyPathSegment: copy everything from *src, starting with the leftmost
  * character (a slash), and ending with either the next slash (not included)
  * or the end of the string.
@@ -672,13 +655,13 @@ static void squashDirectories(char *url)
 /* We can ignore several steps because of a loop invariant: */
 /* After the test, *s is always a slash. */
 	while (*s) {
-		if (hasPrefix(s, "/./"))
+		if (!strncmp(s, "/./", 3))
 			s += 2;	/* Point s at 2nd slash */
 		else if (!strcmp(s, "/.")) {
 			s[1] = '\0';
 			/* We'll copy the segment "/" on the next iteration. */
 			/* And that will be the final iteration of the loop. */
-		} else if (hasPrefix(s, "/../")) {
+		} else if (!strncmp(s, "/../", 4)) {
 			s += 3;	/* Point s at 2nd slash */
 			snipLastSegment(&outPath, &outPathLen);
 		} else if (!strcmp(s, "/..")) {
@@ -708,7 +691,7 @@ char *resolveURL(const char *base, const char *rel)
 
 	if (!base)
 		base = emptyString;
-	n = allocMem(strlen(base) + strlen(rel) + 12);
+	n = allocString(strlen(base) + strlen(rel) + 12);
 	debugPrint(5, "resolve(%s|%s)", base, rel);
 
 	if (rel[0] == '#' && !strchr(rel, '/')) {
@@ -977,7 +960,7 @@ static char dohex(char c, const char **sp)
 char *decodePostData(const char *data, const char *name, int seqno)
 {
 	const char *s, *n, *t;
-	char *new = 0, *w = 0;
+	char *ns = 0, *w = 0;
 	int j = 0;
 	char c;
 
@@ -992,7 +975,7 @@ char *decodePostData(const char *data, const char *name, int seqno)
 /* select attribute by number */
 		++j;
 		if (j == seqno)
-			w = new = allocMem(t - s + 1);
+			w = ns = allocString(t - s + 1);
 		if (seqno && !w)
 			continue;
 		if (name)
@@ -1022,7 +1005,7 @@ char *decodePostData(const char *data, const char *name, int seqno)
 			if (name)
 				continue;
 			*w = 0;
-			return new;
+			return ns;
 		}
 		if (w)
 			*w++ = c;
@@ -1032,7 +1015,7 @@ char *decodePostData(const char *data, const char *name, int seqno)
 				continue;
 			if (*n)
 				continue;
-			w = new = allocMem(t - s + 1);
+			w = ns = allocString(t - s + 1);
 		}
 
 /* At this point we have a match */
@@ -1042,7 +1025,7 @@ char *decodePostData(const char *data, const char *name, int seqno)
 			*w++ = c;
 		}
 		*w = 0;
-		return new;
+		return ns;
 	}
 
 	return 0;
@@ -1051,7 +1034,6 @@ char *decodePostData(const char *data, const char *name, int seqno)
 void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p)
 {
 	const char *s;
-	char *new;
 	if (memEqualCI(url, "mailto:", 7))
 		url += 7;
 	s = url + strcspn(url, "/?");

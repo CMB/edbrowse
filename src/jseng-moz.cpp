@@ -27,7 +27,7 @@ Exit codes are as follows:
 99 memory allocation error or heap corruption
 *********************************************************************/
 
-#include "ebjs.h"
+#include "eb.h"
 
 #include <limits>
 #include <iostream>
@@ -52,501 +52,12 @@ Exit codes are as follows:
 
 using namespace std;
 
-/* Functions copied from stringfile.c */
-
-#define stringEqual !strcmp
-
-static const char emptyString[] = "";
-
-static bool stringEqualCI(const char *s, const char *t)
+/* This function closes edbrowse down, e.g. after malloc failure,
+ * it is just a stub for exit here. */
+void ebClose(int n)
 {
-	char c, d;
-	while ((c = *s) && (d = *t)) {
-		if (islower(c))
-			c = toupper(c);
-		if (islower(d))
-			d = toupper(d);
-		if (c != d)
-			return false;
-		++s, ++t;
-	}
-	if (*s)
-		return false;
-	if (*t)
-		return false;
-	return true;
-}				/* stringEqualCI */
-
-static bool memEqualCI(const char *s, const char *t, int len)
-{
-	char c, d;
-	while (len--) {
-		c = *s, d = *t;
-		if (islower(c))
-			c = toupper(c);
-		if (islower(d))
-			d = toupper(d);
-		if (c != d)
-			return false;
-		++s, ++t;
-	}
-	return true;
-}				/* memEqualCI */
-
-static int stringInListCI(const char *const *list, const char *s)
-{
-	int i = 0;
-	if (!s)
-		return -1;
-	while (*list) {
-		if (stringEqualCI(s, *list))
-			return i;
-		++i;
-		++list;
-	}
-	return -1;
-}				/* stringInListCI */
-
-static char *allocMem(size_t n)
-{
-	char *s;
-	if (!n)
-		return (char *)emptyString;
-	if (!(s = (char *)malloc(n))) {
-		cerr << "malloc failure in edbrowse-js, " << n << " bytes.\n";
-		exit(99);
-	}
-	return s;
-}				/* allocMem */
-
-static void nzFree(const void *s)
-{
-	if (s && s != emptyString)
-		free((void *)s);
-}				/* nzFree */
-
-static char *cloneString(const char *s)
-{
-	char *t;
-	unsigned len;
-
-	if (!s)
-		return 0;
-	if (!*s)
-		return (char *)emptyString;
-	len = strlen(s) + 1;
-	t = allocMem(len);
-	strcpy(t, s);
-	return t;
-}				/* cloneString */
-
-static void skipWhite(const char **s)
-{
-	const char *t = *s;
-	while (isspace(*t))
-		++t;
-	*s = t;
-}				/* skipWhite */
-
-static int stringIsNum(const char *s)
-{
-	int n;
-	if (!isdigit(s[0]))
-		return -1;
-	n = strtol(s, (char **)&s, 10);
-	if (*s)
-		return -1;
-	return n;
-}				/* stringIsNum */
-
-static bool stringIsFloat(const char *s, double *dp)
-{
-	const char *t;
-	*dp = strtod(s, (char **)&t);
-	if (*t)
-		return false;	/* extra stuff at the end */
-	return true;
-}				/* stringIsFloat */
-
-/* Functions copied from url.c */
-
-static struct {
-	const char *prot;
-	int port;
-	bool free_syntax;
-	bool need_slashes;
-	bool need_slash_after_host;
-} protocols[] = {
-	{
-	"file", 0, true, true, false}, {
-	"http", 80, false, true, true}, {
-	"https", 443, false, true, true}, {
-	"pop3", 110, false, true, true}, {
-	"pop3s", 995, false, true, true}, {
-	"smtp", 25, false, true, true}, {
-	"submission", 587, false, true, true}, {
-	"smtps", 465, false, true, true}, {
-	"proxy", 3128, false, true, true}, {
-	"ftp", 21, false, true, true}, {
-	"sftp", 22, false, true, true}, {
-	"ftps", 990, false, true, true}, {
-	"tftp", 69, false, true, true}, {
-	"rtsp", 554, false, true, true}, {
-	"pnm", 7070, false, true, true}, {
-	"finger", 79, false, true, true}, {
-	"smb", 139, false, true, true}, {
-	"mailto", 0, false, false, false}, {
-	"telnet", 23, false, false, false}, {
-	"tn3270", 0, false, false, false}, {
-	"javascript", 0, true, false, false}, {
-	"git", 0, false, false, false}, {
-	"svn", 0, false, false, false}, {
-	"gopher", 70, false, false, false}, {
-	"magnet", 0, false, false, false}, {
-	"irc", 0, false, false, false}, {
-	NULL, 0}
-};
-
-static bool free_syntax;
-
-static int protocolByName(const char *p, int l)
-{
-	int i;
-	for (i = 0; protocols[i].prot; i++)
-		if (memEqualCI(protocols[i].prot, p, l))
-			return i;
-	return -1;
-}				/* protocolByName */
-
-/* Decide if it looks like a web url. */
-static bool httpDefault(const char *url)
-{
-	static const char *const domainSuffix[] = {
-		"com", "biz", "info", "net", "org", "gov", "edu", "us", "uk",
-		"au",
-		"ca", "de", "jp", "nz", 0
-	};
-	int n, len;
-	const char *s, *lastdot, *end = url + strcspn(url, "/?#\1");
-	if (end - url > 7 && stringEqual(end - 7, ".browse"))
-		end -= 7;
-	s = strrchr(url, ':');
-	if (s && s < end) {
-		const char *colon = s;
-		++s;
-		while (isdigit(*s))
-			++s;
-		if (s == end)
-			end = colon;
-	}
-/* need at least two embedded dots */
-	n = 0;
-	for (s = url + 1; s < end - 1; ++s)
-		if (*s == '.' && s[-1] != '.' && s[1] != '.')
-			++n, lastdot = s;
-	if (n < 2)
-		return false;
-/* All digits, like an ip address, is ok. */
-	if (n == 3) {
-		for (s = url; s < end; ++s)
-			if (!isdigit(*s) && *s != '.')
-				break;
-		if (s == end)
-			return true;
-	}
-/* Look for standard domain suffix */
-	++lastdot;
-	len = end - lastdot;
-	for (n = 0; domainSuffix[n]; ++n)
-		if (memEqualCI(lastdot, domainSuffix[n], len)
-		    && !domainSuffix[n][len])
-			return true;
-/* www.anything.xx is ok */
-	if (len == 2 && memEqualCI(url, "www.", 4))
-		return true;
-	return false;
-}				/* httpDefault */
-
-static int parseURL(const char *url, const char **proto, int *prlen, const char **user, int *uslen, const char **pass, int *palen,	/* ftp protocol */
-		    const char **host, int *holen,
-		    const char **portloc, int *port,
-		    const char **data, int *dalen, const char **post)
-{
-	const char *p, *q;
-	int a;
-
-	if (proto)
-		*proto = NULL;
-	if (prlen)
-		*prlen = 0;
-	if (user)
-		*user = NULL;
-	if (uslen)
-		*uslen = 0;
-	if (pass)
-		*pass = NULL;
-	if (palen)
-		*palen = 0;
-	if (host)
-		*host = NULL;
-	if (holen)
-		*holen = 0;
-	if (portloc)
-		*portloc = 0;
-	if (port)
-		*port = 0;
-	if (data)
-		*data = NULL;
-	if (dalen)
-		*dalen = 0;
-	if (post)
-		*post = NULL;
-	free_syntax = false;
-
-	if (!url)
-		return -1;
-
-/* Find the leading protocol:// */
-	a = -1;
-	p = strchr(url, ':');
-	if (p) {
-/* You have to have something after the colon */
-		q = p + 1;
-		if (*q == '/')
-			++q;
-		if (*q == '/')
-			++q;
-		while (isspace(*q))
-			++q;
-		if (!*q)
-			return false;
-		a = protocolByName(url, p - url);
-	}
-	if (a >= 0) {
-		if (proto)
-			*proto = url;
-		if (prlen)
-			*prlen = p - url;
-		if (p[1] != '/' || p[2] != '/') {
-			if (protocols[a].need_slashes) {
-				if (p[1] != '/') {
-/* we should see a slash at this point */
-					return -1;
-				}
-/* We got one out of two slashes, I'm going to call it good */
-				++p;
-			}
-			p -= 2;
-		}
-		p += 3;
-	} else {		/* nothing yet */
-		if (p && p - url < 12 && p[1] == '/') {
-			for (q = url; q < p; ++q)
-				if (!isalpha(*q))
-					break;
-			if (q == p) {	/* some protocol we don't know */
-				char qprot[12];
-				memcpy(qprot, url, p - url);
-				qprot[p - url] = 0;
-				return -1;
-			}
-		}
-		if (httpDefault(url)) {
-			static const char http[] = "http://";
-			if (proto)
-				*proto = http;
-			if (prlen)
-				*prlen = 4;
-			a = 1;
-			p = url;
-		}
-	}
-
-	if (a < 0)
-		return false;
-
-	if (free_syntax = protocols[a].free_syntax) {
-		if (data)
-			*data = p;
-		if (dalen)
-			*dalen = strlen(p);
-		return true;
-	}
-
-	q = p + strcspn(p, "@?#/\1");
-	if (*q == '@') {	/* user:password@host */
-		const char *pp = strchr(p, ':');
-		if (!pp || pp > q) {	/* no password */
-			if (user)
-				*user = p;
-			if (uslen)
-				*uslen = q - p;
-		} else {
-			if (user)
-				*user = p;
-			if (uslen)
-				*uslen = pp - p;
-			if (pass)
-				*pass = pp + 1;
-			if (palen)
-				*palen = q - pp - 1;
-		}
-		p = q + 1;
-	}
-
-	q = p + strcspn(p, ":?#/\1");
-	if (host)
-		*host = p;
-	if (holen)
-		*holen = q - p;
-	if (*q == ':') {	/* port specified */
-		int n;
-		const char *cc, *pp = q + strcspn(q, "/?#\1");
-		if (pp > q + 1) {
-			n = strtol(q + 1, (char **)&cc, 10);
-			if (cc != pp || !isdigit(q[1])) {
-/* impropter port number */
-				return -1;
-			}
-			if (port)
-				*port = n;
-		}
-		if (portloc)
-			*portloc = q;
-		q = pp;		/* up to the slash */
-	} else {
-		if (port)
-			*port = protocols[a].port;
-	}			/* colon or not */
-
-/* Skip past /, but not ? or # */
-	if (*q == '/')
-		q++;
-	p = q;
-
-/* post data is handled separately */
-	q = p + strcspn(p, "\1");
-	if (data)
-		*data = p;
-	if (dalen)
-		*dalen = q - p;
-	if (post)
-		*post = *q ? q + 1 : NULL;
-	return true;
-}				/* parseURL */
-
-static bool isURL(const char *url)
-{
-	int j = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-	if (j < 0)
-		return false;
-	return j;
-}				/* isURL */
-
-/* Helper functions to return pieces of the URL.
- * Makes a copy, so you can have your 0 on the end.
- * Return 0 for an error, and "" if that piece is missing. */
-
-static const char *getProtURL(const char *url)
-{
-	static char buf[12];
-	int l;
-	const char *s;
-	int rc = parseURL(url, &s, &l, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-	if (rc <= 0)
-		return 0;
-	memcpy(buf, s, l);
-	buf[l] = 0;
-	return buf;
-}				/* getProtURL */
-
-static char hostbuf[400];
-static const char *getHostURL(const char *url)
-{
-	int l;
-	const char *s;
-	char *t;
-	char c, d;
-	int rc = parseURL(url, 0, 0, 0, 0, 0, 0, &s, &l, 0, 0, 0, 0, 0);
-	if (rc <= 0)
-		return 0;
-	if (free_syntax)
-		return 0;
-	if (!s)
-		return emptyString;
-	if (l >= sizeof(hostbuf)) {
-/* domain is too long, just give up */
-/* This is old C code; could easily be handled with string in C++ */
-		return 0;
-	}
-	memcpy(hostbuf, s, l);
-	if (l && hostbuf[l - 1] == '.')
-		--l;
-	hostbuf[l] = 0;
-/* domain names must be ascii, with no spaces */
-	d = 0;
-	for (s = t = hostbuf; (c = *s); ++s) {
-		c &= 0x7f;
-		if (c == ' ')
-			continue;
-		if (c == '.' && d == '.')
-			continue;
-		*t++ = d = c;
-	}
-	*t = 0;
-	return hostbuf;
-}				/* getHostURL */
-
-static const char *getDataURL(const char *url)
-{
-	const char *s;
-	int rc = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &s, 0, 0);
-	if (rc <= 0)
-		return 0;
-	return s;
-}				/* getDataURL */
-
-static void getDirURL(const char *url, const char **start_p, const char **end_p)
-{
-	const char *dir = getDataURL(url);
-	const char *end;
-	static const char myslash[] = "/";
-	if (!dir || dir == url)
-		goto slash;
-	if (free_syntax)
-		goto slash;
-	if (!strchr("#?\1", *dir)) {
-		if (*--dir != '/') {
-/* this should never happen */
-			goto slash;
-		}
-	}
-	end = strpbrk(dir, "#?\1");
-	if (!end)
-		end = dir + strlen(dir);
-	while (end > dir && end[-1] != '/')
-		--end;
-	if (end > dir) {
-		*start_p = dir;
-		*end_p = end;
-		return;
-	}
-slash:
-	*start_p = myslash;
-	*end_p = myslash + 1;
-}				/* getDirURL */
-
-static bool getPortLocURL(const char *url, const char **portloc, int *port)
-{
-	int rc = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, portloc, port, 0, 0, 0);
-	if (rc <= 0)
-		return false;
-	if (free_syntax)
-		return false;
-	return true;
-}				/* getPortLocURL */
-
-/* The software for this process begins now. */
+	exit(n);
+}				/* ebclose */
 
 static void usage(void)
 {
@@ -554,13 +65,19 @@ static void usage(void)
 	exit(1);
 }				/* usage */
 
+/* c++ cares whether it's void * or const void * */
+static void cnzFree(const void *v)
+{
+	nzFree((void *)v);
+}				/* cnzFree */
+
 /* arguments, as indicated by the above */
-static int pipe_in, pipe_out, jsPool;
+static int pipe_in, pipe_out, enginePool;
 
 static void js_start(void);
 static void readMessage(void);
 static void processMessage(void);
-static void createJavaContext(void);
+static void createContext(void);
 static void writeHeader(void);
 
 static JSContext *jcx;
@@ -582,17 +99,20 @@ static char *runscript;
 
 int main(int argc, char **argv)
 {
+/* do this first, in case usage some day is tailored to language */
+	selectLanguage();
+
 	if (argc != 4)
 		usage();
 
 	pipe_in = stringIsNum(argv[1]);
 	pipe_out = stringIsNum(argv[2]);
-	jsPool = stringIsNum(argv[3]);
-	if (pipe_in < 0 || pipe_out < 0 || jsPool < 0)
+	enginePool = stringIsNum(argv[3]);
+	if (pipe_in < 0 || pipe_out < 0 || enginePool < 0)
 		usage();
 
-	if (jsPool < 2)
-		jsPool = 2;
+	if (enginePool < 2)
+		enginePool = 2;
 
 	js_start();
 
@@ -611,7 +131,7 @@ int main(int argc, char **argv)
 
 		if (head.cmd == EJ_CMD_CREATE) {
 /* this one is special */
-			createJavaContext();
+			createContext();
 			if (!head.highstat) {
 				head.jcx = jcx;
 				head.winobj = winobj;
@@ -693,7 +213,7 @@ static char *readString(int n)
 	char *s;
 	if (!n)
 		return 0;
-	s = allocMem(n + 1);
+	s = allocString(n + 1);
 	readFromEb(s, n);
 	s[n] = 0;
 	return s;
@@ -746,7 +266,7 @@ static const size_t gStackChunkSize = 8192;
 
 static void js_start(void)
 {
-	jrt = JS_NewRuntime(jsPool * 1024L * 1024L, JS_NO_HELPER_THREADS);
+	jrt = JS_NewRuntime(enginePool * 1024L * 1024L, JS_NO_HELPER_THREADS);
 	if (jrt)
 		return;		/* ok */
 
@@ -829,7 +349,7 @@ The converse is handled by JS_NewStringcopyZ, as provided by the library.
 static char *JS_c_str(js::HandleString str)
 {
 	size_t encodedLength = JS_GetStringEncodingLength(jcx, str);
-	char *buffer = allocMem(encodedLength + 1);
+	char *buffer = allocString(encodedLength + 1);
 	buffer[encodedLength] = '\0';
 	size_t result =
 	    JS_EncodeStringToBuffer(jcx, str, buffer, encodedLength);
@@ -879,7 +399,7 @@ static const char *stringize(js::HandleValue v)
 	double d;
 	if (JSVAL_IS_STRING(v)) {
 		if (dynamic)
-			nzFree(dynamic);
+			cnzFree(dynamic);
 		js::RootedString str(jcx, JSVAL_TO_STRING(v));
 		dynamic = JS_c_str(str);
 		return dynamic;
@@ -989,8 +509,8 @@ static JSBool window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 			effects += winname;
 		endeffect();
 	}
-	nzFree(newloc);
-	nzFree(winname);
+	cnzFree(newloc);
+	cnzFree(winname);
 	v = OBJECT_TO_JSVAL(winobj);
 	JS_DefineProperty(cx, newwin, "opener", v, NULL, NULL, PROP_READONLY);
 	args.rval().set(OBJECT_TO_JSVAL(newwin));
@@ -1148,7 +668,7 @@ static void build_url(JS::HandleObject uo, int component, const char *e)
 		    JS_FALSE) {
 abort:
 			setter_suspend = false;
-			nzFree(e);
+			cnzFree(e);
 			misconfigure();
 			return;
 		}
@@ -1199,7 +719,7 @@ abort:
 		goto abort;
 
 	setter_suspend = false;
-	nzFree(e);
+	cnzFree(e);
 }				/* build_url */
 
 /* Rebuild host, because hostname or port changed. */
@@ -1365,7 +885,7 @@ setter_loc_href(JSContext * cx, JS::HandleObject uo,
 		effects += '\n';
 		endeffect();
 	}
-	nzFree(urlcopy);
+	cnzFree(urlcopy);
 	return JS_TRUE;
 }				/* setter_loc_href */
 
@@ -1473,7 +993,7 @@ setter_loc_host(JSContext * cx, JS::HandleObject uo,
 	if (JS_SetProperty(jcx, uo, "hostname", v.address()) == JS_FALSE) {
 abort:
 		setter_suspend = false;
-		nzFree(e);
+		cnzFree(e);
 		return JS_FALSE;
 	}
 	if (s) {
@@ -1482,7 +1002,7 @@ abort:
 			goto abort;
 	}
 	setter_suspend = false;
-	nzFree(e);
+	cnzFree(e);
 	return JS_TRUE;
 }				/* setter_loc_host */
 
@@ -1614,7 +1134,7 @@ static ej_proptype find_proptype(JS::HandleObject parent, const char *name)
 
 /* Use stringize() to return a property as a string, if it is
  * string compatible. The string is allocated, free it when done. */
-static char *get_property_string(JS::HandleObject parent, const char *name)
+static char *get_prop_string(JS::HandleObject parent, const char *name)
 {
 	js::RootedValue v(jcx);
 	const char *s;
@@ -1633,7 +1153,7 @@ static char *get_property_string(JS::HandleObject parent, const char *name)
 	} else
 		s = stringize(v);
 	return cloneString(s);
-}				/* get_property_string */
+}				/* get_prop_string */
 
 /* if js changes the value of an input field, this must be reflected
  * in the <foobar> text in edbrowse. */
@@ -1779,8 +1299,7 @@ setter_domain(JSContext * cx, JS::HandleObject obj,
 }				/* setter_domain */
 
 static void
-set_property_string(js::HandleObject parent, const char *name,
-		    const char *value)
+set_prop_string(js::HandleObject parent, const char *name, const char *value)
 {
 	js::RootedValue v(jcx);
 	JSStrictPropertyOp my_setter = NULL;
@@ -1823,9 +1342,9 @@ set_property_string(js::HandleObject parent, const char *name,
 	if (JS_DefineProperty(jcx, parent, name, v, NULL, my_setter, PROP_STD)
 	    == JS_FALSE)
 		misconfigure();
-}				/* set_property_string */
+}				/* set_prop_string */
 
-static void set_property_bool(js::HandleObject parent, const char *name, bool n)
+static void set_prop_bool(js::HandleObject parent, const char *name, bool n)
 {
 	js::RootedValue v(jcx);
 	JSBool found;
@@ -1844,10 +1363,9 @@ static void set_property_bool(js::HandleObject parent, const char *name, bool n)
 	if (JS_DefineProperty(jcx, parent, name, v, NULL, NULL, PROP_STD) ==
 	    JS_FALSE)
 		misconfigure();
-}				/* set_property_bool */
+}				/* set_prop_bool */
 
-static void
-set_property_number(js::HandleObject parent, const char *name, int n)
+static void set_prop_number(js::HandleObject parent, const char *name, int n)
 {
 	js::RootedValue v(jcx);
 	JSBool found;
@@ -1866,10 +1384,9 @@ set_property_number(js::HandleObject parent, const char *name, int n)
 	if (JS_DefineProperty(jcx, parent, name, v, NULL, NULL, PROP_STD) ==
 	    JS_FALSE)
 		misconfigure();
-}				/* set_property_number */
+}				/* set_prop_number */
 
-static void
-set_property_float(js::HandleObject parent, const char *name, double n)
+static void set_prop_float(js::HandleObject parent, const char *name, double n)
 {
 	js::RootedValue v(jcx);
 	JSBool found;
@@ -1888,11 +1405,11 @@ set_property_float(js::HandleObject parent, const char *name, double n)
 	if (JS_DefineProperty(jcx, parent, name, v, NULL, NULL, PROP_STD) ==
 	    JS_FALSE)
 		misconfigure();
-}				/* set_property_float */
+}				/* set_prop_float */
 
 static void
-set_property_object(js::HandleObject parent, const char *name,
-		    JS::HandleObject child)
+set_prop_object(js::HandleObject parent, const char *name,
+		JS::HandleObject child)
 {
 	js::RootedValue v(jcx);
 	JSBool found;
@@ -1915,7 +1432,7 @@ set_property_object(js::HandleObject parent, const char *name,
 	if (JS_DefineProperty(jcx, parent, name, v, NULL, my_setter, PROP_STD)
 	    == JS_FALSE)
 		misconfigure();
-}				/* set_property_object */
+}				/* set_prop_object */
 
 /* for window.focus etc */
 static JSBool nullFunction(JSContext * cx, unsigned int argc, jsval * vp)
@@ -2014,7 +1531,7 @@ static void dwrite1(unsigned int argc, jsval * argv, bool newline)
 		if ((str = JS_ValueToString(jcx, argv[i])) &&
 		    (msg = JS_c_str(str))) {
 			effects += msg;
-			nzFree(msg);
+			cnzFree(msg);
 		}
 	}
 	if (newline)
@@ -2103,7 +1620,7 @@ static JSBool win_alert(JSContext * cx, unsigned int argc, jsval * vp)
 	}
 	if (msg && *msg)
 		puts(msg);
-	nzFree(msg);
+	cnzFree(msg);
 	args.rval().set(JSVAL_VOID);
 	return JS_TRUE;
 }				/* win_alert */
@@ -2123,7 +1640,7 @@ static JSBool win_prompt(JSContext * cx, unsigned int argc, jsval * vp)
 	if (!msg)
 		return JS_TRUE;
 	if (!*msg) {
-		nzFree(msg);
+		cnzFree(msg);
 		return JS_TRUE;
 	}
 	if (args.length() > 1 && (str = JS_ValueToString(cx, args[1])))
@@ -2146,12 +1663,12 @@ static JSBool win_prompt(JSContext * cx, unsigned int argc, jsval * vp)
 	if (s > inbuf && s[-1] == '\n')
 		*--s = 0;
 	if (inbuf[0]) {
-		nzFree(answer);	/* Don't need the default answer anymore. */
+		cnzFree(answer);	/* Don't need the default answer anymore. */
 		answer = inbuf;
 	}
 	args.rval().set(STRING_TO_JSVAL(JS_NewStringCopyZ(cx, answer)));
 	if (answer != inbuf)
-		nzFree(answer);
+		cnzFree(answer);
 	return JS_TRUE;
 }				/* win_prompt */
 
@@ -2169,7 +1686,7 @@ static JSBool win_confirm(JSContext * cx, unsigned int argc, jsval * vp)
 	if (!msg)
 		return JS_TRUE;
 	if (!*msg) {
-		nzFree(msg);
+		cnzFree(msg);
 		return JS_TRUE;
 	}
 
@@ -2197,7 +1714,7 @@ static JSBool win_confirm(JSContext * cx, unsigned int argc, jsval * vp)
 		args.rval().set(JSVAL_TRUE);
 	else
 		args.rval().set(JSVAL_FALSE);
-	nzFree(msg);
+	cnzFree(msg);
 	return JS_TRUE;
 }				/* win_confirm */
 
@@ -2254,11 +1771,11 @@ abort:
 			if (len > sizeof(fname) - 4)
 				len = sizeof(fname) - 4;
 			strncpy(fname, s, len);
-			nzFree(allocatedName);
+			cnzFree(allocatedName);
 			fname[len] = 0;
 			strcat(fname, "()");
 			fstr = fname;
-			set_property_object(to, "onclick", fo);
+			set_prop_object(to, "onclick", fo);
 
 		} else {
 
@@ -2376,7 +1893,7 @@ static struct {
 	{0}
 };
 
-static void createJavaContext(void)
+static void createContext(void)
 {
 	int i;
 
@@ -2450,7 +1967,7 @@ no_doc:
 	    (jcx, winobj, "document", v, NULL, NULL, PROP_READONLY) == JS_FALSE)
 		goto no_doc;
 
-}				/* createJavaContext */
+}				/* createContext */
 
 static JSClass *classByName(const char *classname)
 {
@@ -2472,7 +1989,7 @@ static JSClass *classByName(const char *classname)
 }				/* classByName */
 
 /* based on propval and proptype */
-static void set_property_generic(js::HandleObject parent, const char *name)
+static void set_prop_generic(js::HandleObject parent, const char *name)
 {
 	int n;
 	double d;
@@ -2482,28 +1999,28 @@ static void set_property_generic(js::HandleObject parent, const char *name)
 
 	switch (proptype) {
 	case EJ_PROP_STRING:
-		set_property_string(parent, name, propval);
+		set_prop_string(parent, name, propval);
 		break;
 
 	case EJ_PROP_INT:
 		n = atoi(propval);
-		set_property_number(parent, name, n);
+		set_prop_number(parent, name, n);
 		break;
 
 	case EJ_PROP_BOOL:
 		n = atoi(propval);
-		set_property_bool(parent, name, n);
+		set_prop_bool(parent, name, n);
 		break;
 
 	case EJ_PROP_FLOAT:
 		d = atof(propval);
-		set_property_float(parent, name, d);
+		set_prop_float(parent, name, d);
 		break;
 
 	case EJ_PROP_OBJECT:
 		child = string2pointer(propval);
 		childroot = child;
-		set_property_object(parent, name, childroot);
+		set_prop_object(parent, name, childroot);
 		break;
 
 	case EJ_PROP_INSTANCE:
@@ -2521,7 +2038,7 @@ static void set_property_generic(js::HandleObject parent, const char *name)
 		}
 
 childreturn:
-		set_property_object(parent, name, childroot);
+		set_prop_object(parent, name, childroot);
 		propval = cloneString(pointer2string(*childroot.address()));
 		break;
 
@@ -2546,7 +2063,7 @@ childreturn:
 		exit(7);
 	}
 
-}				/* set_property_generic */
+}				/* set_prop_generic */
 
 /*********************************************************************
 ebjs.c allows for geting and setting array elements of all types,
@@ -2554,7 +2071,7 @@ however the DOM only uses objects. Being lazy, I will simply
 implement objects. You can add other types later.
 *********************************************************************/
 
-static JSObject *get_array_element_object(JS::HandleObject parent, int idx)
+static JSObject *get_arrayelem_object(JS::HandleObject parent, int idx)
 {
 	js::RootedValue v(jcx);
 	JS::RootedObject child(jcx);
@@ -2566,11 +2083,10 @@ static JSObject *get_array_element_object(JS::HandleObject parent, int idx)
 	}
 	child = JSVAL_TO_OBJECT(v);
 	return child;
-}				/* get_array_element_object */
+}				/* get_arrayelem_object */
 
 static void
-set_array_element_object(JS::HandleObject parent, int idx,
-			 JS::HandleObject child)
+set_arrayelem_object(JS::HandleObject parent, int idx, JS::HandleObject child)
 {
 	js::RootedValue v(jcx);
 	JSBool found;
@@ -2584,7 +2100,7 @@ set_array_element_object(JS::HandleObject parent, int idx,
 		    == JS_FALSE)
 			misconfigure();
 	}
-}				/* set_array_element_object */
+}				/* set_arrayelem_object */
 
 /*********************************************************************
 run a javascript function and return the result.
@@ -2696,7 +2212,7 @@ static void processMessage(void)
 		break;
 
 	case EJ_CMD_GETPROP:
-		propval = get_property_string(parent, membername);
+		propval = get_prop_string(parent, membername);
 		nzFree(membername);
 		membername = 0;
 		head.n = head.proplength = 0;
@@ -2718,7 +2234,7 @@ static void processMessage(void)
 		if (head.proptype == EJ_PROP_ARRAY
 		    || head.proptype == EJ_PROP_INSTANCE)
 			setret = true;
-		set_property_generic(parent, membername);
+		set_prop_generic(parent, membername);
 		nzFree(membername);
 		membername = 0;
 propreturn:
@@ -2739,7 +2255,7 @@ propreturn:
 		break;
 
 	case EJ_CMD_GETAREL:
-		child = get_array_element_object(parent, head.n);
+		child = get_arrayelem_object(parent, head.n);
 		propval = 0;	/* should already be 0 */
 		head.proplength = 0;
 		if (child) {
@@ -2764,14 +2280,14 @@ propreturn:
 			if (!child)
 				misconfigure();
 			else
-				set_array_element_object(parent, head.n, child);
+				set_arrayelem_object(parent, head.n, child);
 			setret = true;
 			propval = cloneString(pointer2string(*child.address()));
 		}
 		if (head.proptype == EJ_PROP_OBJECT && propval) {
 			chp = string2pointer(propval);
 			child = chp;
-			set_array_element_object(parent, head.n, child);
+			set_arrayelem_object(parent, head.n, child);
 			nzFree(propval);
 			propval = 0;
 		}

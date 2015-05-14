@@ -3410,7 +3410,7 @@ void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 			++nacount;
 	}
 
-	outbuf = allocMem(inbuflen + nacount + 1);
+	outbuf = allocString(inbuflen + nacount + 1);
 	for (i = j = 0; i < inbuflen; ++i) {
 		c = inbuf[i];
 		if (c >= 0) {
@@ -3441,7 +3441,7 @@ void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 		return;
 	}
 
-	outbuf = allocMem(inbuflen + 1);
+	outbuf = allocString(inbuflen + 1);
 	for (i = j = 0; i < inbuflen; ++i) {
 		c = inbuf[i];
 
