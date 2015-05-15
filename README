@@ -80,7 +80,7 @@ If this is not available in your distribution, download into /usr/local,
 expand, cd js/src, ./configure, make, and make install.
 https://ftp.mozilla.org/pub/mozilla.org/js/mozjs-24.2.0.tar.bz2
 Lots of warning messages in the build, don't worry about those.
-This creats /usr/local/lib/libmozjs-24.so, and with /usr/local/lib
+This creates /usr/local/lib/libmozjs-24.so, and with /usr/local/lib
 already in my /etc/ld.so.conf, I thought I'd be fine,
 but I had to run ldconfig again anyways, not sure why.
 Back in your edbrowse/src directory,
@@ -159,7 +159,7 @@ Handles https connections as well,
 and 301/302 redirection.
 Uncompresses html data if necessary.
 
-html.cpp:
+html.c:
 Render the html tags and format the text.
 Update input fields.
 Submit/reset forms.
@@ -194,11 +194,13 @@ according to your locale.
 
 jseng-moz.cpp:
 The javascript engine, built around the mozilla js library.
-Manage all the js object corresponding to the web page in edbrowse.
-This is a stand alone process.
+Manage all the js objects corresponding to the web page in edbrowse.
+This is a stand alone process,
+though it may share some sourcefiles with edbrowse, e.g. stringfile.c.
 The resulting program is edbrowse-js,
 and it must be in the same path as edbrowse.
-All the js details are hideen in this file.
+All the js details are hidden in this file.
+this is encapsulation, hiding the js library from the rest of edbrowse.
 It might be possible, for instance, to build jseng-v8.c, based upon v8.
 
 startwindow.js:
@@ -261,14 +263,14 @@ When js accesses form.fullname.value, it needs to find,
 and in some cases change, the text that you entered.
 These 3 representations are "separate but equal",
 there is a lot of software to keep them in sync.
-Remember that an input field could be an antire text area,
+Remember that an input field could be an entire text area,
 i.e. the text in another editing session.
 When you are in that session, composing your thoughts,
 am I really going to take every textual change, every substitute,
 every delete, every insert, every undo,
 and map those changes over to the html tag that goes with this session,
 and the js variable that goes with this session?
-I don't think so!
+I don't think so.
 So I'm stuck with something almost as bad.
 When you submit the form, or run any javascript for any reason,
 all that text has to be carried into the javascript world.
@@ -297,7 +299,7 @@ All internal.
 Then you run the javascript, and it perhaps creates more objects,
 creates lists dynamically,
 builds entirely new paragraphs, images, links, whatever it does.
-Then pass 3, render the screen by traversing the tree of objects
+Then pass 3, render the screen by traversing the tree of js objects
 depth first.
 That is your text buffer.
 Now, if anything changes, through some onclick code perhaps,
