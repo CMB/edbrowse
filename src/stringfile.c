@@ -13,13 +13,14 @@
 #include <unistd.h>
 #endif
 #include <glob.h>
+#include <pwd.h>
 #include <dirent.h>
 #include <netdb.h>
 
 char emptyString[] = "";
 bool showHiddenFiles, isInteractive;
 int debugLevel = 1;
-char *downDir;
+char *downDir, *home;
 
 /*********************************************************************
 Allocate and manage memory.
@@ -1127,22 +1128,58 @@ bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
 static bool envExpand(const char *line, const char **expanded)
 {
 	const char *s;
-	const char *v;
 	char *t;
-	bool inbrace;
+	const char *v;		/* result of getenv call */
+	bool inbrace;		/* ${foo} */
+	struct passwd *pw;
+	const char *udir;	/* user directory */
 	int l;
 	static char varline[ABSPATH];
 	char var1[40];
 
 /* quick check */
-	if (!strchr(line, '$')) {
+	if (line[0] != '~' && !strchr(line, '$')) {
 		*expanded = line;
 		return true;
 	}
 
 /* ok, need to crunch along */
 	t = varline;
-	for (s = line; *s; ++s) {
+	s = line;
+
+	if (line[0] != '~')
+		goto dollars;
+
+	l = 0;
+	for (s = line + 1; isalnum(*s) || *s == '_'; ++s)
+		++l;
+	if (l >= sizeof(var1) || isdigit(line[1]) || *s && *s != '/') {
+/* invalid syntax, put things back */
+		s = line;
+		goto dollars;
+	}
+
+	udir = 0;
+	strncpy(var1, line + 1, l);
+	var1[l] = 0;
+	if (l) {
+		pw = getpwnam(var1);
+		if (pw && pw->pw_dir && *pw->pw_dir)
+			udir = pw->pw_dir;
+	} else
+		udir = home;
+	if (!udir) {
+		s = line;
+		goto dollars;
+	}
+	l = strlen(udir);
+	if (l >= sizeof(varline))
+		goto longline;
+	strcpy(varline, udir);
+	t = varline + l;
+
+dollars:
+	for (; *s; ++s) {
 		if (t - varline == ABSPATH - 1) {
 longline:
 			setError(MSG_ShellLineLong);
@@ -1218,7 +1255,7 @@ bool envFile(const char *line, const char **expanded)
 		return false;
 
 /* expanded the environment variables, if any, now time to glob */
-	flags = (GLOB_NOSORT | GLOB_TILDE_CHECK);
+	flags = GLOB_NOSORT;
 	rc = glob(varline, flags, NULL, &g);
 
 	if (rc == GLOB_NOMATCH) {

@@ -44,7 +44,7 @@ uchar linePending[MAXTTYLINE];
 char *changeFileName, *mailDir;
 char *mailUnread, *mailStash, *mailReply;
 char *addressFile;
-char *home, *recycleBin, *configFile, *sigFile, *sigFileEnd;
+char *recycleBin, *configFile, *sigFile, *sigFileEnd;
 char *cookieFile;
 struct ebWindow *cw;
 struct ebSession sessionList[MAXSESSION], *cs;
