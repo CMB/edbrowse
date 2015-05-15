@@ -1164,7 +1164,11 @@ static bool envExpand(const char *line, const char **expanded)
 	var1[l] = 0;
 	if (l) {
 		pw = getpwnam(var1);
-		if (pw && pw->pw_dir && *pw->pw_dir)
+		if (!pw) {
+			setError(MSG_NoTilde, var1);
+			return false;
+		}
+		if (pw->pw_dir && *pw->pw_dir)
 			udir = pw->pw_dir;
 	} else
 		udir = home;

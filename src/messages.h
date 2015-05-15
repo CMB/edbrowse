@@ -412,7 +412,7 @@ enum {
 	MSG_NoRead2,
 	MSG_NoAccess,
 	MSG_NoEnvVar,
-	MSG_NotUsed415,
+	MSG_NoTilde,
 	MSG_NotUsed416,
 	MSG_NotUsed417,
 	MSG_NotUsed418,
