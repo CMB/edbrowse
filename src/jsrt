@@ -266,7 +266,7 @@ alert("You cant go over Limit of 2000 Characters!");
 
 function newwords() {
 var b = document.forms[0].body;
-b.innerText = "Why don't you write me I'm out in the jungle I'm lonely to hear you.\nSend me a card I've been waiting so hard to be near you.\n";
+b.innerText = "Why don't you write me I'm out in the jungle I'm hungry to hear you.\nSend me a card I am waiting so hard to be near you.\n";
 }
 
 </script>
