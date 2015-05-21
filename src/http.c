@@ -1253,7 +1253,10 @@ static bool ftpConnect(const char *url, const char *user, const char *pass)
 	callback_data.length = &serverDataLen;
 
 perform:
+	pre_http_headers();
 	curlret = curl_easy_perform(http_curl_handle);
+	nzFree(http_headers);
+	http_headers = 0;
 
 	if (down_state == 5) {
 /* user has directed a download of this file in the background. */
@@ -1302,7 +1305,10 @@ perform:
 			if (curlret != CURLE_OK)
 				goto ftp_transfer_fail;
 
+			pre_http_headers();
 			curlret = curl_easy_perform(http_curl_handle);
+			nzFree(http_headers);
+			http_headers = 0;
 			if (curlret != CURLE_OK)
 				transfer_success = false;
 			else {
