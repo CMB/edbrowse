@@ -57,19 +57,6 @@ static struct eb_curl_callback_data callback_data = {
 	&serverData, &serverDataLen
 };
 
-/* Call this before every HTTP request. */
-static void pre_http_headers(void)
-{
-/* this should already be 0 */
-	nzFree(newlocation);
-	newlocation = NULL;
-	nzFree(http_headers);
-	http_headers = initString(&http_headers_len);
-	hct[0] = 0;
-	hct2 = NULL;
-	hcl = 0;
-}				/* pre_http_headers */
-
 /*
  * Function: copy_and_sanitize
  * Arguments:
@@ -224,6 +211,26 @@ static void scan_http_headers(bool fromCallback)
 		nzFree(v);
 	}
 }				/* scan_http_headers */
+
+/* actually run the curl request, http or ftp or whatever */
+static CURLcode fetch_internet(bool is_http)
+{
+	CURLcode curlret;
+/* this should already be 0 */
+	nzFree(newlocation);
+	newlocation = NULL;
+	nzFree(http_headers);
+	http_headers = initString(&http_headers_len);
+	hct[0] = 0;
+	hct2 = NULL;
+	hcl = 0;
+	curlret = curl_easy_perform(http_curl_handle);
+	if (is_http)
+		scan_http_headers(false);
+	nzFree(http_headers);
+	http_headers = 0;
+	return curlret;
+}				/* fetch_internet */
 
 static bool ftpConnect(const char *url, const char *user, const char *pass);
 static bool read_credentials(char *buffer);
@@ -786,11 +793,7 @@ mimestream:
 		callback_data.length = &serverDataLen;
 
 perform:
-		pre_http_headers();
-		curlret = curl_easy_perform(http_curl_handle);
-		scan_http_headers(false);
-		nzFree(http_headers);
-		http_headers = 0;
+		curlret = fetch_internet(true);
 
 		if (down_state == 6)
 			goto mimestream;
@@ -1253,10 +1256,7 @@ static bool ftpConnect(const char *url, const char *user, const char *pass)
 	callback_data.length = &serverDataLen;
 
 perform:
-	pre_http_headers();
-	curlret = curl_easy_perform(http_curl_handle);
-	nzFree(http_headers);
-	http_headers = 0;
+	curlret = fetch_internet(false);
 
 	if (down_state == 5) {
 /* user has directed a download of this file in the background. */
@@ -1305,10 +1305,7 @@ perform:
 			if (curlret != CURLE_OK)
 				goto ftp_transfer_fail;
 
-			pre_http_headers();
-			curlret = curl_easy_perform(http_curl_handle);
-			nzFree(http_headers);
-			http_headers = 0;
+			curlret = fetch_internet(false);
 			if (curlret != CURLE_OK)
 				transfer_success = false;
 			else {
