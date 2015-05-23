@@ -987,6 +987,7 @@ char *getFileName(int msg, const char *defname, bool isnew, bool ws)
 		i_printf(msg);
 		if (defname)
 			printf("[%s] ", defname);
+		fflush(stdout);
 		if (!fgets(buf, sizeof(buf), stdin))
 			exit(0);
 		allspace = false;
