@@ -1,5 +1,8 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.5.4.1:
+Fix a couple of bugs related to downloading files from the internet.
+
 3.5.4:
 Messages in German, thanks to Sebastian Humenda.
 Autoplay of audio files found on websites, using content-type,
