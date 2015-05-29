@@ -1314,7 +1314,7 @@ so me working on this any more is perhaps a waste of time.
 		"Utilde\0U",
 		"edot\0e",
 		"nbsp\0 ",
-		"shy\0-",
+		"shy\0",
 		"frac13\0001/3",
 		"frac23\0002/3",
 		"plusmn\0+-",
