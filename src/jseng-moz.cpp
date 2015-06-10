@@ -42,14 +42,6 @@ Exit codes are as follows:
 #include <jsapi.h>
 #include <jsfriendapi.h>
 
-/* And some C header files. This program is a bit of a hybrid, C and C++ */
-#include <string.h>
-#include <ctype.h>
-#include <malloc.h>
-#include <unistd.h>
-#include <memory.h>
-#include <signal.h>
-
 using namespace std;
 
 /* This function closes edbrowse down, e.g. after malloc failure,
