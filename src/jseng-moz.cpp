@@ -53,7 +53,7 @@ void ebClose(int n)
 
 static void usage(void)
 {
-	cerr << "Usage:  edbrowse-js pipe_in pipe_out jsHeapSize\n";
+	fprintf(stderr, "Usage:  edbrowse-js pipe_in pipe_out jsHeapSize\n");
 	exit(1);
 }				/* usage */
 
@@ -77,11 +77,12 @@ static JSObject *winobj;	/* window object */
 static JSObject *docobj;	/* document object */
 
 static struct EJ_MSG head;
-static string errorMessage;
-static string effects;
+static char *errorMessage;
+static char *effects;
+static int eff_l;
 static void endeffect(void)
 {
-	effects += "`~@}\n";
+	stringAndString(&effects, &eff_l, "`~@}\n");
 }
 
 static char *membername;
@@ -105,6 +106,8 @@ int main(int argc, char **argv)
 
 	if (enginePool < 2)
 		enginePool = 2;
+
+	effects = initString(&eff_l);
 
 	js_start();
 
@@ -173,28 +176,32 @@ static void writeToEb(const void *data_p, int n)
 	if (rc == n)
 		return;
 /* Oops - can't write to the process any more */
-	cerr << "js cannot communicate with edbrowse\n";
+	fprintf(stderr, "js cannot communicate with edbrowse\n");
 	exit(2);
 }				/* writeToEb */
 
 static void writeHeader(void)
 {
 	head.magic = EJ_MAGIC;
-	head.side = effects.length();
-	head.msglen = errorMessage.length();
+	head.side = eff_l;
+	head.msglen = 0;
+	if (errorMessage)
+		head.msglen = strlen(errorMessage);
 
 	writeToEb(&head, sizeof(head));
 
 /* send out the error message and side effects, if present. */
 /* Edbrowse will expect these before any returned values. */
 	if (head.side) {
-		writeToEb(effects.c_str(), head.side);
-		effects.clear();
+		writeToEb(effects, head.side);
+		nzFree(effects);
+		effects = initString(&eff_l);
 	}
 
 	if (head.msglen) {
-		writeToEb(errorMessage.c_str(), head.msglen);
-		errorMessage.clear();
+		writeToEb(errorMessage, head.msglen);
+		nzFree(errorMessage);
+		errorMessage = 0;
 	}
 
 /* That's the header, you may still need to send a returned value */
@@ -222,7 +229,8 @@ static void readMessage(void)
 	readFromEb(&head, sizeof(head));
 
 	if (head.magic != EJ_MAGIC) {
-		cerr << "Messages between js and edbrowse are out of sync\n";
+		fprintf(stderr,
+			"Messages between js and edbrowse are out of sync\n");
 		exit(3);
 	}
 
@@ -262,7 +270,7 @@ static void js_start(void)
 	if (jrt)
 		return;		/* ok */
 
-	cerr << "Cannot create javascript runtime environment\n";
+	fprintf(stderr, "Cannot create javascript runtime environment\n");
 /* send a message to edbrowse, so it can disable javascript,
  * so we don't get this same error on every browse. */
 	head.highstat = EJ_HIGH_PROC_FAIL;
@@ -287,11 +295,11 @@ my_ErrorReporter(JSContext * cx, const char *message, JSErrorReport * report)
 	    message && strstr(message, "out of memory")) {
 		head.highstat = EJ_HIGH_HEAP_FAIL;
 		head.lowstat = EJ_LOW_MEMORY;
-	} else if (errorMessage.empty() && head.highstat == EJ_HIGH_OK &&
+	} else if (errorMessage == 0 && head.highstat == EJ_HIGH_OK &&
 		   message && *message) {
 		if (report)
 			head.lineno = report->lineno;
-		errorMessage = message;
+		errorMessage = cloneString(message);
 		head.highstat = EJ_HIGH_STMT_FAIL;
 		head.lowstat = EJ_LOW_SYNTAX;
 	}
@@ -494,11 +502,11 @@ static JSBool window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
  * I only do something if opening a new web page.
  * If it's just a blank window, I don't know what to do with that. */
 	if (newloc && *newloc) {
-		effects += "n{";	// }
-		effects += newloc;
-		effects += '\n';
+		stringAndString(&effects, &eff_l, "n{");	// }
+		stringAndString(&effects, &eff_l, newloc);
+		stringAndChar(&effects, &eff_l, '\n');
 		if (winname)
-			effects += winname;
+			stringAndString(&effects, &eff_l, winname);
 		endeffect();
 	}
 	cnzFree(newloc);
@@ -845,9 +853,9 @@ setter_loc(JSContext * cx, JS::HandleObject uo, JS::Handle < jsid > id,
 		JS_ReportError(jcx,
 			       "window.location is assigned something that I don't understand");
 	} else {
-		effects += "n{";	// }
-		effects += s;
-		effects += '\n';
+		stringAndString(&effects, &eff_l, "n{");	// }
+		stringAndString(&effects, &eff_l, s);
+		stringAndChar(&effects, &eff_l, '\n');
 		endeffect();
 	}
 	return JS_TRUE;
@@ -872,9 +880,9 @@ setter_loc_href(JSContext * cx, JS::HandleObject uo,
 	urlcopy = cloneString(url);
 	url_initialize(uo, urlcopy, true);
 	if (iswindocloc(uo)) {
-		effects += "n{";	// }
-		effects += urlcopy;
-		effects += '\n';
+		stringAndString(&effects, &eff_l, "n{");	// }
+		stringAndString(&effects, &eff_l, urlcopy);
+		stringAndChar(&effects, &eff_l, '\n');
 		endeffect();
 	}
 	cnzFree(urlcopy);
@@ -1162,10 +1170,11 @@ setter_value(JSContext * cx, JS::HandleObject obj,
 		JS_ReportError(jcx,
 			       "input.value is assigned something other than a string; this can cause problems when you submit the form.");
 	} else {
-		effects += "v{";	// }
-		effects += pointer2string(*obj.address());
-		effects += '=';
-		effects += val;
+		stringAndString(&effects, &eff_l, "v{");	// }
+		stringAndString(&effects, &eff_l,
+				pointer2string(*obj.address()));
+		stringAndChar(&effects, &eff_l, '=');
+		stringAndString(&effects, &eff_l, val);
 		endeffect();
 	}
 	return JS_TRUE;
@@ -1178,12 +1187,12 @@ setter_innerHTML(JSContext * cx, JS::HandleObject obj,
 {
 	const char *s = stringize(vp);
 	if (s && strlen(s)) {
-		effects += "i{h";	// }
-		effects += pointer2string(obj);
-		effects += "|<!-- inner html -->\n";
-		effects += s;
+		stringAndString(&effects, &eff_l, "i{h");	// }
+		stringAndString(&effects, &eff_l, pointer2string(obj));
+		stringAndString(&effects, &eff_l, "|<!-- inner html -->\n");
+		stringAndString(&effects, &eff_l, s);
 		if (s[strlen(s) - 1] != '\n')
-			effects += '\n';
+			stringAndChar(&effects, &eff_l, '\n');
 		endeffect();
 	}
 	return JS_TRUE;
@@ -1197,10 +1206,10 @@ setter_innerText(JSContext * cx, JS::HandleObject obj,
 	const char *s = stringize(vp);
 	if (!s)
 		s = emptyString;
-	effects += "i{t";	// }
-	effects += pointer2string(obj);
-	effects += '|';
-	effects += s;
+	stringAndString(&effects, &eff_l, "i{t");	// }
+	stringAndString(&effects, &eff_l, pointer2string(obj));
+	stringAndChar(&effects, &eff_l, '|');
+	stringAndString(&effects, &eff_l, s);
 	endeffect();
 	return JS_TRUE;
 }				/* setter_innerText */
@@ -1232,8 +1241,8 @@ static bool foldinCookie(const char *newcook)
 		return false;
 
 /* pass back to edbrowse */
-	effects += "c{";	// }
-	effects += newcook;
+	stringAndString(&effects, &eff_l, "c{");	// }
+	stringAndString(&effects, &eff_l, newcook);
 	endeffect();
 
 /* put ; in front */
@@ -1518,16 +1527,16 @@ static void dwrite1(unsigned int argc, jsval * argv, bool newline)
 	int i;
 	const char *msg;
 	JS::RootedString str(jcx);
-	effects += "w{";	// }
+	stringAndString(&effects, &eff_l, "w{");	// }
 	for (i = 0; i < argc; ++i) {
 		if ((str = JS_ValueToString(jcx, argv[i])) &&
 		    (msg = JS_c_str(str))) {
-			effects += msg;
+			stringAndString(&effects, &eff_l, msg);
 			cnzFree(msg);
 		}
 	}
 	if (newline)
-		effects += '\n';
+		stringAndChar(&effects, &eff_l, '\n');
 	endeffect();
 }				/* dwrite1 */
 
@@ -1566,8 +1575,8 @@ static JSFunctionSpec element_methods[] = {
 static JSBool form_submit(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
-	effects += "f{s";	// }
-	effects += pointer2string(obj);
+	stringAndString(&effects, &eff_l, "f{s");	// }
+	stringAndString(&effects, &eff_l, pointer2string(obj));
 	endeffect();
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	args.rval().set(JSVAL_VOID);
@@ -1577,8 +1586,8 @@ static JSBool form_submit(JSContext * cx, unsigned int argc, jsval * vp)
 static JSBool form_reset(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
-	effects += "f{r";	// }
-	effects += pointer2string(obj);
+	stringAndString(&effects, &eff_l, "f{r");	// }
+	stringAndString(&effects, &eff_l, pointer2string(obj));
 	endeffect();
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	args.rval().set(JSVAL_VOID);
@@ -1802,12 +1811,12 @@ abort:
 		}
 
 		sprintf(nstring, "t{%d|", n);	// }
-		effects += nstring;
-		effects += fstr;
-		effects += '|';
-		effects += pointer2string(to);
-		effects += '|';
-		effects += (isInterval ? '1' : '0');
+		stringAndString(&effects, &eff_l, nstring);
+		stringAndString(&effects, &eff_l, fstr);
+		stringAndChar(&effects, &eff_l, '|');
+		stringAndString(&effects, &eff_l, pointer2string(to));
+		stringAndChar(&effects, &eff_l, '|');
+		stringAndChar(&effects, &eff_l, (isInterval ? '1' : '0'));
 		endeffect();
 
 		return to;
@@ -1973,8 +1982,8 @@ static JSClass *classByName(const char *classname)
 		if (stringEqual(cp->name, classname))
 			break;
 	if (!cp) {
-		cerr << "Unexpected class name " << propval <<
-		    " from edbrowse\n";
+		fprintf(stderr, "Unexpected class name %s from edbrowse\n",
+			propval);
 		exit(8);
 	}
 	return cp;
@@ -2050,8 +2059,8 @@ childreturn:
 		break;
 
 	default:
-		cerr << "Unexpected property type " << proptype <<
-		    " from edbrowse\n";
+		fprintf(stderr, "Unexpected property type %s from edbrowse\n",
+			proptype);
 		exit(7);
 	}
 
@@ -2070,7 +2079,7 @@ static JSObject *get_arrayelem_object(JS::HandleObject parent, int idx)
 	if (JS_GetElement(jcx, parent, idx, v.address()) == JS_FALSE)
 		return 0;	/* perhaps out of range */
 	if (!v.isObject()) {
-		cerr << "JS DOM arrays should contain only objects\n";
+		fprintf(stderr, "JS DOM arrays should contain only objects\n");
 		exit(9);
 	}
 	child = JSVAL_TO_OBJECT(v);
@@ -2310,8 +2319,8 @@ propreturn:
 		break;
 
 	default:
-		cerr << "Unexpected message command " << head.cmd <<
-		    " from edbrowse\n";
+		fprintf(stderr, "Unexpected message command %d from edbrowse\n",
+			head.cmd);
 		exit(6);
 	}
 }				/* processMessage */
