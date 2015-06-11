@@ -1266,6 +1266,19 @@ static bool foldinCookie(const char *newcook)
 }				/* foldinCookie */
 
 static JSBool
+getter_cookie(JSContext * cx, JS::HandleObject obj,
+	      JS::Handle < jsid > id, JS::MutableHandle < JS::Value > vp)
+{
+	if (cookieCopy.empty()) {
+		vp.set(JS_GetEmptyStringValue(cx));
+	} else {
+		JS::RootedString str(cx);
+		str = JS_NewStringCopyZ(cx, cookieCopy.c_str() + 2);
+		vp.set(STRING_TO_JSVAL(str));
+	}
+}				/* getter_cookie */
+
+static JSBool
 setter_cookie(JSContext * cx, JS::HandleObject obj,
 	      JS::Handle < jsid > id, JSBool strict,
 	      JS::MutableHandle < JS::Value > vp)
@@ -1275,13 +1288,8 @@ setter_cookie(JSContext * cx, JS::HandleObject obj,
 		return JS_TRUE;
 
 	val = stringize(vp);
-	if (val && foldinCookie(val)) {
-		setter_suspend = true;
-		js::RootedValue v(jcx);
-		v = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, val));
-		JS_SetProperty(jcx, obj, "cookie", v.address());
-		setter_suspend = false;
-	}
+	if (val)
+		foldinCookie(val);
 
 	return JS_TRUE;
 }				/* setter_cookie */
@@ -1303,6 +1311,7 @@ static void
 set_prop_string(js::HandleObject parent, const char *name, const char *value)
 {
 	js::RootedValue v(jcx);
+	JSPropertyOp my_getter = NULL;
 	JSStrictPropertyOp my_setter = NULL;
 	JSBool found;
 
@@ -1337,10 +1346,13 @@ set_prop_string(js::HandleObject parent, const char *name, const char *value)
 		my_setter = setter_innerText;
 	if (stringEqual(name, "domain") && *parent.address() == docobj)
 		my_setter = setter_domain;
-	if (stringEqual(name, "cookie") && *parent.address() == docobj)
+	if (stringEqual(name, "cookie") && *parent.address() == docobj) {
 		my_setter = setter_cookie;
+		my_getter = getter_cookie;
+	}
 
-	if (JS_DefineProperty(jcx, parent, name, v, NULL, my_setter, PROP_STD)
+	if (JS_DefineProperty
+	    (jcx, parent, name, v, my_getter, my_setter, PROP_STD)
 	    == JS_FALSE)
 		misconfigure();
 }				/* set_prop_string */

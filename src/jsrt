@@ -693,6 +693,19 @@ if(data_uri1_test != "set")
 fail(148);
 if(data_uri2_test != "set")
 fail(149);
+
+/* I wanted to test the initial cookie string as blank,
+ * but if you unbrowse and then browse, this test will fail.
+
+if(document.cookie != "")
+fail(150);
+*/
+
+document.cookie = "yy=37";
+document.cookie = "zz=59";
+if(document.cookie != "yy=37; zz=59")
+fail(151);
+
 </script>
 
 </body>
