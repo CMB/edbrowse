@@ -77,8 +77,6 @@ static JSObject *winobj;	/* window object */
 static JSObject *docobj;	/* document object */
 
 static struct EJ_MSG head;
-static char *cookieCopy;
-static int cook_l;
 static char *errorMessage;
 static char *effects;
 static int eff_l;
@@ -116,7 +114,6 @@ int main(int argc, char **argv)
 	signal(SIGINT, SIG_IGN);
 
 	effects = initString(&eff_l);
-	cookieCopy = initString(&cook_l);
 
 	while (true) {
 		readMessage();
@@ -1226,6 +1223,9 @@ But the setter folds a new cookie into this string,
 and also passes the cookie back to edbrowse to put in the cookie jar.
 *********************************************************************/
 
+static char *cookieCopy;
+static int cook_l;
+
 static bool foldinCookie(const char *newcook)
 {
 	char *nc, *loc, *loc2;
@@ -1278,31 +1278,37 @@ add:
 }				/* foldinCookie */
 
 static JSBool
-getter_cookie(JSContext * cx, JS::HandleObject obj,
-	      JS::Handle < jsid > id, JS::MutableHandle < JS::Value > vp)
-{
-	if (cookieCopy[0] == 0) {
-		vp.set(JS_GetEmptyStringValue(cx));
-	} else {
-		JS::RootedString str(cx);
-		str = JS_NewStringCopyZ(cx, cookieCopy + 2);
-		vp.set(STRING_TO_JSVAL(str));
-	}
-}				/* getter_cookie */
-
-static JSBool
 setter_cookie(JSContext * cx, JS::HandleObject obj,
 	      JS::Handle < jsid > id, JSBool strict,
 	      JS::MutableHandle < JS::Value > vp)
 {
-	const char *val;
+	const char *newcook;
+	char *original;
+
 	if (setter_suspend)
 		return JS_TRUE;
 
-	val = stringize(vp);
-	if (val)
-		foldinCookie(val);
+/* grab the existing document.cookie string, is this reentrant, is this ok? */
+	original = get_prop_string(obj, "cookie");
+	if (!original)		/* should never happen */
+		original = emptyString;
+	cookieCopy = initString(&cook_l);
+	if (original[0]) {
+		stringAndString(&cookieCopy, &cook_l, "; ");
+		stringAndString(&cookieCopy, &cook_l, original);
+	}
+	nzFree(original);
 
+	newcook = stringize(vp);
+	if (newcook)
+		foldinCookie(newcook);
+
+	if (cookieCopy[0]) {
+		js::RootedValue v(cx);
+		v = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, cookieCopy + 2));
+		vp.set(v);
+	}
+	nzFree(cookieCopy);
 	return JS_TRUE;
 }				/* setter_cookie */
 
@@ -1358,24 +1364,13 @@ set_prop_string(js::HandleObject parent, const char *name, const char *value)
 		my_setter = setter_innerText;
 	if (stringEqual(name, "domain") && *parent.address() == docobj)
 		my_setter = setter_domain;
-	if (stringEqual(name, "cookie") && *parent.address() == docobj) {
+	if (stringEqual(name, "cookie") && *parent.address() == docobj)
 		my_setter = setter_cookie;
-		my_getter = getter_cookie;
-	}
 
 	if (JS_DefineProperty
 	    (jcx, parent, name, v, my_getter, my_setter, PROP_STD)
 	    == JS_FALSE)
 		misconfigure();
-
-/* special code for the initialization of document.cookie */
-	if (my_setter == setter_cookie && value) {
-		nzFree(cookieCopy);
-		cookieCopy = initString(&cook_l);
-		stringAndString(&cookieCopy, &cook_l, "; ");
-		stringAndString(&cookieCopy, &cook_l, value);
-	}
-
 }				/* set_prop_string */
 
 static void set_prop_bool(js::HandleObject parent, const char *name, bool n)
