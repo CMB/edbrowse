@@ -77,6 +77,8 @@ static JSObject *winobj;	/* window object */
 static JSObject *docobj;	/* document object */
 
 static struct EJ_MSG head;
+static char *cookieCopy;
+static int cook_l;
 static char *errorMessage;
 static char *effects;
 static int eff_l;
@@ -107,13 +109,14 @@ int main(int argc, char **argv)
 	if (enginePool < 2)
 		enginePool = 2;
 
-	effects = initString(&eff_l);
-
 	js_start();
 
 /* edbrowse catches interrupt, this process ignores it. */
 /* Use quit to terminate, or kill from another console. */
 	signal(SIGINT, SIG_IGN);
+
+	effects = initString(&eff_l);
+	cookieCopy = initString(&cook_l);
 
 	while (true) {
 		readMessage();
@@ -1223,21 +1226,27 @@ But the setter folds a new cookie into this string,
 and also passes the cookie back to edbrowse to put in the cookie jar.
 *********************************************************************/
 
-static string cookieCopy;
-
 static bool foldinCookie(const char *newcook)
 {
-	string nc = newcook;
-	int j, k;
+	char *nc, *loc, *loc2;
+	int j;
+	char *s;
+	char save;
+
+/* make a copy with ; in front */
+	j = strlen(newcook);
+	nc = allocString(j + 3);
+	strcpy(nc, "; ");
+	strcpy(nc + 2, newcook);
 
 /* cut off the extra attributes */
-	j = nc.find_first_of(" \t;");
-	if (j != string::npos)
-		nc.resize(j);
+	s = strpbrk(nc + 2, " \t;");
+	if (s)
+		*s = 0;
 
 /* cookie has to look like keyword=value */
-	j = nc.find("=");
-	if (j == string::npos || j == 0)
+	s = strchr(nc + 2, '=');
+	if (!s || s == nc + 2)
 		return false;
 
 /* pass back to edbrowse */
@@ -1245,23 +1254,26 @@ static bool foldinCookie(const char *newcook)
 	stringAndString(&effects, &eff_l, newcook);
 	endeffect();
 
-/* put ; in front */
-	string nc1 = "; " + nc;
-	j = j + 2;
-	string search = nc1.substr(0, j + 1);
-	k = cookieCopy.find(search);
-	if (k == string::npos) {
-/* not there, just tack the new cookie on the end */
-		cookieCopy += nc1;
-		return true;
-	}
+	++s;
+	save = *s;
+	*s = 0;			/* I'll put it back later */
+	loc = strstr(cookieCopy, nc);
+	*s = save;
+	if (!loc)
+		goto add;
 
-	string rest = cookieCopy.substr(k + 2);
-	cookieCopy.resize(k);
-	cookieCopy += nc1;
-	k = rest.find(";");
-	if (k != string::npos)
-		cookieCopy += rest.substr(k);
+/* find next piece */
+	loc2 = strchr(loc + 2, ';');
+	if (!loc2)
+		loc2 = loc + strlen(loc);
+
+/* excise the oold, put in the new */
+	j = loc2 - loc;
+	strmove(loc, loc2);
+	cook_l -= j;
+
+add:
+	stringAndString(&cookieCopy, &cook_l, nc);
 	return true;
 }				/* foldinCookie */
 
@@ -1269,11 +1281,11 @@ static JSBool
 getter_cookie(JSContext * cx, JS::HandleObject obj,
 	      JS::Handle < jsid > id, JS::MutableHandle < JS::Value > vp)
 {
-	if (cookieCopy.empty()) {
+	if (cookieCopy[0] == 0) {
 		vp.set(JS_GetEmptyStringValue(cx));
 	} else {
 		JS::RootedString str(cx);
-		str = JS_NewStringCopyZ(cx, cookieCopy.c_str() + 2);
+		str = JS_NewStringCopyZ(cx, cookieCopy + 2);
 		vp.set(STRING_TO_JSVAL(str));
 	}
 }				/* getter_cookie */
