@@ -1367,6 +1367,15 @@ set_prop_string(js::HandleObject parent, const char *name, const char *value)
 	    (jcx, parent, name, v, my_getter, my_setter, PROP_STD)
 	    == JS_FALSE)
 		misconfigure();
+
+/* special code for the initialization of document.cookie */
+	if (my_setter == setter_cookie && value) {
+		nzFree(cookieCopy);
+		cookieCopy = initString(&cook_l);
+		stringAndString(&cookieCopy, &cook_l, "; ");
+		stringAndString(&cookieCopy, &cook_l, value);
+	}
+
 }				/* set_prop_string */
 
 static void set_prop_bool(js::HandleObject parent, const char *name, bool n)

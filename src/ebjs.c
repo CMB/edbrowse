@@ -1383,7 +1383,6 @@ void setupJavaDom(void)
 	set_property_object(w, "top", w);
 
 /* document attributes */
-	set_property_string(d, "cookie", 0);
 	set_property_string(d, "referrer", cw->referrer);
 	instantiate_url(d, "URL", cw->fileName);
 	instantiate_url(d, "location", cw->fileName);
