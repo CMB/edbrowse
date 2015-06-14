@@ -551,10 +551,11 @@ if(typeof ilo.a != "object") fail(120);
 if(ilo.b != 24) fail(121);
 if(ilo.a.id.value != "eklhad") fail(122);
 
-/* the URL class, it's about a thousand lines of code just to make this one work. */
+/* the URL class, most of the setters are in startwindow.js */
+/* malformed url, not sure what to do here */
 uo = new URL("local-file"); // url object
 if(uo.href != "local-file") fail(130);
-if(uo.host != "" || uo.pathname != "/") fail(131);
+if(uo.host != "local-file" || uo.pathname != "/") fail(131);
 new_path = "https://this.that.com:777/dir/ectory?search=k&l=english#middle";
 uo.href = new_path;
 if(uo != new_path) fail(132);

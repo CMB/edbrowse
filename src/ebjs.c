@@ -439,7 +439,7 @@ static int readMessage(void)
 			return -1;
 		}
 		effects[head.side] = 0;
-		if (debugLevel >= 5)
+		if (debugLevel >= 4)
 			printf("< side effects\n%s", effects);
 		processEffects();
 	}
@@ -1382,13 +1382,6 @@ void setupJavaDom(void)
 	set_property_object(w, "parent", w);
 	set_property_object(w, "top", w);
 
-/* document attributes */
-	set_property_string(d, "referrer", cw->referrer);
-	instantiate_url(d, "URL", cw->fileName);
-	instantiate_url(d, "location", cw->fileName);
-	instantiate_url(w, "location", cw->firstURL);
-	set_property_string(d, "domain", getHostURL(cw->fileName));
-
 	nav = instantiate(w, "navigator", 0);
 	if (!nav)
 		return;
@@ -1445,14 +1438,19 @@ void setupJavaDom(void)
 	set_property_string(hist, "current", cw->fileName);
 /* Since there is no history in edbrowse, the rest is left to startwindow.js */
 
-/* cookies for the url */
-	docCookie(d);
-
 /* the js window/document setup script.
  * These are all the things that do not depend on the platform,
  * OS, configurations, etc. */
 	javaParseExecute(w, startWindowJS, "StartWindow", 1);
 
+// Document properties that must be set after startwindow.js.
+// Most of these use the setters in the URL class.
+	set_property_string(d, "referrer", cw->referrer);
+	instantiate_url(d, "URL", cw->fileName);
+	instantiate_url(d, "location", cw->fileName);
+	instantiate_url(w, "location", cw->firstURL);
+	set_property_string(d, "domain", getHostURL(cw->fileName));
+	docCookie(d);
 }				/* setupJavaDom */
 
 /* create a new url with constructor */
@@ -1502,6 +1500,7 @@ char *get_property_url(jsobjtype owner, bool action)
 
 	if (uo == NULL)
 		return 0;
+/* should this be href$val? */
 	return get_property_string(uo, "href");
 }				/* get_property_url */
 

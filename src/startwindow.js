@@ -146,8 +146,185 @@ function open() {
 return Window.apply(this, arguments);
 }
 
+var $urlpro = URL.prototype;
+
+/* rebuild the href string from its components.
+ * Call this when a component changes.
+ * All components are strings, except for port,
+ * and all should be defined, even if they are empty. */
+$urlpro.rebuild = function() {
+var h = "";
+if(this.protocol$val.length) {
+// protocol includes the colon
+h = this.protocol$val;
+var plc = h.toLowerCase();
+if(plc != "mailto:" && plc != "telnet:" && plc != "javascript:")
+h += "//";
+}
+if(this.host$val.length) {
+h += this.host$val;
+} else if(this.hostname$val.length) {
+h += this.hostname$val;
+if(this.port$val != 0)
+h += ":" + this.port$val;
+}
+if(this.pathname$val.length) {
+// pathname should always begin with /, should we check for that?
+if(!this.pathname$val.match(/^\//))
+h += "/";
+h += this.pathname$val;
+}
+if(this.search$val.length) {
+// search should always begin with ?, should we check for that?
+h += this.search$val;
+}
+if(this.hash$val.length) {
+// hash should always begin with #, should we check for that?
+h += this.hash$val;
+}
+this.href$val = h;
+};
+
+// No idea why we can't just assign the property directly.
+// $urlpro.protocol = { ... };
+Object.defineProperty($urlpro, "protocol", {
+  get: function() {return this.protocol$val; },
+  set: function(v) { this.protocol$val = v; this.rebuild(); }
+});
+
+Object.defineProperty($urlpro, "pathname", {
+  get: function() {return this.pathname$val; },
+  set: function(v) { this.pathname$val = v; this.rebuild(); }
+});
+
+Object.defineProperty($urlpro, "search", {
+  get: function() {return this.search$val; },
+  set: function(v) { this.search$val = v; this.rebuild(); }
+});
+
+Object.defineProperty($urlpro, "hash", {
+  get: function() {return this.hash$val; },
+  set: function(v) { this.hash$val = v; this.rebuild(); }
+});
+
+Object.defineProperty($urlpro, "port", {
+  get: function() {return this.port$val; },
+  set: function(v) { this.port$val = v;
+if(this.hostname$val.length)
+this.host$val = this.hostname$val + ":" + v;
+this.rebuild(); }
+});
+
+Object.defineProperty($urlpro, "hostname", {
+  get: function() {return this.hostname$val; },
+  set: function(v) { this.hostname$val = v;
+if(this.port$val)
+this.host$val = v + ":" +  this.port$val;
+this.rebuild(); }
+});
+
+Object.defineProperty($urlpro, "host", {
+  get: function() {return this.host$val; },
+  set: function(v) { this.host$val = v;
+if(v.match(/:/)) {
+this.hostname$val = v.replace(/:.*/, "");
+this.port$val = v.replace(/^.*:/, "");
+/* port has to be an integer */
+this.port$val = parseInt(this.port$val);
+} else {
+this.hostname$val = v;
+this.port$val = 0;
+}
+this.rebuild(); }
+});
+
+var prot$port = {
+http: 80,
+https: 443,
+pop3: 110,
+pop3s: 995,
+imap: 220,
+imaps: 993,
+smtp: 25,
+submission: 587,
+smtps: 465,
+proxy: 3128,
+ftp: 21,
+sftp: 22,
+scp: 22,
+ftps: 990,
+tftp: 69,
+gopher: 70,
+finger: 79,
+telnet: 23,
+smb: 139
+};
+
+/* returns default port as an integer, based on protocol */
+function default$port(p) {
+var port = 0;
+p = p.toLowerCase().replace(/:/, "");
+if(prot$port.hasOwnProperty(p))
+port = parseInt(prot$port[p]);
+return port;
+}
+
+Object.defineProperty($urlpro, "href", {
+  get: function() {return this.href$val; },
+  set: function(v) { this.href$val = v;
+// initialize components to empty,
+// then fill them in from href if they are present */
+this.protocol$val = "";
+this.hostname$val = "";
+this.port$val = 0;
+this.host$val = "";
+this.pathname$val = "";
+this.search$val = "";
+this.hash$val = "";
+if(v.match(/^[a-zA-Z]*:/)) {
+this.protocol$val = v.replace(/:.*/, "");
+this.protocol$val += ":";
+v = v.replace(/^[a-zA-z]*:\/*/, "");
+}
+if(v.match(/[/#?]/)) {
+/* contains / ? or # */
+this.host$val = v.replace(/[/#?].*/, "");
+v = v.replace(/^[^/#?]*/, "");
+} else {
+/* no / ? or #, the whole thing is the host, www.foo.bar */
+this.host$val = v;
+v = "";
+}
+if(this.host$val.match(/:/)) {
+this.hostname$val = this.host$val.replace(/:.*/, "");
+this.port$val = this.host$val.replace(/^.*:/, "");
+/* port has to be an integer */
+this.port$val = parseInt(this.port$val);
+} else {
+this.hostname$val = this.host$val;
+// should we be filling in a default port here?
+this.port$val = default$port(this.protocol$val);
+}
+if(v.match(/[#?]/)) {
+this.pathname$val = v.replace(/[#?].*/, "");
+v = v.replace(/^[^#?]*/, "");
+} else {
+this.pathmname$val = v;
+v = "";
+}
+if(this.pathname$val == "")
+this.pathname$val = "/";
+if(v.match(/#/)) {
+this.search$val = v.replace(/#.*/, "");
+this.hash$val = v.replace(/^[^#]*/, "");
+} else {
+this.search$val = v;
+}
+}
+});
+
 URL.prototype.toString = function() { 
-return this.href;
+return this.href$val;
 }
 URL.prototype.indexOf = function(s) { 
 return this.toString().indexOf(s);

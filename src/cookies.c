@@ -194,7 +194,7 @@ bool receiveCookie(const char *url, const char *str)
 	const char *p, *q, *server;
 	char *date, *s;
 
-	debugPrint(3, "%s", str);
+	debugPrint(3, "cookie %s", str);
 
 	server = getHostURL(url);
 	if (server == 0 || !*server)

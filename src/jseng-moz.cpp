@@ -606,13 +606,16 @@ static JSBool textnode_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 	return JS_TRUE;
 }				/* textnode_ctor */
 
-static void url_initialize(JS::HandleObject uo, const char *url,
-			   bool exclude_href);
+static JSBool setter_loc_hrefval(JSContext * cx, JS::HandleObject uo,
+				 JS::Handle < jsid > id, JSBool strict,
+				 JS::MutableHandle < JS::Value > vp);
 
 static JSBool url_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	const char *url = emptyString;
 	const char *s;
+	js::RootedValue v(cx);
+
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	JSObject & callee = args.callee();
 	jsval callee_val = JS::ObjectValue(callee);
@@ -620,16 +623,30 @@ static JSBool url_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 			    JS_NewObjectForConstructor(cx, &url_class,
 						       &callee_val));
 	if (uo == NULL) {
+abort:
 		misconfigure();
 		return JS_FALSE;
 	}
+
+/* href$val has a setter, so define it here */
+	v = JS_GetEmptyStringValue(cx);
+	if (JS_DefineProperty
+	    (cx, uo, "href$val", v, NULL, setter_loc_hrefval,
+	     PROP_STD) == JS_FALSE)
+		goto abort;
+
 	if (args.length() > 0 && JSVAL_IS_STRING(args[0])) {
-		js::RootedValue v(cx, args[0]);
+		v = args[0];
 		s = stringize(v);
 		if (s[0])
 			url = s;
-	}			/* string argument */
-	url_initialize(uo, url, false);
+	}
+	/* string argument */
+	v = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, url));
+/* This should invoke the js setter URL.href, I hope */
+	if (JS_SetProperty(cx, uo, "href", v.address()) == JS_FALSE)
+		goto abort;
+
 	args.rval().set(OBJECT_TO_JSVAL(uo));
 	return JS_TRUE;
 }				/* url_ctor */
@@ -641,207 +658,11 @@ Setters are effectively suspended by setting the following variable to true.
 This is usually done when the dom manipulates the javascript objects directly.
 When website javascript is running however,
 the setters should run as well.
+Realize that the javascript level setters in startwindow.js run all the time.
+There's no way to turn those off, so make sure you don't want to.
 *********************************************************************/
 
 static bool setter_suspend;
-
-/* Lots of little routines for the pieces of the URL object */
-
-/* Put a url together from its pieces, after something has changed. */
-static void build_url(JS::HandleObject uo, int component, const char *e)
-{
-	js::RootedValue v(jcx);
-	const char *new_url;
-	string url_str, pathname;
-	static const char *const noslashes[] = {
-		"mailto", "telnet", "javascript", 0
-	};
-
-	setter_suspend = true;
-/* e was built using stringize(), best to copy it */
-	e = cloneString(e);
-
-	if (component == 1)	// protocol
-		url_str = e;
-	else {
-		if (JS_GetProperty(jcx, uo, "protocol", v.address()) ==
-		    JS_FALSE) {
-abort:
-			setter_suspend = false;
-			cnzFree(e);
-			misconfigure();
-			return;
-		}
-		url_str = stringize(v);
-	}
-	if (url_str.length() && stringInListCI(noslashes, url_str.c_str()) < 0)
-		url_str += "//";
-
-	if (component == 2)	// host
-		url_str += e;
-	else {
-		if (JS_GetProperty(jcx, uo, "host", v.address()) == JS_FALSE)
-			goto abort;
-		url_str += stringize(v);
-	}
-
-	if (component == 3)	// path
-		pathname = e;
-	else {
-		if (JS_GetProperty(jcx, uo, "pathname", v.address()) ==
-		    JS_FALSE)
-			goto abort;
-		pathname = stringize(v);
-	}
-	if (pathname[0] != '/')
-		url_str += '/';
-	url_str += pathname;
-
-	if (component == 4)	// search
-		url_str += e;
-	else {
-		if (JS_GetProperty(jcx, uo, "search", v.address()) == JS_FALSE)
-			goto abort;
-		url_str += stringize(v);
-	}
-
-	if (component == 5)	// hash
-		url_str += e;
-	else {
-		if (JS_GetProperty(jcx, uo, "hash", v.address()) == JS_FALSE)
-			goto abort;
-		url_str += stringize(v);
-	}
-
-	new_url = url_str.c_str();
-	v = STRING_TO_JSVAL(JS_NewStringCopyZ(jcx, new_url));
-	if (JS_SetProperty(jcx, uo, "href", v.address()) == JS_FALSE)
-		goto abort;
-
-	setter_suspend = false;
-	cnzFree(e);
-}				/* build_url */
-
-/* Rebuild host, because hostname or port changed. */
-static void build_host(JS::HandleObject uo, int component,
-		       const char *hostname, int port)
-{
-	js::RootedValue v(jcx);
-	const char *oldhost;
-	bool hadcolon = false;
-	string q;
-	const char *newhost;
-
-	setter_suspend = true;
-
-	if (JS_GetProperty(jcx, uo, "host", v.address()) == JS_FALSE)
-		goto abort;
-	oldhost = stringize(v);
-	if (strchr(oldhost, ':'))
-		hadcolon = true;
-
-	if (component == 1) {
-		if (JS_GetProperty(jcx, uo, "port", v.address()) == JS_FALSE) {
-abort:
-			setter_suspend = false;
-			misconfigure();
-			return;
-		}
-		port = JSVAL_TO_INT(v);
-	} else {
-		if (JS_GetProperty(jcx, uo, "hostname", v.address()) ==
-		    JS_FALSE)
-			goto abort;
-		hostname = stringize(v);
-	}
-
-	q = hostname;
-	if (component == 2 || hadcolon) {
-		char portstring[12];
-		sprintf(portstring, ":%d", port);
-		q += portstring;
-	}
-	newhost = q.c_str();
-	v = STRING_TO_JSVAL(JS_NewStringCopyZ(jcx, newhost));
-	if (JS_SetProperty(jcx, uo, "host", v.address()) == JS_FALSE)
-		goto abort;
-
-	setter_suspend = false;
-}				/* build_host */
-
-static void
-loc_def_set(JS::HandleObject uo, const char *name, const char *s,
-	    JSStrictPropertyOp setter)
-{
-	JSBool found;
-	js::RootedValue v(jcx);
-
-	if (s)
-		v = STRING_TO_JSVAL(JS_NewStringCopyZ(jcx, s));
-	else
-		v = JS_GetEmptyStringValue(jcx);
-	JS_HasProperty(jcx, uo, name, &found);
-	if (found) {
-		if (JS_SetProperty(jcx, uo, name, v.address()) == JS_FALSE) {
-abort:
-			misconfigure();
-			return;
-		}
-	} else {
-		if (JS_DefineProperty(jcx, uo, name, v, NULL, setter, PROP_STD)
-		    == JS_FALSE)
-			goto abort;
-	}
-}				/* loc_def_set */
-
-/* Like the above, but using an integer, this is for port only. */
-static void
-loc_def_set_n(JS::HandleObject uo, const char *name, int port,
-	      JSStrictPropertyOp setter)
-{
-	JSBool found;
-	js::RootedValue v(jcx, INT_TO_JSVAL(port));
-
-	JS_HasProperty(jcx, uo, name, &found);
-	if (found) {
-		if (JS_SetProperty(jcx, uo, name, v.address()) == JS_FALSE) {
-abort:
-			misconfigure();
-			return;
-		}
-	} else {
-		if (JS_DefineProperty(jcx, uo, name, v, NULL, setter, PROP_STD)
-		    == JS_FALSE)
-			goto abort;
-	}
-}				/* loc_def_set_n */
-
-/* string s of length n */
-static void
-loc_def_set_part(JS::HandleObject uo, const char *name, const char *s,
-		 int n, JSStrictPropertyOp setter)
-{
-	JSBool found;
-	js::RootedValue v(jcx);
-
-	if (s)
-		v = STRING_TO_JSVAL(JS_NewStringCopyN(jcx, s, n));
-	else
-		v = JS_GetEmptyStringValue(jcx);
-
-	JS_HasProperty(jcx, uo, name, &found);
-	if (found) {
-		if (JS_SetProperty(jcx, uo, name, v.address()) == JS_FALSE) {
-abort:
-			misconfigure();
-			return;
-		}
-	} else {
-		if (JS_DefineProperty(jcx, uo, name, v, NULL, setter, PROP_STD)
-		    == JS_FALSE)
-			goto abort;
-	}
-}				/* loc_def_set_part */
 
 /* this setter is only for window.location or document.location */
 static JSBool
@@ -861,237 +682,28 @@ setter_loc(JSContext * cx, JS::HandleObject uo, JS::Handle < jsid > id,
 	return JS_TRUE;
 }				/* setter_loc */
 
-/* this setter can also open a new window, if the parent object
+/* this setter can open a new window, if the parent object
  * is window.location or document.location.
- * Otherwise it has the usual side effects for the URL class,
- * distributing the pieces of the url to the members. */
+ * Otherwise it does nothing. */
 static JSBool
-setter_loc_href(JSContext * cx, JS::HandleObject uo,
-		JS::Handle < jsid > id, JSBool strict,
-		JS::MutableHandle < JS::Value > vp)
+setter_loc_hrefval(JSContext * cx, JS::HandleObject uo,
+		   JS::Handle < jsid > id, JSBool strict,
+		   JS::MutableHandle < JS::Value > vp)
 {
 	const char *url = 0;
-	const char *urlcopy;
 	if (setter_suspend)
 		return JS_TRUE;
 	url = stringize(vp);
 	if (!url)
 		return JS_TRUE;
-	urlcopy = cloneString(url);
-	url_initialize(uo, urlcopy, true);
 	if (iswindocloc(uo)) {
 		stringAndString(&effects, &eff_l, "n{");	// }
-		stringAndString(&effects, &eff_l, urlcopy);
+		stringAndString(&effects, &eff_l, url);
 		stringAndChar(&effects, &eff_l, '\n');
 		endeffect();
 	}
-	cnzFree(urlcopy);
 	return JS_TRUE;
-}				/* setter_loc_href */
-
-static JSBool
-setter_loc_hash(JSContext * cx, JS::HandleObject uo,
-		JS::Handle < jsid > id, JSBool strict,
-		JS::MutableHandle < JS::Value > vp)
-{
-	const char *e;
-	if (setter_suspend)
-		return JS_TRUE;
-	e = stringize(vp);
-	build_url(uo, 5, e);
-	return JS_TRUE;
-}				/* setter_loc_hash */
-
-static JSBool
-setter_loc_search(JSContext * cx, JS::HandleObject uo,
-		  JS::Handle < jsid > id, JSBool strict,
-		  JS::MutableHandle < JS::Value > vp)
-{
-	const char *e;
-	if (setter_suspend)
-		return JS_TRUE;
-	e = stringize(vp);
-	build_url(uo, 4, e);
-	return JS_TRUE;
-}				/* setter_loc_search */
-
-static JSBool
-setter_loc_prot(JSContext * cx, JS::HandleObject uo,
-		JS::Handle < jsid > id, JSBool strict,
-		JS::MutableHandle < JS::Value > vp)
-{
-	const char *e;
-	if (setter_suspend)
-		return JS_TRUE;
-	e = stringize(vp);
-	build_url(uo, 1, e);
-	return JS_TRUE;
-}				/* setter_loc_prot */
-
-static JSBool
-setter_loc_pathname(JSContext * cx, JS::HandleObject uo,
-		    JS::Handle < jsid > id, JSBool strict,
-		    JS::MutableHandle < JS::Value > vp)
-{
-	const char *e;
-	if (setter_suspend)
-		return JS_TRUE;
-	e = stringize(vp);
-	build_url(uo, 3, e);
-	return JS_TRUE;
-}				/* setter_loc_pathname */
-
-static JSBool
-setter_loc_hostname(JSContext * cx, JS::HandleObject uo,
-		    JS::Handle < jsid > id, JSBool strict,
-		    JS::MutableHandle < JS::Value > vp)
-{
-	const char *e;
-	if (setter_suspend)
-		return JS_TRUE;
-	e = stringize(vp);
-	build_host(uo, 1, e, 0);
-	build_url(uo, 0, 0);
-	return JS_TRUE;
-}				/* setter_loc_hostname */
-
-static JSBool
-setter_loc_port(JSContext * cx, JS::HandleObject uo,
-		JS::Handle < jsid > id, JSBool strict,
-		JS::MutableHandle < JS::Value > vp)
-{
-	int port;
-	if (setter_suspend)
-		return JS_TRUE;
-	port = JSVAL_TO_INT(vp);
-	build_host(uo, 2, 0, port);
-	build_url(uo, 0, 0);
-	return JS_TRUE;
-}				/* setter_loc_port */
-
-static JSBool
-setter_loc_host(JSContext * cx, JS::HandleObject uo,
-		JS::Handle < jsid > id, JSBool strict,
-		JS::MutableHandle < JS::Value > vp)
-{
-	const char *e, *s;
-	int n;
-	js::RootedValue v(jcx);
-	if (setter_suspend)
-		return JS_TRUE;
-	e = stringize(vp);
-	e = cloneString(e);
-	build_url(uo, 2, e);
-/* and we have to update hostname and port */
-	setter_suspend = true;
-	s = strchr(e, ':');
-	if (s)
-		n = s - e;
-	else
-		n = strlen(e);
-	v = STRING_TO_JSVAL(JS_NewStringCopyN(jcx, e, n));
-	if (JS_SetProperty(jcx, uo, "hostname", v.address()) == JS_FALSE) {
-abort:
-		setter_suspend = false;
-		cnzFree(e);
-		return JS_FALSE;
-	}
-	if (s) {
-		v = INT_TO_JSVAL(atoi(s + 1));
-		if (JS_SetProperty(jcx, uo, "port", v.address()) == JS_FALSE)
-			goto abort;
-	}
-	setter_suspend = false;
-	cnzFree(e);
-	return JS_TRUE;
-}				/* setter_loc_host */
-
-/*********************************************************************
-As the name url_initialize might indicate, this function is called
-by the constructor, to create the pieces of the url:
-protocol, port, domain, path, hash, etc.
-But it is also called when a url is assigned to URL.href,
-again to cut the url into pieces and set the corresponding members.
-This is how the URL class works, and it is a royal pain to program.
-*********************************************************************/
-
-static void
-url_initialize(JS::HandleObject uo, const char *url, bool exclude_href)
-{
-	int n, port;
-	const char *data;
-	const char *s;
-	const char *pl;
-	string q;
-
-	setter_suspend = true;
-
-/* Store the url in location.href */
-	if (!exclude_href)
-		loc_def_set(uo, "href", url, setter_loc_href);
-
-/* Now make a property for each piece of the url. */
-	if (s = getProtURL(url)) {
-		q = s;
-		q += ':';
-		s = q.c_str();
-	}
-	loc_def_set(uo, "protocol", s, setter_loc_prot);
-	q.clear();
-
-	data = getDataURL(url);
-	s = 0;
-	if (data)
-		s = strchr(data, '#');
-	loc_def_set(uo, "hash", s, setter_loc_hash);
-
-	s = getHostURL(url);
-	if (s && !*s)
-		s = 0;
-	loc_def_set(uo, "hostname", s, setter_loc_hostname);
-
-	getPortLocURL(url, &pl, &port);
-	loc_def_set_n(uo, "port", port, setter_loc_port);
-
-	if (s) {		/* this was hostname */
-		q = s;
-		if (pl) {
-			char portstring[12];
-			sprintf(portstring, ":%d", port);
-			q += portstring;
-		}
-		s = q.c_str();
-	}
-	loc_def_set(uo, "host", s, setter_loc_host);
-	q.clear();
-
-	s = 0;
-	n = 0;
-	getDirURL(url, &s, &pl);
-	if (s) {
-		pl = strpbrk(s, "?\1#");
-		n = pl ? pl - s : strlen(s);
-		if (!n)
-			s = "/", n = 1;
-	}
-	loc_def_set_part(uo, "pathname", s, n, setter_loc_pathname);
-
-	s = 0;
-	if (data && (s = strpbrk(data, "?\1")) &&
-	    (!(pl = strchr(data, '#')) || pl > s)) {
-		if (pl)
-			n = pl - s;
-		else
-			n = strlen(s);
-	} else {
-/* If we have foo.html#?bla, then ?bla is not the query. */
-		s = NULL;
-		n = 0;
-	}
-	loc_def_set_part(uo, "search", s, n, setter_loc_search);
-
-	setter_suspend = false;
-}				/* url_initialize */
+}				/* setter_loc_hrefval */
 
 static const char *emptyParms[] = { 0 };
 static jsval emptyArgs[] = { jsval() };
@@ -1339,20 +951,22 @@ set_prop_string(js::HandleObject parent, const char *name, const char *value)
 		v = JS_GetEmptyStringValue(jcx);
 
 	JS_HasProperty(jcx, parent, name, &found);
+
+/*********************************************************************
+Warning - any time edbrowse sets foo.href = string,
+href isnot present as a member, thus found is false.
+However, this is part of a URL object, and href is a setter
+in the prototype for that class.
+We need to pretend like it is found, so it will be set, not defined,
+and then the setter will disperse the components of the url
+to all the members of the object.
+*********************************************************************/
+	if (stringEqual(name, "href"))
+		found = true;
+
 	if (found) {
-		if (JS_GetClass(parent) == &url_class &&
-		    stringEqual(name, "href")) {
-			const char *vv = value;
-			if (!vv)
-				vv = emptyString;
-			url_initialize(parent, vv, false);
-		} else {
-			setter_suspend = true;
-			if (JS_SetProperty(jcx, parent, name, v.address()) ==
-			    JS_FALSE)
-				misconfigure();
-			setter_suspend = false;
-		}
+		if (JS_SetProperty(jcx, parent, name, v.address()) == JS_FALSE)
+			misconfigure();
 		return;
 	}
 
@@ -1368,8 +982,7 @@ set_prop_string(js::HandleObject parent, const char *name, const char *value)
 		my_setter = setter_cookie;
 
 	if (JS_DefineProperty
-	    (jcx, parent, name, v, my_getter, my_setter, PROP_STD)
-	    == JS_FALSE)
+	    (jcx, parent, name, v, my_getter, my_setter, PROP_STD) == JS_FALSE)
 		misconfigure();
 }				/* set_prop_string */
 
@@ -1382,10 +995,8 @@ static void set_prop_bool(js::HandleObject parent, const char *name, bool n)
 
 	JS_HasProperty(jcx, parent, name, &found);
 	if (found) {
-		setter_suspend = true;
 		if (JS_SetProperty(jcx, parent, name, v.address()) == JS_FALSE)
 			misconfigure();
-		setter_suspend = false;
 		return;
 	}
 
@@ -1403,10 +1014,8 @@ static void set_prop_number(js::HandleObject parent, const char *name, int n)
 
 	JS_HasProperty(jcx, parent, name, &found);
 	if (found) {
-		setter_suspend = true;
 		if (JS_SetProperty(jcx, parent, name, v.address()) == JS_FALSE)
 			misconfigure();
-		setter_suspend = false;
 		return;
 	}
 
@@ -1424,10 +1033,8 @@ static void set_prop_float(js::HandleObject parent, const char *name, double n)
 
 	JS_HasProperty(jcx, parent, name, &found);
 	if (found) {
-		setter_suspend = true;
 		if (JS_SetProperty(jcx, parent, name, v.address()) == JS_FALSE)
 			misconfigure();
-		setter_suspend = false;
 		return;
 	}
 
@@ -1448,10 +1055,8 @@ set_prop_object(js::HandleObject parent, const char *name,
 
 	JS_HasProperty(jcx, parent, name, &found);
 	if (found) {
-		setter_suspend = true;
 		if (JS_SetProperty(jcx, parent, name, v.address()) == JS_FALSE)
 			misconfigure();
-		setter_suspend = false;
 		return;
 	}
 
@@ -2062,8 +1667,15 @@ static void set_prop_generic(js::HandleObject parent, const char *name)
 			break;
 		}
 		if (cp == &url_class) {
-/* the constructor didn't run, so create all the pieces under url */
-			url_initialize(childroot, "", false);
+// the constructor didn't run, so create href$val with its native setter here
+			js::RootedValue v(jcx);
+			v = JS_GetEmptyStringValue(jcx);
+			if (JS_DefineProperty
+			    (jcx, childroot, "href$val", v, NULL,
+			     setter_loc_hrefval, PROP_STD) == JS_FALSE) {
+				misconfigure();
+				break;
+			}
 		}
 
 childreturn:
@@ -2263,7 +1875,9 @@ static void processMessage(void)
 		if (head.proptype == EJ_PROP_ARRAY
 		    || head.proptype == EJ_PROP_INSTANCE)
 			setret = true;
+		setter_suspend = true;
 		set_prop_generic(parent, membername);
+		setter_suspend = false;
 		nzFree(membername);
 		membername = 0;
 propreturn:
