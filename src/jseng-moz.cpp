@@ -951,19 +951,6 @@ set_prop_string(js::HandleObject parent, const char *name, const char *value)
 		v = JS_GetEmptyStringValue(jcx);
 
 	JS_HasProperty(jcx, parent, name, &found);
-
-/*********************************************************************
-Warning - any time edbrowse sets foo.href = string,
-href isnot present as a member, thus found is false.
-However, this is part of a URL object, and href is a setter
-in the prototype for that class.
-We need to pretend like it is found, so it will be set, not defined,
-and then the setter will disperse the components of the url
-to all the members of the object.
-*********************************************************************/
-	if (stringEqual(name, "href"))
-		found = true;
-
 	if (found) {
 		if (JS_SetProperty(jcx, parent, name, v.address()) == JS_FALSE)
 			misconfigure();
