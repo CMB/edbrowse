@@ -1,19 +1,19 @@
 <html><head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8"></head><body alink="navy" link="red" bgcolor="white" text="black" vlink="red"><font face="Arial,Helvetica,sans-serif" size="4">
 
-<meta name="description" content="documentation edbrowse, un éditeur orienté texte, 
+<meta name="description" content="documentation Edbrowse, un éditeur orienté texte, 
 un navigateur, et un client de courrier électronique.">
-<meta name="keywords" content="orienté texte, ligne de command, interactif,
+<meta name="keywords" content="orienté texte, ligne de commande, interactif,
 éditeur, navigateur, client mail, portable, C, javascript,
 securité, ssl, aveugle, script, accessible, accessibilité">
-<title>edbrowse documentation</title>
+<title>Edbrowse documentation</title>
 <link rel="SHORTCUT ICON" href="http://www.eklhad.net/linux/app/pc.ico">
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 
 
 
-<h2 align="center"> Documentation edbrowse, guide de l'utilisateur</h2>
+<h2 align="center"> Documentation Edbrowse, guide de l'utilisateur</h2>
 
 <h3 align="center"> <a name="top"> Table des matières </a> </h3>
 
@@ -75,7 +75,6 @@ securité, ssl, aveugle, script, accessible, accessibilité">
 <li><a href="#ftp"> Téléchargements Ftp </a></li>
 <li><a href="#proxy"> Serveurs proxy </a></li>
 <li><a href="#frame"> Cadres </a></li>
-<li><a href="#pdf"> PDF </a></li>
 </ul>
 
 <h4> Chapitre 5, Javascript </h4>
@@ -96,7 +95,7 @@ securité, ssl, aveugle, script, accessible, accessibilité">
 <li><a href="#script"> Fonctions d'Edbrowse </a></li>
 <li><a href="#init"> Le script d'initialisation </a></li>
 <li><a href="#ma"> Comptes de courrier </a></li>
-<li><a href="#mt"> Descripteurs des types Mime </a></li>
+<li><a href="#mt"> Descripteurs des plugins </a></li>
 <li><a href="#sampcfg"> Un exemple de fichier de configuration </a></li>
 </ul>
 
@@ -127,35 +126,38 @@ securité, ssl, aveugle, script, accessible, accessibilité">
 <h4> Chapitre 9, Autres utilitaires en ligne de commande </h4>
 
 <ul>
-<li><a href="#adapt"> Un adaptateur vocal linéaire </a>
-</li><li><a href="#txt"> Messages textes </a>
-</li><li><a href="#wifi"> Configurer le Wifi </a>
-</li><li><a href="#irc"> Client IRC </a>
-</li><li><a href="#mpg"> En avant la musique </a>
-</li><li><a href="#saud"> Streaming Audio </a>
-</li><li><a href="#podc"> Podcast </a>
-</li><li><a href="#youtube"> Youtube </a>
-</li></ul>
+<li><a href="#adapt"> Un adaptateur vocal linéaire </a></li>
+<li><a href="#txt"> Messages textes </a></li>
+<li><a href="#wifi"> Configurer le Wifi </a></li>
+<li><a href="#irc"> Client IRC </a></li>
+<li><a href="#mpg"> En avant la musique </a></li>
+<li><a href="#saud"> Streaming Audio </a></li>
+<li><a href="#podc"> Podcast </a></li>
+<li><a href="#youtube"> Youtube </a></li>
+<LI><A HREF=#twit> Twitter </A></li>
+</ul>
 
 <p></p><hr><p></p>
 <h2 align="center"> Chapitre 1, Préface </h2>
 
 <h3 align="center"> <a name="maint"> Mainteneur </a> </h3>
 
-Chris Brannon
-<a href="mailto:chris@the-brannons.com">chris@the-brannons.com</a>
+Le site de  Edbrowse est <A href=http://Edbrowse.org>Edbrowse.org</A>.&nbsp;
+<A HREF="mailto:maintainers@Edbrowse.org">
+Chris Brannon</A>
+est l'actuel mainteneur du projet et le webmaster.
 
 <h3 align="center"> <a name="auth"> Auteur </a> </h3>
 
 Karl Dahlke
 <a href="mailto:eklhad@gmail.com">eklhad@gmail.com</a>.&nbsp;
 Consultez SVP
-<a href="http://en.wikipedia.org/wiki/edbrowse">l'article wikipedia</a> pour l'historique de edbrowse, 
+<a href="http://en.wikipedia.org/wiki/Edbrowse">l'article wikipedia</a> pour l'historique de Edbrowse, 
 et un aperçu de ses possibilités.
 
 <h3 align="center"> <a name="copy"> Copyright </a> </h3>
 
-Ce programme est copyright (c) (c) Karl Dahlke (et d'autres auteurs et contributeurs), 2000-2015. 
+Ce programme est copyright (c) (c) Karl Dahlke (et d'autres auteurs et contributeurs), 2000-2014. 
 Il est mis à disposition par les auteurs sous la licence publique générale GNU (GPL), 
 définie par la Free Software Fondation. 
 Il peut être utilisé dans n'importe quel but, et redistribué, 
@@ -178,7 +180,7 @@ institutionnels ou gouvernementaux. En utilisant ce programme, vous l'acceptez e
 <p><a href="mailto:chris@the-brannons.com">
 Chris Brannon</a> a écrit ou modifié au moins 20% du code,
 et a fourni de bonnes idées pour l'architecture générale.
-Il maintient désormais edbrowse.
+Il maintient désormais Edbrowse.
 </p>
 
 <p><a href="mailto:arthompson1990@gmail.com">
@@ -211,7 +213,7 @@ vous vous rendiez compte que ce programme fonctionne également comme un navigat
 Vous pouvez éditer une URL aussi facilement qu'un fichier local, et activer 
 le mode navigation pour afficher le HTML d'une façon appropriée pour un 
 programme en ligne de commande.&nbsp;
-En d'autres termes, nous rejetons la majeure partie des informations de formatage, 
+En d'autres termes, nous ignorons la majeure partie des informations de formatage, 
 maintenons les liens et remplissons les formulaires.&nbsp;
 Ceci permet aux utilisateurs aveugles d'accéder à l'Internet par l'intermédiaire 
 d'une application qui est entièrement compatible avec la nature linéaire de la parole 
@@ -222,7 +224,7 @@ ou du braille.&nbsp;
 Si Edbrowse n'est pas fourni par votre distribution, il existe une version en Perl,
  avec des fonctionnalités moindres, que vous pouvez utiliser sur n'importe quel ordinateur :
  Linux, Unix, Mac, Windows, etc. &nbsp;
- Essayez edbrowse.pl, et si vous l'appréciez, vous pourrez récupérer le package git et
+ Essayez Edbrowse.pl, et si vous l'appréciez, vous pourrez récupérer le package git et
   compiler les sources pour construire la version C complète.
 </p>
 
@@ -232,8 +234,8 @@ vous pouvez - bien sûr - utiliser la version Perl mentionnée ci-dessus, mais v
  utiliser la version complète en C, en évitant les tracas de la compilation.&nbsp;
  Des versions liées statiquement pour les architectures 32 bits et 64 bits sont maintenues sur
 Statically-linked executables for 32 bit and 64 bit architectures
-<a href="http://the-brannons.com/edbrowse">
-edbrowse home page</a>.
+<a href="http://edbrowse.org">
+page home d'Edbrowse</a>.
 </p>
 
 <p>
@@ -254,29 +256,31 @@ Ce système est appelé ASCII et, comme vous pouvez le voir, il est spécifique 
 
 <p>
 Les <a href="http://en.wikipedia.org/wiki/Indo-European_languages">
-langages indo-européens</a> comportent plus de caractères, comme ñ (espagnol), 
+langues indo-européens</a> comportent plus de caractères, comme ñ (espagnol), 
 è (français), et ö (allemand). Ceux-ci peuvent tenir sur un octet, 
 en mettant le 8ème bit à 1, selon le standard 
-<a href="http://fr.wikipedia.org/wiki/Iso_8859-1">ISO8859-1</a>. 
+<a href="http://fr.wikipedia.org/wiki/Iso_8859-1">iso8859-1</a>. 
 D'autres langues, comme le tchèque et le hongrois, se conforment au standard
 <a href="http://en.wikipedia.org/wiki/ISO/IEC_8859-2">
 iso8859-2</a>, qui assigne d'autres caractères aux octets supérieurs à 127.
 Et ensuite il y a l'iso8859-3, et ainsi de suite.&nbsp;
 Sélectionnez votre page de codes, et toutes les lettres de vore langue tiennent sur un
-octet.&nbsp;C'est le standard ISO8859, rétro-compatible avec l'ASCII.&nbsp; En d'autres termes, 
-z est 122 en ASCII et dans toutes les pages de codes ISO8859-x, mais les codes plus élevés, au-dessus de 127,
+octet.&nbsp;C'est le standard iso8859, rétro-compatible avec l'ASCII.&nbsp; En d'autres termes, 
+z est 122 en ASCII et dans toutes les pages de codes iso8859-x, mais les codes plus élevés, au-dessus de 127,
 peuvent représenter des lettres différentes dans des langues différentes.
 </p>
 
 <p>
 Ceci a fonctionné pendant longtemps, mais que se passe-t-il si vous désirez écrire un paragraphe en français 
 et un autre en tchèque ?
-Vous pouvez passer de l'iso8859-1 à l'iso8859-2 dans le document, ou bien utiliser un
+Vous pouvez passer de l'iso8859-1 à l'iso8859-2 au milieu du document, ou bien utiliser un
 nouveau standard qui représente toutes les lettres dans toutes les langues
-simultanément. Ce jeu de caractères, qui ne code plus les carctères sur un seul octet,
+simultanément. Ce jeu de caractères, qui ne code plus les caractères sur un seul octet,
 est connu sous le terme <a href="http://en.wikipedia.org/wiki/Utf8">utf8</a>, 
-lequel gagne en popularité. 
-Ainsi, dans votre ordinateur, ñ est représenté par un ou deux octets. 
+lequel est devenu le nouveau standard dans l'industrie informatique.&nbsp;
+Les logiciels n'ont plus à sélectionner une page iso8859 et assigner des nombres aux 
+lettres dans un synthétiseur vocal.&nbsp;
+Ainsi, dans votre ordinateur, ñ est représenté par deux octets, et non un seul.&nbsp;
 C'est transparent pour vous; vous voyez la même lettre sur l'écran, 
 et vous entendez le même son (si votre lecteur d'écran envoie ces lettres 
 à votre synthétiseur). Une façon simple de savoir sur quel système 
@@ -285,7 +289,7 @@ ou utf-8, en minuscules ou majuscules, votre console utilise utf8,
 et attend des séquences de 2 octets. Vos fichiers contiendront ces séquences, 
 sans que vous en soyez (probablement) informé. Des systèmes plus anciens (pré utf-8)
  codent chaque caractère sur un seul octet, et utilisent une page de codes 
- iso-8859-x pour les traduire.
+ iso8859 pour les traduire.
  </p>
 
 <p>Il y aurait beaucoup plus à dire sur les jeux de caractères : ceci est juste une 
@@ -295,55 +299,53 @@ que iso8859 ⇔ utf8 . Le chinois, par exemple, requiert des séquences de 3 ou 
 intégrées dans unicode. Edbrowse, pour l'heure, ne peut gérer ce niveau de complexité.</p>
 
 <p>Les sorties et messages d'erreur ont été "internationalisés",  
-comme "chaîne recherchée non trouvée" :
-ainsi Edbrowse peut accepter la plupart des langues européennes.&nbsp;
+comme "chaîne recherchée non trouvée".&nbsp;
 Positionnez la variable d'environnement LANG pour interagir avec Edbrowse 
 dans votre langue.&nbsp;
 Les langues acceptées sont listées ci-dessous.&nbsp;
-Si vous pouvez traduire edbrowse dans d'autres langues,
+Si vous pouvez traduire Edbrowse dans d'autres langues,
  prière de me le faire savoir.</p>
 
 <p>Anglais: LANG=en (c'est la langue par défaut)</p>
 
 <p>Français: LANG=fr par <a href="mailto:erwinb@no-log.org">Erwin Bliesenick</a>
-avec la <a href="file:///usr2/archives/accessibilit%C3%A9/edbrowse/edbrowse_p201410310616/doc/usersguide_fr.html">documentation</a></p>
+avec la <a href="http://edbrowse.org/usersguide_fr.html">documentation</a></p>
 
 <p>Portuguais brésilien: LANG=pt_br par
-<a href="mailto:clcaul@gmail.com">
-Cleverson Casarin Uliana</a></p>
+<a href="mailto:clcaul@gmail.com">Cleverson Casarin Uliana</a></p>
 
-<p>
-Polonais: LANG=pl_pl by Wojciech Gac</p>
+<p>Polonais: LANG=pl_pl par Wojciech Gac</p>
+
+<p>Allemand: LANG=de par Sebastian Humenda </p>
 
 <p>Lorsqu'un message d'erreur est affiché, les lettres accentuées sont affichées 
-sur un octet, c'est-à-dire en ISO8859-x, à moins que la chaîne 
+sur un octet, c'est-à-dire en iso8859, à moins que la chaîne 
 utf8 ou utf-8 soit présente dans $LANG, auquel cas les caractères non-ascii sont 
 générés en utf8. LANG=fr_FR.UTF-8 est un réglage usuel en France. 
-Seuls ces jeux de caractères sont actuellement supportés. 
 De même, le contenu d'un tampon, qu'il soit un fichier local ou un site internet, 
 est affiché en séquences de 8 bits ou en séquences de 2 octets, 
-conformément à votre environnement local.&nbsp;
-Gardez à l'esprit que utf8 est devenu le standard, et edbrowse ne pourra plus afficher 
-de texte ou des messages d'erreur dans quelque temps. &nbsp; En d'autres termes, 
-ISO8859 est obsolète.
+conformément à $LANG.&nbsp;
+Gardez à l'esprit que utf8 est devenu le standard, et Edbrowse ne pourra plus afficher 
+de texte ou des messages d'erreur en iso8859 dans quelque temps. &nbsp; 
+En d'autres termes, iso8859 est obsolète.
 </p>
 
 <p>
 Si Edbrowse lit un ancien fichier, 
-c'est-à-dire qu'il le charge dans un tampon vide, et qu'il soit codé en ISO8859, 
+c'est-à-dire qu'il le charge dans un tampon vide, et qu'il soit codé en iso8859, 
 alors que votre ordinateur est configuré en UTF-8, 
 ce fichier est alors converti à la volée, bien avant que vous vous en aperceviez. 
 Ainsi, il aura l'air normal. Si j'ai tout fait correctement, 
 vous ne verrez aucune différence. 
-(Utilisez la commande iu pour désactiver cette fonctionnalité.
+(Utilisez la commande iu pour désactiver cette fonctionnalité.)
 </p>
 
 <p>Quand vous sauvegardez vos données dans le même fichier, c'est-à-dire si vous avez
 fait quelques ajouts ou modifications, je reconvertis le fichier dans son jeu de caractères 
-original. Ainsi, vous pouvez renvoyer le fichier modifié à votre correspondant, 
+original iso8859. Ainsi, vous pouvez renvoyer le fichier modifié à votre correspondant, 
 et ce fichier sera dans son jeu de caractères, comme il l'escompte. 
 Cependant, si vous sauvegardez vos données, ou une partie de vos données, 
-sous un nouveau nom de fichier, je les laisserai dans le jeu de caractères utilisé 
+sous un nouveau nom de fichier, il restera dans le jeu de caractères utilisé 
 par votre ordinateur.</p>
 
 <p>Ces conversions ne devraient jamais intervenir sur des fichiers zip, ou des exécutables, 
@@ -382,7 +384,7 @@ si elle est disponible.
 </p><h2 align="center"> Chapitre 2, Guide de référence rapide </h2>
 
 <h3 align="center"> <a name="guide"> Guide de référence rapide </a> </h3>
-Liste de toutes les commandes d'ed et d'edbrowse, toutes regroupées.&nbsp;
+Liste de toutes les commandes d'ed et d'Edbrowse, toutes regroupées.&nbsp;
 C'est un guide de référence rapide.&nbsp;
 La plupart de ces commandes n'auront pas de sens si vous ne lisez pas le reste 
 de la documentation.&nbsp;
@@ -397,7 +399,7 @@ p : afficher la ligne courante <br>
 3 : idem +3p, print est la commande par défaut<br>
 - : ligne précédente<br>
 --- : reculer de 3 lignes<br>
-a,'bp : afficher les lignes repérées par les étiquettes a et b <br>
+'a,'bp : afficher les lignes repérées par les étiquettes a et b <br>
 kb : marquer la ligne courante avec l'étiquette b <br>
 l : lister la ligne courante, affichant les caractères invisibles et les marqueurs de fin de ligne<br>
 eo : marqueurs de fin désactivés<br>
@@ -474,6 +476,7 @@ fmp : mode FTP passif<br>
 rf : rafraichir la page WEB ou la liste des fichiers<br>
 et : éditer cette page Web en mode texte pur <br>
 vs : vérifier les connexions SSL (sécurisées)<br>
+ua3: se présente comme le troisième agent utilisateur dans votre fichier de configuration<br>
 g : suivre le lien sur la ligne courante <br>
 g2 : suivre le deuxième lien sur la ligne courante <br>
 ^ : retourner à la page à la page Web précédente<br>
@@ -485,8 +488,11 @@ db : niveau de déboguage (de 0 à 7)<br>
 cd : changer de répertoire <br>
 bl : découper la ligne courante en phrases<br>
 bd : basculer entre détection/non détection des fichiers binaires du répertoire<br>
-rl: activation javascript (bascule)<br>
+bg: télécharge les fichiers en tâche de fond (bascule)<br>
+bgl: liste les téléchargements en tâche de fond, terminés ou en cours<br>
+rl : utilise readline() en entrée (bascule)<br>
 pb : joue le tampon <br>
+pg : plugins activés (toggle) <br>
 iu : convertir automatiquement entre iso8859 et utf8 (bascule)<br>
 ds=source,login,password : définit la source de données<br>
 sht : montrer les tables<br>
@@ -496,7 +502,7 @@ fbc : chercher colonnes blob<br>
 sm : envoyer le courrier [le numéro de compte] <br>
 re : répondre à un courriel<br>
 rea : répondre à tous<br>
-<foo arg1="" arg2="" ...="" :="" appel="" de="" la="" fonction="" foo,="" définie="" dans="" le="" fichier="" configuration="" ,ebrc="" <="" p="">
+&lt;foo arg1 arg2 ... appel de la fonction foo, définie dans votre fichier .ebrc 
 
 </foo></p><h3 align="center"> <a name="tips"> Trucs pour éviter les numéros de ligne </a> </h3>
 
@@ -539,10 +545,10 @@ J'arrive habituellement au bon endroit en un ou deux essais.&nbsp;
 <p>
 Pour marquer certaines lignes de texte, n'essayez pas de vous rappeler les numéros de ligne.&nbsp;
 Employez la commande 'k' pour les marquer.&nbsp;
-J'emploie habituellement 'ka' et 'kb' pour marquer le début et la fin d'un bloc de texte, 
+Par exemple, utilisez 'ka' et 'kb' pour marquer le début et la fin d'un bloc de texte, 
 alors que 'kc' marque cette zone.&nbsp;
 La commande pour aller à cette zone est alors 'a,'bm'c – sans numéro de ligne.&nbsp;
-C'est le standard de ed, bien que la plupart des personnes n'en tirent jamais profit.
+C'est le standard de ed.
 </p>
 
 <p>
@@ -552,24 +558,25 @@ mais ceci ne se produit pas très souvent.&nbsp;
 Vous pouvez accéder à un lien particulier en tapant «&nbsp;/{Next}/g&nbsp;».&nbsp;
 De même, vous pouvez rechercher des champs de saisie en recherchant 
 le signe plus grand que («&nbsp;&gt;&nbsp;».&nbsp;
-(Ceci s'explique si vous connaissez le codage particulier des pages web.) 
+Ceci s'explique si vous connaissez le codage particulier des pages web. 
 Et naturellement, des opérations multiples peuvent être codées dans un script, 
-une particularité de ce navigateur.&nbsp;
+une importante fonctionnalité de Edbrowse.&nbsp;
 </p>
 
 <p>
 Ce sont juste quelques trucs qui vous rendront aussi rapide et efficace que quiconque 
 employant un éditeur ou un navigateur écran, à condition de connaître la page 
 sur laquelle vous travaillez.&nbsp;
-(Vous ne serez jamais plus rapide que votre collègue voyant en naviguant dans un 
-territoire peu familier, quel que soit le système employé).&nbsp;
 Mon épouse est toujours stupéfaite de la rapidité avec laquelle je dialogue avec 
 des sites Web, ou quand je travaille sur des documents communs à nous deux.&nbsp;
+Cependant, vous ne serez jamais plus rapide que votre collègue voyant en naviguant dans un 
+territoire peu familier, quel que soit le système employé.&nbsp;
+C'est une chimère.
 </p>
 
 <h3 align="center"> <a name="mlist"> Liste de discussion </a> </h3>
 
-Il existe une liste de diffusion pour les utilisateurs d'edbrowse et d'autres utilitaires 
+Il existe une liste de diffusion pour les utilisateurs d'Edbrowse et d'autres utilitaires 
 en ligne de commande.&nbsp;
 Vous pouvez vous y abonner en envoyant un courrier à
 <a href="mailto:commandline-subscribe@yahoogroups.com?subject=Subscribe">
@@ -598,7 +605,7 @@ des expressions régulières sous Perl.&nbsp;
 Une fois accoutumés à leur puissance et flexibilité, vous ne reviendrez jamais à Ed.&nbsp;
 
 <p>
-Super ! Vous avez lu la page du manuel de perlre, et vous voilà de retour.&nbsp;
+Super ! Vous avez lu la page de man de perlre, et vous voilà de retour.&nbsp;
 Voici quelques changements par rapport aux expressions régulières de Perl.&nbsp;
 J'ai constaté que «&nbsp;(and)&nbsp;» est presque toujours considéré comme un littéral, 
 comme en recherchant maFunction (), aussi j'ai inversé la signification des parenthèses 
@@ -625,30 +632,34 @@ Ci-dessous quelques différences supplémentaires entre ce programme et /bin/ed.
 
 <ul>
 <li>
-Les lignes commençant par # sont ignorées, pour faciliter l'insertion de commentaires 
-dans vos scripts edbrowse.&nbsp;
+Les lignes commençant par # sont ignorées, pour faciliter les commentaires 
+dans vos scripts Edbrowse.&nbsp;
 Le caractère # n'a aucune signification spéciale au milieu d'une ligne.&nbsp;
 </li>
 <p></p><li>
 Les lignes commençant par ! appellent un shell.&nbsp;
 le caractère ! n'a aucune signification spéciale au milieu d'une ligne.&nbsp;
-! seul appelle un shell interactif – dans ce shell, taper «&nbsp;exit&nbsp;» pour revenir à edbrowse.&nbsp;
-Le mot «ok» est affiché lorsque vous quittez le shell.&nbsp;
+! seul appelle un shell interactif – dans ce shell, taper «&nbsp;exit&nbsp;» pour revenir à Edbrowse.&nbsp;
+Le mot «ok» est affiché lorsque vous quittez le shell- ainsi vous êtes prévenu 
+à l'achèvement d'une commande sans sorties.&nbsp;
 </li>
 <p></p><li>
 Taper «&nbsp;cd répertoire » pour changer de répertoire.&nbsp;
 Le nouveau répertoire est toujours affiché.&nbsp;
 Tapez «&nbsp;cd&nbsp;» seul pour savoir dans quel répertoire vous vous trouvez.&nbsp;
-Je ne sais pas ce qui arrive sous dos quand on tape cd f:/ceci/cela : je n'ai jamais testé.
 <p>
-A la différence de bash, edbrowse ne revient pas en arrière par des liens symboliques.&nbsp;
-Ainsi «..» est toujours le répertoire parent.&nbsp;
-</p><p>
-Les variables d'environnement sont expansées avant que la commande «&nbsp;cd&nbsp;» soit appliquée, 
-y compris l'en-tête «&nbsp;~&nbsp;».&nbsp;
+A la différence de bash, Edbrowse ne revient pas en arrière par des liens symboliques.&nbsp;
+Ainsi «..» est toujours le répertoire parent physique.&nbsp;
+</p>
+
+<p>
+Si une chaîne contient $ [] * ? ou est précédée d'un ~, les variables 
+d'environnement et les caractères méta sont expansés.&nbsp;
 Ainsi, «&nbsp;cd ~/documents&nbsp;» vous amène dans le répertoire «&nbsp;documents&nbsp;» de votre 
 répertoire personnel.&nbsp;
-</p><p>
+</p>
+
+<p>
 Cette commande ne change aucun nom de fichier actif.&nbsp;
 Vous pouvez éditer le fichier foo, faire «&nbsp;cd.. » , et sauvegarder : 
 foo sera enregistré dans le répertoire parent.&nbsp;
@@ -656,30 +667,42 @@ Cela n'est probablement pas ce que vous vouliez,
 c'est pourquoi faites bien attention.&nbsp;
 </p>
 </li>
-<p></p><li>
+<p>
+
+</p><li>
 r travaille sur la ligne courante par défaut, et pas sur la dernière ligne.&nbsp;
 Employer $r pour lire un fichier à ajouter à la fin de votre texte.&nbsp;
 </li>
-<p></p><li>
+</p>
+
+<p>
+<li>
 La commande «&nbsp;w+&nbsp;» ajoute le tampon d'édition au fichier.&nbsp;
 Quelques versions de ed utilisent «&nbsp;w&gt;&nbsp;» pour cette opération, mais pendant 40 ans «&nbsp;&gt;&nbsp;» 
 a été le standard pour écrire avec troncature.&nbsp;Donc utiliser «&nbsp;&gt;&nbsp;» pour ajouter 
 présente un risque de confusion. Et «&nbsp;w&gt;&gt;&nbsp;» est trop maladroit, ainsi j'emploie «&nbsp;w+».
 </li> 
-<p></p><li>
+<p>
+	
+<li>
 «&nbsp;w/&nbsp;» écrit les données dans un fichier dont le nom est le dernier composant du nom 
 de fichier courant.&nbsp;C'est utile quand vous avez téléchargé un fichier appelé 
 «this.that.com/foo/package-2.7.7-22.tar.gz&nbsp;», et vous voulez le sauvegarder sans avoir 
 à retaper le dernier élément, c'est-à-dire le nom du fichier.&nbsp;
 Alternativement, «&nbsp;f&nbsp;» change le nom du fichier, ne conservant que le dernier élément.&nbsp;
 </li>
-<p></p><li>
+</p>
+
+<p>
+<li>
 Chaque fois qu'un fichier est lu ou écrit sur disque, $var, dans un nom de fichier, 
 est remplacé par la variable d'environnement correspondante.&nbsp;
 Ainsi vous pouvez éditer votre carnet d'adresses en tapant «&nbsp;e $adbook&nbsp;», 
 si $adbook a été placé dans votre environnement.&nbsp;
+Des constructions comme ${foo}bar sont supportées.&nbsp;
 En outre, un «&nbsp;~/&nbsp;» en en-tête est remplacé par $HOME/, facilitant ainsi 
 l'édition de fichiers dans votre répertoire personnel, comme ~/.profile.&nbsp;
+</p>
 <p>
 Les caractères meta du Shell sont également expansés, le résultat étant un nom de fichier.&nbsp;
 Vous pouvez lire ou sauvegarder un fichier en ne tapant qu'une partie de son nom.&nbsp;
@@ -690,53 +713,80 @@ qui permet l'expansion sur la ligne de commande .&nbsp;
 Ainsi vous devriez pouvoir éditer *.c sur n'importe quel système d'exploitation et 
 obtenir tous les fichiers source C dans le tampon courant.&nbsp;
 </p>
+
+<p>
+La substitution de variable et l'expansion de noms de fichiers peuvent être totalement 
+supprimées en faisant précéder l'expression par l'apostrophe arrière.&nbsp;
+Si vous voulez réellement lire un fichier appelé *a?, tapez r `*a?.&nbsp;
+Vous pouvez échapper un caractère isolé meta du shell avec un slash arrière, comme 
+dans jolie\*maison.
+</p>
 </li>
-<p></p><li>
+
+<p>
+<li>
 Beaucoup de versions de ed placent un «&nbsp;$&nbsp;» à la fin d'une ligne dans le tampon, 
 mais ce n'est pas le cas ici, au moins pas par défaut.&nbsp;
-J'emploie un adaptateur linéaire de parole, plutôt qu'un lecteur d'écran, 
-ainsi les caractères «&nbsp;fin de ligne&nbsp;» m'indiquent où se situent les fins de ligne.&nbsp;
-Cependant, beaucoup emploient toujours des lecteurs d'écran, où l'espace de fin ne peut  
-être ditingué de l'écran vide, et un fragment de texte entouré d'espaces est parfois 
-confondu avec une deuxième ligne.&nbsp;
-Par conséquent, employez la commande «&nbsp;el&nbsp;» pour délimiter les lignes.&nbsp;
-Les lignes présentes dans le tampon débutent par «&nbsp;^&nbsp;» et se terminent par «&nbsp;$&nbsp;».&nbsp;
-Tapez «&nbsp;pe&nbsp;» pour placer ces marqueurs autour de toutes les lignes du tampon.&nbsp;
+Employez la commande «&nbsp;el&nbsp;» pour délimiter les lignes.&nbsp;
+Les lignes présentes dans le tampon débutent par ^ et se terminent par $.&nbsp;
+Tapez «&nbsp;ep&nbsp;» pour placer ces marqueurs autour de toutes les lignes affichées 
+du tampon.&nbsp;
 Utilisez «&nbsp;eo&nbsp;» pour enlever les marqueurs.&nbsp;
 </li>
-<p></p><li>
-q quitte edbrowse sans message d'avertissement si le texte n'a été jamais associé 
+</p>
+
+<p>
+<li>
+q quitte Edbrowse sans message d'avertissement si le texte n'a été jamais associé 
 à un fichier.&nbsp;
 </li>
-<p></p><li>
+</p>
+
+<p>
+<li>
 Q majuscule ne quitte pas l'éditeur.&nbsp;
 C'est parce que je frappe souvent la touche de blocage majuscule par erreur, 
 ou parfois «shift q», et si j'ai oublié quelques modifications importantes que j'ai 
 effectuées, ces modifications sont perdues ! Je sais, ceci semble artificiel, 
-parce que cela ne devrait jamais arriver, mais le fait est que cela m'est souvent arrivé, 
+parce que cela ne devrait jamais arriver, mais le fait est que cela arrive, 
 j'ai donc neutralisé Q majuscule.&nbsp;Tapez «&nbsp;qt&nbsp;» pour quitter Edbrowse «&nbsp;en force&nbsp;».&nbsp;
-<p></p>
 </li>
+</p>
+
 <li>
 J majuscule fusionne les lignes avec un espace entre elles.&nbsp;
 </li>
-<p></p><li>
+
+<p>
+<li>
 x (chiffrement) n'est pas implémenté.&nbsp;
 </li>
-<p></p><li>
+</p>
+
+<p>
+<li>
 P (message de sollicitation) n'est pas implémenté.&nbsp;
 </li>
-<p></p><li>
+</p>
+
+<p>
+<li>
 on assume que le numéro de ligne absent avant ou après la virgule est 1 et $.&nbsp;
 C'est conforme à «,p --» pour afficher le fichier entier.&nbsp;
 </li>
-<p></p><li>
+</p>
+
+<p>
+<li>
 Vous ne pouvez pas taper une commande sur deux lignes en mettant un antislash en fin de 
 première ligne.&nbsp;
 Et c'est inutile de toute façon, puisque Perl traduit «&nbsp;\n&nbsp;».&nbsp;
 Pour dédoubler une ligne au milieu du mot «&nbsp;bonjour&nbsp;», tapez «&nbsp;s/bonjour/bon-\njour&nbsp;».&nbsp;
 </li>
-<p></p><li>
+</p>
+
+<p>
+<li>
 Seuls les 500 premiers caractères d'une ligne sont affichés.&nbsp;
 Le reste de la ligne est dans le tampon, et peut être modifié par l'intermédiaire 
 d'une commande remplacement, mais si vous voulez la voir, vous devrez la dédoubler, 
@@ -744,34 +794,50 @@ comme dans l'exemple «&nbsp;bonjour&nbsp;» ci-dessus.&nbsp; Vous pouvez modifi
 caractères affichés en définissant le paramètre "linelength" dans votre fichier de 
 configuration.
 </li>
-<p></p><li>
+</p>
+
+<p>
+<li>
 a+ ajoute du texte, comme a, mais ajoute également la ligne que vous venez de taper, 
 quand vous pensiez être mode insertion, mais que vous n'y étiez pas.&nbsp;
 </li>
-<p></p><li>
+</p>
+
+<p>
+<li>
 Ce programme est moins tolérant vis-à-vis des espaces que /bin/ed.&nbsp;
 <br> «&nbsp;57, 63 p&nbsp;» ne fonctionnera pas.&nbsp;
 </li>
-<p></p><li>
+</p>
+
+<p>
+<li>
 Un seul «&nbsp;%&nbsp;» en fin de substitution est remplacé par la dernière partie droite. 
-Quelques versions de ed fonctionnent ainsi, d'autres non ; Je trouve ce dispositif commode.&nbsp;
+Quelques versions de ed fonctionnent ainsi, d'autres non.&nbsp;
 </li>
-<p></p><li>
+</p>
+
+<p><li>
 s est un raccourci pour  «s/, +,\n&nbsp;». C'est utilisé pour découper les lignes en phrases.&nbsp;
 tapez «&nbsp;s. » pour dédoubler une ligne après le premier point jusqu'à une fin de phrase.&nbsp;
 «&nbsp;s; s: s) s"&nbsp;» peuvent s'employer.&nbsp;
 «&nbsp;s,3&nbsp;» découpe la ligne après la troisième virgule.&nbsp;
 Il faudra taper «&nbsp;s2&nbsp;» si la phrase commence par M. Untel.&nbsp;
 </li>
-<p></p><li>
+</p>
+
+<p><li>
 Taper s pour «&nbsp;s//% ».&nbsp;
 </li>
-<p></p><li>
+</p>
+
+<p>
+<li>
 Les commandes «&nbsp;sg&nbsp;» et «&nbsp;sl&nbsp;» rendent respectivement globales et locales les chaînes de 
 substitution.&nbsp;Si vous voulez chercher tous les «&nbsp;foo&nbsp;» dans tous les fichiers du 
 répertoire courant, et remplacer certains d'entre eux par «&nbsp;toto&nbsp;» :&nbsp;
-taper «&nbsp;*, » (éditer tous les fichiers), puis «&nbsp;sg&nbsp;» pour rendre globales les chaînes 
-de substitution.&nbsp;Dans la session courante, chercher «&nbsp;foo&nbsp;», et remplacer certains 
+taper *, (éditer tous les fichiers), puis «&nbsp;sg&nbsp;» pour rendre globales les chaînes 
+de substitution.&nbsp;Dans la première session, chercher «&nbsp;foo&nbsp;», et remplacer certains 
 d'entre eux par «&nbsp;toto&nbsp;».&nbsp;Taper «&nbsp;e2&nbsp;» pour ouvrir une deuxième session, 
 où vous pouvez rechercher en utilisant seulement le caractère «&nbsp;/&nbsp;», parce que 
 la chaîne «&nbsp;foo&nbsp;» est globale à toutes les sessions.&nbsp;
@@ -780,14 +846,18 @@ La commande «&nbsp;sl&nbsp;» revient au comportement local de l'éditeur,
 où chaque fichier possède ses propres chaînes de recherche et de remplacement.&nbsp;
 .&nbsp;
 </li>
-<p></p><li>
+</p>
+
+<p><li>
 Les erreurs de lectures et d'écriture de fichiers, ou les erreurs de changement de 
 session sont toujours affichées.&nbsp;
 D'autres erreurs affichent le point d'interrogation habituel, : dans ce cas vous devrez 
 taper «h&nbsp;» pour obtenir l'explication.&nbsp;
 Tapez H majuscule pour avoir en permanence les messages d'erreur.&nbsp;
 </li>
-<p></p><li>
+</p>
+
+<p><li>
 Dans la plupart des versions de ed, la commande «&nbsp;z7&nbsp;» signifie «.,+6p&nbsp;», faisant de la 
 ligne courante +7 la nouvelle ligne courante.&nbsp;
 Je pense que c'est inconsistent, ed vous laissant quelque part ailleurs que sur la 
@@ -806,7 +876,6 @@ Ainsi vous pouvez lire votre fichier par morceaux ou écran par écran.&nbsp;
 Les sections suivantes décrivent de nouveaux dispositifs, totalement étrangers à ed.&nbsp;
 Ceux-ci incluent l'édition simultanée de fichiers comme dans emacs et vi, 
 la navigation dans un document HTML et «&nbsp;l'édition» des formulaires de saisie.&nbsp;
-C'est la raison pour laquelle j'ai développé ce programme.&nbsp;
 </p>
 
 <h3 align="center"> <a name="brace"> Equilibrage des parenthèses </a> </h3>
@@ -828,12 +897,13 @@ if(x == 3 &amp;&amp;
 
 <p>
 La commande B majuscule, sur la deuxième ou dernière ligne, se déplace à la ligne du 
-milieu «&nbsp;} else {&nbsp;», laquelle équilibre l'accolade ouvrante de la ligne 2 ou 
-l'accolade fermante de la dernière ligne.&nbsp;
-Sur la première ligne, B se déplace à la deuxième ligne, équilibre la parenthèse ouverte.&nbsp;
+milieu «&nbsp;} else {&nbsp;», laquelle équilibre l'accolade ouvrante.&nbsp;
+Sur la première ligne, B se déplace à la deuxième ligne, qui équilibre la parenthèse 
+ouverte.&nbsp;
 La deuxième ligne équilibre {, plutôt que ), parce que les accolades ont la priorité 
 sur les parenthèses, qui ont la priorité sur les crochets.&nbsp;
-Vous pouvez forcer un match de parenthèses par «&nbsp;B)&nbsp;», laquelle revient de la ligne 2 à la ligne 1.&nbsp;
+Vous pouvez forcer un match de parenthèses par «&nbsp;B)&nbsp;», laquelle revient 
+de la ligne 2 à la ligne 1.&nbsp;
 </p>
 
 <p>
@@ -849,7 +919,7 @@ utilisé dans des certains préprocesseurs tels que m4.&nbsp;
 
 <p>
 Des commentaires ou des chaînes littérales contenant des ponctuations ouvrantes/fermantes 
-vont faire sortir edbrowse de ses gonds. si vous êtes l'auteur du source, essayez d'éviter
+vont faire sortir Edbrowse de ses gonds. si vous êtes l'auteur du source, essayez d'éviter
 des parenthèses dans les commentaires, ou bien équilibrez les parenthèses dans un 
 commentaire.
 </p>
@@ -956,15 +1026,15 @@ Ci-dessous, comment transférer une portion de texte d'un fichier à un autre
 
 <p>
 La commande «&nbsp;e&nbsp;», indique la session courante, au cas où vous l'oublieriez.&nbsp;
-Elle ressemble à la commande «&nbsp;f,&nbsp;» ,qui indique le fichier courant.&nbsp;
+Elle ressemble à la commande «&nbsp;f&nbsp;», qui indique le fichier courant.&nbsp;
 </p>
 
 <h3 align="center"> <a name="usage"> Utilisation </a> </h3>
 
-Tapez «&nbsp;edbrowse -h&nbsp;» pour lire les conseils d'utilisation.&nbsp;
+Tapez «&nbsp;Edbrowse -h&nbsp;» pour lire les conseils d'utilisation.&nbsp;
 Vous verrez les options «&nbsp;-f&nbsp;», «&nbsp;-fm&nbsp;», et «&nbsp;-m&nbsp;»,utilisées de différentes manières.&nbsp;
 Ignorez-les pour l'instant.&nbsp;
-Ces trois options lancent edbrowse en tant que client interactif de courrier.&nbsp;
+Ces trois options lancent Edbrowse en tant que client interactif de courrier.&nbsp;
 Nous y reviendrons.&nbsp;
 
 <p>
@@ -973,27 +1043,25 @@ Le défaut est «&nbsp;-d1&nbsp;», qui affiche les tailles des fichiers lorsqu'
 ou sauvegardés.&nbsp;
 Certains préfèrent «&nbsp;-d2&nbsp;», qui affiche l'URL lorsque vous allez à de nouvelles 
 pages Web ou remplissez des formulaires en ligne.&nbsp;
-À moins que vous vouliez déboguer le programme, vous n'irez probablement pas plus haut 
+À moins que vous soyez un développeur, vous n'irez probablement pas plus haut 
 que «&nbsp;-d3&nbsp;».&nbsp;
-A de rares occasions, vous pourriez employer «&nbsp;-d4&nbsp;», pour afficher les en-têtes HTTP 
-entrantes et sortantes.&nbsp;
 Rappelez-vous, le niveau de déboguage peut être modifié en cours en employant 
 la commande «&nbsp;dbx&nbsp;» (x entre 0 et 9).&nbsp;
 </p>
 
 <p>
-L'option «&nbsp;-e&nbsp;» force edbrowse à quitter en cas d'erreur.&nbsp;
+L'option «&nbsp;-e&nbsp;» force Edbrowse à quitter en cas d'erreur.&nbsp;
 Ceci est habituellement employé par des scripts de traitements par lots.&nbsp;
 S'il y a un problème, vous ne voudriez pas continuer ainsi en exécutant le reste 
-des commandes de edbrowse.&nbsp;
+des commandes de Edbrowse.&nbsp;
 </p>
 
 <p>
 Utilisez «&nbsp;-c&nbsp;» pour désactiver et éditer, le fichier de configuration «&nbsp;.ebrc&nbsp;».&nbsp;
 (Ce fichier de config sera décrit plus tard).&nbsp;
 Pourquoi le faire? Supposez que vous avez modifié ce fichier, avec une erreur de syntaxe, 
-de telle sorte que edbrowse ne puisse même pas démarrer.&nbsp;
-Vous ne pourriez plus employer edbrowse pour fixer votre fichier de configuration.&nbsp;
+de telle sorte que Edbrowse ne puisse même pas démarrer.&nbsp;
+Vous ne pourriez plus employer Edbrowse pour fixer votre fichier de configuration.&nbsp;
 Naturellement vous pourriez renommer le fichier de configuration, fixer l'erreur, 
 et revenir en arrière ; mais alors vous pourriez découvrir une autre erreur de syntaxe, 
 et ainsi de suite.&nbsp;
@@ -1016,12 +1084,12 @@ vous pouvez placer l'alias Unix suivant :
 </p>
 
 <p>
-alias e= " /usr/bin/edbrowse " 
+alias e= " /usr/bin/Edbrowse " 
 </p>
 
 <p>
 Si vous le faites, vous pouvez employer «e nom_de_fichier», pour éditer un nouveau fichier, 
-que vous soyez dans edbrowse ou dans le shell Unix.&nbsp;
+que vous soyez dans Edbrowse ou dans le shell Unix.&nbsp;
 Très commode.&nbsp;
 </p>
 
@@ -1029,16 +1097,16 @@ Très commode.&nbsp;
 
 À tout moment, même lorsqu'on tape un nom de fichier, le programme balaye l'entrée 
 à la recherche de codes binaires.&nbsp;
-Désolé, mais je préfère l'hexadécimal à l'octal.&nbsp;
-Je sais que ce n'est pas standard, mais c'est comme çà.&nbsp;
-Employez la séquence triple «&nbsp;~bd&nbsp;» pour écrire le caractère non-ASCII 0xbd, code de «&nbsp;1/2&nbsp;».&nbsp;
-De même, si vous listez une ligne, avec la commande «&nbsp;l&nbsp;», le caractère «&nbsp;1/2&nbsp;» 
-est affiché «&nbsp;~bd&nbsp;».&nbsp;
-Tout ce qui non ASCCI et la plupart des caractères de contrôle sont tapés 
+Employez la séquence triple «&nbsp;~bd&nbsp;» pour écrire le caractère 
+non-ASCII 0xbd, valeur unicode de «&nbsp;1/2&nbsp;».&nbsp;
+En utf8, vous devrez entrer ~c2~bd pour obtenir 1/2.&nbsp;
+De même, si vous listez une ligne, avec la commande «&nbsp;lna&nbsp;», 
+le caractère «&nbsp;1/2&nbsp;» est affiché ~c2~bd.&nbsp;
+Tout ce qui non ASCCI et la plupart des caractères de contrôle sont entrés 
 et affichés de cette manière.&nbsp;
 La tabulation et le retour-chariot doivent être tapés directement au clavier.&nbsp;
 Tabulation et retour arrière sont affichés respectivement «&nbsp;&gt;&nbsp;» et «&nbsp;&lt;&nbsp;».&nbsp;
-Si la ligne suivante est tapée, 
+Si la ligne ci-dessous est tapée, 
 
 <p>
 «&nbsp;Hello~07 ~x is ~bd of y&nbsp;»
@@ -1052,11 +1120,18 @@ employez deux tildes, «&nbsp;~~&nbsp;».&nbsp;
 </p>
 
 <p>
+Bien sûr, les caractères ne sont pas entrés de cette manière incommode.&nbsp;
+Il y a des moyens plus simples de taper des caractères accentués dans vore document, selon 
+votre langue et la configuration de votre système.
+</p>
+
+<p>
 Quand vous tapez une expression régulière, vous avez le choix, hexadécimal ou octal.&nbsp;
 Ce programme convertit «&nbsp;~xx&nbsp;» en hexadécimal, et la machinerie regexp de Perl 
 convertit «&nbsp;\nnn&nbsp;» en octal.&nbsp;
 Ainsi, les commandes qui suivent annuleront les fins de lignes DOS d'un fichier.&nbsp;
-La première est traduite par mon programme, la deuxième et troisième par le regexp de Perl.&nbsp;
+La première est traduite par Edbrowse, la deuxième et troisième par les 
+expressions régulières de Perl.&nbsp;
 </p>
 
 <pre>,s/~0d$//
@@ -1082,7 +1157,7 @@ un caractère littéral échappé.&nbsp;
 <p>
 Les retours-chariots et les caractères nuls sont également convertis en hexadécimal.&nbsp;
 Ainsi une ligne contenant un retour-chariot n'apparaîtra pas comme deux lignes.&nbsp;
-Vous le verrez en important un fichier texte de DOS.&nbsp;
+Vous le verrez en important un fichier texte de DOS ou de Windows.&nbsp;
 Chaque ligne finit par «&nbsp;~0d&nbsp;».&nbsp;
 Tapez une des trois commandes ci-dessus pour effacer ces fins de lignes DOS.&nbsp;
 </p>
@@ -1111,7 +1186,7 @@ Vous devez employer la commande «&nbsp;e&nbsp;» pour obtenir un nouveau tampon
 </p>
 
 <p>
-Pour la plupart d'entre nous, il n'importe pas vraiment si les données sont considérées 
+Pour la plupart d'entre nous, il n'importe pas vraiment si les données sont  
 binaires ou ASCII.&nbsp;
 Dans l'un ou l'autre cas, vous pouvez afficher et éditer les données, 
 et les sauvegarder dans un fichier.&nbsp;
@@ -1130,12 +1205,12 @@ des langues européennes, elle échoue misérablement pour les langues asiatique
 très semblables aux données binaires.&nbsp;
 Vous pouvez neutraliser la détection binaire en tapant la commande «&nbsp;bd&nbsp;».&nbsp;
 Si vous parlez une langue asiatique, mettez cette commande dans votre script d'init, 
-ainsi edbrowse est lancé de la manière que vous voulez - traiter vos fichiers 
+ainsi Edbrowse est lancé de la manière que vous voulez - traiter vos fichiers 
 internationaux comme fichiers textes.&nbsp;
 </p>
 
 <p>
-Si vous parlez une langue asiatique, employez Windows, et si la détection binaire 
+Si vous parlez une langue asiatique, et si vous employez Windows, et si la détection binaire 
 est désactivée, n'employez pas ce programme pour travailler sur des fichiers binaires, 
 car ils seront corrompus! 
 </p>
@@ -1143,14 +1218,26 @@ car ils seront corrompus!
 <h3 align="center"> <a name="dir"> Listing de répertoire, gestionnaire de fichiers </a> </h3>
 
 Si vous parcourez un répertoire, vous verrez une liste de tous les fichiers non cachés 
-de ce répertoire, dans l'ordre alphabétique.&nbsp;
+de ce répertoire, dans l'ordre alphabétique, selon votre locale.&nbsp;
+Ce classement est le même qu'avec /bin/ls, et il est déterminé par la variable 
+d'environnement LC_COLLATE.&nbsp;
+mettez LC_COLLATE=C pour un classement ascii traditionnel.&nbsp;
 (Employer l'option «hf» si vous voulez également voir les fichiers cachés).&nbsp; 
 Tapez «&nbsp;g&nbsp;» pour aller à un de ces fichiers ou sous-répertoires.&nbsp;
 Tapez «&nbsp;^&nbsp;» pour revenir au répertoire parent.&nbsp;
-(Notez, g est la commande «go», et «&nbsp;^ «&nbsp;est la touche retour arrière ; 
-nous y reviendrons).&nbsp;
+Ceci est conforme avec le navigateur, où g est la commande go et ^ la commande de retour 
+en arrière. On en saura davantage plus tard.&nbsp;
 Vous pouvez traverser ainsi un arbre entier de répertoire comme si vous étiez 
 à l'intérieur d'un gestionnaire de fichiers.&nbsp;
+
+<p>
+Comme le navigateur, et comme d'autres gestionnaires de fichiers, la commande go 
+invoquera un plugin en fonction de l'extension du fichier.&nbsp;
+Un fichier mp3 est joué, et un fichier pdf est converti en texte lisible.&nbsp;
+Utilisez la commande à bascule «&nbsp;pg&nbsp;» pour désactiver les plugins si vous 
+ne voulez pas de ce comportement automatique.&nbsp;
+Nous reviendrons sur les plugins plus tard.
+</p>
 
 <p>
 Comme «&nbsp;ls -F&nbsp;», un sous-répertoire est indiqué par un slash de fin.&nbsp;
@@ -1161,7 +1248,7 @@ Si le nom d'un fichier finit par un de ces caractères, il peut vous induire en 
 mais pas le programme.&nbsp;
 Edbrowse sait si «&nbsp;|&nbsp;» fait partie du nom de fichier ou si c'est un indicateur de pipe.&nbsp;
 Puisque chaque fichier est représenté par une seule ligne du texte, 
-edbrowse ne peut accéder à des fichiers contenant des caractères 
+Edbrowse ne peut accéder à des fichiers contenant des caractères 
 retour-chariot dans leur nom.&nbsp;
 </p>
 
@@ -1254,7 +1341,7 @@ Et ne parlons pas de ces fichiers embêtants avec les espaces ou qui ont des
 caractères de contrôle invisibles dans leurs noms.&nbsp;
 Notre ami voyant appelle son gestionnaire de fichiers et clique simplement 
 sur le fichier qu'il veut regarder ou éditer ou supprimer.&nbsp;
-Parfois je veux/j'ai besoin de ce genre de puissance.&nbsp;
+Edbrowse vous offre ce genre de puissance.&nbsp;
 </p>
 
 <p>
@@ -1277,7 +1364,7 @@ Ceci pourrait être un utilitaire d'impression, un compilateur, etc.&nbsp;
 Parfois vous voulez renommer les fichiers à votre convenance, pour travailler dans le shell.&nbsp;
 Mais parfois vous n'êtes pas propriétaire de ces fichiers, 
 et parfois ils doivent garder leurs noms originaux.&nbsp;
-Par exemple, plusieurs documents de HTML reliés entre par des hyperliens, 
+Par exemple, plusieurs documents HTML reliés entre par des hyperliens, 
 en utilisant leurs noms de fichier existants.&nbsp;
 Ici, vous ne pouvez pas renommer les fichiers, pourtant vous voulez toujours 
 exécuter votre programme sur un ou deux d'entre eux.&nbsp;
@@ -1286,7 +1373,7 @@ exécuter votre programme sur un ou deux d'entre eux.&nbsp;
 <p>
 Vous pouvez exécuter n'importe quel programme sur n'importe quel fichier 
 sans retaper ce nom de fichier en appelant un shell.&nbsp;
-Utilisez «&nbsp;kx&nbsp;» pour affecter l'étiquette X au fichier qui vous intéresse.&nbsp;
+Utilisez «&nbsp;kx&nbsp;» pour affecter l'étiquette x au fichier qui vous intéresse.&nbsp;
 (c'est la syntaxe ed standard).&nbsp;
 Lancez ensuite «&nbsp;!programme 'x&nbsp;» pour appeler ce programme sur ce fichier.&nbsp;
 Ceci semble compliqué, mais c'est en fait une simple macro de substitution, 
@@ -1347,11 +1434,11 @@ La commande «&nbsp;bl&nbsp;» découpe la ligne courante en phrases et expressi
 chacune d'environ 70 caractères de long.&nbsp;
 Elle comprime les espaces et supprime les espaces en fin de ligne.&nbsp;
 Si la ligne contient les caractères retour-chariot, ceux-ci sont transformés en 
-séparateurs de ligne - endroits où la ligne sera certainement coupée.&nbsp;
+séparateurs de ligne - endroits où la ligne sera certainement définitivement coupée.&nbsp;
 Les seuls espaces préservés sont les étiquettes ou les espaces en début de ligne, 
 ou après chaque caractère retour-chariot.&nbsp;
 C'est une modeste tentative pour maintenir le texte indenté, à supposer 
-que ce soit raisonnable. 
+que cela ait du sens. 
 
 <p>
 J'utilise ce dispositif de deux manières différentes.&nbsp;
@@ -1361,7 +1448,7 @@ Je l'ai tapée rapidement, sans m'interrompre, et maintenant je veux la découpe
 Mais je ne veux pas compter les signes de ponctuation et me dire, 
 «&nbsp;j'ai besoin d'une coupure après la troisième virgule et le point suivant 'cela' 
 et puis à la prochaine virgule&nbsp;», utilisant sans cesse la commande de ponctuation «&nbsp;s&nbsp;».&nbsp;
-Oh j'aime bien la commande «&nbsp;s&nbsp;» - qui me donne le contrôle complet - mais il est plus 
+Oh j'aime bien la commande «&nbsp;s&nbsp;» - qui vous donne le contrôle complet - mais il est plus 
 facile de taper «&nbsp;bl&nbsp;» - et «&nbsp;bl&nbsp;» fait habituellement la bonne chose.&nbsp;
 En outre, le bl comprime les doubles espaces accidentels, une faute de typographie 
 que je n'entendrai jamais si je lis simplement la ligne en entier.&nbsp;
@@ -1388,38 +1475,29 @@ c'est-à-dire plus de 120 caractères, on suppose que c'est un paragraphe d'un s
 et on ajoute un interligne avant et après.&nbsp;Ainsi un paragraphe découpé contenant 
 20 phrases n'est pas fusionné au prochain paragraphe contenant 18 phrases 
 supplémentaires.&nbsp;Une ligne vide sépare les deux paragraphes.&nbsp;Ceci est seulement 
-applicable si «&nbsp;bl&nbsp;» est appliqué à un ensemble de lignes, ou le document entier.&nbsp;
+applicable si «&nbsp;bl&nbsp;» est appliqué à un ensemble de lignes, ou le document 
+entier, ce qui arrive quand on rend lisible un document importé.
 </p>
 
 <p>
 Ne pas appliquer la commande «&nbsp;bl&nbsp;» à une section préformatée, telle qu'une table ou de 
-l'ASCII art.&nbsp;Si vous n'êtes pas sûr du résultat, ne sauvegardez pas le fichier, 
+l'ASCII art.&nbsp;Si vous n'êtes pas sûr du résultat, c'est-à-dire si vous n'avez pas 
+écrit le document, ne sauvegardez pas le fichier, 
 parcourez-le, et appliquez «&nbsp;bl&nbsp;» aux seules lignes de texte.&nbsp;
-Souvent c'est le document entier (,bl).&nbsp;Les commandes suivantes font un très bon 
-travail de nettoyage d'un document typique de Microsoft Word.&nbsp;
 </p>
 
-<pre>e fichier.doc ou fichier.wps
-# changez le nom de fichier, pour ne pas écraser l'original
-f _
-,s[~80-~ff~00-~0c~0e-~1f]//g # supprime les codes de formatage ou de contrôle
-g/^\s*$/d # lignes vides contenant habituellement des codes non ASCII
-bl, séparer les lignes et paragraphes
-1,20p # premières souvent inutiles, mais ensuite le texte commence.&nbsp;
-</pre>
-
 <p>
-Naturellement le programme «&nbsp;catdoc&nbsp;» fait un meilleur travail de conversion des 
-documents Word.&nbsp;
-Il est souvent couplé avec «&nbsp;xls2cvs&nbsp;».&nbsp;
-Ces programmes sont un must pour les personnes qui veulent un environnement 
+Vous pourriez être tenté d'utiliser bl pour rendre un document Word lisible : utilisez 
+plutôt catdoc, il fait un meilleur travail.&nbsp;
+Ce programme est un must pour les personnes qui veulent un environnement 
 en ligne de commande.&nbsp;
+
 </p>
 
 <h3 align="center"> <a name="race"> Comportement </a> </h3>
 
-Supposez que vous sauvegardiez un fichier, et edbrowse tronque le fichier existant, 
-puis l'ordinateur plante avant que edbrowse puisse écrire les nouvelles données.&nbsp;
+Supposez que vous sauvegardiez un fichier, et Edbrowse tronque le fichier existant, 
+puis l'ordinateur plante avant que Edbrowse puisse écrire les nouvelles données.&nbsp;
 Quand vous rallumez l'ordinateur, votre fichier est vide, zéro octets, 
 et tout votre travail est perdu.&nbsp;
 
@@ -1449,10 +1527,9 @@ La fenêtre est trop étroite, tout simplement.&nbsp;
 </p>
 
 <p>
-Dans cette optique, edbrowse ne s'encombre pas avec des fichiers temporaires.&nbsp;
-Simplement, je ne me tracasse pas.&nbsp;
-Je tronque le fichier et écris les données, et je ne m'attends à ce que 
-rien ne tourne mal pendant la milliseconde critique.&nbsp;
+Dans cette optique, Edbrowse ne s'encombre pas avec des fichiers temporaires.&nbsp;
+Il tronque le fichier et écrit les données, et espère que 
+rien ne tournera mal pendant la milliseconde critique.&nbsp;
 </p>
 
 <p>
@@ -1466,14 +1543,10 @@ Quand vous commencez à éditer le fichier «&nbsp;foo&nbsp;», l'éditeur mémo
 puis, quand vous êtes prêt à sauvegarder vos changements, il vérifie l'heure, 
 et si «&nbsp;foo&nbsp;» a été mis à jour dans l'intervalle, il vous avertit.&nbsp;
 Le «&nbsp;fichier a été mis à jour par quelqu'un d'autre – voulez-vous l'enregistrer ?&nbsp;»
-</p>
-
-<p>
-C'est un bon dispositif, mais edbrowse ne l'a pas, simplement parce que je n'ai pas 
+C'est un bon dispositif, mais Edbrowse ne l'a pas, simplement parce que je n'ai pas 
 jugé bon de l'implémenter.&nbsp;
 Je suis le seul utilisateur sur mon PC, et vous êtes probablement le seul utilisateur 
 sur votre PC, aussi ce dispositif n'est pas très demandé.&nbsp;
-Mais il est possible que je l'implémente un jour prochain.&nbsp;
 </p>
 
 <p></p><hr><p>
@@ -1496,10 +1569,10 @@ Noter que ceci n'est pas de la navigation Internet, nous recherchons simplement 
 sur une autre machine et l'éditons localement.&nbsp;
 Le texte n'est pas obligatoirement du HTML, il pourrait être (par exemple) 
 un document ASCII.&nbsp;
-Beaucoup de gens, moi-même inclus, ont mis divers types de fichiers, même exécutables, 
+Beaucoup de gens ont mis divers types de fichiers, même des exécutables, 
 sur leurs sites Web pour téléchargement.&nbsp;
 Naturellement vous ne pourrez pas éditer un fichier binaire, mais vous pouvez encore 
-employer edbrowse pour rechercher le fichier et le sauvegarder localement, 
+employer Edbrowse pour rechercher le fichier et le sauvegarder localement, 
 mettant en application un téléchargement HTTP.&nbsp;
 </p>
 
@@ -1509,13 +1582,13 @@ et rechercher le texte d'une machine distante.&nbsp;
 Ou vous pouvez taper «&nbsp;r URL » pour rechercher le texte à distance et l'ajouter au 
 tampon courant.&nbsp;
 Il n'y a aucune commande «&nbsp;w URL », parce que le protocole de HTTP ne vous permet 
-pas «&nbsp;d'écrire» du HTML sur une machine distante.&nbsp;
+pas d'écrire du source HTML sur une machine distante.&nbsp;
 </p>
 
 <p>
 Pour simplifier, n'importe quel nom de fichier avec deux ou plusieurs points incorporés 
 et un suffixe standard (tel que .com ou .net) est traité comme une URL.&nbsp;
-Vous pouvez habituellement omettre le préfixe de http://.&nbsp;
+Vous pouvez habituellement omettre le préfixe http://.&nbsp;
 Par exemple, essayez d'appeler «&nbsp;e www.space.com&nbsp;».&nbsp;
 Mais encore une fois, vous regardez le source HTML, ce qui n'est probablement pas ce que 
 vous voulez.&nbsp;La navigation sera examinée plus loin.&nbsp;
@@ -1544,7 +1617,7 @@ activer le mode navigation.&nbsp;
 La commande sera refusée s'il n'y a pas dans le tampon les tags communs HTML, 
 ou si l'éditeur est déjà dans le mode navigation.&nbsp;
 Vous pouvez forcer la navigation en ajoutant &lt;html&gt; au début du tampon, 
-ou n'importe quelle autre tag identifiable – edbrowse essayera toujours de convertir 
+ou n'importe quelle autre tag identifiable – Edbrowse essayera toujours de convertir 
 un tel fichier.&nbsp;
 Maintenant le texte transformé est lisible, sans tags HTML.&nbsp;
 En d'autres termes, le &lt;P&gt; a été transformé en coupure de paragraphe,
@@ -1554,13 +1627,6 @@ Si vous sauvegardez les données transformées, délibérément ou accidentellem
 le texte restructuré sera archivé dans un nouveau fichier, quelquechose.html.browse, 
 sans toucher au fichier HTML original.&nbsp;
 Ceci vous protège si vous développez vos propres pages Web.&nbsp;
-Je crois que les personnes aveugles devraient écrire du HTML brut, 
-plutôt que d'utiliser un outil de développement «&nbsp;wysiwig&nbsp;» Web tel que Front Page.&nbsp;
-En fait j'écris tous mes documents en HTML, même les lettres commerciales courtes.&nbsp;
-Je peux créer les titres, listes, tables, etc.&nbsp;,sans employer un éditeur 
-d'impression conforme à la visualisation ou un lecteur d'écran.&nbsp;
-Cet <a href="http://www.htmlcodetutorial.com/">excellent tutoriel</a> 
-vous aidera à démarrer.
 
 <p>
 Durant la conversion vers le mode navigation, le système vérifie les erreurs 
@@ -1641,12 +1707,12 @@ instructions d'extraction, de tri, de fusion etc.&nbsp;
 Voici un exemple de table.&nbsp;
 </p>
 
-<pre><font face="Arial,Helvetica,sans-serif" size="3">
+<pre>
 numéro de pièce|quantité|prix
 2635|2|34.80
 1398|1|67.50
 8118|5|125.00
-</font></pre>
+</pre>
 
 <p>
 Les champs vides en fin de ligne sont ignorés.&nbsp;
@@ -1658,8 +1724,8 @@ L'utilisateur aveugle n'a pas besoin de lire les champs vides.&nbsp;
 <p>
 Notez que le fichier navigable est en lecture seule.&nbsp;
 Après tout, ce n'est pas le «&nbsp;source&nbsp;» -- pourquoi devriez-vous l'éditer ? 
-Il y a des moyens de remplir et éditer les zones de saisie d'un formulaire, q
-ui seront vus plus tard.&nbsp;
+Il y a des moyens de remplir et éditer les zones de saisie d'un formulaire, 
+qui seront vus plus tard.&nbsp;
 En attendant, considérez le texte comme non modifiable.&nbsp;
 Le lancement d'une commande de copie, d'insertion ou de remplacement, g
 énérera une erreur.&nbsp;
@@ -1692,6 +1758,8 @@ mais si cela vous arrive…
 <p>
 Un indice inférieur, repéré par un tag HTML, est mis entre crochets.&nbsp;
 Ainsi x&lt;span class=sub&gt;n&lt;/span&gt; devient x[n].&nbsp;
+(span.sub devrait traduire la propriété subscript correctement dans votre fichier 
+css - en fonte basse et réduite).&nbsp;
 Cette transformation n'est pas effectuée si l'indice est un nombre à un ou deux chiffres.&nbsp;
 Ainsi x indice 1 est affiché x1, comme votre professeur le dirait.&nbsp;
 Ce n'est pas ambigu, comme vous pourriez d'abord penser ; 
@@ -1704,24 +1772,23 @@ Même 17a3b3 n'est pas ambigu ; c'est une traduction de 17 fois a[3] fois b[3].&
 Les indices supérieurs, indiqués par &lt;span class=sup&gt; sont mis entre parenthèses, précédés d'une flèche.&nbsp;
 Les parenthèses sont ignorées si l'indice supérieur est un nombre.&nbsp;
 Ainsi x au cube donne x^3, alors que x à la puissance n-1 donne x^(n-1).&nbsp;
+Ici encore, votre fichier css devrait définir span.sup.
 </p>
 
 <p>
+Edbrowse supporte la traduction de certains &amp;mots; clés en html, comme 
+&amp;lt; pour le signe inférieur, 
 Il y a, c'est triste à dire, trois manières différentes de coder des symboles 
-mathématiques en HTML.&nbsp;
-Actuellement edbrowse n'en connaît qu'une seule, la plus commune, 
-et la plus portable parmi tous les navigateurs.&nbsp;
-C'est le système Unicode, où la lettre grecque thêta est affichée
-&amp;#952;.&nbsp;
-Internet Explorer transforme cette expression en θ,
-un caractère sur l'écran, alors que edbrowse le transforme en mot «&nbsp;thêta&nbsp;».&nbsp;
-Nous mettons également les espaces autour du mot si ses voisins sont également des mots.&nbsp;
-Ceci est illustré par le circonférence d'un cercle, qui est 2 fois pi fois r.&nbsp;
-Ces trois termes sont habituellement accolés, sans confusion possible pour un voyant, 
-où pi est une lettre grecque séparée.&nbsp;
-Mais si pi est prononcé, avec les termes restant accolés, le résultat est 2pir.&nbsp;
-Maintenant, «&nbsp;pir&nbsp;» ressemble à un mot de trois lettres.&nbsp;
-Pour éviter ceci, edbrowse insère des espaces, ce qui donne 2 pi R.&nbsp;
+mathématiques en HTML.&nbsp; les &amp;#code: ou &amp;#xcode pour inclusion directe 
+d'unicodes en html.&nbsp;
+La lettre grecque thêta peut être codée comme &amp;theta;
+ou &amp;#952;,
+ou &amp;#x3b8;.&nbsp;
+Dans chaque cas c'est traduit en séquence utf8 pour theta.&nbsp;
+Votre lecteur d'écran devrait être capable de le restituer dans le terme theta, 
+peut-être selon les directives d'un fichier de configuration.&nbsp;
+Ce type de traductions est laissé à l'adaptateur, Edbrowe le traduit simplement 
+le html dans les bonnes séquences utf8.&nbsp;
 </p>
 
 <p>
@@ -1729,7 +1796,7 @@ Ces traductions sont conçues pour fonctionner avec les pages du
 <a href="http://www.mathreference.com/"> Math Reference Project</a>,
 des archives de mathématiques avancées qui essaient simultanément d'être accessibles 
 aux aveugles et voyants.&nbsp;
-C'est peut-être impossible, mais c'est à essayer.&nbsp;
+Un <A href=http://book.mathreference.com>livre en ligne</A> est inclus.
 </p>
 
 <h3 align="center"> <a name="title"> Titre, description, mots-clés </a> </h3>
@@ -1808,10 +1875,8 @@ Certaines pages Web présentent une série d'icônes qui sont des liens vers d'a
 C'est-à-dire, vous cliquez sur une icône, plutôt que sur une expression, pour aller ailleurs.&nbsp;
 Ces icônes sont supposées être intuitives.&nbsp;
 Parfois elles le sont -- parfois non.&nbsp;
-De toute façon, elles sont inutilisables pour un aveugle.&nbsp;
 Parfois le concepteur Web est assez aimable pour fournir un texte décrivant l'image.&nbsp;
 Dans ce cas, l'expression est employée comme lien.&nbsp;
-Elle est affichée entre accolades, comme s'il n'y avait pas d'image.&nbsp;
 S'il n'y a pas d'expression alternative, on utilise le nom de la cible de l'hyperlien.&nbsp;
 Ce nom peut être étonnamment utile, ou tout à fait inutile, comme dans «&nbsp;index.html&nbsp;».&nbsp;
 Si on ne peut déterminer un nom, le lien générique {image} est employé.&nbsp;
@@ -1849,7 +1914,7 @@ Cette fois encore, le contexte peut vous aider.&nbsp;
 Les liens dans une table des matières sont habituellement des renvois aux chapitres 
 dans le document courant.&nbsp;
 Même chose pour les liens qui ressemblent à : «&nbsp;voir {annexe I}&nbsp;», 
-ou «&nbsp;voir la section configuration de matériel}&nbsp;».&nbsp;
+ou «&nbsp;voir la section {configuration de matériel}&nbsp;».&nbsp;
 
 <p>
 La commande «&nbsp;g&nbsp;» suit un lien interne ou un lien externe.&nbsp;
@@ -1875,7 +1940,7 @@ affichée à l'écran.&nbsp;
 Ce dispositif semble plutôt idiot lorsqu'on est en mode édition, mais il se comprend en 
 surfant sur l'internet.&nbsp;
 Souvent nous descendons en suivant deux ou trois liens, 
-pour finir par nous trouver à la fin.&nbsp;
+pour finir par nous trouver dans un cul-de-sac.&nbsp;
 «&nbsp;Je n'ai pas voulu aller ici.» En tapant la touche retour arrière à plusieurs reprises, 
 nous reviendrons en territoire familier.&nbsp;
 Nous pouvons maintenant partir dans une nouvelle direction.&nbsp;
@@ -1889,12 +1954,6 @@ Notez que l'état entier d'une session d'édition est mémorisé et reproduit,
 y compris le nom de fichier, la dernière recherche/remplacement, 
 les chaînes de substitution, les hyperliens et des formulaires, 
 le javascript compilé, tout !
-</p>
-
-<p>
-À la différence de lynx, je ne mémorise pas l'historique des pages Web visitées.&nbsp;
-Je n'ai jamais vraiment eu besoin de ce dispositif.&nbsp;
-Dans 99% des cas, je veux simplement revenir en arrière d'une ou deux pages, voilà tout.&nbsp;
 </p>
 
 <p>
@@ -1924,7 +1983,7 @@ Si un nombre est affiché, même égal à 0, le texte précédent a été mis su
 et vous êtes dans un nouveau fichier.&nbsp;
 Le nombre affiché est la taille du nouveau fichier.&nbsp;
 Employer la commande «&nbsp;^&nbsp;» pour revenir en arrière.&nbsp;
-S'il n'y a pas de nombre, simplement un message d'erreur, alors edbrowse n'a pas créé 
+S'il n'y a pas de nombre, simplement un message d'erreur, alors Edbrowse n'a pas créé 
 de nouveau tampon.&nbsp;
 Il n'a pas obtenu le texte recherché.&nbsp;
 Taper «.» réaffichera la ligne affichée auparavant.&nbsp;
@@ -1948,12 +2007,12 @@ lesquelles sont normalement placées sur la pile, vous pouvez les déplacer une 
 dans une autre session en utilisant la commande «&nbsp;M&nbsp;» majuscule.&nbsp;
 Les étiquettes et les liens sont transférés également.&nbsp;
 Une fois que la page Web a été transférée sur une autre session, 
-edbrowse lance automatiquement la commande «&nbsp;^&nbsp;».&nbsp;
+Edbrowse lance automatiquement la commande «&nbsp;^&nbsp;».&nbsp;
 Vous êtes de nouveau à la page précédente.&nbsp;
 
 <p>
 Il est généralement peu sûr de faire une copie d'une page Web courante, 
-avec ses objets Javascript etc.&nbsp;, aussi la commande M déplace la page 
+avec ses objets Javascript etc.&nbsp;, aussi la commande M <em>déplace</em> la page 
 et la met à l'écart, puis vous renvoie la page précédente.&nbsp;
 Notez, cette commande fonctionne aussi bien avec des fichiers.&nbsp;
 </p>
@@ -2001,27 +2060,32 @@ Au lieu de jouer la chanson, je la rends disponible par un hyperlien.&nbsp;
 
 <p>
 Ce lien apparaît toujours en début de page ou près du début.&nbsp;
-Cliquez sur ce lien et téléchargez le fichier wav ou mp3, pour le jouer à votre convenance.&nbsp;
-Employez la commande «&nbsp;pb&nbsp;».&nbsp;
+Cliquez sur ce lien pour entendre la musique.&nbsp;
+Elle devrait être jouée automatiquement si vous avez le bon plugin 
+configuré.&nbsp;
+S'il n'existe pas de plugin pour ce type particulier de fichier, ou si les 
+plugins sont désactivés, alors Edbrowse téléchargera le fichier audio dans 
+le tampon courant.&nbsp;
+Vous pouvez l'enregistrer dans un fichier, ou le faire jouer d'une autre façon.&nbsp;
+Essayez la commande «&nbsp;pb&nbsp;».&nbsp;
 Normalement, «&nbsp;pb&nbsp;» prend le nom du fichier pour reconnaître le format audio.&nbsp;
-Si le nom de fichier finit par .wav, c'est un fichier son.&nbsp;
+Si le nom de fichier finit par .wav, c'est un fichier son, et on continue.&nbsp;
+Si cela échoue, Edbrowse cherche à inférer le type de fichier par l'attribut 
+"Content-Type" de l'en-tête http.&nbsp;
 Si le nom de fichier n'est pas particulièrement parlant, et que vous connaissez son 
 format audio, vous pouvez le spécifier en tapant «&nbsp;pb.wav&nbsp;» pour un fichier de wav, 
 «&nbsp;pb.mp3&nbsp;» pour un fichier mp3, et ainsi de suite.&nbsp;
-</p>
-
-<p>
 Le fichier de configuration (décrit plus loin) inclut le type des descripteurs de fichiers, 
-qui indique à edbrowse comment jouer les fichiers wav, mp3, etc.&nbsp;
-Ceux-ci doivent être renseignés, sans quoi la commande «&nbsp;pb&nbsp;» ne fonctionnera pas.&nbsp;
+qui indique à Edbrowse comment jouer les fichiers wav, mp3, etc.&nbsp;
+Ceux-ci doivent être configurés, sans quoi la commande «&nbsp;pb&nbsp;» ne fonctionnera pas.&nbsp;
 Elle affichera quelque chose comme «&nbsp;je ne sais pas traiter un fichier mp3&nbsp;».&nbsp;
 C'est conforme à d'autres navigateurs, qui emploient des extensions pour jouer les 
-fichiers son.&nbsp;
+fichiers multimedia en provenace de l'internet.&nbsp;
 </p>
 
 <h3 align="center"> <a name="input"> Zones de saisie </a> </h3>
 
-Les zones de saisie d'un formulaire sont habituellement indiqués par 
+Les zones de saisie d'un formulaire en ligne sont indiqués par 
 les signes «&nbsp;&lt;&nbsp;» et «&nbsp;&gt;&nbsp;».&nbsp;
 Par exemple, un moteur de recherche pourrait présenter le formulaire suivant :
 <pre><font face="Arial,Helvetica,sans-serif" size="3">Mots-clés : &lt;&gt;
@@ -2032,13 +2096,14 @@ Effacer : &lt;RESET&gt;
 </font></pre>
 
 <p>
-La première ligne de cet exemple de formulaire est une zone de texte, initialement vide.&nbsp;
+La première ligne de cet exemple de formulaire est une zone de texte, initialement 
+vide.&nbsp;
 Vous y entrez les mots-clés recherchés.&nbsp;
-Écrire et éditer des zones de saisie sera discuté plus tard.&nbsp;
+Écrire et éditer des zones de saisie sera discuté plus tard.
 </p>
 
 <p>
-La deuxième ligne est un bouton radio.&nbsp;
+La deuxième ligne est une boîte à cocher.&nbsp;
 Ce champ indique au moteur de recherche qu'il faut employer des dispositifs booléens avancés, 
 comme ce mot-clé et ceci, ou cela, mais pas ceci, etc.&nbsp;
 Le bouton est inactif, indiqué par -.&nbsp;
@@ -2047,8 +2112,9 @@ Un + signifie que le bouton est activé.&nbsp;
 </p>
 
 <p>
-La troisième ligne détermine la langue des mots-clés, dans cet exemple anglaise par défaut.&nbsp;
+La troisième ligne détermine la langue des mots-clés, ici anglaise par défaut.&nbsp;
 Ce n'est pas une zone de texte à remplir, vous ne pouvez y entrer n'importe quoi.&nbsp;
+C'est une liste déroulante de langues.&nbsp;
 Nous décrirons comment regarder les options plus tard.&nbsp;
 </p>
 
@@ -2112,7 +2178,7 @@ Si vous obtenez une erreur, c'est probablement parce que le champ a un
 ensemble fixe d'options, et vous n'avez pas sélectionné une de ces options.&nbsp;
 Vous pouvez saisir une des options ou son numéro.&nbsp;
 Vous pouvez également saisir un fragment du texte de l'option désirée, 
-et edbrowse complétera le reste.&nbsp;
+et Edbrowse complétera le reste.&nbsp;
 C'est possible à chaque fois qu'une et seulement une option contient une copie 
 (insensible à la casse) de la chaîne que vous avez tapée.&nbsp;
 Ainsi vous pourriez dans l'exemple ci-dessus taper «&nbsp;tali&nbsp;» et obtenir l'italien, 
@@ -2151,7 +2217,7 @@ Mettre suffisamment de caractères autour du «&nbsp;*&nbsp;» pour indiquer un 
 <p>
 Supposez maintenant que vous tapiez votre numéro de carte bancaire, chacun des 16 chiffres, 
 dans la zone de saisie de texte.&nbsp;
-Si vous avez fait une erreur, vous ne voulez pas recommencer à taper la chaîne entière.&nbsp;
+Si vous avez fait une erreur, vous ne voulez pas retaper la chaîne entière.&nbsp;
 Aucun problème -- employez la commande remplacement.&nbsp;
 Vous pouvez le faire en tapant «&nbsp;i/x/y/&nbsp;» ou «&nbsp;s/x/y/&nbsp;» -- comme vous préférez.&nbsp;
 Rappelez-vous, il vous faudra peut-être indiquer la zone de saisie, comme «&nbsp;s3/x/y/&nbsp;».&nbsp;
@@ -2187,7 +2253,7 @@ Vous verrez quelque chose comme « area [7x40]&nbsp;», qui indique une fenêtre
 colonnes.&nbsp;
 
 <p>
-L'implémentation dans lynx des zones de texte est particulièrement hideuse.&nbsp;
+L'implémentation dans lynx des zones de texte est particulièrement restrictive.&nbsp;
 Ce qui n'est pas étonnant, puisque lynx n'est pas un éditeur.&nbsp;
 Vous pouvez corriger les fautes de frappe, mais vous ne pouvez pas réellement «&nbsp;éditer&nbsp;» 
 le texte en cours.&nbsp;
@@ -2199,7 +2265,7 @@ dans la zone de texte à partir d'un fichier.&nbsp;
 </p>
 
 <p>
-Dans edbrowse, la zone de texte est contrôlée à partir d'une autre session d'édition.&nbsp;
+Dans Edbrowse, la zone de texte est contrôlée à partir d'une autre session d'édition.&nbsp;
 Ceci permet d'utiliser toutes les ressources de l'éditeur.&nbsp;
 Vous pouvez déplacer du texte, faire des substitutions globales, 
 ou insérer des commentaires à partir d'un fichier.&nbsp;
@@ -2251,7 +2317,7 @@ avec des questions sur un autre animal.&nbsp;
 </p>
 
 <p>
-J'ai implémenté les méthodes «GET» et «POST», protocoles HTTP les plus communs, 
+Edbrowse supporte les méthodes «GET» et «POST», protocoles HTTP les plus communs, 
 et elles semblent fonctionner pour la plupart des sites web.&nbsp;
 </p>
 
@@ -2268,7 +2334,7 @@ C'est réellement une bonne chose, comme nous le verrons dans la prochaine secti
 <h3 align="center"> <a name="addr"> Adresses Web et Email </a> </h3>
 
 La commande «&nbsp;A&nbsp;» majuscule montre les adresses Web sous les liens sur la ligne courante.&nbsp;
-Chaque adresse sera entourée par les tags <a> et </a>, prête à être collée dans un 
+Chaque adresse sera entourée par les tags &lt;a&gt; et &lt;/a&gt;, prête à être collée dans un 
 fichier de signets, si c'est ce que vous souhaitez.&nbsp;
 Ces adresses existent dans une nouvelle session ; la session précédente a été empilée.&nbsp;
 Ajoutez ces dernières à votre fichier de signets par «&nbsp;w+ $bookmarks&nbsp;», 
@@ -2280,8 +2346,8 @@ Pour les connectés en RTC, le temps de connexion est précieux, et ne devrait p
 En conclusion, employer la commande ^ pour retourner à la page Web que vous regardiez.&nbsp;
 Voici à quoi elle pourrait ressembler :
 
-<pre>&lt; 
-b this.that.com/whatever # navigation dans une page Web
+<pre>
+&lt; b this.that.com/whatever # navigation dans une page Web
 &gt; 16834 # taille du code HTML brut
 &gt; 7855 # taille du texte navigable
 &lt; /kangourou/i # recherche de kangourou dans la page
@@ -2315,7 +2381,7 @@ pour l'ajouter à votre carnet d'adresses.&nbsp;
 Là encore, vous voudrez changer l'expression générique «&nbsp;nous écrire&nbsp;» pour quelque chose 
 de plus parlant, comme adresse-kangourou.&nbsp;
 C'est un surnom, qu'il est possible d'utiliser pour envoyer du courrier à ce destinataire.&nbsp;
-(Les sections suivantes décrivent l'utilisation de edbrowse en tant que client de courrier).&nbsp;
+(Les sections suivantes décrivent l'utilisation de Edbrowse en tant que client de courrier).&nbsp;
 </p>
 
 <p>
@@ -2349,6 +2415,14 @@ Dans le doute, lister la ligne.&nbsp;
 </p>
 
 <p>
+
+</p>
+Avec la commande A, le texte du nouveau lien hypertexte créé est le titre de la page courante.&nbsp;
+S'il n'y a aps de titre, le texte du lien est repris de l'URL, lequel est vraiment 
+suboptimal.&nbsp;
+Dans ce cas, vous pourriez changer le texte du lien.&nbsp;
+Heureusement, la majorité des pages internet ont un titre.
+<p>
 Un dernier avertissement au sujet des ajouts à votre fichier de signets.&nbsp;
 Disons que vous avez lancé votre commande «&nbsp;A&nbsp;», et avez modifié un peu la description.&nbsp;
 Maintenant le lien est correctement écrit, et vous voulez le sauvegarder.&nbsp;
@@ -2371,16 +2445,14 @@ Et quand nous le ferons, vous écrirez une macro «&nbsp;ajout signet&nbsp;» se
 Maintenant vous pouvez tapez &lt;bma pour ajouter un lien à vos favoris, 
 sans vous soucier des fautes de frappe.&nbsp;
 C'est plus court que «&nbsp;w+ $bookmarks&nbsp;» de toute façon.&nbsp;
-Nous reviendrons sur ce sujet quand nous présenterons des macros, réellement des fonctions, 
-qui sont définies dans votre fichier de configuration.&nbsp;
 </p>
 
 <h3 align="center"> <a name="cook"> Cookies </a> </h3>
 
-Certains sites Web servent des «cookies», qu'on s'attend à ce que votre navigateur 
+Certains sites Web envoient des «cookies», qu'on s'attend à ce que votre navigateur 
 sauvegarde et récupère ensuite pour des échanges futurs.&nbsp;
 En fait beaucoup de sites Web simplement ne fonctionnent pas sans support des cookies.&nbsp;
-Par conséquent edbrowse accepte toujours les cookies.&nbsp;
+Par conséquent Edbrowse accepte toujours les cookies.&nbsp;
 
 <p>
 Notez que seuls les cookies de modèle Netscape sont supportés.&nbsp;
@@ -2390,7 +2462,7 @@ Elle satisfera probablement vos besoins.&nbsp;
 
 <p>
 Des cookies persistants sont stockés dans un fichier, habituellement $HOME/.cookies, 
-et sont ainsi disponibles pour des sessions suivantes d'edbrowse.&nbsp;
+et sont ainsi disponibles pour des sessions suivantes d'Edbrowse.&nbsp;
 Ces cookies sont employés pour stocker des informations à long terme sur vous, 
 tel que votre nom d'utilisateur et mot de passe dans amazon.com.&nbsp;
 Par conséquent votre fichier de cookies devrait être en mode 0600.&nbsp;
@@ -2417,10 +2489,8 @@ Edbrowse vérifiera les connexions SSL, si vous fournissez un fichier de certifi
 C'est une mesure antispoofing (anti usurpation d'identité), 
 de s'assurer qu'un intrus ne se fait pas passer pour votre banque, 
 essayant de voler vos numéros et mots de passe de compte.&nbsp;
-Vous pouvez télécharger un fichier de certificat <a href="file:///usr2/archives/accessibilit%C3%A9/edbrowse/edbrowse_p201410310616/doc/ssl-certs">ici</a>,
-mais je ne le maintiens pas toujours à jour.&nbsp;
 Sur quelques distributions de Linux, vous pouvez lancer la commande 
-`cd /etc/ssl/certs ; cat * &gt;../edbrowse-certs'
+`cd /etc/ssl/certs ; cat * &gt;../Edbrowse-certs'
 pour capturer les certificats SSL déjà enregistrés dans votre système linux.&nbsp;
 Si vous n'avez pas ce fichier, ou si vous ne l'avez pas créé, 
 ou si vous n'indiquez pas son emplacement dans votre fichier de configuration, 
@@ -2432,7 +2502,7 @@ mais en général c'est une bonne idée de vérifier vos connexions sécurisées
 l'authenticité vous paraît certaine.&nbsp;
 Dans ce cas vous pouvez taper «&nbsp;vs&nbsp;» pour stopper le dispositif.&nbsp;
 C'est une commande à bascule ; tapez «&nbsp;vs&nbsp;» encore pour redémarrer le dispositif.&nbsp;
-Pour une autre méthode de désactivation de la vérification, voyez la directive "novs" dans le 
+Pour une autre méthode de désactivation de la vérification, voyez plus loin la directive "novs" dans le 
 fichier de configuration.
 </p>
 
@@ -2510,23 +2580,23 @@ simple interruption, due à une quelconque erreur sur l'internet, vous pourrez t
 retaper la commande et espérer avoir plus de chance.
 
 <p>
-Par défaut, edbrowse emploie le nom d'utilisateur «&nbsp;anonymous&nbsp;» et le mot de passe 
+Par défaut, Edbrowse emploie le nom d'utilisateur «&nbsp;anonymous&nbsp;» et le mot de passe 
 «&nbsp;ftp@example.com&nbsp;» pour les connexions ftp.&nbsp;
 Cependant, vous pouvez modifier ceci dans l'URL, et quelques pages Web tirent profit 
 de ce dispositif.&nbsp;
-Par exemple, disons que vous voulez accéder au fichier /etc/passwd sur une machine 
+Par exemple, disons que vous voulez accéder au fichier /opt/foobar sur une machine 
 appelée quelque.part. Ce fichier n'est pas lisible par les utilisateurs anonymes.&nbsp;
 Vous devez ouvrir une session en tant qu'utilisateur reconnu par la machine quelque.part.&nbsp;
-Dans edbrowse, utilisez la commande :
+Dans Edbrowse, utilisez la commande :
 </p>
 
 <p>
-e ftp://chris:xxx@quelque.part/etc/passwd
+e ftp://chris:xxx@quelque.part/opt/foobar
 </p>
 
 <p>
 La connexion ftp sera établie sous le nom d'utilisateur «&nbsp;Chris&nbsp;», 
-avec le mot de passe «&nbsp;xxx&nbsp;».&nbsp;
+avec le mot de passe «&nbsp;XXX&nbsp;».&nbsp;
 </p>
 
 <p>
@@ -2583,18 +2653,18 @@ proxy = http * proxy.campus.edu:3128
 <p>
 
 Tout le trafic HTTP, pour tout domaine (défini par *) transite à travers 
-proxy.campus.edu on port 3128.&nbsp;
+proxy.campus.edu sur le port 3128.&nbsp;
  Notez que les proxy écoutent souvent sur des ports autres que le port 80.&nbsp;
 «&nbsp;Squid&nbsp;» est un serveur proxy fourni avec quelques distributions Linux, 
 et il emploie le port 3128 par défaut.&nbsp;
 </p>
 
 <p>
-Le protole et le domaine peut être spécifié, ou bien chacun peut être remplacé par * 
+Le protole et le domaine peuvent être spécifiés, ou bien chacun peut être remplacé par * 
 pour tout protocole et pour tout domaine. L'absence de domaine est considérée 
 comme * (tout domaine) et l'absence de protocole et de domaine est considérée valide pour 
 tout.&nbsp;
-Une telle directive doit être la dernière dans la lsite des proxies dans votre
+Une telle directive doit être la dernière dans la liste des proxies dans votre
 fichier de configuration, parce que des proxies définis ensuite sont sans signification.
 </p>
 
@@ -2654,30 +2724,6 @@ ce dispositif, et jusqu'ici, personne ne semble le vouloir.&nbsp;
 Comme vous pouvez l'imaginer, il est tout en bas de la liste des choses à faire.&nbsp;
 </p>
 
-<h3 align="center"> <a name="pdf"> PDF </a> </h3>
-
-PDF est un format portable de documents développé par 
-<a href="http://www.adobe.com/">adobe.com</a>.&nbsp;
-Un document de ce format, désigné par le suffixe .pdf, sera toujours imprimé de la 
-même façon sur n'importe quelle imprimante.&nbsp;
-C'est son principal avantage.&nbsp;
-Cependant, les documents pdf sont totalement illisibles par un non-voyant..&nbsp;
-Heureusement, il existe un utilitaire,
-<a href="http://rpmfind.net/linux/RPM/suse/updates/10.0/i386/rpm/i586/pdftohtml-0.36-130.9.i586.html">pdftohtml</a>,
-qui convertit le pdf en html.&nbsp;
-Parfois, il fonctionne très bien, et parfois les lignes sont coupées d'étrange façon;
-mais c'est mieux que rien.&nbsp;
-Si vous installez ce paquet, edbrowse convertira automatiquement les fichiers pdf 
-en fichiers html,&nbsp;qu'il affichera ensuite comme du texte.
-
-<p>
-Notez qu'il existe également des convertisseurs pdf en texte qui évitent l'étape 
-intermédiaire (html),&nbsp;mais j'ai voulu garder les fonctionnalités des liens 
-hypertextes parfois présents dans le pdf.&nbsp;
-J'ai donc pensé qu'il vaut mieux passer par le html, malgré quelques complications 
-suppléméntaires.
-</p>
-
 <p></p><hr><p>
 </p><h2 align="center"> Chapitre 5, Javascript </h2>
 
@@ -2694,7 +2740,7 @@ La majeure partie de Javascript est employée pour valider et/ou modifier des fo
 ou créer des effets visuels de fantaisie.&nbsp;
 
 <p>
-La première version de edbrowse, écrite en Perl, ignorait Javascript complètement, 
+La première version de Edbrowse, écrite en Perl, ignorait Javascript complètement, 
 et cela a fonctionné un temps, mais de plus en plus sites internet emploient Javascript, 
 et ces sites Web étaient simplement inaccessibles.&nbsp;
 La plupart des emplacements d'e-commerce entrent dans cette catégorie.&nbsp;
@@ -2703,7 +2749,7 @@ vous aurez besoin d'un navigateur autorisant Javascript.&nbsp;
 </p>
 
 <p>
-La deuxième version de edbrowse, écrite en C, et portant un numéro de version 
+La deuxième version de Edbrowse, écrite en C, et portant un numéro de version 
 commençant par 2, incluait un compilateur et un moteur Javascript écrits par moi-même.&nbsp;
 Cela fonctionnait plutôt bien, pour un projet réalisé pendant mon temps libre, 
 mais Javascript évolue, comme n'importe quelle autre langue ou standard, 
@@ -2723,28 +2769,30 @@ Edbrowse n'offre pas toutes les fonctionnalités de Javascript côté client (DO
 et ne les offrira jamais.&nbsp;
 Par exemple, beaucoup de sites Web utilisent Javascript pour changer des images 
 à la volée au passage de la souris sur l'écran.&nbsp;
-Ceci n'a aucune signification dans edbrowse.&nbsp;
+Ceci n'a aucune signification dans Edbrowse.&nbsp;
 D'autres sites Web affichent de multiples fenêtres multiples, et vous laissent agir 
 sur ces sous-fenêtres en utilisant des icônes dans la fenêtre principale.&nbsp;
-Il serait très difficile simuler ce comportement dans un environnement 
-en ligne de commande - aussi je n'essaie pas.&nbsp;
+Il serait très difficile simuler ce comportement dans un environnement.
 </p>
 
 <p>
-Approximativement, je compte implémenter environ la moitié de Javascript, la moitié qui 
-satisfera 95% des sites Web qui nous intéressent.&nbsp;
-Ainsi vous pourrez voir des messages d'avertissement sur telle ou telle fonctionnalité 
-non supportée.&nbsp;
-Si vous êtes fatigué de patauger dans ces messages, ou si un bogue dans mon 
-interpréteur Javascript fait planter edbrowse complètement, 
-vous pouvez désactiver Javascript par l'intermédiaire de la commande «&nbsp;js&nbsp;».&nbsp;
-C'est utile quand vous surfez sur l'internet à la recherche d'information, 
-et que vous savez que vous n'aurez pas besoin de Javascript.&nbsp;
+Une partie de Javascript est implémentée, d'autres parties non.&nbsp;
+C'est encore un travail en cours.&nbsp;
+Si vous soumettez un formulaire, ou suivez un hyperlien, et que rien n'arrive, 
+absolument rien, alors la page web essaie probablement d'utiliser des 
+fonctionnalités Javascript non encore implémentées.&nbsp;
+Montez le niveau de débogage à 3 ou plus haut et poussez de nouveau le bouton 
+pour voir les erreurs Javascript.&nbsp;
+Ensuite, si vous le souhaitez, désactivez Javascript avec la commande js et 
+réessayez.&nbsp;
+Cependant, le site web poeut ne pas fonctionner corectement ou comme attendu 
+avec Javascript désactivé.&nbsp;
+Consultez l'avertissement au début du présent guide.
 </p>
 
 <p>
 Vous pouvez également désactiver Javascript pour des sites internet spécifiques.&nbsp;
-Ceci sera discuté plus tard, quand nous décrirons le fichier de configuration d'edbrowse.&nbsp;
+Ceci sera discuté plus tard, quand nous décrirons le fichier de configuration d'Edbrowse.&nbsp;
 </p>
 
 <h3 align="center"> <a name="valid"> Valider des formulaires </a> </h3>
@@ -2755,7 +2803,7 @@ Cette fonction contrôle vos entrées : vous avez complété tous les champs obl
 - il y a le signe @ dans votre adresse électronique – il y a 5 chiffres dans votre 
 code postal - et ainsi de suite.&nbsp;
 S'il n'y a aucune erreur, il envoie le formulaire.&nbsp;
-Ces fonctions se comportent habituellement bien sous edbrowse.&nbsp;
+Ces fonctions se comportent habituellement bien sous Edbrowse.&nbsp;
 Quand vous poussez le bouton, vous verrez le message d'erreur, 
 ou bien le formulaire sera envoyé, et une page de confirmation apparaîtra sous peu.&nbsp;
 
@@ -2779,7 +2827,9 @@ Si le premier menu présente des «&nbsp;viandes&nbsp;», des «&nbsp;légumes&n
 et des «céréales», et vous choisissez des fruits, le deuxième menu pourrait 
 contenir des «&nbsp;pommes&nbsp;», des «&nbsp;oranges&nbsp;», des «&nbsp;citrons&nbsp;» etc.&nbsp;
 Javascript rend tout ceci possible.&nbsp;
-Malheureusement, ces menus dynamiques ne sont pas encore supportés par edbrowse.&nbsp;
+Ces menus dynamiques sont supportés par Edbrowse.&nbsp;
+Vous verrez un message du genre "La ligne 352 a été modifiée", où 352 contient le sous-menu.&nbsp;
+Tapez 352I? pour consulter les options du menu nouvellement créé.
 
 </p>
 
@@ -2791,13 +2841,10 @@ bien que dans de rares cas, ce soit un aspect nécessaire du site Web.&nbsp;
 
 <p>
 Vous avez un avantage certain sur tous les autres surfeurs avec leurs navigateurs graphiques.&nbsp;
-La fenêtre automatique ne s'ouvre pas automatiquement.&nbsp;
-Les fenêtres ne sont de toute façon pas bien définies dans un navigateur en ligne de commande, 
-ce serait donc folie d'essayer d'implémenter ce dispositif, 
-ou n'importe quel autre aspect de multi-fenêtrage en la matière.&nbsp;
-Au lieu de cela, la fenêtre popup apparaît comme hyperlien au début ou près du 
+La fenêtre popup ne s'ouvre pas automatiquement.&nbsp;
+Au lieu de cela, le popup apparaît comme hyperlien au début ou près du 
 début de la page, et vous pouvez cliquer dessus si vous aimez, ou l'ignorer.&nbsp;
-C'est semblable à la musique de fond, décrite dans une section précédente.&nbsp;
+C'est semblable à la <A HREF=#music>musique de fond</A>, décrite dans une section précédente.&nbsp;
 Le lien automatique pourrait ressembler à ceci.&nbsp;
 </p>
 
@@ -2810,7 +2857,7 @@ Les fenêtres Popunders ne sont pas si fréquentes.&nbsp;
 Elles apparaissent après que vous ayez fermé la fenêtre.&nbsp;
 Dans un certain sens elles sont cachées «&nbsp;sous&nbsp;» votre page Web, 
 et quand vous fermez la page elles remontent à la surface.&nbsp;
-Dans edbrowse, cela ne se produit pas automatiquement.&nbsp;
+Dans Edbrowse, cela ne se produit pas automatiquement.&nbsp;
 Quand vous tapez «&nbsp;q&nbsp;», vous quittez, et tout est terminé.&nbsp;
 Comme vous pouvez le prévoir, la fonction popunder apparaît comme hyperlien.&nbsp;
 Elle pourrait ressembler à ceci.&nbsp;
@@ -2847,14 +2894,14 @@ au bout de 16 secondes.&nbsp;
 <h3 align="center"> <a name="onc"> Onchange et annuler </a> </h3>
 
 Quand vous entrez ou modifiez la valeur d'une zone de saisie, 
-le formulaire peut (pas toujours) appeler une routine Javascript.&nbsp;
+le formulaire peut parfois appeler une routine Javascript.&nbsp;
 Ce n'est pas habituel, mais cela arrive.&nbsp;
 Dans un exemple précédent, j'ai décrit un menu primaire et secondaire.&nbsp;
 Quand le premier choix est fait, par exemple les fruits, Javascript crée le deuxième menu 
 correspondant à votre choix primaire, en utilisant la fonctionnalité «&nbsp;onchange&nbsp;».&nbsp;
 
 <p>
-C'est bel et bon, mais edbrowse a quelque chose que votre navigateur graphique n'a pas, 
+C'est bel et bon, mais Edbrowse a quelque chose que votre navigateur graphique n'a pas, 
 à savoir la commande annuler (undo).&nbsp;
 Et dans ce contexte, cela ne fonctionne vraiment pas.&nbsp;
 Changez les fruits en légumes, et le deuxième menu présentera des carottes, petits pois etc.&nbsp;
@@ -2863,9 +2910,7 @@ mais le deuxième menu contient toujours des légumes.&nbsp;
 C'est parce que la fonction annuler a été écrite à l'origine pour l'éditeur de texte.&nbsp;
 Il remet simplement le texte comme il était, et n'a aucune capacité «&nbsp;de défaire&nbsp;» 
 les effets secondaires du code Javascript.&nbsp;
-Ainsi la morale de l'histoire, s'il y en a une, est d'entrer et changer les valeurs 
-d'une zone de saisie directement, et éviter la commande annuler, à moins d'être sûr ici 
-de n'avoir aucun effet secondaire de Javascript lié à cette zone de saisie.&nbsp;
+A cette fin, la commande undo est désactivée dans les champs de saisie.
 </p>
 
 <p></p><hr><p>
@@ -2873,23 +2918,23 @@ de n'avoir aucun effet secondaire de Javascript lié à cette zone de saisie.&nb
 
 <h3 align="center"> <a name="cfg"> Fichier de configuration </a> </h3>
 
-Au démarrage, edbrowse lit et analyse un fichier de configuration.&nbsp;
+Au démarrage, Edbrowse lit et analyse un fichier de configuration.&nbsp;
 Cela fonctionne si ce fichier est absent, mais s'il est présent, 
 il doit être syntaxiquement correct.&nbsp;
-Une erreur dans votre fichier de configuration fera avorter edbrowse.&nbsp;
+Une erreur dans votre fichier de configuration fera quitter Edbrowse.&nbsp;
 Si cela se produit, employez l'option «&nbsp;-c&nbsp;» pour éditer le fichier de configuration 
 directement.&nbsp;
 Ceci passe outre l'initialisation, vous place dans l'éditeur, 
 avec le fichier de configuration préchargé.&nbsp;
-Faites vos corrections, sauvegardez le fichier, quittez, et relancez edbrowse.&nbsp;
+Faites vos corrections, sauvegardez le fichier, quittez, et relancez Edbrowse.&nbsp;
 Répétez ces étapes jusqu'à ce qu'il n'y ait plus d'erreur, 
-et vous verrez les mots «&nbsp;edbrowse ready&nbsp;».&nbsp;.
+et vous verrez les mots «&nbsp;Edbrowse prêt&nbsp;».&nbsp;.
 
 <p>
 Le fichier de configuration est dans $HOME/.ebrc.&nbsp;
-Le «&nbsp;eb&nbsp;» est un raccourci pour edbrowse.&nbsp;
+Le «&nbsp;eb&nbsp;» est un raccourci pour Edbrowse.&nbsp;
 Vous ne pouvez pas renommer le fichier de configuration ; il est ce qu'il est.&nbsp;
-C'est également vrai sur Windows , ainsi s'assurer que la variable HOME est renseignée.&nbsp;
+C'est également vrai sur Windows , donc s'assurer que la variable HOME est définie.&nbsp;
 </p>
 
 <p>
@@ -2901,9 +2946,9 @@ Les autres lignes tombent dans une de ces 5 catégories.&nbsp;
 </p>
 <ol>
 <p></p><li> Définition d'une option, en utilisant la syntaxe «&nbsp;mot-clé=valeur».&nbsp;</li><p></p>
-<p></p><li> Définition un script edbrowse qui peut être appelé de la ligne de commande, 
+<p></p><li> Définition d'un script Edbrowse qui peut être appelé de la ligne de commande, 
 ou par un autre script.&nbsp;</li><p></p>
-<p></p><li> Une commande d'edbrowse, qui devient une partie d'un script d'edbrowse.&nbsp;</li><p></p>
+<p></p><li> Une commande d'Edbrowse, qui devient une partie d'un script d'Edbrowse.&nbsp;</li><p></p>
 <p></p><li> Définir un compte de courrier électronique.&nbsp;
 Ceci sera décrit plus tard, quand nous parlerons du client de courrier électronique
 </li><p></p>
@@ -2923,7 +2968,7 @@ La ligne qui définit ce récipient de cookies pourrait ressembler à ceci :
 </p>
 
 <p>
-jar = /home/eklhad/.ebsys/cookie-jar
+jar = /home/monlogin/.ebsys/cookie-jar
 </p>
 
 <p>
@@ -2933,10 +2978,10 @@ Pas besoin de le mettre entre parenthèses.&nbsp;
 </p>
 
 <p>
-Quand edbrowse voit cette ligne dans son fichier de configuration, il repère l'emplacement 
+Quand Edbrowse voit cette ligne dans son fichier de configuration, il repère l'emplacement 
 du fichier «&nbsp;«&nbsp;cookie-jar&nbsp;», et vérifie la validité de ce fichier.&nbsp;
 Si le fichier est un répertoire (ou quelque chose de bizarre), ou bien est inaccessible, 
-edbrowse affiche un message d'erreur et quitte.&nbsp;
+Edbrowse affiche un message d'erreur et quitte.&nbsp;
 Si cela se produit, utilisez l'option «&nbsp;-c&nbsp;» pour éditer votre fichier de configuration, 
 et modifiez le fichier des cookies.&nbsp;
 </p>
@@ -2948,7 +2993,7 @@ Ceci deviendra plus clair quand nous parlerons du client de courrier.&nbsp;
 </p>
 
 <p>
-certfile = /home/eklhad/.ebsys/ssl-certs
+certfile = /etc/pki/tls/cert.pem
 </p>
 
 <p>
@@ -2957,7 +3002,7 @@ Ceci a été expliqué dans la section sur les <a href="#ssl">connexions sécuri
 </p>
 
 <p>
-maildir = /home/eklhad/mbox
+maildir = /home/monlogin/mbox
 </p>
 
 <p>
@@ -2978,6 +3023,54 @@ Une valeur 0 attend indéfiniment.&nbsp; Désolé, il ne semble y avoir aucune m
 d'interrompre une connexion, autre que contrôle anti-slash, qui tue le programme.&nbsp;
 C'est pourquoi ces temporisateurs sont ici - ainsi vous n'attendrez pas indéfiniment.&nbsp;
 Les valeurs par défaut sont respectivement de 20 et 0.&nbsp;
+</p>
+
+<p>
+downdir = /home/monlogin/downloads
+</p>
+
+<p>
+Lorsque vous accédez à un fichier binaire, vous avez le choix entre le 
+télécharger directement au lieu de le charger en mémoire.&nbsp;
+Si vous le faites, le fichier est enregistré dans le répertoire de 
+téléchargement par défaut.&nbsp;
+Si le nom de fichier téléchargé comporte un slash, ou bien s'il n'existe pas 
+de répertoire de téléchargement, le chemin est construit relativement au 
+répertoire courant (on assume qu'il n'est pas absolu).&nbsp;
+Dans ce cas, l'expansion des métacaractères est effectuée.&nbsp;
+Par exemple, vous pouvez envoyer un fichier mp3 sur 
+~/musique/country/une-chanson.mp3.&nbsp;
+Les téléchargements s'effectuent en avant-plan, avec une échelle de progression, 
+bloquant Edbrowse jusqu'à l'achèvement du téléchargement.&nbsp;
+Si vous préférez, vous pouvez télécharger un fichier en arrière-plan en 
+invoquant la commande bg (background).&nbsp;
+C'est pratique surtout pour de gros fichiers.&nbsp;
+Vous êtes prévenu à la fin du téléchargement.&nbsp;
+Pendant de temps, vous pouvez continuer à utiliser Edbrowse.&nbsp;
+Attention : si vous téléchargez un fichier en arrière-plan sur un serveur sécurisé 
+(https, ftps, ou sftp), Edbrowse peut rencontrer l'erreur CKR_DEVICE_ERROR, 
+et interrompre le téléchargement, si votre openssl est plus ancien 
+que la version 1.0.1g.&nbsp;
+C'est un interaction ssl / fork que je ne peux facilement fixer ou 
+contourner.&nbsp;
+Si cela arrive, retapez bg et téléchargez en avant-plan.
+</p>
+
+<p>
+Quand on vous demande un nom de fichier, tapez entrée pour garder le nom de fichier 
+par défaut, tel que proposé par le site web, tapez x pour abandonner, tapez espace 
+pour charger les données en mémoire, ou entrez un nom de fichier différend si vous 
+le souhaitez.&nbsp;
+Si le fichier existe déjà, il est écrasé.
+</p>
+
+<p>
+Tapez bgl pour lister vos téléchargements en arrière-plan, incluant les 
+téléchargements terminés.&nbsp;
+A la sortie, Edbrowse listera tous les téléchargements en arrière-plan en 
+cours.&nbsp;
+Ces téléchargements se poursuivront, même après avoir quitté Edbrowse, et afficheront 
+"téléchargement terminé" à leur achèvement.
 </p>
 
 <p>
@@ -3012,7 +3105,7 @@ tels que www.space.com.
 Vous pouvez inclure un chemin ou un chemin partiel après le nom de domaine, 
 comme dans space.com/popups.&nbsp;
 Ceci bloquera les popups ajoutés que vous ne voulez pas voir, 
-et qui produit souvent des erreurs d'edbrowse.&nbsp;
+et qui produit souvent des erreurs d'Edbrowse.&nbsp;
 Les sous-domaines ne sont pas pris en compte quand un chemin est précisé ; 
 le domaine doit correspondre exactement.&nbsp;
 </p>
@@ -3057,7 +3150,7 @@ et envoyer (smtp) le courrier.&nbsp;
 Vous pouvez employer les noms complets de domaine, ou des alias, 
 s'ils sont définis dans le fichier «&nbsp;/etc/hosts&nbsp;».&nbsp;
 Les ports indiqués ici sont standard, et fonctionnent presque toujours.&nbsp;
-Ce sont les ports par défaut de edbrowse, ainsi vous n'avez pas besoin de spécifier 
+Ce sont les ports par défaut de Edbrowse, ainsi vous n'avez pas besoin de spécifier 
 les ports d'entrée et de sortie, à moins qu'ils soient différents.&nbsp;
 Notez, ces mots-clés sont uniquement valides dans le contexte d'un 
 compte de courrier électronique, indiqué par mail{}.&nbsp;
@@ -3081,12 +3174,24 @@ directement connecté au serveur mail, sans passer par l'internet, mais lorsque 
 veut s'assurer qu'il s'agit bien de vous.
 </p>
 
+<p>secure</p>
+
+<p>
+Les connextions entrantes et sortantes sont sécurisées.&nbsp;
+Ceci ajoute effectivement des étoiles avant les numéros de ports, si les 
+ports sont précisés.&nbsp;
+Si les ports ne sont pas précisés, les ports par défaut changent pour prendre 
+en compte les connections sécurisées.&nbsp;
+Le port par défaut pop3s est 995 et le port par defaut smtps est 465. 
+
+</p>
+
 <p>
 nofetch
 </p><p>
 
 </p><p>
-Ne pas récupérer de mail avec l'option -f
+Ne pas récupérer de mail de ce compte avec l'option -f
 </p>
 
 <p>
@@ -3096,7 +3201,7 @@ password = secret
 </p>
 
 <p>
-Indique le nom d'utilisateur (login) et le mot de passe que edbrowse 
+Indique le nom d'utilisateur (login) et le mot de passe que Edbrowse 
 utilisera pour récupérer votre courrier.&nbsp;
 </p>
 
@@ -3132,10 +3237,10 @@ fred : fred.flintstone@bedrock.us : 226 rue des tanneurs : 0555382705
 </p>
 
 <p>
-alors vous pouvez utiliser le surnom fred, et edbrowse substituera l'adresse électronique 
+alors vous pouvez utiliser le surnom fred, et Edbrowse substituera l'adresse électronique 
 de Fred quand il enverra le courrier.&nbsp;
 Seuls les deux premiers champs dans le carnet d'adresses sont significatifs 
-en ce qui concerne edbrowse.&nbsp;
+en ce qui concerne Edbrowse.&nbsp;
 D'autres champs pourraient contenir des numéros de fax, de téléphone, 
 l'adresse postale, etc.&nbsp;
 C'est à vous d'en décider.&nbsp;
@@ -3145,12 +3250,12 @@ C'est à vous d'en décider.&nbsp;
 
 Chaque fois que vous rapatriez une page Web de l'Internet, votre navigateur 
 s'identifie au centre serveur.&nbsp;Ceci est fait automatiquement.&nbsp;
-Edbrowse s'identifie en tant que «&nbsp;edbrowse/2.2.9&nbsp;», 
-où le nombre après le slash indique la version en cours de edbrowse.&nbsp;
+Edbrowse s'identifie en tant que «&nbsp;Edbrowse/2.2.9&nbsp;», 
+où le nombre après le slash indique la version en cours de Edbrowse.&nbsp;
 
 <p>
 Tout cela est bel et bon, mais certains sites Web n'ont aucun respect 
-pour edbrowse, et ne se sentent pas concernés par l'accessibilité de l'Internet.&nbsp;
+pour Edbrowse, et ne se sentent pas concernés par l'accessibilité de l'Internet.&nbsp;
 Ils ne vous laissent pas entrer à moins que vous ressembliez 
 à Internet Explorer ou à Netscape ou un des acteurs majeurs.&nbsp;
 StartPage.com, un frontal de Google, en est un exemple.&nbsp;
@@ -3172,7 +3277,7 @@ et les activer avec la commande «&nbsp;ua&nbsp;» (agent utilisateur).&nbsp;
 Si les lignes suivantes sont présentes dans votre fichier «&nbsp;.ebrc&nbsp;», 
 vous pouvez taper «&nbsp;ua1&nbsp;» pour feindre être lynx, et «&nbsp;ua2&nbsp;» 
 pour feindre être Mozilla.&nbsp;
-Tapez «&nbsp;ua0&nbsp;» pour restaurer l'identification standard d'edbrowse.&nbsp;
+Tapez «&nbsp;ua0&nbsp;» pour restaurer l'identification standard d'Edbrowse.&nbsp;
 Espérons qu'il n'y a pas trop de sites Web stupides qui nous forcent à mentir.&nbsp;
 </p>
 
@@ -3186,7 +3291,7 @@ alors qu'ils devraient.&nbsp;
 
 <h3 align="center"> <a name="script"> Fonctions d'Edbrowse </a> </h3>
 
-Vous pouvez grouper un ensemble de commandes d'edbrowse sous un nom, 
+Vous pouvez grouper un ensemble de commandes d'Edbrowse sous un nom, 
 semblable à une macro.&nbsp;
 Si ce qui suit apparaît dans votre fichier de .ebrc, vous pouvez taper «&nbsp;&lt;ud&nbsp;» 
 pour enlever les fins de lignes DOS dans un fichier.&nbsp;
@@ -3203,7 +3308,7 @@ La nouvelle commande &lt; est supposée vous rappeler la redirection,
 c'est-à-dire lire des commandes dans un fichier de macros.&nbsp;
 Et une macro peut appeler d'autres macros, en employant la commande «&nbsp;&lt;&nbsp;» 
 dans le corps de la macro.&nbsp;
-Presque toutes les commandes d'edbrowse jouent le jeu.&nbsp;
+Presque toutes les commandes d'Edbrowse jouent le jeu.&nbsp;
 Une macro peut récupérer des pages Web de l'Internet, compléter des formulaires, 
 soumettre des requêtes, et envoyer du courrier.&nbsp;
 </p>
@@ -3216,7 +3321,7 @@ qui l'emporte. Edbrowse ignore silencieusement les définitions suivantes.
 </p>
 
 <p>
-Normalement, edbrowse continue de fonctionner, qu'une commande réussisse ou pas.&nbsp;
+Normalement, Edbrowse continue de fonctionner, qu'une commande réussisse ou pas.&nbsp;
 Cependant, vous pouvez dire à une macro de s'arrêter en cas d'erreur en employant 
 cette syntaxe :
 </p>
@@ -3261,7 +3366,7 @@ function+hw {
 </p>
 
 <p>
-Vous pouvez reproduire le comportement précédent en tapant &lt;hw bonjour monde.&nbsp;
+Reproduisez le comportement précédent en tapant &lt;hw bonjour monde.&nbsp;
 Ou vous pouvez rechercher différentes lignes en appelant &lt;hw salut ami.&nbsp;
 La dernière commande recherche une ligne contenant le mot salut et l'affiche, 
 et si succès recherche une ligne contenant le mot ami et l'affiche.&nbsp;
@@ -3286,18 +3391,28 @@ function+gg {
 <p>
 Avec ceci vous tapez simplement `&lt;gg kangourou habitat'
 pour découvrir où les kangourous vivent.&nbsp;
+Attention : depuis mai 2015, Google a une bogue bizarre provoquant un rafraichissement 
+sans fin de la page de recherche.&nbsp;
+Si vous recevez sans cesse la même page, tapez contrôle C immédiatement, parce trop de 
+requêtes de recherche vont provoquer votre déconnexion avec le serveur de 
+Google.&nbsp;
+La même bogue a été reproduite dans Firefox avec Javascript désactivé et l'agent 
+utilisateur défini comme Edbrowse.&nbsp;
+La mécanique du bogue n'est pas bien comprise, mais pouvez contourner le problème : 
+désactiver Javascript, désactiver la redirextion http, ou bien définir l'agent 
+utilisateur comme Lynx/2.8.4rel.1 libwww-FM/2.14.
 </p>
 
 <p>
-En conclusion, une fonction d'edbrowse peut prendre deux directions différentes, 
+En conclusion, une fonction d'Edbrowse peut prendre deux directions différentes, 
 selon le succès ou l'échec de la commande précédente.&nbsp;
 Utilisez «&nbsp;if(*)&nbsp;» pour le succès, et «&nbsp;if(?)&nbsp;» pour l'échec.&nbsp;
-? est supposé vous rappeler le point d'interrogation affiché quand une commande d'edbrowse 
+? est supposé vous rappeler le point d'interrogation affiché quand une commande d'Edbrowse 
 échoue.&nbsp; Ce qui suit recherche une ligne contenant le mot «&nbsp;salut&nbsp;», 
 et s'il en trouve un, il avance à la prochaine ligne, et si cette ligne contient le 
 mot «&nbsp;ami&nbsp;», il la supprime.&nbsp;
 </p>
-<pre><font face="Arial,Helvetica,sans-serif" size="3">function+silly {
+<pre>function+silly {
  /salut/
  if(*) {
   +s/ami//
@@ -3306,11 +3421,11 @@ mot «&nbsp;ami&nbsp;», il la supprime.&nbsp;
   }
  }
 }
-</font></pre>
+</pre>
 
 <p>
 J'ai délibérément employé «&nbsp;function+&nbsp;» au lieu de «&nbsp;function:&nbsp;» dans l'exemple précédent.&nbsp;
-Normalement, + fera avorter la fonction si une commande d'edbrowse échoue.&nbsp;
+Normalement, + fera avorter la fonction si une commande d'Edbrowse échoue.&nbsp;
 Cependant, si le résultat de cette commande est employé dans un test, 
 l'exécution de la fonction doit se poursuivre.&nbsp;
 C'est identique à l'option «&nbsp;-e&nbsp;» du shell, qui fait avorter un script, 
@@ -3323,7 +3438,7 @@ L'exemple qui suit efface les lignes du fichier, à partir du début,
 tant que ces lignes contiennent le mot salut ou ami.&nbsp;
 Il supprime ensuite toutes les lignes vides du début.&nbsp;
 </p>
-<pre><font face="Arial,Helvetica,sans-serif" size="3">function+topclean {
+<pre>function+topclean {
  until(?) {
   1g/salut\|ami/d
  }
@@ -3331,7 +3446,7 @@ Il supprime ensuite toutes les lignes vides du début.&nbsp;
   1g/^$/d
  }
 }
-</font></pre>
+</pre>
 
 <p>
 Vous pouvez employer la boucle (100) {…} pour répéter un ensemble de commandes 100 fois.&nbsp;
@@ -3340,11 +3455,11 @@ Je n'ai pas employé ce dispositif très souvent.&nbsp;
 
 <h3 align="center"> <a name="init"> Le script d'initialisation </a> </h3>
 
-Le script appelé «&nbsp;init&nbsp;» est lancé au démarrage d'edbrowse.&nbsp;
+Le script appelé «&nbsp;init&nbsp;» est lancé au démarrage d'Edbrowse.&nbsp;
 Il définit quelques comportements par défaut – par ex. la lecture de votre 
 fichiers de signets, pour avoir vos «&nbsp;favoris&nbsp;» sous la main.&nbsp;
 Voici un exemple.&nbsp;
-<pre><font face="Arial,Helvetica,sans-serif" size="3">function+init {
+<pre>function+init {
 # désactive le débogage, pour ne pas afficher les messages de ce script
 db0
 # supposent que des répertoires sont en lecture/écriture
@@ -3359,17 +3474,17 @@ e1
 # remet le niveau de débogage à 1 ou 2, valeurs raisonnables
 db1
 }
-</font></pre>
+</pre>
 
 <p>
 C'est juste un exemple.&nbsp;
 Mettez quelque chose que vous aimez dans ce script, 
-ou ignorez-le si le fonctionnement d'edbrowse vous satisfait ainsi.&nbsp;
+ou ignorez-le si le fonctionnement d'Edbrowse vous satisfait ainsi.&nbsp;
 </p>
 
 <h3 align="center"> <a name="ma"> Comptes de courrier </a> </h3>
 
-Le prochain chapitre décrit edbrowse en tant que client de courrier électronique, 
+Le prochain chapitre décrit Edbrowse en tant que client de courrier électronique, 
 aussi allons-nous employer le fichier de configuration pour définir vos comptes de courrier. 
 Vous pouvez définir plusieurs comptes, si besoin.&nbsp;
 Ils sont implicitement numérotés, dans l'ordre d'apparition dans le fichier de configuration.&nbsp;
@@ -3408,7 +3523,7 @@ nous pouvons utiliser ses paramètres pour envoyer et recevoir des courriels.
 Ci-dessous, une configuration typique pour le gmail de Google.
 </p>
 
-<p></p><pre><font face="Arial,Helvetica,sans-serif" size="3">mail {
+<p></p><pre>mail {
   inserver = pop.gmail.com
   outserver = smtp.gmail.com
   inport = *995
@@ -3419,7 +3534,7 @@ Ci-dessous, une configuration typique pour le gmail de Google.
   reply = utilisateur@gmail.com
   from = Karl Dahlke
 }
-</font></pre><p></p>
+</pre><p></p>
 
 <p>
 Le filtrage du courrier, par l'expéditeur et/ou le sujet, est contrôlé par 
@@ -3428,11 +3543,11 @@ Ceci sera <a href="#filter">décrit plus tard</a>,
 en tant qu'élément du client «&nbsp;fetchmail&nbsp;».&nbsp;
 </p>
 
-<h3 align="center"> <a name="mt"> Descripteurs des types Mime </a> </h3>
+<h3 align="center"> <a name="mt"> Descripteurs des plugins </a> </h3>
 
 Les types mime sont déterminés par l'extension dans le nom de fichier, ou dans 
 certains cas par le protocole.&nbsp;
-Ils peuvent indiquer à edbrowse d'utiliser /usr/bin/play pour jouer fichier.wav ou 
+Ils peuvent indiquer à Edbrowse d'utiliser /usr/bin/play pour jouer fichier.wav ou 
 fichier.voc, et /usr/bin/mpg123 pour jouer fichier.mp3, et ainsi de suite.&nbsp;
 Plutôt que de tout répéter ici, je vous suggère de jeter un oeil à la section mime{…} 
 du fichier de configuration exemple fourni.&nbsp;
@@ -3440,48 +3555,100 @@ Les utilisateurs de Linux pourront probablement copier cette section dans leur
 propre fichier de configuration.&nbsp;Elle fait généralement ce qu'il faut.&nbsp;
 Voici un exemple :
 
-<pre>mime {
+<pre>plugin {
+#  La syntaxe mime précédente { } est toujours supportée, pour la compatibilité.
 type = audio/mp3
-desc = fichier audio dans le format mp3
+desc = audio file in mp3 format
 suffix = mp3
-program = mpg123 -q -
+content = audio/mpeg
+#  %i est replacé par le nom de fichier temporaire généré par Edbrowse
+program = mpg123 -q -C %i
 }
 </pre>
 
 <p>
-Si vous avez téléchargé un fichier de l'Internet terminé par «&nbsp;.mp3&nbsp;», 
-tapez «&nbsp;pb&nbsp;» pour jouer le contenu du tampon.&nbsp;
-Les données sont transférées au programme, dont les options lui indiquent de 
-s'attendre à des données provenant de l'entrée standard.&nbsp;
-Si le programme mp3 fonctionne mieux à partir d'un fichier, 
-ajoutez le caractère «&nbsp;%&nbsp;» pour transformer le tampon en fichier temporaire 
-avec le suffixe approprié.&nbsp;
+Si vous avez téléchargé un fichier de l'Internet terminé par .mp3, 
+ou dont le type de contenu hhtp est Audio/Mpeg, il sera automatiquement joué,
+et ok sera affiché lorsque ce sera terminé.&nbsp;
+Ce sont les instructions sonores, audio ou musicales associées à ce site web.&nbsp;
+Cette fonctionnalité de lancement automatique peut être désactivée avec 
+la commande pg qui active ou désactive les plugins.
 </p>
 
 <p>
-program = mpg123 -q %
+Si vous avez chargé un fichier audio en mémoire sur votre ordinateur, vous 
+pouvez taper "pb" pour jouer son contenu dans le tampon.&nbsp;
+Les données sont placées dans le fichier temporaire /tmp/.edbrowse, et 
+ensuite mpg123 est invoqué.&nbsp;
+Finalement, vous pouvez jouer un fichier mp3, ou n'importe quel fichier 
+associé à un plugin, en mode répertoire.&nbsp;
+La commande g (go) joue le fichier sur la ligne courante.&nbsp;
+Ceci est très efficace; nul besoin de lire le fichier en mémoire ou de 
+créer un fichier temporaire sous /tmp.
 </p>
 
 <p>
 La commande «&nbsp;pb&nbsp;» peut signifier "process buffer" ou bien "play buffer".&nbsp;
-Par exemple, un descripteur mime pourrait ouvrir des archives compressées de type «&nbsp;zip&nbsp;».&nbsp;
+Par exemple, un descripteur mime pourrait ouvrir une archive zip.
 </p>
 
-<pre><font face="Arial,Helvetica,sans-serif" size="3">mime {
+<pre>plugin {
 type = data/zip
 desc = archive zip compressée
 suffix = zip
-# utilisez %, puisque le programme unzip ne peut lire des données qu'à partir d'un fichier
-program = unzip %
+program = unzip %i
 }
-</font></pre>
+</pre>
+
+<p>
+Certains plugins agissent sur un fichier, comme décrit ci-dessus, mais d'autres 
+convertissent un fichier en quelque chose de lisible.&nbsp;
+Ceux-ci de "jouent" pas le fichier; ils font partie de la commande de navigation.&nbsp;
+Ce type de plugin est repéré par son attribut de sortie.&nbsp;
+Mettez-le à h si la sortie doit pêtre de l'html, ou t si la sortie doit être du 
+texte.&nbsp;
+Avec le plugin suivant installé, vous pouvez feuilleter la majorité des fichiets pdf 
+et les lire, qu'ils résident sur votre ordinateur ou sur l'internet.&nbsp;
+D'autres plugins pourraient convertir du texte enrichi, des documents Word, des 
+documents Open Office etc.&nbsp;
+</p>
+
+<P><PRE>plugin {
+type = pdf
+desc = fichier pdf
+suffix = pdf
+content = application/pdf
+#  %o est le fichier de sortie
+program = pdftohtml -i -noframes %i %o >/dev/null
+outtype = H
+}
+
+plugin {
+type = Word doc
+desc = document Microsoft Word, pas docx
+suffix = doc
+content = application/msword
+#  sans %o, la sortie est envoyée directement dans le tampon, plus efficace.
+program = catdoc %i
+outtype = T
+}
+</PRE>
+</P>
+
+<p>
+Notez qu'il existe des convertisseurs pdf en texte qui sautent l'étape intermédiaire 
+html, mais j'ai voulu préserver les fonctionnalités des hyperliens qui pourraient 
+être présents dans le pdf, et donc j'ai pensé avantageux de passer par l'html, 
+même si c'est un peu plus compliqué.
+</p>
 
 <h3 align="center"> <a name="sampcfg"> Un exemple de fichier de configuration </a> </h3>
 
 La meilleure documentation étant un exemple, je vous propose un fichier de configuration 
 exemple avec de fausses données; Il est bien commenté.&nbsp;
-Vous pouvez le télécharger <a href="file:///usr2/archives/accessibilit%C3%A9/edbrowse/edbrowse_p201410310616/doc/sample_fr.ebrc">ici</a>.
+Vous pouvez le télécharger <A HREF=http://Edbrowse.org/sample.ebrc>ici</a>.
 
+<P><HR><P>
 <h2 align="center"> Chapitre 7, Client de courrier</h2>
 
 <h3 align="center"> <a name="sm"> Envoyer le courrier </a> </h3>
@@ -3495,17 +3662,17 @@ La plupart des clients mail peuvent automatiquement ajouter une signature à un 
 sortant. Celui-ci ne fait pas exception.
 En fait, vous pouvez avoir une signature différente pour chacun de comptes mail. Ainsi, vous 
 pouvez utiliser une signature pour vos courriels de travail, et une autre pour les courriels 
-personnels. A l'envoi d'un courriel à partir d'un compte N, edbrowse cherche un fichier 
-nommé .signtureN, dans votre répertoire personnel. Par exemple, pour l'envoi à partir du 
-compte 2, edbrowse cherche le fichier .signature2 dans votre répertoire personnel. 
-Si ce fichier n'est pas trouvé, edbrowse cherche un fichier nommé .signature dans votre 
+personnels. A l'envoi d'un courriel à partir d'un compte N, Edbrowse cherche un fichier 
+nommé .signatureN, dans votre répertoire personnel. Par exemple, pour l'envoi à partir du 
+compte 2, Edbrowse cherche le fichier .signature2 dans votre répertoire personnel. 
+Si ce fichier n'est pas trouvé, Edbrowse cherche un fichier nommé .signature dans votre 
 répertoire personnel, et ajoute son contenu s'il le trouve.
 </p>
 
 <p>
 Les destinataires, les pièces jointes, et le sujet doivent apparaître 
 au début de votre fichier.&nbsp;
-La commande «&nbsp;sm&nbsp;» est compliquée, aussi regardez bien la syntaxe ci-dessous :
+La commande «&nbsp;sm&nbsp;» est pointilleuse, aussi regardez bien la syntaxe ci-dessous :
 
 </p>
 <pre>To: fred.flintstone@bedrock.us
@@ -3521,14 +3688,14 @@ Rock studios incorporated.
 
 <p>
 La ligne&nbsp;«&nbsp;account&nbsp;» est facultative.&nbsp;
-Elle oblige edbrowse à utiliser le premier compte de courrier indiqué dans votre 
+Elle oblige Edbrowse à utiliser le premier compte de courrier indiqué dans votre 
 fichier de configuration «&nbsp;.ebrc&nbsp;».&nbsp;
-Si vous omettez la ligne «&nbsp;account&nbsp;», edbrowse utilisera le compte par défaut, 
+Si vous omettez la ligne «&nbsp;account&nbsp;», Edbrowse utilisera le compte par défaut, 
 indiqué par «&nbsp;default&nbsp;» dans votre fichier «&nbsp;.ebrc&nbsp;».&nbsp;
 </p>
 
 <p>
-Taper «&nbsp;sm5&nbsp;» indique à edbrowse d'utiliser le compte 5 de votre fichier de configuration.&nbsp;
+Taper «&nbsp;sm5&nbsp;» indique à Edbrowse d'utiliser le compte 5 de votre fichier de configuration.&nbsp;
 Ceci annule la ligne «&nbsp;account&nbsp;» de votre fichier à envoyer, si elle existe.&nbsp;
 Il est souvent plus facile de taper «&nbsp;sm5&nbsp;» que d'insérer «&nbsp;account: 5&nbsp;».&nbsp;
 Notez, «&nbsp;sm-5&nbsp;» est identique à «&nbsp;sm5&nbsp;», 
@@ -3541,7 +3708,7 @@ Utilisez les lignes «&nbsp;attach:&nbsp;» pour les pièces jointes.&nbsp;
 Chaque ligne doit indiquer le nom de fichier à joindre, 
 et ces lignes doivent précéder la ligne «&nbsp;Subject&nbsp;».&nbsp;
 Si le nom de fichier attaché est simplement un nombre, 
-c'est la session correspondante d'edbrowse qui sera attachée.&nbsp;
+c'est la session correspondante d'Edbrowse qui sera attachée.&nbsp;
 Revenir à l'exemple ci-dessus, où nous essayons d'attacher la brochure pour Hollyrock.&nbsp;
 Une autre manière de faire est de commuter à la session 2 
 et d'y enregistrer le fichier pdf.&nbsp;
@@ -3569,11 +3736,8 @@ Le mail primaire est en texte plat, mais la pièce jointe «&nbsp;alternative&nb
 est en HTML ou en texte formaté.&nbsp;
 À moins que quelque chose n'aille de travers, 
 le destinataire verra la présentation alternative, avec les images et les hyperliens.&nbsp;
-</p>
-
-<p>
 Comme les pièces jointes, la ligne «&nbsp;alt:&nbsp;» se rapporte à un fichier 
-ou à une session d'edbrowse.&nbsp;
+ou à une session d'Edbrowse.&nbsp;
 </p>
 
 <p>
@@ -3608,7 +3772,7 @@ fred : fred.flintstone@bedrock.us : 15 rue des tanneurs : 05555382710
 <p>
 alors vous pouvez simplement écrire «&nbsp;to: fred&nbsp;» en tête de votre fichier.&nbsp;
 Seuls les deux premiers champs du carnet d'adresses sont significatifs 
-en ce qui concerne edbrowse.&nbsp;
+en ce qui concerne Edbrowse.&nbsp;
 D'autres champs peuvent contenir des numéros de fax, de téléphone
 l'adresse postale, etc.&nbsp;
 </p>
@@ -3621,9 +3785,6 @@ Noter que «&nbsp;Reply to fred&nbsp;» est une syntaxe alternative pour «to: f
 Quelques pages Web incluent des liens «&nbsp;sendmail&nbsp;».&nbsp;
 Elles ressemblent à d'autres hyperliens, 
 mais elles envoient le mail à la personne appropriée.&nbsp;
-</p>
-
-<p>
 Si vous activez un lien «&nbsp;sendmail&nbsp;», vous serez placés en nouvelle session 
 d'édition avec les lignes «&nbsp;to&nbsp;» et de «&nbsp;subject&nbsp;» pré-remplies.&nbsp;
 Si l'URL n'indiquait pas de sujet, le sujet est simplement «Hello».&nbsp;
@@ -3637,7 +3798,7 @@ aussi vérifiez avant d'écrire et d'envoyer.&nbsp;
 <p>
 Vous pouvez inclure des pièces jointes avec la directive «&nbsp;attach: &nbsp;» 
 en tête du fichier, supposant que le destinataire peut récupérer ces pièces jointes.&nbsp;
-C'est utile quand le lien sendmail demande un {rapport de bogue} 
+C'est utile quand le lien sendmail demande un rapport de bogue
 - vous pouvez attacher un programme et/ou ce qu'il a produit.&nbsp;
 C'est assez rare.&nbsp;
 La plupart des liens de sendmail n'attendent que quelques commentaires ou réactions, 
@@ -3648,7 +3809,7 @@ et rien d'autre.&nbsp;
 Quelques formulaires de Web sont envoyés par mail, plutôt que par HTTP direct.&nbsp;
 Edbrowse les manipule correctement.&nbsp;
 Il montre l'adresse mail de destination, envoie le courrier par smtp, 
-et vous prévient qu'il attend une réponse.&nbsp;
+et vous avertit de guetter une réponse.&nbsp;
 Cette réponse pourrait être une réponse par mail, ou même un appel téléphonique 
 si vous avez fourni votre numéro de téléphone dans le formulaire.&nbsp;
 Mais rappelez-vous, ce n'est immédiat. Vous êtes toujours sur la même page Web, 
@@ -3659,12 +3820,13 @@ et vous entendrez parler de la compagnie dans les jours à venir.&nbsp;
 
 <h3 align="center"> <a name="smc"> Client d'envoi de courrier </a> </h3>
 
-Comme décrit précédemment, edbrowse incorpore les fonctionnalités d'un client de courrier.&nbsp;
+Comme décrit précédemment, Edbrowse incorpore les fonctionnalités d'un client de courrier.&nbsp;
 En plus de la commande interactive «&nbsp;sm&nbsp;», vous pouvez envoyer le courrier par lots, 
 à partir de la ligne de commande.&nbsp;
 Si Fred et Barney sont dans votre carnet d'adresses, et vous voulez leur envoyer 
 le courrier à partir de la ligne de commande, avec une pièce jointe, 
 en utilisant votre compte primaire de courrier, faites ceci.&nbsp;
+(J'assume que e a été aliasé à l'exécutable Edbrowse)
 
 <p>
 e -m1 fred ^barney hollyrock-notice +hollyrock-brochure.pdf
@@ -3685,28 +3847,9 @@ Un signe «&nbsp;-&nbsp;» indique un format alternatif, comme ceci :
 e -m1 fred ^barney hollyrock-notice -hollyrock-graphical.html
 </p>
 
-<p>
-Souvenez-vous, vous pouvez indiquer plusieurs comptes de courrier 
-dans votre fichier «&nbsp;.ebrc&nbsp;».&nbsp;
-Le premier compte est indiqué par l'index 1, comme ci-dessus dans «&nbsp;-m1&nbsp;», 
-et ainsi de suite.&nbsp;
-Vous pouvez vous faciliter la vie beaucoup avec quelques alias 
-dans votre fichier «&nbsp;.bashrc&nbsp;».&nbsp;
-
-</p>
-<pre><font face="Arial,Helvetica,sans-serif" size="3"># mon courrier, compte à la maison
-alias moi=" e -m1 "
-# le compte de mon épouse.&nbsp;
-alias elle=" e -m2 "
-# mon compte de travail.&nbsp;
-alias travail= " e -m3 "
-# le terme «&nbsp;mail&nbsp;» est obsolète
-alias mail = " utilisez moi, elle, ou travail 
-</font></pre>
-
 <h3 align="center"> <a name="retrmail"> Récupération de courrier </a> </h3>
 
-Si edbrowse est lancé avec l'argument -f, il va récupérer le courrier de tous les comptes,
+Si Edbrowse est lancé avec l'argument -f, il va récupérer le courrier de tous les comptes,
 sauf ceux qui sont marqués "nofetch". Alternativement, vous pouvez spécifier un nombre après -f, 
 afin de récupérer le courrier d'un seul compte. Par exemple, -f1 récupérera le courrier du 
 premier compte pop3, ignorant les autres.
@@ -3715,18 +3858,34 @@ Les messages récupérés sont stockés dans un répertoire nommé unread/, rela
 courrier spécifié dans votre fichier .ebrc. Vous pourrez les consulter, 
 comme expliqué dans la prochaine section.
 
+<p>
+Souvenez-vous, vous pouvez indiquer plusieurs comptes de courrier 
+dans votre fichier «&nbsp;.ebrc&nbsp;».&nbsp;
+Le premier compte est indiqué par l'index 1, comme ci-dessus dans «&nbsp;-m1&nbsp;», 
+et ainsi de suite.&nbsp;
+Vous pouvez vous faciliter la vie beaucoup avec quelques alias 
+dans votre fichier «&nbsp;.bashrc&nbsp;».&nbsp;
+</p>
+
+<pre># mon courrier, compte à la maison
+alias moi=" e -fm1 "
+# le compte de mon épouse.&nbsp;
+alias elle=" e -fm2 "
+# mon compte de travail.&nbsp;
+alias travail=" e -fm3 "
+# le terme «&nbsp;mail&nbsp;» est obsolète
+alias mail="echo utilisez moi, elle, ou travail 
+</pre>
+
 <h3 align="center"> <a name="imr"> Client interactif de récupération de courrier </a> </h3>
 
-Si edbrowse est lancé avec l'option «&nbsp;-m&nbsp;», et pas autres arguments, 
+Si Edbrowse est lancé avec l'option «&nbsp;-m&nbsp;», et pas autres arguments, 
 il devient client interactif de courrier, vous permettant d'examiner les courriers 
 dans votre répertoire de courriers non lus. Si vous désirez récupérer et lire les messages 
-en même temps, vous pouvez combiner les options -f et -m. Dans les versions d'edbrowse 3.4.6 
-et antérieures, la récupération et la lecture n'étaient pas des opérations séparées; 
--m assurait les deux. Utilisateurs actuels de edbrowse, faites attention : c'est un changement 
-notable dans l'interface !
+en même temps, vous pouvez combiner les options -f et -m. 
 
 <p>D'abord il vous indique combien de messages vous avez reçu.&nbsp;
-S'il n'y a aucun message il n'indique «&nbsp;Pas de message&nbsp;», et sort.&nbsp;
+S'il n'y a aucun message il indique «&nbsp;Pas de message&nbsp;», et sort.&nbsp;
 S'il y a des messages non lus, il les montre un par un.
 Pour chaque message, il montre l'en-tête (sujet et l'expéditeur) et la première page du texte,  
 et puis affiche un message de sollicitation.&nbsp;
@@ -3735,20 +3894,20 @@ Un «&nbsp;*&nbsp;» signifie qu'il reste du texte à lire.&nbsp;
 Vous répondez en tapant une touche.&nbsp;
 Les touches ont la signification suivante :</p>
 
-<pre><font face="Arial,Helvetica,sans-serif" size="3">? 	résumé des commandes principales
+<pre>? 	résumé des commandes principales
 q 	quitte le programme
 espace	affiche plus de texte
 n 	lit le prochain message
 d 	efface ce message
 w	sauvegarde ce message dans un fichier, puis le supprime
 u 	sauvegarde ce message non formaté dans un fichier et le supprime
-</font></pre>
+</pre>
 
 <p>
 Les deux dernières commandes, w et u, exigent un nom de fichier, qu'il faut donner.&nbsp;
-Le nom de fichier réservé «&nbsp;x&nbsp;» est /dev/null, c'est-à-dire que le courrier est jeté.&nbsp;
-Vous pouvez jeter le courrier dans «&nbsp;x&nbsp;» mais sauvegarder les pièces jointes.&nbsp;
-Si le fichier ne s'appelle pas «&nbsp;x&nbsp;», et si le programme ne peut pas sauvegarder 
+Le nom de fichier réservé "x" ou "X" est /dev/null, où courrier est jeté.&nbsp;
+Vous pouvez jeter le courrier dans x mais sauvegarder les pièces jointes.&nbsp;
+Si le fichier ne s'appelle pas x, et si le programme ne peut pas sauvegarder 
 sous le nom de fichier indiqué, il demande un nouveau nom de fichier.&nbsp;
 Noter que X majuscule fera la même chose.&nbsp;
 </p>
@@ -3757,7 +3916,7 @@ Noter que X majuscule fera la même chose.&nbsp;
 En pratique, vous pouvez sauvegarder un message avec w, puis réaliser plus tard qu'il vous 
 faut quelque chose, comme un hyperlien ou une pièce attachée, uniquement accessible 
 dans le message non formaté.
-Quand vous utilisez la commande w pour sauvegarder un message formaté, edbrowse sauvegarde 
+Quand vous utilisez la commande w pour sauvegarder un message formaté, Edbrowse sauvegarde 
 maintenant une copie non formatée de ce message. Ces copies sont enregistrées dans le 
 répertoire $HOME/.Trash/rawmail, avec des noms de fichiers composées de 5 chiffres. 
 Lorsque vous sauvegardez un message formaté, vous verrez du texte genre 
@@ -3772,19 +3931,15 @@ de ne pas accumuler les courriers non formatés.
 
 A la récupération, le courriel est sauvegardé dans le répertoire des messages non lus sans 
 aucun formatage. En d'autres termes, c'est une copie conforme du message existant sur le
-serveur. Lorsque vous le lisez après avoir lancé edbrowse avec l'option -m, edbrowse l'affiche, 
+serveur. Lorsque vous le lisez après avoir lancé Edbrowse avec l'option -m, Edbrowse l'affiche, 
 après avoir appliqué quelques règles de formatage. Vous pouvez sauvegarder le message, brut ou 
 formaté. Sélectionner "w" au prompt sauvegarde le message formaté, tandis que sélectionner "u" 
 sauvegarde le message non formaté.
 
 <p>
 Quand un mail HTML est affiché, Javascript est désactivé.&nbsp;
-Un bogue dans la machinerie Javascript ne peut faire planter le client, et du Javascript 
-malveillant ne peut occasionner de problèmes.
-On ne perd pas grand-chose ici, parce que vous ne pourriez pas activer les liens 
-ou compléter les formulaires, de toute façon.&nbsp;
-Si vous voulez «&nbsp;interagir&nbsp;» avec ce mail, vous devez le sauvegarder non formaté 
-dans un fichier, finir votre session mail, éditer ce fichier, 
+Si vous voulez «&nbsp;interagir&nbsp;» avec ce mail, vous devez le sauvegarder 
+non formaté  dans un fichier, finir votre session mail, éditer ce fichier, 
 et taper «&nbsp;b&nbsp;» pour naviguer dedans.&nbsp;
 A ce moment l'affichage HTML sera actif, comme si vous regardiez une page Web 
 sur un site internet.&nbsp;
@@ -3816,13 +3971,13 @@ Naturellement vous pouvez définir un chemin absolu si vous le souhaitez.&nbsp;
 Une règle de filtrage de courrier s'active toujours dans le contexte d'un bloc de filtrage.&nbsp;
 Par exemple, si vous souhaitez réorienter le courrier de certaines personnes, faites ceci :
 </p>
-<pre><font face="Arial,Helvetica,sans-serif" size="3">fromfilter {
+<pre>fromfilter {
 fred flintstone &gt; fredmail
 fred.flintstone@bedrock.us &gt; fredmail
 jerk@hotmail.com &gt; x
 word@m-w.com &gt; -wod
 }
-</font></pre>
+</pre>
 
 <p>
 Vous pouvez indiquer le nom de l'expéditeur, ou son adresse mail.&nbsp;
@@ -3859,13 +4014,13 @@ sur votre compte primaire.&nbsp;
 Voici un bloc témoin :
 </p>
 
-<pre><font face="Arial,Helvetica,sans-serif" size="3">tofilter {
+<pre>tofilter {
 support@my-side-business.com &gt; appui
 sales@my-side-business.com &gt; ventes
 @my-side-business.com &gt; affaires
 me@my-regular-dayjob.com &gt; travail
 }
-</font></pre>
+</pre>
 
 <p>
 La troisième entrée est une adresse de capture, sauvegardant n'importe quel courrier 
@@ -3878,7 +4033,7 @@ dans «&nbsp;affaires&nbsp;».&nbsp;
 
 <p>
 Vous pouvez également employer des adresses de capture dans le bloc «&nbsp;fromfilter&nbsp;».&nbsp;
-Quelque chose de ce domaine va ici, etc.&nbsp;
+Toute chose de ce domaine va ici, etc.&nbsp;
 </p>
 
 <p>
@@ -3890,11 +4045,12 @@ envoyez «&nbsp;viens m'embrasser&nbsp;» à x, et il a disparu.&nbsp;
 
 <p>
 Vous pouvez également employer ce dispositif pour bloquer les avertissements 
-de fournisseurs d'accès internet, se plaignant que vous leur avez envoyé des mails 
-infectés par des virus.&nbsp;
-Vous non, naturellement, parce que vous êtes linux.&nbsp;
-Vous êtes immunisé ! Votre adresse de réponse a été récupérée, 
-et vous recevez donc l'avertissement de virus, mais vous n'en avez vraiment rien à faire.&nbsp;
+d'autres fournisseurs d'accès internet, se plaignant que vous leur avez envoyé 
+des mails infectés par des virus.&nbsp;
+Vous non, naturellement, parce que vous êtes linux, avec un clirent non-standard.&nbsp;
+Votre adresse de réponse a été récupérée, et vous recevez donc l'avertissement 
+de virus, mais vous n'en avez vraiment rien à faire.&nbsp;
+C'est appelé rétrodiffusion.&nbsp;
 Les lignes comme celle-ci peuvent éliminer ces faux avertissements.&nbsp;
 </p>
 
@@ -3930,7 +4086,7 @@ placez un point d'exclamation au début, c'est-à-dire !fred.
 
 <p>
 Si un mail est redirigé sur un fichier, et qu'il possède des pièces jointes, 
-edbrowse demandera que faire avec ces pièces jointes, comme si vous aviez employé 
+Edbrowse demandera que faire avec ces pièces jointes, comme si vous aviez employé 
 la commande «&nbsp;w&nbsp;» pour sauvegarder le courrier.&nbsp;
 Si votre ami vous a envoyé un programme (en pièce jointe) qu'il veut que vous regardiez, 
 tapez simplement la touche entrée pour la sauvegarder sous le nom de fichier par défaut.&nbsp;
@@ -3939,10 +4095,7 @@ qui ne vous intéresse pas, tapez «&nbsp;x&nbsp;» et le mail disparaîtra.&nbs
 Si l'image a un suffixe reconnaissable, tel que GIF, je le jette automatiquement.&nbsp;
 Si vous voulez vraiment ces images, vous devez sauvegarder le mail non formaté, 
 et le consulter plus tard.&nbsp;
-</p>
-
-<p>
-A la consultation d'un mail dans l'éditeur, edbrowse vous permet
+A la consultation d'un mail dans l'éditeur, Edbrowse vous permet
 de récupérer toutes les pièces jointes, que ce soit des images
 ou non. Vous pouvez ignorer une pièce jointe particulière en tapant x, 
 et toutes les pièces jointes en tapant X majuscule.
@@ -3963,13 +4116,14 @@ vous allez répondre, et elle est créée lorsque vous consultez votre e-mail.
 Si cette ligne n'est pas présente, la commande "réponse" échouera.
 
 <p>La ligne "Subject:" (sujet) doit également être présents. Elle aussi aussi est créée 
-lorsque le courrier est formaté (consulté). Après que la commande "re" ait été tapée, 
+lorsque le courrier est formaté. Après que la commande "re" ait été tapée, 
 le sujet peut être déplacé en bas de page, pour faire de la place à d'autres en-têtes 
 de courriel, comme suit.</p>
 
 <p>Si ce message vient d'être lu, et si des données non formatés existent encore 
-dans l'actuelle session edbrowse, re va chercher le numero d'identification du 
-message d'origine. Celui-ci devrait être mentionné dans la réponse. 
+dans l'actuelle session Edbrowse, ou si les mees données sont présentes dans le 
+fichier de données maildir/.reply, alors re insère le numero d'identification du 
+message d'origine. Celui-ci doit faire partie de la réponse. 
 La ligne pourrait ressembler à ceci.</p>
 
 <p>
@@ -3986,44 +4140,46 @@ En utilisant cette information, le serveur entretient les fils de discussion.
 Si vous supprimez cette ligne avant d'envoyer votre réponse, 
 vous allez créer un nouveau fil de discussion, et ce qui ne fera que désorienter 
 et perturber les autres participants. Alors - si vous devez répondre à un message 
-sur une liste de discussion, prenez le temps de le sauver non formaté, le consulter, 
-puis y répondre. Laissez la ligne Références inchangée, éditez lz corps du message, 
-ajoutez vos commentaires, et envoyez. 
-(Vous n'avez pas à vous préoccuper de ces détails si vous répondez à un message dans un 
-webmail).</p>
+sur une liste de discussion, assurez-vous que la commande re insère la ligne 
+References:, et laissez-la telle quelle.
+Editez le corps du message, ajoutez vos commentaires, et envoyez. 
+</p>
 
 <p>Parfois, la ligne références aura deux identifiants séparés par un espace. 
 Le premier est le début du fil de discussion, le message qui a débuté ce sujet, 
 et le second est le commentaire auquel vous répondez directement. 
 Encore une fois, cela contribue à l'organisation des messages en fils de discussion 
-par les serveurs de listes.</p>
+par les serveurs de listes.
+</p>
 
 <p>La commande "rea" signifie répondre à tous, et utilise de la même façon les en-têtes 
 du courriel original. Tous les destinataires s'affichent en haut de votre fichier. 
 Certains seront indiquées par cc, s'ils étaient en copie carbone. 
 Vous pouvez supprimer un de ces destinataires avant d'envoyer votre réponse. 
 Bien sûr, vous ne voudrez probablement pas supprimer la première ligne, 
-car c'est la réponse au premier expéditeur.</p>
+car c'est la réponse au premier expéditeur.
+</p>
 
-<p>Notez que la commande "re" sort du mode navigation, et transforme le fichier en un 
+<p>Si le mail n'était pas formaté, et si vous aviez tapé b pour naviguer dedans, 
+la commande "re" sort du mode navigation, et transforme le fichier en un 
 fichier texte simple. Ce qui permet l'édition de texte, de rédiger votre réponse dans le 
 corps du message. Si vous voulez recommencer à partir de zéro, vous ne pouvez pas juste 
 quitter le mode navigation, parce que vous n'êtes pas en mode navigation. 
 Vous devez ré-éditer le message de courrier sauvegardé, le consulter en mode navigation, 
-et y répondre.</p>
-
-<p>Comme tout le reste dans edbrowse, vous  vous habituerez à utiliser ce qui précède 
-une fois que vous aurez commencé.</p>
+et y répondre.
+Comme tout le reste dans Edbrowse, vous  vous habituerez à utiliser ce qui précède 
+une fois que vous aurez pratiqué.
+</p>
 
 <p></p><hr><p>
 </p><h2 align="center"> Chapitre 8, Accès aux bases de données </h2>
 
 <h3 align="center"> <a name="sqlb"> Compiler Edbrowse avec accès aux bases de données </a> </h3>
 
-Si vous tapez simplement «&nbsp;make&nbsp;», vous obtenez edbrowse, 
+Si vous tapez simplement «&nbsp;make&nbsp;», vous obtenez Edbrowse, 
 sans fonctionnalités base de données.&nbsp;
 Une cible particulière de compilation permet l'accès aux bases de données à travers odbc.&nbsp;
-Lancer «make edbrowseodbc&nbsp;» pour linker edbrowse à odbc.&nbsp;
+Lancer «make edbrowseodbc&nbsp;» pour linker Edbrowse à odbc.&nbsp;
 Ceci suppose que vous avez installé les packages unixODBC et unixODBC-devel sur votre machine. 
 Une autre cible, edbrowseinf, donne accès à 
 <a href="http://www.informix.com/">la base de données Informix</a>. Ceci fonctionne, 
@@ -4040,7 +4196,7 @@ il est considéré être une URL.&nbsp;
 Edbrowse ne cherche pas le fichier sur votre ordinateur ; il sort sur l'Internet.&nbsp;
 De même, quand le nom de fichier a un certain format, on suppose que c'est une 
 table ou une vue dans la base de données.&nbsp;
-Si vous avez une table appelée clients, vous l'appelez avec une parenthèse droite.&nbsp;
+Si vous avez une table appelée clients, vous l'appelez avec un crochet droit.&nbsp;
 
 <p>
 e clients]
@@ -4069,7 +4225,7 @@ La première colonne est un numéro unique qui indique ce client particulier.&nb
 Après tout, deux clients pourraient avoir les mêmes prénom, nom, et date de naissance.&nbsp;
 Les numéros sont toujours une bonne idée, et ils constituent habituellement la clef primaire.&nbsp;
 Ceci est indiqué par le caractère «&nbsp;*&nbsp;», juste avant le nom de colonne.&nbsp;
-Si edbrowse modifie ou supprime un enregistrement, la clef primaire est employée.&nbsp;
+Si Edbrowse modifie ou supprime un enregistrement, la clef primaire est employée.&nbsp;
 Je suppose que, à tout moment, la clef détermine un enregistrement unique dans la 
 base de données, et que chaque enregistrement apparaît au plus une seule fois en 
 session d'édition.&nbsp;Vous pouvez afficher deux fois le numéro 37, en ayant deux copies 
@@ -4077,17 +4233,17 @@ dans votre tampon, mais ne le faites pas !
 </p>
 
 <p>
-Noter que edbrowse peut supporter une clef primaire sur deux ou trois colonnes, 
+Noter que Edbrowse peut supporter une clef primaire sur deux ou trois colonnes, 
 telles qu'un numéro de série et un modificateur.&nbsp;
 J'ai quelques tables au travail qui fonctionnent comme ceci.&nbsp; Cependant, 
-edbrowse ne supporte pas plus de trois colonnes pour une clé primaire. Si la clé primaire 
+Edbrowse ne supporte pas plus de trois colonnes pour une clé primaire. Si la clé primaire 
 compore plus de trois colonnes, ou si la table n'a pas de clé primaire, vous ne pourrez pas 
 mettre à jour ou effacer des enregistrements.
 </p>
 
 <p>
-La syntaxe des tables est davantage qu'un nom et une parenthèse droite.&nbsp;
-Vous pouvez faire suivre la parenthèse droite avec la clause «&nbsp;where&nbsp;».&nbsp;
+La syntaxe des tables est davantage qu'un nom et un crochet droit.&nbsp;
+Vous pouvez faire suivre le crochet droit avec la clause «&nbsp;where&nbsp;».&nbsp;
 C'est important si vous ne voulez pas afficher la table entière, 
 surtout s'il y a des millions d'enregistrements.&nbsp;
 Voici quelques commandes de table et leurs significations.&nbsp;
@@ -4142,7 +4298,7 @@ Chercher les clients dont les noms commencent par «&nbsp;arn&nbsp;».&nbsp;
 </p>
 
 <p>
-clients] date_de_naissance=01/01/1960-31/12/1960<br>
+clients]date_de_naissance=01/01/1960-31/12/1960<br>
 Chercher les clients qui sont nés en 1960.&nbsp;
 </p>
 
@@ -4164,8 +4320,8 @@ Ainsi, vous pouvez récupérer le client #738 en tapant «&nbsp;r clients]738&nb
 
 <p>
 Si vous voulez une grille propre, Tapez «&nbsp;rf&nbsp;» pour régénérer le tampon.&nbsp;
-Ceci vous ramène de nouveau à une grille vide pour la table, sans les rangées.&nbsp;
-AVERTISSEMENT – n'effacez pas votre tampon en supprimant toutes les rangées, 
+Ceci vous ramène de nouveau à une grille vide pour la table, sans les lignes.&nbsp;
+AVERTISSEMENT – n'effacez pas votre tampon en supprimant toutes les lignes, 
 cela supprimera les entrées correspondantes dans la base de données.&nbsp;
 Ce dispositif fonctionne juste comme le mode répertoire – vos modifications sont 
 traduites en actions réelles, aussi faites attention.&nbsp;
@@ -4199,7 +4355,7 @@ Pour travailler sur la base de données, votre fichier de configuration doit ind
 le nom de la base de données, le nom d'utilisateur, et le mot de passe.&nbsp;
 La source de données doit correspondre à l'une des entrées dans votre fichier .odbc.ini. 
 (Nom d'utilisateur et mot de passe peuvent parfois être omis, s'ils sont inférés de 
-votre identité sur l'ordinateur).&nbsp;
+votre identité sur l'ordinateur ou définis dans la source de données du fichier .odbc.ini).&nbsp;
 Voici comment la ligne pourrait ressembler si vous vous connectez sur la base de données 
 «&nbsp;ventes&nbsp;», qui contient la table «&nbsp;clients&nbsp;»
 
@@ -4209,7 +4365,7 @@ database = ventes, nom utilisateur, mot de passe
 
 <p>
 Ceci peut être modifié à la volée par la commande ds=. Assurez-vous de ne pas faire 
-référence à d'anciennes lignes dans le tampon après avoir sléctionné une nouvelle source 
+référence à d'anciennes lignes dans le tampon après avoir sélectionné une nouvelle source 
 de données.
 </p>
 
@@ -4223,20 +4379,26 @@ C'est la syntaxe standard de SQL pour accéder aux tables d'une autre base de do
 
 <h3 align="center"> <a name="insupd"> Insertion, mise à jour, effacement </a> </h3>
 
+Maintenant que nous avons fait quelques requêtes, nous allons modifier quelques données. &nbsp;
+Ce opérations sont connus sous les noms insert, update et delete dans le monde des 
+bases de données.
+
+<p>
 Ajouter des enregistrements à une base de données est substantiellement différent 
-de l'ajout de texte.&nbsp; Puisqu'une rangée peut contenir une douzaine de champs, 
-et que vous pouvez ne pas vous rappeler qu'est-ce qui va où, edbrowse vous interroge 
+de l'ajout de texte.&nbsp; Puisqu'une ligne peut contenir une douzaine de champs, 
+et que vous pouvez ne pas vous rappeler qu'est-ce qui va où, Edbrowse vous interroge 
 pour chaque champ séparément.&nbsp;
 Il vérifie également l'intégrité de chaque champ dès que vous en sortez, 
 par exemple une date doit ressembler à jj/mm/aaaa etc.&nbsp;
-Si une rangée ne peut pas être ajoutée en raison d'une erreur de la base de données, 
-edbrowse affiche l'erreur, et la saisie de données continue, vous donnant une chance 
-de réintroduire la rangée.&nbsp;
+Si une ligne ne peut pas être ajoutée en raison d'une erreur de la base de données, 
+Edbrowse affiche l'erreur, et la saisie de données continue, vous donnant une chance 
+de réintroduire la ligne.&nbsp;
 La saisie de données s'arrête quand vous entrez un point seul, quelque soit le champ 
 dans lequel vous êtes.&nbsp;
-Les rangées qui ont été écrites avec succès seront présentes dans votre tampon, 
-et la ligne courante est la dernière ligne écrite.&nbsp;
+Les lignes qui ont été entrées avec succès seront présentes dans votre tampon, 
+et la ligne courante est la dernière ligne entrée.&nbsp;
 Noter que les données binaires (blobs) ne peuvent pas être entrées à ce stade.&nbsp;
+</p>
 
 <p>
 Une ligne apparaît telle que vous l'avez entrée; et peut différer des valeurs actuelles 
@@ -4260,29 +4422,29 @@ dans tous les cas une erreur "duplicate key".
 </p>
 
 <p>
-Employez la commande remplacement pour mettre à jour une rangée.&nbsp;
+Employez la commande remplacement pour mettre à jour une ligne.&nbsp;
 Assurez-vous que vous n'avez pas accidentellement ajouté ou effacé un caractère pipe.&nbsp;
 Des colonnes d'index primaire ne peuvent être modifiées.&nbsp;
-Si vous mettez à jour beaucoup de rangées avec une commande, en spécifiant un intervalle 
+Si vous mettez à jour beaucoup de lignes avec une commande, en spécifiant un intervalle 
 ou par «&nbsp;g//s&nbsp;», et si une erreur se produit pendant la mise à jour, la substitution 
-s'arrête là.&nbsp;La session d'édition reflétera la base de données, avec quelques rangées 
+s'arrête là.&nbsp;La session d'édition reflétera la base de données, avec quelques lignes 
 modifiées et d'autres intactes.&nbsp;Il y a beaucoup de causes d'erreurs de mise à jour, 
 par exemple une erreur de type (un nombre entier dans un champ de date), un non respect 
 des contraintes (J pour le sexe, au lieu de M ou de F).&nbsp;Si on demande votre avis dans 
 la conception d'une base de données, appliquez des contraintes partout où elles ont du sens. 
 Elles vous protégeront contre les substitutions incorrectes, lesquelles produiraient 
-des mises à jour inconsistentes.&nbsp;
+des données inconsistentes.&nbsp;
 </p>
 
 <p>
-La suppression fonctionne exactement comme attendu ; supprimer une rangée, et l'entrée 
+La suppression fonctionne exactement comme attendu ; supprimer une ligne, et l'entrée 
 correspondante disparaît.&nbsp;
 Il n'y a pas de commande «&nbsp;annuler&nbsp;».&nbsp;
-Ce serait impossible, puisque vous avez pu ne sélectionner qu'une partie de la rangée 
-(voir ci-dessous), et je n'aurais pas toutes les données pour reconstituer la rangée.&nbsp;
+Ce serait impossible, puisque vous avez pu ne sélectionner qu'une partie de la ligne 
+(voir ci-dessous), et je n'aurais pas toutes les données pour reconstituer la ligne.&nbsp;
 Comme mentionné auparavant, l'intégrité référentielle devrait être utilisée partout 
 où c'est possible.&nbsp;
-Comme dernier contrôle, je vous autorise à ne supprimer que 100 rangées à la fois.&nbsp;
+Comme dernier contrôle, je vous autorise à ne supprimer que 100 lignes à la fois.&nbsp;
 Soyez prudent, et faites des sauvegardes régulières.&nbsp;
 </p>
 
@@ -4298,7 +4460,7 @@ Le nom court est un alias, et vous pouvez appeler la table en utilisant cet alia
 Elle contiendra seulement les colonnes que vous indiquez.&nbsp;
 Voici deux descripteurs pour la table mentionnée ci-dessus de clients.&nbsp;
 
-<pre><font face="Arial,Helvetica,sans-serif" size="3">table {
+<pre>table {
 &nbsp;&nbsp;tname = clients
 # cnm est mon nom de code pour la table clients
 # je le code, parce que je vais le taper souvent.&nbsp;
@@ -4315,7 +4477,7 @@ table {
 &nbsp;&nbsp;cols = date_de_naissance, numero
 &nbsp;&nbsp;keycol = 2
 }
-</font></pre>
+</pre>
 
 <p>
 En insérant un enregistrement dans un de ces descripteurs, rappelez-vous que ce n'est 
@@ -4344,7 +4506,7 @@ importer dans un tableur. Pour faciliter les choses, les lignes récupérées so
 par les labels 'a et 'b. Ainsi, vous pouvez sauvegarder les données avec la commande 'a,'bw.
 
 <p>
-Les requêtes peuvent être suavegardées dans un fichier pour un usage futur. Appelez-les, 
+Les requêtes peuvent être sauvegardées dans un fichier pour un usage futur. Appelez-les, 
 modifiez quelques paramètres, et lancez-les.
 </p>
 
@@ -4356,30 +4518,14 @@ where numero = numero_rue and type_adresse = "personnelle"
 and numero between 500 and 600;
 </p>
 
-<h3 align="center"> <a name="end"> Conclusion </a> </h3>
-
-Ceci conclut le guide de l'utilisateur.&nbsp;
-Comme vous pouvez voir, edbrowse est un programme difficile à maîtriser, mais facile à 
-employer.&nbsp;
-Je crois que c'est la clef du succès pour n'importe quel utilisateur ou 
-programmeur aveugle.&nbsp;
-On peut certainement coller un lecteur d'écran sur un programme bi-dimensionnel existant 
-tel que emacs ou lynx, s'en sortir et travailler rapidement, mais pour être vraiment 
-efficace au travail, ou à la maison, vous avez besoin d'une interface en ligne de commande.&nbsp;
-Edbrowse est une étape importante dans cette direction.&nbsp;
-Il ne contrôle pas de synthétiseur de parole, ou d'autres applications communes 
-telles que des tableurs, des logiciels financiers, ou des systèmes audio, 
-mais il fournit un éditeur de texte de qualité, un navigateur décent et un client de 
-courrier.&nbsp;
-C'est un bon début.&nbsp;
-
 <p></p><hr><p>
 </p><h2 align="center"> Chapitre 9, Autres utilitaires en ligne de commande </h2>
 
 <h3 align="center"> <a name="adapt"> Un adaptateur vocal linéaire </a> </h3>
 
 Il y a beaucoup de lecteurs d'écran, pour beaucoup de systèmes d'exploitation, 
-mais il n'existe qu'un seul adaptateur linéaire, le Système Vocal Jupiter.
+mais il n'existe qu'un seul adaptateur linéaire, le Système Vocal Jupiter, 
+lequel est disponible sur github.
 
 <p>git clone https://github.com/eklhad/acsint</p>
 
@@ -4387,7 +4533,8 @@ mais il n'existe qu'un seul adaptateur linéaire, le Système Vocal Jupiter.
 Ceci est spécifique à Linux, et n'a pas été porté sur d'autres sytèmes d'exploitation.&nbsp;
 Le programme utilisateur devrait se compiler sur n'importe quelle plate-forme de type Unix, 
 mais la difficulté est le portage 
-du pilote de périphérique, ce qui demande de bonnes connaissances des fondements d'un OS.
+du pilote de périphérique, qui demande de bonnes connaissances du fonctionnement 
+interne d'un OS.
 </p>
 
 <p>
@@ -4406,8 +4553,8 @@ affiche "bonjour monde" dans une boucle infinie.
 
 <p>
 J'appelle cela un adaptateur linéaire, plutôt qu'un lecteur d'écran, parce qu'il met en place un tampon linéaire 
-d'affichages du terminal, et qu'il autorise l'utilisateur aveugle de se déplacer dans ce tampon et lire le texte 
-accumulé.&nbsp; C'est parfait si vous passez la majeure partie de la journée dans bash, edbrowse, et d'autres 
+de sorties du terminal, et qu'il autorise l'utilisateur aveugle de se déplacer dans ce tampon et lire le texte 
+accumulé.&nbsp; C'est parfait si vous passez la majeure partie de la journée dans bash, Edbrowse, et d'autres 
 programmes en ligne de commande.&nbsp;
 Vous pourriez vous demander ce qui s'est exactement passé deux heures auparavant,
 lorsque vous avez tapé rm *.&nbsp;
@@ -4418,6 +4565,18 @@ lisez ensuite la ligne précédente pour voir dans quel répertoire vous étiez,
 lisez ensuite la ligne suivante pour connaître la réponse de l'ordinateur, 
 exactement comme cela s'est passé deux heures auparavant (en supposant qu'il n'y ait pas une masse de données 
 entre cet instant et maintenant).
+</p>
+
+<p>
+Les tampons de terminaux sont associés aux consoles - ainsi Jupiter est le plus 
+efficace en comninaison avec les 12 consoles virtuelles standard de Linux, 
+accessibles par alt F1 jusqu'à alt F12.	&nbsp;
+Allez à la console 7 et vous lirez le tampon de terminal associé à cette console, 
+c'est-à-dire les sorties des programmes qui ont tourné dans cette console.&nbsp;
+Si vous utilisez screen(1) pour travailler dans des sessions parallèles, les sorties 
+de toutes vos sessions vont se mélanger dans le tampon du terminal, et le résultat 
+sera confus.&nbsp;
+C'est pourquoi je recommande 12 ou 24 terminaux texte virtuels. 
 </p>
 
 <h3 align="center"> <a name="txt"> Messages textes </a> </h3>
@@ -4433,7 +4592,8 @@ En raison du mode de fonctionnement de Edbrowse, chaque mail sortant doit avoir 
 ligne sujet, mais ici il n'y rien après "subject:" car l'email généré n'a pas de sujet.&nbsp;
 C'est la règle en cas de message texte.&nbsp; Le corps du message contient le texte,
 mais il est tronqué à 120 caractères, alors soyez bref.&nbsp;
-Utilisez sm- pour supprimer le fichier .signature.&nbsp; Il devrait être supprimé de toute façon.
+Utilisez sm- pour supprimer le fichier .signature.&nbsp; Il sera probablement 
+supprimé de toute façon.
 </p>
 
 <p>
@@ -4457,14 +4617,24 @@ bpm:2485551111@pm.sprint.com
 
 <p>pour AT&amp;T c'est aussi facile.</p>
 
-<p>2485551111@txt.att.net</p>
+<p>2485551111@txt.att.net
+D'autres compagnies qui utilisent le réseau de AT&amp;T, comme Consumer Cellular, 
+fonctionnent de la même façon.&nbsp;
+Cependant, sur certains téléphones ces messages texte ne sont pas correctement 
+traités - ils ne proviennent d'une source adresse mail et ne sont pas regroupés 
+en fil de discussion.&nbsp;
+Les envoyer à mms.aat.net règle souvent le problème, bien que ces textes soient 
+considérés comme des données, plutôt que du texte traditionnel.nbsp;
+Les clients Boost Mobile peuvent utiliser 2485551111@sms.myboostmobile.com.
+</p>
 
 <p>
 Si tout ce que vous avez, c'est un numéro de téléphone portable et que vous ne 
 connaissez pas l'opérateur, vous pouvez commencer par :
 <a href="http://www.txtdrop.com/">txtdrop.com</a>.&nbsp;
-C'est un site accessible, edbrowse friendly.&nbsp;
-Si cela fonctionne et qu'ils répondent, alors vous avez un point d'entrée.
+C'est un site accessible, Edbrowse friendly.&nbsp;
+Si cela fonctionne et qu'ils répondent, alors vous avez un point d'entrée dans 
+l'interface email / messages texte.
 </p>
 
 <h3 align="center"> <a name="wifi"> Configurer le Wifi </a> </h3>
@@ -4478,7 +4648,7 @@ Que suis-je censé faire ?&nbsp;
 Il m'a fallu deux mois pour trouver une solution.&nbsp;
 C'est un petit stick usb wifi, Ralink Tenda 2870/3070, pas plus grand qu'un briquet.&nbsp;
 J'en ai à peu près 4, et je peux les enficher sur n'importe quel ordinateur ou 
-portable.&nbsp; Je me moque du module wifi qui pourrait être présent dans l'ordinateur; 
+portable.&nbsp; Je ne m'occupe pas du module wifi qui pourrait être présent dans l'ordinateur; 
 je ne l'utilise pas.&nbsp; Je n'ai pas compilé les modules linux pour le wifi, 
 seulement rt3070.ko.&nbsp;
 Ce pilote est standard sous Linux, mais il ne supporte aucune des instructions en 
@@ -4645,18 +4815,16 @@ d'administration (en root).&nbsp;
 De simples appuis de touches vous permettent de rejouer le morceau, aller au morceau 
 précédent ou suivant, de mettre en pause etc.&nbsp;
 A part cela, l'auteur a été assez aimable pour ajouter une fonctionnalité pour moi, 
-qui met la musique en pause si mpg123 reçoit un signal d'un autre processus.&nbsp;
-Si votre version n'a pas cette fonctionnalité, vous pouvez récupérer mes sources 
-<a href="http://www.eklhad.net/mpgsrc.bz2">ici</a>.&nbsp;
+qui met la musique en pause si mpg123 reçoit le signal 10 d'un autre processus.&nbsp;
 Avec ceci, mon adaptateur Jupiter reconfigure les trois touches en haut du clavier 
-à droite en "augmente volume", "diminuer volume" et "pause", comme sur le Mac.&nbsp;
+à droite en "augmenter volume", "diminuer volume" et "pause", comme sur le Mac.&nbsp;
 Je peux être dans n'importe quelle console, dans n'importe quelle application, et ajuster 
 le volume de la musique, ou bien la stopper si j'ai besoin de me concentrer sur ce 
 que je fais ou de répondre au téléphone, en utilisant ces trois trois touches en haut 
 à droite.&nbsp;
 Pas de X, pas d'écran, juste la musique et la possibilité de la contrôler en temps 
 réel.&nbsp;
-Ci-dessous, la reconfiguration des touches de contrôle de la musique pour jupiter :
+Ci-dessous, la reconfiguration des touches de contrôle de la musique pour Jupiter :
 </p>
 
 <p>
@@ -4678,7 +4846,7 @@ pb ou pb.mp3, si ce qui suit est dans votre fichier .ebrc.
 </p>
 
 <p>
-mime {
+plugin {
 <br>
 type = audio/mp3
 <br>
@@ -4706,16 +4874,16 @@ l'ensemble de ses fonctions.&nbsp;
 L'invocation la plus simple est mplayer -quiet foo.mp3.&nbsp;
 Oui, vous pouvez l'utiliser exactement comme mpg123, mais il n'a pas les mêmes 
 possibilités d'interaction, comme pause après le signal 10 envoyé par un autre 
-processus, doncc vous en resterez probablement à mpg123 pour la musique local.
+processus, doncc vous en resterez probablement à mpg123 pour la musique en local.
 </p>
 
 <p>
-pour jouer de la musique avec edbrowse, mettez quelque chose de ce genre dans 
+pour jouer de la musique avec Edbrowse, mettez quelque chose de ce genre dans 
 votre fichier .erbc.
 </p>
 
 <p>
-mime {
+plugin {
 <br>
 #  &lt; force le stream, désormais l'url est passée passed au programme
 <br>
@@ -4766,19 +4934,15 @@ Ci-dessous mon fichier pod.conf, chargeant les podcast de Nature et Scientific
 American.
 
 <p>
-www.sciam.com/podcast/sciam_podcast_r_d.xml
+rss.sciam.com/sciam/science-talk
 <br>
-www.sciam.com/podcast/sciam_podcast_r.xml
-<br>
-rss.sciam.com/sciam/60-second-psych
-<br>
-rss.sciam.com/sciam/60-second-space
-<br>
-rss.sciam.com/sciam/60-second-tech
+rss.sciam.com/sciam/60secsciencepodcast
 <br>
 www.nature.com/nature/podcast/rss/nature.xml
 <br>
-www.nasa.gov/rss/NASAcast_podcast.rs
+feeds.nature.com/nature/podcast/neuropod
+<br>
+www.nasa.gov/rss/NASAcast_podcast.rss
 </p>
 
 <p>
@@ -4842,6 +5006,39 @@ s/>$//
 ^
 <br>
 }
+
+<H3 align=center> <A NAME=twit> Twitter </A> </H3>
+
+Comme la plupart des sites de réseaux sociaux, Twitter est très graphique, et très 
+difficile à utiliser avec Edbrowse ou n'importe quel lecteur d'écran.&nbsp;
+Cependant, Twitter a un site mobile sympathique.&nbsp;
+J'ai d'abord cherché www.twitter.mobi mais, ne l'ayant pas trouvé, j'ai découvert 
+mobile.twitter.com&nbsp;
+Il est parfait!&nbsp;
+Vous pouvez créer un compte (pas de captcha), et ensuite profitez de la plupart des 
+possibilités de twitter.&nbsp;
+La fonction ci-dessus m'y connecte rapidement :
+
+<p>
+#  connection twitter 
+<br>
+function+twit {
+<br>
+b https://mobile.twitter.com
+<br>
+/</ i=eklhad64
+<br>
+/</ i=password
+<br>
+/</ i*
+<br>
+}
+</p>
+
+<p>
+Pourquoi ne pas me suivre sur Twitter, pour suivre les développements de Edbrowse, 
+et de mes autres projets open source.
+</p>
 
 <p>
 SVP <A href=mailto:eklhad@gmail.com>
