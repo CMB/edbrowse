@@ -1387,7 +1387,7 @@ static void htmlScript(char **html, char **h)
 	char *a = 0, *w = 0;
 	struct htmlTag *t = topTag;	// shorthand
 	int js_line;
-	char *js_file;
+	const char *js_file = "current_buffer";
 	int i;
 	const char *filepart;
 
@@ -1418,7 +1418,8 @@ static void htmlScript(char **html, char **h)
 
 /* It's javascript, run with the source, or the inline text. */
 	js_line = browseLine;
-	js_file = cw->fileName;
+	if (cw->fileName)
+		js_file = cw->fileName;
 	if (t->href) {		/* fetch the javascript page */
 		nzFree(javatext);
 		javatext = 0;
