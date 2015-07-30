@@ -635,8 +635,15 @@ bool cxQuit(int cx, int action)
 
 /* We might be trashing data, make sure that's ok. */
 	if (w->changeMode &&
-	    !(w->dirMode | w->sqlMode) && lastq != cx && w->fileName &&
-	    !isURL(w->fileName)) {
+/* something in the buffer has changed */
+	    lastq != cx &&
+/* last command was not q */
+	    !ismc &&
+/* not in fetchmail mode, which uses the same buffer over and over again */
+	    !(w->dirMode | w->sqlMode) &&
+/* not directory or sql mode */
+	    (!w->fileName || !isURL(w->fileName))) {
+/* not changing a url */
 		lastqq = cx;
 		setError(MSG_ExpectW);
 		if (cx != context)
