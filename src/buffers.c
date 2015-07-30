@@ -4836,6 +4836,8 @@ bool browseCurrentBuffer(void)
 			rawbuf = tbuf;
 			rawsize = tlen;
 		}
+/* make it look like remote html, so we don't get a lot of errors printed */
+		remote = true;
 		bmode = (cw->mt->outtype == 'h' ? 2 : 0);
 		if (!allowRedirection)
 			bmode = 0;
