@@ -2623,8 +2623,7 @@ and I just couldn't keep up.
 The third version, which is the "latest and greatest", uses a javascript engine from Mozilla.com,
 which is open source under the Mozzilla Public License.&nbsp;
 This allows me to leverage, rather than reinvent, some 70,000 lines of code -
-and somebody else is maintaining that code as javascript evolves.&nbsp;
-this illustrates the power of the open source community.
+and somebody else is maintaining that code as javascript evolves.
 
 <P>
 Edbrowse does not support all the features of client side DOM javascript,
@@ -2634,7 +2633,7 @@ on the fly as you move your mouse around the screen.&nbsp;
 This has no meaning in edbrowse.&nbsp;
 Other websites bring up multiple windows,
 and let you control the contents of subwindows using icons in a master window.&nbsp;
-This would be very difficult to simulate in a command-line environment.
+This would be difficult to simulate in a command-line environment, though perhaps not impossible.
 
 <P>
 Some javascript is implemented, some is not.&nbsp;
@@ -2735,7 +2734,7 @@ use the <A HREF=#move>M command</A>.
 Javascript also includes timer functions,
 that fire after a specified number of seconds.&nbsp;
 These are implemented as hyperlinks at the top of the page.&nbsp;
-They usually manage visual effects, and are rather pointless.&nbsp;
+They usually manage visual effects, and are not vital.&nbsp;
 The following timer might draw a star burst on the screen in 16 seconds.
 <P>
 {Timer 16: starburst()}
@@ -2748,7 +2747,7 @@ It doesn't usually, but it can.&nbsp;
 In an earlier example, I described a primary and secondary menu.&nbsp;
 When the first selection is made,
 e.g. fruits,
-javascript sets up the second menu commensurate with your primary selection,
+javascript sets up the second menu commensurate with your primary selection
 using the onchange feature.
 
 <P>
@@ -2770,11 +2769,11 @@ To this end, the undo command is disabled for input fields.
 <H3 align=center> <A NAME=cfg> Config File </A> </H3>
 
 At startup, edbrowse reads and parses a config file.&nbsp;
-It's ok if this file is missing, but if it is present,
+It's ok if this file is missing, but if it is present
 it has to be syntactically correct.&nbsp;
 An error in your config file will cause edbrowse to abort.&nbsp;
 If this happens, use the -c option to edit the config file directly.&nbsp;
-This bypasses initialization, and places you in the editor,
+This bypasses initialization, and places you in the editor
 with the config file preloaded.&nbsp;
 Make your corrections, write the file,
 quit, and invoke edbrowse again.&nbsp;
@@ -2791,16 +2790,17 @@ This is true on Windows as well, so make sure HOME is set.
 The config file is line oriented.&nbsp;
 Lines beginning with # are comments, and are ignored.&nbsp;
 Blank lines are also ignored.&nbsp;
-All other lines fall into one of 6 categories.
+All other lines fall into one of 7 categories.
 
 <OL>
-<P><LI> Define an option, using the keyword=value syntax.
-<P><LI> Define an edbrowse script that can be invoked from the command line,
+<P><LI> Define an option using the keyword=value syntax.
+<P><LI> Define an edbrowse script that can be invoked from the command line
 or from another script.
 <P><LI> An edbrowse command, that becomes part of an edbrowse script.
 <P><LI> Establish an email account.&nbsp;
 This will be described later, under email clients.
 <P><LI> A mail filtering rule.&nbsp;
+<P><LI> Describe a plugin.
 <P><LI> Describe a table or a view in an sql database.
 </OL>
 
@@ -2828,7 +2828,7 @@ If the file is a directory (or something weird),
 or is otherwise inaccessible,
 edbrowse prints an error message and aborts.&nbsp;
 If this happens,
-use the -c option to edit your config file,
+use the -c option to edit your config file
 and change the cookie jar.
 
 <P>
@@ -2884,7 +2884,7 @@ This is an ssl / fork interaction that I can't easily fix or circumvent.&nbsp;
 If this happens, type bg again and download in the foreground.
 
 <P>
-When prompted for the filename, hit return for the default file name,
+When prompted for the filename, hit return for the default file name
 as provided by the website,
 enter x to abort,
 enter space to read the data into memory,
@@ -2953,7 +2953,7 @@ outserver = smtp.some-domain.com
 outport = 25
 <P>
 Specify the machines and ports that you use to fetch mail and send mail respectively.&nbsp;
-You can use the fully qualified domain names, or aliases, as defined in /etc/hosts.&nbsp;
+You can use the fully qualified domain names, or aliases as defined in /etc/hosts.&nbsp;
 The ports shown here are standard, and usually correct.&nbsp;
 They are also default in edbrowse, so you need not set inport and outport unless they are different from that shown above.&nbsp;
 Note, these keywords are only valid in the context of a mail account, as indicated by mail{}.
@@ -2973,15 +2973,15 @@ This is the hotmail protocol, and it is as secure as *465; just different.
 
 <P>
 Use +587 to authenticate yourself without encryption.&nbsp;
-This is sometimes done when you are directly connected to the mail server,
-and traffic is not flowing across the internet;
+This is sometimes done when you are directly connected to the mail server
+and traffic is not flowing across the internet,
 but the server still wants to make sure you are you.
 
 <P>
 secure
 
 <P>
-Incoming and outgoing connections are secure.&nbsp;
+Incoming and outgoing email connections are secure.&nbsp;
 This effectively puts stars in front of the port numbers, if ports are specified.&nbsp;
 If ports are not specified, the defaults change to reflect the secure connections.&nbsp;
 Default pop3s is 995 and default smtps is 465.
@@ -3031,7 +3031,7 @@ Other fields might hold phone/fax numbers, street address, anything you like.
 Every time you fetch a web page from the internet,
 your browser identifies itself to the host.&nbsp;
 This is done automatically.&nbsp;
-Edbrowse identifies itself as "edbrowse/2.2.9",
+Edbrowse identifies itself as "edbrowse/3.5.1",
 where the number after the slash indicates the current version of edbrowse.
 
 <P>
@@ -3054,7 +3054,7 @@ You can specify different agents in your .ebrc file,
 and activate them with the `ua' (user agent) command.&nbsp;
 If the following lines are in your .ebrc file,
 you can type ua1 to pretend to bee lynx,
-and ua2 to pretend to be Mozilla.&nbsp;
+or ua2 to pretend to be Mozilla.&nbsp;
 Type ua0 to resurrect the standard edbrowse identification.
 
 <P>
@@ -3080,7 +3080,7 @@ function:ud {
 <P>
 The new &lt; command is suppose to remind you of redirection,
 i.e. read input commands from this macro.&nbsp;
-And macros can invoke other macros,
+And macros can invoke other macros
 by using a &lt; command in the body.&nbsp;
 Almost any edbrowse command is fair game.&nbsp;
 A macro can fetch web pages from the internet,
@@ -3129,8 +3129,8 @@ function+hw {
 }
 
 <P>
-Reproduce the earlier behavior by typing &lt;hw hello world.&nbsp;
-Or search for different lines by invoking &lt;hw foo bar.&nbsp;
+Reproduce the earlier behavior by typing &lt;hw hello world,
+or search for different lines by invoking &lt;hw foo bar.&nbsp;
 The latter looks for a line containing foo and prints it,
 and if this succeeds it looks for a line containing bar and prints that.&nbsp;
 Now let's build a more useful function, a shortcut to google search.&nbsp;
@@ -3185,7 +3185,7 @@ Normally the + will cause the function to abort if an edbrowse command fails.&nb
 However, if the result of that command is used by a control statement,
 the function does not abort.&nbsp;
 This is similar to set -e in the shell,
-which causes a script to abort,
+which causes the script to abort after a failed command,
 unless the result of the command is used by an if or while statement.
 
 <P>
@@ -3240,7 +3240,7 @@ or leave it out altogether if you are happy with edbrowse out of the box.
 The next chapter describes edbrowse as a mail client,
 so let's use the config file to define some email accounts.&nbsp;
 You can define several accounts as necessary.&nbsp;
-They are implicitly numbered,
+They are implicitly numbered
 in the order they appear in the config file.&nbsp;
 The first mail account becomes #1, the second becomes #2, and so on.
 
@@ -3304,7 +3304,6 @@ It generally does the right thing.&nbsp;
 Here is one example.
 
 <P><PRE><font size=3 face=Arial,Helvetica,sans-serif>plugin {
-#  The earlier mime { } syntax is still supported for compatibility.
 type = audio/mp3
 desc = audio file in mp3 format
 suffix = mp3
@@ -3326,7 +3325,7 @@ If you have read an audio file into memory from your own computer,
 you can type `pb' to play the contents of the buffer.&nbsp;
 The data is put into a temp file under
 /tmp/.edbrowse, and them mpg123 is invoked.&nbsp;
-Finally, you can play an mp3 file, or any plugin-enabled file, within directory mode.&nbsp;
+Finally, you can play an mp3 file, or any plugin-enabled file, from directory mode.&nbsp;
 The g (go) command plays the file on the current line.&nbsp;
 This is very efficient; no need to read the file into memory or create a temporary file under /tmp.
 
@@ -3373,9 +3372,9 @@ outtype = T
 </font></PRE>
 
 <P>
-Note, there are also pdf to text converters that skip the middle html step,
+Note, there are pdf to text converters that skip the middle html step,
 but I wanted to preserve the functionality of any hyperlinks that might be embedded within pdf,
-so I thought it worthwhile going through html, even though it adds a little complexity.
+so I thought it worthwhile going through html, even though it adds another step.
 
 <H3 align=center> <A NAME=sampcfg> A Sample Config File </A> </H3>
 
@@ -3391,17 +3390,17 @@ You can see a copy <A HREF=sample.ebrc>here</A>.
 
 Email the contents of your current editing session to someone else
 via the `sm' command.&nbsp;
-Your email accounts are described in your <A HREF=#cfg>config file</A>.
+Your email accounts are described in the <A HREF=#cfg>config file</A>.
 
 <P>
 Most mail clients can automatically append a signature to outgoing email
-messages; this one is no exception.&nbsp;
+messages; edbrowse is no exception.&nbsp;
 In fact, you may have a different signature for each of your mail accounts.&nbsp;
 Thus, you can use one signature for work email,
 and another for personal email.&nbsp;
 When sending mail from account N, edbrowse first checks for a file named
-.signatureN, in your home directory.&nbsp;
-E.G., when sending from account 2, edbrowse looks for .signature2.&nbsp;
+.signatureN in your home directory.&nbsp;
+For example, when sending from account 2, edbrowse looks for .signature2.&nbsp;
 If that file is not found, edbrowse looks for a file named .signature in
 your home directory, appending its contents if it is found.&nbsp;
 <P>
@@ -3427,10 +3426,10 @@ edbrowse uses the default account, indicated by "default" in your .ebrc file.
 
 <P>
 Typing sm5 causes edbrowse to use account number 5.&nbsp;
-This overrides the account: line, if there is one.&nbsp;
+This overrides the account: line if there is one.&nbsp;
 It is often easier to type sm5 than to insert an account:5 line.&nbsp;
 Note, sm-5 is the same as sm5, but the .signature file is not included.&nbsp;
-Sometimes you want a different ending on your email, for a particular situation.
+Sometimes you want a different ending on your email for a particular situation.
 
 <P>
 Use the attach: lines to add attachments to your email.&nbsp;
@@ -3458,7 +3457,7 @@ The alt: directive is almost the same as the attach: directive.&nbsp;
 If you use alt:, the attachment is not treated as an adjunct file.&nbsp;
 Instead, it is an alternate representation of the same email.&nbsp;
 The mail client will use the alternate representation if it can.&nbsp;
-This is usually used to send multimedia email,
+This is usually used to send multimedia email
 with hyperlinks and pictures etc.&nbsp;
 The primary email is in plain text,
 but the alternate attachment is in html or rich text.&nbsp;
@@ -3543,10 +3542,9 @@ In addition to the interactive `sm' command,
 you can send mail in a batch fashion from the command line.&nbsp;
 If fred and barney are in your address book,
 and you want to send them mail from the command line, with an attachment,
-using your primary email account, do this.&nbsp;
-(I'm assuming e has been aliased to an edbrowse executable.)
+using your first email account, do this.
 <P>
-e -m1 fred ^barney hollyrock-notice +hollyrock-brochure.pdf
+edbrowse -m1 fred ^barney hollyrock-notice +hollyrock-brochure.pdf
 
 <P>
 The ^ in front of barney means he is a CC recipient.&nbsp;
@@ -3554,12 +3552,10 @@ Use "?barney" for BCC.
 
 <P>
 Files with a leading + are assumed to be attachments.&nbsp;
-If they are binary they will be encoded properly,
-according to the mime standard.&nbsp;
 A leading - indicates an alternate format, like this.
 
 <P>
-e -m1 fred ^barney hollyrock-notice -hollyrock-graphical.html
+edbrowse -m1 fred ^barney hollyrock-notice -hollyrock-graphical.html
 
 <H3 align=center> <A NAME=retrmail> Retrieving Mail </A> </H3>
 
@@ -3567,7 +3563,7 @@ If edbrowse is invoked with the -f option, it will fetch mail from all
 accounts, except the ones that you have marked nofetch.&nbsp;
 Alternatively, you may specify a number following -f, in order to fetch
 mail from a single account.&nbsp;
-For instance, -f1 will fetch mail from your first pop3 account,
+For instance, -f1 will fetch mail from your first mail account,
 ignoring all the rest.&nbsp;
 When it has finished retrieving mail, the program prints the
 total number of messages that it retrieved.&nbsp;
@@ -3580,11 +3576,11 @@ Remember, you can specify several mail accounts in your .ebrc file.&nbsp;
 The first account is indicated by index 1, as in -m1, and so on.&nbsp;
 You can make life easier with some aliases in your .bashrc file.
 <P><PRE><font size=3 face=Arial,Helvetica,sans-serif>#  My mail, home account
-alias mymail="e -fm1"
+alias mymail="edbrowse -fm1"
 #  My wife's account.
-alias wifemail="e -pfm2"
+alias wifemail="edbrowse -pfm2"
 #  My work account.
-alias workmail="e -fm3"
+alias workmail="edbrowse -fm3"
 #  mail is obsolete
 alias mail="echo use mymail, wifemail, or workmail"
 </font></PRE>
@@ -3645,11 +3641,11 @@ that raw mail does not accumulate indefinitely.&nbsp;
 
 When mail is retrieved, it is saved in the directory of unread
 messages without any formatting applied.&nbsp;
-In other words, it is a faithful copy of the message, as it existed on
+In other words, it is a faithful copy of the message as it existed on
 the server.&nbsp;
 When you read it by invoking edbrowse with the -m option,
-edbrowse displays it, after applying various formatting rules.&nbsp;
-You can save the message, in either its raw or formatted state.&nbsp;
+edbrowse displays it after applying various formatting rules.&nbsp;
+You can save the message in either its raw or formatted state.&nbsp;
 Selecting `w' at the interactive mail prompt writes the formatted version
 to disk, while selecting `u' saves the unformatted version.
 
@@ -3694,7 +3690,7 @@ word@m-w.com > -wod
 </font></PRE>
 
 <P>
-You can specify the sender's name, or his email address.&nbsp;
+You can specify the sender's name or his email address.&nbsp;
 It's not a bad idea to do both,
 in case he sends mail from some other account.
 
@@ -3715,7 +3711,7 @@ This happens to be the word of the day from Merriam Webster.&nbsp;
 You can save it unformatted, then browse it,
 and click on {audio} to hear the word pronounced.&nbsp;
 If an email contains hyperlinks,
-you may want to save it unformatted,
+you may want to save it unformatted
 so you can browse it later.
 
 <P>
@@ -3791,7 +3787,7 @@ as though you had used the w command to save the mail yourself.&nbsp;
 If your friend has send you a program (attached) that he wants you to look at, just hit return
 to save it to the default filename.&nbsp;
 If your friend's mail has some kind of logo, or background image, that you don't care about,
-just type x and it will go away.&nbsp;
+type x and it will go away.&nbsp;
 If the image has a recognizable suffix, such as gif, I discard it automatically.&nbsp;
 If you really want these images, you'll have to save the email unformatted and browse it later.&nbsp;
 When browsing an email inside the editor,
@@ -3892,7 +3888,7 @@ For now, I will concentrate on the odbc interface.
 
 <H3 align=center> <A NAME=rtb> Reading Tables </A> </H3>
 
-When a file name is of a certain format, with the http:// in front etc,
+When a file name is of a certain format, with http:// in front,
 it is deemed to be a url.&nbsp;
 Edbrowse does not look on your computer for the file; it goes out to the internet.&nbsp;
 Similarly, when the file name has a certain format,
@@ -3934,7 +3930,7 @@ You could read customer 37 in twice, thus having two copies in your buffer, but 
 
 <P>
 Note that edbrowse can support a primary key with two or three columns, such as a serial number and a modifier.&nbsp;
-However, more than three key columns are not supported.&nbsp;
+More than three key columns are not supported.&nbsp;
 If the primary key comprises more than three columns, or if the table has no primary key,
 you will not be able to update or delete.&nbsp;
 Rows in the table are readonly.
@@ -4004,7 +4000,7 @@ It is usually best to edit with a blank template, i.e. without a where clause.&n
 Then you can read in whatever rows you like.&nbsp;
 Type an r before any of the strings shown above to read rows into your buffer.&nbsp;
 Note, you cannot read data from different tables into the same buffer,
-but you can switch to another editing session to look at another table,
+but you can switch to another editing session to look at another table
 without losing the rows you are working on.
 
 <P>
@@ -4013,7 +4009,7 @@ For instance, you can bring in customer #738 by typing `r customers]738' or `r 7
 
 <P>
 If you want a clean slate, type `rf' to refresh the buffer.&nbsp;
-This brings you back to a template for the table, with no rows.&nbsp;
+This brings you back to a template for the table with no rows.&nbsp;
 WARNING - do not clear your buffer by deleting all the rows,
 as that will delete the corresponding entries in the database.&nbsp;
 This feature works just like directory mode -
@@ -4076,8 +4072,8 @@ edbrowse prompts you for each field in turn.&nbsp;
 It also checks the integrity of each field as you go,
 e.g. a date has to look like mm/dd/yyyy etc.&nbsp;
 If a row cannot be added because of a database error,
-edbrowse prints the error,
-and data entry continues;
+edbrowse prints the error
+and data entry continues,
 giving you a chance to reenter the row.&nbsp;
 Data entry stops when you enter a period all by itself,
 no matter what field you are on.&nbsp;
@@ -4166,7 +4162,7 @@ table {
 
 <P>
 When inserting a row through one of these descriptors,
-remember that you are only specifying a subset of the columns in the table.&nbsp;
+you are only specifying a subset of the columns in the table.&nbsp;
 The other columns will be null, or they will take on their default values
 as specified by the schema.&nbsp;
 If you receive a Not-Null error, it could be due to one of the other columns,
