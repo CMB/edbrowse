@@ -215,7 +215,7 @@ to realize the full-featured C version.
 <P>
 If you are a Linux user, and your distribution doesn't package edbrowse,
 you can use the aforementioned perl version of course,
-but you can also run the full-featured C version,
+but you can also run the full-featured C version
 without going through the hassle of building it yourself.&nbsp;
 Statically-linked executables for 32 bit and 64 bit architectures
 are maintained on the
@@ -232,7 +232,7 @@ Experience with internet browsers and the associated terminology is also helpful
 First, a few words about character sets (charsets).&nbsp;
 English is easily contained within a byte stream, one letter per byte.&nbsp;
 In fact, each letter fits in 7 bits; the eighth bit is not needed, and is set to 0.&nbsp;
-This system is called ascii, and as you can see, it is English specific.
+This system is called ascii, and is English specific.
 
 <P>
 <A HREF=http://en.wikipedia.org/wiki/Indo-European_languages>
@@ -272,7 +272,7 @@ A quick way to tell which system you are on is to echo $LANG.&nbsp;
 If it ends in utf8 or utf-8,
 and it probably does,
 then your console is using utf8, and it expects two-byte sequences.&nbsp;
-Your files will contain these underlying sequences, and you probably aren't even aware of it.&nbsp;
+Your files probably contain these underlying sequences.&nbsp;
 Older pre-utf8 systems store each character in a single byte, with an iso8859 codepage doing the translation.
 
 <P>
@@ -288,7 +288,7 @@ have been internationalized.&nbsp;
 Set the environment variable LANG to interact with edbrowse in your home language.&nbsp;
 Supported languages are shown below.&nbsp;
 If you can translate edbrowse into additional languages,
-please let me know.
+please contact the developers.
 
 <P>
 English: LANG=en (this is the default)
@@ -324,10 +324,9 @@ In other words, iso8859 is deprecated.
 If an older file is read into edbrowse,
 i.e. read into an empty buffer,
 and that file is in iso8859, while your computer is set to run in utf8,
-then that file is converted on the fly, before you ever see it.&nbsp;
+then that file is converted on the fly before you ever see it.&nbsp;
 Thus it will look normal to you.&nbsp;
-If I did everything right, you shouldn't notice any difference.&nbsp;
-(Use the iu command to disable this feature.)
+Use the iu command to disable this feature.
 
 <P>
 When you write data out to the same file,
@@ -358,7 +357,7 @@ Needless to say, this is very confusing.
 
 <P>
 Search and substitute is performed by the pcre library,
-and fortunately for us, the latest version supports utf8.&nbsp;
+and fortunately, the latest version supports utf8.&nbsp;
 Edbrowse passes pcre an option that tells it to treat certain two-byte sequences as single letters,
 and thus it behaves the way you want it to.&nbsp;
 Searching for ni.o works again.&nbsp;
@@ -615,35 +614,27 @@ rea: reply to all
 
 <H3 align=center> <A NAME=tips> Tips for Avoiding Line Numbers </A> </H3>
 
-If you're new to ed, you may find this program awkward.&nbsp;
-I often receive complaints about line numbers.&nbsp;
-People hate line numbers.&nbsp;
-(Remember basic and fortran?)&nbsp;
-They don't want to read the first page line by line,
-1p 2p 3p 4p 5p etc.&nbsp;
-Well I hate line numbers too, and I never use them.&nbsp;
-Haven't for years.
+If you haven't spent time using the ed editor, you may find this program awkward.&nbsp;
+It seems like you have to use line numbers,
+which are ever changing as text is edited.&nbsp;
+However, line numbers are rarely needed in practice.&nbsp;
+Here are some tips for avoiding them.
 
 <P>
-If you just want to read the whole document, type ,p.&nbsp;
-That works, if you use a command line speech adapter.&nbsp;
-The whole document is in buffer, and you can read through it using the function keys on your adapter.&nbsp;
-If you use a screen reader, this won't work.&nbsp;
-Still, there's an easy way to step through screen by screen.&nbsp;
+If you want to read the entire file, type ,p.&nbsp;
+Of course a large document will fly past your screen,
+but there's an easy way to step through page by page.&nbsp;
 Start with 0z24 to get the first 24 lines.&nbsp;
 Then the z command will give you the next 24, and the next 24, and so on.&nbsp;
-You may want to use 22, or 23, or whatever makes sense relative to your screen.
-
-<P>
+You may want to use 22, or 23, or whatever makes sense relative to your screen.&nbsp;
 Another approach is to simply hit return, again and again, and proceed line by line.
 
 <P>
 Once you are use to regular expressions, you can jump to any part of the document,
 even a large document, in record time simply by searching for a unique text fragment.&nbsp;
 This comes with practice.&nbsp;
-Sometimes I guess wrong, and my search string is not unique.&nbsp;
-I wind up somewhere else and have to search again.&nbsp;
-No matter, I usually get to the right place in one or two tries.
+If your search string is not unique,
+you may have to search two or three times to find the desired paragraph.
 
 <P>
 If you want to mark certain lines of text, please don't try to remember the line numbers.&nbsp;
@@ -660,15 +651,6 @@ You might access a particular link by typing /{Next}/g.&nbsp;
 Similarly, you can look for input fields by searching for the less than sign.&nbsp;
 This will make sense as you read about the representation of web pages below.&nbsp;
 And of course, multiple operations can be scripted, an important feature of edbrowse.
-
-<P>
-These are just some of the tips and tricks that will make you as fast and efficient as anybody using a screen editor or browser,
-provided you are familiar with the page.&nbsp;
-My wife is always amazed at how quickly I can negotiate websites,
-or edit the common documents that we work on together.&nbsp;
-However, you will never be faster than your sighted colleague when traveling through unfamiliar territory,
-no matter what system you use.&nbsp;
-That is a pipe dream.
 
 <H3 align=center> <A NAME=mlist> Mailing List </A> </H3>
 
@@ -727,8 +709,8 @@ Some versions of ed do this, some don't.&nbsp;
 This is convenient; when you want to replace * + or ? you don't have to escape it just because it is a modifier.&nbsp;
 Similarly, an open bracket by itself is treated as literal.&nbsp;
 These changes to regular expressions, to look more like ed, may be confusing
-if you are a perl expert.&nbsp;
-Sorry about that, but I think these changes make this
+if you are a perl expert,
+however, these changes make this
 editor easier to use for everyone,
 especially the experienced ed users.&nbsp;
 Below are some additional differences between this program and /bin/ed.
@@ -819,10 +801,6 @@ Enter `ep' to place end markers around all printed lines.&nbsp;
 Use `eo' to turn end markers off.
 
 <P><LI>
-q quits without a warning message if the text
-has never been associated with a file.
-
-<P><LI>
 Capital Q does not quit the editor absolutely.&nbsp;
 This is because I often hit caps lock by mistake,
 or even shift q by mistake,
@@ -850,7 +828,7 @@ This is consistent with ,p -- to print the entire file.
 You cannot enter one command across two physical lines
 by putting a backslash at the end of the first line.&nbsp;
 And there's no need to in any case, because perl supports \n translation.&nbsp;
-To split a line in the middle of the word doghouse, you would type:
+To split a line in the middle of the word doghouse, type:
 <P>
 s/doghouse/dog-\nhouse/
 
@@ -982,7 +960,7 @@ e1 through e6.&nbsp;
 Note that `e 2' edits a file whose name is "2",
 whereas `e2' (without the space) switches to session 2.&nbsp;
 Similarly, you can read the contents of session 3 into the current buffer
-via r3, and you can write the current buffer into session 5 via w5.&nbsp;
+via r3, or write the current buffer into session 5 via w5.&nbsp;
 The latter command will produce a warning if session five already exists,
 and you have made changes to its text, but have not saved those changes.&nbsp;
 In other words, you are about to lose your edits in session 5.&nbsp;
@@ -1032,7 +1010,6 @@ which would not normally appear in the middle of a line.
 &gt; foo
 &lt; r2
 &gt; 3279  # size of text read from session 2
-&lt; q2  # clean house, get rid of session 2
 &lt; w  # write foo, with the new paragraph included
 &gt; 62121
 </font></PRE>
@@ -1111,18 +1088,18 @@ Note that -c must be the first option.
 The arguments are the files to edit.&nbsp;
 Edbrowse reads these files into corresponding sessions
 and starts in session 1.&nbsp;
-If there are no arguments, you start in session 1,
-but there is no text and no associated file.
+If there are no arguments, you start in session 1
+with no text and no associated file.
 
 <P>
 If you like this program, and you want it to be your primary editor,
 you can set the following Unix alias.
 
 <P>
-alias e="/usr/local/bin/edbrowse"
+alias e="/usr/bin/edbrowse"
 
 <P>
-If you do this, you can use `e filename',
+If you do this you can use `e filename'
 to edit a new file, whether you are inside edbrowse or at the shell prompt.&nbsp;
 Very convenient.
 
@@ -1148,7 +1125,7 @@ Hello~07 ~x is ~c2~bd of y
 And then listed, you will see the very same text,
 but there is a bell and a 1/2 character inside.&nbsp;
 The ~x is not encoded into anything, because x is not a hex digit.&nbsp;
-If you want to force a ~, even though there are hex digits following,
+To force a ~, even though there are hex digits following,
 use two tildes, ~~.
 
 <P>
@@ -1157,7 +1134,7 @@ There are easier ways to enter accented letters into your document, depending on
 and the configuration of your system.
 
 <P>
-When you are entering a regular expression, you have the choice, hex or octal.&nbsp;
+Regular expressions can be entered via hex or octal.&nbsp;
 This program converts ~xx, as a hex value,
 and the perl regexp machinery converts \nnn, as octal.&nbsp;
 Thus any of the following will undos a file.&nbsp;
@@ -1242,7 +1219,7 @@ If you edit a directory
 you will see a list of all the visible files in that directory
 in alphabetical order,
 according to your locale.&nbsp;
-This is the same order as /bin/ls, and is determined by your environment variable $LC_COLLATE.&nbsp;
+This is the same order as /bin/ls, and is determined by the environment variable $LC_COLLATE.&nbsp;
 Set LC_COLLATE=C for traditional ascii order.&nbsp;
 Use the `hf' option to see the hidden files as well.&nbsp;
 Type g to go to one of these files or sub directories.&nbsp;
@@ -1288,7 +1265,6 @@ This distinction is important as we start to edit the text.
 By default, directories are readonly.&nbsp;
 If you try to delete a line, and hence the associated file,
 it will tell you that you are still in directory read mode.&nbsp;
-I'm trying to save you from yourself!&nbsp;
 Type dw to enable directory writes,
 and dr to make directories readonly again.
 
@@ -1304,7 +1280,7 @@ The deleted file isn't actually deleted;
 it is moved to your trash bin,
 located in $HOME/.Trash.&nbsp;
 This is consistent with the Mac and many versions of Linux.&nbsp;
-So if you accidentally type ,d and remove all your files,
+If you accidentally type ,d and remove all your files,
 you can recover them from your trash bin.&nbsp;
 You may want to set up a cron job that removes
 all the files from your trash bin once a week.&nbsp;
@@ -1314,7 +1290,7 @@ After all, some of your deleted files might be private.
 
 <P>
 Because this operation is a move, rather than a true delete,
-there are a few restrictions based on your operating system.&nbsp;
+there are a few restrictions based on the operating system.&nbsp;
 If your OS can move directories,
 this program will be able to delete a subdirectory as easily as a file.&nbsp;
 The entire subtree is moved to your trash bin.&nbsp;
@@ -1323,7 +1299,7 @@ Make sure your cleanup cron job is capable of removing directory trees, not just
 <P>
 If the trash bin is on another file system,
 the file is copied, rather than moved.&nbsp;
-It's practically the same; though the file will have your permissions, and a current time stamp.&nbsp;
+It's practically the same; though the file will have your permissions and a current time stamp.&nbsp;
 Directories cannot be copied in this way.&nbsp;
 You must copy the directory tree yourself, then delete it,
 using cp -r and rm -r.
@@ -1357,14 +1333,14 @@ How do you delete the old ones and keep the most recent,
 or rename them to something more manageable?&nbsp;
 Stars are a bit risky; you can access multiple files without realizing it.&nbsp;
 And we're not even talking about those pesky files with spaces or invisible control characters in their names.&nbsp;
-Our sighted friend calls up his file manager and simply clicks on the file he wants to view or edit or remove.&nbsp;
-Edbrowse gives you that kind of power.
+A file manager brings up the list of files,
+whence you can click on the file you wish to view or edit or remove.&nbsp;
+Edbrowse gives you that kind of power in a command line setting.
 
 <P>
 When the substitute command changes text, it renames the underlying file.&nbsp;
 This won't move the file on top of another existing file,
-so you can't lose any data this way.&nbsp;
-Once again I am saving you from yourself.
+so you can't lose any data this way.
 
 <P>
 The search and substitute commands ignore the trailing filetype characters.&nbsp;
@@ -1391,7 +1367,7 @@ to invoke your program on that file.&nbsp;
 This sounds involved, but it is merely macro substitution, implemented in a few lines of code.&nbsp;
 If 'x is present in a shell escape, and is not next to any letters or digits,
 edbrowse replaces it with the text on the line labeled x.&nbsp;
-If your filename contains spaces, you'd better run !program "'x",
+If your filename contains spaces, run !program "'x",
 to make sure the entire file name is one argument to the running program.
 
 <P>
@@ -1422,7 +1398,6 @@ and the d in mcdonald.
 
 <P>
 This is especially useful in a directory scan.&nbsp;
-The last thing a blind person wants to worry about is whether some of the letters in a file name are upper case.&nbsp;
 If directory write mode is enabled,
 type ,lc to convert all the file names to lower case.&nbsp;
 It's that simple.
@@ -1445,39 +1420,10 @@ places where the line will definitely be cut.&nbsp;
 The only white space that is preserved is the tabs or spaces
 at the beginning of the line, or after each return character.&nbsp;
 This is a modest attempt to keep indented text indented,
-if that makes any sense.
-
-<P>
-I use this feature in two different ways.&nbsp;
-If I am familiar with the document,
-(I probably wrote it),
-I may use the bl command on a line of text that seems rather long.&nbsp;
-I typed it in quickly, as an uninterrupted thought, and now I want to break it up.&nbsp;
-But I don't want to count punctuation marks and say,
-"I think we need a break after the third comma
-and the period following that and then at the next comma",
-issuing the s punctuation commands along the way.&nbsp;
-Oh I like the s commands well enough - they put you in complete control -
-but it's easier to type bl - and bl usually does the right thing.&nbsp;
-Also, bl compresses accidental double spaces,
-a typo that I will never hear if I simply read the line as a whole.
-
-<P>
-When the document comes in from the outside,
-usually from another word processor such as MS-Word,
-bl serves a completely different function.&nbsp;
-Paragraphs are often stored on a single physical line.&nbsp;
-Sometimes the entire document is on a single line,
-with return characters, \r, separating paragraphs.&nbsp;
-Wysiwyg word processors don't worry about separating sentences and phrases -
-that's what word wrap is for.&nbsp;
-Well - bl is my version of word wrap.&nbsp;
-It doesn't try to conform to any screen;
-it merely cuts the text into manageable chunks,
-each piece a separate semantic unit.&nbsp;
-When bl is issued,
+if that makes any sense.&nbsp;
+Once bl is issued,
 physical lines will contain sentences or phrases, as delimited by punctuation,
-or by the newline/return characters embedded in the original document.
+or by the newline/return characters embedded in the original text.
 
 <P>
 If one of the original lines, delimited by newline or return,
@@ -1522,7 +1468,7 @@ Either the new or the old file will survive.
 
 <P>
 Then links came on the scene, hard links, and then symbolic links.&nbsp;
-Authors of ed, and other editors, had to scramble.&nbsp;
+Authors of ed and other editors had to scramble.&nbsp;
 You can't remove a link, write to temp,
 and move the temp file over to the link.&nbsp;
 It isn't a link any more, it's a regular file,
@@ -1546,7 +1492,7 @@ hoping nothing will go wrong during the critical millisecond.
 Another race condition is more subtle.&nbsp;
 Suppose you are editing a file and your friend,
 or a system program, edits the same file.&nbsp;
-Your file has actually been changed out from under you,
+Your file has actually been changed out from under you
 while you held it in memory.&nbsp;
 When you go to write your changes,
 they will clobber any changes made by your friend, or the system utility.&nbsp;
@@ -1554,15 +1500,13 @@ Most text editors guard against this by watching the timestamp.&nbsp;
 When you first edit the file foo,
 an editor might remember the timestamp on foo.&nbsp;
 then, when you are ready to write your changes,
-it checks the timestamp, and if foo has been updated in the interim,
+it checks the timestamp, and if foo has been updated in the interim
 it issues a warning message.&nbsp;
 "File has been updated by someone else -
 do you really want to write?"&nbsp;
 This is a good feature,
 but edbrowse doesn't have it, simply because I haven't gotten round to writing it.&nbsp;
-I'm the only user on my PC,
-and you're probably the only user on your PC too,
-so this feature is not in high demand.
+This feature is not in high demand.
 
 <P><HR><P>
 <H2 align=center> Chapter 4, Web Browser </H2>
