@@ -1622,19 +1622,14 @@ and use the `b' and `ub' commands to switch between
 the raw html and the browsable text.
 
 <P>
-The browse reformatting is relatively simple,
-because a blind person doesn't want complexity.&nbsp;
-We don't care about fonts and italics etc, and if we do,
-the best way to obtain this information is by reading the raw html.&nbsp;
-So most tags are discarded, except those related to headers, paragraphs, and lists.
-
-<P>
-I don't indent subsections or list items.&nbsp;
-The visual effect is lost on us,
+The browse reformatting is relatively simple.&nbsp;
+Most tags are discarded, except those related to headers, paragraphs, and lists.&nbsp;
+Subsections and list items are not indented.&nbsp;
+The visual effect is not important,
 and sometimes the extra spaces get in the way.
 
 <P>
-Because the physical line is, for us, the unit of thought,
+Because the physical line is the unit of thought,
 i.e. the atomic construct that is modified or moved or copied,
 lines are cut at approximately 80 characters, give or take a few,
 usually at a sentence or phrase boundary.&nbsp;
@@ -1648,6 +1643,8 @@ The layout of a preformatted section, &lt;pre&gt;, is honored,
 although sequences of blank lines are compressed down to one blank line,
 and whitespace at the end of lines is stripped.&nbsp;
 This preserves the structure of street addresses,
+code fragments,
+poems,
 and other preformatted blocks.
 
 <P>
@@ -1656,8 +1653,7 @@ Pipes separate the fields on each row.&nbsp;
 There is no whitespace around the pipes,
 and the fields of a given row probably won't line up with the fields below.&nbsp;
 It isn't pretty,
-but a blind user can't really trace down a column in any case,
-especially when using a line editor such as this.&nbsp;
+but you can't really trace down a column when using a line editor such as this in any case.&nbsp;
 Better to write the table to a local file and use cut, sort, join, etc.&nbsp;
 Here is a sample table.
 
@@ -1670,8 +1666,7 @@ Here is a sample table.
 <P>
 Empty fields at the end of a row are dropped.&nbsp;
 These are almost always images -- sometimes an entire row of images --
-sometimes an entire table of images.&nbsp;
-The blind user doesn't need to read the no-content pipes.
+sometimes an entire table of images.
 
 <P>
 Note that the browsable text is readonly.&nbsp;
@@ -1691,7 +1686,7 @@ The browsable text has become plain text, with no internet semantics.
 
 <P>
 The command `b file.html' is shorthand for `e file.html', followed by `b'.&nbsp;
-Remember that the ub command reverses the browse conversion, and reproduces the original html text,
+Remember that the ub command reverses the browse conversion, and reproduces the original html,
 as though you had entered `e file.html' alone.
 
 <P>
@@ -1716,7 +1711,7 @@ Even 17a3b3 is not ambiguous;
 it is a translation of 17 times a[3] times b[3].
 
 <P>
-Superscripts, as indicated by &lt;span class=sup&gt;, are enclosed in parentheses, with a preceding arrow.&nbsp;
+Superscripts, as indicated by &lt;span class=sup&gt;, are enclosed in parentheses with a preceding arrow.&nbsp;
 The parentheses are omitted if the superscript is a number.&nbsp;
 Thus x cubed looks like x^3,
 while x to the n-1 power looks like x^(n-1).&nbsp;
@@ -1739,8 +1734,7 @@ edbrowse merely turns html into the proper utf8 sequences.
 These translations are designed to work with the pages of the
 <A HREF=http://www.mathreference.com> Math Reference Project</A>,
 an archive of advanced mathematics
-that attempts to be both sighted and blind friendly at the same time.&nbsp;
-An <A href=http://book.mathreference.com>online textbook</A> is included.
+that attempts to be both sighted and blind friendly at the same time.
 
 <H3 align=center> <A NAME=title> Title, Description, Keywords </A> </H3>
 
@@ -1803,15 +1797,15 @@ or view the raw html.
 <P>
 Of course the browsable text might also contain words inside braces,
 especially if the web page is technical in nature.&nbsp;
-Hence there is some ambiguity.&nbsp;
-However, it is often clear from context.&nbsp;
+There is some ambiguity,
+but it is often clear from context.&nbsp;
 {More information} is probably a link,
 whereas ${HOME}/.profile is probably not.
 
 <P>
 Some web pages present a series of icons
 that are actually links to other pages.&nbsp;
-That is, you click on a picture, rather than a phrase, to go somewhere else.&nbsp;
+You click on a picture, rather than a phrase, to go somewhere else.&nbsp;
 These icons are suppose to be intuitive.&nbsp;
 Sometimes they are - sometimes they're not.&nbsp;
 Sometimes the web designer is kind enough to supply
@@ -1874,7 +1868,7 @@ Enter z10 to read the first few lines of the appendix.
 
 If you edit a new file via the `e', `b', or `g' command,
 and you already have text in the buffer,
-that text is bundled up and pushed onto an internal stack.&nbsp;
+that text is bundled up and pushed onto a stack.&nbsp;
 You can pop the stack by issuing the `^' command.&nbsp;
 This is suppose to be intuitive --
 the up arrow points to the previous page that rolled off your screen.
@@ -1885,8 +1879,8 @@ but it makes sense when surfing the net.&nbsp;
 Often we descend through two or three links,
 only to find ourselves at a dead end.&nbsp;
 "I didn't want to go here."&nbsp;
-So we hit the back key again and again, until we reach familiar territory.&nbsp;
-We can now proceed in a new direction.&nbsp;
+Hit the back key again and again, until you reach familiar territory.&nbsp;
+You can now proceed in a new direction.&nbsp;
 The command ^3 or ^^^ backs up through three pages.&nbsp;
 Don't use this iterative feature unless you know exactly how many times you need to back up.
 
@@ -1901,7 +1895,7 @@ everything!
 <P>
 The stack should not be confused with parallel edits,
 as described in an earlier section.&nbsp;
-In fact each editing session, e1 e2 e3 ..., has its own internal stack.&nbsp;
+In fact each editing session, e1 e2 e3 &#8230;, has its own stack.&nbsp;
 Parallel sessions are appropriate when you need to move back and forth between two files,
 or cut&amp;paste between them.&nbsp;
 However, one session, with its internal stack,
@@ -2076,7 +2070,6 @@ When you want to select an option,
 you can either type in a substring that determines that option uniquely,
 such as mich for Michigan,
 or you can type in its menu number.&nbsp;
-Needless to say, the latter is often easier.&nbsp;
 Recall the sample form in the previous section.&nbsp;
 If you type i? at the third field, you might see the following.
 
@@ -2113,7 +2106,8 @@ and they ask for the state.&nbsp;
 Type in a few letters of your state name, enough to be unique,
 and you'll probably glom onto the correct option in the list.&nbsp;
 Note the paradigm here:
-blind people don't want to wade through a menu unless they absolutely have to!
+in a command line program,
+you don't want to wade through a menu unless you absolutely have to.
 
 <P>
 There is some ambiguity when the option is itself a number.&nbsp;
@@ -2134,7 +2128,7 @@ This includes wildcard expansion, as long as the expansion leads to one and only
 Put enough characters around the * to designate a single file.
 
 <P>
-Now suppose you are entering your credit card number, all 16 digits, into a free text field.&nbsp;
+Suppose you are entering your credit card number, all 16 digits, into a free text field.&nbsp;
 If you've made a typo, you don't really want to enter the entire string again.&nbsp;
 No problem -- use the substitute command.&nbsp;
 You can write this as i/x/y/ or s/x/y/ -- as you prefer.&nbsp;
@@ -2200,18 +2194,16 @@ A particularly arrogant site might preload the text area with:
 <P>
 When you finally submit the form,
 as discussed in the next section,
-text buffer 2, associated with the second editing session,
+the text in buffer 2, associated with the second editing session,
 will replace the words "bufffer 2" in the input field.&nbsp;
 Thus your carefully crafted comments are on their way.
 
 <H3 align=center> <A NAME=button> Push The Button </A> </H3>
 
 If the third input field on the current line is a reset or submit button,
-you can press the button via i3*.&nbsp;
+press the button via i3*.&nbsp;
 The reset button puts the input fields back to their original values,
-as supplied by the web page when it was first loaded.
-
-<P>
+as supplied by the web page when it was first loaded.&nbsp;
 The submit button sends the form to the remote server and waits for a response.&nbsp;
 This is similar to following an internet link,
 but in this case you are sending some data along with the request.&nbsp;
@@ -2226,7 +2218,7 @@ the most common http protocols,
 and they seem to work on most sites.
 
 <P>
-Once you have submitted your form,
+Once you have submitted your form
 and you are viewing the results,
 you may notice some strange characters at the end of the filename.&nbsp;
 If you have retrieved information on kangaroos, the filename might look like:
@@ -2246,10 +2238,7 @@ These addresses exist in a new editing session; the previous session has been pu
 You can add these to your bookmark file via w+ $bookmarks,
 assuming you have set the environment variable bookmarks appropriately.&nbsp;
 They will be appended at the end;
-you can move them to a more appropriate place in the file later on, when you're not "on line".&nbsp;
-For those with dial up connections,
-connect time is precious,
-and should not be spent rearranging bookmark files.&nbsp;
+you can move them to a more appropriate place in the file later on.&nbsp;
 Finally, use the ^ key to return to the web page you were viewing.&nbsp;
 Here is how it might look.
 
@@ -2371,7 +2360,8 @@ In fact the file is created mode 0600 for your own protection.
 
 <P>
 You probably won't need to view your .cookies file, ever,
-but it is text based, and can be edited directly if you wish.
+but it is text based, and can be edited directly if you wish.&nbsp;
+Edit it using ed or some other editor, so that edbrowse doesn't change it while you are looking at it.
 
 <H3 align=center> <A NAME=ssl> Secure Connections </A> </H3>
 
@@ -2431,15 +2421,15 @@ such as PayPal.com,
 you must keep your password absolutely safe.&nbsp;
 Never send that password over an insecure connection.&nbsp;
 It becomes as valuable as your credit card numbers.&nbsp;
-I have a special password that I use for my secure logins,
+Use a special password for your secure logins,
 and only for those logins.&nbsp;
-I use other, expendable passwords when the connection is not secure.
+Use other, expendable passwords when the connection is not secure.
 
 <P>
 Please don't fall for all those phishing email scams
 that tell you your login has expired, and would you please log in again using this convenient form.&nbsp;
 The mail is forged to look legitimate,
-and the form actually sends your secret password to a thief,
+and the form actually sends your secret password to a thief
 who then raids your account.&nbsp;
 A reputable company will
 never ask you to login through an email form.&nbsp;
@@ -2448,8 +2438,6 @@ They will always tell you to go back to the website and log in there.
 <P>
 Internet security is complex, to say the least,
 and it is beyond the scope of this document.&nbsp;
-If you have any questions about it,
-please send them to me directly.&nbsp;
 As a general rule,
 secure http is really quite safe, and you can use it to send sensitive information across the Net.&nbsp;
 It's probably safer than giving your credit card number to the clerk on the phone,
@@ -2469,7 +2457,7 @@ or it is a hyperlink on a web page.&nbsp;
 The file is retrieved, and placed in a new buffer.&nbsp;
 Type w/ to save it locally, which is what a traditional ftp client would do.&nbsp;
 Of course the download could fail, in which case you will receive an error message.&nbsp;
-If it was simply interrupted,
+If it was interrupted
 due to some internet glitch,
 you can always issue the command again and hope for better luck.
 
@@ -2593,10 +2581,9 @@ Frame {bottom}
 
 <P>
 I thought about a FetchFrame feature that fetches all the frames and presents them in one go,
-just as they are all displayed on the screen for a sighted user,
+just as they are all displayed on the screen in a traditional browser,
 but this feature is very difficult to implement,
-and so far nobody seems to want it.&nbsp;
-So as you might imagine, it's way down on the list.
+and so far nobody seems to want it.
 
 <P><HR><P>
 <H2 align=center> Chapter 5, Javascript </H2>
