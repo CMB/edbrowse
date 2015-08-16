@@ -17,11 +17,12 @@ static bool makeTempFilename(const char *suffix, int idx, bool output)
 {
 	if (fileTypeByName(tempbase, false) != 'd') {
 /* no such directory, try to make it */
-		if (mkdir(tempbase)) {
+/* this temp edbrowse directory is used by everyone system wide */
+		if (mkdir(tempbase, 0777)) {
 			setError(MSG_TempDir);
 			return false;
 		}
-/* this temp edbrowse directory is used by everyone system wide */
+/* yes, we called mkdir with 777 above, but this gets us past umask */
 		chmod(tempbase, 0777);
 	}
 
