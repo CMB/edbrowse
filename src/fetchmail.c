@@ -139,6 +139,7 @@ static struct FOLDER {
 	const char *name;
 	const char *path;
 	bool children;
+	int nmsgs;		/* number of messages in this folder */
 } *topfolders;
 static int n_folders;
 
@@ -168,6 +169,7 @@ static void setFolders(void)
 			continue;
 /* HasChildren or HasNoChildren */
 		f->children = (child[-1] == 's');
+		f->nmsgs = 0;
 		t = child + 8;
 		while (*t == ' ')
 			++t;
@@ -219,9 +221,8 @@ static void showFolders(CURL * handle, const char *mailbox)
 {
 	int i;
 	struct FOLDER *f = topfolders;
-	char *message_url, *message_percent;
-	const char *fname;	/* imap folder name */
-	const char *t;
+	const char *fpath;	/* imap folder path */
+	char *t;
 	CURLcode res;
 
 	for (i = 0; i < n_folders; ++i, ++f) {
@@ -231,29 +232,41 @@ static void showFolders(CURL * handle, const char *mailbox)
 		nl();
 
 /* interrogate folder */
-/* is it name or path? */
-		fname = f->name;
-		if (!*fname)
+		fpath = f->path;
+		if (!*fpath)
 			continue;
 
-		if (asprintf(&message_url, "%s%s", mailbox, fname) == -1)
-			i_printfExit(MSG_MemAllocError,
-				     strlen(mailbox) + strlen(fname));
-		message_percent = percentURL(message_url, NULL);
-		res = setCurlURL(handle, message_url);
+		if (asprintf(&t, "EXAMINE \"%s\"", fpath) == -1)
+			i_printfExit(MSG_MemAllocError, strlen(fpath) + 12);
+		res = setCurlURL(handle, mailbox);
 		if (res != CURLE_OK) {
-			ebcurl_setError(res, message_url);
+			ebcurl_setError(res, mailbox);
 			showErrorAbort();
 		}
 		mailstring = initString(&mailstring_l);
+		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
+		free(t);
 		res = curl_easy_perform(handle);
 		if (res != CURLE_OK) {
-			ebcurl_setError(res, message_url);
+			ebcurl_setError(res, mailbox);
 			showErrorAbort();
 		}
+
+/* look for message count */
+		t = strstr(mailstring, " EXISTS");
+		if (t) {
+			while (*t == ' ')
+				--t;
+			if (isdigit(*t)) {
+				while (isdigit(*t))
+					--t;
+				++t;
+				f->nmsgs = atoi(t);
+			}
+		}
+
 		nzFree(mailstring);
-		free(message_url);
-		free(message_percent);
+		printf("%d messages\n", f->nmsgs);
 	}
 }				/* showFolders */
 
