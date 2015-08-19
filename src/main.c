@@ -675,7 +675,7 @@ nokeyword:
 						    (act->imap ? 993 : 995);
 					else
 						act->inport =
-						    (act->imap ? 220 : 110);
+						    (act->imap ? 143 : 110);
 				if (!act->outport)
 					act->outport = (act->secure ? 465 : 25);
 				continue;
