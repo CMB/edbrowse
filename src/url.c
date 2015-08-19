@@ -102,6 +102,70 @@ void unpercentString(char *s)
 	*w = 0;
 }				/* unpercentString */
 
+/*
+ * Function: percentURL
+ * Arguments:
+ ** start: pointer to start of input string
+  ** end: pointer to end of input string.
+ * Return value: A new string or NULL if memory allocation failed.
+ * This function copies its input to a dynamically-allocated buffer,
+ * while performing the following transformation.  Change backslash to
+ * slash, and percent-escape any blank, non-printing, or non-ASCII
+ * characters.
+ * All characters in the area between start and end, not including end,
+ * are copied or transformed.
+ * Get rid of :/   curl can't handle it.
+ * This function is used to sanitize user-supplied URLs.  */
+
+static char hexdigits[] = "0123456789abcdef";
+#define ESCAPED_CHAR_LENGTH 3
+
+char *percentURL(const char *start, const char *end)
+{
+	if (!end)
+		end = start + strlen(start);
+	int bytes_to_alloc = end - start + 1;
+	char *new_copy = NULL;
+	const char *in_pointer = NULL;
+	char *out_pointer = NULL;
+	const char *portloc = NULL;
+
+	for (in_pointer = start; in_pointer < end; in_pointer++)
+		if (*in_pointer <= 32)
+			bytes_to_alloc += (ESCAPED_CHAR_LENGTH - 1);
+	new_copy = allocMem(bytes_to_alloc);
+	if (new_copy) {
+		char *frag, *params;
+		out_pointer = new_copy;
+		for (in_pointer = start; in_pointer < end; in_pointer++) {
+			if (*in_pointer == '\\')
+				*out_pointer++ = '/';
+			else if (*in_pointer <= 32) {
+				*out_pointer++ = '%';
+				*out_pointer++ =
+				    hexdigits[(uchar) (*in_pointer & 0xf0) >>
+					      4];
+				*out_pointer++ =
+				    hexdigits[(*in_pointer & 0x0f)];
+			} else
+				*out_pointer++ = *in_pointer;
+		}
+		*out_pointer = '\0';
+/* excise #hash, required by some web servers */
+		frag = findHash(new_copy);
+		if (frag)
+			*frag = 0;
+
+		getPortLocURL(new_copy, &portloc, 0);
+		if (portloc && !isdigit(portloc[1])) {
+			const char *s = portloc + strcspn(portloc, "/?#\1");
+			strmove((char *)portloc, s);
+		}
+	}
+
+	return new_copy;
+}				/* percentURL */
+
 /* Decide if it looks like a web url. */
 static bool httpDefault(const char *url)
 {

@@ -130,6 +130,10 @@ static void writeAttachments(struct MHINFO *w)
 	}
 }				/* writeAttachments */
 
+/* string to hold the returned data from the mail server */
+static char *mailstring;
+static int mailstring_l;
+
 /* folders at the top of an imap system */
 static struct FOLDER {
 	const char *name;
@@ -140,13 +144,13 @@ static int n_folders;
 
 /* This routine mucks with the passed in string, which was allocated
  * to receive data from the imap server. So leave it allocated. */
-static void setFolders(char *r)
+static void setFolders(void)
 {
 	struct FOLDER *f;
 	char *s, *t;
 	char *child;
 
-	s = r;
+	s = mailstring;
 	while (t = strstr(s, "LIST (\\")) {
 		s = t + 7;
 		++n_folders;
@@ -155,7 +159,7 @@ static void setFolders(char *r)
 	topfolders = allocZeroMem(n_folders * sizeof(struct FOLDER));
 
 	f = topfolders;
-	s = r;
+	s = mailstring;
 	while (t = strstr(s, "LIST (\\")) {
 		s = t + 6;
 		child = strstr(s, "Children");
@@ -204,18 +208,52 @@ static void setFolders(char *r)
 	}
 
 	n_folders = f - topfolders;
+
+/* You don't dare free mailstring, because it's pieces
+ * are now part of the folders, name and path etc. */
+	mailstring = 0;
 }				/* setFolders */
 
 /* list the folders at the top, at the start of imap or upon request */
-static void showFolders(void)
+static void showFolders(CURL * handle, const char *mailbox)
 {
 	int i;
 	struct FOLDER *f = topfolders;
+	char *message_url, *message_percent;
+	const char *fname;	/* imap folder name */
+	const char *t;
+	CURLcode res;
+
 	for (i = 0; i < n_folders; ++i, ++f) {
 		printf("%s -> %s", f->name, f->path);
 		if (f->children)
 			printf(" with children");
 		nl();
+
+/* interrogate folder */
+/* is it name or path? */
+		fname = f->name;
+		if (!*fname)
+			continue;
+
+		if (asprintf(&message_url, "%s%s", mailbox, fname) == -1)
+			i_printfExit(MSG_MemAllocError,
+				     strlen(mailbox) + strlen(fname));
+		message_percent = percentURL(message_url, NULL);
+		res = setCurlURL(handle, message_url);
+		if (res != CURLE_OK) {
+			ebcurl_setError(res, message_url);
+			showErrorAbort();
+		}
+		mailstring = initString(&mailstring_l);
+		res = curl_easy_perform(handle);
+		if (res != CURLE_OK) {
+			ebcurl_setError(res, message_url);
+			showErrorAbort();
+		}
+		nzFree(mailstring);
+		free(message_url);
+		free(message_percent);
 	}
 }				/* showFolders */
 
@@ -249,9 +287,6 @@ static void unreadStats(void)
 static char *umf;		/* unread mail file */
 static char *umf_end;
 static int umfd;		/* file descriptor for the above */
-/* string to hold the mail message, and then its length */
-static char *mailstring;
-static int mailstring_l;
 /* convert mail message to/from utf8 if need be. */
 /* This isn't really right, cause it should be done per mime component. */
 static char *mailu8;
@@ -391,8 +426,8 @@ static CURLcode count_messages(CURL * handle, const char *mailbox,
 		return res;
 
 	if (isimap) {
-		setFolders(mailstring);
-		showFolders();
+		setFolders();
+		showFolders(handle, mailbox);
 		puts("imap not yet implemented");
 		exit(1);
 	}
@@ -418,7 +453,7 @@ int fetchMail(int account)
 	const char *login = a->login;
 	const char *pass = a->password;
 	int nfetch = 0;		/* number of messages actually fetched */
-	CURLcode res_curl = CURLE_OK;
+	CURLcode res = CURLE_OK;
 	char *mailbox_url = get_mailbox_url(a);
 	const char *url_for_error = mailbox_url;
 	char *message_url = NULL;
@@ -439,8 +474,8 @@ int fetchMail(int account)
 
 	mailstring = initString(&mailstring_l);
 	CURL *mail_handle = newFetchmailHandle(mailbox_url, login, pass);
-	res_curl = count_messages(mail_handle, mailbox_url, &message_count);
-	if (res_curl != CURLE_OK)
+	res = count_messages(mail_handle, mailbox_url, &message_count);
+	if (res != CURLE_OK)
 		goto fetchmail_cleanup;
 
 	for (message_number = 1; message_number <= message_count;
@@ -453,13 +488,12 @@ int fetchMail(int account)
 		}
 		nzFree(mailstring);
 		mailstring = initString(&mailstring_l);
-		res_curl =
-		    fetchOneMessage(mail_handle, message_url, message_number);
-		if (res_curl != CURLE_OK)
+		res = fetchOneMessage(mail_handle, message_url, message_number);
+		if (res != CURLE_OK)
 			goto fetchmail_cleanup;
 		nfetch++;
-		res_curl = deleteOneMessage(mail_handle, message_url);
-		if (res_curl != CURLE_OK)
+		res = deleteOneMessage(mail_handle, message_url);
+		if (res != CURLE_OK)
 			goto fetchmail_cleanup;
 		nzFree(message_url);
 		message_url = NULL;
@@ -468,8 +502,8 @@ int fetchMail(int account)
 fetchmail_cleanup:
 	if (message_url)
 		url_for_error = message_url;
-	if (res_curl != CURLE_OK) {
-		ebcurl_setError(res_curl, url_for_error);
+	if (res != CURLE_OK) {
+		ebcurl_setError(res, url_for_error);
 		showError();
 	}
 	curl_easy_cleanup(mail_handle);
