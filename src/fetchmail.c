@@ -134,12 +134,25 @@ static void writeAttachments(struct MHINFO *w)
 static char *mailstring;
 static int mailstring_l;
 
+#define MAXIMAPFETCH 10
+
+/* missge in a folder */
+struct MIF {
+	int uid;
+	char *subject, *from, *reply;
+	time_t sent;
+};
+
 /* folders at the top of an imap system */
 static struct FOLDER {
 	const char *name;
 	const char *path;
 	bool children;
 	int nmsgs;		/* number of messages in this folder */
+	int nfetch;		/* how many to fetch */
+	int start;
+	int uidnext;		/* uid of next message */
+	struct MIF *mlist;	/* allocated */
 } *topfolders;
 static int n_folders;
 
@@ -150,6 +163,7 @@ static void setFolders(void)
 	struct FOLDER *f;
 	char *s, *t;
 	char *child;
+	char qc;		/* quote character */
 
 	s = mailstring;
 	while (t = strstr(s, "LIST (\\")) {
@@ -169,7 +183,6 @@ static void setFolders(void)
 			continue;
 /* HasChildren or HasNoChildren */
 		f->children = (child[-1] == 's');
-		f->nmsgs = 0;
 		t = child + 8;
 		while (*t == ' ')
 			++t;
@@ -197,10 +210,12 @@ static void setFolders(void)
 		t = strpbrk(s, "\r\n");
 		if (!t)
 			continue;
-		if (*--t != '"')
-			continue;
-		for (s = t - 1; s > child && *s != '"'; --s) ;
-		if (*s != '"')
+		qc = ' ';
+		s = t - 1;
+		if (*s == '"')
+			qc = '"', --s, --t;
+		for (; s > child && *s != qc; --s) ;
+		if (s == child)
 			continue;
 		f->path = ++s;
 		*t = 0;
@@ -219,11 +234,12 @@ static void setFolders(void)
 /* list the folders at the top, at the start of imap or upon request */
 static void showFolders(CURL * handle, const char *mailbox)
 {
-	int i;
+	int i, j;
 	struct FOLDER *f = topfolders;
 	const char *fpath;	/* imap folder path */
 	char *t;
 	CURLcode res;
+	char cust_cmd[80];
 
 	for (i = 0; i < n_folders; ++i, ++f) {
 		printf("%s -> %s", f->name, f->path);
@@ -240,6 +256,7 @@ static void showFolders(CURL * handle, const char *mailbox)
 			i_printfExit(MSG_MemAllocError, strlen(fpath) + 12);
 		res = setCurlURL(handle, mailbox);
 		if (res != CURLE_OK) {
+abort:
 			ebcurl_setError(res, mailbox);
 			showErrorAbort();
 		}
@@ -247,10 +264,8 @@ static void showFolders(CURL * handle, const char *mailbox)
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
 		free(t);
 		res = curl_easy_perform(handle);
-		if (res != CURLE_OK) {
-			ebcurl_setError(res, mailbox);
-			showErrorAbort();
-		}
+		if (res != CURLE_OK)
+			goto abort;
 
 /* look for message count */
 		t = strstr(mailstring, " EXISTS");
@@ -264,9 +279,63 @@ static void showFolders(CURL * handle, const char *mailbox)
 				f->nmsgs = atoi(t);
 			}
 		}
+		f->nfetch = f->nmsgs;
+		if (f->nfetch > MAXIMAPFETCH)
+			f->nfetch = MAXIMAPFETCH;
+		f->start = 1;
+		if (f->nmsgs > f->nfetch)
+			f->start += (f->nmsgs - f->nfetch);
+
+		t = strstr(mailstring, "UIDNEXT ");
+		if (t) {
+			t += 8;
+			while (*t == ' ')
+				++t;
+			if (isdigit(*t))
+				f->uidnext = atoi(t);
+		}
+		printf("uidnext %d\n", f->uidnext);
 
 		nzFree(mailstring);
 		printf("%d messages\n", f->nmsgs);
+		if (!f->nmsgs)
+			continue;
+
+/* get some information on each message */
+		f->mlist = allocZeroMem(sizeof(struct MIF) * f->nfetch);
+		for (j = 0; j < f->nfetch; ++j) {
+			struct MIF *mif = f->mlist + j;
+			mailstring = initString(&mailstring_l);
+			sprintf(cust_cmd, "FETCH %d ALL", f->start + j);
+			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
+					 cust_cmd);
+			res = curl_easy_perform(handle);
+			if (res != CURLE_OK)
+				goto abort;
+
+#if 0
+/* from FETCH %d UID */
+			t = strstr(mailstring, "FETCH (UID ");
+			if (t) {
+				t += 11;
+				while (*t == ' ')
+					++t;
+				if (isdigit(*t))
+					mif->uid = atoi(t);
+			}
+#endif
+
+			t = strstr(mailstring, "ENVELOPE (");
+			if (!t) {
+				nzFree(mailstring);
+				continue;
+			}
+
+/* pull out subject, reply, etc */
+/* Don't free mailstring, we're using pieces of it */
+
+		}
+
 	}
 }				/* showFolders */
 
