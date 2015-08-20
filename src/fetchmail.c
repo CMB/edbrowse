@@ -139,8 +139,11 @@ static int mailstring_l;
 /* missge in a folder */
 struct MIF {
 	int uid;
+	int size;
 	char *subject, *from, *reply;
 	time_t sent;
+	char *refer;
+	bool seen;
 };
 
 /* folders at the top of an imap system */
@@ -237,7 +240,7 @@ static void showFolders(CURL * handle, const char *mailbox)
 	int i, j;
 	struct FOLDER *f = topfolders;
 	const char *fpath;	/* imap folder path */
-	char *t;
+	char *t, *u;
 	CURLcode res;
 	char cust_cmd[80];
 
@@ -294,7 +297,6 @@ abort:
 			if (isdigit(*t))
 				f->uidnext = atoi(t);
 		}
-		printf("uidnext %d\n", f->uidnext);
 
 		nzFree(mailstring);
 		printf("%d messages\n", f->nmsgs);
@@ -325,6 +327,10 @@ abort:
 			}
 #endif
 
+			mif->subject = emptyString;
+			mif->from = emptyString;
+			mif->reply = emptyString;
+
 			t = strstr(mailstring, "ENVELOPE (");
 			if (!t) {
 				nzFree(mailstring);
@@ -333,9 +339,108 @@ abort:
 
 /* pull out subject, reply, etc */
 /* Don't free mailstring, we're using pieces of it */
+			t += 10;
+			while (*t == ' ')
+				++t;
+/* date first, and it must be quoted */
+			if (*t != '"')
+				continue;
+			++t;
+			u = strchr(t, '"');
+			if (!u)
+				continue;
+			*u = 0;
+			mif->sent = parseHeaderDate(t);
+			t = u + 1;
+
+/* subject next, I'll assume it is always quoted */
+			while (*t == ' ')
+				++t;
+			if (*t != '"')
+				continue;
+			++t;
+			u = strchr(t, '"');
+			if (!u)
+				continue;
+			*u = 0;
+			if (*t == '[' && u[-1] == ']')
+				++t, u[-1] = 0;
+			mif->subject = t;
+			t = u + 1;
+
+			while (*t == ' ')
+				++t;
+			if (strncmp(t, "((\"", 3))
+				goto doref;
+			t += 3;
+			u = strchr(t, '"');
+			if (!u)
+				goto doref;
+			*u = 0;
+			mif->from = t;
+			t = u + 1;
+
+			while (*t == ' ')
+				++t;
+			if (strncmp(t, "NIL", 3))
+				goto doref;
+			t += 3;
+			while (*t == ' ')
+				++t;
+/* again assuming each field is quoted */
+			if (*t != '"')
+				goto doref;
+			++t;
+			u = strchr(t, '"');
+			if (!u)
+				goto doref;
+			*u = '@';
+			++u;
+			while (*u == ' ')
+				++u;
+			if (*u != '"')
+				goto doref;
+			++u;
+			strmove(strchr(t, '@') + 1, u);
+			u = strchr(t, '"');
+			if (!u)
+				goto doref;
+			*u = 0;
+			mif->reply = t;
+			t = u + 1;
+
+doref:
+/* find the reference string, for replies */
+			u = strstr(t, " \"<");
+			if (!u)
+				goto doflags;
+			t = u + 2;
+			u = strchr(t, '"');
+			if (!u)
+				goto doflags;
+			*u = 0;
+			mif->refer = t;
+			t = u + 1;
+
+doflags:
+/* flags, mostly looking for has this been read */
+			u = strstr(t, "FLAGS (");
+			if (!u)
+				continue;
+			t = u + 7;
+			if (strstr(t, "\\Seen"))
+				mif->seen = true;
 
 		}
 
+/* print out what we have gathered, this is temporary */
+		for (j = 0; j < f->nfetch; ++j) {
+			struct MIF *mif = f->mlist + j;
+			printf("%s%s|%s|%s|%s",
+			       (mif->seen ? "^" : ""),
+			       mif->subject, mif->from, mif->reply,
+			       (mif->sent ? ctime(&mif->sent) + 4 : "\n"));
+		}
 	}
 }				/* showFolders */
 

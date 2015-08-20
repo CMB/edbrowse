@@ -303,7 +303,7 @@ char *extractHeaderParam(const char *str, const char *item)
 	return NULL;
 }				/* extractHeaderParam */
 
-/* Date format is:    Mon, 03 Jan 2000 21:29:33 GMT */
+/* Date format is:    Mon, 03 Jan 2000 21:29:33 GMT|[+-]nnnn */
 			/* Or perhaps:     Sun Nov  6 08:49:37 1994 */
 time_t parseHeaderDate(const char *date)
 {
@@ -312,6 +312,7 @@ time_t parseHeaderDate(const char *date)
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
 	time_t t = 0;
+	int zone = 0;
 	int y;			/* remember the type of format */
 	struct tm tm;
 	memset(&tm, 0, sizeof(struct tm));
@@ -451,9 +452,23 @@ f2:
 	if (*date != ' ' && *date)
 		goto fail;
 
+	while (*date == ' ')
+		++date;
+	if ((*date == '+' || *date == '-') &&
+	    isdigit(date[1]) && isdigit(date[2]) &&
+	    isdigit(date[3]) && isdigit(date[4])) {
+		zone = 10 * (date[1] - '0') + date[2] - '0';
+		zone *= 60;
+		zone += 10 * (date[3] - '0') + date[4] - '0';
+		zone *= 60;
+/* adjust to gmt */
+		if (*date == '+')
+			zone = -zone;
+	}
+
 	t = mktime(&tm);
 	if (t != (time_t) - 1)
-		return t;
+		return t + zone;
 
 fail:
 	return 0;
