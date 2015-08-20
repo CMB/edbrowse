@@ -133,6 +133,8 @@ static void writeAttachments(struct MHINFO *w)
 /* string to hold the returned data from the mail server */
 static char *mailstring;
 static int mailstring_l;
+static char *mailbox_url, *message_url;
+static CURLcode fetchOneMessage(CURL * handle, int message_number);
 
 #define MAXIMAPFETCH 10
 
@@ -153,6 +155,7 @@ static struct FOLDER {
 	bool children;
 	int nmsgs;		/* number of messages in this folder */
 	int nfetch;		/* how many to fetch */
+	int unread;		/* how many not yet seen */
 	int start;
 	int uidnext;		/* uid of next message */
 	struct MIF *mlist;	/* allocated */
@@ -234,8 +237,73 @@ static void setFolders(void)
 	mailstring = 0;
 }				/* setFolders */
 
+/* scan through the messages in a folder */
+static void scanFolder(CURL * handle, int f_num, bool allmessages)
+{
+	struct FOLDER *f = topfolders + f_num;
+	struct MIF *mif;
+	int j;
+	CURLcode res = CURLE_OK;
+	char *t;
+	char cust_cmd[80];
+
+	if (!f->nfetch || !f->unread && !allmessages) {
+		puts("no messages");
+		return;
+	}
+
+/* tell the server to descend into this folder */
+	if (asprintf(&t, "EXAMINE \"%s\"", f->path) == -1)
+		i_printfExit(MSG_MemAllocError, strlen(f->path) + 12);
+	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
+	free(t);
+	mailstring = initString(&mailstring_l);
+	res = curl_easy_perform(handle);
+	nzFree(mailstring);
+	if (res != CURLE_OK) {
+		ebcurl_setError(res, mailbox_url);
+		showError();
+		return;
+	}
+
+	mif = f->mlist;
+	for (j = 0; j < f->nfetch; ++j, ++mif) {
+		if (!allmessages && mif->seen)
+			continue;
+
+/* download the message */
+		mailstring = initString(&mailstring_l);
+#if 0
+		if (asprintf(&message_url, "%s;uid=%d", mailbox_url, mif->uid)
+		    == -1)
+			i_printfExit(MSG_MemAllocError,
+				     strlen(mailbox_url) + 11);
+		res = fetchOneMessage(handle, 0);
+		if (res != CURLE_OK) {
+			ebcurl_setError(res, message_url);
+			showError();
+			nzFree(mailstring);
+			goto next_msg;
+		}
+#endif
+		sprintf(cust_cmd, "FETCH %d BODY[]", j + f->start);
+		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
+		res = curl_easy_perform(handle);
+		if (res != CURLE_OK) {
+			ebcurl_setError(res, mailbox_url);
+			showError();
+			nzFree(mailstring);
+			return;
+		}
+
+  printf("mailstring_l %d\n", mailstring_l);
+  puts(mailstring);
+		nzFree(mailstring);
+	}
+}				/* scanFolder */
+
 /* list the folders at the top, at the start of imap or upon request */
-static void showFolders(CURL * handle, const char *mailbox)
+static void showFolders(CURL * handle)
 {
 	int i, j;
 	struct FOLDER *f = topfolders;
@@ -243,9 +311,11 @@ static void showFolders(CURL * handle, const char *mailbox)
 	char *t, *u;
 	CURLcode res;
 	char cust_cmd[80];
+	char inputline[80];
+	bool allmessages;
 
 	for (i = 0; i < n_folders; ++i, ++f) {
-		printf("%s -> %s", f->name, f->path);
+		printf("%d: %s -> %s", i + 1, f->name, f->path);
 		if (f->children)
 			printf(" with children");
 		nl();
@@ -257,18 +327,15 @@ static void showFolders(CURL * handle, const char *mailbox)
 
 		if (asprintf(&t, "EXAMINE \"%s\"", fpath) == -1)
 			i_printfExit(MSG_MemAllocError, strlen(fpath) + 12);
-		res = setCurlURL(handle, mailbox);
-		if (res != CURLE_OK) {
-abort:
-			ebcurl_setError(res, mailbox);
-			showErrorAbort();
-		}
-		mailstring = initString(&mailstring_l);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
 		free(t);
+		mailstring = initString(&mailstring_l);
 		res = curl_easy_perform(handle);
-		if (res != CURLE_OK)
-			goto abort;
+		if (res != CURLE_OK) {
+abort:
+			ebcurl_setError(res, mailbox_url);
+			showErrorAbort();
+		}
 
 /* look for message count */
 		t = strstr(mailstring, " EXISTS");
@@ -299,9 +366,10 @@ abort:
 		}
 
 		nzFree(mailstring);
-		printf("%d messages\n", f->nmsgs);
-		if (!f->nmsgs)
+		if (!f->nmsgs) {
+			puts("0 messages");
 			continue;
+		}
 
 /* get some information on each message */
 		f->mlist = allocZeroMem(sizeof(struct MIF) * f->nfetch);
@@ -436,9 +504,15 @@ doflags:
 			t = u + 7;
 			if (strstr(t, "\\Seen"))
 				mif->seen = true;
+			else
+				++f->unread;
 
 		}
 
+		printf("%d messages, %d buffered, %d unread\n",
+		       f->nmsgs, f->nfetch, f->unread);
+
+#if 0
 /* print out what we have gathered, this is temporary */
 		for (j = 0; j < f->nfetch; ++j) {
 			struct MIF *mif = f->mlist + j;
@@ -447,7 +521,27 @@ doflags:
 			       mif->subject, mif->from, mif->reply,
 			       (mif->sent ? ctime(&mif->sent) + 4 : "\n"));
 		}
+#endif
 	}
+
+input:
+	puts("Enter the folder by number that you want to scan.");
+	puts("Prepend + if you want to read all messages, rather than just the unread messages.");
+	if (!fgets(inputline, sizeof(inputline), stdin))
+		exit(0);
+	t = inputline;
+	if (*t == 'q' || *t == 'Q')
+		exit(0);
+	allmessages = false;
+	if (*t == '+')
+		allmessages = true, ++t;
+	if (!isdigit(*t))
+		goto input;
+	i = atoi(t);
+	if (i <= 0 || i > n_folders)
+		goto input;
+	scanFolder(handle, i - 1, allmessages);
+	goto input;
 }				/* showFolders */
 
 /* find the last mail in the local unread directory */
@@ -489,8 +583,7 @@ static struct eb_curl_callback_data callback_data = {
 	&mailstring, &mailstring_l
 };
 
-static CURL *newFetchmailHandle(const char *mailbox, const char *username,
-				const char *password)
+static CURL *newFetchmailHandle(const char *username, const char *password)
 {
 	CURLcode res;
 	CURL *handle = curl_easy_init();
@@ -509,20 +602,20 @@ static CURL *newFetchmailHandle(const char *mailbox, const char *username,
 
 	res = curl_easy_setopt(handle, CURLOPT_USERNAME, username);
 	if (res != CURLE_OK) {
-		ebcurl_setError(res, mailbox);
+		ebcurl_setError(res, mailbox_url);
 		showErrorAbort();
 	}
 
 	res = curl_easy_setopt(handle, CURLOPT_PASSWORD, password);
 	if (res != CURLE_OK) {
-		ebcurl_setError(res, mailbox);
+		ebcurl_setError(res, mailbox_url);
 		showErrorAbort();
 	}
 
 	return handle;
 }				/* newFetchmailHandle */
 
-static char *get_mailbox_url(const struct MACCOUNT *account)
+static void get_mailbox_url(const struct MACCOUNT *account)
 {
 	const char *scheme = "pop3";
 	char *url = NULL;
@@ -541,13 +634,15 @@ static char *get_mailbox_url(const struct MACCOUNT *account)
 		i_printfExit(MSG_MemAllocError,
 			     strlen(scheme) + strlen(account->inurl) + 8);
 	}
-	return url;
+	mailbox_url = url;
 }				/* get_mailbox_url */
 
-static CURLcode fetchOneMessage(CURL * handle, const char *message_url,
-				int message_number)
+/* reads message into mailstring, it's up to you to free it */
+static CURLcode fetchOneMessage(CURL * handle, int message_number)
 {
 	CURLcode res = CURLE_OK;
+
+	mailstring = initString(&mailstring_l);
 
 	res = setCurlURL(handle, message_url);
 	if (res != CURLE_OK)
@@ -574,6 +669,10 @@ static CURLcode fetchOneMessage(CURL * handle, const char *message_url,
 		mailstring[k++] = mailstring[j];
 	}
 	mailstring_l = k;
+	mailstring[k] = 0;
+
+	if (isimap)
+		return res;
 
 /* got the file, save it in unread */
 	sprintf(umf_end, "%d", unreadMax + message_number);
@@ -587,7 +686,7 @@ static CURLcode fetchOneMessage(CURL * handle, const char *message_url,
 	return res;
 }				/* fetchOneMessage */
 
-static CURLcode deleteOneMessage(CURL * handle, const char *message_url)
+static CURLcode deleteOneMessage(CURL * handle)
 {
 	CURLcode res = curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "DELE");
 
@@ -604,10 +703,9 @@ static CURLcode deleteOneMessage(CURL * handle, const char *message_url)
 	return res;
 }				/* deleteOneMessage */
 
-static CURLcode count_messages(CURL * handle, const char *mailbox,
-			       int *message_count)
+static CURLcode count_messages(CURL * handle, int *message_count)
 {
-	CURLcode res = setCurlURL(handle, mailbox);
+	CURLcode res = setCurlURL(handle, mailbox_url);
 	int i, num_messages = 0;
 	bool last_nl = true;
 
@@ -620,7 +718,7 @@ static CURLcode count_messages(CURL * handle, const char *mailbox,
 
 	if (isimap) {
 		setFolders();
-		showFolders(handle, mailbox);
+		showFolders(handle);
 		puts("imap not yet implemented");
 		exit(1);
 	}
@@ -647,10 +745,11 @@ int fetchMail(int account)
 	const char *pass = a->password;
 	int nfetch = 0;		/* number of messages actually fetched */
 	CURLcode res = CURLE_OK;
-	char *mailbox_url = get_mailbox_url(a);
-	const char *url_for_error = mailbox_url;
-	char *message_url = NULL;
+	const char *url_for_error;
 	int message_count = 0, message_number;
+
+	get_mailbox_url(a);
+	url_for_error = mailbox_url;
 
 	if (!mailDir)
 		i_printfExit(MSG_NoMailDir);
@@ -666,8 +765,8 @@ int fetchMail(int account)
 	unreadStats();
 
 	mailstring = initString(&mailstring_l);
-	CURL *mail_handle = newFetchmailHandle(mailbox_url, login, pass);
-	res = count_messages(mail_handle, mailbox_url, &message_count);
+	CURL *mail_handle = newFetchmailHandle(login, pass);
+	res = count_messages(mail_handle, &message_count);
 	if (res != CURLE_OK)
 		goto fetchmail_cleanup;
 
@@ -680,12 +779,11 @@ int fetchMail(int account)
 				     strlen(mailbox_url) + 11);
 		}
 		nzFree(mailstring);
-		mailstring = initString(&mailstring_l);
-		res = fetchOneMessage(mail_handle, message_url, message_number);
+		res = fetchOneMessage(mail_handle, message_number);
 		if (res != CURLE_OK)
 			goto fetchmail_cleanup;
 		nfetch++;
-		res = deleteOneMessage(mail_handle, message_url);
+		res = deleteOneMessage(mail_handle);
 		if (res != CURLE_OK)
 			goto fetchmail_cleanup;
 		nzFree(message_url);
