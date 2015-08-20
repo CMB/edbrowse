@@ -308,15 +308,13 @@ abort:
 		for (j = 0; j < f->nfetch; ++j) {
 			struct MIF *mif = f->mlist + j;
 			mailstring = initString(&mailstring_l);
-			sprintf(cust_cmd, "FETCH %d ALL", f->start + j);
+			sprintf(cust_cmd, "FETCH %d UID", f->start + j);
 			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
 					 cust_cmd);
 			res = curl_easy_perform(handle);
 			if (res != CURLE_OK)
 				goto abort;
 
-#if 0
-/* from FETCH %d UID */
 			t = strstr(mailstring, "FETCH (UID ");
 			if (t) {
 				t += 11;
@@ -325,7 +323,15 @@ abort:
 				if (isdigit(*t))
 					mif->uid = atoi(t);
 			}
-#endif
+			nzFree(mailstring);
+
+			mailstring = initString(&mailstring_l);
+			sprintf(cust_cmd, "FETCH %d ALL", f->start + j);
+			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
+					 cust_cmd);
+			res = curl_easy_perform(handle);
+			if (res != CURLE_OK)
+				goto abort;
 
 			mif->subject = emptyString;
 			mif->from = emptyString;
@@ -436,8 +442,8 @@ doflags:
 /* print out what we have gathered, this is temporary */
 		for (j = 0; j < f->nfetch; ++j) {
 			struct MIF *mif = f->mlist + j;
-			printf("%s%s|%s|%s|%s",
-			       (mif->seen ? "^" : ""),
+			printf("%d:%s%s|%s|%s|%s",
+			       mif->uid, (mif->seen ? "^" : ""),
 			       mif->subject, mif->from, mif->reply,
 			       (mif->sent ? ctime(&mif->sent) + 4 : "\n"));
 		}
