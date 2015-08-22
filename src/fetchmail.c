@@ -152,14 +152,16 @@ static CURLcode fetchOneMessage(CURL * handle, int message_number);
 struct MIF {
 	int uid;
 	int size;
+	char *cbase;		/* allocated string containing the following */
 	char *subject, *from, *reply;
-	time_t sent;
 	char *refer;
+	time_t sent;
 	bool seen;
 };
 
 /* folders at the top of an imap system */
 static struct FOLDER {
+	char *cbase;		/* allocated string containing the following */
 	const char *name;
 	const char *path;
 	bool children;
@@ -282,7 +284,7 @@ static struct FOLDER *folderByName(char *line)
 static void scanFolder(CURL * handle, const struct FOLDER *f, bool allmessages)
 {
 	struct MIF *mif;
-	int j;
+	int j, msize;
 	CURLcode res = CURLE_OK;
 	char *t;
 	char cust_cmd[80];
@@ -316,7 +318,7 @@ abort:
 
 /* download the message */
 #if 0
-		if (asprintf(&message_url, "%s%s/;UID=%d",
+		if (asprintf(&message_url, "%s%s;UID=%d",
 			     mailbox_url, f->path, j + f->start) == -1)
 			i_printfExit(MSG_MemAllocError,
 				     strlen(mailbox_url) + 25);
@@ -328,6 +330,7 @@ abort:
 			nzFree(message_url);
 			return;
 		}
+		nzFree(message_url);
 #endif
 /* neither one of these works */
 #if 0
@@ -353,6 +356,13 @@ abort:
 		printf("%s: %s", mif->from, mif->subject);
 		if (mif->sent)
 			printf(" %s", conciseTime(mif->sent));
+		msize = mif->size;
+		if (msize >= (1 << 20))
+			printf(" %dM", msize >> 20);
+		else if (msize >= (1 << 10))
+			printf(" %dK", msize >> 10);
+		else
+			printf("%d", msize);
 		nl();
 /* give you a chance to delete it, that's all we have right now */
 		puts("d to delete, or return to continue");
@@ -416,6 +426,8 @@ abort:
 			ebcurl_setError(res, mailbox_url);
 			showErrorAbort();
 		}
+
+		f->cbase = mailstring;
 
 /* look for message count */
 		t = strstr(mailstring, " EXISTS");
@@ -481,6 +493,7 @@ abort:
 			if (res != CURLE_OK)
 				goto abort;
 
+			mif->cbase = mailstring;
 			mif->subject = emptyString;
 			mif->from = emptyString;
 			mif->reply = emptyString;
@@ -580,12 +593,21 @@ doflags:
 /* flags, mostly looking for has this been read */
 			u = strstr(t, "FLAGS (");
 			if (!u)
-				continue;
+				goto dosize;
 			t = u + 7;
 			if (strstr(t, "\\Seen"))
 				mif->seen = true;
 			else
 				++f->unread;
+
+dosize:
+			u = strstr(t, "SIZE ");
+			if (!u)
+				continue;
+			t = u + 5;
+			if (!isdigit(*t))
+				continue;
+			mif->size = atoi(t);
 
 		}
 
