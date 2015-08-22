@@ -136,7 +136,7 @@ static int mailstring_l;
 static char *mailbox_url, *message_url;
 static CURLcode fetchOneMessage(CURL * handle, int message_number);
 
-#define MAXIMAPFETCH 10
+#define MAXIMAPFETCH 20
 
 /* missge in a folder */
 struct MIF {
@@ -237,15 +237,47 @@ static void setFolders(void)
 	mailstring = 0;
 }				/* setFolders */
 
-/* scan through the messages in a folder */
-static void scanFolder(CURL * handle, int f_num, bool allmessages)
+static struct FOLDER *folderByName(char *line)
 {
-	struct FOLDER *f = topfolders + f_num;
+	int i, j;
+	struct FOLDER *f;
+	int cnt = 0;
+
+/* chop */
+	j = strlen(line);
+	while (j && isspace(line[j - 1]))
+		--j;
+	if (!j)
+		return 0;
+	line[j] = 0;
+
+	i = stringIsNum(line);
+	if (i > 0 && i <= n_folders)
+		return topfolders + i - 1;
+
+	f = topfolders;
+	for (i = 0; i < n_folders; ++i, ++f)
+		if (strstrCI(f->path, line))
+			++cnt, j = i;
+	if (cnt == 1)
+		return topfolders + j;
+	if (cnt)
+		printf("multiple folders contain %s\n", line);
+	else
+		printf("no folders contain %s\n", line);
+	return 0;
+}				/* folderByName */
+
+/* scan through the messages in a folder */
+static void scanFolder(CURL * handle, const struct FOLDER *f, bool allmessages)
+{
 	struct MIF *mif;
 	int j;
 	CURLcode res = CURLE_OK;
 	char *t;
 	char cust_cmd[80];
+	char inputline[80];
+	bool yesdel = false;
 
 	if (!f->nfetch || !f->unread && !allmessages) {
 		puts("no messages");
@@ -253,7 +285,7 @@ static void scanFolder(CURL * handle, int f_num, bool allmessages)
 	}
 
 /* tell the server to descend into this folder */
-	if (asprintf(&t, "EXAMINE \"%s\"", f->path) == -1)
+	if (asprintf(&t, "SELECT \"%s\"", f->path) == -1)
 		i_printfExit(MSG_MemAllocError, strlen(f->path) + 12);
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
 	free(t);
@@ -261,6 +293,7 @@ static void scanFolder(CURL * handle, int f_num, bool allmessages)
 	res = curl_easy_perform(handle);
 	nzFree(mailstring);
 	if (res != CURLE_OK) {
+abort:
 		ebcurl_setError(res, mailbox_url);
 		showError();
 		return;
@@ -272,22 +305,25 @@ static void scanFolder(CURL * handle, int f_num, bool allmessages)
 			continue;
 
 /* download the message */
-		mailstring = initString(&mailstring_l);
 #if 0
-		if (asprintf(&message_url, "%s;uid=%d", mailbox_url, mif->uid)
-		    == -1)
+		if (asprintf(&message_url, "%s%s/;UID=%d",
+			     mailbox_url, f->path, j + f->start) == -1)
 			i_printfExit(MSG_MemAllocError,
-				     strlen(mailbox_url) + 11);
+				     strlen(mailbox_url) + 25);
 		res = fetchOneMessage(handle, 0);
 		if (res != CURLE_OK) {
 			ebcurl_setError(res, message_url);
 			showError();
 			nzFree(mailstring);
-			goto next_msg;
+			nzFree(message_url);
+			return;
 		}
 #endif
+/* neither one of these works */
+#if 0
 		sprintf(cust_cmd, "FETCH %d BODY[]", j + f->start);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
+		mailstring = initString(&mailstring_l);
 		res = curl_easy_perform(handle);
 		if (res != CURLE_OK) {
 			ebcurl_setError(res, mailbox_url);
@@ -295,11 +331,42 @@ static void scanFolder(CURL * handle, int f_num, bool allmessages)
 			nzFree(mailstring);
 			return;
 		}
+#endif
 
-  printf("mailstring_l %d\n", mailstring_l);
-  puts(mailstring);
+#if 0
+		printf("mailstring_l %d\n", mailstring_l);
+		puts(mailstring);
 		nzFree(mailstring);
+#endif
+		printf("%s\n%s %s\n", mif->subject, mif->from, mif->reply);
+		if (mif->sent)
+			printf("%s", ctime(&mif->sent) + 4);
+/* give you a chance to delete it, that's all we have right now */
+		puts("d to delete, or return to continue");
+		if (!fgets(inputline, sizeof(inputline), stdin))
+			exit(0);
+		if (inputline[0] != 'd' && inputline[0] != 'D')
+			continue;
+		sprintf(cust_cmd, "STORE %d +Flags \\Deleted", j + f->start);
+		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
+		mailstring = initString(&mailstring_l);
+		res = curl_easy_perform(handle);
+		nzFree(mailstring);
+		if (res != CURLE_OK)
+			goto abort;
+		yesdel = true;
 	}
+
+	if (!yesdel)
+		return;
+/* things deleted, time to expunge */
+	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "EXPUNGE");
+	mailstring = initString(&mailstring_l);
+	res = curl_easy_perform(handle);
+	nzFree(mailstring);
+	if (res != CURLE_OK)
+		goto abort;
+	puts("Folder has changed, but refresh not yet implemented");
 }				/* scanFolder */
 
 /* list the folders at the top, at the start of imap or upon request */
@@ -509,8 +576,11 @@ doflags:
 
 		}
 
-		printf("%d messages, %d buffered, %d unread\n",
-		       f->nmsgs, f->nfetch, f->unread);
+		if (f->nmsgs == f->nfetch)
+			printf("%d messages, %d unread\n", f->nmsgs, f->unread);
+		else
+			printf("%d messages, %d buffered, %d unread\n",
+			       f->nmsgs, f->nfetch, f->unread);
 
 #if 0
 /* print out what we have gathered, this is temporary */
@@ -525,22 +595,19 @@ doflags:
 	}
 
 input:
-	puts("Enter the folder by number that you want to scan.");
-	puts("Prepend + if you want to read all messages, rather than just the unread messages.");
+	puts("Select a folder by number or by substring.");
+	puts("Prepend - for just the unread messages. q to quit.");
 	if (!fgets(inputline, sizeof(inputline), stdin))
 		exit(0);
 	t = inputline;
 	if (*t == 'q' || *t == 'Q')
 		exit(0);
-	allmessages = false;
-	if (*t == '+')
-		allmessages = true, ++t;
-	if (!isdigit(*t))
-		goto input;
-	i = atoi(t);
-	if (i <= 0 || i > n_folders)
-		goto input;
-	scanFolder(handle, i - 1, allmessages);
+	allmessages = true;
+	if (*t == '-')
+		allmessages = false, ++t;
+	f = folderByName(t);
+	if (f)
+		scanFolder(handle, f, allmessages);
 	goto input;
 }				/* showFolders */
 
@@ -593,6 +660,7 @@ static CURL *newFetchmailHandle(const char *username, const char *password)
 	curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, mailTimeout);
 	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, eb_curl_callback);
 	curl_easy_setopt(handle, CURLOPT_WRITEDATA, &callback_data);
+/* curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, eb_curl_callback); */
 	if (debugLevel >= 4)
 		curl_easy_setopt(handle, CURLOPT_VERBOSE, 1);
 	curl_easy_setopt(handle, CURLOPT_DEBUGFUNCTION, ebcurl_debug_handler);
@@ -690,9 +758,6 @@ static CURLcode deleteOneMessage(CURL * handle)
 {
 	CURLcode res = curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "DELE");
 
-	if (res != CURLE_OK)
-		return res;
-	res = curl_easy_setopt(handle, CURLOPT_NOBODY, 1L);
 	if (res != CURLE_OK)
 		return res;
 	res = curl_easy_setopt(handle, CURLOPT_NOBODY, 1L);
