@@ -290,6 +290,7 @@ static void scanFolder(CURL * handle, const struct FOLDER *f, bool allmessages)
 	char cust_cmd[80];
 	char inputline[80];
 	bool yesdel = false;
+	static bool deleteprompt = false;
 
 	if (!f->nfetch || !f->unread && !allmessages) {
 		puts("no messages");
@@ -365,8 +366,13 @@ abort:
 			printf("%d", msize);
 		nl();
 /* give you a chance to delete it, that's all we have right now */
-		puts("d to delete, or return to continue");
+		if (!deleteprompt) {
+			puts("d to delete, or return to continue");
+			deleteprompt = true;
+		}
 		if (!fgets(inputline, sizeof(inputline), stdin))
+			exit(0);
+		if (inputline[0] == 'q' || inputline[0] == 'Q')
 			exit(0);
 		if (inputline[0] != 'd' && inputline[0] != 'D')
 			continue;
