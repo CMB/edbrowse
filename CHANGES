@@ -1,5 +1,9 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.5.4.2:
+Limited and preliminary imap access. Envelopes only.
+Messages can be moved or deleted, but not read or downloaded.
+
 3.5.4.1:
 Fix a couple of bugs related to downloading files from the internet.
 
