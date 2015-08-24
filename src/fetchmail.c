@@ -290,12 +290,12 @@ static void scanFolder(CURL * handle, const struct FOLDER *f, bool allmessages)
 	int j, msize;
 	CURLcode res = CURLE_OK;
 	char *t;
+	char key;
 	char cust_cmd[80];
 	char inputline[80];
-	bool yesdel = false;
-	static bool deleteprompt = false;
+	bool yesdel = false, delflag;
 
-	if (!f->nfetch || !f->unread && !allmessages) {
+	if (!f->nmsgs || !allmessages && !f->unread) {
 		puts("no messages");
 		return;
 	}
@@ -312,6 +312,7 @@ static void scanFolder(CURL * handle, const struct FOLDER *f, bool allmessages)
 abort:
 		ebcurl_setError(res, mailbox_url);
 		showError();
+		puts("end of folder");
 		return;
 	}
 
@@ -368,17 +369,53 @@ abort:
 		else
 			printf("%d", msize);
 		nl();
-/* give you a chance to delete it, that's all we have right now */
-		if (!deleteprompt) {
-			puts("d to delete, or return to continue");
-			deleteprompt = true;
+
+/* delete or move, that's all we have right now */
+action:
+		delflag = false;
+		printf("? ");
+		fflush(stdout);
+		key = getLetter("?qdm\r\n");
+		printf("\b\b\b");
+		fflush(stdout);
+		if (key == '?') {
+			puts("?\tprint this help message\nd\tdelete this email.\nm\tmove this email to another folder.\nreturn	tcontinue to the next message.");
+			goto action;
 		}
-		if (!fgets(inputline, sizeof(inputline), stdin) ||
-		    inputline[0] == 'q' || inputline[0] == 'Q') {
+		if (key == 'q') {
+			i_puts(MSG_Quit);
+imap_done:
 			curl_easy_cleanup(handle);
 			exit(0);
 		}
-		if (inputline[0] != 'd' && inputline[0] != 'D')
+		if (key == 'm') {
+			struct FOLDER *g;
+			printf("move to ");
+			fflush(stdout);
+			if (!fgets(inputline, sizeof(inputline), stdin))
+				goto imap_done;
+			g = folderByName(inputline);
+			if (g && g != f) {
+				if (asprintf(&t, "COPY %d \"%s\"",
+					     j + f->start, g->path) == -1)
+					i_printfExit(MSG_MemAllocError, 24);
+				curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
+						 t);
+				free(t);
+				mailstring = initString(&mailstring_l);
+				res = curl_easy_perform(handle);
+				nzFree(mailstring);
+				if (res != CURLE_OK)
+					goto abort;
+/* copy was successful, delete from this folder */
+				delflag = true;
+			}
+		}
+		if (key == 'd') {
+			delflag = true;
+			i_puts(MSG_Delete);
+		}
+		if (!delflag)
 			continue;
 		sprintf(cust_cmd, "STORE %d +Flags \\Deleted", j + f->start);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
@@ -390,15 +427,17 @@ abort:
 		yesdel = true;
 	}
 
-	if (!yesdel)
-		return;
+	if (yesdel) {
 /* things deleted, time to expunge */
-	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "EXPUNGE");
-	mailstring = initString(&mailstring_l);
-	res = curl_easy_perform(handle);
-	nzFree(mailstring);
-	if (res != CURLE_OK)
-		goto abort;
+		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "EXPUNGE");
+		mailstring = initString(&mailstring_l);
+		res = curl_easy_perform(handle);
+		nzFree(mailstring);
+		if (res != CURLE_OK)
+			goto abort;
+	}
+
+	puts("end of folder");
 }				/* scanFolder */
 
 /* examine the specified folder, gather message envelopes */
@@ -460,7 +499,9 @@ abort:
 		if (f->children)
 			printf(" with children");
 		printf(", %d messages\n", f->nmsgs);
+		return;
 	}
+
 	if (!f->nmsgs)
 		return;
 
@@ -609,6 +650,12 @@ dosize:
 		mif->size = atoi(t);
 
 	}
+
+	if (f->nmsgs > f->nfetch)
+		printf("showing last %d of %d messages, %d unread\n",
+		       f->nfetch, f->nmsgs, f->unread);
+	else
+		printf("%d messages, %d unread\n", f->nmsgs, f->unread);
 
 #if 0
 /* print out what we have gathered, this is temporary */
@@ -816,7 +863,7 @@ input:
 		if (!fgets(inputline, sizeof(inputline), stdin))
 			goto imap_done;
 		t = inputline;
-		if (*t == 'q' || *t == 'Q')
+		if (*t == 'q')
 			goto imap_done;
 		allmessages = true;
 		if (*t == '-')
