@@ -320,6 +320,12 @@ ea:
 		strmove(a, b);
 	for (b = a + strlen(a) - 1; b >= a && *b == ' '; b--)
 		*b = 0;
+
+	if (*a == 0) {
+		nzFree(a);
+		a = emptyString;
+	}
+
 	return a;
 }				/* htmlAttrVal */
 
