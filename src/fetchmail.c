@@ -367,7 +367,7 @@ abort:
 		else if (msize >= (1 << 10))
 			printf(" %dK", msize >> 10);
 		else
-			printf("%d", msize);
+			printf(" %d", msize);
 		nl();
 
 /* delete or move, that's all we have right now */
