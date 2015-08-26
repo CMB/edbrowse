@@ -375,11 +375,11 @@ action:
 		delflag = false;
 		printf("? ");
 		fflush(stdout);
-		key = getLetter("?qdm\r\n");
+		key = getLetter("?qdmn");
 		printf("\b\b\b");
 		fflush(stdout);
 		if (key == '?') {
-			puts("?\tprint this help message\nd\tdelete this email.\nm\tmove this email to another folder.\nreturn	tcontinue to the next message.");
+			puts("?\tprint this help message\nd\tdelete this email.\nm\tmove this email to another folder.\nn\tcontinue to next message.");
 			goto action;
 		}
 		if (key == 'q') {
@@ -495,7 +495,7 @@ abort:
 
 	nzFree(mailstring);
 	if (dostats) {
-		printf("%d: %s -> %s", f - topfolders + 1, f->name, f->path);
+		printf("%2d %s", f - topfolders + 1, f->path);
 		if (f->children)
 			printf(" with children");
 		printf(", %d messages\n", f->nmsgs);
