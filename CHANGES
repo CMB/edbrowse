@@ -4,6 +4,11 @@ Here are some changes introduced by recent versions of edbrowse.
 Limited and preliminary imap access. Envelopes only.
 Messages can be moved or deleted, but not read or downloaded.
 
+We no longer downgrade to SSL v3 on failure to use newer versions of SSL.
+
+Edbrowse now warns if you try to quit with a modified buffer that has
+no associated filename.  This is consistent with ed and most other editors.
+
 3.5.4.1:
 Fix a couple of bugs related to downloading files from the internet.
 
