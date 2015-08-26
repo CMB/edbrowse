@@ -73,6 +73,19 @@ prior to 7.29.0, the program will inform you that you need to upgrade.
 If you have to compile curl from source, be sure to specify
 --ENABLE-VERSION-SYMBOLS (or some such) at the configure script.
 
+Edbrowse now uses the Tidy HTML parser.  So there are a couple
+of things to install for this prerequisite.
+The Tidy compilation process uses cmake.  Please either use your
+package manager to get cmake (for instance, apt-get install cmake),
+or follow the instructions at http://www.cmake.org/download/
+
+Once you have cmake, download the latest Tidy code from:
+https://github.com/htacg/tidy-html5/archive/master.zip
+Unzip and cd to build/cmake
+cmake ../..
+make install
+Now the latest Tidy library will be available to edbrowse.
+
 Finally, you need the Spider Monkey javascript engine from Mozilla.org
 ftp://ftp.mozilla.org/pub/mozilla.org/js/
 Edbrowse 3.5.1 and higher requires Mozilla js version 2.4.

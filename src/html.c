@@ -4,8 +4,11 @@
  */
 
 #include "eb.h"
+#include "tidy.h"
 
 #define handlerPresent(obj, name) (has_property(obj, name) == EJ_PROP_FUNCTION)
+
+static TidyDoc tdoc;
 
 static const char *const handlers[] = {
 	"onmousemove", "onmouseover", "onmouseout", "onmouseup", "onmousedown",
@@ -1669,6 +1672,10 @@ static char *encodeTags(char *html, bool fromSource)
 	int intable = 0, inrow = 0;
 	bool tdfirst;
 
+	tdoc = tidyCreate();
+//	commented out due to a slurry of warnings
+//	tidyParseString(tdoc, html);
+
 	ns = initString(&ns_l);
 	preamble = initString(&preamble_l);
 	currentA = currentForm = currentSel = NULL;
@@ -2608,6 +2615,8 @@ endtag:
 	a = htmlReformat(ns);
 	nzFree(ns);
 	ns = a;
+
+	tidyRelease(tdoc);
 
 	return ns;
 }				/* encodeTags */
