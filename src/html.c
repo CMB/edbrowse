@@ -1693,6 +1693,7 @@ static char *encodeTags(char *html, bool fromSource)
 /* special string in the filename suppresses the messages */
 	if (cw->fileName && strstr(cw->fileName, "ntdymsg"))
 		showTidyMessages = false;
+	tidySetCharEncoding(tdoc, (cons_utf8 ? "utf8" : "latin1"));
 	tidyParseString(tdoc, html);
 
 	ns = initString(&ns_l);
