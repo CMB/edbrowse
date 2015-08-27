@@ -1690,6 +1690,9 @@ static char *encodeTags(char *html, bool fromSource)
 	showTidyMessages = false;
 	if (browseLocal && fromSource)
 		showTidyMessages = true;
+/* special string in the filename suppresses the messages */
+	if (cw->fileName && strstr(cw->fileName, "ntdymsg"))
+		showTidyMessages = false;
 	tidyParseString(tdoc, html);
 
 	ns = initString(&ns_l);
