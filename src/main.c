@@ -19,7 +19,6 @@ int webTimeout = 20, mailTimeout = 0;
 char *sslCerts;
 int verifyCertificates = 1;
 bool ismc, isimap, passMail;
-bool browseLocal;
 int browseLine;			/* line number for errors */
 bool inInput, listNA;
 volatile bool intFlag;

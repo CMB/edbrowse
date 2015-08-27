@@ -39,6 +39,7 @@ static char *radioCheck;
 static int radio_l;
 static char *preamble;
 static int preamble_l;
+static uchar browseLocal;
 
 /* paranoia check on the number of tags */
 static void tagCountCheck(void)
@@ -1673,8 +1674,9 @@ static char *encodeTags(char *html, bool fromSource)
 	bool tdfirst;
 
 	tdoc = tidyCreate();
-//	commented out due to a slurry of warnings
-//	tidyParseString(tdoc, html);
+//      only run this for local html, to test, for now.
+	if (browseLocal && fromSource)
+		tidyParseString(tdoc, html);
 
 	ns = initString(&ns_l);
 	preamble = initString(&preamble_l);

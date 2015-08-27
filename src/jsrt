@@ -1,10 +1,14 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head id=boom>
 <title>Edbrowse js regression test</title>
 <base href="http://yyy.zzz.com">
+<!-- tidy5 says this is not a valid tag any more -->
+<bgsound src=whatever.mid>
 </head>
+
 <body onload=bodyLoad() onunload=bodyUnload()>
-<script language="JavaScript">
+<script type=text/javascript language=JavaScript>
 /* This is the javascript regression test for edbrowse.
 It attempts to exercise all the implemented features of javascript,
 which is, by the way, not all the features of javascript by any means.
@@ -275,7 +279,6 @@ b.innerText = "Why don't you write me I'm out in the jungle I'm hungry to hear y
 <OL>
 <LI>This is a regression test without javascript.
 </OL>
-<P>
 </noscript>
 
 ftp test
@@ -284,16 +287,18 @@ y directory</A>
 <A href=ftp://rpmfind.net/linux/fedora/linux/releases/21/Everything/i386/os/Packages/y/yecht-0.0.2-11.fc21.noarch.rpm>
 yecht package</A>
 
-<P>
+<br>
 <form method=POST name=questionnaire
 action=http://localhost:1500/origact
 onsubmit='return submitFunction(questionnaire)'
 onreset='return resetFunction()'
 onload=formLoad(this.name) onunload=formUnload(this.name)>
 
-<script>
+<script language=JavaScript type=text/javascript>
+function catdog(item) { alert('fluffy'); if(item.checked&&document.questionnaire.dog.checked) alert('chased by dog'); }
+
 // Let javascript generate another javascript tag
-document.writeln("<script language=JavaScript>document.writeln('Subject: ');</" + "script>");
+document.writeln("<" + "script language=JavaScript>document.writeln('Subject: ');</" + "script" + ">");
 </script>
 
 <input type='hidden' name='id' value='eklhad'>
@@ -424,9 +429,11 @@ Wyoming
 <option value=BH>
 90210
 </select>
+<!-- this generates and error, but not sure why.
+http://www.w3schools.com/html/html_form_input_types.asp -->
 <input type=number maxlength=5 name="zip code" readonly value="&#56;8888">
 <span id=almond></span>
-<table class=filbert><tr></tr><tr id=pecan></tr></table>
+<table class=filbert summary="pecan test"><tr><td></td></tr><tr id=pecan><td></td></tr></table>
 Colors will change with the state, A through M or N through Z.
 <br>My favorite colors are:
 <select name=colors multiple>
@@ -446,8 +453,8 @@ comfortable
 rich
 <input type=radio name=money value=3>
 <br>Pets:
-dog <input type=checkbox name=dog id=hound checked onclick=alert('rover')>
-cat <input type=checkbox name=cat onclick="alert('fluffy'); if(this.checked&&questionnaire.dog.checked) alert('chased by dog');" value=meow>
+dog <input type=checkbox name=dog id=hound checked onclick="alert('rover')">
+cat <input type=checkbox name=cat onclick="catdog(this)" value=meow>
 bird <input type=checkbox name=bird>
 rabbit <input type=checkbox name=rabbit>
 <br>
@@ -472,9 +479,8 @@ We'll get back to you if we like what you have to say.
 <input type='submit' value='Send Message' name='b1'
 onclick="alert('rock and roll')">
 </form>
-<bgsound src=whatever.mid>
 
-<script language="JavaScript">
+<script type=text/javascript language=JavaScript>
 // I'll push the button for you
 document.questionnaire.b.onclick();
 if(document.questionnaire.result.value != 90) fail(85);
@@ -652,6 +658,8 @@ var onlv = 77;
 
 /* last script to run automatically; loaded by the form.onload function */
 function lastScript() {
+/* This generates a tidy5 error,
+ * but I'm leaving it as is to look at and test the resulting node tree */
 document.writeln('<A href=custer>Last Link</A>');
 }
 
@@ -664,17 +672,17 @@ document.writeln("<P>Some extra html at the end of the buffer.");
 
 // test the innerHTML feature
 if(document.getElementById("sphere").innerHTML !=
-"Surface area is 4&#960;r<span class=sup>2</span>.")
+"Surface area is 4&#960;r<span class=sup>2<" + "/span>.")
 fail(145);
 document.getElementById("album").innerHTML =
-"Why don't we do it <A href=http://en.wikipedia.org/wiki/White_album>in the road</A>?";
+"Why don't we do it <A href=http://en.wikipedia.org/wiki/White_album>in the road<" + "/A>?";
 </script  	
 >
 
-<script src="data:text/javascript,var data_uri1_test %3d %22set%22%3b"></script>
-<script src="data:text/javascript;base64,dmFyIGRhdGFfdXJpMl90ZXN0ID0gInNldCI7Cg=="></script>
+<script type="text/javascript" src="data:text/javascript,var data_uri1_test %3d %22set%22%3b"></script>
+<script type="text/javascript" src="data:text/javascript;base64,dmFyIGRhdGFfdXJpMl90ZXN0ID0gInNldCI7Cg=="></script>
 
-<script>
+<script type=text/javascript language=JavaScript>
 if(data_uri1_test != "set")
 fail(146);
 if(data_uri2_test != "set")
@@ -689,7 +697,7 @@ script_from_data.src = 'data:text/javascript;base64,dmFyIGRhdGFfdXJpMl90ZXN0ID0g
 
 </script>
 
-<script>
+<script type=text/javascript language=JavaScript>
 if(data_uri1_test != "set")
 fail(148);
 if(data_uri2_test != "set")
