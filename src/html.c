@@ -40,6 +40,18 @@ static int radio_l;
 static char *preamble;
 static int preamble_l;
 static uchar browseLocal;
+static bool showTidyMessages;
+
+/* Like the default tidy error reporter, except messages are suppressed
+ * unless we are browsing a local file, and they are sent to stdout
+ * rather than stderr, like most edbrowse messages. */
+static Bool tidyError(TidyDoc tdoc, TidyReportLevel lvl,
+		      uint line, uint col, ctmbstr mssg)
+{
+	if (showTidyMessages)
+		printf("line %d column %d: %s\n", line, col, mssg);
+	return no;
+}				/* tidyError */
 
 /* paranoia check on the number of tags */
 static void tagCountCheck(void)
@@ -1674,9 +1686,11 @@ static char *encodeTags(char *html, bool fromSource)
 	bool tdfirst;
 
 	tdoc = tidyCreate();
-//      only run this for local html, to test, for now.
+	tidySetReportFilter(tdoc, tidyError);
+	showTidyMessages = false;
 	if (browseLocal && fromSource)
-		tidyParseString(tdoc, html);
+		showTidyMessages = true;
+	tidyParseString(tdoc, html);
 
 	ns = initString(&ns_l);
 	preamble = initString(&preamble_l);
