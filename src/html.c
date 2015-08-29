@@ -4,7 +4,8 @@
  */
 
 #include "eb.h"
-#include "tidy.h"
+#include <tidy.h>
+#include <tidybuffio.h>
 
 #define handlerPresent(obj, name) (has_property(obj, name) == EJ_PROP_FUNCTION)
 
@@ -41,6 +42,8 @@ static char *preamble;
 static int preamble_l;
 static uchar browseLocal;
 static bool showTidyMessages;
+static void tidyDumpBody(void);
+static void tidyDumpNode(TidyNode tnod, int indent);
 
 /* Like the default tidy error reporter, except messages are suppressed
  * unless we are browsing a local file, and they are sent to stdout
@@ -1695,6 +1698,10 @@ static char *encodeTags(char *html, bool fromSource)
 		showTidyMessages = false;
 	tidySetCharEncoding(tdoc, (cons_utf8 ? "utf8" : "latin1"));
 	tidyParseString(tdoc, html);
+	if (debugLevel >= 5) {
+		tidyCleanAndRepair(tdoc);
+		tidyDumpBody();
+	}
 
 	ns = initString(&ns_l);
 	preamble = initString(&preamble_l);
@@ -2640,6 +2647,88 @@ endtag:
 
 	return ns;
 }				/* encodeTags */
+
+static void tidyDumpBody(void)
+{
+/* just for debugging - we only reach this routine at db5 or above */
+	tidyDumpNode(tidyGetBody(tdoc), 0);
+}
+
+static void tidyDumpNode(TidyNode tnod, int indent)
+{
+/* just for debugging - we only reach this routine at db5 or above */
+	TidyNode child;
+	TidyBuffer tnv = { 0 };	/* text-node value */
+	for (child = tidyGetChild(tnod); child; child = tidyGetNext(child)) {
+		ctmbstr name;
+		tidyBufClear(&tnv);
+		switch (tidyNodeGetType(child)) {
+		case TidyNode_Root:
+			name = "Root";
+			break;
+		case TidyNode_DocType:
+			name = "DOCTYPE";
+			break;
+		case TidyNode_Comment:
+			name = "Comment";
+			break;
+		case TidyNode_ProcIns:
+			name = "Processing Instruction";
+			break;
+		case TidyNode_Text:
+			name = "Text";
+			break;
+		case TidyNode_CDATA:
+			name = "CDATA";
+			break;
+		case TidyNode_Section:
+			name = "XML Section";
+			break;
+		case TidyNode_Asp:
+			name = "ASP";
+			break;
+		case TidyNode_Jste:
+			name = "JSTE";
+			break;
+		case TidyNode_Php:
+			name = "PHP";
+			break;
+		case TidyNode_XmlDecl:
+			name = "XML Declaration";
+			break;
+		case TidyNode_Start:
+		case TidyNode_End:
+		case TidyNode_StartEnd:
+		default:
+			name = tidyNodeGetName(child);
+			break;
+		}
+		assert(name != NULL);
+		printf("Node(%d): %s\n", (indent / 4), ((char *)name));
+		if (debugLevel >= 6) {
+/* the ifs could be combined with && */
+			if (stringEqual(((char *)name), "Text")) {
+				tidyNodeGetText(tdoc, child, &tnv);
+				printf("Text: %s", tnv.bp);
+/* no trailing newline because it appears that there already is one */
+			}
+		}
+
+/* Get the first attribute for the node */
+		TidyAttr tattr = tidyAttrFirst(child);
+		while (tattr != NULL) {
+/* Print the node and its attribute */
+			printf("%s = %s\n", tidyAttrName(tattr),
+			       tidyAttrValue(tattr));
+/* Get the next attribute */
+			tattr = tidyAttrNext(tattr);
+		}
+		tidyDumpNode(child, indent + 4);
+	}
+	if (tnv.size > 0) {
+		tidyBufFree(&tnv);
+	}
+}				/* tidyDumpNode */
 
 void preFormatCheck(int tagno, bool * pretag, bool * slash)
 {
