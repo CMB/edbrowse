@@ -41,7 +41,6 @@ static int radio_l;
 static char *preamble;
 static int preamble_l;
 static uchar browseLocal;
-static bool showTidyMessages;
 static void tidyDumpBody(void);
 static void tidyDumpNode(TidyNode tnod, int indent);
 
@@ -51,7 +50,7 @@ static void tidyDumpNode(TidyNode tnod, int indent);
 static Bool tidyError(TidyDoc tdoc, TidyReportLevel lvl,
 		      uint line, uint col, ctmbstr mssg)
 {
-	if (showTidyMessages)
+	if (debugLevel >= 3)
 		printf("line %d column %d: %s\n", line, col, mssg);
 	return no;
 }				/* tidyError */
@@ -1690,12 +1689,6 @@ static char *encodeTags(char *html, bool fromSource)
 
 	tdoc = tidyCreate();
 	tidySetReportFilter(tdoc, tidyError);
-	showTidyMessages = false;
-	if (browseLocal && fromSource)
-		showTidyMessages = true;
-/* special string in the filename suppresses the messages */
-	if (cw->fileName && strstr(cw->fileName, "ntdymsg"))
-		showTidyMessages = false;
 	tidySetCharEncoding(tdoc, (cons_utf8 ? "utf8" : "latin1"));
 	tidyParseString(tdoc, html);
 	if (debugLevel >= 5) {

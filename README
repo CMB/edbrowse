@@ -125,6 +125,7 @@ Debug levels:
 and http redirection.
 3: javascript execution and errors.
    cookies, http codes, form data, and sql statements logged.
+   html syntax errors as per tidy5.
 4: show the socket connections, and the http headers in and out
 5: messages to and from the javascript process, url resolution
 6: show javascript to be executed
