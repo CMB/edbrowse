@@ -2708,7 +2708,7 @@ static void tidyDumpNode(TidyNode tnod, int indent)
 		if (debugLevel >= 6) {
 /* the ifs could be combined with && */
 			if (stringEqual(((char *)name), "Text")) {
-				tidyNodeGetText(tdoc, child, &tnv);
+				tidyNodeGetValue(tdoc, child, &tnv);
 				printf("Text: %s", tnv.bp);
 /* no trailing newline because it appears that there already is one */
 			}
