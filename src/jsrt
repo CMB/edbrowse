@@ -298,7 +298,7 @@ onload=formLoad(this.name) onunload=formUnload(this.name)>
 function catdog(item) { alert('fluffy'); if(item.checked&&document.questionnaire.dog.checked) alert('chased by dog'); }
 
 // Let javascript generate another javascript tag
-document.writeln("<" + "script language=JavaScript>document.writeln('Subject: ');</" + "script" + ">");
+document.writeln("<" + "script language=JavaScript>document.writeln('Subject: ');<" + "/script" + ">");
 </script>
 
 <input type='hidden' name='id' value='eklhad'>
@@ -660,7 +660,7 @@ var onlv = 77;
 function lastScript() {
 /* This generates a tidy5 error,
  * but I'm leaving it as is to look at and test the resulting node tree */
-document.writeln('<A href=custer>Last Link</A>');
+document.writeln('<A href=custer>Last Link<' + '/A>');
 }
 
 setTimeout("joker()", 750);
