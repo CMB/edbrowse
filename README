@@ -207,7 +207,7 @@ Also some international print routines to display the correct string
 according to your locale.
 
 jseng-moz.cpp:
-The javascript engine, built around the mozilla js library.
+The javascript engine built around the mozilla js library.
 Manage all the js objects corresponding to the web page in edbrowse.
 This is a stand alone process,
 though it may share some sourcefiles with edbrowse, e.g. stringfile.c.
@@ -215,7 +215,13 @@ The resulting program is edbrowse-js,
 and it must be in the same path as edbrowse.
 All the js details are hidden in this file.
 this is encapsulation, hiding the js library from the rest of edbrowse.
-It might be possible, for instance, to build jseng-v8.c, based upon v8.
+It might be possible, for instance, to build jseng-v8.c, based upon v8 etc.
+
+html-tidy.c:
+Use tidy5 to parse html and return a tree of nodes.
+This is another form of encapsulation.
+We could, in the future, write html-foo.c, having the same interface,
+if we prefer parser foo instead.
 
 startwindow.js:
 Javascript that is run at the start of each session.
