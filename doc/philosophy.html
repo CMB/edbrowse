@@ -1,21 +1,33 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <HTML>
-<FONT face=Arial,Helvetica,sans-serif size=4>
 <HEAD>
 <TITLE> The Command Line Philosophy </TITLE>
 <LINK REL="SHORTCUT ICON" href="x.ico">
+        <style type="text/css">
+body { background: white; color: black; font-family: Arial,Helvetica,sans-serif; font-size: 1.0em; }
+a:link { color: red; }
+a:active { color: green; }
+a:visited { color: red; }
+a:hover { color: green; }
+h2 { text-align: center; color: navy; font-size: 1.6em; }
+h3 { text-align: center; color: darkslateblue; font-size: 1.0em; }
+h4 { text-align: center; color: royalblue; font-size: 1.0em; }
+hr { border-style: solid; color: black; height: 2px; }
+p.cen { text-align: center; }
+</style>
 </HEAD>
-<BODY bgcolor=white text=black link=red vlink=red alink=navy>
+<BODY>
 
-<H2 align=center> Command Line Programs for the Blind </H2>
-<H4 align=center> by Karl Dahlke </H4>
+<H2> Command Line Programs for the Blind </H2>
+<H4> by Karl Dahlke </H4>
 
-<H3 align=center> Introduction </H3>
+<H3> Introduction </H3>
 
 Word processors, Internet browsers, and email clients typically present information in two dimensions,
 spreading text and icons across the screen.&nbsp;
-This interface is remarkably efficient,
+This interface is remarkably efficient
 thanks to the parallel processing capabilities of the retina and the visual cortex.&nbsp;
-In fact, this screen to brain interface is so efficient,
+In fact this screen to brain interface is so efficient,
 there is no need to count the bits as they fly by.&nbsp;
 Amateur webmasters and professional software developers
 routinely exploit this high band width channel, which is almost "too cheap to meter".&nbsp;
@@ -29,10 +41,8 @@ He is forced to read every word on the page, using a voice synthesizer or braill
 These adapters are imperfect at best,
 as they ratchet the flow of information down to an agonizing crawl.&nbsp;
 By analogy, a high speed cable modem has been replaced with a dial-up connection,
-thus turning a rich multimedia experience into an exercise in frustration and futility.&nbsp;
-Is there a practical alternative?
-
-<P>
+turning a rich multimedia experience into an exercise in frustration and futility.&nbsp;
+Is there a practical alternative?&nbsp;
 I believe there is, but certain critical applications must be rewritten from the ground up.&nbsp;
 To this end, I have developed a combination editor/browser called edbrowse, which is 100% text based.&nbsp;
 Output is measured and conserved like a precious commodity
@@ -53,7 +63,7 @@ with some common sense restrictions on the underlying html and javascript,
 it is easily adapted to a wide range of disabilities.&nbsp;
 Each user employs the browser that caters to his particular needs and preferences.&nbsp;
 The interface is automatically tailored to the individual -
-no additional programming is required.&nbsp;
+no additional programming required.&nbsp;
 The semantics of the data, and its representation on the screen, or in speech,
 or on a braille display, have been neatly separated.&nbsp;
 Of course this approach doesn't work for all applications,
@@ -74,26 +84,12 @@ text, headings, and hyperlinks to improve the contrast,
 while A user with low vision might increase the font size.&nbsp;
 Disabled users,
 and folks who simply prefer their text in a particular font,
-are hoping for a software revolution,
+are hoping for a software revolution
 that sequesters functionality within the application,
 and leaves the details of the interface unspecified,
 to be determined by the wants and needs of the individual.
 
-<P>
-Google is taking the lead in this effort.&nbsp;
-The services that are available through code.google.com
-use streaming xml data,
-without mandating a particular client.&nbsp;
-You'll never see, "This website is best viewed with Internet Explorer version x or higher."&nbsp;
-Third parties can develop tailor-made interfaces that meet their needs,
-provided these programs follow
-<a href=http://code.google.com/apis/gdata/basics.html>
-Google's instructions</A>
-for transferring data to and from the server.&nbsp;
-Individuals are already constructing interfaces that work well for them,
-giving them equal access to Google's broad range of services.
-
-<H3 align=center> The Early Human-Machine Interface </H3>
+<H3> The Early Human-Machine Interface </H3>
 
 Today's computer professionals, with laptops in hand, can hardly imagine the awkward interfaces that prior generations had to endure.&nbsp;
 When I was a freshman at Michigan State University,
@@ -204,9 +200,9 @@ yet the interface was still the same.&nbsp;
 A user types a command, and the computer responds on the next line.&nbsp;
 The dialog continues.
 
-<H3 align=center> Early Editors and Word Processors </H3>
+<H3> Early Editors and Word Processors </H3>
 
-When I began my career at AT&T Bell Labs,
+When I began my career at AT&amp;T Bell Labs,
 I learned to use the standard Unix text editor, which is simply called ed.&nbsp;
 This is a command line program, consistent with the interface of its day.&nbsp;
 If you want to see the seventh line in a file, type 7 and hit return.&nbsp;
@@ -240,7 +236,7 @@ and to think otherwise is to live in a state of denial.&nbsp;
 So I continued to use ed and nroff to create programs and documents for Bell Labs.&nbsp;
 I even ported ed to the IBM PC, thus giving me the same linear interface at work and at home.
 
-<H3 align=center> Accessing the Internet </H3>
+<H3> Accessing the Internet </H3>
 
 Fast forward 15 years,
 and the Internet consists of web pages that are text based, with embedded formatting directives that are similar to nroff.&nbsp;
@@ -306,7 +302,7 @@ Compared to other browsers,
 edbrowse demands more input, in the form of entered commands, and generates less output;
 which is precisely the paradigm for a one dimensional channel such as speech or braille.
 
-<H3 align=center> System Administration </H3>
+<H3> System Administration </H3>
 
 We recently purchased a Mac, and after I learned how to log in remotely from my Linux machine,
 I was able to perform all sorts of printer administration tasks,
@@ -345,7 +341,7 @@ If the firewall permits, I could access the printers on your box by typing http:
 There is no need to log in remotely and run edbrowse on your computer,
 which may not be practical in any case.
 
-<H3 align=center> Other Applications </H3>
+<H3> Other Applications </H3>
 
 Some applications cannot be operated effectively through a browser,
 and edbrowse does not claim to be the universal solution to accessibility.&nbsp;
@@ -382,7 +378,7 @@ generate html or xml,
 which gives the user control over his interface
 through specialized clients.
 
-<H3 align=center> In the Background </H3>
+<H3> In the Background </H3>
 
 Although edbrowse was designed to make the Internet accessible to the disabled community,
 it has some unique features which have attracted the attention of Unix administrators and developers.&nbsp;
@@ -400,7 +396,7 @@ a distribution aimed at system administrators,
 was the first to include edbrowse in its standard release.&nbsp;
 Others, such as debian, and even Free BSD, now offer edbrowse in their distributions.
 
-<H3 align=center> Summary </H3>
+<H3> Summary </H3>
 
 Although edbrowse has become a useful tool for batch jobs on the Internet,
 the main focus continues to be accessibility.&nbsp;
@@ -423,5 +419,5 @@ said it best.&nbsp;
 "The overall vision must be one of a society in which everyone (disabled and
 non-disabled alike) can flourish and participate fully as equal citizens."
 
-</BODY></font>
+</BODY>
 </html>
