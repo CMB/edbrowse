@@ -17,8 +17,33 @@ edbrowse bool true false.
 /* the tidy structure corresponding to the html */
 static TidyDoc tdoc;
 
-static void tidyDumpBody(void);
-static void tidyDumpNode(TidyNode tnod, int indent);
+/* traverse the tidy tree with a callback function */
+typedef void (*nodeFunction) (TidyNode node, int level);
+static nodeFunction traverse_callback;
+/* possible callback functions */
+static void printNode(TidyNode node, int level);
+
+static void traverseNode(TidyNode node, int level)
+{
+	TidyNode child;
+
+/* first the callback function */
+	(*traverse_callback) (node, level);
+
+/* and now the children */
+	for (child = tidyGetChild(node); child; child = tidyGetNext(child))
+		traverseNode(child, level + 1);
+}				/* traverseNode */
+
+static void traverseBody(void)
+{
+	traverseNode(tidyGetBody(tdoc), 0);
+}				/* traverseBody */
+
+static void traverseHead(void)
+{
+	traverseNode(tidyGetHead(tdoc), 0);
+}				/* traverseHead */
 
 /* Like the default tidy error reporter, except messages are suppressed
  * unless debugLevel >= 3, and they are sent to stdout
@@ -44,8 +69,11 @@ void html2nodes(const char *htmltext,
 
 	tidyParseString(tdoc, htmltext);
 	tidyCleanAndRepair(tdoc);
-	if (debugLevel >= 5)
-		tidyDumpBody();
+	if (debugLevel >= 5) {
+		traverse_callback = printNode;
+		traverseHead();
+		traverseBody();
+	}
 
 /* loop through tidy nodes and build our nodes, not yet implemented */
 	*num_nodes = 0;
@@ -54,84 +82,72 @@ void html2nodes(const char *htmltext,
 	tidyRelease(tdoc);
 }				/* html2nodes */
 
-static void tidyDumpBody(void)
+/* this is strictly for debugging, level >= 5 */
+static void printNode(TidyNode node, int level)
 {
-/* just for debugging - we only reach this routine at db5 or above */
-	tidyDumpNode(tidyGetBody(tdoc), 0);
-}
+	ctmbstr name;
 
-static void tidyDumpNode(TidyNode tnod, int indent)
-{
-/* just for debugging - we only reach this routine at db5 or above */
-	TidyNode child;
-	TidyBuffer tnv = { 0 };	/* text-node value */
-	for (child = tidyGetChild(tnod); child; child = tidyGetNext(child)) {
-		ctmbstr name;
-		tidyBufClear(&tnv);
-		switch (tidyNodeGetType(child)) {
-		case TidyNode_Root:
-			name = "Root";
-			break;
-		case TidyNode_DocType:
-			name = "DOCTYPE";
-			break;
-		case TidyNode_Comment:
-			name = "Comment";
-			break;
-		case TidyNode_ProcIns:
-			name = "Processing Instruction";
-			break;
-		case TidyNode_Text:
-			name = "Text";
-			break;
-		case TidyNode_CDATA:
-			name = "CDATA";
-			break;
-		case TidyNode_Section:
-			name = "XML Section";
-			break;
-		case TidyNode_Asp:
-			name = "ASP";
-			break;
-		case TidyNode_Jste:
-			name = "JSTE";
-			break;
-		case TidyNode_Php:
-			name = "PHP";
-			break;
-		case TidyNode_XmlDecl:
-			name = "XML Declaration";
-			break;
-		case TidyNode_Start:
-		case TidyNode_End:
-		case TidyNode_StartEnd:
-		default:
-			name = tidyNodeGetName(child);
-			break;
-		}
-		assert(name != NULL);
-		printf("Node(%d): %s\n", (indent / 4), ((char *)name));
-		if (debugLevel >= 6) {
+	switch (tidyNodeGetType(node)) {
+	case TidyNode_Root:
+		name = "Root";
+		break;
+	case TidyNode_DocType:
+		name = "DOCTYPE";
+		break;
+	case TidyNode_Comment:
+		name = "Comment";
+		break;
+	case TidyNode_ProcIns:
+		name = "Processing Instruction";
+		break;
+	case TidyNode_Text:
+		name = "Text";
+		break;
+	case TidyNode_CDATA:
+		name = "CDATA";
+		break;
+	case TidyNode_Section:
+		name = "XML Section";
+		break;
+	case TidyNode_Asp:
+		name = "ASP";
+		break;
+	case TidyNode_Jste:
+		name = "JSTE";
+		break;
+	case TidyNode_Php:
+		name = "PHP";
+		break;
+	case TidyNode_XmlDecl:
+		name = "XML Declaration";
+		break;
+	case TidyNode_Start:
+	case TidyNode_End:
+	case TidyNode_StartEnd:
+	default:
+		name = tidyNodeGetName(node);
+		break;
+	}
+	assert(name != NULL);
+	printf("Node(%d): %s\n", level, ((char *)name));
+	if (debugLevel >= 6) {
 /* the ifs could be combined with && */
-			if (stringEqual(((char *)name), "Text")) {
-				tidyNodeGetValue(tdoc, child, &tnv);
-				printf("Text: %s", tnv.bp);
-/* no trailing newline because it appears that there already is one */
-			}
+		if (stringEqual(((char *)name), "Text")) {
+			TidyBuffer tnv = { 0 };	/* text-node value */
+			tidyBufClear(&tnv);
+			tidyNodeGetValue(tdoc, node, &tnv);
+			printf("Text: %s\n", tnv.bp);
+			if (tnv.size > 0)
+				tidyBufFree(&tnv);
 		}
+	}
 
 /* Get the first attribute for the node */
-		TidyAttr tattr = tidyAttrFirst(child);
-		while (tattr != NULL) {
+	TidyAttr tattr = tidyAttrFirst(node);
+	while (tattr != NULL) {
 /* Print the node and its attribute */
-			printf("%s = %s\n", tidyAttrName(tattr),
-			       tidyAttrValue(tattr));
+		printf("@%s = %s\n", tidyAttrName(tattr), tidyAttrValue(tattr));
 /* Get the next attribute */
-			tattr = tidyAttrNext(tattr);
-		}
-		tidyDumpNode(child, indent + 4);
+		tattr = tidyAttrNext(tattr);
 	}
-	if (tnv.size > 0) {
-		tidyBufFree(&tnv);
-	}
-}				/* tidyDumpNode */
+}				/* printNode */
