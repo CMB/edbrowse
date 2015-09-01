@@ -22,6 +22,7 @@ typedef void (*nodeFunction) (TidyNode node, int level, bool opentag);
 static nodeFunction traverse_callback;
 /* possible callback functions */
 static void printNode(TidyNode node, int level, bool opentag);
+static void convertNode(TidyNode node, int level, bool opentag);
 
 static void traverseNode(TidyNode node, int level)
 {
@@ -61,9 +62,7 @@ static Bool tidyErrorHandler(TidyDoc tdoc, TidyReportLevel lvl,
 }				/* tidyErrorHandler */
 
 /* the entry point */
-void html2nodes(const char *htmltext,
-/* result parameters */
-		int *num_nodes, struct htmlTag **nodelist)
+void html2nodes(const char *htmltext)
 {
 	tdoc = tidyCreate();
 	tidySetReportFilter(tdoc, tidyErrorHandler);
@@ -77,9 +76,10 @@ void html2nodes(const char *htmltext,
 		traverseBody();
 	}
 
-/* loop through tidy nodes and build our nodes, not yet implemented */
-	*num_nodes = 0;
-	*nodelist = 0;
+/* convert tidy nodes into edbrowse nodes */
+	traverse_callback = convertNode;
+	traverseHead();
+	traverseBody();
 
 	tidyRelease(tdoc);
 }				/* html2nodes */
@@ -158,3 +158,66 @@ static void printNode(TidyNode node, int level, bool opentag)
 		tattr = tidyAttrNext(tattr);
 	}
 }				/* printNode */
+
+static void convertNode(TidyNode node, int level, bool opentag)
+{
+	ctmbstr name;
+	TidyAttr tattr;
+	struct htmlTag *t;
+	int nattr;		/* number of attributes */
+	int i;
+
+	switch (tidyNodeGetType(node)) {
+	case TidyNode_Text:
+		name = "@Text";
+		break;
+	case TidyNode_Start:
+	case TidyNode_End:
+	case TidyNode_StartEnd:
+		name = tidyNodeGetName(node);
+		break;
+	default:
+		return;
+	}
+
+	t = newTag((char *)name);
+	if (!t)
+		return;
+
+	if (!opentag) {
+		t->slash = true;
+		return;
+	}
+
+/* this is the open tag, set the attributes */
+/* special case for text tag */
+	if (t->action == TAGACT_TEXT) {
+		TidyBuffer tnv = { 0 };	/* text-node value */
+		tidyBufClear(&tnv);
+		tidyNodeGetValue(tdoc, node, &tnv);
+		if (tnv.size > 0) {
+			t->textval = cloneString(tnv.bp);
+			tidyBufFree(&tnv);
+		}
+	}
+
+	nattr = 0;
+	tattr = tidyAttrFirst(node);
+	while (tattr != NULL) {
+		++nattr;
+		tattr = tidyAttrNext(tattr);
+	}
+
+	t->attributes = allocMem(sizeof(char *) * (nattr + 1));
+	t->atvals = allocMem(sizeof(char *) * (nattr + 1));
+	i = 0;
+	tattr = tidyAttrFirst(node);
+	while (tattr != NULL) {
+		t->attributes[i] = cloneString(tidyAttrName(tattr));
+		t->atvals[i] = cloneString(tidyAttrValue(tattr));
+		++i;
+		tattr = tidyAttrNext(tattr);
+	}
+	t->attributes[i] = 0;
+	t->atvals[i] = 0;
+}				/* convertNode */

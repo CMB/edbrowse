@@ -191,6 +191,7 @@ static const struct tagInfo elements[] = {
 	{"CAPTION", "a caption", TAGACT_NOP, 3, 5, 0},
 	{"HEAD", "the html header information", TAGACT_HEAD, 1, 0, 13},
 	{"BODY", "the html body", TAGACT_BODY, 1, 0, 13},
+	{"@TEXT", "a text section", TAGACT_TEXT, 0, 0, 0},
 	{"BGSOUND", "background music", TAGACT_MUSIC, 0, 0, 5},
 	{"AUDIO", "audio passage", TAGACT_MUSIC, 0, 0, 5},
 	{"META", "a meta tag", TAGACT_META, 0, 0, 12},
@@ -294,13 +295,34 @@ void freeTags(struct ebWindow *w)
 
 	e = w->tags;
 	for (i = 0; i < w->numTags; ++i, ++e) {
+		char **a;
 		t = *e;
 		nzFree(t->attrib);
+		nzFree(t->textval);
 		nzFree(t->name);
 		nzFree(t->id);
 		nzFree(t->value);
 		nzFree(t->href);
 		nzFree(t->classname);
+
+		a = (char **)t->attributes;
+		if (a) {
+			while (*a) {
+				nzFree(*a);
+				++a;
+			}
+			free(t->attributes);
+		}
+
+		a = (char **)t->atvals;
+		if (a) {
+			while (*a) {
+				nzFree(*a);
+				++a;
+			}
+			free(t->atvals);
+		}
+
 		free(t);
 	}
 
@@ -1670,8 +1692,28 @@ static char *encodeTags(char *html, bool fromSource)
 	int intable = 0, inrow = 0;
 	bool tdfirst;
 
-/* call the tidy parser, which doesn't return anything yet */
-	html2nodes(html, &j, &t);
+/* remember how many tags we had to this point */
+	l = cw->numTags;
+/* call the tidy parser to build the html nodes */
+	html2nodes(html);
+/* nodes aren't being used yet, just NOP them out */
+	for (j = l; j < cw->numTags; ++j) {
+		t = cw->tags[j];
+/* Some things we might do in the future */
+		if (!t->slash) {
+/* mark if certain attributes are present */
+			if (stringInListCI(t->attributes, "onclick"))
+				t->onclick = true;
+			if (stringInListCI(t->attributes, "onchange"))
+				t->onchange = true;
+			if (stringInListCI(t->attributes, "onsubmit"))
+				t->onsubmit = true;
+			if (stringInListCI(t->attributes, "onreset"))
+				t->onreset = true;
+		}
+/* turn the tag into a no-op tag, we're still using the old html parser */
+		t->action = TAGACT_NOP;
+	}
 
 	ns = initString(&ns_l);
 	preamble = initString(&preamble_l);

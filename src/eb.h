@@ -409,6 +409,9 @@ struct htmlTag {
 	int lic;		/* list item count, highly overloaded */
 	int action;
 	const struct tagInfo *info;
+	char *textval;	/* for text tags only */
+	const char **attributes;
+	const char **atvals;
 /* the form that owns this input tag */
 	struct htmlTag *controller;
 	bool slash:1;		/* as in </A> */
@@ -445,7 +448,7 @@ enum {
 	TAGACT_ZERO, TAGACT_A, TAGACT_INPUT, TAGACT_TITLE, TAGACT_TA,
 	TAGACT_BUTTON, TAGACT_SELECT, TAGACT_OPTION,
 	TAGACT_NOP, TAGACT_JS, TAGACT_H, TAGACT_SUB, TAGACT_SUP, TAGACT_OVB,
-	TAGACT_DW, TAGACT_BODY, TAGACT_HEAD,
+	TAGACT_DW, TAGACT_TEXT, TAGACT_BODY, TAGACT_HEAD,
 	TAGACT_MUSIC, TAGACT_IMAGE, TAGACT_BR, TAGACT_IBR, TAGACT_P,
 	TAGACT_BASE, TAGACT_META, TAGACT_PRE,
 	TAGACT_DT, TAGACT_LI, TAGACT_HR, TAGACT_TABLE, TAGACT_TR, TAGACT_TD,

@@ -142,7 +142,7 @@ void browseError(int msg, ...) ;
 void runningError(int msg, ...) ;
 
 /* sourcefile=html-tidy.c */
-void html2nodes(const char *htmltext, int *num_nodes, struct htmlTag **nodelist);
+void html2nodes(const char *htmltext);
 
 /* sourcefile=http.c */
 size_t eb_curl_callback(char *incoming, size_t size, size_t nitems, struct eb_curl_callback_data *data) ;
