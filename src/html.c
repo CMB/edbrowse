@@ -1650,6 +1650,9 @@ static int tree_pos;
 static void intoTree(struct htmlTag *parent)
 {
 	struct htmlTag *t, *prev = 0;
+	int j;
+	const char *v;
+
 	while (tree_pos < cw->numTags) {
 		t = cw->tags[tree_pos++];
 		if (t->slash)
@@ -1661,6 +1664,48 @@ static void intoTree(struct htmlTag *parent)
 			parent->firstchild = t;
 		}
 		prev = t;
+
+/* check for some common attributes here */
+		if (stringInListCI(t->attributes, "onclick") >= 0)
+			t->onclick = true;
+		if (stringInListCI(t->attributes, "onchange") >= 0)
+			t->onchange = true;
+		if (stringInListCI(t->attributes, "onsubmit") >= 0)
+			t->onsubmit = true;
+		if (stringInListCI(t->attributes, "onreset") >= 0)
+			t->onreset = true;
+		if (stringInListCI(t->attributes, "checked") >= 0)
+			t->checked = t->rchecked = true;
+		if (stringInListCI(t->attributes, "readonly") >= 0)
+			t->rdonly = true;
+		if (stringInListCI(t->attributes, "multiple") >= 0)
+			t->multiple = true;
+		if ((j = stringInListCI(t->attributes, "name")) >= 0) {
+/* temporarily, make another copy; some day we'll just point to the value */
+			v = t->atvals[j];
+			if (!*v)
+				v = 0;
+			t->name = cloneString(v);
+		}
+		if ((j = stringInListCI(t->attributes, "id")) >= 0) {
+			v = t->atvals[j];
+			if (!*v)
+				v = 0;
+			t->id = cloneString(v);
+		}
+		if ((j = stringInListCI(t->attributes, "class")) >= 0) {
+			v = t->atvals[j];
+			if (!*v)
+				v = 0;
+			t->classname = cloneString(v);
+		}
+		if ((j = stringInListCI(t->attributes, "value")) >= 0) {
+			v = t->atvals[j];
+			if (!*v)
+				v = 0;
+			t->value = cloneString(v);
+		}
+
 		intoTree(t);
 	}
 }				/* intoTree */
@@ -1725,18 +1770,6 @@ static char *encodeTags(char *html, bool fromSource)
 /* nodes aren't being used yet, just NOP them out */
 	for (j = l; j < cw->numTags; ++j) {
 		t = cw->tags[j];
-		if (!t->slash) {
-/* mark if certain attributes are present */
-			if (stringInListCI(t->attributes, "onclick"))
-				t->onclick = true;
-			if (stringInListCI(t->attributes, "onchange"))
-				t->onchange = true;
-			if (stringInListCI(t->attributes, "onsubmit"))
-				t->onsubmit = true;
-			if (stringInListCI(t->attributes, "onreset"))
-				t->onreset = true;
-		}
-/* turn the tag into a no-op tag, we're still using the old html parser */
 		t->action = TAGACT_NOP;
 	}
 
