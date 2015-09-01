@@ -1645,6 +1645,26 @@ static void scriptsPending(void)
 		objectScript(obj);
 }				/* scriptsPending */
 
+/* Convert a list of nodes, properly nested open close, into a tree */
+static int tree_pos;
+static void intoTree(struct htmlTag *parent)
+{
+	struct htmlTag *t, *prev = 0;
+	while (tree_pos < cw->numTags) {
+		t = cw->tags[tree_pos++];
+		if (t->slash)
+			return;
+		t->parent = parent;
+		if (prev) {
+			prev->sibling = t;
+		} else if (parent) {
+			parent->firstchild = t;
+		}
+		prev = t;
+		intoTree(t);
+	}
+}				/* intoTree */
+
 /*********************************************************************
 Encode the html tags - parse the web page.
 Always returns a string, even if errors were found.
@@ -1696,10 +1716,15 @@ static char *encodeTags(char *html, bool fromSource)
 	l = cw->numTags;
 /* call the tidy parser to build the html nodes */
 	html2nodes(html);
+
+/* convert the list of nodes, with open close,
+ * like properly nested parentheses, into a tree. */
+	tree_pos = l;
+	intoTree(0);
+
 /* nodes aren't being used yet, just NOP them out */
 	for (j = l; j < cw->numTags; ++j) {
 		t = cw->tags[j];
-/* Some things we might do in the future */
 		if (!t->slash) {
 /* mark if certain attributes are present */
 			if (stringInListCI(t->attributes, "onclick"))
