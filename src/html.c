@@ -1766,6 +1766,8 @@ static char *encodeTags(char *html, bool fromSource)
  * like properly nested parentheses, into a tree. */
 	tree_pos = l;
 	intoTree(0);
+	a = render();
+	nzFree(a);
 
 /* nodes aren't being used yet, just NOP them out */
 	for (j = l; j < cw->numTags; ++j) {

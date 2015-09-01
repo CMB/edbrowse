@@ -144,6 +144,9 @@ void runningError(int msg, ...) ;
 /* sourcefile=html-tidy.c */
 void html2nodes(const char *htmltext);
 
+/* sourcefile=render.c */
+char *render(void);
+
 /* sourcefile=http.c */
 size_t eb_curl_callback(char *incoming, size_t size, size_t nitems, struct eb_curl_callback_data *data) ;
 char *extractHeaderParam(const char *str, const char *item) ;
