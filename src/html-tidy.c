@@ -18,21 +18,23 @@ edbrowse bool true false.
 static TidyDoc tdoc;
 
 /* traverse the tidy tree with a callback function */
-typedef void (*nodeFunction) (TidyNode node, int level);
+typedef void (*nodeFunction) (TidyNode node, int level, bool opentag);
 static nodeFunction traverse_callback;
 /* possible callback functions */
-static void printNode(TidyNode node, int level);
+static void printNode(TidyNode node, int level, bool opentag);
 
 static void traverseNode(TidyNode node, int level)
 {
 	TidyNode child;
 
 /* first the callback function */
-	(*traverse_callback) (node, level);
+	(*traverse_callback) (node, level, true);
 
 /* and now the children */
 	for (child = tidyGetChild(node); child; child = tidyGetNext(child))
 		traverseNode(child, level + 1);
+
+	(*traverse_callback) (node, level, false);
 }				/* traverseNode */
 
 static void traverseBody(void)
@@ -83,9 +85,14 @@ void html2nodes(const char *htmltext,
 }				/* html2nodes */
 
 /* this is strictly for debugging, level >= 5 */
-static void printNode(TidyNode node, int level)
+static void printNode(TidyNode node, int level, bool opentag)
 {
 	ctmbstr name;
+
+	if (!opentag) {
+		puts("}");
+		return;
+	}
 
 	switch (tidyNodeGetType(node)) {
 	case TidyNode_Root:
@@ -129,7 +136,7 @@ static void printNode(TidyNode node, int level)
 		break;
 	}
 	assert(name != NULL);
-	printf("Node(%d): %s\n", level, ((char *)name));
+	printf("Node(%d): %s {\n", level, ((char *)name));
 	if (debugLevel >= 6) {
 /* the ifs could be combined with && */
 		if (stringEqual(((char *)name), "Text")) {
