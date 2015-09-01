@@ -1683,25 +1683,25 @@ static void intoTree(struct htmlTag *parent)
 		if ((j = stringInListCI(t->attributes, "name")) >= 0) {
 /* temporarily, make another copy; some day we'll just point to the value */
 			v = t->atvals[j];
-			if (!*v)
+			if (v && !*v)
 				v = 0;
 			t->name = cloneString(v);
 		}
 		if ((j = stringInListCI(t->attributes, "id")) >= 0) {
 			v = t->atvals[j];
-			if (!*v)
+			if (v && !*v)
 				v = 0;
 			t->id = cloneString(v);
 		}
 		if ((j = stringInListCI(t->attributes, "class")) >= 0) {
 			v = t->atvals[j];
-			if (!*v)
+			if (v && !*v)
 				v = 0;
 			t->classname = cloneString(v);
 		}
 		if ((j = stringInListCI(t->attributes, "value")) >= 0) {
 			v = t->atvals[j];
-			if (!*v)
+			if (v && !*v)
 				v = 0;
 			t->value = cloneString(v);
 		}
