@@ -1705,6 +1705,22 @@ static void intoTree(struct htmlTag *parent)
 				v = 0;
 			t->value = cloneString(v);
 		}
+		if ((j = stringInListCI(t->attributes, "href")) >= 0) {
+			v = t->atvals[j];
+			if (v && !*v)
+				v = 0;
+			t->href = cloneString(v);
+		} else if ((j = stringInListCI(t->attributes, "src")) >= 0) {
+			v = t->atvals[j];
+			if (v && !*v)
+				v = 0;
+			t->href = cloneString(v);
+		} else if ((j = stringInListCI(t->attributes, "action")) >= 0) {
+			v = t->atvals[j];
+			if (v && !*v)
+				v = 0;
+			t->href = cloneString(v);
+		}
 
 		intoTree(t);
 	}
@@ -1767,6 +1783,7 @@ static char *encodeTags(char *html, bool fromSource)
 	tree_pos = l;
 	intoTree(0);
 	a = render();
+	debugPrint(4, "|%s|\n", a);
 	nzFree(a);
 
 /* nodes aren't being used yet, just NOP them out */
@@ -1970,7 +1987,7 @@ nextchar:
 /* close off the title or option */
 			v->balanced = true;
 			ptr = 0;
-			if (currentTitle && !cw->ft)
+			if (currentTitle)
 				ptr = &cw->ft;
 			if (currentOpt)
 				ptr = &v->name;
@@ -1988,13 +2005,9 @@ nextchar:
 					browseError(MSG_OptionComma);
 				}
 				spaceCrunch(a, true, false);
-				*ptr = a;
-
-				if (ptr == &cw->ft) {
-					spaceCrunch(piece, true, true);
-					cw->fto = piece;
-				} else
-					nzFree(piece);
+				if (currentOpt)
+					*ptr = a;
+				nzFree(piece);
 
 				if (currentTitle && isJSAlive)
 					set_property_string(cw->docobj, "title",
@@ -2062,8 +2075,6 @@ nextchar:
 		case TAGACT_TITLE:
 			if (slash)
 				continue;
-			if (cw->ft)
-				browseError(MSG_ManyTitles);
 			offset = strlen(ns);
 			currentTitle = t;
 			continue;
@@ -2682,6 +2693,7 @@ endtag:
 		}		/* loop over all tags */
 	}
 
+	debugPrint(4, "|%s|\n", ns);
 	/* clean up */
 	browseLine = 0;
 	nzFree(html);

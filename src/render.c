@@ -37,23 +37,89 @@ static void traverseAll(void)
 
 /* the new string, the result of the render operation */
 static char *ns;
-int ns_l;
+static int ns_l;
+static bool invisible;
+static struct htmlTag *currentForm, *currentSelect;
+static struct htmlTag *currentTitle, *currentScript;
 
 static void renderNode(struct htmlTag *t, bool opentag)
 {
-/* this is just playing around */
+	int tagno = t->seqno;
+	char hnum[40];		/* hidden number */
+#define ns_hnum() stringAndString(&ns, &ns_l, hnum)
+#define ns_ic() stringAndChar(&ns, &ns_l, InternalCodeChar)
+
+	hnum[0] = 0;
+
 	switch (t->action) {
 	case TAGACT_TEXT:
-		if (opentag && t->textval)
+		if (!opentag)
+			break;
+		if (!t->textval)
+			break;
+		if (currentTitle) {
+			if (!cw->ft)
+				cw->ft = cloneString(t->textval);
+			spaceCrunch(cw->ft, true, false);
+			if (!cw->fto && t->href) {
+				cw->fto = cloneString(t->href);
+				spaceCrunch(cw->fto, true, false);
+			}
+			break;
+		}
+		if (currentScript) {
+			currentScript->textval = cloneString(t->textval);
+			break;
+		}
+		if (!invisible && t->textval)
 			stringAndString(&ns, &ns_l, t->textval);
 		break;
-	}
+
+	case TAGACT_TITLE:
+		if (opentag)
+			currentTitle = t;
+		else
+			currentTitle = 0;
+		break;
+
+	case TAGACT_SCRIPT:
+		if (opentag)
+			currentScript = t;
+		else
+			currentScript = 0;
+		break;
+
+	case TAGACT_A:
+		if (t->href) {
+			if (opentag) {
+				sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
+			} else {
+				sprintf(hnum, "%c0}", InternalCodeChar);
+			}
+			ns_hnum();
+		}
+		break;
+	}			/* switch */
 }				/* renderNode */
 
+/* returns an allocated string */
 char *render(void)
 {
 	ns = initString(&ns_l);
+	invisible = false;
 	traverse_callback = renderNode;
 	traverseAll();
 	return ns;
 }				/* render */
+
+static void jsNode(struct htmlTag *t, bool opentag)
+{
+/* if js is not active then we should even be here, but just in case ... */
+	if (!isJSAlive)
+		return;
+
+/* all the js variables are on the open tag */
+	if (!opentag)
+		return;
+
+}				/* jsNode */

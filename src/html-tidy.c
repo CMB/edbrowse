@@ -61,6 +61,8 @@ static Bool tidyErrorHandler(TidyDoc tdoc, TidyReportLevel lvl,
 	return no;
 }				/* tidyErrorHandler */
 
+static int lastaction;
+
 /* the entry point */
 void html2nodes(const char *htmltext)
 {
@@ -77,6 +79,7 @@ void html2nodes(const char *htmltext)
 	}
 
 /* convert tidy nodes into edbrowse nodes */
+	lastaction = 0;
 	traverse_callback = convertNode;
 	traverseHead();
 	traverseBody();
@@ -159,6 +162,8 @@ static void printNode(TidyNode node, int level, bool opentag)
 	}
 }				/* printNode */
 
+static int lastconverted;
+
 static void convertNode(TidyNode node, int level, bool opentag)
 {
 	ctmbstr name;
@@ -199,7 +204,17 @@ static void convertNode(TidyNode node, int level, bool opentag)
 			t->textval = cloneString(tnv.bp);
 			tidyBufFree(&tnv);
 		}
+		if (lastaction == TAGACT_TITLE) {
+			tidyBufClear(&tnv);
+			tidyNodeGetText(tdoc, node, &tnv);
+			if (tnv.size > 0) {
+				t->href = cloneString(tnv.bp);
+				tidyBufFree(&tnv);
+			}
+		}
 	}
+
+	lastaction = t->action;
 
 	nattr = 0;
 	tattr = tidyAttrFirst(node);
