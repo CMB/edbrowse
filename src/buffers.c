@@ -3418,7 +3418,7 @@ static char *showLinks(void)
 	int a_l;
 	char *a = initString(&a_l);
 	bool click, dclick;
-	char c, *p, *s, *t, *q, *line, *h;
+	char c, *p, *s, *t, *q, *line, *h, *h2;
 	int j, k = 0, tagno;
 	const struct htmlTag *tag;
 
@@ -3476,15 +3476,22 @@ static char *showLinks(void)
 					click ? "onclick" : "ondblclick");
 				stringAndString(&a, &a_l, buf);
 			} else {
-				if (*h)
-					stringAndString(&a, &a_l, h);
+				if (*h) {
+					h2 = htmlEscape(h);
+					stringAndString(&a, &a_l, h2);
+					nzFree(h2);
+				}
 				stringAndString(&a, &a_l, ">\n");
 			}
 
 			nzFree(h);
 /* next line is the description of the bookmark */
-			stringAndBytes(&a, &a_l, p + 1, s - p - 1);
+			h = pullString(p + 1, s - p - 1);
+			h2 = htmlEscape(h);
+			stringAndString(&a, &a_l, h2);
 			stringAndString(&a, &a_l, "\n</a>\n");
+			nzFree(h);
+			nzFree(h2);
 		}		/* loop looking for hyperlinks */
 	}
 
@@ -3494,7 +3501,7 @@ static char *showLinks(void)
 			return 0;
 		}
 
-		h = cloneString(cw->fileName);
+		h = htmlEscape(cw->fileName);
 		debrowseSuffix(h);
 		stringAndString(&a, &a_l, "<a href=");
 		stringAndString(&a, &a_l, h);

@@ -169,6 +169,34 @@ char *percentURL(const char *start, const char *end)
 	return new_copy;
 }				/* percentURL */
 
+/* escape & < > for display on a web page */
+char *htmlEscape(const char *s)
+{
+	char *t;
+	int l;
+	if (!s)
+		return 0;
+	if (!*s)
+		return emptyString;
+	t = initString(&l);
+	for (; *s; ++s) {
+		if (*s == '&') {
+			stringAndString(&t, &l, "&amp;");
+			continue;
+		}
+		if (*s == '<') {
+			stringAndString(&t, &l, "&lt;");
+			continue;
+		}
+		if (*s == '>') {
+			stringAndString(&t, &l, "&gt;");
+			continue;
+		}
+		stringAndChar(&t, &l, *s);
+	}
+	return t;
+}				/* htmlEscape */
+
 /* Decide if it looks like a web url. */
 static bool httpDefault(const char *url)
 {

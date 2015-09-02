@@ -61,10 +61,8 @@ static void renderNode(struct htmlTag *t, bool opentag)
 			if (!cw->ft)
 				cw->ft = cloneString(t->textval);
 			spaceCrunch(cw->ft, true, false);
-			if (!cw->fto && t->href) {
-				cw->fto = cloneString(t->href);
-				spaceCrunch(cw->fto, true, false);
-			}
+			if (!cw->fto)
+				cw->fto = htmlEscape(cw->ft);
 			break;
 		}
 		if (currentScript) {

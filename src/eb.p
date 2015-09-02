@@ -299,6 +299,7 @@ IP32bit tcp_dots_ip(const char *s) ;
 void unpercentURL(char *url) ;
 void unpercentString(char *s) ;
 char *percentURL(const char *start, const char *end);
+char *htmlEscape(const char *s);
 bool isURL(const char *url) ;
 bool isBrowseableURL(const char *url) ;
 bool isDataURI(const char *u);
