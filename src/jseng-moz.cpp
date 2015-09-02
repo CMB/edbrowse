@@ -57,12 +57,6 @@ static void usage(void)
 	exit(1);
 }				/* usage */
 
-/* c++ cares whether it's void * or const void * */
-static void cnzFree(const void *v)
-{
-	nzFree((void *)v);
-}				/* cnzFree */
-
 /* arguments, as indicated by the above */
 static int pipe_in, pipe_out, enginePool;
 

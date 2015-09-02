@@ -575,7 +575,7 @@ static void freeWindow(struct ebWindow *w)
 	freeWindowLines(w->r_map);
 	nzFree(w->dw);
 	nzFree(w->ft);
-	nzFree(w->fto);
+	nzFree(w->hbase);
 	nzFree(w->fd);
 	nzFree(w->fk);
 	nzFree(w->mailInfo);
@@ -2950,8 +2950,8 @@ et_go:
 		cw->dw = 0;
 		nzFree(cw->ft);
 		cw->ft = 0;
-		nzFree(cw->fto);
-		cw->fto = 0;
+		nzFree(cw->hbase);
+		cw->hbase = 0;
 		nzFree(cw->fd);
 		cw->fd = 0;
 		nzFree(cw->fk);
@@ -3507,9 +3507,11 @@ static char *showLinks(void)
 		stringAndString(&a, &a_l, h);
 		stringAndString(&a, &a_l, ">\n");
 /* get text from the html title if you can */
-		s = cw->fto;
+		s = cw->ft;
 		if (s && *s) {
-			stringAndString(&a, &a_l, s);
+			h2 = htmlEscape(s);
+			stringAndString(&a, &a_l, h2);
+			nzFree(h2);
 		} else {
 /* no title - getting the text from the url, very kludgy */
 			s = (char *)getDataURL(h);

@@ -1709,17 +1709,39 @@ static void intoTree(struct htmlTag *parent)
 			v = t->atvals[j];
 			if (v && !*v)
 				v = 0;
-			t->href = cloneString(v);
-		} else if ((j = stringInListCI(t->attributes, "src")) >= 0) {
+			if (v) {
+/* <base> sets the base URL, and should not be resolved */
+				if (t->action != TAGACT_BASE) {
+					v = resolveURL(cw->hbase, v);
+					cnzFree(t->atvals[j]);
+					t->atvals[j] = v;
+				}
+				t->href = cloneString(v);
+			}
+		}
+		if ((j = stringInListCI(t->attributes, "src")) >= 0) {
 			v = t->atvals[j];
 			if (v && !*v)
 				v = 0;
-			t->href = cloneString(v);
-		} else if ((j = stringInListCI(t->attributes, "action")) >= 0) {
+			if (v) {
+				v = resolveURL(cw->hbase, v);
+				cnzFree(t->atvals[j]);
+				t->atvals[j] = v;
+				if (!t->href)
+					t->href = cloneString(v);
+			}
+		}
+		if ((j = stringInListCI(t->attributes, "action")) >= 0) {
 			v = t->atvals[j];
 			if (v && !*v)
 				v = 0;
-			t->href = cloneString(v);
+			if (v) {
+				v = resolveURL(cw->hbase, v);
+				cnzFree(t->atvals[j]);
+				t->atvals[j] = v;
+				if (!t->href)
+					t->href = cloneString(v);
+			}
 		}
 
 		intoTree(t);
@@ -2761,6 +2783,8 @@ char *htmlParse(char *buf, int remote)
 	t = newTag("base");
 	t->href = cloneString(cw->fileName);
 	basehref = t->href;
+/* alternate system used by render() */
+	cw->hbase = cloneString(cw->fileName);
 
 	newbuf = encodeTags(buf, true);
 

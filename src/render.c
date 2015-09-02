@@ -61,8 +61,6 @@ static void renderNode(struct htmlTag *t, bool opentag)
 			if (!cw->ft)
 				cw->ft = cloneString(t->textval);
 			spaceCrunch(cw->ft, true, false);
-			if (!cw->fto)
-				cw->fto = htmlEscape(cw->ft);
 			break;
 		}
 		if (currentScript) {
@@ -96,6 +94,15 @@ static void renderNode(struct htmlTag *t, bool opentag)
 			}
 			ns_hnum();
 		}
+		break;
+
+	case TAGACT_BASE:
+		if (!opentag)
+			break;
+		if (!t->href)
+			break;
+		nzFree(cw->hbase);
+		cw->hbase = cloneString(t->href);
 		break;
 	}			/* switch */
 }				/* renderNode */

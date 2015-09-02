@@ -219,6 +219,7 @@ char *allocString(size_t n) ;
 char *allocZeroString(size_t n) ;
 char *reallocString(void *p, size_t n) ;
 void nzFree(void *s) ;
+void cnzFree(const void *s) ;
 uchar fromHex(char d, char e) ;
 char *appendString(char *s, const char *p) ;
 char *prependString(char *s, const char *p) ;

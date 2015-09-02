@@ -88,6 +88,12 @@ void nzFree(void *s)
 		free(s);
 }				/* nzFree */
 
+/* some compilers care whether it's void * or const void * */
+void cnzFree(const void *v)
+{
+	nzFree((void *)v);
+}				/* cnzFree */
+
 uchar fromHex(char d, char e)
 {
 	d |= 0x20, e |= 0x20;
