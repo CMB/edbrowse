@@ -1715,6 +1715,9 @@ static void intoTree(struct htmlTag *parent)
 					v = resolveURL(cw->hbase, v);
 					cnzFree(t->atvals[j]);
 					t->atvals[j] = v;
+				} else {
+					nzFree(cw->hbase);
+					cw->hbase = cloneString(v);
 				}
 				t->href = cloneString(v);
 			}
@@ -1804,7 +1807,7 @@ static char *encodeTags(char *html, bool fromSource)
  * like properly nested parentheses, into a tree. */
 	tree_pos = l;
 	intoTree(0);
-	a = render();
+	a = render(l);
 	debugPrint(4, "|%s|\n", a);
 	nzFree(a);
 

@@ -23,14 +23,14 @@ static void traverseNode(struct htmlTag *node)
 	(*traverse_callback) (node, false);
 }				/* traverseNode */
 
-static void traverseAll(void)
+static void traverseAll(int start)
 {
 	struct htmlTag *t;
 	int i;
 
-	for (i = 0; i < cw->numTags; ++i) {
+	for (i = start; i < cw->numTags; ++i) {
 		t = cw->tags[i];
-		if (!t->parent)
+		if (!t->parent && !t->slash)
 			traverseNode(t);
 	}
 }				/* traverseAll */
@@ -48,10 +48,14 @@ static void renderNode(struct htmlTag *t, bool opentag)
 	char hnum[40];		/* hidden number */
 #define ns_hnum() stringAndString(&ns, &ns_l, hnum)
 #define ns_ic() stringAndChar(&ns, &ns_l, InternalCodeChar)
+	int j;
+	const struct tagInfo *ti = t->info;
+	int action = t->action;
+	char c;
 
 	hnum[0] = 0;
 
-	switch (t->action) {
+	switch (action) {
 	case TAGACT_TEXT:
 		if (!opentag)
 			break;
@@ -96,24 +100,34 @@ static void renderNode(struct htmlTag *t, bool opentag)
 		}
 		break;
 
-	case TAGACT_BASE:
-		if (!opentag)
+	case TAGACT_BR:
+	case TAGACT_P:
+	case TAGACT_NOP:
+nop:
+		j = ti->para;
+		if (opentag)
+			j &= 3;
+		else
+			j >>= 2;
+		if (!j)
 			break;
-		if (!t->href)
-			break;
-		nzFree(cw->hbase);
-		cw->hbase = cloneString(t->href);
-		break;
+		c = '\f';
+		if (j == 1) {
+			c = '\r';
+			if (action == TAGACT_BR)
+				c = '\n';
+		}
+		stringAndChar(&ns, &ns_l, c);
 	}			/* switch */
 }				/* renderNode */
 
 /* returns an allocated string */
-char *render(void)
+char *render(int start)
 {
 	ns = initString(&ns_l);
 	invisible = false;
 	traverse_callback = renderNode;
-	traverseAll();
+	traverseAll(start);
 	return ns;
 }				/* render */
 
