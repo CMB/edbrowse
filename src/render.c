@@ -42,7 +42,7 @@ static bool invisible;
 static int nopt;		/* number of options */
 static int listnest;		/* count nested lists */
 static struct htmlTag *currentForm, *currentSel, *currentOpt;
-static struct htmlTag *currentTitle, *currentScript;
+static struct htmlTag *currentTitle, *currentScript, *currentTA;
 static char *radioCheck;
 static int radio_l;
 
@@ -182,20 +182,19 @@ static void renderNode(struct htmlTag *t, bool opentag)
 	char *u;
 	struct htmlTag *ltag;	/* list tag */
 
-/*
+#if 0
 	printf("rend %c%s\n", (opentag ? ' ' : '/'), ti->name);
-*/
+#endif
 
 	if (!opentag && ti->bits & TAG_NOSLASH)
 		return;
 
 	hnum[0] = 0;
 	retainTag = true;
-	if (ti->bits & TAG_INVISIBLE)
-		retainTag = false;
 	if (invisible)
 		retainTag = false;
 	if (ti->bits & TAG_INVISIBLE) {
+		retainTag = false;
 		invisible = opentag;
 /* special case for noscript with no js */
 		if (stringEqual(ti->name, "NOSCRIPT") && !cw->jcx)
@@ -222,6 +221,11 @@ static void renderNode(struct htmlTag *t, bool opentag)
 
 		if (currentScript) {
 			currentScript->textval = cloneString(t->textval);
+			break;
+		}
+
+		if (currentTA) {
+			currentTA->value = cloneString(t->textval);
 			break;
 		}
 
@@ -257,7 +261,7 @@ static void renderNode(struct htmlTag *t, bool opentag)
 		break;
 
 	case TAGACT_A:
-		if (t->href) {
+		if (t->href && retainTag) {
 			if (opentag) {
 				sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
 			} else {
@@ -283,10 +287,13 @@ static void renderNode(struct htmlTag *t, bool opentag)
 		else
 			--listnest;
 	case TAGACT_DL:
+	case TAGACT_PRE:
 	case TAGACT_BR:
 	case TAGACT_P:
 	case TAGACT_NOP:
 nop:
+		if (invisible)
+			break;
 		j = ti->para;
 		if (opentag)
 			j &= 3;
@@ -466,6 +473,33 @@ doneSelect:
 			stringAndString(&ns, &ns_l, "\r----------\r");
 		break;
 
+	case TAGACT_TA:
+		if (opentag) {
+			currentTA = t;
+			t->itype = INP_TA;
+			formControl(t, true);
+		} else {
+			currentTA->action = TAGACT_INPUT;
+			if (retainTag) {
+#if 0
+				j = sideBuffer(0, currentTA->value, -1, 0);
+#else
+				j = 0;
+#endif
+				if (j) {
+					currentTA->lic = j;
+					sprintf(hnum, "%c%d<buffer %d%c0>",
+						InternalCodeChar,
+						currentTA->seqno, j,
+						InternalCodeChar);
+				} else
+					strcpy(hnum, "<buffer ?>");
+				ns_hnum();
+			}
+			currentTA = 0;
+		}
+		break;
+
 	}			/* switch */
 }				/* renderNode */
 
@@ -476,7 +510,7 @@ char *render(int start)
 	invisible = false;
 	listnest = 0;
 	currentForm = currentSel = currentOpt = 0;
-	currentTitle = currentScript = 0;
+	currentTitle = currentScript = currentTA = 0;
 	traverse_callback = renderNode;
 	traverseAll(start);
 	return ns;
