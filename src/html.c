@@ -172,7 +172,7 @@ static const struct tagInfo elements[] = {
 	{"TITLE", "the title", TAGACT_TITLE, 3, 0, 9},
 	{"TEXTAREA", "an input text area", TAGACT_TA, 3, 0, 9},
 	{"SELECT", "an option list", TAGACT_SELECT, 3, 0, 9},
-	{"OPTION", "a select option", TAGACT_OPTION, 0, 0, 13},
+	{"OPTION", "a select option", TAGACT_OPTION, 0, 0, 9},
 	{"SUB", "a subscript", TAGACT_SUB, 3, 0, 0},
 	{"SUP", "a superscript", TAGACT_SUP, 3, 0, 0},
 	{"OVB", "an overbar", TAGACT_OVB, 3, 0, 0},
@@ -203,11 +203,11 @@ static const struct tagInfo elements[] = {
 	{"DT", "a term", TAGACT_DT, 1, 2, 13},
 	{"DD", "a definition", TAGACT_DT, 1, 1, 13},
 	{"LI", "a list item", TAGACT_LI, 1, 1, 13},
-	{"UL", "a bullet list", TAGACT_NOP, 3, 5, 9},
+	{"UL", "a bullet list", TAGACT_UL, 3, 10, 9},
 	{"DIR", "a directory list", TAGACT_NOP, 3, 5, 9},
 	{"MENU", "a menu", TAGACT_NOP, 3, 5, 9},
-	{"OL", "a numbered list", TAGACT_NOP, 3, 5, 9},
-	{"DL", "a definition list", TAGACT_NOP, 3, 5, 9},
+	{"OL", "a numbered list", TAGACT_OL, 3, 10, 9},
+	{"DL", "a definition list", TAGACT_DL, 3, 10, 9},
 	{"HR", "a horizontal line", TAGACT_HR, 0, 5, 5},
 	{"FORM", "a form", TAGACT_FORM, 1, 10, 9},
 	{"BUTTON", "a button", TAGACT_INPUT, 0, 0, 13},
@@ -1798,11 +1798,9 @@ static char *encodeTags(char *html, bool fromSource)
  * like properly nested parentheses, into a tree. */
 	tree_pos = l;
 	intoTree(0);
-#if 0
 	a = render(l);
 	debugPrint(4, "|%s|\n", a);
 	nzFree(a);
-#endif
 
 /* nodes aren't being used yet, just NOP them out */
 	for (j = l; j < cw->numTags; ++j) {
@@ -2301,16 +2299,17 @@ plainTag:
 			if (lastact == TAGACT_TD)
 				continue;
 
-		case TAGACT_NOP:
-/* For some reason, we wind up here on <OL> */
-			if (stringEqual(ti->name, "OL")) {
+		case TAGACT_OL:
 /* look for start parameter for numbered list */
+			if (!slash) {
 				a = htmlAttrVal(topAttrib, "start");
 				if (a && (j = stringIsNum(a)) >= 0)
 					t->lic = j - 1;
 				nzFree(a);
 			}
-
+		case TAGACT_UL:
+		case TAGACT_DL:
+		case TAGACT_NOP:
 nop:
 			if (!retainTag)
 				continue;

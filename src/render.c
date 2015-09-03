@@ -40,6 +40,7 @@ static char *ns;
 static int ns_l;
 static bool invisible;
 static int nopt;		/* number of options */
+static int listnest;		/* count nested lists */
 static struct htmlTag *currentForm, *currentSel, *currentOpt;
 static struct htmlTag *currentTitle, *currentScript;
 static char *radioCheck;
@@ -56,6 +57,12 @@ static const char *attribVal(struct htmlTag *t, const char *name)
 		return 0;
 	return v;
 }				/* attribVal */
+
+static bool attribPresent(struct htmlTag *t, const char *name)
+{
+	int j = stringInListCI(t->attributes, name);
+	return (j >= 0);
+}				/* attribPresent */
 
 static void linkinTree(struct htmlTag *parent, struct htmlTag *child)
 {
@@ -81,6 +88,14 @@ static void makeButton(void)
 	t->created = true;
 	linkinTree(currentForm, t);
 }				/* makeButton */
+
+static struct htmlTag *findList(struct htmlTag *t)
+{
+	while (t = t->parent)
+		if (t->action == TAGACT_OL || t->action == TAGACT_UL)
+			return t;
+	return 0;
+}				/* findList */
 
 static void formControl(struct htmlTag *t, bool namecheck)
 {
@@ -165,6 +180,11 @@ static void renderNode(struct htmlTag *t, bool opentag)
 	bool retainTag;
 	const char *a;		/* usually an attribute */
 	char *u;
+	struct htmlTag *ltag;	/* list tag */
+
+/*
+	printf("rend %c%s\n", (opentag ? ' ' : '/'), ti->name);
+*/
 
 	if (!opentag && ti->bits & TAG_NOSLASH)
 		return;
@@ -186,22 +206,39 @@ static void renderNode(struct htmlTag *t, bool opentag)
 	case TAGACT_TEXT:
 		if (!t->textval)
 			break;
+
 		if (currentTitle) {
 			if (!cw->ft)
 				cw->ft = cloneString(t->textval);
 			spaceCrunch(cw->ft, true, false);
 			break;
 		}
+
 		if (currentOpt) {
 			currentOpt->textval = cloneString(t->textval);
 			spaceCrunch(currentOpt->textval, true, false);
 			break;
 		}
+
 		if (currentScript) {
 			currentScript->textval = cloneString(t->textval);
 			break;
 		}
-		if (!invisible && t->textval)
+
+		if (listnest && (ltag = findList(t)) && ltag->post) {
+			char olbuf[20];
+			if (ltag->action == TAGACT_OL) {
+				j = ++ltag->lic;
+				sprintf(olbuf, "%d. ", j);
+			} else {
+				strcpy(olbuf, "* ");
+			}
+			if (!invisible)
+				stringAndString(&ns, &ns_l, olbuf);
+			ltag->post = false;
+		}
+
+		if (!invisible)
 			stringAndString(&ns, &ns_l, t->textval);
 		break;
 
@@ -230,6 +267,22 @@ static void renderNode(struct htmlTag *t, bool opentag)
 		}
 		break;
 
+	case TAGACT_OL:
+/* look for start parameter for numbered list */
+		if (opentag) {
+			a = attribVal(t, "start");
+			if (a && (j = stringIsNum(a)) >= 0)
+				t->lic = j - 1;
+		} else {
+			t->lic = 0;
+		}
+	case TAGACT_UL:
+		t->post = false;
+		if (opentag)
+			++listnest;
+		else
+			--listnest;
+	case TAGACT_DL:
 	case TAGACT_BR:
 	case TAGACT_P:
 	case TAGACT_NOP:
@@ -381,7 +434,7 @@ doneSelect:
 		currentOpt = t;
 		t->controller = currentSel;
 		t->lic = nopt++;
-		if (attribVal(t, "selected")) {
+		if (attribPresent(t, "selected")) {
 			if (currentSel->lic && !currentSel->multiple)
 				debugPrint(3, "multiple options are selected");
 			else {
@@ -403,6 +456,16 @@ doneSelect:
 		formControl(t, true);
 		break;
 
+	case TAGACT_LI:
+		if ((ltag = findList(t)))
+			ltag->post = true;
+		goto nop;
+
+	case TAGACT_HR:
+		if (retainTag)
+			stringAndString(&ns, &ns_l, "\r----------\r");
+		break;
+
 	}			/* switch */
 }				/* renderNode */
 
@@ -411,6 +474,7 @@ char *render(int start)
 {
 	ns = initString(&ns_l);
 	invisible = false;
+	listnest = 0;
 	currentForm = currentSel = currentOpt = 0;
 	currentTitle = currentScript = 0;
 	traverse_callback = renderNode;
