@@ -633,6 +633,12 @@ bool cxQuit(int cx, int action)
 	if (!w)
 		i_printfExit(MSG_QuitNoActive, cx);
 
+/* action = 3 means we can trash data */
+	if (action == 3) {
+		w->changeMode = false;
+		action = 2;
+	}
+
 /* We might be trashing data, make sure that's ok. */
 	if (w->changeMode &&
 /* something in the buffer has changed */
@@ -4747,7 +4753,7 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 	int svcx = context;
 	bool rc;
 	if (cx) {
-		cxQuit(cx, 2);
+		cxQuit(cx, 3);
 	} else {
 		for (cx = 1; cx < MAXSESSION; ++cx)
 			if (!sessionList[cx].lw)
