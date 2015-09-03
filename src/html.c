@@ -976,7 +976,7 @@ char *displayOptions(const struct htmlTag *sel)
 			continue;
 		if (*opt)
 			stringAndChar(&opt, &opt_l, ',');
-		stringAndString(&opt, &opt_l, t->name);
+		stringAndString(&opt, &opt_l, t->textval);
 	}
 
 	return opt;
@@ -995,7 +995,7 @@ static struct htmlTag *locateOptionByName(const struct htmlTag *sel,
 		t = tagList[i];
 		if (t->controller != sel)
 			continue;
-		if (!(s = t->name))
+		if (!(s = t->textval))
 			continue;
 		if (stringEqualCI(s, name)) {
 			em = t;
@@ -1026,7 +1026,7 @@ static struct htmlTag *locateOptionByNum(const struct htmlTag *sel, int n)
 		t = tagList[i];
 		if (t->controller != sel)
 			continue;
-		if (!t->name)
+		if (!t->textval)
 			continue;
 		++cnt;
 		if (cnt == n)
@@ -1057,7 +1057,7 @@ locateOptions(const struct htmlTag *sel, const char *input,
 			set_property_number(sel->jv, "selectedIndex", -1);
 		for (i = 0; i < cw->numTags; ++i) {
 			t = tagList[i];
-			if (t->controller == sel && t->name) {
+			if (t->controller == sel && t->textval) {
 				t->checked = false;
 				if (t->jv && isJSAlive)
 					set_property_bool(t->jv, "selected",
@@ -1110,7 +1110,7 @@ locateOptions(const struct htmlTag *sel, const char *input,
 		if (disp_p) {
 			if (*disp)
 				stringAndChar(&disp, &disp_l, ',');
-			stringAndString(&disp, &disp_l, t->name);
+			stringAndString(&disp, &disp_l, t->textval);
 		}
 
 		if (setcheck) {
@@ -1381,7 +1381,7 @@ static void htmlOption(struct htmlTag *sel, struct htmlTag *v, const char *a)
 		return;
 
 	v->jv = establish_js_option(sel->jv, v->lic);
-	set_property_string(v->jv, "text", v->name);
+	set_property_string(v->jv, "text", v->textval);
 	set_property_string(v->jv, "value", v->value);
 	set_property_string(v->jv, "nodeName", "OPTION");
 	set_property_bool(v->jv, "selected", v->checked);
@@ -1798,9 +1798,11 @@ static char *encodeTags(char *html, bool fromSource)
  * like properly nested parentheses, into a tree. */
 	tree_pos = l;
 	intoTree(0);
+#if 0
 	a = render(l);
 	debugPrint(4, "|%s|\n", a);
 	nzFree(a);
+#endif
 
 /* nodes aren't being used yet, just NOP them out */
 	for (j = l; j < cw->numTags; ++j) {
@@ -2006,7 +2008,7 @@ nextchar:
 			if (currentTitle)
 				ptr = &cw->ft;
 			if (currentOpt)
-				ptr = &v->name;
+				ptr = &v->textval;
 
 			if (ptr) {
 				char *piece = cloneString(ns + offset);
@@ -3065,13 +3067,13 @@ void infShow(int tagno, const char *search)
 		v = tagList[i];
 		if (v->controller != t)
 			continue;
-		if (!v->name)
+		if (!v->textval)
 			continue;
 		++cnt;
-		if (*search && !strstrCI(v->name, search))
+		if (*search && !strstrCI(v->textval, search))
 			continue;
 		show = true;
-		printf("%3d %s\n", cnt, v->name);
+		printf("%3d %s\n", cnt, v->textval);
 	}
 	if (!show) {
 		if (!search)

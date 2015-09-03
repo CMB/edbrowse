@@ -1567,9 +1567,9 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 			changed = true;
 		t->checked = check2;
 		s = get_property_string(oo, "text");
-		if (s && !t->name || !stringEqual(t->name, s)) {
-			nzFree(t->name);
-			t->name = s;
+		if (s && !t->textval || !stringEqual(t->textval, s)) {
+			nzFree(t->textval);
+			t->textval = s;
 			changed = true;
 		} else
 			nzFree(s);
@@ -1603,7 +1603,7 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 			t->lic = i2;
 			t->controller = sel;
 			t->jv = oo;
-			t->name = get_property_string(oo, "text");
+			t->textval = get_property_string(oo, "text");
 			t->value = get_property_string(oo, "value");
 			t->checked = get_property_bool(oo, "selected");
 			if (t->checked) {

@@ -39,7 +39,8 @@ static void traverseAll(int start)
 static char *ns;
 static int ns_l;
 static bool invisible;
-static struct htmlTag *currentForm, *currentSel;
+static int nopt;		/* number of options */
+static struct htmlTag *currentForm, *currentSel, *currentOpt;
 static struct htmlTag *currentTitle, *currentScript;
 static char *radioCheck;
 static int radio_l;
@@ -189,6 +190,11 @@ static void renderNode(struct htmlTag *t, bool opentag)
 			if (!cw->ft)
 				cw->ft = cloneString(t->textval);
 			spaceCrunch(cw->ft, true, false);
+			break;
+		}
+		if (currentOpt) {
+			currentOpt->textval = cloneString(t->textval);
+			spaceCrunch(currentOpt->textval, true, false);
 			break;
 		}
 		if (currentScript) {
@@ -360,6 +366,43 @@ doneSelect:
 		stringAndString(&ns, &ns_l, "0>");
 		break;
 
+	case TAGACT_OPTION:
+		if (!opentag) {
+			currentOpt = 0;
+			break;
+		}
+
+		if (!currentSel) {
+			debugPrint(3,
+				   "option appears outside a select statement");
+			break;
+		}
+
+		currentOpt = t;
+		t->controller = currentSel;
+		t->lic = nopt++;
+		if (attribVal(t, "selected")) {
+			if (currentSel->lic && !currentSel->multiple)
+				debugPrint(3, "multiple options are selected");
+			else {
+				t->checked = t->rchecked = true;
+				++currentSel->lic;
+			}
+		}
+		break;
+
+	case TAGACT_SELECT:
+		if (!opentag) {
+			if (currentSel)
+				goto doneSelect;
+			break;
+		}
+		currentSel = t;
+		nopt = 0;
+		t->itype = INP_SELECT;
+		formControl(t, true);
+		break;
+
 	}			/* switch */
 }				/* renderNode */
 
@@ -368,7 +411,7 @@ char *render(int start)
 {
 	ns = initString(&ns_l);
 	invisible = false;
-	currentForm = currentSel = 0;
+	currentForm = currentSel = currentOpt = 0;
 	currentTitle = currentScript = 0;
 	traverse_callback = renderNode;
 	traverseAll(start);
