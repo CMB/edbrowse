@@ -399,6 +399,16 @@ struct tagInfo {
 	ushort bits;		/* a bunch of boolean attributes */
 };
 
+/* Information on tagInfo->bits */
+/* Close an open anchor when you see this tag. */
+#define TAG_CLOSEA 1
+/* You won't see the text between <foo> and </fooo> */
+#define TAG_INVISIBLE 2
+/* sometimes </foo> means nothing. */
+#define TAG_NOSLASH 4
+/* This tag should become a corresponding js object in the tree. */
+#define TAG_JSOBJ 8
+
 /* The structure for an html tag.
  * These tags are at times linked with js objects,
  * or even created by js objects. */
@@ -422,6 +432,7 @@ struct htmlTag {
 	bool rdonly:1;
 	bool clickable:1;	/* but not an input field */
 	bool secure:1;
+	bool created:1;
 	bool checked:1;
 	bool rchecked:1;	/* for reset */
 	bool post:1;		/* post, rather than get */

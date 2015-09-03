@@ -165,15 +165,6 @@ It's a normal form kind of thing.
 Not yet implemented.
 *********************************************************************/
 
-/* Close an open anchor when you see this tag. */
-#define TAG_CLOSEA 1
-/* You won't see the text between <foo> and </fooo> */
-#define TAG_INVISIBLE 2
-/* sometimes </foo> means nothing. */
-#define TAG_NOSLASH 4
-/* This tag should become a corresponding js object in the tree. */
-#define TAG_JSOBJ 8
-
 static const struct tagInfo elements[] = {
 	{"BASE", "base reference for relative URLs", TAGACT_BASE, 0, 0, 13},
 	{"A", "an anchor", TAGACT_A, 3, 0, 9},
@@ -218,7 +209,7 @@ static const struct tagInfo elements[] = {
 	{"OL", "a numbered list", TAGACT_NOP, 3, 5, 9},
 	{"DL", "a definition list", TAGACT_NOP, 3, 5, 9},
 	{"HR", "a horizontal line", TAGACT_HR, 0, 5, 5},
-	{"FORM", "a form", TAGACT_FORM, 1, 0, 9},
+	{"FORM", "a form", TAGACT_FORM, 1, 10, 9},
 	{"BUTTON", "a button", TAGACT_INPUT, 0, 0, 13},
 /* we traditionally write </frame>,
  * but it really isn't meaningful to put anything at all in between. Thus nest = 0. */
