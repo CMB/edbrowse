@@ -81,6 +81,76 @@ static void makeButton(void)
 	linkinTree(currentForm, t);
 }				/* makeButton */
 
+static void formControl(struct htmlTag *t, bool namecheck)
+{
+	int itype = t->itype;
+	char *myname = (t->name ? t->name : t->id);
+	if (currentForm) {
+		t->controller = currentForm;
+	} else if (itype != INP_BUTTON)
+		debugPrint(3, "%s is not part of a fill-out form",
+			   t->info->desc);
+	if (namecheck && !myname)
+		debugPrint(3, "%s does not have a name", t->info->desc);
+}				/* formControl */
+
+static const char *const inp_types[] = {
+	"reset", "button", "image", "submit",
+	"hidden",
+	"text", "password", "number", "file",
+	"select", "textarea", "radio", "checkbox",
+	0
+};
+
+/* helper function for input tag */
+static void htmlInput(struct htmlTag *t)
+{
+	int n = INP_TEXT;
+	int len;
+	char *myname = (t->name ? t->name : t->id);
+	const char *s = attribVal(t, "type");
+	if (s) {
+		n = stringInListCI(inp_types, s);
+		if (n < 0) {
+			debugPrint(3, "unrecognized input type %s", s);
+			n = INP_TEXT;
+		}
+	} else if (stringEqual(t->info->name, "BUTTON")) {
+		n = INP_BUTTON;
+	}
+	t->itype = n;
+
+	s = attribVal(t, "maxlength");
+	len = 0;
+	if (s)
+		len = stringIsNum(s);
+	if (len > 0)
+		t->lic = len;
+
+/* In this case an empty value should be "", not null */
+	if (t->value == 0)
+		t->value = emptyString;
+
+	if (n >= INP_RADIO && t->checked) {
+		char namebuf[200];
+		if (n == INP_RADIO && myname &&
+		    radioCheck && strlen(myname) < sizeof(namebuf) - 3) {
+			if (!*radioCheck)
+				stringAndChar(&radioCheck, &radio_l, '|');
+			sprintf(namebuf, "|%s|", t->name);
+			if (strstr(radioCheck, namebuf)) {
+				debugPrint(3,
+					   "multiple radio buttons have been selected");
+				return;
+			}
+			stringAndString(&radioCheck, &radio_l, namebuf + 1);
+		}		/* radio name */
+	}
+
+	/* Even the submit fields can have a name, but they don't have to */
+	formControl(t, (n > INP_SUBMIT));
+}				/* htmlInput */
+
 static void renderNode(struct htmlTag *t, bool opentag)
 {
 	int tagno = t->seqno;
@@ -94,6 +164,9 @@ static void renderNode(struct htmlTag *t, bool opentag)
 	bool retainTag;
 	const char *a;		/* usually an attribute */
 	char *u;
+
+	if (!opentag && ti->bits & TAG_NOSLASH)
+		return;
 
 	hnum[0] = 0;
 	retainTag = true;
@@ -110,8 +183,6 @@ static void renderNode(struct htmlTag *t, bool opentag)
 
 	switch (action) {
 	case TAGACT_TEXT:
-		if (!opentag)
-			break;
 		if (!t->textval)
 			break;
 		if (currentTitle) {
@@ -253,6 +324,41 @@ doneSelect:
 			currentForm = 0;
 		}
 		goto nop;
+
+	case TAGACT_INPUT:
+		htmlInput(t);
+		if (t->itype == INP_HIDDEN)
+			break;
+		if (!retainTag)
+			break;
+		t->retain = true;
+		if (currentForm) {
+			++currentForm->ninp;
+			if (t->itype == INP_SUBMIT || t->itype == INP_IMAGE)
+				currentForm->submitted = true;
+		}
+		sprintf(hnum, "%c%d<", InternalCodeChar, tagno);
+		ns_hnum();
+		if (t->itype < INP_RADIO) {
+			if (t->value[0])
+				stringAndString(&ns, &ns_l, t->value);
+			else if (t->itype == INP_SUBMIT
+				 || t->itype == INP_IMAGE)
+				stringAndString(&ns, &ns_l, "Go");
+			else if (t->itype == INP_RESET)
+				stringAndString(&ns, &ns_l, "Reset");
+		} else
+			stringAndChar(&ns, &ns_l, (t->checked ? '+' : '-'));
+		if (currentForm
+		    && (t->itype == INP_SUBMIT || t->itype == INP_IMAGE)) {
+			if (currentForm->secure)
+				stringAndString(&ns, &ns_l, " secure");
+			if (currentForm->bymail)
+				stringAndString(&ns, &ns_l, " bymail");
+		}
+		ns_ic();
+		stringAndString(&ns, &ns_l, "0>");
+		break;
 
 	}			/* switch */
 }				/* renderNode */

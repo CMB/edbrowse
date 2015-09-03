@@ -182,7 +182,7 @@ static const struct tagInfo elements[] = {
 	{"CAPTION", "a caption", TAGACT_NOP, 3, 5, 0},
 	{"HEAD", "the html header information", TAGACT_HEAD, 1, 0, 13},
 	{"BODY", "the html body", TAGACT_BODY, 1, 0, 13},
-	{"@TEXT", "a text section", TAGACT_TEXT, 0, 0, 0},
+	{"@TEXT", "a text section", TAGACT_TEXT, 0, 0, 4},
 	{"BGSOUND", "background music", TAGACT_MUSIC, 0, 0, 5},
 	{"AUDIO", "audio passage", TAGACT_MUSIC, 0, 0, 5},
 	{"META", "a meta tag", TAGACT_META, 0, 0, 12},
