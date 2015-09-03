@@ -36,7 +36,7 @@ static char *radioCheck;
 static int radio_l;
 static char *preamble;
 static int preamble_l;
-static uchar browseLocal;
+uchar browseLocal;
 
 /* paranoia check on the number of tags */
 static void tagCountCheck(void)
@@ -201,7 +201,7 @@ static const struct tagInfo elements[] = {
 	{"H5", "a level 5 header", TAGACT_NOP, 1, 10, 9},
 	{"H6", "a level 6 header", TAGACT_NOP, 1, 10, 9},
 	{"DT", "a term", TAGACT_DT, 1, 2, 13},
-	{"DD", "a definition", TAGACT_DT, 1, 1, 13},
+	{"DD", "a definition", TAGACT_DD, 1, 1, 13},
 	{"LI", "a list item", TAGACT_LI, 1, 1, 13},
 	{"UL", "a bullet list", TAGACT_UL, 3, 10, 9},
 	{"DIR", "a directory list", TAGACT_NOP, 3, 5, 9},
@@ -219,7 +219,7 @@ static const struct tagInfo elements[] = {
 	{"AREA", "an image map area", TAGACT_AREA, 0, 0, 9},
 	{"TABLE", "a table", TAGACT_TABLE, 3, 10, 9},
 	{"TR", "a table row", TAGACT_TR, 3, 5, 9},
-	{"TD", "a table entry", TAGACT_TD, 3, 0, 9},
+	{"TD", "a table entry", TAGACT_TD, 3, 0, 13},
 	{"TH", "a table heading", TAGACT_TD, 3, 0, 9},
 	{"PRE", "a preformatted section", TAGACT_PRE, 3, 5, 0},
 	{"LISTING", "a listing", TAGACT_PRE, 3, 1, 0},
@@ -441,70 +441,6 @@ static char *getBaseHref(int n)
 	while ((t = tagList[n])->action != TAGACT_BASE);
 	return t->href;
 }				/* getBaseHref */
-
-static void htmlMeta(void)
-{
-	char *name, *content, *heq;
-	char **ptr;
-
-	name = topTag->name;
-	content = htmlAttrVal(topAttrib, "content");
-	if (content == emptyString)
-		content = 0;
-
-	domLink("Meta", 0, "metas", cw->docobj, 0);
-	if (topTag->jv)
-		set_property_string(topTag->jv, "content", content);
-
-	heq = htmlAttrVal(topAttrib, "http-equiv");
-	if (heq == emptyString)
-		heq = 0;
-
-	if (heq && content) {
-		bool rc;
-		int delay;
-/* It's not clear if we should process the http refresh command
- * immediately, the moment we spot it, or if we finish parsing
- * all the html first.
- * Does it matter?  It might.
- * A subsequent meta tag could use http-equiv to set a cooky,
- * and we won't see that cooky if we jump to the new page right now.
- * And there's no telling what subsequent javascript might do.
- * So - I'm going to postpone the refresh, until everything is parsed.
- * Bear in mind, we really don't want to refresh if we're working
- * on a local file. */
-		if (stringEqualCI(heq, "Set-Cookie")) {
-			rc = receiveCookie(cw->fileName, content);
-			debugPrint(3, rc ? "jar" : "rejected");
-		}
-
-		if (allowRedirection && !browseLocal
-		    && stringEqualCI(heq, "Refresh")) {
-			if (parseRefresh(content, &delay)) {
-				char *newcontent;
-				unpercentURL(content);
-				newcontent = resolveURL(basehref, content);
-				gotoLocation(newcontent, delay, true);
-			}
-		}
-	}
-
-	if (name) {
-		ptr = 0;
-		if (stringEqualCI(name, "description"))
-			ptr = &cw->fd;
-		if (stringEqualCI(name, "keywords"))
-			ptr = &cw->fk;
-		if (ptr && !*ptr && content) {
-			stripWhite(content);
-			*ptr = content;
-			content = 0;
-		}
-	}
-
-	nzFree(content);
-	nzFree(heq);
-}				/* htmlMeta */
 
 static void htmlName(void)
 {
@@ -2091,7 +2027,7 @@ nextchar:
 		case TAGACT_TITLE:
 			if (slash)
 				continue;
-			offset = strlen(ns);
+			offset = ns_l;
 			currentTitle = t;
 			continue;
 
@@ -2131,7 +2067,7 @@ nextchar:
 
 		case TAGACT_TA:
 			currentTA = t;
-			offset = strlen(ns);
+			offset = ns_l;
 			t->itype = INP_TA;
 			formControl(true);
 			continue;
@@ -2160,7 +2096,6 @@ plainTag:
 			continue;
 
 		case TAGACT_META:
-			htmlMeta();
 			continue;
 
 		case TAGACT_LI:
@@ -2196,6 +2131,7 @@ plainTag:
 			continue;
 
 		case TAGACT_DT:
+		case TAGACT_DD:
 			for (i1 = cw->numTags - 1; i1 >= 0; --i1) {
 				v = tagList[i1];
 				if (v->balanced || !v->info->nest)
@@ -2253,7 +2189,7 @@ plainTag:
 			if (tdfirst)
 				tdfirst = false;
 			else if (retainTag) {
-				l = strlen(ns);
+				l = ns_l;
 				while (l && ns[l - 1] == ' ')
 					--l;
 				ns[l] = 0;
@@ -2397,7 +2333,7 @@ doneSelect:
 				continue;
 			}
 			currentOpt = t;
-			offset = strlen(ns);
+			offset = ns_l;
 			t->controller = currentSel;
 			t->lic = nopt++;
 			t->value = htmlAttrVal(topAttrib, "value");
@@ -2440,7 +2376,7 @@ subsup:
 				static const char *openstring[] = { 0,
 					"[", "^(", "`"
 				};
-				t->lic = strlen(ns);
+				t->lic = ns_l;
 				stringAndString(&ns, &ns_l, openstring[j]);
 				continue;
 			}
@@ -2718,7 +2654,7 @@ endtag:
 	radioCheck = 0;
 
 	if (j = strlen(preamble)) {
-		a = (char *)allocMem(strlen(ns) + j + 2);
+		a = (char *)allocMem(ns_l + j + 2);
 		strcpy(a, preamble);
 		a[j] = '\f';
 		strcpy(a + j + 1, ns);

@@ -216,6 +216,7 @@ extern int displayLength;	/* when printing a line */
 extern int jsPool;		/* size of js pool in megabytes */
 extern int webTimeout, mailTimeout;
 extern int browseLine;		/* line number, for error reporting */
+extern uchar browseLocal;
 extern bool sqlPresent;		/* Was edbrowse compiled with SQL built in? */
 extern bool ismc;		/* Is the program running as a mail client? */
 extern bool isimap;		/* Is the program running as an imap client? */
@@ -464,8 +465,8 @@ enum {
 	TAGACT_DW, TAGACT_TEXT, TAGACT_BODY, TAGACT_HEAD,
 	TAGACT_MUSIC, TAGACT_IMAGE, TAGACT_BR, TAGACT_IBR, TAGACT_P,
 	TAGACT_BASE, TAGACT_META, TAGACT_PRE,
-	TAGACT_DT, TAGACT_LI, TAGACT_HR, TAGACT_TABLE, TAGACT_TR, TAGACT_TD,
-	TAGACT_DIV, TAGACT_SPAN, TAGACT_HTML,
+	TAGACT_DT, TAGACT_DD, TAGACT_LI, TAGACT_TABLE, TAGACT_TR, TAGACT_TD,
+	TAGACT_DIV, TAGACT_SPAN, TAGACT_HTML, TAGACT_HR,
 	TAGACT_FORM, TAGACT_FRAME,
 	TAGACT_MAP, TAGACT_AREA, TAGACT_SCRIPT, TAGACT_EMBED, TAGACT_OBJ,
 };

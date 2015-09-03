@@ -38,7 +38,7 @@ static void traverseAll(int start)
 /* the new string, the result of the render operation */
 static char *ns;
 static int ns_l;
-static bool invisible;
+static bool invisible, tdfirst;
 static int nopt;		/* number of options */
 static int listnest;		/* count nested lists */
 static struct htmlTag *currentForm, *currentSel, *currentOpt;
@@ -167,13 +167,73 @@ static void htmlInput(struct htmlTag *t)
 	formControl(t, (n > INP_SUBMIT));
 }				/* htmlInput */
 
+/* helper function for meta tag */
+static void htmlMeta(struct htmlTag *t)
+{
+	char *name;
+	const char *content, *heq;
+	char **ptr;
+	char *copy = 0;
+
+	name = t->name;
+	content = attribVal(t, "content");
+	copy = cloneString(content);
+	heq = attribVal(t, "http-equiv");
+
+	if (heq && content) {
+		bool rc;
+		int delay;
+
+/* It's not clear if we should process the http refresh command
+ * immediately, the moment we spot it, or if we finish parsing
+ * all the html first.
+ * Does it matter?  It might.
+ * A subsequent meta tag could use http-equiv to set a cooky,
+ * and we won't see that cooky if we jump to the new page right now.
+ * And there's no telling what subsequent javascript might do.
+ * So I'm going to postpone the refresh until everything is parsed.
+ * Bear in mind, we really don't want to refresh if we're working
+ * on a local file. */
+
+		if (stringEqualCI(heq, "Set-Cookie")) {
+			rc = receiveCookie(cw->fileName, content);
+			debugPrint(3, rc ? "jar" : "rejected");
+		}
+
+		if (allowRedirection && !browseLocal
+		    && stringEqualCI(heq, "Refresh")) {
+			if (parseRefresh(copy, &delay)) {
+				char *newcontent;
+				unpercentURL(copy);
+				newcontent = resolveURL(cw->fileName, content);
+				gotoLocation(newcontent, delay, true);
+			}
+		}
+	}
+
+	if (name) {
+		ptr = 0;
+		if (stringEqualCI(name, "description"))
+			ptr = &cw->fd;
+		if (stringEqualCI(name, "keywords"))
+			ptr = &cw->fk;
+		if (ptr && !*ptr && content) {
+			stripWhite(copy);
+			*ptr = copy;
+			copy = 0;
+		}
+	}
+
+	nzFree(copy);
+}				/* htmlMeta */
+
 static void renderNode(struct htmlTag *t, bool opentag)
 {
 	int tagno = t->seqno;
 	char hnum[40];		/* hidden number */
 #define ns_hnum() stringAndString(&ns, &ns_l, hnum)
 #define ns_ic() stringAndChar(&ns, &ns_l, InternalCodeChar)
-	int j;
+	int j, l;
 	const struct tagInfo *ti = t->info;
 	int action = t->action;
 	char c;
@@ -287,7 +347,10 @@ static void renderNode(struct htmlTag *t, bool opentag)
 		else
 			--listnest;
 	case TAGACT_DL:
+	case TAGACT_DT:
+	case TAGACT_DD:
 	case TAGACT_PRE:
+	case TAGACT_DIV:
 	case TAGACT_BR:
 	case TAGACT_P:
 	case TAGACT_NOP:
@@ -498,6 +561,107 @@ doneSelect:
 			}
 			currentTA = 0;
 		}
+		break;
+
+	case TAGACT_META:
+		htmlMeta(t);
+		break;
+
+	case TAGACT_TR:
+		if (opentag)
+			tdfirst = true;
+	case TAGACT_TABLE:
+		goto nop;
+
+	case TAGACT_TD:
+		if (tdfirst)
+			tdfirst = false;
+		else if (retainTag) {
+			j = ns_l;
+			while (j && ns[j - 1] == ' ')
+				--j;
+			ns[j] = 0;
+			ns_l = j;
+			stringAndChar(&ns, &ns_l, '|');
+		}
+		break;
+
+	case TAGACT_SPAN:
+		if (opentag) {
+			if (!(a = t->classname))
+				goto nop;
+			if (stringEqualCI(a, "sup"))
+				action = TAGACT_SUP;
+			if (stringEqualCI(a, "sub"))
+				action = TAGACT_SUB;
+			if (stringEqualCI(a, "ovb"))
+				action = TAGACT_OVB;
+		} else if (t->subsup)
+			action = t->subsup;
+		if (action == TAGACT_SPAN)
+			goto nop;
+		t->subsup = action;
+/* fall through */
+
+/* This is strictly for rendering math pages written with my particular css.
+* <span class=sup> becomes TAGACT_SUP, which means superscript.
+* sub is subscript and ovb is overbar.
+* Sorry to put my little quirks into this program, but hey,
+* it's my program. */
+
+	case TAGACT_SUP:
+	case TAGACT_SUB:
+	case TAGACT_OVB:
+		if (!retainTag)
+			break;
+		t->retain = true;
+		if (action == TAGACT_SUB)
+			j = 1;
+		if (action == TAGACT_SUP)
+			j = 2;
+		if (action == TAGACT_OVB)
+			j = 3;
+
+		if (opentag) {
+			static const char *openstring[] = { 0,
+				"[", "^(", "`"
+			};
+			t->lic = ns_l;
+			stringAndString(&ns, &ns_l, openstring[j]);
+			break;
+		}
+
+		if (j == 3) {
+			stringAndChar(&ns, &ns_l, '\'');
+			break;
+		}
+
+/* backup, and see if we can get rid of the parentheses or brackets */
+		l = t->lic + j;
+		u = ns + l;
+		if (j == 2 && isalphaByte(u[0]) && !u[1])
+			goto unparen;
+		if (j == 2
+		    && (stringEqual(u, "th") || stringEqual(u, "rd")
+			|| stringEqual(u, "nd") || stringEqual(u, "st"))) {
+			strmove(ns + l - 2, ns + l);
+			ns_l -= 2;
+			break;
+		}
+		while (isdigitByte(*u))
+			++u;
+		if (!*u)
+			goto unparen;
+		stringAndChar(&ns, &ns_l, (j == 2 ? ')' : ']'));
+		break;
+
+/* ok, we can trash the original ( or [ */
+unparen:
+		l = t->lic + j;
+		strmove(ns + l - 1, ns + l);
+		--ns_l;
+		if (j == 2)
+			stringAndChar(&ns, &ns_l, ' ');
 		break;
 
 	}			/* switch */
