@@ -1725,6 +1725,8 @@ static char *encodeTags(char *html, bool fromSource)
 	int intable = 0, inrow = 0;
 	bool tdfirst;
 
+	preamble = initString(&preamble_l);
+
 /* remember how many tags we had to this point */
 	l = cw->numTags;
 /* call the tidy parser to build the html nodes */
@@ -1735,9 +1737,17 @@ static char *encodeTags(char *html, bool fromSource)
 	tree_pos = l;
 	intoTree(0);
 	a = render(l);
-	debugPrint(4, "|%s|\n", a);
-	nzFree(a);
+	debugPrint(5, "|%s|\n", a);
+	if (!isJSAlive) {
+/* no js, use the rendered text from the tidy tree */
+		nzFree(html);
+		anchorSwap(a);
+		ns = htmlReformat(a);
+		nzFree(a);
+		return ns;
+	}
 
+	nzFree(a);
 /* nodes aren't being used yet, just NOP them out */
 	for (j = l; j < cw->numTags; ++j) {
 		t = cw->tags[j];
@@ -1745,7 +1755,6 @@ static char *encodeTags(char *html, bool fromSource)
 	}
 
 	ns = initString(&ns_l);
-	preamble = initString(&preamble_l);
 	currentA = currentForm = currentSel = NULL;
 	currentOpt = currentTitle = currentTA = NULL;
 
@@ -2646,7 +2655,7 @@ endtag:
 		}		/* loop over all tags */
 	}
 
-	debugPrint(4, "|%s|\n", ns);
+	debugPrint(5, "|%s|\n", ns);
 	/* clean up */
 	browseLine = 0;
 	nzFree(html);

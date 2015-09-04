@@ -100,6 +100,24 @@ static struct htmlTag *findList(struct htmlTag *t)
 	return 0;
 }				/* findList */
 
+/* see if a number or star is pending, waiting to be printed */
+static void liCheck(struct htmlTag *t)
+{
+	struct htmlTag *ltag;	/* the list tag */
+	if (listnest && (ltag = findList(t)) && ltag->post) {
+		char olbuf[20];
+		if (ltag->action == TAGACT_OL) {
+			int j = ++ltag->lic;
+			sprintf(olbuf, "%d. ", j);
+		} else {
+			strcpy(olbuf, "* ");
+		}
+		if (!invisible)
+			stringAndString(&ns, &ns_l, olbuf);
+		ltag->post = false;
+	}
+}				/* liCheck */
+
 static void formControl(struct htmlTag *t, bool namecheck)
 {
 	int itype = t->itype;
@@ -292,19 +310,7 @@ static void renderNode(struct htmlTag *t, bool opentag)
 			break;
 		}
 
-		if (listnest && (ltag = findList(t)) && ltag->post) {
-			char olbuf[20];
-			if (ltag->action == TAGACT_OL) {
-				j = ++ltag->lic;
-				sprintf(olbuf, "%d. ", j);
-			} else {
-				strcpy(olbuf, "* ");
-			}
-			if (!invisible)
-				stringAndString(&ns, &ns_l, olbuf);
-			ltag->post = false;
-		}
-
+		liCheck(t);
 		if (!invisible)
 			stringAndString(&ns, &ns_l, t->textval);
 		break;
@@ -318,15 +324,22 @@ static void renderNode(struct htmlTag *t, bool opentag)
 		break;
 
 	case TAGACT_A:
+		liCheck(t);
 		currentA = (opentag ? t : 0);
-		if (t->href && retainTag) {
-			if (opentag) {
+		if (!retainTag)
+			break;
+		if (t->href) {
+			if (opentag)
 				sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
-			} else {
+			else
 				sprintf(hnum, "%c0}", InternalCodeChar);
-			}
-			ns_hnum();
+		} else {
+			if (opentag)
+				sprintf(hnum, "%c%d*", InternalCodeChar, tagno);
+			else
+				hnum[0] = 0;
 		}
+		ns_hnum();
 		break;
 
 	case TAGACT_OL:
@@ -352,6 +365,10 @@ static void renderNode(struct htmlTag *t, bool opentag)
 	case TAGACT_BR:
 	case TAGACT_P:
 	case TAGACT_BASE:
+	case TAGACT_OBJ:
+	case TAGACT_HEAD:
+	case TAGACT_BODY:
+	case TAGACT_JS:
 	case TAGACT_NOP:
 nop:
 		if (invisible)
@@ -423,6 +440,7 @@ doneSelect:
 			if (retainTag) {
 				currentSel->retain = true;
 /* Crank out the input tag */
+				liCheck(t);
 				sprintf(hnum, "%c%d<", InternalCodeChar,
 					currentSel->seqno);
 				ns_hnum();
@@ -437,6 +455,7 @@ doneSelect:
 			if (retainTag && currentForm->href
 			    && !currentForm->submitted) {
 				makeButton();
+				liCheck(t);
 				sprintf(hnum, " %c%d<Go",
 					InternalCodeChar, cw->numTags - 1);
 				ns_hnum();
@@ -464,6 +483,7 @@ doneSelect:
 			if (t->itype == INP_SUBMIT || t->itype == INP_IMAGE)
 				currentForm->submitted = true;
 		}
+		liCheck(t);
 		sprintf(hnum, "%c%d<", InternalCodeChar, tagno);
 		ns_hnum();
 		if (t->itype < INP_RADIO) {
@@ -530,6 +550,7 @@ doneSelect:
 		goto nop;
 
 	case TAGACT_HR:
+		liCheck(t);
 		if (retainTag)
 			stringAndString(&ns, &ns_l, "\r----------\r");
 		break;
@@ -542,13 +563,13 @@ doneSelect:
 		} else {
 			currentTA->action = TAGACT_INPUT;
 			if (retainTag) {
-#if 0
-				j = sideBuffer(0, currentTA->value, -1, 0);
-#else
 				j = 0;
-#endif
+				if (!isJSAlive)
+					j = sideBuffer(0, currentTA->value, -1,
+						       0);
 				if (j) {
 					currentTA->lic = j;
+					liCheck(t);
 					sprintf(hnum, "%c%d<buffer %d%c0>",
 						InternalCodeChar,
 						currentTA->seqno, j,
@@ -575,6 +596,7 @@ doneSelect:
 		if (tdfirst)
 			tdfirst = false;
 		else if (retainTag) {
+			liCheck(t);
 			j = ns_l;
 			while (j && ns[j - 1] == ' ')
 				--j;
@@ -625,6 +647,7 @@ doneSelect:
 				"[", "^(", "`"
 			};
 			t->lic = ns_l;
+			liCheck(t);
 			stringAndString(&ns, &ns_l, openstring[j]);
 			break;
 		}
@@ -663,6 +686,7 @@ unparen:
 
 	case TAGACT_AREA:
 	case TAGACT_FRAME:
+		liCheck(t);
 		if (!retainTag)
 			break;
 		stringAndString(&ns, &ns_l,
@@ -693,6 +717,7 @@ unparen:
 		break;
 
 	case TAGACT_MUSIC:
+		liCheck(t);
 		if (!retainTag)
 			break;
 		if (!t->href)
@@ -708,6 +733,7 @@ unparen:
 		break;
 
 	case TAGACT_IMAGE:
+		liCheck(t);
 		if (!currentA) {
 			if (a = attribVal(t, "alt")) {
 				u = altText(a);
@@ -739,6 +765,8 @@ unparen:
 		stringAndString(&ns, &ns_l, u);
 		break;
 
+	default:
+		debugPrint(3, "unprocessed tag %s", ti->name);
 	}			/* switch */
 }				/* renderNode */
 
