@@ -41,8 +41,11 @@ static int ns_l;
 static bool invisible, tdfirst;
 static int nopt;		/* number of options */
 static int listnest;		/* count nested lists */
+/* None of these tags nest, so it is reasonable to talk about
+ * the current open tag. */
 static struct htmlTag *currentForm, *currentSel, *currentOpt;
 static struct htmlTag *currentTitle, *currentScript, *currentTA;
+static struct htmlTag *currentA;
 static char *radioCheck;
 static int radio_l;
 
@@ -307,20 +310,15 @@ static void renderNode(struct htmlTag *t, bool opentag)
 		break;
 
 	case TAGACT_TITLE:
-		if (opentag)
-			currentTitle = t;
-		else
-			currentTitle = 0;
+		currentTitle = (opentag ? t : 0);
 		break;
 
 	case TAGACT_SCRIPT:
-		if (opentag)
-			currentScript = t;
-		else
-			currentScript = 0;
+		currentScript = (opentag ? t : 0);
 		break;
 
 	case TAGACT_A:
+		currentA = (opentag ? t : 0);
 		if (t->href && retainTag) {
 			if (opentag) {
 				sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
@@ -353,6 +351,7 @@ static void renderNode(struct htmlTag *t, bool opentag)
 	case TAGACT_DIV:
 	case TAGACT_BR:
 	case TAGACT_P:
+	case TAGACT_BASE:
 	case TAGACT_NOP:
 nop:
 		if (invisible)
@@ -376,7 +375,6 @@ nop:
 	case TAGACT_FORM:
 		if (opentag) {
 			currentForm = t;
-
 			a = attribVal(t, "method");
 			if (a) {
 				if (stringEqualCI(a, "post"))
@@ -641,9 +639,8 @@ doneSelect:
 		u = ns + l;
 		if (j == 2 && isalphaByte(u[0]) && !u[1])
 			goto unparen;
-		if (j == 2
-		    && (stringEqual(u, "th") || stringEqual(u, "rd")
-			|| stringEqual(u, "nd") || stringEqual(u, "st"))) {
+		if (j == 2 && (stringEqual(u, "th") || stringEqual(u, "rd")
+			       || stringEqual(u, "nd") || stringEqual(u, "st"))) {
 			strmove(ns + l - 2, ns + l);
 			ns_l -= 2;
 			break;
@@ -664,6 +661,84 @@ unparen:
 			stringAndChar(&ns, &ns_l, ' ');
 		break;
 
+	case TAGACT_AREA:
+	case TAGACT_FRAME:
+		if (!retainTag)
+			break;
+		stringAndString(&ns, &ns_l,
+				(action == TAGACT_FRAME ? "\rFrame " : "\r"));
+		a = 0;
+		if (action == TAGACT_AREA)
+			a = attribVal(t, "alt");
+		u = (char *)a;
+		if (!u) {
+			u = t->name;
+			if (!u)
+				u = altText(t->href);
+		}
+		if (!u)
+			u = (action == TAGACT_FRAME ? "???" : "area");
+		if (t->href) {
+			sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
+			ns_hnum();
+			t->action = TAGACT_A;
+		}
+		if (t->href || action == TAGACT_FRAME)
+			stringAndString(&ns, &ns_l, u);
+		if (t->href) {
+			ns_ic();
+			stringAndString(&ns, &ns_l, "0}");
+		}
+		stringAndChar(&ns, &ns_l, '\r');
+		break;
+
+	case TAGACT_MUSIC:
+		if (!retainTag)
+			break;
+		if (!t->href)
+			break;
+		sprintf(hnum, "\r%c%d{", InternalCodeChar, tagno);
+		ns_hnum();
+		stringAndString(&ns, &ns_l,
+				(ti->name[0] ==
+				 'B' ? "Background Music" : "Audio passage"));
+		sprintf(hnum, "%c0}\r", InternalCodeChar);
+		ns_hnum();
+		t->action = TAGACT_A;
+		break;
+
+	case TAGACT_IMAGE:
+		if (!currentA) {
+			if (a = attribVal(t, "alt")) {
+				u = altText(a);
+				a = NULL;
+				if (u && !invisible) {
+					stringAndChar(&ns, &ns_l, '[');
+					stringAndString(&ns, &ns_l, u);
+					stringAndChar(&ns, &ns_l, ']');
+				}
+			}
+			break;
+		}
+
+/* image part of a hyperlink */
+		if (!retainTag || !currentA->href)
+			break;
+		u = 0;
+		a = attribVal(t, "alt");
+		if (a)
+			u = altText(a);
+		if (!u)
+			u = altText(t->name);
+		if (!u)
+			u = altText(currentA->href);
+		if (!u)
+			u = altText(t->href);
+		if (!u)
+			u = "image";
+		stringAndString(&ns, &ns_l, u);
+		break;
+
 	}			/* switch */
 }				/* renderNode */
 
@@ -675,6 +750,7 @@ char *render(int start)
 	listnest = 0;
 	currentForm = currentSel = currentOpt = 0;
 	currentTitle = currentScript = currentTA = 0;
+	currentA = 0;
 	traverse_callback = renderNode;
 	traverseAll(start);
 	return ns;

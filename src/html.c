@@ -216,7 +216,7 @@ static const struct tagInfo elements[] = {
 	{"FRAME", "a frame", TAGACT_FRAME, 0, 2, 13},
 	{"IFRAME", "a frame", TAGACT_FRAME, 0, 2, 13},
 	{"MAP", "an image map", TAGACT_MAP, 0, 2, 13},
-	{"AREA", "an image map area", TAGACT_AREA, 0, 0, 9},
+	{"AREA", "an image map area", TAGACT_AREA, 0, 0, 13},
 	{"TABLE", "a table", TAGACT_TABLE, 3, 10, 9},
 	{"TR", "a table row", TAGACT_TR, 3, 5, 9},
 	{"TD", "a table entry", TAGACT_TD, 3, 0, 13},
