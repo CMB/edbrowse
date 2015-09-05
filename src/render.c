@@ -567,6 +567,9 @@ doneSelect:
 			formControl(t, true);
 		} else {
 			currentTA->action = TAGACT_INPUT;
+/* like the other value fields, it can't be null */
+			if (!currentTA->value)
+				currentTA->value = emptyString;
 			if (retainTag) {
 				j = 0;
 				if (!isJSAlive)
