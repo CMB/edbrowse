@@ -145,7 +145,7 @@ static char *mailstring;
 static int mailstring_l;
 static char *mailbox_url, *message_url;
 
-#define MAXIMAPFETCH 20
+#define MAXIMAPFETCH 100
 
 /* missge in a folder */
 struct MIF {
@@ -448,10 +448,12 @@ imap_done:
 				mailstring_l = t - mailstring;
 			}
 			key = presentMail();
-			nzFree(mailstring);
+/* presentMail has already freed mailstring */
 		}
-		if (key == 's')
+		if (key == 's') {
+			i_puts(MSG_Stop);
 			break;
+		}
 		if (key == 'm') {
 			struct FOLDER *g;
 			printf("move to ");
@@ -1176,15 +1178,12 @@ key_command:
 		i_puts(MSG_Quit);
 		exit(0);
 
-	case 'm':
-		return 'm';
-
 	case 'n':
 		i_puts(MSG_Next);
 		goto afterinput;
 
 	case 's':
-		i_puts(MSG_Stop);
+	case 'm':
 		goto afterinput;
 
 	case 'd':
@@ -1349,8 +1348,8 @@ afterinput:
 
 	if (delflag)
 		return 'd';
-	if (key == 's')
-		return 's';
+	if (key == 's' || key == 'm')
+		return key;
 	return 'n';
 }				/* presentMail */
 
