@@ -144,7 +144,6 @@ static char *conciseTime(time_t t)
 static char *mailstring;
 static int mailstring_l;
 static char *mailbox_url, *message_url;
-static CURLcode fetchOneMessage(CURL * handle, int message_number);
 
 #define MAXIMAPFETCH 20
 
@@ -283,6 +282,51 @@ static struct FOLDER *folderByName(char *line)
 	return 0;
 }				/* folderByName */
 
+/* data block for the curl ccallback write function in http.c */
+static struct eb_curl_callback_data callback_data = {
+	&mailstring, &mailstring_l
+};
+
+/* imap emails come in through the headers, not the data.
+ * No kidding! I don't understand it either.
+ * This callback function doesn't use a data block, mailstring is assumed. */
+static size_t imap_header_callback(char *i, size_t size,
+				   size_t nitems, void *data)
+{
+	size_t b = nitems * size;
+	int dots1, dots2;
+	dots1 = mailstring_l / CHUNKSIZE;
+	stringAndBytes(&mailstring, &mailstring_l, i, b);
+	dots2 = mailstring_l / CHUNKSIZE;
+	if (dots1 < dots2) {
+		for (; dots1 < dots2; ++dots1)
+			putchar('.');
+		fflush(stdout);
+	}
+	return b;
+}				/* imap_header_callback */
+
+/* after the email has been fetched via pop3 or imap */
+static void undosOneMessage(void)
+{
+	int j, k;
+
+	if (mailstring_l >= CHUNKSIZE)
+		nl();		/* We printed dots, so we terminate them with newline */
+
+/* Remove DOS newlines. */
+	for (j = k = 0; j < mailstring_l; j++) {
+		if (mailstring[j] == '\r' && j < mailstring_l - 1
+		    && mailstring[j + 1] == '\n')
+			continue;
+		mailstring[k++] = mailstring[j];
+	}
+	mailstring_l = k;
+	mailstring[k] = 0;
+}				/* undosOneMessage */
+
+static char presentMail(void);
+
 /* scan through the messages in a folder */
 static void scanFolder(CURL * handle, const struct FOLDER *f, bool allmessages)
 {
@@ -321,41 +365,6 @@ abort:
 		if (!allmessages && mif->seen)
 			continue;
 
-/* download the message */
-#if 0
-		if (asprintf(&message_url, "%s%s;UID=%d",
-			     mailbox_url, f->path, j + f->start) == -1)
-			i_printfExit(MSG_MemAllocError,
-				     strlen(mailbox_url) + 25);
-		res = fetchOneMessage(handle, 0);
-		if (res != CURLE_OK) {
-			ebcurl_setError(res, message_url);
-			showError();
-			nzFree(mailstring);
-			nzFree(message_url);
-			return;
-		}
-		nzFree(message_url);
-#endif
-/* neither one of these works */
-#if 0
-		sprintf(cust_cmd, "FETCH %d BODY[]", j + f->start);
-		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
-		mailstring = initString(&mailstring_l);
-		res = curl_easy_perform(handle);
-		if (res != CURLE_OK) {
-			ebcurl_setError(res, mailbox_url);
-			showError();
-			nzFree(mailstring);
-			return;
-		}
-#endif
-
-#if 0
-		printf("mailstring_l %d\n", mailstring_l);
-		puts(mailstring);
-		nzFree(mailstring);
-#endif
 		if (!mif->seen)
 			printf("*");
 		printf("%s: %s", mif->from, mif->subject);
@@ -375,11 +384,17 @@ action:
 		delflag = false;
 		printf("? ");
 		fflush(stdout);
-		key = getLetter("?qdmn");
+		key = getLetter("?qdsmn ");
 		printf("\b\b\b");
 		fflush(stdout);
 		if (key == '?') {
-			puts("?\tprint this help message\nd\tdelete this email.\nm\tmove this email to another folder.\nn\tcontinue to next message.");
+			puts("?\tprint this help message.\n\
+q\tquit this program.\n\
+s\tstop reading from this folder.\n\
+n\tcontinue to next message.\n\
+d\tdelete this email.\n\
+m\tmove this email to another folder.\n\
+space\tread and manage this email.");
 			goto action;
 		}
 		if (key == 'q') {
@@ -388,6 +403,55 @@ imap_done:
 			curl_easy_cleanup(handle);
 			exit(0);
 		}
+		if (key == ' ') {
+/* download the email from the imap server */
+			sprintf(cust_cmd, "FETCH %d BODY[]", j + f->start);
+			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
+					 cust_cmd);
+			mailstring = initString(&mailstring_l);
+/* I wanted to turn the write function off here, because we don't need it,
+ * but turning it off and leaving HEADERFUNCTION on causes a seg fault,
+ * I have no idea why.
+ * curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, NULL);
+ * curl_easy_setopt(handle, CURLOPT_WRITEDATA, NULL);
+ */
+			curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION,
+					 imap_header_callback);
+			res = curl_easy_perform(handle);
+/* and put things back */
+			curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, NULL);
+			undosOneMessage();
+			if (res != CURLE_OK) {
+				ebcurl_setError(res, mailbox_url);
+				showError();
+				nzFree(mailstring);
+				goto action;
+			}
+/* have to strip 2 fetch BODY lines off the front,
+ * and ) A018 OK off the end. */
+			t = strchr(mailstring, '\n');
+			if (t)
+				t = strchr(t + 1, '\n');
+			if (t) {
+				++t;
+				mailstring_l -= (t - mailstring);
+				strmove(mailstring, t);
+			}
+			t = mailstring + mailstring_l;
+			if (t > mailstring && t[-1] == '\n')
+				t[-1] = 0, --mailstring_l;
+			t = strrchr(mailstring, '\n');
+			if (t && t - 2 >= mailstring &&
+			    !strncmp(t - 2, "\n)\nA", 4)) {
+				--t;
+				*t = 0;
+				mailstring_l = t - mailstring;
+			}
+			key = presentMail();
+			nzFree(mailstring);
+		}
+		if (key == 's')
+			break;
 		if (key == 'm') {
 			struct FOLDER *g;
 			printf("move to ");
@@ -704,10 +768,6 @@ static int umfd;		/* file descriptor for the above */
 static char *mailu8;
 static int mailu8_l;
 
-static struct eb_curl_callback_data callback_data = {
-	&mailstring, &mailstring_l
-};
-
 static CURL *newFetchmailHandle(const char *username, const char *password)
 {
 	CURLcode res;
@@ -718,7 +778,6 @@ static CURL *newFetchmailHandle(const char *username, const char *password)
 	curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, mailTimeout);
 	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, eb_curl_callback);
 	curl_easy_setopt(handle, CURLOPT_WRITEDATA, &callback_data);
-/* curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, eb_curl_callback); */
 	if (debugLevel >= 4)
 		curl_easy_setopt(handle, CURLOPT_VERBOSE, 1);
 	curl_easy_setopt(handle, CURLOPT_DEBUGFUNCTION, ebcurl_debug_handler);
@@ -781,23 +840,8 @@ static CURLcode fetchOneMessage(CURL * handle, int message_number)
 		return res;
 
 	res = curl_easy_perform(handle);
-	if (mailstring_l >= CHUNKSIZE)
-		nl();		/* We printed dots, so we terminate them with newline */
+	undosOneMessage();
 	if (res != CURLE_OK)
-		return res;
-
-/* Remove DOS newlines. */
-	int j, k;
-	for (j = k = 0; j < mailstring_l; j++) {
-		if (mailstring[j] == '\r' && j < mailstring_l - 1
-		    && mailstring[j + 1] == '\n')
-			continue;
-		mailstring[k++] = mailstring[j];
-	}
-	mailstring_l = k;
-	mailstring[k] = 0;
-
-	if (isimap)
 		return res;
 
 /* got the file, save it in unread */
@@ -863,8 +907,10 @@ input:
 		if (!fgets(inputline, sizeof(inputline), stdin))
 			goto imap_done;
 		t = inputline;
-		if (*t == 'q')
+		if (*t == 'q') {
+			i_puts(MSG_Quit);
 			goto imap_done;
+		}
 		allmessages = true;
 		if (*t == '-')
 			allmessages = false, ++t;
@@ -988,7 +1034,6 @@ int fetchAllMail(void)
 	return nfetch;
 }				/* fetchAllMail */
 
-static int presentMail(void);
 static void readReplyInfo(void);
 static void writeReplyInfo(const char *addstring);
 
@@ -1031,7 +1076,7 @@ void scanMail(void)
 			showErrorAbort();
 		unreadBase = unreadMin;
 
-		if (presentMail() == 1)
+		if (presentMail() == 'd')
 			unlink(umf);
 	}			/* loop over mail messages */
 
@@ -1039,9 +1084,9 @@ void scanMail(void)
 }				/* scanMail */
 
 /* a mail message is in mailstring, present it to the user */
-/* Return 0 for ok, 1 to delete the mail, -1 to stop.
+/* Return the key that was pressed.
  * stop is only meaningful for imap. */
-static int presentMail(void)
+static char presentMail(void)
 {
 	int j, k;
 	const char *redirect = NULL;	/* send mail elsewhere */
@@ -1122,7 +1167,7 @@ key_command:
 /* interactive prompt depends on whether there is more text or not */
 	printf("%c ", displine > cw->dol ? '?' : '*');
 	fflush(stdout);
-	key = getLetter((isimap ? "q? nwWuUasd" : "q? nwud"));
+	key = getLetter((isimap ? "q? nwWuUasdm" : "q? nwud"));
 	printf("\b\b\b");
 	fflush(stdout);
 
@@ -1130,6 +1175,9 @@ key_command:
 	case 'q':
 		i_puts(MSG_Quit);
 		exit(0);
+
+	case 'm':
+		return 'm';
 
 	case 'n':
 		i_puts(MSG_Next);
@@ -1140,7 +1188,8 @@ key_command:
 		goto afterinput;
 
 	case 'd':
-		i_puts(MSG_Delete);
+		if (!isimap)
+			i_puts(MSG_Delete);
 		delflag = true;
 		goto afterinput;
 
@@ -1299,10 +1348,10 @@ afterinput:
 	mailu8 = 0;
 
 	if (delflag)
-		return 1;
+		return 'd';
 	if (key == 's')
-		return -1;
-	return 0;
+		return 's';
+	return 'n';
 }				/* presentMail */
 
 /* Here are the common keywords for mail header lines.
