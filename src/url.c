@@ -118,6 +118,8 @@ void unpercentString(char *s)
  * Get rid of :/   curl can't handle it.
  * This function is used to sanitize user-supplied URLs.  */
 
+/* these punctuations are percentable, anywhere in a url */
+static const char percentable[] = "!*'()[]+$,";
 static char hexdigits[] = "0123456789abcdef";
 #define ESCAPED_CHAR_LENGTH 3
 
@@ -132,7 +134,7 @@ char *percentURL(const char *start, const char *end)
 	const char *portloc = NULL;
 
 	for (in_pointer = start; in_pointer < end; in_pointer++)
-		if (*in_pointer <= 32 || strchr("!*'()[]+$,", *in_pointer))
+		if (*in_pointer <= ' ' || strchr(percentable, *in_pointer))
 			bytes_to_alloc += (ESCAPED_CHAR_LENGTH - 1);
 
 	new_copy = allocMem(bytes_to_alloc);
@@ -142,8 +144,8 @@ char *percentURL(const char *start, const char *end)
 		for (in_pointer = start; in_pointer < end; in_pointer++) {
 			if (*in_pointer == '\\')
 				*out_pointer++ = '/';
-			else if (*in_pointer <= 32 ||
-				 strchr("!*'()[]+$,", *in_pointer)) {
+			else if (*in_pointer <= ' ' ||
+				 strchr(percentable, *in_pointer)) {
 				*out_pointer++ = '%';
 				*out_pointer++ =
 				    hexdigits[(uchar) (*in_pointer & 0xf0) >>
@@ -1018,10 +1020,6 @@ char *encodePostData(const char *s)
 	while (c = *s++) {
 		if (isalnumByte(c))
 			goto putc;
-		if (c == ' ') {
-			c = '+';
-			goto putc;
-		}
 		if (strchr("-._~*()!", c))
 			goto putc;
 		sprintf(buf, "%%%02X", (uchar) c);
