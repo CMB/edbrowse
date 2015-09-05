@@ -830,7 +830,7 @@ static void set_onhandlers(const struct htmlTag *t)
 static const char dfvl[] = "defaultValue";
 static const char dfck[] = "defaultChecked";
 
-static void formControlJS(const struct htmlTag *t)
+static void formControlJS(struct htmlTag *t)
 {
 	const char *typedesc;
 	int itype = t->itype;
@@ -843,10 +843,10 @@ static void formControlJS(const struct htmlTag *t)
 		return;
 
 	if (form && form->jv)
-		domLink("Element", 0, "elements", form->jv, isradio | isselect);
+		domLink(t, "Element", 0, "elements", form->jv,
+			isradio | isselect);
 	else
-		domLink("Element", 0, 0, cw->docobj, isradio | isselect);
-
+		domLink(t, "Element", 0, 0, cw->docobj, isradio | isselect);
 	if (!t->jv)
 		return;
 
@@ -888,7 +888,7 @@ static void jsNode(struct htmlTag *t, bool opentag)
 
 	switch (action) {
 	case TAGACT_FORM:
-		domLink("Form", "action", "forms", cw->docobj, 0);
+		domLink(t, "Form", "action", "forms", cw->docobj, 0);
 		if (!t->jv)
 			break;
 		set_onhandlers(t);

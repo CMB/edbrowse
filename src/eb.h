@@ -480,7 +480,6 @@ enum {
 };
 
 /* Last tag in the list parsed from html */
-extern struct htmlTag *topTag;
 
 /* Return codes for base64Decode() */
 #define GOOD_BASE64_DECODE 0

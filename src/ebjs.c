@@ -1117,7 +1117,7 @@ static const char *fakePropName(void)
 
 /* This function was in jsdom.cpp, but surely doesn't belong there,
  * it is all about dom */
-void domLink(const char *classname,	/* instantiate this class */
+void domLink(struct htmlTag *t, const char *classname,	/* instantiate this class */
 	     const char *href, const char *list,	/* next member of this array */
 	     jsobjtype owner, int radiosel)
 {
@@ -1127,11 +1127,11 @@ void domLink(const char *classname,	/* instantiate this class */
 	unsigned length;
 	bool dupname = false;
 /* some strings from the html tag */
-	const char *symname = topTag->name;
-	const char *idname = topTag->id;
+	const char *symname = t->name;
+	const char *idname = t->id;
 	const char *membername = 0;	/* usually symname */
-	const char *href_url = topTag->href;
-	const char *htmlclass = topTag->classname;
+	const char *href_url = t->href;
+	const char *htmlclass = t->classname;
 
 	debugPrint(5, "domLink %s.%d name %s",
 		   classname, radiosel, (symname ? symname : emptyString));
@@ -1300,10 +1300,10 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 		set_property_string(io, "className", htmlclass);
 	}
 
-	topTag->jv = io;
-	makeParentNode(topTag);
+	t->jv = io;
+	makeParentNode(t);
 
-	set_property_string(io, "nodeName", topTag->info->name);
+	set_property_string(io, "nodeName", t->info->name);
 
 	if (stringEqual(classname, "Html")) {
 		set_property_object(cw->docobj, "documentElement", io);

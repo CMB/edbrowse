@@ -27,7 +27,7 @@ static const char *const inp_types[] = {
 static const char dfvl[] = "defaultValue";
 static const char dfck[] = "defaultChecked";
 
-struct htmlTag *topTag;
+static struct htmlTag *topTag;
 static char *topAttrib;
 static char *basehref;
 static struct htmlTag *currentForm;	/* the open form */
@@ -491,10 +491,10 @@ static void formControl(bool namecheck)
 
 	if (isJSAlive) {
 		if (currentForm && currentForm->jv) {
-			domLink("Element", 0, "elements", currentForm->jv,
-				isradio | isselect);
+			domLink(topTag, "Element", 0, "elements",
+				currentForm->jv, isradio | isselect);
 		} else {
-			domLink("Element", 0, 0, cw->docobj,
+			domLink(topTag, "Element", 0, 0, cw->docobj,
 				isradio | isselect);
 		}
 	}
@@ -535,7 +535,7 @@ static void htmlImage(void)
 	if (!isJSAlive)
 		return;
 
-	domLink("Image", "src", "images", cw->docobj, 0);
+	domLink(topTag, "Image", "src", "images", cw->docobj, 0);
 
 	get_js_events();
 
@@ -595,7 +595,7 @@ static void htmlForm(void)
 	if (!isJSAlive)
 		return;
 
-	domLink("Form", "action", "forms", cw->docobj, 0);
+	domLink(topTag, "Form", "action", "forms", cw->docobj, 0);
 	if (!topTag->jv)
 		return;
 
@@ -1348,7 +1348,7 @@ static void htmlScript(char **html, char **h)
 
 /* Create the script object. */
 	htmlHref("src");
-	domLink("Script", "src", "scripts", cw->docobj, 0);
+	domLink(topTag, "Script", "src", "scripts", cw->docobj, 0);
 
 	a = htmlAttrVal(topAttrib, "type");
 	if (a)
@@ -2048,7 +2048,7 @@ nextchar:
 				currentA = 0;
 			} else {
 				htmlHref("href");
-				domLink("Anchor", "href", "anchors",
+				domLink(topTag, "Anchor", "href", "anchors",
 					cw->docobj, 0);
 				get_js_events();
 				if (t->href) {
@@ -2082,15 +2082,15 @@ nextchar:
 			continue;
 
 		case TAGACT_HTML:
-			domLink("Html", 0, "htmls", cw->docobj, 0);
+			domLink(topTag, "Html", 0, "htmls", cw->docobj, 0);
 			goto endtag;
 
 		case TAGACT_HEAD:
-			domLink("Head", 0, "heads", cw->docobj, 0);
+			domLink(topTag, "Head", 0, "heads", cw->docobj, 0);
 			goto plainWithElements;
 
 		case TAGACT_BODY:
-			domLink("Body", 0, "bodies", cw->docobj, 0);
+			domLink(topTag, "Body", 0, "bodies", cw->docobj, 0);
 plainWithElements:
 			if (t->jv && !t->slash)
 				instantiate_array(t->jv, "elements");
@@ -2157,7 +2157,8 @@ plainTag:
 
 		case TAGACT_TABLE:
 			if (!slash && isJSAlive) {
-				domLink("Table", 0, "tables", cw->docobj, 0);
+				domLink(topTag, "Table", 0, "tables",
+					cw->docobj, 0);
 				get_js_events();
 /* create the array of rows under the table */
 				if (topTag->jv)
@@ -2181,7 +2182,7 @@ plainTag:
 			tdfirst = true;
 			if ((!slash) && isJSAlive
 			    && (open = findOpenTag("table")) && open->jv) {
-				domLink("Trow", 0, "rows", open->jv, 0);
+				domLink(topTag, "Trow", 0, "rows", open->jv, 0);
 				get_js_events();
 				if (topTag->jv)
 					instantiate_array(topTag->jv, "cells");
@@ -2206,21 +2207,24 @@ plainTag:
 				stringAndChar(&ns, &ns_l, '|');
 			}
 			if (isJSAlive && (open = findOpenTag("tr")) && open->jv) {
-				domLink("Cell", 0, "cells", open->jv, 0);
+				domLink(topTag, "Cell", 0, "cells", open->jv,
+					0);
 				get_js_events();
 			}
 			goto endtag;
 
 		case TAGACT_DIV:
 			if (!slash && isJSAlive) {
-				domLink("Div", 0, "divs", cw->docobj, 0);
+				domLink(topTag, "Div", 0, "divs", cw->docobj,
+					0);
 				get_js_events();
 			}
 			goto nop;
 
 		case TAGACT_SPAN:
 			if (!slash) {
-				domLink("Span", 0, "spans", cw->docobj, 0);
+				domLink(topTag, "Span", 0, "spans", cw->docobj,
+					0);
 				get_js_events();
 				a = htmlAttrVal(topAttrib, "class");
 				if (!a)
@@ -2428,11 +2432,12 @@ unparen:
 		case TAGACT_FRAME:
 			if (action == TAGACT_FRAME) {
 				htmlHref("src");
-				domLink("Frame", "src", "frames",
+				domLink(topTag, "Frame", "src", "frames",
 					cw->winobj, 0);
 			} else {
 				htmlHref("href");
-				domLink("Area", "href", "areas", cw->docobj, 0);
+				domLink(topTag, "Area", "href", "areas",
+					cw->docobj, 0);
 			}
 			topTag->clickable = true;
 			get_js_events();
@@ -2487,7 +2492,7 @@ unparen:
 				basehref = t->href;
 				debugPrint(3, "base href %s", basehref);
 			}
-			domLink("Base", "href", "bases", cw->docobj, 0);
+			domLink(topTag, "Base", "href", "bases", cw->docobj, 0);
 			continue;
 
 		case TAGACT_IMAGE:
