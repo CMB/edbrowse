@@ -1094,6 +1094,8 @@ char *htmlReformat(const char *buf)
 			premode = !slash;
 
 /* Insert newlines between adjacent hyperlinks. */
+/* not really a good feature */
+#if 0
 		if (c != '}' || premode)
 			continue;
 		for (h = nh; c = *h; ++h)
@@ -1111,6 +1113,7 @@ char *htmlReformat(const char *buf)
 			continue;
 		appendSpaceChunk("\n", 1, false);
 		nh = h;
+#endif
 	}			/* loop over text */
 
 /* close off the last line */
