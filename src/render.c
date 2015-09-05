@@ -49,7 +49,7 @@ static struct htmlTag *currentA;
 static char *radioCheck;
 static int radio_l;
 
-static const char *attribVal(struct htmlTag *t, const char *name)
+static const char *attribVal(const struct htmlTag *t, const char *name)
 {
 	const char *v;
 	int j = stringInListCI(t->attributes, name);
@@ -61,7 +61,7 @@ static const char *attribVal(struct htmlTag *t, const char *name)
 	return v;
 }				/* attribVal */
 
-static bool attribPresent(struct htmlTag *t, const char *name)
+static bool attribPresent(const struct htmlTag *t, const char *name)
 {
 	int j = stringInListCI(t->attributes, name);
 	return (j >= 0);
@@ -255,6 +255,7 @@ static void renderNode(struct htmlTag *t, bool opentag)
 #define ns_hnum() stringAndString(&ns, &ns_l, hnum)
 #define ns_ic() stringAndChar(&ns, &ns_l, InternalCodeChar)
 	int j, l;
+	int itype;		/* input type */
 	const struct tagInfo *ti = t->info;
 	int action = t->action;
 	char c;
@@ -473,31 +474,35 @@ doneSelect:
 
 	case TAGACT_INPUT:
 		htmlInput(t);
-		if (t->itype == INP_HIDDEN)
+		itype = t->itype;
+		if (itype == INP_HIDDEN)
 			break;
+		if (currentForm) {
+			++currentForm->ninp;
+			if (itype == INP_SUBMIT || itype == INP_IMAGE)
+				currentForm->submitted = true;
+			if (itype == INP_BUTTON && t->onclick)
+				currentForm->submitted = true;
+			if (itype > INP_HIDDEN && itype <= INP_SELECT
+			    && t->onchange)
+				currentForm->submitted = true;
+		}
 		if (!retainTag)
 			break;
 		t->retain = true;
-		if (currentForm) {
-			++currentForm->ninp;
-			if (t->itype == INP_SUBMIT || t->itype == INP_IMAGE)
-				currentForm->submitted = true;
-		}
 		liCheck(t);
 		sprintf(hnum, "%c%d<", InternalCodeChar, tagno);
 		ns_hnum();
-		if (t->itype < INP_RADIO) {
+		if (itype < INP_RADIO) {
 			if (t->value[0])
 				stringAndString(&ns, &ns_l, t->value);
-			else if (t->itype == INP_SUBMIT
-				 || t->itype == INP_IMAGE)
+			else if (itype == INP_SUBMIT || itype == INP_IMAGE)
 				stringAndString(&ns, &ns_l, "Go");
-			else if (t->itype == INP_RESET)
+			else if (itype == INP_RESET)
 				stringAndString(&ns, &ns_l, "Reset");
 		} else
 			stringAndChar(&ns, &ns_l, (t->checked ? '+' : '-'));
-		if (currentForm
-		    && (t->itype == INP_SUBMIT || t->itype == INP_IMAGE)) {
+		if (currentForm && (itype == INP_SUBMIT || itype == INP_IMAGE)) {
 			if (currentForm->secure)
 				stringAndString(&ns, &ns_l, " secure");
 			if (currentForm->bymail)
@@ -784,9 +789,93 @@ char *render(int start)
 	return ns;
 }				/* render */
 
+/*********************************************************************
+The following code creates parallel js objects for the nodes in our html tree.
+This follows the template of the above: traverse the tree,
+callback() on each node, switch on the node type,
+and create the corresponding js object or objects.
+It's here because the code is similar to the above,
+but it is semantically quite different.
+It doesn't even have to run if js is off.
+And it only runs at the start of browse, whereas render can be called
+again and again as the running js makes changes to the tree.
+We may want to move this js code to another file some day,
+but for now it's here.
+*********************************************************************/
+
+static void set_onhandler(const struct htmlTag *t, const char *name)
+{
+	const char *s;
+	if ((s = attribVal(t, name)) && t->jv && isJSAlive)
+		handlerSet(t->jv, name, s);
+}				/* set_onhandler */
+
+static void set_onhandlers(const struct htmlTag *t)
+{
+/* I don't do anything with onkeypress, onfocus, etc,
+ * these are just the most common handlers */
+	if (t->onclick)
+		set_onhandler(t, "onclick");
+	if (t->onchange)
+		set_onhandler(t, "onchange");
+	if (t->onsubmit)
+		set_onhandler(t, "onsubmit");
+	if (t->onreset)
+		set_onhandler(t, "onreset");
+}				/* set_onhandlers */
+
+static const char dfvl[] = "defaultValue";
+static const char dfck[] = "defaultChecked";
+
+static void formControlJS(const struct htmlTag *t)
+{
+	const char *typedesc;
+	int itype = t->itype;
+	int isradio = itype == INP_RADIO;
+	int isselect = (itype == INP_SELECT) * 2;
+	char *myname = (t->name ? t->name : t->id);
+	const struct htmlTag *form = t->controller;
+
+	if (!isJSAlive)
+		return;
+
+	if (form && form->jv)
+		domLink("Element", 0, "elements", form->jv, isradio | isselect);
+	else
+		domLink("Element", 0, 0, cw->docobj, isradio | isselect);
+
+	if (!t->jv)
+		return;
+
+	set_onhandlers(t);
+
+	if (itype <= INP_RADIO) {
+		set_property_string(t->jv, "value", t->value);
+		if (itype != INP_FILE) {
+/* No default value on file, for security reasons */
+			set_property_string(t->jv, dfvl, t->value);
+		}		/* not file */
+	}
+
+	if (isselect)
+		typedesc = t->multiple ? "select-multiple" : "select-one";
+	else
+		typedesc = inp_types[itype];
+	set_property_string(t->jv, "type", typedesc);
+
+	if (itype >= INP_RADIO) {
+		set_property_bool(t->jv, "checked", t->checked);
+		set_property_bool(t->jv, dfck, t->checked);
+	}
+}				/* formControlJS */
+
 static void jsNode(struct htmlTag *t, bool opentag)
 {
-/* if js is not active then we should even be here, but just in case ... */
+	int itype;		/* input type */
+	const struct tagInfo *ti = t->info;
+	int action = t->action;
+
+/* if js is not active then we shouldn't even be here, but just in case ... */
 	if (!isJSAlive)
 		return;
 
@@ -794,4 +883,26 @@ static void jsNode(struct htmlTag *t, bool opentag)
 	if (!opentag)
 		return;
 
+	switch (action) {
+	case TAGACT_FORM:
+		domLink("Form", "action", "forms", cw->docobj, 0);
+		if (!t->jv)
+			break;
+		set_onhandlers(t);
+		instantiate_array(t->jv, "elements");
+		break;
+
+	}			/* switch */
 }				/* jsNode */
+
+void html2js(int start)
+{
+	if (!isJSAlive)
+		return;
+
+/* title special case */
+	set_property_string(cw->docobj, "title", cw->ft);
+
+	traverse_callback = jsNode;
+	traverseAll(start);
+}				/* html2js */
