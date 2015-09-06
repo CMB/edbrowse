@@ -100,6 +100,14 @@ static struct htmlTag *findList(struct htmlTag *t)
 	return 0;
 }				/* findList */
 
+static struct htmlTag *findOpenTag(struct htmlTag *t, int action)
+{
+	while (t = t->parent)
+		if (t->action == action)
+			return t;
+	return 0;
+}				/* findOpenTag */
+
 /* see if a number or star is pending, waiting to be printed */
 static void liCheck(struct htmlTag *t)
 {
@@ -595,12 +603,15 @@ doneSelect:
 		break;
 
 	case TAGACT_TR:
-		if (opentag)
+		if (opentag) {
 			tdfirst = true;
+			t->controller = findOpenTag(t, TAGACT_TABLE);
+		}
 	case TAGACT_TABLE:
 		goto nop;
 
 	case TAGACT_TD:
+		t->controller = findOpenTag(t, TAGACT_TR);
 		if (tdfirst)
 			tdfirst = false;
 		else if (retainTag) {
@@ -939,7 +950,7 @@ static void prepareScript(struct htmlTag *t)
 
 /* It's javascript, run with the source or the inline text.
  * As per the starting line number, we cant distinguish between
- * <script foo </script>  and
+ * <script> foo </script>  and
  * <script>
  * foo
  * </script>
@@ -1010,6 +1021,7 @@ static void jsNode(struct htmlTag *t, bool opentag)
 	int itype;		/* input type */
 	const struct tagInfo *ti = t->info;
 	int action = t->action;
+	const struct htmlTag *above;
 
 /* if js is not active then we shouldn't even be here, but just in case ... */
 	if (!isJSAlive)
@@ -1043,6 +1055,37 @@ static void jsNode(struct htmlTag *t, bool opentag)
 	case TAGACT_A:
 		domLink(t, "Anchor", "href", "anchors", cw->docobj, 0);
 		set_onhandlers(t);
+		break;
+
+	case TAGACT_HTML:
+		domLink(t, "Html", 0, "htmls", cw->docobj, 0);
+		break;
+
+	case TAGACT_HEAD:
+		domLink(t, "Head", 0, "heads", cw->docobj, 0);
+		break;
+
+	case TAGACT_BODY:
+		domLink(t, "Body", 0, "bodies", cw->docobj, 0);
+		break;
+
+	case TAGACT_TABLE:
+		domLink(t, "Table", 0, "tables", cw->docobj, 0);
+/* create the array of rows under the table */
+		instantiate_array(t->jv, "rows");
+		break;
+
+	case TAGACT_TR:
+		if ((above = t->controller) && above->jv) {
+			domLink(t, "Trow", 0, "rows", above->jv, 0);
+			instantiate_array(t->jv, "cells");
+		}
+		break;
+
+	case TAGACT_TD:
+		if ((above = t->controller) && above->jv) {
+			domLink(t, "Cell", 0, "cells", above->jv, 0);
+		}
 		break;
 
 	}			/* switch */
