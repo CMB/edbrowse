@@ -137,16 +137,14 @@ static void printNode(TidyNode node, int level, bool opentag)
 	}
 	assert(name != NULL);
 	printf("Node(%d): %s {\n", level, ((char *)name));
-	if (debugLevel >= 6) {
 /* the ifs could be combined with && */
-		if (stringEqual(((char *)name), "Text")) {
-			TidyBuffer tnv = { 0 };	/* text-node value */
-			tidyBufClear(&tnv);
-			tidyNodeGetValue(tdoc, node, &tnv);
-			printf("Text: %s\n", tnv.bp);
-			if (tnv.size > 0)
-				tidyBufFree(&tnv);
-		}
+	if (stringEqual(((char *)name), "Text")) {
+		TidyBuffer tnv = { 0 };	/* text-node value */
+		tidyBufClear(&tnv);
+		tidyNodeGetValue(tdoc, node, &tnv);
+		printf("Text: %s\n", tnv.bp);
+		if (tnv.size > 0)
+			tidyBufFree(&tnv);
 	}
 
 /* Get the first attribute for the node */
@@ -190,6 +188,10 @@ static void convertNode(TidyNode node, int level, bool opentag)
 		t->slash = true;
 		return;
 	}
+
+/* if a js script, remember the line number for error messages */
+	if (t->action == TAGACT_SCRIPT)
+		t->ln = tidyNodeLine(node);
 
 /* this is the open tag, set the attributes */
 /* special case for text tag */

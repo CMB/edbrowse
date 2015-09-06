@@ -3472,7 +3472,7 @@ static char *showLinks(void)
 				continue;
 			}
 			/* mail link */
-			stringAndString(&a, &a_l, "<a href=");
+			stringAndString(&a, &a_l, "<br><a href=");
 
 			if (memEqualCI(h, "javascript:", 11)) {
 				stringAndString(&a, &a_l, "javascript:>\n");

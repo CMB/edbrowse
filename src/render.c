@@ -827,8 +827,9 @@ static void set_onhandlers(const struct htmlTag *t)
 		set_onhandler(t, "onreset");
 }				/* set_onhandlers */
 
-static const char dfvl[] = "defaultValue";
-static const char dfck[] = "defaultChecked";
+static const char defvl[] = "defaultValue";
+static const char defck[] = "defaultChecked";
+static const char defsel[] = "defaultSelected";
 
 static void formControlJS(struct htmlTag *t)
 {
@@ -856,7 +857,7 @@ static void formControlJS(struct htmlTag *t)
 		set_property_string(t->jv, "value", t->value);
 		if (itype != INP_FILE) {
 /* No default value on file, for security reasons */
-			set_property_string(t->jv, dfvl, t->value);
+			set_property_string(t->jv, defvl, t->value);
 		}		/* not file */
 	}
 
@@ -868,9 +869,42 @@ static void formControlJS(struct htmlTag *t)
 
 	if (itype >= INP_RADIO) {
 		set_property_bool(t->jv, "checked", t->checked);
-		set_property_bool(t->jv, dfck, t->checked);
+		set_property_bool(t->jv, defck, t->checked);
 	}
 }				/* formControlJS */
+
+static void optionJS(struct htmlTag *t)
+{
+	struct htmlTag *sel = t->controller;
+	const char *tx = t->textval;
+
+	if (!sel)
+		return;
+
+	if (!tx) {
+		debugPrint(3, "empty option");
+	} else {
+		if (!t->value)
+			t->value = cloneString(tx);
+	}
+
+/* no point if the controlling select doesn't have a js object */
+	if (!sel->jv)
+		return;
+
+	t->jv = establish_js_option(sel->jv, t->lic);
+	set_property_string(t->jv, "text", t->textval);
+	set_property_string(t->jv, "value", t->value);
+	set_property_string(t->jv, "nodeName", "OPTION");
+	set_property_bool(t->jv, "selected", t->checked);
+	set_property_bool(t->jv, defsel, t->checked);
+	set_property_object(t->jv, "parentNode", sel->jv);
+
+	if (t->checked && !sel->multiple) {
+		set_property_number(sel->jv, "selectedIndex", t->lic);
+		set_property_string(sel->jv, "value", t->value);
+	}
+}				/* optionJS */
 
 static void jsNode(struct htmlTag *t, bool opentag)
 {
@@ -897,6 +931,10 @@ static void jsNode(struct htmlTag *t, bool opentag)
 
 	case TAGACT_INPUT:
 		formControlJS(t);
+		break;
+
+	case TAGACT_OPTION:
+		optionJS(t);
 		break;
 
 	case TAGACT_A:

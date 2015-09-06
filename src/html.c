@@ -221,7 +221,7 @@ static const struct tagInfo elements[] = {
 	{"TR", "a table row", TAGACT_TR, 3, 5, 9},
 	{"TD", "a table entry", TAGACT_TD, 3, 0, 13},
 	{"TH", "a table heading", TAGACT_TD, 3, 0, 9},
-	{"PRE", "a preformatted section", TAGACT_PRE, 3, 5, 0},
+	{"PRE", "a preformatted section", TAGACT_PRE, 3, 10, 0},
 	{"LISTING", "a listing", TAGACT_PRE, 3, 1, 0},
 	{"XMP", "an example", TAGACT_PRE, 3, 1, 0},
 	{"FIXED", "a fixed presentation", TAGACT_NOP, 3, 1, 0},
