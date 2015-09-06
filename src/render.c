@@ -906,6 +906,105 @@ static void optionJS(struct htmlTag *t)
 	}
 }				/* optionJS */
 
+/* helper function to prepare an html script.
+ * Fetch from the internetif src=url.
+ * Some day we'll do these fetches in parallel in the background. */
+static void prepareScript(struct htmlTag *t)
+{
+	const char *js_file = "current_buffer";
+	char *js_text = 0;
+	const char *a;
+	const char *filepart;
+
+/* no need to fetch if no js */
+	if (!isJSAlive)
+		return;
+
+/* Create the script object. */
+	domLink(t, "Script", "src", "scripts", cw->docobj, 0);
+
+	a = attribVal(t, "type");
+	if (a)
+		set_property_string(t->jv, "type", a);
+	a = attribVal(t, "language");
+	if (a)
+		set_property_string(t->jv, "language", a);
+/* if the above calls failed */
+	if (!isJSAlive)
+		return;
+
+/* If no language is specified, javascript is default. */
+	if (a && (!memEqualCI(a, "javascript", 10) || isalphaByte(a[10])))
+		return;
+
+/* It's javascript, run with the source or the inline text.
+ * As per the starting line number, we cant distinguish between
+ * <script foo </script>  and
+ * <script>
+ * foo
+ * </script>
+ * so make a guess towards the second form and increment. */
+	++t->js_ln;
+	if (cw->fileName)
+		js_file = cw->fileName;
+
+	if (t->href) {		/* fetch the javascript page */
+		if (javaOK(t->href)) {
+			bool from_data = isDataURI(t->href);
+			debugPrint(3, "java source %s",
+				   !from_data ? t->href : "data URI");
+			if (from_data) {
+				char *mediatype;
+				int data_l = 0;
+				if (parseDataURI(t->href, &mediatype,
+						 &js_text, &data_l)) {
+					prepareForBrowse(js_text, data_l);
+					nzFree(mediatype);
+				} else {
+					debugPrint(3,
+						   "Unable to parse data URI containing JavaScript");
+				}
+			} else if (browseLocal && !isURL(t->href)) {
+				if (!fileIntoMemory
+				    (t->href, &serverData, &serverDataLen)) {
+					if (debugLevel >= 1)
+						i_printf(MSG_GetLocalJS,
+							 errorMsg);
+				} else {
+					js_text = serverData;
+					prepareForBrowse(js_text,
+							 serverDataLen);
+				}
+			} else if (httpConnect(t->href, false, false)) {
+				if (hcode == 200) {
+					js_text = serverData;
+					prepareForBrowse(js_text,
+							 serverDataLen);
+				} else {
+					nzFree(serverData);
+					if (debugLevel >= 3)
+						i_printf(MSG_GetJS, t->href,
+							 hcode);
+				}
+			} else {
+				if (debugLevel >= 3)
+					i_printf(MSG_GetJS2, errorMsg);
+			}
+			t->js_ln = 1;
+			js_file = (!from_data ? t->href : "data_URI");
+			nzFree(changeFileName);
+			changeFileName = NULL;
+		}
+	}
+
+	if (!js_text)
+		return;
+	set_property_string(t->jv, "data", js_text);
+	nzFree(js_text);
+	filepart = getFileURL(js_file, true);
+	t->js_file = cloneString(filepart);
+}				/* prepareScript */
+
 static void jsNode(struct htmlTag *t, bool opentag)
 {
 	int itype;		/* input type */
@@ -921,6 +1020,10 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		return;
 
 	switch (action) {
+	case TAGACT_SCRIPT:
+		prepareScript(t);
+		break;
+
 	case TAGACT_FORM:
 		domLink(t, "Form", "action", "forms", cw->docobj, 0);
 		if (!t->jv)

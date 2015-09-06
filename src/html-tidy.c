@@ -191,7 +191,7 @@ static void convertNode(TidyNode node, int level, bool opentag)
 
 /* if a js script, remember the line number for error messages */
 	if (t->action == TAGACT_SCRIPT)
-		t->ln = tidyNodeLine(node);
+		t->js_ln = tidyNodeLine(node);
 
 /* this is the open tag, set the attributes */
 /* special case for text tag */

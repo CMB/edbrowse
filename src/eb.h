@@ -417,7 +417,8 @@ struct htmlTag {
 	struct htmlTag *parent, *firstchild, *sibling;
 	jsobjtype jv;		/* corresponding java variable */
 	int seqno;
-	int ln;			/* line number */
+	char *js_file;
+	int js_ln;			/* line number of javascript */
 	int lic;		/* list item count, highly overloaded */
 	int action;
 	const struct tagInfo *info;

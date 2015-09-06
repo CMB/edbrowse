@@ -295,6 +295,7 @@ void freeTags(struct ebWindow *w)
 		nzFree(t->value);
 		nzFree(t->href);
 		nzFree(t->classname);
+		nzFree(t->js_file);
 
 		a = (char **)t->attributes;
 		if (a) {
@@ -1883,7 +1884,7 @@ nextchar:
 		t->slash = slash;
 		if (!slash)
 			t->inner = end - html;
-		t->ln = browseLine;
+		t->js_ln = browseLine;
 		t->action = action;	/* we might change this later */
 		j = end - attrib;
 		topAttrib = t->attrib = j ? pullString(attrib, j) : emptyString;
@@ -2627,7 +2628,7 @@ endtag:
 		for (i1 = 0; i1 < cw->numTags; ++i1) {
 			t = tagList[i1];
 			if (fromSource)
-				browseLine = t->ln;
+				browseLine = t->js_ln;
 			if (t->info->nest && !t->slash && !t->balanced) {
 				browseError(MSG_TagNotClosed, t->info->desc);
 				break;
