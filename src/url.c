@@ -64,6 +64,8 @@ void unpercentURL(char *url)
 	u = w = url;
 	while (c = *u) {
 		++u;
+		if (c == '+')
+			c = ' ';
 		if (c == '%' && isxdigit(u[0]) && isxdigit(u[1])) {
 			c = fromHex(u[0], u[1]);
 			u += 2;
@@ -91,6 +93,8 @@ void unpercentString(char *s)
 	u = w = s;
 	while (c = *u) {
 		++u;
+		if (c == '+')
+			c = ' ';
 		if (c == '%' && isxdigit(u[0]) && isxdigit(u[1])) {
 			c = fromHex(u[0], u[1]);
 			u += 2;

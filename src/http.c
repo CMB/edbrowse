@@ -131,9 +131,9 @@ static void scan_http_headers(bool fromCallback)
 		return;
 
 	if ((newlocation == NULL) && (v = find_http_header("location"))) {
-		newlocation = percentURL(v, NULL);
+		unpercentURL(v);
+		newlocation = v;
 		newloc_d = -1;
-		nzFree(v);
 	}
 
 	if (v = find_http_header("refresh")) {
