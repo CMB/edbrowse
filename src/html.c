@@ -1738,7 +1738,7 @@ static char *encodeTags(char *html, bool fromSource)
 	tree_pos = l;
 	intoTree(0);
 	a = render(l);
-	debugPrint(5, "|%s|\n", a);
+	debugPrint(6, "|%s|\n", a);
 	if (!isJSAlive) {
 /* no js, use the rendered text from the tidy tree */
 		nzFree(html);
@@ -2661,7 +2661,7 @@ endtag:
 		}		/* loop over all tags */
 	}
 
-	debugPrint(5, "|%s|\n", ns);
+	debugPrint(6, "|%s|\n", ns);
 	/* clean up */
 	browseLine = 0;
 	nzFree(html);

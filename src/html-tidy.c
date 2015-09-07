@@ -38,15 +38,10 @@ static void traverseNode(TidyNode node, int level)
 	(*traverse_callback) (node, level, false);
 }				/* traverseNode */
 
-static void traverseBody(void)
+static void traverseAll(void)
 {
-	traverseNode(tidyGetBody(tdoc), 0);
-}				/* traverseBody */
-
-static void traverseHead(void)
-{
-	traverseNode(tidyGetHead(tdoc), 0);
-}				/* traverseHead */
+	traverseNode(tidyGetRoot(tdoc), 0);
+}
 
 /* Like the default tidy error reporter, except messages are suppressed
  * unless debugLevel >= 3, and they are sent to stdout
@@ -70,16 +65,15 @@ void html2nodes(const char *htmltext)
 
 	tidyParseString(tdoc, htmltext);
 	tidyCleanAndRepair(tdoc);
+
 	if (debugLevel >= 5) {
 		traverse_callback = printNode;
-		traverseHead();
-		traverseBody();
+		traverseAll();
 	}
 
 /* convert tidy nodes into edbrowse nodes */
 	traverse_callback = convertNode;
-	traverseHead();
-	traverseBody();
+	traverseAll();
 
 	tidyRelease(tdoc);
 }				/* html2nodes */

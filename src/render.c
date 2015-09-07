@@ -375,6 +375,7 @@ static void renderNode(struct htmlTag *t, bool opentag)
 	case TAGACT_P:
 	case TAGACT_BASE:
 	case TAGACT_OBJ:
+	case TAGACT_HTML:
 	case TAGACT_HEAD:
 	case TAGACT_BODY:
 	case TAGACT_JS:
