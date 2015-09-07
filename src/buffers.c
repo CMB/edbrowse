@@ -3509,7 +3509,7 @@ static char *showLinks(void)
 
 		h = htmlEscape(cw->fileName);
 		debrowseSuffix(h);
-		stringAndString(&a, &a_l, "<a href=");
+		stringAndString(&a, &a_l, "<br><a href=");
 		stringAndString(&a, &a_l, h);
 		stringAndString(&a, &a_l, ">\n");
 /* get text from the html title if you can */
