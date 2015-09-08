@@ -549,7 +549,7 @@ static void undoPush(void)
 	madeChanges = true;
 
 	cw->undoable = true;
-	if (!cw->browseMode)
+	if (!(cw->browseMode | cw->quitMode))
 		cw->changeMode = true;
 
 	undoCompare();
@@ -2811,6 +2811,7 @@ static int twoLetter(const char *line, const char **runThis)
 
 	if (stringEqual(line, "bw")) {
 		cw->changeMode = false;
+		cw->quitMode = true;
 		return true;
 	}
 

@@ -350,6 +350,7 @@ struct ebWindow {
 	bool iso8859Mode:1;
 	bool browseMode:1;	/* browsing html */
 	bool changeMode:1;	/* something has changed in this file */
+	bool quitMode:1;	/* you can quit this buffer any time */
 	bool dirMode:1;		/* directory mode */
 	bool undoable:1;	/* undo is possible */
 	bool sqlMode:1;		/* accessing a table */

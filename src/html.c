@@ -280,8 +280,7 @@ void freeTags(struct ebWindow *w)
 		if (side != sessionList[n].fw)
 			continue;
 /* We could have added a line, then deleted it */
-		side->changeMode = false;
-		cxQuit(n, 2);
+		cxQuit(n, 3);
 	}			/* loop over tags */
 
 	e = w->tags;
