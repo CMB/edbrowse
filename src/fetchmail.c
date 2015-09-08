@@ -158,7 +158,7 @@ static void setLimit(const char *t)
 	imapfetch = atoi(t);
 	if (imapfetch < 10)
 		imapfetch = 10;
-	printf("fetch %d at a time\n", imapfetch);
+	i_printf(MSG_FetchN, imapfetch);
 }				/* setLimit */
 
 /* mail message in a folder */
@@ -291,9 +291,9 @@ static struct FOLDER *folderByName(char *line)
 	if (cnt == 1)
 		return topfolders + j;
 	if (cnt)
-		printf("multiple folders contain %s\n", line);
+		i_printf(MSG_ManyFolderMatch, line);
 	else
-		printf("no folders contain %s\n", line);
+		i_printf(MSG_NoFolderMatch, line);
 	return 0;
 }				/* folderByName */
 
@@ -374,10 +374,7 @@ static bool imapSearch(CURL * handle, struct FOLDER *f, char *line)
 		line += 2;
 	} else if (line[0] && !isspace(line[0]) &&
 		   (isspace(line[1]) || !line[1])) {
-		puts("s string, emails with string in the subject\n\
-f string, emails with string in the from line\n\
-b string, emails with string in the message body\n\
-if no letter designator, subject is default.");
+		i_puts(MSG_ImapSearchHelp);
 		return false;
 	}
 
@@ -393,11 +390,13 @@ if no letter designator, subject is default.");
 	}
 
 	if (strchr(line, '"')) {
-		puts("search string cannot contain quotes");
+		i_puts(MSG_SearchQuote);
 		return false;
 	}
 
 	strcpy(cust_cmd, "SEARCH ");
+	if (cons_utf8)
+		strcat(cust_cmd, "CHARSET UTF-8 ");
 	if (searchtype == 's')
 		strcat(cust_cmd, "SUBJECT");
 	if (searchtype == 'f')
@@ -478,7 +477,7 @@ static void scanFolder(CURL * handle, struct FOLDER *f, bool allmessages)
 	bool yesdel = false, delflag;
 
 	if (!f->nmsgs || !allmessages && !f->unread) {
-		puts("no messages");
+		i_puts(MSG_NoMessages);
 		return;
 	}
 
@@ -494,7 +493,7 @@ static void scanFolder(CURL * handle, struct FOLDER *f, bool allmessages)
 abort:
 		ebcurl_setError(res, mailbox_url);
 		showError();
-		puts("end of folder");
+		i_puts(MSG_EndFolder);
 		return;
 	}
 
@@ -527,15 +526,7 @@ action:
 		printf("\b\b\b");
 		fflush(stdout);
 		if (key == '?' || key == 'h') {
-			puts("h\tprint this help message.\n\
-q\tquit this program.\n\
-s\tstop reading from this folder.\n\
-n\tcontinue to next message.\n\
-d\tdelete this email.\n\
-m\tmove this email to another folder.\n\
-space\tread and manage this email.\n\
-/\tsearch for words in subject, from, or body.\n\
-l\tset imap fetch limit.");
+			i_puts(MSG_ImapMessageHelp);
 			goto action;
 		}
 		if (key == 'q') {
@@ -878,9 +869,12 @@ abort:
 	nzFree(mailstring);
 	if (dostats) {
 		printf("%2d %s", f - topfolders + 1, f->path);
+/*
 		if (f->children)
 			printf(" with children");
-		printf(", %d messages\n", f->nmsgs);
+*/
+		printf(", ");
+		i_printf(MSG_MessagesX, f->nmsgs);
 		return;
 	}
 
@@ -1060,7 +1054,7 @@ static CURLcode count_messages(CURL * handle, int *message_count)
 
 		setFolders();
 		if (!n_folders) {
-			puts("no folders present");
+			i_puts(MSG_NoFolders);
 imap_done:
 			curl_easy_cleanup(handle);
 			exit(0);
@@ -1071,8 +1065,7 @@ imap_done:
 			examineFolder(handle, f, true);
 
 input:
-		puts("Select a folder by number or by substring.");
-		puts("Prepend - for just the unread messages. q to quit. l to change fetch limit.");
+		i_puts(MSG_SelectFolder);
 		if (!fgets(inputline, sizeof(inputline), stdin))
 			goto imap_done;
 		t = inputline;
