@@ -2809,6 +2809,11 @@ static int twoLetter(const char *line, const char **runThis)
 		return true;
 	}
 
+	if (stringEqual(line, "bw")) {
+		cw->changeMode = false;
+		return true;
+	}
+
 	if (line[0] == 'u' && line[1] == 'a' && isdigitByte(line[2])
 	    && !line[3]) {
 		char *t = userAgents[line[2] - '0'];

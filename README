@@ -189,8 +189,9 @@ sendmail.c:
 Send mail (smtp or smtps).  Encode attachments.
 
 fetchmail.c:
-Fetch mail (pop3 or pop3s).  Decode attachments.
+Fetch mail (pop3 or pop3s or imap).  Decode attachments.
 Browse mail files, separate mime components.
+Delete emails, move emails to other imap folders, search on an imap server.
 
 plugin.c:
 Determine the mime type of a file or web page and the corresponding plugin,

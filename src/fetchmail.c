@@ -145,11 +145,26 @@ static char *mailstring;
 static int mailstring_l;
 static char *mailbox_url, *message_url;
 
-#define MAXIMAPFETCH 100
+static int imapfetch = 100;
 
-/* missge in a folder */
+static void setLimit(const char *t)
+{
+	while (isspace(*t))
+		++t;
+	if (!isdigit(*t)) {
+		i_puts(MSG_NumberExpected);
+		return;
+	}
+	imapfetch = atoi(t);
+	if (imapfetch < 10)
+		imapfetch = 10;
+	printf("fetch %d at a time\n", imapfetch);
+}				/* setLimit */
+
+/* mail message in a folder */
 struct MIF {
 	int uid;
+	int seqno;
 	int size;
 	char *cbase;		/* allocated string containing the following */
 	char *subject, *from, *reply;
@@ -326,9 +341,132 @@ static void undosOneMessage(void)
 }				/* undosOneMessage */
 
 static char presentMail(void);
+static void envelopes(CURL * handle, struct FOLDER *f);
+
+static void cleanFolder(struct FOLDER *f)
+{
+	int j;
+	struct MIF *mif;
+	if (!f->mlist)
+		return;
+	mif = f->mlist;
+	for (j = 0; j < f->nfetch; ++j, ++mif)
+		nzFree(mif->cbase);
+	nzFree(f->mlist);
+	f->mlist = NULL;
+	f->nmsgs = f->nfetch = f->unread = 0;
+}				/* cleanFolder */
+
+/* search through imap server for a particular string */
+/* Return true if the search ran successfully and found some messages. */
+static bool imapSearch(CURL * handle, struct FOLDER *f, char *line)
+{
+	char searchtype = 's';
+	char c;
+	char *t, *u;
+	CURLcode res;
+	int cnt;
+	struct MIF *mif;
+	char cust_cmd[200];
+
+	if (*line && line[1] == ' ' && strchr("sfb", *line)) {
+		searchtype = *line;
+		line += 2;
+	} else if (line[0] && !isspace(line[0]) &&
+		   (isspace(line[1]) || !line[1])) {
+		puts("s string, emails with string in the subject\n\
+f string, emails with string in the from line\n\
+b string, emails with string in the message body\n\
+if no letter designator, subject is default.");
+		return false;
+	}
+
+	while (isspace(*line))
+		++line;
+	t = line + strlen(line);
+	while (t > line && isspace(t[-1]))
+		--t;
+	*t = 0;
+	if (t == line) {
+		i_puts(MSG_Empty);
+		return false;
+	}
+
+	if (strchr(line, '"')) {
+		puts("search string cannot contain quotes");
+		return false;
+	}
+
+	strcpy(cust_cmd, "SEARCH ");
+	if (searchtype == 's')
+		strcat(cust_cmd, "SUBJECT");
+	if (searchtype == 'f')
+		strcat(cust_cmd, "FROM");
+	if (searchtype == 'b')
+		strcat(cust_cmd, "BODY");
+	strcat(cust_cmd, " \"");
+	strcat(cust_cmd, line);
+	strcat(cust_cmd, "\"");
+	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
+	mailstring = initString(&mailstring_l);
+	res = curl_easy_perform(handle);
+	if (res != CURLE_OK) {
+		nzFree(mailstring);
+		ebcurl_setError(res, mailbox_url);
+		showError();
+		return false;
+	}
+
+	t = strstr(mailstring, "SEARCH ");
+	if (!t) {
+none:
+		nzFree(mailstring);
+		i_puts(MSG_NoMatch);
+		return false;
+	}
+	t += 6;
+	cnt = 0;
+	while (*t == ' ')
+		++t;
+	u = t;
+	while (*u) {
+		if (!isdigit(*u))
+			break;
+		++cnt;
+		while (isdigit(*u))
+			++u;
+		while (isspace(*u))
+			++u;
+	}
+	if (!cnt)
+		goto none;
+
+	cleanFolder(f);
+
+	f->nmsgs = f->nfetch = cnt;
+	if (cnt > imapfetch)
+		f->nfetch = imapfetch;
+	f->mlist = allocZeroMem(sizeof(struct MIF) * f->nfetch);
+	mif = f->mlist;
+	u = t;
+	while (*u) {
+		int seqno = strtol(u, &u, 10);
+		if (cnt <= f->nfetch) {
+			mif->seqno = seqno;
+			++mif;
+		}
+		--cnt;
+		while (isspace(*u))
+			++u;
+	}
+
+	envelopes(handle, f);
+
+	return true;
+}				/* imapSearch */
 
 /* scan through the messages in a folder */
-static void scanFolder(CURL * handle, const struct FOLDER *f, bool allmessages)
+static void scanFolder(CURL * handle, struct FOLDER *f, bool allmessages)
 {
 	struct MIF *mif;
 	int j, msize;
@@ -360,6 +498,8 @@ abort:
 		return;
 	}
 
+showmessages:
+
 	mif = f->mlist;
 	for (j = 0; j < f->nfetch; ++j, ++mif) {
 		if (!allmessages && mif->seen)
@@ -379,22 +519,23 @@ abort:
 			printf(" %d", msize);
 		nl();
 
-/* delete or move, that's all we have right now */
 action:
 		delflag = false;
 		printf("? ");
 		fflush(stdout);
-		key = getLetter("?qdsmn ");
+		key = getLetter("h?qdslmn /");
 		printf("\b\b\b");
 		fflush(stdout);
-		if (key == '?') {
-			puts("?\tprint this help message.\n\
+		if (key == '?' || key == 'h') {
+			puts("h\tprint this help message.\n\
 q\tquit this program.\n\
 s\tstop reading from this folder.\n\
 n\tcontinue to next message.\n\
 d\tdelete this email.\n\
 m\tmove this email to another folder.\n\
-space\tread and manage this email.");
+space\tread and manage this email.\n\
+/\tsearch for words in subject, from, or body.\n\
+l\tset imap fetch limit.");
 			goto action;
 		}
 		if (key == 'q') {
@@ -403,9 +544,24 @@ imap_done:
 			curl_easy_cleanup(handle);
 			exit(0);
 		}
+		if (key == '/') {
+			printf("search ");
+			fflush(stdout);
+			if (!fgets(inputline, sizeof(inputline), stdin))
+				goto imap_done;
+			if (!imapSearch(handle, f, inputline))
+				goto action;
+			allmessages = true;
+			if (f->nmsgs > f->nfetch)
+				printf("showing last %d of %d messages\n",
+				       f->nfetch, f->nmsgs);
+			else
+				i_printf(MSG_MessagesX, f->nmsgs);
+			goto showmessages;
+		}
 		if (key == ' ') {
 /* download the email from the imap server */
-			sprintf(cust_cmd, "FETCH %d BODY[]", j + f->start);
+			sprintf(cust_cmd, "FETCH %d BODY[]", mif->seqno);
 			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
 					 cust_cmd);
 			mailstring = initString(&mailstring_l);
@@ -454,6 +610,14 @@ imap_done:
 			i_puts(MSG_Stop);
 			break;
 		}
+		if (key == 'l') {
+			printf("limit ");
+			fflush(stdout);
+			if (!fgets(inputline, sizeof(inputline), stdin))
+				goto imap_done;
+			setLimit(inputline);
+			goto action;
+		}
 		if (key == 'm') {
 			struct FOLDER *g;
 			printf("move to ");
@@ -463,7 +627,7 @@ imap_done:
 			g = folderByName(inputline);
 			if (g && g != f) {
 				if (asprintf(&t, "COPY %d \"%s\"",
-					     j + f->start, g->path) == -1)
+					     mif->seqno, g->path) == -1)
 					i_printfExit(MSG_MemAllocError, 24);
 				curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
 						 t);
@@ -483,7 +647,7 @@ imap_done:
 		}
 		if (!delflag)
 			continue;
-		sprintf(cust_cmd, "STORE %d +Flags \\Deleted", j + f->start);
+		sprintf(cust_cmd, "STORE %d +Flags \\Deleted", mif->seqno);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
 		mailstring = initString(&mailstring_l);
 		res = curl_easy_perform(handle);
@@ -506,81 +670,24 @@ imap_done:
 	puts("end of folder");
 }				/* scanFolder */
 
-/* examine the specified folder, gather message envelopes */
-static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
+static void envelopes(CURL * handle, struct FOLDER *f)
 {
-	int i, j;
+	int j;
 	char *t, *u;
 	CURLcode res;
 	char cust_cmd[80];
 
-	nzFree(f->mlist);
-	f->mlist = 0;
-	f->nmsgs = f->nfetch = f->unread = 0;
-
-/* interrogate folder */
-	if (asprintf(&t, "EXAMINE \"%s\"", f->path) == -1)
-		i_printfExit(MSG_MemAllocError, strlen(f->path) + 12);
-	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
-	free(t);
-	mailstring = initString(&mailstring_l);
-	res = curl_easy_perform(handle);
-	if (res != CURLE_OK) {
-abort:
-		ebcurl_setError(res, mailbox_url);
-		showErrorAbort();
-	}
-
-/* look for message count */
-	t = strstr(mailstring, " EXISTS");
-	if (t) {
-		while (*t == ' ')
-			--t;
-		if (isdigit(*t)) {
-			while (isdigit(*t))
-				--t;
-			++t;
-			f->nmsgs = atoi(t);
-		}
-	}
-	f->nfetch = f->nmsgs;
-	if (f->nfetch > MAXIMAPFETCH)
-		f->nfetch = MAXIMAPFETCH;
-	f->start = 1;
-	if (f->nmsgs > f->nfetch)
-		f->start += (f->nmsgs - f->nfetch);
-
-	t = strstr(mailstring, "UIDNEXT ");
-	if (t) {
-		t += 8;
-		while (*t == ' ')
-			++t;
-		if (isdigit(*t))
-			f->uidnext = atoi(t);
-	}
-
-	nzFree(mailstring);
-	if (dostats) {
-		printf("%2d %s", f - topfolders + 1, f->path);
-		if (f->children)
-			printf(" with children");
-		printf(", %d messages\n", f->nmsgs);
-		return;
-	}
-
-	if (!f->nmsgs)
-		return;
-
-/* get some information on each message */
-	f->mlist = allocZeroMem(sizeof(struct MIF) * f->nfetch);
 	for (j = 0; j < f->nfetch; ++j) {
 		struct MIF *mif = f->mlist + j;
 		mailstring = initString(&mailstring_l);
-		sprintf(cust_cmd, "FETCH %d UID", f->start + j);
+		sprintf(cust_cmd, "FETCH %d UID", mif->seqno);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
 		res = curl_easy_perform(handle);
-		if (res != CURLE_OK)
-			goto abort;
+		if (res != CURLE_OK) {
+abort:
+			ebcurl_setError(res, mailbox_url);
+			showErrorAbort();
+		}
 
 		t = strstr(mailstring, "FETCH (UID ");
 		if (t) {
@@ -593,7 +700,7 @@ abort:
 		nzFree(mailstring);
 
 		mailstring = initString(&mailstring_l);
-		sprintf(cust_cmd, "FETCH %d ALL", f->start + j);
+		sprintf(cust_cmd, "FETCH %d ALL", mif->seqno);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
 		res = curl_easy_perform(handle);
 		if (res != CURLE_OK)
@@ -716,23 +823,83 @@ dosize:
 		mif->size = atoi(t);
 
 	}
+}				/* envelopes */
 
+/* examine the specified folder, gather message envelopes */
+static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
+{
+	int i, j;
+	char *t;
+	CURLcode res;
+
+	cleanFolder(f);
+
+/* interrogate folder */
+	if (asprintf(&t, "EXAMINE \"%s\"", f->path) == -1)
+		i_printfExit(MSG_MemAllocError, strlen(f->path) + 12);
+	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
+	free(t);
+	mailstring = initString(&mailstring_l);
+	res = curl_easy_perform(handle);
+	if (res != CURLE_OK) {
+abort:
+		ebcurl_setError(res, mailbox_url);
+		showErrorAbort();
+	}
+
+/* look for message count */
+	t = strstr(mailstring, " EXISTS");
+	if (t) {
+		while (*t == ' ')
+			--t;
+		if (isdigit(*t)) {
+			while (isdigit(*t))
+				--t;
+			++t;
+			f->nmsgs = atoi(t);
+		}
+	}
+	f->nfetch = f->nmsgs;
+	if (f->nfetch > imapfetch)
+		f->nfetch = imapfetch;
+	f->start = 1;
 	if (f->nmsgs > f->nfetch)
-		printf("showing last %d of %d messages, %d unread\n",
-		       f->nfetch, f->nmsgs, f->unread);
-	else
-		printf("%d messages, %d unread\n", f->nmsgs, f->unread);
+		f->start += (f->nmsgs - f->nfetch);
 
-#if 0
-/* print out what we have gathered, this is temporary */
+	t = strstr(mailstring, "UIDNEXT ");
+	if (t) {
+		t += 8;
+		while (*t == ' ')
+			++t;
+		if (isdigit(*t))
+			f->uidnext = atoi(t);
+	}
+
+	nzFree(mailstring);
+	if (dostats) {
+		printf("%2d %s", f - topfolders + 1, f->path);
+		if (f->children)
+			printf(" with children");
+		printf(", %d messages\n", f->nmsgs);
+		return;
+	}
+
+	if (!f->nmsgs)
+		return;
+
+/* get some information on each message */
+	f->mlist = allocZeroMem(sizeof(struct MIF) * f->nfetch);
 	for (j = 0; j < f->nfetch; ++j) {
 		struct MIF *mif = f->mlist + j;
-		printf("%d:%s%s|%s|%s|%d|%s",
-		       mif->uid, (mif->seen ? "" : "*"),
-		       mif->subject, mif->from, mif->reply,
-		       mif->size, (mif->sent ? ctime(&mif->sent) + 4 : "\n"));
+		mif->seqno = f->start + j;
 	}
-#endif
+
+	envelopes(handle, f);
+
+	if (f->nmsgs > f->nfetch)
+		printf("showing last %d of %d messages\n", f->nfetch, f->nmsgs);
+	else
+		i_printf(MSG_MessagesX, f->nmsgs);
 }				/* examineFolder */
 
 /* find the last mail in the local unread directory */
@@ -905,10 +1072,14 @@ imap_done:
 
 input:
 		puts("Select a folder by number or by substring.");
-		puts("Prepend - for just the unread messages. q to quit.");
+		puts("Prepend - for just the unread messages. q to quit. l to change fetch limit.");
 		if (!fgets(inputline, sizeof(inputline), stdin))
 			goto imap_done;
 		t = inputline;
+		if (*t == 'l' && isspace(t[1])) {
+			setLimit(t + 1);
+			goto input;
+		}
 		if (*t == 'q') {
 			i_puts(MSG_Quit);
 			goto imap_done;
@@ -1169,7 +1340,7 @@ key_command:
 /* interactive prompt depends on whether there is more text or not */
 	printf("%c ", displine > cw->dol ? '?' : '*');
 	fflush(stdout);
-	key = getLetter((isimap ? "q? nwWuUasdm" : "q? nwud"));
+	key = getLetter((isimap ? "qh? nwWuUasdm" : "qh? nwud"));
 	printf("\b\b\b");
 	fflush(stdout);
 
@@ -1198,6 +1369,7 @@ key_command:
 		goto paging;
 
 	case '?':
+	case 'h':
 		i_puts(isimap ? MSG_ImapReadHelp : MSG_MailHelp);
 		goto key_command;
 

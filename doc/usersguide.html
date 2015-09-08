@@ -124,6 +124,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#mailfmt> Formatted Mail </A>
 <LI><A HREF=#filter> Mail Filtering </A>
 <LI><A HREF=#reply> Mail Reply </A>
+<LI><A HREF=#imap> Imap Client </A>
 </UL>
 
 <H4> Chapter 8, Database Access </H4>
@@ -400,6 +401,8 @@ Most of these commands will not make sense until you read the rest of the docume
 
 <P>
 q: quit the current session
+<br>
+bw: buffer has been written, usually in preparation for the q command
 <br>
 qt: quit the program completely, whether you've written your files or not
 <br>
@@ -3012,9 +3015,9 @@ password = secret
 Specify the login and password that edbrowse uses to fetch your mail.
 
 <P>
-from = Karl Dahlke
+from = Full Name
 <br>
-reply = karl.dahlke@some-domain.com
+reply = john.smith@some-domain.com
 <P>
 These lines are added in to the emails that you send.&nbsp;
 They tell the recipient who you are, and how to reply.&nbsp;
@@ -3266,8 +3269,8 @@ All you have to do is enclose them in mail{...}, like this.
   outserver = smtp.some-domain.com
   login = eklhad
   password = secret
-  from = Karl Dahlke
-  reply = karl.dahlke@some-domain.com
+  from = Full Name
+  reply = john.smith@some-domain.com
 }
 </font></PRE>
 
@@ -3295,7 +3298,7 @@ Here is a typical configuration for Google's gmail.
   login = somebody@gmail.com
   password = secret
   reply = somebody@gmail.com
-  from = Karl Dahlke
+  from = Full Name
 }
 </font></PRE>
 
@@ -3881,6 +3884,93 @@ you can't just unbrowse, because it is not in browse mode.&nbsp;
 You must re-edit the saved mail message,
 browse, and reply.&nbsp;
 Like everything else in edbrowse, you'll get use to it once you play with it.
+
+<H3> <A NAME=imap> Imap Client </A> </H3>
+
+A pop3 client, as described above, fetches mail down to your computer,
+whereupon you are responsible for it.&nbsp;
+You must archive your emails, if you wish, and back them up, etc.&nbsp;
+However, the imap protocol allows you to keep your emails on the server indefinitely,
+in the cloud so to speak.&nbsp;
+You can access your email, perhaps 20 years worth of email, perhaps 100,000 messages,
+from any computer or any tablet or any smart phone.&nbsp;
+You can download emails locally if you wish, but you don't have to.&nbsp;
+This is more of a server side approach.&nbsp;
+The earlier configuration entry for gmail,
+when adjusted for imap, looks like this.
+
+<PRE><font size=3 face=Arial,Helvetica,sans-serif>mail {
+  imap
+  inserver = imap.gmail.com
+  outserver = smtp.gmail.com
+  secure
+  login = somebody@gmail.com
+  password = secret
+  reply = somebody@gmail.com
+  from = Full Name
+}
+</font></PRE>
+
+<P>
+If this is the third mail entry in your config file, then you access this account by `edbrowse -f3'.
+This does not simply fetch all the emails down to your local computer,
+as is the case with a pop3 account.&nbsp;
+Rather, edbrowse provides access to all the emails on the imap server in an interactive fashion.&nbsp;
+Here is a sample screenshot.
+
+<PRE><font size=3 face=Arial,Helvetica,sans-serif> 1 INBOX, 0 messages
+ 2 [Gmail]/All Mail, 7 messages
+ 3 [Gmail]/Drafts, 0 messages
+ 4 [Gmail]/Important, 0 messages
+ 5 [Gmail]/Sent Mail, 0 messages
+ 6 [Gmail]/Spam, 7 messages
+ 7 [Gmail]/Starred, 0 messages
+ 8 [Gmail]/Trash, 16 messages
+Select a folder by number or by substring.
+Prepend - for just the unread messages. q to quit. l to change fetch limit.
+</font></PRE>
+
+<P>
+Type 6, or spam, or just spa, and edbrowse takes you through the 7 messages in the Spam folder.&nbsp;
+It prints the sender, subject, date, and size of each email,
+and asks you what to do, similar to the pop3 client interface.&nbsp;
+Type q to quit, n for the next message, d to delete,
+or m to move this message to another folder.&nbsp;
+Again, you can specify the destination folder by number or by name.&nbsp;
+Type space to read the body of the email, and keep typing space,
+like more or less, to read as much of the email as you wish.&nbsp;
+Type w to write the email formatted, or W to write and delete.&nbsp;
+Type u or U to save the email unformatted.&nbsp;
+Type a to save the attachments.&nbsp;
+Type l to change the fetch limit, i.e. the number of emails that are presented at one time.&nbsp;
+Type / to search for emails by subject, by sender, or by the text in the body of the email.&nbsp;
+Finally type h for the help message, which looks like this.
+
+<PRE><font size=3 face=Arial,Helvetica,sans-serif>
+h   print this help message.
+q   quit this program.
+s   stop reading from this folder.
+n   continue to next message.
+d   delete this email.
+m   move this email to another folder.
+space   read and manage this email.
+/   search for words in subject, from, or body.
+l   set imap fetch limit.
+</font></PRE>
+
+<P>
+On some servers, such as gmail, you can't delete an email from the "All Mail" folder.&nbsp;
+Instead you must move it to Trash and then delete it from there.
+
+<P>
+The search is case insensitive, and often looks for words, rather than simple substrings.&nbsp;
+The implementation will depend on your imap server.&nbsp;
+Thus foo does not match foobar.&nbsp;
+The default is to search through subjects.&nbsp;
+Type `f Smith' to search for mail from Smith,
+or `b neutron star' to find all emails that talk about a neutron star.&nbsp;
+If there are thousands, only the last 100 are shown.&nbsp;
+You can change this limit with the l command.
 
 <hr>
 <H2> Chapter 8, Database Access </H2>
