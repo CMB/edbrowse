@@ -579,9 +579,7 @@ normalChar:
 
 /* Framing characters like [] around an anchor are unnecessary here,
  * because we already frame it in braces.
- * Get rid of these characters, even in premode.
- * Also, remove trailing pipes on a line. */
-	ss = 0;			/* remember location of first pipe */
+ * Get rid of these characters, even in premode. */
 	for (s = w = buf; c = *s; ++s) {
 		char open, close, linkchar;
 		if (!strchr("{[(<", c))
@@ -634,15 +632,8 @@ normalChar:
 		memmove(w, s, a - s);
 		w += a - s;
 		s = a;
-		ss = 0;
 		continue;
 putc:
-		if (c == '|' && !ss)
-			ss = w;
-		if (strchr("\r\n\f", c) && ss)
-			w = ss, ss = 0;
-		if (!isspaceByte(c) && c != '|')
-			ss = 0;
 		*w++ = c;
 	}			/* loop over buffer */
 	*w = 0;
@@ -650,6 +641,7 @@ putc:
 
 /* Now compress the implied linebreaks into one. */
 	premode = false;
+	ss = 0;
 	for (s = buf; c = *s; ++s) {
 		if (c == InternalCodeChar && isdigitByte(s[1])) {
 			n = strtol(s + 1, &s, 10);
@@ -1092,28 +1084,6 @@ char *htmlReformat(const char *buf)
 		preFormatCheck(tagno, &pretag, &slash);
 		if (pretag)
 			premode = !slash;
-
-/* Insert newlines between adjacent hyperlinks. */
-/* not really a good feature */
-#if 0
-		if (c != '}' || premode)
-			continue;
-		for (h = nh; c = *h; ++h)
-			if (!strchr(" \t,:-|;", c))
-				break;
-		if (!c || strchr("\r\n\f", c)) {
-			nh = h;
-			continue;
-		}
-		if (c != InternalCodeChar)
-			continue;
-/* Does this start a new hyperlink? */
-		for (s = h + 1; isdigitByte(*s); ++s) ;
-		if (*s != '{')
-			continue;
-		appendSpaceChunk("\n", 1, false);
-		nh = h;
-#endif
 	}			/* loop over text */
 
 /* close off the last line */
