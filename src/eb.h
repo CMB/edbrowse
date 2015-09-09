@@ -415,7 +415,10 @@ struct tagInfo {
  * These tags are at times linked with js objects,
  * or even created by js objects. */
 struct htmlTag {
+/* maintain a tree structure */
 	struct htmlTag *parent, *firstchild, *sibling;
+/* connect <foo> and </foo> */
+	struct htmlTag *balance;
 	jsobjtype jv;		/* corresponding java variable */
 	int seqno;
 	char *js_file;

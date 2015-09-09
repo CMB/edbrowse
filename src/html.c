@@ -1572,8 +1572,12 @@ static void scriptsPending(void)
 		objectScript(obj);
 }				/* scriptsPending */
 
-/* Convert a list of nodes, properly nested open close, into a tree */
+/* Convert a list of nodes, properly nested open close, into a tree.
+ * Attach the tree to an existing tree here, for document.write etc,
+ * or just build the tree if this is null. */
+static struct htmlTag *treeAttach;
 static int tree_pos;
+static bool treeDisable;
 static void intoTree(struct htmlTag *parent)
 {
 	struct htmlTag *t, *prev = 0;
@@ -1582,8 +1586,35 @@ static void intoTree(struct htmlTag *parent)
 
 	while (tree_pos < cw->numTags) {
 		t = cw->tags[tree_pos++];
-		if (t->slash)
+		if (t->slash) {
+			if (parent)
+				parent->balance = t, t->balance = parent;
 			return;
+		}
+
+		if (treeDisable) {
+			debugPrint(5, "node skip %s", t->info->name);
+			intoTree(t);
+			continue;
+		}
+
+		if (treeAttach) {
+/*Some things are different if you are attaching this to an existing tree.
+ * You can skip past <head> altogether, including its
+ * tidy generated descendants, and you want to pass through <body>
+ * to the children below. */
+			int action = t->action;
+			if (action == TAGACT_HEAD) {
+				debugPrint(5, "node skip %s\n", t->info->name);
+				treeDisable = true;
+				intoTree(t);
+				treeDisable = false;
+				continue;
+			}
+		}
+
+regular:
+/* regular linking through the parent node */
 		t->parent = parent;
 		if (prev) {
 			prev->sibling = t;
@@ -1592,6 +1623,7 @@ static void intoTree(struct htmlTag *parent)
 		}
 		prev = t;
 
+checkattributes:
 /* check for some common attributes here */
 		if (stringInListCI(t->attributes, "onclick") >= 0)
 			t->onclick = true;
@@ -1733,7 +1765,12 @@ static char *encodeTags(char *html, bool fromSource)
 	html2nodes(html);
 
 /* convert the list of nodes, with open close,
- * like properly nested parentheses, into a tree. */
+ * like properly nested parentheses, into a tree.
+ * If this is being pasted into an existing tree, set treeAttach appropriately. */
+	treeAttach = NULL;
+	if (!fromSource)	/* temporary */
+		treeAttach = cw->tags[0];
+	treeDisable = false;	/* should already be false */
 	tree_pos = l;
 	intoTree(0);
 	a = render(l);

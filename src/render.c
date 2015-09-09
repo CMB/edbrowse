@@ -369,16 +369,15 @@ static void renderNode(struct htmlTag *t, bool opentag)
 	case TAGACT_DL:
 	case TAGACT_DT:
 	case TAGACT_DD:
-	case TAGACT_PRE:
 	case TAGACT_DIV:
 	case TAGACT_BR:
 	case TAGACT_P:
 	case TAGACT_BASE:
 	case TAGACT_OBJ:
-	case TAGACT_HTML:
 	case TAGACT_HEAD:
 	case TAGACT_BODY:
 	case TAGACT_JS:
+	case TAGACT_HTML:
 	case TAGACT_NOP:
 nop:
 		if (invisible)
@@ -397,6 +396,22 @@ nop:
 				c = '\n';
 		}
 		stringAndChar(&ns, &ns_l, c);
+		break;
+
+	case TAGACT_PRE:
+		if (!retainTag)
+			break;
+/* one of those rare moments when I really need </tag> in the text stream */
+		j = (opentag ? tagno : t->balance->seqno);
+/* I need to manage the paragraph breaks here, rather than t->info->para,
+ * which would rule if I simply redirected to nop.
+ * But the order is wrong if I do that. */
+		if (opentag)
+			stringAndChar(&ns, &ns_l, '\f');
+		sprintf(hnum, "%c%d*", InternalCodeChar, j);
+		ns_hnum();
+		if (!opentag)
+			stringAndChar(&ns, &ns_l, '\f');
 		break;
 
 	case TAGACT_FORM:
@@ -725,7 +740,6 @@ unparen:
 		if (t->href) {
 			sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
 			ns_hnum();
-			t->action = TAGACT_A;
 		}
 		if (t->href || action == TAGACT_FRAME)
 			stringAndString(&ns, &ns_l, u);
@@ -786,7 +800,7 @@ unparen:
 		break;
 
 	default:
-		debugPrint(3, "unprocessed tag %s", ti->name);
+		debugPrint(3, "unprocessed render tag %s", ti->name);
 	}			/* switch */
 }				/* renderNode */
 
@@ -1035,6 +1049,8 @@ static void jsNode(struct htmlTag *t, bool opentag)
 	switch (action) {
 	case TAGACT_SCRIPT:
 		prepareScript(t);
+	case TAGACT_HTML:
+	case TAGACT_NOP:
 		break;
 
 	case TAGACT_FORM:
@@ -1056,10 +1072,6 @@ static void jsNode(struct htmlTag *t, bool opentag)
 	case TAGACT_A:
 		domLink(t, "Anchor", "href", "anchors", cw->docobj, 0);
 		set_onhandlers(t);
-		break;
-
-	case TAGACT_HTML:
-		domLink(t, "Html", 0, "htmls", cw->docobj, 0);
 		break;
 
 	case TAGACT_HEAD:
@@ -1089,6 +1101,31 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		}
 		break;
 
+	case TAGACT_DIV:
+		domLink(t, "Div", 0, "divs", cw->docobj, 0);
+		break;
+
+	case TAGACT_SPAN:
+	case TAGACT_SUB:
+	case TAGACT_SUP:
+	case TAGACT_OVB:
+		domLink(t, "Span", 0, "spans", cw->docobj, 0);
+		break;
+
+	case TAGACT_AREA:
+		domLink(t, "Area", "href", "areas", cw->docobj, 0);
+		break;
+
+	case TAGACT_FRAME:
+		domLink(t, "Frame", "src", "frames", cw->winobj, 0);
+		break;
+
+	case TAGACT_IMAGE:
+		domLink(t, "Image", "src", "images", cw->docobj, 0);
+		break;
+
+	default:
+		debugPrint(3, "unprocessed js tag %s", ti->name);
 	}			/* switch */
 }				/* jsNode */
 
