@@ -7,6 +7,8 @@
 
 #define handlerPresent(obj, name) (has_property(obj, name) == EJ_PROP_FUNCTION)
 
+static const int testnew = 0;
+
 static const char *const handlers[] = {
 	"onmousemove", "onmouseover", "onmouseout", "onmouseup", "onmousedown",
 	"onclick", "ondblclick", "onblur", "onfocus",
@@ -605,6 +607,7 @@ static void htmlForm(void)
 }				/* htmlForm */
 
 static void scriptsPending(void);
+static void runScriptsPending(void);
 static void formReset(const struct htmlTag *form);
 static char *encodeTags(char *html, bool fromSource);
 static bool nextInnerHTML(void);
@@ -634,7 +637,10 @@ void jSideEffects(void)
 top:
 /* Are there other scripts waiting to run? */
 /* Do this first, so other javascript side effects can pile up. */
-	scriptsPending();
+	if (testnew)
+		runScriptsPending();
+	else
+		scriptsPending();
 
 	if (preamble[0]) {
 /* This has to be timers or intervals. copy the string,
@@ -1572,6 +1578,36 @@ static void scriptsPending(void)
 		objectScript(obj);
 }				/* scriptsPending */
 
+static void runScriptsPending(void)
+{
+	struct htmlTag *t;
+	int j;
+	char *jtxt;
+	const char *js_file;
+	int ln;
+
+	for (j = 0; j < cw->numTags; ++j) {
+		t = cw->tags[j];
+		if (t->action != TAGACT_SCRIPT)
+			continue;
+		if (!t->jv)
+			continue;
+		if (t->jsrun)
+			continue;
+/* now running the script */
+		t->jsrun = true;
+		jtxt = get_property_string(t->jv, "data");
+		if (!jtxt)
+			continue;	/* nothing there */
+		js_file = t->js_file;
+		ln = t->js_ln;
+		debugPrint(3, "execute %s at %d", js_file, ln);
+		javaParseExecute(cw->winobj, jtxt, js_file, ln);
+		debugPrint(3, "execution complete");
+		nzFree(jtxt);
+	}
+}				/* runScriptsPending */
+
 /* Convert a list of nodes, properly nested open close, into a tree.
  * Attach the tree to an existing tree here, for document.write etc,
  * or just build the tree if this is null. */
@@ -1773,10 +1809,18 @@ static char *encodeTags(char *html, bool fromSource)
 	treeDisable = false;	/* should already be false */
 	tree_pos = l;
 	intoTree(0);
+
+	if (isJSAlive && testnew)
+		decorate(l);
+
 	a = render(l);
 	debugPrint(6, "|%s|\n", a);
-	if (!isJSAlive) {
-/* no js, use the rendered text from the tidy tree */
+
+	if (testnew && fromSource)
+		jSideEffects();
+
+	if (!isJSAlive || testnew) {
+/* use the rendered text from the tidy tree */
 		nzFree(html);
 		anchorSwap(a);
 		ns = htmlReformat(a);

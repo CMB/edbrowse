@@ -1021,6 +1021,9 @@ static void prepareScript(struct htmlTag *t)
 			nzFree(changeFileName);
 			changeFileName = NULL;
 		}
+	} else {
+		js_text = t->textval;
+		t->textval = 0;
 	}
 
 	if (!js_text)
@@ -1045,11 +1048,20 @@ static void jsNode(struct htmlTag *t, bool opentag)
 /* all the js variables are on the open tag */
 	if (!opentag)
 		return;
+	if (t->jso)
+		return;
+/* attempting to build the js object now */
+	t->jso = true;
 
 	switch (action) {
 	case TAGACT_SCRIPT:
 		prepareScript(t);
 	case TAGACT_HTML:
+	case TAGACT_BR:
+	case TAGACT_TEXT:
+	case TAGACT_META:
+	case TAGACT_TITLE:
+	case TAGACT_BASE:
 	case TAGACT_NOP:
 		break;
 
@@ -1129,7 +1141,8 @@ static void jsNode(struct htmlTag *t, bool opentag)
 	}			/* switch */
 }				/* jsNode */
 
-void html2js(int start)
+/* decorate the tree of nodes with js objects */
+void decorate(int start)
 {
 	if (!isJSAlive)
 		return;
@@ -1139,4 +1152,4 @@ void html2js(int start)
 
 	traverse_callback = jsNode;
 	traverseAll(start);
-}				/* html2js */
+}				/* decorate */

@@ -433,6 +433,8 @@ struct htmlTag {
 	struct htmlTag *controller;
 	bool slash:1;		/* as in </A> */
 	bool balanced:1;	/* <foo> and </foo> */
+	bool jso:1; /* js object built or attempted */
+	bool jsrun:1; /* js script has been run */
 	bool retain:1;
 	bool multiple:1;
 	bool rdonly:1;
