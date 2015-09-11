@@ -108,6 +108,7 @@ typedef uchar *pst;		/* perl string */
  * See the comments in buffers.c for the rationale. */
 #define InternalCodeChar '\2'
 #define InternalCodeCharAlternate '\1'
+#define TableCellChar '\3'
 
 /* How long can an absolute path be? */
 #define ABSPATH 256

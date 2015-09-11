@@ -1824,6 +1824,7 @@ static char *encodeTags(char *html, bool fromSource)
 	if (!isJSAlive || testnew) {
 /* use the rendered text from the tidy tree */
 		nzFree(html);
+		cellDelimiters(a);
 		anchorSwap(a);
 		ns = htmlReformat(a);
 		nzFree(a);

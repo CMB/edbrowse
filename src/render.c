@@ -675,7 +675,7 @@ nop:
 				--j;
 			ns[j] = 0;
 			ns_l = j;
-			stringAndChar(&ns, &ns_l, '|');
+			stringAndChar(&ns, &ns_l, TableCellChar);
 		}
 		break;
 

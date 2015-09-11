@@ -428,6 +428,28 @@ it won't have the pipes around it that it should.
 I'm willing to accept that for now.
 *********************************************************************/
 
+void cellDelimiters(char *buf)
+{
+	char *lastcell = 0;
+	int cellcount = 0;
+	char *s;
+
+	for (s = buf; *s; ++s) {
+		if (*s == TableCellChar) {
+			*s = '|';
+			lastcell = s;
+			++cellcount;
+			continue;
+		}
+		if (!strchr("\f\r\n", *s))
+			continue;
+/* newline here, if just one cell delimiter then blank it out */
+		if (cellcount == 1)
+			*lastcell = ' ';
+		cellcount = 0;
+	}
+}				/* cellDelimiters */
+
 void anchorSwap(char *buf)
 {
 	char c, d, *s, *ss, *w, *a;

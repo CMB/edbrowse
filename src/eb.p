@@ -102,6 +102,7 @@ const char *skipHtmlComment(const char *h, int *lines) ;
 bool parseTag(char *e, const char **name, int *namelen, const char **attr, const char **end, int *lines) ;
 char *htmlAttrVal(const char *e, const char *name) ;
 bool findEndScript(const char *h, const char *tagname, bool is_js, char **end_p, char **new_p, int *lines) ;
+void cellDelimiters(char *buf) ;
 void anchorSwap(char *buf) ;
 bool breakLine(const char *line, int len, int *newlen) ;
 void breakLineSetup(void) ;
