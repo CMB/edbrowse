@@ -4937,7 +4937,8 @@ bool browseCurrentBuffer(void)
 	}
 
 	if (bmode == 2) {
-		jSideEffects();
+		if (!testnew)
+			jSideEffects();
 		cw->dot = cw->dol;
 	}
 

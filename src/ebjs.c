@@ -148,6 +148,13 @@ static void javaSetsTagVar(jsobjtype v, const char *newtext)
 		runningError(MSG_JSTextarea);
 		return;
 	}
+	nzFree(t->value);
+	t->value = cloneString(newtext);
+/* Once we move to render, and rerender after every js action,
+ * changing value is all we need do, and we won't need the next stuff.
+ * The following if return illustrates that. */
+	if (testnew && !cw->browseMode)
+		return;
 	ic = allocMem(sizeof(struct inputChange) + strlen(newtext));
 	ic->tagno = t->seqno;
 	ic->major = 'v';
@@ -1627,10 +1634,9 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 	s = displayOptions(sel);
 	if (!s)
 		s = emptyString;
-	nzFree(sel->value);
-	sel->value = s;
 	set_property_string(sel->jv, "value", s);
 	javaSetsTagVar(sel->jv, s);
+	nzFree(s);
 
 	if (!sel->multiple)
 		set_property_number(sel->jv, "selectedIndex", sel->lic);

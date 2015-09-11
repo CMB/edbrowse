@@ -7,7 +7,7 @@
 
 #define handlerPresent(obj, name) (has_property(obj, name) == EJ_PROP_FUNCTION)
 
-const int testnew = 0;
+int testnew = 0;
 
 static const char *const handlers[] = {
 	"onmousemove", "onmouseover", "onmouseout", "onmouseup", "onmousedown",
@@ -294,6 +294,7 @@ void freeTags(struct ebWindow *w)
 		nzFree(t->name);
 		nzFree(t->id);
 		nzFree(t->value);
+		nzFree(t->rvalue);
 		nzFree(t->href);
 		nzFree(t->classname);
 		nzFree(t->js_file);
@@ -861,12 +862,13 @@ static void htmlInput(void)
 	nzFree(s);
 	if (len > 0)
 		topTag->lic = len;
-/* store the original text in value. */
+/* store the original text in rvalue. */
 /* This makes it easy to push the reset button. */
 	s = htmlAttrVal(topAttrib, "value");
 	if (!s)
 		s = emptyString;
 	topTag->value = s;
+	topTag->rvalue = cloneString(s);
 	if (n >= INP_RADIO && htmlAttrPresent(topAttrib, "checked")) {
 		char namebuf[200];
 		if (n == INP_RADIO && myname &&
@@ -1699,6 +1701,7 @@ checkattributes:
 			if (v && !*v)
 				v = 0;
 			t->value = cloneString(v);
+			t->rvalue = cloneString(v);
 		}
 		if ((j = stringInListCI(t->attributes, "href")) >= 0) {
 			v = t->atvals[j];
@@ -1812,14 +1815,14 @@ static char *encodeTags(char *html, bool fromSource)
 
 	prerender(l);
 
-	if (isJSAlive && testnew)
+	if (isJSAlive && testnew) {
 		decorate(l);
+		if (fromSource)
+			jSideEffects();
+	}
 
 	a = render(l);
 	debugPrint(6, "|%s|\n", a);
-
-	if (testnew && fromSource)
-		jSideEffects();
 
 	if (!isJSAlive || testnew) {
 /* use the rendered text from the tidy tree */
@@ -1929,6 +1932,7 @@ nextchar:
 			       && (a[-1] == ' ' || a[-1] == '\t'))
 				--a;
 			*a = 0;
+			currentTA->rvalue = cloneString(currentTA->value);
 			if (currentTA->jv && isJSAlive) {
 				establish_inner(currentTA->jv,
 						html + currentTA->inner, save_h,
@@ -2371,6 +2375,7 @@ doneSelect:
 					++currentSel->controller->ninp;
 				currentSel->value = a =
 				    displayOptions(currentSel);
+				currentSel->rvalue = cloneString(a);
 				if (retainTag) {
 					currentSel->retain = true;
 /* Crank out the input tag */
@@ -3256,7 +3261,7 @@ back to the text buffer, and over to javascript.
 static void resetVar(struct htmlTag *t)
 {
 	int itype = t->itype;
-	const char *w = t->value;
+	const char *w = t->rvalue;
 	bool bval;
 
 /* This is a kludge - option looks like INP_SELECT */
@@ -3266,7 +3271,7 @@ static void resetVar(struct htmlTag *t)
 	if (itype <= INP_SUBMIT)
 		return;
 
-	if (itype >= INP_SELECT) {
+	if (itype >= INP_SELECT && itype != INP_TA) {
 		bval = t->rchecked;
 		t->checked = bval;
 		w = bval ? "+" : "-";
@@ -3275,9 +3280,14 @@ static void resetVar(struct htmlTag *t)
 	if (itype == INP_TA) {
 		int cx = t->lic;
 		if (cx)
-			sideBuffer(cx, t->value, -1, 0);
+			sideBuffer(cx, w, -1, 0);
 	} else if (itype != INP_HIDDEN && itype != INP_SELECT)
-		updateFieldInBuffer(t->seqno, w, 0, false);
+		updateFieldInBuffer(t->seqno, w, false, false);
+
+	if (itype >= INP_TEXT && itype <= INP_FILE || itype == INP_TA) {
+		nzFree(t->value);
+		t->value = cloneString(t->rvalue);
+	}
 
 	if (!t->jv)
 		return;
@@ -3287,6 +3297,7 @@ static void resetVar(struct htmlTag *t)
 	if (itype >= INP_RADIO) {
 		set_property_bool(t->jv, "checked", bval);
 	} else if (itype == INP_SELECT) {
+/* remember this means option */
 		set_property_bool(t->jv, "selected", bval);
 		if (bval && !t->controller->multiple && t->controller->jv)
 			set_property_number(t->controller->jv,
@@ -3332,8 +3343,11 @@ static void formReset(const struct htmlTag *form)
 		if (itype != INP_SELECT)
 			continue;
 		display = displayOptions(t);
-		updateFieldInBuffer(t->seqno, display, 0, false);
-		nzFree(display);
+		updateFieldInBuffer(t->seqno, display, false, false);
+		nzFree(t->value);
+		t->value = display;
+/* this should now be the same as t->rvalue, but I guess I'm
+ * not going to check for that, or take advantage of it. */
 	}			/* loop over tags */
 
 	i_puts(MSG_FormReset);
@@ -3624,7 +3638,9 @@ static bool formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 /* option could have an empty value, usually the null choice,
  * before you have made a selection. */
 			if (!*dynamicvalue) {
-				postNameVal(name, dynamicvalue, fsep, false);
+				if (!t->multiple)
+					postNameVal(name, dynamicvalue, fsep,
+						    false);
 				continue;
 			}
 /* Step through the options */

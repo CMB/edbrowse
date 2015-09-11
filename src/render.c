@@ -150,7 +150,7 @@ static void htmlInput(struct htmlTag *t)
 
 /* In this case an empty value should be "", not null */
 	if (t->value == 0)
-		t->value = emptyString;
+		t->value = t->rvalue = emptyString;
 
 	if (n >= INP_RADIO && t->checked) {
 		char namebuf[200];
@@ -232,8 +232,6 @@ static void htmlMeta(struct htmlTag *t)
 	nzFree(copy);
 }				/* htmlMeta */
 
-extern const int testnew;
-
 static void prerenderNode(struct htmlTag *t, bool opentag)
 {
 	int itype;		/* input type */
@@ -280,6 +278,7 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 
 		if (currentTA) {
 			currentTA->value = t->textval;
+			currentTA->rvalue = cloneString(t->textval);
 			t->textval = 0;
 			break;
 		}
@@ -406,9 +405,11 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 			formControl(t, true);
 		} else {
 			t->action = TAGACT_INPUT;
+			if (!t->value) {
+/* This can only happen it no text inside, <textarea></textarea> */
 /* like the other value fields, it can't be null */
-			if (!t->value)
-				t->value = emptyString;
+				t->value = t->rvalue = emptyString;
+			}
 			j = 0;
 			if (!isJSAlive || testnew)
 				j = sideBuffer(0, currentTA->value, -1, 0);
@@ -1068,19 +1069,10 @@ static void jsNode(struct htmlTag *t, bool opentag)
 	switch (action) {
 	case TAGACT_SCRIPT:
 		prepareScript(t);
-	case TAGACT_HTML:
-	case TAGACT_BR:
-	case TAGACT_TEXT:
-	case TAGACT_META:
-	case TAGACT_TITLE:
-	case TAGACT_BASE:
-	case TAGACT_NOP:
 		break;
 
 	case TAGACT_FORM:
 		domLink(t, "Form", "action", "forms", cw->docobj, 0);
-		if (!t->jv)
-			break;
 		set_onhandlers(t);
 		instantiate_array(t->jv, "elements");
 		break;
@@ -1148,8 +1140,6 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		domLink(t, "Image", "src", "images", cw->docobj, 0);
 		break;
 
-	default:
-		debugPrint(3, "unprocessed js tag %s", ti->name);
 	}			/* switch */
 }				/* jsNode */
 

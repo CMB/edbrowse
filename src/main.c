@@ -1069,6 +1069,11 @@ int main(int argc, char **argv)
 	pcre_malloc = allocMem;
 	pcre_free = nzFree;
 
+	if (getenv("testnew")) {
+		puts("test new");
+		testnew = 1;
+	}
+
 /* Establish the home directory, and standard edbrowse files thereunder. */
 	home = getenv("HOME");
 /* Empty is the same as missing. */

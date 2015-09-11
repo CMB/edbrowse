@@ -154,6 +154,7 @@ typedef uchar *pst;		/* perl string */
 extern const char *version;
 extern const char eol[];	/* internet end of line */
 extern char emptyString[];	/* use this whenever you would use "" */
+extern int testnew; /* test the new system, temporary */
 
 /* Here are the strings you can send out to identify this browser.
  * Most of the time we will send out the first string, edbrowse-2.15.3.
@@ -457,6 +458,7 @@ struct htmlTag {
 	short ninp;		/* number of nonhidden inputs */
 	char *attrib;
 	char *name, *id, *value, *href;
+	char *rvalue; /* for reset */
 /* class=foo becomes className = "foo" when you carry from html to javascript,
  * don't ask me why. */
 	char *classname;
@@ -479,6 +481,7 @@ enum {
 };
 
 /* htmlTag.itype */
+/* Warning - the order of these is important! */
 enum {
 	INP_RESET, INP_BUTTON, INP_IMAGE, INP_SUBMIT,
 	INP_HIDDEN,
