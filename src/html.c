@@ -7,7 +7,7 @@
 
 #define handlerPresent(obj, name) (has_property(obj, name) == EJ_PROP_FUNCTION)
 
-static const int testnew = 0;
+const int testnew = 0;
 
 static const char *const handlers[] = {
 	"onmousemove", "onmouseover", "onmouseout", "onmouseup", "onmousedown",
@@ -1592,10 +1592,10 @@ static void runScriptsPending(void)
 			continue;
 		if (!t->jv)
 			continue;
-		if (t->jsrun)
+		if (t->step >= 3)
 			continue;
 /* now running the script */
-		t->jsrun = true;
+		t->step = 3;
 		jtxt = get_property_string(t->jv, "data");
 		if (!jtxt)
 			continue;	/* nothing there */
@@ -1809,6 +1809,8 @@ static char *encodeTags(char *html, bool fromSource)
 	treeDisable = false;	/* should already be false */
 	tree_pos = l;
 	intoTree(0);
+
+	prerender(l);
 
 	if (isJSAlive && testnew)
 		decorate(l);

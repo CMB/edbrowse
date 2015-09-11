@@ -145,6 +145,7 @@ void runningError(int msg, ...) ;
 void html2nodes(const char *htmltext);
 
 /* sourcefile=render.c */
+void prerender(int start);
 char *render(int start);
 void decorate(int start);
 

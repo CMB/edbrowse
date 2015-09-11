@@ -11,8 +11,9 @@ but as long as it's a separate call we're ok.
 typedef void (*nodeFunction) (struct htmlTag * node, bool opentag);
 static nodeFunction traverse_callback;
 /* possible callback functions */
-static void renderNode(struct htmlTag *node, bool opentag);
+static void prerenderNode(struct htmlTag *node, bool opentag);
 static void jsNode(struct htmlTag *node, bool opentag);
+static void renderNode(struct htmlTag *node, bool opentag);
 
 static void traverseNode(struct htmlTag *node)
 {
@@ -88,17 +89,10 @@ static void makeButton(void)
 	struct htmlTag *t = newTag("input");
 	t->controller = currentForm;
 	t->itype = INP_SUBMIT;
+	t->value = emptyString;
 	t->created = true;
 	linkinTree(currentForm, t);
 }				/* makeButton */
-
-static struct htmlTag *findList(struct htmlTag *t)
-{
-	while (t = t->parent)
-		if (t->action == TAGACT_OL || t->action == TAGACT_UL)
-			return t;
-	return 0;
-}				/* findList */
 
 static struct htmlTag *findOpenTag(struct htmlTag *t, int action)
 {
@@ -107,24 +101,6 @@ static struct htmlTag *findOpenTag(struct htmlTag *t, int action)
 			return t;
 	return 0;
 }				/* findOpenTag */
-
-/* see if a number or star is pending, waiting to be printed */
-static void liCheck(struct htmlTag *t)
-{
-	struct htmlTag *ltag;	/* the list tag */
-	if (listnest && (ltag = findList(t)) && ltag->post) {
-		char olbuf[20];
-		if (ltag->action == TAGACT_OL) {
-			int j = ++ltag->lic;
-			sprintf(olbuf, "%d. ", j);
-		} else {
-			strcpy(olbuf, "* ");
-		}
-		if (!invisible)
-			stringAndString(&ns, &ns_l, olbuf);
-		ltag->post = false;
-	}
-}				/* liCheck */
 
 static void formControl(struct htmlTag *t, bool namecheck)
 {
@@ -256,72 +232,58 @@ static void htmlMeta(struct htmlTag *t)
 	nzFree(copy);
 }				/* htmlMeta */
 
-static void renderNode(struct htmlTag *t, bool opentag)
+extern const int testnew;
+
+static void prerenderNode(struct htmlTag *t, bool opentag)
 {
-	int tagno = t->seqno;
-	char hnum[40];		/* hidden number */
-#define ns_hnum() stringAndString(&ns, &ns_l, hnum)
-#define ns_ic() stringAndChar(&ns, &ns_l, InternalCodeChar)
-	int j, l;
 	int itype;		/* input type */
-	const struct tagInfo *ti = t->info;
+	int j;
 	int action = t->action;
-	char c;
-	bool retainTag;
 	const char *a;		/* usually an attribute */
-	char *u;
-	struct htmlTag *ltag;	/* list tag */
 
 #if 0
-	printf("rend %c%s\n", (opentag ? ' ' : '/'), ti->name);
+	printf("prend %c%s\n", (opentag ? ' ' : '/'), t->info->name);
 #endif
 
-	if (!opentag && ti->bits & TAG_NOSLASH)
+	if (t->step >= 1)
 		return;
-
-	hnum[0] = 0;
-	retainTag = true;
-	if (invisible)
-		retainTag = false;
-	if (ti->bits & TAG_INVISIBLE) {
-		retainTag = false;
-		invisible = opentag;
-/* special case for noscript with no js */
-		if (stringEqual(ti->name, "NOSCRIPT") && !cw->jcx)
-			invisible = false;
-	}
+	if (!opentag)
+		t->step = 1;
 
 	switch (action) {
 	case TAGACT_TEXT:
-		if (!t->textval)
+		if (!opentag || !t->textval)
 			break;
 
 		if (currentTitle) {
-			if (!cw->ft)
-				cw->ft = cloneString(t->textval);
-			spaceCrunch(cw->ft, true, false);
+			if (!cw->ft) {
+				cw->ft = t->textval;
+				spaceCrunch(cw->ft, true, false);
+			} else
+				nzFree(t->textval);
+			t->textval = 0;
 			break;
 		}
 
 		if (currentOpt) {
-			currentOpt->textval = cloneString(t->textval);
+			currentOpt->textval = t->textval;
 			spaceCrunch(currentOpt->textval, true, false);
+			t->textval = 0;
 			break;
 		}
 
 		if (currentScript) {
-			currentScript->textval = cloneString(t->textval);
+			currentScript->textval = t->textval;
+			t->textval = 0;
 			break;
 		}
 
 		if (currentTA) {
-			currentTA->value = cloneString(t->textval);
+			currentTA->value = t->textval;
+			t->textval = 0;
 			break;
 		}
 
-		liCheck(t);
-		if (!invisible)
-			stringAndString(&ns, &ns_l, t->textval);
 		break;
 
 	case TAGACT_TITLE:
@@ -330,88 +292,6 @@ static void renderNode(struct htmlTag *t, bool opentag)
 
 	case TAGACT_SCRIPT:
 		currentScript = (opentag ? t : 0);
-		break;
-
-	case TAGACT_A:
-		liCheck(t);
-		currentA = (opentag ? t : 0);
-		if (!retainTag)
-			break;
-		if (t->href) {
-			if (opentag)
-				sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
-			else
-				sprintf(hnum, "%c0}", InternalCodeChar);
-		} else {
-			if (opentag)
-				sprintf(hnum, "%c%d*", InternalCodeChar, tagno);
-			else
-				hnum[0] = 0;
-		}
-		ns_hnum();
-		break;
-
-	case TAGACT_OL:
-/* look for start parameter for numbered list */
-		if (opentag) {
-			a = attribVal(t, "start");
-			if (a && (j = stringIsNum(a)) >= 0)
-				t->lic = j - 1;
-		} else {
-			t->lic = 0;
-		}
-	case TAGACT_UL:
-		t->post = false;
-		if (opentag)
-			++listnest;
-		else
-			--listnest;
-	case TAGACT_DL:
-	case TAGACT_DT:
-	case TAGACT_DD:
-	case TAGACT_DIV:
-	case TAGACT_BR:
-	case TAGACT_P:
-	case TAGACT_BASE:
-	case TAGACT_OBJ:
-	case TAGACT_HEAD:
-	case TAGACT_BODY:
-	case TAGACT_JS:
-	case TAGACT_HTML:
-	case TAGACT_NOP:
-nop:
-		if (invisible)
-			break;
-		j = ti->para;
-		if (opentag)
-			j &= 3;
-		else
-			j >>= 2;
-		if (!j)
-			break;
-		c = '\f';
-		if (j == 1) {
-			c = '\r';
-			if (action == TAGACT_BR)
-				c = '\n';
-		}
-		stringAndChar(&ns, &ns_l, c);
-		break;
-
-	case TAGACT_PRE:
-		if (!retainTag)
-			break;
-/* one of those rare moments when I really need </tag> in the text stream */
-		j = (opentag ? tagno : t->balance->seqno);
-/* I need to manage the paragraph breaks here, rather than t->info->para,
- * which would rule if I simply redirected to nop.
- * But the order is wrong if I do that. */
-		if (opentag)
-			stringAndChar(&ns, &ns_l, '\f');
-		sprintf(hnum, "%c%d*", InternalCodeChar, j);
-		ns_hnum();
-		if (!opentag)
-			stringAndChar(&ns, &ns_l, '\f');
 		break;
 
 	case TAGACT_FORM:
@@ -455,48 +335,18 @@ nop:
 			nzFree(radioCheck);
 			radioCheck = initString(&radio_l);
 		}
-
-		if (currentSel) {
-doneSelect:
-			currentSel->action = TAGACT_INPUT;
-			if (currentSel->controller)
-				++currentSel->controller->ninp;
-			currentSel->value = u = displayOptions(currentSel);
-			if (retainTag) {
-				currentSel->retain = true;
-/* Crank out the input tag */
-				liCheck(t);
-				sprintf(hnum, "%c%d<", InternalCodeChar,
-					currentSel->seqno);
-				ns_hnum();
-				stringAndString(&ns, &ns_l, u);
-				ns_ic();
-				stringAndString(&ns, &ns_l, "0>");
-			}
-			currentSel = 0;
-		}
-
-		if (action == TAGACT_FORM && !opentag && currentForm) {
-			if (retainTag && currentForm->href
-			    && !currentForm->submitted) {
+		if (!opentag && currentForm) {
+			if (t->href && !t->submitted) {
 				makeButton();
-				liCheck(t);
-				sprintf(hnum, " %c%d<Go",
-					InternalCodeChar, cw->numTags - 1);
-				ns_hnum();
-				if (currentForm->secure)
-					stringAndString(&ns, &ns_l, " secure");
-				if (currentForm->bymail)
-					stringAndString(&ns, &ns_l, " bymail");
-				stringAndString(&ns, &ns_l, " implicit");
-				ns_ic();
-				stringAndString(&ns, &ns_l, "0>");
+				t->submitted = true;
 			}
 			currentForm = 0;
 		}
-		goto nop;
+		break;
 
 	case TAGACT_INPUT:
+		if (!opentag)
+			break;
 		htmlInput(t);
 		itype = t->itype;
 		if (itype == INP_HIDDEN)
@@ -511,10 +361,272 @@ doneSelect:
 			    && t->onchange)
 				currentForm->submitted = true;
 		}
+		break;
+
+	case TAGACT_OPTION:
+		if (!opentag) {
+			currentOpt = 0;
+			break;
+		}
+		if (!currentSel) {
+			debugPrint(3,
+				   "option appears outside a select statement");
+			break;
+		}
+		currentOpt = t;
+		t->controller = currentSel;
+		t->lic = nopt++;
+		if (attribPresent(t, "selected")) {
+			if (currentSel->lic && !currentSel->multiple)
+				debugPrint(3, "multiple options are selected");
+			else {
+				t->checked = t->rchecked = true;
+				++currentSel->lic;
+			}
+		}
+		break;
+
+	case TAGACT_SELECT:
+		if (opentag) {
+			currentSel = t;
+			nopt = 0;
+			t->itype = INP_SELECT;
+			formControl(t, true);
+		} else {
+			currentSel = 0;
+			t->action = TAGACT_INPUT;
+			t->value = displayOptions(t);
+		}
+		break;
+
+	case TAGACT_TA:
+		if (opentag) {
+			currentTA = t;
+			t->itype = INP_TA;
+			formControl(t, true);
+		} else {
+			t->action = TAGACT_INPUT;
+/* like the other value fields, it can't be null */
+			if (!t->value)
+				t->value = emptyString;
+			j = 0;
+			if (!isJSAlive || testnew)
+				j = sideBuffer(0, currentTA->value, -1, 0);
+			t->lic = j;
+			currentTA = 0;
+		}
+		break;
+
+	case TAGACT_META:
+		if (opentag)
+			htmlMeta(t);
+		break;
+
+	case TAGACT_TR:
+		if (opentag)
+			t->controller = findOpenTag(t, TAGACT_TABLE);
+		break;
+
+	case TAGACT_TD:
+		if (opentag)
+			t->controller = findOpenTag(t, TAGACT_TR);
+		break;
+
+	case TAGACT_SPAN:
+		if (!opentag)
+			break;
+		if (!(a = t->classname))
+			break;
+		if (stringEqualCI(a, "sup"))
+			action = TAGACT_SUP;
+		if (stringEqualCI(a, "sub"))
+			action = TAGACT_SUB;
+		if (stringEqualCI(a, "ovb"))
+			action = TAGACT_OVB;
+		t->action = action;
+		break;
+
+	case TAGACT_OL:
+/* look for start parameter for numbered list */
+		if (opentag) {
+			a = attribVal(t, "start");
+			if (a && (j = stringIsNum(a)) >= 0)
+				t->lic = j - 1;
+		}
+		break;
+
+	}			/* switch */
+}				/* prerenderNode */
+
+void prerender(int start)
+{
+	currentForm = currentSel = currentOpt = NULL;
+	currentTitle = currentScript = currentTA = NULL;
+	traverse_callback = prerenderNode;
+	traverseAll(start);
+}				/* prerender */
+
+static struct htmlTag *findList(struct htmlTag *t)
+{
+	while (t = t->parent)
+		if (t->action == TAGACT_OL || t->action == TAGACT_UL)
+			return t;
+	return 0;
+}				/* findList */
+
+/* see if a number or star is pending, waiting to be printed */
+static void liCheck(struct htmlTag *t)
+{
+	struct htmlTag *ltag;	/* the list tag */
+	if (listnest && (ltag = findList(t)) && ltag->post) {
+		char olbuf[20];
+		if (ltag->action == TAGACT_OL) {
+			int j = ++ltag->lic;
+			sprintf(olbuf, "%d. ", j);
+		} else {
+			strcpy(olbuf, "* ");
+		}
+		if (!invisible)
+			stringAndString(&ns, &ns_l, olbuf);
+		ltag->post = false;
+	}
+}				/* liCheck */
+
+static void renderNode(struct htmlTag *t, bool opentag)
+{
+	int tagno = t->seqno;
+	char hnum[40];		/* hidden number */
+#define ns_hnum() stringAndString(&ns, &ns_l, hnum)
+#define ns_ic() stringAndChar(&ns, &ns_l, InternalCodeChar)
+	int j, l;
+	int itype;		/* input type */
+	const struct tagInfo *ti = t->info;
+	int action = t->action;
+	char c;
+	bool retainTag;
+	const char *a;		/* usually an attribute */
+	char *u;
+	struct htmlTag *ltag;	/* list tag */
+
+#if 0
+	printf("rend %c%s\n", (opentag ? ' ' : '/'), t->info->name);
+#endif
+
+	if (!opentag && ti->bits & TAG_NOSLASH)
+		return;
+
+	retainTag = true;
+	if (invisible)
+		retainTag = false;
+	if (ti->bits & TAG_INVISIBLE) {
+		retainTag = false;
+		invisible = opentag;
+/* special case for noscript with no js */
+		if (stringEqual(ti->name, "NOSCRIPT") && !cw->jcx)
+			invisible = false;
+	}
+
+	switch (action) {
+	case TAGACT_TEXT:
+		if (!t->textval)
+			break;
+		liCheck(t);
+		if (!invisible)
+			stringAndString(&ns, &ns_l, t->textval);
+		break;
+
+	case TAGACT_A:
+		liCheck(t);
+		currentA = (opentag ? t : 0);
 		if (!retainTag)
 			break;
-		t->retain = true;
+		if (t->href) {
+			if (opentag)
+				sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
+			else
+				sprintf(hnum, "%c0}", InternalCodeChar);
+		} else {
+			if (opentag)
+				sprintf(hnum, "%c%d*", InternalCodeChar, tagno);
+			else
+				hnum[0] = 0;
+		}
+		ns_hnum();
+		break;
+
+	case TAGACT_OL:
+	case TAGACT_UL:
+		t->post = false;
+		if (opentag)
+			++listnest;
+		else
+			--listnest;
+	case TAGACT_DL:
+	case TAGACT_DT:
+	case TAGACT_DD:
+	case TAGACT_DIV:
+	case TAGACT_BR:
+	case TAGACT_P:
+	case TAGACT_NOP:
+nop:
+		if (invisible)
+			break;
+		j = ti->para;
+		if (opentag)
+			j &= 3;
+		else
+			j >>= 2;
+		if (!j)
+			break;
+		c = '\f';
+		if (j == 1) {
+			c = '\r';
+			if (action == TAGACT_BR)
+				c = '\n';
+		}
+		stringAndChar(&ns, &ns_l, c);
+		break;
+
+	case TAGACT_PRE:
+		if (!retainTag)
+			break;
+/* one of those rare moments when I really need </tag> in the text stream */
+		j = (opentag ? tagno : t->balance->seqno);
+/* I need to manage the paragraph breaks here, rather than t->info->para,
+ * which would rule if I simply redirected to nop.
+ * But the order is wrong if I do that. */
+		if (opentag)
+			stringAndChar(&ns, &ns_l, '\f');
+		sprintf(hnum, "%c%d*", InternalCodeChar, j);
+		ns_hnum();
+		if (!opentag)
+			stringAndChar(&ns, &ns_l, '\f');
+		break;
+
+	case TAGACT_FORM:
+		currentForm = (opentag ? t : 0);
+		goto nop;
+
+	case TAGACT_INPUT:
+		if (!opentag)
+			break;
+		itype = t->itype;
+		if (itype == INP_HIDDEN)
+			break;
+		if (!retainTag)
+			break;
 		liCheck(t);
+		if (itype == INP_TA) {
+			j = t->lic;
+			if (j)
+				sprintf(hnum, "%c%d<buffer %d%c0>",
+					InternalCodeChar, t->seqno, j,
+					InternalCodeChar);
+			else
+				strcpy(hnum, "<buffer ?>");
+			ns_hnum();
+			break;
+		}
 		sprintf(hnum, "%c%d<", InternalCodeChar, tagno);
 		ns_hnum();
 		if (itype < INP_RADIO) {
@@ -536,43 +648,6 @@ doneSelect:
 		stringAndString(&ns, &ns_l, "0>");
 		break;
 
-	case TAGACT_OPTION:
-		if (!opentag) {
-			currentOpt = 0;
-			break;
-		}
-
-		if (!currentSel) {
-			debugPrint(3,
-				   "option appears outside a select statement");
-			break;
-		}
-
-		currentOpt = t;
-		t->controller = currentSel;
-		t->lic = nopt++;
-		if (attribPresent(t, "selected")) {
-			if (currentSel->lic && !currentSel->multiple)
-				debugPrint(3, "multiple options are selected");
-			else {
-				t->checked = t->rchecked = true;
-				++currentSel->lic;
-			}
-		}
-		break;
-
-	case TAGACT_SELECT:
-		if (!opentag) {
-			if (currentSel)
-				goto doneSelect;
-			break;
-		}
-		currentSel = t;
-		nopt = 0;
-		t->itype = INP_SELECT;
-		formControl(t, true);
-		break;
-
 	case TAGACT_LI:
 		if ((ltag = findList(t)))
 			ltag->post = true;
@@ -584,50 +659,13 @@ doneSelect:
 			stringAndString(&ns, &ns_l, "\r----------\r");
 		break;
 
-	case TAGACT_TA:
-		if (opentag) {
-			currentTA = t;
-			t->itype = INP_TA;
-			formControl(t, true);
-		} else {
-			currentTA->action = TAGACT_INPUT;
-/* like the other value fields, it can't be null */
-			if (!currentTA->value)
-				currentTA->value = emptyString;
-			if (retainTag) {
-				j = 0;
-				if (!isJSAlive)
-					j = sideBuffer(0, currentTA->value, -1,
-						       0);
-				if (j) {
-					currentTA->lic = j;
-					liCheck(t);
-					sprintf(hnum, "%c%d<buffer %d%c0>",
-						InternalCodeChar,
-						currentTA->seqno, j,
-						InternalCodeChar);
-				} else
-					strcpy(hnum, "<buffer ?>");
-				ns_hnum();
-			}
-			currentTA = 0;
-		}
-		break;
-
-	case TAGACT_META:
-		htmlMeta(t);
-		break;
-
 	case TAGACT_TR:
-		if (opentag) {
+		if (opentag)
 			tdfirst = true;
-			t->controller = findOpenTag(t, TAGACT_TABLE);
-		}
 	case TAGACT_TABLE:
 		goto nop;
 
 	case TAGACT_TD:
-		t->controller = findOpenTag(t, TAGACT_TR);
 		if (tdfirst)
 			tdfirst = false;
 		else if (retainTag) {
@@ -641,42 +679,22 @@ doneSelect:
 		}
 		break;
 
-	case TAGACT_SPAN:
-		if (opentag) {
-			if (!(a = t->classname))
-				goto nop;
-			if (stringEqualCI(a, "sup"))
-				action = TAGACT_SUP;
-			if (stringEqualCI(a, "sub"))
-				action = TAGACT_SUB;
-			if (stringEqualCI(a, "ovb"))
-				action = TAGACT_OVB;
-		} else if (t->subsup)
-			action = t->subsup;
-		if (action == TAGACT_SPAN)
-			goto nop;
-		t->subsup = action;
-/* fall through */
-
 /* This is strictly for rendering math pages written with my particular css.
 * <span class=sup> becomes TAGACT_SUP, which means superscript.
 * sub is subscript and ovb is overbar.
 * Sorry to put my little quirks into this program, but hey,
 * it's my program. */
-
 	case TAGACT_SUP:
 	case TAGACT_SUB:
 	case TAGACT_OVB:
 		if (!retainTag)
 			break;
-		t->retain = true;
 		if (action == TAGACT_SUB)
 			j = 1;
 		if (action == TAGACT_SUP)
 			j = 2;
 		if (action == TAGACT_OVB)
 			j = 3;
-
 		if (opentag) {
 			static const char *openstring[] = { 0,
 				"[", "^(", "`"
@@ -686,12 +704,10 @@ doneSelect:
 			stringAndString(&ns, &ns_l, openstring[j]);
 			break;
 		}
-
 		if (j == 3) {
 			stringAndChar(&ns, &ns_l, '\'');
 			break;
 		}
-
 /* backup, and see if we can get rid of the parentheses or brackets */
 		l = t->lic + j;
 		u = ns + l;
@@ -709,9 +725,8 @@ doneSelect:
 			goto unparen;
 		stringAndChar(&ns, &ns_l, (j == 2 ? ')' : ']'));
 		break;
-
-/* ok, we can trash the original ( or [ */
 unparen:
+/* ok, we can trash the original ( or [ */
 		l = t->lic + j;
 		strmove(ns + l - 1, ns + l);
 		--ns_l;
@@ -780,8 +795,7 @@ unparen:
 			}
 			break;
 		}
-
-/* image part of a hyperlink */
+/* image is part of a hyperlink */
 		if (!retainTag || !currentA->href)
 			break;
 		u = 0;
@@ -799,8 +813,6 @@ unparen:
 		stringAndString(&ns, &ns_l, u);
 		break;
 
-	default:
-		debugPrint(3, "unprocessed render tag %s", ti->name);
 	}			/* switch */
 }				/* renderNode */
 
@@ -810,9 +822,9 @@ char *render(int start)
 	ns = initString(&ns_l);
 	invisible = false;
 	listnest = 0;
-	currentForm = currentSel = currentOpt = 0;
-	currentTitle = currentScript = currentTA = 0;
-	currentA = 0;
+	currentForm = currentSel = currentOpt = NULL;
+	currentTA = NULL;
+	currentA = NULL;
 	traverse_callback = renderNode;
 	traverseAll(start);
 	return ns;
@@ -1048,10 +1060,10 @@ static void jsNode(struct htmlTag *t, bool opentag)
 /* all the js variables are on the open tag */
 	if (!opentag)
 		return;
-	if (t->jso)
+	if (t->step >= 2)
 		return;
-/* attempting to build the js object now */
-	t->jso = true;
+	if (!opentag)
+		t->step = 2;
 
 	switch (action) {
 	case TAGACT_SCRIPT:
