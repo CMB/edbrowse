@@ -137,7 +137,7 @@ static void printNode(TidyNode node, int level, bool opentag)
 		tidyBufClear(&tnv);
 		tidyNodeGetValue(tdoc, node, &tnv);
 		printf("Text: %s\n", tnv.bp);
-		if (tnv.size > 0)
+		if (tnv.size)
 			tidyBufFree(&tnv);
 	}
 
@@ -151,7 +151,39 @@ static void printNode(TidyNode node, int level, bool opentag)
 	}
 }				/* printNode */
 
-static int lastconverted;
+/* remove tags from start and end of a string, for innerHTML */
+static void tagStrip(char *line)
+{
+	char *s = line;
+	if (*s != '<') {
+/* this shouldn't happen, don't know what to do. */
+		return;
+	}
+
+	s = strchr(line, '>');
+	if (!s)
+		return;
+	++s;
+	while (isspace(*s))
+		++s;
+	strmove(line, s);
+
+	s = line + strlen(line);
+	while (s > line && isspace(s[-1]))
+		--s;
+	*s = 0;
+	if (s == line || s[-1] != '>')
+		return;
+/* back up over </foo> */
+	--s;
+	while (s >= line) {
+		if (*s == '<') {
+			*s = 0;
+			return;
+		}
+		--s;
+	}
+}				/* tagStrip */
 
 static void convertNode(TidyNode node, int level, bool opentag)
 {
@@ -193,7 +225,7 @@ static void convertNode(TidyNode node, int level, bool opentag)
 		TidyBuffer tnv = { 0 };	/* text-node value */
 		tidyBufClear(&tnv);
 		tidyNodeGetValue(tdoc, node, &tnv);
-		if (tnv.size > 0) {
+		if (tnv.size) {
 			t->textval = cloneString(tnv.bp);
 			tidyBufFree(&tnv);
 		}
@@ -218,4 +250,22 @@ static void convertNode(TidyNode node, int level, bool opentag)
 	}
 	t->attributes[i] = 0;
 	t->atvals[i] = 0;
+
+/* innerHTML, only for certain tags */
+	if (t->action == TAGACT_DIV) {
+		TidyBuffer tnv = { 0 };	/* text-node value */
+		tidyBufClear(&tnv);
+		t->innerHTML = emptyString;
+		tidyNodeGetText(tdoc, node, &tnv);
+		if (tnv.size) {
+/* But it's not the original html, it has been sanitized.
+ * Put a cap on size, else memory consumed could, theoretically,
+ * grow as the size of the document squared. */
+			if (tnv.size <= 4096)
+				t->innerHTML = cloneString(tnv.bp);
+			tagStrip(t->innerHTML);
+			tidyBufFree(&tnv);
+		}
+	}
+
 }				/* convertNode */

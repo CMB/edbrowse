@@ -671,8 +671,7 @@ document.writeln("<P>Some extra html at the end of the buffer.");
 }
 
 // test the innerHTML feature
-if(document.getElementById("sphere").innerHTML !=
-"Surface area is 4&#960;r<span class=sup>2<" + "/span>.")
+if(!document.getElementById("sphere").innerHTML.match(/^Surface area/))
 fail(145);
 document.getElementById("album").innerHTML =
 "Why don't we do it <A href=http://en.wikipedia.org/wiki/White_album>in the road<" + "/A>?";

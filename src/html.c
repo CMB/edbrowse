@@ -8,6 +8,7 @@
 #define handlerPresent(obj, name) (has_property(obj, name) == EJ_PROP_FUNCTION)
 
 int testnew = 0;
+bool htmlGenerated;
 
 static const char *const handlers[] = {
 	"onmousemove", "onmouseover", "onmouseout", "onmouseup", "onmousedown",
@@ -298,6 +299,7 @@ void freeTags(struct ebWindow *w)
 		nzFree(t->href);
 		nzFree(t->classname);
 		nzFree(t->js_file);
+		nzFree(t->innerHTML);
 
 		a = (char **)t->attributes;
 		if (a) {
@@ -623,12 +625,11 @@ form.reset(), form.submit(), document.location = url, etc.
 Every js activity should start with jSyncup() and end with jSideEffects().
 *********************************************************************/
 
+static void jSide2(void);
+
 void jSideEffects(void)
 {
 	char *post;
-	bool rc;
-	struct htmlTag *t;
-	jsobjtype v;
 	char *timers;
 	int timers_l;
 
@@ -684,6 +685,16 @@ top:
 		nzFree(timers);
 	}
 
+	jSide2();
+}				/* jSideEffects */
+
+static void jSide2(void)
+{
+	struct htmlTag *t;
+	jsobjtype v;
+	bool rc;
+	char *post;
+
 	rebuildSelectors();
 
 	applyInputChanges();
@@ -704,7 +715,7 @@ top:
 				showError();
 		}
 	}
-}				/* jSideEffects */
+}				/* jSide2 */
 
 /* Parse innerHTML and put it where it belongs */
 static bool nextInnerHTML(void)
@@ -724,6 +735,11 @@ static bool nextInnerHTML(void)
 
 found:
 	ic->major = 'x';
+	if (testnew) {
+		debugPrint(3, "innerHTML not yet implemented");
+		return true;
+	}
+
 	tagno = ic->tagno;
 	if (!locateInvisibleAnchor(tagno, &ln, &p, &s, &t))
 		return true;
@@ -795,6 +811,11 @@ static bool nextInnerText(void)
 
 found:
 	ic->major = 'x';
+	if (testnew) {
+		debugPrint(3, "innerText not yet implemented");
+		return true;
+	}
+
 	tagno = ic->tagno;
 	if (!locateTagInBuffer(tagno, &ln, &p, &s1, &s2))
 		return true;
@@ -1582,7 +1603,7 @@ static int tree_pos;
 static bool treeDisable;
 static void intoTree(struct htmlTag *parent);
 
-static void parseDocWrite(struct htmlTag *t)
+static void runDocWrite(struct htmlTag *t)
 {
 	int l;
 	char *a, *ns;
@@ -1598,6 +1619,7 @@ static void parseDocWrite(struct htmlTag *t)
 	nzFree(cw->hbase);
 	cw->hbase = cloneString(cw->fileName);
 	l = cw->numTags;
+	htmlGenerated = true;
 	html2nodes(cw->dw);
 	treeAttach = t;
 	tree_pos = l;
@@ -1605,6 +1627,7 @@ static void parseDocWrite(struct htmlTag *t)
 	treeAttach = NULL;
 	prerender(0);
 	decorate(0);
+	htmlGenerated = false;
 
 /* That's all we need do if still browsing, or , in the future,
  * we will be calling render again. */
@@ -1626,7 +1649,7 @@ static void parseDocWrite(struct htmlTag *t)
 	nzFree(cw->dw);
 	cw->dw = 0;
 	cw->dw_l = 0;
-}				/* parseDocWrite */
+}				/* runDocWrite */
 
 static void runScriptsPending(void)
 {
@@ -1661,13 +1684,19 @@ top:
 		nzFree(jtxt);
 
 /* look for document.write from this script */
-		parseDocWrite(t);
+		runDocWrite(t);
 	}
 
 	if (change)
 		goto top;
 
-	rebuildSelectors();
+	if (nextInnerHTML())
+		goto top;
+
+	if (nextInnerText())
+		goto top;
+
+	jSide2();
 }				/* runScriptsPending */
 
 /* Convert a list of nodes, properly nested open close, into a tree.

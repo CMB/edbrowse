@@ -950,7 +950,7 @@ static void optionJS(struct htmlTag *t)
  * Some day we'll do these fetches in parallel in the background. */
 static void prepareScript(struct htmlTag *t)
 {
-	const char *js_file = "current_buffer";
+	const char *js_file = "generated";
 	char *js_text = 0;
 	const char *a;
 	const char *filepart;
@@ -982,9 +982,9 @@ static void prepareScript(struct htmlTag *t)
  * <script>
  * foo
  * </script>
- * so make a guess towards the second form and increment. */
-	++t->js_ln;
-	if (cw->fileName)
+ * so make a guess towards the first form, knowing we could be off by 1.
+ * Just leave it at t->js_ln */
+	if (cw->fileName && !htmlGenerated)
 		js_file = cw->fileName;
 
 	if (t->href) {		/* fetch the javascript page */
@@ -1063,8 +1063,7 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		return;
 	if (t->step >= 2)
 		return;
-	if (!opentag)
-		t->step = 2;
+	t->step = 2;
 
 	switch (action) {
 	case TAGACT_SCRIPT:
@@ -1119,6 +1118,8 @@ static void jsNode(struct htmlTag *t, bool opentag)
 
 	case TAGACT_DIV:
 		domLink(t, "Div", 0, "divs", cw->docobj, 0);
+/* test innerHTML, just <div> for now */
+		establish_inner(t->jv, t->innerHTML, 0, false);
 		break;
 
 	case TAGACT_SPAN:

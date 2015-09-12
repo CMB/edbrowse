@@ -229,6 +229,7 @@ extern bool iuConvert;		/* perform iso utf8 conversions automatically */
 extern char type8859;		/* 1 through 15 */
 extern bool js_redirects;	/* window.location = new_url */
 extern bool htmlAttrVal_nl;	/* allow nl in the attribute of an html tag */
+extern bool htmlGenerated; /* as in document.write() */
 extern bool passMail;		/* pass mail across the filters */
 extern bool errorExit;		/* exit on any error, for scripting purposes */
 extern bool isInteractive;
@@ -462,6 +463,7 @@ struct htmlTag {
 /* class=foo becomes className = "foo" when you carry from html to javascript,
  * don't ask me why. */
 	char *classname;
+	char *innerHTML; /* the html string under this tag */
 	int inner;		/* for inner html */
 };
 

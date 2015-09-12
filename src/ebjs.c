@@ -1764,10 +1764,14 @@ void establish_inner(jsobjtype obj, const char *start, const char *end,
 {
 	const char *s = emptyString;
 	const char *name = (isText ? "innerText" : "innerHTML");
-	if (start)
-		s = pullString(start, end - start);
+	if (start) {
+		s = start;
+		if (end)
+			s = pullString(start, end - start);
+	}
 	set_property_string(obj, name, s);
-	nzFree((char *)s);
+	if (start && end)
+		nzFree((char *)s);
 /* Anything with an innerHTML might also have a style. */
 	instantiate(obj, "style", 0);
 }				/* establish_inner */

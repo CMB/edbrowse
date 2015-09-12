@@ -4781,6 +4781,7 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 	}
 	if (textlen) {
 		rc = addTextToBuffer((pst) text, textlen, 0, true);
+cw->changeMode = false;
 		if (!rc)
 			i_printf(MSG_BufferPreload, cx);
 	}
