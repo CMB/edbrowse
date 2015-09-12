@@ -294,7 +294,7 @@ void freeTags(struct ebWindow *w)
 		nzFree(t->name);
 		nzFree(t->id);
 		nzFree(t->value);
-		nzFree(t->rvalue);
+		cnzFree(t->rvalue);
 		nzFree(t->href);
 		nzFree(t->classname);
 		nzFree(t->js_file);
@@ -608,7 +608,6 @@ static void htmlForm(void)
 }				/* htmlForm */
 
 static void scriptsPending(void);
-static void runScriptsPending(void);
 static void formReset(const struct htmlTag *form);
 static char *encodeTags(char *html, bool fromSource);
 static bool nextInnerHTML(void);
@@ -638,9 +637,7 @@ void jSideEffects(void)
 top:
 /* Are there other scripts waiting to run? */
 /* Do this first, so other javascript side effects can pile up. */
-	if (testnew)
-		runScriptsPending();
-	else
+	if (!testnew)
 		scriptsPending();
 
 	if (preamble[0]) {
@@ -1580,6 +1577,57 @@ static void scriptsPending(void)
 		objectScript(obj);
 }				/* scriptsPending */
 
+static struct htmlTag *treeAttach;
+static int tree_pos;
+static bool treeDisable;
+static void intoTree(struct htmlTag *parent);
+
+static void parseDocWrite(struct htmlTag *t)
+{
+	int l;
+	char *a, *ns;
+
+	if (!cw->dw)
+		return;
+
+/* replace the <docwrite> tag with <html> */
+	memcpy(cw->dw, "<body>   \n", 10);
+	stringAndString(&cw->dw, &cw->dw_l, "</body>\n");
+/* I really have no idea what the base should be */
+/* Assume it is the file name. */
+	nzFree(cw->hbase);
+	cw->hbase = cloneString(cw->fileName);
+	l = cw->numTags;
+	html2nodes(cw->dw);
+	treeAttach = t;
+	tree_pos = l;
+	intoTree(0);
+	treeAttach = NULL;
+	prerender(0);
+	decorate(0);
+
+/* That's all we need do if still browsing, or , in the future,
+ * we will be calling render again. */
+	if (cw->browseMode) {
+		a = render(l);
+		debugPrint(6, "|%s|\n", a);
+		cellDelimiters(a);
+		anchorSwap(a);
+		ns = htmlReformat(a);
+		nzFree(a);
+		if (strlen(ns) > 1) {
+/* this notification and foldin will go away when we rerender */
+			i_printf(MSG_NewLines, cw->dol + 1);
+			addTextToBuffer(ns, strlen(ns), cw->dol, false);
+		}
+		nzFree(ns);
+	}
+
+	nzFree(cw->dw);
+	cw->dw = 0;
+	cw->dw_l = 0;
+}				/* parseDocWrite */
+
 static void runScriptsPending(void)
 {
 	struct htmlTag *t;
@@ -1587,7 +1635,10 @@ static void runScriptsPending(void)
 	char *jtxt;
 	const char *js_file;
 	int ln;
+	bool change;
 
+top:
+	change = false;
 	for (j = 0; j < cw->numTags; ++j) {
 		t = cw->tags[j];
 		if (t->action != TAGACT_SCRIPT)
@@ -1598,6 +1649,7 @@ static void runScriptsPending(void)
 			continue;
 /* now running the script */
 		t->step = 3;
+		change = true;
 		jtxt = get_property_string(t->jv, "data");
 		if (!jtxt)
 			continue;	/* nothing there */
@@ -1607,15 +1659,20 @@ static void runScriptsPending(void)
 		javaParseExecute(cw->winobj, jtxt, js_file, ln);
 		debugPrint(3, "execution complete");
 		nzFree(jtxt);
+
+/* look for document.write from this script */
+		parseDocWrite(t);
 	}
+
+	if (change)
+		goto top;
+
+	rebuildSelectors();
 }				/* runScriptsPending */
 
 /* Convert a list of nodes, properly nested open close, into a tree.
  * Attach the tree to an existing tree here, for document.write etc,
  * or just build the tree if this is null. */
-static struct htmlTag *treeAttach;
-static int tree_pos;
-static bool treeDisable;
 static void intoTree(struct htmlTag *parent)
 {
 	struct htmlTag *t, *prev = 0;
@@ -1643,15 +1700,40 @@ static void intoTree(struct htmlTag *parent)
  * to the children below. */
 			int action = t->action;
 			if (action == TAGACT_HEAD) {
-				debugPrint(5, "node skip %s\n", t->info->name);
+				debugPrint(5, "node skip %s", t->info->name);
 				treeDisable = true;
 				intoTree(t);
 				treeDisable = false;
 				continue;
 			}
+			if (action == TAGACT_HTML || action == TAGACT_BODY) {
+				debugPrint(5, "node pass %s", t->info->name);
+				intoTree(t);
+				continue;
+			}
+
+/* this node is ok, but if parent is a pass through node... */
+			if (parent == 0 ||	/* this shouldn't happen */
+			    parent->action == TAGACT_HTML
+			    || parent->action == TAGACT_BODY) {
+				struct htmlTag *c;
+/* link up to treeAttach */
+				debugPrint(5, "node up %s to %s",
+					   t->info->name,
+					   treeAttach->info->name);
+				t->parent = treeAttach;
+				c = treeAttach->firstchild;
+				if (!c)
+					treeAttach->firstchild = t;
+				else {
+					while (c->sibling)
+						c = c->sibling;
+					c->sibling = t;
+				}
+				goto checkattributes;
+			}
 		}
 
-regular:
 /* regular linking through the parent node */
 		t->parent = parent;
 		if (prev) {
@@ -1677,6 +1759,7 @@ checkattributes:
 			t->rdonly = true;
 		if (stringInListCI(t->attributes, "multiple") >= 0)
 			t->multiple = true;
+
 		if ((j = stringInListCI(t->attributes, "name")) >= 0) {
 /* temporarily, make another copy; some day we'll just point to the value */
 			v = t->atvals[j];
@@ -1809,7 +1892,6 @@ static char *encodeTags(char *html, bool fromSource)
 	treeAttach = NULL;
 	if (!fromSource)	/* temporary */
 		treeAttach = cw->tags[0];
-	treeDisable = false;	/* should already be false */
 	tree_pos = l;
 	intoTree(0);
 
@@ -1817,8 +1899,7 @@ static char *encodeTags(char *html, bool fromSource)
 
 	if (isJSAlive && testnew) {
 		decorate(l);
-		if (fromSource)
-			jSideEffects();
+		runScriptsPending();
 	}
 
 	a = render(l);
@@ -3987,6 +4068,13 @@ void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 	struct htmlTag *t = newTag("a");
 	char timedesc[48];
 	int l;
+
+	if (testnew) {
+/* We have to move to a better design then turning timers into hyperlinks. */
+/* They actually need to fire and run js at the prescribed times. */
+/* For now let's just not worry about them. */
+		return;
+	}
 
 	strcpy(timedesc, (isInterval ? "Interval" : "Timer"));
 	l = strlen(timedesc);

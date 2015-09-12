@@ -150,7 +150,7 @@ static void htmlInput(struct htmlTag *t)
 
 /* In this case an empty value should be "", not null */
 	if (t->value == 0)
-		t->value = t->rvalue = emptyString;
+		t->rvalue = t->value = emptyString;
 
 	if (n >= INP_RADIO && t->checked) {
 		char namebuf[200];
@@ -408,7 +408,7 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 			if (!t->value) {
 /* This can only happen it no text inside, <textarea></textarea> */
 /* like the other value fields, it can't be null */
-				t->value = t->rvalue = emptyString;
+				t->rvalue = t->value = emptyString;
 			}
 			j = 0;
 			if (!isJSAlive || testnew)

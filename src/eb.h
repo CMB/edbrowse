@@ -458,7 +458,7 @@ struct htmlTag {
 	short ninp;		/* number of nonhidden inputs */
 	char *attrib;
 	char *name, *id, *value, *href;
-	char *rvalue; /* for reset */
+	const char *rvalue; /* for reset */
 /* class=foo becomes className = "foo" when you carry from html to javascript,
  * don't ask me why. */
 	char *classname;
