@@ -1308,7 +1308,11 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 	}
 
 	t->jv = io;
-	makeParentNode(t);
+	if (testnew) {
+		if (t->parent && t->parent->jv)
+			set_property_object(io, "parentNode", t->parent->jv);
+	} else
+		makeParentNode(t);
 
 	set_property_string(io, "nodeName", t->info->name);
 

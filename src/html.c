@@ -1718,6 +1718,7 @@ static void intoTree(struct htmlTag *parent)
 
 		if (treeDisable) {
 			debugPrint(5, "node skip %s", t->info->name);
+			t->step = 100;
 			intoTree(t);
 			continue;
 		}
@@ -1730,6 +1731,7 @@ static void intoTree(struct htmlTag *parent)
 			int action = t->action;
 			if (action == TAGACT_HEAD) {
 				debugPrint(5, "node skip %s", t->info->name);
+				t->step = 100;
 				treeDisable = true;
 				intoTree(t);
 				treeDisable = false;
@@ -1737,6 +1739,7 @@ static void intoTree(struct htmlTag *parent)
 			}
 			if (action == TAGACT_HTML || action == TAGACT_BODY) {
 				debugPrint(5, "node pass %s", t->info->name);
+				t->step = 100;
 				intoTree(t);
 				continue;
 			}

@@ -56,14 +56,75 @@ static Bool tidyErrorHandler(TidyDoc tdoc, TidyReportLevel lvl,
 	return no;
 }				/* tidyErrorHandler */
 
+/* Work around a nasty bug in tidy5 wherein "<script>" anywhere
+ * in a javascript will totally derail things.
+ * I turn < into \x3c. */
+static char *escapeLessScript(const char *htmltext)
+{
+	char *ns;		/* new string */
+	int ns_l;
+	const char *s1, *s2;	/* start and end of script */
+	const char *lw;		/* last write */
+	const char *q;		/* inner script */
+
+	ns = initString(&ns_l);
+	lw = htmltext;
+
+	while (true) {
+		s1 = strstrCI(lw, "<script");
+		if (!s1)
+			break;
+		s1 += 7;
+		if (isalnumByte(*s1)) {	/* <scriptx */
+			stringAndBytes(&ns, &ns_l, lw, s1 - lw);
+			lw = s1;
+			continue;
+		}
+		s2 = strstrCI(s1, "</script");
+		if (!s2)
+			goto abort;
+
+/* script now has a start and end */
+		stringAndBytes(&ns, &ns_l, lw, s1 - lw);
+		lw = s1;
+
+		while (true) {
+			q = strstrCI(lw, "<script");
+			if (!q || q > s2)
+				break;
+			stringAndBytes(&ns, &ns_l, lw, q - lw);
+			stringAndString(&ns, &ns_l, "\\x3c");
+			lw = q + 1;
+		}
+
+		stringAndBytes(&ns, &ns_l, lw, s2 - lw);
+		lw = s2;
+	}
+
+	stringAndString(&ns, &ns_l, lw);
+	return ns;
+
+abort:
+	nzFree(ns);
+	return 0;
+}				/* escapeLessScript */
+
 /* the entry point */
 void html2nodes(const char *htmltext)
 {
+	char *htmlfix;
+
 	tdoc = tidyCreate();
 	tidySetReportFilter(tdoc, tidyErrorHandler);
 	tidySetCharEncoding(tdoc, (cons_utf8 ? "utf8" : "latin1"));
 
-	tidyParseString(tdoc, htmltext);
+	htmlfix = escapeLessScript(htmltext);
+	if (htmlfix) {
+		tidyParseString(tdoc, htmlfix);
+		nzFree(htmlfix);
+	} else
+		tidyParseString(tdoc, htmltext);
+
 	tidyCleanAndRepair(tdoc);
 
 	if (debugLevel >= 5) {

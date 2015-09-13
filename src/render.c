@@ -278,8 +278,19 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 
 		if (currentTA) {
 			currentTA->value = t->textval;
-			currentTA->rvalue = cloneString(t->textval);
 			t->textval = 0;
+/* Sometimes tidy lops off the last newline character; it depends on
+ * the tag following. And even if it didn't end in nl in the original html,
+ * <textarea>foobar</textarea>, it probably should,
+ * as it goes into a new buffer. */
+			j = strlen(currentTA->value);
+			if (j && currentTA->value[j - 1] != '\n') {
+				currentTA->value =
+				    reallocMem(currentTA->value, j + 2);
+				currentTA->value[j] = '\n';
+				currentTA->value[j + 1] = 0;
+			}
+			currentTA->rvalue = cloneString(currentTA->value);
 			break;
 		}
 
