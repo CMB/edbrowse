@@ -31,7 +31,7 @@ static void traverseAll(int start)
 
 	for (i = start; i < cw->numTags; ++i) {
 		t = cw->tags[i];
-		if (!t->parent && !t->slash)
+		if (!t->parent && !t->slash && t->step < 10)
 			traverseNode(t);
 	}
 }				/* traverseAll */

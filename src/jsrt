@@ -592,7 +592,6 @@ if(document.readyState != "loading") fail(140);
 if(!document.title.match(/regression/)) fail(141);
 if(document.head.id != "boom") fail(142);
 if(document.getElementsByTagName("head")[0].id != "boom") fail(143);
-if(document.getElementsByTagName("base")[0].href.port != 80) fail(144);
 
 function submitFunction(me) {
 if(document.questionnaire != me) fail(123);
@@ -689,22 +688,25 @@ fail(147);
 
 data_uri1_test = '';
 data_uri2_test = '';
+/* creating tag elements has to be rethought and redesigned...
 script_from_data = document.createElement('script');
 script_from_data.src = 'data:text/javascript,var data_uri1_test %3d %22set%22%3b';
 script_from_data = document.createElement('script');
 script_from_data.src = 'data:text/javascript;base64,dmFyIGRhdGFfdXJpMl90ZXN0ID0gInNldCI7Cg==';
+*/
 
 </script>
 
 <script type=text/javascript language=JavaScript>
+/*
 if(data_uri1_test != "set")
 fail(148);
 if(data_uri2_test != "set")
 fail(149);
+*/
 
 /* I wanted to test the initial cookie string as blank,
  * but if you unbrowse and then browse, this test will fail.
-
 if(document.cookie != "")
 fail(150);
 */

@@ -1679,6 +1679,10 @@ top:
 		js_file = t->js_file;
 		ln = t->js_ln;
 		debugPrint(3, "execute %s at %d", js_file, ln);
+/* if script is in the html it usually begins on the next line, so increment,
+ * and hope the error messages line up. */
+		if (ln > 1)
+			++ln;
 		javaParseExecute(cw->winobj, jtxt, js_file, ln);
 		debugPrint(3, "execution complete");
 		nzFree(jtxt);
@@ -4073,31 +4077,42 @@ void javaOpensWindow(const char *href, const char *name)
 	const char *a;
 
 	if (!href || !*href) {
-		browseError(MSG_JSBlankWindow);
+		debugPrint(3, "javascript is opening a blank window");
 		return;
 	}
 
 	copy = cloneString(href);
 	unpercentURL(copy);
-	r = resolveURL(getBaseHref(-1), copy);
+	r = resolveURL(cw->hbase, copy);
 	nzFree(copy);
 	if (cw->browseMode) {
 		gotoLocation(r, 0, false);
 		return;
 	}
 
-	t = newTag("a");
-	t->href = r;
+/* Turn the new window into a hyperlink. */
+/* just shovel this onto dw, as though it came from document.write() */
+	if (!cw->dw) {
+		cw->dw = initString(&cw->dw_l);
+		stringAndString(&cw->dw, &cw->dw_l, "<docwrite>");
+	}
+	stringAndString(&cw->dw, &cw->dw_l, "<br>Popup: <A href=");
+	stringAndString(&cw->dw, &cw->dw_l, r);
+	stringAndChar(&cw->dw, &cw->dw_l, '>');
 	a = altText(r);
+	nzFree(r);
 /* I'll assume this is more helpful than the name of the window */
 	if (a)
 		name = a;
-	toPreamble(t->seqno, "Popup", 0, name);
+	r = htmlEscape(name);
+	stringAndString(&cw->dw, &cw->dw_l, r);
+	nzFree(r);
+	stringAndString(&cw->dw, &cw->dw_l, "</A><br>\n");
 }				/* javaOpensWindow */
 
 void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 {
-	struct htmlTag *t = newTag("a");
+	struct htmlTag *t;
 	char timedesc[48];
 	int l;
 
@@ -4108,6 +4123,7 @@ void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 		return;
 	}
 
+	t = newTag("a");
 	strcpy(timedesc, (isInterval ? "Interval" : "Timer"));
 	l = strlen(timedesc);
 	if (n > 1000)
