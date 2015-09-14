@@ -169,6 +169,7 @@ static void javaSetsInner(jsobjtype v, const char *newtext, char c)
 	if (!t)
 		return;
 	ic = allocMem(sizeof(struct inputChange) + strlen(newtext));
+	ic->t = t;
 	ic->tagno = t->seqno;
 	ic->major = 'i';
 	ic->minor = c;

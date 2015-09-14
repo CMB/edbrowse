@@ -1603,24 +1603,11 @@ static int tree_pos;
 static bool treeDisable;
 static void intoTree(struct htmlTag *parent);
 
-static void runDocWrite(struct htmlTag *t)
+static void runGeneratedHtml(struct htmlTag *t, const char *h)
 {
-	int l;
-	char *a, *ns;
-
-	if (!cw->dw)
-		return;
-
-/* replace the <docwrite> tag with <html> */
-	memcpy(cw->dw, "<body>   \n", 10);
-	stringAndString(&cw->dw, &cw->dw_l, "</body>\n");
-/* I really have no idea what the base should be */
-/* Assume it is the file name. */
-	nzFree(cw->hbase);
-	cw->hbase = cloneString(cw->fileName);
-	l = cw->numTags;
+	int l = cw->numTags;
 	htmlGenerated = true;
-	html2nodes(cw->dw);
+	html2nodes(h);
 	treeAttach = t;
 	tree_pos = l;
 	intoTree(0);
@@ -1628,33 +1615,13 @@ static void runDocWrite(struct htmlTag *t)
 	prerender(0);
 	decorate(0);
 	htmlGenerated = false;
-
-/* That's all we need do if still browsing, or , in the future,
- * we will be calling render again. */
-	if (cw->browseMode) {
-		a = render(l);
-		debugPrint(6, "|%s|\n", a);
-		cellDelimiters(a);
-		anchorSwap(a);
-		ns = htmlReformat(a);
-		nzFree(a);
-		if (strlen(ns) > 1) {
-/* this notification and foldin will go away when we rerender */
-			i_printf(MSG_NewLines, cw->dol + 1);
-			addTextToBuffer(ns, strlen(ns), cw->dol, false);
-		}
-		nzFree(ns);
-	}
-
-	nzFree(cw->dw);
-	cw->dw = 0;
-	cw->dw_l = 0;
-}				/* runDocWrite */
+}				/* runGeneratedHtml */
 
 static void runScriptsPending(void)
 {
 	struct htmlTag *t;
-	int j;
+	struct inputChange *ic;
+	int j, l;
 	char *jtxt;
 	const char *js_file;
 	int ln;
@@ -1662,6 +1629,7 @@ static void runScriptsPending(void)
 
 top:
 	change = false;
+
 	for (j = 0; j < cw->numTags; ++j) {
 		t = cw->tags[j];
 		if (t->action != TAGACT_SCRIPT)
@@ -1688,18 +1656,65 @@ top:
 		nzFree(jtxt);
 
 /* look for document.write from this script */
-		runDocWrite(t);
+		if (cw->dw) {
+/* replace the <docwrite> tag with <html> */
+			memcpy(cw->dw, "<body>   \n", 10);
+			stringAndString(&cw->dw, &cw->dw_l, "</body>\n");
+			runGeneratedHtml(t, cw->dw);
+			nzFree(cw->dw);
+			cw->dw = 0;
+			cw->dw_l = 0;
+		}
 	}
 
 	if (change)
 		goto top;
 
-	if (nextInnerHTML())
+/* look for an run innerHTML */
+	foreach(ic, inputChangesPending) {
+		char *h;
+		if (ic->major != 'i' || ic->minor != 'h')
+			continue;
+		ic->major = 'x';
+		l = strlen(ic->value);
+		h = allocMem(l + 16);
+		sprintf(h, "<body>\n%s</body>\n", ic->value);
+		runGeneratedHtml(ic->t, h);
+		change = true;
+	}
+
+	if (change)
 		goto top;
 
-	if (nextInnerText())
-		goto top;
-
+	foreach(ic, inputChangesPending) {
+		char *v;
+		int side;
+		if (ic->major != 'i' || ic->minor != 't')
+			continue;
+		ic->major = 'x';
+		t = ic->t;
+/* the tag should always be a textarea tag. */
+/* Not sure what to do if it's not. */
+		if (t->action != TAGACT_INPUT || t->itype != INP_TA) {
+			debugPrint(3,
+				   "innerText is applied to tag %d that is not a textarea.",
+				   t->seqno);
+			continue;
+		}
+/* 2 parts: innerText copies over to textarea->value
+ * if js has not already done so,
+ * and the text replaces what was in the side buffer. */
+		v = ic->value;
+		set_property_string(t->jv, "valueue", v);
+		side = t->lic;
+		if (side <= 0 || side >= MAXSESSION || side == context)
+			continue;
+		if (sessionList[side].lw == NULL)
+			continue;
+		if (cw->browseMode)
+			i_printf(MSG_BufferUpdated, side);
+		sideBuffer(side, v, -1, 0);
+	}
 	jSide2();
 }				/* runScriptsPending */
 
@@ -1832,9 +1847,10 @@ checkattributes:
 					v = resolveURL(cw->hbase, v);
 					cnzFree(t->atvals[j]);
 					t->atvals[j] = v;
-				} else {
+				} else if (!cw->baseset) {
 					nzFree(cw->hbase);
 					cw->hbase = cloneString(v);
+					cw->baseset = true;
 				}
 				t->href = cloneString(v);
 			}
@@ -2934,7 +2950,7 @@ char *htmlParse(char *buf, int remote)
 	t = newTag("base");
 	t->href = cloneString(cw->fileName);
 	basehref = t->href;
-/* alternate system used by render() */
+	cw->baseset = false;
 	cw->hbase = cloneString(cw->fileName);
 
 	newbuf = encodeTags(buf, true);

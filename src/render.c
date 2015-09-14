@@ -1089,6 +1089,8 @@ static void jsNode(struct htmlTag *t, bool opentag)
 
 	case TAGACT_INPUT:
 		formControlJS(t);
+		if (t->itype == INP_TA)
+			establish_inner(t->jv, t->value, 0, true);
 		break;
 
 	case TAGACT_OPTION:

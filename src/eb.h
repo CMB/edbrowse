@@ -299,6 +299,7 @@ x is unspecified.
 
 struct inputChange {
 	struct inputChange *next, *prev;
+	struct htmlTag *t;
 	int tagno;
 	char major, minor;
 	char filler1, filler2;
@@ -357,6 +358,7 @@ struct ebWindow {
 	bool dirMode:1;		/* directory mode */
 	bool undoable:1;	/* undo is possible */
 	bool sqlMode:1;		/* accessing a table */
+	bool baseset:1; /* <base> tag seen */
 	char *dw;		/* document.write string */
 	int dw_l;		/* length of the above */
 /* The javascript context and window corresponding to this edbrowse buffer.
