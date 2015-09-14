@@ -210,7 +210,7 @@ static void htmlMeta(struct htmlTag *t)
 			if (parseRefresh(copy, &delay)) {
 				char *newcontent;
 				unpercentURL(copy);
-				newcontent = resolveURL(cw->fileName, content);
+				newcontent = resolveURL(cw->hbase, content);
 				gotoLocation(newcontent, delay, true);
 			}
 		}
@@ -790,7 +790,6 @@ unparen:
 				 'B' ? "Background Music" : "Audio passage"));
 		sprintf(hnum, "%c0}\r", InternalCodeChar);
 		ns_hnum();
-		t->action = TAGACT_A;
 		break;
 
 	case TAGACT_IMAGE:
@@ -1169,3 +1168,51 @@ void decorate(int start)
 	traverse_callback = jsNode;
 	traverseAll(start);
 }				/* decorate */
+
+/* Rerender the buffer and notify of any lines that have changed */
+void rerender(bool rr_command)
+{
+	char *a, *newbuf;
+
+	if (!testnew) {
+		puts("not in the new system");
+		return;
+	}
+
+	if (rr_command) {
+/* take the screen snap */
+		jSyncup();
+	}
+
+	if (!cw->lastrender) {
+		puts("lastrender = NULL");
+		return;
+	}
+
+/* and the new screen */
+	a = render(0);
+	cellDelimiters(a);
+	anchorSwap(a);
+	newbuf = htmlReformat(a);
+	nzFree(a);
+
+/* the high runner case, most of the time nothing changes,
+ * and we can check that efficiently with strcmp */
+	if (stringEqual(newbuf, cw->lastrender)) {
+		if (rr_command)
+			i_puts(MSG_NoChange);
+		nzFree(newbuf);
+		return;
+	}
+
+/* This is a dumb prototype, version 1, replace the entire buffer
+ * and tell the user that something changed. No diff yet. */
+	if (cw->dol)
+		delText(1, cw->dol);
+	addTextToBuffer(newbuf, strlen(newbuf), 0, false);
+	cw->undoable = false;
+	nzFree(newbuf);
+	nzFree(cw->lastrender);
+	cw->lastrender = 0;
+	puts("something has changed");
+}				/* rerender */

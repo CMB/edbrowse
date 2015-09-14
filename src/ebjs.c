@@ -145,7 +145,7 @@ static void javaSetsTagVar(jsobjtype v, const char *newtext)
 	if (t->itype == INP_HIDDEN || t->itype == INP_RADIO)
 		return;
 	if (t->itype == INP_TA) {
-		runningError(MSG_JSTextarea);
+		debugPrint(3, "textarea.value is being updated");
 		return;
 	}
 	nzFree(t->value);
@@ -153,8 +153,9 @@ static void javaSetsTagVar(jsobjtype v, const char *newtext)
 /* Once we move to render, and rerender after every js action,
  * changing value is all we need do, and we won't need the next stuff.
  * The following if return illustrates that. */
-	if (testnew && !cw->browseMode)
+	if (testnew)
 		return;
+
 	ic = allocMem(sizeof(struct inputChange) + strlen(newtext));
 	ic->tagno = t->seqno;
 	ic->major = 'v';

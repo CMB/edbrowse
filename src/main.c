@@ -1069,9 +1069,9 @@ int main(int argc, char **argv)
 	pcre_malloc = allocMem;
 	pcre_free = nzFree;
 
-	if (getenv("testnew")) {
-		puts("test new");
-		testnew = 1;
+	if (getenv("oldsystem")) {
+		puts("old system");
+		testnew = 0;
 	}
 
 /* Establish the home directory, and standard edbrowse files thereunder. */

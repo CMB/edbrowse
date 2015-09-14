@@ -7,7 +7,7 @@
 
 #define handlerPresent(obj, name) (has_property(obj, name) == EJ_PROP_FUNCTION)
 
-int testnew = 0;
+int testnew = 1;
 bool htmlGenerated;
 
 static const char *const handlers[] = {
@@ -610,6 +610,7 @@ static void htmlForm(void)
 }				/* htmlForm */
 
 static void scriptsPending(void);
+static void runScriptsPending(void);
 static void formReset(const struct htmlTag *form);
 static char *encodeTags(char *html, bool fromSource);
 static bool nextInnerHTML(void);
@@ -633,13 +634,19 @@ void jSideEffects(void)
 	char *timers;
 	int timers_l;
 
+	if (testnew) {
+		runScriptsPending();
+/* now rerender and look for differences */
+		rerender(false);
+		return;
+	}
+
 	timers = initString(&timers_l);
 
 top:
 /* Are there other scripts waiting to run? */
 /* Do this first, so other javascript side effects can pile up. */
-	if (!testnew)
-		scriptsPending();
+	scriptsPending();
 
 	if (preamble[0]) {
 /* This has to be timers or intervals. copy the string,
@@ -685,6 +692,9 @@ top:
 		nzFree(timers);
 	}
 
+	rebuildSelectors();
+	applyInputChanges();
+
 	jSide2();
 }				/* jSideEffects */
 
@@ -694,10 +704,6 @@ static void jSide2(void)
 	jsobjtype v;
 	bool rc;
 	char *post;
-
-	rebuildSelectors();
-
-	applyInputChanges();
 
 	if (v = js_reset) {
 		js_reset = 0;
@@ -1118,7 +1124,7 @@ that's the way it goes.
 
 void jSyncup(void)
 {
-	const struct htmlTag *t;
+	struct htmlTag *t;
 	int itype, i, j, cx;
 	char *value, *cxbuf;
 
@@ -1126,13 +1132,11 @@ void jSyncup(void)
 		return;		/* not necessary */
 	if (!isJSAlive)
 		return;
-	debugPrint(5, "jSyncup starts");
+	debugPrint(4, "jSyncup starts");
 
 	for (i = 0; i < cw->numTags; ++i) {
 		t = tagList[i];
 		if (t->action != TAGACT_INPUT)
-			continue;
-		if (!t->jv)
 			continue;
 		itype = t->itype;
 		if (itype <= INP_HIDDEN)
@@ -1142,6 +1146,7 @@ void jSyncup(void)
 			int checked = fieldIsChecked(t->seqno);
 			if (checked < 0)
 				checked = t->rchecked;
+			t->checked = checked;
 			set_property_bool(t->jv, "checked", checked);
 			continue;
 		}
@@ -1150,12 +1155,27 @@ void jSyncup(void)
 /* If that line has been deleted from the user's buffer,
  * indicated by value = 0,
  * revert back to the original (reset) value. */
+		if (!value)
+			value = cloneString(t->rvalue);
 
 		if (itype == INP_SELECT) {
+/* set option.selected in js based on the option(s) in value */
 			locateOptions(t, (value ? value : t->value), 0, 0,
 				      true);
-			if (!t->multiple)
+/* This is totally confusing. In the case of select,
+ * t->value is the value displayed on the screen,
+ * but within js, select.value is the value of the option selected,
+ * assuming multiple options are not allowed. */
+			if (value) {
+				nzFree(t->value);
+				t->value = value;
+			}
+			if (!t->multiple) {
 				value = get_property_option(t->jv);
+				set_property_string(t->jv, "value", value);
+				nzFree(value);
+			}
+			continue;
 		}
 
 		if (itype == INP_TA) {
@@ -1178,12 +1198,18 @@ void jSyncup(void)
 
 		if (value) {
 			set_property_string(t->jv, "value", value);
-			nzFree(value);
-		} else
-			set_property_string(t->jv, "value", t->value);
+			nzFree(t->value);
+			t->value = value;
+		}
 	}			/* loop over tags */
 
-	debugPrint(5, "jSyncup ends");
+/* screen snap, to compare with the new screen after js runs */
+	nzFree(cw->lastrender);
+	cw->lastrender = 0;
+	if (unfoldBuffer(context, false, &cxbuf, &j))
+		cw->lastrender = cxbuf;
+
+	debugPrint(4, "jSyncup ends");
 }				/* jSyncup */
 
 /* Find the <foo> tag to match </foo> */
@@ -1715,6 +1741,10 @@ top:
 			i_printf(MSG_BufferUpdated, side);
 		sideBuffer(side, v, -1, 0);
 	}
+	freeList(&inputChangesPending);
+
+	rebuildSelectors();
+
 	jSide2();
 }				/* runScriptsPending */
 

@@ -19,7 +19,7 @@ int displayLength = 500;
 /* The valid edbrowse commands. */
 static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^<";
 /* Commands that can be done in browse mode. */
-static const char browse_cmd[] = "AbBdDefghHijJklmMnpqsuvwXz=^<";
+static const char browse_cmd[] = "AbBefghHiklMnpqsvwXz=^<";
 /* Commands for sql mode. */
 static const char sql_cmd[] = "AadDefghHiklmnpqrsvwXz=^<";
 /* Commands for directory mode. */
@@ -576,6 +576,7 @@ static void freeWindow(struct ebWindow *w)
 	nzFree(w->dw);
 	nzFree(w->ft);
 	nzFree(w->hbase);
+	nzFree(w->lastrender);
 	nzFree(w->fd);
 	nzFree(w->fk);
 	nzFree(w->mailInfo);
@@ -2815,6 +2816,19 @@ static int twoLetter(const char *line, const char **runThis)
 		return true;
 	}
 
+	if (stringEqual(line, "rr")) {
+		if (!cw->browseMode) {
+			setError(MSG_NoBrowse);
+			return false;
+		}
+		if (!isJSAlive) {
+			setError(MSG_JavaOff);
+			return false;
+		}
+		rerender(true);
+		return true;
+	}
+
 	if (line[0] == 'u' && line[1] == 'a' && isdigitByte(line[2])
 	    && !line[3]) {
 		char *t = userAgents[line[2] - '0'];
@@ -2964,6 +2978,8 @@ et_go:
 		cw->ft = 0;
 		nzFree(cw->hbase);
 		cw->hbase = 0;
+		nzFree(cw->lastrender);
+		cw->lastrender = 0;
 		nzFree(cw->fd);
 		cw->fd = 0;
 		nzFree(cw->fk);
@@ -3389,10 +3405,6 @@ bool unfoldBuffer(int cx, bool cr, char **data, int *len)
 	if (size < 0)
 		return false;
 	w = sessionList[cx].lw;
-	if (w->browseMode) {
-		setError(MSG_SessionBrowse, cx);
-		return false;
-	}
 	if (w->dirMode) {
 		setError(MSG_SessionDir, cx);
 		return false;
@@ -4781,7 +4793,7 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 	}
 	if (textlen) {
 		rc = addTextToBuffer((pst) text, textlen, 0, true);
-cw->changeMode = false;
+		cw->changeMode = false;
 		if (!rc)
 			i_printf(MSG_BufferPreload, cx);
 	}
