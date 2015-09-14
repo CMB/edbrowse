@@ -65,7 +65,8 @@ static char *escapeLessScript(const char *htmltext)
 	int ns_l;
 	const char *s1, *s2;	/* start and end of script */
 	const char *lw;		/* last write */
-	const char *q;		/* inner script */
+	const char *q1;		/* inner <script */
+	const char *q2;		/* inner <\/script */
 
 	ns = initString(&ns_l);
 	lw = htmltext;
@@ -89,12 +90,21 @@ static char *escapeLessScript(const char *htmltext)
 		lw = s1;
 
 		while (true) {
-			q = strstrCI(lw, "<script");
-			if (!q || q > s2)
+			q1 = strstrCI(lw, "<script");
+			if (q1 && q1 > s2)
+				q1 = 0;
+			q2 = strstrCI(lw, "<\\/script");
+			if (q2 && q2 > s2)
+				q2 = 0;
+			if (!q1)
+				q1 = q2;
+			if (!q1)
 				break;
-			stringAndBytes(&ns, &ns_l, lw, q - lw);
+			if (q2 && q2 < q1)
+				q1 = q2;
+			stringAndBytes(&ns, &ns_l, lw, q1 - lw);
 			stringAndString(&ns, &ns_l, "\\x3c");
-			lw = q + 1;
+			lw = q1 + 1;
 		}
 
 		stringAndBytes(&ns, &ns_l, lw, s2 - lw);
@@ -112,7 +122,7 @@ abort:
 /* the entry point */
 void html2nodes(const char *htmltext)
 {
-	char *htmlfix;
+	char *htmlfix = 0;
 
 	tdoc = tidyCreate();
 	tidySetReportFilter(tdoc, tidyErrorHandler);
