@@ -1705,6 +1705,9 @@ top:
 		l = strlen(ic->value);
 		h = allocMem(l + 16);
 		sprintf(h, "<body>\n%s</body>\n", ic->value);
+/* one line will cut all the children away from t,
+ * though it's not clear how to do the same in the javascript world. */
+		ic->t->firstchild = NULL;
 		runGeneratedHtml(ic->t, h);
 		change = true;
 	}

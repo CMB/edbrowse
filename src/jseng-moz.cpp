@@ -792,12 +792,12 @@ setter_innerHTML(JSContext * cx, JS::HandleObject obj,
 		 JS::MutableHandle < jsval > vp)
 {
 	const char *s = stringize(vp);
-	if (s && strlen(s)) {
+	if (s) {
 		stringAndString(&effects, &eff_l, "i{h");	// }
 		stringAndString(&effects, &eff_l, pointer2string(obj));
 		stringAndString(&effects, &eff_l, "|<!-- inner html -->\n");
 		stringAndString(&effects, &eff_l, s);
-		if (s[strlen(s) - 1] != '\n')
+		if (*s && s[strlen(s) - 1] != '\n')
 			stringAndChar(&effects, &eff_l, '\n');
 		endeffect();
 	}

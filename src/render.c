@@ -463,7 +463,7 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 		if (opentag) {
 			a = attribVal(t, "start");
 			if (a && (j = stringIsNum(a)) >= 0)
-				t->lic = j - 1;
+				t->slic = j - 1;
 		}
 		break;
 
@@ -568,6 +568,7 @@ static void renderNode(struct htmlTag *t, bool opentag)
 
 	case TAGACT_OL:
 	case TAGACT_UL:
+		t->lic = t->slic;
 		t->post = false;
 		if (opentag)
 			++listnest;
@@ -1169,6 +1170,75 @@ void decorate(int start)
 	traverseAll(start);
 }				/* decorate */
 
+/*********************************************************************
+Diff the old screen with the new rendered screen.
+This is a simple front back diff algorithm.
+Compare the two strings from the start, how many lines are the same.
+Compare the two strings from the back, how many lines are the same.
+That zeros in on the line that has changed.
+Most of the time one line has changed,
+or a couple of adjacent lines, or a couple of nearby lines.
+So this should do it.
+sameFront counts the lines from the top that are the same.
+We're here because the buffers are different, so sameFront will not equal $.
+Lines past sameBack1 and same back2 are the same to the bottom in the two buffers.
+*********************************************************************/
+
+static int sameFront, sameBack1, sameBack2;
+static const char *newChunkStart, *newChunkEnd;
+
+static void frontBackDiff(const char *b1, const char *b2)
+{
+	const char *f1, *f2, *s1, *s2, *e1, *e2;
+
+	sameFront = 0;
+	s1 = b1, s2 = b2;
+	f1 = b1, f2 = b2;
+	while (*s1 == *s2 && *s1) {
+		if (*s1 == '\n') {
+			f1 = s1 + 1, f2 = s2 + 1;
+			++sameFront;
+		}
+		++s1, ++s2;
+	}
+
+	s1 = b1 + strlen(b1);
+	s2 = b2 + strlen(b2);
+	while (s1 > f1 && s2 > f2 && s1[-1] == s2[-1])
+		--s1, --s2;
+
+	if (s1 == f1 && s2[-1] == '\n')
+		goto mark_e;
+	if (s2 == f2 && s1[-1] == '\n')
+		goto mark_e;
+/* advance both pointers to newline or null */
+	while (*s1 && *s1 != '\n')
+		++s1, ++s2;
+/* these buffers should always end in nl, so the next if should always be true */
+	if (*s1 == '\n')
+		++s1, ++s2;
+
+mark_e:
+	e1 = s1, e2 = s2;
+
+	sameBack1 = sameFront;
+	for (s1 = f1; s1 < e1; ++s1)
+		if (*s1 == '\n')
+			++sameBack1;
+	if (s1 > f1 && s1[-1] != '\n')	// should never happen
+		++sameBack1;
+
+	sameBack2 = sameFront;
+	for (s2 = f2; s2 < e2; ++s2)
+		if (*s2 == '\n')
+			++sameBack2;
+	if (s2 > f2 && s2[-1] != '\n')	// should never happen
+		++sameBack2;
+
+	newChunkStart = f2;
+	newChunkEnd = e2;
+}				/* frontBackDiff */
+
 /* Rerender the buffer and notify of any lines that have changed */
 void rerender(bool rr_command)
 {
@@ -1205,14 +1275,37 @@ void rerender(bool rr_command)
 		return;
 	}
 
-/* This is a dumb prototype, version 1, replace the entire buffer
- * and tell the user that something changed. No diff yet. */
-	if (cw->dol)
-		delText(1, cw->dol);
-	addTextToBuffer(newbuf, strlen(newbuf), 0, false);
+	frontBackDiff(cw->lastrender, newbuf);
+	if (sameBack1 > sameFront)
+		delText(sameFront + 1, sameBack1);
+	if (sameBack2 > sameFront)
+		addTextToBuffer((pst) newChunkStart,
+				newChunkEnd - newChunkStart, sameFront, false);
 	cw->undoable = false;
+
+/* It's almost easier to do it than to report it. */
+	if (sameBack2 == sameFront) {	/* delete */
+		if (sameBack1 == sameFront + 1)
+			i_printf(MSG_LineDelete1, sameFront);
+		else
+			i_printf(MSG_LineDelete2, sameBack1 - sameFront,
+				 sameFront);
+	} else if (sameBack1 == sameFront) {
+		if (sameBack2 == sameFront + 1)
+			i_printf(MSG_LineAdd1, sameFront + 1);
+		else
+			i_printf(MSG_LineAdd2, sameFront + 1, sameBack2);
+	} else {
+		if (sameBack1 == sameFront + 1 && sameBack2 == sameFront + 1)
+			i_printf(MSG_LineUpdate1, sameFront + 1);
+		else if (sameBack2 == sameFront + 1)
+			i_printf(MSG_LineUpdate2, sameBack1 - sameFront,
+				 sameFront + 1);
+		else
+			i_printf(MSG_LineUpdate3, sameFront + 1, sameBack2);
+	}
+
 	nzFree(newbuf);
 	nzFree(cw->lastrender);
 	cw->lastrender = 0;
-	puts("something has changed");
 }				/* rerender */

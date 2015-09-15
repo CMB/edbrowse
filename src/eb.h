@@ -430,6 +430,7 @@ struct htmlTag {
 	char *js_file;
 	int js_ln;			/* line number of javascript */
 	int lic;		/* list item count, highly overloaded */
+	int slic; /* start list item count */
 	int action;
 	const struct tagInfo *info;
 	char *textval;	/* for text tags only */

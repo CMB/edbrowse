@@ -343,7 +343,7 @@ updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
 			if (fromForm)
 				displayLine(ln);
 			else if (!followup)
-				i_printf(MSG_LineUpdated, ln);
+				i_printf(MSG_LineUpdate1, ln);
 		}
 		return;
 	}
