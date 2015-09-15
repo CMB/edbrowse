@@ -210,7 +210,7 @@ static void htmlMeta(struct htmlTag *t)
 			if (parseRefresh(copy, &delay)) {
 				char *newcontent;
 				unpercentURL(copy);
-				newcontent = resolveURL(cw->hbase, content);
+				newcontent = resolveURL(cw->hbase, copy);
 				gotoLocation(newcontent, delay, true);
 			}
 		}
