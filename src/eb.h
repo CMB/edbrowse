@@ -442,6 +442,8 @@ struct htmlTag {
 	bool slash:1;		/* as in </A> */
 	bool balanced:1;	/* <foo> and </foo> */
 	bool retain:1;
+	bool textin:1; /* <a> some text </a> */
+	bool deleted:1; /* deleted from the current buffer */
 	bool multiple:1;
 	bool rdonly:1;
 	bool clickable:1;	/* but not an input field */

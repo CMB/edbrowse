@@ -294,6 +294,15 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 			break;
 		}
 
+/* text is on the page */
+		if (currentA) {
+			char *s;
+			for (s = t->textval; *s; ++s)
+				if (isalnumByte(*s)) {
+					currentA->textin = true;
+					break;
+				}
+		}
 		break;
 
 	case TAGACT_TITLE:
@@ -302,6 +311,10 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 
 	case TAGACT_SCRIPT:
 		currentScript = (opentag ? t : 0);
+		break;
+
+	case TAGACT_A:
+		currentA = (opentag ? t : 0);
 		break;
 
 	case TAGACT_FORM:
@@ -816,7 +829,7 @@ unparen:
 			break;
 		}
 /* image is part of a hyperlink */
-		if (!retainTag || !currentA->href)
+		if (!retainTag || !currentA->href || currentA->textin)
 			break;
 		u = 0;
 		a = attribVal(t, "alt");
