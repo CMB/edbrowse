@@ -3582,7 +3582,7 @@ static bool lineHasTag(const char *p, const char *s)
 			continue;
 		j = strtol(p, (char **)&p, 10);
 		t = tagList[j];
-		if (t->id && t->info->nest && stringEqual(t->id, s))
+		if (t->id && stringEqual(t->id, s))
 			return true;
 		if (t->action == TAGACT_A && t->name && stringEqual(t->name, s))
 			return true;

@@ -605,15 +605,20 @@ nop:
 			j &= 3;
 		else
 			j >>= 2;
-		if (!j)
-			break;
-		c = '\f';
-		if (j == 1) {
-			c = '\r';
-			if (action == TAGACT_BR)
-				c = '\n';
+		if (j) {
+			c = '\f';
+			if (j == 1) {
+				c = '\r';
+				if (action == TAGACT_BR)
+					c = '\n';
+			}
+			stringAndChar(&ns, &ns_l, c);
 		}
-		stringAndChar(&ns, &ns_l, c);
+/* tags with id= have to be part of the screen, so you can jump to them */
+		if (t->id && opentag && action != TAGACT_LI) {
+			sprintf(hnum, "%c%d*", InternalCodeChar, t->seqno);
+			ns_hnum();
+		}
 		break;
 
 	case TAGACT_PRE:
@@ -711,7 +716,7 @@ nop:
 			ns_l = j;
 			stringAndChar(&ns, &ns_l, TableCellChar);
 		}
-		break;
+		goto nop;
 
 /* This is strictly for rendering math pages written with my particular css.
 * <span class=sup> becomes TAGACT_SUP, which means superscript.
@@ -1147,12 +1152,12 @@ static void jsNode(struct htmlTag *t, bool opentag)
 	case TAGACT_TD:
 		if ((above = t->controller) && above->jv) {
 			domLink(t, "Cell", 0, "cells", above->jv, 0);
+			establish_inner(t->jv, t->innerHTML, 0, false);
 		}
 		break;
 
 	case TAGACT_DIV:
 		domLink(t, "Div", 0, "divs", cw->docobj, 0);
-/* test innerHTML, just <div> for now */
 		establish_inner(t->jv, t->innerHTML, 0, false);
 		break;
 
@@ -1173,6 +1178,11 @@ static void jsNode(struct htmlTag *t, bool opentag)
 
 	case TAGACT_IMAGE:
 		domLink(t, "Image", "src", "images", cw->docobj, 0);
+		break;
+
+	case TAGACT_P:
+		domLink(t, "P", 0, "paras", cw->docobj, 0);
+		establish_inner(t->jv, t->innerHTML, 0, false);
 		break;
 
 	}			/* switch */

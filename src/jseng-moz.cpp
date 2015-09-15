@@ -532,6 +532,7 @@ generic_class_ctor(document, Document)
     generic_class_ctor(span, Span)
     generic_class_ctor(trow, Trow)
     generic_class_ctor(cell, Cell)
+    generic_class_ctor(para, P)
     generic_class(option, Option)
 /* constructor below */
     generic_class_ctor(script, Script)
@@ -1504,6 +1505,7 @@ static struct {
 	{&span_class, span_ctor},
 	{&option_class, option_ctor, NULL, 2},
 	{&script_class, script_ctor},
+	{&para_class, para_ctor},
 	{&url_class, url_ctor},
 	{&textnode_class, textnode_ctor},
 	{0}

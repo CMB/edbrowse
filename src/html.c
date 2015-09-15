@@ -192,7 +192,7 @@ static const struct tagInfo elements[] = {
 	{"IMG", "an image", TAGACT_IMAGE, 0, 0, 12},
 	{"IMAGE", "an image", TAGACT_IMAGE, 0, 0, 12},
 	{"BR", "a line break", TAGACT_BR, 0, 1, 4},
-	{"P", "a paragraph", TAGACT_NOP, 1, 2, 13},
+	{"P", "a paragraph", TAGACT_P, 1, 2, 13},
 	{"DIV", "a divided section", TAGACT_DIV, 3, 5, 8},
 	{"MAP", "a map of images", TAGACT_NOP, 3, 5, 8},
 	{"HTML", "html", TAGACT_HTML, 1, 0, 13},
@@ -1718,13 +1718,10 @@ top:
 		if (ic->major != 'i' || ic->minor != 'h')
 			continue;
 		ic->major = 'x';
-		l = strlen(ic->value);
-		h = allocMem(l + 16);
-		sprintf(h, "<body>\n%s</body>\n", ic->value);
 /* one line will cut all the children away from t,
  * though it's not clear how to do the same in the javascript world. */
 		ic->t->firstchild = NULL;
-		runGeneratedHtml(ic->t, h);
+		runGeneratedHtml(ic->t, ic->value);
 		change = true;
 	}
 

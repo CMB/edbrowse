@@ -67,7 +67,9 @@ document.spans = document.tag$$map.span;
 document.tag$$map.meta = new Array;
 document.metas = document.tag$$map.meta; 
 document.tag$$map.script = new Array;
+document.tag$$map.p = new Array;
 document.scripts = document.tag$$map.script; 
+document.paras = document.tag$$map.p; 
 
 document.idMaster = new Object;
 document.getElementsByTagName = function(s) { 
