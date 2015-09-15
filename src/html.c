@@ -635,7 +635,9 @@ void jSideEffects(void)
 	int timers_l;
 
 	if (testnew) {
+		debugPrint(4, "jSideEffects starts");
 		runScriptsPending();
+		debugPrint(4, "jSideEffects ends");
 /* now rerender and look for differences */
 		rerender(false);
 		return;
@@ -1652,6 +1654,20 @@ static void runScriptsPending(void)
 	const char *js_file;
 	int ln;
 	bool change;
+
+/* if onclick code or some such does document write, where does that belong?
+ * I don't know, I'll just put it at the end.
+ * As you see below, document.write that comes from a specific javascript
+ * appears inline where the script is. */
+	if (cw->dw) {
+/* replace the <docwrite> tag with <html> */
+		memcpy(cw->dw, "<body>   \n", 10);
+		stringAndString(&cw->dw, &cw->dw_l, "</body>\n");
+		runGeneratedHtml(NULL, cw->dw);
+		nzFree(cw->dw);
+		cw->dw = 0;
+		cw->dw_l = 0;
+	}
 
 top:
 	change = false;

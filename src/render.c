@@ -491,12 +491,15 @@ static void liCheck(struct htmlTag *t)
 {
 	struct htmlTag *ltag;	/* the list tag */
 	if (listnest && (ltag = findList(t)) && ltag->post) {
-		char olbuf[20];
+		char olbuf[32];
+		olbuf[0] = 0;
+		if (ltag->ninp)
+			sprintf(olbuf, "%c%d*", InternalCodeChar, ltag->ninp);
 		if (ltag->action == TAGACT_OL) {
 			int j = ++ltag->lic;
-			sprintf(olbuf, "%d. ", j);
+			sprintf(olbuf + strlen(olbuf), "%d. ", j);
 		} else {
-			strcpy(olbuf, "* ");
+			strcat(olbuf, "* ");
 		}
 		if (!invisible)
 			stringAndString(&ns, &ns_l, olbuf);
@@ -662,8 +665,13 @@ nop:
 		break;
 
 	case TAGACT_LI:
-		if ((ltag = findList(t)))
+		if ((ltag = findList(t))) {
 			ltag->post = true;
+/* borrow ninp to store the tag number of <li>, if id is present */
+			ltag->ninp = 0;
+			if (t->id)
+				ltag->ninp = t->seqno;
+		}
 		goto nop;
 
 	case TAGACT_HR:
