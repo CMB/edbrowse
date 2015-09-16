@@ -4951,12 +4951,8 @@ bool browseCurrentBuffer(void)
 		return false;
 	}
 
-	if (bmode == 2) {
-		if (!testnew)
-			jSideEffects();
+	if (bmode == 2)
 		cw->dot = cw->dol;
-	}
-
 	cw->browseMode = true;
 	fileSize = apparentSize(context, true);
 	return true;

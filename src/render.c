@@ -434,8 +434,6 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 /* like the other value fields, it can't be null */
 				t->rvalue = t->value = emptyString;
 			}
-			j = 0;
-			if (!isJSAlive || testnew)
 				j = sideBuffer(0, currentTA->value, -1, 0);
 			t->lic = j;
 			currentTA = 0;
@@ -621,6 +619,7 @@ li_hide:
 	case TAGACT_DIV:
 	case TAGACT_BR:
 	case TAGACT_P:
+	case TAGACT_SPAN:
 	case TAGACT_NOP:
 nop:
 		if (invisible)
@@ -1317,11 +1316,6 @@ mark_e:
 void rerender(bool rr_command)
 {
 	char *a, *newbuf;
-
-	if (!testnew) {
-		puts("not in the new system");
-		return;
-	}
 
 	if (rr_command) {
 /* take the screen snap */

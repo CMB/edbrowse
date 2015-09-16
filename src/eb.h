@@ -154,7 +154,6 @@ typedef uchar *pst;		/* perl string */
 extern const char *version;
 extern const char eol[];	/* internet end of line */
 extern char emptyString[];	/* use this whenever you would use "" */
-extern int testnew; /* test the new system, temporary */
 
 /* Here are the strings you can send out to identify this browser.
  * Most of the time we will send out the first string, edbrowse-2.15.3.

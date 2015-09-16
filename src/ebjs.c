@@ -150,17 +150,6 @@ static void javaSetsTagVar(jsobjtype v, const char *newtext)
 	}
 	nzFree(t->value);
 	t->value = cloneString(newtext);
-/* Once we move to render, and rerender after every js action,
- * changing value is all we need do, and we won't need the next stuff.
- * The following if return illustrates that. */
-	if (testnew)
-		return;
-
-	ic = allocMem(sizeof(struct inputChange) + strlen(newtext));
-	ic->tagno = t->seqno;
-	ic->major = 'v';
-	strcpy(ic->value, newtext);
-	addToListBack(&inputChangesPending, ic);
 }				/* javaSetsTagVar */
 
 static void javaSetsInner(jsobjtype v, const char *newtext, char c)
@@ -1310,11 +1299,8 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 	}
 
 	t->jv = io;
-	if (testnew) {
-		if (t->parent && t->parent->jv)
-			set_property_object(io, "parentNode", t->parent->jv);
-	} else
-		makeParentNode(t);
+	if (t->parent && t->parent->jv)
+		set_property_object(io, "parentNode", t->parent->jv);
 
 	set_property_string(io, "nodeName", t->info->name);
 
