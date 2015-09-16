@@ -2725,7 +2725,7 @@ and you can click on it if you like, or ignore it.&nbsp;
 This is similar to the <A HREF=#music>background music</A>, described in an earlier section.&nbsp;
 The popup link might look like this.
 <P>
-{Popup: specials()}
+Popup: {Spring specials}
 
 <P>
 Popunders are not as common.&nbsp;
@@ -2736,7 +2736,7 @@ When you type q, you quit, and that's the end of it.&nbsp;
 As you might expect, the popunder function appears as a hyperlink.&nbsp;
 It might look like this.
 <P>
-{On Close: foo()}
+Onclose {Body}
 
 <P>
 Remember, the popup link is a simple html link to another web page,
@@ -2748,27 +2748,16 @@ page you were looking at.&nbsp;
 If you need access to a popup window and the main page in parallel,
 use the <A HREF=#move>M command</A>.
 
-<P>
-Javascript also includes timer functions,
-that fire after a specified number of seconds.&nbsp;
-These are implemented as hyperlinks at the top of the page.&nbsp;
-They usually manage visual effects, and are not vital.&nbsp;
-The following timer might draw a star burst on the screen in 16 seconds.
-<P>
-{Timer 16: starburst()}
-
 <H3> <A NAME=onc> Onchange and Undo </A> </H3>
 
 When you set or change the value of an input field,
 the form can optionally call a javascript routine.&nbsp;
 It doesn't usually, but it can.&nbsp;
-In an earlier example, I described a primary and secondary menu.&nbsp;
+An earlier example describes a primary and secondary menu.&nbsp;
 When the first selection is made,
 e.g. fruits,
 javascript sets up the second menu commensurate with your primary selection
-using the onchange feature.
-
-<P>
+using the onchange feature.&nbsp;
 This is all well and good,
 but edbrowse has something
 your graphical browser does not, the undo command.&nbsp;
@@ -2779,7 +2768,10 @@ and the first field reverts back to fruits,
 but the second menu still contains vegetables.&nbsp;
 This is because the undo feature was originally written for the text editor.&nbsp;
 It simply puts the text back the way it was, and has no capacity to "undo" the side effects of javascript code.&nbsp;
-To this end, the undo command is disabled for input fields.
+To this end, the undo command is disabled in browse mode.&nbsp;
+You're just fiddling with small input fields - the undo command is probably not necessary.&nbsp;
+If, however, you are formulating a text response in a textarea, that is done in another buffer,
+and you have the full power of the editor, including the undo command.
 
 <hr>
 <H2> Chapter 6, Edbrowse Scripts and the Configuration File </H2>
