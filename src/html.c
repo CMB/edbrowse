@@ -1788,8 +1788,8 @@ static void intoTree(struct htmlTag *parent)
 			continue;
 		}
 
-		if (treeAttach) {
-/*Some things are different if you are attaching this to an existing tree.
+		if (htmlGenerated) {
+/*Some things are different if the html is generated, not part of the original web page.
  * You can skip past <head> altogether, including its
  * tidy generated descendants, and you want to pass through <body>
  * to the children below. */
@@ -1813,19 +1813,22 @@ static void intoTree(struct htmlTag *parent)
 			if (parent == 0 ||	/* this shouldn't happen */
 			    parent->action == TAGACT_HTML
 			    || parent->action == TAGACT_BODY) {
-				struct htmlTag *c;
 /* link up to treeAttach */
 				debugPrint(5, "node up %s to %s",
 					   t->info->name,
-					   treeAttach->info->name);
+					   (treeAttach ? treeAttach->info->
+					    name : "root"));
 				t->parent = treeAttach;
-				c = treeAttach->firstchild;
-				if (!c)
-					treeAttach->firstchild = t;
-				else {
-					while (c->sibling)
-						c = c->sibling;
-					c->sibling = t;
+				if (treeAttach) {
+					struct htmlTag *c =
+					    treeAttach->firstchild;
+					if (!c)
+						treeAttach->firstchild = t;
+					else {
+						while (c->sibling)
+							c = c->sibling;
+						c->sibling = t;
+					}
 				}
 				goto checkattributes;
 			}
@@ -1850,6 +1853,10 @@ checkattributes:
 			t->onsubmit = true;
 		if (stringInListCI(t->attributes, "onreset") >= 0)
 			t->onreset = true;
+		if (stringInListCI(t->attributes, "onload") >= 0)
+			t->onload = true;
+		if (stringInListCI(t->attributes, "onunload") >= 0)
+			t->onunload = true;
 		if (stringInListCI(t->attributes, "checked") >= 0)
 			t->checked = t->rchecked = true;
 		if (stringInListCI(t->attributes, "readonly") >= 0)
@@ -1988,8 +1995,6 @@ static char *encodeTags(char *html, bool fromSource)
  * like properly nested parentheses, into a tree.
  * If this is being pasted into an existing tree, set treeAttach appropriately. */
 	treeAttach = NULL;
-	if (!fromSource)	/* temporary */
-		treeAttach = cw->tags[0];
 	tree_pos = l;
 	intoTree(0);
 
@@ -1997,6 +2002,8 @@ static char *encodeTags(char *html, bool fromSource)
 
 	if (isJSAlive && testnew) {
 		decorate(l);
+		runScriptsPending();
+		runOnload();
 		runScriptsPending();
 	}
 

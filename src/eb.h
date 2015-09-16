@@ -457,9 +457,11 @@ struct htmlTag {
 	bool bymail:1;		/* send by mail, rather than http */
 	bool submitted:1;
 	bool onclick:1;
+	bool onchange:1;
 	bool onsubmit:1;
 	bool onreset:1;
-	bool onchange:1;
+	bool onload:1;
+	bool onunload:1;
 	char subsup;		/* span turned into sup or sub */
 	uchar itype;		/* input type = */
 	short ninp;		/* number of nonhidden inputs */

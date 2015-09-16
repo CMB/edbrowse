@@ -776,6 +776,13 @@ nop:
 /* backup, and see if we can get rid of the parentheses or brackets */
 		l = t->lic + j;
 		u = ns + l;
+/* skip past <span> tag indicator */
+		if (*u == InternalCodeChar) {
+			++u;
+			while (isdigit(*u))
+				++u;
+			++u;
+		}
 		if (j == 2 && isalphaByte(u[0]) && !u[1])
 			goto unparen;
 		if (j == 2 && (stringEqual(u, "th") || stringEqual(u, "rd")
@@ -928,6 +935,10 @@ static void set_onhandlers(const struct htmlTag *t)
 		set_onhandler(t, "onsubmit");
 	if (t->onreset)
 		set_onhandler(t, "onreset");
+	if (t->onload)
+		set_onhandler(t, "onload");
+	if (t->onunload)
+		set_onhandler(t, "onunload");
 }				/* set_onhandlers */
 
 static const char defvl[] = "defaultValue";
@@ -1129,6 +1140,10 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		return;
 	t->step = 2;
 
+#if 0
+	printf("decorate %s\n", t->info->name);
+#endif
+
 	switch (action) {
 	case TAGACT_SCRIPT:
 		prepareScript(t);
@@ -1161,6 +1176,7 @@ static void jsNode(struct htmlTag *t, bool opentag)
 
 	case TAGACT_BODY:
 		domLink(t, "Body", 0, "bodies", cw->docobj, 0);
+		set_onhandlers(t);
 		break;
 
 	case TAGACT_TABLE:
@@ -1402,3 +1418,59 @@ void delTags(int startRange, int endRange)
 		}
 	}
 }				/* delTags */
+
+/* turn an onunload function into a clickable hyperlink */
+static void unloadHyperlink(const char *js_function, const char *where)
+{
+	if (!cw->dw) {
+		cw->dw = initString(&cw->dw_l);
+		stringAndString(&cw->dw, &cw->dw_l, "<docwrite>");
+	}
+	stringAndString(&cw->dw, &cw->dw_l, "<P>Onclose <A href='javascript:");
+	stringAndString(&cw->dw, &cw->dw_l, js_function);
+	stringAndString(&cw->dw, &cw->dw_l, "()'>");
+	stringAndString(&cw->dw, &cw->dw_l, where);
+	stringAndString(&cw->dw, &cw->dw_l, "</A><P>");
+}				/* unloadHyperlink */
+
+/* Run the various onload functions */
+/* Turn the onunload functions into hyperlinks */
+/* This runs after the page is parsed and before the various javascripts run, is that right? */
+void runOnload(void)
+{
+	int i, action;
+	int fn;			/* form number */
+	struct htmlTag *t;
+
+	if (!isJSAlive)
+		return;
+
+/* window and document onload */
+	run_function_bool(cw->winobj, "onload");
+	run_function_bool(cw->docobj, "onload");
+
+	fn = -1;
+	for (i = 0; i < cw->numTags; ++i) {
+		t = tagList[i];
+		if (t->slash)
+			continue;
+		action = t->action;
+		if (action == TAGACT_FORM)
+			++fn;
+		if (!t->jv)
+			continue;
+		if (action == TAGACT_BODY && t->onload)
+			run_function_bool(t->jv, "onload");
+		if (action == TAGACT_BODY && t->onunload)
+			unloadHyperlink("document.body.onunload", "Body");
+		if (action == TAGACT_FORM && t->onload)
+			run_function_bool(t->jv, "onload");
+/* tidy5 says there is no form.onunload */
+		if (action == TAGACT_FORM && t->onunload) {
+			char formfunction[20];
+			sprintf(formfunction, "document.forms[%d].onunload",
+				fn);
+			unloadHyperlink(formfunction, "Form");
+		}
+	}
+}				/* runOnload */

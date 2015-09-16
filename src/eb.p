@@ -1,4 +1,4 @@
-/* Until we can switch edbrowse all the way back to C, we need this. */
+/* Prototypes for edbrowse */
 
 /* sourcefile=auth.c */
 bool getUserPass(const char *url, char *creds, bool find_proxy) ;
