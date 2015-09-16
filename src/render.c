@@ -499,26 +499,34 @@ static struct htmlTag *findList(struct htmlTag *t)
 	return 0;
 }				/* findList */
 
+static void tagInStream(int tagno)
+{
+	char buf[8];
+	sprintf(buf, "%c%d*", InternalCodeChar, tagno);
+	stringAndString(&ns, &ns_l, buf);
+}				/* tagInStream */
+
 /* see if a number or star is pending, waiting to be printed */
 static void liCheck(struct htmlTag *t)
 {
 	struct htmlTag *ltag;	/* the list tag */
 	if (listnest && (ltag = findList(t)) && ltag->post) {
 		char olbuf[32];
-		olbuf[0] = 0;
 		if (ltag->ninp)
-			sprintf(olbuf, "%c%d*", InternalCodeChar, ltag->ninp);
+			tagInStream(ltag->ninp);
 		if (ltag->action == TAGACT_OL) {
 			int j = ++ltag->lic;
-			sprintf(olbuf + strlen(olbuf), "%d. ", j);
+			sprintf(olbuf, "%d. ", j);
 		} else {
-			strcat(olbuf, "* ");
+			strcpy(olbuf, "* ");
 		}
 		if (!invisible)
 			stringAndString(&ns, &ns_l, olbuf);
 		ltag->post = false;
 	}
 }				/* liCheck */
+
+static struct htmlTag *deltag;
 
 static void renderNode(struct htmlTag *t, bool opentag)
 {
@@ -540,6 +548,21 @@ static void renderNode(struct htmlTag *t, bool opentag)
 	printf("rend %c%s\n", (opentag ? ' ' : '/'), t->info->name);
 #endif
 
+	if (deltag) {
+		if (t == deltag && !opentag)
+			deltag = 0;
+li_hide:
+/* we can skate past the li tag, but still need to increment the count */
+		if (action == TAGACT_LI && opentag &&
+		    (ltag = findList(t)) && ltag->action == TAGACT_OL)
+			++ltag->lic;
+		return;
+	}
+	if (t->deleted) {
+		deltag = t;
+		goto li_hide;
+	}
+
 	if (!opentag && ti->bits & TAG_NOSLASH)
 		return;
 
@@ -559,8 +582,10 @@ static void renderNode(struct htmlTag *t, bool opentag)
 		if (!t->textval)
 			break;
 		liCheck(t);
-		if (!invisible)
+		if (!invisible) {
+			tagInStream(tagno);
 			stringAndString(&ns, &ns_l, t->textval);
+		}
 		break;
 
 	case TAGACT_A:
@@ -615,10 +640,8 @@ nop:
 			stringAndChar(&ns, &ns_l, c);
 		}
 /* tags with id= have to be part of the screen, so you can jump to them */
-		if (t->id && opentag && action != TAGACT_LI) {
-			sprintf(hnum, "%c%d*", InternalCodeChar, t->seqno);
-			ns_hnum();
-		}
+		if (t->id && opentag && action != TAGACT_LI)
+			tagInStream(tagno);
 		break;
 
 	case TAGACT_PRE:
@@ -685,17 +708,17 @@ nop:
 	case TAGACT_LI:
 		if ((ltag = findList(t))) {
 			ltag->post = true;
-/* borrow ninp to store the tag number of <li>, if id is present */
-			ltag->ninp = 0;
-			if (t->id)
-				ltag->ninp = t->seqno;
+/* borrow ninp to store the tag number of <li> */
+			ltag->ninp = t->seqno;
 		}
 		goto nop;
 
 	case TAGACT_HR:
 		liCheck(t);
-		if (retainTag)
+		if (retainTag) {
+			tagInStream(tagno);
 			stringAndString(&ns, &ns_l, "\r----------\r");
+		}
 		break;
 
 	case TAGACT_TR:
@@ -705,9 +728,11 @@ nop:
 		goto nop;
 
 	case TAGACT_TD:
+		if (!retainTag)
+			break;
 		if (tdfirst)
 			tdfirst = false;
-		else if (retainTag) {
+		else {
 			liCheck(t);
 			j = ns_l;
 			while (j && ns[j - 1] == ' ')
@@ -716,7 +741,8 @@ nop:
 			ns_l = j;
 			stringAndChar(&ns, &ns_l, TableCellChar);
 		}
-		goto nop;
+		tagInStream(tagno);
+		break;
 
 /* This is strictly for rendering math pages written with my particular css.
 * <span class=sup> becomes TAGACT_SUP, which means superscript.
@@ -821,6 +847,7 @@ unparen:
 
 	case TAGACT_IMAGE:
 		liCheck(t);
+		tagInStream(tagno);
 		if (!currentA) {
 			if (a = attribVal(t, "alt")) {
 				u = altText(a);
@@ -1340,3 +1367,38 @@ void rerender(bool rr_command)
 	nzFree(cw->lastrender);
 	cw->lastrender = 0;
 }				/* rerender */
+
+/* mark the tags on the deleted lines as deleted */
+void delTags(int startRange, int endRange)
+{
+	pst p;
+	int j, tagno, action;
+	struct htmlTag *t, *last_td;
+
+	for (j = startRange; j <= endRange; ++j) {
+		p = fetchLine(j, -1);
+		last_td = 0;
+		for (; *p != '\n'; ++p) {
+			if (*p != InternalCodeChar)
+				continue;
+			tagno = strtol(p + 1, (char **)&p, 10);
+			t = cw->tags[tagno];
+/* Only mark certain tags as deleted.
+ * If you mark <div> deleted, it could wipe out half the page. */
+			action = t->action;
+			if (action == TAGACT_TEXT ||
+			    action == TAGACT_HR ||
+			    action == TAGACT_LI || action == TAGACT_IMAGE)
+				t->deleted = true;
+#if 0
+/* this seems to cause more trouble than it's worth */
+			if (action == TAGACT_TD) {
+				printf("td%d\n", tagno);
+				if (last_td)
+					last_td->deleted = true;
+				last_td = t;
+			}
+#endif
+		}
+	}
+}				/* delTags */

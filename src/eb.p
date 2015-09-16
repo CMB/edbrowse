@@ -150,6 +150,7 @@ void prerender(int start);
 char *render(int start);
 void decorate(int start);
 void rerender(bool notify);
+void delTags(int startRange, int endRange);
 
 /* sourcefile=http.c */
 size_t eb_curl_callback(char *incoming, size_t size, size_t nitems, struct eb_curl_callback_data *data) ;

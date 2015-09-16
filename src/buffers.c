@@ -19,7 +19,7 @@ int displayLength = 500;
 /* The valid edbrowse commands. */
 static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^<";
 /* Commands that can be done in browse mode. */
-static const char browse_cmd[] = "AbBefghHiklMnpqsvwXz=^<";
+static const char browse_cmd[] = "AbBdDefghHiklMnpqsvwXz=^<";
 /* Commands for sql mode. */
 static const char sql_cmd[] = "AadDefghHiklmnpqrsvwXz=^<";
 /* Commands for directory mode. */
@@ -4698,6 +4698,8 @@ redirect:
 			cw->undoable = false;
 			goto afterdelete;
 		}
+		if (cw->browseMode)
+			delTags(startRange, endRange);
 		delText(startRange, endRange);
 		j = 1;
 afterdelete:
