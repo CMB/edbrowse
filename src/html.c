@@ -669,7 +669,7 @@ top:
 	change = false;
 
 	for (j = 0; j < cw->numTags; ++j) {
-		t = cw->tags[j];
+		t = tagList[j];
 		if (t->action != TAGACT_SCRIPT)
 			continue;
 		if (!t->jv)
@@ -786,7 +786,7 @@ static void intoTree(struct htmlTag *parent)
 	const char *v;
 
 	while (tree_pos < cw->numTags) {
-		t = cw->tags[tree_pos++];
+		t = tagList[tree_pos++];
 		if (t->slash) {
 			if (parent)
 				parent->balance = t, t->balance = parent;
@@ -965,7 +965,7 @@ char *htmlParse(char *buf, int remote)
 	char *a, *newbuf;
 	struct htmlTag *t;
 
-	if (cw->tags)
+	if (tagList)
 		i_printfExit(MSG_HtmlNotreentrant);
 	if (remote >= 0)
 		browseLocal = !remote;
@@ -1300,6 +1300,51 @@ void infShow(int tagno, const char *search)
 			i_printf(MSG_NoOptionsMatch, search);
 	}
 }				/* infShow */
+
+/*********************************************************************
+Update an input field in the current edbrowse buffer.
+This can be done for one of two reasons.
+First, the user has interactively entered a value in the form, such as
+	i=foobar
+In this case fromForm will be set to true.
+I need to find the tag in the current buffer.
+He just modified it, so it ought to be there.
+If it isn't there, print an error and do nothing.
+The second case: the value has been changed by form reset,
+either the user has pushed the reset button or javascript has called form.reset.
+Here fromForm is false.
+I'm not sure why js would reset a form before the page was even rendered;
+that's the only way the line should not be found,
+or perhaps if that section of the web page was deleted.
+notify = true causes the line to be printed after the change is made.
+Notify true and fromForm false is impossible.
+You don't need to be notified as each variable is changed during a reset.
+The new line replaces the old, and the old is freed.
+This works because undo is disabled in browse mode.
+*********************************************************************/
+
+static void
+updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
+{
+	int ln, idx, n, plen;
+	char *p, *s, *t, *new;
+
+	if (locateTagInBuffer(tagno, &ln, &p, &s, &t)) {
+		n = (plen = pstLength((pst) p)) + strlen(newtext) - (t - s);
+		new = allocMem(n);
+		memcpy(new, p, s - p);
+		strcpy(new + (s - p), newtext);
+		memcpy(new + strlen(new), t, plen - (t - p));
+			free(cw->map[ln].text);
+		cw->map[ln].text = new;
+		if (notify)
+			displayLine(ln);
+		return;
+	}
+
+	if (fromForm)
+		i_printf(MSG_NoTagFound, tagno, newtext);
+}				/* updateFieldInBuffer */
 
 /* Update an input field. */
 bool infReplace(int tagno, const char *newtext, bool notify)
@@ -2111,7 +2156,7 @@ struct htmlTag *tagFromJavaVar(jsobjtype v)
 	struct htmlTag *t = 0;
 	int i;
 
-	if (!cw->tags)
+	if (!tagList)
 		i_printfExit(MSG_NullListInform);
 
 	for (i = 0; i < cw->numTags; ++i) {
@@ -2172,14 +2217,6 @@ void javaOpensWindow(const char *href, const char *name)
 	nzFree(r);
 	stringAndString(&cw->dw, &cw->dw_l, "</A><br>\n");
 }				/* javaOpensWindow */
-
-void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
-{
-/* We have to move to a better design then turning timers into hyperlinks. */
-/* They actually need to fire and run js at the prescribed times. */
-/* For now let's just not worry about them. */
-	return;
-}				/* javaSetsTimeout */
 
 bool handlerGoBrowse(const struct htmlTag * t, const char *name)
 {

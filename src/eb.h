@@ -66,9 +66,6 @@ typedef uchar bool;
 typedef unsigned int IP32bit;
 #define NULL_IP (IP32bit)(-1)
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 /*********************************************************************
 Include the header file that connects edbrowse to the js process.
 This is a series of enums, and the interprocess message structure,
@@ -309,7 +306,7 @@ struct lineMap {
 	pst text;
 	char ds1, ds2;		/* directory suffix */
 	bool gflag;		/* for g// */
-	bool jsup;		/* javascript has updated this line in the buffer */
+	char filler;
 };
 #define LMSIZE sizeof(struct lineMap)
 
@@ -496,8 +493,6 @@ enum {
 	INP_SELECT, INP_TA, INP_RADIO, INP_CHECKBOX,
 };
 
-/* Last tag in the list parsed from html */
-
 /* Return codes for base64Decode() */
 #define GOOD_BASE64_DECODE 0
 #define BAD_BASE64_DECODE 1
@@ -509,7 +504,4 @@ enum {
 /* Symbolic constants for language independent messages */
 #include "messages.h"
 
-#ifdef __cplusplus
-}
-#endif
 #endif

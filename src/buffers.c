@@ -544,12 +544,18 @@ static void undoPush(void)
 {
 	struct ebWindow *uw;
 
+/* if in browse mode, we really shouldn't be here at all!
+ * But we could if substituting on an input field, since substitute is also
+ * a regular ed command. */
+	if (cw->browseMode)
+		return;
+
 	if (madeChanges)
 		return;
 	madeChanges = true;
 
 	cw->undoable = true;
-	if (!(cw->browseMode | cw->quitMode))
+	if (!cw->quitMode)
 		cw->changeMode = true;
 
 	undoCompare();
@@ -773,7 +779,9 @@ static void addToMap(int nlines, int destl)
 			i_printfExit(MSG_LineLimit);
 	}
 
-	undoPush();
+/* browse has no undo command */
+	if (!cw->browseMode)
+		undoPush();
 
 /* adjust labels */
 	for (i = 0; i < 26; ++i) {
@@ -848,9 +856,6 @@ bool addTextToBuffer(const pst inbuf, int length, int destl, bool onside)
 			t->text[i - j] = '\n';
 		}
 		memcpy(t->text, inbuf + j, i - j);
-/* in browse mode only js can add lines to buffer */
-		if (cw->browseMode)
-			t->jsup = true;
 		++t;
 	}			/* loop breaking inbuf into lines */
 
@@ -919,7 +924,13 @@ void delText(int start, int end)
 {
 	int i, j, ln;
 
-	undoPush();
+/* browse has no undo command */
+	if (cw->browseMode) {
+		for (ln = start; ln <= end; ++ln)
+			nzFree(cw->map[ln].text);
+	} else {
+		undoPush();
+	}
 
 	if (end == cw->dol)
 		cw->nlMode = false;
@@ -2197,7 +2208,7 @@ static bool doGlobal(const char *line)
  * Also get ready for javascript, as in g/<->/ i=+
  * which I use in web based gmail to clear out spam etc. */
 	for (t = cw->map + 1; t->text; ++t)
-		t->gflag = t->jsup = false;
+		t->gflag = false;
 
 /* Find the lines that match the pattern. */
 	regexpCompile(re, ci);
@@ -3560,17 +3571,6 @@ static char *showLinks(void)
 	return a;
 }				/* showLinks */
 
-/* clear the js flags, in that this command could invoke js,
- * which could in turn update some of those lines, and we need to know that. */
-static void clear_jsup(void)
-{
-	struct lineMap *t;
-	if (globSub)
-		return;
-	for (t = cw->map + 1; t->text; ++t)
-		t->jsup = false;
-}				/* clear_jsup */
-
 static bool lineHasTag(const char *p, const char *s)
 {
 	const struct htmlTag *t;
@@ -4233,8 +4233,6 @@ bool runCommand(const char *line)
 			rc = false;
 			if (jsgo) {
 /* javascript might update fields */
-				undoCompare();
-				clear_jsup();
 				jSyncup();
 /* The program might depend on the mouseover code running first */
 				if (over) {
@@ -4336,7 +4334,6 @@ bool runCommand(const char *line)
 					return true;
 				}
 
-				undoPush();
 				cw->undoable = false;
 
 				if (c == '<') {
@@ -4427,14 +4424,10 @@ bool runCommand(const char *line)
 					scmd = '=';
 				}
 
-				clear_jsup();
-
 				if (scmd == '=') {
 					rc = infReplace(tagno, line, true);
 					if (newlocation)
 						goto redirect;
-					if (rc)
-						undoCompare();
 					return rc;
 				}
 
@@ -4445,10 +4438,8 @@ bool runCommand(const char *line)
 					if (newlocation)
 						goto redirect;
 /* No url means it was a reset button */
-					if (!allocatedLine) {
-						undoCompare();
+					if (!allocatedLine)
 						return true;
-					}
 					line = allocatedLine;
 					first = *line;
 					cmd = 'b';
@@ -4733,7 +4724,6 @@ afterdelete:
 	}
 
 	if (cmd == 's') {
-		clear_jsup();
 		j = substituteText(line);
 		if (j < 0) {
 			globSub = false;

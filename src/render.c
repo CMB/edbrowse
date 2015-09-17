@@ -30,7 +30,7 @@ static void traverseAll(int start)
 	int i;
 
 	for (i = start; i < cw->numTags; ++i) {
-		t = cw->tags[i];
+		t = tagList[i];
 		if (!t->parent && !t->slash && t->step < 10)
 			traverseNode(t);
 	}
@@ -434,7 +434,7 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 /* like the other value fields, it can't be null */
 				t->rvalue = t->value = emptyString;
 			}
-				j = sideBuffer(0, currentTA->value, -1, 0);
+			j = sideBuffer(0, currentTA->value, -1, 0);
 			t->lic = j;
 			currentTA = 0;
 		}
@@ -695,6 +695,8 @@ nop:
 		} else
 			stringAndChar(&ns, &ns_l, (t->checked ? '+' : '-'));
 		if (currentForm && (itype == INP_SUBMIT || itype == INP_IMAGE)) {
+			if (t->created)
+				stringAndString(&ns, &ns_l, " implicit");
 			if (currentForm->secure)
 				stringAndString(&ns, &ns_l, " secure");
 			if (currentForm->bymail)
@@ -1390,7 +1392,7 @@ void delTags(int startRange, int endRange)
 			if (*p != InternalCodeChar)
 				continue;
 			tagno = strtol(p + 1, (char **)&p, 10);
-			t = cw->tags[tagno];
+			t = tagList[tagno];
 /* Only mark certain tags as deleted.
  * If you mark <div> deleted, it could wipe out half the page. */
 			action = t->action;
@@ -1466,3 +1468,91 @@ void runOnload(void)
 		}
 	}
 }				/* runOnload */
+
+/*********************************************************************
+Manage js timers here.
+It's a simple list of timers, assuming there aren't too many.
+Store the seconds and milliseconds when the timer should fire,
+the code to execute, and the timer object, which becomes "this".
+*********************************************************************/
+
+struct jsTimer {
+	struct jsTimer *prev, *next;
+	int cx;			/* which edbrowse session holds this timer */
+	time_t sec;
+	int ms;
+	bool isInterval;
+	int jump_sec;		/* for interval */
+	int jump_ms;
+	const char *jsrc;
+	jsobjtype timerObject;
+};
+
+/* list of pending timers */
+struct listHead timerList = {
+	&timerList, &timerList
+};
+
+static time_t now_sec;
+static int now_ms;
+static void currentTime(void)
+{
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	now_sec = tv.tv_sec;
+	now_ms = tv.tv_usec / 1000;
+}				/* currentTime */
+
+void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
+{
+	struct jsTimer *jt;
+
+	if (jsrc[0] == 0)
+		return;		/* nothing to run */
+
+	jt = allocMem(sizeof(struct jsTimer));
+	jt->jsrc = cloneString(jsrc);
+	jt->sec = n / 1000;
+	jt->ms = n % 1000;
+	jt->isInterval = isInterval;
+	if (isInterval)
+		jt->jump_sec = n / 1000, jt->jump_ms = n % 1000;
+	currentTime();
+	jt->sec += now_sec;
+	jt->ms += now_ms;
+	if (jt->ms >= 1000)
+		jt->ms -= 1000, ++jt->sec;
+	jt->timerObject = to;
+	jt->cx = context;
+	addToListBack(&timerList, jt);
+}				/* javaSetsTimeout */
+
+static struct jsTimer *soonest(void)
+{
+	struct jsTimer *t, *best_t = 0;
+	if (listIsEmpty(&timerList))
+		return 0;
+	foreach(t, timerList) {
+		if (!best_t || t->sec < best_t->sec ||
+		    t->sec == best_t->sec && t->ms < best_t->ms)
+			best_t = t;
+	}
+	return best_t;
+}				/* soonest */
+
+bool timerWait(int *delay)
+{
+	struct jsTimer *jt = soonest();
+	if (!jt)
+		return false;
+	currentTime();
+	if (now_sec > jt->sec || now_sec == jt->sec && now_ms >= jt->ms)
+		*delay = 0;
+	else {
+		int l = jt->sec - now_sec;
+		l *= 1000;
+		l += (jt->ms - now_ms);
+		*delay = l;
+	}
+	return true;
+}				/* timerWait */

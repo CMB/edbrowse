@@ -1,5 +1,10 @@
 /* Prototypes for edbrowse */
 
+/* Last 3 sourcefiles are shared with a c++ program */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* sourcefile=auth.c */
 bool getUserPass(const char *url, char *creds, bool find_proxy) ;
 bool addWebAuthorization(const char *url, const char *credentials, bool proxy) ;
@@ -47,8 +52,6 @@ bool ebConnect(void) ;
 int goSelect(int *startLine, char **rbuf) ;
 
 /* sourcefile=ebjs.c */
-void updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm) ;
-void applyInputChanges(void);
 void createJavaContext(void) ;
 void freeJavaContext(struct ebWindow *w) ;
 void js_shutdown(void) ;
@@ -129,7 +132,6 @@ bool infPush(int tagno, char **post_string) ;
 struct htmlTag *tagFromJavaVar(jsobjtype v);
 void javaSubmitsForm(jsobjtype v, bool reset) ;
 void javaOpensWindow(const char *href, const char *name) ;
-void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval) ;
 bool handlerGoBrowse(const struct htmlTag *t, const char *name) ;
 void runningError(int msg, ...) ;
 
@@ -143,6 +145,8 @@ char *render(int start);
 void decorate(int start);
 void rerender(bool notify);
 void delTags(int startRange, int endRange);
+void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval) ;
+bool timerWait(int *delay);
 
 /* sourcefile=http.c */
 size_t eb_curl_callback(char *incoming, size_t size, size_t nitems, struct eb_curl_callback_data *data) ;
@@ -181,6 +185,15 @@ int playBuffer(const char *line, const char *playfile);
 bool playServerData(void);
 char *runPluginConverter(const char *buf, int buflen);
 
+/* sourcefile=sendmail.c */
+bool loadAddressBook(void) ;
+const char *reverseAlias(const char *reply) ;
+bool encodeAttachment(const char *file, int ismail, bool webform, const char **type_p, const char **enc_p, char **data_p) ;
+char *makeBoundary(void) ;
+bool sendMail(int account, const char **recipients, const char *body, int subjat, const char **attachments, const char *refline, int nalt, bool dosig) ;
+bool validAccount(int n) ;
+bool sendMailCurrent(int sm_account, bool dosig) ;
+
 /* sourcefile=messages.c */
 void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
 void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
@@ -198,15 +211,6 @@ void showErrorAbort(void) ;
 void i_caseShift(unsigned char *s, char action) ;
 #endif
 void eeCheck(void) ;
-
-/* sourcefile=sendmail.c */
-bool loadAddressBook(void) ;
-const char *reverseAlias(const char *reply) ;
-bool encodeAttachment(const char *file, int ismail, bool webform, const char **type_p, const char **enc_p, char **data_p) ;
-char *makeBoundary(void) ;
-bool sendMail(int account, const char **recipients, const char *body, int subjat, const char **attachments, const char *refline, int nalt, bool dosig) ;
-bool validAccount(int n) ;
-bool sendMailCurrent(int sm_account, bool dosig) ;
 
 /* sourcefile=stringfile.c */
 void *allocMem(size_t n) ;
@@ -320,3 +324,6 @@ char *encodePostData(const char *s) ;
 char *decodePostData(const char *data, const char *name, int seqno) ;
 void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p) ;
 
+#ifdef __cplusplus
+}
+#endif
