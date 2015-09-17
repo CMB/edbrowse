@@ -50,7 +50,7 @@ static struct htmlTag *currentA;
 static char *radioCheck;
 static int radio_l;
 
-static const char *attribVal(const struct htmlTag *t, const char *name)
+const char *attribVal(const struct htmlTag *t, const char *name)
 {
 	const char *v;
 	int j = stringInListCI(t->attributes, name);
@@ -1329,8 +1329,6 @@ void rerender(bool rr_command)
 
 /* and the new screen */
 	a = render(0);
-	cellDelimiters(a);
-	anchorSwap(a);
 	newbuf = htmlReformat(a);
 	nzFree(a);
 

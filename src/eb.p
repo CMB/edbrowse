@@ -98,16 +98,9 @@ bool setupReply(bool all) ;
 /* sourcefile=format.c */
 void prepareForBrowse(char *h, int h_len) ;
 void prepareForField(char *h);
-const char *skipHtmlComment(const char *h, int *lines) ;
-bool parseTag(char *e, const char **name, int *namelen, const char **attr, const char **end, int *lines) ;
-char *htmlAttrVal(const char *e, const char *name) ;
-bool findEndScript(const char *h, const char *tagname, bool is_js, char **end_p, char **new_p, int *lines) ;
-void cellDelimiters(char *buf) ;
-void anchorSwap(char *buf) ;
 bool breakLine(const char *line, int len, int *newlen) ;
 void breakLineSetup(void) ;
-char *htmlReformat(const char *buf) ;
-char *andTranslate(const char *s, bool invisible) ;
+char *htmlReformat(char *buf) ;
 void extractEmailAddresses(char *line) ;
 void cutDuplicateEmails(char *tolist, char *cclist, const char *reply) ;
 bool looksBinary(const char *buf, int buflen) ;
@@ -124,7 +117,6 @@ bool tagHandler(int seqno, const char *name) ;
 void jSideEffects(void) ;
 char *displayOptions(const struct htmlTag *sel) ;
 void jSyncup(void) ;
-void makeParentNode(const struct htmlTag *t) ;
 struct htmlTag *newTag(const char *name) ;
 void preFormatCheck(int tagno, bool * pretag, bool * slash) ;
 char *htmlParse(char *buf, int remote) ;
@@ -139,13 +131,13 @@ void javaSubmitsForm(jsobjtype v, bool reset) ;
 void javaOpensWindow(const char *href, const char *name) ;
 void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval) ;
 bool handlerGoBrowse(const struct htmlTag *t, const char *name) ;
-void browseError(int msg, ...) ;
 void runningError(int msg, ...) ;
 
 /* sourcefile=html-tidy.c */
 void html2nodes(const char *htmltext);
 
 /* sourcefile=render.c */
+const char *attribVal(const struct htmlTag *t, const char *name);
 void prerender(int start);
 char *render(int start);
 void decorate(int start);

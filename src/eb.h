@@ -216,7 +216,6 @@ extern int verifyCertificates;	/* is a certificate required for the ssl connecti
 extern int displayLength;	/* when printing a line */
 extern int jsPool;		/* size of js pool in megabytes */
 extern int webTimeout, mailTimeout;
-extern int browseLine;		/* line number, for error reporting */
 extern uchar browseLocal;
 extern bool sqlPresent;		/* Was edbrowse compiled with SQL built in? */
 extern bool ismc;		/* Is the program running as a mail client? */
@@ -227,7 +226,6 @@ extern bool cons_utf8;		/* does the console expect utf8? */
 extern bool iuConvert;		/* perform iso utf8 conversions automatically */
 extern char type8859;		/* 1 through 15 */
 extern bool js_redirects;	/* window.location = new_url */
-extern bool htmlAttrVal_nl;	/* allow nl in the attribute of an html tag */
 extern bool htmlGenerated; /* as in document.write() */
 extern bool passMail;		/* pass mail across the filters */
 extern bool errorExit;		/* exit on any error, for scripting purposes */
