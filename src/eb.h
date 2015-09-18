@@ -162,6 +162,8 @@ extern char emptyString[];	/* use this whenever you would use "" */
  * Tell them you're Explorer, and walk right in.
  * Anyways, this array holds up to 10 user agent strings. */
 extern char *userAgents[10], *currentAgent;
+extern char *newlocation;
+extern int newloc_d;
 
 struct eb_curl_callback_data {
 	char **buffer;

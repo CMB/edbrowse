@@ -267,6 +267,9 @@ void freeTags(struct ebWindow *w)
 	free(w->tags);
 	w->tags = 0;
 	w->numTags = w->allocTags = 0;
+
+/* delete any pending javascript timers */
+	delTimers(w);
 }				/* freeTags */
 
 bool tagHandler(int seqno, const char *name)
@@ -289,7 +292,6 @@ bool tagHandler(int seqno, const char *name)
 	return handlerPresent(t->jv, name);
 }				/* tagHandler */
 
-static void runScriptsPending(void);
 static void formReset(const struct htmlTag *form);
 
 /*********************************************************************
@@ -640,7 +642,7 @@ static void runGeneratedHtml(struct htmlTag *t, const char *h)
 	htmlGenerated = false;
 }				/* runGeneratedHtml */
 
-static void runScriptsPending(void)
+void runScriptsPending(void)
 {
 	struct htmlTag *t;
 	struct inputChange *ic;
@@ -1335,7 +1337,7 @@ updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
 		memcpy(new, p, s - p);
 		strcpy(new + (s - p), newtext);
 		memcpy(new + strlen(new), t, plen - (t - p));
-			free(cw->map[ln].text);
+		free(cw->map[ln].text);
 		cw->map[ln].text = new;
 		if (notify)
 			displayLine(ln);
@@ -2218,7 +2220,7 @@ void javaOpensWindow(const char *href, const char *name)
 	stringAndString(&cw->dw, &cw->dw_l, "</A><br>\n");
 }				/* javaOpensWindow */
 
-bool handlerGoBrowse(const struct htmlTag * t, const char *name)
+bool handlerGoBrowse(const struct htmlTag *t, const char *name)
 {
 	if (!isJSAlive)
 		return true;

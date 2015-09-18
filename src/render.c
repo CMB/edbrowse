@@ -1210,6 +1210,7 @@ static void jsNode(struct htmlTag *t, bool opentag)
 	case TAGACT_SUP:
 	case TAGACT_OVB:
 		domLink(t, "Span", 0, "spans", cw->docobj, 0);
+		establish_inner(t->jv, t->innerHTML, 0, false);
 		break;
 
 	case TAGACT_AREA:
@@ -1314,6 +1315,8 @@ mark_e:
 	newChunkEnd = e2;
 }				/* frontBackDiff */
 
+static bool intimer;
+
 /* Rerender the buffer and notify of any lines that have changed */
 void rerender(bool rr_command)
 {
@@ -1351,26 +1354,31 @@ void rerender(bool rr_command)
 				newChunkEnd - newChunkStart, sameFront, false);
 	cw->undoable = false;
 
+	if (!intimer) {
 /* It's almost easier to do it than to report it. */
-	if (sameBack2 == sameFront) {	/* delete */
-		if (sameBack1 == sameFront + 1)
-			i_printf(MSG_LineDelete1, sameFront);
-		else
-			i_printf(MSG_LineDelete2, sameBack1 - sameFront,
-				 sameFront);
-	} else if (sameBack1 == sameFront) {
-		if (sameBack2 == sameFront + 1)
-			i_printf(MSG_LineAdd1, sameFront + 1);
-		else
-			i_printf(MSG_LineAdd2, sameFront + 1, sameBack2);
-	} else {
-		if (sameBack1 == sameFront + 1 && sameBack2 == sameFront + 1)
-			i_printf(MSG_LineUpdate1, sameFront + 1);
-		else if (sameBack2 == sameFront + 1)
-			i_printf(MSG_LineUpdate2, sameBack1 - sameFront,
-				 sameFront + 1);
-		else
-			i_printf(MSG_LineUpdate3, sameFront + 1, sameBack2);
+		if (sameBack2 == sameFront) {	/* delete */
+			if (sameBack1 == sameFront + 1)
+				i_printf(MSG_LineDelete1, sameFront);
+			else
+				i_printf(MSG_LineDelete2, sameBack1 - sameFront,
+					 sameFront);
+		} else if (sameBack1 == sameFront) {
+			if (sameBack2 == sameFront + 1)
+				i_printf(MSG_LineAdd1, sameFront + 1);
+			else
+				i_printf(MSG_LineAdd2, sameFront + 1,
+					 sameBack2);
+		} else {
+			if (sameBack1 == sameFront + 1
+			    && sameBack2 == sameFront + 1)
+				i_printf(MSG_LineUpdate1, sameFront + 1);
+			else if (sameBack2 == sameFront + 1)
+				i_printf(MSG_LineUpdate2, sameBack1 - sameFront,
+					 sameFront + 1);
+			else
+				i_printf(MSG_LineUpdate3, sameFront + 1,
+					 sameBack2);
+		}
 	}
 
 	nzFree(newbuf);
@@ -1477,8 +1485,8 @@ the code to execute, and the timer object, which becomes "this".
 *********************************************************************/
 
 struct jsTimer {
-	struct jsTimer *prev, *next;
-	int cx;			/* which edbrowse session holds this timer */
+	struct jsTimer *next, *prev;
+	struct ebWindow *w;	/* edbrowse window holding this timer */
 	time_t sec;
 	int ms;
 	bool isInterval;
@@ -1523,8 +1531,9 @@ void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 	if (jt->ms >= 1000)
 		jt->ms -= 1000, ++jt->sec;
 	jt->timerObject = to;
-	jt->cx = context;
+	jt->w = cw;
 	addToListBack(&timerList, jt);
+	debugPrint(4, "timer %d %s\n", n, jsrc);
 }				/* javaSetsTimeout */
 
 static struct jsTimer *soonest(void)
@@ -1540,19 +1549,86 @@ static struct jsTimer *soonest(void)
 	return best_t;
 }				/* soonest */
 
-bool timerWait(int *delay)
+bool timerWait(int *delay_sec, int *delay_ms)
 {
 	struct jsTimer *jt = soonest();
 	if (!jt)
 		return false;
 	currentTime();
 	if (now_sec > jt->sec || now_sec == jt->sec && now_ms >= jt->ms)
-		*delay = 0;
+		*delay_sec = *delay_ms = 0;
 	else {
-		int l = jt->sec - now_sec;
-		l *= 1000;
-		l += (jt->ms - now_ms);
-		*delay = l;
+		*delay_sec = jt->sec - now_sec;
+		*delay_ms = (jt->ms - now_ms);
+		if (*delay_ms < 0)
+			*delay_ms += 1000, --*delay_sec;
 	}
 	return true;
 }				/* timerWait */
+
+void delTimers(struct ebWindow *w)
+{
+	int delcount = 0;
+	struct jsTimer *jt, *jnext;
+	for (jt = timerList.next; jt != (void *)&timerList; jt = jnext) {
+		jnext = jt->next;
+		if (jt->w == w) {
+			++delcount;
+			delFromList(jt);
+			cnzFree(jt->jsrc);
+			nzFree(jt);
+		}
+	}
+	debugPrint(4, "%d timers deleted", delcount);
+}				/* delTimers */
+
+void runTimers(void)
+{
+	struct jsTimer *jt;
+	struct ebWindow *save_cw = cw;
+	char *screen;
+	int screenlen;
+
+	currentTime();
+
+	while (jt = soonest()) {
+		if (jt->sec > now_sec || jt->sec == now_sec && jt->ms > now_ms)
+			break;
+
+		cw = jt->w;
+		javaParseExecute(jt->timerObject, jt->jsrc, "timer", 1);
+		runScriptsPending();
+		if (newlocation) {
+			printf
+			    ("js timer is trying to redirect to %s, not yet implemented\n",
+			     newlocation);
+			nzFree(newlocation);
+			newlocation = 0;
+		}
+
+		if (cw != save_cw) {
+/* background window, go ahead and rerender, silently. */
+/* Screen snap, because we didn't run jSyncup */
+			nzFree(cw->lastrender);
+			cw->lastrender = 0;
+			if (unfoldBufferW(cw, false, &screen, &screenlen))
+				cw->lastrender = screen;
+			intimer = true;
+			rerender(false);
+			intimer = false;
+		}
+
+		if (jt->isInterval) {
+			jt->sec = now_sec + jt->jump_sec;
+			jt->ms = now_ms + jt->jump_ms;
+			if (jt->ms >= 1000)
+				jt->ms -= 1000, ++jt->sec;
+		} else {
+			delFromList(jt);
+			cnzFree(jt->jsrc);
+			nzFree(jt);
+		}
+	}
+
+	cw = save_cw;
+}				/* runTimers */

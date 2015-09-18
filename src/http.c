@@ -50,8 +50,6 @@ static char *httpLanguage;
 static char hct[60];
 static char *hct2;		/* extra content info such as charset */
 int hcl;			/* http content length */
-extern char *newlocation;
-extern int newloc_d;
 
 static struct eb_curl_callback_data callback_data = {
 	&serverData, &serverDataLen

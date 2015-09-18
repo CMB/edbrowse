@@ -23,6 +23,7 @@ void gotoLocation(char *url, int delay, bool rf) ;
 bool addTextToBuffer(const pst inbuf, int length, int destl, bool onside) ;
 void delText(int start, int end) ;
 bool readFileArgv(const char *filename);
+bool unfoldBufferW(const struct ebWindow *w, bool cr, char **data, int *len) ;
 bool unfoldBuffer(int cx, bool cr, char **data, int *len) ;
 bool runCommand(const char *line) ;
 bool edbrowseCommand(const char *line, bool script) ;
@@ -121,6 +122,7 @@ void jSideEffects(void) ;
 char *displayOptions(const struct htmlTag *sel) ;
 void jSyncup(void) ;
 struct htmlTag *newTag(const char *name) ;
+void runScriptsPending(void);
 void preFormatCheck(int tagno, bool * pretag, bool * slash) ;
 char *htmlParse(char *buf, int remote) ;
 void findField(const char *line, int ftype, int n, int *total, int *realtotal, int *tagno, char **href, const struct htmlTag **tagp) ;
@@ -146,7 +148,9 @@ void decorate(int start);
 void rerender(bool notify);
 void delTags(int startRange, int endRange);
 void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval) ;
-bool timerWait(int *delay);
+bool timerWait(int *delay_sec, int *delay_ms);
+void delTimers(struct ebWindow *w);
+void runTimers(void);
 
 /* sourcefile=http.c */
 size_t eb_curl_callback(char *incoming, size_t size, size_t nitems, struct eb_curl_callback_data *data) ;

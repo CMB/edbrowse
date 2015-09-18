@@ -5,6 +5,7 @@
 
 #include "eb.h"
 #include <netdb.h>
+#include <sys/select.h>
 
 /* If this include file is missing, you need the pcre package,
  * and the pcre-devel package. */
@@ -159,28 +160,39 @@ pst fetchLine(int n, int show)
 	return fetchLineContext(n, show, context);
 }				/* fetchLine */
 
+static int apparentSizeW(const struct ebWindow *w, bool browsing)
+{
+	int ln, size = 0;
+	pst p;
+	for (ln = 1; ln <= w->dol; ++ln) {
+		p = w->map[ln].text;
+		while (*p != '\n') {
+			if (*p == InternalCodeChar && browsing && w->browseMode) {
+				++p;
+				while (isdigitByte(*p))
+					++p;
+				if (strchr("<>{}", *p))
+					++size;
+				++p;
+				continue;
+			}
+			++p, ++size;
+		}
+		++size;
+	}			/* loop over lines */
+	if (w->nlMode)
+		--size;
+	return size;
+}				/* apparentSizeW */
+
 static int apparentSize(int cx, bool browsing)
 {
-	int i, ln, size;
-	struct ebWindow *w;
+	const struct ebWindow *w;
 	if (cx <= 0 || cx >= MAXSESSION || (w = sessionList[cx].lw) == 0) {
 		setError(MSG_SessionInactive, cx);
 		return -1;
 	}
-	size = 0;
-	for (ln = 1; ln <= w->dol; ++ln) {
-		if (browsing && sessionList[cx].lw->browseMode) {
-			pst line = fetchLineContext(ln, 1, cx);
-			size += pstLength(line);
-			free(line);
-		} else {
-			pst line = fetchLineContext(ln, -1, cx);
-			size += pstLength(line);
-		}
-	}			/* loop over lines */
-	if (sessionList[cx].lw->nlMode)
-		--size;
-	return size;
+	return apparentSizeW(w, browsing);
 }				/* apparentSize */
 
 int currentBufferSize(void)
@@ -303,6 +315,7 @@ pst inputLine(void)
 	uchar c, d, e;
 	static char *last_rl;
 	uchar *s;
+	int delay_sec, delay_ms;
 
 top:
 	intFlag = false;
@@ -310,6 +323,27 @@ top:
 	nzFree(last_rl);
 	last_rl = 0;
 	s = 0;
+
+	if (timerWait(&delay_sec, &delay_ms)) {
+/* timers are pending, use select to wait on input or run the first timer. */
+		fd_set channels;
+		int rc;
+		struct timeval tv;
+		if (!(delay_sec | delay_ms))
+			goto dotimers;
+		tv.tv_sec = delay_sec;
+		tv.tv_usec = delay_ms * 1000;
+		memset(&channels, 0, sizeof(channels));
+		FD_SET(0, &channels);
+		rc = select(1, &channels, 0, 0, &tv);
+		if (rc < 0)
+			goto interrupt;
+		if (rc == 0) {	/* timeout */
+dotimers:
+			runTimers();
+			goto top;
+		}
+	}
 
 	if (inputReadLine && isInteractive) {
 		last_rl = readline("");
@@ -321,6 +355,7 @@ top:
 	}
 
 	if (!s) {
+interrupt:
 		if (intFlag)
 			goto top;
 		i_puts(MSG_EndFile);
@@ -870,9 +905,14 @@ static bool inputLinesIntoBuffer(void)
 	pst line;
 	int linecount = 0, cap;
 	struct lineMap *t;
+/* I would use the static variable newpiece to build the new map of lines,
+ * as other routines do, but this one is multiline input, and a javascript
+ * timer can sneak in and add text, thus clobbering newpiece,
+ * so I need a local variable. */
+	struct lineMap *np;
 
 	cap = 128;
-	newpiece = t = allocZeroMem(cap * LMSIZE);
+	np = t = allocZeroMem(cap * LMSIZE);
 
 	if (linePending[0])
 		line = linePending;
@@ -882,8 +922,8 @@ static bool inputLinesIntoBuffer(void)
 	while (line[0] != '.' || line[1] != '\n') {
 		if (linecount == cap) {
 			cap *= 2;
-			newpiece = reallocMem(newpiece, cap * LMSIZE);
-			t = newpiece + linecount;
+			np = reallocMem(np, cap * LMSIZE);
+			t = np + linecount;
 		}
 		t->text = clonePstring(line);
 		t->ds1 = t->ds2 = 0;
@@ -892,8 +932,7 @@ static bool inputLinesIntoBuffer(void)
 	}
 
 	if (!linecount) {	/* no lines entered */
-		free(newpiece);
-		newpiece = 0;
+		free(np);
 		cw->dot = endRange;
 		if (!cw->dot && cw->dol)
 			cw->dot = 1;
@@ -902,6 +941,7 @@ static bool inputLinesIntoBuffer(void)
 
 	if (endRange == cw->dol)
 		cw->nlMode = false;
+	newpiece = np;
 	addToMap(linecount, endRange);
 	return true;
 }				/* inputLinesIntoBuffer */
@@ -3407,17 +3447,15 @@ static bool balanceLine(const char *line)
 }				/* balanceLine */
 
 /* Unfold the buffer into one long, allocated string. */
-bool unfoldBuffer(int cx, bool cr, char **data, int *len)
+bool unfoldBufferW(const struct ebWindow * w, bool cr, char **data, int *len)
 {
 	char *buf;
 	int l, ln;
-	struct ebWindow *w;
-	int size = apparentSize(cx, false);
+	int size = apparentSizeW(w, false);
 	if (size < 0)
 		return false;
-	w = sessionList[cx].lw;
 	if (w->dirMode) {
-		setError(MSG_SessionDir, cx);
+		setError(MSG_SessionDir, context);
 		return false;
 	}
 	if (cr)
@@ -3426,7 +3464,7 @@ bool unfoldBuffer(int cx, bool cr, char **data, int *len)
 	buf = allocMem(size + 4);
 	*data = buf;
 	for (ln = 1; ln <= w->dol; ++ln) {
-		pst line = fetchLineContext(ln, -1, cx);
+		pst line = w->map[ln].text;
 		l = pstLength(line) - 1;
 		if (l) {
 			memcpy(buf, line, l);
@@ -3446,6 +3484,12 @@ bool unfoldBuffer(int cx, bool cr, char **data, int *len)
 	*len = size;
 	(*data)[size] = 0;
 	return true;
+}				/* unfoldBufferW */
+
+bool unfoldBuffer(int cx, bool cr, char **data, int *len)
+{
+	const struct ebWindow *w = sessionList[cx].lw;
+	return unfoldBufferW(w, cr, data, len);
 }				/* unfoldBuffer */
 
 static char *showLinks(void)
