@@ -536,7 +536,7 @@ imap_done:
 			exit(0);
 		}
 		if (key == '/') {
-			printf("search ");
+			i_printf(MSG_Search);
 			fflush(stdout);
 			if (!fgets(inputline, sizeof(inputline), stdin))
 				goto imap_done;
@@ -544,8 +544,7 @@ imap_done:
 				goto action;
 			allmessages = true;
 			if (f->nmsgs > f->nfetch)
-				printf("showing last %d of %d messages\n",
-				       f->nfetch, f->nmsgs);
+				i_printf(MSG_ShowLast, f->nfetch, f->nmsgs);
 			else
 				i_printf(MSG_MessagesX, f->nmsgs);
 			goto showmessages;
@@ -611,7 +610,7 @@ imap_done:
 		}
 		if (key == 'm') {
 			struct FOLDER *g;
-			printf("move to ");
+			i_printf(MSG_MoveTo);
 			fflush(stdout);
 			if (!fgets(inputline, sizeof(inputline), stdin))
 				goto imap_done;
