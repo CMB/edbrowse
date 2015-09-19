@@ -298,7 +298,7 @@ onload=formLoad(this.name) onunload=formUnload(this.name)>
 function catdog(item) { alert('fluffy'); if(item.checked&&document.questionnaire.dog.checked) alert('chased by dog'); }
 
 // Let javascript generate another javascript tag
-document.writeln("<" + "script language=JavaScript>document.writeln('Subject: ');<" + "/script" + ">");
+document.writeln("<script language=JavaScript>document.writeln('Subject: ');<\/script>");
 </script>
 
 <input type='hidden' name='id' value='eklhad'>

@@ -1429,7 +1429,7 @@ static void unloadHyperlink(const char *js_function, const char *where)
 	stringAndString(&cw->dw, &cw->dw_l, js_function);
 	stringAndString(&cw->dw, &cw->dw_l, "()'>");
 	stringAndString(&cw->dw, &cw->dw_l, where);
-	stringAndString(&cw->dw, &cw->dw_l, "</A><P>");
+	stringAndString(&cw->dw, &cw->dw_l, "</A><br>");
 }				/* unloadHyperlink */
 
 /* Run the various onload functions */

@@ -132,7 +132,7 @@ void html2nodes(const char *htmltext)
 	tidySetCharEncoding(tdoc, (cons_utf8 ? "utf8" : "latin1"));
 
 #ifndef HAVE_TIDYSKIPQUOTES
-	htmlfix = escapeLessScript(htmltext);
+//	htmlfix = escapeLessScript(htmltext);
 #endif
 	if (htmlfix) {
 		tidyParseString(tdoc, htmlfix);
