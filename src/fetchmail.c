@@ -602,7 +602,7 @@ imap_done:
 			break;
 		}
 		if (key == 'l') {
-			printf("limit ");
+			i_printf(MSG_Limit);
 			fflush(stdout);
 			if (!fgets(inputline, sizeof(inputline), stdin))
 				goto imap_done;

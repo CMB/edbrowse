@@ -84,13 +84,13 @@ static char icmd;		/* input command, usually the same as cmd */
  * After all, you don't want to see those code characters.
  * You just want to see {Click here for more information}. */
 
-static void removeHiddenNumbers(pst p)
+static void removeHiddenNumbers(pst p, uchar terminate)
 {
 	pst s, t, u;
 	uchar c, d;
 
 	s = t = p;
-	while ((c = *s) != '\n') {
+	while ((c = *s) != terminate) {
 		if (c != InternalCodeChar) {
 addchar:
 			*t++ = c;
@@ -116,7 +116,7 @@ addchar:
 /* This should never happen; just move along. */
 		goto addchar;
 	}			/* loop over p */
-	*t = c;			/* terminating newline */
+	*t = c;			/* terminating character */
 }				/* removeHiddenNumbers */
 
 /* Fetch line n from the current buffer, or perhaps another buffer.
@@ -151,7 +151,7 @@ static pst fetchLineContext(int n, int show, int cx)
 		return t->text;
 	p = clonePstring(t->text);
 	if (show && lw->browseMode)
-		removeHiddenNumbers(p);
+		removeHiddenNumbers(p, '\n');
 	return p;
 }				/* fetchLineContext */
 
@@ -3016,7 +3016,7 @@ pwd:
 		} else {
 et_go:
 			for (i = 1; i <= cw->dol; ++i)
-				removeHiddenNumbers(cw->map[i].text);
+				removeHiddenNumbers(cw->map[i].text, '\n');
 			freeWindowLines(cw->r_map);
 			cw->r_map = 0;
 		}
@@ -3611,7 +3611,8 @@ static char *showLinks(void)
 		stringAndString(&a, &a_l, "\n</a>\n");
 		nzFree(h);
 	}
-	/* using the filename */
+
+removeHiddenNumbers(a, 0);
 	return a;
 }				/* showLinks */
 
