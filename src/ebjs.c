@@ -167,6 +167,15 @@ static void javaSetsInner(jsobjtype v, const char *newtext, char c)
 	addToListBack(&inputChangesPending, ic);
 }				/* javaSetsInner */
 
+/* start a document.write */
+void dwStart(void)
+{
+	if (cw->dw)
+		return;
+	cw->dw = initString(&cw->dw_l);
+	stringAndString(&cw->dw, &cw->dw_l, "<body>");
+}				/* dwStart */
+
 /*********************************************************************
 Process the side effects of running js. These are:
 w{ document.write() strings that fold back into html }
@@ -201,11 +210,7 @@ static void processEffects(void)
 
 		switch (c) {
 		case 'w':	/* document.write */
-			if (!cw->dw) {
-				cw->dw = initString(&cw->dw_l);
-				stringAndString(&cw->dw, &cw->dw_l,
-						"<docwrite>");
-			}
+			dwStart();
 			stringAndString(&cw->dw, &cw->dw_l, s);
 			break;
 

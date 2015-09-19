@@ -1315,7 +1315,7 @@ mark_e:
 	newChunkEnd = e2;
 }				/* frontBackDiff */
 
-static bool intimer;
+static bool backgroundJS;
 
 /* Rerender the buffer and notify of any lines that have changed */
 void rerender(bool rr_command)
@@ -1354,7 +1354,7 @@ void rerender(bool rr_command)
 				newChunkEnd - newChunkStart, sameFront, false);
 	cw->undoable = false;
 
-	if (!intimer) {
+	if (!backgroundJS) {
 /* It's almost easier to do it than to report it. */
 		if (sameBack2 == sameFront) {	/* delete */
 			if (sameBack1 == sameFront + 1)
@@ -1424,10 +1424,7 @@ void delTags(int startRange, int endRange)
 /* turn an onunload function into a clickable hyperlink */
 static void unloadHyperlink(const char *js_function, const char *where)
 {
-	if (!cw->dw) {
-		cw->dw = initString(&cw->dw_l);
-		stringAndString(&cw->dw, &cw->dw_l, "<docwrite>");
-	}
+	dwStart();
 	stringAndString(&cw->dw, &cw->dw_l, "<P>Onclose <A href='javascript:");
 	stringAndString(&cw->dw, &cw->dw_l, js_function);
 	stringAndString(&cw->dw, &cw->dw_l, "()'>");
@@ -1596,15 +1593,9 @@ void runTimers(void)
 			break;
 
 		cw = jt->w;
+		backgroundJS = true;
 		javaParseExecute(jt->timerObject, jt->jsrc, "timer", 1);
 		runScriptsPending();
-		if (newlocation) {
-			printf
-			    ("js timer is trying to redirect to %s, not yet implemented\n",
-			     newlocation);
-			nzFree(newlocation);
-			newlocation = 0;
-		}
 
 		if (cw != save_cw) {
 /* background window, go ahead and rerender, silently. */
@@ -1613,10 +1604,9 @@ void runTimers(void)
 			cw->lastrender = 0;
 			if (unfoldBufferW(cw, false, &screen, &screenlen))
 				cw->lastrender = screen;
-			intimer = true;
 			rerender(false);
-			intimer = false;
 		}
+		backgroundJS = false;
 
 		if (jt->isInterval) {
 			jt->sec = now_sec + jt->jump_sec;
@@ -1632,3 +1622,42 @@ void runTimers(void)
 
 	cw = save_cw;
 }				/* runTimers */
+
+void javaOpensWindow(const char *href, const char *name)
+{
+	struct htmlTag *t;
+	char *copy, *r;
+	const char *a;
+
+	if (!href || !*href) {
+		debugPrint(3, "javascript is opening a blank window");
+		return;
+	}
+
+	copy = cloneString(href);
+	unpercentURL(copy);
+	r = resolveURL(cw->hbase, copy);
+	nzFree(copy);
+	if (cw->browseMode && !backgroundJS) {
+		gotoLocation(r, 0, false);
+		return;
+	}
+
+/* Turn the new window into a hyperlink. */
+/* just shovel this onto dw, as though it came from document.write() */
+	dwStart();
+	stringAndString(&cw->dw, &cw->dw_l, "<P>");
+	stringAndString(&cw->dw, &cw->dw_l, i_getString(MSG_Redirect));
+	stringAndString(&cw->dw, &cw->dw_l, ": <A href=");
+	stringAndString(&cw->dw, &cw->dw_l, r);
+	stringAndChar(&cw->dw, &cw->dw_l, '>');
+	a = altText(r);
+	nzFree(r);
+/* I'll assume this is more helpful than the name of the window */
+	if (a)
+		name = a;
+	r = htmlEscape(name);
+	stringAndString(&cw->dw, &cw->dw_l, r);
+	nzFree(r);
+	stringAndString(&cw->dw, &cw->dw_l, "</A><br>\n");
+}				/* javaOpensWindow */

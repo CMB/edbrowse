@@ -25,7 +25,7 @@ You have to edit it as is, without conversions.
 static const char *englishMessages[] = {
 	"EOF",
 	"no file",
-	0,
+	"redirect",
 	"substitutions global",
 	"substitutions local",
 	"case insensitive",
@@ -688,7 +688,7 @@ static const char *englishMessages[] = {
 static const char *frenchMessages[] = {
 	"EOF - fin de fichier",
 	"pas de fichier",
-	0,
+	"redirection",
 	"substitutions globales",
 	"substitutions locales",
 	"insensible à la casse",
@@ -1351,7 +1351,7 @@ static const char *frenchMessages[] = {
 static const char *brazilianPortugueseMessages[] = {
 	"Fim do arquivo",
 	"nenhum arquivo",
-	0,
+	"redireção",
 	"substituição é global",
 	"substituição é local",
 	"não diferencia maiúsculas",
@@ -2014,7 +2014,7 @@ static const char *brazilianPortugueseMessages[] = {
 static const char *polishMessages[] = {
 	"EOF - koniec pliku",
 	"brak pliku",
-	0,
+	"przekierowanie",
 	"globalne podstawienia",
 	"lokalne podstawienia",
 	"wielkość liter nieistotna",
@@ -2677,7 +2677,7 @@ static const char *polishMessages[] = {
 static const char *germanMessages[] = {
 	"Ende",
 	"keine Datei",
-	0,
+	"Weiterleitung",
 	"globale Ersetzungen",
 	"lokale Ersetzungen",
 	"keine Groß- und Kleinschreibung beachten",

@@ -123,7 +123,6 @@ static const struct tagInfo elements[] = {
 	{"OVB", "an overbar", TAGACT_OVB, 3, 0, 0},
 	{"FONT", "a font", TAGACT_NOP, 3, 0, 0},
 	{"CENTER", "centered text", TAGACT_NOP, 3, 0, 0},
-	{"DOCWRITE", "document.write() text", TAGACT_DW, 0, 0, 0},
 	{"CAPTION", "a caption", TAGACT_NOP, 3, 5, 0},
 	{"HEAD", "the html header information", TAGACT_HEAD, 1, 0, 13},
 	{"BODY", "the html body", TAGACT_BODY, 1, 0, 13},
@@ -658,8 +657,6 @@ void runScriptsPending(void)
  * As you see below, document.write that comes from a specific javascript
  * appears inline where the script is. */
 	if (cw->dw) {
-/* replace the <docwrite> tag with <html> */
-		memcpy(cw->dw, "<body>   \n", 10);
 		stringAndString(&cw->dw, &cw->dw_l, "</body>\n");
 		runGeneratedHtml(NULL, cw->dw);
 		nzFree(cw->dw);
@@ -697,8 +694,6 @@ top:
 
 /* look for document.write from this script */
 		if (cw->dw) {
-/* replace the <docwrite> tag with <html> */
-			memcpy(cw->dw, "<body>   \n", 10);
 			stringAndString(&cw->dw, &cw->dw_l, "</body>\n");
 			runGeneratedHtml(t, cw->dw);
 			nzFree(cw->dw);
@@ -830,8 +825,8 @@ static void intoTree(struct htmlTag *parent)
 /* link up to treeAttach */
 				debugPrint(5, "node up %s to %s",
 					   t->info->name,
-					   (treeAttach ? treeAttach->info->
-					    name : "root"));
+					   (treeAttach ? treeAttach->
+					    info->name : "root"));
 				t->parent = treeAttach;
 				if (treeAttach) {
 					struct htmlTag *c =
@@ -2179,46 +2174,6 @@ void javaSubmitsForm(jsobjtype v, bool reset)
 	else
 		js_submit = v;
 }				/* javaSubmitsForm */
-
-void javaOpensWindow(const char *href, const char *name)
-{
-	struct htmlTag *t;
-	char *copy, *r;
-	const char *a;
-
-	if (!href || !*href) {
-		debugPrint(3, "javascript is opening a blank window");
-		return;
-	}
-
-	copy = cloneString(href);
-	unpercentURL(copy);
-	r = resolveURL(cw->hbase, copy);
-	nzFree(copy);
-	if (cw->browseMode) {
-		gotoLocation(r, 0, false);
-		return;
-	}
-
-/* Turn the new window into a hyperlink. */
-/* just shovel this onto dw, as though it came from document.write() */
-	if (!cw->dw) {
-		cw->dw = initString(&cw->dw_l);
-		stringAndString(&cw->dw, &cw->dw_l, "<docwrite>");
-	}
-	stringAndString(&cw->dw, &cw->dw_l, "<br>Popup: <A href=");
-	stringAndString(&cw->dw, &cw->dw_l, r);
-	stringAndChar(&cw->dw, &cw->dw_l, '>');
-	a = altText(r);
-	nzFree(r);
-/* I'll assume this is more helpful than the name of the window */
-	if (a)
-		name = a;
-	r = htmlEscape(name);
-	stringAndString(&cw->dw, &cw->dw_l, r);
-	nzFree(r);
-	stringAndString(&cw->dw, &cw->dw_l, "</A><br>\n");
-}				/* javaOpensWindow */
 
 bool handlerGoBrowse(const struct htmlTag *t, const char *name)
 {

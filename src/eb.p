@@ -53,6 +53,7 @@ bool ebConnect(void) ;
 int goSelect(int *startLine, char **rbuf) ;
 
 /* sourcefile=ebjs.c */
+void dwStart(void);
 void createJavaContext(void) ;
 void freeJavaContext(struct ebWindow *w) ;
 void js_shutdown(void) ;
@@ -133,7 +134,6 @@ bool infReplace(int tagno, const char *newtext, bool notify) ;
 bool infPush(int tagno, char **post_string) ;
 struct htmlTag *tagFromJavaVar(jsobjtype v);
 void javaSubmitsForm(jsobjtype v, bool reset) ;
-void javaOpensWindow(const char *href, const char *name) ;
 bool handlerGoBrowse(const struct htmlTag *t, const char *name) ;
 void runningError(int msg, ...) ;
 
@@ -151,6 +151,7 @@ void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval) ;
 bool timerWait(int *delay_sec, int *delay_ms);
 void delTimers(struct ebWindow *w);
 void runTimers(void);
+void javaOpensWindow(const char *href, const char *name) ;
 
 /* sourcefile=http.c */
 size_t eb_curl_callback(char *incoming, size_t size, size_t nitems, struct eb_curl_callback_data *data) ;

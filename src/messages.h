@@ -25,7 +25,7 @@ this comment block is just the right size.
 enum {
 	MSG_EndFile,
 	MSG_NoFile,
-	MSG_notused28,
+	MSG_Redirect,
 	MSG_SubGlobal,
 	MSG_SubLocal,
 	MSG_CaseIns,
