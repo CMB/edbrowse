@@ -2257,8 +2257,8 @@ static bool doGlobal(const char *line)
 	for (i = startRange; i <= endRange; ++i) {
 		char *subject = (char *)fetchLine(i, 1);
 		re_count =
-		    pcre_exec(re_cc, 0, subject, pstLength((pst) subject), 0, 0,
-			      re_vector, 33);
+		    pcre_exec(re_cc, 0, subject, pstLength((pst) subject) - 1,
+			      0, 0, re_vector, 33);
 		free(subject);
 		if (re_count < -1) {
 			pcre_free(re_cc);
@@ -3612,7 +3612,7 @@ static char *showLinks(void)
 		nzFree(h);
 	}
 
-removeHiddenNumbers(a, 0);
+	removeHiddenNumbers(a, 0);
 	return a;
 }				/* showLinks */
 
