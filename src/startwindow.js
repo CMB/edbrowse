@@ -103,8 +103,6 @@ document.all.tags = function(s) {
 return document.getElementsByTagName(s);
 }
 
-/* run queue for our script elements */
-document.script$$queue = new Array;
 document.createElement = function(s) { 
 var c;
 var t = s.toLowerCase();
@@ -113,13 +111,12 @@ case "a":
 c = new Anchor();
 break;
 case "image":
+s = "img";
 case "img":
 c = new Image();
 break;
 case "script":
 c = new Script();
-/* add the script to the queue to be ran */
-document.script$$queue.push(c);
 break;
 case "div":
 c = new Div();
@@ -138,6 +135,7 @@ document.tag$$map[t] = new Array;
 * but for most visible ones it does and I doubt it matters much */
 c.style = new Object;
 c.innerHTML = "";
+c.nodeName = s;
 return c;
 } 
 
@@ -516,15 +514,4 @@ alert("[" + h + ":" + m + ":" + s + "] " + obj);
 console.info = console.log;
 console.warn = console.log;
 console.error = console.log;
-
-/* My own function to return the next script that has not been run
- * and is ready to run. Easier to do this here than in C. */
-document.script$$pending = function() {
-for(var i=0; i<document.script$$queue.length; ++i) {
-var s = document.script$$queue[i];
-if(s.exec$$ed) continue; // already run
-if(s.src || s.data) return s;
-}
-return null;
-}
 

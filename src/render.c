@@ -1660,3 +1660,32 @@ void javaOpensWindow(const char *href, const char *name)
 	nzFree(r);
 	stringAndString(&cw->dw, &cw->dw_l, "</A><br>\n");
 }				/* javaOpensWindow */
+
+void javaSetsLinkage(char type, jsobjtype p_j, const char *rest)
+{
+	struct htmlTag *parent, *add, *before;
+	jsobjtype *a_j, *b_j;
+	char p_name[MAXTAGNAME], a_name[MAXTAGNAME], b_name[MAXTAGNAME];
+
+	sscanf(rest, "%s %p,%s %p,%s ", p_name, &a_j, a_name, &b_j, b_name);
+	parent = tagFromJavaVar2(p_j, p_name);
+	add = tagFromJavaVar2(a_j, a_name);
+	if (!parent || !add)
+		return;
+	if (type == 'b') {
+		before = tagFromJavaVar2(b_j, b_name);
+		if (!before)
+			return;
+	}
+
+/* b not implemented yet, just do a for appendChild */
+	add->parent = parent;
+	if (!parent->firstchild)
+		parent->firstchild = add;
+	else {
+		struct htmlTag *c = parent->firstchild;
+		while (c->sibling)
+			c = c->sibling;
+		c->sibling = add;
+	}
+}				/* javaSetsLinkage */

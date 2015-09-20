@@ -111,88 +111,86 @@ Not yet implemented.
 *********************************************************************/
 
 static const struct tagInfo elements[] = {
-	{"BASE", "base reference for relative URLs", TAGACT_BASE, 0, 0, 13},
-	{"A", "an anchor", TAGACT_A, 3, 0, 9},
-	{"INPUT", "an input item", TAGACT_INPUT, 0, 0, 13},
-	{"TITLE", "the title", TAGACT_TITLE, 3, 0, 9},
-	{"TEXTAREA", "an input text area", TAGACT_TA, 3, 0, 9},
-	{"SELECT", "an option list", TAGACT_SELECT, 3, 0, 9},
-	{"OPTION", "a select option", TAGACT_OPTION, 0, 0, 9},
-	{"SUB", "a subscript", TAGACT_SUB, 3, 0, 0},
-	{"SUP", "a superscript", TAGACT_SUP, 3, 0, 0},
-	{"OVB", "an overbar", TAGACT_OVB, 3, 0, 0},
-	{"FONT", "a font", TAGACT_NOP, 3, 0, 0},
-	{"CENTER", "centered text", TAGACT_NOP, 3, 0, 0},
-	{"CAPTION", "a caption", TAGACT_NOP, 3, 5, 0},
-	{"HEAD", "the html header information", TAGACT_HEAD, 1, 0, 13},
-	{"BODY", "the html body", TAGACT_BODY, 1, 0, 13},
-	{"@TEXT", "a text section", TAGACT_TEXT, 0, 0, 4},
-	{"BGSOUND", "background music", TAGACT_MUSIC, 0, 0, 5},
-	{"AUDIO", "audio passage", TAGACT_MUSIC, 0, 0, 5},
-	{"META", "a meta tag", TAGACT_META, 0, 0, 12},
-	{"IMG", "an image", TAGACT_IMAGE, 0, 0, 12},
-	{"IMAGE", "an image", TAGACT_IMAGE, 0, 0, 12},
-	{"BR", "a line break", TAGACT_BR, 0, 1, 4},
-	{"P", "a paragraph", TAGACT_P, 1, 2, 13},
-	{"DIV", "a divided section", TAGACT_DIV, 3, 5, 8},
-	{"MAP", "a map of images", TAGACT_NOP, 3, 5, 8},
-	{"HTML", "html", TAGACT_HTML, 1, 0, 13},
-	{"BLOCKQUOTE", "a quoted paragraph", TAGACT_NOP, 1, 10, 9},
-	{"H1", "a level 1 header", TAGACT_NOP, 1, 10, 9},
-	{"H2", "a level 2 header", TAGACT_NOP, 1, 10, 9},
-	{"H3", "a level 3 header", TAGACT_NOP, 1, 10, 9},
-	{"H4", "a level 4 header", TAGACT_NOP, 1, 10, 9},
-	{"H5", "a level 5 header", TAGACT_NOP, 1, 10, 9},
-	{"H6", "a level 6 header", TAGACT_NOP, 1, 10, 9},
-	{"DT", "a term", TAGACT_DT, 1, 2, 13},
-	{"DD", "a definition", TAGACT_DD, 1, 1, 13},
-	{"LI", "a list item", TAGACT_LI, 1, 1, 13},
-	{"UL", "a bullet list", TAGACT_UL, 3, 10, 9},
-	{"DIR", "a directory list", TAGACT_NOP, 3, 5, 9},
-	{"MENU", "a menu", TAGACT_NOP, 3, 5, 9},
-	{"OL", "a numbered list", TAGACT_OL, 3, 10, 9},
-	{"DL", "a definition list", TAGACT_DL, 3, 10, 9},
-	{"HR", "a horizontal line", TAGACT_HR, 0, 5, 5},
-	{"FORM", "a form", TAGACT_FORM, 1, 10, 9},
-	{"BUTTON", "a button", TAGACT_INPUT, 0, 0, 13},
-/* we traditionally write </frame>,
- * but it really isn't meaningful to put anything at all in between. Thus nest = 0. */
-	{"FRAME", "a frame", TAGACT_FRAME, 0, 2, 13},
-	{"IFRAME", "a frame", TAGACT_FRAME, 0, 2, 13},
-	{"MAP", "an image map", TAGACT_MAP, 0, 2, 13},
-	{"AREA", "an image map area", TAGACT_AREA, 0, 0, 13},
-	{"TABLE", "a table", TAGACT_TABLE, 3, 10, 9},
-	{"TR", "a table row", TAGACT_TR, 3, 5, 9},
-	{"TD", "a table entry", TAGACT_TD, 3, 0, 13},
-	{"TH", "a table heading", TAGACT_TD, 3, 0, 9},
-	{"PRE", "a preformatted section", TAGACT_PRE, 3, 10, 0},
-	{"LISTING", "a listing", TAGACT_PRE, 3, 1, 0},
-	{"XMP", "an example", TAGACT_PRE, 3, 1, 0},
-	{"FIXED", "a fixed presentation", TAGACT_NOP, 3, 1, 0},
-	{"CODE", "a block of code", TAGACT_NOP, 3, 0, 0},
-	{"SAMP", "a block of sample text", TAGACT_NOP, 3, 0, 0},
-	{"ADDRESS", "an address block", TAGACT_NOP, 3, 1, 0},
-	{"STYLE", "a style block", TAGACT_NOP, 0, 0, 2},
-	{"SCRIPT", "a script", TAGACT_SCRIPT, 0, 0, 9},
-	{"NOSCRIPT", "no script section", TAGACT_NOP, 3, 0, 3},
-	{"NOFRAMES", "no frames section", TAGACT_NOP, 3, 0, 3},
-	{"EMBED", "embedded html", TAGACT_MUSIC, 0, 0, 5},
-	{"NOEMBED", "no embed section", TAGACT_NOP, 3, 0, 3},
-	{"OBJECT", "an html object", TAGACT_OBJ, 0, 0, 3},
-	{"EM", "emphasized text", TAGACT_JS, 3, 0, 0},
-	{"LABEL", "a label", TAGACT_JS, 3, 0, 0},
-	{"STRIKE", "emphasized text", TAGACT_JS, 3, 0, 0},
-	{"S", "emphasized text", TAGACT_JS, 3, 0, 0},
-	{"STRONG", "emphasized text", TAGACT_JS, 3, 0, 0},
-	{"B", "bold text", TAGACT_JS, 3, 0, 0},
-	{"I", "italicized text", TAGACT_JS, 3, 0, 0},
-	{"U", "underlined text", TAGACT_JS, 3, 0, 0},
-	{"DFN", "definition text", TAGACT_JS, 3, 0, 0},
-	{"Q", "quoted text", TAGACT_JS, 3, 0, 0},
-	{"ABBR", "an abbreviation", TAGACT_JS, 3, 0, 0},
-	{"SPAN", "an html span", TAGACT_SPAN, 3, 0, 0},
-	{"FRAMESET", "a frame set", TAGACT_JS, 3, 0, 1},
-	{NULL, NULL, 0}
+	{"BASE", "base reference for relative URLs", TAGACT_BASE, 0, 13},
+	{"A", "an anchor", TAGACT_A, 0, 9},
+	{"INPUT", "an input item", TAGACT_INPUT, 0, 13},
+	{"TITLE", "the title", TAGACT_TITLE, 0, 9},
+	{"TEXTAREA", "an input text area", TAGACT_TA, 0, 9},
+	{"SELECT", "an option list", TAGACT_SELECT, 0, 9},
+	{"OPTION", "a select option", TAGACT_OPTION, 0, 9},
+	{"SUB", "a subscript", TAGACT_SUB, 0, 0},
+	{"SUP", "a superscript", TAGACT_SUP, 0, 0},
+	{"OVB", "an overbar", TAGACT_OVB, 0, 0},
+	{"FONT", "a font", TAGACT_NOP, 0, 0},
+	{"CENTER", "centered text", TAGACT_NOP, 0, 0},
+	{"CAPTION", "a caption", TAGACT_NOP, 5, 0},
+	{"HEAD", "the html header information", TAGACT_HEAD, 0, 13},
+	{"BODY", "the html body", TAGACT_BODY, 0, 13},
+	{"@TEXT", "a text section", TAGACT_TEXT, 0, 4},
+	{"BGSOUND", "background music", TAGACT_MUSIC, 0, 5},
+	{"AUDIO", "audio passage", TAGACT_MUSIC, 0, 5},
+	{"META", "a meta tag", TAGACT_META, 0, 12},
+	{"IMG", "an image", TAGACT_IMAGE, 0, 12},
+	{"IMAGE", "an image", TAGACT_IMAGE, 0, 12},
+	{"BR", "a line break", TAGACT_BR, 1, 4},
+	{"P", "a paragraph", TAGACT_P, 2, 13},
+	{"DIV", "a divided section", TAGACT_DIV, 5, 8},
+	{"MAP", "a map of images", TAGACT_NOP, 5, 8},
+	{"HTML", "html", TAGACT_HTML, 0, 13},
+	{"BLOCKQUOTE", "a quoted paragraph", TAGACT_NOP, 10, 9},
+	{"H1", "a level 1 header", TAGACT_NOP, 10, 9},
+	{"H2", "a level 2 header", TAGACT_NOP, 10, 9},
+	{"H3", "a level 3 header", TAGACT_NOP, 10, 9},
+	{"H4", "a level 4 header", TAGACT_NOP, 10, 9},
+	{"H5", "a level 5 header", TAGACT_NOP, 10, 9},
+	{"H6", "a level 6 header", TAGACT_NOP, 10, 9},
+	{"DT", "a term", TAGACT_DT, 2, 13},
+	{"DD", "a definition", TAGACT_DD, 1, 13},
+	{"LI", "a list item", TAGACT_LI, 1, 13},
+	{"UL", "a bullet list", TAGACT_UL, 10, 9},
+	{"DIR", "a directory list", TAGACT_NOP, 5, 9},
+	{"MENU", "a menu", TAGACT_NOP, 5, 9},
+	{"OL", "a numbered list", TAGACT_OL, 10, 9},
+	{"DL", "a definition list", TAGACT_DL, 10, 9},
+	{"HR", "a horizontal line", TAGACT_HR, 5, 5},
+	{"FORM", "a form", TAGACT_FORM, 10, 9},
+	{"BUTTON", "a button", TAGACT_INPUT, 0, 13},
+	{"FRAME", "a frame", TAGACT_FRAME, 2, 13},
+	{"IFRAME", "a frame", TAGACT_FRAME, 2, 13},
+	{"MAP", "an image map", TAGACT_MAP, 2, 13},
+	{"AREA", "an image map area", TAGACT_AREA, 0, 13},
+	{"TABLE", "a table", TAGACT_TABLE, 10, 9},
+	{"TR", "a table row", TAGACT_TR, 5, 9},
+	{"TD", "a table entry", TAGACT_TD, 0, 13},
+	{"TH", "a table heading", TAGACT_TD, 0, 9},
+	{"PRE", "a preformatted section", TAGACT_PRE, 10, 0},
+	{"LISTING", "a listing", TAGACT_PRE, 1, 0},
+	{"XMP", "an example", TAGACT_PRE, 1, 0},
+	{"FIXED", "a fixed presentation", TAGACT_NOP, 1, 0},
+	{"CODE", "a block of code", TAGACT_NOP, 0, 0},
+	{"SAMP", "a block of sample text", TAGACT_NOP, 0, 0},
+	{"ADDRESS", "an address block", TAGACT_NOP, 1, 0},
+	{"STYLE", "a style block", TAGACT_NOP, 0, 2},
+	{"SCRIPT", "a script", TAGACT_SCRIPT, 0, 9},
+	{"NOSCRIPT", "no script section", TAGACT_NOP, 0, 3},
+	{"NOFRAMES", "no frames section", TAGACT_NOP, 0, 3},
+	{"EMBED", "embedded html", TAGACT_MUSIC, 0, 5},
+	{"NOEMBED", "no embed section", TAGACT_NOP, 0, 3},
+	{"OBJECT", "an html object", TAGACT_OBJ, 0, 3},
+	{"EM", "emphasized text", TAGACT_JS, 0, 0},
+	{"LABEL", "a label", TAGACT_JS, 0, 0},
+	{"STRIKE", "emphasized text", TAGACT_JS, 0, 0},
+	{"S", "emphasized text", TAGACT_JS, 0, 0},
+	{"STRONG", "emphasized text", TAGACT_JS, 0, 0},
+	{"B", "bold text", TAGACT_JS, 0, 0},
+	{"I", "italicized text", TAGACT_JS, 0, 0},
+	{"U", "underlined text", TAGACT_JS, 0, 0},
+	{"DFN", "definition text", TAGACT_JS, 0, 0},
+	{"Q", "quoted text", TAGACT_JS, 0, 0},
+	{"ABBR", "an abbreviation", TAGACT_JS, 0, 0},
+	{"SPAN", "an html span", TAGACT_SPAN, 0, 0},
+	{"FRAMESET", "a frame set", TAGACT_JS, 0, 1},
+	{"", NULL, 0}
 };
 
 void freeTags(struct ebWindow *w)
@@ -604,10 +602,10 @@ struct htmlTag *newTag(const char *name)
 	const struct tagInfo *ti;
 	int action;
 
-	for (ti = elements; ti->name; ++ti)
+	for (ti = elements; ti->name[0]; ++ti)
 		if (stringEqualCI(ti->name, name))
 			break;
-	if (!ti->name)
+	if (!ti->name[0])
 		return 0;
 
 	action = ti->action;
@@ -615,9 +613,6 @@ struct htmlTag *newTag(const char *name)
 	t->action = action;
 	t->info = ti;
 	t->seqno = cw->numTags;
-	t->balanced = true;
-	if (stringEqual(name, "a"))
-		t->clickable = true;
 	pushTag(t);
 	return t;
 }				/* newTag */
@@ -683,7 +678,11 @@ top:
 		if (!jtxt)
 			continue;	/* nothing there */
 		js_file = t->js_file;
+		if (!js_file)
+			js_file = "generated";
 		ln = t->js_ln;
+		if (!ln)
+			ln = 1;
 		debugPrint(3, "execute %s at %d", js_file, ln);
 /* if script is in the html it usually begins on the next line, so increment,
  * and hope the error messages line up. */
@@ -2149,6 +2148,7 @@ bool infPush(int tagno, char **post_string)
 }				/* infPush */
 
 /* I don't have any reverse pointers, so I'm just going to scan the list */
+/* This doesn't come up all that often. */
 struct htmlTag *tagFromJavaVar(jsobjtype v)
 {
 	struct htmlTag *t = 0;
@@ -2160,12 +2160,27 @@ struct htmlTag *tagFromJavaVar(jsobjtype v)
 	for (i = 0; i < cw->numTags; ++i) {
 		t = tagList[i];
 		if (t->jv == v)
-			break;
+			return t;
 	}
-	if (!t)
-		runningError(MSG_LostTag);
-	return t;
+	return 0;
 }				/* tagFromJavaVar */
+
+/* Like the above but create it if you can't find it. */
+struct htmlTag *tagFromJavaVar2(jsobjtype v, const char *tagname)
+{
+	struct htmlTag *t = tagFromJavaVar(v);
+	if (t)
+		return t;
+	if (!tagname)
+		return 0;
+	t = newTag(tagname);
+	if (!t)
+		return 0;
+	t->jv = v;
+/* this node now has a js object, don't decorate it again. */
+	t->step = 2;
+	return t;
+}				/* tagFromJavaVar2 */
 
 /* Return false to stop javascript, due to a url redirect */
 void javaSubmitsForm(jsobjtype v, bool reset)

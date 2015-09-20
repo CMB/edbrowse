@@ -133,6 +133,7 @@ void infShow(int tagno, const char *search) ;
 bool infReplace(int tagno, const char *newtext, bool notify) ;
 bool infPush(int tagno, char **post_string) ;
 struct htmlTag *tagFromJavaVar(jsobjtype v);
+struct htmlTag *tagFromJavaVar2(jsobjtype v, const char *tagname);
 void javaSubmitsForm(jsobjtype v, bool reset) ;
 bool handlerGoBrowse(const struct htmlTag *t, const char *name) ;
 void runningError(int msg, ...) ;
@@ -152,6 +153,7 @@ bool timerWait(int *delay_sec, int *delay_ms);
 void delTimers(struct ebWindow *w);
 void runTimers(void);
 void javaOpensWindow(const char *href, const char *name) ;
+void javaSetsLinkage(char type, jsobjtype p, const char *rest);
 
 /* sourcefile=http.c */
 size_t eb_curl_callback(char *incoming, size_t size, size_t nitems, struct eb_curl_callback_data *data) ;

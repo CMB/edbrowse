@@ -394,11 +394,11 @@ extern struct ebSession sessionList[];
 extern struct ebSession *cs;	/* current session */
 
 /* The information on an html tag */
+#define MAXTAGNAME 12
 struct tagInfo {
-	const char *name;
+	const char name[MAXTAGNAME];
 	const char *desc;
 	int action;
-	uchar nest;		/* must nest, like parentheses */
 	uchar para;		/* paragraph and line breaks */
 	ushort bits;		/* a bunch of boolean attributes */
 };
@@ -436,8 +436,6 @@ struct htmlTag {
 	struct htmlTag *controller;
 	uchar step; /* prerender, decorate, runscript */
 	bool slash:1;		/* as in </A> */
-	bool balanced:1;	/* <foo> and </foo> */
-	bool retain:1;
 	bool textin:1; /* <a> some text </a> */
 	bool deleted:1; /* deleted from the current buffer */
 	bool multiple:1;

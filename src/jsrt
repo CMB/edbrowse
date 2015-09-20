@@ -649,6 +649,7 @@ else alert("ok, never mind");
 function formLoad(name) { onlv++; alert("form " + name + " loading");
 var s = document.createElement("script");
 s.data = "lastScript()";
+document.body.appendChild(s);
 }
 function formUnload(name) { alert("form " + name + " unloading"); }
 function docLoad() { alert("doc loader attached"); }
@@ -657,9 +658,7 @@ var onlv = 77;
 
 /* last script to run automatically; loaded by the form.onload function */
 function lastScript() {
-/* This generates a tidy5 error,
- * but I'm leaving it as is to look at and test the resulting node tree */
-document.writeln('<A href=custer>Last Link<' + '/A>');
+document.writeln("<P>Created script running");
 }
 
 setTimeout("joker()", 45000);
@@ -684,16 +683,6 @@ if(data_uri1_test != "set")
 fail(146);
 if(data_uri2_test != "set")
 fail(147);
-
-data_uri1_test = '';
-data_uri2_test = '';
-/* creating tag elements has to be rethought and redesigned...
-script_from_data = document.createElement('script');
-script_from_data.src = 'data:text/javascript,var data_uri1_test %3d %22set%22%3b';
-script_from_data = document.createElement('script');
-script_from_data.src = 'data:text/javascript;base64,dmFyIGRhdGFfdXJpMl90ZXN0ID0gInNldCI7Cg==';
-*/
-
 </script>
 
 <script type=text/javascript language=JavaScript>

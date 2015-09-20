@@ -1097,6 +1097,7 @@ static JSBool setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
 static JSBool appendChild(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	unsigned length;
+	const char *nodeName;
 	js::RootedValue v(cx);
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
@@ -1121,9 +1122,34 @@ static JSBool appendChild(JSContext * cx, unsigned int argc, jsval * vp)
 	if (args.length() > 0 && args[0].isObject()) {
 		char e[40];
 		JS::RootedObject child(cx, JSVAL_TO_OBJECT(args[0]));
-		sprintf(e, "l{a|%s|", pointer2string(thisobj));
+		sprintf(e, "l{a|%s,", pointer2string(thisobj));
 		stringAndString(&effects, &eff_l, e);
+		if (JS_GetProperty(jcx, thisobj, "nodeName", v.address()) ==
+		    JS_TRUE) {
+			nodeName = stringize(v);
+			if (nodeName) {
+				length = strlen(nodeName);
+				if (length >= MAXTAGNAME)
+					length = MAXTAGNAME - 1;
+				stringAndBytes(&effects, &eff_l, nodeName,
+					       length);
+			}
+		}
+		stringAndChar(&effects, &eff_l, ' ');
 		stringAndString(&effects, &eff_l, pointer2string(child));
+		stringAndChar(&effects, &eff_l, ',');
+		if (JS_GetProperty(jcx, child, "nodeName", v.address()) ==
+		    JS_TRUE) {
+			nodeName = stringize(v);
+			if (nodeName) {
+				length = strlen(nodeName);
+				if (length >= MAXTAGNAME)
+					length = MAXTAGNAME - 1;
+				stringAndBytes(&effects, &eff_l, nodeName,
+					       length);
+			}
+		}
+		stringAndString(&effects, &eff_l, " 0x0, ");
 		endeffect();
 	}
 	args.rval().set(JSVAL_VOID);

@@ -261,6 +261,14 @@ static void processEffects(void)
 			javaSetsInner(p, t, c);
 			break;
 
+		case 'l':
+			c = *s;
+			s += 2;
+			sscanf(s, "%p", &p);
+			s = strchr(s, ',') + 1;
+			javaSetsLinkage(c, p, s);
+			break;
+
 		}		/* switch */
 
 /* skip past end marker + newline */
