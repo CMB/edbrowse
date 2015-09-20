@@ -1153,7 +1153,6 @@ static void jsNode(struct htmlTag *t, bool opentag)
 	case TAGACT_FORM:
 		domLink(t, "Form", "action", "forms", cw->docobj, 0);
 		set_onhandlers(t);
-		instantiate_array(t->jv, "elements");
 		break;
 
 	case TAGACT_INPUT:

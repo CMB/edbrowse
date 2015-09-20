@@ -185,6 +185,7 @@ v{ javascript changes the value of an input field }
 c{set cookie}
 i{ innnerHtml or innerText }
 f{ form submit or reset }
+l{ linking objects together in a tree }
 Any or all of these could be coded in the side effects string.
 *********************************************************************/
 
@@ -1143,8 +1144,8 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 			io = instantiate(owner, membername, classname);
 			if (io == NULL)
 				return;
-/* not an array; needs the $kids$ array beneath it for the children */
-			instantiate_array(io, "$kids$");
+/* not an array; needs the elements array beneath it for the children */
+			instantiate_array(io, "elements");
 		}
 
 		if (membername == symname) {

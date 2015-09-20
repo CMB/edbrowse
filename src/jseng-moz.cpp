@@ -1099,8 +1099,8 @@ static JSBool appendChild(JSContext * cx, unsigned int argc, jsval * vp)
 	unsigned length;
 	js::RootedValue v(cx);
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
-	if (JS_GetProperty(cx, obj, "elements", v.address()) == JS_FALSE)
+	JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+	if (JS_GetProperty(cx, thisobj, "elements", v.address()) == JS_FALSE)
 		return JS_TRUE;	/* no such array */
 	JS::RootedObject elar(cx, JSVAL_TO_OBJECT(v));
 	if (elar == NULL) {
@@ -1116,6 +1116,15 @@ static JSBool appendChild(JSContext * cx, unsigned int argc, jsval * vp)
 			     NULL, NULL, PROP_STD) == JS_FALSE) {
 		misconfigure();
 		return JS_FALSE;
+	}
+/* pass this linkage information back to edbrowse, to update its dom tree */
+	if (args.length() > 0 && args[0].isObject()) {
+		char e[40];
+		JS::RootedObject child(cx, JSVAL_TO_OBJECT(args[0]));
+		sprintf(e, "l{a|%s|", pointer2string(thisobj));
+		stringAndString(&effects, &eff_l, e);
+		stringAndString(&effects, &eff_l, pointer2string(child));
+		endeffect();
 	}
 	args.rval().set(JSVAL_VOID);
 	return JS_TRUE;
@@ -1213,6 +1222,14 @@ static JSBool form_reset(JSContext * cx, unsigned int argc, jsval * vp)
 static JSFunctionSpec form_methods[] = {
 	JS_FS("submit", form_submit, 0, 0),
 	JS_FS("reset", form_reset, 0, 0),
+	JS_FS("setAttribute", setAttribute, 2, 0),
+	JS_FS("appendChild", appendChild, 1, 0),
+	JS_FS_END
+};
+
+static JSFunctionSpec div_methods[] = {
+	JS_FS("setAttribute", setAttribute, 2, 0),
+	JS_FS("appendChild", appendChild, 1, 0),
 	JS_FS_END
 };
 
@@ -1500,7 +1517,7 @@ static struct {
 	{&table_class, table_ctor},
 	{&trow_class, trow_ctor},
 	{&cell_class, cell_ctor},
-	{&div_class, div_ctor},
+	{&div_class, div_ctor, div_methods},
 	{&area_class, area_ctor},
 	{&span_class, span_ctor},
 	{&option_class, option_ctor, NULL, 2},
