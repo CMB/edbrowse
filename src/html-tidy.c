@@ -125,15 +125,11 @@ void html2nodes(const char *htmltext)
 	char *htmlfix = 0;
 
 	tdoc = tidyCreate();
-#ifdef HAVE_TIDYSKIPQUOTES
 	tidyOptSetBool(tdoc, TidySkipQuotes, yes);
-#endif
 	tidySetReportFilter(tdoc, tidyErrorHandler);
 	tidySetCharEncoding(tdoc, (cons_utf8 ? "utf8" : "latin1"));
 
-#ifndef HAVE_TIDYSKIPQUOTES
 //	htmlfix = escapeLessScript(htmltext);
-#endif
 	if (htmlfix) {
 		tidyParseString(tdoc, htmlfix);
 		nzFree(htmlfix);
