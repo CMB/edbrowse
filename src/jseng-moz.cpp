@@ -1227,6 +1227,48 @@ static JSBool doc_writeln(JSContext * cx, unsigned int argc, jsval * vp)
 	return JS_TRUE;
 }				/* doc_writeln */
 
+/* this has a native wrapper so we can set innerHTML with a setter */
+static JSBool doc_createElement(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	char run[60];
+	const char *tagname = NULL, *s;
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	JS::RootedString str(cx);
+	if (args.length() > 0 && (str = JS_ValueToString(cx, args[0])))
+		tagname = JS_c_str(str);
+	if (!tagname || strlen(tagname) >= MAXTAGNAME) {
+fail:
+		cnzFree(tagname);
+		args.rval().set(JSVAL_NULL);
+		return JS_TRUE;
+	}
+	for (s = tagname; *s; ++s)
+		if (!isalnumByte(*s))
+			goto fail;
+/* let js do most of the work */
+	sprintf(run, "document.crel$$('%s')", tagname);
+	JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+	js::RootedValue v(cx);
+	if (JS_EvaluateScript(cx, thisobj, run, strlen(run),
+			      "create", 1, v.address()) == JS_FALSE)
+		goto fail;
+	if (!v.isObject())
+		goto fail;
+	JS::RootedObject child(cx, JSVAL_TO_OBJECT(v));
+/* and now the reason for the wrapper */
+	JS_DefineProperty(cx, child, "innerHTML",
+			  JS_GetEmptyStringValue(cx),
+			  NULL, setter_innerHTML, PROP_STD);
+/* But we can't set innerHTML unless the object exists in edbrowse */
+	sprintf(run, "l{c|%s,%s 0x0, 0x0, ", pointer2string(child), tagname);
+	stringAndString(&effects, &eff_l, run);
+	endeffect();
+
+/* and return the created object */
+	args.rval().set(v);
+	return JS_TRUE;
+}				/* doc_createElement */
+
 static JSFunctionSpec document_methods[] = {
 	JS_FS("focus", nullFunction, 0, 0),
 	JS_FS("blur", nullFunction, 0, 0),
@@ -1234,6 +1276,7 @@ static JSFunctionSpec document_methods[] = {
 	JS_FS("close", nullFunction, 0, 0),
 	JS_FS("write", doc_write, 0, 0),
 	JS_FS("writeln", doc_writeln, 0, 0),
+	JS_FS("createElement", doc_createElement, 0, 0),
 	JS_FS_END
 };
 
@@ -1288,6 +1331,13 @@ static JSFunctionSpec span_methods[] = {
 	JS_FS_END
 };
 
+static JSFunctionSpec table_methods[] = {
+	JS_FS("setAttribute", setAttribute, 2, 0),
+	JS_FS("appendChild", appendChild, 1, 0),
+	JS_FS("apch", apch, 1, 0),
+	JS_FS_END
+};
+
 static JSBool win_close(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	if (head.highstat <= EJ_HIGH_CX_FAIL) {
@@ -1304,9 +1354,8 @@ static JSBool win_alert(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	const char *msg = NULL;
 	JS::RootedString str(cx);
-	if (args.length() > 0 && (str = JS_ValueToString(cx, args[0]))) {
+	if (args.length() > 0 && (str = JS_ValueToString(cx, args[0])))
 		msg = JS_c_str(str);
-	}
 	if (msg && *msg)
 		puts(msg);
 	cnzFree(msg);
@@ -1569,7 +1618,7 @@ static struct {
 	{&image_class, image_ctor, NULL, 1},
 	{&frame_class, frame_ctor},
 	{&anchor_class, anchor_ctor, NULL, 1},
-	{&table_class, table_ctor},
+	{&table_class, table_ctor, table_methods},
 	{&trow_class, trow_ctor},
 	{&cell_class, cell_ctor},
 	{&div_class, div_ctor, div_methods},

@@ -103,7 +103,8 @@ document.all.tags = function(s) {
 return document.getElementsByTagName(s);
 }
 
-document.createElement = function(s) { 
+/* document.createElement is a native wrapper around this function */
+document.crel$$ = function(s) { 
 var c;
 var t = s.toLowerCase();
 switch(t) { 
@@ -135,7 +136,6 @@ document.tag$$map[t] = new Array;
 * but for most visible ones it does and I doubt it matters much */
 c.style = new Object;
 c.elements = new Array;
-c.innerHTML = "";
 c.nodeName = s;
 return c;
 } 
