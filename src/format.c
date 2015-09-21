@@ -249,7 +249,7 @@ normalChar:
 		}
 /* end of loop making changes */
 	}
-	debugPrint(3, "anchorSwap %d", cnt);
+	debugPrint(4, "anchorSwap %d", cnt);
 
 /* Framing characters like [] around an anchor are unnecessary here,
  * because we already frame it in braces.
@@ -311,7 +311,7 @@ putc:
 		*w++ = c;
 	}			/* loop over buffer */
 	*w = 0;
-	debugPrint(3, "anchors unframed");
+	debugPrint(4, "anchors unframed");
 
 /* Now compress the implied linebreaks into one. */
 	premode = false;
@@ -350,7 +350,7 @@ putc:
 			if (*w == '\r' && w != a)
 				*w = ' ';
 	}			/* loop over buffer */
-	debugPrint(3, "whitespace combined");
+	debugPrint(4, "whitespace combined");
 }				/* anchorSwap */
 
 /*********************************************************************

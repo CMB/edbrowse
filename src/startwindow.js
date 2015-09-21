@@ -134,13 +134,17 @@ document.tag$$map[t] = new Array;
 /* ok, for some element types this perhaps doesn't make sense,
 * but for most visible ones it does and I doubt it matters much */
 c.style = new Object;
+c.elements = new Array;
 c.innerHTML = "";
 c.nodeName = s;
 return c;
 } 
 
 document.createTextNode = function(t) {
-return new TextNode(t); }
+var c = new TextNode(t);
+c.nodeName = "text";
+return c;
+}
 
 /* window.open is the same as new window, just pass the args through */
 function open() {

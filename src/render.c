@@ -577,6 +577,12 @@ li_hide:
 
 	switch (action) {
 	case TAGACT_TEXT:
+		if (!t->textval && t->jv) {
+/* A text node from html should always contain a string. But if this node
+ * is created by document.createTextNode(), the string is
+ * down in the member "text". */
+t->textval = get_property_string(t->jv, "text");
+}
 		if (!t->textval)
 			break;
 		liCheck(t);
