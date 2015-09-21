@@ -823,10 +823,11 @@ static void intoTree(struct htmlTag *parent)
 			    parent->action == TAGACT_HTML
 			    || parent->action == TAGACT_BODY) {
 /* link up to treeAttach */
-				debugPrint(5, "node up %s to %s",
-					   t->info->name,
-					   (treeAttach ? treeAttach->
-					    info->name : "root"));
+				const char *w = "root";
+				if (treeAttach)
+					w = treeAttach->info->name;
+				debugPrint(5, "node up %s to %s", t->info->name,
+					   w);
 				t->parent = treeAttach;
 				if (treeAttach) {
 					struct htmlTag *c =

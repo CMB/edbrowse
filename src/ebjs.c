@@ -1026,7 +1026,7 @@ This is a disaster!
 Create a fake name, so we can attach the element.
 *********************************************************************/
 
-static const char *fakePropName(void)
+const char *fakePropName(void)
 {
 	static char fakebuf[24];
 	static int idx = 0;
@@ -1221,8 +1221,6 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 	}
 
 	t->jv = io;
-	if (t->parent && t->parent->jv)
-		set_property_object(io, "parentNode", t->parent->jv);
 
 	set_property_string(io, "nodeName", t->info->name);
 

@@ -255,30 +255,28 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 
 		if (currentTitle) {
 			if (!cw->ft) {
-				cw->ft = t->textval;
+				cw->ft = cloneString(t->textval);
 				spaceCrunch(cw->ft, true, false);
-			} else
-				nzFree(t->textval);
-			t->textval = 0;
+			}
+			t->deleted = true;
 			break;
 		}
 
 		if (currentOpt) {
-			currentOpt->textval = t->textval;
+			currentOpt->textval = cloneString(t->textval);
 			spaceCrunch(currentOpt->textval, true, false);
-			t->textval = 0;
+			t->deleted = true;
 			break;
 		}
 
 		if (currentScript) {
-			currentScript->textval = t->textval;
-			t->textval = 0;
+			currentScript->textval = cloneString(t->textval);
+			t->deleted = true;
 			break;
 		}
 
 		if (currentTA) {
-			currentTA->value = t->textval;
-			t->textval = 0;
+			currentTA->value = cloneString(t->textval);
 /* Sometimes tidy lops off the last newline character; it depends on
  * the tag following. And even if it didn't end in nl in the original html,
  * <textarea>foobar</textarea>, it probably should,
@@ -291,6 +289,7 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 				currentTA->value[j + 1] = 0;
 			}
 			currentTA->rvalue = cloneString(currentTA->value);
+			t->deleted = true;
 			break;
 		}
 
@@ -581,8 +580,8 @@ li_hide:
 /* A text node from html should always contain a string. But if this node
  * is created by document.createTextNode(), the string is
  * down in the member "text". */
-t->textval = get_property_string(t->jv, "text");
-}
+			t->textval = get_property_string(t->jv, "text");
+		}
 		if (!t->textval)
 			break;
 		liCheck(t);
@@ -1019,7 +1018,6 @@ static void optionJS(struct htmlTag *t)
 	set_property_string(t->jv, "nodeName", "OPTION");
 	set_property_bool(t->jv, "selected", t->checked);
 	set_property_bool(t->jv, defsel, t->checked);
-	set_property_object(t->jv, "parentNode", sel->jv);
 
 	if (t->checked && !sel->multiple) {
 		set_property_number(sel->jv, "selectedIndex", t->lic);
@@ -1152,6 +1150,17 @@ static void jsNode(struct htmlTag *t, bool opentag)
 #endif
 
 	switch (action) {
+	case TAGACT_TEXT:
+		t->jv = instantiate(cw->docobj, fakePropName(), "TextNode");
+		if (t->jv) {
+			const char *w = t->textval;
+			if (!w)
+				w = emptyString;
+			set_property_string(t->jv, "text", w);
+			set_property_string(t->jv, "nodeName", "text");
+		}
+		break;
+
 	case TAGACT_SCRIPT:
 		prepareScript(t);
 		break;
@@ -1236,6 +1245,10 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		break;
 
 	}			/* switch */
+
+/* js tree mirrors the dom tree */
+	if (t->jv && t->parent && t->parent->jv)
+		run_function_objargs(t->parent->jv, "apch", 1, t->jv);
 }				/* jsNode */
 
 /* decorate the tree of nodes with js objects */

@@ -79,6 +79,7 @@ jsobjtype instantiate_array_element(jsobjtype array, int idx, const char *classn
 jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname) ;
 int set_property_function(jsobjtype parent, const char *name, const char *body) ;
 char *get_property_option(jsobjtype obj) ;
+const char *fakePropName(void);
 void domLink(struct htmlTag *t, const char *classname, const char *href, const char *list, jsobjtype owner, int radiosel) ;
 void setupJavaDom(void) ;
 jsobjtype instantiate_url(jsobjtype parent, const char *name, const char *url) ;

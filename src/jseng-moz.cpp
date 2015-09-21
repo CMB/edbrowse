@@ -370,14 +370,14 @@ static JSObject *string2pointer(const char *s)
 }				/* string2pointer */
 
 /* like the function in ebjs.c, but a different name */
-static const char *fakePropName(void)
+static const char *fakePropName0(void)
 {
 	static char fakebuf[24];
 	static int idx = 0;
 	++idx;
 	sprintf(fakebuf, "cg$$%d", idx);
 	return fakebuf;
-}				/*fakePropName */
+}				/*fakePropName0 */
 
 /*********************************************************************
 This returns the string equivalent of the js value, but use with care.
@@ -1094,12 +1094,17 @@ static JSBool setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
 	return JS_TRUE;
 }				/* setAttribute */
 
-static JSBool appendChild(JSContext * cx, unsigned int argc, jsval * vp)
+static JSBool appendChild0(bool side, JSContext * cx, unsigned int argc,
+			   jsval * vp)
 {
 	unsigned length;
 	const char *nodeName;
 	js::RootedValue v(cx);
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+/* we need an argument that is an object */
+	if (args.length() == 0 || !args[0].isObject())
+		return JS_TRUE;
+
 	JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
 	if (JS_GetProperty(cx, thisobj, "elements", v.address()) == JS_FALSE)
 		return JS_TRUE;	/* no such array */
@@ -1113,15 +1118,17 @@ static JSBool appendChild(JSContext * cx, unsigned int argc, jsval * vp)
 		return JS_FALSE;
 	}
 	if (JS_DefineElement(cx, elar, length,
-			     (args.length() > 0 ? args[0] : JSVAL_NULL),
-			     NULL, NULL, PROP_STD) == JS_FALSE) {
+			     args[0], NULL, NULL, PROP_STD) == JS_FALSE) {
 		misconfigure();
 		return JS_FALSE;
 	}
+	JS::RootedObject child(cx, JSVAL_TO_OBJECT(args[0]));
+	JS_DefineProperty(cx, child, "parentNode", OBJECT_TO_JSVAL(thisobj),
+			  NULL, NULL, PROP_STD);
+
 /* pass this linkage information back to edbrowse, to update its dom tree */
-	if (args.length() > 0 && args[0].isObject()) {
+	if (side) {
 		char e[40];
-		JS::RootedObject child(cx, JSVAL_TO_OBJECT(args[0]));
 		sprintf(e, "l{a|%s,", pointer2string(thisobj));
 		stringAndString(&effects, &eff_l, e);
 		if (JS_GetProperty(jcx, thisobj, "nodeName", v.address()) ==
@@ -1152,19 +1159,32 @@ static JSBool appendChild(JSContext * cx, unsigned int argc, jsval * vp)
 		stringAndString(&effects, &eff_l, " 0x0, ");
 		endeffect();
 	}
+
 	args.rval().set(JSVAL_VOID);
 	return JS_TRUE;
+}				/* appendChild0 */
+
+static JSBool appendChild(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	return appendChild0(true, cx, argc, vp);
 }				/* appendChild */
+
+static JSBool apch(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	return appendChild0(false, cx, argc, vp);
+}				/* apch */
 
 static JSFunctionSpec body_methods[] = {
 	JS_FS("setAttribute", setAttribute, 2, 0),
 	JS_FS("appendChild", appendChild, 1, 0),
+	JS_FS("apch", apch, 1, 0),
 	JS_FS_END
 };
 
 static JSFunctionSpec head_methods[] = {
 	JS_FS("setAttribute", setAttribute, 2, 0),
 	JS_FS("appendChild", appendChild, 1, 0),
+	JS_FS("apch", apch, 1, 0),
 	JS_FS_END
 };
 
@@ -1250,12 +1270,21 @@ static JSFunctionSpec form_methods[] = {
 	JS_FS("reset", form_reset, 0, 0),
 	JS_FS("setAttribute", setAttribute, 2, 0),
 	JS_FS("appendChild", appendChild, 1, 0),
+	JS_FS("apch", apch, 1, 0),
 	JS_FS_END
 };
 
 static JSFunctionSpec div_methods[] = {
 	JS_FS("setAttribute", setAttribute, 2, 0),
 	JS_FS("appendChild", appendChild, 1, 0),
+	JS_FS("apch", apch, 1, 0),
+	JS_FS_END
+};
+
+static JSFunctionSpec span_methods[] = {
+	JS_FS("setAttribute", setAttribute, 2, 0),
+	JS_FS("appendChild", appendChild, 1, 0),
+	JS_FS("apch", apch, 1, 0),
 	JS_FS_END
 };
 
@@ -1411,7 +1440,7 @@ abort:
 		}
 		v1 = OBJECT_TO_JSVAL(to);
 		if (JS_DefineProperty
-		    (jcx, winobj, fakePropName(), v1, NULL, NULL,
+		    (jcx, winobj, fakePropName0(), v1, NULL, NULL,
 		     PROP_STD) == JS_FALSE)
 			goto abort;
 		if (fo) {
@@ -1545,7 +1574,7 @@ static struct {
 	{&cell_class, cell_ctor},
 	{&div_class, div_ctor, div_methods},
 	{&area_class, area_ctor},
-	{&span_class, span_ctor},
+	{&span_class, span_ctor, span_methods},
 	{&option_class, option_ctor, NULL, 2},
 	{&script_class, script_ctor},
 	{&para_class, para_ctor},
