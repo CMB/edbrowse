@@ -2509,6 +2509,167 @@ replaceText(const char *line, int len, const char *rhs,
 	return true;
 }				/* replaceText */
 
+static void
+findField(const char *line, int ftype, int n,
+	  int *total, int *realtotal, int *tagno, char **href,
+	  const struct htmlTag **tagp)
+{
+	const struct htmlTag *t;
+	int nt = 0;		/* number of fields total */
+	int nrt = 0;		/* the real total, for input fields */
+	int nm = 0;		/* number match */
+	int j;
+	const char *s, *ss;
+	char *h, *nmh;
+	char c;
+	static const char urlok[] =
+	    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890,./?@#%&-_+=:~";
+
+	if (href)
+		*href = 0;
+	if (tagp)
+		*tagp = 0;
+
+	if (cw->browseMode) {
+
+		s = line;
+		while ((c = *s) != '\n') {
+			++s;
+			if (c != InternalCodeChar)
+				continue;
+			j = strtol(s, (char **)&s, 10);
+			if (!ftype) {
+				if (*s != '{')
+					continue;
+				++nt, ++nrt;
+				if (n == nt || n < 0)
+					nm = j;
+				if (!n) {
+					if (!nm)
+						nm = j;
+					else
+						nm = -1;
+				}
+			} else {
+				if (*s != '<')
+					continue;
+				if (n > 0) {
+					++nt, ++nrt;
+					if (n == nt)
+						nm = j;
+					continue;
+				}
+				if (n < 0) {
+					nm = j;
+					++nt, ++nrt;
+					continue;
+				}
+				++nrt;
+				t = tagList[j];
+				if (ftype == 1 && t->itype <= INP_SUBMIT)
+					continue;
+				if (ftype == 2 && t->itype > INP_SUBMIT)
+					continue;
+				++nt;
+				if (!nm)
+					nm = j;
+				else
+					nm = -1;
+			}
+		}		/* loop over line */
+	}
+
+	if (nm < 0)
+		nm = 0;
+	if (total)
+		*total = nrt;
+	if (realtotal)
+		*realtotal = nt;
+	if (tagno)
+		*tagno = nm;
+	if (!ftype && nm) {
+		t = tagList[nm];
+		if (href)
+			*href = cloneString(t->href);
+		if (tagp)
+			*tagp = t;
+		if (href && isJSAlive && t->jv) {
+/* defer to the java variable for the reference */
+			char *jh = get_property_url(t->jv, false);
+			if (jh) {
+				if (!*href || !stringEqual(*href, jh)) {
+					nzFree(*href);
+					*href = jh;
+				}
+			}
+		}
+	}
+
+	if (nt || ftype)
+		return;
+
+/* Second time through, maybe the url is in plain text. */
+	nmh = 0;
+	s = line;
+	while (true) {
+/* skip past weird characters */
+		while ((c = *s) != '\n') {
+			if (strchr(urlok, c))
+				break;
+			++s;
+		}
+		if (c == '\n')
+			break;
+		ss = s;
+		while (strchr(urlok, *s))
+			++s;
+		h = pullString1(ss, s);
+		unpercentURL(h);
+		if (!isURL(h)) {
+			free(h);
+			continue;
+		}
+		++nt;
+		if (n == nt || n < 0) {
+			nm = nt;
+			nzFree(nmh);
+			nmh = h;
+			continue;
+		}
+		if (n) {
+			free(h);
+			continue;
+		}
+		if (!nm) {
+			nm = nt;
+			nmh = h;
+			continue;
+		}
+		free(h);
+		nm = -1;
+		free(nmh);
+		nmh = 0;
+	}			/* loop over line */
+
+	if (nm < 0)
+		nm = 0;
+	if (total)
+		*total = nt;
+	if (realtotal)
+		*realtotal = nt;
+	if (href)
+		*href = nmh;
+	else
+		nzFree(nmh);
+}				/* findField */
+
+static void
+findInputField(const char *line, int ftype, int n, int *total, int *realtotal,
+	       int *tagno)
+{
+	findField(line, ftype, n, total, realtotal, tagno, 0, 0);
+}				/* findInputField */
+
 /* Substitute text on the lines in startRange through endRange.
  * We could be changing the text in an input field.
  * If so, we'll call infReplace().
@@ -2546,6 +2707,8 @@ static int substituteText(const char *line)
 /* watch for s2/x/y/ for the second input field */
 		if (isdigitByte(*line))
 			whichField = strtol(line, (char **)&line, 10);
+		else if (*line == '$')
+			whichField = -1, ++line;
 		if (!*line) {
 			setError(MSG_RexpMissing2, icmd);
 			return -1;
@@ -4228,9 +4391,13 @@ bool runCommand(const char *line)
 /* Now try to go to a hyperlink */
 		s = line;
 		j = 0;
-		if (first)
-			j = strtol(line, (char **)&s, 10);
-		if (j >= 0 && !*s) {
+		if (first) {
+			if (isdigitByte(first))
+				j = strtol(s, (char **)&s, 10);
+			else if (first == '$')
+				j = -1, ++s;
+		}
+		if (!*s) {
 			if (cw->sqlMode) {
 				setError(MSG_DBG);
 				return false;
@@ -4278,9 +4445,9 @@ bool runCommand(const char *line)
 			rc = false;
 			if (jsgo) {
 /* javascript might update fields */
-				jSyncup();
 /* The program might depend on the mouseover code running first */
 				if (over) {
+					jSyncup();
 					rc = handlerGoBrowse(tag,
 							     "onmouseover");
 					jSideEffects();
@@ -4292,6 +4459,7 @@ bool runCommand(const char *line)
 			if (!rc && !jsdead)
 				set_property_string(cw->winobj, "status", h);
 			if (jsgo && click) {
+				jSyncup();
 				rc = handlerGoBrowse(tag, "onclick");
 				jSideEffects();
 				if (newlocation)
@@ -4300,6 +4468,7 @@ bool runCommand(const char *line)
 					return true;
 			}
 			if (jsh) {
+				jSyncup();
 				javaParseExecute(cw->winobj, h, 0, 0);
 				jSideEffects();
 				if (newlocation)
@@ -4337,6 +4506,8 @@ bool runCommand(const char *line)
 		s = line;
 		if (isdigitByte(*s))
 			cx = strtol(s, (char **)&s, 10);
+		else if (*s == '$')
+			cx = -1, ++s;
 		c = *s;
 		if (c
 		    && (strchr(valid_delim, c) || cmd == 'i'

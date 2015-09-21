@@ -582,6 +582,8 @@ g: go to the link on the current line
 <br>
 g2: go to the second link on the current line
 <br>
+g$: go to the last link on the current line
+<br>
 ^: the back key, go back to the web page you were looking at before
 <br>
 i=xyz: set the input field on the current line to xyz
@@ -589,6 +591,8 @@ i=xyz: set the input field on the current line to xyz
 i2=xyz: set the second input field on the current line to xyz
 <br>
 i2*: push the second button on the current line, usually submit or reset
+<br>
+i$*: push the last button on the current line
 <br>
 i3?: describe the third input field on the current line
 <br>
@@ -1848,6 +1852,7 @@ but only when it is followed by a regular expression.&nbsp;
 By itself, g follows the link on the current line,
 g2 follows the second link on the current line,
 and 4g follows the link on line 4.&nbsp;
+g$ activates the last link on the line.&nbsp;
 If a link spreads across multiple lines, you must be on the first of these lines,
 the line containing the left brace.
 
