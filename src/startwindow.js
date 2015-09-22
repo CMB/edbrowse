@@ -37,39 +37,21 @@ screen.availWidth = 1024;
 screen.availTop = 0;
 screen.availLeft = 0;
 
-/* holds our lists of tags, uses javascript's hash lookup */
-document.tag$$map = new Object;
 /* some base arrays - lists of things we'll probably need */
-document.tag$$map.form = new Array;
-document.forms = document.tag$$map.form;
-document.tag$$map.table = new Array;
-document.tables = document.tag$$map.table; 
-document.tag$$map.div = new Array;
-document.divs = document.tag$$map.div; 
-document.tag$$map.a = new Array;
-document.anchors = document.tag$$map.a; 
-document.tag$$map.link = new Array;
-document.links = document.tag$$map.link; 
-document.tag$$map.head = new Array;
-document.heads = document.tag$$map.head; 
-document.tag$$map.body = new Array;
-document.bodies = document.tag$$map.body; 
-document.tag$$map.html = new Array;
-document.htmls = document.tag$$map.html; 
-document.tag$$map.base = new Array;
-document.bases = document.tag$$map.base; 
-document.tag$$map.image = new Array;
-document.images = document.tag$$map.image; 
-document.tag$$map.img = new Array;
-document.images = document.tag$$map.img; 
-document.tag$$map.span = new Array;
-document.spans = document.tag$$map.span; 
-document.tag$$map.meta = new Array;
-document.metas = document.tag$$map.meta; 
-document.tag$$map.script = new Array;
-document.tag$$map.p = new Array;
-document.scripts = document.tag$$map.script; 
-document.paras = document.tag$$map.p; 
+document.heads = new Array;
+document.bases = new Array;
+document.links = new Array;
+document.metas = new Array;
+document.bodies = new Array;
+document.forms = new Array;
+document.elements = new Array;
+document.anchors = new Array;
+document.divs = new Array;
+document.scripts = new Array;
+document.paragraphs = new Array;
+document.tables = new Array;
+document.spans = new Array;
+document.images = new Array;
 
 document.getElementsByTagName = function(s) { 
 s = s.toLowerCase();
@@ -152,12 +134,6 @@ break;
 default:
 /* alert("createElement default " + s); */
 c = new Element();
-} 
-/* create an array in our tag map for this tag if it's not there
-* we don't push it if it is since we don't know where it should fit in the DOM
-*/
-if (!document.tag$$map.hasOwnProperty(t)) {
-document.tag$$map[t] = new Array;
 }
 /* ok, for some element types this perhaps doesn't make sense,
 * but for most visible ones it does and I doubt it matters much */
@@ -466,32 +442,36 @@ Array.prototype.lastChild = function() { return (this.length ? this[this.length-
 
 /* document.appendChild and document.apch$ are native */
 document.childNodes = new Array;
+document.insertBefore = function(o, b) { this.childNodes.insertBefore(o, b); }
+document.firstChild = function() { return this.childNodes.firstChild(); }
+document.lastChild = function() { return this.childNodes.lastChild(); }
+
 Head.prototype.appendChild = document.appendChild;
 Head.prototype.apch$ = document.apch$;
-Head.prototype.insertBefore = function(o, b) { this.childNodes.insertBefore(o, b); }
-Head.prototype.firstChild = function() { return this.childNodes.firstChild(); }
-Head.prototype.lastChild = function() { return this.childNodes.lastChild(); }
+Head.prototype.insertBefore = document.insertBefore;
+Head.prototype.firstChild = document.firstChild;
+Head.prototype.lastChild = document.lastChild;
 Head.prototype.setAttribute = document.setAttribute;
 Head.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
 Body.prototype.appendChild = document.appendChild;
 Body.prototype.apch$ = document.apch$;
-Body.prototype.insertBefore = function(o, b) { this.childNodes.insertBefore(o, b); }
-Body.prototype.firstChild = function() { return this.childNodes.firstChild(); }
-Body.prototype.lastChild = function() { return this.childNodes.lastChild(); }
+Body.prototype.insertBefore = document.insertBefore;
+Body.prototype.firstChild = document.firstChild;
+Body.prototype.lastChild = document.lastChild;
 Body.prototype.setAttribute = document.setAttribute;
 Body.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
 Form.prototype.appendChild = document.appendChild;
 Form.prototype.apch$ = document.apch$;
-Form.prototype.insertBefore = function(o, b) { this.childNodes.insertBefore(o, b); }
-Form.prototype.firstChild = function() { return this.childNodes.firstChild(); }
-Form.prototype.lastChild = function() { return this.childNodes.lastChild(); }
+Form.prototype.insertBefore = document.insertBefore;
+Form.prototype.firstChild = document.firstChild;
+Form.prototype.lastChild = document.lastChild;
 Form.prototype.setAttribute = document.setAttribute;
 Form.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
 Element.prototype.appendChild = document.appendChild;
 Element.prototype.apch$ = document.apch$;
-Element.prototype.insertBefore = function(o, b) { this.childNodes.insertBefore(o, b); }
-Element.prototype.firstChild = function() { return this.childNodes.firstChild(); }
-Element.prototype.lastChild = function() { return this.childNodes.lastChild(); }
+Element.prototype.insertBefore = document.insertBefore;
+Element.prototype.firstChild = document.firstChild;
+Element.prototype.lastChild = document.lastChild;
 Element.prototype.setAttribute = document.setAttribute;
 Element.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
 Element.prototype.focus = document.focus;
@@ -502,9 +482,9 @@ Anchor.prototype.focus = document.focus;
 Anchor.prototype.blur = document.blur;
 Div.prototype.appendChild = document.appendChild;
 Div.prototype.apch$ = document.apch$;
-Div.prototype.insertBefore = function(o, b) { this.childNodes.insertBefore(o, b); }
-Div.prototype.firstChild = function() { return this.childNodes.firstChild(); }
-Div.prototype.lastChild = function() { return this.childNodes.lastChild(); }
+Div.prototype.insertBefore = document.insertBefore;
+Div.prototype.firstChild = document.firstChild;
+Div.prototype.lastChild = document.lastChild;
 Div.prototype.setAttribute = document.setAttribute;
 Div.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
 Script.prototype.setAttribute = document.setAttribute;
