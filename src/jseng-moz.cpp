@@ -526,6 +526,7 @@ generic_class_ctor(document, Document)
     generic_class_ctor(image, Image)
     generic_class_ctor(frame, Frame)
     generic_class_ctor(anchor, Anchor)
+    generic_class_ctor(tbody, Tbody)
     generic_class_ctor(table, Table)
     generic_class_ctor(div, Div)
     generic_class_ctor(area, Area)
@@ -1338,6 +1339,27 @@ static JSFunctionSpec table_methods[] = {
 	JS_FS_END
 };
 
+static JSFunctionSpec tbody_methods[] = {
+	JS_FS("setAttribute", setAttribute, 2, 0),
+	JS_FS("appendChild", appendChild, 1, 0),
+	JS_FS("apch", apch, 1, 0),
+	JS_FS_END
+};
+
+static JSFunctionSpec trow_methods[] = {
+	JS_FS("setAttribute", setAttribute, 2, 0),
+	JS_FS("appendChild", appendChild, 1, 0),
+	JS_FS("apch", apch, 1, 0),
+	JS_FS_END
+};
+
+static JSFunctionSpec cell_methods[] = {
+	JS_FS("setAttribute", setAttribute, 2, 0),
+	JS_FS("appendChild", appendChild, 1, 0),
+	JS_FS("apch", apch, 1, 0),
+	JS_FS_END
+};
+
 static JSBool win_close(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	if (head.highstat <= EJ_HIGH_CX_FAIL) {
@@ -1619,8 +1641,9 @@ static struct {
 	{&frame_class, frame_ctor},
 	{&anchor_class, anchor_ctor, NULL, 1},
 	{&table_class, table_ctor, table_methods},
-	{&trow_class, trow_ctor},
-	{&cell_class, cell_ctor},
+	{&tbody_class, tbody_ctor, tbody_methods},
+	{&trow_class, trow_ctor, trow_methods},
+	{&cell_class, cell_ctor, cell_methods},
 	{&div_class, div_ctor, div_methods},
 	{&area_class, area_ctor},
 	{&span_class, span_ctor, span_methods},

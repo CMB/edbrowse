@@ -160,6 +160,7 @@ static const struct tagInfo elements[] = {
 	{"MAP", "an image map", TAGACT_MAP, 2, 13},
 	{"AREA", "an image map area", TAGACT_AREA, 0, 13},
 	{"TABLE", "a table", TAGACT_TABLE, 10, 9},
+	{"TBODY", "a table body", TAGACT_TBODY, 0, 0},
 	{"TR", "a table row", TAGACT_TR, 5, 9},
 	{"TD", "a table entry", TAGACT_TD, 0, 13},
 	{"TH", "a table heading", TAGACT_TD, 0, 9},
@@ -2020,8 +2021,10 @@ struct htmlTag *tagFromJavaVar2(jsobjtype v, const char *tagname)
 	if (!tagname)
 		return 0;
 	t = newTag(tagname);
-	if (!t)
+	if (!t) {
+		debugPrint(3, "cannot create tag node %s", tagname);
 		return 0;
+	}
 	t->jv = v;
 /* this node now has a js object, don't decorate it again. */
 	t->step = 2;

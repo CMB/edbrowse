@@ -108,11 +108,14 @@ document.crel$$ = function(s) {
 var c;
 var t = s.toLowerCase();
 switch(t) { 
+case "body":
+c = new Body();
+break;
 case "a":
 c = new Anchor();
 break;
 case "image":
-s = "img";
+t = "img";
 case "img":
 c = new Image();
 break;
@@ -121,6 +124,18 @@ c = new Script();
 break;
 case "div":
 c = new Div();
+break;
+case "table":
+c = new Table();
+break;
+case "tbody":
+c = new Tbody();
+break;
+case "tr":
+c = new Trow();
+break;
+case "td":
+c = new Cell();
 break;
 default:
 /* alert("createElement default " + s); */
@@ -136,7 +151,7 @@ document.tag$$map[t] = new Array;
 * but for most visible ones it does and I doubt it matters much */
 c.style = new Object;
 c.elements = new Array;
-c.nodeName = s;
+c.nodeName = t;
 return c;
 } 
 
