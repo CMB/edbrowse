@@ -1090,11 +1090,26 @@ static JSBool setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
 	return JS_TRUE;
 }				/* setAttribute */
 
+static void embedNodeName(JS::HandleObject obj)
+{
+	const char *nodeName;
+	js::RootedValue v(jcx);
+	int length;
+	if (JS_GetProperty(jcx, obj, "nodeName", v.address()) == JS_TRUE) {
+		nodeName = stringize(v);
+		if (nodeName) {
+			length = strlen(nodeName);
+			if (length >= MAXTAGNAME)
+				length = MAXTAGNAME - 1;
+			stringAndBytes(&effects, &eff_l, nodeName, length);
+		}
+	}
+}				/* embedNodeName */
+
 static JSBool appendChild0(bool side, JSContext * cx, unsigned int argc,
 			   jsval * vp)
 {
 	unsigned length;
-	const char *nodeName;
 	js::RootedValue v(cx);
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	args.rval().set(JSVAL_VOID);
@@ -1130,27 +1145,11 @@ static JSBool appendChild0(bool side, JSContext * cx, unsigned int argc,
 	char e[40];
 	sprintf(e, "l{a|%s,", pointer2string(thisobj));
 	stringAndString(&effects, &eff_l, e);
-	if (JS_GetProperty(jcx, thisobj, "nodeName", v.address()) == JS_TRUE) {
-		nodeName = stringize(v);
-		if (nodeName) {
-			length = strlen(nodeName);
-			if (length >= MAXTAGNAME)
-				length = MAXTAGNAME - 1;
-			stringAndBytes(&effects, &eff_l, nodeName, length);
-		}
-	}
+	embedNodeName(thisobj);
 	stringAndChar(&effects, &eff_l, ' ');
 	stringAndString(&effects, &eff_l, pointer2string(child));
 	stringAndChar(&effects, &eff_l, ',');
-	if (JS_GetProperty(jcx, child, "nodeName", v.address()) == JS_TRUE) {
-		nodeName = stringize(v);
-		if (nodeName) {
-			length = strlen(nodeName);
-			if (length >= MAXTAGNAME)
-				length = MAXTAGNAME - 1;
-			stringAndBytes(&effects, &eff_l, nodeName, length);
-		}
-	}
+	embedNodeName(child);
 	stringAndString(&effects, &eff_l, " 0x0, ");
 	endeffect();
 	return JS_TRUE;
@@ -1169,7 +1168,6 @@ static JSBool apch(JSContext * cx, unsigned int argc, jsval * vp)
 static JSBool insertBefore(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	unsigned i, mark, length;
-	const char *nodeName;
 	js::RootedValue v(cx);
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	args.rval().set(JSVAL_VOID);
@@ -1224,43 +1222,79 @@ found:
 	char e[40];
 	sprintf(e, "l{b|%s,", pointer2string(thisobj));
 	stringAndString(&effects, &eff_l, e);
-	if (JS_GetProperty(jcx, thisobj, "nodeName", v.address()) == JS_TRUE) {
-		nodeName = stringize(v);
-		if (nodeName) {
-			length = strlen(nodeName);
-			if (length >= MAXTAGNAME)
-				length = MAXTAGNAME - 1;
-			stringAndBytes(&effects, &eff_l, nodeName, length);
-		}
-	}
+	embedNodeName(thisobj);
 	stringAndChar(&effects, &eff_l, ' ');
 	stringAndString(&effects, &eff_l, pointer2string(child));
 	stringAndChar(&effects, &eff_l, ',');
-	if (JS_GetProperty(jcx, child, "nodeName", v.address()) == JS_TRUE) {
-		nodeName = stringize(v);
-		if (nodeName) {
-			length = strlen(nodeName);
-			if (length >= MAXTAGNAME)
-				length = MAXTAGNAME - 1;
-			stringAndBytes(&effects, &eff_l, nodeName, length);
-		}
-	}
+	embedNodeName(child);
 	stringAndChar(&effects, &eff_l, ' ');
 	stringAndString(&effects, &eff_l, pointer2string(item));
 	stringAndChar(&effects, &eff_l, ',');
-	if (JS_GetProperty(jcx, item, "nodeName", v.address()) == JS_TRUE) {
-		nodeName = stringize(v);
-		if (nodeName) {
-			length = strlen(nodeName);
-			if (length >= MAXTAGNAME)
-				length = MAXTAGNAME - 1;
-			stringAndBytes(&effects, &eff_l, nodeName, length);
-		}
-	}
+	embedNodeName(item);
 	stringAndChar(&effects, &eff_l, ' ');
 	endeffect();
 	return JS_TRUE;
 }				/* insertBefore */
+
+static JSBool removeChild(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	unsigned i, mark, length;
+	js::RootedValue v(cx);
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	args.rval().set(JSVAL_VOID);
+/* we need an object */
+	if (args.length() < 1 || !args[0].isObject())
+		return JS_TRUE;
+
+	JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+	JS::RootedObject child(cx, JSVAL_TO_OBJECT(args[0]));
+	if (JS_GetProperty(cx, thisobj, "childNodes", v.address()) == JS_FALSE)
+		return JS_TRUE;	/* no such array */
+	JS::RootedObject elar(cx, JSVAL_TO_OBJECT(v));
+	if (elar == NULL) {
+		misconfigure();
+		return JS_FALSE;
+	}
+	if (JS_GetArrayLength(cx, elar, &length) == JS_FALSE) {
+		misconfigure();
+		return JS_FALSE;
+	}
+
+/* child better be somewhere in the array */
+	for (mark = 0; mark < length; ++mark) {
+		if (JS_GetElement(cx, elar, mark, v.address()) == JS_FALSE) {
+			misconfigure();
+			return JS_FALSE;
+		}
+		if (!v.isObject())
+			continue;
+		if (JSVAL_TO_OBJECT(v) == child)
+			goto found;
+	}
+	return JS_TRUE;
+
+found:
+/* pull the others back */
+	for (i = mark; i < length - 1; ++i) {
+		JS_GetElement(cx, elar, i + 1, v.address());
+		JS_SetElement(cx, elar, i, v.address());
+	}
+	JS_SetArrayLength(cx, elar, length - 1);
+	JS_DeleteProperty(cx, child, "parentNode");
+
+/* pass this linkage information back to edbrowse, to update its dom tree */
+	char e[40];
+	sprintf(e, "l{r|%s,", pointer2string(thisobj));
+	stringAndString(&effects, &eff_l, e);
+	embedNodeName(thisobj);
+	stringAndChar(&effects, &eff_l, ' ');
+	stringAndString(&effects, &eff_l, pointer2string(child));
+	stringAndChar(&effects, &eff_l, ',');
+	embedNodeName(child);
+	stringAndString(&effects, &eff_l, " 0x0, ");
+	endeffect();
+	return JS_TRUE;
+}				/* removeChild */
 
 static void dwrite1(unsigned int argc, jsval * argv, bool newline)
 {
@@ -1350,6 +1384,7 @@ static JSFunctionSpec document_methods[] = {
 	JS_FS("appendChild", appendChild, 1, 0),
 	JS_FS("apch$", apch, 1, 0),
 	JS_FS("insertBefore", insertBefore, 2, 0),
+	JS_FS("removeChild", removeChild, 1, 0),
 	JS_FS_END
 };
 

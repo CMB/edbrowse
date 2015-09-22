@@ -1688,7 +1688,7 @@ void javaOpensWindow(const char *href, const char *name)
 
 void javaSetsLinkage(char type, jsobjtype p_j, const char *rest)
 {
-	struct htmlTag *parent, *add, *before;
+	struct htmlTag *parent, *add, *before, *c;
 	jsobjtype *a_j, *b_j;
 	char p_name[MAXTAGNAME], a_name[MAXTAGNAME], b_name[MAXTAGNAME];
 
@@ -1705,13 +1705,14 @@ void javaSetsLinkage(char type, jsobjtype p_j, const char *rest)
 		before = tagFromJavaVar2(b_j, b_name);
 		if (!before)
 			return;
-		struct htmlTag *c = parent->firstchild;
+		c = parent->firstchild;
 		if (!c)
 			return;
 		if (c == before) {
 			parent->firstchild = add;
 			add->sibling = before;
 			add->parent = parent;
+			add->deleted = false;
 			return;
 		}
 		while (c->sibling && c->sibling != before)
@@ -1721,15 +1722,34 @@ void javaSetsLinkage(char type, jsobjtype p_j, const char *rest)
 		c->sibling = add;
 		add->sibling = before;
 		add->parent = parent;
+		add->deleted = false;
+		return;
+	}
+
+	if (type == 'r') {
+/* add is a misnomer here, it's being removed */
+		add->deleted = true;
+		add->parent = NULL;
+		if (parent->firstchild == add)
+			parent->firstchild = add->sibling;
+		else {
+			for (c = parent->firstchild; c->sibling; c = c->sibling) {
+				if (c->sibling != add)
+					continue;
+				c->sibling = add->sibling;
+				break;
+			}
+		}
 		return;
 	}
 
 /* type = a, appendchild */
 	add->parent = parent;
+	add->deleted = false;
 	if (!parent->firstchild)
 		parent->firstchild = add;
 	else {
-		struct htmlTag *c = parent->firstchild;
+		c = parent->firstchild;
 		while (c->sibling)
 			c = c->sibling;
 		c->sibling = add;

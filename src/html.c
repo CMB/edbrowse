@@ -2028,6 +2028,8 @@ struct htmlTag *tagFromJavaVar2(jsobjtype v, const char *tagname)
 	t->jv = v;
 /* this node now has a js object, don't decorate it again. */
 	t->step = 2;
+/* and don't render it unless it is linked into the active tree */
+t->deleted = true;
 	return t;
 }				/* tagFromJavaVar2 */
 
