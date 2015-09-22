@@ -444,7 +444,6 @@ Array.prototype.lastChild = function() { return (this.length ? this[this.length-
 
 /* document.appendChild and document.apch$ are native */
 document.childNodes = new Array;
-document.insertBefore = function(o, b) { this.childNodes.insertBefore(o, b); }
 document.firstChild = function() { return this.childNodes.firstChild(); }
 document.lastChild = function() { return this.childNodes.lastChild(); }
 

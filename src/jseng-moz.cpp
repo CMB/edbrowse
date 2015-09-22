@@ -1097,6 +1097,7 @@ static JSBool appendChild0(bool side, JSContext * cx, unsigned int argc,
 	const char *nodeName;
 	js::RootedValue v(cx);
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	args.rval().set(JSVAL_VOID);
 /* we need an argument that is an object */
 	if (args.length() == 0 || !args[0].isObject())
 		return JS_TRUE;
@@ -1122,41 +1123,36 @@ static JSBool appendChild0(bool side, JSContext * cx, unsigned int argc,
 	JS_DefineProperty(cx, child, "parentNode", OBJECT_TO_JSVAL(thisobj),
 			  NULL, NULL, PROP_STD);
 
-/* pass this linkage information back to edbrowse, to update its dom tree */
-	if (side) {
-		char e[40];
-		sprintf(e, "l{a|%s,", pointer2string(thisobj));
-		stringAndString(&effects, &eff_l, e);
-		if (JS_GetProperty(jcx, thisobj, "nodeName", v.address()) ==
-		    JS_TRUE) {
-			nodeName = stringize(v);
-			if (nodeName) {
-				length = strlen(nodeName);
-				if (length >= MAXTAGNAME)
-					length = MAXTAGNAME - 1;
-				stringAndBytes(&effects, &eff_l, nodeName,
-					       length);
-			}
-		}
-		stringAndChar(&effects, &eff_l, ' ');
-		stringAndString(&effects, &eff_l, pointer2string(child));
-		stringAndChar(&effects, &eff_l, ',');
-		if (JS_GetProperty(jcx, child, "nodeName", v.address()) ==
-		    JS_TRUE) {
-			nodeName = stringize(v);
-			if (nodeName) {
-				length = strlen(nodeName);
-				if (length >= MAXTAGNAME)
-					length = MAXTAGNAME - 1;
-				stringAndBytes(&effects, &eff_l, nodeName,
-					       length);
-			}
-		}
-		stringAndString(&effects, &eff_l, " 0x0, ");
-		endeffect();
-	}
+	if (!side)
+		return JS_TRUE;
 
-	args.rval().set(JSVAL_VOID);
+/* pass this linkage information back to edbrowse, to update its dom tree */
+	char e[40];
+	sprintf(e, "l{a|%s,", pointer2string(thisobj));
+	stringAndString(&effects, &eff_l, e);
+	if (JS_GetProperty(jcx, thisobj, "nodeName", v.address()) == JS_TRUE) {
+		nodeName = stringize(v);
+		if (nodeName) {
+			length = strlen(nodeName);
+			if (length >= MAXTAGNAME)
+				length = MAXTAGNAME - 1;
+			stringAndBytes(&effects, &eff_l, nodeName, length);
+		}
+	}
+	stringAndChar(&effects, &eff_l, ' ');
+	stringAndString(&effects, &eff_l, pointer2string(child));
+	stringAndChar(&effects, &eff_l, ',');
+	if (JS_GetProperty(jcx, child, "nodeName", v.address()) == JS_TRUE) {
+		nodeName = stringize(v);
+		if (nodeName) {
+			length = strlen(nodeName);
+			if (length >= MAXTAGNAME)
+				length = MAXTAGNAME - 1;
+			stringAndBytes(&effects, &eff_l, nodeName, length);
+		}
+	}
+	stringAndString(&effects, &eff_l, " 0x0, ");
+	endeffect();
 	return JS_TRUE;
 }				/* appendChild0 */
 
@@ -1169,6 +1165,102 @@ static JSBool apch(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	return appendChild0(false, cx, argc, vp);
 }				/* apch */
+
+static JSBool insertBefore(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	unsigned i, mark, length;
+	const char *nodeName;
+	js::RootedValue v(cx);
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	args.rval().set(JSVAL_VOID);
+/* we need two objects */
+	if (args.length() < 2 || !args[0].isObject() || !args[1].isObject())
+		return JS_TRUE;
+
+	JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+	JS::RootedObject child(cx, JSVAL_TO_OBJECT(args[0]));
+	JS::RootedObject item(cx, JSVAL_TO_OBJECT(args[1]));
+	if (JS_GetProperty(cx, thisobj, "childNodes", v.address()) == JS_FALSE)
+		return JS_TRUE;	/* no such array */
+	JS::RootedObject elar(cx, JSVAL_TO_OBJECT(v));
+	if (elar == NULL) {
+		misconfigure();
+		return JS_FALSE;
+	}
+	if (JS_GetArrayLength(cx, elar, &length) == JS_FALSE) {
+		misconfigure();
+		return JS_FALSE;
+	}
+
+/* item better be somewhere in the array */
+	for (mark = 0; mark < length; ++mark) {
+		if (JS_GetElement(cx, elar, mark, v.address()) == JS_FALSE) {
+			misconfigure();
+			return JS_FALSE;
+		}
+		if (!v.isObject())
+			continue;
+		if (JSVAL_TO_OBJECT(v) == item)
+			goto found;
+	}
+	return JS_TRUE;
+
+found:
+/* push the others down */
+	for (i = length; i > mark; --i) {
+		JS_GetElement(cx, elar, i - 1, v.address());
+		if (i == length)
+			JS_DefineElement(cx, elar, i, v, NULL, NULL, PROP_STD);
+		else
+			JS_SetElement(cx, elar, i, v.address());
+	}
+/* and place the child */
+	v = args[0];
+	JS_SetElement(cx, elar, mark, v.address());
+	JS_DefineProperty(cx, child, "parentNode", OBJECT_TO_JSVAL(thisobj),
+			  NULL, NULL, PROP_STD);
+
+/* pass this linkage information back to edbrowse, to update its dom tree */
+	char e[40];
+	sprintf(e, "l{b|%s,", pointer2string(thisobj));
+	stringAndString(&effects, &eff_l, e);
+	if (JS_GetProperty(jcx, thisobj, "nodeName", v.address()) == JS_TRUE) {
+		nodeName = stringize(v);
+		if (nodeName) {
+			length = strlen(nodeName);
+			if (length >= MAXTAGNAME)
+				length = MAXTAGNAME - 1;
+			stringAndBytes(&effects, &eff_l, nodeName, length);
+		}
+	}
+	stringAndChar(&effects, &eff_l, ' ');
+	stringAndString(&effects, &eff_l, pointer2string(child));
+	stringAndChar(&effects, &eff_l, ',');
+	if (JS_GetProperty(jcx, child, "nodeName", v.address()) == JS_TRUE) {
+		nodeName = stringize(v);
+		if (nodeName) {
+			length = strlen(nodeName);
+			if (length >= MAXTAGNAME)
+				length = MAXTAGNAME - 1;
+			stringAndBytes(&effects, &eff_l, nodeName, length);
+		}
+	}
+	stringAndChar(&effects, &eff_l, ' ');
+	stringAndString(&effects, &eff_l, pointer2string(item));
+	stringAndChar(&effects, &eff_l, ',');
+	if (JS_GetProperty(jcx, item, "nodeName", v.address()) == JS_TRUE) {
+		nodeName = stringize(v);
+		if (nodeName) {
+			length = strlen(nodeName);
+			if (length >= MAXTAGNAME)
+				length = MAXTAGNAME - 1;
+			stringAndBytes(&effects, &eff_l, nodeName, length);
+		}
+	}
+	stringAndChar(&effects, &eff_l, ' ');
+	endeffect();
+	return JS_TRUE;
+}				/* insertBefore */
 
 static void dwrite1(unsigned int argc, jsval * argv, bool newline)
 {
@@ -1257,6 +1349,7 @@ static JSFunctionSpec document_methods[] = {
 	JS_FS("setAttribute", setAttribute, 2, 0),
 	JS_FS("appendChild", appendChild, 1, 0),
 	JS_FS("apch$", apch, 1, 0),
+	JS_FS("insertBefore", insertBefore, 2, 0),
 	JS_FS_END
 };
 

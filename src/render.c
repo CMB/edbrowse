@@ -1701,13 +1701,30 @@ void javaSetsLinkage(char type, jsobjtype p_j, const char *rest)
 	if (!parent || !add)
 		return;
 
-	if (type == 'b') {
+	if (type == 'b') {	/* insertBefore */
 		before = tagFromJavaVar2(b_j, b_name);
 		if (!before)
 			return;
+		struct htmlTag *c = parent->firstchild;
+		if (!c)
+			return;
+		if (c == before) {
+			parent->firstchild = add;
+			add->sibling = before;
+			add->parent = parent;
+			return;
+		}
+		while (c->sibling && c->sibling != before)
+			c = c->sibling;
+		if (!c->sibling)
+			return;
+		c->sibling = add;
+		add->sibling = before;
+		add->parent = parent;
+		return;
 	}
 
-/* b not implemented yet, just do a for appendChild */
+/* type = a, appendchild */
 	add->parent = parent;
 	if (!parent->firstchild)
 		parent->firstchild = add;
