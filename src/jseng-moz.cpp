@@ -515,7 +515,6 @@ static JSBool window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
  * If a constructor is not in this list, it is coming later,
  * because it does something special. */
 generic_class_ctor(document, Document)
-    generic_class_ctor(html, Html)
     generic_class_ctor(head, Head)
     generic_class_ctor(meta, Meta)
     generic_class_ctor(link, Link)
@@ -567,7 +566,7 @@ static JSBool option_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 		v = STRING_TO_JSVAL(str);
 		JS_DefineProperty(cx, newopt, "value", v, NULL, NULL, PROP_STD);
 	}
-	str = JS_NewStringCopyZ(cx, "OPTION");
+	str = JS_NewStringCopyZ(cx, "option");
 	v = STRING_TO_JSVAL(str);
 	JS_DefineProperty(cx, newopt, "nodeName", v, NULL, NULL, PROP_STD);
 	v = JSVAL_FALSE;
@@ -1076,7 +1075,7 @@ static JSBool trueFunction(JSContext * cx, unsigned int argc, jsval * vp)
 
 static JSBool setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
 {
-	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
+	JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	js::RootedValue v1(cx), v2(cx);
 	if (args.length() != 2 || !JSVAL_IS_STRING(args[0])) {
@@ -1085,11 +1084,7 @@ static JSBool setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
 		v1 = args[0];
 		v2 = args[1];
 		const char *prop = stringize(v1);
-		if (JS_DefineProperty(cx, obj, prop, v2, NULL, NULL, PROP_STD)
-		    == JS_FALSE) {
-			misconfigure();
-			return JS_FALSE;
-		}
+		JS_DefineProperty(cx, thisobj, prop, v2, NULL, NULL, PROP_STD);
 	}
 	args.rval().set(JSVAL_VOID);
 	return JS_TRUE;
@@ -1107,7 +1102,7 @@ static JSBool appendChild0(bool side, JSContext * cx, unsigned int argc,
 		return JS_TRUE;
 
 	JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
-	if (JS_GetProperty(cx, thisobj, "elements", v.address()) == JS_FALSE)
+	if (JS_GetProperty(cx, thisobj, "childNodes", v.address()) == JS_FALSE)
 		return JS_TRUE;	/* no such array */
 	JS::RootedObject elar(cx, JSVAL_TO_OBJECT(v));
 	if (elar == NULL) {
@@ -1174,25 +1169,6 @@ static JSBool apch(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	return appendChild0(false, cx, argc, vp);
 }				/* apch */
-
-static JSFunctionSpec body_methods[] = {
-	JS_FS("setAttribute", setAttribute, 2, 0),
-	JS_FS("appendChild", appendChild, 1, 0),
-	JS_FS("apch", apch, 1, 0),
-	JS_FS_END
-};
-
-static JSFunctionSpec head_methods[] = {
-	JS_FS("setAttribute", setAttribute, 2, 0),
-	JS_FS("appendChild", appendChild, 1, 0),
-	JS_FS("apch", apch, 1, 0),
-	JS_FS_END
-};
-
-static JSFunctionSpec link_methods[] = {
-	JS_FS("setAttribute", setAttribute, 2, 0),
-	JS_FS_END
-};
 
 static void dwrite1(unsigned int argc, jsval * argv, bool newline)
 {
@@ -1278,12 +1254,9 @@ static JSFunctionSpec document_methods[] = {
 	JS_FS("write", doc_write, 0, 0),
 	JS_FS("writeln", doc_writeln, 0, 0),
 	JS_FS("createElement", doc_createElement, 0, 0),
-	JS_FS_END
-};
-
-static JSFunctionSpec element_methods[] = {
-	JS_FS("focus", nullFunction, 0, 0),
-	JS_FS("blur", nullFunction, 0, 0),
+	JS_FS("setAttribute", setAttribute, 2, 0),
+	JS_FS("appendChild", appendChild, 1, 0),
+	JS_FS("apch$", apch, 1, 0),
 	JS_FS_END
 };
 
@@ -1312,51 +1285,6 @@ static JSBool form_reset(JSContext * cx, unsigned int argc, jsval * vp)
 static JSFunctionSpec form_methods[] = {
 	JS_FS("submit", form_submit, 0, 0),
 	JS_FS("reset", form_reset, 0, 0),
-	JS_FS("setAttribute", setAttribute, 2, 0),
-	JS_FS("appendChild", appendChild, 1, 0),
-	JS_FS("apch", apch, 1, 0),
-	JS_FS_END
-};
-
-static JSFunctionSpec div_methods[] = {
-	JS_FS("setAttribute", setAttribute, 2, 0),
-	JS_FS("appendChild", appendChild, 1, 0),
-	JS_FS("apch", apch, 1, 0),
-	JS_FS_END
-};
-
-static JSFunctionSpec span_methods[] = {
-	JS_FS("setAttribute", setAttribute, 2, 0),
-	JS_FS("appendChild", appendChild, 1, 0),
-	JS_FS("apch", apch, 1, 0),
-	JS_FS_END
-};
-
-static JSFunctionSpec table_methods[] = {
-	JS_FS("setAttribute", setAttribute, 2, 0),
-	JS_FS("appendChild", appendChild, 1, 0),
-	JS_FS("apch", apch, 1, 0),
-	JS_FS_END
-};
-
-static JSFunctionSpec tbody_methods[] = {
-	JS_FS("setAttribute", setAttribute, 2, 0),
-	JS_FS("appendChild", appendChild, 1, 0),
-	JS_FS("apch", apch, 1, 0),
-	JS_FS_END
-};
-
-static JSFunctionSpec trow_methods[] = {
-	JS_FS("setAttribute", setAttribute, 2, 0),
-	JS_FS("appendChild", appendChild, 1, 0),
-	JS_FS("apch", apch, 1, 0),
-	JS_FS_END
-};
-
-static JSFunctionSpec cell_methods[] = {
-	JS_FS("setAttribute", setAttribute, 2, 0),
-	JS_FS("appendChild", appendChild, 1, 0),
-	JS_FS("apch", apch, 1, 0),
 	JS_FS_END
 };
 
@@ -1629,24 +1557,23 @@ static struct {
 	int nargs;
 } const domClasses[] = {
 	{&document_class, document_ctor, document_methods},
-	{&html_class, html_ctor},
-	{&head_class, head_ctor, head_methods},
+	{&head_class, head_ctor},
 	{&meta_class, meta_ctor},
-	{&link_class, link_ctor, link_methods, 0},
-	{&body_class, body_ctor, body_methods},
+	{&link_class, link_ctor},
+	{&body_class, body_ctor},
 	{&base_class, base_ctor},
 	{&form_class, form_ctor, form_methods},
-	{&element_class, element_ctor, element_methods, 0},
+	{&element_class, element_ctor},
 	{&image_class, image_ctor, NULL, 1},
 	{&frame_class, frame_ctor},
 	{&anchor_class, anchor_ctor, NULL, 1},
-	{&table_class, table_ctor, table_methods},
-	{&tbody_class, tbody_ctor, tbody_methods},
-	{&trow_class, trow_ctor, trow_methods},
-	{&cell_class, cell_ctor, cell_methods},
-	{&div_class, div_ctor, div_methods},
+	{&table_class, table_ctor},
+	{&tbody_class, tbody_ctor},
+	{&trow_class, trow_ctor},
+	{&cell_class, cell_ctor},
+	{&div_class, div_ctor},
 	{&area_class, area_ctor},
-	{&span_class, span_ctor, span_methods},
+	{&span_class, span_ctor},
 	{&option_class, option_ctor, NULL, 2},
 	{&script_class, script_ctor},
 	{&para_class, para_ctor},

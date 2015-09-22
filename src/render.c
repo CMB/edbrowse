@@ -1015,7 +1015,7 @@ static void optionJS(struct htmlTag *t)
 	t->jv = establish_js_option(sel->jv, t->lic);
 	set_property_string(t->jv, "text", t->textval);
 	set_property_string(t->jv, "value", t->value);
-	set_property_string(t->jv, "nodeName", "OPTION");
+	set_property_string(t->jv, "nodeName", "option");
 	set_property_bool(t->jv, "selected", t->checked);
 	set_property_bool(t->jv, defsel, t->checked);
 
@@ -1246,23 +1246,15 @@ static void jsNode(struct htmlTag *t, bool opentag)
 
 	}			/* switch */
 
-/*********************************************************************
-js tree mirrors the dom tree.
-But there's something that baffles me.
-Each tag should have an array of elements for all the tags below, right?
-Except specifically the form tag, wherein the elements are the input tags only.
-Really? Is that how it works?
-Haven't we lost the information about the other tags below form,
-the text between the input items, the anchors, etc?
-I don't get it.
-Well I'm going with that formula for now.
-This is exercised by test 87 in jsrt.
-domLink() manages input items in form.elements[].
-*********************************************************************/
-	if (t->jv && t->parent && t->parent->jv
-	    && t->parent->action != TAGACT_FORM) {
-		run_function_objargs(t->parent->jv, "apch", 1, t->jv);
-	}
+/* js tree mirrors the dom tree. */
+	if (t->jv && t->parent && t->parent->jv)
+		run_function_objargs(t->parent->jv, "apch$", 1, t->jv);
+
+/* head and body link to document */
+	if (t->jv && !t->parent &&
+	    (action == TAGACT_HEAD || action == TAGACT_BODY))
+		run_function_objargs(cw->docobj, "apch$", 1, t->jv);
+
 }				/* jsNode */
 
 /* decorate the tree of nodes with js objects */

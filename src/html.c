@@ -110,87 +110,87 @@ It's a normal form kind of thing.
 Not yet implemented.
 *********************************************************************/
 
-static const struct tagInfo elements[] = {
-	{"BASE", "base reference for relative URLs", TAGACT_BASE, 0, 13},
-	{"A", "an anchor", TAGACT_A, 0, 9},
-	{"INPUT", "an input item", TAGACT_INPUT, 0, 13},
-	{"TITLE", "the title", TAGACT_TITLE, 0, 9},
-	{"TEXTAREA", "an input text area", TAGACT_TA, 0, 9},
-	{"SELECT", "an option list", TAGACT_SELECT, 0, 9},
-	{"OPTION", "a select option", TAGACT_OPTION, 0, 9},
-	{"SUB", "a subscript", TAGACT_SUB, 0, 0},
-	{"SUP", "a superscript", TAGACT_SUP, 0, 0},
-	{"OVB", "an overbar", TAGACT_OVB, 0, 0},
-	{"FONT", "a font", TAGACT_NOP, 0, 0},
-	{"CENTER", "centered text", TAGACT_NOP, 0, 0},
-	{"CAPTION", "a caption", TAGACT_NOP, 5, 0},
-	{"HEAD", "the html header information", TAGACT_HEAD, 0, 13},
-	{"BODY", "the html body", TAGACT_BODY, 0, 13},
-	{"TEXT", "a text section", TAGACT_TEXT, 0, 4},
-	{"BGSOUND", "background music", TAGACT_MUSIC, 0, 5},
-	{"AUDIO", "audio passage", TAGACT_MUSIC, 0, 5},
-	{"META", "a meta tag", TAGACT_META, 0, 12},
-	{"IMG", "an image", TAGACT_IMAGE, 0, 12},
-	{"IMAGE", "an image", TAGACT_IMAGE, 0, 12},
-	{"BR", "a line break", TAGACT_BR, 1, 4},
-	{"P", "a paragraph", TAGACT_P, 2, 13},
-	{"DIV", "a divided section", TAGACT_DIV, 5, 8},
-	{"MAP", "a map of images", TAGACT_NOP, 5, 8},
-	{"HTML", "html", TAGACT_HTML, 0, 13},
-	{"BLOCKQUOTE", "a quoted paragraph", TAGACT_NOP, 10, 9},
-	{"H1", "a level 1 header", TAGACT_NOP, 10, 9},
-	{"H2", "a level 2 header", TAGACT_NOP, 10, 9},
-	{"H3", "a level 3 header", TAGACT_NOP, 10, 9},
-	{"H4", "a level 4 header", TAGACT_NOP, 10, 9},
-	{"H5", "a level 5 header", TAGACT_NOP, 10, 9},
-	{"H6", "a level 6 header", TAGACT_NOP, 10, 9},
-	{"DT", "a term", TAGACT_DT, 2, 13},
-	{"DD", "a definition", TAGACT_DD, 1, 13},
-	{"LI", "a list item", TAGACT_LI, 1, 13},
-	{"UL", "a bullet list", TAGACT_UL, 10, 9},
-	{"DIR", "a directory list", TAGACT_NOP, 5, 9},
-	{"MENU", "a menu", TAGACT_NOP, 5, 9},
-	{"OL", "a numbered list", TAGACT_OL, 10, 9},
-	{"DL", "a definition list", TAGACT_DL, 10, 9},
-	{"HR", "a horizontal line", TAGACT_HR, 5, 5},
-	{"FORM", "a form", TAGACT_FORM, 10, 9},
-	{"BUTTON", "a button", TAGACT_INPUT, 0, 13},
-	{"FRAME", "a frame", TAGACT_FRAME, 2, 13},
-	{"IFRAME", "a frame", TAGACT_FRAME, 2, 13},
-	{"MAP", "an image map", TAGACT_MAP, 2, 13},
-	{"AREA", "an image map area", TAGACT_AREA, 0, 13},
-	{"TABLE", "a table", TAGACT_TABLE, 10, 9},
-	{"TBODY", "a table body", TAGACT_TBODY, 0, 0},
-	{"TR", "a table row", TAGACT_TR, 5, 9},
-	{"TD", "a table entry", TAGACT_TD, 0, 13},
-	{"TH", "a table heading", TAGACT_TD, 0, 9},
-	{"PRE", "a preformatted section", TAGACT_PRE, 10, 0},
-	{"LISTING", "a listing", TAGACT_PRE, 1, 0},
-	{"XMP", "an example", TAGACT_PRE, 1, 0},
-	{"FIXED", "a fixed presentation", TAGACT_NOP, 1, 0},
-	{"CODE", "a block of code", TAGACT_NOP, 0, 0},
-	{"SAMP", "a block of sample text", TAGACT_NOP, 0, 0},
-	{"ADDRESS", "an address block", TAGACT_NOP, 1, 0},
-	{"STYLE", "a style block", TAGACT_NOP, 0, 2},
-	{"SCRIPT", "a script", TAGACT_SCRIPT, 0, 9},
-	{"NOSCRIPT", "no script section", TAGACT_NOP, 0, 3},
-	{"NOFRAMES", "no frames section", TAGACT_NOP, 0, 3},
-	{"EMBED", "embedded html", TAGACT_MUSIC, 0, 5},
-	{"NOEMBED", "no embed section", TAGACT_NOP, 0, 3},
-	{"OBJECT", "an html object", TAGACT_OBJ, 0, 3},
-	{"EM", "emphasized text", TAGACT_JS, 0, 0},
-	{"LABEL", "a label", TAGACT_JS, 0, 0},
-	{"STRIKE", "emphasized text", TAGACT_JS, 0, 0},
-	{"S", "emphasized text", TAGACT_JS, 0, 0},
-	{"STRONG", "emphasized text", TAGACT_JS, 0, 0},
-	{"B", "bold text", TAGACT_JS, 0, 0},
-	{"I", "italicized text", TAGACT_JS, 0, 0},
-	{"U", "underlined text", TAGACT_JS, 0, 0},
-	{"DFN", "definition text", TAGACT_JS, 0, 0},
-	{"Q", "quoted text", TAGACT_JS, 0, 0},
-	{"ABBR", "an abbreviation", TAGACT_JS, 0, 0},
-	{"SPAN", "an html span", TAGACT_SPAN, 0, 0},
-	{"FRAMESET", "a frame set", TAGACT_JS, 0, 1},
+static const struct tagInfo availableTags[] = {
+	{"html", "html", TAGACT_ZERO},
+	{"base", "base reference for relative URLs", TAGACT_BASE, 0, 13},
+	{"a", "an anchor", TAGACT_A, 0, 9},
+	{"input", "an input item", TAGACT_INPUT, 0, 13},
+	{"title", "the title", TAGACT_TITLE, 0, 9},
+	{"textarea", "an input text area", TAGACT_TA, 0, 9},
+	{"select", "an option list", TAGACT_SELECT, 0, 9},
+	{"option", "a select option", TAGACT_OPTION, 0, 9},
+	{"sub", "a subscript", TAGACT_SUB, 0, 0},
+	{"sup", "a superscript", TAGACT_SUP, 0, 0},
+	{"ovb", "an overbar", TAGACT_OVB, 0, 0},
+	{"font", "a font", TAGACT_NOP, 0, 0},
+	{"center", "centered text", TAGACT_NOP, 0, 0},
+	{"caption", "a caption", TAGACT_NOP, 5, 0},
+	{"head", "the html header information", TAGACT_HEAD, 0, 13},
+	{"body", "the html body", TAGACT_BODY, 0, 13},
+	{"text", "a text section", TAGACT_TEXT, 0, 4},
+	{"bgsound", "background music", TAGACT_MUSIC, 0, 5},
+	{"audio", "audio passage", TAGACT_MUSIC, 0, 5},
+	{"meta", "a meta tag", TAGACT_META, 0, 12},
+	{"img", "an image", TAGACT_IMAGE, 0, 12},
+	{"image", "an image", TAGACT_IMAGE, 0, 12},
+	{"br", "a line break", TAGACT_BR, 1, 4},
+	{"p", "a paragraph", TAGACT_P, 2, 13},
+	{"div", "a divided section", TAGACT_DIV, 5, 8},
+	{"map", "a map of images", TAGACT_NOP, 5, 8},
+	{"blockquote", "a quoted paragraph", TAGACT_NOP, 10, 9},
+	{"h1", "a level 1 header", TAGACT_NOP, 10, 9},
+	{"h2", "a level 2 header", TAGACT_NOP, 10, 9},
+	{"h3", "a level 3 header", TAGACT_NOP, 10, 9},
+	{"h4", "a level 4 header", TAGACT_NOP, 10, 9},
+	{"h5", "a level 5 header", TAGACT_NOP, 10, 9},
+	{"h6", "a level 6 header", TAGACT_NOP, 10, 9},
+	{"dt", "a term", TAGACT_DT, 2, 13},
+	{"dd", "a definition", TAGACT_DD, 1, 13},
+	{"li", "a list item", TAGACT_LI, 1, 13},
+	{"ul", "a bullet list", TAGACT_UL, 10, 9},
+	{"dir", "a directory list", TAGACT_NOP, 5, 9},
+	{"menu", "a menu", TAGACT_NOP, 5, 9},
+	{"ol", "a numbered list", TAGACT_OL, 10, 9},
+	{"dl", "a definition list", TAGACT_DL, 10, 9},
+	{"hr", "a horizontal line", TAGACT_HR, 5, 5},
+	{"form", "a form", TAGACT_FORM, 10, 9},
+	{"button", "a button", TAGACT_INPUT, 0, 13},
+	{"frame", "a frame", TAGACT_FRAME, 2, 13},
+	{"iframe", "a frame", TAGACT_FRAME, 2, 13},
+	{"map", "an image map", TAGACT_MAP, 2, 13},
+	{"area", "an image map area", TAGACT_AREA, 0, 13},
+	{"table", "a table", TAGACT_TABLE, 10, 9},
+	{"tbody", "a table body", TAGACT_TBODY, 0, 0},
+	{"tr", "a table row", TAGACT_TR, 5, 9},
+	{"td", "a table entry", TAGACT_TD, 0, 13},
+	{"th", "a table heading", TAGACT_TD, 0, 9},
+	{"pre", "a preformatted section", TAGACT_PRE, 10, 0},
+	{"listing", "a listing", TAGACT_PRE, 1, 0},
+	{"xmp", "an example", TAGACT_PRE, 1, 0},
+	{"fixed", "a fixed presentation", TAGACT_NOP, 1, 0},
+	{"code", "a block of code", TAGACT_NOP, 0, 0},
+	{"samp", "a block of sample text", TAGACT_NOP, 0, 0},
+	{"address", "an address block", TAGACT_NOP, 1, 0},
+	{"style", "a style block", TAGACT_NOP, 0, 2},
+	{"script", "a script", TAGACT_SCRIPT, 0, 9},
+	{"noscript", "no script section", TAGACT_NOP, 0, 3},
+	{"noframes", "no frames section", TAGACT_NOP, 0, 3},
+	{"embed", "embedded html", TAGACT_MUSIC, 0, 5},
+	{"noembed", "no embed section", TAGACT_NOP, 0, 3},
+	{"object", "an html object", TAGACT_OBJ, 0, 3},
+	{"em", "emphasized text", TAGACT_JS, 0, 0},
+	{"label", "a label", TAGACT_JS, 0, 0},
+	{"strike", "emphasized text", TAGACT_JS, 0, 0},
+	{"s", "emphasized text", TAGACT_JS, 0, 0},
+	{"strong", "emphasized text", TAGACT_JS, 0, 0},
+	{"b", "bold text", TAGACT_JS, 0, 0},
+	{"i", "italicized text", TAGACT_JS, 0, 0},
+	{"u", "underlined text", TAGACT_JS, 0, 0},
+	{"dfn", "definition text", TAGACT_JS, 0, 0},
+	{"q", "quoted text", TAGACT_JS, 0, 0},
+	{"abbr", "an abbreviation", TAGACT_JS, 0, 0},
+	{"span", "an html span", TAGACT_SPAN, 0, 0},
+	{"frameset", "a frame set", TAGACT_JS, 0, 1},
 	{"", NULL, 0}
 };
 
@@ -603,13 +603,14 @@ struct htmlTag *newTag(const char *name)
 	const struct tagInfo *ti;
 	int action;
 
-	for (ti = elements; ti->name[0]; ++ti)
+	for (ti = availableTags; ti->name[0]; ++ti)
 		if (stringEqualCI(ti->name, name))
 			break;
 	if (!ti->name[0])
 		return 0;
+	if ((action = ti->action) == TAGACT_ZERO)
+		return 0;
 
-	action = ti->action;
 	t = (struct htmlTag *)allocZeroMem(sizeof(struct htmlTag));
 	t->action = action;
 	t->info = ti;
@@ -812,7 +813,7 @@ static void intoTree(struct htmlTag *parent)
 				treeDisable = false;
 				continue;
 			}
-			if (action == TAGACT_HTML || action == TAGACT_BODY) {
+			if (action == TAGACT_BODY) {
 				debugPrint(5, "node pass %s", t->info->name);
 				t->step = 100;
 				intoTree(t);
@@ -821,8 +822,7 @@ static void intoTree(struct htmlTag *parent)
 
 /* this node is ok, but if parent is a pass through node... */
 			if (parent == 0 ||	/* this shouldn't happen */
-			    parent->action == TAGACT_HTML
-			    || parent->action == TAGACT_BODY) {
+			    parent->action == TAGACT_BODY) {
 /* link up to treeAttach */
 				const char *w = "root";
 				if (treeAttach)
@@ -1040,7 +1040,7 @@ bool htmlTest(void)
 			if (j > 1 && (p[j] == '>' || isspaceByte(p[j]))) {
 /* something we recognize? */
 				const struct tagInfo *ti;
-				for (ti = elements; ti->name; ++ti)
+				for (ti = availableTags; ti->name[0]; ++ti)
 					if (stringEqualCI(ti->name, look))
 						return true;
 			}	/* leading tag */

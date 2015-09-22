@@ -71,26 +71,38 @@ document.tag$$map.p = new Array;
 document.scripts = document.tag$$map.script; 
 document.paras = document.tag$$map.p; 
 
-document.idMaster = new Object;
 document.getElementsByTagName = function(s) { 
-/* this function should really return a node list, whatever one of those is
-* but I guess an array is good enough for now */
-/* apparently "*" gives you all the elements in the document */
-var ret = new Array;
-if (s === "*") {
-Object.keys(document.tag$$map).forEach(function (key) {
-ret.concat(document.tag$$map[key]);
-});
+s = s.toLowerCase();
+return document.gebtn$(this, s);
 }
-else {
-var t = s.toLowerCase();
-if (typeof(document.tag$$map[t]) !== "undefined") {
-ret = document.tag$$map[t];
+document.gebtn$ = function(top, s) { 
+var a = new Array;
+if(s === '*' || (top.nodeName && top.nodeName === s))
+a.push(top);
+if(top.childNodes) {
+for(var i=0; i<top.childNodes.length; ++i) {
+c = top.childNodes[i];
+a = a.concat(document.gebtn$(c, s));
 }
 }
-return ret;
-} 
+return a;
+}
 
+Head.prototype.getElementsByTagName = document.getElementsByTagName;
+Body.prototype.getElementsByTagName = document.getElementsByTagName;
+Form.prototype.getElementsByTagName = document.getElementsByTagName;
+Element.prototype.getElementsByTagName = document.getElementsByTagName;
+Anchor.prototype.getElementsByTagName = document.getElementsByTagName;
+Div.prototype.getElementsByTagName = document.getElementsByTagName;
+Script.prototype.getElementsByTagName = document.getElementsByTagName;
+P.prototype.getElementsByTagName = document.getElementsByTagName;
+Table.prototype.getElementsByTagName = document.getElementsByTagName;
+Tbody.prototype.getElementsByTagName = document.getElementsByTagName;
+Trow.prototype.getElementsByTagName = document.getElementsByTagName;
+Cell.prototype.getElementsByTagName = document.getElementsByTagName;
+Span.prototype.getElementsByTagName = document.getElementsByTagName;
+
+document.idMaster = new Object;
 document.getElementById = function(s) { 
 /* take advantage of the js hash lookup */
 return document.idMaster[s]; 
@@ -100,7 +112,7 @@ return document.idMaster[s];
 * but offer the document.all.tags method because that was here already */
 document.all = new Object;
 document.all.tags = function(s) { 
-return document.getElementsByTagName(s);
+return document.gebtn$(document.body, s.toLowerCase());
 }
 
 /* document.createElement is a native wrapper around this function */
@@ -150,7 +162,7 @@ document.tag$$map[t] = new Array;
 /* ok, for some element types this perhaps doesn't make sense,
 * but for most visible ones it does and I doubt it matters much */
 c.style = new Object;
-c.elements = new Array;
+c.childNodes = new Array;
 c.nodeName = t;
 return c;
 } 
@@ -452,45 +464,69 @@ return;
 Array.prototype.firstChild = function() { return (this.length ? this[0] : undefined); }
 Array.prototype.lastChild = function() { return (this.length ? this[this.length-1] : undefined); }
 
-/*********************************************************************
-Of course most of the html objects are not arrays.
-Still they need appendChild and insertBefore
-Here's how easy in js, just one line.
-Body.prototype.appendChild = function(o) { this.elements.appendChild(o); }
-But I can't do it in js because there are side effects.
-The parent child linkage has to pass back to the html tree in edbrowse.
-So it has to be native code.
-See appendChild() in jseng*.cpp.
-Other calls must also be native, but that isn't done yet.
-*********************************************************************/
-
-Body.prototype.insertBefore = function(o, b) { this.elements.insertBefore(o, b); }
-Body.prototype.firstChild = function() { return this.elements.firstChild(); }
-Body.prototype.lastChild = function() { return this.elements.lastChild(); }
-Body.prototype.setAttribute = function(name, val) { this[name.toLowerCase()] = val; }
-Body.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
-Head.prototype.insertBefore = function(o, b) { this.elements.insertBefore(o, b); }
-Head.prototype.firstChild = function() { return this.elements.firstChild(); }
-Head.prototype.lastChild = function() { return this.elements.lastChild(); }
-Head.prototype.setAttribute = function(name, val) { this[name.toLowerCase()] = val; }
+/* document.appendChild and document.apch$ are native */
+document.childNodes = new Array;
+Head.prototype.appendChild = document.appendChild;
+Head.prototype.apch$ = document.apch$;
+Head.prototype.insertBefore = function(o, b) { this.childNodes.insertBefore(o, b); }
+Head.prototype.firstChild = function() { return this.childNodes.firstChild(); }
+Head.prototype.lastChild = function() { return this.childNodes.lastChild(); }
+Head.prototype.setAttribute = document.setAttribute;
 Head.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
-Form.prototype.insertBefore = function(o, b) { this.elements.insertBefore(o, b); }
-Form.prototype.firstChild = function() { return this.elements.firstChild(); }
-Form.prototype.lastChild = function() { return this.elements.lastChild(); }
-Form.prototype.setAttribute = function(name, val) { this[name.toLowerCase()] = val; }
+Body.prototype.appendChild = document.appendChild;
+Body.prototype.apch$ = document.apch$;
+Body.prototype.insertBefore = function(o, b) { this.childNodes.insertBefore(o, b); }
+Body.prototype.firstChild = function() { return this.childNodes.firstChild(); }
+Body.prototype.lastChild = function() { return this.childNodes.lastChild(); }
+Body.prototype.setAttribute = document.setAttribute;
+Body.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
+Form.prototype.appendChild = document.appendChild;
+Form.prototype.apch$ = document.apch$;
+Form.prototype.insertBefore = function(o, b) { this.childNodes.insertBefore(o, b); }
+Form.prototype.firstChild = function() { return this.childNodes.firstChild(); }
+Form.prototype.lastChild = function() { return this.childNodes.lastChild(); }
+Form.prototype.setAttribute = document.setAttribute;
 Form.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
-Element.prototype.insertBefore = function(o, b) { this.elements.insertBefore(o, b); }
-Element.prototype.firstChild = function() { return this.elements.firstChild(); }
-Element.prototype.lastChild = function() { return this.elements.lastChild(); }
-Element.prototype.setAttribute = function(name, val) { this[name.toLowerCase()] = val; }
+Element.prototype.appendChild = document.appendChild;
+Element.prototype.apch$ = document.apch$;
+Element.prototype.insertBefore = function(o, b) { this.childNodes.insertBefore(o, b); }
+Element.prototype.firstChild = function() { return this.childNodes.firstChild(); }
+Element.prototype.lastChild = function() { return this.childNodes.lastChild(); }
+Element.prototype.setAttribute = document.setAttribute;
 Element.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
-Div.prototype.insertBefore = function(o, b) { this.elements.insertBefore(o, b); }
-Div.prototype.firstChild = function() { return this.elements.firstChild(); }
-Div.prototype.lastChild = function() { return this.elements.lastChild(); }
-Div.prototype.setAttribute = function(name, val) { this[name.toLowerCase()] = val; }
+Element.prototype.focus = document.focus;
+Element.prototype.blur = document.blur;
+Anchor.prototype.appendChild = document.appendChild;
+Anchor.prototype.apch$ = document.apch$;
+Anchor.prototype.focus = document.focus;
+Anchor.prototype.blur = document.blur;
+Div.prototype.appendChild = document.appendChild;
+Div.prototype.apch$ = document.apch$;
+Div.prototype.insertBefore = function(o, b) { this.childNodes.insertBefore(o, b); }
+Div.prototype.firstChild = function() { return this.childNodes.firstChild(); }
+Div.prototype.lastChild = function() { return this.childNodes.lastChild(); }
+Div.prototype.setAttribute = document.setAttribute;
 Div.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
-Script.prototype.setAttribute = function(name, val) { this[name.toLowerCase()] = val; }
+Script.prototype.setAttribute = document.setAttribute;
 Script.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
+P.prototype.appendChild = document.appendChild;
+P.prototype.apch$ = document.apch$;
+P.prototype.setAttribute = document.setAttribute;
+Table.prototype.appendChild = document.appendChild;
+Table.prototype.apch$ = document.apch$;
+Table.prototype.setAttribute = document.setAttribute;
+Tbody.prototype.appendChild = document.appendChild;
+Tbody.prototype.apch$ = document.apch$;
+Tbody.prototype.setAttribute = document.setAttribute;
+Trow.prototype.appendChild = document.appendChild;
+Trow.prototype.apch$ = document.apch$;
+Trow.prototype.setAttribute = document.setAttribute;
+Cell.prototype.appendChild = document.appendChild;
+Cell.prototype.apch$ = document.apch$;
+Cell.prototype.setAttribute = document.setAttribute;
+Span.prototype.appendChild = document.appendChild;
+Span.prototype.apch$ = document.apch$;
+Span.prototype.setAttribute = document.setAttribute;
 
 /* navigator; some parameters are filled in by the buildstartwindow script. */
 navigator.appName = "edbrowse";

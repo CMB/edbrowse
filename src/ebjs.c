@@ -1136,7 +1136,7 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 				return;
 			if (radiosel == 1) {
 				set_property_string(io, "type", "radio");
-				set_property_string(io, "nodeName", "RADIO");
+				set_property_string(io, "nodeName", "radio");
 			} else {
 /* I've read some docs that say select is itself an array,
  * and then references itself as an array of options.
@@ -1152,8 +1152,12 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 			io = instantiate(owner, membername, classname);
 			if (io == NULL)
 				return;
-/* not an array; needs the elements array beneath it for the children */
-			instantiate_array(io, "elements");
+
+/* not an array; needs the childNodes array beneath it for the children */
+			instantiate_array(io, "childNodes");
+/* and in the special case of form, also need an array of elements */
+			if (stringEqual(classname, "Form"))
+				instantiate_array(io, "elements");
 		}
 
 		if (membername == symname) {
