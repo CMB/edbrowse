@@ -52,6 +52,8 @@ document.paragraphs = new Array;
 document.tables = new Array;
 document.spans = new Array;
 document.images = new Array;
+document.areas = new Array;
+frames = new Array;
 
 document.getElementsByTagName = function(s) { 
 s = s.toLowerCase();
@@ -375,7 +377,7 @@ var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
 if(!this[evarray]) {
 /* attaching the first handler */
-var a = new Array();
+var a = new Array;
 /* was there already a function from before? */
 if(this[ev]) {
 this[evorig] = this[ev];
@@ -399,7 +401,7 @@ var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
 if(!this[evarray]) {
 /* attaching the first handler */
-var a = new Array();
+var a = new Array;
 /* was there already a function from before? */
 if(this[ev]) {
 this[evorig] = this[ev];

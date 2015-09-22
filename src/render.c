@@ -1240,7 +1240,7 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		break;
 
 	case TAGACT_P:
-		domLink(t, "P", 0, "paras", cw->docobj, 0);
+		domLink(t, "P", 0, "paragraphs", cw->docobj, 0);
 		establish_inner(t->jv, t->innerHTML, 0, false);
 		break;
 
