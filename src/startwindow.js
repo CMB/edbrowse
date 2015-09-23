@@ -72,19 +72,79 @@ a = a.concat(document.gebtn$(c, s));
 return a;
 }
 
+document.getElementsByName = function(s) { 
+s = s.toLowerCase();
+return document.gebn$(this, s);
+}
+document.gebn$ = function(top, s) { 
+var a = new Array;
+if(s === '*' || (top.name && top.name === s))
+a.push(top);
+if(top.childNodes) {
+for(var i=0; i<top.childNodes.length; ++i) {
+c = top.childNodes[i];
+a = a.concat(document.gebn$(c, s));
+}
+}
+return a;
+}
+
+document.getElementsByClassName = function(s) { 
+s = s.toLowerCase();
+return document.gebcn$(this, s);
+}
+document.gebcn$ = function(top, s) { 
+var a = new Array;
+if(s === '*' || (top.className && top.className === s))
+a.push(top);
+if(top.childNodes) {
+for(var i=0; i<top.childNodes.length; ++i) {
+c = top.childNodes[i];
+a = a.concat(document.gebcn$(c, s));
+}
+}
+return a;
+}
+
 Head.prototype.getElementsByTagName = document.getElementsByTagName;
+Head.prototype.getElementsByName = document.getElementsByName;
+Head.prototype.getElementsByClassName = document.getElementsByClassName;
 Body.prototype.getElementsByTagName = document.getElementsByTagName;
+Body.prototype.getElementsByName = document.getElementsByName;
+Body.prototype.getElementsByClassName = document.getElementsByClassName;
 Form.prototype.getElementsByTagName = document.getElementsByTagName;
+Form.prototype.getElementsByName = document.getElementsByName;
+Form.prototype.getElementsByClassName = document.getElementsByClassName;
 Element.prototype.getElementsByTagName = document.getElementsByTagName;
+Element.prototype.getElementsByName = document.getElementsByName;
+Element.prototype.getElementsByClassName = document.getElementsByClassName;
 Anchor.prototype.getElementsByTagName = document.getElementsByTagName;
+Anchor.prototype.getElementsByName = document.getElementsByName;
+Anchor.prototype.getElementsByClassName = document.getElementsByClassName;
 Div.prototype.getElementsByTagName = document.getElementsByTagName;
+Div.prototype.getElementsByName = document.getElementsByName;
+Div.prototype.getElementsByClassName = document.getElementsByClassName;
 Script.prototype.getElementsByTagName = document.getElementsByTagName;
+Script.prototype.getElementsByName = document.getElementsByName;
+Script.prototype.getElementsByClassName = document.getElementsByClassName;
 P.prototype.getElementsByTagName = document.getElementsByTagName;
+P.prototype.getElementsByName = document.getElementsByName;
+P.prototype.getElementsByClassName = document.getElementsByClassName;
 Table.prototype.getElementsByTagName = document.getElementsByTagName;
+Table.prototype.getElementsByName = document.getElementsByName;
+Table.prototype.getElementsByClassName = document.getElementsByClassName;
 Tbody.prototype.getElementsByTagName = document.getElementsByTagName;
+Tbody.prototype.getElementsByName = document.getElementsByName;
+Tbody.prototype.getElementsByClassName = document.getElementsByClassName;
 Trow.prototype.getElementsByTagName = document.getElementsByTagName;
+Trow.prototype.getElementsByName = document.getElementsByName;
+Trow.prototype.getElementsByClassName = document.getElementsByClassName;
 Cell.prototype.getElementsByTagName = document.getElementsByTagName;
+Cell.prototype.getElementsByName = document.getElementsByName;
+Cell.prototype.getElementsByClassName = document.getElementsByClassName;
 Span.prototype.getElementsByTagName = document.getElementsByTagName;
+Span.prototype.getElementsByName = document.getElementsByName;
+Span.prototype.getElementsByClassName = document.getElementsByClassName;
 
 document.idMaster = new Object;
 document.getElementById = function(s) { 

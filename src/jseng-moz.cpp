@@ -596,7 +596,7 @@ static JSBool textnode_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 		v = STRING_TO_JSVAL(str);
 	else
 		v = JS_GetEmptyStringValue(jcx);
-	JS_DefineProperty(cx, newtext, "text", v, NULL, NULL, PROP_STD);
+	JS_DefineProperty(cx, newtext, "data", v, NULL, NULL, PROP_STD);
 	args.rval().set(OBJECT_TO_JSVAL(newtext));
 	return JS_TRUE;
 }				/* textnode_ctor */

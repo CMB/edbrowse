@@ -579,8 +579,8 @@ li_hide:
 		if (!t->textval && t->jv) {
 /* A text node from html should always contain a string. But if this node
  * is created by document.createTextNode(), the string is
- * down in the member "text". */
-			t->textval = get_property_string(t->jv, "text");
+ * down in the member "data". */
+			t->textval = get_property_string(t->jv, "data");
 		}
 		if (!t->textval)
 			break;
@@ -1156,7 +1156,7 @@ static void jsNode(struct htmlTag *t, bool opentag)
 			const char *w = t->textval;
 			if (!w)
 				w = emptyString;
-			set_property_string(t->jv, "text", w);
+			set_property_string(t->jv, "data", w);
 			set_property_string(t->jv, "nodeName", "text");
 		}
 		break;
