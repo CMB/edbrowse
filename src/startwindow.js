@@ -488,25 +488,32 @@ Element.prototype.attachEvent = window.attachEvent;
 Anchor.prototype.addEventListener = window.addEventListener;
 Anchor.prototype.attachEvent = window.attachEvent;
 
-/* an array in an html document uses appendchild like push */
-Array.prototype.appendChild = function(child) { this.push(child); }
-/* insertBefore maps to splice, but we have to find the element. */
-/* This prototype assumes all elements are objects. */
-Array.prototype.insertBefore = function(newobj, item) {
-for(var i=0; i<this.length; ++i)
-if(this[i] == item) {
-this.splice(i-1, 0, newobj);
-return;
-}
-}
-Array.prototype.firstChild = function() { return (this.length ? this[0] : undefined); }
-Array.prototype.lastChild = function() { return (this.length ? this[this.length-1] : undefined); }
-
 /* document.appendChild and document.apch$ are native */
 document.childNodes = new Array;
-document.firstChild = function() { return this.childNodes.firstChild(); }
-document.lastChild = function() { return this.childNodes.lastChild(); }
+document.firstChild = function() { return (this.childNodes.length > 0 ? this.childNodes[0] : undefined); }
+document.lastChild = function() { return (this.childNodes.length > 0 ? this.childNodes[this.childNodes.length-1] : undefined); }
 document.hasChildNodes = function() { return (this.childNodes.length > 0); }
+document.replaceChild = function(newc, oldc) {
+var lastentry;
+var l = this.childNodes.length;
+var nextinline;
+for(var i=0; i<l; ++i) {
+if(this.childNodes[i] != oldc)
+continue;
+if(i == l-1)
+lastentry = true;
+else {
+lastentry = false;
+nextinline = this.childNodes[i+1];
+}
+this.removeChild(oldc);
+if(lastentry)
+this.appendChild(newc);
+else
+this.insertBefore(newc, nextinline);
+break;
+}
+}
 
 Head.prototype.appendChild = document.appendChild;
 Head.prototype.apch$ = document.apch$;
@@ -515,6 +522,7 @@ Head.prototype.firstChild = document.firstChild;
 Head.prototype.lastChild = document.lastChild;
 Head.prototype.hasChildNodes = document.hasChildNodes;
 Head.prototype.removeChild = document.removeChild;
+Head.prototype.replaceChild = document.replaceChild;
 Head.prototype.setAttribute = document.setAttribute;
 Head.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
 Body.prototype.appendChild = document.appendChild;
@@ -524,6 +532,7 @@ Body.prototype.firstChild = document.firstChild;
 Body.prototype.lastChild = document.lastChild;
 Body.prototype.hasChildNodes = document.hasChildNodes;
 Body.prototype.removeChild = document.removeChild;
+Body.prototype.replaceChild = document.replaceChild;
 Body.prototype.setAttribute = document.setAttribute;
 Body.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
 Form.prototype.appendChild = document.appendChild;
@@ -533,6 +542,7 @@ Form.prototype.firstChild = document.firstChild;
 Form.prototype.lastChild = document.lastChild;
 Form.prototype.hasChildNodes = document.hasChildNodes;
 Form.prototype.removeChild = document.removeChild;
+Form.prototype.replaceChild = document.replaceChild;
 Form.prototype.setAttribute = document.setAttribute;
 Form.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
 Element.prototype.appendChild = document.appendChild;
@@ -542,6 +552,7 @@ Element.prototype.firstChild = document.firstChild;
 Element.prototype.lastChild = document.lastChild;
 Element.prototype.hasChildNodes = document.hasChildNodes;
 Element.prototype.removeChild = document.removeChild;
+Element.prototype.replaceChild = document.replaceChild;
 Element.prototype.setAttribute = document.setAttribute;
 Element.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
 Element.prototype.focus = document.focus;
@@ -557,6 +568,7 @@ Div.prototype.firstChild = document.firstChild;
 Div.prototype.lastChild = document.lastChild;
 Div.prototype.hasChildNodes = document.hasChildNodes;
 Div.prototype.removeChild = document.removeChild;
+Div.prototype.replaceChild = document.replaceChild;
 Div.prototype.setAttribute = document.setAttribute;
 Div.prototype.getAttribute = function(name) { return this[name.toLowerCase()]; }
 Script.prototype.setAttribute = document.setAttribute;
@@ -564,24 +576,57 @@ Script.prototype.getAttribute = function(name) { return this[name.toLowerCase()]
 P.prototype.appendChild = document.appendChild;
 P.prototype.apch$ = document.apch$;
 P.prototype.setAttribute = document.setAttribute;
+P.prototype.insertBefore = document.insertBefore;
+P.prototype.firstChild = document.firstChild;
+P.prototype.lastChild = document.lastChild;
+P.prototype.hasChildNodes = document.hasChildNodes;
+P.prototype.removeChild = document.removeChild;
+P.prototype.replaceChild = document.replaceChild;
 Table.prototype.appendChild = document.appendChild;
 Table.prototype.apch$ = document.apch$;
 Table.prototype.setAttribute = document.setAttribute;
+Table.prototype.insertBefore = document.insertBefore;
+Table.prototype.firstChild = document.firstChild;
+Table.prototype.lastChild = document.lastChild;
+Table.prototype.hasChildNodes = document.hasChildNodes;
+Table.prototype.removeChild = document.removeChild;
+Table.prototype.replaceChild = document.replaceChild;
 Tbody.prototype.appendChild = document.appendChild;
 Tbody.prototype.apch$ = document.apch$;
 Tbody.prototype.setAttribute = document.setAttribute;
+Tbody.prototype.insertBefore = document.insertBefore;
+Tbody.prototype.firstChild = document.firstChild;
+Tbody.prototype.lastChild = document.lastChild;
+Tbody.prototype.hasChildNodes = document.hasChildNodes;
+Tbody.prototype.removeChild = document.removeChild;
+Tbody.prototype.replaceChild = document.replaceChild;
 Trow.prototype.appendChild = document.appendChild;
 Trow.prototype.apch$ = document.apch$;
 Trow.prototype.setAttribute = document.setAttribute;
+Trow.prototype.insertBefore = document.insertBefore;
+Trow.prototype.firstChild = document.firstChild;
+Trow.prototype.lastChild = document.lastChild;
+Trow.prototype.hasChildNodes = document.hasChildNodes;
+Trow.prototype.removeChild = document.removeChild;
+Trow.prototype.replaceChild = document.replaceChild;
 Cell.prototype.appendChild = document.appendChild;
 Cell.prototype.apch$ = document.apch$;
 Cell.prototype.setAttribute = document.setAttribute;
+Cell.prototype.insertBefore = document.insertBefore;
+Cell.prototype.firstChild = document.firstChild;
+Cell.prototype.lastChild = document.lastChild;
+Cell.prototype.hasChildNodes = document.hasChildNodes;
+Cell.prototype.removeChild = document.removeChild;
+Cell.prototype.replaceChild = document.replaceChild;
 Span.prototype.appendChild = document.appendChild;
 Span.prototype.apch$ = document.apch$;
 Span.prototype.setAttribute = document.setAttribute;
+Span.prototype.insertBefore = document.insertBefore;
 Span.prototype.firstChild = document.firstChild;
 Span.prototype.lastChild = document.lastChild;
 Span.prototype.hasChildNodes = document.hasChildNodes;
+Span.prototype.removeChild = document.removeChild;
+Span.prototype.replaceChild = document.replaceChild;
 
 /* navigator; some parameters are filled in by the buildstartwindow script. */
 navigator.appName = "edbrowse";
