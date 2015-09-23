@@ -298,10 +298,6 @@ FILE *efopen(const char *name, const char *mode) ;
 int eopen(const char *name, int mode, int perms) ;
 void appendFile(const char *fname, const char *message, ...) ;
 void appendFileNF(const char *filename, const char *msg) ;
-IP32bit tcp_name_ip(const char *name) ;
-char *tcp_ip_dots(IP32bit ip) ;
-int tcp_isDots(const char *s) ;
-IP32bit tcp_dots_ip(const char *s) ;
 
 /* sourcefile=url.c */
 void unpercentURL(char *url) ;

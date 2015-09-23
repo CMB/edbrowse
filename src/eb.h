@@ -63,9 +63,6 @@ typedef uchar bool;
 #define true 1
 #endif
 
-typedef unsigned int IP32bit;
-#define NULL_IP (IP32bit)(-1)
-
 /*********************************************************************
 Include the header file that connects edbrowse to the js process.
 This is a series of enums, and the interprocess message structure,
