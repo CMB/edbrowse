@@ -3083,6 +3083,40 @@ static int twoLetter(const char *line, const char **runThis)
 		}
 	}
 
+	if (line[0] == 'l' && line[1] == 's') {
+		char lsmode[8];
+		cmd = 'e';	/* so error messages are printed */
+		if (!cw->dirMode) {
+			setError(MSG_NoDir);
+			return false;
+		}
+		if (cw->dot == 0) {
+			setError(MSG_AtLine0);
+			return false;
+		}
+		if (!lsattrChars(line + 2, lsmode)) {
+			setError(MSG_LSBadChar);
+			return false;
+		}
+/* default ls mode is size time */
+		if (!lsmode[0])
+			strcpy(lsmode, "st");
+		char *file, *path, *t;
+		file = (char *)fetchLine(cw->dot, -1);
+		t = strchr(file, '\n');
+		if (!t)
+			i_printfExit(MSG_NoNlOnDir, file);
+		*t = 0;
+		path = makeAbsPath(file);
+		*t = '\n';
+		if (!path)
+			t = emptyString;
+		else
+			t = lsattr(path, lsmode);
+		puts(*t ? t : "no access");
+		return true;
+	}
+
 	if (line[0] == 'c' && line[1] == 'd') {
 		c = line[2];
 		if (!c || isspaceByte(c)) {

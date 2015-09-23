@@ -130,16 +130,6 @@ static void writeAttachments(struct MHINFO *w)
 	}
 }				/* writeAttachments */
 
-static char *conciseTime(time_t t)
-{
-	static char buffer[20];
-	struct tm *tm = localtime(&t);
-	sprintf(buffer, "%02d/%02d/%04d %02d:%02d:%02d",
-		tm->tm_mon + 1, tm->tm_mday, tm->tm_year + 1900,
-		tm->tm_hour, tm->tm_min, tm->tm_sec);
-	return buffer;
-}				/* conciseTime */
-
 /* string to hold the returned data from the mail server */
 static char *mailstring;
 static int mailstring_l;
@@ -468,7 +458,7 @@ none:
 static void scanFolder(CURL * handle, struct FOLDER *f, bool allmessages)
 {
 	struct MIF *mif;
-	int j, msize;
+	int j;
 	CURLcode res = CURLE_OK;
 	char *t;
 	char key;
@@ -509,14 +499,7 @@ showmessages:
 		printf("%s: %s", mif->from, mif->subject);
 		if (mif->sent)
 			printf(" %s", conciseTime(mif->sent));
-		msize = mif->size;
-		if (msize >= (1 << 20))
-			printf(" %dM", msize >> 20);
-		else if (msize >= (1 << 10))
-			printf(" %dK", msize >> 10);
-		else
-			printf(" %d", msize);
-		nl();
+			printf(" %s\n", conciseSize(mif->size));
 
 action:
 		delflag = false;

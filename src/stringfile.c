@@ -14,6 +14,7 @@
 #endif
 #include <glob.h>
 #include <pwd.h>
+#include <grp.h>
 #include <dirent.h>
 #include <netdb.h>
 
@@ -904,6 +905,150 @@ time_t fileTimeByName(const char *name)
 	}
 	return buf.st_mtime;
 }				/* fileTimeByName */
+
+char *conciseSize(size_t n)
+{
+	static char buf[32];
+	if (n >= (1 << 30))
+		sprintf(buf, "%dG", n >> 30);
+	else if (n >= (1 << 20))
+		sprintf(buf, "%dM", n >> 20);
+	else if (n >= (1 << 10))
+		sprintf(buf, "%dK", n >> 10);
+	else
+		sprintf(buf, "%d", n);
+	return buf;
+}				/* conciseSize */
+
+char *conciseTime(time_t t)
+{
+	static char buffer[20];
+	struct tm *tm = localtime(&t);
+	sprintf(buffer, "%02d/%02d/%04d %02d:%02d",
+		tm->tm_mon + 1, tm->tm_mday, tm->tm_year + 1900,
+		tm->tm_hour, tm->tm_min);
+	return buffer;
+}				/* conciseTime */
+
+/* retain only characters l s t i k p m, for ls attributes */
+bool lsattrChars(const char *buf, char *dest)
+{
+	bool rc = true;
+	const char *s;
+	char c, *t;
+	char used[26];
+	memset(used, 0, sizeof(used));
+	t = dest;
+	for (s = buf; (c = *s); ++s) {
+		if (isspaceByte(c))
+			continue;
+		if (!strchr("lstikpm", c)) {
+			rc = false;
+			continue;
+		}
+		if (used[c - 'a'])
+			continue;
+		used[c - 'a'] = 1;
+		*t++ = c;
+	}
+	*t = 0;
+	return rc;
+}				/* lsattrChars */
+
+/* expand the ls attributes for a file into a static string. */
+/* This assumes user/group names will not be too long. */
+char *lsattr(const char *path, const char *flags)
+{
+	static char buf[200];
+	char p[40];
+	struct stat st;
+	struct passwd *pwbuf;
+	struct group *grpbuf;
+	char *s;
+	int l, modebits;
+
+	buf[0] = 0;
+
+	if (!path || !path[0] || !flags || !flags[0])
+		return buf;
+
+/* we already glommed onto this file through the directory listing;
+ * it ought to be there. */
+	if (stat(path, &st))
+		return buf;
+
+	while (*flags) {
+		if (buf[0])
+			strcat(buf, " ");
+
+		switch (*flags) {
+		case 't':
+			strcat(buf, conciseTime(st.st_mtime));
+			break;
+		case 'l':
+			sprintf(p, "%d", st.st_size);
+p:
+			strcat(buf, p);
+			break;
+		case 's':
+			strcat(buf, conciseSize(st.st_size));
+			break;
+		case 'i':
+			sprintf(p, "%d", st.st_ino);
+			goto p;
+		case 'k':
+			sprintf(p, "%d", st.st_nlink);
+			goto p;
+		case 'm':
+			strcpy(p, "-");
+			if (st.st_rdev)
+				sprintf(p, "%d/%d",
+					(int)(st.st_rdev >> 8),
+					(int)(st.st_rdev & 0xff));
+			goto p;
+		case 'p':
+			s = buf + strlen(buf);
+			pwbuf = getpwuid(st.st_uid);
+			if (pwbuf) {
+				l = strlen(pwbuf->pw_name);
+				if (l > 20)
+					l = 20;
+				strncpy(s, pwbuf->pw_name, l);
+				s[l] = 0;
+			} else
+				sprintf(s, "%d", st.st_uid);
+			s += strlen(s);
+			*s++ = ' ';
+			grpbuf = getgrgid(st.st_gid);
+			if (grpbuf) {
+				l = strlen(grpbuf->gr_name);
+				if (l > 20)
+					l = 20;
+				strncpy(s, grpbuf->gr_name, l);
+				s[l] = 0;
+			} else
+				sprintf(s, "%d", st.st_gid);
+			s += strlen(s);
+			*s++ = ' ';
+			modebits = st.st_mode;
+			modebits &= 07777;
+			if (modebits & 07000)
+				*s++ = '0' + (modebits >> 9);
+			modebits &= 0777;
+			*s++ = '0' + (modebits >> 6);
+			modebits &= 077;
+			*s++ = '0' + (modebits >> 3);
+			modebits &= 7;
+			*s++ = '0' + modebits;
+			*s = 0;
+			break;
+		}
+
+		++flags;
+	}
+
+	return buf;
+}				/* lsattr */
 
 #ifndef DOSLIKE
 
