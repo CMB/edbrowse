@@ -709,14 +709,20 @@ top:
 
 /* look for an run innerHTML */
 	foreach(ic, inputChangesPending) {
+		struct htmlTag *u, *v;
 		char *h;
 		if (ic->major != 'i' || ic->minor != 'h')
 			continue;
 		ic->major = 'x';
-/* one line will cut all the children away from t,
- * though it's not clear how to do the same in the javascript world. */
-		ic->t->firstchild = NULL;
-		runGeneratedHtml(ic->t, ic->value);
+/* Cut all the children away from t */
+		t = ic->t;
+		for (u = t->firstchild; u; u = v) {
+			v = u->sibling;
+			u->sibling = u->parent = 0;
+			u->deleted = true;
+		}
+		t->firstchild = NULL;
+		runGeneratedHtml(t, ic->value);
 		change = true;
 	}
 
@@ -2029,7 +2035,7 @@ struct htmlTag *tagFromJavaVar2(jsobjtype v, const char *tagname)
 /* this node now has a js object, don't decorate it again. */
 	t->step = 2;
 /* and don't render it unless it is linked into the active tree */
-t->deleted = true;
+	t->deleted = true;
 	return t;
 }				/* tagFromJavaVar2 */
 

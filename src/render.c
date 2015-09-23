@@ -581,6 +581,9 @@ li_hide:
  * is created by document.createTextNode(), the string is
  * down in the member "data". */
 			t->textval = get_property_string(t->jv, "data");
+/* Unfortunately this does not reflect subsequent changes to TextNode.data.
+ * either we query js every time, on every piece of text,
+ * or we include a setter so that TextNode.data assignment has a side effect. */
 		}
 		if (!t->textval)
 			break;
