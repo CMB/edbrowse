@@ -17,6 +17,9 @@ int displayLength = 500;
 
 /* Static variables for this file. */
 
+static uchar dirWrite;		/* directories read write */
+static char lsformat[8];	/* size date etc on a directory listing */
+static uchar endMarks;		/* ^ $ on printed lines */
 /* The valid edbrowse commands. */
 static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^<";
 /* Commands that can be done in browse mode. */
@@ -258,7 +261,14 @@ void displayLine(int n)
 
 	if (cnt >= displayLength)
 		printf("...");
-	printf("%s", dirSuffix(n));
+	if (cw->dirMode) {
+		printf("%s", dirSuffix(n));
+		if (cw->r_map) {
+			s = cw->r_map[n].text;
+			if (*s)
+				printf(" %s", s);
+		}
+	}
 	if (endMarks == 2 || endMarks && cmd == 'l')
 		printf("$");
 	nl();
@@ -950,7 +960,7 @@ static bool inputLinesIntoBuffer(void)
 /* This is static, with a limit on path length. */
 static char *makeAbsPath(const char *f)
 {
-	static char path[ABSPATH];
+	static char path[ABSPATH + 200];
 	if (strlen(cw->baseDirName) + strlen(f) > ABSPATH - 2) {
 		setError(MSG_PathNameLong, ABSPATH);
 		return 0;
@@ -1206,6 +1216,124 @@ static bool joinText(void)
 	return true;
 }				/* joinText */
 
+/* Read the contents of a directory into the current buffer */
+static bool readDirectory(const char *filename)
+{
+	int len, j, linecount;
+	char *v;
+	struct lineMap *mptr;
+	struct lineMap *backpiece = 0;
+
+	cw->baseDirName = cloneString(filename);
+/* get rid of trailing slash */
+	len = strlen(cw->baseDirName);
+	if (len && cw->baseDirName[len - 1] == '/')
+		cw->baseDirName[len - 1] = 0;
+/* Understand that the empty string now means / */
+
+/* get the files, or fail if there is a problem */
+	if (!sortedDirList(filename, &newpiece, &linecount))
+		return false;
+	if (!cw->dol) {
+		cw->dirMode = true;
+		i_puts(MSG_DirMode);
+		if (lsformat[0])
+			backpiece = allocZeroMem(LMSIZE * (linecount + 2));
+	}
+
+	if (!linecount) {	/* empty directory */
+		cw->dot = endRange;
+		fileSize = 0;
+		free(newpiece);
+		newpiece = 0;
+		nzFree(backpiece);
+		goto success;
+	}
+
+/* change 0 to nl and count bytes */
+	fileSize = 0;
+	mptr = newpiece;
+	for (j = 0; j < linecount; ++j, ++mptr) {
+		char c, ftype;
+		pst t = mptr->text;
+		char *abspath = makeAbsPath((char *)t);
+		while (*t) {
+			if (*t == '\n')
+				*t = '\t';
+			++t;
+		}
+		*t = '\n';
+		len = t - mptr->text;
+		fileSize += len + 1;
+		if (!abspath)
+			continue;	/* should never happen */
+
+		ftype = fileTypeByName(abspath, true);
+		if (!ftype)
+			continue;
+		if (isupperByte(ftype)) {	/* symbolic link */
+			if (!cw->dirMode)
+				*t = '@', *++t = '\n';
+			else
+				mptr->ds1 = '@';
+			++fileSize;
+		}
+		ftype = tolower(ftype);
+		c = 0;
+		if (ftype == 'd')
+			c = '/';
+		if (ftype == 's')
+			c = '^';
+		if (ftype == 'c')
+			c = '<';
+		if (ftype == 'b')
+			c = '*';
+		if (ftype == 'p')
+			c = '|';
+		if (c) {
+			if (!cw->dirMode)
+				*t = c, *++t = '\n';
+			else if (mptr->ds1)
+				mptr->ds2 = c;
+			else
+				mptr->ds1 = c;
+			++fileSize;
+		}
+
+/* extra stat entries on the line */
+		if (!lsformat[0])
+			continue;
+		if (backpiece)
+			backpiece[j + 1].text = emptyString;
+		v = lsattr(abspath, lsformat);
+		if (!v || !*v)
+			continue;
+		len = strlen(v);
+		fileSize += len + 1;
+		if (cw->dirMode) {
+			backpiece[j + 1].text = cloneString(v);
+		} else {
+/* have to realloc at this point */
+			int l1 = t - mptr->text;
+			mptr->text = reallocMem(mptr->text, l1 + len + 3);
+			t = mptr->text + l1;
+			*t++ = ' ';
+			strcpy(t, v);
+			t += len;
+			*t++ = '\n';
+			*t = 0;
+		}
+	}			/* loop fixing files in the directory scan */
+
+	addToMap(linecount, endRange);
+	cw->r_map = backpiece;
+
+success:
+	if (cmd == 'r')
+		debugPrint(1, "%d", fileSize);
+	return true;
+}				/* readDirectory */
+
 /* Read a file, or url, into the current buffer.
  * Post/get data is passed, via the second parameter, if it's a URL. */
 static bool readFile(const char *filename, const char *post)
@@ -1217,7 +1345,6 @@ static bool readFile(const char *filename, const char *post)
 	bool is8859, isutf8;
 	char *nopound;
 	char filetype;
-	struct lineMap *mptr;
 
 	serverData = 0;
 	serverDataLen = 0;
@@ -1296,84 +1423,8 @@ fromdisk:
 /* reading a file from disk */
 	filetype = fileTypeByName(filename, false);
 	fileSize = 0;
-	if (filetype == 'd') {
-/* directory scan */
-		int len, j, linecount;
-		cw->baseDirName = cloneString(filename);
-/* get rid of trailing slash */
-		len = strlen(cw->baseDirName);
-		if (len && cw->baseDirName[len - 1] == '/')
-			cw->baseDirName[len - 1] = 0;
-/* Understand that the empty string now means / */
-/* get the files, or fail if there is a problem */
-		if (!sortedDirList(filename, &newpiece, &linecount))
-			return false;
-		if (!cw->dol) {
-			cw->dirMode = true;
-			i_puts(MSG_DirMode);
-		}
-		if (!linecount) {	/* empty directory */
-			cw->dot = endRange;
-			fileSize = 0;
-			free(newpiece);
-			newpiece = 0;
-			return true;
-		}
-
-/* change 0 to nl and count bytes */
-		fileSize = 0;
-		mptr = newpiece;
-		for (j = 0; j < linecount; ++j, ++mptr) {
-			char c, ftype;
-			pst t = mptr->text;
-			char *abspath = makeAbsPath((char *)t);
-			while (*t) {
-				if (*t == '\n')
-					*t = '\t';
-				++t;
-			}
-			*t = '\n';
-			len = t - mptr->text;
-			fileSize += len + 1;
-			if (!abspath)
-				continue;	/* should never happen */
-			ftype = fileTypeByName(abspath, true);
-			if (!ftype)
-				continue;
-			if (isupperByte(ftype)) {	/* symbolic link */
-				if (!cw->dirMode)
-					*t = '@', *++t = '\n';
-				else
-					mptr->ds1 = '@';
-				++fileSize;
-			}
-			ftype = tolower(ftype);
-			c = 0;
-			if (ftype == 'd')
-				c = '/';
-			if (ftype == 's')
-				c = '^';
-			if (ftype == 'c')
-				c = '<';
-			if (ftype == 'b')
-				c = '*';
-			if (ftype == 'p')
-				c = '|';
-			if (!c)
-				continue;
-			if (!cw->dirMode)
-				*t = c, *++t = '\n';
-			else if (mptr->ds1)
-				mptr->ds2 = c;
-			else
-				mptr->ds1 = c;
-			++fileSize;
-		}		/* loop fixing files in the directory scan */
-
-		addToMap(linecount, endRange);
-
-		return true;
-	}
+	if (filetype == 'd')
+		return readDirectory(filename);
 
 	if ((cmd == 'e' || cmd == 'b') && !cw->mt)
 		cw->mt = findMimeByFile(filename);
@@ -1537,7 +1588,7 @@ static bool writeFile(const char *name, int mode)
 		bool alloc_p = cw->browseMode;
 		bool rc = true;
 
-		if (!suf[0]) {
+		if (!cw->dirMode) {
 			if (i == cw->dol && cw->nlMode)
 				--len;
 
@@ -1548,8 +1599,9 @@ static bool writeFile(const char *name, int mode)
 						free(p);
 					alloc_p = true;
 					p = (pst) tp;
-					if (fwrite(p, 1, tlen, fh) < tlen)
+					if (fwrite(p, tlen, 1, fh) <= 0)
 						rc = false;
+					len = tlen;
 					goto endline;
 				}
 
@@ -1559,28 +1611,53 @@ static bool writeFile(const char *name, int mode)
 						free(p);
 					alloc_p = true;
 					p = (pst) tp;
-					if (fwrite(p, 1, tlen, fh) < tlen)
+					if (fwrite(p, tlen, 1, fh) <= 0)
 						rc = false;
+					len = tlen;
 					goto endline;
 				}
 			}
 
-			if (fwrite(p, 1, len, fh) < len)
+			if (fwrite(p, len, 1, fh) <= 0)
 				rc = false;
 			goto endline;
 		}
 
-/* must write this line with the suffix on the end */
+/* Write this line with directory suffix, and possibly attributes */
 		--len;
-		if (fwrite(p, 1, len, fh) < len) {
+		if (fwrite(p, len, 1, fh) <= 0) {
 badwrite:
 			rc = false;
 			goto endline;
 		}
 		fileSize += len;
+
+		if (cw->r_map) {
+			int l;
+/* extra ls stats to write */
+			char *extra;
+			len = strlen(suf);
+			if (len && fwrite(suf, len, 1, fh) <= 0)
+				goto badwrite;
+			++len;	/* for nl */
+			extra = cw->r_map[i].text;
+			l = strlen(extra);
+			if (l) {
+				if (fwrite(" ", 1, 1, fh) <= 0)
+					goto badwrite;
+				++len;
+				if (fwrite(extra, l, 1, fh) <= 0)
+					goto badwrite;
+				len += l;
+			}
+			if (fwrite("\n", 1, 1, fh) <= 0)
+				goto badwrite;
+			goto endline;
+		}
+
 		strcat(suf, "\n");
 		len = strlen(suf);
-		if (fwrite(suf, 1, len, fh) < len)
+		if (fwrite(suf, len, 1, fh) <= 0)
 			goto badwrite;
 
 endline:
@@ -1627,11 +1704,26 @@ static bool readContext(int cx)
 		pst q;
 		if (lw->dirMode) {
 			char *suf = dirSuffixContext(i, cx);
-			char *q = allocMem(len + 3);
-			memcpy(q, p, len);
-			--len;
-			strcat(suf, "\n");
-			strcpy(q + len, suf);
+			char *q;
+			if (lw->r_map) {
+				char *extra = lw->r_map[i].text;
+				int elen = strlen(extra);
+				q = allocMem(len + 4 + elen);
+				memcpy(q, p, len);
+				--len;
+				strcpy(q + len, suf);
+				if (elen) {
+					strcat(q, " ");
+					strcat(q, extra);
+				}
+				strcat(q, "\n");
+			} else {
+				q = allocMem(len + 3);
+				memcpy(q, p, len);
+				--len;
+				strcat(suf, "\n");
+				strcpy(q + len, suf);
+			}
 			len = strlen(q);
 			p = (pst) q;
 		}
@@ -1678,11 +1770,25 @@ static bool writeContext(int cx)
 			if (cw->dirMode) {
 				pst q;
 				char *suf = dirSuffix(i);
-				q = allocMem(len + 3);
-				memcpy(q, p, len);
-				--len;
-				strcat(suf, "\n");
-				strcpy((char *)q + len, suf);
+				if (cw->r_map) {
+					char *extra = cw->r_map[i].text;
+					int elen = strlen(extra);
+					q = allocMem(len + 4 + elen);
+					memcpy(q, p, len);
+					--len;
+					strcpy((char *)q + len, suf);
+					if (elen) {
+						strcat(q, " ");
+						strcat(q, extra);
+					}
+					strcat(q, "\n");
+				} else {
+					q = allocMem(len + 3);
+					memcpy(q, p, len);
+					--len;
+					strcat(suf, "\n");
+					strcpy((char *)q + len, suf);
+				}
 				len = strlen((char *)q);
 				p = q;
 			}
@@ -3084,24 +3190,37 @@ static int twoLetter(const char *line, const char **runThis)
 	}
 
 	if (line[0] == 'l' && line[1] == 's') {
-		char lsmode[8];
 		cmd = 'e';	/* so error messages are printed */
-		if (!cw->dirMode) {
-			setError(MSG_NoDir);
-			return false;
+		char lsmode[8];
+		bool setmode = false;
+		char *file, *path, *t;
+		const char *s = line + 2;
+		skipWhite(&s);
+		if (*s == '=') {
+			setmode = true;
+			++s;
+			skipWhite(&s);
+		} else {
+			if (!cw->dirMode) {
+				setError(MSG_NoDir);
+				return false;
+			}
+			if (cw->dot == 0) {
+				setError(MSG_AtLine0);
+				return false;
+			}
 		}
-		if (cw->dot == 0) {
-			setError(MSG_AtLine0);
-			return false;
-		}
-		if (!lsattrChars(line + 2, lsmode)) {
+		if (!lsattrChars(s, lsmode)) {
 			setError(MSG_LSBadChar);
 			return false;
+		}
+		if (setmode) {
+			strcpy(lsformat, lsmode);
+			return true;
 		}
 /* default ls mode is size time */
 		if (!lsmode[0])
 			strcpy(lsmode, "st");
-		char *file, *path, *t;
 		file = (char *)fetchLine(cw->dot, -1);
 		t = strchr(file, '\n');
 		if (!t)
@@ -3358,7 +3477,7 @@ et_go:
 	if (stringEqual(line, "hr")) {
 		allowRedirection ^= 1;
 /* We're doing this manually for now.
-	curl_easy_setopt(http_curl_handle, CURLOPT_FOLLOWLOCATION, allowRedirection);
+        curl_easy_setopt(http_curl_handle, CURLOPT_FOLLOWLOCATION, allowRedirection);
 */
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(allowRedirection + MSG_RedirectionOff);

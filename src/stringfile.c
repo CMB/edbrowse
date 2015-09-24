@@ -923,9 +923,13 @@ char *conciseSize(size_t n)
 char *conciseTime(time_t t)
 {
 	static char buffer[20];
+	static const char *months[] = {
+		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+	};
 	struct tm *tm = localtime(&t);
-	sprintf(buffer, "%04d-%02d-%02d %02d:%02d",
-		tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+	sprintf(buffer, "%s %2d %d %02d:%02d",
+		months[tm->tm_mon], tm->tm_mday, tm->tm_year + 1900,
 		tm->tm_hour, tm->tm_min);
 	return buffer;
 }				/* conciseTime */

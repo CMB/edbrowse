@@ -253,8 +253,6 @@ extern bool allowJS;		/* javascript on */
 extern bool helpMessagesOn;	/* no need to type h */
 extern bool pluginsOn;		/* plugins are active */
 extern bool showHiddenFiles;	/* during directory scan */
-extern uchar dirWrite;		/* directory write mode, e.g. rename files */
-extern uchar endMarks;		/* do we print ^ $ at the start and end of lines? */
 extern int context;		/* which session (buffer) are we in? */
 extern uchar linePending[];
 extern char *changeFileName;

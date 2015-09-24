@@ -36,7 +36,6 @@ bool caseInsensitive, searchStringsAll;
 bool allowRedirection = true, allowJS = true, sendReferrer = true;
 bool binaryDetect = true, pluginsOn = true;
 bool inputReadLine;
-uchar dirWrite, endMarks;
 int context = 1;
 uchar linePending[MAXTTYLINE];
 char *changeFileName, *mailDir;

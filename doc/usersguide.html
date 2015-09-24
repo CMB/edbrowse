@@ -520,6 +520,26 @@ dx: directory is writable, and d deletes files
 <br>
 hf: show hidden files in directory listing (toggle)
 <br>
+lsl: list length of the file on the current line, in directory mode only
+<br>
+lss: list the approximate size of the file, in kilobytes, megabytes, etc
+<br>
+lst: list the mod time of the file
+<br>
+lsp: list owner group permissions
+<br>
+lsi: list the inode
+<br>
+lsk: list the number of hard links
+<br>
+lsm: list major and minor number
+<br>
+ls: same as lsst
+<br>
+ls=lt: display length and time of all files in subsequent directory scans
+<br>
+ls=: just list the files in a directory scan
+<br>
 u: undo the last command
 <br>
 i: insert text before the current line, end with a period
@@ -1409,6 +1429,52 @@ You may be editing a simple file,
 but you can still paste the contents of a line into your shell command.&nbsp;
 Off hand I don't know why you'd want to do this,
 but you can.
+
+<P>
+When in directory mode, the ls command displays various attributes of the file on the current line.&nbsp;
+Type lsl for the length, lss for the approximate size, lst for the mod time,
+lsp for the owner group permissions, lsi for the inode, lsk for the number of hard links, or lsm for the major and minor device numbers.&nbsp;
+These can be combined, e.g. lspk prints permissions and the number of hard links.&nbsp;
+ls is the same as lsst, size and mod time.
+
+<P>
+If you want file length and time to appear next to every file in a directory listing, then enter ls=lt.&nbsp;
+The equals sign applies the ls directive to all subsequent directory scans.&nbsp;
+Type ls= to turn this off.&nbsp;
+Here is how the root directory might look, with ls=lt.
+
+<PRE><font size=3 face=Arial,Helvetica,sans-serif>bin@/ 36864 Aug 31 2015 16:20
+boot/ 4096 Dec  4 2014 07:54
+cd/ 4096 Nov 30 2014 09:38
+dev/ 3560 Sep  3 2015 05:00
+etc/ 4096 Sep  3 2015 05:00
+home/ 4096 Mar 10 2015 07:52
+lib@/ 53248 Aug 31 2015 16:20
+lost+found/ 16384 Dec 10 2014 15:32
+opt/ 4096 Jan 12 2015 04:36
+proc/ 0 Sep  3 2015 04:59
+root/ 4096 Mar 10 2015 07:37
+run/ 740 Sep  3 2015 05:00
+sbin@/ 12288 Jul 14 2015 10:43
+sys/ 0 Sep  3 2015 04:59
+tmp/ 260 Sep 24 2015 11:05
+usr/ 4096 Jan 12 2015 04:47
+var/ 4096 Sep  3 2015 04:59
+</font></PRE>
+
+<P>
+All entries are directories under the root directory,
+thus they all end in /.&nbsp;
+The birst entry is bin@/ because bin is a symbolic link to usr/bin
+(most systems are configured this way),
+and /usr/bin is a directory.&nbsp;
+The size of /proc is 0, because /proc is a virtual filesystem.&nbsp;
+The same holds for /sys.
+
+<P>
+If you search for the year 2014, you won't find anything, because the date and time are extras that are not part of the file name.&nbsp;
+Searches and substitutes apply to file names only.&nbsp;
+If you want to view the entire text as text, write it to a file, or to another session.
 
 <H3> <A NAME=case> Upper/Lower Case </A> </H3>
 
