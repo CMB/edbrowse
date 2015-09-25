@@ -1691,9 +1691,10 @@ void javaOpensWindow(const char *href, const char *name)
 
 void javaSetsLinkage(char type, jsobjtype p_j, const char *rest)
 {
-	struct htmlTag *parent, *add, *before, *c;
+	struct htmlTag *parent, *add, *before, *c, *t;
 	jsobjtype *a_j, *b_j;
 	char p_name[MAXTAGNAME], a_name[MAXTAGNAME], b_name[MAXTAGNAME];
+	int action;
 
 	sscanf(rest, "%s %p,%s %p,%s ", p_name, &a_j, a_name, &b_j, b_name);
 	parent = tagFromJavaVar2(p_j, p_name);
@@ -1703,6 +1704,23 @@ void javaSetsLinkage(char type, jsobjtype p_j, const char *rest)
 	add = tagFromJavaVar2(a_j, a_name);
 	if (!parent || !add)
 		return;
+
+	if (type == 'r') {
+/* add is a misnomer here, it's being removed */
+		add->deleted = true;
+		add->parent = NULL;
+		if (parent->firstchild == add)
+			parent->firstchild = add->sibling;
+		else {
+			for (c = parent->firstchild; c->sibling; c = c->sibling) {
+				if (c->sibling != add)
+					continue;
+				c->sibling = add->sibling;
+				break;
+			}
+		}
+		return;
+	}
 
 	if (type == 'b') {	/* insertBefore */
 		before = tagFromJavaVar2(b_j, b_name);
@@ -1724,37 +1742,30 @@ void javaSetsLinkage(char type, jsobjtype p_j, const char *rest)
 			return;
 		c->sibling = add;
 		add->sibling = before;
-		add->parent = parent;
-		add->deleted = false;
-		return;
-	}
-
-	if (type == 'r') {
-/* add is a misnomer here, it's being removed */
-		add->deleted = true;
-		add->parent = NULL;
-		if (parent->firstchild == add)
-			parent->firstchild = add->sibling;
-		else {
-			for (c = parent->firstchild; c->sibling; c = c->sibling) {
-				if (c->sibling != add)
-					continue;
-				c->sibling = add->sibling;
-				break;
-			}
-		}
-		return;
-	}
-
+	} else {
 /* type = a, appendchild */
+		if (!parent->firstchild)
+			parent->firstchild = add;
+		else {
+			c = parent->firstchild;
+			while (c->sibling)
+				c = c->sibling;
+			c->sibling = add;
+		}
+	}
 	add->parent = parent;
 	add->deleted = false;
-	if (!parent->firstchild)
-		parent->firstchild = add;
-	else {
-		c = parent->firstchild;
-		while (c->sibling)
-			c = c->sibling;
-		c->sibling = add;
-	}
+
+/* Bad news, we have to replicate some of the prerender logic here. */
+/* This node is attached to the tree, just like an html tag would be. */
+	t = add;
+	action = t->action;
+	switch (action) {
+	case TAGACT_INPUT:
+		if (!t->value)
+			t->value = emptyString;
+		t->rvalue = cloneString(t->value);
+		t->controller = findOpenTag(t, TAGACT_FORM);
+		break;
+	}			/* switch */
 }				/* javaSetsLinkage */
