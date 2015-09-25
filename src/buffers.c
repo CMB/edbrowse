@@ -3492,9 +3492,13 @@ et_go:
 	}
 
 	if (stringEqual(line, "bg")) {
+#ifdef DOSLIKE
+puts("download in background not available on Windows at this time.");
+#else
 		down_bg ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(down_bg + MSG_DownForeground);
+#endif
 		return true;
 	}
 

@@ -5,7 +5,11 @@
 
 #include "eb.h"
 
+#ifdef _MSC_VER
+#include <fcntl.h>
+#else
 #include <wait.h>
+#endif
 #include <time.h>
 
 CURL *http_curl_handle = NULL;
@@ -590,10 +594,14 @@ mimestream:
 		cmd = pluginCommand(cw->mt, url, NULL, NULL);
 		if (!cmd)
 			return false;
+#ifdef DOSLIKE
+		system(cmd);
+#else
 /* Stop ignoring SIGPIPE for the duration of system(): */
 		signal(SIGPIPE, SIG_DFL);
 		system(cmd);
 		signal(SIGPIPE, SIG_IGN);
+#endif
 		nzFree(cmd);
 		i_puts(MSG_OK);
 		return true;
@@ -849,9 +857,10 @@ perform:
 		}
 
 		else if (hcode == 401 && !proceed_unauthenticated) {
+			bool got_creds;
 			i_printf(MSG_AuthRequired, urlcopy);
 			nl();
-			bool got_creds = read_credentials(creds_buf);
+			got_creds = read_credentials(creds_buf);
 			if (got_creds) {
 				addWebAuthorization(urlcopy, creds_buf, false);
 				curl_easy_setopt(http_curl_handle,
@@ -1014,11 +1023,11 @@ static void ftpls(char *line)
 /* Repeatedly calls ftpls to parse each line of the data. */
 static void parse_directory_listing(void)
 {
+	char *s, *t;
 	char *incomingData = serverData;
 	int incomingLen = serverDataLen;
 	serverData = initString(&serverDataLen);
 	stringAndString(&serverData, &serverDataLen, "<html>\n<body>\n");
-	char *s, *t;
 
 	if (!incomingLen) {
 		i_stringAndMessage(&serverData, &serverDataLen,
@@ -1281,12 +1290,16 @@ void setHTTPLanguage(const char *lang)
 static int
 my_curl_safeSocket(void *clientp, curl_socket_t socketfd, curlsocktype purpose)
 {
+#ifdef _MSC_VER
+	return 0;
+#else // !_MSC_VER for success = fcntl(socketfd, F_SETFD, FD_CLOEXEC);
 	int success = fcntl(socketfd, F_SETFD, FD_CLOEXEC);
 	if (success == -1)
 		success = 1;
 	else
 		success = 0;
 	return success;
+#endif // _MSC_VER y/n
 }
 
 /* Clean up libcurl's state. */
@@ -1569,7 +1582,7 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb, void *unused)
 static void
 prettify_network_text(const char *text, size_t size, FILE * destination)
 {
-	int i;
+	size_t i;
 	for (i = 0; i < size; i++) {
 		if (text[i] != '\r')
 			fputc(text[i], destination);
@@ -1656,6 +1669,23 @@ top:
 	down_state = (down_bg ? 5 : 2);
 	callback_data.length = &down_length;
 }				/* setup_download */
+
+#ifdef _MSC_VER			// need fork()
+/* At this point, down_state = 5 */
+static void background_download(void)
+{
+	down_state = -1;
+/* perhaps a better error message here */
+	setError(MSG_DownAbort);
+	return;
+}
+
+int bg_jobs(bool iponly)
+{
+	return 0;
+}
+
+#else // !_MSC_VER
 
 /* At this point, down_state = 5 */
 static void background_download(void)
@@ -1767,6 +1797,7 @@ int bg_jobs(bool iponly)
 
 	return numback;
 }				/* bg_jobs */
+#endif // #ifndef _MSC_VER // need fork()
 
 static char **novs_hosts;
 size_t novs_hosts_avail;
@@ -1811,13 +1842,15 @@ static bool mustVerifyHost(const char *host)
 
 CURLcode setCurlURL(CURL * h, const char *url)
 {
+	const char *host;
+	unsigned long verify;
 	const char *proxy = findProxyForURL(url);
 	if (!proxy)
 		proxy = "";
 	else
 		debugPrint(3, "proxy %s", proxy);
-	const char *host = getHostURL(url);
-	unsigned long verify = mustVerifyHost(host);
+	host = getHostURL(url);
+	verify = mustVerifyHost(host);
 	curl_easy_setopt(h, CURLOPT_PROXY, proxy);
 	curl_easy_setopt(h, CURLOPT_SSL_VERIFYPEER, verify);
 	curl_easy_setopt(h, CURLOPT_SSL_VERIFYHOST, verify);

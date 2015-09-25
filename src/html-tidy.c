@@ -129,7 +129,7 @@ void html2nodes(const char *htmltext)
 	tidySetReportFilter(tdoc, tidyErrorHandler);
 	tidySetCharEncoding(tdoc, (cons_utf8 ? "utf8" : "latin1"));
 
-//	htmlfix = escapeLessScript(htmltext);
+//      htmlfix = escapeLessScript(htmltext);
 	if (htmlfix) {
 		tidyParseString(tdoc, htmlfix);
 		nzFree(htmlfix);
@@ -154,6 +154,7 @@ void html2nodes(const char *htmltext)
 static void printNode(TidyNode node, int level, bool opentag)
 {
 	ctmbstr name;
+	TidyAttr tattr;
 
 	if (!opentag) {
 		puts("}");
@@ -214,7 +215,7 @@ static void printNode(TidyNode node, int level, bool opentag)
 	}
 
 /* Get the first attribute for the node */
-	TidyAttr tattr = tidyAttrFirst(node);
+	tattr = tidyAttrFirst(node);
 	while (tattr != NULL) {
 /* Print the node and its attribute */
 		printf("@%s = %s\n", tidyAttrName(tattr), tidyAttrValue(tattr));

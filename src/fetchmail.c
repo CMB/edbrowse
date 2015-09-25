@@ -7,6 +7,10 @@
 
 #include "eb.h"
 
+#ifdef _MSC_VER
+#include "vsprtf.h"
+#endif
+
 #define MHLINE 200		/* length of a mail header line */
 /* headers and other information about an email */
 struct MHINFO {
@@ -499,7 +503,7 @@ showmessages:
 		printf("%s: %s", mif->from, mif->subject);
 		if (mif->sent)
 			printf(" %s", conciseTime(mif->sent));
-			printf(" %s\n", conciseSize(mif->size));
+		printf(" %s\n", conciseSize(mif->size));
 
 action:
 		delflag = false;
@@ -815,7 +819,6 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 	mailstring = initString(&mailstring_l);
 	res = curl_easy_perform(handle);
 	if (res != CURLE_OK) {
-abort:
 		ebcurl_setError(res, mailbox_url);
 		showErrorAbort();
 	}
@@ -1087,6 +1090,7 @@ input:
 /* Returns number of messages fetched */
 int fetchMail(int account)
 {
+	CURL *mail_handle;
 	const struct MACCOUNT *a = accounts + account - 1;
 	const char *login = a->login;
 	const char *pass = a->password;
@@ -1112,7 +1116,7 @@ int fetchMail(int account)
 	unreadStats();
 
 	mailstring = initString(&mailstring_l);
-	CURL *mail_handle = newFetchmailHandle(login, pass);
+	mail_handle = newFetchmailHandle(login, pass);
 	res = count_messages(mail_handle, &message_count);
 	if (res != CURLE_OK)
 		goto fetchmail_cleanup;
@@ -1244,6 +1248,9 @@ static char presentMail(void)
 	bool scanat = false;	/* scan for attachments */
 	int displine;
 	int stashNumber = -1;
+	char exists;
+	int fsize;		/* file size */
+	int fh;
 
 /* clear things out from the last message */
 	if (lastMailInfo)
@@ -1380,9 +1387,8 @@ saveMail:
 	if (stringEqual(atname, "x"))
 		goto afterinput;
 
-	char exists = fileTypeByName(atname, false);
-	int fsize;		/* file size */
-	int fh = open(atname, O_WRONLY | O_TEXT | O_CREAT | O_APPEND, 0666);
+	exists = fileTypeByName(atname, false);
+	fh = open(atname, O_WRONLY | O_TEXT | O_CREAT | O_APPEND, 0666);
 	if (fh < 0) {
 		i_printf(MSG_NoCreate, atname);
 		goto saveMail;
@@ -1646,6 +1652,7 @@ unpackUploadedFile(const char *post, const char *boundary,
 	const int m64len = strlen(message64);
 	char *post2;
 	char *b1, *b2, *b3, *b4;	/* boundary points */
+	int unpack_ret;
 
 	*postb = 0;
 	*postb_l = 0;
@@ -1670,7 +1677,7 @@ unpackUploadedFile(const char *post, const char *boundary,
 		b3 = b2 - 4;
 
 		b4 = b3;
-		int unpack_ret = base64Decode(b1, &b4);
+		unpack_ret = base64Decode(b1, &b4);
 		if (unpack_ret != GOOD_BASE64_DECODE)
 			mail64Error(unpack_ret);
 		/* Should we *really* keep going at this point? */
@@ -2629,10 +2636,11 @@ bool setupReply(bool all)
 	subln = repln = 0;
 	strcpy(linetype, " xxxxxx");
 	for (j = 1; j <= 6; ++j) {
+		char *p;
 		if (j > cw->dol)
 			break;
 
-		char *p = (char *)fetchLine(j, -1);
+		p = (char *)fetchLine(j, -1);
 
 		if (memEqualCI(p, "subject:", 8)) {
 			linetype[j] = 's';

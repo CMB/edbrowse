@@ -7,6 +7,12 @@
 
 #define handlerPresent(obj, name) (has_property(obj, name) == EJ_PROP_FUNCTION)
 
+#ifdef _MSC_VER			// sleep(secs) macro
+#define SLEEP(a) Sleep(a * 1000)
+#else // !_MSC_VER
+#define SLEEP sleep
+#endif // _MSC_VEER y/n
+
 bool htmlGenerated;
 
 static const char *const handlers[] = {
@@ -1985,7 +1991,7 @@ bool infPush(int tagno, char **post_string)
 		strcpy(q + strlen(q), pfs + actlen);
 		nzFree(pfs);
 		i_printf(MSG_MailSending, addr);
-		sleep(1);
+		SLEEP(1);
 		rc = sendMail(localAccount, tolist, q, -1, atlist, 0, 0, false);
 		if (rc)
 			i_puts(MSG_MailSent);

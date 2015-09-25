@@ -29,6 +29,7 @@
 #include <curl/curl.h>
 #ifdef DOSLIKE
 #include <io.h>
+#include <direct.h> // for _mkdir, ...
 #else
 #include <unistd.h>
 #endif
