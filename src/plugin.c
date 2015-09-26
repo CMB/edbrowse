@@ -5,6 +5,11 @@ Run audio players, pdf converters, etc, based on suffix or content-type.
 
 #include "eb.h"
 
+#ifdef DOSLIKE
+#include <process.h>		// for _getpid(),...
+#define getpid _getpid
+#endif
+
 /* create an input or an output file for edbrowse under /tmp.
  * Since an external program may act upon this file, a certain suffix
  * may be required.
@@ -337,9 +342,13 @@ int playBuffer(const char *line, const char *playfile)
 	}
 
 play_command:
+#ifdef DOSLIKE
+	system(cmd);
+#else
 	signal(SIGPIPE, SIG_DFL);
 	system(cmd);
 	signal(SIGPIPE, SIG_IGN);
+#endif
 
 	if (!cw->dirMode && infile == tempin)
 		unlink(tempin);
@@ -380,10 +389,13 @@ bool playServerData(void)
 		nzFree(cmd);
 		return false;
 	}
-
+#ifdef DOSLIKE
+	system(cmd);
+#else
 	signal(SIGPIPE, SIG_DFL);
 	system(cmd);
 	signal(SIGPIPE, SIG_IGN);
+#endif
 
 	unlink(tempin);
 	nzFree(cmd);
@@ -435,7 +447,8 @@ char *runPluginConverter(const char *buf, int buflen)
 			return NULL;
 		}
 	}
-
+#ifndef DOSLIKE
+/* no popen call in windows I guess */
 	if (ispipe) {
 		FILE *p = popen(cmd, "r");
 		if (!p) {
@@ -461,6 +474,9 @@ char *runPluginConverter(const char *buf, int buflen)
 	signal(SIGPIPE, SIG_DFL);
 	system(cmd);
 	signal(SIGPIPE, SIG_IGN);
+#else // !#ifndef DOSLIKE
+	system(cmd);
+#endif // #ifndef DOSLIKE
 
 	if (infile == tempin)
 		unlink(tempin);

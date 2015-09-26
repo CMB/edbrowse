@@ -754,7 +754,7 @@ top:
  * if js has not already done so,
  * and the text replaces what was in the side buffer. */
 		v = ic->value;
-		set_property_string(t->jv, "valueue", v);
+		set_property_string(t->jv, "value", v);
 		side = t->lic;
 		if (side <= 0 || side >= MAXSESSION || side == context)
 			continue;

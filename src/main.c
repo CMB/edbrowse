@@ -837,8 +837,9 @@ const char *mailRedirect(const char *to, const char *from,
 	for (f = filters; f->match; ++f) {
 		const char *m = f->match;
 		int mlen = strlen(m);
-		r = f->redirect;
 		int j, k;
+
+		r = f->redirect;
 
 		switch (f->type) {
 		case 2:
@@ -1053,9 +1054,11 @@ int main(int argc, char **argv)
 	bool rc, doConfig = true;
 	bool dofetch = false, domail = false;
 
+#ifndef _MSC_VER // port setlinebuf(stdout);, if required...
 /* In case this is being piped over to a synthesizer, or whatever. */
 	if (fileTypeByHandle(fileno(stdout)) != 'f')
 		setlinebuf(stdout);
+#endif // !_MSC_VER
 
 	selectLanguage();
 
@@ -1263,8 +1266,10 @@ int main(int argc, char **argv)
 	http_curl_init();
 
 	signal(SIGINT, catchSig);
+#ifndef _MSC_VER // port siginterrupt(SIGINT, 1); signal(SIGPIPE, SIG_IGN);, if required
 	siginterrupt(SIGINT, 1);
 	signal(SIGPIPE, SIG_IGN);
+#endif // !_MSC_VER
 
 	cx = 0;
 	while (argc) {

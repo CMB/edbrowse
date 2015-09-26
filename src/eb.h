@@ -494,6 +494,11 @@ enum {
 #define BAD_BASE64_DECODE 1
 #define EXTRA_CHARS_BASE64_DECODE 2
 
+#ifdef DOSLIKE
+/* windows mkdir takes only one argument */
+#define mkdir(a,b) _mkdir(a)
+#endif
+
 /* function prototypes */
 #include "eb.p"
 
