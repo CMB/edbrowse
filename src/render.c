@@ -406,6 +406,9 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 				++currentSel->lic;
 			}
 		}
+		if (!t->value)
+			t->value = emptyString;
+		t->textval = emptyString;
 		break;
 
 	case TAGACT_SELECT:
@@ -1767,5 +1770,13 @@ void javaSetsLinkage(char type, jsobjtype p_j, const char *rest)
 		t->rvalue = cloneString(t->value);
 		t->controller = findOpenTag(t, TAGACT_FORM);
 		break;
+
+	case TAGACT_OPTION:
+		if (!t->value)
+			t->value = emptyString;
+		if (!t->textval)
+			t->textval = emptyString;
+		break;
+
 	}			/* switch */
 }				/* javaSetsLinkage */
