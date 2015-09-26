@@ -137,8 +137,8 @@ void html2nodes(const char *htmltext)
 
 	tdoc = tidyCreate();
 	tidyOptSetBool(tdoc, TidySkipQuotes, yes);
-	//tidySetReportFilter(tdoc, tidyErrorHandler);
-    tidySetReportFilter(tdoc, tidyReportFilter);
+	tidySetReportFilter(tdoc, tidyErrorHandler);
+//    tidySetReportFilter(tdoc, tidyReportFilter);
 
 	tidySetCharEncoding(tdoc, (cons_utf8 ? "utf8" : "latin1"));
 

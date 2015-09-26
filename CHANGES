@@ -19,6 +19,8 @@ mod time, and permissions of the file on the current line.
 Set ls=lt to list the length and time of all the files in subsequent
 directory scans. See documentation for more.
 
+Port edbrowse to windows, with small modifications.
+
 3.5.4.2:
 Limited and preliminary imap access. Envelopes only.
 Messages can be moved or deleted, but not read or downloaded.
