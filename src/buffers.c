@@ -4,8 +4,10 @@
  */
 
 #include "eb.h"
-#include <netdb.h>
+
+#ifndef _MSC_VER		// no #include <sys/select.h>
 #include <sys/select.h>
+#endif // _MSC_VER
 
 /* If this include file is missing, you need the pcre package,
  * and the pcre-devel package. */
@@ -1461,6 +1463,7 @@ gotdata:
 /* looks like text.  In DOS, we should have compressed crlf.
  * Let's do that now. */
 #ifdef DOSLIKE
+		int i, j;
 		for (i = j = 0; i < fileSize - 1; ++i) {
 			char c = rbuf[i];
 			if (c == '\r' && rbuf[i + 1] == '\n')
@@ -1842,16 +1845,16 @@ static bool shellEscape(const char *line)
 			setError(MSG_SessionBackground);
 			return false;
 		}
+#ifdef DOSLIKE
+		system(line);
+#else
 /* Ignoring of SIGPIPE propagates across fork-exec. */
 /* So stop ignoring it for the duration of system(). */
 		signal(SIGPIPE, SIG_DFL);
-#ifdef DOSLIKE
-		system(line);	/* don't know how to spawn a shell here */
-#else
 		sprintf(subshell, "exec %s -i", sh);
 		system(subshell);
-#endif
 		signal(SIGPIPE, SIG_IGN);
+#endif
 		i_puts(MSG_OK);
 		return true;
 	}
@@ -1934,9 +1937,13 @@ addchar:
 /* Run the command.  Note that this routine returns success
  * even if the shell command failed.
  * Edbrowse succeeds if it is *able* to run the system command. */
+#ifdef DOSLIKE
+	system(newline);
+#else
 	signal(SIGPIPE, SIG_DFL);
 	system(newline);
 	signal(SIGPIPE, SIG_IGN);
+#endif
 	i_puts(MSG_OK);
 	free(newline);
 	return true;
@@ -3190,11 +3197,11 @@ static int twoLetter(const char *line, const char **runThis)
 	}
 
 	if (line[0] == 'l' && line[1] == 's') {
-		cmd = 'e';	/* so error messages are printed */
 		char lsmode[8];
 		bool setmode = false;
 		char *file, *path, *t;
 		const char *s = line + 2;
+		cmd = 'e';	/* so error messages are printed */
 		skipWhite(&s);
 		if (*s == '=') {
 			setmode = true;
@@ -3493,7 +3500,7 @@ et_go:
 
 	if (stringEqual(line, "bg")) {
 #ifdef DOSLIKE
-puts("download in background not available on Windows at this time.");
+		puts("download in background not available on Windows at this time.");
 #else
 		down_bg ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)

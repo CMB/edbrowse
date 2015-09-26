@@ -1277,7 +1277,22 @@ static void docCookie(jsobjtype d)
 	nzFree(cook);
 }				/* docCookie */
 
+#ifdef DOSLIKE			// port of uname(p), and struct utsname
+struct utsname {
+	char sysname[32];
+	char machine[32];
+};
+
+int uname(struct utsname *pun)
+{
+	memset(pun, 0, sizeof(struct utsname));
+
+	return 0;
+}
+
+#else // !DOSLIKE - // port of uname(p), and struct utsname
 #include <sys/utsname.h>
+#endif // DOSLIKE y/n // port of uname(p), and struct utsname
 
 /* After createJavaContext, set up the document object and other variables
  * and methods that are base for client side DOM. */

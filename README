@@ -116,6 +116,10 @@ In other words, the indenting style is the same as the Linux kernel.
 If you modify some source, you may want to run it through
 ../tools/Lindent before the commit.
 
+In the interest of portability to Window Studio C, please keep variable
+definitions at the top of each function or block.
+A variable should not be defined after an executable statement.
+
 ------------------------------------------------------------
 
 Debug levels:

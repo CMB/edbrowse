@@ -129,13 +129,19 @@ static char hexdigits[] = "0123456789abcdef";
 
 char *percentURL(const char *start, const char *end)
 {
+	int bytes_to_alloc;
+	char *new_copy;
+	const char *in_pointer;
+	char *out_pointer;
+	const char *portloc;
+
 	if (!end)
 		end = start + strlen(start);
-	int bytes_to_alloc = end - start + 1;
-	char *new_copy = NULL;
-	const char *in_pointer = NULL;
-	char *out_pointer = NULL;
-	const char *portloc = NULL;
+	bytes_to_alloc = end - start + 1;
+	new_copy = NULL;
+	in_pointer = NULL;
+	out_pointer = NULL;
+	portloc = NULL;
 
 	for (in_pointer = start; in_pointer < end; in_pointer++)
 		if (*in_pointer <= ' ' || strchr(percentable, *in_pointer))

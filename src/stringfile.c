@@ -5,18 +5,16 @@
 #include "eb.h"
 
 #include <sys/stat.h>
-#include <arpa/inet.h>
+#include <dirent.h>
 #ifdef DOSLIKE
 #include <dos.h>
 #else
 #include <termios.h>
 #include <unistd.h>
-#endif
 #include <glob.h>
 #include <pwd.h>
 #include <grp.h>
-#include <dirent.h>
-#include <netdb.h>
+#endif
 
 char emptyString[] = "";
 bool showHiddenFiles, isInteractive;
@@ -818,6 +816,15 @@ char fileTypeByName(const char *name, bool showlink)
 	bool islink = false;
 	char c;
 	int mode;
+
+#ifdef DOSLIKE
+	if (stat(name, &buf)) {
+		setError(MSG_NoAccess, name);
+		return 0;
+	}
+	mode = buf.st_mode & S_IFMT;
+#else // !DOSLIKE
+
 	if (lstat(name, &buf)) {
 		setError(MSG_NoAccess, name);
 		return 0;
@@ -830,6 +837,8 @@ char fileTypeByName(const char *name, bool showlink)
 			return (showlink ? 'F' : 0);
 		mode = buf.st_mode & S_IFMT;
 	}
+#endif // DOSLIKE y/n
+
 	c = 'f';
 	if (mode == S_IFDIR)
 		c = 'd';
@@ -997,6 +1006,9 @@ p:
 		case 's':
 			strcat(buf, conciseSize(st.st_size));
 			break;
+#ifndef DOSLIKE
+/* not sure any of these work under windows */
+
 		case 'i':
 			sprintf(p, "%d", st.st_ino);
 			goto p;
@@ -1046,6 +1058,9 @@ p:
 			*s++ = '0' + modebits;
 			*s = 0;
 			break;
+
+#endif
+
 		}
 
 		++flags;
