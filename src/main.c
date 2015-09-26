@@ -68,6 +68,12 @@ static char *cfgcopy;
 static int cfglen;
 static long nowday;
 
+#ifdef _MSC_VER
+#define mkdir(a,b) _mkdir(a)
+extern const char *pebrc;
+#endif // _MSC_VER
+
+
 static void setNowDay(void)
 {
 	time_t now;
@@ -1041,6 +1047,10 @@ static void eb_curl_global_init(void)
 		i_printfExit(MSG_CurlVersion, major, minor, patch);
 }				/* eb_curl_global_init */
 
+/*\ MSVC Debug: May need to provide path to 3rdParty DLLs, like
+ *  set PATH=F:\Projects\software\bin;%PATH% ...
+\*/
+
 /* I'm not going to expand wild card arguments here.
  * I don't need to on Unix, and on Windows there is a
  * setargv.obj, or something like that, that performs the expansion.
@@ -1072,6 +1082,36 @@ int main(int argc, char **argv)
 
 /* Establish the home directory, and standard edbrowse files thereunder. */
 	home = getenv("HOME");
+#ifdef _MSC_VER
+    if (!home) {
+    	home = getenv("APPDATA");
+        if (home) {
+            char *ebdata = (char *)allocMem(264);
+        	sprintf(ebdata, "%s\\edbrowse", home);
+        	if (fileTypeByName(ebdata, false) != 'd') {
+                FILE *fp;
+                char *cfgfil;
+                if (mkdir(ebdata, 0700)) {
+            		i_printfExit(MSG_NotHome); // TODO: more appropriate exit message...
+                }
+                cfgfil = (char *)allocMem(264);
+                sprintf(cfgfil,"%s\\.ebrc", ebdata);
+                fp = fopen(cfgfil,"w");
+                if (fp) {
+                    fwrite(pebrc,1,strlen(pebrc),fp);
+                    fclose(fp);
+                }
+                printf("Before running edbrowse again, take the time to\n"
+                    "personalise the default config file\n"
+                    "%s\n", cfgfil );
+           		i_printfExit(MSG_NotHome); // TODO: more appropriate exit message...
+
+            }
+            home = ebdata;
+        }
+    }
+#endif // !_MSC_VER
+
 /* Empty is the same as missing. */
 	if (home && !*home)
 		home = 0;

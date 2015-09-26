@@ -11,7 +11,7 @@
 #define SLEEP(a) Sleep(a * 1000)
 #else // !_MSC_VER
 #define SLEEP sleep
-#endif // _MSC_VEER y/n
+#endif // _MSC_VER y/n
 
 bool htmlGenerated;
 

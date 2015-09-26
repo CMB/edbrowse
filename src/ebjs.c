@@ -51,6 +51,9 @@ static struct EJ_MSG head;
 /* Start the js process. */
 static void js_start(void)
 {
+#ifdef DOSLIKE
+	debugPrint(5, "TODO: setting of communication channels for javascript");
+#else // !DOSLIKE
 	int pid;
 	char arg1[8], arg2[8], arg3[8];
 
@@ -111,6 +114,7 @@ static void js_start(void)
 	head.lowstat = EJ_LOW_EXEC;
 	write(pipe_in[1], &head, sizeof(head));
 	exit(90);
+#endif // DOSLIKE y/n
 }				/* js_start */
 
 /* Shut down the js process, although if we got here,
@@ -120,10 +124,13 @@ static void js_kill(void)
 	if (!js_pid)
 		return;
 
+#ifndef DOSLIKE
 	close(pipe_in[0]);
 	close(pipe_out[1]);
 	kill(js_pid, SIGTERM);
 	js_pid = 0;
+#endif // #ifndef DOSLIKE
+
 }				/* js_kill */
 
 /* String description of side effects, as a result of running js code. */

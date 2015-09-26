@@ -1000,7 +1000,9 @@ char *lsattr(const char *path, const char *flags)
 			break;
 		case 'l':
 			sprintf(p, "%d", st.st_size);
+#ifndef DOSLIKE
 p:
+#endif // #ifndef DOSLIKE
 			strcat(buf, p);
 			break;
 		case 's':
@@ -1069,8 +1071,12 @@ p:
 	return buf;
 }				/* lsattr */
 
-#ifndef DOSLIKE
-
+#ifdef DOSLIKE
+void ttySaveSettings(void)
+{
+    // TODO: Anything needed here for WIN32?
+}
+#else // !#ifdef DOSLIKE
 static struct termios savettybuf;
 void ttySaveSettings(void)
 {
@@ -1126,7 +1132,7 @@ int getch(void)
 	return c;
 }				/* getche */
 
-#endif
+#endif // #ifdef DOSLIKE y/n
 
 char getLetter(const char *s)
 {
@@ -1333,6 +1339,7 @@ static bool envExpand(const char *line, const char **expanded)
 	udir = 0;
 	strncpy(var1, line + 1, l);
 	var1[l] = 0;
+#ifndef DOSLIKE
 	if (l) {
 		pw = getpwnam(var1);
 		if (!pw) {
@@ -1342,6 +1349,7 @@ static bool envExpand(const char *line, const char **expanded)
 		if (pw->pw_dir && *pw->pw_dir)
 			udir = pw->pw_dir;
 	} else
+#endif
 		udir = home;
 	if (!udir) {
 		s = line;
@@ -1413,7 +1421,9 @@ bool envFile(const char *line, const char **expanded)
 	const char *varline;
 	const char *s;
 	char *t;
+#ifndef DOSLIKE
 	glob_t g;
+#endif // #ifndef DOSLIKE
 	int rc, flags;
 
 /* ` disables this stuff */
@@ -1428,6 +1438,10 @@ bool envFile(const char *line, const char **expanded)
 
 	if (!envExpand(line, &varline))
 		return false;
+
+#ifdef DOSLIKE
+    return false;   // TODO: WIN32: Expand like glob...
+#else // !#ifdef DOSLIKE
 
 /* expanded the environment variables, if any, now time to glob */
 	flags = GLOB_NOSORT;
@@ -1471,6 +1485,8 @@ bool envFile(const char *line, const char **expanded)
 	globfree(&g);
 	*expanded = line2;
 	return true;
+#endif // #ifdef DOSLIKE y/n
+
 }				/* envFile */
 
 /* Call the above routine if filename contains a  slash,

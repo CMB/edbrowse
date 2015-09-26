@@ -14,6 +14,7 @@
 #include <pcre.h>
 
 #include <readline/readline.h>
+#include <readline/history.h>
 
 int displayLength = 500;
 
@@ -2894,11 +2895,12 @@ static int substituteText(const char *line)
 
 	for (ln = startRange; ln <= endRange && !intFlag; ++ln) {
 		char *p;
+        int len;
 
 		replaceString = 0;
 
 		p = (char *)fetchLine(ln, -1);
-		int len = pstLength((pst) p);
+		len = pstLength((pst) p);
 
 		if (bl_mode) {
 			int newlen;

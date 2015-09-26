@@ -56,6 +56,17 @@ static Bool tidyErrorHandler(TidyDoc tdoc, TidyReportLevel lvl,
 	return no;
 }				/* tidyErrorHandler */
 
+/** Callback to filter messages by diagnostic level:
+**  info, warning, etc.  Just set diagnostic output 
+**  handler to redirect all diagnostics output.  Return true
+**  to proceed with output, false to cancel.
+*/
+Bool TIDY_CALL tidyReportFilter( TidyDoc tdoc, TidyReportLevel lvl,
+                                           uint line, uint col, ctmbstr mssg )
+{
+    return yes;
+}
+
 /* Work around a nasty bug in tidy5 wherein "<script>" anywhere
  * in a javascript will totally derail things.
  * I turn < into \x3c. */
@@ -126,7 +137,9 @@ void html2nodes(const char *htmltext)
 
 	tdoc = tidyCreate();
 	tidyOptSetBool(tdoc, TidySkipQuotes, yes);
-	tidySetReportFilter(tdoc, tidyErrorHandler);
+	//tidySetReportFilter(tdoc, tidyErrorHandler);
+    tidySetReportFilter(tdoc, tidyReportFilter);
+
 	tidySetCharEncoding(tdoc, (cons_utf8 ? "utf8" : "latin1"));
 
 //      htmlfix = escapeLessScript(htmltext);
