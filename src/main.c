@@ -43,7 +43,6 @@ char *mailUnread, *mailStash, *mailReply;
 char *addressFile;
 char *recycleBin, *configFile, *sigFile, *sigFileEnd;
 char *cookieFile;
-struct ebWindow *cw;
 struct ebSession sessionList[MAXSESSION], *cs;
 
 /* Edbrowse functions, defined in the config file */

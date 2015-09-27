@@ -489,6 +489,10 @@ enum {
 	INP_SELECT, INP_TA, INP_RADIO, INP_CHECKBOX,
 };
 
+/* For traversing a tree of html nodes, this is the callback function */
+typedef void (*nodeFunction) (struct htmlTag * node, bool opentag);
+extern nodeFunction traverse_callback;
+
 /* Return codes for base64Decode() */
 #define GOOD_BASE64_DECODE 0
 #define BAD_BASE64_DECODE 1

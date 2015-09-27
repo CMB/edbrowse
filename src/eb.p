@@ -132,15 +132,6 @@ struct htmlTag *tagFromJavaVar2(jsobjtype v, const char *tagname);
 void javaSubmitsForm(jsobjtype v, bool reset) ;
 bool handlerGoBrowse(const struct htmlTag *t, const char *name) ;
 void runningError(int msg, ...) ;
-
-/* sourcefile=html-tidy.c */
-void html2nodes(const char *htmltext);
-
-/* sourcefile=decorate.c */
-const char *attribVal(const struct htmlTag *t, const char *name);
-void prerender(int start);
-char *render(int start);
-void decorate(int start);
 void rerender(bool notify);
 void delTags(int startRange, int endRange);
 void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval) ;
@@ -149,6 +140,18 @@ void delTimers(struct ebWindow *w);
 void runTimers(void);
 void javaOpensWindow(const char *href, const char *name) ;
 void javaSetsLinkage(char type, jsobjtype p, const char *rest);
+
+/* sourcefile=html-tidy.c */
+void html2nodes(const char *htmltext);
+
+/* sourcefile=decorate.c */
+void traverseAll(int start);
+const char *attribVal(const struct htmlTag *t, const char *name);
+struct htmlTag *findOpenTag(struct htmlTag *t, int action);
+struct htmlTag *findOpenList(struct htmlTag *t);
+void prerender(int start);
+char *render(int start);
+void decorate(int start);
 
 /* sourcefile=http.c */
 size_t eb_curl_callback(char *incoming, size_t size, size_t nitems, struct eb_curl_callback_data *data) ;

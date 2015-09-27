@@ -18,8 +18,8 @@ edbrowse bool true false.
 static TidyDoc tdoc;
 
 /* traverse the tidy tree with a callback function */
-typedef void (*nodeFunction) (TidyNode node, int level, bool opentag);
-static nodeFunction traverse_callback;
+typedef void (*tidyNodeCallback) (TidyNode node, int level, bool opentag);
+static tidyNodeCallback traverse_tidycall;
 /* possible callback functions */
 static void printNode(TidyNode node, int level, bool opentag);
 static void convertNode(TidyNode node, int level, bool opentag);
@@ -29,106 +29,32 @@ static void traverseNode(TidyNode node, int level)
 	TidyNode child;
 
 /* first the callback function */
-	(*traverse_callback) (node, level, true);
+	(*traverse_tidycall) (node, level, true);
 
 /* and now the children */
 	for (child = tidyGetChild(node); child; child = tidyGetNext(child))
 		traverseNode(child, level + 1);
 
-	(*traverse_callback) (node, level, false);
+	(*traverse_tidycall) (node, level, false);
 }				/* traverseNode */
 
-static void traverseAll(void)
+static void traverseTidy(void)
 {
 	traverseNode(tidyGetRoot(tdoc), 0);
 }
 
-/* Like the default tidy error reporter, except messages are suppressed
- * unless debugLevel >= 3, and they are sent to stdout
+/* This is like the default tidy error reporter, except messages are suppressed
+ * unless debugLevel >= 3, and in that case they are sent to stdout
  * rather than stderr, like most edbrowse messages.
  * Since these are debug messages, they are not internationalized. */
 
 static Bool TIDY_CALL tidyErrorHandler(TidyDoc tdoc, TidyReportLevel lvl,
-			     uint line, uint col, ctmbstr mssg)
+				       uint line, uint col, ctmbstr mssg)
 {
 	if (debugLevel >= 3)
 		printf("line %d column %d: %s\n", line, col, mssg);
 	return no;
 }				/* tidyErrorHandler */
-
-/** Callback to filter messages by diagnostic level:
-**  info, warning, etc.  Just set diagnostic output 
-**  handler to redirect all diagnostics output.  Return true
-**  to proceed with output, false to cancel.
-*/
-Bool TIDY_CALL tidyReportFilter( TidyDoc tdoc, TidyReportLevel lvl,
-                                           uint line, uint col, ctmbstr mssg )
-{
-    return yes;
-}
-
-/* Work around a nasty bug in tidy5 wherein "<script>" anywhere
- * in a javascript will totally derail things.
- * I turn < into \x3c. */
-static char *escapeLessScript(const char *htmltext)
-{
-	char *ns;		/* new string */
-	int ns_l;
-	const char *s1, *s2;	/* start and end of script */
-	const char *lw;		/* last write */
-	const char *q1;		/* inner <script */
-	const char *q2;		/* inner <\/script */
-
-	ns = initString(&ns_l);
-	lw = htmltext;
-
-	while (true) {
-		s1 = strstrCI(lw, "<script");
-		if (!s1)
-			break;
-		s1 += 7;
-		if (isalnumByte(*s1)) {	/* <scriptx */
-			stringAndBytes(&ns, &ns_l, lw, s1 - lw);
-			lw = s1;
-			continue;
-		}
-		s2 = strstrCI(s1, "</script");
-		if (!s2)
-			goto abort;
-
-/* script now has a start and end */
-		stringAndBytes(&ns, &ns_l, lw, s1 - lw);
-		lw = s1;
-
-		while (true) {
-			q1 = strstrCI(lw, "<script");
-			if (q1 && q1 > s2)
-				q1 = 0;
-			q2 = strstrCI(lw, "<\\/script");
-			if (q2 && q2 > s2)
-				q2 = 0;
-			if (!q1)
-				q1 = q2;
-			if (!q1)
-				break;
-			if (q2 && q2 < q1)
-				q1 = q2;
-			stringAndBytes(&ns, &ns_l, lw, q1 - lw);
-			stringAndString(&ns, &ns_l, "\\x3c");
-			lw = q1 + 1;
-		}
-
-		stringAndBytes(&ns, &ns_l, lw, s2 - lw);
-		lw = s2;
-	}
-
-	stringAndString(&ns, &ns_l, lw);
-	return ns;
-
-abort:
-	nzFree(ns);
-	return 0;
-}				/* escapeLessScript */
 
 /* the entry point */
 void html2nodes(const char *htmltext)
@@ -152,13 +78,13 @@ void html2nodes(const char *htmltext)
 	tidyCleanAndRepair(tdoc);
 
 	if (debugLevel >= 5) {
-		traverse_callback = printNode;
-		traverseAll();
+		traverse_tidycall = printNode;
+		traverseTidy();
 	}
 
 /* convert tidy nodes into edbrowse nodes */
-	traverse_callback = convertNode;
-	traverseAll();
+	traverse_tidycall = convertNode;
+	traverseTidy();
 
 	tidyRelease(tdoc);
 }				/* html2nodes */

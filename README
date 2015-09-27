@@ -32,11 +32,7 @@ This produces the documentation in text form,
 which you can read using your favorite editor.
 Of course we hope edbrowse will eventually become your
 favorite editor, whence you can browse the documentation directly.
-
-The doc directory also includes a sample config file, and a script to help you
-set up your own, customized config file.
-Run setup.ebrc and answer the questions.
-(This assumes you are using bash.)
+The doc directory also includes a sample config file.
 
 ------------------------------------------------------------
 
@@ -45,8 +41,9 @@ No need to repeat all that here.
 You're here because you want to compile and/or package the program,
 or modify the source in some way.  Great!
 
-I haven't developed a configure script, and I should do that some day,
-but meantime just type make, and make install, and hope for the best.
+A full cmake system is under development.
+Meantime, on unix or linux,
+just type make, and make install, and hope for the best.
 
 As you may know, edbrowse was originally a perl script.
 As such, it was only natural to use perl regular expressions for
@@ -61,8 +58,6 @@ You need version 8.10 or higher.
 Note that my files include <pcre.h>.
 Some distributions put it in /usr/include/pcre/pcre.h,
 so you'll have to adjust the source, the -I path, or make a link.
-Yeah I know, that's something a configure script should do for you,
-but I'm just not there yet.
 
 You also need libcurl and libcurl-devel,
 which is included in almost every Linux distro.
@@ -182,8 +177,9 @@ html.c:
 Manage the html tags and the tree of nodes.
 Turn js side effects, like document.write or innerHTML,
 back into html tags if that makes sense.
-Update input fields.
 Submit/reset forms.
+Render the tree of html nodes into a text buffer.
+Rerender the tree after js has run, and report any changes to the user.
 
 cookies.c:
 Send and receive cookies.  Maintain the cookie jar.
@@ -213,11 +209,9 @@ Strings corresponding to these error messages in various languages.
 Also some international print routines to display the correct string
 according to your locale.
 
-render.c:
-Render the tree of html nodes into a text buffer.
-Decorate the tree with js objects corresponding to the html nodes,
+decorate.c:
+Decorate the tree with js objects corresponding to the html nodes
 if js is enabled.
-Rerender the tree after js has run, and report any changes to the user.
 
 jseng-moz.cpp:
 The javascript engine built around the mozilla js library.
