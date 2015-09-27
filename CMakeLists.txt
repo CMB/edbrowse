@@ -129,12 +129,25 @@ endif(BUILD_SHARED_LIB)
 #  Header file dependencies.
 #$(EBOBJS) : eb.h eb.p messages.h ebjs.h
 
-message(STATUS "*** TODO: Still to generate startwindow.c from startwindow.js")
 # see tools/buildstartwindow script, and now a buildstartwindow.pl
 set(dir src)
 set(GEN_SOURCES
-    ${dir}/startwindow.c
+    ${CMAKE_SOURCE_DIR}/${dir}/startwindow.c
     )
+find_program(PERL perl)
+if (PERL)
+    add_custom_command(
+        OUTPUT ${GEN_SOURCES}
+        COMMAND perl -f tools/buildstartwindow.pl
+        DEPENDS src/startwindow.js 
+            tools/buildstartwindow.pl
+        COMMENT "Running perl to build ${GEN_SOURCES}"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        )
+    message(STATUS "*** Build startwindow.c from startwindow.js")
+else ()
+    message(FATAL_ERROR, "Error: Can NOT locate 'perl'???")
+endif ()
 
 set(name edbrowse)
 set(dir src)
@@ -154,7 +167,7 @@ set(${name}_SRCS
     ${dir}/ebjs.c
     ${dir}/plugin.c
     ${dir}/html-tidy.c
-    ${dir}/render.c
+    ${dir}/decorate.c
     ${dir}/dbstubs.c
     ${GEN_SOURCES}
     )
