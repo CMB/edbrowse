@@ -79,8 +79,6 @@ jsobjtype instantiate_array_element(jsobjtype array, int idx, const char *classn
 jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname) ;
 int set_property_function(jsobjtype parent, const char *name, const char *body) ;
 char *get_property_option(jsobjtype obj) ;
-const char *fakePropName(void);
-void domLink(struct htmlTag *t, const char *classname, const char *href, const char *list, jsobjtype owner, int radiosel) ;
 void setupJavaDom(void) ;
 jsobjtype instantiate_url(jsobjtype parent, const char *name, const char *url) ;
 char *get_property_url(jsobjtype owner, bool action) ;
@@ -89,8 +87,6 @@ void handlerSet(jsobjtype ev, const char *name, const char *code);
 jsobjtype run_function_object(jsobjtype obj, const char *name);
 bool run_function_bool(jsobjtype obj, const char *name);
 void run_function_objargs(jsobjtype obj, const char *name, int nargs, ...);
-jsobjtype establish_js_option(jsobjtype obj, int idx);
-void establish_inner(jsobjtype obj, const char *start, const char *end, bool isText);
 
 /* sourcefile=fetchmail.c */
 int fetchMail(int account) ;

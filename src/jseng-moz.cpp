@@ -27,6 +27,8 @@ Exit codes are as follows:
 99 memory allocation error or heap corruption
 *********************************************************************/
 
+#define JS_ENGINE
+
 #include "eb.h"
 
 #include <limits>
@@ -370,14 +372,14 @@ static JSObject *string2pointer(const char *s)
 }				/* string2pointer */
 
 /* like the function in ebjs.c, but a different name */
-static const char *fakePropName0(void)
+static const char *fakePropName(void)
 {
 	static char fakebuf[24];
 	static int idx = 0;
 	++idx;
 	sprintf(fakebuf, "cg$$%d", idx);
 	return fakebuf;
-}				/*fakePropName0 */
+}				/*fakePropName */
 
 /*********************************************************************
 This returns the string equivalent of the js value, but use with care.
@@ -741,7 +743,7 @@ static ej_proptype find_proptype(JS::HandleObject parent, const char *name)
 
 /* Use stringize() to return a property as a string, if it is
  * string compatible. The string is allocated, free it when done. */
-static char *get_prop_string(JS::HandleObject parent, const char *name)
+static char *get_property_string1(JS::HandleObject parent, const char *name)
 {
 	js::RootedValue v(jcx);
 	const char *s;
@@ -760,7 +762,31 @@ static char *get_prop_string(JS::HandleObject parent, const char *name)
 	} else
 		s = stringize(v);
 	return cloneString(s);
-}				/* get_prop_string */
+}				/* get_property_string1 */
+
+char *get_property_string(jsobjtype parent, const char *name)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	return get_property_string1(p, name);
+}				/* get_property_string */
+
+static JSObject *get_property_object1(JS::HandleObject parent, const char *name)
+{
+	js::RootedValue v(jcx);
+	JS::RootedObject child(jcx);
+	if (JS_GetProperty(jcx, parent, name, v.address()) == JS_FALSE)
+		return 0;
+	if (!v.isObject())
+		return 0;
+	child = JSVAL_TO_OBJECT(v);
+	return child;
+}				/* get_property_object1 */
+
+jsobjtype get_property_object(jsobjtype parent, const char *name)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	return get_property_object1(p, name);
+}				/* get_property_object */
 
 /* if js changes the value of an input field, this must be reflected
  * in the <foobar> text in edbrowse. */
@@ -897,7 +923,7 @@ setter_cookie(JSContext * cx, JS::HandleObject obj,
 		return JS_TRUE;
 
 /* grab the existing document.cookie string, is this reentrant, is this ok? */
-	original = get_prop_string(obj, "cookie");
+	original = get_property_string1(obj, "cookie");
 	if (!original)		/* should never happen */
 		original = emptyString;
 	cookieCopy = initString(&cook_l);
@@ -934,7 +960,8 @@ setter_domain(JSContext * cx, JS::HandleObject obj,
 }				/* setter_domain */
 
 static void
-set_prop_string(js::HandleObject parent, const char *name, const char *value)
+set_property_string1(js::HandleObject parent, const char *name,
+		     const char *value)
 {
 	js::RootedValue v(jcx);
 	JSPropertyOp my_getter = NULL;
@@ -967,9 +994,17 @@ set_prop_string(js::HandleObject parent, const char *name, const char *value)
 	if (JS_DefineProperty
 	    (jcx, parent, name, v, my_getter, my_setter, PROP_STD) == JS_FALSE)
 		misconfigure();
-}				/* set_prop_string */
+}				/* set_property_string1 */
 
-static void set_prop_bool(js::HandleObject parent, const char *name, bool n)
+int set_property_string(jsobjtype parent, const char *name, const char *value)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	set_property_string1(p, name, value);
+	return 0;
+}				/* set_property_string */
+
+static void set_property_bool1(js::HandleObject parent, const char *name,
+			       bool n)
 {
 	js::RootedValue v(jcx);
 	JSBool found;
@@ -986,9 +1021,17 @@ static void set_prop_bool(js::HandleObject parent, const char *name, bool n)
 	if (JS_DefineProperty(jcx, parent, name, v, NULL, NULL, PROP_STD) ==
 	    JS_FALSE)
 		misconfigure();
-}				/* set_prop_bool */
+}				/* set_property_bool1 */
 
-static void set_prop_number(js::HandleObject parent, const char *name, int n)
+int set_property_bool(jsobjtype parent, const char *name, bool n)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	set_property_bool1(p, name, n);
+	return 0;
+}				/* set_property_bool */
+
+static void set_property_number1(js::HandleObject parent, const char *name,
+				 int n)
 {
 	js::RootedValue v(jcx);
 	JSBool found;
@@ -1005,9 +1048,17 @@ static void set_prop_number(js::HandleObject parent, const char *name, int n)
 	if (JS_DefineProperty(jcx, parent, name, v, NULL, NULL, PROP_STD) ==
 	    JS_FALSE)
 		misconfigure();
-}				/* set_prop_number */
+}				/* set_property_number1 */
 
-static void set_prop_float(js::HandleObject parent, const char *name, double n)
+int set_property_number(jsobjtype parent, char *name, int n)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	set_property_number1(p, name, n);
+	return 0;
+}				/* set_property_number */
+
+static void set_property_float1(js::HandleObject parent, const char *name,
+				double n)
 {
 	js::RootedValue v(jcx);
 	JSBool found;
@@ -1024,11 +1075,18 @@ static void set_prop_float(js::HandleObject parent, const char *name, double n)
 	if (JS_DefineProperty(jcx, parent, name, v, NULL, NULL, PROP_STD) ==
 	    JS_FALSE)
 		misconfigure();
-}				/* set_prop_float */
+}				/* set_property_float1 */
+
+int set_property_float(jsobjtype parent, const char *name, double n)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	set_property_float1(p, name, n);
+	return 0;
+}				/* set_property_float */
 
 static void
-set_prop_object(js::HandleObject parent, const char *name,
-		JS::HandleObject child)
+set_property_object1(js::HandleObject parent, const char *name,
+		     JS::HandleObject child)
 {
 	js::RootedValue v(jcx);
 	JSBool found;
@@ -1049,7 +1107,15 @@ set_prop_object(js::HandleObject parent, const char *name,
 	if (JS_DefineProperty(jcx, parent, name, v, NULL, my_setter, PROP_STD)
 	    == JS_FALSE)
 		misconfigure();
-}				/* set_prop_object */
+}				/* set_property_object1 */
+
+int set_property_object(jsobjtype parent, const char *name, jsobjtype child)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	JS::RootedObject c(jcx, (JSObject *) child);
+	set_property_object1(p, name, c);
+	return 0;
+}				/* set_property_object */
 
 /* for window.focus etc */
 static JSBool nullFunction(JSContext * cx, unsigned int argc, jsval * vp)
@@ -1072,6 +1138,25 @@ static JSBool trueFunction(JSContext * cx, unsigned int argc, jsval * vp)
 	args.rval().set(JSVAL_TRUE);
 	return JS_TRUE;
 }				/* trueFunction */
+
+static void set_property_function1(js::HandleObject parent,
+				   const char *name, const char *body)
+{
+	if (!body || !*body) {
+/* null or empty function, link to native null function */
+		JS_NewFunction(jcx, nullFunction, 0, 0, parent, name);
+	} else {
+		JS_CompileFunction(jcx, parent, name, 0, emptyParms,
+				   body, strlen(body), name, 1);
+	}
+}				/* set_property_function1 */
+
+int set_property_function(jsobjtype parent, const char *name, const char *body)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	set_property_function1(p, name, body);
+	return 0;
+}				/* set_property_function */
 
 static JSBool setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
 {
@@ -1567,7 +1652,7 @@ abort:
 		}
 		v1 = OBJECT_TO_JSVAL(to);
 		if (JS_DefineProperty
-		    (jcx, winobj, fakePropName0(), v1, NULL, NULL,
+		    (jcx, winobj, fakePropName(), v1, NULL, NULL,
 		     PROP_STD) == JS_FALSE)
 			goto abort;
 		if (fo) {
@@ -1591,7 +1676,7 @@ abort:
 			fname[len] = 0;
 			strcat(fname, "()");
 			fstr = fname;
-			set_prop_object(to, "onclick", fo);
+			set_property_object1(to, "onclick", fo);
 
 		} else {
 
@@ -1806,7 +1891,7 @@ static JSClass *classByName(const char *classname)
 }				/* classByName */
 
 /* based on propval and proptype */
-static void set_prop_generic(js::HandleObject parent, const char *name)
+static void set_property_generic(js::HandleObject parent, const char *name)
 {
 	int n;
 	double d;
@@ -1816,28 +1901,28 @@ static void set_prop_generic(js::HandleObject parent, const char *name)
 
 	switch (proptype) {
 	case EJ_PROP_STRING:
-		set_prop_string(parent, name, propval);
+		set_property_string1(parent, name, propval);
 		break;
 
 	case EJ_PROP_INT:
 		n = atoi(propval);
-		set_prop_number(parent, name, n);
+		set_property_number1(parent, name, n);
 		break;
 
 	case EJ_PROP_BOOL:
 		n = atoi(propval);
-		set_prop_bool(parent, name, n);
+		set_property_bool1(parent, name, n);
 		break;
 
 	case EJ_PROP_FLOAT:
 		d = atof(propval);
-		set_prop_float(parent, name, d);
+		set_property_float1(parent, name, d);
 		break;
 
 	case EJ_PROP_OBJECT:
 		child = string2pointer(propval);
 		childroot = child;
-		set_prop_object(parent, name, childroot);
+		set_property_object1(parent, name, childroot);
 		break;
 
 	case EJ_PROP_INSTANCE:
@@ -1862,7 +1947,7 @@ static void set_prop_generic(js::HandleObject parent, const char *name)
 		}
 
 childreturn:
-		set_prop_object(parent, name, childroot);
+		set_property_object1(parent, name, childroot);
 		propval = cloneString(pointer2string(*childroot.address()));
 		break;
 
@@ -1871,14 +1956,7 @@ childreturn:
 		goto childreturn;
 
 	case EJ_PROP_FUNCTION:
-		if (!propval || !*propval) {
-/* null or empty function, link to native null function */
-			JS_NewFunction(jcx, nullFunction, 0, 0, parent,
-				       membername);
-		} else {
-			JS_CompileFunction(jcx, parent, name, 0, emptyParms,
-					   propval, strlen(propval), name, 1);
-		}
+		set_property_function1(parent, name, propval);
 		break;
 
 	default:
@@ -1887,30 +1965,90 @@ childreturn:
 		exit(7);
 	}
 
-}				/* set_prop_generic */
+}				/* set_property_generic */
 
-/*********************************************************************
-ebjs.c allows for geting and setting array elements of all types,
-however the DOM only uses objects. Being lazy, I will simply
-implement objects. You can add other types later.
-*********************************************************************/
-
-static JSObject *get_arrayelem_object(JS::HandleObject parent, int idx)
+static JSObject *instantiate_array1(js::HandleObject parent, const char *name)
 {
 	js::RootedValue v(jcx);
-	JS::RootedObject child(jcx);
-	if (JS_GetElement(jcx, parent, idx, v.address()) == JS_FALSE)
-		return 0;	/* perhaps out of range */
-	if (!v.isObject()) {
-		fprintf(stderr, "JS DOM arrays should contain only objects\n");
-		exit(9);
+	js::RootedObject a(jcx);
+	JSBool found;
+	JS_HasProperty(jcx, parent, name, &found);
+	if (found) {
+		if (v.isObject()) {
+			a = JSVAL_TO_OBJECT(v);
+			if (JS_IsArrayObject(jcx, a))
+				return a;
+		}
+		JS_DeleteProperty(jcx, parent, name);
 	}
-	child = JSVAL_TO_OBJECT(v);
-	return child;
-}				/* get_arrayelem_object */
+	a = JS_NewArrayObject(jcx, 0, NULL);
+	v = OBJECT_TO_JSVAL(a);
+	if (JS_DefineProperty(jcx, parent, name, v, NULL, NULL, PROP_STD) ==
+	    JS_FALSE) {
+		misconfigure();
+		return 0;
+	}
+	return a;
+}				/* instantiate_array1 */
+
+jsobjtype instantiate_array(jsobjtype parent, const char *name)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	return instantiate_array1(p, name);
+}				/* instantiate_array */
+
+static JSObject *instantiate1(js::HandleObject parent, const char *name,
+			      const char *classname)
+{
+	js::RootedValue v(jcx);
+	js::RootedObject a(jcx);
+	JSBool found;
+	JS_HasProperty(jcx, parent, name, &found);
+	if (found) {
+		if (v.isObject()) {
+			a = JSVAL_TO_OBJECT(v);
+/* I'm going to assume it is of the proper class */
+			return a;
+		}
+		JS_DeleteProperty(jcx, parent, name);
+	}
+	JSClass *cp = classByName(classname);
+	a = JS_NewObject(jcx, cp, NULL, parent);
+	v = OBJECT_TO_JSVAL(a);
+	if (JS_DefineProperty(jcx, parent, name, v, NULL, NULL, PROP_STD) ==
+	    JS_FALSE) {
+		misconfigure();
+		return 0;
+	}
+	return a;
+}				/* instantiate1 */
+
+jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	return instantiate1(p, name, classname);
+}				/* instantiate */
+
+static JSObject *instantiate_array_element1(js::HandleObject parent, int idx,
+					    const char *classname)
+{
+	js::RootedObject a(jcx);
+	JSClass *cp = classByName(classname);
+	a = JS_NewObject(jcx, cp, NULL, parent);
+	set_array_element_object(parent, idx, a);
+	return a;
+}				/* instantiate_array_element1 */
+
+jsobjtype instantiate_array_element(jsobjtype parent, int idx,
+				    const char *classname)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	return instantiate_array_element1(p, idx, classname);
+}				/* instantiate_array_element */
 
 static void
-set_arrayelem_object(JS::HandleObject parent, int idx, JS::HandleObject child)
+set_array_element_object1(js::HandleObject parent, int idx,
+			  JS::HandleObject child)
 {
 	js::RootedValue v(jcx);
 	JSBool found;
@@ -1924,7 +2062,41 @@ set_arrayelem_object(JS::HandleObject parent, int idx, JS::HandleObject child)
 		    == JS_FALSE)
 			misconfigure();
 	}
-}				/* set_arrayelem_object */
+}				/* set_array_element_object1 */
+
+int set_array_element_object(jsobjtype parent, int idx, jsobjtype child)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	JS::RootedObject c(jcx, (JSObject *) child);
+	set_array_element_object1(p, idx, c);
+	return 0;
+}				/* set_array_element_object */
+
+static JSObject *get_array_element_object1(JS::HandleObject parent, int idx)
+{
+	js::RootedValue v(jcx);
+	JS::RootedObject child(jcx);
+	if (JS_GetElement(jcx, parent, idx, v.address()) == JS_FALSE)
+		return 0;	/* perhaps out of range */
+	if (!v.isObject()) {
+		fprintf(stderr, "JS DOM arrays should contain only objects\n");
+		exit(9);
+	}
+	child = JSVAL_TO_OBJECT(v);
+	return child;
+}				/* get_array_element_object1 */
+
+jsobjtype get_array_element_object(jsobjtype parent, int idx)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	return get_array_element_object1(p, idx);
+}				/* get_array_element_object */
+
+/*********************************************************************
+ebjs.c allows for geting and setting array elements of all types,
+however the DOM only uses objects. Being lazy, I will simply
+implement objects. You can add other types later.
+*********************************************************************/
 
 /*********************************************************************
 run a javascript function and return the result.
@@ -2036,7 +2208,7 @@ static void processMessage(void)
 		break;
 
 	case EJ_CMD_GETPROP:
-		propval = get_prop_string(parent, membername);
+		propval = get_property_string1(parent, membername);
 		nzFree(membername);
 		membername = 0;
 		head.n = head.proplength = 0;
@@ -2059,7 +2231,7 @@ static void processMessage(void)
 		    || head.proptype == EJ_PROP_INSTANCE)
 			setret = true;
 		setter_suspend = true;
-		set_prop_generic(parent, membername);
+		set_property_generic(parent, membername);
 		setter_suspend = false;
 		nzFree(membername);
 		membername = 0;
@@ -2081,7 +2253,7 @@ propreturn:
 		break;
 
 	case EJ_CMD_GETAREL:
-		child = get_arrayelem_object(parent, head.n);
+		child = get_array_element_object1(parent, head.n);
 		propval = 0;	/* should already be 0 */
 		head.proplength = 0;
 		if (child) {
@@ -2106,14 +2278,15 @@ propreturn:
 			if (!child)
 				misconfigure();
 			else
-				set_arrayelem_object(parent, head.n, child);
+				set_array_element_object1(parent, head.n,
+							  child);
 			setret = true;
 			propval = cloneString(pointer2string(*child.address()));
 		}
 		if (head.proptype == EJ_PROP_OBJECT && propval) {
 			chp = string2pointer(propval);
 			child = chp;
-			set_arrayelem_object(parent, head.n, child);
+			set_array_element_object1(parent, head.n, child);
 			nzFree(propval);
 			propval = 0;
 		}

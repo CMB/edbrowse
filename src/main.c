@@ -69,7 +69,6 @@ static int cfglen;
 static long nowday;
 
 #ifdef _MSC_VER
-#define mkdir(a,b) _mkdir(a)
 extern const char *pebrc;
 #endif // _MSC_VER
 
