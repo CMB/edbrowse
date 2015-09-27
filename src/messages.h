@@ -205,7 +205,7 @@ enum {
 	MSG_BalanceAmbig,
 	MSG_BalanceNothing,
 	MSG_Unbalanced,
-	MSG_notused208,
+	MSG_Personalize,
 	MSG_SessionDir,
 	MSG_NoFileName,
 	MSG_EndBuffer,

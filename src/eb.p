@@ -119,7 +119,7 @@ bool tagHandler(int seqno, const char *name) ;
 void jSideEffects(void) ;
 char *displayOptions(const struct htmlTag *sel) ;
 void jSyncup(void) ;
-struct htmlTag *newTag(const char *name) ;
+struct htmlTag *newTag(const char *tagname) ;
 void runScriptsPending(void);
 void preFormatCheck(int tagno, bool * pretag, bool * slash) ;
 char *htmlParse(char *buf, int remote) ;
@@ -136,7 +136,7 @@ void runningError(int msg, ...) ;
 /* sourcefile=html-tidy.c */
 void html2nodes(const char *htmltext);
 
-/* sourcefile=render.c */
+/* sourcefile=decorate.c */
 const char *attribVal(const struct htmlTag *t, const char *name);
 void prerender(int start);
 char *render(int start);

@@ -27,8 +27,6 @@ Exit codes are as follows:
 99 memory allocation error or heap corruption
 *********************************************************************/
 
-#define JS_ENGINE
-
 #include "eb.h"
 
 #include <limits>
@@ -52,6 +50,13 @@ void ebClose(int n)
 {
 	exit(n);
 }				/* ebclose */
+
+/* stub for newTag, tidy is not being used yet, so we don't actually
+ * have to generate html tag nodes */
+struct htmlTag *newTag(const char *tagname)
+{
+	return 0;
+}				/* newTag */
 
 static void usage(void)
 {

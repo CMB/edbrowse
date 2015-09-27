@@ -14,15 +14,15 @@ LFLAGS = -s -Wl,--rpath -Wl,/usr/pkg/lib
 JSLIB = -lmozjs-24
 
 #  Libraries for edbrowse.
-LDLIBS = -lpcre -lcurl -lreadline -lncurses
+LDLIBS = -lpcre -lcurl -lreadline -lncurses -ltidy
 
 #  Make the dynamically linked executable program by default.
-#  Edbrowse executable.
 all: edbrowse edbrowse-js
 
 #  edbrowse objects
 EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
-	html.o format.o cookies.o stringfile.o messages.o ebjs.o plugin.o
+	html.o format.o cookies.o stringfile.o messages.o \
+	ebjs.o plugin.o html-tidy.o decorate.o
 
 #  Header file dependencies.
 $(EBOBJS) : eb.h eb.p messages.h ebjs.h
@@ -44,11 +44,11 @@ edbrowse-odbc: $(EBOBJS) startwindow.o dbops.o dbodbc.o
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 clean:
-	rm -f *.o edbrowse edbrowseinf edbrowse-odbc edbrowse-js startwindow.c
+	rm -f *.o edbrowse edbrowse-infx edbrowse-odbc edbrowse-js startwindow.c
 
 jseng-moz.o: jseng-moz.cpp
 	$(CXX) -c $(CXXFLAGS) $(JS_CXXFLAGS) $^ -o $@
 
-edbrowse-js : jseng-moz.o messages.o url.o stringfile.o
-	cc jseng-moz.o messages.o url.o stringfile.o $(LOADLIBES) $(JSLIB) -lstdc++ -o $@
+edbrowse-js : jseng-moz.o messages.o url.o stringfile.o html-tidy.o
+	cc jseng-moz.o messages.o url.o stringfile.o $(LOADLIBES) $(JSLIB) -ltidy -lstdc++ -o $@
 

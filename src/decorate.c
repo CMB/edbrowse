@@ -1,8 +1,11 @@
 /*********************************************************************
-render.c: render the text buffer from the tree of nodes.
-Also, in a separate call, spin off parallel js objects.
-The js functionality may move to another file someday,
-but as long as it's a separate call we're ok.
+decorate.c:
+sanitize a tree of nodes produced by html,
+and decorate the tree with the corresponding js objects.
+A <form> tag has a corresponding Form object in the js world, etc.
+This is done for the html that is on the initial web page,
+and any html that is produced by javascript via
+foo.innerHTML = string or document.write(string).
 *********************************************************************/
 
 #include "eb.h"

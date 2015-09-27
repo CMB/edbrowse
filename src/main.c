@@ -1100,9 +1100,7 @@ int main(int argc, char **argv)
                     fwrite(pebrc,1,strlen(pebrc),fp);
                     fclose(fp);
                 }
-                printf("Before running edbrowse again, take the time to\n"
-                    "personalise the default config file\n"
-                    "%s\n", cfgfil );
+i_printf(MSG_Personalize, cfgfil );
            		i_printfExit(MSG_NotHome); // TODO: more appropriate exit message...
 
             }
