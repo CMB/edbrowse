@@ -4,8 +4,8 @@
 use strict;
 use warnings;
 
-my $infile = "startwindow.js";
-my $outfile = "startwindow.c";
+my $infile = "src/startwindow.js";
+my $outfile = "src/startwindow.c";
 
 my $max_chars = 16380;
 
