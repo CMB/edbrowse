@@ -48,7 +48,7 @@ static void traverseAll(void)
  * rather than stderr, like most edbrowse messages.
  * Since these are debug messages, they are not internationalized. */
 
-static Bool tidyErrorHandler(TidyDoc tdoc, TidyReportLevel lvl,
+static Bool TIDY_CALL tidyErrorHandler(TidyDoc tdoc, TidyReportLevel lvl,
 			     uint line, uint col, ctmbstr mssg)
 {
 	if (debugLevel >= 3)
