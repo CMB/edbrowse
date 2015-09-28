@@ -23,6 +23,7 @@ int displayLength = 500;
 static uchar dirWrite;		/* directories read write */
 static char lsformat[8];	/* size date etc on a directory listing */
 static uchar endMarks;		/* ^ $ on printed lines */
+static bool jexmode;
 /* The valid edbrowse commands. */
 static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^<";
 /* Commands that can be done in browse mode. */
@@ -410,8 +411,20 @@ addchar:
 		i += 2;
 		goto addchar;
 	}			/* loop over input chars */
+	s[j] = 0;
+
+	if (jexmode) {
+		if (stringEqual(s, ".")) {
+			jexmode = false;
+			puts("bye");
+		} else {
+			javaParseExecute(cw->winobj, s, "jex", 1);
+		}
+		goto top;
+	}
+
+/* rest of edbrowse expects this line to be nl terminated */
 	s[j] = '\n';
-// in either case the line is not null terminated; hope that's ok
 	return s;
 }				/* inputLine */
 
@@ -2895,7 +2908,7 @@ static int substituteText(const char *line)
 
 	for (ln = startRange; ln <= endRange && !intFlag; ++ln) {
 		char *p;
-        int len;
+		int len;
 
 		replaceString = 0;
 
@@ -3317,6 +3330,20 @@ pwd:
 		if (!ebConnect())
 			return false;
 		return showTables();
+	}
+
+	if (stringEqual(line, "jex")) {
+		cmd = 'e';
+		if (!cw->browseMode) {
+			setError(MSG_NoBrowse);
+			return false;
+		}
+		if (!isJSAlive) {
+			setError(MSG_JavaOff);
+			return false;
+		}
+		jexmode = true;
+		return true;
 	}
 
 	if (stringEqual(line, "ub") || stringEqual(line, "et")) {
