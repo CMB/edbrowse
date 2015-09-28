@@ -665,7 +665,14 @@ static void intoTree(struct htmlTag *parent);
 static void runGeneratedHtml(struct htmlTag *t, const char *h)
 {
 	int l = cw->numTags;
-	debugPrint(4, "generated {%s}\n", h);
+	if (debugLevel >= 4) {
+		const char *bh = strstr(h, "<body>");
+		if (!bh)
+			bh = h;
+		else
+			bh += 6;
+		printf("Generated {%s}\n", bh);
+	}
 	htmlGenerated = true;
 	html2nodes(h);
 	treeAttach = t;

@@ -180,7 +180,8 @@ void dwStart(void)
 	if (cw->dw)
 		return;
 	cw->dw = initString(&cw->dw_l);
-	stringAndString(&cw->dw, &cw->dw_l, "<body>");
+	stringAndString(&cw->dw, &cw->dw_l,
+			"<!DOCTYPE public><head><title>Generated</title></head><body>");
 }				/* dwStart */
 
 /*********************************************************************

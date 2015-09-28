@@ -92,10 +92,9 @@ static struct EJ_MSG head;
 static char *errorMessage;
 static char *effects;
 static int eff_l;
-static void endeffect(void)
-{
-	stringAndString(&effects, &eff_l, "`~@}\n");
-}
+#define effectString(s) stringAndString(&effects, &eff_l, (s))
+#define effectChar(s) stringAndChar(&effects, &eff_l, (s))
+#define endeffect() effectString("`~@}\n");
 
 static char *membername;
 static char *propval;
@@ -514,11 +513,11 @@ static JSBool window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
  * I only do something if opening a new web page.
  * If it's just a blank window, I don't know what to do with that. */
 	if (newloc && *newloc) {
-		stringAndString(&effects, &eff_l, "n{");	// }
-		stringAndString(&effects, &eff_l, newloc);
-		stringAndChar(&effects, &eff_l, '\n');
+		effectString("n{");	// }
+		effectString(newloc);
+		effectChar('\n');
 		if (winname)
-			stringAndString(&effects, &eff_l, winname);
+			effectString(winname);
 		endeffect();
 	}
 	cnzFree(newloc);
@@ -687,9 +686,9 @@ setter_loc(JSContext * cx, JS::HandleObject uo, JS::Handle < jsid > id,
 		JS_ReportError(jcx,
 			       "window.location is assigned something that I don't understand");
 	} else {
-		stringAndString(&effects, &eff_l, "n{");	// }
-		stringAndString(&effects, &eff_l, s);
-		stringAndChar(&effects, &eff_l, '\n');
+		effectString("n{");	// }
+		effectString(s);
+		effectChar('\n');
 		endeffect();
 	}
 	return JS_TRUE;
@@ -710,9 +709,9 @@ setter_loc_hrefval(JSContext * cx, JS::HandleObject uo,
 	if (!url)
 		return JS_TRUE;
 	if (iswindocloc(uo)) {
-		stringAndString(&effects, &eff_l, "n{");	// }
-		stringAndString(&effects, &eff_l, url);
-		stringAndChar(&effects, &eff_l, '\n');
+		effectString("n{");	// }
+		effectString(url);
+		effectChar('\n');
 		endeffect();
 	}
 	return JS_TRUE;
@@ -850,11 +849,10 @@ setter_value(JSContext * cx, JS::HandleObject obj,
 		JS_ReportError(jcx,
 			       "input.value is assigned something other than a string; this can cause problems when you submit the form.");
 	} else {
-		stringAndString(&effects, &eff_l, "v{");	// }
-		stringAndString(&effects, &eff_l,
-				pointer2string(*obj.address()));
-		stringAndChar(&effects, &eff_l, '=');
-		stringAndString(&effects, &eff_l, val);
+		effectString("v{");	// }
+		effectString(pointer2string(*obj.address()));
+		effectChar('=');
+		effectString(val);
 		endeffect();
 	}
 	return JS_TRUE;
@@ -867,13 +865,14 @@ setter_innerHTML(JSContext * cx, JS::HandleObject obj,
 {
 	const char *s = stringize(vp);
 	if (s) {
-		stringAndString(&effects, &eff_l, "i{h");	// }
-		stringAndString(&effects, &eff_l, pointer2string(obj));
-		stringAndString(&effects, &eff_l, "|<body>\n");
-		stringAndString(&effects, &eff_l, s);
+		effectString("i{h");	// }
+		effectString(pointer2string(obj));
+		effectString
+		    ("|<!DOCTYPE public><head><title>Generated</title></head><body>\n");
+		effectString(s);
 		if (*s && s[strlen(s) - 1] != '\n')
-			stringAndChar(&effects, &eff_l, '\n');
-		stringAndString(&effects, &eff_l, "</body >");
+			effectChar('\n');
+		effectString("</body >");
 		endeffect();
 	}
 	return JS_TRUE;
@@ -887,10 +886,10 @@ setter_innerText(JSContext * cx, JS::HandleObject obj,
 	const char *s = stringize(vp);
 	if (!s)
 		s = emptyString;
-	stringAndString(&effects, &eff_l, "i{t");	// }
-	stringAndString(&effects, &eff_l, pointer2string(obj));
-	stringAndChar(&effects, &eff_l, '|');
-	stringAndString(&effects, &eff_l, s);
+	effectString("i{t");	// }
+	effectString(pointer2string(obj));
+	effectChar('|');
+	effectString(s);
 	endeffect();
 	return JS_TRUE;
 }				/* setter_innerText */
@@ -931,8 +930,8 @@ static bool foldinCookie(const char *newcook)
 		return false;
 
 /* pass back to edbrowse */
-	stringAndString(&effects, &eff_l, "c{");	// }
-	stringAndString(&effects, &eff_l, newcook);
+	effectString("c{");	// }
+	effectString(newcook);
 	endeffect();
 
 	++s;
@@ -1294,13 +1293,13 @@ static JSBool appendChild0(bool side, JSContext * cx, unsigned int argc,
 /* pass this linkage information back to edbrowse, to update its dom tree */
 	char e[40];
 	sprintf(e, "l{a|%s,", pointer2string(thisobj));
-	stringAndString(&effects, &eff_l, e);
+	effectString(e);
 	embedNodeName(thisobj);
-	stringAndChar(&effects, &eff_l, ' ');
-	stringAndString(&effects, &eff_l, pointer2string(child));
-	stringAndChar(&effects, &eff_l, ',');
+	effectChar(' ');
+	effectString(pointer2string(child));
+	effectChar(',');
 	embedNodeName(child);
-	stringAndString(&effects, &eff_l, " 0x0, ");
+	effectString(" 0x0, ");
 	endeffect();
 	return JS_TRUE;
 }				/* appendChild0 */
@@ -1371,17 +1370,17 @@ found:
 /* pass this linkage information back to edbrowse, to update its dom tree */
 	char e[40];
 	sprintf(e, "l{b|%s,", pointer2string(thisobj));
-	stringAndString(&effects, &eff_l, e);
+	effectString(e);
 	embedNodeName(thisobj);
-	stringAndChar(&effects, &eff_l, ' ');
-	stringAndString(&effects, &eff_l, pointer2string(child));
-	stringAndChar(&effects, &eff_l, ',');
+	effectChar(' ');
+	effectString(pointer2string(child));
+	effectChar(',');
 	embedNodeName(child);
-	stringAndChar(&effects, &eff_l, ' ');
-	stringAndString(&effects, &eff_l, pointer2string(item));
-	stringAndChar(&effects, &eff_l, ',');
+	effectChar(' ');
+	effectString(pointer2string(item));
+	effectChar(',');
 	embedNodeName(item);
-	stringAndChar(&effects, &eff_l, ' ');
+	effectChar(' ');
 	endeffect();
 	return JS_TRUE;
 }				/* insertBefore */
@@ -1435,13 +1434,13 @@ found:
 /* pass this linkage information back to edbrowse, to update its dom tree */
 	char e[40];
 	sprintf(e, "l{r|%s,", pointer2string(thisobj));
-	stringAndString(&effects, &eff_l, e);
+	effectString(e);
 	embedNodeName(thisobj);
-	stringAndChar(&effects, &eff_l, ' ');
-	stringAndString(&effects, &eff_l, pointer2string(child));
-	stringAndChar(&effects, &eff_l, ',');
+	effectChar(' ');
+	effectString(pointer2string(child));
+	effectChar(',');
 	embedNodeName(child);
-	stringAndString(&effects, &eff_l, " 0x0, ");
+	effectString(" 0x0, ");
 	endeffect();
 	return JS_TRUE;
 }				/* removeChild */
@@ -1451,16 +1450,16 @@ static void dwrite1(unsigned int argc, jsval * argv, bool newline)
 	int i;
 	const char *msg;
 	JS::RootedString str(jcx);
-	stringAndString(&effects, &eff_l, "w{");	// }
+	effectString("w{");	// }
 	for (i = 0; i < argc; ++i) {
 		if ((str = JS_ValueToString(jcx, argv[i])) &&
 		    (msg = JS_c_str(str))) {
-			stringAndString(&effects, &eff_l, msg);
+			effectString(msg);
 			cnzFree(msg);
 		}
 	}
 	if (newline)
-		stringAndChar(&effects, &eff_l, '\n');
+		effectChar('\n');
 	endeffect();
 }				/* dwrite1 */
 
@@ -1514,7 +1513,7 @@ fail:
 			  NULL, setter_innerHTML, PROP_STD);
 /* But we can't set innerHTML unless the object exists in edbrowse */
 	sprintf(run, "l{c|%s,%s 0x0, 0x0, ", pointer2string(child), tagname);
-	stringAndString(&effects, &eff_l, run);
+	effectString(run);
 	endeffect();
 
 /* and return the created object */
@@ -1541,8 +1540,8 @@ static JSFunctionSpec document_methods[] = {
 static JSBool form_submit(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
-	stringAndString(&effects, &eff_l, "f{s");	// }
-	stringAndString(&effects, &eff_l, pointer2string(obj));
+	effectString("f{s");	// }
+	effectString(pointer2string(obj));
 	endeffect();
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	args.rval().set(JSVAL_VOID);
@@ -1552,8 +1551,8 @@ static JSBool form_submit(JSContext * cx, unsigned int argc, jsval * vp)
 static JSBool form_reset(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
-	stringAndString(&effects, &eff_l, "f{r");	// }
-	stringAndString(&effects, &eff_l, pointer2string(obj));
+	effectString("f{r");	// }
+	effectString(pointer2string(obj));
 	endeffect();
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	args.rval().set(JSVAL_VOID);
@@ -1776,12 +1775,12 @@ abort:
 		}
 
 		sprintf(nstring, "t{%d|", n);	// }
-		stringAndString(&effects, &eff_l, nstring);
-		stringAndString(&effects, &eff_l, fstr);
-		stringAndChar(&effects, &eff_l, '|');
-		stringAndString(&effects, &eff_l, pointer2string(to));
-		stringAndChar(&effects, &eff_l, '|');
-		stringAndChar(&effects, &eff_l, (isInterval ? '1' : '0'));
+		effectString(nstring);
+		effectString(fstr);
+		effectChar('|');
+		effectString(pointer2string(to));
+		effectChar('|');
+		effectChar((isInterval ? '1' : '0'));
 		endeffect();
 
 		return to;
