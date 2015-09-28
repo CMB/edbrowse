@@ -86,6 +86,12 @@ static JSContext *jcx;
 static JSObject *winobj;	/* window object */
 static JSObject *docobj;	/* document object */
 
+static void cwSetup(void)
+{
+	in_js_cw.winobj = winobj;
+	in_js_cw.docobj = docobj;
+}				/* cwSetup */
+
 static struct EJ_MSG head;
 static char *errorMessage;
 static char *effects;
@@ -865,12 +871,15 @@ setter_innerHTML(JSContext * cx, JS::HandleObject obj,
 	if (s) {
 		effectString("i{h");	// }
 		effectString(pointer2string(obj));
+		int begin = eff_l + 1;
 		effectString
 		    ("|<!DOCTYPE public><head><title>Generated</title></head><body>\n");
 		effectString(s);
 		if (*s && s[strlen(s) - 1] != '\n')
 			effectChar('\n');
 		effectString("</body >");
+		cwSetup();
+		html_from_setter(effects + begin);
 		endeffect();
 	}
 	return JS_TRUE;
@@ -1445,10 +1454,11 @@ found:
 
 static void dwrite1(unsigned int argc, jsval * argv, bool newline)
 {
-	int i;
+	int i, begin;
 	const char *msg;
 	JS::RootedString str(jcx);
 	effectString("w{");	// }
+	begin = eff_l;
 	for (i = 0; i < argc; ++i) {
 		if ((str = JS_ValueToString(jcx, argv[i])) &&
 		    (msg = JS_c_str(str))) {
@@ -1458,6 +1468,8 @@ static void dwrite1(unsigned int argc, jsval * argv, bool newline)
 	}
 	if (newline)
 		effectChar('\n');
+	cwSetup();
+	html_from_setter(effects + begin);
 	endeffect();
 }				/* dwrite1 */
 

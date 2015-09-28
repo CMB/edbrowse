@@ -364,6 +364,7 @@ struct ebWindow {
 	struct DBTABLE *table;	/* if in sqlMode */
 };
 extern struct ebWindow *cw;	/* current window */
+extern struct ebWindow in_js_cw; /* window within edbrowse-js */
 
 /* quickly grab a tag from the current window via its sequence number:
  * tagList[n] */

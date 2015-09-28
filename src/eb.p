@@ -159,6 +159,7 @@ void freeTags(struct ebWindow *w) ;
 struct htmlTag *newTag(const char *tagname) ;
 void initTagArray(void);
 void htmlNodesIntoTree(int start, struct htmlTag *attach);
+void html_from_setter(const char *h);
 
 /* sourcefile=http.c */
 size_t eb_curl_callback(char *incoming, size_t size, size_t nitems, struct eb_curl_callback_data *data) ;
