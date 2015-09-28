@@ -54,6 +54,8 @@ static int radio_l;
 const char *attribVal(const struct htmlTag *t, const char *name)
 {
 	const char *v;
+	if (!t->attributes)
+		return 0;
 	int j = stringInListCI(t->attributes, name);
 	if (j < 0)
 		return 0;
@@ -111,13 +113,18 @@ struct htmlTag *findOpenList(struct htmlTag *t)
 	return 0;
 }				/* findOpenList */
 
-static void formControl(struct htmlTag *t, bool namecheck)
+void formControl(struct htmlTag *t, bool namecheck)
 {
 	int itype = t->itype;
 	char *myname = (t->name ? t->name : t->id);
-	if (currentForm) {
-		t->controller = currentForm;
-	} else if (itype != INP_BUTTON)
+	struct htmlTag *cf = currentForm;
+	if (!cf) {
+/* nodes could be created dynamically, not through html */
+		cf = findOpenTag(t, TAGACT_FORM);
+	}
+	if (cf)
+		t->controller = cf;
+	else if (itype != INP_BUTTON)
 		debugPrint(3, "%s is not part of a fill-out form",
 			   t->info->desc);
 	if (namecheck && !myname)
@@ -133,7 +140,7 @@ static const char *const inp_types[] = {
 };
 
 /* helper function for input tag */
-static void htmlInput(struct htmlTag *t)
+void htmlInputHelper(struct htmlTag *t)
 {
 	int n = INP_TEXT;
 	int len;
@@ -159,12 +166,13 @@ static void htmlInput(struct htmlTag *t)
 
 /* In this case an empty value should be "", not null */
 	if (t->value == 0)
-		t->rvalue = t->value = emptyString;
+		t->value = emptyString;
+	if (t->rvalue == 0)
+		t->rvalue = cloneString(t->value);
 
-	if (n >= INP_RADIO && t->checked) {
+	if (n == INP_RADIO && t->checked && radioCheck && myname) {
 		char namebuf[200];
-		if (n == INP_RADIO && myname &&
-		    radioCheck && strlen(myname) < sizeof(namebuf) - 3) {
+		if (strlen(myname) < sizeof(namebuf) - 3) {
 			if (!*radioCheck)
 				stringAndChar(&radioCheck, &radio_l, '|');
 			sprintf(namebuf, "|%s|", t->name);
@@ -174,72 +182,36 @@ static void htmlInput(struct htmlTag *t)
 				return;
 			}
 			stringAndString(&radioCheck, &radio_l, namebuf + 1);
-		}		/* radio name */
+		}
 	}
 
+	/* radio name */
 	/* Even the submit fields can have a name, but they don't have to */
 	formControl(t, (n > INP_SUBMIT));
-}				/* htmlInput */
+}				/* htmlInputHelper */
 
-/* helper function for meta tag */
-static void htmlMeta(struct htmlTag *t)
+/* return an allocated string containing the text entries for the checked options */
+char *displayOptions(const struct htmlTag *sel)
 {
-	char *name;
-	const char *content, *heq;
-	char **ptr;
-	char *copy = 0;
+	const struct htmlTag *t;
+	char *opt;
+	int opt_l;
+	int i;
 
-	name = t->name;
-	content = attribVal(t, "content");
-	copy = cloneString(content);
-	heq = attribVal(t, "http-equiv");
-
-	if (heq && content) {
-		bool rc;
-		int delay;
-
-/* It's not clear if we should process the http refresh command
- * immediately, the moment we spot it, or if we finish parsing
- * all the html first.
- * Does it matter?  It might.
- * A subsequent meta tag could use http-equiv to set a cooky,
- * and we won't see that cooky if we jump to the new page right now.
- * And there's no telling what subsequent javascript might do.
- * So I'm going to postpone the refresh until everything is parsed.
- * Bear in mind, we really don't want to refresh if we're working
- * on a local file. */
-
-		if (stringEqualCI(heq, "Set-Cookie")) {
-			rc = receiveCookie(cw->fileName, content);
-			debugPrint(3, rc ? "jar" : "rejected");
-		}
-
-		if (allowRedirection && !browseLocal
-		    && stringEqualCI(heq, "Refresh")) {
-			if (parseRefresh(copy, &delay)) {
-				char *newcontent;
-				unpercentURL(copy);
-				newcontent = resolveURL(cw->hbase, copy);
-				gotoLocation(newcontent, delay, true);
-			}
-		}
+	opt = initString(&opt_l);
+	for (i = 0; i < cw->numTags; ++i) {
+		t = tagList[i];
+		if (t->controller != sel)
+			continue;
+		if (!t->checked)
+			continue;
+		if (*opt)
+			stringAndChar(&opt, &opt_l, ',');
+		stringAndString(&opt, &opt_l, t->textval);
 	}
 
-	if (name) {
-		ptr = 0;
-		if (stringEqualCI(name, "description"))
-			ptr = &cw->fd;
-		if (stringEqualCI(name, "keywords"))
-			ptr = &cw->fk;
-		if (ptr && !*ptr && content) {
-			stripWhite(copy);
-			*ptr = copy;
-			copy = 0;
-		}
-	}
-
-	nzFree(copy);
-}				/* htmlMeta */
+	return opt;
+}				/* displayOptions */
 
 static void prerenderNode(struct htmlTag *t, bool opentag)
 {
@@ -378,7 +350,7 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 	case TAGACT_INPUT:
 		if (!opentag)
 			break;
-		htmlInput(t);
+		htmlInputHelper(t);
 		itype = t->itype;
 		if (itype == INP_HIDDEN)
 			break;
@@ -445,15 +417,23 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 /* like the other value fields, it can't be null */
 				t->rvalue = t->value = emptyString;
 			}
-			j = sideBuffer(0, currentTA->value, -1, 0);
+			j = sideBuffer(0, t->value, -1, 0);
 			t->lic = j;
 			currentTA = 0;
 		}
 		break;
 
 	case TAGACT_META:
-		if (opentag)
-			htmlMeta(t);
+		if (opentag) {
+/* This function doesn't do anything inside the js process.
+ * It only works when scanning the original web page.
+ * Thus I assume meta tags that set cookies, or keywords, or description,
+ * or a refresh directive, are there from the get-go.
+ * If js was going to generate a cookie it would just set document.cookie,
+ * it wouldn't build a meta tag to set the cookie and then
+ * appendChild it to head, right? */
+			htmlMetaHelper(t);
+		}
 		break;
 
 	case TAGACT_TR:
@@ -496,28 +476,44 @@ void prerender(int start)
 {
 	currentForm = currentSel = currentOpt = NULL;
 	currentTitle = currentScript = currentTA = NULL;
+	nzFree(radioCheck);
+	radioCheck = 0;
 	traverse_callback = prerenderNode;
 	traverseAll(start);
+	currentForm = NULL;
+	nzFree(radioCheck);
+	radioCheck = 0;
 }				/* prerender */
 
-/*********************************************************************
-The following code creates parallel js objects for the nodes in our html tree.
-This follows the template of the above: traverse the tree,
-callback() on each node, switch on the node type,
-and create the corresponding js object or objects.
-It's here because the code is similar to the above,
-but it is semantically quite different.
-It doesn't even have to run if js is off.
-And it only runs at the start of browse, whereas render can be called
-again and again as the running js makes changes to the tree.
-We may want to move this js code to another file some day,
-but for now it's here.
-*********************************************************************/
+/* create a new url with constructor */
+jsobjtype instantiate_url(jsobjtype parent, const char *name, const char *url)
+{
+	jsobjtype uo;		/* url object */
+	uo = instantiate(parent, name, "URL");
+	if (uo)
+		set_property_string(uo, "href", url);
+	return uo;
+}				/* instantiate_url */
+
+static void handlerSet(jsobjtype ev, const char *name, const char *code)
+{
+	enum ej_proptype hasform = has_property(ev, "form");
+	char *newcode = allocMem(strlen(code) + 60);
+	strcpy(newcode, "with(document) { ");
+	if (hasform)
+		strcat(newcode, "with(this.form) { ");
+	strcat(newcode, code);
+	if (hasform)
+		strcat(newcode, " }");
+	strcat(newcode, " }");
+	set_property_function(ev, name, newcode);
+	nzFree(newcode);
+}				/* handlerSet */
 
 static void set_onhandler(const struct htmlTag *t, const char *name)
 {
 	const char *s;
-	if ((s = attribVal(t, name)) && t->jv && isJSAlive)
+	if ((s = attribVal(t, name)) && t->jv)
 		handlerSet(t->jv, name, s);
 }				/* set_onhandler */
 
@@ -808,9 +804,6 @@ static void formControlJS(struct htmlTag *t)
 	char *myname = (t->name ? t->name : t->id);
 	const struct htmlTag *form = t->controller;
 
-	if (!isJSAlive)
-		return;
-
 	if (form && form->jv)
 		domLink(t, "Element", 0, "elements", form->jv,
 			isradio | isselect);
@@ -873,118 +866,13 @@ static void optionJS(struct htmlTag *t)
 	}
 }				/* optionJS */
 
-/* helper function to prepare an html script.
- * Fetch from the internetif src=url.
- * Some day we'll do these fetches in parallel in the background. */
-static void prepareScript(struct htmlTag *t)
-{
-	const char *js_file = "generated";
-	char *js_text = 0;
-	const char *a;
-	const char *filepart;
-
-/* no need to fetch if no js */
-	if (!isJSAlive)
-		return;
-
-/* Create the script object. */
-	domLink(t, "Script", "src", "scripts", cw->docobj, 0);
-
-	a = attribVal(t, "type");
-	if (a)
-		set_property_string(t->jv, "type", a);
-	a = attribVal(t, "language");
-	if (a)
-		set_property_string(t->jv, "language", a);
-/* if the above calls failed */
-	if (!isJSAlive)
-		return;
-
-/* If no language is specified, javascript is default. */
-	if (a && (!memEqualCI(a, "javascript", 10) || isalphaByte(a[10])))
-		return;
-
-/* It's javascript, run with the source or the inline text.
- * As per the starting line number, we cant distinguish between
- * <script> foo </script>  and
- * <script>
- * foo
- * </script>
- * so make a guess towards the first form, knowing we could be off by 1.
- * Just leave it at t->js_ln */
-	if (cw->fileName && !htmlGenerated)
-		js_file = cw->fileName;
-
-	if (t->href) {		/* fetch the javascript page */
-		if (javaOK(t->href)) {
-			bool from_data = isDataURI(t->href);
-			debugPrint(3, "java source %s",
-				   !from_data ? t->href : "data URI");
-			if (from_data) {
-				char *mediatype;
-				int data_l = 0;
-				if (parseDataURI(t->href, &mediatype,
-						 &js_text, &data_l)) {
-					prepareForBrowse(js_text, data_l);
-					nzFree(mediatype);
-				} else {
-					debugPrint(3,
-						   "Unable to parse data URI containing JavaScript");
-				}
-			} else if (browseLocal && !isURL(t->href)) {
-				if (!fileIntoMemory
-				    (t->href, &serverData, &serverDataLen)) {
-					if (debugLevel >= 1)
-						i_printf(MSG_GetLocalJS,
-							 errorMsg);
-				} else {
-					js_text = serverData;
-					prepareForBrowse(js_text,
-							 serverDataLen);
-				}
-			} else if (httpConnect(t->href, false, false)) {
-				if (hcode == 200) {
-					js_text = serverData;
-					prepareForBrowse(js_text,
-							 serverDataLen);
-				} else {
-					nzFree(serverData);
-					if (debugLevel >= 3)
-						i_printf(MSG_GetJS, t->href,
-							 hcode);
-				}
-			} else {
-				if (debugLevel >= 3)
-					i_printf(MSG_GetJS2, errorMsg);
-			}
-			t->js_ln = 1;
-			js_file = (!from_data ? t->href : "data_URI");
-			nzFree(changeFileName);
-			changeFileName = NULL;
-		}
-	} else {
-		js_text = t->textval;
-		t->textval = 0;
-	}
-
-	if (!js_text)
-		return;
-	set_property_string(t->jv, "data", js_text);
-	nzFree(js_text);
-	filepart = getFileURL(js_file, true);
-	t->js_file = cloneString(filepart);
-}				/* prepareScript */
-
 static void jsNode(struct htmlTag *t, bool opentag)
 {
 	int itype;		/* input type */
 	const struct tagInfo *ti = t->info;
 	int action = t->action;
 	const struct htmlTag *above;
-
-/* if js is not active then we shouldn't even be here, but just in case ... */
-	if (!isJSAlive)
-		return;
+	const char *a;
 
 /* all the js variables are on the open tag */
 	if (!opentag)
@@ -1010,7 +898,13 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		break;
 
 	case TAGACT_SCRIPT:
-		prepareScript(t);
+		domLink(t, "Script", "src", "scripts", cw->docobj, 0);
+		a = attribVal(t, "type");
+		if (a)
+			set_property_string(t->jv, "type", a);
+		a = attribVal(t, "language");
+		if (a)
+			set_property_string(t->jv, "language", a);
 		break;
 
 	case TAGACT_FORM:
@@ -1092,28 +986,27 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		establish_inner(t->jv, t->innerHTML, 0, false);
 		break;
 
+	case TAGACT_TITLE:
+		if (cw->ft)
+			set_property_string(cw->docobj, "title", cw->ft);
+		break;
+
 	}			/* switch */
 
 /* js tree mirrors the dom tree. */
 	if (t->jv && t->parent && t->parent->jv)
-		run_function_objargs(t->parent->jv, "apch$", 1, t->jv);
+		run_function_onearg(t->parent->jv, "apch$", t->jv);
 
 /* head and body link to document */
 	if (t->jv && !t->parent &&
 	    (action == TAGACT_HEAD || action == TAGACT_BODY))
-		run_function_objargs(cw->docobj, "apch$", 1, t->jv);
+		run_function_onearg(cw->docobj, "apch$", t->jv);
 
 }				/* jsNode */
 
 /* decorate the tree of nodes with js objects */
 void decorate(int start)
 {
-	if (!isJSAlive)
-		return;
-
-/* title special case */
-	set_property_string(cw->docobj, "title", cw->ft);
-
 	traverse_callback = jsNode;
 	traverseAll(start);
 }				/* decorate */

@@ -223,7 +223,6 @@ extern bool cons_utf8;		/* does the console expect utf8? */
 extern bool iuConvert;		/* perform iso utf8 conversions automatically */
 extern char type8859;		/* 1 through 15 */
 extern bool js_redirects;	/* window.location = new_url */
-extern bool htmlGenerated; /* as in document.write() */
 extern bool passMail;		/* pass mail across the filters */
 extern bool errorExit;		/* exit on any error, for scripting purposes */
 extern bool isInteractive;
@@ -482,6 +481,7 @@ enum {
 
 /* htmlTag.itype */
 /* Warning - the order of these is important! */
+/* Corresponds to inp_types in decorate.c */
 enum {
 	INP_RESET, INP_BUTTON, INP_IMAGE, INP_SUBMIT,
 	INP_HIDDEN,

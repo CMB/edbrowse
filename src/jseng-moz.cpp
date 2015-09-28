@@ -58,6 +58,17 @@ struct htmlTag *newTag(const char *tagname)
 	return 0;
 }				/* newTag */
 
+/* meta tags don't have side effects from within the js process. */
+void htmlMetaHelper(struct htmlTag *t)
+{
+}
+
+/* textarea does not generate a side buffer here */
+int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
+{
+	return 0;
+}
+
 static void usage(void)
 {
 	fprintf(stderr, "Usage:  edbrowse-js pipe_in pipe_out jsHeapSize\n");
@@ -746,6 +757,37 @@ static ej_proptype find_proptype(JS::HandleObject parent, const char *name)
 	return val_proptype(v);
 }				/* find_proptype */
 
+enum ej_proptype has_property(jsobjtype parent, const char *name)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	return find_proptype(p, name);
+}				/* has_property */
+
+static void delete_property1(JS::HandleObject parent, const char *name)
+{
+	JS_DeleteProperty(jcx, parent, name);
+}				/* delete_property1 */
+
+void delete_property(jsobjtype parent, const char *name)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	delete_property1(p, name);
+}				/* delete_property */
+
+static int get_arraylength1(JS::HandleObject a)
+{
+	unsigned int length;
+	if (JS_GetArrayLength(jcx, a, &length) == JS_FALSE)
+		return -1;
+	return length;
+}				/* get_arraylength1 */
+
+int get_arraylength(jsobjtype a)
+{
+	JS::RootedObject p(jcx, (JSObject *) a);
+	return get_arraylength1(p);
+}				/* get_arraylength */
+
 /* Use stringize() to return a property as a string, if it is
  * string compatible. The string is allocated, free it when done. */
 static char *get_property_string1(JS::HandleObject parent, const char *name)
@@ -1055,7 +1097,7 @@ static void set_property_number1(js::HandleObject parent, const char *name,
 		misconfigure();
 }				/* set_property_number1 */
 
-int set_property_number(jsobjtype parent, char *name, int n)
+int set_property_number(jsobjtype parent, const char *name, int n)
 {
 	JS::RootedObject p(jcx, (JSObject *) parent);
 	set_property_number1(p, name, n);
@@ -1162,6 +1204,24 @@ int set_property_function(jsobjtype parent, const char *name, const char *body)
 	set_property_function1(p, name, body);
 	return 0;
 }				/* set_property_function */
+
+static void
+run_function_onearg1(js::HandleObject parent, const char *name,
+		     JS::HandleObject child)
+{
+	js::RootedValue v(jcx);
+	jsval argv[2];
+	argv[0] = OBJECT_TO_JSVAL(child);
+	argv[1] = jsval();
+	JS_CallFunctionName(jcx, parent, name, 1, argv, v.address());
+}				/* run_function_onearg1 */
+
+void run_function_onearg(jsobjtype parent, const char *name, jsobjtype child)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	JS::RootedObject c(jcx, (JSObject *) child);
+	run_function_onearg1(p, name, c);
+}				/* run_function_onearg */
 
 static JSBool setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
 {

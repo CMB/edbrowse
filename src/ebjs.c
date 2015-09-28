@@ -1173,16 +1173,6 @@ void setupJavaDom(void)
 	docCookie(d);
 }				/* setupJavaDom */
 
-/* create a new url with constructor */
-jsobjtype instantiate_url(jsobjtype parent, const char *name, const char *url)
-{
-	jsobjtype uo;		/* url object */
-	uo = instantiate(parent, name, "URL");
-	if (uo)
-		set_property_string(uo, "href", url);
-	return uo;
-}				/* instantiate_url */
-
 /* Get the url from a url object, special wrapper.
  * Owner object is passed, look for obj.href, obj.src, or obj.action.
  * Return that if it's a string, or its member href if it is a url.
@@ -1381,21 +1371,6 @@ void rebuildSelectors(void)
 
 }				/* rebuildSelectors */
 
-void handlerSet(jsobjtype ev, const char *name, const char *code)
-{
-	enum ej_proptype hasform = has_property(ev, "form");
-	char *newcode = allocMem(strlen(code) + 60);
-	strcpy(newcode, "with(document) { ");
-	if (hasform)
-		strcat(newcode, "with(this.form) { ");
-	strcat(newcode, code);
-	if (hasform)
-		strcat(newcode, " }");
-	strcat(newcode, " }");
-	set_property_function(ev, name, newcode);
-	nzFree(newcode);
-}				/* handlerSet */
-
 /* run a function with no args that returns an object */
 jsobjtype run_function_object(jsobjtype obj, const char *name)
 {
@@ -1456,3 +1431,8 @@ void run_function_objargs(jsobjtype obj, const char *name, int nargs, ...)
 	nzFree(propval);
 	propval = 0;
 }				/* run_function_objargs */
+
+void run_function_onearg(jsobjtype obj, const char *name, jsobjtype a)
+{
+	run_function_objargs(obj, name, 1, a);
+}				/* run_function_onearg */

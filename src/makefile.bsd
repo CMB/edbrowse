@@ -49,6 +49,6 @@ clean:
 jseng-moz.o: jseng-moz.cpp
 	$(CXX) -c $(CXXFLAGS) $(JS_CXXFLAGS) $^ -o $@
 
-edbrowse-js : jseng-moz.o messages.o url.o stringfile.o html-tidy.o
+edbrowse-js : jseng-moz.o messages.o url.o stringfile.o html-tidy.o decorate.o
 	cc jseng-moz.o messages.o url.o stringfile.o $(LOADLIBES) $(JSLIB) -ltidy -lstdc++ -o $@
 

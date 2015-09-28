@@ -80,7 +80,7 @@ jseng-moz.o: jseng-moz.cpp
 	$(CXX) -c $(CXXFLAGS) $(JS_CXXFLAGS) $^ -o $@
 
 
-edbrowse-js : jseng-moz.o messages.o url.o stringfile.o html-tidy.o
+edbrowse-js : jseng-moz.o messages.o url.o stringfile.o html-tidy.o decorate.o
 	$(LINK.o) $^ $(LOADLIBES) $(JSLIB) -ltidy -lstdc++ -o $@
 
 #  some hello world targets, for testing and debugging

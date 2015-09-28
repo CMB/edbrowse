@@ -15,7 +15,7 @@ static void runOnload(void);
 #define SLEEP sleep
 #endif // _MSC_VER y/n
 
-bool htmlGenerated;
+static bool htmlGenerated;
 
 static const char *const handlers[] = {
 	"onmousemove", "onmouseover", "onmouseout", "onmouseup", "onmousedown",
@@ -313,30 +313,6 @@ void jSideEffects(void)
 	rerender(false);
 }				/* jSideEffects */
 
-/* display the checked options in an allocated string */
-char *displayOptions(const struct htmlTag *sel)
-{
-	const struct htmlTag *t;
-	char *opt;
-	int opt_l;
-	int i;
-
-	opt = initString(&opt_l);
-
-	for (i = 0; i < cw->numTags; ++i) {
-		t = tagList[i];
-		if (t->controller != sel)
-			continue;
-		if (!t->checked)
-			continue;
-		if (*opt)
-			stringAndChar(&opt, &opt_l, ',');
-		stringAndString(&opt, &opt_l, t->textval);
-	}
-
-	return opt;
-}				/* displayOptions */
-
 static struct htmlTag *locateOptionByName(const struct htmlTag *sel,
 					  const char *name, int *pmc,
 					  bool exact)
@@ -621,6 +597,66 @@ struct htmlTag *newTag(const char *name)
 	return t;
 }				/* newTag */
 
+/* helper function for meta tag */
+void htmlMetaHelper(struct htmlTag *t)
+{
+	char *name;
+	const char *content, *heq;
+	char **ptr;
+	char *copy = 0;
+
+	name = t->name;
+	content = attribVal(t, "content");
+	copy = cloneString(content);
+	heq = attribVal(t, "http-equiv");
+
+	if (heq && content) {
+		bool rc;
+		int delay;
+
+/* It's not clear if we should process the http refresh command
+ * immediately, the moment we spot it, or if we finish parsing
+ * all the html first.
+ * Does it matter?  It might.
+ * A subsequent meta tag could use http-equiv to set a cooky,
+ * and we won't see that cooky if we jump to the new page right now.
+ * And there's no telling what subsequent javascript might do.
+ * So I'm going to postpone the refresh until everything is parsed.
+ * Bear in mind, we really don't want to refresh if we're working
+ * on a local file. */
+
+		if (stringEqualCI(heq, "Set-Cookie")) {
+			rc = receiveCookie(cw->fileName, content);
+			debugPrint(3, rc ? "jar" : "rejected");
+		}
+
+		if (allowRedirection && !browseLocal
+		    && stringEqualCI(heq, "Refresh")) {
+			if (parseRefresh(copy, &delay)) {
+				char *newcontent;
+				unpercentURL(copy);
+				newcontent = resolveURL(cw->hbase, copy);
+				gotoLocation(newcontent, delay, true);
+			}
+		}
+	}
+
+	if (name) {
+		ptr = 0;
+		if (stringEqualCI(name, "description"))
+			ptr = &cw->fd;
+		if (stringEqualCI(name, "keywords"))
+			ptr = &cw->fk;
+		if (ptr && !*ptr && content) {
+			stripWhite(copy);
+			*ptr = copy;
+			copy = 0;
+		}
+	}
+
+	nzFree(copy);
+}				/* htmlMetaHelper */
+
 static struct htmlTag *treeAttach;
 static int tree_pos;
 static bool treeDisable;
@@ -640,6 +676,92 @@ static void runGeneratedHtml(struct htmlTag *t, const char *h)
 	decorate(0);
 	htmlGenerated = false;
 }				/* runGeneratedHtml */
+
+/* helper function to prepare an html script.
+ * Fetch from the internetif src=url.
+ * Some day we'll do these fetches in parallel in the background. */
+static void prepareScript(struct htmlTag *t)
+{
+	const char *js_file = "generated";
+	char *js_text = 0;
+	const char *a;
+	const char *filepart;
+
+/* If no language is specified, javascript is default. */
+	a = attribVal(t, "language");
+	if (a && (!memEqualCI(a, "javascript", 10) || isalphaByte(a[10])))
+		return;
+
+/* It's javascript, run with the source or the inline text.
+ * As per the starting line number, we cant distinguish between
+ * <script> foo </script>  and
+ * <script>
+ * foo
+ * </script>
+ * so make a guess towards the first form, knowing we could be off by 1.
+ * Just leave it at t->js_ln */
+	if (cw->fileName && !htmlGenerated)
+		js_file = cw->fileName;
+
+	if (t->href) {		/* fetch the javascript page */
+		if (javaOK(t->href)) {
+			bool from_data = isDataURI(t->href);
+			debugPrint(3, "java source %s",
+				   !from_data ? t->href : "data URI");
+			if (from_data) {
+				char *mediatype;
+				int data_l = 0;
+				if (parseDataURI(t->href, &mediatype,
+						 &js_text, &data_l)) {
+					prepareForBrowse(js_text, data_l);
+					nzFree(mediatype);
+				} else {
+					debugPrint(3,
+						   "Unable to parse data URI containing JavaScript");
+				}
+			} else if (browseLocal && !isURL(t->href)) {
+				if (!fileIntoMemory
+				    (t->href, &serverData, &serverDataLen)) {
+					if (debugLevel >= 1)
+						i_printf(MSG_GetLocalJS,
+							 errorMsg);
+				} else {
+					js_text = serverData;
+					prepareForBrowse(js_text,
+							 serverDataLen);
+				}
+			} else if (httpConnect(t->href, false, false)) {
+				if (hcode == 200) {
+					js_text = serverData;
+					prepareForBrowse(js_text,
+							 serverDataLen);
+				} else {
+					nzFree(serverData);
+					if (debugLevel >= 3)
+						i_printf(MSG_GetJS, t->href,
+							 hcode);
+				}
+			} else {
+				if (debugLevel >= 3)
+					i_printf(MSG_GetJS2, errorMsg);
+			}
+			t->js_ln = 1;
+			js_file = (!from_data ? t->href : "data_URI");
+			nzFree(changeFileName);
+			changeFileName = NULL;
+		}
+	} else {
+		js_text = t->textval;
+		t->textval = 0;
+	}
+
+	if (!js_text)
+		return;
+	set_property_string(t->jv, "data", js_text);
+	nzFree(js_text);
+	filepart = getFileURL(js_file, true);
+	t->js_file = cloneString(filepart);
+}				/* prepareScript */
 
 void runScriptsPending(void)
 {
@@ -678,6 +800,9 @@ top:
 /* now running the script */
 		t->step = 3;
 		change = true;
+
+		prepareScript(t);
+
 		jtxt = get_property_string(t->jv, "data");
 		if (!jtxt)
 			continue;	/* nothing there */
@@ -2562,10 +2687,7 @@ void javaSetsLinkage(char type, jsobjtype p_j, const char *rest)
 	action = t->action;
 	switch (action) {
 	case TAGACT_INPUT:
-		if (!t->value)
-			t->value = emptyString;
-		t->rvalue = cloneString(t->value);
-		t->controller = findOpenTag(t, TAGACT_FORM);
+		htmlInputHelper(t);
 		break;
 
 	case TAGACT_OPTION:
@@ -2573,6 +2695,30 @@ void javaSetsLinkage(char type, jsobjtype p_j, const char *rest)
 			t->value = emptyString;
 		if (!t->textval)
 			t->textval = emptyString;
+		break;
+
+	case TAGACT_TA:
+		t->action = TAGACT_INPUT;
+		t->itype = INP_TA;
+		formControl(t, true);
+		if (!t->value)
+			t->value = emptyString;
+		if (!t->rvalue)
+			t->rvalue = cloneString(t->value);
+		break;
+
+	case TAGACT_SELECT:
+		t->action = TAGACT_INPUT;
+		t->itype = INP_SELECT;
+		formControl(t, true);
+		break;
+
+	case TAGACT_TR:
+		t->controller = findOpenTag(t, TAGACT_TABLE);
+		break;
+
+	case TAGACT_TD:
+		t->controller = findOpenTag(t, TAGACT_TR);
 		break;
 
 	}			/* switch */
