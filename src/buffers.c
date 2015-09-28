@@ -637,6 +637,7 @@ static void undoPush(void)
 static void freeWindow(struct ebWindow *w)
 {
 	freeTags(w);
+	delTimers(w);
 	freeJavaContext(w);
 	freeWindowLines(w->map);
 	freeWindowLines(w->r_map);
@@ -3373,6 +3374,7 @@ et_go:
 			cw->r_map = 0;
 		}
 		freeTags(cw);
+		delTimers(cw);
 		freeJavaContext(cw);
 		cw->jcx = NULL;
 		nzFree(cw->dw);
@@ -5203,17 +5205,20 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 	return cx;
 }				/* sideBuffer */
 
-/* Bailing wire and duct tape, here it comes.
- * You'd never know I was a professional programmer.  :-)
- * Ok, the text buffer, that you edit, is the final arbiter on most
- * (but not all) input fields.  And when javascript changes
- * one of these values, it is copied back to the text buffer,
- * where you can see it, and modify it as you like.
- * But what happens if that javascript is running while the html is parsed,
- * and before the page even exists?
- * I hadn't thought of that.
- * The following is a cache of input fields that have been changed,
- * before we even had a chance to render the page. */
+void freeEmptySideBuffer(int n)
+{
+	struct ebWindow *side;
+	if (!(side = sessionList[n].lw))
+		return;
+	if (side->fileName)
+		return;
+	if (side->dol)
+		return;
+	if (side != sessionList[n].fw)
+		return;
+/* We could have added a line, then deleted it */
+	cxQuit(n, 3);
+}				/* freeEmptySideBuffer */
 
 bool browseCurrentBuffer(void)
 {

@@ -250,6 +250,7 @@ extern bool caseInsensitive, searchStringsAll;
 extern bool allowRedirection;	/* from http code 301, or http refresh */
 extern bool sendReferrer;	/* in the http header */
 extern bool allowJS;		/* javascript on */
+extern bool htmlGenerated;
 extern bool helpMessagesOn;	/* no need to type h */
 extern bool pluginsOn;		/* plugins are active */
 extern bool showHiddenFiles;	/* during directory scan */
@@ -397,6 +398,7 @@ struct tagInfo {
 	uchar para;		/* paragraph and line breaks */
 	ushort bits;		/* a bunch of boolean attributes */
 };
+extern const struct tagInfo availableTags[];
 
 /* Information on tagInfo->bits */
 /* Close an open anchor when you see this tag. */
@@ -454,7 +456,6 @@ struct htmlTag {
 	char subsup;		/* span turned into sup or sub */
 	uchar itype;		/* input type = */
 	short ninp;		/* number of nonhidden inputs */
-	char *attrib;
 	char *name, *id, *value, *href;
 	const char *rvalue; /* for reset */
 /* class=foo becomes className = "foo" when you carry from html to javascript,

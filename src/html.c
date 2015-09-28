@@ -15,8 +15,6 @@ static void runOnload(void);
 #define SLEEP sleep
 #endif // _MSC_VER y/n
 
-static bool htmlGenerated;
-
 static const char *const handlers[] = {
 	"onmousemove", "onmouseover", "onmouseout", "onmouseup", "onmousedown",
 	"onclick", "ondblclick", "onblur", "onfocus",
@@ -36,241 +34,6 @@ static const char *const inp_types[] = {
 
 static jsobjtype js_reset, js_submit;
 uchar browseLocal;
-
-/* paranoia check on the number of tags */
-static void tagCountCheck(void)
-{
-	if (sizeof(int) == 4) {
-		if (cw->numTags > MAXLINES)
-			i_printfExit(MSG_LineLimit);
-	}
-}				/* tagCountCheck */
-
-static void pushTag(struct htmlTag *t)
-{
-	int a = cw->allocTags;
-	if (cw->numTags == a) {
-/* make more room */
-		a = a / 2 * 3;
-		cw->tags =
-		    (struct htmlTag **)reallocMem(cw->tags, a * sizeof(t));
-		cw->allocTags = a;
-	}
-	tagList[cw->numTags++] = t;
-	tagCountCheck();
-}				/* pushTag */
-
-/*********************************************************************
-Comments on struct tagInfo member nest, the nestability of a tag.
-
-nest = 0:
-Like <input>, where </input> doesn't make any sense.
-</input> is silently tolerated without error,
-but stuff between <input> and </input> isn't really bound up
-as objects under the input tag.
-Some conventions require the close, like <frame></frame>,
-but even here there should be nothing in between, and if there is
-it is a mistake, and is not bound to the frame tag.
-
-nest = 1:
-Like <p> here is a paragraph </p>.
-Semantically there should not be a paragraph inside a paragraph,
-so if you run into another <p> that implicitly closes the previous <p>.
-In other words <p> implies </p><p>.
-Web pages usually close paragraphs properly, but not always lists.
-<ol> <li> item 1 <li> item 2 <li> item 3 </ol>.
-
-nest = 3:
-Strict nesting, like <b> bold text </b>.
-this should close properly, and not out of sequence like <b> <p> </b>.
-
-Closing a tag </foo>:
-If 0 then we don't care.
-If 1 or 3 then back up and find the first open, unbalanced, tag of the same type.
-Close the open tag and all open tags in between.
-
-Opening a tag <foo>:
-If 0 then we don't care.
-If 1 or 3 then push the tag and leave it unbalanced,
-but if 1, back up and find the first unbalanced tag of any type.
-If it is the same type then close off that tag.
-This solves the <li> item 1 <li> item 2 problem,
-but not <li> stuff <p> more stuff <li>
-so it's just not a perfect solution.
-
-Parent node:
-Open a tag that corresponds to an object,
-and if a js object is created, back up to the first open tag
-above it that corresponds to an object,
-and if there is indeed a js object for that tag, create the parent link.
-
-children:
-A post scan derives children from parents.
-So if I got the parent logic wrong, and I probably did,
-I can fix it, and then the children will be fixed as well.
-It's a normal form kind of thing.
-Not yet implemented.
-*********************************************************************/
-
-static const struct tagInfo availableTags[] = {
-	{"html", "html", TAGACT_ZERO},
-	{"base", "base reference for relative URLs", TAGACT_BASE, 0, 13},
-	{"a", "an anchor", TAGACT_A, 0, 9},
-	{"input", "an input item", TAGACT_INPUT, 0, 13},
-	{"title", "the title", TAGACT_TITLE, 0, 9},
-	{"textarea", "an input text area", TAGACT_TA, 0, 9},
-	{"select", "an option list", TAGACT_SELECT, 0, 9},
-	{"option", "a select option", TAGACT_OPTION, 0, 9},
-	{"sub", "a subscript", TAGACT_SUB, 0, 0},
-	{"sup", "a superscript", TAGACT_SUP, 0, 0},
-	{"ovb", "an overbar", TAGACT_OVB, 0, 0},
-	{"font", "a font", TAGACT_NOP, 0, 0},
-	{"center", "centered text", TAGACT_NOP, 0, 0},
-	{"caption", "a caption", TAGACT_NOP, 5, 0},
-	{"head", "the html header information", TAGACT_HEAD, 0, 13},
-	{"body", "the html body", TAGACT_BODY, 0, 13},
-	{"text", "a text section", TAGACT_TEXT, 0, 4},
-	{"bgsound", "background music", TAGACT_MUSIC, 0, 5},
-	{"audio", "audio passage", TAGACT_MUSIC, 0, 5},
-	{"meta", "a meta tag", TAGACT_META, 0, 12},
-	{"img", "an image", TAGACT_IMAGE, 0, 12},
-	{"image", "an image", TAGACT_IMAGE, 0, 12},
-	{"br", "a line break", TAGACT_BR, 1, 4},
-	{"p", "a paragraph", TAGACT_P, 2, 13},
-	{"div", "a divided section", TAGACT_DIV, 5, 8},
-	{"map", "a map of images", TAGACT_NOP, 5, 8},
-	{"blockquote", "a quoted paragraph", TAGACT_NOP, 10, 9},
-	{"h1", "a level 1 header", TAGACT_NOP, 10, 9},
-	{"h2", "a level 2 header", TAGACT_NOP, 10, 9},
-	{"h3", "a level 3 header", TAGACT_NOP, 10, 9},
-	{"h4", "a level 4 header", TAGACT_NOP, 10, 9},
-	{"h5", "a level 5 header", TAGACT_NOP, 10, 9},
-	{"h6", "a level 6 header", TAGACT_NOP, 10, 9},
-	{"dt", "a term", TAGACT_DT, 2, 13},
-	{"dd", "a definition", TAGACT_DD, 1, 13},
-	{"li", "a list item", TAGACT_LI, 1, 13},
-	{"ul", "a bullet list", TAGACT_UL, 10, 9},
-	{"dir", "a directory list", TAGACT_NOP, 5, 9},
-	{"menu", "a menu", TAGACT_NOP, 5, 9},
-	{"ol", "a numbered list", TAGACT_OL, 10, 9},
-	{"dl", "a definition list", TAGACT_DL, 10, 9},
-	{"hr", "a horizontal line", TAGACT_HR, 5, 5},
-	{"form", "a form", TAGACT_FORM, 10, 9},
-	{"button", "a button", TAGACT_INPUT, 0, 13},
-	{"frame", "a frame", TAGACT_FRAME, 2, 13},
-	{"iframe", "a frame", TAGACT_FRAME, 2, 13},
-	{"map", "an image map", TAGACT_MAP, 2, 13},
-	{"area", "an image map area", TAGACT_AREA, 0, 13},
-	{"table", "a table", TAGACT_TABLE, 10, 9},
-	{"tbody", "a table body", TAGACT_TBODY, 0, 0},
-	{"tr", "a table row", TAGACT_TR, 5, 9},
-	{"td", "a table entry", TAGACT_TD, 0, 13},
-	{"th", "a table heading", TAGACT_TD, 0, 9},
-	{"pre", "a preformatted section", TAGACT_PRE, 10, 0},
-	{"listing", "a listing", TAGACT_PRE, 1, 0},
-	{"xmp", "an example", TAGACT_PRE, 1, 0},
-	{"fixed", "a fixed presentation", TAGACT_NOP, 1, 0},
-	{"code", "a block of code", TAGACT_NOP, 0, 0},
-	{"samp", "a block of sample text", TAGACT_NOP, 0, 0},
-	{"address", "an address block", TAGACT_NOP, 1, 0},
-	{"style", "a style block", TAGACT_NOP, 0, 2},
-	{"script", "a script", TAGACT_SCRIPT, 0, 9},
-	{"noscript", "no script section", TAGACT_NOP, 0, 3},
-	{"noframes", "no frames section", TAGACT_NOP, 0, 3},
-	{"embed", "embedded html", TAGACT_MUSIC, 0, 5},
-	{"noembed", "no embed section", TAGACT_NOP, 0, 3},
-	{"object", "an html object", TAGACT_OBJ, 0, 3},
-	{"em", "emphasized text", TAGACT_JS, 0, 0},
-	{"label", "a label", TAGACT_JS, 0, 0},
-	{"strike", "emphasized text", TAGACT_JS, 0, 0},
-	{"s", "emphasized text", TAGACT_JS, 0, 0},
-	{"strong", "emphasized text", TAGACT_JS, 0, 0},
-	{"b", "bold text", TAGACT_JS, 0, 0},
-	{"i", "italicized text", TAGACT_JS, 0, 0},
-	{"u", "underlined text", TAGACT_JS, 0, 0},
-	{"dfn", "definition text", TAGACT_JS, 0, 0},
-	{"q", "quoted text", TAGACT_JS, 0, 0},
-	{"abbr", "an abbreviation", TAGACT_JS, 0, 0},
-	{"span", "an html span", TAGACT_SPAN, 0, 0},
-	{"frameset", "a frame set", TAGACT_JS, 0, 1},
-	{"", NULL, 0}
-};
-
-void freeTags(struct ebWindow *w)
-{
-	int i, n;
-	struct htmlTag *t;
-	struct htmlTag **e;
-	struct ebWindow *side;
-
-/* if not browsing ... */
-	if (!(e = w->tags))
-		return;
-
-/* drop empty textarea buffers created by this session */
-	for (i = 0; i < w->numTags; ++i, ++e) {
-		t = *e;
-		if (t->action != TAGACT_INPUT)
-			continue;
-		if (t->itype != INP_TA)
-			continue;
-		if (!(n = t->lic))
-			continue;
-		if (!(side = sessionList[n].lw))
-			continue;
-		if (side->fileName)
-			continue;
-		if (side->dol)
-			continue;
-		if (side != sessionList[n].fw)
-			continue;
-/* We could have added a line, then deleted it */
-		cxQuit(n, 3);
-	}			/* loop over tags */
-
-	e = w->tags;
-	for (i = 0; i < w->numTags; ++i, ++e) {
-		char **a;
-		t = *e;
-		nzFree(t->attrib);
-		nzFree(t->textval);
-		nzFree(t->name);
-		nzFree(t->id);
-		nzFree(t->value);
-		cnzFree(t->rvalue);
-		nzFree(t->href);
-		nzFree(t->classname);
-		nzFree(t->js_file);
-		nzFree(t->innerHTML);
-
-		a = (char **)t->attributes;
-		if (a) {
-			while (*a) {
-				nzFree(*a);
-				++a;
-			}
-			free(t->attributes);
-		}
-
-		a = (char **)t->atvals;
-		if (a) {
-			while (*a) {
-				nzFree(*a);
-				++a;
-			}
-			free(t->atvals);
-		}
-
-		free(t);
-	}
-
-	free(w->tags);
-	w->tags = 0;
-	w->numTags = w->allocTags = 0;
-
-/* delete any pending javascript timers */
-	delTimers(w);
-}				/* freeTags */
 
 bool tagHandler(int seqno, const char *name)
 {
@@ -575,28 +338,6 @@ void jSyncup(void)
 	debugPrint(4, "jSyncup ends");
 }				/* jSyncup */
 
-struct htmlTag *newTag(const char *name)
-{
-	struct htmlTag *t;
-	const struct tagInfo *ti;
-	int action;
-
-	for (ti = availableTags; ti->name[0]; ++ti)
-		if (stringEqualCI(ti->name, name))
-			break;
-	if (!ti->name[0])
-		return 0;
-	if ((action = ti->action) == TAGACT_ZERO)
-		return 0;
-
-	t = (struct htmlTag *)allocZeroMem(sizeof(struct htmlTag));
-	t->action = action;
-	t->info = ti;
-	t->seqno = cw->numTags;
-	pushTag(t);
-	return t;
-}				/* newTag */
-
 /* helper function for meta tag */
 void htmlMetaHelper(struct htmlTag *t)
 {
@@ -657,11 +398,6 @@ void htmlMetaHelper(struct htmlTag *t)
 	nzFree(copy);
 }				/* htmlMetaHelper */
 
-static struct htmlTag *treeAttach;
-static int tree_pos;
-static bool treeDisable;
-static void intoTree(struct htmlTag *parent);
-
 static void runGeneratedHtml(struct htmlTag *t, const char *h)
 {
 	int l = cw->numTags;
@@ -675,10 +411,7 @@ static void runGeneratedHtml(struct htmlTag *t, const char *h)
 	}
 	htmlGenerated = true;
 	html2nodes(h);
-	treeAttach = t;
-	tree_pos = l;
-	intoTree(0);
-	treeAttach = NULL;
+	htmlNodesIntoTree(l, t);
 	prerender(0);
 	decorate(0);
 	htmlGenerated = false;
@@ -915,179 +648,6 @@ top:
 	}
 }				/* runScriptsPending */
 
-/* Convert a list of nodes, properly nested open close, into a tree.
- * Attach the tree to an existing tree here, for document.write etc,
- * or just build the tree if this is null. */
-static void intoTree(struct htmlTag *parent)
-{
-	struct htmlTag *t, *prev = 0;
-	int j;
-	const char *v;
-
-	while (tree_pos < cw->numTags) {
-		t = tagList[tree_pos++];
-		if (t->slash) {
-			if (parent)
-				parent->balance = t, t->balance = parent;
-			return;
-		}
-
-		if (treeDisable) {
-			debugPrint(5, "node skip %s", t->info->name);
-			t->step = 100;
-			intoTree(t);
-			continue;
-		}
-
-		if (htmlGenerated) {
-/*Some things are different if the html is generated, not part of the original web page.
- * You can skip past <head> altogether, including its
- * tidy generated descendants, and you want to pass through <body>
- * to the children below. */
-			int action = t->action;
-			if (action == TAGACT_HEAD) {
-				debugPrint(5, "node skip %s", t->info->name);
-				t->step = 100;
-				treeDisable = true;
-				intoTree(t);
-				treeDisable = false;
-				continue;
-			}
-			if (action == TAGACT_BODY) {
-				debugPrint(5, "node pass %s", t->info->name);
-				t->step = 100;
-				intoTree(t);
-				continue;
-			}
-
-/* this node is ok, but if parent is a pass through node... */
-			if (parent == 0 ||	/* this shouldn't happen */
-			    parent->action == TAGACT_BODY) {
-/* link up to treeAttach */
-				const char *w = "root";
-				if (treeAttach)
-					w = treeAttach->info->name;
-				debugPrint(5, "node up %s to %s", t->info->name,
-					   w);
-				t->parent = treeAttach;
-				if (treeAttach) {
-					struct htmlTag *c =
-					    treeAttach->firstchild;
-					if (!c)
-						treeAttach->firstchild = t;
-					else {
-						while (c->sibling)
-							c = c->sibling;
-						c->sibling = t;
-					}
-				}
-				goto checkattributes;
-			}
-		}
-
-/* regular linking through the parent node */
-		t->parent = parent;
-		if (prev) {
-			prev->sibling = t;
-		} else if (parent) {
-			parent->firstchild = t;
-		}
-		prev = t;
-
-checkattributes:
-/* check for some common attributes here */
-		if (stringInListCI(t->attributes, "onclick") >= 0)
-			t->onclick = true;
-		if (stringInListCI(t->attributes, "onchange") >= 0)
-			t->onchange = true;
-		if (stringInListCI(t->attributes, "onsubmit") >= 0)
-			t->onsubmit = true;
-		if (stringInListCI(t->attributes, "onreset") >= 0)
-			t->onreset = true;
-		if (stringInListCI(t->attributes, "onload") >= 0)
-			t->onload = true;
-		if (stringInListCI(t->attributes, "onunload") >= 0)
-			t->onunload = true;
-		if (stringInListCI(t->attributes, "checked") >= 0)
-			t->checked = t->rchecked = true;
-		if (stringInListCI(t->attributes, "readonly") >= 0)
-			t->rdonly = true;
-		if (stringInListCI(t->attributes, "multiple") >= 0)
-			t->multiple = true;
-
-		if ((j = stringInListCI(t->attributes, "name")) >= 0) {
-/* temporarily, make another copy; some day we'll just point to the value */
-			v = t->atvals[j];
-			if (v && !*v)
-				v = 0;
-			t->name = cloneString(v);
-		}
-		if ((j = stringInListCI(t->attributes, "id")) >= 0) {
-			v = t->atvals[j];
-			if (v && !*v)
-				v = 0;
-			t->id = cloneString(v);
-		}
-		if ((j = stringInListCI(t->attributes, "class")) >= 0) {
-			v = t->atvals[j];
-			if (v && !*v)
-				v = 0;
-			t->classname = cloneString(v);
-		}
-		if ((j = stringInListCI(t->attributes, "value")) >= 0) {
-			v = t->atvals[j];
-			if (v && !*v)
-				v = 0;
-			t->value = cloneString(v);
-			t->rvalue = cloneString(v);
-		}
-		if ((j = stringInListCI(t->attributes, "href")) >= 0) {
-			v = t->atvals[j];
-			if (v && !*v)
-				v = 0;
-			if (v) {
-/* <base> sets the base URL, and should not be resolved */
-				if (t->action != TAGACT_BASE) {
-					v = resolveURL(cw->hbase, v);
-					cnzFree(t->atvals[j]);
-					t->atvals[j] = v;
-				} else if (!cw->baseset) {
-					nzFree(cw->hbase);
-					cw->hbase = cloneString(v);
-					cw->baseset = true;
-				}
-				t->href = cloneString(v);
-			}
-		}
-		if ((j = stringInListCI(t->attributes, "src")) >= 0) {
-			v = t->atvals[j];
-			if (v && !*v)
-				v = 0;
-			if (v) {
-				v = resolveURL(cw->hbase, v);
-				cnzFree(t->atvals[j]);
-				t->atvals[j] = v;
-				if (!t->href)
-					t->href = cloneString(v);
-			}
-		}
-		if ((j = stringInListCI(t->attributes, "action")) >= 0) {
-			v = t->atvals[j];
-			if (v && !*v)
-				v = 0;
-			if (v) {
-				v = resolveURL(cw->hbase, v);
-				cnzFree(t->atvals[j]);
-				t->atvals[j] = v;
-				if (!t->href)
-					t->href = cloneString(v);
-			}
-		}
-
-		intoTree(t);
-	}
-}				/* intoTree */
-
 void preFormatCheck(int tagno, bool * pretag, bool * slash)
 {
 	const struct htmlTag *t;
@@ -1108,26 +668,14 @@ char *htmlParse(char *buf, int remote)
 		i_printfExit(MSG_HtmlNotreentrant);
 	if (remote >= 0)
 		browseLocal = !remote;
-
-/* reserve space for 512 tags */
-	cw->numTags = 0;
-	cw->allocTags = 512;
-	cw->tags =
-	    (struct htmlTag **)allocMem(cw->allocTags *
-					sizeof(struct htmlTag *));
+	initTagArray();
 	cw->baseset = false;
 	cw->hbase = cloneString(cw->fileName);
 
 /* call the tidy parser to build the html nodes */
 	html2nodes(buf);
 	nzFree(buf);
-
-/* convert the list of nodes, with open close,
- * like properly nested parentheses, into a tree. */
-	treeAttach = NULL;
-	tree_pos = 0;
-	intoTree(0);
-
+	htmlNodesIntoTree(0, NULL);
 	prerender(0);
 	if (isJSAlive) {
 		decorate(0);

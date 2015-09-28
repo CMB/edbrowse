@@ -28,6 +28,7 @@ bool unfoldBuffer(int cx, bool cr, char **data, int *len) ;
 bool runCommand(const char *line) ;
 bool edbrowseCommand(const char *line, bool script) ;
 int sideBuffer(int cx, const char *text, int textlen, const char *bufname);
+void freeEmptySideBuffer(int n);
 bool browseCurrentBuffer(void) ;
 bool locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p);
 bool locateInvisibleAnchor(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p);
@@ -114,11 +115,9 @@ void iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen
 bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l);
 
 /* sourcefile=html.c */
-void freeTags(struct ebWindow *w) ;
 bool tagHandler(int seqno, const char *name) ;
 void jSideEffects(void) ;
 void jSyncup(void) ;
-struct htmlTag *newTag(const char *tagname) ;
 void htmlMetaHelper(struct htmlTag *t);
 void runScriptsPending(void);
 void preFormatCheck(int tagno, bool * pretag, bool * slash) ;
@@ -156,6 +155,10 @@ void prerender(int start);
 jsobjtype instantiate_url(jsobjtype parent, const char *name, const char *url) ;
 char *render(int start);
 void decorate(int start);
+void freeTags(struct ebWindow *w) ;
+struct htmlTag *newTag(const char *tagname) ;
+void initTagArray(void);
+void htmlNodesIntoTree(int start, struct htmlTag *attach);
 
 /* sourcefile=http.c */
 size_t eb_curl_callback(char *incoming, size_t size, size_t nitems, struct eb_curl_callback_data *data) ;

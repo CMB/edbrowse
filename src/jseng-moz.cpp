@@ -51,12 +51,10 @@ void ebClose(int n)
 	exit(n);
 }				/* ebclose */
 
-/* stub for newTag, tidy is not being used yet, so we don't actually
- * have to generate html tag nodes */
-struct htmlTag *newTag(const char *tagname)
+/* stub, this function called be freeTags(), but never called in this context */
+void freeEmptySideBuffer(int n)
 {
-	return 0;
-}				/* newTag */
+}
 
 /* meta tags don't have side effects from within the js process. */
 void htmlMetaHelper(struct htmlTag *t)
