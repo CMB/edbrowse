@@ -663,10 +663,11 @@ function lastScript() {
 document.writeln("Created script running");
 }
 
-setTimeout("joker()", 45000);
+setTimeout("joker()", 30000);
 function joker() {
-alert("45 seconds have passed!");
-document.writeln("<P>Some extra html at the end of the buffer.");
+alert("30 seconds have passed!");
+var j = document.createTextNode(" And some extra text");
+document.body.appendChild(j);
 }
 
 // test the innerHTML feature
