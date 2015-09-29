@@ -544,13 +544,15 @@ void js_disconnect(void)
 }				/* js_disconnect */
 
 /* Run some javascript code under the current window */
-int javaParseExecute(jsobjtype obj, const char *str, const char *filename,
-		     int lineno)
+/* Pass the return value of the script back as a string. */
+char *jsRunScriptResult(jsobjtype obj, const char *str, const char *filename,
+			int lineno)
 {
 	int rc;
+	char *s;
 
 	if (!allowJS || !cw->winobj || !obj)
-		return -1;
+		return 0;
 
 	if (!str || !str[0])
 		return 0;
@@ -563,19 +565,37 @@ int javaParseExecute(jsobjtype obj, const char *str, const char *filename,
 	head.proplength = strlen(str);
 	head.lineno = lineno;
 	if (writeHeader())
-		return -1;
+		return 0;
 /* and send the script to execute */
 	if (writeToJS(str, head.proplength))
-		return -1;
+		return 0;
 	jsSourceFile = filename;
 	rc = readMessage();
 	jsSourceFile = 0;
 	if (rc)
-		return -1;
+		return 0;
 	ack5();
 
-	return head.highstat ? -1 : 0;
-}				/* javaParseExecute */
+	s = propval;
+	propval = 0;
+
+	if (head.n) {		/* a real result */
+		if (!s)
+			s = emptyString;
+	} else {
+		nzFree(s);
+		s = 0;
+	}
+	return s;
+}				/* jsRunScriptResult */
+
+/* like the above but throw away the result */
+void jsRunScript(jsobjtype obj, const char *str, const char *filename,
+		 int lineno)
+{
+	char *s = jsRunScriptResult(obj, str, filename, lineno);
+	nzFree(s);
+}				/* jsRunScript */
 
 /* does the member exist? */
 enum ej_proptype has_property(jsobjtype obj, const char *name)
@@ -1172,7 +1192,7 @@ void setupJavaDom(void)
 /* the js window/document setup script.
  * These are all the things that do not depend on the platform,
  * OS, configurations, etc. */
-	javaParseExecute(w, startWindowJS, "StartWindow", 1);
+	jsRunScript(w, startWindowJS, "StartWindow", 1);
 
 // Document properties that must be set after startwindow.js.
 // Most of these use the setters in the URL class.

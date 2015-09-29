@@ -578,7 +578,7 @@ top:
  * and hope the error messages line up. */
 		if (ln > 1)
 			++ln;
-		javaParseExecute(cw->winobj, jtxt, js_file, ln);
+		jsRunScript(cw->winobj, jtxt, js_file, ln);
 		debugPrint(3, "execution complete");
 		nzFree(jtxt);
 
@@ -1623,7 +1623,7 @@ bool infPush(int tagno, char **post_string)
 			setError(MSG_NJNoForm);
 			return false;
 		}
-		javaParseExecute(form->jv, action, 0, 0);
+		jsRunScript(form->jv, action, 0, 0);
 		jSideEffects();
 		return true;
 	}
@@ -2129,7 +2129,7 @@ void runTimers(void)
 
 		cw = jt->w;
 		backgroundJS = true;
-		javaParseExecute(jt->timerObject, jt->jsrc, "timer", 1);
+		jsRunScript(jt->timerObject, jt->jsrc, "timer", 1);
 		runScriptsPending();
 
 		if (cw != save_cw) {

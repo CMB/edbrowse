@@ -2289,22 +2289,37 @@ static void processMessage(void)
 
 	switch (head.cmd) {
 	case EJ_CMD_SCRIPT:
-		rc = false;
+		propval = 0;
 		s = runscript;
 /* Sometimes Mac puts these three chars at the start of a text file. */
 		if (!strncmp(s, "\xef\xbb\xbf", 3))
 			s += 3;
+		head.n = 0;
+		head.proplength = 0;
 		if (JS_EvaluateScript(jcx, parent, s, strlen(s),
 				      "foo", head.lineno, v.address())) {
-			rc = true;
-			if (JSVAL_IS_BOOLEAN(v))
-				rc = JSVAL_TO_BOOLEAN(v);
+			if (v != JSVAL_VOID) {
+				s = 0;
+				JS::RootedString str(jcx);
+				str = JS_ValueToString(jcx, v);
+				if (str)
+					s = JS_c_str(str);
+				if (s && !*s) {
+					cnzFree(s);
+					s = 0;
+				}
+				head.n = 1;
+				if (s)
+					head.proplength = strlen(s);
+			}
 		}
-		head.n = rc;
 		nzFree(runscript);
 		runscript = 0;
-		head.proplength = 0;
 		writeHeader();
+		if (head.proplength) {
+			writeToEb(s, head.proplength);
+			cnzFree(s);
+		}
 		break;
 
 	case EJ_CMD_HASPROP:

@@ -418,7 +418,8 @@ addchar:
 			jexmode = false;
 			puts("bye");
 		} else {
-			javaParseExecute(cw->winobj, s, "jex", 1);
+			char *result = jsRunScriptResult(cw->winobj, s, "jex", 1);
+if(result) puts(result);
 		}
 		goto top;
 	}
@@ -4665,7 +4666,7 @@ bool runCommand(const char *line)
 			}
 			if (jsh) {
 				jSyncup();
-				javaParseExecute(cw->winobj, h, 0, 0);
+				jsRunScript(cw->winobj, h, 0, 0);
 				jSideEffects();
 				if (newlocation)
 					goto redirect;

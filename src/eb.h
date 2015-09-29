@@ -402,14 +402,12 @@ struct tagInfo {
 extern const struct tagInfo availableTags[];
 
 /* Information on tagInfo->bits */
-/* Close an open anchor when you see this tag. */
-#define TAG_CLOSEA 1
+/* support innerHTML */
+#define TAG_INNERHTML 1
 /* You won't see the text between <foo> and </fooo> */
 #define TAG_INVISIBLE 2
 /* sometimes </foo> means nothing. */
 #define TAG_NOSLASH 4
-/* This tag should become a corresponding js object in the tree. */
-#define TAG_JSOBJ 8
 
 /* The structure for an html tag.
  * These tags are at times linked with js objects,

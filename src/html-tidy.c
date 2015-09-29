@@ -264,7 +264,7 @@ static void convertNode(TidyNode node, int level, bool opentag)
 	t->atvals[i] = 0;
 
 /* innerHTML, only for certain tags */
-	if (t->action == TAGACT_DIV) {
+	if (t->info->bits & TAG_INNERHTML) {
 		TidyBuffer tnv = { 0 };	/* text-node value */
 		tidyBufClear(&tnv);
 		t->innerHTML = emptyString;
