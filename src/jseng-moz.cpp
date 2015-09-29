@@ -901,8 +901,13 @@ setter_innerHTML(JSContext * cx, JS::HandleObject obj,
 	if (!s)
 		return JS_TRUE;
 
-	int begin;
+/* lop off the preexisting children */
+	JS::RootedObject children(jcx);
+	children = get_property_object1(obj, "childNodes");
+	if (children)
+		JS_SetArrayLength(jcx, children, 0);
 
+	int begin;
 	effectString("i{h");	// }
 	effectString(pointer2string(obj));
 	begin = eff_l + 1;
