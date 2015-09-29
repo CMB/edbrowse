@@ -672,8 +672,12 @@ document.writeln("<P>Some extra html at the end of the buffer.");
 // test the innerHTML feature
 if(!document.getElementById("sphere").innerHTML.match(/^Surface area/))
 fail(145);
-document.getElementById("album").innerHTML =
+album = document.getElementById("album");
+album.innerHTML =
 "Why don't we do it <A href=http://en.wikipedia.org/wiki/White_album>in the road<" + "/A>?";
+/* all the js objects associated with this html should be here */
+if(!album.getElementsByTagName("a")[0].href.match(/wikipedia.org/))
+fail(152);
 </script  	
 >
 

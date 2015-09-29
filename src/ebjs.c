@@ -181,7 +181,7 @@ void dwStart(void)
 		return;
 	cw->dw = initString(&cw->dw_l);
 	stringAndString(&cw->dw, &cw->dw_l,
-			"<!DOCTYPE public><head><title>Generated</title></head><body>");
+			"<!DOCTYPE public><head><title>write</title></head><body>");
 }				/* dwStart */
 
 /*********************************************************************

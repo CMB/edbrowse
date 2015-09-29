@@ -398,9 +398,10 @@ void htmlMetaHelper(struct htmlTag *t)
 	nzFree(copy);
 }				/* htmlMetaHelper */
 
-static void runGeneratedHtml(struct htmlTag *t, const char *h)
+/* pre is the predecoration from edbrowse-js, if appropriate */
+static void runGeneratedHtml(struct htmlTag *t, const char *h, const char *pre)
 {
-	int l = cw->numTags;
+	int j, l = cw->numTags;
 	if (debugLevel >= 4) {
 		const char *bh = strstr(h, "<body>");
 		if (!bh)
@@ -409,11 +410,31 @@ static void runGeneratedHtml(struct htmlTag *t, const char *h)
 			bh += 6;
 		printf("Generated {%s}\n", bh);
 	}
+
 	htmlGenerated = true;
 	html2nodes(h);
 	htmlNodesIntoTree(l, t);
 	prerender(0);
-	decorate(0);
+
+	if (pre) {
+		for (j = l; j < cw->numTags; ++j) {
+			t = tagList[j];
+			if (t->step < 2)
+				t->step = 2;	/* already decorated */
+		}
+		while (*pre == ',') {
+			jsobjtype v;
+			j = strtol(pre + 1, (char **)&pre, 10);
+			if (*pre != '=')
+				break;
+			++pre;
+			sscanf(pre, "%p", &v);
+			tagList[l + j]->jv = v;
+			while (*pre && *pre != ',')
+				++pre;
+		}
+	} else
+		decorate(0);
 	htmlGenerated = false;
 }				/* runGeneratedHtml */
 
@@ -520,7 +541,7 @@ void runScriptsPending(void)
  * appears inline where the script is. */
 	if (cw->dw) {
 		stringAndString(&cw->dw, &cw->dw_l, "</body>\n");
-		runGeneratedHtml(NULL, cw->dw);
+		runGeneratedHtml(NULL, cw->dw, NULL);
 		nzFree(cw->dw);
 		cw->dw = 0;
 		cw->dw_l = 0;
@@ -564,7 +585,7 @@ top:
 /* look for document.write from this script */
 		if (cw->dw) {
 			stringAndString(&cw->dw, &cw->dw_l, "</body>\n");
-			runGeneratedHtml(t, cw->dw);
+			runGeneratedHtml(t, cw->dw, NULL);
 			nzFree(cw->dw);
 			cw->dw = 0;
 			cw->dw_l = 0;
@@ -589,7 +610,13 @@ top:
 			u->deleted = true;
 		}
 		t->firstchild = NULL;
-		runGeneratedHtml(t, ic->value);
+		h = strstr(ic->value, "</body>@");
+		if (h) {
+			h += 7;
+			*h++ = 0;
+		} else
+			h = emptyString;
+		runGeneratedHtml(t, ic->value, h);
 		change = true;
 	}
 

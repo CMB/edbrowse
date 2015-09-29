@@ -90,9 +90,18 @@ static void cwSetup(void)
 {
 	in_js_cw.winobj = winobj;
 	in_js_cw.docobj = docobj;
-	in_js_cw.hbase =get_property_string(docobj, "base$href");
+	in_js_cw.hbase = get_property_string(docobj, "base$href");
 	in_js_cw.baseset = true;
 }				/* cwSetup */
+
+static void cwBringdown(void)
+{
+	freeTags(cw);
+	nzFree(cw->ft);		/* title could have been set by prerender */
+	cw->ft = 0;
+	nzFree(cw->hbase);
+	cw->hbase = 0;
+}				/* cwBringdown */
 
 static struct EJ_MSG head;
 static char *errorMessage;
@@ -101,6 +110,23 @@ static int eff_l;
 #define effectString(s) stringAndString(&effects, &eff_l, (s))
 #define effectChar(s) stringAndChar(&effects, &eff_l, (s))
 #define endeffect() effectString("`~@}\n");
+
+/* pack the decoration of a tree into the effects string */
+static void packDecoration(void)
+{
+	struct htmlTag *t;
+	int j;
+	if (!cw->tags)		/* should never happen */
+		return;
+	for (j = 0; j < cw->numTags; ++j) {
+		char line[60];
+		t = tagList[j];
+		if (!t->jv)
+			continue;
+		sprintf(line, ",%d=%p", j, t->jv);
+		effectString(line);
+	}
+}				/* packDecoration */
 
 static char *membername;
 static char *propval;
@@ -548,6 +574,8 @@ generic_class_ctor(document, Document)
     generic_class_ctor(image, Image)
     generic_class_ctor(frame, Frame)
     generic_class_ctor(anchor, Anchor)
+    generic_class_ctor(lister, Lister)
+    generic_class_ctor(listitem, Listitem)
     generic_class_ctor(tbody, Tbody)
     generic_class_ctor(table, Table)
     generic_class_ctor(div, Div)
@@ -870,20 +898,27 @@ setter_innerHTML(JSContext * cx, JS::HandleObject obj,
 		 JS::MutableHandle < jsval > vp)
 {
 	const char *s = stringize(vp);
-	if (s) {
-		effectString("i{h");	// }
-		effectString(pointer2string(obj));
-		int begin = eff_l + 1;
-		effectString
-		    ("|<!DOCTYPE public><head><title>Generated</title></head><body>\n");
-		effectString(s);
-		if (*s && s[strlen(s) - 1] != '\n')
-			effectChar('\n');
-		effectString("</body >");
-		cwSetup();
-		html_from_setter(effects + begin);
-		endeffect();
-	}
+	if (!s)
+		return JS_TRUE;
+
+	int begin;
+
+	effectString("i{h");	// }
+	effectString(pointer2string(obj));
+	begin = eff_l + 1;
+	effectString
+	    ("|<!DOCTYPE public><head><title>innerHTML</title></head><body>\n");
+	effectString(s);
+	if (*s && s[strlen(s) - 1] != '\n')
+		effectChar('\n');
+	effectString("</body>");
+	cwSetup();
+	jsobjtype innerParent = obj;
+	html_from_setter(innerParent, effects + begin);
+	effectChar('@');
+	packDecoration();
+	cwBringdown();
+	endeffect();
 	return JS_TRUE;
 }				/* setter_innerHTML */
 
@@ -1470,8 +1505,6 @@ static void dwrite1(unsigned int argc, jsval * argv, bool newline)
 	}
 	if (newline)
 		effectChar('\n');
-	cwSetup();
-	html_from_setter(effects + begin);
 	endeffect();
 }				/* dwrite1 */
 
@@ -1856,6 +1889,8 @@ static struct {
 	{&image_class, image_ctor, NULL, 1},
 	{&frame_class, frame_ctor},
 	{&anchor_class, anchor_ctor, NULL, 1},
+	{&lister_class, lister_ctor},
+	{&listitem_class, listitem_ctor},
 	{&table_class, table_ctor},
 	{&tbody_class, tbody_ctor},
 	{&trow_class, trow_ctor},
@@ -1960,7 +1995,7 @@ static JSClass *classByName(const char *classname)
 			break;
 	if (!cp) {
 		fprintf(stderr, "Unexpected class name %s from edbrowse\n",
-			propval);
+			classname);
 		exit(8);
 	}
 	return cp;
