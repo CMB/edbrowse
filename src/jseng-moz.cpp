@@ -90,6 +90,8 @@ static void cwSetup(void)
 {
 	in_js_cw.winobj = winobj;
 	in_js_cw.docobj = docobj;
+	in_js_cw.hbase =get_property_string(docobj, "base$href");
+	in_js_cw.baseset = true;
 }				/* cwSetup */
 
 static struct EJ_MSG head;

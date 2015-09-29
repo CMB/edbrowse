@@ -88,6 +88,7 @@ jsobjtype run_function_object(jsobjtype obj, const char *name);
 bool run_function_bool(jsobjtype obj, const char *name);
 void run_function_objargs(jsobjtype obj, const char *name, int nargs, ...);
 void run_function_onearg(jsobjtype obj, const char *name, jsobjtype o);
+void set_basehref(const char *b);
 
 /* sourcefile=fetchmail.c */
 int fetchMail(int account) ;

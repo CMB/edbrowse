@@ -1420,4 +1420,6 @@ void html_from_setter(const char *h)
 	freeTags(cw);
 	nzFree(cw->ft);		/* title could have been set by prerender */
 	cw->ft = 0;
+	nzFree(cw->hbase);
+	cw->hbase = 0;
 }				/* html_from_setter */

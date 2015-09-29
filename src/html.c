@@ -679,6 +679,7 @@ char *htmlParse(char *buf, int remote)
 	prerender(0);
 	if (isJSAlive) {
 		decorate(0);
+		set_basehref(cw->hbase);
 		runScriptsPending();
 		runOnload();
 		runScriptsPending();

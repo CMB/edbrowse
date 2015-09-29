@@ -3160,6 +3160,7 @@ static int twoLetter(const char *line, const char **runThis)
 	}
 
 	if (stringEqual(line, "rr")) {
+		cmd = 'e';
 		if (!cw->browseMode) {
 			setError(MSG_NoBrowse);
 			return false;

@@ -1000,8 +1000,18 @@ int get_arraylength(jsobjtype a)
 Everything beyond this point is, perhaps, part of a DOM support layer
 above what has come before.
 Still, these are library-like routines that are used repeatedly
-by other files, particularly html.c.
+by other files, particularly html.c and decorate.c.
 *********************************************************************/
+
+/* pass, to the js process, the filename,
+ * or the <base href=url>, for relative url resolution on innerHTML.
+ * This has to be retained per edbrowse buffer. */
+void set_basehref(const char *h)
+{
+	if (!h)
+		h = emptyString;
+	set_property_string(cw->docobj, "base$href$", h);
+}				/* set_basehref */
 
 /* The object is a select-one field in the form, and this function returns
  * object.options[selectedIndex].value */
