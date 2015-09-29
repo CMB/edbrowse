@@ -54,9 +54,10 @@ static int radio_l;
 const char *attribVal(const struct htmlTag *t, const char *name)
 {
 	const char *v;
+	int j;
 	if (!t->attributes)
 		return 0;
-	int j = stringInListCI(t->attributes, name);
+	j = stringInListCI(t->attributes, name);
 	if (j < 0)
 		return 0;
 	v = t->atvals[j];
