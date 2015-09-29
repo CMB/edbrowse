@@ -418,8 +418,11 @@ addchar:
 			jexmode = false;
 			puts("bye");
 		} else {
-			char *result = jsRunScriptResult(cw->winobj, s, "jex", 1);
-if(result) puts(result);
+			char *result =
+			    jsRunScriptResult(cw->winobj, s, "jex", 1);
+			if (result)
+				puts(result);
+			nzFree(result);
 		}
 		goto top;
 	}
