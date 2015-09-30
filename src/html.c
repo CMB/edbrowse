@@ -2001,7 +2001,7 @@ static void runOnload(void)
 			run_function_bool(t->jv, "onload");
 /* tidy5 says there is no form.onunload */
 		if (action == TAGACT_FORM && t->onunload) {
-			char formfunction[20];
+			char formfunction[48];
 			sprintf(formfunction, "document.forms[%d].onunload",
 				fn);
 			unloadHyperlink(formfunction, "Form");
