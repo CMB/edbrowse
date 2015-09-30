@@ -2640,50 +2640,56 @@ bool setupReply(bool all)
 		if (j > cw->dol)
 			break;
 
-		p = (char *)fetchLine(j, -1);
+		p = (char *)fetchLine(j, 1);
 
 		if (memEqualCI(p, "subject:", 8)) {
 			linetype[j] = 's';
 			subln = j;
-			continue;
+			goto nextline;
 		}
 
 		if (memEqualCI(p, "to ", 3)) {
 			linetype[j] = 't';
-			continue;
+			goto nextline;
 		}
 
 		if (memEqualCI(p, "from ", 5)) {
 			linetype[j] = 'f';
-			continue;
+			goto nextline;
 		}
 
 		if (memEqualCI(p, "mail sent ", 10)) {
 			linetype[j] = 'w';
-			continue;
+			goto nextline;
 		}
 
 		if (memEqualCI(p, "references:", 11)) {
 			linetype[j] = 'v';
-			continue;
+			goto nextline;
 		}
 
 		if (memEqualCI(p, "reply to ", 9)) {
 			linetype[j] = 'r';
 			repln = j;
-			continue;
+			goto nextline;
 		}
 
 /* This one has to be last. */
-		while (isdigitByte(*p))
-			++p;
-		if (memEqualCI(p, " attachment", 11)
-		    || memEqualCI(p, " image", 6)) {
+		s = p;
+		while (isdigitByte(*s))
+			++s;
+		if (memEqualCI(s, " attachment", 11)
+		    || memEqualCI(s, " image", 6)) {
 			linetype[j] = 'a';
-			continue;
+			goto nextline;
 		}
 
+/* line doesn't match anything we know */
+		nzFree(p);
 		break;
+
+nextline:
+		nzFree(p);
 	}
 
 	if (!subln || !repln) {
