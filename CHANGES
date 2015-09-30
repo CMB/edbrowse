@@ -1,6 +1,6 @@
 Here are some changes introduced by recent versions of edbrowse.
 
-3.6:
+3.6.0:
 Edbrowse is an imap client. Scan and search through folders,
 delete move or download emails, pull down attachments.
 
@@ -20,6 +20,12 @@ Set ls=lt to list the length and time of all the files in subsequent
 directory scans. See documentation for more.
 
 Port edbrowse to windows, with small modifications.
+
+Add an interactive javascript / DOM debugger.
+Type jex to enter this debugging mode, and period to exit.
+
+Create a default .ebrc file if none is found.
+This is just a template, the user is encouraged to personalize the file.
 
 3.5.4.2:
 Limited and preliminary imap access. Envelopes only.

@@ -1,15 +1,25 @@
 #!/usr/bin/perl -w
-#  turn startwindow.js into startwindow.c
+#  Turn a file into a C string containing the contents of that file.
 # Windows has a limit of 16380 single-byte characters.
 use strict;
 use warnings;
 
-my $infile = "src/startwindow.js";
-my $outfile = "src/startwindow.c";
+sub prt($) { print shift; }
+
+if($#ARGV != 2) {
+prt "Usage: buildsourcestring.pl infile outfile stringname\n";
+exit 1;
+}
+
+my $infile = $ARGV[0];
+my $outfile = $ARGV[1];
+my $stringname = $ARGV[2];
+my $inbase = $infile;
+$inbase =~ s,.*/,,;
+my $outbase = $outfile;
+$outbase =~ s,.*/,,;
 
 my $max_chars = 16380;
-
-sub prt($) { print shift; }
 
 if ( -f $infile ) {
     if (!open  INF, "<$infile") {
@@ -22,10 +32,10 @@ if ( -f $infile ) {
         prt("Error: Unable to create $outfile file!\n");
         exit(1);
     }
-    print OUTF "/* startwindow.c: this file is machine generated; */\n";
-    print OUTF "/* please edit startwindow.js instead. */\n";
+    print OUTF "/* $outbase: this file is machine generated; */\n";
+    print OUTF "/* please edit $inbase instead. */\n";
     print OUTF "\n";
-    print OUTF "const char startWindowJS[] = \"\\\n";
+    print OUTF "const char *$stringname = \"\\\n";
     my ($line,$len,$total);
     $total = 0;
     foreach $line (@lines) {

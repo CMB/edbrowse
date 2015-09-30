@@ -28,7 +28,10 @@ EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
 $(EBOBJS) : eb.h eb.p messages.h ebjs.h
 
 startwindow.c: startwindow.js
-	cd .. ; ./tools/buildstartwindow.pl
+	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js src/startwindow.c startWindowJS
+
+ebrc.c: ebrc.default
+	cd .. ; ./tools/buildsourcestring.pl src/ebrc.default src/ebrc.c pebrc
 
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.

@@ -1125,7 +1125,7 @@ void setupJavaDom(void)
 		"english", "french", "portuguese", "polish",
 		"german",
 	};
-	extern const char startWindowJS[];
+	extern const char *startWindowJS;
 
 /* self reference through several names */
 	set_property_object(w, "window", w);
