@@ -205,7 +205,7 @@ static const char *englishMessages[] = {
 	"both %c and %c are unbalanced on this line, try B%c or B%c",
 	"line does not contain an unbalanced brace, parenthesis, or bracket",
 	"cannot find the line that balances %c",
-	"Before running edbrowse again, take the time to\npersonalise the default config file\n%s\nedbrowse -c to edit\n",
+	"Your edbrowse config file is missing; a default file has been created for you.\nBefore running edbrowse again, take the time to\npersonalize your config file:\n%s\nedbrowse -c to edit\n",
 	"session %d is currently in directory mode",
 	"no file name",
 	"end of buffer",

@@ -3,8 +3,6 @@
  * This file is part of the edbrowse project, released under GPL.
  */
 
-#include "eb.h"
-
 const char *pebrc = "#  .ebrc: sample configuration file for edbrowse (version 3.4.8 or above)\n"
 "#  email account; you may have several.\n"
 "#  a gmail account, most people have one of these now adays.\n"

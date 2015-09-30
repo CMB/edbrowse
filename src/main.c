@@ -66,11 +66,10 @@ static int subjstart = 0;
 static char *cfgcopy;
 static int cfglen;
 static long nowday;
+extern const char *pebrc;
 
 #ifdef _MSC_VER
-extern const char *pebrc;
 #endif // _MSC_VER
-
 
 static void setNowDay(void)
 {
@@ -1062,7 +1061,7 @@ int main(int argc, char **argv)
 	bool rc, doConfig = true;
 	bool dofetch = false, domail = false;
 
-#ifndef _MSC_VER // port setlinebuf(stdout);, if required...
+#ifndef _MSC_VER		// port setlinebuf(stdout);, if required...
 /* In case this is being piped over to a synthesizer, or whatever. */
 	if (fileTypeByHandle(fileno(stdout)) != 'f')
 		setlinebuf(stdout);
@@ -1081,31 +1080,30 @@ int main(int argc, char **argv)
 /* Establish the home directory, and standard edbrowse files thereunder. */
 	home = getenv("HOME");
 #ifdef _MSC_VER
-    if (!home) {
-    	home = getenv("APPDATA");
-        if (home) {
-            char *ebdata = (char *)allocMem(264);
-        	sprintf(ebdata, "%s\\edbrowse", home);
-        	if (fileTypeByName(ebdata, false) != 'd') {
-                FILE *fp;
-                char *cfgfil;
-                if (mkdir(ebdata, 0700)) {
-            		i_printfExit(MSG_NotHome); // TODO: more appropriate exit message...
-                }
-                cfgfil = (char *)allocMem(264);
-                sprintf(cfgfil,"%s\\.ebrc", ebdata);
-                fp = fopen(cfgfil,"w");
-                if (fp) {
-                    fwrite(pebrc,1,strlen(pebrc),fp);
-                    fclose(fp);
-                }
-i_printf(MSG_Personalize, cfgfil );
-           		i_printfExit(MSG_NotHome); // TODO: more appropriate exit message...
+	if (!home) {
+		home = getenv("APPDATA");
+		if (home) {
+			char *ebdata = (char *)allocMem(264);
+			sprintf(ebdata, "%s\\edbrowse", home);
+			if (fileTypeByName(ebdata, false) != 'd') {
+				FILE *fp;
+				char *cfgfil;
+				if (mkdir(ebdata, 0700)) {
+					i_printfExit(MSG_NotHome);	// TODO: more appropriate exit message...
+				}
+				cfgfil = (char *)allocMem(264);
+				sprintf(cfgfil, "%s\\.ebrc", ebdata);
+				fp = fopen(cfgfil, "w");
+				if (fp) {
+					fwrite(pebrc, 1, strlen(pebrc), fp);
+					fclose(fp);
+				}
+				i_printfExit(MSG_Personalize, cfgfil);
 
-            }
-            home = ebdata;
-        }
-    }
+			}
+			home = ebdata;
+		}
+	}
 #endif // !_MSC_VER
 
 /* Empty is the same as missing. */
@@ -1117,9 +1115,17 @@ i_printf(MSG_Personalize, cfgfil );
 	if (fileTypeByName(home, false) != 'd')
 		i_printfExit(MSG_NotDir, home);
 
-/* See sample.ebrc in this directory for a sample config file. */
 	configFile = allocMem(strlen(home) + 7);
 	sprintf(configFile, "%s/.ebrc", home);
+/* if not present then create it, as was done above */
+	if (fileTypeByName(configFile, false) == 0) {
+		int fh = creat(configFile, 0600);
+		if (fh >= 0) {
+			write(fh, pebrc, strlen(pebrc));
+			close(fh);
+			i_printfExit(MSG_Personalize, configFile);
+		}
+	}
 
 	recycleBin = allocMem(strlen(home) + 8);
 	sprintf(recycleBin, "%s/.Trash", home);
@@ -1302,7 +1308,7 @@ i_printf(MSG_Personalize, cfgfil );
 	http_curl_init();
 
 	signal(SIGINT, catchSig);
-#ifndef _MSC_VER // port siginterrupt(SIGINT, 1); signal(SIGPIPE, SIG_IGN);, if required
+#ifndef _MSC_VER		// port siginterrupt(SIGINT, 1); signal(SIGPIPE, SIG_IGN);, if required
 	siginterrupt(SIGINT, 1);
 	signal(SIGPIPE, SIG_IGN);
 #endif // !_MSC_VER

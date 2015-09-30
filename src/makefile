@@ -38,7 +38,7 @@ all: edbrowse edbrowse-js
 #  edbrowse objects
 EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
 	html.o format.o cookies.o stringfile.o messages.o \
-	ebjs.o plugin.o html-tidy.o decorate.o
+	ebjs.o plugin.o html-tidy.o decorate.o ebrc.o
 
 #  Header file dependencies.
 $(EBOBJS) : eb.h eb.p messages.h ebjs.h
