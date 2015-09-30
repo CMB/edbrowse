@@ -133,35 +133,20 @@ endif(BUILD_SHARED_LIB)
 set(dir src)
 set(GEN_SOURCES
     ${CMAKE_SOURCE_DIR}/${dir}/startwindow.c
-    )
-find_program(PERL perl)
-if (PERL)
-    add_custom_command(
-        OUTPUT ${GEN_SOURCES}
-        COMMAND perl -f tools/buildsourcestring.pl src/startwindow.js src/startwindow.c startWindowJS
-        DEPENDS src/startwindow.js 
-            tools/buildsourcestring.pl
-        COMMENT "Running perl to build ${GEN_SOURCES}"
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        )
-    message(STATUS "*** Build startwindow.c from startwindow.js")
-else ()
-    message(FATAL_ERROR, "Error: Can NOT locate 'perl'???")
-endif ()
-
     ${CMAKE_SOURCE_DIR}/${dir}/ebrc.c
     )
 find_program(PERL perl)
 if (PERL)
     add_custom_command(
         OUTPUT ${GEN_SOURCES}
+        COMMAND perl -f tools/buildsourcestring.pl src/startwindow.js src/startwindow.c startWindowJS
         COMMAND perl -f tools/buildsourcestring.pl src/ebrc.default src/ebrc.c pebrc
-        DEPENDS src/ebrc.default 
+        DEPENDS src/ebrc.default src/startwindow.js 
             tools/buildsourcestring.pl
         COMMENT "Running perl to build ${GEN_SOURCES}"
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         )
-    message(STATUS "*** Build ebrc.c from ebrc.default")
+    message(STATUS "*** Setup build of ebrc.c and startwindow.c")
 else ()
     message(FATAL_ERROR, "Error: Can NOT locate 'perl'???")
 endif ()
