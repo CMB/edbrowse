@@ -99,6 +99,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#valid> Validating and Modifying Forms </A>
 <LI><A HREF=#popup> Popups and Popunders </A>
 <LI><A HREF=#onc> Onchange and Undo </A>
+<LI><A HREF=#jex> Javascript Debugger </A>
 </UL>
 
 <H4> Chapter 6, Edbrowse Scripts and the Configuration File </H4>
@@ -2843,6 +2844,16 @@ To this end, the undo command is disabled in browse mode.&nbsp;
 You're just fiddling with small input fields - the undo command is probably not necessary.&nbsp;
 If, however, you are formulating a text response in a textarea, that is done in another buffer,
 and you have the full power of the editor, including the undo command.
+
+<H3> <A NAME=jex> Javascript Debugger </A> </H3>
+
+In browse mode, the jex (javascript execute) command
+directs subsequent input to the javascript engine, containing the objects associated with the current web page.&nbsp;
+Type document.body.childNodes to see a list of the nodes under the body of the web page.&nbsp;
+A predefined ok (object keys) command lists all the members of an object.&nbsp;
+Type period by itself to return to edbrowse.&nbsp;
+It is best to enter jex with debug level 3, so you can see any javascript syntax or reference errors.&nbsp;
+This feature is for developers, and is not very helpful for end users.
 
 <hr>
 <H2> Chapter 6, Edbrowse Scripts and the Configuration File </H2>
