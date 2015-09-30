@@ -2,6 +2,8 @@
 
 #  email account; you may have several.
 #  a gmail account, most people have one of these now adays.
+#  This is pop3 access. To fetch and read your mail from this account:
+#  edbrowse -fm1
 mail {
 inserver = pop.gmail.com
 outserver = smtp.gmail.com
@@ -12,8 +14,8 @@ from = Donald Duck
 reply = edbrowse@gmail.com
 }
 
-#  And imap access to your gmail account.
-#  If this remains the second email account in this file, then imap access is
+#  Imap access to your gmail account.
+#  If this remains the second email account in this file, then imap access is:
 #  edbrowse -f2
 mail {
 imap
@@ -106,6 +108,13 @@ b http://www.google.com
 #  <mw elephant
 function+mw {
 b http://www.merriam-webster.com/dictionary/~1
+}
+
+#  This function is run at edbrowse startup.
+function:init {
+# make directories writable, so you can rename or delete files
+dw
+# other personal settings
 }
 
 # and much more...
