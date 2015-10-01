@@ -536,13 +536,13 @@ static void set_onhandlers(const struct htmlTag *t)
 		set_onhandler(t, "onunload");
 }				/* set_onhandlers */
 
+static char fakePropLast[24];
 static const char *fakePropName(void)
 {
-	static char fakebuf[24];
 	static int idx = 0;
 	++idx;
-	sprintf(fakebuf, "gc$$%d", idx);
-	return fakebuf;
+	sprintf(fakePropLast, "gc$$%d", idx);
+	return fakePropLast;
 }				/*fakePropName */
 
 static jsobjtype establish_js_option(jsobjtype obj, int idx)
@@ -1017,6 +1017,12 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		else if (action == TAGACT_HEAD || action == TAGACT_BODY)
 			run_function_onearg(cw->docobj, "apch$", t->jv);
 	}
+
+/* TextNode linked to document/gc to protect if from garbage collection,
+ * but now it is linked to its parent, and even if it isn't,
+ * we don't need it hanging around anyways. */
+	if (action == TAGACT_TEXT && t->jv)
+		delete_property(cw->docobj, fakePropLast);
 
 }				/* jsNode */
 
