@@ -1069,7 +1069,7 @@ const struct tagInfo availableTags[] = {
 	{"sup", "a superscript", TAGACT_SUP, 0, 0},
 	{"ovb", "an overbar", TAGACT_OVB, 0, 0},
 	{"font", "a font", TAGACT_NOP, 0, 0},
-	{"center", "centered text", TAGACT_NOP, 0, 0},
+	{"center", "centered text", TAGACT_P, 2, 5},
 	{"caption", "a caption", TAGACT_NOP, 5, 0},
 	{"head", "the html header information", TAGACT_HEAD, 0, 4},
 	{"body", "the html body", TAGACT_BODY, 0, 4},
