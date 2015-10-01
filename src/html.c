@@ -686,6 +686,20 @@ void preFormatCheck(int tagno, bool * pretag, bool * slash)
 	}
 }				/* preFormatCheck */
 
+/* is there a doorway from html to js? */
+static bool jsDoorway(void)
+{
+	const struct htmlTag *t;
+	int j;
+	for (j = 0; j < cw->numTags; ++j) {
+		t = tagList[j];
+		if (t->doorway)
+			return true;
+	}
+	debugPrint(3, "no js doorway");
+	return false;
+}				/* jsDoorway */
+
 char *htmlParse(char *buf, int remote)
 {
 	char *a, *newbuf;
@@ -704,6 +718,14 @@ char *htmlParse(char *buf, int remote)
 	nzFree(buf);
 	htmlNodesIntoTree(0, NULL);
 	prerender(0);
+
+/* if the html doesn't use javascript, then there's
+ * no point in generating it.
+ * This is typical of generated html, from pdf for instance,
+ * or the html that is in email. */
+	if (isJSAlive && !jsDoorway())
+		freeJavaContext(cw);
+
 	if (isJSAlive) {
 		decorate(0);
 		set_basehref(cw->hbase);

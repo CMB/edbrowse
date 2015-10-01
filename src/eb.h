@@ -452,6 +452,7 @@ struct htmlTag {
 	bool onreset:1;
 	bool onload:1;
 	bool onunload:1;
+	bool doorway:1; /* doorway to javascript */
 	char subsup;		/* span turned into sup or sub */
 	uchar itype;		/* input type = */
 	short ninp;		/* number of nonhidden inputs */

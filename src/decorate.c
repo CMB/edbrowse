@@ -1256,6 +1256,7 @@ static void intoTree(struct htmlTag *parent)
 	struct htmlTag *t, *prev = 0;
 	int j;
 	const char *v;
+	int action;
 
 	while (tree_pos < cw->numTags) {
 		t = tagList[tree_pos++];
@@ -1277,7 +1278,7 @@ static void intoTree(struct htmlTag *parent)
  * You can skip past <head> altogether, including its
  * tidy generated descendants, and you want to pass through <body>
  * to the children below. */
-			int action = t->action;
+			action = t->action;
 			if (action == TAGACT_HEAD) {
 				debugPrint(5, "node skip %s", t->info->name);
 				t->step = 100;
@@ -1329,25 +1330,25 @@ static void intoTree(struct htmlTag *parent)
 
 checkattributes:
 /* check for some common attributes here */
+		action = t->action;
 		if (stringInListCI(t->attributes, "onclick") >= 0)
-			t->onclick = true;
+			t->onclick = t->doorway = true;
 		if (stringInListCI(t->attributes, "onchange") >= 0)
-			t->onchange = true;
+			t->onchange = t->doorway = true;
 		if (stringInListCI(t->attributes, "onsubmit") >= 0)
-			t->onsubmit = true;
+			t->onsubmit = t->doorway = true;
 		if (stringInListCI(t->attributes, "onreset") >= 0)
-			t->onreset = true;
+			t->onreset = t->doorway = true;
 		if (stringInListCI(t->attributes, "onload") >= 0)
-			t->onload = true;
+			t->onload = t->doorway = true;
 		if (stringInListCI(t->attributes, "onunload") >= 0)
-			t->onunload = true;
+			t->onunload = t->doorway = true;
 		if (stringInListCI(t->attributes, "checked") >= 0)
 			t->checked = t->rchecked = true;
 		if (stringInListCI(t->attributes, "readonly") >= 0)
 			t->rdonly = true;
 		if (stringInListCI(t->attributes, "multiple") >= 0)
 			t->multiple = true;
-
 		if ((j = stringInListCI(t->attributes, "name")) >= 0) {
 /* temporarily, make another copy; some day we'll just point to the value */
 			v = t->atvals[j];
@@ -1380,7 +1381,7 @@ checkattributes:
 				v = 0;
 			if (v) {
 /* <base> sets the base URL, and should not be resolved */
-				if (t->action != TAGACT_BASE) {
+				if (action != TAGACT_BASE) {
 					v = resolveURL(cw->hbase, v);
 					cnzFree(t->atvals[j]);
 					t->atvals[j] = v;
@@ -1416,6 +1417,13 @@ checkattributes:
 					t->href = cloneString(v);
 			}
 		}
+
+/* href=javascript:foo() is another doorway into js */
+		if (t->href && memEqualCI(t->href, "javascript:", 11))
+			t->doorway = true;
+/* And of course the primary doorway */
+		if (action == TAGACT_SCRIPT)
+			t->doorway = true;
 
 		intoTree(t);
 	}
