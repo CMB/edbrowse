@@ -114,6 +114,8 @@ b http://www.merriam-webster.com/dictionary/~1
 function:init {
 # make directories writable, so you can rename or delete files
 dw
+# Display the size of each file in a directory listing
+ls=s
 # other personal settings
 }
 

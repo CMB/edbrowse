@@ -139,8 +139,8 @@ find_program(PERL perl)
 if (PERL)
     add_custom_command(
         OUTPUT ${GEN_SOURCES}
-        COMMAND perl -f tools/buildsourcestring.pl src/startwindow.js src/startwindow.c startWindowJS
-        COMMAND perl -f tools/buildsourcestring.pl src/ebrc.default src/ebrc.c pebrc
+        COMMAND perl -f tools/buildsourcestring.pl src/startwindow.js startWindowJS src/startwindow.c
+        COMMAND perl -f tools/buildsourcestring.pl src/ebrc.default pebrc src/ebrc.c
         DEPENDS src/ebrc.default src/startwindow.js 
             tools/buildsourcestring.pl
         COMMENT "Running perl to build ${GEN_SOURCES}"
