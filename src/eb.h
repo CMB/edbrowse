@@ -455,7 +455,7 @@ struct htmlTag {
 	bool doorway:1; /* doorway to javascript */
 	char subsup;		/* span turned into sup or sub */
 	uchar itype;		/* input type = */
-	short ninp;		/* number of nonhidden inputs */
+	int ninp;		/* number of nonhidden inputs */
 	char *name, *id, *value, *href;
 	const char *rvalue; /* for reset */
 /* class=foo becomes className = "foo" when you carry from html to javascript,

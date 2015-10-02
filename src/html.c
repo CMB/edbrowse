@@ -723,7 +723,7 @@ char *htmlParse(char *buf, int remote)
  * no point in generating it.
  * This is typical of generated html, from pdf for instance,
  * or the html that is in email. */
-	if (isJSAlive && !jsDoorway())
+	if (cw->jcx && !jsDoorway())
 		freeJavaContext(cw);
 
 	if (isJSAlive) {
@@ -1950,6 +1950,10 @@ void delTags(int startRange, int endRange)
 	int j, tagno, action;
 	struct htmlTag *t, *last_td;
 
+/* no javascript, no cause to ever rerender */
+	if (!cw->jcx)
+		return;
+
 	for (j = startRange; j <= endRange; ++j) {
 		p = fetchLine(j, -1);
 		last_td = 0;
@@ -1957,6 +1961,9 @@ void delTags(int startRange, int endRange)
 			if (*p != InternalCodeChar)
 				continue;
 			tagno = strtol(p + 1, (char **)&p, 10);
+/* could be 0, but should never be negative */
+			if (tagno <= 0)
+				continue;
 			t = tagList[tagno];
 /* Only mark certain tags as deleted.
  * If you mark <div> deleted, it could wipe out half the page. */
