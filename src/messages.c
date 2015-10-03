@@ -3487,7 +3487,10 @@ void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 void selectLanguage(void)
 {
 	char buf[8];
-	char *s = getenv("LANG");
+
+	char *s = getenv("LANG");	// This is likely to fail in windows
+
+#ifndef DOSLIKE
 	if (!s)
 		return;
 	if (!*s)
@@ -3505,6 +3508,18 @@ void selectLanguage(void)
  * See dircmp() in stringfile.c */
 
 	setlocale(LC_ALL, "");
+#else // DOSLIKE
+
+/* I'm going to assume Windows runs utf8 */
+	cons_utf8 = true;
+
+	if (!s)
+		s = setlocale(LC_ALL, "");
+	if (!s)
+		return;
+	if (!*s)
+		return;
+#endif // DOSLIKE y/n
 
 	strncpy(buf, s, 7);
 	buf[7] = 0;
