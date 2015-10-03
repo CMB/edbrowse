@@ -162,6 +162,7 @@ extern char emptyString[];	/* use this whenever you would use "" */
 extern char *userAgents[10], *currentAgent;
 extern char *newlocation;
 extern int newloc_d;
+extern const char *ebrc_string; /* default ebrc file */
 
 struct eb_curl_callback_data {
 	char **buffer;

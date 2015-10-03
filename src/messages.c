@@ -3341,6 +3341,9 @@ static const char **messageArray = englishMessages;
 static int messageArrayLength = sizeof(englishMessages) / sizeof(char *);
 
 int eb_lang = 1;		/* default English */
+/* startup .ebrc files in various languages */
+extern const char *ebrc_en, *ebrc_fr;
+const char *ebrc_string;
 bool cons_utf8, iuConvert = true;
 char type8859 = 1;
 bool helpMessagesOn;
@@ -3489,6 +3492,7 @@ void selectLanguage(void)
 	char buf[8];
 
 	char *s = getenv("LANG");	// This is likely to fail in windows
+	ebrc_string = ebrc_en;
 
 #ifndef DOSLIKE
 	if (!s)
@@ -3532,6 +3536,7 @@ void selectLanguage(void)
 		eb_lang = 2;
 		messageArray = frenchMessages;
 		messageArrayLength = sizeof(frenchMessages) / sizeof(char *);
+		ebrc_string = ebrc_fr;
 		return;
 	}
 

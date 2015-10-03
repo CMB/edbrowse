@@ -30,8 +30,8 @@ $(EBOBJS) : eb.h eb.p messages.h ebjs.h
 startwindow.c: startwindow.js
 	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/startwindow.c
 
-ebrc.c: ebrc.default
-	cd .. ; ./tools/buildsourcestring.pl src/ebrc.default pebrc src/ebrc.c
+ebrc.c: ../doc/ebrc-en ../doc/ebrc-fr
+	cd .. ; ./tools/buildsourcestring.pl doc/ebrc-en ebrc_en doc/ebrc-fr ebrc_fr src/ebrc.c
 
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.

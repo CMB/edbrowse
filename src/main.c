@@ -66,7 +66,6 @@ static int subjstart = 0;
 static char *cfgcopy;
 static int cfglen;
 static long nowday;
-extern const char *pebrc;
 
 #ifdef _MSC_VER
 #endif // _MSC_VER
@@ -1095,7 +1094,8 @@ int main(int argc, char **argv)
 				sprintf(cfgfil, "%s\\.ebrc", ebdata);
 				fp = fopen(cfgfil, "w");
 				if (fp) {
-					fwrite(pebrc, 1, strlen(pebrc), fp);
+					fwrite(ebrc_string, 1,
+					       strlen(ebrc_string), fp);
 					fclose(fp);
 				}
 				i_printfExit(MSG_Personalize, cfgfil);
@@ -1121,7 +1121,7 @@ int main(int argc, char **argv)
 	if (fileTypeByName(configFile, false) == 0) {
 		int fh = creat(configFile, 0600);
 		if (fh >= 0) {
-			write(fh, pebrc, strlen(pebrc));
+			write(fh, ebrc_string, strlen(ebrc_string));
 			close(fh);
 			i_printfExit(MSG_Personalize, configFile);
 		}

@@ -51,7 +51,7 @@ void ebClose(int n)
 	exit(n);
 }				/* ebclose */
 
-/* stub, this function called be freeTags(), but never called in this context */
+/* stub, this function called by freeTags(), but never called in this context */
 void freeEmptySideBuffer(int n)
 {
 }
@@ -66,6 +66,10 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 {
 	return 0;
 }
+
+/* ebrc strings don't mean anything here */
+const char *ebrc_en = emptyString;
+const char *ebrc_fr = emptyString;
 
 static void usage(void)
 {
