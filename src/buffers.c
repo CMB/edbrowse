@@ -1852,10 +1852,15 @@ static bool shellEscape(const char *line)
 	char *sh;
 	char subshell[ABSPATH];
 
+#ifdef DOSLIKE
+/* cmd.exe is the windows shell */
+	sh = "cmd";
+#else
 /* preferred shell */
 	sh = getenv("SHELL");
 	if (!sh || !*sh)
 		sh = "/bin/sh";
+#endif
 
 	linesize = strlen(line);
 	if (!linesize) {
@@ -1865,7 +1870,7 @@ static bool shellEscape(const char *line)
 			return false;
 		}
 #ifdef DOSLIKE
-		system(line);
+		system(sh);
 #else
 /* Ignoring of SIGPIPE propagates across fork-exec. */
 /* So stop ignoring it for the duration of system(). */
