@@ -21,7 +21,7 @@ int displayLength = 500;
 /* Static variables for this file. */
 
 static uchar dirWrite;		/* directories read write */
-static char lsformat[8];	/* size date etc on a directory listing */
+static char lsformat[12];	/* size date etc on a directory listing */
 static uchar endMarks;		/* ^ $ on printed lines */
 static bool jexmode;
 /* The valid edbrowse commands. */
@@ -3223,7 +3223,7 @@ static int twoLetter(const char *line, const char **runThis)
 	}
 
 	if (line[0] == 'l' && line[1] == 's') {
-		char lsmode[8];
+		char lsmode[12];
 		bool setmode = false;
 		char *file, *path, *t;
 		const char *s = line + 2;
@@ -3265,7 +3265,10 @@ static int twoLetter(const char *line, const char **runThis)
 			t = emptyString;
 		else
 			t = lsattr(path, lsmode);
-		puts(*t ? t : "no access");
+		if (*t)
+			puts(t);
+		else
+			i_puts(MSG_Inaccess);
 		return true;
 	}
 

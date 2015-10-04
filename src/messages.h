@@ -317,7 +317,7 @@ enum {
 	MSG_WebConnect,
 	MSG_Down,
 	MSG_NoCertify,
-	MSG_notused320,
+	MSG_Inaccess,
 	MSG_ImapReadHelp,
 	MSG_Authorize2,
 	MSG_LoginAbort,
