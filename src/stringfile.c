@@ -1075,6 +1075,7 @@ p:
 void ttySaveSettings(void)
 {
     // TODO: Anything needed here for WIN32?
+ isInteractive = _isatty(0);
 }
 #else // !#ifdef DOSLIKE
 static struct termios savettybuf;
