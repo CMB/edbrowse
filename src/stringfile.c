@@ -949,13 +949,18 @@ bool lsattrChars(const char *buf, char *dest)
 	bool rc = true;
 	const char *s;
 	char c, *t;
+#ifdef DOSLIKE
+	static const char ok_chars[] = "lst";
+#else
+	static const char ok_chars[] = "lstikpmy";
+#endif
 	char used[26];
 	memset(used, 0, sizeof(used));
 	t = dest;
 	for (s = buf; (c = *s); ++s) {
 		if (isspaceByte(c))
 			continue;
-		if (!strchr("lstikpm", c)) {
+		if (!strchr(ok_chars, c)) {
 			rc = false;
 			continue;
 		}
@@ -972,27 +977,43 @@ bool lsattrChars(const char *buf, char *dest)
 /* This assumes user/group names will not be too long. */
 char *lsattr(const char *path, const char *flags)
 {
-	static char buf[200];
+	static char buf[200 + ABSPATH];
 	char p[40];
-	struct stat st;
+	struct stat st, lst;
 	struct passwd *pwbuf;
 	struct group *grpbuf;
 	char *s;
 	int l, modebits;
+	bool sympath = false;	// user is requesting symlink path
+	bool statyes = true;	// stat call succeeds
+	char newpath[ABSPATH];
 
 	buf[0] = 0;
 
 	if (!path || !path[0] || !flags || !flags[0])
 		return buf;
 
+	if (strchr(flags, 'y'))
+		sympath = true;
+
 /* we already glommed onto this file through the directory listing;
- * it ought to be there. */
-	if (stat(path, &st))
-		return buf;
+ * it ought to be there, except for broken symlink. */
+	if (stat(path, &st)) {
+		statyes = false;
+		if (!sympath)
+			return buf;
+	}
 
 	while (*flags) {
 		if (buf[0])
 			strcat(buf, " ");
+
+/* exception when asking for information on a broken symlink */
+		if (!statyes && *flags != 'y') {
+			strcat(buf, "?");
+			++flags;
+			continue;
+		}
 
 		switch (*flags) {
 		case 't':
@@ -1061,6 +1082,27 @@ p:
 			*s = 0;
 			break;
 
+		case 'y':
+			if (lstat(path, &lst)) {
+/* Wow, this call should always succeed */
+				strcat(buf, "?");
+				break;
+			}
+			if ((lst.st_mode & S_IFMT) != S_IFLNK) {
+				strcat(buf, "-");
+				break;
+			}
+/* yes it's a link, read the path */
+			l = readlink(path, newpath, sizeof(newpath));
+			if (l <= 0)
+				strcat(buf, "?");
+			else {
+				s = buf + strlen(buf);
+				strncpy(s, newpath, l);
+				s[l] = 0;
+			}
+			break;
+
 #endif
 
 		}
@@ -1074,8 +1116,8 @@ p:
 #ifdef DOSLIKE
 void ttySaveSettings(void)
 {
-    // TODO: Anything needed here for WIN32?
- isInteractive = _isatty(0);
+	// TODO: Anything needed here for WIN32?
+	isInteractive = _isatty(0);
 }
 #else // !#ifdef DOSLIKE
 static struct termios savettybuf;
@@ -1441,7 +1483,7 @@ bool envFile(const char *line, const char **expanded)
 		return false;
 
 #ifdef DOSLIKE
-    return false;   // TODO: WIN32: Expand like glob...
+	return false;		// TODO: WIN32: Expand like glob...
 #else // !#ifdef DOSLIKE
 
 /* expanded the environment variables, if any, now time to glob */

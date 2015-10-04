@@ -535,6 +535,8 @@ lsk: list the number of hard links
 <br>
 lsm: list major and minor number
 <br>
+lsy: list path for a symbolic link
+<br>
 ls: same as lsst
 <br>
 ls=lt: display length and time of all files in subsequent directory scans
@@ -1434,7 +1436,10 @@ but you can.
 <P>
 When in directory mode, the ls command displays various attributes of the file on the current line.&nbsp;
 Type lsl for the length, lss for the approximate size, lst for the mod time,
-lsp for the owner group permissions, lsi for the inode, lsk for the number of hard links, or lsm for the major and minor device numbers.&nbsp;
+lsp for the owner group permissions, lsi for the inode, lsk for the number of hard links,
+lsy for the path associated with this symbolic link,
+or lsm for the major and minor device numbers.&nbsp;
+(The last 5 do not apply on Windows.)&nbsp;
 These can be combined, e.g. lspk prints permissions and the number of hard links.&nbsp;
 ls is the same as lsst, size and mod time.
 
@@ -1442,7 +1447,7 @@ ls is the same as lsst, size and mod time.
 If you want file length and time to appear next to every file in a directory listing, then enter ls=lt.&nbsp;
 The equals sign applies the ls directive to all subsequent directory scans.&nbsp;
 Type ls= to turn this off.&nbsp;
-Here is how the root directory might look, with ls=lt.
+Here is how the root directory might look with ls=lt.
 
 <PRE><font size=3 face=Arial,Helvetica,sans-serif>bin@/ 36864 Aug 31 2015 16:20
 boot/ 4096 Dec  4 2014 07:54
