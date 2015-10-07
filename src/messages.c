@@ -3342,7 +3342,7 @@ static int messageArrayLength = sizeof(englishMessages) / sizeof(char *);
 
 int eb_lang = 1;		/* default English */
 /* startup .ebrc files in various languages */
-extern const char *ebrc_en, *ebrc_fr;
+extern const char *ebrc_en, *ebrc_fr, *ebrc_pt_br;
 const char *ebrc_string;
 bool cons_utf8, iuConvert = true;
 char type8859 = 1;
@@ -3545,6 +3545,7 @@ void selectLanguage(void)
 		messageArray = brazilianPortugueseMessages;
 		messageArrayLength =
 		    sizeof(brazilianPortugueseMessages) / sizeof(char *);
+		ebrc_string = ebrc_pt_br;
 		return;
 	}
 

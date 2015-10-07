@@ -70,6 +70,7 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 /* ebrc strings don't mean anything here */
 const char *ebrc_en = emptyString;
 const char *ebrc_fr = emptyString;
+const char *ebrc_pt_br = emptyString;
 
 static void usage(void)
 {

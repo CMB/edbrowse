@@ -140,8 +140,8 @@ if (PERL)
     add_custom_command(
         OUTPUT ${GEN_SOURCES}
         COMMAND perl -f tools/buildsourcestring.pl src/startwindow.js startWindowJS src/startwindow.c
-        COMMAND perl -f tools/buildsourcestring.pl doc/ebrc-en ebrc_en doc/ebrc-fr ebrc_fr src/ebrc.c
-        DEPENDS doc/ebrc-en doc/ebrc-fr src/startwindow.js 
+        COMMAND perl -f tools/buildsourcestring.pl doc/ebrc-en ebrc_en doc/ebrc-fr ebrc_fr doc/ebrc-pt_br ebrc_pt_br src/ebrc.c
+        DEPENDS doc/ebrc-en doc/ebrc-fr doc/ebrc-pt_br src/startwindow.js 
             tools/buildsourcestring.pl
         COMMENT "Running perl to build ${GEN_SOURCES}"
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
