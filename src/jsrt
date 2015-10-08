@@ -298,7 +298,7 @@ onload=formLoad(this.name) onunload=formUnload(this.name)>
 function catdog(item) { alert('fluffy'); if(item.checked&&document.questionnaire.dog.checked) alert('chased by dog'); }
 
 // Let javascript generate another javascript tag
-document.writeln("<script language=JavaScript>document.writeln('Subject: ');<\/script>");
+document.writeln("<script language=JavaScript>document.writeln('Subject: ');<" + "/script>");
 </script>
 
 <input type='hidden' name='id' value='eklhad'>
@@ -675,10 +675,13 @@ if(!document.getElementById("sphere").innerHTML.match(/^Surface area/))
 fail(145);
 album = document.getElementById("album");
 album.innerHTML =
-"Why don't we do it <A href=http://en.wikipedia.org/wiki/White_album>in the road<" + "/A>?";
+"Why don't we do it <A href=http://en.wikipedia.org/wiki/White_album style='color: red ;illegal;legit3:okay;'>in the road<" + "/A>?";
 /* all the js objects associated with this html should be here */
-if(!album.getElementsByTagName("a")[0].href.match(/wikipedia.org/))
+var aa = album.getElementsByTagName("a")[0];
+if(!aa.href.match(/wikipedia.org/))
 fail(152);
+if(aa.style.color != "red")
+fail(153);
 </script  	
 >
 

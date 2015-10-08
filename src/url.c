@@ -314,8 +314,7 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 			++q;
 		if (*q == '/')
 			++q;
-		while (isspaceByte(*q))
-			++q;
+		skipWhite(&q);
 		if (!*q)
 			return false;
 		a = protocolByName(url, p - url);

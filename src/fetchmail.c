@@ -143,8 +143,7 @@ static int imapfetch = 100;
 
 static void setLimit(const char *t)
 {
-	while (isspace(*t))
-		++t;
+	skipWhite2(&t);
 	if (!isdigit(*t)) {
 		i_puts(MSG_NumberExpected);
 		return;
@@ -266,13 +265,9 @@ static struct FOLDER *folderByName(char *line)
 	struct FOLDER *f;
 	int cnt = 0;
 
-/* chop */
-	j = strlen(line);
-	while (j && isspace(line[j - 1]))
-		--j;
-	if (!j)
+	trimWhite(line);
+	if (!line[0])
 		return 0;
-	line[j] = 0;
 
 	i = stringIsNum(line);
 	if (i > 0 && i <= n_folders)
@@ -372,13 +367,9 @@ static bool imapSearch(CURL * handle, struct FOLDER *f, char *line)
 		return false;
 	}
 
-	while (isspace(*line))
-		++line;
-	t = line + strlen(line);
-	while (t > line && isspace(t[-1]))
-		--t;
-	*t = 0;
-	if (t == line) {
+	skipWhite2(&line);
+	trimWhite(line);
+	if (!line[0]) {
 		i_puts(MSG_Empty);
 		return false;
 	}
@@ -428,8 +419,7 @@ none:
 		++cnt;
 		while (isdigit(*u))
 			++u;
-		while (isspace(*u))
-			++u;
+		skipWhite2(&u);
 	}
 	if (!cnt)
 		goto none;
@@ -449,8 +439,7 @@ none:
 			++mif;
 		}
 		--cnt;
-		while (isspace(*u))
-			++u;
+		skipWhite2(&u);
 	}
 
 	envelopes(handle, f);

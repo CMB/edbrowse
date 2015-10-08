@@ -176,14 +176,10 @@ static void tagStrip(char *line)
 	if (!s)
 		return;
 	++s;
-	while (isspace(*s))
-		++s;
+	skipWhite2(&s);
 	strmove(line, s);
-
+	trimWhite(line);
 	s = line + strlen(line);
-	while (s > line && isspace(s[-1]))
-		--s;
-	*s = 0;
 	if (s == line || s[-1] != '>')
 		return;
 /* back up over </foo> */

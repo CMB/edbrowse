@@ -766,9 +766,8 @@ call out to process those and add them to the object */
 			so = instantiate(io, "style", 0);
 /* now if there are any style pairs to unpack,
  processStyles can rely on obj.style existing */
-			if (stylestring) {
+			if (stylestring)
 				processStyles(so, stylestring);
-			}
 /* done with styles - on to forms */
 
 /* in the special case of form, also need an array of elements */
@@ -828,9 +827,8 @@ call out to process those and add them to the object */
 		set_property_object(master, idname, io);
 	}
 
-	if (href && href_url) {
+	if (href && href_url)
 		instantiate_url(io, href, href_url);
-	}
 
 	if (stringEqual(classname, "Element")) {
 /* link back to the form that owns the element */
@@ -1531,23 +1529,20 @@ static void processStyles(jsobjtype so, const char *stylestring)
 	char *s;		// gets truncated to the style name
 	char *sv;
 	char *next;
-	int index;
 	for (s = workstring; *s; s = next) {
 		next = strchr(s, ';');
 		if (!next) {
 			next = s + strlen(s);
 		} else {
-			index = (int)(next - s);
-			s[index] = '\0';
-			++next;
-			skipWhite((const char **)&next);
+			*next++ = 0;
+			skipWhite2(&next);
 		}
 		sv = strchr(s, ':');
 		// if there was something there, but it didn't
 		// adhere to the expected syntax, skip this pair
 		if (sv) {
 			*sv++ = '\0';
-			skipWhite((const char **)&sv);
+			skipWhite2(&sv);
 			trimWhite(s);
 			trimWhite(sv);
 			set_property_string(so, s, sv);

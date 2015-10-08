@@ -240,6 +240,8 @@ uchar fromHex(char d, char e) ;
 char *appendString(char *s, const char *p) ;
 char *prependString(char *s, const char *p) ;
 void skipWhite(const char **s) ;
+#define skipWhite2(s) skipWhite((const char **)s)
+void trimWhite(char *s) ;
 void stripWhite(char *s) ;
 void spaceCrunch(char *s, bool onespace, bool unprint) ;
 char *strmove(char *dest, const char *src) ;
@@ -251,7 +253,6 @@ void stringAndNum(char **s, int *l, int n) ;
 void stringAndKnum(char **s, int *l, int n) ;
 char *cloneString(const char *s) ;
 char *cloneMemory(const char *s, int n) ;
-void clipString(char *s) ;
 void leftClipString(char *s) ;
 void shiftRight(char *s, char first) ;
 char *Cify(const char *s, int n) ;

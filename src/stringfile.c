@@ -132,17 +132,24 @@ void skipWhite(const char **s)
 	*s = t;
 }				/* skipWhite */
 
+void trimWhite(char *s)
+{
+	int l;
+	if (!s)
+		return;
+	l = strlen(s);
+	while (l && isspaceByte(s[l - 1]))
+		--l;
+	s[l] = 0;
+}				/* trimWhite */
+
 void stripWhite(char *s)
 {
 	const char *t = s;
-	char *u;
 	skipWhite(&t);
 	if (t > s)
 		strmove(s, t);
-	u = s + strlen(s);
-	while (u > s && isspaceByte(u[-1]))
-		--u;
-	*u = 0;
+trimWhite(s);
 }				/* stripWhite */
 
 /* compress white space */
@@ -294,18 +301,6 @@ char *cloneMemory(const char *s, int n)
 		memcpy(t, s, n);
 	return t;
 }				/* cloneMemory */
-
-void clipString(char *s)
-{
-	int len;
-	if (!s)
-		return;
-	len = strlen(s);
-	while (--len >= 0)
-		if (!isspaceByte(s[len]))
-			break;
-	s[len + 1] = 0;
-}				/* clipString */
 
 void leftClipString(char *s)
 {
@@ -1609,14 +1604,3 @@ void appendFileNF(const char *filename, const char *msg)
 	fprintf(f, "%s\n", msg);
 	fclose(f);
 }				/* appendFileNF */
-
-void trimWhite(char *s)
-{
-	int l;
-	if (!s)
-		return;
-	l = strlen(s);
-	while (l && isspaceByte(s[l - 1]))
-		--l;
-	s[l] = 0;
-}				/* trimWhite */

@@ -950,14 +950,14 @@ static void retsFromOdbc(void)
 		/* Postprocess the return values. */
 		/* For instance, turn string dates into our own 4-byte format. */
 		s = tbuf;
-		clipString(s);
+		trimWhite(s);
 		switch (rv_type[i]) {
 		case 'C':
 			*(char *)q = tbuf[0];
 			break;
 
 		case 'S':
-			clipString(q);
+			trimWhite(q);
 			break;
 
 		case 'D':
