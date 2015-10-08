@@ -1609,3 +1609,14 @@ void appendFileNF(const char *filename, const char *msg)
 	fprintf(f, "%s\n", msg);
 	fclose(f);
 }				/* appendFileNF */
+
+void trimWhite(char *s)
+{
+	int l;
+	if (!s)
+		return;
+	l = strlen(s);
+	while (l && isspaceByte(s[l - 1]))
+		--l;
+	s[l] = 0;
+}				/* trimWhite */
