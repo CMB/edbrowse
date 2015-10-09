@@ -2192,8 +2192,12 @@ void javaOpensWindow(const char *href, const char *name)
 	struct htmlTag *t;
 	char *copy, *r;
 	const char *a;
+	bool replace = false;
 
-	if (!href || !*href) {
+	if (*href == 'r')
+		replace = true;
+	++href;
+	if (!*href) {
 		debugPrint(3, "javascript is opening a blank window");
 		return;
 	}
@@ -2202,8 +2206,8 @@ void javaOpensWindow(const char *href, const char *name)
 	unpercentURL(copy);
 	r = resolveURL(cw->hbase, copy);
 	nzFree(copy);
-	if (cw->browseMode && !backgroundJS) {
-		gotoLocation(r, 0, false);
+	if (replace || cw->browseMode && !backgroundJS) {
+		gotoLocation(r, 0, replace);
 		return;
 	}
 

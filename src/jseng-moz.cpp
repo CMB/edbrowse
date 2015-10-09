@@ -550,7 +550,7 @@ static JSBool window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
  * I only do something if opening a new web page.
  * If it's just a blank window, I don't know what to do with that. */
 	if (newloc && *newloc) {
-		effectString("n{");	// }
+		effectString("n{p");	// }
 		effectString(newloc);
 		effectChar('\n');
 		if (winname)
@@ -715,7 +715,9 @@ There's no way to turn those off, so make sure you don't want to.
 
 static bool setter_suspend;
 
-/* this setter is only for window.location or document.location */
+/* This setter is only for window.location or document.location.
+ * It returns false to stop javascript;
+ * the browser is redirected elsewhere and the current page replaced. */
 static JSBool
 setter_loc(JSContext * cx, JS::HandleObject uo, JS::Handle < jsid > id,
 	   JSBool strict, JS::MutableHandle < JS::Value > vp)
@@ -725,12 +727,12 @@ setter_loc(JSContext * cx, JS::HandleObject uo, JS::Handle < jsid > id,
 		JS_ReportError(jcx,
 			       "window.location is assigned something that I don't understand");
 	} else {
-		effectString("n{");	// }
+		effectString("n{r");	// }
 		effectString(s);
 		effectChar('\n');
 		endeffect();
 	}
-	return JS_TRUE;
+	return JS_FALSE;
 }				/* setter_loc */
 
 /* this setter can open a new window, if the parent object
@@ -748,10 +750,11 @@ setter_loc_hrefval(JSContext * cx, JS::HandleObject uo,
 	if (!url)
 		return JS_TRUE;
 	if (iswindocloc(uo)) {
-		effectString("n{");	// }
+		effectString("n{r");	// }
 		effectString(url);
 		effectChar('\n');
 		endeffect();
+		return JS_FALSE;
 	}
 	return JS_TRUE;
 }				/* setter_loc_hrefval */

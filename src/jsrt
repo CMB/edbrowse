@@ -462,7 +462,9 @@ Amount of objects to create <input type="text" id="fill_amount" name="fill_amoun
 <input type=button name=hog value="memory hog" onclick=memfill()>
 <input type=button name=mclear value="memory clear" onclick="memhog.length = 0">
 <br>
-<input type="button" onclick="memshow()" name="mshow" value="show memory length">
+<input type=button onclick="memshow()" name="mshow" value="show memory length">
+<input type=button name=goodbye value="jump away"
+onclick="alert('page is being replaced'); window.location.href='http://www.cartercenter.org';">
 <br>Message Body:
 <textarea name='body' rows='6' cols='50'>
 Type your brilliant thoughts here.

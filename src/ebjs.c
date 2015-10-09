@@ -792,8 +792,11 @@ static int set_property(jsobjtype obj, const char *name,
 		return -1;
 	if (writeToJS(value, strlen(value)))
 		return -1;
+	if (proptype == EJ_PROP_FUNCTION)
+		jsSourceFile = name;
 	if (readMessage())
 		return -1;
+	jsSourceFile = NULL;
 	ack5();
 
 	return 0;
