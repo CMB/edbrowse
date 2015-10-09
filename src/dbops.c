@@ -1713,7 +1713,7 @@ void syncup_table(const char *table1, const char *table2,	/* the two tables */
 		    ("2constructed select statement in syncup_table() is too long");
 
 	if (otherclause) {
-		skipWhite(&otherClause);
+		skipWhite(&otherclause);
 		if (strncmp(otherclause, "and ", 4)
 		    && strncmp(otherclause, "AND ", 4))
 			errorPrint
