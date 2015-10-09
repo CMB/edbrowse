@@ -385,7 +385,7 @@ if(v.match(/[#?]/)) {
 this.pathname$val = v.replace(/[#?].*/, "");
 v = v.replace(/^[^#?]*/, "");
 } else {
-this.pathmname$val = v;
+this.pathname$val = v;
 v = "";
 }
 if(this.pathname$val == "")
