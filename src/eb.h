@@ -161,7 +161,8 @@ extern char emptyString[];	/* use this whenever you would use "" */
  * Anyways, this array holds up to 10 user agent strings. */
 extern char *userAgents[10], *currentAgent;
 extern char *newlocation;
-extern int newloc_d;
+extern int newloc_d; /* delay */
+extern bool newloc_r; /* location replaces this page */
 extern const char *ebrc_string; /* default ebrc file */
 
 struct eb_curl_callback_data {

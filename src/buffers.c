@@ -795,7 +795,7 @@ void cxSwitch(int cx, bool interactive)
  * or by window.location = new_url. */
 char *newlocation;
 int newloc_d;			/* possible delay */
-static bool newloc_rf;		/* refresh the buffer */
+bool newloc_r;			/* replace the buffer */
 bool js_redirects;
 
 void gotoLocation(char *url, int delay, bool rf)
@@ -807,7 +807,7 @@ void gotoLocation(char *url, int delay, bool rf)
 	nzFree(newlocation);
 	newlocation = url;
 	newloc_d = delay;
-	newloc_rf = rf;
+	newloc_r = rf;
 	if (!delay)
 		js_redirects = true;
 }				/* gotoLocation */
@@ -5013,7 +5013,7 @@ browse:
 				newlocation = 0;
 			} else {
 redirect:
-				noStack = newloc_rf;
+				noStack = newloc_r;
 				nzFree(allocatedLine);
 				line = allocatedLine = newlocation;
 				debugPrint(2, "redirect %s", line);

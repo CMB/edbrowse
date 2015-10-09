@@ -535,6 +535,9 @@ void runScriptsPending(void)
 	bool change;
 	jsobjtype v;
 
+	if (newlocation && newloc_r)
+		return;
+
 /* if onclick code or some such does document write, where does that belong?
  * I don't know, I'll just put it at the end.
  * As you see below, document.write that comes from a specific javascript
@@ -581,6 +584,9 @@ top:
 		jsRunScript(cw->winobj, jtxt, js_file, ln);
 		debugPrint(3, "execution complete");
 		nzFree(jtxt);
+
+		if (newlocation && newloc_r)
+			return;
 
 /* look for document.write from this script */
 		if (cw->dw) {
