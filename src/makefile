@@ -27,30 +27,31 @@ LDFLAGS += $(STRIP)
 ESQLDFLAGS = $(STRIP)
 
 #  Libraries for edbrowse.
-#  This assumes the javascript library is in /lib/libjs.so
-#  This is the case for fedora and debian.
 # Override JSLIB on the command-line, if your distro uses a different name.
 # E.G., make JSLIB=-lmozjs
 JSLIB = -lmozjs-24
-LDLIBS = -lpcre -lcurl -lreadline -lncurses
+LDLIBS = -lpcre -lcurl -lreadline -lncurses -ltidy
 
 #  Make the dynamically linked executable program by default.
 all: edbrowse edbrowse-js
 
 #  edbrowse objects
 EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
-	html.o format.o cookies.o stringfile.o messages.o
+	html.o format.o cookies.o stringfile.o messages.o \
+	ebjs.o plugin.o html-tidy.o decorate.o ebrc.o
 
 #  Header file dependencies.
 $(EBOBJS) : eb.h eb.p messages.h ebjs.h
-ebjs.o : ebjs.h messages.h
 
 startwindow.c: startwindow.js
-	../tools/buildstartwindow
+	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/startwindow.c
+
+ebrc.c: ../doc/ebrc-en ../doc/ebrc-fr ../doc/ebrc-pt_br
+	cd .. ; ./tools/buildsourcestring.pl doc/ebrc-en ebrc_en doc/ebrc-fr ebrc_fr doc/ebrc-pt_br ebrc_pt_br src/ebrc.c
 
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.
-edbrowse: $(EBOBJS) ebjs.o startwindow.o dbstubs.o
+edbrowse: $(EBOBJS) startwindow.o dbstubs.o
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 #  You probably need to be root to do this.
@@ -67,22 +68,23 @@ dbinfx.o : dbinfx.ec
 	esql -c dbinfx.ec
 
 #  Informix executable
-edbrowseinf: $(EBOBJS) ebjs.o startwindow.o dbops.o dbinfx.o
-	esql $(ESQLDFLAGS) -o edbrowseinf $(EBOBJS) ebjs.o startwindow.o dbops.o dbinfx.o $(LDLIBS)
+edbrowse-infx: $(EBOBJS) startwindow.o dbops.o dbinfx.o
+	esql $(ESQLDFLAGS) -o edbrowse-infx $(EBOBJS) startwindow.o dbops.o dbinfx.o $(LDLIBS)
 
 #  odbc access
 edbrowse-odbc: LDLIBS += -lodbc
-edbrowse-odbc: $(EBOBJS) ebjs.o startwindow.o dbops.o dbodbc.o
+edbrowse-odbc: $(EBOBJS) startwindow.o dbops.o dbodbc.o
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 clean:
-	rm -f *.o edbrowse edbrowseinf edbrowse-odbc edbrowse-js startwindow.c
+	rm -f *.o edbrowse edbrowse-infx edbrowse-odbc edbrowse-js startwindow.c
 
 jseng-moz.o: jseng-moz.cpp
 	$(CXX) -c $(CXXFLAGS) $(JS_CXXFLAGS) $^ -o $@
 
-edbrowse-js : jseng-moz.o
-	$(LINK.o) $^ $(LOADLIBES) $(JSLIB) -lstdc++ -o $@
+
+edbrowse-js : jseng-moz.o messages.o url.o stringfile.o html-tidy.o decorate.o
+	$(LINK.o) $^ $(LOADLIBES) $(JSLIB) -ltidy -lstdc++ -o $@
 
 #  some hello world targets, for testing and debugging
 

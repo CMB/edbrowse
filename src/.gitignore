@@ -1,0 +1,6 @@
+*.o
+edbrowse
+edbrowse-js
+edbrowse-odbc
+startwindow.c
+ebrc.c

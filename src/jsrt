@@ -1,10 +1,14 @@
+<!DOCTYPE html>
 <html>
 <head id=boom>
 <title>Edbrowse js regression test</title>
 <base href="http://yyy.zzz.com">
+<!-- tidy5 says this is not a valid tag any more -->
+<bgsound src=whatever.mid>
 </head>
+
 <body onload=bodyLoad() onunload=bodyUnload()>
-<script language="JavaScript">
+<script type=text/javascript language=JavaScript>
 /* This is the javascript regression test for edbrowse.
 It attempts to exercise all the implemented features of javascript,
 which is, by the way, not all the features of javascript by any means.
@@ -266,7 +270,7 @@ alert("You cant go over Limit of 2000 Characters!");
 
 function newwords() {
 var b = document.forms[0].body;
-b.innerText = "Why don't you write me I'm out in the jungle I'm lonely to hear you.\nSend me a card I've been waiting so hard to be near you.\n";
+b.innerText = "Why don't you write me I'm out in the jungle I'm hungry to hear you.\nSend me a card I am waiting so hard to be near you.\n";
 }
 
 </script>
@@ -275,18 +279,26 @@ b.innerText = "Why don't you write me I'm out in the jungle I'm lonely to hear y
 <OL>
 <LI>This is a regression test without javascript.
 </OL>
-<P>
 </noscript>
 
+ftp test
+<A href=ftp://rpmfind.net/linux/fedora/linux/releases/21/Everything/i386/os/Packages/y>
+y directory</A>
+<A href=ftp://rpmfind.net/linux/fedora/linux/releases/21/Everything/i386/os/Packages/y/yecht-0.0.2-11.fc21.noarch.rpm>
+yecht package</A>
+
+<br>
 <form method=POST name=questionnaire
 action=http://localhost:1500/origact
 onsubmit='return submitFunction(questionnaire)'
 onreset='return resetFunction()'
 onload=formLoad(this.name) onunload=formUnload(this.name)>
 
-<script>
+<script language=JavaScript type=text/javascript>
+function catdog(item) { alert('fluffy'); if(item.checked&&document.questionnaire.dog.checked) alert('chased by dog'); }
+
 // Let javascript generate another javascript tag
-document.writeln("<script language=JavaScript>document.writeln('Subject: ');</" + "script>");
+document.writeln("<script language=JavaScript>document.writeln('Subject: ');<" + "/script>");
 </script>
 
 <input type='hidden' name='id' value='eklhad'>
@@ -417,9 +429,11 @@ Wyoming
 <option value=BH>
 90210
 </select>
+<!-- this generates and error, but not sure why.
+http://www.w3schools.com/html/html_form_input_types.asp -->
 <input type=number maxlength=5 name="zip code" readonly value="&#56;8888">
 <span id=almond></span>
-<table class=filbert><tr></tr><tr id=pecan></tr></table>
+<table class=filbert><tr><td></td></tr><tr id=pecan><td></td></tr></table>
 Colors will change with the state, A through M or N through Z.
 <br>My favorite colors are:
 <select name=colors multiple>
@@ -439,8 +453,8 @@ comfortable
 rich
 <input type=radio name=money value=3>
 <br>Pets:
-dog <input type=checkbox name=dog id=hound checked onclick=alert('rover')>
-cat <input type=checkbox name=cat onclick="alert('fluffy'); if(this.checked&&questionnaire.dog.checked) alert('chased by dog');" value=meow>
+dog <input type=checkbox name=dog id=hound checked onclick="alert('rover')">
+cat <input type=checkbox name=cat onclick="catdog(this)" value=meow>
 bird <input type=checkbox name=bird>
 rabbit <input type=checkbox name=rabbit>
 <br>
@@ -448,7 +462,9 @@ Amount of objects to create <input type="text" id="fill_amount" name="fill_amoun
 <input type=button name=hog value="memory hog" onclick=memfill()>
 <input type=button name=mclear value="memory clear" onclick="memhog.length = 0">
 <br>
-<input type="button" onclick="memshow()" name="mshow" value="show memory length">
+<input type=button onclick="memshow()" name="mshow" value="show memory length">
+<input type=button name=goodbye value="jump away"
+onclick="alert('page is being replaced'); window.location.href='http://www.cartercenter.org';">
 <br>Message Body:
 <textarea name='body' rows='6' cols='50'>
 Type your brilliant thoughts here.
@@ -465,12 +481,11 @@ We'll get back to you if we like what you have to say.
 <input type='submit' value='Send Message' name='b1'
 onclick="alert('rock and roll')">
 </form>
-<bgsound src=whatever.mid>
 
-<script language="JavaScript">
+<script type=text/javascript language=JavaScript>
 // I'll push the button for you
 document.questionnaire.b.onclick();
-if(document.questionnaire.result.value != 90) fail(85);
+if(document.questionnaire.result.getAttribute("value") != 90) fail(85);
 if(document.questionnaire.id.value != "eklhad") fail(86);
 if(document.forms[0].elements[1].value != "secret") fail(87);
 
@@ -544,10 +559,11 @@ if(typeof ilo.a != "object") fail(120);
 if(ilo.b != 24) fail(121);
 if(ilo.a.id.value != "eklhad") fail(122);
 
-/* the URL class, it's about a thousand lines of code just to make this one work. */
+/* the URL class, most of the setters are in startwindow.js */
+/* malformed url, not sure what to do here */
 uo = new URL("local-file"); // url object
 if(uo.href != "local-file") fail(130);
-if(uo.host != "" || uo.pathname != "/") fail(131);
+if(uo.host != "local-file" || uo.pathname != "/") fail(131);
 new_path = "https://this.that.com:777/dir/ectory?search=k&l=english#middle";
 uo.href = new_path;
 if(uo != new_path) fail(132);
@@ -578,7 +594,6 @@ if(document.readyState != "loading") fail(140);
 if(!document.title.match(/regression/)) fail(141);
 if(document.head.id != "boom") fail(142);
 if(document.getElementsByTagName("head")[0].id != "boom") fail(143);
-if(document.getElementsByTagName("base")[0].href.port != 80) fail(144);
 
 function submitFunction(me) {
 if(document.questionnaire != me) fail(123);
@@ -629,13 +644,16 @@ olist[3] = oo;
 
 function bodyLoad() { alert("body loading"); }
 function bodyUnload() {
-if(confirm("Are you interested in discrete mathematics?"))
-new Window("http://book.mathreference.com");
+if(confirm("Go to the edbrowse home page?"))
+new Window("http://edbrowse.org");
 else alert("ok, never mind");
 }
 function formLoad(name) { onlv++; alert("form " + name + " loading");
+var t = document.createTextNode("Created text before ");
+document.body.appendChild(t);
 var s = document.createElement("script");
 s.data = "lastScript()";
+document.body.appendChild(s);
 }
 function formUnload(name) { alert("form " + name + " unloading"); }
 function docLoad() { alert("doc loader attached"); }
@@ -644,48 +662,60 @@ var onlv = 77;
 
 /* last script to run automatically; loaded by the form.onload function */
 function lastScript() {
-document.writeln('<A href=custer>Last Link</A>');
+document.writeln("Created script running");
 }
 
-setTimeout("joker()", 750);
-function joker()
-{
-alert("times up!");
-document.writeln("<P>Some extra html at the end of the buffer.");
+setTimeout("joker()", 30000);
+function joker() {
+alert("30 seconds have passed!");
+var j = document.createTextNode(" And some extra text");
+document.body.appendChild(j);
 }
 
 // test the innerHTML feature
-if(document.getElementById("sphere").innerHTML !=
-"Surface area is 4&#960;r<span class=sup>2</span>.")
+if(!document.getElementById("sphere").innerHTML.match(/^Surface area/))
 fail(145);
-document.getElementById("album").innerHTML =
-"Why don't we do it <A href=http://en.wikipedia.org/wiki/White_album>in the road</A>?";
+album = document.getElementById("album");
+album.innerHTML =
+"Why don't we do it <A href=http://en.wikipedia.org/wiki/White_album style='color: red ;illegal;legit3:okay;'>in the road<" + "/A>?";
+/* all the js objects associated with this html should be here */
+var aa = album.getElementsByTagName("a")[0];
+if(!aa.href.match(/wikipedia.org/))
+fail(152);
+if(aa.style.color != "red")
+fail(153);
 </script  	
 >
 
-<script src="data:text/javascript,var data_uri1_test %3d %22set%22%3b"></script>
-<script src="data:text/javascript;base64,dmFyIGRhdGFfdXJpMl90ZXN0ID0gInNldCI7Cg=="></script>
+<script type="text/javascript" src="data:text/javascript,var data_uri1_test %3d %22set%22%3b"></script>
+<script type="text/javascript" src="data:text/javascript;base64,dmFyIGRhdGFfdXJpMl90ZXN0ID0gInNldCI7Cg=="></script>
 
-<script>
+<script type=text/javascript language=JavaScript>
 if(data_uri1_test != "set")
 fail(146);
 if(data_uri2_test != "set")
 fail(147);
-
-data_uri1_test = '';
-data_uri2_test = '';
-script_from_data = document.createElement('script');
-script_from_data.src = 'data:text/javascript,var data_uri1_test %3d %22set%22%3b';
-script_from_data = document.createElement('script');
-script_from_data.src = 'data:text/javascript;base64,dmFyIGRhdGFfdXJpMl90ZXN0ID0gInNldCI7Cg==';
-
 </script>
 
-<script>
+<script type=text/javascript language=JavaScript>
+/*
 if(data_uri1_test != "set")
 fail(148);
 if(data_uri2_test != "set")
 fail(149);
+*/
+
+/* I wanted to test the initial cookie string as blank,
+ * but if you unbrowse and then browse, this test will fail.
+if(document.cookie != "")
+fail(150);
+*/
+
+document.cookie = "yy=37 other stuff";
+document.cookie = "zz=59";
+if(document.cookie != "yy=37; zz=59")
+fail(151);
+
 </script>
 
 </body>

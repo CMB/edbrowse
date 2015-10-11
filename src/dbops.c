@@ -1034,14 +1034,13 @@ void showForeign(void)
 }				/* showForeign */
 
 /* Select rows of data and put them into the text buffer */
-static bool
-rowsIntoBuffer(int cid, const char *types, char **bufptr, int *lcnt)
+static bool rowsIntoBuffer(int cid, const char *types, char **bufptr, int *lcnt)
 {
 	char *rbuf, *unld, *u, *v, *s, *end;
 	int rbuflen;
 	bool rc = false;
 
-	*bufptr = EMPTYSTRING;
+	*bufptr = emptyString;
 	*lcnt = 0;
 	rbuf = initString(&rbuflen);
 
@@ -1097,7 +1096,7 @@ bool sqlReadRows(const char *filename, char **bufptr)
 {
 	int cid, lcnt;
 
-	*bufptr = EMPTYSTRING;
+	*bufptr = emptyString;
 	if (!ebConnect())
 		return false;
 	if (!setTable())
@@ -1714,8 +1713,7 @@ void syncup_table(const char *table1, const char *table2,	/* the two tables */
 		    ("2constructed select statement in syncup_table() is too long");
 
 	if (otherclause) {
-		while (*otherclause == ' ')
-			++otherclause;
+		skipWhite(&otherclause);
 		if (strncmp(otherclause, "and ", 4)
 		    && strncmp(otherclause, "AND ", 4))
 			errorPrint
@@ -1749,7 +1747,7 @@ int goSelect(int *startLine, char **rbuf)
 		MSG_ProcExec
 	};
 
-	*rbuf = EMPTYSTRING;
+	*rbuf = emptyString;
 
 /* Make sure first line begins with ] */
 	line = fetchLine(lineno, -1);
@@ -1777,7 +1775,8 @@ int goSelect(int *startLine, char **rbuf)
 
 /* Try to infer action from the first word of the command. */
 	action = -1;
-	for (s = cmd; isspaceByte(*s); ++s) ;
+	s = cmd;
+	skipWhite2(&s);
 	for (i = 0; actionWords[i]; ++i) {
 		l = strlen(actionWords[i]);
 		if (memEqualCI(s, actionWords[i], l) && isspace(s[l])) {

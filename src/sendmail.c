@@ -278,7 +278,7 @@ encodeAttachment(const char *file, int ismail, bool webform,
 		buf = cloneString(file);
 		buflen = strlen(buf);
 		ismail = -ismail;
-		file = EMPTYSTRING;
+		file = emptyString;
 	} else {
 
 		if (!ismc && (cx = stringIsNum(file)) >= 0) {
@@ -288,7 +288,7 @@ encodeAttachment(const char *file, int ismail, bool webform,
 			if (!buflen) {
 				if (webform) {
 empty:
-					buf = EMPTYSTRING;
+					buf = emptyString;
 					ct = "text/plain";
 					ce = "7bit";
 					goto success;
@@ -572,7 +572,7 @@ static char *mailTimeString(void)
 {
 	static char buf[48];
 	struct tm *cur_tm;
-	long now;
+	time_t now;
 	time(&now);
 	cur_tm = localtime(&now);
 	strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S %z", cur_tm);
@@ -583,7 +583,7 @@ static char *messageTimeID(void)
 {
 	static char buf[48];
 	struct tm *cur_tm;
-	long now;
+	time_t now;
 	time(&now);
 	cur_tm = localtime(&now);
 	sprintf(buf, "%04d%02d%02d%02d%02d%02d",
@@ -636,7 +636,7 @@ static size_t smtp_upload_callback(char *buffer_for_curl, size_t size,
 {
 	size_t out_buffer_size = size * nmem;
 	size_t remaining = upload->length - upload->pos;
-	size_t to_send;
+	size_t to_send, cur_pos;
 
 	if (upload->pos >= upload->length)
 		return 0;
@@ -647,7 +647,7 @@ static size_t smtp_upload_callback(char *buffer_for_curl, size_t size,
 		to_send = remaining;
 
 	memcpy(buffer_for_curl, upload->data + upload->pos, to_send);
-	size_t cur_pos = upload->pos + to_send;
+	cur_pos = upload->pos + to_send;
 	upload->pos = cur_pos;
 	return to_send;
 }				/* smtp_upload_callback */
@@ -753,19 +753,26 @@ new_handle_cleanup:
 	return handle;
 }				/* newSendmailHandle */
 
+typedef struct tagsmtp_upload {
+	const char *data;
+	size_t length;
+	size_t pos;
+} smtp_upload;
+
 static bool
 sendMailSMTP(const struct MACCOUNT *account, const char *reply,
 	     const char **recipients, const char *message)
 {
+	CURL *handle = 0;
 	CURLcode res = CURLE_OK;
 	bool smtp_success = false;
 	char *smtp_url = buildSMTPURL(account);
 	struct curl_slist *recipient_slist = buildRecipientSList(recipients);
-	struct smtp_upload upload = {
-		.data = message,.length = strlen(message),.pos = 0
-	};
-	CURL *handle =
-	    newSendmailHandle(account, smtp_url, reply, recipient_slist);
+	smtp_upload upload;
+	upload.data = message;
+	upload.length = strlen(message);
+	upload.pos = 0;
+	handle = newSendmailHandle(account, smtp_url, reply, recipient_slist);
 
 	if (!handle)
 		goto smtp_cleanup;
@@ -1004,8 +1011,7 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 
 	if (mustmime) {
 		for (i = 0; s = attachments[i]; ++i) {
-			if (!encodeAttachment
-			    (s, 0, false, &ct, &ce, &encoded))
+			if (!encodeAttachment(s, 0, false, &ct, &ce, &encoded))
 				return false;
 			sprintf(serverLine, "%s--%s%sContent-Type: %s%s", eol,
 				boundary, eol, ct, charsetString(ct, ce));

@@ -5,27 +5,34 @@
 #include "eb.h"
 
 #include <sys/stat.h>
-#include <arpa/inet.h>
+#include <dirent.h>
 #ifdef DOSLIKE
 #include <dos.h>
 #else
 #include <termios.h>
 #include <unistd.h>
+#include <glob.h>
+#include <pwd.h>
+#include <grp.h>
 #endif
-#include <wordexp.h>
-#include <netdb.h>
+
+char emptyString[] = "";
+bool showHiddenFiles, isInteractive;
+int debugLevel = 1;
+char *downDir, *home;
 
 /*********************************************************************
 Allocate and manage memory.
 Allocate and copy strings.
 If we're out of memory, the program aborts.  No error legs.
+Soooooo much easier! With 32gb of RAM, we shouldn't run out.
 *********************************************************************/
 
 void *allocMem(size_t n)
 {
 	void *s;
 	if (!n)
-		return EMPTYSTRING;
+		return emptyString;
 	if (!(s = malloc(n)))
 		i_printfExit(MSG_MemAllocError, n);
 	return s;
@@ -35,7 +42,7 @@ void *allocZeroMem(size_t n)
 {
 	void *s;
 	if (!n)
-		return EMPTYSTRING;
+		return emptyString;
 	if (!(s = calloc(n, 1)))
 		i_printfExit(MSG_MemCallocError, n);
 	return s;
@@ -51,18 +58,40 @@ void *reallocMem(void *p, size_t n)
 		i_printfExit(MSG_MemAllocError, n);
 	if (!p)
 		i_printfExit(MSG_Realloc0, n);
-	if (p == EMPTYSTRING)
+	if (p == emptyString)
 		return allocMem(n);
 	if (!(s = realloc(p, n)))
 		i_printfExit(MSG_ErrorRealloc, n);
 	return s;
 }				/* reallocMem */
 
+/* When you know the allocated thing is a string. */
+char *allocString(size_t n)
+{
+	return (char *)allocMem(n);
+}				/* allocString */
+
+char *allocZeroString(size_t n)
+{
+	return (char *)allocZeroMem(n);
+}				/* allocZeroString */
+
+char *reallocString(void *p, size_t n)
+{
+	return (char *)reallocMem(p, n);
+}				/* reallocString */
+
 void nzFree(void *s)
 {
-	if (s && s != EMPTYSTRING)
+	if (s && s != emptyString)
 		free(s);
 }				/* nzFree */
+
+/* some compilers care whether it's void * or const void * */
+void cnzFree(const void *v)
+{
+	nzFree((void *)v);
+}				/* cnzFree */
 
 uchar fromHex(char d, char e)
 {
@@ -79,7 +108,7 @@ char *appendString(char *s, const char *p)
 {
 	int slen = strlen(s);
 	int plen = strlen(p);
-	s = reallocMem(s, slen + plen + 1);
+	s = reallocString(s, slen + plen + 1);
 	strcpy(s + slen, p);
 	return s;
 }				/* appendstring */
@@ -88,7 +117,7 @@ char *prependString(char *s, const char *p)
 {
 	int slen = strlen(s);
 	int plen = strlen(p);
-	char *t = allocMem(slen + plen + 1);
+	char *t = allocString(slen + plen + 1);
 	strcpy(t, p);
 	strcpy(t + plen, s);
 	nzFree(s);
@@ -103,17 +132,24 @@ void skipWhite(const char **s)
 	*s = t;
 }				/* skipWhite */
 
+void trimWhite(char *s)
+{
+	int l;
+	if (!s)
+		return;
+	l = strlen(s);
+	while (l && isspaceByte(s[l - 1]))
+		--l;
+	s[l] = 0;
+}				/* trimWhite */
+
 void stripWhite(char *s)
 {
 	const char *t = s;
-	char *u;
 	skipWhite(&t);
 	if (t > s)
 		strmove(s, t);
-	u = s + strlen(s);
-	while (u > s && isspaceByte(u[-1]))
-		--u;
-	*u = 0;
+trimWhite(s);
 }				/* stripWhite */
 
 /* compress white space */
@@ -142,7 +178,7 @@ void spaceCrunch(char *s, bool onespace, bool unprint)
 /* Like strcpy, but able to cope with overlapping strings. */
 char *strmove(char *dest, const char *src)
 {
-	return memmove(dest, src, strlen(src) + 1);
+	return (char *)memmove(dest, src, strlen(src) + 1);
 }				/* strmove */
 
 /* OO has a lot of unnecessary overhead, and a few inconveniences,
@@ -154,7 +190,7 @@ char *strmove(char *dest, const char *src)
 char *initString(int *l)
 {
 	*l = 0;
-	return EMPTYSTRING;
+	return emptyString;
 }
 
 /* String management routines realloc to one less than a power of 2 */
@@ -173,7 +209,7 @@ void stringAndString(char **s, int *l, const char *t)
 		newlen |= (newlen >> 4);
 		newlen |= (newlen >> 8);
 		newlen |= (newlen >> 16);
-		p = reallocMem(p, newlen);
+		p = reallocString(p, newlen);
 		*s = p;
 	}
 	strcpy(p + oldlen, t);
@@ -194,7 +230,7 @@ void stringAndBytes(char **s, int *l, const char *t, int cnt)
 		newlen |= (newlen >> 4);
 		newlen |= (newlen >> 8);
 		newlen |= (newlen >> 16);
-		p = reallocMem(p, newlen);
+		p = reallocString(p, newlen);
 		*s = p;
 	}
 	memcpy(p + oldlen, t, cnt);
@@ -216,7 +252,7 @@ void stringAndChar(char **s, int *l, char c)
 		newlen |= (newlen >> 4);
 		newlen |= (newlen >> 8);
 		newlen |= (newlen >> 16);
-		p = reallocMem(p, newlen);
+		p = reallocString(p, newlen);
 		*s = p;
 	}
 	p[oldlen] = c;
@@ -251,32 +287,20 @@ char *cloneString(const char *s)
 	if (!s)
 		return 0;
 	if (!*s)
-		return EMPTYSTRING;
+		return emptyString;
 	len = strlen(s) + 1;
-	t = allocMem(len);
+	t = allocString(len);
 	strcpy(t, s);
 	return t;
 }				/* cloneString */
 
 char *cloneMemory(const char *s, int n)
 {
-	char *t = allocMem(n);
+	char *t = allocString(n);
 	if (n)
 		memcpy(t, s, n);
 	return t;
 }				/* cloneMemory */
-
-void clipString(char *s)
-{
-	int len;
-	if (!s)
-		return;
-	len = strlen(s);
-	while (--len >= 0)
-		if (!isspaceByte(s[len]))
-			break;
-	s[len + 1] = 0;
-}				/* clipString */
 
 void leftClipString(char *s)
 {
@@ -302,7 +326,7 @@ void shiftRight(char *s, char first)
 char *Cify(const char *s, int n)
 {
 	char *u;
-	char *t = allocMem(n + 1);
+	char *t = allocString(n + 1);
 	if (n)
 		memcpy(t, s, n);
 	for (u = t; u < t + n; ++u)
@@ -318,8 +342,8 @@ char *pullString(const char *s, int l)
 {
 	char *t;
 	if (!l)
-		return EMPTYSTRING;
-	t = allocMem(l + 1);
+		return emptyString;
+	t = allocString(l + 1);
 	memcpy(t, s, l);
 	t[l] = 0;
 	return t;
@@ -330,6 +354,7 @@ char *pullString1(const char *s, const char *t)
 	return pullString(s, t - s);
 }
 
+/* return the number, if string is a number, else -1 */
 int stringIsNum(const char *s)
 {
 	int n;
@@ -379,53 +404,6 @@ bool stringIsFloat(const char *s, double *dp)
 		return false;	/* extra stuff at the end */
 	return true;
 }				/* stringIsFloat */
-
-bool stringIsPDF(const char *s)
-{
-	int j = 0;
-	if (s)
-		j = strlen(s);
-	return j >= 5 && stringEqual(s + j - 4, ".pdf");
-}				/* stringIsPDF */
-
-bool isSQL(const char *s)
-{
-	char c;
-	const char *c1 = 0, *c2 = 0;
-	c = *s;
-
-	if (!sqlPresent)
-		goto no;
-
-	if (isURL(s))
-		goto no;
-
-	if (!isalphaByte(c))
-		goto no;
-
-	for (++s; c = *s; ++s) {
-		if (c == '_')
-			continue;
-		if (isalnumByte(c))
-			continue;
-		if (c == ':') {
-			if (c1)
-				goto no;
-			c1 = s;
-			continue;
-		}
-		if (c == ']') {
-			c2 = s;
-			goto yes;
-		}
-	}
-
-no:
-	return false;
-
-yes:
-	return true;
-}				/* isSQL */
 
 bool memEqualCI(const char *s, const char *t, int len)
 {
@@ -530,7 +508,7 @@ int charInList(const char *list, char c)
 	char *s;
 	if (!list)
 		i_printfExit(MSG_NullCharInList);
-	s = strchr(list, c);
+	s = (char *)strchr(list, c);
 	if (!s)
 		return -1;
 	return s - list;
@@ -550,37 +528,37 @@ void initList(struct listHead *l)
 
 void delFromList(void *x)
 {
-	struct listHead *xh = x;
+	struct listHead *xh = (struct listHead *)x;
 	((struct listHead *)xh->next)->prev = xh->prev;
 	((struct listHead *)xh->prev)->next = xh->next;
 }				/* delFromList */
 
 void addToListFront(struct listHead *l, void *x)
 {
-	struct listHead *xh = x;
+	struct listHead *xh = (struct listHead *)x;
 	xh->next = l->next;
 	xh->prev = l;
-	l->next = x;
-	((struct listHead *)xh->next)->prev = x;
+	l->next = (struct listHead *)x;
+	((struct listHead *)xh->next)->prev = (struct listHead *)x;
 }				/* addToListFront */
 
 void addToListBack(struct listHead *l, void *x)
 {
-	struct listHead *xh = x;
+	struct listHead *xh = (struct listHead *)x;
 	xh->prev = l->prev;
 	xh->next = l;
-	l->prev = x;
-	((struct listHead *)xh->prev)->next = x;
+	l->prev = (struct listHead *)x;
+	((struct listHead *)xh->prev)->next = (struct listHead *)x;
 }				/* addToListBack */
 
 void addAtPosition(void *p, void *x)
 {
-	struct listHead *xh = x;
-	struct listHead *ph = p;
+	struct listHead *xh = (struct listHead *)x;
+	struct listHead *ph = (struct listHead *)p;
 	xh->prev = p;
 	xh->next = ph->next;
-	ph->next = x;
-	((struct listHead *)xh->next)->prev = x;
+	ph->next = (struct listHead *)x;
+	((struct listHead *)xh->next)->prev = (struct listHead *)x;
 }				/* addAtPosition */
 
 void freeList(struct listHead *l)
@@ -681,7 +659,7 @@ pst clonePstring(pst s)
 	if (!s)
 		return s;
 	len = pstLength(s);
-	t = allocMem(len);
+	t = (pst) allocMem(len);
 	memcpy(t, s, len);
 	return t;
 }				/* clonePstring */
@@ -706,7 +684,7 @@ bool fdIntoMemory(int fd, char **data, int *len)
 	const int blocksize = 8192;
 	char *chunk, *buf;
 
-	chunk = allocZeroMem(blocksize);
+	chunk = allocZeroString(blocksize);
 	buf = initString(&length);
 
 	n = 0;
@@ -715,7 +693,7 @@ bool fdIntoMemory(int fd, char **data, int *len)
 		if (n < 0) {
 			nzFree(buf);
 			nzFree(chunk);
-			*data = EMPTYSTRING;
+			*data = emptyString;
 			*len = 0;
 			setError(MSG_NoRead, "file descriptor");
 			return false;
@@ -726,7 +704,7 @@ bool fdIntoMemory(int fd, char **data, int *len)
 	} while (n != 0);
 
 	nzFree(chunk);
-	buf = reallocMem(buf, length + 2);
+	buf = reallocString(buf, length + 2);
 	*data = buf;
 	*len = length;
 	return true;
@@ -833,6 +811,15 @@ char fileTypeByName(const char *name, bool showlink)
 	bool islink = false;
 	char c;
 	int mode;
+
+#ifdef DOSLIKE
+	if (stat(name, &buf)) {
+		setError(MSG_NoAccess, name);
+		return 0;
+	}
+	mode = buf.st_mode & S_IFMT;
+#else // !DOSLIKE
+
 	if (lstat(name, &buf)) {
 		setError(MSG_NoAccess, name);
 		return 0;
@@ -845,6 +832,8 @@ char fileTypeByName(const char *name, bool showlink)
 			return (showlink ? 'F' : 0);
 		mode = buf.st_mode & S_IFMT;
 	}
+#endif // DOSLIKE y/n
+
 	c = 'f';
 	if (mode == S_IFDIR)
 		c = 'd';
@@ -921,8 +910,211 @@ time_t fileTimeByName(const char *name)
 	return buf.st_mtime;
 }				/* fileTimeByName */
 
-#ifndef DOSLIKE
+char *conciseSize(size_t n)
+{
+	static char buf[32];
+	if (n >= (1 << 30))
+		sprintf(buf, "%dG", n >> 30);
+	else if (n >= (1 << 20))
+		sprintf(buf, "%dM", n >> 20);
+	else if (n >= (1 << 10))
+		sprintf(buf, "%dK", n >> 10);
+	else
+		sprintf(buf, "%d", n);
+	return buf;
+}				/* conciseSize */
 
+char *conciseTime(time_t t)
+{
+	static char buffer[20];
+	static const char *months[] = {
+		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+	};
+	struct tm *tm = localtime(&t);
+	sprintf(buffer, "%s %2d %d %02d:%02d",
+		months[tm->tm_mon], tm->tm_mday, tm->tm_year + 1900,
+		tm->tm_hour, tm->tm_min);
+	return buffer;
+}				/* conciseTime */
+
+/* retain only characters l s t i k p m, for ls attributes */
+bool lsattrChars(const char *buf, char *dest)
+{
+	bool rc = true;
+	const char *s;
+	char c, *t;
+#ifdef DOSLIKE
+	static const char ok_chars[] = "lst";
+#else
+	static const char ok_chars[] = "lstikpmy";
+#endif
+	char used[26];
+	memset(used, 0, sizeof(used));
+	t = dest;
+	for (s = buf; (c = *s); ++s) {
+		if (isspaceByte(c))
+			continue;
+		if (!strchr(ok_chars, c)) {
+			rc = false;
+			continue;
+		}
+		if (used[c - 'a'])
+			continue;
+		used[c - 'a'] = 1;
+		*t++ = c;
+	}
+	*t = 0;
+	return rc;
+}				/* lsattrChars */
+
+/* expand the ls attributes for a file into a static string. */
+/* This assumes user/group names will not be too long. */
+char *lsattr(const char *path, const char *flags)
+{
+	static char buf[200 + ABSPATH];
+	char p[40];
+	struct stat st, lst;
+	struct passwd *pwbuf;
+	struct group *grpbuf;
+	char *s;
+	int l, modebits;
+	bool sympath = false;	// user is requesting symlink path
+	bool statyes = true;	// stat call succeeds
+	char newpath[ABSPATH];
+
+	buf[0] = 0;
+
+	if (!path || !path[0] || !flags || !flags[0])
+		return buf;
+
+	if (strchr(flags, 'y'))
+		sympath = true;
+
+/* we already glommed onto this file through the directory listing;
+ * it ought to be there, except for broken symlink. */
+	if (stat(path, &st)) {
+		statyes = false;
+		if (!sympath)
+			return buf;
+	}
+
+	while (*flags) {
+		if (buf[0])
+			strcat(buf, " ");
+
+/* exception when asking for information on a broken symlink */
+		if (!statyes && *flags != 'y') {
+			strcat(buf, "?");
+			++flags;
+			continue;
+		}
+
+		switch (*flags) {
+		case 't':
+			strcat(buf, conciseTime(st.st_mtime));
+			break;
+		case 'l':
+			sprintf(p, "%d", st.st_size);
+#ifndef DOSLIKE
+p:
+#endif // #ifndef DOSLIKE
+			strcat(buf, p);
+			break;
+		case 's':
+			strcat(buf, conciseSize(st.st_size));
+			break;
+#ifndef DOSLIKE
+/* not sure any of these work under windows */
+
+		case 'i':
+			sprintf(p, "%d", st.st_ino);
+			goto p;
+		case 'k':
+			sprintf(p, "%d", st.st_nlink);
+			goto p;
+		case 'm':
+			strcpy(p, "-");
+			if (st.st_rdev)
+				sprintf(p, "%d/%d",
+					(int)(st.st_rdev >> 8),
+					(int)(st.st_rdev & 0xff));
+			goto p;
+		case 'p':
+			s = buf + strlen(buf);
+			pwbuf = getpwuid(st.st_uid);
+			if (pwbuf) {
+				l = strlen(pwbuf->pw_name);
+				if (l > 20)
+					l = 20;
+				strncpy(s, pwbuf->pw_name, l);
+				s[l] = 0;
+			} else
+				sprintf(s, "%d", st.st_uid);
+			s += strlen(s);
+			*s++ = ' ';
+			grpbuf = getgrgid(st.st_gid);
+			if (grpbuf) {
+				l = strlen(grpbuf->gr_name);
+				if (l > 20)
+					l = 20;
+				strncpy(s, grpbuf->gr_name, l);
+				s[l] = 0;
+			} else
+				sprintf(s, "%d", st.st_gid);
+			s += strlen(s);
+			*s++ = ' ';
+			modebits = st.st_mode;
+			modebits &= 07777;
+			if (modebits & 07000)
+				*s++ = '0' + (modebits >> 9);
+			modebits &= 0777;
+			*s++ = '0' + (modebits >> 6);
+			modebits &= 077;
+			*s++ = '0' + (modebits >> 3);
+			modebits &= 7;
+			*s++ = '0' + modebits;
+			*s = 0;
+			break;
+
+		case 'y':
+			if (lstat(path, &lst)) {
+/* Wow, this call should always succeed */
+				strcat(buf, "?");
+				break;
+			}
+			if ((lst.st_mode & S_IFMT) != S_IFLNK) {
+				strcat(buf, "-");
+				break;
+			}
+/* yes it's a link, read the path */
+			l = readlink(path, newpath, sizeof(newpath));
+			if (l <= 0)
+				strcat(buf, "?");
+			else {
+				s = buf + strlen(buf);
+				strncpy(s, newpath, l);
+				s[l] = 0;
+			}
+			break;
+
+#endif
+
+		}
+
+		++flags;
+	}
+
+	return buf;
+}				/* lsattr */
+
+#ifdef DOSLIKE
+void ttySaveSettings(void)
+{
+	// TODO: Anything needed here for WIN32?
+	isInteractive = _isatty(0);
+}
+#else // !#ifdef DOSLIKE
 static struct termios savettybuf;
 void ttySaveSettings(void)
 {
@@ -978,7 +1170,7 @@ int getch(void)
 	return c;
 }				/* getche */
 
-#endif
+#endif // #ifdef DOSLIKE y/n
 
 char getLetter(const char *s)
 {
@@ -1000,6 +1192,7 @@ char getLetter(const char *s)
 char *getFileName(int msg, const char *defname, bool isnew, bool ws)
 {
 	static char buf[ABSPATH];
+	static char spacename[] = " ";
 	int l;
 	char *p;
 	bool allspace;
@@ -1008,6 +1201,7 @@ char *getFileName(int msg, const char *defname, bool isnew, bool ws)
 		i_printf(msg);
 		if (defname)
 			printf("[%s] ", defname);
+		fflush(stdout);
 		if (!fgets(buf, sizeof(buf), stdin))
 			exit(0);
 		allspace = false;
@@ -1020,7 +1214,7 @@ char *getFileName(int msg, const char *defname, bool isnew, bool ws)
 		p[l] = 0;
 		if (!l) {
 			if (ws & allspace)
-				return " ";
+				return spacename;
 			if (!defname)
 				continue;
 /* make a copy just to be safe */
@@ -1041,94 +1235,70 @@ char *getFileName(int msg, const char *defname, bool isnew, bool ws)
 	}
 }				/* getFileName */
 
-/* loop through the files in a directory */
-/* Hides the differences between DOS, Unix, and NT. */
+/* Protect a filename from expansion by the shell */
+static const char shellmeta[] = "\\\n\t |&;<>(){}#'\"~$*?";
+int shellProtectLength(const char *s)
+{
+	int l = 0;
+	while (*s) {
+		if (strchr(shellmeta, *s))
+			++l;
+		++l, ++s;
+	}
+	return l;
+}				/* shellProtectLength */
 
+void shellProtect(char *t, const char *s)
+{
+	while (*s) {
+		if (strchr(shellmeta, *s))
+			*t++ = '\\';
+		*t++ = *s++;
+	}
+}				/* shellProtect */
+
+/* loop through the files in a directory */
 const char *nextScanFile(const char *base)
 {
-	static char *dirquoted;	// 'directoryName'/*
-	static wordexp_t w;
-	static int baselen, word_idx;
+	static DIR *df;
+	struct dirent *de;
 	const char *s;
-	char *t;
-	int cnt;
-	static const char shellmeta[] = "\n\t |&;<>(){}\\#'\"~$*?";
 
-	if (!dirquoted) {
+	if (!df) {
 		if (!base)
 			base = ".";
-		for (s = base, cnt = 0; *s; ++s)
-			if (strchr(shellmeta, *s))
-				++cnt;
-		baselen = s - base;
-		dirquoted = t = allocMem(baselen + cnt + 4);
-		for (s = base; *s; ++s) {
-			if (strchr(shellmeta, *s))
-				*t++ = '\\';
-			*t++ = *s;
-		}
-		if (s[-1] != '/')
-			*t++ = '/', ++baselen;
-		*t++ = '*';
-		*t++ = 0;
-
-/* this call should not fail */
-		if (wordexp(dirquoted, &w, 0)) {
+		df = opendir(base);
+/* directory could be unreadable */
+		if (!df) {
 			i_puts(MSG_NoDirNoList);
-			free(dirquoted);
-			dirquoted = 0;
 			return 0;
 		}
-
-		word_idx = 0;
 	}
 
-restart:
-
-/*********************************************************************
-special code here for an empty directory, wherein the pattern of *
-produces the single word of *
-I don't understand why .* with no match doesn't produce .*
-i.e. when searching for hidden files.
-It doesn't, at least on my system.
-Seems inconsistent to me.
-Well this code covers both cases.
-*********************************************************************/
-
-	if (w.we_wordc == 1 && access(w.we_wordv[0], 0))
-		++word_idx;
-
-	while (word_idx < w.we_wordc) {
-		s = w.we_wordv[word_idx++] + baselen;
-		if (stringEqual(s, "."))
-			continue;
-		if (stringEqual(s, ".."))
-			continue;
+	while (de = readdir(df)) {
+		s = de->d_name;
+		if (s[0] == '.') {
+			if (stringEqual(s, "."))
+				continue;
+			if (stringEqual(s, ".."))
+				continue;
+			if (!showHiddenFiles)
+				continue;
+		}
 		return s;
 	}			/* end loop over files in directory */
 
-	wordfree(&w);
-	if (showHiddenFiles) {
-		cnt = strlen(dirquoted);
-		if (dirquoted[cnt - 2] == '/') {
-/* rerun query with leading . */
-			strcpy(dirquoted + cnt - 1, ".*");
-/* last call worked; this one should too */
-			if (!wordexp(dirquoted, &w, 0)) {
-				word_idx = 0;
-				goto restart;
-			}
-		}
-	}
-	free(dirquoted);
-	dirquoted = 0;
+	closedir(df);
+	df = 0;
 	return 0;
 }				/* nextScanFile */
 
-static int qscmp(const void *s, const void *t)
+/* compare routine for quicksort */
+static int dircmp(const void *s, const void *t)
 {
-	return strcmp(((struct lineMap *)s)->text, ((struct lineMap *)t)->text);
-}				/* qscmp */
+	return strcoll((const char *)((const struct lineMap *)s)->text,
+		       (const char *)((const struct lineMap *)t)->text);
+}				/* dircmp */
 
 bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
 {
@@ -1137,16 +1307,16 @@ bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
 	struct lineMap *t, *map;
 
 	cap = 128;
-	map = t = allocZeroMem(cap * LMSIZE);
+	map = t = (struct lineMap *)allocZeroMem(cap * LMSIZE);
 
 	while (f = nextScanFile(dir)) {
 		if (linecount == cap) {
 			cap *= 2;
-			map = reallocMem(map, cap * LMSIZE);
+			map = (struct lineMap *)reallocMem(map, cap * LMSIZE);
 			t = map + linecount;
 		}
 /* leave room for @ / newline */
-		t->text = allocMem(strlen(f) + 3);
+		t->text = (pst) allocMem(strlen(f) + 3);
 		strcpy((char *)t->text, f);
 		t->ds1 = t->ds2 = 0;
 		++t, ++linecount;
@@ -1158,7 +1328,8 @@ bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
 	if (!linecount)
 		return true;
 
-	qsort(map, linecount, LMSIZE, qscmp);
+/* sort the entries */
+	qsort(map, linecount, LMSIZE, dircmp);
 
 	return true;
 }				/* sortedDirList */
@@ -1169,64 +1340,191 @@ bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
  * Neither the original line nore the new line is allocated.
  * They are static char buffers that are just plain long enough. */
 
-bool envFile(const char *line, const char **expanded, bool expect_file)
+static bool envExpand(const char *line, const char **expanded)
 {
-	static char line2[MAXTTYLINE];
-	wordexp_t w;
-	int rc;
+	const char *s;
+	char *t;
+	const char *v;		/* result of getenv call */
+	bool inbrace;		/* ${foo} */
+	struct passwd *pw;
+	const char *udir;	/* user directory */
+	int l;
+	static char varline[ABSPATH];
+	char var1[40];
 
-/* ` supresses this stuff */
-	if (line[0] == '`') {
-		*expanded = line + 1;
-		return true;
-	}
-
-/* quick check, nothing to do */
-	if (!strpbrk(line, "$[*?") &&
-	    (line[0] != '~' || line[1] && line[1] != '/')) {
+/* quick check */
+	if (line[0] != '~' && !strchr(line, '$')) {
 		*expanded = line;
 		return true;
 	}
 
-	rc = wordexp(line, &w, (WRDE_NOCMD | WRDE_UNDEF));
+/* ok, need to crunch along */
+	t = varline;
+	s = line;
 
-	if (rc == WRDE_BADVAL) {
-		setError(MSG_NoEnvVar);
+	if (line[0] != '~')
+		goto dollars;
+
+	l = 0;
+	for (s = line + 1; isalnum(*s) || *s == '_'; ++s)
+		++l;
+	if (l >= sizeof(var1) || isdigit(line[1]) || *s && *s != '/') {
+/* invalid syntax, put things back */
+		s = line;
+		goto dollars;
+	}
+
+	udir = 0;
+	strncpy(var1, line + 1, l);
+	var1[l] = 0;
+#ifndef DOSLIKE
+	if (l) {
+		pw = getpwnam(var1);
+		if (!pw) {
+			setError(MSG_NoTilde, var1);
+			return false;
+		}
+		if (pw->pw_dir && *pw->pw_dir)
+			udir = pw->pw_dir;
+	} else
+#endif
+		udir = home;
+	if (!udir) {
+		s = line;
+		goto dollars;
+	}
+	l = strlen(udir);
+	if (l >= sizeof(varline))
+		goto longline;
+	strcpy(varline, udir);
+	t = varline + l;
+
+dollars:
+	for (; *s; ++s) {
+		if (t - varline == ABSPATH - 1) {
+longline:
+			setError(MSG_ShellLineLong);
+			return false;
+		}
+		if (*s == '\\' && s[1] == '$') {
+/* this $ is escaped */
+			++s;
+appendchar:
+			*t++ = *s;
+			continue;
+		}
+		if (*s != '$')
+			goto appendchar;
+
+/* this is $, see if it is $var or ${var} */
+		inbrace = false;
+		v = s + 1;
+		if (*v == '{')
+			inbrace = true, ++v;
+		if (!isalphaByte(*v) && *v != '_')
+			goto appendchar;
+		l = 0;
+		while (isalnumByte(*v) || *v == '_') {
+			if (l == sizeof(var1) - 1)
+				goto longline;
+			var1[l++] = *v++;
+		}
+		var1[l] = 0;
+		if (inbrace) {
+			if (*v != '}')
+				goto appendchar;
+			++v;
+		}
+		s = v - 1;
+		v = getenv(var1);
+		if (!v) {
+			setError(MSG_NoEnvVar, var1);
+			return false;
+		}
+		l = strlen(v);
+		if (t - varline + l >= ABSPATH)
+			goto longline;
+		strcpy(t, v);
+		t += l;
+	}
+	*t = 0;
+
+	*expanded = varline;
+	return true;
+}				/* envExpand */
+
+bool envFile(const char *line, const char **expanded)
+{
+	static char line2[ABSPATH];
+	const char *varline;
+	const char *s;
+	char *t;
+#ifndef DOSLIKE
+	glob_t g;
+#endif // #ifndef DOSLIKE
+	int rc, flags;
+
+/* ` disables this stuff */
+/* but `` is a literal ` */
+	if (line[0] == '`') {
+		if (line[1] != '`') {
+			*expanded = line + 1;
+			return true;
+		}
+		++line;
+	}
+
+	if (!envExpand(line, &varline))
 		return false;
+
+#ifdef DOSLIKE
+	return false;		// TODO: WIN32: Expand like glob...
+#else // !#ifdef DOSLIKE
+
+/* expanded the environment variables, if any, now time to glob */
+	flags = GLOB_NOSORT;
+	rc = glob(varline, flags, NULL, &g);
+
+	if (rc == GLOB_NOMATCH) {
+/* unescape the metas */
+		t = line2;
+		for (s = varline; *s; ++s) {
+			if (*s == '\\' && s[1] && strchr("*?[", s[1]))
+				++s;
+			*t++ = *s;
+		}
+		*t = 0;
+		*expanded = line2;
+		return true;
 	}
 
 	if (rc) {
 /* some other syntax error, whereup we can't expand. */
 		setError(MSG_ShellExpand);
+		globfree(&g);
 		return false;
 	}
 
-	if (w.we_wordc != 1) {
-		setError((w.we_wordc > 0) + MSG_ShellNoMatch);
-		wordfree(&w);
+	if (g.gl_pathc != 1) {
+		setError(MSG_ShellManyMatch);
+		globfree(&g);
 		return false;
 	}
 
 /* looks good, if it isn't too long */
-	if (strlen(w.we_wordv[0]) >= sizeof(line2)) {
+	s = g.gl_pathv[0];
+	if (strlen(s) >= sizeof(line2)) {
 		setError(MSG_ShellLineLong);
-		wordfree(&w);
+		globfree(&g);
 		return false;
 	}
 
-	strcpy(line2, w.we_wordv[0]);
-	wordfree(&w);
+	strcpy(line2, s);
+	globfree(&g);
 	*expanded = line2;
-
-/* There's another problem; wordexp gives you the same pattern back again
- * even if it matches nothing. I suppose the shell does the same thing,
- * but that's not what I want here if we're expecting a file. */
-	if (expect_file && access(line2, F_OK)) {
-		setError(MSG_ShellNoMatch);
-		return false;
-	}
-
 	return true;
+#endif // #ifdef DOSLIKE y/n
+
 }				/* envFile */
 
 /* Call the above routine if filename contains a  slash,
@@ -1238,7 +1536,7 @@ bool envFileDown(const char *line, const char **expanded)
 
 	if (!downDir || strchr(line, '/'))
 /* we don't necessarily expect there to be a file here */
-		return envFile(line, expanded, false);
+		return envFile(line, expanded);
 
 	if (strlen(downDir) + strlen(line) >= sizeof(line2) - 1) {
 		setError(MSG_ShellLineLong);
@@ -1306,61 +1604,3 @@ void appendFileNF(const char *filename, const char *msg)
 	fprintf(f, "%s\n", msg);
 	fclose(f);
 }				/* appendFileNF */
-
-/*********************************************************************
-Routines to convert between names and IP addresses.
-This is ipv4; need to write similar for ipv6.
-*********************************************************************/
-
-IP32bit tcp_name_ip(const char *name)
-{
-	struct hostent *hp;
-	IP32bit *ip;
-
-	hp = gethostbyname(name);
-	if (!hp)
-		return NULL_IP;
-	ip = (IP32bit *) * (hp->h_addr_list);
-	if (!ip)
-		return NULL_IP;
-	return *ip;
-}				/* tcp_name_ip */
-
-char *tcp_ip_dots(IP32bit ip)
-{
-	return inet_ntoa(*(struct in_addr *)&ip);
-}				/* tcp_ip_dots */
-
-int tcp_isDots(const char *s)
-{
-	const char *t;
-	char c;
-	int nd = 0;		/* number of dots */
-	if (!s)
-		return 0;
-	for (t = s; (c = *t); ++t) {
-		if (c == '.') {
-			++nd;
-			if (t == s || !t[1])
-				return 0;
-			if (t[-1] == '.' || t[1] == '.')
-				return 0;
-			continue;
-		}
-		if (!isdigit(c))
-			return 0;
-	}
-	return (nd == 3);
-}				/* tcp_isDots */
-
-IP32bit tcp_dots_ip(const char *s)
-{
-	struct in_addr a;
-/* this for SCO unix */
-#ifdef SCO
-	inet_aton(s, &a);
-#else
-	*(IP32bit *) & a = inet_addr(s);
-#endif
-	return *(IP32bit *) & a;
-}				/* tcp_dots_ip */

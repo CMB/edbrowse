@@ -1,5 +1,54 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.6.0:
+Edbrowse is an imap client. Scan and search through folders,
+delete move or download emails, pull down attachments.
+
+Use the tidy5 library to parse html and create a tree of nodes.
+Render the text buffer based on this tree of nodes,
+rather than the html text directly.
+Rerender the tree after it has been changed by javascript,
+or via the rr command,
+and report any differences, i.e. what has javascript changed?
+
+Implement javascript timers and intervals.
+These run asynchronously in the background.
+
+Various ls commands in directory mode print the size,
+mod time, and permissions of the file on the current line.
+Set ls=lt to list the length and time of all the files in subsequent
+directory scans. See documentation for more.
+
+Port edbrowse to windows, with small modifications.
+
+Add an interactive javascript / DOM debugger.
+Type jex to enter this debugging mode, and period to exit.
+
+Create a default .ebrc file if none is found.
+This is just a template, the user is encouraged to personalize the file.
+
+3.5.4.2:
+Limited and preliminary imap access. Envelopes only.
+Messages can be moved or deleted, but not read or downloaded.
+
+We no longer downgrade to SSL v3 on failure to use newer versions of SSL.
+
+Edbrowse now warns if you try to quit with a modified buffer that has
+no associated filename.  This is consistent with ed and most other editors.
+
+3.5.4.1:
+Fix a couple of bugs related to downloading files from the internet.
+
+3.5.4:
+Messages in German, thanks to Sebastian Humenda.
+Autoplay of audio files found on websites, using content-type,
+and autoplay of audio files from directory mode.
+Use a plugin to convert pdf to html, or any other conversion you wish.
+Autoconvert such files as you encounter them via the g command.
+directory listing sorted by locale, like/bin/ls.
+Automatically include references when replying to an email, re or rea commands,
+so it threads properly.
+
 3.5.3:
 Write a separate process, edbrowse-js, to handle all the javascript objects.
 This process and only this process interacts with the js library,

@@ -5,8 +5,8 @@
 
 #include "eb.h"
 
-struct {
-	char *prot;
+struct PROTOCOL {
+	const char prot[12];
 	int port;
 	bool free_syntax;
 	bool need_slashes;
@@ -18,12 +18,15 @@ struct {
 	"https", 443, false, true, true}, {
 	"pop3", 110, false, true, true}, {
 	"pop3s", 995, false, true, true}, {
+	"imap", 220, false, true, true}, {
+	"imaps", 993, false, true, true}, {
 	"smtp", 25, false, true, true}, {
 	"submission", 587, false, true, true}, {
 	"smtps", 465, false, true, true}, {
 	"proxy", 3128, false, true, true}, {
 	"ftp", 21, false, true, true}, {
 	"sftp", 22, false, true, true}, {
+	"scp", 22, false, true, true}, {
 	"ftps", 990, false, true, true}, {
 	"tftp", 69, false, true, true}, {
 	"rtsp", 554, false, true, true}, {
@@ -40,15 +43,14 @@ struct {
 	"gopher", 70, false, false, false}, {
 	"magnet", 0, false, false, false}, {
 	"irc", 0, false, false, false}, {
-	NULL, 0}
-};
+"", 0},};
 
 static bool free_syntax;
 
 static int protocolByName(const char *p, int l)
 {
 	int i;
-	for (i = 0; protocols[i].prot; i++)
+	for (i = 0; protocols[i].prot[0]; i++)
 		if (memEqualCI(protocols[i].prot, p, l))
 			return i;
 	return -1;
@@ -62,6 +64,8 @@ void unpercentURL(char *url)
 	u = w = url;
 	while (c = *u) {
 		++u;
+		if (c == '+')
+			c = ' ';
 		if (c == '%' && isxdigit(u[0]) && isxdigit(u[1])) {
 			c = fromHex(u[0], u[1]);
 			u += 2;
@@ -89,6 +93,8 @@ void unpercentString(char *s)
 	u = w = s;
 	while (c = *u) {
 		++u;
+		if (c == '+')
+			c = ' ';
 		if (c == '%' && isxdigit(u[0]) && isxdigit(u[1])) {
 			c = fromHex(u[0], u[1]);
 			u += 2;
@@ -99,6 +105,109 @@ void unpercentString(char *s)
 	}
 	*w = 0;
 }				/* unpercentString */
+
+/*
+ * Function: percentURL
+ * Arguments:
+ ** start: pointer to start of input string
+  ** end: pointer to end of input string.
+ * Return value: A new string or NULL if memory allocation failed.
+ * This function copies its input to a dynamically-allocated buffer,
+ * while performing the following transformation.  Change backslash to slash,
+ * and percent-escape some of the reserved characters as per RFC3986.
+ * Some of the chars retain their reserved semantics and should not be changed.
+ * This is a friggin guess!
+ * All characters in the area between start and end, not including end,
+ * are copied or transformed.
+ * Get rid of :/   curl can't handle it.
+ * This function is used to sanitize user-supplied URLs.  */
+
+/* these punctuations are percentable, anywhere in a url */
+static const char percentable[] = "!*'()[]+$,";
+static char hexdigits[] = "0123456789abcdef";
+#define ESCAPED_CHAR_LENGTH 3
+
+char *percentURL(const char *start, const char *end)
+{
+	int bytes_to_alloc;
+	char *new_copy;
+	const char *in_pointer;
+	char *out_pointer;
+	const char *portloc;
+
+	if (!end)
+		end = start + strlen(start);
+	bytes_to_alloc = end - start + 1;
+	new_copy = NULL;
+	in_pointer = NULL;
+	out_pointer = NULL;
+	portloc = NULL;
+
+	for (in_pointer = start; in_pointer < end; in_pointer++)
+		if (*in_pointer <= ' ' || strchr(percentable, *in_pointer))
+			bytes_to_alloc += (ESCAPED_CHAR_LENGTH - 1);
+
+	new_copy = allocMem(bytes_to_alloc);
+	if (new_copy) {
+		char *frag, *params;
+		out_pointer = new_copy;
+		for (in_pointer = start; in_pointer < end; in_pointer++) {
+			if (*in_pointer == '\\')
+				*out_pointer++ = '/';
+			else if (*in_pointer <= ' ' ||
+				 strchr(percentable, *in_pointer)) {
+				*out_pointer++ = '%';
+				*out_pointer++ =
+				    hexdigits[(uchar) (*in_pointer & 0xf0) >>
+					      4];
+				*out_pointer++ =
+				    hexdigits[(*in_pointer & 0x0f)];
+			} else
+				*out_pointer++ = *in_pointer;
+		}
+		*out_pointer = '\0';
+/* excise #hash, required by some web servers */
+		frag = findHash(new_copy);
+		if (frag)
+			*frag = 0;
+
+		getPortLocURL(new_copy, &portloc, 0);
+		if (portloc && !isdigit(portloc[1])) {
+			const char *s = portloc + strcspn(portloc, "/?#\1");
+			strmove((char *)portloc, s);
+		}
+	}
+
+	return new_copy;
+}				/* percentURL */
+
+/* escape & < > for display on a web page */
+char *htmlEscape0(const char *s, bool do_and)
+{
+	char *t;
+	int l;
+	if (!s)
+		return 0;
+	if (!*s)
+		return emptyString;
+	t = initString(&l);
+	for (; *s; ++s) {
+		if (*s == '&' && do_and) {
+			stringAndString(&t, &l, "&amp;");
+			continue;
+		}
+		if (*s == '<') {
+			stringAndString(&t, &l, "&lt;");
+			continue;
+		}
+		if (*s == '>') {
+			stringAndString(&t, &l, "&gt;");
+			continue;
+		}
+		stringAndChar(&t, &l, *s);
+	}
+	return t;
+}				/* htmlEscape0 */
 
 /* Decide if it looks like a web url. */
 static bool httpDefault(const char *url)
@@ -205,8 +314,7 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 			++q;
 		if (*q == '/')
 			++q;
-		while (isspaceByte(*q))
-			++q;
+		skipWhite(&q);
 		if (!*q)
 			return false;
 		a = protocolByName(url, p - url);
@@ -350,7 +458,7 @@ bool isBrowseableURL(const char *url)
 bool isDataURI(const char *u)
 {
 	return memEqualCI(u, "data:", 5);
-}			/* isDataURI */
+}				/* isDataURI */
 
 /* Helper functions to return pieces of the URL.
  * Makes a copy, so you can have your 0 on the end.
@@ -382,7 +490,7 @@ const char *getHostURL(const char *url)
 	if (free_syntax)
 		return 0;
 	if (!s)
-		return EMPTYSTRING;
+		return emptyString;
 	if (l >= sizeof(hostbuf)) {
 		setError(MSG_DomainLong);
 		return 0;
@@ -440,9 +548,9 @@ const char *getUserURL(const char *url)
 	if (rc <= 0)
 		return 0;
 	if (free_syntax)
-		return EMPTYSTRING;
+		return emptyString;
 	if (!s)
-		return EMPTYSTRING;
+		return emptyString;
 	if (l >= sizeof(buf)) {
 		setError(MSG_UserNameLong2);
 		return 0;
@@ -461,9 +569,9 @@ const char *getPassURL(const char *url)
 	if (rc <= 0)
 		return 0;
 	if (free_syntax)
-		return EMPTYSTRING;
+		return emptyString;
 	if (!s)
-		return EMPTYSTRING;
+		return emptyString;
 	if (l >= sizeof(buf)) {
 		setError(MSG_PasswordLong2);
 		return 0;
@@ -519,8 +627,8 @@ char *findHash(const char *s)
 	const char *t = strrchr(s, '/');
 	if (t)
 		s = t;
-	return strchr(s, '#');
-}				/* chopHash */
+	return (char *)strchr(s, '#');
+}				/* findHash */
 
 /* extract the file piece of a pathname or url */
 /* This is for debugPrint or w/, so could be chopped for convenience */
@@ -594,22 +702,6 @@ bool isProxyURL(const char *url)
 }
 
 /*
- * hasPrefix: return true if s has a prefix of p, false otherwise.
- */
-static bool hasPrefix(char *s, char *p)
-{
-	bool ret = false;
-	if (!p[0])
-		ret = true;	/* Empty string is a prefix of all strings. */
-	else {
-		size_t slen = strlen(s);
-		size_t plen = strlen(p);
-		ret = (plen <= slen) && !strncmp(p, s, plen);
-	}
-	return ret;
-}				/* hasPrefix */
-
-/*
  * copyPathSegment: copy everything from *src, starting with the leftmost
  * character (a slash), and ending with either the next slash (not included)
  * or the end of the string.
@@ -654,6 +746,10 @@ static void squashDirectories(char *url)
 	if (strchr("#?\1", *dd))
 		return;
 	--dd;
+/* dd could point to : in bogus code such as <A href=crap:foobar> */
+/* crap: looks like a slashless protocol, perhaps unknown to us. */
+	if (*dd == ':')
+		return;
 	if (*dd != '/')
 		i_printfExit(MSG_BadSlash, url);
 	end = dd + strcspn(dd, "?\1");
@@ -665,13 +761,13 @@ static void squashDirectories(char *url)
 /* We can ignore several steps because of a loop invariant: */
 /* After the test, *s is always a slash. */
 	while (*s) {
-		if (hasPrefix(s, "/./"))
+		if (!strncmp(s, "/./", 3))
 			s += 2;	/* Point s at 2nd slash */
 		else if (!strcmp(s, "/.")) {
 			s[1] = '\0';
 			/* We'll copy the segment "/" on the next iteration. */
 			/* And that will be the final iteration of the loop. */
-		} else if (hasPrefix(s, "/../")) {
+		} else if (!strncmp(s, "/../", 4)) {
 			s += 3;	/* Point s at 2nd slash */
 			snipLastSegment(&outPath, &outPathLen);
 		} else if (!strcmp(s, "/..")) {
@@ -700,8 +796,8 @@ char *resolveURL(const char *base, const char *rel)
 		return cloneString(rel);
 
 	if (!base)
-		base = EMPTYSTRING;
-	n = allocMem(strlen(base) + strlen(rel) + 12);
+		base = emptyString;
+	n = allocString(strlen(base) + strlen(rel) + 12);
 	debugPrint(5, "resolve(%s|%s)", base, rel);
 
 	if (rel[0] == '#' && !strchr(rel, '/')) {
@@ -799,6 +895,9 @@ bool sameURL(const char *s, const char *t)
 	const char *u, *p, *q;
 	int l;
 
+	if (!s || !t)
+		return false;
+
 /* check for post data at the end */
 	p = strchr(s, '\1');
 	if (!p)
@@ -831,11 +930,12 @@ bool sameURL(const char *s, const char *t)
 	return !memcmp(s, t, l);
 }				/* sameURL */
 
-/* Find some helpful text to print, in place of an image. */
-/* Text longer than 80 chars isn't helpful, so we return a static buffer. */
+/* Find some helpful text to print, in place of an image.
+ * Not sure why we would need more than 1000 chars for this,
+ * so return a static buffer. */
 char *altText(const char *base)
 {
-	static char buf[80];
+	static char buf[1000];
 	int len, n;
 	int recount = 0;
 	char *s;
@@ -923,16 +1023,12 @@ char *encodePostData(const char *s)
 
 	if (!s)
 		return 0;
-	if (s == EMPTYSTRING)
-		return EMPTYSTRING;
+	if (s == emptyString)
+		return emptyString;
 	post = initString(&l);
 	while (c = *s++) {
 		if (isalnumByte(c))
 			goto putc;
-		if (c == ' ') {
-			c = '+';
-			goto putc;
-		}
 		if (strchr("-._~*()!", c))
 			goto putc;
 		sprintf(buf, "%%%02X", (uchar) c);
@@ -966,7 +1062,7 @@ static char dohex(char c, const char **sp)
 char *decodePostData(const char *data, const char *name, int seqno)
 {
 	const char *s, *n, *t;
-	char *new = 0, *w = 0;
+	char *ns = 0, *w = 0;
 	int j = 0;
 	char c;
 
@@ -981,7 +1077,7 @@ char *decodePostData(const char *data, const char *name, int seqno)
 /* select attribute by number */
 		++j;
 		if (j == seqno)
-			w = new = allocMem(t - s + 1);
+			w = ns = allocString(t - s + 1);
 		if (seqno && !w)
 			continue;
 		if (name)
@@ -1011,7 +1107,7 @@ char *decodePostData(const char *data, const char *name, int seqno)
 			if (name)
 				continue;
 			*w = 0;
-			return new;
+			return ns;
 		}
 		if (w)
 			*w++ = c;
@@ -1021,7 +1117,7 @@ char *decodePostData(const char *data, const char *name, int seqno)
 				continue;
 			if (*n)
 				continue;
-			w = new = allocMem(t - s + 1);
+			w = ns = allocString(t - s + 1);
 		}
 
 /* At this point we have a match */
@@ -1031,7 +1127,7 @@ char *decodePostData(const char *data, const char *name, int seqno)
 			*w++ = c;
 		}
 		*w = 0;
-		return new;
+		return ns;
 	}
 
 	return 0;
@@ -1040,7 +1136,6 @@ char *decodePostData(const char *data, const char *name, int seqno)
 void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p)
 {
 	const char *s;
-	char *new;
 	if (memEqualCI(url, "mailto:", 7))
 		url += 7;
 	s = url + strcspn(url, "/?");
@@ -1059,173 +1154,3 @@ void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p)
 	if (body_p)
 		*body_p = decodePostData(url, "body", 0);
 }				/* decodeMailURL */
-
-bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l)
-{
-	bool base64 = false;
-	const char *mediatype_start;
-	const char *data_sep;
-	const char *cp;
-	size_t encoded_len;
-
-	*data = *mediatype = EMPTYSTRING;
-	*data_l = 0;
-
-	if (!isDataURI(uri))
-		return false;
-
-	mediatype_start = uri + 5;
-	data_sep = strchr(mediatype_start, ',');
-
-	if (!data_sep)
-		return false;
-
-	for (cp = data_sep - 1; (cp >= mediatype_start && *cp != ';'); cp--);
-
-	if (cp >= mediatype_start && memEqualCI(cp, ";base64,", 8)) {
-		base64 = true;
-		*mediatype = pullString1(mediatype_start, cp);
-	} else {
-		*mediatype = pullString1(mediatype_start, data_sep);
-	}
-
-	encoded_len = strlen(data_sep + 1);
-	*data = pullString(data_sep + 1, encoded_len);
-	unpercentString(*data);
-
-	if (!base64) {
-		*data_l = strlen(*data);
-	} else {
-		char *data_end = *data + strlen(*data);
-		int unpack_ret = base64Decode(*data, &data_end);
-		if (unpack_ret != GOOD_BASE64_DECODE) {
-			nzFree(*mediatype);
-			*mediatype = EMPTYSTRING;
-			nzFree(*data);
-			*data = EMPTYSTRING;
-			return false;
-		}
-		*data_end = '\0';
-		*data_l = data_end - *data;
-	}
-
-	return true;
-}			/* parseDataURI */
-
-/*********************************************************************
-Given a protocol and a domain, find the proxy server
-to mediate your request.
-This is the C version, using entries in .ebrc.
-There is a javascript version of the same name, that we will support later.
-This is a beginning, and it can be used even when javascript is disabled.
-A return of null means DIRECT, and this is the default
-if we don't match any of the proxy entries.
-*********************************************************************/
-
-static const char *findProxyInternal(const char *prot, const char *domain)
-{
-	struct PXENT *px = proxyEntries;
-	int i;
-
-/* first match wins */
-	for (i = 0; i < maxproxy; ++i, ++px) {
-
-		if (px->prot) {
-			char *s = px->prot;
-			char *t;
-			int rc;
-			while (*s) {
-				t = strchr(s, '|');
-				if (t)
-					*t = 0;
-				rc = stringEqualCI(s, prot);
-				if (t)
-					*t = '|';
-				if (rc)
-					goto domain;
-				if (!t)
-					break;
-				s = t + 1;
-			}
-			continue;
-		}
-
-domain:
-		if (px->domain) {
-			int l1 = strlen(px->domain);
-			int l2 = strlen(domain);
-			if (l1 > l2)
-				continue;
-			l2 -= l1;
-			if (!stringEqualCI(px->domain, domain + l2))
-				continue;
-			if (l2 && domain[l2 - 1] != '.')
-				continue;
-		}
-
-		return px->proxy;
-	}
-
-	return 0;
-}				/* findProxyInternal */
-
-const char *findProxyForURL(const char *url)
-{
-	return findProxyInternal(getProtURL(url), getHostURL(url));
-}				/* findProxyForURL */
-
-static char **novs_hosts;
-size_t novs_hosts_avail;
-size_t novs_hosts_max;
-
-void addNovsHost(char *host)
-{
-	if (novs_hosts_max == 0) {
-		novs_hosts_max = 32;
-		novs_hosts = allocZeroMem(novs_hosts_max * sizeof(char *));
-	} else if (novs_hosts_avail >= novs_hosts_max) {
-		novs_hosts_max *= 2;
-		novs_hosts =
-		    reallocMem(novs_hosts, novs_hosts_max * sizeof(char *));
-	}
-	novs_hosts[novs_hosts_avail++] = host;
-}				/* addNovsHost */
-
-/* Return true if the cert for this host should be verified. */
-static bool mustVerifyHost(const char *host)
-{
-	size_t this_host_len = strlen(host);
-	size_t i;
-
-	if (!verifyCertificates)
-		return false;
-
-	for (i = 0; i < novs_hosts_avail; i++) {
-		size_t l1 = strlen(novs_hosts[i]);
-		size_t l2 = this_host_len;
-		if (l1 > l2)
-			continue;
-		l2 -= l1;
-		if (!stringEqualCI(novs_hosts[i], host + l2))
-			continue;
-		if (l2 && host[l2 - 1] != '.')
-			continue;
-		return false;
-	}
-	return true;
-}				/* mustVerifyHost */
-
-CURLcode setCurlURL(CURL * h, const char *url)
-{
-	const char *proxy = findProxyForURL(url);
-	if (!proxy)
-		proxy = "";
-	else
-		debugPrint(3, "proxy %s", proxy);
-	const char *host = getHostURL(url);
-	unsigned long verify = mustVerifyHost(host);
-	curl_easy_setopt(h, CURLOPT_PROXY, proxy);
-	curl_easy_setopt(h, CURLOPT_SSL_VERIFYPEER, verify);
-	curl_easy_setopt(h, CURLOPT_SSL_VERIFYHOST, verify);
-	return curl_easy_setopt(h, CURLOPT_URL, url);
-}				/* setCurlURL */

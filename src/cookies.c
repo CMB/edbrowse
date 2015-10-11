@@ -43,9 +43,10 @@ static struct cookie *cookie_from_netscape_line(char *cookie_line)
  * machine-generated. */
 		if (cookie_line[0] != '#' &&
 		    count_tabs(cookie_line) == FIELDS_PER_COOKIE_LINE - 1) {
+			char *start, *end;
 			new_cookie = allocZeroMem(sizeof(struct cookie));
-			char *start = cookie_line;
-			char *end = strchr(cookie_line, '\t');
+			start = cookie_line;
+			end = strchr(cookie_line, '\t');
 			new_cookie->domain = pullString1(start, end);
 			start = end + 1;
 			end = strchr(start, '\t');
@@ -147,10 +148,10 @@ static char *netscapeCookieLine(const struct cookie *c)
  * the Netscape cookie file format, and pass that to libcurl. */
 static CURLcode cookieForLibcurl(const struct cookie *c)
 {
+	CURLcode ret;
 	char *cookLine = netscapeCookieLine(c);
 	debugPrint(3, "cookie for libcurl");
-	CURLcode ret =
-	    curl_easy_setopt(http_curl_handle, CURLOPT_COOKIELIST, cookLine);
+	ret = curl_easy_setopt(http_curl_handle, CURLOPT_COOKIELIST, cookLine);
 	nzFree(cookLine);
 	return ret;
 }				/* cookieForLibcurl */
@@ -194,7 +195,7 @@ bool receiveCookie(const char *url, const char *str)
 	const char *p, *q, *server;
 	char *date, *s;
 
-	debugPrint(3, "%s", str);
+	debugPrint(3, "cookie %s", str);
 
 	server = getHostURL(url);
 	if (server == 0 || !*server)
@@ -215,7 +216,7 @@ bool receiveCookie(const char *url, const char *str)
 	if (p - q > 0)
 		c->value = pullString1(q, p);
 	else
-		c->value = EMPTYSTRING;
+		c->value = emptyString;
 
 	c->server = cloneString(server);
 

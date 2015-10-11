@@ -29,6 +29,7 @@
 #include <curl/curl.h>
 #ifdef DOSLIKE
 #include <io.h>
+#include <direct.h> // for _mkdir, ...
 #else
 #include <unistd.h>
 #endif
@@ -57,12 +58,11 @@ typedef unsigned long ulong;
 typedef unsigned char uchar;
 
 /* We use unsigned char for boolean fields. */
+#ifndef __cplusplus
 typedef uchar bool;
 #define false 0
 #define true 1
-
-typedef unsigned int IP32bit;
-#define NULL_IP (IP32bit)(-1)
+#endif
 
 /*********************************************************************
 Include the header file that connects edbrowse to the js process.
@@ -103,6 +103,7 @@ typedef uchar *pst;		/* perl string */
  * See the comments in buffers.c for the rationale. */
 #define InternalCodeChar '\2'
 #define InternalCodeCharAlternate '\1'
+#define TableCellChar '\3'
 
 /* How long can an absolute path be? */
 #define ABSPATH 256
@@ -110,8 +111,6 @@ typedef uchar *pst;		/* perl string */
 #define MAXRE 400
 /* How long can an entered line be? */
 #define MAXTTYLINE 256
-/* Longest line that can take the breakline command */
-#define REPLACELINELEN 50000
 /* The longest string, in certain contexts. */
 #define MAXSTRLEN 1024
 /* How about user login and password? */
@@ -149,7 +148,7 @@ typedef uchar *pst;		/* perl string */
 /* the version of edbrowse */
 extern const char *version;
 extern const char eol[];	/* internet end of line */
-extern char EMPTYSTRING[];	/* use this whenever you would use "" */
+extern char emptyString[];	/* use this whenever you would use "" */
 
 /* Here are the strings you can send out to identify this browser.
  * Most of the time we will send out the first string, edbrowse-2.15.3.
@@ -161,6 +160,10 @@ extern char EMPTYSTRING[];	/* use this whenever you would use "" */
  * Tell them you're Explorer, and walk right in.
  * Anyways, this array holds up to 10 user agent strings. */
 extern char *userAgents[10], *currentAgent;
+extern char *newlocation;
+extern int newloc_d; /* delay */
+extern bool newloc_r; /* location replaces this page */
+extern const char *ebrc_string; /* default ebrc file */
 
 struct eb_curl_callback_data {
 	char **buffer;
@@ -188,7 +191,9 @@ extern int maxproxy;
 struct MIMETYPE {
 	char *type, *desc;
 	char *suffix, *prot, *program;
-	bool stream;
+	char *content;
+	char outtype;
+	bool stream, download;
 };
 extern struct MIMETYPE mimetypes[];
 extern int maxMime;		/* how many mime types specified */
@@ -210,18 +215,16 @@ extern int verifyCertificates;	/* is a certificate required for the ssl connecti
 extern int displayLength;	/* when printing a line */
 extern int jsPool;		/* size of js pool in megabytes */
 extern int webTimeout, mailTimeout;
-extern int browseLine;		/* line number, for error reporting */
+extern uchar browseLocal;
 extern bool sqlPresent;		/* Was edbrowse compiled with SQL built in? */
 extern bool ismc;		/* Is the program running as a mail client? */
 extern bool isimap;		/* Is the program running as an imap client? */
-extern bool down_bg; /* download in background */
+extern bool down_bg;		/* download in background */
 extern int eb_lang;		/* edbrowse language, determined by $LANG */
 extern bool cons_utf8;		/* does the console expect utf8? */
 extern bool iuConvert;		/* perform iso utf8 conversions automatically */
 extern char type8859;		/* 1 through 15 */
 extern bool js_redirects;	/* window.location = new_url */
-extern uchar browseLocal;	/* browsing a local file */
-extern bool htmlAttrVal_nl;	/* allow nl in the attribute of an html tag */
 extern bool passMail;		/* pass mail across the filters */
 extern bool errorExit;		/* exit on any error, for scripting purposes */
 extern bool isInteractive;
@@ -239,6 +242,7 @@ extern int localAccount;	/* this is the smtp server for outgoing mail */
 extern char *mailDir;		/* move to this directory when fetching mail */
 extern char *downDir;		/* the download directory */
 extern char *mailUnread;	/* place to hold fetched but unread mail */
+extern char *mailReply;		/* file to hold reply info for each email */
 /* Keep a copy of unformatted mail that you probably won't need again,
  * but you never know. Should probably live somewhere under .Trash */
 extern char *mailStash;
@@ -248,25 +252,22 @@ extern bool caseInsensitive, searchStringsAll;
 extern bool allowRedirection;	/* from http code 301, or http refresh */
 extern bool sendReferrer;	/* in the http header */
 extern bool allowJS;		/* javascript on */
+extern bool htmlGenerated;
 extern bool helpMessagesOn;	/* no need to type h */
+extern bool pluginsOn;		/* plugins are active */
 extern bool showHiddenFiles;	/* during directory scan */
-extern uchar dirWrite;		/* directory write mode, e.g. rename files */
-extern uchar endMarks;		/* do we print ^ $ at the start and end of lines? */
 extern int context;		/* which session (buffer) are we in? */
 extern uchar linePending[];
 extern char *changeFileName;
 extern char *addressFile;	/* your address book */
 extern char *serverData;
 extern int serverDataLen;
-extern char replaceLine[];
+extern char *breakLineResult;
 extern char *currentReferrer;
 extern char *home;		/* home directory */
 extern char *recycleBin;	/* holds deleted files */
 extern char *configFile, *sigFile, *sigFileEnd;
 extern char *cookieFile;	/* persistent cookies */
-extern char *edbrowseTempFile;
-extern char *edbrowseTempPDF;
-extern char *edbrowseTempHTML;
 
 struct listHead {
 	void *next;
@@ -292,6 +293,7 @@ x is unspecified.
 
 struct inputChange {
 	struct inputChange *next, *prev;
+	struct htmlTag *t;
 	int tagno;
 	char major, minor;
 	char filler1, filler2;
@@ -304,7 +306,7 @@ struct lineMap {
 	pst text;
 	char ds1, ds2;		/* directory suffix */
 	bool gflag;		/* for g// */
-	bool jsup;		/* javascript has updated this line in the buffer */
+	char filler;
 };
 #define LMSIZE sizeof(struct lineMap)
 
@@ -323,7 +325,8 @@ struct ebWindow {
 	char *referrer;
 	char *baseDirName;	/* when scanning a directory */
 	char *ft, *fd, *fk;	/* title, description, keywords */
-	char *fto;		/* original title, before andTranslate */
+	char *hbase; /* base for href references */
+	char *lastrender;
 	char *mailInfo;
 	char lhs[MAXRE], rhs[MAXRE];	/* remembered substitution strings */
 	struct lineMap *map, *r_map;
@@ -335,6 +338,7 @@ struct ebWindow {
  * and used thereafter for hyperlinks, fill-out forms, etc. */
 	struct htmlTag **tags;
 	int numTags, allocTags;
+	const struct MIMETYPE *mt;
 	bool lhs_yes:1;
 	bool rhs_yes:1;
 	bool binMode:1;		/* binary file */
@@ -345,9 +349,11 @@ struct ebWindow {
 	bool iso8859Mode:1;
 	bool browseMode:1;	/* browsing html */
 	bool changeMode:1;	/* something has changed in this file */
+	bool quitMode:1;	/* you can quit this buffer any time */
 	bool dirMode:1;		/* directory mode */
 	bool undoable:1;	/* undo is possible */
 	bool sqlMode:1;		/* accessing a table */
+	bool baseset:1; /* <base> tag seen */
 	char *dw;		/* document.write string */
 	int dw_l;		/* length of the above */
 /* The javascript context and window corresponding to this edbrowse buffer.
@@ -360,6 +366,7 @@ struct ebWindow {
 	struct DBTABLE *table;	/* if in sqlMode */
 };
 extern struct ebWindow *cw;	/* current window */
+extern struct ebWindow in_js_cw; /* window within edbrowse-js */
 
 /* quickly grab a tag from the current window via its sequence number:
  * tagList[n] */
@@ -386,34 +393,54 @@ extern struct ebSession sessionList[];
 extern struct ebSession *cs;	/* current session */
 
 /* The information on an html tag */
+#define MAXTAGNAME 12
 struct tagInfo {
-	const char *name;
+	const char name[MAXTAGNAME];
 	const char *desc;
 	int action;
-	uchar nest;		/* must nest, like parentheses */
 	uchar para;		/* paragraph and line breaks */
 	ushort bits;		/* a bunch of boolean attributes */
 };
+extern const struct tagInfo availableTags[];
+
+/* Information on tagInfo->bits */
+/* support innerHTML */
+#define TAG_INNERHTML 1
+/* You won't see the text between <foo> and </fooo> */
+#define TAG_INVISIBLE 2
+/* sometimes </foo> means nothing. */
+#define TAG_NOSLASH 4
 
 /* The structure for an html tag.
  * These tags are at times linked with js objects,
  * or even created by js objects. */
 struct htmlTag {
+/* maintain a tree structure */
+	struct htmlTag *parent, *firstchild, *sibling;
+/* connect <foo> and </foo> */
+	struct htmlTag *balance;
 	jsobjtype jv;		/* corresponding java variable */
 	int seqno;
-	int ln;			/* line number */
+	char *js_file;
+	int js_ln;			/* line number of javascript */
 	int lic;		/* list item count, highly overloaded */
+	int slic; /* start list item count */
 	int action;
 	const struct tagInfo *info;
+	char *textval;	/* for text tags only */
+	const char **attributes;
+	const char **atvals;
 /* the form that owns this input tag */
 	struct htmlTag *controller;
+	uchar step; /* prerender, decorate, runscript */
 	bool slash:1;		/* as in </A> */
-	bool balanced:1;	/* <foo> and </foo> */
-	bool retain:1;
+	bool textin:1; /* <a> some text </a> */
+	bool deleted:1; /* deleted from the current buffer */
 	bool multiple:1;
 	bool rdonly:1;
 	bool clickable:1;	/* but not an input field */
 	bool secure:1;
+	bool created:1;
 	bool checked:1;
 	bool rchecked:1;	/* for reset */
 	bool post:1;		/* post, rather than get */
@@ -422,17 +449,21 @@ struct htmlTag {
 	bool bymail:1;		/* send by mail, rather than http */
 	bool submitted:1;
 	bool onclick:1;
+	bool onchange:1;
 	bool onsubmit:1;
 	bool onreset:1;
-	bool onchange:1;
+	bool onload:1;
+	bool onunload:1;
+	bool doorway:1; /* doorway to javascript */
 	char subsup;		/* span turned into sup or sub */
 	uchar itype;		/* input type = */
-	short ninp;		/* number of nonhidden inputs */
-	char *attrib;
+	int ninp;		/* number of nonhidden inputs */
 	char *name, *id, *value, *href;
+	const char *rvalue; /* for reset */
 /* class=foo becomes className = "foo" when you carry from html to javascript,
  * don't ask me why. */
 	char *classname;
+	char *innerHTML; /* the html string under this tag */
 	int inner;		/* for inner html */
 };
 
@@ -441,16 +472,19 @@ enum {
 	TAGACT_ZERO, TAGACT_A, TAGACT_INPUT, TAGACT_TITLE, TAGACT_TA,
 	TAGACT_BUTTON, TAGACT_SELECT, TAGACT_OPTION,
 	TAGACT_NOP, TAGACT_JS, TAGACT_H, TAGACT_SUB, TAGACT_SUP, TAGACT_OVB,
-	TAGACT_DW, TAGACT_BODY, TAGACT_HEAD,
+	TAGACT_OL, TAGACT_UL, TAGACT_DL,
+	TAGACT_TEXT, TAGACT_BODY, TAGACT_HEAD,
 	TAGACT_MUSIC, TAGACT_IMAGE, TAGACT_BR, TAGACT_IBR, TAGACT_P,
-	TAGACT_BASE, TAGACT_META, TAGACT_PRE,
-	TAGACT_DT, TAGACT_LI, TAGACT_HR, TAGACT_TABLE, TAGACT_TR, TAGACT_TD,
-	TAGACT_DIV, TAGACT_SPAN, TAGACT_HTML,
+	TAGACT_BASE, TAGACT_META, TAGACT_PRE, TAGACT_TBODY,
+	TAGACT_DT, TAGACT_DD, TAGACT_LI, TAGACT_TABLE, TAGACT_TR, TAGACT_TD,
+	TAGACT_DIV, TAGACT_SPAN, TAGACT_HR,
 	TAGACT_FORM, TAGACT_FRAME,
 	TAGACT_MAP, TAGACT_AREA, TAGACT_SCRIPT, TAGACT_EMBED, TAGACT_OBJ,
 };
 
 /* htmlTag.itype */
+/* Warning - the order of these is important! */
+/* Corresponds to inp_types in decorate.c */
 enum {
 	INP_RESET, INP_BUTTON, INP_IMAGE, INP_SUBMIT,
 	INP_HIDDEN,
@@ -458,13 +492,19 @@ enum {
 	INP_SELECT, INP_TA, INP_RADIO, INP_CHECKBOX,
 };
 
-/* Last tag in the list parsed from html */
-extern struct htmlTag *topTag;
+/* For traversing a tree of html nodes, this is the callback function */
+typedef void (*nodeFunction) (struct htmlTag * node, bool opentag);
+extern nodeFunction traverse_callback;
 
 /* Return codes for base64Decode() */
 #define GOOD_BASE64_DECODE 0
 #define BAD_BASE64_DECODE 1
 #define EXTRA_CHARS_BASE64_DECODE 2
+
+#ifdef DOSLIKE
+/* windows mkdir takes only one argument */
+#define mkdir(a,b) _mkdir(a)
+#endif
 
 /* function prototypes */
 #include "eb.p"

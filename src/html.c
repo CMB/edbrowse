@@ -5,7 +5,15 @@
 
 #include "eb.h"
 
+static void runOnload(void);
+
 #define handlerPresent(obj, name) (has_property(obj, name) == EJ_PROP_FUNCTION)
+
+#ifdef _MSC_VER			// sleep(secs) macro
+#define SLEEP(a) Sleep(a * 1000)
+#else // !_MSC_VER
+#define SLEEP sleep
+#endif // _MSC_VER y/n
 
 static const char *const handlers[] = {
 	"onmousemove", "onmouseover", "onmouseout", "onmouseup", "onmousedown",
@@ -24,379 +32,8 @@ static const char *const inp_types[] = {
 	0
 };
 
-static const char dfvl[] = "defaultValue";
-static const char dfck[] = "defaultChecked";
-
-struct htmlTag *topTag;
-static char *topAttrib;
-static char *basehref;
-static struct htmlTag *currentForm;	/* the open form */
-int browseLine;			/* for error reporting */
 static jsobjtype js_reset, js_submit;
-static char *radioCheck;
-static int radio_l;
-static char *preamble;
-int preamble_l;
-
-/* paranoia check on the number of tags */
-static void tagCountCheck(void)
-{
-	if (sizeof(int) == 4) {
-		if (cw->numTags > MAXLINES)
-			i_printfExit(MSG_LineLimit);
-	}
-}				/* tagCountCheck */
-
-static void pushTag(struct htmlTag *t)
-{
-	int a = cw->allocTags;
-	if (cw->numTags == a) {
-/* make more room */
-		a = a / 2 * 3;
-		cw->tags =
-		    (struct htmlTag **)reallocMem(cw->tags, a * sizeof(t));
-		cw->allocTags = a;
-	}
-	tagList[cw->numTags++] = t;
-	tagCountCheck();
-}				/* pushTag */
-
-static bool htmlAttrPresent(const char *e, const char *name)
-{
-	char *a;
-	if (!(a = htmlAttrVal(e, name)))
-		return false;
-	nzFree(a);
-	return true;
-}				/* htmlAttrPresent */
-
-static char *hrefVal(const char *e, const char *name)
-{
-	char *a;
-	htmlAttrVal_nl = true;
-	a = htmlAttrVal(e, name);
-	htmlAttrVal_nl = false;	/* put it back */
-	return a;
-}				/* hrefVal */
-
-static void toPreamble(int tagno, const char *msg, const char *j, const char *h)
-{
-	char buf[8];
-	char fn[40], *s;
-
-	sprintf(buf, "\r%c%d{", InternalCodeChar, tagno);
-	stringAndString(&preamble, &preamble_l, buf);
-	stringAndString(&preamble, &preamble_l, msg);
-
-	if (h) {
-		stringAndString(&preamble, &preamble_l, ": ");
-		stringAndString(&preamble, &preamble_l, h);
-	} else if (j) {
-		skipWhite(&j);
-		if (memEqualCI(j, "javascript:", 11))
-			j += 11;
-		skipWhite(&j);
-		if (isalphaByte(*j) || *j == '_') {
-			stringAndString(&preamble, &preamble_l, ": ");
-			for (s = fn; isalnumByte(*j) || *j == '_'; ++j) {
-				if (s < fn + sizeof(fn) - 3)
-					*s++ = *j;
-			}
-			strcpy(s, "()");
-			skipWhite(&j);
-			if (*j == '(')
-				stringAndString(&preamble, &preamble_l, fn);
-		}
-	}
-
-	sprintf(buf, "%c0}\r", InternalCodeChar);
-	stringAndString(&preamble, &preamble_l, buf);
-}				/* toPreamble */
-
-/*********************************************************************
-Comments on struct tagInfo member nest, the nestability of a tag.
-
-nest = 0:
-Like <input>, where </input> doesn't make any sense.
-</input> is silently tolerated without error,
-but stuff between <input> and </input> isn't really bound up
-as objects under the input tag.
-Some conventions require the close, like <frame></frame>,
-but even here there should be nothing in between, and if there is
-it is a mistake, and is not bound to the frame tag.
-
-nest = 1:
-Like <p> here is a paragraph </p>.
-Semantically there should not be a paragraph inside a paragraph,
-so if you run into another <p> that implicitly closes the previous <p>.
-In other words <p> implies </p><p>.
-Web pages usually close paragraphs properly, but not always lists.
-<ol> <li> item 1 <li> item 2 <li> item 3 </ol>.
-
-nest = 3:
-Strict nesting, like <b> bold text </b>.
-this should close properly, and not out of sequence like <b> <p> </b>.
-
-Closing a tag </foo>:
-If 0 then we don't care.
-If 1 or 3 then back up and find the first open, unbalanced, tag of the same type.
-Close the open tag and all open tags in between.
-
-Opening a tag <foo>:
-If 0 then we don't care.
-If 1 or 3 then push the tag and leave it unbalanced,
-but if 1, back up and find the first unbalanced tag of any type.
-If it is the same type then close off that tag.
-This solves the <li> item 1 <li> item 2 problem,
-but not <li> stuff <p> more stuff <li>
-so it's just not a perfect solution.
-
-Parent node:
-Open a tag that corresponds to an object,
-and if a js object is created, back up to the first open tag
-above it that corresponds to an object,
-and if there is indeed a js object for that tag, create the parent link.
-
-children:
-A post scan derives children from parents.
-So if I got the parent logic wrong, and I probably did,
-I can fix it, and then the children will be fixed as well.
-It's a normal form kind of thing.
-Not yet implemented.
-*********************************************************************/
-
-/* Close an open anchor when you see this tag. */
-#define TAG_CLOSEA 1
-/* You won't see the text between <foo> and </fooo> */
-#define TAG_INVISIBLE 2
-/* sometimes </foo> means nothing. */
-#define TAG_NOSLASH 4
-/* This tag should become a corresponding js object in the tree. */
-#define TAG_JSOBJ 8
-
-static const struct tagInfo elements[] = {
-	{"BASE", "base reference for relative URLs", TAGACT_BASE, 0, 0, 13},
-	{"A", "an anchor", TAGACT_A, 3, 0, 9},
-	{"INPUT", "an input item", TAGACT_INPUT, 0, 0, 13},
-	{"TITLE", "the title", TAGACT_TITLE, 3, 0, 9},
-	{"TEXTAREA", "an input text area", TAGACT_TA, 3, 0, 9},
-	{"SELECT", "an option list", TAGACT_SELECT, 3, 0, 9},
-	{"OPTION", "a select option", TAGACT_OPTION, 0, 0, 13},
-	{"SUB", "a subscript", TAGACT_SUB, 3, 0, 0},
-	{"SUP", "a superscript", TAGACT_SUP, 3, 0, 0},
-	{"OVB", "an overbar", TAGACT_OVB, 3, 0, 0},
-	{"FONT", "a font", TAGACT_NOP, 3, 0, 0},
-	{"CENTER", "centered text", TAGACT_NOP, 3, 0, 0},
-	{"DOCWRITE", "document.write() text", TAGACT_DW, 0, 0, 0},
-	{"CAPTION", "a caption", TAGACT_NOP, 3, 5, 0},
-	{"HEAD", "the html header information", TAGACT_HEAD, 1, 0, 13},
-	{"BODY", "the html body", TAGACT_BODY, 1, 0, 13},
-	{"BGSOUND", "background music", TAGACT_MUSIC, 0, 0, 5},
-	{"AUDIO", "audio passage", TAGACT_MUSIC, 0, 0, 5},
-	{"META", "a meta tag", TAGACT_META, 0, 0, 12},
-	{"IMG", "an image", TAGACT_IMAGE, 0, 0, 12},
-	{"IMAGE", "an image", TAGACT_IMAGE, 0, 0, 12},
-	{"BR", "a line break", TAGACT_BR, 0, 1, 4},
-	{"P", "a paragraph", TAGACT_NOP, 1, 2, 13},
-	{"DIV", "a divided section", TAGACT_DIV, 3, 5, 8},
-	{"MAP", "a map of images", TAGACT_NOP, 3, 5, 8},
-	{"HTML", "html", TAGACT_HTML, 1, 0, 13},
-	{"BLOCKQUOTE", "a quoted paragraph", TAGACT_NOP, 1, 10, 9},
-	{"H1", "a level 1 header", TAGACT_NOP, 1, 10, 9},
-	{"H2", "a level 2 header", TAGACT_NOP, 1, 10, 9},
-	{"H3", "a level 3 header", TAGACT_NOP, 1, 10, 9},
-	{"H4", "a level 4 header", TAGACT_NOP, 1, 10, 9},
-	{"H5", "a level 5 header", TAGACT_NOP, 1, 10, 9},
-	{"H6", "a level 6 header", TAGACT_NOP, 1, 10, 9},
-	{"DT", "a term", TAGACT_DT, 1, 2, 13},
-	{"DD", "a definition", TAGACT_DT, 1, 1, 13},
-	{"LI", "a list item", TAGACT_LI, 1, 1, 13},
-	{"UL", "a bullet list", TAGACT_NOP, 3, 5, 9},
-	{"DIR", "a directory list", TAGACT_NOP, 3, 5, 9},
-	{"MENU", "a menu", TAGACT_NOP, 3, 5, 9},
-	{"OL", "a numbered list", TAGACT_NOP, 3, 5, 9},
-	{"DL", "a definition list", TAGACT_NOP, 3, 5, 9},
-	{"HR", "a horizontal line", TAGACT_HR, 0, 5, 5},
-	{"FORM", "a form", TAGACT_FORM, 1, 0, 9},
-	{"BUTTON", "a button", TAGACT_INPUT, 0, 0, 13},
-/* we traditionally write </frame>,
- * but it really isn't meaningful to put anything at all in between. Thus nest = 0. */
-	{"FRAME", "a frame", TAGACT_FRAME, 0, 2, 13},
-	{"IFRAME", "a frame", TAGACT_FRAME, 0, 2, 13},
-	{"MAP", "an image map", TAGACT_MAP, 0, 2, 13},
-	{"AREA", "an image map area", TAGACT_AREA, 0, 0, 9},
-	{"TABLE", "a table", TAGACT_TABLE, 3, 10, 9},
-	{"TR", "a table row", TAGACT_TR, 3, 5, 9},
-	{"TD", "a table entry", TAGACT_TD, 3, 0, 9},
-	{"TH", "a table heading", TAGACT_TD, 3, 0, 9},
-	{"PRE", "a preformatted section", TAGACT_PRE, 3, 1, 0},
-	{"LISTING", "a listing", TAGACT_PRE, 3, 1, 0},
-	{"XMP", "an example", TAGACT_PRE, 3, 1, 0},
-	{"FIXED", "a fixed presentation", TAGACT_NOP, 3, 1, 0},
-	{"CODE", "a block of code", TAGACT_NOP, 3, 0, 0},
-	{"SAMP", "a block of sample text", TAGACT_NOP, 3, 0, 0},
-	{"ADDRESS", "an address block", TAGACT_NOP, 3, 1, 0},
-	{"STYLE", "a style block", TAGACT_NOP, 0, 0, 2},
-	{"SCRIPT", "a script", TAGACT_SCRIPT, 0, 0, 9},
-	{"NOSCRIPT", "no script section", TAGACT_NOP, 3, 0, 3},
-	{"NOFRAMES", "no frames section", TAGACT_NOP, 3, 0, 3},
-	{"EMBED", "embedded html", TAGACT_MUSIC, 0, 0, 5},
-	{"NOEMBED", "no embed section", TAGACT_NOP, 3, 0, 3},
-	{"OBJECT", "an html object", TAGACT_OBJ, 0, 0, 3},
-	{"EM", "emphasized text", TAGACT_JS, 3, 0, 0},
-	{"LABEL", "a label", TAGACT_JS, 3, 0, 0},
-	{"STRIKE", "emphasized text", TAGACT_JS, 3, 0, 0},
-	{"S", "emphasized text", TAGACT_JS, 3, 0, 0},
-	{"STRONG", "emphasized text", TAGACT_JS, 3, 0, 0},
-	{"B", "bold text", TAGACT_JS, 3, 0, 0},
-	{"I", "italicized text", TAGACT_JS, 3, 0, 0},
-	{"U", "underlined text", TAGACT_JS, 3, 0, 0},
-	{"DFN", "definition text", TAGACT_JS, 3, 0, 0},
-	{"Q", "quoted text", TAGACT_JS, 3, 0, 0},
-	{"ABBR", "an abbreviation", TAGACT_JS, 3, 0, 0},
-	{"SPAN", "an html span", TAGACT_SPAN, 3, 0, 0},
-	{"FRAMESET", "a frame set", TAGACT_JS, 3, 0, 1},
-	{NULL, NULL, 0}
-};
-
-void freeTags(struct ebWindow *w)
-{
-	int i, n;
-	struct htmlTag *t;
-	struct htmlTag **e;
-	struct ebWindow *side;
-
-/* if not browsing ... */
-	if (!(e = w->tags))
-		return;
-
-/* drop empty textarea buffers created by this session */
-	for (i = 0; i < w->numTags; ++i, ++e) {
-		t = *e;
-		if (t->action != TAGACT_INPUT)
-			continue;
-		if (t->itype != INP_TA)
-			continue;
-		if (!(n = t->lic))
-			continue;
-		if (!(side = sessionList[n].lw))
-			continue;
-		if (side->fileName)
-			continue;
-		if (side->dol)
-			continue;
-		if (side != sessionList[n].fw)
-			continue;
-/* We could have added a line, then deleted it */
-		side->changeMode = false;
-		cxQuit(n, 2);
-	}			/* loop over tags */
-
-	e = w->tags;
-	for (i = 0; i < w->numTags; ++i, ++e) {
-		t = *e;
-		nzFree(t->attrib);
-		nzFree(t->name);
-		nzFree(t->id);
-		nzFree(t->value);
-		nzFree(t->href);
-		nzFree(t->classname);
-		free(t);
-	}
-
-	free(w->tags);
-	w->tags = 0;
-	w->numTags = w->allocTags = 0;
-}				/* freeTags */
-
-static void get_js_event(const char *name)
-{
-	char *s;
-	int action = topTag->action;
-	int itype = topTag->itype;
-
-	if (!(s = htmlAttrVal(topAttrib, name)))
-		return;		/* not there */
-
-	if (topTag->jv && isJSAlive)
-		handlerSet(topTag->jv, name, s);
-	nzFree(s);
-
-/* This code is only here to print warnings if js is disabled
- * or otherwise broken.  Record the fact that handlers exist,
- * outside the context of js. */
-	if (stringEqual(name, "onclick")) {
-		if (action == TAGACT_A || action == TAGACT_AREA
-		    || action == TAGACT_FRAME || action == TAGACT_INPUT
-		    && (itype >= INP_RADIO || itype <= INP_SUBMIT)
-		    || action == TAGACT_OPTION) {
-			topTag->onclick = true;
-			if (currentForm && action == TAGACT_INPUT
-			    && itype == INP_BUTTON)
-				currentForm->submitted = true;
-		}
-	}
-	if (stringEqual(name, "onsubmit")) {
-		if (action == TAGACT_FORM)
-			topTag->onsubmit = true;
-	}
-	if (stringEqual(name, "onreset")) {
-		if (action == TAGACT_FORM)
-			topTag->onreset = true;
-	}
-	if (stringEqual(name, "onchange")) {
-		if (action == TAGACT_INPUT || action == TAGACT_SELECT) {
-			if (itype == INP_TA)
-				runningError(MSG_OnchangeText);
-			else if (itype > INP_HIDDEN && itype <= INP_SELECT) {
-				topTag->onchange = true;
-				if (currentForm)
-					currentForm->submitted = true;
-			}
-		}
-	}
-}				/* get_js_event */
-
-static bool strayClick;
-
-static void get_js_events(void)
-{
-	int j;
-	const char *t;
-	int action = topTag->action;
-	int itype = topTag->itype;
-
-	for (j = 0; t = handlers[j]; ++j)
-		get_js_event(t);
-
-	if (!topTag->jv)
-		return;
-	if (!isJSAlive)
-		return;
-
-/* Some warnings about some handlers that we just don't "handle" */
-	if (handlerPresent(topTag->jv, "onkeypress") ||
-	    handlerPresent(topTag->jv, "onkeyup")
-	    || handlerPresent(topTag->jv, "onkeydown"))
-		browseError(MSG_JSKeystroke);
-	if (handlerPresent(topTag->jv, "onfocus")
-	    || handlerPresent(topTag->jv, "onblur"))
-		browseError(MSG_JSFocus);
-	if (handlerPresent(topTag->jv, "ondblclick"))
-		runningError(MSG_Doubleclick);
-	if (handlerPresent(topTag->jv, "onclick")) {
-		if ((action == TAGACT_A || action == TAGACT_AREA || action == TAGACT_FRAME) && topTag->href || action == TAGACT_INPUT && (itype <= INP_SUBMIT || itype >= INP_RADIO)) ;	/* ok */
-		else
-			browseError(MSG_StrayOnclick);
-	}
-	if (handlerPresent(topTag->jv, "onchange")) {
-		if (action != TAGACT_INPUT && action != TAGACT_SELECT
-		    || itype == INP_TA)
-			browseError(MSG_StrayOnchange);
-	}
-/* Other warnings might be appropriate, but I'm going to assume this
- * is valid javascript, and you won't put an onsubmit function on <P> etc */
-}				/* get_js_events */
+uchar browseLocal;
 
 bool tagHandler(int seqno, const char *name)
 {
@@ -418,248 +55,7 @@ bool tagHandler(int seqno, const char *name)
 	return handlerPresent(t->jv, name);
 }				/* tagHandler */
 
-static char *getBaseHref(int n)
-{
-	const struct htmlTag *t;
-	if (n < 0)
-		n = cw->numTags;
-	do
-		--n;
-	while ((t = tagList[n])->action != TAGACT_BASE);
-	return t->href;
-}				/* getBaseHref */
-
-static void htmlMeta(void)
-{
-	char *name, *content, *heq;
-	char **ptr;
-
-	name = topTag->name;
-	content = htmlAttrVal(topAttrib, "content");
-	if (content == EMPTYSTRING)
-		content = 0;
-
-	domLink("Meta", 0, "metas", cw->docobj, 0);
-	if (topTag->jv)
-		set_property_string(topTag->jv, "content", content);
-
-	heq = htmlAttrVal(topAttrib, "http-equiv");
-	if (heq == EMPTYSTRING)
-		heq = 0;
-
-	if (heq && content) {
-		bool rc;
-		int delay;
-/* It's not clear if we should process the http refresh command
- * immediately, the moment we spot it, or if we finish parsing
- * all the html first.
- * Does it matter?  It might.
- * A subsequent meta tag could use http-equiv to set a cooky,
- * and we won't see that cooky if we jump to the new page right now.
- * And there's no telling what subsequent javascript might do.
- * So - I'm going to postpone the refresh, until everything is parsed.
- * Bear in mind, we really don't want to refresh if we're working
- * on a local file. */
-		if (stringEqualCI(heq, "Set-Cookie")) {
-			rc = receiveCookie(cw->fileName, content);
-			debugPrint(3, rc ? "jar" : "rejected");
-		}
-
-		if (allowRedirection && !browseLocal
-		    && stringEqualCI(heq, "Refresh")) {
-			if (parseRefresh(content, &delay)) {
-				char *newcontent;
-				unpercentURL(content);
-				newcontent = resolveURL(basehref, content);
-				gotoLocation(newcontent, delay, true);
-			}
-		}
-	}
-
-	if (name) {
-		ptr = 0;
-		if (stringEqualCI(name, "description"))
-			ptr = &cw->fd;
-		if (stringEqualCI(name, "keywords"))
-			ptr = &cw->fk;
-		if (ptr && !*ptr && content) {
-			stripWhite(content);
-			*ptr = content;
-			content = 0;
-		}
-	}
-
-	nzFree(content);
-	nzFree(heq);
-}				/* htmlMeta */
-
-static void htmlName(void)
-{
-	char *name = htmlAttrVal(topAttrib, "name");
-	char *id = htmlAttrVal(topAttrib, "id");
-	char *classname = htmlAttrVal(topAttrib, "class");
-	if (name == EMPTYSTRING)
-		name = 0;
-	topTag->name = name;
-	if (id == EMPTYSTRING)
-		id = 0;
-	topTag->id = id;
-	if (classname == EMPTYSTRING)
-		classname = 0;
-	topTag->classname = classname;
-}				/* htmlName */
-
-static void htmlHref(const char *desc)
-{
-	char *h = hrefVal(topAttrib, desc);
-	if (h == EMPTYSTRING) {
-		h = 0;
-		if (topTag->action == TAGACT_A)
-			h = cloneString("#");
-	}
-	if (h) {
-		unpercentURL(h);
-		topTag->href = resolveURL(basehref, h);
-		free(h);
-	}
-}				/* htmlHref */
-
-static void formControl(bool namecheck)
-{
-	const char *typedesc;
-	int itype = topTag->itype;
-	int isradio = itype == INP_RADIO;
-	int isselect = (itype == INP_SELECT) * 2;
-	char *myname = (topTag->name ? topTag->name : topTag->id);
-
-	if (currentForm) {
-		topTag->controller = currentForm;
-	} else if (itype != INP_BUTTON)
-		browseError(MSG_NotInForm2, topTag->info->desc);
-
-	if (namecheck && !myname)
-		browseError(MSG_FieldNoName, topTag->info->desc);
-
-	if (isJSAlive) {
-		if (currentForm && currentForm->jv) {
-			domLink("Element", 0, "elements", currentForm->jv,
-				isradio | isselect);
-		} else {
-			domLink("Element", 0, 0, cw->docobj,
-				isradio | isselect);
-		}
-	}
-
-	get_js_events();
-
-	if (!topTag->jv)
-		return;
-	if (!isJSAlive)
-		return;
-
-	if (itype <= INP_RADIO) {
-		set_property_string(topTag->jv, "value", topTag->value);
-		if (itype != INP_FILE) {
-/* No default value on file, for security reasons */
-			set_property_string(topTag->jv, dfvl, topTag->value);
-		}		/* not file */
-	}
-
-	if (isselect)
-		typedesc = topTag->multiple ? "select-multiple" : "select-one";
-	else
-		typedesc = inp_types[itype];
-	set_property_string(topTag->jv, "type", typedesc);
-
-	if (itype >= INP_RADIO) {
-		set_property_bool(topTag->jv, "checked", topTag->checked);
-		set_property_bool(topTag->jv, dfck, topTag->checked);
-	}
-}				/* formControl */
-
-static void htmlImage(void)
-{
-	char *a;
-
-	htmlHref("src");
-
-	if (!isJSAlive)
-		return;
-
-	domLink("Image", "src", "images", cw->docobj, 0);
-
-	get_js_events();
-
-/* don't know if javascript ever looks at alt.  Probably not. */
-	if (!topTag->jv)
-		return;
-	a = htmlAttrVal(topAttrib, "alt");
-	if (a)
-		set_property_string(topTag->jv, "alt", a);
-	nzFree(a);
-}				/* htmlImage */
-
-static void htmlForm(void)
-{
-	char *a;
-
-	if (topTag->slash)
-		return;
-	currentForm = topTag;
-	htmlHref("action");
-
-	a = htmlAttrVal(topAttrib, "method");
-	if (a) {
-		if (stringEqualCI(a, "post"))
-			topTag->post = true;
-		else if (!stringEqualCI(a, "get"))
-			browseError(MSG_GetPost);
-		nzFree(a);
-	}
-
-	a = htmlAttrVal(topAttrib, "enctype");
-	if (a) {
-		if (stringEqualCI(a, "multipart/form-data"))
-			topTag->mime = true;
-		else if (!stringEqualCI(a, "application/x-www-form-urlencoded"))
-			browseError(MSG_Enctype);
-		nzFree(a);
-	}
-
-	if (a = topTag->href) {
-		const char *prot = getProtURL(a);
-		if (prot) {
-			if (stringEqualCI(prot, "mailto"))
-				topTag->bymail = true;
-			else if (stringEqualCI(prot, "javascript"))
-				topTag->javapost = true;
-			else if (stringEqualCI(prot, "https"))
-				topTag->secure = true;
-			else if (!stringEqualCI(prot, "http"))
-				browseError(MSG_FormProtBad, prot);
-		}
-	}
-
-	nzFree(radioCheck);
-	radioCheck = initString(&radio_l);
-
-	if (!isJSAlive)
-		return;
-
-	domLink("Form", "action", "forms", cw->docobj, 0);
-	if (!topTag->jv)
-		return;
-
-	get_js_events();
-
-	instantiate_array(topTag->jv, "elements");
-}				/* htmlForm */
-
-static void scriptsPending(void);
 static void formReset(const struct htmlTag *form);
-static char *encodeTags(char *html, bool fromSource);
-static bool nextInnerHTML(void);
-static bool nextInnerText(void);
 
 /*********************************************************************
 This function was originally written to incorporate any strings generated by
@@ -673,301 +69,12 @@ Every js activity should start with jSyncup() and end with jSideEffects().
 
 void jSideEffects(void)
 {
-	char *post;
-	bool rc;
-	struct htmlTag *t;
-	jsobjtype v;
-	char *timers;
-	int timers_l;
-
-	timers = initString(&timers_l);
-
-top:
-/* Are there other scripts waiting to run? */
-/* Do this first, so other javascript side effects can pile up. */
-	scriptsPending();
-
-	if (preamble[0]) {
-/* This has to be timers or intervals. copy the string,
- * as subsequent calls to encodeTags() will clear it. */
-		stringAndString(&timers, &timers_l, preamble);
-		nzFree(preamble);
-		preamble = initString(&preamble_l);
-	}
-
-	if (nextInnerHTML())
-		goto top;
-
-	if (nextInnerText())
-		goto top;
-
-	if (cw->dw) {
-/* parse document.write tags and put the text at the end */
-/* replace the <docwrite> tag with <html> */
-		memcpy(cw->dw, "<html>   \n", 10);
-		stringAndString(&cw->dw, &cw->dw_l, "</html>\n");
-/* I really have no idea what the base should be */
-		basehref = getBaseHref(-1);
-		post = encodeTags(cw->dw, false);
-		basehref = NULL;
-		cw->dw = 0;
-		cw->dw_l = 0;
-		if (strlen(post) > 1) {
-			if (cw->browseMode)
-				i_printf(MSG_NewLines, cw->dol + 1);
-			addTextToBuffer(post, strlen(post), cw->dol, false);
-		}
-		nzFree(post);
-		goto top;
-	}
-
-	if (timers_l) {
-/* New timers created. */
-		if (cw->browseMode)
-			i_printf(MSG_NewLines, cw->dol + 1);
-		post = htmlReformat(timers);
-		addTextToBuffer(post, strlen(post), cw->dol, false);
-		nzFree(post);
-		nzFree(timers);
-	}
-
-	rebuildSelectors();
-
-	applyInputChanges();
-
-	if (v = js_reset) {
-		js_reset = 0;
-		if (t = tagFromJavaVar(v))
-			formReset(t);
-	}
-
-	if (v = js_submit) {
-		js_submit = 0;
-		if (t = tagFromJavaVar(v)) {
-			rc = infPush(t->seqno, &post);
-			if (rc)
-				gotoLocation(post, 0, false);
-			else
-				showError();
-		}
-	}
+	debugPrint(4, "jSideEffects starts");
+	runScriptsPending();
+	debugPrint(4, "jSideEffects ends");
+/* now rerender and look for differences */
+	rerender(false);
 }				/* jSideEffects */
-
-/* Parse innerHTML and put it where it belongs */
-static bool nextInnerHTML(void)
-{
-	struct inputChange *ic;
-	int tagno;
-	int start;		/* new text starts after this line */
-	char *post;		/* processed html tags */
-	int ln, n, plen;
-	char *p, *s, *t;
-
-	foreach(ic, inputChangesPending) {
-		if (ic->major == 'i' && ic->minor == 'h')
-			goto found;
-	}
-	return false;
-
-found:
-	ic->major = 'x';
-	tagno = ic->tagno;
-	if (!locateInvisibleAnchor(tagno, &ln, &p, &s, &t))
-		return true;
-
-	basehref = getBaseHref(tagno);
-/* It's a bit awkward, but we have to clone the html text. This because
- * encodeTags() will free it, or realloc it to paste in more text
- * generated by document.write() etc. */
-	s = cloneString(ic->value);
-	post = encodeTags(s, false);
-	basehref = NULL;
-	if (strlen(post) <= 1) {
-		free(post);
-		return true;
-	}
-
-/* tag at start of line, put text before.
- * tag at end of line, put text after.
- * tag in the middle of the line, break the line. */
-	if (*t == '\n')
-		start = ln;
-	else if (s == p)
-		start = ln - 1;
-	else {
-		char *part1, *part2;
-		plen = pstLength((pst) p);
-		n = t - p;
-		part1 = allocMem(n + 1);
-		memcpy(part1, p, n);
-		part1[n] = '\n';
-		n = plen - n;
-		part2 = allocMem(n);
-		memcpy(part2, t, n);
-		if (!cw->browseMode || cw->map[ln].jsup)
-			free(cw->map[ln].text);
-		cw->map[ln].text = part1;
-/* and tack the second part onto post */
-		plen = strlen(post);
-		post = reallocMem(post, plen + n + 1);
-		memcpy(post + plen, part2, n);
-		post[plen + n] = 0;
-		free(part2);
-		start = ln;
-	}
-
-	if (cw->browseMode)
-		i_printf(MSG_NewLines, start + 1);
-	addTextToBuffer(post, strlen(post), start, false);
-	nzFree(post);
-	return true;
-}				/* nextInnerHTML */
-
-/* Put innerText into the buffer corresponding to that text area. */
-/* This is not a generated tag to hold innerHTML, it is the actual <textarea> tag. */
-static bool nextInnerText(void)
-{
-	struct inputChange *ic;
-	int tagno, side, ln;
-	char *p, *s1, *s2;
-	char *v;		/* short for ic->value */
-	int vlen;
-	struct htmlTag *t;
-
-	foreach(ic, inputChangesPending) {
-		if (ic->major == 'i' && ic->minor == 't')
-			goto found;
-	}
-	return false;
-
-found:
-	ic->major = 'x';
-	tagno = ic->tagno;
-	if (!locateTagInBuffer(tagno, &ln, &p, &s1, &s2))
-		return true;
-
-	t = tagList[tagno];
-/* the tag should alwaays be a textarea tag. */
-/* Not sure what to do if it's not. */
-	if (t->action != TAGACT_INPUT || t->itype != INP_TA) {
-		debugPrint(3,
-			   "innerText is applied to tag %d that is not a textarea.",
-			   tagno);
-		return true;
-	}
-
-/* 2 parts: innerText copies over to input->value
- * if js has not already done that,
- * and the text replaces what was in the side buffer. */
-
-	v = ic->value;
-	vlen = strlen(v);
-	if (isJSAlive && t->jv)
-		set_property_string(t->jv, "valueue", v);
-
-	side = t->lic;
-	if (side <= 0 || side >= MAXSESSION || side == context)
-		return true;
-	if (sessionList[side].lw == NULL)
-		return true;
-	if (cw->browseMode)
-		i_printf(MSG_BufferUpdated, side);
-	sideBuffer(side, v, vlen, 0);
-
-	return true;
-}				/* nextInnerText */
-
-static void htmlInput(void)
-{
-	int n = INP_TEXT;
-	int len;
-	char *myname = (topTag->name ? topTag->name : topTag->id);
-	char *s = htmlAttrVal(topAttrib, "type");
-	if (s && *s) {
-		caseShift(s, 'l');
-		n = stringInList(inp_types, s);
-		if (n < 0) {
-			browseError(MSG_InputType, s);
-			n = INP_TEXT;
-		}
-	} else if (stringEqual(topTag->info->name, "BUTTON")) {
-		n = INP_BUTTON;
-	}
-
-	nzFree(s);
-	topTag->itype = n;
-
-	if (htmlAttrPresent(topAttrib, "readonly"))
-		topTag->rdonly = true;
-	s = htmlAttrVal(topAttrib, "maxlength");
-	len = 0;
-	if (s)
-		len = stringIsNum(s);
-	nzFree(s);
-	if (len > 0)
-		topTag->lic = len;
-/* store the original text in value. */
-/* This makes it easy to push the reset button. */
-	s = htmlAttrVal(topAttrib, "value");
-	if (!s)
-		s = EMPTYSTRING;
-	topTag->value = s;
-	if (n >= INP_RADIO && htmlAttrPresent(topAttrib, "checked")) {
-		char namebuf[200];
-		if (n == INP_RADIO && myname &&
-		    radioCheck && strlen(myname) < sizeof(namebuf) - 3) {
-			if (!*radioCheck)
-				stringAndChar(&radioCheck, &radio_l, '|');
-			sprintf(namebuf, "|%s|", topTag->name);
-			if (strstr(radioCheck, namebuf)) {
-				browseError(MSG_RadioMany);
-				return;
-			}
-			stringAndString(&radioCheck, &radio_l, namebuf + 1);
-		}		/* radio name */
-		topTag->rchecked = true;
-		topTag->checked = true;
-	}
-
-	/* Even the submit fields can have a name, but they don't have to */
-	formControl(n > INP_SUBMIT);
-}				/* htmlInput */
-
-static void makeButton(void)
-{
-	struct htmlTag *t =
-	    (struct htmlTag *)allocZeroMem(sizeof(struct htmlTag));
-	t->seqno = cw->numTags;
-	pushTag(t);
-	t->info = elements + 2;
-	t->action = TAGACT_INPUT;
-	t->controller = currentForm;
-	t->itype = INP_SUBMIT;
-}				/* makeButton */
-
-/* display the checked options in an allocated string */
-char *displayOptions(const struct htmlTag *sel)
-{
-	const struct htmlTag *t;
-	char *opt;
-	int opt_l;
-	int i;
-
-	opt = initString(&opt_l);
-
-	for (i = 0; i < cw->numTags; ++i) {
-		t = tagList[i];
-		if (t->controller != sel)
-			continue;
-		if (!t->checked)
-			continue;
-		if (*opt)
-			stringAndChar(&opt, &opt_l, ',');
-		stringAndString(&opt, &opt_l, t->name);
-	}
-
-	return opt;
-}				/* displayOptions */
 
 static struct htmlTag *locateOptionByName(const struct htmlTag *sel,
 					  const char *name, int *pmc,
@@ -982,7 +89,7 @@ static struct htmlTag *locateOptionByName(const struct htmlTag *sel,
 		t = tagList[i];
 		if (t->controller != sel)
 			continue;
-		if (!(s = t->name))
+		if (!(s = t->textval))
 			continue;
 		if (stringEqualCI(s, name)) {
 			em = t;
@@ -1013,7 +120,7 @@ static struct htmlTag *locateOptionByNum(const struct htmlTag *sel, int n)
 		t = tagList[i];
 		if (t->controller != sel)
 			continue;
-		if (!t->name)
+		if (!t->textval)
 			continue;
 		++cnt;
 		if (cnt == n)
@@ -1044,7 +151,7 @@ locateOptions(const struct htmlTag *sel, const char *input,
 			set_property_number(sel->jv, "selectedIndex", -1);
 		for (i = 0; i < cw->numTags; ++i) {
 			t = tagList[i];
-			if (t->controller == sel && t->name) {
+			if (t->controller == sel && t->textval) {
 				t->checked = false;
 				if (t->jv && isJSAlive)
 					set_property_bool(t->jv, "selected",
@@ -1097,7 +204,7 @@ locateOptions(const struct htmlTag *sel, const char *input,
 		if (disp_p) {
 			if (*disp)
 				stringAndChar(&disp, &disp_l, ',');
-			stringAndString(&disp, &disp_l, t->name);
+			stringAndString(&disp, &disp_l, t->textval);
 		}
 
 		if (setcheck) {
@@ -1143,7 +250,7 @@ that's the way it goes.
 
 void jSyncup(void)
 {
-	const struct htmlTag *t;
+	struct htmlTag *t;
 	int itype, i, j, cx;
 	char *value, *cxbuf;
 
@@ -1151,13 +258,11 @@ void jSyncup(void)
 		return;		/* not necessary */
 	if (!isJSAlive)
 		return;
-	debugPrint(5, "jSyncup starts");
+	debugPrint(4, "jSyncup starts");
 
 	for (i = 0; i < cw->numTags; ++i) {
 		t = tagList[i];
 		if (t->action != TAGACT_INPUT)
-			continue;
-		if (!t->jv)
 			continue;
 		itype = t->itype;
 		if (itype <= INP_HIDDEN)
@@ -1167,6 +272,7 @@ void jSyncup(void)
 			int checked = fieldIsChecked(t->seqno);
 			if (checked < 0)
 				checked = t->rchecked;
+			t->checked = checked;
 			set_property_bool(t->jv, "checked", checked);
 			continue;
 		}
@@ -1175,12 +281,27 @@ void jSyncup(void)
 /* If that line has been deleted from the user's buffer,
  * indicated by value = 0,
  * revert back to the original (reset) value. */
+		if (!value)
+			value = cloneString(t->rvalue);
 
 		if (itype == INP_SELECT) {
+/* set option.selected in js based on the option(s) in value */
 			locateOptions(t, (value ? value : t->value), 0, 0,
 				      true);
-			if (!t->multiple)
+/* This is totally confusing. In the case of select,
+ * t->value is the value displayed on the screen,
+ * but within js, select.value is the value of the option selected,
+ * assuming multiple options are not allowed. */
+			if (value) {
+				nzFree(t->value);
+				t->value = value;
+			}
+			if (!t->multiple) {
 				value = get_property_option(t->jv);
+				set_property_string(t->jv, "value", value);
+				nzFree(value);
+			}
+			continue;
 		}
 
 		if (itype == INP_TA) {
@@ -1203,226 +324,147 @@ void jSyncup(void)
 
 		if (value) {
 			set_property_string(t->jv, "value", value);
-			nzFree(value);
-		} else
-			set_property_string(t->jv, "value", t->value);
+			nzFree(t->value);
+			t->value = value;
+		}
 	}			/* loop over tags */
 
-	debugPrint(5, "jSyncup ends");
+/* screen snap, to compare with the new screen after js runs */
+	nzFree(cw->lastrender);
+	cw->lastrender = 0;
+	if (unfoldBuffer(context, false, &cxbuf, &j))
+		cw->lastrender = cxbuf;
+
+	debugPrint(4, "jSyncup ends");
 }				/* jSyncup */
 
-/* Find the <foo> tag to match </foo> */
-/* If name is null then find the most recent open tag. */
-static struct htmlTag *findOpenTag(const char *name)
+/* helper function for meta tag */
+void htmlMetaHelper(struct htmlTag *t)
 {
-	struct htmlTag *t;
-	bool closing = topTag->slash;
-	bool match;
-	const char *desc = topTag->info->desc;
-	int i;
+	char *name;
+	const char *content, *heq;
+	char **ptr;
+	char *copy = 0;
 
-	for (i = cw->numTags - 2; i >= 0; --i) {
-		t = tagList[i];
-		if (t->balanced)
-			continue;
-		if (!t->info->nest)
-			continue;
-		if (t->slash)
-			continue;	/* unbalanced slash, should never happen */
-/* Now we have an unbalanced open tag */
-		if (!name)
-			return t;
-		match = stringEqualCI(t->info->name, name);
-/* I expect tags to nest perfectly, like labeled parentheses */
-		if (closing) {
-			if (match)
-				return t;
-			if (t->info->nest & 2)
-				browseError(MSG_TagNest, desc, t->info->desc);
-			continue;
+	name = t->name;
+	content = attribVal(t, "content");
+	copy = cloneString(content);
+	heq = attribVal(t, "http-equiv");
+
+	if (heq && content) {
+		bool rc;
+		int delay;
+
+/* It's not clear if we should process the http refresh command
+ * immediately, the moment we spot it, or if we finish parsing
+ * all the html first.
+ * Does it matter?  It might.
+ * A subsequent meta tag could use http-equiv to set a cooky,
+ * and we won't see that cooky if we jump to the new page right now.
+ * And there's no telling what subsequent javascript might do.
+ * So I'm going to postpone the refresh until everything is parsed.
+ * Bear in mind, we really don't want to refresh if we're working
+ * on a local file. */
+
+		if (stringEqualCI(heq, "Set-Cookie")) {
+			rc = receiveCookie(cw->fileName, content);
+			debugPrint(3, rc ? "jar" : "rejected");
 		}
-		if (!match)
-			continue;
-		if (!(t->info->nest & 2))
-			browseError(MSG_TagInTag, desc, desc);
-		return t;
-	}			/* loop */
 
-	if (closing)
-		browseError(MSG_TagClose, desc);
-	return NULL;
-}				/* findOpenTag */
-
-void makeParentNode(const struct htmlTag *t)
-{
-	const struct htmlTag *v;
-	int i;
-
-/* there should always be an object on t */
-	if (!t->jv)
-		return;
-
-/* this test should also pass */
-	if (!(t->info->bits & TAG_JSOBJ))
-		return;
-
-	for (i = t->seqno - 1; i >= 0; --i) {
-		v = tagList[i];
-		if ((v->info->bits & TAG_JSOBJ) &&
-		    v->info->nest && !v->balanced)
-			break;
+		if (allowRedirection && !browseLocal
+		    && stringEqualCI(heq, "Refresh")) {
+			if (parseRefresh(copy, &delay)) {
+				char *newcontent;
+				unpercentURL(copy);
+				newcontent = resolveURL(cw->hbase, copy);
+				gotoLocation(newcontent, delay, true);
+			}
+		}
 	}
 
-	if (i < 0) {
-/* nothing open, link to document */
-		debugPrint(5, "parent %s > document", t->info->name);
-		set_property_object(t->jv, "parentNode", cw->docobj);
-		return;
+	if (name) {
+		ptr = 0;
+		if (stringEqualCI(name, "description"))
+			ptr = &cw->fd;
+		if (stringEqualCI(name, "keywords"))
+			ptr = &cw->fk;
+		if (ptr && !*ptr && content) {
+			stripWhite(copy);
+			*ptr = copy;
+			copy = 0;
+		}
 	}
 
-/* parent tag should also have a js object */
-	if (!v->jv)
-		return;
+	nzFree(copy);
+}				/* htmlMetaHelper */
 
-	debugPrint(5, "parent %s > %s", t->info->name, v->info->name);
-	set_property_object(t->jv, "parentNode", v->jv);
-
-/* and make t the next child of the parent, using the appendChild function */
-	run_function_objargs(v->jv, "appendChild", 1, t->jv);
-}				/* makeParentNode */
-
-struct htmlTag *newTag(const char *name)
+/* pre is the predecoration from edbrowse-js, if appropriate */
+static void runGeneratedHtml(struct htmlTag *t, const char *h, const char *pre)
 {
-	struct htmlTag *t;
-	const struct tagInfo *ti;
-	int action;
-
-	for (ti = elements; ti->name; ++ti)
-		if (stringEqualCI(ti->name, name))
-			break;
-	if (!ti->name)
-		return 0;
-
-	action = ti->action;
-	t = (struct htmlTag *)allocZeroMem(sizeof(struct htmlTag));
-	t->action = action;
-	t->info = ti;
-	t->seqno = cw->numTags;
-	t->balanced = true;
-	if (stringEqual(name, "a"))
-		t->clickable = true;
-	pushTag(t);
-	return t;
-}				/* newTag */
-
-/* This is only called if js is alive */
-static void onloadGo(jsobjtype obj, const char *jsrc, const char *tagname)
-{
-	struct htmlTag *t;
-	char buf[32];
-	jsobjtype fn;
-
-/* The first one is easy - one line of code. */
-	run_function_bool(obj, "onload");
-
-	if (!handlerPresent(obj, "onunload"))
-		return;
-	if (handlerPresent(obj, "onclick")) {
-		runningError(MSG_UnloadClick);
-		return;
+	int j, l = cw->numTags;
+	if (debugLevel >= 4) {
+		const char *bh = strstr(h, "<body>");
+		if (!bh)
+			bh = h;
+		else
+			bh += 6;
+		printf("Generated {%s}\n", bh);
 	}
 
-	t = newTag("a");
-	t->jv = obj;
-	t->href = cloneString("#");
-/* make the onunload function a clickable function */
-	if (fn = get_property_function(obj, "onunload"))
-		set_property_object(obj, "onclick", fn);
-	sprintf(buf, "on close %s", tagname);
-	caseShift(buf, 'm');
-	toPreamble(t->seqno, buf, jsrc, 0);
-}				/* onloadGo */
+	htmlGenerated = true;
+	html2nodes(h);
+	htmlNodesIntoTree(l, t);
+	prerender(0);
 
-/*********************************************************************
-Given a tag with an id attribute whose value is foo, generate a label
-<a name="foo">, so you can jump to this tag internally via
-<A href=#foo>jump</A>.
-If the tag has no ID then generate an anchor anyways, in case
-the tag is referenced tag.innerHTML or tag.innerText.
-This should only be called by an open tag (no slash) that can closed.
-Not <br>, but <p> ... </p>
-*********************************************************************/
+	if (pre) {
+		for (j = l; j < cw->numTags; ++j) {
+			t = tagList[j];
+			if (t->step < 2)
+				t->step = 2;	/* already decorated */
+		}
+		while (*pre == ',') {
+			jsobjtype v;
+			j = strtol(pre + 1, (char **)&pre, 10);
+			if (*pre != '=')
+				break;
+			++pre;
+			sscanf(pre, "%p", &v);
+			tagList[l + j]->jv = v;
+			while (*pre && *pre != ',')
+				++pre;
+		}
+	} else
+		decorate(0);
+	htmlGenerated = false;
+}				/* runGeneratedHtml */
 
-static void htmlOption(struct htmlTag *sel, struct htmlTag *v, const char *a)
+/* helper function to prepare an html script.
+ * Fetch from the internetif src=url.
+ * Some day we'll do these fetches in parallel in the background. */
+static void prepareScript(struct htmlTag *t)
 {
-	if (!*a) {
-		browseError(MSG_OptionEmpty);
-	} else {
-		if (!v->value)
-			v->value = cloneString(a);
-	}
-
-	if (!sel->jv)
-		return;
-	if (!isJSAlive)
-		return;
-
-	v->jv = establish_js_option(sel->jv, v->lic);
-	set_property_string(v->jv, "text", v->name);
-	set_property_string(v->jv, "value", v->value);
-	set_property_string(v->jv, "nodeName", "OPTION");
-	set_property_bool(v->jv, "selected", v->checked);
-	set_property_bool(v->jv, "defaultSelected", v->checked);
-	debugPrint(5, "parent OPTION > SELECT");
-	set_property_object(v->jv, "parentNode", sel->jv);
-
-	if (v->checked && !sel->multiple) {
-		set_property_number(sel->jv, "selectedIndex", v->lic);
-		set_property_string(sel->jv, "value", v->value);
-	}
-}				/* htmlOption */
-
-static char *javatext;
-static void htmlScript(char **html, char **h)
-{
-	char *a = 0, *w = 0;
-	struct htmlTag *t = topTag;	// shorthand
-	int js_line;
-	char *js_file;
-	int i;
+	const char *js_file = "generated";
+	char *js_text = 0;
+	const char *a;
 	const char *filepart;
 
-	if (!isJSAlive)
-		goto done;
-	if (intFlag)
-		goto done;
-
-/* Create the script object. */
-	htmlHref("src");
-	domLink("Script", "src", "scripts", cw->docobj, 0);
-
-	a = htmlAttrVal(topAttrib, "type");
-	if (a)
-		set_property_string(t->jv, "type", a);
-
-	a = htmlAttrVal(topAttrib, "language");
-	if (a)
-		set_property_string(t->jv, "language", a);
-
-/* if the above calls failed */
-	if (!isJSAlive)
-		goto done;
-
 /* If no language is specified, javascript is default. */
+	a = attribVal(t, "language");
 	if (a && (!memEqualCI(a, "javascript", 10) || isalphaByte(a[10])))
-		goto done;
+		return;
 
-/* It's javascript, run with the source, or the inline text. */
-	js_line = browseLine;
-	js_file = cw->fileName;
+/* It's javascript, run with the source or the inline text.
+ * As per the starting line number, we cant distinguish between
+ * <script> foo </script>  and
+ * <script>
+ * foo
+ * </script>
+ * so make a guess towards the first form, knowing we could be off by 1.
+ * Just leave it at t->js_ln */
+	if (cw->fileName && !htmlGenerated)
+		js_file = cw->fileName;
+
 	if (t->href) {		/* fetch the javascript page */
-		nzFree(javatext);
-		javatext = 0;
 		if (javaOK(t->href)) {
 			bool from_data = isDataURI(t->href);
 			debugPrint(3, "java source %s",
@@ -1431,1177 +473,213 @@ static void htmlScript(char **html, char **h)
 				char *mediatype;
 				int data_l = 0;
 				if (parseDataURI(t->href, &mediatype,
-						 &javatext, &data_l)) {
-					prepareForBrowse(javatext, data_l);
+						 &js_text, &data_l)) {
+					prepareForBrowse(js_text, data_l);
 					nzFree(mediatype);
 				} else {
-					runningError(MSG_BadDataURI);
+					debugPrint(3,
+						   "Unable to parse data URI containing JavaScript");
 				}
 			} else if (browseLocal && !isURL(t->href)) {
 				if (!fileIntoMemory
 				    (t->href, &serverData, &serverDataLen)) {
-					runningError(MSG_GetLocalJS, errorMsg);
+					if (debugLevel >= 1)
+						i_printf(MSG_GetLocalJS,
+							 errorMsg);
 				} else {
-					javatext = serverData;
-					prepareForBrowse(javatext,
+					js_text = serverData;
+					prepareForBrowse(js_text,
 							 serverDataLen);
 				}
 			} else if (httpConnect(t->href, false, false)) {
 				if (hcode == 200) {
-					javatext = serverData;
-					prepareForBrowse(javatext,
+					js_text = serverData;
+					prepareForBrowse(js_text,
 							 serverDataLen);
 				} else {
 					nzFree(serverData);
-					runningError(MSG_GetJS, t->href, hcode);
+					if (debugLevel >= 3)
+						i_printf(MSG_GetJS, t->href,
+							 hcode);
 				}
 			} else {
-				runningError(MSG_GetJS2, errorMsg);
+				if (debugLevel >= 3)
+					i_printf(MSG_GetJS2, errorMsg);
 			}
-			js_line = 1;
+			t->js_ln = 1;
 			js_file = (!from_data ? t->href : "data_URI");
 			nzFree(changeFileName);
 			changeFileName = NULL;
 		}
+	} else {
+		js_text = t->textval;
+		t->textval = 0;
 	}
 
-	if (!javatext)
-		goto done;
-
+	if (!js_text)
+		return;
+	set_property_string(t->jv, "data", js_text);
+	nzFree(js_text);
 	filepart = getFileURL(js_file, true);
-	debugPrint(3, "execute %s at %d", filepart, js_line);
+	t->js_file = cloneString(filepart);
+}				/* prepareScript */
 
-/* mark this script as having been executed */
-	set_property_bool(t->jv, "exec$$ed", true);
-	set_property_string(t->jv, "data", javatext);
-/* now run the script */
-	javaParseExecute(cw->winobj, javatext, filepart, js_line);
-	debugPrint(3, "execution complete");
+void runScriptsPending(void)
+{
+	struct htmlTag *t;
+	struct inputChange *ic;
+	int j, l;
+	char *jtxt;
+	const char *js_file;
+	int ln;
+	bool change;
+	jsobjtype v;
 
-/* See if the script has produced html via document.write() */
+	if (newlocation && newloc_r)
+		return;
+
+/* if onclick code or some such does document write, where does that belong?
+ * I don't know, I'll just put it at the end.
+ * As you see below, document.write that comes from a specific javascript
+ * appears inline where the script is. */
 	if (cw->dw) {
-		int afterlen;	/* after we fold in this string */
-		char *after;
-		int pastlen;
-		debugPrint(3, "docwrite %d bytes", cw->dw_l);
-		debugPrint(4, "<<\n%s\n>>", cw->dw + 10);
-		stringAndString(&cw->dw, &cw->dw_l, "</docwrite>");
-		afterlen = strlen(*html) + strlen(cw->dw);
-		after = (char *)allocMem(afterlen + 1);
-		pastlen = *h - *html;
-		memcpy(after, *html, pastlen);
-		strcpy(after + pastlen, cw->dw);
-		strcat(after, *h);
+		stringAndString(&cw->dw, &cw->dw_l, "</body>\n");
+		runGeneratedHtml(NULL, cw->dw, NULL);
 		nzFree(cw->dw);
 		cw->dw = 0;
 		cw->dw_l = 0;
-		nzFree(*html);
-		*html = after;
-		*h = after + pastlen;
 	}
 
-done:
-	nzFree(javatext);
-	javatext = 0;
-	nzFree(a);
-}				/* htmlScript */
+top:
+	change = false;
 
-static void objectScript(jsobjtype obj)
-{
-	char *lang = 0;
-	const char *w = 0;
-	char *jsrc = 0, *jtext = 0;
+	for (j = 0; j < cw->numTags; ++j) {
+		t = tagList[j];
+		if (t->action != TAGACT_SCRIPT)
+			continue;
+		if (!t->jv)
+			continue;
+		if (t->step >= 3)
+			continue;
+/* now running the script */
+		t->step = 3;
+		change = true;
 
-	if (!isJSAlive)
-		return;
-	if (intFlag)
-		return;
+		prepareScript(t);
 
-/* can't be some other language */
-	lang = get_property_string(obj, "language");
-	if (lang
-	    && (!memEqualCI(lang, "javascript", 10) || isalphaByte(lang[10])))
-		goto done;
+		jtxt = get_property_string(t->jv, "data");
+		if (!jtxt)
+			continue;	/* nothing there */
+		js_file = t->js_file;
+		if (!js_file)
+			js_file = "generated";
+		ln = t->js_ln;
+		if (!ln)
+			ln = 1;
+		debugPrint(3, "execute %s at %d", js_file, ln);
+/* if script is in the html it usually begins on the next line, so increment,
+ * and hope the error messages line up. */
+		if (ln > 1)
+			++ln;
+		jsRunScript(cw->winobj, jtxt, js_file, ln);
+		debugPrint(3, "execution complete");
+		nzFree(jtxt);
 
-	jsrc = get_property_url(obj, false);
-	if (jsrc) {
+		if (newlocation && newloc_r)
+			return;
+
+/* look for document.write from this script */
+		if (cw->dw) {
+			stringAndString(&cw->dw, &cw->dw_l, "</body>\n");
+			runGeneratedHtml(t, cw->dw, NULL);
+			nzFree(cw->dw);
+			cw->dw = 0;
+			cw->dw_l = 0;
+		}
+	}
+
+	if (change)
+		goto top;
+
+/* look for an run innerHTML */
+	foreach(ic, inputChangesPending) {
+		struct htmlTag *u, *v;
 		char *h;
-		if (isDataURI(jsrc)) {
-			char *mediatype;
-			int data_l;
-			if (parseDataURI(jsrc, &mediatype, &h, &data_l)) {
-				jtext = h;
-				/* Should look at charset in mediatype... */
-				nzFree(mediatype);
-				nzFree(jsrc);
-				jsrc = cloneString("script from data URI");
-				prepareForBrowse(jtext, data_l);
-				goto execute;
-			} else {
-				runningError(MSG_BadDataURI);
-				goto done;
-			}
+		if (ic->major != 'i' || ic->minor != 'h')
+			continue;
+		ic->major = 'x';
+/* Cut all the children away from t */
+		t = ic->t;
+		for (u = t->firstchild; u; u = v) {
+			v = u->sibling;
+			u->sibling = u->parent = 0;
+			u->deleted = true;
 		}
-
-		unpercentURL(jsrc);
-		h = resolveURL(getBaseHref(-1), jsrc);
+		t->firstchild = NULL;
+		h = strstr(ic->value, "</body>@");
 		if (h) {
-			nzFree(jsrc);
-			jsrc = h;
-		}
-
-		if (!javaOK(jsrc))
-			goto done;
-		debugPrint(3, "java source %s", jsrc);
-
-		if (browseLocal && !isURL(jsrc)) {
-			if (!fileIntoMemory(jsrc, &serverData, &serverDataLen)) {
-				runningError(MSG_GetLocalJS, errorMsg);
-				goto done;
-			}
-			jtext = serverData;
-			prepareForBrowse(jtext, serverDataLen);
-			goto execute;
-		}
-
-		if (!httpConnect(jsrc, false, false)) {
-			runningError(MSG_GetJS2, errorMsg);
-			goto done;
-		}
-
-		if (hcode != 200) {
-			nzFree(serverData);
-			runningError(MSG_GetJS, jsrc, hcode);
-			goto done;
-		}
-
-		jtext = serverData;
-		prepareForBrowse(jtext, serverDataLen);
-		goto execute;
-	}
-
-	jtext = get_property_string(obj, "data");
-	if (!jtext)
-		goto done;
-	debugPrint(2, "java source dynamic");
-	prepareForBrowse(jtext, strlen(jtext));
-
-execute:
-	w = "script";
-	if (jsrc) {
-		set_property_string(obj, "data", jtext);
-		if (w = strrchr(jsrc, '/')) {
-/* Trailing slash doesn't count */
-			if (w[1] == 0 && w > jsrc)
-				for (--w; w >= jsrc && *w != '/'; --w) ;
-			++w;
+			h += 7;
+			*h++ = 0;
 		} else
-			w = jsrc;
+			h = emptyString;
+		runGeneratedHtml(t, ic->value, h);
+		change = true;
 	}
 
-	debugPrint(3, "execute %s", w);
-	javaParseExecute(cw->winobj, jtext, w, 0);
-	debugPrint(3, "execution complete");
+	if (change)
+		goto top;
 
-done:
-	nzFree(jtext);
-	nzFree(jsrc);
-	nzFree(lang);
-	nzFree(changeFileName);
-	changeFileName = NULL;
-/* mark this script as having been executed, even if it didn't run properly */
-	set_property_bool(obj, "exec$$ed", true);
-}				/* objectScript */
-
-/* runs scripts that have ben dynamically created */
-static void scriptsPending(void)
-{
-	jsobjtype obj;
-
-	while (obj = run_function_object(cw->docobj, "script$$pending"))
-		objectScript(obj);
-}				/* scriptsPending */
-
-/*********************************************************************
-Encode the html tags - parse the web page.
-Always returns a string, even if errors were found.
-Internet web pages often contain errors!
-This routine mucks with the passed-in string, and frees it
-when finished.  Thus the argument is not const.
-*********************************************************************/
-
-static char *encodeTags(char *html, bool fromSource)
-{
-	const struct tagInfo *ti;
-	struct htmlTag *t, *open, *v;
-	char *save_h;
-	char *h = html;
-	char *a;		/* for a specific attribute */
-	char *ns;		/* the new string */
-	int ns_l;
-#define ns_hnum() stringAndString(&ns, &ns_l, hnum)
-#define ns_ic() stringAndChar(&ns, &ns_l, InternalCodeChar)
-	int js_nl;		/* number of newlines in javascript */
-	int i1, i2;		/* iterators */
-	const char *name, *attrib, *end;
-	char tagname[12];
-	int tagno;		// number of current tag
-	const char *s;
-	int j, l, namelen, lns;
-	int dw_line, dw_nest = 0;
-	char hnum[40];		/* hidden number */
-	char c;
-	bool retainTag;
-	bool a_text;		/* visible text within the hyperlink */
-	bool slash, a_href, rc;
-	bool premode = false, invisible = false;
-/* Tags that cannot nest, one open at a time. */
-	struct htmlTag *currentA;	/* the open anchor */
-	struct htmlTag *currentSel;	/* the open select */
-	struct htmlTag *currentOpt;	/* the current option */
-	struct htmlTag *currentTitle;
-	struct htmlTag *currentTA;	/* text area */
-	int offset;		/* where the current x starts */
-	int ln = 1;		/* line number */
-	int action;		/* action of the tag */
-	int lastact = 0;
-	int nopt;		/* number of options */
-	int intable = 0, inrow = 0;
-	bool tdfirst;
-
-	ns = initString(&ns_l);
-	preamble = initString(&preamble_l);
-	currentA = currentForm = currentSel = NULL;
-	currentOpt = currentTitle = currentTA = NULL;
-
-	while (c = *h) {
-		if (c != '<') {
-			if (c == '\n')
-				++ln;	/* keep track of line numbers */
-putc:
-			if (!invisible) {
-				if (strchr("\r\n\f", c) && !currentTA) {
-					if (!premode || c == '\r'
-					    && h[1] == '\n')
-						c = ' ';
-					else if (c == '\r')
-						c = '\n';
-				}
-				if (lastact == TAGACT_TD && c == ' ')
-					goto nextchar;
-				stringAndChar(&ns, &ns_l, c);
-				if (!isspaceByte(c)) {
-					a_text = true;
-					lastact = 0;
-				}
-			}
-nextchar:
-			++h;
+	foreach(ic, inputChangesPending) {
+		char *v;
+		int side;
+		if (ic->major != 'i' || ic->minor != 't')
+			continue;
+		ic->major = 'x';
+		t = ic->t;
+/* the tag should always be a textarea tag. */
+/* Not sure what to do if it's not. */
+		if (t->action != TAGACT_INPUT || t->itype != INP_TA) {
+			debugPrint(3,
+				   "innerText is applied to tag %d that is not a textarea.",
+				   t->seqno);
 			continue;
 		}
-
-		if (h[1] == '!' || h[1] == '?') {
-			h = (char *)skipHtmlComment(h, &lns);
-			ln += lns;
+/* 2 parts: innerText copies over to textarea->value
+ * if js has not already done so,
+ * and the text replaces what was in the side buffer. */
+		v = ic->value;
+		set_property_string(t->jv, "value", v);
+		side = t->lic;
+		if (side <= 0 || side >= MAXSESSION || side == context)
 			continue;
-		}
-
-		if (!parseTag(h, &name, &namelen, &attrib, &end, &lns))
-			goto putc;
-
-/* html tag found */
-		save_h = h;
-		h = (char *)end;	/* skip past tag */
-		if (!dw_nest)
-			browseLine = ln;
-		if (!fromSource)
-			browseLine = 0;
-		ln += lns;
-		slash = false;
-		if (*name == '/')
-			slash = true, ++name, --namelen;
-		if (namelen > sizeof(tagname) - 1)
-			namelen = sizeof(tagname) - 1;
-		strncpy(tagname, name, namelen);
-		tagname[namelen] = 0;
-
-		for (ti = elements; ti->name; ++ti)
-			if (stringEqualCI(ti->name, tagname))
-				break;
-		action = ti->action;
-		tagno = cw->numTags;
-		debugPrint(7, "tag %s %d %d %d", tagname, tagno, ln, action);
-
-		if (currentTA) {
-/* Sometimes a textarea is used to present a chunk of html code.
- * "Cut and paste this into your web page."
- * So it may contain tags.  Ignore them!
- * All except the textarea tag. */
-			if (action != TAGACT_TA) {
-				ln = browseLine, h = save_h;	/* back up */
-				goto putc;
-			}
-/* Close it off */
-			currentTA->action = TAGACT_INPUT;
-			currentTA->itype = INP_TA;
-			currentTA->balanced = true;
-			s = currentTA->value = andTranslate(ns + offset, true);
-/* Text starts at the next line boundary */
-			while (*s == '\t' || *s == ' ')
-				++s;
-			if (*s == '\r')
-				++s;
-			if (*s == '\n')
-				++s;
-			if (s > currentTA->value)
-				strmove(currentTA->value, s);
-			a = currentTA->value;
-			a += strlen(a);
-			while (a > currentTA->value
-			       && (a[-1] == ' ' || a[-1] == '\t'))
-				--a;
-			*a = 0;
-			if (currentTA->jv && isJSAlive) {
-				establish_inner(currentTA->jv,
-						html + currentTA->inner, save_h,
-						true);
-				set_property_string(currentTA->jv, "value",
-						    currentTA->value);
-				set_property_string(currentTA->jv, dfvl,
-						    currentTA->value);
-			}
-			ns[offset] = 0;
-			ns_l = offset;
-			j = sideBuffer(0, currentTA->value, -1, 0);
-			if (j) {
-				currentTA->lic = j;
-				sprintf(hnum, "%c%d<buffer %d%c0>",
-					InternalCodeChar, currentTA->seqno, j,
-					InternalCodeChar);
-				ns_hnum();
-			} else
-				stringAndString(&ns, &ns_l, "<buffer ?>");
-			currentTA = 0;
-			if (slash)
-				continue;
-			browseError(MSG_TextareaNest);
-		}
-
-		if (!action)
-			continue;	/* tag not recognized */
-
-		topTag = t =
-		    (struct htmlTag *)allocZeroMem(sizeof(struct htmlTag));
-		pushTag(t);
-		t->seqno = tagno;
-		sprintf(hnum, "%c%d", InternalCodeChar, tagno);
-		t->info = ti;
-		t->slash = slash;
-		if (!slash)
-			t->inner = end - html;
-		t->ln = browseLine;
-		t->action = action;	/* we might change this later */
-		j = end - attrib;
-		topAttrib = t->attrib = j ? pullString(attrib, j) : EMPTYSTRING;
-
-		open = 0;
-		if (ti->nest && slash) {
-			t->balanced = true;
-			open = findOpenTag(ti->name);
-			if (!open)
-				continue;	/* unbalanced </ul> means nothing */
-			open->balanced = true;
-			if (open->jv && isJSAlive)
-				establish_inner(open->jv, html + open->inner,
-						save_h, false);
-/* and mark everything in between */
-			for (i2 = open->seqno; i2 < tagno; ++i2) {
-				v = tagList[i2];
-				if (v->info->nest)
-					v->balanced = true;
-			}
-		}
-
-		if (ti->nest == 1 && !slash) {
-			open = findOpenTag(0);
-			if (open && open->info == ti)
-				open->balanced = true;
-		}
-
-		if (slash && ti->bits & TAG_NOSLASH)
-			continue;	/* negated version means nothing */
-
-/* just about any tag can have a name or id */
-		if (!slash)
-			htmlName();
-
-		retainTag = true;
-		if (ti->bits & TAG_INVISIBLE)
-			retainTag = false;
-		if (invisible)
-			retainTag = false;
-		if (ti->bits & TAG_INVISIBLE) {
-			invisible = !slash;
-/* special case for noscript with no js */
-			if (stringEqual(ti->name, "NOSCRIPT") && !cw->jcx)
-				invisible = false;
-		}
-
-		strayClick = false;
-
-/* Are we gathering text to build title or option? */
-		if (currentTitle || currentOpt) {
-			char **ptr;
-			v = (currentTitle ? currentTitle : currentOpt);
-/* Should we print an error message? */
-			if (v->action != action &&
-			    !(v->action == TAGACT_OPTION
-			      && action == TAGACT_SELECT)
-			    || action != TAGACT_OPTION && !slash)
-				browseError(MSG_HasTags, v->info->desc);
-			if (!(ti->bits & TAG_CLOSEA))
-				continue;
-/* close off the title or option */
-			v->balanced = true;
-			ptr = 0;
-			if (currentTitle && !cw->ft)
-				ptr = &cw->ft;
-			if (currentOpt)
-				ptr = &v->name;
-
-			if (ptr) {
-				char *piece = cloneString(ns + offset);
-				a = andTranslate(piece, true);
-				stripWhite(a);
-				if (currentOpt && strchr(a, ',')
-				    && currentSel->multiple) {
-					char *y;
-					for (y = a; *y; ++y)
-						if (*y == ',')
-							*y = ' ';
-					browseError(MSG_OptionComma);
-				}
-				spaceCrunch(a, true, false);
-				*ptr = a;
-
-				if (ptr == &cw->ft) {
-					spaceCrunch(piece, true, true);
-					cw->fto = piece;
-				} else
-					nzFree(piece);
-
-				if (currentTitle && isJSAlive)
-					set_property_string(cw->docobj, "title",
-							    a);
-
-				if (currentOpt)
-					htmlOption(currentSel, currentOpt, a);
-			}
-
-			ns[offset] = 0;
-			ns_l = offset;
-			currentTitle = currentOpt = 0;
-		}
-
-/* If we aren't, under normal circumstances, going to inject an anchor into
- * the edbrowse buffer for this tag, then put one in here. Any nestable tag
- * should have an anchor, to support innerHTML. */
-		if (!slash && ti->nest &&
-		    action != TAGACT_SELECT &&
-		    action != TAGACT_A &&
-		    action != TAGACT_TITLE && action != TAGACT_TA) {
-			strcat(hnum, "*");
-			ns_hnum();
-		}
-
-		switch (action) {
-		case TAGACT_INPUT:
-			htmlInput();
-			if (t->itype == INP_HIDDEN)
-				continue;
-			if (!retainTag)
-				continue;
-			t->retain = true;
-			if (currentForm) {
-				++currentForm->ninp;
-				if (t->itype == INP_SUBMIT
-				    || t->itype == INP_IMAGE)
-					currentForm->submitted = true;
-			}
-			strcat(hnum, "<");
-			ns_hnum();
-			if (t->itype < INP_RADIO) {
-				if (t->value[0])
-					stringAndString(&ns, &ns_l, t->value);
-				else if (t->itype == INP_SUBMIT
-					 || t->itype == INP_IMAGE)
-					stringAndString(&ns, &ns_l, "Go");
-				else if (t->itype == INP_RESET)
-					stringAndString(&ns, &ns_l, "Reset");
-			} else
-				stringAndChar(&ns, &ns_l,
-					      (t->checked ? '+' : '-'));
-			if (currentForm
-			    && (t->itype == INP_SUBMIT
-				|| t->itype == INP_IMAGE)) {
-				if (currentForm->secure)
-					stringAndString(&ns, &ns_l, " secure");
-				if (currentForm->bymail)
-					stringAndString(&ns, &ns_l, " bymail");
-			}
-			ns_ic();
-			stringAndString(&ns, &ns_l, "0>");
-			goto endtag;
-
-		case TAGACT_TITLE:
-			if (slash)
-				continue;
-			if (cw->ft)
-				browseError(MSG_ManyTitles);
-			offset = strlen(ns);
-			currentTitle = t;
+		if (sessionList[side].lw == NULL)
 			continue;
+		if (cw->browseMode)
+			i_printf(MSG_BufferUpdated, side);
+		sideBuffer(side, v, -1, 0);
+	}
+	freeList(&inputChangesPending);
 
-		case TAGACT_A:
-			a_href = false;
-			if (slash) {
-				if (open->href)
-					a_href = true;
-				currentA = 0;
-			} else {
-				htmlHref("href");
-				domLink("Anchor", "href", "anchors",
-					cw->docobj, 0);
-				get_js_events();
-				if (t->href) {
-					a_href = true;
-					topTag->clickable = true;
-				}
-				a_text = false;
-			}
-			if (a_href) {
-				if (slash) {
-					sprintf(hnum, "%c0}", InternalCodeChar);
-				} else {
-					strcat(hnum, "{");
-					currentA = t;
-				}
-			} else {
-				if (!t->name)
-					retainTag = false;	/* no need to keep this anchor */
-			}	/* href or not */
-			break;
+	rebuildSelectors();
 
-		case TAGACT_PRE:
-			premode = !slash;
-			break;
+	if (v = js_reset) {
+		js_reset = 0;
+		if (t = tagFromJavaVar(v))
+			formReset(t);
+	}
 
-		case TAGACT_TA:
-			currentTA = t;
-			offset = strlen(ns);
-			t->itype = INP_TA;
-			formControl(true);
-			continue;
-
-		case TAGACT_HTML:
-			domLink("Html", 0, "htmls", cw->docobj, 0);
-			goto endtag;
-
-		case TAGACT_HEAD:
-			domLink("Head", 0, "heads", cw->docobj, 0);
-			goto plainWithElements;
-
-		case TAGACT_BODY:
-			domLink("Body", 0, "bodies", cw->docobj, 0);
-plainWithElements:
-			if (t->jv && !t->slash)
-				instantiate_array(t->jv, "elements");
-/* fall through */
-
-		case TAGACT_JS:
-plainTag:
-/* check for javascript events, that's it */
-			if (!slash)
-				get_js_events();
-/* no need to keep these tags in the output */
-			continue;
-
-		case TAGACT_META:
-			htmlMeta();
-			continue;
-
-		case TAGACT_LI:
-/* Look for the open UL or OL */
-			j = -1;
-			for (i1 = cw->numTags - 1; i1 >= 0; --i1) {
-				v = tagList[i1];
-				if (v->balanced || !v->info->nest)
-					continue;
-				if (v->slash)
-					continue;	/* should never happen */
-				s = v->info->name;
-				if (stringEqual(s, "OL") ||
-				    stringEqual(s, "UL") ||
-				    stringEqual(s, "MENU")
-				    || stringEqual(s, "DIR")) {
-					j = 0;
-					if (*s == 'O')
-						j = ++v->lic;
-				}
-			}
-			if (j < 0)
-				browseError(MSG_NotInList, ti->desc);
-			if (!retainTag)
-				continue;
-			hnum[0] = '\r';
-			hnum[1] = 0;
-			if (j == 0)
-				strcat(hnum, "* ");
-			if (j > 0)
-				sprintf(hnum + 1, "%d. ", j);
-			ns_hnum();
-			continue;
-
-		case TAGACT_DT:
-			for (i1 = cw->numTags - 1; i1 >= 0; --i1) {
-				v = tagList[i1];
-				if (v->balanced || !v->info->nest)
-					continue;
-				if (v->slash)
-					continue;	/* should never happen */
-				s = v->info->name;
-				if (stringEqual(s, "DL"))
-					break;
-			}
-			if (i1 < 0)
-				browseError(MSG_NotInList, ti->desc);
-			goto nop;
-
-		case TAGACT_TABLE:
-			if (!slash && isJSAlive) {
-				domLink("Table", 0, "tables", cw->docobj, 0);
-				get_js_events();
-/* create the array of rows under the table */
-				if (topTag->jv)
-					instantiate_array(topTag->jv, "rows");
-			}
-			if (slash)
-				--intable;
+	if (v = js_submit) {
+		js_submit = 0;
+		if (t = tagFromJavaVar(v)) {
+			char *post;
+			bool rc = infPush(t->seqno, &post);
+			if (rc)
+				gotoLocation(post, 0, false);
 			else
-				++intable;
-			goto nop;
-
-		case TAGACT_TR:
-			if (!intable) {
-				browseError(MSG_NotInTable, ti->desc);
-				continue;
-			}
-			if (slash)
-				--inrow;
-			else
-				++inrow;
-			tdfirst = true;
-			if ((!slash) && isJSAlive
-			    && (open = findOpenTag("table")) && open->jv) {
-				domLink("Trow", 0, "rows", open->jv, 0);
-				get_js_events();
-				if (topTag->jv)
-					instantiate_array(topTag->jv, "cells");
-			}
-			goto nop;
-
-		case TAGACT_TD:
-			if (!inrow) {
-				browseError(MSG_NotInRow, ti->desc);
-				continue;
-			}
-			if (slash)
-				continue;
-			if (tdfirst)
-				tdfirst = false;
-			else if (retainTag) {
-				l = strlen(ns);
-				while (l && ns[l - 1] == ' ')
-					--l;
-				ns[l] = 0;
-				ns_l = l;
-				stringAndChar(&ns, &ns_l, '|');
-			}
-			if (isJSAlive && (open = findOpenTag("tr")) && open->jv) {
-				domLink("Cell", 0, "cells", open->jv, 0);
-				get_js_events();
-			}
-			goto endtag;
-
-		case TAGACT_DIV:
-			if (!slash && isJSAlive) {
-				domLink("Div", 0, "divs", cw->docobj, 0);
-				get_js_events();
-			}
-			goto nop;
-
-		case TAGACT_SPAN:
-			if (!slash) {
-				domLink("Span", 0, "spans", cw->docobj, 0);
-				get_js_events();
-				a = htmlAttrVal(topAttrib, "class");
-				if (!a)
-					goto nop;
-				caseShift(a, 'l');
-				if (stringEqual(a, "sup"))
-					action = TAGACT_SUP;
-				if (stringEqual(a, "sub"))
-					action = TAGACT_SUB;
-				if (stringEqual(a, "ovb"))
-					action = TAGACT_OVB;
-				nzFree(a);
-			} else if (open && open->subsup)
-				action = open->subsup;
-			if (action == TAGACT_SPAN)
-				goto nop;
-			t->subsup = action;
-			goto subsup;
-
-		case TAGACT_BR:
-			if (lastact == TAGACT_TD)
-				continue;
-
-		case TAGACT_NOP:
-nop:
-			if (!retainTag)
-				continue;
-			j = ti->para;
-			if (slash)
-				j >>= 2;
-			else
-				j &= 3;
-			if (!j)
-				goto endtag;
-			c = '\f';
-			if (j == 1) {
-				c = '\r';
-				if (action == TAGACT_BR)
-					c = '\n';
-			}
-			stringAndChar(&ns, &ns_l, c);
-			goto endtag;
-
-		case TAGACT_FORM:
-			htmlForm();
-			if (currentSel) {
-doneSelect:
-				currentSel->action = TAGACT_INPUT;
-				if (currentSel->controller)
-					++currentSel->controller->ninp;
-				currentSel->value = a =
-				    displayOptions(currentSel);
-				if (retainTag) {
-					currentSel->retain = true;
-/* Crank out the input tag */
-					sprintf(hnum, "%c%d<", InternalCodeChar,
-						currentSel->seqno);
-					ns_hnum();
-					stringAndString(&ns, &ns_l, a);
-					ns_ic();
-					stringAndString(&ns, &ns_l, "0>");
-				}
-				currentSel = 0;
-			}
-			if (action == TAGACT_FORM && slash && currentForm) {
-				if (retainTag && currentForm->href
-				    && !currentForm->submitted) {
-					makeButton();
-					sprintf(hnum, " %c%d<Go",
-						InternalCodeChar,
-						cw->numTags - 1);
-					ns_hnum();
-					if (currentForm->secure)
-						stringAndString(&ns, &ns_l,
-								" secure");
-					if (currentForm->bymail)
-						stringAndString(&ns, &ns_l,
-								" bymail");
-					stringAndString(&ns, &ns_l,
-							" implicit");
-					ns_ic();
-					stringAndString(&ns, &ns_l, "0>");
-				}
-				currentForm = 0;
-			}
-			continue;
-
-		case TAGACT_SELECT:
-			if (slash) {
-				if (currentSel)
-					goto doneSelect;
-				continue;
-			}
-			currentSel = t;
-			nopt = 0;
-			t->itype = INP_SELECT;
-			if (htmlAttrPresent(topAttrib, "readonly"))
-				t->rdonly = true;
-			if (htmlAttrPresent(topAttrib, "multiple"))
-				t->multiple = true;
-			formControl(true);
-			continue;
-
-		case TAGACT_OPTION:
-			if (slash)
-				continue;
-			if (!currentSel) {
-				browseError(MSG_NotInSelect);
-				continue;
-			}
-			currentOpt = t;
-			offset = strlen(ns);
-			t->controller = currentSel;
-			t->lic = nopt++;
-			t->value = htmlAttrVal(topAttrib, "value");
-			if (htmlAttrPresent(topAttrib, "selected")) {
-				if (currentSel->lic && !currentSel->multiple)
-					browseError(MSG_ManyOptSelected);
-				else
-					t->checked = t->rchecked =
-					    true, ++currentSel->lic;
-			}
-			continue;
-
-		case TAGACT_HR:
-			if (!retainTag)
-				continue;
-			stringAndString(&ns, &ns_l,
-					"\r----------------------------------------\r");
-			continue;
-
-/* This is strictly for rendering math pages written with my particular css.
- * <span class=sup> becomes TAGACT_SUP, which means superscript.
-* sub is subscript and ovb is overbar.
- * Sorry to put my little quirks into this program, but hey,
- * it's my program. */
-		case TAGACT_SUP:
-		case TAGACT_SUB:
-		case TAGACT_OVB:
-subsup:
-			if (!retainTag)
-				continue;
-			t->retain = true;
-			if (action == TAGACT_SUB)
-				j = 1;
-			if (action == TAGACT_SUP)
-				j = 2;
-			if (action == TAGACT_OVB)
-				j = 3;
-
-			if (!slash) {	// open
-				static const char *openstring[] = { 0,
-					"[", "^(", "`"
-				};
-				t->lic = strlen(ns);
-				stringAndString(&ns, &ns_l, openstring[j]);
-				continue;
-			}
-
-			if (j == 3) {
-				stringAndChar(&ns, &ns_l, '\'');
-				continue;
-			}
-
-/* backup, and see if we can get rid of the parentheses or brackets */
-			l = open->lic + j;
-			s = ns + l;
-			if (j == 2 && isalphaByte(s[0]) && !s[1])
-				goto unparen;
-			if (j == 2 &&
-			    (stringEqual(s, "th") || stringEqual(s, "rd")
-			     || stringEqual(s, "nd")
-			     || stringEqual(s, "st"))) {
-				strmove(ns + l - 2, ns + l);
-				ns_l -= 2;
-				continue;
-			}
-			while (isdigitByte(*s))
-				++s;
-			if (!*s)
-				goto unparen;
-			stringAndChar(&ns, &ns_l, (j == 2 ? ')' : ']'));
-			continue;
-
-/* ok, we can trash the original ( or [ */
-unparen:
-			l = open->lic + j;
-			strmove(ns + l - 1, ns + l);
-			--ns_l;
-			if (j == 2)
-				stringAndChar(&ns, &ns_l, ' ');
-			continue;
-
-		case TAGACT_AREA:
-		case TAGACT_FRAME:
-			if (action == TAGACT_FRAME) {
-				htmlHref("src");
-				domLink("Frame", "src", "frames",
-					cw->winobj, 0);
-			} else {
-				htmlHref("href");
-				domLink("Area", "href", "areas", cw->docobj, 0);
-			}
-			topTag->clickable = true;
-			get_js_events();
-			if (!retainTag)
-				continue;
-			stringAndString(&ns, &ns_l,
-					(action ==
-					 TAGACT_FRAME ? "\rFrame " : "\r"));
-			a = 0;
-			if (action == TAGACT_AREA)
-				a = htmlAttrVal(topAttrib, "alt");
-			s = a;
-			if (!s) {
-				s = t->name;
-				if (!s)
-					s = altText(t->href);
-			}
-			if (!s)
-				s = (action == TAGACT_FRAME ? "???" : "area");
-			if (t->href) {
-				strcat(hnum, "{");
-				ns_hnum();
-				t->action = TAGACT_A;
-				t->balanced = true;
-			}
-			if (t->href || action == TAGACT_FRAME)
-				stringAndString(&ns, &ns_l, s);
-			nzFree(a);
-			if (t->href) {
-				ns_ic();
-				stringAndString(&ns, &ns_l, "0}");
-			}
-			stringAndChar(&ns, &ns_l, '\r');
-			continue;
-
-		case TAGACT_MUSIC:
-			if (!retainTag)
-				continue;
-			htmlHref("src");
-			if (!t->href)
-				continue;
-			toPreamble(t->seqno,
-				   (ti->name[0] !=
-				    'B' ? "Audio passage" : "Background Music"),
-				   0, 0);
-			t->action = TAGACT_A;
-			continue;
-
-		case TAGACT_BASE:
-			htmlHref("href");
-			if (t->href) {
-				basehref = t->href;
-				debugPrint(3, "base href %s", basehref);
-			}
-			domLink("Base", "href", "bases", cw->docobj, 0);
-			continue;
-
-		case TAGACT_IMAGE:
-			htmlImage();
-			if (!currentA) {
-/* I'm going to assume that if the web designer took the time
- * to put in an alt tag, then it's worth reading.
- * You can turn this feature off, but I don't think you'd want to. */
-				if (a = htmlAttrVal(topAttrib, "alt")) {
-					s = altText(a);
-					nzFree(a);
-					a = NULL;
-					if (s) {
-						stringAndChar(&ns, &ns_l, '[');
-						stringAndString(&ns, &ns_l, s);
-						stringAndChar(&ns, &ns_l, ']');
-					}
-				}
-				continue;
-			}
-			if (!retainTag)
-				continue;
-			if (a_text)
-				continue;
-			s = 0;
-			a = htmlAttrVal(topAttrib, "alt");
-			if (a) {
-				s = altText(a);
-				nzFree(a);
-			}
-			if (!s)
-				s = altText(t->name);
-			if (!s)
-				s = altText(currentA->href);
-			if (!s)
-				s = altText(t->href);
-			if (!s)
-				s = "image";
-			stringAndString(&ns, &ns_l, s);
-			a_text = true;
-			continue;
-
-		case TAGACT_SCRIPT:
-			if (slash)
-				continue;
-			rc = findEndScript(h, ti->name,
-					   (ti->action == TAGACT_SCRIPT), &h,
-					   &javatext, &js_nl);
-			if (*h)
-				h = strchr(h, '>') + 1;
-			ln += js_nl;
-/* I'm not going to process an open ended script. */
-			if (!rc) {
-				nzFree(javatext);
-				runningError(MSG_ScriptNotClosed);
-				continue;
-			}
-
-			htmlScript(&html, &h);
-			scriptsPending();
-			continue;
-
-		case TAGACT_OBJ:
-/* no clue what to do here */
-			continue;
-
-		case TAGACT_DW:
-			if (slash) {
-				if (!--dw_nest && fromSource)
-					browseLine = ln = dw_line;
-			} else {
-				if (!dw_nest++)
-					dw_line = ln;
-				browseLine = ln = 0;
-			}
-			continue;
-
-		default:
-			browseError(MSG_BadTag, action);
-			continue;
-		}		/* switch */
-
-		if (!retainTag)
-			continue;
-		t->retain = true;
-		if (!strpbrk(hnum, "{}")) {
-			strcat(hnum, "*");
-/* Leave the meaningless tags out. */
-			if (action == TAGACT_PRE && slash || action == TAGACT_A && topTag->name) ;	/* ok */
-			else
-				hnum[0] = 0;
+				showError();
 		}
-		ns_hnum();
-
-endtag:
-		lastact = action;
-	}			/* loop over html string */
-
-	if (currentA) {
-		ns_ic();
-		stringAndString(&ns, &ns_l, "0}");
-		currentA = 0;
 	}
-
-/* Run the various onload functions */
-/* Turn the onunload functions into hyperlinks */
-	if (fromSource && isJSAlive) {
-		int stoptag = cw->numTags - 1;
-		onloadGo(cw->winobj, 0, "window");
-		onloadGo(cw->docobj, 0, "document");
-
-		for (i1 = 0; i1 < stoptag; ++i1) {
-			char *jsrc;
-			t = tagList[i1];
-			if (t->action == TAGACT_OPTION)
-				continue;
-			if (!t->jv)
-				continue;
-			if (t->slash)
-				continue;
-			jsrc = htmlAttrVal(t->attrib, "onunload");
-			onloadGo(t->jv, jsrc, t->info->name);
-			nzFree(jsrc);
-		}		/* loop over tags */
-	}
-
-/* don't need these any more */
-#undef ns_ic
-#undef ns_hnum
-
-	if (browseLocal == 1) {	/* no errors yet */
-		for (i1 = 0; i1 < cw->numTags; ++i1) {
-			t = tagList[i1];
-			if (fromSource)
-				browseLine = t->ln;
-			if (t->info->nest && !t->slash && !t->balanced) {
-				browseError(MSG_TagNotClosed, t->info->desc);
-				break;
-			}
-
-/* Make sure the internal links are defined. */
-			if (t->action != TAGACT_A)
-				continue;	/* not anchor */
-			h = t->href;
-			if (!h)
-				continue;
-			if (h[0] != '#')
-				continue;
-			if (h[1] == 0)
-				continue;
-			a = h + 1;	/* this is what we're looking for */
-			for (i2 = 0; i2 < cw->numTags; ++i2) {
-				v = tagList[i2];
-				if (v->id && v->info->nest
-				    && stringEqual(v->id, a))
-					break;
-				if (v->action == TAGACT_A && v->name
-				    && stringEqual(v->name, a))
-					break;
-			}
-			if (i2 == cw->numTags) {
-				browseError(MSG_NoLable2, a);
-				break;
-			}
-		}		/* loop over all tags */
-	}
-
-	/* clean up */
-	browseLine = 0;
-	nzFree(html);
-	nzFree(radioCheck);
-	radioCheck = 0;
-
-	if (j = strlen(preamble)) {
-		a = (char *)allocMem(strlen(ns) + j + 2);
-		strcpy(a, preamble);
-		a[j] = '\f';
-		strcpy(a + j + 1, ns);
-		nzFree(ns);
-		ns = a;
-	}
-
-	nzFree(preamble);
-	preamble = initString(&preamble_l);
-	basehref = 0;
-
-/* you probably don't want to see this much debug output! */
-	debugPrint(7, "%s", ns);
-
-	a = andTranslate(ns, false);
-	nzFree(ns);
-	ns = a;
-
-	anchorSwap(ns);
-	debugPrint(7, "%s", ns);
-
-	a = htmlReformat(ns);
-	nzFree(ns);
-	ns = a;
-
-	return ns;
-}				/* encodeTags */
+}				/* runScriptsPending */
 
 void preFormatCheck(int tagno, bool * pretag, bool * slash)
 {
@@ -2614,187 +692,62 @@ void preFormatCheck(int tagno, bool * pretag, bool * slash)
 	}
 }				/* preFormatCheck */
 
+/* is there a doorway from html to js? */
+static bool jsDoorway(void)
+{
+	const struct htmlTag *t;
+	int j;
+	for (j = 0; j < cw->numTags; ++j) {
+		t = tagList[j];
+		if (t->doorway)
+			return true;
+	}
+	debugPrint(3, "no js doorway");
+	return false;
+}				/* jsDoorway */
+
 char *htmlParse(char *buf, int remote)
 {
-	char *newbuf;
+	char *a, *newbuf;
 	struct htmlTag *t;
 
-	if (cw->tags)
+	if (tagList)
 		i_printfExit(MSG_HtmlNotreentrant);
 	if (remote >= 0)
 		browseLocal = !remote;
+	initTagArray();
+	cw->baseset = false;
+	cw->hbase = cloneString(cw->fileName);
 
-/* reserve space for 512 tags */
-	cw->numTags = 0;
-	cw->allocTags = 512;
-	cw->tags =
-	    (struct htmlTag **)allocMem(cw->allocTags *
-					sizeof(struct htmlTag *));
-/* first tag is a base tag, from the filename */
-	t = newTag("base");
-	t->href = cloneString(cw->fileName);
-	basehref = t->href;
+/* call the tidy parser to build the html nodes */
+	html2nodes(buf);
+	nzFree(buf);
+	htmlNodesIntoTree(0, NULL);
+	prerender(0);
 
-	newbuf = encodeTags(buf, true);
+/* if the html doesn't use javascript, then there's
+ * no point in generating it.
+ * This is typical of generated html, from pdf for instance,
+ * or the html that is in email. */
+	if (cw->jcx && !jsDoorway())
+		freeJavaContext(cw);
+
+	if (isJSAlive) {
+		decorate(0);
+		set_basehref(cw->hbase);
+		runScriptsPending();
+		runOnload();
+		runScriptsPending();
+	}
+
+	a = render(0);
+	debugPrint(6, "|%s|\n", a);
+	newbuf = htmlReformat(a);
+	nzFree(a);
 
 	set_property_string(cw->docobj, "readyState", "complete");
 	return newbuf;
 }				/* htmlParse */
-
-void
-findField(const char *line, int ftype, int n,
-	  int *total, int *realtotal, int *tagno, char **href,
-	  const struct htmlTag **tagp)
-{
-	const struct htmlTag *t;
-	int nt = 0;		/* number of fields total */
-	int nrt = 0;		/* the real total, for input fields */
-	int nm = 0;		/* number match */
-	int j;
-	const char *s, *ss;
-	char *h, *nmh;
-	char c;
-	static const char urlok[] =
-	    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890,./?@#%&-_+=:~";
-
-	if (href)
-		*href = 0;
-	if (tagp)
-		*tagp = 0;
-
-	if (cw->browseMode) {
-
-		s = line;
-		while ((c = *s) != '\n') {
-			++s;
-			if (c != InternalCodeChar)
-				continue;
-			j = strtol(s, (char **)&s, 10);
-			if (!ftype) {
-				if (*s != '{')
-					continue;
-				++nt, ++nrt;
-				if (n == nt)
-					nm = j;
-				if (!n) {
-					if (!nm)
-						nm = j;
-					else
-						nm = -1;
-				}
-			} else {
-				if (*s != '<')
-					continue;
-				if (n) {
-					++nt, ++nrt;
-					if (n == nt)
-						nm = j;
-					continue;
-				}
-				t = tagList[j];
-				++nrt;
-				if (ftype == 1 && t->itype <= INP_SUBMIT)
-					continue;
-				if (ftype == 2 && t->itype > INP_SUBMIT)
-					continue;
-				++nt;
-				if (!nm)
-					nm = j;
-				else
-					nm = -1;
-			}
-		}		/* loop over line */
-	}
-
-	if (nm < 0)
-		nm = 0;
-	if (total)
-		*total = nrt;
-	if (realtotal)
-		*realtotal = nt;
-	if (tagno)
-		*tagno = nm;
-	if (!ftype && nm) {
-		t = tagList[nm];
-		if (href)
-			*href = cloneString(t->href);
-		if (tagp)
-			*tagp = t;
-		if (href && isJSAlive && t->jv) {
-/* defer to the java variable for the reference */
-			char *jh = get_property_url(t->jv, false);
-			if (jh) {
-				if (!*href || !stringEqual(*href, jh)) {
-					nzFree(*href);
-					*href = jh;
-				}
-			}
-		}
-	}
-
-	if (nt || ftype)
-		return;
-
-/* Second time through, maybe the url is in plain text. */
-	nmh = 0;
-	s = line;
-	while (true) {
-/* skip past weird characters */
-		while ((c = *s) != '\n') {
-			if (strchr(urlok, c))
-				break;
-			++s;
-		}
-		if (c == '\n')
-			break;
-		ss = s;
-		while (strchr(urlok, *s))
-			++s;
-		h = pullString1(ss, s);
-		unpercentURL(h);
-		if (!isURL(h)) {
-			free(h);
-			continue;
-		}
-		++nt;
-		if (n == nt) {
-			nm = nt;
-			nmh = h;
-			continue;
-		}
-		if (n) {
-			free(h);
-			continue;
-		}
-		if (!nm) {
-			nm = nt;
-			nmh = h;
-			continue;
-		}
-		free(h);
-		nm = -1;
-		free(nmh);
-		nmh = 0;
-	}			/* loop over line */
-
-	if (nm < 0)
-		nm = 0;
-	if (total)
-		*total = nt;
-	if (realtotal)
-		*realtotal = nt;
-	if (href)
-		*href = nmh;
-	else
-		nzFree(nmh);
-}				/* findField */
-
-void
-findInputField(const char *line, int ftype, int n, int *total, int *realtotal,
-	       int *tagno)
-{
-	findField(line, ftype, n, total, realtotal, tagno, 0, 0);
-}				/* findInputField */
 
 /* See if there are simple tags like <p> or </font> */
 bool htmlTest(void)
@@ -2831,7 +784,7 @@ bool htmlTest(void)
 			if (j > 1 && (p[j] == '>' || isspaceByte(p[j]))) {
 /* something we recognize? */
 				const struct tagInfo *ti;
-				for (ti = elements; ti->name; ++ti)
+				for (ti = availableTags; ti->name[0]; ++ti)
 					if (stringEqualCI(ti->name, look))
 						return true;
 			}	/* leading tag */
@@ -2893,18 +846,18 @@ void infShow(int tagno, const char *search)
 	if (t->itype >= INP_TEXT && t->itype <= INP_NUMBER && t->lic)
 		printf("[%d]", t->lic);
 	if (t->itype == INP_TA) {
-		char *rows = htmlAttrVal(t->attrib, "rows");
-		char *cols = htmlAttrVal(t->attrib, "cols");
-		char *wrap = htmlAttrVal(t->attrib, "wrap");
+		const char *rows = attribVal(t, "rows");
+		const char *cols = attribVal(t, "cols");
+		const char *wrap = attribVal(t, "wrap");
 		if (rows && cols) {
 			printf("[%sx%s", rows, cols);
 			if (wrap && stringEqualCI(wrap, "virtual"))
 				i_printf(MSG_Recommended);
 			i_printf(MSG_Close);
 		}
-		nzFree(rows);
-		nzFree(cols);
-		nzFree(wrap);
+		cnzFree(rows);
+		cnzFree(cols);
+		cnzFree(wrap);
 	}			/* text area */
 	if (t->name)
 		printf(" %s", t->name);
@@ -2920,13 +873,13 @@ void infShow(int tagno, const char *search)
 		v = tagList[i];
 		if (v->controller != t)
 			continue;
-		if (!v->name)
+		if (!v->textval)
 			continue;
 		++cnt;
-		if (*search && !strstrCI(v->name, search))
+		if (*search && !strstrCI(v->textval, search))
 			continue;
 		show = true;
-		printf("%3d %s\n", cnt, v->name);
+		printf("%3d %s\n", cnt, v->textval);
 	}
 	if (!show) {
 		if (!search)
@@ -2935,6 +888,51 @@ void infShow(int tagno, const char *search)
 			i_printf(MSG_NoOptionsMatch, search);
 	}
 }				/* infShow */
+
+/*********************************************************************
+Update an input field in the current edbrowse buffer.
+This can be done for one of two reasons.
+First, the user has interactively entered a value in the form, such as
+	i=foobar
+In this case fromForm will be set to true.
+I need to find the tag in the current buffer.
+He just modified it, so it ought to be there.
+If it isn't there, print an error and do nothing.
+The second case: the value has been changed by form reset,
+either the user has pushed the reset button or javascript has called form.reset.
+Here fromForm is false.
+I'm not sure why js would reset a form before the page was even rendered;
+that's the only way the line should not be found,
+or perhaps if that section of the web page was deleted.
+notify = true causes the line to be printed after the change is made.
+Notify true and fromForm false is impossible.
+You don't need to be notified as each variable is changed during a reset.
+The new line replaces the old, and the old is freed.
+This works because undo is disabled in browse mode.
+*********************************************************************/
+
+static void
+updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
+{
+	int ln, idx, n, plen;
+	char *p, *s, *t, *new;
+
+	if (locateTagInBuffer(tagno, &ln, &p, &s, &t)) {
+		n = (plen = pstLength((pst) p)) + strlen(newtext) - (t - s);
+		new = allocMem(n);
+		memcpy(new, p, s - p);
+		strcpy(new + (s - p), newtext);
+		memcpy(new + strlen(new), t, plen - (t - p));
+		free(cw->map[ln].text);
+		cw->map[ln].text = new;
+		if (notify)
+			displayLine(ln);
+		return;
+	}
+
+	if (fromForm)
+		i_printf(MSG_NoTagFound, tagno, newtext);
+}				/* updateFieldInBuffer */
 
 /* Update an input field. */
 bool infReplace(int tagno, const char *newtext, bool notify)
@@ -3000,7 +998,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 	}
 
 	if (itype == INP_FILE) {
-		if (!envFile(newtext, &newtext, true))
+		if (!envFile(newtext, &newtext))
 			return false;
 		if (newtext[0] && access(newtext, 4)) {
 			setError(MSG_FileAccess, newtext);
@@ -3076,7 +1074,7 @@ back to the text buffer, and over to javascript.
 static void resetVar(struct htmlTag *t)
 {
 	int itype = t->itype;
-	const char *w = t->value;
+	const char *w = t->rvalue;
 	bool bval;
 
 /* This is a kludge - option looks like INP_SELECT */
@@ -3086,7 +1084,7 @@ static void resetVar(struct htmlTag *t)
 	if (itype <= INP_SUBMIT)
 		return;
 
-	if (itype >= INP_SELECT) {
+	if (itype >= INP_SELECT && itype != INP_TA) {
 		bval = t->rchecked;
 		t->checked = bval;
 		w = bval ? "+" : "-";
@@ -3095,9 +1093,14 @@ static void resetVar(struct htmlTag *t)
 	if (itype == INP_TA) {
 		int cx = t->lic;
 		if (cx)
-			sideBuffer(cx, t->value, -1, 0);
+			sideBuffer(cx, w, -1, 0);
 	} else if (itype != INP_HIDDEN && itype != INP_SELECT)
-		updateFieldInBuffer(t->seqno, w, 0, false);
+		updateFieldInBuffer(t->seqno, w, false, false);
+
+	if (itype >= INP_TEXT && itype <= INP_FILE || itype == INP_TA) {
+		nzFree(t->value);
+		t->value = cloneString(t->rvalue);
+	}
 
 	if (!t->jv)
 		return;
@@ -3107,6 +1110,7 @@ static void resetVar(struct htmlTag *t)
 	if (itype >= INP_RADIO) {
 		set_property_bool(t->jv, "checked", bval);
 	} else if (itype == INP_SELECT) {
+/* remember this means option */
 		set_property_bool(t->jv, "selected", bval);
 		if (bval && !t->controller->multiple && t->controller->jv)
 			set_property_number(t->controller->jv,
@@ -3152,8 +1156,11 @@ static void formReset(const struct htmlTag *form)
 		if (itype != INP_SELECT)
 			continue;
 		display = displayOptions(t);
-		updateFieldInBuffer(t->seqno, display, 0, false);
-		nzFree(display);
+		updateFieldInBuffer(t->seqno, display, false, false);
+		nzFree(t->value);
+		t->value = display;
+/* this should now be the same as t->rvalue, but I guess I'm
+ * not going to check for that, or take advantage of it. */
 	}			/* loop over tags */
 
 	i_puts(MSG_FormReset);
@@ -3222,9 +1229,9 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 	const char *ct, *ce;	/* content type, content encoding */
 
 	if (!name)
-		name = EMPTYSTRING;
+		name = emptyString;
 	if (!val)
-		val = EMPTYSTRING;
+		val = emptyString;
 	if (!*name && !*val)
 		return true;
 
@@ -3444,7 +1451,9 @@ static bool formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 /* option could have an empty value, usually the null choice,
  * before you have made a selection. */
 			if (!*dynamicvalue) {
-				postNameVal(name, dynamicvalue, fsep, false);
+				if (!t->multiple)
+					postNameVal(name, dynamicvalue, fsep,
+						    false);
 				continue;
 			}
 /* Step through the options */
@@ -3613,7 +1622,7 @@ bool infPush(int tagno, char **post_string)
 		if (jh && (!action || !stringEqual(jh, action))) {
 /* Tie action to the form tag, to plug a small memory leak */
 			nzFree(form->href);
-			form->href = resolveURL(getBaseHref(form->seqno), jh);
+			form->href = resolveURL(cw->hbase, jh);
 			action = form->href;
 		}
 		nzFree(jh);
@@ -3621,7 +1630,7 @@ bool infPush(int tagno, char **post_string)
 
 /* if no action, or action is "#", the default is the current location */
 	if (!action || stringEqual(action, "#")) {
-		action = getBaseHref(form->seqno);
+		action = cw->hbase;
 	}
 
 	if (!action) {
@@ -3642,7 +1651,7 @@ bool infPush(int tagno, char **post_string)
 			setError(MSG_NJNoForm);
 			return false;
 		}
-		javaParseExecute(form->jv, action, 0, 0);
+		jsRunScript(form->jv, action, 0, 0);
 		jSideEffects();
 		return true;
 	}
@@ -3714,7 +1723,7 @@ bool infPush(int tagno, char **post_string)
 		strcpy(q + strlen(q), pfs + actlen);
 		nzFree(pfs);
 		i_printf(MSG_MailSending, addr);
-		sleep(1);
+		SLEEP(1);
 		rc = sendMail(localAccount, tolist, q, -1, atlist, 0, 0, false);
 		if (rc)
 			i_puts(MSG_MailSent);
@@ -3730,23 +1739,43 @@ bool infPush(int tagno, char **post_string)
 }				/* infPush */
 
 /* I don't have any reverse pointers, so I'm just going to scan the list */
+/* This doesn't come up all that often. */
 struct htmlTag *tagFromJavaVar(jsobjtype v)
 {
 	struct htmlTag *t = 0;
 	int i;
 
-	if (!cw->tags)
+	if (!tagList)
 		i_printfExit(MSG_NullListInform);
 
 	for (i = 0; i < cw->numTags; ++i) {
 		t = tagList[i];
 		if (t->jv == v)
-			break;
+			return t;
 	}
-	if (!t)
-		runningError(MSG_LostTag);
-	return t;
+	return 0;
 }				/* tagFromJavaVar */
+
+/* Like the above but create it if you can't find it. */
+struct htmlTag *tagFromJavaVar2(jsobjtype v, const char *tagname)
+{
+	struct htmlTag *t = tagFromJavaVar(v);
+	if (t)
+		return t;
+	if (!tagname)
+		return 0;
+	t = newTag(tagname);
+	if (!t) {
+		debugPrint(3, "cannot create tag node %s", tagname);
+		return 0;
+	}
+	t->jv = v;
+/* this node now has a js object, don't decorate it again. */
+	t->step = 2;
+/* and don't render it unless it is linked into the active tree */
+	t->deleted = true;
+	return t;
+}				/* tagFromJavaVar2 */
 
 /* Return false to stop javascript, due to a url redirect */
 void javaSubmitsForm(jsobjtype v, bool reset)
@@ -3757,53 +1786,6 @@ void javaSubmitsForm(jsobjtype v, bool reset)
 		js_submit = v;
 }				/* javaSubmitsForm */
 
-void javaOpensWindow(const char *href, const char *name)
-{
-	struct htmlTag *t;
-	char *copy, *r;
-	const char *a;
-
-	if (!href || !*href) {
-		browseError(MSG_JSBlankWindow);
-		return;
-	}
-
-	copy = cloneString(href);
-	unpercentURL(copy);
-	r = resolveURL(getBaseHref(-1), copy);
-	nzFree(copy);
-	if (cw->browseMode) {
-		gotoLocation(r, 0, false);
-		return;
-	}
-
-	t = newTag("a");
-	t->href = r;
-	a = altText(r);
-/* I'll assume this is more helpful than the name of the window */
-	if (a)
-		name = a;
-	toPreamble(t->seqno, "Popup", 0, name);
-}				/* javaOpensWindow */
-
-void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
-{
-	struct htmlTag *t = newTag("a");
-	char timedesc[48];
-	int l;
-
-	strcpy(timedesc, (isInterval ? "Interval" : "Timer"));
-	l = strlen(timedesc);
-	if (n > 1000)
-		sprintf(timedesc + l, " %d", n / 1000);
-	else
-		sprintf(timedesc + l, " %dms", n);
-
-	t->jv = to;
-	t->href = cloneString("#");
-	toPreamble(t->seqno, timedesc, jsrc, 0);
-}				/* javaSetsTimeout */
-
 bool handlerGoBrowse(const struct htmlTag *t, const char *name)
 {
 	if (!isJSAlive)
@@ -3812,3 +1794,976 @@ bool handlerGoBrowse(const struct htmlTag *t, const char *name)
 		return true;
 	return run_function_bool(t->jv, name);
 }				/* handlerGoBrowse */
+
+/* Javascript errors, we need to see these no matter what. */
+void runningError(int msg, ...)
+{
+	va_list p;
+	if (ismc)
+		return;
+	if (debugLevel <= 2)
+		return;
+	va_start(p, msg);
+	vprintf(i_getString(msg), p);
+	va_end(p);
+	nl();
+}				/* runningError */
+
+/*********************************************************************
+Diff the old screen with the new rendered screen.
+This is a simple front back diff algorithm.
+Compare the two strings from the start, how many lines are the same.
+Compare the two strings from the back, how many lines are the same.
+That zeros in on the line that has changed.
+Most of the time one line has changed,
+or a couple of adjacent lines, or a couple of nearby lines.
+So this should do it.
+sameFront counts the lines from the top that are the same.
+We're here because the buffers are different, so sameFront will not equal $.
+Lines past sameBack1 and same back2 are the same to the bottom in the two buffers.
+*********************************************************************/
+
+static int sameFront, sameBack1, sameBack2;
+static const char *newChunkStart, *newChunkEnd;
+
+static void frontBackDiff(const char *b1, const char *b2)
+{
+	const char *f1, *f2, *s1, *s2, *e1, *e2;
+
+	sameFront = 0;
+	s1 = b1, s2 = b2;
+	f1 = b1, f2 = b2;
+	while (*s1 == *s2 && *s1) {
+		if (*s1 == '\n') {
+			f1 = s1 + 1, f2 = s2 + 1;
+			++sameFront;
+		}
+		++s1, ++s2;
+	}
+
+	s1 = b1 + strlen(b1);
+	s2 = b2 + strlen(b2);
+	while (s1 > f1 && s2 > f2 && s1[-1] == s2[-1])
+		--s1, --s2;
+
+	if (s1 == f1 && s2[-1] == '\n')
+		goto mark_e;
+	if (s2 == f2 && s1[-1] == '\n')
+		goto mark_e;
+/* advance both pointers to newline or null */
+	while (*s1 && *s1 != '\n')
+		++s1, ++s2;
+/* these buffers should always end in nl, so the next if should always be true */
+	if (*s1 == '\n')
+		++s1, ++s2;
+
+mark_e:
+	e1 = s1, e2 = s2;
+
+	sameBack1 = sameFront;
+	for (s1 = f1; s1 < e1; ++s1)
+		if (*s1 == '\n')
+			++sameBack1;
+	if (s1 > f1 && s1[-1] != '\n')	// should never happen
+		++sameBack1;
+
+	sameBack2 = sameFront;
+	for (s2 = f2; s2 < e2; ++s2)
+		if (*s2 == '\n')
+			++sameBack2;
+	if (s2 > f2 && s2[-1] != '\n')	// should never happen
+		++sameBack2;
+
+	newChunkStart = f2;
+	newChunkEnd = e2;
+}				/* frontBackDiff */
+
+static bool backgroundJS;
+
+/* Rerender the buffer and notify of any lines that have changed */
+void rerender(bool rr_command)
+{
+	char *a, *newbuf;
+
+	if (rr_command) {
+/* take the screen snap */
+		jSyncup();
+	}
+
+	if (!cw->lastrender) {
+		puts("lastrender = NULL");
+		return;
+	}
+
+/* and the new screen */
+	a = render(0);
+	newbuf = htmlReformat(a);
+	nzFree(a);
+
+/* the high runner case, most of the time nothing changes,
+ * and we can check that efficiently with strcmp */
+	if (stringEqual(newbuf, cw->lastrender)) {
+		if (rr_command)
+			i_puts(MSG_NoChange);
+		nzFree(newbuf);
+		return;
+	}
+
+	frontBackDiff(cw->lastrender, newbuf);
+	if (sameBack1 > sameFront)
+		delText(sameFront + 1, sameBack1);
+	if (sameBack2 > sameFront)
+		addTextToBuffer((pst) newChunkStart,
+				newChunkEnd - newChunkStart, sameFront, false);
+	cw->undoable = false;
+
+	if (!backgroundJS) {
+/* It's almost easier to do it than to report it. */
+		if (sameBack2 == sameFront) {	/* delete */
+			if (sameBack1 == sameFront + 1)
+				i_printf(MSG_LineDelete1, sameFront);
+			else
+				i_printf(MSG_LineDelete2, sameBack1 - sameFront,
+					 sameFront);
+		} else if (sameBack1 == sameFront) {
+			if (sameBack2 == sameFront + 1)
+				i_printf(MSG_LineAdd1, sameFront + 1);
+			else
+				i_printf(MSG_LineAdd2, sameFront + 1,
+					 sameBack2);
+		} else {
+			if (sameBack1 == sameFront + 1
+			    && sameBack2 == sameFront + 1)
+				i_printf(MSG_LineUpdate1, sameFront + 1);
+			else if (sameBack2 == sameFront + 1)
+				i_printf(MSG_LineUpdate2, sameBack1 - sameFront,
+					 sameFront + 1);
+			else
+				i_printf(MSG_LineUpdate3, sameFront + 1,
+					 sameBack2);
+		}
+	}
+
+	nzFree(newbuf);
+	nzFree(cw->lastrender);
+	cw->lastrender = 0;
+}				/* rerender */
+
+/* mark the tags on the deleted lines as deleted */
+void delTags(int startRange, int endRange)
+{
+	pst p;
+	int j, tagno, action;
+	struct htmlTag *t, *last_td;
+
+/* no javascript, no cause to ever rerender */
+	if (!cw->jcx)
+		return;
+
+	for (j = startRange; j <= endRange; ++j) {
+		p = fetchLine(j, -1);
+		last_td = 0;
+		for (; *p != '\n'; ++p) {
+			if (*p != InternalCodeChar)
+				continue;
+			tagno = strtol(p + 1, (char **)&p, 10);
+/* could be 0, but should never be negative */
+			if (tagno <= 0)
+				continue;
+			t = tagList[tagno];
+/* Only mark certain tags as deleted.
+ * If you mark <div> deleted, it could wipe out half the page. */
+			action = t->action;
+			if (action == TAGACT_TEXT ||
+			    action == TAGACT_HR ||
+			    action == TAGACT_LI || action == TAGACT_IMAGE)
+				t->deleted = true;
+#if 0
+/* this seems to cause more trouble than it's worth */
+			if (action == TAGACT_TD) {
+				printf("td%d\n", tagno);
+				if (last_td)
+					last_td->deleted = true;
+				last_td = t;
+			}
+#endif
+		}
+	}
+}				/* delTags */
+
+/* turn an onunload function into a clickable hyperlink */
+static void unloadHyperlink(const char *js_function, const char *where)
+{
+	dwStart();
+	stringAndString(&cw->dw, &cw->dw_l, "<P>Onclose <A href='javascript:");
+	stringAndString(&cw->dw, &cw->dw_l, js_function);
+	stringAndString(&cw->dw, &cw->dw_l, "()'>");
+	stringAndString(&cw->dw, &cw->dw_l, where);
+	stringAndString(&cw->dw, &cw->dw_l, "</A><br>");
+}				/* unloadHyperlink */
+
+/* Run the various onload functions */
+/* Turn the onunload functions into hyperlinks */
+/* This runs after the page is parsed and before the various javascripts run, is that right? */
+static void runOnload(void)
+{
+	int i, action;
+	int fn;			/* form number */
+	struct htmlTag *t;
+
+	if (!isJSAlive)
+		return;
+
+/* window and document onload */
+	run_function_bool(cw->winobj, "onload");
+	run_function_bool(cw->docobj, "onload");
+
+	fn = -1;
+	for (i = 0; i < cw->numTags; ++i) {
+		t = tagList[i];
+		if (t->slash)
+			continue;
+		action = t->action;
+		if (action == TAGACT_FORM)
+			++fn;
+		if (!t->jv)
+			continue;
+		if (action == TAGACT_BODY && t->onload)
+			run_function_bool(t->jv, "onload");
+		if (action == TAGACT_BODY && t->onunload)
+			unloadHyperlink("document.body.onunload", "Body");
+		if (action == TAGACT_FORM && t->onload)
+			run_function_bool(t->jv, "onload");
+/* tidy5 says there is no form.onunload */
+		if (action == TAGACT_FORM && t->onunload) {
+			char formfunction[48];
+			sprintf(formfunction, "document.forms[%d].onunload",
+				fn);
+			unloadHyperlink(formfunction, "Form");
+		}
+	}
+}				/* runOnload */
+
+/*********************************************************************
+Manage js timers here.
+It's a simple list of timers, assuming there aren't too many.
+Store the seconds and milliseconds when the timer should fire,
+the code to execute, and the timer object, which becomes "this".
+*********************************************************************/
+
+struct jsTimer {
+	struct jsTimer *next, *prev;
+	struct ebWindow *w;	/* edbrowse window holding this timer */
+	time_t sec;
+	int ms;
+	bool isInterval;
+	int jump_sec;		/* for interval */
+	int jump_ms;
+	const char *jsrc;
+	jsobjtype timerObject;
+};
+
+/* list of pending timers */
+struct listHead timerList = {
+	&timerList, &timerList
+};
+
+static time_t now_sec;
+static int now_ms;
+static void currentTime(void)
+{
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	now_sec = tv.tv_sec;
+	now_ms = tv.tv_usec / 1000;
+}				/* currentTime */
+
+void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
+{
+	struct jsTimer *jt;
+
+	if (jsrc[0] == 0)
+		return;		/* nothing to run */
+
+	jt = allocMem(sizeof(struct jsTimer));
+	jt->jsrc = cloneString(jsrc);
+	jt->sec = n / 1000;
+	jt->ms = n % 1000;
+	jt->isInterval = isInterval;
+	if (isInterval)
+		jt->jump_sec = n / 1000, jt->jump_ms = n % 1000;
+	currentTime();
+	jt->sec += now_sec;
+	jt->ms += now_ms;
+	if (jt->ms >= 1000)
+		jt->ms -= 1000, ++jt->sec;
+	jt->timerObject = to;
+	jt->w = cw;
+	addToListBack(&timerList, jt);
+	debugPrint(4, "timer %d %s\n", n, jsrc);
+}				/* javaSetsTimeout */
+
+static struct jsTimer *soonest(void)
+{
+	struct jsTimer *t, *best_t = 0;
+	if (listIsEmpty(&timerList))
+		return 0;
+	foreach(t, timerList) {
+		if (!best_t || t->sec < best_t->sec ||
+		    t->sec == best_t->sec && t->ms < best_t->ms)
+			best_t = t;
+	}
+	return best_t;
+}				/* soonest */
+
+bool timerWait(int *delay_sec, int *delay_ms)
+{
+	struct jsTimer *jt = soonest();
+	if (!jt)
+		return false;
+	currentTime();
+	if (now_sec > jt->sec || now_sec == jt->sec && now_ms >= jt->ms)
+		*delay_sec = *delay_ms = 0;
+	else {
+		*delay_sec = jt->sec - now_sec;
+		*delay_ms = (jt->ms - now_ms);
+		if (*delay_ms < 0)
+			*delay_ms += 1000, --*delay_sec;
+	}
+	return true;
+}				/* timerWait */
+
+void delTimers(struct ebWindow *w)
+{
+	int delcount = 0;
+	struct jsTimer *jt, *jnext;
+	for (jt = timerList.next; jt != (void *)&timerList; jt = jnext) {
+		jnext = jt->next;
+		if (jt->w == w) {
+			++delcount;
+			delFromList(jt);
+			cnzFree(jt->jsrc);
+			nzFree(jt);
+		}
+	}
+	debugPrint(4, "%d timers deleted", delcount);
+}				/* delTimers */
+
+void runTimers(void)
+{
+	struct jsTimer *jt;
+	struct ebWindow *save_cw = cw;
+	char *screen;
+	int screenlen;
+
+	currentTime();
+
+	while (jt = soonest()) {
+		if (jt->sec > now_sec || jt->sec == now_sec && jt->ms > now_ms)
+			break;
+
+		cw = jt->w;
+		backgroundJS = true;
+		jsRunScript(jt->timerObject, jt->jsrc, "timer", 1);
+		runScriptsPending();
+
+		if (cw != save_cw) {
+/* background window, go ahead and rerender, silently. */
+/* Screen snap, because we didn't run jSyncup */
+			nzFree(cw->lastrender);
+			cw->lastrender = 0;
+			if (unfoldBufferW(cw, false, &screen, &screenlen))
+				cw->lastrender = screen;
+			rerender(false);
+		}
+		backgroundJS = false;
+
+		if (jt->isInterval) {
+			jt->sec = now_sec + jt->jump_sec;
+			jt->ms = now_ms + jt->jump_ms;
+			if (jt->ms >= 1000)
+				jt->ms -= 1000, ++jt->sec;
+		} else {
+			delFromList(jt);
+			cnzFree(jt->jsrc);
+			nzFree(jt);
+		}
+	}
+
+	cw = save_cw;
+}				/* runTimers */
+
+void javaOpensWindow(const char *href, const char *name)
+{
+	struct htmlTag *t;
+	char *copy, *r;
+	const char *a;
+	bool replace = false;
+
+	if (*href == 'r')
+		replace = true;
+	++href;
+	if (!*href) {
+		debugPrint(3, "javascript is opening a blank window");
+		return;
+	}
+
+	copy = cloneString(href);
+	unpercentURL(copy);
+	r = resolveURL(cw->hbase, copy);
+	nzFree(copy);
+	if (replace || cw->browseMode && !backgroundJS) {
+		gotoLocation(r, 0, replace);
+		return;
+	}
+
+/* Turn the new window into a hyperlink. */
+/* just shovel this onto dw, as though it came from document.write() */
+	dwStart();
+	stringAndString(&cw->dw, &cw->dw_l, "<P>");
+	stringAndString(&cw->dw, &cw->dw_l, i_getString(MSG_Redirect));
+	stringAndString(&cw->dw, &cw->dw_l, ": <A href=");
+	stringAndString(&cw->dw, &cw->dw_l, r);
+	stringAndChar(&cw->dw, &cw->dw_l, '>');
+	a = altText(r);
+	nzFree(r);
+/* I'll assume this is more helpful than the name of the window */
+	if (a)
+		name = a;
+	r = htmlEscape(name);
+	stringAndString(&cw->dw, &cw->dw_l, r);
+	nzFree(r);
+	stringAndString(&cw->dw, &cw->dw_l, "</A><br>\n");
+}				/* javaOpensWindow */
+
+void javaSetsLinkage(char type, jsobjtype p_j, const char *rest)
+{
+	struct htmlTag *parent, *add, *before, *c, *t;
+	jsobjtype *a_j, *b_j;
+	char p_name[MAXTAGNAME], a_name[MAXTAGNAME], b_name[MAXTAGNAME];
+	int action;
+
+	sscanf(rest, "%s %p,%s %p,%s ", p_name, &a_j, a_name, &b_j, b_name);
+	parent = tagFromJavaVar2(p_j, p_name);
+	if (type == 'c')	/* create */
+		return;
+
+	add = tagFromJavaVar2(a_j, a_name);
+	if (!parent || !add)
+		return;
+
+	if (type == 'r') {
+/* add is a misnomer here, it's being removed */
+		add->deleted = true;
+		add->parent = NULL;
+		if (parent->firstchild == add)
+			parent->firstchild = add->sibling;
+		else {
+			for (c = parent->firstchild; c->sibling; c = c->sibling) {
+				if (c->sibling != add)
+					continue;
+				c->sibling = add->sibling;
+				break;
+			}
+		}
+		return;
+	}
+
+	if (type == 'b') {	/* insertBefore */
+		before = tagFromJavaVar2(b_j, b_name);
+		if (!before)
+			return;
+		c = parent->firstchild;
+		if (!c)
+			return;
+		if (c == before) {
+			parent->firstchild = add;
+			add->sibling = before;
+			add->parent = parent;
+			add->deleted = false;
+			return;
+		}
+		while (c->sibling && c->sibling != before)
+			c = c->sibling;
+		if (!c->sibling)
+			return;
+		c->sibling = add;
+		add->sibling = before;
+	} else {
+/* type = a, appendchild */
+		if (!parent->firstchild)
+			parent->firstchild = add;
+		else {
+			c = parent->firstchild;
+			while (c->sibling)
+				c = c->sibling;
+			c->sibling = add;
+		}
+	}
+	add->parent = parent;
+	add->deleted = false;
+
+/* Bad news, we have to replicate some of the prerender logic here. */
+/* This node is attached to the tree, just like an html tag would be. */
+	t = add;
+	action = t->action;
+	switch (action) {
+	case TAGACT_INPUT:
+		htmlInputHelper(t);
+		break;
+
+	case TAGACT_OPTION:
+		if (!t->value)
+			t->value = emptyString;
+		if (!t->textval)
+			t->textval = emptyString;
+		break;
+
+	case TAGACT_TA:
+		t->action = TAGACT_INPUT;
+		t->itype = INP_TA;
+		formControl(t, true);
+		if (!t->value)
+			t->value = emptyString;
+		if (!t->rvalue)
+			t->rvalue = cloneString(t->value);
+		break;
+
+	case TAGACT_SELECT:
+		t->action = TAGACT_INPUT;
+		t->itype = INP_SELECT;
+		formControl(t, true);
+		break;
+
+	case TAGACT_TR:
+		t->controller = findOpenTag(t, TAGACT_TABLE);
+		break;
+
+	case TAGACT_TD:
+		t->controller = findOpenTag(t, TAGACT_TR);
+		break;
+
+	}			/* switch */
+}				/* javaSetsLinkage */
+
+/* the new string, the result of the render operation */
+static char *ns;
+static int ns_l;
+static bool invisible, tdfirst;
+static int listnest;		/* count nested lists */
+/* None of these tags nest, so it is reasonable to talk about
+ * the current open tag. */
+static struct htmlTag *currentForm, *currentA;
+
+static void tagInStream(int tagno)
+{
+	char buf[8];
+	sprintf(buf, "%c%d*", InternalCodeChar, tagno);
+	stringAndString(&ns, &ns_l, buf);
+}				/* tagInStream */
+
+/* see if a number or star is pending, waiting to be printed */
+static void liCheck(struct htmlTag *t)
+{
+	struct htmlTag *ltag;	/* the list tag */
+	if (listnest && (ltag = findOpenList(t)) && ltag->post) {
+		char olbuf[32];
+		if (ltag->ninp)
+			tagInStream(ltag->ninp);
+		if (ltag->action == TAGACT_OL) {
+			int j = ++ltag->lic;
+			sprintf(olbuf, "%d. ", j);
+		} else {
+			strcpy(olbuf, "* ");
+		}
+		if (!invisible)
+			stringAndString(&ns, &ns_l, olbuf);
+		ltag->post = false;
+	}
+}				/* liCheck */
+
+static struct htmlTag *deltag;
+
+static void renderNode(struct htmlTag *t, bool opentag)
+{
+	int tagno = t->seqno;
+	char hnum[40];		/* hidden number */
+#define ns_hnum() stringAndString(&ns, &ns_l, hnum)
+#define ns_ic() stringAndChar(&ns, &ns_l, InternalCodeChar)
+	int j, l;
+	int itype;		/* input type */
+	const struct tagInfo *ti = t->info;
+	int action = t->action;
+	char c;
+	bool retainTag;
+	const char *a;		/* usually an attribute */
+	char *u;
+	struct htmlTag *ltag;	/* list tag */
+
+#if 0
+	printf("rend %c%s\n", (opentag ? ' ' : '/'), t->info->name);
+#endif
+
+	if (deltag) {
+		if (t == deltag && !opentag)
+			deltag = 0;
+li_hide:
+/* we can skate past the li tag, but still need to increment the count */
+		if (action == TAGACT_LI && opentag &&
+		    (ltag = findOpenList(t)) && ltag->action == TAGACT_OL)
+			++ltag->lic;
+		return;
+	}
+	if (t->deleted) {
+		deltag = t;
+		goto li_hide;
+	}
+
+	if (!opentag && ti->bits & TAG_NOSLASH)
+		return;
+
+	retainTag = true;
+	if (invisible)
+		retainTag = false;
+	if (ti->bits & TAG_INVISIBLE) {
+		retainTag = false;
+		invisible = opentag;
+/* special case for noscript with no js */
+		if (stringEqual(ti->name, "noscript") && !cw->jcx)
+			invisible = false;
+	}
+
+	switch (action) {
+	case TAGACT_TEXT:
+		if (!t->textval && t->jv) {
+/* A text node from html should always contain a string. But if this node
+ * is created by document.createTextNode(), the string is
+ * down in the member "data". */
+			t->textval = get_property_string(t->jv, "data");
+/* Unfortunately this does not reflect subsequent changes to TextNode.data.
+ * either we query js every time, on every piece of text,
+ * or we include a setter so that TextNode.data assignment has a side effect. */
+		}
+		if (!t->textval)
+			break;
+		liCheck(t);
+		if (!invisible) {
+			tagInStream(tagno);
+			stringAndString(&ns, &ns_l, t->textval);
+		}
+		break;
+
+	case TAGACT_A:
+		liCheck(t);
+		currentA = (opentag ? t : 0);
+		if (!retainTag)
+			break;
+		if (t->href) {
+			if (opentag)
+				sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
+			else
+				sprintf(hnum, "%c0}", InternalCodeChar);
+		} else {
+			if (opentag)
+				sprintf(hnum, "%c%d*", InternalCodeChar, tagno);
+			else
+				hnum[0] = 0;
+		}
+		ns_hnum();
+		break;
+
+	case TAGACT_OL:
+	case TAGACT_UL:
+		t->lic = t->slic;
+		t->post = false;
+		if (opentag)
+			++listnest;
+		else
+			--listnest;
+	case TAGACT_DL:
+	case TAGACT_DT:
+	case TAGACT_DD:
+	case TAGACT_DIV:
+	case TAGACT_BR:
+	case TAGACT_P:
+	case TAGACT_SPAN:
+	case TAGACT_NOP:
+nop:
+		if (invisible)
+			break;
+		j = ti->para;
+		if (opentag)
+			j &= 3;
+		else
+			j >>= 2;
+		if (j) {
+			c = '\f';
+			if (j == 1) {
+				c = '\r';
+				if (action == TAGACT_BR)
+					c = '\n';
+			}
+			stringAndChar(&ns, &ns_l, c);
+		}
+/* tags with id= have to be part of the screen, so you can jump to them */
+		if (t->id && opentag && action != TAGACT_LI)
+			tagInStream(tagno);
+		break;
+
+	case TAGACT_PRE:
+		if (!retainTag)
+			break;
+/* one of those rare moments when I really need </tag> in the text stream */
+		j = (opentag ? tagno : t->balance->seqno);
+/* I need to manage the paragraph breaks here, rather than t->info->para,
+ * which would rule if I simply redirected to nop.
+ * But the order is wrong if I do that. */
+		if (opentag)
+			stringAndChar(&ns, &ns_l, '\f');
+		sprintf(hnum, "%c%d*", InternalCodeChar, j);
+		ns_hnum();
+		if (!opentag)
+			stringAndChar(&ns, &ns_l, '\f');
+		break;
+
+	case TAGACT_FORM:
+		currentForm = (opentag ? t : 0);
+		goto nop;
+
+	case TAGACT_INPUT:
+		if (!opentag)
+			break;
+		itype = t->itype;
+		if (itype == INP_HIDDEN)
+			break;
+		if (!retainTag)
+			break;
+		liCheck(t);
+		if (itype == INP_TA) {
+			j = t->lic;
+			if (j)
+				sprintf(hnum, "%c%d<buffer %d%c0>",
+					InternalCodeChar, t->seqno, j,
+					InternalCodeChar);
+			else
+				strcpy(hnum, "<buffer ?>");
+			ns_hnum();
+			break;
+		}
+		sprintf(hnum, "%c%d<", InternalCodeChar, tagno);
+		ns_hnum();
+		if (itype < INP_RADIO) {
+			if (t->value[0])
+				stringAndString(&ns, &ns_l, t->value);
+			else if (itype == INP_SUBMIT || itype == INP_IMAGE)
+				stringAndString(&ns, &ns_l, "Go");
+			else if (itype == INP_RESET)
+				stringAndString(&ns, &ns_l, "Reset");
+		} else
+			stringAndChar(&ns, &ns_l, (t->checked ? '+' : '-'));
+		if (currentForm && (itype == INP_SUBMIT || itype == INP_IMAGE)) {
+			if (t->created)
+				stringAndString(&ns, &ns_l, " implicit");
+			if (currentForm->secure)
+				stringAndString(&ns, &ns_l, " secure");
+			if (currentForm->bymail)
+				stringAndString(&ns, &ns_l, " bymail");
+		}
+		ns_ic();
+		stringAndString(&ns, &ns_l, "0>");
+		break;
+
+	case TAGACT_LI:
+		if ((ltag = findOpenList(t))) {
+			ltag->post = true;
+/* borrow ninp to store the tag number of <li> */
+			ltag->ninp = t->seqno;
+		}
+		goto nop;
+
+	case TAGACT_HR:
+		liCheck(t);
+		if (retainTag) {
+			tagInStream(tagno);
+			stringAndString(&ns, &ns_l, "\r----------\r");
+		}
+		break;
+
+	case TAGACT_TR:
+		if (opentag)
+			tdfirst = true;
+	case TAGACT_TABLE:
+		goto nop;
+
+	case TAGACT_TD:
+		if (!retainTag)
+			break;
+		if (tdfirst)
+			tdfirst = false;
+		else {
+			liCheck(t);
+			j = ns_l;
+			while (j && ns[j - 1] == ' ')
+				--j;
+			ns[j] = 0;
+			ns_l = j;
+			stringAndChar(&ns, &ns_l, TableCellChar);
+		}
+		tagInStream(tagno);
+		break;
+
+/* This is strictly for rendering math pages written with my particular css.
+* <span class=sup> becomes TAGACT_SUP, which means superscript.
+* sub is subscript and ovb is overbar.
+* Sorry to put my little quirks into this program, but hey,
+* it's my program. */
+	case TAGACT_SUP:
+	case TAGACT_SUB:
+	case TAGACT_OVB:
+		if (!retainTag)
+			break;
+		if (action == TAGACT_SUB)
+			j = 1;
+		if (action == TAGACT_SUP)
+			j = 2;
+		if (action == TAGACT_OVB)
+			j = 3;
+		if (opentag) {
+			static const char *openstring[] = { 0,
+				"[", "^(", "`"
+			};
+			t->lic = ns_l;
+			liCheck(t);
+			stringAndString(&ns, &ns_l, openstring[j]);
+			break;
+		}
+		if (j == 3) {
+			stringAndChar(&ns, &ns_l, '\'');
+			break;
+		}
+/* backup, and see if we can get rid of the parentheses or brackets */
+		l = t->lic + j;
+		u = ns + l;
+/* skip past <span> tag indicator */
+		if (*u == InternalCodeChar) {
+			++u;
+			while (isdigit(*u))
+				++u;
+			++u;
+		}
+		if (j == 2 && isalphaByte(u[0]) && !u[1])
+			goto unparen;
+		if (j == 2 && (stringEqual(u, "th") || stringEqual(u, "rd")
+			       || stringEqual(u, "nd") || stringEqual(u, "st"))) {
+			strmove(ns + l - 2, ns + l);
+			ns_l -= 2;
+			break;
+		}
+		while (isdigitByte(*u))
+			++u;
+		if (!*u)
+			goto unparen;
+		stringAndChar(&ns, &ns_l, (j == 2 ? ')' : ']'));
+		break;
+unparen:
+/* ok, we can trash the original ( or [ */
+		l = t->lic + j;
+		strmove(ns + l - 1, ns + l);
+		--ns_l;
+		if (j == 2)
+			stringAndChar(&ns, &ns_l, ' ');
+		break;
+
+	case TAGACT_AREA:
+	case TAGACT_FRAME:
+		liCheck(t);
+		if (!retainTag)
+			break;
+		stringAndString(&ns, &ns_l,
+				(action == TAGACT_FRAME ? "\rFrame " : "\r"));
+		a = 0;
+		if (action == TAGACT_AREA)
+			a = attribVal(t, "alt");
+		u = (char *)a;
+		if (!u) {
+			u = t->name;
+			if (!u)
+				u = altText(t->href);
+		}
+		if (!u)
+			u = (action == TAGACT_FRAME ? "???" : "area");
+		if (t->href) {
+			sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
+			ns_hnum();
+		}
+		if (t->href || action == TAGACT_FRAME)
+			stringAndString(&ns, &ns_l, u);
+		if (t->href) {
+			ns_ic();
+			stringAndString(&ns, &ns_l, "0}");
+		}
+		stringAndChar(&ns, &ns_l, '\r');
+		break;
+
+	case TAGACT_MUSIC:
+		liCheck(t);
+		if (!retainTag)
+			break;
+		if (!t->href)
+			break;
+		sprintf(hnum, "\r%c%d{", InternalCodeChar, tagno);
+		ns_hnum();
+		stringAndString(&ns, &ns_l,
+				(ti->name[0] ==
+				 'B' ? "Background Music" : "Audio passage"));
+		sprintf(hnum, "%c0}\r", InternalCodeChar);
+		ns_hnum();
+		break;
+
+	case TAGACT_IMAGE:
+		liCheck(t);
+		tagInStream(tagno);
+		if (!currentA) {
+			if (a = attribVal(t, "alt")) {
+				u = altText(a);
+				a = NULL;
+				if (u && !invisible) {
+					stringAndChar(&ns, &ns_l, '[');
+					stringAndString(&ns, &ns_l, u);
+					stringAndChar(&ns, &ns_l, ']');
+				}
+			}
+			break;
+		}
+/* image is part of a hyperlink */
+		if (!retainTag || !currentA->href || currentA->textin)
+			break;
+		u = 0;
+		a = attribVal(t, "alt");
+		if (a)
+			u = altText(a);
+		if (!u)
+			u = altText(t->name);
+		if (!u)
+			u = altText(currentA->href);
+		if (!u)
+			u = altText(t->href);
+		if (!u)
+			u = "image";
+		stringAndString(&ns, &ns_l, u);
+		break;
+
+	}			/* switch */
+}				/* renderNode */
+
+/* returns an allocated string */
+char *render(int start)
+{
+	ns = initString(&ns_l);
+	invisible = false;
+	listnest = 0;
+	currentForm = currentA = NULL;
+	traverse_callback = renderNode;
+	traverseAll(start);
+	return ns;
+}				/* render */

@@ -4,22 +4,30 @@
  */
 
 #include "eb.h"
-#include <netdb.h>
+
+#ifndef _MSC_VER		// no #include <sys/select.h>
+#include <sys/select.h>
+#endif // _MSC_VER
 
 /* If this include file is missing, you need the pcre package,
  * and the pcre-devel package. */
 #include <pcre.h>
 
 #include <readline/readline.h>
+#include <readline/history.h>
 
 int displayLength = 500;
 
 /* Static variables for this file. */
 
+static uchar dirWrite;		/* directories read write */
+static char lsformat[12];	/* size date etc on a directory listing */
+static uchar endMarks;		/* ^ $ on printed lines */
+static bool jexmode;
 /* The valid edbrowse commands. */
 static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^<";
 /* Commands that can be done in browse mode. */
-static const char browse_cmd[] = "AbBdDefghHijJklmMnpqsuvwXz=^<";
+static const char browse_cmd[] = "AbBdDefghHiklMnpqsvwXz=^<";
 /* Commands for sql mode. */
 static const char sql_cmd[] = "AadDefghHiklmnpqrsvwXz=^<";
 /* Commands for directory mode. */
@@ -83,13 +91,13 @@ static char icmd;		/* input command, usually the same as cmd */
  * After all, you don't want to see those code characters.
  * You just want to see {Click here for more information}. */
 
-static void removeHiddenNumbers(pst p)
+static void removeHiddenNumbers(pst p, uchar terminate)
 {
 	pst s, t, u;
 	uchar c, d;
 
 	s = t = p;
-	while ((c = *s) != '\n') {
+	while ((c = *s) != terminate) {
 		if (c != InternalCodeChar) {
 addchar:
 			*t++ = c;
@@ -115,7 +123,7 @@ addchar:
 /* This should never happen; just move along. */
 		goto addchar;
 	}			/* loop over p */
-	*t = c;			/* terminating newline */
+	*t = c;			/* terminating character */
 }				/* removeHiddenNumbers */
 
 /* Fetch line n from the current buffer, or perhaps another buffer.
@@ -150,7 +158,7 @@ static pst fetchLineContext(int n, int show, int cx)
 		return t->text;
 	p = clonePstring(t->text);
 	if (show && lw->browseMode)
-		removeHiddenNumbers(p);
+		removeHiddenNumbers(p, '\n');
 	return p;
 }				/* fetchLineContext */
 
@@ -159,29 +167,39 @@ pst fetchLine(int n, int show)
 	return fetchLineContext(n, show, context);
 }				/* fetchLine */
 
+static int apparentSizeW(const struct ebWindow *w, bool browsing)
+{
+	int ln, size = 0;
+	pst p;
+	for (ln = 1; ln <= w->dol; ++ln) {
+		p = w->map[ln].text;
+		while (*p != '\n') {
+			if (*p == InternalCodeChar && browsing && w->browseMode) {
+				++p;
+				while (isdigitByte(*p))
+					++p;
+				if (strchr("<>{}", *p))
+					++size;
+				++p;
+				continue;
+			}
+			++p, ++size;
+		}
+		++size;
+	}			/* loop over lines */
+	if (w->nlMode)
+		--size;
+	return size;
+}				/* apparentSizeW */
+
 static int apparentSize(int cx, bool browsing)
 {
-	char c;
-	int i, ln, size;
-	struct ebWindow *w;
+	const struct ebWindow *w;
 	if (cx <= 0 || cx >= MAXSESSION || (w = sessionList[cx].lw) == 0) {
 		setError(MSG_SessionInactive, cx);
 		return -1;
 	}
-	size = 0;
-	for (ln = 1; ln <= w->dol; ++ln) {
-		if (browsing && sessionList[cx].lw->browseMode) {
-			pst line = fetchLineContext(ln, 1, cx);
-			size += pstLength(line);
-			free(line);
-		} else {
-			pst line = fetchLineContext(ln, -1, cx);
-			size += pstLength(line);
-		}
-	}			/* loop over lines */
-	if (sessionList[cx].lw->nlMode)
-		--size;
-	return size;
+	return apparentSizeW(w, browsing);
 }				/* apparentSize */
 
 int currentBufferSize(void)
@@ -247,7 +265,14 @@ void displayLine(int n)
 
 	if (cnt >= displayLength)
 		printf("...");
-	printf("%s", dirSuffix(n));
+	if (cw->dirMode) {
+		printf("%s", dirSuffix(n));
+		if (cw->r_map) {
+			s = cw->r_map[n].text;
+			if (*s)
+				printf(" %s", s);
+		}
+	}
 	if (endMarks == 2 || endMarks && cmd == 'l')
 		printf("$");
 	nl();
@@ -304,6 +329,7 @@ pst inputLine(void)
 	uchar c, d, e;
 	static char *last_rl;
 	uchar *s;
+	int delay_sec, delay_ms;
 
 top:
 	intFlag = false;
@@ -311,6 +337,27 @@ top:
 	nzFree(last_rl);
 	last_rl = 0;
 	s = 0;
+
+	if (timerWait(&delay_sec, &delay_ms)) {
+/* timers are pending, use select to wait on input or run the first timer. */
+		fd_set channels;
+		int rc;
+		struct timeval tv;
+		if (!(delay_sec | delay_ms))
+			goto dotimers;
+		tv.tv_sec = delay_sec;
+		tv.tv_usec = delay_ms * 1000;
+		memset(&channels, 0, sizeof(channels));
+		FD_SET(0, &channels);
+		rc = select(1, &channels, 0, 0, &tv);
+		if (rc < 0)
+			goto interrupt;
+		if (rc == 0) {	/* timeout */
+dotimers:
+			runTimers();
+			goto top;
+		}
+	}
 
 	if (inputReadLine && isInteractive) {
 		last_rl = readline("");
@@ -322,6 +369,7 @@ top:
 	}
 
 	if (!s) {
+interrupt:
 		if (intFlag)
 			goto top;
 		i_puts(MSG_EndFile);
@@ -363,8 +411,24 @@ addchar:
 		i += 2;
 		goto addchar;
 	}			/* loop over input chars */
+	s[j] = 0;
+
+	if (jexmode) {
+		if (stringEqual(s, ".")) {
+			jexmode = false;
+			puts("bye");
+		} else {
+			char *result =
+			    jsRunScriptResult(cw->winobj, s, "jex", 1);
+			if (result)
+				puts(result);
+			nzFree(result);
+		}
+		goto top;
+	}
+
+/* rest of edbrowse expects this line to be nl terminated */
 	s[j] = '\n';
-// in either case the line is not null terminated; hope that's ok
 	return s;
 }				/* inputLine */
 
@@ -545,12 +609,18 @@ static void undoPush(void)
 {
 	struct ebWindow *uw;
 
+/* if in browse mode, we really shouldn't be here at all!
+ * But we could if substituting on an input field, since substitute is also
+ * a regular ed command. */
+	if (cw->browseMode)
+		return;
+
 	if (madeChanges)
 		return;
 	madeChanges = true;
 
 	cw->undoable = true;
-	if (!cw->browseMode)
+	if (!cw->quitMode)
 		cw->changeMode = true;
 
 	undoCompare();
@@ -571,12 +641,14 @@ static void undoPush(void)
 static void freeWindow(struct ebWindow *w)
 {
 	freeTags(w);
+	delTimers(w);
 	freeJavaContext(w);
 	freeWindowLines(w->map);
 	freeWindowLines(w->r_map);
 	nzFree(w->dw);
 	nzFree(w->ft);
-	nzFree(w->fto);
+	nzFree(w->hbase);
+	nzFree(w->lastrender);
 	nzFree(w->fd);
 	nzFree(w->fk);
 	nzFree(w->mailInfo);
@@ -634,10 +706,23 @@ bool cxQuit(int cx, int action)
 	if (!w)
 		i_printfExit(MSG_QuitNoActive, cx);
 
+/* action = 3 means we can trash data */
+	if (action == 3) {
+		w->changeMode = false;
+		action = 2;
+	}
+
 /* We might be trashing data, make sure that's ok. */
 	if (w->changeMode &&
-	    !(w->dirMode | w->sqlMode) && lastq != cx && w->fileName &&
-	    !isURL(w->fileName)) {
+/* something in the buffer has changed */
+	    lastq != cx &&
+/* last command was not q */
+	    !ismc &&
+/* not in fetchmail mode, which uses the same buffer over and over again */
+	    !(w->dirMode | w->sqlMode) &&
+/* not directory or sql mode */
+	    (!w->fileName || !isURL(w->fileName))) {
+/* not changing a url */
 		lastqq = cx;
 		setError(MSG_ExpectW);
 		if (cx != context)
@@ -710,7 +795,7 @@ void cxSwitch(int cx, bool interactive)
  * or by window.location = new_url. */
 char *newlocation;
 int newloc_d;			/* possible delay */
-static bool newloc_rf;		/* refresh the buffer */
+bool newloc_r;			/* replace the buffer */
 bool js_redirects;
 
 void gotoLocation(char *url, int delay, bool rf)
@@ -722,7 +807,7 @@ void gotoLocation(char *url, int delay, bool rf)
 	nzFree(newlocation);
 	newlocation = url;
 	newloc_d = delay;
-	newloc_rf = rf;
+	newloc_r = rf;
 	if (!delay)
 		js_redirects = true;
 }				/* gotoLocation */
@@ -760,7 +845,9 @@ static void addToMap(int nlines, int destl)
 			i_printfExit(MSG_LineLimit);
 	}
 
-	undoPush();
+/* browse has no undo command */
+	if (!cw->browseMode)
+		undoPush();
 
 /* adjust labels */
 	for (i = 0; i < 26; ++i) {
@@ -835,9 +922,6 @@ bool addTextToBuffer(const pst inbuf, int length, int destl, bool onside)
 			t->text[i - j] = '\n';
 		}
 		memcpy(t->text, inbuf + j, i - j);
-/* in browse mode only js can add lines to buffer */
-		if (cw->browseMode)
-			t->jsup = true;
 		++t;
 	}			/* loop breaking inbuf into lines */
 
@@ -852,9 +936,14 @@ static bool inputLinesIntoBuffer(void)
 	pst line;
 	int linecount = 0, cap;
 	struct lineMap *t;
+/* I would use the static variable newpiece to build the new map of lines,
+ * as other routines do, but this one is multiline input, and a javascript
+ * timer can sneak in and add text, thus clobbering newpiece,
+ * so I need a local variable. */
+	struct lineMap *np;
 
 	cap = 128;
-	newpiece = t = allocZeroMem(cap * LMSIZE);
+	np = t = allocZeroMem(cap * LMSIZE);
 
 	if (linePending[0])
 		line = linePending;
@@ -864,8 +953,8 @@ static bool inputLinesIntoBuffer(void)
 	while (line[0] != '.' || line[1] != '\n') {
 		if (linecount == cap) {
 			cap *= 2;
-			newpiece = reallocMem(newpiece, cap * LMSIZE);
-			t = newpiece + linecount;
+			np = reallocMem(np, cap * LMSIZE);
+			t = np + linecount;
 		}
 		t->text = clonePstring(line);
 		t->ds1 = t->ds2 = 0;
@@ -874,8 +963,7 @@ static bool inputLinesIntoBuffer(void)
 	}
 
 	if (!linecount) {	/* no lines entered */
-		free(newpiece);
-		newpiece = 0;
+		free(np);
 		cw->dot = endRange;
 		if (!cw->dot && cw->dol)
 			cw->dot = 1;
@@ -884,16 +972,36 @@ static bool inputLinesIntoBuffer(void)
 
 	if (endRange == cw->dol)
 		cw->nlMode = false;
+	newpiece = np;
 	addToMap(linecount, endRange);
 	return true;
 }				/* inputLinesIntoBuffer */
+
+/* create the full pathname for a file that you are viewing in directory mode. */
+/* This is static, with a limit on path length. */
+static char *makeAbsPath(const char *f)
+{
+	static char path[ABSPATH + 200];
+	if (strlen(cw->baseDirName) + strlen(f) > ABSPATH - 2) {
+		setError(MSG_PathNameLong, ABSPATH);
+		return 0;
+	}
+	sprintf(path, "%s/%s", cw->baseDirName, f);
+	return path;
+}				/* makeAbsPath */
 
 /* Delete a block of text. */
 void delText(int start, int end)
 {
 	int i, j, ln;
 
-	undoPush();
+/* browse has no undo command */
+	if (cw->browseMode) {
+		for (ln = start; ln <= end; ++ln)
+			nzFree(cw->map[ln].text);
+	} else {
+		undoPush();
+	}
 
 	if (end == cw->dol)
 		cw->nlMode = false;
@@ -927,17 +1035,6 @@ void delText(int start, int end)
 /* Delete files from a directory as you delete lines.
  * Set dw to move them to your recycle bin.
  * Set dx to delete them outright. */
-
-static char *makeAbsPath(char *f)
-{
-	static char path[ABSPATH];
-	if (strlen(cw->baseDirName) + strlen(f) > ABSPATH - 2) {
-		setError(MSG_PathNameLong, ABSPATH);
-		return 0;
-	}
-	sprintf(path, "%s/%s", cw->baseDirName, f);
-	return path;
-}				/* makeAbsPath */
 
 static bool delFiles(void)
 {
@@ -1140,9 +1237,127 @@ static bool joinText(void)
 	return true;
 }				/* joinText */
 
+/* Read the contents of a directory into the current buffer */
+static bool readDirectory(const char *filename)
+{
+	int len, j, linecount;
+	char *v;
+	struct lineMap *mptr;
+	struct lineMap *backpiece = 0;
+
+	cw->baseDirName = cloneString(filename);
+/* get rid of trailing slash */
+	len = strlen(cw->baseDirName);
+	if (len && cw->baseDirName[len - 1] == '/')
+		cw->baseDirName[len - 1] = 0;
+/* Understand that the empty string now means / */
+
+/* get the files, or fail if there is a problem */
+	if (!sortedDirList(filename, &newpiece, &linecount))
+		return false;
+	if (!cw->dol) {
+		cw->dirMode = true;
+		i_puts(MSG_DirMode);
+		if (lsformat[0])
+			backpiece = allocZeroMem(LMSIZE * (linecount + 2));
+	}
+
+	if (!linecount) {	/* empty directory */
+		cw->dot = endRange;
+		fileSize = 0;
+		free(newpiece);
+		newpiece = 0;
+		nzFree(backpiece);
+		goto success;
+	}
+
+/* change 0 to nl and count bytes */
+	fileSize = 0;
+	mptr = newpiece;
+	for (j = 0; j < linecount; ++j, ++mptr) {
+		char c, ftype;
+		pst t = mptr->text;
+		char *abspath = makeAbsPath((char *)t);
+		while (*t) {
+			if (*t == '\n')
+				*t = '\t';
+			++t;
+		}
+		*t = '\n';
+		len = t - mptr->text;
+		fileSize += len + 1;
+		if (!abspath)
+			continue;	/* should never happen */
+
+		ftype = fileTypeByName(abspath, true);
+		if (!ftype)
+			continue;
+		if (isupperByte(ftype)) {	/* symbolic link */
+			if (!cw->dirMode)
+				*t = '@', *++t = '\n';
+			else
+				mptr->ds1 = '@';
+			++fileSize;
+		}
+		ftype = tolower(ftype);
+		c = 0;
+		if (ftype == 'd')
+			c = '/';
+		if (ftype == 's')
+			c = '^';
+		if (ftype == 'c')
+			c = '<';
+		if (ftype == 'b')
+			c = '*';
+		if (ftype == 'p')
+			c = '|';
+		if (c) {
+			if (!cw->dirMode)
+				*t = c, *++t = '\n';
+			else if (mptr->ds1)
+				mptr->ds2 = c;
+			else
+				mptr->ds1 = c;
+			++fileSize;
+		}
+
+/* extra stat entries on the line */
+		if (!lsformat[0])
+			continue;
+		if (backpiece)
+			backpiece[j + 1].text = emptyString;
+		v = lsattr(abspath, lsformat);
+		if (!v || !*v)
+			continue;
+		len = strlen(v);
+		fileSize += len + 1;
+		if (cw->dirMode) {
+			backpiece[j + 1].text = cloneString(v);
+		} else {
+/* have to realloc at this point */
+			int l1 = t - mptr->text;
+			mptr->text = reallocMem(mptr->text, l1 + len + 3);
+			t = mptr->text + l1;
+			*t++ = ' ';
+			strcpy(t, v);
+			t += len;
+			*t++ = '\n';
+			*t = 0;
+		}
+	}			/* loop fixing files in the directory scan */
+
+	addToMap(linecount, endRange);
+	cw->r_map = backpiece;
+
+success:
+	if (cmd == 'r')
+		debugPrint(1, "%d", fileSize);
+	return true;
+}				/* readDirectory */
+
 /* Read a file, or url, into the current buffer.
  * Post/get data is passed, via the second parameter, if it's a URL. */
-bool readFile(const char *filename, const char *post)
+static bool readFile(const char *filename, const char *post)
 {
 	char *rbuf;		/* read buffer */
 	int readSize;		/* should agree with fileSize */
@@ -1151,7 +1366,6 @@ bool readFile(const char *filename, const char *post)
 	bool is8859, isutf8;
 	char *nopound;
 	char filetype;
-	struct lineMap *mptr;
 
 	serverData = 0;
 	serverDataLen = 0;
@@ -1221,93 +1435,30 @@ bool readFile(const char *filename, const char *post)
 		}
 		serverData = rbuf;
 		fileSize = strlen(rbuf);
-		if (rbuf == EMPTYSTRING)
+		if (rbuf == emptyString)
 			return true;
 		goto intext;
 	}
 
 fromdisk:
-	filetype = fileTypeByName(filename, false);
 /* reading a file from disk */
+	filetype = fileTypeByName(filename, false);
 	fileSize = 0;
-	if (filetype == 'd') {
-/* directory scan */
-		int len, j, linecount;
-		cw->baseDirName = cloneString(filename);
-/* get rid of trailing slash */
-		len = strlen(cw->baseDirName);
-		if (len && cw->baseDirName[len - 1] == '/')
-			cw->baseDirName[len - 1] = 0;
-/* Understand that the empty string now means / */
-/* get the files, or fail if there is a problem */
-		if (!sortedDirList(filename, &newpiece, &linecount))
-			return false;
-		if (!cw->dol) {
-			cw->dirMode = true;
-			i_puts(MSG_DirMode);
-		}
-		if (!linecount) {	/* empty directory */
-			cw->dot = endRange;
-			fileSize = 0;
-			free(newpiece);
-			newpiece = 0;
-			return true;
-		}
+	if (filetype == 'd')
+		return readDirectory(filename);
 
-/* change 0 to nl and count bytes */
+	if ((cmd == 'e' || cmd == 'b') && !cw->mt)
+		cw->mt = findMimeByFile(filename);
+
+#if 0
+/* special optimization code for going to a renderable file,
+ * via a plugin, from directory mode. */
+/* Not sure if this is a good idea. */
+	if (cmd == 'b' && icmd == 'g' && pluginsOn && cw->mt && cw->mt->outtype) {
 		fileSize = 0;
-		mptr = newpiece;
-		for (j = 0; j < linecount; ++j, ++mptr) {
-			char c, ftype;
-			pst t = mptr->text;
-			char *abspath = makeAbsPath((char *)t);
-			while (*t) {
-				if (*t == '\n')
-					*t = '\t';
-				++t;
-			}
-			*t = '\n';
-			len = t - mptr->text;
-			fileSize += len + 1;
-			if (!abspath)
-				continue;	/* should never happen */
-			ftype = fileTypeByName(abspath, true);
-			if (!ftype)
-				continue;
-			if (isupperByte(ftype)) {	/* symbolic link */
-				if (!cw->dirMode)
-					*t = '@', *++t = '\n';
-				else
-					mptr->ds1 = '@';
-				++fileSize;
-			}
-			ftype = tolower(ftype);
-			c = 0;
-			if (ftype == 'd')
-				c = '/';
-			if (ftype == 's')
-				c = '^';
-			if (ftype == 'c')
-				c = '<';
-			if (ftype == 'b')
-				c = '*';
-			if (ftype == 'p')
-				c = '|';
-			if (!c)
-				continue;
-			if (!cw->dirMode)
-				*t = c, *++t = '\n';
-			else if (mptr->ds1)
-				mptr->ds2 = c;
-			else
-				mptr->ds1 = c;
-			++fileSize;
-		}		/* loop fixing files in the directory scan */
-
-		addToMap(linecount, endRange);
-
 		return true;
 	}
+#endif
 
 	nopound = cloneString(filename);
 	rbuf = findHash(nopound);
@@ -1323,7 +1474,7 @@ fromdisk:
 		cw->dot = endRange;
 		return true;
 	}
-	/* empty */
+
 gotdata:
 
 	if (!looksBinary(rbuf, fileSize)) {
@@ -1331,6 +1482,7 @@ gotdata:
 /* looks like text.  In DOS, we should have compressed crlf.
  * Let's do that now. */
 #ifdef DOSLIKE
+		int i, j;
 		for (i = j = 0; i < fileSize - 1; ++i) {
 			char c = rbuf[i];
 			if (c == '\r' && rbuf[i + 1] == '\n')
@@ -1382,6 +1534,13 @@ intext:
 	free(rbuf);
 	return rc;
 }				/* readFile */
+
+/* from the command line */
+bool readFileArgv(const char *filename)
+{
+	cmd = 'e';
+	return readFile(filename, emptyString);
+}				/* readFileArgv */
 
 /* Write a range to a file. */
 static bool writeFile(const char *name, int mode)
@@ -1451,7 +1610,7 @@ static bool writeFile(const char *name, int mode)
 		bool alloc_p = cw->browseMode;
 		bool rc = true;
 
-		if (!suf[0]) {
+		if (!cw->dirMode) {
 			if (i == cw->dol && cw->nlMode)
 				--len;
 
@@ -1462,8 +1621,9 @@ static bool writeFile(const char *name, int mode)
 						free(p);
 					alloc_p = true;
 					p = (pst) tp;
-					if (fwrite(p, 1, tlen, fh) < tlen)
+					if (fwrite(p, tlen, 1, fh) <= 0)
 						rc = false;
+					len = tlen;
 					goto endline;
 				}
 
@@ -1473,28 +1633,53 @@ static bool writeFile(const char *name, int mode)
 						free(p);
 					alloc_p = true;
 					p = (pst) tp;
-					if (fwrite(p, 1, tlen, fh) < tlen)
+					if (fwrite(p, tlen, 1, fh) <= 0)
 						rc = false;
+					len = tlen;
 					goto endline;
 				}
 			}
 
-			if (fwrite(p, 1, len, fh) < len)
+			if (fwrite(p, len, 1, fh) <= 0)
 				rc = false;
 			goto endline;
 		}
 
-/* must write this line with the suffix on the end */
+/* Write this line with directory suffix, and possibly attributes */
 		--len;
-		if (fwrite(p, 1, len, fh) < len) {
+		if (fwrite(p, len, 1, fh) <= 0) {
 badwrite:
 			rc = false;
 			goto endline;
 		}
 		fileSize += len;
+
+		if (cw->r_map) {
+			int l;
+/* extra ls stats to write */
+			char *extra;
+			len = strlen(suf);
+			if (len && fwrite(suf, len, 1, fh) <= 0)
+				goto badwrite;
+			++len;	/* for nl */
+			extra = cw->r_map[i].text;
+			l = strlen(extra);
+			if (l) {
+				if (fwrite(" ", 1, 1, fh) <= 0)
+					goto badwrite;
+				++len;
+				if (fwrite(extra, l, 1, fh) <= 0)
+					goto badwrite;
+				len += l;
+			}
+			if (fwrite("\n", 1, 1, fh) <= 0)
+				goto badwrite;
+			goto endline;
+		}
+
 		strcat(suf, "\n");
 		len = strlen(suf);
-		if (fwrite(suf, 1, len, fh) < len)
+		if (fwrite(suf, len, 1, fh) <= 0)
 			goto badwrite;
 
 endline:
@@ -1541,11 +1726,26 @@ static bool readContext(int cx)
 		pst q;
 		if (lw->dirMode) {
 			char *suf = dirSuffixContext(i, cx);
-			char *q = allocMem(len + 3);
-			memcpy(q, p, len);
-			--len;
-			strcat(suf, "\n");
-			strcpy(q + len, suf);
+			char *q;
+			if (lw->r_map) {
+				char *extra = lw->r_map[i].text;
+				int elen = strlen(extra);
+				q = allocMem(len + 4 + elen);
+				memcpy(q, p, len);
+				--len;
+				strcpy(q + len, suf);
+				if (elen) {
+					strcat(q, " ");
+					strcat(q, extra);
+				}
+				strcat(q, "\n");
+			} else {
+				q = allocMem(len + 3);
+				memcpy(q, p, len);
+				--len;
+				strcat(suf, "\n");
+				strcpy(q + len, suf);
+			}
 			len = strlen(q);
 			p = (pst) q;
 		}
@@ -1592,11 +1792,25 @@ static bool writeContext(int cx)
 			if (cw->dirMode) {
 				pst q;
 				char *suf = dirSuffix(i);
-				q = allocMem(len + 3);
-				memcpy(q, p, len);
-				--len;
-				strcat(suf, "\n");
-				strcpy((char *)q + len, suf);
+				if (cw->r_map) {
+					char *extra = cw->r_map[i].text;
+					int elen = strlen(extra);
+					q = allocMem(len + 4 + elen);
+					memcpy(q, p, len);
+					--len;
+					strcpy((char *)q + len, suf);
+					if (elen) {
+						strcat(q, " ");
+						strcat(q, extra);
+					}
+					strcat(q, "\n");
+				} else {
+					q = allocMem(len + 3);
+					memcpy(q, p, len);
+					--len;
+					strcat(suf, "\n");
+					strcpy((char *)q + len, suf);
+				}
 				len = strlen((char *)q);
 				p = q;
 			}
@@ -1638,10 +1852,15 @@ static bool shellEscape(const char *line)
 	char *sh;
 	char subshell[ABSPATH];
 
+#ifdef DOSLIKE
+/* cmd.exe is the windows shell */
+	sh = "cmd";
+#else
 /* preferred shell */
 	sh = getenv("SHELL");
 	if (!sh || !*sh)
 		sh = "/bin/sh";
+#endif
 
 	linesize = strlen(line);
 	if (!linesize) {
@@ -1650,16 +1869,16 @@ static bool shellEscape(const char *line)
 			setError(MSG_SessionBackground);
 			return false;
 		}
+#ifdef DOSLIKE
+		system(sh);
+#else
 /* Ignoring of SIGPIPE propagates across fork-exec. */
 /* So stop ignoring it for the duration of system(). */
 		signal(SIGPIPE, SIG_DFL);
-#ifdef DOSLIKE
-		system(line);	/* don't know how to spawn a shell here */
-#else
 		sprintf(subshell, "exec %s -i", sh);
 		system(subshell);
-#endif
 		signal(SIGPIPE, SIG_IGN);
+#endif
 		i_puts(MSG_OK);
 		return true;
 	}
@@ -1742,9 +1961,13 @@ addchar:
 /* Run the command.  Note that this routine returns success
  * even if the shell command failed.
  * Edbrowse succeeds if it is *able* to run the system command. */
+#ifdef DOSLIKE
+	system(newline);
+#else
 	signal(SIGPIPE, SIG_DFL);
 	system(newline);
 	signal(SIGPIPE, SIG_IGN);
+#endif
 	i_puts(MSG_OK);
 	free(newline);
 	return true;
@@ -1988,7 +2211,7 @@ static bool re_utf8 = true;
 
 static void regexpCompile(const char *re, bool ci)
 {
-	static char try8 = 0;	/* 1 is utf8 on, -1 is utf8 off */
+	static signed char try8 = 0;	/* 1 is utf8 on, -1 is utf8 off */
 	const char *re_error;
 	int re_offset;
 	int re_opt;
@@ -2053,7 +2276,7 @@ static bool getRangePart(const char *line, int *lineno, const char **split)
 
 		char *re;	/* regular expression */
 		bool ci = caseInsensitive;
-		char incr;	/* forward or back */
+		signed char incr;	/* forward or back */
 /* Don't look through an empty buffer. */
 		if (cw->dol == 0) {
 			setError(MSG_EmptyBuffer);
@@ -2162,7 +2385,7 @@ static bool doGlobal(const char *line)
  * Also get ready for javascript, as in g/<->/ i=+
  * which I use in web based gmail to clear out spam etc. */
 	for (t = cw->map + 1; t->text; ++t)
-		t->gflag = t->jsup = false;
+		t->gflag = false;
 
 /* Find the lines that match the pattern. */
 	regexpCompile(re, ci);
@@ -2171,8 +2394,8 @@ static bool doGlobal(const char *line)
 	for (i = startRange; i <= endRange; ++i) {
 		char *subject = (char *)fetchLine(i, 1);
 		re_count =
-		    pcre_exec(re_cc, 0, subject, pstLength((pst) subject), 0, 0,
-			      re_vector, 33);
+		    pcre_exec(re_cc, 0, subject, pstLength((pst) subject) - 1,
+			      0, 0, re_vector, 33);
 		free(subject);
 		if (re_count < -1) {
 			pcre_free(re_cc);
@@ -2423,6 +2646,167 @@ replaceText(const char *line, int len, const char *rhs,
 	return true;
 }				/* replaceText */
 
+static void
+findField(const char *line, int ftype, int n,
+	  int *total, int *realtotal, int *tagno, char **href,
+	  const struct htmlTag **tagp)
+{
+	const struct htmlTag *t;
+	int nt = 0;		/* number of fields total */
+	int nrt = 0;		/* the real total, for input fields */
+	int nm = 0;		/* number match */
+	int j;
+	const char *s, *ss;
+	char *h, *nmh;
+	char c;
+	static const char urlok[] =
+	    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890,./?@#%&-_+=:~";
+
+	if (href)
+		*href = 0;
+	if (tagp)
+		*tagp = 0;
+
+	if (cw->browseMode) {
+
+		s = line;
+		while ((c = *s) != '\n') {
+			++s;
+			if (c != InternalCodeChar)
+				continue;
+			j = strtol(s, (char **)&s, 10);
+			if (!ftype) {
+				if (*s != '{')
+					continue;
+				++nt, ++nrt;
+				if (n == nt || n < 0)
+					nm = j;
+				if (!n) {
+					if (!nm)
+						nm = j;
+					else
+						nm = -1;
+				}
+			} else {
+				if (*s != '<')
+					continue;
+				if (n > 0) {
+					++nt, ++nrt;
+					if (n == nt)
+						nm = j;
+					continue;
+				}
+				if (n < 0) {
+					nm = j;
+					++nt, ++nrt;
+					continue;
+				}
+				++nrt;
+				t = tagList[j];
+				if (ftype == 1 && t->itype <= INP_SUBMIT)
+					continue;
+				if (ftype == 2 && t->itype > INP_SUBMIT)
+					continue;
+				++nt;
+				if (!nm)
+					nm = j;
+				else
+					nm = -1;
+			}
+		}		/* loop over line */
+	}
+
+	if (nm < 0)
+		nm = 0;
+	if (total)
+		*total = nrt;
+	if (realtotal)
+		*realtotal = nt;
+	if (tagno)
+		*tagno = nm;
+	if (!ftype && nm) {
+		t = tagList[nm];
+		if (href)
+			*href = cloneString(t->href);
+		if (tagp)
+			*tagp = t;
+		if (href && isJSAlive && t->jv) {
+/* defer to the java variable for the reference */
+			char *jh = get_property_url(t->jv, false);
+			if (jh) {
+				if (!*href || !stringEqual(*href, jh)) {
+					nzFree(*href);
+					*href = jh;
+				}
+			}
+		}
+	}
+
+	if (nt || ftype)
+		return;
+
+/* Second time through, maybe the url is in plain text. */
+	nmh = 0;
+	s = line;
+	while (true) {
+/* skip past weird characters */
+		while ((c = *s) != '\n') {
+			if (strchr(urlok, c))
+				break;
+			++s;
+		}
+		if (c == '\n')
+			break;
+		ss = s;
+		while (strchr(urlok, *s))
+			++s;
+		h = pullString1(ss, s);
+		unpercentURL(h);
+		if (!isURL(h)) {
+			free(h);
+			continue;
+		}
+		++nt;
+		if (n == nt || n < 0) {
+			nm = nt;
+			nzFree(nmh);
+			nmh = h;
+			continue;
+		}
+		if (n) {
+			free(h);
+			continue;
+		}
+		if (!nm) {
+			nm = nt;
+			nmh = h;
+			continue;
+		}
+		free(h);
+		nm = -1;
+		free(nmh);
+		nmh = 0;
+	}			/* loop over line */
+
+	if (nm < 0)
+		nm = 0;
+	if (total)
+		*total = nt;
+	if (realtotal)
+		*realtotal = nt;
+	if (href)
+		*href = nmh;
+	else
+		nzFree(nmh);
+}				/* findField */
+
+static void
+findInputField(const char *line, int ftype, int n, int *total, int *realtotal,
+	       int *tagno)
+{
+	findField(line, ftype, n, total, realtotal, tagno, 0, 0);
+}				/* findInputField */
+
 /* Substitute text on the lines in startRange through endRange.
  * We could be changing the text in an input field.
  * If so, we'll call infReplace().
@@ -2460,6 +2844,8 @@ static int substituteText(const char *line)
 /* watch for s2/x/y/ for the second input field */
 		if (isdigitByte(*line))
 			whichField = strtol(line, (char **)&line, 10);
+		else if (*line == '$')
+			whichField = -1, ++line;
 		if (!*line) {
 			setError(MSG_RexpMissing2, icmd);
 			return -1;
@@ -2532,25 +2918,32 @@ static int substituteText(const char *line)
 
 	for (ln = startRange; ln <= endRange && !intFlag; ++ln) {
 		char *p;
+		int len;
 
 		replaceString = 0;
 
 		p = (char *)fetchLine(ln, -1);
-		int len = pstLength((pst) p);
+		len = pstLength((pst) p);
 
 		if (bl_mode) {
 			int newlen;
 			if (!breakLine(p, len, &newlen)) {
-				setError(MSG_BreakLong, REPLACELINELEN);
+/* you just should never be here */
+				setError(MSG_BreakLong, 0);
+				nzFree(breakLineResult);
+				breakLineResult = 0;
 				return -1;
 			}
 /* empty line is not allowed */
 			if (!newlen)
-				replaceLine[newlen++] = '\n';
+				breakLineResult[newlen++] = '\n';
 /* perhaps no changes were made */
-			if (newlen == len && !memcmp(p, replaceLine, len))
+			if (newlen == len && !memcmp(p, breakLineResult, len)) {
+				nzFree(breakLineResult);
+				breakLineResult = 0;
 				continue;
-			replaceString = replaceLine;
+			}
+			replaceString = breakLineResult;
 /* But the regular substitute doesn't have the \n on the end.
  * We need to make this one conform. */
 			replaceStringLength = newlen - 1;
@@ -2701,8 +3094,9 @@ static int substituteText(const char *line)
 		if (subPrint == 2)
 			displayLine(ln);
 		lastSubst = ln;
-		if (replaceString != replaceLine)
-			nzFree(replaceString);
+		nzFree(replaceString);
+/* we may have just freed the result of a breakline command */
+		breakLineResult = 0;
 	}			/* loop over lines in the range */
 
 	if (re_cc)
@@ -2716,7 +3110,7 @@ static int substituteText(const char *line)
 	if (!lastSubst) {
 		if (!globSub) {
 			if (!errorMsg[0])
-				setError(bl_mode + MSG_NoMatch);
+				setError(bl_mode ? MSG_NoChange : MSG_NoMatch);
 		}
 		return false;
 	}
@@ -2728,8 +3122,9 @@ static int substituteText(const char *line)
 abort:
 	if (re_cc)
 		pcre_free(re_cc);
-	if (replaceString && replaceString != replaceLine)
-		nzFree(replaceString);
+	nzFree(replaceString);
+/* we may have just freed the result of a breakline command */
+	breakLineResult = 0;
 	return -1;
 }				/* substituteText */
 
@@ -2764,6 +3159,26 @@ static int twoLetter(const char *line, const char **runThis)
 			curl_easy_setopt(http_curl_handle, CURLOPT_VERBOSE, 1);
 		else
 			curl_easy_setopt(http_curl_handle, CURLOPT_VERBOSE, 0);
+		return true;
+	}
+
+	if (stringEqual(line, "bw")) {
+		cw->changeMode = false;
+		cw->quitMode = true;
+		return true;
+	}
+
+	if (stringEqual(line, "rr")) {
+		cmd = 'e';
+		if (!cw->browseMode) {
+			setError(MSG_NoBrowse);
+			return false;
+		}
+		if (!isJSAlive) {
+			setError(MSG_JavaOff);
+			return false;
+		}
+		rerender(true);
 		return true;
 	}
 
@@ -2807,6 +3222,56 @@ static int twoLetter(const char *line, const char **runThis)
 		}
 	}
 
+	if (line[0] == 'l' && line[1] == 's') {
+		char lsmode[12];
+		bool setmode = false;
+		char *file, *path, *t;
+		const char *s = line + 2;
+		cmd = 'e';	/* so error messages are printed */
+		skipWhite(&s);
+		if (*s == '=') {
+			setmode = true;
+			++s;
+			skipWhite(&s);
+		} else {
+			if (!cw->dirMode) {
+				setError(MSG_NoDir);
+				return false;
+			}
+			if (cw->dot == 0) {
+				setError(MSG_AtLine0);
+				return false;
+			}
+		}
+		if (!lsattrChars(s, lsmode)) {
+			setError(MSG_LSBadChar);
+			return false;
+		}
+		if (setmode) {
+			strcpy(lsformat, lsmode);
+			return true;
+		}
+/* default ls mode is size time */
+		if (!lsmode[0])
+			strcpy(lsmode, "st");
+		file = (char *)fetchLine(cw->dot, -1);
+		t = strchr(file, '\n');
+		if (!t)
+			i_printfExit(MSG_NoNlOnDir, file);
+		*t = 0;
+		path = makeAbsPath(file);
+		*t = '\n';
+		if (!path)
+			t = emptyString;
+		else
+			t = lsattr(path, lsmode);
+		if (*t)
+			puts(t);
+		else
+			i_puts(MSG_Inaccess);
+		return true;
+	}
+
 	if (line[0] == 'c' && line[1] == 'd') {
 		c = line[2];
 		if (!c || isspaceByte(c)) {
@@ -2825,7 +3290,7 @@ pwd:
 				puts(cwdbuf);
 				return true;
 			}
-			if (!envFile(t, &t, true))
+			if (!envFile(t, &t))
 				return false;
 			if (!chdir(t))
 				goto pwd;
@@ -2835,55 +3300,10 @@ pwd:
 	}
 
 	if (line[0] == 'p' && line[1] == 'b') {
-		c = line[2];
-		if (!c || c == '.') {
-			const struct MIMETYPE *mt;
-			char *cmd;
-			const char *suffix = 0;
-			bool trailPercent = false;
-			if (!cw->dol) {
-				setError(MSG_AudioEmpty);
-				return false;
-			}
-			if (cw->browseMode) {
-				setError(MSG_AudioBrowse);
-				return false;
-			}
-			if (cw->dirMode) {
-				setError(MSG_AudioDir);
-				return false;
-			}
-			if (cw->sqlMode) {
-				setError(MSG_AudioDB);
-				return false;
-			}
-			if (c == '.') {
-				suffix = line + 3;
-			} else {
-				if (cw->fileName)
-					suffix = strrchr(cw->fileName, '.');
-				if (!suffix) {
-					setError(MSG_NoSuffix);
-					return false;
-				}
-				++suffix;
-			}
-			if (strlen(suffix) > 5) {
-				setError(MSG_SuffixLong);
-				return false;
-			}
-			mt = findMimeBySuffix(suffix);
-			if (!mt) {
-				setError(MSG_SuffixBad, suffix);
-				return false;
-			}
-			if (mt->program[strlen(mt->program) - 1] == '%')
-				trailPercent = true;
-			cmd = pluginCommand(mt, 0, suffix);
-			rc = bufferToProgram(cmd, suffix, trailPercent);
-			nzFree(cmd);
-			return rc;
-		}
+		rc = playBuffer(line, NULL);
+		if (rc == 2)
+			goto no_action;
+		return rc;
 	}
 
 	if (stringEqual(line, "rf")) {
@@ -2926,6 +3346,20 @@ pwd:
 		return showTables();
 	}
 
+	if (stringEqual(line, "jex")) {
+		cmd = 'e';
+		if (!cw->browseMode) {
+			setError(MSG_NoBrowse);
+			return false;
+		}
+		if (!isJSAlive) {
+			setError(MSG_JavaOff);
+			return false;
+		}
+		jexmode = true;
+		return true;
+	}
+
 	if (stringEqual(line, "ub") || stringEqual(line, "et")) {
 		ub = (line[0] == 'u');
 		rc = true;
@@ -2948,19 +3382,22 @@ pwd:
 		} else {
 et_go:
 			for (i = 1; i <= cw->dol; ++i)
-				removeHiddenNumbers(cw->map[i].text);
+				removeHiddenNumbers(cw->map[i].text, '\n');
 			freeWindowLines(cw->r_map);
 			cw->r_map = 0;
 		}
 		freeTags(cw);
+		delTimers(cw);
 		freeJavaContext(cw);
 		cw->jcx = NULL;
 		nzFree(cw->dw);
 		cw->dw = 0;
 		nzFree(cw->ft);
 		cw->ft = 0;
-		nzFree(cw->fto);
-		cw->fto = 0;
+		nzFree(cw->hbase);
+		cw->hbase = 0;
+		nzFree(cw->lastrender);
+		cw->lastrender = 0;
 		nzFree(cw->fd);
 		cw->fd = 0;
 		nzFree(cw->fk);
@@ -3091,17 +3528,28 @@ et_go:
 	if (stringEqual(line, "hr")) {
 		allowRedirection ^= 1;
 /* We're doing this manually for now.
-	curl_easy_setopt(http_curl_handle, CURLOPT_FOLLOWLOCATION, allowRedirection);
+        curl_easy_setopt(http_curl_handle, CURLOPT_FOLLOWLOCATION, allowRedirection);
 */
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(allowRedirection + MSG_RedirectionOff);
 		return true;
 	}
 
+	if (stringEqual(line, "pg")) {
+		pluginsOn ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(pluginsOn + MSG_PluginsOff);
+		return true;
+	}
+
 	if (stringEqual(line, "bg")) {
+#ifdef DOSLIKE
+		puts("download in background not available on Windows at this time.");
+#else
 		down_bg ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(down_bg + MSG_DownForeground);
+#endif
 		return true;
 	}
 
@@ -3244,6 +3692,7 @@ et_go:
 		return true;
 	}
 
+no_action:
 	*runThis = line;
 	return 2;		/* no change */
 }				/* twoLetter */
@@ -3369,21 +3818,15 @@ static bool balanceLine(const char *line)
 }				/* balanceLine */
 
 /* Unfold the buffer into one long, allocated string. */
-bool unfoldBuffer(int cx, bool cr, char **data, int *len)
+bool unfoldBufferW(const struct ebWindow * w, bool cr, char **data, int *len)
 {
 	char *buf;
 	int l, ln;
-	struct ebWindow *w;
-	int size = apparentSize(cx, false);
+	int size = apparentSizeW(w, false);
 	if (size < 0)
 		return false;
-	w = sessionList[cx].lw;
-	if (w->browseMode) {
-		setError(MSG_SessionBrowse, cx);
-		return false;
-	}
 	if (w->dirMode) {
-		setError(MSG_SessionDir, cx);
+		setError(MSG_SessionDir, context);
 		return false;
 	}
 	if (cr)
@@ -3392,7 +3835,7 @@ bool unfoldBuffer(int cx, bool cr, char **data, int *len)
 	buf = allocMem(size + 4);
 	*data = buf;
 	for (ln = 1; ln <= w->dol; ++ln) {
-		pst line = fetchLineContext(ln, -1, cx);
+		pst line = w->map[ln].text;
 		l = pstLength(line) - 1;
 		if (l) {
 			memcpy(buf, line, l);
@@ -3412,6 +3855,12 @@ bool unfoldBuffer(int cx, bool cr, char **data, int *len)
 	*len = size;
 	(*data)[size] = 0;
 	return true;
+}				/* unfoldBufferW */
+
+bool unfoldBuffer(int cx, bool cr, char **data, int *len)
+{
+	const struct ebWindow *w = sessionList[cx].lw;
+	return unfoldBufferW(w, cr, data, len);
 }				/* unfoldBuffer */
 
 static char *showLinks(void)
@@ -3419,7 +3868,7 @@ static char *showLinks(void)
 	int a_l;
 	char *a = initString(&a_l);
 	bool click, dclick;
-	char c, *p, *s, *t, *q, *line, *h;
+	char c, *p, *s, *t, *q, *line, *h, *h2;
 	int j, k = 0, tagno;
 	const struct htmlTag *tag;
 
@@ -3450,10 +3899,10 @@ static char *showLinks(void)
 					break;
 /* Ok, everything between p and s exclusive is the description */
 			if (!h)
-				h = EMPTYSTRING;
+				h = emptyString;
 			if (stringEqual(h, "#")) {
 				nzFree(h);
-				h = EMPTYSTRING;
+				h = emptyString;
 			}
 
 			if (memEqualCI(h, "mailto:", 7)) {
@@ -3467,7 +3916,7 @@ static char *showLinks(void)
 				continue;
 			}
 			/* mail link */
-			stringAndString(&a, &a_l, "<a href=");
+			stringAndString(&a, &a_l, "<br><a href=");
 
 			if (memEqualCI(h, "javascript:", 11)) {
 				stringAndString(&a, &a_l, "javascript:>\n");
@@ -3477,15 +3926,22 @@ static char *showLinks(void)
 					click ? "onclick" : "ondblclick");
 				stringAndString(&a, &a_l, buf);
 			} else {
-				if (*h)
-					stringAndString(&a, &a_l, h);
+				if (*h) {
+					h2 = htmlEscape(h);
+					stringAndString(&a, &a_l, h2);
+					nzFree(h2);
+				}
 				stringAndString(&a, &a_l, ">\n");
 			}
 
 			nzFree(h);
 /* next line is the description of the bookmark */
-			stringAndBytes(&a, &a_l, p + 1, s - p - 1);
+			h = pullString(p + 1, s - p - 1);
+			h2 = htmlEscape(h);
+			stringAndString(&a, &a_l, h2);
 			stringAndString(&a, &a_l, "\n</a>\n");
+			nzFree(h);
+			nzFree(h2);
 		}		/* loop looking for hyperlinks */
 	}
 
@@ -3495,15 +3951,17 @@ static char *showLinks(void)
 			return 0;
 		}
 
-		h = cloneString(cw->fileName);
+		h = htmlEscape(cw->fileName);
 		debrowseSuffix(h);
-		stringAndString(&a, &a_l, "<a href=");
+		stringAndString(&a, &a_l, "<br><a href=");
 		stringAndString(&a, &a_l, h);
 		stringAndString(&a, &a_l, ">\n");
 /* get text from the html title if you can */
-		s = cw->fto;
+		s = cw->ft;
 		if (s && *s) {
-			stringAndString(&a, &a_l, s);
+			h2 = htmlEscape(s);
+			stringAndString(&a, &a_l, h2);
+			nzFree(h2);
 		} else {
 /* no title - getting the text from the url, very kludgy */
 			s = (char *)getDataURL(h);
@@ -3524,20 +3982,10 @@ static char *showLinks(void)
 		stringAndString(&a, &a_l, "\n</a>\n");
 		nzFree(h);
 	}
-	/* using the filename */
+
+	removeHiddenNumbers(a, 0);
 	return a;
 }				/* showLinks */
-
-/* clear the js flags, in that this command could invoke js,
- * which could in turn update some of those lines, and we need to know that. */
-static void clear_jsup(void)
-{
-	struct lineMap *t;
-	if (globSub)
-		return;
-	for (t = cw->map + 1; t->text; ++t)
-		t->jsup = false;
-}				/* clear_jsup */
 
 static bool lineHasTag(const char *p, const char *s)
 {
@@ -3550,7 +3998,7 @@ static bool lineHasTag(const char *p, const char *s)
 			continue;
 		j = strtol(p, (char **)&p, 10);
 		t = tagList[j];
-		if (t->id && t->info->nest && stringEqual(t->id, s))
+		if (t->id && stringEqual(t->id, s))
 			return true;
 		if (t->action == TAGACT_A && t->name && stringEqual(t->name, s))
 			return true;
@@ -3784,7 +4232,7 @@ bool runCommand(const char *line)
 /* env variable and wild card expansion */
 	if (strchr("brewf", cmd) && first && !isURL(line) && !isSQL(line)) {
 		if (cmd != 'r' || !cw->sqlMode) {
-			if (!envFile(line, &line, !(cmd == 'w' || cmd == 'f')))
+			if (!envFile(line, &line))
 				return false;
 			first = *line;
 		}
@@ -4038,6 +4486,9 @@ bool runCommand(const char *line)
 			return false;
 		if (cxActive(cx) && !cxQuit(cx, 2))
 			return false;
+/* If changes were made to this buffer, they are undoable after the move */
+		undoCompare();
+		cw->undoable = false;
 /* Magic with pointers, hang on to your hat. */
 		sessionList[cx].fw = sessionList[cx].lw = cw;
 		cs->lw = cw->prev;
@@ -4073,6 +4524,7 @@ bool runCommand(const char *line)
 	/* go to a file in a directory listing */
 	if (cmd == 'g' && cw->dirMode && !first) {
 		char *p, *dirline, *endline;
+		const struct MIMETYPE *gmt;	/* the go mime type */
 		if (endRange > startRange) {
 			setError(MSG_RangeG);
 			return false;
@@ -4086,6 +4538,13 @@ bool runCommand(const char *line)
 		cmd = 'e';
 		if (!dirline)
 			return false;
+		gmt = findMimeByFile(dirline);
+		if (pluginsOn && gmt) {
+			if (gmt->outtype)
+				cmd = 'b';
+			else if (!gmt->stream)
+				return playBuffer("pb", dirline);
+		}
 /* I don't think we need to make a copy here. */
 		line = dirline;
 		first = *line;
@@ -4140,9 +4599,13 @@ bool runCommand(const char *line)
 /* Now try to go to a hyperlink */
 		s = line;
 		j = 0;
-		if (first)
-			j = strtol(line, (char **)&s, 10);
-		if (j >= 0 && !*s) {
+		if (first) {
+			if (isdigitByte(first))
+				j = strtol(s, (char **)&s, 10);
+			else if (first == '$')
+				j = -1, ++s;
+		}
+		if (!*s) {
 			if (cw->sqlMode) {
 				setError(MSG_DBG);
 				return false;
@@ -4190,11 +4653,9 @@ bool runCommand(const char *line)
 			rc = false;
 			if (jsgo) {
 /* javascript might update fields */
-				undoCompare();
-				clear_jsup();
-				jSyncup();
 /* The program might depend on the mouseover code running first */
 				if (over) {
+					jSyncup();
 					rc = handlerGoBrowse(tag,
 							     "onmouseover");
 					jSideEffects();
@@ -4206,6 +4667,7 @@ bool runCommand(const char *line)
 			if (!rc && !jsdead)
 				set_property_string(cw->winobj, "status", h);
 			if (jsgo && click) {
+				jSyncup();
 				rc = handlerGoBrowse(tag, "onclick");
 				jSideEffects();
 				if (newlocation)
@@ -4214,7 +4676,8 @@ bool runCommand(const char *line)
 					return true;
 			}
 			if (jsh) {
-				javaParseExecute(cw->winobj, h, 0, 0);
+				jSyncup();
+				jsRunScript(cw->winobj, h, 0, 0);
 				jSideEffects();
 				if (newlocation)
 					goto redirect;
@@ -4251,6 +4714,8 @@ bool runCommand(const char *line)
 		s = line;
 		if (isdigitByte(*s))
 			cx = strtol(s, (char **)&s, 10);
+		else if (*s == '$')
+			cx = -1, ++s;
 		c = *s;
 		if (c
 		    && (strchr(valid_delim, c) || cmd == 'i'
@@ -4293,7 +4758,6 @@ bool runCommand(const char *line)
 					return true;
 				}
 
-				undoPush();
 				cw->undoable = false;
 
 				if (c == '<') {
@@ -4339,7 +4803,7 @@ bool runCommand(const char *line)
 					} else {
 						int fd;
 						fromfile = true;
-						if (!envFile(line, &line, true))
+						if (!envFile(line, &line))
 							return false;
 						fd = open(line,
 							  O_RDONLY | O_TEXT);
@@ -4384,14 +4848,10 @@ bool runCommand(const char *line)
 					scmd = '=';
 				}
 
-				clear_jsup();
-
 				if (scmd == '=') {
 					rc = infReplace(tagno, line, true);
 					if (newlocation)
 						goto redirect;
-					if (rc)
-						undoCompare();
 					return rc;
 				}
 
@@ -4402,10 +4862,8 @@ bool runCommand(const char *line)
 					if (newlocation)
 						goto redirect;
 /* No url means it was a reset button */
-					if (!allocatedLine) {
-						undoCompare();
+					if (!allocatedLine)
 						return true;
-					}
 					line = allocatedLine;
 					first = *line;
 					cmd = 'b';
@@ -4479,7 +4937,7 @@ rebrowse:
 				cw->sqlMode = true;
 			if (icmd == 'g' && !nogo && isURL(line))
 				debugPrint(2, "*%s", line);
-			j = readFile(line, "");
+			j = readFile(line, emptyString);
 		}
 		w->undoable = w->changeMode = false;
 		cw = cs->lw;
@@ -4518,7 +4976,7 @@ rebrowse:
 /* Some files we just can't browse */
 		if (!cw->dol || cw->dirMode)
 			cmd = 'e';
-		if (cw->binMode && !stringIsPDF(cw->fileName))
+		if (cw->binMode && (!cw->mt || !cw->mt->outtype))
 			cmd = 'e';
 		if (cmd == 'e')
 			return true;
@@ -4527,7 +4985,7 @@ rebrowse:
 browse:
 	if (cmd == 'b') {
 		if (!cw->browseMode) {
-			if (cw->binMode && !stringIsPDF(cw->fileName)) {
+			if (cw->binMode && (!cw->mt || !cw->mt->outtype)) {
 				setError(MSG_BrowseBinary);
 				return false;
 			}
@@ -4555,7 +5013,7 @@ browse:
 				newlocation = 0;
 			} else {
 redirect:
-				noStack = newloc_rf;
+				noStack = newloc_r;
 				nzFree(allocatedLine);
 				line = allocatedLine = newlocation;
 				debugPrint(2, "redirect %s", line);
@@ -4655,6 +5113,8 @@ redirect:
 			cw->undoable = false;
 			goto afterdelete;
 		}
+		if (cw->browseMode)
+			delTags(startRange, endRange);
 		delText(startRange, endRange);
 		j = 1;
 afterdelete:
@@ -4678,7 +5138,7 @@ afterdelete:
 				strmove(strchr(newline, ']') + 1, line);
 				line = newline;
 			}
-			j = readFile(line, "");
+			j = readFile(line, emptyString);
 			if (!serverData)
 				fileSize = -1;
 			return j;
@@ -4688,7 +5148,6 @@ afterdelete:
 	}
 
 	if (cmd == 's') {
-		clear_jsup();
 		j = substituteText(line);
 		if (j < 0) {
 			globSub = false;
@@ -4728,7 +5187,7 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 	int svcx = context;
 	bool rc;
 	if (cx) {
-		cxQuit(cx, 2);
+		cxQuit(cx, 3);
 	} else {
 		for (cx = 1; cx < MAXSESSION; ++cx)
 			if (!sessionList[cx].lw)
@@ -4750,6 +5209,7 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 	}
 	if (textlen) {
 		rc = addTextToBuffer((pst) text, textlen, 0, true);
+		cw->changeMode = false;
 		if (!rc)
 			i_printf(MSG_BufferPreload, cx);
 	}
@@ -4758,37 +5218,38 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 	return cx;
 }				/* sideBuffer */
 
-/* Bailing wire and duct tape, here it comes.
- * You'd never know I was a professional programmer.  :-)
- * Ok, the text buffer, that you edit, is the final arbiter on most
- * (but not all) input fields.  And when javascript changes
- * one of these values, it is copied back to the text buffer,
- * where you can see it, and modify it as you like.
- * But what happens if that javascript is running while the html is parsed,
- * and before the page even exists?
- * I hadn't thought of that.
- * The following is a cache of input fields that have been changed,
- * before we even had a chance to render the page. */
+void freeEmptySideBuffer(int n)
+{
+	struct ebWindow *side;
+	if (!(side = sessionList[n].lw))
+		return;
+	if (side->fileName)
+		return;
+	if (side->dol)
+		return;
+	if (side != sessionList[n].fw)
+		return;
+/* We could have added a line, then deleted it */
+	cxQuit(n, 3);
+}				/* freeEmptySideBuffer */
 
 bool browseCurrentBuffer(void)
 {
 	char *rawbuf, *newbuf, *tbuf;
 	int rawsize, tlen, j;
-	bool rc, remote = false, ispdf = false;
+	bool rc, remote = false;
 	bool save_ch = cw->changeMode;
 	uchar bmode = 0;
 
-	if (cw->fileName) {
+	if (cw->fileName)
 		remote = isURL(cw->fileName);
-		ispdf = stringIsPDF(cw->fileName);
-	}
 
-/* I'm trusting the pdf suffix, and not looking inside. */
-	if (ispdf)
+	if (cw->mt && cw->mt->outtype)
 		bmode = 3;
+	else
 /* A mail message often contains lots of html tags,
  * so we need to check for email headers first. */
-	else if (!remote && emailTest())
+	if (!remote && emailTest())
 		bmode = 1;
 	else if (htmlTest())
 		bmode = 2;
@@ -4797,42 +5258,45 @@ bool browseCurrentBuffer(void)
 		return false;
 	}
 
-	if (!unfoldBuffer(context, false, &rawbuf, &rawsize))
-		return false;	/* should never happen */
+	rawbuf = NULL;
+	rawsize = 0;
+	if (bmode != 3 || remote || access(cw->fileName, 4)) {
+		if (!unfoldBuffer(context, false, &rawbuf, &rawsize))
+			return false;	/* should never happen */
+	}
 
-/* expand pdf using pdftohtml */
-/* http://rpmfind.net/linux/RPM/suse/updates/10.0/i386/rpm/i586/pdftohtml-0.36-130.9.i586.html */
 	if (bmode == 3) {
-		char *cmd;
-		if (!memoryOutToFile(edbrowseTempPDF, rawbuf, rawsize,
-				     MSG_TempNoCreate2, MSG_TempNoWrite)) {
+/* convert raw text via a plugin */
+		char *outfile = runPluginConverter(rawbuf, rawsize);
+		if (!outfile) {
 			nzFree(rawbuf);
 			return false;
 		}
 		nzFree(rawbuf);
-		unlink(edbrowseTempHTML);
-		j = strlen(edbrowseTempPDF);
-		cmd = allocMem(50 + j);
-		sprintf(cmd, "pdftohtml -i -noframes %s >/dev/null 2>&1",
-			edbrowseTempPDF);
-		system(cmd);
-		nzFree(cmd);
-		if (fileSizeByName(edbrowseTempHTML) <= 0) {
-			setError(MSG_NoPDF, edbrowseTempPDF);
-			return false;
+		if (stringEqual(outfile, "|")) {
+			rawbuf = serverData;
+			rawsize = serverDataLen;
+			serverData = NULL;
+		} else {
+			rc = fileIntoMemory(outfile, &rawbuf, &rawsize);
+			unlink(outfile);
+			if (!rc)
+				return false;
 		}
-		rc = fileIntoMemory(edbrowseTempHTML, &rawbuf, &rawsize);
-		if (!rc)
-			return false;
 		iuReformat(rawbuf, rawsize, &tbuf, &tlen);
 		if (tbuf) {
 			nzFree(rawbuf);
 			rawbuf = tbuf;
 			rawsize = tlen;
 		}
-		bmode = 2;
+/* make it look like remote html, so we don't get a lot of errors printed */
+		remote = true;
+		bmode = (cw->mt->outtype == 'h' ? 2 : 0);
+		if (!allowRedirection)
+			bmode = 0;
 	}
 
+/* this shouldn't do any harm if the output is text */
 	prepareForBrowse(rawbuf, rawsize);
 
 /* No harm in running this code in mail client, but no help either,
@@ -4857,6 +5321,7 @@ bool browseCurrentBuffer(void)
 		if (memEqualCI(newbuf, "<html>\n", 7) && allowRedirection) {
 /* double browse, mail then html */
 			bmode = 2;
+			remote = true;
 			rawbuf = newbuf;
 			rawsize = j;
 			prepareForBrowse(rawbuf, rawsize);
@@ -4871,8 +5336,13 @@ bool browseCurrentBuffer(void)
 		newbuf = htmlParse(rawbuf, remote);
 	}
 
+	if (bmode == 0)
+		newbuf = rawbuf;
+
 	cw->rnlMode = cw->nlMode;
 	cw->nlMode = false;
+/* I'm gonna assume it ain't binary no more */
+	cw->binMode = false;
 	cw->r_dot = cw->dot, cw->r_dol = cw->dol;
 	cw->dot = cw->dol = 0;
 	cw->r_map = cw->map;
@@ -4898,11 +5368,8 @@ bool browseCurrentBuffer(void)
 		return false;
 	}
 
-	if (bmode == 2) {
-		jSideEffects();
+	if (bmode == 2)
 		cw->dot = cw->dol;
-	}
-
 	cw->browseMode = true;
 	fileSize = apparentSize(context, true);
 	return true;

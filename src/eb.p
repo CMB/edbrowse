@@ -1,4 +1,9 @@
-/* Until we can switch edbrowse all the way back to C, we need this. */
+/* Prototypes for edbrowse */
+
+/* Last 3 sourcefiles are shared with a c++ program */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* sourcefile=auth.c */
 bool getUserPass(const char *url, char *creds, bool find_proxy) ;
@@ -17,11 +22,13 @@ void cxSwitch(int cx, bool interactive) ;
 void gotoLocation(char *url, int delay, bool rf) ;
 bool addTextToBuffer(const pst inbuf, int length, int destl, bool onside) ;
 void delText(int start, int end) ;
-bool readFile(const char *filename, const char *post) ;
+bool readFileArgv(const char *filename);
+bool unfoldBufferW(const struct ebWindow *w, bool cr, char **data, int *len) ;
 bool unfoldBuffer(int cx, bool cr, char **data, int *len) ;
 bool runCommand(const char *line) ;
 bool edbrowseCommand(const char *line, bool script) ;
 int sideBuffer(int cx, const char *text, int textlen, const char *bufname);
+void freeEmptySideBuffer(int n);
 bool browseCurrentBuffer(void) ;
 bool locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p);
 bool locateInvisibleAnchor(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p);
@@ -47,13 +54,13 @@ bool ebConnect(void) ;
 int goSelect(int *startLine, char **rbuf) ;
 
 /* sourcefile=ebjs.c */
-void updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm) ;
-void applyInputChanges(void);
+void dwStart(void);
 void createJavaContext(void) ;
 void freeJavaContext(struct ebWindow *w) ;
 void js_shutdown(void) ;
 void js_disconnect(void);
-int javaParseExecute(jsobjtype obj, const char *str, const char *filename, int lineno) ;
+char *jsRunScriptResult(jsobjtype obj, const char *str, const char *filename, int lineno) ;
+void jsRunScript(jsobjtype obj, const char *str, const char *filename, int lineno) ;
 enum ej_proptype has_property(jsobjtype obj, const char *name) ;
 void delete_property(jsobjtype obj, const char *name) ;
 char *get_property_string(jsobjtype obj, const char *name) ;
@@ -73,18 +80,16 @@ int set_array_element_object(jsobjtype array, int idx, jsobjtype child) ;
 jsobjtype instantiate_array_element(jsobjtype array, int idx, const char *classname) ;
 jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname) ;
 int set_property_function(jsobjtype parent, const char *name, const char *body) ;
+int get_arraylength(jsobjtype a);
 char *get_property_option(jsobjtype obj) ;
-void domLink(const char *classname, const char *href, const char *list, jsobjtype owner, int radiosel) ;
 void setupJavaDom(void) ;
-jsobjtype instantiate_url(jsobjtype parent, const char *name, const char *url) ;
 char *get_property_url(jsobjtype owner, bool action) ;
 void rebuildSelectors(void);
-void handlerSet(jsobjtype ev, const char *name, const char *code);
 jsobjtype run_function_object(jsobjtype obj, const char *name);
 bool run_function_bool(jsobjtype obj, const char *name);
 void run_function_objargs(jsobjtype obj, const char *name, int nargs, ...);
-jsobjtype establish_js_option(jsobjtype obj, int idx);
-void establish_inner(jsobjtype obj, const char *start, const char *end, bool isText);
+void run_function_onearg(jsobjtype obj, const char *name, jsobjtype o);
+void set_basehref(const char *b);
 
 /* sourcefile=fetchmail.c */
 int fetchMail(int account) ;
@@ -98,47 +103,65 @@ bool setupReply(bool all) ;
 /* sourcefile=format.c */
 void prepareForBrowse(char *h, int h_len) ;
 void prepareForField(char *h);
-const char *skipHtmlComment(const char *h, int *lines) ;
-bool parseTag(char *e, const char **name, int *namelen, const char **attr, const char **end, int *lines) ;
-char *htmlAttrVal(const char *e, const char *name) ;
-bool findEndScript(const char *h, const char *tagname, bool is_js, char **end_p, char **new_p, int *lines) ;
-void anchorSwap(char *buf) ;
 bool breakLine(const char *line, int len, int *newlen) ;
 void breakLineSetup(void) ;
-char *htmlReformat(const char *buf) ;
-char *andTranslate(const char *s, bool invisible) ;
+char *htmlReformat(char *buf) ;
 void extractEmailAddresses(char *line) ;
 void cutDuplicateEmails(char *tolist, char *cclist, const char *reply) ;
 bool looksBinary(const char *buf, int buflen) ;
 void looks_8859_utf8(const char *buf, int buflen, bool * iso_p, bool * utf8_p) ;
-void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
-void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
 uchar base64Bits(char c);
 char *base64Encode(const char *inbuf, int inlen, bool lines);
 int base64Decode(char *start, char **end);
 void iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
+bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l);
 
-/* sourcefile=html.cpp */
-void freeTags(struct ebWindow *w) ;
+/* sourcefile=html.c */
 bool tagHandler(int seqno, const char *name) ;
 void jSideEffects(void) ;
-char *displayOptions(const struct htmlTag *sel) ;
 void jSyncup(void) ;
-void makeParentNode(const struct htmlTag *t) ;
-struct htmlTag *newTag(const char *name) ;
+void htmlMetaHelper(struct htmlTag *t);
+void runScriptsPending(void);
 void preFormatCheck(int tagno, bool * pretag, bool * slash) ;
 char *htmlParse(char *buf, int remote) ;
-void findField(const char *line, int ftype, int n, int *total, int *realtotal, int *tagno, char **href, const struct htmlTag **tagp) ;
-void findInputField(const char *line, int ftype, int n, int *total, int *realtotal, int *tagno) ;
 bool htmlTest(void) ;
 void infShow(int tagno, const char *search) ;
 bool infReplace(int tagno, const char *newtext, bool notify) ;
 bool infPush(int tagno, char **post_string) ;
 struct htmlTag *tagFromJavaVar(jsobjtype v);
+struct htmlTag *tagFromJavaVar2(jsobjtype v, const char *tagname);
 void javaSubmitsForm(jsobjtype v, bool reset) ;
-void javaOpensWindow(const char *href, const char *name) ;
-void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval) ;
 bool handlerGoBrowse(const struct htmlTag *t, const char *name) ;
+void runningError(int msg, ...) ;
+void rerender(bool notify);
+void delTags(int startRange, int endRange);
+void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval) ;
+bool timerWait(int *delay_sec, int *delay_ms);
+void delTimers(struct ebWindow *w);
+void runTimers(void);
+void javaOpensWindow(const char *href, const char *name) ;
+void javaSetsLinkage(char type, jsobjtype p, const char *rest);
+
+/* sourcefile=html-tidy.c */
+void html2nodes(const char *htmltext);
+
+/* sourcefile=decorate.c */
+void traverseAll(int start);
+const char *attribVal(const struct htmlTag *t, const char *name);
+struct htmlTag *findOpenTag(struct htmlTag *t, int action);
+struct htmlTag *findOpenList(struct htmlTag *t);
+void formControl(struct htmlTag *t, bool namecheck);
+void htmlInputHelper(struct htmlTag *t);
+char *displayOptions(const struct htmlTag *sel) ;
+void prerender(int start);
+jsobjtype instantiate_url(jsobjtype parent, const char *name, const char *url) ;
+char *render(int start);
+void decorate(int start);
+void freeTags(struct ebWindow *w) ;
+struct htmlTag *newTag(const char *tagname) ;
+void initTagArray(void);
+void htmlNodesIntoTree(int start, struct htmlTag *attach);
+void html_from_setter( jsobjtype innerParent, const char *h);
 
 /* sourcefile=http.c */
 size_t eb_curl_callback(char *incoming, size_t size, size_t nitems, struct eb_curl_callback_data *data) ;
@@ -146,41 +169,36 @@ char *extractHeaderParam(const char *str, const char *item) ;
 time_t parseHeaderDate(const char *date) ;
 bool parseRefresh(char *ref, int *delay_p) ;
 bool refreshDelay(int sec, const char *u) ;
-char *copy_and_sanitize(const char *start, const char *end) ;
 bool httpConnect(const char *url, bool down_ok, bool webpage);
 void ebcurl_setError(CURLcode curlret, const char *url) ;
 void setHTTPLanguage(const char *lang) ;
 void http_curl_init(void) ;
 int ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data, size_t size, void *unused) ;
 int bg_jobs(bool iponly);
+void addNovsHost(char *host) ;
+CURLcode setCurlURL(CURL * h, const char *url) ;
+const char *findProxyForURL(const char *url) ;
 
 /* sourcefile=main.c */
 const char *mailRedirect(const char *to, const char *from, const char *reply, const char *subj) ;
 bool javaOK(const char *url) ;
 void ebClose(int n) ;
-void eeCheck(void) ;
+bool isSQL(const char *s) ;
 void setDataSource(char *v) ;
 bool runEbFunction(const char *line) ;
-bool bufferToProgram(const char *cmd, const char *suffix, bool trailPercent) ;
 struct DBTABLE *findTableDescriptor(const char *sn) ;
 struct DBTABLE *newTableDescriptor(const char *name) ;
-struct MIMETYPE *findMimeBySuffix(const char *suffix) ;
-struct MIMETYPE *findMimeByProtocol(const char *prot) ;
-char *pluginCommand(const struct MIMETYPE *m, const char *file, const char *suffix) ;
 
-/* sourcefile=messages.c */
-void selectLanguage(void) ;
-void i_puts(int msg) ;
-void i_printf(int msg, ...) ;
-void i_printfExit(int msg, ...) ;
-void i_stringAndMessage(char **s, int *l, int messageNum) ;
-void setError(int msg, ...) ;
-void showError(void) ;
-void showErrorConditional(char cmd) ;
-void showErrorAbort(void) ;
-void browseError(int msg, ...) ;
-void runningError(int msg, ...) ;
-void i_caseShift(unsigned char *s, char action) ;
+/* sourcefile=plugin.c */
+const struct MIMETYPE *findMimeBySuffix(const char *suffix) ;
+const struct MIMETYPE *findMimeByURL(const char *url) ;
+const struct MIMETYPE *findMimeByFile(const char *filename) ;
+const struct MIMETYPE *findMimeByContent(const char *content) ;
+const struct MIMETYPE *findMimeByProtocol(const char *prot) ;
+char *pluginCommand(const struct MIMETYPE *m, const char *infile, const char *outfile, const char *suffix);
+int playBuffer(const char *line, const char *playfile);
+bool playServerData(void);
+char *runPluginConverter(const char *buf, int buflen);
 
 /* sourcefile=sendmail.c */
 bool loadAddressBook(void) ;
@@ -191,15 +209,39 @@ bool sendMail(int account, const char **recipients, const char *body, int subjat
 bool validAccount(int n) ;
 bool sendMailCurrent(int sm_account, bool dosig) ;
 
+/* sourcefile=messages.c */
+void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
+void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
+void selectLanguage(void) ;
+const char *i_getString(int msg);
+void i_puts(int msg) ;
+void i_printf(int msg, ...) ;
+void i_printfExit(int msg, ...) ;
+void i_stringAndMessage(char **s, int *l, int messageNum) ;
+void setError(int msg, ...) ;
+void showError(void) ;
+void showErrorConditional(char cmd) ;
+void showErrorAbort(void) ;
+#if 0
+void i_caseShift(unsigned char *s, char action) ;
+#endif
+void eeCheck(void) ;
+
 /* sourcefile=stringfile.c */
 void *allocMem(size_t n) ;
 void *allocZeroMem(size_t n) ;
 void *reallocMem(void *p, size_t n) ;
+char *allocString(size_t n) ;
+char *allocZeroString(size_t n) ;
+char *reallocString(void *p, size_t n) ;
 void nzFree(void *s) ;
+void cnzFree(const void *s) ;
 uchar fromHex(char d, char e) ;
 char *appendString(char *s, const char *p) ;
 char *prependString(char *s, const char *p) ;
 void skipWhite(const char **s) ;
+#define skipWhite2(s) skipWhite((const char **)s)
+void trimWhite(char *s) ;
 void stripWhite(char *s) ;
 void spaceCrunch(char *s, bool onespace, bool unprint) ;
 char *strmove(char *dest, const char *src) ;
@@ -211,7 +253,6 @@ void stringAndNum(char **s, int *l, int n) ;
 void stringAndKnum(char **s, int *l, int n) ;
 char *cloneString(const char *s) ;
 char *cloneMemory(const char *s, int n) ;
-void clipString(char *s) ;
 void leftClipString(char *s) ;
 void shiftRight(char *s, char first) ;
 char *Cify(const char *s, int n) ;
@@ -220,8 +261,6 @@ char *pullString1(const char *s, const char *t) ;
 int stringIsNum(const char *s) ;
 bool stringIsDate(const char *s) ;
 bool stringIsFloat(const char *s, double *dp) ;
-bool stringIsPDF(const char *s) ;
-bool isSQL(const char *s) ;
 bool memEqualCI(const char *s, const char *t, int len) ;
 char *strstrCI(const char *base, const char *search) ;
 bool stringEqual(const char *s, const char *t) ;
@@ -254,27 +293,33 @@ char fileTypeByHandle(int fd) ;
 int fileSizeByName(const char *name) ;
 int fileSizeByHandle(int fd) ;
 time_t fileTimeByName(const char *name) ;
+char *conciseSize(size_t n);
+char *conciseTime(time_t t);
+bool lsattrChars(const char *buf, char *dest);
+char *lsattr(const char *path, const char *flags);
 void ttySaveSettings(void) ;
 int getche(void) ;
 int getch(void) ;
 char getLetter(const char *s) ;
 char *getFileName(int msg, const char *defname, bool isnew, bool ws);
+int shellProtectLength(const char *s);
+void shellProtect(char *t, const char *s);
 const char *nextScanFile(const char *base) ;
 bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p) ;
-bool envFile(const char *line, const char **expanded, bool expect_file );
+bool envFile(const char *line, const char **expanded);
 bool envFileDown(const char *line, const char **expanded) ;
 FILE *efopen(const char *name, const char *mode) ;
 int eopen(const char *name, int mode, int perms) ;
 void appendFile(const char *fname, const char *message, ...) ;
 void appendFileNF(const char *filename, const char *msg) ;
-IP32bit tcp_name_ip(const char *name) ;
-char *tcp_ip_dots(IP32bit ip) ;
-int tcp_isDots(const char *s) ;
-IP32bit tcp_dots_ip(const char *s) ;
 
 /* sourcefile=url.c */
 void unpercentURL(char *url) ;
 void unpercentString(char *s) ;
+char *percentURL(const char *start, const char *end);
+char *htmlEscape0(const char *s, bool do_and);
+#define htmlEscape(s) htmlEscape0((s), true)
+#define htmlEscapeTextarea(s) htmlEscape0((s), false)
 bool isURL(const char *url) ;
 bool isBrowseableURL(const char *url) ;
 bool isDataURI(const char *u);
@@ -296,8 +341,7 @@ char *altText(const char *base) ;
 char *encodePostData(const char *s) ;
 char *decodePostData(const char *data, const char *name, int seqno) ;
 void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p) ;
-bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l);
-const char *findProxyForURL(const char *url) ;
-void addNovsHost(char *host) ;
-CURLcode setCurlURL(CURL * h, const char *url) ;
 
+#ifdef __cplusplus
+}
+#endif

@@ -54,348 +54,6 @@ void prepareForField(char *h)
 }				/* prepareForField */
 
 /*********************************************************************
-Skip past an html comment.
-Parse an html tag <tag foo=bar>
-*********************************************************************/
-
-const char *skipHtmlComment(const char *h, int *lines)
-{
-	int lns = 0;
-	bool comm = h[2] == '-' && h[3] == '-';
-	bool php = memEqualCI(h + 1, "?php", 4);
-
-	h += comm ? 4 : 2;
-	while (*h) {
-		if (php) {	/* special type of comment */
-			if (*h == '?' && h[1] == '>') {
-				h += 2;
-				goto done;
-			}
-			++h;
-			continue;
-		}
-
-		if (!comm && *h == '>') {
-			++h;
-			goto done;
-		}
-
-		if (comm && h[0] == '-' && h[1] == '-') {
-			h += 2;
-			while (*h == '-')
-				h++;
-			while (isspaceByte(*h)) {
-				if (*h == '\n')
-					++lns;
-				h++;
-			}
-			if (!*h)
-				goto done;
-			if (*h == '>') {
-				++h;
-				goto done;
-			}
-			continue;
-		}
-
-		if (*h == '\n')
-			++lns;
-		h++;
-	}
-
-done:
-	if (lines)
-		*lines = lns;
-	return h;
-}				/* skipHtmlComment */
-
-/* an attribute character */
-static bool atchr(char c)
-{
-	return (c > ' ' && c != '=' && c != '<' && c != '>');
-}				/* atchr */
-
-/*********************************************************************
-Parse an html tag.
-e is pointer to the begining of the element (*e must be '<').
-eof is pointer to the end of the html page.
-Result parameters:
-parsed tag name is stored in name, it's length is namelen.
-first attribute is stored in attr.
-end points to first character past the html tag.
-lines records the number of newlines consumed by the tag.
-*********************************************************************/
-
-bool htmlAttrVal_nl;		/* allow nl in attribute values */
-
-bool
-parseTag(char *e,
-	 const char **name, int *namelen, const char **attr, const char **end,
-	 int *lines)
-{
-	int lns = 0;
-	if (*e++ != '<')
-		return false;
-	if (name)
-		*name = e;
-	if (*e == '/')
-		e++;
-	if (!isA(*e))
-		return false;
-	while (isA(*e) || *e == '=')
-		++e;
-	if (!isspaceByte(*e) && *e != '>' && *e != '<' && *e != '/'
-	    && *e != ':')
-		return false;
-/* Note that name includes the leading / */
-	if (name && namelen)
-		*namelen = e - *name;
-/* skip past space colon slash */
-	while (isspaceByte(*e) || *e == '/' || *e == ':') {
-		if (*e == '\n')
-			++lns;
-		++e;
-	}
-/* should be the start of the first attribute, or < or > */
-	if (!atchr(*e) && *e != '>' && *e != '<')
-		return false;
-	if (attr)
-		*attr = e;
-nextattr:
-	if (*e == '>' || *e == '<')
-		goto en;
-	if (!atchr(*e))
-		return false;
-	while (atchr(*e))
-		++e;
-	while (isspaceByte(*e)) {
-		if (*e == '\n')
-			++lns;
-		++e;
-	}
-	if (*e != '=')
-		goto nextattr;
-	++e;
-	while (isspaceByte(*e)) {
-		if (*e == '\n')
-			++lns;
-		++e;
-	}
-	if (isquote(*e)) {
-		unsigned char uu = *e;
-x3:
-		++e;
-		while (*e != uu && *e) {
-			if (*e == '\n')
-				++lns;
-			++e;
-		}
-		if (*e != uu)
-			return false;
-		++e;
-		if (*e == uu) {
-/* lots of tags end with an extra quote */
-			if (e[1] == '>')
-				*e = ' ';
-			else
-				goto x3;
-		}
-	} else {
-		while (!isspaceByte(*e) && *e != '>' && *e != '<' && *e)
-			++e;
-	}
-	while (isspaceByte(*e)) {
-		if (*e == '\n')
-			++lns;
-		++e;
-	}
-	goto nextattr;
-en:
-/* could be < or > */
-	if (end)
-		*end = e + (*e == '>');
-	if (lines)
-		*lines = lns;
-	return true;
-}				/* parseTag */
-
-/* Don't know why he didn't use the stringAndChar() functions, but he
- * invented something new here, so on we go. */
-static void valChar(char **sp, int *lp, char c)
-{
-	char *s = *sp;
-	int l = *lp;
-	if (!(l % ALLOC_GR))
-		*sp = s = reallocMem(s, l + ALLOC_GR);
-	s[l++] = c;
-	*lp = l;
-}				/* valChar */
-
-/*********************************************************************
-Find an attribute in an html tag.
-e is attr pointer previously gotten from parseTag, DON'T PASS HERE ANY OTHER VALUE!!!
-name is the sought attribute.
-returns allocated string containing the attribute, or NULL on unsuccess.
-*********************************************************************/
-
-char *htmlAttrVal(const char *e, const char *name)
-{
-	const char *n;
-	char *a = EMPTYSTRING;	/* holds the value */
-	char *b;
-	int l = 0;		/* length */
-	char f;
-
-	if (!e) {
-out:
-		nzFree(a);
-		return NULL;
-	}
-
-top:
-	while (isspaceByte(*e))
-		e++;
-	if (!*e)
-		goto out;
-	if (*e == '>' || *e == '<')
-		goto out;
-
-/* case insensitive match on name */
-	n = name;
-	while (*n && !((*e ^ *n) & 0xdf))
-		e++, n++;
-	f = *n;
-	while (atchr(*e))
-		f = 'x', e++;
-	while (isspaceByte(*e))
-		e++;
-	if (*e != '=')
-		goto ea;
-	e++;
-	while (isspaceByte(*e))
-		e++;
-	if (!isquote(*e)) {
-/* no quotes, the attribute value is just the word */
-		while (*e && !isspaceByte(*e) && *e != '>' && *e != '<') {
-			if (!f)
-				valChar(&a, &l, *e);
-			e++;
-		}
-	} else {
-		char uu = *e;	/* holds " or ' */
-a:
-		e++;
-		while (*e != uu) {
-			if (!*e)
-				goto out;
-			if (!f && *e != '\r') {
-				if (*e != '\t' && *e != '\n')
-					valChar(&a, &l, *e);
-				else if (!htmlAttrVal_nl)
-					valChar(&a, &l, ' ');
-			}
-			e++;
-		}
-		e++;
-		if (*e == uu) {
-			if (!f)
-				valChar(&a, &l, uu);
-			goto a;
-		}
-	}
-ea:
-	if (f)
-		goto top;	/* no match, next attribute */
-	if (l)
-		valChar(&a, &l, 0);	/* null terminate */
-	if (strchr(a, '&')) {
-		b = a;
-		a = andTranslate(b, true);
-		nzFree(b);
-	}
-/* strip leading and trailing spaces.
- * Are we really suppose to do this? */
-	for (b = a; *b == ' '; b++) ;
-	if (b > a)
-		strmove(a, b);
-	for (b = a + strlen(a) - 1; b >= a && *b == ' '; b--)
-		*b = 0;
-	return a;
-}				/* htmlAttrVal */
-
-/*********************************************************************
-Jump straight to the </script>, and don't look at anything in between.
-Result parameters:
-end of the script, the extracted script, and the number of newlines.
-*********************************************************************/
-
-bool
-findEndScript(const char *h, const char *tagname,
-	      bool is_js, char **end_p, char **new_p, int *lines)
-{
-	char *end;
-	bool rc = true;
-	const char *s = h;
-	char look[12];
-	int looklen;
-	int js_nl = 0;
-
-	sprintf(look, "</%s", tagname);
-	looklen = strlen(look);
-
-retry:
-	end = strstrCI(s, look);
-	if (!end) {
-		rc = false;
-		browseError(MSG_CloseTag, look);
-		end = (char *)h + strlen(h);
-	} else if (isA(end[looklen])) {
-/* the tag is </scriptfoobar> or some such, skip past it */
-		s = end + looklen;
-		goto retry;
-	} else if (is_js) {
-/* Check for document.write("</script>");
- * This isn't legal javascript, but it happens all the time!
- * This is a really stupid check.
- * Scan forward 30 chars, on the same line, looking
- * for a quote, and ) ; or + */
-		char c;
-		int j;
-		s = end + looklen;
-		for (j = 0; j < 30; ++j, ++s) {
-			c = *s;
-			if (!c)
-				break;
-			if (c == '\n')
-				break;
-			if (c != '"' && c != '\'')
-				continue;
-			while (s[1] == ' ' || s[1] == '\t')
-				++s;
-			c = s[1];
-			if (!c)
-				break;
-			if (strchr(";)+", c))
-				goto retry;
-		}
-	}
-
-	if (end_p)
-		*end_p = end;
-	if (new_p)
-		*new_p = pullString1(h, end);
-/* count the newlines */
-	while (h < end) {
-		if (*h == '\n')
-			++js_nl;
-		++h;
-	}
-
-	*lines = js_nl;
-	return rc;
-}				/* findEndScript */
-
-/*********************************************************************
 The primary goal of this routine is to turn
 Hey,{ click here } for more information
 into
@@ -422,7 +80,29 @@ it won't have the pipes around it that it should.
 I'm willing to accept that for now.
 *********************************************************************/
 
-void anchorSwap(char *buf)
+static void cellDelimiters(char *buf)
+{
+	char *lastcell = 0;
+	int cellcount = 0;
+	char *s;
+
+	for (s = buf; *s; ++s) {
+		if (*s == TableCellChar) {
+			*s = '|';
+			lastcell = s;
+			++cellcount;
+			continue;
+		}
+		if (!strchr("\f\r\n", *s))
+			continue;
+/* newline here, if just one cell delimiter then blank it out */
+		if (cellcount == 1)
+			*lastcell = ' ';
+		cellcount = 0;
+	}
+}				/* cellDelimiters */
+
+static void anchorSwap(char *buf)
 {
 	char c, d, *s, *ss, *w, *a;
 	bool pretag;		// <pre>
@@ -477,6 +157,8 @@ void anchorSwap(char *buf)
 		if (ss)
 			c = becomes[ss - from];
 
+#if 0
+// keep empty anchors, for now.
 		if (c != InternalCodeChar)
 			goto put1;
 		if (!isdigitByte(s[1]))
@@ -490,6 +172,7 @@ void anchorSwap(char *buf)
 /* skip past empty {} */
 		s = a + 2;
 		continue;
+#endif
 
 put1:
 		*w++ = c;
@@ -569,13 +252,11 @@ normalChar:
 		}
 /* end of loop making changes */
 	}
-	debugPrint(3, "anchorSwap %d", cnt);
+	debugPrint(4, "anchorSwap %d", cnt);
 
 /* Framing characters like [] around an anchor are unnecessary here,
  * because we already frame it in braces.
- * Get rid of these characters, even in premode.
- * Also, remove trailing pipes on a line. */
-	ss = 0;			/* remember location of first pipe */
+ * Get rid of these characters, even in premode. */
 	for (s = w = buf; c = *s; ++s) {
 		char open, close, linkchar;
 		if (!strchr("{[(<", c))
@@ -628,22 +309,16 @@ normalChar:
 		memmove(w, s, a - s);
 		w += a - s;
 		s = a;
-		ss = 0;
 		continue;
 putc:
-		if (c == '|' && !ss)
-			ss = w;
-		if (strchr("\r\n\f", c) && ss)
-			w = ss, ss = 0;
-		if (!isspaceByte(c) && c != '|')
-			ss = 0;
 		*w++ = c;
 	}			/* loop over buffer */
 	*w = 0;
-	debugPrint(3, "anchors unframed");
+	debugPrint(4, "anchors unframed");
 
 /* Now compress the implied linebreaks into one. */
 	premode = false;
+	ss = 0;
 	for (s = buf; c = *s; ++s) {
 		if (c == InternalCodeChar && isdigitByte(s[1])) {
 			n = strtol(s + 1, &s, 10);
@@ -678,7 +353,7 @@ putc:
 			if (*w == '\r' && w != a)
 				*w = ' ';
 	}			/* loop over buffer */
-	debugPrint(3, "whitespace combined");
+	debugPrint(4, "whitespace combined");
 }				/* anchorSwap */
 
 /*********************************************************************
@@ -949,7 +624,8 @@ static void appendPrintableChunk(const char *chunk, int len, bool premode)
  * and is only in this file because it shares the above routines and variables
  * with the html reformatting, which really has to be here. */
 
-char replaceLine[REPLACELINELEN];
+char *breakLineResult;
+#define REFORMAT_EXTRA 4000
 
 bool breakLine(const char *line, int len, int *newlen)
 {
@@ -971,9 +647,13 @@ bool breakLine(const char *line, int len, int *newlen)
 		lspace = 2;	/* should never happen */
 	if (!len + pre_cr)
 		lspace = 3;
-	bl_start = bl_cursor = replaceLine;
-	bl_end = replaceLine + REPLACELINELEN - 8;
+
+	nzFree(breakLineResult);
+	breakLineResult = allocMem(len + REFORMAT_EXTRA);
+	bl_start = bl_cursor = breakLineResult;
+	bl_end = breakLineResult + len + REFORMAT_EXTRA - 8;
 	bl_overflow = false;
+
 	colno = 1;
 	longcut = lperiod = lcomma = lright = lany = 0;
 	last = 0;
@@ -1027,7 +707,7 @@ void breakLineSetup(void)
 	lspace = 3;
 }
 
-char *htmlReformat(const char *buf)
+char *htmlReformat(char *buf)
 {
 	const char *h, *nh, *s;
 	char c;
@@ -1036,28 +716,31 @@ char *htmlReformat(const char *buf)
 	char *new;
 	int l, tagno;
 
+	cellDelimiters(buf);
+
+	anchorSwap(buf);
+
 	longcut = lperiod = lcomma = lright = lany = 0;
 	colno = 1;
 	pre_cr = 0;
 	lspace = 3;
-	bl_start = bl_cursor = replaceLine;
-	bl_end = replaceLine + REPLACELINELEN - 8;
+
+	l = strlen(buf);
+/* Only a pathological web page gets longer after reformatting.
+ * Even then it isn't by much. This is a bit of a kludge.
+ * If you still overflow, even beyond the EXTRA,
+ * it won't seg fault, you'll just lose some text. */
+	new = allocMem(l + REFORMAT_EXTRA);
+	bl_start = bl_cursor = new;
+	bl_end = new + l + REFORMAT_EXTRA - 20;
 	bl_overflow = false;
-	new = initString(&l);
 
 	for (h = buf; (c = *h); h = nh) {
 		if (isspaceByte(c)) {
 			for (s = h + 1; isspaceByte(*s); ++s) ;
 			nh = s;
 			appendSpaceChunk(h, nh - h, premode);
-			if (lspace == 3 || (lspace == 2 || premode) &&
-			    (bl_cursor - bl_start) >=
-			    (bl_end - bl_start) * 2 / 3) {
-				if (bl_cursor > bl_start)
-					stringAndBytes(&new, &l, bl_start,
-						       bl_cursor - bl_start);
-				bl_cursor = bl_start;
-				lspace = 3;
+			if (lspace == 3) {
 				longcut = lperiod = lcomma = lright = lany = 0;
 				colno = 1;
 			}
@@ -1082,32 +765,13 @@ char *htmlReformat(const char *buf)
 		preFormatCheck(tagno, &pretag, &slash);
 		if (pretag)
 			premode = !slash;
-
-/* Insert newlines between adjacent hyperlinks. */
-		if (c != '}' || premode)
-			continue;
-		for (h = nh; c = *h; ++h)
-			if (!strchr(" \t,:-|;", c))
-				break;
-		if (!c || strchr("\r\n\f", c)) {
-			nh = h;
-			continue;
-		}
-		if (c != InternalCodeChar)
-			continue;
-/* Does this start a new hyperlink? */
-		for (s = h + 1; isdigitByte(*s); ++s) ;
-		if (*s != '{')
-			continue;
-		appendSpaceChunk("\n", 1, false);
-		nh = h;
 	}			/* loop over text */
 
 /* close off the last line */
 	if (lspace < 2)
 		appendSpaceChunk("\n", 1, true);
-	if (bl_cursor > bl_start)
-		stringAndBytes(&new, &l, bl_start, bl_cursor - bl_start);
+	*bl_cursor = 0;
+	l = bl_cursor - bl_start;
 /* Get rid of last space. */
 	if (l >= 2 && new[l - 1] == '\n' && new[l - 2] == ' ')
 		new[l - 2] = '\n', new[--l] = 0;
@@ -1117,7 +781,13 @@ char *htmlReformat(const char *buf)
 	new[l] = 0;
 /* Don't allow an empty buffer */
 	if (!l)
-		stringAndChar(&new, &l, '\n');
+		new[0] = '\n', new[1] = 0, l = 1;
+
+	if (bl_overflow) {
+/* we should print a more helpful error message here */
+		strcpy(new + l, "\n???");
+		l += 4;
+	}
 
 	return new;
 }				/* htmlReformat */
@@ -1161,292 +831,6 @@ static void uni2utf8(unsigned int unichar, unsigned char *outbuf)
 
 	outbuf[n] = 0;
 }				/* uni2utf8 */
-
-/*********************************************************************
-And-convert the string; you know, &nbsp; &lt; etc.
-This is the routine that makes it possible for me to read, and write,
-my math site.  http://www.mathreference.com/accessible.html
-In the invisible mode, graphics characters are not rendered at all.
-This is used when translating attributes inside tags,
-such as HREF, in an anchor.
-The original string is not disturbed.
-The new string is allocated.
-*********************************************************************/
-
-char *andTranslate(const char *s, bool invisible)
-{
-	char *new;
-	int l, n, j;
-	uchar c, d;
-	uchar alnum = 0;	/* was last char an alphanumeric */
-	bool premode = false;
-	char andbuf[16];
-
-	static const char *const andwords[] = {
-		"gt\0>",
-		"lt\0<",
-		"quot\0\"",
-		"raquo\0-",
-		"ldquo\0\"",
-		"rdquo\0\"",
-		"lsquo\0'",
-		"rsquo\0'",
-		"plus\0+",
-		"minus\0-",
-		"mdash\0 - ",
-		"ndash\0 - ",
-		"colon\0:",
-		"apos\0`",
-		"star\0*",
-		"comma\0,",
-		"period\0.",
-		"dot\0.",
-		"dollar\0$",
-		"percnt\0%",
-		"amp\0&",
-		"iexcl\0!",
-		"cent\0\xa2",
-		"pound\0\xa3",
-		"yen\0\xa5",
-		"brvbar\0\xa6",
-		"copy\0\xa9",
-		"reg\0\xae",
-		"deg\0\xb0",
-		"plusmn\0\xb1",
-		"para\0\xb6",
-		"sdot\0\xb7",
-		"middot\0\xb7",
-		"frac14\0\xbc",
-		"half\0\xbd",
-		"frac34\0\xbe",
-		"iquest\0\xbf",
-		"rsaquo\0*",
-		"Agrave\0\xc0",
-		"Aacute\0\xc1",
-		"Acirc\0\xc2",
-		"Atilde\0\xc3",
-		"Auml\0\xc4",
-		"Aring\0\xc5",
-		"AElig\0\xc6",
-		"Ccedil\0\xc7",
-		"Egrave\0\xc8",
-		"Eacute\0\xc9",
-		"Ecirc\0\xca",
-		"Euml\0\xcb",
-		"Igrave\0\xcc",
-		"Iacute\0\xcd",
-		"Icirc\0\xce",
-		"Iuml\0\xcf",
-		"ETH\0\xd0",
-		"Ntilde\0\xd1",
-		"Ograve\0\xd2",
-		"Oacute\0\xd3",
-		"Ocirc\0\xd4",
-		"Otilde\0\xd5",
-		"Ouml\0\xd6",
-		"times\0\xd7",
-		"Oslash\0\xd8",
-		"Ugrave\0\xd9",
-		"Uacute\0\xda",
-		"Ucirc\0\xdb",
-		"Uuml\0\xdc",
-		"Yacute\0\xdd",
-		"THORN\0\xde",
-		"szlig\0\xdf",
-		"agrave\0\xe0",
-		"aacute\0\xe1",
-		"acirc\0\xe2",
-		"atilde\0\xe3",
-		"auml\0\xe4",
-		"aring\0\xe5",
-		"aelig\0\xe6",
-		"ccedil\0\xe7",
-		"egrave\0\xe8",
-		"eacute\0\xe9",
-		"ecirc\0\xea",
-		"euml\0\xeb",
-		"igrave\0\xec",
-		"iacute\0\xed",
-		"icirc\0\xee",
-		"iuml\0\xef",
-		"eth\0\xf0",
-		"ntilde\0\xf1",
-		"ograve\0\xf2",
-		"oacute\0\xf3",
-		"ocirc\0\xf4",
-		"otilde\0\xf5",
-		"ouml\0\xf6",
-		"divide\0\xf7",
-		"oslash\0\xf8",
-		"ugrave\0\xf9",
-		"uacute\0\xfa",
-		"ucirc\0\xfb",
-		"uuml\0\xfc",
-		"yacute\0\xfd",
-		"thorn\0\xfe",
-		"yuml\0\xff",
-		"Yuml\0Y",
-		"itilde\0i",
-		"Itilde\0I",
-		"utilde\0u",
-		"Utilde\0U",
-		"edot\0e",
-		"nbsp\0 ",
-		"shy\0-",
-		"frac13\01/3",
-		"frac23\02/3",
-		"plusmn\0+-",
-		"laquo\0left arrow",
-		"#171\0left arrow",
-		"raquo\0arrow",
-		"#187\0arrow",
-		"micro\0micro",
-		"trade\0(TM)",
-		"hellip\0...",
-		"#275\0`",
-		"#773\0overbar",
-		"#177\0+-",
-		"#8211\0-",
-		"#8212\0 - ",
-		"#8216\0`",
-		"#8217\0'",
-		"#8220\0`",
-		"#8221\0'",
-		"bull\0*",
-		0
-	};
-
-	if (!s)
-		return 0;
-	if (s == EMPTYSTRING)
-		return EMPTYSTRING;
-	new = initString(&l);
-
-	while (c = *s) {
-		if (c == InternalCodeChar && !invisible) {
-			const char *t = s + 1;
-			while (isdigitByte(*t))
-				++t;
-			if (t > s + 1 && *t && strchr("{}<>*", *t)) {	/* it's a tag */
-				bool separate, pretag, slash;
-				n = atoi(s + 1);
-				preFormatCheck(n, &pretag, &slash);
-				separate = (*t != '*');
-				if (separate)
-					alnum = 0;
-				debugPrint(7, "tag %d%c separate %d", n, *t,
-					   separate);
-				if (pretag)
-					premode = !slash;
-				++t;
-				stringAndBytes(&new, &l, s, t - s);
-				s = t;
-				continue;
-			}	/* tag */
-		}
-
-		if (c != '&')
-			goto putc;
-
-		for (j = 0; j < sizeof(andbuf); ++j) {
-			d = s[j + 1];
-			if (d == '&' || d == ';' || d <= ' ')
-				break;
-		}
-		if (j == sizeof(andbuf))
-			goto putc;	/* too long, no match */
-		strncpy(andbuf, s + 1, j);
-		andbuf[j] = 0;
-		++j;
-		if (s[j] == ';')
-			++j;
-/* remove leading zeros */
-		if (andbuf[0] == '#') {
-			while (andbuf[1] == '0')
-				strmove(andbuf + 1, andbuf + 2);
-			if (andbuf[1] == 'x' || andbuf[1] == 'X') {
-				unsigned int uc;
-				uc = strtol(andbuf + 2, 0, 16);
-				if (uc <= 0x7fffffff)
-					sprintf(andbuf + 1, "%d", uc);
-			}
-		}
-
-lookup:
-		debugPrint(6, "meta %s", andbuf);
-		n = stringInList(andwords, andbuf);
-		if (n >= 0) {	/* match */
-			const char *r = andwords[n] + strlen(andwords[n]) + 1;	/* replacement string */
-			s += j;
-			if (!r[1]) {	/* replace with a single character */
-				c = *r;
-				if (c & 0x80 && cons_utf8) {
-					static char utfbuf[8];
-					n = (uchar) c;
-n_utf8:
-					uni2utf8(n, (uchar *) utfbuf);
-					r = utfbuf;
-					goto putw;
-				}
-				--s;
-				goto putc;
-			}
-			if (invisible) {
-				s -= j;
-				goto putc;
-			}
-/* We're replacing with a word */
-			if (!invisible && isalnumByte(*r)) {
-/* insert spaces either side */
-				if (alnum)
-					stringAndChar(&new, &l, ' ');
-				alnum = 2;
-			} else
-				alnum = 0;
-putw:
-			stringAndString(&new, &l, r);
-			continue;
-		}
-
-		if (andbuf[0] != '#')
-			goto putc;
-		if (andbuf[1] == 'x' || andbuf[1] == 'X') {
-			n = strtol(andbuf + 2, 0, 16);
-		} else
-			n = stringIsNum(andbuf + 1);
-		if (n < 0)
-			goto putc;
-		if (n > 0x7f && cons_utf8) {
-			s += j;
-			goto n_utf8;
-		}
-		if (n > 0xff)
-			goto putc;
-/* This line assumes iso8859-1; if you're anything else, you're screwed! */
-/* I need to fix this some day, but most everybody is utf8 anyways. */
-		c = n;
-/* don't allow nulls */
-		if (c == 0)
-			c = ' ';
-		if (strchr("\r\n\f", c) && !premode)
-			c = ' ';
-		if (c == InternalCodeChar)
-			c = ' ';
-		s += j - 1;
-
-putc:
-		if (isalnumByte(c)) {
-			if (alnum == 2)
-				stringAndChar(&new, &l, ' ');
-			alnum = 1;
-		} else
-			alnum = 0;
-		stringAndChar(&new, &l, c);
-		++s;
-	}			/* loop over input string */
-
-	return new;
-}				/* andTranslate */
 
 /*********************************************************************
 Crunch a to-list or a copy-to-list down to its email addresses.
@@ -1638,144 +1022,6 @@ isogo:
 		*iso_p = true;
 }				/* looks_8859_utf8 */
 
-/*********************************************************************
-Convert a string from iso 8859 to utf8, or vice versa.
-In each case a new string is allocated.
-Don't forget to free it when you're done.
-*********************************************************************/
-
-/* only 8859-1 and 8859-2 so far */
-static const int iso_unicodes[2][128] = {
-	{0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b,
-	 0x8c, 0x8d, 0x8e, 0x8f,
-	 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9a,
-	 0x9b, 0x9c, 0x9d, 0x9e, 0x9f,
-	 0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7, 0xa8, 0xa9, 0xaa,
-	 0xab, 0xac, 0xad, 0xae, 0xaf,
-	 0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xba,
-	 0xbb, 0xbc, 0xbd, 0xbe, 0xbf,
-	 0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7, 0xc8, 0xc9, 0xca,
-	 0xcb, 0xcc, 0xcd, 0xce, 0xcf,
-	 0xd0, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8, 0xd9, 0xda,
-	 0xdb, 0xdc, 0xdd, 0xde, 0xdf,
-	 0xe0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea,
-	 0xeb, 0xec, 0xed, 0xee, 0xef,
-	 0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa,
-	 0xfb, 0xfc, 0xfd, 0xfe, 0xff},
-	{0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b,
-	 0x8c, 0x8d, 0x8e, 0x8f,
-	 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9a,
-	 0x9b, 0x9c, 0x9d, 0x9e, 0x9f,
-	 0xa0, 0x104, 0x2d8, 0x141, 0xa4, 0x13d, 0x15a, 0xa7, 0xa8, 0x160,
-	 0x15e, 0x164, 0x179, 0xad, 0x17d, 0x17b,
-	 0xb0, 0x105, 0x2db, 0x142, 0xb4, 0x13e, 0x15b, 0x2c7, 0xb8, 0x161,
-	 0x15f, 0x165, 0x17a, 0x2dd, 0x17e, 0x17c,
-	 0x154, 0xc1, 0xc2, 0x102, 0xc4, 0x139, 0x106, 0xc7, 0x10c, 0xc9,
-	 0x118, 0xcb, 0x11a, 0xcd, 0xce, 0x10e,
-	 0x110, 0x143, 0x147, 0xd3, 0xd4, 0x150, 0xd6, 0xd7, 0x158, 0x16e,
-	 0xda, 0x170, 0xdc, 0xdd, 0x162, 0xdf,
-	 0x155, 0xe1, 0xe2, 0x103, 0xe4, 0x13a, 0x107, 0xe7, 0x10d, 0xe9,
-	 0x119, 0xeb, 0x11b, 0xed, 0xee, 0x10f,
-	 0x111, 0x144, 0x148, 0xf3, 0xf4, 0x151, 0xf6, 0xf7, 0x159, 0x16f,
-	 0xfa, 0x171, 0xfc, 0xfd, 0x163, 0x2d9},
-};
-
-void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
-{
-	int i, j;
-	int nacount = 0;
-	char c;
-	char *outbuf;
-	const int *isoarray = iso_unicodes[type8859 - 1];
-	int ucode;
-
-	if (!inbuflen) {
-		*outbuf_p = EMPTYSTRING;
-		*outbuflen_p = 0;
-		return;
-	}
-
-/* count chars, so we can allocate */
-	for (i = 0; i < inbuflen; ++i) {
-		c = inbuf[i];
-		if (c < 0)
-			++nacount;
-	}
-
-	outbuf = allocMem(inbuflen + nacount + 1);
-	for (i = j = 0; i < inbuflen; ++i) {
-		c = inbuf[i];
-		if (c >= 0) {
-			outbuf[j++] = c;
-			continue;
-		}
-		ucode = isoarray[c & 0x7f];
-		outbuf[j++] = (ucode >> 6) | 0xc0;
-		outbuf[j++] = (ucode & 0x3f) | 0x80;
-	}
-	outbuf[j] = 0;		/* just for fun */
-
-	*outbuf_p = outbuf;
-	*outbuflen_p = j;
-}				/* iso2utf */
-
-void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
-{
-	int i, j, k;
-	char c;
-	char *outbuf;
-	const int *isoarray = iso_unicodes[type8859 - 1];
-	int ucode;
-
-	if (!inbuflen) {
-		*outbuf_p = EMPTYSTRING;
-		*outbuflen_p = 0;
-		return;
-	}
-
-	outbuf = allocMem(inbuflen + 1);
-	for (i = j = 0; i < inbuflen; ++i) {
-		c = inbuf[i];
-
-/* regular chars and nonascii chars that aren't utf8 pass through. */
-/* There shouldn't be any of the latter */
-		if (((uchar) c & 0xc0) != 0xc0) {
-			outbuf[j++] = c;
-			continue;
-		}
-
-/* Convertable into 11 bit */
-		if (((uchar) c & 0xe0) == 0xc0
-		    && ((uchar) inbuf[i + 1] & 0xc0) == 0x80) {
-			ucode = c & 0x1f;
-			ucode <<= 6;
-			ucode |= (inbuf[i + 1] & 0x3f);
-			for (k = 0; k < 128; ++k)
-				if (isoarray[k] == ucode)
-					break;
-			if (k < 128) {
-				outbuf[j++] = k | 0x80;
-				++i;
-				continue;
-			}
-		}
-
-/* unicodes not found in our iso class are converted into stars */
-		c <<= 1;
-		++i;
-		for (++i; c < 0; ++i, c <<= 1) {
-			if (((uchar) outbuf[i] & 0xc0) != 0x80)
-				break;
-		}
-		outbuf[j++] = '*';
-		--i;
-	}
-	outbuf[j] = 0;		/* just for fun */
-
-	*outbuf_p = outbuf;
-	*outbuflen_p = j;
-}				/* utf2iso */
-
 static char base64_chars[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -1932,3 +1178,55 @@ iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 		utf2iso(inbuf, inbuflen, outbuf_p, outbuflen_p);
 	}
 }				/* iuReformat */
+
+bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l)
+{
+	bool base64 = false;
+	const char *mediatype_start;
+	const char *data_sep;
+	const char *cp;
+	size_t encoded_len;
+
+	*data = *mediatype = emptyString;
+	*data_l = 0;
+
+	if (!isDataURI(uri))
+		return false;
+
+	mediatype_start = uri + 5;
+	data_sep = strchr(mediatype_start, ',');
+
+	if (!data_sep)
+		return false;
+
+	for (cp = data_sep - 1; (cp >= mediatype_start && *cp != ';'); cp--) ;
+
+	if (cp >= mediatype_start && memEqualCI(cp, ";base64,", 8)) {
+		base64 = true;
+		*mediatype = pullString1(mediatype_start, cp);
+	} else {
+		*mediatype = pullString1(mediatype_start, data_sep);
+	}
+
+	encoded_len = strlen(data_sep + 1);
+	*data = pullString(data_sep + 1, encoded_len);
+	unpercentString(*data);
+
+	if (!base64) {
+		*data_l = strlen(*data);
+	} else {
+		char *data_end = *data + strlen(*data);
+		int unpack_ret = base64Decode(*data, &data_end);
+		if (unpack_ret != GOOD_BASE64_DECODE) {
+			nzFree(*mediatype);
+			*mediatype = emptyString;
+			nzFree(*data);
+			*data = emptyString;
+			return false;
+		}
+		*data_end = '\0';
+		*data_l = data_end - *data;
+	}
+
+	return true;
+}				/* parseDataURI */

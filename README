@@ -1,6 +1,7 @@
 edbrowse, a line oriented editor browser.
-Maintained by Chris Brannon, chris@the-brannons.com
-Written and maintained by Karl Dahlke, eklhad@gmail.com
+Written and maintained by Chris Brannon and Karl Dahlke.
+See our home page edbrowse.org for current releases and contact information.
+
 See COPYING for licensing agreements.
 
 ------------------------------------------------------------
@@ -31,11 +32,7 @@ This produces the documentation in text form,
 which you can read using your favorite editor.
 Of course we hope edbrowse will eventually become your
 favorite editor, whence you can browse the documentation directly.
-
-The doc directory also includes a sample config file, and a script to help you
-set up your own, customized config file.
-Run setup.ebrc and answer the questions.
-(This assumes you are using bash.)
+The doc directory also includes a sample config file.
 
 ------------------------------------------------------------
 
@@ -44,13 +41,14 @@ No need to repeat all that here.
 You're here because you want to compile and/or package the program,
 or modify the source in some way.  Great!
 
-I haven't developed a configure script, and I should do that some day,
-but meantime just type make and hope for the best.
+A full cmake system is under development.
+Meantime, on unix or linux,
+just type make, and make install, and hope for the best.
 
 As you may know, edbrowse was originally a perl script.
 As such, it was only natural to use perl regular expressions for
-my search/substitute functions in the editor.
-And once you've experienced the power of perl regexp, you'll never
+the search/substitute functions in the editor.
+Once you've experienced the power of perl regexp, you'll never
 go back to ed.  So I use the perl compatible regular expression
 library, /lib/libpcre.so.0, available on most Linux systems.
 If you don't have this file, check your installation disks.
@@ -60,8 +58,6 @@ You need version 8.10 or higher.
 Note that my files include <pcre.h>.
 Some distributions put it in /usr/include/pcre/pcre.h,
 so you'll have to adjust the source, the -I path, or make a link.
-Yeah I know, that's something a configure script should do for you,
-but I'm just not there yet.
 
 You also need libcurl and libcurl-devel,
 which is included in almost every Linux distro.
@@ -72,6 +68,19 @@ prior to 7.29.0, the program will inform you that you need to upgrade.
 If you have to compile curl from source, be sure to specify
 --ENABLE-VERSION-SYMBOLS (or some such) at the configure script.
 
+Edbrowse now uses the Tidy HTML parser.  So there are a couple
+of things to install for this prerequisite.
+The Tidy compilation process uses cmake.  Please either use your
+package manager to get cmake (for instance, apt-get install cmake),
+or follow the instructions at http://www.cmake.org/download/
+
+Once you have cmake, download the latest Tidy code from:
+https://github.com/htacg/tidy-html5/archive/master.zip
+Unzip and cd to build/cmake
+cmake ../..
+make install
+Now the latest Tidy library will be available to edbrowse.
+
 Finally, you need the Spider Monkey javascript engine from Mozilla.org
 ftp://ftp.mozilla.org/pub/mozilla.org/js/
 Edbrowse 3.5.1 and higher requires Mozilla js version 2.4.
@@ -79,7 +88,7 @@ If this is not available in your distribution, download into /usr/local,
 expand, cd js/src, ./configure, make, and make install.
 https://ftp.mozilla.org/pub/mozilla.org/js/mozjs-24.2.0.tar.bz2
 Lots of warning messages in the build, don't worry about those.
-This creats /usr/local/lib/libmozjs-24.so, and with /usr/local/lib
+This creates /usr/local/lib/libmozjs-24.so, and with /usr/local/lib
 already in my /etc/ld.so.conf, I thought I'd be fine,
 but I had to run ldconfig again anyways, not sure why.
 Back in your edbrowse/src directory,
@@ -102,6 +111,10 @@ In other words, the indenting style is the same as the Linux kernel.
 If you modify some source, you may want to run it through
 ../tools/Lindent before the commit.
 
+In the interest of portability to Window Studio C, please keep variable
+definitions at the top of each function or block.
+A variable should not be defined after an executable statement.
+
 ------------------------------------------------------------
 
 Debug levels:
@@ -111,8 +124,10 @@ Debug levels:
 and http redirection.
 3: javascript execution and errors.
    cookies, http codes, form data, and sql statements logged.
+   html syntax errors as per tidy5.
 4: show the socket connections, and the http headers in and out
-5: messages to and from the javascript process, url resolution
+   side effects of running javascript.
+5: messages to and from the javascript process, url resolution, tidy html nodes.
 6: show javascript to be executed
 7: reformatted regular expressions, breakline chunks, read from js.
 8: text lines freed, debug garbage collection
@@ -148,20 +163,23 @@ Resolve relative url into absolute url
 based on the location of the current web page.
 
 format.c:
-Parse html tags and comments.
-Translate common unicode sequences.
 Arrange text into lines and paragraphs.
+base64 encode and decode for email.
 
 http.c:
 Send the http request, and read the data from the web server.
 Handles https connections as well,
 and 301/302 redirection.
 Uncompresses html data if necessary.
+ftp, sftp, download files, possibly in the background.
 
-html.cpp:
-Render the html tags and format the text.
-Update input fields.
+html.c:
+Manage the html tags and the tree of nodes.
+Turn js side effects, like document.write or innerHTML,
+back into html tags if that makes sense.
 Submit/reset forms.
+Render the tree of html nodes into a text buffer.
+Rerender the tree after js has run, and report any changes to the user.
 
 cookies.c:
 Send and receive cookies.  Maintain the cookie jar.
@@ -174,26 +192,43 @@ sendmail.c:
 Send mail (smtp or smtps).  Encode attachments.
 
 fetchmail.c:
-Fetch mail (pop3 or pop3s).  Decode attachments.
+Fetch mail (pop3 or pop3s or imap).  Decode attachments.
 Browse mail files, separate mime components.
+Delete emails, move emails to other imap folders, search on an imap server.
+
+plugin.c:
+Determine the mime type of a file or web page and the corresponding plugin,
+if any. Launch the plugin automatically or on command.
+A plugin can play the file, like music, or render the file, like pdf.
 
 messages.h:
 Symbolic constants for the warning/error messages of edbrowse.
 
 messages.c:
-Strings corresponding to these error messages,
-in various languages.
+Strings corresponding to these error messages in various languages.
 Also some international print routines to display the correct string
 according to your locale.
 
+decorate.c:
+Decorate the tree with js objects corresponding to the html nodes
+if js is enabled.
+
 jseng-moz.cpp:
-The javascript engine, built around the mozilla js library.
-Manage all the js object corresponding to the web page in edbrowse.
-This is a stand alone process.
+The javascript engine built around the mozilla js library.
+Manage all the js objects corresponding to the web page in edbrowse.
+This is a stand alone process,
+though it may share some sourcefiles with edbrowse, e.g. stringfile.c.
 The resulting program is edbrowse-js,
 and it must be in the same path as edbrowse.
-All the js details are hideen in this file.
-It might be possible, for instance, to build jseng-v8.c, based upon v8.
+All the js details are hidden in this file.
+this is encapsulation, hiding the js library from the rest of edbrowse.
+It might be possible, for instance, to build jseng-v8.c, based upon v8 etc.
+
+html-tidy.c:
+Use tidy5 to parse html and return a tree of nodes.
+This is another form of encapsulation.
+We could, in the future, write html-foo.c, having the same interface,
+if we prefer parser foo instead.
 
 startwindow.js:
 Javascript that is run at the start of each session.
@@ -204,6 +239,13 @@ As you write functions to support DOM,
 your first preference is to write them in startwindow.js.
 Failing this, write them in C, using the api in ebjs.c.
 Failing this, and as a last resort, write them as native code in the js engine.
+
+../doc/ebrc-*:
+Default .ebrc config file that is written to your home directory,
+if you have no such file.
+Different files for different languages.
+Each is converted into a const string in ebrc.c,
+thus ebrc.c is not a source file.
 
 ebjs.c:
 Interface between edbrowse and edbrowse-js.
@@ -230,7 +272,7 @@ Error conventions.
 Unix commands return 0 for ok, and a negative number for a problem.
 Some of my functions work this way, but many return
 true for success and false for error.
-The error message is left in a buffer, which you can see by typing h,
+The error message is left in a buffer, which you can see by typing h
 in the /bin/ed style.
 Sometimes the error is displayed no matter what,
 like when you are reading or writing files.
@@ -255,76 +297,26 @@ When js accesses form.fullname.value, it needs to find,
 and in some cases change, the text that you entered.
 These 3 representations are "separate but equal",
 there is a lot of software to keep them in sync.
-Remember that an input field could be an antire text area,
+Remember that an input field could be an entire text area,
 i.e. the text in another editing session.
 When you are in that session, composing your thoughts,
 am I really going to take every textual change, every substitute,
 every delete, every insert, every undo,
 and map those changes over to the html tag that goes with this session,
 and the js variable that goes with this session?
-I don't think so!
-So I'm stuck with something almost as bad.
+I don't think so.
 When you submit the form, or run any javascript for any reason,
-all that text has to be carried into the javascript world.
+the text is carried into the html tag, under t->value, and into the js object,
+to make sure everything is in sync before js runs.
 This is accomplished by jSyncup() in html.c.
 When js has run to completion, any changes it has made to the fields have
 to be mapped back to the editor, where you can see them.
 This is done by jSideEffects() in html.c.
 In other words, any action that might in any way involve js
 must begin with jSyncup() and end with jSideEffects().
-The latter function notifies you if certain lines in the buffer have changed,
-e.g. js has changed one of the input fields out from under you.
+Once this is done, the tree of tags is rerendered, in render.c,
+and the new buffer is compared with the old using a very simple diff algorithm.
+Edbrowse tells you if any lines have changed.
 
 Line 357 has been updated.
 
-Along with some cleanup, and even some modest enhancements, edbrowse
-really needs a rewrite, at least with respect to browsing and javascript.
-Today, it takes html text and tags, and builds
-javascript objects to go along with those tags; and it builds the screen,
-(I'll call it a screen, it's really a text buffer),
-in parallel, at the same time.
-What it should do is not build the screen at all on the first pass.
-Words on the web page would simply be turned into a string
-and put in as an attribute in whatever object we are working on at the time,
-or the document object if no tag has appeared yet.
-All internal.
-Then you run the javascript, and it perhaps creates more objects,
-creates lists dynamically,
-builds entirely new paragraphs, images, links, whatever it does.
-Then pass 3, render the screen by traversing the tree of objects
-depth first.
-That is your text buffer.
-Now, if anything changes, through some onclick code perhaps,
-you have a new tree of objects,
-so Simply rerender the screen.
-In our case that builds a new text buffer.
-Maybe this is what standard browsers do; I don't know.
-But there's something we should do that they don't.
-Keep a copy of the old screen and run diff.
-If one or two lines have changed,
-or if a menu has changed behind the scenes, report that to the user.
-It's something a sighted person would notice right away,
-but I would be left in the dark.
-If there are many changes, just say "entire buffer has changed".
-Anyways, this is the kind of rewrite that needs to happen.
-Think of this as version 4.1.
-
-The beginning of this new approach can bee seen in rebuildSelectors() in ebjs.c.
-If javascript rebuilds a dropdown list of options, that is detected,
-and mapped back into html tags, and the user is notified.
-See jsrt states and colors for this feature.
-
-After this, enhance the DOM with the createElement methods.
-This lets javascript create its own tables, paragraphs, lists, images, etc,
-and yes, some websites do indeed do this.
-https://developer.mozilla.org/en/docs/Traversing_an_HTML_table_with_JavaScript_and_DOM_Interfaces
-Version 4.2.
-
-Then, stop turning html tags into javascript objects by hand;
-that is reinventing the wheel.
-When you run into <P>, simply call createElement("paragraph"),
-or something along those lines.
-We have to implement all this in DOM JS eventually, so once this is done,
-why not take advantage of it.
-Version 4.3.
-Just some thoughts for the future.

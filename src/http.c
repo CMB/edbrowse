@@ -5,7 +5,11 @@
 
 #include "eb.h"
 
+#ifdef _MSC_VER
+#include <fcntl.h>
+#else
 #include <wait.h>
+#endif
 #include <time.h>
 
 CURL *http_curl_handle = NULL;
@@ -23,11 +27,13 @@ static bool down_permitted;
 * 2 disk download foreground
 * 3 disk download background parent
 * 4 disk download background child
-* 5 disk download background prefork */
+* 5 disk download background prefork
+ * 6 mime type says this should be a stream */
 static int down_state;
 bool down_bg;			/* download in background */
 static int down_length;		/* how much data to disk so far */
 static int down_msg;
+
 struct BG_JOB {
 	struct BG_JOB *next, *prev;
 	int pid, state;
@@ -40,15 +46,132 @@ struct listHead down_jobs = {
 static void background_download(void);
 static void setup_download(void);
 static char errorText[CURL_ERROR_SIZE + 1];
+static char *http_headers;
+static int http_headers_len;
 static char *httpLanguage;
+/* http content type is used in many places, and isn't arbitrarily long
+ * or case sensitive, so keep our own sanitized copy. */
+static char hct[60];
+static char *hct2;		/* extra content info such as charset */
+int hcl;			/* http content length */
 
 static struct eb_curl_callback_data callback_data = {
 	&serverData, &serverDataLen
 };
 
+/* string is allocated. Quotes are removed. No other processing is done.
+ * You may need to decode %xx bytes or such. */
+static char *find_http_header(const char *name)
+{
+	char *s, *t, *u, *v;
+	int namelen = strlen(name);
+
+	if (!http_headers)
+		return NULL;
+
+	for (s = http_headers; *s; s = v) {
+/* find start of next line */
+		v = strchr(s, '\n');
+		if (!v)
+			break;
+		++v;
+
+/* name: value */
+		t = strchr(s, ':');
+		if (!t || t >= v)
+			continue;
+		u = t;
+		while (u > s && isspace(u[-1]))
+			--u;
+		if (u - s != namelen)
+			continue;
+		if (!memEqualCI(s, name, namelen))
+			continue;
+
+/* This is a match */
+		++t;
+		while (t < v && isspace(*t))
+			++t;
+		u = v;
+		while (u > t && isspace(u[-1]))
+			--u;
+/* remove quotes */
+		if (u - t >= 2 && *t == u[-1] && (*t == '"' || *t == '\''))
+			++t, --u;
+		if (u == t)
+			return NULL;
+		return pullString(t, u - t);
+	}
+
+	return NULL;
+}				/* find_http_header */
+
+static void scan_http_headers(bool fromCallback)
+{
+	char *v;
+
+	if (!hct[0] && (v = find_http_header("content-type"))) {
+		strncpy(hct, v, sizeof(hct) - 1);
+		caseShift(hct, 'l');
+		nzFree(v);
+		debugPrint(3, "content %s", hct);
+		hct2 = strchr(hct, ';');
+		if (hct2)
+			*hct2++ = 0;
+/* The protocol, such as rtsp, could have already set the mime type. */
+		if (!cw->mt)
+			cw->mt = findMimeByContent(hct);
+	}
+
+	if (!hcl && (v = find_http_header("content-length"))) {
+		hcl = atoi(v);
+		nzFree(v);
+		debugPrint(3, "content length %d", hcl);
+	}
+
+	if (fromCallback)
+		return;
+
+	if ((newlocation == NULL) && (v = find_http_header("location"))) {
+		unpercentURL(v);
+		newlocation = v;
+		newloc_d = -1;
+	}
+
+	if (v = find_http_header("refresh")) {
+		int delay;
+		if (parseRefresh(v, &delay)) {
+			unpercentURL(v);
+			gotoLocation(v, delay, true);
+/* string is passed to somewhere else, set v to null so it is not freed */
+			v = NULL;
+		}
+		nzFree(v);
+	}
+}				/* scan_http_headers */
+
+/* actually run the curl request, http or ftp or whatever */
+static CURLcode fetch_internet(bool is_http)
+{
+	CURLcode curlret;
+/* this should already be 0 */
+	nzFree(newlocation);
+	newlocation = NULL;
+	nzFree(http_headers);
+	http_headers = initString(&http_headers_len);
+	hct[0] = 0;
+	hct2 = NULL;
+	hcl = 0;
+	curlret = curl_easy_perform(http_curl_handle);
+	if (is_http)
+		scan_http_headers(false);
+	nzFree(http_headers);
+	http_headers = 0;
+	return curlret;
+}				/* fetch_internet */
+
 static bool ftpConnect(const char *url, const char *user, const char *pass);
 static bool read_credentials(char *buffer);
-static void init_header_parser(void);
 static size_t curl_header_callback(char *header_line, size_t size, size_t nmemb,
 				   void *unused);
 static const char *message_for_response_code(int code);
@@ -173,7 +296,7 @@ char *extractHeaderParam(const char *str, const char *item)
 		while (*s && ((uchar) * s <= ' ' || *s == '='))
 			s++;
 		if (!*s)
-			return EMPTYSTRING;
+			return emptyString;
 		lp = 0;
 		while ((uchar) s[lp] >= ' ' && s[lp] != ';')
 			lp++;
@@ -182,7 +305,7 @@ char *extractHeaderParam(const char *str, const char *item)
 	return NULL;
 }				/* extractHeaderParam */
 
-/* Date format is:    Mon, 03 Jan 2000 21:29:33 GMT */
+/* Date format is:    Mon, 03 Jan 2000 21:29:33 GMT|[+-]nnnn */
 			/* Or perhaps:     Sun Nov  6 08:49:37 1994 */
 time_t parseHeaderDate(const char *date)
 {
@@ -191,6 +314,7 @@ time_t parseHeaderDate(const char *date)
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
 	time_t t = 0;
+	int zone = 0;
 	int y;			/* remember the type of format */
 	struct tm tm;
 	memset(&tm, 0, sizeof(struct tm));
@@ -330,9 +454,23 @@ f2:
 	if (*date != ' ' && *date)
 		goto fail;
 
+	while (*date == ' ')
+		++date;
+	if ((*date == '+' || *date == '-') &&
+	    isdigit(date[1]) && isdigit(date[2]) &&
+	    isdigit(date[3]) && isdigit(date[4])) {
+		zone = 10 * (date[1] - '0') + date[2] - '0';
+		zone *= 60;
+		zone += 10 * (date[3] - '0') + date[4] - '0';
+		zone *= 60;
+/* adjust to gmt */
+		if (*date == '+')
+			zone = -zone;
+	}
+
 	t = mktime(&tm);
 	if (t != (time_t) - 1)
-		return t;
+		return t + zone;
 
 fail:
 	return 0;
@@ -362,8 +500,12 @@ bool parseRefresh(char *ref, int *delay_p)
 		u = ref + strlen(ref);
 		if (u > ref && u[-1] == qc)
 			u[-1] = 0;
-		if (delay)
-			debugPrint(3, "delay %d %s", delay, ref);
+		debugPrint(3, "delay %d %s", delay, ref);
+/* avoid the obvious infinite loop */
+		if (sameURL(ref, cw->fileName)) {
+			*delay_p = 0;
+			return false;
+		}
 		*delay_p = delay;
 		return true;
 	}
@@ -383,75 +525,9 @@ bool refreshDelay(int sec, const char *u)
 	return false;
 }				/* refreshDelay */
 
-static char hexdigits[] = "0123456789abcdef";
-#define ESCAPED_CHAR_LENGTH 3
-
-/*
- * Function: copy_and_sanitize
- * Arguments:
- ** start: pointer to start of input string
-  ** end: pointer to end of input string.
- * Return value: A new string or NULL if memory allocation failed.
- * This function copies its input to a dynamically-allocated buffer,
- * while performing the following transformation.  Change backslash to
- * slash, and percent-escape any blank, non-printing, or non-ASCII
- * characters.
- * All characters in the area between start and end, not including end,
- * are copied or transformed.
-
- * Get rid of :/   curl can't handle it.
-
- * This function is used to sanitize user-supplied URLs.  */
-
-char *copy_and_sanitize(const char *start, const char *end)
-{
-	int bytes_to_alloc = end - start + 1;
-	char *new_copy = NULL;
-	const char *in_pointer = NULL;
-	char *out_pointer = NULL;
-	const char *portloc = NULL;
-
-	for (in_pointer = start; in_pointer < end; in_pointer++)
-		if (*in_pointer <= 32)
-			bytes_to_alloc += (ESCAPED_CHAR_LENGTH - 1);
-	new_copy = allocMem(bytes_to_alloc);
-	if (new_copy) {
-		char *frag, *params;
-		out_pointer = new_copy;
-		for (in_pointer = start; in_pointer < end; in_pointer++) {
-			if (*in_pointer == '\\')
-				*out_pointer++ = '/';
-			else if (*in_pointer <= 32) {
-				*out_pointer++ = '%';
-				*out_pointer++ =
-				    hexdigits[(uchar) (*in_pointer & 0xf0) >>
-					      4];
-				*out_pointer++ =
-				    hexdigits[(*in_pointer & 0x0f)];
-			} else
-				*out_pointer++ = *in_pointer;
-		}
-		*out_pointer = '\0';
-/* excise #hash, required by some web servers */
-		frag = findHash(new_copy);
-		if (frag)
-				*frag = 0;
-
-		getPortLocURL(new_copy, &portloc, 0);
-		if (portloc && !isdigit(portloc[1])) {
-			const char *s = portloc + strcspn(portloc, "/?#\1");
-			strmove((char *)portloc, s);
-		}
-	}
-
-	return new_copy;
-}				/* copy_and_sanitize */
-
 long hcode;			/* example, 404 */
 static char herror[32];		/* example, file not found */
 static char *urlcopy;
-extern char *newlocation;
-extern int newloc_d;
 
 bool httpConnect(const char *url, bool down_ok, bool webpage)
 {
@@ -463,16 +539,14 @@ bool httpConnect(const char *url, bool down_ok, bool webpage)
 	char creds_buf[MAXUSERPASS * 2 + 1];	/* creds abr. for credentials */
 	int creds_len = 0;
 	bool still_fetching = true;
-	int ssl_version;
 	const char *host;
-	struct MIMETYPE *mt;
 	const char *prot;
 	char *cmd;
-	char suffix[12];
 	const char *post, *s;
 	char *postb = NULL;
 	int postb_l = 0;
 	bool transfer_status = false;
+	bool proceed_unauthenticated = false;
 	int redirect_count = 0;
 	bool name_changed = false;
 
@@ -480,6 +554,7 @@ bool httpConnect(const char *url, bool down_ok, bool webpage)
 	serverData = NULL;
 	serverDataLen = 0;
 	strcpy(creds_buf, ":");	/* Flush stale username and password. */
+	cw->mt = NULL;		/* should already be null */
 
 /* Pull user password out of the url */
 	user[0] = pass[0] = 0;
@@ -501,8 +576,6 @@ bool httpConnect(const char *url, bool down_ok, bool webpage)
 	}
 
 	prot = getProtURL(url);
-
-/* See if the protocol is a recognized stream */
 	if (!prot) {
 		setError(MSG_WebProtBad, "(?)");
 		return false;
@@ -512,16 +585,25 @@ bool httpConnect(const char *url, bool down_ok, bool webpage)
 		;		/* ok for now */
 	} else if (stringEqualCI(prot, "ftp") ||
 		   stringEqualCI(prot, "ftps") ||
+		   stringEqualCI(prot, "scp") ||
 		   stringEqualCI(prot, "tftp") || stringEqualCI(prot, "sftp")) {
 		return ftpConnect(url, user, pass);
-	} else if (mt = findMimeByProtocol(prot)) {
-mimeProcess:
-		cmd = pluginCommand(mt, url, 0);
+	} else if ((cw->mt = findMimeByProtocol(prot)) && pluginsOn
+		   && cw->mt->stream) {
+mimestream:
+		cmd = pluginCommand(cw->mt, url, NULL, NULL);
+		if (!cmd)
+			return false;
+#ifdef DOSLIKE
+		system(cmd);
+#else
 /* Stop ignoring SIGPIPE for the duration of system(): */
 		signal(SIGPIPE, SIG_DFL);
 		system(cmd);
 		signal(SIGPIPE, SIG_IGN);
+#endif
 		nzFree(cmd);
+		i_puts(MSG_OK);
 		return true;
 	} else {
 		setError(MSG_WebProtBad, prot);
@@ -529,17 +611,8 @@ mimeProcess:
 	}
 
 /* Ok, it's http, but the suffix could force a plugin */
-	post = url + strcspn(url, "?\1");
-	for (s = post - 1; s >= url && *s != '.' && *s != '/'; --s) ;
-	if (*s == '.') {
-		++s;
-		if (post >= s + sizeof(suffix))
-			post = s + sizeof(suffix) - 1;
-		strncpy(suffix, s, post - s);
-		suffix[post - s] = 0;
-		if ((mt = findMimeBySuffix(suffix)) && mt->stream)
-			goto mimeProcess;
-	}
+	if ((cw->mt = findMimeByURL(url)) && pluginsOn && cw->mt->stream)
+		goto mimestream;
 
 /* "Expect:" header causes some servers to lose.  Disable it. */
 	tmp_headers = curl_slist_append(custom_headers, "Expect:");
@@ -556,7 +629,7 @@ mimeProcess:
 	post = strchr(url, '\1');
 	postb = 0;
 	if (post) {
-		urlcopy = copy_and_sanitize(url, post);
+		urlcopy = percentURL(url, post);
 		post++;
 
 		if (strncmp(post, "`mfd~", 5)) ;	/* No need to do anything, not multipart. */
@@ -597,7 +670,7 @@ mimeProcess:
 		if (curlret != CURLE_OK)
 			goto curl_fail;
 	} else {
-		urlcopy = copy_and_sanitize(url, url + strlen(url));
+		urlcopy = percentURL(url, NULL);
 		curlret =
 		    curl_easy_setopt(http_curl_handle, CURLOPT_HTTPGET, 1);
 		if (curlret != CURLE_OK)
@@ -663,21 +736,20 @@ mimeProcess:
  * then add it to the list of authentication records.  */
 
 	still_fetching = true;
-	ssl_version = CURL_SSLVERSION_DEFAULT;
 	serverData = initString(&serverDataLen);
 
 	while (still_fetching == true) {
 		char *redir = NULL;
-		curl_easy_setopt(http_curl_handle, CURLOPT_SSLVERSION,
-				 ssl_version);
-		init_header_parser();
 		down_state = 0;
 		down_file = NULL;
 		down_permitted = down_ok;
 		callback_data.length = &serverDataLen;
 
 perform:
-		curlret = curl_easy_perform(http_curl_handle);
+		curlret = fetch_internet(true);
+
+		if (down_state == 6)
+			goto mimestream;
 
 		if (down_state == 5) {
 /* user has directed a download of this file in the background. */
@@ -713,21 +785,6 @@ perform:
 			return false;
 		}
 
-		if (curlret == CURLE_SSL_CONNECT_ERROR) {
-/* all this would be unnecessary if curl sent the proper hello message */
-/* try the next version */
-			if (ssl_version == CURL_SSLVERSION_DEFAULT) {
-				ssl_version = CURL_SSLVERSION_SSLv3;
-				debugPrint(3, "stepping back to sslv3");
-				continue;
-			}
-			if (ssl_version == CURL_SSLVERSION_SSLv3) {
-				ssl_version = CURL_SSLVERSION_TLSv1;
-				debugPrint(3, "stepping back to tlsv1");
-				continue;
-			}
-/* probably shouldn't step down to SSLv2; it is considered to be insecure */
-		}
 		if (curlret != CURLE_OK)
 			goto curl_fail;
 		curl_easy_getinfo(http_curl_handle, CURLINFO_RESPONSE_CODE,
@@ -790,34 +847,30 @@ perform:
 					goto curl_fail;
 
 				nzFree(serverData);
-				serverData = EMPTYSTRING;
+				serverData = emptyString;
 				serverDataLen = 0;
 				redirect_count += 1;
 				still_fetching = true;
 				name_changed = true;
 				debugPrint(2, "redirect %s", urlcopy);
-
-/* after redirection, go back to default ssl version. */
-/* It might be a completely different server. */
-/* Some day we might want to cache which domains require which ssl versions */
-				ssl_version = CURL_SSLVERSION_DEFAULT;
 			}
 		}
 
-		else if (hcode == 401) {
+		else if (hcode == 401 && !proceed_unauthenticated) {
+			bool got_creds;
 			i_printf(MSG_AuthRequired, urlcopy);
 			nl();
-			bool got_creds = read_credentials(creds_buf);
+			got_creds = read_credentials(creds_buf);
 			if (got_creds) {
 				addWebAuthorization(urlcopy, creds_buf, false);
 				curl_easy_setopt(http_curl_handle,
 						 CURLOPT_USERPWD, creds_buf);
 				nzFree(serverData);
-				serverData = EMPTYSTRING;
+				serverData = emptyString;
 				serverDataLen = 0;
-			} else {	/* User aborted the login process. */
-				still_fetching = false;
-				transfer_status = false;
+			} else {
+/* User aborted the login process, try and at least get something. */
+				proceed_unauthenticated = true;
 			}
 		}
 		/* authenticate? */
@@ -842,8 +895,9 @@ curl_fail:
 		serverDataLen = 0;
 		nzFree(urlcopy);	/* Free it on transfer failure. */
 	} else {
-		if (hcode != 200 &&
-(webpage || debugLevel >= 2))
+		if (hcode != 200 && hcode != 201 &&
+		    (webpage || debugLevel >= 2) ||
+		    hcode == 201 && debugLevel >= 3)
 			i_printf(MSG_HTTPError, hcode,
 				 message_for_response_code(hcode));
 		if (name_changed)
@@ -853,6 +907,17 @@ curl_fail:
 	}
 
 	nzFree(postb);
+
+/* Check for plugin to run here */
+	if (transfer_status && hcode == 200 && cw->mt && pluginsOn &&
+	    !cw->mt->stream && !cw->mt->outtype && cw->mt->program) {
+		bool rc = playServerData();
+		nzFree(serverData);
+		serverData = NULL;
+		serverDataLen = 0;
+		return rc;
+	}
+
 	return transfer_status;
 }				/* httpConnect */
 
@@ -958,11 +1023,11 @@ static void ftpls(char *line)
 /* Repeatedly calls ftpls to parse each line of the data. */
 static void parse_directory_listing(void)
 {
+	char *s, *t;
 	char *incomingData = serverData;
 	int incomingLen = serverDataLen;
 	serverData = initString(&serverDataLen);
 	stringAndString(&serverData, &serverDataLen, "<html>\n<body>\n");
-	char *s, *t;
 
 	if (!incomingLen) {
 		i_stringAndMessage(&serverData, &serverDataLen,
@@ -992,7 +1057,7 @@ void ebcurl_setError(CURLcode curlret, const char *url)
 
 /* this should never happen */
 	if (!host)
-		host = EMPTYSTRING;
+		host = emptyString;
 
 	switch (curlret) {
 
@@ -1076,13 +1141,15 @@ static bool ftpConnect(const char *url, const char *user, const char *pass)
 	int protLength;		/* length of "ftp://" */
 	int urlcopy_l = 0;
 	bool transfer_success = false;
-	bool has_slash;
+	bool has_slash, is_scp;
 	CURLcode curlret = CURLE_OK;
 	char creds_buf[MAXUSERPASS * 2 + 1];
 	size_t creds_len = 0;
 
 	urlcopy = NULL;
 	protLength = strchr(url, ':') - url + 3;
+/* scp is somewhat unique among the protocols handled here */
+	is_scp = memEqualCI(url, "scp", 3);
 
 	if (user[0] && pass[0]) {
 		strcpy(creds_buf, user);
@@ -1114,13 +1181,16 @@ static bool ftpConnect(const char *url, const char *user, const char *pass)
 
 	has_slash = urlcopy[urlcopy_l - 1] == '/';
 /* don't download a directory listing, we want to see that */
+/* Fetching a directory will fail in the special case of scp. */
 	down_state = (has_slash ? 0 : 1);
 	down_file = NULL;	/* should already be null */
 	down_msg = MSG_FTPDownload;
+	if (is_scp)
+		down_msg = MSG_SCPDownload;
 	callback_data.length = &serverDataLen;
 
 perform:
-	curlret = curl_easy_perform(http_curl_handle);
+	curlret = fetch_internet(false);
 
 	if (down_state == 5) {
 /* user has directed a download of this file in the background. */
@@ -1160,7 +1230,7 @@ perform:
 /* The SSH error pops up under sftp. */
 	if (curlret == CURLE_FTP_COULDNT_RETR_FILE ||
 	    curlret == CURLE_REMOTE_FILE_NOT_FOUND || curlret == CURLE_SSH) {
-		if (has_slash == true)	/* Was a directory. */
+		if (has_slash | is_scp)
 			transfer_success = false;
 		else {		/* try appending a slash. */
 			stringAndChar(&urlcopy, &urlcopy_l, '/');
@@ -1169,7 +1239,7 @@ perform:
 			if (curlret != CURLE_OK)
 				goto ftp_transfer_fail;
 
-			curlret = curl_easy_perform(http_curl_handle);
+			curlret = fetch_internet(false);
 			if (curlret != CURLE_OK)
 				transfer_success = false;
 			else {
@@ -1220,12 +1290,16 @@ void setHTTPLanguage(const char *lang)
 static int
 my_curl_safeSocket(void *clientp, curl_socket_t socketfd, curlsocktype purpose)
 {
+#ifdef _MSC_VER
+	return 0;
+#else // !_MSC_VER for success = fcntl(socketfd, F_SETFD, FD_CLOEXEC);
 	int success = fcntl(socketfd, F_SETFD, FD_CLOEXEC);
 	if (success == -1)
 		success = 1;
 	else
 		success = 0;
 	return success;
+#endif // _MSC_VER y/n
 }
 
 /* Clean up libcurl's state. */
@@ -1475,98 +1549,27 @@ static bool read_credentials(char *buffer)
 	return got_creds;
 }				/* read_credentials */
 
-/*
- * This code reads a stream of header lines from libcurl.
- * It can go away one of these days, when we're sure that everyone is using
- * version 7.18.2 or greater of libcurl.
-*/
-/* Call this before every HTTP request. */
-static void init_header_parser(void)
-{
-/* this should already be 0 */
-	nzFree(newlocation);
-	newlocation = NULL;
-}				/* init_header_parser */
-
-static const char *loc_field = "Location:";
-static size_t loc_field_length = 9;	/* length of string "Location:" */
-static const char *refresh_field = "Refresh:";
-static size_t refresh_field_length = 8;	/* length of string "Refresh:" */
-static const char *content_field = "Content-Type:";
-static size_t content_field_length = 13;	/* length of string "Content-Type:" */
-
 /* Callback used by libcurl.
- * Right now, it just extracts Location: headers. */
+ * Gather all the http headers into one long string. */
 static size_t
 curl_header_callback(char *header_line, size_t size, size_t nmemb, void *unused)
 {
 	size_t bytes_in_line = size * nmemb;
-	char *last_pos = header_line + bytes_in_line;
+	stringAndBytes(&http_headers, &http_headers_len,
+		       header_line, bytes_in_line);
 
-	/* If we're still looking for a location: header, and this line is long
-	 * enough to be one, and the line starts with "Location: ", then proceed.
-	 */
-
-	if ((newlocation == NULL) && (bytes_in_line > loc_field_length) &&
-	    memEqualCI(header_line, loc_field, loc_field_length)) {
-		const char *start = header_line + loc_field_length;
-		const char *end = last_pos - 1;
-
-/* Make start point to first non-whitespace char after Location: or to
- * last_pos if no such char exists. */
-		while (isspaceByte(*start) && (start < last_pos))
-			start++;
-
-/* end points to start of trailing whitespace if it exists.  Otherwise,
- * it is last_pos. */
-		while ((end >= start) && isspaceByte(*end))
-			end--;
-		end++;
-
-		if (start < end)
-			newlocation = copy_and_sanitize(start, end);
-		newloc_d = -1;
-	}
-
-	if ((bytes_in_line > refresh_field_length) &&
-	    memEqualCI(header_line, refresh_field, refresh_field_length)) {
-/* want to use parseRefresh, but that has to end in null */
-		char *start = header_line + refresh_field_length;
-		char *end = last_pos - 1;
-		int delay;
-
-/* Make start point to first non-whitespace char after Refresh: or to
- * last_pos if no such char exists. */
-		while (start < last_pos && isspaceByte(*start))
-			start++;
-
-/* end points to start of trailing whitespace if it exists.  Otherwise,
- * it is last_pos. */
-		while ((end >= start) && isspaceByte(*end))
-			end--;
-		end++;
-
-		if (start < end) {
-			memmove(header_line, start, end - start);
-			header_line[end - start] = 0;	/* now null terminated */
-			if (parseRefresh(header_line, &delay)) {
-				unpercentURL(header_line);
-				gotoLocation(cloneString(header_line), delay,
-					     true);
-			}
+	if (down_permitted && down_state == 0 && !hct[0]) {
+		scan_http_headers(true);
+		if (cw->mt && cw->mt->stream && pluginsOn) {
+/* I don't think this ever happens, since streams are indicated by the protocol,
+ * and we wouldn't even get here, but just in case -
+ * stop the download and set the flag so we can pass this url
+ * to the program that handles this kind of stream. */
+			down_state = 6;
+			return -1;
 		}
-	}
-
-	if (down_state == 0 &&
-	    (bytes_in_line > content_field_length) &&
-	    memEqualCI(header_line, content_field, content_field_length)) {
-		const char *start = header_line + content_field_length;
-		while (start < last_pos && isspaceByte(*start))
-			start++;
-		if (down_permitted && last_pos - start >= 5 &&
-		    !memEqualCI(start, "text/", 5)) {
-/* Not text, see if the user wants to download in the background. */
-/* Set a variable, so it uses the ftp download mechanism. */
+		if (hct[0] && !memEqualCI(hct, "text/", 5) &&
+		    (!pluginsOn || !cw->mt || cw->mt->download)) {
 			down_state = 1;
 			down_msg = MSG_Down;
 		}
@@ -1579,7 +1582,7 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb, void *unused)
 static void
 prettify_network_text(const char *text, size_t size, FILE * destination)
 {
-	int i;
+	size_t i;
 	for (i = 0; i < size; i++) {
 		if (text[i] != '\r')
 			fputc(text[i], destination);
@@ -1666,6 +1669,23 @@ top:
 	down_state = (down_bg ? 5 : 2);
 	callback_data.length = &down_length;
 }				/* setup_download */
+
+#ifdef _MSC_VER			// need fork()
+/* At this point, down_state = 5 */
+static void background_download(void)
+{
+	down_state = -1;
+/* perhaps a better error message here */
+	setError(MSG_DownAbort);
+	return;
+}
+
+int bg_jobs(bool iponly)
+{
+	return 0;
+}
+
+#else // !_MSC_VER
 
 /* At this point, down_state = 5 */
 static void background_download(void)
@@ -1777,3 +1797,124 @@ int bg_jobs(bool iponly)
 
 	return numback;
 }				/* bg_jobs */
+#endif // #ifndef _MSC_VER // need fork()
+
+static char **novs_hosts;
+size_t novs_hosts_avail;
+size_t novs_hosts_max;
+
+void addNovsHost(char *host)
+{
+	if (novs_hosts_max == 0) {
+		novs_hosts_max = 32;
+		novs_hosts = allocZeroMem(novs_hosts_max * sizeof(char *));
+	} else if (novs_hosts_avail >= novs_hosts_max) {
+		novs_hosts_max *= 2;
+		novs_hosts =
+		    reallocMem(novs_hosts, novs_hosts_max * sizeof(char *));
+	}
+	novs_hosts[novs_hosts_avail++] = host;
+}				/* addNovsHost */
+
+/* Return true if the cert for this host should be verified. */
+static bool mustVerifyHost(const char *host)
+{
+	size_t this_host_len = strlen(host);
+	size_t i;
+
+	if (!verifyCertificates)
+		return false;
+
+	for (i = 0; i < novs_hosts_avail; i++) {
+		size_t l1 = strlen(novs_hosts[i]);
+		size_t l2 = this_host_len;
+		if (l1 > l2)
+			continue;
+		l2 -= l1;
+		if (!stringEqualCI(novs_hosts[i], host + l2))
+			continue;
+		if (l2 && host[l2 - 1] != '.')
+			continue;
+		return false;
+	}
+	return true;
+}				/* mustVerifyHost */
+
+CURLcode setCurlURL(CURL * h, const char *url)
+{
+	const char *host;
+	unsigned long verify;
+	const char *proxy = findProxyForURL(url);
+	if (!proxy)
+		proxy = "";
+	else
+		debugPrint(3, "proxy %s", proxy);
+	host = getHostURL(url);
+	verify = mustVerifyHost(host);
+	curl_easy_setopt(h, CURLOPT_PROXY, proxy);
+	curl_easy_setopt(h, CURLOPT_SSL_VERIFYPEER, verify);
+	curl_easy_setopt(h, CURLOPT_SSL_VERIFYHOST, verify);
+	return curl_easy_setopt(h, CURLOPT_URL, url);
+}				/* setCurlURL */
+
+/*********************************************************************
+Given a protocol and a domain, find the proxy server
+to mediate your request.
+This is the C version, using entries in .ebrc.
+There is a javascript version of the same name, that we will support later.
+This is a beginning, and it can be used even when javascript is disabled.
+A return of null means DIRECT, and this is the default
+if we don't match any of the proxy entries.
+*********************************************************************/
+
+static const char *findProxyInternal(const char *prot, const char *domain)
+{
+	struct PXENT *px = proxyEntries;
+	int i;
+
+/* first match wins */
+	for (i = 0; i < maxproxy; ++i, ++px) {
+
+		if (px->prot) {
+			char *s = px->prot;
+			char *t;
+			int rc;
+			while (*s) {
+				t = strchr(s, '|');
+				if (t)
+					*t = 0;
+				rc = stringEqualCI(s, prot);
+				if (t)
+					*t = '|';
+				if (rc)
+					goto domain;
+				if (!t)
+					break;
+				s = t + 1;
+			}
+			continue;
+		}
+
+domain:
+		if (px->domain) {
+			int l1 = strlen(px->domain);
+			int l2 = strlen(domain);
+			if (l1 > l2)
+				continue;
+			l2 -= l1;
+			if (!stringEqualCI(px->domain, domain + l2))
+				continue;
+			if (l2 && domain[l2 - 1] != '.')
+				continue;
+		}
+
+		return px->proxy;
+	}
+
+	return 0;
+}				/* findProxyInternal */
+
+const char *findProxyForURL(const char *url)
+{
+	return findProxyInternal(getProtURL(url), getHostURL(url));
+}				/* findProxyForURL */

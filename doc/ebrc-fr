@@ -1,0 +1,125 @@
+# .ebrc: exemple de fichier de configuration pour edbrowse
+# (version 3.5.4 et au-dessus)
+
+# compte mail : vous pouvez en avoir plusieurs
+# un compte gmail : la plupart des gens en ont un aujourd'hui
+# ceci est un compte pop3. pour récupérer et lire vos mails depuis ce compte :
+# edbrowse -fm1
+mail {
+inserver = pop.gmail.com
+outserver = smtp.gmail.com
+secure
+login = edbrowse
+password = rhinoceros
+from = Donald Duck
+reply = edbrowse@gmail.com
+}
+
+# Accès Imap à votre compte gmail.
+# Si celui-ci est votre 2ème compte mail dans ce fichier,
+alors l'accès imap sera :
+# edbrowse -f2
+mail {
+imap
+inserver = imap.gmail.com
+outserver = smtp.gmail.com
+secure
+login = edbrowse
+password = rhinoceros
+from = Donald Duck
+reply = edbrowse@gmail.com
+}
+
+# Ajouter le carnet d'adresses.
+#adbook=/home/monlogin/outside/adbook
+
+# Boîte de réception. Le chemin d'accès doit être absolu.
+#maildir = /home/monlogin/mbox
+
+# Répertoire de téléchargements. Doit avoir un chemin d'accès absolu.
+# downdir = /home/monlogin/téléchargements
+
+# Le récipient à cookies - où nous stockons les cookies.
+#jar = /home/monlogin/outside/cookies
+
+# fichier des certificats ssl
+# certfile = /etc/ssl/cert.pem
+# certfile = /etc/pki/tls/cert.pem
+
+# attend la réponse d'un serveur web pendant 30 secondes
+webtimer = 30
+# attend la réponse d'un serveur mail pendant 3 minutes
+mailtimer = 180
+
+# Redirection mail basée sur l'expéditeur, ou sur la destination
+fromfilter {
+fred flintstone > fredmail
+fred.flintstone@bedrock.us > fredmail
+jerk@hotmail.com > x
+word@m-w.com > -wod
+}
+
+# tofilter { }
+
+# Description des types mime et des plugins pour les gérer.
+plugin {
+type = audio/basic
+desc = audio file in a wave format
+suffix = wav,voc,au,ogg
+content = audio/x-wav
+# %i est le fichier temporaire généré par edbrowse
+program = play -q %i
+}
+
+plugin {
+type = audio/mp3
+desc = audio file in mp3 format
+suffix = mp3
+content = audio/mpeg
+program = mpg123 -q -C %i
+}
+
+# ce plugin affiche un fichier, plutôt que de le "jouer"
+plugin {
+type = pdf
+desc = pdf file
+suffix = pdf
+content = application/pdf
+program = pdftohtml -i -noframes %i %o >/dev/null
+# indique que la sortie est de l'html, plutôt que du texte
+outtype = H
+}
+
+# A chaque fois que vous récupérez une page de l'internet,
+# votre navigateur s'identifie auprès du serveur
+agent = Lynx/2.8.4rel.1 libwww-FM/2.14
+agent = Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; Win 9x 4.90)
+
+# Ok, nous sommes prêts à écrire notre premier script.
+# comme une fonction d'accès à google.
+# Ainsi, <gg éléphants tigres appellera google
+# pour chercher éléphants et tigres
+function+gg {
+b http://www.google.com
+/<>/ i=~0
++i1*
+/^1/
+}
+
+# recherche dans le dictionnaire merriam-webster, -1 est le 1er paramètre,
+le mot cherché
+# <mv éléphant
+function+mw {
+b http://www.merriam-webster.com/dictionary/~1
+}
+# Cette fonction s'exécute au démarrage de edbrowse
+function:init {
+# met les répertoires en lecture/écriture,
+# ainsi vous pouvez renommer ou effacer des fichiers
+dw
+# affiche la taille de chaque fichier dans un listing de répertoire
+ls=s
+# d'autres paramètres personnels
+}
+
+# et beaucoup plus encore...

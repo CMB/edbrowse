@@ -27,7 +27,7 @@ Exit codes are as follows:
 99 memory allocation error or heap corruption
 *********************************************************************/
 
-#include "ebjs.h"
+#include "eb.h"
 
 #include <limits>
 #include <iostream>
@@ -42,538 +42,96 @@ Exit codes are as follows:
 #include <jsapi.h>
 #include <jsfriendapi.h>
 
-/* And some C header files. This program is a bit of a hybrid, C and C++ */
-#include <string.h>
-#include <ctype.h>
-#include <malloc.h>
-#include <unistd.h>
-#include <memory.h>
-#include <signal.h>
-
 using namespace std;
 
-/* Functions copied from stringfile.c */
-
-#define stringEqual !strcmp
-
-static const char emptyString[] = "";
-
-static bool stringEqualCI(const char *s, const char *t)
+/* This function closes edbrowse down, e.g. after malloc failure,
+ * it is just a stub for exit here. */
+void ebClose(int n)
 {
-	char c, d;
-	while ((c = *s) && (d = *t)) {
-		if (islower(c))
-			c = toupper(c);
-		if (islower(d))
-			d = toupper(d);
-		if (c != d)
-			return false;
-		++s, ++t;
-	}
-	if (*s)
-		return false;
-	if (*t)
-		return false;
-	return true;
-}				/* stringEqualCI */
+	exit(n);
+}				/* ebclose */
 
-static bool memEqualCI(const char *s, const char *t, int len)
+/* stub, this function called by freeTags(), but never called in this context */
+void freeEmptySideBuffer(int n)
 {
-	char c, d;
-	while (len--) {
-		c = *s, d = *t;
-		if (islower(c))
-			c = toupper(c);
-		if (islower(d))
-			d = toupper(d);
-		if (c != d)
-			return false;
-		++s, ++t;
-	}
-	return true;
-}				/* memEqualCI */
+}
 
-static int stringInListCI(const char *const *list, const char *s)
+/* meta tags don't have side effects from within the js process. */
+void htmlMetaHelper(struct htmlTag *t)
 {
-	int i = 0;
-	if (!s)
-		return -1;
-	while (*list) {
-		if (stringEqualCI(s, *list))
-			return i;
-		++i;
-		++list;
-	}
-	return -1;
-}				/* stringInListCI */
+}
 
-static char *allocMem(size_t n)
+/* textarea does not generate a side buffer here */
+int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 {
-	char *s;
-	if (!n)
-		return (char *)emptyString;
-	if (!(s = (char *)malloc(n))) {
-		cerr << "malloc failure in edbrowse-js, " << n << " bytes.\n";
-		exit(99);
-	}
-	return s;
-}				/* allocMem */
+	return 0;
+}
 
-static void nzFree(const void *s)
-{
-	if (s && s != emptyString)
-		free((void *)s);
-}				/* nzFree */
-
-static char *cloneString(const char *s)
-{
-	char *t;
-	unsigned len;
-
-	if (!s)
-		return 0;
-	if (!*s)
-		return (char *)emptyString;
-	len = strlen(s) + 1;
-	t = allocMem(len);
-	strcpy(t, s);
-	return t;
-}				/* cloneString */
-
-static void skipWhite(const char **s)
-{
-	const char *t = *s;
-	while (isspace(*t))
-		++t;
-	*s = t;
-}				/* skipWhite */
-
-static int stringIsNum(const char *s)
-{
-	int n;
-	if (!isdigit(s[0]))
-		return -1;
-	n = strtol(s, (char **)&s, 10);
-	if (*s)
-		return -1;
-	return n;
-}				/* stringIsNum */
-
-static bool stringIsFloat(const char *s, double *dp)
-{
-	const char *t;
-	*dp = strtod(s, (char **)&t);
-	if (*t)
-		return false;	/* extra stuff at the end */
-	return true;
-}				/* stringIsFloat */
-
-/* Functions copied from url.c */
-
-static struct {
-	const char *prot;
-	int port;
-	bool free_syntax;
-	bool need_slashes;
-	bool need_slash_after_host;
-} protocols[] = {
-	{
-	"file", 0, true, true, false}, {
-	"http", 80, false, true, true}, {
-	"https", 443, false, true, true}, {
-	"pop3", 110, false, true, true}, {
-	"pop3s", 995, false, true, true}, {
-	"smtp", 25, false, true, true}, {
-	"submission", 587, false, true, true}, {
-	"smtps", 465, false, true, true}, {
-	"proxy", 3128, false, true, true}, {
-	"ftp", 21, false, true, true}, {
-	"sftp", 22, false, true, true}, {
-	"ftps", 990, false, true, true}, {
-	"tftp", 69, false, true, true}, {
-	"rtsp", 554, false, true, true}, {
-	"pnm", 7070, false, true, true}, {
-	"finger", 79, false, true, true}, {
-	"smb", 139, false, true, true}, {
-	"mailto", 0, false, false, false}, {
-	"telnet", 23, false, false, false}, {
-	"tn3270", 0, false, false, false}, {
-	"javascript", 0, true, false, false}, {
-	"git", 0, false, false, false}, {
-	"svn", 0, false, false, false}, {
-	"gopher", 70, false, false, false}, {
-	"magnet", 0, false, false, false}, {
-	"irc", 0, false, false, false}, {
-	NULL, 0}
-};
-
-static bool free_syntax;
-
-static int protocolByName(const char *p, int l)
-{
-	int i;
-	for (i = 0; protocols[i].prot; i++)
-		if (memEqualCI(protocols[i].prot, p, l))
-			return i;
-	return -1;
-}				/* protocolByName */
-
-/* Decide if it looks like a web url. */
-static bool httpDefault(const char *url)
-{
-	static const char *const domainSuffix[] = {
-		"com", "biz", "info", "net", "org", "gov", "edu", "us", "uk",
-		"au",
-		"ca", "de", "jp", "nz", 0
-	};
-	int n, len;
-	const char *s, *lastdot, *end = url + strcspn(url, "/?#\1");
-	if (end - url > 7 && stringEqual(end - 7, ".browse"))
-		end -= 7;
-	s = strrchr(url, ':');
-	if (s && s < end) {
-		const char *colon = s;
-		++s;
-		while (isdigit(*s))
-			++s;
-		if (s == end)
-			end = colon;
-	}
-/* need at least two embedded dots */
-	n = 0;
-	for (s = url + 1; s < end - 1; ++s)
-		if (*s == '.' && s[-1] != '.' && s[1] != '.')
-			++n, lastdot = s;
-	if (n < 2)
-		return false;
-/* All digits, like an ip address, is ok. */
-	if (n == 3) {
-		for (s = url; s < end; ++s)
-			if (!isdigit(*s) && *s != '.')
-				break;
-		if (s == end)
-			return true;
-	}
-/* Look for standard domain suffix */
-	++lastdot;
-	len = end - lastdot;
-	for (n = 0; domainSuffix[n]; ++n)
-		if (memEqualCI(lastdot, domainSuffix[n], len)
-		    && !domainSuffix[n][len])
-			return true;
-/* www.anything.xx is ok */
-	if (len == 2 && memEqualCI(url, "www.", 4))
-		return true;
-	return false;
-}				/* httpDefault */
-
-static int parseURL(const char *url, const char **proto, int *prlen, const char **user, int *uslen, const char **pass, int *palen,	/* ftp protocol */
-		    const char **host, int *holen,
-		    const char **portloc, int *port,
-		    const char **data, int *dalen, const char **post)
-{
-	const char *p, *q;
-	int a;
-
-	if (proto)
-		*proto = NULL;
-	if (prlen)
-		*prlen = 0;
-	if (user)
-		*user = NULL;
-	if (uslen)
-		*uslen = 0;
-	if (pass)
-		*pass = NULL;
-	if (palen)
-		*palen = 0;
-	if (host)
-		*host = NULL;
-	if (holen)
-		*holen = 0;
-	if (portloc)
-		*portloc = 0;
-	if (port)
-		*port = 0;
-	if (data)
-		*data = NULL;
-	if (dalen)
-		*dalen = 0;
-	if (post)
-		*post = NULL;
-	free_syntax = false;
-
-	if (!url)
-		return -1;
-
-/* Find the leading protocol:// */
-	a = -1;
-	p = strchr(url, ':');
-	if (p) {
-/* You have to have something after the colon */
-		q = p + 1;
-		if (*q == '/')
-			++q;
-		if (*q == '/')
-			++q;
-		while (isspace(*q))
-			++q;
-		if (!*q)
-			return false;
-		a = protocolByName(url, p - url);
-	}
-	if (a >= 0) {
-		if (proto)
-			*proto = url;
-		if (prlen)
-			*prlen = p - url;
-		if (p[1] != '/' || p[2] != '/') {
-			if (protocols[a].need_slashes) {
-				if (p[1] != '/') {
-/* we should see a slash at this point */
-					return -1;
-				}
-/* We got one out of two slashes, I'm going to call it good */
-				++p;
-			}
-			p -= 2;
-		}
-		p += 3;
-	} else {		/* nothing yet */
-		if (p && p - url < 12 && p[1] == '/') {
-			for (q = url; q < p; ++q)
-				if (!isalpha(*q))
-					break;
-			if (q == p) {	/* some protocol we don't know */
-				char qprot[12];
-				memcpy(qprot, url, p - url);
-				qprot[p - url] = 0;
-				return -1;
-			}
-		}
-		if (httpDefault(url)) {
-			static const char http[] = "http://";
-			if (proto)
-				*proto = http;
-			if (prlen)
-				*prlen = 4;
-			a = 1;
-			p = url;
-		}
-	}
-
-	if (a < 0)
-		return false;
-
-	if (free_syntax = protocols[a].free_syntax) {
-		if (data)
-			*data = p;
-		if (dalen)
-			*dalen = strlen(p);
-		return true;
-	}
-
-	q = p + strcspn(p, "@?#/\1");
-	if (*q == '@') {	/* user:password@host */
-		const char *pp = strchr(p, ':');
-		if (!pp || pp > q) {	/* no password */
-			if (user)
-				*user = p;
-			if (uslen)
-				*uslen = q - p;
-		} else {
-			if (user)
-				*user = p;
-			if (uslen)
-				*uslen = pp - p;
-			if (pass)
-				*pass = pp + 1;
-			if (palen)
-				*palen = q - pp - 1;
-		}
-		p = q + 1;
-	}
-
-	q = p + strcspn(p, ":?#/\1");
-	if (host)
-		*host = p;
-	if (holen)
-		*holen = q - p;
-	if (*q == ':') {	/* port specified */
-		int n;
-		const char *cc, *pp = q + strcspn(q, "/?#\1");
-		if (pp > q + 1) {
-			n = strtol(q + 1, (char **)&cc, 10);
-			if (cc != pp || !isdigit(q[1])) {
-/* impropter port number */
-				return -1;
-			}
-			if (port)
-				*port = n;
-		}
-		if (portloc)
-			*portloc = q;
-		q = pp;		/* up to the slash */
-	} else {
-		if (port)
-			*port = protocols[a].port;
-	}			/* colon or not */
-
-/* Skip past /, but not ? or # */
-	if (*q == '/')
-		q++;
-	p = q;
-
-/* post data is handled separately */
-	q = p + strcspn(p, "\1");
-	if (data)
-		*data = p;
-	if (dalen)
-		*dalen = q - p;
-	if (post)
-		*post = *q ? q + 1 : NULL;
-	return true;
-}				/* parseURL */
-
-static bool isURL(const char *url)
-{
-	int j = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-	if (j < 0)
-		return false;
-	return j;
-}				/* isURL */
-
-/* Helper functions to return pieces of the URL.
- * Makes a copy, so you can have your 0 on the end.
- * Return 0 for an error, and "" if that piece is missing. */
-
-static const char *getProtURL(const char *url)
-{
-	static char buf[12];
-	int l;
-	const char *s;
-	int rc = parseURL(url, &s, &l, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-	if (rc <= 0)
-		return 0;
-	memcpy(buf, s, l);
-	buf[l] = 0;
-	return buf;
-}				/* getProtURL */
-
-static char hostbuf[400];
-static const char *getHostURL(const char *url)
-{
-	int l;
-	const char *s;
-	char *t;
-	char c, d;
-	int rc = parseURL(url, 0, 0, 0, 0, 0, 0, &s, &l, 0, 0, 0, 0, 0);
-	if (rc <= 0)
-		return 0;
-	if (free_syntax)
-		return 0;
-	if (!s)
-		return emptyString;
-	if (l >= sizeof(hostbuf)) {
-/* domain is too long, just give up */
-/* This is old C code; could easily be handled with string in C++ */
-		return 0;
-	}
-	memcpy(hostbuf, s, l);
-	if (l && hostbuf[l - 1] == '.')
-		--l;
-	hostbuf[l] = 0;
-/* domain names must be ascii, with no spaces */
-	d = 0;
-	for (s = t = hostbuf; (c = *s); ++s) {
-		c &= 0x7f;
-		if (c == ' ')
-			continue;
-		if (c == '.' && d == '.')
-			continue;
-		*t++ = d = c;
-	}
-	*t = 0;
-	return hostbuf;
-}				/* getHostURL */
-
-static const char *getDataURL(const char *url)
-{
-	const char *s;
-	int rc = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &s, 0, 0);
-	if (rc <= 0)
-		return 0;
-	return s;
-}				/* getDataURL */
-
-static void getDirURL(const char *url, const char **start_p, const char **end_p)
-{
-	const char *dir = getDataURL(url);
-	const char *end;
-	static const char myslash[] = "/";
-	if (!dir || dir == url)
-		goto slash;
-	if (free_syntax)
-		goto slash;
-	if (!strchr("#?\1", *dir)) {
-		if (*--dir != '/') {
-/* this should never happen */
-			goto slash;
-		}
-	}
-	end = strpbrk(dir, "#?\1");
-	if (!end)
-		end = dir + strlen(dir);
-	while (end > dir && end[-1] != '/')
-		--end;
-	if (end > dir) {
-		*start_p = dir;
-		*end_p = end;
-		return;
-	}
-slash:
-	*start_p = myslash;
-	*end_p = myslash + 1;
-}				/* getDirURL */
-
-static bool getPortLocURL(const char *url, const char **portloc, int *port)
-{
-	int rc = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, portloc, port, 0, 0, 0);
-	if (rc <= 0)
-		return false;
-	if (free_syntax)
-		return false;
-	return true;
-}				/* getPortLocURL */
-
-/* The software for this process begins now. */
+/* ebrc strings don't mean anything here */
+const char *ebrc_en = emptyString;
+const char *ebrc_fr = emptyString;
+const char *ebrc_pt_br = emptyString;
 
 static void usage(void)
 {
-	cerr << "Usage:  edbrowse-js pipe_in pipe_out jsHeapSize\n";
+	fprintf(stderr, "Usage:  edbrowse-js pipe_in pipe_out jsHeapSize\n");
 	exit(1);
 }				/* usage */
 
 /* arguments, as indicated by the above */
-static int pipe_in, pipe_out, jsPool;
+static int pipe_in, pipe_out, enginePool;
 
 static void js_start(void);
 static void readMessage(void);
 static void processMessage(void);
-static void createJavaContext(void);
+static void createContext(void);
 static void writeHeader(void);
 
 static JSContext *jcx;
 static JSObject *winobj;	/* window object */
 static JSObject *docobj;	/* document object */
 
-static struct EJ_MSG head;
-static string errorMessage;
-static string effects;
-static void endeffect(void)
+static void cwSetup(void)
 {
-	effects += "`~@}\n";
-}
+	in_js_cw.winobj = winobj;
+	in_js_cw.docobj = docobj;
+	in_js_cw.hbase = get_property_string(docobj, "base$href");
+	in_js_cw.baseset = true;
+}				/* cwSetup */
+
+static void cwBringdown(void)
+{
+	freeTags(cw);
+	nzFree(cw->ft);		/* title could have been set by prerender */
+	cw->ft = 0;
+	nzFree(cw->hbase);
+	cw->hbase = 0;
+}				/* cwBringdown */
+
+static struct EJ_MSG head;
+static char *errorMessage;
+static char *effects;
+static int eff_l;
+#define effectString(s) stringAndString(&effects, &eff_l, (s))
+#define effectChar(s) stringAndChar(&effects, &eff_l, (s))
+#define endeffect() effectString("`~@}\n");
+
+/* pack the decoration of a tree into the effects string */
+static void packDecoration(void)
+{
+	struct htmlTag *t;
+	int j;
+	if (!cw->tags)		/* should never happen */
+		return;
+	for (j = 0; j < cw->numTags; ++j) {
+		char line[60];
+		t = tagList[j];
+		if (!t->jv)
+			continue;
+		sprintf(line, ",%d=%p", j, t->jv);
+		effectString(line);
+	}
+}				/* packDecoration */
 
 static char *membername;
 static char *propval;
@@ -582,23 +140,28 @@ static char *runscript;
 
 int main(int argc, char **argv)
 {
+/* do this first, in case usage some day is tailored to language */
+	selectLanguage();
+
 	if (argc != 4)
 		usage();
 
 	pipe_in = stringIsNum(argv[1]);
 	pipe_out = stringIsNum(argv[2]);
-	jsPool = stringIsNum(argv[3]);
-	if (pipe_in < 0 || pipe_out < 0 || jsPool < 0)
+	enginePool = stringIsNum(argv[3]);
+	if (pipe_in < 0 || pipe_out < 0 || enginePool < 0)
 		usage();
 
-	if (jsPool < 2)
-		jsPool = 2;
+	if (enginePool < 2)
+		enginePool = 2;
 
 	js_start();
 
 /* edbrowse catches interrupt, this process ignores it. */
 /* Use quit to terminate, or kill from another console. */
 	signal(SIGINT, SIG_IGN);
+
+	effects = initString(&eff_l);
 
 	while (true) {
 		readMessage();
@@ -611,7 +174,7 @@ int main(int argc, char **argv)
 
 		if (head.cmd == EJ_CMD_CREATE) {
 /* this one is special */
-			createJavaContext();
+			createContext();
 			if (!head.highstat) {
 				head.jcx = jcx;
 				head.winobj = winobj;
@@ -661,28 +224,32 @@ static void writeToEb(const void *data_p, int n)
 	if (rc == n)
 		return;
 /* Oops - can't write to the process any more */
-	cerr << "js cannot communicate with edbrowse\n";
+	fprintf(stderr, "js cannot communicate with edbrowse\n");
 	exit(2);
 }				/* writeToEb */
 
 static void writeHeader(void)
 {
 	head.magic = EJ_MAGIC;
-	head.side = effects.length();
-	head.msglen = errorMessage.length();
+	head.side = eff_l;
+	head.msglen = 0;
+	if (errorMessage)
+		head.msglen = strlen(errorMessage);
 
 	writeToEb(&head, sizeof(head));
 
 /* send out the error message and side effects, if present. */
 /* Edbrowse will expect these before any returned values. */
 	if (head.side) {
-		writeToEb(effects.c_str(), head.side);
-		effects.clear();
+		writeToEb(effects, head.side);
+		nzFree(effects);
+		effects = initString(&eff_l);
 	}
 
 	if (head.msglen) {
-		writeToEb(errorMessage.c_str(), head.msglen);
-		errorMessage.clear();
+		writeToEb(errorMessage, head.msglen);
+		nzFree(errorMessage);
+		errorMessage = 0;
 	}
 
 /* That's the header, you may still need to send a returned value */
@@ -693,7 +260,7 @@ static char *readString(int n)
 	char *s;
 	if (!n)
 		return 0;
-	s = allocMem(n + 1);
+	s = allocString(n + 1);
 	readFromEb(s, n);
 	s[n] = 0;
 	return s;
@@ -710,7 +277,8 @@ static void readMessage(void)
 	readFromEb(&head, sizeof(head));
 
 	if (head.magic != EJ_MAGIC) {
-		cerr << "Messages between js and edbrowse are out of sync\n";
+		fprintf(stderr,
+			"Messages between js and edbrowse are out of sync\n");
 		exit(3);
 	}
 
@@ -746,11 +314,11 @@ static const size_t gStackChunkSize = 8192;
 
 static void js_start(void)
 {
-	jrt = JS_NewRuntime(jsPool * 1024L * 1024L, JS_NO_HELPER_THREADS);
+	jrt = JS_NewRuntime(enginePool * 1024L * 1024L, JS_NO_HELPER_THREADS);
 	if (jrt)
 		return;		/* ok */
 
-	cerr << "Cannot create javascript runtime environment\n";
+	fprintf(stderr, "Cannot create javascript runtime environment\n");
 /* send a message to edbrowse, so it can disable javascript,
  * so we don't get this same error on every browse. */
 	head.highstat = EJ_HIGH_PROC_FAIL;
@@ -775,11 +343,11 @@ my_ErrorReporter(JSContext * cx, const char *message, JSErrorReport * report)
 	    message && strstr(message, "out of memory")) {
 		head.highstat = EJ_HIGH_HEAP_FAIL;
 		head.lowstat = EJ_LOW_MEMORY;
-	} else if (errorMessage.empty() && head.highstat == EJ_HIGH_OK &&
+	} else if (errorMessage == 0 && head.highstat == EJ_HIGH_OK &&
 		   message && *message) {
 		if (report)
 			head.lineno = report->lineno;
-		errorMessage = message;
+		errorMessage = cloneString(message);
 		head.highstat = EJ_HIGH_STMT_FAIL;
 		head.lowstat = EJ_LOW_SYNTAX;
 	}
@@ -829,7 +397,7 @@ The converse is handled by JS_NewStringcopyZ, as provided by the library.
 static char *JS_c_str(js::HandleString str)
 {
 	size_t encodedLength = JS_GetStringEncodingLength(jcx, str);
-	char *buffer = allocMem(encodedLength + 1);
+	char *buffer = allocString(encodedLength + 1);
 	buffer[encodedLength] = '\0';
 	size_t result =
 	    JS_EncodeStringToBuffer(jcx, str, buffer, encodedLength);
@@ -879,7 +447,7 @@ static const char *stringize(js::HandleValue v)
 	double d;
 	if (JSVAL_IS_STRING(v)) {
 		if (dynamic)
-			nzFree(dynamic);
+			cnzFree(dynamic);
 		js::RootedString str(jcx, JSVAL_TO_STRING(v));
 		dynamic = JS_c_str(str);
 		return dynamic;
@@ -982,15 +550,15 @@ static JSBool window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
  * I only do something if opening a new web page.
  * If it's just a blank window, I don't know what to do with that. */
 	if (newloc && *newloc) {
-		effects += "n{";	// }
-		effects += newloc;
-		effects += '\n';
+		effectString("n{p");	// }
+		effectString(newloc);
+		effectChar('\n');
 		if (winname)
-			effects += winname;
+			effectString(winname);
 		endeffect();
 	}
-	nzFree(newloc);
-	nzFree(winname);
+	cnzFree(newloc);
+	cnzFree(winname);
 	v = OBJECT_TO_JSVAL(winobj);
 	JS_DefineProperty(cx, newwin, "opener", v, NULL, NULL, PROP_READONLY);
 	args.rval().set(OBJECT_TO_JSVAL(newwin));
@@ -1001,7 +569,6 @@ static JSBool window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
  * If a constructor is not in this list, it is coming later,
  * because it does something special. */
 generic_class_ctor(document, Document)
-    generic_class_ctor(html, Html)
     generic_class_ctor(head, Head)
     generic_class_ctor(meta, Meta)
     generic_class_ctor(link, Link)
@@ -1012,12 +579,16 @@ generic_class_ctor(document, Document)
     generic_class_ctor(image, Image)
     generic_class_ctor(frame, Frame)
     generic_class_ctor(anchor, Anchor)
+    generic_class_ctor(lister, Lister)
+    generic_class_ctor(listitem, Listitem)
+    generic_class_ctor(tbody, Tbody)
     generic_class_ctor(table, Table)
     generic_class_ctor(div, Div)
     generic_class_ctor(area, Area)
     generic_class_ctor(span, Span)
     generic_class_ctor(trow, Trow)
     generic_class_ctor(cell, Cell)
+    generic_class_ctor(para, P)
     generic_class(option, Option)
 /* constructor below */
     generic_class_ctor(script, Script)
@@ -1051,7 +622,7 @@ static JSBool option_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 		v = STRING_TO_JSVAL(str);
 		JS_DefineProperty(cx, newopt, "value", v, NULL, NULL, PROP_STD);
 	}
-	str = JS_NewStringCopyZ(cx, "OPTION");
+	str = JS_NewStringCopyZ(cx, "option");
 	v = STRING_TO_JSVAL(str);
 	JS_DefineProperty(cx, newopt, "nodeName", v, NULL, NULL, PROP_STD);
 	v = JSVAL_FALSE;
@@ -1081,18 +652,21 @@ static JSBool textnode_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 		v = STRING_TO_JSVAL(str);
 	else
 		v = JS_GetEmptyStringValue(jcx);
-	JS_DefineProperty(cx, newtext, "text", v, NULL, NULL, PROP_STD);
+	JS_DefineProperty(cx, newtext, "data", v, NULL, NULL, PROP_STD);
 	args.rval().set(OBJECT_TO_JSVAL(newtext));
 	return JS_TRUE;
 }				/* textnode_ctor */
 
-static void url_initialize(JS::HandleObject uo, const char *url,
-			   bool exclude_href);
+static JSBool setter_loc_hrefval(JSContext * cx, JS::HandleObject uo,
+				 JS::Handle < jsid > id, JSBool strict,
+				 JS::MutableHandle < JS::Value > vp);
 
 static JSBool url_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	const char *url = emptyString;
 	const char *s;
+	js::RootedValue v(cx);
+
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	JSObject & callee = args.callee();
 	jsval callee_val = JS::ObjectValue(callee);
@@ -1100,16 +674,30 @@ static JSBool url_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 			    JS_NewObjectForConstructor(cx, &url_class,
 						       &callee_val));
 	if (uo == NULL) {
+abort:
 		misconfigure();
 		return JS_FALSE;
 	}
+
+/* href$val has a setter, so define it here */
+	v = JS_GetEmptyStringValue(cx);
+	if (JS_DefineProperty
+	    (cx, uo, "href$val", v, NULL, setter_loc_hrefval,
+	     PROP_STD) == JS_FALSE)
+		goto abort;
+
 	if (args.length() > 0 && JSVAL_IS_STRING(args[0])) {
-		js::RootedValue v(cx, args[0]);
+		v = args[0];
 		s = stringize(v);
 		if (s[0])
 			url = s;
-	}			/* string argument */
-	url_initialize(uo, url, false);
+	}
+	/* string argument */
+	v = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, url));
+/* This should invoke the js setter URL.href, I hope */
+	if (JS_SetProperty(cx, uo, "href", v.address()) == JS_FALSE)
+		goto abort;
+
 	args.rval().set(OBJECT_TO_JSVAL(uo));
 	return JS_TRUE;
 }				/* url_ctor */
@@ -1121,209 +709,15 @@ Setters are effectively suspended by setting the following variable to true.
 This is usually done when the dom manipulates the javascript objects directly.
 When website javascript is running however,
 the setters should run as well.
+Realize that the javascript level setters in startwindow.js run all the time.
+There's no way to turn those off, so make sure you don't want to.
 *********************************************************************/
 
 static bool setter_suspend;
 
-/* Lots of little routines for the pieces of the URL object */
-
-/* Put a url together from its pieces, after something has changed. */
-static void build_url(JS::HandleObject uo, int component, const char *e)
-{
-	js::RootedValue v(jcx);
-	const char *new_url;
-	string url_str, pathname;
-	static const char *const noslashes[] = {
-		"mailto", "telnet", "javascript", 0
-	};
-
-	setter_suspend = true;
-/* e was built using stringize(), best to copy it */
-	e = cloneString(e);
-
-	if (component == 1)	// protocol
-		url_str = e;
-	else {
-		if (JS_GetProperty(jcx, uo, "protocol", v.address()) ==
-		    JS_FALSE) {
-abort:
-			setter_suspend = false;
-			nzFree(e);
-			misconfigure();
-			return;
-		}
-		url_str = stringize(v);
-	}
-	if (url_str.length() && stringInListCI(noslashes, url_str.c_str()) < 0)
-		url_str += "//";
-
-	if (component == 2)	// host
-		url_str += e;
-	else {
-		if (JS_GetProperty(jcx, uo, "host", v.address()) == JS_FALSE)
-			goto abort;
-		url_str += stringize(v);
-	}
-
-	if (component == 3)	// path
-		pathname = e;
-	else {
-		if (JS_GetProperty(jcx, uo, "pathname", v.address()) ==
-		    JS_FALSE)
-			goto abort;
-		pathname = stringize(v);
-	}
-	if (pathname[0] != '/')
-		url_str += '/';
-	url_str += pathname;
-
-	if (component == 4)	// search
-		url_str += e;
-	else {
-		if (JS_GetProperty(jcx, uo, "search", v.address()) == JS_FALSE)
-			goto abort;
-		url_str += stringize(v);
-	}
-
-	if (component == 5)	// hash
-		url_str += e;
-	else {
-		if (JS_GetProperty(jcx, uo, "hash", v.address()) == JS_FALSE)
-			goto abort;
-		url_str += stringize(v);
-	}
-
-	new_url = url_str.c_str();
-	v = STRING_TO_JSVAL(JS_NewStringCopyZ(jcx, new_url));
-	if (JS_SetProperty(jcx, uo, "href", v.address()) == JS_FALSE)
-		goto abort;
-
-	setter_suspend = false;
-	nzFree(e);
-}				/* build_url */
-
-/* Rebuild host, because hostname or port changed. */
-static void build_host(JS::HandleObject uo, int component,
-		       const char *hostname, int port)
-{
-	js::RootedValue v(jcx);
-	const char *oldhost;
-	bool hadcolon = false;
-	string q;
-	const char *newhost;
-
-	setter_suspend = true;
-
-	if (JS_GetProperty(jcx, uo, "host", v.address()) == JS_FALSE)
-		goto abort;
-	oldhost = stringize(v);
-	if (strchr(oldhost, ':'))
-		hadcolon = true;
-
-	if (component == 1) {
-		if (JS_GetProperty(jcx, uo, "port", v.address()) == JS_FALSE) {
-abort:
-			setter_suspend = false;
-			misconfigure();
-			return;
-		}
-		port = JSVAL_TO_INT(v);
-	} else {
-		if (JS_GetProperty(jcx, uo, "hostname", v.address()) ==
-		    JS_FALSE)
-			goto abort;
-		hostname = stringize(v);
-	}
-
-	q = hostname;
-	if (component == 2 || hadcolon) {
-		char portstring[12];
-		sprintf(portstring, ":%d", port);
-		q += portstring;
-	}
-	newhost = q.c_str();
-	v = STRING_TO_JSVAL(JS_NewStringCopyZ(jcx, newhost));
-	if (JS_SetProperty(jcx, uo, "host", v.address()) == JS_FALSE)
-		goto abort;
-
-	setter_suspend = false;
-}				/* build_host */
-
-static void
-loc_def_set(JS::HandleObject uo, const char *name, const char *s,
-	    JSStrictPropertyOp setter)
-{
-	JSBool found;
-	js::RootedValue v(jcx);
-
-	if (s)
-		v = STRING_TO_JSVAL(JS_NewStringCopyZ(jcx, s));
-	else
-		v = JS_GetEmptyStringValue(jcx);
-	JS_HasProperty(jcx, uo, name, &found);
-	if (found) {
-		if (JS_SetProperty(jcx, uo, name, v.address()) == JS_FALSE) {
-abort:
-			misconfigure();
-			return;
-		}
-	} else {
-		if (JS_DefineProperty(jcx, uo, name, v, NULL, setter, PROP_STD)
-		    == JS_FALSE)
-			goto abort;
-	}
-}				/* loc_def_set */
-
-/* Like the above, but using an integer, this is for port only. */
-static void
-loc_def_set_n(JS::HandleObject uo, const char *name, int port,
-	      JSStrictPropertyOp setter)
-{
-	JSBool found;
-	js::RootedValue v(jcx, INT_TO_JSVAL(port));
-
-	JS_HasProperty(jcx, uo, name, &found);
-	if (found) {
-		if (JS_SetProperty(jcx, uo, name, v.address()) == JS_FALSE) {
-abort:
-			misconfigure();
-			return;
-		}
-	} else {
-		if (JS_DefineProperty(jcx, uo, name, v, NULL, setter, PROP_STD)
-		    == JS_FALSE)
-			goto abort;
-	}
-}				/* loc_def_set_n */
-
-/* string s of length n */
-static void
-loc_def_set_part(JS::HandleObject uo, const char *name, const char *s,
-		 int n, JSStrictPropertyOp setter)
-{
-	JSBool found;
-	js::RootedValue v(jcx);
-
-	if (s)
-		v = STRING_TO_JSVAL(JS_NewStringCopyN(jcx, s, n));
-	else
-		v = JS_GetEmptyStringValue(jcx);
-
-	JS_HasProperty(jcx, uo, name, &found);
-	if (found) {
-		if (JS_SetProperty(jcx, uo, name, v.address()) == JS_FALSE) {
-abort:
-			misconfigure();
-			return;
-		}
-	} else {
-		if (JS_DefineProperty(jcx, uo, name, v, NULL, setter, PROP_STD)
-		    == JS_FALSE)
-			goto abort;
-	}
-}				/* loc_def_set_part */
-
-/* this setter is only for window.location or document.location */
+/* This setter is only for window.location or document.location.
+ * It returns false to stop javascript;
+ * the browser is redirected elsewhere and the current page replaced. */
 static JSBool
 setter_loc(JSContext * cx, JS::HandleObject uo, JS::Handle < jsid > id,
 	   JSBool strict, JS::MutableHandle < JS::Value > vp)
@@ -1333,245 +727,37 @@ setter_loc(JSContext * cx, JS::HandleObject uo, JS::Handle < jsid > id,
 		JS_ReportError(jcx,
 			       "window.location is assigned something that I don't understand");
 	} else {
-		effects += "n{";	// }
-		effects += s;
-		effects += '\n';
+		effectString("n{r");	// }
+		effectString(s);
+		effectChar('\n');
 		endeffect();
 	}
-	return JS_TRUE;
+	return JS_FALSE;
 }				/* setter_loc */
 
-/* this setter can also open a new window, if the parent object
+/* this setter can open a new window, if the parent object
  * is window.location or document.location.
- * Otherwise it has the usual side effects for the URL class,
- * distributing the pieces of the url to the members. */
+ * Otherwise it does nothing. */
 static JSBool
-setter_loc_href(JSContext * cx, JS::HandleObject uo,
-		JS::Handle < jsid > id, JSBool strict,
-		JS::MutableHandle < JS::Value > vp)
+setter_loc_hrefval(JSContext * cx, JS::HandleObject uo,
+		   JS::Handle < jsid > id, JSBool strict,
+		   JS::MutableHandle < JS::Value > vp)
 {
 	const char *url = 0;
-	const char *urlcopy;
 	if (setter_suspend)
 		return JS_TRUE;
 	url = stringize(vp);
 	if (!url)
 		return JS_TRUE;
-	urlcopy = cloneString(url);
-	url_initialize(uo, urlcopy, true);
 	if (iswindocloc(uo)) {
-		effects += "n{";	// }
-		effects += urlcopy;
-		effects += '\n';
+		effectString("n{r");	// }
+		effectString(url);
+		effectChar('\n');
 		endeffect();
-	}
-	nzFree(urlcopy);
-	return JS_TRUE;
-}				/* setter_loc_href */
-
-static JSBool
-setter_loc_hash(JSContext * cx, JS::HandleObject uo,
-		JS::Handle < jsid > id, JSBool strict,
-		JS::MutableHandle < JS::Value > vp)
-{
-	const char *e;
-	if (setter_suspend)
-		return JS_TRUE;
-	e = stringize(vp);
-	build_url(uo, 5, e);
-	return JS_TRUE;
-}				/* setter_loc_hash */
-
-static JSBool
-setter_loc_search(JSContext * cx, JS::HandleObject uo,
-		  JS::Handle < jsid > id, JSBool strict,
-		  JS::MutableHandle < JS::Value > vp)
-{
-	const char *e;
-	if (setter_suspend)
-		return JS_TRUE;
-	e = stringize(vp);
-	build_url(uo, 4, e);
-	return JS_TRUE;
-}				/* setter_loc_search */
-
-static JSBool
-setter_loc_prot(JSContext * cx, JS::HandleObject uo,
-		JS::Handle < jsid > id, JSBool strict,
-		JS::MutableHandle < JS::Value > vp)
-{
-	const char *e;
-	if (setter_suspend)
-		return JS_TRUE;
-	e = stringize(vp);
-	build_url(uo, 1, e);
-	return JS_TRUE;
-}				/* setter_loc_prot */
-
-static JSBool
-setter_loc_pathname(JSContext * cx, JS::HandleObject uo,
-		    JS::Handle < jsid > id, JSBool strict,
-		    JS::MutableHandle < JS::Value > vp)
-{
-	const char *e;
-	if (setter_suspend)
-		return JS_TRUE;
-	e = stringize(vp);
-	build_url(uo, 3, e);
-	return JS_TRUE;
-}				/* setter_loc_pathname */
-
-static JSBool
-setter_loc_hostname(JSContext * cx, JS::HandleObject uo,
-		    JS::Handle < jsid > id, JSBool strict,
-		    JS::MutableHandle < JS::Value > vp)
-{
-	const char *e;
-	if (setter_suspend)
-		return JS_TRUE;
-	e = stringize(vp);
-	build_host(uo, 1, e, 0);
-	build_url(uo, 0, 0);
-	return JS_TRUE;
-}				/* setter_loc_hostname */
-
-static JSBool
-setter_loc_port(JSContext * cx, JS::HandleObject uo,
-		JS::Handle < jsid > id, JSBool strict,
-		JS::MutableHandle < JS::Value > vp)
-{
-	int port;
-	if (setter_suspend)
-		return JS_TRUE;
-	port = JSVAL_TO_INT(vp);
-	build_host(uo, 2, 0, port);
-	build_url(uo, 0, 0);
-	return JS_TRUE;
-}				/* setter_loc_port */
-
-static JSBool
-setter_loc_host(JSContext * cx, JS::HandleObject uo,
-		JS::Handle < jsid > id, JSBool strict,
-		JS::MutableHandle < JS::Value > vp)
-{
-	const char *e, *s;
-	int n;
-	js::RootedValue v(jcx);
-	if (setter_suspend)
-		return JS_TRUE;
-	e = stringize(vp);
-	e = cloneString(e);
-	build_url(uo, 2, e);
-/* and we have to update hostname and port */
-	setter_suspend = true;
-	s = strchr(e, ':');
-	if (s)
-		n = s - e;
-	else
-		n = strlen(e);
-	v = STRING_TO_JSVAL(JS_NewStringCopyN(jcx, e, n));
-	if (JS_SetProperty(jcx, uo, "hostname", v.address()) == JS_FALSE) {
-abort:
-		setter_suspend = false;
-		nzFree(e);
 		return JS_FALSE;
 	}
-	if (s) {
-		v = INT_TO_JSVAL(atoi(s + 1));
-		if (JS_SetProperty(jcx, uo, "port", v.address()) == JS_FALSE)
-			goto abort;
-	}
-	setter_suspend = false;
-	nzFree(e);
 	return JS_TRUE;
-}				/* setter_loc_host */
-
-/*********************************************************************
-As the name url_initialize might indicate, this function is called
-by the constructor, to create the pieces of the url:
-protocol, port, domain, path, hash, etc.
-But it is also called when a url is assigned to URL.href,
-again to cut the url into pieces and set the corresponding members.
-This is how the URL class works, and it is a royal pain to program.
-*********************************************************************/
-
-static void
-url_initialize(JS::HandleObject uo, const char *url, bool exclude_href)
-{
-	int n, port;
-	const char *data;
-	const char *s;
-	const char *pl;
-	string q;
-
-	setter_suspend = true;
-
-/* Store the url in location.href */
-	if (!exclude_href)
-		loc_def_set(uo, "href", url, setter_loc_href);
-
-/* Now make a property for each piece of the url. */
-	if (s = getProtURL(url)) {
-		q = s;
-		q += ':';
-		s = q.c_str();
-	}
-	loc_def_set(uo, "protocol", s, setter_loc_prot);
-	q.clear();
-
-	data = getDataURL(url);
-	s = 0;
-	if (data)
-		s = strchr(data, '#');
-	loc_def_set(uo, "hash", s, setter_loc_hash);
-
-	s = getHostURL(url);
-	if (s && !*s)
-		s = 0;
-	loc_def_set(uo, "hostname", s, setter_loc_hostname);
-
-	getPortLocURL(url, &pl, &port);
-	loc_def_set_n(uo, "port", port, setter_loc_port);
-
-	if (s) {		/* this was hostname */
-		q = s;
-		if (pl) {
-			char portstring[12];
-			sprintf(portstring, ":%d", port);
-			q += portstring;
-		}
-		s = q.c_str();
-	}
-	loc_def_set(uo, "host", s, setter_loc_host);
-	q.clear();
-
-	s = 0;
-	n = 0;
-	getDirURL(url, &s, &pl);
-	if (s) {
-		pl = strpbrk(s, "?\1#");
-		n = pl ? pl - s : strlen(s);
-		if (!n)
-			s = "/", n = 1;
-	}
-	loc_def_set_part(uo, "pathname", s, n, setter_loc_pathname);
-
-	s = 0;
-	if (data && (s = strpbrk(data, "?\1")) &&
-	    (!(pl = strchr(data, '#')) || pl > s)) {
-		if (pl)
-			n = pl - s;
-		else
-			n = strlen(s);
-	} else {
-/* If we have foo.html#?bla, then ?bla is not the query. */
-		s = NULL;
-		n = 0;
-	}
-	loc_def_set_part(uo, "search", s, n, setter_loc_search);
-
-	setter_suspend = false;
-}				/* url_initialize */
+}				/* setter_loc_hrefval */
 
 static const char *emptyParms[] = { 0 };
 static jsval emptyArgs[] = { jsval() };
@@ -1612,9 +798,40 @@ static ej_proptype find_proptype(JS::HandleObject parent, const char *name)
 	return val_proptype(v);
 }				/* find_proptype */
 
+enum ej_proptype has_property(jsobjtype parent, const char *name)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	return find_proptype(p, name);
+}				/* has_property */
+
+static void delete_property1(JS::HandleObject parent, const char *name)
+{
+	JS_DeleteProperty(jcx, parent, name);
+}				/* delete_property1 */
+
+void delete_property(jsobjtype parent, const char *name)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	delete_property1(p, name);
+}				/* delete_property */
+
+static int get_arraylength1(JS::HandleObject a)
+{
+	unsigned int length;
+	if (JS_GetArrayLength(jcx, a, &length) == JS_FALSE)
+		return -1;
+	return length;
+}				/* get_arraylength1 */
+
+int get_arraylength(jsobjtype a)
+{
+	JS::RootedObject p(jcx, (JSObject *) a);
+	return get_arraylength1(p);
+}				/* get_arraylength */
+
 /* Use stringize() to return a property as a string, if it is
  * string compatible. The string is allocated, free it when done. */
-static char *get_property_string(JS::HandleObject parent, const char *name)
+static char *get_property_string1(JS::HandleObject parent, const char *name)
 {
 	js::RootedValue v(jcx);
 	const char *s;
@@ -1633,7 +850,31 @@ static char *get_property_string(JS::HandleObject parent, const char *name)
 	} else
 		s = stringize(v);
 	return cloneString(s);
+}				/* get_property_string1 */
+
+char *get_property_string(jsobjtype parent, const char *name)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	return get_property_string1(p, name);
 }				/* get_property_string */
+
+static JSObject *get_property_object1(JS::HandleObject parent, const char *name)
+{
+	js::RootedValue v(jcx);
+	JS::RootedObject child(jcx);
+	if (JS_GetProperty(jcx, parent, name, v.address()) == JS_FALSE)
+		return 0;
+	if (!v.isObject())
+		return 0;
+	child = JSVAL_TO_OBJECT(v);
+	return child;
+}				/* get_property_object1 */
+
+jsobjtype get_property_object(jsobjtype parent, const char *name)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	return get_property_object1(p, name);
+}				/* get_property_object */
 
 /* if js changes the value of an input field, this must be reflected
  * in the <foobar> text in edbrowse. */
@@ -1650,10 +891,10 @@ setter_value(JSContext * cx, JS::HandleObject obj,
 		JS_ReportError(jcx,
 			       "input.value is assigned something other than a string; this can cause problems when you submit the form.");
 	} else {
-		effects += "v{";	// }
-		effects += pointer2string(*obj.address());
-		effects += '=';
-		effects += val;
+		effectString("v{");	// }
+		effectString(pointer2string(*obj.address()));
+		effectChar('=');
+		effectString(val);
 		endeffect();
 	}
 	return JS_TRUE;
@@ -1665,15 +906,32 @@ setter_innerHTML(JSContext * cx, JS::HandleObject obj,
 		 JS::MutableHandle < jsval > vp)
 {
 	const char *s = stringize(vp);
-	if (s && strlen(s)) {
-		effects += "i{h";	// }
-		effects += pointer2string(obj);
-		effects += "|<!-- inner html -->\n";
-		effects += s;
-		if (s[strlen(s) - 1] != '\n')
-			effects += '\n';
-		endeffect();
-	}
+	if (!s)
+		return JS_TRUE;
+
+/* lop off the preexisting children */
+	JS::RootedObject children(jcx);
+	children = get_property_object1(obj, "childNodes");
+	if (children)
+		JS_SetArrayLength(jcx, children, 0);
+
+	int begin;
+	effectString("i{h");	// }
+	effectString(pointer2string(obj));
+	begin = eff_l + 1;
+	effectString
+	    ("|<!DOCTYPE public><head><title>innerHTML</title></head><body>\n");
+	effectString(s);
+	if (*s && s[strlen(s) - 1] != '\n')
+		effectChar('\n');
+	effectString("</body>");
+	cwSetup();
+	jsobjtype innerParent = obj;
+	html_from_setter(innerParent, effects + begin);
+	effectChar('@');
+	packDecoration();
+	cwBringdown();
+	endeffect();
 	return JS_TRUE;
 }				/* setter_innerHTML */
 
@@ -1685,10 +943,10 @@ setter_innerText(JSContext * cx, JS::HandleObject obj,
 	const char *s = stringize(vp);
 	if (!s)
 		s = emptyString;
-	effects += "i{t";	// }
-	effects += pointer2string(obj);
-	effects += '|';
-	effects += s;
+	effectString("i{t");	// }
+	effectString(pointer2string(obj));
+	effectChar('|');
+	effectString(s);
 	endeffect();
 	return JS_TRUE;
 }				/* setter_innerText */
@@ -1702,45 +960,57 @@ But the setter folds a new cookie into this string,
 and also passes the cookie back to edbrowse to put in the cookie jar.
 *********************************************************************/
 
-static string cookieCopy;
+static char *cookieCopy;
+static int cook_l;
 
 static bool foldinCookie(const char *newcook)
 {
-	string nc = newcook;
-	int j, k;
+	char *nc, *loc, *loc2;
+	int j;
+	char *s;
+	char save;
+
+/* make a copy with ; in front */
+	j = strlen(newcook);
+	nc = allocString(j + 3);
+	strcpy(nc, "; ");
+	strcpy(nc + 2, newcook);
 
 /* cut off the extra attributes */
-	j = nc.find_first_of(" \t;");
-	if (j != string::npos)
-		nc.resize(j);
+	s = strpbrk(nc + 2, " \t;");
+	if (s)
+		*s = 0;
 
 /* cookie has to look like keyword=value */
-	j = nc.find("=");
-	if (j == string::npos || j == 0)
+	s = strchr(nc + 2, '=');
+	if (!s || s == nc + 2)
 		return false;
 
 /* pass back to edbrowse */
-	effects += "c{";	// }
-	effects += newcook;
+	effectString("c{");	// }
+	effectString(newcook);
 	endeffect();
 
-/* put ; in front */
-	string nc1 = "; " + nc;
-	j = j + 2;
-	string search = nc1.substr(0, j + 1);
-	k = cookieCopy.find(search);
-	if (k == string::npos) {
-/* not there, just tack the new cookie on the end */
-		cookieCopy += nc1;
-		return true;
-	}
+	++s;
+	save = *s;
+	*s = 0;			/* I'll put it back later */
+	loc = strstr(cookieCopy, nc);
+	*s = save;
+	if (!loc)
+		goto add;
 
-	string rest = cookieCopy.substr(k + 2);
-	cookieCopy.resize(k);
-	cookieCopy += nc1;
-	k = rest.find(";");
-	if (k != string::npos)
-		cookieCopy += rest.substr(k);
+/* find next piece */
+	loc2 = strchr(loc + 2, ';');
+	if (!loc2)
+		loc2 = loc + strlen(loc);
+
+/* excise the oold, put in the new */
+	j = loc2 - loc;
+	strmove(loc, loc2);
+	cook_l -= j;
+
+add:
+	stringAndString(&cookieCopy, &cook_l, nc);
 	return true;
 }				/* foldinCookie */
 
@@ -1749,19 +1019,33 @@ setter_cookie(JSContext * cx, JS::HandleObject obj,
 	      JS::Handle < jsid > id, JSBool strict,
 	      JS::MutableHandle < JS::Value > vp)
 {
-	const char *val;
+	const char *newcook;
+	char *original;
+
 	if (setter_suspend)
 		return JS_TRUE;
 
-	val = stringize(vp);
-	if (val && foldinCookie(val)) {
-		setter_suspend = true;
-		js::RootedValue v(jcx);
-		v = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, val));
-		JS_SetProperty(jcx, obj, "cookie", v.address());
-		setter_suspend = false;
+/* grab the existing document.cookie string, is this reentrant, is this ok? */
+	original = get_property_string1(obj, "cookie");
+	if (!original)		/* should never happen */
+		original = emptyString;
+	cookieCopy = initString(&cook_l);
+	if (original[0]) {
+		stringAndString(&cookieCopy, &cook_l, "; ");
+		stringAndString(&cookieCopy, &cook_l, original);
 	}
+	nzFree(original);
 
+	newcook = stringize(vp);
+	if (newcook)
+		foldinCookie(newcook);
+
+	if (cookieCopy[0]) {
+		js::RootedValue v(cx);
+		v = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, cookieCopy + 2));
+		vp.set(v);
+	}
+	nzFree(cookieCopy);
 	return JS_TRUE;
 }				/* setter_cookie */
 
@@ -1779,10 +1063,11 @@ setter_domain(JSContext * cx, JS::HandleObject obj,
 }				/* setter_domain */
 
 static void
-set_property_string(js::HandleObject parent, const char *name,
-		    const char *value)
+set_property_string1(js::HandleObject parent, const char *name,
+		     const char *value)
 {
 	js::RootedValue v(jcx);
+	JSPropertyOp my_getter = NULL;
 	JSStrictPropertyOp my_setter = NULL;
 	JSBool found;
 
@@ -1793,19 +1078,8 @@ set_property_string(js::HandleObject parent, const char *name,
 
 	JS_HasProperty(jcx, parent, name, &found);
 	if (found) {
-		if (JS_GetClass(parent) == &url_class &&
-		    stringEqual(name, "href")) {
-			const char *vv = value;
-			if (!vv)
-				vv = emptyString;
-			url_initialize(parent, vv, false);
-		} else {
-			setter_suspend = true;
-			if (JS_SetProperty(jcx, parent, name, v.address()) ==
-			    JS_FALSE)
-				misconfigure();
-			setter_suspend = false;
-		}
+		if (JS_SetProperty(jcx, parent, name, v.address()) == JS_FALSE)
+			misconfigure();
 		return;
 	}
 
@@ -1820,12 +1094,20 @@ set_property_string(js::HandleObject parent, const char *name,
 	if (stringEqual(name, "cookie") && *parent.address() == docobj)
 		my_setter = setter_cookie;
 
-	if (JS_DefineProperty(jcx, parent, name, v, NULL, my_setter, PROP_STD)
-	    == JS_FALSE)
+	if (JS_DefineProperty
+	    (jcx, parent, name, v, my_getter, my_setter, PROP_STD) == JS_FALSE)
 		misconfigure();
+}				/* set_property_string1 */
+
+int set_property_string(jsobjtype parent, const char *name, const char *value)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	set_property_string1(p, name, value);
+	return 0;
 }				/* set_property_string */
 
-static void set_property_bool(js::HandleObject parent, const char *name, bool n)
+static void set_property_bool1(js::HandleObject parent, const char *name,
+			       bool n)
 {
 	js::RootedValue v(jcx);
 	JSBool found;
@@ -1834,20 +1116,25 @@ static void set_property_bool(js::HandleObject parent, const char *name, bool n)
 
 	JS_HasProperty(jcx, parent, name, &found);
 	if (found) {
-		setter_suspend = true;
 		if (JS_SetProperty(jcx, parent, name, v.address()) == JS_FALSE)
 			misconfigure();
-		setter_suspend = false;
 		return;
 	}
 
 	if (JS_DefineProperty(jcx, parent, name, v, NULL, NULL, PROP_STD) ==
 	    JS_FALSE)
 		misconfigure();
+}				/* set_property_bool1 */
+
+int set_property_bool(jsobjtype parent, const char *name, bool n)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	set_property_bool1(p, name, n);
+	return 0;
 }				/* set_property_bool */
 
-static void
-set_property_number(js::HandleObject parent, const char *name, int n)
+static void set_property_number1(js::HandleObject parent, const char *name,
+				 int n)
 {
 	js::RootedValue v(jcx);
 	JSBool found;
@@ -1856,20 +1143,25 @@ set_property_number(js::HandleObject parent, const char *name, int n)
 
 	JS_HasProperty(jcx, parent, name, &found);
 	if (found) {
-		setter_suspend = true;
 		if (JS_SetProperty(jcx, parent, name, v.address()) == JS_FALSE)
 			misconfigure();
-		setter_suspend = false;
 		return;
 	}
 
 	if (JS_DefineProperty(jcx, parent, name, v, NULL, NULL, PROP_STD) ==
 	    JS_FALSE)
 		misconfigure();
+}				/* set_property_number1 */
+
+int set_property_number(jsobjtype parent, const char *name, int n)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	set_property_number1(p, name, n);
+	return 0;
 }				/* set_property_number */
 
-static void
-set_property_float(js::HandleObject parent, const char *name, double n)
+static void set_property_float1(js::HandleObject parent, const char *name,
+				double n)
 {
 	js::RootedValue v(jcx);
 	JSBool found;
@@ -1878,21 +1170,26 @@ set_property_float(js::HandleObject parent, const char *name, double n)
 
 	JS_HasProperty(jcx, parent, name, &found);
 	if (found) {
-		setter_suspend = true;
 		if (JS_SetProperty(jcx, parent, name, v.address()) == JS_FALSE)
 			misconfigure();
-		setter_suspend = false;
 		return;
 	}
 
 	if (JS_DefineProperty(jcx, parent, name, v, NULL, NULL, PROP_STD) ==
 	    JS_FALSE)
 		misconfigure();
+}				/* set_property_float1 */
+
+int set_property_float(jsobjtype parent, const char *name, double n)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	set_property_float1(p, name, n);
+	return 0;
 }				/* set_property_float */
 
 static void
-set_property_object(js::HandleObject parent, const char *name,
-		    JS::HandleObject child)
+set_property_object1(js::HandleObject parent, const char *name,
+		     JS::HandleObject child)
 {
 	js::RootedValue v(jcx);
 	JSBool found;
@@ -1902,10 +1199,8 @@ set_property_object(js::HandleObject parent, const char *name,
 
 	JS_HasProperty(jcx, parent, name, &found);
 	if (found) {
-		setter_suspend = true;
 		if (JS_SetProperty(jcx, parent, name, v.address()) == JS_FALSE)
 			misconfigure();
-		setter_suspend = false;
 		return;
 	}
 
@@ -1915,6 +1210,14 @@ set_property_object(js::HandleObject parent, const char *name,
 	if (JS_DefineProperty(jcx, parent, name, v, NULL, my_setter, PROP_STD)
 	    == JS_FALSE)
 		misconfigure();
+}				/* set_property_object1 */
+
+int set_property_object(jsobjtype parent, const char *name, jsobjtype child)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	JS::RootedObject c(jcx, (JSObject *) child);
+	set_property_object1(p, name, c);
+	return 0;
 }				/* set_property_object */
 
 /* for window.focus etc */
@@ -1939,9 +1242,48 @@ static JSBool trueFunction(JSContext * cx, unsigned int argc, jsval * vp)
 	return JS_TRUE;
 }				/* trueFunction */
 
+static void set_property_function1(js::HandleObject parent,
+				   const char *name, const char *body)
+{
+	if (!body || !*body) {
+/* null or empty function, link to native null function */
+		JS_NewFunction(jcx, nullFunction, 0, 0, parent, name);
+	} else {
+		JS_CompileFunction(jcx, parent, name, 0, emptyParms,
+				   body, strlen(body), name, 1);
+	}
+}				/* set_property_function1 */
+
+int set_property_function(jsobjtype parent, const char *name, const char *body)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	set_property_function1(p, name, body);
+	return 0;
+}				/* set_property_function */
+
+static void
+run_function_onearg1(js::HandleObject parent, const char *name,
+		     JS::HandleObject child)
+{
+	js::RootedValue v(jcx);
+	jsval argv[2];
+	argv[0] = OBJECT_TO_JSVAL(child);
+	argv[1] = jsval();
+	JS_CallFunctionName(jcx, parent, name, 1, argv, v.address());
+}				/* run_function_onearg1 */
+
+void run_function_onearg(jsobjtype parent, const char *name, jsobjtype child)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	JS::RootedObject c(jcx, (JSObject *) child);
+	run_function_onearg1(p, name, c);
+}				/* run_function_onearg */
+
+#if 0
+/* Not clear that setAttribute needs any side effects, or needs to be native. */
 static JSBool setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
 {
-	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
+	JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	js::RootedValue v1(cx), v2(cx);
 	if (args.length() != 2 || !JSVAL_IS_STRING(args[0])) {
@@ -1950,23 +1292,42 @@ static JSBool setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
 		v1 = args[0];
 		v2 = args[1];
 		const char *prop = stringize(v1);
-		if (JS_DefineProperty(cx, obj, prop, v2, NULL, NULL, PROP_STD)
-		    == JS_FALSE) {
-			misconfigure();
-			return JS_FALSE;
-		}
+		JS_DefineProperty(cx, thisobj, prop, v2, NULL, NULL, PROP_STD);
 	}
 	args.rval().set(JSVAL_VOID);
 	return JS_TRUE;
 }				/* setAttribute */
+#endif
 
-static JSBool appendChild(JSContext * cx, unsigned int argc, jsval * vp)
+static void embedNodeName(JS::HandleObject obj)
+{
+	const char *nodeName;
+	js::RootedValue v(jcx);
+	int length;
+	if (JS_GetProperty(jcx, obj, "nodeName", v.address()) == JS_TRUE) {
+		nodeName = stringize(v);
+		if (nodeName) {
+			length = strlen(nodeName);
+			if (length >= MAXTAGNAME)
+				length = MAXTAGNAME - 1;
+			stringAndBytes(&effects, &eff_l, nodeName, length);
+		}
+	}
+}				/* embedNodeName */
+
+static JSBool appendChild0(bool side, JSContext * cx, unsigned int argc,
+			   jsval * vp)
 {
 	unsigned length;
 	js::RootedValue v(cx);
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
-	if (JS_GetProperty(cx, obj, "elements", v.address()) == JS_FALSE)
+	args.rval().set(JSVAL_VOID);
+/* we need an argument that is an object */
+	if (args.length() == 0 || !args[0].isObject())
+		return JS_TRUE;
+
+	JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+	if (JS_GetProperty(cx, thisobj, "childNodes", v.address()) == JS_FALSE)
 		return JS_TRUE;	/* no such array */
 	JS::RootedObject elar(cx, JSVAL_TO_OBJECT(v));
 	if (elar == NULL) {
@@ -1978,47 +1339,188 @@ static JSBool appendChild(JSContext * cx, unsigned int argc, jsval * vp)
 		return JS_FALSE;
 	}
 	if (JS_DefineElement(cx, elar, length,
-			     (args.length() > 0 ? args[0] : JSVAL_NULL),
-			     NULL, NULL, PROP_STD) == JS_FALSE) {
+			     args[0], NULL, NULL, PROP_STD) == JS_FALSE) {
 		misconfigure();
 		return JS_FALSE;
 	}
-	args.rval().set(JSVAL_VOID);
+	JS::RootedObject child(cx, JSVAL_TO_OBJECT(args[0]));
+	JS_DefineProperty(cx, child, "parentNode", OBJECT_TO_JSVAL(thisobj),
+			  NULL, NULL, PROP_STD);
+
+	if (!side)
+		return JS_TRUE;
+
+/* pass this linkage information back to edbrowse, to update its dom tree */
+	char e[40];
+	sprintf(e, "l{a|%s,", pointer2string(thisobj));
+	effectString(e);
+	embedNodeName(thisobj);
+	effectChar(' ');
+	effectString(pointer2string(child));
+	effectChar(',');
+	embedNodeName(child);
+	effectString(" 0x0, ");
+	endeffect();
 	return JS_TRUE;
+}				/* appendChild0 */
+
+static JSBool appendChild(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	return appendChild0(true, cx, argc, vp);
 }				/* appendChild */
 
-static JSFunctionSpec body_methods[] = {
-	JS_FS("setAttribute", setAttribute, 2, 0),
-	JS_FS("appendChild", appendChild, 1, 0),
-	JS_FS_END
-};
+static JSBool apch(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	return appendChild0(false, cx, argc, vp);
+}				/* apch */
 
-static JSFunctionSpec head_methods[] = {
-	JS_FS("setAttribute", setAttribute, 2, 0),
-	JS_FS("appendChild", appendChild, 1, 0),
-	JS_FS_END
-};
+static JSBool insertBefore(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	unsigned i, mark, length;
+	js::RootedValue v(cx);
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	args.rval().set(JSVAL_VOID);
+/* we need two objects */
+	if (args.length() < 2 || !args[0].isObject() || !args[1].isObject())
+		return JS_TRUE;
 
-static JSFunctionSpec link_methods[] = {
-	JS_FS("setAttribute", setAttribute, 2, 0),
-	JS_FS_END
-};
+	JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+	JS::RootedObject child(cx, JSVAL_TO_OBJECT(args[0]));
+	JS::RootedObject item(cx, JSVAL_TO_OBJECT(args[1]));
+	if (JS_GetProperty(cx, thisobj, "childNodes", v.address()) == JS_FALSE)
+		return JS_TRUE;	/* no such array */
+	JS::RootedObject elar(cx, JSVAL_TO_OBJECT(v));
+	if (elar == NULL) {
+		misconfigure();
+		return JS_FALSE;
+	}
+	if (JS_GetArrayLength(cx, elar, &length) == JS_FALSE) {
+		misconfigure();
+		return JS_FALSE;
+	}
+
+/* item better be somewhere in the array */
+	for (mark = 0; mark < length; ++mark) {
+		if (JS_GetElement(cx, elar, mark, v.address()) == JS_FALSE) {
+			misconfigure();
+			return JS_FALSE;
+		}
+		if (!v.isObject())
+			continue;
+		if (JSVAL_TO_OBJECT(v) == item)
+			goto found;
+	}
+	return JS_TRUE;
+
+found:
+/* push the others down */
+	for (i = length; i > mark; --i) {
+		JS_GetElement(cx, elar, i - 1, v.address());
+		if (i == length)
+			JS_DefineElement(cx, elar, i, v, NULL, NULL, PROP_STD);
+		else
+			JS_SetElement(cx, elar, i, v.address());
+	}
+/* and place the child */
+	v = args[0];
+	JS_SetElement(cx, elar, mark, v.address());
+	JS_DefineProperty(cx, child, "parentNode", OBJECT_TO_JSVAL(thisobj),
+			  NULL, NULL, PROP_STD);
+
+/* pass this linkage information back to edbrowse, to update its dom tree */
+	char e[40];
+	sprintf(e, "l{b|%s,", pointer2string(thisobj));
+	effectString(e);
+	embedNodeName(thisobj);
+	effectChar(' ');
+	effectString(pointer2string(child));
+	effectChar(',');
+	embedNodeName(child);
+	effectChar(' ');
+	effectString(pointer2string(item));
+	effectChar(',');
+	embedNodeName(item);
+	effectChar(' ');
+	endeffect();
+	return JS_TRUE;
+}				/* insertBefore */
+
+static JSBool removeChild(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	unsigned i, mark, length;
+	js::RootedValue v(cx);
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	args.rval().set(JSVAL_VOID);
+/* we need an object */
+	if (args.length() < 1 || !args[0].isObject())
+		return JS_TRUE;
+
+	JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+	JS::RootedObject child(cx, JSVAL_TO_OBJECT(args[0]));
+	if (JS_GetProperty(cx, thisobj, "childNodes", v.address()) == JS_FALSE)
+		return JS_TRUE;	/* no such array */
+	JS::RootedObject elar(cx, JSVAL_TO_OBJECT(v));
+	if (elar == NULL) {
+		misconfigure();
+		return JS_FALSE;
+	}
+	if (JS_GetArrayLength(cx, elar, &length) == JS_FALSE) {
+		misconfigure();
+		return JS_FALSE;
+	}
+
+/* child better be somewhere in the array */
+	for (mark = 0; mark < length; ++mark) {
+		if (JS_GetElement(cx, elar, mark, v.address()) == JS_FALSE) {
+			misconfigure();
+			return JS_FALSE;
+		}
+		if (!v.isObject())
+			continue;
+		if (JSVAL_TO_OBJECT(v) == child)
+			goto found;
+	}
+	return JS_TRUE;
+
+found:
+/* pull the others back */
+	for (i = mark; i < length - 1; ++i) {
+		JS_GetElement(cx, elar, i + 1, v.address());
+		JS_SetElement(cx, elar, i, v.address());
+	}
+	JS_SetArrayLength(cx, elar, length - 1);
+	JS_DeleteProperty(cx, child, "parentNode");
+
+/* pass this linkage information back to edbrowse, to update its dom tree */
+	char e[40];
+	sprintf(e, "l{r|%s,", pointer2string(thisobj));
+	effectString(e);
+	embedNodeName(thisobj);
+	effectChar(' ');
+	effectString(pointer2string(child));
+	effectChar(',');
+	embedNodeName(child);
+	effectString(" 0x0, ");
+	endeffect();
+	return JS_TRUE;
+}				/* removeChild */
 
 static void dwrite1(unsigned int argc, jsval * argv, bool newline)
 {
-	int i;
+	int i, begin;
 	const char *msg;
 	JS::RootedString str(jcx);
-	effects += "w{";	// }
+	effectString("w{");	// }
+	begin = eff_l;
 	for (i = 0; i < argc; ++i) {
 		if ((str = JS_ValueToString(jcx, argv[i])) &&
 		    (msg = JS_c_str(str))) {
-			effects += msg;
-			nzFree(msg);
+			effectString(msg);
+			cnzFree(msg);
 		}
 	}
 	if (newline)
-		effects += '\n';
+		effectChar('\n');
 	endeffect();
 }				/* dwrite1 */
 
@@ -2038,6 +1540,48 @@ static JSBool doc_writeln(JSContext * cx, unsigned int argc, jsval * vp)
 	return JS_TRUE;
 }				/* doc_writeln */
 
+/* this has a native wrapper so we can set innerHTML with a setter */
+static JSBool doc_createElement(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	char run[60];
+	const char *tagname = NULL, *s;
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	JS::RootedString str(cx);
+	if (args.length() > 0 && (str = JS_ValueToString(cx, args[0])))
+		tagname = JS_c_str(str);
+	if (!tagname || strlen(tagname) >= MAXTAGNAME) {
+fail:
+		cnzFree(tagname);
+		args.rval().set(JSVAL_NULL);
+		return JS_TRUE;
+	}
+	for (s = tagname; *s; ++s)
+		if (!isalnumByte(*s))
+			goto fail;
+/* let js do most of the work */
+	sprintf(run, "document.crel$$('%s')", tagname);
+	JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+	js::RootedValue v(cx);
+	if (JS_EvaluateScript(cx, thisobj, run, strlen(run),
+			      "create", 1, v.address()) == JS_FALSE)
+		goto fail;
+	if (!v.isObject())
+		goto fail;
+	JS::RootedObject child(cx, JSVAL_TO_OBJECT(v));
+/* and now the reason for the wrapper */
+	JS_DefineProperty(cx, child, "innerHTML",
+			  JS_GetEmptyStringValue(cx),
+			  NULL, setter_innerHTML, PROP_STD);
+/* But we can't set innerHTML unless the object exists in edbrowse */
+	sprintf(run, "l{c|%s,%s 0x0, 0x0, ", pointer2string(child), tagname);
+	effectString(run);
+	endeffect();
+
+/* and return the created object */
+	args.rval().set(v);
+	return JS_TRUE;
+}				/* doc_createElement */
+
 static JSFunctionSpec document_methods[] = {
 	JS_FS("focus", nullFunction, 0, 0),
 	JS_FS("blur", nullFunction, 0, 0),
@@ -2045,20 +1589,19 @@ static JSFunctionSpec document_methods[] = {
 	JS_FS("close", nullFunction, 0, 0),
 	JS_FS("write", doc_write, 0, 0),
 	JS_FS("writeln", doc_writeln, 0, 0),
-	JS_FS_END
-};
-
-static JSFunctionSpec element_methods[] = {
-	JS_FS("focus", nullFunction, 0, 0),
-	JS_FS("blur", nullFunction, 0, 0),
+	JS_FS("createElement", doc_createElement, 0, 0),
+	JS_FS("appendChild", appendChild, 1, 0),
+	JS_FS("apch$", apch, 1, 0),
+	JS_FS("insertBefore", insertBefore, 2, 0),
+	JS_FS("removeChild", removeChild, 1, 0),
 	JS_FS_END
 };
 
 static JSBool form_submit(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
-	effects += "f{s";	// }
-	effects += pointer2string(obj);
+	effectString("f{s");	// }
+	effectString(pointer2string(obj));
 	endeffect();
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	args.rval().set(JSVAL_VOID);
@@ -2068,8 +1611,8 @@ static JSBool form_submit(JSContext * cx, unsigned int argc, jsval * vp)
 static JSBool form_reset(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
-	effects += "f{r";	// }
-	effects += pointer2string(obj);
+	effectString("f{r");	// }
+	effectString(pointer2string(obj));
 	endeffect();
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	args.rval().set(JSVAL_VOID);
@@ -2098,12 +1641,11 @@ static JSBool win_alert(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	const char *msg = NULL;
 	JS::RootedString str(cx);
-	if (args.length() > 0 && (str = JS_ValueToString(cx, args[0]))) {
+	if (args.length() > 0 && (str = JS_ValueToString(cx, args[0])))
 		msg = JS_c_str(str);
-	}
 	if (msg && *msg)
 		puts(msg);
-	nzFree(msg);
+	cnzFree(msg);
 	args.rval().set(JSVAL_VOID);
 	return JS_TRUE;
 }				/* win_alert */
@@ -2123,7 +1665,7 @@ static JSBool win_prompt(JSContext * cx, unsigned int argc, jsval * vp)
 	if (!msg)
 		return JS_TRUE;
 	if (!*msg) {
-		nzFree(msg);
+		cnzFree(msg);
 		return JS_TRUE;
 	}
 	if (args.length() > 1 && (str = JS_ValueToString(cx, args[1])))
@@ -2146,12 +1688,12 @@ static JSBool win_prompt(JSContext * cx, unsigned int argc, jsval * vp)
 	if (s > inbuf && s[-1] == '\n')
 		*--s = 0;
 	if (inbuf[0]) {
-		nzFree(answer);	/* Don't need the default answer anymore. */
+		cnzFree(answer);	/* Don't need the default answer anymore. */
 		answer = inbuf;
 	}
 	args.rval().set(STRING_TO_JSVAL(JS_NewStringCopyZ(cx, answer)));
 	if (answer != inbuf)
-		nzFree(answer);
+		cnzFree(answer);
 	return JS_TRUE;
 }				/* win_prompt */
 
@@ -2169,7 +1711,7 @@ static JSBool win_confirm(JSContext * cx, unsigned int argc, jsval * vp)
 	if (!msg)
 		return JS_TRUE;
 	if (!*msg) {
-		nzFree(msg);
+		cnzFree(msg);
 		return JS_TRUE;
 	}
 
@@ -2197,7 +1739,7 @@ static JSBool win_confirm(JSContext * cx, unsigned int argc, jsval * vp)
 		args.rval().set(JSVAL_TRUE);
 	else
 		args.rval().set(JSVAL_FALSE);
-	nzFree(msg);
+	cnzFree(msg);
 	return JS_TRUE;
 }				/* win_confirm */
 
@@ -2254,11 +1796,11 @@ abort:
 			if (len > sizeof(fname) - 4)
 				len = sizeof(fname) - 4;
 			strncpy(fname, s, len);
-			nzFree(allocatedName);
+			cnzFree(allocatedName);
 			fname[len] = 0;
 			strcat(fname, "()");
 			fstr = fname;
-			set_property_object(to, "onclick", fo);
+			set_property_object1(to, "onclick", fo);
 
 		} else {
 
@@ -2293,12 +1835,12 @@ abort:
 		}
 
 		sprintf(nstring, "t{%d|", n);	// }
-		effects += nstring;
-		effects += fstr;
-		effects += '|';
-		effects += pointer2string(to);
-		effects += '|';
-		effects += (isInterval ? '1' : '0');
+		effectString(nstring);
+		effectString(fstr);
+		effectChar('|');
+		effectString(pointer2string(to));
+		effectChar('|');
+		effectChar((isInterval ? '1' : '0'));
 		endeffect();
 
 		return to;
@@ -2352,18 +1894,20 @@ static struct {
 	int nargs;
 } const domClasses[] = {
 	{&document_class, document_ctor, document_methods},
-	{&html_class, html_ctor},
-	{&head_class, head_ctor, head_methods},
+	{&head_class, head_ctor},
 	{&meta_class, meta_ctor},
-	{&link_class, link_ctor, link_methods, 0},
-	{&body_class, body_ctor, body_methods},
+	{&link_class, link_ctor},
+	{&body_class, body_ctor},
 	{&base_class, base_ctor},
 	{&form_class, form_ctor, form_methods},
-	{&element_class, element_ctor, element_methods, 0},
+	{&element_class, element_ctor},
 	{&image_class, image_ctor, NULL, 1},
 	{&frame_class, frame_ctor},
 	{&anchor_class, anchor_ctor, NULL, 1},
+	{&lister_class, lister_ctor},
+	{&listitem_class, listitem_ctor},
 	{&table_class, table_ctor},
+	{&tbody_class, tbody_ctor},
 	{&trow_class, trow_ctor},
 	{&cell_class, cell_ctor},
 	{&div_class, div_ctor},
@@ -2371,12 +1915,13 @@ static struct {
 	{&span_class, span_ctor},
 	{&option_class, option_ctor, NULL, 2},
 	{&script_class, script_ctor},
+	{&para_class, para_ctor},
 	{&url_class, url_ctor},
 	{&textnode_class, textnode_ctor},
 	{0}
 };
 
-static void createJavaContext(void)
+static void createContext(void)
 {
 	int i;
 
@@ -2450,7 +1995,7 @@ no_doc:
 	    (jcx, winobj, "document", v, NULL, NULL, PROP_READONLY) == JS_FALSE)
 		goto no_doc;
 
-}				/* createJavaContext */
+}				/* createContext */
 
 static JSClass *classByName(const char *classname)
 {
@@ -2464,8 +2009,8 @@ static JSClass *classByName(const char *classname)
 		if (stringEqual(cp->name, classname))
 			break;
 	if (!cp) {
-		cerr << "Unexpected class name " << propval <<
-		    " from edbrowse\n";
+		fprintf(stderr, "Unexpected class name %s from edbrowse\n",
+			classname);
 		exit(8);
 	}
 	return cp;
@@ -2482,28 +2027,28 @@ static void set_property_generic(js::HandleObject parent, const char *name)
 
 	switch (proptype) {
 	case EJ_PROP_STRING:
-		set_property_string(parent, name, propval);
+		set_property_string1(parent, name, propval);
 		break;
 
 	case EJ_PROP_INT:
 		n = atoi(propval);
-		set_property_number(parent, name, n);
+		set_property_number1(parent, name, n);
 		break;
 
 	case EJ_PROP_BOOL:
 		n = atoi(propval);
-		set_property_bool(parent, name, n);
+		set_property_bool1(parent, name, n);
 		break;
 
 	case EJ_PROP_FLOAT:
 		d = atof(propval);
-		set_property_float(parent, name, d);
+		set_property_float1(parent, name, d);
 		break;
 
 	case EJ_PROP_OBJECT:
 		child = string2pointer(propval);
 		childroot = child;
-		set_property_object(parent, name, childroot);
+		set_property_object1(parent, name, childroot);
 		break;
 
 	case EJ_PROP_INSTANCE:
@@ -2516,12 +2061,19 @@ static void set_property_generic(js::HandleObject parent, const char *name)
 			break;
 		}
 		if (cp == &url_class) {
-/* the constructor didn't run, so create all the pieces under url */
-			url_initialize(childroot, "", false);
+// the constructor didn't run, so create href$val with its native setter here
+			js::RootedValue v(jcx);
+			v = JS_GetEmptyStringValue(jcx);
+			if (JS_DefineProperty
+			    (jcx, childroot, "href$val", v, NULL,
+			     setter_loc_hrefval, PROP_STD) == JS_FALSE) {
+				misconfigure();
+				break;
+			}
 		}
 
 childreturn:
-		set_property_object(parent, name, childroot);
+		set_property_object1(parent, name, childroot);
 		propval = cloneString(pointer2string(*childroot.address()));
 		break;
 
@@ -2530,47 +2082,99 @@ childreturn:
 		goto childreturn;
 
 	case EJ_PROP_FUNCTION:
-		if (!propval || !*propval) {
-/* null or empty function, link to native null function */
-			JS_NewFunction(jcx, nullFunction, 0, 0, parent,
-				       membername);
-		} else {
-			JS_CompileFunction(jcx, parent, name, 0, emptyParms,
-					   propval, strlen(propval), name, 1);
-		}
+		set_property_function1(parent, name, propval);
 		break;
 
 	default:
-		cerr << "Unexpected property type " << proptype <<
-		    " from edbrowse\n";
+		fprintf(stderr, "Unexpected property type %s from edbrowse\n",
+			proptype);
 		exit(7);
 	}
 
 }				/* set_property_generic */
 
-/*********************************************************************
-ebjs.c allows for geting and setting array elements of all types,
-however the DOM only uses objects. Being lazy, I will simply
-implement objects. You can add other types later.
-*********************************************************************/
-
-static JSObject *get_array_element_object(JS::HandleObject parent, int idx)
+static JSObject *instantiate_array1(js::HandleObject parent, const char *name)
 {
 	js::RootedValue v(jcx);
-	JS::RootedObject child(jcx);
-	if (JS_GetElement(jcx, parent, idx, v.address()) == JS_FALSE)
-		return 0;	/* perhaps out of range */
-	if (!v.isObject()) {
-		cerr << "JS DOM arrays should contain only objects\n";
-		exit(9);
+	js::RootedObject a(jcx);
+	JSBool found;
+	JS_HasProperty(jcx, parent, name, &found);
+	if (found) {
+		if (v.isObject()) {
+			a = JSVAL_TO_OBJECT(v);
+			if (JS_IsArrayObject(jcx, a))
+				return a;
+		}
+		JS_DeleteProperty(jcx, parent, name);
 	}
-	child = JSVAL_TO_OBJECT(v);
-	return child;
-}				/* get_array_element_object */
+	a = JS_NewArrayObject(jcx, 0, NULL);
+	v = OBJECT_TO_JSVAL(a);
+	if (JS_DefineProperty(jcx, parent, name, v, NULL, NULL, PROP_STD) ==
+	    JS_FALSE) {
+		misconfigure();
+		return 0;
+	}
+	return a;
+}				/* instantiate_array1 */
+
+jsobjtype instantiate_array(jsobjtype parent, const char *name)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	return instantiate_array1(p, name);
+}				/* instantiate_array */
+
+static JSObject *instantiate1(js::HandleObject parent, const char *name,
+			      const char *classname)
+{
+	js::RootedValue v(jcx);
+	js::RootedObject a(jcx);
+	JSBool found;
+	JS_HasProperty(jcx, parent, name, &found);
+	if (found) {
+		if (v.isObject()) {
+			a = JSVAL_TO_OBJECT(v);
+/* I'm going to assume it is of the proper class */
+			return a;
+		}
+		JS_DeleteProperty(jcx, parent, name);
+	}
+	JSClass *cp = classByName(classname);
+	a = JS_NewObject(jcx, cp, NULL, parent);
+	v = OBJECT_TO_JSVAL(a);
+	if (JS_DefineProperty(jcx, parent, name, v, NULL, NULL, PROP_STD) ==
+	    JS_FALSE) {
+		misconfigure();
+		return 0;
+	}
+	return a;
+}				/* instantiate1 */
+
+jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	return instantiate1(p, name, classname);
+}				/* instantiate */
+
+static JSObject *instantiate_array_element1(js::HandleObject parent, int idx,
+					    const char *classname)
+{
+	js::RootedObject a(jcx);
+	JSClass *cp = classByName(classname);
+	a = JS_NewObject(jcx, cp, NULL, parent);
+	set_array_element_object(parent, idx, a);
+	return a;
+}				/* instantiate_array_element1 */
+
+jsobjtype instantiate_array_element(jsobjtype parent, int idx,
+				    const char *classname)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	return instantiate_array_element1(p, idx, classname);
+}				/* instantiate_array_element */
 
 static void
-set_array_element_object(JS::HandleObject parent, int idx,
-			 JS::HandleObject child)
+set_array_element_object1(js::HandleObject parent, int idx,
+			  JS::HandleObject child)
 {
 	js::RootedValue v(jcx);
 	JSBool found;
@@ -2584,7 +2188,41 @@ set_array_element_object(JS::HandleObject parent, int idx,
 		    == JS_FALSE)
 			misconfigure();
 	}
+}				/* set_array_element_object1 */
+
+int set_array_element_object(jsobjtype parent, int idx, jsobjtype child)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	JS::RootedObject c(jcx, (JSObject *) child);
+	set_array_element_object1(p, idx, c);
+	return 0;
 }				/* set_array_element_object */
+
+static JSObject *get_array_element_object1(JS::HandleObject parent, int idx)
+{
+	js::RootedValue v(jcx);
+	JS::RootedObject child(jcx);
+	if (JS_GetElement(jcx, parent, idx, v.address()) == JS_FALSE)
+		return 0;	/* perhaps out of range */
+	if (!v.isObject()) {
+		fprintf(stderr, "JS DOM arrays should contain only objects\n");
+		exit(9);
+	}
+	child = JSVAL_TO_OBJECT(v);
+	return child;
+}				/* get_array_element_object1 */
+
+jsobjtype get_array_element_object(jsobjtype parent, int idx)
+{
+	JS::RootedObject p(jcx, (JSObject *) parent);
+	return get_array_element_object1(p, idx);
+}				/* get_array_element_object */
+
+/*********************************************************************
+ebjs.c allows for geting and setting array elements of all types,
+however the DOM only uses objects. Being lazy, I will simply
+implement objects. You can add other types later.
+*********************************************************************/
 
 /*********************************************************************
 run a javascript function and return the result.
@@ -2661,22 +2299,37 @@ static void processMessage(void)
 
 	switch (head.cmd) {
 	case EJ_CMD_SCRIPT:
-		rc = false;
+		propval = 0;
 		s = runscript;
 /* Sometimes Mac puts these three chars at the start of a text file. */
 		if (!strncmp(s, "\xef\xbb\xbf", 3))
 			s += 3;
+		head.n = 0;
+		head.proplength = 0;
 		if (JS_EvaluateScript(jcx, parent, s, strlen(s),
 				      "foo", head.lineno, v.address())) {
-			rc = true;
-			if (JSVAL_IS_BOOLEAN(v))
-				rc = JSVAL_TO_BOOLEAN(v);
+			if (v != JSVAL_VOID) {
+				s = 0;
+				JS::RootedString str(jcx);
+				str = JS_ValueToString(jcx, v);
+				if (str)
+					s = JS_c_str(str);
+				if (s && !*s) {
+					cnzFree(s);
+					s = 0;
+				}
+				head.n = 1;
+				if (s)
+					head.proplength = strlen(s);
+			}
 		}
-		head.n = rc;
 		nzFree(runscript);
 		runscript = 0;
-		head.proplength = 0;
 		writeHeader();
+		if (head.proplength) {
+			writeToEb(s, head.proplength);
+			cnzFree(s);
+		}
 		break;
 
 	case EJ_CMD_HASPROP:
@@ -2696,7 +2349,7 @@ static void processMessage(void)
 		break;
 
 	case EJ_CMD_GETPROP:
-		propval = get_property_string(parent, membername);
+		propval = get_property_string1(parent, membername);
 		nzFree(membername);
 		membername = 0;
 		head.n = head.proplength = 0;
@@ -2718,7 +2371,9 @@ static void processMessage(void)
 		if (head.proptype == EJ_PROP_ARRAY
 		    || head.proptype == EJ_PROP_INSTANCE)
 			setret = true;
+		setter_suspend = true;
 		set_property_generic(parent, membername);
+		setter_suspend = false;
 		nzFree(membername);
 		membername = 0;
 propreturn:
@@ -2739,7 +2394,7 @@ propreturn:
 		break;
 
 	case EJ_CMD_GETAREL:
-		child = get_array_element_object(parent, head.n);
+		child = get_array_element_object1(parent, head.n);
 		propval = 0;	/* should already be 0 */
 		head.proplength = 0;
 		if (child) {
@@ -2764,14 +2419,15 @@ propreturn:
 			if (!child)
 				misconfigure();
 			else
-				set_array_element_object(parent, head.n, child);
+				set_array_element_object1(parent, head.n,
+							  child);
 			setret = true;
 			propval = cloneString(pointer2string(*child.address()));
 		}
 		if (head.proptype == EJ_PROP_OBJECT && propval) {
 			chp = string2pointer(propval);
 			child = chp;
-			set_array_element_object(parent, head.n, child);
+			set_array_element_object1(parent, head.n, child);
 			nzFree(propval);
 			propval = 0;
 		}
@@ -2802,8 +2458,8 @@ propreturn:
 		break;
 
 	default:
-		cerr << "Unexpected message command " << head.cmd <<
-		    " from edbrowse\n";
+		fprintf(stderr, "Unexpected message command %d from edbrowse\n",
+			head.cmd);
 		exit(6);
 	}
 }				/* processMessage */
