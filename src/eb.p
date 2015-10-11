@@ -317,7 +317,9 @@ void appendFileNF(const char *filename, const char *msg) ;
 void unpercentURL(char *url) ;
 void unpercentString(char *s) ;
 char *percentURL(const char *start, const char *end);
-char *htmlEscape(const char *s);
+char *htmlEscape0(const char *s, bool do_and);
+#define htmlEscape(s) htmlEscape0((s), true)
+#define htmlEscapeTextarea(s) htmlEscape0((s), false)
 bool isURL(const char *url) ;
 bool isBrowseableURL(const char *url) ;
 bool isDataURI(const char *u);

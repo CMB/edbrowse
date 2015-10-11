@@ -14,6 +14,59 @@ edbrowse bool true false.
 #include <tidy.h>
 #include <tidybuffio.h>
 
+/*********************************************************************
+This routine preprocesses the html text to work around
+any shortcomings of tidy that are not worth fixing just for edbrowse,
+or have not been fixed yet.
+Other shortcomings are easier to manage after the fact,
+dealing with the tree of nodes - see nestedAnchors() in decorate.c.
+But some things must be managed prior to dity parse.
+Return null if there is no need to change the text.
+Otherwise return an allocated string.
+The only workaround here is the expansion of < > inside a textarea.
+*********************************************************************/
+
+char *tidyPreprocess(const char *h)
+{
+	char *ns;		/* the new string */
+	int l;
+	char *inside, *expanded;
+	const char *lg, *s = strstrCI(h, "<textarea");
+/* most web pages don't have textareas */
+	if (!s)
+		return NULL;
+	ns = initString(&l);
+	stringAndBytes(&ns, &l, h, s - h);
+	h = s;
+	while (true) {
+/* next textarea */
+		s = strstrCI(h, "<textarea");
+		if (!s)
+			break;
+		s = strchr(s, '>');
+		if (!s)
+			break;
+		++s;
+		stringAndBytes(&ns, &l, h, s - h);
+		h = s;
+		s = strstrCI(h, "</textarea");
+		if (!s)
+			break;
+		lg = strpbrk(h, "<>");
+/* lg is at most s */
+		if (lg == s)
+			continue;
+		inside = pullString1(h, s);
+		expanded = htmlEscapeTextarea(inside);
+		stringAndString(&ns, &l, expanded);
+		nzFree(inside);
+		nzFree(expanded);
+		h = s;
+	}
+	stringAndString(&ns, &l, h);
+	return ns;
+}				/* tidyPreprocess */
+
 /* the tidy structure corresponding to the html */
 static TidyDoc tdoc;
 
@@ -68,7 +121,7 @@ void html2nodes(const char *htmltext)
 
 	tidySetCharEncoding(tdoc, (cons_utf8 ? "utf8" : "latin1"));
 
-//      htmlfix = escapeLessScript(htmltext);
+	htmlfix = tidyPreprocess(htmltext);
 	if (htmlfix) {
 		tidyParseString(tdoc, htmlfix);
 		nzFree(htmlfix);

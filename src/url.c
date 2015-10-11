@@ -182,7 +182,7 @@ char *percentURL(const char *start, const char *end)
 }				/* percentURL */
 
 /* escape & < > for display on a web page */
-char *htmlEscape(const char *s)
+char *htmlEscape0(const char *s, bool do_and)
 {
 	char *t;
 	int l;
@@ -192,7 +192,7 @@ char *htmlEscape(const char *s)
 		return emptyString;
 	t = initString(&l);
 	for (; *s; ++s) {
-		if (*s == '&') {
+		if (*s == '&' && do_and) {
 			stringAndString(&t, &l, "&amp;");
 			continue;
 		}
@@ -207,7 +207,7 @@ char *htmlEscape(const char *s)
 		stringAndChar(&t, &l, *s);
 	}
 	return t;
-}				/* htmlEscape */
+}				/* htmlEscape0 */
 
 /* Decide if it looks like a web url. */
 static bool httpDefault(const char *url)
