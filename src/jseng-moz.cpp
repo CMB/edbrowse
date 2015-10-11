@@ -1279,6 +1279,8 @@ void run_function_onearg(jsobjtype parent, const char *name, jsobjtype child)
 	run_function_onearg1(p, name, c);
 }				/* run_function_onearg */
 
+#if 0
+/* Not clear that setAttribute needs any side effects, or needs to be native. */
 static JSBool setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
@@ -1295,6 +1297,7 @@ static JSBool setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
 	args.rval().set(JSVAL_VOID);
 	return JS_TRUE;
 }				/* setAttribute */
+#endif
 
 static void embedNodeName(JS::HandleObject obj)
 {
@@ -1587,7 +1590,6 @@ static JSFunctionSpec document_methods[] = {
 	JS_FS("write", doc_write, 0, 0),
 	JS_FS("writeln", doc_writeln, 0, 0),
 	JS_FS("createElement", doc_createElement, 0, 0),
-	JS_FS("setAttribute", setAttribute, 2, 0),
 	JS_FS("appendChild", appendChild, 1, 0),
 	JS_FS("apch$", apch, 1, 0),
 	JS_FS("insertBefore", insertBefore, 2, 0),

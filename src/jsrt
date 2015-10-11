@@ -1,4 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <html>
 <head id=boom>
 <title>Edbrowse js regression test</title>
@@ -433,7 +433,7 @@ Wyoming
 http://www.w3schools.com/html/html_form_input_types.asp -->
 <input type=number maxlength=5 name="zip code" readonly value="&#56;8888">
 <span id=almond></span>
-<table class=filbert summary="pecan test"><tr><td></td></tr><tr id=pecan><td></td></tr></table>
+<table class=filbert><tr><td></td></tr><tr id=pecan><td></td></tr></table>
 Colors will change with the state, A through M or N through Z.
 <br>My favorite colors are:
 <select name=colors multiple>
@@ -485,7 +485,7 @@ onclick="alert('rock and roll')">
 <script type=text/javascript language=JavaScript>
 // I'll push the button for you
 document.questionnaire.b.onclick();
-if(document.questionnaire.result.value != 90) fail(85);
+if(document.questionnaire.result.getAttribute("value") != 90) fail(85);
 if(document.questionnaire.id.value != "eklhad") fail(86);
 if(document.forms[0].elements[1].value != "secret") fail(87);
 
