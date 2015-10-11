@@ -157,6 +157,8 @@ static void anchorSwap(char *buf)
 		if (ss)
 			c = becomes[ss - from];
 
+#if 0
+// keep empty anchors, for now.
 		if (c != InternalCodeChar)
 			goto put1;
 		if (!isdigitByte(s[1]))
@@ -170,6 +172,7 @@ static void anchorSwap(char *buf)
 /* skip past empty {} */
 		s = a + 2;
 		continue;
+#endif
 
 put1:
 		*w++ = c;
