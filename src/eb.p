@@ -143,7 +143,7 @@ void javaOpensWindow(const char *href, const char *name) ;
 void javaSetsLinkage(char type, jsobjtype p, const char *rest);
 
 /* sourcefile=html-tidy.c */
-void html2nodes(const char *htmltext);
+void html2nodes(const char *htmltext, bool startpage);
 
 /* sourcefile=decorate.c */
 void traverseAll(int start);

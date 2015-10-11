@@ -1515,7 +1515,7 @@ void html_from_setter(jsobjtype inner, const char *h)
 {
 	cw = &in_js_cw;
 	initTagArray();
-	html2nodes(h);
+	html2nodes(h, false);
 	htmlGenerated = true;
 	htmlNodesIntoTree(0, NULL);
 	prerender(0);

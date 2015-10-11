@@ -412,7 +412,7 @@ static void runGeneratedHtml(struct htmlTag *t, const char *h, const char *pre)
 	}
 
 	htmlGenerated = true;
-	html2nodes(h);
+	html2nodes(h, false);
 	htmlNodesIntoTree(l, t);
 	prerender(0);
 
@@ -720,7 +720,7 @@ char *htmlParse(char *buf, int remote)
 	cw->hbase = cloneString(cw->fileName);
 
 /* call the tidy parser to build the html nodes */
-	html2nodes(buf);
+	html2nodes(buf, true);
 	nzFree(buf);
 	htmlNodesIntoTree(0, NULL);
 	prerender(0);

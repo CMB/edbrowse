@@ -110,12 +110,14 @@ static Bool TIDY_CALL tidyErrorHandler(TidyDoc tdoc, TidyReportLevel lvl,
 }				/* tidyErrorHandler */
 
 /* the entry point */
-void html2nodes(const char *htmltext)
+void html2nodes(const char *htmltext, bool startpage)
 {
 	char *htmlfix = 0;
 
 	tdoc = tidyCreate();
 	tidyOptSetBool(tdoc, TidySkipQuotes, yes);
+	if (!startpage)
+		tidyOptSetInt(tdoc, TidyBodyOnly, yes);
 	tidySetReportFilter(tdoc, tidyErrorHandler);
 //    tidySetReportFilter(tdoc, tidyReportFilter);
 
