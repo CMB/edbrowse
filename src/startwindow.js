@@ -381,6 +381,17 @@ this.hostname$val = this.host$val;
 // should we be filling in a default port here?
 this.port$val = default$port(this.protocol$val);
 }
+// perhaps set protocol to http if it looks like a url?
+// as in edbrowse foo.bar.com
+// Ends in standard tld, or looks like an ip4 address, or starts with www.
+if(this.protocol$val == "" &&
+(this.hostname$val.match(/\.(com|org|net|info|biz|gov|edu|us|uk|ca|au)$/) ||
+this.hostname$val.match(/^\d+\.\d+\.\d+\.\d+$/) ||
+this.hostname$val.match(/^www\..*\.[a-zA-Z]{2,}$/))) {
+this.protocol$val = "http:";
+if(this.port$val == 0)
+this.port$val = 80;
+}
 if(v.match(/[#?]/)) {
 this.pathname$val = v.replace(/[#?].*/, "");
 v = v.replace(/^[^#?]*/, "");
