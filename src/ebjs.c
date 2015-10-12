@@ -1126,7 +1126,7 @@ void setupJavaDom(void)
 	char save_c;
 	static const char *languages[] = { 0,
 		"english", "french", "portuguese", "polish",
-		"german",
+		"german", "russian",
 	};
 	extern const char *startWindowJS;
 

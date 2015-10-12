@@ -4228,6 +4228,14 @@ void selectLanguage(void)
 		return;
 	}
 
+	if (!strncmp(buf, "ru", 2)) {
+		eb_lang = 6;
+		messageArray = russianMessages;
+		messageArrayLength = sizeof(russianMessages) / sizeof(char *);
+		type8859 = 5;
+		return;
+	}
+
 /* This message is really annoying if it pops up every time you invoke edbrowse.
 	fprintf(stderr, "Sorry, language %s is not implemented\n", buf);
 */
