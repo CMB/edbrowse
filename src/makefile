@@ -47,7 +47,7 @@ startwindow.c: startwindow.js
 	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/startwindow.c
 
 ebrc.c: ../doc/ebrc-en ../doc/ebrc-fr ../doc/ebrc-pt_br
-	cd .. ; ./tools/buildsourcestring.pl doc/ebrc-en ebrc_en doc/ebrc-fr ebrc_fr doc/ebrc-pt_br ebrc_pt_br src/ebrc.c
+	cd .. ; ./tools/buildebrcstring.pl
 
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.
