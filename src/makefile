@@ -41,7 +41,7 @@ EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
 	ebjs.o plugin.o html-tidy.o decorate.o ebrc.o
 
 #  Header file dependencies.
-$(EBOBJS) : eb.h eb.p messages.h ebjs.h
+$(EBOBJS) : eb.h ebprot.h messages.h ebjs.h
 
 startwindow.c: startwindow.js
 	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/startwindow.c
@@ -60,7 +60,7 @@ install:
 	install -Dm755 edbrowse-js $(DESTDIR)$(bindir)/edbrowse-js
 
 #  Database files.
-dbodbc.o dbinfx.o dbops.o : dbapi.h eb.h eb.p
+dbodbc.o dbinfx.o dbops.o : dbapi.h eb.h ebprot.h
 
 #  native Informix library for database access.
 #  Others could be built, e.g. Oracle, but odbc is the most general.

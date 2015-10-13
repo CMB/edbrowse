@@ -127,7 +127,7 @@ endif(BUILD_SHARED_LIB)
 #EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
 #	html.o format.o cookies.o stringfile.o messages.o ebjs.o plugin.o
 #  Header file dependencies.
-#$(EBOBJS) : eb.h eb.p messages.h ebjs.h
+#$(EBOBJS) : eb.h ebprot.h messages.h ebjs.h
 
 # see tools/buildsourcestring.pl
 set(dir src)
@@ -175,7 +175,7 @@ set(${name}_SRCS
     )
 set(${name}_HDRS
     ${dir}/eb.h
-    ${dir}/eb.p
+    ${dir}/ebprot.h
     ${dir}/messages.h
     ${dir}/ebjs.h
     )

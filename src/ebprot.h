@@ -1,10 +1,5 @@
 /* Prototypes for edbrowse */
 
-/* Last 3 sourcefiles are shared with a c++ program */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* sourcefile=auth.c */
 bool getUserPass(const char *url, char *creds, bool find_proxy) ;
 bool addWebAuthorization(const char *url, const char *credentials, bool proxy) ;
@@ -342,6 +337,3 @@ char *encodePostData(const char *s) ;
 char *decodePostData(const char *data, const char *name, int seqno) ;
 void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p) ;
 
-#ifdef __cplusplus
-}
-#endif

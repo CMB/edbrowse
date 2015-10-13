@@ -64,6 +64,13 @@ typedef uchar bool;
 #define true 1
 #endif
 
+/* Some source files are shared between edbrowse, a C program,
+ * and edbrowse-js, currently a C++ function program, thus the prototypes,
+ * and some other structures, must be C protected. */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*********************************************************************
 Include the header file that connects edbrowse to the js process.
 This is a series of enums, and the interprocess message structure,
@@ -155,8 +162,6 @@ extern char emptyString[];	/* use this whenever you would use "" */
  * But sometimes we have to lie.
  * When you deal with clickbank, for instance, they won't let you in the
  * door unless you are one of three approved browsers.
- * I've written to them about this particular flavor of stupidity,
- * but they obviously don't care.  So lie!
  * Tell them you're Explorer, and walk right in.
  * Anyways, this array holds up to 10 user agent strings. */
 extern char *userAgents[10], *currentAgent;
@@ -507,9 +512,13 @@ extern nodeFunction traverse_callback;
 #endif
 
 /* function prototypes */
-#include "eb.p"
+#include "ebprot.h"
 
 /* Symbolic constants for language independent messages */
 #include "messages.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
