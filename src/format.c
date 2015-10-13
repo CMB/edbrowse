@@ -158,7 +158,7 @@ static void anchorSwap(char *buf)
 			c = becomes[ss - from];
 
 #if 0
-// keep empty anchors, for now.
+// Should we modify empty anchors in any way?
 		if (c != InternalCodeChar)
 			goto put1;
 		if (!isdigitByte(s[1]))
@@ -169,7 +169,8 @@ static void anchorSwap(char *buf)
 		for (++a; *a == ' '; ++a) ;
 		if (a[0] != InternalCodeChar || a[1] != '0' || a[2] != '}')
 			goto put1;
-/* skip past empty {} */
+// do something with empty {} here.
+// Following code just skips it, but we likely shouldn't do that.
 		s = a + 2;
 		continue;
 #endif
@@ -774,8 +775,19 @@ char *htmlReformat(char *buf)
 			i_printfExit(MSG_BadTagCode, tagno, c);
 		appendPrintableChunk(h, nh - h, premode);
 		preFormatCheck(tagno, &pretag, &slash);
-		if (pretag)
+		if (pretag) {
 			premode = !slash;
+			if (!premode) {
+/* This forces a new paragraph, so it last char was nl, erase it. */
+				char *w = bl_cursor - 1;
+				while (*w != InternalCodeChar)
+					--w;
+				if (w > bl_start && w[-1] == '\n') {
+					memmove(w - 1, w, bl_cursor - w);
+					--bl_cursor;
+				}
+			}
+		}
 	}			/* loop over text */
 
 /* close off the last line */
