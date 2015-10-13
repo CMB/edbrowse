@@ -354,6 +354,17 @@ putc:
 				*w = ' ';
 	}			/* loop over buffer */
 	debugPrint(4, "whitespace combined");
+
+/* Due to the anchor swap, the buffer could end in whitespace
+ * followed by several anchors. Trim these off. */
+	s = buf + strlen(buf);
+	while (s > buf + 1 && s[-1] == '*' && isdigitByte(s[-2])) {
+		for (w = s - 3; w >= buf && isdigitByte(*w); --w) ;
+		if (w < buf || *w != InternalCodeChar)
+			break;
+		s = w;
+	}
+	*s = 0;
 }				/* anchorSwap */
 
 /*********************************************************************
