@@ -402,14 +402,8 @@ void htmlMetaHelper(struct htmlTag *t)
 static void runGeneratedHtml(struct htmlTag *t, const char *h, const char *pre)
 {
 	int j, l = cw->numTags;
-	if (debugLevel >= 4) {
-		const char *bh = strstr(h, "<body>");
-		if (!bh)
-			bh = h;
-		else
-			bh += 6;
-		printf("Generated {%s}\n", bh);
-	}
+
+	debugPrint(4, "Generated {%s}", h);
 
 	htmlGenerated = true;
 	html2nodes(h, false);

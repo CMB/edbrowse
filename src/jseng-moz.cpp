@@ -920,7 +920,7 @@ setter_innerHTML(JSContext * cx, JS::HandleObject obj,
 	effectString(pointer2string(obj));
 	begin = eff_l + 1;
 	effectString
-	    ("|<!DOCTYPE public><head><title>innerHTML</title></head><body>\n");
+	    ("|<!DOCTYPE public><body>\n");
 	effectString(s);
 	if (*s && s[strlen(s) - 1] != '\n')
 		effectChar('\n');
