@@ -29,7 +29,7 @@ EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
 	html.o format.o cookies.o stringfile.o jsdom.o jsloc.o messages.o
 
 # Header file dependencies.
-$(EBOBJS) : eb.h ebprot.h messages.h
+$(EBOBJS) : eb.h ebprot.h messages.h ebjs.h
 
 edbrowse: $(EBOBJS) dbstubs.o
 	cc $(LFLAGS) -o edbrowse $(EBOBJS) dbstubs.o $(LIBS)

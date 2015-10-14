@@ -41,7 +41,7 @@ EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
 	ebjs.o plugin.o html-tidy.o decorate.o ebrc.o
 
 #  Header file dependencies.
-$(EBOBJS) : eb.h ebprot.h messages.h ebjs.h
+$(EBOBJS) jseng-moz.o : eb.h ebprot.h messages.h ebjs.h
 
 startwindow.c: startwindow.js
 	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/startwindow.c
@@ -80,7 +80,7 @@ clean:
 	rm -f *.o edbrowse edbrowse-infx edbrowse-odbc edbrowse-js startwindow.c
 
 jseng-moz.o: jseng-moz.cpp
-	$(CXX) -c $(CXXFLAGS) $(JS_CXXFLAGS) $^ -o $@
+	$(CXX) -c $(CXXFLAGS) $(JS_CXXFLAGS) jseng-moz.cpp -o $@
 
 
 edbrowse-js : jseng-moz.o messages.o url.o stringfile.o html-tidy.o decorate.o

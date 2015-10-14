@@ -6,6 +6,7 @@
 #include "eb.h"
 
 static void runOnload(void);
+static void runScriptsPending(void);
 
 #define handlerPresent(obj, name) (has_property(obj, name) == EJ_PROP_FUNCTION)
 
@@ -518,7 +519,7 @@ static void prepareScript(struct htmlTag *t)
 	t->js_file = cloneString(filepart);
 }				/* prepareScript */
 
-void runScriptsPending(void)
+static void runScriptsPending(void)
 {
 	struct htmlTag *t;
 	struct inputChange *ic;

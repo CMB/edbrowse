@@ -6,7 +6,6 @@ bool addWebAuthorization(const char *url, const char *credentials, bool proxy) ;
 
 /* sourcefile=buffers.c */
 pst fetchLine(int n, int show) ;
-int currentBufferSize(void) ;
 void displayLine(int n) ;
 void initializeReadline(void) ;
 pst inputLine(void) ;
@@ -26,7 +25,6 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname);
 void freeEmptySideBuffer(int n);
 bool browseCurrentBuffer(void) ;
 bool locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p);
-bool locateInvisibleAnchor(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p);
 char *getFieldFromBuffer(int tagno);
 int fieldIsChecked(int tagno);
 
@@ -116,7 +114,6 @@ bool tagHandler(int seqno, const char *name) ;
 void jSideEffects(void) ;
 void jSyncup(void) ;
 void htmlMetaHelper(struct htmlTag *t);
-void runScriptsPending(void);
 void preFormatCheck(int tagno, bool * pretag, bool * slash) ;
 char *htmlParse(char *buf, int remote) ;
 bool htmlTest(void) ;
