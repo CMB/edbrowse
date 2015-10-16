@@ -129,7 +129,10 @@ endif(BUILD_SHARED_LIB)
 #  Header file dependencies.
 #$(EBOBJS) : eb.h ebprot.h messages.h ebjs.h
 
-# see tools/buildsourcestring.pl
+# see tools/build*.pl scripts
+file(GLOB LANG_EBRC_FILES "lang/ebrc-*")
+message(STATUS "Language ebrc files: LANG_EBRC_FILES=${LANG_EBRC_FILES}")
+
 set(dir src)
 set(GEN_SOURCES
     ${CMAKE_SOURCE_DIR}/${dir}/startwindow.c
@@ -141,8 +144,8 @@ if (PERL)
         OUTPUT ${GEN_SOURCES}
         COMMAND perl -f tools/buildsourcestring.pl src/startwindow.js startWindowJS src/startwindow.c
         COMMAND perl -f tools/buildebrcstring.pl
-        DEPENDS doc/ebrc-en doc/ebrc-fr doc/ebrc-pt_br src/startwindow.js 
-            tools/buildsourcestring.pl
+        DEPENDS ${LANG_EBRC_FILES} src/startwindow.js tools/buildsourcestring.pl
+            tools/buildebrcstring.pl
         COMMENT "Running perl to build ${GEN_SOURCES}"
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         )

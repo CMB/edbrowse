@@ -46,7 +46,7 @@ $(EBOBJS) jseng-moz.o : eb.h ebprot.h messages.h ebjs.h
 startwindow.c: startwindow.js
 	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/startwindow.c
 
-ebrc.c: ../doc/ebrc-en ../doc/ebrc-fr ../doc/ebrc-pt_br
+ebrc.c: ../lang/ebrc-*
 	cd .. ; ./tools/buildebrcstring.pl
 
 # The implicit linking rule isn't good enough, because we don't have an

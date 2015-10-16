@@ -4,7 +4,7 @@
 use strict;
 use warnings;
 
-my $s = join ' ', glob "doc/ebrc-*";
+my $s = join ' ', glob "lang/ebrc-*";
 $s =~ s/ebrc-\w+/$& $&/g;
 # Some inconsistency has evolved here,
 # file name is hyphen, but C string has to be an underscore.
