@@ -199,6 +199,11 @@ break;
 case "td":
 c = new Cell();
 break;
+case "option":
+c = new Option();
+c.nodeName = t;
+// don't need style or childNodes here.
+return c;
 default:
 /* alert("createElement default " + s); */
 c = new Element();
