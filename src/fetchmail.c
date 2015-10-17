@@ -594,7 +594,7 @@ imap_done:
 				goto imap_done;
 			g = folderByName(inputline);
 			if (g && g != f) {
-				if (asprintf(&t, "COPY %d \"%s\"",
+				if (asprintf(&t, "MOVE %d \"%s\"",
 					     mif->seqno, g->path) == -1)
 					i_printfExit(MSG_MemAllocError, 24);
 				curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
@@ -605,14 +605,7 @@ imap_done:
 				nzFree(mailstring);
 				if (res != CURLE_OK)
 					goto abort;
-// copy was successful, delete from this folder.
-// Documentation says we have to delete explicitly,
-// but gmail does it automatically, like copy is really a move,
-// and if I try to delete after the fact bad things happen!
-// I really don't know here.
-// delflag = true;
-// Furthermore, and again this is gmail, not sure in general,
-// the move command shifts all the sequence numbers down.
+// The move command shifts all the sequence numbers down.
 				j2 = j + 1;
 				mif2 = mif + 1;
 				while (j2 < f->nfetch) {
