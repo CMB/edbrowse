@@ -4,3 +4,4 @@ edbrowse-js
 edbrowse-odbc
 startwindow.c
 ebrc.c
+msg-strings.c

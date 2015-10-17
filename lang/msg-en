@@ -1,0 +1,659 @@
+EOF
+no file
+redirect
+substitutions global
+substitutions local
+case insensitive
+case sensitive
+directories readonly
+directories writable
+directories writable with delete
+no http redirection
+http redirection
+do not send referrer
+send referrer
+javascript disabled
+javascript enabled
+treating binary like text
+watching for binary files
+passive mode
+active mode
+Javascript engine has failed; all current javascript sessions have been closed.
+don't verify ssl connections (less secure)
+verify ssl connections
+don't show hidden files in directory mode
+show hidden files in directory mode
+Unable to fork child process for edbrowse-js, javascript has been disabled.
+Unable to exec edbrowse-js, javascript has been disabled.
+end markers off
+end markers on listed lines
+end markers on
+javascript disabled, no action taken
+javascript is disabled, going straight to the url
+redirection interrupted by user
+empty
+new session
+no trailing newline
+directory mode
+binary data
+ok
+ [binary]
+no title
+no description
+no keywords
+session %d\n
+SendMail link.  Compose your mail, type sm to send, then ^ to get back.
+line %d has been updated\n
+h\tprint this help message.\nq\tquit this program.\ns\tstop reading from this folder.\nn\tcontinue to next message.\nd\tdelete this email.\nm\tmove this email to another folder.\nspace\tread and manage this email.\n/\tsearch for words in subject, from, or body.\nl\tset imap fetch limit.
+s string, emails with string in the subject\nf string, emails with string in the from line\nb string, emails with string in the message body\nif no letter designator, subject is default.
+no messages
+interrupt, type qt to quit completely
+edbrowse ready
+entered command line contains nulls; you can use \\0 in a search/replace string to indicate null
+authorization requested - type x to abort.
+too many redirections
+success
+directory
+redirect to %s delayed by %d seconds\n
+Username: 
+user name too long, limit %d characters
+Password: 
+password too long, limit %d characters
+Unable to communicate with edbrowse-js, javascript has been disabled.
+warning, the directory is inaccessible - the listing will be empty
+disaster, error message length %d is too long\n
+line %d: 
+not in directory mode
+buffer %d has been updated\n
+no options
+form has been reset
+submitting form
+.ebrc: line %d, outtype should be set to t or h
+ many
+ recommended
+]
+no options contain the string %s\n
+sending mail to %s\n
+Your information has been sent; watch for a reply via return mail.
+junk
+quit
+next
+delete
+plugins inactive
+plugins active
+Unable to set up the javascript runtime environment, javascript has been disabled.
+end of message
+not yet implemented
+filename: 
+Sorry, file %s already exists.\n
+abbreviated 
+empty attachment
+attachment 
+no buffers left, atachment discarded
+could not copy the attachment into buffer %d
+cannot create file %s, attachment is discarded\n
+cannot write to file %s, attachment is discarded\n
+no mail
+%d messages\n
+Javascript interprocess messages are out of sync.
+invalid characters after the ls command
+h\tprint this help message.\nq\tquit this program.\nspace\tread more of this email.\nn\tnext email.\nd\tdelete this email.\nw\twrite this email to a file and delete it.\nu\twrite this email unformatted to a file and delete it.
+cannot create file %s\n
+cannot write to file %s\n
+mail saved, %d bytes
+ appended
+This page is finished, please use your back key or quit.
+cannot create temporary directory /tmp/.edbrowse
+no errors
+proxy authentication for a non-proxy url
+session %d is not active
+session 0 is invalid
+session %d is out of bounds, limit %d
+you are already in session %d
+expecting `w'
+expecting `w' on session %d
+Your limit of 170 million lines has been reached.\nSave your files, then exit and restart this program.
+absolute path name too long, limit %d chars
+directories are readonly, type dw to enable directory writes
+could not create .Trash under your home directory, to hold the deleted files
+could not remove file %s
+Could not move %s to the trash bin, set dx mode to actually remove the file
+destination lies inside the block to be moved or copied
+no change
+cannot join one line
+cannot read from the database into another file
+cannot read different tables into the same session
+missing file name
+empty domain in url
+cannot write to a url
+cannot write to a database table
+cannot write an empty file
+cannot create %s
+cannot write to %s
+session is not interactive
+line %c is out of range
+cannot embed nulls in a shell command
+label %c not set
+invalid delimiter
+no remembered search string
+no remembered replacement string
+regular expression too long
+line ends in backslash
+unexpected closing )
+replacement string can only use $1 through $9
+%s modifier has no preceding character
+no closing ]
+no closing )
+empty buffer
+error in regular expression, %s
+unexpected error while evaluating the regular expression at line %d
+search string not found
+line number too large
+negative line number
+no regular expression after %c
+missing delimiter
+no lines match the g pattern
+all lines match the v pattern
+none of the marked lines were successfully modified
+operation interrupted
+no match
+Javascript objects are missing or misconfigured.
+agent number %c is not defined
+could not print new directory
+could not establish current directory
+invalid directory
+cannot play audio from an empty buffer
+cannot play audio in browse mode
+cannot play audio in directory mode
+cannot play audio in database mode
+file has no suffix, use pb.xxx to specify your own suffix
+suffix is limited to 5 characters
+suffix .%s is not a recognized mime type, please check your config file.
+no file name or url to refresh
+not in database mode
+not in browse mode
+file name does not contain /
+file name ends in /
+invalid characters after the sm command
+you must specify exactly one of %s after the B command
+line does not contain an open %c
+both %c and %c are unbalanced on this line, try B%c or B%c
+line does not contain an unbalanced brace, parenthesis, or bracket
+cannot find the line that balances %c
+Your edbrowse config file is missing; a default file has been created for you.\nBefore running edbrowse again, take the time to personalize your config file:\n%s\nedbrowse -c to edit\n
+session %d is currently in directory mode
+no file name
+end of buffer
+no more lines to join
+bad range
+cannot break lines in directory mode
+cannot break lines in database mode
+cannot break lines in browse mode
+unknown command %c
+%c not available in directory mode
+%c not available in database mode
+%c not available in browse mode
+zero line number
+no space after command
+the %c command cannot be applied globally
+invalid move/copy destination
+unexpected text after the %c command
+nothing to undo
+please enter k[a-z]
+cannot label an entire range
+backing up 0 is invalid
+warning: no buffers available to handle the ancillary window
+unexpected text after the q command
+cannot change the name of a directory
+cannot change the name of a table
+cannot append to another buffer
+no file specified
+cannot write to the directory; files are modified as you go
+cannot write to the database; rows are modified as you go
+unexpected text after the ^ command
+no previous text
+unexpected text after the M command
+destination session not specified
+no previous text, cannot back up
+cannot apply the g command to a range
+g not available in database mode
+cannot apply the i%c command to a range
+cannot use i< in a global command
+buffer %d is empty
+buffer %d contains more than one line
+cannot open %s
+cannot read from %s
+input text contains nulls
+line contains an embeded carriage return
+first line of %s is too long
+file is currently in buffer - please use the rf command to refresh
+cannot browse a binary file
+cannot browse an empty file
+this doesn't look like browsable text
+already browsing
+label %s is not found
+i not available in browse mode
+cannot run an insert command from an edbrowse function
+Unable to communicate with edbrowse-js, javascript is closed.
+command %c not yet implemented
+%d is out of range
+no options contain the string %s
+multiple options contain the string %s
+this is a button; use i* to push the button
+this is a submit button; use i* to push the button
+this is a reset button; use i* to push the button
+this is a textarea, you must edit it from session %d
+readonly field
+input field cannot contain a newline character
+input too long, limit %d characters
+field must be set to + or -
+you cannot clear a radio button; you must set another one
+%s is not an accessible file
+number expected
+session %d contains nulls
+sending a file requires method=post and enctype=multipart/form-data
+this is an input field, not a button
+this button is not part of a form
+no javascript associated with this button
+form does not include a destination url
+the action of the form is not a url
+javascript is disabled, cannot activate this form
+This form has changed from https to http, and is now insecure
+cannot submit using protocol %s
+%d is out of range, please use %c1 through %c%d
+%d is out of range, please use %c1, or simply %c
+cannot replace multiple instances of the empty string
+download aborted.
+no regular expression after %c
+multiple numbers after the third delimiter
+unexpected substitution suffix after the third delimiter
+cannot use both a numeric suffix and the `g' suffix simultaneously
+sorry, cannot apply the bl command to lines longer than %d bytes
+replacement data contains newlines
+replacement data contains null characters
+cannot embed slash, newline, or null in a directory name
+destination file already exists
+cannot rename file to %s
+cannot embed nulls in an input field
+cannot embed newlines in an input field
+no input fields present
+no links present
+no buttons present
+multiple input fields present, please use %c1 through %c%d
+multiple links present, please use %c1 through %c%d
+multiple buttons present, please use %c1 through %c%d
+could not read the data from the server
+%s is not a url
+download complete
+cannot identify %s on the network
+the %s protocol is not supported by edbrowse, and is not included in the mime types in your config file
+warning: could not preload <buffer %d> with its initial text\n
+download in progress
+cannot connect to %s
+download: 
+The certificate for host %s could not be verified - SSL connection aborted
+inaccessible
+h\tprint this help message.\nq\tquit this program.\ns\tstop reading mail from this folder.\nspace\tread more of this email.\nn\tnext email.\nd\tdelete this email.\nm\tmove this email to another folder\nw\twrite this email to a file.\nW\twrite this email to a file and delete it.\nu\twrite this email unformatted to a file.\nU\twrite this email unformatted to a file and delete it.\na\tscan and save attachments.
+web page requires authorization
+login aborted
+search string cannot contain quotes
+end of folder
+download in foreground
+download in background
+complete
+failed
+ftp could not connect to remote host
+ftp transfer failed
+no folders present
+Select a folder by number or by substring.\nPrepend - for just the unread messages. q to quit. l to change fetch limit.
+in progress
+stop
+fetch %d at a time\n
+no attachments
+.ebrc: keyword = value inside an edbrowse function at line %d
+showing last %d of %d messages\n
+ftp session initialization failed
+0
+edbrowse was not compiled with database access
+missing alias in address book line %d
+missing : in address book line %d
+alias in address book line %d is too long, limit 15 characters
+email in address book line %d is too long, limit 63 characters
+email in address book line %d does not have an @
+cannot handle whitespace in email, address book line %d
+unprintable characters in your alias or email, address book line %d
+last line of your address book is not terminated
+no folders contain %s\n
+multiple folders contain %s\n
+search 
+limit 
+move to 
+warning: form url specifies a section %s, which will be ignored\n
+file %s is empty
+your email should begin with subject:
+0
+subject line too long, limit %d characters
+0
+.signature is not a regular file
+cannot access .signature file
+cannot mail the binary file %s, perhaps this should be an attachment?
+either none or all of the attachments must be declared \"alternative\"
+too many recipients, limit %d
+No address book specified, please check your .ebrc config file
+alias %s not found in your address book
+no recipients specified
+session %d is empty, cannot atach
+cannot access attachment %s
+file %s is not a regular file, cannot attach
+file %s is empty, cannot attach
+line after %d has been deleted\n
+%d lines after %d have been deleted\n
+line %d has been added\n
+lines %d through %d have been added\n
+0
+no mail accounts specified, plese check your config file
+invalid account number %d, please use 1 through %d
+cannot send mail while in browse mode
+cannot send mail while in database mode
+cannot send mail from directory mode
+cannot mail binary data, should this be an attachment?
+cannot mail an empty file
+no recipient at line %d
+cannot cc or bcc to the first recipient
+no attachment at line %d
+invalid account number at line %d
+0
+line %d should begin with to: attach: alt: account: or subject:
+0
+no recipients specified, place to: emailaddress at the top of youre file
+%s:// expected
+unrecognized protocol %s
+invalid :port specifier at the end of the domain
+domain name too long
+user name too long
+password too long
+%d lines have been replaced with line %d\n
+lines %d through %d have been updated\n
+no function specified
+function name should only contain letters and numbers
+no such function %s
+too many arguments
+~%d has no corresponding argument
+could not spawn subcommand %s, errno %d
+could not create temp file %s, errno %d
+too many sql tables in cache, limit %d
+%s is not a regular file
+0
+cannot read the contents of %s
+cannot access %s
+$%s is not defined
+~%s is not defined
+0
+0
+0
+0
+0
+unexpected error while evaluating the shell pattern
+0
+shell pattern matches more than one file
+line becomes too long when shell variables are expanded
+the config file does not specify the database - cannot connect
+cannot connect to the database - error %d
+database error %d
+no primary key for this table
+column name %s is too long, limit %d characters
+syntax error in where clause
+column %d is out of range
+multiple columns match %s
+no column matches %s
+no such table %s
+invalid column name
+cannot select more than one blob column
+the data contains pipes, which is my reserved delimiter
+the data contains newlines
+line contains too many fields, please do not introduce any pipes into the text
+line contains too few fields, please do not remove any pipes from the text
+no primary key column for this table
+miscelaneous sql error %d
+cannot delete more than 100 rows at a time
+cannot change a key column
+cannot change a blob field
+cannot change a text field
+oops!  I deleted %d row(s), and %d database record(s) were affected.
+oops!  I inserted %d row(s), and %d database record(s) were affected.
+oops!  I updated %d row(s), and %d database record(s) were affected.
+some other row in the database depends on this row
+row or table is locked
+you do not have permission to modify the database in this way
+deadlock detected
+placing null into a not-null column
+check constraint violated
+database timeout
+cannot modify a view
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+unexpected characters after the encoded attachment
+invalid characters in the encoded attachment
+0
+warning, javascript cannot be invoked by a double click
+error resolving option %s during sync or form submit
+0
+0
+could not fetch local javascript, %s\n
+could not fetch javascript from %s, code %ld\n
+could not fetch javascript, %s\n
+javascript disabled, skipping the onclick code
+javascript disabled, skipping the onchange code
+javascript disabled, skipping the onreset code
+javascript disabled, skipping the onsubmit code
+could not find the html tag associated with the javascript variable being modified
+0
+warning: garbled refresh directive, %s\n
+0
+warning: http redirection %ld, but a new url is not specified\n
+warning: http error %ld, %s\n
+0
+0
+help messages on
+ftp download: 
+no ssl certificate file specified; secure connections cannot be verified
+scp download: 
+.ebrc: null characters at line %d
+.ebrc: missing function name at line %d
+.ebrc: function name at line %d begins with a digit
+.ebrc: function name at line %d is too long, limit ten characters
+.ebrc: improper function definition syntax at line %d
+.ebrc: line %d, \"condition > file\" expected
+.ebrc: line %d, filter rule has no match string
+.ebrc: line %d, match on %s is set nowhere
+.ebrc: line %d, too many mail filters
+.ebrc: unrecognized keyword %s at line %d
+.ebrc: line %d, attribute %s canot be set outside of a mail descriptor
+.ebrc: line %d, attribute %s canot be set outside of a plugin descriptor
+.ebrc: line %d, attribute %s canot be set outside of a table descriptor
+.ebrc: line %d, attribute %s canot be set inside a mail descriptor or filter block
+.ebrc: line %d, attribute %s canot be set inside a plugin descriptor
+.ebrc: line %d, attribute %s canot be set inside a table descriptor
+.ebrc: line %d, attribute %s is set to nothing
+.ebrc: line %d, too many columns, limit %d
+.ebrc: line %d, keycol should be number or number,number
+.ebrc: line %d, keycol is out of range; only %d columns specified
+.ebrc: address book %s is not a regular file
+0
+.ebrc: %s is not a directory
+.ebrc: line %d, too many user agents, limit 9
+.ebrc: cookie jar %s is not a regular file
+.ebrc: cannot create cookie jar %s
+.ebrc: too many no js directives, limit %d
+.ebrc: line %d, domain %s does not contain a dot
+0
+.ebrc: SSL certificate file %s is not a regular file
+.ebrc: SSL certificate file %s does not exist or is not readable.
+.ebrc: line %d, keyword %s is not yet implemented
+.ebrc: setting multiple mail accounts as default
+.ebrc: missing inserver at line %d
+.ebrc: missing outserver at line %d
+.ebrc: missing login at line %d
+.ebrc: missing password at line %d
+.ebrc: missing from at line %d
+.ebrc: missing reply at line %d
+.ebrc: missing type at line %d
+.ebrc: missing description at line %d
+.ebrc: missing suffix or protocol list at line %d
+.ebrc: missing program at line %d
+.ebrc: missing table name at line %d
+.ebrc: missing short name at line %d
+.ebrc: missing columns at line %d
+.ebrc: unexpected } at line %d
+.ebrc: else at line %d is not part of an if statement
+.ebrc: garbled text at line %d
+.ebrc: line %d, cannot start a function, mail/plugin descriptor, or filter block inside %s
+.ebrc: statement at line %d must appear inside a function
+too many email accounts in your .ebrc config file, limit %d
+too many plugin blocks in your .ebrc config file, limit %d
+too many sql tables in your .ebrc config file, limit %d
+too many functions in your .ebrc config file, limit %d
+.ebrc: line %d, control structures are nested too deeply
+.ebrc: function %s is not closed at eof
+.ebrc: mail or plugin block is not closed at EOF
+home directory not defined by $HOME.
+%s is not a directory
+no mail accounts specified, please check your .ebrc config file
+invalid account number, please use 1 through %d
+edbrowse  -v    (show version)\nedbrowse -h (this message)\nedbrowse -c (edit config file)\nedbrowse [-e] [-d#] -f[#] (fetch mail) \nedbrowse  [-e] [-d#] -[p]m    (read pending mail)\nedbrowse  [-e] [-d#] -[p]fm[#]    (fetch mail and read pending mail)\nedbrowse  [-e] [-d#] -m[#] address1 address2 ... file [+attachments]\nedbrowse  [-e] [-d#] file1 file2 ...
+please specify at least one recipient and the file to send
+please specify at least one recipient and the file to send, before your attachments
+too many files open simultaneously, limit %d
+invalid session %d in fetchLineContext()
+invalid line number %d in fetchLineContext()
+too many proxy entries in your .ebrc config file, limit %d
+session %d out of range in cxActive
+double init on session %d
+quitting a nonactive session %d
+empty new piece in addToMap()
+no newline on directory entry %s
+no closing > at line %d
+fieldInBuffer could not find tag %d newtext %s
+cannot rebuild your cookie jar %s
+0
+fetchmail client is interactive, and cannot run in the background
+mailbox directory not specified in your .ebrc file
+Cannot change directory to %s
+0
+Invalid login or password
+0
+0
+0
+0
+0
+tag code %d has bad character %c following
+0
+htmlParse() is not reentrant.
+unexpected input type in submitForm()
+list = 0 in tagFromJavaVar()
+0
+Could not allocate memory for javascript operations.
+Unable to create javascript context.
+Unable to create javascript window object.
+0
+Unable to create document object for javascript.
+0
+0
+error allocating %zu bytes
+error callocating %zu bytes
+reallocMem(p,0)
+reallocMem(0,%zu)
+error re-allocating %zu bytes
+stringInList(null,...)
+stringInListCI(null,...)
+charInList(null,...)
+null pointer in pstLength
+canot use ioctl() to manage the tty
+cannot open %s
+cannot create or write to %s
+calling fopen() with invalid mode %s
+misplaced / in getDirURL(%s)
+misplaced / in %s
+decodePostData(0,0)
+0
+0
+0
+cannot reply in directory mode
+cannot reply in database mode
+cannot reply to an empty file
+cannot reply to a binary file
+subject and reply lines are required
+warning, there is no message ID to reference
+Sorry, email headers are not available.\nYou must start with an unformatted email message, browse, then reply all.
+l expands control chars into hex
+l expands control and nonascii chars into hex
+Warning: search/substitution functions will not support utf8 characters,\nbecause your pcre library lacks this functionality.\nexport PCREUTF8=off to disable this feature and suppress this warning message.
+converting to iso8859
+converting to utf8
+do not convert between iso8859 and utf8
+automatically convert between iso8859 and utf8
+cannot copy a directory tree to your trash bin on another file system;\nuse cpio -p or cp -r from the shell
+cannot delete a directory tree; use rm -r from the shell
+Failed to initialize libcurl.
+This ftp directory listing is empty.
+search and substitute using ascii
+search and substitute using utf8
+Warning: you may need to (temporarily) disable utf8 search and substitute\nwith the su8 command for this to work properly.
+primary key comprises more than 3 columns
+cannot determine the next value for the serial key(0)
+Table names are in buffer %d\n
+no datasource specified
+connecting to datasource %s\n
+row
+rows
+selected
+inserted
+updated
+deleted
+procedure executed
+table
+sql statement is not terminated by a final semicolon, or a right bracket on the following line
+update or delete statement with no where clause
+remote access denied
+Authorization required to access %s
+operation failed because memory could not be allocated
+Your version of libcurl is older than version %u.%u.%u.\nYou must upgrade libcurl in order to use edbrowse.
+operation timed out
+cannot send data to the server
+the curl library returned the following error message while performing the requested operation: %s
+foreign keys for %s\n
+do not fetch blob columns
+fetch blob columns
+SSL connect error in libcurl: %s
+input tty
+input readline()
+0
+Unrecoverable JavaScript error in this session, javascript is closed.
+0
+0

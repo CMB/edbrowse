@@ -1,0 +1,659 @@
+Fim do arquivo
+nenhum arquivo
+redireção
+substituição é global
+substituição é local
+não diferencia maiúsculas
+diferencia maiúsculas
+diretório é somente leitura
+diretório pode ser escrito
+diretório pode ser escrito e seu conteúdo apagado
+sem redirecionamento http
+redirecionamento http
+não envia referência
+envia referência
+javascript desligado
+javascript ligado
+criando binário como texto
+cuidando arquivos binários
+modo passivo
+modo ativo
+O mecanismo de Javascript falhou; todas as sessões atuais de Javascript foram encerradas.
+não verifica conexões SSL (menos seguro)
+verifica conexões SSL
+não exibe arquivos ocultos no modo diretório
+exibe arquivos ocultos no modo diretório
+Impossível bifurcar processo filho para edbrowse-js, Javascript foi desabilitado.
+Impossível executar edbrowse-js, Javascript foi desabilitado.
+marcadores de fim desligados
+marcadores de fim em linhas listadas
+marcadores de fim ligados
+javascript desativado; nenhuma ação
+javascript está desativado;indo direto à URL
+redirecionamento interrompido pelo usuário
+vazio
+nova sessão
+nenhum espaço de linha nova
+modo diretório
+dados binários
+OK
+ [binário]
+sem título
+sem descrição
+sem palavras chave
+sessção %d\n
+linque de correio.  Escreva a carta, digite sm para enviar e depois ^ para voltar.
+linha %d atualizada\n
+h\timprime esta mensagem de ajuda.\nq\tsai deste programa.\ns\tpára de ler esta pasta.\nn\tprossegue para a próxima mensagem.\nd\tapaga este e-mail.\nm\tmove este e-mail para outra pasta.\nspace\tlê e gerencia este e-mail.\n/\tbusca palavras em assunto, de ou corpo.\nl\tconfigura limite de recepção do imap.
+s cadeia, e-mails com cadeia no assunto\nf cadeia, e-mails com cadeia na linha de\nb cadeia, e-mails com cadeia no corpo da mensagem\ncaso não haja letra designadora, o assunto é o padrão.
+nenhuma mensagem
+interrompendo; digite qt para sair completamente
+edbrowse ativado
+comando contém caracteres nulos; você pode usar \\0 numa cadeia de busca/substituição para indicar nulos
+autorização solicitada - digite x para cancelar.
+redirecionamentos demais
+sucesso
+diretório
+redireção para %s atrasada em %d segundos\n
+Nome de usuário: 
+nome de usuário longo demais; limite %d caracteres
+Senha: 
+senha longa demais; limite %d caracteres
+Impossível comunicar-se com edbrowse-js, Javascript foi desabilitado.
+aviso: diretório inacessível - listagem ficará vazia
+catástrofe; mensagem de erro %d é comprida demais\n
+linha %d: 
+não está em modo diretório
+exibidor %d foi atualizado\n
+sem opções
+formulário limpo
+submetendo formulário
+.ebrc: linha %d, outtype tem que ser definido para t ou h
+ muitos
+ recomendado
+]
+sem opções com a cadeia %s\n
+enviando carta para %s\n
+informação enviada; aguarde resposta por e-mail.
+lixo
+sair
+próximo
+apagar
+plug-ins inativos
+plug-ins ativos
+Impossível configurar o ambiente de execução Javascript, Javascript foi desabilitado.
+fim da mensagem
+não implementado ainda
+nome do arquivo: 
+arquivo %s já existe.\n
+abreviado
+anexo vazio
+anexo 
+sem buffers; anexos descartados
+não foi possível copiar o anexo para o buffer %d
+impossível criar o arquivo %s; anexo descartado\n
+impossível escrever no arquivo %s; anexo descartado\n
+sem cartas
+%d mensagens\n
+Mensagens interprocessos de Javascript não estão em sincronia.
+caracteres inválidos após o comando ls
+h\tmostra esta mensagem de ajuda.\nq\tsai do programa.\nespaço\tcontinua a ler esta carta.\nn\tvai para próxima carta.\nd\tapaga carta.\nw\tguarda carta em arquivo e apaga carta.\nu\tguarda carta em arquivo sem formatar e apaga carta
+impossível criar o arquivo %s\n
+impossível escrever no arquivo %s\n
+carta salva; %d bytes
+ adicionado
+página terminou; por favor use a tecla de retorno ou saia
+não consegui criar o diretório temporário /tmp/.edbrowse
+sem erros
+autenticação proxy para URL não proxy
+sessão %d não ativa
+sessão 0 é inválida
+a sessão %d está fora do limite %d
+já está na sessão %d
+esperando `w'
+esperando `w' na sessão %d
+limite de 170 milhão de linhas alcansado.\nSalve os arquivos, saia e reinicie o programa.
+caminho absoluto comprido demais; o limite é de %d caracteres
+os diretórios são somente leitura; digite dw para ativar a escrita em diretórios
+não foi possível criar o .Trash no seu diretório home para armazenar arquivos apagados
+não foi possível remover o arquivo %s
+não foi possível mover %s para a lixeira; ative o modo dx para remover permanentemente o arquivo
+local de destino fica dentro do bloco a copiar ou mover
+sem mudança
+impossível juntar uma linha
+impossível ler do banco de dados para outro arquivo
+impossível ler tabelas diferentes dentro da mesma sessão
+nome do arquivo faltando
+domínio vazio na URL
+impossível escrever numa URL
+impossível escrever numa tabela do banco de dados
+impossível escrever um arquivo vazio
+impossível criar %s
+impossível escrever em %s
+sessão não interativa
+linha %c fora do intervalo
+impossível embutir caracteres nulos num comando de shell
+rótulo %c não definido
+delimitador inválido
+nenhuma cadeia de busca memorizada
+nenhuma cadeia de substituição memorizada
+expressão regular longa demais
+a linha termina em barra invertida
+fecho inesperado )
+cadeia de substituição pode usar apenas $1 até $9
+o modificador %s não possui caractere predecessor
+sem fecho ]
+sem fecho )
+buffer vazio
+erro na expressão regular; %s
+erro inesperado a avaliar a expressão regular na linha %d
+cadeia não achada
+número de linha grande demais
+número de linha negativo
+sem expressão regular após %c
+delimitador faltando
+nenhuma linha condiz com o padrão g
+todas as linhas condizem com o padrão v
+nenhuma linha marcada modificada com sucesso
+operação interrompida
+nada similar
+Objetos Javascript estão faltando ou desconfigurados.
+agente número %c não definido
+não foi possível mostrar diretório novo
+não foi possível estabelecer o diretório atual
+diretório inválido
+impossível reproduzir áudio a partir de um buffer vazio
+impossível reproduzir áudio em modo navegação
+impossível reproduzir áudio em modo de diretório
+impossível reproduzir áudio em modo banco de dados
+arquivo não tem sufixo; use pb.xxx para especificar um sufixo próprio
+sufixo pode ter no máximo 5 caracteres
+sufixo .%s não é um mime conhecido; consulte por favor o arquivo de configuração.
+sem arquivo ou URL para atualizar
+não está em modo banco de dados
+não está em modo navegação
+nome do arquivo não possui /
+nome do arquivo termina em /
+caracteres inválidos após o comando sm
+você deve especificar exatamente um dos %s após o comando B
+linha não possui um %c de abertura
+ambos %c e %c não estão completados nesta linha; experimente B%c ou B%c
+linha não possui uma chave, um parêntese ou um colchete não completado
+impossível achar a linha que completa o %c
+O arquivo de configuração do edbrowse está faltante;\nfoi criado um arquivo padrão para você.\nAntes de rodar o edbrowse novamente, tire um tempinho para personalizar o seu arquivo de configuração:\n%s\nedbrowse -c para editar.\n
+sessão %d está atualmente em modo diretório
+sem nome de arquivo
+fim do buffer
+sem mais linhas para juntar
+intervalo não recomendado
+impossível quebrar linhas em modo diretório
+impossível quebrar linhas em modo banco de dados
+impossível quebrar linhas em modo navegação
+comando %c desconhecido
+%c não disponível em modo diretório
+%c não disponível em modo banco de dados
+%c não disponível em modo navegação
+número de linha zero
+sem espaço após comando
+o comando %c não se aplica globalmente
+local de destino para cópia/moção inválido
+texto inesperado após o comando %c
+nada a desfazer
+por favor entre k[a-z]
+impossível rotular um intervalo inteiro
+copiar 0 é inválido
+aviso: nenhum buffer disponível para gerir a janela auxiliar
+texto inesperado após o comando q
+impossível trocar o nome de um diretório
+impossível trocar o nome de uma tabela
+impossível adicionar a outro buffer
+sem arquivo especificado
+impossível escrever no diretório; os arquivos são modificados conforme você tenta
+impossível escrever no banco de dados; as linhas são modificadas conforme você tenta
+texto inesperado após o comando ^
+sem texto anterior
+texto inesperado após o comando M
+sessão destino não especificada
+sem texto anterior; impossível copiar
+impossível aplicar comando g a um intervalo
+g não disponível em modo banco de dados
+impossível aplicar comando i%c a um intervalo
+impossível usar i< num comando global
+o buffer %d está vazio
+o buffer %d contém mais que uma linha
+impossível abrir %s
+impossível ler a partir de %s
+texto de entrada contém caracteres nulos
+a linha possui um retorno de carro embutido
+a primeira linha do %s é comprida demais
+arquivo atualmente no buffer - use por favor o comando rf para atualizar
+impossível navegar num arquivo binário
+impossível navegar num arquivo vazio
+isto não parece um texto navegável
+já está navegando
+rótulo %s não achado
+i não disponível em modo navegação
+impossível executar um comando insert a partir de uma função do edbrowse
+Impossível comunicar-se com edbrowse-js, Javascript está fechado.
+comando %c ainda não implementado
+%d está fora do intervalo
+não há opções com a cadeia %s
+várias opções contêm a cadeia %s
+botão; use i* para pressioná-lo
+botão de submeter; use i* para pressioná-lo
+botão de limpar; use i* para pressioná-lo
+área de edição; edite na sessão %d
+somente leitura
+campo de entrada não pode ter caracteres de nova linha
+entrada comprida demais; o limite é de %d caracteres
+campo deve ser preenchido com + ou -
+não pode desmarcar um botão de opção; tem que marcar outro
+%s não é um arquivo acessível
+espera-se um número
+a sessão %d contém caracteres nulos
+enviar um arquivo requer method=post e enctype=multipart/form-data
+isto é um campo de entrada e não um botão
+botão não faz parte de um formulário
+sem javascript associado a este botão
+formulário não inclui URL de destino
+ação do formulário não é uma URL
+javascript desligado; impossível ativar este formulário
+formulário mudou de https para http e agora não é seguro
+impossível submeter usando protocolo %s
+%d fora do intervalo; por favor use %c1 até %c%d
+%d fora do intervalo; por favor use %c1 ou simplesmente %c
+impossível substituir várias ocorrências de uma cadeia vazia
+transferência abortada.
+sem expressão regular após %c
+vários números após o terceiro delimitador
+sufixo de substituição inesperado após o terceiro delimitador
+impossível usar um sufixo numérico e o sufixo `g' simultaneamente
+impossível aplicar o comando bl a linhas maiores que %d bytes
+dados de substituição contêm linhas novas
+dados de substituição contêm caracteres nulos
+impossível embutir barra, nova linha ou caractere nulo num nome de diretório
+arquivo destino já existe
+impossível renomear o arquivo para %s
+impossível embutir caracteres nulos num campo de entrada
+impossível embutir novas linhas num campo de entrada
+sem campos de entrada presentes
+sem linques presentes
+sem botões presentes
+presentes vários campos de entrada; por favor use %c1 até %c%d
+presentes vários linques; por favor use %c1 até %c%d
+presentes; por favor use %c1 até %c%d
+não consegui ler os dados do servidor
+%s não é uma URL
+transferência completa
+impossível identificar %s na rede
+o protocolo %s não é suportado pelo edbrowse e não está incluído nos tipos mime do arquivo de configuração
+aviso: não foi possível precarregar o <buffer %d> com o texto inicial do mesmo\n
+transferência em progresso
+não é possível conectar a %s
+transferência: 
+o certificado do servidor %s não pôde ser verificado - conexão SSL abortada
+inacessível
+h\tescreve esta mensagem de ajuda.\nq\tsai deste programa.\nspace\tlê mais desta mensagem de e-mail.\nn\tvai para a próxima mensagem de e-mail.\nd\tapaga esta mensagem.\nw\tguarda esta mensagem em arquivo.\nW\tgrava esta mensagem em arquivo e a apaga.\nu\tgrava esta mensagem sem formatação em arquivo.\nU\tgrava esta mensagem sem formatação em arquivo e a apaga.\na\tprocura e salva anexos.\ns\tinterrompe a leitura de e-mails desta pasta.
+página da web requer autorização
+Login cancelado
+cadeia a buscar não pode conter aspas
+fim da pasta
+transferir em primeiro plano
+transferir em segundo plano
+terminou
+falhou
+o FTP não conseguiu conectar ao servidor remoto
+transferência FTP falhou
+nenhuma pasta presente
+Selecione uma pasta por número ou por subcadeia.\nAcrescente - para somente as mensagens não lidas; q para sair; l para mudar o limite de recepção.
+ativa
+interromper
+pegar %d de uma vez\n
+sem anexos
+.ebrc: palavrachave = valor numa função do edbrowse na linha %d
+mostrando as últimas %d de %d mensagens\n
+falha a iniciar sessão de FTP
+0
+o edbrowse não foi compilado com acesso a bancos de dado
+faltando apelido na linha %d do catálogo de endereços
+faltando : na linha %d do catálogo de endereços
+o apelido na linha %d do catálogo de endereços é comprido demais; o limite é de 15 caracteres
+o e-mail na linha %d do catálogo de endereços é comprido demais; o limite é de 63 caracteres
+o e-mail na linha %d do catálogo de endereços não possui uma @
+impossível deixar espaços em branco em endereços de e-mail; linha %d do catálogo de endereços
+caracteres não imprimíveis no apelido ou no e-mail; linha %d do catálogo de endereços
+a última linha do catálogo de endereços não possui terminação
+nenhuma pastas contém %s\n
+várias pastas contém %s\n
+buscar 
+limite 
+mover para 
+aviso: a URL do formulário especifica uma sessão %s que será ignorada\n
+arquivo %s vazio
+carta deve começar pelo assunto:
+0
+assunto comprido demais; o limite é de %d caracteres
+0
+.signature não é um arquivo regular
+impossível acessar o arquivo .signature
+não é possível enviar o arquivo binário %s; quem sabe ele devesse ser um anexo ?
+ou nenhum ou todos os anexos têm de ser declarados como \"alternative\"
+destinatários demais; limite é %d
+sem catálogo de endereço; confira por favor seu arquivo de configuração .ebrc
+apelido %s não achado no catálogo de endereços
+nenhum destinatário especificado
+sessão %d vazia; impossível anexar
+impossível acessar o anexo %s
+o arquivo %s não é regular; impossível anexar
+arquivo %s vazio; impossível anexar
+linha após a %d foi apagada\n
+%d linhas após a %d foram apagadas\n
+linha %d foi adicionada\n
+linhas %d a %d foram adicionadas\n
+0
+sem contas de correio; confira por favor o arquivo de configuração
+número de conta %d inválido; por favor use 1 até %d
+não posso enviar cartas em modo navegação
+não posso enviar cartas em modo banco de dados
+não posso enviar cartas em modo diretório
+não posso enviar dados binários; isto não tem que ser um anexo ?
+não posso enviar um arquivo vazio
+sem destinatário na linha %d
+não posso enviar CC ou CCO para o primeiro destinatário
+sem anexo na linha %d
+número de conta inválido na linha %d
+0
+a linha %d deve começar com to: attach: alt: account: ou subject:
+0
+sem destinatário; coloque to: endereco no topo do arquivo
+%s:// esperado
+protocolo desconhecido  %s
+:porta inválida ao final do domínio
+nome de domínio longo demais
+nome de usuário longo demais
+senha longa demais
+%d linhas foram substituídas pela linha %d\n
+linhas %d a %d foram atualizadas\n
+sem função especificada
+o nome da função deve conter apenas letras e números
+função %s não existe
+argumentos demais
+~%d não possui argumento correspondente
+não consegui executar o subcomando %s; erro %d
+não consegui criar o arquivo temporário %s; erro %d
+tabelas SQL demais no cache; limite é %d
+%s não é um arquivo regular
+0
+impossível ler o conteúdo do %s
+impossível acessar %s
+$%s não definida
+~%s não definida
+0
+0
+0
+0
+0
+erro inesperado a avaliar o padrão shell
+0
+padrão shell condiz com mais que um arquivo
+as linhas ficam longas demais quando as variáveis do shell são expandidas
+o arquivo de configuração não especifica um banco de dados - impossível conectar
+não consigo conectar ao banco de dados - erro %d
+erro SQL inesperado; %d
+sem coluna chave especificada
+nome de coluna %s é longo demais; limite é %d caracteres
+erro de sintaxe na cláusula where
+coluna %d fora do intervalo
+várias colunas condizem com %s
+nenhuma coluna condiz com %s
+tabela %s não existe
+nome de coluna inválido
+não posso selecionar mais que uma coluna de bolha
+dados possuem pipas que são os meus delimitadores reservados
+dados contêm novas linhas
+a linha possui campos demais; por favor não insira pipas no texto
+a linha possui muito poucos campos; por favor não remova nenhuma pipa do texto
+coluna chave não especificada
+erro miscelâneo de SQL; %d
+não posso apagar mais que 100 linhas de uma vez
+não posso alterar uma coluna chave
+não posso alterar um campo de bolha
+não posso alterar um campo de texto
+ops !  Apaguei %d linha(s) e %d entrada(s) de banco de dados foram afetadas.
+ops !  Inseri %d linha(s) e %d entrada(s) de banco de dados foram afetadas.
+ops !  Atualizei %d linha(s) e %d entrada(s) de banco de dados foram afetadas.
+outra linha no banco de dados depende desta
+a linha ou a tabela está bloqueada
+Você não tem permissão para modificar o banco de dados desse jeito
+paralização detectada
+colocando nulo numa coluna não nula
+restrição de conferência violada
+tempo do banco de dados esgotado
+impossível modificar um panorama
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+caracteres inesperados após o anexo codificado
+caracteres inválidos no anexo codificado
+0
+aviso: o javascript não pode ser invocado por duplo clique
+erro a resolver a opção %s durante um sync ou submissão de formulário
+0
+0
+não consegui trazer o javascript local; %s\n
+não consegui trazer o javascript de %s; código %ld\n
+não consegui trazer o javascript; %s\n
+javascript desligado; ignorando código onclick
+javascript desligado; ignorando onchange código
+javascript desligado; ignorando código onreset
+javascript desligado; ignorando código onsubmit
+não consegui achar a etiqueta HTML associada à variável javascript que está sendo modificada
+0
+aviso: diretiva de atualização adulterada; %s\n
+0
+aviso: redirecionamento HTTP %ld mas não foi especificada uma URL nova\n
+aviso: erro de HTTP %ld, %s\n
+0
+0
+mensagens de ajuda ligadas
+download via FTP: 
+nenhum arquivo de certificados SSL; conexões seguras não podem ser verificadas
+download via SCP: 
+.ebrc: caracteres nulos na linha %d
+.ebrc: falta nome de função na linha %d
+.ebrc: nome de função na linha %d começa com um algarismo
+.ebrc: nome de função na linha %d é longo demais; o limite é dez caracteres
+.ebrc: a sintaxe de definição de função na linha %d é imprópria
+.ebrc: linha %d, esperado \"condição > arquivo\" 
+.ebrc: linha %d, regras de filtragem não têm cadeias a coincidir
+.ebrc: linha %d, critério em %s não está definido em lugar algum
+.ebrc: linha %d, filtros de e-mail em ecesso
+.ebrc: palavra-chave desconhecida %s na linha %d
+.ebrc: linha %d, o atributo %s não pode ser definido fora de um descritor de mensagem
+.ebrc: linha %d, o atributo %s não pode ser definido fora de um descritor plugin
+.ebrc: linha %d, o atributo %s não pode ser definido fora de um descritor de tabela
+.ebrc: linha %d, o atributo %s não pode ser definido dentro de um descritor de mensagem ou bloco de filtro
+.ebrc: linha %d, o atributo %s não pode ser definido dentro de um descritor de plugin
+.ebrc: linha %d, o atributo %s não pode ser definido dentro de um descritor de tabela
+.ebrc: linha %d, o atributo %s está definido para nada
+.ebrc: linha %d, colunas em excesso; o limite é %d
+.ebrc: linha %d, keycol tem que ser número ou número,número
+.ebrc: linha %d, keycol fora do intervalo; especificadas somente %d colunas
+.ebrc: o catálogo de endereços %s não é um arquivo regular
+0
+.ebrc: %s não é um diretório
+.ebrc: linha %d, agentes do usuário em excesso; o limite é 9
+.ebrc: cookie jar %s não é um arquivo regular
+.ebrc: não posso criar a cookie jar %s
+.ebrc: diretivas no js em excesso; o limit é %d
+.ebrc: linha %d, o domínio %s não possui ponto
+0
+.ebrc: arquivo de certificados SSL %s não é um arquivo regular
+.ebrc: arquivo de certificados SSL %s não existe ou não é legível.
+.ebrc: linha %d, palavra-chave %s não foi implementada ainda
+.ebrc: definindo várias contas de e-mail como padrão
+.ebrc: falta o servidor de entrada na linha %d
+.ebrc: falta o servidor de saída na linha %d
+.ebrc: falta o usuário na linha %d
+.ebrc: falta a senha na linha %d
+.ebrc: falta o remetente na linha %d
+.ebrc: falta o endereço para resposta na linha %d
+.ebrc: falta o tipo na linha %d
+.ebrc: falta a descrição na linha %d
+.ebrc: falta o sufixo ou a lista de protocolos na linha %d
+.ebrc: falta o programa na linha %d
+.ebrc: falta o nome da tabela na linha %d
+.ebrc: falta o nome curto na linha %d
+.ebrc: faltam colunas na linha %d
+.ebrc: } inesperada na linha %d
+.ebrc: else na linha %d não faz parte de um comando if
+.ebrc: texto adulterado na linha %d
+.ebrc: linha %d, impossível iniciar função, descritor de mail/plugin ou bloco de filtro dentro de %s
+.ebrc: comando na linha %d deve aparecer dentro de uma função
+contas de e-mail demais no arquivo de configuração .ebrc; o limite é %d
+tipos plugin demais no arquivo de configuração .ebrc; o limite é %d
+tabelas SQL demais no arquivo de configuração .ebrc; o limite é %d
+funções demais no arquivo de configuração .ebrc; o limite é %d
+.ebrc: linha %d, as estruturas de controle estão aninhadas até um nível alto demais
+.ebrc: função %s não se fecha no fim do arquivo
+.ebrc: mail ou bloco plugin não se fecha no fim do arquivo
+diretório home não definido por $HOME.
+%s não é um diretório
+nenhuma conta de e-mail especificada; confira por favor o arquivo de configuração .ebrc
+número de conta inválido; por favor use 1 até %d
+edbrowse -v (mostra a versão)\nedbrowse -h (esta mensagem)\nedbrowse -c (edita arquivo de configuração)\nedbrowse [-e] [-d#] -f[#] (recebe cartas)\nedbrowse [-e] [-d#] -[p]m (lê cartas pendentes)\nedbrowse [-e] [-d#] -[p]fm[#] (recebe cartas e lê as cartas pendentes)\nedbrowse [-e] [-d#] -m[#] endereço1 endereço2 ... arquivo [+anexos]\nedbrowse [-e] [-d#] arquivo1 arquivo2 ...
+por favor especifique ao menos um destinatário e o arquivo a enviar
+por favor especifique ao menos um destinatário e o arquivo a enviar, antes dos anexos
+demais arquivos abertos ao mesmo tempo; o limite é %d
+sessão %d inválida na fetchLineContext()
+número de linha %d inválido na fetchLineContext()
+contas de proxy no arquivo de configuração .ebrc; o limite é %d
+sessão %d fora do intervalo na cxActive
+init duplo na sessão %d
+fechando sessão não ativa %d
+novo trecho vazio na addToMap()
+sem linha nova na entrada do diretório %s
+sem fecho > na linha %d
+fieldInBuffer não encontrou a etiqueta %d newtext %s
+impossível refazer a cookie jar %s
+0
+o cliente de recepção de cartas é interativo e não pode rodar em segundo plano
+diretório para caixa de entrada não especificado no arquivo .ebrc
+não posso mudar para o diretório %s
+0
+usuário ou senha inválido
+0
+0
+0
+0
+0
+o código da etiqueta %d possui o caractere inválido %c a seguir
+0
+htmlParse() não é reentrante.
+dipo de entrada inesperado na submitForm()
+lista = 0 in tagFromJavaVar()
+0
+não consegui alocar memória para operação Javascript.
+impossível criar contexto Javascript 
+impossível criar objeto de janela para o Javascript
+0
+impossível criar objeto de documento para o Javascript
+0
+0
+erro a alocar %zu bytes
+erro a alocar %zu bytes
+reallocMem(p,0)
+reallocMem(0,%zu)
+erro a realocar %zu bytes
+stringInList(null,...)
+stringInListCI(null,...)
+charInList(null,...)
+ponteiro nulo na pstLength
+não posso usar ioctl() para controlar o TTY
+não é possível abrir %s
+não é possível criar ou escrever em %s
+chamando fopen() em modo inválido %s
+/ mal posicionada na getDirURL(%s)
+/ mal posicionada na %s
+decodePostData(0,0)
+0
+0
+0
+não é possível replicar em modo diretório
+não é possível replicar em modo banco de dados
+não posso replicar para um arquivo vazio
+não posso replicar para um arquivo binário
+linhas subject e reply são obrigatórias
+aviso: não há ID da mensagem a referenciar
+Desculpe; o cabeçalho da carta não está disponível.\nComece com uma carta não formatada, escolha browse e depois reply all.
+l expande caracteres de controle para hexadecimais
+l expande caracteres de controle e não-ASCII para hexadecimais
+Atenção: as funções buscar e substituir não aceitarão caracteres UTF8\nporque a biblioteca PCRE que você tem instalada não suporta essa funcionalidade.\nExporte PCREUTF8=off para desabilitar esse recurso e suprimir este aviso.
+convertendo para iso8859
+convertendo para utf8
+não converta entre iso8859 e utf8
+converte automaticamente entre iso8859 e utf8
+Não posso copiar uma árvore de diretórios para uma lixeira em outro sistema de arquivos;\nUse cpio -p ou cp -r a partir do shell
+Não posso apagar uma árvore de diretórios; use rm -r a partir do shell
+Falha ao inicializar a biblioteca libcurl.
+Esta listagem do diretório FTP está vazia.
+procurar e substituir usando ASCII
+procurar e substituir usando UTF8
+Aviso: talvez você precise desabilitar temporariamente o UTF8 no procurar e substituir,\nusando o comando su8, para que isso funcione de modo adequado.
+chave primária ocupa mais de 3 colunas
+impossível determinar próxima coluna para a chave serial(0)
+Nomes das tabelas estão no búfer %d\n
+nenhuma fonte de dados especificada
+conectando à fonte de dados %s\n
+linha
+linhas
+selecionado
+inserido
+atualizado
+apagado
+procedimento executado
+tabela
+comando SQL não terminado por ponto e vírgula ou fecha colchetes na seguinte linha
+comando de atualizar ou apagar sem cláusula where
+acesso remoto negado
+Autorização necessária para acessar %s
+operação falhou porque a memória não pôde ser alocada
+A sua versão de libcurl é mais velha que a %u.%u.%u.\nVocê tem que atualizá-la para usar o Edbrowse.
+tempo limite da operação esgotado
+não é possível enviar dados ao servidor
+a biblioteca curl retornou o seguinte erro ao executar a operação solicitada: %s
+chaves estrangeiras para %s\n
+não pegar colunas de blob
+pegar colunas de blob
+Erro de conexão SSL na libcurl: %s
+TTY de entrada
+linha de entrada()
+0
+Erro não-reparável de javascript nesta sessão, javascript está fechado.
+0
+0

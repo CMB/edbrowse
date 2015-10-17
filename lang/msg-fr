@@ -1,0 +1,659 @@
+EOF - fin de fichier
+pas de fichier
+redirection
+substitutions globales
+substitutions locales
+insensible à la casse
+sensible à la casse
+répertoires en lecture seule
+répertoires en lecture écriture
+répertoires en lecture écriture avec effacement
+pas de redirection http
+redirection http
+ne pas envoyer le référent
+envoyer le référent
+javascript dédactivé
+javascript activé
+binaire traité comme texte
+détection des fichiers binaires
+mode passif
+mode actif
+Panne du moteur javascript : toutes les sessions javascript ouvertes ont été fermées.
+pas de vérification des connexions ssl (moins sûr)
+vérification des connexions ssl
+ne pas afficher les fichiers cachés en mode répertoire
+afficher les fichiers cachés en mode répertoire
+Impossible de lancer un sous-processus pour edbrowse-js : javascript a été désactivé.
+Impossible de lancer edbrowse-js : javascript a été désactivé.
+marqueurs de fin de ligne désactivés
+marqueurs de fin de ligne activés pour les lignes listées
+marqueurs de fin de ligne activés
+javascript désactivé, aucune action lancée
+javascript désactivé, on va directement à l'url
+redirection interrompue par l'utilisateur
+vide
+nouvelle session
+pas de saut de ligne à la fin
+mode répertoire
+données binaires
+ok
+ [binaire]
+pas de titre
+pas de description
+pas de mots-clés
+session %d\n
+Envoi de courrier. Tapez votre courrier, tapez sm pour l'envoyer, puis ^ pour revenir.
+la ligne %d a été modifiée\n
+h\taffiche ce message d'aide.\nq\tquitte ce programme.\ns\tstoppe la lecture de ce dossier.\nn\tva au prochain message.\nd\tefface ce mail.\nm\tdéplace ce mail dans un autre dossier.\nespace\tlit et traite ce mail.\n/\trecherche des mots dans le sujet, l'expéditeur, ou le corps.\nl\tdéfinit la limite maximale de récupération pour imap.
+s chaine, mails avec chaîne dans le sujet\nf chaîne, mails avec chaîne dans la ligne from\nb chaîne, mails avec chaîne dans le corps du message\nsans lettre repère, le sujet est par défaut.
+pas de messages
+interruption, tapez qt pour quitter complètement
+edbrowse prêt
+la ligne de commande contient des caractères nuls; vous pouvez utiliser \\0 dans une chaîne de recherche/remplacement pour indiquer le caractère nul
+autorisation nécessaire - tapez x pour annuler.
+trop de redirections
+succès
+répertoire
+redirection vers %s retardée de %d secondes\n
+Nom d'utilisateur: 
+nom d'utilisateur trop long, la limite est de %d caractères
+Mot de passe: 
+nom de passe trop long, la limite est de %d caractères
+Impossible de communiquer avec edbrowse-js : javascript a été désactivé.
+attention, répertoire inaccessible - la liste des fichiers sera vide
+désastre, message d'erreur %d trop long\n
+ligne %d: 
+pas en mode répertoire
+le tampon %d a été mis à jour\n
+pas d'options
+formulaire réinitialisé
+formulaire en cours de soumission
+.ebrc: ligne %d, outtype devrait être t ou h
+ beaucoup
+ recommendé
+]
+aucune option ne contient la chaîne %s\n
+envoi du courrier à %s\n
+Envoi effectué; attendez une réponse par retour de courrier.
+indésirable
+quitter
+suivant
+effacement
+greffons inactifs
+greffons actifs
+Environnement de travail javascript impossible à construire : javascript a été désactivé.
+fin du message
+pas encore implémenté
+nom de fichier: 
+Désolé, le fichier %s existe déjà.\n
+abrégé 
+pièce jointe vide
+pièce jointe 
+plus de tampon disponible, pièce jointe ignorée
+impossible de copier la pièce jointe dans le tampon %d
+impossible de créer le fichier %s, pièce jointe ignorée\n
+impossible de sauvegarder le fichier %s, pièce jointe ignorée\n
+pas de courrier
+%d messages\n
+Messages d'interprocessus javascript désynchronisés.
+commande ls suivie de caractères invalides
+h\taffiche ce message d'aide.\nq\tquitte ce programme.\nx\tquitte sans rien modifier sur le serveur de courrier.\nespace\tcontinuer la lecture de ce message.\nn\taller au message suivant.\nd\teffacer ce message.\nw\tsauvegarder ce message et l'effacer.\nu\tsauvegader ce message non formaté puis l'effacer.
+création du fichier %s impossible\n
+sauvegarde du fichier %s impossible\n
+courrier sauvegardé, %d octets
+ ajouté
+page terminée, utilisez la touche retour arrière ou quittez
+impossible de créer le répertoire temporaire /tmp/.edbrowse
+pas d'erreurs
+authentification proxy pour une url non-proxy
+session %d non active
+session 0 invalide
+débordement de la session %d, la limite est de %d
+vous êtes déjà dans la session %d
+`w' attendu
+`w' attendu en session %d
+Vous avez atteint la limite d'170 million de lignes.\nSauvegardez vos fichiers, puis sortez et redémarrez le programme.
+chemin du répertoire trop long, la limite est de %d caractères
+répertoires en lecture seule, tapez dw pour autoriser l'écriture
+impossible de créer le fichier corbeille .Trash, pour contenir vos fichiers effacés
+effacement du fichier %s impossible
+impossible de mettre %s à la corbeille, passez en mode dx pour l'effacer
+destination à l'intérieur du bloc à déplacer ou à copier
+pas de modification
+ne peut fusionner une seule ligne
+impossible de lire la base de données dans un autre fichier
+impossible de lire plusieurs tables dans la même session
+nom de fichier absent
+nom de domaine vide dans l'url
+impossible d'écrire sur une url
+impossible d'écrire dans une table de base de données
+impossible de sauvegarder un fichier vide
+impossible de créer %s
+ne peut écrire dans %s
+session non interactive
+ligne %c trop grande
+une commande shell ne peut contenir des caractères nuls
+label %c non défini
+délimiteur invalide
+chaîne de recherche non conservée
+chaîne de remplacement non conservée
+expression régulière trop grande
+ligne terminée par un anti-slash
+parenthèse fermante inattendue
+on ne peut remplacer que de $1 à $9
+le modificateur %s n'est précédé d'aucun caractère
+pas de crochet fermant
+pas de parenthèse fermante
+tampon vide
+erreur dans l'expression régulière, %s
+erreur inattendue en évaluant l'expression régulière %d
+chaîne de recherche non trouvée
+numéro de ligne trop grand
+numéro de ligne négatif
+pas d'expression régulière après %c
+délimiteur absent
+aucune ligne ne correspond au modèle g
+toutes les lignes correspondent au modèle v
+aucune des lignes marquées n'a pu être modifiée avec succès
+opération interrompue
+pas de correspondance
+Objets javascript manquants ou mal configurés.
+l'agent numéro %c n'est pas défini
+impossible d'afficher le nouveau répertoire
+impossible d'établir le répertoire courant
+répertoire invalide
+lecture audio impossible à partir d'un tampon vide audio
+lecture audio impossible en mode navigation
+lecture audio impossible en mode répertoire
+lecture audio impossible en mode base de données
+le fichier n'a pas d'extension, utilisez pb.xxx pour définir votre propre extension
+extension limitée à 5 caractères
+l'extension .%s n'est pas un type mime connu, vérifiez votre fichier de configuration.
+pas de nom de fichier ou d'url à réafficher
+pas en mode base de données
+pas en mode navigation
+le nom de fichier ne contient pas le caractère /
+le nom de fichier se termine par le caractère /
+commande sm suivie de caractères invalides
+vous devez spécifier exactement un %s après la commande B
+la ligne ne contient pas de %c ouvrant(e)
+%c et %c non équilibrés sur cette ligne, essayez B%c ou B%c
+la ligne ne contient pas de parenthèses, de crochets ou d'accolades non équilibrés
+ne peux trouver de ligne équilibrant %c
+Votre fichier de configuration edbrowse est absent;\nun fichier par défaut a été créé pour vous.\nAvant de relancer edbrowse, prenez le temps\nde personnaliser votre fichier de configuration:\n%s\nedbrowse -c pour l'éditer.\n
+session %d actuellement en mode répertoire
+pas de nom de fichier
+fin du tampon
+plus de lignes à fusionner
+mauvais intervalle
+impossible de découper les lignes en mode répertoire
+impossible de découper les lignes en mode base de données
+impossible de découper les lignes en mode navigation
+commande %c inconnue
+%c impossible en mode répertoire
+%c impossible en mode base de données
+%c impossible en mode navigation
+ligne numéro zéro
+pas d'espace après la commande
+la commande %c ne peut s'appliquer globalement
+destination du déplacement ou de la copie invalide
+texte inattendu après la commande %c
+rien à défaire
+tapez svp k[a-z]
+impossible d'étiqueter un intervalle entier
+ne peux sauvegarder 0
+attention : pas de tampon pour gérer la fenêtre auxiliaire
+texte inattendu après la commande q
+impossible de renommer le répertoire
+impossible de renommer la table
+impossible d'ajouter à un autre tampon
+pas de fichier spécifié
+ne peut mettre à jour le répertoire; les fichiers seront modifiés quand vous quitterez
+ne peut mettre à jour la base de données; les lignes seront modifiées quand vous quitterez
+texte inattendu après la commande ^
+pas de texte antérieur
+texte inattendu après la commande M
+destination de la session non spécifiée
+pas de texte antérieur, sauvegarde impossible
+impossible d'appliquer la commande g à un intervalle
+g impossible en mode base de données
+impossible d'appliquer la commande i%c à un intervalle
+impossible d'utiliser i< dans une commande globale
+le tampon %d est vide
+le tampon %d contient plus d'une ligne
+impossible d'ouvrir %s
+impossible de lire %s
+le texte entré contient des caractères nuls
+il y a un retour-chariot dans la ligne
+le première ligne de %s est trop longue
+le fichier est actuellement dans le tampon - utilisez la commande rf pour le réafficher
+navigation impossible dans un fichier binaire
+navigation impossible dans un fichier vide
+ce contenu ne semble pas navigable
+en cours de navigation
+label %s non trouvé
+i impossible en mode navigation
+impossible de lancer une commande d'insertion à partir d'une fonction d'edbrowse
+Communication avec javascript impossible : javascript est fermé.
+commande %c non implémentée
+%d hors limites
+aucune option ne contient la chaîne %s
+de multiples options contiennent la chaîne %s
+c'est un bouton; tapez i* pour le déclencher
+c'est un bouton de validation; tapez i* pour le déclencher
+c'est un bouton d'annulation; tapez i* pour le déclencher
+c'est une zone de texte, vous devez l'éditer dans la session %d
+champ en lecture seule
+une zone de saisie ne peut contenir un saut de ligne
+saisie trop long, la limite est de %d caractères
+le champ doit être défini + or -
+vous ne pouvez réinitialiser un bouton radio; vous devez en activer un autre
+%s n'est pas un fichier accessible
+nombre attendu
+la session %d contient des caractères nuls
+l'envoi d'un fichier exige 'method=post and enctype=multipart/form-data'
+c'est une zone de saisie, pas un bouton
+ce bouton ne fait pas partie d'un formulaire
+pas de javascript associé à ce bouton
+le formulaire n'inclut aucune URL de destination
+l'action de ce formulaire ne renvoie pas à une destination URL
+javascript désactivé, impossible d'activer ce formulaire
+Le formulaire est passé du mode https au mode http, il n'est plus sécurisé
+impossible de soumettre avec le protocole %s
+%d hors limites, utilisez s'il vous plait %c1 à %c%d
+%d hors limites, utilisez s'il vous plait  %c1, ou simplement %c
+impossible de remplacer plusieurs fois la chaîne vide
+téléchargement abandonné.
+pas d'expression régulière après %c
+nombres multiples après le troisième délimiteur
+suffixe de substitution inattendu après le troisième délimiteur
+impossible d'utiliser simultanément un suffixe numérique et le suffixe `g'
+désolé, impossible d'exécuter la commande bl sur les lignes excédant %d caractères
+les données de remplacement contiennent des sauts de ligne
+les données de remplacement contiennent des caractères nuls
+un nom de répertoire ne peut contenir un slash, un saut de ligne ou un caractère nul
+le fichier destination existe déjà
+impossible de renommer le fichier à %s
+une zone de saisie ne peut contenir des caractères nuls
+une zone de saisie ne peut contenir des sauts de ligne
+aucune zone de saisie présente
+aucun lien présent
+aucun bouton présent
+il y a plusieurs zones de saisie, utilisez svp %c1 à %c%d
+il y a plusieurs liens, utilisez svp %c1 à %c%d
+il y a plusieurs boutons, utilisez svp %c1 à %c%d
+impossible de lire les données sur le serveur
+%s n'est pas une url
+téléchargement terminé
+impossible d'identifier %s sur le réseau
+le protocole %s n'est pas supporté par edbrowse, et n'est pas défini dans les types mime de votre fichier de configuration
+attention : impossible de précharger le texte initial dans le <tampon %d>\n
+télachargement en cours
+connexion impossible à %s
+téléchargement: 
+Le certificat de sécurité de l'hôte %s ne peut être vérifié - connexion SSL abandonnée
+inaccessible
+h\taffiche ce texte d'aide.\nq\tquitter ce programme.\nespace\taffiche la suite de ce courriel.\nn\tva au courriel suivant.\nd\tefface ce message.\nw\tsauvegarde ce message dans un fichier.\nW\tsauvegarde ce message dans un fichier puis l'efface.\nu\tsauvegarde ce message non formaté dans un fichier.\nU\tsauvegarde ce message dans un fichier puis l'efface.\na\tparcourt et sauvegarde les pièces attachées.\ns\tinterrompre la lecture des courriels de ce dossier.
+la page web requiert une autorisation
+authentification abandonnée
+la chaîne de recherche ne peut comporter des guillemets
+fin du dossier
+téléchargement au premier plan
+téléchargement en arrière plan
+terminée
+échec
+connexion ftp impossible à l'hôte distant
+échec du transfert ftp
+pas de dossier présent
+Choisissez un dossier par numéro ou par sous-chaîne.\nPrefixez par - uniquement les messages non lus. q pour quitter. l pour changer la limite maximale de récupération.
+active
+stop
+récupérer %d à la fois\n
+pas de pièces attachées
+.ebrc: mot-clé = valeur dans une fonction edbrowse à la ligne %d
+affichage des derniers %d de %d messages\n
+ftp : échec de la session d'initialisation
+0
+edbrowse n'a pas été compilé avec l'accès aux bases de données
+alias manquant dans le carnet d'adresses à la ligne %d
+manquant dans le carnet d'adresses à la ligne %d
+alias trop long dans le carnet d'adresses, limite 15 caractères
+email trop long dans le carnet d'adresses, limite 63 caractères
+pas de @ dans l'email à la ligne %d du carnet d'adresses
+espaces interdits dans un email, à la ligne %d du carnet d'adresses
+caractères non imprimables dans un alias ou un email, à la ligne %d du carnet d'adresses
+la dernière ligne de votre carnet d'adresses n'est pas terminée
+aucun dossier ne contient %s\n
+plusieurs dossiers contiennent %s\n
+recherche 
+limite 
+déplacer vers 
+attention : le formulaire url spécifie une section %s, qui sera ignorée\n
+le fichier %s est vide
+votre mail devrait commencer par 'subject:':
+0
+ligne sujet trop longue, la limite est de %d caractères
+0
+.signature n'est pas un fichier régulier
+impossible d'accéder au fichier .signature
+impossible d'envoyer le fichier binaire %s, serait-ce une pièce jointe ?
+aucune ou bien toutes les pièces jointes doivent être spécifiées \"alternative\"
+trop de destinataires, la limite est de %d
+Pas de carnet d'adresses défini, contrôlez votre fichier de configuration .ebrc
+impossible de trouver l'alias %s dans votre carnet d'adresses
+aucun destinataire spécifié
+la session %d est vide, impossible de joindre quelque chose
+impossible d'accéder à la pièce jointe %s
+impossible de joindre le fichier %s, ce n'est pas un fichier régulier
+le fichier %s est vide, impossible de le joindre
+la ligne après %d a été effacée\n
+%d lignes après %d ont été effacées\n
+la ligne %d a été ajoutée\n
+les lignes %d à %d ont été ajoutées\n
+0
+pas de comptes de courrier définis, contrôlez votre fichier de configuration
+numéro de compte de courrier invalide %d, utilisez 1 à %d
+impossible d'envoyer du courrier en mode navigation
+impossible d'envoyer du courrier en mode base de données
+impossible d'envoyer du courrier en mode répertoire
+impossible d'envoyer des données binaires, serait-ce une pièce jointe ?
+impossible d'envoyer un fichier vide
+pas de destinataire à la ligne %d
+impossible de mettre le premier destinataire en cc ou bcc
+pas de pièce jointe à la ligne %d
+numéro de compte de courrier invalide à la ligne %d
+0
+la ligne %d devrait débuter par to: attach: alt: account: ou subject:
+0
+pas de destinataires spécifiés, placez to: adresse email au début de votre fichier
+%s:// attendu
+protocole %s non reconnu
+:port invalide à la fin du nom de domaine
+nom de domaine trop long
+nom d'utilisateur trop long
+mot de passe trop long
+%d lignes ont été remplacées par la ligne %d\n
+les lignes %d à %d ont été mises à jour\n
+pas de fonction spécifiée
+les noms de fonction ne peuvent contenir que des lettres et des chiffres
+fonction %s non trouvée
+trop d'arguments
+~%d n'a pas d'argument correspondant
+impossible de créer la sous-commande %s, erreur numéro %d
+impossible de créer le fichier temporaire %s, erreur numéro %d
+trop de tables sql dans le cache, la limite est de %d
+%s n'est pas un fichier régulier
+0
+impossible de lire le contenu de %s
+impossible d'accéder à %s
+$%s n'est pas définie
+~%s n'est pas définie
+0
+0
+0
+0
+0
+erreur inattendue d'évaluation du modèle shell
+0
+le modèle shell correspond à plusieurs noms de fichier
+ligne trop longue après expansion des variables shell
+le fichier de config ne définit aucune base de données - connexion impossible
+connexion à la base de données impossible - erreur %d
+erreur sql inattendue %d
+pas de colonne index spécifiée
+nom de colonne %s trop long, la limite est de %d caractères
+erreur de syntaxe dans la clause where
+débordement dans la colonne %d
+plusieurs colonnes correspondent à %s
+aucune colonne ne correspond à %s
+la table %s n'existe pas
+nom de colonne invalide
+impossible de sélectionner plus d'une colonne contenant des données binaires
+les données contiennent le caractère pipe, réservé comme délimiteur de champ
+les données contiennent des sauts de ligne
+trop de champs dans la ligne, s'il vous plait, ne mettez pas de caractères pipe dans le texte
+pas assez de champs dans la ligne, s'il vous plait, ne supprimez pas de caractères pipe dans le texte
+colonne index non spécifiée
+erreur sql %d
+impossible de supprimer plus de 100 lignes à la fois
+impossible de modifier une colonne index
+impossible de modifier un champ de données binaires
+impossible de modifier un champ de texte
+oups!  j'ai supprimé %d ligne(s), et %d enregistrement(s) de la base de données ont été affectés.
+oups!  j'ai supprimé %d ligne(s), et %d enregistrement(s) de la base de données ont été affectés.
+oups!  j'ai supprimé %d ligne(s), et %d enregistrement(s) de la base de données ont été affectés.
+d'autres lignes de la base de données dépendent de cette ligne
+la ligne ou la table sont verrouillées
+vous n'avez pas la permission de modifier la base de données par ce moyen
+deadlock (verrou mortel) détecté
+placement d'un null dans une colonne non null
+violation de contrainte
+dépassement de délai de la base de données
+impossible de modifier une vue
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+caractères inattendus après la pièce jointe encodée
+caractères invalides dans la pièce jointe encodée
+0
+attention, javascript ne peut être invoqué par un double clic
+erreur de détermination de l'option %s pendant la synchronisation ou la soumission du formulaire
+0
+0
+impossible de charger localement javascript, %s\n
+impossible de charger javascript depuis %s, code %ld\n
+impossible de charger javascript, %s\n
+javascript désactivé, code onclick ignoré
+javascript désactivé, code onchange ignoré
+javascript désactivé, code onreset ignoré
+javascript désactivé, code onsubmit ignoré
+impossible de trouver la balise html associée à la variable javascript modifiée
+0
+attention : directive de rafraîchissement altérée, %s\n
+0
+attention: redirection http %ld, mais la nouvelle url n'a pas été spécifiée\n
+attention : erreur html %ld, %s\n
+0
+0
+messages d'aide activés
+téléchargement ftp: 
+pas de fichier de certificats ssl; les connexions sécurisées ne pourront être vérifiées
+téléchargement scp: 
+Caractères nuls à la ligne %d
+.ebrc : pas de nom de fonction à la ligne %d
+.ebrc : le nom de fonction à la ligne %d commence par un chiffre
+.ebrc : nom de fonction à la ligne %d trop long : la limite est de dix caractères
+.ebrc : erreur de syntaxe dans la définition de fonction à la ligne %d
+.ebrc : ligne %d,  \"condition > fichier\" attendu
+.ebrc : ligne %d, la règle de filtrage ne correspond à aucune chaîne
+.ebrc : ligne %d, la correspondance sur %s n'est pas définie
+.ebrc : ligne %d, trop de filtres de courrier
+.ebrc : mot clé %s inconnu à la ligne %d
+.ebrc : ligne %d, l'attribut %s ne peut être défini hors d'un descripteur de courrier
+.ebrc : ligne %d, l'attribut %s ne peut être défini hors d'un descripteur plugin
+.ebrc : ligne %d, l'attribut %s ne peut être défini hors d'un descripteur de table
+.ebrc : ligne %d, l'attribut %s ne peut être défini dans un descripteur de courrier ou un bloc de filtrage
+.ebrc : ligne %d, l'attribut %s ne peut être défini dans un descripteur plugin
+.ebrc : ligne %d, l'attribut %s ne peut être défini dans un descripteur de table
+.ebrc : ligne %d, l'attribut %s n'est pas défini
+.ebrc : ligne %d,trop de connes, la limite est de %d
+.ebrc : ligne %d, la colonne index ne peut être que numérique
+.ebrc : colonne index hors limites; seules %d colonnes ont été spécifiées
+.ebrc : le carnet d'adresses %s n'est pas un fichier régulier
+0
+.ebrc : %s n'est pas un répertoire
+.ebrc : ligne %d, trop d'agents utilisateurs, la limite est de 9
+.ebrc : le récipient de cookies n'est pas un fichier régulier
+.ebrc : impossible de créer   le récipient de cookies
+.ebrc : trop de directives no js, la limite est de %d
+.ebrc : ligne %d, le domaine ne contient pas de point
+0
+.ebrc : le fichier de certificats SSL n'est pas un fichier régulier
+.ebrc :  fichier de certificats SSL absent ou illisible
+.ebrc : ligne %d, le mot-clé %s n'est pas encore implémenté
+.ebrc : plus d'un compte mail est défini comme compte par défaut
+.ebrc : serveur entrant manquant
+.ebrc : serveur sortant manquant
+.ebrc : nom d'utilisateur manquant
+.ebrc : mot de passe manquant
+.ebrc : ligne from manquante à la ligne %d
+.ebrc : ligne reply manquante à la ligne %d
+.ebrc : type manquant à la ligne %d
+.ebrc : description manquante à la ligne %d
+.ebrc : suffixe ou liste de protocoles manquants à la ligne %d
+.ebrc : programme manquant à la ligne %d
+.ebrc : nom de table manquant à la ligne %d
+.ebrc : surnom manquant à la ligne %d
+.ebrc : colonnes manquantes à la ligne %d
+.ebrc : } inattendue à la ligne %d
+.ebrc : else à la ligne %d ne fait pas partie d'une instruction
+.ebrc : texte altéré à la ligne %d
+.ebrc : la ligne %d ne peut lancer une fonction, un descripteur plugin ou de type, ou un filtre dans %s
+.ebrc : l'instruction à la ligne %d doit apparaître dans une fonction
+Trop de comptes de courrier dans votre fichier de configuration, la limite est de %d
+Trop de types plugin dans votre fichier de configuration, la limite est de %d
+Trop de tables sql dans votre fichier de configuration, la limite est de %d
+Trop de fonctions dans votre fichier de configuration, la limite est de %d
+.ebrc : ligne %d, trop de structures imbriquées
+.ebrc : la fonction %s n'est pas fermée
+.ebrc : le bloc plugin ou courrier n'est pas fermé
+Votre répertoire personnel n'est pas défini par la variable $HOME
+%s n'est pas un répertoire
+Pas de comptes de courrier définis, vérifiez votre fichier .ebrc
+Numéro de compte de courrier invalide, utilisez svp de 1 à %d
+edbrowse  -v    (montre version)\nedbrowse -h (ce message)\nedbrowse -c (edit fichier config)\nedbrowse  [-e] [-d#] -[p]m#    (lecture courrier \nedbrowse  [-e] [-d#] -m# adresse1 adresse2 ... fichier [+pièces jointes]\nedbrowse  [-e] [-d#] fichier1 fichier2 ...
+Définissez s'il vous plaît au moins un destinataire et le fichier à envoyer
+Définissez s'il vous plaît au moins un destinataire et le fichier à envoyer, avant vos pièces jointes
+Trop de fichiers ouverts, la limite est de %d
+Session %d invalide dans la fonction fetchLineContext()
+Numéro %d de ligne invalide dans la fonction fetchLineContext()
+Trop de proxy dans votre fichier de configuration, la limite est de %d
+La session %d est hors limites dans cxActive
+Double init dans la session %d
+Quitte la session %d inactive
+Nouveau morceau vide dans la fonction addToMap()
+Pas de retour-chariot après la ligne du répertoire %s
+Pas de caractère  > dans la ligne %d
+FieldInBuffer ne peut trouver le tag %d nouveau texte %s
+Impossible de reconstruire votre récipient %s de cookies
+0
+Le client de courrier est interactif, et ne peut être lancé en arrière-fond
+répertoire de courrier non défini dans votre fichier .ebrc
+Ne peut aller dans le répertoire %s
+0
+nom utilisateur / mot de passe invalide
+0
+0
+0
+0
+0
+Le tag %d est suivi d'un caractère %c erroné
+0
+HtmlParse() n'est pas réentrant
+Type de données inattendu dans submitForm()
+List = 0 dans tagFromJavaVar()
+0
+Impossible d'allouer de la mémoire pour les opérations javascript
+Impossible de créer un contexte javascript
+Impossible de créer un objet fenêtre pour javascript
+0
+Impossible de créer un document objet pour javascript
+0
+0
+Erreur alloc de %zu octets
+Erreur calloc de %zu octets
+reallocMem(p,0)
+reallocMem(0,%zu)
+Erreur de ré-allocation de %zu octets
+StringInList(null,...)
+StringInListCI(null,...)
+charInList(null,...)
+Pointeur nul dans pstLength
+Impossible d'utiliser ioctl() pour gérer le terminal
+Impossible d'ouvrir %s
+Impossible de créer ou d'écrire %s
+Mode d'appel %s de fopen() invalide
+/ mal placé dans getDirUrl(%s)
+/ mal placé dans %s
+decodePostData(0,0)
+0
+0
+0
+impossible de répondre en mode répertoire
+impossible de répondre en mode base de données
+impossible de répondre à un fichier vide
+impossible de répondre à un fichier binaire
+lignes 'subject' et 'reply' obligatoires
+attention, pas d'identificateur ID de message pour le référencer
+Désolé, pas d'en-têtes de courrier.\nVous devez commencer avec un courrier non formaté, le consulter, puis répondre à tous.
+l affiche tous les caractères de contrôle en hexadécimal
+l affiche tous les caractères non-ascii et de contrôle en hexadécimal
+Attention : les fonctions de recherche/remplacement ne fonctionneront pas avec les caractères utf8,\nparce que cette fonctionnalité est absente de la librairie pcre.\nExportez PCREUT8=off pour désactiver cette fonctionnalité et supprimer ce message d'avertissement
+converti en utf8
+converti en iso8859
+pas de conversion entre iso8859 et utf8
+conversion automatique entre iso8859 et utf8
+impossible de copier un répertoire dans la corbeille sur un autre système de fichiers;n utilisez cpio -p ou cp -r à partir du shell
+impossible de supprimer un répertoire; utilisez rm -r à partir du shell
+Echec à l'initialisation de libcurl.
+Ce répertoire ftp est vide.
+recherche et remplacement en ascii
+recherche et remplacement en utf8
+Attention: vous devriez désactiver (temporairement) la recherche/remplacement en utf8\n avec la commande su8 pour que cela fonctionne correctement.
+la clé primaire comprend plus de 3 colonnes
+impossible de déterminer la prochaine valeur de la clé auto(0)
+les noms de table sont dans le tampon %d\n
+pas de source de données spécifiée
+connexion à la source de données %s\n
+ligne
+lignes
+sélectionné
+inséré
+mis à jour
+supprimé
+procédure exécutée
+table
+instruction sql non suivie d'un point-virgule ou d'un crochet fermant sur la ligne suivante
+instruction update ou delete sans clause where
+accès distant refusé
+autorisation nécessaire pour accéder à %s
+l'opération a échoué : impossibilité d'allouer de la mémoire
+votre version de la librairie libcurl est antérieure à %u.%u.%u.\nMettez à jour libcurl pour utiliser edbrowse.
+délai d'attente de l'opération dépassé
+impossible d'envoyer des données au serveur
+la librairie curl a renvoyé ce message d'erreur suite à l'opération demandée : %s
+clés extérieures pour %s\n
+ne pas extraire de colonnes blob
+extraction de colonnes blob
+Erreur de connexion SSL dans libcurl: %s
+entrées tty
+entrées readline()
+0
+Erreur Javascript irrécupérable dans cette session, javascript est fermé.
+0
+0
