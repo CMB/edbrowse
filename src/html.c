@@ -2132,6 +2132,9 @@ void delTimers(struct ebWindow *w)
 {
 	int delcount = 0;
 	struct jsTimer *jt, *jnext;
+// if not browsing with javascript then there is nothing to do here.
+	if (!w->jcx)
+		return;
 	for (jt = timerList.next; jt != (void *)&timerList; jt = jnext) {
 		jnext = jt->next;
 		if (jt->w == w) {

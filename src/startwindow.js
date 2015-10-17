@@ -199,9 +199,21 @@ break;
 case "td":
 c = new Cell();
 break;
+case "select":
+/* select and radio are special form elements in that they are intrinsically
+ * arrays, with all the options as array elements,
+ * and also "options" or "childNodes" linked to itself
+ * so it looks like it has children in the usual way. */
+c = new Array;
+c.nodeName = t;
+c.options = c;
+c.childNodes = c;
+c.selectedIndex = -1;
+c.value = "";
+// no style, and childNodes already self-linked, so just return.
+return c;
 case "option":
 c = new Option();
-c.nodeName = t;
 // don't need style or childNodes here.
 return c;
 default:
@@ -538,6 +550,27 @@ break;
 }
 document.getAttribute = function(name) { return this[name.toLowerCase()]; }
 document.setAttribute = function(name, v) { this[name.toLowerCase()] = v; }
+
+/* The select element in a form is itself an array, so the above functions have
+ * to be on array prototype, except appendchild is to have no side effects,
+ * because select options are maintained by rebuildSelectors(), so appendChild
+ * is just array.push(). */
+Array.prototype.appendChild = function(child) { this.push(child); }
+/* insertBefore maps to splice, but we have to find the element. */
+/* This prototype assumes all elements are objects. */
+Array.prototype.insertBefore = function(newobj, item) {
+for(var i=0; i<this.length; ++i)
+if(this[i] == item) {
+this.splice(i-1, 0, newobj);
+return;
+}
+}
+Array.prototype.firstChild = document.firstChild;
+Array.prototype.lastChild = document.lastChild;
+Array.prototype.hasChildNodes = document.hasChildNodes;
+Array.prototype.replaceChild = document.replaceChild;
+Array.prototype.getAttribute = document.getAttribute;
+Array.prototype.setAttribute = document.setAttribute;
 
 Head.prototype.appendChild = document.appendChild;
 Head.prototype.apch$ = document.apch$;

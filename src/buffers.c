@@ -412,6 +412,7 @@ addchar:
 		if (stringEqual(s, ".")) {
 			jexmode = false;
 			puts("bye");
+			jSideEffects();
 		} else {
 			char *result =
 			    jsRunScriptResult(cw->winobj, s, "jex", 1);
@@ -3342,6 +3343,8 @@ pwd:
 	}
 
 	if (stringEqual(line, "jex")) {
+		char *cxbuf;
+		int cxbuflen;
 		cmd = 'e';
 		if (!cw->browseMode) {
 			setError(MSG_NoBrowse);
@@ -3352,6 +3355,11 @@ pwd:
 			return false;
 		}
 		jexmode = true;
+// screen snap, to compare with the new screen after you exit jex mode
+		nzFree(cw->lastrender);
+		cw->lastrender = 0;
+		if (unfoldBuffer(context, false, &cxbuf, &cxbuflen))
+			cw->lastrender = cxbuf;
 		return true;
 	}
 

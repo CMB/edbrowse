@@ -746,6 +746,7 @@ or id= if there is no name=, or a fake name just to protect it from gc.
  * and then references itself as an array of options.
  * Self referencing? Really? Well it seems to work. */
 				set_property_object(io, "options", io);
+				set_property_object(io, "childNodes", io);
 				set_property_number(io, "selectedIndex", -1);
 			}
 		} else {
@@ -997,7 +998,9 @@ static void jsNode(struct htmlTag *t, bool opentag)
 
 	case TAGACT_OPTION:
 		optionJS(t);
-		break;
+// The parent child relationship has already been established,
+// don't break, just return;
+		return;
 
 	case TAGACT_A:
 		domLink(t, "Anchor", "href", "anchors", cw->docobj, 0);
