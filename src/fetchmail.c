@@ -586,6 +586,8 @@ imap_done:
 		}
 		if (key == 'm') {
 			struct FOLDER *g;
+			int j2;
+			struct MIF *mif2;
 			i_printf(MSG_MoveTo);
 			fflush(stdout);
 			if (!fgets(inputline, sizeof(inputline), stdin))
@@ -603,8 +605,20 @@ imap_done:
 				nzFree(mailstring);
 				if (res != CURLE_OK)
 					goto abort;
-/* copy was successful, delete from this folder */
-				delflag = true;
+// copy was successful, delete from this folder.
+// Documentation says we have to delete explicitly,
+// but gmail does it automatically, like copy is really a move,
+// and if I try to delete after the fact bad things happen!
+// I really don't know here.
+// delflag = true;
+// Furthermore, and again this is gmail, not sure in general,
+// the move command shifts all the sequence numbers down.
+				j2 = j + 1;
+				mif2 = mif + 1;
+				while (j2 < f->nfetch) {
+					--mif2->seqno;
+					++j2, ++mif2;
+				}
 			}
 		}
 		if (key == 'd') {
