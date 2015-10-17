@@ -3355,11 +3355,7 @@ pwd:
 			return false;
 		}
 		jexmode = true;
-// screen snap, to compare with the new screen after you exit jex mode
-		nzFree(cw->lastrender);
-		cw->lastrender = 0;
-		if (unfoldBuffer(context, false, &cxbuf, &cxbuflen))
-			cw->lastrender = cxbuf;
+		jSyncup();
 		return true;
 	}
 
