@@ -919,8 +919,7 @@ setter_innerHTML(JSContext * cx, JS::HandleObject obj,
 	effectString("i{h");	// }
 	effectString(pointer2string(obj));
 	begin = eff_l + 1;
-	effectString
-	    ("|<!DOCTYPE public><body>\n");
+	effectString("|<!DOCTYPE public><body>\n");
 	effectString(s);
 	if (*s && s[strlen(s) - 1] != '\n')
 		effectChar('\n');
@@ -1347,6 +1346,7 @@ static JSBool appendChild0(bool side, JSContext * cx, unsigned int argc,
 	JS_DefineProperty(cx, child, "parentNode", OBJECT_TO_JSVAL(thisobj),
 			  NULL, NULL, PROP_STD);
 
+	args.rval().set(args[0]);
 	if (!side)
 		return JS_TRUE;
 
