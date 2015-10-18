@@ -4,14 +4,89 @@
 
 /*********************************************************************
 Symbolic constants for message numbers.
-These become the indexes for the messages in message.c.
-The array of messages is selected by the language.
+These become the indexes for the messages in lang/msg-en,
+or in lang/msg-xx for language xx.
+The externs below correspond to the languages supported.
+The array of messages is selected by $LANG.
+See selectLanguage() in messages.c.
+EdbrowseMessageCount is the number of edbrowse messages, including some
+blank spaces for messages no longer used.
+Each file lang/msg-* must have exactly this many lines.
+*********************************************************************/
 
-This file and messages.c line up.
-In other words, the constant at line 100 of messages.h corresponds
-to the English string at line 100 of messages.c.
+#define EdbrowseMessageCount 659
+
+// English
+extern const char *msg_en[], *ebrc_en;
+
+// French, Erwin Bliesenick, erwinb@no-log.org
+extern const char *msg_fr[], *ebrc_fr;
+
+// Brazilian Portuguese, Cleverson Casarin, clcaul@gmail.com
+extern const char *msg_pt_br[], *ebrc_pt_br;
+
+// German, Sebastian Humenda, shumenda@gmx.de
+extern const char *msg_de[], *ebrc_de;
+
+// Polish, Wojciech Gac, wojciech.s.gac@gmail.com
+extern const char *msg_pl[], *ebrc_pl;
+
+// Russian, Wojciech Gac, wojciech.s.gac@gmail.com
+extern const char *msg_ru[], *ebrc_ru;
+
+/*********************************************************************
+This file and lang/msg-en line up.
+The constant at line 101 of messages.h corresponds
+to the English string at line 1 of lang/msg-en.
 to keep this alignment, even if you run this file through indent,
 this comment block is just the right size.
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
 *
 *
 *
@@ -338,7 +413,7 @@ enum {
 	MSG_EBRC_KeyInFunc,
 	MSG_ShowLast,
 	MSG_FTPSession,
-	MSG_notused341,
+	MSG_notused316,
 	MSG_DBNotCompiled,
 	MSG_ABNoAlias,
 	MSG_ABNoColon,
@@ -356,9 +431,9 @@ enum {
 	MSG_SectionIgnored,
 	MSG_FileXEmpty,
 	MSG_SubjectStart,
-	MSG_notused359,
+	MSG_notused334,
 	MSG_SubjectLong,
-	MSG_notused361,
+	MSG_notused336,
 	MSG_SigRegular,
 	MSG_SigAccess,
 	MSG_MailBinary,
@@ -375,7 +450,7 @@ enum {
 	MSG_LineDelete2,
 	MSG_LineAdd1,
 	MSG_LineAdd2,
-	MSG_notused378,
+	MSG_notused353,
 	MSG_MailAccountsNone,
 	MSG_MailAccountBad,
 	MSG_MailBrowse,
@@ -387,9 +462,9 @@ enum {
 	MSG_MailFirstCC,
 	MSG_AttLineX,
 	MSG_MailAccountBadLineX,
-	MSG_notused390,
+	MSG_notused365,
 	MSG_MailFirstLine,
-	MSG_notused392,
+	MSG_notused367,
 	MSG_RecipNone3,
 	MSG_ProtExpected,
 	MSG_BadProt,
@@ -408,18 +483,18 @@ enum {
 	MSG_TempNoCreate2,
 	MSG_ManyTables,
 	MSG_RegularFile,
-	MSG_notused411,
+	MSG_notused386,
 	MSG_NoRead2,
 	MSG_NoAccess,
 	MSG_NoEnvVar,
 	MSG_NoTilde,
-	MSG_notused416,
-	MSG_notused417,
-	MSG_notused418,
-	MSG_notused419,
-	MSG_notused420,
+	MSG_notused391,
+	MSG_notused392,
+	MSG_notused393,
+	MSG_notused394,
+	MSG_notused395,
 	MSG_ShellExpand,
-	MSG_notused422,
+	MSG_notused397,
 	MSG_ShellManyMatch,
 	MSG_ShellLineLong,
 	MSG_DBUnspecified,
@@ -455,41 +530,41 @@ enum {
 	MSG_DBCheck,
 	MSG_DBTimeout,
 	MSG_DBView,
+	MSG_notused433,
+	MSG_notused434,
+	MSG_notused435,
+	MSG_notused436,
+	MSG_notused437,
+	MSG_notused438,
+	MSG_notused439,
+	MSG_notused440,
+	MSG_notused441,
+	MSG_notused442,
+	MSG_notused443,
+	MSG_notused444,
+	MSG_notused445,
+	MSG_notused446,
+	MSG_notused447,
+	MSG_notused448,
+	MSG_notused449,
+	MSG_notused450,
+	MSG_notused451,
+	MSG_notused452,
+	MSG_notused453,
+	MSG_notused454,
+	MSG_notused455,
+	MSG_notused456,
+	MSG_notused457,
 	MSG_notused458,
 	MSG_notused459,
 	MSG_notused460,
-	MSG_notused461,
-	MSG_notused462,
-	MSG_notused463,
-	MSG_notused464,
-	MSG_notused465,
-	MSG_notused466,
-	MSG_notused467,
-	MSG_notused468,
-	MSG_notused469,
-	MSG_notused470,
-	MSG_notused471,
-	MSG_notused472,
-	MSG_notused473,
-	MSG_notused474,
-	MSG_notused475,
-	MSG_notused476,
-	MSG_notused477,
-	MSG_notused478,
-	MSG_notused479,
-	MSG_notused480,
-	MSG_notused481,
-	MSG_notused482,
-	MSG_notused483,
-	MSG_notused484,
-	MSG_notused485,
 	MSG_AttAfterChars,
 	MSG_AttBad64,
-	MSG_notused488,
+	MSG_notused463,
 	MSG_Doubleclick,
 	MSG_OptionSync,
-	MSG_notused491,
-	MSG_notused492,
+	MSG_notused466,
+	MSG_notused467,
 	MSG_GetLocalJS,
 	MSG_GetJS,
 	MSG_GetJS2,
@@ -498,13 +573,13 @@ enum {
 	MSG_NJNoReset,
 	MSG_NJNoSubmit,
 	MSG_LostTag,
-	MSG_notused501,
+	MSG_notused476,
 	MSG_GarbledRefresh,
-	MSG_notused503,
+	MSG_notused478,
 	MSG_RedirectNoURL,
 	MSG_HTTPError,
-	MSG_notused506,
-	MSG_notused507,
+	MSG_notused481,
+	MSG_notused482,
 	MSG_HelpOn,
 	MSG_FTPDownload,
 	MSG_NoCertFile,
@@ -530,14 +605,14 @@ enum {
 	MSG_EBRC_KeyNotNb,
 	MSG_EBRC_KeyOutRange,
 	MSG_EBRC_AbNotFile,
-	MSG_notused533,
+	MSG_notused508,
 	MSG_EBRC_NotDir,
 	MSG_EBRC_ManyAgents,
 	MSG_EBRC_JarNotFile,
 	MSG_EBRC_JarNoWrite,
 	MSG_EBRC_NoJS,
 	MSG_EBRC_DomainDot,
-	MSG_notused540,
+	MSG_notused515,
 	MSG_EBRC_SSLNoFile,
 	MSG_EBRC_SSLNoRead,
 	MSG_EBRC_KeywordNYI,
@@ -586,30 +661,30 @@ enum {
 	MSG_NoClosingLine,
 	MSG_NoTagFound,
 	MSG_NoRebCookie,
-	MSG_notused589,
+	MSG_notused564,
 	MSG_FetchNotBackgnd,
 	MSG_NoMailDir,
 	MSG_NoDirChange,
-	MSG_notused593,
+	MSG_notused568,
 	MSG_LogPass,
-	MSG_notused595,
-	MSG_notused596,
-	MSG_notused597,
-	MSG_notused598,
-	MSG_notused599,
+	MSG_notused570,
+	MSG_notused571,
+	MSG_notused572,
+	MSG_notused573,
+	MSG_notused574,
 	MSG_BadTagCode,
-	MSG_notused601,
+	MSG_notused576,
 	MSG_HtmlNotreentrant,
 	MSG_UnexSubmitForm,
 	MSG_NullListInform,
-	MSG_notused605,
+	MSG_notused580,
 	MSG_JavaMemError,
 	MSG_JavaContextError,
 	MSG_JavaWindowError,
-	MSG_notused609,
+	MSG_notused584,
 	MSG_JavaObjError,
-	MSG_notused611,
-	MSG_notused612,
+	MSG_notused586,
+	MSG_notused587,
 	MSG_MemAllocError,
 	MSG_MemCallocError,
 	MSG_ReallocP,
@@ -626,9 +701,9 @@ enum {
 	MSG_BadDirSlash,
 	MSG_BadSlash,
 	MSG_DecodePost,
-	MSG_notused629,
-	MSG_notused630,
-	MSG_notused631,
+	MSG_notused604,
+	MSG_notused605,
+	MSG_notused606,
 	MSG_ReDir,
 	MSG_ReDB,
 	MSG_ReEmpty,
@@ -678,8 +753,8 @@ enum {
 	MSG_SSLConnectError,
 	MSG_InputTTY,
 	MSG_InputReadLine,
-	MSG_notused681,
+	MSG_notused656,
 	MSG_JSSessionFail,
-	MSG_notused683,
-	MSG_notused684,
+	MSG_notused658,
+	MSG_notused659,
 };

@@ -1,0 +1,659 @@
+EOF - koniec pliku
+brak pliku
+przekierowanie
+globalne podstawienia
+lokalne podstawienia
+wielkość liter nieistotna
+wielkość liter istotna
+katalogi tylko do odczytu
+katalogi z prawem zapisu
+katalogi z prawem zapisu (wraz z usuwaniem)
+brak przekierowania HTTP
+przekierowanie HTTP
+nie wysyłaj adresu strony wywołującej (referrera)
+wysyłaj adres strony wywołującej (referrera)
+JavaScript włączony
+JavaScript wyłączony
+traktuj dane binarne jak tekst
+szukanie plików binarnych
+tryb pasywny
+tryb aktywny
+Silnik JavaScript zawiódł; wszystkie bieżące sesje JavaScript zostały zamknięte.
+nie weryfikuj połączeń SSL (mniej bezpieczne)
+weryfikuj połączenia SSL
+nie pokazuj ukrytych plików w trybie katalogu
+pokazuj ukryte pliki w trybie katalogu
+Nie można utworzyć procesu potomnego dla edbrowse-js, JavaScript został wyłączony.
+Nie można wykonać polecenia edbrowse-js, JavaScript został wyłączony.
+znaczniki końca linii wyłączone
+znaczniki końca linii włączone dla wyświetlonych linii
+znaczniki końca linii włączone
+JavaScript wyłączony, brak akcji
+JavaScript wyłączony, idziemy wprost pod URL
+przekierowanie przerwane przez użytkownika
+pusty
+nowa sesja
+brak znaku końca linii
+tryb katalogu
+dane binarne
+ok
+ [binarny]
+brak tytułu
+brak opisu
+brak słów kluczowych
+sesja %d\n
+Odnośnik SendMail. Stwórz wiadomość, wpisz 'sm' by wysłać, potem '^' by wrócić
+wiersz %d został zaktualizowany\n
+h\twyświetl pomoc.\nq\tzakończ ten program.\ns\tzakończ odczyt tego katalogu.\nn\tidź do następnej wiadomości.\nd\tusuń tę wiadomość.\nm\tprzenieś tę wiadomość do innego katalogu.\nspacja\twczytaj wiadomość i zarządzaj nią.\n/\tszukaj słów w temacie, polu nadawcy lub treści.\nl\tustaw limit pobierania IMAP.
+s string, wiadomości zawierające 'string' w temacie\nf string, wiadomości zawierające 'string' w polu nadawcy\nb string, wiadomości zawierające 'string' w treści\ngdy brak literowego polecenia, szukaj domyślnie w temacie.
+brak wiadomości
+przerwanie, wpisz 'qt' by zakończyć
+edbrowse gotów
+wprowadzone polecenie zawiera puste znaki (NULL); możesz użyć '\\0' w poleceniu szukaj/zamień w charakterze pustych znaków
+żądanie autoryzacji - wpisz 'x' by anulować
+zbyt wiele przekierowań
+sukces
+katalog
+przekierowanie do %s opóźnione o %d sekund\n
+Nazwa użytkownika: 
+nazwa użytkownika zbyt długa, ograniczenie do %d znaków
+Hasło: 
+hasło zbyt długie, ograniczenie do %d znaków
+Nie można skomunikować się z edbrowse-js, JavaScript został wyłączony.
+uwaga, katalog jest niedostępny - lista zawartości będzie pusta
+katastrofa, długość wiadomości o błędzie %d - zbyt duża
+wiersz %d: 
+nie jesteś w tryb katalogu
+bufor %d został zaktualizowany\n
+brak opcji
+formularz został zresetowany
+wysyłanie formularza
+.ebrc: wiersz %d, 'outtype' powinno mieć wartość 't' lub 'h'
+ wiele
+ zalecane
+]
+żadna opcja nie zawiera ciągu znaków %s\n
+wysyłanie wiadomości do %s\n
+Twoje informacje zostały wysłane; oczekuj odpowiedzi emailem zwrotnym.
+śmieci
+wyjdź
+następny
+usuń
+wtyczki nieaktywne
+wtyczki aktywne
+Nie można skonfigurować środowiska uruchomieniowego JavaScript, JavaScript został wyłączony.
+koniec wiadomości
+nie zaimplementowano
+nazwa pliku: 
+Przykro mi, plik %s już istnieje.\n
+skrócone
+pusty załącznik
+załącznik 
+brak wolnych buforów, załącznik odrzucony
+nie można skopiować załącznika do bufora %d
+nie można utworzyć pliku %s, załącznik odrzucony\n
+nie można zapisać pliku %s, załącznik odrzucony\n
+brak poczty
+%d wiadomości\n
+Komunikacja między procesami JavaScript jest rozsynchronizowana.
+niedozwolone znaki po poleceniu 'ls'
+h\twydrukuj ten wątek pomocy.\nq\tzakończ ten program.\nspacja\tczytaj więcej z tej wiadomości.\nn\tprzejdź do następnej wiadomości pocztowej.\nd\tusuń tę wiadomość.\nw\tzapisz tę wiadomość do pliku i usuń ją.\nu\tzapisz tę wiadomość do pliku w postaci niesformatowanej i usuń ją.
+nie można utworzyć pliku %s\n
+nie można zapisać pliku %s\n
+poczta zapisana, %d bajtów
+ dopisano
+to koniec tej strony, użyj klawisza 'wstecz' lub wyjdź
+nie można utworzyć tymczasowego katalogu /tmp/.edbrowse
+brak błędów
+autoryzacja proxy dla URLa nie będącego proxy
+sesja %d jest nieaktywna
+sesja 0 nie jest dozwolona
+sesja %d jest poza dozwoloną granicą: %d
+już jesteś w sesji %d
+oczekiwano `w'
+oczekiwano `w' w sesji %d
+Twój limit 170 milionów wierszy został osiągnięty.\nZapisz swoje pliki, po czym wyjdź z programu i uruchom go ponownie.
+długość ścieżki bezwzględnej zbyt duża, limit: %d znaków
+katalogi są tylko do odczytu, wpisz 'dw' by uaktywnić zapis
+nie można utworzyć katalogu '.Trash' w Twoim katalogu domowym
+nie można usunąć pliku %s
+Nie można przenieść %s do śmieci, ustaw tryb 'dx' aby rzeczywiście usunąć plik
+lokalizacja docelowa znajduje się w kopiowanym/przenoszonym obszarze
+brak zmian
+nie można dołączyć wiersza
+nie można wczytać z bazy danych do innego pliku
+nie można wczytać innych tabel do tej samej sesji
+brak nazwy pliku
+pusta domena w adresie URL
+nie można zapisać pod adresem URL
+nie można zapisać do tabeli bazy danych
+nie można zapisać pustego pliku
+nie można utworzyć %s
+nie można zapisać %s
+sesja nie jest interaktywna
+wiersz %c jest poza zakresem
+nie można włączać pustych znaków do poleceń
+etykieta %c nie jest ustawiona
+niedozwolony ogranicznik
+brak zapamiętanych fraz wyszukiwania
+brak zapamiętanych fraz podstawienia
+wyrażenie regularne zbyt długie
+wiersz kończy się ukośnikiem wstecznym (backslash)
+nieoczekiwany nawias zamykający ')'
+fraza podstawienia może wykorzystywać jedynie '$1' do '$9'
+modyfikator %s nie posiada znaku poprzedzającego
+brak zamykającego nawiasu kwadratowego ']'
+brak zamykającego nawiasu ')'
+pusty bufor
+błąd w wyrażeniu regularnym, %s
+nieoczekiwany błąd przy wykonywaniu wyrażenia regularnego w wierszu %d
+nie znaleziono frazy wyszukiwania
+numer wiersza zbyt duży
+ujemny numer wiersza
+brak wyrażenia regularnego po %c
+brak ogranicznika
+żaden wiersz nie pasuje do wzorca 'g'
+wszystkie wiersze pasują do wzorca 'v'
+żaden z zaznaczonych wierszy nie został poprawnie zmodyfikowany
+operacja przerwana
+brak pasujących wyników
+Brak obiektów JavaScript, lub zostały one błędnie skonfigurowane.
+agent numer %c nie został zdefiniowany
+nie można wyświetlić nowego katalogu
+nie można wykryć bieżącego katalogu
+niewłaściwy katalog
+nie można odtworzyć dźwięku z pustego bufora
+nie można odtworzyć dźwięku w trybie przeglądania
+nie można odtworzyć dźwięku w trybie katalogu
+nie można odtworzyć dźwięku w trybie bazy danych
+plik nie ma rozszerzenia, użyj 'pb.xxx' aby określić własne rozszerzenie
+rozszerzenie jest ogranicznone do 5 znaków
+rozszerzenie .%s nie jest rozpoznawanym typem MIME, sprawdź swój plik konfiguracyjny
+brak nazwy pliku lub URLa do odświeżenia
+nie jesteś w trybie bazy danych
+nie jesteś w trybie przeglądania
+nazwa pliku nie zawiera '/'
+nazwa pliku kończy się znakiem '/'
+niedozwolone znaki po poleceniu 'sm'
+musisz podać dokładnie jedno z '%s' po poleceniu 'B'
+wiersz nie zawiera otwartego %c
+zarówno %c jak i %c nie są domknięte w tym wierszu, spróbuj B%c lub B%c
+wiersz nie zawiera niedomkniętych nawiasów zwykłych, klamrowych ani kwadratowych
+nie można znaleźć wiersza z domknięciem %c
+Twój plik konfiguracyjny edbrowse nie istnieje; został stworzony domyślny plik.\nPrzed ponownym uruchomieniem edbrowse poświęć nieco czasu na jego personalizację:\n%s\nedbrowse -c by wyedytować\n
+sesja %d jest obecnie w trybie katalogu
+brak nazwy pliku
+koniec bufora
+nie ma dalszych wierszy do dołączenia
+nieprawidłowy zakres
+nie można łamać linii w trybie katalogu
+nie można łamać linii w trybie bazy danych
+nie można łamać linii w trybie przeglądania
+nieznane polecenie %c
+%c niedostępne w trybie katalogu
+%c niedostępne w trybie bazy danych
+%c niedostępne w trybie przeglądania
+zerowy numer wiersza
+brak spacji po poleceniu
+polecenie %c nie może być wykonane globalnie
+niewłaściwa lokalizacja docelowa dla przenoszenia/kopiowania
+nieoczekiwany tekst po poleceniu %c
+nie ma czego cofnąć
+proszę, wprowadź 'k[a-z]'
+nie można zaetykietować całego zakresu
+nie można wykonać kopii zapasowej 0
+uwaga: brak dostępnych buforów dla obsługi okna pomocniczego
+nieoczekiwany tekst po poleceniu 'q'
+nie można zmienić nazwy katalogu
+nie można zmienić nazwy tabeli
+nie można dołączyć do następnego bufora
+nie podano pliku
+nie można zapisać w katalogu; pliki będą modyfikowane na bieżąco
+nie można zapisać w bazie danych; rekordy będą modyfikowane na bieżąco
+nieoczekiwany tekst po poleceniu '^'
+brak poprzedniego tekstu
+nieoczekiwany tekst po poleceniu 'M'
+nie podano sesji docelowej
+brak poprzedniego tekstu, nie można zapisać
+nie można zastosować polecenia 'g' do zakresu
+polecenie 'g' niedostępne w trybie bazy danych
+nie można zastosować polecenia 'i%c' do zakresu
+nie można użyć 'i<' w poleceniu globalnym
+bufor %d jest pusty
+bufor %d zawiera więcej niż jeden wiersz
+nie można otworzyć %s
+nie można wczytać %s
+wprowadzony tekst zawiera puste znaki
+wiersz zawiera znak powrotu karetki
+pierwszy wiersz %s jest zbyt długi
+plik jest obecnie w buforze - użyj polecenia 'rf' by odświeżyć
+nie można przeglądać pliku binarnego
+nie można przeglądać pustego pliku
+to nie wygląda jak przeglądalny tekst
+już przeglądasz
+etykieta %s nie znaleziona
+'i' nie znalezione w trybie przeglądania
+nie można wywołać polecenia wstawienia z funkcji edbrowse
+Nie można skomunikować się z edbrowse-js, JavaScript został zamknięty.
+polecenie %c nie zaimplementowane
+%d jest poza zakresem
+żadna opcja nie zawiera ciągu %s
+wiele opcji zawiera ciąg %s
+to jest przycisk; użyj 'i*' aby go przycisnąć
+to jest przycisk wysyłania formularza; użyj 'i*' aby go przycisnąć
+to jest przycisk resetowania; użyj 'i*' aby go przycisnąć
+to jest pole tekstowe, musisz je edytować z poziomu sesji %d
+pole tylko do odczytu
+pole wprowadzania nie może zawierać znaku końca linii
+tekst zbyt długi, limit %d znaków
+pole musi zawierać + lub -
+nie możesz wyczyścić pola radio; musisz wybrać inne pole
+%s nie jest dostępnym plikiem
+oczekiwano liczby
+sesja %d zawiera znaki zerowe
+wysyłanie pliku wymaga parametrów method=post i enctype=multipart/form-data
+to jest pole wprowadzania, nie przycisk
+ten przycisk nie jest częścią formularza
+brak JavaScriptu powiązanego z tym przyciskiem
+formularz nie zawiera docelowego URLa
+akcja tego formularza nie jest URLem
+JavaScript jest wyłączony, nie można aktywować formularza
+Ten formularz zmienił się z http na https i nie jest teraz bezpieczny
+nie można wysłać używając protokołu %s
+%d jest poza zakresem, używaj %c1 do %c%d
+%d jest poza zakresem, użyj %c1 lub po prostu %c
+nie można zamienić wielu instancji pustego ciągu znaków
+anulowano pobieranie.
+brak wyrażenia regularnego po %c
+wiele liczb po trzecim ograniczniku
+nieoczekiwany tekst podstawienia po trzecim ograniczniku
+nie można użyć liczby i 'g' jednocześnie jako przyrostka
+przykro mi, nie można zastosować polecenia 'bl' do wierszy dłuższych niż %d bajtów
+dane podstawiane zawierają znaki końca linii
+dane podstawiane zawierają puste znaki
+nazwa katalogu nie może zawierać ukośnika, znaku końca linii ani znaku zerowego
+plik docelowy już istnieje
+nie można zmienić nazwy pliku na %s
+pole wprowadzania nie może zawierać znaków zerowych
+pole wprowadzania nie może zawierać znaków końca linii
+brak pól wprowadzania
+brak odnośników
+brak przycisków
+wiele pól wprowadzania obecnych, użyj %c1 do %c%d
+wiele odnośników obecnych, użyj %c1 do %c%d
+wiele przycisków obecnych, użyj %c1 do %c%d
+nie dało się wczytać danych z serwera
+%s nie jest URLem
+pobieranie zakończone.
+nie można zidentyfikować %s w sieci
+protokół %s nie jest wspierany przez edbrowse i nie jest zawarty w typach MIME w pliku konfiguracyjnym
+uwaga: nie można załadować <bufora %d> z tekstem początkowym\n
+pobieranie w toku
+nie można się połączyć z %s
+pobieranie: 
+Ceryfikat hosta %s nie mógł być zweryfikowany - połączenie SSL anulowane
+nie można odczytać
+h\tpokaż treść tej pomocy.\nq\tzakończ ten program.\nspace\tprzeczytaj dalszą część tej wiadomości.\nn\tprzejdź do następnej wiadomości.\nd\tusuń tę wiadomość.\nw\tzapisz tę wiadomość do pliku.\nW\tzapisz tę wiadomość do pliku i usuń ją.\nu\tzapisz tę wiadomość do pliku w postaci niesformatowanej.\nU\tzapisz tę wiadomość do pliku w postaci niesformatowanej i usuń ją.\na\tprzeskanuj i zapisz załączniki.\ns\tzakończ czytanie poczty z tego katalogu.
+strona wymaga autoryzacji
+logowanie anulowane
+fraza wyszukiwania nie może zawierać cudzysłowów
+koniec katalogu
+pobieranie w głównym procesie
+pobieranie w tle
+ukończono
+niepowodzenie
+ftp: nie można połączyć się ze zdalnym hostem
+ftp: transfer zakończony niepowodzeniem
+brak katalogów
+Wybierz katalog wg. numeru lub części nazwy.\nPoprzedź '-' by wyświetlić jedynie nieprzeczytane wiadomości. 'q' by zakończyć. 'l' by zmienić limity pobierania.
+w toku
+stop
+pobierz %d na raz\n
+brak załączników
+.ebrc: klucz = wartość wewnątrz funkcji edbrowse w wierszu %d
+pokazuję ostatnie %d z %d wiadomości\n
+ftp: inicjalizacja sesji zakończona niepowodzeniem
+0
+edbrowse nie został skompilowany z dostępem do bazy danych
+brakujący alias w wierszu książki adresowej %d
+brakujący ':' w wierszu książki adresowej %d
+alias w wierszu książki adresowej %d jest zbyt długi, limit 15 znaków
+email w wierszu książki adresowej %d jest zbyt długi, limit 63 znaków
+email w wierszu książki adresowej %d nie zawiera '@'
+w emailu nie może być spacji, wiersz %d książki adresowej
+niedrukowalny znak w Twoim aliasie lub emailu, wiersz %d książki adresowej
+ostatni wiersz Twojej książki adresowej nie jest zakończony
+żaden katalog nie zawiera %s\n
+wiele katalogów zawiera %s\n
+wyszukaj 
+limit 
+przenieś do 
+uwaga: URL formularza podaje sekcję %s, która zostanie zignorowana\n
+plik %s jest pusty
+Twoja wiadomość powinna zaczynać się od 'subject:'
+0
+wiersz tematu zbyt długi, limit %d znaków
+0
+'.signature' nie jest regularnym plikiem
+nie można odczytać pliku '.signature'
+nie można wysłać pliku binarnego %s, być może powinien być załącznikiem?
+albo żaden albo wszystkie załączniki powinny być zadeklarowane jako \"alternative\"
+zbyt wielu odbiorców, limit %d
+Nie podano książki adresowej, sprawdź swój plik konfiguracyjny '.ebrc'
+alias %s nie znaleziony w Twojej książce adresowej
+nie podano odbiorców
+sesja %d jest pusta, nie można załączyć
+nie można otworzyć załącznika %s
+plik %s nie jest regularnym plikiem, nie można załączyć
+plik %s jest pusty, nie można załączyć
+wiersz następujący po %d został usunięty\n
+%d wierszy następujących po %d zostało usuniętych\n
+wiersz %d został dodany\n
+wiersze od %d do %d zostały dodane\n
+0
+nie podano żadnych kont pocztowych, sprawdź swój plik konfiguracyjny
+niewłaściwy numer konta %d, użyj liczby od 1 do %d
+nie można wysyłać wiadomości w trybie przeglądarki
+nie można wysyłać wiadomości w trybie bazy danych
+nie można wysyłać wiadomości w trybie katalogu
+nie można wysyłać danych binarnych, czy powinny być załącznikiem?
+nie można wysyłać pustych plików
+brak odbiorcy w wierszu %d
+nie można dodać pierwszego odbiorcy do 'cc' lub 'bcc'
+brak załącznika w wierszu %d
+błędny numer konta w wierszu %d
+0
+wiersz %d powinien zaczynać się od 'attach:', 'alt:', 'account:' lub 'subject:'
+0
+nie podano odbiorców, umieść 'to: <email>' na początku swojego pliku
+oczekiwano %s://
+nierozpoznany protokół %s
+nieprawidłowy specyfikator ':port' na końcu domeny
+nazwa domeny zbyt długa
+nazwa użytkownika zbyt długa
+hasło zbyt długie
+%d wierszy zostało zastąpionych wierszem %d\n
+wiersze od %d do %d zostały zaktualizowane\n
+nie podano funkcji
+nazwa funkcji powinna zawierać jedynie litery i cyfry
+funkcja %s nie istnieje
+zbyt wiele argumentów
+~%d nie posiada odpowiadającego argumentu
+nie można wywołać subpolecenia %s, błąd %d
+nie można utworzyć tymczasowego pliku %s, błąd %d
+zbyt wiele tabel SQL w pamięci podręcznej, limit %d
+%s nie jest regularnym plikiem
+0
+nie można wczytać zawartości %s
+nie można odczytać %s
+$%s nie jest zdefiniowana
+~%s nie jest zdefiniowana
+0
+0
+0
+0
+0
+nieoczekiwany błąd podczas wykonywania wzorca powłoki
+0
+wzorzec powłoki pasuje do więcej niż jednego pliku
+wiersz zbyt długi po rozwinięciu zmiennych powłoki
+plik konfiguracyjny nie podaje bazy danych - nie można połączyć
+nie można połączyć się z bazą danych - błąd %d
+błąd bazy danych %d
+brak klucza głównego dla tej tabeli
+nazwa kolumny %s jest zbyt długa, limit %d znaków
+błąd składniowy w wyrażeniu 'where'
+kolumna %d poza zakresem
+wiele kolumn pasuje do %s
+żadna kolumna nie pasuje do %s
+brak tabeli %s
+nieprawidłowa nazwa kolumny
+nie można wybrać więcej niż jednej kolumny BLOB
+dane zawierają pionowe kreski - zarezerwowany ogranicznik
+dane zawierają znaki końca linii
+wiersz zawiera zbyt wiele pól, nie wprowadzaj pionowych kresek do tekstu
+wiersz zawiera zbyt mało pól, nie usuwaj pionowych kresek z tekstu
+brak kolumny z kluczem głównym dla tej tabeli
+inny błąd SQL: %d
+nie można usunąć więcej niż 100 rekordów na raz
+nie można zmienić kolumny klucza
+nie można zmienić pola BLOB
+nie można zmienić pola tekstowego
+Ups! Usunąłem %d rząd(rzędów) i %d rekord(rekordów) zostało zmodyfikowanych
+Ups! Wstawiłem %d rząd(rzędów) i %d rekord(rekordów) zostało zmodyfikowanych
+Ups! Zaktualizowałem %d rząd(rzędów) i %d rekord(rekordów) zostało zmodyfikowanych
+inny rekord w bazie danych zależy od tego rekordu
+rekord lub tabela są zablokowane
+nie masz uprawnień by zmodyfikować bazę danych w ten sposób
+wykryto blokadę wzajemną (deadlock)
+umieszczono znak zerowy w kolumnie, w której jest to niedozwolone
+sprawdzić naruszenie więzów
+przekroczenie czasu dostępu do bazy danych
+nie można zmodyfikować widoku
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+nieoczekiwane znaki po zakodowanym załączniku
+nieprawidłowe znaki w zakodowanym ząłączniku
+0
+uwaga, JavaScript nie może być wywołany podwójnym kliknięciem
+błąd użycia opcji %s podczas synchronizacji lub wysyłania formularza
+0
+0
+nie można pobrać lokalnego JavaScriptu, %s\n
+nie można pobrać JavaScriptu z %s, kod %ld\n
+nie można pobrać JavaScriptu, %s\n
+JavaScript wyłączony, pomijanie kodu 'onclick'
+JavaScript wyłączony, pomijanie kodu 'onchange'
+JavaScript wyłączony, pomijanie kodu 'onreset'
+JavaScript wyłączony, pomijanie kodu 'onsubmit'
+nie można znaleźć tagu HTML skojarzonego ze zmienną modyfikowaną w kodzie JavaScript
+0
+uwaga: zniekształcona dyrektywa odświeżania, %s\n
+0
+uwaga: przekierowanie HTTP %ld, ale brak nowego adresu URL\n
+uwaga: błąd HTTP %ld, %s\n
+0
+0
+wiadomości pomocnicze włączone
+ściąganie ftp: 
+nie podano pliku z certyfikatem SSL; bezpieczne połączenie nie może zostać zweryfikowane
+ściąganie scp: 
+.ebrc: znaki zerowe w wierszu %d
+.ebrc: brak nazwy funkcji w wierszu %d
+.ebrc: nazwa funkcji w wierszu %d zaczyna się od cyfry
+.ebrc: nazwa funkcji w wierszu %d jest zbyt długa, limit 10 znaków
+.ebrc: nieprawidłowa składnia definicji funkcji w wierszu %d
+.ebrc: wiersz %d, oczekiwano 'warunek > plik'
+.ebrc: wiersz %d, reguła filtracji nie posiada wzorca wyszukiwania
+.ebrc: wiersz %d, dopasowanie %s nie jest nigdzie ustawione
+.ebrc: wiersz %d, zbyt wiele filtrów poczty
+.ebrc: nierozpoznane słowo kluczowe %s w wierszu %d
+.ebrc: wiersz %d, atrybut %s nie może być ustawiony poza deskryptorem poczty
+.ebrc: wiersz %d, atrybut %s nie może być ustawiony poza deskryptorem Plugin
+.ebrc: wiersz %d, atrybut %s nie może być ustawiony poza deskryptorem tabeli
+.ebrc: wiersz %d, atrybut %s nie może być ustawiony poza deskryptorem poczty lub blokiem filtra
+.ebrc: wiersz %d, atrybut %s nie może być ustawiony wewnątrz deskryptora Plugin
+.ebrc: wiersz %d, atrybut %s nie może być ustawiony wewnątrz deskryptora tabeli
+.ebrc: wiersz %d, atrybut %s nie jest ustawiony
+.ebrc: wiersz %d, zbyt wiele kolumn, limit %d
+.ebrc: wiersz %d, klucz powinien być postaci 'liczba' lub 'liczba,liczba'
+.ebrc: wiersz %d, klucz poza zasięgiem; podano tylko %d kolumn
+.ebrc: książka adresowa %s nie jest regularnym plikiem
+0
+.ebrc: %s nie jest katalogiem
+.ebrc: wiersz %d, zbyt wiele agentów użytkownika, limit 9
+.ebrc: plik ciastek %s nie jest regularnym plikiem
+.ebrc: nie można utworzyć pliku ciastek %s
+.ebrc: zbyt wiele dyrektyw JS, limit %d
+.ebrc: wiersz %d, domena %s nie zawiera kropki
+0
+.ebrc: plik z certyfikatem SSL %s nie jest regularnym plikiem
+.ebrc: plik z certyfikatem SSL %s nie istnieje lub nie jest do odczytu
+.ebrc: wiersz %d, słowo kluczowe %s nie jest zaimplementowane
+.ebrc: wiele kont pocztowych ustawionych jako domyślne
+.ebrc: brak dyrektywy 'inserver' w wierszu %d
+.ebrc: brak dyrektywy 'outerver' w wierszu %d
+.ebrc: brak dyrektywy 'login' w wierszu %d
+.ebrc: brak dyrektywy 'password' w wierszu %d
+.ebrc: brak dyrektywy 'from' w wierszu %d
+.ebrc: brak dyrektywy 'reply' w wierszu %d
+.ebrc: brak dyrektywy 'type' w wierszu %d
+.ebrc: brak dyrektywy 'description' w wierszu %d
+.ebrc: brak przyrostka lub listy protokołów w wierszu %d
+.ebrc: brak dyrektywy 'program' w wierszu %d
+.ebrc: brak dyrektywy 'table name' w wierszu %d
+.ebrc: brak dyrektywy 'short name' w wierszu %d
+.ebrc: brak dyrektywy 'columns' w wierszu %d
+.ebrc: nieoczekiwany '}' w wierszu %d
+.ebrc: funkcja %s nie jest domknięta przed końcem pliku
+.ebrc: zniekształcony tekst w wierszu %d
+.ebrc: wiersz %d, nie można rozpocząć funkcji, deskryptora Plugin/poczty lub bloku filtrów wewnątrz %s
+.ebrc: wyrażenie w wierszu %d musi się znajdować wewnątrz funkcji
+zbyt wiele kont pocztowych w Twoim pliku .ebrc, limit %d
+zbyt wiele typów Plugin w Twoim pliku .ebrc, limit %d
+zbyt wiele tabel SQL w Twoim pliku .ebrc, limit %d
+zbyt wiele funkcji w Twoim pliku .ebrc, limit %d
+.ebrc: wiersz %d, zbyt głębokie zagnieżdżenie struktur kontrolnych
+.ebrc: funkcja %s nie jest domknięta przed końcem pliku
+.ebrc: blok poczty lub Plugin nie jest domknięty przed końcem pliku
+katalog domowy nie jest zdefiniowany w zmiennej $HOME
+%s nie jest katalogiem
+nie podano kont pocztowych, sprawdź swój plik konfiguracyjny .ebrc
+nieprawidłowy numer konta, użyj numeru od 1 do %d
+edbrowse  -v    (pokaż wersję)\nedbrowse -h (ta wiadomość)\nedbrowse -c (edytuj plik konfiguracyjny)\nedbrowse [-e] [-d#] -f[#] (pobierz pocztę) \nedbrowse  [-e] [-d#] -[p]m    (czytaj nieprzeczytane wiadomości)\nedbrowse  [-e] [-d#] -[p]fm[#]    (pobierz pocztę i czytaj nieprzeczytane wiadomości)\nedbrowse  [-e] [-d#] -m[#] adres1 adres2 ... plik [+załączniki]\nedbrowse  [-e] [-d#] plik1 plik2 ...
+podaj co najmniej jednego odbiorcę i plik do wysłania
+podaj co najmniej jednego odbiorcę i plik do wysłania, przed załącznikami
+zbyt wiele plików otwartych jednocześnie, limit %d
+nieprawidłowa sesja %d w fetchLineContext()
+nieprawidłowy numer wiersza %d w fetchLineContext()
+zbyt wiele kont proxy w Twoim pliku .ebrc, limit %d
+sesja %d poza zakresem w cxActive
+podwójna inicjalizacja w sesji %d
+zamykam nieaktywną sesję %d
+pusty nowy element w addToMap()
+brak znaku nowej linii we wpisie z katalogiem %s
+brak zamykającego '>' w wierszu %d
+funkcja fieldInBuffer nie może znaleźć tagu %d newtext %s
+nie można odtworzyć Twojego pliku ciastek %s
+0
+klient Fetchmail jest interaktywny i nie może być uruchomiony w tle
+katalog skrzynki odbiorczej nie został podany w Twoim pliku .ebrc
+Nie można zmienić katalogu na %s
+0
+login lub hasło niepoprawne
+0
+0
+0
+0
+0
+po kodzie tagu %d następuje nieprawidłowy znak %c
+0
+Funkcja htmlParse() nie jest wielobieżna (reentrant).
+nieoczekiwany typ danych wejściowych w funkcji submitForm()
+lista = 0 w tagFromJavaVar()
+0
+nie można zaalokować pamięci dla operacji JavaScript
+nie można utworzyć kontekstu JavaScript
+nie można utworzyć obiektu 'window' JavaScript
+0
+nie można utworzyć obiektu 'document' JavaScript
+0
+0
+błąd alokacji %zu bajtów
+błąd alokacji (calloc) %zu bajtów
+reallocMem(p,0)
+reallocMem(0,%zu)
+błąd realokacji %zu bajtów
+stringInList(null,...)
+stringInListCI(null,...)
+charInList(null,...)
+zerowy wskaźnik w pstLength
+nie można użyć ioctl() aby zarządzać konsolą (tty)
+nie można otworzyć %s
+nie można utworzyć lub zapisać %s
+wywołanie fopen() z niewłaściwym trybem %s
+'/' w złym miejscu w getDirURL(%s)
+'/' w złym miejscu w %s
+decodePostData(0,0)
+0
+0
+0
+nie można odpowiadać w trybie katalogu
+nie można odpowiadać w trybie bazy danych
+nie można odpowiadać na pusty plik
+nie można odpowiadać na plik binarny
+wiersze tematu i adresu zwrotnego są wymagane
+uwaga, brak identyfikatora wiadomości
+Przykro mi, nagłówki emaila nie są dostępne.\nMusisz zacząć od niesformatowanej wiadomości
+l rozwija znaki kontrolne do postaci szesnastkowej (hex)
+l rozwija znaki kontrolne i znaki spoza ASCII do postaci szesnastkowej (hex)
+Uwaga: funkcje wyszukiwania/podstawienia nie wspierają znaków UTF-8,\ngdyź w Twojej bibliotece 'pcre' brakuje takiej funkcjonalności.\nWywołaj 'export PCREUTF8=off' aby wyłączyć tę funkcję i nie widzieć tego ostrzeżenia
+konwersja do ISO-8859
+konwersja do UTF-8
+nie konwertuj pomiędzy ISO-8859 a UTF-8
+automatycznie konwertuj pomiędzy ISO-8859 a UTF-8
+nie można skopiować drzewa katalogów do kosza lub innego systemu plików;\nużyj 'cpio -p' lub 'cp -r' z poziomu powłoki
+nie można usunąć drzewa katalogów; użyj 'rm -r' z poziomu powłoki
+Nie udało się zainicjalizować libcurl
+Lista zawartości tego katalogu FTP jest pusta
+wyszukiwanie i podstawianie z użyciem ASCII
+wyszukiwanie i podstawianie z użyciem UTF-8
+Uwaga: może być konieczne (tymczasowe) wyłączenie wyszukiwania i podstawiania UTF-8\npoleceniem 'su8', aby to zadziałało
+klucz główny składa się z więcej niż 3 kolumn
+nie można wyznaczyć następnej wartości klucza seryjnego (0)
+Nazwy tabel znajdują się w buforze %d\n
+nie podano źródła danych
+łączenie ze źródłem danych %s\n
+rząd
+rzędy
+wybrane
+wstawione
+zaktualizowane
+usunięte
+procedura wykonana
+tabela
+wyrażenie SQL nie jest zakończone średnikiem, lub prawym nawiasem w następnej linii
+wyrażenie 'update' lub 'delete' bez opcji 'where'
+odmowa zdalnego dostępu
+Autoryzacja wymagana aby odczytac %s
+operacja zakończona niepowodzeniem z powodu błędu alokacji pamięci
+Twoja wersja libcurl jest starsza niż %u.%u.%u.\nMusisz zaktualizować by używać edbrowse
+przekroczenie czasu wykonania operacji
+nie można wysłać danych do serwera
+biblioteka curl zwróciła następującą informację o błędzie podczas wykonywania żądanej operacji: %s
+klucze obce dla %s\n
+nie pobieraj kolumn BLOB
+pobieraj kolumny BLOB
+błąd połączenia SSL w libcurl: %s
+konsola wejścia (tty)
+wejście readline()
+0
+Nienaprawialny błąd JavaScript w bieżącej sesji, JavaScript został zamknięty
+0
+0

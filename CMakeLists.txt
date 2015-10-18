@@ -132,11 +132,14 @@ endif(BUILD_SHARED_LIB)
 # see tools/build*.pl scripts
 file(GLOB LANG_EBRC_FILES "lang/ebrc-*")
 message(STATUS "Language ebrc files: LANG_EBRC_FILES=${LANG_EBRC_FILES}")
+file(GLOB LANG_MSG_FILES "lang/msg-*")
+message(STATUS "Language msg files: LANG_MSG_FILES=${LANG_MSG_FILES}")
 
 set(dir src)
 set(GEN_SOURCES
     ${CMAKE_SOURCE_DIR}/${dir}/startwindow.c
     ${CMAKE_SOURCE_DIR}/${dir}/ebrc.c
+    ${CMAKE_SOURCE_DIR}/${dir}/msg-strings.c
     )
 find_program(PERL perl)
 if (PERL)
@@ -144,12 +147,15 @@ if (PERL)
         OUTPUT ${GEN_SOURCES}
         COMMAND perl -f tools/buildsourcestring.pl src/startwindow.js startWindowJS src/startwindow.c
         COMMAND perl -f tools/buildebrcstring.pl
-        DEPENDS ${LANG_EBRC_FILES} src/startwindow.js tools/buildsourcestring.pl
+        COMMAND perl -f tools/buildmsgstrings.pl
+        DEPENDS ${LANG_EBRC_FILES} ${LANG_MSG_FILES} src/startwindow.js
+            tools/buildsourcestring.pl
             tools/buildebrcstring.pl
+            tools/buildmsgstrings.pl
         COMMENT "Running perl to build ${GEN_SOURCES}"
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         )
-    message(STATUS "*** Setup build of ebrc.c and startwindow.c")
+    message(STATUS "*** Setup build of ebrc.c, msg-strings.c, and startwindow.c")
 else ()
     message(FATAL_ERROR, "Error: Can NOT locate 'perl'???")
 endif ()

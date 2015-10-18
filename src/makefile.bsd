@@ -33,6 +33,9 @@ startwindow.c: startwindow.js
 ebrc.c: ../lang/ebrc-*
 	cd .. ; ./tools/buildebrcstring.pl
 
+msg-strings.c: ../lang/msg-*
+	cd .. ; ./tools/buildmsgstrings.pl
+
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.
 edbrowse: $(EBOBJS) startwindow.o dbstubs.o

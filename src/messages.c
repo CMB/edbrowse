@@ -4001,11 +4001,9 @@ static const char *russianMessages[] = {
 
 /* English by default */
 static const char **messageArray = englishMessages;
-static int messageArrayLength = sizeof(englishMessages) / sizeof(char *);
 
 int eb_lang = 1;		/* default English */
 /* startup .ebrc files in various languages */
-extern const char *ebrc_en, *ebrc_fr, *ebrc_pt_br;
 const char *ebrc_string;
 bool cons_utf8, iuConvert = true;
 char type8859 = 1;
@@ -4198,7 +4196,6 @@ void selectLanguage(void)
 	if (!strncmp(buf, "fr", 2)) {
 		eb_lang = 2;
 		messageArray = frenchMessages;
-		messageArrayLength = sizeof(frenchMessages) / sizeof(char *);
 		ebrc_string = ebrc_fr;
 		return;
 	}
@@ -4206,8 +4203,6 @@ void selectLanguage(void)
 	if (!strncmp(buf, "pt_br", 5)) {
 		eb_lang = 3;
 		messageArray = brazilianPortugueseMessages;
-		messageArrayLength =
-		    sizeof(brazilianPortugueseMessages) / sizeof(char *);
 		ebrc_string = ebrc_pt_br;
 		return;
 	}
@@ -4215,7 +4210,6 @@ void selectLanguage(void)
 	if (!strncmp(buf, "pl", 2)) {
 		eb_lang = 4;
 		messageArray = polishMessages;
-		messageArrayLength = sizeof(polishMessages) / sizeof(char *);
 		type8859 = 2;
 		return;
 	}
@@ -4223,7 +4217,6 @@ void selectLanguage(void)
 	if (!strncmp(buf, "de", 2)) {
 		eb_lang = 5;
 		messageArray = germanMessages;
-		messageArrayLength = sizeof(germanMessages) / sizeof(char *);
 		type8859 = 1;
 		return;
 	}
@@ -4231,7 +4224,6 @@ void selectLanguage(void)
 	if (!strncmp(buf, "ru", 2)) {
 		eb_lang = 6;
 		messageArray = russianMessages;
-		messageArrayLength = sizeof(russianMessages) / sizeof(char *);
 		type8859 = 5;
 		return;
 	}
@@ -4249,9 +4241,10 @@ const char *i_getString(int msg)
 	int t_len;
 	static char utfbuf[1000];
 
-	if (msg >= messageArrayLength)
-		a = englishMessages;
-	s = a[msg];
+	if (msg >= EdbrowseMessageCount)
+		s = emptyString;
+	else
+		s = a[msg];
 	if (!s)
 		s = englishMessages[msg];
 	if (!s)
