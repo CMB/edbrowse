@@ -38,7 +38,7 @@ all: edbrowse edbrowse-js
 #  edbrowse objects
 EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
 	html.o format.o cookies.o stringfile.o messages.o \
-	ebjs.o plugin.o html-tidy.o decorate.o ebrc.o
+	ebjs.o plugin.o html-tidy.o decorate.o ebrc.o msg-strings.o
 
 #  Header file dependencies.
 $(EBOBJS) jseng-moz.o : eb.h ebprot.h messages.h ebjs.h
@@ -86,7 +86,7 @@ jseng-moz.o: jseng-moz.cpp
 	$(CXX) -c $(CXXFLAGS) $(JS_CXXFLAGS) jseng-moz.cpp -o $@
 
 
-edbrowse-js : jseng-moz.o messages.o url.o stringfile.o html-tidy.o decorate.o
+edbrowse-js : jseng-moz.o messages.o url.o stringfile.o html-tidy.o decorate.o msg-strings.o
 	$(LINK.o) $^ $(LOADLIBES) $(JSLIB) -ltidy -lstdc++ -o $@
 
 #  some hello world targets, for testing and debugging
