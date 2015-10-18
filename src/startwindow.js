@@ -555,7 +555,7 @@ document.setAttribute = function(name, v) { this[name.toLowerCase()] = v; }
  * to be on array prototype, except appendchild is to have no side effects,
  * because select options are maintained by rebuildSelectors(), so appendChild
  * is just array.push(). */
-Array.prototype.appendChild = function(child) { this.push(child); }
+Array.prototype.appendChild = function(child) { this.push(child);return child }
 /* insertBefore maps to splice, but we have to find the element. */
 /* This prototype assumes all elements are objects. */
 Array.prototype.insertBefore = function(newobj, item) {
@@ -618,6 +618,11 @@ Anchor.prototype.appendChild = document.appendChild;
 Anchor.prototype.apch$ = document.apch$;
 Anchor.prototype.focus = document.focus;
 Anchor.prototype.blur = document.blur;
+Anchor.prototype.getAttribute = document.getAttribute;
+Anchor.prototype.setAttribute = document.setAttribute;
+
+
+
 Div.prototype.appendChild = document.appendChild;
 Div.prototype.apch$ = document.apch$;
 Div.prototype.insertBefore = document.insertBefore;
