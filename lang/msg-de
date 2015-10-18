@@ -44,9 +44,9 @@ keine Schlüsselwörter
 Sitzung %d\n
 SendMail Link. Schreiben Sie Ihre Email, sm zum Senden und ^ um zurückzugelangen
 Zeile %d aktualisiert\n
-0
-0
-0
+h\tzeige Hilfe.\nq\tbeende Programm.\ns\tlese nicht weiter aus diesem Ordner.\nn\tweiter mit nächster Nachricht.\nd\tlösche Nachricht.\nm\tverschiebe Nachricht in anderen Ordner.\n<Leer>\tlese und verwalte Email.\n/\tsuche nach Wort in Betreff, Absender oder Nachricht.\nl\tsetze IMAP-Abrufobergrenze.
+s Zeichenkette, Emails mit der Zeichenkette im Betreff\nf Zeichenkette, Emails mit der Zeichenkette im Absender\nb Zeichenkette, Emails mit der Zeichenkette in der Nachricht\nStandard ist Betreff wenn kein Bezeichner angegeben.
+keine Nachrichten
 Unterbrechung, tippen Sie qt zum verlassen
 Edbrowse bereit
 eingegebene Kommandozeile enthält Nullbytes, Sie können \\0 in einer Suche verwenden, um Null auszudrücken
@@ -79,8 +79,8 @@ Spam
 Verlassen
 Weiter
 Löschen
-0
-0
+Plugins inaktiv
+Plugins aktiv
 Unmöglich die JavaScript Runtime zu starten, JavaScript deaktiviert.
 Ende der Nachricht
 noch nicht implementiert
@@ -180,7 +180,7 @@ Zeile enthält keine öffnende %c
 %c und %c nicht gleichermaßen vorhanden auf dieser Zeile, versuchen Sie B%c oder B%c
 Zeile enthält keine ungleich verteilten runde, eckige oder geschweifte Klammern
 kann keine Zeile finden, in der %c ausgeglichen würde
-0
+Ihre Edbrowse-Konfiguration fehlt, es wurde eine Beispieldatei angelegt\nBevor Sie Edbrowse erneut ausführen, personalisieren Sie die Konfiguration:\n%s\nedbrowse -c zum bearbeiten.\n
 Sitzung %d ist momentan im Verzeichnismodus
 kein Dateiname
 Ende des Puffers
@@ -296,22 +296,22 @@ kann nicht zugegriffen
 h\tgib diese Hilfe aus.\nq\tbeende Programm.\nLeertaste\tZeige Rest der Email-Nachricht.\nn\tnächste Email.\nd\tdiese Nachricht löschen.\nw\tschreibe Nachricht in Datei\nW\tschreibe Nachricht in Datei und lösche sie.\nu\tschreibe diese Nachricht unformatiert in eine Datei.\nU\tschreibe Nachricht unformatiert in Datei und lösche sie.\na\tscanne und speichere Anhänge.\ns\tlese keine Nachrichten mehr von diesem Ordner.
 Webseite erfordert Anmeldung
 Anmeldung abgebrochen
-0
-0
+Suchtext kann keine Anführungszeichen enthalten
+Ende des Ordners
 Download im Vordergrund
 Download im Hintergrund
 Vollständig
 fehlgeschlagen
 ftp konnte sich nicht zum entfernten Rechner verbinden
 FTP-Übertragung fehlgeschlagen
-0
-0
+keine Ordner vorhanden
+Wähle Ordner mittels Zahl oder Teilbegriff.\nFür ungelesene Nachrichten - voranstellen, q zum Verlassen, l um die Begrenzung für das Abholen zu ändern.
 Aufbau...
 stop
-0
+hole %d auf einmal\n
 keine Anhänge
 .ebrc: Schlüsselwort = Wert innerhalb einer Edbrowse-Funktion in Zeile %d
-0
+zeige letzte %d von %d Nachrichten\n
 ftp-Sitzung konnte nicht initialisiert werden
 0
 Edbrowse wurde ohne Datenbankzugriff kompiliert
@@ -323,11 +323,11 @@ Email im Adressbuch Zeile %d enthält nicht das Zeichen @
 kann mit Leerzeichen in Emailadressen nicht umgehen, Adressbuchzeile %d
 undarstellbare Zeichen in Ihrer Email-Adresse oder im Pseudonym, Adressbuchzeile %d
 letzte Zeile Ihres Adressbuches ist nicht beendet
-0
-0
-0
-0
-0
+keine Ordner enthalten %s\n
+mehrere Ordner enthalten %s\n
+suche
+begrenze
+verschiebe nach
 Warnung: Formular-URL gibt einen Abschnitt %s an der ignoriert wird
 die Datei %s ist leer
 Ihre Email sollte mit subject: beginnen
@@ -346,10 +346,10 @@ Sitzung %d ist leer, kann nicht angehängt werden
 kann Anhang %s nicht abrufen
 Datei %s ist keine reguläre Datei und kann nicht angehängt werden
 Datei %s ist leer und kann nicht angehängt werden
-0
-0
-0
-0
+die auf %d folgende Zeile wurde entfernt\n
+%d Zeilen nach Zeile %d gelöscht\n
+Zeile %d wurde hinzugefügt\n
+Zeilen %d bis %d hinzugefügt\n
 0
 keine Email-Konten angegeben, überprüfen Sie ihre Konfigurationsdatei
 Ungültige Kontonummer %d, nutzen Sie 1 bis %d
@@ -372,8 +372,8 @@ ungültiger Port am Ende der Domain
 Domainname zu lang
 Nutzername zu lang
 Passwort zu lang
-0
-0
+Zeile %d durch Zeile %d ersetzt\n
+Zeilen %d bis %d aktualisiert\n
 keine Funktion angegeben
 Funktionsname sollte nur Buchstaben und Zahlen enthalten
 keine solche Funktion %s
