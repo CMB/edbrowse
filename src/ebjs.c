@@ -115,8 +115,7 @@ static void js_start(void)
 		int l = strlen(progname);
 		char *jspath = allocMem(l + 4);
 		sprintf(jspath, "%s-js", progname);
-  printf("jspath %s\n", jspath);
-		execlp(jspath, "edbrowse-js", arg1, arg2, arg3, 0);
+		execl(jspath, "edbrowse-js", arg1, arg2, arg3, 0);
 		nzFree(jspath);
 	}
 
