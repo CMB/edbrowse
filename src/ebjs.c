@@ -56,6 +56,7 @@ static void js_start(void)
 #else // !DOSLIKE
 	int pid;
 	char arg1[8], arg2[8], arg3[8];
+	char *jsprog;
 
 	if (js_pid)
 		return;		/* already running */
@@ -104,7 +105,20 @@ static void js_start(void)
 	sprintf(arg2, "%d", pipe_in[1]);
 	sprintf(arg3, "%d", jsPool);
 	debugPrint(5, "spawning edbrowse-js %s %s %s", arg1, arg2, arg3);
-	execlp("edbrowse-js", "edbrowse-js", arg1, arg2, arg3, 0);
+
+	if (!strchr(progname, '/')) {
+// no path specified, just the program, so assume edbrowse-js is also on $PATH,
+// hopefully in the same bin.
+		execlp("edbrowse-js", "edbrowse-js", arg1, arg2, arg3, 0);
+	} else {
+// change /foo/bar/edbrowse to /foo/bar/edbrowse-js
+		int l = strlen(progname);
+		char *jspath = allocMem(l + 4);
+		sprintf(jspath, "%s-js", progname);
+  printf("jspath %s\n", jspath);
+		execlp(jspath, "edbrowse-js", arg1, arg2, arg3, 0);
+		nzFree(jspath);
+	}
 
 /* oops, process did not exec */
 /* write a message from this child, saying js would not exec */
@@ -180,8 +194,7 @@ void dwStart(void)
 	if (cw->dw)
 		return;
 	cw->dw = initString(&cw->dw_l);
-	stringAndString(&cw->dw, &cw->dw_l,
-			"<!DOCTYPE public><body>");
+	stringAndString(&cw->dw, &cw->dw_l, "<!DOCTYPE public><body>");
 }				/* dwStart */
 
 /*********************************************************************

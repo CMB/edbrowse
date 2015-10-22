@@ -12,6 +12,7 @@
 /* See eb.h for descriptive comments. */
 
 const char *version = "3.5.4.2+";
+const char *progname;
 char *userAgents[10], *currentAgent, *currentReferrer;
 const char eol[] = "\r\n";
 int jsPool = 32;
@@ -1071,6 +1072,7 @@ int main(int argc, char **argv)
 	eb_curl_global_init();
 	ttySaveSettings();
 	initializeReadline();
+	progname = argv[0];
 
 /* Let's everybody use my malloc and free routines */
 	pcre_malloc = allocMem;
@@ -1082,7 +1084,7 @@ int main(int argc, char **argv)
 	if (!home) {
 		home = getenv("APPDATA");
 		if (home) {
-			char *ebdata = (char *)allocMem(264);
+			char *ebdata = (char *)allocMem(ABSPATH);
 			sprintf(ebdata, "%s\\edbrowse", home);
 			if (fileTypeByName(ebdata, false) != 'd') {
 				FILE *fp;
@@ -1090,7 +1092,7 @@ int main(int argc, char **argv)
 				if (mkdir(ebdata, 0700)) {
 					i_printfExit(MSG_NotHome);	// TODO: more appropriate exit message...
 				}
-				cfgfil = (char *)allocMem(264);
+				cfgfil = (char *)allocMem(ABSPATH);
 				sprintf(cfgfil, "%s\\.ebrc", ebdata);
 				fp = fopen(cfgfil, "w");
 				if (fp) {

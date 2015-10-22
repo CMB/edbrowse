@@ -68,6 +68,7 @@ typedef uchar bool;
  * and edbrowse-js, currently a C++ function program, thus the prototypes,
  * and some other structures, must be C protected. */
 #ifdef __cplusplus
+// Because of this line, you can't meaningfully run this file through indent.
 extern "C" {
 #endif
 
@@ -113,7 +114,7 @@ typedef uchar *pst;		/* perl string */
 #define TableCellChar '\3'
 
 /* How long can an absolute path be? */
-#define ABSPATH 256
+#define ABSPATH 264 // max length of an absolute pathname, in windows or unix
 /* How long can a regular expression be? */
 #define MAXRE 400
 /* How long can an entered line be? */
@@ -152,8 +153,8 @@ typedef uchar *pst;		/* perl string */
 #define COLOR_DIALOG_TEXT 0
 #define G_BFU_FONT_SIZE 0
 
-/* the version of edbrowse */
-extern const char *version;
+extern const char *version; // the version of edbrowse
+extern const char *progname; // edbrowse, or the absolute path to edbrowse
 extern const char eol[];	/* internet end of line */
 extern char emptyString[];	/* use this whenever you would use "" */
 
