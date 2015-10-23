@@ -42,8 +42,9 @@ You're here because you want to compile and/or package the program,
 or modify the source in some way.  Great!
 
 A full cmake system is under development.
-Meantime, on unix or linux,
-just type make, and make install, and hope for the best.
+This is the method of choice for Windows.
+visual C studio is assumed.
+On unix or linux, type make, and make install, and hope for the best.
 
 As you may know, edbrowse was originally a perl script.
 As such, it was only natural to use perl regular expressions for
@@ -133,11 +134,14 @@ and http redirection.
 8: text lines freed, debug garbage collection
 9: not used
 
+Casual users should not go beyond db2.
+Even developers rarely go beyond db4.
+
 ------------------------------------------------------------
 
-Sourcefiles (in the src directory).
+Sourcefiles as follows.
 
-main.c:
+src/main.c:
 Read and parse the config file.
 Entry point.
 Command line options.
@@ -147,33 +151,32 @@ and read them into buffers.
 Read commands from stdin and invoke them via the command
 interpreter in buffers.c.
 
-buffers.c:
+src/buffers.c:
 Manage all the text buffers.
 Interpret the standard ed commands, move, copy, delete, substitute, etc.
 Run the 2 letter commands, such as qt to quit.
 
-stringfile.c:
+src/stringfile.c:
 Helper functions to manage memory, strings, files, directories.
-Hides many of the OS specific quirks.
 
-url.c:
+src/url.c:
 Split a url into its components.
 Decide if it's a proxy url.
 Resolve relative url into absolute url
 based on the location of the current web page.
 
-format.c:
+src/format.c:
 Arrange text into lines and paragraphs.
 base64 encode and decode for email.
 
-http.c:
+src/http.c:
 Send the http request, and read the data from the web server.
 Handles https connections as well,
 and 301/302 redirection.
 Uncompresses html data if necessary.
 ftp, sftp, download files, possibly in the background.
 
-html.c:
+src/html.c:
 Manage the html tags and the tree of nodes.
 Turn js side effects, like document.write or innerHTML,
 back into html tags if that makes sense.
@@ -181,100 +184,106 @@ Submit/reset forms.
 Render the tree of html nodes into a text buffer.
 Rerender the tree after js has run, and report any changes to the user.
 
-cookies.c:
+src/cookies.c:
 Send and receive cookies.  Maintain the cookie jar.
 
-auth.c:
+src/auth.c:
 Remember user and password for web pages that require authentication.
 Only the basic method is implemented at this time.
 
-sendmail.c:
+src/sendmail.c:
 Send mail (smtp or smtps).  Encode attachments.
 
-fetchmail.c:
+src/fetchmail.c:
 Fetch mail (pop3 or pop3s or imap).  Decode attachments.
 Browse mail files, separate mime components.
 Delete emails, move emails to other imap folders, search on an imap server.
 
-plugin.c:
+src/plugin.c:
 Determine the mime type of a file or web page and the corresponding plugin,
 if any. Launch the plugin automatically or on command.
 A plugin can play the file, like music, or render the file, like pdf.
 
-messages.h:
+src/messages.h:
 Symbolic constants for the warning/error messages of edbrowse.
 
-messages.c:
-Strings corresponding to these error messages in various languages.
-Also some international print routines to display the correct string
-according to your locale.
+src/messages.c:
+International print routines to display the message according to your locale.
 
-decorate.c:
+lang/msg-*:
+Edbrowse status and error messages in various languages.
+Each is converted into a const array of messages in src/msg-strings.c,
+thus src/msg-strings.c is not a source file.
+
+src/decorate.c:
 Decorate the tree with js objects corresponding to the html nodes
 if js is enabled.
 
-jseng-moz.cpp:
+src/jseng-moz.cpp:
 The javascript engine built around the mozilla js library.
 Manage all the js objects corresponding to the web page in edbrowse.
 This is a stand alone process,
 though it may share some sourcefiles with edbrowse, e.g. stringfile.c.
 The resulting program is edbrowse-js,
-and it must be in the same path as edbrowse.
+and it must be in the same bin as edbrowse.
 All the js details are hidden in this file.
 this is encapsulation, hiding the js library from the rest of edbrowse.
 It might be possible, for instance, to build jseng-v8.c, based upon v8 etc.
 
-html-tidy.c:
+src/html-tidy.c:
 Use tidy5 to parse html and return a tree of nodes.
 This is another form of encapsulation.
 We could, in the future, write html-foo.c, having the same interface,
 if we prefer parser foo instead.
 
-startwindow.js:
+src/startwindow.js:
 Javascript that is run at the start of each session.
 This creates certain support methods that client js will need.
-It is converted into a const string in startwindow.c,
-thus startwindow.c is not a source file.
+It is converted into a const string in src/startwindow.c,
+thus src/startwindow.c is not a source file.
 As you write functions to support DOM,
-your first preference is to write them in startwindow.js.
-Failing this, write them in C, using the api in ebjs.c.
+your first preference is to write them in src/startwindow.js.
+Failing this, write them in C, using the api in src/ebjs.c.
 Failing this, and as a last resort, write them as native code in the js engine.
 
-../lang/ebrc-*:
+lang/ebrc-*:
 Default .ebrc config file that is written to your home directory,
 if you have no such file.
 Different files for different languages.
-Each is converted into a const string in ebrc.c,
-thus ebrc.c is not a source file.
+Each is converted into a const string in src/ebrc.c,
+thus src/ebrc.c is not a source file.
 
-../lang/msg-*:
-Edbrowse status and error messages in various languages.
-Each is converted into a const array of messages in msg-strings.c,
-thus msg-strings.c is not a source file.
-
-ebjs.c:
+src/ebjs.c:
 Interface between edbrowse and edbrowse-js.
 Sends interprocess messages to js to manipulate the js objects,
 and returns the result back to edbrowse.
 Think of edbrowse-js as the js server, and edbrowse as the client.
 
-jsrt:
+src/jsrt:
 This is the javascript regression test for edbrowse.
 It exercises some of the javascript DOM interactions.
 
-dbops.c:
+win32/dirent.c:
+Access directories in Windows.
+
+win32/vsprtf.c:
+Windows implementation of asprintf().
+
+src/dbops.c:
 Database operations; insert update delete.
 
-dbodbc.c:
+src/dbodbc.c:
 Connect edbrowse to odbc.
 
-dbinfx.ec:
+src/dbinfx.ec:
 Connect edbrowse directly to Informix.
+Other connectors could be built, e.g. Oracle,
+but it's probably easier just to go through odbc.
 
 ------------------------------------------------------------
 
 Error conventions.
-Unix commands return 0 for ok, and a negative number for a problem.
+Unix commands return 0 for ok and a negative number for a problem.
 Some of my functions work this way, but many return
 true for success and false for error.
 The error message is left in a buffer, which you can see by typing h
@@ -301,7 +310,7 @@ As if that weren't bad enough, I now need a third copy for javascript.
 When js accesses form.fullname.value, it needs to find,
 and in some cases change, the text that you entered.
 These 3 representations are "separate but equal",
-there is a lot of software to keep them in sync.
+using a lot of software to keep them in sync.
 Remember that an input field could be an entire text area,
 i.e. the text in another editing session.
 When you are in that session, composing your thoughts,
@@ -319,7 +328,7 @@ to be mapped back to the editor, where you can see them.
 This is done by jSideEffects() in html.c.
 In other words, any action that might in any way involve js
 must begin with jSyncup() and end with jSideEffects().
-Once this is done, the tree of tags is rerendered, in render.c,
+Once this is done, the tree of tags is rerendered,
 and the new buffer is compared with the old using a very simple diff algorithm.
 Edbrowse tells you if any lines have changed.
 
