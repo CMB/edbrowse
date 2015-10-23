@@ -1457,12 +1457,10 @@ checkattributes:
 			if (v && !*v)
 				v = 0;
 			if (v) {
-/* <base> sets the base URL, and should not be resolved */
-				if (action != TAGACT_BASE) {
-					v = resolveURL(cw->hbase, v);
-					cnzFree(t->atvals[j]);
-					t->atvals[j] = v;
-				} else if (!cw->baseset) {
+				v = resolveURL(cw->hbase, v);
+				cnzFree(t->atvals[j]);
+				t->atvals[j] = v;
+				if (action == TAGACT_BASE && !cw->baseset) {
 					nzFree(cw->hbase);
 					cw->hbase = cloneString(v);
 					cw->baseset = true;
