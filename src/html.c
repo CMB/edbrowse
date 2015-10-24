@@ -1167,8 +1167,11 @@ static char *fetchTextVar(const struct htmlTag *t)
 {
 	char *v;
 
-	if (t->jv && isJSAlive)
-		return get_property_string(t->jv, "value");
+// js must not muck with the value of a file field
+	if (t->itype != INP_FILE) {
+		if (t->jv && isJSAlive)
+			return get_property_string(t->jv, "value");
+	}
 
 	if (t->itype > INP_HIDDEN) {
 		v = getFieldFromBuffer(t->seqno);

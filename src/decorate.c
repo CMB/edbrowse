@@ -221,6 +221,15 @@ void htmlInputHelper(struct htmlTag *t)
 	if (len > 0)
 		t->lic = len;
 
+// No preset value on file, for security reasons.
+// <input type=file value=/etc/passwd> then submit via onload().
+	if (n == INP_FILE) {
+		nzFree(t->value);
+		t->value = 0;
+		cnzFree(t->rvalue);
+		t->rvalue = 0;
+	}
+
 /* In this case an empty value should be "", not null */
 	if (t->value == 0)
 		t->value = emptyString;
@@ -242,7 +251,6 @@ void htmlInputHelper(struct htmlTag *t)
 		}
 	}
 
-	/* radio name */
 	/* Even the submit fields can have a name, but they don't have to */
 	formControl(t, (n > INP_SUBMIT));
 }				/* htmlInputHelper */

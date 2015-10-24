@@ -162,7 +162,8 @@ static void javaSetsTagVar(jsobjtype v, const char *newtext)
 	struct htmlTag *t = tagFromJavaVar(v);
 	if (!t)
 		return;
-	if (t->itype == INP_HIDDEN || t->itype == INP_RADIO)
+	if (t->itype == INP_HIDDEN || t->itype == INP_RADIO
+	    || t->itype == INP_FILE)
 		return;
 	if (t->itype == INP_TA) {
 		debugPrint(3, "textarea.value is being updated");
