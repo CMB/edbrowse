@@ -1479,9 +1479,10 @@ gotdata:
  * Let's do that now. */
 #ifdef DOSLIKE
 		int i, j;
-		for (i = j = 0; i < fileSize - 1; ++i) {
+		for (i = j = 0; i < fileSize; ++i) {
 			char c = rbuf[i];
-			if (c == '\r' && rbuf[i + 1] == '\n')
+			if (c == '\r' && i < fileSize - 1
+			    && rbuf[i + 1] == '\n')
 				continue;
 			rbuf[j++] = c;
 		}
