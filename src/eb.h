@@ -30,6 +30,8 @@
 #ifdef DOSLIKE
 #include <io.h>
 #include <direct.h> // for _mkdir, ...
+#include <conio.h>  // for _kbhit, getch, getche
+#include <stdint.h> // for UINT32_MAX
 #else
 #include <unistd.h>
 #endif
