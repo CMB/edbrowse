@@ -10,6 +10,10 @@
 #include "eb.h"
 
 #include <stdarg.h>
+#if defined(DOSLIKE) && defined(HAVE_PTHREAD_H)
+#include <process.h> // for _execlp()
+#include <pthread.h> // for pthreads...
+#endif /* defined(DOSLIKE) && defined(HAVE_PTHREAD_H) */
 
 /* If connection is lost, mark all js sessions as dead. */
 static void markAllDead(void)
@@ -45,34 +49,101 @@ static void markAllDead(void)
 
 /* communication pipes with the js process */
 static int pipe_in[2], pipe_out[2];
+static char arg1[8], arg2[8], arg3[8];
+
 static int js_pid;
 static struct EJ_MSG head;
+#ifdef DOSLIKE
+#define PIPE(a) _pipe(a,1024,_O_BINARY)
+#else // !DOSLIKE
+#define PIPE pipe
+#endif // DOSLIKE y/n
+
+#if defined(DOSLIKE) && defined(HAVE_PTHREAD_H)
+static pthread_t tid;
+static void * child_proc(void *vp)
+{
+/* child here, exec the back end js process */
+    size_t len;
+// change [d:\foo\bar\]edbrowse[.exe] to [d:\foo\bar\]edbrowse-js[.exe]
+    char drive[_MAX_DRIVE];
+    char dir[_MAX_DIR];
+    char fname[_MAX_FNAME];
+    char ext[_MAX_EXT];
+    char pn[MAX_PATH];
+    // split it up
+    _splitpath(progname,drive,dir,fname,ext);
+    // put it back together
+    pn[0] = 0;
+    strcat(pn,drive);
+    strcat(pn,dir);
+    len = strlen(fname);
+    if (len && (fname[len - 1] == 'd')) {
+        fname[len - 1] = 0;
+        strcat(pn,fname);
+        strcat(pn,"-jsd"); // add to the debug file name
+    } else {
+        strcat(pn,fname);
+        strcat(pn,"-js"); // add to the file name
+    }
+
+    strcat(pn,ext);
+
+	//close(pipe_in[0]);
+	//close(pipe_out[1]);
+	sprintf(arg1, "%d", pipe_out[0]);
+	sprintf(arg2, "%d", pipe_in[1]);
+	sprintf(arg3, "%d", jsPool);
+
+	debugPrint(5, "spawning '%s' %s %s %s", pn, arg1, arg2, arg3);
+    len = _spawnl( _P_WAIT, pn, "edbrowse-js", arg1, arg2, arg3, 0 );
+	//_execlp(pn, "edbrowse-js", arg1, arg2, arg3, 0);
+    // len = 1;
+    if (len) {
+    	debugPrint(5, "spawning FAILED! %d\n", errno);
+/* oops, process did not exec */
+/* write a message from this child, saying js would not exec */
+/* The process just started; head is zero */
+	    head.magic = EJ_MAGIC;
+	    head.highstat = EJ_HIGH_PROC_FAIL;
+	    head.lowstat = EJ_LOW_EXEC;
+	    write(pipe_in[1], &head, sizeof(head));
+	//exit(90);
+    }
+    return (void *)90;
+}
+
+#endif // defined(DOSLIKE) && defined(HAVE_PTHREAD_H)
 
 /* Start the js process. */
 static void js_start(void)
 {
-#ifdef DOSLIKE
-	debugPrint(5, "TODO: setting of communication channels for javascript");
-#else // !DOSLIKE
 	int pid;
-	char arg1[8], arg2[8], arg3[8];
 	char *jsprog;
 
 	if (js_pid)
 		return;		/* already running */
 
+#if defined(DOSLIKE) && !defined(HAVE_PTHREAD_H)
+	debugPrint(5, "no pthread, so no communication channels for javascript");
+	allowJS = false;
+    return;
+#endif // defined(DOSLIKE) && !defined(HAVE_PTHREAD_H)
+
+#ifndef DOSLIKE
 /* doesn't hurt to do this more than once */
 	signal(SIGPIPE, SIG_IGN);
+#endif // !DOSLIKE
 
 	debugPrint(5, "setting of communication channels for javascript");
 
-	if (pipe(pipe_in)) {
+	if (PIPE(pipe_in)) {
 		i_puts(MSG_JSEnginePipe);
 		allowJS = false;
 		return;
 	}
 
-	if (pipe(pipe_out)) {
+	if (PIPE(pipe_out)) {
 		i_puts(MSG_JSEnginePipe);
 		allowJS = false;
 		close(pipe_in[0]);
@@ -80,6 +151,20 @@ static void js_start(void)
 		return;
 	}
 
+#if defined(DOSLIKE) && defined(HAVE_PTHREAD_H)
+    /* windows implementation of fork() using pthreads */
+    pid = pthread_create(&tid,NULL,child_proc,0);
+    if (pid) {
+		i_puts(MSG_JSEngineFork);
+		allowJS = false;
+		close(pipe_in[0]);
+		close(pipe_in[1]);
+		close(pipe_out[0]);
+		close(pipe_out[1]);
+		return;
+    }
+    js_pid = 1;
+#else // !(defined(DOSLIKE) && defined(HAVE_PTHREAD_H)
 	pid = fork();
 	if (pid < 0) {
 		i_puts(MSG_JSEngineFork);
@@ -127,7 +212,8 @@ static void js_start(void)
 	head.lowstat = EJ_LOW_EXEC;
 	write(pipe_in[1], &head, sizeof(head));
 	exit(90);
-#endif // DOSLIKE y/n
+#endif // defined(DOSLIKE) && defined(HAVE_PTHREAD_H) y/n
+
 }				/* js_start */
 
 /* Shut down the js process, although if we got here,
@@ -137,12 +223,12 @@ static void js_kill(void)
 	if (!js_pid)
 		return;
 
-#ifndef DOSLIKE
 	close(pipe_in[0]);
 	close(pipe_out[1]);
+#ifndef DOSLIKE
 	kill(js_pid, SIGTERM);
-	js_pid = 0;
 #endif // #ifndef DOSLIKE
+	js_pid = 0;
 
 }				/* js_kill */
 
@@ -1114,7 +1200,7 @@ struct utsname {
 int uname(struct utsname *pun)
 {
 	memset(pun, 0, sizeof(struct utsname));
-
+    // TODO: WIN32: maybe fill in sysname, and machine...
 	return 0;
 }
 
