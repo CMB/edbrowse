@@ -5,9 +5,9 @@
 
 #include "eb.h"
 
-#ifndef _MSC_VER		// no #include <sys/select.h>
+#ifndef DOSLIKE		// no #include <sys/select.h>
 #include <sys/select.h>
-#endif // _MSC_VER
+#endif // !DOSLIKE
 
 /* If this include file is missing, you need the pcre package,
  * and the pcre-devel package. */
@@ -301,6 +301,37 @@ void initializeReadline(void)
 	rl_completion_entry_function = edbrowse_completion;
 }				/* initializeReadline */
 
+#ifdef DOSLIKE
+/* unix can use the select function on a file descriptor, like stdin
+   this function provides a work around for windows */
+int select_stdin( struct timeval *ptv )
+{
+    int ms_delay   = 55;
+    int delay_secs = ptv->tv_sec;
+    int delay_ms   = ptv->tv_usec / 1000;
+    int res = _kbhit();
+    while (!res && (delay_secs || delay_ms)) {
+        if (!delay_secs && (delay_ms < ms_delay))
+            ms_delay = delay_ms;    // reduce this last sleep
+        Sleep(ms_delay);
+        if (delay_ms >= ms_delay)
+            delay_ms -= ms_delay;
+        else {
+            if (delay_secs) {
+                delay_ms += 1000;
+                delay_secs--;
+            }
+            if (delay_ms >= ms_delay)
+                delay_ms -= ms_delay;
+            else
+                delay_ms = 0;
+        }
+        res = _kbhit();
+    }
+    return res;
+}
+#endif // DOSLIKE
+
 /* Get a line from standard in.  Need not be a terminal.
  * Each input line is limited to 255 chars.
  * On Unix cooked mode, that's as long as a line can be anyways.
@@ -342,9 +373,13 @@ top:
 			goto dotimers;
 		tv.tv_sec = delay_sec;
 		tv.tv_usec = delay_ms * 1000;
+#ifdef DOSLIKE
+		rc = select_stdin(&tv);
+#else // !DOSLIKE
 		memset(&channels, 0, sizeof(channels));
 		FD_SET(0, &channels);
 		rc = select(1, &channels, 0, 0, &tv);
+#endif // DOSLIKE y/n
 		if (rc < 0)
 			goto interrupt;
 		if (rc == 0) {	/* timeout */

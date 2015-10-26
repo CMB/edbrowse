@@ -35,7 +35,8 @@ if(WIN32)
         # C4090: 'function' : different 'const' qualifiers
         # C4101: 'idx' : unreferenced local variable
         # C4018: '>' : signed/unsigned mismatch
-        foreach(warning 4244 4101 4090 4018)
+        # C4800: 'JSBool' : forcing value to bool
+        foreach(warning 4244 4101 4090 4018 4800)
             set(WARNING_FLAGS "${WARNING_FLAGS} /wd${warning}")
         endforeach()
         set( MSVC_FLAGS "-DNOMINMAX -D_USE_MATH_DEFINES -D_CRT_SECURE_NO_WARNINGS -D_SCL_SECURE_NO_WARNINGS -D__CRT_NONSTDC_NO_WARNINGS" )
@@ -113,6 +114,50 @@ else ()
     message(FATAL_ERROR "*** READLINE NOT FOUND")
 endif ()
 
+# MOZJS_FOUND
+# MOZJS_LIBRARY
+# MOZJS_INCLUDE_DIR
+find_package(MOZJS)
+if (MOZJS_FOUND)
+    message( STATUS "*** MOZJS found inc ${MOZJS_INCLUDE_DIR} lib ${MOZJS_LIBRARY}" )
+    include_directories( ${MOZJS_INCLUDE_DIR} )
+    list( APPEND add_LIBS ${MOZJS_LIBRARY} )
+else ()
+    message( STATUS "*** MOZJS NOT FOUND, No edbrowse-js build")
+endif ()
+
+if (WIN32 AND MOZJS_FOUND)
+    find_package(Threads)
+    if(Threads_FOUND)
+        list(APPEND add_LIBS winmm.lib ws2_32.lib)
+        message( STATUS "*** Finding pthread.h HINTS [${CMAKE_PREFIX_PATH}] PATHS [${CMAKE_INCLUDE_PATH}] PATH_SUFFIXES include" )
+        find_path( thread_INC pthread.h
+            HINTS ${CMAKE_PREFIX_PATH} $ENV{INCLUDE}
+            PATHS ${CMAKE_INCLUDE_PATH} $ENV{INCLUDE}
+            PATH_SUFFIXES include )
+        if(thread_INC)
+            include_directories( ${thread_INC} )
+            add_definitions( -DHAVE_PTHREAD_H )
+            message(STATUS "*** thread_INC: ${thread_INC}")
+        else()
+            message(FATAL_ERROR "*** thread_INC: ${thread_INC} pthread.h NOT FOUND!")
+        endif()
+        find_library( thread_LIB pthreadVC2.lib
+            HINTS ${CMAKE_PREFIX_PATH} $ENV{LIB}
+            PATHS ${CMAKE_INCLUDE_PATH} $ENV{LIB}
+            PATH_SUFFIXES lib )
+        if(thread_LIB)
+            list(APPEND add_LIBS ${thread_LIB})
+            message(STATUS "*** Found ${thread_LIB})" )
+        else()
+            message( FATAL_ERROR "*** Thread libray NOT FOUND!" )
+        endif()
+    else ()
+        message( STATUS "*** Threads NOT FOUND, No edbrowse-js build")
+        set(MOZJS_FOUND)
+    endif ()
+endif ()
+    
 # add_definitions( -DHAVE_CONFIG_H )
 
 if(BUILD_SHARED_LIB)
@@ -160,12 +205,33 @@ else ()
     message(FATAL_ERROR, "Error: Can NOT locate 'perl'???")
 endif ()
 
+###########################################################
+### edbr static libraro of shared source
+set(name edbr-lib)
+set(dir src)
+set(${name}_SRCS
+    ${dir}/messages.c
+    ${dir}/url.c
+    ${dir}/stringfile.c
+    ${dir}/html-tidy.c
+    ${dir}/decorate.c
+    ${GEN_SOURCES}
+    )
+if (MSVC)
+    list(APPEND ${name}_SRCS win32/vsprtf.c win32/dirent.c)
+    list(APPEND ${name}_HDRS win32/vsprtf.h win32/dirent.h)
+    include_directories( win32 )
+endif ()
+add_library( ${name} ${${name}_SRCS} )
+list(APPEND add_LIBS ${name})
+
+#######################################################
+### main edbrowse app
 set(name edbrowse)
 set(dir src)
 set(${name}_SRCS
     ${dir}/main.c
     ${dir}/buffers.c
-    ${dir}/url.c
     ${dir}/auth.c
     ${dir}/http.c
     ${dir}/sendmail.c
@@ -173,14 +239,9 @@ set(${name}_SRCS
 	${dir}/html.c
     ${dir}/format.c
     ${dir}/cookies.c
-    ${dir}/stringfile.c
-    ${dir}/messages.c
     ${dir}/ebjs.c
     ${dir}/plugin.c
-    ${dir}/html-tidy.c
-    ${dir}/decorate.c
     ${dir}/dbstubs.c
-    ${GEN_SOURCES}
     )
 set(${name}_HDRS
     ${dir}/eb.h
@@ -188,11 +249,6 @@ set(${name}_HDRS
     ${dir}/messages.h
     ${dir}/ebjs.h
     )
-if (MSVC)
-    list(APPEND ${name}_SRCS win32/vsprtf.c win32/dirent.c ${dir}/ebrc.c)
-    list(APPEND ${name}_HDRS win32/vsprtf.h win32/dirent.h)
-    include_directories( win32 )
-endif ()
 add_executable( ${name} ${${name}_SRCS} ${${name}_HDRS} )
 if (add_LIBS OR extra_LIBS)
     target_link_libraries( ${name} ${add_LIBS} ${extra_LIBS} )
@@ -200,7 +256,19 @@ endif ()
 if (MSVC)
     set_target_properties( ${name} PROPERTIES DEBUG_POSTFIX d )
 endif ()
-
 # deal with INSTALL
+
+if (MOZJS_FOUND)
+    set(name edbrowse-js)
+    set(dir src)
+    set(${name}_SRCS
+        ${dir}/jseng-moz.cpp
+        )
+    add_executable( ${name} ${${name}_SRCS} )
+    target_link_libraries( ${name} ${add_LIBS} ${extra_LIBS} )
+    if (MSVC)
+        set_target_properties( ${name} PROPERTIES DEBUG_POSTFIX d )
+    endif ()
+endif ()
 
 # eof
