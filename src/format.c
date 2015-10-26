@@ -997,13 +997,34 @@ It's not an exact science.
 
 bool looksBinary(const char *buf, int buflen)
 {
-	int i, bincount = 0;
-	for (i = 0; i < buflen; ++i) {
-		char c = buf[i];
-		if (c <= 0)
+	int i, j, bincount = 0, charcount = 0;
+	char c;
+	uchar seed;
+	for (i = 0; i < buflen; ++i, ++charcount) {
+		c = buf[i];
+// 0 is ascii, but not really text, and very common in binary files.
+		if (c == 0)
 			++bincount;
+		if (c >= 0)
+			continue;
+// could represent a utf8 character
+		seed = c;
+		if ((seed & 0xfe) == 0xfe || (seed & 0xc0) == 0x80) {
+binchar:
+			++bincount;
+			continue;
+		}
+		seed <<= 1;
+		j = 1;
+		while (seed & 0x80 && i + j < buflen
+		       && (buf[i + j] & 0xc0) == 0x80)
+			seed <<= 1, ++j;
+		if (seed & 0x80)
+			goto binchar;
+// this is valid utf8 char, don't treat it as binary.
+		i += j;
 	}
-	return (bincount * 4 - 10 >= buflen);
+	return (bincount * 8 - 16 >= charcount);
 }				/* looksBinary */
 
 void looks_8859_utf8(const char *buf, int buflen, bool * iso_p, bool * utf8_p)
