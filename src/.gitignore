@@ -1,4 +1,4 @@
-*.o
+*.[oa]
 edbrowse
 edbrowse-js
 edbrowse-odbc

@@ -20,12 +20,14 @@ LDLIBS = -lpcre -lcurl -lreadline -lncurses -ltidy
 all: edbrowse edbrowse-js
 
 #  edbrowse objects
-EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
-	html.o format.o cookies.o stringfile.o messages.o \
-	ebjs.o plugin.o html-tidy.o decorate.o ebrc.o msg-strings.o
+EBOBJS = main.o buffers.o auth.o http.o sendmail.o fetchmail.o \
+	html.o format.o cookies.o ebjs.o plugin.o ebrc.o
+
+#  common objects
+COMOBJS = messages.o url.o stringfile.o html-tidy.o decorate.o msg-strings.o
 
 #  Header file dependencies.
-$(EBOBJS) jseng-moz.o : eb.h ebprot.h messages.h ebjs.h
+$(EBOBJS) $(COMOBJS) jseng-moz.o : eb.h ebprot.h messages.h ebjs.h
 
 startwindow.c: startwindow.js
 	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/startwindow.c
@@ -36,25 +38,30 @@ ebrc.c: ../lang/ebrc-*
 msg-strings.c: ../lang/msg-*
 	cd .. ; ./tools/buildmsgstrings.pl
 
+#  library of common objects among all edbrowse processes
+common.a : $(COMOBJS)
+	ar rs common.a $?
+
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.
-edbrowse: $(EBOBJS) startwindow.o dbstubs.o
-	cc $(LFLAGS) -o edbrowse startwindow.o dbstubs.o $(EBOBJS) $(LIBS)
+edbrowse: $(EBOBJS) common.a startwindow.o dbstubs.o
+	cc $(LFLAGS) -o edbrowse startwindow.o dbstubs.o $(EBOBJS) common.a $(LIBS)
 
 #  Database files.
 dbodbc.o dbinfx.o dbops.o : dbapi.h eb.h ebprot.h
 
 #  odbc access
 edbrowse-odbc: LDLIBS += -lodbc
-edbrowse-odbc: $(EBOBJS) startwindow.o dbops.o dbodbc.o
+edbrowse-odbc: $(EBOBJS) common.a startwindow.o dbops.o dbodbc.o
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 clean:
-	rm -f *.o edbrowse edbrowse-infx edbrowse-odbc edbrowse-js startwindow.c
+	rm -f *.[oa] edbrowse edbrowse-infx edbrowse-odbc edbrowse-js \
+	startwindow.c ebrc.c msg-strings.c
 
 jseng-moz.o: jseng-moz.cpp
 	$(CXX) -c $(CXXFLAGS) $(JS_CXXFLAGS) jseng-moz.cpp -o $@
 
-edbrowse-js : jseng-moz.o messages.o url.o stringfile.o html-tidy.o decorate.o msg-strings.o
-	cc jseng-moz.o messages.o url.o stringfile.o $(LOADLIBES) $(JSLIB) -ltidy -lstdc++ -o $@
+edbrowse-js : jseng-moz.o common.a
+	cc jseng-moz.o common.a $(LOADLIBES) $(JSLIB) -ltidy -lstdc++ -o $@
 
