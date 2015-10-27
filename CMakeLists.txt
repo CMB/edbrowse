@@ -223,7 +223,7 @@ if (MSVC)
     include_directories( win32 )
 endif ()
 add_library( ${name} ${${name}_SRCS} )
-list(APPEND add_LIBS ${name})
+set(add_LIBS ${name} ${add_LIBS})
 
 #######################################################
 ### main edbrowse app
