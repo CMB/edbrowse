@@ -9,7 +9,7 @@
 set(_LIB_NAME mozjs-24)
 
 FIND_PATH(MOZJS_INCLUDE_DIR jsapi.h
-    PATH_SUFFIXES include/mozjs 
+    PATH_SUFFIXES include/mozjs-24 include/mozjs 
   )
   
 if (MSVC)
