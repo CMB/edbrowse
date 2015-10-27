@@ -226,6 +226,7 @@ void selectLanguage(void)
 	if (!strncmp(buf, "de", 2)) {
 		eb_lang = 5;
 		messageArray = msg_de;
+		ebrc_string = ebrc_de;
 		type8859 = 1;
 		return;
 	}

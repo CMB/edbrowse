@@ -1,0 +1,122 @@
+# .ebrc: Beispielkonfiguration für Edbrowse (version 3.5.4 oder höher)
+
+# Emailzugang, ggf. mehrere; beispielhaft ein Gmail-Konto (die Meisten haben
+# einen solchen heute)
+# Folgender Aufruf für Pop3-Zugang mit dem Gmail-Konto
+# edbrowse -fm1
+mail {
+inserver = pop.gmail.com
+outserver = smtp.gmail.com
+secure
+login = edbrowse
+password = rhinoceros
+from = Herr Fuchs
+reply = edbrowse@gmail.com
+}
+
+# Imap-Zugang für ein Gmail-Konto
+# Wenn dies das zweite Konto in dieser Datei bleibt, ruf man Imap mit
+# edbrowse -f2
+# auf.
+mail {
+imap
+inserver = imap.gmail.com
+outserver = smtp.gmail.com
+secure
+login = edbrowse
+password = rhinoceros
+from = Frau Elster
+reply = edbrowse@gmail.com
+}
+
+# Füge Adressbuch hinzu
+#adbook=/home/meinkonto/ausserhalb/adbook
+
+# Posteingang; sollte ein absoluter Pfad sein.
+#maildir = /home/meinkonto/mbox
+
+# Folgendes Verzeichnis für Downloads, sollte ein absoluter Pfad sein
+# downdir = /home/meinkonto/downloads
+
+# Der Cookie-Speicher (jar) in dem die HTTP-Cookies abgelegt werden.
+#jar = /home/meinkonto/ausserhalb/cookies
+
+# Datei mit SSL-Zertifikaten
+# certfile = /etc/ssl/cert.pem
+# certfile = /etc/pki/tls/cert.pem
+
+# warte 30 Sekunden auf Antworten vom Webserver
+webtimer = 30
+# warte 3 Minuten auf Antworten vom Mailserver
+mailtimer = 180
+
+# Leite Post abhängig vom Sender oder vom Zielkonto um
+fromfilter {
+fred flintstone > fredmail
+fred.flintstone@bedrock.us > fredmail
+jerk@hotmail.com > x
+word@m-w.com > -wod
+}
+
+# tofilter { }
+
+# Beschreibe MIME-Typen und plugins um diese auszurüfen.
+plugin {
+type = audio/basic
+desc = Audiodatei im Wave-Format
+>suffix = wav,voc,au,ogg
+>content = audio/x-wav
+# %i: temporäre Eingabedatei, von Edbrowse generiert
+program = play -q %i
+}
+
+plugin {
+type = audio/mp3
+desc = Audiodatei im mp3-Format
+suffix = mp3
+content = audio/mpeg
+program = mpg123 -q -C %i
+}
+
+# dieses Plugin wandelt die Datei um, anstatt Sie anzuzeigen
+plugin {
+type = pdf
+desc = PDF-Datei
+suffix = pdf
+content = application/pdf
+program = pdftohtml -i -noframes %i %o >/dev/null
+# lege fest, dass Ausgabe HTML, kein reiner Text ist
+outtype = H
+}
+
+# Jedesmal wenn Sie eine Webseite aus dem Internet abrufen, weist sich Ihr
+# Browser mit seiner Kennzeichnung beim Host aus:
+agent = Lynx/2.8.4rel.1 libwww-FM/2.14
+agent = Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; Win 9x 4.90)
+
+# Ok, nun ein erstes Skript
+# Warum nicht ein Skript um Google zu verwenden?
+# <gg Elefanten und Tiger sucht nach Elefanten und Tiger bei Google,
+function+gg {
+b http://www.google.com
+/<>/ i=~0
++i1*
+/^1/
+}
+
+# Nachschlagen im Mariam-Webster Wörterbuch, ~1 ist der Parameter (das Wort zum
+# Nachschlagen), <mw Elefant
+function+mw {
+b http://www.merriam-webster.com/dictionary/~1
+}
+
+# Folgende Funktion wird beim Edbrowse-Start ausgeführt:
+function:init {
+# Verzeichnisse schreibbar, damit Dateien umbenannt oder gelöscht werden können
+dw
+# zeige Größe jeder Datei in Verzeichnisauflistung an
+ls=s
+# andere persönliche Einstellungen
+}
+
+# und so weiter...
