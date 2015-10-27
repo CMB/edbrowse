@@ -41,10 +41,14 @@ No need to repeat all that here.
 You're here because you want to compile and/or package the program,
 or modify the source in some way.  Great!
 
-A full cmake system is under development.
-This is the method of choice for Windows.
-visual C studio is assumed.
-On unix or linux, type make, and make install, and hope for the best.
+cmake can be used to build and install edbrowse in Windows or linux.
+visual C studio is assumed on Windows.
+cd build
+cmake .. [options]
+make
+Or, on linux, you can use the traditional makefiles.
+cd src
+make
 
 As you may know, edbrowse was originally a perl script.
 As such, it was only natural to use perl regular expressions for

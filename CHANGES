@@ -6,7 +6,7 @@ delete move or download emails, pull down attachments.
 
 Use the tidy5 library to parse html and create a tree of nodes.
 Render the text buffer based on this tree of nodes,
-rather than the html text directly.
+rather than the original html text.
 Rerender the tree after it has been changed by javascript,
 or via the rr command,
 and report any differences, i.e. what has javascript changed?
@@ -21,11 +21,20 @@ directory scans. See documentation for more.
 
 Port edbrowse to windows, with small modifications.
 
+Set up cmake scripts so that cmake can be used to build edbrowse,
+on windows or on linux.
+Traditional make is still available from the src directory.
+
 Add an interactive javascript / DOM debugger.
 Type jex to enter this debugging mode, and period to exit.
 
 Create a default .ebrc file if none is found.
 This is just a template, the user is encouraged to personalize the file.
+The default .ebrc file is in the user's language, for supported languages.
+
+Move all the language files, (ebrc files and message strings),
+to per-language files in the lang directory.
+perl programs map these into strings in the C source.
 
 3.5.4.2:
 Limited and preliminary imap access. Envelopes only.
