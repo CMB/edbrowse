@@ -1513,7 +1513,7 @@ static void dwrite1(unsigned int argc, jsval * argv, bool newline)
 	JS::RootedString str(jcx);
 	effectString("w{");	// }
 	begin = eff_l;
-	for (i = 0; i < argc; ++i) {
+	for (i = 0; i < (signed)argc; ++i) {
 		if ((str = JS_ValueToString(jcx, argv[i])) &&
 		    (msg = JS_c_str(str))) {
 			effectString(msg);
@@ -1794,7 +1794,7 @@ abort:
 			if (!s || !*s || stringEqual(s, "anonymous"))
 				s = "javascript";
 			int len = strlen(s);
-			if (len > sizeof(fname) - 4)
+			if (len > (signed)sizeof(fname) - 4)
 				len = sizeof(fname) - 4;
 			strncpy(fname, s, len);
 			cnzFree(allocatedName);
