@@ -313,7 +313,7 @@ keine Anhänge
 .ebrc: Schlüsselwort = Wert innerhalb einer Edbrowse-Funktion in Zeile %d
 zeige letzte %d von %d Nachrichten\n
 ftp-Sitzung konnte nicht initialisiert werden
-0
+Versenden
 Edbrowse wurde ohne Datenbankzugriff kompiliert
 fehlendes Pseudonym in Adressbuchzeile %d
 fehlender : in Adressbuchzeile %d
@@ -388,11 +388,11 @@ kann Inhalt von %s nicht lesen
 kann auf %s nicht zugreifen
 $%s ungültige
 ~%s ungültige
-0
-0
-0
-0
-0
+Senden
+ implizit
+ (gesichert)
+ per Email
+Reset
 unerwarteter Fehler beim Auswerten des Shell-Musters
 0
 Shell-Muster passt auf mehr als eine Datei

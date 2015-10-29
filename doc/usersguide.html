@@ -4060,8 +4060,8 @@ You can change this limit with the l command.
 <H3> <A NAME=sqlb> Building edbrowse with Database Access </A> </H3>
 
 If you simply type make, you get edbrowse, with no database functionality.&nbsp;
-A separate target supports database access through odbc.&nbsp;
-Run `make edbrowse-odbc' to link edbrowse with odbc.&nbsp;
+A separate option supports database access through odbc.&nbsp;
+Run `make BUILD_EDBR_ODBC=on' to link edbrowse with odbc.&nbsp;
 This assumes you have the unixODBC and unixODBC-devel packages installed on your machine.&nbsp;
 Another target, edbrowseinf, provides a direct link to an
 <A HREF=http://www.informix.com>Informix database</A>.&nbsp;

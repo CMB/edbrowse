@@ -2564,18 +2564,29 @@ nop:
 			if (t->value[0])
 				stringAndString(&ns, &ns_l, t->value);
 			else if (itype == INP_SUBMIT || itype == INP_IMAGE)
-				stringAndString(&ns, &ns_l, "Go");
+				stringAndString(&ns, &ns_l,
+						i_getString(MSG_Submit));
 			else if (itype == INP_RESET)
-				stringAndString(&ns, &ns_l, "Reset");
+				stringAndString(&ns, &ns_l,
+						i_getString(MSG_Reset));
+			else if (itype == INP_BUTTON)
+				stringAndString(&ns, &ns_l,
+						i_getString(MSG_Push));
 		} else
 			stringAndChar(&ns, &ns_l, (t->checked ? '+' : '-'));
 		if (currentForm && (itype == INP_SUBMIT || itype == INP_IMAGE)) {
+#if 0
+// Adding in the word implicit causes lots of confusion.
 			if (t->created)
-				stringAndString(&ns, &ns_l, " implicit");
+				stringAndString(&ns, &ns_l,
+						i_getString(MSG_Implicit));
+#endif
 			if (currentForm->secure)
-				stringAndString(&ns, &ns_l, " secure");
+				stringAndString(&ns, &ns_l,
+						i_getString(MSG_Secure));
 			if (currentForm->bymail)
-				stringAndString(&ns, &ns_l, " bymail");
+				stringAndString(&ns, &ns_l,
+						i_getString(MSG_Bymail));
 		}
 		ns_ic();
 		stringAndString(&ns, &ns_l, "0>");

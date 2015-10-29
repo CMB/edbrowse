@@ -313,7 +313,7 @@ sem anexos
 .ebrc: palavrachave = valor numa função do edbrowse na linha %d
 mostrando as últimas %d de %d mensagens\n
 falha a iniciar sessão de FTP
-0
+botão de ação
 o edbrowse não foi compilado com acesso a bancos de dado
 faltando apelido na linha %d do catálogo de endereços
 faltando : na linha %d do catálogo de endereços
@@ -388,11 +388,11 @@ impossível ler o conteúdo do %s
 impossível acessar %s
 $%s não definida
 ~%s não definida
-0
-0
-0
-0
-0
+submete
+ implícito
+ seguro
+ por e-mail
+limpa dados
 erro inesperado a avaliar o padrão shell
 0
 padrão shell condiz com mais que um arquivo

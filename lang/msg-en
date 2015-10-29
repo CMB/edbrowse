@@ -313,7 +313,7 @@ no attachments
 .ebrc: keyword = value inside an edbrowse function at line %d
 showing last %d of %d messages\n
 ftp session initialization failed
-0
+Push
 edbrowse was not compiled with database access
 missing alias in address book line %d
 missing : in address book line %d
@@ -388,11 +388,11 @@ cannot read the contents of %s
 cannot access %s
 $%s is not defined
 ~%s is not defined
-0
-0
-0
-0
-0
+Go
+ implicit
+ secure
+ bymail
+Reset
 unexpected error while evaluating the shell pattern
 0
 shell pattern matches more than one file
