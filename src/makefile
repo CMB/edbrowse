@@ -38,12 +38,19 @@ all: edbrowse edbrowse-js
 #  edbrowse objects
 EBOBJS = main.o buffers.o auth.o http.o sendmail.o fetchmail.o \
 	html.o format.o cookies.o ebjs.o plugin.o ebrc.o
+ifeq ($(BUILD_EDBR_ODBC),on)
+EBOBJS += dbodbc.o dbops.o
+LDLIBS += -lodbc
+else
+EBOBJS += dbstubs.o
+endif
 
 #  common objects
 COMOBJS = messages.o url.o stringfile.o html-tidy.o decorate.o msg-strings.o
 
 #  Header file dependencies.
 $(EBOBJS) $(COMOBJS) jseng-moz.o : eb.h ebprot.h messages.h ebjs.h
+dbodbc.o dbinfx.o dbops.o : dbapi.h
 
 startwindow.c: startwindow.js
 	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/startwindow.c
@@ -60,16 +67,13 @@ common.a : $(COMOBJS)
 
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.
-edbrowse: $(EBOBJS) common.a startwindow.o dbstubs.o
+edbrowse: $(EBOBJS) common.a startwindow.o
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 #  You probably need to be root to do this.
 install:
 	install -Dm755 edbrowse $(DESTDIR)$(bindir)/edbrowse
 	install -Dm755 edbrowse-js $(DESTDIR)$(bindir)/edbrowse-js
-
-#  Database files.
-dbodbc.o dbinfx.o dbops.o : dbapi.h eb.h ebprot.h
 
 #  native Informix library for database access.
 #  Others could be built, e.g. Oracle, but odbc is the most general.
@@ -80,13 +84,8 @@ dbinfx.o : dbinfx.ec
 edbrowse-infx: $(EBOBJS) common.a startwindow.o dbops.o dbinfx.o
 	esql $(ESQLDFLAGS) -o edbrowse-infx $(EBOBJS) common.a startwindow.o dbops.o dbinfx.o $(LDLIBS)
 
-#  odbc access
-edbrowse-odbc: LDLIBS += -lodbc
-edbrowse-odbc: $(EBOBJS) common.a startwindow.o dbops.o dbodbc.o
-	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
-
 clean:
-	rm -f *.[oa] edbrowse edbrowse-infx edbrowse-odbc edbrowse-js \
+	rm -f *.[oa] edbrowse edbrowse-js \
 	startwindow.c ebrc.c msg-strings.c
 
 jseng-moz.o: jseng-moz.cpp

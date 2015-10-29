@@ -22,12 +22,19 @@ all: edbrowse edbrowse-js
 #  edbrowse objects
 EBOBJS = main.o buffers.o auth.o http.o sendmail.o fetchmail.o \
 	html.o format.o cookies.o ebjs.o plugin.o ebrc.o
+ifeq ($BUILD_EDBR_ODBC = on)
+EBOBJS += dbodbc.o dbinfx.o dbops.o
+LDLIBS += -lodbc
+else
+EBOBJS += dbstubs.o
+endif
 
 #  common objects
 COMOBJS = messages.o url.o stringfile.o html-tidy.o decorate.o msg-strings.o
 
 #  Header file dependencies.
 $(EBOBJS) $(COMOBJS) jseng-moz.o : eb.h ebprot.h messages.h ebjs.h
+dbodbc.o dbinfx.o dbops.o : dbapi.h
 
 startwindow.c: startwindow.js
 	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/startwindow.c
@@ -44,19 +51,11 @@ common.a : $(COMOBJS)
 
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.
-edbrowse: $(EBOBJS) common.a startwindow.o dbstubs.o
+edbrowse: $(EBOBJS) common.a startwindow.o
 	cc $(LFLAGS) -o edbrowse startwindow.o dbstubs.o $(EBOBJS) common.a $(LIBS)
 
-#  Database files.
-dbodbc.o dbinfx.o dbops.o : dbapi.h eb.h ebprot.h
-
-#  odbc access
-edbrowse-odbc: LDLIBS += -lodbc
-edbrowse-odbc: $(EBOBJS) common.a startwindow.o dbops.o dbodbc.o
-	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
-
 clean:
-	rm -f *.[oa] edbrowse edbrowse-infx edbrowse-odbc edbrowse-js \
+	rm -f *.[oa] edbrowse edbrowse-js \
 	startwindow.c ebrc.c msg-strings.c
 
 jseng-moz.o: jseng-moz.cpp

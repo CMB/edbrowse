@@ -25,6 +25,8 @@ Set up cmake scripts so that cmake can be used to build edbrowse,
 on windows or on linux.
 Traditional make is still available from the src directory.
 
+Use cmake to build edbrowse under MacPorts, thus available under OSX.
+
 Add an interactive javascript / DOM debugger.
 Type jex to enter this debugging mode, and period to exit.
 
