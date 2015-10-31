@@ -716,6 +716,28 @@ document.cookie = "zz=59";
 if(document.cookie != "yy=37; zz=59")
 fail(151);
 
+insertBefore_returnvalue();
+
+function insertBefore_returnvalue()
+{
+// insertBefore return value test
+var ibrv = document.createTextNode("this will be returned from iB");
+// If you echoed document.body.childNodes[0] before the change,
+// it is something other than our new text node
+var firstchild_before = document.body.childNodes[0];
+var firstchild_after = document.body.insertBefore(ibrv,firstchild_before);
+if (firstchild_after.data == "this will be returned from iB")
+{
+// passed the test
+// clean up - remove the node created for the test
+document.body.removeChild(ibrv);
+} else {
+// clean up now, because fail is going to abort
+document.body.removeChild(ibrv);
+fail(154);
+}
+}
+
 </script>
 
 </body>

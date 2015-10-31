@@ -1414,7 +1414,12 @@ static JSBool insertBefore(JSContext * cx, unsigned int argc, jsval * vp)
 	return JS_TRUE;
 
 found:
-/* push the others down */
+/* since the item to insert before was found, the call is going to */
+/* succeed, so put the return value here */
+args.rval().set(args[0]);
+
+
+/* push the other elements down */
 	for (i = length; i > mark; --i) {
 		JS_GetElement(cx, elar, i - 1, v.address());
 		if (i == length)

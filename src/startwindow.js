@@ -562,7 +562,7 @@ Array.prototype.insertBefore = function(newobj, item) {
 for(var i=0; i<this.length; ++i)
 if(this[i] == item) {
 this.splice(i-1, 0, newobj);
-return;
+return newobj;
 }
 }
 Array.prototype.firstChild = document.firstChild;
