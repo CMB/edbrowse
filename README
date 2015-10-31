@@ -104,8 +104,9 @@ The following works for me.
 make JS_CXXFLAGS=-I/usr/local/include/mozjs-24 JSLIB=-lmozjs-24 edbrowse
 
 If you want database access, you need unixODBC and unixODBC-devel.
-Select the odbc option via
-make BUILD_EDBR_ODBC=on
+Select the odbc option via:
+make BUILD_EDBR_ODBC=on in the src directory, or from build,
+cmake -DBUILD_EDBR_ODBC:BOOL=ON ..
 ODBC has been very stable for a long time.
 unixODBC version 2.2.14 seems to satisfy edbrowse-odbc.
 

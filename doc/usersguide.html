@@ -4063,17 +4063,19 @@ You can change this limit with the l command.
 
 If you simply type make, you get edbrowse with no database functionality.&nbsp;
 A separate option supports database access through odbc.&nbsp;
-Run `make BUILD_EDBR_ODBC=on'
-in the src directory or in the build directory after cmake,
-to link edbrowse with odbc.&nbsp;
+To link edbrowse with odbc,
+run `make BUILD_EDBR_ODBC=on'
+in the src directory,
+or in the build directory type
+`cmake -DBUILD_EDBR_ODBC:BOOL=ON ..'.&nbsp;
 This assumes you have the unixODBC and unixODBC-devel packages installed on your machine.&nbsp;
-Another target, edbrowseinf, provides a direct link to an
+A separate target, edbrowseinf, provides a direct link to an
 <A HREF=http://www.informix.com>Informix database</A>.&nbsp;
 This works, but is not generally supported.&nbsp;
 Other database specific edbrowse connectors could be built.&nbsp;
 You are basically implementing the interface described in dbapi.h,
 using the C database development toolkit provided by the vendor.&nbsp;
-For now, I will concentrate on the odbc interface.
+Since odbc connects to everything, it will probably meet your needs.
 
 <H3> <A NAME=rtb> Reading Tables </A> </H3>
 
