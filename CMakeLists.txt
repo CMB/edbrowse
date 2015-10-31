@@ -16,7 +16,7 @@ set( eb_POINT 1 )
 # Allow developer to select is Dynamic or static library built
 set( LIB_TYPE STATIC )  # set default static
 option( BUILD_SHARED_LIB "Build Shared Library" OFF )
-
+option( BUILD_EDBR_ODBC  "Set 'ON' to add ODBC support. Needs ODBC package installed." OFF)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
     set( WARNING_FLAGS -Wall )
@@ -46,7 +46,7 @@ if(WIN32)
         # distinguish between debug and release libraries
         set( CMAKE_DEBUG_POSTFIX "d" )
     endif(MSVC)
-    list(APPEND extra_LIBS ws2_32 Winmm)
+    list(APPEND extra_LIBS ws2_32 Winmm odbc32)
     set( NOMINMAX 1 )
 else()
     # unix/mac stuff
@@ -157,6 +157,22 @@ if (WIN32 AND MOZJS_FOUND)
         set(MOZJS_FOUND)
     endif ()
 endif ()
+
+if (BUILD_EDBR_ODBC) # if the user OPTION ON
+    # This module defines
+    # ODBC_INCLUDE_DIRECTORIES, where to find sql.h
+    # ODBC_LIBRARIES, the libraries to link against to use ODBC
+    # ODBC_FOUND.  If false, you cannot build anything that requires MySQL.
+    find_package(ODBC)
+    if (ODBC_FOUND)
+        message( STATUS "*** ODBC found inc ${ODBC_INCLUDE_DIRECTORIES} lib ${ODBC_LIBRARIES}" )
+        add_definitions( -DHAVE_SQL_H )
+        include_directories( ${ODBC_INCLUDE_DIRECTORIES} )
+        list( APPEND add_LIBS ${ODBC_LIBRARIES} )
+    else ()
+        message(STATUS "*** ODBC NOT FOUND")
+    endif ()
+endif ()
     
 # add_definitions( -DHAVE_CONFIG_H )
 
@@ -229,6 +245,24 @@ set(add_LIBS ${name} ${add_LIBS})
 ### main edbrowse app
 set(name edbrowse)
 set(dir src)
+set(ODBC_SRCS ${dir}/dbstubs.c) # set default stubs source
+if (BUILD_EDBR_ODBC) # if the user OPTION ON
+   if (ODBC_FOUND)   # and if package found
+        message(STATUS "*** Building edbrowse with ODBC support") # happy days!
+        set(ODBC_SRCS ${dir}/dbops.c ${dir}/dbodbc.c ${dir}/dbapi.h) # real db sources
+   else ()
+        message(WARNING "ODBC support requested, but ODBC package NOT FOUND!"
+        "1. Has the dev package been installed? 2. Do you need to use"
+        "-DCMAKE_PREFIX_PATH:PATH=/path/to/odbc/install/root to help find it?")
+   endif ()
+else ()
+   if (ODBC_FOUND) # more a polite did-you-know information type message
+        message(STATUS "*** ODBC package found, but option -DBUILD_EDBR_ODBC=ON not used.")
+   else ()
+        # does not want ODBC, which is ok, because it was not found! win win
+   endif ()
+endif ()
+
 set(${name}_SRCS
     ${dir}/main.c
     ${dir}/buffers.c
@@ -241,7 +275,7 @@ set(${name}_SRCS
     ${dir}/cookies.c
     ${dir}/ebjs.c
     ${dir}/plugin.c
-    ${dir}/dbstubs.c
+    ${ODBC_SRCS}
     )
 set(${name}_HDRS
     ${dir}/eb.h
