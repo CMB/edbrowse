@@ -516,7 +516,7 @@ static void freeLine(struct lineMap *t)
 		printf("free ");
 		print_pst(t->text);
 	}
-	free(t->text);
+	nzFree(t->text);
 }				/* freeLine */
 
 static void freeWindowLines(struct lineMap *map)
