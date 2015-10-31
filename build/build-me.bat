@@ -24,6 +24,9 @@
 @set TMPLOG=bldlog-1.txt
 @set TMPOPTS=-DCMAKE_INSTALL_PREFIX=%TMPINS%
 
+@REM 20151031 - Add OSBC support in WIN32 build
+@set TMPOPTS=%TMPOPTS% -DBUILD_EDBR_ODBC:BOOL=ON
+
 :RPT
 @if "%~1x" == "x" goto GOTCMD
 @set TMPOPTS=%TMPOPTS% %1
