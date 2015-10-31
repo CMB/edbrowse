@@ -18,7 +18,7 @@ we would be doing something wrong.
 *********************************************************************/
 
 #ifdef _WIN32
-#include <windows.h>		// don't know why this is needed
+#include <WinSock2.h> // also includes <windows.h> // needed for sql.h whihc uses say HWND, DWORD, etc...
 #endif
 
 #include <sql.h>		/* ODBC header files */
