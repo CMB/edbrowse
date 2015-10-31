@@ -151,15 +151,17 @@ is the current project maintainer and webmaster.
 
 <H3> <A NAME=auth> Author </A> </H3>
 
-Karl Dahlke
-<A HREF=mailto:eklhad@gmail.com>eklhad@gmail.com</A>.&nbsp;
+<A HREF=mailto:eklhad@gmail.com>
+Karl Dahlke</A>
+wrote the first version of edbrowse in perl, in 2001,
+and he is still the principal developer of the project.&nbsp;
 Please see the
 <A href=http://en.wikipedia.org/wiki/edbrowse>
 wikipedia article</A> for a history of edbrowse and an overview of its features.
 
 <H3> <A NAME=copy> Copyright Notice </A> </H3>
 
-This program is copyright &copy; Karl Dahlke (and other authors and contributors), 2000-2015.&nbsp;
+This program is copyright &copy; Karl Dahlke (and other authors and contributors), 2001-2015.&nbsp;
 It is made available by the authors under the terms of the GNU General Public License (GPL),
 as articulated by the Free Software Foundation.&nbsp;
 It may be used for any purpose, and redistributed, provided this copyright notice is included.
@@ -185,7 +187,7 @@ and provided valuable ideas for the overall design.&nbsp;
 <A href=mailto:arthompson1990@gmail.com>
 Adam Thompson</A>
 converted the javascript interface from C to C++, as required by Mozilla JS versions 2,
-and he continues to direct the project's architecture.&nbsp;
+and he continues to direct the project's overall architecture.&nbsp;
 <A href=mailto:kevin@carhart.net>
 Kevin Carhart</A>
 deciphered the mysteries of jquery,
@@ -4059,9 +4061,11 @@ You can change this limit with the l command.
 
 <H3> <A NAME=sqlb> Building edbrowse with Database Access </A> </H3>
 
-If you simply type make, you get edbrowse, with no database functionality.&nbsp;
+If you simply type make, you get edbrowse with no database functionality.&nbsp;
 A separate option supports database access through odbc.&nbsp;
-Run `make BUILD_EDBR_ODBC=on' to link edbrowse with odbc.&nbsp;
+Run `make BUILD_EDBR_ODBC=on'
+in the src directory or in the build directory after cmake,
+to link edbrowse with odbc.&nbsp;
 This assumes you have the unixODBC and unixODBC-devel packages installed on your machine.&nbsp;
 Another target, edbrowseinf, provides a direct link to an
 <A HREF=http://www.informix.com>Informix database</A>.&nbsp;
