@@ -561,8 +561,15 @@ Array.prototype.appendChild = function(child) { this.push(child);return child }
 Array.prototype.insertBefore = function(newobj, item) {
 for(var i=0; i<this.length; ++i)
 if(this[i] == item) {
-this.splice(i-1, 0, newobj);
+this.splice(i, 0, newobj);
 return newobj;
+}
+}
+Array.prototype.removeChild = function(item) {
+for(var i=0; i<this.length; ++i)
+if(this[i] == item) {
+this.splice(i, 1);
+return;
 }
 }
 Array.prototype.firstChild = document.firstChild;
@@ -592,16 +599,41 @@ Body.prototype.removeChild = document.removeChild;
 Body.prototype.replaceChild = document.replaceChild;
 Body.prototype.getAttribute = document.getAttribute;
 Body.prototype.setAttribute = document.setAttribute;
-Form.prototype.appendChild = document.appendChild;
+
+/*********************************************************************
+Special functions for form and input.
+If you add an input to a form, it adds under childNodes in the usual way,
+but also must add in the elements[] array.
+Same for insertBefore and removeChild.
+*********************************************************************/
+
+Form.prototype.appendChildNative = document.appendChild;
+Form.prototype.appendChild = function(newobj) {
+this.appendChildNative(newobj);
+if(newobj.nodeName === "input" || newobj.nodeName === "select")
+this.elements.appendChild(newobj);
+}
 Form.prototype.apch$ = document.apch$;
-Form.prototype.insertBefore = document.insertBefore;
+Form.prototype.insertBeforeNative = document.insertBefore;
+Form.prototype.insertBefore = function(newobj, item) {
+this.insertBeforeNative(newobj, item);
+// the following won't work unless item is also type input.
+if(newobj.nodeName === "input" || newobj.nodeName === "select")
+this.elements.insertBefore(newobj, item);
+}
 Form.prototype.firstChild = document.firstChild;
 Form.prototype.lastChild = document.lastChild;
 Form.prototype.hasChildNodes = document.hasChildNodes;
-Form.prototype.removeChild = document.removeChild;
+Form.prototype.removeChildNative = document.removeChild;
+Form.prototype.removeChild = function(item) {
+this.removeChildNative(item);
+if(item.nodeName === "input" || item.nodeName === "select")
+this.elements.removeChild(item);
+}
 Form.prototype.replaceChild = document.replaceChild;
 Form.prototype.getAttribute = document.getAttribute;
 Form.prototype.setAttribute = document.setAttribute;
+
 Element.prototype.appendChild = document.appendChild;
 Element.prototype.apch$ = document.apch$;
 Element.prototype.insertBefore = document.insertBefore;
