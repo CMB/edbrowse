@@ -653,6 +653,14 @@ top:
 			i_printf(MSG_BufferUpdated, side);
 		sideBuffer(side, v, -1, 0);
 	}
+
+	foreach(ic, inputChangesPending) {
+		if (ic->major != 'l')
+			continue;
+		ic->major = 'x';
+		javaSetsLinkage(true, ic->minor, ic->t, ic->value);
+	}
+
 	freeList(&inputChangesPending);
 
 	rebuildSelectors();
@@ -2237,12 +2245,27 @@ void javaOpensWindow(const char *href, const char *name)
 	stringAndString(&cw->dw, &cw->dw_l, "</A><br>\n");
 }				/* javaOpensWindow */
 
-void javaSetsLinkage(char type, jsobjtype p_j, const char *rest)
+void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 {
 	struct htmlTag *parent, *add, *before, *c, *t;
 	jsobjtype *a_j, *b_j;
 	char p_name[MAXTAGNAME], a_name[MAXTAGNAME], b_name[MAXTAGNAME];
 	int action;
+
+// Postpone anything other than create until after js is finished,
+// so we can query js variables.
+	if (!after && type != 'c') {
+		struct inputChange *ic;
+		ic = allocMem(sizeof(struct inputChange) + strlen(rest));
+// Yeah I know, this isn't a pointer to htmlTag.
+		ic->t = p_j;
+		ic->tagno = 0;
+		ic->major = 'l';
+		ic->minor = type;
+		strcpy(ic->value, rest);
+		addToListBack(&inputChangesPending, ic);
+		return;
+	}
 
 /* options are relinked by rebuildSelectors, not here. */
 	if (stringEqual(p_name, "option"))
@@ -2287,9 +2310,7 @@ void javaSetsLinkage(char type, jsobjtype p_j, const char *rest)
 		if (c == before) {
 			parent->firstchild = add;
 			add->sibling = before;
-			add->parent = parent;
-			add->deleted = false;
-			return;
+			goto ab;
 		}
 		while (c->sibling && c->sibling != before)
 			c = c->sibling;
@@ -2297,17 +2318,20 @@ void javaSetsLinkage(char type, jsobjtype p_j, const char *rest)
 			return;
 		c->sibling = add;
 		add->sibling = before;
-	} else {
-/* type = a, appendchild */
-		if (!parent->firstchild)
-			parent->firstchild = add;
-		else {
-			c = parent->firstchild;
-			while (c->sibling)
-				c = c->sibling;
-			c->sibling = add;
-		}
+		goto ab;
 	}
+
+/* type = a, appendchild */
+	if (!parent->firstchild)
+		parent->firstchild = add;
+	else {
+		c = parent->firstchild;
+		while (c->sibling)
+			c = c->sibling;
+		c->sibling = add;
+	}
+
+ab:
 	add->parent = parent;
 	add->deleted = false;
 
@@ -2315,8 +2339,14 @@ void javaSetsLinkage(char type, jsobjtype p_j, const char *rest)
 /* This node is attached to the tree, just like an html tag would be. */
 	t = add;
 	action = t->action;
+	t->name = get_property_string(t->jv, "name");
+	t->id = get_property_string(t->jv, "id");
+
 	switch (action) {
 	case TAGACT_INPUT:
+// get_property_string(t->jv, "type");
+// get_property_string(t->jv, "value");
+// How to put these into the attrib list?
 		htmlInputHelper(t);
 		break;
 
@@ -2340,6 +2370,8 @@ void javaSetsLinkage(char type, jsobjtype p_j, const char *rest)
 	case TAGACT_SELECT:
 		t->action = TAGACT_INPUT;
 		t->itype = INP_SELECT;
+		if (has_property(t->jv, "multiple"))
+			t->multiple = true;
 		formControl(t, true);
 		break;
 

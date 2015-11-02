@@ -373,7 +373,7 @@ static void processEffects(void)
 			s += 2;
 			sscanf(s, "%p", &p);
 			s = strchr(s, ',') + 1;
-			javaSetsLinkage(c, p, s);
+			javaSetsLinkage(false, c, p, s);
 			break;
 
 		}		/* switch */

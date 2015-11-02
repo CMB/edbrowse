@@ -132,7 +132,7 @@ bool timerWait(int *delay_sec, int *delay_ms);
 void delTimers(struct ebWindow *w);
 void runTimers(void);
 void javaOpensWindow(const char *href, const char *name) ;
-void javaSetsLinkage(char type, jsobjtype p, const char *rest);
+void javaSetsLinkage(bool after, char type, jsobjtype p, const char *rest);
 
 /* sourcefile=html-tidy.c */
 void html2nodes(const char *htmltext, bool startpage);
