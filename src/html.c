@@ -2245,12 +2245,48 @@ void javaOpensWindow(const char *href, const char *name)
 	stringAndString(&cw->dw, &cw->dw_l, "</A><br>\n");
 }				/* javaOpensWindow */
 
+/* Push an attribute onto an html tag. */
+/* Value is already allocated, name is not. */
+/* So far only used by javaSetsLinkage. */
+static void setTagAttr(struct htmlTag *t, const char *name, char *val)
+{
+	int nattr = 0;		/* number of attributes */
+	int i = -1;
+	if (!val)
+		return;
+	if (t->attributes) {
+		for (nattr = 0; t->attributes[nattr]; ++nattr)
+			if (stringEqualCI(name, t->attributes[nattr]))
+				i = nattr;
+	}
+	if (i >= 0) {
+		cnzFree(t->atvals[i]);
+		t->atvals[i] = val;
+		return;
+	}
+/* push */
+	if (!nattr) {
+		t->attributes = allocMem(sizeof(char *) * 2);
+		t->atvals = allocMem(sizeof(char *) * 2);
+	} else {
+		t->attributes =
+		    reallocMem(t->attributes, sizeof(char *) * (nattr + 2));
+		t->atvals = reallocMem(t->atvals, sizeof(char *) * (nattr + 2));
+	}
+	t->attributes[nattr] = cloneString(name);
+	t->atvals[nattr] = val;
+	++nattr;
+	t->attributes[nattr] = 0;
+	t->atvals[nattr] = 0;
+}				/* setTagAttr */
+
 void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 {
 	struct htmlTag *parent, *add, *before, *c, *t;
 	jsobjtype *a_j, *b_j;
 	char p_name[MAXTAGNAME], a_name[MAXTAGNAME], b_name[MAXTAGNAME];
 	int action;
+	char *jst;		// java string
 
 // Postpone anything other than create until after js is finished,
 // so we can query js variables.
@@ -2344,9 +2380,9 @@ ab:
 
 	switch (action) {
 	case TAGACT_INPUT:
-// get_property_string(t->jv, "type");
-// get_property_string(t->jv, "value");
-// How to put these into the attrib list?
+		jst = get_property_string(t->jv, "type");
+		setTagAttr(t, "type", jst);
+		t->value = get_property_string(t->jv, "value");
 		htmlInputHelper(t);
 		break;
 
@@ -2360,11 +2396,12 @@ ab:
 	case TAGACT_TA:
 		t->action = TAGACT_INPUT;
 		t->itype = INP_TA;
-		formControl(t, true);
+		t->value = get_property_string(t->jv, "value");
 		if (!t->value)
 			t->value = emptyString;
-		if (!t->rvalue)
-			t->rvalue = cloneString(t->value);
+		t->rvalue = emptyString;
+// Need to create the side buffer here.
+		formControl(t, true);
 		break;
 
 	case TAGACT_SELECT:
