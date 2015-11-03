@@ -738,6 +738,34 @@ fail(154);
 }
 }
 
+
+test_cloneNode();
+function test_cloneNode()
+{
+var x1  = document.createElement("div");
+var x2  = document.createElement("div");
+var x3  = document.createElement("div");
+var x4  = document.createElement("div");
+x4.innerHTML = "<A HREF='http://water.com' style='color:red;float:left'><\/A>";
+x3.appendChild(x4);
+x2.appendChild(x3);
+x1.appendChild(x2);
+x4.setAttribute('verify','should exist on clone when called with deep true');
+var x5 = x1.cloneNode(true);
+var test_object = x5.firstChild.firstChild.firstChild;
+var string_deep_true = test_object.getAttribute('verify');
+var test_anchor = test_object.firstChild;
+var x6 = x1.cloneNode(false);
+if (x6.hasChildNodes())
+fail(155);
+if (string_deep_true != "should exist on clone when called with deep true")
+fail(156);
+if (test_anchor.style.color != "red")
+fail(157);
+if (test_anchor.href.host != "water.com")
+fail(158);
+}
+
 </script>
 
 </body>

@@ -524,8 +524,12 @@ Anchor.prototype.attachEvent = window.attachEvent;
 
 /* document.appendChild and document.apch$ are native */
 document.childNodes = new Array;
-document.firstChild = function() { return (this.childNodes.length > 0 ? this.childNodes[0] : undefined); }
-document.lastChild = function() { return (this.childNodes.length > 0 ? this.childNodes[this.childNodes.length-1] : undefined); }
+Object.defineProperty(document, "firstChild", {
+get: function() { return document.childNodes[0]; }
+});
+Object.defineProperty(document, "lastChild", {
+get: function() { return document.childNodes[document.childNodes.length-1]; }
+});
 document.hasChildNodes = function() { return (this.childNodes.length > 0); }
 document.replaceChild = function(newc, oldc) {
 var lastentry;
@@ -551,6 +555,77 @@ break;
 document.getAttribute = function(name) { return this[name.toLowerCase()]; }
 document.setAttribute = function(name, v) { this[name.toLowerCase()] = v; }
 
+/*********************************************************************
+Notes on cloneNode:
+
+- cloneNode creates a copy of what it is called on, yet
+we are not allowed to have multiple document objects. So
+is it a problem to define this on document and other kinds
+of objects get that implementation in the usual way?
+KC: I don't think it's a problem, because we aren't
+trying to prohibit every weird or nonsensical case.  It will
+tend not to happen in the wild most of the time.
+KD: Well the first step of cloneNode, createNode("document"),
+won't work anyways.
+
+- Does cloneNode need to be native?  Does it need a side effect?
+KC: I don't think it does, because it appears from MDC that it
+is intended to be used as the first hop of a multi-step usage.
+cloneNode returns a JS variable.  It's up to the developer to
+use appendChild or similar, to add it to the tree.  So
+cloneNode is a 'second order' routine which itself calls the
+more integral work that we already did, and the first-order
+routines will deal with side effects.
+KD: Agree, and somewhat surprised, happily surprised.
+
+- There is recursion involved here.  The argument, 'deep'
+refers to whether or not the clone will have a literal
+copy of additional depths on the tree of the original.
+KC: This is the reason for having cloneNode call importNode,
+and importNode calling importNode.  Also, importNode
+is not tethered to any particular prototype.
+*********************************************************************/
+
+document.cloneNode = function(deep) {
+return import$node (this,deep);
+}
+
+function import$node(nodeToCopy,deep)
+{
+var nodeToReturn = document.createElement(nodeToCopy.nodeName);
+var i;
+if (deep && nodeToCopy.childNodes) {
+for(i = 0; i < nodeToCopy.childNodes.length; ++i) {
+var current_item = nodeToCopy.childNodes[i];
+nodeToReturn.appendChild(import$node(current_item,true));
+}
+}
+
+// now for the strings.
+for (var item in nodeToCopy) {
+if (typeof nodeToCopy[item] == 'string' && nodeToCopy[item] !== '')
+nodeToReturn[item] = nodeToCopy[item];
+}
+
+// copy style object if present and its subordinate strings.
+if (typeof nodeToCopy.style == "object") {
+nodeToReturn.style = {};
+for (var item in nodeToCopy.style){
+if (typeof nodeToCopy.style[item] == 'string')
+nodeToReturn.style[item] = nodeToCopy.style[item];
+}
+}
+
+// copy any objects of class URL.
+for (var url in nodeToCopy) {
+var u = nodeToCopy[url];
+if(typeof u == "object" && u instanceof URL)
+nodeToReturn[url] = new URL(u.href);
+}
+
+return nodeToReturn;
+}
+
 /* The select element in a form is itself an array, so the above functions have
  * to be on array prototype, except appendchild is to have no side effects,
  * because select options are maintained by rebuildSelectors(), so appendChild
@@ -572,8 +647,12 @@ this.splice(i, 1);
 return;
 }
 }
-Array.prototype.firstChild = document.firstChild;
-Array.prototype.lastChild = document.lastChild;
+Object.defineProperty(Array.prototype, "firstChild", {
+get: function() { return this[0]; }
+});
+Object.defineProperty(Array.prototype, "lastChild", {
+get: function() { return this[this.length-1]; }
+});
 Array.prototype.hasChildNodes = document.hasChildNodes;
 Array.prototype.replaceChild = document.replaceChild;
 Array.prototype.getAttribute = document.getAttribute;
@@ -582,47 +661,82 @@ Array.prototype.setAttribute = document.setAttribute;
 Head.prototype.appendChild = document.appendChild;
 Head.prototype.apch$ = document.apch$;
 Head.prototype.insertBefore = document.insertBefore;
-Head.prototype.firstChild = document.firstChild;
-Head.prototype.lastChild = document.lastChild;
+Object.defineProperty(Head.prototype, "firstChild", {
+get: function() { return this.childNodes[0]; }
+});
+Object.defineProperty(Head.prototype, "lastChild", {
+get: function() { return this.childNodes[this.childNodes.length-1]; }
+});
 Head.prototype.hasChildNodes = document.hasChildNodes;
 Head.prototype.removeChild = document.removeChild;
 Head.prototype.replaceChild = document.replaceChild;
 Head.prototype.getAttribute = document.getAttribute;
 Head.prototype.setAttribute = document.setAttribute;
+Head.prototype.cloneNode = document.cloneNode;
+
 Body.prototype.appendChild = document.appendChild;
 Body.prototype.apch$ = document.apch$;
 Body.prototype.insertBefore = document.insertBefore;
-Body.prototype.firstChild = document.firstChild;
-Body.prototype.lastChild = document.lastChild;
+Object.defineProperty(Body.prototype, "firstChild", {
+get: function() { return this.childNodes[0]; }
+});
+Object.defineProperty(Body.prototype, "lastChild", {
+get: function() { return this.childNodes[this.childNodes.length-1]; }
+});
 Body.prototype.hasChildNodes = document.hasChildNodes;
 Body.prototype.removeChild = document.removeChild;
 Body.prototype.replaceChild = document.replaceChild;
 Body.prototype.getAttribute = document.getAttribute;
 Body.prototype.setAttribute = document.setAttribute;
+Body.prototype.cloneNode = document.cloneNode;
+
 
 /*********************************************************************
 Special functions for form and input.
 If you add an input to a form, it adds under childNodes in the usual way,
 but also must add in the elements[] array.
 Same for insertBefore and removeChild.
+When adding an input element to a form,
+linnk form[element.name] to that element.
 *********************************************************************/
+
+function form$name(parent, child)
+{
+var s;
+if(typeof child.name == "string")
+s = child.name;
+else if(typeof child.id == "string")
+s = child.id;
+else return;
+// Is it ok if name is "action"? I'll assume it is,
+// but then there is no way to submit the form. Oh well.
+parent[s] = child;
+}
 
 Form.prototype.appendChildNative = document.appendChild;
 Form.prototype.appendChild = function(newobj) {
 this.appendChildNative(newobj);
-if(newobj.nodeName === "input" || newobj.nodeName === "select")
+if(newobj.nodeName === "input" || newobj.nodeName === "select") {
 this.elements.appendChild(newobj);
+form$name(this, newobj);
+}
 }
 Form.prototype.apch$ = document.apch$;
 Form.prototype.insertBeforeNative = document.insertBefore;
 Form.prototype.insertBefore = function(newobj, item) {
 this.insertBeforeNative(newobj, item);
+if(newobj.nodeName === "input" || newobj.nodeName === "select") {
 // the following won't work unless item is also type input.
-if(newobj.nodeName === "input" || newobj.nodeName === "select")
 this.elements.insertBefore(newobj, item);
+form$name(this, newobj);
 }
-Form.prototype.firstChild = document.firstChild;
-Form.prototype.lastChild = document.lastChild;
+}
+Object.defineProperty(Form.prototype, "firstChild", {
+get: function() { return this.childNodes[0]; }
+});
+Object.defineProperty(Form.prototype, "lastChild", {
+get: function() { return this.childNodes[this.childNodes.length-1]; }
+});
 Form.prototype.hasChildNodes = document.hasChildNodes;
 Form.prototype.removeChildNative = document.removeChild;
 Form.prototype.removeChild = function(item) {
@@ -633,12 +747,17 @@ this.elements.removeChild(item);
 Form.prototype.replaceChild = document.replaceChild;
 Form.prototype.getAttribute = document.getAttribute;
 Form.prototype.setAttribute = document.setAttribute;
+Form.prototype.cloneNode = document.cloneNode;
 
 Element.prototype.appendChild = document.appendChild;
 Element.prototype.apch$ = document.apch$;
 Element.prototype.insertBefore = document.insertBefore;
-Element.prototype.firstChild = document.firstChild;
-Element.prototype.lastChild = document.lastChild;
+Object.defineProperty(Element.prototype, "firstChild", {
+get: function() { return this.childNodes[0]; }
+});
+Object.defineProperty(Element.prototype, "lastChild", {
+get: function() { return this.childNodes[this.childNodes.length-1]; }
+});
 Element.prototype.hasChildNodes = document.hasChildNodes;
 Element.prototype.removeChild = document.removeChild;
 Element.prototype.replaceChild = document.replaceChild;
@@ -646,107 +765,164 @@ Element.prototype.getAttribute = document.getAttribute;
 Element.prototype.setAttribute = document.setAttribute;
 Element.prototype.focus = document.focus;
 Element.prototype.blur = document.blur;
+Element.prototype.cloneNode = document.cloneNode;
+
 Anchor.prototype.appendChild = document.appendChild;
 Anchor.prototype.apch$ = document.apch$;
 Anchor.prototype.focus = document.focus;
 Anchor.prototype.blur = document.blur;
 Anchor.prototype.getAttribute = document.getAttribute;
 Anchor.prototype.setAttribute = document.setAttribute;
-
-
+Anchor.prototype.cloneNode = document.cloneNode;
 
 Div.prototype.appendChild = document.appendChild;
 Div.prototype.apch$ = document.apch$;
 Div.prototype.insertBefore = document.insertBefore;
-Div.prototype.firstChild = document.firstChild;
-Div.prototype.lastChild = document.lastChild;
+Object.defineProperty(Div.prototype, "firstChild", {
+get: function() { return this.childNodes[0]; }
+});
+Object.defineProperty(Div.prototype, "lastChild", {
+get: function() { return this.childNodes[this.childNodes.length-1]; }
+});
 Div.prototype.hasChildNodes = document.hasChildNodes;
 Div.prototype.removeChild = document.removeChild;
 Div.prototype.replaceChild = document.replaceChild;
 Div.prototype.getAttribute = document.getAttribute;
 Div.prototype.setAttribute = document.setAttribute;
+Div.prototype.cloneNode = document.cloneNode;
+
 Script.prototype.getAttribute = document.getAttribute;
 Script.prototype.setAttribute = document.setAttribute;
+Script.prototype.cloneNode = document.cloneNode;
+
 P.prototype.appendChild = document.appendChild;
 P.prototype.apch$ = document.apch$;
 P.prototype.getAttribute = document.getAttribute;
 P.prototype.setAttribute = document.setAttribute;
 P.prototype.insertBefore = document.insertBefore;
-P.prototype.firstChild = document.firstChild;
-P.prototype.lastChild = document.lastChild;
+Object.defineProperty(P.prototype, "firstChild", {
+get: function() { return this.childNodes[0]; }
+});
+Object.defineProperty(P.prototype, "lastChild", {
+get: function() { return this.childNodes[this.childNodes.length-1]; }
+});
 P.prototype.hasChildNodes = document.hasChildNodes;
 P.prototype.removeChild = document.removeChild;
 P.prototype.replaceChild = document.replaceChild;
+P.prototype.cloneNode = document.cloneNode;
+
 Lister.prototype.appendChild = document.appendChild;
 Lister.prototype.apch$ = document.apch$;
 Lister.prototype.getAttribute = document.getAttribute;
 Lister.prototype.setAttribute = document.setAttribute;
 Lister.prototype.insertBefore = document.insertBefore;
-Lister.prototype.firstChild = document.firstChild;
-Lister.prototype.lastChild = document.lastChild;
+Object.defineProperty(Lister.prototype, "firstChild", {
+get: function() { return this.childNodes[0]; }
+});
+Object.defineProperty(Lister.prototype, "lastChild", {
+get: function() { return this.childNodes[this.childNodes.length-1]; }
+});
 Lister.prototype.hasChildNodes = document.hasChildNodes;
 Lister.prototype.removeChild = document.removeChild;
 Lister.prototype.replaceChild = document.replaceChild;
+Lister.prototype.cloneNode = document.cloneNode;
+
 Listitem.prototype.appendChild = document.appendChild;
 Listitem.prototype.apch$ = document.apch$;
 Listitem.prototype.getAttribute = document.getAttribute;
 Listitem.prototype.setAttribute = document.setAttribute;
 Listitem.prototype.insertBefore = document.insertBefore;
-Listitem.prototype.firstChild = document.firstChild;
-Listitem.prototype.lastChild = document.lastChild;
+Object.defineProperty(Listitem.prototype, "firstChild", {
+get: function() { return this.childNodes[0]; }
+});
+Object.defineProperty(Listitem.prototype, "lastChild", {
+get: function() { return this.childNodes[this.childNodes.length-1]; }
+});
 Listitem.prototype.hasChildNodes = document.hasChildNodes;
 Listitem.prototype.removeChild = document.removeChild;
 Listitem.prototype.replaceChild = document.replaceChild;
+Listitem.prototype.cloneNode = document.cloneNode;
+
 Table.prototype.appendChild = document.appendChild;
 Table.prototype.apch$ = document.apch$;
 Table.prototype.getAttribute = document.getAttribute;
 Table.prototype.setAttribute = document.setAttribute;
 Table.prototype.insertBefore = document.insertBefore;
-Table.prototype.firstChild = document.firstChild;
-Table.prototype.lastChild = document.lastChild;
+Object.defineProperty(Table.prototype, "firstChild", {
+get: function() { return this.childNodes[0]; }
+});
+Object.defineProperty(Table.prototype, "lastChild", {
+get: function() { return this.childNodes[this.childNodes.length-1]; }
+});
 Table.prototype.hasChildNodes = document.hasChildNodes;
 Table.prototype.removeChild = document.removeChild;
 Table.prototype.replaceChild = document.replaceChild;
+Table.prototype.cloneNode = document.cloneNode;
+
 Tbody.prototype.appendChild = document.appendChild;
 Tbody.prototype.apch$ = document.apch$;
 Tbody.prototype.getAttribute = document.getAttribute;
 Tbody.prototype.setAttribute = document.setAttribute;
 Tbody.prototype.insertBefore = document.insertBefore;
-Tbody.prototype.firstChild = document.firstChild;
-Tbody.prototype.lastChild = document.lastChild;
+Object.defineProperty(Tbody.prototype, "firstChild", {
+get: function() { return this.childNodes[0]; }
+});
+Object.defineProperty(Tbody.prototype, "lastChild", {
+get: function() { return this.childNodes[this.childNodes.length-1]; }
+});
 Tbody.prototype.hasChildNodes = document.hasChildNodes;
 Tbody.prototype.removeChild = document.removeChild;
 Tbody.prototype.replaceChild = document.replaceChild;
+Tbody.prototype.cloneNode = document.cloneNode;
+
 Trow.prototype.appendChild = document.appendChild;
 Trow.prototype.apch$ = document.apch$;
 Trow.prototype.getAttribute = document.getAttribute;
 Trow.prototype.setAttribute = document.setAttribute;
 Trow.prototype.insertBefore = document.insertBefore;
-Trow.prototype.firstChild = document.firstChild;
-Trow.prototype.lastChild = document.lastChild;
+Object.defineProperty(Trow.prototype, "firstChild", {
+get: function() { return this.childNodes[0]; }
+});
+Object.defineProperty(Trow.prototype, "lastChild", {
+get: function() { return this.childNodes[this.childNodes.length-1]; }
+});
 Trow.prototype.hasChildNodes = document.hasChildNodes;
 Trow.prototype.removeChild = document.removeChild;
 Trow.prototype.replaceChild = document.replaceChild;
+Trow.prototype.cloneNode = document.cloneNode;
+
 Cell.prototype.appendChild = document.appendChild;
 Cell.prototype.apch$ = document.apch$;
 Cell.prototype.getAttribute = document.getAttribute;
 Cell.prototype.setAttribute = document.setAttribute;
 Cell.prototype.insertBefore = document.insertBefore;
-Cell.prototype.firstChild = document.firstChild;
-Cell.prototype.lastChild = document.lastChild;
+Object.defineProperty(Cell.prototype, "firstChild", {
+get: function() { return this.childNodes[0]; }
+});
+Object.defineProperty(Cell.prototype, "lastChild", {
+get: function() { return this.childNodes[this.childNodes.length-1]; }
+});
 Cell.prototype.hasChildNodes = document.hasChildNodes;
 Cell.prototype.removeChild = document.removeChild;
 Cell.prototype.replaceChild = document.replaceChild;
+Cell.prototype.cloneNode = document.cloneNode;
+
 Span.prototype.appendChild = document.appendChild;
 Span.prototype.apch$ = document.apch$;
 Span.prototype.getAttribute = document.getAttribute;
 Span.prototype.setAttribute = document.setAttribute;
 Span.prototype.insertBefore = document.insertBefore;
-Span.prototype.firstChild = document.firstChild;
-Span.prototype.lastChild = document.lastChild;
+Object.defineProperty(Span.prototype, "firstChild", {
+get: function() { return this.childNodes[0]; }
+});
+Object.defineProperty(Span.prototype, "lastChild", {
+get: function() { return this.childNodes[this.childNodes.length-1]; }
+});
 Span.prototype.hasChildNodes = document.hasChildNodes;
 Span.prototype.removeChild = document.removeChild;
 Span.prototype.replaceChild = document.replaceChild;
+Span.prototype.cloneNode = document.cloneNode;
+
 
 /* navigator; some parameters are filled in by the buildstartwindow script. */
 navigator.appName = "edbrowse";
