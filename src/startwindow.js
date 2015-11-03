@@ -592,12 +592,22 @@ return import$node (this,deep);
 
 function import$node(nodeToCopy,deep)
 {
-var nodeToReturn = document.createElement(nodeToCopy.nodeName);
+var nodeToReturn;
 var i;
+
+// special case for array, which is the select node.
+if(nodeToCopy instanceof Array) {
+nodeToReturn = new Array;
+for(i = 0; i < nodeToCopy.length; ++i)
+nodeToReturn.push(import$node(nodeToCopy[i]));
+} else {
+
+nodeToReturn = document.createElement(nodeToCopy.nodeName);
 if (deep && nodeToCopy.childNodes) {
 for(i = 0; i < nodeToCopy.childNodes.length; ++i) {
 var current_item = nodeToCopy.childNodes[i];
 nodeToReturn.appendChild(import$node(current_item,true));
+}
 }
 }
 
