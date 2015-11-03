@@ -11,8 +11,8 @@
 
 #include <stdarg.h>
 #if defined(DOSLIKE) && defined(HAVE_PTHREAD_H)
-#include <process.h> // for _execlp()
-#include <pthread.h> // for pthreads...
+#include <process.h>		// for _execlp()
+#include <pthread.h>		// for pthreads...
 #endif /* defined(DOSLIKE) && defined(HAVE_PTHREAD_H) */
 
 /* If connection is lost, mark all js sessions as dead. */
@@ -61,33 +61,33 @@ static struct EJ_MSG head;
 
 #if defined(DOSLIKE) && defined(HAVE_PTHREAD_H)
 static pthread_t tid;
-static void * child_proc(void *vp)
+static void *child_proc(void *vp)
 {
 /* child here, exec the back end js process */
-    size_t len;
+	size_t len;
 // change [d:\foo\bar\]edbrowse[.exe] to [d:\foo\bar\]edbrowse-js[.exe]
-    char drive[_MAX_DRIVE];
-    char dir[_MAX_DIR];
-    char fname[_MAX_FNAME];
-    char ext[_MAX_EXT];
-    char pn[MAX_PATH];
-    // split it up
-    _splitpath(progname,drive,dir,fname,ext);
-    // put it back together
-    pn[0] = 0;
-    strcat(pn,drive);
-    strcat(pn,dir);
-    len = strlen(fname);
-    if (len && (fname[len - 1] == 'd')) {
-        fname[len - 1] = 0;
-        strcat(pn,fname);
-        strcat(pn,"-jsd"); // add to the debug file name
-    } else {
-        strcat(pn,fname);
-        strcat(pn,"-js"); // add to the file name
-    }
+	char drive[_MAX_DRIVE];
+	char dir[_MAX_DIR];
+	char fname[_MAX_FNAME];
+	char ext[_MAX_EXT];
+	char pn[MAX_PATH];
+	// split it up
+	_splitpath(progname, drive, dir, fname, ext);
+	// put it back together
+	pn[0] = 0;
+	strcat(pn, drive);
+	strcat(pn, dir);
+	len = strlen(fname);
+	if (len && (fname[len - 1] == 'd')) {
+		fname[len - 1] = 0;
+		strcat(pn, fname);
+		strcat(pn, "-jsd");	// add to the debug file name
+	} else {
+		strcat(pn, fname);
+		strcat(pn, "-js");	// add to the file name
+	}
 
-    strcat(pn,ext);
+	strcat(pn, ext);
 
 	//close(pipe_in[0]);
 	//close(pipe_out[1]);
@@ -96,21 +96,21 @@ static void * child_proc(void *vp)
 	sprintf(arg3, "%d", jsPool);
 
 	debugPrint(5, "spawning '%s' %s %s %s", pn, arg1, arg2, arg3);
-    len = _spawnl( _P_WAIT, pn, "edbrowse-js", arg1, arg2, arg3, 0 );
+	len = _spawnl(_P_WAIT, pn, "edbrowse-js", arg1, arg2, arg3, 0);
 	//_execlp(pn, "edbrowse-js", arg1, arg2, arg3, 0);
-    // len = 1;
-    if (len) {
-    	debugPrint(5, "spawning FAILED! %d\n", errno);
+	// len = 1;
+	if (len) {
+		debugPrint(5, "spawning FAILED! %d\n", errno);
 /* oops, process did not exec */
 /* write a message from this child, saying js would not exec */
 /* The process just started; head is zero */
-	    head.magic = EJ_MAGIC;
-	    head.highstat = EJ_HIGH_PROC_FAIL;
-	    head.lowstat = EJ_LOW_EXEC;
-	    write(pipe_in[1], &head, sizeof(head));
-	//exit(90);
-    }
-    return (void *)90;
+		head.magic = EJ_MAGIC;
+		head.highstat = EJ_HIGH_PROC_FAIL;
+		head.lowstat = EJ_LOW_EXEC;
+		write(pipe_in[1], &head, sizeof(head));
+		//exit(90);
+	}
+	return (void *)90;
 }
 
 #endif // defined(DOSLIKE) && defined(HAVE_PTHREAD_H)
@@ -125,9 +125,10 @@ static void js_start(void)
 		return;		/* already running */
 
 #if defined(DOSLIKE) && !defined(HAVE_PTHREAD_H)
-	debugPrint(5, "no pthread, so no communication channels for javascript");
+	debugPrint(5,
+		   "no pthread, so no communication channels for javascript");
 	allowJS = false;
-    return;
+	return;
 #endif // defined(DOSLIKE) && !defined(HAVE_PTHREAD_H)
 
 #ifndef DOSLIKE
@@ -150,11 +151,10 @@ static void js_start(void)
 		close(pipe_in[1]);
 		return;
 	}
-
 #if defined(DOSLIKE) && defined(HAVE_PTHREAD_H)
-    /* windows implementation of fork() using pthreads */
-    pid = pthread_create(&tid,NULL,child_proc,0);
-    if (pid) {
+	/* windows implementation of fork() using pthreads */
+	pid = pthread_create(&tid, NULL, child_proc, 0);
+	if (pid) {
 		i_puts(MSG_JSEngineFork);
 		allowJS = false;
 		close(pipe_in[0]);
@@ -162,8 +162,8 @@ static void js_start(void)
 		close(pipe_out[0]);
 		close(pipe_out[1]);
 		return;
-    }
-    js_pid = 1;
+	}
+	js_pid = 1;
 #else // !(defined(DOSLIKE) && defined(HAVE_PTHREAD_H)
 	pid = fork();
 	if (pid < 0) {
@@ -1201,7 +1201,7 @@ struct utsname {
 int uname(struct utsname *pun)
 {
 	memset(pun, 0, sizeof(struct utsname));
-    // TODO: WIN32: maybe fill in sysname, and machine...
+	// TODO: WIN32: maybe fill in sysname, and machine...
 	return 0;
 }
 
@@ -1446,6 +1446,7 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 			t->lic = i2;
 			t->controller = sel;
 			t->jv = oo;
+			t->step = 2;	// already decorated
 			t->textval = get_property_string(oo, "text");
 			t->value = get_property_string(oo, "value");
 			t->checked = get_property_bool(oo, "selected");
