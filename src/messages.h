@@ -489,7 +489,7 @@ enum {
 	MSG_NoEnvVar,
 	MSG_NoTilde,
 	MSG_Submit,
-	MSG_Implicit,
+	MSG_notused392,
 	MSG_Secure,
 	MSG_Bymail,
 	MSG_Reset,

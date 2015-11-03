@@ -448,7 +448,7 @@ struct htmlTag {
 	bool rdonly:1;
 	bool clickable:1;	/* but not an input field */
 	bool secure:1;
-	bool created:1;
+	bool scriptgen:1; // script generated, not from source
 	bool checked:1;
 	bool rchecked:1;	/* for reset */
 	bool post:1;		/* post, rather than get */

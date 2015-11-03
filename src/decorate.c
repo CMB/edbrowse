@@ -96,7 +96,6 @@ static void makeButton(void)
 	t->controller = currentForm;
 	t->itype = INP_SUBMIT;
 	t->value = emptyString;
-	t->created = true;
 	linkinTree(currentForm, t);
 }				/* makeButton */
 
@@ -1505,8 +1504,10 @@ checkattributes:
 		if (t->href && memEqualCI(t->href, "javascript:", 11))
 			t->doorway = true;
 /* And of course the primary doorway */
-		if (action == TAGACT_SCRIPT)
+		if (action == TAGACT_SCRIPT) {
 			t->doorway = true;
+			t->scriptgen = htmlGenerated;
+		}
 
 		intoTree(t);
 	}

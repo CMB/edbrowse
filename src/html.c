@@ -456,7 +456,7 @@ static void prepareScript(struct htmlTag *t)
  * </script>
  * so make a guess towards the first form, knowing we could be off by 1.
  * Just leave it at t->js_ln */
-	if (cw->fileName && !htmlGenerated)
+	if (cw->fileName && !t->scriptgen)
 		js_file = cw->fileName;
 
 	if (t->href) {		/* fetch the javascript page */
@@ -2644,12 +2644,6 @@ nop:
 		} else
 			stringAndChar(&ns, &ns_l, (t->checked ? '+' : '-'));
 		if (currentForm && (itype == INP_SUBMIT || itype == INP_IMAGE)) {
-#if 0
-// Adding in the word implicit causes lots of confusion.
-			if (t->created)
-				stringAndString(&ns, &ns_l,
-						i_getString(MSG_Implicit));
-#endif
 			if (currentForm->secure)
 				stringAndString(&ns, &ns_l,
 						i_getString(MSG_Secure));

@@ -389,7 +389,7 @@ cannot access %s
 $%s is not defined
 ~%s is not defined
 Go
- implicit
+0
  secure
  bymail
 Reset
