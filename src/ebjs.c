@@ -302,6 +302,7 @@ static void processEffects(void)
 	char c;
 	jsobjtype p;
 	int n;
+struct inputChange *ic;
 
 	if (!effects)
 		return;
@@ -344,7 +345,14 @@ static void processEffects(void)
 			*t++ = 0;
 			v[-2] = 0;
 			sscanf(t, "%p", &p);
-			javaSetsTimeout(n, s, p, v[-1] - '0');
+		ic = allocMem(sizeof(struct inputChange) + strlen(s));
+// Yeah I know, this isn't a pointer to htmlTag.
+		ic->t = p;
+		ic->tagno = n;
+		ic->major = 't';
+		ic->minor = v[-1];
+		strcpy(ic->value, s);
+		addToListBack(&inputChangesPending, ic);
 			break;
 
 		case 'c':	/* cookie */

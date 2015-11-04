@@ -1416,8 +1416,7 @@ static JSBool insertBefore(JSContext * cx, unsigned int argc, jsval * vp)
 found:
 /* since the item to insert before was found, the call is going to */
 /* succeed, so put the return value here */
-args.rval().set(args[0]);
-
+	args.rval().set(args[0]);
 
 /* push the other elements down */
 	for (i = length; i > mark; --i) {
@@ -1880,12 +1879,29 @@ static JSBool win_intv(JSContext * cx, unsigned int argc, jsval * vp)
 	return JS_TRUE;
 }				/* win_intv */
 
+/* Clear a timer or an interval */
+static JSBool clearTimeout(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	args.rval().set(JSVAL_VOID);
+	if (argc == 0 || !args[0].isObject())
+		return JS_TRUE;
+	JS::RootedObject obj(jcx, JSVAL_TO_OBJECT(args[0]));
+	char nstring[80];
+	sprintf(nstring, "t{0|-|%s|0", pointer2string(obj));	// }
+	effectString(nstring);
+	endeffect();
+	return JS_TRUE;
+}				/* clearTimeout */
+
 static JSFunctionSpec window_methods[] = {
 	JS_FS("alert", win_alert, 1, 0),
 	JS_FS("prompt", win_prompt, 2, 0),
 	JS_FS("confirm", win_confirm, 1, 0),
 	JS_FS("setTimeout", win_sto, 2, 0),
 	JS_FS("setInterval", win_intv, 2, 0),
+	JS_FS("clearTimeout", clearTimeout, 1, 0),
+	JS_FS("clearInterval", clearTimeout, 1, 0),
 	JS_FS("close", win_close, 0, 0),
 	JS_FS("focus", nullFunction, 0, 0),
 	JS_FS("blur", nullFunction, 0, 0),

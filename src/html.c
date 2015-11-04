@@ -7,6 +7,8 @@
 
 static void runOnload(void);
 static void runScriptsPending(void);
+static void javaSetsTimeout(int n, const char *jsrc, jsobjtype to,
+			    bool isInterval);
 
 #define handlerPresent(obj, name) (has_property(obj, name) == EJ_PROP_FUNCTION)
 
@@ -659,6 +661,13 @@ top:
 			continue;
 		ic->major = 'x';
 		javaSetsLinkage(true, ic->minor, ic->t, ic->value);
+	}
+
+	foreach(ic, inputChangesPending) {
+		if (ic->major != 't')
+			continue;
+		ic->major = 'x';
+		javaSetsTimeout(ic->tagno, ic->value, ic->t, ic->minor - '0');
 	}
 
 	freeList(&inputChangesPending);
@@ -2084,12 +2093,26 @@ static void currentTime(void)
 	now_ms = tv.tv_usec / 1000;
 }				/* currentTime */
 
-void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
+static void javaSetsTimeout(int n, const char *jsrc, jsobjtype to,
+			    bool isInterval)
 {
 	struct jsTimer *jt;
 
 	if (jsrc[0] == 0)
 		return;		/* nothing to run */
+
+	if (stringEqual(jsrc, "-")) {
+// delete a timer
+		foreach(jt, timerList) {
+			if (jt->timerObject == to) {
+				delFromList(jt);
+				debugPrint(4, "timer delete");
+				return;
+			}
+		}
+// not found, just return.
+		return;
+	}
 
 	jt = allocMem(sizeof(struct jsTimer));
 	jt->jsrc = cloneString(jsrc);

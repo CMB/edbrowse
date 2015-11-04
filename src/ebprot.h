@@ -127,7 +127,6 @@ bool handlerGoBrowse(const struct htmlTag *t, const char *name) ;
 void runningError(int msg, ...) ;
 void rerender(bool notify);
 void delTags(int startRange, int endRange);
-void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval) ;
 bool timerWait(int *delay_sec, int *delay_ms);
 void delTimers(struct ebWindow *w);
 void runTimers(void);
