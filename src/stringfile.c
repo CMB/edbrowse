@@ -149,7 +149,7 @@ void stripWhite(char *s)
 	skipWhite(&t);
 	if (t > s)
 		strmove(s, t);
-trimWhite(s);
+	trimWhite(s);
 }				/* stripWhite */
 
 /* compress white space */
@@ -1478,7 +1478,8 @@ bool envFile(const char *line, const char **expanded)
 		return false;
 
 #ifdef DOSLIKE
-	return false;		// TODO: WIN32: Expand like glob...
+	*expanded = varline;
+	return true;		// TODO: WIN32: Expand like glob...
 #else // !#ifdef DOSLIKE
 
 /* expanded the environment variables, if any, now time to glob */
