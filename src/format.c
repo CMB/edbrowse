@@ -637,12 +637,23 @@ static void appendPrintableChunk(const char *chunk, int len, bool premode)
  * with the html reformatting, which really has to be here. */
 
 char *breakLineResult;
-#define REFORMAT_EXTRA 4000
+#define REFORMAT_EXTRA 400
+
+/* Count the formfeeds in a string. Each of these expands to \n\n,
+ * making the string longer. */
+static int formfeedCount(const char *buf, int len)
+{
+	int i, ff = 0;
+	for (i = 0; i < len; ++i)
+		if (buf[i] == '\f')
+			++ff;
+	return ff;
+}				/* formfeedCount */
 
 bool breakLine(const char *line, int len, int *newlen)
 {
 	char c, state, newstate;
-	int i, last;
+	int i, last, extra;
 
 	pre_cr = 0;
 	if (len && line[len - 1] == '\r')
@@ -661,9 +672,10 @@ bool breakLine(const char *line, int len, int *newlen)
 		lspace = 3;
 
 	nzFree(breakLineResult);
-	breakLineResult = allocMem(len + REFORMAT_EXTRA);
+	extra = REFORMAT_EXTRA + formfeedCount(line, len);
+	breakLineResult = allocMem(len + extra);
 	bl_start = bl_cursor = breakLineResult;
-	bl_end = breakLineResult + len + REFORMAT_EXTRA - 8;
+	bl_end = breakLineResult + len + extra - 8;
 	bl_overflow = false;
 
 	colno = 1;
@@ -726,7 +738,7 @@ char *htmlReformat(char *buf)
 	bool premode = false;
 	bool pretag, slash;
 	char *new;
-	int l, tagno;
+	int l, tagno, extra;
 
 	cellDelimiters(buf);
 
@@ -739,12 +751,16 @@ char *htmlReformat(char *buf)
 
 	l = strlen(buf);
 /* Only a pathological web page gets longer after reformatting.
- * Even then it isn't by much. This is a bit of a kludge.
+ * Those with paragraphs and nothing else to compress or remove.
+ * Thus I allocate for the formfeeds, which correspond to paragraphs,
+ * and are replaced with \n\n.
+ * Plus some extra bytes for slop.
  * If you still overflow, even beyond the EXTRA,
  * it won't seg fault, you'll just lose some text. */
-	new = allocMem(l + REFORMAT_EXTRA);
+	extra = REFORMAT_EXTRA + formfeedCount(buf, l);
+	new = allocMem(l + extra);
 	bl_start = bl_cursor = new;
-	bl_end = new + l + REFORMAT_EXTRA - 20;
+	bl_end = new + l + extra - 20;
 	bl_overflow = false;
 
 	for (h = buf; (c = *h); h = nh) {
