@@ -115,7 +115,6 @@ void html2nodes(const char *htmltext, bool startpage)
 	char *htmlfix = 0;
 
 	tdoc = tidyCreate();
-	tidyOptSetBool(tdoc, TidySkipQuotes, yes);
 	if (!startpage)
 		tidyOptSetInt(tdoc, TidyBodyOnly, yes);
 	tidySetReportFilter(tdoc, tidyErrorHandler);
