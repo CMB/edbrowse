@@ -44,6 +44,8 @@ if ( -f $infile ) {
     $total = 0;
     foreach $line (@lines) {
         chomp $line;
+#  in case \r is not removed on windows
+$line =~ s/\r*$//;
         $line =~ s/\\/\\\\/g;
         $line =~ s/"/\\"/g;
         $len = length($line) + 4;

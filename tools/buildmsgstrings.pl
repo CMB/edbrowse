@@ -42,6 +42,8 @@ my $line;
     print OUTF "const char *$stringname" . "[] = {\n";
     foreach $line (@lines) {
 chomp $line;
+#  in case \r is not removed on windows
+$line =~ s/\r*$//;
 if($line =~ /^[0,\s]*$/) {
 print OUTF "\t0,\n";
 } else {
