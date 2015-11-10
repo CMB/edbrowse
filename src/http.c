@@ -8,7 +8,7 @@
 #ifdef _MSC_VER
 #include <fcntl.h>
 #else
-#include <wait.h>
+#include <sys/wait.h>
 #endif
 #include <time.h>
 
