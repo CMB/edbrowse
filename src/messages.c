@@ -279,7 +279,7 @@ The i_ prefix means international.
 
 void i_puts(int msg)
 {
-	puts(i_getString(msg));
+	eb_puts(i_getString(msg));
 }				/* i_puts */
 
 void i_printf(int msg, ...)
@@ -346,7 +346,7 @@ void setError(int msg, ...)
 void showError(void)
 {
 	if (errorMsg[0])
-		puts(errorMsg);
+		eb_puts(errorMsg);
 	else
 		i_puts(MSG_NoErrors);
 }				/* showError */
@@ -356,7 +356,7 @@ void showErrorConditional(char cmd)
 	if (helpMessagesOn || strchr(showerror_cmd, cmd))
 		showError();
 	else
-		puts("?");
+		eb_puts("?");
 }				/* showErrorConditional */
 
 void showErrorAbort(void)
@@ -469,3 +469,32 @@ void i_caseShift(unsigned char *s, char action)
 }				/* caseShift */
 
 #endif
+
+void eb_puts(const char *s)
+{
+#ifdef DOSLIKE
+	wchar_t *chars = NULL;
+	DWORD written, mode;
+	HANDLE output_handle;
+	int needed;
+	output_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (GetConsoleMode(output_handle, &mode) == 0) {
+		puts(s);
+		return;
+	}
+	needed = MultiByteToWideChar(CP_UTF8, 0, s, -1, NULL, 0);
+	if (needed == 0) {
+		return;
+	}
+	//Add space for the newline
+	chars = (wchar_t *) allocMem(sizeof(wchar_t) * (needed + 2));
+	MultiByteToWideChar(CP_UTF8, 0, s, -1, chars, needed);
+	chars[needed - 1] = L'\r';
+	chars[needed] = L'\n';
+	chars[needed + 1] = L'\0';
+	WriteConsoleW(output_handle, (void *)chars, needed + 1, &written, NULL);
+	free(chars);
+#else
+	puts(s);
+#endif
+}				/* eb_puts */

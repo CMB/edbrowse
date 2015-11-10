@@ -217,6 +217,7 @@ void showErrorAbort(void) ;
 void i_caseShift(unsigned char *s, char action) ;
 #endif
 void eeCheck(void) ;
+void eb_puts(const char *s);
 
 /* sourcefile=stringfile.c */
 void *allocMem(size_t n) ;
