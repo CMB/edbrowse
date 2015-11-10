@@ -29,18 +29,22 @@ void showForeign(void)
 
 bool showTables(void)
 {
+	return false;
 }				/* showTables */
 
 bool sqlDelRows(int start, int end)
 {
+	return false;
 }				/* sqlDelRows */
 
 bool sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 {
+	return false;
 }				/* sqlUpdateRow */
 
 bool sqlAddRows(int ln)
 {
+	return false;
 }				/* sqlAddRows */
 
 bool ebConnect(void)
