@@ -151,9 +151,13 @@ static void js_start(void)
 		close(pipe_in[1]);
 		return;
 	}
-#if defined(DOSLIKE) && defined(HAVE_PTHREAD_H)
+#if defined(DOSLIKE)
+#if defined(HAVE_PTHREAD_H)
 	/* windows implementation of fork() using pthreads */
 	pid = pthread_create(&tid, NULL, child_proc, 0);
+#else // !HAVE_PTHREAD_h
+    pid = 1;
+#endif // HAVE_PTHREAD_H y/n
 	if (pid) {
 		i_puts(MSG_JSEngineFork);
 		allowJS = false;
