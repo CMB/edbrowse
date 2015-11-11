@@ -1318,6 +1318,11 @@ static bool readDirectory(const char *filename)
 		char c, ftype;
 		pst t = mptr->text;
 		char *abspath = makeAbsPath((char *)t);
+
+// make sure this gets done.
+		if (backpiece)
+			backpiece[j + 1].text = emptyString;
+
 		while (*t) {
 			if (*t == '\n')
 				*t = '\t';
@@ -1364,8 +1369,6 @@ static bool readDirectory(const char *filename)
 /* extra stat entries on the line */
 		if (!lsformat[0])
 			continue;
-		if (backpiece)
-			backpiece[j + 1].text = emptyString;
 		v = lsattr(abspath, lsformat);
 		if (!v || !*v)
 			continue;
