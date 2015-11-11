@@ -5,7 +5,7 @@
 
 #include "eb.h"
 
-#ifndef DOSLIKE		// no #include <sys/select.h>
+#ifndef DOSLIKE			// no #include <sys/select.h>
 #include <sys/select.h>
 #endif // !DOSLIKE
 
@@ -231,11 +231,16 @@ void displayLine(int n)
 	pst s = line;
 	int cnt = 0;
 	uchar c;
+	int output_l = 0;
+	char *output = initString(&output_l);
+	char buf[10];
 
-	if (cmd == 'n')
-		printf("%d ", n);
+	if (cmd == 'n') {
+		stringAndNum(&output, &output_l, n);
+		stringAndChar(&output, &output_l, ' ');
+	}
 	if (endMarks == 2 || endMarks && cmd == 'l')
-		printf("^");
+		stringAndChar(&output, &output_l, '^');
 
 	while ((c = *s++) != '\n') {
 		bool expand = false;
@@ -250,29 +255,33 @@ void displayLine(int n)
 			if (c < ' ' || c == 0x7f || c >= 0x80 && listNA)
 				expand = true;
 		}		/* list */
-		if (expand)
-			printf("~%02X", c), cnt += 3;
-		else
-			printf("%c", c), ++cnt;
+		if (expand) {
+			sprintf(buf, "~%02X", c), cnt += 3;
+			stringAndString(&output, &output_l, buf);
+		} else
+			stringAndChar(&output, &output_l, c), ++cnt;
 		if (cnt >= displayLength)
 			break;
 	}			/* loop over line */
 
 	if (cnt >= displayLength)
-		printf("...");
+		stringAndString(&output, &output_l, "...");
 	if (cw->dirMode) {
-		printf("%s", dirSuffix(n));
+		stringAndString(&output, &output_l, dirSuffix(n));
 		if (cw->r_map) {
 			s = cw->r_map[n].text;
-			if (*s)
-				printf(" %s", s);
+			if (*s) {
+				stringAndChar(&output, &output_l, ' ');
+				stringAndString(&output, &output_l, s);
+			}
 		}
 	}
 	if (endMarks == 2 || endMarks && cmd == 'l')
-		printf("$");
-	nl();
+		stringAndChar(&output, &output_l, '$');
+	eb_puts(output);
 
 	free(line);
+	nzFree(output);
 }				/* displayLine */
 
 static void printDot(void)
@@ -304,31 +313,31 @@ void initializeReadline(void)
 #ifdef DOSLIKE
 /* unix can use the select function on a file descriptor, like stdin
    this function provides a work around for windows */
-int select_stdin( struct timeval *ptv )
+int select_stdin(struct timeval *ptv)
 {
-    int ms_delay   = 55;
-    int delay_secs = ptv->tv_sec;
-    int delay_ms   = ptv->tv_usec / 1000;
-    int res = _kbhit();
-    while (!res && (delay_secs || delay_ms)) {
-        if (!delay_secs && (delay_ms < ms_delay))
-            ms_delay = delay_ms;    // reduce this last sleep
-        Sleep(ms_delay);
-        if (delay_ms >= ms_delay)
-            delay_ms -= ms_delay;
-        else {
-            if (delay_secs) {
-                delay_ms += 1000;
-                delay_secs--;
-            }
-            if (delay_ms >= ms_delay)
-                delay_ms -= ms_delay;
-            else
-                delay_ms = 0;
-        }
-        res = _kbhit();
-    }
-    return res;
+	int ms_delay = 55;
+	int delay_secs = ptv->tv_sec;
+	int delay_ms = ptv->tv_usec / 1000;
+	int res = _kbhit();
+	while (!res && (delay_secs || delay_ms)) {
+		if (!delay_secs && (delay_ms < ms_delay))
+			ms_delay = delay_ms;	// reduce this last sleep
+		Sleep(ms_delay);
+		if (delay_ms >= ms_delay)
+			delay_ms -= ms_delay;
+		else {
+			if (delay_secs) {
+				delay_ms += 1000;
+				delay_secs--;
+			}
+			if (delay_ms >= ms_delay)
+				delay_ms -= ms_delay;
+			else
+				delay_ms = 0;
+		}
+		res = _kbhit();
+	}
+	return res;
 }
 #endif // DOSLIKE
 
