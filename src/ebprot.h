@@ -218,6 +218,7 @@ void i_caseShift(unsigned char *s, char action) ;
 #endif
 void eeCheck(void) ;
 void eb_puts(const char *s);
+void eb_vprintf (const char *fmt, va_list args) ;
 
 /* sourcefile=stringfile.c */
 void *allocMem(size_t n) ;

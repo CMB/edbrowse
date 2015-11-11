@@ -287,7 +287,7 @@ void i_printf(int msg, ...)
 	const char *realmsg = i_getString(msg);
 	va_list p;
 	va_start(p, msg);
-	vprintf(realmsg, p);
+	eb_vprintf(realmsg, p);
 	va_end(p);
 }				/* i_printf */
 
@@ -297,8 +297,8 @@ void i_printfExit(int msg, ...)
 	const char *realmsg = i_getString(msg);
 	va_list p;
 	va_start(p, msg);
-	vfprintf(stderr, realmsg, p);
-	fprintf(stderr, "\n");
+	eb_vprintf(realmsg, p);
+	nl();
 	va_end(p);
 	ebClose(99);
 }				/* i_printfExit */
@@ -361,7 +361,8 @@ void showErrorConditional(char cmd)
 
 void showErrorAbort(void)
 {
-	errorPrint("1%s", errorMsg);
+	showError();
+	ebClose(99);
 }				/* showErrorAbort */
 
 /* error exit check function */
@@ -498,3 +499,33 @@ void eb_puts(const char *s)
 	puts(s);
 #endif
 }				/* eb_puts */
+
+void eb_vprintf(const char *fmt, va_list args)
+{
+#ifdef DOSLIKE
+	wchar_t *chars = NULL;
+	DWORD written, mode;
+	HANDLE output_handle;
+	int needed;
+	char *a;		// result of vasprintf
+	output_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (GetConsoleMode(output_handle, &mode) == 0) {
+		vprintf(fmt, args);
+		return;
+	}
+	if (vasprintf(&a, fmt, args) < 0)
+		return;
+	needed = MultiByteToWideChar(CP_UTF8, 0, a, -1, NULL, 0);
+	if (needed == 0) {
+		free(a);
+		return;
+	}
+	chars = (wchar_t *) allocMem(sizeof(wchar_t) * needed);
+	MultiByteToWideChar(CP_UTF8, 0, a, -1, chars, needed);
+	WriteConsoleW(output_handle, (void *)chars, needed - 1, &written, NULL);
+	free(chars);
+	free(a);
+#else
+	vprintf(fmt, args);
+#endif
+}				/* eb_printf */
