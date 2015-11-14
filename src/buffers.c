@@ -985,7 +985,7 @@ static bool inputLinesIntoBuffer(void)
 	cap = 128;
 	np = t = allocZeroMem(cap * LMSIZE);
 
-	if (linePending[0])
+	if (linePending)
 		line = linePending;
 	else
 		line = inputLine();
@@ -1001,6 +1001,9 @@ static bool inputLinesIntoBuffer(void)
 		++t, ++linecount;
 		line = inputLine();
 	}
+
+	nzFree(linePending);
+	linePending = 0;
 
 	if (!linecount) {	/* no lines entered */
 		free(np);
@@ -4309,10 +4312,14 @@ bool runCommand(const char *line)
 	if (cmd == 'a') {
 		if (stringEqual(line, "+"))
 			++line, first = 0;
-		else
-			linePending[0] = 0;
-	} else
-		linePending[0] = 0;
+		else {
+			nzFree(linePending);
+			linePending = 0;
+		}
+	} else {
+		nzFree(linePending);
+		linePending = 0;
+	}
 
 	if (first && strchr(nofollow_cmd, cmd)) {
 		setError(MSG_TextAfter, icmd);

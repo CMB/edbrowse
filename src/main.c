@@ -38,7 +38,7 @@ bool allowRedirection = true, allowJS = true, sendReferrer = true;
 bool binaryDetect = true, pluginsOn = true;
 bool inputReadLine;
 int context = 1;
-uchar linePending[MAXTTYLINE];
+pst linePending;
 char *changeFileName, *mailDir;
 char *mailUnread, *mailStash, *mailReply;
 char *addressFile;
@@ -1363,14 +1363,16 @@ int main(int argc, char **argv)
 		cxSwitch(1, false);
 
 	while (true) {
-		uchar saveline[MAXTTYLINE];
 		pst p = inputLine();
-		copyPstring(saveline, p);
-		if (perl2c((char *)p))
+		pst save_p = clonePstring(p);
+		if (perl2c((char *)p)) {
 			i_puts(MSG_EnterNull);
-		else
+			nzFree(save_p);
+		} else {
 			edbrowseCommand((char *)p, false);
-		copyPstring(linePending, saveline);
+			nzFree(linePending);
+			linePending = save_p;
+		}
 	}			/* infinite loop */
 }				/* main */
 

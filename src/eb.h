@@ -265,7 +265,7 @@ extern bool helpMessagesOn;	/* no need to type h */
 extern bool pluginsOn;		/* plugins are active */
 extern bool showHiddenFiles;	/* during directory scan */
 extern int context;		/* which session (buffer) are we in? */
-extern uchar linePending[];
+extern pst linePending;
 extern char *changeFileName;
 extern char *addressFile;	/* your address book */
 extern char *serverData;
