@@ -12,6 +12,7 @@
 /* If this include file is missing, you need the pcre package,
  * and the pcre-devel package. */
 #include <pcre.h>
+static bool pcre_utf8_error_stop = false;
 
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -2358,7 +2359,9 @@ static bool getRangePart(const char *line, int *lineno, const char **split)
 				      pstLength((pst) subject) - 1, 0, 0,
 				      re_vector, 33);
 			free(subject);
-			if (re_count < -1) {
+// An error in evaluation is treated like text not found.
+// This usually happens because this particular line has bad binary, not utf8.
+			if (re_count < -1 && pcre_utf8_error_stop) {
 				pcre_free(re_cc);
 				setError(MSG_RexpError2, ln);
 				return (globSub = false);
@@ -2444,7 +2447,7 @@ static bool doGlobal(const char *line)
 		    pcre_exec(re_cc, 0, subject, pstLength((pst) subject) - 1,
 			      0, 0, re_vector, 33);
 		free(subject);
-		if (re_count < -1) {
+		if (re_count < -1 && pcre_utf8_error_stop) {
 			pcre_free(re_cc);
 			setError(MSG_RexpError2, i);
 			return false;
@@ -2555,7 +2558,8 @@ replaceText(const char *line, int len, const char *rhs,
 /* find the next match */
 		re_count =
 		    pcre_exec(re_cc, 0, line, len, offset, 0, re_vector, 33);
-		if (re_count < -1) {
+		if (re_count < -1 &&
+		    (pcre_utf8_error_stop || startRange == endRange)) {
 			setError(MSG_RexpError2, ln);
 			nzFree(r);
 			return -1;

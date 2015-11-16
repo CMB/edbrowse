@@ -146,7 +146,7 @@ no closing ]
 no closing )
 empty buffer
 error in regular expression, %s
-unexpected error while evaluating the regular expression at line %d
+unexpected error while evaluating the regular expression at line %d, probably improper utf8
 search string not found
 line number too large
 negative line number
