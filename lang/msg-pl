@@ -103,7 +103,7 @@ nie można zapisać pliku %s\n
 poczta zapisana, %d bajtów
  dopisano
 to koniec tej strony, użyj klawisza 'wstecz' lub wyjdź
-nie można utworzyć tymczasowego katalogu /tmp/.edbrowse
+nie można utworzyć tymczasowego katalogu %s
 brak błędów
 autoryzacja proxy dla URLa nie będącego proxy
 sesja %d jest nieaktywna

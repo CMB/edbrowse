@@ -17,6 +17,13 @@ static bool pcre_utf8_error_stop = false;
 #include <readline/readline.h>
 #include <readline/history.h>
 
+// rename() in linux is all inclusive, moving either files or directories.
+// The comparable function in windows is MoveFile.
+#ifdef DOSLIKE
+#define rename(a, b) MoveFile(a, b)
+#endif
+
+// Truncate the display of a really long line.
 int displayLength = 500;
 
 /* Static variables for this file. */

@@ -103,7 +103,7 @@ cannot write to file %s\n
 mail saved, %d bytes
  appended
 This page is finished, please use your back key or quit.
-cannot create temporary directory /tmp/.edbrowse
+cannot create temporary directory %s
 no errors
 proxy authentication for a non-proxy url
 session %d is not active

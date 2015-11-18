@@ -103,7 +103,7 @@ sauvegarde du fichier %s impossible\n
 courrier sauvegardé, %d octets
  ajouté
 page terminée, utilisez la touche retour arrière ou quittez
-impossible de créer le répertoire temporaire /tmp/.edbrowse
+impossible de créer le répertoire temporaire %s
 pas d'erreurs
 authentification proxy pour une url non-proxy
 session %d non active

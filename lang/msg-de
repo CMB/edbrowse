@@ -103,7 +103,7 @@ kann Datei %s nicht schreiben
 Email gespeichert, %d Bytes
  angehängt
 Diese Seite ist fertig. Nutzen Sie die Zurücktaste oder verlassen sie diese Seite.
-kann temporäres Verzeichnis /tmp/.edbrowse nicht anlegen
+kann temporäres Verzeichnis %s nicht anlegen
 keine Fehler
 Proxy-Anmeldung für eine URL ohne Proxy
 Sitzung %d ist nicht aktiv

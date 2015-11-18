@@ -14,27 +14,53 @@ Run audio players, pdf converters, etc, based on suffix or content-type.
  * Since an external program may act upon this file, a certain suffix
  * may be required.
  * Fails if /tmp/.edbrowse does not exist or cannot be created. */
-static const char tempbase[] = "/tmp/.edbrowse";
-static char tempin[60], tempout[60];
+static const char *tempbase;
+static char *tempin, *tempout;
 static char *suffixin;		/* suffix of input file */
 static char *suffixout;		/* suffix of output file */
+
 static bool makeTempFilename(const char *suffix, int idx, bool output)
 {
+	char *filename;
+
+	if (!tempbase) {
+/* has not yet been set */
+#ifdef DOSLIKE
+		tempbase = getenv("TEMP");
+		if (!tempbase) {
+			setError(MSG_NoEnvVar, "TEMP");
+			return false;
+		}
+#else
+		tempbase = "/tmp/.edbrowse";
+#endif
+	}
+
 	if (fileTypeByName(tempbase, false) != 'd') {
 /* no such directory, try to make it */
 /* this temp edbrowse directory is used by everyone system wide */
 		if (mkdir(tempbase, 0777)) {
-			setError(MSG_TempDir);
+			setError(MSG_TempDir, tempbase);
 			return false;
 		}
-/* yes, we called mkdir with 777 above, but this gets us past umask */
+/* yes, we called mkdir with 777 above, but this call gets us past umask */
 		chmod(tempbase, 0777);
 	}
 
-	sprintf((output ? tempout : tempin), "%s/pf%d-%d.%s",
-		tempbase, getpid(), idx, suffix);
-	if (!output)
+	if (asprintf(&filename, "%s/pf%d-%d.%s",
+		     tempbase, getpid(), idx, suffix) < 0)
+		i_printfExit(MSG_MemAllocError, strlen(tempbase) + 24);
+
+	if (output) {
+// free the last one, don't need it any more.
+		nzFree(tempout);
+		tempout = filename;
+	} else {
+		nzFree(tempin);
+		tempin = filename;
 		suffixin = tempin + strlen(tempin) - strlen(suffix);
+	}
+
 	return true;
 }				/* makeTempFilename */
 
@@ -259,7 +285,7 @@ int playBuffer(const char *line, const char *playfile)
 		mt = findMimeBySuffix(suffix);
 		if (!mt || mt->outtype | mt->stream) {
 			setError(MSG_SuffixBad, suffix);
-			return false;
+			return 0;
 		}
 		cmd = pluginCommand(mt, playfile, 0, suffix);
 		if (!cmd)
@@ -319,7 +345,8 @@ int playBuffer(const char *line, const char *playfile)
 	}
 
 	++tempIndex;
-	makeTempFilename(suffix, tempIndex, false);
+	if (!makeTempFilename(suffix, tempIndex, false))
+		return 0;
 	infile = tempin;
 	if (!isURL(cw->fileName) && !access(cw->fileName, 4) && !cw->changeMode)
 		infile = cw->fileName;
@@ -379,7 +406,8 @@ bool playServerData(void)
 	}
 
 	++tempIndex;
-	makeTempFilename(suffix, tempIndex, false);
+	if (!makeTempFilename(suffix, tempIndex, false))
+		return false;
 	cmd = pluginCommand(cw->mt, tempin, 0, suffix);
 	if (!cmd)
 		return false;
@@ -405,6 +433,7 @@ bool playServerData(void)
 }				/* playServerData */
 
 /* return the name of the output file, or 0 upon failure */
+/* Return "|" if output is in memory and not in a temp file. */
 char *runPluginConverter(const char *buf, int buflen)
 {
 	const struct MIMETYPE *mt = cw->mt;
@@ -429,10 +458,12 @@ char *runPluginConverter(const char *buf, int buflen)
 	}
 
 	++tempIndex;
-	makeTempFilename(suffix, tempIndex, false);
+	if (!makeTempFilename(suffix, tempIndex, false))
+		return 0;
 	suffixout = (cw->mt->outtype == 'h' ? "html" : "txt");
 	++tempIndex;
-	makeTempFilename(suffixout, tempIndex, true);
+	if (!makeTempFilename(suffixout, tempIndex, true))
+		return 0;
 	infile = tempin;
 	if (!isURL(cw->fileName) && !access(cw->fileName, 4) && !cw->changeMode)
 		infile = cw->fileName;

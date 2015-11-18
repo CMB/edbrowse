@@ -103,7 +103,7 @@ impossível escrever no arquivo %s\n
 carta salva; %d bytes
  adicionado
 página terminou; por favor use a tecla de retorno ou saia
-não consegui criar o diretório temporário /tmp/.edbrowse
+não consegui criar o diretório temporário %s
 sem erros
 autenticação proxy para URL não proxy
 sessão %d não ativa
