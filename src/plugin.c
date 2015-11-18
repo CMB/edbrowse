@@ -26,11 +26,18 @@ static bool makeTempFilename(const char *suffix, int idx, bool output)
 	if (!tempbase) {
 /* has not yet been set */
 #ifdef DOSLIKE
+		int l;
+		char *a;
 		tempbase = getenv("TEMP");
 		if (!tempbase) {
 			setError(MSG_NoEnvVar, "TEMP");
 			return false;
 		}
+// put /edbrowse on the end
+		l = strlen(tempbase);
+		a = allocMem(l + 10);
+		sprintf(a, "%s/edbrowse", tempbase);
+		tempbase = a;
 #else
 		tempbase = "/tmp/.edbrowse";
 #endif
@@ -44,6 +51,7 @@ static bool makeTempFilename(const char *suffix, int idx, bool output)
 			return false;
 		}
 /* yes, we called mkdir with 777 above, but this call gets us past umask */
+/* What does this do in Windows? */
 		chmod(tempbase, 0777);
 	}
 
