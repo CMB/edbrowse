@@ -467,7 +467,7 @@ addchar:
 			jSideEffects();
 		} else {
 			char *result =
-			    jsRunScriptResult(cw->winobj, s, "jex", 1);
+			    jsRunScriptResult(cw->winobj, s, "jdb", 1);
 			if (result)
 				puts(result);
 			nzFree(result);
@@ -3404,7 +3404,7 @@ pwd:
 		return showTables();
 	}
 
-	if (stringEqual(line, "jex")) {
+	if (stringEqual(line, "jdb")) {
 		char *cxbuf;
 		int cxbuflen;
 		cmd = 'e';

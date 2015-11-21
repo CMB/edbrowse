@@ -977,7 +977,7 @@ console.warn = console.log;
 console.error = console.log;
 
 /* An ok, object keys, function, for javascrtip/dom debugging. */
-/* This is in concert with the jex command in edbrowse. */
+/* This is in concert with the jdb command in edbrowse. */
 ok = Object.keys = Object.keys || (function () { 
 		var hasOwnProperty = Object.prototype.hasOwnProperty, 
 		hasDontEnumBug = !{toString:null}.propertyIsEnumerable("toString"),
