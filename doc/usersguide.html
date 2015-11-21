@@ -404,261 +404,195 @@ This is a quick reference guide.&nbsp;
 Most of these commands will not make sense until you read the rest of the documentation.
 
 <P>
-q: quit the current session
-<br>
-bw: this buffer is henceforth considered "written", you can quit at any time
-<br>
-qt: quit the program completely, whether you've written your files or not
-<br>
-!command: shell escape
-<br>
-p: print the current line
-<br>
-4,7p: print lines 4 through 7
-<br>
-+3p: advance 3 lines and print
-<br>
-+3: same as +3p, print is default command
-<br>
--: previous line
-<br>
----: back up three lines
-<br>
-'a,'bp: print a range of lines marked with labels a and b
-<br>
-kb: mark the current line as b
-<br>
-l: list the current line, showing invisible chars and end markers
-<br>
-eo: end markers off
-<br>
-el: show end markers ^$ when a line is listed
-<br>
-ep: show end markers when a line is listed or printed
-<br>
-lna: expand all nonascii chars into hex when a line is listed (toggle)
-<br>
-n: print the current line with its line number
-<br>
-z22: print the next 22 lines
-<br>
-z: print another 22 lines
-<br>
-=: print the number of lines in the file
-<br>
-X: make this the current line (a no-op)
-<br>
-s/x/y/: replace x with y on the current line
-<br>
-s/x/y: replace x with y and print the result
-<br>
-s//y/: use the last substitution string, in this case x
-<br>
-s/x/%/: use the last replacement string
-<br>
-s: repeat the previous substitute command
-<br>
-s/x/y/2: replace the second instance of x with y on the current line
-<br>
-4,7s/x/y/g: replace all instances of x with y on lines 4 through 7
-<br>
-/x/: look for the line containing x
-<br>
-/x: same as /x/
-<br>
-/x/i: look for the line containing x or X
-<br>
-?x?: look backwards for x
-<br>
-ci: searches and substitutions are case insensitive
-<br>
-cs: searches and substitutions are case sensitive
-<br>
-sg: substitution strings are global across sessions
-<br>
-sl: substitution strings are local to their sessions
-<br>
-su8: search and substitute uses utf8 character sequences (toggle)
-<br>
-lc: convert line to lower case
-<br>
-mc: convert line to mixed case
-<br>
-uc: convert line to upper case
-<br>
-s/x/uc: convert x to X on the current line
-<br>
-h: help, explain the last question mark
-<br>
-f: print the name of the current file
-<br>
-f foo: set the file name to foo
-<br>
-f/: retain only the lass component of the filename
-<br>
-e: print the number of the current session
-<br>
-e3: move to session 3
-<br>
-e foo: edit the file named foo
-<br>
-r foo: read the contents of foo into the current buffer
-<br>
-w foo: write the current buffer to foo
-<br>
-w+ foo: append to foo
-<br>
-w/: write to the lass component of the filename
-<br>
-d: delete the current line
-<br>
-1,$d: delete all the lines, 1 through eof
-<br>
-D: delete the current line and print the next line
-<br>
-dr: directory is readonly
-<br>
-dw: directory is writable, and d moves files to your trash bin
-<br>
-dx: directory is writable, and d deletes files
-<br>
-hf: show hidden files in directory listing (toggle)
-<br>
-lsl: list length of the file on the current line, in directory mode only
-<br>
-lss: list the approximate size of the file, in kilobytes, megabytes, etc
-<br>
-lst: list the mod time of the file
-<br>
-lsp: list owner group permissions
-<br>
-lsi: list the inode
-<br>
-lsk: list the number of hard links
-<br>
-lsm: list major and minor number
-<br>
-lsy: list path for a symbolic link
-<br>
-ls: same as lsst
-<br>
-ls=lt: display length and time of all files in subsequent directory scans
-<br>
-ls=: just list the files in a directory scan
-<br>
-u: undo the last command
-<br>
-i: insert text before the current line, end with a period
-<br>
-c: change the current line, enter a new block of text, end with period
-<br>
-a: add text after the current line, end with a period
-<br>
-a+: include the line you just typed in, when you thought you were in append mode
-<br>
-4,7m11: move lines 4 through 7 to line 11
-<br>
-4,7t11: copy lines 4 through 7 to line 11
-<br>
-3,4j: join lines 3 and 4 together
-<br>
-3,4J: join lines 3 and 4 together with a space between
-<br>
-g/x/ p: print every line that has an x
-<br>
-v/x/ p: print every line that does not have an x
-<br>
-B: find the line with the balancing brace
-<br>
-b: browse the current file, which is assumed to be in html
-<br>
-b foo.html: edit the file foo.html and browse it
-<br>
-b url: fetch url from the internet and browse it
-<br>
-ub: unbrowse a file
-<br>
-ft: show the title of the current web page
-<br>
-fd: show the description of the current web page
-<br>
-fk: show the keywords of the current web page
-<br>
-hr: http redirection (toggle)
-<br>
-js: allow javascript (toggle)
-<br>
-rr: rerender the screen, to reflect asynchronous javascript changes
-<br>
-sr: send referrer (toggle)
-<br>
-fma: ftp mode active
-<br>
-fmp: ftp mode passive
-<br>
-rf: refresh the web page or directory listing
-<br>
-et: edit this web page as pure text
-<br>
-vs: verify ssl connections (toggle)
-<br>
-ua3: pretend to be the third user agent in your config file
-<br>
-g: go to the link on the current line
-<br>
-g2: go to the second link on the current line
-<br>
-g$: go to the last link on the current line
-<br>
-^: the back key, go back to the web page you were looking at before
-<br>
-i=xyz: set the input field on the current line to xyz
-<br>
-i2=xyz: set the second input field on the current line to xyz
-<br>
-i2*: push the second button on the current line, usually submit or reset
-<br>
-i$*: push the last button on the current line
-<br>
-i3?: describe the third input field on the current line
-<br>
-db: set debug level [0-9]
-<br>
-cd: change directory
-<br>
-bl: break line into sentences and phrases
-<br>
-bd: binary detection on files (toggle)
-<br>
-bg: download files in background (toggle)
-<br>
-bgl: list background downloads, complete or in progress
-<br>
-rl: use readline() on input (toggle)
-<br>
-pb: play buffer (audio)
-<br>
-pg: plugins active (toggle)
-<br>
-iu: automatically convert between iso8859 and utf8 (toggle)
-<br>
-ds=source,login,password: set the data source
-<br>
-sht: show tables
-<br>
-shc: show columns (and primary key) for the current table
-<br>
-shf: show foreign keys for the current table
-<br>
-fbc: fetch blob columns (toggle)
-<br>
-sm: send mail [account number]
-<br>
-re: reply to a mail message
-<br>
-rea: reply to all
-<br>
-&lt;foo arg1 arg2 ... invoke the function foo, defined in your .ebrc file
+Exit the Program
+<P>
+q&nbsp; quit the current session
+<br>qt&nbsp; quit the program completely, whether you've written your files or not
+<br>bw&nbsp; buffer written; you can quit at any time
+<br>!command&nbsp; shell escape
+<br>!&nbsp; interactive shell
+<br>cd&nbsp; change directory
+<P>
+Input
+<P>
+rl&nbsp; use readline() on input (toggle)
+<P>
+Display Lines in the Buffer
+<P>
+p&nbsp; print the current line
+<br>4,7p&nbsp; print lines 4 through 7
+<br>+3p&nbsp; advance 3 lines and print
+<br>+3&nbsp; same as +3p, print is default command
+<br>-&nbsp; previous line
+<br>---&nbsp; back up three lines
+<br>'a,'bp&nbsp; print a range of lines marked with labels a and b
+<br>kb&nbsp; mark the current line as b
+<br>l&nbsp; list the current line, showing invisible chars and end markers
+<br>eo&nbsp; end markers off
+<br>el&nbsp; show end markers ^$ when a line is listed
+<br>ep&nbsp; show end markers when a line is listed or printed
+<br>lna&nbsp; expand all nonascii chars into hex when a line is listed (toggle)
+<br>n&nbsp; print the current line with its line number
+<br>z22&nbsp; print the next 22 lines
+<br>z&nbsp; print another 22 lines
+<br>=&nbsp; print the number of lines in the file
+<br>.=&nbsp; print the current line number
+<br>B&nbsp; find the line with the balancing brace
+<br>B(&nbsp; find the line with the balancing parenthesis
+<P>
+Help Messages
+<P>
+h&nbsp; help, explain the last question mark
+<br>H&nbsp; show all error messages (toggle)
+<P>
+Search and Substitute
+<P>
+s/x/y/&nbsp; replace x with y on the current line
+<br>s/x/y&nbsp; replace x with y and print the result
+<br>s//y/&nbsp; use the last substitution string, in this case x
+<br>s/x/%/&nbsp; use the last replacement string
+<br>s&nbsp; repeat the previous substitute command
+<br>s/x/y/2&nbsp; replace the second instance of x with y on the current line
+<br>4,7s/x/y/g&nbsp; replace all instances of x with y on lines 4 through 7
+<br>s,&nbsp; replace comma space with newline, break line in two
+<br>s.&nbsp; replace period space with newline, break line in two
+<br>s?2&nbsp; break line at the second question mark
+<br>bl&nbsp; break very long line into sentences and phrases
+<br>/x/&nbsp; look for the line containing x
+<br>/x&nbsp; same as /x/
+<br>/x/i&nbsp; look for the line containing x or X
+<br>?x?&nbsp; look backwards for x
+<br>ci&nbsp; searches and substitutions are case insensitive
+<br>cs&nbsp; searches and substitutions are case sensitive
+<br>sg&nbsp; substitution strings are global across sessions
+<br>sl&nbsp; substitution strings are local to their sessions
+<br>su8&nbsp; search and substitute uses utf8 character sequences (toggle)
+<br>g/x/ p&nbsp; print every line that has an x
+<br>v/x/ p&nbsp; print every line that does not have an x
+<br>v/x/i l&nbsp; list every line that does not have x or X
+<br>lc&nbsp; convert line to lower case
+<br>mc&nbsp; convert line to mixed case
+<br>uc&nbsp; convert line to upper case
+<br>s/foo/uc&nbsp; convert foo to FOO on the current line
+<br>s/\bfoo\b/mc/g&nbsp; convert foo to Foo, but not foobar
+<P>
+Files and Sessions
+<P>
+f&nbsp; print the name of the current file
+<br>f foo&nbsp; set the file name to foo
+<br>f/&nbsp; retain only the lass component of the filename
+<br>e&nbsp; print the number of the current session
+<br>e3&nbsp; move to session 3
+<br>e foo&nbsp; edit the file named foo
+<br>r foo&nbsp; read the contents of foo into the current buffer
+<br>w foo&nbsp; write the current buffer to foo
+<br>w+ foo&nbsp; append to foo
+<br>w/&nbsp; write to the lass component of the filename
+<br>e ~/projects/edbrowse/src/buf*.c&nbsp; expand wildcards if exactly one match
+<br>e $EBSRC/buf*.c&nbsp; variable expansion
+<br>bd&nbsp; binary detection on files (toggle)
+<br>iu&nbsp; automatically convert between iso8859 and utf8 (toggle)
+<P>
+Text Editing
+<P>
+u&nbsp; undo the last command
+<br>d&nbsp; delete the current line
+<br>1,$d&nbsp; delete all the lines, 1 through eof
+<br>D&nbsp; delete the current line and print the next line
+<br>i&nbsp; insert text before the current line, end with a period
+<br>c&nbsp; change the current line, enter a new block of text, end with period
+<br>a&nbsp; add text after the current line, end with a period
+<br>a+&nbsp; include the line you just typed in, when you thought you were in append mode
+<br>4,7m11&nbsp; move lines 4 through 7 to line 11
+<br>4,7t11&nbsp; copy lines 4 through 7 to line 11
+<br>3,4j&nbsp; join lines 3 and 4 together
+<br>3,4J&nbsp; join lines 3 and 4 together with a space between
+<P>
+Directory Scan
+<P>
+dr&nbsp; directory is readonly
+<br>dw&nbsp; directory is writable, and d moves files to your trash bin
+<br>dx&nbsp; directory is writable, and d deletes files
+<br>hf&nbsp; show hidden files in directory listing (toggle)
+<br>lsl&nbsp; list length of the file on the current line, directory mode only
+<br>lss&nbsp; list the approximate size of the file, in kilobytes, megabytes, etc
+<br>lst&nbsp; list the mod time of the file
+<br>lsp&nbsp; list owner group permissions
+<br>lsi&nbsp; list the inode
+<br>lsk&nbsp; list the number of hard links
+<br>lsm&nbsp; list major and minor number
+<br>lsy&nbsp; list path for a symbolic link
+<br>ls&nbsp; same as lsst
+<br>ls=lt&nbsp; display length and time of all files in subsequent directory scans
+<br>ls=&nbsp; just list the files in a directory scan
+<P>
+Browse an html file or a web page
+<P>
+b&nbsp; browse the current file, which is assumed to be in html
+<br>b foo.html&nbsp; edit the file foo.html and browse it
+<br>b url&nbsp; fetch url from the internet and browse it
+<br>ub&nbsp; unbrowse a file
+<br>ft&nbsp; show the title of the current web page
+<br>fd&nbsp; show the description of the current web page
+<br>fk&nbsp; show the keywords of the current web page
+<br>rf&nbsp; refresh the web page or directory listing
+<br>et&nbsp; edit this web page as pure text
+<br>hr&nbsp; http redirection (toggle)
+<br>vs&nbsp; verify ssl connections (toggle)
+<br>sr&nbsp; send referrer (toggle)
+<br>ua3&nbsp; pretend to be the third user agent in your config file
+<P>
+FTP or HTTP Downloads
+<P>
+fma&nbsp; ftp mode active
+<br>fmp&nbsp; ftp mode passive
+<br>bg&nbsp; download files in background (toggle)
+<br>bgl&nbsp; list background downloads, complete or in progress
+<P>
+Interact with a Web Page
+<P>
+g&nbsp; go to the link on the current line
+<br>g2&nbsp; go to the second link on the current line
+<br>g$&nbsp; go to the last link on the current line
+<br>^&nbsp; the back key, go back to the web page you were looking at before
+<br>i=xyz&nbsp; set the input field on the current line to xyz
+<br>i2=xyz&nbsp; set the second input field on the current line to xyz
+<br>i2*&nbsp; push the second button on the current line, usually submit or reset
+<br>i$*&nbsp; push the last button on the current line
+<br>i3?&nbsp; describe the third input field on the current line
+<br>M4&nbsp; move this web page to session 4 and return to the previous page
+<br>js&nbsp; allow javascript (toggle)
+<br>rr&nbsp; rerender the screen, to reflect asynchronous javascript changes
+<P>
+Mail Client
+<P>
+sm&nbsp; send mail [account number]
+<br>re&nbsp; reply to a mail message
+<br>rea&nbsp; reply to all
+<P>
+Plugins
+<P>
+pb&nbsp; play buffer (typically audio)
+<br>pb.mp3&nbsp; play the current buffer as an mp3 file
+<br>pg&nbsp; plugins active (toggle)
+<P>
+Database Access
+<P>
+ds=source,login,password&nbsp; set the data source
+<br>sht&nbsp; show tables
+<br>shc&nbsp; show columns (and primary key) for the current table
+<br>shf&nbsp; show foreign keys for the current table
+<br>fbc&nbsp; fetch blob columns (toggle)
+<P>
+Edbrowse Functions
+<P>
+&lt;foo arg1 arg2 &#8230;&nbsp; invoke the function foo, defined in your .ebrc file
+<br>X&nbsp; silently make this the current line, often used in scripts
+<P>
+Debug
+<P>
+db3&nbsp; set debug level, 0 through 9
+<br>jdb&nbsp; javascript debugger, dot to exit
 
 <H3> <A NAME=tips> Tips for Avoiding Line Numbers </A> </H3>
 
