@@ -1318,13 +1318,14 @@ static void embedNodeName(JS::HandleObject obj)
 static JSBool appendChild0(bool side, JSContext * cx, unsigned int argc,
 			   jsval * vp)
 {
-	unsigned length;
+	unsigned i, length;
 	js::RootedValue v(cx);
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	args.rval().set(JSVAL_VOID);
 /* we need an argument that is an object */
 	if (args.length() == 0 || !args[0].isObject())
 		return JS_TRUE;
+	JS::RootedObject child(cx, JSVAL_TO_OBJECT(args[0]));
 
 	JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
 	if (JS_GetProperty(cx, thisobj, "childNodes", v.address()) == JS_FALSE)
@@ -1338,12 +1339,27 @@ static JSBool appendChild0(bool side, JSContext * cx, unsigned int argc,
 		misconfigure();
 		return JS_FALSE;
 	}
+// see if it's already there.
+	for (i = 0; i < length; ++i) {
+		if (JS_GetElement(cx, elar, i, v.address()) == JS_FALSE) {
+			misconfigure();
+			return JS_FALSE;
+		}
+		if (!v.isObject())
+			continue;
+		if (JSVAL_TO_OBJECT(v) == child) {
+// child was already there, what should we do?
+			args.rval().set(args[0]);
+			return JS_TRUE;
+		}
+	}
+
+// add child to the end
 	if (JS_DefineElement(cx, elar, length,
 			     args[0], NULL, NULL, PROP_STD) == JS_FALSE) {
 		misconfigure();
 		return JS_FALSE;
 	}
-	JS::RootedObject child(cx, JSVAL_TO_OBJECT(args[0]));
 	JS_DefineProperty(cx, child, "parentNode", OBJECT_TO_JSVAL(thisobj),
 			  NULL, NULL, PROP_STD);
 
@@ -1400,20 +1416,27 @@ static JSBool insertBefore(JSContext * cx, unsigned int argc, jsval * vp)
 		return JS_FALSE;
 	}
 
-/* item better be somewhere in the array */
-	for (mark = 0; mark < length; ++mark) {
-		if (JS_GetElement(cx, elar, mark, v.address()) == JS_FALSE) {
+/* item better be somewhere in the array, and child should not be */
+	mark = -1;
+	for (i = 0; i < length; ++i) {
+		if (JS_GetElement(cx, elar, i, v.address()) == JS_FALSE) {
 			misconfigure();
 			return JS_FALSE;
 		}
 		if (!v.isObject())
 			continue;
 		if (JSVAL_TO_OBJECT(v) == item)
-			goto found;
+			mark = i;
+		if (JSVAL_TO_OBJECT(v) == child) {
+// child was already there, what should we do?
+			args.rval().set(args[0]);
+			return JS_TRUE;
+		}
 	}
-	return JS_TRUE;
 
-found:
+	if (mark < 0)
+		return JS_TRUE;
+
 /* since the item to insert before was found, the call is going to */
 /* succeed, so put the return value here */
 	args.rval().set(args[0]);

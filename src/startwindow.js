@@ -640,10 +640,19 @@ return nodeToReturn;
  * to be on array prototype, except appendchild is to have no side effects,
  * because select options are maintained by rebuildSelectors(), so appendChild
  * is just array.push(). */
-Array.prototype.appendChild = function(child) { this.push(child);return child }
+Array.prototype.appendChild = function(child) {
+// check to see if it's already there
+for(var i=0; i<this.length; ++i)
+if(this[i] == child)
+return child;
+this.push(child);return child; }
 /* insertBefore maps to splice, but we have to find the element. */
 /* This prototype assumes all elements are objects. */
 Array.prototype.insertBefore = function(newobj, item) {
+// check to see if it's already there
+for(var i=0; i<this.length; ++i)
+if(this[i] == child)
+return child;
 for(var i=0; i<this.length; ++i)
 if(this[i] == item) {
 this.splice(i, 0, newobj);
