@@ -651,8 +651,8 @@ this.push(child);return child; }
 Array.prototype.insertBefore = function(newobj, item) {
 // check to see if it's already there
 for(var i=0; i<this.length; ++i)
-if(this[i] == child)
-return child;
+if(this[i] == newobj)
+return newobj;
 for(var i=0; i<this.length; ++i)
 if(this[i] == item) {
 this.splice(i, 0, newobj);
