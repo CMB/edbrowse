@@ -766,6 +766,22 @@ if (test_anchor.href.host != "water.com")
 fail(158);
 }
 
+test_removeListener();
+function test_removeListener()
+{
+var x1 = document.createElement("a");
+x1.addEventListener("click",function(){ alert('ok') },0)
+// typeof x1.onclick$$array[0] is now function
+
+x1.removeEventListener("click",function(){ alert('ok') });
+if (typeof x1.onclick$$array[0] == 'undefined')
+{
+// this demonstrates that it was removed
+} else {
+fail(159);
+}
+}
+
 </script>
 
 </body>

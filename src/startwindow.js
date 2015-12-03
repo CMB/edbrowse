@@ -224,6 +224,7 @@ c = new Element();
 * but for most visible ones it does and I doubt it matters much */
 c.style = new Object;
 c.childNodes = new Array;
+c.attributes = new Object;
 c.nodeName = t;
 return c;
 } 
@@ -233,6 +234,23 @@ var c = new TextNode(t);
 c.nodeName = "text";
 return c;
 }
+
+document.createDocumentFragment = function() {
+var c = document.createElement("fragment");
+return c;
+}
+
+document.createComment = function() {
+var c = document.createElement("comment");
+return c;
+}
+
+
+
+
+
+
+
 
 /* window.open is the same as new window, just pass the args through */
 function open() {
@@ -487,6 +505,32 @@ for(var i = 0; i<a.length; ++i) a[i]();
 this[evarray].push(handler);
 }
 
+// here is the counterpart to add
+// what if every handler is removed and there is an empty array?
+// the assumption is that this is not a problem
+function removeEventListener(ev, handler, notused)
+{
+ev = "on" + ev;
+if(this[ev + "$$orig"]) {
+this[ev] = this[ev + "$$orig"];
+} else {
+delete this[ev];
+}
+
+var a = this[ev + "$$array"];
+// if there are multiple handlers for a given event,
+// what am I doing?  Test all the handlers themselves
+// for equality for the one passed in, and if you get
+// a match, erase it 
+for(var i = 0; i<a.length; ++i)
+{
+if (a[i].toString() == handler.toString())
+{
+delete this[ev + "$$array"][i];
+}
+}
+}
+
 /* For grins let's put in the other standard. */
 
 function attachEvent(ev, handler)
@@ -513,14 +557,19 @@ this[evarray].push(handler);
 
 document.addEventListener = window.addEventListener;
 document.attachEvent = window.attachEvent;
+document.removeEventListener = window.removeEventListener;
 Body.prototype.addEventListener = window.addEventListener;
 Body.prototype.attachEvent = window.attachEvent;
+Body.prototype.removeEventListener = window.removeEventListener;
 Form.prototype.addEventListener = window.addEventListener;
 Form.prototype.attachEvent = window.attachEvent;
+Form.prototype.removeEventListener = window.removeEventListener;
 Element.prototype.addEventListener = window.addEventListener;
 Element.prototype.attachEvent = window.attachEvent;
+Element.prototype.removeEventListener = window.removeEventListener;
 Anchor.prototype.addEventListener = window.addEventListener;
 Anchor.prototype.attachEvent = window.attachEvent;
+Anchor.prototype.removeEventListener = window.removeEventListener;
 
 /* document.appendChild and document.apch$ are native */
 document.childNodes = new Array;
@@ -553,7 +602,10 @@ break;
 }
 }
 document.getAttribute = function(name) { return this[name.toLowerCase()]; }
-document.setAttribute = function(name, v) { this[name.toLowerCase()] = v; }
+document.setAttribute = function(name, v) { 
+this.attributes[name.toLowerCase()] = v;
+this[name.toLowerCase()] = v; 
+}
 
 /*********************************************************************
 Notes on cloneNode:
@@ -984,6 +1036,16 @@ alert("[" + h + ":" + m + ":" + s + "] " + obj);
 console.info = console.log;
 console.warn = console.log;
 console.error = console.log;
+
+// just a placeholder for now, for code that 
+// expects to be able to create an XHR object
+// Implementation of actual asynchronous HTTP is going to be more work
+
+XMLHttpRequest = function(){
+    this.headers = {};
+    this.responseHeaders = {};
+    this.aborted = false;//non-standard
+};
 
 /* An ok, object keys, function, for javascrtip/dom debugging. */
 /* This is in concert with the jdb command in edbrowse. */

@@ -1511,6 +1511,9 @@ static JSBool removeChild(JSContext * cx, unsigned int argc, jsval * vp)
 	return JS_TRUE;
 
 found:
+/* we are now situated properly so set the return value, the node to remove*/
+        args.rval().set(args[0]);
+
 /* pull the others back */
 	for (i = mark; i < length - 1; ++i) {
 		JS_GetElement(cx, elar, i + 1, v.address());

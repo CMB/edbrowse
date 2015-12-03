@@ -850,11 +850,9 @@ call out to process those and add them to the object */
 	t->jv = io;
 
 	set_property_string(io, "nodeName", t->info->name);
-
-	if (stringEqual(classname, "Html")) {
-		set_property_object(cw->docobj, "documentElement", io);
-	}
-
+/* documentElement is now set in the "Body" case because the 
+"Html" does not appear ever to be encountered */
+ 
 	if (stringEqual(classname, "Body")) {
 /* here are a few attributes that come in with the body */
 		set_property_object(cw->docobj, "body", io);
@@ -866,6 +864,7 @@ call out to process those and add them to the object */
 		set_property_number(io, "scrollWidth", 1024);
 		set_property_number(io, "scrollTop", 0);
 		set_property_number(io, "scrollLeft", 0);
+                set_property_object(cw->docobj, "documentElement", io);
 	}
 
 	if (stringEqual(classname, "Head")) {
