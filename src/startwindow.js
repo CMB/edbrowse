@@ -511,22 +511,25 @@ this[evarray].push(handler);
 function removeEventListener(ev, handler, notused)
 {
 ev = "on" + ev;
-if(this[ev + "$$orig"]) {
-this[ev] = this[ev + "$$orig"];
-} else {
-delete this[ev];
+var evarray = ev + "$$array"; // array of handlers
+var evorig = ev + "$$orig"; // original handler from html
+// remove original html handler after other events have been added.
+if(this[evorig] == handler) {
+delete this[evorig];
+return;
 }
-
-var a = this[ev + "$$array"];
-// if there are multiple handlers for a given event,
-// what am I doing?  Test all the handlers themselves
-// for equality for the one passed in, and if you get
-// a match, erase it 
+// remove original html handler when no other events have been added.
+if(this[ev] == handler) {
+delete this[ev];
+return;
+}
+// If other events have been added, check through the array.
+if(this[evarray]) {
+var a = this[evarray]; // shorthand
 for(var i = 0; i<a.length; ++i)
-{
-if (a[i].toString() == handler.toString())
-{
-delete this[ev + "$$array"][i];
+if(a[i] == handler) {
+a.splice(i, 1);
+return;
 }
 }
 }

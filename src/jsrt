@@ -770,16 +770,13 @@ test_removeListener();
 function test_removeListener()
 {
 var x1 = document.createElement("a");
-x1.addEventListener("click",function(){ alert('ok') },0)
-// typeof x1.onclick$$array[0] is now function
-
-x1.removeEventListener("click",function(){ alert('ok') });
-if (typeof x1.onclick$$array[0] == 'undefined')
-{
-// this demonstrates that it was removed
-} else {
+var x1click = function(){ alert('ok') };
+x1.addEventListener("click",x1click,0);
+if(typeof x1.onclick$$array[0] != "function")
 fail(159);
-}
+x1.removeEventListener("click",x1click);
+if(x1.onclick$$array.length)
+fail(160);
 }
 
 </script>
