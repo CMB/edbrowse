@@ -85,6 +85,8 @@ Unzip and cd to build/cmake
 cmake ../..
 make install
 Now the latest Tidy library will be available to edbrowse.
+Edbrowse requires tidy version 5.1.26 or greater,
+and might not work properly, or even compile with an earlier version.
 
 Finally, you need the Spider Monkey javascript engine from Mozilla.org
 ftp://ftp.mozilla.org/pub/mozilla.org/js/

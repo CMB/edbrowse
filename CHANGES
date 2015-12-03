@@ -21,18 +21,21 @@ directory scans. See documentation for more.
 
 Port edbrowse to windows, with small modifications.
 
-Set up cmake scripts so that cmake can be used to build edbrowse,
+Set up cmake scripts so that cmake can be used to build edbrowse
 on windows or on linux.
 Traditional make is still available from the src directory.
 
 Use cmake to build edbrowse under MacPorts, thus available under OSX.
 
+Enhance the DOM sufficient to compile a jQuery object <= 1.9.1.
+This is the first step along the path to full jQuery support.
+
 Add an interactive javascript / DOM debugger.
-Type jex to enter this debugging mode, and period to exit.
+Type jdb to enter this debugging mode, and period to exit.
 
 Create a default .ebrc file if none is found.
 This is just a template, the user is encouraged to personalize the file.
-The default .ebrc file is in the user's language, for supported languages.
+The default .ebrc file is in the user's language for supported languages.
 
 Move all the language files, (ebrc files and message strings),
 to per-language files in the lang directory.
