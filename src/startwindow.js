@@ -28,6 +28,8 @@ name = "unspecifiedFrame";
 
 document.bgcolor = "white";
 document.readyState = "loading";
+document.nodeType = 9;
+document.implementation = {};
 
 screen = new Object;
 screen.height = 768;

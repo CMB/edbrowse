@@ -2349,11 +2349,14 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 		if (parent->firstchild == add)
 			parent->firstchild = add->sibling;
 		else {
-			for (c = parent->firstchild; c->sibling; c = c->sibling) {
-				if (c->sibling != add)
-					continue;
-				c->sibling = add->sibling;
-				break;
+			c = parent->firstchild;
+			if (c) {
+				for (; c->sibling; c = c->sibling) {
+					if (c->sibling != add)
+						continue;
+					c->sibling = add->sibling;
+					break;
+				}
 			}
 		}
 		return;
