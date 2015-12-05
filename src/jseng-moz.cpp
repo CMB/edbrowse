@@ -1512,7 +1512,7 @@ static JSBool removeChild(JSContext * cx, unsigned int argc, jsval * vp)
 
 found:
 /* we are now situated properly so set the return value, the node to remove*/
-        args.rval().set(args[0]);
+	args.rval().set(args[0]);
 
 /* pull the others back */
 	for (i = mark; i < length - 1; ++i) {
@@ -1777,8 +1777,9 @@ static JSBool win_confirm(JSContext * cx, unsigned int argc, jsval * vp)
 /* Set a timer or an interval */
 static JSObject *setTimeout(unsigned int argc, jsval * argv, bool isInterval)
 {
-	JS::RootedValue v0(jcx), v1(jcx);
-	JS::RootedObject fo(jcx), to(jcx);
+	JS::RootedValue v0(jcx), v1(jcx);	// values of the 2 args
+// the function object, to execute, and the timer object.
+	JS::RootedObject fo(jcx, 0), to(jcx);
 	int n;			/* number of milliseconds */
 	char nstring[20];
 	char fname[48];		/* function name */
@@ -1805,11 +1806,13 @@ abort:
 			misconfigure();
 			return NULL;
 		}
+// protect this timer from the garbage collector
 		v1 = OBJECT_TO_JSVAL(to);
 		if (JS_DefineProperty
 		    (jcx, winobj, fakePropName(), v1, NULL, NULL,
 		     PROP_STD) == JS_FALSE)
 			goto abort;
+
 		if (fo) {
 /* Extract the function name, which requires several steps */
 			js::RootedFunction f(jcx,

@@ -2196,7 +2196,7 @@ void runTimers(void)
 
 		cw = jt->w;
 		backgroundJS = true;
-		jsRunScript(jt->timerObject, jt->jsrc, "timer", 1);
+		run_function_bool(jt->timerObject, "onclick");
 		runScriptsPending();
 
 		if (cw != save_cw) {
