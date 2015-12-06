@@ -2074,7 +2074,6 @@ struct jsTimer {
 	bool isInterval;
 	int jump_sec;		/* for interval */
 	int jump_ms;
-	const char *jsrc;
 	jsobjtype timerObject;
 };
 
@@ -2105,8 +2104,9 @@ static void javaSetsTimeout(int n, const char *jsrc, jsobjtype to,
 // delete a timer
 		foreach(jt, timerList) {
 			if (jt->timerObject == to) {
-				delFromList(jt);
 				debugPrint(4, "timer delete");
+				delFromList(jt);
+				nzFree(jt);
 				return;
 			}
 		}
@@ -2115,7 +2115,6 @@ static void javaSetsTimeout(int n, const char *jsrc, jsobjtype to,
 	}
 
 	jt = allocMem(sizeof(struct jsTimer));
-	jt->jsrc = cloneString(jsrc);
 	jt->sec = n / 1000;
 	jt->ms = n % 1000;
 	jt->isInterval = isInterval;
@@ -2174,7 +2173,6 @@ void delTimers(struct ebWindow *w)
 		if (jt->w == w) {
 			++delcount;
 			delFromList(jt);
-			cnzFree(jt->jsrc);
 			nzFree(jt);
 		}
 	}
@@ -2217,7 +2215,6 @@ void runTimers(void)
 				jt->ms -= 1000, ++jt->sec;
 		} else {
 			delFromList(jt);
-			cnzFree(jt->jsrc);
 			nzFree(jt);
 		}
 	}
