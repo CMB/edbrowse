@@ -914,13 +914,13 @@ char *conciseSize(size_t n)
 {
 	static char buf[32];
 	if (n >= (1 << 30))
-		sprintf(buf, "%dG", n >> 30);
+		sprintf(buf, "%luG", (unsigned long)n >> 30);
 	else if (n >= (1 << 20))
-		sprintf(buf, "%dM", n >> 20);
+		sprintf(buf, "%luM", (unsigned long)n >> 20);
 	else if (n >= (1 << 10))
-		sprintf(buf, "%dK", n >> 10);
+		sprintf(buf, "%luK", (unsigned long)n >> 10);
 	else
-		sprintf(buf, "%d", n);
+		sprintf(buf, "%lu", (unsigned long)n);
 	return buf;
 }				/* conciseSize */
 
@@ -1015,7 +1015,7 @@ char *lsattr(const char *path, const char *flags)
 			strcat(buf, conciseTime(st.st_mtime));
 			break;
 		case 'l':
-			sprintf(p, "%d", st.st_size);
+			sprintf(p, "%lld", (long long)st.st_size);
 #ifndef DOSLIKE
 p:
 #endif // #ifndef DOSLIKE
@@ -1028,10 +1028,10 @@ p:
 /* not sure any of these work under windows */
 
 		case 'i':
-			sprintf(p, "%d", st.st_ino);
+			sprintf(p, "%lu", (unsigned long)st.st_ino);
 			goto p;
 		case 'k':
-			sprintf(p, "%d", st.st_nlink);
+			sprintf(p, "%lu", (unsigned long)st.st_nlink);
 			goto p;
 		case 'm':
 			strcpy(p, "-");

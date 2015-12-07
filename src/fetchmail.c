@@ -852,7 +852,8 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 
 	nzFree(mailstring);
 	if (dostats) {
-		printf("%2d %s", f - topfolders + 1, f->path);
+		printf("%2lld %s", (unsigned long long)(f - topfolders + 1),
+		       f->path);
 /*
 		if (f->children)
 			printf(" with children");

@@ -2137,7 +2137,7 @@ childreturn:
 		break;
 
 	default:
-		fprintf(stderr, "Unexpected property type %s from edbrowse\n",
+		fprintf(stderr, "Unexpected property type %d from edbrowse\n",
 			proptype);
 		exit(7);
 	}
