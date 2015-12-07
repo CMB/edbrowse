@@ -198,13 +198,13 @@ static void js_start(void)
 	if (!strchr(progname, '/')) {
 // no path specified, just the program, so assume edbrowse-js is also on $PATH,
 // hopefully in the same bin.
-		execlp("edbrowse-js", "edbrowse-js", arg1, arg2, arg3, 0);
+		execlp("edbrowse-js", "edbrowse-js", arg1, arg2, arg3, NULL);
 	} else {
 // change /foo/bar/edbrowse to /foo/bar/edbrowse-js
 		int l = strlen(progname);
 		char *jspath = allocMem(l + 4);
 		sprintf(jspath, "%s-js", progname);
-		execl(jspath, "edbrowse-js", arg1, arg2, arg3, 0);
+		execl(jspath, "edbrowse-js", arg1, arg2, arg3, NULL);
 		nzFree(jspath);
 	}
 
