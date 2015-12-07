@@ -2323,11 +2323,11 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 		return;
 	}
 
+	sscanf(rest, "%s %p,%s %p,%s ", p_name, &a_j, a_name, &b_j, b_name);
 /* options are relinked by rebuildSelectors, not here. */
 	if (stringEqual(p_name, "option"))
 		return;
 
-	sscanf(rest, "%s %p,%s %p,%s ", p_name, &a_j, a_name, &b_j, b_name);
 	parent = tagFromJavaVar2(p_j, p_name);
 	if (type == 'c')	/* create */
 		return;
