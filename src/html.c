@@ -2195,6 +2195,11 @@ void runTimers(void)
 		cw = jt->w;
 		backgroundJS = true;
 		run_function_bool(jt->timerObject, "onclick");
+		if (!jt->isInterval) {
+			delFromList(jt);
+			nzFree(jt);
+			jt = NULL;
+		}
 		runScriptsPending();
 
 		if (cw != save_cw) {
@@ -2208,14 +2213,11 @@ void runTimers(void)
 		}
 		backgroundJS = false;
 
-		if (jt->isInterval) {
+		if (jt) {
 			jt->sec = now_sec + jt->jump_sec;
 			jt->ms = now_ms + jt->jump_ms;
 			if (jt->ms >= 1000)
 				jt->ms -= 1000, ++jt->sec;
-		} else {
-			delFromList(jt);
-			nzFree(jt);
 		}
 	}
 
