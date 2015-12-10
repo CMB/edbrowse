@@ -85,7 +85,9 @@ static struct cookie *cookie_from_netscape_line(char *cookie_line)
 /* Whenever new_cookie->tail is true, there's going to be a dot at the front of the
  * domain name.  Libcurl even puts one there when it parses set-cookie
  * headers.  But let's be sure. */
-			if (new_cookie->tail && (new_cookie->domain[0] != '.'))
+			if (new_cookie->tail && (new_cookie->domain[0] != '.')
+			    && !strncmp(new_cookie->domain, httponly_prefix,
+					httponly_prefix_len))
 				new_cookie->domain =
 				    prependString(new_cookie->domain, ".");
 		}
