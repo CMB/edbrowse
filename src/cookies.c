@@ -22,6 +22,15 @@ struct cookie {
 	bool secure;
 };
 
+static const char *httponly_prefix = "#HttpOnly_";
+static const size_t httponly_prefix_len = 10;
+
+static bool isComment(const char *line)
+{
+	return (line[0] == '#' &&
+		strncmp(line, httponly_prefix, httponly_prefix_len) != 0);
+}				/* isComment */
+
 static int count_tabs(const char *the_string)
 {
 	int str_index = 0, num_tabs = 0;
@@ -41,7 +50,7 @@ static struct cookie *cookie_from_netscape_line(char *cookie_line)
  * of tabs.  Comment lines begin with a leading # symbol.
  * Syntax checking is rudimentary, because these lines are
  * machine-generated. */
-		if (cookie_line[0] != '#' &&
+		if (!isComment(cookie_line) &&
 		    count_tabs(cookie_line) == FIELDS_PER_COOKIE_LINE - 1) {
 			char *start, *end;
 			new_cookie = allocZeroMem(sizeof(struct cookie));
@@ -399,6 +408,11 @@ void sendCookies(char **s, int *l, const char *url, bool issecure)
 		c = cookie_from_netscape_line(cursor->data);
 		cursor = cursor->next;
 		if (c == NULL)	/* didn't read a cookie line. */
+			continue;
+/* This next test is technically redundant, but let's be clear that
+ * HttpOnly cookies *never ever ever* get passed to JavaScript...
+ */
+		if (!strncmp(c->domain, httponly_prefix, httponly_prefix_len))
 			continue;
 		if (!isInDomain(c->domain, server))
 			continue;
