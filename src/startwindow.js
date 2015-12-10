@@ -219,7 +219,7 @@ c = new Option();
 // don't need style or childNodes here.
 return c;
 default:
-/* alert("createElement default " + s); */
+/* $puts$("createElement default " + s); */
 c = new Element();
 }
 /* ok, for some element types this perhaps doesn't make sense,
@@ -247,12 +247,9 @@ var c = document.createElement("comment");
 return c;
 }
 
-
-
-
-
-
-
+// window.alert is a simple wrapper around native puts.
+// Probably I should rename and wrapperize other functions like prompt and confirm.
+function alert(s) { $puts$(s); }
 
 /* window.open is the same as new window, just pass the args through */
 function open() {
@@ -1036,7 +1033,7 @@ var s=today.getSeconds();
 if(h < 10) h = "0" + h;
 if(m < 10) m = "0" + m;
 if(s < 10) s = "0" + s;
-alert("[" + h + ":" + m + ":" + s + "] " + obj);
+$puts$("[" + h + ":" + m + ":" + s + "] " + obj);
 }
 console.info = console.log;
 console.warn = console.log;
