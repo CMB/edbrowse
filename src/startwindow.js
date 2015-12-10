@@ -1049,7 +1049,7 @@ XMLHttpRequest = function(){
     this.aborted = false;//non-standard
 };
 
-/* An ok, object keys, function, for javascrtip/dom debugging. */
+/* An ok (object keys) function for javascript/dom debugging. */
 /* This is in concert with the jdb command in edbrowse. */
 ok = Object.keys = Object.keys || (function () { 
 		var hasOwnProperty = Object.prototype.hasOwnProperty, 
