@@ -1742,7 +1742,7 @@ int goSelect(int *startLine, char **rbuf)
 		"select", "insert", "update", "delete", "execute",
 		0
 	};
-	static const actionCodes[] = {
+	static const int actionCodes[] = {
 		MSG_Selected, MSG_Inserted, MSG_Updated, MSG_Deleted,
 		MSG_ProcExec
 	};

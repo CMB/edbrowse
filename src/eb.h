@@ -15,6 +15,16 @@
 #define DOSLIKE 1
 #endif
 
+/* Define _GNU_SOURCE on Linux, so we don't have an implicit declaration
+ * of asprintf, but only if we are not compiling C++.
+ * Turns out that when compiling C++ on LInux, _GNU_SOURCE is helpfully
+ * predefined, so defining it twice generates a nasty warning.
+ */
+
+#if defined(EDBROWSE_ON_LINUX) && !defined(__cplusplus)
+#define _GNU_SOURCE
+#endif
+
 /* seems like everybody needs these header files */
 #include <sys/types.h>
 #include <ctype.h>

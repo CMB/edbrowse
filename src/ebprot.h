@@ -34,6 +34,12 @@ bool receiveCookie(const char *url, const char *str) ;
 void cookiesFromJar(void) ;
 void sendCookies(char **s, int *l, const char *url, bool issecure) ;
 
+/* sourcefile=dbodbc.c (and others) */
+bool fetchForeign(char *tname) ;
+
+/* sourcefile=dbops.c */
+int findColByName(const char *name) ;
+
 /* sourcefile=dbstubs.c */
 bool sqlReadRows(const char *filename, char **bufptr) ;
 void dbClose(void) ;

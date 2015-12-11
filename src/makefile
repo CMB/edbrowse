@@ -3,13 +3,17 @@
 prefix = /usr/local
 bindir = $(prefix)/bin
 
+PLATFORM := $(shell uname)
+ifeq ($(PLATFORM),Linux)
+CFLAGS += -DEDBROWSE_ON_LINUX
+endif
+
 #  Flags for gcc compilation.
 #  This assumes js and js-devel have been installed.
 #  These are available packages on most distros.
 #  You also need pcre[-devel] and curl[-devel]
 
 JS_CXXFLAGS =-I/usr/include/mozjs-24
-
 
 # By default, we strip the executables.
 # Override this behavior on the command line, by setting STRIP to the
