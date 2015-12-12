@@ -76,12 +76,12 @@ if (_TIDY_SEARCHES)
             NAMES tidy.h
             PATHS ${search}
             PATH_SUFFIXES include
-            )
+            NO_DEFAULT_PATH)
           find_library(TIDY_LIBRARY
             NAMES ${TIDY_NAMES}
             PATHS ${search}
             PATH_SUFFIXES lib
-            )
+            NO_DEFAULT_PATH)
         endforeach()
     endif ()
 
