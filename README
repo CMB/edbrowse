@@ -41,7 +41,7 @@ No need to repeat all that here.
 You're here because you want to compile and/or package the program,
 or modify the source in some way.  Great!
 
-cmake can be used to build and install edbrowse in Windows or linux.
+cmake can be used to build and install edbrowse in Windows, linux, or Mac OS X.
 visual C studio is assumed on Windows.
 cd build
 cmake .. [options]
@@ -49,6 +49,16 @@ make
 Or, on linux, you can use the traditional makefiles.
 cd src
 make
+
+On Mac OS X, you'll need to install tidy-html5.  It's not in macports
+yet.  Tell cmake about its location like this:
+export TIDY_ROOT=/path/to/tidy-html5
+cd build
+cmake ..
+make
+Be careful here.  Apple distributes an ancient version of tidy-html.
+You're going to have to take steps to insure that they do not collide.
+Perhaps your best bet is to get edbrowse from MacPorts.
 
 As you may know, edbrowse was originally a perl script.
 As such, it was only natural to use perl regular expressions for
