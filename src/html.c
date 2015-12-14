@@ -2459,7 +2459,7 @@ static struct htmlTag *currentForm, *currentA;
 
 static void tagInStream(int tagno)
 {
-	char buf[8];
+	char buf[32];
 	sprintf(buf, "%c%d*", InternalCodeChar, tagno);
 	stringAndString(&ns, &ns_l, buf);
 }				/* tagInStream */
