@@ -17,7 +17,7 @@ reply = edbrowse@gmail.com
 
 # Accès Imap à votre compte gmail.
 # Si celui-ci est votre 2ème compte mail dans ce fichier,
-alors l'accès imap sera :
+# alors l'accès imap sera :
 # edbrowse -f2
 mail {
 imap
@@ -107,7 +107,7 @@ b http://www.google.com
 }
 
 # recherche dans le dictionnaire merriam-webster, -1 est le 1er paramètre,
-le mot cherché
+# le mot cherché
 # <mv éléphant
 function+mw {
 b http://www.merriam-webster.com/dictionary/~1
