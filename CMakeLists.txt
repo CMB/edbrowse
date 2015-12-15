@@ -51,7 +51,7 @@ if(WIN32)
 else()
     # unix/mac stuff
     message(STATUS "*** Some of these gcc warnings should be looked at, and FIXED!")
-    set(WARNING_FLAGS "${WARNING_FLAGS} -Wno-char-subscripts -Wno-parentheses -Wno-unused-but-set-variable -Wno-unused-variable -Wno-pointer-sign -Wno-unused-function -Wno-implicit-function-declaration -Wno-format -Wno-return-type")
+    set(WARNING_FLAGS "${WARNING_FLAGS} -Wno-char-subscripts -Wno-parentheses -Wno-unused-but-set-variable -Wno-unused-variable -Wno-pointer-sign -Wno-unused-function -Wno-return-type")
 endif()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
