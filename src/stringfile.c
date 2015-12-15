@@ -1605,3 +1605,26 @@ void appendFileNF(const char *filename, const char *msg)
 	fprintf(f, "%s\n", msg);
 	fclose(f);
 }				/* appendFileNF */
+
+/* Wrapper around system(). */
+int eb_system(const char *cmd, bool print_on_success)
+{
+	int system_ret = 0;
+#ifdef DOSLIKE
+	system_ret = system(cmd);
+#else
+/* Ignoring of SIGPIPE propagates across fork-exec. */
+/* So stop ignoring it for the duration of system(). */
+	signal(SIGPIPE, SIG_DFL);
+	system_ret = system(cmd);
+	signal(SIGPIPE, SIG_IGN);
+#endif
+
+	if (system_ret == 0) {
+		if (print_on_success)
+			i_puts(MSG_OK);
+	} else {
+		i_printf(MSG_SystemCmdFail, system_ret);
+	}
+	return system_ret;
+}				/* eb_system */

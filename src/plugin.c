@@ -378,18 +378,11 @@ int playBuffer(const char *line, const char *playfile)
 	}
 
 play_command:
-#ifdef DOSLIKE
-	system(cmd);
-#else
-	signal(SIGPIPE, SIG_DFL);
-	system(cmd);
-	signal(SIGPIPE, SIG_IGN);
-#endif
+	eb_system(cmd, true);
 
 	if (!cw->dirMode && infile == tempin)
 		unlink(tempin);
 	nzFree(cmd);
-	i_puts(MSG_OK);
 
 	return 1;
 }				/* playBuffer */
@@ -426,17 +419,10 @@ bool playServerData(void)
 		nzFree(cmd);
 		return false;
 	}
-#ifdef DOSLIKE
-	system(cmd);
-#else
-	signal(SIGPIPE, SIG_DFL);
-	system(cmd);
-	signal(SIGPIPE, SIG_IGN);
-#endif
+	eb_system(cmd, true);
 
 	unlink(tempin);
 	nzFree(cmd);
-	i_puts(MSG_OK);
 
 	return true;
 }				/* playServerData */
@@ -451,6 +437,7 @@ char *runPluginConverter(const char *buf, int buflen)
 	bool ispipe = !strstr(mt->program, "%o");
 	bool rc;
 	char *infile;
+	int system_ret = 0;
 
 	if (!suffix)
 		suffix = "x";
@@ -510,16 +497,15 @@ char *runPluginConverter(const char *buf, int buflen)
 		serverData = NULL;
 		return NULL;
 	}
-
-	signal(SIGPIPE, SIG_DFL);
-	system(cmd);
-	signal(SIGPIPE, SIG_IGN);
-#else // !#ifndef DOSLIKE
-	system(cmd);
 #endif // #ifndef DOSLIKE
+
+	system_ret = eb_system(cmd, false);
 
 	if (infile == tempin)
 		unlink(tempin);
 	nzFree(cmd);
-	return tempout;
+	if (!system_ret)
+		return tempout;
+	else
+		return NULL;
 }				/* runPluginConverter */

@@ -755,6 +755,6 @@ enum {
 	MSG_InputReadLine,
 	MSG_notused656,
 	MSG_JSSessionFail,
-	MSG_notused658,
+	MSG_SystemCmdFail,
 	MSG_notused659,
 };

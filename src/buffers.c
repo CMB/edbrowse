@@ -1897,6 +1897,18 @@ static void debrowseSuffix(char *s)
 	}
 }				/* debrowseSuffix */
 
+static char *get_interactive_shell(const char *sh)
+{
+	char *ishell = NULL;
+#ifdef DOSLIKE
+	return cloneString(sh);
+#else
+	if (asprintf(&ishell, "exec %s -i", sh) == -1)
+		i_printfExit(MSG_NoMem);
+	return ishell;
+#endif
+}				/* get_interactive_shell */
+
 static bool shellEscape(const char *line)
 {
 	char *newline, *s;
@@ -1905,7 +1917,6 @@ static bool shellEscape(const char *line)
 	char key;
 	int linesize, pass, n;
 	char *sh;
-	char subshell[ABSPATH];
 
 #ifdef DOSLIKE
 /* cmd.exe is the windows shell */
@@ -1924,17 +1935,9 @@ static bool shellEscape(const char *line)
 			setError(MSG_SessionBackground);
 			return false;
 		}
-#ifdef DOSLIKE
-		system(sh);
-#else
-/* Ignoring of SIGPIPE propagates across fork-exec. */
-/* So stop ignoring it for the duration of system(). */
-		signal(SIGPIPE, SIG_DFL);
-		sprintf(subshell, "exec %s -i", sh);
-		system(subshell);
-		signal(SIGPIPE, SIG_IGN);
-#endif
-		i_puts(MSG_OK);
+		char *interactive_shell_cmd = get_interactive_shell(sh);
+		eb_system(interactive_shell_cmd, true);
+		nzFree(interactive_shell_cmd);
 		return true;
 	}
 
@@ -2016,14 +2019,7 @@ addchar:
 /* Run the command.  Note that this routine returns success
  * even if the shell command failed.
  * Edbrowse succeeds if it is *able* to run the system command. */
-#ifdef DOSLIKE
-	system(newline);
-#else
-	signal(SIGPIPE, SIG_DFL);
-	system(newline);
-	signal(SIGPIPE, SIG_IGN);
-#endif
-	i_puts(MSG_OK);
+	eb_system(newline, true);
 	free(newline);
 	return true;
 }				/* shellEscape */

@@ -313,6 +313,7 @@ FILE *efopen(const char *name, const char *mode) ;
 int eopen(const char *name, int mode, int perms) ;
 void appendFile(const char *fname, const char *message, ...) ;
 void appendFileNF(const char *filename, const char *msg) ;
+int eb_system(const char *cmd, bool print_on_success);
 
 /* sourcefile=url.c */
 void unpercentURL(char *url) ;

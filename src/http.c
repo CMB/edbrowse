@@ -594,16 +594,8 @@ mimestream:
 		cmd = pluginCommand(cw->mt, url, NULL, NULL);
 		if (!cmd)
 			return false;
-#ifdef DOSLIKE
-		system(cmd);
-#else
-/* Stop ignoring SIGPIPE for the duration of system(): */
-		signal(SIGPIPE, SIG_DFL);
-		system(cmd);
-		signal(SIGPIPE, SIG_IGN);
-#endif
+		eb_system(cmd, true);
 		nzFree(cmd);
-		i_puts(MSG_OK);
 		return true;
 	} else {
 		setError(MSG_WebProtBad, prot);
