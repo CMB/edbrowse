@@ -579,8 +579,14 @@ static void handlerSet(jsobjtype ev, const char *name, const char *code)
 static void set_onhandler(const struct htmlTag *t, const char *name)
 {
 	const char *s;
-	if ((s = attribVal(t, name)) && t->jv)
+	if (t->jv) {
+		s = attribVal(t, name);
+		if (s)
+			skipWhite(&s);
+		if (!s || !*s)
+			s = "return true";
 		handlerSet(t->jv, name, s);
+	}
 }				/* set_onhandler */
 
 static void set_onhandlers(const struct htmlTag *t)
@@ -852,7 +858,7 @@ call out to process those and add them to the object */
 	set_property_string(io, "nodeName", t->info->name);
 /* documentElement is now set in the "Body" case because the 
 "Html" does not appear ever to be encountered */
- 
+
 	if (stringEqual(classname, "Body")) {
 /* here are a few attributes that come in with the body */
 		set_property_object(cw->docobj, "body", io);
@@ -864,7 +870,7 @@ call out to process those and add them to the object */
 		set_property_number(io, "scrollWidth", 1024);
 		set_property_number(io, "scrollTop", 0);
 		set_property_number(io, "scrollLeft", 0);
-                set_property_object(cw->docobj, "documentElement", io);
+		set_property_object(cw->docobj, "documentElement", io);
 	}
 
 	if (stringEqual(classname, "Head")) {
