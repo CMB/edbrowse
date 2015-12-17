@@ -1625,6 +1625,7 @@ int eb_system(const char *cmd, bool print_on_success)
 			i_puts(MSG_OK);
 	} else {
 		i_printf(MSG_SystemCmdFail, system_ret);
+		nl();
 	}
 	return system_ret;
 }				/* eb_system */
