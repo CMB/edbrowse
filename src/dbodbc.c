@@ -793,7 +793,7 @@ sql_blobInsert(const char *tabname, const char *colname, int rowid,
 	if (sql_debug)
 		appendFile(sql_debuglog, "%d rows affected", rv_lastNrows);
 	if (sql_debug2)
-		printf("%d rows affected\n", rv_lastNrows);
+		printf("%ld rows affected\n", rv_lastNrows);
 	SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 	exclist = 0;
 }				/* sql_blobInsert */
@@ -1341,7 +1341,7 @@ static bool execInternal(const char *stmt, int mode)
 				appendFile(sql_debuglog, "%d rows affected",
 					   rv_lastNrows);
 			if (sql_debug2)
-				printf("%d rows affected\n", rv_lastNrows);
+				printf("%ld rows affected\n", rv_lastNrows);
 		}
 	}
 
