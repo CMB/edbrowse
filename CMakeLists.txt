@@ -294,7 +294,7 @@ endif ()
 if (MSVC)
     set_target_properties( ${name} PROPERTIES DEBUG_POSTFIX d )
 endif ()
-# deal with INSTALL
+install(TARGETS ${name} DESTINATION bin)
 
 if (MOZJS_FOUND)
     set(name edbrowse-js)
@@ -307,6 +307,7 @@ if (MOZJS_FOUND)
     if (MSVC)
         set_target_properties( ${name} PROPERTIES DEBUG_POSTFIX d )
     endif ()
+    install(TARGETS ${name} DESTINATION bin)
 endif ()
 
 # eof
