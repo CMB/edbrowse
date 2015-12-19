@@ -156,7 +156,7 @@ static void js_start(void)
 	/* windows implementation of fork() using pthreads */
 	pid = pthread_create(&tid, NULL, child_proc, 0);
 #else // !HAVE_PTHREAD_h
-    pid = 1;
+	pid = 1;
 #endif // HAVE_PTHREAD_H y/n
 	if (pid) {
 		i_puts(MSG_JSEngineFork);
@@ -306,7 +306,7 @@ static void processEffects(void)
 	char c;
 	jsobjtype p;
 	int n;
-struct inputChange *ic;
+	struct inputChange *ic;
 
 	if (!effects)
 		return;
@@ -349,14 +349,14 @@ struct inputChange *ic;
 			*t++ = 0;
 			v[-2] = 0;
 			sscanf(t, "%p", &p);
-		ic = allocMem(sizeof(struct inputChange) + strlen(s));
+			ic = allocMem(sizeof(struct inputChange) + strlen(s));
 // Yeah I know, this isn't a pointer to htmlTag.
-		ic->t = p;
-		ic->tagno = n;
-		ic->major = 't';
-		ic->minor = v[-1];
-		strcpy(ic->value, s);
-		addToListBack(&inputChangesPending, ic);
+			ic->t = p;
+			ic->tagno = n;
+			ic->major = 't';
+			ic->minor = v[-1];
+			strcpy(ic->value, s);
+			addToListBack(&inputChangesPending, ic);
 			break;
 
 		case 'c':	/* cookie */
@@ -789,8 +789,7 @@ int get_property_number(jsobjtype obj, const char *name)
 	get_property(obj, name);
 	if (!propval)
 		return n;
-	if (stringIsNum(propval))
-		n = atoi(propval);
+	n = atoi(propval);
 	free(propval);
 	propval = 0;
 	return n;
@@ -1541,17 +1540,23 @@ bool run_function_bool(jsobjtype obj, const char *name)
 {
 	run_function(obj, name, 0, NULL);
 	if (!propval)
-		return false;
+		return true;
 	if (head.proptype == EJ_PROP_BOOL) {
 		bool rc = (propval[0] == '1');
 		nzFree(propval);
 		propval = 0;
 		return rc;
 	}
-/* wrong type, just return false */
+	if (head.proptype == EJ_PROP_INT) {
+		int n = atoi(propval);
+		nzFree(propval);
+		propval = 0;
+		return (n != 0);
+	}
+/* wrong type, but at least it's something, just return true */
 	nzFree(propval);
 	propval = 0;
-	return false;
+	return true;
 }				/* run_function_bool */
 
 void run_function_objargs(jsobjtype obj, const char *name, int nargs, ...)

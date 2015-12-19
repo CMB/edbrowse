@@ -655,5 +655,5 @@ Eingabe-tty
 zeilenweise Eingabe
 0
 Schwerwiegender Fehler in dieser Sitzung, JavaScript wird geschlossen
-0
+Ausführung des Kommandos fehlgeschlagen, das System gab %d zurück
 0

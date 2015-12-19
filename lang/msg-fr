@@ -655,5 +655,5 @@ entrées tty
 entrées readline()
 0
 Erreur Javascript irrécupérable dans cette session, javascript est fermé.
-0
+La commande a échoué, le système a renvoyé %d
 0

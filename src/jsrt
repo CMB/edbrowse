@@ -602,7 +602,7 @@ me.action =
 (where == 'm' ? "mailto:eklhad@gmail.com" : "http://localhost:1200/foobar");
 if(where == 'a') me.submit();
 if(where != 'm' && where != 'w') return false;
-return true;
+return 1;
 }
 
 function resetFunction() {

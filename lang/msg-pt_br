@@ -655,5 +655,5 @@ TTY de entrada
 linha de entrada()
 0
 Erro não-reparável de javascript nesta sessão, javascript está fechado.
-0
+Execução de comando falhou; system() retornou %d
 0

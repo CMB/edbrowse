@@ -655,5 +655,5 @@ input tty
 input readline()
 0
 Unrecoverable JavaScript error in this session, javascript is closed.
-0
+Command execution failed, system() returned %d
 0

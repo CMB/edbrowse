@@ -582,10 +582,7 @@ static void set_onhandler(const struct htmlTag *t, const char *name)
 	if (t->jv) {
 		s = attribVal(t, name);
 		if (s)
-			skipWhite(&s);
-		if (!s || !*s)
-			s = "return true";
-		handlerSet(t->jv, name, s);
+			handlerSet(t->jv, name, s);
 	}
 }				/* set_onhandler */
 
