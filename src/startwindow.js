@@ -495,11 +495,8 @@ this[evorig] = this[ev];
 this[ev] = undefined;
 }
 this[evarray] = a;
-this[ev] = function(){
-var a = this[evarray]; /* should be an array */
-if(this[evorig]) this[evorig]();
-for(var i = 0; i<a.length; ++i) a[i]();
-};
+eval(
+'this.' + ev + ' = function(){ var a = this.' + evarray + '; if(this.' + evorig + ') this.' + evorig + '(); for(var i = 0; i<a.length; ++i) a[i](); };');
 }
 this[evarray].push(handler);
 }
@@ -548,11 +545,8 @@ this[evorig] = this[ev];
 this[ev] = undefined;
 }
 this[evarray] = a;
-this[ev] = function(){
-var a = this[evarray]; /* should be an array */
-if(this[evorig]) this[evorig]();
-for(var i = 0; i<a.length; ++i) a[i]();
-};
+eval(
+'this.' + ev + ' = function(){ var a = this.' + evarray + '; if(this.' + evorig + ') this.' + evorig + '(); for(var i = 0; i<a.length; ++i) a[i](); };');
 }
 this[evarray].push(handler);
 }
