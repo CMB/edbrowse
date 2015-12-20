@@ -1,17 +1,15 @@
+<!DOCTYPE html>
 <html><head>
-<meta http-equiv="content-type" content="text/html; charset=UTF-8"></head><body alink="navy" link="red" bgcolor="white" text="black" vlink="red"><font face="Arial,Helvetica,sans-serif" size="4">
-
 <meta name="description" content="documentation Edbrowse, un éditeur orienté texte, 
 un navigateur, et un client de courrier électronique.">
 <meta name="keywords" content="orienté texte, ligne de commande, interactif,
 éditeur, navigateur, client mail, portable, C, javascript,
 securité, ssl, aveugle, script, accessible, accessibilité">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <title>Edbrowse documentation</title>
-<link rel="SHORTCUT ICON" href="http://www.eklhad.net/linux/app/pc.ico">
-<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-
-
+</head>
+<body alink="navy" link="red" bgcolor="white" text="black" vlink="red">
+<font face="Arial,Helvetica,sans-serif" size="4">
 
 <h2 align="center"> Documentation Edbrowse, guide de l'utilisateur</h2>
 
@@ -35,6 +33,7 @@ securité, ssl, aveugle, script, accessible, accessibilité">
 <li><a href="#guide"> Guide de référence rapide </a></li>
 <li><a href="#tips"> Trucs pour éviter les numéros de ligne </a></li>
 <li><a href="#mlist"> Liste de diffusion </a></li>
+<li><a href="#wiki"> Wiki Edbrowse </a></li>
 </ul>
 
 <h4> Chapitre 3, l'éditeur </h4>
@@ -84,6 +83,7 @@ securité, ssl, aveugle, script, accessible, accessibilité">
 <li><a href="#valid"> Validation et modification de formulaires </a></li>
 <li><a href="#popup"> fenêtres Popups et Popunders </a></li>
 <li><a href="#onc"> Onchange et annuler </a></li>
+<li><a href="#jex"> Debugger Javascript </a></li>
 </ul>
 
 <h4> Chapitre 6, scripts d'Edbrowse et le fichier de configuration </h4>
@@ -109,6 +109,7 @@ securité, ssl, aveugle, script, accessible, accessibilité">
 <li><a href="#mailfmt"> Courrier formaté </a></li>
 <li><a href="#filter"> Filtrage de courrier </a></li>
 <li><a href="#reply"> Réponse au courrier </a></li>
+<li><a href=#imap> Client Imap </a>
 </ul>
 
 <h4> Chapitre 8, Accéder aux bases de données </h4>
@@ -135,15 +136,17 @@ est l'actuel mainteneur du projet et le webmaster.
 
 <h3 align="center"> <a name="auth"> Auteur </a> </h3>
 
-Karl Dahlke
-<a href="mailto:eklhad@gmail.com">eklhad@gmail.com</a>.&nbsp;
+<A HREF=mailto:eklhad@gmail.com>
+Karl Dahlke</A>
+ a écrit la première version de Edbrowse en perl, en 2001, et reste le principal développeur 
+ du projet.
 Consultez SVP
 <a href="http://en.wikipedia.org/wiki/Edbrowse">l'article wikipedia</a> pour l'historique de Edbrowse, 
 et un aperçu de ses possibilités.
 
 <h3 align="center"> <a name="copy"> Copyright </a> </h3>
 
-Ce programme est copyright (c) (c) Karl Dahlke (et d'autres auteurs et contributeurs), 2000-2014. 
+Ce programme est copyright (c) (c) Karl Dahlke (et d'autres auteurs et contributeurs), 2000-2015. 
 Il est mis à disposition par les auteurs sous la licence publique générale GNU (GPL), 
 définie par la Free Software Fondation. 
 Il peut être utilisé dans n'importe quel but, et redistribué, 
@@ -163,26 +166,23 @@ institutionnels ou gouvernementaux. En utilisant ce programme, vous l'acceptez e
 
 <h3 align="center"> <a name="ack"> Remerciements </a> </h3>
 
-<p><a href="mailto:chris@the-brannons.com">
+<a href="mailto:chris@the-brannons.com">
 Chris Brannon</a> a écrit ou modifié au moins 20% du code,
 et a fourni de bonnes idées pour l'architecture générale.
-Il maintient désormais Edbrowse.
-</p>
-
-<p><a href="mailto:arthompson1990@gmail.com">
+<a href="mailto:arthompson1990@gmail.com">
 Adam Thompson</a>
- a porté l'interface javascript de C à C++, portage requis par les versions 2.4 et plus de Mozilla JS.
-Il est devenu un membre précieux de l'équipe de développement.
-</p>
-
-<p><a href="mailto:obrien654j@gmail.com">
+ a porté l'interface javascript de C à C++, portage requis par les versions 2 de Mozilla JS, 
+et il continue à superviser l'architecture générale du projet.
+ <A href=mailto:kevin@carhart.net>
+Kevin Carhart</A>
+a déchiffré les mystères de jquery, et mis à jour le DOM pour l'implémenter. 
+<a href="mailto:obrien654j@gmail.com">
 Jeremy O'Brien</a> a porté le programme sur Mac OS X.
-</p>
-
-<p>
-Plusieurs personnes ont traduit les sorties et messages d'erreur en d'autres langues,
+et
+<A href=mailto:ubuntu@geoffair.info>
+Geoff McLane</A> a fourni le portage Windows, une configuration cmake et un 
+système de compilation généraux. Plusieurs personnes ont traduit les sorties et messages d'erreur en d'autres langues,
 et elles sont créditées de leur travail dans la section "Langages" ci-dessous.
-</p>
 
 <h3 align="center"> <a name="over"> Vue d'ensemble </a> </h3>
 
@@ -219,9 +219,8 @@ Si vous êtes un utilisateur de Linux, et que votre distribution de fournisse pa
 vous pouvez - bien sûr - utiliser la version Perl mentionnée ci-dessus, mais vous pouvez égalemnt
  utiliser la version complète en C, en évitant les tracas de la compilation.&nbsp;
  Des versions liées statiquement pour les architectures 32 bits et 64 bits sont maintenues sur
-Statically-linked executables for 32 bit and 64 bit architectures
 <a href="http://edbrowse.org">
-page home d'Edbrowse</a>.
+la home page d'Edbrowse</a>.
 </p>
 
 <p>
@@ -376,35 +375,70 @@ La plupart de ces commandes n'auront pas de sens si vous ne lisez pas le reste
 de la documentation.&nbsp;
 
 <p>
+Quitter le programme
+</p>
+<P>
 q : quitte la session courante <br>
 qt : quitte le programme complètement, que vous ayez sauvegardé vos fichiers ou non <br>
+bw : tampon sauvegardé; vous pouvez quitter n'importe quand<br>
 !commande : commande shell <br>
-p : afficher la ligne courante <br>
-4,7p : afficher les lignes 4 à 7 <br>
-+3p : avancer de 3 lignes et affiche<br>
+! : shell interactif<br>
+cd : change de répertoire
+</P>
+<p>
+Entrées
+</p>
+<P>
+rl : utilise readline() en entrée (bascule)<br>
+</p>
+<p>
+Affichage des lignes dans le tampon
+</p>
+<P>
+p : affiche la ligne courante <br>
+4,7p : affiche les lignes 4 à 7 <br>
++3p : avance de 3 lignes et affiche<br>
 3 : idem +3p, print est la commande par défaut<br>
 - : ligne précédente<br>
---- : reculer de 3 lignes<br>
-'a,'bp : afficher les lignes repérées par les étiquettes a et b <br>
-kb : marquer la ligne courante avec l'étiquette b <br>
-l : lister la ligne courante, affichant les caractères invisibles et les marqueurs de fin de ligne<br>
+--- : recule de 3 lignes<br>
+'a,'bp : affiche les lignes repérées par les étiquettes a et b <br>
+kb : marque la ligne courante avec l'étiquette b <br>
+l : liste la ligne courante, affichant les caractères invisibles et les marqueurs de fin de ligne<br>
 eo : marqueurs de fin désactivés<br>
-el : afficher les marqueurs de fin ^$ quand une ligne est listée<br>
-ep : afficher les marqueurs de fin quand une ligne est listée ou affichée<br>
-lna : afficher les caractères nonascii en hexadécimal uand une ligne est listée (bascule)<br>
-n : afficher la ligne courante avec son numéro de ligne <br>
-z22 : afficher les 22 prochaines lignes <br>
-z : afficher encore 22 lignes <br>
-= : afficher le nombre de lignes du fichier en cours<br>
-X : faire de cette ligne la ligne courante <br>
-s/x/y/ : remplacer x par y dans la ligne courante <br>
-s/x/y : remplacer x par y dans la ligne courante et afficher le résultat<br>
-s//y/ : utiliser la dernière chaîne de substitution, dans ce cas x<br>
-s/x/%/ : utiliser la dernière chaîne de substitution<br>
-s : répéter la dernière opération de substitution<br>
-s/x/y/2 : remplacer la deuxième occurrence de x par y dans la ligne courante <br>
-4,7s/x/y/g : remplacer toutes les occurrences de x par y, dans la ligne courante<br>
-/x/ : rechercher la ligne contenant x <br>
+el : affiche les marqueurs de fin ^$ quand une ligne est listée<br>
+ep : affiche les marqueurs de fin quand une ligne est listée ou affichée<br>
+lna : affiche les caractères nonascii en hexadécimal uand une ligne est listée (bascule)<br>
+n : affiche la ligne courante avec son numéro de ligne <br>
+z22 : affiche les 22 prochaines lignes <br>
+z : affiche encore 22 lignes <br>
+= : affiche le nombre de lignes du fichier en cours<br>
+.= : affiche le numéro de ligne courante<br>
+B : trouve la ligne contenant le crochet correspondant <br>
+B( : trouve la ligne contenant la parenthèse correspondante
+</p>
+<p>
+Messages d'aide
+</p>
+<P>
+h : aide, explique le dernier point d'interrogation <br>
+H : affiche tous les messages d'erreur (bascule)
+</p>
+<p>
+Recherche et remplacement
+</p>
+<p>
+s/x/y/ : remplace x par y dans la ligne courante <br>
+s/x/y : remplace x par y dans la ligne courante et affiche le résultat<br>
+s//y/ : utilise la dernière chaîne de substitution, dans ce cas x<br>
+s/x/%/ : utilise la dernière chaîne de substitution<br>
+s : répète la dernière opération de substitution<br>
+s/x/y/2 : remplace la deuxième occurrence de x par y dans la ligne courante <br>
+4,7s/x/y/g : remplace toutes les occurrences de x par y, dans la ligne courante<br>
+s, : remplace virgule espace par un retour-chariot, divise la ligne en deux<br>
+s. : replace point espace par un retour-chariot, divise la ligne en deux<br>
+s?2 : divise la ligne à l'emplacement du 2ème point d'interrogation<br>
+bl : découpe une très longue ligne en phrases<br>
+/x/ : recherche la ligne contenant x <br>
 /x: idem que /x/<br>
 /x/i: cherche la ligne contenant x ou X<br>
 ?x? : recherche x en arrière<br>
@@ -413,29 +447,42 @@ cs : les recherches et les substitutions sont sensibles à la casse<br>
 sg : les chaînes de substitution sont globales pour toutes les sessions <br>
 sl : les chaînes de substitution sont locales à leurs sessions <br>
 su8: Utiliser utf-8 dans recherche et remplacement (bascule)<br>
+g/x/ p : affiche toutes les lignes contenant x x<br>
+v/x/ p : affiche toutes les lignes ne contenant pas x<br>
+v/x/i l : liste toutes les lignes ne contenant ni x ni X<br>
 lc : conversion de la ligne courante en minuscules<br>
 mc : majuscules en début de mot dans la ligne courante<br>
 uc : conversion de la ligne courante en majuscules <br>
-s/x/uc: conversion de x en X dans la ligne courante<br>
-h : aide, expliquant le dernier point d'interrogation <br>
-f : afficher le nom du fichier courant <br>
-f foo : renommer le fichier courant en 'foo' <br>
-f/ : ne conserveur que la dernière partie du nom de fichier courant <br>
-e : afficher le numéro de la session courante <br>
-e3 : aller à la session numéro 3 <br>
-e foo : éditer le fichier 'foo' <br>
-r foo : lire le contenu du fichier 'foo' dans le tampon courant <br>
-w foo: sauvegarder le tampon courant sous le nom 'foo'<br>
-w+ foo : ajouter au fichier 'foo' le contenu du tampon courant<br>
-w/ : sauvegarder sous le nom de la dernière partie du nom de fichier courant <br>
+s/foo/uc: conversion de foo en FOO dans la ligne courante<br>
+s/\bfoo\b/mc/g : convertit foo en Foo, mas pas foobar
+</p>
+<p>	
+Fichiers et sessions
+</p>
+<p>
+f : affiche le nom du fichier courant <br>
+f foo : renomme le fichier courant en 'foo' <br>
+f/ : ne conserve que la dernière partie du nom de fichier courant <br>
+e : affiche le numéro de la session courante <br>
+e3 : va à la session numéro 3 <br>
+e foo : édite le fichier 'foo' <br>
+r foo : lit le contenu du fichier 'foo' dans le tampon courant <br>
+w foo: sauvegarde le tampon courant sous le nom 'foo'<br>
+w+ foo : ajoute au fichier 'foo' le contenu du tampon courant<br>
+w/ : sauvegarde sous le nom de la dernière partie du nom de fichier courant <br>
+e ~/projets/edbrowse/src/buf*.c : expanse les méta-caractères s'il y a correspondance exacte<br>
+e $EBSRC/buf*.c :  expansion de variable<br>
+bd : bascule entre détection/non détection des fichiers binaires du répertoire<br>
+iu : convertit automatiquement entre iso8859 et utf8 (bascule)<br>
+</p>
+<p>
+Edition de texte
+</p>
+<p>
+u : annuler la dernière commande <br>
 d : supprimer la ligne courante <br>
 1, $d : supprimer toutes les lignes, de 1 à la fin du fichier <br>
 D : supprimer la ligne courante et afficher la prochaine ligne<br>
-dr : le répertoire est en lecture seule <br>
-dw : on peut écrire dans le répertoire, et d déplace les fichiers dans la corbeille<br>
-dx : on peut écrire dans le répertoire, et d supprime le fichier<br>
-hf : basculer entre montrer/cacher les fichiers cachés du répertoire<br>
-u : annuler la dernière commande <br>
 i : insérer le texte, suivi d'une virgule, avant la ligne courante<br>
 c : remplacer la ligne courante par un nouveau bloc du texte, terminé par une virgule <br>
 a : ajouter le texte après la ligne courante, terminé par une virgule <br>
@@ -443,76 +490,128 @@ a+ : inclure la ligne que vous vous venez de taper, si vous pensiez être en mod
 4,7m11 : déplacer les lignes 4 à 7 à la ligne 11 <br>
 4,7t11 : copier les lignes 4 à 7 à la ligne 11 <br>
 3,4j : fusionner les lignes 3 et 4<br>
-3,4J : fusionner les lignes 3 et 4, séparées par un espace<br>
-g/x/ p : afficher les lignes contenant 'x' <br>
-v/x/ p : afficher les lignes qne contenant pas 'x' <br>
-B : trouver la ligne contenant la parenthèse correspondante <br>
-b : naviguer dans le fichier courant courant, si c'est du HTML <br>
-b foo.html : éditer et naviguer dans le fichier foo.html<br>
-b URL : se connecter à URL et naviguer<br>
+3,4J : fusionner les lignes 3 et 4, séparées par un espace
+</p>
+<p>
+Parcours de répertoire
+</p>
+<p>
+dr : le répertoire est en lecture seule <br>
+dw : on peut écrire dans le répertoire, et d déplace les fichiers dans la corbeille<br>
+dx : on peut écrire dans le répertoire, et d supprime le fichier<br>
+hf : basculer entre montrer/cacher les fichiers cachés du répertoire<br>
+lsl : affiche la taille du fichier sur la ligne courante, en mode répertoire uniquement<br>
+lss : affiche la taille approximative du fichier, en ko, mo etc..<br>
+lst : affiche la date de modification du fichiers binaires<br>
+lsp : affiche le propriétaire, le groupe et les les permissions<br>
+lsi : affiche l'inode<br>
+lsk : affiche le nombre de liens en dur<br>
+lsm : affiche les nombres majeur et mineur<br>
+lsy : affiche le chemin d'un lien symbolique<br>
+ls : idem à lsst<br>
+ls=lt : affiche la longueur et la date de tous les fichiers du répertoire parcouru<br>
+ls= : affiche uniquement la liste des fichiers du répertoire parcouru
+</p>
+<p>
+Parcourir un fichier html ou une page web
+</p>
+<p>
+b : navigue dans le fichier courant, considéré comme étant du HTML <br>
+b foo.html : éditr et navigue dans le fichier foo.html<br>
+b URL : se connecte à URL et naviguer<br>
 ub : quitte le mode navigation du fichier courant <br>
-ft : afficher le titre de la page Web courante <br>
-fd : afficher la description de la page Web courante<br>
-fk : afficher les mots-clés de la page Web courante<br>
+ft : affiche le titre de la page Web courante <br>
+fd : affiche la description de la page Web courante<br>
+fk : affiche les mots-clés de la page Web courante<br>
+rf : rafraîchit la page WEB ou la liste des fichiers<br>
+et : édite cette page Web en mode texte pur <br>
 hr : redirection HTTP (bascule)<br>
-js : activation javascript (bascule)<br>
-sr : envoyer le référent  (bascule)<br>
+vs : vérifie les connexions SSL (sécurisées)<br>
+sr : envoie le référent  (bascule)<br>
+ua3 : se présente comme le troisième agent utilisateur dans votre fichier de configuration
+</p>
+<p>
+Téléchargements FTP ou HTTP
+</p>
 fma : mode FTP actif<br>
 fmp : mode FTP passif<br>
-rf : rafraichir la page WEB ou la liste des fichiers<br>
-et : éditer cette page Web en mode texte pur <br>
-vs : vérifier les connexions SSL (sécurisées)<br>
-ua3: se présente comme le troisième agent utilisateur dans votre fichier de configuration<br>
-g : suivre le lien sur la ligne courante <br>
-g2 : suivre le deuxième lien sur la ligne courante <br>
-^ : retourner à la page à la page Web précédente<br>
-i=xyz : remplir le formulaire sur ligne courante avec 'xyz'<br>
-i2=xyz : placer le deuxième formulaire de la ligne courante avec 'xyz' <br>
-i2* : appuyer sur le 2ème bouton de la ligne courante, habituellement envoyer ou remettre à zéro<br>
-i3 ? : afficher la description du troisième formulaire de la ligne courante <br>
-db : niveau de déboguage (de 0 à 7)<br>
-cd : changer de répertoire <br>
-bl : découper la ligne courante en phrases<br>
-bd : basculer entre détection/non détection des fichiers binaires du répertoire<br>
-bg: télécharge les fichiers en tâche de fond (bascule)<br>
-bgl: liste les téléchargements en tâche de fond, terminés ou en cours<br>
-rl : utilise readline() en entrée (bascule)<br>
-pb : joue le tampon <br>
-pg : plugins activés (toggle) <br>
-iu : convertir automatiquement entre iso8859 et utf8 (bascule)<br>
+bg : télécharge les fichiers en tâche de fond (bascule)<br>
+bgl : liste les téléchargements en tâche de fond, terminés ou en cours
+</p>
+<p>
+Interagir avec une page Web
+</p>
+<p>
+g : suit le lien sur la ligne courante <br>
+g2 : suit le deuxième lien sur la ligne courante <br>
+g$ : suit le dernier lien sur la ligne courante<br>
+^ : retourne à la page à la page Web précédente<br>
+i=xyz : remplit le formulaire sur ligne courante avec 'xyz'<br>
+i2=xyz : place le deuxième formulaire de la ligne courante avec 'xyz' <br>
+i2* : appuie sur le 2ème bouton de la ligne courante, habituellement envoyer ou remettre à zéro<br>
+i$* : appuie sur le dernier bouton de la ligne courante<br>
+i3 ? : affiche la description du troisième formulaire de la ligne courante <br>
+M4 : déplace cette page web en session 4 et revient à la page précédente<br>
+js : activation javascript (bascule)<br>
+rr : rafraîchit  l'écran, afin de refléter les modifications javascript asynchrones 
+</p>
+<p>
+Client Mail
+</p>
+<p>
+sm : envoie le courrier [le numéro de compte] <br>
+re : répond à un courriel<br>
+rea : répond à tous
+</p>
+<p>
+Plugins
+</p>
+<p>
+pb : joue le tampon (typiquement de l'audio)<br>
+pb.mp3 : joue le tampon courant comme un fichier mp3<br>
+pg : plugins activés (bascule) 
+</p>
+<p>
+Accès aux bases de données
+</p>
+<p>
 ds=source,login,password : définit la source de données<br>
 sht : montrer les tables<br>
 shc : montrer les colonnes (et la clé primaire) de la table courante<br>
 shf : montrer clés de la table courante<br>
-fbc : chercher colonnes blob<br>
-sm : envoyer le courrier [le numéro de compte] <br>
-re : répondre à un courriel<br>
-rea : répondre à tous<br>
-&lt;foo arg1 arg2 ... appel de la fonction foo, définie dans votre fichier .ebrc 
+fbc : chercher colonnes blob
+</p>
+<p>
+Fonctions Edbrowse
+</p>
+<p>
+&lt;foo arg1 arg2 ... appel de la fonction foo, définie dans votre fichier .ebrc<br>
+X : fait de cette ligne la ligne courante, souvent employé dans un script
+</p>
+<p>
+Deboguage
+</p>
+<p>
+db3 : niveau de déboguage (de 0 à 7)<br>
+jdb : débugger javascript : point pour le quitter
+</p>
 
-</foo></p><h3 align="center"> <a name="tips"> Trucs pour éviter les numéros de ligne </a> </h3>
+<h3 align="center"> <a name="tips"> Trucs pour éviter les numéros de ligne </a> </h3>
 
+<p>
 Si vous découvrez ed, vous pouvez trouver ce programme malcommode.&nbsp;
-Je reçois souvent des plaintes au sujet des numéros de ligne.&nbsp;
-Les gens haïssent les numéros de ligne.&nbsp;
-Ils ne veulent pas lire la page ligne par ligne par ligne, en tapant 1p 2p 3p 4p 5p etc.&nbsp;
-Pour tout dire, je hais également les numéros de ligne, et ne les utilise jamais.&nbsp;
- Pas depuis des années.&nbsp;
+Il semble vous obliger à utiliser des numéros de ligne, lesquels se modifient toujours 
+en cours d'édition de texte. Cependant, les numéros de lignes sont rarement 
+nécessaires en pratique. Voici quelques astuces pour s'en passer.
 
 <p>
 Pour lire le document entier, tapez ',p'.&nbsp;
-Ceci fonctionne, si vous utilisez un synthétiseur de parole en ligne de commande.&nbsp;
-Le document entier est dans le tampon et vous pouvez le lire en employant les touches 
-de fonction de votre synthétiseur. Comme la plupart des personnes utilisent toutefois 
-des lecteurs d'écran, ceci ne fonctionnera pas.&nbsp;
-Cependant, il y a une manière facile de sauter d'écran en écran.&nbsp;
+Evidemment, un long document débordera de l'écran, cependant, il y a une manière facile de sauter 
+d'écran en écran.&nbsp;
 Commencer par 0z24 pour obtenir les 24 premières lignes.&nbsp;
 Ensuite, la commande 'z' donnera les 24 prochaines, et les 24 prochaines, 
 et ainsi de suite.&nbsp;
-Vous pouvez employer 22, ou 23, ou ce qui semble approprié à votre écran.&nbsp;
-</p>
-
-<p>
+Vous pouvez employer 22, ou 23, ou ce qui semble approprié à votre écran.&nbsp;<br>
 Une autre approche est de simplement taper la touche entrée, à plusieurs reprises, 
 pour aller de ligne en ligne.&nbsp;
 </p>
@@ -549,17 +648,6 @@ Et naturellement, des opérations multiples peuvent être codées dans un script
 une importante fonctionnalité de Edbrowse.&nbsp;
 </p>
 
-<p>
-Ce sont juste quelques trucs qui vous rendront aussi rapide et efficace que quiconque 
-employant un éditeur ou un navigateur écran, à condition de connaître la page 
-sur laquelle vous travaillez.&nbsp;
-Mon épouse est toujours stupéfaite de la rapidité avec laquelle je dialogue avec 
-des sites Web, ou quand je travaille sur des documents communs à nous deux.&nbsp;
-Cependant, vous ne serez jamais plus rapide que votre collègue voyant en naviguant dans un 
-territoire peu familier, quel que soit le système employé.&nbsp;
-C'est une chimère.
-</p>
-
 <h3 align="center"> <a name="mlist"> Liste de discussion </a> </h3>
 
 Il existe une liste de diffusion pour les utilisateurs d'Edbrowse et d'autres utilitaires 
@@ -567,6 +655,12 @@ en ligne de commande.&nbsp;
 Vous pouvez vous y abonner en envoyant un courrier à
 <a href="mailto:commandline-subscribe@yahoogroups.com?subject=Subscribe">
 commandline-subscribe@yahoogroups.com</a>.
+
+<h3 align="center"> <a name="wiki"> Wiki Edbrowse </a> </h3>
+
+Il existe un wiki dévolu à Edbrowse, incluant des trucs et astuces, et des exemples de fichiers 
+de configuration.
+Voyez <A href=http://edbrowse.org>edbrowse.org</A> pour plus d'informations.
 
 <p></p><hr><p>
 </p><h2 align="center"> Chapitre 3, l'Editeur </h2>
@@ -641,7 +735,7 @@ Ainsi «..» est toujours le répertoire parent physique.&nbsp;
 <p>
 Si une chaîne contient $ [] * ? ou est précédée d'un ~, les variables 
 d'environnement et les caractères méta sont expansés.&nbsp;
-Ainsi, «&nbsp;cd ~/documents&nbsp;» vous amène dans le répertoire «&nbsp;documents&nbsp;» de votre 
+Ainsi, «cd ~/documents» vous amène dans le répertoire «documents» de votre 
 répertoire personnel.&nbsp;
 </p>
 
@@ -723,13 +817,6 @@ Utilisez «&nbsp;eo&nbsp;» pour enlever les marqueurs.&nbsp;
 
 <p>
 <li>
-q quitte Edbrowse sans message d'avertissement si le texte n'a été jamais associé 
-à un fichier.&nbsp;
-</li>
-</p>
-
-<p>
-<li>
 Q majuscule ne quitte pas l'éditeur.&nbsp;
 C'est parce que je frappe souvent la touche de blocage majuscule par erreur, 
 ou parfois «shift q», et si j'ai oublié quelques modifications importantes que j'ai 
@@ -767,7 +854,8 @@ C'est conforme à «,p --» pour afficher le fichier entier.&nbsp;
 Vous ne pouvez pas taper une commande sur deux lignes en mettant un antislash en fin de 
 première ligne.&nbsp;
 Et c'est inutile de toute façon, puisque Perl traduit «&nbsp;\n&nbsp;».&nbsp;
-Pour dédoubler une ligne au milieu du mot «&nbsp;bonjour&nbsp;», tapez «&nbsp;s/bonjour/bon-\njour&nbsp;».&nbsp;
+Pour dédoubler une ligne au milieu du mot «&nbsp;bonjour&nbsp;», tapez :
+<p>s/bonjour/bon-\njour&nbsp;».&nbsp;</p>
 </li>
 </p>
 
@@ -1385,10 +1473,53 @@ et lancez alors «&nbsp;!diff 'x 'y&nbsp;».&nbsp;
 </p>
 
 <p>
-Ce dispositif n'est pas limité aux parcours de répertoire.&nbsp;
-Vous pouvez éditer un fichier simple, mais vous pouvez encore coller le contenu 
-d'une ligne dans votre commande shell.&nbsp;
-Je ne sais pas pourquoi vous voudriez faire ceci, mais c'est possible.&nbsp;
+En mode répertoire, la commande ls affiche différents attributs du ficheirt sue la ligne courante. 
+Tapez lsl pour la longueur, lss pour la taille approximative, lst pour la date de modification,
+lsp pour les permissions, lsi pour l'inode, lsk pour le nombre de liens durs, lsy por le chmein 
+associé à ce lien symbolique, ou lsm pour les nombres majeurs et mineurs.
+(les 5 derniers ne s'appliquent pas à Windows).
+Ceux-ci peuvent être combinés : par ex. lspk affiche les permissions et le nombre de liens en dur.
+ls est identique à lsst, taille et date de modification.
+</p>
+
+<p>
+Si vous voulez afficher la longueur et la date pour chaque fichier dans un listing de répertoire, 
+alors tapez ls=lt. Le signe égal applique la directive ls à tous les parcours de répertoire. 
+Tapez ls= pour désactiver ceci. Ci-dessous, voici comment le répertoire racine s'affichera 
+avec ls=lt.
+</p>
+
+<PRE>bin@/ 36864 Aug 31 2015 16:20
+boot/ 4096 Dec  4 2014 07:54
+cd/ 4096 Nov 30 2014 09:38
+dev/ 3560 Sep  3 2015 05:00
+etc/ 4096 Sep  3 2015 05:00
+home/ 4096 Mar 10 2015 07:52
+lib@/ 53248 Aug 31 2015 16:20
+lost+found/ 16384 Dec 10 2014 15:32
+opt/ 4096 Jan 12 2015 04:36
+proc/ 0 Sep  3 2015 04:59
+root/ 4096 Mar 10 2015 07:37
+run/ 740 Sep  3 2015 05:00
+sbin@/ 12288 Jul 14 2015 10:43
+sys/ 0 Sep  3 2015 04:59
+tmp/ 260 Sep 24 2015 11:05
+usr/ 4096 Jan 12 2015 04:47
+var/ 4096 Sep  3 2015 04:59
+</PRE>
+
+<p>
+Toutes les entrées dans le répertoire racine sont des répertoires, ainsi se terminent-elles toutes 
+par /. La première entrée est bin@/ parce que bin est un lien symbolique vers /usr/bin (la plupart 
+des sytèmes sont ainsi configurés) et /usr/bin est un répertoire.
+La taille de /proc est 0, parce que /proc est un système de fichier virtuel. Idem pour sys.
+</p>
+
+<p>
+Si vous recherchez l'année 2014, vous ne trouverez rien, parce que la date et l'heure sont des 
+infos supplémentaires ne faisant pas partie du nom de fichier.
+Si vous voulez voir ce répertoire comme du texte, sauvegardez-le dans un fichier, ou dans 
+une autre session.
 </p>
 
 <h3 align="center"> <a name="case"> Majuscules et minuscules </a> </h3>
@@ -1425,35 +1556,8 @@ Les seuls espaces préservés sont les étiquettes ou les espaces en début de l
 ou après chaque caractère retour-chariot.&nbsp;
 C'est une modeste tentative pour maintenir le texte indenté, à supposer 
 que cela ait du sens. 
-
-<p>
-J'utilise ce dispositif de deux manières différentes.&nbsp;
-Si je connais bien le document, (je l'ai probablement écrit), je peux employer la 
-commande bl sur une ligne du texte qui semble plutôt longue.&nbsp;
-Je l'ai tapée rapidement, sans m'interrompre, et maintenant je veux la découper.&nbsp;
-Mais je ne veux pas compter les signes de ponctuation et me dire, 
-«&nbsp;j'ai besoin d'une coupure après la troisième virgule et le point suivant 'cela' 
-et puis à la prochaine virgule&nbsp;», utilisant sans cesse la commande de ponctuation «&nbsp;s&nbsp;».&nbsp;
-Oh j'aime bien la commande «&nbsp;s&nbsp;» - qui vous donne le contrôle complet - mais il est plus 
-facile de taper «&nbsp;bl&nbsp;» - et «&nbsp;bl&nbsp;» fait habituellement la bonne chose.&nbsp;
-En outre, le bl comprime les doubles espaces accidentels, une faute de typographie 
-que je n'entendrai jamais si je lis simplement la ligne en entier.&nbsp;
-</p>
-
-<p>
-Quand le document est importé, habituellement d'un traitement de texte tel que 
-Word, «&nbsp;bl&nbsp;» remplit une fonction complètement différente.&nbsp;
-Les paragraphes sont souvent stockés sur une ligne physique simple.&nbsp;
-Parfois le document entier ne comporte qu'une seule ligne, avec le caractère de 
-retour «&nbsp;\r&nbsp;» séparant les paragraphes.&nbsp;
-Les traitements de textes «&nbsp;wysiwyg&nbsp;» ne s'occupent pas de séparer les phrases et 
-expressions - le retour automatique à la ligne s'en chargeant.&nbsp;
-Bien, «&nbsp;bl&nbsp;» est notre version de retour automatique à la ligne.&nbsp;
-Il n'essaie pas de se conformer à un écran ; il coupe simplement le texte 
-en morceaux maniables, chaque morceau étant une unité sémantique séparée.&nbsp;
-Quand «&nbsp;bl&nbsp;» est lancé, les lignes physiques contiendront des phrases ou des expressions, 
-délimitées par la ponctuation, ou par le caractère retour-ligne/retour-chariot.&nbsp;
-</p>
+Une fois bl exécuté, les lignes physiques contiendront des phrases ou énoncés, délimités par 
+la ponctuation, ou par le saut de ligne/retour-chariot présent dans le texte original.
 
 <p>
 Si l'une des lignes originales, délimitée par un retour-ligne ou chariot, est longue, 
@@ -1531,8 +1635,7 @@ et si «&nbsp;foo&nbsp;» a été mis à jour dans l'intervalle, il vous avertit
 Le «&nbsp;fichier a été mis à jour par quelqu'un d'autre – voulez-vous l'enregistrer ?&nbsp;»
 C'est un bon dispositif, mais Edbrowse ne l'a pas, simplement parce que je n'ai pas 
 jugé bon de l'implémenter.&nbsp;
-Je suis le seul utilisateur sur mon PC, et vous êtes probablement le seul utilisateur 
-sur votre PC, aussi ce dispositif n'est pas très demandé.&nbsp;
+Ce dispositif n'est pas très demandé.&nbsp;
 </p>
 
 <p></p><hr><p>
@@ -1648,17 +1751,10 @@ pour commuter entre le HTML brut et la page navigable.&nbsp;
 </p>
 
 <p>
-La mise en page dans le mode navigation est relativement simple, parce qu'une personne 
-aveugle ne veut pas la complexité.&nbsp;Nous ignorons les polices, les italiques etc., 
-et si jamais ce type d'information nous intéresse, la meilleure façon de l'obtenir est de 
-lire le code HTML brut.&nbsp;
-Ainsi la plupart des tags sont ignorés, à l'exception des en-têtes, 
-paragraphes, et listes.&nbsp;
-</p>
-
-<p>
-Je n'indente pas les sous-sections ou les items de liste.&nbsp;
-Nous perdons l'effet visuel, et parfois les espaces supplémentaires disparaissent.&nbsp;
+La mise en page dans le mode navigation est relativement simple. La plupart des tags est 
+ignorée, à l'exception des en-têtes, paragraphes, et listes.&nbsp;
+Les sous-sections et les items de liste ne sont pas indentés.&nbsp;
+L'effet visuel n'est pas important, et parfois les espaces supplémentaires disparaissent.&nbsp;
 </p>
 
 <p>
@@ -1782,7 +1878,6 @@ Ces traductions sont conçues pour fonctionner avec les pages du
 <a href="http://www.mathreference.com/"> Math Reference Project</a>,
 des archives de mathématiques avancées qui essaient simultanément d'être accessibles 
 aux aveugles et voyants.&nbsp;
-Un <A href=http://book.mathreference.com>livre en ligne</A> est inclus.
 </p>
 
 <h3 align="center"> <a name="title"> Titre, description, mots-clés </a> </h3>
@@ -2457,7 +2552,8 @@ En fait le fichier est créé en mode 0600, pour votre propre protection.&nbsp;
 
 <p>
 Vous n'aurez pas probablement jamais besoin de regarder votre fichier de cookies, 
-mais si c'est le cas, c'est du texte directement éditable.&nbsp;
+mais si c'est le cas, c'est du texte directement éditable.&nbsp; Editez-le avec ed ou un autre éditeur, 
+pour que Edbrowse ne le modifie pas pendant que vous le consultez.
 </p>
 
 <h3 align="center"> <a name="ssl"> Connexions sécurisées </a> </h3>
@@ -2879,14 +2975,13 @@ au bout de 16 secondes.&nbsp;
 
 <h3 align="center"> <a name="onc"> Onchange et annuler </a> </h3>
 
+<p>
 Quand vous entrez ou modifiez la valeur d'une zone de saisie, 
 le formulaire peut parfois appeler une routine Javascript.&nbsp;
 Ce n'est pas habituel, mais cela arrive.&nbsp;
 Dans un exemple précédent, j'ai décrit un menu primaire et secondaire.&nbsp;
 Quand le premier choix est fait, par exemple les fruits, Javascript crée le deuxième menu 
 correspondant à votre choix primaire, en utilisant la fonctionnalité «&nbsp;onchange&nbsp;».&nbsp;
-
-<p>
 C'est bel et bon, mais Edbrowse a quelque chose que votre navigateur graphique n'a pas, 
 à savoir la commande annuler (undo).&nbsp;
 Et dans ce contexte, cela ne fonctionne vraiment pas.&nbsp;
@@ -2898,6 +2993,15 @@ Il remet simplement le texte comme il était, et n'a aucune capacité «&nbsp;de
 les effets secondaires du code Javascript.&nbsp;
 A cette fin, la commande undo est désactivée dans les champs de saisie.
 </p>
+
+<H3 align="center"> <A NAME=jex> Debugger Javascript </A> </H3>
+En mode navigation, la commande "jdb" redirige tous les entrées suivantes vers le moteur javascript, 
+contenant les objets associés à page web courante. Tapez document.body.childNodes pour voir une 
+liste de tous les noeuds de la page web. Une commande ok prédéfinie liste tous les membres d'un 
+objet. Tapez un point pour revenir à Edbrowse.
+Il est préférable d'entre la commande jdb avec un niveau de débogage à 3, pour voir ainsi toutes les 
+erreurs javascript de syntaxe ou de référence. Cette fonctionnalité est destinée aux 
+développeurs, et n'est pas très utile à l'utilisateur final..
 
 <p></p><hr><p>
 </p><h2 align="center"> Chapitre 6, Scripts d'Edbrowse et le fichier de configuration </h2>
@@ -3436,7 +3540,7 @@ Il supprime ensuite toutes les lignes vides du début.&nbsp;
 
 <p>
 Vous pouvez employer la boucle (100) {…} pour répéter un ensemble de commandes 100 fois.&nbsp;
-Je n'ai pas employé ce dispositif très souvent.&nbsp;
+Ce dispositif n'est que rarement employé.&nbsp;
 </p>
 
 <h3 align="center"> <a name="init"> Le script d'initialisation </a> </h3>
@@ -3863,7 +3967,7 @@ alias travail=" e -fm3 "
 alias mail="echo utilisez moi, elle, ou travail 
 </pre>
 
-<h3 align="center"> <a name="imr"> Client interactif de récupération de courrier </a> </h3>
+<h3 align="center"> <a name="imr"> Client interactif de lecture de courrier </a> </h3>
 
 Si Edbrowse est lancé avec l'option «&nbsp;-m&nbsp;», et pas autres arguments, 
 il devient client interactif de courrier, vous permettant d'examiner les courriers 
@@ -4157,6 +4261,98 @@ Comme tout le reste dans Edbrowse, vous  vous habituerez à utiliser ce qui pré
 une fois que vous aurez pratiqué.
 </p>
 
+<H3 align="center"> <A NAME=imap> Client Imap </A> </H3>
+
+Un client pop3, tel que décrit ci-dessus, télécharge le courrier sur votre ordinateur, 
+courrier dont vous êtes ensuite responsable. Vous devez archiver vos mails, si vous le souhaitez, 
+les sauvegarder, etc..
+Le protocole Imap vous permet de conserver vos mails sur le serveur indéfiniment, dans le nuage 
+si vous préférez.
+Vous pouvez accéder à vos mails, peut-être 20 ans après, peut-être 100000 messages, depuis n'importe 
+quel ordinateur, tablette ou smartphone.
+Vous pouvez télécharger les emails localement, si vous le souhaitez, mais ce n'est pas 
+obligatoire. C'est davantage une approche orientée serveur. La configuration initiale de gmail, 
+pour imap, ressemble à ceci :
+
+<PRE><font size=3 face=Arial,Helvetica,sans-serif>mail {
+  imap
+  inserver = imap.gmail.com
+  outserver = smtp.gmail.com
+  secure
+  login = quelqun@gmail.com
+  password = secret
+  reply = quelqun@gmail.com
+  from = nom complet
+}
+</font></PRE>
+
+<p>
+Si ce qui précède est la troisième entrée Mail dans votre fichier de configutration, alors 
+vous accédez à ce compte avec "edbrowse -f3". Ceci na rapatrie pas simplement tous les 
+mails sur votre ordinateur local, comme c'est le cas avec un compte pop3.
+Edbrowse vous permet plutôt d'accéder à tous vos mails sur le serveur imap de façon 
+interactive. Voici une capture d'écran.
+</p>
+
+<PRE><font size=3 face=Arial,Helvetica,sans-serif> 1 INBOX, 0 messages
+ 2 [Gmail]/Tous les mails, 7 messages
+ 3 [Gmail]/Brouillons, 0 messages
+ 4 [Gmail]/Important, 0 messages
+ 5 [Gmail]/Envoyés, 0 messages
+ 6 [Gmail]/Spam, 7 messages
+ 7 [Gmail]/Marqués, 0 messages
+ 8 [Gmail]/Corbeille, 16 messages
+Select a folder by number or by substring.
+Choisissez un dossier par numéro ou par sous-chaîne.
+Prefixez par - uniquement les messages non lus. q pour quitter. l pour changer la limite maximale de récupération.
+</font></PRE>
+
+<p>
+Tapez 6, ou Corbeille, ou simplement Cor et Edbrowse vous permet de naviquer dans le dossier 
+Corbeille. Il affiche l'expéditeur, le sujet, la date et la taille de chaque mail, et vous 
+demande quoi faire, comme dans l'interface du client pop3.
+Tapez q pour quitter, n pour le message suivant, d pour l'effacer, ou m pour le déplacer 
+dans un autre dossier.
+Ici aussi, vous pouvez spécifier le dossier de destination par le numéro ou par son nom. 
+Tapez espace pour lire le corps du mail, et continuez à taper espace, comme more ou less, 
+pour lire la suite du mail. 
+Tapez w pour enregistrer le mail formaté, ou W pour le sauvegarder et l'effacer ensuite.
+Tapez u ou U pour enregistrer le mail non formaté.
+Tapez a pour enregistrer les pièces attachées.
+Tapez l pour modifier la limite de récupération, c'est-à-dire le nombre de mails affichés 
+simultanément.
+Tapez / pour rechercher dans les mails par sujet, expéditeur ou dans le corps
+Tapez h pour l'aide, qui ressemble à ceci :
+</p>
+
+<PRE><font size=3 face=Arial,Helvetica,sans-serif>
+h   affiche ce message d'aide.
+q   quitte ce programme.
+s   arrête la lecture dans ce dossier.
+n   message suivant.
+d   efface cet email.
+m   dépalce ce mail dans un autre dossier.
+espace   lit et traite ce mail.
+/   recherche des mots dans le sujet, l'expéditeur ou le corps du message.
+l   définit la limte de récupération imap.
+</font></PRE>
+
+<p>
+Sur certains serveurs, comm gmail, vous ne pouvez effacer un mail dans le dossier 
+"Tous les mails". Vous devrez déplacer ce mail dans la Corbeille et l'y effacer. 
+</p>
+
+<p>
+La recherche est insensible à la casse, et recherche souvent des mots, plutôt 
+que des sous-chaînes. Ainsi, anti trouve Anti, mais antique.
+L'implémentation dépend de votre serveur imap.
+Par défaut, la recherche se fait dans le sujet.
+Tapez "f Smith" pour rechercher les mails de Smith, ou "b étoile noire" pour trouver 
+tous les mails contenant étoile noire.
+S'il y des milliers sont trouvés, seuls les 100 derniers sont affichés. Vous pouvez 
+modifier cette limite avec la commande l.
+</p>
+
 <p></p><hr><p>
 </p><h2 align="center"> Chapitre 8, Accès aux bases de données </h2>
 
@@ -4173,7 +4369,8 @@ mais n'est pas supporté.
 D'autres interfaces à des bases de données spécifiques peuvent être développées. 
 Vous devrez mettre en application l'interface décrite dans «&nbsp;dbapi.h&nbsp;», 
 en utilisant le kit de développement de base de données écrit en C 
-fourni par le vendeur.&nbsp; pour l'instant, je vais en rester à l'interface odbc.
+fourni par le vendeur.&nbsp; Comme odbc peut se connecter à n'importe quelle base, 
+cela dervrait satisfaire vos besoins.
 
 <h3 align="center"> <a name="rtb"> Lire les tables </a> </h3>
 
