@@ -983,8 +983,10 @@ static bool foldinCookie(const char *newcook)
 
 /* cookie has to look like keyword=value */
 	s = strchr(nc + 2, '=');
-	if (!s || s == nc + 2)
+	if (!s || s == nc + 2) {
+		nzFree(nc);
 		return false;
+	}
 
 /* pass back to edbrowse */
 	effectString("c{");	// }
@@ -1011,6 +1013,7 @@ static bool foldinCookie(const char *newcook)
 
 add:
 	stringAndString(&cookieCopy, &cook_l, nc);
+	nzFree(nc);
 	return true;
 }				/* foldinCookie */
 
