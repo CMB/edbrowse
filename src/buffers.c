@@ -696,7 +696,6 @@ static void freeWindow(struct ebWindow *w)
 	nzFree(w->dw);
 	nzFree(w->ft);
 	nzFree(w->hbase);
-	nzFree(w->lastrender);
 	nzFree(w->fd);
 	nzFree(w->fk);
 	nzFree(w->mailInfo);
@@ -3453,8 +3452,6 @@ et_go:
 		cw->ft = 0;
 		nzFree(cw->hbase);
 		cw->hbase = 0;
-		nzFree(cw->lastrender);
-		cw->lastrender = 0;
 		nzFree(cw->fd);
 		cw->fd = 0;
 		nzFree(cw->fk);

@@ -332,12 +332,6 @@ void jSyncup(void)
 		}
 	}			/* loop over tags */
 
-/* screen snap, to compare with the new screen after js runs */
-	nzFree(cw->lastrender);
-	cw->lastrender = 0;
-	if (unfoldBuffer(context, false, &cxbuf, &j))
-		cw->lastrender = cxbuf;
-
 	debugPrint(4, "jSyncup ends");
 }				/* jSyncup */
 
@@ -1900,15 +1894,19 @@ static bool backgroundJS;
 /* Rerender the buffer and notify of any lines that have changed */
 void rerender(bool rr_command)
 {
-	char *a, *newbuf;
+	char *a, *snap, *newbuf;
+	int j;
+
+	debugPrint(4, "rerender");
 
 	if (rr_command) {
-/* take the screen snap */
+// You might have changed some input fields on the screen, then typed rr
 		jSyncup();
 	}
-
-	if (!cw->lastrender) {
-		puts("lastrender = NULL");
+// screen snap, to compare with the new screen.
+	if (!unfoldBufferW(cw, false, &snap, &j)) {
+		snap = 0;
+		puts("no screen snap available");
 		return;
 	}
 
@@ -1919,14 +1917,15 @@ void rerender(bool rr_command)
 
 /* the high runner case, most of the time nothing changes,
  * and we can check that efficiently with strcmp */
-	if (stringEqual(newbuf, cw->lastrender)) {
+	if (stringEqual(newbuf, snap)) {
 		if (rr_command)
 			i_puts(MSG_NoChange);
 		nzFree(newbuf);
+		nzFree(snap);
 		return;
 	}
 
-	frontBackDiff(cw->lastrender, newbuf);
+	frontBackDiff(snap, newbuf);
 	if (sameBack1 > sameFront)
 		delText(sameFront + 1, sameBack1);
 	if (sameBack2 > sameFront)
@@ -1962,8 +1961,7 @@ void rerender(bool rr_command)
 	}
 
 	nzFree(newbuf);
-	nzFree(cw->lastrender);
-	cw->lastrender = 0;
+	nzFree(snap);
 }				/* rerender */
 
 /* mark the tags on the deleted lines as deleted */
@@ -2185,8 +2183,6 @@ void runTimers(void)
 {
 	struct jsTimer *jt;
 	struct ebWindow *save_cw = cw;
-	char *screen;
-	int screenlen;
 
 	currentTime();
 
@@ -2213,11 +2209,6 @@ void runTimers(void)
 
 		if (cw != save_cw) {
 /* background window, go ahead and rerender, silently. */
-/* Screen snap, because we didn't run jSyncup */
-			nzFree(cw->lastrender);
-			cw->lastrender = 0;
-			if (unfoldBufferW(cw, false, &screen, &screenlen))
-				cw->lastrender = screen;
 			rerender(false);
 		}
 		backgroundJS = false;

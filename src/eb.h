@@ -344,7 +344,6 @@ struct ebWindow {
 	char *baseDirName;	/* when scanning a directory */
 	char *ft, *fd, *fk;	/* title, description, keywords */
 	char *hbase; /* base for href references */
-	char *lastrender;
 	char *mailInfo;
 	char lhs[MAXRE], rhs[MAXRE];	/* remembered substitution strings */
 	struct lineMap *map, *r_map;
