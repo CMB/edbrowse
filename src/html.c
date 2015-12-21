@@ -1357,6 +1357,8 @@ static bool formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 		if (itype <= INP_SUBMIT && t != submit)
 			continue;
 		name = t->name;
+		if (!name)
+			name = t->id;
 
 		if (t == submit) {	/* the submit button you pushed */
 			int namelen;

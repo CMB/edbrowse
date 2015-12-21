@@ -455,7 +455,7 @@ rich
 <br>Pets:
 dog <input type=checkbox name=dog id=hound checked onclick="alert('rover')">
 cat <input type=checkbox name=cat onclick="catdog(this)" value=meow>
-bird <input type=checkbox name=bird>
+bird <input type=checkbox id=bird>
 rabbit <input type=checkbox name=rabbit>
 <br>
 Amount of objects to create <input type="text" id="fill_amount" name="fill_amount" value="2000000" />
