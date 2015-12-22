@@ -15,6 +15,7 @@
 CURL *http_curl_handle = NULL;
 char *serverData;
 int serverDataLen;
+bool pluginsOn = true;
 static int down_fd;		/* downloading file descriptor */
 static const char *down_file;	/* downloading filename */
 static const char *down_file2;	/* without download directory */
@@ -58,6 +59,26 @@ int hcl;			/* http content length */
 static struct eb_curl_callback_data callback_data = {
 	&serverData, &serverDataLen
 };
+
+/* This function is called for web redirection, by the refresh command,
+ * or by window.location = new_url. */
+char *newlocation;
+int newloc_d;			/* possible delay */
+bool newloc_r;			/* replace the buffer */
+bool js_redirects;
+void gotoLocation(char *url, int delay, bool rf)
+{
+	if (newlocation && delay >= newloc_d) {
+		nzFree(url);
+		return;
+	}
+	nzFree(newlocation);
+	newlocation = url;
+	newloc_d = delay;
+	newloc_r = rf;
+	if (!delay)
+		js_redirects = true;
+}				/* gotoLocation */
 
 /* string is allocated. Quotes are removed. No other processing is done.
  * You may need to decode %xx bytes or such. */
@@ -250,6 +271,131 @@ curl_progress(void *unused, double dl_total, double dl_now,
 	}
 	return ret;
 }				/* curl_progress */
+
+uchar base64Bits(char c)
+{
+	if (isupperByte(c))
+		return c - 'A';
+	if (islowerByte(c))
+		return c - ('a' - 26);
+	if (isdigitByte(c))
+		return c - ('0' - 52);
+	if (c == '+')
+		return 62;
+	if (c == '/')
+		return 63;
+	return 64;		/* error */
+}				/* base64Bits */
+
+/*********************************************************************
+Decode some data in base64.
+This function operates on the data in-line.  It does not allocate a fresh
+string to hold the decoded data.  Since the data will be smaller than
+the base64 encoded representation, this cannot overflow.
+If you need to preserve the input, copy it first.
+start points to the start of the input
+*end initially points to the byte just after the end of the input
+Returns: GOOD_BASE64_DECODE on success, BAD_BASE64_DECODE or
+EXTRA_CHARS_BASE64_DECODE on error.
+When the function returns success, *end points to the end of the decoded
+data.  On failure, end points to the just past the end of
+what was successfully decoded.
+*********************************************************************/
+
+int base64Decode(char *start, char **end)
+{
+	char *b64_end = *end;
+	uchar val, leftover, mod;
+	bool equals;
+	int ret = GOOD_BASE64_DECODE;
+	char c, *q, *r;
+/* Since this is a copy, and the unpacked version is always
+ * smaller, just unpack it inline. */
+	mod = 0;
+	equals = false;
+	for (q = r = start; q < b64_end; ++q) {
+		c = *q;
+		if (isspaceByte(c))
+			continue;
+		if (equals) {
+			if (c == '=')
+				continue;
+			ret = EXTRA_CHARS_BASE64_DECODE;
+			break;
+		}
+		if (c == '=') {
+			equals = true;
+			continue;
+		}
+		val = base64Bits(c);
+		if (val & 64) {
+			ret = BAD_BASE64_DECODE;
+			break;
+		}
+		if (mod == 0) {
+			leftover = val << 2;
+		} else if (mod == 1) {
+			*r++ = (leftover | (val >> 4));
+			leftover = val << 4;
+		} else if (mod == 2) {
+			*r++ = (leftover | (val >> 2));
+			leftover = val << 6;
+		} else {
+			*r++ = (leftover | val);
+		}
+		++mod;
+		mod &= 3;
+	}
+	*end = r;
+	return ret;
+}				/* base64Decode */
+
+static void
+unpackUploadedFile(const char *post, const char *boundary,
+		   char **postb, int *postb_l)
+{
+	static const char message64[] = "Content-Transfer-Encoding: base64";
+	const int boundlen = strlen(boundary);
+	const int m64len = strlen(message64);
+	char *post2;
+	char *b1, *b2, *b3, *b4;	/* boundary points */
+	int unpack_ret;
+
+	*postb = 0;
+	*postb_l = 0;
+	if (!strstr(post, message64))
+		return;
+
+	post2 = cloneString(post);
+	b2 = strstr(post2, boundary);
+	while (true) {
+		b1 = b2 + boundlen;
+		if (*b1 != '\r')
+			break;
+		b1 += 2;
+		b1 = strstr(b1, "Content-Transfer");
+		b2 = strstr(b1, boundary);
+		if (memcmp(b1, message64, m64len))
+			continue;
+		b1 += m64len - 6;
+		strcpy(b1, "8bit\r\n\r\n");
+		b1 += 8;
+		b1[0] = b1[1] = ' ';
+		b3 = b2 - 4;
+
+		b4 = b3;
+		unpack_ret = base64Decode(b1, &b4);
+		if (unpack_ret != GOOD_BASE64_DECODE)
+			mail64Error(unpack_ret);
+		/* Should we *really* keep going at this point? */
+		strmove(b4, b3);
+		b2 = b4 + 4;
+	}
+
+	b1 += strlen(b1);
+	*postb = post2;
+	*postb_l = b1 - post2;
+}				/* unpackUploadedFile */
 
 /* Pull a keyword: attribute out of an internet header. */
 static char *extractHeaderItem(const char *head, const char *end,

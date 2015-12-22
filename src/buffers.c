@@ -24,7 +24,6 @@ static bool pcre_utf8_error_stop = false;
 #endif
 
 // Truncate the display of a really long line.
-int displayLength = 500;
 
 /* Static variables for this file. */
 
@@ -837,27 +836,6 @@ void cxSwitch(int cx, bool interactive)
  * when the first arg is a url and there is a second arg. */
 	startRange = endRange = cw->dot;
 }				/* cxSwitch */
-
-/* This function is called for web redirection, by the refresh command,
- * or by window.location = new_url. */
-char *newlocation;
-int newloc_d;			/* possible delay */
-bool newloc_r;			/* replace the buffer */
-bool js_redirects;
-
-void gotoLocation(char *url, int delay, bool rf)
-{
-	if (newlocation && delay >= newloc_d) {
-		nzFree(url);
-		return;
-	}
-	nzFree(newlocation);
-	newlocation = url;
-	newloc_d = delay;
-	newloc_r = rf;
-	if (!delay)
-		js_redirects = true;
-}				/* gotoLocation */
 
 static struct lineMap *newpiece;
 

@@ -49,7 +49,7 @@ static void markAllDead(void)
 
 /* communication pipes with the js process */
 static int pipe_in[2], pipe_out[2];
-static char arg1[8], arg2[8], arg3[8];
+static char arg1[8], arg2[8];
 
 static int js_pid;
 static struct EJ_MSG head;
@@ -93,11 +93,10 @@ static void *child_proc(void *vp)
 	//close(pipe_out[1]);
 	sprintf(arg1, "%d", pipe_out[0]);
 	sprintf(arg2, "%d", pipe_in[1]);
-	sprintf(arg3, "%d", jsPool);
 
-	debugPrint(5, "spawning '%s' %s %s %s", pn, arg1, arg2, arg3);
-	len = _spawnl(_P_WAIT, pn, "edbrowse-js", arg1, arg2, arg3, 0);
-	//_execlp(pn, "edbrowse-js", arg1, arg2, arg3, 0);
+	debugPrint(5, "spawning '%s' %s %s", pn, arg1, arg2);
+	len = _spawnl(_P_WAIT, pn, "edbrowse-js", arg1, arg2, 0);
+	//_execlp(pn, "edbrowse-js", arg1, arg2, 0);
 	// len = 1;
 	if (len) {
 		debugPrint(5, "spawning FAILED! %d\n", errno);
@@ -192,19 +191,18 @@ static void js_start(void)
 	close(pipe_out[1]);
 	sprintf(arg1, "%d", pipe_out[0]);
 	sprintf(arg2, "%d", pipe_in[1]);
-	sprintf(arg3, "%d", jsPool);
-	debugPrint(5, "spawning edbrowse-js %s %s %s", arg1, arg2, arg3);
+	debugPrint(5, "spawning edbrowse-js %s %s", arg1, arg2);
 
 	if (!strchr(progname, '/')) {
 // no path specified, just the program, so assume edbrowse-js is also on $PATH,
 // hopefully in the same bin.
-		execlp("edbrowse-js", "edbrowse-js", arg1, arg2, arg3, NULL);
+		execlp("edbrowse-js", "edbrowse-js", arg1, arg2, NULL);
 	} else {
 // change /foo/bar/edbrowse to /foo/bar/edbrowse-js
 		int l = strlen(progname);
 		char *jspath = allocMem(l + 4);
 		sprintf(jspath, "%s-js", progname);
-		execl(jspath, "edbrowse-js", arg1, arg2, arg3, NULL);
+		execl(jspath, "edbrowse-js", arg1, arg2, NULL);
 		nzFree(jspath);
 	}
 

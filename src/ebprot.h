@@ -13,7 +13,6 @@ bool cxCompare(int cx) ;
 bool cxActive(int cx) ;
 bool cxQuit(int cx, int action) ;
 void cxSwitch(int cx, bool interactive) ;
-void gotoLocation(char *url, int delay, bool rf) ;
 bool addTextToBuffer(const pst inbuf, int length, int destl, bool onside) ;
 void delText(int start, int end) ;
 bool readFileArgv(const char *filename);
@@ -95,7 +94,7 @@ int fetchMail(int account) ;
 int fetchAllMail(void) ;
 void scanMail(void) ;
 bool emailTest(void) ;
-void unpackUploadedFile(const char *post, const char *boundary, char **postb, int *postb_l) ;
+void mail64Error(int err);
 char *emailParse(char *buf) ;
 bool setupReply(bool all) ;
 
@@ -109,9 +108,7 @@ void extractEmailAddresses(char *line) ;
 void cutDuplicateEmails(char *tolist, char *cclist, const char *reply) ;
 bool looksBinary(const char *buf, int buflen) ;
 void looks_8859_utf8(const char *buf, int buflen, bool * iso_p, bool * utf8_p) ;
-uchar base64Bits(char c);
 char *base64Encode(const char *inbuf, int inlen, bool lines);
-int base64Decode(char *start, char **end);
 void iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
 bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l);
 
@@ -161,7 +158,10 @@ void htmlNodesIntoTree(int start, struct htmlTag *attach);
 void html_from_setter( jsobjtype innerParent, const char *h);
 
 /* sourcefile=http.c */
+void gotoLocation(char *url, int delay, bool rf) ;
 size_t eb_curl_callback(char *incoming, size_t size, size_t nitems, struct eb_curl_callback_data *data) ;
+uchar base64Bits(char c);
+int base64Decode(char *start, char **end);
 char *extractHeaderParam(const char *str, const char *item) ;
 time_t parseHeaderDate(const char *date) ;
 bool parseRefresh(char *ref, int *delay_p) ;
@@ -314,6 +314,7 @@ int eopen(const char *name, int mode, int perms) ;
 void appendFile(const char *fname, const char *message, ...) ;
 void appendFileNF(const char *filename, const char *msg) ;
 int eb_system(const char *cmd, bool print_on_success);
+void readConfigFile(void);
 
 /* sourcefile=url.c */
 void unpercentURL(char *url) ;

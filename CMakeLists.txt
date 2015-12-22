@@ -189,7 +189,7 @@ endif(BUILD_SHARED_LIB)
 
 # LDLIBS = -lpcre -lcurl -lreadline -lncurses -ltidy
 #  edbrowse objects
-#EBOBJS = main.o buffers.o url.o auth.o http.o sendmail.o fetchmail.o \
+#EBOBJS = main.o buffers.o url.o sendmail.o fetchmail.o \
 #	html.o format.o cookies.o stringfile.o messages.o ebjs.o plugin.o
 #  Header file dependencies.
 #$(EBOBJS) : eb.h ebprot.h messages.h ebjs.h
@@ -235,6 +235,8 @@ set(${name}_SRCS
     ${dir}/stringfile.c
     ${dir}/html-tidy.c
     ${dir}/decorate.c
+    ${dir}/http.c
+    ${dir}/auth.c
     ${GEN_SOURCES}
     )
 if (MSVC)
@@ -270,8 +272,6 @@ endif ()
 set(${name}_SRCS
     ${dir}/main.c
     ${dir}/buffers.c
-    ${dir}/auth.c
-    ${dir}/http.c
     ${dir}/sendmail.c
     ${dir}/fetchmail.c
 	${dir}/html.c

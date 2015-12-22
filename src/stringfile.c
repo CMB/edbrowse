@@ -1629,3 +1629,773 @@ int eb_system(const char *cmd, bool print_on_success)
 	}
 	return system_ret;
 }				/* eb_system */
+
+/* Some variables and structures that are populated from the config file */
+const char *version = "3.6.0+";
+char *changeFileName;
+char *configFile, *addressFile, *cookieFile;
+char *mailDir, *mailUnread, *mailStash, *mailReply;
+char *recycleBin, *sigFile, *sigFileEnd;
+char *userAgents[10];
+char *currentAgent, *currentReferrer;
+bool allowRedirection = true, allowJS = true, sendReferrer = true;
+int jsPool = 32;
+int webTimeout = 20, mailTimeout = 0;
+int displayLength = 500;
+int verifyCertificates = 1;
+char *sslCerts;
+int localAccount, maxAccount;
+struct MACCOUNT accounts[MAXACCOUNT];
+int maxMime;
+struct MIMETYPE mimetypes[MAXMIME];
+int maxproxy;
+struct PXENT proxyEntries[MAXPROXY];
+struct FILTERDESC mailFilters[MAXFILTER];
+int n_filters;
+char *ebScript[MAXEBSCRIPT + 1];
+char *ebScriptName[MAXEBSCRIPT + 1];
+#define MAXNOJS 500
+static const char *javaDis[MAXNOJS];
+static int javaDisCount;
+struct DBTABLE dbtables[MAXDBT];
+int numTables;
+volatile bool intFlag;
+
+/* Read the config file and populate the corresponding data structures. */
+/* This routine succeeds, or aborts via i_printfExit */
+void readConfigFile(void)
+{
+	char *buf, *s, *t, *v, *q;
+	int buflen, n;
+	char c, ftype;
+	bool cmt = false;
+	bool startline = true;
+	uchar mailblock = 0;
+	bool mimeblock = false, tabblock = false;
+	int nest, ln, j;
+	int sn = 0;		/* script number */
+	char stack[MAXNEST];
+	char last[24];
+	int lidx = 0;
+	struct MACCOUNT *act;
+	struct PXENT *px;
+	struct MIMETYPE *mt;
+	struct DBTABLE *td;
+
+/* Order is important here: mail{}, mime{}, table{}, then global keywords */
+#define MAILWORDS 0
+#define MIMEWORDS 8
+#define TABLEWORDS 15
+#define GLOBALWORDS 19
+	static const char *const keywords[] = {
+		"inserver", "outserver", "login", "password", "from", "reply",
+		"inport", "outport",
+		"type", "desc", "suffix", "protocol", "program",
+		"content", "outtype",
+		"tname", "tshort", "cols", "keycol",
+		"adbook", "downdir", "maildir", "agent",
+		"jar", "nojs", "xyz@xyz",
+		"webtimer", "mailtimer", "certfile", "datasource", "proxy",
+		"linelength", "localizeweb", "jspool", "novs",
+		0
+	};
+
+	if (!fileTypeByName(configFile, false))
+		return;		/* config file not present */
+	if (!fileIntoMemory(configFile, &buf, &buflen))
+		showErrorAbort();
+/* An extra newline won't hurt. */
+	if (buflen && buf[buflen - 1] != '\n')
+		buf[buflen++] = '\n';
+
+/* Undos, uncomment, watch for nulls */
+/* Encode mail{ as hex 81 m, and other encodings. */
+	ln = 1;
+	for (s = t = v = buf; s < buf + buflen; ++s) {
+		c = *s;
+		if (c == '\0')
+			i_printfExit(MSG_EBRC_Nulls, ln);
+		if (c == '\r' && s[1] == '\n')
+			continue;
+
+		if (cmt) {
+			if (c != '\n')
+				continue;
+			cmt = false;
+		}
+
+		if (c == '#' && startline) {
+			cmt = true;
+			goto putc;
+		}
+
+		if (c == '\n') {
+			last[lidx] = 0;
+			lidx = 0;
+			if (stringEqual(last, "}")) {
+				*v = '\x82';
+				t = v + 1;
+			}
+			if (stringEqual(last, "}else{")) {
+				*v = '\x83';
+				t = v + 1;
+			}
+			if (stringEqual(last, "mail{")) {
+				*v = '\x81';
+				v[1] = 'm';
+				t = v + 2;
+			}
+			if (stringEqual(last, "plugin{") ||
+			    stringEqual(last, "mime{")) {
+				*v = '\x81';
+				v[1] = 'e';
+				t = v + 2;
+			}
+			if (stringEqual(last, "table{")) {
+				*v = '\x81';
+				v[1] = 'b';
+				t = v + 2;
+			}
+			if (stringEqual(last, "fromfilter{")) {
+				*v = '\x81';
+				v[1] = 'r';
+				t = v + 2;
+			}
+			if (stringEqual(last, "tofilter{")) {
+				*v = '\x81';
+				v[1] = 't';
+				t = v + 2;
+			}
+			if (stringEqual(last, "subjfilter{")) {
+				*v = '\x81';
+				v[1] = 's';
+				t = v + 2;
+			}
+			if (stringEqual(last, "if(*){")) {
+				*v = '\x81';
+				v[1] = 'I';
+				t = v + 2;
+			}
+			if (stringEqual(last, "if(?){")) {
+				*v = '\x81';
+				v[1] = 'i';
+				t = v + 2;
+			}
+			if (stringEqual(last, "while(*){")) {
+				*v = '\x81';
+				v[1] = 'W';
+				t = v + 2;
+			}
+			if (stringEqual(last, "while(?){")) {
+				*v = '\x81';
+				v[1] = 'w';
+				t = v + 2;
+			}
+			if (stringEqual(last, "until(*){")) {
+				*v = '\x81';
+				v[1] = 'U';
+				t = v + 2;
+			}
+			if (stringEqual(last, "until(?){")) {
+				*v = '\x81';
+				v[1] = 'u';
+				t = v + 2;
+			}
+			if (!strncmp(last, "loop(", 5) && isdigitByte(last[5])) {
+				q = last + 6;
+				while (isdigitByte(*q))
+					++q;
+				if (stringEqual(q, "){")) {
+					*q = 0;
+					last[4] = 'l';
+					last[3] = '\x81';
+					strcpy(v, last + 3);
+					t = v + strlen(v);
+				}
+			}
+			if (!strncmp(last, "function", 8) &&
+			    (last[8] == '+' || last[8] == ':')) {
+				q = last + 9;
+				if (*q == 0 || *q == '{' || *q == '(')
+					i_printfExit(MSG_EBRC_NoFnName, ln);
+				if (isdigitByte(*q))
+					i_printfExit(MSG_EBRC_FnDigit, ln);
+				while (isalnumByte(*q))
+					++q;
+				if (q - last - 9 > 10)
+					i_printfExit(MSG_EBRC_FnTooLong, ln);
+				if (*q != '{' || q[1])
+					i_printfExit(MSG_EBRC_SyntaxErr, ln);
+				last[7] = 'f';
+				last[6] = '\x81';
+				strcpy(v, last + 6);
+				t = v + strlen(v);
+			}
+
+			*t++ = c;
+			v = t;
+			++ln;
+			startline = true;
+			continue;
+		}
+
+		if (c == ' ' || c == '\t') {
+			if (startline)
+				continue;
+		} else {
+			if (lidx < sizeof(last) - 1)
+				last[lidx++] = c;
+			startline = false;
+		}
+
+putc:
+		*t++ = c;
+	}
+	*t = 0;			/* now it's a string */
+
+/* Go line by line */
+	ln = 1;
+	nest = 0;
+	stack[0] = ' ';
+
+	for (s = buf; *s; s = t + 1, ++ln) {
+		t = strchr(s, '\n');
+		if (t == s)
+			continue;	/* empty line */
+		if (t == s + 1 && *s == '#')
+			continue;	/* comment */
+		*t = 0;		/* I'll put it back later */
+
+/* Gather the filters in a mail filter block */
+		if (mailblock > 1 && !strchr("\x81\x82\x83", *s)) {
+			v = strchr(s, '>');
+			if (!v)
+				i_printfExit(MSG_EBRC_NoCondFile, ln);
+			while (v > s && (v[-1] == ' ' || v[-1] == '\t'))
+				--v;
+			if (v == s)
+				i_printfExit(MSG_EBRC_NoMatchStr, ln);
+			c = *v, *v++ = 0;
+			if (c != '>') {
+				while (*v != '>')
+					++v;
+				++v;
+			}
+			while (*v == ' ' || *v == '\t')
+				++v;
+			if (!*v)
+				i_printfExit(MSG_EBRC_MatchNowh, ln, s);
+			if (n_filters == MAXFILTER - 1)
+				i_printfExit(MSG_EBRC_Filters, ln);
+			mailFilters[n_filters].match = s;
+			mailFilters[n_filters].redirect = v;
+			mailFilters[n_filters].type = mailblock;
+			++n_filters;
+			continue;
+		}
+
+		v = strchr(s, '=');
+		if (!v)
+			goto nokeyword;
+
+		while (v > s && (v[-1] == ' ' || v[-1] == '\t'))
+			--v;
+		if (v == s)
+			goto nokeyword;
+		c = *v, *v = 0;
+		for (q = s; q < v; ++q)
+			if (!isalphaByte(*q)) {
+				*v = c;
+				goto nokeyword;
+			}
+
+		n = stringInList(keywords, s);
+		if (n < 0) {
+			if (!nest)
+				i_printfExit(MSG_EBRC_BadKeyword, s, ln);
+			*v = c;	/* put it back */
+			goto nokeyword;
+		}
+
+		if (nest)
+			i_printfExit(MSG_EBRC_KeyInFunc, ln);
+
+		if (n < MIMEWORDS && mailblock != 1)
+			i_printfExit(MSG_EBRC_MailAttrOut, ln, s);
+
+		if (n >= MIMEWORDS && n < TABLEWORDS && !mimeblock)
+			i_printfExit(MSG_EBRC_MimeAttrOut, ln, s);
+
+		if (n >= TABLEWORDS && n < GLOBALWORDS && !tabblock)
+			i_printfExit(MSG_EBRC_TableAttrOut, ln, s);
+
+		if (n >= MIMEWORDS && mailblock)
+			i_printfExit(MSG_EBRC_MailAttrIn, ln, s);
+
+		if ((n < MIMEWORDS || n >= TABLEWORDS) && mimeblock)
+			i_printfExit(MSG_EBRC_MimeAttrIn, ln, s);
+
+		if ((n < TABLEWORDS || n >= GLOBALWORDS) && tabblock)
+			i_printfExit(MSG_EBRC_TableAttrIn, ln, s);
+
+/* act upon the keywords */
+		++v;
+		if (c != '=') {
+			while (*v != '=')
+				++v;
+			++v;
+		}
+		while (*v == ' ' || *v == '\t')
+			++v;
+		if (!*v)
+			i_printfExit(MSG_EBRC_NoAttr, ln, s);
+
+		switch (n) {
+		case 0:	/* inserver */
+			act->inurl = v;
+			continue;
+
+		case 1:	/* outserver */
+			act->outurl = v;
+			continue;
+
+		case 2:	/* login */
+			act->login = v;
+			continue;
+
+		case 3:	/* password */
+			act->password = v;
+			continue;
+
+		case 4:	/* from */
+			act->from = v;
+			continue;
+
+		case 5:	/* reply */
+			act->reply = v;
+			continue;
+
+		case 6:	/* inport */
+			if (*v == '*')
+				act->inssl = 1, ++v;
+			act->inport = atoi(v);
+			continue;
+
+		case 7:	/* outport */
+			if (*v == '+')
+				act->outssl = 4, ++v;
+			if (*v == '^')
+				act->outssl = 2, ++v;
+			if (*v == '*')
+				act->outssl = 1, ++v;
+			act->outport = atoi(v);
+			continue;
+
+		case 8:	/* type */
+			mt->type = v;
+			continue;
+
+		case 9:	/* desc */
+			mt->desc = v;
+			continue;
+
+		case 10:	/* suffix */
+			mt->suffix = v;
+			continue;
+
+		case 11:	/* protocol */
+			mt->prot = v;
+			mt->stream = true;
+			continue;
+
+		case 12:	/* program */
+			mt->program = v;
+			continue;
+
+		case 13:	/* content */
+			mt->content = v;
+			continue;
+
+		case 14:	/* outtype */
+			c = tolower(*v);
+			if (c != 'h' && c != 't')
+				i_printfExit(MSG_EBRC_Outtype, ln);
+			mt->outtype = c;
+			continue;
+
+		case 15:	/* tname */
+			td->name = v;
+			continue;
+
+		case 16:	/* tshort */
+			td->shortname = v;
+			continue;
+
+		case 17:	/* cols */
+			while (*v) {
+				if (td->ncols == MAXTCOLS)
+					i_printfExit(MSG_EBRC_ManyCols, ln,
+						     MAXTCOLS);
+				td->cols[td->ncols++] = v;
+				q = strchr(v, ',');
+				if (!q)
+					break;
+				*q = 0;
+				v = q + 1;
+			}
+			continue;
+
+		case 18:	/* keycol */
+			if (!isdigitByte(*v))
+				i_printfExit(MSG_EBRC_KeyNotNb, ln);
+			td->key1 = strtol(v, &v, 10);
+			if (*v == ',' && isdigitByte(v[1]))
+				td->key2 = strtol(v + 1, &v, 10);
+			if (td->key1 > td->ncols || td->key2 > td->ncols)
+				i_printfExit(MSG_EBRC_KeyOutRange, ln,
+					     td->ncols);
+			continue;
+
+		case 19:	/* adbook */
+			addressFile = v;
+			ftype = fileTypeByName(v, false);
+			if (ftype && ftype != 'f')
+				i_printfExit(MSG_EBRC_AbNotFile, v);
+			continue;
+
+		case 20:	/* downdir */
+			downDir = v;
+			if (fileTypeByName(v, false) != 'd')
+				i_printfExit(MSG_EBRC_NotDir, v);
+			continue;
+
+		case 21:	/* maildir */
+			mailDir = v;
+			if (fileTypeByName(v, false) != 'd')
+				i_printfExit(MSG_EBRC_NotDir, v);
+			mailUnread = allocMem(strlen(v) + 20);
+			sprintf(mailUnread, "%s/unread", v);
+/* We need the unread directory, else we can't fetch mail. */
+/* Create it if it isn't there. */
+			if (fileTypeByName(mailUnread, false) != 'd') {
+				if (mkdir(mailUnread, 0700))
+					i_printfExit(MSG_EBRC_NotDir,
+						     mailUnread);
+			}
+			mailReply = allocMem(strlen(v) + 20);
+			sprintf(mailReply, "%s/.reply", v);
+			continue;
+
+		case 22:	/* agent */
+			for (j = 0; j < 10; ++j)
+				if (!userAgents[j])
+					break;
+			if (j == 10)
+				i_printfExit(MSG_EBRC_ManyAgents, ln);
+			userAgents[j] = v;
+			continue;
+
+		case 23:	/* jar */
+			cookieFile = v;
+			ftype = fileTypeByName(v, false);
+			if (ftype && ftype != 'f')
+				i_printfExit(MSG_EBRC_JarNotFile, v);
+			j = open(v, O_WRONLY | O_APPEND | O_CREAT, 0600);
+			if (j < 0)
+				i_printfExit(MSG_EBRC_JarNoWrite, v);
+			close(j);
+			continue;
+
+		case 24:	/* nojs */
+			if (javaDisCount == MAXNOJS)
+				i_printfExit(MSG_EBRC_NoJS, MAXNOJS);
+			if (*v == '.')
+				++v;
+			q = strchr(v, '.');
+			if (!q || q[1] == 0)
+				i_printfExit(MSG_EBRC_DomainDot, ln, v);
+			javaDis[javaDisCount++] = v;
+			continue;
+
+		case 26:	/* webtimer */
+			webTimeout = atoi(v);
+			continue;
+
+		case 27:	/* mailtimer */
+			mailTimeout = atoi(v);
+			continue;
+
+		case 28:	/* certfile */
+			sslCerts = v;
+			ftype = fileTypeByName(v, false);
+			if (ftype && ftype != 'f')
+				i_printfExit(MSG_EBRC_SSLNoFile, v);
+			j = open(v, O_RDONLY);
+			if (j < 0)
+				i_printfExit(MSG_EBRC_SSLNoRead, v);
+			close(j);
+			continue;
+
+		case 29:	/* datasource */
+			setDataSource(v);
+			continue;
+
+		case 30:	/* proxy */
+			if (maxproxy == MAXPROXY)
+				i_printfExit(MSG_EBRC_NoPROXY, MAXPROXY);
+			px = proxyEntries + maxproxy;
+			maxproxy++;
+			spaceCrunch(v, true, true);
+			q = strchr(v, ' ');
+			if (q) {
+				*q = 0;
+				if (!stringEqual(v, "*"))
+					px->prot = v;
+				v = q + 1;
+				q = strchr(v, ' ');
+				if (q) {
+					*q = 0;
+					if (!stringEqual(v, "*"))
+						px->domain = v;
+					v = q + 1;
+				}
+			}
+			if (!stringEqualCI(v, "direct"))
+				px->proxy = v;
+			continue;
+
+		case 31:	/* linelength */
+			displayLength = atoi(v);
+			if (displayLength < 80)
+				displayLength = 80;
+			continue;
+
+		case 32:	/* localizeweb */
+/* We should probably allow autodetection of language. */
+/* E.G., the keyword auto indicates that you want autodetection. */
+			setHTTPLanguage(v);
+			continue;
+
+		case 33:	/* jspool */
+			jsPool = atoi(v);
+			if (jsPool < 2)
+				jsPool = 2;
+			if (jsPool > 1000)
+				jsPool = 1000;
+			continue;
+
+		case 34:	/* novs */
+			if (*v == '.')
+				++v;
+			q = strchr(v, '.');
+			if (!q || q[1] == 0)
+				i_printfExit(MSG_EBRC_DomainDot, ln, v);
+			addNovsHost(v);
+			continue;
+
+		default:
+			i_printfExit(MSG_EBRC_KeywordNYI, ln, s);
+		}		/* switch */
+
+nokeyword:
+
+		if (stringEqual(s, "default") && mailblock == 1) {
+			if (localAccount == maxAccount + 1)
+				continue;
+			if (localAccount)
+				i_printfExit(MSG_EBRC_SevDefaults);
+			localAccount = maxAccount + 1;
+			continue;
+		}
+
+		if (stringEqual(s, "nofetch") && mailblock == 1) {
+			act->nofetch = true;
+			continue;
+		}
+
+		if (stringEqual(s, "secure") && mailblock == 1) {
+			act->secure = true;
+			continue;
+		}
+
+		if (stringEqual(s, "imap") && mailblock == 1) {
+			act->imap = act->nofetch = true;
+			continue;
+		}
+
+		if (stringEqual(s, "download") && mimeblock == 1) {
+			mt->download = true;
+			continue;
+		}
+		if (stringEqual(s, "stream") && mimeblock == 1) {
+			mt->stream = true;
+			continue;
+		}
+
+		if (*s == '\x82' && s[1] == 0) {
+			if (mailblock == 1) {
+				++maxAccount;
+				mailblock = 0;
+				if (!act->inurl)
+					i_printfExit(MSG_EBRC_NoInserver, ln);
+				if (!act->outurl)
+					i_printfExit(MSG_EBRC_NoOutserver, ln);
+				if (!act->login)
+					i_printfExit(MSG_EBRC_NoLogin, ln);
+				if (!act->password)
+					i_printfExit(MSG_EBRC_NPasswd, ln);
+				if (!act->from)
+					i_printfExit(MSG_EBRC_NoFrom, ln);
+				if (!act->reply)
+					i_printfExit(MSG_EBRC_NoReply, ln);
+				if (act->secure)
+					act->inssl = act->outssl = 1;
+				if (!act->inport)
+					if (act->secure)
+						act->inport =
+						    (act->imap ? 993 : 995);
+					else
+						act->inport =
+						    (act->imap ? 143 : 110);
+				if (!act->outport)
+					act->outport = (act->secure ? 465 : 25);
+				continue;
+			}
+
+			if (mailblock) {
+				mailblock = 0;
+				continue;
+			}
+
+			if (mimeblock) {
+				++maxMime;
+				mimeblock = false;
+				if (!mt->type)
+					i_printfExit(MSG_EBRC_NoType, ln);
+				if (!mt->desc)
+					i_printfExit(MSG_EBRC_NDesc, ln);
+				if (!mt->suffix && !mt->prot)
+					i_printfExit(MSG_EBRC_NoSuffix, ln);
+				if (!mt->program)
+					i_printfExit(MSG_EBRC_NoProgram, ln);
+				continue;
+			}
+
+			if (tabblock) {
+				++numTables;
+				tabblock = false;
+				if (!td->name)
+					i_printfExit(MSG_EBRC_NoTblName, ln);
+				if (!td->shortname)
+					i_printfExit(MSG_EBRC_NoShortName, ln);
+				if (!td->ncols)
+					i_printfExit(MSG_EBRC_NColumns, ln);
+				continue;
+			}
+
+			if (--nest < 0)
+				i_printfExit(MSG_EBRC_UnexpBrace, ln);
+			if (nest)
+				goto putback;
+/* This ends the function */
+			*s = 0;	/* null terminate the script */
+			++sn;
+			continue;
+		}
+
+		if (*s == '\x83' && s[1] == 0) {
+/* Does else make sense here? */
+			c = toupper(stack[nest]);
+			if (c != 'I')
+				i_printfExit(MSG_EBRC_UnexElse, ln);
+			goto putback;
+		}
+
+		if (*s != '\x81') {
+			if (!nest)
+				i_printfExit(MSG_EBRC_GarblText, ln);
+			goto putback;
+		}
+
+/* Starting something */
+		c = s[1];
+		if ((nest || mailblock || mimeblock) && strchr("fmerts", c)) {
+			const char *curblock = "another function";
+			if (mailblock)
+				curblock = "a mail descriptor";
+			if (mailblock > 1)
+				curblock = "a filter block";
+			if (mimeblock)
+				curblock = "a plugin descriptor";
+			i_printfExit(MSG_EBRC_FnNotStart, ln, curblock);
+		}
+
+		if (!strchr("fmertsb", c) && !nest)
+			i_printfExit(MSG_EBRC_StatNotInFn, ln);
+
+		if (c == 'm') {
+			mailblock = 1;
+			if (maxAccount == MAXACCOUNT)
+				i_printfExit(MSG_EBRC_ManyAcc, MAXACCOUNT);
+			act = accounts + maxAccount;
+			continue;
+		}
+
+		if (c == 'e') {
+			mimeblock = true;
+			if (maxMime == MAXMIME)
+				i_printfExit(MSG_EBRC_ManyTypes, MAXMIME);
+			mt = mimetypes + maxMime;
+			continue;
+		}
+
+		if (c == 'b') {
+			tabblock = true;
+			if (numTables == MAXDBT)
+				i_printfExit(MSG_EBRC_ManyTables, MAXDBT);
+			td = dbtables + numTables;
+			continue;
+		}
+
+		if (c == 'r') {
+			mailblock = 2;
+			continue;
+		}
+
+		if (c == 't') {
+			mailblock = 3;
+			continue;
+		}
+
+		if (c == 's') {
+			mailblock = 4;
+			continue;
+		}
+
+		if (c == 'f') {
+			stack[++nest] = c;
+			if (sn == MAXEBSCRIPT)
+				i_printfExit(MSG_EBRC_ManyFn, sn);
+			ebScriptName[sn] = s + 2;
+			t[-1] = 0;
+			ebScript[sn] = t;
+			goto putback;
+		}
+
+		if (++nest >= sizeof(stack))
+			i_printfExit(MSG_EBRC_TooDeeply, ln);
+		stack[nest] = c;
+
+putback:
+		*t = '\n';
+	}			/* loop over lines */
+
+	if (nest)
+		i_printfExit(MSG_EBRC_FnNotClosed, ebScriptName[sn]);
+
+	if (mailblock | mimeblock)
+		i_printfExit(MSG_EBRC_MNotClosed);
+
+	if (!sslCerts)
+		verifyCertificates = 0;
+}				/* readConfigFile */

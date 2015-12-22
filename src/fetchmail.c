@@ -1602,7 +1602,7 @@ bool emailTest(void)
 	return false;
 }				/* emailTest */
 
-static void mail64Error(int err)
+void mail64Error(int err)
 {
 	switch (err) {
 	case BAD_BASE64_DECODE:
@@ -1642,53 +1642,6 @@ static void unpackQP(struct MHINFO *w)
 	w->end = r;
 	*r = 0;
 }				/* unpackQP */
-
-void
-unpackUploadedFile(const char *post, const char *boundary,
-		   char **postb, int *postb_l)
-{
-	static const char message64[] = "Content-Transfer-Encoding: base64";
-	const int boundlen = strlen(boundary);
-	const int m64len = strlen(message64);
-	char *post2;
-	char *b1, *b2, *b3, *b4;	/* boundary points */
-	int unpack_ret;
-
-	*postb = 0;
-	*postb_l = 0;
-	if (!strstr(post, message64))
-		return;
-
-	post2 = cloneString(post);
-	b2 = strstr(post2, boundary);
-	while (true) {
-		b1 = b2 + boundlen;
-		if (*b1 != '\r')
-			break;
-		b1 += 2;
-		b1 = strstr(b1, "Content-Transfer");
-		b2 = strstr(b1, boundary);
-		if (memcmp(b1, message64, m64len))
-			continue;
-		b1 += m64len - 6;
-		strcpy(b1, "8bit\r\n\r\n");
-		b1 += 8;
-		b1[0] = b1[1] = ' ';
-		b3 = b2 - 4;
-
-		b4 = b3;
-		unpack_ret = base64Decode(b1, &b4);
-		if (unpack_ret != GOOD_BASE64_DECODE)
-			mail64Error(unpack_ret);
-		/* Should we *really* keep going at this point? */
-		strmove(b4, b3);
-		b2 = b4 + 4;
-	}
-
-	b1 += strlen(b1);
-	*postb = post2;
-	*postb_l = b1 - post2;
-}				/* unpackUploadedFile */
 
 /* Look for the name of the attachment and boundary */
 static void ctExtras(struct MHINFO *w, const char *s, const char *t)

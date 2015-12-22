@@ -40,7 +40,7 @@ LDLIBS = -lpcre -lcurl -lreadline -lncurses -ltidy
 all: edbrowse edbrowse-js
 
 #  edbrowse objects
-EBOBJS = main.o buffers.o auth.o http.o sendmail.o fetchmail.o \
+EBOBJS = main.o buffers.o sendmail.o fetchmail.o \
 	html.o format.o cookies.o ebjs.o plugin.o ebrc.o
 ifeq ($(BUILD_EDBR_ODBC),on)
 EBOBJS += dbodbc.o dbops.o
@@ -50,7 +50,7 @@ EBOBJS += dbstubs.o
 endif
 
 #  common objects
-COMOBJS = messages.o url.o stringfile.o html-tidy.o decorate.o msg-strings.o
+COMOBJS = messages.o url.o stringfile.o html-tidy.o decorate.o msg-strings.o http.o auth.o
 
 #  Header file dependencies.
 $(EBOBJS) $(COMOBJS) jseng-moz.o : eb.h ebprot.h messages.h ebjs.h
@@ -96,7 +96,7 @@ jseng-moz.o: jseng-moz.cpp
 	$(CXX) -c $(CXXFLAGS) $(JS_CXXFLAGS) jseng-moz.cpp -o $@
 
 edbrowse-js : jseng-moz.o common.a
-	$(LINK.o) $^ $(LOADLIBES) $(JSLIB) -ltidy -lstdc++ -o $@
+	$(LINK.o) $^ $(LOADLIBES) $(JSLIB) -ltidy -lcurl -lstdc++ -o $@
 
 #  some hello world targets, for testing and debugging
 

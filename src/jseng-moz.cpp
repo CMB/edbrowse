@@ -67,6 +67,50 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 	return 0;
 }
 
+void setDataSource(char *v)
+{
+}
+
+bool javaOK(const char *url)
+{
+	return true;
+}
+
+void mail64Error(int err)
+{
+}
+
+const struct MIMETYPE *findMimeByURL(const char *url)
+{
+	return NULL;
+}
+
+const struct MIMETYPE *findMimeByContent(const char *content)
+{
+	return NULL;
+}
+
+const struct MIMETYPE *findMimeByProtocol(const char *prot)
+{
+	return NULL;
+}
+
+char *pluginCommand(const struct MIMETYPE *m, const char *infile,
+		    const char *outfile, const char *suffix)
+{
+	return NULL;
+}
+
+bool playServerData(void)
+{
+	return true;
+}
+
+/* http calls this when a download takes place in the background */
+void js_disconnect(void)
+{
+}
+
 /* ebrc strings don't mean anything here */
 const char *ebrc_en = emptyString;
 const char *ebrc_fr = emptyString;
@@ -75,12 +119,12 @@ const char *ebrc_de = emptyString;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage:  edbrowse-js pipe_in pipe_out jsHeapSize\n");
+	fprintf(stderr, "Usage:  edbrowse-js pipe_in pipe_out\n");
 	exit(1);
 }				/* usage */
 
 /* arguments, as indicated by the above */
-static int pipe_in, pipe_out, enginePool;
+static int pipe_in, pipe_out;
 
 static void js_start(void);
 static void readMessage(void);
@@ -141,20 +185,38 @@ static char *runscript;
 
 int main(int argc, char **argv)
 {
+	static char agent0[64] = "edbrowse/";
+
 /* do this first, in case usage some day is tailored to language */
 	selectLanguage();
 
-	if (argc != 4)
+	if (argc != 3)
 		usage();
 
 	pipe_in = stringIsNum(argv[1]);
 	pipe_out = stringIsNum(argv[2]);
-	enginePool = stringIsNum(argv[3]);
-	if (pipe_in < 0 || pipe_out < 0 || enginePool < 0)
+	if (pipe_in < 0 || pipe_out < 0)
 		usage();
 
-	if (enginePool < 2)
-		enginePool = 2;
+/* Establish the home directory, and standard edbrowse files thereunder. */
+	home = getenv("HOME");
+#ifdef _MSC_VER
+	if (!home) {
+		home = getenv("APPDATA");
+		if (home) {
+			char *ebdata = (char *)allocMem(ABSPATH);
+			sprintf(ebdata, "%s\\edbrowse", home);
+			home = ebdata;
+		}
+	}
+#endif // !_MSC_VER
+	configFile = allocString(strlen(home) + 7);
+	sprintf(configFile, "%s/.ebrc", home);
+
+	strcat(agent0, version);
+	userAgents[0] = currentAgent = agent0;
+
+	readConfigFile();
 
 	js_start();
 
@@ -315,7 +377,7 @@ static const size_t gStackChunkSize = 8192;
 
 static void js_start(void)
 {
-	jrt = JS_NewRuntime(enginePool * 1024L * 1024L, JS_NO_HELPER_THREADS);
+	jrt = JS_NewRuntime(jsPool * 1024L * 1024L, JS_NO_HELPER_THREADS);
 	if (jrt)
 		return;		/* ok */
 
