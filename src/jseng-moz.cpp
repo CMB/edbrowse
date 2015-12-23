@@ -112,8 +112,6 @@ static char *runscript;
 
 int js_main(int argc, char **argv)
 {
-	static char agent0[64] = "edbrowse/";
-
 	if (argc != 3)
 		usage();
 
@@ -121,24 +119,6 @@ int js_main(int argc, char **argv)
 	pipe_out = stringIsNum(argv[2]);
 	if (pipe_in < 0 || pipe_out < 0)
 		usage();
-
-/* Establish the home directory, and standard edbrowse files thereunder. */
-	home = getenv("HOME");
-#ifdef _MSC_VER
-	if (!home) {
-		home = getenv("APPDATA");
-		if (home) {
-			char *ebdata = (char *)allocMem(ABSPATH);
-			sprintf(ebdata, "%s\\edbrowse", home);
-			home = ebdata;
-		}
-	}
-#endif // !_MSC_VER
-	configFile = allocString(strlen(home) + 7);
-	sprintf(configFile, "%s/.ebrc", home);
-
-	strcat(agent0, version);
-	userAgents[0] = currentAgent = agent0;
 
 	readConfigFile();
 

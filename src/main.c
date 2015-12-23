@@ -58,23 +58,9 @@ struct ebSession sessionList[MAXSESSION], *cs;
 #define MAXNOJS 500
 static const char *javaDis[MAXNOJS];
 static int javaDisCount;
-static int subjstart = 0;
-static char *cfgcopy;
-static int cfglen;
-static long nowday;
 
 #ifdef _MSC_VER
 #endif // _MSC_VER
-
-static void setNowDay(void)
-{
-	time_t now;
-	time(&now);
-	now /= (60 * 60 * 24);	/* convert to days */
-	now -= 30 * 365;
-	now -= 7;		/* leap years */
-	nowday = now;
-}				/* setNowDay */
 
 /*********************************************************************
 Redirect the incoming mail into a file, based on the subject or the sender.
@@ -320,6 +306,7 @@ int main(int argc, char **argv)
 	int cx, l, account;
 	bool rc, doConfig = true;
 	bool dofetch = false, domail = false;
+	static char agent0[64] = "edbrowse/";
 
 #ifndef _MSC_VER		// port setlinebuf(stdout);, if required...
 /* In case this is being piped over to a synthesizer, or whatever. */
@@ -328,19 +315,7 @@ int main(int argc, char **argv)
 #endif // !_MSC_VER
 
 	selectLanguage();
-
 	eb_curl_global_init();
-	progname = argv[0];
-	l = strlen(progname);
-	if (l >= 11 && stringEqual(progname + l - 11, "edbrowse-js"))
-		return js_main(argc, argv);
-
-	ttySaveSettings();
-	initializeReadline();
-
-/* Let's everybody use my malloc and free routines */
-	pcre_malloc = allocMem;
-	pcre_free = nzFree;
 
 /* Establish the home directory, and standard edbrowse files thereunder. */
 	home = getenv("HOME");
@@ -419,13 +394,20 @@ int main(int argc, char **argv)
 	sprintf(sigFile, "%s/.signature", home);
 	sigFileEnd = sigFile + strlen(sigFile);
 
-	{
-		static char agent0[64] = "edbrowse/";
-		strcat(agent0, version);
-		userAgents[0] = currentAgent = agent0;
-	}
+	strcat(agent0, version);
+	userAgents[0] = currentAgent = agent0;
 
-	setNowDay();
+	progname = argv[0];
+	l = strlen(progname);
+	if (l >= 11 && stringEqual(progname + l - 11, "edbrowse-js"))
+		return js_main(argc, argv);
+
+	ttySaveSettings();
+	initializeReadline();
+
+/* Let's everybody use my malloc and free routines */
+	pcre_malloc = allocMem;
+	pcre_free = nzFree;
 
 	++argv, --argc;
 	if (argc && stringEqual(argv[0], "-c")) {
