@@ -37,11 +37,13 @@ JSLIB = -lmozjs-24
 LDLIBS = -lpcre -lcurl -lreadline -lncurses -ltidy
 
 #  Make the dynamically linked executable program by default.
-all: edbrowse edbrowse-js
+all: edbrowse
 
 #  edbrowse objects
 EBOBJS = main.o buffers.o sendmail.o fetchmail.o \
-	html.o format.o cookies.o ebjs.o plugin.o ebrc.o
+	html.o format.o cookies.o ebjs.o plugin.o ebrc.o \
+	messages.o url.o stringfile.o html-tidy.o decorate.o \
+	msg-strings.o http.o auth.o jseng-moz.o
 ifeq ($(BUILD_EDBR_ODBC),on)
 EBOBJS += dbodbc.o dbops.o
 LDLIBS += -lodbc
@@ -49,11 +51,8 @@ else
 EBOBJS += dbstubs.o
 endif
 
-#  common objects
-COMOBJS = messages.o url.o stringfile.o html-tidy.o decorate.o msg-strings.o http.o auth.o
-
 #  Header file dependencies.
-$(EBOBJS) $(COMOBJS) jseng-moz.o : eb.h ebprot.h messages.h ebjs.h
+$(EBOBJS) : eb.h ebprot.h messages.h ebjs.h
 dbodbc.o dbinfx.o dbops.o : dbapi.h
 
 startwindow.c: startwindow.js
@@ -65,14 +64,12 @@ ebrc.c: ../lang/ebrc-*
 msg-strings.c: ../lang/msg-*
 	cd .. ; ./tools/buildmsgstrings.pl
 
-#  library of common objects among all edbrowse processes
-common.a : $(COMOBJS)
-	ar rs common.a $?
-
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.
-edbrowse: $(EBOBJS) common.a startwindow.o
-	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
+edbrowse: $(EBOBJS) startwindow.o
+	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) $(JSLIB) -lstdc++ -o $@
+	rm -f edbrowse-js
+	ln -s edbrowse edbrowse-js
 
 #  You probably need to be root to do this.
 install:
@@ -85,18 +82,15 @@ dbinfx.o : dbinfx.ec
 	esql -c dbinfx.ec
 
 #  Informix executable
-edbrowse-infx: $(EBOBJS) common.a startwindow.o dbops.o dbinfx.o
-	esql $(ESQLDFLAGS) -o edbrowse-infx $(EBOBJS) common.a startwindow.o dbops.o dbinfx.o $(LDLIBS)
+edbrowse-infx: $(EBOBJS) startwindow.o dbops.o dbinfx.o
+	esql $(ESQLDFLAGS) -o edbrowse-infx $(EBOBJS) startwindow.o dbops.o dbinfx.o $(LDLIBS)
 
 clean:
-	rm -f *.[oa] edbrowse edbrowse-js \
+	rm -f *.o edbrowse edbrowse-js \
 	startwindow.c ebrc.c msg-strings.c
 
 jseng-moz.o: jseng-moz.cpp
 	$(CXX) -c $(CXXFLAGS) $(JS_CXXFLAGS) jseng-moz.cpp -o $@
-
-edbrowse-js : jseng-moz.o common.a
-	$(LINK.o) $^ $(LOADLIBES) $(JSLIB) -ltidy -lcurl -lstdc++ -o $@
 
 #  some hello world targets, for testing and debugging
 

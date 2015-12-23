@@ -242,10 +242,9 @@ if js is enabled.
 src/jseng-moz.cpp:
 The javascript engine built around the mozilla js library.
 Manage all the js objects corresponding to the web page in edbrowse.
-This is a stand alone process,
-though it may share some sourcefiles with edbrowse, e.g. stringfile.c.
-The resulting program is edbrowse-js,
-and it must be in the same bin as edbrowse.
+Copy or link edbrowse to edbrowse-js;
+the latter executable runs the machinery in this file.
+It must be in the same bin as edbrowse.
 All the js details are hidden in this file.
 this is encapsulation, hiding the js library from the rest of edbrowse.
 It might be possible, for instance, to build jseng-v8.c, based upon v8 etc.

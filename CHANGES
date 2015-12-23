@@ -1,5 +1,10 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.6.1:
+Merge edbrowse and edbrowse-js back into one process.
+Necessary so that both worlds can share the common curl state
+of cookies, agent, authorization passwords, etc.
+
 3.6.0:
 Edbrowse is an imap client. Scan and search through folders,
 delete move or download emails, pull down attachments.

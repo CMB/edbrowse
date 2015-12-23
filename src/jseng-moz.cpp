@@ -44,79 +44,6 @@ Exit codes are as follows:
 
 using namespace std;
 
-/* This function closes edbrowse down, e.g. after malloc failure,
- * it is just a stub for exit here. */
-void ebClose(int n)
-{
-	exit(n);
-}				/* ebclose */
-
-/* stub, this function called by freeTags(), but never called in this context */
-void freeEmptySideBuffer(int n)
-{
-}
-
-/* meta tags don't have side effects from within the js process. */
-void htmlMetaHelper(struct htmlTag *t)
-{
-}
-
-/* textarea does not generate a side buffer here */
-int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
-{
-	return 0;
-}
-
-void setDataSource(char *v)
-{
-}
-
-bool javaOK(const char *url)
-{
-	return true;
-}
-
-void mail64Error(int err)
-{
-}
-
-const struct MIMETYPE *findMimeByURL(const char *url)
-{
-	return NULL;
-}
-
-const struct MIMETYPE *findMimeByContent(const char *content)
-{
-	return NULL;
-}
-
-const struct MIMETYPE *findMimeByProtocol(const char *prot)
-{
-	return NULL;
-}
-
-char *pluginCommand(const struct MIMETYPE *m, const char *infile,
-		    const char *outfile, const char *suffix)
-{
-	return NULL;
-}
-
-bool playServerData(void)
-{
-	return true;
-}
-
-/* http calls this when a download takes place in the background */
-void js_disconnect(void)
-{
-}
-
-/* ebrc strings don't mean anything here */
-const char *ebrc_en = emptyString;
-const char *ebrc_fr = emptyString;
-const char *ebrc_pt_br = emptyString;
-const char *ebrc_de = emptyString;
-
 static void usage(void)
 {
 	fprintf(stderr, "Usage:  edbrowse-js pipe_in pipe_out\n");
@@ -140,7 +67,7 @@ static void cwSetup(void)
 {
 	in_js_cw.winobj = winobj;
 	in_js_cw.docobj = docobj;
-	in_js_cw.hbase = get_property_string(docobj, "base$href");
+	in_js_cw.hbase = get_property_string_nat(docobj, "base$href");
 	in_js_cw.baseset = true;
 }				/* cwSetup */
 
@@ -183,12 +110,9 @@ static char *propval;
 static enum ej_proptype proptype;
 static char *runscript;
 
-int main(int argc, char **argv)
+int js_main(int argc, char **argv)
 {
 	static char agent0[64] = "edbrowse/";
-
-/* do this first, in case usage some day is tailored to language */
-	selectLanguage();
 
 	if (argc != 3)
 		usage();
@@ -218,6 +142,7 @@ int main(int argc, char **argv)
 
 	readConfigFile();
 
+	jsthread = true;
 	js_start();
 
 /* edbrowse catches interrupt, this process ignores it. */
@@ -263,7 +188,7 @@ int main(int argc, char **argv)
 /* this function will enter the compartment */
 		processMessage();
 	}
-}				/* main */
+}				/* js_main */
 
 /* read from and write to edbrowse */
 static void readFromEb(void *data_p, int n)
@@ -861,22 +786,22 @@ static ej_proptype find_proptype(JS::HandleObject parent, const char *name)
 	return val_proptype(v);
 }				/* find_proptype */
 
-enum ej_proptype has_property(jsobjtype parent, const char *name)
+enum ej_proptype has_property_nat(jsobjtype parent, const char *name)
 {
 	JS::RootedObject p(jcx, (JSObject *) parent);
 	return find_proptype(p, name);
-}				/* has_property */
+}				/* has_property_nat */
 
 static void delete_property1(JS::HandleObject parent, const char *name)
 {
 	JS_DeleteProperty(jcx, parent, name);
 }				/* delete_property1 */
 
-void delete_property(jsobjtype parent, const char *name)
+void delete_property_nat(jsobjtype parent, const char *name)
 {
 	JS::RootedObject p(jcx, (JSObject *) parent);
 	delete_property1(p, name);
-}				/* delete_property */
+}				/* delete_property_nat */
 
 static int get_arraylength1(JS::HandleObject a)
 {
@@ -886,11 +811,11 @@ static int get_arraylength1(JS::HandleObject a)
 	return length;
 }				/* get_arraylength1 */
 
-int get_arraylength(jsobjtype a)
+int get_arraylength_nat(jsobjtype a)
 {
 	JS::RootedObject p(jcx, (JSObject *) a);
 	return get_arraylength1(p);
-}				/* get_arraylength */
+}				/* get_arraylength_nat */
 
 /* Use stringize() to return a property as a string, if it is
  * string compatible. The string is allocated, free it when done. */
@@ -915,11 +840,11 @@ static char *get_property_string1(JS::HandleObject parent, const char *name)
 	return cloneString(s);
 }				/* get_property_string1 */
 
-char *get_property_string(jsobjtype parent, const char *name)
+char *get_property_string_nat(jsobjtype parent, const char *name)
 {
 	JS::RootedObject p(jcx, (JSObject *) parent);
 	return get_property_string1(p, name);
-}				/* get_property_string */
+}				/* get_property_string_nat */
 
 static JSObject *get_property_object1(JS::HandleObject parent, const char *name)
 {
@@ -933,11 +858,11 @@ static JSObject *get_property_object1(JS::HandleObject parent, const char *name)
 	return child;
 }				/* get_property_object1 */
 
-jsobjtype get_property_object(jsobjtype parent, const char *name)
+jsobjtype get_property_object_nat(jsobjtype parent, const char *name)
 {
 	JS::RootedObject p(jcx, (JSObject *) parent);
 	return get_property_object1(p, name);
-}				/* get_property_object */
+}				/* get_property_object_nat */
 
 /* if js changes the value of an input field, this must be reflected
  * in the <foobar> text in edbrowse. */
@@ -1164,12 +1089,13 @@ set_property_string1(js::HandleObject parent, const char *name,
 		misconfigure();
 }				/* set_property_string1 */
 
-int set_property_string(jsobjtype parent, const char *name, const char *value)
+int set_property_string_nat(jsobjtype parent, const char *name,
+			    const char *value)
 {
 	JS::RootedObject p(jcx, (JSObject *) parent);
 	set_property_string1(p, name, value);
 	return 0;
-}				/* set_property_string */
+}				/* set_property_string_nat */
 
 static void set_property_bool1(js::HandleObject parent, const char *name,
 			       bool n)
@@ -1191,12 +1117,12 @@ static void set_property_bool1(js::HandleObject parent, const char *name,
 		misconfigure();
 }				/* set_property_bool1 */
 
-int set_property_bool(jsobjtype parent, const char *name, bool n)
+int set_property_bool_nat(jsobjtype parent, const char *name, bool n)
 {
 	JS::RootedObject p(jcx, (JSObject *) parent);
 	set_property_bool1(p, name, n);
 	return 0;
-}				/* set_property_bool */
+}				/* set_property_bool_nat */
 
 static void set_property_number1(js::HandleObject parent, const char *name,
 				 int n)
@@ -1218,12 +1144,12 @@ static void set_property_number1(js::HandleObject parent, const char *name,
 		misconfigure();
 }				/* set_property_number1 */
 
-int set_property_number(jsobjtype parent, const char *name, int n)
+int set_property_number_nat(jsobjtype parent, const char *name, int n)
 {
 	JS::RootedObject p(jcx, (JSObject *) parent);
 	set_property_number1(p, name, n);
 	return 0;
-}				/* set_property_number */
+}				/* set_property_number_nat */
 
 static void set_property_float1(js::HandleObject parent, const char *name,
 				double n)
@@ -1245,12 +1171,12 @@ static void set_property_float1(js::HandleObject parent, const char *name,
 		misconfigure();
 }				/* set_property_float1 */
 
-int set_property_float(jsobjtype parent, const char *name, double n)
+int set_property_float_nat(jsobjtype parent, const char *name, double n)
 {
 	JS::RootedObject p(jcx, (JSObject *) parent);
 	set_property_float1(p, name, n);
 	return 0;
-}				/* set_property_float */
+}				/* set_property_float_nat */
 
 static void
 set_property_object1(js::HandleObject parent, const char *name,
@@ -1277,13 +1203,13 @@ set_property_object1(js::HandleObject parent, const char *name,
 		misconfigure();
 }				/* set_property_object1 */
 
-int set_property_object(jsobjtype parent, const char *name, jsobjtype child)
+int set_property_object_nat(jsobjtype parent, const char *name, jsobjtype child)
 {
 	JS::RootedObject p(jcx, (JSObject *) parent);
 	JS::RootedObject c(jcx, (JSObject *) child);
 	set_property_object1(p, name, c);
 	return 0;
-}				/* set_property_object */
+}				/* set_property_object_nat */
 
 /* for window.focus etc */
 static JSBool nullFunction(JSContext * cx, unsigned int argc, jsval * vp)
@@ -1319,12 +1245,13 @@ static void set_property_function1(js::HandleObject parent,
 	}
 }				/* set_property_function1 */
 
-int set_property_function(jsobjtype parent, const char *name, const char *body)
+int set_property_function_nat(jsobjtype parent, const char *name,
+			      const char *body)
 {
 	JS::RootedObject p(jcx, (JSObject *) parent);
 	set_property_function1(p, name, body);
 	return 0;
-}				/* set_property_function */
+}				/* set_property_function_nat */
 
 static void
 run_function_onearg1(js::HandleObject parent, const char *name,
@@ -1337,12 +1264,13 @@ run_function_onearg1(js::HandleObject parent, const char *name,
 	JS_CallFunctionName(jcx, parent, name, 1, argv, v.address());
 }				/* run_function_onearg1 */
 
-void run_function_onearg(jsobjtype parent, const char *name, jsobjtype child)
+void run_function_onearg_nat(jsobjtype parent, const char *name,
+			     jsobjtype child)
 {
 	JS::RootedObject p(jcx, (JSObject *) parent);
 	JS::RootedObject c(jcx, (JSObject *) child);
 	run_function_onearg1(p, name, c);
-}				/* run_function_onearg */
+}				/* run_function_onearg_nat */
 
 #if 0
 /* Not clear that setAttribute needs any side effects, or needs to be native. */
@@ -2233,11 +2161,11 @@ static JSObject *instantiate_array1(js::HandleObject parent, const char *name)
 	return a;
 }				/* instantiate_array1 */
 
-jsobjtype instantiate_array(jsobjtype parent, const char *name)
+jsobjtype instantiate_array_nat(jsobjtype parent, const char *name)
 {
 	JS::RootedObject p(jcx, (JSObject *) parent);
 	return instantiate_array1(p, name);
-}				/* instantiate_array */
+}				/* instantiate_array_nat */
 
 static JSObject *instantiate1(js::HandleObject parent, const char *name,
 			      const char *classname)
@@ -2265,11 +2193,12 @@ static JSObject *instantiate1(js::HandleObject parent, const char *name,
 	return a;
 }				/* instantiate1 */
 
-jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname)
+jsobjtype instantiate_nat(jsobjtype parent, const char *name,
+			  const char *classname)
 {
 	JS::RootedObject p(jcx, (JSObject *) parent);
 	return instantiate1(p, name, classname);
-}				/* instantiate */
+}				/* instantiate_nat */
 
 static JSObject *instantiate_array_element1(js::HandleObject parent, int idx,
 					    const char *classname)
@@ -2281,12 +2210,12 @@ static JSObject *instantiate_array_element1(js::HandleObject parent, int idx,
 	return a;
 }				/* instantiate_array_element1 */
 
-jsobjtype instantiate_array_element(jsobjtype parent, int idx,
-				    const char *classname)
+jsobjtype instantiate_array_element_nat(jsobjtype parent, int idx,
+					const char *classname)
 {
 	JS::RootedObject p(jcx, (JSObject *) parent);
 	return instantiate_array_element1(p, idx, classname);
-}				/* instantiate_array_element */
+}				/* instantiate_array_element_nat */
 
 static void
 set_array_element_object1(js::HandleObject parent, int idx,
@@ -2306,7 +2235,7 @@ set_array_element_object1(js::HandleObject parent, int idx,
 	}
 }				/* set_array_element_object1 */
 
-int set_array_element_object(jsobjtype parent, int idx, jsobjtype child)
+int set_array_element_object_nat(jsobjtype parent, int idx, jsobjtype child)
 {
 	JS::RootedObject p(jcx, (JSObject *) parent);
 	JS::RootedObject c(jcx, (JSObject *) child);
@@ -2328,11 +2257,11 @@ static JSObject *get_array_element_object1(JS::HandleObject parent, int idx)
 	return child;
 }				/* get_array_element_object1 */
 
-jsobjtype get_array_element_object(jsobjtype parent, int idx)
+jsobjtype get_array_element_object_nat(jsobjtype parent, int idx)
 {
 	JS::RootedObject p(jcx, (JSObject *) parent);
 	return get_array_element_object1(p, idx);
-}				/* get_array_element_object */
+}				/* get_array_element_object_nat */
 
 /*********************************************************************
 ebjs.c allows for geting and setting array elements of all types,

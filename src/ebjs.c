@@ -631,6 +631,8 @@ void freeJavaContext(struct ebWindow *w)
 
 void js_shutdown(void)
 {
+	if (jsthread)
+		return;
 	if (!js_pid)		/* js not running */
 		return;
 	debugPrint(5, "> js shutdown");
@@ -645,6 +647,8 @@ void js_shutdown(void)
 /* After fork, the child process does not need to talk to js */
 void js_disconnect(void)
 {
+	if (jsthread)
+		return;
 	if (!js_pid)
 		return;
 	close(pipe_in[0]);
@@ -709,6 +713,8 @@ void jsRunScript(jsobjtype obj, const char *str, const char *filename,
 /* does the member exist? */
 enum ej_proptype has_property(jsobjtype obj, const char *name)
 {
+	if (jsthread)
+		return has_property_nat(obj, name);
 	if (!allowJS || !cw->winobj || !obj)
 		return EJ_PROP_NONE;
 
@@ -729,6 +735,10 @@ enum ej_proptype has_property(jsobjtype obj, const char *name)
 
 void delete_property(jsobjtype obj, const char *name)
 {
+	if (jsthread) {
+		delete_property_nat(obj, name);
+		return;
+	}
 	if (!allowJS || !cw->winobj || !obj)
 		return;
 
@@ -773,6 +783,8 @@ static int get_property(jsobjtype obj, const char *name)
 char *get_property_string(jsobjtype obj, const char *name)
 {
 	char *s;
+	if (jsthread)
+		return get_property_string_nat(obj, name);
 	get_property(obj, name);
 	s = propval;
 	propval = 0;
@@ -823,6 +835,8 @@ bool get_property_bool(jsobjtype obj, const char *name)
 jsobjtype get_property_object(jsobjtype parent, const char *name)
 {
 	jsobjtype child = 0;
+	if (jsthread)
+		return get_property_object_nat(parent, name);
 	get_property(parent, name);
 	if (!propval)
 		return child;
@@ -869,6 +883,8 @@ static int get_array_element(jsobjtype obj, int idx)
 jsobjtype get_array_element_object(jsobjtype obj, int idx)
 {
 	jsobjtype p = 0;
+	if (jsthread)
+		return get_array_element_object_nat(obj, idx);
 	get_array_element(obj, idx);
 	if (!propval)
 		return p;
@@ -912,6 +928,8 @@ static int set_property(jsobjtype obj, const char *name,
 
 int set_property_string(jsobjtype obj, const char *name, const char *value)
 {
+	if (jsthread)
+		return set_property_string_nat(obj, name, value);
 	if (value == NULL)
 		value = emptyString;
 	return set_property(obj, name, value, EJ_PROP_STRING);
@@ -920,6 +938,8 @@ int set_property_string(jsobjtype obj, const char *name, const char *value)
 int set_property_number(jsobjtype obj, const char *name, int n)
 {
 	char buf[20];
+	if (jsthread)
+		return set_property_number_nat(obj, name, n);
 	sprintf(buf, "%d", n);
 	return set_property(obj, name, buf, EJ_PROP_INT);
 }				/* set_property_number */
@@ -927,6 +947,8 @@ int set_property_number(jsobjtype obj, const char *name, int n)
 int set_property_float(jsobjtype obj, const char *name, double n)
 {
 	char buf[32];
+	if (jsthread)
+		return set_property_float_nat(obj, name, n);
 	sprintf(buf, "%lf", n);
 	return set_property(obj, name, buf, EJ_PROP_FLOAT);
 }				/* set_property_float */
@@ -934,6 +956,8 @@ int set_property_float(jsobjtype obj, const char *name, double n)
 int set_property_bool(jsobjtype obj, const char *name, bool n)
 {
 	char buf[8];
+	if (jsthread)
+		return set_property_bool_nat(obj, name, n);
 	strcpy(buf, (n ? "1" : "0"));
 	return set_property(obj, name, buf, EJ_PROP_BOOL);
 }				/* set_property_bool */
@@ -941,6 +965,8 @@ int set_property_bool(jsobjtype obj, const char *name, bool n)
 int set_property_object(jsobjtype parent, const char *name, jsobjtype child)
 {
 	char buf[32];
+	if (jsthread)
+		return set_property_object_nat(parent, name, child);
 	sprintf(buf, "%p", child);
 	return set_property(parent, name, buf, EJ_PROP_OBJECT);
 }				/* set_property_object */
@@ -948,6 +974,9 @@ int set_property_object(jsobjtype parent, const char *name, jsobjtype child)
 jsobjtype instantiate_array(jsobjtype parent, const char *name)
 {
 	jsobjtype p = 0;
+
+	if (jsthread)
+		return instantiate_array_nat(parent, name);
 
 	if (!allowJS || !cw->winobj || !parent)
 		return 0;
@@ -1007,6 +1036,8 @@ static int set_array_element(jsobjtype array, int idx,
 int set_array_element_object(jsobjtype array, int idx, jsobjtype child)
 {
 	char buf[32];
+	if (jsthread)
+		return set_array_element_object_nat(array, idx, child);
 	sprintf(buf, "%p", child);
 	return set_array_element(array, idx, buf, EJ_PROP_OBJECT);
 }				/* set_array_element_object */
@@ -1015,6 +1046,8 @@ jsobjtype instantiate_array_element(jsobjtype array, int idx,
 				    const char *classname)
 {
 	jsobjtype p = 0;
+	if (jsthread)
+		return instantiate_array_element_nat(array, idx, classname);
 	set_array_element(array, idx, classname, EJ_PROP_INSTANCE);
 	if (!propval)
 		return p;
@@ -1030,6 +1063,9 @@ jsobjtype instantiate_array_element(jsobjtype array, int idx,
 jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname)
 {
 	jsobjtype p = 0;
+
+	if (jsthread)
+		return instantiate_nat(parent, name, classname);
 
 	if (!allowJS || !cw->winobj || !parent)
 		return 0;
@@ -1065,6 +1101,8 @@ jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname)
 
 int set_property_function(jsobjtype parent, const char *name, const char *body)
 {
+	if (jsthread)
+		return set_property_function_nat(parent, name, body);
 	if (!body)
 		body = emptyString;
 	return set_property(parent, name, body, EJ_PROP_FUNCTION);
@@ -1117,6 +1155,8 @@ static int run_function(jsobjtype obj, const char *name, int argc,
 
 int get_arraylength(jsobjtype a)
 {
+	if (jsthread)
+		return get_arraylength_nat(a);
 	head.cmd = EJ_CMD_ARLEN;
 	head.obj = a;
 	if (writeHeader())
@@ -1583,5 +1623,9 @@ void run_function_objargs(jsobjtype obj, const char *name, int nargs, ...)
 
 void run_function_onearg(jsobjtype obj, const char *name, jsobjtype a)
 {
+	if (jsthread) {
+		run_function_onearg_nat(obj, name, a);
+		return;
+	}
 	run_function_objargs(obj, name, 1, a);
 }				/* run_function_onearg */

@@ -255,6 +255,7 @@ extern bool sqlPresent;		/* Was edbrowse compiled with SQL built in? */
 extern bool ismc;		/* Is the program running as a mail client? */
 extern bool isimap;		/* Is the program running as an imap client? */
 extern bool down_bg;		/* download in background */
+extern bool jsthread; // running under the javascript thread
 extern int eb_lang;		/* edbrowse language, determined by $LANG */
 extern bool cons_utf8;		/* does the console expect utf8? */
 extern bool iuConvert;		/* perform iso utf8 conversions automatically */

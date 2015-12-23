@@ -185,6 +185,7 @@ void setDataSource(char *v) ;
 bool runEbFunction(const char *line) ;
 struct DBTABLE *findTableDescriptor(const char *sn) ;
 struct DBTABLE *newTableDescriptor(const char *name) ;
+void readConfigFile(void);
 
 /* sourcefile=plugin.c */
 const struct MIMETYPE *findMimeBySuffix(const char *suffix) ;
@@ -314,7 +315,6 @@ int eopen(const char *name, int mode, int perms) ;
 void appendFile(const char *fname, const char *message, ...) ;
 void appendFileNF(const char *filename, const char *msg) ;
 int eb_system(const char *cmd, bool print_on_success);
-void readConfigFile(void);
 
 /* sourcefile=url.c */
 void unpercentURL(char *url) ;
@@ -344,4 +344,25 @@ char *altText(const char *base) ;
 char *encodePostData(const char *s) ;
 char *decodePostData(const char *data, const char *name, int seqno) ;
 void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p) ;
+
+/* sourcefile=jseng-moz.cpp */
+int js_main(int argc, char **argv);
+// the native versions of the api functions in ebjs.c
+enum ej_proptype has_property_nat(jsobjtype obj, const char *name) ;
+void delete_property_nat(jsobjtype obj, const char *name) ;
+char *get_property_string_nat(jsobjtype obj, const char *name) ;
+jsobjtype get_property_object_nat(jsobjtype parent, const char *name) ;
+jsobjtype get_array_element_object_nat(jsobjtype obj, int idx) ;
+int set_property_string_nat(jsobjtype obj, const char *name, const char *value) ;
+int set_property_number_nat(jsobjtype obj, const char *name, int n) ;
+int set_property_float_nat(jsobjtype obj, const char *name, double n) ;
+int set_property_bool_nat(jsobjtype obj, const char *name, bool n) ;
+int set_property_object_nat(jsobjtype parent, const char *name, jsobjtype child) ;
+jsobjtype instantiate_array_nat(jsobjtype parent, const char *name) ;
+int set_array_element_object_nat(jsobjtype array, int idx, jsobjtype child) ;
+jsobjtype instantiate_array_element_nat(jsobjtype array, int idx, const char *classname) ;
+jsobjtype instantiate_nat(jsobjtype parent, const char *name, const char *classname) ;
+int set_property_function_nat(jsobjtype parent, const char *name, const char *body) ;
+int get_arraylength_nat(jsobjtype a);
+void run_function_onearg_nat(jsobjtype obj, const char *name, jsobjtype o);
 
