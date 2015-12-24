@@ -137,16 +137,6 @@ typedef uchar *pst;		/* perl string */
 #define MAXUSERPASS 40
 /* Number of pop3 mail accounts */
 #define MAXACCOUNT 100
-/* filters to save emails in various files */
-#define MAXFILTER 500
-struct FILTERDESC {
-	const char *match;
-	const char *redirect;
-	char type;
-	long expire;
-};
-extern struct FILTERDESC mailFilters[MAXFILTER];
-extern int n_filters;
 /* Number of mime types */
 #define MAXMIME 40
 /* Number of proxy entries */
@@ -154,11 +144,6 @@ extern int n_filters;
 /* number of db tables */
 #define MAXDBT 100
 #define MAXTCOLS 40
-/* for edbrowse functions defined in the config file */
-#define MAXEBSCRIPT 500 // this many scripts
-#define MAXNEST 20 // nested blocks
-extern char *ebScript[MAXEBSCRIPT + 1];
-extern char *ebScriptName[MAXEBSCRIPT + 1];
 /* How many sessions open concurrently */
 #define MAXSESSION 1000
 /* Allocation increment for a growing string, that we don't expect
@@ -239,8 +224,6 @@ struct DBTABLE {
 	char *types;
 	char *nullable;
 };
-extern struct DBTABLE dbtables[MAXDBT];
-extern int numTables;
 
 /* various globals */
 extern CURL *http_curl_handle;

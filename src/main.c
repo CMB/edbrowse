@@ -30,17 +30,28 @@ int localAccount, maxAccount;
 struct MACCOUNT accounts[MAXACCOUNT];
 int maxMime;
 struct MIMETYPE mimetypes[MAXMIME];
+/* filters to save emails in various files */
+#define MAXFILTER 500
+struct FILTERDESC {
+	const char *match;
+	const char *redirect;
+	char type;
+	long expire;
+};
+static struct FILTERDESC mailFilters[MAXFILTER];
+static int n_filters;
 int maxproxy;
 struct PXENT proxyEntries[MAXPROXY];
-struct FILTERDESC mailFilters[MAXFILTER];
-int n_filters;
-char *ebScript[MAXEBSCRIPT + 1];
-char *ebScriptName[MAXEBSCRIPT + 1];
+/* for edbrowse functions defined in the config file */
+#define MAXEBSCRIPT 500		// this many scripts
+#define MAXNEST 20		// nested blocks
+static char *ebScript[MAXEBSCRIPT + 1];
+static char *ebScriptName[MAXEBSCRIPT + 1];
 #define MAXNOJS 500
 static const char *javaDis[MAXNOJS];
 static int javaDisCount;
-struct DBTABLE dbtables[MAXDBT];
-int numTables;
+static struct DBTABLE dbtables[MAXDBT];
+static int numTables;
 volatile bool intFlag;
 bool ismc, isimap, passMail;
 bool jsthread;
@@ -548,7 +559,6 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	cookiesFromJar();
 	http_curl_init();
 
 	signal(SIGINT, catchSig);
