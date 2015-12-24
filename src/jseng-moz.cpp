@@ -121,6 +121,7 @@ int js_main(int argc, char **argv)
 		usage();
 
 	readConfigFile();
+	http_curl_init();
 
 	jsthread = true;
 	js_start();
