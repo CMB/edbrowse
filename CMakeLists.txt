@@ -127,7 +127,7 @@ if (MOZJS_FOUND)
     include_directories( ${MOZJS_INCLUDE_DIR} )
     list( APPEND add_LIBS ${MOZJS_LIBRARY} )
 else ()
-    message( STATUS "*** MOZJS NOT FOUND, No edbrowse-js build")
+    message( FATAL_ERROR "*** MOZJS NOT FOUND, unable to proceed")
 endif ()
 
 if (WIN32 AND MOZJS_FOUND)
@@ -157,8 +157,7 @@ if (WIN32 AND MOZJS_FOUND)
             message( FATAL_ERROR "*** Thread libray NOT FOUND!" )
         endif()
     else ()
-        message( STATUS "*** Threads NOT FOUND, No edbrowse-js build")
-        set(MOZJS_FOUND)
+        message( FATAL "*** Threads NOT FOUNDunable to proceed")
     endif ()
 endif ()
 
@@ -279,6 +278,7 @@ set(${name}_SRCS
     ${dir}/cookies.c
     ${dir}/ebjs.c
     ${dir}/plugin.c
+    ${dir}/jseng-moz.cpp
     ${ODBC_SRCS}
     )
 set(${name}_HDRS
@@ -296,18 +296,17 @@ if (MSVC)
 endif ()
 install(TARGETS ${name} DESTINATION bin)
 
-if (MOZJS_FOUND)
-    set(name edbrowse-js)
-    set(dir src)
-    set(${name}_SRCS
-        ${dir}/jseng-moz.cpp
-        )
-    add_executable( ${name} ${${name}_SRCS} )
-    target_link_libraries( ${name} ${add_LIBS} ${extra_LIBS} )
-    if (MSVC)
-        set_target_properties( ${name} PROPERTIES DEBUG_POSTFIX d )
+set(name edbrowse-js)
+set(dir src)
+
+if (WIN32)
+    add_custom_target(${name} ALL ${CMAKE_COMMAND} -E copy_if_different edbrowse ${name} DEPENDS edbrowse)
+else ()
+    add_custom_target(${name} ALL ${CMAKE_COMMAND} -E create_symlink edbrowse ${name} DEPENDS edbrowse)
     endif ()
-    install(TARGETS ${name} DESTINATION bin)
+if (MSVC)
+    set_target_properties( ${name} PROPERTIES DEBUG_POSTFIX d )
 endif ()
+install(FILES "${CMAKE_BINARY_DIR}/${name}" DESTINATION bin)
 
 # eof
