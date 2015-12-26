@@ -1,5 +1,9 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.6.0.1:
+Bug fixes.
+Most importantly, fixed a buffer overflow in sprintf.
+
 3.6.0:
 Edbrowse is an imap client. Scan and search through folders,
 delete move or download emails, pull down attachments.

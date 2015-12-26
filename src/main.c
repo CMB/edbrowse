@@ -11,7 +11,7 @@
 /* Define the globals that are declared in eb.h. */
 /* See eb.h for descriptive comments. */
 
-const char *version = "3.6.0+";
+const char *version = "3.6.0.1";
 const char *progname;
 char *userAgents[10], *currentAgent, *currentReferrer;
 const char eol[] = "\r\n";
