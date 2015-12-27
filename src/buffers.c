@@ -3614,6 +3614,13 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "xhr")) {
+		allowXHR ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(allowXHR + MSG_XhrOff);
+		return true;
+	}
+
 	if (stringEqual(line, "bd")) {
 		binaryDetect ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)

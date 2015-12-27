@@ -123,7 +123,7 @@ int js_main(int argc, char **argv)
 	readConfigFile();
 	http_curl_init();
 
-	jsthread = true;
+	whichproc = 'j';
 	js_start();
 
 /* edbrowse catches interrupt, this process ignores it. */

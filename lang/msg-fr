@@ -463,8 +463,8 @@ caractères invalides dans la pièce jointe encodée
 0
 attention, javascript ne peut être invoqué par un double clic
 erreur de détermination de l'option %s pendant la synchronisation ou la soumission du formulaire
-0
-0
+xhr dédactivé
+xhr activé
 impossible de charger localement javascript, %s\n
 impossible de charger javascript depuis %s, code %ld\n
 impossible de charger javascript, %s\n

@@ -21,6 +21,7 @@ char *recycleBin, *sigFile, *sigFileEnd;
 char *userAgents[10];
 char *currentAgent, *currentReferrer;
 bool allowRedirection = true, allowJS = true, sendReferrer = true;
+bool allowXHR = true;
 int jsPool = 32;
 int webTimeout = 20, mailTimeout = 0;
 int displayLength = 500;
@@ -54,7 +55,7 @@ static struct DBTABLE dbtables[MAXDBT];
 static int numTables;
 volatile bool intFlag;
 bool ismc, isimap, passMail;
-bool jsthread;
+char whichproc = 'e';		// edbrowse
 bool inInput, listNA;
 int fileSize;
 char *dbarea, *dblogin, *dbpw;	/* to log into the database */

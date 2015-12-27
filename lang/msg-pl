@@ -463,8 +463,8 @@ nieprawidłowe znaki w zakodowanym ząłączniku
 0
 uwaga, JavaScript nie może być wywołany podwójnym kliknięciem
 błąd użycia opcji %s podczas synchronizacji lub wysyłania formularza
-0
-0
+xhr włączony
+xhr wyłączony
 nie można pobrać lokalnego JavaScriptu, %s\n
 nie można pobrać JavaScriptu z %s, kod %ld\n
 nie można pobrać JavaScriptu, %s\n

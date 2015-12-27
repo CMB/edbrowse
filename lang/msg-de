@@ -12,8 +12,8 @@ keine HTTP-Weiterleitung
 HTTP-Weiterleitung
 sende Referer nicht
 sende Referer
-JavaScript deaktiviert
-JavaScript aktiviert
+javascript deaktiviert
+javascript aktiviert
 behandle Binärdaten als Text
 warte auf Binärdateien
 passiver Modus
@@ -463,8 +463,8 @@ ungültige Zeichen im kodierten Anhang
 0
 Warnung, JavaScript kann nicht durch einen Doppelklick aktiviert werden
 Fehler beim Auflösen der Option %s beim Synchronisieren oder Versand des Formularfelds
-0
-0
+xhr deaktiviert
+xhr aktiviert
 konnte lokales JavaScript nicht abrufen, %s\n
 konnte JavaScript von %s nicht abrufen, Code %ld\n
 konnte JavaScript nicht abrufen, %s\n

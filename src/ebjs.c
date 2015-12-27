@@ -631,7 +631,7 @@ void freeJavaContext(struct ebWindow *w)
 
 void js_shutdown(void)
 {
-	if (jsthread)
+	if (whichproc == 'j')
 		return;
 	if (!js_pid)		/* js not running */
 		return;
@@ -647,7 +647,7 @@ void js_shutdown(void)
 /* After fork, the child process does not need to talk to js */
 void js_disconnect(void)
 {
-	if (jsthread)
+	if (whichproc == 'j')
 		return;
 	if (!js_pid)
 		return;
@@ -713,7 +713,7 @@ void jsRunScript(jsobjtype obj, const char *str, const char *filename,
 /* does the member exist? */
 enum ej_proptype has_property(jsobjtype obj, const char *name)
 {
-	if (jsthread)
+	if (whichproc == 'j')
 		return has_property_nat(obj, name);
 	if (!allowJS || !cw->winobj || !obj)
 		return EJ_PROP_NONE;
@@ -735,7 +735,7 @@ enum ej_proptype has_property(jsobjtype obj, const char *name)
 
 void delete_property(jsobjtype obj, const char *name)
 {
-	if (jsthread) {
+	if (whichproc == 'j') {
 		delete_property_nat(obj, name);
 		return;
 	}
@@ -783,7 +783,7 @@ static int get_property(jsobjtype obj, const char *name)
 char *get_property_string(jsobjtype obj, const char *name)
 {
 	char *s;
-	if (jsthread)
+	if (whichproc == 'j')
 		return get_property_string_nat(obj, name);
 	get_property(obj, name);
 	s = propval;
@@ -835,7 +835,7 @@ bool get_property_bool(jsobjtype obj, const char *name)
 jsobjtype get_property_object(jsobjtype parent, const char *name)
 {
 	jsobjtype child = 0;
-	if (jsthread)
+	if (whichproc == 'j')
 		return get_property_object_nat(parent, name);
 	get_property(parent, name);
 	if (!propval)
@@ -883,7 +883,7 @@ static int get_array_element(jsobjtype obj, int idx)
 jsobjtype get_array_element_object(jsobjtype obj, int idx)
 {
 	jsobjtype p = 0;
-	if (jsthread)
+	if (whichproc == 'j')
 		return get_array_element_object_nat(obj, idx);
 	get_array_element(obj, idx);
 	if (!propval)
@@ -928,7 +928,7 @@ static int set_property(jsobjtype obj, const char *name,
 
 int set_property_string(jsobjtype obj, const char *name, const char *value)
 {
-	if (jsthread)
+	if (whichproc == 'j')
 		return set_property_string_nat(obj, name, value);
 	if (value == NULL)
 		value = emptyString;
@@ -938,7 +938,7 @@ int set_property_string(jsobjtype obj, const char *name, const char *value)
 int set_property_number(jsobjtype obj, const char *name, int n)
 {
 	char buf[20];
-	if (jsthread)
+	if (whichproc == 'j')
 		return set_property_number_nat(obj, name, n);
 	sprintf(buf, "%d", n);
 	return set_property(obj, name, buf, EJ_PROP_INT);
@@ -947,7 +947,7 @@ int set_property_number(jsobjtype obj, const char *name, int n)
 int set_property_float(jsobjtype obj, const char *name, double n)
 {
 	char buf[32];
-	if (jsthread)
+	if (whichproc == 'j')
 		return set_property_float_nat(obj, name, n);
 	sprintf(buf, "%lf", n);
 	return set_property(obj, name, buf, EJ_PROP_FLOAT);
@@ -956,7 +956,7 @@ int set_property_float(jsobjtype obj, const char *name, double n)
 int set_property_bool(jsobjtype obj, const char *name, bool n)
 {
 	char buf[8];
-	if (jsthread)
+	if (whichproc == 'j')
 		return set_property_bool_nat(obj, name, n);
 	strcpy(buf, (n ? "1" : "0"));
 	return set_property(obj, name, buf, EJ_PROP_BOOL);
@@ -965,7 +965,7 @@ int set_property_bool(jsobjtype obj, const char *name, bool n)
 int set_property_object(jsobjtype parent, const char *name, jsobjtype child)
 {
 	char buf[32];
-	if (jsthread)
+	if (whichproc == 'j')
 		return set_property_object_nat(parent, name, child);
 	sprintf(buf, "%p", child);
 	return set_property(parent, name, buf, EJ_PROP_OBJECT);
@@ -975,7 +975,7 @@ jsobjtype instantiate_array(jsobjtype parent, const char *name)
 {
 	jsobjtype p = 0;
 
-	if (jsthread)
+	if (whichproc == 'j')
 		return instantiate_array_nat(parent, name);
 
 	if (!allowJS || !cw->winobj || !parent)
@@ -1036,7 +1036,7 @@ static int set_array_element(jsobjtype array, int idx,
 int set_array_element_object(jsobjtype array, int idx, jsobjtype child)
 {
 	char buf[32];
-	if (jsthread)
+	if (whichproc == 'j')
 		return set_array_element_object_nat(array, idx, child);
 	sprintf(buf, "%p", child);
 	return set_array_element(array, idx, buf, EJ_PROP_OBJECT);
@@ -1046,7 +1046,7 @@ jsobjtype instantiate_array_element(jsobjtype array, int idx,
 				    const char *classname)
 {
 	jsobjtype p = 0;
-	if (jsthread)
+	if (whichproc == 'j')
 		return instantiate_array_element_nat(array, idx, classname);
 	set_array_element(array, idx, classname, EJ_PROP_INSTANCE);
 	if (!propval)
@@ -1064,7 +1064,7 @@ jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname)
 {
 	jsobjtype p = 0;
 
-	if (jsthread)
+	if (whichproc == 'j')
 		return instantiate_nat(parent, name, classname);
 
 	if (!allowJS || !cw->winobj || !parent)
@@ -1101,7 +1101,7 @@ jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname)
 
 int set_property_function(jsobjtype parent, const char *name, const char *body)
 {
-	if (jsthread)
+	if (whichproc == 'j')
 		return set_property_function_nat(parent, name, body);
 	if (!body)
 		body = emptyString;
@@ -1155,7 +1155,7 @@ static int run_function(jsobjtype obj, const char *name, int argc,
 
 int get_arraylength(jsobjtype a)
 {
-	if (jsthread)
+	if (whichproc == 'j')
 		return get_arraylength_nat(a);
 	head.cmd = EJ_CMD_ARLEN;
 	head.obj = a;
@@ -1623,7 +1623,7 @@ void run_function_objargs(jsobjtype obj, const char *name, int nargs, ...)
 
 void run_function_onearg(jsobjtype obj, const char *name, jsobjtype a)
 {
-	if (jsthread) {
+	if (whichproc == 'j') {
 		run_function_onearg_nat(obj, name, a);
 		return;
 	}

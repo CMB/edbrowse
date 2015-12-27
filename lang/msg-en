@@ -463,8 +463,8 @@ invalid characters in the encoded attachment
 0
 warning, javascript cannot be invoked by a double click
 error resolving option %s during sync or form submit
-0
-0
+xhr disabled
+xhr enabled
 could not fetch local javascript, %s\n
 could not fetch javascript from %s, code %ld\n
 could not fetch javascript, %s\n

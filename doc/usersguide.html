@@ -562,6 +562,7 @@ g&nbsp; go to the link on the current line
 <br>i3?&nbsp; describe the third input field on the current line
 <br>M4&nbsp; move this web page to session 4 and return to the previous page
 <br>js&nbsp; allow javascript (toggle)
+<br>xhr&nbsp; allow XHR (toggle)
 <br>rr&nbsp; rerender the screen, to reflect asynchronous javascript changes
 <P>
 Mail Client
@@ -2370,30 +2371,33 @@ It's shorter than `w+ $bookmarks' anyways.
 
 <H3> <A NAME=cook> Cookies </A> </H3>
 
-Some websites serve cookies,
+Most websites serve cookies,
 which your browser is expected to retain
 and pass back during subsequent exchanges.&nbsp;
 In fact many websites simply won't work without cookie support.&nbsp;
 Therefore edbrowse always accepts cookies.
 
 <P>
-Note that only Netscape-style cookies are supported.&nbsp;
-However, this is the most common flavor of cookie.&nbsp;
-It will probably meet your needs.
-
-<P>
 Persistent cookies are stored in a file,
-usually $HOME/.cookies,
+specified as `jar = file' in .ebrc,
 and are thus available for subsequent edbrowse sessions.&nbsp;
 These cookies are used to store long-term information about you,
 such as your login and password into amazon.com.&nbsp;
-Hence your .cookies file should be mode 0600.&nbsp;
-In fact the file is created mode 0600 for your own protection.
+Hence your cookie file should be mode 0600.&nbsp;
+In fact it is created mode 0600 if it does not exist.
 
 <P>
-You probably won't need to view your .cookies file, ever,
+You probably won't need to view your cookie file, ever,
 but it is text based, and can be edited directly if you wish.&nbsp;
-Edit it using ed or some other editor, so that edbrowse doesn't change it while you are looking at it.
+Don't edit it when any web pages are active, or you may run into race conditions.
+
+<P>
+speaking of race conditions, don't surf the net using separate instances of edbrowse running in different virtual consoles.&nbsp;
+Instead, run one instance of edbrowse with different web pages in different buffers.&nbsp;
+Parallel edbrowse programs could each write out the cookie file independently,
+and the second could conceivably clobber some cookies that were set by the first.&nbsp;
+It's only a minor nuisance, and you might not even notice.&nbsp;
+Still, a future version of edbrowse might use one global http server to get around this problem.
 
 <H3> <A NAME=ssl> Secure Connections </A> </H3>
 

@@ -238,7 +238,7 @@ extern bool sqlPresent;		/* Was edbrowse compiled with SQL built in? */
 extern bool ismc;		/* Is the program running as a mail client? */
 extern bool isimap;		/* Is the program running as an imap client? */
 extern bool down_bg;		/* download in background */
-extern bool jsthread; // running under the javascript thread
+extern char whichproc; // which edbrowse-xx process
 extern int eb_lang;		/* edbrowse language, determined by $LANG */
 extern bool cons_utf8;		/* does the console expect utf8? */
 extern bool iuConvert;		/* perform iso utf8 conversions automatically */
@@ -271,6 +271,7 @@ extern bool caseInsensitive, searchStringsAll;
 extern bool allowRedirection;	/* from http code 301, or http refresh */
 extern bool sendReferrer;	/* in the http header */
 extern bool allowJS;		/* javascript on */
+extern bool allowXHR;		/* xhr on */
 extern bool htmlGenerated;
 extern bool helpMessagesOn;	/* no need to type h */
 extern bool pluginsOn;		/* plugins are active */
