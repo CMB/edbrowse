@@ -1419,7 +1419,7 @@ static bool readFile(const char *filename, const char *post)
 			return false;
 		}
 
-		rc = httpConnect(filename, (cmd != 'r'), true);
+		rc = httpConnect(filename, (cmd != 'r'), true, 0, 0, 0);
 		if (!rc) {
 /* The error could have occured after redirection */
 			nzFree(changeFileName);

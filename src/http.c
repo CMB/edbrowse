@@ -675,7 +675,10 @@ long hcode;			/* example, 404 */
 static char herror[32];		/* example, file not found */
 static char *urlcopy;
 
-bool httpConnect(const char *url, bool down_ok, bool webpage)
+// Last three are result parameters, for http headers and body strings.
+// Set to 0 if you don't want these passed back in this way.
+bool httpConnect(const char *url, bool down_ok, bool webpage,
+		 char **headers_p, char **body_p, int *bodlen_p)
 {
 	char *referrer = NULL;
 	CURLcode curlret = CURLE_OK;
@@ -695,6 +698,13 @@ bool httpConnect(const char *url, bool down_ok, bool webpage)
 	bool proceed_unauthenticated = false;
 	int redirect_count = 0;
 	bool name_changed = false;
+
+	if (headers_p)
+		*headers_p = 0;
+	if (body_p)
+		*body_p = 0;
+	if (bodlen_p)
+		*bodlen_p = 0;
 
 	urlcopy = NULL;
 	serverData = NULL;
@@ -1054,6 +1064,18 @@ curl_fail:
 		serverData = NULL;
 		serverDataLen = 0;
 		return rc;
+	}
+
+	if (transfer_status) {
+		if (headers_p)
+			*headers_p = cloneString(http_headers);
+		if (body_p) {
+			*body_p = serverData;
+			*bodlen_p = serverDataLen;
+// The string is your responsibility now.
+			serverData = 0;
+			serverDataLen = 0;
+		}
 	}
 
 	return transfer_status;
