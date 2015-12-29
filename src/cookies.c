@@ -87,7 +87,7 @@ static struct cookie *cookie_from_netscape_line(char *cookie_line)
  * headers.  But let's be sure. */
 			if (new_cookie->tail && (new_cookie->domain[0] != '.')
 			    && strncmp(new_cookie->domain, httponly_prefix,
-					httponly_prefix_len))
+				       httponly_prefix_len))
 				new_cookie->domain =
 				    prependString(new_cookie->domain, ".");
 		}
@@ -338,19 +338,23 @@ void cookiesFromJar(void)
 	debugPrint(3, "%d persistent cookies, %d expired, %d displaced",
 		   cnt, expired, displaced);
 	nzFree(cbuf);
-	if (!(expired + displaced))
-		return;
 
+	if (expired + displaced) {
 /* Pour the cookies back into the jar */
-	f = fopen(cookieFile, "w");
-	if (!f)
-		i_printfExit(MSG_NoRebCookie, cookieFile);
-	foreach(c, cookies) {
-		char *cookLine = netscapeCookieLine(c);
-		fputs(cookLine, f);
-		nzFree(cookLine);
+		f = fopen(cookieFile, "w");
+		if (!f)
+			i_printfExit(MSG_NoRebCookie, cookieFile);
+		foreach(c, cookies) {
+			char *cookLine = netscapeCookieLine(c);
+			fputs(cookLine, f);
+			nzFree(cookLine);
+		}
+		fclose(f);
 	}
-	fclose(f);
+// Free the resources allocated by this routine.
+	foreach(c, cookies)
+	    freeCookie(c);
+	freeList(&cookies);
 }				/* cookiesFromJar */
 
 static bool isInDomain(const char *d, const char *s)
