@@ -22,6 +22,7 @@ char *userAgents[10];
 char *currentAgent, *currentReferrer;
 bool allowRedirection = true, allowJS = true, sendReferrer = true;
 bool allowXHR = true;
+bool ftpActive;
 int jsPool = 32;
 int webTimeout = 20, mailTimeout = 0;
 int displayLength = 500;
@@ -216,17 +217,6 @@ static void catchSig(int n)
 	signal(SIGINT, catchSig);
 }				/* catchSig */
 
-void ebClose(int n)
-{
-	bg_jobs(true);
-	dbClose();
-	js_shutdown();
-/* We should call curl_global_cleanup() here, for clarity and completeness,
- * but it can cause a seg fault when combined with older versions of open ssl,
- * and the process is going to exit anyways, so don't worry about it. */
-	exit(n);
-}				/* ebClose */
-
 bool isSQL(const char *s)
 {
 	char c;
@@ -286,7 +276,7 @@ void setDataSource(char *v)
 	dbpw = v;
 }				/* setDataSource */
 
-static void eb_curl_global_init(void)
+void eb_curl_global_init(void)
 {
 	const unsigned int major = 7;
 	const unsigned int minor = 29;
@@ -296,11 +286,58 @@ static void eb_curl_global_init(void)
 	curl_version_info_data *version_data = NULL;
 	CURLcode curl_init_status = curl_global_init(CURL_GLOBAL_ALL);
 	if (curl_init_status != 0)
-		i_printfExit(MSG_LibcurlNoInit);
+		goto libcurl_init_fail;
 	version_data = curl_version_info(CURLVERSION_NOW);
 	if (version_data->version_num < least_acceptable_version)
 		i_printfExit(MSG_CurlVersion, major, minor, patch);
+
+// Initialize the global handle, to manage the cookie space.
+	global_http_handle = curl_easy_init();
+	if (global_http_handle == NULL)
+		goto libcurl_init_fail;
+	if (sslCerts) {
+		curl_init_status =
+		    curl_easy_setopt(global_http_handle, CURLOPT_CAINFO,
+				     sslCerts);
+		if (curl_init_status != CURLE_OK)
+			goto libcurl_init_fail;
+	}
+	if (cookieFile) {
+		curl_init_status =
+		    curl_easy_setopt(global_http_handle, CURLOPT_COOKIEFILE,
+				     cookieFile);
+		if (curl_init_status != CURLE_OK)
+			goto libcurl_init_fail;
+		curl_init_status =
+		    curl_easy_setopt(global_http_handle, CURLOPT_COOKIEJAR,
+				     cookieFile);
+		if (curl_init_status != CURLE_OK)
+			goto libcurl_init_fail;
+	}
+	curl_init_status =
+	    curl_easy_setopt(global_http_handle, CURLOPT_ENCODING, "");
+	if (curl_init_status != CURLE_OK)
+		goto libcurl_init_fail;
+	return;
+
+libcurl_init_fail:
+	i_printfExit(MSG_LibcurlNoInit);
 }				/* eb_curl_global_init */
+
+static void eb_curl_global_cleanup(void)
+{
+	curl_easy_cleanup(global_http_handle);
+	curl_global_cleanup();
+}				/* eb_curl_global_cleanup */
+
+void ebClose(int n)
+{
+	bg_jobs(true);
+	dbClose();
+	js_shutdown();
+	eb_curl_global_cleanup();
+	exit(n);
+}				/* ebClose */
 
 /*\ MSVC Debug: May need to provide path to 3rdParty DLLs, like
  *  set PATH=F:\Projects\software\bin;%PATH% ...
@@ -327,7 +364,6 @@ int main(int argc, char **argv)
 #endif // !_MSC_VER
 
 	selectLanguage();
-	eb_curl_global_init();
 
 /* Establish the home directory, and standard edbrowse files thereunder. */
 	home = getenv("HOME");
@@ -434,6 +470,11 @@ int main(int argc, char **argv)
 			localAccount = 1;
 	}
 	account = localAccount;
+
+// With config file read, we can now set up the global http handle
+// with certificate file and cookie jar etc.
+	cookiesFromJar();
+	eb_curl_global_init();
 
 	for (; argc && argv[0][0] == '-'; ++argv, --argc) {
 		char *s = *argv;
@@ -559,9 +600,6 @@ int main(int argc, char **argv)
 		showError();
 		exit(1);
 	}
-
-	cookiesFromJar();
-	http_curl_init();
 
 	signal(SIGINT, catchSig);
 #ifndef _MSC_VER		// port siginterrupt(SIGINT, 1); signal(SIGPIPE, SIG_IGN);, if required

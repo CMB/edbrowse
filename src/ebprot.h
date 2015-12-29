@@ -169,7 +169,6 @@ bool refreshDelay(int sec, const char *u) ;
 bool httpConnect(const char *url, bool down_ok, bool webpage, char **headers_p, char **body_p, int *bodlen_p);
 void ebcurl_setError(CURLcode curlret, const char *url) ;
 void setHTTPLanguage(const char *lang) ;
-void http_curl_init(void) ;
 int ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data, size_t size, void *unused) ;
 int bg_jobs(bool iponly);
 void addNovsHost(char *host) ;
@@ -179,6 +178,7 @@ const char *findProxyForURL(const char *url) ;
 /* sourcefile=main.c */
 const char *mailRedirect(const char *to, const char *from, const char *reply, const char *subj) ;
 bool javaOK(const char *url) ;
+void eb_curl_global_init(void);
 void ebClose(int n) ;
 bool isSQL(const char *s) ;
 void setDataSource(char *v) ;

@@ -3186,10 +3186,6 @@ static int twoLetter(const char *line, const char **runThis)
 	if (line[0] == 'd' && line[1] == 'b' && isdigitByte(line[2])
 	    && !line[3]) {
 		debugLevel = line[2] - '0';
-		if (debugLevel >= 4)
-			curl_easy_setopt(http_curl_handle, CURLOPT_VERBOSE, 1);
-		else
-			curl_easy_setopt(http_curl_handle, CURLOPT_VERBOSE, 0);
 		return true;
 	}
 
@@ -3222,8 +3218,6 @@ static int twoLetter(const char *line, const char **runThis)
 			return false;
 		}
 		currentAgent = t;
-		curl_easy_setopt(http_curl_handle, CURLOPT_USERAGENT,
-				 currentAgent);
 		if (helpMessagesOn || debugLevel >= 1)
 			puts(currentAgent);
 		return true;
@@ -3559,9 +3553,6 @@ et_go:
 
 	if (stringEqual(line, "hr")) {
 		allowRedirection ^= 1;
-/* We're doing this manually for now.
-        curl_easy_setopt(http_curl_handle, CURLOPT_FOLLOWLOCATION, allowRedirection);
-*/
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(allowRedirection + MSG_RedirectionOff);
 		return true;
@@ -3599,9 +3590,6 @@ et_go:
 
 	if (stringEqual(line, "sr")) {
 		sendReferrer ^= 1;
-/* In case of redirect, let libcurl send URL of redirecting page. */
-		curl_easy_setopt(http_curl_handle, CURLOPT_AUTOREFERER,
-				 sendReferrer);
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(sendReferrer + MSG_RefererOff);
 		return true;
@@ -3644,22 +3632,9 @@ et_go:
 
 	if (line[0] == 'f' && line[1] == 'm' &&
 	    line[2] && strchr("pa", line[2]) && !line[3]) {
-		bool doHelp = helpMessagesOn || debugLevel >= 1;
-/* Can't support passive/active mode with libcurl, or at least not easily. */
-		if (line[2] == 'p') {
-			curl_easy_setopt(http_curl_handle, CURLOPT_FTPPORT,
-					 NULL);
-			if (doHelp)
-				i_puts(MSG_PassiveMode);
-		} else {
-			curl_easy_setopt(http_curl_handle, CURLOPT_FTPPORT,
-					 "-");
-			if (doHelp)
-				i_puts(MSG_ActiveMode);
-		}
-/* See "man curl_easy_setopt.3" for info on CURLOPT_FTPPORT.  Supplying
-* "-" makes libcurl select the best IP address for active ftp.
-*/
+		ftpActive = (line[2] == 'a');
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(MSG_PassiveMode + ftpActive);
 		return true;
 	}
 

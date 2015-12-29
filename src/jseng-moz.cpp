@@ -121,7 +121,7 @@ int js_main(int argc, char **argv)
 		usage();
 
 	readConfigFile();
-	http_curl_init();
+	eb_curl_global_init();
 
 	whichproc = 'j';
 	js_start();
