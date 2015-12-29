@@ -16,23 +16,10 @@ char *serverData;
 int serverDataLen;
 CURL *global_http_handle;
 bool pluginsOn = true;
-static int down_fd;		/* downloading file descriptor */
-static const char *down_file;	/* downloading filename */
-static const char *down_file2;	/* without download directory */
+bool down_bg;			/* download in background */
+
 static int down_pid;		/* pid of the downloading child process */
 static bool down_permitted;
-/* download states.
- * -1 user aborted the download
- * 0 in-memory download
- * 1 download but stop and ask user if it looks binary
-* 2 disk download foreground
-* 3 disk download background parent
-* 4 disk download background child
-* 5 disk download background prefork
- * 6 mime type says this should be a stream */
-static int down_state;
-bool down_bg;			/* download in background */
-static int down_length;		/* how much data to disk so far */
 static int down_msg;
 
 struct BG_JOB {
@@ -44,8 +31,8 @@ struct listHead down_jobs = {
 	&down_jobs, &down_jobs
 };
 
-static void background_download(void);
-static void setup_download(void);
+static void background_download(struct eb_curl_callback_data *data);
+static void setup_download(struct eb_curl_callback_data *data);
 static char errorText[CURL_ERROR_SIZE + 1];
 static char *http_headers;
 static int http_headers_len;
@@ -55,11 +42,7 @@ static char *httpLanguage;
 static char hct[60];
 static char *hct2;		/* extra content info such as charset */
 int hcl;			/* http content length */
-static CURL *http_curl_init(void);
-
-static struct eb_curl_callback_data callback_data = {
-	&serverData, &serverDataLen
-};
+static CURL *http_curl_init(struct eb_curl_callback_data *cbd);
 
 /* This function is called for web redirection, by the refresh command,
  * or by window.location = new_url. */
@@ -193,10 +176,19 @@ static CURLcode fetch_internet(CURL * h, bool is_http)
 static bool ftpConnect(const char *url, const char *user, const char *pass);
 static bool read_credentials(char *buffer);
 static size_t curl_header_callback(char *header_line, size_t size, size_t nmemb,
-				   void *unused);
+				   struct eb_curl_callback_data *data);
 static const char *message_for_response_code(int code);
 
-/* Callback used by libcurl. Appends data to serverData. */
+/* Callback used by libcurl. Captures data from http, ftp, pop3, etc.
+ * download states:
+ * -1 user aborted the download
+ * 0 standard in-memory download
+ * 1 download but stop and ask user if he wants to download to disk
+* 2 disk download foreground
+* 3 disk download background parent
+* 4 disk download background child
+* 5 disk download background prefork
+ * 6 mime type says this should be a stream */
 size_t
 eb_curl_callback(char *incoming, size_t size, size_t nitems,
 		 struct eb_curl_callback_data *data)
@@ -204,27 +196,35 @@ eb_curl_callback(char *incoming, size_t size, size_t nitems,
 	size_t num_bytes = nitems * size;
 	int dots1, dots2, rc;
 
-	if (down_state == 1) {
+	if (data->down_state == 1) {
 /* state 1, first data block, ask the user */
-		setup_download();
-		if (down_state == 0)
+		setup_download(data);
+		if (data->down_state == 0)
 			goto showdots;
-		if (down_state == -1 || down_state == 5)
+		if (data->down_state == -1 || data->down_state == 5)
 			return -1;
 	}
 
-	if (down_state == 2 || down_state == 4) {	/* to disk */
-		rc = write(down_fd, incoming, num_bytes);
+	if (data->down_state == 2 || data->down_state == 4) {	/* to disk */
+		rc = write(data->down_fd, incoming, num_bytes);
 		if (rc == num_bytes) {
-			if (down_state == 4)
+			if (data->down_state == 4) {
+#if 0
+// Deliberately delay background download, to get several running in parallel
+// for testing purposes.
+				if (!data->down_length)
+					sleep(17);
+				data->down_length += rc;
+#endif
 				return rc;
+			}
 			goto showdots;
 		}
-		if (down_state == 2) {
-			setError(MSG_NoWrite2, down_file);
+		if (data->down_state == 2) {
+			setError(MSG_NoWrite2, data->down_file);
 			return -1;
 		}
-		i_printf(MSG_NoWrite2, down_file);
+		i_printf(MSG_NoWrite2, data->down_file);
 		printf(", ");
 		i_puts(MSG_DownAbort);
 		exit(1);
@@ -232,7 +232,7 @@ eb_curl_callback(char *incoming, size_t size, size_t nitems,
 
 showdots:
 	dots1 = *(data->length) / CHUNKSIZE;
-	if (down_state == 0)
+	if (data->down_state == 0)
 		stringAndBytes(data->buffer, data->length, incoming, num_bytes);
 	else
 		*(data->length) += num_bytes;
@@ -680,6 +680,7 @@ bool httpConnect(const char *url, bool down_ok, bool webpage,
 		 char **headers_p, char **body_p, int *bodlen_p)
 {
 	CURL *h;		// the curl http handle
+	struct eb_curl_callback_data cbd;
 	char *referrer = NULL;
 	CURLcode curlret = CURLE_OK;
 	struct curl_slist *custom_headers = NULL;
@@ -762,7 +763,13 @@ mimestream:
 	if ((cw->mt = findMimeByURL(url)) && pluginsOn && cw->mt->stream)
 		goto mimestream;
 
-	h = http_curl_init();
+	cbd.buffer = &serverData;
+	cbd.length = &serverDataLen;
+	cbd.down_state = 0;
+	cbd.down_file = cbd.down_file2 = NULL;
+	cbd.down_length = 0;
+	down_permitted = down_ok;
+	h = http_curl_init(&cbd);
 	if (!h)
 		return false;
 
@@ -888,49 +895,48 @@ mimestream:
 
 	while (still_fetching == true) {
 		char *redir = NULL;
-		down_state = 0;
-		down_file = NULL;
-		down_permitted = down_ok;
-		callback_data.length = &serverDataLen;
+		cbd.length = &serverDataLen;
 
 perform:
 		curlret = fetch_internet(h, true);
 
-		if (down_state == 6) {
+		if (cbd.down_state == 6) {
 			curl_easy_cleanup(h);
 			goto mimestream;
 		}
 
-		if (down_state == 5) {
+		if (cbd.down_state == 5) {
 /* user has directed a download of this file in the background. */
-			background_download();
-			if (down_state == 4)
+			background_download(&cbd);
+			if (cbd.down_state == 4)
 				goto perform;
 		}
 
-		if (down_state == 3 || down_state == -1) {
+		if (cbd.down_state == 3 || cbd.down_state == -1) {
 /* set this to null so we don't push a new buffer */
 			serverData = NULL;
+			cnzFree(cbd.down_file);
 			curl_easy_cleanup(h);
 			return false;
 		}
 
-		if (down_state == 4) {
+		if (cbd.down_state == 4) {
 			if (curlret != CURLE_OK) {
 				ebcurl_setError(curlret, urlcopy);
 				showError();
 				exit(2);
 			}
 			i_printf(MSG_DownSuccess);
-			printf(": %s\n", down_file2);
+			printf(": %s\n", cbd.down_file2);
 			exit(0);
 		}
 
-		if (*(callback_data.length) >= CHUNKSIZE)
+		if (*(cbd.length) >= CHUNKSIZE)
 			nl();	/* We printed dots, so terminate them with newline */
 
-		if (down_state == 2) {
-			close(down_fd);
+		if (cbd.down_state == 2) {
+			close(cbd.down_fd);
+			cnzFree(cbd.down_file);
 			setError(MSG_DownSuccess);
 			serverData = NULL;
 			curl_easy_cleanup(h);
@@ -1303,6 +1309,7 @@ void ebcurl_setError(CURLcode curlret, const char *url)
 static bool ftpConnect(const char *url, const char *user, const char *pass)
 {
 	CURL *h;		// the curl handle for ftp
+	struct eb_curl_callback_data cbd;
 	int protLength;		/* length of "ftp://" */
 	int urlcopy_l = 0;
 	bool transfer_success = false;
@@ -1325,7 +1332,12 @@ static bool ftpConnect(const char *url, const char *user, const char *pass)
 		strcpy(creds_buf, "anonymous:ftp@example.com");
 	}
 
-	h = http_curl_init();
+	cbd.buffer = &serverData;
+	cbd.length = &serverDataLen;
+	cbd.down_state = 0;
+	cbd.down_file = cbd.down_file2 = NULL;
+	cbd.down_length = 0;
+	h = http_curl_init(&cbd);
 	if (!h)
 		goto ftp_transfer_fail;
 	curlret = curl_easy_setopt(h, CURLOPT_USERPWD, creds_buf);
@@ -1349,48 +1361,49 @@ static bool ftpConnect(const char *url, const char *user, const char *pass)
 	has_slash = urlcopy[urlcopy_l - 1] == '/';
 /* don't download a directory listing, we want to see that */
 /* Fetching a directory will fail in the special case of scp. */
-	down_state = (has_slash ? 0 : 1);
-	down_file = NULL;	/* should already be null */
+	cbd.down_state = (has_slash ? 0 : 1);
 	down_msg = MSG_FTPDownload;
 	if (is_scp)
 		down_msg = MSG_SCPDownload;
-	callback_data.length = &serverDataLen;
+	cbd.length = &serverDataLen;
 
 perform:
 	curlret = fetch_internet(h, false);
 
-	if (down_state == 5) {
+	if (cbd.down_state == 5) {
 /* user has directed a download of this file in the background. */
-		background_download();
-		if (down_state == 4)
+		background_download(&cbd);
+		if (cbd.down_state == 4)
 			goto perform;
 	}
 
-	if (down_state == 3 || down_state == -1) {
+	if (cbd.down_state == 3 || cbd.down_state == -1) {
 /* set this to null so we don't push a new buffer */
 		serverData = NULL;
+		cnzFree(cbd.down_file);
 		curl_easy_cleanup(h);
 		return false;
 	}
 
-	if (down_state == 4) {
+	if (cbd.down_state == 4) {
 		if (curlret != CURLE_OK) {
 			ebcurl_setError(curlret, urlcopy);
 			showError();
 			exit(2);
 		}
 		i_printf(MSG_DownSuccess);
-		printf(": %s\n", down_file2);
+		printf(": %s\n", cbd.down_file2);
 		exit(0);
 	}
 
-	if (*(callback_data.length) >= CHUNKSIZE)
+	if (*(cbd.length) >= CHUNKSIZE)
 		nl();		/* We printed dots, so terminate them with newline */
 
-	if (down_state == 2) {
-		close(down_fd);
+	if (cbd.down_state == 2) {
+		close(cbd.down_fd);
 		setError(MSG_DownSuccess);
 		serverData = NULL;
+		cnzFree(cbd.down_file);
 		curl_easy_cleanup(h);
 		return false;
 	}
@@ -1403,7 +1416,9 @@ perform:
 			transfer_success = false;
 		else {		/* try appending a slash. */
 			stringAndChar(&urlcopy, &urlcopy_l, '/');
-			down_state = 0;
+			cbd.down_state = 0;
+			cnzFree(cbd.down_file);
+			cbd.down_file = 0;
 			curlret = setCurlURL(h, urlcopy);
 			if (curlret != CURLE_OK)
 				goto ftp_transfer_fail;
@@ -1474,7 +1489,7 @@ my_curl_safeSocket(void *clientp, curl_socket_t socketfd, curlsocktype purpose)
 #endif // _MSC_VER y/n
 }
 
-static CURL *http_curl_init(void)
+static CURL *http_curl_init(struct eb_curl_callback_data *cbd)
 {
 	CURLcode curl_init_status = CURLE_OK;
 	CURL *h = curl_easy_init();
@@ -1483,8 +1498,9 @@ static CURL *http_curl_init(void)
 /* Lots of these setopt calls shouldn't fail.  They just diddle a struct. */
 	curl_easy_setopt(h, CURLOPT_SOCKOPTFUNCTION, my_curl_safeSocket);
 	curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, eb_curl_callback);
-	curl_easy_setopt(h, CURLOPT_WRITEDATA, &callback_data);
+	curl_easy_setopt(h, CURLOPT_WRITEDATA, cbd);
 	curl_easy_setopt(h, CURLOPT_HEADERFUNCTION, curl_header_callback);
+	curl_easy_setopt(h, CURLOPT_HEADERDATA, cbd);
 	if (debugLevel >= 4)
 		curl_easy_setopt(h, CURLOPT_VERBOSE, 1);
 	curl_easy_setopt(h, CURLOPT_DEBUGFUNCTION, ebcurl_debug_handler);
@@ -1721,25 +1737,26 @@ static bool read_credentials(char *buffer)
 /* Callback used by libcurl.
  * Gather all the http headers into one long string. */
 static size_t
-curl_header_callback(char *header_line, size_t size, size_t nmemb, void *unused)
+curl_header_callback(char *header_line, size_t size, size_t nmemb,
+		     struct eb_curl_callback_data *data)
 {
 	size_t bytes_in_line = size * nmemb;
 	stringAndBytes(&http_headers, &http_headers_len,
 		       header_line, bytes_in_line);
 
-	if (down_permitted && down_state == 0 && !hct[0]) {
+	if (down_permitted && data->down_state == 0 && !hct[0]) {
 		scan_http_headers(true);
 		if (cw->mt && cw->mt->stream && pluginsOn) {
 /* I don't think this ever happens, since streams are indicated by the protocol,
  * and we wouldn't even get here, but just in case -
  * stop the download and set the flag so we can pass this url
  * to the program that handles this kind of stream. */
-			down_state = 6;
+			data->down_state = 6;
 			return -1;
 		}
 		if (hct[0] && !memEqualCI(hct, "text/", 5) &&
 		    (!pluginsOn || !cw->mt || cw->mt->download)) {
-			down_state = 1;
+			data->down_state = 1;
 			down_msg = MSG_Down;
 		}
 	}
@@ -1787,15 +1804,14 @@ ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
 }				/* ebcurl_debug_handler */
 
 /* At this point, down_state = 1 */
-static void setup_download(void)
+static void setup_download(struct eb_curl_callback_data *data)
 {
 	const char *filepart;
 	const char *answer;
-	int msg;
 
 /* if not run from a terminal then just return. */
-	if (!isatty(0)) {
-		down_state = 0;
+	if (!isInteractive) {
+		data->down_state = 0;
 		return;
 	}
 
@@ -1804,12 +1820,12 @@ top:
 	answer = getFileName(down_msg, filepart, false, true);
 /* space for a filename means read into memory */
 	if (stringEqual(answer, " ")) {
-		down_state = 0;	/* in memory download */
+		data->down_state = 0;	/* in memory download */
 		return;
 	}
 
 	if (stringEqual(answer, "x") || stringEqual(answer, "X")) {
-		down_state = -1;
+		data->down_state = -1;
 		setError(MSG_DownAbort);
 		return;
 	}
@@ -1819,31 +1835,31 @@ top:
 		goto top;
 	}
 
-	down_fd = creat(answer, 0666);
-	if (down_fd < 0) {
+	data->down_fd = creat(answer, 0666);
+	if (data->down_fd < 0) {
 		i_printf(MSG_NoCreate2, answer);
 		nl();
 		goto top;
 	}
-
-	down_file = down_file2 = answer;
+// free down_file, but not down_file2
+	data->down_file = data->down_file2 = cloneString(answer);
 	if (downDir) {
 		int l = strlen(downDir);
-		if (!strncmp(down_file2, downDir, l)) {
-			down_file2 += l;
-			if (down_file2[0] == '/')
-				++down_file2;
+		if (!strncmp(data->down_file2, downDir, l)) {
+			data->down_file2 += l;
+			if (data->down_file2[0] == '/')
+				++data->down_file2;
 		}
 	}
-	down_state = (down_bg ? 5 : 2);
-	callback_data.length = &down_length;
+	data->down_state = (down_bg ? 5 : 2);
+	data->length = &data->down_length;
 }				/* setup_download */
 
 #ifdef _MSC_VER			// need fork()
 /* At this point, down_state = 5 */
-static void background_download(void)
+static void background_download(struct eb_curl_callback_data *data)
 {
-	down_state = -1;
+	data->down_state = -1;
 /* perhaps a better error message here */
 	setError(MSG_DownAbort);
 	return;
@@ -1857,11 +1873,11 @@ int bg_jobs(bool iponly)
 #else // !_MSC_VER
 
 /* At this point, down_state = 5 */
-static void background_download(void)
+static void background_download(struct eb_curl_callback_data *data)
 {
 	down_pid = fork();
 	if (down_pid < 0) {	/* should never happen */
-		down_state = -1;
+		data->down_state = -1;
 /* perhaps a better error message here */
 		setError(MSG_DownAbort);
 		return;
@@ -1869,16 +1885,17 @@ static void background_download(void)
 
 	if (down_pid) {		/* parent */
 		struct BG_JOB *job;
-		close(down_fd);
+		close(data->down_fd);
 /* the error message here isn't really an error, but a progress message */
 		setError(MSG_DownProgress);
-		down_state = 3;
+		data->down_state = 3;
 
-/* push job onto the list, for tracking and display */
-		job = allocMem(sizeof(struct BG_JOB) + strlen(down_file2));
+/* push job onto the list for tracking and display */
+		job =
+		    allocMem(sizeof(struct BG_JOB) + strlen(data->down_file2));
 		job->pid = down_pid;
 		job->state = 4;
-		strcpy(job->file, down_file2);
+		strcpy(job->file, data->down_file2);
 		addToListBack(&down_jobs, job);
 
 		return;
@@ -1888,7 +1905,7 @@ static void background_download(void)
 	js_disconnect();
 /* ignore interrupt, not sure about quit and hangup */
 	signal(SIGINT, SIG_IGN);
-	down_state = 4;
+	data->down_state = 4;
 }				/* background_download */
 
 /* show background jobs and return the number of jobs pending */

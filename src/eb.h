@@ -184,8 +184,15 @@ extern bool newloc_r; /* location replaces this page */
 extern const char *ebrc_string; /* default ebrc file */
 
 struct eb_curl_callback_data {
+// where to put the captured data.
 	char **buffer;
 	int *length;
+// State of download to disk, see http.c for state values.
+	int down_state;
+	int down_fd;	/* downloading file descriptor */
+	const char *down_file;	/* downloading filename */
+	const char *down_file2;	/* without download directory */
+	int down_length;
 };
 
 struct MACCOUNT {		/* pop3 account */
