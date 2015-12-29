@@ -560,6 +560,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
+	cookiesFromJar();
 	http_curl_init();
 
 	signal(SIGINT, catchSig);
