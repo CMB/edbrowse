@@ -6,6 +6,7 @@
 #include "eb.h"
 
 #include <sys/stat.h>
+#include <pthread.h>
 #include <pcre.h>
 
 /* Define the globals that are declared in eb.h. */
@@ -67,6 +68,7 @@ bool inputReadLine;
 int context = 1;
 pst linePending;
 struct ebSession sessionList[MAXSESSION], *cs;
+static pthread_mutex_t share_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #define MAXNOJS 500
 static const char *javaDis[MAXNOJS];
@@ -276,6 +278,21 @@ void setDataSource(char *v)
 	dbpw = v;
 }				/* setDataSource */
 
+/*
+ * Libcurl allows some really fine-grained access to data.  We could
+ * have multiple mutexes if we want, and that might lead to less
+ * blocking.  For now, we just use one mutex.
+ */
+
+static void lock_share(CURL *handle, curl_lock_data data, curl_lock_access access, void *userptr) {
+/* TODO error handling. */
+	pthread_mutex_lock(&share_mutex);
+}				/* lock_share */
+
+static void unlock_share(CURL *handle, curl_lock_data data, void *userptr) {
+	pthread_mutex_unlock(&share_mutex);
+}				/* unlock_share */
+
 void eb_curl_global_init(void)
 {
 	const unsigned int major = 7;
@@ -292,6 +309,16 @@ void eb_curl_global_init(void)
 		i_printfExit(MSG_CurlVersion, major, minor, patch);
 
 // Initialize the global handle, to manage the cookie space.
+	global_share_handle = curl_share_init();
+	if (global_share_handle == NULL)
+		goto libcurl_init_fail;
+
+	curl_share_setopt(global_share_handle, CURLSHOPT_LOCKFUNC, lock_share);
+	curl_share_setopt(global_share_handle, CURLSHOPT_UNLOCKFUNC, unlock_share);
+	curl_share_setopt(global_share_handle, CURLSHOPT_SHARE, CURL_LOCK_DATA_COOKIE);
+	curl_share_setopt(global_share_handle, CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS);
+	curl_share_setopt(global_share_handle, CURLSHOPT_SHARE, CURL_LOCK_DATA_SSL_SESSION);
+
 	global_http_handle = curl_easy_init();
 	if (global_http_handle == NULL)
 		goto libcurl_init_fail;
@@ -316,6 +343,10 @@ void eb_curl_global_init(void)
 	}
 	curl_init_status =
 	    curl_easy_setopt(global_http_handle, CURLOPT_ENCODING, "");
+	if (curl_init_status != CURLE_OK)
+		goto libcurl_init_fail;
+
+	curl_init_status = curl_easy_setopt(global_http_handle, CURLOPT_SHARE, global_share_handle);
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
 	return;

@@ -15,6 +15,7 @@
 char *serverData;
 int serverDataLen;
 CURL *global_http_handle;
+CURL *global_share_handle;
 bool pluginsOn = true;
 bool down_bg;			/* download in background */
 
@@ -1494,6 +1495,9 @@ static CURL *http_curl_init(struct eb_curl_callback_data *cbd)
 	CURLcode curl_init_status = CURLE_OK;
 	CURL *h = curl_easy_init();
 	if (h == NULL)
+		goto libcurl_init_fail;
+	curl_init_status = curl_easy_setopt(h, CURLOPT_SHARE, global_share_handle);
+	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
 /* Lots of these setopt calls shouldn't fail.  They just diddle a struct. */
 	curl_easy_setopt(h, CURLOPT_SOCKOPTFUNCTION, my_curl_safeSocket);
