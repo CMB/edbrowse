@@ -1540,7 +1540,7 @@ static CURL *http_curl_init(struct eb_curl_callback_data *cbd)
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
 // We shouldn't need these next few, after sharing with global_http_handle.
-#if 1
+#if 0
 	curl_init_status = curl_easy_setopt(h, CURLOPT_CAINFO, sslCerts);
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
