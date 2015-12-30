@@ -1033,16 +1033,6 @@ console.info = console.log;
 console.warn = console.log;
 console.error = console.log;
 
-// just a placeholder for now, for code that 
-// expects to be able to create an XHR object
-// Implementation of actual asynchronous HTTP is going to be more work
-
-XMLHttpRequest = function(){
-    this.headers = {};
-    this.responseHeaders = {};
-    this.aborted = false;//non-standard
-};
-
 /* An ok (object keys) function for javascript/dom debugging. */
 /* This is in concert with the jdb command in edbrowse. */
 ok = Object.keys = Object.keys || (function () { 
@@ -1070,4 +1060,158 @@ ok = Object.keys = Object.keys || (function () {
 		return result; 
 		}; 
 		})(); 
+
+// ------------ experimental below this point
+// @author Originally implemented by Yehuda Katz
+// And since then, from envjs, by Thatcher et al
+
+var domparser;
+
+XMLHttpRequest = function(){
+    this.headers = {};
+    this.responseHeaders = {};
+    this.aborted = false;//non-standard
+};
+
+// defined by the standard: http://www.w3.org/TR/XMLHttpRequest/#xmlhttprequest
+// but not provided by Firefox.  Safari and others do define it.
+XMLHttpRequest.UNSENT = 0;
+XMLHttpRequest.OPEN = 1;
+XMLHttpRequest.HEADERS_RECEIVED = 2;
+XMLHttpRequest.LOADING = 3;
+XMLHttpRequest.DONE = 4;
+
+XMLHttpRequest.prototype = {
+open: function(method, url, async, user, password){
+//alert('opening xhr ' +   method  + ' ' + url + ' ' + async);
+this.readyState = 1;
+//        this.async = (async === false)?false:true;
+this.async = false;
+this.method = method || "GET";
+//        this.url = Envjs.uri2(url);
+this.url = convert_url(url);
+this.onreadystatechange();
+},
+setRequestHeader: function(header, value){
+this.headers[header] = value;
+},
+send: function(data, parsedoc/*non-standard*/){
+var headerstring = "";
+
+for (item in this.headers) {
+v1=item;
+v2=this.headers[item];
+headerstring+=v1;
+headerstring+=": ";
+headerstring+=v2;
+headerstring+=",";
+}
+
+entire_http_response =  document.fetchHTTP(this.url,this.method,headerstring,data);
+
+http_headers = entire_http_response.split("\r\n\r\n")[0];
+
+responsebody_array = entire_http_response.split("\r\n\r\n");
+responsebody_array[0] = "";
+responsebody = responsebody_array.join("\r\n\r\n");
+responsebody = responsebody.trim();
+
+this.responseText = responsebody;
+hhc = http_headers.split("\r\n");
+i=0;
+while (i < hhc.length) {
+value1 = hhc[i]+":";
+value2 = value1.split(":")[0];
+value3 = value1.split(":")[1];
+this.responseHeaders[value2] = value3.trim();
+i++;
+}
+
+try{
+this.readyState = 4;
+cookie = this.getResponseHeader('SET-COOKIE');
+if(cookie){
+document.cookie = document.cookie+"; "+ cookie;
+}
+}catch(e){
+}
+
+
+if ((!this.aborted) && this.responseText.length > 0){
+this.readyState = 4;
+this.onreadystatechange();
+}
+
+},
+abort: function(){
+this.aborted = true;
+},
+onreadystatechange: function(){
+//Instance specific
+},
+getResponseHeader: function(header){
+//$debug('GETTING RESPONSE HEADER '+header);
+var rHeader, returnedHeaders;
+if (this.readyState < 3){
+throw new Error("INVALID_STATE_ERR");
+} else {
+returnedHeaders = [];
+for (rHeader in this.responseHeaders) {
+if (rHeader.match(new RegExp(header, "i"))) {
+returnedHeaders.push(this.responseHeaders[rHeader]);
+}
+}
+
+if (returnedHeaders.length){
+//$debug('GOT RESPONSE HEADER '+returnedHeaders.join(", "));
+return returnedHeaders.join(", ");
+}
+}
+return null;
+},
+getAllResponseHeaders: function(){
+var header, returnedHeaders = [];
+if (this.readyState < 3){
+throw new Error("INVALID_STATE_ERR");
+} else {
+for (header in this.responseHeaders) {
+returnedHeaders.push( header + ": " + this.responseHeaders[header] );
+}
+}
+return returnedHeaders.join("\r\n");
+},
+async: false,
+readyState: 0,
+responseText: "",
+status: 0,
+statusText: ""
+};
+
+convert_url = function(path, base) {
+
+var new_url;
+sideprotocol =location.protocol;
+sidehost = location.host;
+var lpl  = location.protocol.length;
+if (lpl ==  0)
+{
+sideprotocol = "http:";
+sideprotocol.length = 5;
+lpl = 5;
+}
+if (sidehost == "")
+{
+sidehost = location.href;
+}
+
+protocol1= path.substring(0,lpl);
+if (protocol1 == sideprotocol)
+{
+new_url = path;
+// ok - it is fully qualified already
+} else {
+new_url = sideprotocol + '//' + sidehost + path;
+}
+return new_url;
+}
 

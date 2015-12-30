@@ -779,6 +779,24 @@ if(x1.onclick$$array.length)
 fail(160);
 }
 
+test_xhr()
+function test_xhr()
+{
+var xhr = new XMLHttpRequest;
+xhr.url = "http://edbrowse.org";
+xhr.method = "GET";
+xhr.send();
+var rt = xhr.responseText.split("edbrowse").length;
+if (rt > 0)
+{
+// as the responseText contains one or more instances
+// of 'edbrowse', barring some kind of confounding reason,
+// this means that a real GET fired and retrieved the page
+} else {
+fail(161);
+}
+}
+
 </script>
 
 </body>

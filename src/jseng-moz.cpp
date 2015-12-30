@@ -1588,6 +1588,44 @@ fail:
 	return JS_TRUE;
 }				/* doc_createElement */
 
+static JSBool fetchHTTP(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	JS::RootedString incoming_url(cx);
+	JS::RootedString incoming_method(cx);
+	JS::RootedString incoming_headers(cx);
+	JS::RootedString incoming_payload(cx);
+// the order of the parameters is:
+// url, method, headers, payload
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	incoming_url = JS_ValueToString(cx, args[0]);
+	char *curl_incoming_url = JS_c_str(incoming_url);
+	incoming_method = JS_ValueToString(cx, args[1]);
+	char *curl_incoming_method = JS_c_str(incoming_method);
+	incoming_headers = JS_ValueToString(cx, args[2]);
+	char *curl_incoming_headers = JS_c_str(incoming_headers);
+	incoming_payload = JS_ValueToString(cx, args[3]);
+	char *curl_incoming_payload = JS_c_str(incoming_payload);
+
+	char *curl_outgoing_xhrheaders = NULL;
+	char *curl_outgoing_xhrbody = NULL;
+	int serverDataLen = 0;
+
+	httpConnect(curl_incoming_url, false, false, &curl_outgoing_xhrheaders,
+		    &curl_outgoing_xhrbody, &serverDataLen);
+	args.rval().
+	    set(STRING_TO_JSVAL
+		(JS_NewStringCopyZ
+		 (cx,
+		  (string(curl_outgoing_xhrheaders) +
+		   string(curl_outgoing_xhrbody)).c_str())));
+	cnzFree(curl_incoming_url);
+	cnzFree(curl_incoming_method);
+	cnzFree(curl_incoming_headers);
+	cnzFree(curl_incoming_payload);
+	cnzFree(curl_outgoing_xhrheaders);
+	cnzFree(curl_outgoing_xhrbody);
+}
+
 static JSFunctionSpec document_methods[] = {
 	JS_FS("focus", nullFunction, 0, 0),
 	JS_FS("blur", nullFunction, 0, 0),
@@ -1600,6 +1638,7 @@ static JSFunctionSpec document_methods[] = {
 	JS_FS("apch$", apch, 1, 0),
 	JS_FS("insertBefore", insertBefore, 2, 0),
 	JS_FS("removeChild", removeChild, 1, 0),
+	JS_FS("fetchHTTP", fetchHTTP, 0, 0),
 	JS_FS_END
 };
 
