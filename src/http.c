@@ -15,7 +15,7 @@
 char *serverData;
 int serverDataLen;
 CURL *global_http_handle;
-CURL *global_share_handle;
+CURLSH *global_share_handle;
 bool pluginsOn = true;
 bool down_bg;			/* download in background */
 
