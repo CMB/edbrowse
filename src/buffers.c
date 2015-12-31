@@ -1894,6 +1894,7 @@ static bool shellEscape(const char *line)
 	char key;
 	int linesize, pass, n;
 	char *sh;
+	char *interactive_shell_cmd = NULL;
 
 #ifdef DOSLIKE
 /* cmd.exe is the windows shell */
@@ -1912,7 +1913,7 @@ static bool shellEscape(const char *line)
 			setError(MSG_SessionBackground);
 			return false;
 		}
-		char *interactive_shell_cmd = get_interactive_shell(sh);
+		interactive_shell_cmd = get_interactive_shell(sh);
 		eb_system(interactive_shell_cmd, true);
 		nzFree(interactive_shell_cmd);
 		return true;
