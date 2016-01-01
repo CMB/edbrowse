@@ -1083,12 +1083,13 @@ XMLHttpRequest.DONE = 4;
 
 XMLHttpRequest.prototype = {
 open: function(method, url, async, user, password){
-//alert('opening xhr ' +   method  + ' ' + url + ' ' + async);
 this.readyState = 1;
-//        this.async = (async === false)?false:true;
 this.async = false;
+// Note: async is currently hardcoded to false
+// In the implementation in envjs, the line here was:
+// this.async = (async === false)?false:true;
+
 this.method = method || "GET";
-//        this.url = Envjs.uri2(url);
 this.url = convert_url(url);
 this.onreadystatechange();
 },
@@ -1097,41 +1098,40 @@ this.headers[header] = value;
 },
 send: function(data, parsedoc/*non-standard*/){
 var headerstring = "";
-
-for (item in this.headers) {
-v1=item;
-v2=this.headers[item];
+for (var item in this.headers) {
+var v1=item;
+var v2=this.headers[item];
 headerstring+=v1;
 headerstring+=": ";
 headerstring+=v2;
 headerstring+=",";
 }
 
-entire_http_response =  document.fetchHTTP(this.url,this.method,headerstring,data);
+var entire_http_response =  document.fetchHTTP(this.url,this.method,headerstring,data);
 
-http_headers = entire_http_response.split("\r\n\r\n")[0];
+var http_headers = entire_http_response.split("\r\n\r\n")[0];
 
-responsebody_array = entire_http_response.split("\r\n\r\n");
+var responsebody_array = entire_http_response.split("\r\n\r\n");
 responsebody_array[0] = "";
-responsebody = responsebody_array.join("\r\n\r\n");
+var responsebody = responsebody_array.join("\r\n\r\n");
 responsebody = responsebody.trim();
 
 this.responseText = responsebody;
-hhc = http_headers.split("\r\n");
-i=0;
+var hhc = http_headers.split("\r\n");
+var i=0;
 while (i < hhc.length) {
-value1 = hhc[i]+":";
-value2 = value1.split(":")[0];
-value3 = value1.split(":")[1];
+var value1 = hhc[i]+":";
+var value2 = value1.split(":")[0];
+var value3 = value1.split(":")[1];
 this.responseHeaders[value2] = value3.trim();
 i++;
 }
 
 try{
 this.readyState = 4;
-cookie = this.getResponseHeader('SET-COOKIE');
-if(cookie){
-document.cookie = document.cookie+"; "+ cookie;
+var xhr_cookie = this.getResponseHeader('SET-COOKIE');
+if(xhr_cookie){
+document.cookie = xhr_cookie;
 }
 }catch(e){
 }
@@ -1150,7 +1150,6 @@ onreadystatechange: function(){
 //Instance specific
 },
 getResponseHeader: function(header){
-//$debug('GETTING RESPONSE HEADER '+header);
 var rHeader, returnedHeaders;
 if (this.readyState < 3){
 throw new Error("INVALID_STATE_ERR");
@@ -1163,7 +1162,6 @@ returnedHeaders.push(this.responseHeaders[rHeader]);
 }
 
 if (returnedHeaders.length){
-//$debug('GOT RESPONSE HEADER '+returnedHeaders.join(", "));
 return returnedHeaders.join(", ");
 }
 }
@@ -1190,8 +1188,8 @@ statusText: ""
 convert_url = function(path, base) {
 
 var new_url;
-sideprotocol =location.protocol;
-sidehost = location.host;
+var sideprotocol =location.protocol;
+var sidehost = location.host;
 var lpl  = location.protocol.length;
 if (lpl ==  0)
 {
@@ -1204,7 +1202,7 @@ if (sidehost == "")
 sidehost = location.href;
 }
 
-protocol1= path.substring(0,lpl);
+var protocol1= path.substring(0,lpl);
 if (protocol1 == sideprotocol)
 {
 new_url = path;

@@ -1599,6 +1599,10 @@ fail:
 
 static JSBool fetchHTTP(JSContext * cx, unsigned int argc, jsval * vp)
 {
+
+if (allowXHR)
+{
+
 	JS::RootedString incoming_url(cx);
 	JS::RootedString incoming_method(cx);
 	JS::RootedString incoming_headers(cx);
@@ -1617,10 +1621,10 @@ static JSBool fetchHTTP(JSContext * cx, unsigned int argc, jsval * vp)
 
 	char *curl_outgoing_xhrheaders = NULL;
 	char *curl_outgoing_xhrbody = NULL;
-	int serverDataLen = 0;
+	int responseLength = 0;
 
 	httpConnect(curl_incoming_url, false, false, &curl_outgoing_xhrheaders,
-		    &curl_outgoing_xhrbody, &serverDataLen);
+		    &curl_outgoing_xhrbody, &responseLength);
 	args.rval().
 	    set(STRING_TO_JSVAL
 		(JS_NewStringCopyZ
@@ -1633,6 +1637,21 @@ static JSBool fetchHTTP(JSContext * cx, unsigned int argc, jsval * vp)
 	cnzFree(curl_incoming_payload);
 	cnzFree(curl_outgoing_xhrheaders);
 	cnzFree(curl_outgoing_xhrbody);
+} else {
+// current strategy - the send action is allowed,
+// but there will be an empty string returned.  
+// So there should not be any runtime errors on account
+// of missing xhr functionality.  The incoming url, etc,
+// are being accepted, just sent to /dev/null unbeknownst
+// to the calling page.  Is this a reasonable way to
+// handle allowXHR == false?
+        JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+        args.rval().
+            set(STRING_TO_JSVAL
+                (JS_NewStringCopyZ
+                 (cx,""
+                  )));
+	}
 }
 
 static JSFunctionSpec document_methods[] = {
@@ -1647,7 +1666,7 @@ static JSFunctionSpec document_methods[] = {
 	JS_FS("apch$", apch, 1, 0),
 	JS_FS("insertBefore", insertBefore, 2, 0),
 	JS_FS("removeChild", removeChild, 1, 0),
-	JS_FS("fetchHTTP", fetchHTTP, 0, 0),
+	JS_FS("fetchHTTP", fetchHTTP, 4, 0),
 	JS_FS_END
 };
 
