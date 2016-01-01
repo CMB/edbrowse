@@ -1131,7 +1131,16 @@ try{
 this.readyState = 4;
 var xhr_cookie = this.getResponseHeader('SET-COOKIE');
 if(xhr_cookie){
+/*********************************************************************
+Multiple cookies will be comma separated, not semi separated.
+Beyond this, we shouldn't add this into document.cookie
+unless the xhr domain and path are compatible with current domain and path.
+Cookie will be added to the jar correctly via http; this is
+just a matter of keeping document.cookie up to date for the current window.
+More thought needed here.
 document.cookie = xhr_cookie;
+*********************************************************************/
+;
 }
 }catch(e){
 }

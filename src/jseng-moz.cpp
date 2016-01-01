@@ -1599,17 +1599,16 @@ fail:
 
 static JSBool fetchHTTP(JSContext * cx, unsigned int argc, jsval * vp)
 {
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 
 if (allowXHR)
 {
-
 	JS::RootedString incoming_url(cx);
 	JS::RootedString incoming_method(cx);
 	JS::RootedString incoming_headers(cx);
 	JS::RootedString incoming_payload(cx);
 // the order of the parameters is:
 // url, method, headers, payload
-	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	incoming_url = JS_ValueToString(cx, args[0]);
 	char *curl_incoming_url = JS_c_str(incoming_url);
 	incoming_method = JS_ValueToString(cx, args[1]);
@@ -1639,19 +1638,17 @@ if (allowXHR)
 	cnzFree(curl_outgoing_xhrbody);
 } else {
 // current strategy - the send action is allowed,
-// but there will be an empty string returned.  
+// but there will be an empty string returned.
 // So there should not be any runtime errors on account
 // of missing xhr functionality.  The incoming url, etc,
 // are being accepted, just sent to /dev/null unbeknownst
 // to the calling page.  Is this a reasonable way to
 // handle allowXHR == false?
-        JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
         args.rval().
-            set(STRING_TO_JSVAL
-                (JS_NewStringCopyZ
-                 (cx,""
-                  )));
+            set(JS_GetEmptyStringValue(cx));
 	}
+
+	return JS_TRUE;
 }
 
 static JSFunctionSpec document_methods[] = {

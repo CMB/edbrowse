@@ -779,7 +779,10 @@ if(x1.onclick$$array.length)
 fail(160);
 }
 
-test_xhr()
+// test_xhr() succeeds even if allowXHR is off, which is weird.
+// Not that I want it to fail if allowXHR is off either. IDK
+// and not sure I want to run this internet test every time. Maybe.
+// test_xhr()
 function test_xhr()
 {
 var xhr = new XMLHttpRequest;
