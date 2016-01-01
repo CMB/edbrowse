@@ -3607,6 +3607,7 @@ et_go:
 		allowXHR ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(allowXHR + MSG_XhrOff);
+		update_var_in_js(1);
 		return true;
 	}
 

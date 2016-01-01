@@ -167,6 +167,15 @@ int js_main(int argc, char **argv)
 			continue;
 		}
 
+		if (head.cmd == EJ_CMD_VARUPDATE) {
+			if (head.lineno == 1)
+				allowXHR = head.n;
+			head.n = head.proplength = 0;
+//			no acknowledgement needed
+//			writeHeader();
+			continue;
+		}
+
 /* this function will enter the compartment */
 		processMessage();
 	}

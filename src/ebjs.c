@@ -120,9 +120,6 @@ static void js_start(void)
 	int pid;
 	char *jsprog;
 
-	if (js_pid)
-		return;		/* already running */
-
 #if defined(DOSLIKE) && !defined(HAVE_PTHREAD_H)
 	debugPrint(5,
 		   "no pthread, so no communication channels for javascript");
@@ -576,7 +573,10 @@ void createJavaContext(void)
 	if (!allowJS)
 		return;
 
-	js_start();
+	if (!js_pid) {
+		js_start();
+		update_var_in_js(1);
+	}
 
 	debugPrint(5, "> create context for session %d", context);
 
@@ -1166,6 +1166,22 @@ int get_arraylength(jsobjtype a)
 	ack5();
 	return head.n;
 }				/* get_arraylength */
+
+/* A global variable has changed that js needs to know about. */
+void update_var_in_js(int varid)
+{
+	int value = 0;
+	if (!js_pid)
+		return;
+	if (varid == 1)
+		value = allowXHR;
+	debugPrint(5, "> varupdate %d", varid);
+	head.cmd = EJ_CMD_VARUPDATE;
+	head.obj = 0;
+	head.lineno = varid;
+	head.n = value;
+	writeHeader();
+}				/* update_var_in_js */
 
 /*********************************************************************
 Everything beyond this point is, perhaps, part of a DOM support layer
