@@ -171,8 +171,8 @@ int js_main(int argc, char **argv)
 			if (head.lineno == 1)
 				allowXHR = head.n;
 			head.n = head.proplength = 0;
-//			no acknowledgement needed
-//			writeHeader();
+//                      no acknowledgement needed
+//                      writeHeader();
 			continue;
 		}
 
@@ -1597,46 +1597,82 @@ fail:
 	return JS_TRUE;
 }				/* doc_createElement */
 
+/* Adjust cookie after an http fetch. */
+static void cookieRefresh(void)
+{
+	JS::RootedObject p(jcx);
+	js::RootedValue v(jcx);
+	if (JS_GetProperty(jcx, winobj, "location", v.address()) == JS_TRUE &&
+	    v.isObject()) {
+		p = JSVAL_TO_OBJECT(v);
+		char *url = get_property_string1(p, "href$val");
+		if (url && *url) {
+			int cook_l;
+			char *cook = initString(&cook_l);
+			const char *proto = getProtURL(url);
+			bool secure = false;
+			char *s;
+			if (proto && stringEqualCI(proto, "https"))
+				secure = true;
+			sendCookies(&cook, &cook_l, url, secure);
+			if (memEqualCI(cook, "cookie: ", 8))	/* should often happen */
+				strmove(cook, cook + 8);
+			if (s = strstr(cook, "\r\n"))
+				*s = 0;
+			setter_suspend = true;
+			set_property_string_nat(docobj, "cookie", cook);
+			setter_suspend = false;
+			nzFree(cook);
+		}
+		nzFree(url);
+	}
+}				/* cookieRefresh */
+
 static JSBool fetchHTTP(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 
-if (allowXHR)
-{
-	JS::RootedString incoming_url(cx);
-	JS::RootedString incoming_method(cx);
-	JS::RootedString incoming_headers(cx);
-	JS::RootedString incoming_payload(cx);
+	if (allowXHR) {
+		JS::RootedString incoming_url(cx);
+		JS::RootedString incoming_method(cx);
+		JS::RootedString incoming_headers(cx);
+		JS::RootedString incoming_payload(cx);
 // the order of the parameters is:
 // url, method, headers, payload
-	incoming_url = JS_ValueToString(cx, args[0]);
-	char *curl_incoming_url = JS_c_str(incoming_url);
-	incoming_method = JS_ValueToString(cx, args[1]);
-	char *curl_incoming_method = JS_c_str(incoming_method);
-	incoming_headers = JS_ValueToString(cx, args[2]);
-	char *curl_incoming_headers = JS_c_str(incoming_headers);
-	incoming_payload = JS_ValueToString(cx, args[3]);
-	char *curl_incoming_payload = JS_c_str(incoming_payload);
+		incoming_url = JS_ValueToString(cx, args[0]);
+		char *curl_incoming_url = JS_c_str(incoming_url);
+		incoming_method = JS_ValueToString(cx, args[1]);
+		char *curl_incoming_method = JS_c_str(incoming_method);
+		incoming_headers = JS_ValueToString(cx, args[2]);
+		char *curl_incoming_headers = JS_c_str(incoming_headers);
+		incoming_payload = JS_ValueToString(cx, args[3]);
+		char *curl_incoming_payload = JS_c_str(incoming_payload);
 
-	char *curl_outgoing_xhrheaders = NULL;
-	char *curl_outgoing_xhrbody = NULL;
-	int responseLength = 0;
+		char *curl_outgoing_xhrheaders = NULL;
+		char *curl_outgoing_xhrbody = NULL;
+		int responseLength = 0;
 
-	httpConnect(curl_incoming_url, false, false, &curl_outgoing_xhrheaders,
-		    &curl_outgoing_xhrbody, &responseLength);
-	args.rval().
-	    set(STRING_TO_JSVAL
-		(JS_NewStringCopyZ
-		 (cx,
-		  (string(curl_outgoing_xhrheaders) +
-		   string(curl_outgoing_xhrbody)).c_str())));
-	cnzFree(curl_incoming_url);
-	cnzFree(curl_incoming_method);
-	cnzFree(curl_incoming_headers);
-	cnzFree(curl_incoming_payload);
-	cnzFree(curl_outgoing_xhrheaders);
-	cnzFree(curl_outgoing_xhrbody);
-} else {
+		httpConnect(curl_incoming_url, false, false,
+			    &curl_outgoing_xhrheaders, &curl_outgoing_xhrbody,
+			    &responseLength);
+		args.
+		    rval().set(STRING_TO_JSVAL
+			       (JS_NewStringCopyZ
+				(cx,
+				 (string(curl_outgoing_xhrheaders) +
+				  string(curl_outgoing_xhrbody)).c_str())));
+		cnzFree(curl_incoming_url);
+		cnzFree(curl_incoming_method);
+		cnzFree(curl_incoming_headers);
+		cnzFree(curl_incoming_payload);
+		cnzFree(curl_outgoing_xhrheaders);
+		cnzFree(curl_outgoing_xhrbody);
+// http fetch could bring new cookies into the current window.
+// This code commented out and untested because it can't possibly
+// work when the js process and edbrowse have separate cookie spaces.
+// Remember to test this when there is one curl server with one cookie space.
+//              cookieRefresh();
+	} else {
 // current strategy - the send action is allowed,
 // but there will be an empty string returned.
 // So there should not be any runtime errors on account
@@ -1644,8 +1680,7 @@ if (allowXHR)
 // are being accepted, just sent to /dev/null unbeknownst
 // to the calling page.  Is this a reasonable way to
 // handle allowXHR == false?
-        args.rval().
-            set(JS_GetEmptyStringValue(cx));
+		args.rval().set(JS_GetEmptyStringValue(cx));
 	}
 
 	return JS_TRUE;
