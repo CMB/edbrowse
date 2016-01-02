@@ -26,6 +26,8 @@ static int down_msg;
 struct BG_JOB {
 	struct BG_JOB *next, *prev;
 	int pid, state;
+	size_t fsize;		// file size
+	int file2;		// offset into filename
 	char file[4];
 };
 struct listHead down_jobs = {
@@ -213,7 +215,7 @@ eb_curl_callback(char *incoming, size_t size, size_t nitems,
 #if 0
 // Deliberately delay background download, to get several running in parallel
 // for testing purposes.
-				if (!data->down_length)
+				if (data->down_length == 0)
 					sleep(17);
 				data->down_length += rc;
 #endif
@@ -1496,7 +1498,8 @@ static CURL *http_curl_init(struct eb_curl_callback_data *cbd)
 	CURL *h = curl_easy_init();
 	if (h == NULL)
 		goto libcurl_init_fail;
-	curl_init_status = curl_easy_setopt(h, CURLOPT_SHARE, global_share_handle);
+	curl_init_status =
+	    curl_easy_setopt(h, CURLOPT_SHARE, global_share_handle);
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
 /* Lots of these setopt calls shouldn't fail.  They just diddle a struct. */
@@ -1540,7 +1543,7 @@ static CURL *http_curl_init(struct eb_curl_callback_data *cbd)
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
 // We shouldn't need these next few, after sharing with global_http_handle.
-#if 0
+#if 1
 	curl_init_status = curl_easy_setopt(h, CURLOPT_CAINFO, sslCerts);
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
@@ -1748,8 +1751,8 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb,
 	stringAndBytes(&http_headers, &http_headers_len,
 		       header_line, bytes_in_line);
 
-	if (down_permitted && data->down_state == 0 && !hct[0]) {
-		scan_http_headers(true);
+	scan_http_headers(true);
+	if (down_permitted && data->down_state == 0) {
 		if (cw->mt && cw->mt->stream && pluginsOn) {
 /* I don't think this ever happens, since streams are indicated by the protocol,
  * and we wouldn't even get here, but just in case -
@@ -1895,11 +1898,14 @@ static void background_download(struct eb_curl_callback_data *data)
 		data->down_state = 3;
 
 /* push job onto the list for tracking and display */
-		job =
-		    allocMem(sizeof(struct BG_JOB) + strlen(data->down_file2));
+		job = allocMem(sizeof(struct BG_JOB) + strlen(data->down_file));
 		job->pid = down_pid;
 		job->state = 4;
-		strcpy(job->file, data->down_file2);
+		strcpy(job->file, data->down_file);
+		job->file2 = data->down_file2 - data->down_file;
+// round file size up to the nearest megabyte.
+// This will come out 0 only if the true size is 0.
+		job->fsize = ((hcl + ((1 << 20) - 1)) >> 20);
 		addToListBack(&down_jobs, job);
 
 		return;
@@ -1913,6 +1919,7 @@ static void background_download(struct eb_curl_callback_data *data)
 }				/* background_download */
 
 /* show background jobs and return the number of jobs pending */
+/* if iponly is true then just show in progress */
 int bg_jobs(bool iponly)
 {
 	bool present = false, part;
@@ -1936,6 +1943,7 @@ int bg_jobs(bool iponly)
 /* in progress */
 	part = false;
 	foreach(j, down_jobs) {
+		size_t now_size;
 		if (j->state != 4)
 			continue;
 		++numback;
@@ -1944,7 +1952,11 @@ int bg_jobs(bool iponly)
 			puts(" {");
 			part = present = true;
 		}
-		puts(j->file);
+		printf("%s", j->file + j->file2);
+		if (j->fsize)
+			printf(" %d/%d MB",
+			       (fileSizeByName(j->file) >> 20), j->fsize);
+		nl();
 	}
 	if (part)
 		puts("}");
@@ -1962,7 +1974,7 @@ int bg_jobs(bool iponly)
 			puts(" {");
 			part = present = true;
 		}
-		puts(j->file);
+		puts(j->file + j->file2);
 	}
 	if (part)
 		puts("}");
@@ -1977,7 +1989,7 @@ int bg_jobs(bool iponly)
 			puts(" {");
 			part = present = true;
 		}
-		puts(j->file);
+		puts(j->file + j->file2);
 	}
 	if (part)
 		puts("}");
