@@ -19,6 +19,7 @@ CURLSH *global_share_handle;
 bool pluginsOn = true;
 bool down_bg;			/* download in background */
 
+static CURL *down_h;
 static int down_pid;		/* pid of the downloading child process */
 static bool down_permitted;
 static int down_msg;
@@ -162,6 +163,7 @@ static void scan_http_headers(bool fromCallback)
 static CURLcode fetch_internet(CURL * h, bool is_http)
 {
 	CURLcode curlret;
+	down_h = h;
 /* this should already be 0 */
 	nzFree(newlocation);
 	newlocation = NULL;
@@ -200,6 +202,18 @@ eb_curl_callback(char *incoming, size_t size, size_t nitems,
 	int dots1, dots2, rc;
 
 	if (data->down_state == 1) {
+		if (hcl == 0) {
+// http should always set http content length, this is just for ftp.
+// And ftp downloading a file always has state = 1 on the first data block.
+			double d_size = 0.0;	// download size, if we can get it
+			curl_easy_getinfo(down_h,
+					  CURLINFO_CONTENT_LENGTH_DOWNLOAD,
+					  &d_size);
+			hcl = d_size;
+			if (hcl < 0)
+				hcl = 0;
+		}
+
 /* state 1, first data block, ask the user */
 		setup_download(data);
 		if (data->down_state == 0)
@@ -1543,7 +1557,7 @@ static CURL *http_curl_init(struct eb_curl_callback_data *cbd)
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
 // We shouldn't need these next few, after sharing with global_http_handle.
-#if 1
+#if 0
 	curl_init_status = curl_easy_setopt(h, CURLOPT_CAINFO, sslCerts);
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
@@ -1903,9 +1917,9 @@ static void background_download(struct eb_curl_callback_data *data)
 		job->state = 4;
 		strcpy(job->file, data->down_file);
 		job->file2 = data->down_file2 - data->down_file;
-// round file size up to the nearest megabyte.
+// round file size up to the nearest chunk.
 // This will come out 0 only if the true size is 0.
-		job->fsize = ((hcl + ((1 << 20) - 1)) >> 20);
+		job->fsize = ((hcl + (CHUNKSIZE - 1)) / CHUNKSIZE);
 		addToListBack(&down_jobs, job);
 
 		return;
@@ -1954,8 +1968,8 @@ int bg_jobs(bool iponly)
 		}
 		printf("%s", j->file + j->file2);
 		if (j->fsize)
-			printf(" %d/%d MB",
-			       (fileSizeByName(j->file) >> 20), j->fsize);
+			printf(" %d/%d",
+			       (fileSizeByName(j->file) / CHUNKSIZE), j->fsize);
 		nl();
 	}
 	if (part)
