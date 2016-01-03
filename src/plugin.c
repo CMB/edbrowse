@@ -199,12 +199,6 @@ char *pluginCommand(const struct MIMETYPE *m,
 
 	len = 0;
 	for (s = m->program; *s; ++s) {
-#if 0
-		if (*s == '*') {
-			len += strlen(suffix);
-			continue;
-		}
-#endif
 		if (*s == '%' && s[1] == 'i') {
 			inlen = shellProtectLength(infile);
 			len += inlen;
@@ -224,13 +218,6 @@ char *pluginCommand(const struct MIMETYPE *m,
 	cmd = allocMem(len);
 	t = cmd;
 	for (s = m->program; *s; ++s) {
-#if 0
-		if (*s == '*') {
-			strcpy(t, suffix);
-			t += strlen(suffix);
-			continue;
-		}
-#endif
 		if (*s == '%' && s[1] == 'i') {
 			shellProtect(t, infile);
 			t += inlen;

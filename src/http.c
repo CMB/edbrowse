@@ -1562,18 +1562,6 @@ static CURL *http_curl_init(struct eb_curl_callback_data *cbd)
 	curl_init_status = curl_easy_setopt(h, CURLOPT_ERRORBUFFER, errorText);
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
-// We shouldn't need these next few, after sharing with global_http_handle.
-#if 0
-	curl_init_status = curl_easy_setopt(h, CURLOPT_CAINFO, sslCerts);
-	if (curl_init_status != CURLE_OK)
-		goto libcurl_init_fail;
-	curl_init_status = curl_easy_setopt(h, CURLOPT_COOKIEFILE, cookieFile);
-	if (curl_init_status != CURLE_OK)
-		goto libcurl_init_fail;
-	curl_init_status = curl_easy_setopt(h, CURLOPT_COOKIEJAR, cookieFile);
-	if (curl_init_status != CURLE_OK)
-		goto libcurl_init_fail;
-#endif
 	curl_init_status = curl_easy_setopt(h, CURLOPT_ENCODING, "");
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;

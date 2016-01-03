@@ -1481,16 +1481,6 @@ fromdisk:
 	if ((cmd == 'e' || cmd == 'b') && !cw->mt)
 		cw->mt = findMimeByFile(filename);
 
-#if 0
-/* special optimization code for going to a renderable file,
- * via a plugin, from directory mode. */
-/* Not sure if this is a good idea. */
-	if (cmd == 'b' && icmd == 'g' && pluginsOn && cw->mt && cw->mt->outtype) {
-		fileSize = 0;
-		return true;
-	}
-#endif
-
 	nopound = cloneString(filename);
 	rbuf = findHash(nopound);
 	if (rbuf && !filetype)
