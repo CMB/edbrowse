@@ -68,13 +68,10 @@ msg-strings.c: ../lang/msg-*
 # edbrowse.o object, and it expects one.
 edbrowse: $(EBOBJS) startwindow.o
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) $(JSLIB) -lstdc++ -o $@
-	rm -f edbrowse-js
-	ln -s edbrowse edbrowse-js
 
 #  You probably need to be root to do this.
 install:
 	install -Dm755 edbrowse $(DESTDIR)$(bindir)/edbrowse
-	install -Dm755 edbrowse-js $(DESTDIR)$(bindir)/edbrowse-js
 
 #  native Informix library for database access.
 #  Others could be built, e.g. Oracle, but odbc is the most general.
@@ -86,7 +83,7 @@ edbrowse-infx: $(EBOBJS) startwindow.o dbops.o dbinfx.o
 	esql $(ESQLDFLAGS) -o edbrowse-infx $(EBOBJS) startwindow.o dbops.o dbinfx.o $(LDLIBS)
 
 clean:
-	rm -f *.o edbrowse edbrowse-js \
+	rm -f *.o edbrowse \
 	startwindow.c ebrc.c msg-strings.c
 
 jseng-moz.o: jseng-moz.cpp

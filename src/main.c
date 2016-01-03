@@ -284,12 +284,15 @@ void setDataSource(char *v)
  * blocking.  For now, we just use one mutex.
  */
 
-static void lock_share(CURL *handle, curl_lock_data data, curl_lock_access access, void *userptr) {
+static void lock_share(CURL * handle, curl_lock_data data,
+		       curl_lock_access access, void *userptr)
+{
 /* TODO error handling. */
 	pthread_mutex_lock(&share_mutex);
 }				/* lock_share */
 
-static void unlock_share(CURL *handle, curl_lock_data data, void *userptr) {
+static void unlock_share(CURL * handle, curl_lock_data data, void *userptr)
+{
 	pthread_mutex_unlock(&share_mutex);
 }				/* unlock_share */
 
@@ -314,10 +317,14 @@ void eb_curl_global_init(void)
 		goto libcurl_init_fail;
 
 	curl_share_setopt(global_share_handle, CURLSHOPT_LOCKFUNC, lock_share);
-	curl_share_setopt(global_share_handle, CURLSHOPT_UNLOCKFUNC, unlock_share);
-	curl_share_setopt(global_share_handle, CURLSHOPT_SHARE, CURL_LOCK_DATA_COOKIE);
-	curl_share_setopt(global_share_handle, CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS);
-	curl_share_setopt(global_share_handle, CURLSHOPT_SHARE, CURL_LOCK_DATA_SSL_SESSION);
+	curl_share_setopt(global_share_handle, CURLSHOPT_UNLOCKFUNC,
+			  unlock_share);
+	curl_share_setopt(global_share_handle, CURLSHOPT_SHARE,
+			  CURL_LOCK_DATA_COOKIE);
+	curl_share_setopt(global_share_handle, CURLSHOPT_SHARE,
+			  CURL_LOCK_DATA_DNS);
+	curl_share_setopt(global_share_handle, CURLSHOPT_SHARE,
+			  CURL_LOCK_DATA_SSL_SESSION);
 
 	global_http_handle = curl_easy_init();
 	if (global_http_handle == NULL)
@@ -346,7 +353,9 @@ void eb_curl_global_init(void)
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
 
-	curl_init_status = curl_easy_setopt(global_http_handle, CURLOPT_SHARE, global_share_handle);
+	curl_init_status =
+	    curl_easy_setopt(global_http_handle, CURLOPT_SHARE,
+			     global_share_handle);
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
 	return;
@@ -383,7 +392,7 @@ void ebClose(int n)
 
 int main(int argc, char **argv)
 {
-	int cx, l, account;
+	int cx, account;
 	bool rc, doConfig = true;
 	bool dofetch = false, domail = false;
 	static char agent0[64] = "edbrowse/";
@@ -477,9 +486,21 @@ int main(int argc, char **argv)
 	userAgents[0] = currentAgent = agent0;
 
 	progname = argv[0];
-	l = strlen(progname);
-	if (l >= 11 && stringEqual(progname + l - 11, "edbrowse-js"))
-		return js_main(argc, argv);
+	++argv, --argc;
+
+// a mode directive has to come first.
+	if (stringEqual(argv[0], "--mode")) {
+		char *m;
+		if (argc == 1)
+			i_printfExit(MSG_Usage);
+		m = argv[1];
+		argv += 2;
+		argc -= 2;
+		if (stringEqual(m, "js"))
+			return js_main(argc, argv);
+// unknown mode
+		i_printfExit(MSG_Usage);
+	}
 
 	ttySaveSettings();
 	initializeReadline();
@@ -488,7 +509,6 @@ int main(int argc, char **argv)
 	pcre_malloc = allocMem;
 	pcre_free = nzFree;
 
-	++argv, --argc;
 	if (argc && stringEqual(argv[0], "-c")) {
 		if (argc == 1)
 			*argv = configFile;

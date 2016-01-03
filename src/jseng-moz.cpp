@@ -112,11 +112,11 @@ static char *runscript;
 
 int js_main(int argc, char **argv)
 {
-	if (argc != 3)
+	if (argc != 2)
 		usage();
 
-	pipe_in = stringIsNum(argv[1]);
-	pipe_out = stringIsNum(argv[2]);
+	pipe_in = stringIsNum(argv[0]);
+	pipe_out = stringIsNum(argv[1]);
 	if (pipe_in < 0 || pipe_out < 0)
 		usage();
 

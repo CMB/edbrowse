@@ -63,46 +63,19 @@ static struct EJ_MSG head;
 static pthread_t tid;
 static void *child_proc(void *vp)
 {
+	int rc;
 /* child here, exec the back end js process */
-	size_t len;
-// change [d:\foo\bar\]edbrowse[.exe] to [d:\foo\bar\]edbrowse-js[.exe]
-	char drive[_MAX_DRIVE];
-	char dir[_MAX_DIR];
-	char fname[_MAX_FNAME];
-	char ext[_MAX_EXT];
-	char pn[MAX_PATH];
-	// split it up
-	_splitpath(progname, drive, dir, fname, ext);
-	// put it back together
-	pn[0] = 0;
-	strcat(pn, drive);
-	strcat(pn, dir);
-	len = strlen(fname);
-	if (len && (fname[len - 1] == 'd')) {
-		fname[len - 1] = 0;
-		strcat(pn, fname);
-		strcat(pn, "-jsd");	// add to the debug file name
-	} else {
-		strcat(pn, fname);
-		strcat(pn, "-js");	// add to the file name
-	}
-
-	strcat(pn, ext);
-
 	//close(pipe_in[0]);
 	//close(pipe_out[1]);
 	sprintf(arg1, "%d", pipe_out[0]);
 	sprintf(arg2, "%d", pipe_in[1]);
-
-	debugPrint(5, "spawning '%s' %s %s", pn, arg1, arg2);
-	len = _spawnl(_P_WAIT, pn, "edbrowse-js", arg1, arg2, 0);
-	//_execlp(pn, "edbrowse-js", arg1, arg2, 0);
-	// len = 1;
-	if (len) {
+	debugPrint(5, "spawning '%s' %s %s", progname, arg1, arg2);
+	rc = _spawnl(_P_WAIT, progname, "edbrowse", "--mode", "js", arg1, arg2,
+		     0);
+	if (rc) {
 		debugPrint(5, "spawning FAILED! %d\n", errno);
 /* oops, process did not exec */
 /* write a message from this child, saying js would not exec */
-/* The process just started; head is zero */
 		head.magic = EJ_MAGIC;
 		head.highstat = EJ_HIGH_PROC_FAIL;
 		head.lowstat = EJ_LOW_EXEC;
@@ -111,7 +84,6 @@ static void *child_proc(void *vp)
 	}
 	return (void *)90;
 }
-
 #endif // defined(DOSLIKE) && defined(HAVE_PTHREAD_H)
 
 /* Start the js process. */
@@ -189,30 +161,16 @@ static void js_start(void)
 	sprintf(arg1, "%d", pipe_out[0]);
 	sprintf(arg2, "%d", pipe_in[1]);
 	debugPrint(5, "spawning edbrowse-js %s %s", arg1, arg2);
-
-	if (!strchr(progname, '/')) {
-// no path specified, just the program, so assume edbrowse-js is also on $PATH,
-// hopefully in the same bin.
-		execlp("edbrowse-js", "edbrowse-js", arg1, arg2, NULL);
-	} else {
-// change /foo/bar/edbrowse to /foo/bar/edbrowse-js
-		int l = strlen(progname);
-		char *jspath = allocMem(l + 4);
-		sprintf(jspath, "%s-js", progname);
-		execl(jspath, "edbrowse-js", arg1, arg2, NULL);
-		nzFree(jspath);
-	}
+	execlp(progname, "edbrowse", "--mode", "js", arg1, arg2, NULL);
 
 /* oops, process did not exec */
 /* write a message from this child, saying js would not exec */
-/* The process just started; head is zero */
 	head.magic = EJ_MAGIC;
 	head.highstat = EJ_HIGH_PROC_FAIL;
 	head.lowstat = EJ_LOW_EXEC;
 	write(pipe_in[1], &head, sizeof(head));
 	exit(90);
 #endif // defined(DOSLIKE) && defined(HAVE_PTHREAD_H) y/n
-
 }				/* js_start */
 
 /* Shut down the js process, although if we got here,

@@ -296,17 +296,4 @@ if (MSVC)
 endif ()
 install(TARGETS ${name} DESTINATION bin)
 
-set(name edbrowse-js)
-set(dir src)
-
-if (WIN32)
-    add_custom_target(${name} ALL ${CMAKE_COMMAND} -E copy_if_different edbrowse ${name} DEPENDS edbrowse)
-else ()
-    add_custom_target(${name} ALL ${CMAKE_COMMAND} -E create_symlink edbrowse ${name} DEPENDS edbrowse)
-    endif ()
-if (MSVC)
-    set_target_properties( ${name} PROPERTIES DEBUG_POSTFIX d )
-endif ()
-install(FILES "${CMAKE_BINARY_DIR}/${name}" DESTINATION bin)
-
 # eof

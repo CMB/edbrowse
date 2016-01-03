@@ -48,11 +48,9 @@ msg-strings.c: ../lang/msg-*
 # edbrowse.o object, and it expects one.
 edbrowse: $(EBOBJS) startwindow.o
 	cc $(LFLAGS) -o edbrowse startwindow.o dbstubs.o $(EBOBJS) $(LIBS) $(JSLIB) -lstdc++
-	rm -f edbrowse-js
-	ln -s edbrowse edbrowse-js
 
 clean:
-	rm -f *.o edbrowse edbrowse-js \
+	rm -f *.o edbrowse \
 	startwindow.c ebrc.c msg-strings.c
 
 jseng-moz.o: jseng-moz.cpp
