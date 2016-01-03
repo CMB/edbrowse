@@ -544,7 +544,10 @@ b&nbsp; browse the current file, which is assumed to be in html
 <P>
 FTP or HTTP Downloads
 <P>
-fma&nbsp; ftp mode active
+pdd&nbsp; progress of download indicated by dots
+<br>pdc&nbsp; progress of download indicated by megabyte count
+<br>pdq&nbsp; progress of download quiet, no indicator
+<br>fma&nbsp; ftp mode active
 <br>fmp&nbsp; ftp mode passive
 <br>bg&nbsp; download files in background (toggle)
 <br>bgl&nbsp; list background downloads, complete or in progress
@@ -2916,10 +2919,7 @@ If you prefer, you can run downloads in the background by issuing the bg (backgr
 This is especially useful for large files.&nbsp;
 You are notified when the download is complete.&nbsp;
 Meantime you can continue to use edbrowse.&nbsp;
-Warning: if you are downloading a file in the background from a secure server
-(https, ftps, or sftp), edbrowse may produce CKR_DEVICE_ERROR, and abort the download, if your openssl is earlier than version 1.0.1g.&nbsp;
-This is an ssl / fork interaction that I can't easily fix or circumvent.&nbsp;
-If this happens, type bg again and download in the foreground.
+No dots will be printed, as they would interfere with what you are doing.
 
 <P>
 When prompted for the filename, hit return for the default file name
@@ -2934,6 +2934,15 @@ Type bgl to list your background download jobs, including those that have run to
 Upon exit, edbrowse will list any background downloads that are in progress.&nbsp;
 These continue to run, even after edbrowse exits,
 and they will print "download complete" messages when they finish.
+
+<P>
+Foreground downloads, or any internet fetch for that matter, prints progress dots,
+but you can suppress these with the pdq (progress of download quiet) command.&nbsp;
+Another option is the pdc (progress of download by count) command.&nbsp;
+This prints megabytes downloaded and megabytes total.&nbsp;
+For instance, 17/235 means 17 megs received out of 235.&nbsp;
+These are decimal megabytes, not binary 0x100000 megabytes -
+there is only a slight difference.
 
 <P>
 linelength = 1000

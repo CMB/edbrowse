@@ -18,6 +18,7 @@ CURL *global_http_handle;
 CURLSH *global_share_handle;
 bool pluginsOn = true;
 bool down_bg;			/* download in background */
+char showProgress = 'd';	// dots
 
 static CURL *down_h;
 static int down_pid;		/* pid of the downloading child process */
@@ -254,10 +255,15 @@ showdots:
 	else
 		*(data->length) += num_bytes;
 	dots2 = *(data->length) / CHUNKSIZE;
-	if (dots1 < dots2) {
-		for (; dots1 < dots2; ++dots1)
-			putchar('.');
-		fflush(stdout);
+	if (showProgress != 'q' && dots1 < dots2) {
+		if (showProgress == 'd') {
+			for (; dots1 < dots2; ++dots1)
+				putchar('.');
+			fflush(stdout);
+		}
+		if (showProgress == 'c' && hcl)
+			printf("%d/%d\n", dots2,
+			       (hcl + CHUNKSIZE - 1) / CHUNKSIZE);
 	}
 	return num_bytes;
 }
@@ -948,7 +954,7 @@ perform:
 			exit(0);
 		}
 
-		if (*(cbd.length) >= CHUNKSIZE)
+		if (*(cbd.length) >= CHUNKSIZE && showProgress == 'd')
 			nl();	/* We printed dots, so terminate them with newline */
 
 		if (cbd.down_state == 2) {
@@ -1413,7 +1419,7 @@ perform:
 		exit(0);
 	}
 
-	if (*(cbd.length) >= CHUNKSIZE)
+	if (*(cbd.length) >= CHUNKSIZE && showProgress == 'd')
 		nl();		/* We printed dots, so terminate them with newline */
 
 	if (cbd.down_state == 2) {

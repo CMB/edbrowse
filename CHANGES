@@ -7,6 +7,9 @@ Program name determines the action of the process.
 
 Simple implementation of xhr under javascript, synchronous only.
 
+Turn on or off the progress dots during an http or ftp download,
+or receive progress counts by megabyte.
+
 3.6.0:
 Edbrowse is an imap client. Scan and search through folders,
 delete move or download emails, pull down attachments.

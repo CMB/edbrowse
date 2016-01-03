@@ -3640,6 +3640,20 @@ et_go:
 		return true;
 	}
 
+	if (line[0] == 'p' && line[1] == 'd' &&
+	    line[2] && strchr("qdc", line[2]) && !line[3]) {
+		showProgress = line[2];
+		if (helpMessagesOn || debugLevel >= 1) {
+			if (showProgress == 'q')
+				i_puts(MSG_ProgressQuiet);
+			if (showProgress == 'd')
+				i_puts(MSG_ProgressDots);
+			if (showProgress == 'c')
+				i_puts(MSG_ProgressCount);
+		}
+		return true;
+	}
+
 	if (stringEqual(line, "vs")) {
 		verifyCertificates ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)

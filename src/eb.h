@@ -248,6 +248,7 @@ extern bool ismc;		/* Is the program running as a mail client? */
 extern bool isimap;		/* Is the program running as an imap client? */
 extern bool down_bg;		/* download in background */
 extern char whichproc; // which edbrowse-xx process
+extern char showProgress; // feedback as a file is downloaded
 extern int eb_lang;		/* edbrowse language, determined by $LANG */
 extern bool cons_utf8;		/* does the console expect utf8? */
 extern bool iuConvert;		/* perform iso utf8 conversions automatically */
