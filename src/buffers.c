@@ -840,20 +840,6 @@ void cxSwitch(int cx, bool interactive)
 
 static struct lineMap *newpiece;
 
-/* for debugging */
-static void show_newpiece(int cnt)
-{
-	const struct lineMap *t = newpiece;
-	const char *s;
-	printf("newpiece %d\n", cnt);
-	while (cnt) {
-		for (s = t->text; *s != '\n'; ++s)
-			printf("%c", *s);
-		printf("\n");
-		++t, --cnt;
-	}
-}				/* show_newpiece */
-
 /* Adjust the map of line numbers -- we have inserted text.
  * Also shift the downstream labels.
  * Pass the string containing the new line numbers, and the dest line number. */
@@ -5003,6 +4989,7 @@ rebrowse:
 		if (changeFileName) {
 			nzFree(w->fileName);
 			w->fileName = changeFileName;
+			w->f_encoded = true;
 			changeFileName = 0;
 		}
 /* Some files we just can't browse */

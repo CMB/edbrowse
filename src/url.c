@@ -123,7 +123,8 @@ void unpercentString(char *s)
  * This function is used to sanitize user-supplied URLs.  */
 
 /* these punctuations are percentable, anywhere in a url */
-static const char percentable[] = "!*'()[]+$,";
+/* + has to lead */
+static const char percentable[] = "+!*'()[]$,";
 static char hexdigits[] = "0123456789abcdef";
 #define ESCAPED_CHAR_LENGTH 3
 
@@ -180,6 +181,18 @@ char *percentURL(const char *start, const char *end)
 
 	return new_copy;
 }				/* percentURL */
+
+// For debugging only.
+bool looksPercented(const char *start, const char *end)
+{
+	const char *s;
+	if (!end)
+		end = start + strlen(start);
+	for (s = start; s < end; ++s)
+		if (*s < ' ' || strchr(percentable + 1, *s))
+			return false;
+	return true;
+}				/* looksPercented */
 
 /* escape & < > for display on a web page */
 char *htmlEscape0(const char *s, bool do_and)

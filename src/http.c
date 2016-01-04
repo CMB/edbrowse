@@ -810,8 +810,22 @@ mimestream:
 
 	post = strchr(url, '\1');
 	postb = 0;
-	if (post) {
+	if (f_encoded && !looksPercented(url, post)) {
+		debugPrint(1, "Warning, url %s doesn't look encoded", url);
+		f_encoded = false;
+	}
+	if (!f_encoded) {
 		urlcopy = percentURL(url, post);
+	} else {
+		if (post) {
+			int ul;
+			urlcopy = initString(&ul);
+			stringAndBytes(&urlcopy, &ul, url, post - url);
+		} else
+			urlcopy = cloneString(url);
+	}
+
+	if (post) {
 		post++;
 
 		if (strncmp(post, "`mfd~", 5)) ;	/* No need to do anything, not multipart. */
@@ -852,7 +866,6 @@ mimestream:
 		if (curlret != CURLE_OK)
 			goto curl_fail;
 	} else {
-		urlcopy = percentURL(url, NULL);
 		curlret = curl_easy_setopt(h, CURLOPT_HTTPGET, 1);
 		if (curlret != CURLE_OK)
 			goto curl_fail;
