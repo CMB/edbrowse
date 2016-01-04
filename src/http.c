@@ -700,7 +700,7 @@ static char *urlcopy;
 // Last three are result parameters, for http headers and body strings.
 // Set to 0 if you don't want these passed back in this way.
 bool httpConnect(const char *url, bool down_ok, bool webpage,
-		 char **headers_p, char **body_p, int *bodlen_p)
+		 bool f_encoded, char **headers_p, char **body_p, int *bodlen_p)
 {
 	CURL *h;		// the curl http handle
 	struct eb_curl_callback_data cbd;

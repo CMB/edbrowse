@@ -1652,15 +1652,14 @@ static JSBool fetchHTTP(JSContext * cx, unsigned int argc, jsval * vp)
 		char *curl_outgoing_xhrbody = NULL;
 		int responseLength = 0;
 
-		httpConnect(curl_incoming_url, false, false,
+		httpConnect(curl_incoming_url, false, false, true,
 			    &curl_outgoing_xhrheaders, &curl_outgoing_xhrbody,
 			    &responseLength);
-		args.
-		    rval().set(STRING_TO_JSVAL
-			       (JS_NewStringCopyZ
-				(cx,
-				 (string(curl_outgoing_xhrheaders) +
-				  string(curl_outgoing_xhrbody)).c_str())));
+		args.rval().set(STRING_TO_JSVAL
+				(JS_NewStringCopyZ
+				 (cx,
+				  (string(curl_outgoing_xhrheaders) +
+				   string(curl_outgoing_xhrbody)).c_str())));
 		cnzFree(curl_incoming_url);
 		cnzFree(curl_incoming_method);
 		cnzFree(curl_incoming_headers);

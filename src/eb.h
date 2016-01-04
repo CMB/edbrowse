@@ -384,6 +384,7 @@ struct ebWindow {
 	bool undoable:1;	/* undo is possible */
 	bool sqlMode:1;		/* accessing a table */
 	bool baseset:1; /* <base> tag seen */
+	bool f_encoded:1; /* filename is url encoded */
 	char *dw;		/* document.write string */
 	int dw_l;		/* length of the above */
 /* The javascript context and window corresponding to this edbrowse buffer.

@@ -51,13 +51,14 @@ static const char global_cmd[] = "dDijJlmnpstX";
 static int startRange, endRange;	/* as in 57,89p */
 static int destLine;		/* as in 57,89m226 */
 static int last_z = 1;
-static char cmd, icmd, scmd;
+static char cmd, scmd;
 static uchar subPrint;		/* print lines after substitutions */
 static bool noStack;		/* don't stack up edit sessions */
 static bool globSub;		/* in the midst of a g// command */
 static bool inscript;		/* run from inside an edbrowse function */
 static int lastq, lastqq;
 static char icmd;		/* input command, usually the same as cmd */
+static bool f_encoded;
 
 /*********************************************************************
  * If a rendered line contains a hyperlink, the link is indicated
@@ -1419,7 +1420,8 @@ static bool readFile(const char *filename, const char *post)
 			return false;
 		}
 
-		rc = httpConnect(filename, (cmd != 'r'), true, 0, 0, 0);
+		rc = httpConnect(filename, (cmd != 'r'), true, f_encoded, 0, 0,
+				 0);
 		if (!rc) {
 /* The error could have occured after redirection */
 			nzFree(changeFileName);
@@ -3335,6 +3337,7 @@ pwd:
 		sprintf(allocatedLine, "%c %s", cmd, cw->fileName);
 		debrowseSuffix(allocatedLine);
 		*runThis = allocatedLine;
+		f_encoded = cw->f_encoded;
 		return 2;
 	}
 
@@ -4059,6 +4062,7 @@ bool runCommand(const char *line)
 	js_redirects = false;
 
 	cmd = icmd = 'p';
+	f_encoded = false;
 	skipWhite(&line);
 	first = *line;
 
@@ -4638,6 +4642,7 @@ bool runCommand(const char *line)
 			jsdead = !isJSAlive;
 			click = dclick = over = false;
 			cmd = 'b';
+			f_encoded = true;
 			if (endRange > startRange) {
 				setError(MSG_RangeG);
 				return false;
@@ -4891,6 +4896,7 @@ bool runCommand(const char *line)
 					line = allocatedLine;
 					first = *line;
 					cmd = 'b';
+					f_encoded = true;
 				}
 
 			} else
@@ -4903,6 +4909,7 @@ bool runCommand(const char *line)
 
 rebrowse:
 	if (cmd == 'e' || cmd == 'b' && first && first != '#') {
+//  printf("ifetch %d %s\n", f_encoded, line);
 		if (cw->fileName && !noStack && sameURL(line, cw->fileName)) {
 			if (stringEqual(line, cw->fileName)) {
 				setError(MSG_AlreadyInBuffer);
@@ -4932,6 +4939,7 @@ rebrowse:
 		changeFileName = 0;	/* should already be zero */
 		w = createWindow();
 		cw = w;		/* we might wind up putting this back */
+		cw->f_encoded = f_encoded;
 /* Check for sendmail link */
 		if (cmd == 'b' && memEqualCI(line, "mailto:", 7)) {
 			char *addr, *subj, *body;
@@ -5043,6 +5051,7 @@ redirect:
 				debugPrint(2, "redirect %s", line);
 				newlocation = 0;
 				icmd = cmd = 'b';
+				f_encoded = true;
 				first = *line;
 				if (intFlag) {
 					i_puts(MSG_RedirectionInterrupted);
