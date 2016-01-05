@@ -179,7 +179,8 @@ static CURLcode fetch_internet(CURL * h, bool is_http)
 	return curlret;
 }				/* fetch_internet */
 
-static bool ftpConnect(const char *url, const char *user, const char *pass);
+static bool ftpConnect(const char *url, const char *user, const char *pass,
+		       bool f_encoded);
 static bool read_credentials(char *buffer);
 static size_t curl_header_callback(char *header_line, size_t size, size_t nmemb,
 				   struct eb_curl_callback_data *data);
@@ -696,6 +697,41 @@ bool refreshDelay(int sec, const char *u)
 long hcode;			/* example, 404 */
 static char herror[32];		/* example, file not found */
 static char *urlcopy;
+static int urlcopy_l;
+
+// encode the url, if it was supplied by the user.
+// Otherwise just make a copy.
+// Either way there is room for one more char at the end.
+static void urlSanitize(const char *url, const char *post, bool f_encoded)
+{
+	const char *portloc;
+
+	if (f_encoded && !looksPercented(url, post)) {
+		debugPrint(1, "Warning, url %s doesn't look encoded", url);
+		f_encoded = false;
+	}
+
+	if (!f_encoded) {
+		urlcopy = percentURL(url, post);
+		urlcopy_l = strlen(urlcopy);
+	} else {
+		if (post)
+			urlcopy_l = post - url;
+		else
+			urlcopy_l = strlen(url);
+		urlcopy = allocMem(urlcopy_l + 2);
+		strncpy(urlcopy, url, urlcopy_l);
+		urlcopy[urlcopy_l] = 0;
+	}
+
+// get rid of : in http://this.that.com:/path, curl can't handle it.
+	getPortLocURL(urlcopy, &portloc, 0);
+	if (portloc && !isdigit(portloc[1])) {
+		const char *s = portloc + strcspn(portloc, "/?#\1");
+		strmove((char *)portloc, s);
+		urlcopy_l = strlen(urlcopy);
+	}
+}				/* urlSanitize */
 
 // Last three are result parameters, for http headers and body strings.
 // Set to 0 if you don't want these passed back in this way.
@@ -767,7 +803,7 @@ bool httpConnect(const char *url, bool down_ok, bool webpage,
 		   stringEqualCI(prot, "ftps") ||
 		   stringEqualCI(prot, "scp") ||
 		   stringEqualCI(prot, "tftp") || stringEqualCI(prot, "sftp")) {
-		return ftpConnect(url, user, pass);
+		return ftpConnect(url, user, pass, f_encoded);
 	} else if ((cw->mt = findMimeByProtocol(prot)) && pluginsOn
 		   && cw->mt->stream) {
 mimestream:
@@ -810,20 +846,7 @@ mimestream:
 
 	post = strchr(url, '\1');
 	postb = 0;
-	if (f_encoded && !looksPercented(url, post)) {
-		debugPrint(1, "Warning, url %s doesn't look encoded", url);
-		f_encoded = false;
-	}
-	if (!f_encoded) {
-		urlcopy = percentURL(url, post);
-	} else {
-		if (post) {
-			int ul;
-			urlcopy = initString(&ul);
-			stringAndBytes(&urlcopy, &ul, url, post - url);
-		} else
-			urlcopy = cloneString(url);
-	}
+	urlSanitize(url, post, f_encoded);
 
 	if (post) {
 		post++;
@@ -1342,19 +1365,18 @@ void ebcurl_setError(CURLcode curlret, const char *url)
 }				/* ebcurl_setError */
 
 /* Like httpConnect, but for ftp */
-static bool ftpConnect(const char *url, const char *user, const char *pass)
+static bool ftpConnect(const char *url, const char *user, const char *pass,
+		       bool f_encoded)
 {
 	CURL *h;		// the curl handle for ftp
 	struct eb_curl_callback_data cbd;
 	int protLength;		/* length of "ftp://" */
-	int urlcopy_l = 0;
 	bool transfer_success = false;
 	bool has_slash, is_scp;
 	CURLcode curlret = CURLE_OK;
 	char creds_buf[MAXUSERPASS * 2 + 1];
 	size_t creds_len = 0;
 
-	urlcopy = NULL;
 	protLength = strchr(url, ':') - url + 3;
 /* scp is somewhat unique among the protocols handled here */
 	is_scp = memEqualCI(url, "scp", 3);
@@ -1381,20 +1403,19 @@ static bool ftpConnect(const char *url, const char *user, const char *pass)
 		goto ftp_transfer_fail;
 
 	serverData = initString(&serverDataLen);
-	urlcopy = initString(&urlcopy_l);
-	stringAndString(&urlcopy, &urlcopy_l, url);
+	urlSanitize(url, 0, f_encoded);
 
 /* libcurl appends an implicit slash to URLs like "ftp://foo.com".
 * Be explicit, so that edbrowse knows that we have a directory. */
 
 	if (!strchr(urlcopy + protLength, '/'))
-		stringAndChar(&urlcopy, &urlcopy_l, '/');
+		strcpy(urlcopy + urlcopy_l, "/");
 
 	curlret = setCurlURL(h, urlcopy);
 	if (curlret != CURLE_OK)
 		goto ftp_transfer_fail;
 
-	has_slash = urlcopy[urlcopy_l - 1] == '/';
+	has_slash = urlcopy[urlcopy_l] == '/';
 /* don't download a directory listing, we want to see that */
 /* Fetching a directory will fail in the special case of scp. */
 	cbd.down_state = (has_slash ? 0 : 1);
@@ -1451,7 +1472,7 @@ perform:
 		if (has_slash | is_scp)
 			transfer_success = false;
 		else {		/* try appending a slash. */
-			stringAndChar(&urlcopy, &urlcopy_l, '/');
+			strcpy(urlcopy + urlcopy_l, "/");
 			cbd.down_state = 0;
 			cnzFree(cbd.down_file);
 			cbd.down_file = 0;

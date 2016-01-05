@@ -111,7 +111,8 @@ void unpercentString(char *s)
  * Arguments:
  ** start: pointer to start of input string
   ** end: pointer to end of input string.
- * Return value: A new string or NULL if memory allocation failed.
+ * Return value: A new string with the url encoded.
+ * There is an extra byte, room for / at the end.
  * This function copies its input to a dynamically-allocated buffer,
  * while performing the following transformation.  Change backslash to slash,
  * and percent-escape some of the reserved characters as per RFC3986.
@@ -119,7 +120,6 @@ void unpercentString(char *s)
  * This is a friggin guess!
  * All characters in the area between start and end, not including end,
  * are copied or transformed.
- * Get rid of :/   curl can't handle it.
  * This function is used to sanitize user-supplied URLs.  */
 
 /* these punctuations are percentable, anywhere in a url */
@@ -134,50 +134,37 @@ char *percentURL(const char *start, const char *end)
 	char *new_copy;
 	const char *in_pointer;
 	char *out_pointer;
-	const char *portloc;
+	char *frag;
 
 	if (!end)
 		end = start + strlen(start);
-	bytes_to_alloc = end - start + 1;
+	bytes_to_alloc = end - start + 2;
 	new_copy = NULL;
 	in_pointer = NULL;
 	out_pointer = NULL;
-	portloc = NULL;
 
 	for (in_pointer = start; in_pointer < end; in_pointer++)
 		if (*in_pointer <= ' ' || strchr(percentable, *in_pointer))
 			bytes_to_alloc += (ESCAPED_CHAR_LENGTH - 1);
 
 	new_copy = allocMem(bytes_to_alloc);
-	if (new_copy) {
-		char *frag, *params;
-		out_pointer = new_copy;
-		for (in_pointer = start; in_pointer < end; in_pointer++) {
-			if (*in_pointer == '\\')
-				*out_pointer++ = '/';
-			else if (*in_pointer <= ' ' ||
-				 strchr(percentable, *in_pointer)) {
-				*out_pointer++ = '%';
-				*out_pointer++ =
-				    hexdigits[(uchar) (*in_pointer & 0xf0) >>
-					      4];
-				*out_pointer++ =
-				    hexdigits[(*in_pointer & 0x0f)];
-			} else
-				*out_pointer++ = *in_pointer;
-		}
-		*out_pointer = '\0';
-/* excise #hash, required by some web servers */
-		frag = findHash(new_copy);
-		if (frag)
-			*frag = 0;
-
-		getPortLocURL(new_copy, &portloc, 0);
-		if (portloc && !isdigit(portloc[1])) {
-			const char *s = portloc + strcspn(portloc, "/?#\1");
-			strmove((char *)portloc, s);
-		}
+	out_pointer = new_copy;
+	for (in_pointer = start; in_pointer < end; in_pointer++) {
+		if (*in_pointer == '\\')
+			*out_pointer++ = '/';
+		else if (*in_pointer <= ' ' || strchr(percentable, *in_pointer)) {
+			*out_pointer++ = '%';
+			*out_pointer++ =
+			    hexdigits[(uchar) (*in_pointer & 0xf0) >> 4];
+			*out_pointer++ = hexdigits[(*in_pointer & 0x0f)];
+		} else
+			*out_pointer++ = *in_pointer;
 	}
+	*out_pointer = '\0';
+/* excise #hash, required by some web servers */
+	frag = findHash(new_copy);
+	if (frag)
+		*frag = 0;
 
 	return new_copy;
 }				/* percentURL */
