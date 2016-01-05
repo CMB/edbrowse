@@ -408,7 +408,7 @@ dotimers:
 
 	if (inputReadLine && isInteractive) {
 		last_rl = readline("");
-		if (*last_rl)
+		if ((last_rl != NULL) && *last_rl)
 			add_history(last_rl);
 		s = (uchar *) last_rl;
 	} else {
