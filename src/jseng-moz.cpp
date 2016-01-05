@@ -1652,6 +1652,19 @@ static JSBool fetchHTTP(JSContext * cx, unsigned int argc, jsval * vp)
 		char *curl_outgoing_xhrbody = NULL;
 		int responseLength = 0;
 
+		if (curl_incoming_payload && *curl_incoming_payload) {
+			char *a, methchar = '?';
+			if (curl_incoming_method &&
+			    stringEqualCI(curl_incoming_method, "post"))
+				methchar = '\1';
+			if (asprintf(&a, "%s%c%s",
+				     curl_incoming_url, methchar,
+				     curl_incoming_payload) < 0)
+				i_printfExit(MSG_MemAllocError, 50);
+			nzFree(curl_incoming_url);
+			curl_incoming_url = a;
+		}
+
 		httpConnect(curl_incoming_url, false, false, true,
 			    &curl_outgoing_xhrheaders, &curl_outgoing_xhrbody,
 			    &responseLength);
