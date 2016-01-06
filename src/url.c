@@ -123,8 +123,9 @@ void unpercentString(char *s)
  * This function is used to sanitize user-supplied URLs.  */
 
 /* these punctuations are percentable, anywhere in a url */
-/* + has to lead */
-static const char percentable[] = "+!*'()[]$,";
+/* +, has to lead */
+/* I see commas in already encoded urls on web pages so IDK */
+static const char percentable[] = "+,!*'()[]$";
 static char hexdigits[] = "0123456789abcdef";
 #define ESCAPED_CHAR_LENGTH 3
 
@@ -176,7 +177,7 @@ bool looksPercented(const char *start, const char *end)
 	if (!end)
 		end = start + strlen(start);
 	for (s = start; s < end; ++s)
-		if (*s < ' ' || strchr(percentable + 1, *s))
+		if (*s < ' ' || strchr(percentable + 2, *s))
 			return false;
 	return true;
 }				/* looksPercented */
