@@ -331,9 +331,9 @@ déplacer vers
 attention : le formulaire url spécifie une section %s, qui sera ignorée\n
 le fichier %s est vide
 votre mail devrait commencer par 'subject:':
-0
+indicateur de progression absent
 ligne sujet trop longue, la limite est de %d caractères
-0
+indicateur de progression par points
 .signature n'est pas un fichier régulier
 impossible d'accéder au fichier .signature
 impossible d'envoyer le fichier binaire %s, serait-ce une pièce jointe ?
@@ -350,7 +350,7 @@ la ligne après %d a été effacée\n
 %d lignes après %d ont été effacées\n
 la ligne %d a été ajoutée\n
 les lignes %d à %d ont été ajoutées\n
-0
+indicateur de progression chiffré
 pas de comptes de courrier définis, contrôlez votre fichier de configuration
 numéro de compte de courrier invalide %d, utilisez 1 à %d
 impossible d'envoyer du courrier en mode navigation

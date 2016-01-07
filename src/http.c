@@ -136,7 +136,8 @@ static void scan_http_headers(bool fromCallback)
 	if (!hcl && (v = find_http_header("content-length"))) {
 		hcl = atoi(v);
 		nzFree(v);
-		debugPrint(3, "content length %d", hcl);
+		if (hcl)
+			debugPrint(3, "content length %d", hcl);
 	}
 
 	if (fromCallback)
