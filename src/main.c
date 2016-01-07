@@ -585,8 +585,8 @@ int main(int argc, char **argv)
 
 // With config file read, we can now set up the global http handle
 // with certificate file and cookie jar etc.
-	cookiesFromJar();
 	eb_curl_global_init();
+	cookiesFromJar();
 
 	for (; argc && argv[0][0] == '-'; ++argv, --argc) {
 		char *s = *argv;

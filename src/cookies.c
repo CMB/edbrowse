@@ -340,6 +340,10 @@ void cookiesFromJar(void)
 		   cnt, expired, displaced);
 	nzFree(cbuf);
 
+	foreach(c, cookies) {
+		cookieForLibcurl(c);
+	}
+
 	if (expired + displaced) {
 /* Pour the cookies back into the jar */
 		f = fopen(cookieFile, "w");
