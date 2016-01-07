@@ -1521,6 +1521,11 @@ void setHTTPLanguage(const char *lang)
 {
 	int httpLanguage_l;
 
+	nzFree(httpLanguage);
+	httpLanguage = NULL;
+	if (!lang)
+		return;
+
 	httpLanguage = initString(&httpLanguage_l);
 	stringAndString(&httpLanguage, &httpLanguage_l, "Accept-Language: ");
 	stringAndString(&httpLanguage, &httpLanguage_l, lang);
@@ -2084,6 +2089,13 @@ static bool mustVerifyHost(const char *host)
 	}
 	return true;
 }				/* mustVerifyHost */
+
+void deleteNovsHosts(void)
+{
+	nzFree(novs_hosts);
+	novs_hosts = NULL;
+	novs_hosts_avail = novs_hosts_max = 0;
+}				/* deleteNovsHosts */
 
 CURLcode setCurlURL(CURL * h, const char *url)
 {

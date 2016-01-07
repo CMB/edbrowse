@@ -573,8 +573,6 @@ int main(int argc, char **argv)
 		doConfig = false;
 	} else {
 		readConfigFile();
-		if (maxAccount && !localAccount)
-			localAccount = 1;
 	}
 	account = localAccount;
 
@@ -1018,6 +1016,50 @@ struct DBTABLE *newTableDescriptor(const char *name)
 	return td;
 }				/* newTableDescriptor */
 
+static char *configMemory;
+
+// unread the config file, so we can read it again
+void unreadConfigFile(void)
+{
+	if (!configMemory)
+		return;
+	nzFree(configMemory);
+	configMemory = 0;
+
+	memset(mailFilters, 0, sizeof(mailFilters));
+	n_filters = 0;
+	memset(accounts, 0, sizeof(accounts));
+	maxAccount = localAccount = 0;
+	memset(mimetypes, 0, sizeof(mimetypes));
+	maxMime = 0;
+	memset(dbtables, 0, sizeof(dbtables));
+	numTables = 0;
+	memset(proxyEntries, 0, sizeof(proxyEntries));
+	maxproxy = 0;
+	memset(ebScript, 0, sizeof(ebScript));
+	memset(ebScriptName, 0, sizeof(ebScriptName));
+	memset(userAgents + 1, 0, sizeof(userAgents) - sizeof(userAgents[0]));
+	javaDisCount = 0;
+
+	addressFile = NULL;
+	cookieFile = NULL;
+	sslCerts = NULL;
+	downDir = NULL;
+	mailDir = NULL;
+	nzFree(mailUnread);
+	mailUnread = NULL;
+	nzFree(mailReply);
+	mailReply = NULL;
+
+	webTimeout = mailTimeout = 0;
+	displayLength = 500;
+	jsPool = 32;
+
+	setDataSource(NULL);
+	setHTTPLanguage(NULL);
+	deleteNovsHosts();
+}				/* unreadConfigFile */
+
 /* Read the config file and populate the corresponding data structures. */
 /* This routine succeeds, or aborts via i_printfExit */
 void readConfigFile(void)
@@ -1038,6 +1080,8 @@ void readConfigFile(void)
 	struct PXENT *px;
 	struct MIMETYPE *mt;
 	struct DBTABLE *td;
+
+	unreadConfigFile();
 
 /* Order is important here: mail{}, mime{}, table{}, then global keywords */
 #define MAILWORDS 0
@@ -1064,6 +1108,9 @@ void readConfigFile(void)
 /* An extra newline won't hurt. */
 	if (buflen && buf[buflen - 1] != '\n')
 		buf[buflen++] = '\n';
+
+// remember this allocated pointer in case we want to reset everything.
+	configMemory = buf;
 
 /* Undos, uncomment, watch for nulls */
 /* Encode mail{ as hex 81 m, and other encodings. */
@@ -1755,4 +1802,7 @@ putback:
 
 	if (!sslCerts)
 		verifyCertificates = 0;
+
+	if (maxAccount && !localAccount)
+		localAccount = 1;
 }				/* readConfigFile */

@@ -173,6 +173,7 @@ void setHTTPLanguage(const char *lang) ;
 int ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data, size_t size, void *unused) ;
 int bg_jobs(bool iponly);
 void addNovsHost(char *host) ;
+void deleteNovsHosts(void);
 CURLcode setCurlURL(CURL * h, const char *url) ;
 const char *findProxyForURL(const char *url) ;
 
