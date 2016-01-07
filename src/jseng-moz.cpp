@@ -122,6 +122,7 @@ int js_main(int argc, char **argv)
 
 	readConfigFile();
 	eb_curl_global_init();
+	cookiesFromJar();
 	pluginsOn = false;
 
 	js_start();

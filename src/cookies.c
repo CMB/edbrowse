@@ -344,7 +344,7 @@ void cookiesFromJar(void)
 		cookieForLibcurl(c);
 	}
 
-	if (expired + displaced) {
+	if (expired + displaced && whichproc == 'e') {
 /* Pour the cookies back into the jar */
 		f = fopen(cookieFile, "w");
 		if (!f)
@@ -356,6 +356,7 @@ void cookiesFromJar(void)
 		}
 		fclose(f);
 	}
+
 // Free the resources allocated by this routine.
 	foreach(c, cookies)
 	    freeCookie(c);

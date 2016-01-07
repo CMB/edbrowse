@@ -337,7 +337,7 @@ void eb_curl_global_init(void)
 		if (curl_init_status != CURLE_OK)
 			goto libcurl_init_fail;
 	}
-	if (cookieFile) {
+	if (cookieFile && whichproc == 'e') {
 		curl_init_status =
 		    curl_easy_setopt(global_http_handle, CURLOPT_COOKIEJAR,
 				     cookieFile);
