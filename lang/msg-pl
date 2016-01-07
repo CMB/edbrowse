@@ -103,7 +103,7 @@ nie można zapisać pliku %s\n
 poczta zapisana, %d bajtów
  dopisano
 to koniec tej strony, użyj klawisza 'wstecz' lub wyjdź
-nie można utworzyć tymczasowego katalogu %s
+nie można utworzyć tymczasowego katalogu %s\n
 brak błędów
 autoryzacja proxy dla URLa nie będącego proxy
 sesja %d jest nieaktywna
@@ -362,7 +362,7 @@ brak odbiorcy w wierszu %d
 nie można dodać pierwszego odbiorcy do 'cc' lub 'bcc'
 brak załącznika w wierszu %d
 błędny numer konta w wierszu %d
-0
+brak tymczasowego katalogu
 wiersz %d powinien zaczynać się od 'attach:', 'alt:', 'account:' lub 'subject:'
 0
 nie podano odbiorców, umieść 'to: <email>' na początku swojego pliku

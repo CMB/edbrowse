@@ -103,7 +103,7 @@ kann Datei %s nicht schreiben
 Email gespeichert, %d Bytes
  angehängt
 Diese Seite ist fertig. Nutzen Sie die Zurücktaste oder verlassen sie diese Seite.
-kann temporäres Verzeichnis %s nicht anlegen
+kann temporäres Verzeichnis %s nicht anlegen\n
 keine Fehler
 Proxy-Anmeldung für eine URL ohne Proxy
 Sitzung %d ist nicht aktiv
@@ -331,9 +331,9 @@ verschiebe nach
 Warnung: Formular-URL gibt einen Abschnitt %s an der ignoriert wird
 die Datei %s ist leer
 Ihre Email sollte mit subject: beginnen
-0
+Fortschrittsanzeige aus
 Betreffzeile zu lang, %d Zeichen
-0
+Fortschrittsanzeige mit Punkten
 .signature ist keine reguläre Datei
 kann Signaturdatei nicht öffnen
 kann Binärdatei %s nicht versenden, vielleicht sollte dies ein Anhang sein?
@@ -350,7 +350,7 @@ die auf %d folgende Zeile wurde entfernt\n
 %d Zeilen nach Zeile %d gelöscht\n
 Zeile %d wurde hinzugefügt\n
 Zeilen %d bis %d hinzugefügt\n
-0
+Fortschrittsanzeige numerisch
 keine Email-Konten angegeben, überprüfen Sie ihre Konfigurationsdatei
 Ungültige Kontonummer %d, nutzen Sie 1 bis %d
 kann Email im Browsermodus nicht verschicken
@@ -362,7 +362,7 @@ kein Empfänger in Zeile %d
 kann an ersten Empfänger nicht eine Nachricht per CC oder BCC senden
 kein Anhang in Zeile %d
 ungültige Kontonummber in Zeile %d
-0
+kein temporäres Verzeichnis
 Zeile %d sollte mit: attach: alt: account: oder subject: beginnen
 0
 keine Empfänger angegeben, platzieren Sie to: emailadresse an den Anfang

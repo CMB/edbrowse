@@ -124,7 +124,6 @@ int js_main(int argc, char **argv)
 	eb_curl_global_init();
 	pluginsOn = false;
 
-	whichproc = 'j';
 	js_start();
 
 /* edbrowse catches interrupt, this process ignores it. */

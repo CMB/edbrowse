@@ -103,7 +103,7 @@ cannot write to file %s\n
 mail saved, %d bytes
  appended
 This page is finished, please use your back key or quit.
-cannot create temporary directory %s
+cannot create temporary directory %s\n
 no errors
 proxy authentication for a non-proxy url
 session %d is not active
@@ -362,7 +362,7 @@ no recipient at line %d
 cannot cc or bcc to the first recipient
 no attachment at line %d
 invalid account number at line %d
-0
+no edbrowse temp directory available
 line %d should begin with to: attach: alt: account: or subject:
 0
 no recipients specified, place to: emailaddress at the top of youre file

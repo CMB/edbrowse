@@ -462,7 +462,7 @@ enum {
 	MSG_MailFirstCC,
 	MSG_AttLineX,
 	MSG_MailAccountBadLineX,
-	MSG_notused365,
+	MSG_TempNone,
 	MSG_MailFirstLine,
 	MSG_notused367,
 	MSG_RecipNone3,

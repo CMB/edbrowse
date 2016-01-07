@@ -103,7 +103,7 @@ sauvegarde du fichier %s impossible\n
 courrier sauvegardé, %d octets
  ajouté
 page terminée, utilisez la touche retour arrière ou quittez
-impossible de créer le répertoire temporaire %s
+impossible de créer le répertoire temporaire %s\n
 pas d'erreurs
 authentification proxy pour une url non-proxy
 session %d non active
@@ -362,7 +362,7 @@ pas de destinataire à la ligne %d
 impossible de mettre le premier destinataire en cc ou bcc
 pas de pièce jointe à la ligne %d
 numéro de compte de courrier invalide à la ligne %d
-0
+pas de pertoire temporaire
 la ligne %d devrait débuter par to: attach: alt: account: ou subject:
 0
 pas de destinataires spécifiés, placez to: adresse email au début de votre fichier

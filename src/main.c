@@ -19,6 +19,7 @@ char *changeFileName;
 char *configFile, *addressFile, *cookieFile;
 char *mailDir, *mailUnread, *mailStash, *mailReply;
 char *recycleBin, *sigFile, *sigFileEnd;
+char *ebTempDir, *ebUserDir;
 char *userAgents[10];
 char *currentAgent, *currentReferrer;
 bool allowRedirection = true, allowJS = true, sendReferrer = true;
@@ -379,6 +380,59 @@ void ebClose(int n)
 	exit(n);
 }				/* ebClose */
 
+static void setupEdbrowseTempDirectory(void)
+{
+	int userid;
+#ifdef DOSLIKE
+	int l;
+	char *a;
+	ebTempDir = getenv("TEMP");
+	if (!ebTempDir) {
+		i_printf(MSG_NoEnvVar, "TEMP");
+		nl();
+		exit(1);
+	}
+// put /edbrowse on the end
+	l = strlen(ebTempDir);
+	a = allocMem(l + 10);
+	sprintf(a, "%s/edbrowse", ebTempDir);
+	ebTempDir = a;
+	userid = 0;
+#else
+	ebTempDir = "/tmp/.edbrowse";
+	userid = geteuid();
+#endif
+
+// On a multiuser system, mkdir /tmp/.edbrowse at startup,
+// by root, and then chmod 1777
+
+	if (fileTypeByName(ebTempDir, false) != 'd') {
+/* no such directory, try to make it */
+/* this temp edbrowse directory is used by everyone system wide */
+		if (mkdir(ebTempDir, 0777)) {
+			if (whichproc == 'e')
+				i_printf(MSG_TempDir, ebTempDir);
+			ebTempDir = 0;
+			return;
+		}
+// yes, we called mkdir with 777 above, but that was cut by umask.
+		chmod(ebTempDir, 0777);
+	}
+// make room for user ID on the end
+	ebUserDir = allocMem(strlen(ebTempDir) + 20);
+	sprintf(ebUserDir, "%s/%d", ebTempDir, userid);
+	if (fileTypeByName(ebUserDir, false) != 'd') {
+/* no such directory, try to make it */
+		if (mkdir(ebUserDir, 0700)) {
+			if (whichproc == 'e')
+				i_printf(MSG_TempDir, ebUserDir);
+			ebUserDir = 0;
+			return;
+		}
+		chmod(ebUserDir, 0700);
+	}
+}				/* setupEdbrowseTempDirectory */
+
 /*\ MSVC Debug: May need to provide path to 3rdParty DLLs, like
  *  set PATH=F:\Projects\software\bin;%PATH% ...
 \*/
@@ -488,7 +542,7 @@ int main(int argc, char **argv)
 	progname = argv[0];
 	++argv, --argc;
 
-// a mode directive has to come first.
+// look for --mode on the arg list.
 	if (stringEqual(argv[0], "--mode")) {
 		char *m;
 		if (argc == 1)
@@ -497,10 +551,17 @@ int main(int argc, char **argv)
 		argv += 2;
 		argc -= 2;
 		if (stringEqual(m, "js"))
-			return js_main(argc, argv);
-// unknown mode
-		i_printfExit(MSG_Usage);
+			whichproc = 'j';
+		else if (stringEqual(m, "curl"))
+			whichproc = 'c';
+		else
+			i_printfExit(MSG_Usage);
 	}
+
+	setupEdbrowseTempDirectory();
+
+	if (whichproc == 'j')
+		return js_main(argc, argv);
 
 	ttySaveSettings();
 	initializeReadline();

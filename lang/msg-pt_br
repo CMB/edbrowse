@@ -103,7 +103,7 @@ impossível escrever no arquivo %s\n
 carta salva; %d bytes
  adicionado
 página terminou; por favor use a tecla de retorno ou saia
-não consegui criar o diretório temporário %s
+não consegui criar o diretório temporário %s\n
 sem erros
 autenticação proxy para URL não proxy
 sessão %d não ativa
@@ -331,9 +331,9 @@ mover para
 aviso: a URL do formulário especifica uma sessão %s que será ignorada\n
 arquivo %s vazio
 carta deve começar pelo assunto:
-0
+progresso quieto
 assunto comprido demais; o limite é de %d caracteres
-0
+progresso em pontos
 .signature não é um arquivo regular
 impossível acessar o arquivo .signature
 não é possível enviar o arquivo binário %s; quem sabe ele devesse ser um anexo ?
@@ -350,7 +350,7 @@ linha após a %d foi apagada\n
 %d linhas após a %d foram apagadas\n
 linha %d foi adicionada\n
 linhas %d a %d foram adicionadas\n
-0
+progresso contado
 sem contas de correio; confira por favor o arquivo de configuração
 número de conta %d inválido; por favor use 1 até %d
 não posso enviar cartas em modo navegação
@@ -362,7 +362,7 @@ sem destinatário na linha %d
 não posso enviar CC ou CCO para o primeiro destinatário
 sem anexo na linha %d
 número de conta inválido na linha %d
-0
+nenhum diretório temporário
 a linha %d deve começar com to: attach: alt: account: ou subject:
 0
 sem destinatário; coloque to: endereco no topo do arquivo

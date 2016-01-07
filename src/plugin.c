@@ -15,7 +15,6 @@ Run audio players, pdf converters, etc, based on suffix or content-type.
  * Since an external program may act upon this file, a certain suffix
  * may be required.
  * Fails if /tmp/.edbrowse does not exist or cannot be created. */
-static const char *tempbase;
 static char *tempin, *tempout;
 static char *suffixin;		/* suffix of input file */
 static char *suffixout;		/* suffix of output file */
@@ -24,41 +23,15 @@ static bool makeTempFilename(const char *suffix, int idx, bool output)
 {
 	char *filename;
 
-	if (!tempbase) {
-/* has not yet been set */
-#ifdef DOSLIKE
-		int l;
-		char *a;
-		tempbase = getenv("TEMP");
-		if (!tempbase) {
-			setError(MSG_NoEnvVar, "TEMP");
-			return false;
-		}
-// put /edbrowse on the end
-		l = strlen(tempbase);
-		a = allocMem(l + 10);
-		sprintf(a, "%s/edbrowse", tempbase);
-		tempbase = a;
-#else
-		tempbase = "/tmp/.edbrowse";
-#endif
-	}
-
-	if (fileTypeByName(tempbase, false) != 'd') {
-/* no such directory, try to make it */
-/* this temp edbrowse directory is used by everyone system wide */
-		if (mkdir(tempbase, 0777)) {
-			setError(MSG_TempDir, tempbase);
-			return false;
-		}
-/* yes, we called mkdir with 777 above, but this call gets us past umask */
-/* What does this do in Windows? */
-		chmod(tempbase, 0777);
+// if no temp directory then we can't proceed
+	if (!ebTempDir) {
+		setError(MSG_TempNone);
+		return false;
 	}
 
 	if (asprintf(&filename, "%s/pf%d-%d.%s",
-		     tempbase, getpid(), idx, suffix) < 0)
-		i_printfExit(MSG_MemAllocError, strlen(tempbase) + 24);
+		     ebTempDir, getpid(), idx, suffix) < 0)
+		i_printfExit(MSG_MemAllocError, strlen(ebTempDir) + 24);
 
 	if (output) {
 // free the last one, don't need it any more.
