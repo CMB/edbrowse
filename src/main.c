@@ -389,7 +389,7 @@ static void setupEdbrowseTempDirectory(void)
 	}
 // put /edbrowse on the end
 	l = strlen(ebTempDir);
-	a = allocMem(l + 10);
+	a = allocString(l + 10);
 	sprintf(a, "%s/edbrowse", ebTempDir);
 	ebTempDir = a;
 	userid = 0;

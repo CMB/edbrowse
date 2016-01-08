@@ -801,6 +801,16 @@ char *resolveURL(const char *base, const char *rel)
 	n = allocString(strlen(base) + strlen(rel) + 12);
 	debugPrint(5, "resolve(%s|%s)", base, rel);
 
+// This is specifically to work around a tidy bug.
+	for (s = rel; *s == '%'; s += 3) {
+		if (s[1] == '2' && s[2] == '0')
+			continue;
+		break;
+	}
+	if (s > rel && memEqualCI(s, "http", 4))
+		rel = s;
+// end tidy workaround
+
 	if (rel[0] == '#' && !strchr(rel, '/')) {
 /* This is an anchor for the current document, don't resolve. */
 /* I assume the base does not have a #fragment on the end; that is not part of the base. */
