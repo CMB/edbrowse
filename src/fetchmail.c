@@ -1414,7 +1414,7 @@ saveMail:
 		write(fh,
 		      "======================================================================\n",
 		      71);
-	if (key == 'u') {
+	if (key == 'u' || key == 'U') {
 		if (write(fh, mailstring, mailstring_l) < mailstring_l) {
 badsave:
 			i_printf(MSG_NoWrite, atname);
@@ -1425,8 +1425,8 @@ badsave:
 		fsize = mailstring_l;
 	} else {
 
-/* key = w, write the file - if pop then save the original unformatted */
-		if (!isimap && mailStash) {
+/* key = w, write the file and save the original unformatted */
+		if (mailStash) {
 			char *rmf;	/* raw mail file */
 			int rmfh;	/* file handle to same */
 /* I want a fairly easy filename, in case I want to go look at the original.
