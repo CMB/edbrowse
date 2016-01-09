@@ -24,14 +24,14 @@ static bool makeTempFilename(const char *suffix, int idx, bool output)
 	char *filename;
 
 // if no temp directory then we can't proceed
-	if (!ebTempDir) {
+	if (!ebUserDir) {
 		setError(MSG_TempNone);
 		return false;
 	}
 
 	if (asprintf(&filename, "%s/pf%d-%d.%s",
-		     ebTempDir, getpid(), idx, suffix) < 0)
-		i_printfExit(MSG_MemAllocError, strlen(ebTempDir) + 24);
+		     ebUserDir, getpid(), idx, suffix) < 0)
+		i_printfExit(MSG_MemAllocError, strlen(ebUserDir) + 24);
 
 	if (output) {
 // free the last one, don't need it any more.

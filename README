@@ -122,7 +122,19 @@ Select the odbc option via:
 make BUILD_EDBR_ODBC=on in the src directory, or from build,
 cmake -DBUILD_EDBR_ODBC:BOOL=ON ..
 ODBC has been very stable for a long time.
-unixODBC version 2.2.14 seems to satisfy edbrowse-odbc.
+unixODBC version 2.2.14 seems to satisfy edbrowse with odbc.
+
+------------------------------------------------------------
+
+Edbrowse creates a system wide temp directory if it is not already present.
+This is /tmp/.edbrowse in Unix, and $(TEMP)/edbrowse in Windows.
+This directory contains a subdirectory per user, mod 777, for added security.
+Thus one user cannot spy on the temp files, perhaps sensitive internet data,
+of another user.
+However, true multiuser security requires a root job at startup,
+e.g. in /etc/rc.d/rc.local, to create the directory with the sticky bit.
+	mkdir /tmp/.edbrowse
+	chmod 1777 /tmp/.edbrowse
 
 ------------------------------------------------------------
 
