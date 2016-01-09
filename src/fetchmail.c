@@ -331,6 +331,7 @@ static void undosOneMessage(void)
 
 static char presentMail(void);
 static void envelopes(CURL * handle, struct FOLDER *f);
+static void isoDecode(char *vl, char **vrp);
 
 static void cleanFolder(struct FOLDER *f)
 {
@@ -458,6 +459,9 @@ static void scanFolder(CURL * handle, struct FOLDER *f, bool allmessages)
 	char cust_cmd[80];
 	char inputline[80];
 	bool yesdel = false, delflag;
+	char *envp;		// print the envelope concisely
+	char *envp_end;
+	int envp_l;
 
 	if (!f->nmsgs || !allmessages && !f->unread) {
 		i_puts(MSG_NoMessages);
@@ -487,12 +491,25 @@ showmessages:
 		if (!allmessages && mif->seen)
 			continue;
 
+// Print the envelope. From and subject could be encoded in various ways.
+		envp = initString(&envp_l);
 		if (!mif->seen)
-			printf("*");
-		printf("%s: %s", mif->from, mif->subject);
-		if (mif->sent)
-			printf(" %s", conciseTime(mif->sent));
-		printf(" %s\n", conciseSize(mif->size));
+			stringAndChar(&envp, &envp_l, '*');
+		stringAndString(&envp, &envp_l, mif->from);
+		stringAndString(&envp, &envp_l, ": ");
+		stringAndString(&envp, &envp_l, mif->subject);
+		if (mif->sent) {
+			stringAndChar(&envp, &envp_l, ' ');
+			stringAndString(&envp, &envp_l, conciseTime(mif->sent));
+		}
+		stringAndChar(&envp, &envp_l, ' ');
+		stringAndString(&envp, &envp_l, conciseSize(mif->size));
+		envp_end = envp + envp_l;
+		isoDecode(envp, &envp_end);
+		*envp_end = 0;
+// Resulting line could contain utf8, use the portable puts routine.
+		eb_puts(envp);
+		nzFree(envp);
 
 action:
 		delflag = false;
