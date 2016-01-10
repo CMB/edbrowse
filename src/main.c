@@ -807,6 +807,7 @@ static const char *balance(const char *ip, int direction)
 bool runEbFunction(const char *line)
 {
 	char *linecopy = cloneString(line);
+	char *fncopy = 0;
 	char *allargs = 0;
 	const char *args[10];
 	int argl[10];		/* lengths of args */
@@ -871,6 +872,13 @@ bool runEbFunction(const char *line)
 		if (t)
 			*t = 0;
 		argl[j] = strlen(s);
+	}
+
+// have to copy the function if it invokes config.
+// Don't know why anybody would do that!
+	if (strstr(ip, "config")) {
+		fncopy = cloneString(ip);
+		ip = fncopy;
 	}
 
 	while (code = *ip) {
@@ -981,11 +989,13 @@ nextline:
 		goto fail;
 
 	nzFree(linecopy);
+	nzFree(fncopy);
 	nzFree(allargs);
 	return true;
 
 fail:
 	nzFree(linecopy);
+	nzFree(fncopy);
 	nzFree(allargs);
 	return false;
 }				/* runEbFunction */
