@@ -3327,6 +3327,12 @@ pwd:
 		return 2;
 	}
 
+	if (stringEqual(line, "config")) {
+		if (readConfigFile())
+			i_puts(MSG_OK);
+		return true;
+	}
+
 	if (stringEqual(line, "shc")) {
 		if (!cw->sqlMode) {
 			setError(MSG_NoDB);

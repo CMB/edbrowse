@@ -15,6 +15,8 @@ Create the edbrowse temp dir at the outset, and user directories
 beneath this directory, mod 777, for added security in a multiuser system.
 Temp files for plugins are created beneath the user directories.
 
+Reload the config file on command. No need to exit and restart.
+
 3.6.0:
 Edbrowse is an imap client. Scan and search through folders,
 delete move or download emails, pull down attachments.

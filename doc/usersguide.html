@@ -412,6 +412,7 @@ q&nbsp; quit the current session
 <br>!command&nbsp; shell escape
 <br>!&nbsp; interactive shell
 <br>cd&nbsp; change directory
+<br>config&nbsp; reread the config file
 <P>
 Input
 <P>
@@ -1059,16 +1060,15 @@ Note that set -e has the same effect in a bash script.
 
 <P>
 Use -c to suppress processing of, and edit, the .ebrc configuration file.&nbsp;
-This config file will be described later.&nbsp;
-And why would you want to do this?&nbsp;
-Suppose you have made a change to this file,
-and thereby produced a syntax error, so that edbrowse cannot even get started.&nbsp;
-Now you can't use edbrowse to fix your config file.&nbsp;
-Of course you could rename the config file to something else, fix it, and put it back;
-but then you might discover another syntax error, and so on.&nbsp;
-Instead, use the -c option to edit the config file directly.&nbsp;
+(This config file will be described later.)&nbsp;
+You might want to do this if your config file has syntax errors, which are displayed when edbrowse starts.&nbsp;
+Use the -c option to edit the config file directly.&nbsp;
 It is automatically loaded into buffer 1.&nbsp;
-Note that -c must be the first option.
+Note that -c must be the first option.&nbsp;
+Make changes, save the file, and type `config' to reload the file.&nbsp;
+If there is another error you may need to make another change, save, and reload.&nbsp;
+Continue until there are no errors.&nbsp;
+Processing of the config file stops at the first error, so you really want a clean load.
 
 <P>
 The arguments are the files to edit.&nbsp;
@@ -2811,15 +2811,11 @@ This feature is for developers, and is not very helpful for end users.
 
 At startup, edbrowse reads and parses a config file.&nbsp;
 It's ok if this file is missing, but if it is present
-it has to be syntactically correct.&nbsp;
-An error in your config file will cause edbrowse to abort.&nbsp;
-If this happens, use the -c option to edit the config file directly.&nbsp;
-This bypasses initialization, and places you in the editor
-with the config file preloaded.&nbsp;
-Make your corrections, write the file,
-quit, and invoke edbrowse again.&nbsp;
-Repeat these steps until there are no errors,
-and you see the words "edbrowse ready".
+it should be syntactically correct.&nbsp;
+If there is an error, edit the config file, fix the error, and type `config' to reload.&nbsp;
+Continue until there are no errors.&nbsp;
+Processing of the config file stops at the first error, so you really want a clean load.&nbsp;
+Remember that `edbrowse -c', from the command line, will edit the config file directly.
 
 <P>
 The config file is in $HOME/.ebrc.&nbsp;
@@ -2867,9 +2863,9 @@ When edbrowse sees this line in its config file, it records the location of the 
 and it checks the validity of that file.&nbsp;
 If the file is a directory (or something weird),
 or is otherwise inaccessible,
-edbrowse prints an error message and aborts.&nbsp;
+edbrowse prints an error message and stops processing the config file at that point.&nbsp;
 If this happens,
-use the -c option to edit your config file
+edit your config file
 and change the cookie jar.
 
 <P>

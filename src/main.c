@@ -1077,8 +1077,14 @@ static const char *const keywords[] = {
 };
 
 /* Read the config file and populate the corresponding data structures. */
-/* This routine succeeds, or aborts via i_printfExit */
-void readConfigFile(void)
+/* This routine succeeds, or aborts via one of these macros. */
+#define cfgAbort0(m) { i_printf(m); nl(); return false; }
+#define cfgAbort1(m, arg) { i_printf(m, arg); nl(); return false; }
+#define cfgLine0(m) { i_printf(m, ln); nl(); return false; }
+#define cfgLine1(m, arg) { i_printf(m, ln, arg); nl(); return false; }
+#define cfgLine1a(m, arg) { i_printf(m, arg, ln); nl(); return false; }
+
+bool readConfigFile(void)
 {
 	char *buf, *s, *t, *v, *q;
 	int buflen, n;
@@ -1100,7 +1106,7 @@ void readConfigFile(void)
 	unreadConfigFile();
 
 	if (!fileTypeByName(configFile, false))
-		return;		/* config file not present */
+		return true;	/* config file not present */
 	if (!fileIntoMemory(configFile, &buf, &buflen))
 		showErrorAbort();
 /* An extra newline won't hurt. */
@@ -1116,7 +1122,7 @@ void readConfigFile(void)
 	for (s = t = v = buf; s < buf + buflen; ++s) {
 		c = *s;
 		if (c == '\0')
-			i_printfExit(MSG_EBRC_Nulls, ln);
+			cfgLine0(MSG_EBRC_Nulls);
 		if (c == '\r' && s[1] == '\n')
 			continue;
 
@@ -1219,15 +1225,15 @@ void readConfigFile(void)
 			    (last[8] == '+' || last[8] == ':')) {
 				q = last + 9;
 				if (*q == 0 || *q == '{' || *q == '(')
-					i_printfExit(MSG_EBRC_NoFnName, ln);
+					cfgLine0(MSG_EBRC_NoFnName);
 				if (isdigitByte(*q))
-					i_printfExit(MSG_EBRC_FnDigit, ln);
+					cfgLine0(MSG_EBRC_FnDigit);
 				while (isalnumByte(*q))
 					++q;
 				if (q - last - 9 > 10)
-					i_printfExit(MSG_EBRC_FnTooLong, ln);
+					cfgLine0(MSG_EBRC_FnTooLong);
 				if (*q != '{' || q[1])
-					i_printfExit(MSG_EBRC_SyntaxErr, ln);
+					cfgLine0(MSG_EBRC_SyntaxErr);
 				last[7] = 'f';
 				last[6] = '\x81';
 				strcpy(v, last + 6);
@@ -1272,11 +1278,11 @@ putc:
 		if (mailblock > 1 && !strchr("\x81\x82\x83", *s)) {
 			v = strchr(s, '>');
 			if (!v)
-				i_printfExit(MSG_EBRC_NoCondFile, ln);
+				cfgLine0(MSG_EBRC_NoCondFile);
 			while (v > s && (v[-1] == ' ' || v[-1] == '\t'))
 				--v;
 			if (v == s)
-				i_printfExit(MSG_EBRC_NoMatchStr, ln);
+				cfgLine0(MSG_EBRC_NoMatchStr);
 			c = *v, *v++ = 0;
 			if (c != '>') {
 				while (*v != '>')
@@ -1286,9 +1292,9 @@ putc:
 			while (*v == ' ' || *v == '\t')
 				++v;
 			if (!*v)
-				i_printfExit(MSG_EBRC_MatchNowh, ln, s);
+				cfgLine1(MSG_EBRC_MatchNowh, s);
 			if (n_filters == MAXFILTER - 1)
-				i_printfExit(MSG_EBRC_Filters, ln);
+				cfgLine0(MSG_EBRC_Filters);
 			mailFilters[n_filters].match = s;
 			mailFilters[n_filters].redirect = v;
 			mailFilters[n_filters].type = mailblock;
@@ -1314,31 +1320,31 @@ putc:
 		n = stringInList(keywords, s);
 		if (n < 0) {
 			if (!nest)
-				i_printfExit(MSG_EBRC_BadKeyword, s, ln);
+				cfgLine1a(MSG_EBRC_BadKeyword, s);
 			*v = c;	/* put it back */
 			goto nokeyword;
 		}
 
 		if (nest)
-			i_printfExit(MSG_EBRC_KeyInFunc, ln);
+			cfgLine0(MSG_EBRC_KeyInFunc);
 
 		if (n < MIMEWORDS && mailblock != 1)
-			i_printfExit(MSG_EBRC_MailAttrOut, ln, s);
+			cfgLine1(MSG_EBRC_MailAttrOut, s);
 
 		if (n >= MIMEWORDS && n < TABLEWORDS && !mimeblock)
-			i_printfExit(MSG_EBRC_MimeAttrOut, ln, s);
+			cfgLine1(MSG_EBRC_MimeAttrOut, s);
 
 		if (n >= TABLEWORDS && n < GLOBALWORDS && !tabblock)
-			i_printfExit(MSG_EBRC_TableAttrOut, ln, s);
+			cfgLine1(MSG_EBRC_TableAttrOut, s);
 
 		if (n >= MIMEWORDS && mailblock)
-			i_printfExit(MSG_EBRC_MailAttrIn, ln, s);
+			cfgLine1(MSG_EBRC_MailAttrIn, s);
 
 		if ((n < MIMEWORDS || n >= TABLEWORDS) && mimeblock)
-			i_printfExit(MSG_EBRC_MimeAttrIn, ln, s);
+			cfgLine1(MSG_EBRC_MimeAttrIn, s);
 
 		if ((n < TABLEWORDS || n >= GLOBALWORDS) && tabblock)
-			i_printfExit(MSG_EBRC_TableAttrIn, ln, s);
+			cfgLine1(MSG_EBRC_TableAttrIn, s);
 
 /* act upon the keywords */
 		++v;
@@ -1350,7 +1356,7 @@ putc:
 		while (*v == ' ' || *v == '\t')
 			++v;
 		if (!*v)
-			i_printfExit(MSG_EBRC_NoAttr, ln, s);
+			cfgLine1(MSG_EBRC_NoAttr, s);
 
 		switch (n) {
 		case 0:	/* inserver */
@@ -1421,7 +1427,7 @@ putc:
 		case 14:	/* outtype */
 			c = tolower(*v);
 			if (c != 'h' && c != 't')
-				i_printfExit(MSG_EBRC_Outtype, ln);
+				cfgLine0(MSG_EBRC_Outtype);
 			mt->outtype = c;
 			continue;
 
@@ -1436,8 +1442,7 @@ putc:
 		case 17:	/* cols */
 			while (*v) {
 				if (td->ncols == MAXTCOLS)
-					i_printfExit(MSG_EBRC_ManyCols, ln,
-						     MAXTCOLS);
+					cfgLine1(MSG_EBRC_ManyCols, MAXTCOLS);
 				td->cols[td->ncols++] = v;
 				q = strchr(v, ',');
 				if (!q)
@@ -1449,40 +1454,38 @@ putc:
 
 		case 18:	/* keycol */
 			if (!isdigitByte(*v))
-				i_printfExit(MSG_EBRC_KeyNotNb, ln);
+				cfgLine0(MSG_EBRC_KeyNotNb);
 			td->key1 = strtol(v, &v, 10);
 			if (*v == ',' && isdigitByte(v[1]))
 				td->key2 = strtol(v + 1, &v, 10);
 			if (td->key1 > td->ncols || td->key2 > td->ncols)
-				i_printfExit(MSG_EBRC_KeyOutRange, ln,
-					     td->ncols);
+				cfgLine1(MSG_EBRC_KeyOutRange, td->ncols);
 			continue;
 
 		case 19:	/* adbook */
 			addressFile = v;
 			ftype = fileTypeByName(v, false);
 			if (ftype && ftype != 'f')
-				i_printfExit(MSG_EBRC_AbNotFile, v);
+				cfgAbort1(MSG_EBRC_AbNotFile, v);
 			continue;
 
 		case 20:	/* downdir */
 			downDir = v;
 			if (fileTypeByName(v, false) != 'd')
-				i_printfExit(MSG_EBRC_NotDir, v);
+				cfgAbort1(MSG_EBRC_NotDir, v);
 			continue;
 
 		case 21:	/* maildir */
 			mailDir = v;
 			if (fileTypeByName(v, false) != 'd')
-				i_printfExit(MSG_EBRC_NotDir, v);
+				cfgAbort1(MSG_EBRC_NotDir, v);
 			mailUnread = allocMem(strlen(v) + 20);
 			sprintf(mailUnread, "%s/unread", v);
 /* We need the unread directory, else we can't fetch mail. */
 /* Create it if it isn't there. */
 			if (fileTypeByName(mailUnread, false) != 'd') {
 				if (mkdir(mailUnread, 0700))
-					i_printfExit(MSG_EBRC_NotDir,
-						     mailUnread);
+					cfgAbort1(MSG_EBRC_NotDir, mailUnread);
 			}
 			mailReply = allocMem(strlen(v) + 20);
 			sprintf(mailReply, "%s/.reply", v);
@@ -1493,7 +1496,7 @@ putc:
 				if (!userAgents[j])
 					break;
 			if (j == 10)
-				i_printfExit(MSG_EBRC_ManyAgents, ln);
+				cfgLine0(MSG_EBRC_ManyAgents);
 			userAgents[j] = v;
 			continue;
 
@@ -1501,21 +1504,21 @@ putc:
 			cookieFile = v;
 			ftype = fileTypeByName(v, false);
 			if (ftype && ftype != 'f')
-				i_printfExit(MSG_EBRC_JarNotFile, v);
+				cfgAbort1(MSG_EBRC_JarNotFile, v);
 			j = open(v, O_WRONLY | O_APPEND | O_CREAT, 0600);
 			if (j < 0)
-				i_printfExit(MSG_EBRC_JarNoWrite, v);
+				cfgAbort1(MSG_EBRC_JarNoWrite, v);
 			close(j);
 			continue;
 
 		case 24:	/* nojs */
 			if (javaDisCount == MAXNOJS)
-				i_printfExit(MSG_EBRC_NoJS, MAXNOJS);
+				cfgAbort1(MSG_EBRC_NoJS, MAXNOJS);
 			if (*v == '.')
 				++v;
 			q = strchr(v, '.');
 			if (!q || q[1] == 0)
-				i_printfExit(MSG_EBRC_DomainDot, ln, v);
+				cfgLine1(MSG_EBRC_DomainDot, v);
 			javaDis[javaDisCount++] = v;
 			continue;
 
@@ -1531,10 +1534,10 @@ putc:
 			sslCerts = v;
 			ftype = fileTypeByName(v, false);
 			if (ftype && ftype != 'f')
-				i_printfExit(MSG_EBRC_SSLNoFile, v);
+				cfgAbort1(MSG_EBRC_SSLNoFile, v);
 			j = open(v, O_RDONLY);
 			if (j < 0)
-				i_printfExit(MSG_EBRC_SSLNoRead, v);
+				cfgAbort1(MSG_EBRC_SSLNoRead, v);
 			close(j);
 			continue;
 
@@ -1544,7 +1547,7 @@ putc:
 
 		case 30:	/* proxy */
 			if (maxproxy == MAXPROXY)
-				i_printfExit(MSG_EBRC_NoPROXY, MAXPROXY);
+				cfgAbort1(MSG_EBRC_NoPROXY, MAXPROXY);
 			px = proxyEntries + maxproxy;
 			maxproxy++;
 			spaceCrunch(v, true, true);
@@ -1591,12 +1594,12 @@ putc:
 				++v;
 			q = strchr(v, '.');
 			if (!q || q[1] == 0)
-				i_printfExit(MSG_EBRC_DomainDot, ln, v);
+				cfgLine1(MSG_EBRC_DomainDot, v);
 			addNovsHost(v);
 			continue;
 
 		default:
-			i_printfExit(MSG_EBRC_KeywordNYI, ln, s);
+			cfgLine1(MSG_EBRC_KeywordNYI, s);
 		}		/* switch */
 
 nokeyword:
@@ -1605,7 +1608,7 @@ nokeyword:
 			if (localAccount == maxAccount + 1)
 				continue;
 			if (localAccount)
-				i_printfExit(MSG_EBRC_SevDefaults);
+				cfgAbort0(MSG_EBRC_SevDefaults);
 			localAccount = maxAccount + 1;
 			continue;
 		}
@@ -1639,17 +1642,17 @@ nokeyword:
 				++maxAccount;
 				mailblock = 0;
 				if (!act->inurl)
-					i_printfExit(MSG_EBRC_NoInserver, ln);
+					cfgLine0(MSG_EBRC_NoInserver);
 				if (!act->outurl)
-					i_printfExit(MSG_EBRC_NoOutserver, ln);
+					cfgLine0(MSG_EBRC_NoOutserver);
 				if (!act->login)
-					i_printfExit(MSG_EBRC_NoLogin, ln);
+					cfgLine0(MSG_EBRC_NoLogin);
 				if (!act->password)
-					i_printfExit(MSG_EBRC_NPasswd, ln);
+					cfgLine0(MSG_EBRC_NPasswd);
 				if (!act->from)
-					i_printfExit(MSG_EBRC_NoFrom, ln);
+					cfgLine0(MSG_EBRC_NoFrom);
 				if (!act->reply)
-					i_printfExit(MSG_EBRC_NoReply, ln);
+					cfgLine0(MSG_EBRC_NoReply);
 				if (act->secure)
 					act->inssl = act->outssl = 1;
 				if (!act->inport)
@@ -1673,13 +1676,13 @@ nokeyword:
 				++maxMime;
 				mimeblock = false;
 				if (!mt->type)
-					i_printfExit(MSG_EBRC_NoType, ln);
+					cfgLine0(MSG_EBRC_NoType);
 				if (!mt->desc)
-					i_printfExit(MSG_EBRC_NDesc, ln);
+					cfgLine0(MSG_EBRC_NDesc);
 				if (!mt->suffix && !mt->prot)
-					i_printfExit(MSG_EBRC_NoSuffix, ln);
+					cfgLine0(MSG_EBRC_NoSuffix);
 				if (!mt->program)
-					i_printfExit(MSG_EBRC_NoProgram, ln);
+					cfgLine0(MSG_EBRC_NoProgram);
 				continue;
 			}
 
@@ -1687,16 +1690,16 @@ nokeyword:
 				++numTables;
 				tabblock = false;
 				if (!td->name)
-					i_printfExit(MSG_EBRC_NoTblName, ln);
+					cfgLine0(MSG_EBRC_NoTblName);
 				if (!td->shortname)
-					i_printfExit(MSG_EBRC_NoShortName, ln);
+					cfgLine0(MSG_EBRC_NoShortName);
 				if (!td->ncols)
-					i_printfExit(MSG_EBRC_NColumns, ln);
+					cfgLine0(MSG_EBRC_NColumns);
 				continue;
 			}
 
 			if (--nest < 0)
-				i_printfExit(MSG_EBRC_UnexpBrace, ln);
+				cfgLine0(MSG_EBRC_UnexpBrace);
 			if (nest)
 				goto putback;
 /* This ends the function */
@@ -1709,13 +1712,13 @@ nokeyword:
 /* Does else make sense here? */
 			c = toupper(stack[nest]);
 			if (c != 'I')
-				i_printfExit(MSG_EBRC_UnexElse, ln);
+				cfgLine0(MSG_EBRC_UnexElse);
 			goto putback;
 		}
 
 		if (*s != '\x81') {
 			if (!nest)
-				i_printfExit(MSG_EBRC_GarblText, ln);
+				cfgLine0(MSG_EBRC_GarblText);
 			goto putback;
 		}
 
@@ -1729,16 +1732,16 @@ nokeyword:
 				curblock = "a filter block";
 			if (mimeblock)
 				curblock = "a plugin descriptor";
-			i_printfExit(MSG_EBRC_FnNotStart, ln, curblock);
+			cfgLine1(MSG_EBRC_FnNotStart, curblock);
 		}
 
 		if (!strchr("fmertsb", c) && !nest)
-			i_printfExit(MSG_EBRC_StatNotInFn, ln);
+			cfgLine0(MSG_EBRC_StatNotInFn);
 
 		if (c == 'm') {
 			mailblock = 1;
 			if (maxAccount == MAXACCOUNT)
-				i_printfExit(MSG_EBRC_ManyAcc, MAXACCOUNT);
+				cfgAbort1(MSG_EBRC_ManyAcc, MAXACCOUNT);
 			act = accounts + maxAccount;
 			continue;
 		}
@@ -1746,7 +1749,7 @@ nokeyword:
 		if (c == 'e') {
 			mimeblock = true;
 			if (maxMime == MAXMIME)
-				i_printfExit(MSG_EBRC_ManyTypes, MAXMIME);
+				cfgAbort1(MSG_EBRC_ManyTypes, MAXMIME);
 			mt = mimetypes + maxMime;
 			continue;
 		}
@@ -1754,7 +1757,7 @@ nokeyword:
 		if (c == 'b') {
 			tabblock = true;
 			if (numTables == MAXDBT)
-				i_printfExit(MSG_EBRC_ManyTables, MAXDBT);
+				cfgAbort1(MSG_EBRC_ManyTables, MAXDBT);
 			td = dbtables + numTables;
 			continue;
 		}
@@ -1777,7 +1780,7 @@ nokeyword:
 		if (c == 'f') {
 			stack[++nest] = c;
 			if (sn == MAXEBSCRIPT)
-				i_printfExit(MSG_EBRC_ManyFn, sn);
+				cfgAbort1(MSG_EBRC_ManyFn, sn);
 			ebScriptName[sn] = s + 2;
 			t[-1] = 0;
 			ebScript[sn] = t;
@@ -1785,7 +1788,7 @@ nokeyword:
 		}
 
 		if (++nest >= sizeof(stack))
-			i_printfExit(MSG_EBRC_TooDeeply, ln);
+			cfgLine0(MSG_EBRC_TooDeeply);
 		stack[nest] = c;
 
 putback:
@@ -1793,14 +1796,15 @@ putback:
 	}			/* loop over lines */
 
 	if (nest)
-		i_printfExit(MSG_EBRC_FnNotClosed, ebScriptName[sn]);
+		cfgAbort1(MSG_EBRC_FnNotClosed, ebScriptName[sn]);
 
 	if (mailblock | mimeblock)
-		i_printfExit(MSG_EBRC_MNotClosed);
+		cfgAbort0(MSG_EBRC_MNotClosed);
 
 	if (!sslCerts)
 		verifyCertificates = 0;
 
 	if (maxAccount && !localAccount)
 		localAccount = 1;
+	return true;
 }				/* readConfigFile */
