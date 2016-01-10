@@ -32,6 +32,9 @@ Exit codes are as follows:
 #include <limits>
 #include <iostream>
 #include <string>
+#ifdef DOSLIKE
+#include "vsprtf.h"
+#endif // DOSLIKE
 
 /* work around a bug where the standard UINT32_MAX isn't defined, I really hope this is correct */
 #ifndef UINT32_MAX
