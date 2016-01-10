@@ -225,26 +225,14 @@ else ()
 endif ()
 
 ###########################################################
-### edbr static libraro of shared source
-set(name edbr-lib)
-set(dir src)
-set(${name}_SRCS
-    ${dir}/messages.c
-    ${dir}/url.c
-    ${dir}/stringfile.c
-    ${dir}/html-tidy.c
-    ${dir}/decorate.c
-    ${dir}/http.c
-    ${dir}/auth.c
-    ${GEN_SOURCES}
-    )
-if (MSVC)
-    list(APPEND ${name}_SRCS win32/vsprtf.c win32/dirent.c)
-    list(APPEND ${name}_HDRS win32/vsprtf.h win32/dirent.h)
-    include_directories( win32 )
-endif ()
-add_library( ${name} ${${name}_SRCS} )
-set(add_LIBS ${name} ${add_LIBS})
+### edbr static library of shared source - not currently used.
+#  set(name edbr-lib)
+#  set(dir src)
+#  set(${name}_SRCS
+#      ${dir}/foo.c
+#      )
+#  add_library( ${name} ${${name}_SRCS} )
+#  set(add_LIBS ${name} ${add_LIBS})
 
 #######################################################
 ### main edbrowse app
@@ -273,6 +261,13 @@ set(${name}_SRCS
     ${dir}/buffers.c
     ${dir}/sendmail.c
     ${dir}/fetchmail.c
+    ${dir}/messages.c
+    ${dir}/url.c
+    ${dir}/stringfile.c
+    ${dir}/html-tidy.c
+    ${dir}/decorate.c
+    ${dir}/http.c
+    ${dir}/auth.c
 	${dir}/html.c
     ${dir}/format.c
     ${dir}/cookies.c
@@ -280,6 +275,7 @@ set(${name}_SRCS
     ${dir}/plugin.c
     ${dir}/jseng-moz.cpp
     ${ODBC_SRCS}
+    ${GEN_SOURCES}
     )
 set(${name}_HDRS
     ${dir}/eb.h
@@ -287,6 +283,11 @@ set(${name}_HDRS
     ${dir}/messages.h
     ${dir}/ebjs.h
     )
+if (MSVC)
+    list(APPEND ${name}_SRCS win32/vsprtf.c win32/dirent.c)
+    list(APPEND ${name}_HDRS win32/vsprtf.h win32/dirent.h)
+    include_directories( win32 )
+endif ()
 add_executable( ${name} ${${name}_SRCS} ${${name}_HDRS} )
 if (add_LIBS OR extra_LIBS)
     target_link_libraries( ${name} ${add_LIBS} ${extra_LIBS} )
