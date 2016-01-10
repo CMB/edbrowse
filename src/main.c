@@ -807,9 +807,9 @@ static const char *balance(const char *ip, int direction)
 bool runEbFunction(const char *line)
 {
 	char *linecopy = cloneString(line);
+	char *allargs = 0;
 	const char *args[10];
 	int argl[10];		/* lengths of args */
-	int argtl;		/* total length */
 	const char *s;
 	char *t, *new;
 	int j, l, nest;
@@ -828,7 +828,6 @@ bool runEbFunction(const char *line)
 	}
 	memset(args, 0, sizeof(args));
 	memset(argl, 0, sizeof(argl));
-	argtl = 0;
 	t = strchr(linecopy, ' ');
 	if (t)
 		*t = 0;
@@ -851,22 +850,28 @@ bool runEbFunction(const char *line)
 	nest = 0;
 	ok = true;
 
-/* collect arguments */
+/* collect arguments, ~0 first */
+	if (t) {
+		args[0] = allargs = cloneString(t + 1);
+		argl[0] = strlen(allargs);
+	} else {
+		args[0] = allargs = emptyString;
+		argl[0] = 0;
+	}
+
 	j = 0;
 	for (s = t; s; s = t) {
 		if (++j >= 10) {
-			setError(MSG_ManyArgs);
-			goto fail;
+//                      setError(MSG_ManyArgs);
+//                      goto fail;
+			break;
 		}
 		args[j] = ++s;
 		t = strchr(s, ' ');
 		if (t)
 			*t = 0;
-		if (argtl)
-			++argtl;
-		argtl += (argl[j] = strlen(s));
+		argl[j] = strlen(s);
 	}
-	argl[0] = argtl;
 
 	while (code = *ip) {
 		if (intFlag) {
@@ -950,23 +955,13 @@ ahead:
 		for (s = ip; s < endl; ++s) {
 			if (*s == '~' && isdigitByte(s[1])) {
 				j = *++s - '0';
-				if (j) {
-					if (!args[j]) {
-						setError(MSG_NoArgument, j);
-						nzFree(new);
-						goto fail;
-					}
-					strcpy(t, args[j]);
-					t += argl[j];
-					continue;
+				if (!args[j]) {
+					setError(MSG_NoArgument, j);
+					nzFree(new);
+					goto fail;
 				}
-/* ~0 is all args together */
-				for (j = 1; j <= 9 && args[j]; ++j) {
-					if (j > 1)
-						*t++ = ' ';
-					strcpy(t, args[j]);
-					t += argl[j];
-				}
+				strcpy(t, args[j]);
+				t += argl[j];
 				continue;
 			}
 			*t++ = *s;
@@ -986,10 +981,12 @@ nextline:
 		goto fail;
 
 	nzFree(linecopy);
+	nzFree(allargs);
 	return true;
 
 fail:
 	nzFree(linecopy);
+	nzFree(allargs);
 	return false;
 }				/* runEbFunction */
 
@@ -1067,17 +1064,17 @@ void unreadConfigFile(void)
 #define GLOBALWORDS 19
 
 static const char *const keywords[] = {
-		"inserver", "outserver", "login", "password", "from", "reply",
-		"inport", "outport",
-		"type", "desc", "suffix", "protocol", "program",
-		"content", "outtype",
-		"tname", "tshort", "cols", "keycol",
-		"adbook", "downdir", "maildir", "agent",
-		"jar", "nojs", "xyz@xyz",
-		"webtimer", "mailtimer", "certfile", "datasource", "proxy",
-		"linelength", "localizeweb", "jspool", "novs",
-		0
-	};
+	"inserver", "outserver", "login", "password", "from", "reply",
+	"inport", "outport",
+	"type", "desc", "suffix", "protocol", "program",
+	"content", "outtype",
+	"tname", "tshort", "cols", "keycol",
+	"adbook", "downdir", "maildir", "agent",
+	"jar", "nojs", "xyz@xyz",
+	"webtimer", "mailtimer", "certfile", "datasource", "proxy",
+	"linelength", "localizeweb", "jspool", "novs",
+	0
+};
 
 /* Read the config file and populate the corresponding data structures. */
 /* This routine succeeds, or aborts via i_printfExit */
