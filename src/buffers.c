@@ -3221,7 +3221,7 @@ static int twoLetter(const char *line, const char **runThis)
 		while (*t == '^')
 			++t;
 		if (!*t) {
-			sprintf(shortline, "^%ld", t - line);
+			sprintf(shortline, "^%ld", (long)(t - line));
 			return 2;
 		}
 	}

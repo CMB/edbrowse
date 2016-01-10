@@ -18,7 +18,8 @@ we would be doing something wrong.
 *********************************************************************/
 
 #ifdef _WIN32
-#include <WinSock2.h> // also includes <windows.h> // needed for sql.h whihc uses say HWND, DWORD, etc...
+#include <WinSock2.h>		// also includes <windows.h>
+	// needed for sql.h which uses say HWND, DWORD, etc...
 #endif
 
 #include <sql.h>		/* ODBC header files */
@@ -245,10 +246,10 @@ static bool errorTrap(const char *cxerr)
 		errorFound = true;
 		rv_lastStatus = errTranslate(errcodes);
 
-		/* Don't know how to get statement ofset or invalid token from ODBC.
-		   /* I can get them from Informix; see dbinfx.ec */
+/* Don't know how to get statement ofset or invalid token from ODBC.
+ * I can get them from Informix; see dbinfx.ec */
 
-		/* if the application didn't trap for this exception, blow up! */
+/* if the application didn't trap for this exception, blow up! */
 		if (exclist) {
 			for (i = 0; exclist[i]; ++i)
 				if (exclist[i] == rv_lastStatus)

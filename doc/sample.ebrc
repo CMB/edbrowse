@@ -242,8 +242,8 @@ function+undos {
 function+gg {
 b http://www.google.com
 /<>/ i=~0
-+i1*
-/^1/+
+/</ i1*
+/^About/+2
 }
 
 #  mariam-webster dictionary lookup, ~1 is parameter 1, the word to look up.
