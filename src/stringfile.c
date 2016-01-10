@@ -1620,7 +1620,7 @@ int eb_system(const char *cmd, bool print_on_success)
 	signal(SIGPIPE, SIG_IGN);
 #endif
 
-	if (system_ret == 0) {
+	if (system_ret != -1) {
 		if (print_on_success)
 			i_puts(MSG_OK);
 	} else {
