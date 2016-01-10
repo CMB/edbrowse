@@ -1060,6 +1060,25 @@ void unreadConfigFile(void)
 	deleteNovsHosts();
 }				/* unreadConfigFile */
 
+/* Order is important here: mail{}, mime{}, table{}, then global keywords */
+#define MAILWORDS 0
+#define MIMEWORDS 8
+#define TABLEWORDS 15
+#define GLOBALWORDS 19
+
+static const char *const keywords[] = {
+		"inserver", "outserver", "login", "password", "from", "reply",
+		"inport", "outport",
+		"type", "desc", "suffix", "protocol", "program",
+		"content", "outtype",
+		"tname", "tshort", "cols", "keycol",
+		"adbook", "downdir", "maildir", "agent",
+		"jar", "nojs", "xyz@xyz",
+		"webtimer", "mailtimer", "certfile", "datasource", "proxy",
+		"linelength", "localizeweb", "jspool", "novs",
+		0
+	};
+
 /* Read the config file and populate the corresponding data structures. */
 /* This routine succeeds, or aborts via i_printfExit */
 void readConfigFile(void)
@@ -1082,24 +1101,6 @@ void readConfigFile(void)
 	struct DBTABLE *td;
 
 	unreadConfigFile();
-
-/* Order is important here: mail{}, mime{}, table{}, then global keywords */
-#define MAILWORDS 0
-#define MIMEWORDS 8
-#define TABLEWORDS 15
-#define GLOBALWORDS 19
-	static const char *const keywords[] = {
-		"inserver", "outserver", "login", "password", "from", "reply",
-		"inport", "outport",
-		"type", "desc", "suffix", "protocol", "program",
-		"content", "outtype",
-		"tname", "tshort", "cols", "keycol",
-		"adbook", "downdir", "maildir", "agent",
-		"jar", "nojs", "xyz@xyz",
-		"webtimer", "mailtimer", "certfile", "datasource", "proxy",
-		"linelength", "localizeweb", "jspool", "novs",
-		0
-	};
 
 	if (!fileTypeByName(configFile, false))
 		return;		/* config file not present */
