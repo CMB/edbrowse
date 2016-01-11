@@ -3330,6 +3330,9 @@ pwd:
 	if (stringEqual(line, "config")) {
 		if (readConfigFile())
 			i_puts(MSG_OK);
+		curl_easy_setopt(global_http_handle, CURLOPT_COOKIEJAR,
+				 cookieFile);
+		curl_easy_setopt(global_http_handle, CURLOPT_CAINFO, sslCerts);
 		return true;
 	}
 

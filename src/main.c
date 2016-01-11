@@ -804,6 +804,7 @@ static const char *balance(const char *ip, int direction)
 }				/* balance */
 
 /* Run an edbrowse function, as defined in the config file. */
+/* This function must be reentrant. */
 bool runEbFunction(const char *line)
 {
 	char *linecopy = cloneString(line);
