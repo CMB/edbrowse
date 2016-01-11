@@ -128,7 +128,7 @@ unixODBC version 2.2.14 seems to satisfy edbrowse with odbc.
 
 Edbrowse creates a system wide temp directory if it is not already present.
 This is /tmp/.edbrowse in Unix, and $(TEMP)/edbrowse in Windows.
-This directory contains a subdirectory per user, mod 777, for added security.
+This directory contains a subdirectory per user, mod 700, for added security.
 Thus one user cannot spy on the temp files, perhaps sensitive internet data,
 of another user.
 However, true multiuser security requires a root job at startup,
