@@ -333,6 +333,8 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 				currentTA->value[j] = '\n';
 				currentTA->value[j + 1] = 0;
 			}
+// Don't need leading whitespace.
+			leftClipString(currentTA->value);
 			currentTA->rvalue = cloneString(currentTA->value);
 			t->deleted = true;
 			break;

@@ -875,12 +875,10 @@ bool runEbFunction(const char *line)
 		argl[j] = strlen(s);
 	}
 
-// have to copy the function if it invokes config.
+// This or a downstream function could invoke config.
 // Don't know why anybody would do that!
-	if (strstr(ip, "config")) {
-		fncopy = cloneString(ip);
-		ip = fncopy;
-	}
+	fncopy = cloneString(ip);
+	ip = fncopy;
 
 	while (code = *ip) {
 		if (intFlag) {
