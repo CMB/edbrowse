@@ -708,7 +708,7 @@ static void urlSanitize(const char *url, const char *post, bool f_encoded)
 	const char *portloc;
 
 	if (f_encoded && !looksPercented(url, post)) {
-		debugPrint(1, "Warning, url %s doesn't look encoded", url);
+		debugPrint(2, "Warning, url %s doesn't look encoded", url);
 		f_encoded = false;
 	}
 

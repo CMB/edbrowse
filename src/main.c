@@ -14,7 +14,7 @@
 
 const char *progname;
 const char eol[] = "\r\n";
-const char *version = "3.6.0+";
+const char *version = "3.6.1";
 char *changeFileName;
 char *configFile, *addressFile, *cookieFile;
 char *mailDir, *mailUnread, *mailStash, *mailReply;

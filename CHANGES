@@ -8,6 +8,9 @@ Example edbrowse --mode js to run as the js engine.
 
 Simple implementation of xhr under javascript, synchronous only.
 
+Don't encode urls that have already been encoded via <A href=url>.
+The second encoding is mostly harmless, except for + becoming %2b.
+
 Turn on or off the progress dots during an http or ftp download,
 or receive progress counts by megabyte.
 
@@ -16,6 +19,8 @@ beneath this directory, mod 700, for added security in a multiuser system.
 Temp files for plugins are created beneath the user directories.
 
 Reload the config file on command. No need to exit and restart.
+
+~0 in an edbrowse function is the whole line, even if more than 9 arguments.
 
 3.6.0:
 Edbrowse is an imap client. Scan and search through folders,
