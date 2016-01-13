@@ -432,10 +432,14 @@ interrupt:
 		len = sizeof(line) - 1;
 	}
 
+	if (debugFile)
+		fprintf(debugFile, "* ");
 	while (i < len && (c = s[i]) != '\n') {
 /* A bug in my keyboard causes nulls to be entered from time to time. */
 		if (c == 0)
 			c = ' ';
+		if (debugFile)
+			fputc(c, debugFile);
 		if (c != '~') {
 addchar:
 			s[j++] = c;
@@ -459,6 +463,8 @@ addchar:
 		goto addchar;
 	}			/* loop over input chars */
 	s[j] = 0;
+	if (debugFile)
+		fputc('\n', debugFile);
 
 	if (jexmode) {
 		if (stringEqual(s, ".")) {
@@ -522,15 +528,21 @@ static struct ebWindow *createWindow(void)
 /* for debugging */
 static void print_pst(pst p)
 {
-	do
-		printf("%c", *p);
-	while (*p++ != '\n');
+	do {
+		if (debugFile)
+			fprintf(debugFile, "%c", *p);
+		else
+			printf("%c", *p);
+	} while (*p++ != '\n');
 }				/* print_pst */
 
 static void freeLine(struct lineMap *t)
 {
 	if (debugLevel >= 8) {
-		printf("free ");
+		if (debugFile)
+			fprintf(debugFile, "free ");
+		else
+			printf("free ");
 		print_pst(t->text);
 	}
 	nzFree(t->text);
@@ -828,7 +840,7 @@ void cxSwitch(int cx, bool interactive)
 		if (created)
 			i_puts(MSG_SessionNew);
 		else if (cw->fileName)
-			puts(cw->fileName);
+			eb_puts(cw->fileName);
 		else
 			i_puts(MSG_NoFile);
 	}
@@ -3168,6 +3180,11 @@ static int twoLetter(const char *line, const char **runThis)
 		return true;
 	}
 
+	if (!strncmp(line, "db>", 3)) {
+		setDebugFile(line + 3);
+		return true;
+	}
+
 	if (stringEqual(line, "bw")) {
 		cw->changeMode = false;
 		cw->quitMode = true;
@@ -3198,7 +3215,7 @@ static int twoLetter(const char *line, const char **runThis)
 		}
 		currentAgent = t;
 		if (helpMessagesOn || debugLevel >= 1)
-			puts(currentAgent);
+			eb_puts(currentAgent);
 		return true;
 	}
 
@@ -3270,7 +3287,7 @@ static int twoLetter(const char *line, const char **runThis)
 		else
 			t = lsattr(path, lsmode);
 		if (*t)
-			puts(t);
+			eb_puts(t);
 		else
 			i_puts(MSG_Inaccess);
 		return true;
@@ -3291,7 +3308,7 @@ pwd:
 						 MSG_CDSetError);
 					return false;
 				}
-				puts(cwdbuf);
+				eb_puts(cwdbuf);
 				return true;
 			}
 			if (!envFile(t, &t))
@@ -3328,8 +3345,7 @@ pwd:
 	}
 
 	if (stringEqual(line, "config")) {
-		if (readConfigFile())
-			i_puts(MSG_OK);
+		readConfigFile();
 		curl_easy_setopt(global_http_handle, CURLOPT_COOKIEJAR,
 				 cookieFile);
 		curl_easy_setopt(global_http_handle, CURLOPT_CAINFO, sslCerts);
@@ -3465,7 +3481,7 @@ et_go:
 		if (line[1] == 'k')
 			s = cw->fk, t = MSG_NoKeywords;
 		if (s)
-			puts(s);
+			eb_puts(s);
 		else
 			i_puts(t);
 		return true;

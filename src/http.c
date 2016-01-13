@@ -1113,8 +1113,8 @@ curl_fail:
 		if (hcode != 200 && hcode != 201 &&
 		    (webpage || debugLevel >= 2) ||
 		    hcode == 201 && debugLevel >= 3)
-			i_printf(MSG_HTTPError, hcode,
-				 message_for_response_code(hcode));
+			i_printf(MSG_HTTPError,
+				 hcode, message_for_response_code(hcode));
 		if (name_changed)
 			changeFileName = urlcopy;
 		else
@@ -1840,14 +1840,15 @@ ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
 		     size_t size, void *unused)
 {
 	static bool last_curlin = false;
+	FILE *f = debugFile ? debugFile : stdout;
 
 	if (info_desc == CURLINFO_HEADER_OUT) {
-		printf("curl>\n");
-		prettify_network_text(data, size, stdout);
+		fprintf(f, "curl>\n");
+		prettify_network_text(data, size, f);
 	} else if (info_desc == CURLINFO_HEADER_IN) {
 		if (!last_curlin)
-			printf("curl<\n");
-		prettify_network_text(data, size, stdout);
+			fprintf(f, "curl<\n");
+		prettify_network_text(data, size, f);
 	} else;			/* Do nothing.  We don't care about this piece of data. */
 
 	if (info_desc == CURLINFO_HEADER_IN)

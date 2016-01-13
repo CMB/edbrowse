@@ -22,6 +22,8 @@ Reload the config file on command. No need to exit and restart.
 
 ~0 in an edbrowse function is the whole line, even if more than 9 arguments.
 
+db>filename to redirect debugging output to a file.
+
 3.6.0:
 Edbrowse is an imap client. Scan and search through folders,
 delete move or download emails, pull down attachments.

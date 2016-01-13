@@ -105,7 +105,7 @@ static Bool TIDY_CALL tidyErrorHandler(TidyDoc tdoc, TidyReportLevel lvl,
 				       uint line, uint col, ctmbstr mssg)
 {
 	if (debugLevel >= 3)
-		printf("line %d column %d: %s\n", line, col, mssg);
+		debugPrint(3, "line %d column %d: %s", line, col, mssg);
 	return no;
 }				/* tidyErrorHandler */
 
@@ -148,9 +148,11 @@ static void printNode(TidyNode node, int level, bool opentag)
 {
 	ctmbstr name;
 	TidyAttr tattr;
+	FILE *f;
 
+	f = debugFile ? debugFile : stdout;
 	if (!opentag) {
-		puts("}");
+		fprintf(f, "}\n");
 		return;
 	}
 
@@ -196,13 +198,13 @@ static void printNode(TidyNode node, int level, bool opentag)
 		break;
 	}
 	assert(name != NULL);
-	printf("Node(%d): %s {\n", level, ((char *)name));
+	fprintf(f, "Node(%d): %s {\n", level, ((char *)name));
 /* the ifs could be combined with && */
 	if (stringEqual(((char *)name), "Text")) {
 		TidyBuffer tnv = { 0 };	/* text-node value */
 		tidyBufClear(&tnv);
 		tidyNodeGetValue(tdoc, node, &tnv);
-		printf("Text: %s\n", tnv.bp);
+		fprintf(f, "Text: %s\n", tnv.bp);
 		if (tnv.size)
 			tidyBufFree(&tnv);
 	}
@@ -211,7 +213,8 @@ static void printNode(TidyNode node, int level, bool opentag)
 	tattr = tidyAttrFirst(node);
 	while (tattr != NULL) {
 /* Print the node and its attribute */
-		printf("@%s = %s\n", tidyAttrName(tattr), tidyAttrValue(tattr));
+		fprintf(f, "@%s = %s\n", tidyAttrName(tattr),
+			tidyAttrValue(tattr));
 /* Get the next attribute */
 		tattr = tidyAttrNext(tattr);
 	}

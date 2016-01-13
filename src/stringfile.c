@@ -19,6 +19,7 @@
 char emptyString[] = "";
 bool showHiddenFiles, isInteractive;
 int debugLevel = 1;
+FILE *debugFile;
 char *downDir, *home;
 
 /*********************************************************************
@@ -615,16 +616,41 @@ void debugPrint(int lev, const char *msg, ...)
 	if (lev > debugLevel)
 		return;
 	va_start(p, msg);
-	vprintf(msg, p);
+	if (!debugFile || lev <= 2) {
+		vprintf(msg, p);
+		printf("\n");
+	}
+	if (debugFile) {
+		if (fseek(debugFile, 0, SEEK_END) >= 10000000) {
+			puts("debug file overflow, program aborted");
+			fclose(debugFile);
+			ebClose(3);
+		}
+		vfprintf(debugFile, msg, p);
+		fprintf(debugFile, "\n");
+	}
 	va_end(p);
-	nl();
 	if (lev == 0 && !memcmp(msg, "warning", 7))
 		eeCheck();
 }				/* debugPrint */
 
+void setDebugFile(const char *name)
+{
+	if (debugFile)
+		fclose(debugFile);
+	debugFile = 0;
+	if (!name || !*name)
+		return;
+	debugFile = fopen(name, "w");
+	if (debugFile)
+		setlinebuf(debugFile);
+	else
+		printf("cannot create %s\n", name);
+}				/* setDebugFile */
+
 void nl(void)
 {
-	puts("");
+	eb_puts("");
 }				/* nl */
 
 /* Turn perl string into C string, and complain about nulls. */

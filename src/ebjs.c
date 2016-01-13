@@ -431,8 +431,9 @@ static int readMessage(void)
 			return -1;
 		}
 		effects[head.side] = 0;
-		if (debugLevel >= 4)
-			printf("< side effects\n%s", effects);
+// because debugPrint always puts on a newline
+		effects[head.side - 1] = 0;
+		debugPrint(4, "< side effects\n%s", effects);
 		processEffects();
 	}
 
@@ -447,10 +448,15 @@ static int readMessage(void)
 		msg[l] = 0;
 		if (debugLevel >= 3) {
 /* print message, this will be in English, and mostly for our debugging */
-			if (jsSourceFile)
-				printf("%s line %d: ", jsSourceFile,
-				       head.lineno);
-			printf("%s\n", msg);
+			if (jsSourceFile) {
+				if (debugFile)
+					fprintf(debugFile, "%s line %d: ",
+						jsSourceFile, head.lineno);
+				else
+					printf("%s line %d: ",
+					       jsSourceFile, head.lineno);
+			}
+			debugPrint(3, "%s", msg);
 		}
 		free(msg);
 	}
@@ -511,17 +517,26 @@ static const char *debugString(const char *v)
  * from the js process. */
 static void ack5(void)
 {
+	char *a;
+	int a_l;
+	char buf[32];
 	if (debugLevel < 5)
 		return;
-	printf("<");
-	if (head.highstat)
-		printf(" error %d|%d", head.highstat, head.lowstat);
+	a = initString(&a_l);
+	stringAndChar(&a, &a_l, '<');
+	if (head.highstat) {
+		sprintf(buf, " error %d|%d", head.highstat, head.lowstat);
+		stringAndString(&a, &a_l, buf);
+	}
+	stringAndChar(&a, &a_l, ' ');
 	if (propval)
-		printf(" %s\n", debugString(propval));
+		stringAndString(&a, &a_l, debugString(propval));
 	else if (head.cmd == EJ_CMD_HASPROP)
-		printf(" %d\n", head.proptype);
+		stringAndNum(&a, &a_l, head.proptype);
 	else
-		puts(" ok");
+		stringAndString(&a, &a_l, "ok");
+	debugPrint(5, "%s", a);
+	nzFree(a);
 }				/* ack5 */
 
 /* Create a js context for the current window.

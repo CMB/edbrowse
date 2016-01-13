@@ -498,6 +498,9 @@ void eb_puts(const char *s)
 #else
 	puts(s);
 #endif
+
+	if (debugFile)
+		fprintf(debugFile, "%s\n", s);
 }				/* eb_puts */
 
 void eb_vprintf(const char *fmt, va_list args)
@@ -528,4 +531,7 @@ void eb_vprintf(const char *fmt, va_list args)
 #else
 	vprintf(fmt, args);
 #endif
+
+	if (debugFile)
+		vfprintf(debugFile, fmt, args);
 }				/* eb_printf */

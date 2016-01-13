@@ -393,34 +393,36 @@ static int idxperiod, idxcomma, idxright, idxany;
 static void debugChunk(const char *chunk, int len)
 {
 	int i;
+	FILE *f;
 	if (debugLevel < 7)
 		return;
-	printf("chunk<");
+	f = debugFile ? debugFile : stdout;
+	fprintf(f, "chunk<");
 	for (i = 0; i < len; ++i) {
 		char c = chunk[i];
 		if (c == '\t') {
-			printf("\\t");
+			fprintf(f, "\\t");
 			continue;
 		}
 		if (c == '\n') {
-			printf("\\n");
+			fprintf(f, "\\n");
 			continue;
 		}
 		if (c == '\f') {
-			printf("\\f");
+			fprintf(f, "\\f");
 			continue;
 		}
 		if (c == '\r') {
-			printf("\\r");
+			fprintf(f, "\\r");
 			continue;
 		}
 		if (c == '\0') {
-			printf("\\0");
+			fprintf(f, "\\0");
 			continue;
 		}
-		printf("%c", c);
+		fprintf(f, "%c", c);
 	}
-	printf(">%d.%d\n", colno, lspace);
+	fprintf(f, ">%d.%d\n", colno, lspace);
 }				/* debugChunk */
 
 static void appendOneChar(char c)

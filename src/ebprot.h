@@ -281,6 +281,7 @@ bool isA(char c) ;
 bool isquote(char c) ;
 void errorPrint(const char *msg, ...) ;
 void debugPrint(int lev, const char *msg, ...) ;
+void setDebugFile(const char *name);
 void nl(void) ;
 int perl2c(char *t) ;
 unsigned pstLength(pst s) ;
