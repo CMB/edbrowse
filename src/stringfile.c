@@ -19,7 +19,7 @@
 char emptyString[] = "";
 bool showHiddenFiles, isInteractive;
 int debugLevel = 1;
-FILE *debugFile;
+FILE *debugFile = NULL;
 char *downDir, *home;
 
 /*********************************************************************
@@ -642,9 +642,13 @@ void setDebugFile(const char *name)
 	if (!name || !*name)
 		return;
 	debugFile = fopen(name, "w");
-	if (debugFile)
+	if (debugFile) {
+#ifndef _MSC_VER		// port setlinebuf(debugFile);, if required...
 		setlinebuf(debugFile);
-	else
+#else
+		;
+#endif // !_MSC_VER
+	} else
 		printf("cannot create %s\n", name);
 }				/* setDebugFile */
 
