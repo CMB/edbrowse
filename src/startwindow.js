@@ -49,6 +49,7 @@ document.forms = new Array;
 document.elements = new Array;
 document.anchors = new Array;
 document.divs = new Array;
+document.htmlobjs = new Array;
 document.scripts = new Array;
 document.paragraphs = new Array;
 document.tables = new Array;
@@ -857,6 +858,22 @@ Div.prototype.replaceChild = document.replaceChild;
 Div.prototype.getAttribute = document.getAttribute;
 Div.prototype.setAttribute = document.setAttribute;
 Div.prototype.cloneNode = document.cloneNode;
+
+HtmlObj.prototype.appendChild = document.appendChild;
+HtmlObj.prototype.apch$ = document.apch$;
+HtmlObj.prototype.insertBefore = document.insertBefore;
+Object.defineProperty(HtmlObj.prototype, "firstChild", {
+get: function() { return this.childNodes[0]; }
+});
+Object.defineProperty(HtmlObj.prototype, "lastChild", {
+get: function() { return this.childNodes[this.childNodes.length-1]; }
+});
+HtmlObj.prototype.hasChildNodes = document.hasChildNodes;
+HtmlObj.prototype.removeChild = document.removeChild;
+HtmlObj.prototype.replaceChild = document.replaceChild;
+HtmlObj.prototype.getAttribute = document.getAttribute;
+HtmlObj.prototype.setAttribute = document.setAttribute;
+HtmlObj.prototype.cloneNode = document.cloneNode;
 
 Script.prototype.getAttribute = document.getAttribute;
 Script.prototype.setAttribute = document.setAttribute;

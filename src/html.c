@@ -2581,6 +2581,7 @@ li_hide:
 	case TAGACT_DT:
 	case TAGACT_DD:
 	case TAGACT_DIV:
+	case TAGACT_OBJECT:
 	case TAGACT_BR:
 	case TAGACT_P:
 	case TAGACT_SPAN:

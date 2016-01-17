@@ -1062,6 +1062,11 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		establish_inner(t->jv, t->innerHTML, 0, false);
 		break;
 
+	case TAGACT_OBJECT:
+		domLink(t, "HtmlObj", 0, "htmlobjs", cw->docobj, 0);
+		establish_inner(t->jv, t->innerHTML, 0, false);
+		break;
+
 	case TAGACT_SPAN:
 	case TAGACT_SUB:
 	case TAGACT_SUP:
@@ -1170,6 +1175,7 @@ const struct tagInfo availableTags[] = {
 	{"br", "a line break", TAGACT_BR, 1, 4},
 	{"p", "a paragraph", TAGACT_P, 2, 5},
 	{"div", "a divided section", TAGACT_DIV, 5, 1},
+	{"object", "an html object", TAGACT_OBJECT, 5, 1},
 	{"map", "a map of images", TAGACT_NOP, 5, 0},
 	{"blockquote", "a quoted paragraph", TAGACT_NOP, 10, 1},
 	{"h1", "a level 1 header", TAGACT_NOP, 10, 1},

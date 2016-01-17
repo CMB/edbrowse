@@ -566,6 +566,7 @@ generic_class_ctor(document, Document)
     generic_class_ctor(tbody, Tbody)
     generic_class_ctor(table, Table)
     generic_class_ctor(div, Div)
+    generic_class_ctor(htmlobj, HtmlObj)
     generic_class_ctor(area, Area)
     generic_class_ctor(span, Span)
     generic_class_ctor(trow, Trow)
@@ -2051,6 +2052,7 @@ static struct {
 	{&trow_class, trow_ctor},
 	{&cell_class, cell_ctor},
 	{&div_class, div_ctor},
+	{&htmlobj_class, htmlobj_ctor},
 	{&area_class, area_ctor},
 	{&span_class, span_ctor},
 	{&option_class, option_ctor, NULL, 2},

@@ -331,9 +331,9 @@ move to
 warning: form url specifies a section %s, which will be ignored\n
 file %s is empty
 your email should begin with subject:
-0
+progress quiet
 subject line too long, limit %d characters
-0
+progress dots
 .signature is not a regular file
 cannot access .signature file
 cannot mail the binary file %s, perhaps this should be an attachment?
@@ -350,7 +350,7 @@ line after %d has been deleted\n
 %d lines after %d have been deleted\n
 line %d has been added\n
 lines %d through %d have been added\n
-0
+progress count
 no mail accounts specified, plese check your config file
 invalid account number %d, please use 1 through %d
 cannot send mail while in browse mode
