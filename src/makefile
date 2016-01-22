@@ -16,11 +16,13 @@ endif
 JS_CXXFLAGS =-I/usr/include/mozjs-24
 
 # By default, we strip the executables.
-# Override this behavior on the command line, by setting STRIP to the
-# empty string.  E.G., in order to build executables with debugging symbols,
-# CFLAGS='-g -ggdb' make STRIP=''
-
+# Override this behavior by setting EBDEBUG to a nonempty string
 STRIP=-s
+ifneq ($(EBDEBUG),)
+STRIP=
+CFLAGS += -g -ggdb
+CXXFLAGS += -g -ggdb
+endif
 
 #  Normal load flags
 LDFLAGS += $(STRIP)
