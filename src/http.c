@@ -1810,6 +1810,7 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb,
 			return -1;
 		}
 		if (hct[0] && !memEqualCI(hct, "text/", 5) &&
+		    !memEqualCI(hct, "application/xhtml+xml", 21) &&
 		    (!pluginsOn || !cw->mt || cw->mt->download)) {
 			data->down_state = 1;
 			down_msg = MSG_Down;
