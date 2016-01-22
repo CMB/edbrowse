@@ -56,6 +56,11 @@ static void usage(void)
 /* arguments, as indicated by the above */
 static int pipe_in, pipe_out;
 
+/* Here is an instance of the edbrowse window that exists for parsing
+ * html from inside javascript. It belongs to edbrowse-js,
+ * and isn't associated with a particular buffer on the edbrowse side. */
+static struct ebWindow in_js_cw;
+
 static void js_start(void);
 static void readMessage(void);
 static void processMessage(void);
@@ -68,10 +73,10 @@ static JSObject *docobj;	/* document object */
 
 static void cwSetup(void)
 {
-	in_js_cw.winobj = winobj;
-	in_js_cw.docobj = docobj;
-	in_js_cw.hbase = get_property_string_nat(docobj, "base$href");
-	in_js_cw.baseset = true;
+	cw->winobj = winobj;
+	cw->docobj = docobj;
+	cw->hbase = get_property_string_nat(docobj, "base$href");
+	cw->baseset = true;
 }				/* cwSetup */
 
 static void cwBringdown(void)
@@ -127,6 +132,7 @@ int js_main(int argc, char **argv)
 	eb_curl_global_init();
 	cookiesFromJar();
 	pluginsOn = false;
+	cw = &in_js_cw;
 
 	js_start();
 
@@ -1672,6 +1678,10 @@ static JSBool fetchHTTP(JSContext * cx, unsigned int argc, jsval * vp)
 		httpConnect(curl_incoming_url, false, false, true,
 			    &curl_outgoing_xhrheaders, &curl_outgoing_xhrbody,
 			    &responseLength);
+		if (curl_outgoing_xhrheaders == NULL)
+			curl_outgoing_xhrheaders = emptyString;
+		if (curl_outgoing_xhrbody == NULL)
+			curl_outgoing_xhrbody = emptyString;
 		args.rval().set(STRING_TO_JSVAL
 				(JS_NewStringCopyZ
 				 (cx,
