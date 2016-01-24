@@ -364,7 +364,7 @@ pas de pièce jointe à la ligne %d
 numéro de compte de courrier invalide à la ligne %d
 pas de pertoire temporaire
 la ligne %d devrait débuter par to: attach: alt: account: ou subject:
-0
+converti en utf16
 pas de destinataires spécifiés, placez to: adresse email au début de votre fichier
 %s:// attendu
 protocole %s non reconnu
@@ -383,7 +383,7 @@ impossible de créer la sous-commande %s, erreur numéro %d
 impossible de créer le fichier temporaire %s, erreur numéro %d
 trop de tables sql dans le cache, la limite est de %d
 %s n'est pas un fichier régulier
-0
+converti en utf32
 impossible de lire le contenu de %s
 impossible d'accéder à %s
 $%s n'est pas définie
@@ -614,8 +614,8 @@ Désolé, pas d'en-têtes de courrier.\nVous devez commencer avec un courrier no
 l affiche tous les caractères de contrôle en hexadécimal
 l affiche tous les caractères non-ascii et de contrôle en hexadécimal
 Attention : les fonctions de recherche/remplacement ne fonctionneront pas avec les caractères utf8,\nparce que cette fonctionnalité est absente de la librairie pcre.\nExportez PCREUT8=off pour désactiver cette fonctionnalité et supprimer ce message d'avertissement
-converti en utf8
 converti en iso8859
+converti en utf8
 pas de conversion entre iso8859 et utf8
 conversion automatique entre iso8859 et utf8
 impossible de copier un répertoire dans la corbeille sur un autre système de fichiers;n utilisez cpio -p ou cp -r à partir du shell

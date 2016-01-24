@@ -377,8 +377,12 @@ struct ebWindow {
 	bool binMode:1;		/* binary file */
 	bool nlMode:1;		/* newline at the end */
 	bool rnlMode:1;
-/* Two text modes:1; these are incompatible with binMode */
+/* Various text modes, these are incompatible with binMode */
+/* All modes convert to utf8, as that is what pcre understands. */
 	bool utf8Mode:1;
+	bool utf16Mode:1;
+	bool utf32Mode:1;
+	bool bigMode:1; // big-endian
 	bool iso8859Mode:1;
 	bool browseMode:1;	/* browsing html */
 	bool changeMode:1;	/* something has changed in this file */

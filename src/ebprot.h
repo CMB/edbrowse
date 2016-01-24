@@ -212,6 +212,7 @@ bool sendMailCurrent(int sm_account, bool dosig) ;
 /* sourcefile=messages.c */
 void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
 void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
+void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
 void selectLanguage(void) ;
 const char *i_getString(int msg);
 void i_puts(int msg) ;

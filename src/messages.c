@@ -157,6 +157,104 @@ void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 	*outbuflen_p = j;
 }				/* utf2iso */
 
+/*********************************************************************
+Convert the current line in buffer, which is either iso8859-1 or utf8,
+into utf16 or utf32, big or little endian.
+The returned string is allocated, though not really a string,
+since it will contain nulls, plenty of them in the case of utf32.
+*********************************************************************/
+
+void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
+{
+	uchar *outbuf;
+	unsigned int unicode;
+	uchar c;
+	int i, j;
+
+	if (!inbuflen) {
+		*outbuf_p = emptyString;
+		*outbuflen_p = 0;
+		return;
+	}
+
+	outbuf = allocMem(inbuflen * 4);	// worst case
+
+	i = j = 0;
+	while (i < inbuflen) {
+		c = (uchar) inbuf[i];
+		if (!cons_utf8 || (c & 0xc0) != 0xc0 && (c & 0xfe) != 0xfe) {
+			unicode = c;	// that was easy
+			++i;
+		} else {
+			uchar mask = 0x20;
+			int k = 1;
+			++i;
+			while (c & mask)
+				++k, mask >>= 1;
+			c &= (mask - 1);
+			unicode = ((unsigned int)c) << (6 * k);
+			while (i < inbuflen && k) {
+				c = (uchar) inbuf[i];
+				if ((c & 0xc0) != 0x80)
+					break;
+				++i, --k;
+				c &= 0x3f;
+				unicode |= (((unsigned int)c) << (6 * k));
+			}
+		}
+
+		if (cw->utf32Mode) {
+			if (cw->bigMode) {
+				outbuf[j++] = ((unicode >> 24) & 0xff);
+				outbuf[j++] = ((unicode >> 16) & 0xff);
+				outbuf[j++] = ((unicode >> 8) & 0xff);
+				outbuf[j++] = (unicode & 0xff);
+			} else {
+				outbuf[j++] = (unicode & 0xff);
+				outbuf[j++] = ((unicode >> 8) & 0xff);
+				outbuf[j++] = ((unicode >> 16) & 0xff);
+				outbuf[j++] = ((unicode >> 24) & 0xff);
+			}
+			continue;
+		}
+// utf16, a bit trickier but not too bad.
+		if (unicode <= 0xd7ff || unicode >= 0xe000 && unicode <= 0xffff) {
+			if (cw->bigMode) {
+				outbuf[j++] = ((unicode >> 8) & 0xff);
+				outbuf[j++] = (unicode & 0xff);
+			} else {
+				outbuf[j++] = (unicode & 0xff);
+				outbuf[j++] = ((unicode >> 8) & 0xff);
+			}
+			continue;
+		}
+
+		if (unicode >= 0x10000 && unicode <= 0x10ffff) {
+// surrogate pairs
+			unsigned int pair1, pair2;
+			unicode -= 0x10000;
+			pair1 = 0xd800 + ((unicode >> 10) & 0x3ff);
+			pair2 = 0xdc00 + (unicode & 0x3ff);
+			if (cw->bigMode) {
+				outbuf[j++] = ((pair1 >> 8) & 0xff);
+				outbuf[j++] = (pair1 & 0xff);
+				outbuf[j++] = ((pair2 >> 8) & 0xff);
+				outbuf[j++] = (pair2 & 0xff);
+			} else {
+				outbuf[j++] = (pair1 & 0xff);
+				outbuf[j++] = ((pair1 >> 8) & 0xff);
+				outbuf[j++] = (pair2 & 0xff);
+				outbuf[j++] = ((pair2 >> 8) & 0xff);
+			}
+			continue;
+		}
+
+	}
+
+	*outbuf_p = (char *)outbuf;
+	*outbuflen_p = j;
+}				/* utfHigh */
+
 void selectLanguage(void)
 {
 	char buf[8];

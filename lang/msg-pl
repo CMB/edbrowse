@@ -364,7 +364,7 @@ brak załącznika w wierszu %d
 błędny numer konta w wierszu %d
 brak tymczasowego katalogu
 wiersz %d powinien zaczynać się od 'attach:', 'alt:', 'account:' lub 'subject:'
-0
+konwersja do UTF-16
 nie podano odbiorców, umieść 'to: <email>' na początku swojego pliku
 oczekiwano %s://
 nierozpoznany protokół %s
@@ -383,7 +383,7 @@ nie można wywołać subpolecenia %s, błąd %d
 nie można utworzyć tymczasowego pliku %s, błąd %d
 zbyt wiele tabel SQL w pamięci podręcznej, limit %d
 %s nie jest regularnym plikiem
-0
+konwersja do UTF-32
 nie można wczytać zawartości %s
 nie można odczytać %s
 $%s nie jest zdefiniowana

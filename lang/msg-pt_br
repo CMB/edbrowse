@@ -364,7 +364,7 @@ sem anexo na linha %d
 número de conta inválido na linha %d
 nenhum diretório temporário
 a linha %d deve começar com to: attach: alt: account: ou subject:
-0
+convertendo para utf16
 sem destinatário; coloque to: endereco no topo do arquivo
 %s:// esperado
 protocolo desconhecido  %s
@@ -383,7 +383,7 @@ não consegui executar o subcomando %s; erro %d
 não consegui criar o arquivo temporário %s; erro %d
 tabelas SQL demais no cache; limite é %d
 %s não é um arquivo regular
-0
+convertendo para utf32
 impossível ler o conteúdo do %s
 impossível acessar %s
 $%s não definida

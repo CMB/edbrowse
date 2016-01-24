@@ -1611,15 +1611,23 @@ static bool writeFile(const char *name, int mode)
 		setError(MSG_NoCreate2, name);
 		return false;
 	}
-
+// If writing to the same file and converting, print message,
+// and perhaps write the byte order mark.
 	if (name == cw->fileName && iuConvert) {
-/* should we locale convert back? */
 		if (cw->iso8859Mode && cons_utf8)
 			if (debugLevel >= 1)
 				i_puts(MSG_Conv8859);
 		if (cw->utf8Mode && !cons_utf8)
 			if (debugLevel >= 1)
 				i_puts(MSG_ConvUtf8);
+		if (cw->utf16Mode) {
+			if (debugLevel >= 1)
+				i_puts(MSG_ConvUtf16);
+		}
+		if (cw->utf32Mode) {
+			if (debugLevel >= 1)
+				i_puts(MSG_ConvUtf32);
+		}
 	}
 
 	fileSize = 0;
@@ -1651,6 +1659,18 @@ static bool writeFile(const char *name, int mode)
 
 				if (cw->utf8Mode && !cons_utf8) {
 					iso2utf((char *)p, len, &tp, &tlen);
+					if (alloc_p)
+						free(p);
+					alloc_p = true;
+					p = (pst) tp;
+					if (fwrite(p, tlen, 1, fh) <= 0)
+						rc = false;
+					len = tlen;
+					goto endline;
+				}
+
+				if (cw->utf16Mode || cw->utf32Mode) {
+					utfHigh((char *)p, len, &tp, &tlen);
 					if (alloc_p)
 						free(p);
 					alloc_p = true;

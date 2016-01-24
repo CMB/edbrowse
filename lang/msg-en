@@ -364,7 +364,7 @@ no attachment at line %d
 invalid account number at line %d
 no edbrowse temp directory available
 line %d should begin with to: attach: alt: account: or subject:
-0
+converting to utf16
 no recipients specified, place to: emailaddress at the top of youre file
 %s:// expected
 unrecognized protocol %s
@@ -383,7 +383,7 @@ could not spawn subcommand %s, errno %d
 could not create temp file %s, errno %d
 too many sql tables in cache, limit %d
 %s is not a regular file
-0
+converting to utf32
 cannot read the contents of %s
 cannot access %s
 $%s is not defined

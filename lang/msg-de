@@ -364,7 +364,7 @@ kein Anhang in Zeile %d
 ungültige Kontonummber in Zeile %d
 kein temporäres Verzeichnis
 Zeile %d sollte mit: attach: alt: account: oder subject: beginnen
-0
+konvertiere in utf16
 keine Empfänger angegeben, platzieren Sie to: emailadresse an den Anfang
 %s:// erwartet
 unbekanntes Protokoll %s
@@ -383,7 +383,7 @@ konnte Subkommando %s nicht ausführen, Erno %d
 konnte temporär Datei %s nicht anlegen, Erno %d
 zu viele SQL-Tabellen im Cache, Grenze %d
 %s ist keine reguläre Datei
-0
+konvertiere in utf32
 kann Inhalt von %s nicht lesen
 kann auf %s nicht zugreifen
 $%s ungültige
