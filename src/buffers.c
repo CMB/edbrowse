@@ -1572,6 +1572,8 @@ static bool writeFile(const char *name, int mode)
 	char *modeString;
 	int modeString_l;
 
+	fileSize = 0;
+
 	if (memEqualCI(name, "file://", 7))
 		name += 7;
 
@@ -1611,6 +1613,7 @@ static bool writeFile(const char *name, int mode)
 		setError(MSG_NoCreate2, name);
 		return false;
 	}
+
 // If writing to the same file and converting, print message,
 // and perhaps write the byte order mark.
 	if (name == cw->fileName && iuConvert) {
@@ -1623,14 +1626,26 @@ static bool writeFile(const char *name, int mode)
 		if (cw->utf16Mode) {
 			if (debugLevel >= 1)
 				i_puts(MSG_ConvUtf16);
+			if (fwrite
+			    ((cw->bigMode ? "\xfe\xff" : "\xff\xfe"), 2, 1,
+			     fh) <= 0) {
+badwrite:
+				setError(MSG_NoWrite2, name);
+				fclose(fh);
+				return false;
+			}
 		}
 		if (cw->utf32Mode) {
 			if (debugLevel >= 1)
 				i_puts(MSG_ConvUtf32);
+			if (fwrite
+			    ((cw->
+			      bigMode ? "\x00\x00\xfe\xff" :
+			      "\xff\xfe\x00\x00"), 4, 1, fh) <= 0)
+				goto badwrite;
 		}
 	}
 
-	fileSize = 0;
 	for (i = startRange; i <= endRange; ++i) {
 		pst p = fetchLine(i, (cw->browseMode ? 1 : -1));
 		int len = pstLength(p);
@@ -1690,7 +1705,7 @@ static bool writeFile(const char *name, int mode)
 /* Write this line with directory suffix, and possibly attributes */
 		--len;
 		if (fwrite(p, len, 1, fh) <= 0) {
-badwrite:
+badline:
 			rc = false;
 			goto endline;
 		}
@@ -1702,36 +1717,33 @@ badwrite:
 			char *extra;
 			len = strlen(suf);
 			if (len && fwrite(suf, len, 1, fh) <= 0)
-				goto badwrite;
+				goto badline;
 			++len;	/* for nl */
 			extra = cw->r_map[i].text;
 			l = strlen(extra);
 			if (l) {
 				if (fwrite(" ", 1, 1, fh) <= 0)
-					goto badwrite;
+					goto badline;
 				++len;
 				if (fwrite(extra, l, 1, fh) <= 0)
-					goto badwrite;
+					goto badline;
 				len += l;
 			}
 			if (fwrite("\n", 1, 1, fh) <= 0)
-				goto badwrite;
+				goto badline;
 			goto endline;
 		}
 
 		strcat(suf, "\n");
 		len = strlen(suf);
 		if (fwrite(suf, len, 1, fh) <= 0)
-			goto badwrite;
+			goto badline;
 
 endline:
 		if (alloc_p)
 			free(p);
-		if (!rc) {
-			setError(MSG_NoWrite2, name);
-			fclose(fh);
-			return false;
-		}
+		if (!rc)
+			goto badwrite;
 		fileSize += len;
 	}			/* loop over lines */
 
