@@ -107,6 +107,7 @@ void breakLineSetup(void) ;
 char *htmlReformat(char *buf) ;
 void extractEmailAddresses(char *line) ;
 void cutDuplicateEmails(char *tolist, char *cclist, const char *reply) ;
+int byteOrderMark(const uchar *buf, int buflen);
 bool looksBinary(const char *buf, int buflen) ;
 void looks_8859_utf8(const char *buf, int buflen, bool * iso_p, bool * utf8_p) ;
 char *base64Encode(const char *inbuf, int inlen, bool lines);

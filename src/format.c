@@ -1004,13 +1004,32 @@ void cutDuplicateEmails(char *tolist, char *cclist, const char *reply)
 	}
 }				/* cutDuplicateEmails */
 
+/* return 1 for utf16, 2 for utf32, ored with 4 for big endian */
+int byteOrderMark(const uchar * buf, int buflen)
+{
+	if (buflen < 2)
+		return 0;
+	if (buf[0] == 0xfe && buf[1] == 0xff)
+		return 5;
+	if (buf[0] == 0xff && buf[1] == 0xfe) {
+		if (buflen >= 4 && buf[2] == 0 && buf[3] == 0)
+			return 2;
+		return 1;
+	}
+	if (buflen >= 4 && !memcmp(buf, "\x0\x0\xfe\xff", 4))
+		return 6;
+	return 0;
+}				/* byteOrderMark */
+
 /*********************************************************************
-We got some data, from a file or from the internet.
+We got some data from a file or from the internet.
 Count the binary characters and decide if this is, on the whole,
 binary or text.  I allow some nonascii chars,
 like you might see in Spanish or German, and still call it text,
 but if there's too many such chars, I call it binary.
 It's not an exact science.
+utf8 sequences are considered text characters.
+If there is a leading byte order mark as per the previous routine, it's text.
 *********************************************************************/
 
 bool looksBinary(const char *buf, int buflen)
@@ -1018,6 +1037,10 @@ bool looksBinary(const char *buf, int buflen)
 	int i, j, bincount = 0, charcount = 0;
 	char c;
 	uchar seed;
+
+	if (byteOrderMark((uchar *) buf, buflen))
+		return false;
+
 	for (i = 0; i < buflen; ++i, ++charcount) {
 		c = buf[i];
 // 0 is ascii, but not really text, and very common in binary files.
@@ -1042,6 +1065,7 @@ binchar:
 // this is valid utf8 char, don't treat it as binary.
 		i += j;
 	}
+
 	return (bincount * 8 - 16 >= charcount);
 }				/* looksBinary */
 
