@@ -1635,12 +1635,11 @@ static bool writeFile(const char *name, int mode)
 		stringAndChar(&modeString, &modeString_l, 'a');
 	else
 		stringAndChar(&modeString, &modeString_l, 'w');
-	if (cw->binMode)
+	if (cw->binMode | cw->utf16Mode | cw->utf32Mode)
 		stringAndChar(&modeString, &modeString_l, 'b');
 
 	fh = fopen(name, modeString);
 	nzFree(modeString);
-
 	if (fh == NULL) {
 		setError(MSG_NoCreate2, name);
 		return false;
