@@ -4325,6 +4325,10 @@ bool runCommand(const char *line)
 		}		/* was there something after m or t */
 	}
 
+/* -c is the config file */
+	if ((cmd == 'b' || cmd == 'e') && stringEqual(line, "-c"))
+		line = configFile;
+
 /* env variable and wild card expansion */
 	if (strchr("brewf", cmd) && first && !isURL(line) && !isSQL(line)) {
 		if (cmd != 'r' || !cw->sqlMode) {

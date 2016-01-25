@@ -1069,12 +1069,16 @@ Use the -c option to edit the config file directly.&nbsp;
 It is automatically loaded into buffer 1.&nbsp;
 Note that -c must be the first option.&nbsp;
 Make changes, save the file, and type `config' to reload the file.&nbsp;
-If there is another error you may need to make another change, save, and reload.&nbsp;
+If there is another error you may need to make another change, save, and reconfig.&nbsp;
 Continue until there are no errors.&nbsp;
-Processing of the config file stops at the first error, so you really want a clean load.
+Processing of the config file stops at the first error, so you really want a clean run.
 
 <P>
-The arguments are the files to edit.&nbsp;
+From within edbrowse, a file name of -c is treated as the config file.&nbsp;
+You can switch to a new session, view, edit, save, and reaply the config file without ever leaving edbrowse.
+
+<P>
+The arguments to edbrowse are the files to edit.&nbsp;
 Edbrowse reads these files into corresponding sessions
 and starts in session 1.&nbsp;
 If there are no arguments, you start in session 1
@@ -2815,16 +2819,19 @@ This feature is for developers, and is not very helpful for end users.
 At startup, edbrowse reads and parses a config file.&nbsp;
 It's ok if this file is missing, but if it is present
 it should be syntactically correct.&nbsp;
-If there is an error, edit the config file, fix the error, and type `config' to reload.&nbsp;
-Continue until there are no errors.&nbsp;
-Processing of the config file stops at the first error, so you really want a clean load.&nbsp;
-Remember that `edbrowse -c', from the command line, will edit the config file directly.
+If there is an error, edit the config file, fix the error, and type `config' to reapply.&nbsp;
+Repeat until there are no errors.&nbsp;
+Processing of the config file stops at the first error, so you really want a clean run.&nbsp;
+Remember that `edbrowse -c', from the command line, will edit the config file directly.&nbsp;
+Also, from within edbrowse, a file name of -c is treated as the config file.&nbsp;
+You can switch to a new session, view, edit, save, and reaply the config file without ever leaving edbrowse.
+
 
 <P>
 The config file is in $HOME/.ebrc.&nbsp;
 The "eb" is shorthand for edbrowse.&nbsp;
 You cannot rename the config file; it is what it is.&nbsp;
-This is true on Windows as well, so make sure HOME is set.
+The location in Windows is different, but still based on $HOME.
 
 <P>
 The config file is line oriented.&nbsp;
