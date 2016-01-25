@@ -1393,7 +1393,6 @@ static bool readFile(const char *filename, const char *post)
 	int readSize;		/* should agree with fileSize */
 	int fh;			/* file handle */
 	bool rc;		/* return code */
-	bool is8859, isutf8;
 	char *nopound;
 	char filetype;
 
@@ -1500,6 +1499,7 @@ gotdata:
 
 	if (!looksBinary(rbuf, fileSize)) {
 		char *tbuf;
+
 /* looks like text.  In DOS, we should have compressed crlf.
  * Let's do that now. */
 #ifdef DOSLIKE
@@ -1513,29 +1513,60 @@ gotdata:
 		rbuf[j] = 0;
 		fileSize = j;
 #endif
+
 		if (iuConvert) {
-/* Classify this incoming text as ascii or 8859 or utf8 */
-			looks_8859_utf8(rbuf, fileSize, &is8859, &isutf8);
-			debugPrint(3, "text type is %s",
-				   (isutf8 ? "utf8"
-				    : (is8859 ? "8859" : "ascii")));
-			if (cons_utf8 && is8859) {
+			bool isbig = false, is8859 = false, isutf8 = false;
+/* Classify this incoming text as ascii or 8859 or utf-x */
+			int bom = byteOrderMark(rbuf, fileSize);
+			if (bom) {
+				debugPrint(3, "text type is %s%s",
+					   ((bom & 4) ? "big " : ""),
+					   ((bom & 2) ? "utf32" : "utf16"));
 				if (debugLevel >= 2 || debugLevel == 1
 				    && !isURL(filename))
-					i_puts(MSG_ConvUtf8);
-				iso2utf(rbuf, fileSize, &tbuf, &fileSize);
+					i_puts(cons_utf8 ? MSG_ConvUtf8 :
+					       MSG_Conv8859);
+				utfLow(rbuf, fileSize, &tbuf, &fileSize, bom);
 				nzFree(rbuf);
 				rbuf = tbuf;
+			} else {
+				looks_8859_utf8(rbuf, fileSize, &is8859,
+						&isutf8);
+				debugPrint(3, "text type is %s",
+					   (isutf8 ? "utf8"
+					    : (is8859 ? "8859" : "ascii")));
+				if (cons_utf8 && is8859) {
+					if (debugLevel >= 2 || debugLevel == 1
+					    && !isURL(filename))
+						i_puts(MSG_ConvUtf8);
+					iso2utf(rbuf, fileSize, &tbuf,
+						&fileSize);
+					nzFree(rbuf);
+					rbuf = tbuf;
+				}
+				if (!cons_utf8 && isutf8) {
+					if (debugLevel >= 2 || debugLevel == 1
+					    && !isURL(filename))
+						i_puts(MSG_Conv8859);
+					utf2iso(rbuf, fileSize, &tbuf,
+						&fileSize);
+					nzFree(rbuf);
+					rbuf = tbuf;
+				}
 			}
-			if (!cons_utf8 && isutf8) {
-				if (debugLevel >= 2 || debugLevel == 1
-				    && !isURL(filename))
-					i_puts(MSG_Conv8859);
-				utf2iso(rbuf, fileSize, &tbuf, &fileSize);
-				nzFree(rbuf);
-				rbuf = tbuf;
-			}
+
+// if reading into an empty buffer, set the mode and print message
 			if (!cw->dol) {
+				if (bom & 2) {
+					cw->utf32Mode = true;
+					debugPrint(3, "setting utf32 mode");
+				}
+				if (bom & 1) {
+					cw->utf16Mode = true;
+					debugPrint(3, "setting utf16 mode");
+				}
+				if (bom & 4)
+					cw->bigMode = true;
 				if (isutf8) {
 					cw->utf8Mode = true;
 					debugPrint(3, "setting utf8 mode");
@@ -1545,6 +1576,7 @@ gotdata:
 					debugPrint(3, "setting 8859 mode");
 				}
 			}
+
 		}
 	} else if (binaryDetect & !cw->binMode) {
 		i_puts(MSG_BinaryData);
@@ -1613,7 +1645,6 @@ static bool writeFile(const char *name, int mode)
 		setError(MSG_NoCreate2, name);
 		return false;
 	}
-
 // If writing to the same file and converting, print message,
 // and perhaps write the byte order mark.
 	if (name == cw->fileName && iuConvert) {
@@ -1639,8 +1670,7 @@ badwrite:
 			if (debugLevel >= 1)
 				i_puts(MSG_ConvUtf32);
 			if (fwrite
-			    ((cw->
-			      bigMode ? "\x00\x00\xfe\xff" :
+			    ((cw->bigMode ? "\x00\x00\xfe\xff" :
 			      "\xff\xfe\x00\x00"), 4, 1, fh) <= 0)
 				goto badwrite;
 		}

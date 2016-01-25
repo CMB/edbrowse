@@ -108,8 +108,12 @@ char *htmlReformat(char *buf) ;
 void extractEmailAddresses(char *line) ;
 void cutDuplicateEmails(char *tolist, char *cclist, const char *reply) ;
 int byteOrderMark(const uchar *buf, int buflen);
-bool looksBinary(const char *buf, int buflen) ;
-void looks_8859_utf8(const char *buf, int buflen, bool * iso_p, bool * utf8_p) ;
+bool looksBinary(const char *buf, int buflen);
+void looks_8859_utf8(const char *buf, int buflen, bool * iso_p, bool * utf8_p);
+void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p);
+void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p);
+void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p);
+void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p, int bom);
 char *base64Encode(const char *inbuf, int inlen, bool lines);
 void iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
 bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l);
@@ -211,9 +215,6 @@ bool validAccount(int n) ;
 bool sendMailCurrent(int sm_account, bool dosig) ;
 
 /* sourcefile=messages.c */
-void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
-void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
-void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
 void selectLanguage(void) ;
 const char *i_getString(int msg);
 void i_puts(int msg) ;
