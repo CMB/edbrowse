@@ -1553,6 +1553,15 @@ gotdata:
 					nzFree(rbuf);
 					rbuf = tbuf;
 				}
+				if (cons_utf8 && isutf8) {
+// Strip off the leading bom, if any, and no we're not going to put it back.
+					if (fileSize >= 3 &&
+					    !memcmp(rbuf, "\xef\xbb\xbf", 3)) {
+						fileSize -= 3;
+						memmove(rbuf, rbuf + 3,
+							fileSize);
+					}
+				}
 			}
 
 // if reading into an empty buffer, set the mode and print message
