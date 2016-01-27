@@ -107,6 +107,7 @@ static void anchorSwap(char *buf)
 	char c, d, *s, *ss, *w, *a;
 	bool pretag;		// <pre>
 	bool premode;		// inside <pre> </pre>
+	bool inputmode;		// inside an input field
 	bool slash;		// closing tag
 	bool change;		// made a swap somewhere
 	bool strong;		// strong whitespace, newline or paragraph
@@ -123,10 +124,28 @@ static void anchorSwap(char *buf)
  * Watch out for utf8 - don't translate the a0 in c3a0.  That is a grave.
  * But a0 by itself is breakspace; turn it into space.
  * And c2a0 is a0 is breakspace.
- * Then get rid of hyperlinks with absolutely nothing to click on. */
+ * Don't do any of these transliterations in an input field. */
 
+	inputmode = false;
 	for (s = w = buf; c = *s; ++s) {
 		d = s[1];
+		if (c == InternalCodeChar && isdigitByte(d)) {
+			strtol(s + 1, &ss, 10);
+			if (*ss == '<')
+				inputmode = true;
+			if (*ss == '>')
+				inputmode = false;
+			++ss;
+			n = ss - s;
+			memmove(w, s, n);
+			w += n;
+			s = ss - 1;
+			continue;
+		}
+
+		if (inputmode)
+			goto put1;
+
 /* utf8 test */
 		if ((c & 0xc0) == 0xc0 && (d & 0xc0) == 0x80) {
 			unsigned int uni = 0;
