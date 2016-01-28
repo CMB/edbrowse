@@ -6,6 +6,9 @@ convert to utf8 or iso8859-1 as per the console setting,
 though the latter is deprecated.
 Convert back only if writing back out to the same file.
 
+Enter high unicodes by the string ~u....;
+where the dots are hex digits and the semi is optional.
+
 3.6.1:
 Merge edbrowse and edbrowse-js back into one executable image.
 More convenient for distribution.

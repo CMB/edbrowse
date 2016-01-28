@@ -113,6 +113,7 @@ void looks_8859_utf8(const char *buf, int buflen, bool * iso_p, bool * utf8_p);
 void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p);
 void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p);
 void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p);
+char *uni2utf8(unsigned int unichar);
 void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p, int bom);
 char *base64Encode(const char *inbuf, int inlen, bool lines);
 void iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;

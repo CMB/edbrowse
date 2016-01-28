@@ -451,10 +451,24 @@ addchar:
 			++i;
 			goto addchar;
 		}
-		if (!isxdigit(d))
-			goto addchar;
-		e = s[i + 2];
-		if (!isxdigit(e))
+		e = 0;
+		if (d)
+			e = s[i + 2];
+		if (d == 'u' && isxdigit(e)) {
+			unsigned int unicode;
+			char *t;
+			int l;
+			unicode = strtol((char *)s + i + 2, &t, 16);
+			if (*t == ';')
+				++t;
+			i = (uchar *) t - s;
+			t = uni2utf8(unicode);
+			l = strlen(t);
+			memcpy(s + j, t, l);
+			j += l;
+			continue;
+		}
+		if (!isxdigit(d) || !isxdigit(e))
 			goto addchar;
 		c = fromHex(d, e);
 		if (c == '\n')

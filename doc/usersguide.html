@@ -1122,9 +1122,16 @@ To force a ~, even though there are hex digits following,
 use two tildes, ~~.
 
 <P>
-Of course characters are not usually entered in this awkward manner.&nbsp;
-There are easier ways to enter accented letters into your document, depending on your native language
-and the configuration of your system.
+for international text,
+there are easier ways to enter accented letters into your document,
+assuming those letters are in your native language and your keyboard has been configured appropriately.&nbsp;
+In other words, there are typically keyboard shortcuts for your accented letters, so no need to mess with utf8.&nbsp;
+Use ~u to enter a high unicode outside of your native language and beyond your keyboard shortcuts.&nbsp;
+The unicode is in hex.&nbsp;
+Thus ~u3b3; is the Greek letter gamma.&nbsp;
+The semicolon is optional.&nbsp;
+You only need it if another hex digit follows, as in ~u3b3;4 for gamma4.&nbsp;
+hello~u1f600world puts a grin emoji between hello and world, because w cannot be confused with a hex digit.
 
 <P>
 Regular expressions can be entered via hex or octal.&nbsp;

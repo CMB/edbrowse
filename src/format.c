@@ -1324,8 +1324,9 @@ void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 }				/* utfHigh */
 
 /* convert a 32 bit unicode character into utf8 */
-static void uni2utf8(unsigned int unichar, unsigned char *outbuf)
+char *uni2utf8(unsigned int unichar)
 {
+static uchar outbuf[12];
 	int n = 0;
 
 	if (unichar <= 0x7f) {
@@ -1358,6 +1359,7 @@ static void uni2utf8(unsigned int unichar, unsigned char *outbuf)
 	}
 
 	outbuf[n] = 0;
+return (char *)outbuf;
 }				/* uni2utf8 */
 
 void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
@@ -1446,9 +1448,7 @@ void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 // ok we got the unicode.
 // It now becomes utf8 or iso8859-x
 		if (cons_utf8) {
-			char u8buf[12];
-			uni2utf8(unicode, u8buf);
-			stringAndString(&obuf, &obuf_l, u8buf);
+			stringAndString(&obuf, &obuf_l, uni2utf8(unicode));
 			continue;
 		}
 // iso8859-x here, practically deprecated
