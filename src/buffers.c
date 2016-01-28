@@ -462,10 +462,14 @@ addchar:
 			if (*t == ';')
 				++t;
 			i = (uchar *) t - s;
-			t = uni2utf8(unicode);
-			l = strlen(t);
-			memcpy(s + j, t, l);
-			j += l;
+			if (cons_utf8) {
+				t = uni2utf8(unicode);
+				l = strlen(t);
+				memcpy(s + j, t, l);
+				j += l;
+			} else {
+				t[j++] = (c <= 0xff ? c : '?');
+			}
 			continue;
 		}
 		if (!isxdigit(d) || !isxdigit(e))
