@@ -169,6 +169,36 @@ static void nestedAnchors(int start)
 	}
 }				/* nestedAnchors */
 
+/*********************************************************************
+Bad html will derail tidy, so that <a><div>stuff</div></a>
+will push div outside the anchor, to render as  {} stuff
+This routine tries to put it back.
+An anchor with no children followd by div
+moves div under the anchor.
+*********************************************************************/
+
+static void emptyAnchors(int start)
+{
+	int j;
+	struct htmlTag *a0, *div, *up;
+
+	for (j = start; j < cw->numTags; ++j) {
+		a0 = tagList[j];
+		if (a0->action != TAGACT_A || a0->firstchild)
+			continue;
+// anchor no children
+		for (up = a0; up; up = up->parent)
+			if (up->sibling)
+				break;
+		if (!up || !(div = up->sibling) || div->action != TAGACT_DIV)
+			continue;
+// div follows
+		up->sibling = div->sibling;
+		a0->firstchild = div;
+		div->parent = a0;
+	}
+}				/* emptyAnchors */
+
 void formControl(struct htmlTag *t, bool namecheck)
 {
 	int itype = t->itype;
@@ -541,6 +571,7 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 void prerender(int start)
 {
 	nestedAnchors(start);
+	emptyAnchors(start);
 
 	currentForm = currentSel = currentOpt = NULL;
 	currentTitle = currentScript = currentTA = NULL;
