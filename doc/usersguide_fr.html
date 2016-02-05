@@ -1104,17 +1104,25 @@ des commandes de Edbrowse.&nbsp;
 </p>
 
 <p>
-Utilisez «&nbsp;-c&nbsp;» pour désactiver et éditer, le fichier de configuration «&nbsp;.ebrc&nbsp;».&nbsp;
+Utilisez «&nbsp;-c&nbsp;» pour désactiver et éditer le fichier de configuration «&nbsp;.ebrc&nbsp;».&nbsp;
 (Ce fichier de config sera décrit plus tard).&nbsp;
-Pourquoi le faire? Supposez que vous avez modifié ce fichier, avec une erreur de syntaxe, 
-de telle sorte que Edbrowse ne puisse même pas démarrer.&nbsp;
-Vous ne pourriez plus employer Edbrowse pour fixer votre fichier de configuration.&nbsp;
-Naturellement vous pourriez renommer le fichier de configuration, fixer l'erreur, 
-et revenir en arrière ; mais alors vous pourriez découvrir une autre erreur de syntaxe, 
-et ainsi de suite.&nbsp;
-Au lieu de cela, l'option «&nbsp;-c&nbsp;» permet d'éditer le fichier de configuration directement.&nbsp;
+Vous devrez le faire si votre fichier de configuration comporte des erreurs des erreurs
+de syntaxe, lesquelles sont affichées au démarrage de Edbrowse.
+Utilisez l'option -c pour modifier le fichier de configuration directement.
 Il est automatiquement chargé dans le tampon 1.&nbsp;
 Noter que «&nbsp;-c&nbsp;» doit être la première option.&nbsp;
+Faites les modifications, sauvegardez, et tapez "config" pour recharger le
+fichier.
+S'il y une autre erreur, vous devrez refaire un changement, sauvegarder, et réappliquer.
+Poursuivez jusqu'à ce qu'il n'y ait plus d'erreurs.
+La lecture du fichier de configuration s'arrête à la première erreur, ainsi vous aurez un 
+un système propre.
+</p>
+
+<p>
+Pour Edbrowse, le nom de fichier -c est traité comme le fichier de configuration.
+Vous pouvez changer de session, afficher, éditer, sauvegarder et manipuler le
+fichier de configuration sans quitter Edbrowse.
 </p>
 
 <p>
@@ -1167,9 +1175,16 @@ employez deux tildes, «&nbsp;~~&nbsp;».&nbsp;
 </p>
 
 <p>
-Bien sûr, les caractères ne sont pas entrés de cette manière incommode.&nbsp;
-Il y a des moyens plus simples de taper des caractères accentués dans vore document, selon 
-votre langue et la configuration de votre système.
+Pour des langues étrangères, il y des moyens commodes de taper des lettres accentuées, 
+en admettant que ces lettres font partie de la langue de votre système et que votre 
+clavier ait été correctement configuré. En d'autres termes, il y a des raccourcis clavier 
+pour vos lettres accentuées, ainsi vous n'avez pas à vous soucier de UTF-8.
+Utiliser ~u pour entrer un caractère Unicode extérieur à votre langue et non disponible 
+avec un raccourci clavier. L'unicode est en hexa.
+Ainsi, ~u3b3; est  la lettre grecque gamma. Le point-virgule est optionnel. Il n'est 
+nécessaire que si un autre caractère hexa suit, comme dans ~u3b3;4 pour gamma4. 
+hello~u1f600monde met un emoji entre hello et monde, parce que m ne peut confondu 
+avec un caractère hexa.
 </p>
 
 <p>
@@ -2991,20 +3006,21 @@ développeurs, et n'est pas très utile à l'utilisateur final..
 Au démarrage, Edbrowse lit et analyse un fichier de configuration.&nbsp;
 Cela fonctionne si ce fichier est absent, mais s'il est présent, 
 il doit être syntaxiquement correct.&nbsp;
-Une erreur dans votre fichier de configuration fera quitter Edbrowse.&nbsp;
-Si cela se produit, employez l'option «&nbsp;-c&nbsp;» pour éditer le fichier de configuration 
-directement.&nbsp;
-Ceci passe outre l'initialisation, vous place dans l'éditeur, 
-avec le fichier de configuration préchargé.&nbsp;
-Faites vos corrections, sauvegardez le fichier, quittez, et relancez Edbrowse.&nbsp;
-Répétez ces étapes jusqu'à ce qu'il n'y ait plus d'erreur, 
-et vous verrez les mots «&nbsp;Edbrowse prêt&nbsp;».&nbsp;.
+S'il y a une erreur, éditez le fichier de configuration, corrigez l'erreur, et 
+tapez "config" pour l'appliquer à nouveau.
+Recommencez jusqu'à ce qu'il n'y ait plus d'erreurs, ainsi vous aurez un 
+fonctionnement impeccable.
+Souvenez-vous que "edbrowse -c" vous permet d'éditer le fichier de configuration 
+directement. 
+Egalement, pour Edbrowse, un fichier nommé -c est traité comme le fichier de configuration. 
+Vous pouvez changer de session, modifier, afficher, éditer, sauvegarder et réappliquer 
+le fichier de configuration sans quitter Edbrowse.
 
 <p>
 Le fichier de configuration est dans $HOME/.ebrc.&nbsp;
 Le «&nbsp;eb&nbsp;» est un raccourci pour Edbrowse.&nbsp;
 Vous ne pouvez pas renommer le fichier de configuration ; il est ce qu'il est.&nbsp;
-C'est également vrai sur Windows , donc s'assurer que la variable HOME est définie.&nbsp;
+L'emplacement sous Windows est différent, mais toujours basé sur la variable HOME.&nbsp;
 </p>
 
 <p>
