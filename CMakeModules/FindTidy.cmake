@@ -71,21 +71,20 @@ if (_TIDY_SEARCHES)
             endforeach()
         endif ()
     else ()
-        foreach(search ${_TIDY_SEARCHES})
-          find_path(TIDY_INCLUDE_DIR
-            NAMES tidy.h
-            PATHS ${search}
-            PATH_SUFFIXES include
-            NO_DEFAULT_PATH)
-          find_library(TIDY_LIBRARY
-            NAMES ${TIDY_NAMES}
-            PATHS ${search}
-            PATH_SUFFIXES lib
-            NO_DEFAULT_PATH)
-        endforeach()
+        find_path(TIDY_INCLUDE_DIR
+          NAMES tidy.h
+          PATHS ${_TIDY_SEARCHES}
+          PATH_SUFFIXES include
+          NO_DEFAULT_PATH)
+        find_library(TIDY_LIBRARY
+          NAMES ${TIDY_NAMES}
+          PATHS ${_TIDY_SEARCHES}
+          PATH_SUFFIXES lib
+          NO_DEFAULT_PATH)
     endif ()
+endif ()
 
-else ()
+if (NOT TIDY_LIBRARY OR NOT TIDY_INCLUDE_DIR)
     message(STATUS "+++ Default search with no search paths")
     find_path(TIDY_INCLUDE_DIR
         NAMES tidy.h
