@@ -196,6 +196,7 @@ static void emptyAnchors(int start)
 		up->sibling = div->sibling;
 		a0->firstchild = div;
 		div->parent = a0;
+		div->sibling = 0;
 	}
 }				/* emptyAnchors */
 
@@ -314,9 +315,9 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 	int action = t->action;
 	const char *a;		/* usually an attribute */
 
-#if 0
-	printf("prend %c%s\n", (opentag ? ' ' : '/'), t->info->name);
-#endif
+	debugPrint(6, "prend %c%s %d%s",
+		   (opentag ? ' ' : '/'), t->info->name,
+		   t->seqno, (t->step >= 1 ? "-" : ""));
 
 	if (t->step >= 1)
 		return;
@@ -571,7 +572,10 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 void prerender(int start)
 {
 	nestedAnchors(start);
+/* emptyAnchors shouldn't cause any trouble, but it does!
+ * http://stackoverflow.com/questions/8432584/how-to-make-notepad-to-save-text-in-utf-8-without-bom
 	emptyAnchors(start);
+ */
 
 	currentForm = currentSel = currentOpt = NULL;
 	currentTitle = currentScript = currentTA = NULL;
@@ -1001,9 +1005,7 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		return;
 	t->step = 2;
 
-#if 0
-	printf("decorate %s\n", t->info->name);
-#endif
+	debugPrint(6, "decorate %s %d", t->info->name, t->seqno);
 
 	switch (action) {
 	case TAGACT_TEXT:
