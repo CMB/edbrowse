@@ -956,6 +956,10 @@ mimestream:
 	while (still_fetching == true) {
 		char *redir = NULL;
 		cbd.length = &serverDataLen;
+// An earlier 302 redirection could set content type = application/binary,
+// which in turn sets state = 1, which is ignored since 302 takes precedence.
+// So state might still be 1, set it back to 0.
+		cbd.down_state = 0;
 
 perform:
 		curlret = fetch_internet(h, true);
@@ -1814,6 +1818,8 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb,
 		    (!pluginsOn || !cw->mt || cw->mt->download)) {
 			data->down_state = 1;
 			down_msg = MSG_Down;
+			debugPrint(3, "potential download based on type %s",
+				   hct);
 		}
 	}
 
