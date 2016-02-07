@@ -922,7 +922,7 @@ static void addToMap(int nlines, int destl)
 }				/* addToMap */
 
 /* Add a block of text into the buffer; uses addToMap(). */
-bool addTextToBuffer(const pst inbuf, int length, int destl, bool onside)
+bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail)
 {
 	int i, j, linecount = 0;
 	struct lineMap *t;
@@ -943,7 +943,7 @@ bool addTextToBuffer(const pst inbuf, int length, int destl, bool onside)
 		++linecount;	/* last line wasn't counted */
 		if (destl == cw->dol) {
 			cw->nlMode = true;
-			if (cmd != 'b' && !cw->binMode && !ismc && !onside)
+			if (cmd != 'b' && !cw->binMode && showtrail)
 				i_puts(MSG_NoTrailing);
 		}
 	}
@@ -1427,6 +1427,7 @@ static bool readFile(const char *filename, const char *post)
 	}
 
 	if (isURL(filename)) {
+// I don't think we need this domain checking code, it is pre-curl.
 		const char *domain = getHostURL(filename);
 		if (!domain)
 			return false;	/* some kind of error */
@@ -1611,7 +1612,8 @@ gotdata:
 	}
 
 intext:
-	rc = addTextToBuffer((const pst)rbuf, fileSize, endRange, false);
+	rc = addTextToBuffer((const pst)rbuf, fileSize, endRange,
+			     !isURL(filename));
 	free(rbuf);
 	return rc;
 }				/* readFile */
@@ -4713,7 +4715,7 @@ bool runCommand(const char *line)
 					int savedol = cw->dol;
 					addTextToBuffer((pst) rbuf,
 							strlen(rbuf), cw->dot,
-							false);
+							true);
 					nzFree(rbuf);
 					if (cw->dol > savedol) {
 						cw->labels[0] = startRange + 1;
@@ -5345,7 +5347,7 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 		cw->binMode = looksBinary(text, textlen);
 	}
 	if (textlen) {
-		rc = addTextToBuffer((pst) text, textlen, 0, true);
+		rc = addTextToBuffer((pst) text, textlen, 0, false);
 		cw->changeMode = false;
 		if (!rc)
 			i_printf(MSG_BufferPreload, cx);
