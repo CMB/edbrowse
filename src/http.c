@@ -773,6 +773,12 @@ bool httpConnect(const char *url, bool down_ok, bool webpage,
 	strcpy(creds_buf, ":");	/* Flush stale username and password. */
 	cw->mt = NULL;		/* should already be null */
 
+	host = getHostURL(url);
+	if (!host) {
+		setError(MSG_DomainEmpty);
+		return false;
+	}
+
 /* Pull user password out of the url */
 	user[0] = pass[0] = 0;
 	s = getUserURL(url);
@@ -2115,6 +2121,8 @@ CURLcode setCurlURL(CURL * h, const char *url)
 	else
 		debugPrint(3, "proxy %s", proxy);
 	host = getHostURL(url);
+	if (!host)		// should never happen
+		return CURLE_URL_MALFORMAT;
 	verify = mustVerifyHost(host);
 	curl_easy_setopt(h, CURLOPT_PROXY, proxy);
 	curl_easy_setopt(h, CURLOPT_SSL_VERIFYPEER, verify);

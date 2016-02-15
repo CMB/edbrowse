@@ -232,6 +232,10 @@ static bool httpDefault(const char *url)
 		if (s == end)
 			end = colon;
 	}
+// only domain characters allowed
+	for (s = url; s < end; ++s)
+		if (!isalnumByte(*s) && *s != '.' && *s != '-')
+			return false;
 /* need at least two embedded dots */
 	n = 0;
 	for (s = url + 1; s < end - 1; ++s)
@@ -272,7 +276,7 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 		    const char **portloc, int *port,
 		    const char **data, int *dalen, const char **post)
 {
-	const char *p, *q;
+	const char *p, *q, *pp;
 	int a;
 
 	if (proto)
@@ -377,7 +381,7 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 /* find the end of the domain */
 	q = p + strcspn(p, "@?#/\1");
 	if (*q == '@') {	/* user:password@host */
-		const char *pp = strchr(p, ':');
+		pp = strchr(p, ':');
 		if (!pp || pp > q) {	/* no password */
 			if (user)
 				*user = p;
@@ -398,6 +402,10 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 
 /* again, look for the end of the domain */
 	q = p + strcspn(p, ":?#/\1");
+// only domain characters allowed
+	for (pp = p; pp < q; ++pp)
+		if (!isalnumByte(*pp) && *pp != '.' && *pp != '-')
+			return -1;
 	if (host)
 		*host = p;
 	if (holen)
