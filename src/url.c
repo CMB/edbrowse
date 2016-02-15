@@ -259,7 +259,7 @@ static bool httpDefault(const char *url)
 		    && !domainSuffix[n][len])
 			return true;
 /* www.anything.xx is ok */
-	if (len == 2 && memEqualCI(url, "www.", 4))
+	if (len >= 2 && memEqualCI(url, "www.", 4))
 		return true;
 	return false;
 }				/* httpDefault */
