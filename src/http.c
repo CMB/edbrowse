@@ -2016,7 +2016,7 @@ int bg_jobs(bool iponly)
 		}
 		printf("%s", j->file + j->file2);
 		if (j->fsize)
-			printf(" %d/%d",
+			printf(" %d/%lu",
 			       (fileSizeByName(j->file) / CHUNKSIZE), j->fsize);
 		nl();
 	}
