@@ -178,7 +178,7 @@ rather than extended versions of the standard unix print functions.
 Thus I don't need the i_ prefix.
 *********************************************************************/
 
-char errorMsg[4000];
+char errorMsg[1024];
 
 /* Show the error message, not just the question mark, after these commands. */
 static const char showerror_cmd[] = "AbefMqrw^";
@@ -187,6 +187,8 @@ static const char showerror_cmd[] = "AbefMqrw^";
 void setError(int msg, ...)
 {
 	va_list p;
+	char *a;		// result of vasprintf
+	int l;
 
 	if (msg < 0) {
 		errorMsg[0] = 0;
@@ -194,15 +196,13 @@ void setError(int msg, ...)
 	}
 
 	va_start(p, msg);
-	vsprintf(errorMsg, i_getString(msg), p);
+	if (vasprintf(&a, i_getString(msg), p) < 0)
+		i_printfExit(MSG_MemAllocError, 4096);
 	va_end(p);
-
-/* sanity check */
-	if (strlen(errorMsg) >= sizeof(errorMsg)) {
-		i_printf(MSG_ErrorMessageLong, strlen(errorMsg));
-		puts(errorMsg);
-		exit(1);
-	}
+// If the error message is crazy long, truncate it.
+	l = sizeof(errorMsg) - 1;
+	strncpy(errorMsg, a, l);
+	nzFree(a);
 }				/* setError */
 
 void showError(void)
