@@ -412,7 +412,35 @@ dotimers:
 			add_history(last_rl);
 		s = (uchar *) last_rl;
 	} else {
-		s = (uchar *) fgets((char *)line, sizeof(line), stdin);
+		while (fgets((char *)line, sizeof(line), stdin)) {
+/* A bug in my keyboard causes nulls to be entered from time to time. */
+			c = 0;
+			i = 0;
+			while (i < sizeof(line) - 1 && (c = line[i]) != '\n') {
+				if (c == 0)
+					line[i] = ' ';
+				++i;
+			}
+			if (last_rl) {
+// paste this line piece onto the growing line.
+// This is not very efficient, but it hardly ever happens.
+				len = strlen(last_rl);
+// with nulls transliterated, strlen() returns the right answer
+				i = strlen(line);
+				last_rl = reallocMem(last_rl, len + i + 1);
+				strcpy(last_rl + len, line);
+			}
+			if (c == '\n')
+				goto tty_complete;
+			if (!last_rl)
+				last_rl = cloneString(line);
+		}
+		goto interrupt;
+tty_complete:
+		if (last_rl)
+			s = last_rl;
+		else
+			s = line;
 	}
 
 	if (!s) {
@@ -435,9 +463,6 @@ interrupt:
 	if (debugFile)
 		fprintf(debugFile, "* ");
 	while (i < len && (c = s[i]) != '\n') {
-/* A bug in my keyboard causes nulls to be entered from time to time. */
-		if (c == 0)
-			c = ' ';
 		if (debugFile)
 			fputc(c, debugFile);
 		if (c != '~') {
