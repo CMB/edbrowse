@@ -967,6 +967,14 @@ mimestream:
 // So state might still be 1, set it back to 0.
 		cbd.down_state = 0;
 
+// recheck suffix after a redirect
+		if (redirect_count &&
+		    (cw->mt = findMimeByURL(urlcopy)) && pluginsOn
+		    && cw->mt->stream) {
+			curl_easy_cleanup(h);
+			goto mimestream;
+		}
+
 perform:
 		curlret = fetch_internet(h, true);
 
