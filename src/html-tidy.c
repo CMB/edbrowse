@@ -119,6 +119,10 @@ void html2nodes(const char *htmltext, bool startpage)
 		tidyOptSetInt(tdoc, TidyBodyOnly, yes);
 	tidySetReportFilter(tdoc, tidyErrorHandler);
 //    tidySetReportFilter(tdoc, tidyReportFilter);
+	
+	// the following tidyOptSetBool implements 
+	// a fix for https://github.com/htacg/tidy-html5/issues/348 
+	tidyOptSetBool( tdoc, TidyEscapeScripts, no );
 
 	tidySetCharEncoding(tdoc, (cons_utf8 ? "utf8" : "latin1"));
 
