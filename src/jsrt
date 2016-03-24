@@ -677,7 +677,7 @@ if(!document.getElementById("sphere").innerHTML.match(/^Surface area/))
 fail(145);
 album = document.getElementById("album");
 album.innerHTML =
-"Why don't we do it <A href=http://en.wikipedia.org/wiki/White_album style='color: red ;illegal;legit3:okay;'>in the road<" + "/A>?";
+"Why don't we do it <A href=http://en.wikipedia.org/wiki/White_album style='color: red ;illegal;legit3:okay;'>in the road</A>?";
 /* all the js objects associated with this html should be here */
 var aa = album.getElementsByTagName("a")[0];
 if(!aa.href.match(/wikipedia.org/))
@@ -746,7 +746,7 @@ var x1  = document.createElement("div");
 var x2  = document.createElement("div");
 var x3  = document.createElement("div");
 var x4  = document.createElement("div");
-x4.innerHTML = "<A HREF='http://water.com' style='color:red;float:left'><\/A>";
+x4.innerHTML = "<A HREF='http://water.com' style='color:red;float:left'></A>";
 x3.appendChild(x4);
 x2.appendChild(x3);
 x1.appendChild(x2);
