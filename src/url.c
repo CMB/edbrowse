@@ -953,14 +953,13 @@ bool sameURL(const char *s, const char *t)
 	return !memcmp(s, t, l);
 }				/* sameURL */
 
-/* Find some helpful text to print, in place of an image.
+/* Find some helpful text to print in place of an image.
  * Not sure why we would need more than 1000 chars for this,
  * so return a static buffer. */
 char *altText(const char *base)
 {
 	static char buf[1000];
 	int len, n;
-	int recount = 0;
 	char *s;
 	debugPrint(6, "altText(%s)", base);
 	if (!base)
@@ -969,24 +968,16 @@ char *altText(const char *base)
 		return 0;
 	if (memEqualCI(base, "javascript", 10))
 		return 0;
-
-retry:
-	if (recount >= 2)
-		return 0;
 	strncpy(buf, base, sizeof(buf) - 1);
 	spaceCrunch(buf, true, false);
 	len = strlen(buf);
 	if (len && !isalnumByte(buf[len - 1]))
 		buf[--len] = 0;
-	while (len && !isalnumByte(buf[0]))
+	while (len && isspaceByte(buf[0]))
 		strmove(buf, buf + 1), --len;
 	if (len > 10) {
 /* see whether it's a phrase/sentence or a pathname/url */
-/* Do this by counting spaces */
-		for (n = 0, s = buf; *s; ++s)
-			if (*s == ' ')
-				++n;
-		if (n * 8 >= len)
+		if (!isURL(buf))
 			return buf;	/* looks like words */
 /* Ok, now we believe it's a pathname or url */
 /* get rid of post or get data */
@@ -1009,31 +1000,16 @@ retry:
 				*s = 0;
 		}
 /* Get rid of everything up to the last slash, leaving the file name */
+retry:
 		s = strrchr(buf, '/');
-		if (s && recount) {
-			char *ss;
-			*s = 0;
-			ss = strrchr(buf, '/');
-			if (!ss)
-				return 0;
-			if (ss > buf && ss[-1] == '/')
-				return 0;
-			*s = '/';
-			s = ss;
-		}
-		if (s)
+		if (s && s - buf >= 12) {
+			if (!s[1]) {
+				*s = 0;
+				goto retry;
+			}
 			strmove(buf, s + 1);
+		}
 	}			/* more than ten characters */
-	++recount;
-/* If we don't have enough letters, forget it */
-	len = strlen(buf);
-	if (len < 3)
-		goto retry;
-	for (n = 0, s = buf; *s; ++s)
-		if (isalphaByte(*s))
-			++n;
-	if (n * 2 <= len)
-		return 0;	/* not enough letters */
 	return buf;
 }				/* altText */
 
