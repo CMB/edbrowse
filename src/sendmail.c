@@ -661,7 +661,7 @@ static char *buildSMTPURL(const struct MACCOUNT *account)
 	if (smlogin)
 		++smlogin;
 	else
-		smlogin = account->login;
+		smlogin = "unknown";
 
 	if (account->outssl & 1)
 		scheme = "smtps";
