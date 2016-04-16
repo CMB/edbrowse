@@ -3701,6 +3701,19 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "bfl")) {
+		for (n = 1; n < MAXSESSION; ++n) {
+			struct ebWindow *lw = sessionList[n].lw;
+			if (!lw)
+				continue;
+			printf("%d: ", n);
+			if (lw->fileName)
+				printf("%s", lw->fileName);
+			nl();
+		}
+		return true;
+	}
+
 	if (stringEqual(line, "iu")) {
 		iuConvert ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
