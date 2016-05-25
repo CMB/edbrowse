@@ -1592,7 +1592,9 @@ static void processStyles(jsobjtype so, const char *stylestring)
 			skipWhite2(&sv);
 			trimWhite(s);
 			trimWhite(sv);
-			set_property_string(so, s, sv);
+// the property name has to be nonempty
+			if (*s)
+				set_property_string(so, s, sv);
 		}
 	}
 	nzFree(workstring);
