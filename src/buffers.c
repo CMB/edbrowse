@@ -38,7 +38,7 @@ static const char browse_cmd[] = "AbBdDefghHiklMnpqsvwXz=^<";
 /* Commands for sql mode. */
 static const char sql_cmd[] = "AadDefghHiklmnpqrsvwXz=^<";
 /* Commands for directory mode. */
-static const char dir_cmd[] = "AdDefghHklmnpqsvwXz=^<";
+static const char dir_cmd[] = "AbdDefghHklmnpqsvwXz=^<";
 /* Commands that work at line number 0, in an empty file. */
 static const char zero_cmd[] = "aAbefhHMqruwz=^<";
 /* Commands that expect a space afterward. */
@@ -5160,6 +5160,10 @@ rebrowse:
 
 browse:
 	if (cmd == 'b') {
+		if (cw->dirMode) {
+			setError(MSG_DirCommand, cmd);
+			return false;
+		}
 		if (!cw->browseMode) {
 			if (cw->binMode && (!cw->mt || !cw->mt->outtype)) {
 				setError(MSG_BrowseBinary);
