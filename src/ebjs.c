@@ -475,6 +475,13 @@ static int readMessage(void)
 		propval[l] = 0;
 	}
 
+/* stop at the first js error when debugging */
+	if (head.msglen && debugLevel >= 5) {
+		head.highstat = EJ_HIGH_CX_FAIL;
+		head.lowstat = 0;
+		debugPrint(5, "js abort due to error while debugging");
+	}
+
 	if (head.highstat == EJ_HIGH_CX_FAIL) {
 		if (head.lowstat == EJ_LOW_VARS)
 			i_puts(MSG_JSEngineVars);
