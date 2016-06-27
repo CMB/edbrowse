@@ -816,7 +816,16 @@ call out to process those and add them to the object */
  processStyles can rely on obj.style existing */
 			if (stylestring)
 				processStyles(so, stylestring);
-/* done with styles - on to forms */
+
+/* Other attributes that are expected by pages, even if they
+ * aren't populated at domLink-time */
+set_property_string(io, "className", "");
+set_property_string(io, "nodeValue","");
+instantiate_array(io, "attributes");
+set_property_object(io, "ownerDocument", cw->docobj);
+
+
+
 
 /* in the special case of form, also need an array of elements */
 			if (stringEqual(classname, "Form"))
@@ -1027,8 +1036,21 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		a = attribVal(t, "language");
 		if (a)
 			set_property_string(t->jv, "language", a);
+                a = attribVal(t, "src");
+                if (a)
+	        {
+        	        set_property_string(t->jv, "src", a);
+        	}else {
+        		set_property_string(t->jv, "src", "");
+        	}
+                a = attribVal(t, "data");
+                if (a)
+                {
+                        set_property_string(t->jv, "data", a);
+                }else {
+                        set_property_string(t->jv, "data", "");
+                }
 		break;
-
 	case TAGACT_FORM:
 		domLink(t, "Form", "action", "forms", cw->docobj, 0);
 		set_onhandlers(t);

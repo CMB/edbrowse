@@ -443,6 +443,14 @@ static void prepareScript(struct htmlTag *t)
 	a = attribVal(t, "language");
 	if (a && (!memEqualCI(a, "javascript", 10) || isalphaByte(a[10])))
 		return;
+/* Also reject a script if a type is specified and it is not JS.
+ * For instance, some JSON pairs in script tags on the amazon.com
+ * homepage. */
+	a = attribVal(t, "type");
+	if (a && (!memEqualCI(a, "javascript", 10)) && (!memEqualCI(a, "text/javascript", 15)))
+                return; 
+
+
 
 /* It's javascript, run with the source or the inline text.
  * As per the starting line number, we cant distinguish between

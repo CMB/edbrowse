@@ -229,22 +229,35 @@ c.style = new Object;
 c.childNodes = new Array;
 c.attributes = new Object;
 c.nodeName = t;
+c.nodeType = 1;
+c.nodeValue = undefined;
+c.className = new String;
+c.ownerDocument = document;
+c.tagName = t;
 return c;
 } 
 
 document.createTextNode = function(t) {
 var c = new TextNode(t);
 c.nodeName = "text";
+c.nodeValue = t;
+c.nodeType=3;
+c.ownerDocument = document;
+c.style = new Object;
+c.tagName = "text";
+c.className = new String;
 return c;
 }
 
 document.createDocumentFragment = function() {
 var c = document.createElement("fragment");
+c.nodeType = 11;
 return c;
 }
 
 document.createComment = function() {
 var c = document.createElement("comment");
+c.nodeType = 8;
 return c;
 }
 
@@ -1221,7 +1234,15 @@ if (protocol1 == sideprotocol)
 new_url = path;
 // ok - it is fully qualified already
 } else {
+
+sidehost_last = sidehost.substring(sidehost.length-1,sidehost.length);
+path_first = path.substring(0,1);
+if (sidehost_last !== '/' && path_first !== '/')
+{
+new_url = sideprotocol + '//' + sidehost + '/' + path;
+} else {
 new_url = sideprotocol + '//' + sidehost + path;
+}
 }
 return new_url;
 }
