@@ -478,7 +478,7 @@ return this.toString().substring(from, to);
 }
 // pages expect both substring and substr 
 URL.prototype.substr = function(from, to) {
-return this.toString().substring(from, to);
+return this.toString().substr(from, to);
 }
 URL.prototype.toLowerCase = function() { 
 return this.toString().toLowerCase();
