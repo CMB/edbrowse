@@ -1888,12 +1888,17 @@ static JSObject *setTimeout(unsigned int argc, jsval * argv, bool isInterval)
 	const char *allocatedName = NULL;
 	const char *s = NULL;
 
-	if (argc != 2 || !JSVAL_IS_INT(argv[1]))
-		goto badarg;
 
 	v0 = argv[0];
-	v1 = argv[1];
-	n = JSVAL_TO_INT(v1);
+	if (argc != 2 || !JSVAL_IS_INT(argv[1]))
+	{
+		// if only one parameter was supplied, hardcode
+		// a number of milliseconds.  1?  100?  1000?
+		n = 100;
+	} else {
+        	v1 = argv[1];
+        	n = JSVAL_TO_INT(v1);
+	}
 	if (JSVAL_IS_STRING(v0) ||
 	    v0.isObject() &&
 	    JS_ValueToObject(jcx, v0, fo.address()) &&
@@ -1980,9 +1985,6 @@ abort:
 		return to;
 	}
 
-badarg:
-	JS_ReportError(jcx, "invalid arguments to %s()", methname);
-	return NULL;
 }				/* setTimeout */
 
 /* set timer and set interval */

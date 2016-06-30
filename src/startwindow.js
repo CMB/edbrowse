@@ -16,7 +16,8 @@ The classes are created first, so that you can write meaningful prototypes here.
  * Better to have something than nothing at all. */
 height = 768;
 width = 1024;
-status = 0;
+// document.status is removed because it creates a conflict with
+// the status property of the XMLHttpRequest implementation
 defaultStatus = 0;
 returnValue = true;
 menubar = true;
@@ -30,6 +31,8 @@ document.bgcolor = "white";
 document.readyState = "loading";
 document.nodeType = 9;
 document.implementation = {};
+// pages seem to want document.style to exist
+document.style = {"bgcolor":"white"};
 
 screen = new Object;
 screen.height = 768;
@@ -64,7 +67,7 @@ return document.gebtn$(this, s);
 }
 document.gebtn$ = function(top, s) { 
 var a = new Array;
-if(s === '*' || (top.nodeName && top.nodeName === s))
+if(s === '*' || (top.nodeName && top.nodeName.toLowerCase() === s))
 a.push(top);
 if(top.childNodes) {
 for(var i=0; i<top.childNodes.length; ++i) {
@@ -81,7 +84,7 @@ return document.gebn$(this, s);
 }
 document.gebn$ = function(top, s) { 
 var a = new Array;
-if(s === '*' || (top.name && top.name === s))
+if(s === '*' || (top.name && top.name.toLowerCase() === s))
 a.push(top);
 if(top.childNodes) {
 for(var i=0; i<top.childNodes.length; ++i) {
@@ -98,7 +101,7 @@ return document.gebcn$(this, s);
 }
 document.gebcn$ = function(top, s) { 
 var a = new Array;
-if(s === '*' || (top.className && top.className === s))
+if(s === '*' || (top.className && top.className.toLowerCase() === s))
 a.push(top);
 if(top.childNodes) {
 for(var i=0; i<top.childNodes.length; ++i) {
@@ -231,9 +234,12 @@ c.attributes = new Object;
 c.nodeName = t;
 c.nodeType = 1;
 c.nodeValue = undefined;
+c.class = new String;
 c.className = new String;
 c.ownerDocument = document;
 c.tagName = t;
+
+
 return c;
 } 
 
@@ -470,6 +476,10 @@ return this.toString().lastIndexOf(s);
 URL.prototype.substring = function(from, to) { 
 return this.toString().substring(from, to);
 }
+// pages expect both substring and substr 
+URL.prototype.substr = function(from, to) {
+return this.toString().substring(from, to);
+}
 URL.prototype.toLowerCase = function() { 
 return this.toString().toLowerCase();
 }
@@ -481,6 +491,9 @@ return this.toString().match(s);
 }
 URL.prototype.replace = function(s, t) { 
 return this.toString().replace(s, t);
+}
+URL.prototype.split = function(s) {
+return this.toString().split(s);
 }
 
 /*********************************************************************
@@ -497,6 +510,7 @@ Third arg is not used cause I don't understand it.
 
 function addEventListener(ev, handler, notused)
 {
+ev_before_changes = ev;
 ev = "on" + ev;
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
@@ -510,7 +524,7 @@ this[ev] = undefined;
 }
 this[evarray] = a;
 eval(
-'this.' + ev + ' = function(){ var a = this.' + evarray + '; if(this.' + evorig + ') this.' + evorig + '(); for(var i = 0; i<a.length; ++i) a[i](); };');
+'this.' + ev + ' = function(){ var a = this.' + evarray + '; if(this.' + evorig + ') this.' + evorig + '(); for(var i = 0; i<a.length; ++i) {var tempEvent = new Event;tempEvent.type = "' + ev_before_changes + '";a[i](tempEvent);} };');
 }
 this[evarray].push(handler);
 }
@@ -615,6 +629,23 @@ document.getAttribute = function(name) { return this[name.toLowerCase()]; }
 document.setAttribute = function(name, v) { 
 this.attributes[name.toLowerCase()] = v;
 this[name.toLowerCase()] = v; 
+}
+// hasAttribute works in a comparable way to get and set, returning true/false
+document.hasAttribute = function(name) {
+if (this[name.toLowerCase()])
+        {
+                return true;
+        }
+        else
+        {
+                for (var i=0; i < this.attributes.length; ++i)
+                {
+                        if (this.attributes[i] == name.toLowerCase()) {
+                                return true;
+                        }
+                }
+        }
+return false;
 }
 
 /*********************************************************************
@@ -738,6 +769,7 @@ Array.prototype.hasChildNodes = document.hasChildNodes;
 Array.prototype.replaceChild = document.replaceChild;
 Array.prototype.getAttribute = document.getAttribute;
 Array.prototype.setAttribute = document.setAttribute;
+Array.prototype.hasAttribute = document.setAttribute;
 
 Head.prototype.appendChild = document.appendChild;
 Head.prototype.apch$ = document.apch$;
@@ -754,6 +786,7 @@ Head.prototype.replaceChild = document.replaceChild;
 Head.prototype.getAttribute = document.getAttribute;
 Head.prototype.setAttribute = document.setAttribute;
 Head.prototype.cloneNode = document.cloneNode;
+Head.prototype.hasAttribute = document.setAttribute;
 
 Body.prototype.appendChild = document.appendChild;
 Body.prototype.apch$ = document.apch$;
@@ -770,7 +803,7 @@ Body.prototype.replaceChild = document.replaceChild;
 Body.prototype.getAttribute = document.getAttribute;
 Body.prototype.setAttribute = document.setAttribute;
 Body.prototype.cloneNode = document.cloneNode;
-
+Body.prototype.hasAttribute = document.setAttribute;
 
 /*********************************************************************
 Special functions for form and input.
@@ -829,6 +862,7 @@ Form.prototype.replaceChild = document.replaceChild;
 Form.prototype.getAttribute = document.getAttribute;
 Form.prototype.setAttribute = document.setAttribute;
 Form.prototype.cloneNode = document.cloneNode;
+Form.prototype.hasAttribute = document.setAttribute;
 
 Element.prototype.appendChild = document.appendChild;
 Element.prototype.apch$ = document.apch$;
@@ -847,6 +881,7 @@ Element.prototype.setAttribute = document.setAttribute;
 Element.prototype.focus = document.focus;
 Element.prototype.blur = document.blur;
 Element.prototype.cloneNode = document.cloneNode;
+Element.prototype.hasAttribute = document.setAttribute;
 
 Anchor.prototype.appendChild = document.appendChild;
 Anchor.prototype.apch$ = document.apch$;
@@ -855,6 +890,7 @@ Anchor.prototype.blur = document.blur;
 Anchor.prototype.getAttribute = document.getAttribute;
 Anchor.prototype.setAttribute = document.setAttribute;
 Anchor.prototype.cloneNode = document.cloneNode;
+Anchor.prototype.hasAttribute = document.setAttribute;
 
 Div.prototype.appendChild = document.appendChild;
 Div.prototype.apch$ = document.apch$;
@@ -871,6 +907,7 @@ Div.prototype.replaceChild = document.replaceChild;
 Div.prototype.getAttribute = document.getAttribute;
 Div.prototype.setAttribute = document.setAttribute;
 Div.prototype.cloneNode = document.cloneNode;
+Div.prototype.hasAttribute = document.setAttribute;
 
 HtmlObj.prototype.appendChild = document.appendChild;
 HtmlObj.prototype.apch$ = document.apch$;
@@ -887,10 +924,12 @@ HtmlObj.prototype.replaceChild = document.replaceChild;
 HtmlObj.prototype.getAttribute = document.getAttribute;
 HtmlObj.prototype.setAttribute = document.setAttribute;
 HtmlObj.prototype.cloneNode = document.cloneNode;
+HtmlObj.prototype.hasAttribute = document.setAttribute;
 
 Script.prototype.getAttribute = document.getAttribute;
 Script.prototype.setAttribute = document.setAttribute;
 Script.prototype.cloneNode = document.cloneNode;
+Script.prototype.hasAttribute = document.setAttribute;
 
 P.prototype.appendChild = document.appendChild;
 P.prototype.apch$ = document.apch$;
@@ -907,6 +946,7 @@ P.prototype.hasChildNodes = document.hasChildNodes;
 P.prototype.removeChild = document.removeChild;
 P.prototype.replaceChild = document.replaceChild;
 P.prototype.cloneNode = document.cloneNode;
+P.prototype.setAttribute = document.setAttribute;
 
 Lister.prototype.appendChild = document.appendChild;
 Lister.prototype.apch$ = document.apch$;
@@ -923,6 +963,7 @@ Lister.prototype.hasChildNodes = document.hasChildNodes;
 Lister.prototype.removeChild = document.removeChild;
 Lister.prototype.replaceChild = document.replaceChild;
 Lister.prototype.cloneNode = document.cloneNode;
+Lister.prototype.hasAttribute = document.setAttribute;
 
 Listitem.prototype.appendChild = document.appendChild;
 Listitem.prototype.apch$ = document.apch$;
@@ -939,6 +980,7 @@ Listitem.prototype.hasChildNodes = document.hasChildNodes;
 Listitem.prototype.removeChild = document.removeChild;
 Listitem.prototype.replaceChild = document.replaceChild;
 Listitem.prototype.cloneNode = document.cloneNode;
+Listitem.prototype.hasAttribute = document.setAttribute;
 
 Table.prototype.appendChild = document.appendChild;
 Table.prototype.apch$ = document.apch$;
@@ -955,6 +997,7 @@ Table.prototype.hasChildNodes = document.hasChildNodes;
 Table.prototype.removeChild = document.removeChild;
 Table.prototype.replaceChild = document.replaceChild;
 Table.prototype.cloneNode = document.cloneNode;
+Table.prototype.hasAttribute = document.setAttribute;
 
 Tbody.prototype.appendChild = document.appendChild;
 Tbody.prototype.apch$ = document.apch$;
@@ -971,6 +1014,7 @@ Tbody.prototype.hasChildNodes = document.hasChildNodes;
 Tbody.prototype.removeChild = document.removeChild;
 Tbody.prototype.replaceChild = document.replaceChild;
 Tbody.prototype.cloneNode = document.cloneNode;
+Tbody.prototype.hasAttribute = document.setAttribute;
 
 Trow.prototype.appendChild = document.appendChild;
 Trow.prototype.apch$ = document.apch$;
@@ -987,6 +1031,7 @@ Trow.prototype.hasChildNodes = document.hasChildNodes;
 Trow.prototype.removeChild = document.removeChild;
 Trow.prototype.replaceChild = document.replaceChild;
 Trow.prototype.cloneNode = document.cloneNode;
+Trow.prototype.hasAttribute = document.setAttribute;
 
 Cell.prototype.appendChild = document.appendChild;
 Cell.prototype.apch$ = document.apch$;
@@ -1003,6 +1048,7 @@ Cell.prototype.hasChildNodes = document.hasChildNodes;
 Cell.prototype.removeChild = document.removeChild;
 Cell.prototype.replaceChild = document.replaceChild;
 Cell.prototype.cloneNode = document.cloneNode;
+Cell.prototype.hasAttribute = document.setAttribute;
 
 Span.prototype.appendChild = document.appendChild;
 Span.prototype.apch$ = document.apch$;
@@ -1019,6 +1065,42 @@ Span.prototype.hasChildNodes = document.hasChildNodes;
 Span.prototype.removeChild = document.removeChild;
 Span.prototype.replaceChild = document.replaceChild;
 Span.prototype.cloneNode = document.cloneNode;
+Span.prototype.hasAttribute = document.setAttribute;
+
+Image.prototype.appendChild = document.appendChild;
+Image.prototype.apch$ = document.apch$;
+Image.prototype.getAttribute = document.getAttribute;
+Image.prototype.setAttribute = document.setAttribute;
+Image.prototype.insertBefore = document.insertBefore;
+Object.defineProperty(Image.prototype, "firstChild", {
+get: function() { return this.childNodes[0]; }
+});
+Object.defineProperty(Image.prototype, "lastChild", {
+get: function() { return this.childNodes[this.childNodes.length-1]; }
+});
+Image.prototype.hasChildNodes = document.hasChildNodes;
+Image.prototype.removeChild = document.removeChild;
+Image.prototype.replaceChild = document.replaceChild;
+Image.prototype.cloneNode = document.cloneNode;
+Image.prototype.hasAttribute = document.hasAttribute;
+
+Frame.prototype.appendChild = document.appendChild;
+Frame.prototype.apch$ = document.apch$;
+Frame.prototype.getAttribute = document.getAttribute;
+Frame.prototype.setAttribute = document.setAttribute;
+Frame.prototype.insertBefore = document.insertBefore;
+Object.defineProperty(Frame.prototype, "firstChild", {
+get: function() { return this.childNodes[0]; }
+});
+Object.defineProperty(Frame.prototype, "lastChild", {
+get: function() { return this.childNodes[this.childNodes.length-1]; }
+});
+Frame.prototype.hasChildNodes = document.hasChildNodes;
+Frame.prototype.removeChild = document.removeChild;
+Frame.prototype.replaceChild = document.replaceChild;
+Frame.prototype.cloneNode = document.cloneNode;
+Frame.prototype.hasAttribute = document.hasAttribute;
+
 
 
 /* navigator; some parameters are filled in by the buildstartwindow script. */
@@ -1121,6 +1203,8 @@ this.async = false;
 
 this.method = method || "GET";
 this.url = convert_url(url);
+this.status = 0;
+this.statusText = "";
 this.onreadystatechange();
 },
 setRequestHeader: function(header, value){
@@ -1165,6 +1249,8 @@ this.readyState = 4;
 
 if ((!this.aborted) && this.responseText.length > 0){
 this.readyState = 4;
+this.status = 200;
+this.statusText = "OK";
 this.onreadystatechange();
 }
 
@@ -1246,4 +1332,56 @@ new_url = sideprotocol + '//' + sidehost + path;
 }
 return new_url;
 }
+
+document.defaultView = function()
+{
+return this.style;
+}
+
+document.defaultView.getComputedStyle = function()
+{
+        obj = new CSSStyleDeclaration;
+        obj.element = document;
+        obj.style = document.style;
+        return obj;
+}
+
+getComputedStyle = function(n)
+{
+        obj = new CSSStyleDeclaration;
+        obj.element = this;
+        obj.style = new Array;
+        obj.style.push({n:obj.style[n]});
+        return obj;
+}
+
+CSSStyleDeclaration = function(){
+        this.element = null;
+        this.style = null;
+};
+
+CSSStyleDeclaration.prototype = {
+getPropertyValue: function (n)
+        {
+                if (this.style[n] == undefined)
+                {
+                        this.style[n] = 0;
+                        return 0;
+                } else {
+                        return this.style[n];
+                }
+        }
+}
+
+Event = function(options){
+    this._bubbles = true;
+    this._cancelable = true;
+    this._cancelled = false;
+    this._currentTarget = null;
+    this._target = null;
+    this._eventPhase = Event.AT_TARGET;
+    this._timeStamp = new Date().getTime();
+    this._preventDefault = false;
+    this._stopPropagation = false;
+};
 
