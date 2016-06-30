@@ -132,9 +132,9 @@ nie można utworzyć %s
 nie można zapisać %s
 sesja nie jest interaktywna
 wiersz %c jest poza zakresem
-nie można włączać pustych znaków do poleceń
+nie można włączać pustych znaków (null) do poleceń
 etykieta %c nie jest ustawiona
-niedozwolony ogranicznik
+niedozwolony separator
 brak zapamiętanych fraz wyszukiwania
 brak zapamiętanych fraz podstawienia
 wyrażenie regularne zbyt długie
@@ -151,7 +151,7 @@ nie znaleziono frazy wyszukiwania
 numer wiersza zbyt duży
 ujemny numer wiersza
 brak wyrażenia regularnego po %c
-brak ogranicznika
+brak separatora
 żaden wiersz nie pasuje do wzorca 'g'
 wszystkie wiersze pasują do wzorca 'v'
 żaden z zaznaczonych wierszy nie został poprawnie zmodyfikowany
@@ -247,7 +247,7 @@ pole tylko do odczytu
 pole wprowadzania nie może zawierać znaku końca linii
 tekst zbyt długi, limit %d znaków
 pole musi zawierać + lub -
-nie możesz wyczyścić pola radio; musisz wybrać inne pole
+nie możesz wyczyścić przycisku radio; musisz wybrać inne pole
 %s nie jest dostępnym plikiem
 oczekiwano liczby
 sesja %d zawiera znaki zerowe
@@ -265,8 +265,8 @@ nie można wysłać używając protokołu %s
 nie można zamienić wielu instancji pustego ciągu znaków
 anulowano pobieranie.
 brak wyrażenia regularnego po %c
-wiele liczb po trzecim ograniczniku
-nieoczekiwany tekst podstawienia po trzecim ograniczniku
+wiele liczb po trzecim separatorze
+nieoczekiwany tekst podstawienia po trzecim separatorze
 nie można użyć liczby i 'g' jednocześnie jako przyrostka
 przykro mi, nie można zastosować polecenia 'bl' do wierszy dłuższych niż %d bajtów
 dane podstawiane zawierają znaki końca linii
@@ -282,7 +282,7 @@ brak przycisków
 wiele pól wprowadzania obecnych, użyj %c1 do %c%d
 wiele odnośników obecnych, użyj %c1 do %c%d
 wiele przycisków obecnych, użyj %c1 do %c%d
-nie dało się wczytać danych z serwera
+nie udało się wczytać danych z serwera
 %s nie jest URLem
 pobieranie zakończone.
 nie można zidentyfikować %s w sieci
@@ -313,7 +313,7 @@ brak załączników
 .ebrc: klucz = wartość wewnątrz funkcji edbrowse w wierszu %d
 pokazuję ostatnie %d z %d wiadomości\n
 ftp: inicjalizacja sesji zakończona niepowodzeniem
-0
+Pchnij
 edbrowse nie został skompilowany z dostępem do bazy danych
 brakujący alias w wierszu książki adresowej %d
 brakujący ':' w wierszu książki adresowej %d
@@ -331,9 +331,9 @@ przenieś do
 uwaga: URL formularza podaje sekcję %s, która zostanie zignorowana\n
 plik %s jest pusty
 Twoja wiadomość powinna zaczynać się od 'subject:'
-0
+brak wizualizacji postępu
 wiersz tematu zbyt długi, limit %d znaków
-0
+wizualizacja postępu za pomocą kropek
 '.signature' nie jest regularnym plikiem
 nie można odczytać pliku '.signature'
 nie można wysłać pliku binarnego %s, być może powinien być załącznikiem?
@@ -350,7 +350,7 @@ wiersz następujący po %d został usunięty\n
 %d wierszy następujących po %d zostało usuniętych\n
 wiersz %d został dodany\n
 wiersze od %d do %d zostały dodane\n
-0
+numeryczna wizualizacja postępu
 nie podano żadnych kont pocztowych, sprawdź swój plik konfiguracyjny
 niewłaściwy numer konta %d, użyj liczby od 1 do %d
 nie można wysyłać wiadomości w trybie przeglądarki
@@ -388,11 +388,11 @@ nie można wczytać zawartości %s
 nie można odczytać %s
 $%s nie jest zdefiniowana
 ~%s nie jest zdefiniowana
+Idź
 0
-0
-0
-0
-0
+ bezpieczne
+ bymail
+Reset
 nieoczekiwany błąd podczas wykonywania wzorca powłoki
 0
 wzorzec powłoki pasuje do więcej niż jednego pliku
@@ -409,7 +409,7 @@ wiele kolumn pasuje do %s
 brak tabeli %s
 nieprawidłowa nazwa kolumny
 nie można wybrać więcej niż jednej kolumny BLOB
-dane zawierają pionowe kreski - zarezerwowany ogranicznik
+dane zawierają pionowe kreski - zarezerwowany separator
 dane zawierają znaki końca linii
 wiersz zawiera zbyt wiele pól, nie wprowadzaj pionowych kresek do tekstu
 wiersz zawiera zbyt mało pól, nie usuwaj pionowych kresek z tekstu
@@ -531,7 +531,7 @@ nie podano pliku z certyfikatem SSL; bezpieczne połączenie nie może zostać z
 .ebrc: brak dyrektywy 'short name' w wierszu %d
 .ebrc: brak dyrektywy 'columns' w wierszu %d
 .ebrc: nieoczekiwany '}' w wierszu %d
-.ebrc: funkcja %s nie jest domknięta przed końcem pliku
+.ebrc: 'else' w wierszu %d nie jest częścią wyrażenia 'if'
 .ebrc: zniekształcony tekst w wierszu %d
 .ebrc: wiersz %d, nie można rozpocząć funkcji, deskryptora Plugin/poczty lub bloku filtrów wewnątrz %s
 .ebrc: wyrażenie w wierszu %d musi się znajdować wewnątrz funkcji
@@ -655,5 +655,5 @@ konsola wejścia (tty)
 wejście readline()
 0
 Nienaprawialny błąd JavaScript w bieżącej sesji, JavaScript został zamknięty
-0
+Wykonanie polecenia zakończone niepowodzeniem, system() zwrócił %d
 0
