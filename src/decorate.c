@@ -1274,7 +1274,7 @@ const struct tagInfo availableTags[] = {
 	{"form", "a form", TAGACT_FORM, 10, 1},
 	{"button", "a button", TAGACT_INPUT, 0, 4},
 	{"frame", "a frame", TAGACT_FRAME, 2, 4},
-//	{"iframe", "a frame", TAGACT_FRAME, 2, 4},
+	{"iframe", "a frame", TAGACT_FRAME, 2, 4},
 	{"map", "an image map", TAGACT_MAP, 2, 4},
 	{"area", "an image map area", TAGACT_AREA, 0, 4},
 	{"table", "a table", TAGACT_TABLE, 10, 1},

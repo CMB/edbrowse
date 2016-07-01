@@ -510,7 +510,6 @@ Third arg is not used cause I don't understand it.
 
 function addEventListener(ev, handler, notused)
 {
-ev_before_changes = ev;
 ev = "on" + ev;
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
@@ -524,7 +523,7 @@ this[ev] = undefined;
 }
 this[evarray] = a;
 eval(
-'this.' + ev + ' = function(){ var a = this.' + evarray + '; if(this.' + evorig + ') this.' + evorig + '(); for(var i = 0; i<a.length; ++i) {var tempEvent = new Event;tempEvent.type = "' + ev_before_changes + '";a[i](tempEvent);} };');
+'this.' + ev + ' = function(){ var a = this.' + evarray + '; if(this.' + evorig + ') this.' + evorig + '(); for(var i = 0; i<a.length; ++i) {a[i]();} };');
 }
 this[evarray].push(handler);
 }
@@ -769,7 +768,7 @@ Array.prototype.hasChildNodes = document.hasChildNodes;
 Array.prototype.replaceChild = document.replaceChild;
 Array.prototype.getAttribute = document.getAttribute;
 Array.prototype.setAttribute = document.setAttribute;
-Array.prototype.hasAttribute = document.setAttribute;
+Array.prototype.hasAttribute = document.hasAttribute;
 
 Head.prototype.appendChild = document.appendChild;
 Head.prototype.apch$ = document.apch$;
@@ -786,7 +785,7 @@ Head.prototype.replaceChild = document.replaceChild;
 Head.prototype.getAttribute = document.getAttribute;
 Head.prototype.setAttribute = document.setAttribute;
 Head.prototype.cloneNode = document.cloneNode;
-Head.prototype.hasAttribute = document.setAttribute;
+Head.prototype.hasAttribute = document.hasAttribute;
 
 Body.prototype.appendChild = document.appendChild;
 Body.prototype.apch$ = document.apch$;
@@ -803,7 +802,7 @@ Body.prototype.replaceChild = document.replaceChild;
 Body.prototype.getAttribute = document.getAttribute;
 Body.prototype.setAttribute = document.setAttribute;
 Body.prototype.cloneNode = document.cloneNode;
-Body.prototype.hasAttribute = document.setAttribute;
+Body.prototype.hasAttribute = document.hasAttribute;
 
 /*********************************************************************
 Special functions for form and input.
@@ -862,7 +861,7 @@ Form.prototype.replaceChild = document.replaceChild;
 Form.prototype.getAttribute = document.getAttribute;
 Form.prototype.setAttribute = document.setAttribute;
 Form.prototype.cloneNode = document.cloneNode;
-Form.prototype.hasAttribute = document.setAttribute;
+Form.prototype.hasAttribute = document.hasAttribute;
 
 Element.prototype.appendChild = document.appendChild;
 Element.prototype.apch$ = document.apch$;
@@ -881,7 +880,7 @@ Element.prototype.setAttribute = document.setAttribute;
 Element.prototype.focus = document.focus;
 Element.prototype.blur = document.blur;
 Element.prototype.cloneNode = document.cloneNode;
-Element.prototype.hasAttribute = document.setAttribute;
+Element.prototype.hasAttribute = document.hasAttribute;
 
 Anchor.prototype.appendChild = document.appendChild;
 Anchor.prototype.apch$ = document.apch$;
@@ -890,7 +889,7 @@ Anchor.prototype.blur = document.blur;
 Anchor.prototype.getAttribute = document.getAttribute;
 Anchor.prototype.setAttribute = document.setAttribute;
 Anchor.prototype.cloneNode = document.cloneNode;
-Anchor.prototype.hasAttribute = document.setAttribute;
+Anchor.prototype.hasAttribute = document.hasAttribute;
 
 Div.prototype.appendChild = document.appendChild;
 Div.prototype.apch$ = document.apch$;
@@ -907,7 +906,7 @@ Div.prototype.replaceChild = document.replaceChild;
 Div.prototype.getAttribute = document.getAttribute;
 Div.prototype.setAttribute = document.setAttribute;
 Div.prototype.cloneNode = document.cloneNode;
-Div.prototype.hasAttribute = document.setAttribute;
+Div.prototype.hasAttribute = document.hasAttribute;
 
 HtmlObj.prototype.appendChild = document.appendChild;
 HtmlObj.prototype.apch$ = document.apch$;
@@ -924,12 +923,12 @@ HtmlObj.prototype.replaceChild = document.replaceChild;
 HtmlObj.prototype.getAttribute = document.getAttribute;
 HtmlObj.prototype.setAttribute = document.setAttribute;
 HtmlObj.prototype.cloneNode = document.cloneNode;
-HtmlObj.prototype.hasAttribute = document.setAttribute;
+HtmlObj.prototype.hasAttribute = document.hasAttribute;
 
 Script.prototype.getAttribute = document.getAttribute;
 Script.prototype.setAttribute = document.setAttribute;
 Script.prototype.cloneNode = document.cloneNode;
-Script.prototype.hasAttribute = document.setAttribute;
+Script.prototype.hasAttribute = document.hasAttribute;
 
 P.prototype.appendChild = document.appendChild;
 P.prototype.apch$ = document.apch$;
@@ -946,7 +945,7 @@ P.prototype.hasChildNodes = document.hasChildNodes;
 P.prototype.removeChild = document.removeChild;
 P.prototype.replaceChild = document.replaceChild;
 P.prototype.cloneNode = document.cloneNode;
-P.prototype.setAttribute = document.setAttribute;
+P.prototype.setAttribute = document.hasAttribute;
 
 Lister.prototype.appendChild = document.appendChild;
 Lister.prototype.apch$ = document.apch$;
@@ -963,7 +962,7 @@ Lister.prototype.hasChildNodes = document.hasChildNodes;
 Lister.prototype.removeChild = document.removeChild;
 Lister.prototype.replaceChild = document.replaceChild;
 Lister.prototype.cloneNode = document.cloneNode;
-Lister.prototype.hasAttribute = document.setAttribute;
+Lister.prototype.hasAttribute = document.hasAttribute;
 
 Listitem.prototype.appendChild = document.appendChild;
 Listitem.prototype.apch$ = document.apch$;
@@ -980,7 +979,7 @@ Listitem.prototype.hasChildNodes = document.hasChildNodes;
 Listitem.prototype.removeChild = document.removeChild;
 Listitem.prototype.replaceChild = document.replaceChild;
 Listitem.prototype.cloneNode = document.cloneNode;
-Listitem.prototype.hasAttribute = document.setAttribute;
+Listitem.prototype.hasAttribute = document.hasAttribute;
 
 Table.prototype.appendChild = document.appendChild;
 Table.prototype.apch$ = document.apch$;
@@ -997,7 +996,7 @@ Table.prototype.hasChildNodes = document.hasChildNodes;
 Table.prototype.removeChild = document.removeChild;
 Table.prototype.replaceChild = document.replaceChild;
 Table.prototype.cloneNode = document.cloneNode;
-Table.prototype.hasAttribute = document.setAttribute;
+Table.prototype.hasAttribute = document.hasAttribute;
 
 Tbody.prototype.appendChild = document.appendChild;
 Tbody.prototype.apch$ = document.apch$;
@@ -1014,7 +1013,7 @@ Tbody.prototype.hasChildNodes = document.hasChildNodes;
 Tbody.prototype.removeChild = document.removeChild;
 Tbody.prototype.replaceChild = document.replaceChild;
 Tbody.prototype.cloneNode = document.cloneNode;
-Tbody.prototype.hasAttribute = document.setAttribute;
+Tbody.prototype.hasAttribute = document.hasAttribute;
 
 Trow.prototype.appendChild = document.appendChild;
 Trow.prototype.apch$ = document.apch$;
@@ -1031,7 +1030,7 @@ Trow.prototype.hasChildNodes = document.hasChildNodes;
 Trow.prototype.removeChild = document.removeChild;
 Trow.prototype.replaceChild = document.replaceChild;
 Trow.prototype.cloneNode = document.cloneNode;
-Trow.prototype.hasAttribute = document.setAttribute;
+Trow.prototype.hasAttribute = document.hasAttribute;
 
 Cell.prototype.appendChild = document.appendChild;
 Cell.prototype.apch$ = document.apch$;
@@ -1048,7 +1047,7 @@ Cell.prototype.hasChildNodes = document.hasChildNodes;
 Cell.prototype.removeChild = document.removeChild;
 Cell.prototype.replaceChild = document.replaceChild;
 Cell.prototype.cloneNode = document.cloneNode;
-Cell.prototype.hasAttribute = document.setAttribute;
+Cell.prototype.hasAttribute = document.hasAttribute;
 
 Span.prototype.appendChild = document.appendChild;
 Span.prototype.apch$ = document.apch$;
@@ -1065,7 +1064,7 @@ Span.prototype.hasChildNodes = document.hasChildNodes;
 Span.prototype.removeChild = document.removeChild;
 Span.prototype.replaceChild = document.replaceChild;
 Span.prototype.cloneNode = document.cloneNode;
-Span.prototype.hasAttribute = document.setAttribute;
+Span.prototype.hasAttribute = document.hasAttribute;
 
 Image.prototype.appendChild = document.appendChild;
 Image.prototype.apch$ = document.apch$;
@@ -1373,15 +1372,4 @@ getPropertyValue: function (n)
         }
 }
 
-Event = function(options){
-    this._bubbles = true;
-    this._cancelable = true;
-    this._cancelled = false;
-    this._currentTarget = null;
-    this._target = null;
-    this._eventPhase = Event.AT_TARGET;
-    this._timeStamp = new Date().getTime();
-    this._preventDefault = false;
-    this._stopPropagation = false;
-};
 
