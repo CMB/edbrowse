@@ -405,7 +405,7 @@ static void runGeneratedHtml(struct htmlTag *t, const char *h, const char *pre)
 	htmlGenerated = true;
 	html2nodes(h, false);
 	htmlNodesIntoTree(l, t);
-	prerender(0);
+	prerender(false);
 
 	if (pre) {
 		for (j = l; j < cw->numTags; ++j) {
@@ -447,10 +447,9 @@ static void prepareScript(struct htmlTag *t)
  * For instance, some JSON pairs in script tags on the amazon.com
  * homepage. */
 	a = attribVal(t, "type");
-	if (a && (!memEqualCI(a, "javascript", 10)) && (!memEqualCI(a, "text/javascript", 15)))
-                return; 
-
-
+	if (a && (!memEqualCI(a, "javascript", 10))
+	    && (!memEqualCI(a, "text/javascript", 15)))
+		return;
 
 /* It's javascript, run with the source or the inline text.
  * As per the starting line number, we cant distinguish between
@@ -739,7 +738,7 @@ char *htmlParse(char *buf, int remote)
 	html2nodes(buf, true);
 	nzFree(buf);
 	htmlNodesIntoTree(0, NULL);
-	prerender(0);
+	prerender(false);
 
 /* if the html doesn't use javascript, then there's
  * no point in generating it.
@@ -1899,9 +1898,20 @@ mark_e:
 	newChunkEnd = e2;
 }				/* frontBackDiff */
 
+static time_t now_sec;
+static int now_ms;
+static void currentTime(void)
+{
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	now_sec = tv.tv_sec;
+	now_ms = tv.tv_usec / 1000;
+}				/* currentTime */
+
 static bool backgroundJS;
 
 /* Rerender the buffer and notify of any lines that have changed */
+static time_t lasttime_rr;
 void rerender(bool rr_command)
 {
 	char *a, *snap, *newbuf;
@@ -1944,6 +1954,7 @@ void rerender(bool rr_command)
 	cw->undoable = false;
 
 	if (!backgroundJS) {
+		lasttime_rr = now_sec;
 /* It's almost easier to do it than to report it. */
 		if (sameBack2 == sameFront) {	/* delete */
 			if (sameBack1 == sameFront + 1)
@@ -2092,16 +2103,6 @@ struct listHead timerList = {
 	&timerList, &timerList
 };
 
-static time_t now_sec;
-static int now_ms;
-static void currentTime(void)
-{
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	now_sec = tv.tv_sec;
-	now_ms = tv.tv_usec / 1000;
-}				/* currentTime */
-
 static void javaSetsTimeout(int n, const char *jsrc, jsobjtype to,
 			    bool isInterval)
 {
@@ -2220,7 +2221,15 @@ void runTimers(void)
 		if (cw != save_cw) {
 /* background window, go ahead and rerender, silently. */
 			rerender(false);
+		} else {
+/* rerender a foreground window no more than every 10 seconds */
+/* A constant stream of update messages could be really annoying. */
+			if (now_sec >= lasttime_rr + 10) {
+				backgroundJS = false;
+				rerender(false);
+			}
 		}
+
 		backgroundJS = false;
 	}
 
