@@ -1965,9 +1965,12 @@ void rerender(bool rr_command)
 		} else if (sameBack1 == sameFront) {
 			if (sameBack2 == sameFront + 1)
 				i_printf(MSG_LineAdd1, sameFront + 1);
-			else
+			else {
 				i_printf(MSG_LineAdd2, sameFront + 1,
 					 sameBack2);
+/* put dot back to the start of the new block */
+				cw->dot = sameFront + 1;
+			}
 		} else {
 			if (sameBack1 == sameFront + 1
 			    && sameBack2 == sameFront + 1)
@@ -1975,9 +1978,12 @@ void rerender(bool rr_command)
 			else if (sameBack2 == sameFront + 1)
 				i_printf(MSG_LineUpdate2, sameBack1 - sameFront,
 					 sameFront + 1);
-			else
+			else {
 				i_printf(MSG_LineUpdate3, sameFront + 1,
 					 sameBack2);
+/* put dot back to the start of the new block */
+				cw->dot = sameFront + 1;
+			}
 		}
 	}
 
