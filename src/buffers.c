@@ -4849,6 +4849,8 @@ bool runCommand(const char *line)
 			}
 			if (jsh) {
 				jSyncup();
+/* actually running the url, not passing it to http etc, need to unescape */
+				unpercentString(h);
 				jsRunScript(cw->winobj, h, 0, 0);
 				jSideEffects();
 				if (newlocation)
