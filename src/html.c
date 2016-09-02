@@ -2853,6 +2853,14 @@ unparen:
 			if (a = attribVal(t, "alt")) {
 				u = altText(a);
 				a = NULL;
+/* see if js has changed the alt tag */
+				if (isJSAlive && t->jv) {
+					char *aa =
+					    get_property_string(t->jv, "alt");
+					if (aa)
+						u = altText(aa);
+					nzFree(aa);
+				}
 				if (u && !invisible) {
 					stringAndChar(&ns, &ns_l, '[');
 					stringAndString(&ns, &ns_l, u);
