@@ -349,21 +349,21 @@ int select_stdin(struct timeval *ptv)
 }
 #endif // DOSLIKE
 
-/* Get a line from standard in.  Need not be a terminal.
- * Each input line is limited to 255 chars.
- * On Unix cooked mode, that's as long as a line can be anyways.
- * This routine returns the line in a static string.
- * If you want to keep it, better make a copy.
- * ~xx is converted from hex, a way to enter nonascii chars.
- * This is the opposite of displayLine() above.
- * But you can't enter a newline this way; I won't permit it.
- * The only newline is the one corresponding to the end of your text,
- * when you hit enter. This terminates the line.
- * As we described earlier, this is a perl string.
- * It may contain nulls, and is terminated by newline.
- * The program exits on EOF.
- * If you hit interrupt at this point, I print a message
- * and ask for your line again. */
+/*********************************************************************
+Get a line from standard in.  Need not be a terminal.
+This routine returns the line in an allocated string.
+~xx is converted from hex, a way to enter nonascii chars.
+This is the opposite of displayLine() above.
+But you can't enter a newline this way; I won't permit it.
+The only newline is the one corresponding to the end of your text,
+when you hit enter. This terminates the line.
+As we described earlier, this is a perl string.
+It may contain nulls, and is terminated by newline.
+Enter ~u hex digits for higher unicodes, emojis etc.
+The program exits on EOF.
+If you hit interrupt at this point, I print a message
+and ask for your line again.
+*********************************************************************/
 
 pst inputLine(void)
 {
@@ -402,6 +402,15 @@ top:
 		if (rc == 0) {	/* timeout */
 dotimers:
 			runTimers();
+/* in case a timer set document.location.hreg to a new page */
+			if (newlocation) {
+				debugPrint(2, "redirect %s", newlocation);
+				s = allocMem(strlen(newlocation) + 4);
+				sprintf(s, "b %s\n", newlocation);
+				nzFree(newlocation);
+				newlocation = 0;
+				return s;
+			}
 			goto top;
 		}
 	}
