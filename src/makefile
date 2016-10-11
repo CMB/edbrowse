@@ -1,4 +1,5 @@
 #  This is the makefile for edbrowse under BSD Unix.
+#  See GNUmakefile for the makefile used with GNU make on Linux.
 
 # Default settings:
 CC ?=		cc
