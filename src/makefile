@@ -7,7 +7,7 @@ CXX ?=		c++
 PREFIX ?=	/usr/local
 CFLAGS ?=	-Wall -Wextra
 CXXFLAGS ?=	-Wall -Wextra
-ODBC ?=		off
+BUILD_EDBR_ODBC ?= off
 
 PERL !=		which perl
 TIDY5_LIBS ?=	-ltidy
@@ -36,7 +36,7 @@ EBOBJS =	main.o buffers.o sendmail.o fetchmail.o \
 		messages.o url.o stringfile.o html-tidy.o decorate.o \
 		msg-strings.o http.o auth.o jseng-moz.o startwindow.o
 
-.if ${ODBC:L:Mon}
+.if ${BUILD_EDBR_ODBC:L:Mon}
 EBOBJS +=	dbodbc.o dbinfx.o dbops.o
 LIBS +=		-lodbc
 .else
