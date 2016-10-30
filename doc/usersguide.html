@@ -434,6 +434,7 @@ p : print the current line
 <br>ep : show end markers when a line is listed or printed
 <br>lna : expand all nonascii chars into hex when a line is listed (toggle)
 <br>n : print the current line with its line number
+<br>ll 1000 : line length 1000, show the first 1000 chars of each line
 <br>z22 : print the next 22 lines
 <br>z : print another 22 lines
 <br>= : print the number of lines in the file
@@ -826,7 +827,8 @@ Only the first 500 characters of a line are displayed.
 The rest of the line is in the buffer, and can even be modified via a substitute command,
 but if you want to see it, you will need to split it,
 as in the doghouse example above.
-You can change the number of characters displayed by setting the linelength parameter in your config file.
+You can change the number of characters displayed by setting the linelength parameter in your config file,
+or by the ll command.
 
 <LI><P>
 a+ adds text, like a, but also adds the line you last typed,

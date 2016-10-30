@@ -3444,6 +3444,20 @@ pwd:
 		}
 	}
 
+	if (line[0] == 'l' && line[1] == 'l') {
+		c = line[2];
+		if (!c) {
+			printf("%d\n", displayLength);
+			return true;
+		}
+		if (isspaceByte(c) && isdigitByte(line[3])) {
+			displayLength = atoi(line + 3);
+			if (displayLength < 80)
+				displayLength = 80;
+			return true;
+		}
+	}
+
 	if (line[0] == 'p' && line[1] == 'b') {
 		rc = playBuffer(line, NULL);
 		if (rc == 2)
