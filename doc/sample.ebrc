@@ -133,15 +133,26 @@ content = audio/mpeg
 program = mpg123 -q -C %i
 }
 
+#  you can use mplayer or mpv for the program; arguments are the same.
 plugin {
 type = audio/x-pn-realaudio
 desc = streaming audio
 #  protocol implies a stream, otherwise you could use the keyword stream
 stream
 protocol = rtsp,pnm,sdp
-suffix = rm,ra,ram,pls
+suffix = rm,ra,ram
 content = audio/x-scpls
-program = /usr/bin/mplayer -quiet %i
+program = /usr/bin/mpv -quiet %i
+}
+
+plugin {
+type = audio playlist
+desc = streaming audio play list
+stream
+protocol = pls
+suffix = pls
+content = application/pls+xml
+program = /usr/bin/mpv -quiet -playlist %i
 }
 
 #  Some plugins play the file, others convert it for readability.
