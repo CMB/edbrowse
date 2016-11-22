@@ -47,6 +47,7 @@ static char *httpLanguage;
 static char hct[60];
 static char *hct2;		/* extra content info such as charset */
 int hcl;			/* http content length */
+static char *hcdfn;		/* http content disposition file name */
 static CURL *http_curl_init(struct eb_curl_callback_data *cbd);
 
 /* This function is called for web redirection, by the refresh command,
@@ -133,6 +134,23 @@ static void scan_http_headers(bool fromCallback)
 			cw->mt = findMimeByContent(hct);
 	}
 
+	if (!hcdfn && (v = find_http_header("content-disposition"))) {
+		char *s = strstrCI(v, "filename=");
+		if (s) {
+			s += 9;
+			if (*s == '"') {
+				char *t;
+				++s;
+				t = strchr(s, '"');
+				if (t)
+					*t = 0;
+			}
+			hcdfn = cloneString(s);
+			debugPrint(3, "disposition filename %s", hcdfn);
+		}
+		nzFree(v);
+	}
+
 	if (!hcl && (v = find_http_header("content-length"))) {
 		hcl = atoi(v);
 		nzFree(v);
@@ -173,6 +191,8 @@ static CURLcode fetch_internet(CURL * h, bool is_http)
 	http_headers = initString(&http_headers_len);
 	hct[0] = 0;
 	hct2 = NULL;
+	nzFree(hcdfn);
+	hcdfn = NULL;
 	hcl = 0;
 	curlret = curl_easy_perform(h);
 	if (is_http)
