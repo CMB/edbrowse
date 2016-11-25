@@ -765,6 +765,7 @@ bool httpConnect(const char *url, bool down_ok, bool webpage,
 	CURLcode curlret = CURLE_OK;
 	struct curl_slist *custom_headers = NULL;
 	struct curl_slist *tmp_headers = NULL;
+	const struct MIMETYPE *mt;
 	char user[MAXUSERPASS], pass[MAXUSERPASS];
 	char creds_buf[MAXUSERPASS * 2 + 1];	/* creds abr. for credentials */
 	int creds_len = 0;
@@ -848,6 +849,13 @@ mimestream:
 /* Ok, it's http, but the suffix could force a plugin */
 	if ((cw->mt = findMimeByURL(url)) && pluginsOn && cw->mt->stream)
 		goto mimestream;
+
+/* if invoked from a playlist */
+	if (currentReferrer && (mt = findMimeByURL(currentReferrer)) &&
+	    mt->stream) {
+		cw->mt = mt;
+		goto mimestream;
+	}
 
 	cbd.buffer = &serverData;
 	cbd.length = &serverDataLen;
