@@ -1161,6 +1161,13 @@ curl_fail:
 
 	nzFree(postb);
 
+/* see if http header has set the filename */
+	if (hcdfn) {
+		nzFree(changeFileName);
+		changeFileName = hcdfn;
+		hcdfn = NULL;
+	}
+
 /* Check for plugin to run here */
 	if (transfer_status && hcode == 200 && cw->mt && pluginsOn &&
 	    !cw->mt->stream && !cw->mt->outtype && cw->mt->program) {
