@@ -252,7 +252,7 @@ int playBuffer(const char *line, const char *playfile)
 		strcpy(sufbuf, suffix);
 		suffix = sufbuf;
 		mt = findMimeBySuffix(suffix);
-		if (!mt || mt->outtype | mt->stream) {
+		if (!mt || mt->outtype) {
 			setError(MSG_SuffixBad, suffix);
 			return 0;
 		}
@@ -308,7 +308,7 @@ int playBuffer(const char *line, const char *playfile)
 		}
 	}
 
-	if (mt->outtype | mt->stream) {
+	if (mt->outtype) {
 		setError(MSG_SuffixBad, suffix);
 		return 0;
 	}

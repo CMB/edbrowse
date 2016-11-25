@@ -4736,7 +4736,7 @@ bool runCommand(const char *line)
 		if (pluginsOn && gmt) {
 			if (gmt->outtype)
 				cmd = 'b';
-			else if (!gmt->stream)
+			else
 				return playBuffer("pb", dirline);
 		}
 /* I don't think we need to make a copy here. */
