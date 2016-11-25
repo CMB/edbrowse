@@ -851,8 +851,8 @@ mimestream:
 		goto mimestream;
 
 /* if invoked from a playlist */
-	if (currentReferrer && (mt = findMimeByURL(currentReferrer)) &&
-	    mt->stream) {
+	if (currentReferrer && pluginsOn
+	    && (mt = findMimeByURL(currentReferrer)) && mt->stream) {
 		cw->mt = mt;
 		goto mimestream;
 	}

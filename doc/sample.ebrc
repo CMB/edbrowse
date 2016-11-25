@@ -131,20 +131,10 @@ type = audio/x-pn-realaudio
 desc = streaming audio
 #  protocol implies a stream, otherwise you could use the keyword stream
 stream
-protocol = rtsp,pnm,sdp
-suffix = rm,ra,ram,ogg,mp3
-content = audio/x-scpls,audio/mpeg
+protocol = rtsp,pnm,sdp,pls
+suffix = rm,ra,ram,ogg,mp3,pls,m3u
+content = audio/x-scpls,audio/mpeg,application/pls+xml
 program = /usr/bin/mpv -quiet %i
-}
-
-plugin {
-type = audio playlist
-desc = streaming audio play list
-stream
-protocol = pls
-suffix = pls,m3u
-content = application/pls+xml
-program = /usr/bin/mpv -quiet -playlist %i
 }
 
 #  Some plugins play the file, others convert it for readability.
