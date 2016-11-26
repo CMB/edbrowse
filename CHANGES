@@ -2,12 +2,21 @@ Here are some changes introduced by recent versions of edbrowse.
 
 3.6.2:
 Read and convert utf16 and utf32 as per the byte order mark.
-convert to utf8 or iso8859-1 as per the console setting,
+convert such files to utf8 or iso8859-1 as per the console setting,
 though the latter is deprecated.
 Convert back only if writing back out to the same file.
 
 Enter high unicodes by the string ~u....;
 where the dots are hex digits and the semi is optional.
+
+Read the attachment filename from the http content-disposition header and set the current filename accordingly.
+The url could be replaced with foobar.zip, but that's what the web designer wanted.
+
+If a file has a recognized suffix, with a stream plugin,
+then typing g on a link within that file invokes the same plugin.
+This is primarily used for .pls files, which are playlists,
+and each URL therein is intended for a music player.
+Other browsers seem to work this way.
 
 3.6.1:
 Merge edbrowse and edbrowse-js back into one executable image.
