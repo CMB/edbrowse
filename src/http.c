@@ -1920,9 +1920,17 @@ static void setup_download(struct eb_curl_callback_data *data)
 {
 	const char *filepart;
 	const char *answer;
+	const struct MIMETYPE *mt;
 
 /* if not run from a terminal then just return. */
 	if (!isInteractive) {
+		data->down_state = 0;
+		return;
+	}
+
+/* If file is changed to a playlist or some such, just return */
+	if (hcdfn && (mt = findMimeByURL(hcdfn)) && mt->stream) {
+		debugPrint(3, "download aborted due to stream plugin");
 		data->down_state = 0;
 		return;
 	}

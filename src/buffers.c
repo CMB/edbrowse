@@ -4219,8 +4219,9 @@ bool runCommand(const char *line)
 		nzFree(allocatedLine);
 		allocatedLine = 0;
 	}
+
 	nzFree(currentReferrer);
-	currentReferrer = cloneString(cw->fileName);
+	currentReferrer = NULL;
 	js_redirects = false;
 
 	cmd = icmd = 'p';
@@ -4357,6 +4358,11 @@ bool runCommand(const char *line)
 		setError(MSG_UnknownCommand, cmd);
 		return (globSub = false);
 	}
+
+/* set the referrer if you are following a linnk,
+ * as opposed to entering a b command and jumping somewhere else completely. */
+	if (strchr("giI", cmd))
+		currentReferrer = cloneString(cw->fileName);
 
 	first = *line;
 	if (cmd == 'w' && first == '+')
