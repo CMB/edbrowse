@@ -191,16 +191,22 @@ int js_main(int argc, char **argv)
 }				/* js_main */
 
 /* read from and write to edbrowse */
+
 static void readFromEb(void *data_p, int n)
 {
-	int rc;
+	ssize_t rc;
+	unsigned char *bytes_p = (unsigned char *)data_p;
 	if (n == 0)
 		return;
-	rc = read(pipe_in, data_p, n);
-	if (rc == n)
-		return;
+	while (n > 0) {
+		rc = read(pipe_in, bytes_p, n);
+		if (rc <= 0) {
 /* Oops - can't read from the process any more */
-	exit(2);
+			exit(2);
+		}
+		n -= rc;
+		bytes_p += rc;
+	}
 }				/* readFromEb */
 
 static void writeToEb(const void *data_p, int n)

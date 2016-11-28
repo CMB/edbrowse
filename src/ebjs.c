@@ -356,18 +356,24 @@ static void processEffects(void)
  * Returns 0 for ok or -1 for bad read. */
 static int readFromJS(void *data_p, int n)
 {
+	unsigned char *bytes_p = (unsigned char *)data_p;
 	int rc;
 	if (n == 0)
 		return 0;
-	rc = read(pipe_in[0], data_p, n);
-	debugPrint(7, "js read %d", rc);
-	if (rc == n)
-		return 0;
+	while (n > 0) {
+		rc = read(pipe_in[0], bytes_p, n);
+		debugPrint(7, "js read %d", rc);
+		if (rc <= 0) {
 /* Oops - can't read from the process any more */
-	i_puts(MSG_JSEngineRW);
-	js_kill();
-	markAllDead();
-	return -1;
+			i_puts(MSG_JSEngineRW);
+			js_kill();
+			markAllDead();
+			return -1;
+		}
+		n -= rc;
+		bytes_p += rc;
+	}
+	return 0;
 }				/* readFromJS */
 
 static int writeToJS(const void *data_p, int n)
