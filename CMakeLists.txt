@@ -10,8 +10,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMakeModules)
 
 # ### NOTE: from sersguide.htm
 set( eb_MAJOR 3 )
-set( eb_MINOR 5 )
-set( eb_POINT 1 )
+set( eb_MINOR 6 )
+set( eb_POINT 2 )
 
 # Allow developer to select is Dynamic or static library built
 set( LIB_TYPE STATIC )  # set default static
