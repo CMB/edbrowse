@@ -1303,9 +1303,10 @@ static char presentMail(void)
 			key = 'w';
 			if (*redirect == '-')
 				++redirect, key = 'u';
-			if (stringEqual(redirect, "x"))
-				i_puts(MSG_Junk);
-			else
+			if (stringEqual(redirect, "x")) {
+				i_printf(MSG_Junk);
+				printf("[%s]\n", lastMailInfo->subject);
+			} else
 				printf("> %s\n", redirect);
 		} else {
 			if (*redirect == '-')

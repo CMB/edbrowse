@@ -126,32 +126,22 @@ const char *mailRedirect(const char *to, const char *from,
 			break;
 
 		case 4:
-			if (stringEqualCI(m, subj))
-				return r;
-/* a prefix match is ok */
-			if (slen < 16 || mlen < 16)
-				break;	/* too short */
-			j = k = 0;
-			while (true) {
-				char c = subj[j];
-				char d = m[k];
-				if (isupperByte(c))
-					c = tolower(c);
-				if (isupperByte(d))
-					d = tolower(d);
-				if (!c || !d)
-					break;
-				if (c != d)
-					break;
-				for (++j; c == subj[j]; ++j) ;
-				for (++k; d == m[k]; ++k) ;
+			if (mlen > slen)
+				break;
+			if (mlen == slen) {
+				if (stringEqualCI(m, subj))
+					return r;
+				break;
 			}
-/* must match at least 2/3 of either string */
-			if (k > j)
-				j = k;
-			if (j >= 2 * mlen / 3 || j >= 2 * slen / 3) {
+/* a prefix or suffix match is ok */
+/* have to be at least half the subject line */
+			if (slen > mlen + mlen)
+				break;
+			if (memEqualCI(m, subj, mlen))
 				return r;
-			}
+			k = slen - mlen;
+			if (memEqualCI(m, subj + k, mlen))
+				return r;
 			break;
 		}		/* switch */
 	}			/* loop */
