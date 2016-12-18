@@ -5191,6 +5191,7 @@ rebrowse:
 
 browse:
 	if (cmd == 'b') {
+		char *newhash;
 		if (cw->dirMode) {
 			setError(MSG_DirCommand, cmd);
 			return false;
@@ -5240,7 +5241,7 @@ redirect:
 			}
 		}
 
-/* Jump to the #section, if specified in the url */
+/* Jump to the #section if specified in the url */
 		s = findHash(line);
 		if (!s)
 			return true;
@@ -5256,15 +5257,19 @@ redirect:
 			debugPrint(1, "%d", fileSize);
 			fileSize = -1;
 		}
+		newhash = cloneString(s);
+		unpercentString(newhash);
 		for (i = 1; i <= cw->dol; ++i) {
 			char *p = (char *)fetchLine(i, -1);
-			if (lineHasTag(p, s)) {
+			if (lineHasTag(p, newhash)) {
 				cw->dot = i;
 				printDot();
+				nzFree(newhash);
 				return true;
 			}
 		}
-		setError(MSG_NoLable2, s);
+		setError(MSG_NoLable2, newhash);
+		nzFree(newhash);
 		return false;
 	}
 
