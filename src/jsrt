@@ -808,6 +808,7 @@ var x2 = document.createElement("span");
 var x3 = document.createElement("table");
 var x4 = document.createElement("script");
 var x5 = document.createElement("element");
+x5.name = "frog";
 x5.value = 123;
 
 x1.appendChild(x2);

@@ -1232,6 +1232,7 @@ const struct tagInfo availableTags[] = {
 	{"base", "base reference for relative URLs", TAGACT_BASE, 0, 4},
 	{"a", "an anchor", TAGACT_A, 0, 1},
 	{"input", "an input item", TAGACT_INPUT, 0, 4},
+	{"element", "an input element", TAGACT_INPUT, 0, 4},
 	{"title", "the title", TAGACT_TITLE, 0, 0},
 	{"textarea", "an input text area", TAGACT_TA, 0, 0},
 	{"select", "an option list", TAGACT_SELECT, 0, 0},
