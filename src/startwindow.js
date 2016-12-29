@@ -239,7 +239,6 @@ c.className = new String;
 c.ownerDocument = document;
 c.tagName = t;
 
-
 return c;
 } 
 
@@ -602,6 +601,13 @@ get: function() { return document.childNodes[0]; }
 Object.defineProperty(document, "lastChild", {
 get: function() { return document.childNodes[document.childNodes.length-1]; }
 });
+Object.defineProperty(document, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(document, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
+
 document.hasChildNodes = function() { return (this.childNodes.length > 0); }
 document.replaceChild = function(newc, oldc) {
 var lastentry;
@@ -728,6 +734,35 @@ nodeToReturn[url] = new URL(u.href);
 return nodeToReturn;
 }
 
+function get_sibling(obj,direction)
+{
+if (typeof obj.parentNode == 'undefined') {
+// need calling node to have parent and it doesn't, error
+return null;
+}
+var pn = obj.parentNode;
+var j, l;
+l = pn.childNodes.length;
+for (j=0; j<l; ++j)
+if (pn.childNodes[j] == obj) break;
+if (j == l) {
+// child not found under parent, error
+return null;
+}
+switch(direction)
+{
+case "previous":
+return (j > 0 ? pn.childNodes[j-1] : null);
+break;
+case "next":
+return (j < l-1 ? pn.childNodes[j+1] : null);
+break;
+default:
+// the function should always have been called with either 'previous' or 'next' specified
+return null;
+}
+}
+
 /* The select element in a form is itself an array, so the above functions have
  * to be on array prototype, except appendchild is to have no side effects,
  * because select options are maintained by rebuildSelectors(), so appendChild
@@ -764,6 +799,13 @@ get: function() { return this[0]; }
 Object.defineProperty(Array.prototype, "lastChild", {
 get: function() { return this[this.length-1]; }
 });
+Object.defineProperty(Array.prototype, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(Array.prototype, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
+
 Array.prototype.hasChildNodes = document.hasChildNodes;
 Array.prototype.replaceChild = document.replaceChild;
 Array.prototype.getAttribute = document.getAttribute;
@@ -779,6 +821,13 @@ get: function() { return this.childNodes[0]; }
 Object.defineProperty(Head.prototype, "lastChild", {
 get: function() { return this.childNodes[this.childNodes.length-1]; }
 });
+Object.defineProperty(Head.prototype, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(Head.prototype, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
+
 Head.prototype.hasChildNodes = document.hasChildNodes;
 Head.prototype.removeChild = document.removeChild;
 Head.prototype.replaceChild = document.replaceChild;
@@ -796,6 +845,13 @@ get: function() { return this.childNodes[0]; }
 Object.defineProperty(Body.prototype, "lastChild", {
 get: function() { return this.childNodes[this.childNodes.length-1]; }
 });
+Object.defineProperty(Body.prototype, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(Body.prototype, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
+
 Body.prototype.hasChildNodes = document.hasChildNodes;
 Body.prototype.removeChild = document.removeChild;
 Body.prototype.replaceChild = document.replaceChild;
@@ -850,6 +906,13 @@ get: function() { return this.childNodes[0]; }
 Object.defineProperty(Form.prototype, "lastChild", {
 get: function() { return this.childNodes[this.childNodes.length-1]; }
 });
+Object.defineProperty(Form.prototype, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(Form.prototype, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
+
 Form.prototype.hasChildNodes = document.hasChildNodes;
 Form.prototype.removeChildNative = document.removeChild;
 Form.prototype.removeChild = function(item) {
@@ -872,6 +935,13 @@ get: function() { return this.childNodes[0]; }
 Object.defineProperty(Element.prototype, "lastChild", {
 get: function() { return this.childNodes[this.childNodes.length-1]; }
 });
+Object.defineProperty(Element.prototype, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(Element.prototype, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
+
 Element.prototype.hasChildNodes = document.hasChildNodes;
 Element.prototype.removeChild = document.removeChild;
 Element.prototype.replaceChild = document.replaceChild;
@@ -900,6 +970,13 @@ get: function() { return this.childNodes[0]; }
 Object.defineProperty(Div.prototype, "lastChild", {
 get: function() { return this.childNodes[this.childNodes.length-1]; }
 });
+Object.defineProperty(Div.prototype, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(Div.prototype, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
+
 Div.prototype.hasChildNodes = document.hasChildNodes;
 Div.prototype.removeChild = document.removeChild;
 Div.prototype.replaceChild = document.replaceChild;
@@ -917,6 +994,14 @@ get: function() { return this.childNodes[0]; }
 Object.defineProperty(HtmlObj.prototype, "lastChild", {
 get: function() { return this.childNodes[this.childNodes.length-1]; }
 });
+Object.defineProperty(HtmlObj.prototype, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(HtmlObj.prototype, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
+
+
 HtmlObj.prototype.hasChildNodes = document.hasChildNodes;
 HtmlObj.prototype.removeChild = document.removeChild;
 HtmlObj.prototype.replaceChild = document.replaceChild;
@@ -929,11 +1014,56 @@ Script.prototype.getAttribute = document.getAttribute;
 Script.prototype.setAttribute = document.setAttribute;
 Script.prototype.cloneNode = document.cloneNode;
 Script.prototype.hasAttribute = document.hasAttribute;
+Script.prototype.appendChild = document.appendChild;
+Script.prototype.apch$ = document.apch$;
+Script.prototype.insertBefore = document.insertBefore;
+Script.prototype.hasChildNodes = document.hasChildNodes;
+Script.prototype.removeChild = document.removeChild;
+Script.prototype.replaceChild = document.replaceChild;
+
+Object.defineProperty(Script.prototype, "firstChild", {
+get: function() { return this.childNodes[0]; }
+});
+Object.defineProperty(Script.prototype, "lastChild", {
+get: function() { return this.childNodes[this.childNodes.length-1]; }
+});
+Object.defineProperty(Script.prototype, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(Script.prototype, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
+
+TextNode.prototype.getAttribute = document.getAttribute;
+TextNode.prototype.setAttribute = document.setAttribute;
+TextNode.prototype.cloneNode = document.cloneNode;
+TextNode.prototype.hasAttribute = document.hasAttribute;
+TextNode.prototype.appendChild = document.appendChild;
+TextNode.prototype.apch$ = document.apch$;
+TextNode.prototype.insertBefore = document.insertBefore;
+TextNode.prototype.hasChildNodes = document.hasChildNodes;
+TextNode.prototype.removeChild = document.removeChild;
+TextNode.prototype.replaceChild = document.replaceChild;
+
+Object.defineProperty(TextNode.prototype, "firstChild", {
+get: function() { return this.childNodes[0]; }
+});
+Object.defineProperty(TextNode.prototype, "lastChild", {
+get: function() { return this.childNodes[this.childNodes.length-1]; }
+});
+Object.defineProperty(TextNode.prototype, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(TextNode.prototype, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
 
 P.prototype.appendChild = document.appendChild;
 P.prototype.apch$ = document.apch$;
 P.prototype.getAttribute = document.getAttribute;
 P.prototype.setAttribute = document.setAttribute;
+P.prototype.hasAttribute = document.hasAttribute;
+
 P.prototype.insertBefore = document.insertBefore;
 Object.defineProperty(P.prototype, "firstChild", {
 get: function() { return this.childNodes[0]; }
@@ -941,11 +1071,17 @@ get: function() { return this.childNodes[0]; }
 Object.defineProperty(P.prototype, "lastChild", {
 get: function() { return this.childNodes[this.childNodes.length-1]; }
 });
+Object.defineProperty(P.prototype, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(P.prototype, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
+
 P.prototype.hasChildNodes = document.hasChildNodes;
 P.prototype.removeChild = document.removeChild;
 P.prototype.replaceChild = document.replaceChild;
 P.prototype.cloneNode = document.cloneNode;
-P.prototype.setAttribute = document.hasAttribute;
 
 Lister.prototype.appendChild = document.appendChild;
 Lister.prototype.apch$ = document.apch$;
@@ -958,6 +1094,13 @@ get: function() { return this.childNodes[0]; }
 Object.defineProperty(Lister.prototype, "lastChild", {
 get: function() { return this.childNodes[this.childNodes.length-1]; }
 });
+Object.defineProperty(Lister.prototype, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(Lister.prototype, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
+
 Lister.prototype.hasChildNodes = document.hasChildNodes;
 Lister.prototype.removeChild = document.removeChild;
 Lister.prototype.replaceChild = document.replaceChild;
@@ -975,6 +1118,13 @@ get: function() { return this.childNodes[0]; }
 Object.defineProperty(Listitem.prototype, "lastChild", {
 get: function() { return this.childNodes[this.childNodes.length-1]; }
 });
+Object.defineProperty(Listitem.prototype, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(Listitem.prototype, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
+
 Listitem.prototype.hasChildNodes = document.hasChildNodes;
 Listitem.prototype.removeChild = document.removeChild;
 Listitem.prototype.replaceChild = document.replaceChild;
@@ -992,6 +1142,13 @@ get: function() { return this.childNodes[0]; }
 Object.defineProperty(Table.prototype, "lastChild", {
 get: function() { return this.childNodes[this.childNodes.length-1]; }
 });
+Object.defineProperty(Table.prototype, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(Table.prototype, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
+
 Table.prototype.hasChildNodes = document.hasChildNodes;
 Table.prototype.removeChild = document.removeChild;
 Table.prototype.replaceChild = document.replaceChild;
@@ -1009,6 +1166,13 @@ get: function() { return this.childNodes[0]; }
 Object.defineProperty(Tbody.prototype, "lastChild", {
 get: function() { return this.childNodes[this.childNodes.length-1]; }
 });
+Object.defineProperty(Tbody.prototype, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(Tbody.prototype, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
+
 Tbody.prototype.hasChildNodes = document.hasChildNodes;
 Tbody.prototype.removeChild = document.removeChild;
 Tbody.prototype.replaceChild = document.replaceChild;
@@ -1026,6 +1190,13 @@ get: function() { return this.childNodes[0]; }
 Object.defineProperty(Trow.prototype, "lastChild", {
 get: function() { return this.childNodes[this.childNodes.length-1]; }
 });
+Object.defineProperty(Trow.prototype, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(Trow.prototype, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
+
 Trow.prototype.hasChildNodes = document.hasChildNodes;
 Trow.prototype.removeChild = document.removeChild;
 Trow.prototype.replaceChild = document.replaceChild;
@@ -1043,6 +1214,14 @@ get: function() { return this.childNodes[0]; }
 Object.defineProperty(Cell.prototype, "lastChild", {
 get: function() { return this.childNodes[this.childNodes.length-1]; }
 });
+Object.defineProperty(Cell.prototype, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(Cell.prototype, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
+
+
 Cell.prototype.hasChildNodes = document.hasChildNodes;
 Cell.prototype.removeChild = document.removeChild;
 Cell.prototype.replaceChild = document.replaceChild;
@@ -1060,6 +1239,13 @@ get: function() { return this.childNodes[0]; }
 Object.defineProperty(Span.prototype, "lastChild", {
 get: function() { return this.childNodes[this.childNodes.length-1]; }
 });
+Object.defineProperty(Span.prototype, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(Span.prototype, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
+
 Span.prototype.hasChildNodes = document.hasChildNodes;
 Span.prototype.removeChild = document.removeChild;
 Span.prototype.replaceChild = document.replaceChild;
@@ -1077,6 +1263,13 @@ get: function() { return this.childNodes[0]; }
 Object.defineProperty(Image.prototype, "lastChild", {
 get: function() { return this.childNodes[this.childNodes.length-1]; }
 });
+Object.defineProperty(Image.prototype, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(Image.prototype, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
+
 Image.prototype.hasChildNodes = document.hasChildNodes;
 Image.prototype.removeChild = document.removeChild;
 Image.prototype.replaceChild = document.replaceChild;
@@ -1094,13 +1287,18 @@ get: function() { return this.childNodes[0]; }
 Object.defineProperty(Frame.prototype, "lastChild", {
 get: function() { return this.childNodes[this.childNodes.length-1]; }
 });
+Object.defineProperty(Frame.prototype, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(Frame.prototype, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
+
 Frame.prototype.hasChildNodes = document.hasChildNodes;
 Frame.prototype.removeChild = document.removeChild;
 Frame.prototype.replaceChild = document.replaceChild;
 Frame.prototype.cloneNode = document.cloneNode;
 Frame.prototype.hasAttribute = document.hasAttribute;
-
-
 
 /* navigator; some parameters are filled in by the buildstartwindow script. */
 navigator.appName = "edbrowse";
@@ -1371,5 +1569,3 @@ getPropertyValue: function (n)
                 }
         }
 }
-
-

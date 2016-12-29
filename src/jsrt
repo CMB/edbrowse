@@ -800,6 +800,32 @@ fail(161);
 }
 }
 
+test_siblings();
+function test_siblings()
+{
+var x1 = document.createElement("div");
+var x2 = document.createElement("span");
+var x3 = document.createElement("table");
+var x4 = document.createElement("script");
+var x5 = document.createElement("element");
+x5.value = 123;
+
+x1.appendChild(x2);
+x1.appendChild(x3);
+x1.appendChild(x4);
+x1.appendChild(x5);
+
+var child1 = x1.childNodes[0];
+// in the wild it is common to see these sibling calls daisychained
+var testchild = child1.nextSibling.nextSibling.previousSibling.nextSibling.nextSibling;
+if (testchild.value == 123)
+{
+// pass
+} else {
+fail(162);
+}
+}
+
 </script>
 
 </body>
