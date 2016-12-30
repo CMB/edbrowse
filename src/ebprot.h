@@ -112,7 +112,7 @@ bool looksBinary(const char *buf, int buflen);
 void looks_8859_utf8(const char *buf, int buflen, bool * iso_p, bool * utf8_p);
 void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p);
 void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p);
-void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p);
+void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p, bool inutf8, bool out32, bool outbig);
 char *uni2utf8(unsigned int unichar);
 void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p, int bom);
 char *base64Encode(const char *inbuf, int inlen, bool lines);

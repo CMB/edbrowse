@@ -1894,16 +1894,14 @@ static JSObject *setTimeout(unsigned int argc, jsval * argv, bool isInterval)
 	const char *allocatedName = NULL;
 	const char *s = NULL;
 
-
 	v0 = argv[0];
-	if (argc != 2 || !JSVAL_IS_INT(argv[1]))
-	{
+	if (argc != 2 || !JSVAL_IS_INT(argv[1])) {
 		// if only one parameter was supplied, hardcode
 		// a number of milliseconds.  1?  100?  1000?
 		n = 100;
 	} else {
-        	v1 = argv[1];
-        	n = JSVAL_TO_INT(v1);
+		v1 = argv[1];
+		n = JSVAL_TO_INT(v1);
 	}
 	if (JSVAL_IS_STRING(v0) ||
 	    v0.isObject() &&
@@ -2457,18 +2455,31 @@ static void processMessage(void)
 	bool rc;		/* return code */
 	bool setret;		/* does setting a property produce a return? */
 	unsigned len;		/* array length */
+	char *uc_run;
+	int uc_len;
 
 	switch (head.cmd) {
 	case EJ_CMD_SCRIPT:
 		propval = 0;
 		s = runscript;
-/* Sometimes Mac puts these three chars at the start of a text file. */
+
+/* skip pass utf8 byte order mark if present */
 		if (!strncmp(s, "\xef\xbb\xbf", 3))
 			s += 3;
+
+/* Have to convert to unicode 16 to use JS_EvaluateUCScript.
+ * Manual says there is a version of EvaluateUCScript that converts the c string
+ * for us, but I can't find it anywhere, so I'm using utfHigh() in format.c,
+ * which I already wrote.
+ * This assumes little endian, last parameter. Is that always the case,
+ * perhaps a js standard, or does it follow the architecture of the machine? */
+		utfHigh(s, strlen(s), &uc_run, &uc_len, true, false, false);
+
 		head.n = 0;
 		head.proplength = 0;
-		if (JS_EvaluateScript(jcx, parent, s, strlen(s),
-				      "foo", head.lineno, v.address())) {
+		if (JS_EvaluateUCScript
+		    (jcx, parent, (short unsigned int *)uc_run, uc_len / 2,
+		     "foo", head.lineno, v.address())) {
 			if (v != JSVAL_VOID) {
 				s = 0;
 				JS::RootedString str(jcx);
@@ -2484,6 +2495,7 @@ static void processMessage(void)
 					head.proplength = strlen(s);
 			}
 		}
+		nzFree(uc_run);
 		nzFree(runscript);
 		runscript = 0;
 		writeHeader();

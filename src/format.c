@@ -1232,7 +1232,8 @@ The returned string is allocated, though not really a string,
 since it will contain nulls, plenty of them in the case of utf32.
 *********************************************************************/
 
-void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
+void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
+	     bool inutf8, bool out32, bool outbig)
 {
 	uchar *outbuf;
 	unsigned int unicode;
@@ -1250,7 +1251,7 @@ void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 	i = j = 0;
 	while (i < inbuflen) {
 		c = (uchar) inbuf[i];
-		if (!cons_utf8 || (c & 0xc0) != 0xc0 && (c & 0xfe) != 0xfe) {
+		if (!inutf8 || (c & 0xc0) != 0xc0 && (c & 0xfe) != 0xfe) {
 			unicode = c;	// that was easy
 			++i;
 		} else {
@@ -1271,8 +1272,8 @@ void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 			}
 		}
 
-		if (cw->utf32Mode) {
-			if (cw->bigMode) {
+		if (out32) {
+			if (outbig) {
 				outbuf[j++] = ((unicode >> 24) & 0xff);
 				outbuf[j++] = ((unicode >> 16) & 0xff);
 				outbuf[j++] = ((unicode >> 8) & 0xff);
@@ -1287,7 +1288,7 @@ void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 		}
 // utf16, a bit trickier but not too bad.
 		if (unicode <= 0xd7ff || unicode >= 0xe000 && unicode <= 0xffff) {
-			if (cw->bigMode) {
+			if (outbig) {
 				outbuf[j++] = ((unicode >> 8) & 0xff);
 				outbuf[j++] = (unicode & 0xff);
 			} else {
@@ -1303,7 +1304,7 @@ void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 			unicode -= 0x10000;
 			pair1 = 0xd800 + ((unicode >> 10) & 0x3ff);
 			pair2 = 0xdc00 + (unicode & 0x3ff);
-			if (cw->bigMode) {
+			if (outbig) {
 				outbuf[j++] = ((pair1 >> 8) & 0xff);
 				outbuf[j++] = (pair1 & 0xff);
 				outbuf[j++] = ((pair2 >> 8) & 0xff);
@@ -1326,7 +1327,7 @@ void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 /* convert a 32 bit unicode character into utf8 */
 char *uni2utf8(unsigned int unichar)
 {
-static uchar outbuf[12];
+	static uchar outbuf[12];
 	int n = 0;
 
 	if (unichar <= 0x7f) {
@@ -1359,7 +1360,7 @@ static uchar outbuf[12];
 	}
 
 	outbuf[n] = 0;
-return (char *)outbuf;
+	return (char *)outbuf;
 }				/* uni2utf8 */
 
 void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
