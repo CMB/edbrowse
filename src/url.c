@@ -971,8 +971,10 @@ char *altText(const char *base)
 	strncpy(buf, base, sizeof(buf) - 1);
 	spaceCrunch(buf, true, false);
 	len = strlen(buf);
-	if (len && !isalnumByte(buf[len - 1]))
+/* remove punctuation mark from the end of a sentence or phrase */
+	if (len >= 2 && !isalnumByte(buf[len - 1]) && isalnumByte(buf[len - 2]))
 		buf[--len] = 0;
+/* strip leading whitespace */
 	while (len && isspaceByte(buf[0]))
 		strmove(buf, buf + 1), --len;
 	if (len > 10) {
