@@ -486,6 +486,9 @@ static int readMessage(void)
 		head.highstat = EJ_HIGH_CX_FAIL;
 		head.lowstat = 0;
 		debugPrint(5, "js abort due to error while debugging");
+/* but there's really no reason to march on */
+		puts("edbrowse abort due to error while debugging.");
+		exit(1);
 	}
 
 	if (head.highstat == EJ_HIGH_CX_FAIL) {
