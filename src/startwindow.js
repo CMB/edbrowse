@@ -652,6 +652,22 @@ if (this[name.toLowerCase()])
         }
 return false;
 }
+/* removeAttribute removes the attribute with the given name */
+document.removeAttribute = function(name) {
+    var ln = name.toLowerCase();
+    if (this[ln])
+    {
+    delete this[ln];
+    }
+    /* Delete from end of array so that we don't have to worry about things
+    being moved around */
+    for (var i=this.attributes.length - 1; i >= 0; --i)
+    {
+        if (this.attributes[i] == ln) {
+            delete this.attributes[i];
+        }
+    }
+}
 
 /*********************************************************************
 Notes on cloneNode:
@@ -811,6 +827,7 @@ Array.prototype.replaceChild = document.replaceChild;
 Array.prototype.getAttribute = document.getAttribute;
 Array.prototype.setAttribute = document.setAttribute;
 Array.prototype.hasAttribute = document.hasAttribute;
+Array.prototype.removeAttribute = document.removeAttribute;
 
 Head.prototype.appendChild = document.appendChild;
 Head.prototype.apch$ = document.apch$;
@@ -835,6 +852,7 @@ Head.prototype.getAttribute = document.getAttribute;
 Head.prototype.setAttribute = document.setAttribute;
 Head.prototype.cloneNode = document.cloneNode;
 Head.prototype.hasAttribute = document.hasAttribute;
+Head.prototype.removeAttribute = document.removeAttribute;
 
 Body.prototype.appendChild = document.appendChild;
 Body.prototype.apch$ = document.apch$;
@@ -859,6 +877,7 @@ Body.prototype.getAttribute = document.getAttribute;
 Body.prototype.setAttribute = document.setAttribute;
 Body.prototype.cloneNode = document.cloneNode;
 Body.prototype.hasAttribute = document.hasAttribute;
+Body.prototype.removeAttribute = document.removeAttribute;
 
 /*********************************************************************
 Special functions for form and input.
@@ -925,6 +944,7 @@ Form.prototype.getAttribute = document.getAttribute;
 Form.prototype.setAttribute = document.setAttribute;
 Form.prototype.cloneNode = document.cloneNode;
 Form.prototype.hasAttribute = document.hasAttribute;
+Form.prototype.removeAttribute = document.removeAttribute;
 
 Element.prototype.appendChild = document.appendChild;
 Element.prototype.apch$ = document.apch$;
@@ -951,6 +971,7 @@ Element.prototype.focus = document.focus;
 Element.prototype.blur = document.blur;
 Element.prototype.cloneNode = document.cloneNode;
 Element.prototype.hasAttribute = document.hasAttribute;
+Element.prototype.removeAttribute = document.removeAttribute;
 
 Anchor.prototype.appendChild = document.appendChild;
 Anchor.prototype.apch$ = document.apch$;
@@ -960,6 +981,7 @@ Anchor.prototype.getAttribute = document.getAttribute;
 Anchor.prototype.setAttribute = document.setAttribute;
 Anchor.prototype.cloneNode = document.cloneNode;
 Anchor.prototype.hasAttribute = document.hasAttribute;
+Anchor.prototype.removeAttribute = document.removeAttribute;
 
 Div.prototype.appendChild = document.appendChild;
 Div.prototype.apch$ = document.apch$;
@@ -984,6 +1006,7 @@ Div.prototype.getAttribute = document.getAttribute;
 Div.prototype.setAttribute = document.setAttribute;
 Div.prototype.cloneNode = document.cloneNode;
 Div.prototype.hasAttribute = document.hasAttribute;
+Div.prototype.removeAttribute = document.removeAttribute;
 
 HtmlObj.prototype.appendChild = document.appendChild;
 HtmlObj.prototype.apch$ = document.apch$;
@@ -1009,11 +1032,13 @@ HtmlObj.prototype.getAttribute = document.getAttribute;
 HtmlObj.prototype.setAttribute = document.setAttribute;
 HtmlObj.prototype.cloneNode = document.cloneNode;
 HtmlObj.prototype.hasAttribute = document.hasAttribute;
+HtmlObj.prototype.removeAttribute = document.removeAttribute;
 
 Script.prototype.getAttribute = document.getAttribute;
 Script.prototype.setAttribute = document.setAttribute;
 Script.prototype.cloneNode = document.cloneNode;
 Script.prototype.hasAttribute = document.hasAttribute;
+Script.prototype.removeAttribute = document.removeAttribute;
 Script.prototype.appendChild = document.appendChild;
 Script.prototype.apch$ = document.apch$;
 Script.prototype.insertBefore = document.insertBefore;
@@ -1038,6 +1063,7 @@ TextNode.prototype.getAttribute = document.getAttribute;
 TextNode.prototype.setAttribute = document.setAttribute;
 TextNode.prototype.cloneNode = document.cloneNode;
 TextNode.prototype.hasAttribute = document.hasAttribute;
+TextNode.prototype.removeAttribute = document.removeAttribute;
 TextNode.prototype.appendChild = document.appendChild;
 TextNode.prototype.apch$ = document.apch$;
 TextNode.prototype.insertBefore = document.insertBefore;
@@ -1063,6 +1089,7 @@ P.prototype.apch$ = document.apch$;
 P.prototype.getAttribute = document.getAttribute;
 P.prototype.setAttribute = document.setAttribute;
 P.prototype.hasAttribute = document.hasAttribute;
+P.prototype.removeAttribute = document.removeAttribute;
 
 P.prototype.insertBefore = document.insertBefore;
 Object.defineProperty(P.prototype, "firstChild", {
@@ -1106,6 +1133,7 @@ Lister.prototype.removeChild = document.removeChild;
 Lister.prototype.replaceChild = document.replaceChild;
 Lister.prototype.cloneNode = document.cloneNode;
 Lister.prototype.hasAttribute = document.hasAttribute;
+Lister.prototype.removeAttribute = document.removeAttribute;
 
 Listitem.prototype.appendChild = document.appendChild;
 Listitem.prototype.apch$ = document.apch$;
@@ -1130,6 +1158,7 @@ Listitem.prototype.removeChild = document.removeChild;
 Listitem.prototype.replaceChild = document.replaceChild;
 Listitem.prototype.cloneNode = document.cloneNode;
 Listitem.prototype.hasAttribute = document.hasAttribute;
+Listitem.prototype.removeAttribute = document.removeAttribute;
 
 Table.prototype.appendChild = document.appendChild;
 Table.prototype.apch$ = document.apch$;
@@ -1154,6 +1183,7 @@ Table.prototype.removeChild = document.removeChild;
 Table.prototype.replaceChild = document.replaceChild;
 Table.prototype.cloneNode = document.cloneNode;
 Table.prototype.hasAttribute = document.hasAttribute;
+Table.prototype.removeAttribute = document.removeAttribute;
 
 Tbody.prototype.appendChild = document.appendChild;
 Tbody.prototype.apch$ = document.apch$;
@@ -1178,6 +1208,7 @@ Tbody.prototype.removeChild = document.removeChild;
 Tbody.prototype.replaceChild = document.replaceChild;
 Tbody.prototype.cloneNode = document.cloneNode;
 Tbody.prototype.hasAttribute = document.hasAttribute;
+Tbody.prototype.removeAttribute = document.removeAttribute;
 
 Trow.prototype.appendChild = document.appendChild;
 Trow.prototype.apch$ = document.apch$;
@@ -1202,6 +1233,7 @@ Trow.prototype.removeChild = document.removeChild;
 Trow.prototype.replaceChild = document.replaceChild;
 Trow.prototype.cloneNode = document.cloneNode;
 Trow.prototype.hasAttribute = document.hasAttribute;
+Trow.prototype.removeAttribute = document.removeAttribute;
 
 Cell.prototype.appendChild = document.appendChild;
 Cell.prototype.apch$ = document.apch$;
@@ -1227,6 +1259,7 @@ Cell.prototype.removeChild = document.removeChild;
 Cell.prototype.replaceChild = document.replaceChild;
 Cell.prototype.cloneNode = document.cloneNode;
 Cell.prototype.hasAttribute = document.hasAttribute;
+Cell.prototype.removeAttribute = document.removeAttribute;
 
 Span.prototype.appendChild = document.appendChild;
 Span.prototype.apch$ = document.apch$;
@@ -1251,6 +1284,7 @@ Span.prototype.removeChild = document.removeChild;
 Span.prototype.replaceChild = document.replaceChild;
 Span.prototype.cloneNode = document.cloneNode;
 Span.prototype.hasAttribute = document.hasAttribute;
+Span.prototype.removeAttribute = document.removeAttribute;
 
 Image.prototype.appendChild = document.appendChild;
 Image.prototype.apch$ = document.apch$;
@@ -1275,6 +1309,7 @@ Image.prototype.removeChild = document.removeChild;
 Image.prototype.replaceChild = document.replaceChild;
 Image.prototype.cloneNode = document.cloneNode;
 Image.prototype.hasAttribute = document.hasAttribute;
+Image.prototype.removeAttribute = document.removeAttribute;
 
 Frame.prototype.appendChild = document.appendChild;
 Frame.prototype.apch$ = document.apch$;
@@ -1299,6 +1334,7 @@ Frame.prototype.removeChild = document.removeChild;
 Frame.prototype.replaceChild = document.replaceChild;
 Frame.prototype.cloneNode = document.cloneNode;
 Frame.prototype.hasAttribute = document.hasAttribute;
+Frame.prototype.removeAttribute = document.removeAttribute;
 
 /* navigator; some parameters are filled in by the buildstartwindow script. */
 navigator.appName = "edbrowse";
