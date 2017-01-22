@@ -3385,6 +3385,8 @@ static int twoLetter(const char *line, const char **runThis)
 				setError(MSG_NoDir);
 				return false;
 			}
+			if (stringEqual(s, "X"))
+				return true;
 			if (cw->dot == 0) {
 				setError(MSG_AtLine0);
 				return false;
