@@ -19,6 +19,7 @@ char *changeFileName;
 char *configFile, *addressFile, *cookieFile;
 char *mailDir, *mailUnread, *mailStash, *mailReply;
 char *recycleBin, *sigFile, *sigFileEnd;
+char *cacheDir, *cacheControl;
 char *ebTempDir, *ebUserDir;
 char *userAgents[10];
 char *currentAgent, *currentReferrer;
@@ -515,6 +516,28 @@ int main(int argc, char **argv)
 				mailStash = 0;
 			}
 		}
+	}
+
+	cacheDir = allocMem(strlen(home) + 10);
+	sprintf(cacheDir, "%s/.ebcache", home);
+	if (fileTypeByName(cacheDir, false) != 'd') {
+		if (mkdir(cacheDir, 0700)) {
+/* Don't want to abort here; we might be on a readonly filesystem.
+ * Don't have a cache directory and can't creat one; yet we should move on. */
+			free(cacheDir);
+			cacheDir = 0;
+		}
+	}
+
+	if (cacheDir) {
+		int fh;
+/* the cache control file, which urls go to which files, and when fetched? */
+		cacheControl = allocMem(strlen(cacheDir) + 9);
+		sprintf(cacheControl, "%s/control", cacheDir);
+/* make sure the control file exists, just for grins */
+		fh = open(cacheControl, O_WRONLY | O_APPEND | O_CREAT, 0600);
+		if (fh >= 0)
+			close(fh);
 	}
 
 	sigFile = allocMem(strlen(home) + 20);
