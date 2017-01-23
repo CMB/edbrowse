@@ -1,0 +1,43 @@
+#!/bin/sh
+
+#  find a string in the lang/msg-en file, map back to its symbolic constants,
+#  and see which sourcefiles contain it.
+#  This is meant to be run from the src directory. -
+#  won't work properly if run from anywhere else.
+
+if [ $# != 1 ]
+then
+echo "usage: errorstring message"
+exit 1
+fi
+
+#  the error message, or a fragment thereof
+e="$1"
+
+nl ../lang/msg-en | fgrep "$e" >/tmp/elines
+count=`cat /tmp/elines | wc -l`
+
+if [ $count = 0 ]
+then
+echo "message not found, try a smaller fragment"
+rm /tmp/elines
+exit 1
+fi
+
+if [ $count != 1 ]
+then
+echo "multiple messages found"
+cat /tmp/elines
+rm /tmp/elines
+exit 1
+fi
+
+#  line number
+ln=`sed </tmp/elines -e 's/	.*//' -e 's/^ *//'`
+rm /tmp/elines
+ln=$((ln+100))
+symbol=`sed <messages.h -e "$ln!d" -e 's/[ ,]*$//' -e 's/^[ 	]*//'`
+echo $symbol
+fgrep -l "$symbol" *.c *.cpp
+
+exit 0
