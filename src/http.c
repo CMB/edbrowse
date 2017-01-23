@@ -48,6 +48,7 @@ static char hct[60];
 static char *hct2;		/* extra content info such as charset */
 int hcl;			/* http content length */
 static char *hcdfn;		/* http content disposition file name */
+static time_t hmd;		/* http modification date */
 static CURL *http_curl_init(struct eb_curl_callback_data *cbd);
 
 /* This function is called for web redirection, by the refresh command,
@@ -158,6 +159,13 @@ static void scan_http_headers(bool fromCallback)
 			debugPrint(3, "content length %d", hcl);
 	}
 
+	if (!hmd && (v = find_http_header("last-modified"))) {
+		hmd = parseHeaderDate(v);
+		if (hmd)
+			debugPrint(3, "mod date %s", v);
+		nzFree(v);
+	}
+
 	if (fromCallback)
 		return;
 
@@ -194,6 +202,7 @@ static CURLcode fetch_internet(CURL * h, bool is_http)
 	nzFree(hcdfn);
 	hcdfn = NULL;
 	hcl = 0;
+	hmd = 0;
 	curlret = curl_easy_perform(h);
 	if (is_http)
 		scan_http_headers(false);
