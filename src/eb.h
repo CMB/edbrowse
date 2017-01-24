@@ -302,6 +302,8 @@ extern char *home;		/* home directory */
 extern char *recycleBin;	/* holds deleted files */
 extern char *configFile, *sigFile, *sigFileEnd;
 extern char *cookieFile;	/* persistent cookies */
+extern char *cacheDir;	/* directory for a persistent cache of http pages */
+extern char *cacheControl;	/* control file (or database) for the cache, map urls to files */
 
 struct listHead {
 	void *next;
