@@ -419,6 +419,47 @@ static void setupEdbrowseTempDirectory(void)
 	}
 }				/* setupEdbrowseTempDirectory */
 
+static void setupEdbrowseCache(void)
+{
+	int fh;
+
+#ifdef DOSLIKE
+	if (!ebUserDir)
+		return;
+	cacheDir = allocMem(strlen(ebUserDir) + 7);
+	sprintf(cacheDir, "%s/cache", ebUserDir);
+	if (fileTypeByName(cacheDir, false) != 'd') {
+		if (mkdir(cacheDir, 0700)) {
+/* Don't want to abort here; we might be on a readonly filesystem.
+ * Don't have a cache directory and can't creat one; yet we should move on. */
+			free(cacheDir);
+			cacheDir = 0;
+			return;
+		}
+	}
+#else
+	cacheDir = allocMem(strlen(home) + 10);
+	sprintf(cacheDir, "%s/.ebcache", home);
+	if (fileTypeByName(cacheDir, false) != 'd') {
+		if (mkdir(cacheDir, 0700)) {
+/* Don't want to abort here; we might be on a readonly filesystem.
+ * Don't have a cache directory and can't creat one; yet we should move on. */
+			free(cacheDir);
+			cacheDir = 0;
+			return;
+		}
+	}
+#endif
+
+/* the cache control file, which urls go to which files, and when fetched? */
+	cacheControl = allocMem(strlen(cacheDir) + 9);
+	sprintf(cacheControl, "%s/control", cacheDir);
+/* make sure the control file exists, just for grins */
+	fh = open(cacheControl, O_WRONLY | O_APPEND | O_CREAT, 0600);
+	if (fh >= 0)
+		close(fh);
+}				/* setupEdbrowseCache */
+
 /*\ MSVC Debug: May need to provide path to 3rdParty DLLs, like
  *  set PATH=F:\Projects\software\bin;%PATH% ...
 \*/
@@ -496,6 +537,7 @@ int main(int argc, char **argv)
 		}
 	}
 
+/* recycle bin and .signature files are unix-like, and not adjusted for windows. */
 	recycleBin = allocMem(strlen(home) + 8);
 	sprintf(recycleBin, "%s/.Trash", home);
 	if (fileTypeByName(recycleBin, false) != 'd') {
@@ -518,34 +560,15 @@ int main(int argc, char **argv)
 		}
 	}
 
-	cacheDir = allocMem(strlen(home) + 10);
-	sprintf(cacheDir, "%s/.ebcache", home);
-	if (fileTypeByName(cacheDir, false) != 'd') {
-		if (mkdir(cacheDir, 0700)) {
-/* Don't want to abort here; we might be on a readonly filesystem.
- * Don't have a cache directory and can't creat one; yet we should move on. */
-			free(cacheDir);
-			cacheDir = 0;
-		}
-	}
-
-	if (cacheDir) {
-		int fh;
-/* the cache control file, which urls go to which files, and when fetched? */
-		cacheControl = allocMem(strlen(cacheDir) + 9);
-		sprintf(cacheControl, "%s/control", cacheDir);
-/* make sure the control file exists, just for grins */
-		fh = open(cacheControl, O_WRONLY | O_APPEND | O_CREAT, 0600);
-		if (fh >= 0)
-			close(fh);
-	}
-
 	sigFile = allocMem(strlen(home) + 20);
 	sprintf(sigFile, "%s/.signature", home);
 	sigFileEnd = sigFile + strlen(sigFile);
 
 	strcat(agent0, version);
 	userAgents[0] = currentAgent = agent0;
+
+	setupEdbrowseTempDirectory();
+	setupEdbrowseCache();
 
 	progname = argv[0];
 	++argv, --argc;
@@ -565,8 +588,6 @@ int main(int argc, char **argv)
 		else
 			i_printfExit(MSG_Usage);
 	}
-
-	setupEdbrowseTempDirectory();
 
 	if (whichproc == 'j')
 		return js_main(argc, argv);
