@@ -5104,6 +5104,7 @@ rebrowse:
 			}
 			line = s;
 			first = '#';
+			cmd = 'b';
 			goto browse;
 		}
 
