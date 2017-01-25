@@ -22,7 +22,7 @@ We don't even query the cache if we don't have at least one of etag or mod date.
 
 #include "eb.h"
 
-static int control_fh;		/* file handle for cacheControl */
+static int control_fh = -1;	/* file handle for cacheControl */
 static char *cache_data;
 static time_t now_t;
 
@@ -62,6 +62,7 @@ static bool readControl(void)
 	int datalen;
 	struct CENTRY *e;
 
+	lseek(control_fh, 0L, 0);
 	if (!fdIntoMemory(control_fh, &data, &datalen))
 		return false;
 
@@ -79,7 +80,7 @@ static bool readControl(void)
 		e->etag = s;
 		s = strchr(s, '\t');
 		*s++ = 0;
-		sscanf(s, "%ud %ud", &e->fetchtime, &e->accesstime);
+		sscanf(s, "%u %u", &e->fetchtime, &e->accesstime);
 		++e, ++numentries;
 	}
 
@@ -91,7 +92,7 @@ static bool readControl(void)
 static char *record2string(const struct CENTRY *e)
 {
 	char *t;
-	asprintf(&t, "%s\t%05d\t%s\t%ud\t%ud\n",
+	asprintf(&t, "%s\t%05d\t%s\t%u\t%u\n",
 		 e->url, e->filenumber, e->etag, e->fetchtime, e->accesstime);
 	return t;
 }				/* record2string */
@@ -117,12 +118,14 @@ static bool writeControl(void)
 		free(newrec);
 		if (rc <= 0) {
 			fclose(f);
+			control_fh = -1;
 			truncate(cacheFile, 0);
 			return false;
 		}
 	}
 
 	fclose(f);
+	control_fh = -1;
 	return true;
 }				/* writeControl */
 
@@ -163,14 +166,16 @@ top:
 		lock_fh = open(cacheLock, O_WRONLY | O_EXCL | O_CREAT, 0666);
 		if (lock_fh >= 0) {	/* got it */
 			close(lock_fh);
-			control_fh = open(cacheControl, O_RDWR | O_BINARY, 0);
 			if (control_fh < 0) {
+				control_fh =
+				    open(cacheControl, O_RDWR | O_BINARY, 0);
+				if (control_fh < 0) {
 /* got the lock but couldn't open the database */
-				unlink(cacheLock);
-				return false;
+					unlink(cacheLock);
+					return false;
+				}
 			}
 			if (!readControl()) {
-				close(control_fh);
 				unlink(cacheLock);
 				return false;
 			}
@@ -211,7 +216,6 @@ static void clearCacheInternal(void)
 	}
 
 	ftruncate(control_fh, 0);
-	close(control_fh);
 }				/* clearCacheInternal */
 
 void clearCache(void)
@@ -243,7 +247,7 @@ bool fetchCache(const char *url, const char *etag, time_t modtime,
 /* find the url */
 	e = entries;
 	for (i = 0; i < numentries; ++i, ++e) {
-		if (!stringEqual(url, e->url))
+		if (!sameURL(url, e->url))
 			continue;
 /* look for match on etag */
 		if (e->etag[0] && etag && etag[0]) {
@@ -262,7 +266,6 @@ bool fetchCache(const char *url, const char *etag, time_t modtime,
 
 nomatch:
 	free(cache_data);
-	close(control_fh);
 	clearLock();
 	return false;
 
@@ -276,7 +279,6 @@ match:
 	newrec = record2string(e);
 	lseek(control_fh, e->offset, 0);
 	write(control_fh, newrec, strlen(newrec));
-	close(control_fh);
 	free(cache_data);
 	free(newrec);
 	clearLock();
@@ -309,7 +311,7 @@ void storeCache(const char *url, const char *etag, const char *data,
 /* find the url */
 	e = entries;
 	for (i = 0; i < numentries; ++i, ++e) {
-		if (stringEqual(url, e->url))
+		if (sameURL(url, e->url))
 			break;
 	}
 
@@ -322,7 +324,6 @@ void storeCache(const char *url, const char *etag, const char *data,
 			     MSG_TempNoCreate2, MSG_NoWrite2)) {
 /* oops, can't write the file */
 		unlink(cacheFile);
-		close(control_fh);
 		free(cache_data);
 		clearLock();
 		return;
@@ -342,7 +343,6 @@ void storeCache(const char *url, const char *etag, const char *data,
 			char *newrec = record2string(e);
 			lseek(control_fh, e->offset, 0);
 			write(control_fh, newrec, strlen(newrec));
-			close(control_fh);
 			free(cache_data);
 			free(newrec);
 			clearLock();
@@ -383,7 +383,6 @@ void storeCache(const char *url, const char *etag, const char *data,
 		char *newrec = record2string(e);
 		lseek(control_fh, 0L, 2);
 		write(control_fh, newrec, strlen(newrec));
-		close(control_fh);
 		free(cache_data);
 		free(newrec);
 		clearLock();
