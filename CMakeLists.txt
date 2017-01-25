@@ -271,6 +271,7 @@ set(${name}_SRCS
 	${dir}/html.c
     ${dir}/format.c
     ${dir}/cookies.c
+    ${dir}/cache.c
     ${dir}/ebjs.c
     ${dir}/plugin.c
     ${dir}/jseng-moz.cpp

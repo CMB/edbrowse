@@ -42,7 +42,7 @@ LDLIBS = -lpcre -lcurl -lreadline -lncurses -ltidy
 all: edbrowse
 
 #  edbrowse objects
-EBOBJS = main.o buffers.o sendmail.o fetchmail.o \
+EBOBJS = main.o buffers.o sendmail.o fetchmail.o cache.o \
 	html.o format.o cookies.o ebjs.o plugin.o ebrc.o \
 	messages.o url.o stringfile.o html-tidy.o decorate.o \
 	msg-strings.o http.o auth.o jseng-moz.o
