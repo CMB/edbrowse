@@ -19,7 +19,7 @@ char *changeFileName;
 char *configFile, *addressFile, *cookieFile;
 char *mailDir, *mailUnread, *mailStash, *mailReply;
 char *recycleBin, *sigFile, *sigFileEnd;
-char *cacheDir, *cacheControl;
+char *cacheDir, *cacheControl, *cacheLock, *cacheFile;
 char *ebTempDir, *ebUserDir;
 char *userAgents[10];
 char *currentAgent, *currentReferrer;
@@ -458,6 +458,10 @@ static void setupEdbrowseCache(void)
 	fh = open(cacheControl, O_WRONLY | O_APPEND | O_CREAT, 0600);
 	if (fh >= 0)
 		close(fh);
+
+	cacheLock = allocMem(strlen(cacheDir) + 6);
+	sprintf(cacheLock, "%s/lock", cacheDir);
+	cacheFile = allocMem(strlen(cacheDir) + 7);
 }				/* setupEdbrowseCache */
 
 /*\ MSVC Debug: May need to provide path to 3rdParty DLLs, like

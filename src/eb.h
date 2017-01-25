@@ -304,6 +304,8 @@ extern char *configFile, *sigFile, *sigFileEnd;
 extern char *cookieFile;	/* persistent cookies */
 extern char *cacheDir;	/* directory for a persistent cache of http pages */
 extern char *cacheControl;	/* control file (or database) for the cache, map urls to files */
+extern char *cacheLock; /* lock file for accessing the cache */
+extern char *cacheFile;
 
 struct listHead {
 	void *next;
