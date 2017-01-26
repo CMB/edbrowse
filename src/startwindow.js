@@ -230,7 +230,7 @@ c = new Element();
 * but for most visible ones it does and I doubt it matters much */
 c.style = new Object;
 c.childNodes = new Array;
-c.attributes = new Object;
+c.attributes = new Array;
 c.nodeName = t;
 c.nodeType = 1;
 c.nodeValue = undefined;
@@ -631,42 +631,27 @@ break;
 }
 }
 document.getAttribute = function(name) { return this[name.toLowerCase()]; }
+document.hasAttribute = function(name) { if (this[name.toLowerCase()]) return true; else return false; }
+// Sets the attribute in 3 different ways, the third using attributes as an array.
+// This may be overkill. I don't know.
 document.setAttribute = function(name, v) { 
-this.attributes[name.toLowerCase()] = v;
-this[name.toLowerCase()] = v; 
+var n = name.toLowerCase();
+this[n] = v; 
+this.attributes[n] = v;
+this.attributes.push(n);
 }
-// hasAttribute works in a comparable way to get and set, returning true/false
-document.hasAttribute = function(name) {
-if (this[name.toLowerCase()])
-        {
-                return true;
-        }
-        else
-        {
-                for (var i=0; i < this.attributes.length; ++i)
-                {
-                        if (this.attributes[i] == name.toLowerCase()) {
-                                return true;
-                        }
-                }
-        }
-return false;
-}
-/* removeAttribute removes the attribute with the given name */
+// Removes the attribute in 3 different ways, the third using attributes as an array.
+// This may be overkill. I don't know.
 document.removeAttribute = function(name) {
-    var ln = name.toLowerCase();
-    if (this[ln])
-    {
-    delete this[ln];
-    }
-    /* Delete from end of array so that we don't have to worry about things
-    being moved around */
-    for (var i=this.attributes.length - 1; i >= 0; --i)
-    {
-        if (this.attributes[i] == ln) {
-            delete this.attributes[i];
-        }
-    }
+    var n = name.toLowerCase();
+    if (this[n]) delete this[n];
+if(this.attributes[n]) delete this.attributes[n];
+    for (var i=this.attributes.length - 1; i >= 0; --i) {
+        if (this.attributes[i] == n) {
+this.splice(i, 1);
+break;
+}
+}
 }
 
 /*********************************************************************
