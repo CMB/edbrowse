@@ -162,7 +162,7 @@ static void nestedAnchors(int start)
 		}
 		a2->sibling = 0;
 
-/* and link a2 up next to a1 */
+/* then link a2 up next to a1 */
 		a2->parent = a1->parent;
 		a2->sibling = a1->sibling;
 		a1->sibling = a2;
@@ -172,9 +172,19 @@ static void nestedAnchors(int start)
 /*********************************************************************
 Bad html will derail tidy, so that <a><div>stuff</div></a>
 will push div outside the anchor, to render as  {} stuff
+m.facebook.com is loaded with them.
+Here is a tiny example.
+
+<body>
+<input type=button name=whatever value=hohaa>
+<a href="#bottom"><div>Cognitive business is here</div></a>
+</body>
+
 This routine tries to put it back.
 An anchor with no children followd by div
 moves div under the anchor.
+For a while I had this function commented out, like it caused a problem,
+but I can't see why or how, so it's back, and facebook looks better.
 *********************************************************************/
 
 static void emptyAnchors(int start)
@@ -571,11 +581,9 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 
 void prerender(int start)
 {
+/* some cleanup routines to rearrange the tree, working around some tidy5 bugs. */
 	nestedAnchors(start);
-/* emptyAnchors shouldn't cause any trouble, but it does!
- * http://stackoverflow.com/questions/8432584/how-to-make-notepad-to-save-text-in-utf-8-without-bom
 	emptyAnchors(start);
- */
 
 	currentForm = currentSel = currentOpt = NULL;
 	currentTitle = currentScript = currentTA = NULL;
