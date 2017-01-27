@@ -160,6 +160,8 @@ and http redirection.
    html syntax errors as per tidy5.
 4: show the socket connections, and the http headers in and out
    side effects of running javascript.
+   Tree of nodes internal to edbrowse.
+   Dynamic node linkage.
 5: messages to and from the javascript process, url resolution, tidy html nodes.
 6: show javascript to be executed
 7: reformatted regular expressions, breakline chunks, read from js.

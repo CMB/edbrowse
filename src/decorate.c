@@ -819,14 +819,11 @@ call out to process those and add them to the object */
 
 /* Other attributes that are expected by pages, even if they
  * aren't populated at domLink-time */
-set_property_string(io, "className", "");
-set_property_string(io, "class", "");
-set_property_string(io, "nodeValue","");
-instantiate_array(io, "attributes");
-set_property_object(io, "ownerDocument", cw->docobj);
-
-
-
+			set_property_string(io, "className", "");
+			set_property_string(io, "class", "");
+			set_property_string(io, "nodeValue", "");
+			instantiate_array(io, "attributes");
+			set_property_object(io, "ownerDocument", cw->docobj);
 
 /* in the special case of form, also need an array of elements */
 			if (stringEqual(classname, "Form"))
@@ -1039,76 +1036,74 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		a = attribVal(t, "language");
 		if (a)
 			set_property_string(t->jv, "language", a);
-                a = attribVal(t, "src");
-                if (a)
-	        {
-        	        set_property_string(t->jv, "src", a);
-        	}else {
-        		set_property_string(t->jv, "src", "");
-        	}
-                a = attribVal(t, "data");
-                if (a)
-                {
-                        set_property_string(t->jv, "data", a);
-                }else {
-                        set_property_string(t->jv, "data", "");
-                }
+		a = attribVal(t, "src");
+		if (a) {
+			set_property_string(t->jv, "src", a);
+		} else {
+			set_property_string(t->jv, "src", "");
+		}
+		a = attribVal(t, "data");
+		if (a) {
+			set_property_string(t->jv, "data", a);
+		} else {
+			set_property_string(t->jv, "data", "");
+		}
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 	case TAGACT_FORM:
 		domLink(t, "Form", "action", "forms", cw->docobj, 0);
 		set_onhandlers(t);
-                set_property_number(t->jv, "nodeType", 1);
+		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_INPUT:
 		formControlJS(t);
 		if (t->itype == INP_TA)
 			establish_inner(t->jv, t->value, 0, true);
-                set_property_number(t->jv, "nodeType", 1);
+		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_OPTION:
 		optionJS(t);
 // The parent child relationship has already been established,
 // don't break, just return;
-                set_property_number(t->jv, "nodeType", 1);
+		set_property_number(t->jv, "nodeType", 1);
 		return;
 
 	case TAGACT_A:
 		domLink(t, "Anchor", "href", "anchors", cw->docobj, 0);
 		set_onhandlers(t);
-                set_property_number(t->jv, "nodeType", 1);
+		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_HEAD:
 		domLink(t, "Head", 0, "heads", cw->docobj, 0);
-                set_property_number(t->jv, "nodeType", 1);
+		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_BODY:
 		domLink(t, "Body", 0, "bodies", cw->docobj, 0);
 		set_onhandlers(t);
-                set_property_number(t->jv, "nodeType", 1);
+		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_OL:
 	case TAGACT_UL:
 	case TAGACT_DL:
 		domLink(t, "Lister", 0, 0, cw->docobj, 0);
-                set_property_number(t->jv, "nodeType", 1);
+		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_LI:
 		domLink(t, "Listitem", 0, 0, cw->docobj, 0);
-                set_property_number(t->jv, "nodeType", 1);
+		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_TABLE:
 		domLink(t, "Table", 0, "tables", cw->docobj, 0);
 /* create the array of rows under the table */
 		instantiate_array(t->jv, "rows");
-                set_property_number(t->jv, "nodeType", 1);
+		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_TR:
@@ -1116,7 +1111,7 @@ static void jsNode(struct htmlTag *t, bool opentag)
 			domLink(t, "Trow", 0, "rows", above->jv, 0);
 			instantiate_array(t->jv, "cells");
 		}
-                set_property_number(t->jv, "nodeType", 1);
+		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_TD:
@@ -1124,19 +1119,19 @@ static void jsNode(struct htmlTag *t, bool opentag)
 			domLink(t, "Cell", 0, "cells", above->jv, 0);
 			establish_inner(t->jv, t->innerHTML, 0, false);
 		}
-                set_property_number(t->jv, "nodeType", 1);
+		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_DIV:
 		domLink(t, "Div", 0, "divs", cw->docobj, 0);
 		establish_inner(t->jv, t->innerHTML, 0, false);
-                set_property_number(t->jv, "nodeType", 1);
+		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_OBJECT:
 		domLink(t, "HtmlObj", 0, "htmlobjs", cw->docobj, 0);
 		establish_inner(t->jv, t->innerHTML, 0, false);
-                set_property_number(t->jv, "nodeType", 1);
+		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_SPAN:
@@ -1145,34 +1140,34 @@ static void jsNode(struct htmlTag *t, bool opentag)
 	case TAGACT_OVB:
 		domLink(t, "Span", 0, "spans", cw->docobj, 0);
 		establish_inner(t->jv, t->innerHTML, 0, false);
-                set_property_number(t->jv, "nodeType", 1);
+		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_AREA:
 		domLink(t, "Area", "href", "areas", cw->docobj, 0);
-                set_property_number(t->jv, "nodeType", 1);
+		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_FRAME:
 		domLink(t, "Frame", "src", "frames", cw->winobj, 0);
-                set_property_number(t->jv, "nodeType", 1);
+		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_IMAGE:
 		domLink(t, "Image", "src", "images", cw->docobj, 0);
-                set_property_number(t->jv, "nodeType", 1);
+		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_P:
 		domLink(t, "P", 0, "paragraphs", cw->docobj, 0);
 		establish_inner(t->jv, t->innerHTML, 0, false);
-                set_property_number(t->jv, "nodeType", 1);
+		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_TITLE:
 		if (cw->ft)
 			set_property_string(cw->docobj, "title", cw->ft);
-                set_property_number(t->jv, "nodeType", 1);
+		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	}			/* switch */
@@ -1418,7 +1413,9 @@ void htmlNodesIntoTree(int start, struct htmlTag *attach)
 	treeAttach = attach;
 	tree_pos = start;
 	treeDisable = false;
+	debugPrint(4, "@@tree of nodes");
 	intoTree(0);
+	debugPrint(4, "}\n@@end tree");
 }				/* htmlNodesIntoTree */
 
 /* Convert a list of html nodes, properly nested open close, into a tree.
@@ -1431,11 +1428,17 @@ static void intoTree(struct htmlTag *parent)
 	const char *v;
 	int action;
 
+	if (!parent)
+		debugPrint(4, "root {");
+	else
+		debugPrint(4, "%s %d {", parent->info->name, parent->seqno);
+
 	while (tree_pos < cw->numTags) {
 		t = tagList[tree_pos++];
 		if (t->slash) {
 			if (parent)
 				parent->balance = t, t->balance = parent;
+			debugPrint(4, "}");
 			return;
 		}
 

@@ -2362,6 +2362,9 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 	if (type == 'r') {
 /* add is a misnomer here, it's being removed */
 		add->deleted = true;
+		debugPrint(4, "linkage, %s %d removed from %s",
+			   a_name, add->seqno,
+			   (add->parent ? add->parent->info->name : "nobody"));
 		add->parent = NULL;
 		if (parent->firstchild == add)
 			parent->firstchild = add->sibling;
@@ -2379,10 +2382,32 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 		return;
 	}
 
+/* check and see if this link would turn the tree into a circle, whence
+ * any subsequent traversal would fall into an infinite loop. */
+	if (add->parent) {	/* already linked in */
+		if (debugLevel >= 3) {
+			printf("linkage cycle, cannot link %s %d into %s %d",
+			       a_name, add->seqno, p_name, parent->seqno);
+			if (type == 'b') {
+				before = tagFromJavaVar2(b_j, b_name);
+				printf(" before %s %d", b_name,
+				       (before ? before->seqno : -1));
+			}
+			printf(", as the child already has parent %s %d\n",
+			       add->parent->info->name, add->parent->seqno);
+			printf
+			    ("Aborting the link, some data may not be rendered.\n");
+		}
+		return;
+	}
+
 	if (type == 'b') {	/* insertBefore */
 		before = tagFromJavaVar2(b_j, b_name);
 		if (!before)
 			return;
+		debugPrint(4, "linkage, %s %d linked into %s %d before %s %d",
+			   a_name, add->seqno, p_name, parent->seqno,
+			   b_name, before->seqno);
 		c = parent->firstchild;
 		if (!c)
 			return;
@@ -2401,6 +2426,8 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 	}
 
 /* type = a, appendchild */
+	debugPrint(4, "linkage, %s %d linked into %s %d",
+		   a_name, add->seqno, p_name, parent->seqno);
 	if (!parent->firstchild)
 		parent->firstchild = add;
 	else {
