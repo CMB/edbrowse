@@ -119,7 +119,7 @@ static bool writeControl(void)
 		if (rc <= 0) {
 			fclose(f);
 			control_fh = -1;
-			truncate(cacheFile, 0);
+			truncate(cacheControl, 0);
 			return false;
 		}
 	}
