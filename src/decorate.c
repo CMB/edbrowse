@@ -1201,14 +1201,14 @@ static void jsNode(struct htmlTag *t, bool opentag)
 
 /* js tree mirrors the dom tree. */
 	if (t->jv && t->parent && t->parent->jv)
-		run_function_onearg(t->parent->jv, "apch$", t->jv);
+		run_function_onearg(t->parent->jv, "apch1$", t->jv);
 
 	if (t->jv && !t->parent) {
 		if (innerParent)
-			run_function_onearg(innerParent, "apch$", t->jv);
+			run_function_onearg(innerParent, "apch1$", t->jv);
 /* head and body link to document */
 		else if (action == TAGACT_HEAD || action == TAGACT_BODY)
-			run_function_onearg(cw->docobj, "apch$", t->jv);
+			run_function_onearg(cw->docobj, "apch1$", t->jv);
 	}
 
 /* TextNode linked to document/gc to protect if from garbage collection,

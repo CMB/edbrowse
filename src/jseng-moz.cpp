@@ -1381,17 +1381,17 @@ static JSBool appendChild0(bool side, JSContext * cx, unsigned int argc,
 	return JS_TRUE;
 }				/* appendChild0 */
 
-static JSBool appendChild(JSContext * cx, unsigned int argc, jsval * vp)
-{
-	return appendChild0(true, cx, argc, vp);
-}				/* appendChild */
-
-static JSBool apch(JSContext * cx, unsigned int argc, jsval * vp)
+static JSBool apch1(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	return appendChild0(false, cx, argc, vp);
-}				/* apch */
+}				/* apch1 */
 
-static JSBool insertBefore(JSContext * cx, unsigned int argc, jsval * vp)
+static JSBool apch2(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	return appendChild0(true, cx, argc, vp);
+}				/* apch2 */
+
+static JSBool insbf(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	unsigned i, mark, length;
 	js::RootedValue v(cx);
@@ -1471,7 +1471,7 @@ static JSBool insertBefore(JSContext * cx, unsigned int argc, jsval * vp)
 	effectChar(' ');
 	endeffect();
 	return JS_TRUE;
-}				/* insertBefore */
+}				/* insbf */
 
 static JSBool removeChild(JSContext * cx, unsigned int argc, jsval * vp)
 {
@@ -1726,9 +1726,9 @@ static JSFunctionSpec document_methods[] = {
 	JS_FS("write", doc_write, 0, 0),
 	JS_FS("writeln", doc_writeln, 0, 0),
 	JS_FS("createElement", doc_createElement, 0, 0),
-	JS_FS("appendChild", appendChild, 1, 0),
-	JS_FS("apch$", apch, 1, 0),
-	JS_FS("insertBefore", insertBefore, 2, 0),
+	JS_FS("apch1$", apch1, 1, 0),
+	JS_FS("apch2$", apch2, 1, 0),
+	JS_FS("insbf$", insbf, 2, 0),
 	JS_FS("removeChild", removeChild, 1, 0),
 	JS_FS("fetchHTTP", fetchHTTP, 4, 0),
 	JS_FS_END

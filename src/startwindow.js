@@ -593,7 +593,30 @@ Anchor.prototype.addEventListener = window.addEventListener;
 Anchor.prototype.attachEvent = window.attachEvent;
 Anchor.prototype.removeEventListener = window.removeEventListener;
 
-/* document.appendChild and document.apch$ are native */
+/*********************************************************************
+The functions apch1$ and apch2$ are native. They perform appendChild in js.
+The first has no side effects, because the linkage was already performed
+within edbrowse via html, and a linkage side effect would only confuse things.
+The second, apch2$, has side effects, as js code calls appendChild
+and those links have to pass back to edbrowse.
+But, the actual function appendChild makes another check;
+if the child is already linked into the tree, then we have to unlink it first,
+before we put it somewhere else.
+This is a call to removeChild, which unlinks in js,
+and passses the remove side effect back to edbrowse.
+The same reasoning holds for insertBefore.
+*********************************************************************/
+
+document.appendChild = function(c) {
+if(c.parentNode) c.parentNode.removeChild(c);
+return this.apch2$(c);
+}
+
+document.insertBefore = function(c, t) {
+if(c.parentNode) c.parentNode.removeChild(c);
+return this.insbf$(c, t);
+}
+
 document.childNodes = new Array;
 Object.defineProperty(document, "firstChild", {
 get: function() { return document.childNodes[0]; }
@@ -815,8 +838,10 @@ Array.prototype.hasAttribute = document.hasAttribute;
 Array.prototype.removeAttribute = document.removeAttribute;
 
 Head.prototype.appendChild = document.appendChild;
-Head.prototype.apch$ = document.apch$;
+Head.prototype.apch1$ = document.apch1$;
+Head.prototype.apch2$ = document.apch2$;
 Head.prototype.insertBefore = document.insertBefore;
+Head.prototype.insbf$ = document.insbf$;
 Object.defineProperty(Head.prototype, "firstChild", {
 get: function() { return this.childNodes[0]; }
 });
@@ -840,8 +865,10 @@ Head.prototype.hasAttribute = document.hasAttribute;
 Head.prototype.removeAttribute = document.removeAttribute;
 
 Body.prototype.appendChild = document.appendChild;
-Body.prototype.apch$ = document.apch$;
+Body.prototype.apch1$ = document.apch1$;
+Body.prototype.apch2$ = document.apch2$;
 Body.prototype.insertBefore = document.insertBefore;
+Body.prototype.insbf$ = document.insbf$;
 Object.defineProperty(Body.prototype, "firstChild", {
 get: function() { return this.childNodes[0]; }
 });
@@ -869,6 +896,7 @@ Special functions for form and input.
 If you add an input to a form, it adds under childNodes in the usual way,
 but also must add in the elements[] array.
 Same for insertBefore and removeChild.
+Same for insertBefore and removeChild.
 When adding an input element to a form,
 linnk form[element.name] to that element.
 *********************************************************************/
@@ -894,7 +922,9 @@ this.elements.appendChild(newobj);
 form$name(this, newobj);
 }
 }
-Form.prototype.apch$ = document.apch$;
+Form.prototype.apch1$ = document.apch1$;
+Form.prototype.apch2$ = document.apch2$;
+Form.prototype.insbf$ = document.insbf$;
 Form.prototype.insertBeforeNative = document.insertBefore;
 Form.prototype.insertBefore = function(newobj, item) {
 this.insertBeforeNative(newobj, item);
@@ -932,8 +962,10 @@ Form.prototype.hasAttribute = document.hasAttribute;
 Form.prototype.removeAttribute = document.removeAttribute;
 
 Element.prototype.appendChild = document.appendChild;
-Element.prototype.apch$ = document.apch$;
+Element.prototype.apch1$ = document.apch1$;
+Element.prototype.apch2$ = document.apch2$;
 Element.prototype.insertBefore = document.insertBefore;
+Element.prototype.insbf$ = document.insbf$;
 Object.defineProperty(Element.prototype, "firstChild", {
 get: function() { return this.childNodes[0]; }
 });
@@ -959,7 +991,8 @@ Element.prototype.hasAttribute = document.hasAttribute;
 Element.prototype.removeAttribute = document.removeAttribute;
 
 Anchor.prototype.appendChild = document.appendChild;
-Anchor.prototype.apch$ = document.apch$;
+Anchor.prototype.apch1$ = document.apch1$;
+Anchor.prototype.apch2$ = document.apch2$;
 Anchor.prototype.focus = document.focus;
 Anchor.prototype.blur = document.blur;
 Anchor.prototype.getAttribute = document.getAttribute;
@@ -969,8 +1002,10 @@ Anchor.prototype.hasAttribute = document.hasAttribute;
 Anchor.prototype.removeAttribute = document.removeAttribute;
 
 Div.prototype.appendChild = document.appendChild;
-Div.prototype.apch$ = document.apch$;
+Div.prototype.apch1$ = document.apch1$;
+Div.prototype.apch2$ = document.apch2$;
 Div.prototype.insertBefore = document.insertBefore;
+Div.prototype.insbf$ = document.insbf$;
 Object.defineProperty(Div.prototype, "firstChild", {
 get: function() { return this.childNodes[0]; }
 });
@@ -994,8 +1029,10 @@ Div.prototype.hasAttribute = document.hasAttribute;
 Div.prototype.removeAttribute = document.removeAttribute;
 
 HtmlObj.prototype.appendChild = document.appendChild;
-HtmlObj.prototype.apch$ = document.apch$;
+HtmlObj.prototype.apch1$ = document.apch1$;
+HtmlObj.prototype.apch2$ = document.apch2$;
 HtmlObj.prototype.insertBefore = document.insertBefore;
+HtmlObj.prototype.insbf$ = document.insbf$;
 Object.defineProperty(HtmlObj.prototype, "firstChild", {
 get: function() { return this.childNodes[0]; }
 });
@@ -1025,8 +1062,10 @@ Script.prototype.cloneNode = document.cloneNode;
 Script.prototype.hasAttribute = document.hasAttribute;
 Script.prototype.removeAttribute = document.removeAttribute;
 Script.prototype.appendChild = document.appendChild;
-Script.prototype.apch$ = document.apch$;
+Script.prototype.apch1$ = document.apch1$;
+Script.prototype.apch2$ = document.apch2$;
 Script.prototype.insertBefore = document.insertBefore;
+Script.prototype.insbf$ = document.insbf$;
 Script.prototype.hasChildNodes = document.hasChildNodes;
 Script.prototype.removeChild = document.removeChild;
 Script.prototype.replaceChild = document.replaceChild;
@@ -1050,8 +1089,10 @@ TextNode.prototype.cloneNode = document.cloneNode;
 TextNode.prototype.hasAttribute = document.hasAttribute;
 TextNode.prototype.removeAttribute = document.removeAttribute;
 TextNode.prototype.appendChild = document.appendChild;
-TextNode.prototype.apch$ = document.apch$;
+TextNode.prototype.apch1$ = document.apch1$;
+TextNode.prototype.apch2$ = document.apch2$;
 TextNode.prototype.insertBefore = document.insertBefore;
+TextNode.prototype.insbf$ = document.insbf$;
 TextNode.prototype.hasChildNodes = document.hasChildNodes;
 TextNode.prototype.removeChild = document.removeChild;
 TextNode.prototype.replaceChild = document.replaceChild;
@@ -1070,13 +1111,15 @@ get: function() { return get_sibling(this,"previous"); }
 });
 
 P.prototype.appendChild = document.appendChild;
-P.prototype.apch$ = document.apch$;
+P.prototype.apch1$ = document.apch1$;
+P.prototype.apch2$ = document.apch2$;
 P.prototype.getAttribute = document.getAttribute;
 P.prototype.setAttribute = document.setAttribute;
 P.prototype.hasAttribute = document.hasAttribute;
 P.prototype.removeAttribute = document.removeAttribute;
 
 P.prototype.insertBefore = document.insertBefore;
+P.prototype.insbf$ = document.insbf$;
 Object.defineProperty(P.prototype, "firstChild", {
 get: function() { return this.childNodes[0]; }
 });
@@ -1096,10 +1139,12 @@ P.prototype.replaceChild = document.replaceChild;
 P.prototype.cloneNode = document.cloneNode;
 
 Lister.prototype.appendChild = document.appendChild;
-Lister.prototype.apch$ = document.apch$;
+Lister.prototype.apch1$ = document.apch1$;
+Lister.prototype.apch2$ = document.apch2$;
 Lister.prototype.getAttribute = document.getAttribute;
 Lister.prototype.setAttribute = document.setAttribute;
 Lister.prototype.insertBefore = document.insertBefore;
+Lister.prototype.insbf$ = document.insbf$;
 Object.defineProperty(Lister.prototype, "firstChild", {
 get: function() { return this.childNodes[0]; }
 });
@@ -1121,10 +1166,12 @@ Lister.prototype.hasAttribute = document.hasAttribute;
 Lister.prototype.removeAttribute = document.removeAttribute;
 
 Listitem.prototype.appendChild = document.appendChild;
-Listitem.prototype.apch$ = document.apch$;
+Listitem.prototype.apch1$ = document.apch1$;
+Listitem.prototype.apch2$ = document.apch2$;
 Listitem.prototype.getAttribute = document.getAttribute;
 Listitem.prototype.setAttribute = document.setAttribute;
 Listitem.prototype.insertBefore = document.insertBefore;
+Listitem.prototype.insbf$ = document.insbf$;
 Object.defineProperty(Listitem.prototype, "firstChild", {
 get: function() { return this.childNodes[0]; }
 });
@@ -1146,10 +1193,12 @@ Listitem.prototype.hasAttribute = document.hasAttribute;
 Listitem.prototype.removeAttribute = document.removeAttribute;
 
 Table.prototype.appendChild = document.appendChild;
-Table.prototype.apch$ = document.apch$;
+Table.prototype.apch1$ = document.apch1$;
+Table.prototype.apch2$ = document.apch2$;
 Table.prototype.getAttribute = document.getAttribute;
 Table.prototype.setAttribute = document.setAttribute;
 Table.prototype.insertBefore = document.insertBefore;
+Table.prototype.insbf$ = document.insbf$;
 Object.defineProperty(Table.prototype, "firstChild", {
 get: function() { return this.childNodes[0]; }
 });
@@ -1171,10 +1220,12 @@ Table.prototype.hasAttribute = document.hasAttribute;
 Table.prototype.removeAttribute = document.removeAttribute;
 
 Tbody.prototype.appendChild = document.appendChild;
-Tbody.prototype.apch$ = document.apch$;
+Tbody.prototype.apch1$ = document.apch1$;
+Tbody.prototype.apch2$ = document.apch2$;
 Tbody.prototype.getAttribute = document.getAttribute;
 Tbody.prototype.setAttribute = document.setAttribute;
 Tbody.prototype.insertBefore = document.insertBefore;
+Tbody.prototype.insbf$ = document.insbf$;
 Object.defineProperty(Tbody.prototype, "firstChild", {
 get: function() { return this.childNodes[0]; }
 });
@@ -1196,10 +1247,12 @@ Tbody.prototype.hasAttribute = document.hasAttribute;
 Tbody.prototype.removeAttribute = document.removeAttribute;
 
 Trow.prototype.appendChild = document.appendChild;
-Trow.prototype.apch$ = document.apch$;
+Trow.prototype.apch1$ = document.apch1$;
+Trow.prototype.apch2$ = document.apch2$;
 Trow.prototype.getAttribute = document.getAttribute;
 Trow.prototype.setAttribute = document.setAttribute;
 Trow.prototype.insertBefore = document.insertBefore;
+Trow.prototype.insbf$ = document.insbf$;
 Object.defineProperty(Trow.prototype, "firstChild", {
 get: function() { return this.childNodes[0]; }
 });
@@ -1221,10 +1274,12 @@ Trow.prototype.hasAttribute = document.hasAttribute;
 Trow.prototype.removeAttribute = document.removeAttribute;
 
 Cell.prototype.appendChild = document.appendChild;
-Cell.prototype.apch$ = document.apch$;
+Cell.prototype.apch1$ = document.apch1$;
+Cell.prototype.apch2$ = document.apch2$;
 Cell.prototype.getAttribute = document.getAttribute;
 Cell.prototype.setAttribute = document.setAttribute;
 Cell.prototype.insertBefore = document.insertBefore;
+Cell.prototype.insbf$ = document.insbf$;
 Object.defineProperty(Cell.prototype, "firstChild", {
 get: function() { return this.childNodes[0]; }
 });
@@ -1247,10 +1302,12 @@ Cell.prototype.hasAttribute = document.hasAttribute;
 Cell.prototype.removeAttribute = document.removeAttribute;
 
 Span.prototype.appendChild = document.appendChild;
-Span.prototype.apch$ = document.apch$;
+Span.prototype.apch1$ = document.apch1$;
+Span.prototype.apch2$ = document.apch2$;
 Span.prototype.getAttribute = document.getAttribute;
 Span.prototype.setAttribute = document.setAttribute;
 Span.prototype.insertBefore = document.insertBefore;
+Span.prototype.insbf$ = document.insbf$;
 Object.defineProperty(Span.prototype, "firstChild", {
 get: function() { return this.childNodes[0]; }
 });
@@ -1272,10 +1329,12 @@ Span.prototype.hasAttribute = document.hasAttribute;
 Span.prototype.removeAttribute = document.removeAttribute;
 
 Image.prototype.appendChild = document.appendChild;
-Image.prototype.apch$ = document.apch$;
+Image.prototype.apch1$ = document.apch1$;
+Image.prototype.apch2$ = document.apch2$;
 Image.prototype.getAttribute = document.getAttribute;
 Image.prototype.setAttribute = document.setAttribute;
 Image.prototype.insertBefore = document.insertBefore;
+Image.prototype.insbf$ = document.insbf$;
 Object.defineProperty(Image.prototype, "firstChild", {
 get: function() { return this.childNodes[0]; }
 });
@@ -1297,10 +1356,12 @@ Image.prototype.hasAttribute = document.hasAttribute;
 Image.prototype.removeAttribute = document.removeAttribute;
 
 Frame.prototype.appendChild = document.appendChild;
-Frame.prototype.apch$ = document.apch$;
+Frame.prototype.apch1$ = document.apch1$;
+Frame.prototype.apch2$ = document.apch2$;
 Frame.prototype.getAttribute = document.getAttribute;
 Frame.prototype.setAttribute = document.setAttribute;
 Frame.prototype.insertBefore = document.insertBefore;
+Frame.prototype.insbf$ = document.insbf$;
 Object.defineProperty(Frame.prototype, "firstChild", {
 get: function() { return this.childNodes[0]; }
 });
