@@ -185,7 +185,23 @@ An anchor with no children followd by div
 moves div under the anchor.
 For a while I had this function commented out, like it caused a problem,
 but I can't see why or how, so it's back, and facebook looks better.
+
+As an after kludge, don't move <div> under <a> if <div> has an anchor beneath it.
+That could create nested anchors, which we already worked hard to get rid of.   Eeeeeeesh.
+Would be easier if the tidy bug was fixed.
 *********************************************************************/
+
+static bool anchorBelow(struct htmlTag *t)
+{
+	struct htmlTag *c;
+
+	if (t->action == TAGACT_A)
+		return true;
+	for (c = t->firstchild; c; c = c->sibling)
+		if (anchorBelow(c))
+			return true;
+	return false;
+}				/* anchorBelow */
 
 static void emptyAnchors(int start)
 {
@@ -203,6 +219,9 @@ static void emptyAnchors(int start)
 		if (!up || !(div = up->sibling) || div->action != TAGACT_DIV)
 			continue;
 // div follows
+/* would moving this create nested anchors? */
+		if (anchorBelow(div))
+			continue;
 		up->sibling = div->sibling;
 		a0->firstchild = div;
 		div->parent = a0;
