@@ -255,6 +255,19 @@ static const char *const inp_types[] = {
 	0
 };
 
+/*********************************************************************
+Here are some other input types that should have additional syntax checks
+performed on them, but as far as this version of edbrowse is concerned,
+they are equivalent to text. Just here to suppress warnings.
+List taken from https://www.tutorialspoint.com/html/html_input_tag.htm
+*********************************************************************/
+
+static const char *const inp_others[] = {
+	"date", "datetime", "datetime-local",
+	"month", "week", "time",
+	"email", "range", "search", "tel", "url", 0
+};
+
 /* helper function for input tag */
 void htmlInputHelper(struct htmlTag *t)
 {
@@ -265,7 +278,9 @@ void htmlInputHelper(struct htmlTag *t)
 	if (s) {
 		n = stringInListCI(inp_types, s);
 		if (n < 0) {
-			debugPrint(3, "unrecognized input type %s", s);
+			n = stringInListCI(inp_others, s);
+			if (n < 0)
+				debugPrint(3, "unrecognized input type %s", s);
 			n = INP_TEXT;
 		}
 	} else if (stringEqual(t->info->name, "BUTTON")) {
