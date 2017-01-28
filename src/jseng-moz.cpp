@@ -194,7 +194,7 @@ int js_main(int argc, char **argv)
 
 static void readFromEb(void *data_p, int n)
 {
-	ssize_t rc;
+	int rc;
 	unsigned char *bytes_p = (unsigned char *)data_p;
 	if (n == 0)
 		return;
@@ -2478,7 +2478,7 @@ static void processMessage(void)
 		head.n = 0;
 		head.proplength = 0;
 		if (JS_EvaluateUCScript
-		    (jcx, parent, (short unsigned int *)uc_run, uc_len / 2,
+		    (jcx, parent, (const jschar *)uc_run, uc_len / 2,
 		     "foo", head.lineno, v.address())) {
 			if (v != JSVAL_VOID) {
 				s = 0;
