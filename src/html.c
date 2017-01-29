@@ -2362,9 +2362,8 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 	if (type == 'r') {
 /* add is a misnomer here, it's being removed */
 		add->deleted = true;
-		debugPrint(4, "linkage, %s %d removed from %s",
-			   a_name, add->seqno,
-			   (add->parent ? add->parent->info->name : "nobody"));
+		debugPrint(4, "linkage, %s %d removed from %s %d",
+			   a_name, add->seqno, p_name, parent->seqno);
 		add->parent = NULL;
 		if (parent->firstchild == add)
 			parent->firstchild = add->sibling;
@@ -2379,6 +2378,7 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 				}
 			}
 		}
+		add->sibling = NULL;
 		return;
 	}
 
