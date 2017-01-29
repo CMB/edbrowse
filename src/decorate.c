@@ -23,9 +23,20 @@ static void jsNode(struct htmlTag *node, bool opentag);
 
 static void processStyles(jsobjtype so, const char *stylestring);
 
+static bool treeOverflow;
+
 static void traverseNode(struct htmlTag *node)
 {
 	struct htmlTag *child;
+
+	if (node->visited) {
+		treeOverflow = true;
+		debugPrint(4, "node revisit %s %d", node->info->name,
+			   node->seqno);
+		return;
+	}
+	node->visited = true;
+
 	(*traverse_callback) (node, true);
 	for (child = node->firstchild; child; child = child->sibling)
 		traverseNode(child);
@@ -37,11 +48,21 @@ void traverseAll(int start)
 	struct htmlTag *t;
 	int i;
 
+	treeOverflow = false;
+
+	for (i = start; i < cw->numTags; ++i) {
+		t = tagList[i];
+		t->visited = false;
+	}
+
 	for (i = start; i < cw->numTags; ++i) {
 		t = tagList[i];
 		if (!t->parent && !t->slash && t->step < 100)
 			traverseNode(t);
 	}
+
+	if (treeOverflow)
+		debugPrint(3, "malformed tree!");
 }				/* traverseAll */
 
 static int nopt;		/* number of options */
