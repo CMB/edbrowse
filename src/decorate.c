@@ -1285,9 +1285,11 @@ static void pushTag(struct htmlTag *t)
 	tagCountCheck();
 }				/* pushTag */
 
+/* first three have to be in this order */
 const struct tagInfo availableTags[] = {
 	{"html", "html", TAGACT_ZERO},
 	{"base", "base reference for relative URLs", TAGACT_BASE, 0, 4},
+	{"object", "an html object", TAGACT_OBJECT, 5, 1},
 	{"a", "an anchor", TAGACT_A, 0, 1},
 	{"input", "an input item", TAGACT_INPUT, 0, 4},
 	{"element", "an input element", TAGACT_INPUT, 0, 4},
@@ -1312,7 +1314,6 @@ const struct tagInfo availableTags[] = {
 	{"br", "a line break", TAGACT_BR, 1, 4},
 	{"p", "a paragraph", TAGACT_P, 2, 5},
 	{"div", "a divided section", TAGACT_DIV, 5, 1},
-	{"object", "an html object", TAGACT_OBJECT, 5, 1},
 	{"map", "a map of images", TAGACT_NOP, 5, 0},
 	{"blockquote", "a quoted paragraph", TAGACT_NOP, 10, 1},
 	{"h1", "a level 1 header", TAGACT_NOP, 10, 1},
@@ -1442,8 +1443,13 @@ struct htmlTag *newTag(const char *name)
 	for (ti = availableTags; ti->name[0]; ++ti)
 		if (stringEqualCI(ti->name, name))
 			break;
-	if (!ti->name[0])
-		return 0;
+
+	if (!ti->name[0]) {
+		debugPrint(3, "warning, created node %s reverts to generic",
+			   name);
+		ti = availableTags + 2;
+	}
+
 	if ((action = ti->action) == TAGACT_ZERO)
 		return 0;
 
