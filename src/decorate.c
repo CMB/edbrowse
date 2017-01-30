@@ -1309,6 +1309,7 @@ const struct tagInfo availableTags[] = {
 	{"bgsound", "background music", TAGACT_MUSIC, 0, 4},
 	{"audio", "audio passage", TAGACT_MUSIC, 0, 4},
 	{"meta", "a meta tag", TAGACT_META, 0, 4},
+	{"link", "a link tag", TAGACT_LINK, 0, 4},
 	{"img", "an image", TAGACT_IMAGE, 0, 4},
 	{"image", "an image", TAGACT_IMAGE, 0, 4},
 	{"br", "a line break", TAGACT_BR, 1, 4},
