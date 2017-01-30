@@ -3829,6 +3829,7 @@ et_go:
 		verifyCertificates ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(verifyCertificates + MSG_CertifyOff);
+		update_var_in_js(3);
 		return true;
 	}
 

@@ -181,6 +181,8 @@ int js_main(int argc, char **argv)
 				allowXHR = head.n;
 			if (head.lineno == 2)
 				debugLevel = head.n;
+			if (head.lineno == 3)
+				verifyCertificates = head.n;
 			head.n = head.proplength = 0;
 //                      no acknowledgement needed
 //                      writeHeader();
