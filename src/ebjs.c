@@ -565,6 +565,7 @@ void createJavaContext(void)
 	if (!js_pid) {
 		js_start();
 		update_var_in_js(1);
+		update_var_in_js(2);
 	}
 
 	debugPrint(5, "> create context for session %d", context);
@@ -1164,6 +1165,8 @@ void update_var_in_js(int varid)
 		return;
 	if (varid == 1)
 		value = allowXHR;
+	if (varid == 2)
+		value = debugLevel;
 	debugPrint(5, "> varupdate %d", varid);
 	head.cmd = EJ_CMD_VARUPDATE;
 	head.obj = 0;

@@ -788,7 +788,7 @@ function test_xhr()
 var xhr = new XMLHttpRequest;
 xhr.url = "http://edbrowse.org";
 xhr.method = "GET";
-xhr.send();
+xhr.send("", 0);
 var rt = xhr.responseText.split("edbrowse").length;
 if (rt > 0)
 {

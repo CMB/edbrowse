@@ -179,6 +179,8 @@ int js_main(int argc, char **argv)
 		if (head.cmd == EJ_CMD_VARUPDATE) {
 			if (head.lineno == 1)
 				allowXHR = head.n;
+			if (head.lineno == 2)
+				debugLevel = head.n;
 			head.n = head.proplength = 0;
 //                      no acknowledgement needed
 //                      writeHeader();
