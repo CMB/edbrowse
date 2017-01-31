@@ -76,9 +76,6 @@ static pthread_mutex_t share_mutex = PTHREAD_MUTEX_INITIALIZER;
 static const char *javaDis[MAXNOJS];
 static int javaDisCount;
 
-#ifdef _MSC_VER
-#endif // _MSC_VER
-
 /*********************************************************************
 Redirect the incoming mail into a file, based on the subject or the sender.
 Along with the filters in .ebrc, this routine dips into your addressbook,

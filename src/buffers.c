@@ -3354,6 +3354,7 @@ static int twoLetter(const char *line, const char **runThis)
 		currentAgent = t;
 		if (helpMessagesOn || debugLevel >= 1)
 			eb_puts(currentAgent);
+		update_var_in_js(4);
 		return true;
 	}
 

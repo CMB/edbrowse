@@ -132,12 +132,14 @@ int js_main(int argc, char **argv)
 	eb_curl_global_init();
 	cookiesFromJar();
 	pluginsOn = false;
+	sendReferrer = false;
 	cw = &in_js_cw;
 
 	js_start();
 
 /* edbrowse catches interrupt, this process ignores it. */
 /* Use quit to terminate, or kill from another console. */
+/* If edbrowse quits then this process also quits via broken pipe. */
 	signal(SIGINT, SIG_IGN);
 
 	effects = initString(&eff_l);
@@ -183,6 +185,11 @@ int js_main(int argc, char **argv)
 				debugLevel = head.n;
 			if (head.lineno == 3)
 				verifyCertificates = head.n;
+			if (head.lineno == 4) {
+				char *t = userAgents[head.n];
+				if (t)
+					currentAgent = t;
+			}
 			head.n = head.proplength = 0;
 //                      no acknowledgement needed
 //                      writeHeader();
