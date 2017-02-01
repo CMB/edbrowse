@@ -1382,6 +1382,33 @@ Frame.prototype.cloneNode = document.cloneNode;
 Frame.prototype.hasAttribute = document.hasAttribute;
 Frame.prototype.removeAttribute = document.removeAttribute;
 
+Option.prototype.appendChild = document.appendChild;
+Option.prototype.apch1$ = document.apch1$;
+Option.prototype.apch2$ = document.apch2$;
+Option.prototype.getAttribute = document.getAttribute;
+Option.prototype.setAttribute = document.setAttribute;
+Option.prototype.insertBefore = document.insertBefore;
+Option.prototype.insbf$ = document.insbf$;
+Object.defineProperty(Option.prototype, "firstChild", {
+get: function() { return this.childNodes[0]; }
+});
+Object.defineProperty(Option.prototype, "lastChild", {
+get: function() { return this.childNodes[this.childNodes.length-1]; }
+});
+Object.defineProperty(Option.prototype, "nextSibling", {
+get: function() { return get_sibling(this,"next"); }
+});
+Object.defineProperty(Option.prototype, "previousSibling", {
+get: function() { return get_sibling(this,"previous"); }
+});
+
+Option.prototype.hasChildNodes = document.hasChildNodes;
+Option.prototype.removeChild = document.removeChild;
+Option.prototype.replaceChild = document.replaceChild;
+Option.prototype.cloneNode = document.cloneNode;
+Option.prototype.hasAttribute = document.hasAttribute;
+Option.prototype.removeAttribute = document.removeAttribute;
+
 /* navigator; some parameters are filled in by the buildstartwindow script. */
 navigator.appName = "edbrowse";
 navigator["appCode Name"] = "edbrowse C/mozjs";

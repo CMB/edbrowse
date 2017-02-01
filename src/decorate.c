@@ -1091,6 +1091,13 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		}
 		break;
 
+	case TAGACT_META:
+		domLink(t, "Meta", "content", "metas", cw->docobj, 0);
+		a = attribVal(t, "content");
+		set_property_string(t->jv, "content", a);
+		set_property_number(t->jv, "nodeType", 1);
+		break;
+
 	case TAGACT_SCRIPT:
 		domLink(t, "Script", "src", "scripts", cw->docobj, 0);
 		a = attribVal(t, "type");

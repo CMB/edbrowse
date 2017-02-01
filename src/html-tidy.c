@@ -123,6 +123,8 @@ void html2nodes(const char *htmltext, bool startpage)
 	// the following tidyOptSetBool implements 
 	// a fix for https://github.com/htacg/tidy-html5/issues/348 
 	tidyOptSetBool( tdoc, TidyEscapeScripts, no );
+	tidyOptSetBool( tdoc, TidyDropEmptyElems, no );
+	tidyOptSetBool( tdoc, TidyDropEmptyParas, no );
 
 	tidySetCharEncoding(tdoc, (cons_utf8 ? "utf8" : "latin1"));
 
