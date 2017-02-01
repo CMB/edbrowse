@@ -157,7 +157,7 @@ toutes les lignes correspondent au modèle v
 aucune des lignes marquées n'a pu être modifiée avec succès
 opération interrompue
 pas de correspondance
-Objets javascript manquants ou mal configurés.
+Objets javascript manquants ou mal configurés. %d\n
 l'agent numéro %c n'est pas défini
 impossible d'afficher le nouveau répertoire
 impossible d'établir le répertoire courant

@@ -220,8 +220,7 @@ c.value = "";
 return c;
 case "option":
 c = new Option();
-// don't need style or childNodes here.
-return c;
+break;
 default:
 /* $puts$("createElement default " + s); */
 c = new Element();

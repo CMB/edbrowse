@@ -493,7 +493,7 @@ static int readMessage(void)
 
 	if (head.highstat == EJ_HIGH_CX_FAIL) {
 		if (head.lowstat == EJ_LOW_VARS)
-			i_puts(MSG_JSEngineVars);
+			i_printf(MSG_JSEngineVars, head.lineno);
 		if (head.lowstat == EJ_LOW_CX)
 			i_puts(MSG_JavaContextError);
 		if (head.lowstat == EJ_LOW_WIN)

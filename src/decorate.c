@@ -728,6 +728,9 @@ static jsobjtype establish_js_option(jsobjtype obj, int idx)
 	fo = get_property_object(obj, "form");
 	if (fo)
 		set_property_object(oo, "form", fo);
+	instantiate_array(oo, "childNodes");
+	instantiate_array(oo, "attribute");
+	instantiate(oo, "style", 0);
 
 	return oo;
 }				/* establish_js_option */
@@ -1092,7 +1095,7 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		break;
 
 	case TAGACT_META:
-		domLink(t, "Meta", "content", "metas", cw->docobj, 0);
+		domLink(t, "Meta", 0, "metas", cw->docobj, 0);
 		a = attribVal(t, "content");
 		set_property_string(t->jv, "content", a);
 		set_property_number(t->jv, "nodeType", 1);

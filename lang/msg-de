@@ -157,7 +157,7 @@ alle Zeilen passen auf dem Ausdruck v
 keine der markierten Zeilen wurden erfolgreich entfernt
 Operation unterbrochen
 kein Treffer
-JavaScript Objekte fehlen oder sind fehlerhaft.
+JavaScript Objekte fehlen oder sind fehlerhaft. %d\n
 Agent Nummer %c ist nicht definiert
 konnte neues Verzeichnis nicht ausgeben
 konnte aktuelles Verzeichnis nicht anzeigen

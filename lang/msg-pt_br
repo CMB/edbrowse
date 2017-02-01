@@ -157,7 +157,7 @@ todas as linhas condizem com o padrão v
 nenhuma linha marcada modificada com sucesso
 operação interrompida
 nada similar
-Objetos Javascript estão faltando ou desconfigurados.
+Objetos Javascript estão faltando ou desconfigurados. %d\n
 agente número %c não definido
 não foi possível mostrar diretório novo
 não foi possível estabelecer o diretório atual

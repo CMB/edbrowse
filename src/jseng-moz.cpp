@@ -332,13 +332,14 @@ static void js_start(void)
 	exit(4);
 }				/* js_start */
 
-static void misconfigure(void)
+static void misconfigure(int n)
 {
 /* there may already be a larger error */
 	if (head.highstat > EJ_HIGH_CX_FAIL)
 		return;
 	head.highstat = EJ_HIGH_CX_FAIL;
 	head.lowstat = EJ_LOW_VARS;
+	head.lineno = n;
 }				/* misconfigure */
 
 static void
@@ -407,7 +408,7 @@ static char *JS_c_str(js::HandleString str)
 	size_t result =
 	    JS_EncodeStringToBuffer(jcx, str, buffer, encodedLength);
 	if (result == (size_t) - 1) {
-		misconfigure();
+		misconfigure(2);
 		buffer[0] = 0;
 	}
 	return buffer;
@@ -507,7 +508,7 @@ static JSBool c##_ctor(JSContext * cx, unsigned int argc, jsval * vp) \
 	JS::RootedObject newobj(cx, \
 		JS_NewObjectForConstructor(cx, &c##_class, &callee_val)); \
 	if (newobj == NULL) { \
-		misconfigure(); \
+		misconfigure(1); \
 		return JS_FALSE; \
 	} \
 	args.rval().set(OBJECT_TO_JSVAL(newobj)); \
@@ -543,7 +544,7 @@ static JSBool window_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 				JS_NewObjectForConstructor(cx, &window_class,
 							   &callee_val));
 	if (newwin == NULL) {
-		misconfigure();
+		misconfigure(3);
 		return JS_FALSE;
 	}
 	if (args.length() > 0 && (str = JS_ValueToString(cx, args[0])))
@@ -617,7 +618,7 @@ static JSBool option_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 				JS_NewObjectForConstructor(cx, &option_class,
 							   &callee_val));
 	if (newopt == NULL) {
-		misconfigure();
+		misconfigure(4);
 		return JS_FALSE;
 	}
 	if (args.length() > 0 && (str = JS_ValueToString(cx, args[0]))) {
@@ -651,7 +652,7 @@ static JSBool textnode_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 				 JS_NewObjectForConstructor(cx, &textnode_class,
 							    &callee_val));
 	if (newtext == NULL) {
-		misconfigure();
+		misconfigure(5);
 		return JS_FALSE;
 	}
 	if (args.length() > 0 && (str = JS_ValueToString(cx, args[0])))
@@ -681,7 +682,7 @@ static JSBool url_ctor(JSContext * cx, unsigned int argc, jsval * vp)
 						       &callee_val));
 	if (uo == NULL) {
 abort:
-		misconfigure();
+		misconfigure(6);
 		return JS_FALSE;
 	}
 
@@ -1087,7 +1088,7 @@ set_property_string1(js::HandleObject parent, const char *name,
 	JS_HasProperty(jcx, parent, name, &found);
 	if (found) {
 		if (JS_SetProperty(jcx, parent, name, v.address()) == JS_FALSE)
-			misconfigure();
+			misconfigure(7);
 		return;
 	}
 
@@ -1104,7 +1105,7 @@ set_property_string1(js::HandleObject parent, const char *name,
 
 	if (JS_DefineProperty
 	    (jcx, parent, name, v, my_getter, my_setter, PROP_STD) == JS_FALSE)
-		misconfigure();
+		misconfigure(8);
 }				/* set_property_string1 */
 
 int set_property_string_nat(jsobjtype parent, const char *name,
@@ -1126,13 +1127,13 @@ static void set_property_bool1(js::HandleObject parent, const char *name,
 	JS_HasProperty(jcx, parent, name, &found);
 	if (found) {
 		if (JS_SetProperty(jcx, parent, name, v.address()) == JS_FALSE)
-			misconfigure();
+			misconfigure(9);
 		return;
 	}
 
 	if (JS_DefineProperty(jcx, parent, name, v, NULL, NULL, PROP_STD) ==
 	    JS_FALSE)
-		misconfigure();
+		misconfigure(10);
 }				/* set_property_bool1 */
 
 int set_property_bool_nat(jsobjtype parent, const char *name, bool n)
@@ -1153,13 +1154,13 @@ static void set_property_number1(js::HandleObject parent, const char *name,
 	JS_HasProperty(jcx, parent, name, &found);
 	if (found) {
 		if (JS_SetProperty(jcx, parent, name, v.address()) == JS_FALSE)
-			misconfigure();
+			misconfigure(11);
 		return;
 	}
 
 	if (JS_DefineProperty(jcx, parent, name, v, NULL, NULL, PROP_STD) ==
 	    JS_FALSE)
-		misconfigure();
+		misconfigure(12);
 }				/* set_property_number1 */
 
 int set_property_number_nat(jsobjtype parent, const char *name, int n)
@@ -1180,13 +1181,13 @@ static void set_property_float1(js::HandleObject parent, const char *name,
 	JS_HasProperty(jcx, parent, name, &found);
 	if (found) {
 		if (JS_SetProperty(jcx, parent, name, v.address()) == JS_FALSE)
-			misconfigure();
+			misconfigure(13);
 		return;
 	}
 
 	if (JS_DefineProperty(jcx, parent, name, v, NULL, NULL, PROP_STD) ==
 	    JS_FALSE)
-		misconfigure();
+		misconfigure(14);
 }				/* set_property_float1 */
 
 int set_property_float_nat(jsobjtype parent, const char *name, double n)
@@ -1209,7 +1210,7 @@ set_property_object1(js::HandleObject parent, const char *name,
 	JS_HasProperty(jcx, parent, name, &found);
 	if (found) {
 		if (JS_SetProperty(jcx, parent, name, v.address()) == JS_FALSE)
-			misconfigure();
+			misconfigure(15);
 		return;
 	}
 
@@ -1218,7 +1219,7 @@ set_property_object1(js::HandleObject parent, const char *name,
 
 	if (JS_DefineProperty(jcx, parent, name, v, NULL, my_setter, PROP_STD)
 	    == JS_FALSE)
-		misconfigure();
+		misconfigure(16);
 }				/* set_property_object1 */
 
 int set_property_object_nat(jsobjtype parent, const char *name, jsobjtype child)
@@ -1343,17 +1344,17 @@ static JSBool appendChild0(bool side, JSContext * cx, unsigned int argc,
 		return JS_TRUE;	/* no such array */
 	JS::RootedObject elar(cx, JSVAL_TO_OBJECT(v));
 	if (elar == NULL) {
-		misconfigure();
+		misconfigure(17);
 		return JS_FALSE;
 	}
 	if (JS_GetArrayLength(cx, elar, &length) == JS_FALSE) {
-		misconfigure();
+		misconfigure(18);
 		return JS_FALSE;
 	}
 // see if it's already there.
 	for (i = 0; i < length; ++i) {
 		if (JS_GetElement(cx, elar, i, v.address()) == JS_FALSE) {
-			misconfigure();
+			misconfigure(19);
 			return JS_FALSE;
 		}
 		if (!v.isObject())
@@ -1368,7 +1369,7 @@ static JSBool appendChild0(bool side, JSContext * cx, unsigned int argc,
 // add child to the end
 	if (JS_DefineElement(cx, elar, length,
 			     args[0], NULL, NULL, PROP_STD) == JS_FALSE) {
-		misconfigure();
+		misconfigure(20);
 		return JS_FALSE;
 	}
 	JS_DefineProperty(cx, child, "parentNode", OBJECT_TO_JSVAL(thisobj),
@@ -1419,11 +1420,11 @@ static JSBool insbf(JSContext * cx, unsigned int argc, jsval * vp)
 		return JS_TRUE;	/* no such array */
 	JS::RootedObject elar(cx, JSVAL_TO_OBJECT(v));
 	if (elar == NULL) {
-		misconfigure();
+		misconfigure(21);
 		return JS_FALSE;
 	}
 	if (JS_GetArrayLength(cx, elar, &length) == JS_FALSE) {
-		misconfigure();
+		misconfigure(22);
 		return JS_FALSE;
 	}
 
@@ -1431,7 +1432,7 @@ static JSBool insbf(JSContext * cx, unsigned int argc, jsval * vp)
 	mark = -1;
 	for (i = 0; i < length; ++i) {
 		if (JS_GetElement(cx, elar, i, v.address()) == JS_FALSE) {
-			misconfigure();
+			misconfigure(23);
 			return JS_FALSE;
 		}
 		if (!v.isObject())
@@ -1500,18 +1501,18 @@ static JSBool removeChild(JSContext * cx, unsigned int argc, jsval * vp)
 		return JS_TRUE;	/* no such array */
 	JS::RootedObject elar(cx, JSVAL_TO_OBJECT(v));
 	if (elar == NULL) {
-		misconfigure();
+		misconfigure(24);
 		return JS_FALSE;
 	}
 	if (JS_GetArrayLength(cx, elar, &length) == JS_FALSE) {
-		misconfigure();
+		misconfigure(25);
 		return JS_FALSE;
 	}
 
 /* child better be somewhere in the array */
 	for (mark = 0; mark < length; ++mark) {
 		if (JS_GetElement(cx, elar, mark, v.address()) == JS_FALSE) {
-			misconfigure();
+			misconfigure(26);
 			return JS_FALSE;
 		}
 		if (!v.isObject())
@@ -1923,7 +1924,7 @@ static JSObject *setTimeout(unsigned int argc, jsval * argv, bool isInterval)
 		to = JS_NewObject(jcx, &timer_class, NULL, winobj);
 		if (to == NULL) {
 abort:
-			misconfigure();
+			misconfigure(27);
 			return NULL;
 		}
 // protect this timer from the garbage collector
@@ -2226,7 +2227,7 @@ static void set_property_generic(js::HandleObject parent, const char *name)
 		propval = 0;
 		childroot = JS_NewObject(jcx, cp, NULL, parent);
 		if (!childroot) {
-			misconfigure();
+			misconfigure(28);
 			break;
 		}
 		if (cp == &url_class) {
@@ -2236,7 +2237,7 @@ static void set_property_generic(js::HandleObject parent, const char *name)
 			if (JS_DefineProperty
 			    (jcx, childroot, "href$val", v, NULL,
 			     setter_loc_hrefval, PROP_STD) == JS_FALSE) {
-				misconfigure();
+				misconfigure(29);
 				break;
 			}
 		}
@@ -2280,7 +2281,7 @@ static JSObject *instantiate_array1(js::HandleObject parent, const char *name)
 	v = OBJECT_TO_JSVAL(a);
 	if (JS_DefineProperty(jcx, parent, name, v, NULL, NULL, PROP_STD) ==
 	    JS_FALSE) {
-		misconfigure();
+		misconfigure(30);
 		return 0;
 	}
 	return a;
@@ -2312,7 +2313,7 @@ static JSObject *instantiate1(js::HandleObject parent, const char *name,
 	v = OBJECT_TO_JSVAL(a);
 	if (JS_DefineProperty(jcx, parent, name, v, NULL, NULL, PROP_STD) ==
 	    JS_FALSE) {
-		misconfigure();
+		misconfigure(31);
 		return 0;
 	}
 	return a;
@@ -2352,11 +2353,11 @@ set_array_element_object1(js::HandleObject parent, int idx,
 	JS_HasElement(jcx, parent, idx, &found);
 	if (found) {
 		if (JS_SetElement(jcx, parent, idx, v.address()) == JS_FALSE)
-			misconfigure();
+			misconfigure(32);
 	} else {
 		if (JS_DefineElement(jcx, parent, idx, v, NULL, NULL, PROP_STD)
 		    == JS_FALSE)
-			misconfigure();
+			misconfigure(33);
 	}
 }				/* set_array_element_object1 */
 
@@ -2601,7 +2602,7 @@ propreturn:
 			propval = 0;
 			child = JS_NewObject(jcx, cp, NULL, parent);
 			if (!child)
-				misconfigure();
+				misconfigure(34);
 			else
 				set_array_element_object1(parent, head.n,
 							  child);

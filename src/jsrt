@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head id=boom>
+<meta content=Snoopy>
 <title>Edbrowse js regression test</title>
 <base href="http://yyy.zzz.com">
 <!-- tidy5 says this is not a valid tag any more -->
@@ -826,6 +827,10 @@ if (testchild.value == 123)
 fail(162);
 }
 }
+
+if(document.metas[1].content != "Snoopy")
+fail(163);
+// add tests for getAttribute etc, once Meta is actually a class in startwindow.js.
 
 </script>
 

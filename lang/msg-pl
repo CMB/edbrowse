@@ -157,7 +157,7 @@ wszystkie wiersze pasują do wzorca 'v'
 żaden z zaznaczonych wierszy nie został poprawnie zmodyfikowany
 operacja przerwana
 brak pasujących wyników
-Brak obiektów JavaScript, lub zostały one błędnie skonfigurowane.
+Brak obiektów JavaScript, lub zostały one błędnie skonfigurowane. %d\n
 agent numer %c nie został zdefiniowany
 nie można wyświetlić nowego katalogu
 nie można wykryć bieżącego katalogu

@@ -157,7 +157,7 @@ all lines match the v pattern
 none of the marked lines were successfully modified
 operation interrupted
 no match
-Javascript objects are missing or misconfigured.
+Javascript objects are missing or misconfigured. %d\n
 agent number %c is not defined
 could not print new directory
 could not establish current directory
