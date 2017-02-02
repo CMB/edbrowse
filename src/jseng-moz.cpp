@@ -1799,6 +1799,21 @@ static JSBool win_puts(JSContext * cx, unsigned int argc, jsval * vp)
 	return JS_TRUE;
 }				/* win_puts */
 
+static JSBool win_logputs(JSContext * cx, unsigned int argc, jsval * vp)
+{
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	const char *msg = NULL;
+	int minlev = JSVAL_TO_INT(args[0]);
+	JS::RootedString str(cx);
+	if (args.length() > 1 && (str = JS_ValueToString(cx, args[1])))
+		msg = JS_c_str(str);
+	if (debugLevel >= minlev && msg && *msg)
+		puts(msg);
+	cnzFree(msg);
+	args.rval().set(JSVAL_VOID);
+	return JS_TRUE;
+}				/* win_logputs */
+
 static JSBool win_prompt(JSContext * cx, unsigned int argc, jsval * vp)
 {
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
@@ -2043,6 +2058,7 @@ static JSBool clearTimeout(JSContext * cx, unsigned int argc, jsval * vp)
 
 static JSFunctionSpec window_methods[] = {
 	JS_FS("$puts$", win_puts, 1, 0),
+	JS_FS("$logputs$", win_logputs, 2, 0),
 	JS_FS("prompt", win_prompt, 2, 0),
 	JS_FS("confirm", win_confirm, 1, 0),
 	JS_FS("setTimeout", win_sto, 2, 0),

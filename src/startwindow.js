@@ -266,7 +266,6 @@ return c;
 }
 
 // window.alert is a simple wrapper around native puts.
-// Probably I should rename and wrapperize other functions like prompt and confirm.
 function alert(s) { $puts$(s); }
 
 /* window.open is the same as new window, just pass the args through */
@@ -670,7 +669,7 @@ document.removeAttribute = function(name) {
 if(this.attributes[n]) delete this.attributes[n];
     for (var i=this.attributes.length - 1; i >= 0; --i) {
         if (this.attributes[i] == n) {
-this.splice(i, 1);
+this.attributes.splice(i, 1);
 break;
 }
 }
@@ -1433,9 +1432,8 @@ history.toString = function() {
  return "Sorry, edbrowse does not maintain a browsing history.";
 } 
 
-/* The web console, just the log method for now, and only one arg. */
-console = new Object;
-console.log = function(obj) {
+/* The web console, one argument, print based on debugLevel */
+time$log$ = function(debug, level, obj) {
 var today=new Date();
 var h=today.getHours();
 var m=today.getMinutes();
@@ -1444,11 +1442,13 @@ var s=today.getSeconds();
 if(h < 10) h = "0" + h;
 if(m < 10) m = "0" + m;
 if(s < 10) s = "0" + s;
-$puts$("[" + h + ":" + m + ":" + s + "] " + obj);
+$logputs$(debug, "console " + level + " [" + h + ":" + m + ":" + s + "] " + obj);
 }
-console.info = console.log;
-console.warn = console.log;
-console.error = console.log;
+console = new Object;
+console.log = function(obj) { time$log$(3, "log", obj); }
+console.info = function(obj) { time$log$(3, "info", obj); }
+console.warn = function(obj) { time$log$(3, "warn", obj); }
+console.error = function(obj) { time$log$(3, "error", obj); }
 
 /* An ok (object keys) function for javascript/dom debugging. */
 /* This is in concert with the jdb command in edbrowse. */
