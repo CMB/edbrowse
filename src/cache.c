@@ -293,6 +293,31 @@ static int entry_cmp(const void *s, const void *t)
 	    ((struct CENTRY *)s)->accesstime;
 }				/* entry_cmp */
 
+/*
+ * Is a URL present in the cache?  This can save on HEAD requests,
+ * since we can just do a straight GET if the item is not there.
+ */
+bool presentInCache(const char *url)
+{
+	bool ret = false;
+	struct CENTRY *e;
+	int i;
+
+	if (!setLock())
+		return false;
+
+	e = entries;
+
+	for (i = 0; (!ret && i < numentries); ++i, ++e) {
+		if (!sameURL(url, e->url))
+			continue;
+		ret = true;
+	}
+
+	clearLock();
+	return ret;
+}				/* presentInCache */
+
 /* Put a file into the cache.
  * Sets the fetch time and last access time to now.
  * If you ask me to store a file that I just fetched, I'll do it,

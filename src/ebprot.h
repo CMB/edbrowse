@@ -37,6 +37,7 @@ void sendCookies(char **s, int *l, const char *url, bool issecure) ;
 void clearCache(void) ;
 bool fetchCache(const char * url, const char *etag, time_t modtime, char **data, int *data_len) ;
 void storeCache(const char *url, const char *etag, const char *data, int datalen) ;
+bool presentInCache(const char *url) ;
 
 /* sourcefile=dbodbc.c (and others) */
 bool fetchForeign(char *tname) ;
