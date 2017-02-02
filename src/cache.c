@@ -2,8 +2,8 @@
 cache.c: maintain a cache of the http files.
 The url is the key.
 The result is a string that holds a 5 digit filename, the etag,
-fetch time, and last access time.
-nnnnn tab etag tab fetch tab access
+last-modified time, and last access time.
+nnnnn tab etag tab last-mod tab access
 The access time helps us clean house; delete the oldest files.
 cacheDir is the directory holding the cached files,
 and cacheControl is the file that houses the database,
@@ -15,7 +15,7 @@ accessing the cache, and if busy then wait a few milliseconds and try again.
 For now I'm rolling my own.
 If the stored etag and header etag are both present, and don't match,
 then the file is stale.
-If one or the other etag is missing, and mod date > fetch date,
+If one or the other etag is missing, and mod date > mod date of cache entry,
 then the file is stale.
 We don't even query the cache if we don't have at least one of etag or mod date.
 *********************************************************************/
@@ -32,9 +32,8 @@ struct CENTRY {
 	const char *url;
 	int filenumber;
 	const char *etag;
-/* time is in tens of seconds past 1970, good for a while. */
-	unsigned int fetchtime;
-	unsigned int accesstime;
+	time_t modtime;
+	time_t accesstime;
 };
 
 #define MAXCACHESIZE 2000
@@ -80,7 +79,7 @@ static bool readControl(void)
 		e->etag = s;
 		s = strchr(s, '\t');
 		*s++ = 0;
-		sscanf(s, "%u %u", &e->fetchtime, &e->accesstime);
+		sscanf(s, "%ld %ld", &e->modtime, &e->accesstime);
 		++e, ++numentries;
 	}
 
@@ -92,8 +91,8 @@ static bool readControl(void)
 static char *record2string(const struct CENTRY *e)
 {
 	char *t;
-	asprintf(&t, "%s\t%05d\t%s\t%u\t%u\n",
-		 e->url, e->filenumber, e->etag, e->fetchtime, e->accesstime);
+	asprintf(&t, "%s\t%05d\t%s\t%ld\t%ld\n",
+		 e->url, e->filenumber, e->etag, e->modtime, e->accesstime);
 	return t;
 }				/* record2string */
 
@@ -258,7 +257,7 @@ bool fetchCache(const char *url, const char *etag, time_t modtime,
 		}
 		if (!modtime)
 			goto nomatch;
-		if (modtime > e->fetchtime)
+		if (modtime > e->modtime)
 			goto nomatch;
 		goto match;
 	}
@@ -275,7 +274,7 @@ match:
 		goto nomatch;
 /* file has been pulled from cache */
 /* have to update the access time */
-	e->accesstime = now_t / 10;
+	e->accesstime = now_t;
 	newrec = record2string(e);
 	lseek(control_fh, e->offset, 0);
 	write(control_fh, newrec, strlen(newrec));
@@ -319,11 +318,10 @@ bool presentInCache(const char *url)
 }				/* presentInCache */
 
 /* Put a file into the cache.
- * Sets the fetch time and last access time to now.
- * If you ask me to store a file that I just fetched, I'll do it,
- * but it's a waste, so don't go there. */
-void storeCache(const char *url, const char *etag, const char *data,
-		int datalen)
+ * Sets the modified time and last access time to now. */
+
+void storeCache(const char *url, const char *etag, time_t modtime,
+		const char *data, int datalen)
 {
 	struct CENTRY *e;
 	int i;
@@ -357,9 +355,10 @@ void storeCache(const char *url, const char *etag, const char *data,
 	if (i < numentries) {
 /* we're just updating a preexisting record */
 		rewrite = false;
-		e->fetchtime = e->accesstime = now_t / 10;
+		e->accesstime = now_t;
+		e->modtime = modtime;
 		if (etag && *etag) {
-			if (strlen(etag) != strlen(e->etag))
+		if (strlen(etag) != strlen(e->etag))
 				rewrite = true;
 			e->etag = etag;
 		}
@@ -401,7 +400,8 @@ void storeCache(const char *url, const char *etag, const char *data,
 	e->url = url;
 	e->filenumber = filenum;
 	e->etag = (etag ? etag : emptyString);
-	e->fetchtime = e->accesstime = now_t / 10;
+	e->modtime = modtime;
+	e->accesstime = now_t;
 
 	if (!rewrite) {
 /* didn't have to prune; just append this record */
