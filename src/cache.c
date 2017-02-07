@@ -29,6 +29,7 @@ static time_t now_t;
 /* a cache entry */
 struct CENTRY {
 	off_t offset;
+	size_t textlength;
 	const char *url;
 	int filenumber;
 	const char *etag;
@@ -71,6 +72,7 @@ static bool readControl(void)
 	for (s = data; s != endfile; s = t) {
 		t = strchr(s, '\n') + 1;
 		e->offset = s - data;
+		e->textlength = t - s;
 		e->url = s;
 		s = strchr(s, '\t');
 		*s++ = 0;
@@ -113,6 +115,7 @@ static bool writeControl(void)
 	e = entries;
 	for (i = 0; i < numentries; ++i, ++e) {
 		char *newrec = record2string(e);
+		e->textlength = strlen(newrec);
 		int rc = fprintf(f, "%s", newrec);
 		free(newrec);
 		if (rc <= 0) {
@@ -235,6 +238,7 @@ bool fetchCache(const char *url, const char *etag, time_t modtime,
 	struct CENTRY *e;
 	int i;
 	char *newrec;
+	size_t newlen = 0;
 
 /* you have to give me enough information */
 	if (!modtime && (!etag || !*etag))
@@ -276,8 +280,14 @@ match:
 /* have to update the access time */
 	e->accesstime = now_t;
 	newrec = record2string(e);
-	lseek(control_fh, e->offset, 0);
-	write(control_fh, newrec, strlen(newrec));
+	newlen = strlen(newrec);
+	if (newlen == e->textlength) {
+		lseek(control_fh, e->offset, 0);
+		write(control_fh, newrec, newlen);
+	} else {
+		if (!writeControl())
+			clearCacheInternal();
+	}
 	free(cache_data);
 	free(newrec);
 	clearLock();
@@ -326,7 +336,7 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 	struct CENTRY *e;
 	int i;
 	int filenum;
-	bool rewrite;
+	bool append = false;
 
 	if (!setLock())
 		return;
@@ -354,26 +364,23 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 
 	if (i < numentries) {
 /* we're just updating a preexisting record */
-		rewrite = false;
 		e->accesstime = now_t;
 		e->modtime = modtime;
-		if (etag && *etag) {
-		if (strlen(etag) != strlen(e->etag))
-				rewrite = true;
-			e->etag = etag;
-		}
-		if (!rewrite) {
+		e->etag = etag;
+		char *newrec = record2string(e);
+		size_t newlen = strlen(newrec);
+		if (newlen == e->textlength) {
 /* record is the same length, just update it */
-			char *newrec = record2string(e);
 			lseek(control_fh, e->offset, 0);
-			write(control_fh, newrec, strlen(newrec));
+			write(control_fh, newrec, newlen);
 			free(cache_data);
 			free(newrec);
 			clearLock();
 			return;
 		}
 
-/* etag has changed length, have to rewrite the whole control file */
+/* Record has changed length, have to rewrite the whole control file */
+			e->textlength = newlen;
 		if (!writeControl())
 			clearCacheInternal();
 		free(cache_data);
@@ -382,9 +389,7 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 	}
 
 /* this file is new. See if the database is full. */
-	rewrite = false;
 	if (numentries == MAXCACHESIZE) {
-		rewrite = true;
 /* sort to find the 100 oldest files */
 		qsort(entries, numentries, sizeof(struct CENTRY), entry_cmp);
 		e = entries + numentries - 100;
@@ -393,6 +398,8 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 			unlink(cacheFile);
 		}
 		numentries -= 100;
+	} else {
+		append = true;
 	}
 
 	e = entries + numentries;
@@ -403,11 +410,12 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 	e->modtime = modtime;
 	e->accesstime = now_t;
 
-	if (!rewrite) {
+	if (append) {
 /* didn't have to prune; just append this record */
 		char *newrec = record2string(e);
+		e->textlength = strlen(newrec);
 		lseek(control_fh, 0L, 2);
-		write(control_fh, newrec, strlen(newrec));
+		write(control_fh, newrec, e->textlength);
 		free(cache_data);
 		free(newrec);
 		clearLock();
