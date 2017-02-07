@@ -776,6 +776,8 @@ static void urlSanitize(const char *url, const char *post, bool f_encoded)
 bool httpConnect(const char *url, bool down_ok, bool webpage,
 		 bool f_encoded, char **headers_p, char **body_p, int *bodlen_p)
 {
+	char *cacheData = NULL;
+	int cacheDataLen = 0;
 	CURL *h;		// the curl http handle
 	struct eb_curl_callback_data cbd;
 	char *referrer = NULL;
@@ -797,6 +799,8 @@ bool httpConnect(const char *url, bool down_ok, bool webpage,
 	bool proceed_unauthenticated = false;
 	int redirect_count = 0;
 	bool name_changed = false;
+	bool post_request = false;
+	bool head_request = false;
 
 	if (headers_p)
 		*headers_p = 0;
@@ -901,6 +905,7 @@ mimestream:
 	urlSanitize(url, post, f_encoded);
 
 	if (post) {
+		post_request = true;
 		post++;
 
 		if (strncmp(post, "`mfd~", 5)) ;	/* No need to do anything, not multipart. */
@@ -1004,6 +1009,11 @@ mimestream:
 	still_fetching = true;
 	serverData = initString(&serverDataLen);
 
+	if (!post_request && presentInCache(urlcopy)) {
+		head_request = true;
+		curl_easy_setopt(h, CURLOPT_NOBODY, 1l);
+	}
+
 	while (still_fetching == true) {
 		char *redir = NULL;
 		cbd.length = &serverDataLen;
@@ -1026,6 +1036,18 @@ perform:
 		if (cbd.down_state == 6) {
 			curl_easy_cleanup(h);
 			goto mimestream;
+		}
+
+		if (head_request && cbd.down_state != 0) {
+			curl_easy_setopt(h, CURLOPT_NOBODY, 0l);
+			head_request = false;
+			if (cbd.down_state == 2) {
+				curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE,
+						  &hcode);
+				if (hcode == 200) {
+					goto perform;
+				}
+			}
 		}
 
 		if (cbd.down_state == 5) {
@@ -1107,8 +1129,10 @@ perform:
 
 /* Convert POST request to GET request after redirection. */
 /* This should only be done for 301 through 303 */
-				if (hcode < 307)
+				if (hcode < 307) {
 					curl_easy_setopt(h, CURLOPT_HTTPGET, 1);
+					post_request = false;
+				}
 /* I think there is more work to do for 307 308,
  * pasting the prior post string onto the new URL. Not sure about this. */
 
@@ -1123,6 +1147,11 @@ perform:
 				curlret = setCurlURL(h, urlcopy);
 				if (curlret != CURLE_OK)
 					goto curl_fail;
+
+				if (!post_request && presentInCache(urlcopy)) {
+					head_request = true;
+					curl_easy_setopt(h, CURLOPT_NOBODY, 1l);
+				}
 
 				nzFree(serverData);
 				serverData = emptyString;
@@ -1150,8 +1179,29 @@ perform:
 				proceed_unauthenticated = true;
 			}
 		} else {	/* not redirect, not 401 */
-			still_fetching = false;
-			transfer_status = true;
+			if (head_request) {
+				if (fetchCache
+				    (urlcopy, hetag, hmd, &cacheData,
+				     &cacheDataLen)) {
+					nzFree(serverData);
+					serverData = cacheData;
+					serverDataLen = cacheDataLen;
+					still_fetching = false;
+					transfer_status = true;
+				} else {
+/* Back through the loop,
+ * now doing GET rather than HEAD. */
+					curl_easy_setopt(h, CURLOPT_NOBODY, 0l);
+					head_request = false;
+					redirect_count = 0;
+				}
+			} else {
+				if ((hcode == 200) && (hmd || hetag))
+					storeCache(url, hetag, hmd, serverData,
+						   serverDataLen);
+				still_fetching = false;
+				transfer_status = true;
+			}
 		}
 	}
 
