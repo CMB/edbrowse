@@ -193,6 +193,9 @@ break;
 case "div":
 c = new Div();
 break;
+case "p":
+c = new P();
+break;
 case "table":
 c = new Table();
 break;

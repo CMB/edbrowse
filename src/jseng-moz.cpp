@@ -1341,7 +1341,7 @@ static JSBool appendChild0(bool side, JSContext * cx, unsigned int argc,
 
 	JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
 	if (JS_GetProperty(cx, thisobj, "childNodes", v.address()) == JS_FALSE)
-		return JS_TRUE;	/* no such array */
+		return JS_FALSE;	/* error */
 	JS::RootedObject elar(cx, JSVAL_TO_OBJECT(v));
 	if (elar == NULL) {
 		misconfigure(17);
@@ -1417,7 +1417,7 @@ static JSBool insbf(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::RootedObject child(cx, JSVAL_TO_OBJECT(args[0]));
 	JS::RootedObject item(cx, JSVAL_TO_OBJECT(args[1]));
 	if (JS_GetProperty(cx, thisobj, "childNodes", v.address()) == JS_FALSE)
-		return JS_TRUE;	/* no such array */
+		return JS_FALSE;	/* error */
 	JS::RootedObject elar(cx, JSVAL_TO_OBJECT(v));
 	if (elar == NULL) {
 		misconfigure(21);
@@ -1498,7 +1498,7 @@ static JSBool removeChild(JSContext * cx, unsigned int argc, jsval * vp)
 	JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
 	JS::RootedObject child(cx, JSVAL_TO_OBJECT(args[0]));
 	if (JS_GetProperty(cx, thisobj, "childNodes", v.address()) == JS_FALSE)
-		return JS_TRUE;	/* no such array */
+		return JS_FALSE;	/* error */
 	JS::RootedObject elar(cx, JSVAL_TO_OBJECT(v));
 	if (elar == NULL) {
 		misconfigure(24);

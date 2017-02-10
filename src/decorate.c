@@ -729,7 +729,7 @@ static jsobjtype establish_js_option(jsobjtype obj, int idx)
 	if (fo)
 		set_property_object(oo, "form", fo);
 	instantiate_array(oo, "childNodes");
-	instantiate_array(oo, "attribute");
+	instantiate_array(oo, "attributes");
 	instantiate(oo, "style", 0);
 
 	return oo;
@@ -1091,6 +1091,11 @@ static void jsNode(struct htmlTag *t, bool opentag)
 			set_property_string(t->jv, "data", w);
 			set_property_string(t->jv, "nodeName", "text");
 			set_property_number(t->jv, "nodeType", 3);
+/* A text node chould never have children, and does not need childNodes array,
+ * but there is improper html out there <text> <stuff>
+ * which has to put stuff under the text node, so against this
+ * unlikely occurence, I have to create the array. */
+			instantiate_array(t->jv, "childNodes");
 		}
 		break;
 
