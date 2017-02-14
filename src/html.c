@@ -364,7 +364,7 @@ void htmlMetaHelper(struct htmlTag *t)
  * on a local file. */
 
 		if (stringEqualCI(heq, "Set-Cookie")) {
-			rc = receiveCookie(cw->fileName, content);
+			rc = receiveCookie(cf->fileName, content);
 			debugPrint(3, rc ? "jar" : "rejected");
 		}
 
@@ -373,7 +373,7 @@ void htmlMetaHelper(struct htmlTag *t)
 			if (parseRefresh(copy, &delay)) {
 				char *newcontent;
 				unpercentURL(copy);
-				newcontent = resolveURL(cw->hbase, copy);
+				newcontent = resolveURL(cf->hbase, copy);
 				gotoLocation(newcontent, delay, true);
 			}
 		}
@@ -459,8 +459,8 @@ static void prepareScript(struct htmlTag *t)
  * </script>
  * so make a guess towards the first form, knowing we could be off by 1.
  * Just leave it at t->js_ln */
-	if (cw->fileName && !t->scriptgen)
-		js_file = cw->fileName;
+	if (cf->fileName && !t->scriptgen)
+		js_file = cf->fileName;
 
 	if (t->href) {		/* fetch the javascript page */
 		if (javaOK(t->href)) {
@@ -542,12 +542,12 @@ static void runScriptsPending(void)
  * I don't know, I'll just put it at the end.
  * As you see below, document.write that comes from a specific javascript
  * appears inline where the script is. */
-	if (cw->dw) {
-		stringAndString(&cw->dw, &cw->dw_l, "</body>\n");
-		runGeneratedHtml(NULL, cw->dw, NULL);
-		nzFree(cw->dw);
-		cw->dw = 0;
-		cw->dw_l = 0;
+	if (cf->dw) {
+		stringAndString(&cf->dw, &cf->dw_l, "</body>\n");
+		runGeneratedHtml(NULL, cf->dw, NULL);
+		nzFree(cf->dw);
+		cf->dw = 0;
+		cf->dw_l = 0;
 	}
 
 top:
@@ -581,7 +581,7 @@ top:
  * and hope the error messages line up. */
 		if (ln > 1)
 			++ln;
-		jsRunScript(cw->winobj, jtxt, js_file, ln);
+		jsRunScript(cf->winobj, jtxt, js_file, ln);
 		debugPrint(3, "execution complete");
 		nzFree(jtxt);
 
@@ -589,12 +589,12 @@ top:
 			return;
 
 /* look for document.write from this script */
-		if (cw->dw) {
-			stringAndString(&cw->dw, &cw->dw_l, "</body>\n");
-			runGeneratedHtml(t, cw->dw, NULL);
-			nzFree(cw->dw);
-			cw->dw = 0;
-			cw->dw_l = 0;
+		if (cf->dw) {
+			stringAndString(&cf->dw, &cf->dw_l, "</body>\n");
+			runGeneratedHtml(t, cf->dw, NULL);
+			nzFree(cf->dw);
+			cf->dw = 0;
+			cf->dw_l = 0;
 		}
 	}
 
@@ -731,8 +731,8 @@ char *htmlParse(char *buf, int remote)
 	if (remote >= 0)
 		browseLocal = !remote;
 	initTagArray();
-	cw->baseset = false;
-	cw->hbase = cloneString(cw->fileName);
+	cf->baseset = false;
+	cf->hbase = cloneString(cf->fileName);
 
 /* call the tidy parser to build the html nodes */
 	html2nodes(buf, true);
@@ -744,12 +744,12 @@ char *htmlParse(char *buf, int remote)
  * no point in generating it.
  * This is typical of generated html, from pdf for instance,
  * or the html that is in email. */
-	if (cw->jcx && !jsDoorway())
-		freeJavaContext(cw);
+	if (cf->jcx && !jsDoorway())
+		freeJavaContext(cf);
 
 	if (isJSAlive) {
 		decorate(0);
-		set_basehref(cw->hbase);
+		set_basehref(cf->hbase);
 		runScriptsPending();
 		runOnload();
 		runScriptsPending();
@@ -760,7 +760,7 @@ char *htmlParse(char *buf, int remote)
 	newbuf = htmlReformat(a);
 	nzFree(a);
 
-	set_property_string(cw->docobj, "readyState", "complete");
+	set_property_string(cf->docobj, "readyState", "complete");
 	return newbuf;
 }				/* htmlParse */
 
@@ -1642,7 +1642,7 @@ bool infPush(int tagno, char **post_string)
 		if (jh && (!action || !stringEqual(jh, action))) {
 /* Tie action to the form tag, to plug a small memory leak */
 			nzFree(form->href);
-			form->href = resolveURL(cw->hbase, jh);
+			form->href = resolveURL(cf->hbase, jh);
 			action = form->href;
 		}
 		nzFree(jh);
@@ -1650,7 +1650,7 @@ bool infPush(int tagno, char **post_string)
 
 /* if no action, or action is "#", the default is the current location */
 	if (!action || stringEqual(action, "#")) {
-		action = cw->hbase;
+		action = cf->hbase;
 	}
 
 	if (!action) {
@@ -1999,7 +1999,7 @@ void delTags(int startRange, int endRange)
 	struct htmlTag *t, *last_td;
 
 /* no javascript, no cause to ever rerender */
-	if (!cw->jcx)
+	if (!cf->jcx)
 		return;
 
 	for (j = startRange; j <= endRange; ++j) {
@@ -2037,11 +2037,11 @@ void delTags(int startRange, int endRange)
 static void unloadHyperlink(const char *js_function, const char *where)
 {
 	dwStart();
-	stringAndString(&cw->dw, &cw->dw_l, "<P>Onclose <A href='javascript:");
-	stringAndString(&cw->dw, &cw->dw_l, js_function);
-	stringAndString(&cw->dw, &cw->dw_l, "()'>");
-	stringAndString(&cw->dw, &cw->dw_l, where);
-	stringAndString(&cw->dw, &cw->dw_l, "</A><br>");
+	stringAndString(&cf->dw, &cf->dw_l, "<P>Onclose <A href='javascript:");
+	stringAndString(&cf->dw, &cf->dw_l, js_function);
+	stringAndString(&cf->dw, &cf->dw_l, "()'>");
+	stringAndString(&cf->dw, &cf->dw_l, where);
+	stringAndString(&cf->dw, &cf->dw_l, "</A><br>");
 }				/* unloadHyperlink */
 
 /* Run the various onload functions */
@@ -2057,8 +2057,8 @@ static void runOnload(void)
 		return;
 
 /* window and document onload */
-	run_function_bool(cw->winobj, "onload");
-	run_function_bool(cw->docobj, "onload");
+	run_function_bool(cf->winobj, "onload");
+	run_function_bool(cf->docobj, "onload");
 
 	fn = -1;
 	for (i = 0; i < cw->numTags; ++i) {
@@ -2095,7 +2095,7 @@ the code to execute, and the timer object, which becomes "this".
 
 struct jsTimer {
 	struct jsTimer *next, *prev;
-	struct ebWindow *w;	/* edbrowse window holding this timer */
+	struct ebFrame *frame;	/* edbrowse frame holding this timer */
 	time_t sec;
 	int ms;
 	bool isInterval;
@@ -2143,7 +2143,7 @@ static void javaSetsTimeout(int n, const char *jsrc, jsobjtype to,
 	if (jt->ms >= 1000)
 		jt->ms -= 1000, ++jt->sec;
 	jt->timerObject = to;
-	jt->w = cw;
+	jt->frame = cf;
 	addToListBack(&timerList, jt);
 	debugPrint(4, "timer %d %s\n", n, jsrc);
 }				/* javaSetsTimeout */
@@ -2182,12 +2182,9 @@ void delTimers(struct ebWindow *w)
 {
 	int delcount = 0;
 	struct jsTimer *jt, *jnext;
-// if not browsing with javascript then there is nothing to do here.
-	if (!w->jcx)
-		return;
 	for (jt = timerList.next; jt != (void *)&timerList; jt = jnext) {
 		jnext = jt->next;
-		if (jt->w == w) {
+		if (jt->frame->owner == w) {
 			++delcount;
 			delFromList(jt);
 			nzFree(jt);
@@ -2200,6 +2197,7 @@ void runTimers(void)
 {
 	struct jsTimer *jt;
 	struct ebWindow *save_cw = cw;
+	struct ebFrame *save_cf = cf;
 
 	currentTime();
 
@@ -2207,7 +2205,8 @@ void runTimers(void)
 		if (jt->sec > now_sec || jt->sec == now_sec && jt->ms > now_ms)
 			break;
 
-		cw = jt->w;
+		cf = jt->frame;
+		cw = cf->owner;
 		backgroundJS = true;
 		run_function_bool(jt->timerObject, "onclick");
 
@@ -2240,6 +2239,7 @@ void runTimers(void)
 	}
 
 	cw = save_cw;
+	cf = save_cf;
 }				/* runTimers */
 
 void javaOpensWindow(const char *href, const char *name)
@@ -2259,7 +2259,7 @@ void javaOpensWindow(const char *href, const char *name)
 
 	copy = cloneString(href);
 	unpercentURL(copy);
-	r = resolveURL(cw->hbase, copy);
+	r = resolveURL(cf->hbase, copy);
 	nzFree(copy);
 	if (replace || cw->browseMode && !backgroundJS) {
 		gotoLocation(r, 0, replace);
@@ -2269,20 +2269,20 @@ void javaOpensWindow(const char *href, const char *name)
 /* Turn the new window into a hyperlink. */
 /* just shovel this onto dw, as though it came from document.write() */
 	dwStart();
-	stringAndString(&cw->dw, &cw->dw_l, "<P>");
-	stringAndString(&cw->dw, &cw->dw_l, i_getString(MSG_Redirect));
-	stringAndString(&cw->dw, &cw->dw_l, ": <A href=");
-	stringAndString(&cw->dw, &cw->dw_l, r);
-	stringAndChar(&cw->dw, &cw->dw_l, '>');
+	stringAndString(&cf->dw, &cf->dw_l, "<P>");
+	stringAndString(&cf->dw, &cf->dw_l, i_getString(MSG_Redirect));
+	stringAndString(&cf->dw, &cf->dw_l, ": <A href=");
+	stringAndString(&cf->dw, &cf->dw_l, r);
+	stringAndChar(&cf->dw, &cf->dw_l, '>');
 	a = altText(r);
 	nzFree(r);
 /* I'll assume this is more helpful than the name of the window */
 	if (a)
 		name = a;
 	r = htmlEscape(name);
-	stringAndString(&cw->dw, &cw->dw_l, r);
+	stringAndString(&cf->dw, &cf->dw_l, r);
 	nzFree(r);
-	stringAndString(&cw->dw, &cw->dw_l, "</A><br>\n");
+	stringAndString(&cf->dw, &cf->dw_l, "</A><br>\n");
 }				/* javaOpensWindow */
 
 /* Push an attribute onto an html tag. */
@@ -2576,7 +2576,7 @@ li_hide:
 		retainTag = false;
 		invisible = opentag;
 /* special case for noscript with no js */
-		if (stringEqual(ti->name, "noscript") && !cw->jcx)
+		if (stringEqual(ti->name, "noscript") && !cf->jcx)
 			invisible = false;
 	}
 

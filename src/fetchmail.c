@@ -101,7 +101,7 @@ static void writeAttachment(struct MHINFO *w)
 			    ((pst) w->start, w->end - w->start, 0, false))
 				i_printf(MSG_AttNoCopy, cx);
 			else if (w->cfn[0])
-				cw->fileName = cloneString(w->cfn);
+				cf->fileName = cloneString(w->cfn);
 			cxSwitch(svcx, false);	/* back to where we were */
 		}
 	} else if (!stringEqual(atname, "x")) {

@@ -757,8 +757,8 @@ int main(int argc, char **argv)
 		if (cx == 1)
 			runEbFunction("init");
 		changeFileName = 0;
-		cw->fileName = cloneString(file);
-		cw->firstURL = cloneString(file);
+		cf->fileName = cloneString(file);
+		cf->firstURL = cloneString(file);
 		if (isSQL(file))
 			cw->sqlMode = true;
 		rc = readFileArgv(file);
@@ -768,16 +768,16 @@ int main(int argc, char **argv)
 		if (!rc) {
 			showError();
 		} else if (changeFileName) {
-			nzFree(cw->fileName);
-			cw->fileName = changeFileName;
+			nzFree(cf->fileName);
+			cf->fileName = changeFileName;
 			changeFileName = 0;
 		}
 
 		cw->undoable = cw->changeMode = false;
 /* Browse the text if it's a url */
-		if (rc && isURL(cw->fileName) &&
+		if (rc && isURL(cf->fileName) &&
 		    (cw->mt && cw->mt->outtype
-		     || isBrowseableURL(cw->fileName))) {
+		     || isBrowseableURL(cf->fileName))) {
 			if (runCommand("b"))
 				debugPrint(1, "%d", fileSize);
 			else

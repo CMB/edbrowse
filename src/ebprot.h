@@ -59,7 +59,7 @@ int goSelect(int *startLine, char **rbuf) ;
 /* sourcefile=ebjs.c */
 void dwStart(void);
 void createJavaContext(void) ;
-void freeJavaContext(struct ebWindow *w) ;
+void freeJavaContext(struct ebFrame *f) ;
 void js_shutdown(void) ;
 void js_disconnect(void);
 char *jsRunScriptResult(jsobjtype obj, const char *str, const char *filename, int lineno) ;

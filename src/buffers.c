@@ -23,7 +23,9 @@ static bool pcre_utf8_error_stop = false;
 #define rename(a, b) MoveFile(a, b)
 #endif
 
-// Truncate the display of a really long line.
+/* temporary, set the frame whenever you set the window. */
+/* We're one frame per window for now. */
+#define selfFrame() ( cf = &(cw->f0), cf->owner = cw )
 
 /* Static variables for this file. */
 
@@ -536,7 +538,7 @@ addchar:
 			jSideEffects();
 		} else {
 			char *result =
-			    jsRunScriptResult(cw->winobj, s, "jdb", 1);
+			    jsRunScriptResult(cf->winobj, s, "jdb", 1);
 			if (result)
 				puts(result);
 			nzFree(result);
@@ -763,19 +765,25 @@ static void undoPush(void)
 
 static void freeWindow(struct ebWindow *w)
 {
+	struct ebFrame *f, *fnext;
 	freeTags(w);
 	delTimers(w);
-	freeJavaContext(w);
+	for (f = &w->f0; f; f = fnext) {
+		fnext = f->next;
+		freeJavaContext(f);
+		nzFree(f->dw);
+		nzFree(f->hbase);
+		nzFree(f->fileName);
+		nzFree(f->firstURL);
+		if (f != &w->f0)
+			free(f);
+	}
 	freeWindowLines(w->map);
 	freeWindowLines(w->r_map);
-	nzFree(w->dw);
 	nzFree(w->ft);
-	nzFree(w->hbase);
 	nzFree(w->fd);
 	nzFree(w->fk);
 	nzFree(w->mailInfo);
-	nzFree(w->fileName);
-	nzFree(w->firstURL);
 	nzFree(w->referrer);
 	nzFree(w->baseDirName);
 	free(w);
@@ -843,7 +851,7 @@ bool cxQuit(int cx, int action)
 /* not in fetchmail mode, which uses the same buffer over and over again */
 	    !(w->dirMode | w->sqlMode) &&
 /* not directory or sql mode */
-	    (!w->fileName || !isURL(w->fileName))) {
+	    (!w->f0.fileName || !isURL(w->f0.fileName))) {
 /* not changing a url */
 		lastqq = cx;
 		setError(MSG_ExpectW);
@@ -870,8 +878,10 @@ bool cxQuit(int cx, int action)
 	} else
 		freeWindow(w);
 
-	if (cx == context)
+	if (cx == context) {
 		cw = 0;
+		cf = 0;
+	}
 
 	return true;
 }				/* cxQuit */
@@ -897,13 +907,14 @@ void cxSwitch(int cx, bool interactive)
 		cw->undoable = false;
 	}
 	cw = nw;
+	selfFrame();
 	cs = sessionList + cx;
 	context = cx;
 	if (interactive && debugLevel) {
 		if (created)
 			i_puts(MSG_SessionNew);
-		else if (cw->fileName)
-			eb_puts(cw->fileName);
+		else if (cf->fileName)
+			eb_puts(cf->fileName);
 		else
 			i_puts(MSG_NoFile);
 	}
@@ -1510,10 +1521,10 @@ static bool readFile(const char *filename, const char *post)
 			setError(MSG_DBOtherFile);
 			return false;
 		}
-		t1 = strchr(cw->fileName, ']');
+		t1 = strchr(cf->fileName, ']');
 		t2 = strchr(filename, ']');
-		if (t1 - cw->fileName != t2 - filename ||
-		    memcmp(cw->fileName, filename, t2 - filename)) {
+		if (t1 - cf->fileName != t2 - filename ||
+		    memcmp(cf->fileName, filename, t2 - filename)) {
 			setError(MSG_DBOtherTable);
 			return false;
 		}
@@ -1522,8 +1533,8 @@ static bool readFile(const char *filename, const char *post)
 			nzFree(rbuf);
 			if (!cw->dol && cmd != 'r') {
 				cw->sqlMode = false;
-				nzFree(cw->fileName);
-				cw->fileName = 0;
+				nzFree(cf->fileName);
+				cf->fileName = 0;
 			}
 			return false;
 		}
@@ -1720,7 +1731,7 @@ static bool writeFile(const char *name, int mode)
 	}
 // If writing to the same file and converting, print message,
 // and perhaps write the byte order mark.
-	if (name == cw->fileName && iuConvert) {
+	if (name == cf->fileName && iuConvert) {
 		if (cw->iso8859Mode && cons_utf8)
 			if (debugLevel >= 1)
 				i_puts(MSG_Conv8859);
@@ -1762,7 +1773,7 @@ badwrite:
 			if (i == cw->dol && cw->nlMode)
 				--len;
 
-			if (name == cw->fileName && iuConvert) {
+			if (name == cf->fileName && iuConvert) {
 				if (cw->iso8859Mode && cons_utf8) {
 					utf2iso((char *)p, len, &tp, &tlen);
 					if (alloc_p)
@@ -2059,12 +2070,12 @@ static bool shellEscape(const char *line)
 
 			if (key == '_') {
 				++t;
-				if (!cw->fileName)
+				if (!cf->fileName)
 					continue;
 				if (pass == 1) {
-					linesize += strlen(cw->fileName);
+					linesize += strlen(cf->fileName);
 				} else {
-					strcpy(s, cw->fileName);
+					strcpy(s, cf->fileName);
 					s += strlen(s);
 				}
 				continue;
@@ -3484,18 +3495,18 @@ pwd:
 
 	if (stringEqual(line, "rf")) {
 		cmd = 'e';
-		if (!cw->fileName) {
+		if (!cf->fileName) {
 			setError(MSG_NoRefresh);
 			return false;
 		}
 		if (cw->browseMode)
 			cmd = 'b';
 		noStack = true;
-		allocatedLine = allocMem(strlen(cw->fileName) + 3);
-		sprintf(allocatedLine, "%c %s", cmd, cw->fileName);
+		allocatedLine = allocMem(strlen(cf->fileName) + 3);
+		sprintf(allocatedLine, "%c %s", cmd, cf->fileName);
 		debrowseSuffix(allocatedLine);
 		*runThis = allocatedLine;
-		f_encoded = cw->f_encoded;
+		f_encoded = cf->f_encoded;
 		return 2;
 	}
 
@@ -3549,6 +3560,7 @@ pwd:
 	}
 
 	if (stringEqual(line, "ub") || stringEqual(line, "et")) {
+		struct ebFrame *f;
 		ub = (line[0] == 'u');
 		rc = true;
 		cmd = 'e';
@@ -3560,7 +3572,7 @@ pwd:
 		cw->undoable = false;
 		cw->browseMode = false;
 		if (ub) {
-			debrowseSuffix(cw->fileName);
+			debrowseSuffix(cf->fileName);
 			cw->nlMode = cw->rnlMode;
 			cw->dot = cw->r_dot, cw->dol = cw->r_dol;
 			memcpy(cw->labels, cw->r_labels, sizeof(cw->labels));
@@ -3576,14 +3588,16 @@ et_go:
 		}
 		freeTags(cw);
 		delTimers(cw);
-		freeJavaContext(cw);
-		cw->jcx = NULL;
-		nzFree(cw->dw);
-		cw->dw = 0;
+		for (f = &cw->f0; f; f = f->next) {
+			freeJavaContext(f);
+			f->jcx = NULL;
+			nzFree(f->dw);
+			f->dw = 0;
+			nzFree(f->hbase);
+			f->hbase = 0;
+		}
 		nzFree(cw->ft);
 		cw->ft = 0;
-		nzFree(cw->hbase);
-		cw->hbase = 0;
 		nzFree(cw->fd);
 		cw->fd = 0;
 		nzFree(cw->fk);
@@ -3598,11 +3612,11 @@ et_go:
 	if (stringEqual(line, "f/") || stringEqual(line, "w/")) {
 		char *t;
 		cmd = line[0];
-		if (!cw->fileName) {
+		if (!cf->fileName) {
 			setError(MSG_NoRefresh);
 			return false;
 		}
-		t = strrchr(cw->fileName, '/');
+		t = strrchr(cf->fileName, '/');
 		if (!t) {
 			setError(MSG_NoSlash);
 			return false;
@@ -3612,7 +3626,7 @@ et_go:
 			setError(MSG_YesSlash);
 			return false;
 		}
-		t = getFileURL(cw->fileName, false);
+		t = getFileURL(cf->fileName, false);
 		allocatedLine = allocMem(strlen(t) + 8);
 /* ` prevents wildcard expansion, which normally happens on an f command */
 		sprintf(allocatedLine, "%c `%s", cmd, t);
@@ -3747,8 +3761,8 @@ et_go:
 			if (!lw)
 				continue;
 			printf("%d: ", n);
-			if (lw->fileName)
-				printf("%s", lw->fileName);
+			if (lw->f0.fileName)
+				printf("%s", lw->f0.fileName);
 			nl();
 		}
 		return true;
@@ -4149,12 +4163,12 @@ static char *showLinks(void)
 	}
 
 	if (!a_l) {		/* nothing found yet */
-		if (!cw->fileName) {
+		if (!cf->fileName) {
 			setError(MSG_NoFileName);
 			return 0;
 		}
 
-		h = htmlEscape(cw->fileName);
+		h = htmlEscape(cf->fileName);
 		debrowseSuffix(h);
 		stringAndString(&a, &a_l, "<br><a href=");
 		stringAndString(&a, &a_l, h);
@@ -4380,7 +4394,7 @@ bool runCommand(const char *line)
 /* set the referrer if you are following a linnk,
  * as opposed to entering a b command and jumping somewhere else completely. */
 	if (strchr("giI", cmd))
-		currentReferrer = cloneString(cw->fileName);
+		currentReferrer = cloneString(cf->fileName);
 
 	first = *line;
 	if (cmd == 'w' && first == '+')
@@ -4605,7 +4619,7 @@ bool runCommand(const char *line)
 				return false;
 			if (!cxActive(cx))
 				return false;
-			s = sessionList[cx].lw->fileName;
+			s = sessionList[cx].lw->f0.fileName;
 			if (s)
 				printf("%s", s);
 			else
@@ -4624,10 +4638,10 @@ bool runCommand(const char *line)
 				setError(MSG_TableRename);
 				return false;
 			}
-			nzFree(cw->fileName);
-			cw->fileName = cloneString(line);
+			nzFree(cf->fileName);
+			cf->fileName = cloneString(line);
 		}
-		s = cw->fileName;
+		s = cf->fileName;
 		if (s)
 			printf("%s", s);
 		else
@@ -4647,16 +4661,16 @@ bool runCommand(const char *line)
 			return writeContext(cx);
 		}
 		if (!first)
-			line = cw->fileName;
+			line = cf->fileName;
 		if (!line) {
 			setError(MSG_NoFileSpecified);
 			return false;
 		}
-		if (cw->dirMode && stringEqual(line, cw->fileName)) {
+		if (cw->dirMode && stringEqual(line, cf->fileName)) {
 			setError(MSG_NoDirWrite);
 			return false;
 		}
-		if (cw->sqlMode && stringEqual(line, cw->fileName)) {
+		if (cw->sqlMode && stringEqual(line, cf->fileName)) {
 			setError(MSG_NoDBWrite);
 			return false;
 		}
@@ -4680,6 +4694,7 @@ bool runCommand(const char *line)
 			if (!cxQuit(context, 1))
 				return false;
 			sessionList[context].lw = cw = prev;
+			selfFrame();
 			restoreSubstitutionStrings(cw);
 			--cx;
 		}
@@ -4712,6 +4727,7 @@ bool runCommand(const char *line)
 		cs->lw = cw->prev;
 		cw->prev = 0;
 		cw = cs->lw;
+		selfFrame();
 		printDot();
 		return true;
 	}
@@ -4727,6 +4743,7 @@ bool runCommand(const char *line)
 		w = createWindow();
 		w->prev = cw;
 		cw = w;
+		selfFrame();
 		cs->lw = w;
 		rc = addTextToBuffer((pst) a, strlen(a), 0, false);
 		nzFree(a);
@@ -4884,7 +4901,7 @@ bool runCommand(const char *line)
 			}
 /* This is the only handler where false tells the browser to do something else. */
 			if (!rc && !jsdead)
-				set_property_string(cw->winobj, "status", h);
+				set_property_string(cf->winobj, "status", h);
 			if (jsgo && click) {
 				jSyncup();
 				rc = handlerGoBrowse(tag, "onclick");
@@ -4898,7 +4915,7 @@ bool runCommand(const char *line)
 				jSyncup();
 /* actually running the url, not passing it to http etc, need to unescape */
 				unpercentString(h);
-				jsRunScript(cw->winobj, h, 0, 0);
+				jsRunScript(cf->winobj, h, 0, 0);
 				jSideEffects();
 				if (newlocation)
 					goto redirect;
@@ -5102,8 +5119,8 @@ bool runCommand(const char *line)
 rebrowse:
 	if (cmd == 'e' || cmd == 'b' && first && first != '#') {
 //  printf("ifetch %d %s\n", f_encoded, line);
-		if (cw->fileName && !noStack && sameURL(line, cw->fileName)) {
-			if (stringEqual(line, cw->fileName)) {
+		if (cf->fileName && !noStack && sameURL(line, cf->fileName)) {
+			if (stringEqual(line, cf->fileName)) {
 				setError(MSG_AlreadyInBuffer);
 				return false;
 			}
@@ -5132,7 +5149,8 @@ rebrowse:
 		changeFileName = 0;	/* should already be zero */
 		w = createWindow();
 		cw = w;		/* we might wind up putting this back */
-		cw->f_encoded = f_encoded;
+		selfFrame();
+		cf->f_encoded = f_encoded;
 /* Check for sendmail link */
 		if (cmd == 'b' && memEqualCI(line, "mailto:", 7)) {
 			char *addr, *subj, *body;
@@ -5156,8 +5174,8 @@ rebrowse:
 			if (j)
 				i_puts(MSG_MailHowto);
 		} else {
-			cw->fileName = cloneString(line);
-			cw->firstURL = cloneString(line);
+			cf->fileName = cloneString(line);
+			cf->firstURL = cloneString(line);
 			if (isSQL(line))
 				cw->sqlMode = true;
 			if (icmd == 'g' && !nogo && isURL(line))
@@ -5166,6 +5184,7 @@ rebrowse:
 		}
 		w->undoable = w->changeMode = false;
 		cw = cs->lw;
+		selfFrame();
 /* Don't push a new session if we were trying to read a url,
  * and didn't get anything. */
 		if (!serverData && (isURL(line) || isSQL(line))) {
@@ -5174,6 +5193,7 @@ rebrowse:
 			if (noStack && cw->prev) {
 				w = cw;
 				cw = w->prev;
+				selfFrame();
 				cs->lw = cw;
 				freeWindow(w);
 			}
@@ -5181,22 +5201,23 @@ rebrowse:
 		}
 		if (noStack) {
 			w->prev = cw->prev;
-			nzFree(w->firstURL);
-			w->firstURL = cw->firstURL;
-			cw->firstURL = 0;
+			nzFree(w->f0.firstURL);
+			w->f0.firstURL = cf->firstURL;
+			cf->firstURL = 0;
 			cxQuit(context, 1);
 		} else {
 			w->prev = cw;
 		}
 		cs->lw = cw = w;
+		selfFrame();
 		if (!w->prev)
 			cs->fw = w;
 		if (!j)
 			return false;
 		if (changeFileName) {
-			nzFree(w->fileName);
-			w->fileName = changeFileName;
-			w->f_encoded = true;
+			nzFree(w->f0.fileName);
+			w->f0.fileName = changeFileName;
+			w->f0.f_encoded = true;
 			changeFileName = 0;
 		}
 /* Some files we just can't browse */
@@ -5370,7 +5391,7 @@ afterdelete:
 			return readContext(cx);
 		if (first) {
 			if (cw->sqlMode && !isSQL(line)) {
-				strcpy(newline, cw->fileName);
+				strcpy(newline, cf->fileName);
 				strmove(strchr(newline, ']') + 1, line);
 				line = newline;
 			}
@@ -5435,8 +5456,8 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 	}
 	cxSwitch(cx, false);
 	if (bufname) {
-		cw->fileName = cloneString(bufname);
-		debrowseSuffix(cw->fileName);
+		cf->fileName = cloneString(bufname);
+		debrowseSuffix(cf->fileName);
 	}
 	if (textlen < 0) {
 		textlen = strlen(text);
@@ -5459,7 +5480,7 @@ void freeEmptySideBuffer(int n)
 	struct ebWindow *side;
 	if (!(side = sessionList[n].lw))
 		return;
-	if (side->fileName)
+	if (side->f0.fileName)
 		return;
 	if (side->dol)
 		return;
@@ -5477,8 +5498,8 @@ bool browseCurrentBuffer(void)
 	bool save_ch = cw->changeMode;
 	uchar bmode = 0;
 
-	if (cw->fileName)
-		remote = isURL(cw->fileName);
+	if (cf->fileName)
+		remote = isURL(cf->fileName);
 
 	if (cw->mt && cw->mt->outtype)
 		bmode = 3;
@@ -5496,7 +5517,7 @@ bool browseCurrentBuffer(void)
 
 	rawbuf = NULL;
 	rawsize = 0;
-	if (bmode != 3 || remote || access(cw->fileName, 4)) {
+	if (bmode != 3 || remote || access(cf->fileName, 4)) {
 		if (!unfoldBuffer(context, false, &rawbuf, &rawsize))
 			return false;	/* should never happen */
 	}
@@ -5565,7 +5586,7 @@ bool browseCurrentBuffer(void)
 	}
 
 	if (bmode == 2) {
-		if (javaOK(cw->fileName))
+		if (javaOK(cf->fileName))
 			createJavaContext();
 		nzFree(newlocation);	/* should already be 0 */
 		newlocation = 0;
@@ -5591,10 +5612,10 @@ bool browseCurrentBuffer(void)
 	cw->undoable = false;
 	cw->changeMode = save_ch;
 
-	if (cw->fileName) {
-		j = strlen(cw->fileName);
-		cw->fileName = reallocMem(cw->fileName, j + 8);
-		strcat(cw->fileName, ".browse");
+	if (cf->fileName) {
+		j = strlen(cf->fileName);
+		cf->fileName = reallocMem(cf->fileName, j + 8);
+		strcat(cf->fileName, ".browse");
 	}
 
 	if (!rc) {

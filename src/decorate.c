@@ -10,9 +10,10 @@ foo.innerHTML = string or document.write(string).
 
 #include "eb.h"
 
-/* The current (foreground) edbrowse window.
- * This is replaced with a stub when run within the javascript process. */
+/* The current (foreground) edbrowse window and frame.
+ * These are replaced with stubs when run within the javascript process. */
 struct ebWindow *cw;
+struct ebFrame *cf;
 
 /* traverse the tree of nodes with a callback function */
 nodeFunction traverse_callback;
@@ -254,13 +255,13 @@ void formControl(struct htmlTag *t, bool namecheck)
 {
 	int itype = t->itype;
 	char *myname = (t->name ? t->name : t->id);
-	struct htmlTag *cf = currentForm;
-	if (!cf) {
+	struct htmlTag *cform = currentForm;
+	if (!cform) {
 /* nodes could be created dynamically, not through html */
-		cf = findOpenTag(t, TAGACT_FORM);
+		cform = findOpenTag(t, TAGACT_FORM);
 	}
-	if (cf)
-		t->controller = cf;
+	if (cform)
+		t->controller = cform;
 	else if (itype != INP_BUTTON)
 		debugPrint(3, "%s is not part of a fill-out form",
 			   t->info->desc);
@@ -889,7 +890,7 @@ call out to process those and add them to the object */
 			set_property_string(io, "class", "");
 			set_property_string(io, "nodeValue", "");
 			instantiate_array(io, "attributes");
-			set_property_object(io, "ownerDocument", cw->docobj);
+			set_property_object(io, "ownerDocument", cf->docobj);
 
 /* in the special case of form, also need an array of elements */
 			if (stringEqual(classname, "Form"))
@@ -898,7 +899,7 @@ call out to process those and add them to the object */
 
 		if (membername == symname) {
 /* link to document.all */
-			master = get_property_object(cw->docobj, "all");
+			master = get_property_object(cf->docobj, "all");
 			if (master == NULL)
 				return;
 			set_property_object(master, symname, io);
@@ -944,7 +945,7 @@ call out to process those and add them to the object */
  * a form field named "id". */
 		if (!stringEqual(classname, "Form"))
 			set_property_string(io, "id", idname);
-		master = get_property_object(cw->docobj, "idMaster");
+		master = get_property_object(cf->docobj, "idMaster");
 		set_property_object(master, idname, io);
 	}
 
@@ -969,7 +970,7 @@ call out to process those and add them to the object */
 
 	if (stringEqual(classname, "Body")) {
 /* here are a few attributes that come in with the body */
-		set_property_object(cw->docobj, "body", io);
+		set_property_object(cf->docobj, "body", io);
 		set_property_number(io, "clientHeight", 768);
 		set_property_number(io, "clientWidth", 1024);
 		set_property_number(io, "offsetHeight", 768);
@@ -978,11 +979,11 @@ call out to process those and add them to the object */
 		set_property_number(io, "scrollWidth", 1024);
 		set_property_number(io, "scrollTop", 0);
 		set_property_number(io, "scrollLeft", 0);
-		set_property_object(cw->docobj, "documentElement", io);
+		set_property_object(cf->docobj, "documentElement", io);
 	}
 
 	if (stringEqual(classname, "Head")) {
-		set_property_object(cw->docobj, "head", io);
+		set_property_object(cf->docobj, "head", io);
 	}
 
 }				/* domLink */
@@ -1004,7 +1005,7 @@ static void formControlJS(struct htmlTag *t)
 		domLink(t, "Element", 0, "elements", form->jv,
 			isradio | isselect);
 	else
-		domLink(t, "Element", 0, 0, cw->docobj, isradio | isselect);
+		domLink(t, "Element", 0, 0, cf->docobj, isradio | isselect);
 	if (!t->jv)
 		return;
 
@@ -1083,7 +1084,7 @@ static void jsNode(struct htmlTag *t, bool opentag)
 
 	switch (action) {
 	case TAGACT_TEXT:
-		t->jv = instantiate(cw->docobj, fakePropName(), "TextNode");
+		t->jv = instantiate(cf->docobj, fakePropName(), "TextNode");
 		if (t->jv) {
 			const char *w = t->textval;
 			if (!w)
@@ -1100,14 +1101,14 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		break;
 
 	case TAGACT_META:
-		domLink(t, "Meta", 0, "metas", cw->docobj, 0);
+		domLink(t, "Meta", 0, "metas", cf->docobj, 0);
 		a = attribVal(t, "content");
 		set_property_string(t->jv, "content", a);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_SCRIPT:
-		domLink(t, "Script", "src", "scripts", cw->docobj, 0);
+		domLink(t, "Script", "src", "scripts", cf->docobj, 0);
 		a = attribVal(t, "type");
 		if (a)
 			set_property_string(t->jv, "type", a);
@@ -1129,7 +1130,7 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 	case TAGACT_FORM:
-		domLink(t, "Form", "action", "forms", cw->docobj, 0);
+		domLink(t, "Form", "action", "forms", cf->docobj, 0);
 		set_onhandlers(t);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
@@ -1149,18 +1150,18 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		return;
 
 	case TAGACT_A:
-		domLink(t, "Anchor", "href", "anchors", cw->docobj, 0);
+		domLink(t, "Anchor", "href", "anchors", cf->docobj, 0);
 		set_onhandlers(t);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_HEAD:
-		domLink(t, "Head", 0, "heads", cw->docobj, 0);
+		domLink(t, "Head", 0, "heads", cf->docobj, 0);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_BODY:
-		domLink(t, "Body", 0, "bodies", cw->docobj, 0);
+		domLink(t, "Body", 0, "bodies", cf->docobj, 0);
 		set_onhandlers(t);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
@@ -1168,17 +1169,17 @@ static void jsNode(struct htmlTag *t, bool opentag)
 	case TAGACT_OL:
 	case TAGACT_UL:
 	case TAGACT_DL:
-		domLink(t, "Lister", 0, 0, cw->docobj, 0);
+		domLink(t, "Lister", 0, 0, cf->docobj, 0);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_LI:
-		domLink(t, "Listitem", 0, 0, cw->docobj, 0);
+		domLink(t, "Listitem", 0, 0, cf->docobj, 0);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_TABLE:
-		domLink(t, "Table", 0, "tables", cw->docobj, 0);
+		domLink(t, "Table", 0, "tables", cf->docobj, 0);
 /* create the array of rows under the table */
 		instantiate_array(t->jv, "rows");
 		set_property_number(t->jv, "nodeType", 1);
@@ -1201,13 +1202,13 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		break;
 
 	case TAGACT_DIV:
-		domLink(t, "Div", 0, "divs", cw->docobj, 0);
+		domLink(t, "Div", 0, "divs", cf->docobj, 0);
 		establish_inner(t->jv, t->innerHTML, 0, false);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_OBJECT:
-		domLink(t, "HtmlObj", 0, "htmlobjs", cw->docobj, 0);
+		domLink(t, "HtmlObj", 0, "htmlobjs", cf->docobj, 0);
 		establish_inner(t->jv, t->innerHTML, 0, false);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
@@ -1216,35 +1217,35 @@ static void jsNode(struct htmlTag *t, bool opentag)
 	case TAGACT_SUB:
 	case TAGACT_SUP:
 	case TAGACT_OVB:
-		domLink(t, "Span", 0, "spans", cw->docobj, 0);
+		domLink(t, "Span", 0, "spans", cf->docobj, 0);
 		establish_inner(t->jv, t->innerHTML, 0, false);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_AREA:
-		domLink(t, "Area", "href", "areas", cw->docobj, 0);
+		domLink(t, "Area", "href", "areas", cf->docobj, 0);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_FRAME:
-		domLink(t, "Frame", "src", "frames", cw->winobj, 0);
+		domLink(t, "Frame", "src", "frames", cf->winobj, 0);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_IMAGE:
-		domLink(t, "Image", "src", "images", cw->docobj, 0);
+		domLink(t, "Image", "src", "images", cf->docobj, 0);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_P:
-		domLink(t, "P", 0, "paragraphs", cw->docobj, 0);
+		domLink(t, "P", 0, "paragraphs", cf->docobj, 0);
 		establish_inner(t->jv, t->innerHTML, 0, false);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_TITLE:
 		if (cw->ft)
-			set_property_string(cw->docobj, "title", cw->ft);
+			set_property_string(cf->docobj, "title", cw->ft);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
@@ -1259,14 +1260,14 @@ static void jsNode(struct htmlTag *t, bool opentag)
 			run_function_onearg(innerParent, "apch1$", t->jv);
 /* head and body link to document */
 		else if (action == TAGACT_HEAD || action == TAGACT_BODY)
-			run_function_onearg(cw->docobj, "apch1$", t->jv);
+			run_function_onearg(cf->docobj, "apch1$", t->jv);
 	}
 
 /* TextNode linked to document/gc to protect if from garbage collection,
  * but now it is linked to its parent, and even if it isn't,
  * we don't need it hanging around anyways. */
 	if (action == TAGACT_TEXT && t->jv)
-		delete_property(cw->docobj, fakePropLast);
+		delete_property(cf->docobj, fakePropLast);
 
 }				/* jsNode */
 
@@ -1641,13 +1642,13 @@ checkattributes:
 			if (v && !*v)
 				v = 0;
 			if (v) {
-				v = resolveURL(cw->hbase, v);
+				v = resolveURL(cf->hbase, v);
 				cnzFree(t->atvals[j]);
 				t->atvals[j] = v;
-				if (action == TAGACT_BASE && !cw->baseset) {
-					nzFree(cw->hbase);
-					cw->hbase = cloneString(v);
-					cw->baseset = true;
+				if (action == TAGACT_BASE && !cf->baseset) {
+					nzFree(cf->hbase);
+					cf->hbase = cloneString(v);
+					cf->baseset = true;
 				}
 				t->href = cloneString(v);
 			}
@@ -1657,7 +1658,7 @@ checkattributes:
 			if (v && !*v)
 				v = 0;
 			if (v) {
-				v = resolveURL(cw->hbase, v);
+				v = resolveURL(cf->hbase, v);
 				cnzFree(t->atvals[j]);
 				t->atvals[j] = v;
 				if (!t->href)
@@ -1669,7 +1670,7 @@ checkattributes:
 			if (v && !*v)
 				v = 0;
 			if (v) {
-				v = resolveURL(cw->hbase, v);
+				v = resolveURL(cf->hbase, v);
 				cnzFree(t->atvals[j]);
 				t->atvals[j] = v;
 				if (!t->href)

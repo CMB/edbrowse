@@ -73,10 +73,10 @@ static JSObject *docobj;	/* document object */
 
 static void cwSetup(void)
 {
-	cw->winobj = winobj;
-	cw->docobj = docobj;
-	cw->hbase = get_property_string_nat(docobj, "base$href");
-	cw->baseset = true;
+	cf->winobj = winobj;
+	cf->docobj = docobj;
+	cf->hbase = get_property_string_nat(docobj, "base$href");
+	cf->baseset = true;
 }				/* cwSetup */
 
 static void cwBringdown(void)
@@ -84,8 +84,8 @@ static void cwBringdown(void)
 	freeTags(cw);
 	nzFree(cw->ft);		/* title could have been set by prerender */
 	cw->ft = 0;
-	nzFree(cw->hbase);
-	cw->hbase = 0;
+	nzFree(cf->hbase);
+	cf->hbase = 0;
 }				/* cwBringdown */
 
 static struct EJ_MSG head;
@@ -134,6 +134,8 @@ int js_main(int argc, char **argv)
 	pluginsOn = false;
 	sendReferrer = false;
 	cw = &in_js_cw;
+	cf = &(cw->f0);
+	cf->owner = cw;
 
 	js_start();
 

@@ -879,7 +879,7 @@ static bool setTable(void)
 {
 	static const short exclist[] = { EXCNOTABLE, EXCNOCOLUMN, 0 };
 	int cid, nc, i, part1, part2, part3, part4;
-	const char *s = cw->fileName;
+	const char *s = cf->fileName;
 	const char *t = strchr(s, ']');
 	if (t - s >= sizeof(myTab))
 		errorPrint("2table name too long, limit %d characters",

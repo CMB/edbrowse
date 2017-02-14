@@ -709,7 +709,7 @@ bool parseRefresh(char *ref, int *delay_p)
 			u[-1] = 0;
 		debugPrint(3, "delay %d %s", delay, ref);
 /* avoid the obvious infinite loop */
-		if (sameURL(ref, cw->fileName)) {
+		if (sameURL(ref, cf->fileName)) {
 			*delay_p = 0;
 			return false;
 		}

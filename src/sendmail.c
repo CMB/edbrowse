@@ -298,8 +298,8 @@ empty:
 			}
 			sprintf(newfilename, "<buffer %d>", cx);
 			file = newfilename;
-			if (sessionList[cx].lw->fileName)
-				file = sessionList[cx].lw->fileName;
+			if (sessionList[cx].lw->f0.fileName)
+				file = sessionList[cx].lw->f0.fileName;
 		} else {
 			if (!fileIntoMemory(file, &buf, &buflen))
 				return false;

@@ -20,26 +20,21 @@ static void markAllDead(void)
 {
 	int cx;			/* edbrowse context */
 	struct ebWindow *w;
+	struct ebFrame *f;
 	bool killed = false;
 
 	for (cx = 1; cx < MAXSESSION; ++cx) {
 		w = sessionList[cx].lw;
-		if (!w)
-			continue;
-		if (w->winobj) {
-			w->winobj = 0;
-			w->docobj = 0;
-			w->jcx = 0;
-			killed = true;
-		}
-		while (w != sessionList[cx].fw) {
-			w = w->prev;
-			if (w->winobj) {
-				w->winobj = 0;
-				w->docobj = 0;
-				w->jcx = 0;
+		while (w) {
+			for (f = &w->f0; f; f = f->next) {
+				if (!f->winobj)
+					continue;
+				f->winobj = 0;
+				f->docobj = 0;
+				f->jcx = 0;
 				killed = true;
 			}
+			w = w->prev;
 		}
 	}
 
@@ -234,10 +229,10 @@ static void javaSetsInner(jsobjtype v, const char *newtext, char c)
 /* start a document.write */
 void dwStart(void)
 {
-	if (cw->dw)
+	if (cf->dw)
 		return;
-	cw->dw = initString(&cw->dw_l);
-	stringAndString(&cw->dw, &cw->dw_l, "<!DOCTYPE public><body>");
+	cf->dw = initString(&cf->dw_l);
+	stringAndString(&cf->dw, &cf->dw_l, "<!DOCTYPE public><body>");
 }				/* dwStart */
 
 /*********************************************************************
@@ -277,7 +272,7 @@ static void processEffects(void)
 		switch (c) {
 		case 'w':	/* document.write */
 			dwStart();
-			stringAndString(&cw->dw, &cw->dw_l, s);
+			stringAndString(&cf->dw, &cf->dw_l, s);
 			break;
 
 		case 'n':	/* new window */
@@ -315,7 +310,7 @@ static void processEffects(void)
 		case 'c':	/* cookie */
 /* Javascript does some modest syntax checking on the cookie before
  * passing it back to us, so I'm just going to assume it works. */
-			receiveCookie(cw->fileName, s);
+			receiveCookie(cf->fileName, s);
 			break;
 
 		case 'f':
@@ -504,7 +499,7 @@ static int readMessage(void)
 			i_puts(MSG_PageDone);
 		else
 			i_puts(MSG_JSSessionFail);
-		freeJavaContext(cw);
+		freeJavaContext(cf);
 /* should I free and zero the property at this point? */
 	}
 
@@ -514,9 +509,9 @@ static int readMessage(void)
 static int writeHeader(void)
 {
 	head.magic = EJ_MAGIC;
-	head.jcx = cw->jcx;
-	head.winobj = cw->winobj;
-	head.docobj = cw->docobj;
+	head.jcx = cf->jcx;
+	head.winobj = cf->winobj;
+	head.docobj = cf->docobj;
 	return writeToJS(&head, sizeof(head));
 }				/* writeHeader */
 
@@ -556,7 +551,7 @@ static void ack5(void)
 }				/* ack5 */
 
 /* Create a js context for the current window.
- * The corresponding js context will be stored in cw->jcx. */
+ * The corresponding js context will be stored in cf->jcx. */
 void createJavaContext(void)
 {
 	if (!allowJS)
@@ -583,9 +578,9 @@ void createJavaContext(void)
 		return;
 
 /* Copy the context pointer back to edbrowse. */
-	cw->jcx = head.jcx;
-	cw->winobj = head.winobj;
-	cw->docobj = head.docobj;
+	cf->jcx = head.jcx;
+	cf->winobj = head.winobj;
+	cf->docobj = head.docobj;
 
 	setupJavaDom();
 }				/* createJavaContext */
@@ -600,24 +595,24 @@ writeHeader() function above,
 * whibuilds the message assuming cw.
 *********************************************************************/
 
-void freeJavaContext(struct ebWindow *w)
+void freeJavaContext(struct ebFrame *f)
 {
-	if (!w->winobj)
+	if (!f->winobj)
 		return;
 
 	debugPrint(5, "> free context session %d", context);
 
 	head.magic = EJ_MAGIC;
 	head.cmd = EJ_CMD_DESTROY;
-	head.jcx = w->jcx;
-	head.winobj = w->winobj;
-	head.docobj = w->docobj;
+	head.jcx = f->jcx;
+	head.winobj = f->winobj;
+	head.docobj = f->docobj;
 	if (writeToJS(&head, sizeof(head)))
 		return;
 	if (readMessage())
 		return;
 	ack5();
-	w->jcx = w->winobj = 0;
+	f->jcx = f->winobj = 0;
 }				/* freeJavaContext */
 
 void js_shutdown(void)
@@ -655,7 +650,7 @@ char *jsRunScriptResult(jsobjtype obj, const char *str, const char *filename,
 	int rc;
 	char *s;
 
-	if (!allowJS || !cw->winobj || !obj)
+	if (!allowJS || !cf->winobj || !obj)
 		return 0;
 
 	if (!str || !str[0])
@@ -706,7 +701,7 @@ enum ej_proptype has_property(jsobjtype obj, const char *name)
 {
 	if (whichproc == 'j')
 		return has_property_nat(obj, name);
-	if (!allowJS || !cw->winobj || !obj)
+	if (!allowJS || !cf->winobj || !obj)
 		return EJ_PROP_NONE;
 
 	debugPrint(5, "> has %s", name);
@@ -730,7 +725,7 @@ void delete_property(jsobjtype obj, const char *name)
 		delete_property_nat(obj, name);
 		return;
 	}
-	if (!allowJS || !cw->winobj || !obj)
+	if (!allowJS || !cf->winobj || !obj)
 		return;
 
 	debugPrint(5, "> delete %s", name);
@@ -751,7 +746,7 @@ void delete_property(jsobjtype obj, const char *name)
 static int get_property(jsobjtype obj, const char *name)
 {
 	propval = 0;		/* should already be 0 */
-	if (!allowJS || !cw->winobj || !obj)
+	if (!allowJS || !cf->winobj || !obj)
 		return -1;
 
 	debugPrint(5, "> get %s", name);
@@ -855,7 +850,7 @@ jsobjtype get_property_function(jsobjtype parent, const char *name)
 static int get_array_element(jsobjtype obj, int idx)
 {
 	propval = 0;
-	if (!allowJS || !cw->winobj || !obj)
+	if (!allowJS || !cf->winobj || !obj)
 		return -1;
 
 	debugPrint(5, "> get [%d]", idx);
@@ -891,7 +886,7 @@ static int set_property(jsobjtype obj, const char *name,
 {
 	int l;
 
-	if (!allowJS || !cw->winobj || !obj)
+	if (!allowJS || !cf->winobj || !obj)
 		return -1;
 
 	debugPrint(5, "> set %s=%s", name, debugString(value));
@@ -969,7 +964,7 @@ jsobjtype instantiate_array(jsobjtype parent, const char *name)
 	if (whichproc == 'j')
 		return instantiate_array_nat(parent, name);
 
-	if (!allowJS || !cw->winobj || !parent)
+	if (!allowJS || !cf->winobj || !parent)
 		return 0;
 
 	debugPrint(5, "> new array %s", name);
@@ -1001,7 +996,7 @@ static int set_array_element(jsobjtype array, int idx,
 {
 	int l;
 
-	if (!allowJS || !cw->winobj || !array)
+	if (!allowJS || !cf->winobj || !array)
 		return -1;
 
 	debugPrint(5, "> set [%d]=%s", idx, debugString(value));
@@ -1058,7 +1053,7 @@ jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname)
 	if (whichproc == 'j')
 		return instantiate_nat(parent, name, classname);
 
-	if (!allowJS || !cw->winobj || !parent)
+	if (!allowJS || !cf->winobj || !parent)
 		return 0;
 
 	debugPrint(5, "> instantiate %s %s", name,
@@ -1106,7 +1101,7 @@ static int run_function(jsobjtype obj, const char *name, int argc,
 {
 	int rc;
 	propval = 0;		/* should already be 0 */
-	if (!allowJS || !cw->winobj || !obj)
+	if (!allowJS || !cf->winobj || !obj)
 		return -1;
 
 	debugPrint(5, "> call %s(%d)", name, argc);
@@ -1200,7 +1195,7 @@ void set_basehref(const char *h)
 {
 	if (!h)
 		h = emptyString;
-	set_property_string(cw->docobj, "base$href$", h);
+	set_property_string(cf->docobj, "base$href$", h);
 }				/* set_basehref */
 
 /* The object is a select-one field in the form, and this function returns
@@ -1212,7 +1207,7 @@ char *get_property_option(jsobjtype obj)
 	jsobjtype oo;		/* option object */
 	char *val;
 
-	if (!allowJS || !cw->winobj || !obj)
+	if (!allowJS || !cf->winobj || !obj)
 		return 0;
 
 	n = get_property_number(obj, "selectedIndex");
@@ -1239,7 +1234,7 @@ static void docCookie(jsobjtype d)
 {
 	int cook_l;
 	char *cook = initString(&cook_l);
-	const char *url = cw->fileName;
+	const char *url = cf->fileName;
 	bool secure = false;
 	const char *proto;
 	char *s;
@@ -1281,8 +1276,8 @@ int uname(struct utsname *pun)
  * and methods that are base for client side DOM. */
 void setupJavaDom(void)
 {
-	jsobjtype w = cw->winobj;	// window object
-	jsobjtype d = cw->docobj;	// document object
+	jsobjtype w = cf->winobj;	// window object
+	jsobjtype d = cf->docobj;	// document object
 	jsobjtype nav;		// navigator object
 	jsobjtype navpi;	// navigator plugins
 	jsobjtype navmt;	// navigator mime types
@@ -1356,7 +1351,7 @@ void setupJavaDom(void)
 	hist = instantiate(w, "history", 0);
 	if (hist == NULL)
 		return;
-	set_property_string(hist, "current", cw->fileName);
+	set_property_string(hist, "current", cf->fileName);
 /* Since there is no history in edbrowse, the rest is left to startwindow.js */
 
 /* the js window/document setup script.
@@ -1367,10 +1362,10 @@ void setupJavaDom(void)
 // Document properties that must be set after startwindow.js.
 // Most of these use the setters in the URL class.
 	set_property_string(d, "referrer", cw->referrer);
-	instantiate_url(d, "URL", cw->fileName);
-	instantiate_url(d, "location", cw->fileName);
-	instantiate_url(w, "location", cw->fileName);
-	set_property_string(d, "domain", getHostURL(cw->fileName));
+	instantiate_url(d, "URL", cf->fileName);
+	instantiate_url(d, "location", cf->fileName);
+	instantiate_url(w, "location", cf->fileName);
+	set_property_string(d, "domain", getHostURL(cf->fileName));
 	docCookie(d);
 }				/* setupJavaDom */
 

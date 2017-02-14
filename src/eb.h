@@ -348,6 +348,30 @@ struct lineMap {
 };
 #define LMSIZE sizeof(struct lineMap)
 
+/* an edbrowse frame, as when there are many frames in an html page.
+ * There could be several frames in an edbrowse window or buffer, chained
+ * together in a linked list, but usually there is just one, as when editing
+ * a local file and browsing a simple web page.
+*/
+struct ebFrame {
+	struct ebFrame *next;
+	struct ebWindow *owner;
+	char *fileName;		/* name of file or url */
+	char *firstURL;		/* before http redirection */
+	char *hbase; /* base for href references */
+	bool baseset; /* <base> tag has been seen */
+	bool f_encoded:1; /* filename is url encoded */
+	char *dw;		/* document.write string */
+	int dw_l;		/* length of the above */
+/* The javascript context and window corresponding to this url or frame.
+ * If this is null then javascript is not operational for this frame.
+ * We could still be browsing however, without javascript. */
+	jsobjtype jcx;
+	jsobjtype winobj;
+	jsobjtype docobj;	/* window.document */
+};
+extern struct ebFrame *cf;	/* current frame */
+
 /* an edbrowse window */
 struct ebWindow {
 /* windows stack up as you open new files or follow hyperlinks.
@@ -358,12 +382,11 @@ struct ebWindow {
 	int dot, dol;
 /* remember dot and dol for the raw text, when in browse mode */
 	int r_dot, r_dol;
-	char *fileName;		/* name of file or url */
-	char *firstURL;		/* before http redirection */
+	struct ebFrame f0; /* first frame */
+/* is the referrer the original web page or the individual frame? */
 	char *referrer;
 	char *baseDirName;	/* when scanning a directory */
 	char *ft, *fd, *fk;	/* title, description, keywords */
-	char *hbase; /* base for href references */
 	char *mailInfo;
 	char lhs[MAXRE], rhs[MAXRE];	/* remembered substitution strings */
 	struct lineMap *map, *r_map;
@@ -394,17 +417,6 @@ struct ebWindow {
 	bool dirMode:1;		/* directory mode */
 	bool undoable:1;	/* undo is possible */
 	bool sqlMode:1;		/* accessing a table */
-	bool baseset:1; /* <base> tag seen */
-	bool f_encoded:1; /* filename is url encoded */
-	char *dw;		/* document.write string */
-	int dw_l;		/* length of the above */
-/* The javascript context and window corresponding to this edbrowse buffer.
- * If this is null then javascript is not operational for this window.
- * We could still be browsing however, without javascript.
- * Refer to browseMode to test for that. */
-	jsobjtype jcx;
-	jsobjtype winobj;
-	jsobjtype docobj;	/* window.document */
 	struct DBTABLE *table;	/* if in sqlMode */
 };
 extern struct ebWindow *cw;	/* current window */
@@ -414,7 +426,7 @@ extern struct ebWindow *cw;	/* current window */
 #define tagList (cw->tags)
 
 /* js is running in the current session */
-#define isJSAlive (cw->jcx != NULL && allowJS)
+#define isJSAlive (cf->jcx != NULL && allowJS)
 
 /*********************************************************************
 Temporary cap on the number of lines, so the integer index into cw->map

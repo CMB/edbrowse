@@ -267,10 +267,10 @@ int playBuffer(const char *line, const char *playfile)
 		if (c == '.') {
 			suffix = line + 3;
 		} else {
-			if (cw->fileName) {
+			if (cf->fileName) {
 				const char *endslash;
-				suffix = strrchr(cw->fileName, '.');
-				endslash = strrchr(cw->fileName, '/');
+				suffix = strrchr(cf->fileName, '.');
+				endslash = strrchr(cf->fileName, '/');
 				if (suffix && endslash && endslash > suffix)
 					suffix = NULL;
 			}
@@ -317,8 +317,8 @@ int playBuffer(const char *line, const char *playfile)
 	if (!makeTempFilename(suffix, tempIndex, false))
 		return 0;
 	infile = tempin;
-	if (!isURL(cw->fileName) && !access(cw->fileName, 4) && !cw->changeMode)
-		infile = cw->fileName;
+	if (!isURL(cf->fileName) && !access(cf->fileName, 4) && !cw->changeMode)
+		infile = cf->fileName;
 	cmd = pluginCommand(mt, infile, 0, suffix);
 	if (!cmd)
 		return 0;
@@ -421,8 +421,8 @@ char *runPluginConverter(const char *buf, int buflen)
 	if (!makeTempFilename(suffixout, tempIndex, true))
 		return 0;
 	infile = tempin;
-	if (!isURL(cw->fileName) && !access(cw->fileName, 4) && !cw->changeMode)
-		infile = cw->fileName;
+	if (!isURL(cf->fileName) && !access(cf->fileName, 4) && !cw->changeMode)
+		infile = cf->fileName;
 	cmd = pluginCommand(cw->mt, infile, tempout, suffix);
 	if (!cmd)
 		return NULL;
