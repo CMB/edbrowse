@@ -522,9 +522,21 @@ time_t parseHeaderDate(const char *date)
 	};
 	time_t t = 0;
 	int zone = 0;
+	time_t now = 0;
+	time_t utcnow = 0;
 	int y;			/* remember the type of format */
+	struct tm *temptm = NULL;
 	struct tm tm;
 	memset(&tm, 0, sizeof(struct tm));
+	tm.tm_isdst = -1;
+
+	now = time(NULL);
+	temptm = gmtime(&now);
+	if (temptm == NULL)
+		goto fail;
+	utcnow = mktime(temptm);
+	if (utcnow == -1 && errno)
+		goto fail;
 
 /* skip past day of the week */
 	date = strchr(date, ' ');
@@ -677,7 +689,7 @@ f2:
 
 	t = mktime(&tm);
 	if (t != (time_t) - 1)
-		return t + zone;
+		return t + zone + (now - utcnow);
 
 fail:
 	return 0;
