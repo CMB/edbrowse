@@ -194,7 +194,8 @@ static void scan_http_headers(bool fromCallback)
 }				/* scan_http_headers */
 
 /* actually run the curl request, http or ftp or whatever */
-static CURLcode fetch_internet(CURL * h, bool is_http)
+static bool is_http;
+static CURLcode fetch_internet(CURL * h)
 {
 	CURLcode curlret;
 	down_h = h;
@@ -240,6 +241,13 @@ eb_curl_callback(char *incoming, size_t size, size_t nitems,
 {
 	size_t num_bytes = nitems * size;
 	int dots1, dots2, rc;
+
+	if (data->down_state == 1 && is_http) {
+/* don't do a download unless the code is 200. */
+		curl_easy_getinfo(down_h, CURLINFO_RESPONSE_CODE, &hcode);
+		if (hcode != 200)
+			data->down_state = 0;
+	}
 
 	if (data->down_state == 1) {
 		if (hcl == 0) {
@@ -1043,7 +1051,8 @@ mimestream:
 		}
 
 perform:
-		curlret = fetch_internet(h, true);
+		is_http = true;
+		curlret = fetch_internet(h);
 
 		if (cbd.down_state == 6) {
 			curl_easy_cleanup(h);
@@ -1510,6 +1519,7 @@ static bool ftpConnect(const char *url, const char *user, const char *pass,
 	char creds_buf[MAXUSERPASS * 2 + 1];
 	size_t creds_len = 0;
 
+	is_http = false;
 	protLength = strchr(url, ':') - url + 3;
 /* scp is somewhat unique among the protocols handled here */
 	is_scp = memEqualCI(url, "scp", 3);
@@ -1558,7 +1568,7 @@ static bool ftpConnect(const char *url, const char *user, const char *pass,
 	cbd.length = &serverDataLen;
 
 perform:
-	curlret = fetch_internet(h, false);
+	curlret = fetch_internet(h);
 
 	if (cbd.down_state == 5) {
 /* user has directed a download of this file in the background. */
@@ -1613,7 +1623,7 @@ perform:
 			if (curlret != CURLE_OK)
 				goto ftp_transfer_fail;
 
-			curlret = fetch_internet(h, false);
+			curlret = fetch_internet(h);
 			if (curlret != CURLE_OK)
 				transfer_success = false;
 			else {
