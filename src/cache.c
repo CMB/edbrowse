@@ -70,7 +70,13 @@ static bool readControl(void)
 	e = entries;
 	endfile = data + datalen;
 	for (s = data; s != endfile; s = t) {
-		t = strchr(s, '\n') + 1;
+		t = strchr(s, '\n');
+		if (!t) {
+/* file does not end in newline; this should never happen! */
+/* Not sure what to do, but at least it's not a seg fault. */
+			break;
+		}
+		++t;
 		e->offset = s - data;
 		e->textlength = t - s;
 		e->url = s;
@@ -188,10 +194,10 @@ top:
 		usleep(5000);
 	}
 
-/* if lock file is more than an hour old then something bad has happened,
+/* if lock file is more than 5 minutes old then something bad has happened,
  * just remove it. */
 	lock_t = fileTimeByName(cacheLock);
-	if (now_t - lock_t > 3600) {
+	if (now_t - lock_t > 5 * 60) {
 		if (unlink(cacheLock) == 0)
 			goto top;
 	}
@@ -209,6 +215,8 @@ static void clearCacheInternal(void)
 {
 	struct CENTRY *e;
 	int i;
+
+	debugPrint(3, "clear cache");
 
 /* loop through and remove the files */
 	e = entries;
@@ -288,8 +296,10 @@ match:
 		if (!writeControl())
 			clearCacheInternal();
 	}
-	free(cache_data);
+
+	debugPrint(3, "from cache");
 	free(newrec);
+	free(cache_data);
 	clearLock();
 	return true;
 }				/* fetchCache */
@@ -323,6 +333,7 @@ bool presentInCache(const char *url)
 		ret = true;
 	}
 
+	free(cache_data);
 	clearLock();
 	return ret;
 }				/* presentInCache */
@@ -341,6 +352,11 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 	if (!setLock())
 		return;
 
+/* leading http:// is the default, and not needed in the control file.
+ * sameURL() takes care of all that. */
+	if (memEqualCI(url, "http://", 7))
+		url += 7;
+
 /* find the url */
 	e = entries;
 	for (i = 0; i < numentries; ++i, ++e) {
@@ -357,6 +373,7 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 			     MSG_TempNoCreate2, MSG_NoWrite2)) {
 /* oops, can't write the file */
 		unlink(cacheFile);
+		debugPrint(3, "cannot write web page into cache");
 		free(cache_data);
 		clearLock();
 		return;
@@ -366,13 +383,14 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 /* we're just updating a preexisting record */
 		e->accesstime = now_t;
 		e->modtime = modtime;
-		e->etag = etag;
+		e->etag = (etag ? etag : emptyString);
 		char *newrec = record2string(e);
 		size_t newlen = strlen(newrec);
 		if (newlen == e->textlength) {
 /* record is the same length, just update it */
 			lseek(control_fh, e->offset, 0);
 			write(control_fh, newrec, newlen);
+			debugPrint(3, "into cache");
 			free(cache_data);
 			free(newrec);
 			clearLock();
@@ -380,9 +398,11 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 		}
 
 /* Record has changed length, have to rewrite the whole control file */
-			e->textlength = newlen;
+		e->textlength = newlen;
 		if (!writeControl())
 			clearCacheInternal();
+		else
+			debugPrint(3, "into cache");
 		free(cache_data);
 		clearLock();
 		return;
@@ -392,6 +412,7 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 	if (numentries == MAXCACHESIZE) {
 /* sort to find the 100 oldest files */
 		qsort(entries, numentries, sizeof(struct CENTRY), entry_cmp);
+		debugPrint(3, "cache is full; removing the 100 oldest files");
 		e = entries + numentries - 100;
 		for (i = 0; i < 100; ++i, ++e) {
 			sprintf(cacheFile, "%s/%05d", cacheDir, e->filenumber);
@@ -416,6 +437,7 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 		e->textlength = strlen(newrec);
 		lseek(control_fh, 0L, 2);
 		write(control_fh, newrec, e->textlength);
+		debugPrint(3, "into cache");
 		free(cache_data);
 		free(newrec);
 		clearLock();
@@ -425,6 +447,8 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 /* have to rewrite the whole control file */
 	if (!writeControl())
 		clearCacheInternal();
+	else
+		debugPrint(3, "into cache");
 	free(cache_data);
 	clearLock();
 }				/* storeCache */
