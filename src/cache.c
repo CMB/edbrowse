@@ -2,22 +2,18 @@
 cache.c: maintain a cache of the http files.
 The url is the key.
 The result is a string that holds a 5 digit filename, the etag,
-last-modified time, and last access time.
-nnnnn tab etag tab last-mod tab access
+last modified time, last access time, and file size.
+nnnnn tab etag tab last-mod tab access tab size
 The access time helps us clean house; delete the oldest files.
 cacheDir is the directory holding the cached files,
-and cacheControl is the file that houses the database,
-either home grown or in some db format.
-We might use a database library, if it allows separate edbrowse processes to
-access the cache consistently.
-Or I could home grow it; I'd just have to open a lock file with O_EXCL when
-accessing the cache, and if busy then wait a few milliseconds and try again.
-For now I'm rolling my own.
+and cacheControl is the file that houses the database.
+I open a lock file with O_EXCL when accessing the cache,
+and if busy then I wait a few milliseconds and try again.
 If the stored etag and header etag are both present, and don't match,
 then the file is stale.
-If one or the other etag is missing, and mod date > mod date of cache entry,
+If one or the other etag is missing, and mod time website > mod time cached,
 then the file is stale.
-We don't even query the cache if we don't have at least one of etag or mod date.
+We don't even query the cache if we don't have at least one of etag or mod time.
 *********************************************************************/
 
 #include "eb.h"
@@ -33,14 +29,14 @@ struct CENTRY {
 	const char *url;
 	int filenumber;
 	const char *etag;
-	time_t modtime;
-	time_t accesstime;
+	int modtime;
+	int accesstime;
+	int pages;		/* in 4K pages */
 };
 
-#define MAXCACHESIZE 2000
-
-static struct CENTRY entries[MAXCACHESIZE];
+static struct CENTRY *entries;
 static int numentries;
+static int lastCacheCount;
 
 /*********************************************************************
 Read the control file into memory and parse it into entry structures.
@@ -61,6 +57,12 @@ static bool readControl(void)
 	char *data;
 	int datalen;
 	struct CENTRY *e;
+
+	if (cacheCount != lastCacheCount) {
+		nzFree(entries);
+		entries = allocMem(cacheCount * sizeof(struct CENTRY));
+		lastCacheCount = cacheCount;
+	}
 
 	lseek(control_fh, 0L, 0);
 	if (!fdIntoMemory(control_fh, &data, &datalen))
@@ -87,7 +89,7 @@ static bool readControl(void)
 		e->etag = s;
 		s = strchr(s, '\t');
 		*s++ = 0;
-		sscanf(s, "%ld %ld", &e->modtime, &e->accesstime);
+		sscanf(s, "%d %d %d", &e->modtime, &e->accesstime, &e->pages);
 		++e, ++numentries;
 	}
 
@@ -99,8 +101,9 @@ static bool readControl(void)
 static char *record2string(const struct CENTRY *e)
 {
 	char *t;
-	asprintf(&t, "%s\t%05d\t%s\t%ld\t%ld\n",
-		 e->url, e->filenumber, e->etag, e->modtime, e->accesstime);
+	asprintf(&t, "%s\t%05d\t%s\t%d\t%d\t%d\n",
+		 e->url, e->filenumber, e->etag, e->modtime, e->accesstime,
+		 e->pages);
 	return t;
 }				/* record2string */
 
@@ -269,7 +272,7 @@ bool fetchCache(const char *url, const char *etag, time_t modtime,
 		}
 		if (!modtime)
 			goto nomatch;
-		if (modtime > e->modtime)
+		if (modtime / 8 > e->modtime)
 			goto nomatch;
 		goto match;
 	}
@@ -286,7 +289,7 @@ match:
 		goto nomatch;
 /* file has been pulled from cache */
 /* have to update the access time */
-	e->accesstime = now_t;
+	e->accesstime = now_t / 8;
 	newrec = record2string(e);
 	newlen = strlen(newrec);
 	if (newlen == e->textlength) {
@@ -339,7 +342,8 @@ bool presentInCache(const char *url)
 }				/* presentInCache */
 
 /* Put a file into the cache.
- * Sets the modified time and last access time to now. */
+ * Sets the modified time and last access time to now.
+ * Time is in 8 second chunks, so even a 32 bit int will hold us for centuries. */
 
 void storeCache(const char *url, const char *etag, time_t modtime,
 		const char *data, int datalen)
@@ -381,9 +385,10 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 
 	if (i < numentries) {
 /* we're just updating a preexisting record */
-		e->accesstime = now_t;
-		e->modtime = modtime;
+		e->accesstime = now_t / 8;
+		e->modtime = modtime / 8;
 		e->etag = (etag ? etag : emptyString);
+		e->pages = (datalen + 4095) / 4096;
 		char *newrec = record2string(e);
 		size_t newlen = strlen(newrec);
 		if (newlen == e->textlength) {
@@ -409,7 +414,7 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 	}
 
 /* this file is new. See if the database is full. */
-	if (numentries == MAXCACHESIZE) {
+	if (numentries == cacheCount) {
 /* sort to find the 100 oldest files */
 		qsort(entries, numentries, sizeof(struct CENTRY), entry_cmp);
 		debugPrint(3, "cache is full; removing the 100 oldest files");
@@ -428,8 +433,9 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 	e->url = url;
 	e->filenumber = filenum;
 	e->etag = (etag ? etag : emptyString);
-	e->modtime = modtime;
-	e->accesstime = now_t;
+	e->accesstime = now_t / 8;
+	e->modtime = modtime / 8;
+	e->pages = (datalen + 4095) / 4096;
 
 	if (append) {
 /* didn't have to prune; just append this record */

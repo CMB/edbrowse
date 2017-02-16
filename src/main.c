@@ -20,6 +20,7 @@ char *configFile, *addressFile, *cookieFile;
 char *mailDir, *mailUnread, *mailStash, *mailReply;
 char *recycleBin, *sigFile, *sigFileEnd;
 char *cacheDir, *cacheControl, *cacheLock, *cacheFile;
+int cacheSize, cacheCount = 2000;
 char *ebTempDir, *ebUserDir;
 char *userAgents[10];
 char *currentAgent, *currentReferrer;

@@ -306,6 +306,8 @@ extern char *cacheDir;	/* directory for a persistent cache of http pages */
 extern char *cacheControl;	/* control file (or database) for the cache, map urls to files */
 extern char *cacheLock; /* lock file for accessing the cache */
 extern char *cacheFile;
+extern int cacheSize; /* in megabytes */
+extern int cacheCount; /* number of cache files */
 
 struct listHead {
 	void *next;
