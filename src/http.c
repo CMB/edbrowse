@@ -1240,7 +1240,7 @@ they go where they go, so this doesn't come up very often.
 			} else {
 				if ((hcode == 200) && (hmd || hetag) &&
 				    cbd.down_state == 0)
-					storeCache(url, hetag, hmd, serverData,
+					storeCache(urlcopy, hetag, hmd, serverData,
 						   serverDataLen);
 				still_fetching = false;
 				transfer_status = true;
