@@ -492,7 +492,7 @@ static void prepareScript(struct htmlTag *t)
 			} else
 			    if (httpConnect
 				(t->href, false, false, true, 0, 0, 0)) {
-				if (hcode == 200) {
+				if (ht_code == 200) {
 					js_text = serverData;
 					prepareForBrowse(js_text,
 							 serverDataLen);
@@ -500,7 +500,7 @@ static void prepareScript(struct htmlTag *t)
 					nzFree(serverData);
 					if (debugLevel >= 3)
 						i_printf(MSG_GetJS,
-							 t->href, hcode);
+							 t->href, ht_code);
 				}
 			} else {
 				if (debugLevel >= 3)

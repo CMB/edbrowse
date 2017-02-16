@@ -265,7 +265,7 @@ extern bool listNA;		/* list nonascii chars */
 extern bool inInput;		/* reading line from standard in */
 extern int fileSize;		/* when reading/writing files */
 extern int mssock;		/* mail server socket */
-extern long hcode;		/* http code, like 404 file not found */
+extern long ht_code;		/* http code, like 404 file not found */
 extern char errorMsg[];		/* generated error message */
 extern char serverLine[];	/* lines to and from the mail server */
 extern int localAccount;	/* this is the smtp server for outgoing mail */

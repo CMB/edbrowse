@@ -221,6 +221,9 @@ Rerender the tree after js has run, and report any changes to the user.
 src/cookies.c:
 Send and receive cookies.  Maintain the cookie jar.
 
+src/cache.c:
+Maintain a cache of http files.
+
 src/auth.c:
 Remember user and password for web pages that require authentication.
 Only the basic method is implemented at this time.

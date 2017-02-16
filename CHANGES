@@ -1,5 +1,9 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.6.3:
+Maintain a cache of http files.
+Provides faster access to websites that are visited often.
+
 3.6.2:
 Read and convert utf16 and utf32 as per the byte order mark.
 convert such files to utf8 or iso8859-1 as per the console setting,

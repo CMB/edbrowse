@@ -40,10 +40,11 @@ static void background_download(struct eb_curl_callback_data *data);
 static void setup_download(struct eb_curl_callback_data *data);
 static CURL *http_curl_init(struct eb_curl_callback_data *cbd);
 
-static char errorText[CURL_ERROR_SIZE + 1];
 static char *http_headers;
 static int http_headers_len;
 static char *httpLanguage;	/* outgoing */
+long ht_code;			/* example, 404 */
+static char ht_error[CURL_ERROR_SIZE + 1];
 /* an assortment of variables that are gleaned from the incoming http headers */
 /* http content type is used in many places, and isn't arbitrarily long
  * or case sensitive, so keep our own sanitized copy. */
@@ -265,8 +266,8 @@ eb_curl_callback(char *incoming, size_t size, size_t nitems,
 
 	if (data->down_state == 1 && is_http) {
 /* don't do a download unless the code is 200. */
-		curl_easy_getinfo(down_h, CURLINFO_RESPONSE_CODE, &hcode);
-		if (hcode != 200)
+		curl_easy_getinfo(down_h, CURLINFO_RESPONSE_CODE, &ht_code);
+		if (ht_code != 200)
 			data->down_state = 0;
 	}
 
@@ -773,8 +774,6 @@ bool refreshDelay(int sec, const char *u)
 	return false;
 }				/* refreshDelay */
 
-long hcode;			/* example, 404 */
-static char herror[32];		/* example, file not found */
 static char *urlcopy;
 static int urlcopy_l;
 
@@ -1108,8 +1107,8 @@ they go where they go, so this doesn't come up very often.
 
 			if (cbd.down_state == 2) {
 				curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE,
-						  &hcode);
-				if (hcode == 200)
+						  &ht_code);
+				if (ht_code == 200)
 					goto perform;
 			}
 		}
@@ -1154,11 +1153,11 @@ they go where they go, so this doesn't come up very often.
 
 		if (curlret != CURLE_OK)
 			goto curl_fail;
-		curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &hcode);
+		curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &ht_code);
 		if (curlret != CURLE_OK)
 			goto curl_fail;
 
-		debugPrint(3, "http code %ld %s", hcode, herror);
+		debugPrint(3, "http code %ld", ht_code);
 
 /* refresh header is an alternate form of redirection */
 		if (newlocation && newloc_d >= 0) {
@@ -1166,20 +1165,20 @@ they go where they go, so this doesn't come up very often.
 				nzFree(newlocation);
 				newlocation = 0;
 			} else {
-				hcode = 302;
+				ht_code = 302;
 			}
 		}
 
 		if (allowRedirection &&
-		    (hcode >= 301 && hcode <= 303 ||
-		     hcode >= 307 && hcode <= 308)) {
+		    (ht_code >= 301 && ht_code <= 303 ||
+		     ht_code >= 307 && ht_code <= 308)) {
 			redir = newlocation;
 			if (redir)
 				redir = resolveURL(urlcopy, redir);
 			still_fetching = false;
 			if (redir == NULL) {
 				/* Redirected, but we don't know where to go. */
-				i_printf(MSG_RedirectNoURL, hcode);
+				i_printf(MSG_RedirectNoURL, ht_code);
 				transfer_status = true;
 			} else if (redirect_count >= 10) {
 				i_puts(MSG_RedirectMany);
@@ -1193,7 +1192,7 @@ they go where they go, so this doesn't come up very often.
 
 /* Convert POST request to GET request after redirection. */
 /* This should only be done for 301 through 303 */
-				if (hcode < 307) {
+				if (ht_code < 307) {
 					curl_easy_setopt(h, CURLOPT_HTTPGET, 1);
 					post_request = false;
 				}
@@ -1227,7 +1226,7 @@ they go where they go, so this doesn't come up very often.
 			}
 		}
 
-		else if (hcode == 401 && !proceed_unauthenticated) {
+		else if (ht_code == 401 && !proceed_unauthenticated) {
 			bool got_creds;
 			i_printf(MSG_AuthRequired, urlcopy);
 			nl();
@@ -1260,7 +1259,7 @@ they go where they go, so this doesn't come up very often.
 					--redirect_count;
 				}
 			} else {
-				if (hcode == 200 && ht_cacheable &&
+				if (ht_code == 200 && ht_cacheable &&
 				    (ht_modtime || ht_etag) &&
 				    cbd.down_state == 0)
 					storeCache(urlcopy, ht_etag, ht_modtime,
@@ -1289,11 +1288,11 @@ curl_fail:
 		serverDataLen = 0;
 		nzFree(urlcopy);	/* Free it on transfer failure. */
 	} else {
-		if (hcode != 200 && hcode != 201 &&
+		if (ht_code != 200 && ht_code != 201 &&
 		    (webpage || debugLevel >= 2) ||
-		    hcode == 201 && debugLevel >= 3)
+		    ht_code == 201 && debugLevel >= 3)
 			i_printf(MSG_HTTPError,
-				 hcode, message_for_response_code(hcode));
+				 ht_code, message_for_response_code(ht_code));
 		if (name_changed)
 			changeFileName = urlcopy;
 		else
@@ -1310,7 +1309,7 @@ curl_fail:
 	}
 
 /* Check for plugin to run here */
-	if (transfer_status && hcode == 200 && cw->mt && pluginsOn &&
+	if (transfer_status && ht_code == 200 && cw->mt && pluginsOn &&
 	    !cw->mt->stream && !cw->mt->outtype && cw->mt->program) {
 		bool rc = playServerData();
 		nzFree(serverData);
@@ -1538,7 +1537,7 @@ void ebcurl_setError(CURLcode curlret, const char *url)
 		break;
 
 	case CURLE_SSL_CONNECT_ERROR:
-		setError(MSG_SSLConnectError, errorText);
+		setError(MSG_SSLConnectError, ht_error);
 		break;
 
 	case CURLE_LOGIN_DENIED:
@@ -1785,8 +1784,8 @@ static CURL *http_curl_init(struct eb_curl_callback_data *cbd)
 			 CURLAUTH_BASIC | CURLAUTH_DIGEST | CURLAUTH_NTLM);
 
 /* The next few setopt calls could allocate or perform file I/O. */
-	errorText[0] = '\0';
-	curl_init_status = curl_easy_setopt(h, CURLOPT_ERRORBUFFER, errorText);
+	ht_error[0] = '\0';
+	curl_init_status = curl_easy_setopt(h, CURLOPT_ERRORBUFFER, ht_error);
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
 	curl_init_status = curl_easy_setopt(h, CURLOPT_ENCODING, "");
@@ -2311,7 +2310,7 @@ CURLcode setCurlURL(CURL * h, const char *url)
 	verify = mustVerifyHost(host);
 	curl_easy_setopt(h, CURLOPT_PROXY, proxy);
 	curl_easy_setopt(h, CURLOPT_SSL_VERIFYPEER, verify);
-	curl_easy_setopt(h, CURLOPT_SSL_VERIFYHOST, verify);
+	curl_easy_setopt(h, CURLOPT_SSL_VERIFYHOST, (verify ? 2 : 0));
 	return curl_easy_setopt(h, CURLOPT_URL, url);
 }				/* setCurlURL */
 
