@@ -38,19 +38,22 @@ struct listHead down_jobs = {
 
 static void background_download(struct eb_curl_callback_data *data);
 static void setup_download(struct eb_curl_callback_data *data);
+static CURL *http_curl_init(struct eb_curl_callback_data *cbd);
+
 static char errorText[CURL_ERROR_SIZE + 1];
 static char *http_headers;
 static int http_headers_len;
-static char *httpLanguage;
+static char *httpLanguage;	/* outgoing */
+/* an assortment of variables that are gleaned from the incoming http headers */
 /* http content type is used in many places, and isn't arbitrarily long
  * or case sensitive, so keep our own sanitized copy. */
-static char hct[60];
-static char *hct2;		/* extra content info such as charset */
-int hcl;			/* http content length */
-static char *hcdfn;		/* http content disposition file name */
-static time_t hmd;		/* http modification date */
-static char *hetag;		/* the etag in the header */
-static CURL *http_curl_init(struct eb_curl_callback_data *cbd);
+static char ht_content[60];
+static char *ht_charset;	/* extra content info such as charset */
+int ht_length;			/* http content length */
+static char *ht_cdfn;		/* http content disposition file name */
+static time_t ht_modtime;	/* http modification time */
+static char *ht_etag;		/* the etag in the header */
+static bool ht_cacheable;
 
 /* This function is called for web redirection, by the refresh command,
  * or by window.location = new_url. */
@@ -123,20 +126,20 @@ static void scan_http_headers(bool fromCallback)
 {
 	char *v;
 
-	if (!hct[0] && (v = find_http_header("content-type"))) {
-		strncpy(hct, v, sizeof(hct) - 1);
-		caseShift(hct, 'l');
+	if (!ht_content[0] && (v = find_http_header("content-type"))) {
+		strncpy(ht_content, v, sizeof(ht_content) - 1);
+		caseShift(ht_content, 'l');
 		nzFree(v);
-		debugPrint(3, "content %s", hct);
-		hct2 = strchr(hct, ';');
-		if (hct2)
-			*hct2++ = 0;
+		debugPrint(3, "content %s", ht_content);
+		ht_charset = strchr(ht_content, ';');
+		if (ht_charset)
+			*ht_charset++ = 0;
 /* The protocol, such as rtsp, could have already set the mime type. */
 		if (!cw->mt)
-			cw->mt = findMimeByContent(hct);
+			cw->mt = findMimeByContent(ht_content);
 	}
 
-	if (!hcdfn && (v = find_http_header("content-disposition"))) {
+	if (!ht_cdfn && (v = find_http_header("content-disposition"))) {
 		char *s = strstrCI(v, "filename=");
 		if (s) {
 			s += 9;
@@ -147,27 +150,45 @@ static void scan_http_headers(bool fromCallback)
 				if (t)
 					*t = 0;
 			}
-			hcdfn = cloneString(s);
-			debugPrint(3, "disposition filename %s", hcdfn);
+			ht_cdfn = cloneString(s);
+			debugPrint(3, "disposition filename %s", ht_cdfn);
 		}
 		nzFree(v);
 	}
 
-	if (!hcl && (v = find_http_header("content-length"))) {
-		hcl = atoi(v);
+	if (!ht_length && (v = find_http_header("content-length"))) {
+		ht_length = atoi(v);
 		nzFree(v);
-		if (hcl)
-			debugPrint(3, "content length %d", hcl);
+		if (ht_length)
+			debugPrint(3, "content length %d", ht_length);
 	}
 
-	if (!hetag && (v = find_http_header("etag"))) {
-		hetag = v;
-		debugPrint(3, "etag %s", hetag);
+	if (!ht_etag && (v = find_http_header("etag"))) {
+		ht_etag = v;
+		debugPrint(3, "etag %s", ht_etag);
 	}
 
-	if (!hmd && (v = find_http_header("last-modified"))) {
-		hmd = parseHeaderDate(v);
-		if (hmd)
+	if (ht_cacheable && (v = find_http_header("cache-control"))) {
+		caseShift(v, 'l');
+		if (strstr(v, "no-cache")) {
+			ht_cacheable = false;
+			debugPrint(3, "no cache");
+		}
+		nzFree(v);
+	}
+
+	if (ht_cacheable && (v = find_http_header("pragma"))) {
+		caseShift(v, 'l');
+		if (strstr(v, "no-cache")) {
+			ht_cacheable = false;
+			debugPrint(3, "no cache");
+		}
+		nzFree(v);
+	}
+
+	if (!ht_modtime && (v = find_http_header("last-modified"))) {
+		ht_modtime = parseHeaderDate(v);
+		if (ht_modtime)
 			debugPrint(3, "mod date %s", v);
 		nzFree(v);
 	}
@@ -204,14 +225,14 @@ static CURLcode fetch_internet(CURL * h)
 	newlocation = NULL;
 	nzFree(http_headers);
 	http_headers = initString(&http_headers_len);
-	hct[0] = 0;
-	hct2 = NULL;
-	nzFree(hcdfn);
-	hcdfn = NULL;
-	nzFree(hetag);
-	hetag = NULL;
-	hcl = 0;
-	hmd = 0;
+	ht_content[0] = 0;
+	ht_charset = NULL;
+	nzFree(ht_cdfn);
+	ht_cdfn = NULL;
+	nzFree(ht_etag);
+	ht_etag = NULL;
+	ht_length = 0;
+	ht_modtime = 0;
 	curlret = curl_easy_perform(h);
 	if (is_http)
 		scan_http_headers(false);
@@ -250,16 +271,16 @@ eb_curl_callback(char *incoming, size_t size, size_t nitems,
 	}
 
 	if (data->down_state == 1) {
-		if (hcl == 0) {
+		if (ht_length == 0) {
 // http should always set http content length, this is just for ftp.
 // And ftp downloading a file always has state = 1 on the first data block.
 			double d_size = 0.0;	// download size, if we can get it
 			curl_easy_getinfo(down_h,
 					  CURLINFO_CONTENT_LENGTH_DOWNLOAD,
 					  &d_size);
-			hcl = d_size;
-			if (hcl < 0)
-				hcl = 0;
+			ht_length = d_size;
+			if (ht_length < 0)
+				ht_length = 0;
 		}
 
 /* state 1, first data block, ask the user */
@@ -308,9 +329,9 @@ showdots:
 				putchar('.');
 			fflush(stdout);
 		}
-		if (showProgress == 'c' && hcl)
+		if (showProgress == 'c' && ht_length)
 			printf("%d/%d\n", dots2,
-			       (hcl + CHUNKSIZE - 1) / CHUNKSIZE);
+			       (ht_length + CHUNKSIZE - 1) / CHUNKSIZE);
 	}
 	return num_bytes;
 }
@@ -1052,6 +1073,7 @@ mimestream:
 
 perform:
 		is_http = true;
+		ht_cacheable = true;
 		curlret = fetch_internet(h);
 
 		if (cbd.down_state == 6) {
@@ -1223,7 +1245,7 @@ they go where they go, so this doesn't come up very often.
 		} else {	/* not redirect, not 401 */
 			if (head_request) {
 				if (fetchCache
-				    (urlcopy, hetag, hmd, &cacheData,
+				    (urlcopy, ht_etag, ht_modtime, &cacheData,
 				     &cacheDataLen)) {
 					nzFree(serverData);
 					serverData = cacheData;
@@ -1238,10 +1260,11 @@ they go where they go, so this doesn't come up very often.
 					--redirect_count;
 				}
 			} else {
-				if ((hcode == 200) && (hmd || hetag) &&
+				if (hcode == 200 && ht_cacheable &&
+				    (ht_modtime || ht_etag) &&
 				    cbd.down_state == 0)
-					storeCache(urlcopy, hetag, hmd, serverData,
-						   serverDataLen);
+					storeCache(urlcopy, ht_etag, ht_modtime,
+						   serverData, serverDataLen);
 				still_fetching = false;
 				transfer_status = true;
 			}
@@ -1280,10 +1303,10 @@ curl_fail:
 	nzFree(postb);
 
 /* see if http header has set the filename */
-	if (hcdfn) {
+	if (ht_cdfn) {
 		nzFree(changeFileName);
-		changeFileName = hcdfn;
-		hcdfn = NULL;
+		changeFileName = ht_cdfn;
+		ht_cdfn = NULL;
 	}
 
 /* Check for plugin to run here */
@@ -1973,13 +1996,13 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb,
 			data->down_state = 6;
 			return -1;
 		}
-		if (hct[0] && !memEqualCI(hct, "text/", 5) &&
-		    !memEqualCI(hct, "application/xhtml+xml", 21) &&
+		if (ht_content[0] && !memEqualCI(ht_content, "text/", 5) &&
+		    !memEqualCI(ht_content, "application/xhtml+xml", 21) &&
 		    (!pluginsOn || !cw->mt || cw->mt->download)) {
 			data->down_state = 1;
 			down_msg = MSG_Down;
 			debugPrint(3, "potential download based on type %s",
-				   hct);
+				   ht_content);
 		}
 	}
 
@@ -2040,7 +2063,7 @@ static void setup_download(struct eb_curl_callback_data *data)
 	}
 
 /* If file is changed to a playlist or some such, just return */
-	if (hcdfn && (mt = findMimeByURL(hcdfn)) && mt->stream) {
+	if (ht_cdfn && (mt = findMimeByURL(ht_cdfn)) && mt->stream) {
 		debugPrint(3, "download aborted due to stream plugin");
 		data->down_state = 0;
 		return;
@@ -2129,7 +2152,7 @@ static void background_download(struct eb_curl_callback_data *data)
 		job->file2 = data->down_file2 - data->down_file;
 // round file size up to the nearest chunk.
 // This will come out 0 only if the true size is 0.
-		job->fsize = ((hcl + (CHUNKSIZE - 1)) / CHUNKSIZE);
+		job->fsize = ((ht_length + (CHUNKSIZE - 1)) / CHUNKSIZE);
 		addToListBack(&down_jobs, job);
 
 		return;
