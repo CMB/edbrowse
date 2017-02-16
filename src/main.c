@@ -19,7 +19,7 @@ char *changeFileName;
 char *configFile, *addressFile, *cookieFile;
 char *mailDir, *mailUnread, *mailStash, *mailReply;
 char *recycleBin, *sigFile, *sigFileEnd;
-char *cacheDir, *cacheControl, *cacheLock, *cacheFile;
+char *cacheDir;
 int cacheSize, cacheCount = 2000;
 char *ebTempDir, *ebUserDir;
 char *userAgents[10];
@@ -419,8 +419,6 @@ static void setupEdbrowseTempDirectory(void)
 
 static void setupEdbrowseCache(void)
 {
-	int fh;
-
 #ifdef DOSLIKE
 	if (!ebUserDir)
 		return;
@@ -448,18 +446,6 @@ static void setupEdbrowseCache(void)
 		}
 	}
 #endif
-
-/* the cache control file, which urls go to which files, and when fetched? */
-	cacheControl = allocMem(strlen(cacheDir) + 9);
-	sprintf(cacheControl, "%s/control", cacheDir);
-/* make sure the control file exists, just for grins */
-	fh = open(cacheControl, O_WRONLY | O_APPEND | O_CREAT, 0600);
-	if (fh >= 0)
-		close(fh);
-
-	cacheLock = allocMem(strlen(cacheDir) + 6);
-	sprintf(cacheLock, "%s/lock", cacheDir);
-	cacheFile = allocMem(strlen(cacheDir) + 7);
 }				/* setupEdbrowseCache */
 
 /*\ MSVC Debug: May need to provide path to 3rdParty DLLs, like

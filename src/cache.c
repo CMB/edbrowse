@@ -5,6 +5,9 @@ The result is a string that holds a 5 digit filename, the etag,
 last modified time, last access time, and file size.
 nnnnn tab etag tab last-mod tab access tab size
 The access time helps us clean house; delete the oldest files.
+If you change the format of this file in any way, increment the version number.
+Previous cache files will be left hanging around, but oh well.
+Not expecting to change this file format very often.
 cacheDir is the directory holding the cached files,
 and cacheControl is the file that houses the database.
 I open a lock file with O_EXCL when accessing the cache,
@@ -18,9 +21,12 @@ We don't even query the cache if we don't have at least one of etag or mod time.
 
 #include "eb.h"
 
+#define CACHECONTROLVERSION 1
+
 static int control_fh = -1;	/* file handle for cacheControl */
 static char *cache_data;
 static time_t now_t;
+static char *cacheFile, *cacheLock, *cacheControl;
 
 /* a cache entry */
 struct CENTRY {
@@ -168,6 +174,21 @@ static bool setLock(void)
 
 	if (!cacheDir)
 		return false;
+
+	if (!cacheControl) {
+		int fh;
+/* the cache control file, which urls go to which files, and when fetched? */
+		cacheControl = allocMem(strlen(cacheDir) + 11);
+		sprintf(cacheControl, "%s/control%02d", cacheDir,
+			CACHECONTROLVERSION);
+/* make sure the control file exists, just for grins */
+		fh = open(cacheControl, O_WRONLY | O_APPEND | O_CREAT, 0600);
+		if (fh >= 0)
+			close(fh);
+		cacheLock = allocMem(strlen(cacheDir) + 6);
+		sprintf(cacheLock, "%s/lock", cacheDir);
+		cacheFile = allocMem(strlen(cacheDir) + 7);
+	}
 
 top:
 	time(&now_t);
