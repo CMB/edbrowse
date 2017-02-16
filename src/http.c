@@ -1059,15 +1059,36 @@ perform:
 			goto mimestream;
 		}
 
-		if (head_request && cbd.down_state != 0) {
-			curl_easy_setopt(h, CURLOPT_NOBODY, 0l);
-			head_request = false;
+/*********************************************************************
+If the desired file is in cache for some reason, and we issued the head request,
+and it is application, or some such that triggers a download, then state = 1,
+but no data is forthcoming, and the user was never asked if he wants
+to download, so state is still 1.
+So ask, and then look at state.
+If state is nonzero, sorry, I'm not taking the file from cache,
+not yet, just because it's a whole bunch of new code.
+We don't generally store our downloaded files in cache anyways,
+they go where they go, so this doesn't come up very often.
+*********************************************************************/
+
+		if (head_request) {
+			if (cbd.down_state == 1) {
+				setup_download(&cbd);
+/* now we have our answer */
+			}
+
+			if (cbd.down_state != 0) {
+				curl_easy_setopt(h, CURLOPT_NOBODY, 0l);
+				head_request = false;
+				debugPrint(3, "switch to get for download %d",
+					   cbd.down_state);
+			}
+
 			if (cbd.down_state == 2) {
 				curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE,
 						  &hcode);
-				if (hcode == 200) {
+				if (hcode == 200)
 					goto perform;
-				}
 			}
 		}
 
@@ -1214,10 +1235,11 @@ perform:
  * now doing GET rather than HEAD. */
 					curl_easy_setopt(h, CURLOPT_NOBODY, 0l);
 					head_request = false;
-					redirect_count = 0;
+					--redirect_count;
 				}
 			} else {
-				if ((hcode == 200) && (hmd || hetag))
+				if ((hcode == 200) && (hmd || hetag) &&
+				    cbd.down_state == 0)
 					storeCache(url, hetag, hmd, serverData,
 						   serverDataLen);
 				still_fetching = false;
