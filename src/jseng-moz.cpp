@@ -731,6 +731,7 @@ static JSBool
 setter_loc(JSContext * cx, JS::HandleObject uo, JS::Handle < jsid > id,
 	   JSBool strict, JS::MutableHandle < JS::Value > vp)
 {
+	debugPrint(5, "setter location");
 	const char *s = stringize(vp);
 	if (!s) {
 		JS_ReportError(jcx,
@@ -741,6 +742,7 @@ setter_loc(JSContext * cx, JS::HandleObject uo, JS::Handle < jsid > id,
 		effectChar('\n');
 		endeffect();
 	}
+	debugPrint(5, "return");
 	return JS_FALSE;
 }				/* setter_loc */
 
@@ -755,16 +757,17 @@ setter_loc_hrefval(JSContext * cx, JS::HandleObject uo,
 	const char *url = 0;
 	if (setter_suspend)
 		return JS_TRUE;
+	debugPrint(5, "setter location href");
 	url = stringize(vp);
-	if (!url)
-		return JS_TRUE;
-	if (iswindocloc(uo)) {
+	if (url && iswindocloc(uo)) {
 		effectString("n{r");	// }
 		effectString(url);
 		effectChar('\n');
 		endeffect();
+		debugPrint(5, "return abort");
 		return JS_FALSE;
 	}
+	debugPrint(5, "return");
 	return JS_TRUE;
 }				/* setter_loc_hrefval */
 
@@ -895,6 +898,7 @@ setter_value(JSContext * cx, JS::HandleObject obj,
 	const char *val;
 	if (setter_suspend)
 		return JS_TRUE;
+	debugPrint(5, "setter value");
 	val = stringize(vp);
 	if (!val) {
 		JS_ReportError(jcx,
@@ -906,6 +910,7 @@ setter_value(JSContext * cx, JS::HandleObject obj,
 		effectString(val);
 		endeffect();
 	}
+	debugPrint(5, "return");
 	return JS_TRUE;
 }				/* setter_value */
 
@@ -917,6 +922,8 @@ setter_innerHTML(JSContext * cx, JS::HandleObject obj,
 	const char *s = stringize(vp);
 	if (!s)
 		return JS_TRUE;
+
+	debugPrint(5, "setter innerHTML");
 
 /* lop off the preexisting children */
 	JS::RootedObject children(jcx);
@@ -940,6 +947,7 @@ setter_innerHTML(JSContext * cx, JS::HandleObject obj,
 	packDecoration();
 	cwBringdown();
 	endeffect();
+	debugPrint(5, "return");
 	return JS_TRUE;
 }				/* setter_innerHTML */
 
@@ -948,6 +956,7 @@ setter_innerText(JSContext * cx, JS::HandleObject obj,
 		 JS::Handle < jsid > id, JSBool strict,
 		 JS::MutableHandle < jsval > vp)
 {
+	debugPrint(5, "setter innerText");
 	const char *s = stringize(vp);
 	if (!s)
 		s = emptyString;
@@ -956,6 +965,7 @@ setter_innerText(JSContext * cx, JS::HandleObject obj,
 	effectChar('|');
 	effectString(s);
 	endeffect();
+	debugPrint(5, "return");
 	return JS_TRUE;
 }				/* setter_innerText */
 
@@ -1036,6 +1046,8 @@ setter_cookie(JSContext * cx, JS::HandleObject obj,
 	if (setter_suspend)
 		return JS_TRUE;
 
+	debugPrint(5, "setter cookie");
+
 /* grab the existing document.cookie string, is this reentrant, is this ok? */
 	original = get_property_string1(obj, "cookie");
 	if (!original)		/* should never happen */
@@ -1057,6 +1069,7 @@ setter_cookie(JSContext * cx, JS::HandleObject obj,
 		vp.set(v);
 	}
 	nzFree(cookieCopy);
+	debugPrint(5, "return");
 	return JS_TRUE;
 }				/* setter_cookie */
 
@@ -1069,7 +1082,9 @@ setter_domain(JSContext * cx, JS::HandleObject obj,
 	const char *val;
 	if (setter_suspend)
 		return JS_TRUE;
+	debugPrint(5, "setter domain");
 	val = stringize(vp);
+	debugPrint(5, "return");
 	return JS_TRUE;
 }				/* setter_domain */
 
@@ -1293,26 +1308,6 @@ void run_function_onearg_nat(jsobjtype parent, const char *name,
 	run_function_onearg1(p, name, c);
 }				/* run_function_onearg_nat */
 
-#if 0
-/* Not clear that setAttribute needs any side effects, or needs to be native. */
-static JSBool setAttribute(JSContext * cx, unsigned int argc, jsval * vp)
-{
-	JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
-	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-	js::RootedValue v1(cx), v2(cx);
-	if (args.length() != 2 || !JSVAL_IS_STRING(args[0])) {
-		JS_ReportError(cx, "unexpected arguments to setAttribute()");
-	} else {
-		v1 = args[0];
-		v2 = args[1];
-		const char *prop = stringize(v1);
-		JS_DefineProperty(cx, thisobj, prop, v2, NULL, NULL, PROP_STD);
-	}
-	args.rval().set(JSVAL_VOID);
-	return JS_TRUE;
-}				/* setAttribute */
-#endif
-
 static void embedNodeName(JS::HandleObject obj)
 {
 	const char *nodeName;
@@ -1397,12 +1392,20 @@ static JSBool appendChild0(bool side, JSContext * cx, unsigned int argc,
 
 static JSBool apch1(JSContext * cx, unsigned int argc, jsval * vp)
 {
-	return appendChild0(false, cx, argc, vp);
+	JSBool ret;
+	debugPrint(5, "apch1");
+	ret = appendChild0(false, cx, argc, vp);
+	debugPrint(5, "return");
+	return ret;
 }				/* apch1 */
 
 static JSBool apch2(JSContext * cx, unsigned int argc, jsval * vp)
 {
-	return appendChild0(true, cx, argc, vp);
+	JSBool ret;
+	debugPrint(5, "apch2");
+	ret = appendChild0(true, cx, argc, vp);
+	debugPrint(5, "return");
+	return ret;
 }				/* apch2 */
 
 static JSBool insbf(JSContext * cx, unsigned int argc, jsval * vp)
@@ -1414,6 +1417,8 @@ static JSBool insbf(JSContext * cx, unsigned int argc, jsval * vp)
 /* we need two objects */
 	if (args.length() < 2 || !args[0].isObject() || !args[1].isObject())
 		return JS_TRUE;
+
+	debugPrint(5, "insbf");
 
 	JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
 	JS::RootedObject child(cx, JSVAL_TO_OBJECT(args[0]));
@@ -1444,12 +1449,15 @@ static JSBool insbf(JSContext * cx, unsigned int argc, jsval * vp)
 		if (JSVAL_TO_OBJECT(v) == child) {
 // child was already there, what should we do?
 			args.rval().set(args[0]);
+			debugPrint(5, "return");
 			return JS_TRUE;
 		}
 	}
 
-	if (mark < 0)
+	if (mark < 0) {
+		debugPrint(5, "return");
 		return JS_TRUE;
+	}
 
 /* since the item to insert before was found, the call is going to */
 /* succeed, so put the return value here */
@@ -1484,6 +1492,7 @@ static JSBool insbf(JSContext * cx, unsigned int argc, jsval * vp)
 	embedNodeName(item);
 	effectChar(' ');
 	endeffect();
+	debugPrint(5, "return");
 	return JS_TRUE;
 }				/* insbf */
 
@@ -1496,6 +1505,8 @@ static JSBool removeChild(JSContext * cx, unsigned int argc, jsval * vp)
 /* we need an object */
 	if (args.length() < 1 || !args[0].isObject())
 		return JS_TRUE;
+
+	debugPrint(5, "removeChild");
 
 	JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
 	JS::RootedObject child(cx, JSVAL_TO_OBJECT(args[0]));
@@ -1522,6 +1533,7 @@ static JSBool removeChild(JSContext * cx, unsigned int argc, jsval * vp)
 		if (JSVAL_TO_OBJECT(v) == child)
 			goto found;
 	}
+	debugPrint(5, "return");
 	return JS_TRUE;
 
 found:
@@ -1547,11 +1559,13 @@ found:
 	embedNodeName(child);
 	effectString(" 0x0, ");
 	endeffect();
+	debugPrint(5, "return");
 	return JS_TRUE;
 }				/* removeChild */
 
 static void dwrite1(unsigned int argc, jsval * argv, bool newline)
 {
+	debugPrint(5, "document write");
 	int i, begin;
 	const char *msg;
 	JS::RootedString str(jcx);
@@ -1567,6 +1581,7 @@ static void dwrite1(unsigned int argc, jsval * argv, bool newline)
 	if (newline)
 		effectChar('\n');
 	endeffect();
+	debugPrint(5, "return");
 }				/* dwrite1 */
 
 static JSBool doc_write(JSContext * cx, unsigned int argc, jsval * vp)
@@ -1588,6 +1603,7 @@ static JSBool doc_writeln(JSContext * cx, unsigned int argc, jsval * vp)
 /* this has a native wrapper so we can set innerHTML with a setter */
 static JSBool doc_createElement(JSContext * cx, unsigned int argc, jsval * vp)
 {
+	debugPrint(5, "create element");
 	char run[60];
 	const char *tagname = NULL, *s;
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
@@ -1598,6 +1614,7 @@ static JSBool doc_createElement(JSContext * cx, unsigned int argc, jsval * vp)
 fail:
 		cnzFree(tagname);
 		args.rval().set(JSVAL_NULL);
+		debugPrint(5, "return");
 		return JS_TRUE;
 	}
 	for (s = tagname; *s; ++s)
@@ -1624,6 +1641,7 @@ fail:
 
 /* and return the created object */
 	args.rval().set(v);
+	debugPrint(5, "return");
 	return JS_TRUE;
 }				/* doc_createElement */
 
@@ -1660,6 +1678,7 @@ static void cookieRefresh(void)
 
 static JSBool fetchHTTP(JSContext * cx, unsigned int argc, jsval * vp)
 {
+	debugPrint(5, "fetch http");
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 
 	if (allowXHR) {
@@ -1729,6 +1748,7 @@ static JSBool fetchHTTP(JSContext * cx, unsigned int argc, jsval * vp)
 		args.rval().set(JS_GetEmptyStringValue(cx));
 	}
 
+	debugPrint(5, "return");
 	return JS_TRUE;
 }
 
@@ -1750,23 +1770,27 @@ static JSFunctionSpec document_methods[] = {
 
 static JSBool form_submit(JSContext * cx, unsigned int argc, jsval * vp)
 {
+	debugPrint(5, "form submit");
 	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
 	effectString("f{s");	// }
 	effectString(pointer2string(obj));
 	endeffect();
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	args.rval().set(JSVAL_VOID);
+	debugPrint(5, "return");
 	return JS_TRUE;
 }				/* form_submit */
 
 static JSBool form_reset(JSContext * cx, unsigned int argc, jsval * vp)
 {
+	debugPrint(5, "form reset");
 	JS::RootedObject obj(cx, JS_THIS_OBJECT(cx, vp));
 	effectString("f{r");	// }
 	effectString(pointer2string(obj));
 	endeffect();
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	args.rval().set(JSVAL_VOID);
+	debugPrint(5, "return");
 	return JS_TRUE;
 }				/* form_reset */
 
@@ -1912,6 +1936,7 @@ static JSBool win_confirm(JSContext * cx, unsigned int argc, jsval * vp)
 /* Set a timer or an interval */
 static JSObject *setTimeout(unsigned int argc, jsval * argv, bool isInterval)
 {
+	debugPrint(5, "set timer");
 	JS::RootedValue v0(jcx), v1(jcx);	// values of the 2 args
 // the function object, to execute, and the timer object.
 	JS::RootedObject fo(jcx, 0), to(jcx);
@@ -1984,6 +2009,7 @@ abort:
 				JS_ReportError(jcx,
 					       "error compiling function in %s()",
 					       methname);
+				debugPrint(5, "return");
 				return NULL;
 			}
 			strcpy(fname, "?");
@@ -2015,9 +2041,12 @@ abort:
 		effectChar((isInterval ? '1' : '0'));
 		endeffect();
 
+		debugPrint(5, "return");
 		return to;
 	}
 
+	debugPrint(5, "return");
+	return NULL;
 }				/* setTimeout */
 
 /* set timer and set interval */
@@ -2046,6 +2075,7 @@ static JSBool win_intv(JSContext * cx, unsigned int argc, jsval * vp)
 /* Clear a timer or an interval */
 static JSBool clearTimeout(JSContext * cx, unsigned int argc, jsval * vp)
 {
+	debugPrint(5, "clear timer");
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	args.rval().set(JSVAL_VOID);
 	if (argc == 0 || !args[0].isObject())
@@ -2055,6 +2085,7 @@ static JSBool clearTimeout(JSContext * cx, unsigned int argc, jsval * vp)
 	sprintf(nstring, "t{0|-|%s|0", pointer2string(obj));	// }
 	effectString(nstring);
 	endeffect();
+	debugPrint(5, "return");
 	return JS_TRUE;
 }				/* clearTimeout */
 
