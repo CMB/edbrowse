@@ -753,7 +753,7 @@ static void undoPush(void)
 	uw = &undoWindow;
 	uw->dot = cw->dot;
 	uw->dol = cw->dol;
-	memcpy(uw->labels, cw->labels, 26 * sizeof(int));
+	memcpy(uw->labels, cw->labels, MARKLETTERS * sizeof(int));
 	uw->binMode = cw->binMode;
 	uw->nlMode = cw->nlMode;
 	uw->dirMode = cw->dirMode;
@@ -948,7 +948,7 @@ static void addToMap(int nlines, int destl)
 		undoPush();
 
 /* adjust labels */
-	for (i = 0; i < 26; ++i) {
+	for (i = 0; i < MARKLETTERS; ++i) {
 		ln = cw->labels[i];
 		if (ln <= destl)
 			continue;
@@ -1111,7 +1111,7 @@ void delText(int start, int end)
 		(cw->dol - end + 1) * LMSIZE);
 
 /* move the labels */
-	for (i = 0; i < 26; ++i) {
+	for (i = 0; i < MARKLETTERS; ++i) {
 		ln = cw->labels[i];
 		if (ln < start)
 			continue;
@@ -1282,7 +1282,7 @@ static bool moveCopy(void)
 		highcut = dl;
 		diff = dl - er;
 	}
-	for (i = 0; i < 26; ++i) {
+	for (i = 0; i < MARKLETTERS; ++i) {
 		ln = cw->labels[i];
 		if (ln < lowcut)
 			continue;
@@ -4550,7 +4550,7 @@ bool runCommand(const char *line)
 /* swap, so we can undo our undo, if need be */
 		i = uw->dot, uw->dot = cw->dot, cw->dot = i;
 		i = uw->dol, uw->dol = cw->dol, cw->dol = i;
-		for (j = 0; j < 26; ++j) {
+		for (j = 0; j < MARKLETTERS; ++j) {
 			i = uw->labels[j], uw->labels[j] =
 			    cw->labels[j], cw->labels[j] = i;
 		}

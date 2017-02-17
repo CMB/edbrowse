@@ -1916,6 +1916,7 @@ void rerender(bool rr_command)
 {
 	char *a, *snap, *newbuf;
 	int j;
+	int markdot;
 
 	debugPrint(4, "rerender");
 
@@ -1945,12 +1946,17 @@ void rerender(bool rr_command)
 		return;
 	}
 
+/* mark dot, so it stays in place */
+	cw->labels[MARKDOT] = cw->dot;
 	frontBackDiff(snap, newbuf);
 	if (sameBack1 > sameFront)
 		delText(sameFront + 1, sameBack1);
 	if (sameBack2 > sameFront)
 		addTextToBuffer((pst) newChunkStart,
 				newChunkEnd - newChunkStart, sameFront, false);
+	markdot = cw->labels[MARKDOT];
+	if (markdot)
+		cw->dot = markdot;
 	cw->undoable = false;
 
 	if (!backgroundJS) {
@@ -1969,7 +1975,8 @@ void rerender(bool rr_command)
 				i_printf(MSG_LineAdd2, sameFront + 1,
 					 sameBack2);
 /* put dot back to the start of the new block */
-				cw->dot = sameFront + 1;
+				if (!markdot)
+					cw->dot = sameFront + 1;
 			}
 		} else {
 			if (sameBack1 == sameFront + 1
@@ -1982,7 +1989,8 @@ void rerender(bool rr_command)
 				i_printf(MSG_LineUpdate3, sameFront + 1,
 					 sameBack2);
 /* put dot back to the start of the new block */
-				cw->dot = sameFront + 1;
+				if (!markdot)
+					cw->dot = sameFront + 1;
 			}
 		}
 	}
