@@ -162,6 +162,15 @@ static bool readControl(void)
 	return true;
 }				/* readControl */
 
+/* Truncate the control file in a portable way.
+ * We already opened the file read write, so can't imagine why this wouldn't work. */
+static void clobber(void)
+{
+	int fh = open(cacheControl, O_WRONLY | O_TRUNC);
+	if (fh >= 0)
+		close(fh);
+}
+
 /* create an ascii equivalent for a record, this is allocated */
 static char *record2string(const struct CENTRY *e)
 {
@@ -181,8 +190,8 @@ static bool writeControl(void)
 	int i;
 	FILE *f;
 
-	ftruncate(control_fh, 0);
 	lseek(control_fh, 0L, 0);
+	clobber();
 /* buffered IO is more efficient */
 	f = fdopen(control_fh, "w");
 
@@ -196,7 +205,7 @@ static bool writeControl(void)
 		if (rc <= 0) {
 			fclose(f);
 			control_fh = -1;
-			truncate(cacheControl, 0);
+			clobber();
 			return false;
 		}
 	}
@@ -296,7 +305,7 @@ static void clearCacheInternal(void)
 		unlink(cacheFile);
 	}
 
-	ftruncate(control_fh, 0);
+	clobber();
 }				/* clearCacheInternal */
 
 void clearCache(void)
