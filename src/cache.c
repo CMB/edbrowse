@@ -23,6 +23,12 @@ We don't even query the cache if we don't have at least one of etag or mod time.
 
 #define CACHECONTROLVERSION 1
 
+#ifdef DOSLIKE
+#define USLEEP(a) Sleep(a / 1000)	// sleep millisecs
+#else
+#define USLEEP(a) usleep(a)	// sleep microsecs
+#endif
+
 static int control_fh = -1;	/* file handle for cacheControl */
 static char *cache_data;
 static time_t now_t;
@@ -228,12 +234,14 @@ static bool setLock(void)
 
 	if (!cacheDir)
 		return false;
+	if (!cacheSize)
+		return false;
 
 top:
 	time(&now_t);
 
-/* try every 5 ms, 200 times, for a total of 1 second */
-	for (i = 0; i < 200; ++i) {
+/* try every 10 ms, 100 times, for a total of 1 second */
+	for (i = 0; i < 100; ++i) {
 		lock_fh = open(cacheLock, O_WRONLY | O_EXCL | O_CREAT, 0666);
 		if (lock_fh >= 0) {	/* got it */
 			close(lock_fh);
@@ -254,7 +262,7 @@ top:
 		}
 		if (errno != EEXIST)
 			return false;
-		usleep(5000);
+		USLEEP(10000);
 	}
 
 /* if lock file is more than 5 minutes old then something bad has happened,
@@ -476,18 +484,28 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 	}
 
 /* this file is new. See if the database is full. */
-	if (numentries == cacheCount) {
+	append = true;
+	if (numentries >= 140) {
+		int npages = 0;
+		e = entries;
+		for (i = 0; i < numentries; ++i, ++e)
+			npages += e->pages;
+
+		if (numentries == cacheCount || npages / 256 >= cacheSize) {
 /* sort to find the 100 oldest files */
-		qsort(entries, numentries, sizeof(struct CENTRY), entry_cmp);
-		debugPrint(3, "cache is full; removing the 100 oldest files");
-		e = entries + numentries - 100;
-		for (i = 0; i < 100; ++i, ++e) {
-			sprintf(cacheFile, "%s/%05d", cacheDir, e->filenumber);
-			unlink(cacheFile);
+			qsort(entries, numentries, sizeof(struct CENTRY),
+			      entry_cmp);
+			debugPrint(3,
+				   "cache is full; removing the 100 oldest files");
+			e = entries + numentries - 100;
+			for (i = 0; i < 100; ++i, ++e) {
+				sprintf(cacheFile, "%s/%05d", cacheDir,
+					e->filenumber);
+				unlink(cacheFile);
+			}
+			numentries -= 100;
+			append = false;
 		}
-		numentries -= 100;
-	} else {
-		append = true;
 	}
 
 	e = entries + numentries;

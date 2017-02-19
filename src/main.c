@@ -1074,7 +1074,7 @@ static const char *const keywords[] = {
 	"adbook", "downdir", "maildir", "agent",
 	"jar", "nojs", "cachedir",
 	"webtimer", "mailtimer", "certfile", "datasource", "proxy",
-	"linelength", "localizeweb", "jspool", "novs",
+	"linelength", "localizeweb", "jspool", "novs", "cachesize",
 	0
 };
 
@@ -1605,6 +1605,14 @@ putc:
 			if (!q || q[1] == 0)
 				cfgLine1(MSG_EBRC_DomainDot, v);
 			addNovsHost(v);
+			continue;
+
+		case 35:	/* cachesize */
+			cacheSize = atoi(v);
+			if (cacheSize <= 0)
+				cacheSize = 0;
+			if (cacheSize >= 10000)
+				cacheSize = 10000;
 			continue;
 
 		default:
