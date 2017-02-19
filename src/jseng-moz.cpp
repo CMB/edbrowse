@@ -129,6 +129,7 @@ int js_main(int argc, char **argv)
 		usage();
 
 	readConfigFile();
+	setupEdbrowseCache();
 	eb_curl_global_init();
 	cookiesFromJar();
 	pluginsOn = false;

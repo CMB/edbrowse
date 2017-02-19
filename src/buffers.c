@@ -3512,6 +3512,7 @@ pwd:
 
 	if (stringEqual(line, "config")) {
 		readConfigFile();
+		setupEdbrowseCache();
 		curl_easy_setopt(global_http_handle, CURLOPT_COOKIEJAR,
 				 cookieFile);
 		curl_easy_setopt(global_http_handle, CURLOPT_CAINFO, sslCerts);

@@ -20,7 +20,7 @@ char *configFile, *addressFile, *cookieFile;
 char *mailDir, *mailUnread, *mailStash, *mailReply;
 char *recycleBin, *sigFile, *sigFileEnd;
 char *cacheDir;
-int cacheSize, cacheCount = 2000;
+int cacheSize = 1000, cacheCount = 20000;
 char *ebTempDir, *ebUserDir;
 char *userAgents[10];
 char *currentAgent, *currentReferrer;
@@ -417,37 +417,6 @@ static void setupEdbrowseTempDirectory(void)
 	}
 }				/* setupEdbrowseTempDirectory */
 
-static void setupEdbrowseCache(void)
-{
-#ifdef DOSLIKE
-	if (!ebUserDir)
-		return;
-	cacheDir = allocMem(strlen(ebUserDir) + 7);
-	sprintf(cacheDir, "%s/cache", ebUserDir);
-	if (fileTypeByName(cacheDir, false) != 'd') {
-		if (mkdir(cacheDir, 0700)) {
-/* Don't want to abort here; we might be on a readonly filesystem.
- * Don't have a cache directory and can't creat one; yet we should move on. */
-			free(cacheDir);
-			cacheDir = 0;
-			return;
-		}
-	}
-#else
-	cacheDir = allocMem(strlen(home) + 10);
-	sprintf(cacheDir, "%s/.ebcache", home);
-	if (fileTypeByName(cacheDir, false) != 'd') {
-		if (mkdir(cacheDir, 0700)) {
-/* Don't want to abort here; we might be on a readonly filesystem.
- * Don't have a cache directory and can't creat one; yet we should move on. */
-			free(cacheDir);
-			cacheDir = 0;
-			return;
-		}
-	}
-#endif
-}				/* setupEdbrowseCache */
-
 /*\ MSVC Debug: May need to provide path to 3rdParty DLLs, like
  *  set PATH=F:\Projects\software\bin;%PATH% ...
 \*/
@@ -556,7 +525,6 @@ int main(int argc, char **argv)
 	userAgents[0] = currentAgent = agent0;
 
 	setupEdbrowseTempDirectory();
-	setupEdbrowseCache();
 
 	progname = argv[0];
 	++argv, --argc;
@@ -602,6 +570,7 @@ int main(int argc, char **argv)
 // with certificate file and cookie jar etc.
 	eb_curl_global_init();
 	cookiesFromJar();
+	setupEdbrowseCache();
 
 	for (; argc && argv[0][0] == '-'; ++argv, --argc) {
 		char *s = *argv;
@@ -1074,6 +1043,8 @@ void unreadConfigFile(void)
 	sslCerts = NULL;
 	downDir = NULL;
 	mailDir = NULL;
+	nzFree(cacheDir);
+	cacheDir = NULL;
 	nzFree(mailUnread);
 	mailUnread = NULL;
 	nzFree(mailReply);
@@ -1101,7 +1072,7 @@ static const char *const keywords[] = {
 	"content", "outtype",
 	"tname", "tshort", "cols", "keycol",
 	"adbook", "downdir", "maildir", "agent",
-	"jar", "nojs", "xyz@xyz",
+	"jar", "nojs", "cachedir",
 	"webtimer", "mailtimer", "certfile", "datasource", "proxy",
 	"linelength", "localizeweb", "jspool", "novs",
 	0
@@ -1553,6 +1524,11 @@ putc:
 			if (!q || q[1] == 0)
 				cfgLine1(MSG_EBRC_DomainDot, v);
 			javaDis[javaDisCount++] = v;
+			continue;
+
+		case 25:	/* cachedir */
+			nzFree(cacheDir);
+			cacheDir = cloneString(v);
 			continue;
 
 		case 26:	/* webtimer */

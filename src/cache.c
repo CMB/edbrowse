@@ -42,7 +42,66 @@ struct CENTRY {
 
 static struct CENTRY *entries;
 static int numentries;
-static int lastCacheCount;
+
+void setupEdbrowseCache(void)
+{
+	int fh;
+
+	if (control_fh >= 0) {
+		close(control_fh);
+		control_fh = -1;
+	}
+#ifdef DOSLIKE
+	if (!cacheDir) {
+		if (!ebUserDir)
+			return;
+		cacheDir = allocMem(strlen(ebUserDir) + 7);
+		sprintf(cacheDir, "%s/cache", ebUserDir);
+	}
+	if (fileTypeByName(cacheDir, false) != 'd') {
+		if (mkdir(cacheDir, 0700)) {
+/* Don't want to abort here; we might be on a readonly filesystem.
+ * Don't have a cache directory and can't creat one; yet we should move on. */
+			free(cacheDir);
+			cacheDir = 0;
+			return;
+		}
+	}
+#else
+	if (!cacheDir) {
+		cacheDir = allocMem(strlen(home) + 10);
+		sprintf(cacheDir, "%s/.ebcache", home);
+	}
+	if (fileTypeByName(cacheDir, false) != 'd') {
+		if (mkdir(cacheDir, 0700)) {
+/* Don't want to abort here; we might be on a readonly filesystem.
+ * Don't have a cache directory and can't creat one; yet we should move on. */
+			free(cacheDir);
+			cacheDir = 0;
+			return;
+		}
+	}
+#endif
+
+/* the cache control file, which urls go to which files, and when fetched? */
+	nzFree(cacheControl);
+	cacheControl = allocMem(strlen(cacheDir) + 11);
+	sprintf(cacheControl, "%s/control%02d", cacheDir, CACHECONTROLVERSION);
+/* make sure the control file exists, just for grins */
+	fh = open(cacheControl, O_WRONLY | O_APPEND | O_CREAT, 0600);
+	if (fh >= 0)
+		close(fh);
+
+	nzFree(cacheLock);
+	cacheLock = allocMem(strlen(cacheDir) + 6);
+	sprintf(cacheLock, "%s/lock", cacheDir);
+
+	nzFree(cacheFile);
+	cacheFile = allocMem(strlen(cacheDir) + 7);
+
+	nzFree(entries);
+	entries = allocMem(cacheCount * sizeof(struct CENTRY));
+}				/* setupEdbrowseCache */
 
 /*********************************************************************
 Read the control file into memory and parse it into entry structures.
@@ -63,12 +122,6 @@ static bool readControl(void)
 	char *data;
 	int datalen;
 	struct CENTRY *e;
-
-	if (cacheCount != lastCacheCount) {
-		nzFree(entries);
-		entries = allocMem(cacheCount * sizeof(struct CENTRY));
-		lastCacheCount = cacheCount;
-	}
 
 	lseek(control_fh, 0L, 0);
 	if (!fdIntoMemory(control_fh, &data, &datalen))
@@ -129,9 +182,10 @@ static bool writeControl(void)
 
 	e = entries;
 	for (i = 0; i < numentries; ++i, ++e) {
+		int rc;
 		char *newrec = record2string(e);
 		e->textlength = strlen(newrec);
-		int rc = fprintf(f, "%s", newrec);
+		rc = fprintf(f, "%s", newrec);
 		free(newrec);
 		if (rc <= 0) {
 			fclose(f);
@@ -174,21 +228,6 @@ static bool setLock(void)
 
 	if (!cacheDir)
 		return false;
-
-	if (!cacheControl) {
-		int fh;
-/* the cache control file, which urls go to which files, and when fetched? */
-		cacheControl = allocMem(strlen(cacheDir) + 11);
-		sprintf(cacheControl, "%s/control%02d", cacheDir,
-			CACHECONTROLVERSION);
-/* make sure the control file exists, just for grins */
-		fh = open(cacheControl, O_WRONLY | O_APPEND | O_CREAT, 0600);
-		if (fh >= 0)
-			close(fh);
-		cacheLock = allocMem(strlen(cacheDir) + 6);
-		sprintf(cacheLock, "%s/lock", cacheDir);
-		cacheFile = allocMem(strlen(cacheDir) + 7);
-	}
 
 top:
 	time(&now_t);
@@ -405,13 +444,15 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 	}
 
 	if (i < numentries) {
+		char *newrec;
+		size_t newlen;
 /* we're just updating a preexisting record */
 		e->accesstime = now_t / 8;
 		e->modtime = modtime / 8;
 		e->etag = (etag ? etag : emptyString);
 		e->pages = (datalen + 4095) / 4096;
-		char *newrec = record2string(e);
-		size_t newlen = strlen(newrec);
+		newrec = record2string(e);
+		newlen = strlen(newrec);
 		if (newlen == e->textlength) {
 /* record is the same length, just update it */
 			lseek(control_fh, e->offset, 0);
