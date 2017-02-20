@@ -20,7 +20,7 @@ char *configFile, *addressFile, *cookieFile;
 char *mailDir, *mailUnread, *mailStash, *mailReply;
 char *recycleBin, *sigFile, *sigFileEnd;
 char *cacheDir;
-int cacheSize = 1000, cacheCount = 20000;
+int cacheSize = 1000, cacheCount = 10000;
 char *ebTempDir, *ebUserDir;
 char *userAgents[10];
 char *currentAgent, *currentReferrer;
@@ -1062,20 +1062,20 @@ void unreadConfigFile(void)
 /* Order is important here: mail{}, mime{}, table{}, then global keywords */
 #define MAILWORDS 0
 #define MIMEWORDS 8
-#define TABLEWORDS 15
-#define GLOBALWORDS 19
+#define TABLEWORDS 16
+#define GLOBALWORDS 20
 
 static const char *const keywords[] = {
 	"inserver", "outserver", "login", "password", "from", "reply",
 	"inport", "outport",
 	"type", "desc", "suffix", "protocol", "program",
-	"content", "outtype",
+	"content", "outtype", "urlmatch",
 	"tname", "tshort", "cols", "keycol",
-	"adbook", "downdir", "maildir", "agent",
+	"downdir", "maildir", "agent",
 	"jar", "nojs", "cachedir",
 	"webtimer", "mailtimer", "certfile", "datasource", "proxy",
 	"linelength", "localizeweb", "jspool", "novs", "cachesize",
-	0
+	"adbook", 0
 };
 
 /* Read the config file and populate the corresponding data structures. */
@@ -1435,15 +1435,19 @@ putc:
 			mt->outtype = c;
 			continue;
 
-		case 15:	/* tname */
+		case 15:	/* urlmatch */
+			mt->urlmatch = v;
+			continue;
+
+		case 16:	/* tname */
 			td->name = v;
 			continue;
 
-		case 16:	/* tshort */
+		case 17:	/* tshort */
 			td->shortname = v;
 			continue;
 
-		case 17:	/* cols */
+		case 18:	/* cols */
 			while (*v) {
 				if (td->ncols == MAXTCOLS)
 					cfgLine1(MSG_EBRC_ManyCols, MAXTCOLS);
@@ -1456,7 +1460,7 @@ putc:
 			}
 			continue;
 
-		case 18:	/* keycol */
+		case 19:	/* keycol */
 			if (!isdigitByte(*v))
 				cfgLine0(MSG_EBRC_KeyNotNb);
 			td->key1 = strtol(v, &v, 10);
@@ -1464,13 +1468,6 @@ putc:
 				td->key2 = strtol(v + 1, &v, 10);
 			if (td->key1 > td->ncols || td->key2 > td->ncols)
 				cfgLine1(MSG_EBRC_KeyOutRange, td->ncols);
-			continue;
-
-		case 19:	/* adbook */
-			addressFile = v;
-			ftype = fileTypeByName(v, false);
-			if (ftype && ftype != 'f')
-				cfgAbort1(MSG_EBRC_AbNotFile, v);
 			continue;
 
 		case 20:	/* downdir */
@@ -1613,6 +1610,13 @@ putc:
 				cacheSize = 0;
 			if (cacheSize >= 10000)
 				cacheSize = 10000;
+			continue;
+
+		case 36:	/* adbook */
+			addressFile = v;
+			ftype = fileTypeByName(v, false);
+			if (ftype && ftype != 'f')
+				cfgAbort1(MSG_EBRC_AbNotFile, v);
 			continue;
 
 		default:

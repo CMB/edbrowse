@@ -216,6 +216,7 @@ extern int maxproxy;
 struct MIMETYPE {
 	char *type, *desc;
 	char *suffix, *prot, *program;
+	char *urlmatch;
 	char *content;
 	char outtype;
 	bool stream, download;

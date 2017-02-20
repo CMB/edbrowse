@@ -132,9 +132,10 @@ desc = streaming audio
 #  protocol implies a stream, otherwise you could use the keyword stream
 stream
 protocol = rtsp,pnm,sdp,pls
-suffix = rm,ra,ram,ogg,mp3,pls,m3u
+suffix = rm,ra,ram,ogg,mp3,mp4,m3u,m3u8
+urlmatch = .youtube.com/watch?
 content = audio/x-scpls,audio/mpeg,application/pls+xml
-program = /usr/bin/mpv -quiet %i
+program = /usr/bin/mpv --really-quiet %i
 }
 
 #  Some plugins play the file, others convert it for readability.

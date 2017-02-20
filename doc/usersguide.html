@@ -2925,7 +2925,7 @@ The cachesize parameter sets the size of the cache in megabytes.
 Default is 1000.
 If this is set to 0, edbrowse does not cache any files.
 When the cache is full, edbrowse deletes the 100 oldest files and marches on.
-Edbrowse does not retain more than 20,000 files, even if the cache would hold more.
+Edbrowse does not retain more than 10,000 files, even if the cache could hold more.
 
 <P>
 webtimer = 30
@@ -3392,12 +3392,10 @@ program = mpg123 -q -C %i
 <P>
 This example handles an mp3 file, not an mp3 stream.
 See sample.ebrc for a more general plugin that passes either a stream or a file to a music player.
-
 <P>
 If you have pulled down a file from the internet that ends in .mp3,
 or has an http content-type of Audio/Mpeg,
 it will automatically play, and print ok when done.
-It is the sound or music or audio instructions associated with the website.
 This autoplay feature can be disabled with the pg command that turns plugins on and off.
 
 <P>
@@ -3408,6 +3406,14 @@ The data is put into a temp file under
 Finally, you can play an mp3 file, or any plugin-enabled file, from directory mode.
 The g (go) command plays the file on the current line.
 This is very efficient; no need to read the file into memory or create a temporary file under /tmp.
+
+<P>
+In some cases the stream is not indicated by protocol or suffix.
+A youtube video, for example, looks like just another html page; yet it can be played by a music player.
+use the urlmatch atribute for this.
+
+<P>
+urlmatch = .youtube.com/watch?
 
 <P>
 The command `pb' could mean process buffer,as well as play buffer.

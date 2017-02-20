@@ -54,6 +54,9 @@ const struct MIMETYPE *findMimeBySuffix(const char *suffix)
 	int len = strlen(suffix);
 	const struct MIMETYPE *m = mimetypes;
 
+	if (!len)
+		return NULL;
+
 	for (i = 0; i < maxMime; ++i, ++m) {
 		const char *s = m->suffix, *t;
 		if (!s)
@@ -73,20 +76,53 @@ const struct MIMETYPE *findMimeBySuffix(const char *suffix)
 	return NULL;
 }				/* findMimeBySuffix */
 
+/* This looks for a match on suffix or on the url string */
 const struct MIMETYPE *findMimeByURL(const char *url)
 {
 	char suffix[12];
-	const char *post, *s;
+	const char *post, *s, *t;
+	const struct MIMETYPE *mt;
+	const struct MIMETYPE *m;
+	int i, j, l, url_length;
+
 	post = url + strcspn(url, "?\1");
 	for (s = post - 1; s >= url && *s != '.' && *s != '/'; --s) ;
-	if (*s != '.')
-		return NULL;
-	++s;
-	if (post >= s + sizeof(suffix))
-		return NULL;
-	strncpy(suffix, s, post - s);
-	suffix[post - s] = 0;
-	return findMimeBySuffix(suffix);
+	if (*s == '.') {
+		++s;
+		if (post < s + sizeof(suffix)) {
+			strncpy(suffix, s, post - s);
+			suffix[post - s] = 0;
+			mt = findMimeBySuffix(suffix);
+			if (mt)
+				return mt;
+		}
+	}
+
+/* not by suffix, let's look for a url match */
+	url_length = strlen(url);
+	m = mimetypes;
+	for (i = 0; i < maxMime; ++i, ++m) {
+		s = m->urlmatch;
+		if (!s)
+			continue;
+		while (*s) {
+			t = strchr(s, '|');
+			if (!t)
+				t = s + strlen(s);
+			l = t - s;
+			if (l && l <= url_length) {
+				for (j = 0; j + l <= url_length; ++j) {
+					if (memEqualCI(s, url + j, l))
+						return m;
+				}
+			}
+			if (*t)
+				++t;
+			s = t;
+		}
+	}
+
+	return NULL;
 }				/* findMimeByURL */
 
 const struct MIMETYPE *findMimeByFile(const char *filename)

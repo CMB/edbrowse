@@ -156,10 +156,11 @@ plugin {
 type = audio/x-pn-realaudio
 desc = stream audio
 suffix = rm,ra,ram
+urlmatch = .youtube.com/watch?
 stream
 protocol = rtsp,pnm
 content = audio/x-scpls
-program = /usr/bin/mplayer -quiet %i
+program = /usr/bin/mplayer --really-quiet %i
 }
 
 plugin {
