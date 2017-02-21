@@ -74,9 +74,8 @@ void jSideEffects(void)
 {
 	debugPrint(4, "jSideEffects starts");
 	runScriptsPending();
+	cw->mustrender = true;
 	debugPrint(4, "jSideEffects ends");
-/* now rerender and look for differences */
-	rerender(false);
 }				/* jSideEffects */
 
 static struct htmlTag *locateOptionByName(const struct htmlTag *sel,
@@ -251,7 +250,7 @@ Most of the time I'm setting the strings to what they were before;
 that's the way it goes.
 *********************************************************************/
 
-void jSyncup(void)
+void jSyncup(bool fromtimer)
 {
 	struct htmlTag *t;
 	int itype, i, j, cx;
@@ -262,6 +261,8 @@ void jSyncup(void)
 	if (!isJSAlive)
 		return;
 	debugPrint(4, "jSyncup starts");
+	if (!fromtimer)
+		cw->nextrender = 0;
 
 	for (i = 0; i < cw->numTags; ++i) {
 		t = tagList[i];
@@ -1053,7 +1054,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		if (!isJSAlive)
 			runningError(MSG_NJNoOnclick);
 		else {
-			jSyncup();
+			jSyncup(false);
 			run_function_bool(t->jv, "onclick");
 			jSideEffects();
 			if (js_redirects)
@@ -1066,7 +1067,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		if (!isJSAlive)
 			runningError(MSG_NJNoOnchange);
 		else {
-			jSyncup();
+			jSyncup(false);
 			run_function_bool(t->jv, "onchange");
 			jSideEffects();
 			if (js_redirects)
@@ -1908,10 +1909,7 @@ static void currentTime(void)
 	now_ms = tv.tv_usec / 1000;
 }				/* currentTime */
 
-static bool backgroundJS;
-
 /* Rerender the buffer and notify of any lines that have changed */
-static time_t lasttime_rr;
 void rerender(bool rr_command)
 {
 	char *a, *snap, *newbuf;
@@ -1919,10 +1917,13 @@ void rerender(bool rr_command)
 	int markdot;
 
 	debugPrint(4, "rerender");
+	cw->mustrender = false;
+	time(&cw->nextrender);
+	cw->nextrender += 20;
 
 	if (rr_command) {
 // You might have changed some input fields on the screen, then typed rr
-		jSyncup();
+		jSyncup(true);
 	}
 // screen snap, to compare with the new screen.
 	if (!unfoldBufferW(cw, false, &snap, &j)) {
@@ -1959,39 +1960,33 @@ void rerender(bool rr_command)
 		cw->dot = markdot;
 	cw->undoable = false;
 
-	if (!backgroundJS) {
-		lasttime_rr = now_sec;
 /* It's almost easier to do it than to report it. */
-		if (sameBack2 == sameFront) {	/* delete */
-			if (sameBack1 == sameFront + 1)
-				i_printf(MSG_LineDelete1, sameFront);
-			else
-				i_printf(MSG_LineDelete2, sameBack1 - sameFront,
-					 sameFront);
-		} else if (sameBack1 == sameFront) {
-			if (sameBack2 == sameFront + 1)
-				i_printf(MSG_LineAdd1, sameFront + 1);
-			else {
-				i_printf(MSG_LineAdd2, sameFront + 1,
-					 sameBack2);
+	if (sameBack2 == sameFront) {	/* delete */
+		if (sameBack1 == sameFront + 1)
+			i_printf(MSG_LineDelete1, sameFront);
+		else
+			i_printf(MSG_LineDelete2, sameBack1 - sameFront,
+				 sameFront);
+	} else if (sameBack1 == sameFront) {
+		if (sameBack2 == sameFront + 1)
+			i_printf(MSG_LineAdd1, sameFront + 1);
+		else {
+			i_printf(MSG_LineAdd2, sameFront + 1, sameBack2);
 /* put dot back to the start of the new block */
-				if (!markdot)
-					cw->dot = sameFront + 1;
-			}
-		} else {
-			if (sameBack1 == sameFront + 1
-			    && sameBack2 == sameFront + 1)
-				i_printf(MSG_LineUpdate1, sameFront + 1);
-			else if (sameBack2 == sameFront + 1)
-				i_printf(MSG_LineUpdate2, sameBack1 - sameFront,
-					 sameFront + 1);
-			else {
-				i_printf(MSG_LineUpdate3, sameFront + 1,
-					 sameBack2);
+			if (!markdot)
+				cw->dot = sameFront + 1;
+		}
+	} else {
+		if (sameBack1 == sameFront + 1 && sameBack2 == sameFront + 1)
+			i_printf(MSG_LineUpdate1, sameFront + 1);
+		else if (sameBack2 == sameFront + 1)
+			i_printf(MSG_LineUpdate2, sameBack1 - sameFront,
+				 sameFront + 1);
+		else {
+			i_printf(MSG_LineUpdate3, sameFront + 1, sameBack2);
 /* put dot back to the start of the new block */
-				if (!markdot)
-					cw->dot = sameFront + 1;
-			}
+			if (!markdot)
+				cw->dot = sameFront + 1;
 		}
 	}
 
@@ -2172,8 +2167,24 @@ static struct jsTimer *soonest(void)
 bool timerWait(int *delay_sec, int *delay_ms)
 {
 	struct jsTimer *jt = soonest();
-	if (!jt)
-		return false;
+	time_t now;
+	int remaining;
+
+	if (cw->mustrender) {
+		time(&now);
+		remaining = 0;
+		if (now < cw->nextrender)
+			remaining = cw->nextrender - now;
+	}
+
+	if (!jt) {
+		if (!cw->mustrender)
+			return false;
+		*delay_sec = remaining;
+		*delay_ms = 0;
+		return true;
+	}
+
 	currentTime();
 	if (now_sec > jt->sec || now_sec == jt->sec && now_ms >= jt->ms)
 		*delay_sec = *delay_ms = 0;
@@ -2183,6 +2194,12 @@ bool timerWait(int *delay_sec, int *delay_ms)
 		if (*delay_ms < 0)
 			*delay_ms += 1000, --*delay_sec;
 	}
+
+	if (cw->mustrender && remaining <= *delay_sec) {
+		*delay_sec = remaining;
+		*delay_ms = 0;
+	}
+
 	return true;
 }				/* timerWait */
 
@@ -2215,7 +2232,9 @@ void runTimers(void)
 
 		cf = jt->frame;
 		cw = cf->owner;
-		backgroundJS = true;
+
+		if (foregroundWindow)
+			jSyncup(true);
 		run_function_bool(jt->timerObject, "onclick");
 
 		if (!jt->isInterval) {
@@ -2229,21 +2248,7 @@ void runTimers(void)
 				jt->ms -= 1000, ++jt->sec;
 		}
 
-		runScriptsPending();
-
-		if (cw != save_cw) {
-/* background window, go ahead and rerender, silently. */
-			rerender(false);
-		} else {
-/* rerender a foreground window no more than every 10 seconds */
-/* A constant stream of update messages could be really annoying. */
-			if (now_sec >= lasttime_rr + 10) {
-				backgroundJS = false;
-				rerender(false);
-			}
-		}
-
-		backgroundJS = false;
+		jSideEffects();
 	}
 
 	cw = save_cw;
@@ -2269,7 +2274,7 @@ void javaOpensWindow(const char *href, const char *name)
 	unpercentURL(copy);
 	r = resolveURL(cf->hbase, copy);
 	nzFree(copy);
-	if (replace || cw->browseMode && !backgroundJS) {
+	if (replace || cw->browseMode && foregroundWindow) {
 		gotoLocation(r, 0, replace);
 		return;
 	}

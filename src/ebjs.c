@@ -476,15 +476,16 @@ static int readMessage(void)
 		propval[l] = 0;
 	}
 
-/* stop at the first js error when debugging */
+/* sometimes you want to stop at the first js error, but sometimes you don't */
+#if 0
 	if (head.msglen && debugLevel >= 5) {
 		head.highstat = EJ_HIGH_CX_FAIL;
 		head.lowstat = 0;
 		debugPrint(5, "js abort due to error while debugging");
-/* but there's really no reason to march on */
 		puts("edbrowse abort due to error while debugging.");
 		exit(1);
 	}
+#endif
 
 	if (head.highstat == EJ_HIGH_CX_FAIL) {
 		if (head.lowstat == EJ_LOW_VARS)
@@ -1416,11 +1417,9 @@ in a primary menu. These new options must map back to html tags,
 and then to the dropdown list as you interact with the form.
 This is tested in jsrt - select a state,
 whereupon the colors below, that you have to choose from, can change.
-
-Someday the entire page will be rerendered based upon the js tree,
-which could be modified in almost any way, but today I only look at
-changing menus, because that is the high runner case.
-Besides, it use to seg fault when I didn't watch for this.
+This does not easily fold into rerender(),
+since the line <> in the buffer looks exactly the same,
+so this tells you the options underneath have changed.
 *********************************************************************/
 
 static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)

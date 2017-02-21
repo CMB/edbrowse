@@ -403,6 +403,7 @@ struct ebWindow {
 	struct htmlTag **tags;
 	int numTags, allocTags;
 	const struct MIMETYPE *mt;
+	bool mustrender: 1;
 	bool lhs_yes:1;
 	bool rhs_yes:1;
 	bool binMode:1;		/* binary file */
@@ -422,8 +423,10 @@ struct ebWindow {
 	bool undoable:1;	/* undo is possible */
 	bool sqlMode:1;		/* accessing a table */
 	struct DBTABLE *table;	/* if in sqlMode */
+	time_t nextrender;
 };
 extern struct ebWindow *cw;	/* current window */
+#define foregroundWindow (cw == sessionList[context].lw)
 
 /* quickly grab a tag from the current window via its sequence number:
  * tagList[n] */

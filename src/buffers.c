@@ -365,6 +365,21 @@ Enter ~u hex digits for higher unicodes, emojis etc.
 The program exits on EOF.
 If you hit interrupt at this point, I print a message
 and ask for your line again.
+
+Here are some thoughts on when to rerender and announce any changes to the user.
+I rerender here because this is the foreground window, and I'm looking for input.
+Other buffers could be changing, but that can wait; you're not looking at those right now.
+If you switch to one of those, you may get a change message after the context switch.
+So here's what I want.
+If you have pushed a button or made a change to a form that invokes js,
+then you want to see any changes, right now, that result from that action.
+However, timers can also change the buffer in the background.
+A line could be updating every second, but no one wants to see that.
+So only rerender every 20 seconds.
+mustrender is set if any js happens, and cleared after rerender.
+It starts out clear when the buffer is first browsed.
+nextrender is the suggested time to render again, if js changes have been made.
+It is generally 20 seconds after the last render.
 *********************************************************************/
 
 pst inputLine(void)
@@ -389,6 +404,14 @@ top:
 		int rc;
 		struct timeval tv;
 
+/* a false timer will fire when time to rerender */
+		if (cw->mustrender) {
+			time_t now;
+			time(&now);
+			if (now >= cw->nextrender)
+				rerender(false);
+		}
+
 /*********************************************************************
 I'm not willing to churn, firing a timer every few milliseconds.
 Some websites with intervals of 50ms take over the edbrowse process,
@@ -398,8 +421,8 @@ This is almost always fast-paced visual effects, which are lost on us.
 Slowing things down should not cause any trouble,
 and it lets me type at the keyboard.
 *********************************************************************/
-		if (delay_sec == 0 && delay_ms < 230)
-			delay_ms = 230;
+		if (delay_sec == 0 && delay_ms < 600)
+			delay_ms = 600;
 
 		tv.tv_sec = delay_sec;
 		tv.tv_usec = delay_ms * 1000;
@@ -3556,7 +3579,7 @@ pwd:
 			return false;
 		}
 		jexmode = true;
-		jSyncup();
+		jSyncup(false);
 		return true;
 	}
 
@@ -4892,7 +4915,7 @@ bool runCommand(const char *line)
 /* javascript might update fields */
 /* The program might depend on the mouseover code running first */
 				if (over) {
-					jSyncup();
+					jSyncup(false);
 					rc = handlerGoBrowse(tag,
 							     "onmouseover");
 					jSideEffects();
@@ -4904,7 +4927,7 @@ bool runCommand(const char *line)
 			if (!rc && !jsdead)
 				set_property_string(cf->winobj, "status", h);
 			if (jsgo && click) {
-				jSyncup();
+				jSyncup(false);
 				rc = handlerGoBrowse(tag, "onclick");
 				jSideEffects();
 				if (newlocation)
@@ -4913,7 +4936,7 @@ bool runCommand(const char *line)
 					return true;
 			}
 			if (jsh) {
-				jSyncup();
+				jSyncup(false);
 /* actually running the url, not passing it to http etc, need to unescape */
 				unpercentString(h);
 				jsRunScript(cf->winobj, h, 0, 0);
@@ -5095,7 +5118,7 @@ bool runCommand(const char *line)
 				}
 
 				if (c == '*') {
-					jSyncup();
+					jSyncup(false);
 					if (!infPush(tagno, &allocatedLine))
 						return false;
 					if (newlocation)
@@ -5630,6 +5653,9 @@ bool browseCurrentBuffer(void)
 		cw->dot = cw->dol;
 	cw->browseMode = true;
 	fileSize = apparentSize(context, true);
+	cw->mustrender = false;
+	time(&cw->nextrender);
+	cw->nextrender += 2;
 	return true;
 }				/* browseCurrentBuffer */
 

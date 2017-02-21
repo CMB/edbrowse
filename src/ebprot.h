@@ -129,7 +129,7 @@ bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l);
 /* sourcefile=html.c */
 bool tagHandler(int seqno, const char *name) ;
 void jSideEffects(void) ;
-void jSyncup(void) ;
+void jSyncup(bool fromtimer) ;
 void htmlMetaHelper(struct htmlTag *t);
 void preFormatCheck(int tagno, bool * pretag, bool * slash) ;
 char *htmlParse(char *buf, int remote) ;
