@@ -404,6 +404,7 @@ struct ebWindow {
 	int numTags, allocTags;
 	const struct MIMETYPE *mt;
 	bool mustrender: 1;
+	bool sank: 1;
 	bool lhs_yes:1;
 	bool rhs_yes:1;
 	bool binMode:1;		/* binary file */

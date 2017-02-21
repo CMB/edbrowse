@@ -451,6 +451,8 @@ dotimers:
 		}
 	}
 
+	jClearSync();
+
 	if (inputReadLine && isInteractive) {
 		last_rl = readline("");
 		if ((last_rl != NULL) && *last_rl)

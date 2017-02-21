@@ -130,6 +130,7 @@ bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l);
 bool tagHandler(int seqno, const char *name) ;
 void jSideEffects(void) ;
 void jSyncup(bool fromtimer) ;
+void jClearSync(void);
 void htmlMetaHelper(struct htmlTag *t);
 void preFormatCheck(int tagno, bool * pretag, bool * slash) ;
 char *htmlParse(char *buf, int remote) ;

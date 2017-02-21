@@ -258,6 +258,9 @@ void jSyncup(bool fromtimer)
 
 	if (!cw->browseMode)
 		return;		/* not necessary */
+	if (cw->sank)
+		return;		/* already done */
+	cw->sank = true;
 	if (!isJSAlive)
 		return;
 	debugPrint(4, "jSyncup starts");
@@ -335,6 +338,23 @@ void jSyncup(bool fromtimer)
 
 	debugPrint(4, "jSyncup ends");
 }				/* jSyncup */
+
+void jClearSync(void)
+{
+	int cx;			/* edbrowse context */
+	struct ebWindow *w;
+	if (cw->browseMode) {
+		cw->sank = false;
+		return;
+	}
+	for (cx = 1; cx < MAXSESSION; ++cx) {
+		w = sessionList[cx].lw;
+		while (w) {
+			w->sank = false;
+			w = w->prev;
+		}
+	}
+}				/* jClearSync */
 
 /* helper function for meta tag */
 void htmlMetaHelper(struct htmlTag *t)
@@ -2233,6 +2253,16 @@ void runTimers(void)
 		cf = jt->frame;
 		cw = cf->owner;
 
+/*********************************************************************
+Only syncing the foreground window is right almost all the time,
+but not every time.
+The forground could be just text, buffer for a textarea in another window.
+You should sync that other window before running javascript, so it has
+the latest text, the text you are editing right now.
+I can't do that because jSyncup calls fetchLine() to pull text lines
+out of the buffer, which has to be the foreground window.
+We need to fix this someday, though it is a very rare low runner case.
+*********************************************************************/
 		if (foregroundWindow)
 			jSyncup(true);
 		run_function_bool(jt->timerObject, "onclick");
