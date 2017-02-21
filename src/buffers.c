@@ -452,6 +452,10 @@ dotimers:
 	}
 
 	jClearSync();
+	if (cw->mustrender) {
+/* in case jSyncup runs again */
+		rebuildSelectors();
+	}
 
 	if (inputReadLine && isInteractive) {
 		last_rl = readline("");

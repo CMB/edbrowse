@@ -1548,6 +1548,9 @@ void rebuildSelectors(void)
 	jsobjtype oa;		/* option array */
 	int len;		/* length of option array */
 
+	if (!isJSAlive)
+		return;
+
 	for (i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (!t->jv)

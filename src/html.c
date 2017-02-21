@@ -347,6 +347,9 @@ void jClearSync(void)
 		cw->sank = false;
 		return;
 	}
+/* when we are able to jSyncup windows other than the foreground window,
+ * which we can't do yet, then the rest of this will make sense. */
+#if 0
 	for (cx = 1; cx < MAXSESSION; ++cx) {
 		w = sessionList[cx].lw;
 		while (w) {
@@ -354,6 +357,7 @@ void jClearSync(void)
 			w = w->prev;
 		}
 	}
+#endif
 }				/* jClearSync */
 
 /* helper function for meta tag */
@@ -695,8 +699,6 @@ top:
 	}
 
 	freeList(&inputChangesPending);
-
-	rebuildSelectors();
 
 	if (v = js_reset) {
 		js_reset = 0;
@@ -1161,6 +1163,8 @@ static void formReset(const struct htmlTag *form)
 	int i, itype;
 	char *display;
 
+	rebuildSelectors();
+
 	for (i = 0; i < cw->numTags; ++i) {
 		t = tagList[i];
 		if (t->action == TAGACT_OPTION) {
@@ -1360,6 +1364,9 @@ static bool formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 	char fsep = '&';	/* field separator */
 	bool noname = false, rc;
 	bool bval;
+
+/* js could rebuild an option list then submit the form. */
+	rebuildSelectors();
 
 	if (form->bymail)
 		fsep = '\n';
@@ -1940,6 +1947,8 @@ void rerender(bool rr_command)
 	cw->mustrender = false;
 	time(&cw->nextrender);
 	cw->nextrender += 20;
+
+	rebuildSelectors();
 
 	if (rr_command) {
 // You might have changed some input fields on the screen, then typed rr
