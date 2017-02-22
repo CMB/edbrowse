@@ -36,10 +36,16 @@ if(WIN32)
         # C4101: 'idx' : unreferenced local variable
         # C4018: '>' : signed/unsigned mismatch
         # C4800: 'JSBool' : forcing value to bool
-        foreach(warning 4244 4101 4090 4018 4800)
+        # warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+        foreach(warning 4244 4101 4090 4018 4800 4267)
             set(WARNING_FLAGS "${WARNING_FLAGS} /wd${warning}")
         endforeach()
         set( MSVC_FLAGS "-DNOMINMAX -D_USE_MATH_DEFINES -D_CRT_SECURE_NO_WARNINGS -D_SCL_SECURE_NO_WARNINGS -D__CRT_NONSTDC_NO_WARNINGS" )
+        # tesing MSVC version - horrible kludge
+        if (${MSVC_VERSION} EQUAL 1900)
+            message(STATUS "*** MSVC version equals 1900 - adding HAVE_STRUCT_TIMESPEC")
+            set( MSVC_FLAGS "${MSVC_FLAGS} -DHAVE_STRUCT_TIMESPEC")
+        endif ()
         # if (${MSVC_VERSION} EQUAL 1600)
         #    set( MSVC_LD_FLAGS "/FORCE:MULTIPLE" )
         # endif (${MSVC_VERSION} EQUAL 1600)
