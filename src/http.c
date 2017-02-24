@@ -896,7 +896,15 @@ bool httpConnect(const char *url, bool down_ok, bool webpage,
 	} else if ((cw->mt = findMimeByProtocol(prot)) && pluginsOn
 		   && cw->mt->stream) {
 mimestream:
-		cmd = pluginCommand(cw->mt, url, NULL, NULL);
+/* set this to null so we don't push a new buffer */
+		nzFree(serverData);
+		serverData = NULL;
+		serverDataLen = 0;
+/* could jump back here after a redirect, so use urlcopy if it is there */
+		cmd = pluginCommand(cw->mt, (urlcopy ? urlcopy : url),
+				    NULL, NULL);
+		nzFree(urlcopy);
+		urlcopy = NULL;
 		if (!cmd)
 			return false;
 		eb_system(cmd, true);
