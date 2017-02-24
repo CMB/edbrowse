@@ -138,6 +138,7 @@ struct htmlTag *findOpenList(struct htmlTag *t)
 }				/* findOpenList */
 
 /*********************************************************************
+tidy workaround functions.
 Consider html like this.
 <body>
 <A href=http://www.edbrowse.org>Link1
@@ -145,9 +146,9 @@ Consider html like this.
 <A href=http://www.edbrowse.org>Link3
 </body>
 Each anchor should close the one before, thus rendering as
-{Link1} {Link2} {Link3}
+ {Link1} {Link2} {Link3}
 But tidy does not do this; it allows anchors to nest, thus
-{Link1{Link2{Link3}}}
+ {Link1{Link2{Link3}}}
 Not a serious problem really, it just looks funny.
 And yes, html like this does appear in the wild.
 This routine restructures the tree to move the inner anchor
@@ -213,17 +214,17 @@ That could create nested anchors, which we already worked hard to get rid of.   
 Would be easier if the tidy bug was fixed.
 *********************************************************************/
 
-static bool anchorBelow(struct htmlTag *t)
+static bool tagBelow(struct htmlTag *t, int action)
 {
 	struct htmlTag *c;
 
-	if (t->action == TAGACT_A)
+	if (t->action == action)
 		return true;
 	for (c = t->firstchild; c; c = c->sibling)
-		if (anchorBelow(c))
+		if (tagBelow(c, action))
 			return true;
 	return false;
-}				/* anchorBelow */
+}				/* tagBelow */
 
 static void emptyAnchors(int start)
 {
@@ -242,7 +243,7 @@ static void emptyAnchors(int start)
 			continue;
 // div follows
 /* would moving this create nested anchors? */
-		if (anchorBelow(div))
+		if (tagBelow(div, TAGACT_A))
 			continue;
 		up->sibling = div->sibling;
 		a0->firstchild = div;
@@ -250,6 +251,39 @@ static void emptyAnchors(int start)
 		div->sibling = 0;
 	}
 }				/* emptyAnchors */
+
+/*********************************************************************
+If a form is in a table, but not in tr or td, it closes immediately,
+and all the following inputs are orphaned.
+Check for an empty form beneath table, and move all the following siblings
+down into the form.
+*********************************************************************/
+
+static void tableForm(int start)
+{
+	int j;
+	struct htmlTag *form, *table, *t;
+
+	for (j = start; j < cw->numTags; ++j) {
+		form = tagList[j];
+		if (form->action != TAGACT_FORM || form->firstchild)
+			continue;
+		t = form;
+		for (table = form->sibling; table; table = table->sibling) {
+			if (table->action == TAGACT_TABLE &&
+			    tagBelow(table, TAGACT_INPUT)) {
+/* table with inputs below; move it to form */
+/* hope this doesn't break anything */
+				table->parent = form;
+				form->firstchild = table;
+				t->sibling = table->sibling;
+				table->sibling = 0;
+				break;
+			}
+			t = table;
+		}
+	}
+}				/* tableForm */
 
 void formControl(struct htmlTag *t, bool namecheck)
 {
@@ -640,6 +674,7 @@ void prerender(int start)
 /* some cleanup routines to rearrange the tree, working around some tidy5 bugs. */
 	nestedAnchors(start);
 	emptyAnchors(start);
+	tableForm(start);
 
 	currentForm = currentSel = currentOpt = NULL;
 	currentTitle = currentScript = currentTA = NULL;
