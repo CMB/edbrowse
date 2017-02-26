@@ -460,7 +460,7 @@ kann eine Ansicht nicht verändern
 0
 unerwartete Zeichen nach dem kodierten Anhang
 ungültige Zeichen im kodierten Anhang
-0
+Kommando %s kann nicht global angewandt werden
 Warnung, JavaScript kann nicht durch einen Doppelklick aktiviert werden
 Fehler beim Auflösen der Option %s beim Synchronisieren oder Versand des Formularfelds
 xhr deaktiviert

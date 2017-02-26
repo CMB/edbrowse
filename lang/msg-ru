@@ -460,7 +460,7 @@ cannot modify a view
 0
 unexpected characters after the encoded attachment
 invalid characters in the encoded attachment
-0
+the %s command cannot be applied globally
 warning, javascript cannot be invoked by a double click
 error resolving option %s during sync or form submit
 xhr включен

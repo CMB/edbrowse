@@ -389,7 +389,7 @@ cannot access %s
 $%s is not defined
 ~%s is not defined
 Go
-line is not a frame
+0
  secure
  bymail
 Reset
@@ -460,7 +460,7 @@ cannot modify a view
 0
 unexpected characters after the encoded attachment
 invalid characters in the encoded attachment
-0
+the %s command cannot be applied globally
 warning, javascript cannot be invoked by a double click
 error resolving option %s during sync or form submit
 xhr disabled
@@ -478,8 +478,8 @@ warning: garbled refresh directive, %s\n
 0
 warning: http redirection %ld, but a new url is not specified\n
 warning: http error %ld, %s\n
-0
-0
+no frames to expand
+no frames to contract
 help messages on
 ftp download: 
 no ssl certificate file specified; secure connections cannot be verified

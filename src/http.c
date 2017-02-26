@@ -2384,42 +2384,88 @@ const char *findProxyForURL(const char *url)
 	return findProxyInternal(getProtURL(url), getHostURL(url));
 }				/* findProxyForURL */
 
-/* expand a frame inline. */
-/* Return false only if there is a problem fetching the web page. */
-static bool frameExpand(void)
+/* expand a frame inline.
+ * Pass a range of lines; you can expand all the frames in one go.
+ * Return false if there is a problem fetching a web page,
+ * or if none of the lines are frames. */
+static int frameExpandLine(int lineNumber);
+static int frameContractLine(int lineNumber);
+bool frameExpand(bool expand, int ln1, int ln2)
 {
-	const pst line = fetchLine(cw->dot, -1);
+	int ln;			/* line number */
+	int problem = 0, p;
+	bool something_worked = false;
+
+	if (ln2 == 0) {
+		setError(MSG_EmptyBuffer);
+		return false;
+	}
+
+	if (!cw->browseMode) {
+		setError(MSG_NoBrowse);
+		return false;
+	}
+
+	for (ln = ln1; ln <= ln2; ++ln) {
+		if (expand)
+			p = frameExpandLine(ln);
+		else
+			p = frameContractLine(ln);
+		if (p > problem)
+			problem = p;
+		if (p == 0)
+			something_worked = true;
+	}
+
+	if (something_worked && problem < 3)
+		problem = 0;
+	if (problem == 1)
+		setError(expand ? MSG_NoFrame1 : MSG_NoFrame2);
+	if (problem == 2)
+		setError(MSG_FrameNoURL);
+	return (problem == 0);
+}				/* frameExpand */
+
+/* Problems: 0, frame expanded successfully.
+ 1 line is not a frame.
+ 2 frame doesn't have a valid url.
+ 3 Problem fetching the rul or rendering the page.  */
+static int frameExpandLine(int ln)
+{
+	pst line;
 	int tagno;
 	const char *s;
 	struct htmlTag *t;
 
-	if (strncmp(line, "Frame ", 6)) {
-no_frame:
-		setError(MSG_NotFrame);
-		return false;
-	}
-
-	if ((s = strchr(line, InternalCodeChar)) == NULL) {
-no_url:
-		setError(MSG_FrameNoURL);
-		return false;
-	}
-
+	line = fetchLine(ln, -1);
+	s = strstr(line, "Frame ");
+	if (!s)
+		return 1;
+	if ((s = strchr(s, InternalCodeChar)) == NULL)
+		return 2;
 	tagno = strtol(s + 1, (char **)&s, 10);
 	if (tagno < 0 || tagno >= cw->numTags || *s != '{')
-		goto no_url;
+		return 2;
 	t = tagList[tagno];
 	if (t->action != TAGACT_FRAME)
-		goto no_frame;
+		return 1;
 
 /* the easy case is if it's already been expanded before, we just unhide it. */
 	if (t->f1) {
 		t->deleted = false;
-		return true;
+		return 0;
 	}
 
 /* For now you can't expand a frame that is a local file, has to be a url */
 	s = t->href;
 	if (!s || !isURL(s))
-		goto no_url;
-}				/* frameExpand */
+		return 2;
+
+	printf("expand %d\n", ln);
+	return 0;
+}				/* frameExpandLine */
+
+static int frameContractLine(int ln)
+{
+	return 1;
+}				/* frameContractLine */

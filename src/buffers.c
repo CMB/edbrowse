@@ -4382,9 +4382,9 @@ bool runCommand(const char *line)
 		return false;
 	}
 
-/* change uc into a substitute command, converting the whole line */
 	skipWhite(&line);
 	first = *line;
+/* change uc into a substitute command, converting the whole line */
 	if ((first == 'u' || first == 'l' || first == 'm') && line[1] == 'c' &&
 	    line[2] == 0) {
 		sprintf(newline, "s/.*/%cc/", first);
@@ -4406,6 +4406,17 @@ bool runCommand(const char *line)
 			return false;
 		}
 		line = "s`bl";
+	}
+
+/* special commands to expand and contract frames */
+	if (stringEqual(line, "exp") || stringEqual(line, "ctr")) {
+		if (globSub) {
+			cmd = 'g';
+			setError(MSG_GlobalCommand2, line);
+			return false;
+		}
+		cmd = 'e';	/* show errors */
+		return frameExpand((line[0] == 'e'), startRange, endRange);
 	}
 
 /* get the command */
