@@ -101,7 +101,7 @@ static bool f_encoded;
  * After all, you don't want to see those code characters.
  * You just want to see {Click here for more information}. */
 
-static void removeHiddenNumbers(pst p, uchar terminate)
+void removeHiddenNumbers(pst p, uchar terminate)
 {
 	pst s, t, u;
 	uchar c, d;

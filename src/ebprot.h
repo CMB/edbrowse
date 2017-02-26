@@ -5,6 +5,7 @@ bool getUserPass(const char *url, char *creds, bool find_proxy) ;
 bool addWebAuthorization(const char *url, const char *credentials, bool proxy) ;
 
 /* sourcefile=buffers.c */
+void removeHiddenNumbers(pst p, uchar terminate);
 pst fetchLine(int n, int show) ;
 void displayLine(int n) ;
 void initializeReadline(void) ;

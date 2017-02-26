@@ -1989,7 +1989,22 @@ void rerender(bool rr_command)
 		cw->dot = markdot;
 	cw->undoable = false;
 
-/* It's almost easier to do it than to report it. */
+/*********************************************************************
+It's almost easier to do it than to report it.
+First, run diff again with the hidden numbers gone, so we only report
+the visible differences. It's annoying to hear that line 27 has been updated,
+and it looks just like it did before.
+This happens when a periodic timer updates a section through innerHTML.
+If the text is the same every time that's fine, but it's new tags each time,
+and new internal numbers each time, and that use to trip this algorithm.
+*********************************************************************/
+
+	removeHiddenNumbers(snap, 0);
+	removeHiddenNumbers(newbuf, 0);
+	if (stringEqual(snap, newbuf))
+		goto done;
+	frontBackDiff(snap, newbuf);
+
 	if (sameBack2 == sameFront) {	/* delete */
 		if (sameBack1 == sameFront + 1)
 			i_printf(MSG_LineDelete1, sameFront);
@@ -2019,6 +2034,7 @@ void rerender(bool rr_command)
 		}
 	}
 
+done:
 	nzFree(newbuf);
 	nzFree(snap);
 }				/* rerender */
