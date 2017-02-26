@@ -3618,6 +3618,7 @@ et_go:
 		}
 		freeTags(cw);
 		delTimers(cw);
+		cw->mustrender = false;
 		for (f = &cw->f0; f; f = f->next) {
 			freeJavaContext(f);
 			f->jcx = NULL;
