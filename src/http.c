@@ -136,8 +136,8 @@ static void scan_http_headers(bool fromCallback)
 		if (ht_charset)
 			*ht_charset++ = 0;
 /* The protocol, such as rtsp, could have already set the mime type. */
-		if (!cw->mt)
-			cw->mt = findMimeByContent(ht_content);
+		if (!cf->mt)
+			cf->mt = findMimeByContent(ht_content);
 	}
 
 	if (!ht_cdfn && (v = find_http_header("content-disposition"))) {
@@ -853,7 +853,7 @@ bool httpConnect(const char *url, bool down_ok, bool webpage,
 	serverData = NULL;
 	serverDataLen = 0;
 	strcpy(creds_buf, ":");	/* Flush stale username and password. */
-	cw->mt = NULL;		/* should already be null */
+	cf->mt = NULL;		/* should already be null */
 
 	host = getHostURL(url);
 	if (!host) {
@@ -893,15 +893,15 @@ bool httpConnect(const char *url, bool down_ok, bool webpage,
 		   stringEqualCI(prot, "scp") ||
 		   stringEqualCI(prot, "tftp") || stringEqualCI(prot, "sftp")) {
 		return ftpConnect(url, user, pass, f_encoded);
-	} else if ((cw->mt = findMimeByProtocol(prot)) && pluginsOn
-		   && cw->mt->stream) {
+	} else if ((cf->mt = findMimeByProtocol(prot)) && pluginsOn
+		   && cf->mt->stream) {
 mimestream:
 /* set this to null so we don't push a new buffer */
 		nzFree(serverData);
 		serverData = NULL;
 		serverDataLen = 0;
 /* could jump back here after a redirect, so use urlcopy if it is there */
-		cmd = pluginCommand(cw->mt, (urlcopy ? urlcopy : url),
+		cmd = pluginCommand(cf->mt, (urlcopy ? urlcopy : url),
 				    NULL, NULL);
 		nzFree(urlcopy);
 		urlcopy = NULL;
@@ -916,13 +916,13 @@ mimestream:
 	}
 
 /* Ok, it's http, but the suffix could force a plugin */
-	if ((cw->mt = findMimeByURL(url)) && pluginsOn && cw->mt->stream)
+	if ((cf->mt = findMimeByURL(url)) && pluginsOn && cf->mt->stream)
 		goto mimestream;
 
 /* if invoked from a playlist */
 	if (currentReferrer && pluginsOn
 	    && (mt = findMimeByURL(currentReferrer)) && mt->stream) {
-		cw->mt = mt;
+		cf->mt = mt;
 		goto mimestream;
 	}
 
@@ -1072,8 +1072,8 @@ mimestream:
 
 // recheck suffix after a redirect
 		if (redirect_count &&
-		    (cw->mt = findMimeByURL(urlcopy)) && pluginsOn
-		    && cw->mt->stream) {
+		    (cf->mt = findMimeByURL(urlcopy)) && pluginsOn
+		    && cf->mt->stream) {
 			curl_easy_cleanup(h);
 			goto mimestream;
 		}
@@ -1317,8 +1317,8 @@ curl_fail:
 	}
 
 /* Check for plugin to run here */
-	if (transfer_status && ht_code == 200 && cw->mt && pluginsOn &&
-	    !cw->mt->stream && !cw->mt->outtype && cw->mt->program) {
+	if (transfer_status && ht_code == 200 && cf->mt && pluginsOn &&
+	    !cf->mt->stream && !cf->mt->outtype && cf->mt->program) {
 		bool rc = playServerData();
 		nzFree(serverData);
 		serverData = NULL;
@@ -1995,7 +1995,7 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb,
 
 	scan_http_headers(true);
 	if (down_permitted && data->down_state == 0) {
-		if (cw->mt && cw->mt->stream && pluginsOn) {
+		if (cf->mt && cf->mt->stream && pluginsOn) {
 /* I don't think this ever happens, since streams are indicated by the protocol,
  * and we wouldn't even get here, but just in case -
  * stop the download and set the flag so we can pass this url
@@ -2005,7 +2005,7 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb,
 		}
 		if (ht_content[0] && !memEqualCI(ht_content, "text/", 5) &&
 		    !memEqualCI(ht_content, "application/xhtml+xml", 21) &&
-		    (!pluginsOn || !cw->mt || cw->mt->download)) {
+		    (!pluginsOn || !cf->mt || cf->mt->download)) {
 			data->down_state = 1;
 			down_msg = MSG_Down;
 			debugPrint(3, "potential download based on type %s",
@@ -2383,3 +2383,43 @@ const char *findProxyForURL(const char *url)
 {
 	return findProxyInternal(getProtURL(url), getHostURL(url));
 }				/* findProxyForURL */
+
+/* expand a frame inline. */
+/* Return false only if there is a problem fetching the web page. */
+static bool frameExpand(void)
+{
+	const pst line = fetchLine(cw->dot, -1);
+	int tagno;
+	const char *s;
+	struct htmlTag *t;
+
+	if (strncmp(line, "Frame ", 6)) {
+no_frame:
+		setError(MSG_NotFrame);
+		return false;
+	}
+
+	if ((s = strchr(line, InternalCodeChar)) == NULL) {
+no_url:
+		setError(MSG_FrameNoURL);
+		return false;
+	}
+
+	tagno = strtol(s + 1, (char **)&s, 10);
+	if (tagno < 0 || tagno >= cw->numTags || *s != '{')
+		goto no_url;
+	t = tagList[tagno];
+	if (t->action != TAGACT_FRAME)
+		goto no_frame;
+
+/* the easy case is if it's already been expanded before, we just unhide it. */
+	if (t->f1) {
+		t->deleted = false;
+		return true;
+	}
+
+/* For now you can't expand a frame that is a local file, has to be a url */
+	s = t->href;
+	if (!s || !isURL(s))
+		goto no_url;
+}				/* frameExpand */

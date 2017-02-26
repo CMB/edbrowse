@@ -253,7 +253,7 @@ char *pluginCommand(const struct MIMETYPE *m,
 * 0 error, 1 success, 2 not a play buffer command */
 int playBuffer(const char *line, const char *playfile)
 {
-	const struct MIMETYPE *mt = cw->mt;
+	const struct MIMETYPE *mt = cf->mt;
 	static char sufbuf[12];
 	char *cmd;
 	const char *suffix = NULL;
@@ -325,7 +325,7 @@ int playBuffer(const char *line, const char *playfile)
 			setError(MSG_SuffixBad, suffix);
 			return 0;
 		}
-		cw->mt = mt;
+		cf->mt = mt;
 	}
 
 	if (!suffix) {
@@ -385,7 +385,7 @@ play_command:
 
 bool playServerData(void)
 {
-	const struct MIMETYPE *mt = cw->mt;
+	const struct MIMETYPE *mt = cf->mt;
 	char *cmd;
 	const char *suffix = mt->suffix;
 
@@ -406,7 +406,7 @@ bool playServerData(void)
 	++tempIndex;
 	if (!makeTempFilename(suffix, tempIndex, false))
 		return false;
-	cmd = pluginCommand(cw->mt, tempin, 0, suffix);
+	cmd = pluginCommand(cf->mt, tempin, 0, suffix);
 	if (!cmd)
 		return false;
 	if (!memoryOutToFile(tempin, serverData, serverDataLen,
@@ -427,7 +427,7 @@ bool playServerData(void)
 /* Return "|" if output is in memory and not in a temp file. */
 char *runPluginConverter(const char *buf, int buflen)
 {
-	const struct MIMETYPE *mt = cw->mt;
+	const struct MIMETYPE *mt = cf->mt;
 	char *cmd;
 	const char *suffix = mt->suffix;
 	bool ispipe = !strstr(mt->program, "%o");
@@ -452,14 +452,14 @@ char *runPluginConverter(const char *buf, int buflen)
 	++tempIndex;
 	if (!makeTempFilename(suffix, tempIndex, false))
 		return 0;
-	suffixout = (cw->mt->outtype == 'h' ? "html" : "txt");
+	suffixout = (cf->mt->outtype == 'h' ? "html" : "txt");
 	++tempIndex;
 	if (!makeTempFilename(suffixout, tempIndex, true))
 		return 0;
 	infile = tempin;
 	if (!isURL(cf->fileName) && !access(cf->fileName, 4) && !cw->changeMode)
 		infile = cf->fileName;
-	cmd = pluginCommand(cw->mt, infile, tempout, suffix);
+	cmd = pluginCommand(cf->mt, infile, tempout, suffix);
 	if (!cmd)
 		return NULL;
 	if (infile == tempin) {

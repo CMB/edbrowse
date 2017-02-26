@@ -19,7 +19,7 @@ Convert back only if writing back out to the same file.
 Enter high unicodes by the string ~u....;
 where the dots are hex digits and the semi is optional.
 
-New "list buffers" command (bfl)  to get a list of buffers and filenames.
+New "buffer list" command (bflist)  to get a list of buffers and filenames.
 
 Read the attachment filename from the http content-disposition header and set the current filename accordingly.
 The url could be replaced with foobar.zip, but that's what the web designer wanted.

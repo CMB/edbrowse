@@ -732,7 +732,7 @@ int main(int argc, char **argv)
 		cw->undoable = cw->changeMode = false;
 /* Browse the text if it's a url */
 		if (rc && isURL(cf->fileName) &&
-		    (cw->mt && cw->mt->outtype
+		    (cf->mt && cf->mt->outtype
 		     || isBrowseableURL(cf->fileName))) {
 			if (runCommand("b"))
 				debugPrint(1, "%d", fileSize);

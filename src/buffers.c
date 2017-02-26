@@ -1581,8 +1581,8 @@ fromdisk:
 	if (filetype == 'd')
 		return readDirectory(filename);
 
-	if ((cmd == 'e' || cmd == 'b') && !cw->mt)
-		cw->mt = findMimeByFile(filename);
+	if ((cmd == 'e' || cmd == 'b') && !cf->mt)
+		cf->mt = findMimeByFile(filename);
 
 	nopound = cloneString(filename);
 	rbuf = findHash(nopound);
@@ -5253,7 +5253,7 @@ rebrowse:
 /* Some files we just can't browse */
 		if (!cw->dol || cw->dirMode)
 			cmd = 'e';
-		if (cw->binMode && (!cw->mt || !cw->mt->outtype))
+		if (cw->binMode && (!cf->mt || !cf->mt->outtype))
 			cmd = 'e';
 		if (cmd == 'e')
 			return true;
@@ -5267,7 +5267,7 @@ browse:
 			return false;
 		}
 		if (!cw->browseMode) {
-			if (cw->binMode && (!cw->mt || !cw->mt->outtype)) {
+			if (cw->binMode && (!cf->mt || !cf->mt->outtype)) {
 				setError(MSG_BrowseBinary);
 				return false;
 			}
@@ -5531,7 +5531,7 @@ bool browseCurrentBuffer(void)
 	if (cf->fileName)
 		remote = isURL(cf->fileName);
 
-	if (cw->mt && cw->mt->outtype)
+	if (cf->mt && cf->mt->outtype)
 		bmode = 3;
 	else
 /* A mail message often contains lots of html tags,
@@ -5578,7 +5578,7 @@ bool browseCurrentBuffer(void)
 		}
 /* make it look like remote html, so we don't get a lot of errors printed */
 		remote = true;
-		bmode = (cw->mt->outtype == 'h' ? 2 : 0);
+		bmode = (cf->mt->outtype == 'h' ? 2 : 0);
 		if (!allowRedirection)
 			bmode = 0;
 	}

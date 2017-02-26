@@ -389,12 +389,12 @@ cannot access %s
 $%s is not defined
 ~%s is not defined
 Go
-0
+line is not a frame
  secure
  bymail
 Reset
 unexpected error while evaluating the shell pattern
-0
+frame does not have an associated web page
 shell pattern matches more than one file
 line becomes too long when shell variables are expanded
 the config file does not specify the database - cannot connect

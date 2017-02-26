@@ -1506,6 +1506,7 @@ struct htmlTag *newTag(const char *name)
 		return 0;
 
 	t = (struct htmlTag *)allocZeroMem(sizeof(struct htmlTag));
+	t->f0 = cf;		/* set current frame */
 	t->action = action;
 	t->info = ti;
 	t->seqno = cw->numTags;

@@ -369,6 +369,7 @@ struct ebFrame {
 	jsobjtype jcx;
 	jsobjtype winobj;
 	jsobjtype docobj;	/* window.document */
+	const struct MIMETYPE *mt;
 };
 extern struct ebFrame *cf;	/* current frame */
 
@@ -402,7 +403,6 @@ struct ebWindow {
  * and used thereafter for hyperlinks, fill-out forms, etc. */
 	struct htmlTag **tags;
 	int numTags, allocTags;
-	const struct MIMETYPE *mt;
 	bool mustrender:1;
 	bool sank:1; /* jSyncup has been run */
 	bool lhs_yes:1;
@@ -480,6 +480,8 @@ struct htmlTag {
 	struct htmlTag *parent, *firstchild, *sibling;
 /* connect <foo> and </foo> */
 	struct htmlTag *balance;
+	struct ebFrame *f0; /* frame that owns this tag */
+	struct ebFrame *f1; /* subordinate frame if this is a <frame> tag */
 	jsobjtype jv;		/* corresponding java variable */
 	int seqno;
 	char *js_file;
