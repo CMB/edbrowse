@@ -3785,7 +3785,7 @@ et_go:
 		return true;
 	}
 
-	if (stringEqual(line, "bfl")) {
+	if (stringEqual(line, "bflist")) {
 		for (n = 1; n < MAXSESSION; ++n) {
 			struct ebWindow *lw = sessionList[n].lw;
 			if (!lw)
