@@ -1498,6 +1498,7 @@ static bool readFile(const char *filename, const char *post)
 	bool rc;		/* return code */
 	char *nopound;
 	char filetype;
+	bool inframe = (cf != &(cf->owner->f0));
 
 	serverData = 0;
 	serverDataLen = 0;
@@ -1512,17 +1513,10 @@ static bool readFile(const char *filename, const char *post)
 	}
 
 	if (isURL(filename)) {
-// I don't think we need this domain checking code, it is pre-curl.
-		const char *domain = getHostURL(filename);
-		if (!domain)
-			return false;	/* some kind of error */
-		if (!*domain) {
-			setError(MSG_DomainEmpty);
-			return false;
-		}
-
-		rc = httpConnect(filename, (cmd != 'r'), true, f_encoded, 0, 0,
-				 0);
+		bool down_ok = false;
+		if (!inframe && cmd != 'r')
+			down_ok = true;
+		rc = httpConnect(filename, down_ok, true, f_encoded, 0, 0, 0);
 		if (!rc) {
 /* The error could have occured after redirection */
 			nzFree(changeFileName);
@@ -1537,14 +1531,15 @@ static bool readFile(const char *filename, const char *post)
 
 		if (fileSize == 0) {	/* empty file */
 			nzFree(rbuf);
-			cw->dot = endRange;
+			if (!inframe)
+				cw->dot = endRange;
 			return true;
 		}
 
 		goto gotdata;
 	}
 
-	if (isSQL(filename)) {
+	if (isSQL(filename) && !inframe) {
 		const char *t1, *t2;
 		if (!cw->sqlMode) {
 			setError(MSG_DBOtherFile);
@@ -1578,8 +1573,12 @@ fromdisk:
 /* reading a file from disk */
 	filetype = fileTypeByName(filename, false);
 	fileSize = 0;
-	if (filetype == 'd')
-		return readDirectory(filename);
+	if (filetype == 'd') {
+		if (!inframe)
+			return readDirectory(filename);
+		setError(MSG_FrameNotHTML);
+		return false;
+	}
 
 	if ((cmd == 'e' || cmd == 'b') && !cf->mt)
 		cf->mt = findMimeByFile(filename);
@@ -1595,7 +1594,8 @@ fromdisk:
 	serverData = rbuf;
 	if (fileSize == 0) {	/* empty file */
 		free(rbuf);
-		cw->dot = endRange;
+		if (!inframe)
+			cw->dot = endRange;
 		return true;
 	}
 
@@ -1691,9 +1691,18 @@ gotdata:
 			}
 
 		}
+	} else if (inframe) {
+		nzFree(rbuf);
+		setError(MSG_FrameNotHTML);
+		return false;
 	} else if (binaryDetect & !cw->binMode) {
 		i_puts(MSG_BinaryData);
 		cw->binMode = true;
+	}
+
+	if (inframe) {
+/* serverData holds the html text to browse */
+		return true;
 	}
 
 intext:
@@ -4934,6 +4943,7 @@ bool runCommand(const char *line)
 /* The program might depend on the mouseover code running first */
 				if (over) {
 					jSyncup(false);
+					cf = tag->f0;
 					rc = handlerGoBrowse(tag,
 							     "onmouseover");
 					jSideEffects();
@@ -4946,6 +4956,7 @@ bool runCommand(const char *line)
 				set_property_string(cf->winobj, "status", h);
 			if (jsgo && click) {
 				jSyncup(false);
+				cf = tag->f0;
 				rc = handlerGoBrowse(tag, "onclick");
 				jSideEffects();
 				if (newlocation)
@@ -4957,6 +4968,7 @@ bool runCommand(const char *line)
 				jSyncup(false);
 /* actually running the url, not passing it to http etc, need to unescape */
 				unpercentString(h);
+				cf = tag->f0;
 				jsRunScript(cf->winobj, h, 0, 0);
 				jSideEffects();
 				if (newlocation)

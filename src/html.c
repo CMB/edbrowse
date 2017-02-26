@@ -275,6 +275,13 @@ void jSyncup(bool fromtimer)
 		if (itype <= INP_HIDDEN)
 			continue;
 
+/*********************************************************************
+You could change input fields in several frames, and each item should be
+passed down to its corresponding js context.
+This line sets the current frame, then we're ready to roll.
+*********************************************************************/
+		cf = t->f0;
+
 		if (itype >= INP_RADIO) {
 			int checked = fieldIsChecked(t->seqno);
 			if (checked < 0)
@@ -1077,6 +1084,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 			runningError(MSG_NJNoOnclick);
 		else {
 			jSyncup(false);
+			cf = t->f0;
 			run_function_bool(t->jv, "onclick");
 			jSideEffects();
 			if (js_redirects)
@@ -1090,6 +1098,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 			runningError(MSG_NJNoOnchange);
 		else {
 			jSyncup(false);
+			cf = t->f0;
 			run_function_bool(t->jv, "onchange");
 			jSideEffects();
 			if (js_redirects)
@@ -1568,6 +1577,7 @@ which checks the fields and calls form.submit(),
 which calls this routine.  Happens all the time.
 *********************************************************************/
 
+/* jSyncup has been called before we enter this function */
 bool infPush(int tagno, char **post_string)
 {
 	struct htmlTag *t = tagList[tagno];
@@ -1579,6 +1589,7 @@ bool infPush(int tagno, char **post_string)
 	const char *prot;
 	bool rc;
 
+	cf = t->f0;		/* set the frame */
 	*post_string = 0;
 
 /* If the tag is actually a form, then infPush() was invoked
@@ -2290,6 +2301,8 @@ We need to fix this someday, though it is a very rare low runner case.
 *********************************************************************/
 		if (foregroundWindow)
 			jSyncup(true);
+/* Oops, jSyncup could have changed the frame. */
+		cf = jt->frame;
 		run_function_bool(jt->timerObject, "onclick");
 
 		if (!jt->isInterval) {

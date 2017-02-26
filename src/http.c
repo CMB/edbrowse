@@ -2436,6 +2436,7 @@ static int frameExpandLine(int ln)
 	int tagno;
 	const char *s;
 	struct htmlTag *t;
+	struct ebFrame *save_cf, *last_f;
 
 	line = fetchLine(ln, -1);
 	s = strstr(line, "Frame ");
@@ -2456,12 +2457,66 @@ static int frameExpandLine(int ln)
 		return 0;
 	}
 
-/* For now you can't expand a frame that is a local file, has to be a url */
 	s = t->href;
-	if (!s || !isURL(s))
+	if (!s)
 		return 2;
 
-	printf("expand %d\n", ln);
+	save_cf = cf;
+/* have to push a new frame before we read the web page */
+	for (last_f = &(cw->f0); last_f->next; last_f = last_f->next) ;
+	last_f->next = cf = allocZeroMem(sizeof(struct ebFrame));
+	if (!readFileArgv(s)) {
+/* serverData was never set, or was freed do to some other error. */
+/* We just need to pop the frame and return. */
+fail:
+		fileSize = -1;	/* don't print 0 */
+		nzFree(cf->fileName);
+		free(cf);
+		last_f->next = 0;
+		cf = save_cf;
+		return 3;
+	}
+
+/*********************************************************************
+readFile could return success and yet serverData is null.
+This happens if httpConnect did something other than fetching data,
+like playing a stream. Does that happen, even in a frame?
+It can, if the frame is a youtube video, which is not unusual at all.
+So check for serverData null here. Once again we pop the frame.
+*********************************************************************/
+
+	if (serverData == NULL) {
+		nzFree(cf->fileName);
+		free(cf);
+		last_f->next = 0;
+		cf = save_cf;
+		return 0;
+	}
+
+	if (changeFileName) {
+		nzFree(cf->fileName);
+		cf->fileName = changeFileName;
+		cf->f_encoded = true;
+		changeFileName = 0;
+	} else {
+		cf->fileName = cloneString(s);
+	}
+
+/* don't print the size of what we just fetched */
+	fileSize = -1;
+
+/* If we got some data it has to be html.
+ * I should check for that, something like htmlTest in html.c,
+ * but I'm too lazy to do that right now, so I'll just assume it's good. */
+
+/* this is just debug prints for now */
+	printf("expand %d length %d\n", ln, serverDataLen);
+
+	nzFree(serverData);
+	nzFree(cf->fileName);
+	free(cf);
+	last_f->next = 0;
+	cf = save_cf;
 	return 0;
 }				/* frameExpandLine */
 
