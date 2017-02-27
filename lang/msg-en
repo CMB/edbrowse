@@ -473,7 +473,7 @@ javascript disabled, skipping the onchange code
 javascript disabled, skipping the onreset code
 javascript disabled, skipping the onsubmit code
 could not find the html tag associated with the javascript variable being modified
-0
+please use exp to expand a frame
 warning: garbled refresh directive, %s\n
 0
 warning: http redirection %ld, but a new url is not specified\n

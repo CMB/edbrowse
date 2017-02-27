@@ -760,6 +760,7 @@ char *htmlReformat(char *buf)
 	bool pretag, slash;
 	char *new;
 	int l, tagno, extra;
+	char *fmark;		/* mark the start of a frame */
 
 	cellDelimiters(buf);
 
@@ -847,6 +848,13 @@ char *htmlReformat(char *buf)
 /* we should print a more helpful error message here */
 		strcpy(new + l, "\n???");
 		l += 4;
+	}
+
+/* It's a little thing really, but the blank line at the top of each frame annoys me */
+	fmark = new;
+	while (fmark = strstr(fmark + 1, "*<--\n\n")) {
+		if (isdigit(fmark[-1]))
+			strmove(fmark + 5, fmark + 6);
 	}
 
 	return new;

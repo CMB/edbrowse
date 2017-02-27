@@ -2433,10 +2433,11 @@ bool frameExpand(bool expand, int ln1, int ln2)
 static int frameExpandLine(int ln)
 {
 	pst line;
-	int tagno;
+	int tagno, start;
 	const char *s;
 	struct htmlTag *t;
 	struct ebFrame *save_cf, *last_f;
+	bool remote;
 
 	line = fetchLine(ln, -1);
 	s = strstr(line, "Frame ");
@@ -2465,6 +2466,7 @@ static int frameExpandLine(int ln)
 /* have to push a new frame before we read the web page */
 	for (last_f = &(cw->f0); last_f->next; last_f = last_f->next) ;
 	last_f->next = cf = allocZeroMem(sizeof(struct ebFrame));
+	debugPrint(2, "fetch frame %s", s);
 	if (!readFileArgv(s)) {
 /* serverData was never set, or was freed do to some other error. */
 /* We just need to pop the frame and return. */
@@ -2490,6 +2492,7 @@ So check for serverData null here. Once again we pop the frame.
 		free(cf);
 		last_f->next = 0;
 		cf = save_cf;
+		fileSize = -1;
 		return 0;
 	}
 
@@ -2509,13 +2512,38 @@ So check for serverData null here. Once again we pop the frame.
  * I should check for that, something like htmlTest in html.c,
  * but I'm too lazy to do that right now, so I'll just assume it's good. */
 
-/* this is just debug prints for now */
-	printf("expand %d length %d\n", ln, serverDataLen);
+	cf->hbase = cloneString(cf->fileName);
+	remote = isURL(cf->fileName);
+	browseLocal = !remote;
+	prepareForBrowse(serverData, serverDataLen);
+	if (javaOK(cf->fileName))
+		createJavaContext();
+	nzFree(newlocation);	/* should already be 0 */
+	newlocation = 0;
 
-	nzFree(serverData);
-	nzFree(cf->fileName);
-	free(cf);
-	last_f->next = 0;
+	start = cw->numTags;
+/* call the tidy parser to build the html nodes */
+	html2nodes(serverData, true);
+	nzFree(serverData);	/* don't need it any more */
+	htmlGenerated = false;
+	htmlNodesIntoTree(start, t);
+	prerender(0);
+	if (isJSAlive) {
+		decorate(0);
+		set_basehref(cf->hbase);
+		runScriptsPending();
+		runOnload();
+		runScriptsPending();
+		set_property_string(cf->docobj, "readyState", "complete");
+	}
+
+	if (cf->fileName) {
+		int j = strlen(cf->fileName);
+		cf->fileName = reallocMem(cf->fileName, j + 8);
+		strcat(cf->fileName, ".browse");
+	}
+
+	t->f1 = cf;
 	cf = save_cf;
 	return 0;
 }				/* frameExpandLine */

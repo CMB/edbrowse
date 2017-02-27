@@ -282,13 +282,16 @@ b.innerText = "Why don't you write me I'm out in the jungle I'm hungry to hear y
 </OL>
 </noscript>
 
+<!-- this doesn't work any more, maybe a different ftp site that always works.
 ftp test
 <A href=ftp://rpmfind.net/linux/fedora/linux/releases/21/Everything/i386/os/Packages/y>
 y directory</A>
 <A href=ftp://rpmfind.net/linux/fedora/linux/releases/21/Everything/i386/os/Packages/y/yecht-0.0.2-11.fc21.noarch.rpm>
 yecht package</A>
+-->
 
-<br>
+<iframe src=http://www.eklhad.net/jframe.html></iframe>
+
 <form method=POST name=questionnaire
 action=http://localhost:1500/origact
 onsubmit='return submitFunction(questionnaire)'

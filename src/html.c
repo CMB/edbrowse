@@ -5,8 +5,6 @@
 
 #include "eb.h"
 
-static void runOnload(void);
-static void runScriptsPending(void);
 static void javaSetsTimeout(int n, const char *jsrc, jsobjtype to,
 			    bool isInterval);
 
@@ -437,7 +435,7 @@ static void runGeneratedHtml(struct htmlTag *t, const char *h, const char *pre)
 	htmlGenerated = true;
 	html2nodes(h, false);
 	htmlNodesIntoTree(l, t);
-	prerender(false);
+	prerender(0);
 
 	if (pre) {
 		for (j = l; j < cw->numTags; ++j) {
@@ -556,7 +554,7 @@ static void prepareScript(struct htmlTag *t)
 	t->js_file = cloneString(filepart);
 }				/* prepareScript */
 
-static void runScriptsPending(void)
+void runScriptsPending(void)
 {
 	struct htmlTag *t;
 	struct inputChange *ic;
@@ -768,7 +766,7 @@ char *htmlParse(char *buf, int remote)
 	html2nodes(buf, true);
 	nzFree(buf);
 	htmlNodesIntoTree(0, NULL);
-	prerender(false);
+	prerender(0);
 
 /* if the html doesn't use javascript, then there's
  * no point in generating it.
@@ -2106,7 +2104,7 @@ static void unloadHyperlink(const char *js_function, const char *where)
 /* Run the various onload functions */
 /* Turn the onunload functions into hyperlinks */
 /* This runs after the page is parsed and before the various javascripts run, is that right? */
-static void runOnload(void)
+void runOnload(void)
 {
 	int i, action;
 	int fn;			/* form number */
@@ -2123,6 +2121,8 @@ static void runOnload(void)
 	for (i = 0; i < cw->numTags; ++i) {
 		t = tagList[i];
 		if (t->slash)
+			continue;
+		if (t->f0 != cf)
 			continue;
 		action = t->action;
 		if (action == TAGACT_FORM)
@@ -2628,9 +2628,7 @@ static void renderNode(struct htmlTag *t, bool opentag)
 	char *u;
 	struct htmlTag *ltag;	/* list tag */
 
-#if 0
-	printf("rend %c%s\n", (opentag ? ' ' : '/'), t->info->name);
-#endif
+	debugPrint(6, "rend %c%s", (opentag ? ' ' : '/'), t->info->name);
 
 	if (deltag) {
 		if (t == deltag && !opentag)
@@ -2910,9 +2908,20 @@ unparen:
 
 	case TAGACT_AREA:
 	case TAGACT_FRAME:
-		liCheck(t);
 		if (!retainTag)
 			break;
+
+		if (t->f1) {	/* expanded frame */
+			sprintf(hnum, "\r%c%d*%s\r", InternalCodeChar, tagno,
+				(opentag ? "<--" : "-->"));
+			ns_hnum();
+			break;
+		}
+
+/* back to unexpanded frame or area */
+		if (!opentag)
+			break;
+		liCheck(t);
 		stringAndString(&ns, &ns_l,
 				(action == TAGACT_FRAME ? "\rFrame " : "\r"));
 		a = 0;

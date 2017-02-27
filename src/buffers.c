@@ -4425,8 +4425,11 @@ bool runCommand(const char *line)
 			setError(MSG_GlobalCommand2, line);
 			return false;
 		}
-		cmd = 'e';	/* show errors */
-		return frameExpand((line[0] == 'e'), startRange, endRange);
+		if (!frameExpand((line[0] == 'e'), startRange, endRange))
+			showError();
+/* even if one frame failed to expand, another might, so always rerender */
+		rerender(true);
+		return true;
 	}
 
 /* get the command */
@@ -4665,6 +4668,7 @@ bool runCommand(const char *line)
 	}
 
 	if (cmd == 'f') {
+		selfFrame();
 		if (cx) {
 			if (!cxCompare(cx))
 				return false;
@@ -4908,6 +4912,11 @@ bool runCommand(const char *line)
 			p = (char *)fetchLine(endRange, -1);
 			findField(p, 0, j, &n, 0, &tagno, &h, &tag);
 			debugPrint(5, "findField returns %d, %s", tagno, h);
+			if (tag->action == TAGACT_FRAME) {
+				cmd = 'g';
+				setError(MSG_ExpGo);
+				return false;
+			}
 			if (!h) {
 				fieldNumProblem(1, 'g', j, n, n);
 				return false;

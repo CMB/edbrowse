@@ -1385,8 +1385,8 @@ const struct tagInfo availableTags[] = {
 	{"hr", "a horizontal line", TAGACT_HR, 5, 4},
 	{"form", "a form", TAGACT_FORM, 10, 1},
 	{"button", "a button", TAGACT_INPUT, 0, 4},
-	{"frame", "a frame", TAGACT_FRAME, 2, 4},
-	{"iframe", "a frame", TAGACT_FRAME, 2, 4},
+	{"frame", "a frame", TAGACT_FRAME, 2, 0},
+	{"iframe", "a frame", TAGACT_FRAME, 2, 0},
 	{"map", "an image map", TAGACT_MAP, 2, 4},
 	{"area", "an image map area", TAGACT_AREA, 0, 4},
 	{"table", "a table", TAGACT_TABLE, 10, 1},
@@ -1565,7 +1565,7 @@ static void intoTree(struct htmlTag *parent)
 		}
 
 		if (treeDisable) {
-			debugPrint(5, "node skip %s", t->info->name);
+			debugPrint(4, "node skip %s", t->info->name);
 			t->step = 100;
 			intoTree(t);
 			continue;
@@ -1578,7 +1578,7 @@ static void intoTree(struct htmlTag *parent)
  * to the children below. */
 			action = t->action;
 			if (action == TAGACT_HEAD) {
-				debugPrint(5, "node skip %s", t->info->name);
+				debugPrint(4, "node skip %s", t->info->name);
 				t->step = 100;
 				treeDisable = true;
 				intoTree(t);
@@ -1586,7 +1586,7 @@ static void intoTree(struct htmlTag *parent)
 				continue;
 			}
 			if (action == TAGACT_BODY) {
-				debugPrint(5, "node pass %s", t->info->name);
+				debugPrint(4, "node pass %s", t->info->name);
 				t->step = 100;
 				intoTree(t);
 				continue;
@@ -1599,7 +1599,7 @@ static void intoTree(struct htmlTag *parent)
 				const char *w = "root";
 				if (treeAttach)
 					w = treeAttach->info->name;
-				debugPrint(5, "node up %s to %s", t->info->name,
+				debugPrint(4, "node up %s to %s", t->info->name,
 					   w);
 				t->parent = treeAttach;
 				if (treeAttach) {
@@ -1618,11 +1618,14 @@ static void intoTree(struct htmlTag *parent)
 		}
 
 /* regular linking through the parent node */
-		t->parent = parent;
+/* Could be treeAttach if this is a frame inside a window */
+		t->parent = (parent ? parent : treeAttach);
 		if (prev) {
 			prev->sibling = t;
 		} else if (parent) {
 			parent->firstchild = t;
+		} else if (treeAttach) {
+			treeAttach->firstchild = t;
 		}
 		prev = t;
 

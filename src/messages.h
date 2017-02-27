@@ -573,7 +573,7 @@ enum {
 	MSG_NJNoReset,
 	MSG_NJNoSubmit,
 	MSG_LostTag,
-	MSG_notused476,
+	MSG_ExpGo,
 	MSG_GarbledRefresh,
 	MSG_notused478,
 	MSG_RedirectNoURL,
