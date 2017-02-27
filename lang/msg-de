@@ -389,12 +389,12 @@ kann auf %s nicht zugreifen
 $%s ungültige
 ~%s ungültige
 Senden
-0
+Daten aus Rahmen sind kein HTML
  (gesichert)
  per Email
 Reset
 unerwarteter Fehler beim Auswerten des Shell-Musters
-0
+Rahmen hat keine hinterlegte Webseite
 Shell-Muster passt auf mehr als eine Datei
 Zeile wird zu lang, wenn Shell-Variablen expandiert werden
 Konfigurationsdatei gibt keine Datenbank an - keine Verbindung möglich
@@ -473,13 +473,13 @@ JavaScript deaktiviert, überspringe Onchange-Code
 JavaScript deaktiviert, überspringe Onreset-Code
 JavaScript deaktiviert, überspringe Onsubmit-Code
 konnte HTML-Tag nicht finden, mit dem die zu verändernde JavaScript-Variable verknüpft ist
-0
+Nutzen Sie exp zum Ausklappen eines Rahmens
 Warnung, deffekte Anweisung zum Aktualisieren der Seite, %s\n
 0
 Warnung, HTTP-Weiterleitung %ld, aber keine neue URL angegeben\n
 Warnung, HTTP-Fehler %ld, %s\n
-0
-0
+Keine Rahmen zum Ausklappen
+Keine Rahmen zum Zusammenklappen
 Hilfetexte aktiviert
 FTP download:
 keine Datei für SSL-Zertifikate angegeben, sichere Verbindungen können nicht überprüft werden.
