@@ -389,12 +389,12 @@ nie można odczytać %s
 $%s nie jest zdefiniowana
 ~%s nie jest zdefiniowana
 Idź
-0
+dane w ramce to nie HTML
  bezpieczne
  bymail
 Reset
 nieoczekiwany błąd podczas wykonywania wzorca powłoki
-0
+ramka nie posiada powiązanej strony web
 wzorzec powłoki pasuje do więcej niż jednego pliku
 wiersz zbyt długi po rozwinięciu zmiennych powłoki
 plik konfiguracyjny nie podaje bazy danych - nie można połączyć
@@ -473,13 +473,13 @@ JavaScript wyłączony, pomijanie kodu 'onchange'
 JavaScript wyłączony, pomijanie kodu 'onreset'
 JavaScript wyłączony, pomijanie kodu 'onsubmit'
 nie można znaleźć tagu HTML skojarzonego ze zmienną modyfikowaną w kodzie JavaScript
-0
+proszę, użyj exp by rozwinąć ramkę
 uwaga: zniekształcona dyrektywa odświeżania, %s\n
 0
 uwaga: przekierowanie HTTP %ld, ale brak nowego adresu URL\n
 uwaga: błąd HTTP %ld, %s\n
-0
-0
+brak ramek do rozwinięcia
+brak ramek do zwinięcia
 wiadomości pomocnicze włączone
 ściąganie ftp: 
 nie podano pliku z certyfikatem SSL; bezpieczne połączenie nie może zostać zweryfikowane
