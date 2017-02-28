@@ -4912,7 +4912,7 @@ bool runCommand(const char *line)
 			p = (char *)fetchLine(endRange, -1);
 			findField(p, 0, j, &n, 0, &tagno, &h, &tag);
 			debugPrint(5, "findField returns %d, %s", tagno, h);
-			if (tag->action == TAGACT_FRAME) {
+			if (tag && tag->action == TAGACT_FRAME) {
 				cmd = 'g';
 				setError(MSG_ExpGo);
 				return false;
