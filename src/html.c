@@ -283,7 +283,7 @@ This line sets the current frame, then we're ready to roll.
 		if (itype >= INP_RADIO) {
 			int checked = fieldIsChecked(t->seqno);
 			if (checked < 0)
-				checked = t->rchecked;
+				continue;
 			t->checked = checked;
 			set_property_bool(t->jv, "checked", checked);
 			continue;
@@ -292,9 +292,9 @@ This line sets the current frame, then we're ready to roll.
 		value = getFieldFromBuffer(t->seqno);
 /* If that line has been deleted from the user's buffer,
  * indicated by value = 0,
- * revert back to the original (reset) value. */
+ * then don't do anything. */
 		if (!value)
-			value = cloneString(t->rvalue);
+			continue;
 
 		if (itype == INP_SELECT) {
 /* set option.selected in js based on the option(s) in value */
@@ -2647,6 +2647,8 @@ li_hide:
 	if (!opentag && ti->bits & TAG_NOSLASH)
 		return;
 
+	cf = t->f0;
+
 	retainTag = true;
 	if (invisible)
 		retainTag = false;
@@ -2946,7 +2948,7 @@ unparen:
 		}
 		stringAndChar(&ns, &ns_l, '\r');
 		if (t->f1 && t->contracted)	/* contracted frame */
-deltag = t;
+			deltag = t;
 		break;
 
 	case TAGACT_MUSIC:
