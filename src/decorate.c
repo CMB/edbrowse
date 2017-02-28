@@ -118,6 +118,7 @@ static void makeButton(void)
 	t->controller = currentForm;
 	t->itype = INP_SUBMIT;
 	t->value = emptyString;
+	t->step = 1;
 	linkinTree(currentForm, t);
 }				/* makeButton */
 
@@ -336,16 +337,17 @@ void htmlInputHelper(struct htmlTag *t)
 	int len;
 	char *myname = (t->name ? t->name : t->id);
 	const char *s = attribVal(t, "type");
-	if (s) {
+	if (stringEqual(t->info->name, "button")) {
+		n = INP_BUTTON;
+	} else if (s) {
 		n = stringInListCI(inp_types, s);
 		if (n < 0) {
 			n = stringInListCI(inp_others, s);
-			if (n < 0)
+			if (n < 0) {
 				debugPrint(3, "unrecognized input type %s", s);
-			n = INP_TEXT;
+				n = INP_TEXT;
+			}
 		}
-	} else if (stringEqual(t->info->name, "BUTTON")) {
-		n = INP_BUTTON;
 	}
 	t->itype = n;
 
