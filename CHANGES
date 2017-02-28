@@ -13,6 +13,10 @@ Currently a substring, may become a regexp later.
 g? prints the url for the link instead of going to it. You can look before you leap.
 Also g2? g$? etc.
 
+Represent multiple frames in one edbrowse window. Each has its own javascript world.
+At this point the worlds do not interact.
+You can expand and contract frames by the exp and ctr commands.
+
 3.6.2:
 Read and convert utf16 and utf32 as per the byte order mark.
 convert such files to utf8 or iso8859-1 as per the console setting,
