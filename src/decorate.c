@@ -1115,6 +1115,15 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		return;
 	t->step = 2;
 
+/*********************************************************************
+If js is off, and you don't decorate this tree,
+then js is turned on later, and you parse and decorate a frame,
+it might also decorate this tree in the wrong context.
+Needless to say that's not good!
+*********************************************************************/
+	if (t->f0 != cf)
+		return;
+
 	debugPrint(6, "decorate %s %d", t->info->name, t->seqno);
 
 	switch (action) {

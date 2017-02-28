@@ -587,12 +587,11 @@ top:
 		t = tagList[j];
 		if (t->action != TAGACT_SCRIPT)
 			continue;
-		if (!t->jv)
-			continue;
 		if (t->step >= 3)
 			continue;
-/* now running the script */
-		t->step = 3;
+		t->step = 3;	/* now running the script */
+		if (!t->jv)
+			continue;
 		change = true;
 
 		prepareScript(t);
