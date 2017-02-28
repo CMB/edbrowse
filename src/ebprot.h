@@ -194,6 +194,7 @@ void deleteNovsHosts(void);
 CURLcode setCurlURL(CURL * h, const char *url) ;
 const char *findProxyForURL(const char *url) ;
 bool frameExpand(bool expand, int ln1, int ln2);
+struct htmlTag *line2frame(int ln);
 
 /* sourcefile=main.c */
 const char *mailRedirect(const char *to, const char *from, const char *reply, const char *subj) ;

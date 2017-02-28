@@ -3586,17 +3586,29 @@ pwd:
 	if (stringEqual(line, "jdb")) {
 		char *cxbuf;
 		int cxbuflen;
+		const struct htmlTag *t;
 		cmd = 'e';
 		if (!cw->browseMode) {
 			setError(MSG_NoBrowse);
 			return false;
 		}
+/* debug the js context of the frame you are in */
+		t = line2frame(cw->dot);
+		if (t)
+			cf = t->f1;
+		else
+			selfFrame();
 		if (!isJSAlive) {
 			setError(MSG_JavaOff);
 			return false;
 		}
 		jexmode = true;
 		jSyncup(false);
+/* the sync could have changed cf */
+		if (t)
+			cf = t->f1;
+		else
+			selfFrame();
 		return true;
 	}
 
@@ -4437,10 +4449,11 @@ bool runCommand(const char *line)
 			setError(MSG_NoBrowse);
 			return false;
 		}
+		jSyncup(false);
 		if (!frameExpand((line[0] == 'e'), startRange, endRange))
 			showError();
 /* even if one frame failed to expand, another might, so always rerender */
-		rerender(true);
+		rerender(false);
 		return true;
 	}
 

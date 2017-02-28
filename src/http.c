@@ -2390,7 +2390,6 @@ const char *findProxyForURL(const char *url)
  * or if none of the lines are frames. */
 static int frameExpandLine(int lineNumber);
 static int frameContractLine(int lineNumber);
-static struct htmlTag *line2frame(int lineNumber);
 static const char *stringInBufLine(const char *s, const char *t);
 bool frameExpand(bool expand, int ln1, int ln2)
 {
@@ -2458,6 +2457,7 @@ static int frameExpandLine(int ln)
 /* have to push a new frame before we read the web page */
 	for (last_f = &(cw->f0); last_f->next; last_f = last_f->next) ;
 	last_f->next = cf = allocZeroMem(sizeof(struct ebFrame));
+	cf->owner = cw;
 	debugPrint(2, "fetch frame %s", s);
 	if (!readFileArgv(s)) {
 /* serverData was never set, or was freed do to some other error. */
@@ -2549,7 +2549,7 @@ static int frameContractLine(int ln)
 	return 0;
 }				/* frameContractLine */
 
-static struct htmlTag *line2frame(int ln)
+struct htmlTag *line2frame(int ln)
 {
 	const char *line;
 	int n, opentag = 0, ln1 = ln;
