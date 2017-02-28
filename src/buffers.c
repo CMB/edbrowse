@@ -1592,10 +1592,12 @@ fromdisk:
 	if (!rc)
 		return false;
 	serverData = rbuf;
+	serverDataLen = fileSize;
 	if (fileSize == 0) {	/* empty file */
-		free(rbuf);
-		if (!inframe)
+		if (!inframe) {
 			cw->dot = endRange;
+			free(rbuf);
+		}
 		return true;
 	}
 
