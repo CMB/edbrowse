@@ -2945,7 +2945,8 @@ findField(const char *line, int ftype, int n,
 				if (!*href || !stringEqual(*href, jh)) {
 					nzFree(*href);
 					*href = jh;
-				}
+				} else
+					nzFree(jh);
 			}
 		}
 	}
@@ -4365,7 +4366,8 @@ bool runCommand(const char *line)
 	}
 
 	if (first == 'w' || first == 'v' || first == 'g' &&
-	    line[1] && strchr(valid_delim, line[1])) {
+	    line[1] && strchr(valid_delim, line[1]) &&
+	    !stringEqual(line, "g?")) {
 		didRange = true;
 		startRange = 1;
 		if (cw->dol == 0)
@@ -4860,6 +4862,11 @@ bool runCommand(const char *line)
 		int tagno;
 		bool click, dclick, over;
 		bool jsh, jsgo, jsdead;
+		bool lookmode = false;
+
+		j = strlen(line);
+		if (j && line[j - 1] == '?')
+			lookmode = true;
 
 		/* Check to see if g means run an sql command. */
 		if (!first) {
@@ -4895,6 +4902,8 @@ bool runCommand(const char *line)
 			else if (first == '$')
 				j = -1, ++s;
 		}
+		if (*s == '?')
+			++s;
 		if (!*s) {
 			if (cw->sqlMode) {
 				setError(MSG_DBG);
@@ -4912,16 +4921,25 @@ bool runCommand(const char *line)
 			p = (char *)fetchLine(endRange, -1);
 			findField(p, 0, j, &n, 0, &tagno, &h, &tag);
 			debugPrint(5, "findField returns %d, %s", tagno, h);
-			if (tag && tag->action == TAGACT_FRAME) {
-				cmd = 'g';
-				setError(MSG_ExpGo);
-				return false;
-			}
+
 			if (!h) {
 				fieldNumProblem(1, 'g', j, n, n);
 				return false;
 			}
 			jsh = memEqualCI(h, "javascript:", 11);
+
+			if (lookmode) {
+				puts(jsh ? "javascript:" : h);
+				nzFree(h);
+				return true;
+			}
+
+			if (tag && tag->action == TAGACT_FRAME) {
+				setError(MSG_ExpGo);
+				nzFree(h);
+				return false;
+			}
+
 			if (tagno) {
 				over = tagHandler(tagno, "onmouseover");
 				click = tagHandler(tagno, "onclick");
@@ -4943,6 +4961,7 @@ bool runCommand(const char *line)
 					i_puts(MSG_NJGoing);
 				jsgo = jsh = false;
 			}
+/* because I am setting allocatedLine to h, I don't have to free it */
 			line = allocatedLine = h;
 			first = *line;
 			setError(-1);

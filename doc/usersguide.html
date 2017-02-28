@@ -561,6 +561,9 @@ Interact with a Web Page
 g : go to the link on the current line
 <br>g2 : go to the second link on the current line
 <br>g$ : go to the last link on the current line
+<br>g? : print the url for the link on the current line
+<br>g2? : print the url for the second link
+<br>g$? : print the url for the last link
 <br>^ : the back key, go back to the web page you were looking at before
 <br>i=xyz : set the input field on the current line to xyz
 <br>i2=xyz : set the second input field on the current line to xyz
@@ -1889,6 +1892,7 @@ and 4g follows the link on line 4.
 g$ activates the last link on the line.
 If a link spreads across multiple lines, you must be on the first of these lines,
 the line containing the left brace.
+Use g? to print the url - where you will go if you type g.
 
 <P>
 The g command can also act on a link that is written in raw text,

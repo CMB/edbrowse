@@ -2912,7 +2912,7 @@ unparen:
 
 		if (t->f1) {	/* expanded frame */
 			sprintf(hnum, "\r%c%d*%s\r", InternalCodeChar, tagno,
-				(opentag ? "<--" : "-->"));
+				(opentag ? "[--" : "--]"));
 			ns_hnum();
 			break;
 		}
