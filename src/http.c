@@ -2390,21 +2390,13 @@ const char *findProxyForURL(const char *url)
  * or if none of the lines are frames. */
 static int frameExpandLine(int lineNumber);
 static int frameContractLine(int lineNumber);
+static struct htmlTag *line2frame(int lineNumber);
+static const char *stringInBufLine(const char *s, const char *t);
 bool frameExpand(bool expand, int ln1, int ln2)
 {
 	int ln;			/* line number */
 	int problem = 0, p;
 	bool something_worked = false;
-
-	if (ln2 == 0) {
-		setError(MSG_EmptyBuffer);
-		return false;
-	}
-
-	if (!cw->browseMode) {
-		setError(MSG_NoBrowse);
-		return false;
-	}
 
 	for (ln = ln1; ln <= ln2; ++ln) {
 		if (expand)
@@ -2440,7 +2432,7 @@ static int frameExpandLine(int ln)
 	bool remote;
 
 	line = fetchLine(ln, -1);
-	s = strstr(line, "Frame ");
+	s = stringInBufLine(line, "Frame ");
 	if (!s)
 		return 1;
 	if ((s = strchr(s, InternalCodeChar)) == NULL)
@@ -2550,5 +2542,51 @@ So check for serverData null here. Once again we pop the frame.
 
 static int frameContractLine(int ln)
 {
-	return 1;
+	struct htmlTag *t = line2frame(ln);
+	if (!t)
+		return 1;
+	t->contracted = true;
+	return 0;
 }				/* frameContractLine */
+
+static struct htmlTag *line2frame(int ln)
+{
+	const char *line;
+	int n, opentag = 0, ln1 = ln;
+	const char *s;
+
+	for (; ln; --ln) {
+		line = (char *)fetchLine(ln, -1);
+		if (!opentag && ln < ln1
+		    && (s = stringInBufLine(line, "*--`\n"))) {
+			for (--s; s > line && *s != InternalCodeChar; --s) ;
+			if (*s == InternalCodeChar)
+				opentag = atoi(s + 1);
+			continue;
+		}
+		s = stringInBufLine(line, "*`--\n");
+		if (!s)
+			continue;
+		for (--s; s > line && *s != InternalCodeChar; --s) ;
+		if (*s != InternalCodeChar)
+			continue;
+		n = atoi(s + 1);
+		if (!opentag)
+			return tagList[n];
+		if (n == opentag)
+			opentag = 0;
+	}
+
+	return 0;
+}				/* line2frame */
+
+/* a text line in the buffer isn't a string; you can't use strstr */
+static const char *stringInBufLine(const char *s, const char *t)
+{
+	int n = strlen(t);
+	for (; *s != '\n'; ++s) {
+		if (!strncmp(s, t, n))
+			return s;
+	}
+	return 0;
+}				/* stringInBufLine */

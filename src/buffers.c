@@ -4428,6 +4428,15 @@ bool runCommand(const char *line)
 			setError(MSG_GlobalCommand2, line);
 			return false;
 		}
+		cmd = 'e';
+		if (endRange == 0) {
+			setError(MSG_EmptyBuffer);
+			return false;
+		}
+		if (!cw->browseMode) {
+			setError(MSG_NoBrowse);
+			return false;
+		}
 		if (!frameExpand((line[0] == 'e'), startRange, endRange))
 			showError();
 /* even if one frame failed to expand, another might, so always rerender */

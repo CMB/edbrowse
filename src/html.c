@@ -2945,6 +2945,8 @@ unparen:
 			stringAndString(&ns, &ns_l, "0}");
 		}
 		stringAndChar(&ns, &ns_l, '\r');
+		if (t->f1 && t->contracted)	/* contracted frame */
+deltag = t;
 		break;
 
 	case TAGACT_MUSIC:
