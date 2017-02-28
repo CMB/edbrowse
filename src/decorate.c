@@ -245,6 +245,11 @@ static void emptyAnchors(int start)
 /* would moving this create nested anchors? */
 		if (tagBelow(div, TAGACT_A))
 			continue;
+/* shouldn't have inputs or forms in an anchor. */
+		if (tagBelow(div, TAGACT_INPUT))
+			continue;
+		if (tagBelow(div, TAGACT_FORM))
+			continue;
 		up->sibling = div->sibling;
 		a0->firstchild = div;
 		div->parent = a0;
