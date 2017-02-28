@@ -3534,6 +3534,7 @@ pwd:
 
 	if (stringEqual(line, "rf")) {
 		cmd = 'e';
+		selfFrame();
 		if (!cf->fileName) {
 			setError(MSG_NoRefresh);
 			return false;
@@ -4717,6 +4718,7 @@ bool runCommand(const char *line)
 			}
 			return writeContext(cx);
 		}
+		selfFrame();
 		if (!first)
 			line = cf->fileName;
 		if (!line) {

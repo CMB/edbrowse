@@ -852,7 +852,7 @@ char *htmlReformat(char *buf)
 
 /* It's a little thing really, but the blank line at the top of each frame annoys me */
 	fmark = new;
-	while (fmark = strstr(fmark + 1, "*[--\n\n")) {
+	while (fmark = strstr(fmark + 1, "*`--\n\n")) {
 		if (isdigit(fmark[-1]))
 			strmove(fmark + 5, fmark + 6);
 	}

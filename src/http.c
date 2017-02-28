@@ -2454,7 +2454,7 @@ static int frameExpandLine(int ln)
 
 /* the easy case is if it's already been expanded before, we just unhide it. */
 	if (t->f1) {
-		t->deleted = false;
+		t->contracted = false;
 		return 0;
 	}
 

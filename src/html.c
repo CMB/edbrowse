@@ -2910,9 +2910,9 @@ unparen:
 		if (!retainTag)
 			break;
 
-		if (t->f1) {	/* expanded frame */
+		if (t->f1 && !t->contracted) {	/* expanded frame */
 			sprintf(hnum, "\r%c%d*%s\r", InternalCodeChar, tagno,
-				(opentag ? "[--" : "--]"));
+				(opentag ? "`--" : "--`"));
 			ns_hnum();
 			break;
 		}
