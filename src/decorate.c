@@ -1134,6 +1134,9 @@ Needless to say that's not good!
 	debugPrint(6, "decorate %s %d", t->info->name, t->seqno);
 
 	switch (action) {
+		jsobjtype cd;	/* contentDocument */
+		jsobjtype cdbody;	/* contentDocument.body */
+
 	case TAGACT_TEXT:
 		t->jv = instantiate(cf->docobj, fakePropName(), "TextNode");
 		if (t->jv) {
@@ -1281,6 +1284,13 @@ Needless to say that's not good!
 	case TAGACT_FRAME:
 		domLink(t, "Frame", "src", "frames", cf->winobj, 0);
 		set_property_number(t->jv, "nodeType", 1);
+/* frames have contentDocument below, even though it is not populated
+ * with the frame's dom as of this version of edbrowse. */
+		cd = instantiate(t->jv, "contentDocument", "Document");
+		cdbody = instantiate(cd, "body", "Body");
+		instantiate(cdbody, "style", 0);
+		instantiate_url(cd, "location", t->href);
+/* perhaps other stuff that a frame document always needs */
 		break;
 
 	case TAGACT_IMAGE:

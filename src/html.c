@@ -373,6 +373,12 @@ void htmlMetaHelper(struct htmlTag *t)
 	char **ptr;
 	char *copy = 0;
 
+/* if we're generating a cookie, we better get the frame right,
+ * because that's the url that the cookie belongs to.
+ * I think the frame is correct anyways, because we are parsing html,
+ * but just to be safe ... */
+	cf = t->f0;
+
 	name = t->name;
 	content = attribVal(t, "content");
 	copy = cloneString(content);
