@@ -343,10 +343,9 @@ void htmlInputHelper(struct htmlTag *t)
 		n = stringInListCI(inp_types, s);
 		if (n < 0) {
 			n = stringInListCI(inp_others, s);
-			if (n < 0) {
+			if (n < 0)
 				debugPrint(3, "unrecognized input type %s", s);
-				n = INP_TEXT;
-			}
+			n = INP_TEXT;
 		}
 	}
 	t->itype = n;
