@@ -438,7 +438,7 @@ and it lets me type at the keyboard.
 		if (rc == 0) {	/* timeout */
 dotimers:
 			runTimers();
-/* in case a timer set document.location.hreg to a new page */
+/* in case a timer set document.location to a new page */
 			if (newlocation) {
 				debugPrint(2, "redirect %s", newlocation);
 				s = allocMem(strlen(newlocation) + 4);
@@ -5368,7 +5368,7 @@ browse:
 		}
 
 		if (newlocation) {
-			if (!refreshDelay(newloc_d, newlocation)) {
+			if (!shortRefreshDelay()) {
 				nzFree(newlocation);
 				newlocation = 0;
 			} else {

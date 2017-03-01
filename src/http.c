@@ -56,8 +56,16 @@ static time_t ht_modtime;	/* http modification time */
 static char *ht_etag;		/* the etag in the header */
 static bool ht_cacheable;
 
-/* This function is called for web redirection, by the refresh command,
- * or by window.location = new_url. */
+/*********************************************************************
+This function is called for a new web page, by http refresh,
+or by http redirection,
+or by document.location = new_url, or by new Window().
+If delay is 0 or less then the action should happen now.
+-1 is from http header location:
+The refresh parameter means replace the current page.
+This is false only if js creates a new window, which should stack up on top of the old.
+*********************************************************************/
+
 char *newlocation;
 int newloc_d;			/* possible delay */
 bool newloc_r;			/* replace the buffer */
@@ -199,8 +207,7 @@ static void scan_http_headers(bool fromCallback)
 
 	if ((newlocation == NULL) && (v = find_http_header("location"))) {
 		unpercentURL(v);
-		newlocation = v;
-		newloc_d = -1;
+		gotoLocation(v, -1, true);
 	}
 
 	if (v = find_http_header("refresh")) {
@@ -765,14 +772,14 @@ bool parseRefresh(char *ref, int *delay_p)
 
 /* Return true if we waited for the duration, false if interrupted.
  * I don't know how to do this in Windows. */
-bool refreshDelay(int sec, const char *u)
+bool shortRefreshDelay(void)
 {
-/* the value 15 seconds is somewhat arbitrary */
-	if (sec < 15)
+/* the value 10 seconds is somewhat arbitrary */
+	if (newloc_d < 10)
 		return true;
-	i_printf(MSG_RedirectDelayed, u, sec);
+	i_printf(MSG_RedirectDelayed, newlocation, newloc_d);
 	return false;
-}				/* refreshDelay */
+}				/* shortRefreshDelay */
 
 static char *urlcopy;
 static int urlcopy_l;
@@ -1169,11 +1176,11 @@ they go where they go, so this doesn't come up very often.
 
 /* refresh header is an alternate form of redirection */
 		if (newlocation && newloc_d >= 0) {
-			if (!refreshDelay(newloc_d, newlocation)) {
+			if (shortRefreshDelay()) {
+				ht_code = 302;
+			} else {
 				nzFree(newlocation);
 				newlocation = 0;
-			} else {
-				ht_code = 302;
 			}
 		}
 

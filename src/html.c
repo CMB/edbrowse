@@ -560,6 +560,14 @@ static void prepareScript(struct htmlTag *t)
 	t->js_file = cloneString(filepart);
 }				/* prepareScript */
 
+/*********************************************************************
+Run pending scripts, and perform other actions that have been queued up by javascript.
+This includes document.write, linkages, perhaps even form.submit.
+Things stop however if we detect document.location = new_url,
+i.e. a page replacement, as indicated by the newlocation variable being set.
+The old page doesn't matter any more.
+*********************************************************************/
+
 void runScriptsPending(void)
 {
 	struct htmlTag *t;

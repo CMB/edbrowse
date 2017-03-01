@@ -183,7 +183,7 @@ int base64Decode(char *start, char **end);
 char *extractHeaderParam(const char *str, const char *item) ;
 time_t parseHeaderDate(const char *date) ;
 bool parseRefresh(char *ref, int *delay_p) ;
-bool refreshDelay(int sec, const char *u) ;
+bool shortRefreshDelay(void);
 bool httpConnect(const char *url, bool down_ok, bool webpage, bool f_encoded, char **headers_p, char **body_p, int *bodlen_p);
 void ebcurl_setError(CURLcode curlret, const char *url) ;
 void setHTTPLanguage(const char *lang) ;
