@@ -2272,13 +2272,13 @@ bool timerWait(int *delay_sec, int *delay_ms)
 	return true;
 }				/* timerWait */
 
-void delTimers(struct ebWindow *w)
+void delTimers(struct ebFrame *f)
 {
 	int delcount = 0;
 	struct jsTimer *jt, *jnext;
 	for (jt = timerList.next; jt != (void *)&timerList; jt = jnext) {
 		jnext = jt->next;
-		if (jt->frame->owner == w) {
+		if (jt->frame == f) {
 			++delcount;
 			delFromList(jt);
 			nzFree(jt);
@@ -2286,6 +2286,14 @@ void delTimers(struct ebWindow *w)
 	}
 	debugPrint(4, "%d timers deleted", delcount);
 }				/* delTimers */
+
+void delInputChanges(struct ebFrame *f)
+{
+	struct inputChange *ic;
+	foreach(ic, inputChangesPending)
+	    if (ic->f0 == f)
+		ic->major = 'x';
+}				/* delInputChanges */
 
 void runTimers(void)
 {
@@ -2432,6 +2440,7 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 		ic->tagno = 0;
 		ic->major = 'l';
 		ic->minor = type;
+		ic->f0 = cf;
 		strcpy(ic->value, rest);
 		addToListBack(&inputChangesPending, ic);
 		return;

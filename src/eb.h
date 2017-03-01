@@ -335,6 +335,7 @@ struct inputChange {
 	int tagno;
 	char major, minor;
 	char filler1, filler2;
+	struct ebFrame *f0;
 	char value[4];
 };
 extern struct listHead inputChangesPending;

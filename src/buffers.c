@@ -441,8 +441,9 @@ dotimers:
 /* in case a timer set document.location to a new page */
 			if (newlocation) {
 				debugPrint(2, "redirect %s", newlocation);
-				s = allocMem(strlen(newlocation) + 4);
-				sprintf(s, "b %s\n", newlocation);
+				s = allocMem(strlen(newlocation) + 8);
+				sprintf(s, "%sb %s\n", (newloc_r ? "ReF@" : ""),
+					newlocation);
 				nzFree(newlocation);
 				newlocation = 0;
 				return s;
@@ -796,9 +797,10 @@ static void freeWindow(struct ebWindow *w)
 {
 	struct ebFrame *f, *fnext;
 	freeTags(w);
-	delTimers(w);
 	for (f = &w->f0; f; f = fnext) {
 		fnext = f->next;
+		delTimers(f);
+		delInputChanges(f);
 		freeJavaContext(f);
 		nzFree(f->dw);
 		nzFree(f->hbase);
@@ -3642,9 +3644,10 @@ et_go:
 			cw->r_map = 0;
 		}
 		freeTags(cw);
-		delTimers(cw);
 		cw->mustrender = false;
 		for (f = &cw->f0; f; f = f->next) {
+			delTimers(f);
+			delInputChanges(f);
 			freeJavaContext(f);
 			f->jcx = NULL;
 			nzFree(f->dw);
@@ -4331,6 +4334,10 @@ bool runCommand(const char *line)
 /* Watch for successive q commands. */
 		lastq = lastqq, lastqq = 0;
 		noStack = false;
+		if (!strncmp(line, "ReF@b", 5)) {
+			line += 4;
+			noStack = true;
+		}
 
 /* special 2 letter commands - most of these change operational modes */
 		j = twoLetter(line, &line);

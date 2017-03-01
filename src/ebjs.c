@@ -222,6 +222,7 @@ static void javaSetsInner(jsobjtype v, const char *newtext, char c)
 	ic->tagno = t->seqno;
 	ic->major = 'i';
 	ic->minor = c;
+	ic->f0 = cf;
 	strcpy(ic->value, newtext);
 	addToListBack(&inputChangesPending, ic);
 }				/* javaSetsInner */
@@ -303,6 +304,7 @@ static void processEffects(void)
 			ic->tagno = n;
 			ic->major = 't';
 			ic->minor = v[-1];
+			ic->f0 = cf;
 			strcpy(ic->value, s);
 			addToListBack(&inputChangesPending, ic);
 			break;
