@@ -313,7 +313,7 @@ enum {
 	MSG_ArrowAfter,
 	MSG_NoPrevious,
 	MSG_MAfter,
-	MSG_NoDestSession,
+	MSG_MovedSession,
 	MSG_NoBackup,
 	MSG_RangeG,
 	MSG_DBG,

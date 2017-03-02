@@ -17,6 +17,8 @@ Represent multiple frames in one edbrowse window. Each has its own javascript wo
 At this point the worlds do not interact.
 You can expand and contract frames by the exp and ctr commands.
 
+The M (move) command does not require a destination session; edbrowse finds an empty session for you.
+
 3.6.2:
 Read and convert utf16 and utf32 as per the byte order mark.
 convert such files to utf8 or iso8859-1 as per the console setting,

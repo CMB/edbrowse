@@ -573,7 +573,8 @@ g : go to the link on the current line
 <br>i2* : push the second button on the current line, usually submit or reset
 <br>i$* : push the last button on the current line
 <br>i3? : describe the third input field on the current line
-<br>M4 : move this web page to session 4 and return to the previous page
+<br>M4 : move this web page to session 4 and back up to the previous page
+<br>M : move this web page to an empty session and back up
 <br>js : allow javascript (toggle)
 <br>xhr : allow XHR (toggle)
 <br>rr : rerender the screen, to reflect asynchronous javascript changes
@@ -2000,6 +2001,7 @@ After you've visited the appendix, use the label 'r to return to your original l
 
 <H3> <A NAME=move> The M Command </A> </H3>
 
+<P>
 If you want to read and/or interact with several web pages in parallel,
 pages that would normally stack up,
 you can move each one to another session using the capital M command.
@@ -2040,6 +2042,12 @@ M4
 Now sessions 2 3 and 4 are the subpages about plains trains and automobiles respectively.
 You can fill out forms or follow hyperlinks in any of them,
 or stay in session 1 and do something else.
+
+<P>
+Edbrowse clobbers the destination session, unless there are edits that have not been written out to a file.
+You can issue the M command without a destination if you are not sure which sessions are available.
+Edbrowse will pick an empty session for you
+and print something like "moved to session 15".
 
 <H3> <A NAME=music> Background Music </A> </H3>
 
