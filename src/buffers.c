@@ -4797,21 +4797,25 @@ bool runCommand(const char *line)
 			setError(MSG_MAfter);
 			return false;
 		}
-		if (!first) {
-			setError(MSG_NoDestSession);
-			return false;
-		}
 		if (!cw->prev) {
 			setError(MSG_NoBackup);
 			return false;
 		}
-		if (!cxCompare(cx))
-			return false;
+		if (cx) {
+			if (!cxCompare(cx))
+				return false;
+		} else {
+			cx = sideBuffer(0, emptyString, 0, NULL);
+			if (cx == 0)
+				return false;
+		}
+/* we likely just created it; now quit it */
 		if (cxActive(cx) && !cxQuit(cx, 2))
 			return false;
 /* If changes were made to this buffer, they are undoable after the move */
 		undoCompare();
 		cw->undoable = false;
+		i_printf(MSG_MovedSession, cx);
 /* Magic with pointers, hang on to your hat. */
 		sessionList[cx].fw = sessionList[cx].lw = cw;
 		cs->lw = cw->prev;

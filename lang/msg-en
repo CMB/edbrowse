@@ -213,7 +213,7 @@ cannot write to the database; rows are modified as you go
 unexpected text after the ^ command
 no previous text
 unexpected text after the M command
-destination session not specified
+moved to session %d\n
 no previous text, cannot back up
 cannot apply the g command to a range
 g not available in database mode

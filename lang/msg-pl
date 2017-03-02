@@ -213,7 +213,7 @@ nie można zapisać w bazie danych; rekordy będą modyfikowane na bieżąco
 nieoczekiwany tekst po poleceniu '^'
 brak poprzedniego tekstu
 nieoczekiwany tekst po poleceniu 'M'
-nie podano sesji docelowej
+0
 brak poprzedniego tekstu, nie można zapisać
 nie można zastosować polecenia 'g' do zakresu
 polecenie 'g' niedostępne w trybie bazy danych
