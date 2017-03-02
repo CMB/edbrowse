@@ -1,6 +1,6 @@
 EOF
 no file
-new window
+redirect
 substitutions global
 substitutions local
 case insensitive
@@ -475,7 +475,7 @@ javascript disabled, skipping the onsubmit code
 could not find the html tag associated with the javascript variable being modified
 please use exp to expand a frame
 warning: garbled refresh directive, %s\n
-0
+new window
 warning: http redirection %ld, but a new url is not specified\n
 warning: http error %ld, %s\n
 no frames to expand

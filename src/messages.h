@@ -575,7 +575,7 @@ enum {
 	MSG_LostTag,
 	MSG_ExpGo,
 	MSG_GarbledRefresh,
-	MSG_notused478,
+	MSG_NewWindow,
 	MSG_RedirectNoURL,
 	MSG_HTTPError,
 	MSG_NoFrame1,

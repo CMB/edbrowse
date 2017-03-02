@@ -1,6 +1,6 @@
 Ende
 keine Datei
-neues Fenster
+Weiterleitung
 globale Ersetzungen
 lokale Ersetzungen
 keine Groß- und Kleinschreibung beachten
@@ -475,7 +475,7 @@ JavaScript deaktiviert, überspringe Onsubmit-Code
 konnte HTML-Tag nicht finden, mit dem die zu verändernde JavaScript-Variable verknüpft ist
 Nutzen Sie exp zum Ausklappen eines Rahmens
 Warnung, deffekte Anweisung zum Aktualisieren der Seite, %s\n
-0
+neues Fenster
 Warnung, HTTP-Weiterleitung %ld, aber keine neue URL angegeben\n
 Warnung, HTTP-Fehler %ld, %s\n
 Keine Rahmen zum Ausklappen

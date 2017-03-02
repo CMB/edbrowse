@@ -1,6 +1,6 @@
 EOF - fin de fichier
 pas de fichier
-nouvelle fenêtre
+redirection
 substitutions globales
 substitutions locales
 insensible à la casse
@@ -475,7 +475,7 @@ javascript désactivé, code onsubmit ignoré
 impossible de trouver la balise html associée à la variable javascript modifiée
 utilisez svp exp pour déployer un cadre
 attention : directive de rafraîchissement altérée, %s\n
-0
+nouvelle fenêtre
 attention: redirection http %ld, mais la nouvelle url n'a pas été spécifiée\n
 attention : erreur html %ld, %s\n
 pas de cadres à déployer

@@ -1,6 +1,6 @@
 Fim do arquivo
 nenhum arquivo
-nova para
+redireção
 substituição é global
 substituição é local
 não diferencia maiúsculas
@@ -475,7 +475,7 @@ javascript desligado; ignorando código onsubmit
 não consegui achar a etiqueta HTML associada à variável javascript que está sendo modificada
 por favor use exp para expandir uma freime
 aviso: diretiva de atualização adulterada; %s\n
-0
+nova para
 aviso: redirecionamento HTTP %ld mas não foi especificada uma URL nova\n
 aviso: erro de HTTP %ld, %s\n
 sem freimes a expandir

@@ -2363,7 +2363,7 @@ void javaOpensWindow(const char *href, const char *name)
 	unpercentURL(copy);
 	r = resolveURL(cf->hbase, copy);
 	nzFree(copy);
-	if (replace || cw->browseMode && foregroundWindow) {
+	if ((replace || cw->browseMode) && foregroundWindow) {
 		gotoLocation(r, 0, replace);
 		return;
 	}
@@ -2372,7 +2372,8 @@ void javaOpensWindow(const char *href, const char *name)
 /* just shovel this onto dw, as though it came from document.write() */
 	dwStart();
 	stringAndString(&cf->dw, &cf->dw_l, "<P>");
-	stringAndString(&cf->dw, &cf->dw_l, i_getString(MSG_Redirect));
+	stringAndString(&cf->dw, &cf->dw_l,
+			i_getString(replace ? MSG_Redirect : MSG_NewWindow));
 	stringAndString(&cf->dw, &cf->dw_l, ": <A href=");
 	stringAndString(&cf->dw, &cf->dw_l, r);
 	stringAndChar(&cf->dw, &cf->dw_l, '>');
