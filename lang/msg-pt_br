@@ -1,6 +1,6 @@
 Fim do arquivo
 nenhum arquivo
-redireção
+nova para
 substituição é global
 substituição é local
 não diferencia maiúsculas
@@ -213,7 +213,7 @@ impossível escrever no banco de dados; as linhas são modificadas conforme voc�
 texto inesperado após o comando ^
 sem texto anterior
 texto inesperado após o comando M
-0
+movido para a sessão %d\n
 sem texto anterior; impossível copiar
 impossível aplicar comando g a um intervalo
 g não disponível em modo banco de dados

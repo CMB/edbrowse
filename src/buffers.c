@@ -442,9 +442,15 @@ dotimers:
 			if (newlocation) {
 				debugPrint(2, "redirect %s", newlocation);
 				if (newloc_f->owner != cw) {
-					printf
-					    ("redirection of a background window to %s is not yet implemented\n",
-					     newlocation);
+/* if these messages aren't going to go away,
+ * then they should be internationalized.
+ * Second message should never appear, as the new window
+ * becomes a hyperlink in the background window. */
+					printf((newloc_r ?
+						"redirection of a background window to %s is not implemented\n"
+						:
+						"background window opening %s is not implemented\n"),
+					       newlocation);
 					nzFree(newlocation);
 					newlocation = 0;
 				} else if (newloc_f != cf) {
