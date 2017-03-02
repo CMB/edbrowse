@@ -4462,6 +4462,13 @@ bool runCommand(const char *line)
 		if (!frameExpand((line[0] == 'e'), startRange, endRange))
 			showError();
 /* even if one frame failed to expand, another might, so always rerender */
+		if (newlocation) {
+			printf
+			    ("redirection of frame to %s is not yet implemented\n",
+			     newlocation);
+			nzFree(newlocation);
+			newlocation = 0;
+		}
 		rerender(false);
 		return true;
 	}
