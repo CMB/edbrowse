@@ -290,7 +290,7 @@ y directory</A>
 yecht package</A>
 -->
 
-<iframe src=http://www.eklhad.net/jframe.html></iframe>
+<iframe src=http://www.edbrowse.org/jsfrm></iframe>
 
 <form method=POST name=questionnaire
 action=http://localhost:1500/origact

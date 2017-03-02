@@ -561,6 +561,12 @@ Interact with a Web Page
 g : go to the link on the current line
 <br>g2 : go to the second link on the current line
 <br>g$ : go to the last link on the current line
+<br>g? : print the url for the link on the current line
+<br>g2? : print the url for the second link
+<br>g$? : print the url for the last link
+<br>exp : expand a frame
+<br>,exp : expand all frames
+<br>ctr : contract a frame
 <br>^ : the back key, go back to the web page you were looking at before
 <br>i=xyz : set the input field on the current line to xyz
 <br>i2=xyz : set the second input field on the current line to xyz
@@ -1889,6 +1895,7 @@ and 4g follows the link on line 4.
 g$ activates the last link on the line.
 If a link spreads across multiple lines, you must be on the first of these lines,
 the line containing the left brace.
+Use g? to print the url - where you will go if you type g.
 
 <P>
 The g command can also act on a link that is written in raw text,
@@ -2613,24 +2620,26 @@ Mail will attempt to pass through this proxy, just like web traffic.
 
 <H3> <A NAME=frame> Frames </A> </H3>
 
+<P>
 Frames are a mechanism whereby a web page can fetch and display several other web pages on the screen at once.
 Each subpage is called a frame, and lives in its own space on the screen.
 Sometimes the frames are top middle and bottom;
 sometimes they are left middle and right.
 Edbrowse presents these frames as hyperlinks,
-and you can call up each in turn,
-or jump straight to a specific frame if you are familiar with the website.
-Usually the top frame is navigational in nature,
-and the bottom is a legal disclaimer/copyright notice,
-so you're just as happy to skip these and cut to the chase.
+and you can expand each in turn
+using the `exp' command,
+or expand them all if you wish.
+Type 1,$exp to expand them all, or equivalently, ,exp.
+The ctr (contract) command hides the frame and makes it a hyperlink again.
+Type ,ctr to contract them all.
+Sometimes you can leave a frame closed if you have been to this website before and you know that information does not interest you.
 On rare occasions, and I've only seen this once,
 you must open the top frame,
 whether you are interested in it or not,
 because that particular html page sets some cookies that you need to run the website.
 
 <P>
-A page of frames might look like this.
-I think you can guess which one to click on.
+Here is a page of frames, and then the same page after the middle frame is expanded.
 
 <P>
 Frame {navigation}
@@ -2640,10 +2649,17 @@ Frame {main}
 Frame {bottom}
 
 <P>
-I thought about a FetchFrame feature that fetches all the frames and presents them in one go,
-just as they are all displayed on the screen in a traditional browser,
-but this feature is very difficult to implement,
-and so far nobody seems to want it.
+Frame {navigation}
+<br>
+`--
+<br>
+This is the home page of blah blah blah.
+Interesting information about blah blah blah.
+We've got the lowest prices anywhere.
+<br>
+--`
+<br>
+Frame {bottom}
 
 <hr>
 <H2> Chapter 5, Javascript </H2>

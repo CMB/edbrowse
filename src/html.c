@@ -283,7 +283,7 @@ This line sets the current frame, then we're ready to roll.
 		if (itype >= INP_RADIO) {
 			int checked = fieldIsChecked(t->seqno);
 			if (checked < 0)
-				checked = t->rchecked;
+				continue;
 			t->checked = checked;
 			set_property_bool(t->jv, "checked", checked);
 			continue;
@@ -292,9 +292,9 @@ This line sets the current frame, then we're ready to roll.
 		value = getFieldFromBuffer(t->seqno);
 /* If that line has been deleted from the user's buffer,
  * indicated by value = 0,
- * revert back to the original (reset) value. */
+ * then don't do anything. */
 		if (!value)
-			value = cloneString(t->rvalue);
+			continue;
 
 		if (itype == INP_SELECT) {
 /* set option.selected in js based on the option(s) in value */
@@ -372,6 +372,12 @@ void htmlMetaHelper(struct htmlTag *t)
 	const char *content, *heq;
 	char **ptr;
 	char *copy = 0;
+
+/* if we're generating a cookie, we better get the frame right,
+ * because that's the url that the cookie belongs to.
+ * I think the frame is correct anyways, because we are parsing html,
+ * but just to be safe ... */
+	cf = t->f0;
 
 	name = t->name;
 	content = attribVal(t, "content");
@@ -554,6 +560,14 @@ static void prepareScript(struct htmlTag *t)
 	t->js_file = cloneString(filepart);
 }				/* prepareScript */
 
+/*********************************************************************
+Run pending scripts, and perform other actions that have been queued up by javascript.
+This includes document.write, linkages, perhaps even form.submit.
+Things stop however if we detect document.location = new_url,
+i.e. a page replacement, as indicated by the newlocation variable being set.
+The old page doesn't matter any more.
+*********************************************************************/
+
 void runScriptsPending(void)
 {
 	struct htmlTag *t;
@@ -587,12 +601,11 @@ top:
 		t = tagList[j];
 		if (t->action != TAGACT_SCRIPT)
 			continue;
-		if (!t->jv)
-			continue;
 		if (t->step >= 3)
 			continue;
-/* now running the script */
-		t->step = 3;
+		t->step = 3;	/* now running the script */
+		if (!t->jv)
+			continue;
 		change = true;
 
 		prepareScript(t);
@@ -2259,13 +2272,13 @@ bool timerWait(int *delay_sec, int *delay_ms)
 	return true;
 }				/* timerWait */
 
-void delTimers(struct ebWindow *w)
+void delTimers(struct ebFrame *f)
 {
 	int delcount = 0;
 	struct jsTimer *jt, *jnext;
 	for (jt = timerList.next; jt != (void *)&timerList; jt = jnext) {
 		jnext = jt->next;
-		if (jt->frame->owner == w) {
+		if (jt->frame == f) {
 			++delcount;
 			delFromList(jt);
 			nzFree(jt);
@@ -2273,6 +2286,14 @@ void delTimers(struct ebWindow *w)
 	}
 	debugPrint(4, "%d timers deleted", delcount);
 }				/* delTimers */
+
+void delInputChanges(struct ebFrame *f)
+{
+	struct inputChange *ic;
+	foreach(ic, inputChangesPending)
+	    if (ic->f0 == f)
+		ic->major = 'x';
+}				/* delInputChanges */
 
 void runTimers(void)
 {
@@ -2419,6 +2440,7 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 		ic->tagno = 0;
 		ic->major = 'l';
 		ic->minor = type;
+		ic->f0 = cf;
 		strcpy(ic->value, rest);
 		addToListBack(&inputChangesPending, ic);
 		return;
@@ -2647,6 +2669,8 @@ li_hide:
 
 	if (!opentag && ti->bits & TAG_NOSLASH)
 		return;
+
+	cf = t->f0;
 
 	retainTag = true;
 	if (invisible)
@@ -2911,9 +2935,9 @@ unparen:
 		if (!retainTag)
 			break;
 
-		if (t->f1) {	/* expanded frame */
+		if (t->f1 && !t->contracted) {	/* expanded frame */
 			sprintf(hnum, "\r%c%d*%s\r", InternalCodeChar, tagno,
-				(opentag ? "<--" : "-->"));
+				(opentag ? "`--" : "--`"));
 			ns_hnum();
 			break;
 		}
@@ -2946,6 +2970,8 @@ unparen:
 			stringAndString(&ns, &ns_l, "0}");
 		}
 		stringAndChar(&ns, &ns_l, '\r');
+		if (t->f1 && t->contracted)	/* contracted frame */
+			deltag = t;
 		break;
 
 	case TAGACT_MUSIC:

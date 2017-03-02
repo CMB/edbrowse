@@ -149,7 +149,8 @@ void rerender(bool notify);
 void delTags(int startRange, int endRange);
 extern void runOnload(void);
 bool timerWait(int *delay_sec, int *delay_ms);
-void delTimers(struct ebWindow *w);
+void delTimers(struct ebFrame *f);
+void delInputChanges(struct ebFrame *f);
 void runTimers(void);
 void javaOpensWindow(const char *href, const char *name) ;
 void javaSetsLinkage(bool after, char type, jsobjtype p, const char *rest);
@@ -183,7 +184,7 @@ int base64Decode(char *start, char **end);
 char *extractHeaderParam(const char *str, const char *item) ;
 time_t parseHeaderDate(const char *date) ;
 bool parseRefresh(char *ref, int *delay_p) ;
-bool refreshDelay(int sec, const char *u) ;
+bool shortRefreshDelay(void);
 bool httpConnect(const char *url, bool down_ok, bool webpage, bool f_encoded, char **headers_p, char **body_p, int *bodlen_p);
 void ebcurl_setError(CURLcode curlret, const char *url) ;
 void setHTTPLanguage(const char *lang) ;
@@ -194,6 +195,7 @@ void deleteNovsHosts(void);
 CURLcode setCurlURL(CURL * h, const char *url) ;
 const char *findProxyForURL(const char *url) ;
 bool frameExpand(bool expand, int ln1, int ln2);
+struct htmlTag *line2frame(int ln);
 
 /* sourcefile=main.c */
 const char *mailRedirect(const char *to, const char *from, const char *reply, const char *subj) ;

@@ -438,11 +438,12 @@ and it lets me type at the keyboard.
 		if (rc == 0) {	/* timeout */
 dotimers:
 			runTimers();
-/* in case a timer set document.location.hreg to a new page */
+/* in case a timer set document.location to a new page */
 			if (newlocation) {
 				debugPrint(2, "redirect %s", newlocation);
-				s = allocMem(strlen(newlocation) + 4);
-				sprintf(s, "b %s\n", newlocation);
+				s = allocMem(strlen(newlocation) + 8);
+				sprintf(s, "%sb %s\n", (newloc_r ? "ReF@" : ""),
+					newlocation);
 				nzFree(newlocation);
 				newlocation = 0;
 				return s;
@@ -796,9 +797,10 @@ static void freeWindow(struct ebWindow *w)
 {
 	struct ebFrame *f, *fnext;
 	freeTags(w);
-	delTimers(w);
 	for (f = &w->f0; f; f = fnext) {
 		fnext = f->next;
+		delTimers(f);
+		delInputChanges(f);
 		freeJavaContext(f);
 		nzFree(f->dw);
 		nzFree(f->hbase);
@@ -1592,10 +1594,12 @@ fromdisk:
 	if (!rc)
 		return false;
 	serverData = rbuf;
+	serverDataLen = fileSize;
 	if (fileSize == 0) {	/* empty file */
-		free(rbuf);
-		if (!inframe)
+		if (!inframe) {
 			cw->dot = endRange;
+			free(rbuf);
+		}
 		return true;
 	}
 
@@ -2945,7 +2949,8 @@ findField(const char *line, int ftype, int n,
 				if (!*href || !stringEqual(*href, jh)) {
 					nzFree(*href);
 					*href = jh;
-				}
+				} else
+					nzFree(jh);
 			}
 		}
 	}
@@ -3533,6 +3538,7 @@ pwd:
 
 	if (stringEqual(line, "rf")) {
 		cmd = 'e';
+		selfFrame();
 		if (!cf->fileName) {
 			setError(MSG_NoRefresh);
 			return false;
@@ -3584,17 +3590,29 @@ pwd:
 	if (stringEqual(line, "jdb")) {
 		char *cxbuf;
 		int cxbuflen;
+		const struct htmlTag *t;
 		cmd = 'e';
 		if (!cw->browseMode) {
 			setError(MSG_NoBrowse);
 			return false;
 		}
+/* debug the js context of the frame you are in */
+		t = line2frame(cw->dot);
+		if (t)
+			cf = t->f1;
+		else
+			selfFrame();
 		if (!isJSAlive) {
 			setError(MSG_JavaOff);
 			return false;
 		}
 		jexmode = true;
 		jSyncup(false);
+/* the sync could have changed cf */
+		if (t)
+			cf = t->f1;
+		else
+			selfFrame();
 		return true;
 	}
 
@@ -3626,9 +3644,10 @@ et_go:
 			cw->r_map = 0;
 		}
 		freeTags(cw);
-		delTimers(cw);
 		cw->mustrender = false;
 		for (f = &cw->f0; f; f = f->next) {
+			delTimers(f);
+			delInputChanges(f);
 			freeJavaContext(f);
 			f->jcx = NULL;
 			nzFree(f->dw);
@@ -4315,6 +4334,10 @@ bool runCommand(const char *line)
 /* Watch for successive q commands. */
 		lastq = lastqq, lastqq = 0;
 		noStack = false;
+		if (!strncmp(line, "ReF@b", 5)) {
+			line += 4;
+			noStack = true;
+		}
 
 /* special 2 letter commands - most of these change operational modes */
 		j = twoLetter(line, &line);
@@ -4365,7 +4388,8 @@ bool runCommand(const char *line)
 	}
 
 	if (first == 'w' || first == 'v' || first == 'g' &&
-	    line[1] && strchr(valid_delim, line[1])) {
+	    line[1] && strchr(valid_delim, line[1]) &&
+	    !stringEqual(line, "g?")) {
 		didRange = true;
 		startRange = 1;
 		if (cw->dol == 0)
@@ -4425,10 +4449,20 @@ bool runCommand(const char *line)
 			setError(MSG_GlobalCommand2, line);
 			return false;
 		}
+		cmd = 'e';
+		if (endRange == 0) {
+			setError(MSG_EmptyBuffer);
+			return false;
+		}
+		if (!cw->browseMode) {
+			setError(MSG_NoBrowse);
+			return false;
+		}
+		jSyncup(false);
 		if (!frameExpand((line[0] == 'e'), startRange, endRange))
 			showError();
 /* even if one frame failed to expand, another might, so always rerender */
-		rerender(true);
+		rerender(false);
 		return true;
 	}
 
@@ -4715,6 +4749,7 @@ bool runCommand(const char *line)
 			}
 			return writeContext(cx);
 		}
+		selfFrame();
 		if (!first)
 			line = cf->fileName;
 		if (!line) {
@@ -4860,6 +4895,11 @@ bool runCommand(const char *line)
 		int tagno;
 		bool click, dclick, over;
 		bool jsh, jsgo, jsdead;
+		bool lookmode = false;
+
+		j = strlen(line);
+		if (j && line[j - 1] == '?')
+			lookmode = true;
 
 		/* Check to see if g means run an sql command. */
 		if (!first) {
@@ -4895,6 +4935,8 @@ bool runCommand(const char *line)
 			else if (first == '$')
 				j = -1, ++s;
 		}
+		if (*s == '?')
+			++s;
 		if (!*s) {
 			if (cw->sqlMode) {
 				setError(MSG_DBG);
@@ -4912,16 +4954,25 @@ bool runCommand(const char *line)
 			p = (char *)fetchLine(endRange, -1);
 			findField(p, 0, j, &n, 0, &tagno, &h, &tag);
 			debugPrint(5, "findField returns %d, %s", tagno, h);
-			if (tag->action == TAGACT_FRAME) {
-				cmd = 'g';
-				setError(MSG_ExpGo);
-				return false;
-			}
+
 			if (!h) {
 				fieldNumProblem(1, 'g', j, n, n);
 				return false;
 			}
 			jsh = memEqualCI(h, "javascript:", 11);
+
+			if (lookmode) {
+				puts(jsh ? "javascript:" : h);
+				nzFree(h);
+				return true;
+			}
+
+			if (tag && tag->action == TAGACT_FRAME) {
+				setError(MSG_ExpGo);
+				nzFree(h);
+				return false;
+			}
+
 			if (tagno) {
 				over = tagHandler(tagno, "onmouseover");
 				click = tagHandler(tagno, "onclick");
@@ -4943,6 +4994,7 @@ bool runCommand(const char *line)
 					i_puts(MSG_NJGoing);
 				jsgo = jsh = false;
 			}
+/* because I am setting allocatedLine to h, I don't have to free it */
 			line = allocatedLine = h;
 			first = *line;
 			setError(-1);
@@ -5323,7 +5375,7 @@ browse:
 		}
 
 		if (newlocation) {
-			if (!refreshDelay(newloc_d, newlocation)) {
+			if (!shortRefreshDelay()) {
 				nzFree(newlocation);
 				newlocation = 0;
 			} else {

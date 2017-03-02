@@ -389,12 +389,12 @@ impossível acessar %s
 $%s não definida
 ~%s não definida
 submete
-0
+dados da freime não são html
  seguro
  por e-mail
 limpa dados
 erro inesperado a avaliar o padrão shell
-0
+freime não tem uma página associada
 padrão shell condiz com mais que um arquivo
 as linhas ficam longas demais quando as variáveis do shell são expandidas
 o arquivo de configuração não especifica um banco de dados - impossível conectar
@@ -473,13 +473,13 @@ javascript desligado; ignorando onchange código
 javascript desligado; ignorando código onreset
 javascript desligado; ignorando código onsubmit
 não consegui achar a etiqueta HTML associada à variável javascript que está sendo modificada
-0
+por favor use exp para expandir uma freime
 aviso: diretiva de atualização adulterada; %s\n
 0
 aviso: redirecionamento HTTP %ld mas não foi especificada uma URL nova\n
 aviso: erro de HTTP %ld, %s\n
-0
-0
+sem freimes a expandir
+sem freimes a contrair
 mensagens de ajuda ligadas
 download via FTP: 
 nenhum arquivo de certificados SSL; conexões seguras não podem ser verificadas

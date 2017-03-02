@@ -335,6 +335,7 @@ struct inputChange {
 	int tagno;
 	char major, minor;
 	char filler1, filler2;
+	struct ebFrame *f0;
 	char value[4];
 };
 extern struct listHead inputChangesPending;
@@ -499,6 +500,7 @@ struct htmlTag {
 	bool slash:1;		/* as in </A> */
 	bool textin:1; /* <a> some text </a> */
 	bool deleted:1; /* deleted from the current buffer */
+	bool contracted:1; /* frame is contracted */
 	bool multiple:1;
 	bool rdonly:1;
 	bool clickable:1;	/* but not an input field */

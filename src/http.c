@@ -56,8 +56,16 @@ static time_t ht_modtime;	/* http modification time */
 static char *ht_etag;		/* the etag in the header */
 static bool ht_cacheable;
 
-/* This function is called for web redirection, by the refresh command,
- * or by window.location = new_url. */
+/*********************************************************************
+This function is called for a new web page, by http refresh,
+or by http redirection,
+or by document.location = new_url, or by new Window().
+If delay is 0 or less then the action should happen now.
+-1 is from http header location:
+The refresh parameter means replace the current page.
+This is false only if js creates a new window, which should stack up on top of the old.
+*********************************************************************/
+
 char *newlocation;
 int newloc_d;			/* possible delay */
 bool newloc_r;			/* replace the buffer */
@@ -199,8 +207,7 @@ static void scan_http_headers(bool fromCallback)
 
 	if ((newlocation == NULL) && (v = find_http_header("location"))) {
 		unpercentURL(v);
-		newlocation = v;
-		newloc_d = -1;
+		gotoLocation(v, -1, true);
 	}
 
 	if (v = find_http_header("refresh")) {
@@ -765,14 +772,14 @@ bool parseRefresh(char *ref, int *delay_p)
 
 /* Return true if we waited for the duration, false if interrupted.
  * I don't know how to do this in Windows. */
-bool refreshDelay(int sec, const char *u)
+bool shortRefreshDelay(void)
 {
-/* the value 15 seconds is somewhat arbitrary */
-	if (sec < 15)
+/* the value 10 seconds is somewhat arbitrary */
+	if (newloc_d < 10)
 		return true;
-	i_printf(MSG_RedirectDelayed, u, sec);
+	i_printf(MSG_RedirectDelayed, newlocation, newloc_d);
 	return false;
-}				/* refreshDelay */
+}				/* shortRefreshDelay */
 
 static char *urlcopy;
 static int urlcopy_l;
@@ -1169,11 +1176,11 @@ they go where they go, so this doesn't come up very often.
 
 /* refresh header is an alternate form of redirection */
 		if (newlocation && newloc_d >= 0) {
-			if (!refreshDelay(newloc_d, newlocation)) {
+			if (shortRefreshDelay()) {
+				ht_code = 302;
+			} else {
 				nzFree(newlocation);
 				newlocation = 0;
-			} else {
-				ht_code = 302;
 			}
 		}
 
@@ -2390,21 +2397,12 @@ const char *findProxyForURL(const char *url)
  * or if none of the lines are frames. */
 static int frameExpandLine(int lineNumber);
 static int frameContractLine(int lineNumber);
+static const char *stringInBufLine(const char *s, const char *t);
 bool frameExpand(bool expand, int ln1, int ln2)
 {
 	int ln;			/* line number */
 	int problem = 0, p;
 	bool something_worked = false;
-
-	if (ln2 == 0) {
-		setError(MSG_EmptyBuffer);
-		return false;
-	}
-
-	if (!cw->browseMode) {
-		setError(MSG_NoBrowse);
-		return false;
-	}
 
 	for (ln = ln1; ln <= ln2; ++ln) {
 		if (expand)
@@ -2440,7 +2438,7 @@ static int frameExpandLine(int ln)
 	bool remote;
 
 	line = fetchLine(ln, -1);
-	s = strstr(line, "Frame ");
+	s = stringInBufLine(line, "Frame ");
 	if (!s)
 		return 1;
 	if ((s = strchr(s, InternalCodeChar)) == NULL)
@@ -2454,7 +2452,7 @@ static int frameExpandLine(int ln)
 
 /* the easy case is if it's already been expanded before, we just unhide it. */
 	if (t->f1) {
-		t->deleted = false;
+		t->contracted = false;
 		return 0;
 	}
 
@@ -2466,6 +2464,7 @@ static int frameExpandLine(int ln)
 /* have to push a new frame before we read the web page */
 	for (last_f = &(cw->f0); last_f->next; last_f = last_f->next) ;
 	last_f->next = cf = allocZeroMem(sizeof(struct ebFrame));
+	cf->owner = cw;
 	debugPrint(2, "fetch frame %s", s);
 	if (!readFileArgv(s)) {
 /* serverData was never set, or was freed do to some other error. */
@@ -2550,5 +2549,51 @@ So check for serverData null here. Once again we pop the frame.
 
 static int frameContractLine(int ln)
 {
-	return 1;
+	struct htmlTag *t = line2frame(ln);
+	if (!t)
+		return 1;
+	t->contracted = true;
+	return 0;
 }				/* frameContractLine */
+
+struct htmlTag *line2frame(int ln)
+{
+	const char *line;
+	int n, opentag = 0, ln1 = ln;
+	const char *s;
+
+	for (; ln; --ln) {
+		line = (char *)fetchLine(ln, -1);
+		if (!opentag && ln < ln1
+		    && (s = stringInBufLine(line, "*--`\n"))) {
+			for (--s; s > line && *s != InternalCodeChar; --s) ;
+			if (*s == InternalCodeChar)
+				opentag = atoi(s + 1);
+			continue;
+		}
+		s = stringInBufLine(line, "*`--\n");
+		if (!s)
+			continue;
+		for (--s; s > line && *s != InternalCodeChar; --s) ;
+		if (*s != InternalCodeChar)
+			continue;
+		n = atoi(s + 1);
+		if (!opentag)
+			return tagList[n];
+		if (n == opentag)
+			opentag = 0;
+	}
+
+	return 0;
+}				/* line2frame */
+
+/* a text line in the buffer isn't a string; you can't use strstr */
+static const char *stringInBufLine(const char *s, const char *t)
+{
+	int n = strlen(t);
+	for (; *s != '\n'; ++s) {
+		if (!strncmp(s, t, n))
+			return s;
+	}
+	return 0;
+}				/* stringInBufLine */

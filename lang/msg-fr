@@ -389,12 +389,12 @@ impossible d'accéder à %s
 $%s n'est pas définie
 ~%s n'est pas définie
 0
-0
+les données du cadre ne sont pas de l'html
 0
 0
 0
 erreur inattendue d'évaluation du modèle shell
-0
+le cadre n'a pas de page web associée
 le modèle shell correspond à plusieurs noms de fichier
 ligne trop longue après expansion des variables shell
 le fichier de config ne définit aucune base de données - connexion impossible
@@ -473,13 +473,13 @@ javascript désactivé, code onchange ignoré
 javascript désactivé, code onreset ignoré
 javascript désactivé, code onsubmit ignoré
 impossible de trouver la balise html associée à la variable javascript modifiée
-0
+utilisez svp exp pour déployer un cadre
 attention : directive de rafraîchissement altérée, %s\n
 0
 attention: redirection http %ld, mais la nouvelle url n'a pas été spécifiée\n
 attention : erreur html %ld, %s\n
-0
-0
+pas de cadres à déployer
+pas de cadres à réduire
 messages d'aide activés
 téléchargement ftp: 
 pas de fichier de certificats ssl; les connexions sécurisées ne pourront être vérifiées

@@ -7,8 +7,15 @@ Cache directory and size can be set in the config file, but the defaults are rea
 
 Use a substring of the url to determine a mime type, not just the suffix.
 This is primarily for youtube videos, which can play as a stream, but have no obvious protocol or subject to key on.
-urlmatch = .youtube.com/watch?
+urlmatch = youtube.com/watch?|youtube.com/embed/
 Currently a substring, may become a regexp later.
+
+g? prints the url for the link instead of going to it. You can look before you leap.
+Also g2? g$? etc.
+
+Represent multiple frames in one edbrowse window. Each has its own javascript world.
+At this point the worlds do not interact.
+You can expand and contract frames by the exp and ctr commands.
 
 3.6.2:
 Read and convert utf16 and utf32 as per the byte order mark.

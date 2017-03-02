@@ -118,6 +118,7 @@ static void makeButton(void)
 	t->controller = currentForm;
 	t->itype = INP_SUBMIT;
 	t->value = emptyString;
+	t->step = 1;
 	linkinTree(currentForm, t);
 }				/* makeButton */
 
@@ -245,6 +246,11 @@ static void emptyAnchors(int start)
 /* would moving this create nested anchors? */
 		if (tagBelow(div, TAGACT_A))
 			continue;
+/* shouldn't have inputs or forms in an anchor. */
+		if (tagBelow(div, TAGACT_INPUT))
+			continue;
+		if (tagBelow(div, TAGACT_FORM))
+			continue;
 		up->sibling = div->sibling;
 		a0->firstchild = div;
 		div->parent = a0;
@@ -331,7 +337,9 @@ void htmlInputHelper(struct htmlTag *t)
 	int len;
 	char *myname = (t->name ? t->name : t->id);
 	const char *s = attribVal(t, "type");
-	if (s) {
+	if (stringEqual(t->info->name, "button")) {
+		n = INP_BUTTON;
+	} else if (s) {
 		n = stringInListCI(inp_types, s);
 		if (n < 0) {
 			n = stringInListCI(inp_others, s);
@@ -339,8 +347,6 @@ void htmlInputHelper(struct htmlTag *t)
 				debugPrint(3, "unrecognized input type %s", s);
 			n = INP_TEXT;
 		}
-	} else if (stringEqual(t->info->name, "BUTTON")) {
-		n = INP_BUTTON;
 	}
 	t->itype = n;
 
@@ -1115,9 +1121,21 @@ static void jsNode(struct htmlTag *t, bool opentag)
 		return;
 	t->step = 2;
 
+/*********************************************************************
+If js is off, and you don't decorate this tree,
+then js is turned on later, and you parse and decorate a frame,
+it might also decorate this tree in the wrong context.
+Needless to say that's not good!
+*********************************************************************/
+	if (t->f0 != cf)
+		return;
+
 	debugPrint(6, "decorate %s %d", t->info->name, t->seqno);
 
 	switch (action) {
+		jsobjtype cd;	/* contentDocument */
+		jsobjtype cdbody;	/* contentDocument.body */
+
 	case TAGACT_TEXT:
 		t->jv = instantiate(cf->docobj, fakePropName(), "TextNode");
 		if (t->jv) {
@@ -1265,6 +1283,13 @@ static void jsNode(struct htmlTag *t, bool opentag)
 	case TAGACT_FRAME:
 		domLink(t, "Frame", "src", "frames", cf->winobj, 0);
 		set_property_number(t->jv, "nodeType", 1);
+/* frames have contentDocument below, even though it is not populated
+ * with the frame's dom as of this version of edbrowse. */
+		cd = instantiate(t->jv, "contentDocument", "Document");
+		cdbody = instantiate(cd, "body", "Body");
+		instantiate(cdbody, "style", 0);
+		instantiate_url(cd, "location", t->href);
+/* perhaps other stuff that a frame document always needs */
 		break;
 
 	case TAGACT_IMAGE:
