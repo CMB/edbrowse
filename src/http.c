@@ -69,6 +69,7 @@ This is false only if js creates a new window, which should stack up on top of t
 char *newlocation;
 int newloc_d;			/* possible delay */
 bool newloc_r;			/* replace the buffer */
+struct ebFrame *newloc_f;	/* frame calling for new web page */
 bool js_redirects;
 void gotoLocation(char *url, int delay, bool rf)
 {
@@ -80,6 +81,7 @@ void gotoLocation(char *url, int delay, bool rf)
 	newlocation = url;
 	newloc_d = delay;
 	newloc_r = rf;
+	newloc_f = cf;
 	if (!delay)
 		js_redirects = true;
 }				/* gotoLocation */

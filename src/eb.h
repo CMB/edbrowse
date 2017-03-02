@@ -181,6 +181,7 @@ extern char *userAgents[10], *currentAgent;
 extern char *newlocation;
 extern int newloc_d; /* delay */
 extern bool newloc_r; /* location replaces this page */
+extern struct ebFrame *newloc_f; /* frame calling for new web page */
 extern const char *ebrc_string; /* default ebrc file */
 
 struct eb_curl_callback_data {

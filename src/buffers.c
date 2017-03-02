@@ -441,12 +441,27 @@ dotimers:
 /* in case a timer set document.location to a new page */
 			if (newlocation) {
 				debugPrint(2, "redirect %s", newlocation);
-				s = allocMem(strlen(newlocation) + 8);
-				sprintf(s, "%sb %s\n", (newloc_r ? "ReF@" : ""),
-					newlocation);
-				nzFree(newlocation);
-				newlocation = 0;
-				return s;
+				if (newloc_f->owner != cw) {
+					printf
+					    ("redirection of a background window to %s is not yet implemented\n",
+					     newlocation);
+					nzFree(newlocation);
+					newlocation = 0;
+				} else if (newloc_f != cf) {
+					printf
+					    ("redirection of a frame to %s is not yet implemented\n",
+					     newlocation);
+					nzFree(newlocation);
+					newlocation = 0;
+				} else {
+					s = allocMem(strlen(newlocation) + 8);
+					sprintf(s, "%sb %s\n",
+						(newloc_r ? "ReF@" : ""),
+						newlocation);
+					nzFree(newlocation);
+					newlocation = 0;
+					return s;
+				}
 			}
 			goto top;
 		}
@@ -4461,15 +4476,18 @@ bool runCommand(const char *line)
 		jSyncup(false);
 		if (!frameExpand((line[0] == 'e'), startRange, endRange))
 			showError();
+		selfFrame();
 /* even if one frame failed to expand, another might, so always rerender */
+		rerender(false);
+/* meta http refresh could send to another page */
+//              if (newlocation) goto redirect;
 		if (newlocation) {
 			printf
-			    ("redirection of frame to %s is not yet implemented\n",
+			    ("redirection of a frame to %s is not yet implemented\n",
 			     newlocation);
 			nzFree(newlocation);
 			newlocation = 0;
 		}
-		rerender(false);
 		return true;
 	}
 
@@ -5309,7 +5327,7 @@ rebrowse:
 			j = readFile(line, emptyString);
 		}
 		w->undoable = w->changeMode = false;
-		cw = cs->lw;
+		cw = cs->lw;	/* put it back, for now */
 		selfFrame();
 /* Don't push a new session if we were trying to read a url,
  * and didn't get anything. */
@@ -5394,8 +5412,8 @@ redirect:
 				noStack = newloc_r;
 				nzFree(allocatedLine);
 				line = allocatedLine = newlocation;
-				debugPrint(2, "redirect %s", line);
 				newlocation = 0;
+				debugPrint(2, "redirect %s", line);
 				icmd = cmd = 'b';
 				f_encoded = true;
 				first = *line;
