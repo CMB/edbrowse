@@ -611,7 +611,7 @@ top:
 		prepareScript(t);
 
 		jtxt = get_property_string(t->jv, "data");
-		if (!jtxt)
+		if (!jtxt || !*jtxt)
 			continue;	/* nothing there */
 		js_file = t->js_file;
 		if (!js_file)
@@ -2208,8 +2208,21 @@ static void javaSetsTimeout(int n, const char *jsrc, jsobjtype to,
 	jt->sec = n / 1000;
 	jt->ms = n % 1000;
 	jt->isInterval = isInterval;
-	if (isInterval)
+	if (isInterval) {
+/*********************************************************************
+I'm not willing to churn, firing a timer every few milliseconds.
+Some websites with intervals of 50ms or less take over the edbrowse process,
+wherein stdin can't get a word in edgewise.
+The user is literally locked out.
+This is almost always fast-paced visual effects, which are lost on us.
+Slowing things down should not cause any trouble,
+and it lets me type at the keyboard.
+Hey, the spec says you can't run faster than 10ms; well for us it's 600ms.
+*********************************************************************/
+		if (n < 600)
+			n = 600;
 		jt->jump_sec = n / 1000, jt->jump_ms = n % 1000;
+	}
 	currentTime();
 	jt->sec += now_sec;
 	jt->ms += now_ms;

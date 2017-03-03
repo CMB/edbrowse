@@ -414,18 +414,6 @@ top:
 			}
 		}
 
-/*********************************************************************
-I'm not willing to churn, firing a timer every few milliseconds.
-Some websites with intervals of 50ms take over the edbrowse process,
-wherein stdin can't get a word in edgewise.
-The user is literally locked out.
-This is almost always fast-paced visual effects, which are lost on us.
-Slowing things down should not cause any trouble,
-and it lets me type at the keyboard.
-*********************************************************************/
-		if (delay_sec == 0 && delay_ms < 600)
-			delay_ms = 600;
-
 		tv.tv_sec = delay_sec;
 		tv.tv_usec = delay_ms * 1000;
 #ifdef DOSLIKE
