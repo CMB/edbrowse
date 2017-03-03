@@ -2608,6 +2608,7 @@ bool reexpandFrame(void)
 	frametag = cf->frametag;
 	for (t = frametag->firstchild; t; t = t->sibling) {
 		t->deleted = true;
+		t->step = 100;
 		t->parent = 0;
 	}
 	frametag->firstchild = 0;

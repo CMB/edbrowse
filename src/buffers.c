@@ -408,8 +408,10 @@ top:
 		if (cw->mustrender) {
 			time_t now;
 			time(&now);
-			if (now >= cw->nextrender)
+			if (now >= cw->nextrender) {
+				jSyncup(true);
 				rerender(false);
+			}
 		}
 
 /*********************************************************************

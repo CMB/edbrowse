@@ -657,6 +657,7 @@ top:
 			v = u->sibling;
 			u->sibling = u->parent = 0;
 			u->deleted = true;
+			u->step = 100;
 		}
 		t->firstchild = NULL;
 		h = strstr(ic->value, "</body>@");

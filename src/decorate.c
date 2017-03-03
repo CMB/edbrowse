@@ -420,6 +420,7 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 	int j;
 	int action = t->action;
 	const char *a;		/* usually an attribute */
+	struct htmlTag *u;
 
 	debugPrint(6, "prend %c%s %d%s",
 		   (opentag ? ' ' : '/'), t->info->name,
@@ -670,6 +671,18 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 			if (a && (j = stringIsNum(a)) >= 0)
 				t->slic = j - 1;
 		}
+		break;
+
+	case TAGACT_FRAME:
+		if (opentag)
+			break;
+/* since this browser supports frames, we don't show the text inside */
+		for (u = t->firstchild; u; u = u->sibling) {
+			u->parent = 0;
+			u->deleted = true;
+			u->step = 100;
+		}
+		t->firstchild = 0;
 		break;
 
 	}			/* switch */
