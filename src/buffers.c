@@ -438,25 +438,19 @@ and it lets me type at the keyboard.
 		if (rc == 0) {	/* timeout */
 dotimers:
 			runTimers();
-/* in case a timer set document.location to a new page */
+/* in case a timer set document.location to a new page, or opens a new window */
 			if (newlocation) {
 				debugPrint(2, "redirect %s", newlocation);
 				if (newloc_f->owner != cw) {
-/* if these messages aren't going to go away,
- * then they should be internationalized.
- * Second message should never appear, as the new window
- * becomes a hyperlink in the background window. */
+/* background window; we shouldn't even be here! */
+/* Such redirections are turned into hyperlinks on the page. */
+#if 0
 					printf((newloc_r ?
 						"redirection of a background window to %s is not implemented\n"
 						:
 						"background window opening %s is not implemented\n"),
 					       newlocation);
-					nzFree(newlocation);
-					newlocation = 0;
-				} else if (newloc_f != cf) {
-					printf
-					    ("redirection of a frame to %s is not yet implemented\n",
-					     newlocation);
+#endif
 					nzFree(newlocation);
 					newlocation = 0;
 				} else {
@@ -4327,6 +4321,7 @@ bool runCommand(const char *line)
 	const char *s = NULL;
 	static char newline[MAXTTYLINE];
 
+	selfFrame();
 	if (allocatedLine) {
 		nzFree(allocatedLine);
 		allocatedLine = 0;
@@ -4341,6 +4336,17 @@ bool runCommand(const char *line)
 	skipWhite(&line);
 	first = *line;
 
+	noStack = false;
+	if (!strncmp(line, "ReF@b", 5)) {
+		line += 4;
+		noStack = true;
+		if (cf != newloc_f) {
+/* replace a frame, not the whole window */
+			newlocation = cloneString(line + 2);
+			goto replaceframe;
+		}
+	}
+
 	if (!globSub) {
 		madeChanges = false;
 
@@ -4354,11 +4360,6 @@ bool runCommand(const char *line)
 
 /* Watch for successive q commands. */
 		lastq = lastqq, lastqq = 0;
-		noStack = false;
-		if (!strncmp(line, "ReF@b", 5)) {
-			line += 4;
-			noStack = true;
-		}
 
 /* special 2 letter commands - most of these change operational modes */
 		j = twoLetter(line, &line);
@@ -4482,18 +4483,23 @@ bool runCommand(const char *line)
 		jSyncup(false);
 		if (!frameExpand((line[0] == 'e'), startRange, endRange))
 			showError();
-		selfFrame();
-/* even if one frame failed to expand, another might, so always rerender */
-		rerender(false);
 /* meta http refresh could send to another page */
-//              if (newlocation) goto redirect;
 		if (newlocation) {
-			printf
-			    ("redirection of a frame to %s is not yet implemented\n",
-			     newlocation);
-			nzFree(newlocation);
-			newlocation = 0;
+replaceframe:
+			if (!shortRefreshDelay()) {
+				nzFree(newlocation);
+				newlocation = 0;
+			} else {
+				jSyncup(false);
+				if (!reexpandFrame())
+					showError();
+				if (newlocation)
+					goto replaceframe;
+			}
 		}
+/* even if one frame failed to expand, another might, so always rerender */
+		selfFrame();
+		rerender(false);
 		return true;
 	}
 

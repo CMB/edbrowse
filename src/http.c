@@ -2437,7 +2437,6 @@ static int frameExpandLine(int ln)
 	const char *s;
 	struct htmlTag *t;
 	struct ebFrame *save_cf, *last_f;
-	bool remote;
 
 	line = fetchLine(ln, -1);
 	s = stringInBufLine(line, "Frame ");
@@ -2514,8 +2513,7 @@ So check for serverData null here. Once again we pop the frame.
  * but I'm too lazy to do that right now, so I'll just assume it's good. */
 
 	cf->hbase = cloneString(cf->fileName);
-	remote = isURL(cf->fileName);
-	browseLocal = !remote;
+	browseLocal = !isURL(cf->fileName);
 	prepareForBrowse(serverData, serverDataLen);
 	if (javaOK(cf->fileName))
 		createJavaContext();
@@ -2599,3 +2597,96 @@ static const char *stringInBufLine(const char *s, const char *t)
 	}
 	return 0;
 }				/* stringInBufLine */
+
+bool reexpandFrame(void)
+{
+	int j, start;
+	struct htmlTag *t, *frametag;
+
+/* cut the children off from the frame tag */
+	cf = newloc_f;
+	for (j = 0; j < cw->numTags; ++j) {
+		frametag = tagList[j];
+		if (frametag->action == TAGACT_FRAME && frametag->f1 == cf)
+			break;
+	}
+	if (j == cw->numTags)
+		frametag = 0;
+
+	delTimers(cf);
+	delInputChanges(cf);
+	freeJavaContext(cf);
+	nzFree(cf->dw);
+	cf->dw = 0;
+	nzFree(cf->hbase);
+	cf->hbase = 0;
+	nzFree(cf->fileName);
+	cf->fileName = newlocation;
+	newlocation = 0;
+	cf->f_encoded = false;
+	nzFree(cf->firstURL);
+	cf->firstURL = 0;
+
+	if (!frametag) {
+		printf
+		    ("oops - frame tag not found, replacement page %s is left empty\n",
+		     cf->fileName);
+		return true;
+	}
+
+	for (t = frametag->firstchild; t; t = t->sibling) {
+		t->deleted = true;
+		t->parent = 0;
+	}
+	frametag->firstchild = 0;
+
+	if (!readFileArgv(cf->fileName)) {
+/* serverData was never set, or was freed do to some other error. */
+fail:
+		fileSize = -1;	/* don't print 0 */
+		return false;
+	}
+
+	if (serverData == NULL) {
+/* frame replaced itself with a playable stream, what to do? */
+		fileSize = -1;
+		return true;
+	}
+
+	if (changeFileName) {
+		nzFree(cf->fileName);
+		cf->fileName = changeFileName;
+		cf->f_encoded = true;
+		changeFileName = 0;
+	}
+
+/* don't print the size of what we just fetched */
+	fileSize = -1;
+
+	cf->hbase = cloneString(cf->fileName);
+	browseLocal = !isURL(cf->fileName);
+	prepareForBrowse(serverData, serverDataLen);
+	if (javaOK(cf->fileName))
+		createJavaContext();
+	start = cw->numTags;
+/* call the tidy parser to build the html nodes */
+	html2nodes(serverData, true);
+	nzFree(serverData);	/* don't need it any more */
+	htmlGenerated = false;
+	htmlNodesIntoTree(start, frametag);
+	prerender(0);
+	if (isJSAlive) {
+		decorate(0);
+		set_basehref(cf->hbase);
+		runScriptsPending();
+		runOnload();
+		runScriptsPending();
+		set_property_string(cf->docobj, "readyState", "complete");
+	}
+
+	j = strlen(cf->fileName);
+	cf->fileName = reallocMem(cf->fileName, j + 8);
+	strcat(cf->fileName, ".browse");
+
+	return true;
+}				/* reexpandFrame */
