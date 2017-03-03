@@ -358,6 +358,7 @@ struct lineMap {
 struct ebFrame {
 	struct ebFrame *next;
 	struct ebWindow *owner;
+	struct htmlTag *frametag;
 	char *fileName;		/* name of file or url */
 	char *firstURL;		/* before http redirection */
 	char *hbase; /* base for href references */

@@ -2466,11 +2466,11 @@ static int frameExpandLine(int ln)
 	for (last_f = &(cw->f0); last_f->next; last_f = last_f->next) ;
 	last_f->next = cf = allocZeroMem(sizeof(struct ebFrame));
 	cf->owner = cw;
+	cf->frametag = t;
 	debugPrint(2, "fetch frame %s", s);
 	if (!readFileArgv(s)) {
 /* serverData was never set, or was freed do to some other error. */
 /* We just need to pop the frame and return. */
-fail:
 		fileSize = -1;	/* don't print 0 */
 		nzFree(cf->fileName);
 		free(cf);
@@ -2605,13 +2605,12 @@ bool reexpandFrame(void)
 
 /* cut the children off from the frame tag */
 	cf = newloc_f;
-	for (j = 0; j < cw->numTags; ++j) {
-		frametag = tagList[j];
-		if (frametag->action == TAGACT_FRAME && frametag->f1 == cf)
-			break;
+	frametag = cf->frametag;
+	for (t = frametag->firstchild; t; t = t->sibling) {
+		t->deleted = true;
+		t->parent = 0;
 	}
-	if (j == cw->numTags)
-		frametag = 0;
+	frametag->firstchild = 0;
 
 	delTimers(cf);
 	delInputChanges(cf);
@@ -2627,22 +2626,8 @@ bool reexpandFrame(void)
 	nzFree(cf->firstURL);
 	cf->firstURL = 0;
 
-	if (!frametag) {
-		printf
-		    ("oops - frame tag not found, replacement page %s is left empty\n",
-		     cf->fileName);
-		return true;
-	}
-
-	for (t = frametag->firstchild; t; t = t->sibling) {
-		t->deleted = true;
-		t->parent = 0;
-	}
-	frametag->firstchild = 0;
-
 	if (!readFileArgv(cf->fileName)) {
 /* serverData was never set, or was freed do to some other error. */
-fail:
 		fileSize = -1;	/* don't print 0 */
 		return false;
 	}
