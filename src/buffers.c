@@ -5411,7 +5411,10 @@ browse:
 				newlocation = 0;
 			} else {
 redirect:
+				selfFrame();
 				noStack = newloc_r;
+				if (newloc_f != cf)
+					goto replaceframe;
 				nzFree(allocatedLine);
 				line = allocatedLine = newlocation;
 				newlocation = 0;

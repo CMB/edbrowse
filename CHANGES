@@ -6,7 +6,7 @@ Provides faster access to websites that are visited often.
 Cache directory and size can be set in the config file, but the defaults are reasonable.
 
 Use a substring of the url to determine a mime type, not just the suffix.
-This is primarily for youtube videos, which can play as a stream, but have no obvious protocol or subject to key on.
+This is primarily for youtube videos, which can play as a stream, but have no obvious protocol or suffix to key on.
 urlmatch = youtube.com/watch?|youtube.com/embed/
 Currently a substring, may become a regexp later.
 
