@@ -475,7 +475,7 @@ JavaScript wyłączony, pomijanie kodu 'onsubmit'
 nie można znaleźć tagu HTML skojarzonego ze zmienną modyfikowaną w kodzie JavaScript
 proszę, użyj exp by rozwinąć ramkę
 uwaga: zniekształcona dyrektywa odświeżania, %s\n
-0
+nowe okno
 uwaga: przekierowanie HTTP %ld, ale brak nowego adresu URL\n
 uwaga: błąd HTTP %ld, %s\n
 brak ramek do rozwinięcia
