@@ -912,9 +912,6 @@ void infShow(int tagno, const char *search)
 				i_printf(MSG_Recommended);
 			i_printf(MSG_Close);
 		}
-		cnzFree(rows);
-		cnzFree(cols);
-		cnzFree(wrap);
 	}			/* text area */
 	if (t->name)
 		printf(" %s", t->name);

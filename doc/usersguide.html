@@ -572,6 +572,7 @@ g : go to the link on the current line
 <br>i2=xyz : set the second input field on the current line to xyz
 <br>i2* : push the second button on the current line, usually submit or reset
 <br>i$* : push the last button on the current line
+<br>i* : switch to the buffer containing this textarea
 <br>i3? : describe the third input field on the current line
 <br>M4 : move this web page to session 4 and back up to the previous page
 <br>M : move this web page to an empty session and back up
@@ -2238,8 +2239,6 @@ but you can't actually edit the text you are working on.
 Once you hit return, that line is done, and you're on to the next line.
 You can't move lines around or insert lines,
 nor can you prepare your comments ahead of time and read them into the text area from a file.
-
-<P>
 In edbrowse, the text area is managed from another editing session.
 This allows you to use the full power of the editor.
 You can move text, make global substitutions,
@@ -2256,6 +2255,11 @@ In this example, session 2 was not active when browsing began.
 The browser allocated session 2 specifically for this input field.
 Type e2 to move to session 2, prepare your comments,
 then type e1 to return to the input form.
+Note, i* also takes you to the text area, like e2, as though you were pushing a button.
+(See more about buttons in the next section.)
+This is convenient for scripting, since you don't know ahead of time which buffer will be allocated for this purpose.
+
+<P>
 On most web pages the text area starts out blank,
 whence buffer 2 will be empty,
 but this is not always the case.
@@ -2299,6 +2303,12 @@ The text after the question mark is an encoded version of the data
 you entered into the form.
 It becomes part of the virtual URL.
 This is actually a good thing, as we shall see in the next section.
+
+<P>
+Remember that a textarea acts like a button, in that i* takes you to that editing session.
+also, buttons can simply run javascript, without being type submit or reset.
+These are all pressed by the i* command.
+If more than one button is on the current line, any style of button, then i* is not sufficient; you have to specify which button, as in i3*.
 
 <H3> <A NAME=addr> Web And Email Addresses </A> </H3>
 

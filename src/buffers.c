@@ -2922,7 +2922,8 @@ findField(const char *line, int ftype, int n,
 				t = tagList[j];
 				if (ftype == 1 && t->itype <= INP_SUBMIT)
 					continue;
-				if (ftype == 2 && t->itype > INP_SUBMIT)
+				if (ftype == 2 && t->itype > INP_SUBMIT
+				    && t->itype != INP_TA)
 					continue;
 				++nt;
 				if (!nm)
@@ -4908,6 +4909,7 @@ replaceframe:
 
 	if (cmd == 'e') {
 		if (cx) {
+switchsession:
 			if (!cxCompare(cx))
 				return false;
 			cxSwitch(cx, true);
@@ -5116,6 +5118,7 @@ replaceframe:
 			if (cmd == 'i' && strchr("?=<*", c)) {
 				char *p;
 				int realtotal;
+				bool gobuffer;	/* for i* switch to buffer */
 				scmd = c;
 				line = s + 1;
 				first = *line;
@@ -5143,6 +5146,12 @@ replaceframe:
 				}
 
 				cw->undoable = false;
+				gobuffer = (tagList[tagno]->itype == INP_TA);
+				if (gobuffer && scmd == '*') {
+					cx = tagList[tagno]->lic;
+					cmd = 'e';
+					goto switchsession;
+				}
 
 				if (c == '<') {
 					bool fromfile = false;
