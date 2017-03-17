@@ -119,12 +119,12 @@ void html2nodes(const char *htmltext, bool startpage)
 		tidyOptSetInt(tdoc, TidyBodyOnly, yes);
 	tidySetReportFilter(tdoc, tidyErrorHandler);
 //    tidySetReportFilter(tdoc, tidyReportFilter);
-	
+
 	// the following tidyOptSetBool implements 
 	// a fix for https://github.com/htacg/tidy-html5/issues/348 
-	tidyOptSetBool( tdoc, TidyEscapeScripts, no );
-	tidyOptSetBool( tdoc, TidyDropEmptyElems, no );
-	tidyOptSetBool( tdoc, TidyDropEmptyParas, no );
+	tidyOptSetBool(tdoc, TidyEscapeScripts, no);
+	tidyOptSetBool(tdoc, TidyDropEmptyElems, no);
+	tidyOptSetBool(tdoc, TidyDropEmptyParas, no);
 
 	tidySetCharEncoding(tdoc, (cons_utf8 ? "utf8" : "latin1"));
 
@@ -330,10 +330,9 @@ static void convertNode(TidyNode node, int level, bool opentag)
 		tidyNodeGetText(tdoc, node, &tnv);
 		if (tnv.size) {
 /* But it's not the original html, it has been sanitized.
- * Put a cap on size, else memory consumed could, theoretically,
+ * Warning! Memory consumed could, theoretically,
  * grow as the size of the document squared. */
-			if (tnv.size <= 4096)
-				t->innerHTML = cloneString(tnv.bp);
+			t->innerHTML = cloneString(tnv.bp);
 			tagStrip(t->innerHTML);
 			tidyBufFree(&tnv);
 		}
