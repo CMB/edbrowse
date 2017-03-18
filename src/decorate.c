@@ -204,7 +204,7 @@ Here is a tiny example.
 <a href="#bottom"><div>Cognitive business is here</div></a>
 </body>
 
-This routine tries to put it back.
+This routine puts it back.
 An anchor with no children followd by div
 moves div under the anchor.
 For a while I had this function commented out, like it caused a problem,
@@ -212,7 +212,19 @@ but I can't see why or how, so it's back, and facebook looks better.
 
 As an after kludge, don't move <div> under <a> if <div> has an anchor beneath it.
 That could create nested anchors, which we already worked hard to get rid of.   Eeeeeeesh.
-Would be easier if the tidy bug was fixed.
+
+This and other tidy workaround functions are based on heuristics,
+and suffer from false positives and false negatives,
+the former being the more serious problem -
+i.e. we rearrange the tree when we shouldn't.
+Even when we do the right thing, there is another problem,
+innerHTML is wrong, and doesn't match the tree of nodes
+or the original source.
+innerHTML comes to us from tidy, after it has fixed (sometimes broken) things.
+Add <script> to the above, browse, jdb, and look at document.body.innerHTML.
+It does not match the source, in fact it represent the tree *before* we fixed it.
+There really isn't anything I can do about that.
+In so many ways, the better approach is to fix tidy, but sometimes that is out of our hands.
 *********************************************************************/
 
 static bool tagBelow(struct htmlTag *t, int action)
