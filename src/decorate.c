@@ -803,8 +803,6 @@ static void establish_inner(jsobjtype obj, const char *start, const char *end,
 	set_property_string(obj, name, s);
 	if (start && end)
 		nzFree((char *)s);
-/* Anything with an innerHTML might also have a style. */
-	instantiate(obj, "style", 0);
 }				/* establish_inner */
 
 static void domLink(struct htmlTag *t, const char *classname,	/* instantiate this class */
@@ -1262,20 +1260,17 @@ Needless to say that's not good!
 	case TAGACT_TD:
 		if ((above = t->controller) && above->jv) {
 			domLink(t, "Cell", 0, "cells", above->jv, 0);
-			establish_inner(t->jv, t->innerHTML, 0, false);
 		}
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_DIV:
 		domLink(t, "Div", 0, "divs", cf->docobj, 0);
-		establish_inner(t->jv, t->innerHTML, 0, false);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_OBJECT:
 		domLink(t, "HtmlObj", 0, "htmlobjs", cf->docobj, 0);
-		establish_inner(t->jv, t->innerHTML, 0, false);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
@@ -1284,7 +1279,6 @@ Needless to say that's not good!
 	case TAGACT_SUP:
 	case TAGACT_OVB:
 		domLink(t, "Span", 0, "spans", cf->docobj, 0);
-		establish_inner(t->jv, t->innerHTML, 0, false);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
@@ -1312,7 +1306,6 @@ Needless to say that's not good!
 
 	case TAGACT_P:
 		domLink(t, "P", 0, "paragraphs", cf->docobj, 0);
-		establish_inner(t->jv, t->innerHTML, 0, false);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
@@ -1324,11 +1317,14 @@ Needless to say that's not good!
 
 	}			/* switch */
 
+	if (!t->jv)
+		return;		/* nothing else to do */
+
 /* js tree mirrors the dom tree. */
-	if (t->jv && t->parent && t->parent->jv)
+	if (t->parent && t->parent->jv)
 		run_function_onearg(t->parent->jv, "apch1$", t->jv);
 
-	if (t->jv && !t->parent) {
+	if (!t->parent) {
 		if (innerParent)
 			run_function_onearg(innerParent, "apch1$", t->jv);
 /* head and body link to document */
@@ -1339,9 +1335,12 @@ Needless to say that's not good!
 /* TextNode linked to document/gc to protect if from garbage collection,
  * but now it is linked to its parent, and even if it isn't,
  * we don't need it hanging around anyways. */
-	if (action == TAGACT_TEXT && t->jv)
+	if (action == TAGACT_TEXT)
 		delete_property(cf->docobj, fakePropLast);
 
+/* set innerHTML from the source html, if this tag supports it */
+	if (ti->bits & TAG_INNERHTML)
+		establish_inner(t->jv, t->innerHTML, 0, false);
 }				/* jsNode */
 
 /* decorate the tree of nodes with js objects */
@@ -1392,8 +1391,8 @@ const struct tagInfo availableTags[] = {
 	{"font", "a font", TAGACT_NOP, 0, 0},
 	{"center", "centered text", TAGACT_P, 2, 5},
 	{"caption", "a caption", TAGACT_NOP, 5, 0},
-	{"head", "the html header information", TAGACT_HEAD, 0, 4},
-	{"body", "the html body", TAGACT_BODY, 0, 4},
+	{"head", "the html header information", TAGACT_HEAD, 0, 5},
+	{"body", "the html body", TAGACT_BODY, 0, 5},
 	{"text", "a text section", TAGACT_TEXT, 0, 4},
 	{"bgsound", "background music", TAGACT_MUSIC, 0, 4},
 	{"audio", "audio passage", TAGACT_MUSIC, 0, 4},
@@ -1424,11 +1423,11 @@ const struct tagInfo availableTags[] = {
 	{"form", "a form", TAGACT_FORM, 10, 1},
 	{"button", "a button", TAGACT_INPUT, 0, 4},
 	{"frame", "a frame", TAGACT_FRAME, 2, 0},
-	{"iframe", "a frame", TAGACT_FRAME, 2, 0},
+	{"iframe", "a frame", TAGACT_FRAME, 2, 1},
 	{"map", "an image map", TAGACT_MAP, 2, 4},
 	{"area", "an image map area", TAGACT_AREA, 0, 4},
 	{"table", "a table", TAGACT_TABLE, 10, 1},
-	{"tbody", "a table body", TAGACT_TBODY, 0, 0},
+	{"tbody", "a table body", TAGACT_TBODY, 0, 1},
 	{"tr", "a table row", TAGACT_TR, 5, 1},
 	{"td", "a table entry", TAGACT_TD, 0, 5},
 	{"th", "a table heading", TAGACT_TD, 0, 5},
@@ -1445,7 +1444,6 @@ const struct tagInfo availableTags[] = {
 	{"noframes", "no frames section", TAGACT_NOP, 0, 2},
 	{"embed", "embedded html", TAGACT_MUSIC, 0, 4},
 	{"noembed", "no embed section", TAGACT_NOP, 0, 2},
-	{"object", "an html object", TAGACT_OBJ, 0, 2},
 	{"em", "emphasized text", TAGACT_JS, 0, 0},
 	{"label", "a label", TAGACT_JS, 0, 0},
 	{"strike", "emphasized text", TAGACT_JS, 0, 0},
