@@ -3815,7 +3815,7 @@ et_go:
 		return true;
 	}
 
-	if (stringEqual(line, "bgl")) {
+	if (stringEqual(line, "bglist")) {
 		bg_jobs(false);
 		return true;
 	}

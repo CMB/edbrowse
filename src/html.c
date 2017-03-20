@@ -825,10 +825,12 @@ bool htmlTest(void)
 		if (*p == '\n')
 			continue;	/* skip blank line */
 		if (firstline && *p == '<') {
-/* check for <!doctype */
+/* check for <!doctype and other things */
 			if (memEqualCI(p + 1, "!doctype", 8))
 				return true;
 			if (memEqualCI(p + 1, "?xml", 4))
+				return true;
+			if (memEqualCI(p + 1, "!--", 3))
 				return true;
 /* If it starts with <tag, for any tag we recognize,
  * we'll call it good. */
