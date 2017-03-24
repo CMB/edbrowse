@@ -505,6 +505,7 @@ struct htmlTag {
 	bool contracted:1; /* frame is contracted */
 	bool multiple:1;
 	bool rdonly:1;
+	bool disabled:1;
 	bool clickable:1;	/* but not an input field */
 	bool secure:1;
 	bool scriptgen:1; // script generated, not from source

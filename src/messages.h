@@ -530,7 +530,7 @@ enum {
 	MSG_DBCheck,
 	MSG_DBTimeout,
 	MSG_DBView,
-	MSG_notused433,
+	MSG_Disabled,
 	MSG_notused434,
 	MSG_notused435,
 	MSG_notused436,

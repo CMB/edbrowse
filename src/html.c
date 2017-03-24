@@ -1020,6 +1020,10 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		setError(MSG_Readonly);
 		return false;
 	}
+	if (t->disabled) {
+		setError(MSG_Disabled);
+		return false;
+	}
 
 	if (strchr(newtext, '\n')) {
 		setError(MSG_InputNewline);

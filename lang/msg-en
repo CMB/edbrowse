@@ -430,7 +430,7 @@ placing null into a not-null column
 check constraint violated
 database timeout
 cannot modify a view
-0
+field is disabled
 0
 0
 0

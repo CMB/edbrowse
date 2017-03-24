@@ -1696,6 +1696,8 @@ checkattributes:
 			t->checked = t->rchecked = true;
 		if (stringInListCI(t->attributes, "readonly") >= 0)
 			t->rdonly = true;
+		if (stringInListCI(t->attributes, "disabled") >= 0)
+			t->disabled = true;
 		if (stringInListCI(t->attributes, "multiple") >= 0)
 			t->multiple = true;
 		if ((j = stringInListCI(t->attributes, "name")) >= 0) {
