@@ -187,114 +187,114 @@ edbrowse готов
 конец буфера
 нет строк дла связывания
 неправильный предел
-cannot break lines in directory mode
-cannot break lines in database mode
-cannot break lines in browse mode
-unknown command %c
-%c not available in directory mode
-%c not available in database mode
-%c not available in browse mode
-zero line number
-no space after command
-the %c command cannot be applied globally
-invalid move/copy destination
-unexpected text after the %c command
-nothing to undo
-please enter k[a-z]
-cannot label an entire range
-backing up 0 is invalid
-warning: no buffers available to handle the ancillary window
-unexpected text after the q command
-cannot change the name of a directory
-cannot change the name of a table
-cannot append to another buffer
-no file specified
-cannot write to the directory; files are modified as you go
-cannot write to the database; rows are modified as you go
-unexpected text after the ^ command
-no previous text
-unexpected text after the M command
-0
-no previous text, cannot back up
-cannot apply the g command to a range
-g not available in database mode
-cannot apply the i%c command to a range
-cannot use i< in a global command
-buffer %d is empty
-buffer %d contains more than one line
-cannot open %s
-cannot read from %s
-input text contains nulls
-line contains an embeded carriage return
-first line of %s is too long
-file is currently in buffer - please use the rf command to refresh
-cannot browse a binary file
-cannot browse an empty file
-this doesn't look like browsable text
-already browsing
-label %s is not found
-i not available in browse mode
-cannot run an insert command from an edbrowse function
-Unable to communicate with edbrowse-js, javascript is closed.
-command %c not yet implemented
-%d is out of range
-no options contain the string %s
-multiple options contain the string %s
-this is a button; use i* to push the button
-this is a submit button; use i* to push the button
-this is a reset button; use i* to push the button
-this is a textarea, you must edit it from session %d
-readonly field
-input field cannot contain a newline character
-input too long, limit %d characters
-field must be set to + or -
-you cannot clear a radio button; you must set another one
-%s is not an accessible file
-number expected
-session %d contains nulls
-sending a file requires method=post and enctype=multipart/form-data
-this is an input field, not a button
-this button is not part of a form
-no javascript associated with this button
-form does not include a destination url
-the action of the form is not a url
-javascript is disabled, cannot activate this form
-This form has changed from https to http, and is now insecure
-cannot submit using protocol %s
-%d is out of range, please use %c1 through %c%d
-%d is out of range, please use %c1, or simply %c
-cannot replace multiple instances of the empty string
-download aborted.
-no regular expression after %c
-multiple numbers after the third delimiter
-unexpected substitution suffix after the third delimiter
-cannot use both a numeric suffix and the `g' suffix simultaneously
-sorry, cannot apply the bl command to lines longer than %d bytes
-replacement data contains newlines
-replacement data contains null characters
-cannot embed slash, newline, or null in a directory name
-destination file already exists
-cannot rename file to %s
-cannot embed nulls in an input field
-cannot embed newlines in an input field
-no input fields present
-no links present
-no buttons present
-multiple input fields present, please use %c1 through %c%d
-multiple links present, please use %c1 through %c%d
-multiple buttons present, please use %c1 through %c%d
-could not read the data from the server
-%s is not a url
-download complete
-cannot identify %s on the network
-the %s protocol is not supported by edbrowse, and is not included in the mime types in your config file
-warning: could not preload <buffer %d> with its initial text\n
-download in progress
-cannot connect to %s
-download: 
-The certificate for host %s could not be verified - SSL connection aborted
-inaccessible
-h\tprint this help message.\nq\tquit this program.\ns\tstop reading mail from this folder.\nspace\tread more of this email.\nn\tnext email.\nd\tdelete this email.\nm\tmove this email to another folder\nw\twrite this email to a file.\nW\twrite this email to a file and delete it.\nu\twrite this email unformatted to a file.\nU\twrite this email unformatted to a file and delete it.\na\tscan and save attachments.
+не можна разрывать строк в режиме каталога
+не можна разрывать строк в режиме базы данных
+не можна разрывать строк в режиме браузера
+неизвестна команда %c
+%c не доступный в режиме каталога
+%c не доступный в режиме базы данных
+%c не доступный в режиме браузера
+число строк ноль
+нет пробела следуя команды
+команда %c не можеть быть использована глобально
+неправильное место назначения команды переместить/копировать
+неожиданный текст следуя команды %c
+никаких шагов для отменения
+пожалуйста впиши k[a-z]
+не можна навесить целого предела
+изготовление резервной копии 0 неправильное
+внимание: нет буферов дла справлениа подчинённого окна
+неожиданный текст следуя команды q
+не можна изменить имени каталога
+не можна изменить имени таблицы
+не можна добавить до другого буфера
+не выбрано файла
+не можна писать в каталог; файлы будут изменены по дороге
+не можна писать в базу данных; строки будут изменены по дороге
+неожиданный текст следуя команды ^
+нет предыдущего текста
+неожиданный текст следуя команды M
+перемещено в сессию %d\n
+нет предыдущего текста, не можна отменить
+не можна исполнить команды g на пределе
+g не доступна в режиме базы данных
+не можна исполнить команды i%c на пределе
+не можна использовать i< в глобальной команде
+буфер %d пустой
+буфер %d содержает больше одной строки
+не можна открыть %s
+не можна прочитать %s
+входный текст содержает нуллы
+строка содержает вставленный возврат каретки
+первая строка %s слишком долгая
+файл теперь в буфере - пожалуйста используйте команду rf чтобы освежить
+не можна осматривать двоичного файла
+не можна осматривать пустого файла
+это не похоже на осматриваемый текст
+уже осматриваться
+не найдено этикетки %s
+i не доступное в режиме браузера
+не можна запустить команды insert с функции edbrowse
+Коммуникациа с edbrowse-js невозможна, JavaScript закрытый
+команда %c ещё не осуществлена
+%d вне предела
+никакие опции содержают строку %s
+многие опции содержают строку %s
+это кнопка; используйте i* чтобы нажать её
+это кнопка submit; используйте i* чтобы нажать её
+это кнопка reset; используйте i* чтобы нажать её
+это текстовое поле; надо редактировать из сесси %d
+поле только для отчита
+поле ввода не может содержать перевода строки
+ввод слишком долгий, лимит %d знаков
+поле должно быть назначено + или -
+не можна очистить радиокнопки; надо создать другую
+%s не кажеться доступным файлом
+ожиданное число
+сессия %d содержает нулы
+передача файла нуждаеться method=post и enctype=multipart/form-data
+это поле ввода, не кнопка
+эта кнопка нет частей формы
+никакий JavaScript не связан с этой кнопкой
+форма не содержает конечного URLа
+действие формы нет URLом
+JavaScript выключен, не можна включить этой формы
+Эта форма сменилась с HTTPS на HTTP, и теперь опасная
+не можна отправить используя протокол %s
+%d вне предела, пожалуйста используйте %c1 через %c%d
+%d вне предела, пожалуйста используйте %c1, или просто %c
+не можна заместить многих случаев пустой строки
+загружение отменено.
+нет регулярного выражения следуя %c
+многие числа следуя третего разделителя
+неожиданный суффикс замены следуя третего разделителя
+не можна использовать нумерического суффикса и `g' одновременно
+извините, не можна примиенить команды bl для строк долее %d байтов
+данные замены содержают переводы строки
+данные замены содержают нуллы
+не можна встроить косой черты, перевода строки, или нулля в имени каталога
+конечный файл уже существует
+не можна изменить имени файла на %s
+не можна встроить нуллей в поле ввода
+не можна встроить перевода строки в поле ввода
+нет полей ввода
+нет связьей
+нет кнопок
+многочисленные поля ввода, пожалуйста используйте %c1 до %c%d
+многочисленные свяьы, пожалуйста используйте %c1 до %c%d
+многочисленные кнопки, пожалуйста используйте %c1 до %c%d
+не можна вчитать данных с сервера
+%s - не URL
+загружение законченное
+не можна идентифицировать %s в сети
+протокол %s не поддержен edbrowse, и его нет в вашим файле mime types
+внимание: не можна пре-загрузить <buffer %d> с его инициальным текстом\n
+незавершённая загрузка
+не можна связать с %s
+загрузка: 
+Не можна подтвердить сертификата для хоста %s - соединение SSL прекращенное
+недоступный
+h\tотпечатать эту сообщение о помощи.\nq\tвыйти из этой программы.\ns\tоставить чтение почты с этого каталога.\nspace\tчитать больше.\nn\tследующее сообщение.\nd\tудалить это сообщение.\nm\tперенести это сообщение в другой каталог\nw\tзаписать это сообщение в файл.\nW\tзаписать это сообщение в файл и удалить её.\nu\tзаписать это сообщение в файл без форматирования.\nU\tзаписать это сообщение в файл без форматирования и удалить её.\na\tсканировать и записать приложения.
 web page requires authorization
 login aborted
 search string cannot contain quotes
