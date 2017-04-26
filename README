@@ -20,7 +20,8 @@ Use this program at your own risk.
 Netscape and Explorer are graphical browsers.
 Lynx and Links are screen browsers.
 This is a command line browser, the only one of its kind.
-The user's guide can be found in doc/usersguide.html (in this package).
+The user's guide can be found in doc/usersguide.html (in this package),
+online at https://rawgit.com/CMB/edbrowse/master/doc/usersguide.html.
 Of course this reasoning is a bit circular.
 You need to use a browser to read the documentation,
 which describes how to use the browser.
