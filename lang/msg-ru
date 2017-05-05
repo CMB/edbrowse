@@ -328,74 +328,74 @@ email в строке %d записной книжки не имеет @
 многие каталоги содержают %s\n
 поиск
 лимит
-move to 
-warning: form url specifies a section %s, which will be ignored\n
-file %s is empty
-your email should begin with subject:
-progress quiet
-subject line too long, limit %d characters
-progress dots
-.signature is not a regular file
-cannot access .signature file
-cannot mail the binary file %s, perhaps this should be an attachment?
-either none or all of the attachments must be declared \"alternative\"
-too many recipients, limit %d
-No address book specified, please check your .ebrc config file
-alias %s not found in your address book
-no recipients specified
-session %d is empty, cannot atach
-cannot access attachment %s
-file %s is not a regular file, cannot attach
-file %s is empty, cannot attach
-line after %d has been deleted\n
-%d lines after %d have been deleted\n
-line %d has been added\n
-lines %d through %d have been added\n
-progress count
-no mail accounts specified, plese check your config file
-invalid account number %d, please use 1 through %d
-cannot send mail while in browse mode
-cannot send mail while in database mode
-cannot send mail from directory mode
-cannot mail binary data, should this be an attachment?
-cannot mail an empty file
-no recipient at line %d
-cannot cc or bcc to the first recipient
-no attachment at line %d
-invalid account number at line %d
-no edbrowse temp directory available
-line %d should begin with to: attach: alt: account: or subject:
-converting to utf16
-no recipients specified, place to: emailaddress at the top of youre file
-%s:// expected
-unrecognized protocol %s
-invalid :port specifier at the end of the domain
-domain name too long
-user name too long
-password too long
-%d lines have been replaced with line %d\n
-lines %d through %d have been updated\n
-no function specified
-function name should only contain letters and numbers
-no such function %s
-too many arguments
-~%d has no corresponding argument
-could not spawn subcommand %s, errno %d
-could not create temp file %s, errno %d
-too many sql tables in cache, limit %d
-%s is not a regular file
-converting to utf32
-cannot read the contents of %s
-cannot access %s
-$%s is not defined
-~%s is not defined
-Go
-0
- secure
+перенести в 
+внимание: url формы определяет секцию %s, которая будет игнорирована\n
+файл %s пустой
+твое сообщение должно начинаться темой:
+тихий прогресс
+строка темы слишком долга, лимит %d знаков
+точки прогресса
+.signature нет регулярный файл
+нет доступа к файлу .signature
+не можна отправить бинарного файла %s, возможно он должен быть подключением?
+либо никакие либо все подключения должны быть заявлены \"alternative\"
+слишком много получателей, лимит %d
+Нет записной книжки, пожалуйста провери свой файл .ebrc
+кличка %s не найдена в твоей записной книжке
+не определено получителей
+сессия %d пустая, не можна подключить
+нет доступа к подключению %s
+%s не регулярный файл, не можна подключить
+%s пустой файл, не можна подключить
+строка после %d удалена\n
+%d строк после %d удаленый\n
+строка %d добавлена\n
+стоки %d до %d добавлены\n
+подсчёт прогресса
+не определено почтовых счётов, пожалуйста провери свой конфигурационный файл
+неправильный номер счёта %d, пожалуйста используй между 1 и %d
+не можна отправить сообщения в режиме браузера
+не можна отправить сообщения в режиме базы данных
+не можна отправить сообщения в режиме каталога
+не можна отправить бинарного файла, подключить его?
+не можна отправить пустого файла
+нет получителя в строке %d
+не можна установить cc или bcc для первого получителя
+нет подключения в строке %d
+неправильный номер счёта в строке %d
+не временного каталога edbrowse
+строка %d долбна начинаться to: attach: alt: account: или subject:
+конвертируем в utf16
+не определено получителей, стави to: <адрес> на вершине файла
+%s:// ожидаемый
+протокол %s не признанный
+неправильный определитель :port в конце домены
+имя домены слишком долгое
+имя пользователя слишком долгое
+пароль слишком долгий
+%d строк замещеных строкой %d\n
+строки от %d до %d актуализированы\n
+не определено функции
+имя функции должно содержать только буквы и числа
+нет функции %s
+слишком много аргументов
+у ~%d нет соответствующего аргумента
+не можна вызвать команды %s, номер ошибки %d
+не можна создать временного файла %s, номер ошибки %d
+слишком много таблиц SQL в кеше, лимит %d
+%s нет регулярный файл
+конвертируем в utf32
+не можна вчитать содержания %s
+нет доступа к %s
+$%s не определен
+~%s не определен
+Иди
+данные рамки нет html
+ безопасный
  bymail
-Reset
-unexpected error while evaluating the shell pattern
-0
+Запускать
+неожиданная ошибка во время выполнения образца оболочки
+рамка не имеет связанной страницы
 shell pattern matches more than one file
 line becomes too long when shell variables are expanded
 the config file does not specify the database - cannot connect
