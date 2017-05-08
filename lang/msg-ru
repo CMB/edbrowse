@@ -396,41 +396,42 @@ $%s не определен
 Запускать
 неожиданная ошибка во время выполнения образца оболочки
 рамка не имеет связанной страницы
-shell pattern matches more than one file
-line becomes too long when shell variables are expanded
-the config file does not specify the database - cannot connect
-cannot connect to the database - error %d
-database error %d
-no primary key for this table
-column name %s is too long, limit %d characters
-syntax error in where clause
-column %d is out of range
-multiple columns match %s
-no column matches %s
-no such table %s
-invalid column name
-cannot select more than one blob column
-the data contains pipes, which is my reserved delimiter
-the data contains newlines
-line contains too many fields, please do not introduce any pipes into the text
-line contains too few fields, please do not remove any pipes from the text
-no primary key column for this table
-miscelaneous sql error %d
-cannot delete more than 100 rows at a time
-cannot change a key column
-cannot change a blob field
-cannot change a text field
-oops!  I deleted %d row(s), and %d database record(s) were affected.
-oops!  I inserted %d row(s), and %d database record(s) were affected.
-oops!  I updated %d row(s), and %d database record(s) were affected.
-some other row in the database depends on this row
-row or table is locked
-you do not have permission to modify the database in this way
-deadlock detected
-placing null into a not-null column
-check constraint violated
-database timeout
-cannot modify a view
+образец оболочки включает больше одного файла
+строка слишком долга после развития переменных оболочки
+конфигурационный файл не определяет базы данных - соединение невозможно
+не можна подключить к базе данных - ошибка %d
+ошибка базы данных %d
+нет первичного ключа дла этой таблицы
+имя колонны %s слишком долгое, лимит %d знаков
+синтаксическая ошибка в выражении where
+колонна %d за пределами
+многочисленные колонны подходят %s
+ни одна колонна подходит %s
+нет таблицы %s
+неправилное имя колонны
+не можна выбрать больше одной колонны блоб
+данные содержают вертыкальные черты - мой резервированный разделитель
+данные содержают переводы строки
+строка содержает слишком много полей, пожалуйста не вводи вертыкальных черт в текст
+строка содержает слишком немного полей, пожалуйста не убирай никаких вертыкальных черт из текста
+нет колонны первичного ключа для этой таблицы
+разнородная ошибка sql %d
+не можна удалить больше 100 строк разом
+не можна сменить ключевой колонны
+не можна сменить поля блоб
+не можна сменить текстового поля
+ой!  Удалено %d строк, и %d записей базы данных затронутых.
+ой!  Вводено %d строк, и %d записей базы данных затронутых.
+ой!  Обновлено %d строк, и %d записей базы данных затронутых.
+другая запись в базе данных зависит от этой записи
+запись или таблица блокированные
+не имеешь позволения модифицировать базу данных таким образом
+обнаружено взаимную блокировку
+ставение NULL в колонну отказывающую NULL
+нарушение проверки связей
+таймаут базы данных
+не можна модифицировать вида
+поле отключенное
 0
 0
 0
@@ -458,33 +459,32 @@ cannot modify a view
 0
 0
 0
-0
-unexpected characters after the encoded attachment
-invalid characters in the encoded attachment
-the %s command cannot be applied globally
-warning, javascript cannot be invoked by a double click
-error resolving option %s during sync or form submit
+неожыданные знаки после зашифрованного подключения
+неправильные знаки в зашифрованном подключении
+команда %s не может быть исполнена глобально
+внимание, JavaScript не может быть вызван двойном щёлканием
+ошибка при решении опции %s в течение синхронизации или предложением формы
 xhr включен
 xhr выключен
-could not fetch local javascript, %s\n
-could not fetch javascript from %s, code %ld\n
-could not fetch javascript, %s\n
-javascript disabled, skipping the onclick code
-javascript disabled, skipping the onchange code
-javascript disabled, skipping the onreset code
-javascript disabled, skipping the onsubmit code
-could not find the html tag associated with the javascript variable being modified
-0
-warning: garbled refresh directive, %s\n
-0
-warning: http redirection %ld, but a new url is not specified\n
-warning: http error %ld, %s\n
-0
-0
-help messages on
-ftp download: 
-no ssl certificate file specified; secure connections cannot be verified
-scp download: 
+не можна загрузить локального JavaScriptа, %s\n
+не можна загрузить JavaScriptа с %s, код %ld\n
+не можна загрузить JavaScriptа, %s\n
+JavaScript выключен, пропускаем код onclick
+JavaScript выключен, пропускаем код onchange
+JavaScript выключен, пропускаем код onreset
+JavaScript выключен, пропускаем код onsubmit
+не можна найти тэга HTML связанного с модифицированной переменной JavaScript
+пожалуйста используй exp чтобы развить рамку
+внимание: запутанна директива освежения, %s\n
+новое окно
+внимание: перенаправление HTTP %ld, новый URL не определен\n
+внимание: ошибка HTTP %ld, %s\n
+нет рамок для развития
+нет рамок для сокращения
+сообщение о помощи включено
+загрузка FTP: 
+не определено файла сертификата SSL; безопасные соединения не могут быть подтверждены
+загрузка SCP: 
 .ebrc: null characters at line %d
 .ebrc: missing function name at line %d
 .ebrc: function name at line %d begins with a digit
