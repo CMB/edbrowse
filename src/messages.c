@@ -44,6 +44,10 @@ void selectLanguage(void)
 
 	setlocale(LC_ALL, "");
 
+/* But LC_TIME controls time/date formatting, I.E., strftime.  The one
+ * place we do that, we need standard day/month abbreviations, not
+ * localized ones.  So LC_TIME needs to be C. */
+	setlocale(LC_TIME, "C");
 #else // DOSLIKE
 
 /* I'm going to assume Windows runs utf8 */
@@ -55,6 +59,7 @@ void selectLanguage(void)
 		return;
 	if (!*s)
 		return;
+	setlocale(LC_TIME, "C");
 #endif // DOSLIKE y/n
 
 	strncpy(buf, s, 7);
