@@ -1019,13 +1019,13 @@ utf8 sequences are considered text characters.
 If there is a leading byte order mark as per the previous routine, it's text.
 *********************************************************************/
 
-bool looksBinary(const char *buf, int buflen)
+bool looksBinary(const uchar * buf, int buflen)
 {
 	int i, j, bincount = 0, charcount = 0;
-	char c;
+	uchar c;
 	uchar seed;
 
-	if (byteOrderMark((uchar *) buf, buflen))
+	if (byteOrderMark(buf, buflen))
 		return false;
 
 	for (i = 0; i < buflen; ++i, ++charcount) {
@@ -1033,7 +1033,7 @@ bool looksBinary(const char *buf, int buflen)
 // 0 is ascii, but not really text, and very common in binary files.
 		if (c == 0)
 			++bincount;
-		if (c >= 0)
+		if (c < 0x80)
 			continue;
 // could represent a utf8 character
 		seed = c;
@@ -1056,14 +1056,14 @@ binchar:
 	return (bincount * 8 - 16 >= charcount);
 }				/* looksBinary */
 
-void looks_8859_utf8(const char *buf, int buflen, bool * iso_p, bool * utf8_p)
+void looks_8859_utf8(const uchar * buf, int buflen, bool * iso_p, bool * utf8_p)
 {
 	int utfcount = 0, isocount = 0;
 	int i, j, bothcount;
 
 	for (i = 0; i < buflen; ++i) {
-		char c = buf[i];
-		if (c >= 0)
+		uchar c = buf[i];
+		if (c < 0x80)
 			continue;
 /* This is the start of the nonascii sequence. */
 /* No second bit, it has to be iso. */
@@ -1073,11 +1073,11 @@ isogo:
 			continue;
 		}
 /* Next byte has to start with 10 to be utf8, else it's iso */
-		if (((uchar) buf[i + 1] & 0xc0) != 0x80)
+		if ((buf[i + 1] & 0xc0) != 0x80)
 			goto isogo;
 		c <<= 2;
 		for (j = i + 2; c < 0; ++j, c <<= 1)
-			if (((uchar) buf[j] & 0xc0) != 0x80)
+			if ((buf[j] & 0xc0) != 0x80)
 				goto isogo;
 		++utfcount;
 		i = j - 1;
@@ -1137,12 +1137,13 @@ static const int iso_unicodes[2][128] = {
 	 0xfa, 0x171, 0xfc, 0xfd, 0x163, 0x2d9},
 };
 
-void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
+void iso2utf(const uchar * inbuf, int inbuflen, uchar ** outbuf_p,
+	     int *outbuflen_p)
 {
 	int i, j;
 	int nacount = 0;
-	char c;
-	char *outbuf;
+	uchar c;
+	uchar *outbuf;
 	const int *isoarray = iso_unicodes[type8859 - 1];
 	int ucode;
 
@@ -1155,14 +1156,14 @@ void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 /* count chars, so we can allocate */
 	for (i = 0; i < inbuflen; ++i) {
 		c = inbuf[i];
-		if (c < 0)
+		if (c >= 0x80)
 			++nacount;
 	}
 
 	outbuf = allocString(inbuflen + nacount + 1);
 	for (i = j = 0; i < inbuflen; ++i) {
 		c = inbuf[i];
-		if (c >= 0) {
+		if (c < 0x80) {
 			outbuf[j++] = c;
 			continue;
 		}
@@ -1176,11 +1177,12 @@ void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 	*outbuflen_p = j;
 }				/* iso2utf */
 
-void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
+void utf2iso(const uchar * inbuf, int inbuflen, uchar ** outbuf_p,
+	     int *outbuflen_p)
 {
 	int i, j, k;
-	char c;
-	char *outbuf;
+	uchar c;
+	uchar *outbuf;
 	const int *isoarray = iso_unicodes[type8859 - 1];
 	int ucode;
 
@@ -1196,14 +1198,13 @@ void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 
 /* regular chars and nonascii chars that aren't utf8 pass through. */
 /* There shouldn't be any of the latter */
-		if (((uchar) c & 0xc0) != 0xc0) {
+		if ((c & 0xc0) != 0xc0) {
 			outbuf[j++] = c;
 			continue;
 		}
 
 /* Convertable into 11 bit */
-		if (((uchar) c & 0xe0) == 0xc0
-		    && ((uchar) inbuf[i + 1] & 0xc0) == 0x80) {
+		if ((c & 0xe0) == 0xc0 && (inbuf[i + 1] & 0xc0) == 0x80) {
 			ucode = c & 0x1f;
 			ucode <<= 6;
 			ucode |= (inbuf[i + 1] & 0x3f);
@@ -1221,7 +1222,7 @@ void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 		c <<= 1;
 		++i;
 		for (++i; c < 0; ++i, c <<= 1) {
-			if (((uchar) outbuf[i] & 0xc0) != 0x80)
+			if ((outbuf[i] & 0xc0) != 0x80)
 				break;
 		}
 		outbuf[j++] = '*';
@@ -1553,14 +1554,16 @@ iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 	if (!iuConvert)
 		return;
 
-	looks_8859_utf8(inbuf, inbuflen, &is8859, &isutf8);
+	looks_8859_utf8((uchar *) inbuf, inbuflen, &is8859, &isutf8);
 	if (cons_utf8 && is8859) {
 		debugPrint(3, "converting to utf8");
-		iso2utf(inbuf, inbuflen, outbuf_p, outbuflen_p);
+		iso2utf((uchar *) inbuf, inbuflen, (uchar **) outbuf_p,
+			outbuflen_p);
 	}
 	if (!cons_utf8 && isutf8) {
 		debugPrint(3, "converting to iso8859");
-		utf2iso(inbuf, inbuflen, outbuf_p, outbuflen_p);
+		utf2iso((uchar *) inbuf, inbuflen, (uchar **) outbuf_p,
+			outbuflen_p);
 	}
 }				/* iuReformat */
 

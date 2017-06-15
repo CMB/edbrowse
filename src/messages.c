@@ -131,7 +131,7 @@ const char *i_getString(int msg)
 		return s;
 
 /* We have to convert it. */
-	utf2iso(s, strlen(s), &t, &t_len);
+	utf2iso((uchar *) s, strlen(s), (uchar **) & t, &t_len);
 	strcpy(utfbuf, t);
 	nzFree(t);
 	return utfbuf;

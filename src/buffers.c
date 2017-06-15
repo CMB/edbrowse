@@ -1610,7 +1610,7 @@ fromdisk:
 
 gotdata:
 
-	if (!looksBinary(rbuf, fileSize)) {
+	if (!looksBinary((uchar *) rbuf, fileSize)) {
 		char *tbuf;
 
 /* looks like text.  In DOS, we should have compressed crlf.
@@ -1643,8 +1643,8 @@ gotdata:
 				nzFree(rbuf);
 				rbuf = tbuf;
 			} else {
-				looks_8859_utf8(rbuf, fileSize, &is8859,
-						&isutf8);
+				looks_8859_utf8((uchar *) rbuf, fileSize,
+						&is8859, &isutf8);
 				debugPrint(3, "text type is %s",
 					   (isutf8 ? "utf8"
 					    : (is8859 ? "8859" : "ascii")));
@@ -1652,8 +1652,8 @@ gotdata:
 					if (debugLevel >= 2 || debugLevel == 1
 					    && !isURL(filename))
 						i_puts(MSG_ConvUtf8);
-					iso2utf(rbuf, fileSize, &tbuf,
-						&fileSize);
+					iso2utf((uchar *) rbuf, fileSize,
+						(uchar **) & tbuf, &fileSize);
 					nzFree(rbuf);
 					rbuf = tbuf;
 				}
@@ -1661,8 +1661,8 @@ gotdata:
 					if (debugLevel >= 2 || debugLevel == 1
 					    && !isURL(filename))
 						i_puts(MSG_Conv8859);
-					utf2iso(rbuf, fileSize, &tbuf,
-						&fileSize);
+					utf2iso((uchar *) rbuf, fileSize,
+						(uchar **) & tbuf, &fileSize);
 					nzFree(rbuf);
 					rbuf = tbuf;
 				}
@@ -1822,7 +1822,8 @@ badwrite:
 
 			if (name == cf->fileName && iuConvert) {
 				if (cw->iso8859Mode && cons_utf8) {
-					utf2iso((char *)p, len, &tp, &tlen);
+					utf2iso((uchar *) p, len,
+						(uchar **) & tp, &tlen);
 					if (alloc_p)
 						free(p);
 					alloc_p = true;
@@ -1834,7 +1835,8 @@ badwrite:
 				}
 
 				if (cw->utf8Mode && !cons_utf8) {
-					iso2utf((char *)p, len, &tp, &tlen);
+					iso2utf((uchar *) p, len,
+						(uchar **) & tp, &tlen);
 					if (alloc_p)
 						free(p);
 					alloc_p = true;
@@ -5620,7 +5622,7 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 	if (textlen < 0) {
 		textlen = strlen(text);
 	} else {
-		cw->binMode = looksBinary(text, textlen);
+		cw->binMode = looksBinary((uchar *) text, textlen);
 	}
 	if (textlen) {
 		rc = addTextToBuffer((pst) text, textlen, 0, false);
