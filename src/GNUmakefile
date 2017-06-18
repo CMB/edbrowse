@@ -99,6 +99,9 @@ js_hello_moz : js_hello_moz.cpp
 js_hello_v8 : js_hello_v8.cpp
 	gcc js_hello_v8.cpp -lv8 -lstdc++ -o js_hello_v8
 
+js_hello_duk: js_hello_duk.c
+	$(CC) js_hello_duk.c -o js_hello_duk -lduktape -lm
+
 testsock : socket.c socket.h
 	gcc -DTEST_CONNECT socket.c -o testsock
 
