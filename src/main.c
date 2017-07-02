@@ -68,6 +68,7 @@ bool fetchBlobColumns;
 bool caseInsensitive, searchStringsAll;
 bool binaryDetect = true;
 bool inputReadLine;
+bool curlAuthNegotiate = false;
 int context = 1;
 pst linePending;
 struct ebSession sessionList[MAXSESSION], *cs;

@@ -430,10 +430,10 @@ placement d'un null dans une colonne non null
 violation de contrainte
 dépassement de délai de la base de données
 impossible de modifier une vue
-champ dédactivé
+champ désactivé
+authentification SPNEGO désactivée
+authentification SPNEGO activée
 0
-0
-la commande %s ne peut s'appliquer globalement
 0
 0
 0

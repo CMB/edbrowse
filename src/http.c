@@ -1758,6 +1758,7 @@ my_curl_safeSocket(void *clientp, curl_socket_t socketfd, curlsocktype purpose)
 static CURL *http_curl_init(struct eb_curl_callback_data *cbd)
 {
 	CURLcode curl_init_status = CURLE_OK;
+	int curl_auth;
 	CURL *h = curl_easy_init();
 	if (h == NULL)
 		goto libcurl_init_fail;
@@ -1793,12 +1794,18 @@ static CURL *http_curl_init(struct eb_curl_callback_data *cbd)
 
 /*
 * tell libcurl to pick the strongest method from basic, digest and ntlm authentication
-* don't use any auth method as it will prefer Negotiate to NTLM,
+* don't use any auth method by default as it will prefer Negotiate to NTLM,
 * and it looks like in most cases microsoft IIS says it supports both and libcurl
 * doesn't fall back to NTLM when it discovers that Negotiate isn't set up on a system
 */
-	curl_easy_setopt(h, CURLOPT_HTTPAUTH,
-			 CURLAUTH_BASIC | CURLAUTH_DIGEST | CURLAUTH_NTLM);
+	curl_auth = CURLAUTH_BASIC | CURLAUTH_DIGEST | CURLAUTH_NTLM;
+	if (curlAuthNegotiate)
+#ifdef CURLAUTH_NEGOTIATE
+		curl_auth |= CURLAUTH_NEGOTIATE;
+#else
+		curl_auth |= CURLAUTH_GSSNEGOTIATE; /* libcurl < 7.38 */
+#endif
+	curl_easy_setopt(h, CURLOPT_HTTPAUTH, curl_auth);
 
 /* The next few setopt calls could allocate or perform file I/O. */
 	ht_error[0] = '\0';

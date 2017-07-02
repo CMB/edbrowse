@@ -431,8 +431,8 @@ check constraint violated
 database timeout
 cannot modify a view
 field is disabled
-0
-0
+SPNEGO curl auth disabled
+SPNEGO curl auth enabled
 0
 0
 0

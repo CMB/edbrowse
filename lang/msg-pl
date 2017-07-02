@@ -431,8 +431,8 @@ sprawdzić naruszenie więzów
 przekroczenie czasu dostępu do bazy danych
 nie można zmodyfikować widoku
 pole włączony
-0
-0
+SPNEGO curl auth disabled
+SPNEGO curl auth enabled
 0
 0
 0

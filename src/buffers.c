@@ -3890,6 +3890,13 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "can")) {
+		curlAuthNegotiate ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(curlAuthNegotiate + MSG_CurlNoAuthNegotiate);
+		return true;
+	}
+
 	if (stringEqual(line, "lna")) {
 		listNA ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
