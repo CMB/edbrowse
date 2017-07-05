@@ -4,9 +4,7 @@
 
 #include <duktape.h>
 
-static const char runCommand[] = "'hello world, the answer is ' + 6*7;";
-
-int run(duk_context *cx, const char *script)
+int run(duk_context * cx, const char *script)
 {
 	/* Your application code here. This may include JSAPI calls to create your own custom JS objects and run scripts. */
 	int rc = duk_peval_string(cx, script);
@@ -21,7 +19,7 @@ int run(duk_context *cx, const char *script)
 	} else if (duk_is_string(cx, -1)) {
 		printf("%s\n", duk_safe_to_string(cx, -1));
 	} else {
-		printf("Got non-string result after successful eval, not printing it.\n");
+		printf("Non-string result after successful eval.\n");
 	}
 	duk_pop(cx);
 
@@ -30,7 +28,6 @@ int run(duk_context *cx, const char *script)
 
 int main(int argc, const char *argv[])
 {
-	/* Create a JS runtime. */
 	duk_context *cx = duk_create_heap_default();
 
 	if (!cx) {
@@ -38,10 +35,35 @@ int main(int argc, const char *argv[])
 		return 1;
 	}
 
-	int status = run(cx, runCommand);
+	duk_idx_t base = duk_get_top(cx);
+/* the base is 0, we haven't done anything yet.
+	printf("base %d\n", base);
+*/
+
+	int status = run(cx, "'hello world, the answer is ' + 6*7;");
 	/* If you want to see the error reporter in action:
-	status = run(cx, "foo();");
+	   status = run(cx, "foo();");
 	 */
+
+/* make window object as global */
+	duk_push_global_object(cx);
+	duk_push_string(cx, "window");
+	duk_push_global_object(cx);
+	duk_def_prop(cx, base,
+		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE));
+
+/* now create a variable snork and see if we can access it via window.snork */
+/* this is a regular variable, writable, deletable. */
+	duk_push_string(cx, "snork");
+	duk_push_int(cx, 27);
+	duk_def_prop(cx, base,
+		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
+		      DUK_DEFPROP_SET_WRITABLE | DUK_DEFPROP_SET_CONFIGURABLE));
+/* now see if it's there under window */
+/* Also make sure the standard classes are there by taking square root. */
+	status = run(cx, "'sqrt(window.snork) = ' + Math.sqrt(window.snork)");
+/* and pop the global object, which is still sitting there on stack */
+	duk_pop(cx);
 
 	duk_destroy_heap(cx);
 
