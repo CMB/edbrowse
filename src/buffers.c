@@ -83,7 +83,7 @@ static bool f_encoded;
  * But it makes so much sense!
  * If I move a line, the referenced hyperlink moves with it.
  * I don't have to update some other structure that says,
- * "At line 73, characters 29 through 47, that's hyperlink 17.
+ * "At line 73, characters 29 through 47, that's hyperlink 17."
  * I use to do it that way, and wow, what a lot of overhead
  * when you move lines about, or delete them, or make substitutions.
  * Yes, you really need to change rendered html text,
@@ -99,12 +99,16 @@ static bool f_encoded;
  * So now, certain sequences in the text are for internal use only.
  * This routine strips out these sequences, for display.
  * After all, you don't want to see those code characters.
- * You just want to see {Click here for more information}. */
+ * You just want to see {Click here for more information}.
+ *
+ * This also checks for special input fields that are masked and
+ * displays stars instead, whenever we would display formated text */
 
 void removeHiddenNumbers(pst p, uchar terminate)
 {
 	pst s, t, u;
 	uchar c, d;
+	int field;
 
 	s = t = p;
 	while ((c = *s) != terminate) {
@@ -118,14 +122,22 @@ addchar:
 		d = *u;
 		if (!isdigitByte(d))
 			goto addchar;
-		do {
-			d = *++u;
-		} while (isdigitByte(d));
+		field = strtol(u, (char**)&u, 10);
+		d = *u;
 		if (d == '*') {
 			s = u + 1;
 			continue;
 		}
-		if (strchr("<>{}", d)) {
+		if (d == '<') {
+			if (tagList[field]->masked) {
+				*t++ = d;
+				while (*++u != InternalCodeChar)
+					*t++ = '*';
+			}
+			s = u;
+			continue;
+		}
+		if (strchr(">{}", d)) {
 			s = u;
 			continue;
 		}
