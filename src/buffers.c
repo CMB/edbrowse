@@ -2696,7 +2696,7 @@ done:
 	return (errorMsg[0] == 0);
 }				/* doGlobal */
 
-static void fieldNumProblem(int desc, char c, int n, int nt, int nrt)
+static void fieldNumProblem(int desc, char *c, int n, int nt, int nrt)
 {
 	if (!nrt) {
 		setError(MSG_NoInputFields + desc);
@@ -3189,7 +3189,7 @@ static int substituteText(const char *line)
 				findInputField(p, 1, whichField, &total,
 					       &realtotal, &tagno);
 				if (!tagno) {
-					fieldNumProblem(0, 'i', whichField,
+					fieldNumProblem(0, "i", whichField,
 							total, realtotal);
 					continue;
 				}
@@ -4508,6 +4508,49 @@ replaceframe:
 		return true;
 	}
 
+	/* special command for hidden input */
+	if (!strncmp(line, "ipass", 5)) {
+		char *p, *c;
+		char buffer[MAXUSERPASS];
+		int realtotal;
+		bool old_masked;
+		if (!cw->browseMode) {
+			setError(MSG_NoBrowse);
+			return false;
+		}
+		if (endRange > startRange) {
+			setError(MSG_RangeCmd, "ipass");
+			return false;
+		}
+
+		s = line + 5;
+		if (isdigitByte(*s))
+			cx = strtol(s, (char **)&s, 10);
+		else if (*s == '$')
+			cx = -1, ++s;
+		/* XXX try to guess cx if only one password input field? */
+
+		cw->dot = endRange;
+		p = (char*)fetchLine(cw->dot, -1);
+		findInputField(p, 1, cx, &n, &realtotal, &tagno);
+		debugPrint(5, "findField returns %d.%d", n, tagno);
+		if (!tagno) {
+			fieldNumProblem(0, "ipass", cx, n, realtotal);
+			return false;
+		}
+
+		prompt_and_read(MSG_Password, buffer, MAXUSERPASS,
+				     MSG_PasswordLong, true);
+
+		old_masked = tagList[tagno]->masked;
+		tagList[tagno]->masked = true;
+
+		rc = infReplace(tagno, buffer, true);
+		if (!rc)
+			tagList[tagno]->masked = old_masked;
+		return rc;
+	}
+
 /* get the command */
 	cmd = *line;
 	if (cmd)
@@ -4897,7 +4940,7 @@ replaceframe:
 		char *p, *dirline, *endline;
 		const struct MIMETYPE *gmt;	/* the go mime type */
 		if (endRange > startRange) {
-			setError(MSG_RangeG);
+			setError(MSG_RangeCmd, "g");
 			return false;
 		}
 		p = (char *)fetchLine(endRange, -1);
@@ -4995,7 +5038,7 @@ switchsession:
 			cmd = 'b';
 			f_encoded = true;
 			if (endRange > startRange) {
-				setError(MSG_RangeG);
+				setError(MSG_RangeCmd, "g");
 				return false;
 			}
 			p = (char *)fetchLine(endRange, -1);
@@ -5003,7 +5046,7 @@ switchsession:
 			debugPrint(5, "findField returns %d, %s", tagno, h);
 
 			if (!h) {
-				fieldNumProblem(1, 'g', j, n, n);
+				fieldNumProblem(1, "g", j, n, n);
 				return false;
 			}
 			jsh = memEqualCI(h, "javascript:", 11);
@@ -5149,7 +5192,7 @@ switchsession:
 				debugPrint(5, "findField returns %d.%d", n,
 					   tagno);
 				if (!tagno) {
-					fieldNumProblem((c == '*' ? 2 : 0), 'i',
+					fieldNumProblem((c == '*' ? 2 : 0), "i",
 							cx, n, realtotal);
 					return false;
 				}

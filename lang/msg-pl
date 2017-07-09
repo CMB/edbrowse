@@ -215,7 +215,7 @@ brak poprzedniego tekstu
 nieoczekiwany tekst po poleceniu 'M'
 przeniesiono do sesji %d\n
 brak poprzedniego tekstu, nie można zapisać
-nie można zastosować polecenia 'g' do zakresu
+nie można zastosować polecenia '%s' do zakresu
 polecenie 'g' niedostępne w trybie bazy danych
 nie można zastosować polecenia 'i%c' do zakresu
 nie można użyć 'i<' w poleceniu globalnym
@@ -260,8 +260,8 @@ akcja tego formularza nie jest URLem
 JavaScript jest wyłączony, nie można aktywować formularza
 Ten formularz zmienił się z http na https i nie jest teraz bezpieczny
 nie można wysłać używając protokołu %s
-%d jest poza zakresem, używaj %c1 do %c%d
-%d jest poza zakresem, użyj %c1 lub po prostu %c
+%d jest poza zakresem, używaj %s1 do %s%d
+%d jest poza zakresem, użyj %s1 lub po prostu %s
 nie można zamienić wielu instancji pustego ciągu znaków
 anulowano pobieranie.
 brak wyrażenia regularnego po %c

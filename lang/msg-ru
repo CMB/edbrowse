@@ -215,7 +215,7 @@ no previous text
 unexpected text after the M command
 0
 no previous text, cannot back up
-cannot apply the g command to a range
+cannot apply the %s command to a range
 g not available in database mode
 cannot apply the i%c command to a range
 cannot use i< in a global command
@@ -260,8 +260,8 @@ the action of the form is not a url
 javascript is disabled, cannot activate this form
 This form has changed from https to http, and is now insecure
 cannot submit using protocol %s
-%d is out of range, please use %c1 through %c%d
-%d is out of range, please use %c1, or simply %c
+%d is out of range, please use %s1 through %s%d
+%d is out of range, please use %s1, or simply %s
 cannot replace multiple instances of the empty string
 download aborted.
 no regular expression after %c

@@ -215,7 +215,7 @@ kein vorheriger Text
 unerwarteter Text nach dem Kommando m
 0
 kein vorheriger Text, kann nicht sichern
-kann das g Kommando nicht auf einen Bereich anwenden
+kann das %s Kommando nicht auf einen Bereich anwenden
 g im Datenbankmodus nicht verfügbar
 kann das i%c Kommando nicht auf einen Bereich anwenden
 kann i< nicht in einem globalen Kommando verwenden
@@ -260,8 +260,8 @@ die Aktion der Eingabemaske ist keine URL
 JavaScript ist deaktiviert, kann EingabeMaske nicht verwenden
 Die Eingabemaske hat von HTTPS auf HTTP gewechselt und ist nun unsicher
 kann nicht über Protokoll %s versenden
-%d ist außerhalb des Bereichs; nutzen Sie %c1 bis %c%d
-%d ist außerhalb des Bereichs; nutzen Sie %c1, oder einfach %c
+%d ist außerhalb des Bereichs; nutzen Sie %s1 bis %s%d
+%d ist außerhalb des Bereichs; nutzen Sie %s1, oder einfach %s
 kann nicht mehrere Vorkommen einer leeren Zeichenkette ersetzen
 Download abgebrochen
 kein regulärer Ausdruck nach Kommando %C
