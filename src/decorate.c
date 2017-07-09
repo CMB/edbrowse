@@ -361,6 +361,8 @@ void htmlInputHelper(struct htmlTag *t)
 		}
 	}
 	t->itype = n;
+	if (n == INP_PW)
+		t->masked = true;
 
 	s = attribVal(t, "maxlength");
 	len = 0;
