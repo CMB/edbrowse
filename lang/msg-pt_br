@@ -215,7 +215,7 @@ sem texto anterior
 texto inesperado após o comando M
 movido para a sessão %d\n
 sem texto anterior; impossível copiar
-impossível aplicar comando g a um intervalo
+impossível aplicar comando %s a um intervalo
 g não disponível em modo banco de dados
 impossível aplicar comando i%c a um intervalo
 impossível usar i< num comando global
@@ -260,8 +260,8 @@ ação do formulário não é uma URL
 javascript desligado; impossível ativar este formulário
 formulário mudou de https para http e agora não é seguro
 impossível submeter usando protocolo %s
-%d fora do intervalo; por favor use %c1 até %c%d
-%d fora do intervalo; por favor use %c1 ou simplesmente %c
+%d fora do intervalo; por favor use %s1 até %s%d
+%d fora do intervalo; por favor use %s1 ou simplesmente %s
 impossível substituir várias ocorrências de uma cadeia vazia
 transferência abortada.
 sem expressão regular após %c

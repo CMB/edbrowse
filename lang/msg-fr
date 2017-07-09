@@ -215,7 +215,7 @@ pas de texte antérieur
 texte inattendu après la commande M
 0
 pas de texte antérieur, sauvegarde impossible
-impossible d'appliquer la commande g à un intervalle
+impossible d'appliquer la commande %s à un intervalle
 g impossible en mode base de données
 impossible d'appliquer la commande i%c à un intervalle
 impossible d'utiliser i< dans une commande globale
@@ -260,8 +260,8 @@ l'action de ce formulaire ne renvoie pas à une destination URL
 javascript désactivé, impossible d'activer ce formulaire
 Le formulaire est passé du mode https au mode http, il n'est plus sécurisé
 impossible de soumettre avec le protocole %s
-%d hors limites, utilisez s'il vous plait %c1 à %c%d
-%d hors limites, utilisez s'il vous plait  %c1, ou simplement %c
+%d hors limites, utilisez s'il vous plait %s1 à %s%d
+%d hors limites, utilisez s'il vous plait  %s1, ou simplement %s
 impossible de remplacer plusieurs fois la chaîne vide
 téléchargement abandonné.
 pas d'expression régulière après %c

@@ -1927,7 +1927,7 @@ static const char *message_for_response_code(int code)
  * in a function, and we call that function twice.
  * After the call, the buffer contains the user's input, without a newline.
  * The return value is the length of the string in buffer. */
-static int
+int
 prompt_and_read(int prompt, char *buffer, int buffer_length, int error_message,
 		bool hide_echo)
 {
