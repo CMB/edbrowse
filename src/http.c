@@ -1917,7 +1917,8 @@ static const char *message_for_response_code(int code)
   ** prompt: prompt that user should see.
   ** buffer: buffer into which the data should be stored.
   ** max_length: maximum allowable length of input.
- ** error_msg: message to display if input exceeds maximum length.
+  ** error_msg: message to display if input exceeds maximum length.
+  ** hide_echo: whether to disable terminal echo (sensitive input)
  * Note: prompt and error_message should be message constants from messages.h.
  * Return value: none.  buffer contains input on return. */
 
@@ -1927,14 +1928,22 @@ static const char *message_for_response_code(int code)
  * After the call, the buffer contains the user's input, without a newline.
  * The return value is the length of the string in buffer. */
 static int
-prompt_and_read(int prompt, char *buffer, int buffer_length, int error_message)
+prompt_and_read(int prompt, char *buffer, int buffer_length, int error_message,
+		bool hide_echo)
 {
 	bool reading = true;
 	int n = 0;
+
 	while (reading) {
+		char *s;
+		if (hide_echo)
+			ttySetEcho(false);
 		i_printf(prompt);
 		fflush(stdout);
-		if (!fgets(buffer, buffer_length, stdin))
+		s = fgets(buffer, buffer_length, stdin);
+		if (hide_echo)
+			ttySetEcho(true);
+		if (!s)
 			ebClose(0);
 		n = strlen(buffer);
 		if (n && buffer[n - 1] == '\n')
@@ -1974,11 +1983,11 @@ static bool read_credentials(char *buffer)
 		i_puts(MSG_WebAuthorize);
 		input_length =
 		    prompt_and_read(MSG_UserName, buffer, MAXUSERPASS,
-				    MSG_UserNameLong);
+				    MSG_UserNameLong, false);
 		if (!stringEqual(buffer, "x")) {
 			char *password_ptr = buffer + input_length + 1;
 			prompt_and_read(MSG_Password, password_ptr, MAXUSERPASS,
-					MSG_PasswordLong);
+					MSG_PasswordLong, true);
 			if (!stringEqual(password_ptr, "x")) {
 				got_creds = true;
 				*(password_ptr - 1) = ':';	/* separate user and password with colon. */
