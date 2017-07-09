@@ -1178,7 +1178,29 @@ static void ttyRaw(int charcount, int timeout, bool isecho)
 		buf.c_lflag |= ECHO;
 	tcsetattr(0, TCSANOW, &buf);
 }				/* ttyRaw */
+#endif // #ifdef DOSLIKE y/n
 
+void ttySetEcho(bool enable_echo) {
+#ifndef DOSLIKE
+	struct termios termios;
+
+	if (!isInteractive)
+		return;
+
+	tcgetattr(0, &termios);
+	if (enable_echo) {
+		termios.c_lflag |= ECHO;
+		termios.c_lflag &= ~ECHONL;
+	} else {
+		termios.c_lflag &= ~ECHO;
+		termios.c_lflag |= ECHONL;
+	}
+	tcsetattr(0, TCSANOW, &termios);
+#endif // #ifndef DOSLIKE
+}
+
+
+#ifndef DOSLIKE
 /* simulate MSDOS getche() system call */
 int getche(void)
 {
@@ -1200,7 +1222,7 @@ int getch(void)
 	return c;
 }				/* getche */
 
-#endif // #ifdef DOSLIKE y/n
+#endif // #ifndef DOSLIKE
 
 char getLetter(const char *s)
 {
