@@ -37,7 +37,7 @@ Exit codes are as follows:
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage:  edbrowse-js pipe_in pipe_out\n");
+	fprintf(stderr, "Usage:  edbrowse-js pipe_in pipe_out URL\n");
 	exit(1);
 }				/* usage */
 
@@ -107,13 +107,18 @@ static char *runscript;
 
 int js_main(int argc, char **argv)
 {
-	if (argc != 2)
+	if (argc != 3)
 		usage();
+
+	cw = &in_js_cw;
+	cf = &(cw->f0);
+	cf->owner = cw;
 
 	pipe_in = stringIsNum(argv[0]);
 	pipe_out = stringIsNum(argv[1]);
 	if (pipe_in < 0 || pipe_out < 0)
 		usage();
+	cf->fileName = argv[2];
 
 	readConfigFile();
 	setupEdbrowseCache();
@@ -121,9 +126,6 @@ int js_main(int argc, char **argv)
 	cookiesFromJar();
 	pluginsOn = false;
 	sendReferrer = false;
-	cw = &in_js_cw;
-	cf = &(cw->f0);
-	cf->owner = cw;
 
 /* edbrowse catches interrupt, this process ignores it. */
 /* Use quit to terminate, or kill from another console. */
@@ -1003,10 +1005,14 @@ static void startCookie(void)
 		if (proto && stringEqualCI(proto, "https"))
 			secure = true;
 		sendCookies(&cookieCopy, &cook_l, url, secure);
-		if (memEqualCI(cookieCopy, "; cookie: ", 10))	/* should often happen */
+		if (memEqualCI(cookieCopy, "; cookie: ", 10)) {	// should often happen
 			strmove(cookieCopy + 2, cookieCopy + 10);
-		if (s = strstr(cookieCopy, "\r\n"))
+			cook_l -= 8;
+		}
+		if (s = strstr(cookieCopy, "\r\n")) {
 			*s = 0;
+			cook_l -= 2;
+		}
 	}
 }
 
@@ -1058,7 +1064,10 @@ static bool foldinCookie(const char *newcook)
 	cook_l -= j;
 
 add:
-	stringAndString(&cookieCopy, &cook_l, nc);
+	if (cook_l == 2)	// empty
+		stringAndString(&cookieCopy, &cook_l, nc + 2);
+	else
+		stringAndString(&cookieCopy, &cook_l, nc);
 	nzFree(nc);
 	return true;
 }				/* foldinCookie */
@@ -1066,7 +1075,7 @@ add:
 static duk_ret_t native_getcook(duk_context * cx)
 {
 	duk_push_string(cx, cookieCopy + 2);
-	return 0;
+	return 1;
 }
 
 static duk_ret_t native_setcook(duk_context * cx)

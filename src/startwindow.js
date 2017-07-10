@@ -25,13 +25,13 @@ document = new Object;
 // Example: eb$puts, which we can replace with print,
 // which is native to the duktape shell.
 eb$puts = print;
-function eb$logputs(a, b) { print(b) }
-function eb$newLocation(s) { print("new location " + s); }
-function eb$logElement(o, tag) { print("pass tag " + tag + " to edbrowse"); }
-function eb$getcook(member) { return ""; }
-function eb$setcook(value, member) { }
-function eb$formSubmit() {}
-function eb$formReset() {}
+eb$logputs = function(a,b) { print(b); }
+eb$newLocation = function (s) { print("new location " + s); }
+eb$logElement = function(o, tag) { print("pass tag " + tag + " to edbrowse"); }
+eb$getcook = function(member) { return "cookies"; }
+eb$setcook = function(value, member) { print(" new cookie " + value); }
+eb$formSubmit = function() { print("submit"); }
+eb$formReset = function() { print("reset"); }
 }
 
 // other names for window

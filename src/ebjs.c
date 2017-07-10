@@ -66,7 +66,7 @@ static void *child_proc(void *vp)
 	sprintf(arg2, "%d", pipe_in[1]);
 	debugPrint(5, "spawning '%s' %s %s", progname, arg1, arg2);
 	rc = _spawnl(_P_WAIT, progname, "edbrowse", "--mode", "js", arg1, arg2,
-		     0);
+		     cf->fileName, 0);
 	if (rc) {
 		debugPrint(5, "spawning FAILED! %d\n", errno);
 /* oops, process did not exec */
@@ -156,7 +156,8 @@ static void js_start(void)
 	sprintf(arg1, "%d", pipe_out[0]);
 	sprintf(arg2, "%d", pipe_in[1]);
 	debugPrint(5, "spawning edbrowse-js %s %s", arg1, arg2);
-	execlp(progname, "edbrowse", "--mode", "js", arg1, arg2, NULL);
+	execlp(progname, "edbrowse", "--mode", "js", arg1, arg2, cf->fileName,
+	       NULL);
 
 /* oops, process did not exec */
 /* write a message from this child, saying js would not exec */

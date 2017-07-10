@@ -567,7 +567,7 @@ addchar:
 		fputc('\n', debugFile);
 
 	if (jexmode) {
-		if (stringEqual(s, ".")) {
+		if (stringEqual(s, ".") || stringEqual(s, "qt")) {
 			jexmode = false;
 			puts("bye");
 			jSideEffects();
