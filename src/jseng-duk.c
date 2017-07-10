@@ -1548,11 +1548,26 @@ static void processMessage(void)
 		} else {
 // error in executing the script.
 // Let's try to snag the line number.
+			int offset = 0;
+			char *cut;
 			if (duk_get_prop_string(jcx, -1, "lineNumber"))
-				head.lineno = duk_get_int(jcx, -1);
+				offset = duk_get_int(jcx, -1);
 			duk_pop(jcx);
 			nzFree(errorMessage);
 			errorMessage = cloneString(duk_to_string(jcx, -1));
+			if (offset) {
+				head.lineno += (offset - 1);
+// symtax error message includes the relative line number, which is confusing
+// since edbrowse prints the absolute line number.
+				cut = strstr(errorMessage, " (line ");
+				if (cut) {
+					s = cut + 7;
+					while (isdigit(*s))
+						++s;
+					if (stringEqual(s, ")"))
+						*cut = 0;
+				}
+			}
 		}
 		nzFree(runscript);
 		runscript = 0;
