@@ -1166,13 +1166,6 @@ Needless to say that's not good!
 			if (!w)
 				w = emptyString;
 			set_property_string(t->jv, "data", w);
-			set_property_string(t->jv, "nodeName", "text");
-			set_property_number(t->jv, "nodeType", 3);
-/* A text node chould never have children, and does not need childNodes array,
- * but there is improper html out there <text> <stuff>
- * which has to put stuff under the text node, so against this
- * unlikely occurence, I have to create the array. */
-			instantiate_array(t->jv, "childNodes");
 		}
 		break;
 
@@ -1334,14 +1327,14 @@ Needless to say that's not good!
 
 /* js tree mirrors the dom tree. */
 	if (t->parent && t->parent->jv)
-		run_function_onearg(t->parent->jv, "apch1$", t->jv);
+		run_function_onearg(t->parent->jv, "eb$apch1", t->jv);
 
 	if (!t->parent) {
 		if (innerParent)
-			run_function_onearg(innerParent, "apch1$", t->jv);
+			run_function_onearg(innerParent, "eb$apch1", t->jv);
 /* head and body link to document */
 		else if (action == TAGACT_HEAD || action == TAGACT_BODY)
-			run_function_onearg(cf->docobj, "apch1$", t->jv);
+			run_function_onearg(cf->docobj, "eb$apch1", t->jv);
 	}
 
 /* TextNode linked to document/gc to protect if from garbage collection,

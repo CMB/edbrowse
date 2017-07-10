@@ -1232,32 +1232,6 @@ This is a disaster!
 Create a fake name, so we can attach the element.
 *********************************************************************/
 
-/* set document.cookie to the cookies relevant to this url */
-static void docCookie(jsobjtype d)
-{
-	int cook_l;
-	char *cook = initString(&cook_l);
-	const char *url = cf->fileName;
-	bool secure = false;
-	const char *proto;
-	char *s;
-
-	if (url) {
-		proto = getProtURL(url);
-		if (proto && stringEqualCI(proto, "https"))
-			secure = true;
-		sendCookies(&cook, &cook_l, url, secure);
-		if (memEqualCI(cook, "cookie: ", 8)) {	/* should often happen */
-			strmove(cook, cook + 8);
-		}
-		if (s = strstr(cook, "\r\n"))
-			*s = 0;
-	}
-
-	set_property_string(d, "cookie", cook);
-	nzFree(cook);
-}				/* docCookie */
-
 #ifdef DOSLIKE			// port of uname(p), and struct utsname
 struct utsname {
 	char sysname[32];
@@ -1295,14 +1269,15 @@ void setupJavaDom(void)
 	};
 	extern const char *startWindowJS;
 
-/* self reference through several names */
 	set_property_object(w, "window", w);
-	set_property_object(w, "self", w);
-	set_property_object(w, "parent", w);
-	set_property_object(w, "top", w);
 
-	nav = instantiate(w, "navigator", 0);
-	if (!nav)
+/* the js window/document setup script.
+ * These are all the things that do not depend on the platform,
+ * OS, configurations, etc. */
+	jsRunScript(w, startWindowJS, "StartWindow", 1);
+
+	nav = get_property_object(w, "navigator");
+	if (nav == NULL)
 		return;
 /* some of the navigator is in startwindow.js; the runtime properties are here. */
 	set_property_string(nav, "userLanguage", languages[eb_lang]);
@@ -1316,11 +1291,9 @@ void setupJavaDom(void)
 
 /* Build the array of mime types and plugins,
  * according to the entries in the config file. */
-	navpi = instantiate_array(nav, "plugins");
-	if (navpi == NULL)
-		return;
-	navmt = instantiate_array(nav, "mimeTypes");
-	if (navmt == NULL)
+	navpi = get_property_object(nav, "plugins");
+	navmt = get_property_object(nav, "mimeTypes");
+	if (navpi == NULL || navmt == NULL)
 		return;
 	mt = mimetypes;
 	for (i = 0; i < maxMime; ++i, ++mt) {
@@ -1351,25 +1324,16 @@ void setupJavaDom(void)
 		mt->program[len] = save_c;
 	}
 
-	hist = instantiate(w, "history", 0);
+	hist = get_property_object(w, "history");
 	if (hist == NULL)
 		return;
 	set_property_string(hist, "current", cf->fileName);
-/* Since there is no history in edbrowse, the rest is left to startwindow.js */
 
-/* the js window/document setup script.
- * These are all the things that do not depend on the platform,
- * OS, configurations, etc. */
-	jsRunScript(w, startWindowJS, "StartWindow", 1);
-
-// Document properties that must be set after startwindow.js.
-// Most of these use the setters in the URL class.
 	set_property_string(d, "referrer", cw->referrer);
 	instantiate_url(d, "URL", cf->fileName);
 	instantiate_url(d, "location", cf->fileName);
 	instantiate_url(w, "location", cf->fileName);
 	set_property_string(d, "domain", getHostURL(cf->fileName));
-	docCookie(d);
 }				/* setupJavaDom */
 
 /* Get the url from a url object, special wrapper.
