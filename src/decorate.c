@@ -321,10 +321,9 @@ void formControl(struct htmlTag *t, bool namecheck)
 		debugPrint(3, "%s does not have a name", t->info->desc);
 }				/* formControl */
 
-static const char *const inp_types[] = {
+const char *const inp_types[] = {
 	"reset", "button", "image", "submit",
-	"hidden",
-	"text", "password", "number", "file",
+	"hidden", "text", "file",
 	"select", "textarea", "radio", "checkbox",
 	0
 };
@@ -336,10 +335,11 @@ they are equivalent to text. Just here to suppress warnings.
 List taken from https://www.tutorialspoint.com/html/html_input_tag.htm
 *********************************************************************/
 
-static const char *const inp_others[] = {
-	"date", "datetime", "datetime-local",
-	"month", "week", "time",
-	"email", "range", "search", "tel", "url", 0
+const char *const inp_others[] = {
+	"no_minor", "date", "datetime", "datetime-local",
+	"month", "week", "time", "email", "range",
+	"search", "tel", "url", "number", "password",
+	0
 };
 
 /* helper function for input tag */
@@ -357,12 +357,14 @@ void htmlInputHelper(struct htmlTag *t)
 			n = stringInListCI(inp_others, s);
 			if (n < 0)
 				debugPrint(3, "unrecognized input type %s", s);
+			else
+				t->itype_minor = n;
+			if (n == INP_PW)
+				t->masked = true;
 			n = INP_TEXT;
 		}
 	}
 	t->itype = n;
-	if (n == INP_PW)
-		t->masked = true;
 
 	s = attribVal(t, "maxlength");
 	len = 0;

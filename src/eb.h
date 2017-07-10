@@ -527,6 +527,7 @@ struct htmlTag {
 	bool masked:1;
 	char subsup;		/* span turned into sup or sub */
 	uchar itype;		/* input type = */
+	uchar itype_minor;
 	int ninp;		/* number of nonhidden inputs */
 	char *name, *id, *value, *href;
 	const char *rvalue; /* for reset */
@@ -557,10 +558,19 @@ enum {
 /* Corresponds to inp_types in decorate.c */
 enum {
 	INP_RESET, INP_BUTTON, INP_IMAGE, INP_SUBMIT,
-	INP_HIDDEN,
-	INP_TEXT, INP_PW, INP_NUMBER, INP_FILE,
+	INP_HIDDEN, INP_TEXT, INP_FILE,
 	INP_SELECT, INP_TA, INP_RADIO, INP_CHECKBOX,
 };
+extern const char *const inp_types[];
+
+/* htmlTag.itype_minor */
+/* The order corresponds to inp_others in decorate.c */
+enum {
+	INP_NO_MINOR, INP_DATE, INP_DATETIME, INP_DATETIME_LOCAL,
+	INP_MONTH, INP_WEEK, INP_TIME, INP_EMAIL, INP_RANGE,
+	INP_SEARCH, INP_TEL, INP_URL, INP_NUMBER, INP_PW,
+};
+extern const char *const inp_others[];
 
 /* For traversing a tree of html nodes, this is the callback function */
 typedef void (*nodeFunction) (struct htmlTag * node, bool opentag);

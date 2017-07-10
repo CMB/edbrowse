@@ -25,14 +25,6 @@ static const char *const handlers[] = {
 	0
 };
 
-static const char *const inp_types[] = {
-	"reset", "button", "image", "submit",
-	"hidden",
-	"text", "password", "number", "file",
-	"select", "textarea", "radio", "checkbox",
-	0
-};
-
 static jsobjtype js_reset, js_submit;
 uchar browseLocal;
 
@@ -902,8 +894,10 @@ void infShow(int tagno, const char *search)
 	printf("%s", s);
 	if (t->multiple)
 		i_printf(MSG_Many);
-	if (t->itype >= INP_TEXT && t->itype <= INP_NUMBER && t->lic)
+	if (t->itype == INP_TEXT && t->lic)
 		printf("[%d]", t->lic);
+	if (t->itype_minor != INP_NO_MINOR)
+		printf(" (%s)", inp_others[t->itype_minor]);
 	if (t->itype == INP_TA) {
 		const char *rows = attribVal(t, "rows");
 		const char *cols = attribVal(t, "cols");
@@ -997,6 +991,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 	const struct htmlTag *form = t->controller;
 	char *display;
 	int itype = t->itype;
+	int itype_minor = t->itype_minor;
 	int newlen = strlen(newtext);
 	int i;
 
@@ -1030,8 +1025,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		return false;
 	}
 
-	if (itype >= INP_TEXT && itype <= INP_NUMBER && t->lic
-	    && newlen > t->lic) {
+	if (itype == INP_TEXT && t->lic && newlen > t->lic) {
 		setError(MSG_InputLong, t->lic);
 		return false;
 	}
@@ -1066,7 +1060,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		}
 	}
 
-	if (itype == INP_NUMBER) {
+	if (itype_minor == INP_NUMBER) {
 		if (*newtext && stringIsNum(newtext) < 0) {
 			setError(MSG_NumberExpected);
 			return false;
