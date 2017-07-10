@@ -311,6 +311,7 @@ static void misconfigure(int n)
 	head.lineno = n;
 }				/* misconfigure */
 
+#if 0
 static void my_ErrorReporter(duk_context * cx, const char *message)
 {
 	if (message && strstr(message, "out of memory")) {
@@ -324,6 +325,7 @@ static void my_ErrorReporter(duk_context * cx, const char *message)
 		head.lowstat = EJ_LOW_SYNTAX;
 	}
 }				/* my_ErrorReporter */
+#endif
 
 static duk_ret_t native_new_location(duk_context * cx)
 {
@@ -437,17 +439,25 @@ static jsobjtype string2pointer(const char *s)
 	return p;
 }				/* string2pointer */
 
+static bool setter_suspend;
+
 static duk_ret_t setter_innerHTML(duk_context * cx)
 {
 	jsobjtype thisobj;
+	const char *h;
 	int begin;
-	const char *h = duk_get_string(cx, 0);
+
+	if (setter_suspend)
+		return 0;
+
+	h = duk_get_string(cx, 0);
 	if (!h)			// should never happen
 		return 0;
 
+	duk_pop(cx);		// we know the member name is innerHTML
 	duk_push_this(cx);
 /* lop off the preexisting children */
-	if (!duk_get_prop_string(cx, 1, "childNodes"))
+	if (!duk_get_prop_string(cx, -1, "childNodes"))
 		duk_set_length(cx, -1, 0);
 	duk_pop(cx);
 // stack now holds html and this
@@ -477,9 +487,15 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 static duk_ret_t setter_innerText(duk_context * cx)
 {
 	jsobjtype thisobj;
-	const char *h = duk_get_string(cx, 0);
+	const char *h;
+
+	if (setter_suspend)
+		return 0;
+
+	h = duk_get_string(cx, 0);
 	if (!h)			// should never happen
 		h = emptyString;
+	duk_pop(cx);
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
@@ -491,16 +507,18 @@ static duk_ret_t setter_innerText(duk_context * cx)
 	return 0;
 }
 
-static bool setter_suspend;
 static duk_ret_t setter_value(duk_context * cx)
 {
 	jsobjtype thisobj;
 	const char *h;
+
 	if (setter_suspend)
 		return 0;
+
 	h = duk_to_string(cx, 0);
 	if (!h)			// should never happen
 		h = emptyString;
+	duk_pop(cx);
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
@@ -1228,6 +1246,7 @@ jsobjtype get_property_object_nat(jsobjtype parent, const char *name)
 int set_property_string_nat(jsobjtype parent, const char *name,
 			    const char *value)
 {
+	bool defset = false;
 	duk_c_function my_setter = NULL;
 	if (stringEqual(name, "value"))
 		my_setter = setter_value;
@@ -1236,29 +1255,25 @@ int set_property_string_nat(jsobjtype parent, const char *name,
 	if (stringEqual(name, "innerText"))
 		my_setter = setter_innerText;
 	duk_push_heapptr(jcx, parent);
+	if (my_setter) {
+		if (!duk_get_prop_string(jcx, -1, name))
+			defset = true;
+		duk_pop(jcx);
+	}
+#if 0
+// can't get native setters to work!!
+	if (defset) {
+		duk_push_string(jcx, name);
+		duk_push_c_function(jcx, my_setter, 2);
+		duk_def_prop(jcx, -3, DUK_DEFPROP_HAVE_SETTER);
+	}
+#endif
 	if (!value)
 		value = emptyString;
-	if (!my_setter) {
-		duk_push_string(jcx, value);
-		duk_put_prop_string(jcx, -2, name);
-		duk_pop(jcx);
-		return 0;
-	}
-	if (!duk_get_prop_string(jcx, -1, name)) {
-		duk_pop(jcx);
-		duk_push_string(jcx, value);
-		duk_put_prop_string(jcx, -2, name);
-		duk_pop(jcx);
-		return 0;
-	}
-	duk_pop(jcx);
-	duk_push_string(jcx, name);
+	setter_suspend = true;
 	duk_push_string(jcx, value);
-	duk_push_c_function(jcx, my_setter, 2);
-	duk_def_prop(jcx, 0,
-		     (DUK_DEFPROP_SET_ENUMERABLE | DUK_DEFPROP_SET_WRITABLE |
-		      DUK_DEFPROP_SET_CONFIGURABLE |
-		      DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_HAVE_SETTER));
+	duk_put_prop_string(jcx, -2, name);
+	setter_suspend = false;
 	duk_pop(jcx);
 	return 0;
 }				/* set_property_string_nat */
@@ -1320,9 +1335,11 @@ void run_function_onearg_nat(jsobjtype parent, const char *name,
 			     jsobjtype child)
 {
 	duk_push_heapptr(jcx, parent);
-	if (!duk_get_prop_string(jcx, -1, name) || !duk_is_function(jcx, -1))
+	if (!duk_get_prop_string(jcx, -1, name) || !duk_is_function(jcx, -1)) {
+		duk_pop_2(jcx);
 		return;		// no such function
-	duk_insert(jcx, 0);
+	}
+	duk_insert(jcx, -2);
 	duk_push_heapptr(jcx, child);	// child is the only argument
 	duk_call_method(jcx, 1);
 // Don't care about the return.
