@@ -441,30 +441,32 @@ static jsobjtype string2pointer(const char *s)
 	return p;
 }				/* string2pointer */
 
-static bool setter_suspend;
+static duk_ret_t getter_innerHTML(duk_context * cx)
+{
+	duk_push_this(cx);
+	duk_get_prop_string(cx, -1, "inner$HTML");
+	duk_remove(cx, -2);
+	return 1;
+}
 
 static duk_ret_t setter_innerHTML(duk_context * cx)
 {
 	jsobjtype thisobj;
-	const char *h;
 	int begin;
-
-	if (setter_suspend)
-		return 0;
-
-	h = duk_get_string(cx, 0);
+	const char *h = duk_get_string(cx, 0);
 	if (!h)			// should never happen
-		return 0;
-
-	duk_pop(cx);		// we know the member name is innerHTML
+		h = emptyString;
 	duk_push_this(cx);
 /* lop off the preexisting children */
 	if (!duk_get_prop_string(cx, -1, "childNodes"))
 		duk_set_length(cx, -1, 0);
 	duk_pop(cx);
 // stack now holds html and this
+	duk_insert(cx, -2);
+	duk_put_prop_string(cx, -2, "inner$HTML");
 
-	thisobj = duk_get_heapptr(cx, 1);
+	thisobj = duk_get_heapptr(cx, -1);
+	duk_pop(cx);
 	effectString("i{h");	// }
 	effectString(pointer2string(thisobj));
 	begin = eff_l + 1;
@@ -481,24 +483,27 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	packDecoration();
 	cwBringdown();
 	endeffect();
-	duk_pop(cx);		// pop this
 
 	return 0;
+}
+
+static duk_ret_t getter_innerText(duk_context * cx)
+{
+	duk_push_this(cx);
+	duk_get_prop_string(cx, -1, "inner$Text");
+	duk_remove(cx, -2);
+	return 1;
 }
 
 static duk_ret_t setter_innerText(duk_context * cx)
 {
 	jsobjtype thisobj;
-	const char *h;
-
-	if (setter_suspend)
-		return 0;
-
-	h = duk_get_string(cx, 0);
+	const char *h = duk_get_string(cx, 0);
 	if (!h)			// should never happen
 		h = emptyString;
-	duk_pop(cx);
 	duk_push_this(cx);
+	duk_insert(cx, -2);
+	duk_put_prop_string(cx, -2, "inner$Text");
 	thisobj = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
 	effectString("i{t");	// }
@@ -509,19 +514,23 @@ static duk_ret_t setter_innerText(duk_context * cx)
 	return 0;
 }
 
+static duk_ret_t getter_value(duk_context * cx)
+{
+	duk_push_this(cx);
+	duk_get_prop_string(cx, -1, "val$ue");
+	duk_remove(cx, -2);
+	return 1;
+}
+
 static duk_ret_t setter_value(duk_context * cx)
 {
 	jsobjtype thisobj;
-	const char *h;
-
-	if (setter_suspend)
-		return 0;
-
-	h = duk_to_string(cx, 0);
+	const char *h = duk_to_string(cx, 0);
 	if (!h)			// should never happen
 		h = emptyString;
-	duk_pop(cx);
 	duk_push_this(cx);
+	duk_insert(cx, -2);
+	duk_put_prop_string(cx, -2, "val$ue");
 	thisobj = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
 	effectString("v{");	// }
@@ -544,12 +553,14 @@ static duk_ret_t native_log_element(duk_context * cx)
 	duk_pop(cx);
 // create the innerHTML member with its setter, this has to be done in C.
 	duk_push_string(cx, "innerHTML");
+	duk_push_c_function(cx, getter_innerHTML, 0);
+	duk_push_c_function(cx, setter_innerHTML, 1);
+	duk_def_prop(cx, -4,
+		     (DUK_DEFPROP_HAVE_SETTER | DUK_DEFPROP_HAVE_GETTER |
+		      DUK_DEFPROP_SET_ENUMERABLE));
 	duk_push_string(cx, emptyString);
-	duk_push_c_function(cx, setter_innerHTML, 2);
-	duk_def_prop(cx, 0,
-		     (DUK_DEFPROP_SET_ENUMERABLE | DUK_DEFPROP_SET_WRITABLE |
-		      DUK_DEFPROP_CLEAR_CONFIGURABLE |
-		      DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_HAVE_SETTER));
+	duk_put_prop_string(cx, -2, "inner$HTML");
+	duk_pop(cx);
 	return 0;
 }
 
@@ -1256,33 +1267,36 @@ int set_property_string_nat(jsobjtype parent, const char *name,
 			    const char *value)
 {
 	bool defset = false;
-	duk_c_function my_setter = NULL;
+	duk_c_function setter = NULL;
+	duk_c_function getter = NULL;
+	const char *altname;
 	if (stringEqual(name, "value"))
-		my_setter = setter_value;
+		setter = setter_value, getter = getter_value, altname =
+		    "val$ue";
 	if (stringEqual(name, "innerHTML"))
-		my_setter = setter_innerHTML;
+		setter = setter_innerHTML, getter = getter_innerHTML, altname =
+		    "inner$HTML";
 	if (stringEqual(name, "innerText"))
-		my_setter = setter_innerText;
+		setter = setter_innerText, getter = getter_innerText, altname =
+		    "inner$Text";
 	duk_push_heapptr(jcx, parent);
-	if (my_setter) {
+	if (setter) {
 		if (!duk_get_prop_string(jcx, -1, name))
 			defset = true;
 		duk_pop(jcx);
 	}
-#if 0
-// can't get native setters to work!!
 	if (defset) {
 		duk_push_string(jcx, name);
-		duk_push_c_function(jcx, my_setter, 2);
-		duk_def_prop(jcx, -3, DUK_DEFPROP_HAVE_SETTER);
+		duk_push_c_function(jcx, getter, 0);
+		duk_push_c_function(jcx, setter, 1);
+		duk_def_prop(jcx, -4,
+			     (DUK_DEFPROP_HAVE_SETTER | DUK_DEFPROP_HAVE_GETTER
+			      | DUK_DEFPROP_SET_ENUMERABLE));
 	}
-#endif
 	if (!value)
 		value = emptyString;
-	setter_suspend = true;
 	duk_push_string(jcx, value);
-	duk_put_prop_string(jcx, -2, name);
-	setter_suspend = false;
+	duk_put_prop_string(jcx, -2, (setter ? altname : name));
 	duk_pop(jcx);
 	return 0;
 }				/* set_property_string_nat */
@@ -1642,9 +1656,7 @@ static void processMessage(void)
 		if (head.proptype == EJ_PROP_ARRAY
 		    || head.proptype == EJ_PROP_INSTANCE)
 			setret = true;
-		setter_suspend = true;
 		set_property_generic(parent, membername);
-		setter_suspend = false;
 		nzFree(membername);
 		membername = 0;
 propreturn:
