@@ -453,7 +453,7 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 {
 	jsobjtype thisobj;
 	int begin;
-	const char *h = duk_get_string(cx, 0);
+	const char *h = duk_to_string(cx, 0);
 	if (!h)			// should never happen
 		h = emptyString;
 	duk_push_this(cx);
@@ -498,7 +498,7 @@ static duk_ret_t getter_innerText(duk_context * cx)
 static duk_ret_t setter_innerText(duk_context * cx)
 {
 	jsobjtype thisobj;
-	const char *h = duk_get_string(cx, 0);
+	const char *h = duk_to_string(cx, 0);
 	if (!h)			// should never happen
 		h = emptyString;
 	duk_push_this(cx);
