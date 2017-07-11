@@ -619,7 +619,7 @@ static void set_timeout(duk_context * cx, bool isInterval)
 		}
 // compile the string under the filename timer
 		duk_push_string(cx, "timer");
-		duk_compile(cx, 0);
+		duk_pcompile(cx, 0);
 // Now looks like a function object, just like the previous case.
 	} else {
 // oops, not a function or a string.
@@ -1346,10 +1346,11 @@ int set_property_function_nat(jsobjtype parent, const char *name,
 	}
 	duk_push_string(jcx, body);
 	duk_push_string(jcx, name);
-	duk_compile(jcx, 0);
+	duk_pcompile(jcx, 0);
 	duk_push_heapptr(jcx, parent);
-	duk_insert(jcx, 0);	// switch places
-	duk_put_prop_string(jcx, 0, name);
+	duk_insert(jcx, -2);	// switch places
+	duk_put_prop_string(jcx, -2, name);
+	duk_pop(jcx);
 	return 0;
 }
 

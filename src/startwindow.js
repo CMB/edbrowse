@@ -698,6 +698,10 @@ function open() {
 return Window.apply(this, arguments);
 }
 
+// Document class, I don't know what to make of this,
+// but my stubs for frames needs it.
+Document = function(){}
+
 CSSStyleDeclaration = function(){
         this.element = null;
         this.style = null;
