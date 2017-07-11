@@ -666,13 +666,13 @@ static void set_timeout(duk_context * cx, bool isInterval)
 static duk_ret_t native_setTimeout(duk_context * cx)
 {
 	set_timeout(cx, false);
-	return 0;
+	return 1;
 }
 
 static duk_ret_t native_setInterval(duk_context * cx)
 {
 	set_timeout(cx, true);
-	return 0;
+	return 1;
 }
 
 static duk_ret_t native_clearTimeout(duk_context * cx)
