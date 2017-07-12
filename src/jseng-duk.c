@@ -456,6 +456,7 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	const char *h = duk_to_string(cx, 0);
 	if (!h)			// should never happen
 		h = emptyString;
+	debugPrint(5, "setter h 1");
 	duk_push_this(cx);
 /* lop off the preexisting children */
 	if (!duk_get_prop_string(cx, -1, "childNodes"))
@@ -484,6 +485,7 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	cwBringdown();
 	endeffect();
 
+	debugPrint(5, "setter h 2");
 	return 0;
 }
 
@@ -501,6 +503,7 @@ static duk_ret_t setter_innerText(duk_context * cx)
 	const char *h = duk_to_string(cx, 0);
 	if (!h)			// should never happen
 		h = emptyString;
+	debugPrint(5, "setter t 1");
 	duk_push_this(cx);
 	duk_insert(cx, -2);
 	duk_put_prop_string(cx, -2, "inner$Text");
@@ -511,6 +514,7 @@ static duk_ret_t setter_innerText(duk_context * cx)
 	effectChar('|');
 	effectString(h);
 	endeffect();
+	debugPrint(5, "setter t 2");
 	return 0;
 }
 
@@ -528,6 +532,7 @@ static duk_ret_t setter_value(duk_context * cx)
 	const char *h = duk_to_string(cx, 0);
 	if (!h)			// should never happen
 		h = emptyString;
+	debugPrint(5, "setter v 1");
 	duk_push_this(cx);
 	duk_insert(cx, -2);
 	duk_put_prop_string(cx, -2, "val$ue");
@@ -538,6 +543,7 @@ static duk_ret_t setter_value(duk_context * cx)
 	effectChar('=');
 	effectString(h);
 	endeffect();
+	debugPrint(5, "setter v 2");
 	return 0;
 }
 
@@ -546,6 +552,7 @@ static duk_ret_t native_log_element(duk_context * cx)
 	jsobjtype newobj = duk_get_heapptr(cx, 0);
 	const char *tag = duk_get_string(cx, 1);
 	char e[60];
+	debugPrint(5, "log el 1");
 // pass the newly created node over to edbrowse
 	sprintf(e, "l{c|%s,%s 0x0, 0x0, ", pointer2string(newobj), tag);
 	effectString(e);
@@ -561,6 +568,7 @@ static duk_ret_t native_log_element(duk_context * cx)
 	duk_push_string(cx, emptyString);
 	duk_put_prop_string(cx, -2, "inner$HTML");
 	duk_pop(cx);
+	debugPrint(5, "log el 2");
 	return 0;
 }
 
@@ -587,6 +595,7 @@ static void set_timeout(duk_context * cx, bool isInterval)
 	if (top == 0)
 		return;		// no args
 
+	debugPrint(5, "timer 1");
 // if second parameter is missing, leave milliseconds at 1000.
 	if (top > 1) {
 		n = duk_get_int(cx, 1);
@@ -661,6 +670,7 @@ static void set_timeout(duk_context * cx, bool isInterval)
 	effectChar('|');
 	effectChar((isInterval ? '1' : '0'));
 	endeffect();
+	debugPrint(5, "timer 2");
 }
 
 static duk_ret_t native_setTimeout(duk_context * cx)
@@ -746,18 +756,19 @@ static void append0(duk_context * cx, bool side)
 	if (duk_get_top(cx) != 1 || !duk_is_object(cx, 0))
 		return;
 
+	debugPrint(5, "append 1");
 	child = duk_get_heapptr(cx, 0);
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
 	if (!duk_get_prop_string(cx, -1, "childNodes") || !duk_is_array(cx, -1))
-		return;
+		goto done;
 	length = duk_get_length(cx, -1);
 // see if it's already there.
 	for (i = 0; i < length; ++i) {
 		duk_get_prop_index(cx, -1, i);
 		if (child == duk_get_heapptr(cx, -1)) {
 // child was already there, just return.
-			return;
+			goto done;
 		}
 		duk_pop(cx);
 	}
@@ -774,7 +785,7 @@ static void append0(duk_context * cx, bool side)
 	duk_pop(cx);
 
 	if (!side)
-		return;
+		goto done;
 
 /* pass this linkage information back to edbrowse, to update its dom tree */
 	sprintf(e, "l{a|%s,", pointer2string(thisobj));
@@ -786,6 +797,8 @@ static void append0(duk_context * cx, bool side)
 	embedNodeName(cx, child);
 	effectString(" 0x0, ");
 	endeffect();
+done:
+	debugPrint(5, "append 2");
 }
 
 static duk_ret_t native_apch1(duk_context * cx)
@@ -812,29 +825,28 @@ static duk_ret_t native_insbf(duk_context * cx)
 	    !duk_is_object(cx, 0) || !duk_is_object(cx, 1))
 		return 0;
 
+	debugPrint(5, "before 1");
 	child = duk_get_heapptr(cx, 0);
 	item = duk_get_heapptr(cx, 1);
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
 	duk_get_prop_string(cx, -1, "childNodes");
 	if (!duk_is_array(cx, -1))
-		return 0;
+		goto done;
 	length = duk_get_length(cx, -1);
 	mark = -1;
 	for (i = 0; i < length; ++i) {
 		duk_get_prop_index(cx, -1, i);
 		h = duk_get_heapptr(cx, -1);
-		if (child == h) {
-// child was already there, just return.
-			return 0;
-		}
+		if (child == h)
+			goto done;
 		if (h == item)
 			mark = i;
 		duk_pop(cx);
 	}
 
 	if (mark < 0)
-		return 0;
+		goto done;
 
 /* push the other elements down */
 	for (i = length; i > mark; --i) {
@@ -860,6 +872,8 @@ static duk_ret_t native_insbf(duk_context * cx)
 	embedNodeName(cx, item);
 	effectChar(' ');
 	endeffect();
+done:
+	debugPrint(5, "before 2");
 	return 0;
 }
 
@@ -874,12 +888,13 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	if (duk_get_top(cx) != 1 || !duk_is_object(cx, 0))
 		return 0;
 
+	debugPrint(5, "remove 1");
 	child = duk_get_heapptr(cx, 0);
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
 	duk_get_prop_string(cx, -1, "childNodes");
 	if (!duk_is_array(cx, -1))
-		return 0;
+		goto done;
 	length = duk_get_length(cx, -1);
 	mark = -1;
 	for (i = 0; i < length; ++i) {
@@ -893,7 +908,7 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	}
 
 	if (mark < 0)
-		return 0;
+		goto done;
 
 /* push the other elements down */
 	for (i = mark + 1; i < length; --i) {
@@ -914,11 +929,14 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	embedNodeName(cx, child);
 	effectString(" 0x0, ");
 	endeffect();
+done:
+	debugPrint(5, "remove 2");
 	return 0;
 }
 
 static duk_ret_t native_fetchHTTP(duk_context * cx)
 {
+	debugPrint(5, "xhr 1");
 	if (allowXHR) {
 		const char *incoming_url = duk_to_string(cx, 0);
 		const char *incoming_method = duk_get_string(cx, 1);
@@ -963,6 +981,7 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 		duk_push_string(cx, emptyString);
 	}
 
+	debugPrint(5, "xhr 2");
 	return 0;
 }
 
@@ -1092,8 +1111,10 @@ static duk_ret_t native_getcook(duk_context * cx)
 static duk_ret_t native_setcook(duk_context * cx)
 {
 	const char *newcook = duk_get_string(cx, 0);
+	debugPrint(5, "cook 1");
 	if (newcook)
 		foldinCookie(newcook);
+	debugPrint(5, "cook 2");
 	return 0;
 }
 
@@ -1589,13 +1610,23 @@ static void processMessage(void)
 		} else {
 // error in executing the script.
 // Let's try to snag the line number.
+			const char *callstack = emptyString;
 			int offset = 0;
 			char *cut;
 			if (duk_get_prop_string(jcx, -1, "lineNumber"))
 				offset = duk_get_int(jcx, -1);
 			duk_pop(jcx);
+			if (duk_get_prop_string(jcx, -1, "stack"))
+				callstack = duk_to_string(jcx, -1);
+			duk_pop(jcx);
 			nzFree(errorMessage);
 			errorMessage = cloneString(duk_to_string(jcx, -1));
+			if (strstr(errorMessage, "callstack") &&
+			    strlen(callstack)) {
+// this is rare.
+				nzFree(errorMessage);
+				errorMessage = cloneString(callstack);
+			}
 			if (offset) {
 				head.lineno += (offset - 1);
 // symtax error message includes the relative line number, which is confusing
