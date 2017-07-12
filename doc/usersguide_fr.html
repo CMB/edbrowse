@@ -534,6 +534,7 @@ g : suit le lien sur la ligne courante
 <br>i2* : appuie sur le 2ème bouton de la ligne courante, habituellement envoyer ou remettre à zéro
 <br>i$* : appuie sur le dernier bouton de la ligne courante
 <br>i3 ? : affiche la description du troisième formulaire de la ligne courante
+<br>ipass2 : invite a rentrer le texte du deuxième formulaire sans afficher d'écho
 <br>M4 : déplace cette page web en session 4 et revient à la page précédente
 <br>js : activation javascript (bascule)
 <br>xhr :  permet le XHR (bascule)
@@ -2269,6 +2270,15 @@ Si ce n'est pas un numéro valide du menu (par exemple hors de la gamme),
 je fais une comparaison partielle avec les options, recherchant ces chiffres 
 comme sous-chaîne.&nbsp;
 Ceci peut sembler confus, mais c'est habituellement ce que vous voulez obtenir.&nbsp;
+</p>
+
+<p>
+Si vous ne souhaitez pas voir votre mot de passe affiché lors de la saisie,
+vous pouvez utiliser «&nbsp;ipass&nbsp;» (ou par exemple «&nbsp;ipass2&nbsp;» s'il
+s'agit du deuxième champ) pour être invité à saisir le contenu du champ de manière
+cachée.
+Le texte renseigné avec ipass ou pour les formulaire de type mot de passe est
+restitué sous forme d'asterisques, et ne sera jamais affiché par la suite.
 </p>
 
 <p>
