@@ -574,6 +574,7 @@ g : go to the link on the current line
 <br>i$* : push the last button on the current line
 <br>i* : switch to the buffer containing this textarea
 <br>i3? : describe the third input field on the current line
+<br>ipass2 : prompt for the content of the second input field, disabling echo
 <br>M4 : move this web page to session 4 and back up to the previous page
 <br>M : move this web page to an empty session and back up
 <br>js : allow javascript (toggle)
@@ -2190,6 +2191,13 @@ If the number you entered is not a perfect match for one of the options, it is t
 If it is not a valid menu number (e.g. out of range),
 edbrowse performs a partial match on the options, looking for those digits as a substring.
 This may seem confusing, but it is usually what you want.
+
+<P>
+If you would like your password to not be displayed on screen when you type it,
+you can use ipass (or ipass2 if the password is the second field) to get a no-echo
+prompt for your password.
+When printing anything you entered with ipass, or if the input field type is password,
+you will get wildcards back.
 
 <P>
 You can use i&lt;7 to pull the contents of session 7 into the current input field.
