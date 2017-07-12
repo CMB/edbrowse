@@ -69,6 +69,40 @@ ok = Object.keys = Object.keys || (function () {
 		}; 
 		})(); 
 
+// Dump the tree below a node, this is for debugging.
+document.nodeName = "document"; // in case you want to start at the top.
+// Print the first line of text for a text node, and no braces
+// because nothing should be below a text node.
+// You can make this more elaborate and informative if you wish.
+function dumptree(top) {
+var nn = top.nodeName.toLowerCase();
+var extra = "";
+if(nn === "text" && top.data) {
+extra = top.data;
+extra = extra.replace(/^[ \t\n]*/, "");
+var l = extra.indexOf('\n');
+if(l >= 0) extra = extra.substr(0,l);
+}
+if(nn === "option" && top.text)
+extra = top.text;
+if(nn === "a" && top.href)
+extra = top.href.toString();
+if(extra.length) extra = ' ' + extra;
+// some tags should never have anything below them so skip the parentheses notation for these.
+if((nn == "meta" || nn == "link" ||nn == "text" || nn == "image" || nn == "option") && top.childNodes.length == 0) {
+alert(nn + extra);
+return;
+}
+alert(nn + " {" + extra);
+if(top.childNodes) {
+for(var i=0; i<top.childNodes.length; ++i) {
+var c = top.childNodes[i];
+dumptree(c);
+}
+}
+alert("}");
+}
+
 /* Some visual attributes of the window.
  * These are just guesses.
  * Better to have something than nothing at all. */
@@ -195,7 +229,7 @@ if(s === '*' || (top.nodeName && top.nodeName.toLowerCase() === s))
 a.push(top);
 if(top.childNodes) {
 for(var i=0; i<top.childNodes.length; ++i) {
-c = top.childNodes[i];
+var c = top.childNodes[i];
 a = a.concat(document.eb$gebtn(c, s));
 }
 }
@@ -212,7 +246,7 @@ if(s === '*' || (top.name && top.name.toLowerCase() === s))
 a.push(top);
 if(top.childNodes) {
 for(var i=0; i<top.childNodes.length; ++i) {
-c = top.childNodes[i];
+var c = top.childNodes[i];
 a = a.concat(document.eb$gebn(c, s));
 }
 }
@@ -229,7 +263,7 @@ if(s === '*' || (top.className && top.className.toLowerCase() === s))
 a.push(top);
 if(top.childNodes) {
 for(var i=0; i<top.childNodes.length; ++i) {
-c = top.childNodes[i];
+var c = top.childNodes[i];
 a = a.concat(document.eb$gebcn(c, s));
 }
 }
