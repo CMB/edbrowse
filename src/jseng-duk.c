@@ -459,8 +459,14 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	debugPrint(5, "setter h 1");
 	duk_push_this(cx);
 /* lop off the preexisting children */
-	if (!duk_get_prop_string(cx, -1, "childNodes"))
+	if (duk_get_prop_string(cx, -1, "childNodes") && duk_is_array(cx, -1)) {
 		duk_set_length(cx, -1, 0);
+	} else {
+// no child nodes array, don't do anything.
+// This should never happen.
+		debugPrint(5, "setter h 3");
+		return 0;
+	}
 	duk_pop(cx);
 // stack now holds html and this
 	duk_insert(cx, -2);
