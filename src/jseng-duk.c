@@ -766,14 +766,17 @@ static void append0(duk_context * cx, bool side)
 	child = duk_get_heapptr(cx, 0);
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
-	if (!duk_get_prop_string(cx, -1, "childNodes") || !duk_is_array(cx, -1))
+	if (!duk_get_prop_string(cx, -1, "childNodes") || !duk_is_array(cx, -1)) {
+		duk_pop_2(cx);
 		goto done;
+	}
 	length = duk_get_length(cx, -1);
 // see if it's already there.
 	for (i = 0; i < length; ++i) {
 		duk_get_prop_index(cx, -1, i);
 		if (child == duk_get_heapptr(cx, -1)) {
 // child was already there, just return.
+			duk_pop_n(cx, 3);
 			goto done;
 		}
 		duk_pop(cx);
@@ -788,7 +791,6 @@ static void append0(duk_context * cx, bool side)
 	duk_def_prop(cx, 0,
 		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
 		      DUK_DEFPROP_SET_WRITABLE | DUK_DEFPROP_SET_CONFIGURABLE));
-	duk_pop(cx);
 
 	if (!side)
 		goto done;
@@ -810,13 +812,13 @@ done:
 static duk_ret_t native_apch1(duk_context * cx)
 {
 	append0(cx, false);
-	return 0;
+	return 1;
 }
 
 static duk_ret_t native_apch2(duk_context * cx)
 {
 	append0(cx, true);
-	return 0;
+	return 1;
 }
 
 static duk_ret_t native_insbf(duk_context * cx)
@@ -837,22 +839,28 @@ static duk_ret_t native_insbf(duk_context * cx)
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
 	duk_get_prop_string(cx, -1, "childNodes");
-	if (!duk_is_array(cx, -1))
+	if (!duk_is_array(cx, -1)) {
+		duk_pop_n(cx, 3);
 		goto done;
+	}
 	length = duk_get_length(cx, -1);
 	mark = -1;
 	for (i = 0; i < length; ++i) {
 		duk_get_prop_index(cx, -1, i);
 		h = duk_get_heapptr(cx, -1);
-		if (child == h)
+		if (child == h) {
+			duk_pop_n(cx, 4);
 			goto done;
+		}
 		if (h == item)
 			mark = i;
 		duk_pop(cx);
 	}
 
-	if (mark < 0)
+	if (mark < 0) {
+		duk_pop_n(cx, 3);
 		goto done;
+	}
 
 /* push the other elements down */
 	for (i = length; i > mark; --i) {
@@ -862,7 +870,13 @@ static duk_ret_t native_insbf(duk_context * cx)
 /* and place the child */
 	duk_push_heapptr(cx, child);
 	duk_put_prop_index(cx, -2, mark);
-	duk_pop_n(cx, 3);
+	duk_pop(cx);
+	duk_push_string(cx, "parentNode");
+	duk_insert(cx, -2);
+	duk_remove(cx, 1);
+	duk_def_prop(cx, 0,
+		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
+		      DUK_DEFPROP_SET_WRITABLE | DUK_DEFPROP_SET_CONFIGURABLE));
 
 /* pass this linkage information back to edbrowse, to update its dom tree */
 	sprintf(e, "l{b|%s,", pointer2string(thisobj));
@@ -880,7 +894,7 @@ static duk_ret_t native_insbf(duk_context * cx)
 	endeffect();
 done:
 	debugPrint(5, "before 2");
-	return 0;
+	return 1;
 }
 
 static duk_ret_t native_removeChild(duk_context * cx)
