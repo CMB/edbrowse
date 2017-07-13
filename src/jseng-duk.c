@@ -390,7 +390,7 @@ static duk_ret_t native_prompt(duk_context * cx)
 	}
 	duk_pop_n(cx, top);
 	duk_push_string(cx, answer);
-	return 0;
+	return 1;
 }
 
 static duk_ret_t native_confirm(duk_context * cx)
@@ -423,7 +423,7 @@ static duk_ret_t native_confirm(duk_context * cx)
 	if (c == 'y' || c == 'Y')
 		answer = true;
 	duk_push_boolean(cx, answer);
-	return 0;
+	return 1;
 }
 
 /* represent an object pointer in ascii */
@@ -1311,16 +1311,30 @@ int set_property_string_nat(jsobjtype parent, const char *name,
 	duk_c_function setter = NULL;
 	duk_c_function getter = NULL;
 	const char *altname;
-	if (stringEqual(name, "value"))
-		setter = setter_value, getter = getter_value, altname =
-		    "val$ue";
-	if (stringEqual(name, "innerHTML"))
-		setter = setter_innerHTML, getter = getter_innerHTML, altname =
-		    "inner$HTML";
-	if (stringEqual(name, "innerText"))
-		setter = setter_innerText, getter = getter_innerText, altname =
-		    "inner$Text";
 	duk_push_heapptr(jcx, parent);
+	if (stringEqual(name, "innerHTML"))
+		setter = setter_innerHTML, getter = getter_innerHTML,
+		    altname = "inner$HTML";
+	if (stringEqual(name, "innerText"))
+		setter = setter_innerText, getter = getter_innerText,
+		    altname = "inner$Text";
+	if (stringEqual(name, "value")) {
+// This one is complicated. If option.value had side effects,
+// that would only serve to confuse.
+		bool valsetter = true;
+		static jsobjtype optclass;
+		if (!optclass) {
+			duk_get_global_string(jcx, "Option");
+			optclass = duk_get_heapptr(jcx, -1);
+		} else
+			duk_push_heapptr(jcx, optclass);
+		if (duk_is_array(jcx, -2) || duk_instanceof(jcx, -2, -1))
+			valsetter = false;
+		duk_pop(jcx);
+		if (valsetter)
+			setter = setter_value,
+			    getter = getter_value, altname = "val$ue";
+	}
 	if (setter) {
 		if (!duk_get_prop_string(jcx, -1, name))
 			defset = true;
