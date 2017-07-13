@@ -735,6 +735,34 @@ static void handlerSet(jsobjtype ev, const char *name, const char *code)
 	strcpy(newcode, "with(document) { ");
 	if (hasform)
 		strcat(newcode, "with(this.form) { ");
+
+/*********************************************************************
+This is rather cheeky.
+As you see from the above, handlers are suppose to run in the context
+of the document object and sometimes the form that houses them.
+That's the spec, so I put
+with(document) and sometimes with(form) around the running code.
+For onclik the code just runs, but for onsubmit the code is suppose to
+return something.
+Mozilla had no trouble compiling and running  return 7  not in a function.
+Duktape won't do that. Return has to be in a function.
+I even tried DUK_COMPILE_FUNCTION, no dice.
+So I tried wrapping the code in
+(function() { code })();
+Then it doesn't matter if the code is just expressions, or return expression.
+But should the with clauses be inside or outside the function?
+One way wouldn't parse, and the other way lost the this binding,
+which some fragments of code depend on.
+These were all good ideas, but they don't work.
+I am left with the kludge of removing the word return,
+so return expression is just expression, and it compiles, and runs,
+and leaves a value on the stack, which duktape treats as the return value.
+*********************************************************************/
+
+	while (isspace(*code))
+		++code;
+	if (!strncmp(code, "return", 6) && !isalnum(code[6]))
+		code += 6;
 	strcat(newcode, code);
 	if (hasform)
 		strcat(newcode, " }");

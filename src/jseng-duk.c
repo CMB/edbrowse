@@ -1392,7 +1392,7 @@ int set_property_function_nat(jsobjtype parent, const char *name,
 {
 	if (!body || !*body) {
 // null or empty function, just return null.
-		body = "return null;";
+		body = "null";
 	}
 	duk_push_string(jcx, body);
 	duk_push_string(jcx, name);
