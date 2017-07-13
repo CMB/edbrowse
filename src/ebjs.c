@@ -1563,7 +1563,7 @@ bool run_function_bool(jsobjtype obj, const char *name)
 	if (!propval)
 		return true;
 	if (head.proptype == EJ_PROP_BOOL) {
-		bool rc = (propval[0] == '1');
+		bool rc = (propval[0] == '1' || propval[0] == 't');
 		nzFree(propval);
 		propval = 0;
 		return rc;
