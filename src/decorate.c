@@ -776,7 +776,7 @@ static const char *fakePropName(void)
 {
 	static int idx = 0;
 	++idx;
-	sprintf(fakePropLast, "gc$$%d", idx);
+	sprintf(fakePropLast, "gc$%c%d", whichproc, idx);
 	return fakePropLast;
 }				/*fakePropName */
 
