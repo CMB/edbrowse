@@ -1322,12 +1322,7 @@ int set_property_string_nat(jsobjtype parent, const char *name,
 // This one is complicated. If option.value had side effects,
 // that would only serve to confuse.
 		bool valsetter = true;
-		static jsobjtype optclass;
-		if (!optclass) {
-			duk_get_global_string(jcx, "Option");
-			optclass = duk_get_heapptr(jcx, -1);
-		} else
-			duk_push_heapptr(jcx, optclass);
+		duk_get_global_string(jcx, "Option");
 		if (duk_is_array(jcx, -2) || duk_instanceof(jcx, -2, -1))
 			valsetter = false;
 		duk_pop(jcx);
