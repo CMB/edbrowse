@@ -1,5 +1,11 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.7.0:
+Switch from Mozilla js to Duktape js.
+
+Mask password fields on input forms with stars, as other browsers do.
+Issue the ipass command to enter a password without echo.
+
 3.6.3:
 Maintain a cache of http files.
 Provides faster access to websites that are visited often.
