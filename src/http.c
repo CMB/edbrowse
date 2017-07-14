@@ -553,6 +553,7 @@ char *extractHeaderParam(const char *str, const char *item)
 
 /* Date format is:    Mon, 03 Jan 2000 21:29:33 GMT|[+-]nnnn */
 			/* Or perhaps:     Sun Nov  6 08:49:37 1994 */
+/* or perhaps 1994-11-06 08:49:37.nnnnZ */
 time_t parseHeaderDate(const char *date)
 {
 	static const char *const months[12] = {
@@ -568,6 +569,7 @@ time_t parseHeaderDate(const char *date)
 	struct tm tm;
 	memset(&tm, 0, sizeof(struct tm));
 	tm.tm_isdst = -1;
+	const char *date0 = date;	// remember for debugging
 
 	now = time(NULL);
 	temptm = gmtime(&now);
@@ -576,6 +578,16 @@ time_t parseHeaderDate(const char *date)
 	utcnow = mktime(temptm);
 	if (utcnow == -1 && errno)
 		goto fail;
+
+	if (isdigitByte(date[0]) && isdigitByte(date[1]) &&
+	    isdigitByte(date[2]) && isdigitByte(date[3]) && date[4] == '-') {
+		y = 2;
+		tm.tm_year = atoi(date + 0) - 1900;
+		tm.tm_mon = atoi(date + 5) - 1;
+		tm.tm_mday = atoi(date + 8);
+		date += 11;
+		goto f3;
+	}
 
 /* skip past day of the week */
 	date = strchr(date, ' ');
@@ -603,13 +615,8 @@ f1:
 		date += 3;
 		if (*date == ' ') {
 			date++;
-			if (!isdigitByte(date[0]))
-				goto fail;
-			if (!isdigitByte(date[1]))
-				goto fail;
-			if (!isdigitByte(date[2]))
-				goto fail;
-			if (!isdigitByte(date[3]))
+			if (!isdigitByte(date[0]) || !isdigitByte(date[1]) ||
+			    !isdigitByte(date[2]) || !isdigitByte(date[3]))
 				goto fail;
 			tm.tm_year =
 			    (date[0] - '0') * 1000 + (date[1] - '0') * 100 +
@@ -618,9 +625,7 @@ f1:
 		} else if (*date == '-') {
 			/* Sunday, 06-Nov-94 08:49:37 GMT */
 			date++;
-			if (!isdigitByte(date[0]))
-				goto fail;
-			if (!isdigitByte(date[1]))
+			if (!isdigitByte(date[0]) || !isdigitByte(date[1]))
 				goto fail;
 			if (!isdigitByte(date[2])) {
 				tm.tm_year =
@@ -663,44 +668,36 @@ f2:
 		date++;
 	}
 
+f3:
 /* ready to crack time */
-	if (!isdigitByte(date[0]))
-		goto fail;
-	if (!isdigitByte(date[1]))
+	if (!isdigitByte(date[0]) || !isdigitByte(date[1]))
 		goto fail;
 	tm.tm_hour = (date[0] - '0') * 10 + date[1] - '0';
 	date += 2;
 	if (*date != ':')
 		goto fail;
 	date++;
-	if (!isdigitByte(date[0]))
-		goto fail;
-	if (!isdigitByte(date[1]))
+	if (!isdigitByte(date[0]) || !isdigitByte(date[1]))
 		goto fail;
 	tm.tm_min = (date[0] - '0') * 10 + date[1] - '0';
 	date += 2;
 	if (*date != ':')
 		goto fail;
 	date++;
-	if (!isdigitByte(date[0]))
-		goto fail;
-	if (!isdigitByte(date[1]))
+	if (!isdigitByte(date[0]) || !isdigitByte(date[1]))
 		goto fail;
 	tm.tm_sec = (date[0] - '0') * 10 + date[1] - '0';
 	date += 2;
+	if (y == 2)
+		goto f4;
 
-	if (y) {
+	if (y == 1) {
 /* year is at the end */
 		if (*date != ' ')
 			goto fail;
 		date++;
-		if (!isdigitByte(date[0]))
-			goto fail;
-		if (!isdigitByte(date[1]))
-			goto fail;
-		if (!isdigitByte(date[2]))
-			goto fail;
-		if (!isdigitByte(date[3]))
+		if (!isdigitByte(date[0]) || !isdigitByte(date[1]) ||
+		    !isdigitByte(date[2]) || !isdigitByte(date[3]))
 			goto fail;
 		tm.tm_year =
 		    (date[0] - '0') * 1000 + (date[1] - '0') * 100 + (date[2] -
@@ -726,11 +723,13 @@ f2:
 			zone = -zone;
 	}
 
+f4:
 	t = mktime(&tm);
 	if (t != (time_t) - 1)
 		return t + zone + (now - utcnow);
 
 fail:
+	debugPrint(3, "parseHeaderDate fails on %s", date0);
 	return 0;
 }				/* parseHeaderDate */
 
