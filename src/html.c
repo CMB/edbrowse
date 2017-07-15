@@ -606,7 +606,6 @@ top:
 		t->step = 3;	/* now running the script */
 		if (!t->jv)
 			continue;
-		change = true;
 
 		prepareScript(t);
 
@@ -639,10 +638,26 @@ top:
 			cf->dw = 0;
 			cf->dw_l = 0;
 		}
+
+		change = true;
+		break;
 	}
 
-	if (change)
-		goto top;
+/*********************************************************************
+It's important to process side effects after each script,
+instead of waiting for all the scripts to run, as I use to do.
+Script 1 sets a global variable g = new Object;
+and passes back some side effects that mess with that object,
+that cause edbrowse to get or set properties on that object.
+Script 2 does the same thing, referencing the same global variable g.
+If I run both scripts, and if garbage collection happens to run,
+then the first object is freed, since g now points to the second object,
+and edbrowse runs the side effects
+on the first object that is freed, and js crashes!
+This doesn't happen very often,
+but still I should process linkage and other side effects after each script
+and after each handler.
+*********************************************************************/
 
 /* look for an run innerHTML */
 	foreach(ic, inputChangesPending) {
@@ -667,12 +682,11 @@ top:
 		} else
 			h = emptyString;
 		runGeneratedHtml(t, ic->value, h);
+// innerHTML could create a new script to run.
 		change = true;
 	}
 
-	if (change)
-		goto top;
-
+/* innerText */
 	foreach(ic, inputChangesPending) {
 		char *v;
 		int side;
@@ -703,6 +717,7 @@ top:
 		sideBuffer(side, v, -1, 0);
 	}
 
+/* linkages */
 	foreach(ic, inputChangesPending) {
 		if (ic->major != 'l')
 			continue;
@@ -710,6 +725,7 @@ top:
 		javaSetsLinkage(true, ic->minor, ic->t, ic->value);
 	}
 
+/* timers set and cleared */
 	foreach(ic, inputChangesPending) {
 		if (ic->major != 't')
 			continue;
@@ -718,6 +734,9 @@ top:
 	}
 
 	freeList(&inputChangesPending);
+
+	if (change)
+		goto top;
 
 	if (v = js_reset) {
 		js_reset = 0;
