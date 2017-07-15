@@ -703,9 +703,13 @@ void jsRunScript(jsobjtype obj, const char *str, const char *filename,
 /* does the member exist? */
 enum ej_proptype has_property(jsobjtype obj, const char *name)
 {
+	if (!obj) {
+		debugPrint(3, "has_property(0, %s)", name);
+		return EJ_PROP_NONE;
+	}
 	if (whichproc == 'j')
 		return has_property_nat(obj, name);
-	if (!allowJS || !cf->winobj || !obj)
+	if (!allowJS || !cf->winobj)
 		return EJ_PROP_NONE;
 
 	debugPrint(5, "> has %s", name);
@@ -725,11 +729,15 @@ enum ej_proptype has_property(jsobjtype obj, const char *name)
 
 void delete_property(jsobjtype obj, const char *name)
 {
+	if (!obj) {
+		debugPrint(3, "delete_property(0, %s)", name);
+		return;
+	}
 	if (whichproc == 'j') {
 		delete_property_nat(obj, name);
 		return;
 	}
-	if (!allowJS || !cf->winobj || !obj)
+	if (!allowJS || !cf->winobj)
 		return;
 
 	debugPrint(5, "> delete %s", name);
@@ -750,8 +758,12 @@ void delete_property(jsobjtype obj, const char *name)
 static int get_property(jsobjtype obj, const char *name)
 {
 	propval = 0;		/* should already be 0 */
-	if (!allowJS || !cf->winobj || !obj)
+	if (!allowJS || !cf->winobj)
 		return -1;
+	if (!obj) {
+		debugPrint(3, "get_property(0, %s)", name);
+		return -1;
+	}
 
 	debugPrint(5, "> get %s", name);
 
@@ -854,8 +866,12 @@ jsobjtype get_property_function(jsobjtype parent, const char *name)
 static int get_array_element(jsobjtype obj, int idx)
 {
 	propval = 0;
-	if (!allowJS || !cf->winobj || !obj)
+	if (!allowJS || !cf->winobj)
 		return -1;
+	if (!obj) {
+		debugPrint(3, "get_array_element(0, %d)", idx);
+		return -1;
+	}
 
 	debugPrint(5, "> get [%d]", idx);
 
@@ -890,8 +906,12 @@ static int set_property(jsobjtype obj, const char *name,
 {
 	int l;
 
-	if (!allowJS || !cf->winobj || !obj)
+	if (!allowJS || !cf->winobj)
 		return -1;
+	if (!obj) {
+		debugPrint(3, "set_property(0, %s, %s)", name, value);
+		return -1;
+	}
 
 	debugPrint(5, "> set %s=%s", name, debugString(value));
 
