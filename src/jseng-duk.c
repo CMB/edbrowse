@@ -104,6 +104,7 @@ static char *membername;
 static char *propval;
 static enum ej_proptype proptype;
 static char *runscript;
+static duk_context *context0;
 
 int js_main(int argc, char **argv)
 {
@@ -119,6 +120,18 @@ int js_main(int argc, char **argv)
 	if (pipe_in < 0 || pipe_out < 0)
 		usage();
 	cf->fileName = argv[2];
+
+	context0 = duk_create_heap_default();
+	if (!context0) {
+		fprintf(stderr,
+			"Cannot create javascript runtime environment\n");
+/* send a message to edbrowse, so it can disable javascript,
+ * so we don't get this same error on every browse. */
+		head.highstat = EJ_HIGH_PROC_FAIL;
+		head.lowstat = EJ_LOW_RUNTIME;
+		writeHeader();
+		exit(4);
+	}
 
 	readConfigFile();
 	setupEdbrowseCache();
@@ -161,7 +174,13 @@ int js_main(int argc, char **argv)
 		docobj = head.docobj;
 
 		if (head.cmd == EJ_CMD_DESTROY) {
-			duk_destroy_heap(jcx);
+			int i, top = duk_get_top(context0);
+			for (i = 0; i < top; ++i) {
+				if (jcx == duk_get_context(context0, i)) {
+					duk_remove(context0, i);
+					break;
+				}
+			}
 			head.n = head.proplength = 0;
 			writeHeader();
 			continue;
@@ -1140,14 +1159,13 @@ static duk_ret_t native_setcook(duk_context * cx)
 
 static void createContext(void)
 {
-	jcx = duk_create_heap_default();
+	duk_push_thread_new_globalenv(context0);
+	jcx = duk_get_context(context0, -1);
 	if (!jcx) {
 		head.highstat = EJ_HIGH_HEAP_FAIL;
 		head.lowstat = EJ_LOW_CX;
 		return;
 	}
-// set my_errorReporter; not sure what to do here.
-
 // the global object, which will become window,
 // and the document object.
 	duk_push_global_object(jcx);
