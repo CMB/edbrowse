@@ -249,7 +249,6 @@ if(c2.constructor != Circle || oo.constructor != Object) fail(79);
 
 // the date object
 var d = new Date(2003,11,25,17,55,9);
-d.setYear(d.getYear()-1);
 if(d.getMonth() != 11 || d.getDate() != 25) fail(81);
 if(d.getHours() != 17 || d.getMinutes() != 55 || d.getSeconds() != 9) fail(82);
 if(d.constructor != Date || a.constructor != Array) fail(84);
