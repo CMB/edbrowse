@@ -656,24 +656,7 @@ top:
 		}
 
 		change = true;
-		break;
 	}
-
-/*********************************************************************
-It's important to process side effects after each script,
-instead of waiting for all the scripts to run, as I use to do.
-Script 1 sets a global variable g = new Object;
-and passes back some side effects that mess with that object,
-that cause edbrowse to get or set properties on that object.
-Script 2 does the same thing, referencing the same global variable g.
-If I run both scripts, and if garbage collection happens to run,
-then the first object is freed, since g now points to the second object,
-and edbrowse runs the side effects
-on the first object that is freed, and js crashes!
-This doesn't happen very often,
-but still I should process linkage and other side effects after each script
-and after each handler.
-*********************************************************************/
 
 /* look for an run innerHTML */
 	foreach(ic, inputChangesPending) {
