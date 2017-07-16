@@ -32,7 +32,8 @@ static bool pcre_utf8_error_stop = false;
 static uchar dirWrite;		/* directories read write */
 static char lsformat[12];	/* size date etc on a directory listing */
 static uchar endMarks;		/* ^ $ on printed lines */
-static bool jexmode;
+static bool jdb_mode;
+static struct ebFrame *jdb_frame;
 /* The valid edbrowse commands. */
 static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^<";
 /* Commands that can be done in browse mode. */
@@ -566,9 +567,10 @@ addchar:
 	if (debugFile)
 		fputc('\n', debugFile);
 
-	if (jexmode) {
+	if (jdb_mode) {
+		cf = jdb_frame;
 		if (stringEqual(s, ".") || stringEqual(s, "qt")) {
-			jexmode = false;
+			jdb_mode = false;
 			puts("bye");
 			jSideEffects();
 		} else {
@@ -3610,17 +3612,13 @@ pwd:
 			cf = t->f1;
 		else
 			selfFrame();
+		jdb_frame = cf;
 		if (!isJSAlive) {
 			setError(MSG_JavaOff);
 			return false;
 		}
-		jexmode = true;
+		jdb_mode = true;
 		jSyncup(false);
-/* the sync could have changed cf */
-		if (t)
-			cf = t->f1;
-		else
-			selfFrame();
 		return true;
 	}
 
