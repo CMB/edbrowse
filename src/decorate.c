@@ -1633,6 +1633,9 @@ static void intoTree(struct htmlTag *parent)
 			return;
 		}
 
+		if (!parent)
+			t->topnode = true;
+
 		if (treeDisable) {
 			debugPrint(4, "node skip %s", t->info->name);
 			t->step = 100;

@@ -1694,6 +1694,11 @@ static void processMessage(void)
 		writeHeader();
 		if (head.proplength)
 			writeToEb(s, head.proplength);
+		{
+			const char *gc = getenv("JSGC");
+			if (gc && *gc)
+				duk_gc(jcx, 0);
+		}
 		break;
 
 	case EJ_CMD_HASPROP:
