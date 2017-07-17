@@ -1176,6 +1176,8 @@ void update_var_in_js(int varid)
 				break;
 			}
 	}
+	if (varid == 5)
+		value = curlAuthNegotiate;
 	debugPrint(5, "> varupdate %d", varid);
 	head.cmd = EJ_CMD_VARUPDATE;
 	head.obj = 0;

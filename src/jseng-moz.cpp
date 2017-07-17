@@ -193,6 +193,8 @@ int js_main(int argc, char **argv)
 				if (t)
 					currentAgent = t;
 			}
+			if (head.lineno == 5)
+				curlAuthNegotiate = head.n;
 			head.n = head.proplength = 0;
 //                      no acknowledgement needed
 //                      writeHeader();

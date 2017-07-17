@@ -122,7 +122,7 @@ addchar:
 		d = *u;
 		if (!isdigitByte(d))
 			goto addchar;
-		field = strtol(u, (char**)&u, 10);
+		field = strtol(u, (char **)&u, 10);
 		d = *u;
 		if (d == '*') {
 			s = u + 1;
@@ -3894,6 +3894,7 @@ et_go:
 		curlAuthNegotiate ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(curlAuthNegotiate + MSG_CurlNoAuthNegotiate);
+		update_var_in_js(5);
 		return true;
 	}
 
@@ -4538,7 +4539,7 @@ replaceframe:
 		/* XXX try to guess cx if only one password input field? */
 
 		cw->dot = endRange;
-		p = (char*)fetchLine(cw->dot, -1);
+		p = (char *)fetchLine(cw->dot, -1);
 		findInputField(p, 1, cx, &n, &realtotal, &tagno);
 		debugPrint(5, "findField returns %d.%d", n, tagno);
 		if (!tagno) {
@@ -4547,7 +4548,7 @@ replaceframe:
 		}
 
 		prompt_and_read(MSG_Password, buffer, MAXUSERPASS,
-				     MSG_PasswordLong, true);
+				MSG_PasswordLong, true);
 
 		old_masked = tagList[tagno]->masked;
 		tagList[tagno]->masked = true;
