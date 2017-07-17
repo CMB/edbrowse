@@ -567,17 +567,16 @@ time_t parseHeaderDate(const char *date)
 	int y;			/* remember the type of format */
 	struct tm *temptm = NULL;
 	struct tm tm;
+	long utcoffset = 0;
 	memset(&tm, 0, sizeof(struct tm));
 	tm.tm_isdst = -1;
 	const char *date0 = date;	// remember for debugging
 
 	now = time(NULL);
-	temptm = gmtime(&now);
+	temptm = localtime(&now);
 	if (temptm == NULL)
 		goto fail;
-	utcnow = mktime(temptm);
-	if (utcnow == -1 && errno)
-		goto fail;
+	utcoffset = temptm->tm_gmtoff;
 
 	if (isdigitByte(date[0]) && isdigitByte(date[1]) &&
 	    isdigitByte(date[2]) && isdigitByte(date[3]) && date[4] == '-') {
@@ -726,7 +725,7 @@ f3:
 f4:
 	t = mktime(&tm);
 	if (t != (time_t) - 1)
-		return t + zone + (now - utcnow);
+		return t + zone + utcoffset;
 
 fail:
 	debugPrint(3, "parseHeaderDate fails on %s", date0);
