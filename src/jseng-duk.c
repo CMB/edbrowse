@@ -1690,10 +1690,10 @@ static void processMessage(void)
 		}
 		nzFree(runscript);
 		runscript = 0;
-		duk_pop(jcx);
 		writeHeader();
 		if (head.proplength)
 			writeToEb(s, head.proplength);
+		duk_pop(jcx);
 		{
 			const char *gc = getenv("JSGC");
 			if (gc && *gc)
