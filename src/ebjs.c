@@ -564,13 +564,13 @@ void createJavaContext(void)
 	if (!js_pid) {
 		int i;
 		js_start();
-// update 6, URL, is per context, not global, thus not dealt with here.
-		for (i = 1; i <= 7; ++i)
-			if (i != 6)
+// update URL, is per context, not global, thus not dealt with here.
+		for (i = 1; i < EJ_VARUPDATE_COUNT; ++i)
+			if (i != EJ_VARUPDATE_FILENAME)
 				update_var_in_js(i);
 	}
 // set the URL, then create context, so the cookies will be right.
-	update_var_in_js(6);
+	update_var_in_js(EJ_VARUPDATE_FILENAME);
 
 	debugPrint(5, "> create context for session %d", context);
 
@@ -1190,13 +1190,13 @@ void update_var_in_js(int varid)
 	if (!js_pid)
 		return;
 
-	if (varid == 1)
+	if (varid == EJ_VARUPDATE_XHR)
 		value = allowXHR;
-	if (varid == 2)
+	if (varid == EJ_VARUPDATE_DEBUG)
 		value = debugLevel;
-	if (varid == 3)
+	if (varid == EJ_VARUPDATE_VERIFYCERT)
 		value = verifyCertificates;
-	if (varid == 4) {
+	if (varid == EJ_VARUPDATE_USERAGENT) {
 		int i;
 		for (i = 0; i < 10; ++i)
 			if (userAgents[i] == currentAgent) {
@@ -1204,11 +1204,11 @@ void update_var_in_js(int varid)
 				break;
 			}
 	}
-	if (varid == 5)
+	if (varid == EJ_VARUPDATE_CURLAUTHNEG)
 		value = curlAuthNegotiate;
-	if (varid == 6)
+	if (varid == EJ_VARUPDATE_FILENAME)
 		s = cf->fileName;
-	if (varid == 7)
+	if (varid == EJ_VARUPDATE_DEBUGFILE)
 		s = debugFileName;
 	debugPrint(5, "> varupdate %d", varid);
 

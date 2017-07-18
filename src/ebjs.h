@@ -67,6 +67,18 @@ enum ej_proptype {
 	EJ_PROP_INSTANCE,
 };
 
+enum ej_varupdates {
+	EJ_VARUPDATE_NONE,
+	EJ_VARUPDATE_XHR,
+	EJ_VARUPDATE_DEBUG,
+	EJ_VARUPDATE_VERIFYCERT,
+	EJ_VARUPDATE_USERAGENT,
+	EJ_VARUPDATE_CURLAUTHNEG,
+	EJ_VARUPDATE_FILENAME,
+	EJ_VARUPDATE_DEBUGFILE,
+	EJ_VARUPDATE_COUNT, /* special value to iterate over varupdates */
+};
+
 /* Opaque indicator of an object that can be shared
  * between the two processes. */
 typedef void *jsobjtype;

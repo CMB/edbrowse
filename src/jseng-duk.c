@@ -185,18 +185,18 @@ int js_main(int argc, char **argv)
 		}
 
 		if (head.cmd == EJ_CMD_VARUPDATE) {
-			if (head.lineno == 1)
+			if (head.lineno == EJ_VARUPDATE_XHR)
 				allowXHR = head.n;
-			if (head.lineno == 2)
+			if (head.lineno == EJ_VARUPDATE_DEBUG)
 				debugLevel = head.n;
-			if (head.lineno == 3)
+			if (head.lineno == EJ_VARUPDATE_VERIFYCERT)
 				verifyCertificates = head.n;
-			if (head.lineno == 4) {
+			if (head.lineno == EJ_VARUPDATE_USERAGENT) {
 				char *t = userAgents[head.n];
 				if (t)
 					currentAgent = t;
 			}
-			if (head.lineno == 5)
+			if (head.lineno == EJ_VARUPDATE_CURLAUTHNEG)
 				curlAuthNegotiate = head.n;
 			if (head.lineno == 6) {
 				nzFree(cf->fileName);
