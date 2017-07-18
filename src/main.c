@@ -361,6 +361,7 @@ void ebClose(int n)
 	bg_jobs(true);
 	dbClose();
 	js_shutdown();
+	mergeCookies();
 	eb_curl_global_cleanup();
 	exit(n);
 }				/* ebClose */

@@ -18,8 +18,9 @@ struct cookie {
 	bool tail;
 /* tail is needed for libcurl, to tell it to tail-match. */
 /* Why doesn't it just look for the damned dot at the front of the domain? */
-	time_t expires;		/* zero means undefined */
 	bool secure;
+	bool fromjar;
+	time_t expires;		/* zero means undefined */
 };
 
 static const char *httponly_prefix = "#HttpOnly_";
@@ -107,24 +108,6 @@ static void freeCookie(struct cookie *c)
 
 static struct listHead cookies = { &cookies, &cookies };
 
-static bool displacedCookie;
-static void acceptCookie(struct cookie *c)
-{
-	struct cookie *d;
-	displacedCookie = false;
-	foreach(d, cookies) {
-		if (stringEqualCI(d->name, c->name) &&
-		    stringEqualCI(d->domain, c->domain)) {
-			displacedCookie = true;
-			delFromList(d);
-			freeCookie(d);
-			nzFree(d);
-			break;
-		}
-	}
-	addToListBack(&cookies, c);
-}				/* acceptCookie */
-
 /*
  * Construct a cookie line of the form used by Netscape's file format,
  * from a cookie c.  Returns dynamically-allocated memory, which the
@@ -156,7 +139,9 @@ static char *netscapeCookieLine(const struct cookie *c)
 /* Tell libcurl about a new cookie.  Called when setting cookies from
  * JavaScript.
  * The function is pretty simple.  Construct a line of the form used by
- * the Netscape cookie file format, and pass that to libcurl. */
+ * the Netscape cookie file format, and pass that to libcurl.
+ * Also called by mergeCookies() to bring other jar cookies into curl space,
+ * but should we be doing debugPrints in that case? */
 static CURLcode cookieForLibcurl(const struct cookie *c)
 {
 	CURLcode ret;
@@ -287,15 +272,30 @@ bool receiveCookie(const char *url, const char *str)
 	return true;
 }				/* receiveCookie */
 
-/* I'm assuming I can read the cookie file, process it,
- * and if necessary, write it out again, with the expired cookies deleted,
- * all before another edbrowse process interferes.
- * I've given it some thought, and I think I can ignore the race conditions. */
+/*********************************************************************
+This function is called at edbrowse startup.
+It reads the cookies in the cookie jar and hands them to curl.
+You'd think curl would just read and parse the file itself, but it doesn't.
+It does however write the updated file on exit, including all the new cookies
+it has acquired during the edbrowse session.
+Why it writes at exit, but doesn't read at startup, I have no idea,
+so we have to spoonfeed it the cookies at the start.
+There's something else curl doesn't do, it doesn't delete
+expired cookies, they just accumulate forever.
+So we cull the old cookies from the cookie jar as we're passing them up to curl.
+When it writes the jar at exit, the old cookies will be gone.
+If spoonfeed = false, then we're just bringing the cookies from jar into memory,
+and not handing them to curl.
+This is done by mergeCookies().
+*********************************************************************/
+
+static bool spoonfeed = true;
+
 void cookiesFromJar(void)
 {
 	char *cbuf, *s, *t;
 	FILE *f;
-	int n, cnt, expired, displaced;
+	int n, cnt, expired;
 	char *cbuf_end;
 	time_t now;
 	struct cookie *c;
@@ -308,7 +308,7 @@ void cookiesFromJar(void)
 	cbuf_end = cbuf + n;
 	time(&now);
 
-	cnt = expired = displaced = 0;
+	cnt = expired = 0;
 	s = cbuf;
 
 	while (s < cbuf_end) {
@@ -319,14 +319,14 @@ void cookiesFromJar(void)
 		c = cookie_from_netscape_line(s);
 
 		if (c) {	/* Got a valid cookie line. */
-			cnt++;
 			if (c->expires < now) {
 				freeCookie(c);
 				nzFree(c);
 				++expired;
 			} else {
-				acceptCookie(c);
-				displaced += displacedCookie;
+				cnt++;
+				c->fromjar = true;
+				addToListBack(&cookies, c);
 			}
 		}
 
@@ -336,15 +336,21 @@ void cookiesFromJar(void)
 			s++;
 	}
 
-	debugPrint(3, "%d persistent cookies, %d expired, %d displaced",
-		   cnt, expired, displaced);
+	debugPrint(3, "%d persistent cookies, %d expired", cnt, expired);
 	nzFree(cbuf);
 
-	foreach(c, cookies) {
-		cookieForLibcurl(c);
+	if (!spoonfeed) {
+// cookies are in memory; that's all we have to do.
+		return;
 	}
 
-	if (expired + displaced && whichproc == 'e') {
+	foreach(c, cookies)
+	    cookieForLibcurl(c);
+
+#if 0
+// We use to write the file out again with the old cookies deleted,
+// I don't think we need to do this.
+	if (expired && whichproc == 'e') {
 /* Pour the cookies back into the jar */
 		f = fopen(cookieFile, "w");
 		if (!f)
@@ -356,6 +362,7 @@ void cookiesFromJar(void)
 		}
 		fclose(f);
 	}
+#endif
 
 // Free the resources allocated by this routine.
 	foreach(c, cookies)
@@ -385,6 +392,17 @@ static bool isPathPrefix(const char *d, const char *s)
 		return false;
 	return !memcmp(d, s, dl);
 }				/* isPathPrefix */
+
+/*********************************************************************
+Given a URL, find the cookies that belong to that URL.
+These are the cookies that are part of the headers when you fetch a web page.
+Curl does all these calculations for us when it fetches the page,
+thus building the proper headers, but dog gone it I can't get my hands on
+that logic so I have to rewrite it all here. Ugh!
+I need it for javascript  document.cookie, which returns all the cookies
+that belong to this web page, including any new cookies that were
+added during this edbrowse session, e.g. document.cookie = newCookie;
+*********************************************************************/
 
 void sendCookies(char **s, int *l, const char *url, bool issecure)
 {
@@ -455,3 +473,129 @@ void sendCookies(char **s, int *l, const char *url, bool issecure)
 	if (nc)
 		stringAndString(s, l, eol);
 }				/* sendCookies */
+
+// Compare two cookies; this is for qsort.
+static int compareCookies(const void *s, const void *t)
+{
+	const struct cookie **a0 = (const struct cookie **)s;
+	const struct cookie **b0 = (const struct cookie **)t;
+	const struct cookie *a = *a0;
+	const struct cookie *b = *b0;
+	int d;
+// domains are case insensitive, should we shift these to lower case?
+	d = strcmp(a->domain, b->domain);
+	if (d)
+		return d;
+	d = strcmp(a->name, b->name);
+	if (d)
+		return d;
+// It's the same cookie, check expiration dates.
+// Reverse order, put the latest expiration date first.
+// The transients have expires = 0 and will be last.
+// We shouldn't be considdering those anyways.
+	d = b->expires - a->expires;
+	if (d)
+		return d;
+// Same cookie same expires, probably from the jar originally
+// and now in curl space. Don't waste time putting it back into curl.
+// Put the curl entry first so we can skip that step.
+	return ((int)a->fromjar - (int)b->fromjar);
+}
+
+/*********************************************************************
+You're working on a long term project, and you have programmer's documentation
+up in console 6 for 3 weeks. The project ends, and you close down
+edbrowse in console 6. What happens?
+On exit, curl writes the cookie jar with all the cookies it knows about.
+These are basically the same cookies you had 3 weeks earlier.
+Other instances of edbrowse have added cookies to the jar since then
+but that doesn't matter. Those cookies are gone. Poof!
+To get around this, I merge the cookies in the jar with the cookies in curl
+space just before exit, then curl will right all the cookies to the jar
+and we won't lose any.
+When there is a duplicate I keep the cookie with the latest expiration date.
+There could be thousands of cookies, so don't do a bubble sort, use qsort().
+Start by reading from the jar. I didn't want
+to copy all that code, so call cookiesFromJar with spoonfeed = false.
+Then get the cookies from curl space,
+but of course we want all of them, not just for a given URL.
+Then sort, merge, and put the new ones back into curl,
+which will write to the jar just before it exits.
+*********************************************************************/
+
+void mergeCookies(void)
+{
+	time_t now;
+	struct cookie *c, *c2, **a;
+	struct curl_slist *known_cookies;
+	struct curl_slist *cursor;
+	int nc;			// number of cookies
+	int i;
+
+	if (!cookieFile)
+		return;
+	if (whichproc != 'e')
+		return;
+
+	spoonfeed = false;
+	cookiesFromJar();
+	spoonfeed = true;
+
+	time(&now);
+	curl_easy_getinfo(global_http_handle, CURLINFO_COOKIELIST,
+			  &known_cookies);
+	cursor = known_cookies;
+	while (cursor != NULL) {
+		c = cookie_from_netscape_line(cursor->data);
+		cursor = cursor->next;
+		if (c == NULL)	/* didn't read a cookie line. */
+			continue;
+		if (c->expires < now) {	// transient or old
+			freeCookie(c);
+			nzFree(c);
+			continue;
+		}
+		addToListBack(&cookies, c);
+	}
+
+	if (known_cookies != NULL)
+		curl_slist_free_all(known_cookies);
+
+// qsort needs an array, not a linked list.
+	nc = 0;
+	foreach(c, cookies)
+	    ++ nc;
+	if (!nc)
+		return;
+
+	a = allocMem(nc * sizeof(void *));
+	i = 0;
+	foreach(c, cookies)
+	    a[i++] = c;
+	qsort(a, nc, sizeof(void *), compareCookies);
+
+// Step through and tell curl about any cookies in the jar that are new,
+// or newer than what curl already knows about.
+	for (i = 0; i < nc; ++i) {
+		c = a[i];
+		if (c->fromjar)
+			cookieForLibcurl(c);
+// skip past duplicates of this cookie.
+		while (true) {
+			if (i == nc - 1)
+				break;
+			c2 = a[i + 1];	// next one
+			if (!stringEqual(c->domain, c2->domain))
+				break;
+			if (!stringEqual(c->name, c2->name))
+				break;
+			++i;
+		}
+	}
+
+// free resources
+	nzFree(a);
+	foreach(c, cookies)
+	    freeCookie(c);
+	freeList(&cookies);
+}

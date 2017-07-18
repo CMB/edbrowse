@@ -33,6 +33,7 @@ bool domainSecurityCheck(const char *server, const char *domain) ;
 bool receiveCookie(const char *url, const char *str) ;
 void cookiesFromJar(void) ;
 void sendCookies(char **s, int *l, const char *url, bool issecure) ;
+void mergeCookies(void);
 
 /* sourcefile=cache.c */
 void setupEdbrowseCache(void);
