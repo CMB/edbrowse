@@ -641,7 +641,7 @@ table
 instruction sql non suivie d'un point-virgule ou d'un crochet fermant sur la ligne suivante
 instruction update ou delete sans clause where
 accès distant refusé
-autorisation nécessaire pour accéder à %s
+autorisation nécessaire pour accéder à %s (%s)
 l'opération a échoué : impossibilité d'allouer de la mémoire
 votre version de la librairie libcurl est antérieure à %u.%u.%u.\nMettez à jour libcurl pour utiliser edbrowse.
 délai d'attente de l'opération dépassé

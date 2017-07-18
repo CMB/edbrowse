@@ -14,6 +14,7 @@ struct httpAuth {
 /* These strings are allocated. */
 	char *host;
 	char *directory;
+	char *realm;
 	char *user_password;
 	int port;
 	bool proxy;
@@ -55,7 +56,34 @@ bool getUserPass(const char *url, char *creds, bool find_proxy)
 	return (found != NULL);
 }				/* getUserPass */
 
-bool addWebAuthorization(const char *url, const char *credentials, bool proxy)
+bool getUserPassRealm(const char *url, char *creds, const char *realm)
+{
+	const char *host = getHostURL(url);
+	int port = getPortURL(url);
+	struct httpAuth *a;
+	struct httpAuth *found = NULL;
+
+	foreach(a, authlist) {
+		if (found == NULL && stringEqualCI(a->host, host) &&
+		    a->port == port) {
+			if (!a->realm)
+				continue;
+			if (strcmp(a->realm, realm))
+				continue;
+			found = a;
+		}
+	}
+
+	if (found)
+		strcpy(creds, found->user_password);
+
+	return (found != NULL);
+}
+
+bool
+addWebAuthorization(const char *url,
+		    const char *credentials, bool proxy,
+		    const char *realm)
 {
 	struct httpAuth *a;
 	const char *host;
@@ -103,6 +131,8 @@ bool addWebAuthorization(const char *url, const char *credentials, bool proxy)
 		a->host = cloneString(host);
 	if (dir && !a->directory)
 		a->directory = pullString1(dir, dirend);
+	if (realm && !a->realm)
+		a->realm = cloneString(realm);
 
 	a->user_password = cloneString(credentials);
 	debugPrint(3, "%s authorization for %s%s",

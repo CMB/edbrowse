@@ -641,7 +641,7 @@ tabela
 wyrażenie SQL nie jest zakończone średnikiem, lub prawym nawiasem w następnej linii
 wyrażenie 'update' lub 'delete' bez opcji 'where'
 odmowa zdalnego dostępu
-Autoryzacja wymagana aby odczytac %s
+Autoryzacja wymagana aby odczytac %s (%s)
 operacja zakończona niepowodzeniem z powodu błędu alokacji pamięci
 Twoja wersja libcurl jest starsza niż %u.%u.%u.\nMusisz zaktualizować by używać edbrowse
 przekroczenie czasu wykonania operacji

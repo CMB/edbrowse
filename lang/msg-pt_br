@@ -641,7 +641,7 @@ tabela
 comando SQL não terminado por ponto e vírgula ou fecha colchetes na seguinte linha
 comando de atualizar ou apagar sem cláusula where
 acesso remoto negado
-Autorização necessária para acessar %s
+Autorização necessária para acessar %s (%s)
 operação falhou porque a memória não pôde ser alocada
 A sua versão de libcurl é mais velha que a %u.%u.%u.\nVocê tem que atualizá-la para usar o Edbrowse.
 tempo limite da operação esgotado

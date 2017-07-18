@@ -55,6 +55,7 @@ static char *ht_cdfn;		/* http content disposition file name */
 static time_t ht_modtime;	/* http modification time */
 static char *ht_etag;		/* the etag in the header */
 static bool ht_cacheable;
+static char ht_auth_realm[60];	/* WWW-Authenticate realm header */
 
 /*********************************************************************
 This function is called for a new web page, by http refresh,
@@ -203,6 +204,31 @@ static void scan_http_headers(bool fromCallback)
 			debugPrint(3, "mod date %s", v);
 		nzFree(v);
 	}
+	if (!ht_auth_realm[0] && (v = find_http_header("WWW-Authenticate"))) {
+		char *realm, *end;
+		if ((realm = strcasestr(v, "realm="))) {
+			realm += 6;
+			if (strchr("'\"", realm[0])) {
+				end = strchr(realm + 1, realm[0]);
+				realm++;
+			} else {
+				/* look for space if unquoted */
+				end = strchr(realm, ' ');
+			}
+			if (end) {
+				int sz = end - realm;
+				if (sz > sizeof(ht_auth_realm) - 1)
+					sz = sizeof(ht_auth_realm) - 1;
+				memcpy(ht_auth_realm, realm, sz);
+				ht_auth_realm[sz] = 0;
+			} else {
+				strncpy(ht_auth_realm, realm,
+					sizeof(ht_auth_realm) - 1);
+			}
+			debugPrint(3, "auth realm %s", ht_auth_realm);
+		}
+		nzFree(v);
+	}
 
 	if (fromCallback)
 		return;
@@ -243,6 +269,7 @@ static CURLcode fetch_internet(CURL * h)
 	ht_etag = NULL;
 	ht_length = 0;
 	ht_modtime = 0;
+	ht_auth_realm[0] = 0;
 	curlret = curl_easy_perform(h);
 	if (is_http)
 		scan_http_headers(false);
@@ -1254,12 +1281,20 @@ they go where they go, so this doesn't come up very often.
 		}
 
 		else if (ht_code == 401 && !proceed_unauthenticated) {
-			bool got_creds;
-			i_printf(MSG_AuthRequired, urlcopy);
-			nl();
-			got_creds = read_credentials(creds_buf);
+			bool got_creds = false;
+
+			/* only try realm on first try - prevents loop */
+			if (strcmp(creds_buf, ":") == 0)
+				got_creds = getUserPassRealm(urlcopy, creds_buf, ht_auth_realm);
+
+			if (!got_creds) {
+				i_printf(MSG_AuthRequired, urlcopy,
+					 ht_auth_realm);
+				nl();
+				got_creds = read_credentials(creds_buf);
+			}
 			if (got_creds) {
-				addWebAuthorization(urlcopy, creds_buf, false);
+				addWebAuthorization(urlcopy, creds_buf, false, ht_auth_realm);
 				curl_easy_setopt(h, CURLOPT_USERPWD, creds_buf);
 				nzFree(serverData);
 				serverData = emptyString;

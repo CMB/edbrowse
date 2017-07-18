@@ -641,7 +641,7 @@ table
 sql statement is not terminated by a final semicolon, or a right bracket on the following line
 update or delete statement with no where clause
 remote access denied
-Authorization required to access %s
+Authorization required to access %s (%s)
 operation failed because memory could not be allocated
 Your version of libcurl is older than version %u.%u.%u.\nYou must upgrade libcurl in order to use edbrowse.
 operation timed out

@@ -2,7 +2,9 @@
 
 /* sourcefile=auth.c */
 bool getUserPass(const char *url, char *creds, bool find_proxy) ;
-bool addWebAuthorization(const char *url, const char *credentials, bool proxy) ;
+bool getUserPassRealm(const char *url, char *creds, const char *realm);
+bool addWebAuthorization(const char *url, const char *credentials, bool proxy,
+			 const char *realm);
 
 /* sourcefile=buffers.c */
 void removeHiddenNumbers(pst p, uchar terminate);

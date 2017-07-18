@@ -641,7 +641,7 @@ Tabelle
 SQL-Anweisung nicht durch Semikolon oder durch eckige Klammern auf der nächsten Zeile beendet
 aktualisieren oder entfernen Sie die Anweisung ohne where-Zweig
 Fernzugriff verweigert
-Authorisierung nötig für %s
+Authorisierung nötig für %s (%s)
 Operation schlug fehl, es konnte kein Speicher angefordert werden
 Ihre Version von libcurl ist älter als %u.%u.%u.\nSie müssen libcurl aktualisieren, um Edbrowse nutzen zu können.
 Zeitüberschreitung für Operation
