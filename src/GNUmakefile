@@ -10,9 +10,7 @@ endif
 
 #  Flags for gcc compilation.
 #  This assumes js and js-devel have been installed.
-#  These are available packages on most distros.
-#  You also need pcre[-devel] and curl[-devel]
-
+#  This is legacy, when edbrowse used mozilla js.
 JS_CXXFLAGS =-I/usr/include/mozjs-24
 
 # By default, we strip the executables.
@@ -33,10 +31,9 @@ LDFLAGS += $(STRIP)
 ESQLDFLAGS = $(STRIP)
 
 #  Libraries for edbrowse.
-# Override JSLIB on the command-line, if your distro uses a different name.
-# E.G., make JSLIB=-lmozjs
+LDLIBS = -lpcre -lcurl -lreadline -lncurses -ltidy -lduktape -lm
+#  legacy mozilla js
 JSLIB = -lmozjs-24
-LDLIBS = -lpcre -lcurl -lreadline -lncurses -ltidy
 
 #  Make the dynamically linked executable program by default.
 all: edbrowse
@@ -45,7 +42,7 @@ all: edbrowse
 EBOBJS = main.o buffers.o sendmail.o fetchmail.o cache.o \
 	html.o format.o cookies.o ebjs.o plugin.o ebrc.o \
 	messages.o url.o stringfile.o html-tidy.o decorate.o \
-	msg-strings.o http.o auth.o jseng-moz.o
+	msg-strings.o http.o auth.o jseng-duk.o
 ifeq ($(BUILD_EDBR_ODBC),on)
 EBOBJS += dbodbc.o dbops.o
 LDLIBS += -lodbc
@@ -69,7 +66,7 @@ msg-strings.c: ../lang/msg-*
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.
 edbrowse: $(EBOBJS) startwindow.o
-	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) $(JSLIB) -lstdc++ -o $@
+	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 #  You probably need to be root to do this.
 install:
@@ -88,6 +85,7 @@ clean:
 	rm -f *.o edbrowse \
 	startwindow.c ebrc.c msg-strings.c
 
+#  legacy mozilla js
 jseng-moz.o: jseng-moz.cpp
 	$(CXX) -c $(CXXFLAGS) $(JS_CXXFLAGS) jseng-moz.cpp -o $@
 

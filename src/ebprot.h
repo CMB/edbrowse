@@ -154,7 +154,7 @@ void delTimers(struct ebFrame *f);
 void delInputChanges(struct ebFrame *f);
 void runTimers(void);
 void javaOpensWindow(const char *href, const char *name) ;
-void javaSetsLinkage(bool after, char type, jsobjtype p, const char *rest);
+void javaSetsLinkage(bool after, char type, jsobjtype p, const char *rest, int pass);
 
 /* sourcefile=html-tidy.c */
 void html2nodes(const char *htmltext, bool startpage);

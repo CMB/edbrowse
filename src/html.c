@@ -552,6 +552,19 @@ static void prepareScript(struct htmlTag *t)
 	t->js_file = cloneString(filepart);
 }				/* prepareScript */
 
+/* Is a tag rooted, i.e. accessible from document? */
+static bool rooted(const struct htmlTag *t)
+{
+	while (true) {
+		if (t->topnode)
+			return true;
+		if (!t->parent)
+			break;
+		t = t->parent;
+	}
+	return false;
+}
+
 /*********************************************************************
 Run pending scripts, and perform other actions that have been queued up by javascript.
 This includes document.write, linkages, perhaps even form.submit.
@@ -569,6 +582,7 @@ void runScriptsPending(void)
 	const char *js_file;
 	int ln;
 	bool change;
+	char pass;
 	jsobjtype v;
 
 	if (newlocation && newloc_r)
@@ -595,10 +609,11 @@ top:
 			continue;
 		if (t->step >= 3)
 			continue;
+		if (!rooted(t))
+			continue;
 		t->step = 3;	/* now running the script */
 		if (!t->jv)
 			continue;
-		change = true;
 
 		prepareScript(t);
 
@@ -631,10 +646,9 @@ top:
 			cf->dw = 0;
 			cf->dw_l = 0;
 		}
-	}
 
-	if (change)
-		goto top;
+		change = true;
+	}
 
 /* look for an run innerHTML */
 	foreach(ic, inputChangesPending) {
@@ -659,12 +673,11 @@ top:
 		} else
 			h = emptyString;
 		runGeneratedHtml(t, ic->value, h);
+// innerHTML could create a new script to run.
 		change = true;
 	}
 
-	if (change)
-		goto top;
-
+/* innerText */
 	foreach(ic, inputChangesPending) {
 		char *v;
 		int side;
@@ -695,13 +708,22 @@ top:
 		sideBuffer(side, v, -1, 0);
 	}
 
-	foreach(ic, inputChangesPending) {
-		if (ic->major != 'l')
-			continue;
-		ic->major = 'x';
-		javaSetsLinkage(true, ic->minor, ic->t, ic->value);
+/* linkages */
+	for (pass = 1; pass <= 2; ++pass) {
+		foreach(ic, inputChangesPending) {
+			if (ic->major != 'l')
+				continue;
+			if (pass == 2)
+				ic->major = 'x';
+			javaSetsLinkage(true, ic->minor, ic->t, ic->value,
+					pass);
+// Linkage could make a dynamically created script object rooted,
+// that wasn't rooted before. It happens in jsrt.
+			change = true;
+		}
 	}
 
+/* timers set and cleared */
 	foreach(ic, inputChangesPending) {
 		if (ic->major != 't')
 			continue;
@@ -710,6 +732,9 @@ top:
 	}
 
 	freeList(&inputChangesPending);
+
+	if (change)
+		goto top;
 
 	if (v = js_reset) {
 		js_reset = 0;
@@ -2434,7 +2459,8 @@ static void setTagAttr(struct htmlTag *t, const char *name, char *val)
 	t->atvals[nattr] = 0;
 }				/* setTagAttr */
 
-void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
+void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest,
+		     int pass)
 {
 	struct htmlTag *parent, *add, *before, *c, *t;
 	jsobjtype *a_j, *b_j;
@@ -2473,6 +2499,9 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 	add = tagFromJavaVar2(a_j, a_name);
 	if (!parent || !add)
 		return;
+
+	if (pass == 2)
+		goto fixnodes;
 
 	if (type == 'r') {
 /* add is a misnomer here, it's being removed */
@@ -2555,10 +2584,19 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 ab:
 	add->parent = parent;
 	add->deleted = false;
+	return;
 
-/* Bad news, we have to replicate some of the prerender logic here. */
-/* This node is attached to the tree, just like an html tag would be. */
+fixnodes:
+
+// Bad news, we have to replicate some of the prerender logic here.
+// This is a waste of time, and will cause js to crash, of the node
+// was temporary, and has been discarded by the garbage collector.
+// So check for rootedness first.
+	if (!rooted(add))
+		return;
+
 	t = add;
+	debugPrint(4, "fixup %s %d", a_name, t->seqno);
 	action = t->action;
 	t->name = get_property_string(t->jv, "name");
 	t->id = get_property_string(t->jv, "id");
@@ -2720,6 +2758,11 @@ li_hide:
 		currentA = (opentag ? t : 0);
 		if (!retainTag)
 			break;
+		if (!t->href) {
+// onclick turns this into a hyperlink.
+			if (tagHandler(tagno, "onclick"))
+				t->href = cloneString("#");
+		}
 		if (t->href) {
 			if (opentag)
 				sprintf(hnum, "%c%d{", InternalCodeChar, tagno);

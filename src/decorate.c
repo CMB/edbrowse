@@ -739,6 +739,34 @@ static void handlerSet(jsobjtype ev, const char *name, const char *code)
 	strcpy(newcode, "with(document) { ");
 	if (hasform)
 		strcat(newcode, "with(this.form) { ");
+
+/*********************************************************************
+This is rather cheeky.
+As you see from the above, handlers are suppose to run in the context
+of the document object and sometimes the form that houses them.
+That's the spec, so I put
+with(document) and sometimes with(form) around the running code.
+For onclik the code just runs, but for onsubmit the code is suppose to
+return something.
+Mozilla had no trouble compiling and running  return 7  not in a function.
+Duktape won't do that. Return has to be in a function.
+I even tried DUK_COMPILE_FUNCTION, no dice.
+So I tried wrapping the code in
+(function() { code })();
+Then it doesn't matter if the code is just expressions, or return expression.
+But should the with clauses be inside or outside the function?
+One way wouldn't parse, and the other way lost the this binding,
+which some fragments of code depend on.
+These were all good ideas, but they don't work.
+I am left with the kludge of removing the word return,
+so return expression is just expression, and it compiles, and runs,
+and leaves a value on the stack, which duktape treats as the return value.
+*********************************************************************/
+
+	while (isspace(*code))
+		++code;
+	if (!strncmp(code, "return", 6) && !isalnum(code[6]))
+		code += 6;
 	strcat(newcode, code);
 	if (hasform)
 		strcat(newcode, " }");
@@ -780,7 +808,7 @@ static const char *fakePropName(void)
 {
 	static int idx = 0;
 	++idx;
-	sprintf(fakePropLast, "gc$$%d", idx);
+	sprintf(fakePropLast, "gc$%c%d", whichproc, idx);
 	return fakePropLast;
 }				/*fakePropName */
 
@@ -1170,13 +1198,6 @@ Needless to say that's not good!
 			if (!w)
 				w = emptyString;
 			set_property_string(t->jv, "data", w);
-			set_property_string(t->jv, "nodeName", "text");
-			set_property_number(t->jv, "nodeType", 3);
-/* A text node chould never have children, and does not need childNodes array,
- * but there is improper html out there <text> <stuff>
- * which has to put stuff under the text node, so against this
- * unlikely occurence, I have to create the array. */
-			instantiate_array(t->jv, "childNodes");
 		}
 		break;
 
@@ -1338,14 +1359,14 @@ Needless to say that's not good!
 
 /* js tree mirrors the dom tree. */
 	if (t->parent && t->parent->jv)
-		run_function_onearg(t->parent->jv, "apch1$", t->jv);
+		run_function_onearg(t->parent->jv, "eb$apch1", t->jv);
 
 	if (!t->parent) {
 		if (innerParent)
-			run_function_onearg(innerParent, "apch1$", t->jv);
+			run_function_onearg(innerParent, "eb$apch1", t->jv);
 /* head and body link to document */
 		else if (action == TAGACT_HEAD || action == TAGACT_BODY)
-			run_function_onearg(cf->docobj, "apch1$", t->jv);
+			run_function_onearg(cf->docobj, "eb$apch1", t->jv);
 	}
 
 /* TextNode linked to document/gc to protect if from garbage collection,
@@ -1615,6 +1636,9 @@ static void intoTree(struct htmlTag *parent)
 			debugPrint(4, "}");
 			return;
 		}
+
+		if (!parent)
+			t->topnode = true;
 
 		if (treeDisable) {
 			debugPrint(4, "node skip %s", t->info->name);

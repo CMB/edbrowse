@@ -10,8 +10,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMakeModules)
 
 # ### NOTE: from sersguide.htm
 set( eb_MAJOR 3 )
-set( eb_MINOR 6 )
-set( eb_POINT 3 )
+set( eb_MINOR 7 )
+set( eb_POINT 0 )
 
 # Allow developer to select is Dynamic or static library built
 set( LIB_TYPE STATIC )  # set default static
@@ -124,16 +124,23 @@ else ()
     message(FATAL_ERROR "*** READLINE NOT FOUND")
 endif ()
 
-# MOZJS_FOUND
-# MOZJS_LIBRARY
-# MOZJS_INCLUDE_DIR
-find_package(MOZJS)
-if (MOZJS_FOUND)
-    message( STATUS "*** MOZJS found inc ${MOZJS_INCLUDE_DIR} lib ${MOZJS_LIBRARY}" )
-    include_directories( ${MOZJS_INCLUDE_DIR} )
-    list( APPEND add_LIBS ${MOZJS_LIBRARY} )
+# DUKTAPE_FOUND
+# DUKTAPE_LIBRARY
+# DUKTAPE_INCLUDE_DIR
+find_package(Duktape)
+if (DUKTAPE_FOUND)
+    message( STATUS "*** Duktape found inc ${DUKTAPE_INCLUDE_DIR} lib ${DUKTAPE_LIBRARY}" )
+    include_directories( ${DUKTAPE_INCLUDE_DIR} )
+    list( APPEND add_LIBS ${DUKTAPE_LIBRARY} )
+    # Fragment borrrowed and modified from modules included with cmake:
+    # Explicitly link -lm on most Unices.
+    if(UNIX AND NOT APPLE AND NOT BEOS AND NOT HAIKU)
+        find_library(MATH_LIBRARY m)
+        list( APPEND add_LIBS ${MATH_LIBRARY} )
+    # For Windows and Mac, don't need to explicitly include the math library
+    endif()
 else ()
-    message( FATAL_ERROR "*** MOZJS NOT FOUND, unable to proceed")
+    message( FATAL_ERROR "*** Duktape NOT FOUND, unable to proceed")
 endif ()
 
 if (WIN32 AND MOZJS_FOUND)
@@ -280,7 +287,7 @@ set(${name}_SRCS
     ${dir}/cache.c
     ${dir}/ebjs.c
     ${dir}/plugin.c
-    ${dir}/jseng-moz.cpp
+    ${dir}/jseng-duk.c
     ${ODBC_SRCS}
     ${GEN_SOURCES}
     )

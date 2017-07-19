@@ -102,22 +102,9 @@ and might not work properly, or even compile with an earlier version.
 Note that the latest tagged version is 5.1.25, but 5.1.26 and later
 have some fixes for known issues that have been reported upstream.
 
-Finally, you need the Spider Monkey javascript engine from Mozilla.org
-ftp://ftp.mozilla.org/pub/mozilla.org/js/
-Edbrowse 3.5.1 and higher requires Mozilla js version 2.4.
-If this is not available in your distribution, download into /usr/local,
-expand, cd js/src, ./configure, make, and make install.
-https://ftp.mozilla.org/pub/mozilla.org/js/mozjs-24.2.0.tar.bz2
-Lots of warning messages in the build, don't worry about those.
-This creates /usr/local/lib/libmozjs-24.so, and with /usr/local/lib
-already in my /etc/ld.so.conf, I thought I'd be fine,
-but I had to run ldconfig again anyways, not sure why.
-Back in your edbrowse/src directory,
-you may need to set some flags on the command line
-if you had to install Mozilla js as above.
-The following works for me.
-
-make JS_CXXFLAGS=-I/usr/local/include/mozjs-24 JSLIB=-lmozjs-24 edbrowse
+Finally, you need the Duktape javascript engine and header file.
+If this is not part of your distribution, download from github, compile, and install.
+https://github.com/svaarala/duktape/releases/download/v2.1.0/duktape-2.1.0.tar.xz
 
 If you want database access, you need unixODBC and unixODBC-devel.
 Select the odbc option via:
@@ -204,12 +191,12 @@ based on the location of the current web page.
 src/format.c:
 Arrange text into lines and paragraphs.
 base64 encode and decode for email.
+Convert utf8, iso8859-1, unicode 16, unicode 32, etc.
 
 src/http.c:
 Send the http request, and read the data from the web server.
 Handles https connections as well,
 and 301/302 redirection.
-Uncompresses html data if necessary.
 ftp, sftp, download files, possibly in the background.
 
 src/html.c:
@@ -236,7 +223,7 @@ Send mail (smtp or smtps).  Encode attachments.
 src/fetchmail.c:
 Fetch mail (pop3 or pop3s or imap).  Decode attachments.
 Browse mail files, separate mime components.
-Delete emails, move emails to other imap folders, search on an imap server.
+Delete emails, move emails to other imap folders, search on the imap server.
 
 src/plugin.c:
 Determine the mime type of a file or web page and the corresponding plugin,
@@ -258,12 +245,9 @@ src/decorate.c:
 Decorate the tree with js objects corresponding to the html nodes
 if js is enabled.
 
-src/jseng-moz.cpp:
-The javascript engine built around the mozilla js library.
+src/jseng-duk.c:
+The javascript engine built around the duktape js library.
 Manage all the js objects corresponding to the web page in edbrowse.
-Copy or link edbrowse to edbrowse-js;
-the latter executable runs the machinery in this file.
-It must be in the same bin as edbrowse.
 All the js details are hidden in this file.
 this is encapsulation, hiding the js library from the rest of edbrowse.
 It might be possible, for instance, to build jseng-v8.c, based upon v8 etc.
@@ -276,7 +260,7 @@ if we prefer parser foo instead.
 
 src/startwindow.js:
 Javascript that is run at the start of each session.
-This creates certain support methods that client js will need.
+This creates certain classes and methods that client js will need.
 It is converted into a const string in src/startwindow.c,
 thus src/startwindow.c is not a source file.
 As you write functions to support DOM,
@@ -292,10 +276,10 @@ Each is converted into a const string in src/ebrc.c,
 thus src/ebrc.c is not a source file.
 
 src/ebjs.c:
-Interface between edbrowse and edbrowse-js.
-Sends interprocess messages to js to manipulate the js objects,
-and returns the result back to edbrowse.
-Think of edbrowse-js as the js server, and edbrowse as the client.
+Interface between edbrowse main process and edbrowse js process.
+Sends interprocess messages to the child to manipulate the js objects,
+and returns the result back to edbrowse parent.
+Think of edbrowse child as the js server, and edbrowse parent as the client.
 
 src/jsrt:
 This is the javascript regression test for edbrowse.
