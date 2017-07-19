@@ -733,9 +733,14 @@ static duk_ret_t native_win_close(duk_context * cx)
 
 static void dwrite(duk_context * cx, bool newline)
 {
-	duk_push_string(cx, "");
-	duk_insert(cx, 0);
-	duk_join(cx, duk_get_top(cx) - 1);
+	int top = duk_get_top(cx);
+	if (top) {
+		duk_push_string(cx, emptyString);
+		duk_insert(cx, 0);
+		duk_join(cx, top);
+	} else {
+		duk_push_string(cx, emptyString);
+	}
 	effectString("w{");	// }
 	effectString(duk_get_string(cx, 0));
 	if (newline)
@@ -1028,7 +1033,7 @@ static duk_ret_t native_formSubmit(duk_context * cx)
 {
 	jsobjtype thisobj;
 	duk_push_this(cx);
-	thisobj = duk_get_heapptr(cx, 0);
+	thisobj = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
 	effectString("f{s");	// }
 	effectString(pointer2string(thisobj));
@@ -1040,7 +1045,7 @@ static duk_ret_t native_formReset(duk_context * cx)
 {
 	jsobjtype thisobj;
 	duk_push_this(cx);
-	thisobj = duk_get_heapptr(cx, 0);
+	thisobj = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
 	effectString("f{r");	// }
 	effectString(pointer2string(thisobj));
@@ -1665,9 +1670,8 @@ static void processMessage(void)
 			duk_pop(jcx);
 			if (duk_get_prop_string(jcx, -1, "stack"))
 				callstack = duk_to_string(jcx, -1);
-			duk_pop(jcx);
 			nzFree(errorMessage);
-			errorMessage = cloneString(duk_to_string(jcx, -1));
+			errorMessage = cloneString(duk_to_string(jcx, -2));
 			if (strstr(errorMessage, "callstack") &&
 			    strlen(callstack)) {
 // this is rare.
@@ -1687,6 +1691,7 @@ static void processMessage(void)
 						*cut = 0;
 				}
 			}
+			duk_pop(jcx);
 		}
 		nzFree(runscript);
 		runscript = 0;
