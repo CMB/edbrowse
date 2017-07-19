@@ -2764,6 +2764,11 @@ li_hide:
 		currentA = (opentag ? t : 0);
 		if (!retainTag)
 			break;
+		if (!t->href) {
+// onclick turns this into a hyperlink.
+			if (tagHandler(tagno, "onclick"))
+				t->href = cloneString("#");
+		}
 		if (t->href) {
 			if (opentag)
 				sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
