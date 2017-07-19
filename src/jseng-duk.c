@@ -1427,20 +1427,69 @@ int set_property_function_nat(jsobjtype parent, const char *name,
 	return 0;
 }
 
+/*********************************************************************
+Error object is at the top of the duktape stack.
+Extract the line number, call stack, and error message,
+the latter being error.toString().
+Leave the result in errorMessage, which is automatically sent to edbrowse.
+Pop the error object when done.
+*********************************************************************/
+
+static void processError(void)
+{
+	const char *callstack = emptyString;
+	int offset = 0;
+	char *cut, *s;
+	if (duk_get_prop_string(jcx, -1, "lineNumber"))
+		offset = duk_get_int(jcx, -1);
+	duk_pop(jcx);
+	if (duk_get_prop_string(jcx, -1, "stack"))
+		callstack = duk_to_string(jcx, -1);
+	nzFree(errorMessage);
+	errorMessage = cloneString(duk_to_string(jcx, -2));
+	if (strstr(errorMessage, "callstack") && strlen(callstack)) {
+// this is rare.
+		nzFree(errorMessage);
+		errorMessage = cloneString(callstack);
+	}
+	if (offset) {
+		head.lineno += (offset - 1);
+// symtax error message includes the relative line number, which is confusing
+// since edbrowse prints the absolute line number.
+		cut = strstr(errorMessage, " (line ");
+		if (cut) {
+			s = cut + 7;
+			while (isdigit(*s))
+				++s;
+			if (stringEqual(s, ")"))
+				*cut = 0;
+		}
+	}
+	duk_pop(jcx);
+}
+
 // The single argument to the function has to be an object.
 void run_function_onearg_nat(jsobjtype parent, const char *name,
 			     jsobjtype child)
 {
 	duk_push_heapptr(jcx, parent);
 	if (!duk_get_prop_string(jcx, -1, name) || !duk_is_function(jcx, -1)) {
+#if 0
+		if (!errorMessage)
+			asprintf(&errorMessage, "no such function %s", name);
+#endif
 		duk_pop_2(jcx);
-		return;		// no such function
+		return;
 	}
 	duk_insert(jcx, -2);
 	duk_push_heapptr(jcx, child);	// child is the only argument
-	duk_call_method(jcx, 1);
+	if (!duk_pcall_method(jcx, 1)) {
 // Don't care about the return.
-	duk_pop(jcx);
+		duk_pop(jcx);
+		return;
+	}
+// error in execution
+	processError();
 }				/* run_function_onearg_nat */
 
 jsobjtype instantiate_array_nat(jsobjtype parent, const char *name)
@@ -1597,6 +1646,10 @@ static char *run_function(jsobjtype parent, const char *name)
 	if (!duk_get_prop_string(jcx, -1, name) || !duk_is_function(jcx, -1)) {
 		nzFree(propval);
 		propval = 0;
+#if 0
+		if (!errorMessage)
+			asprintf(&errorMessage, "no such function %s", name);
+#endif
 		duk_pop_2(jcx);
 		return NULL;
 	}
@@ -1613,7 +1666,13 @@ static char *run_function(jsobjtype parent, const char *name)
 	}
 	nzFree(propval);
 	propval = 0;
-	duk_call_method(jcx, argc);
+
+	rc = duk_pcall_method(jcx, argc);
+	if (rc) {		// error during function execution
+		processError();
+		return 0;
+	}
+
 	proptype = top_proptype();
 	if (proptype == EJ_PROP_NONE) {
 		duk_pop(jcx);
@@ -1661,37 +1720,7 @@ static void processMessage(void)
 				head.proplength = strlen(s);
 		} else {
 // error in executing the script.
-// Let's try to snag the line number.
-			const char *callstack = emptyString;
-			int offset = 0;
-			char *cut;
-			if (duk_get_prop_string(jcx, -1, "lineNumber"))
-				offset = duk_get_int(jcx, -1);
-			duk_pop(jcx);
-			if (duk_get_prop_string(jcx, -1, "stack"))
-				callstack = duk_to_string(jcx, -1);
-			nzFree(errorMessage);
-			errorMessage = cloneString(duk_to_string(jcx, -2));
-			if (strstr(errorMessage, "callstack") &&
-			    strlen(callstack)) {
-// this is rare.
-				nzFree(errorMessage);
-				errorMessage = cloneString(callstack);
-			}
-			if (offset) {
-				head.lineno += (offset - 1);
-// symtax error message includes the relative line number, which is confusing
-// since edbrowse prints the absolute line number.
-				cut = strstr(errorMessage, " (line ");
-				if (cut) {
-					s = cut + 7;
-					while (isdigit(*s))
-						++s;
-					if (stringEqual(s, ")"))
-						*cut = 0;
-				}
-			}
-			duk_pop(jcx);
+			processError();
 		}
 		nzFree(runscript);
 		runscript = 0;
