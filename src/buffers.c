@@ -5872,7 +5872,7 @@ bool locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
 		for (s = p; (c = *s) != '\n'; ++s) {
 			if (c != InternalCodeChar)
 				continue;
-			if (!memcmp(s, search, n))
+			if (!strncmp(s, search, n))
 				break;
 		}
 		if (c == '\n')
