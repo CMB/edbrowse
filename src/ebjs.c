@@ -155,7 +155,7 @@ static void js_start(void)
 	close(pipe_out[1]);
 	sprintf(arg1, "%d", pipe_out[0]);
 	sprintf(arg2, "%d", pipe_in[1]);
-	debugPrint(5, "spawning edbrowse-js %s %s", arg1, arg2);
+	debugPrint(5, "Executing %s arguments: edbrowse --mode js %s %s", progname, arg1, arg2);
 	execlp(progname, "edbrowse", "--mode", "js", arg1, arg2, NULL);
 
 /* oops, process did not exec */
