@@ -20,6 +20,7 @@ char emptyString[] = "";
 bool showHiddenFiles, isInteractive;
 int debugLevel = 1;
 FILE *debugFile = NULL;
+char *debugFileName;
 char *downDir, *home;
 
 /*********************************************************************
@@ -639,8 +640,11 @@ void setDebugFile(const char *name)
 	if (debugFile)
 		fclose(debugFile);
 	debugFile = 0;
+	nzFree(debugFileName);
+	debugFileName = 0;
 	if (!name || !*name)
 		return;
+	debugFileName = cloneString(name);
 	debugFile = fopen(name, "w");
 	if (debugFile) {
 #ifndef _MSC_VER		// port setlinebuf(debugFile);, if required...
@@ -648,7 +652,7 @@ void setDebugFile(const char *name)
 #else
 		;
 #endif // !_MSC_VER
-	} else
+	} else if (whichproc == 'e')
 		printf("cannot create %s\n", name);
 }				/* setDebugFile */
 
@@ -1180,7 +1184,8 @@ static void ttyRaw(int charcount, int timeout, bool isecho)
 }				/* ttyRaw */
 #endif // #ifdef DOSLIKE y/n
 
-void ttySetEcho(bool enable_echo) {
+void ttySetEcho(bool enable_echo)
+{
 #ifndef DOSLIKE
 	struct termios termios;
 
@@ -1198,7 +1203,6 @@ void ttySetEcho(bool enable_echo) {
 	tcsetattr(0, TCSANOW, &termios);
 #endif // #ifndef DOSLIKE
 }
-
 
 #ifndef DOSLIKE
 /* simulate MSDOS getche() system call */

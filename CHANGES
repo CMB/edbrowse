@@ -6,6 +6,9 @@ Switch from Mozilla js to Duktape js.
 Mask password fields on input forms with stars, as other browsers do.
 Issue the ipass command to enter a password without echo.
 
+Curl authorization negotiations enabled or disabled via the can toggle command.
+This is a workaround for problems with NTLM.
+
 3.6.3:
 Maintain a cache of http files.
 Provides faster access to websites that are visited often.

@@ -240,6 +240,7 @@ extern CURL *global_http_handle;
 extern CURLSH *global_share_handle;
 extern int debugLevel;		/* 0 to 9 */
 extern FILE *debugFile;
+extern char *debugFileName;
 extern char *sslCerts;		/* ssl certificates to validate the secure server */
 extern int verifyCertificates;	/* is a certificate required for the ssl connection? */
 extern int displayLength;	/* when printing a line */

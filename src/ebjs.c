@@ -565,7 +565,7 @@ void createJavaContext(void)
 		int i;
 		js_start();
 // update 6, URL, is per context, not global, thus not dealt with here.
-		for (i = 1; i <= 6; ++i)
+		for (i = 1; i <= 7; ++i)
 			if (i != 6)
 				update_var_in_js(i);
 	}
@@ -1208,6 +1208,8 @@ void update_var_in_js(int varid)
 		value = curlAuthNegotiate;
 	if (varid == 6)
 		s = cf->fileName;
+	if (varid == 7)
+		s = debugFileName;
 	debugPrint(5, "> varupdate %d", varid);
 
 	head.cmd = EJ_CMD_VARUPDATE;

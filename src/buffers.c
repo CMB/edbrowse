@@ -3396,6 +3396,7 @@ static int twoLetter(const char *line, const char **runThis)
 
 	if (!strncmp(line, "db>", 3)) {
 		setDebugFile(line + 3);
+update_var_in_js(7);
 		return true;
 	}
 

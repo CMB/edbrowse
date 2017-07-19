@@ -202,6 +202,10 @@ int js_main(int argc, char **argv)
 				nzFree(cf->fileName);
 				cf->fileName = propval;
 			}
+			if (head.lineno == 7) {
+				setDebugFile(propval);
+				nzFree(propval);
+			}
 
 			head.n = head.proplength = 0;
 			propval = 0;
