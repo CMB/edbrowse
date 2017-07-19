@@ -66,7 +66,7 @@ static void *child_proc(void *vp)
 	sprintf(arg2, "%d", pipe_in[1]);
 	debugPrint(5, "spawning '%s' %s %s", progname, arg1, arg2);
 	rc = _spawnl(_P_WAIT, progname, "edbrowse", "--mode", "js", arg1, arg2,
-		     cf->fileName, 0);
+		     0);
 	if (rc) {
 		debugPrint(5, "spawning FAILED! %d\n", errno);
 /* oops, process did not exec */
@@ -157,8 +157,7 @@ static void js_start(void)
 	sprintf(arg2, "%d", pipe_in[1]);
 	debugPrint(5, "Executing %s arguments: edbrowse --mode js %s %s",
 		   progname, arg1, arg2);
-	execlp(progname, "edbrowse", "--mode", "js", arg1, arg2, cf->fileName,
-	       NULL);
+	execlp(progname, "edbrowse", "--mode", "js", arg1, arg2, NULL);
 
 /* oops, process did not exec */
 /* write a message from this child, saying js would not exec */
@@ -565,9 +564,13 @@ void createJavaContext(void)
 	if (!js_pid) {
 		int i;
 		js_start();
-		for (i = 1; i <= 4; ++i)
-			update_var_in_js(i);
+// update 6, URL, is per context, not global, thus not dealt with here.
+		for (i = 1; i <= 6; ++i)
+			if (i != 6)
+				update_var_in_js(i);
 	}
+// set the URL, then create context, so the cookies will be right.
+	update_var_in_js(6);
 
 	debugPrint(5, "> create context for session %d", context);
 
@@ -1182,8 +1185,11 @@ int get_arraylength(jsobjtype a)
 void update_var_in_js(int varid)
 {
 	int value = 0;
+	const char *s = 0;
+
 	if (!js_pid)
 		return;
+
 	if (varid == 1)
 		value = allowXHR;
 	if (varid == 2)
@@ -1200,12 +1206,20 @@ void update_var_in_js(int varid)
 	}
 	if (varid == 5)
 		value = curlAuthNegotiate;
+	if (varid == 6)
+		s = cf->fileName;
 	debugPrint(5, "> varupdate %d", varid);
+
 	head.cmd = EJ_CMD_VARUPDATE;
 	head.obj = 0;
 	head.lineno = varid;
 	head.n = value;
+	head.proplength = 0;
+	if (s)
+		head.proplength = strlen(s);
 	writeHeader();
+	if (head.proplength)
+		writeToJS(s, head.proplength);
 }				/* update_var_in_js */
 
 /*********************************************************************

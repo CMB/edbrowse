@@ -37,7 +37,7 @@ Exit codes are as follows:
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage:  edbrowse-js pipe_in pipe_out URL\n");
+	fprintf(stderr, "Usage:  edbrowse-js pipe_in pipe_out\n");
 	exit(1);
 }				/* usage */
 
@@ -108,18 +108,16 @@ static duk_context *context0;
 
 int js_main(int argc, char **argv)
 {
-	if (argc != 3)
+	if (argc != 2)
+		usage();
+	pipe_in = stringIsNum(argv[0]);
+	pipe_out = stringIsNum(argv[1]);
+	if (pipe_in < 0 || pipe_out < 0)
 		usage();
 
 	cw = &in_js_cw;
 	cf = &(cw->f0);
 	cf->owner = cw;
-
-	pipe_in = stringIsNum(argv[0]);
-	pipe_out = stringIsNum(argv[1]);
-	if (pipe_in < 0 || pipe_out < 0)
-		usage();
-	cf->fileName = argv[2];
 
 	context0 = duk_create_heap_default();
 	if (!context0) {
@@ -198,7 +196,15 @@ int js_main(int argc, char **argv)
 				if (t)
 					currentAgent = t;
 			}
+			if (head.lineno == 5)
+				curlAuthNegotiate = head.n;
+			if (head.lineno == 6) {
+				nzFree(cf->fileName);
+				cf->fileName = propval;
+			}
+
 			head.n = head.proplength = 0;
+			propval = 0;
 //                      no acknowledgement needed
 //                      writeHeader();
 			continue;
@@ -313,7 +319,7 @@ static void readMessage(void)
 
 /* property in function call is | separated list of object args */
 	if (cmd == EJ_CMD_SETPROP || cmd == EJ_CMD_SETAREL ||
-	    cmd == EJ_CMD_CALL) {
+	    cmd == EJ_CMD_CALL || cmd == EJ_CMD_VARUPDATE) {
 		proptype = head.proptype;
 		if (head.proplength)
 			propval = readString(head.proplength);
@@ -331,22 +337,6 @@ static void misconfigure(int n)
 	head.lowstat = EJ_LOW_VARS;
 	head.lineno = n;
 }				/* misconfigure */
-
-#if 0
-static void my_ErrorReporter(duk_context * cx, const char *message)
-{
-	if (message && strstr(message, "out of memory")) {
-		head.highstat = EJ_HIGH_HEAP_FAIL;
-		head.lowstat = EJ_LOW_MEMORY;
-	} else if (errorMessage == 0 && head.highstat == EJ_HIGH_OK &&
-		   message && *message) {
-// set head.lineno;
-		errorMessage = cloneString(message);
-		head.highstat = EJ_HIGH_STMT_FAIL;
-		head.lowstat = EJ_LOW_SYNTAX;
-	}
-}				/* my_ErrorReporter */
-#endif
 
 static duk_ret_t native_new_location(duk_context * cx)
 {
