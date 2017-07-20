@@ -1012,10 +1012,9 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 		if (outgoing_xhrbody == NULL)
 			outgoing_xhrbody = emptyString;
 		duk_pop_n(cx, 4);
+		duk_push_string(cx, "");
 		duk_push_string(cx, outgoing_xhrheaders);
 		duk_push_string(cx, outgoing_xhrbody);
-		duk_push_string(cx, "");
-		duk_insert(cx, 0);
 		duk_join(cx, 2);
 		nzFree(outgoing_xhrheaders);
 		nzFree(outgoing_xhrbody);
@@ -1027,7 +1026,7 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 	}
 
 	debugPrint(5, "xhr 2");
-	return 0;
+	return 1;
 }
 
 static duk_ret_t native_formSubmit(duk_context * cx)
