@@ -185,26 +185,33 @@ int js_main(int argc, char **argv)
 		}
 
 		if (head.cmd == EJ_CMD_VARUPDATE) {
-			if (head.lineno == EJ_VARUPDATE_XHR)
+			switch (head.lineno) {
+				char *t;
+			case EJ_VARUPDATE_XHR:
 				allowXHR = head.n;
-			if (head.lineno == EJ_VARUPDATE_DEBUG)
+				break;
+			case EJ_VARUPDATE_DEBUG:
 				debugLevel = head.n;
-			if (head.lineno == EJ_VARUPDATE_VERIFYCERT)
+				break;
+			case EJ_VARUPDATE_VERIFYCERT:
 				verifyCertificates = head.n;
-			if (head.lineno == EJ_VARUPDATE_USERAGENT) {
-				char *t = userAgents[head.n];
+				break;
+			case EJ_VARUPDATE_USERAGENT:
+				t = userAgents[head.n];
 				if (t)
 					currentAgent = t;
-			}
-			if (head.lineno == EJ_VARUPDATE_CURLAUTHNEG)
+				break;
+			case EJ_VARUPDATE_CURLAUTHNEG:
 				curlAuthNegotiate = head.n;
-			if (head.lineno == 6) {
+				break;
+			case EJ_VARUPDATE_FILENAME:
 				nzFree(cf->fileName);
 				cf->fileName = propval;
-			}
-			if (head.lineno == 7) {
+				break;
+			case EJ_VARUPDATE_DEBUGFILE:
 				setDebugFile(propval);
 				nzFree(propval);
+				break;
 			}
 
 			head.n = head.proplength = 0;
@@ -1150,8 +1157,14 @@ static duk_ret_t native_setcook(duk_context * cx)
 {
 	const char *newcook = duk_get_string(cx, 0);
 	debugPrint(5, "cook 1");
-	if (newcook)
+	if (newcook) {
 		foldinCookie(newcook);
+// foldinCookie passes the cookie back up to the parent process, but the js
+// process, this process, might need the cookie as well for XHR.
+		duk_get_global_string(cx, "eb$url");
+		receiveCookie(duk_get_string(cx, -1), newcook);
+		duk_pop(cx);
+	}
 	debugPrint(5, "cook 2");
 	return 0;
 }
@@ -1227,6 +1240,11 @@ static void createContext(void)
 	duk_put_prop_string(jcx, -2, "removeChild");
 	duk_pop(jcx);
 
+// Sequence is to set cf->fileName, then createContext(), so for a short time,
+// we can rely on that variable.
+// Let's make it more permanent, per context.
+	duk_push_string(jcx, cf->fileName);
+	duk_put_global_string(jcx, "eb$url");
 	startCookie();		// so document.cookie will work properly
 
 // setupJavaDom() in ebjs.c does the rest.
