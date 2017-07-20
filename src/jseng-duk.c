@@ -1029,6 +1029,23 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 	return 1;
 }
 
+static duk_ret_t native_resolveURL(duk_context * cx)
+{
+	const char *base;
+	const char *rel = duk_get_string(cx, 0);
+	char *outgoing_url;
+
+	duk_get_global_string(cx, "eb$url");
+	base = duk_get_string(cx, -1);
+	outgoing_url = resolveURL(base, rel);
+	if (outgoing_url == NULL)
+		outgoing_url = emptyString;
+	duk_pop_n(cx, 2);
+	duk_push_string(cx, outgoing_url);
+	nzFree(outgoing_url);
+	return 1;
+}
+
 static duk_ret_t native_formSubmit(duk_context * cx)
 {
 	jsobjtype thisobj;
@@ -1215,6 +1232,8 @@ static void createContext(void)
 	duk_put_global_string(jcx, "close");
 	duk_push_c_function(jcx, native_fetchHTTP, 4);
 	duk_put_global_string(jcx, "eb$fetchHTTP");
+	duk_push_c_function(jcx, native_resolveURL, 1);
+	duk_put_global_string(jcx, "eb$resolveURL");
 	duk_push_c_function(jcx, native_formSubmit, 0);
 	duk_put_global_string(jcx, "eb$formSubmit");
 	duk_push_c_function(jcx, native_formReset, 0);

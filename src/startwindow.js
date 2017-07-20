@@ -891,38 +891,6 @@ status: 0,
 statusText: ""
 };
 
-// similar to resolveURL in url.c, but simpler.
-eb$resolveURL = function(path) {
-
-	// path is already a full url, take as is.
-	if (path.indexOf("://") > -1)
-		return path;
-
-	var components = location.href.split('/');
-	var base;
-
-	/* href can be local */
-	if (location.href.indexOf("://") == -1) {
-		if (components.length == 1) {
-			base = './';
-		} else {
-			components[components.length-1] = "";
-			base = components.join('/');
-		}
-		return base + path;
-	}
-
-	/* absolute link, get base of url without path */
-	if (path[0] == '/')
-		return components.slice(0,3).join('/') + path;
-
-	if (location.href[location.href.length-1] == '/')
-		return location.href + path;
-
-	components[components.length-1] = path;
-	return components.join('/');
-}
-
 // Here are the DOM classes with generic constructors.
 Head = function(){}
 Meta = function(){}

@@ -836,38 +836,6 @@ if(document.metas[1].content != "Snoopy")
 fail(163);
 // add tests for getAttribute etc, once Meta is actually a class in startwindow.js.
 
-
-test_resolveURL();
-function test_resolveURL()
-{
-var oldhref = location.href;
-
-location.href = 'http://test/dir/file';
-if (eb$resolveURL("http://full/url") != "http://full/url")
-	fail(164);
-if (eb$resolveURL("/absolute/path") != "http://test/absolute/path")
-	fail(165);
-if (eb$resolveURL("relative/path") != "http://test/dir/relative/path")
-	fail(166);
-location.href = "http://test/dir/";
-if (eb$resolveURL("/absolute/path") != "http://test/absolute/path")
-	fail(167);
-if (eb$resolveURL("relative/path") != "http://test/dir/relative/path")
-	fail(168);
-location.href = "file";
-if (eb$resolveURL("/absolute/path") != ".//absolute/path")
-	fail(169);
-if (eb$resolveURL("relative/path") != "./relative/path")
-	fail(170);
-location.href = "dir/file";
-if (eb$resolveURL("/absolute/path") != "dir//absolute/path")
-	fail(171);
-if (eb$resolveURL("relative/path") != "dir/relative/path")
-	fail(172);
-
-location.href = oldhref;
-}
-
 </script>
 
 </body>
