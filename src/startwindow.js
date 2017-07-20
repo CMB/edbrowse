@@ -818,9 +818,8 @@ headerstring+=",";
 
 var entire_http_response =  eb$fetchHTTP(this.url,this.method,headerstring,data);
 
-var http_headers = entire_http_response.split("\r\n\r\n")[0];
-
 var responsebody_array = entire_http_response.split("\r\n\r\n");
+var http_headers = responsebody_array[0];
 responsebody_array[0] = "";
 var responsebody = responsebody_array.join("\r\n\r\n");
 responsebody = responsebody.trim();
@@ -894,32 +893,34 @@ statusText: ""
 
 // similar to resolveURL in url.c, but simpler.
 eb$resolveURL = function(path) {
-var new_url;
-var sideprotocol =location.protocol;
-var sidehost = location.host;
-var lpl  = location.protocol.length;
-if (lpl ==  0) {
-sideprotocol = "http:";
-sideprotocol.length = 5;
-lpl = 5;
-}
-if (sidehost == "")
-sidehost = location.href;
 
-var protocol1= path.substring(0,lpl);
-if (protocol1 == sideprotocol) {
-new_url = path;
-// ok - it is fully qualified already
-} else {
-sidehost_last = sidehost.substring(sidehost.length-1,sidehost.length);
-path_first = path.substring(0,1);
-if (sidehost_last !== '/' && path_first !== '/') {
-new_url = sideprotocol + '//' + sidehost + '/' + path;
-} else {
-new_url = sideprotocol + '//' + sidehost + path;
-}
-}
-return new_url;
+	// path is already a full url, take as is.
+	if (path.indexOf("://") > -1)
+		return path;
+
+	var components = location.href.split('/');
+	var base;
+
+	/* href can be local */
+	if (location.href.indexOf("://") == -1) {
+		if (components.length == 1) {
+			base = './';
+		} else {
+			components[components.length-1] = "";
+			base = components.join('/');
+		}
+		return base + path;
+	}
+
+	/* absolute link, get base of url without path */
+	if (path[0] == '/')
+		return components.slice(0,3).join('/') + path;
+
+	if (location.href[location.href.length-1] == '/')
+		return location.href + path;
+
+	components[components.length-1] = path;
+	return components.join('/');
 }
 
 // Here are the DOM classes with generic constructors.
