@@ -1349,7 +1349,7 @@ Needless to say that's not good!
 	case TAGACT_TITLE:
 		if (cw->ft)
 			set_property_string(cf->docobj, "title", cw->ft);
-		set_property_number(t->jv, "nodeType", 1);
+// Title is not a node, more like an attribute of the page.
 		break;
 
 	}			/* switch */
