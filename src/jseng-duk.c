@@ -1040,7 +1040,7 @@ static duk_ret_t native_resolveURL(duk_context * cx)
 	outgoing_url = resolveURL(base, rel);
 	if (outgoing_url == NULL)
 		outgoing_url = emptyString;
-	duk_pop_n(cx, 2);
+	duk_pop_2(cx);
 	duk_push_string(cx, outgoing_url);
 	nzFree(outgoing_url);
 	return 1;
@@ -1261,8 +1261,16 @@ static void createContext(void)
 // Sequence is to set cf->fileName, then createContext(), so for a short time,
 // we can rely on that variable.
 // Let's make it more permanent, per context.
+// Has to be nonwritable for security reasons.
+	duk_push_global_object(jcx);
+	duk_push_string(jcx, "eb$url");
 	duk_push_string(jcx, cf->fileName);
-	duk_put_global_string(jcx, "eb$url");
+	duk_def_prop(jcx, -3,
+		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
+		      DUK_DEFPROP_CLEAR_WRITABLE |
+		      DUK_DEFPROP_CLEAR_CONFIGURABLE));
+	duk_pop(jcx);
+
 	startCookie();		// so document.cookie will work properly
 
 // setupJavaDom() in ebjs.c does the rest.

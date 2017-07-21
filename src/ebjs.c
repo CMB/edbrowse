@@ -1184,32 +1184,39 @@ int get_arraylength(jsobjtype a)
 /* A global variable has changed that js needs to know about. */
 void update_var_in_js(int varid)
 {
-	int value = 0;
+	int i, value = 0;
 	const char *s = 0;
 
 	if (!js_pid)
 		return;
 
-	if (varid == EJ_VARUPDATE_XHR)
+	switch (varid) {
+	case EJ_VARUPDATE_XHR:
 		value = allowXHR;
-	if (varid == EJ_VARUPDATE_DEBUG)
+		break;
+	case EJ_VARUPDATE_DEBUG:
 		value = debugLevel;
-	if (varid == EJ_VARUPDATE_VERIFYCERT)
+		break;
+	case EJ_VARUPDATE_VERIFYCERT:
 		value = verifyCertificates;
-	if (varid == EJ_VARUPDATE_USERAGENT) {
-		int i;
+		break;
+	case EJ_VARUPDATE_USERAGENT:
 		for (i = 0; i < 10; ++i)
 			if (userAgents[i] == currentAgent) {
 				value = i;
 				break;
 			}
-	}
-	if (varid == EJ_VARUPDATE_CURLAUTHNEG)
+		break;
+	case EJ_VARUPDATE_CURLAUTHNEG:
 		value = curlAuthNegotiate;
-	if (varid == EJ_VARUPDATE_FILENAME)
+		break;
+	case EJ_VARUPDATE_FILENAME:
 		s = cf->fileName;
-	if (varid == EJ_VARUPDATE_DEBUGFILE)
+		break;
+	case EJ_VARUPDATE_DEBUGFILE:
 		s = debugFileName;
+		break;
+	}
 	debugPrint(5, "> varupdate %d", varid);
 
 	head.cmd = EJ_CMD_VARUPDATE;
