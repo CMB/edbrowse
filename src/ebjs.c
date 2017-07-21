@@ -1245,7 +1245,7 @@ void set_basehref(const char *h)
 {
 	if (!h)
 		h = emptyString;
-	set_property_string(cf->docobj, "base$href$", h);
+	set_property_string(cf->winobj, "eb$base", h);
 }				/* set_basehref */
 
 /* The object is a select-one field in the form, and this function returns

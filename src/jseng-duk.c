@@ -62,7 +62,7 @@ static void cwSetup(void)
 {
 	cf->winobj = winobj;
 	cf->docobj = docobj;
-	cf->hbase = get_property_string_nat(docobj, "base$href");
+	cf->hbase = get_property_string_nat(winobj, "eb$base");
 	cf->baseset = true;
 }				/* cwSetup */
 
