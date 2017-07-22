@@ -645,7 +645,7 @@ void setDebugFile(const char *name)
 	if (!name || !*name)
 		return;
 	debugFileName = cloneString(name);
-	debugFile = fopen(name, "w");
+	debugFile = fopen(name, (whichproc == 'e' ? "w" : "a"));
 	if (debugFile) {
 #ifndef _MSC_VER		// port setlinebuf(debugFile);, if required...
 		setlinebuf(debugFile);
