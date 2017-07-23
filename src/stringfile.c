@@ -4,7 +4,6 @@
 
 #include "eb.h"
 
-#include <sys/stat.h>
 #include <dirent.h>
 #ifdef DOSLIKE
 #include <dos.h>

@@ -27,6 +27,7 @@
 
 /* seems like everybody needs these header files */
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <ctype.h>
 #include <string.h>
 #include <signal.h>

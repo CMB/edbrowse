@@ -5,7 +5,6 @@
 
 #include "eb.h"
 
-#include <sys/stat.h>
 #include <pthread.h>
 #include <pcre.h>
 

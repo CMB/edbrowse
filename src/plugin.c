@@ -4,7 +4,6 @@ Run audio players, pdf converters, etc, based on suffix or content-type.
 *********************************************************************/
 
 #include "eb.h"
-#include <sys/stat.h>
 
 #ifdef DOSLIKE
 #include <process.h>		// for _getpid(),...
