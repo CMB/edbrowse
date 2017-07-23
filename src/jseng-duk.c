@@ -433,6 +433,8 @@ static duk_ret_t getter_innerHTML(duk_context * cx)
 	return 1;
 }
 
+static duk_ret_t native_removeChild(duk_context * cx);
+
 static duk_ret_t setter_innerHTML(duk_context * cx)
 {
 	jsobjtype thisobj;
@@ -442,9 +444,15 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 		h = emptyString;
 	debugPrint(5, "setter h 1");
 	duk_push_this(cx);
-/* lop off the preexisting children */
+// remove the preexisting children.
+// Use the removeChild method so the side effects go back to edbrowse.
 	if (duk_get_prop_string(cx, -1, "childNodes") && duk_is_array(cx, -1)) {
-		duk_set_length(cx, -1, 0);
+		int l = duk_get_length(cx, -1);
+// More efficient to remove them last to first.
+		while (l--) {
+			duk_get_prop_index(cx, -1, l);
+			native_removeChild(cx);
+		}
 	} else {
 // no child nodes array, don't do anything.
 // This should never happen.
@@ -893,17 +901,18 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	jsobjtype child, thisobj, h;
 	char e[40];
 
-/* we need one object */
-	if (duk_get_top(cx) != 1 || !duk_is_object(cx, 0))
-		return 0;
-
 	debugPrint(5, "remove 1");
-	child = duk_get_heapptr(cx, 0);
+// top of stack must be the object to remove.
+	if (!duk_is_object(cx, -1))
+		goto done;
+	child = duk_get_heapptr(cx, -1);
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
 	duk_get_prop_string(cx, -1, "childNodes");
-	if (!duk_is_array(cx, -1))
+	if (!duk_is_array(cx, -1)) {
+		duk_pop_2(cx);
 		goto done;
+	}
 	length = duk_get_length(cx, -1);
 	mark = -1;
 	for (i = 0; i < length; ++i) {
@@ -916,8 +925,10 @@ static duk_ret_t native_removeChild(duk_context * cx)
 			break;
 	}
 
-	if (mark < 0)
+	if (mark < 0) {
+		duk_pop_2(cx);
 		goto done;
+	}
 
 /* push the other elements down */
 	for (i = mark + 1; i < length; --i) {
@@ -926,7 +937,7 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	}
 	duk_set_length(cx, -1, length - 1);
 	duk_pop_2(cx);
-	duk_del_prop_string(cx, 0, "parentNode");
+	duk_del_prop_string(cx, -1, "parentNode");
 
 /* pass this linkage information back to edbrowse, to update its dom tree */
 	sprintf(e, "l{r|%s,", pointer2string(thisobj));
@@ -938,7 +949,9 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	embedNodeName(cx, child);
 	effectString(" 0x0, ");
 	endeffect();
+
 done:
+	duk_pop(cx);		// the argument
 	debugPrint(5, "remove 2");
 	return 0;
 }
