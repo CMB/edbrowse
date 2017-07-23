@@ -392,4 +392,5 @@ jsobjtype instantiate_nat(jsobjtype parent, const char *name, const char *classn
 int set_property_function_nat(jsobjtype parent, const char *name, const char *body) ;
 int get_arraylength_nat(jsobjtype a);
 void run_function_onearg_nat(jsobjtype obj, const char *name, jsobjtype o);
+void processMessage1(void);
 

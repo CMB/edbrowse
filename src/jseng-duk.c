@@ -50,7 +50,8 @@ static int pipe_in, pipe_out;
 static struct ebWindow in_js_cw;
 
 static void readMessage(void);
-static void processMessage(void);
+void processMessage1(void);
+static void processMessage2(void);
 static void createContext(void);
 static void writeHeader(void);
 
@@ -58,8 +59,19 @@ static duk_context *jcx;
 static jsobjtype winobj;	/* window object */
 static jsobjtype docobj;	/* document object */
 
+static struct ebWindow *save_cw;
+static struct ebFrame *save_cf;
+static bool save_ref, save_plug;
+
 static void cwSetup(void)
 {
+	if (js1) {
+		save_cw = cw;
+		save_cf = cf;
+		cw = &in_js_cw;
+		cf = &(cw->f0);
+		cf->owner = cw;
+	}
 	cf->winobj = winobj;
 	cf->docobj = docobj;
 	cf->hbase = get_property_string_nat(winobj, "eb$base");
@@ -73,6 +85,8 @@ static void cwBringdown(void)
 	cw->ft = 0;
 	nzFree(cf->hbase);
 	cf->hbase = 0;
+	if (js1)
+		cw = save_cw, cf = save_cf;
 }				/* cwBringdown */
 
 static struct EJ_MSG head;
@@ -108,28 +122,39 @@ static duk_context *context0;
 
 int js_main(int argc, char **argv)
 {
-	if (argc != 2)
-		usage();
-	pipe_in = stringIsNum(argv[0]);
-	pipe_out = stringIsNum(argv[1]);
-	if (pipe_in < 0 || pipe_out < 0)
-		usage();
-
-	cw = &in_js_cw;
-	cf = &(cw->f0);
-	cf->owner = cw;
+	if (!js1) {
+		if (argc != 2)
+			usage();
+		pipe_in = stringIsNum(argv[0]);
+		pipe_out = stringIsNum(argv[1]);
+		if (pipe_in < 0 || pipe_out < 0)
+			usage();
+	}
 
 	context0 = duk_create_heap_default();
 	if (!context0) {
 		fprintf(stderr,
 			"Cannot create javascript runtime environment\n");
+		if (!js1) {
 /* send a message to edbrowse, so it can disable javascript,
  * so we don't get this same error on every browse. */
-		head.highstat = EJ_HIGH_PROC_FAIL;
-		head.lowstat = EJ_LOW_RUNTIME;
-		writeHeader();
-		exit(4);
+			head.highstat = EJ_HIGH_PROC_FAIL;
+			head.lowstat = EJ_LOW_RUNTIME;
+			writeHeader();
+			exit(4);
+		} else {
+			return 4;
+		}
 	}
+
+	effects = initString(&eff_l);
+
+	if (js1)
+		return 0;
+
+	cw = &in_js_cw;
+	cf = &(cw->f0);
+	cf->owner = cw;
 
 	readConfigFile();
 	setupEdbrowseCache();
@@ -143,86 +168,8 @@ int js_main(int argc, char **argv)
 /* If edbrowse quits then this process also quits via broken pipe. */
 	signal(SIGINT, SIG_IGN);
 
-	effects = initString(&eff_l);
-
-	while (true) {
-		readMessage();
-		head.highstat = EJ_HIGH_OK;
-		head.lowstat = EJ_LOW_OK;
-		head.side = head.msglen = 0;
-
-		if (head.cmd == EJ_CMD_EXIT)
-			exit(0);
-
-		if (head.cmd == EJ_CMD_CREATE) {
-/* this one is special */
-			createContext();
-			if (!head.highstat) {
-				head.jcx = jcx;
-				head.winobj = winobj;
-				head.docobj = docobj;
-			}
-			head.n = head.proplength = 0;
-			writeHeader();
-			continue;
-		}
-
-		jcx = (duk_context *) head.jcx;
-		winobj = head.winobj;
-		docobj = head.docobj;
-
-		if (head.cmd == EJ_CMD_DESTROY) {
-			int i, top = duk_get_top(context0);
-			for (i = 0; i < top; ++i) {
-				if (jcx == duk_get_context(context0, i)) {
-					duk_remove(context0, i);
-					break;
-				}
-			}
-			head.n = head.proplength = 0;
-			writeHeader();
-			continue;
-		}
-
-		if (head.cmd == EJ_CMD_VARUPDATE) {
-			switch (head.lineno) {
-				char *t;
-			case EJ_VARUPDATE_XHR:
-				allowXHR = head.n;
-				break;
-			case EJ_VARUPDATE_DEBUG:
-				debugLevel = head.n;
-				break;
-			case EJ_VARUPDATE_VERIFYCERT:
-				verifyCertificates = head.n;
-				break;
-			case EJ_VARUPDATE_USERAGENT:
-				t = userAgents[head.n];
-				if (t)
-					currentAgent = t;
-				break;
-			case EJ_VARUPDATE_CURLAUTHNEG:
-				curlAuthNegotiate = head.n;
-				break;
-			case EJ_VARUPDATE_FILENAME:
-				nzFree(cf->fileName);
-				cf->fileName = propval;
-				break;
-			case EJ_VARUPDATE_DEBUGFILE:
-				setDebugFile(propval);
-				nzFree(propval);
-				break;
-			}
-
-			head.n = head.proplength = 0;
-			propval = 0;
-//                      no acknowledgement needed
-//                      writeHeader();
-			continue;
-		}
-
-		processMessage();
-	}
+	while (true)
+		processMessage1();
 }				/* js_main */
 
 /* read from and write to edbrowse */
@@ -233,6 +180,11 @@ static void readFromEb(void *data_p, int n)
 	unsigned char *bytes_p = (unsigned char *)data_p;
 	if (n == 0)
 		return;
+	if (js1) {
+		memcpy(data_p, ipm_c, n);
+		ipm_c += n;
+		return;
+	}
 	while (n > 0) {
 		rc = read(pipe_in, bytes_p, n);
 		if (rc <= 0) {
@@ -249,6 +201,10 @@ static void writeToEb(const void *data_p, int n)
 	int rc;
 	if (n == 0)
 		return;
+	if (js1) {
+		stringAndBytes(&ipm, &ipm_l, data_p, n);
+		return;
+	}
 	rc = write(pipe_out, data_p, n);
 	if (rc == n)
 		return;
@@ -265,6 +221,8 @@ static void writeHeader(void)
 	if (errorMessage)
 		head.msglen = strlen(errorMessage);
 
+	if (js1)
+		ipm = initString(&ipm_l);
 	writeToEb(&head, sizeof(head));
 
 /* send out the error message and side effects, if present. */
@@ -304,6 +262,8 @@ static void readMessage(void)
 	enum ej_cmd cmd;
 	enum ej_proptype pt;
 
+	if (js1)
+		ipm_c = ipm;
 	readFromEb(&head, sizeof(head));
 
 	if (head.magic != EJ_MAGIC) {
@@ -337,6 +297,10 @@ static void readMessage(void)
 	}
 
 /* and that's the whole message */
+	if (js1) {
+		nzFree(ipm);
+		ipm = 0;
+	}
 }				/* readMessage */
 
 static void misconfigure(int n)
@@ -1003,10 +967,18 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 			incoming_url = a;
 		}
 
+		if (js1) {
+			save_plug = pluginsOn;
+			save_ref = sendReferrer;
+		}
 		httpConnect(incoming_url, false, false, true,
 			    &outgoing_xhrheaders, &outgoing_xhrbody,
 			    &responseLength);
 		nzFree(a);
+		if (js1) {
+			pluginsOn = save_plug;
+			sendReferrer = save_ref;
+		}
 		if (outgoing_xhrheaders == NULL)
 			outgoing_xhrheaders = emptyString;
 		if (outgoing_xhrbody == NULL)
@@ -1035,7 +1007,7 @@ static duk_ret_t native_resolveURL(duk_context * cx)
 	const char *rel = duk_get_string(cx, 0);
 	char *outgoing_url;
 
-	duk_get_global_string(cx, "eb$url");
+	duk_get_global_string(cx, "eb$base");
 	base = duk_get_string(cx, -1);
 	outgoing_url = resolveURL(base, rel);
 	if (outgoing_url == NULL)
@@ -1175,11 +1147,13 @@ static duk_ret_t native_setcook(duk_context * cx)
 	debugPrint(5, "cook 1");
 	if (newcook) {
 		foldinCookie(newcook);
+		if (!js1) {
 // foldinCookie passes the cookie back up to the parent process, but the js
 // process, this process, might need the cookie as well for XHR.
-		duk_get_global_string(cx, "eb$url");
-		receiveCookie(duk_get_string(cx, -1), newcook);
-		duk_pop(cx);
+			duk_get_global_string(cx, "eb$url");
+			receiveCookie(duk_get_string(cx, -1), newcook);
+			duk_pop(cx);
+		}
 	}
 	debugPrint(5, "cook 2");
 	return 0;
@@ -1194,6 +1168,7 @@ static void createContext(void)
 		head.lowstat = EJ_LOW_CX;
 		return;
 	}
+	debugPrint(3, "create js context %d", duk_get_top(context0) - 1);
 // the global object, which will become window,
 // and the document object.
 	duk_push_global_object(jcx);
@@ -1728,7 +1703,88 @@ static char *run_function(jsobjtype parent, const char *name)
 }				/* run_function */
 
 /* process each message from edbrowse and respond appropriately */
-static void processMessage(void)
+void processMessage1(void)
+{
+	readMessage();
+	head.highstat = EJ_HIGH_OK;
+	head.lowstat = EJ_LOW_OK;
+	head.side = head.msglen = 0;
+
+	if (head.cmd == EJ_CMD_EXIT)
+		exit(0);
+
+	if (head.cmd == EJ_CMD_CREATE) {
+/* this one is special */
+		createContext();
+		if (!head.highstat) {
+			head.jcx = jcx;
+			head.winobj = winobj;
+			head.docobj = docobj;
+		}
+		head.n = head.proplength = 0;
+		writeHeader();
+		return;
+	}
+
+	jcx = (duk_context *) head.jcx;
+	winobj = head.winobj;
+	docobj = head.docobj;
+
+	if (head.cmd == EJ_CMD_DESTROY) {
+		int i, top = duk_get_top(context0);
+		for (i = 0; i < top; ++i) {
+			if (jcx == duk_get_context(context0, i)) {
+				duk_remove(context0, i);
+				debugPrint(3, "remove js context %d", i);
+				break;
+			}
+		}
+		head.n = head.proplength = 0;
+		writeHeader();
+		return;
+	}
+
+	if (head.cmd == EJ_CMD_VARUPDATE) {
+		switch (head.lineno) {
+			char *t;
+		case EJ_VARUPDATE_XHR:
+			allowXHR = head.n;
+			break;
+		case EJ_VARUPDATE_DEBUG:
+			debugLevel = head.n;
+			break;
+		case EJ_VARUPDATE_VERIFYCERT:
+			verifyCertificates = head.n;
+			break;
+		case EJ_VARUPDATE_USERAGENT:
+			t = userAgents[head.n];
+			if (t)
+				currentAgent = t;
+			break;
+		case EJ_VARUPDATE_CURLAUTHNEG:
+			curlAuthNegotiate = head.n;
+			break;
+		case EJ_VARUPDATE_FILENAME:
+			nzFree(cf->fileName);
+			cf->fileName = propval;
+			break;
+		case EJ_VARUPDATE_DEBUGFILE:
+			setDebugFile(propval);
+			nzFree(propval);
+			break;
+		}
+
+		head.n = head.proplength = 0;
+		propval = 0;
+//                      no acknowledgement needed
+//                      writeHeader();
+		return;
+	}
+
+	processMessage2();
+}
+
+static void processMessage2(void)
 {
 /* head.obj should be a valid object or 0 */
 	jsobjtype parent = head.obj;
@@ -1892,4 +1948,4 @@ propreturn:
 			head.cmd);
 		exit(6);
 	}
-}				/* processMessage */
+}				/* processMessage2 */

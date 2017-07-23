@@ -430,8 +430,8 @@ static void runGeneratedHtml(struct htmlTag *t, const char *h, const char *pre)
 
 	debugPrint(4, "Generated {%s}", h);
 
-	htmlGenerated = true;
 	html2nodes(h, false);
+	htmlGenerated = true;
 	htmlNodesIntoTree(l, t);
 	prerender(0);
 
@@ -454,7 +454,6 @@ static void runGeneratedHtml(struct htmlTag *t, const char *h, const char *pre)
 		}
 	} else
 		decorate(0);
-	htmlGenerated = false;
 }				/* runGeneratedHtml */
 
 /* helper function to prepare an html script.
@@ -796,6 +795,7 @@ char *htmlParse(char *buf, int remote)
 /* call the tidy parser to build the html nodes */
 	html2nodes(buf, true);
 	nzFree(buf);
+	htmlGenerated = false;
 	htmlNodesIntoTree(0, NULL);
 	prerender(0);
 

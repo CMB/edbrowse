@@ -61,6 +61,7 @@ static int numTables;
 volatile bool intFlag;
 bool ismc, isimap, passMail;
 char whichproc = 'e';		// edbrowse
+bool js1;			// all in one process
 bool inInput, listNA;
 int fileSize;
 char *dbarea, *dblogin, *dbpw;	/* to log into the database */
@@ -435,6 +436,7 @@ int main(int argc, char **argv)
 	int cx, account;
 	bool rc, doConfig = true;
 	bool dofetch = false, domail = false;
+	const char *js1var;
 	static char agent0[64] = "edbrowse/";
 
 #ifndef _MSC_VER		// port setlinebuf(stdout);, if required...
@@ -531,8 +533,17 @@ int main(int argc, char **argv)
 	progname = argv[0];
 	++argv, --argc;
 
+	js1var = getenv("JS1");
+	if (js1var && *js1var)
+		js1 = true;
+
 // look for --mode on the arg list.
 	if (stringEqual(argv[0], "--mode")) {
+		if (js1) {
+			fprintf(stderr,
+				"edbrowse should not run with --mode and JS1 set\n");
+			exit(2);
+		}
 		char *m;
 		if (argc == 1)
 			i_printfExit(MSG_Usage);

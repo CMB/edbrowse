@@ -50,7 +50,6 @@ void traverseAll(int start)
 	int i;
 
 	treeOverflow = false;
-
 	for (i = start; i < cw->numTags; ++i) {
 		t = tagList[i];
 		t->visited = false;
@@ -637,8 +636,10 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 /* like the other value fields, it can't be null */
 				t->rvalue = t->value = emptyString;
 			}
-			j = sideBuffer(0, t->value, -1, 0);
-			t->lic = j;
+			if (whichproc == 'e') {
+				j = sideBuffer(0, t->value, -1, 0);
+				t->lic = j;
+			}
 			currentTA = 0;
 		}
 		break;
@@ -1820,6 +1821,7 @@ void html_from_setter(jsobjtype inner, const char *h)
 	prerender(0);
 	innerParent = inner;
 	decorate(0);
+	innerParent = 0;
 }				/* html_from_setter */
 
 static void processStyles(jsobjtype so, const char *stylestring)

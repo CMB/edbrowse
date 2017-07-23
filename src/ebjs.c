@@ -62,8 +62,6 @@ static void *child_proc(void *vp)
 /* child here, exec the back end js process */
 	//close(pipe_in[0]);
 	//close(pipe_out[1]);
-	sprintf(arg1, "%d", pipe_out[0]);
-	sprintf(arg2, "%d", pipe_in[1]);
 	debugPrint(5, "spawning '%s' %s %s", progname, arg1, arg2);
 	rc = _spawnl(_P_WAIT, progname, "edbrowse", "--mode", "js", arg1, arg2,
 		     0);
@@ -101,6 +99,18 @@ static void js_start(void)
 
 	debugPrint(5, "setting of communication channels for javascript");
 
+	if (js1) {
+// Start the js machinery in the current process.
+		static char *a[] = { "", "", 0 };
+		if (js_main(2, a)) {
+			i_puts(MSG_JSEngineRun);
+			markAllDead();
+		} else {
+			js_pid = 1;
+		}
+		return;
+	}
+
 	if (PIPE(pipe_in)) {
 		i_puts(MSG_JSEnginePipe);
 		allowJS = false;
@@ -114,6 +124,10 @@ static void js_start(void)
 		close(pipe_in[1]);
 		return;
 	}
+
+	sprintf(arg1, "%d", pipe_out[0]);
+	sprintf(arg2, "%d", pipe_in[1]);
+
 #if defined(DOSLIKE)
 #if defined(HAVE_PTHREAD_H)
 	/* windows implementation of fork() using pthreads */
@@ -153,8 +167,6 @@ static void js_start(void)
 /* child here, exec the back end js process */
 	close(pipe_in[0]);
 	close(pipe_out[1]);
-	sprintf(arg1, "%d", pipe_out[0]);
-	sprintf(arg2, "%d", pipe_in[1]);
 	debugPrint(5, "Executing %s arguments: edbrowse --mode js %s %s",
 		   progname, arg1, arg2);
 	execlp(progname, "edbrowse", "--mode", "js", arg1, arg2, NULL);
@@ -176,13 +188,14 @@ static void js_kill(void)
 	if (!js_pid)
 		return;
 
-	close(pipe_in[0]);
-	close(pipe_out[1]);
+	if (!js1) {
+		close(pipe_in[0]);
+		close(pipe_out[1]);
 #ifndef DOSLIKE
-	kill(js_pid, SIGTERM);
+		kill(js_pid, SIGTERM);
 #endif // #ifndef DOSLIKE
+	}
 	js_pid = 0;
-
 }				/* js_kill */
 
 /* String description of side effects, as a result of running js code. */
@@ -349,6 +362,9 @@ static void processEffects(void)
 	effects = 0;
 }				/* processEffects */
 
+char *ipm, *ipm_c;
+int ipm_l;
+
 /* Read some data from the js process.
  * Close things down if there is any trouble from the read.
  * Returns 0 for ok or -1 for bad read. */
@@ -358,6 +374,11 @@ static int readFromJS(void *data_p, int n)
 	int rc;
 	if (n == 0)
 		return 0;
+	if (js1) {
+		memcpy(data_p, ipm_c, n);
+		ipm_c += n;
+		return 0;
+	}
 	while (n > 0) {
 		rc = read(pipe_in[0], bytes_p, n);
 		debugPrint(7, "js read %d", rc);
@@ -379,6 +400,10 @@ static int writeToJS(const void *data_p, int n)
 	int rc;
 	if (n == 0)
 		return 0;
+	if (js1) {
+		stringAndBytes(&ipm, &ipm_l, data_p, n);
+		return 0;
+	}
 	rc = write(pipe_out[1], data_p, n);
 	if (rc == n)
 		return 0;
@@ -398,6 +423,16 @@ static int readMessage(void)
 {
 	int l;
 	char *msg;		/* error message from js */
+
+	if (js1) {
+// process the message we sent in the current process,
+// so we can then read the response.
+// Pretend like it's the js process, so we call the native methods.
+		whichproc = 'j';
+		processMessage1();
+		whichproc = 'e';
+		ipm_c = ipm;
+	}
 
 	if (readFromJS(&head, sizeof(head)) < 0)
 		return -1;	/* read failed */
@@ -479,6 +514,11 @@ static int readMessage(void)
 		propval[l] = 0;
 	}
 
+	if (js1) {
+		nzFree(ipm);
+		ipm = 0;
+	}
+
 /* sometimes you want to stop at the first js error, but sometimes you don't */
 #if 0
 	if (head.msglen && debugLevel >= 5) {
@@ -516,6 +556,8 @@ static int writeHeader(void)
 	head.jcx = cf->jcx;
 	head.winobj = cf->winobj;
 	head.docobj = cf->docobj;
+	if (js1)
+		ipm = initString(&ipm_l);
 	return writeToJS(&head, sizeof(head));
 }				/* writeHeader */
 
@@ -615,6 +657,8 @@ void freeJavaContext(struct ebFrame *f)
 	head.jcx = f->jcx;
 	head.winobj = f->winobj;
 	head.docobj = f->docobj;
+	if (js1)
+		ipm = initString(&ipm_l);
 	if (writeToJS(&head, sizeof(head)))
 		return;
 	if (readMessage())
@@ -628,6 +672,8 @@ void js_shutdown(void)
 	if (whichproc == 'j')
 		return;
 	if (!js_pid)		/* js not running */
+		return;
+	if (js1)
 		return;
 	debugPrint(5, "> js shutdown");
 	head.magic = EJ_MAGIC;
@@ -645,8 +691,10 @@ void js_disconnect(void)
 		return;
 	if (!js_pid)
 		return;
-	close(pipe_in[0]);
-	close(pipe_out[1]);
+	if (!js1) {
+		close(pipe_in[0]);
+		close(pipe_out[1]);
+	}
 	js_pid = 0;
 }				/* js_disconnect */
 
@@ -1188,6 +1236,8 @@ void update_var_in_js(int varid)
 	const char *s = 0;
 
 	if (!js_pid)
+		return;
+	if (js1)
 		return;
 
 	switch (varid) {
