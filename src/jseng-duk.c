@@ -497,7 +497,8 @@ static duk_ret_t getter_innerHTML(duk_context * cx)
 static duk_ret_t setter_innerHTML(duk_context * cx)
 {
 	jsobjtype thisobj;
-	int begin;
+	char *run;
+	int run_l;
 	const char *h = duk_to_string(cx, 0);
 	if (!h)			// should never happen
 		h = emptyString;
@@ -528,22 +529,28 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 
 	thisobj = watch_heapptr(-1);
 	duk_pop(cx);
-	effectString("i{h");	// }
-	effectString(pointer2string(thisobj));
-	begin = eff_l + 1;
-	effectString("|<!DOCTYPE public><body>\n");
-	effectString(h);
+
+// Put some tags around the html, so tidy can parse it.
+	run = initString(&run_l);
+	stringAndString(&run, &run_l, "<!DOCTYPE public><body>\n");
+	stringAndString(&run, &run_l, h);
 	if (*h && h[strlen(h) - 1] != '\n')
-		effectChar('\n');
-	effectString("</body>");
+		stringAndChar(&run, &run_l, '\n');
+	stringAndString(&run, &run_l, "</body>");
 
 // now turn the html into objects
 	cwSetup();
-	html_from_setter(thisobj, effects + begin);
+	html_from_setter(thisobj, run);
+
+	effectString("i{h");	// }
+	effectString(pointer2string(thisobj));
+	effectChar('|');
+	effectString(run);
 	effectChar('@');
 	packDecoration();
 	cwBringdown();
 	endeffect();
+	nzFree(run);
 
 	debugPrint(5, "setter h 2");
 	return 0;
@@ -769,6 +776,7 @@ static duk_ret_t native_win_close(duk_context * cx)
 static void dwrite(duk_context * cx, bool newline)
 {
 	int top = duk_get_top(cx);
+	const char *s;
 	if (top) {
 		duk_push_string(cx, emptyString);
 		duk_insert(cx, 0);
@@ -776,8 +784,9 @@ static void dwrite(duk_context * cx, bool newline)
 	} else {
 		duk_push_string(cx, emptyString);
 	}
+	s = duk_get_string(cx, 0);
 	effectString("w{");	// }
-	effectString(duk_get_string(cx, 0));
+	effectString(s);
 	if (newline)
 		effectChar('\n');
 	endeffect();
@@ -795,20 +804,37 @@ static duk_ret_t native_doc_writeln(duk_context * cx)
 	return 0;
 }
 
-static void embedNodeName(duk_context * cx, jsobjtype obj)
+// We need to call and remember up to 3 node names, and then embed
+// them in the side effects string, after all duktape calls have been made.
+static const char *embedNodeName(jsobjtype obj)
 {
+	static char buf1[MAXTAGNAME], buf2[MAXTAGNAME], buf3[MAXTAGNAME];
+	char *b;
+	static int cycle = 0;
 	const char *nodeName = 0;
 	int length;
-	duk_push_heapptr(cx, obj);
-	if (duk_get_prop_string(cx, -1, "nodeName"))
-		nodeName = duk_get_string(cx, -1);
+
+	if (++cycle == 4)
+		cycle = 1;
+	if (cycle == 1)
+		b = buf1;
+	if (cycle == 2)
+		b = buf2;
+	if (cycle == 3)
+		b = buf3;
+	*b = 0;
+
+	duk_push_heapptr(jcx, obj);
+	if (duk_get_prop_string(jcx, -1, "nodeName"))
+		nodeName = duk_get_string(jcx, -1);
 	if (nodeName) {
 		length = strlen(nodeName);
 		if (length >= MAXTAGNAME)
 			length = MAXTAGNAME - 1;
-		stringAndBytes(&effects, &eff_l, nodeName, length);
+		strncpy(b, nodeName, length);
 	}
-	duk_pop_2(cx);
+	duk_pop_2(jcx);
+	return b;
 }				/* embedNodeName */
 
 static void append0(duk_context * cx, bool side)
@@ -816,6 +842,7 @@ static void append0(duk_context * cx, bool side)
 	unsigned i, length;
 	jsobjtype child, thisobj;
 	char e[40];
+	const char *thisname, *childname;
 
 /* we need one argument that is an object */
 	if (duk_get_top(cx) != 1 || !duk_is_object(cx, 0))
@@ -855,13 +882,13 @@ static void append0(duk_context * cx, bool side)
 		goto done;
 
 /* pass this linkage information back to edbrowse, to update its dom tree */
-	sprintf(e, "l{a|%s,", pointer2string(thisobj));
+	thisname = embedNodeName(thisobj);
+	childname = embedNodeName(child);
+	sprintf(e, "l{a|%s,%s ", pointer2string(thisobj), thisname);
 	effectString(e);
-	embedNodeName(cx, thisobj);
-	effectChar(' ');
 	effectString(pointer2string(child));
 	effectChar(',');
-	embedNodeName(cx, child);
+	effectString(childname);
 	effectString(" 0x0, ");
 	endeffect();
 done:
@@ -886,6 +913,7 @@ static duk_ret_t native_insbf(duk_context * cx)
 	int mark;
 	jsobjtype child, item, thisobj, h;
 	char e[40];
+	const char *thisname, *childname, *itemname;
 
 /* we need two objects */
 	if (duk_get_top(cx) != 2 ||
@@ -938,17 +966,18 @@ static duk_ret_t native_insbf(duk_context * cx)
 		      DUK_DEFPROP_SET_WRITABLE | DUK_DEFPROP_SET_CONFIGURABLE));
 
 /* pass this linkage information back to edbrowse, to update its dom tree */
-	sprintf(e, "l{b|%s,", pointer2string(thisobj));
+	thisname = embedNodeName(thisobj);
+	childname = embedNodeName(child);
+	itemname = embedNodeName(item);
+	sprintf(e, "l{b|%s,%s ", pointer2string(thisobj), thisname);
 	effectString(e);
-	embedNodeName(cx, thisobj);
-	effectChar(' ');
 	effectString(pointer2string(child));
 	effectChar(',');
-	embedNodeName(cx, child);
+	effectString(childname);
 	effectChar(' ');
 	effectString(pointer2string(item));
 	effectChar(',');
-	embedNodeName(cx, item);
+	effectString(itemname);
 	effectChar(' ');
 	endeffect();
 done:
@@ -962,6 +991,7 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	int mark;
 	jsobjtype child, thisobj, h;
 	char e[40];
+	const char *thisname, *childname;
 
 	debugPrint(5, "remove 1");
 // top of stack must be the object to remove.
@@ -1002,13 +1032,13 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	duk_del_prop_string(cx, -1, "parentNode");
 
 /* pass this linkage information back to edbrowse, to update its dom tree */
-	sprintf(e, "l{r|%s,", pointer2string(thisobj));
+	thisname = embedNodeName(thisobj);
+	childname = embedNodeName(child);
+	sprintf(e, "l{r|%s,%s ", pointer2string(thisobj), thisname);
 	effectString(e);
-	embedNodeName(cx, thisobj);
-	effectChar(' ');
 	effectString(pointer2string(child));
 	effectChar(',');
-	embedNodeName(cx, child);
+	effectString(childname);
 	effectString(" 0x0, ");
 	endeffect();
 
