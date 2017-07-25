@@ -428,7 +428,7 @@ this.attributes = new Array;
 document.createTextNode = function(t) {
 if(t == undefined) t = "";
 var c = new TextNode(t);
-// shouldn't we log this over to the edbrowse side?
+eb$logElement(c, "text");
 return c;
 }
 

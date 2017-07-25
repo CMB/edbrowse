@@ -509,7 +509,7 @@ struct htmlTag {
 	bool slash:1;		/* as in </A> */
 	bool textin:1; /* <a> some text </a> */
 	bool deleted:1; /* deleted from the current buffer */
-	bool topnode:1; // at top of window or frame, usually head or body
+	bool dead:1; // removed by garbage collection
 	bool contracted:1; /* frame is contracted */
 	bool multiple:1;
 	bool rdonly:1;

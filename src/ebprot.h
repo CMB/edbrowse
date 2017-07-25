@@ -142,7 +142,6 @@ void infShow(int tagno, const char *search) ;
 bool infReplace(int tagno, const char *newtext, bool notify) ;
 bool infPush(int tagno, char **post_string) ;
 struct htmlTag *tagFromJavaVar(jsobjtype v);
-struct htmlTag *tagFromJavaVar2(jsobjtype v, const char *tagname);
 void javaSubmitsForm(jsobjtype v, bool reset) ;
 bool handlerGoBrowse(const struct htmlTag *t, const char *name) ;
 void runningError(int msg, ...) ;
@@ -154,7 +153,7 @@ void delTimers(struct ebFrame *f);
 void delInputChanges(struct ebFrame *f);
 void runTimers(void);
 void javaOpensWindow(const char *href, const char *name) ;
-void javaSetsLinkage(bool after, char type, jsobjtype p, const char *rest, int pass);
+void javaSetsLinkage(bool after, char type, jsobjtype p, const char *rest);
 
 /* sourcefile=html-tidy.c */
 void html2nodes(const char *htmltext, bool startpage);

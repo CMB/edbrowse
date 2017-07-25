@@ -1353,6 +1353,11 @@ Needless to say that's not good!
 // Title is not a node, more like an attribute of the page.
 		break;
 
+	default:
+// Don't know what this tag is, or it's not semantically important,
+// so just call it an html element.
+		domLink(t, "Element", 0, 0, cf->docobj, 0);
+		break;
 	}			/* switch */
 
 	if (!t->jv)
@@ -1403,6 +1408,7 @@ static void pushTag(struct htmlTag *t)
 	if (cw->numTags == a) {
 /* make more room */
 		a = a / 2 * 3;
+		debugPrint(3, "%d tags", a);
 		cw->tags =
 		    (struct htmlTag **)reallocMem(cw->tags, a * sizeof(t));
 		cw->allocTags = a;
@@ -1637,9 +1643,10 @@ static void intoTree(struct htmlTag *parent)
 			debugPrint(4, "}");
 			return;
 		}
-
+#if 0
 		if (!parent)
 			t->topnode = true;
+#endif
 
 		if (treeDisable) {
 			debugPrint(4, "node skip %s", t->info->name);

@@ -428,6 +428,10 @@ static void runGeneratedHtml(struct htmlTag *t, const char *h, const char *pre)
 {
 	int j, l = cw->numTags;
 
+	if (t)
+		debugPrint(4, "parse under %s %d", t->info->name, t->seqno);
+	else
+		debugPrint(4, "parse under top");
 	debugPrint(4, "Generated {%s}", h);
 
 	html2nodes(h, false);
@@ -551,19 +555,6 @@ static void prepareScript(struct htmlTag *t)
 	t->js_file = cloneString(filepart);
 }				/* prepareScript */
 
-/* Is a tag rooted, i.e. accessible from document? */
-static bool rooted(const struct htmlTag *t)
-{
-	while (true) {
-		if (t->topnode)
-			return true;
-		if (!t->parent)
-			break;
-		t = t->parent;
-	}
-	return false;
-}
-
 /*********************************************************************
 Run pending scripts, and perform other actions that have been queued up by javascript.
 This includes document.write, linkages, perhaps even form.submit.
@@ -581,7 +572,6 @@ void runScriptsPending(void)
 	const char *js_file;
 	int ln;
 	bool change;
-	char pass;
 	jsobjtype v;
 
 	if (newlocation && newloc_r)
@@ -607,8 +597,6 @@ top:
 		if (t->action != TAGACT_SCRIPT)
 			continue;
 		if (t->step >= 3)
-			continue;
-		if (!rooted(t))
 			continue;
 		t->step = 3;	/* now running the script */
 		if (!t->jv)
@@ -708,18 +696,11 @@ top:
 	}
 
 /* linkages */
-	for (pass = 1; pass <= 2; ++pass) {
-		foreach(ic, inputChangesPending) {
-			if (ic->major != 'l')
-				continue;
-			if (pass == 2)
-				ic->major = 'x';
-			javaSetsLinkage(true, ic->minor, ic->t, ic->value,
-					pass);
-// Linkage could make a dynamically created script object rooted,
-// that wasn't rooted before. It happens in jsrt.
-			change = true;
-		}
+	foreach(ic, inputChangesPending) {
+		if (ic->major != 'l')
+			continue;
+		ic->major = 'x';
+		javaSetsLinkage(true, ic->minor, ic->t, ic->value);
 	}
 
 /* timers set and cleared */
@@ -1843,18 +1824,16 @@ struct htmlTag *tagFromJavaVar(jsobjtype v)
 
 	for (i = 0; i < cw->numTags; ++i) {
 		t = tagList[i];
-		if (t->jv == v)
+		if (t->jv == v && !t->dead)
 			return t;
 	}
 	return 0;
 }				/* tagFromJavaVar */
 
-/* Like the above but create it if you can't find it. */
-struct htmlTag *tagFromJavaVar2(jsobjtype v, const char *tagname)
+// Create a new tag for this pointer, only from document.createElement().
+static struct htmlTag *tagFromJavaVar2(jsobjtype v, const char *tagname)
 {
-	struct htmlTag *t = tagFromJavaVar(v);
-	if (t)
-		return t;
+	struct htmlTag *t;
 	if (!tagname)
 		return 0;
 	t = newTag(tagname);
@@ -2459,8 +2438,7 @@ static void setTagAttr(struct htmlTag *t, const char *name, char *val)
 	t->atvals[nattr] = 0;
 }				/* setTagAttr */
 
-void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest,
-		     int pass)
+void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 {
 	struct htmlTag *parent, *add, *before, *c, *t;
 	jsobjtype *a_j, *b_j;
@@ -2468,9 +2446,17 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest,
 	int action;
 	char *jst;		// java string
 
+	sscanf(rest, "%s %p,%s %p,%s ", p_name, &a_j, a_name, &b_j, b_name);
+	if (type == 'c') {	/* create */
+		parent = tagFromJavaVar2(p_j, p_name);
+		if (parent)
+			debugPrint(4, "linkage, %s %d created",
+				   p_name, parent->seqno);
+		return;
+	}
 // Postpone anything other than create until after js is finished,
 // so we can query js variables.
-	if (!after && type != 'c') {
+	if (!after) {
 		struct inputChange *ic;
 		ic = allocMem(sizeof(struct inputChange) + strlen(rest));
 // Yeah I know, this isn't a pointer to htmlTag.
@@ -2484,24 +2470,17 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest,
 		return;
 	}
 
-	sscanf(rest, "%s %p,%s %p,%s ", p_name, &a_j, a_name, &b_j, b_name);
+	parent = tagFromJavaVar(p_j);
 /* options are relinked by rebuildSelectors, not here. */
 	if (stringEqual(p_name, "option"))
-		return;
-
-	parent = tagFromJavaVar2(p_j, p_name);
-	if (type == 'c')	/* create */
 		return;
 
 	if (stringEqual(a_name, "option"))
 		return;
 
-	add = tagFromJavaVar2(a_j, a_name);
+	add = tagFromJavaVar(a_j);
 	if (!parent || !add)
 		return;
-
-	if (pass == 2)
-		goto fixnodes;
 
 	if (type == 'r') {
 /* add is a misnomer here, it's being removed */
@@ -2533,7 +2512,7 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest,
 			printf("linkage cycle, cannot link %s %d into %s %d",
 			       a_name, add->seqno, p_name, parent->seqno);
 			if (type == 'b') {
-				before = tagFromJavaVar2(b_j, b_name);
+				before = tagFromJavaVar(b_j);
 				printf(" before %s %d", b_name,
 				       (before ? before->seqno : -1));
 			}
@@ -2546,7 +2525,7 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest,
 	}
 
 	if (type == 'b') {	/* insertBefore */
-		before = tagFromJavaVar2(b_j, b_name);
+		before = tagFromJavaVar(b_j);
 		if (!before)
 			return;
 		debugPrint(4, "linkage, %s %d linked into %s %d before %s %d",
@@ -2584,17 +2563,8 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest,
 ab:
 	add->parent = parent;
 	add->deleted = false;
-	return;
 
 fixnodes:
-
-// Bad news, we have to replicate some of the prerender logic here.
-// This is a waste of time, and will cause js to crash, of the node
-// was temporary, and has been discarded by the garbage collector.
-// So check for rootedness first.
-	if (!rooted(add))
-		return;
-
 	t = add;
 	debugPrint(4, "fixup %s %d", a_name, t->seqno);
 	action = t->action;
