@@ -101,8 +101,7 @@ const char *mailRedirect(const char *to, const char *from,
 
 	for (f = mailFilters; f->match; ++f) {
 		const char *m = f->match;
-		int mlen = strlen(m);
-		int j, k;
+		int k, mlen = strlen(m);
 
 		r = f->redirect;
 
@@ -212,9 +211,8 @@ static void catchSig(int n)
 
 bool isSQL(const char *s)
 {
-	char c;
-	const char *c1 = 0, *c2 = 0;
-	c = *s;
+	char c = *s;
+	const char *c1 = 0;
 
 	if (!sqlPresent)
 		goto no;
@@ -222,10 +220,11 @@ bool isSQL(const char *s)
 	if (isURL(s))
 		goto no;
 
+// look for word] or word:word]
 	if (!isalphaByte(c))
 		goto no;
 
-	for (++s; c = *s; ++s) {
+	for (++s; (c = *s); ++s) {
 		if (c == '_')
 			continue;
 		if (isalnumByte(c))
@@ -236,10 +235,8 @@ bool isSQL(const char *s)
 			c1 = s;
 			continue;
 		}
-		if (c == ']') {
-			c2 = s;
+		if (c == ']')
 			goto yes;
-		}
 	}
 
 no:
@@ -743,9 +740,10 @@ int main(int argc, char **argv)
 
 		cw->undoable = cw->changeMode = false;
 /* Browse the text if it's a url */
-		if (rc && isURL(cf->fileName) &&
-		    (cf->mt && cf->mt->outtype
-		     || isBrowseableURL(cf->fileName))) {
+		if (rc && isURL(cf->fileName) && ((cf->mt && cf->mt->outtype)
+						  ||
+						  isBrowseableURL
+						  (cf->fileName))) {
 			if (runCommand("b"))
 				debugPrint(1, "%d", fileSize);
 			else
@@ -883,7 +881,7 @@ bool runEbFunction(const char *line)
 	fncopy = cloneString(ip);
 	ip = fncopy;
 
-	while (code = *ip) {
+	while ((code = *ip)) {
 		if (intFlag) {
 			setError(MSG_Interrupted);
 			goto fail;
@@ -1688,13 +1686,15 @@ nokeyword:
 					cfgLine0(MSG_EBRC_NoReply);
 				if (act->secure)
 					act->inssl = act->outssl = 1;
-				if (!act->inport)
-					if (act->secure)
+				if (!act->inport) {
+					if (act->secure) {
 						act->inport =
 						    (act->imap ? 993 : 995);
-					else
+					} else {
 						act->inport =
 						    (act->imap ? 143 : 110);
+					}
+				}
 				if (!act->outport)
 					act->outport = (act->secure ? 465 : 25);
 				continue;

@@ -191,7 +191,7 @@ static void setFolders(void)
 	char qc;		/* quote character */
 
 	s = mailstring;
-	while (t = strstr(s, "LIST (\\")) {
+	while ((t = strstr(s, "LIST (\\"))) {
 		s = t + 7;
 		++n_folders;
 	}
@@ -200,7 +200,7 @@ static void setFolders(void)
 
 	f = topfolders;
 	s = mailstring;
-	while (t = strstr(s, "LIST (\\")) {
+	while ((t = strstr(s, "LIST (\\"))) {
 		s = t + 6;
 		child = strstr(s, "Children");
 /* this should always be present */
@@ -352,7 +352,6 @@ static void cleanFolder(struct FOLDER *f)
 static bool imapSearch(CURL * handle, struct FOLDER *f, char *line)
 {
 	char searchtype = 's';
-	char c;
 	char *t, *u;
 	CURLcode res;
 	int cnt;
@@ -463,7 +462,7 @@ static void scanFolder(CURL * handle, struct FOLDER *f, bool allmessages)
 	char *envp_end;
 	int envp_l;
 
-	if (!f->nmsgs || !allmessages && !f->unread) {
+	if (!f->nmsgs || !(allmessages && !f->unread)) {
 		i_puts(MSG_NoMessages);
 		return;
 	}
@@ -821,7 +820,7 @@ dosize:
 /* examine the specified folder, gather message envelopes */
 static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 {
-	int i, j;
+	int j;
 	char *t;
 	CURLcode res;
 
@@ -911,7 +910,7 @@ static void unreadStats(void)
 	unreadMin = 0;
 	unreadCount = 0;
 
-	while (f = nextScanFile(mailUnread)) {
+	while ((f = nextScanFile(mailUnread))) {
 		if (!stringIsNum(f))
 			continue;
 		n = atoi(f);
@@ -1593,7 +1592,7 @@ bool emailTest(void)
 		char *q;
 		char *p = (char *)fetchLine(i, -1);
 		char first = *p;
-		if (first == '\n' || first == '\r' && p[1] == '\n')
+		if (first == '\n' || (first == '\r' && p[1] == '\n'))
 			break;
 		if (first == ' ' || first == '\t')
 			continue;
@@ -1634,7 +1633,6 @@ void mail64Error(int err)
 
 static void unpackQP(struct MHINFO *w)
 {
-	uchar val;
 	char c, d, *q, *r;
 	for (q = r = w->start; q < w->end; ++q) {
 		c = *q;
@@ -2146,8 +2144,8 @@ static struct MHINFO *headerGlean(char *start, char *end)
 		if (w->error64 != GOOD_BASE64_DECODE)
 			mail64Error(w->error64);
 	}
-	if (w->ce == CE_64 && w->ct == CT_OTHER || w->ct == CT_APPLIC
-	    || w->cfn[0]) {
+	if ((w->ce == CE_64 && w->ct == CT_OTHER) ||
+	    w->ct == CT_APPLIC || w->cfn[0]) {
 		w->doAttach = true;
 		++nattach;
 		q = w->cfn;
@@ -2509,8 +2507,8 @@ static void formatMail(struct MHINFO *w, bool top)
 		++j;
 		if (subtype != CT_OTHER)
 			best = j;
-		if (mailIsHtml && subtype == CT_HTML ||
-		    !mailIsHtml && subtype == CT_TEXT)
+		if ((mailIsHtml && subtype == CT_HTML) ||
+		    (!mailIsHtml && subtype == CT_TEXT))
 			break;
 	}
 
@@ -2529,7 +2527,7 @@ static void formatMail(struct MHINFO *w, bool top)
 /* Browse the email file. */
 char *emailParse(char *buf)
 {
-	struct MHINFO *w, *v;
+	struct MHINFO *w;
 	nattach = nimages = 0;
 	firstAttach = 0;
 	mailIsHtml = ignoreImages = false;
@@ -2776,12 +2774,12 @@ static void writeReplyInfo(const char *addstring)
 static void readReplyInfo(void)
 {
 	int rfh;		/* reply file handle */
-	char *p;
+	const char *p;
 	int ln, major, minor;
 	char prestring[20];
 	char *buf;
 	int buflen;
-	char *s, *t, *cut;
+	char *s, *t;
 
 	if (cw->mailInfo)
 		return;		/* already there */
@@ -2789,7 +2787,7 @@ static void readReplyInfo(void)
 /* scan through the buffer looking for the Unformatted line,
  * but stop if you hit an email divider. */
 	for (ln = 1; ln <= cw->dol; ++ln) {
-		p = fetchLine(ln, -1);
+		p = (char *)fetchLine(ln, -1);
 		if (!memcmp
 		    (p,
 		     "======================================================================\n",

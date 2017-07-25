@@ -159,7 +159,7 @@ void spaceCrunch(char *s, bool onespace, bool unprint)
 	int i, j;
 	char c;
 	bool space = true;
-	for (i = j = 0; c = s[i]; ++i) {
+	for (i = j = 0; (c = s[i]); ++i) {
 		if (isspaceByte(c)) {
 			if (!onespace)
 				continue;
@@ -793,7 +793,7 @@ void caseShift(char *s, char action)
 	int mc = 0;
 	bool ws = true;
 
-	for (; c = *s; ++s) {
+	for (; (c = *s); ++s) {
 		if (action == 'u') {
 			if (isalphaByte(c))
 				*s = toupper(c);
@@ -1330,7 +1330,7 @@ const char *nextScanFile(const char *base)
 		}
 	}
 
-	while (de = readdir(df)) {
+	while ((de = readdir(df))) {
 		s = de->d_name;
 		if (s[0] == '.') {
 			if (stringEqual(s, "."))
@@ -1364,7 +1364,7 @@ bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
 	cap = 128;
 	map = t = (struct lineMap *)allocZeroMem(cap * LMSIZE);
 
-	while (f = nextScanFile(dir)) {
+	while ((f = nextScanFile(dir))) {
 		if (linecount == cap) {
 			cap *= 2;
 			map = (struct lineMap *)reallocMem(map, cap * LMSIZE);
@@ -1423,7 +1423,7 @@ static bool envExpand(const char *line, const char **expanded)
 	l = 0;
 	for (s = line + 1; isalnum(*s) || *s == '_'; ++s)
 		++l;
-	if (l >= sizeof(var1) || isdigit(line[1]) || *s && *s != '/') {
+	if (l >= sizeof(var1) || isdigit(line[1]) || (*s && *s != '/')) {
 /* invalid syntax, put things back */
 		s = line;
 		goto dollars;

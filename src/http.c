@@ -212,7 +212,7 @@ static void scan_http_headers(bool fromCallback)
 		gotoLocation(v, -1, true);
 	}
 
-	if (v = find_http_header("refresh")) {
+	if ((v = find_http_header("refresh"))) {
 		int delay;
 		if (parseRefresh(v, &delay)) {
 			unpercentURL(v);
@@ -498,6 +498,8 @@ unpackUploadedFile(const char *post, const char *boundary,
 }				/* unpackUploadedFile */
 
 /* Pull a keyword: attribute out of an internet header. */
+/* Seems like nobody uses this. */
+#if 0
 static char *extractHeaderItem(const char *head, const char *end,
 			       const char *item, const char **ptr)
 {
@@ -525,6 +527,7 @@ static char *extractHeaderItem(const char *head, const char *end,
 	}
 	return h;
 }				/* extractHeaderItem */
+#endif
 
 /* This is a global function; it is called from cookies.c */
 char *extractHeaderParam(const char *str, const char *item)
@@ -533,7 +536,7 @@ char *extractHeaderParam(const char *str, const char *item)
 	const char *s = str;
 /* ; denotes the next param */
 /* Even the first param has to be preceeded by ; */
-	while (s = strchr(s, ';')) {
+	while ((s = strchr(s, ';'))) {
 		while (*s && (*s == ';' || (uchar) * s <= ' '))
 			s++;
 		if (!memEqualCI(s, item, le))
@@ -563,7 +566,6 @@ time_t parseHeaderDate(const char *date)
 	time_t t = 0;
 	int zone = 0;
 	time_t now = 0;
-	time_t utcnow = 0;
 	int y;			/* remember the type of format */
 	struct tm *temptm = NULL;
 	struct tm tm;
@@ -1185,8 +1187,8 @@ they go where they go, so this doesn't come up very often.
 		}
 
 		if (allowRedirection &&
-		    (ht_code >= 301 && ht_code <= 303 ||
-		     ht_code >= 307 && ht_code <= 308)) {
+		    ((ht_code >= 301 && ht_code <= 303) ||
+		     (ht_code >= 307 && ht_code <= 308))) {
 			redir = newlocation;
 			if (redir)
 				redir = resolveURL(urlcopy, redir);
@@ -1303,9 +1305,9 @@ curl_fail:
 		serverDataLen = 0;
 		nzFree(urlcopy);	/* Free it on transfer failure. */
 	} else {
-		if (ht_code != 200 && ht_code != 201 &&
-		    (webpage || debugLevel >= 2) ||
-		    ht_code == 201 && debugLevel >= 3)
+		if ((ht_code != 200 && ht_code != 201 &&
+		     (webpage || debugLevel >= 2)) ||
+		    (ht_code == 201 && debugLevel >= 3))
 			i_printf(MSG_HTTPError,
 				 ht_code, message_for_response_code(ht_code));
 		if (name_changed)
@@ -1360,7 +1362,7 @@ static void ftpls(char *line)
 		line[--l] = 0;
 
 /* blank line becomes paragraph break */
-	if (!l || memEqualCI(line, "total ", 6) && stringIsNum(line + 6)) {
+	if (!l || (memEqualCI(line, "total ", 6) && stringIsNum(line + 6))) {
 		stringAndString(&serverData, &serverDataLen, "<P>\n");
 		return;
 	}
@@ -1430,7 +1432,7 @@ static void ftpls(char *line)
 		stringAndString(&serverData, &serverDataLen, line);
 	} else {
 		char c, *q;
-		for (q = line; c = *q; ++q) {
+		for (q = line; (c = *q); ++q) {
 			char *meta = 0;
 			if (c == '<')
 				meta = "&lt;";
@@ -1801,7 +1803,7 @@ static CURL *http_curl_init(struct eb_curl_callback_data *cbd)
 #ifdef CURLAUTH_NEGOTIATE
 		curl_auth |= CURLAUTH_NEGOTIATE;
 #else
-		curl_auth |= CURLAUTH_GSSNEGOTIATE; /* libcurl < 7.38 */
+		curl_auth |= CURLAUTH_GSSNEGOTIATE;	/* libcurl < 7.38 */
 #endif
 	curl_easy_setopt(h, CURLOPT_HTTPAUTH, curl_auth);
 
@@ -2220,7 +2222,6 @@ int bg_jobs(bool iponly)
 /* in progress */
 	part = false;
 	foreach(j, down_jobs) {
-		size_t now_size;
 		if (j->state != 4)
 			continue;
 		++numback;
@@ -2231,7 +2232,7 @@ int bg_jobs(bool iponly)
 		}
 		printf("%s", j->file + j->file2);
 		if (j->fsize)
-			printf(" %d/%lu",
+			printf(" %d/%zu",
 			       (fileSizeByName(j->file) / CHUNKSIZE), j->fsize);
 		nl();
 	}
@@ -2453,7 +2454,7 @@ static int frameExpandLine(int ln)
 	struct ebFrame *save_cf, *last_f;
 
 	line = fetchLine(ln, -1);
-	s = stringInBufLine(line, "Frame ");
+	s = stringInBufLine((char *)line, "Frame ");
 	if (!s)
 		return 1;
 	if ((s = strchr(s, InternalCodeChar)) == NULL)

@@ -193,7 +193,7 @@ static int errTranslate(const char *code)
 	return EXCSQLMISC;
 }				/* errTranslate */
 
-static char errorText[200];
+static uchar errorText[200];
 
 static bool errorTrap(const char *cxerr)
 {
@@ -222,7 +222,7 @@ static bool errorTrap(const char *cxerr)
 
 	while (true) {
 		rc = SQLError(henv, hdbc, hstmt,
-			      errcodes, &rv_vendorStatus, errorText,
+			      (uchar *) errcodes, &rv_vendorStatus, errorText,
 			      sizeof(errorText), &waste);
 		if (rc == SQL_NO_DATA) {
 			if (firstError) {
@@ -377,7 +377,7 @@ void sql_connect(const char *db, const char *login, const char *pw)
 {
 	short waste;
 	char constring[200];
-	char outstring[200];
+	uchar outstring[200];
 	char drivername[40];
 	char *s;
 
@@ -430,7 +430,7 @@ void sql_connect(const char *db, const char *login, const char *pw)
 	stmt_text = constring;
 	debugStatement();
 	rc = SQLDriverConnect(hdbc, NULL,
-			      constring, SQL_NTS,
+			      (uchar *) constring, SQL_NTS,
 			      outstring, sizeof(outstring), &waste,
 			      SQL_DRIVER_NOPROMPT);
 	if (errorTrap(0))
@@ -648,7 +648,7 @@ void sql_deferConstraints(void)
 	debugStatement();
 	/* is there a way to do this through ODBC? */
 	newStatement();
-	rc = SQLExecDirect(hstmt, (char *)stmt_text, SQL_NTS);
+	rc = SQLExecDirect(hstmt, (uchar *) stmt_text, SQL_NTS);
 	errorTrap(0);
 	SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 	exclist = 0;
@@ -737,7 +737,7 @@ sql_blobInsert(const char *tabname, const char *colname, int rowid,
 		return;
 	}
 
-	rc = SQLExecDirect(hstmt, blobcmd, SQL_NTS);
+	rc = SQLExecDirect(hstmt, (uchar *) blobcmd, SQL_NTS);
 	SQLRowCount(hstmt, &rv_lastNrows);
 
 	if (isfile) {
@@ -928,7 +928,7 @@ static void retsFromOdbc(void)
 				   rv_type[i]);
 		}		/* switch */
 
-		if (everything_null || c_type == SQL_C_BINARY && !fbc) {
+		if (everything_null || (c_type == SQL_C_BINARY && !fbc)) {
 			rc = SQL_SUCCESS;
 			output_length = SQL_NULL_DATA;
 		} else {
@@ -1167,9 +1167,9 @@ static bool prepareInternal(const char *stmt)
 	rv_lastNrows = 0;
 
 	if (openfirst)
-		rc = SQLExecDirect(hstmt, (char *)stmt, SQL_NTS);
+		rc = SQLExecDirect(hstmt, (uchar *) stmt, SQL_NTS);
 	else
-		rc = SQLPrepare(hstmt, (char *)stmt, SQL_NTS);
+		rc = SQLPrepare(hstmt, (uchar *) stmt, SQL_NTS);
 	if (errorTrap(0))
 		return false;
 
@@ -1185,7 +1185,7 @@ static bool prepareInternal(const char *stmt)
 
 	for (i = 0; i < nc; ++i) {
 		rc = SQLDescribeCol(hstmt, (USHORT) (i + 1),
-				    rv_name[i], COLNAMELEN, &namelen,
+				    (uchar *) rv_name[i], COLNAMELEN, &namelen,
 				    &coltype, &colprec, &colscale, &nullable);
 		if (errorTrap("01004"))
 			return false;
@@ -1516,7 +1516,6 @@ int sql_prepareScrolling(const char *stmt, ...)
 
 void sql_open(int cid)
 {
-	short i;
 	struct OCURS *o = findCursor(cid);
 	if (o->flag == CURSOR_OPENED)
 		return;		/* already open */
@@ -1740,8 +1739,8 @@ void getPrimaryKey(char *tname, int *part1, int *part2, int *part3, int *part4)
 
 	rc = SQLPrimaryKeys(hstmt,
 			    NULL, SQL_NTS,
-			    (dot ? tname : NULL), SQL_NTS, (dot ? dot : tname),
-			    SQL_NTS);
+			    (uchar *) (dot ? tname : NULL), SQL_NTS,
+			    (uchar *) (dot ? dot : tname), SQL_NTS);
 	if (dot)
 		dot[-1] = '.';
 	if (rc)
@@ -1799,9 +1798,9 @@ bool showTables(void)
 	SQLLEN tabnameOut, tabtypeOut, tabownerOut;
 	char *buf;
 	int buflen, cx;
-	int truevalue = SQL_TRUE;
 
 /*
+	int truevalue = SQL_TRUE;
 SQLSetConnectAttr(hdbc, SQL_ATTR_METADATA_ID,
 &truevalue, SQL_IS_INTEGER);
 */
@@ -1860,8 +1859,8 @@ bool fetchForeign(char *tname)
 	rc = SQLForeignKeys(hstmt,
 			    NULL, SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS,
 			    NULL, SQL_NTS,
-			    (dot ? tname : NULL), SQL_NTS, (dot ? dot : tname),
-			    SQL_NTS);
+			    (uchar *) (dot ? tname : NULL), SQL_NTS,
+			    (uchar *) (dot ? dot : tname), SQL_NTS);
 	if (dot)
 		dot[-1] = '.';
 	if (rc)

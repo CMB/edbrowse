@@ -12,11 +12,8 @@
 #define MAXMSLINE 1024		/* max mail server line */
 
 char serverLine[MAXMSLINE];
-static char spareLine[MAXMSLINE];
 int mssock;			/* mail server socket */
 static bool doSignature;
-static bool ssl_on;
-static const char *mailhost;
 static char subjectLine[400];
 static int mailAccount;
 
@@ -180,7 +177,7 @@ static char *qpEncode(const char *line)
 
 	newbuf = initString(&l);
 	for (s = line; (c = *s); ++s) {
-		if (c < '\n' && c != '\t' || c == '=') {
+		if ((c < '\n' && c != '\t') || c == '=') {
 			char expand[4];
 			sprintf(expand, "=%02X", (uchar) c);
 			stringAndString(&newbuf, &l, expand);
@@ -468,8 +465,8 @@ empty:
  * files uploaded from a web form need not be encoded, unless they contain
  * nulls, which is a quirk of my slapped together software. */
 
-	if (!webform && (buflen > 20 && nacount * 5 > buflen) ||
-	    webform && nullcount) {
+	if ((!webform && buflen > 20 && nacount * 5 > buflen) ||
+	    (webform && nullcount)) {
 		if (ismail) {
 			setError(MSG_MailBinary, file);
 			goto freefail;
@@ -503,11 +500,11 @@ empty:
 			for (s = buf; s < v; ++s) {
 				c = *s;
 /* do we have to =expand this character? */
-				if (c < '\n' && c != '\t' ||
+				if ((c < '\n' && c != '\t') ||
 				    c == '=' ||
 				    c == '\xff' ||
-				    (c == ' ' || c == '\t') && s < v - 1
-				    && s[1] == '\n') {
+				    ((c == ' ' || c == '\t') &&
+				     s < v - 1 && s[1] == '\n')) {
 					char expand[4];
 					sprintf(expand, "=%02X", (uchar) c);
 					stringAndString(&newbuf, &l, expand);
@@ -801,7 +798,7 @@ sendMail(int account, const char **recipients, const char *body,
 	 int subjat, const char **attachments, const char *refline,
 	 int nalt, bool dosig)
 {
-	char *from, *fromiso, *reply, *login, *smlogin, *pass;
+	char *from, *fromiso, *reply;
 	const struct MACCOUNT *a, *ao, *localMail;
 	const char *s, *boundary;
 	char reccc[MAXRECAT];
@@ -810,7 +807,6 @@ sendMail(int account, const char **recipients, const char *body,
 	char *out = 0;
 	bool sendmail_success = false;
 	bool mustmime = false;
-	bool firstgreet = true;
 	bool firstrec;
 	const char *ct, *ce;
 	char *encoded = 0;
@@ -842,7 +838,7 @@ sendMail(int account, const char **recipients, const char *body,
 		return false;
 
 /* set copy flags */
-	for (j = 0; s = recipients[j]; ++j) {
+	for (j = 0; (s = recipients[j]); ++j) {
 		char cc = 0;
 		if (*s == '^' || *s == '?')
 			cc = *s++;
@@ -855,7 +851,7 @@ sendMail(int account, const char **recipients, const char *body,
 	}
 
 /* Look up aliases in the address book */
-	for (j = 0; s = recipients[j]; ++j) {
+	for (j = 0; (s = recipients[j]); ++j) {
 		if (strchr(s, '@'))
 			continue;
 		t = 0;
@@ -887,7 +883,7 @@ sendMail(int account, const char **recipients, const char *body,
 	}
 
 /* verify attachments are readable */
-	for (j = 0; s = attachments[j]; ++j) {
+	for (j = 0; (s = attachments[j]); ++j) {
 		if (!ismc && (cx = stringIsNum(s)) >= 0) {
 			if (!cxCompare(cx) || !cxActive(cx))
 				return false;
@@ -923,7 +919,7 @@ sendMail(int account, const char **recipients, const char *body,
 	out = initString(&j);
 
 	firstrec = true;
-	for (i = 0; s = recipients[i]; ++i) {
+	for (i = 0; (s = recipients[i]); ++i) {
 		if (reccc[i])
 			continue;
 		stringAndString(&out, &j, firstrec ? "To:" : ",\r\n  ");
@@ -934,7 +930,7 @@ sendMail(int account, const char **recipients, const char *body,
 		stringAndString(&out, &j, eol);
 
 	firstrec = true;
-	for (i = 0; s = recipients[i]; ++i) {
+	for (i = 0; (s = recipients[i]); ++i) {
 		if (reccc[i] != '^')
 			continue;
 		stringAndString(&out, &j, firstrec ? "CC:" : ",\r\n  ");
@@ -945,7 +941,7 @@ sendMail(int account, const char **recipients, const char *body,
 		stringAndString(&out, &j, eol);
 
 	firstrec = true;
-	for (i = 0; s = recipients[i]; ++i) {
+	for (i = 0; (s = recipients[i]); ++i) {
 		if (reccc[i] != '?')
 			continue;
 		stringAndString(&out, &j, firstrec ? "BCC:" : ",\r\n  ");
@@ -1010,7 +1006,7 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 	encoded = 0;
 
 	if (mustmime) {
-		for (i = 0; s = attachments[i]; ++i) {
+		for (i = 0; (s = attachments[i]); ++i) {
 			if (!encodeAttachment(s, 0, false, &ct, &ce, &encoded))
 				return false;
 			sprintf(serverLine, "%s--%s%sContent-Type: %s%s", eol,

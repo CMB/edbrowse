@@ -22,6 +22,10 @@ CFLAGS += -g -ggdb
 CXXFLAGS += -g -ggdb
 endif
 
+ifneq ($(EBSTRICT),)
+CFLAGS += -Wall
+endif
+
 #  Normal load flags
 LDFLAGS += $(STRIP)
 

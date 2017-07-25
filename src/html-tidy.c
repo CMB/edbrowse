@@ -297,7 +297,7 @@ static void convertNode(TidyNode node, int level, bool opentag)
 		tidyBufClear(&tnv);
 		tidyNodeGetValue(tdoc, node, &tnv);
 		if (tnv.size) {
-			t->textval = cloneString(tnv.bp);
+			t->textval = cloneString((char *)tnv.bp);
 			tidyBufFree(&tnv);
 		}
 	}
@@ -332,7 +332,7 @@ static void convertNode(TidyNode node, int level, bool opentag)
 /* But it's not the original html, it has been sanitized.
  * Warning! Memory consumed could, theoretically,
  * grow as the size of the document squared. */
-			t->innerHTML = cloneString(tnv.bp);
+			t->innerHTML = cloneString((char *)tnv.bp);
 			tagStrip(t->innerHTML);
 			tidyBufFree(&tnv);
 		}

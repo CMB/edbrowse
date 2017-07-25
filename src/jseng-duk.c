@@ -322,7 +322,6 @@ static char *readString(int n)
 static void readMessage(void)
 {
 	enum ej_cmd cmd;
-	enum ej_proptype pt;
 
 	if (js1)
 		ipm_c = ipm;
@@ -335,7 +334,6 @@ static void readMessage(void)
 	}
 
 	cmd = head.cmd;
-	pt = head.proptype;
 
 	if (cmd == EJ_CMD_SCRIPT) {
 		if (head.proplength)
@@ -365,6 +363,7 @@ static void readMessage(void)
 	}
 }				/* readMessage */
 
+#if 0
 static void misconfigure(int n)
 {
 /* there may already be a larger error */
@@ -374,6 +373,7 @@ static void misconfigure(int n)
 	head.lowstat = EJ_LOW_VARS;
 	head.lineno = n;
 }				/* misconfigure */
+#endif
 
 static duk_ret_t native_new_location(duk_context * cx)
 {
@@ -1055,7 +1055,7 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 	if (allowXHR) {
 		const char *incoming_url = duk_to_string(cx, 0);
 		const char *incoming_method = duk_get_string(cx, 1);
-		const char *incoming_headers = duk_get_string(cx, 2);
+//              const char *incoming_headers = duk_get_string(cx, 2);
 		const char *incoming_payload = duk_get_string(cx, 3);
 		char *outgoing_xhrheaders = NULL;
 		char *outgoing_xhrbody = NULL;
@@ -1178,7 +1178,7 @@ static void startCookie(void)
 			strmove(cookieCopy + 2, cookieCopy + 10);
 			cook_l -= 8;
 		}
-		if (s = strstr(cookieCopy, "\r\n")) {
+		if ((s = strstr(cookieCopy, "\r\n"))) {
 			*s = 0;
 			cook_l -= 2;
 		}

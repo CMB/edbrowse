@@ -123,7 +123,7 @@ static void makeButton(void)
 
 struct htmlTag *findOpenTag(struct htmlTag *t, int action)
 {
-	while (t = t->parent)
+	while ((t = t->parent))
 		if (t->action == action)
 			return t;
 	return 0;
@@ -131,7 +131,7 @@ struct htmlTag *findOpenTag(struct htmlTag *t, int action)
 
 struct htmlTag *findOpenList(struct htmlTag *t)
 {
-	while (t = t->parent)
+	while ((t = t->parent))
 		if (t->action == TAGACT_OL || t->action == TAGACT_UL)
 			return t;
 	return 0;
@@ -537,7 +537,7 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 					debugPrint(3,
 						   "unrecognized enctype, plese use multipart/form-data or application/x-www-form-urlencoded");
 			}
-			if (a = t->href) {
+			if ((a = t->href)) {
 				const char *prot = getProtURL(a);
 				if (prot) {
 					if (stringEqualCI(prot, "mailto"))
@@ -1095,7 +1095,6 @@ static void formControlJS(struct htmlTag *t)
 	int itype = t->itype;
 	int isradio = itype == INP_RADIO;
 	int isselect = (itype == INP_SELECT) * 2;
-	char *myname = (t->name ? t->name : t->id);
 	const struct htmlTag *form = t->controller;
 
 	if (form && form->jv)
@@ -1164,7 +1163,6 @@ static jsobjtype innerParent;
 
 static void jsNode(struct htmlTag *t, bool opentag)
 {
-	int itype;		/* input type */
 	const struct tagInfo *ti = t->info;
 	int action = t->action;
 	const struct htmlTag *above;

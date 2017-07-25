@@ -83,7 +83,6 @@ static void *child_proc(void *vp)
 static void js_start(void)
 {
 	int pid;
-	char *jsprog;
 
 #if defined(DOSLIKE) && !defined(HAVE_PTHREAD_H)
 	debugPrint(5,
@@ -210,7 +209,6 @@ struct listHead inputChangesPending = {
 /* Javascript has changed an input field */
 static void javaSetsTagVar(jsobjtype v, const char *newtext)
 {
-	struct inputChange *ic;
 	struct htmlTag *t = tagFromJavaVar(v);
 	if (!t)
 		return;
@@ -313,7 +311,7 @@ static void garbageSweep1(jsobjtype p)
 				continue;
 			if (garbageSweep2(w, p))
 				return;
-		} while (w = w->prev);
+		} while ((w = w->prev));
 	}
 }
 
@@ -343,7 +341,7 @@ static void processEffects(void)
 		return;
 
 	s = effects;
-	while (c = *s) {	/* another effect */
+	while ((c = *s)) {	/* another effect */
 		s += 2;
 		v = strstr(s, "`~@}");	/* end marker */
 /* There should always be an end marker -
@@ -1030,7 +1028,6 @@ jsobjtype get_array_element_object(jsobjtype obj, int idx)
 static int set_property(jsobjtype obj, const char *name,
 			const char *value, enum ej_proptype proptype)
 {
-	int l;
 
 	if (!allowJS || !cf->winobj)
 		return -1;
@@ -1144,7 +1141,6 @@ jsobjtype instantiate_array(jsobjtype parent, const char *name)
 static int set_array_element(jsobjtype array, int idx,
 			     const char *value, enum ej_proptype proptype)
 {
-	int l;
 
 	if (!allowJS || !cf->winobj || !array)
 		return -1;
@@ -1379,7 +1375,6 @@ char *get_property_option(jsobjtype obj)
 	int n;
 	jsobjtype oa;		/* option array */
 	jsobjtype oo;		/* option object */
-	char *val;
 
 	if (!allowJS || !cf->winobj || !obj)
 		return 0;
@@ -1609,14 +1604,14 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 			changed = true;
 		t->checked = check2;
 		s = get_property_string(oo, "text");
-		if (s && !t->textval || !stringEqual(t->textval, s)) {
+		if ((s && !t->textval) || !stringEqual(t->textval, s)) {
 			nzFree(t->textval);
 			t->textval = s;
 			changed = true;
 		} else
 			nzFree(s);
 		s = get_property_string(oo, "value");
-		if (s && !t->value || !stringEqual(t->value, s)) {
+		if ((s && !t->value) || !stringEqual(t->value, s)) {
 			nzFree(t->value);
 			t->value = s;
 		} else

@@ -127,7 +127,7 @@ static void anchorSwap(char *buf)
  * Don't do any of these transliterations in an input field. */
 
 	inputmode = false;
-	for (s = w = buf; c = *s; ++s) {
+	for (s = w = buf; (c = *s); ++s) {
 		d = s[1];
 		if (c == InternalCodeChar && isdigitByte(d)) {
 			strtol(s + 1, &ss, 10);
@@ -211,7 +211,7 @@ put1:
 /* a points to the prior anchor, which is swappable with following whitespace */
 		a = NULL;
 
-		for (s = buf; c = *s; ++s) {
+		for (s = buf; (c = *s); ++s) {
 			if (isspaceByte(c) || c == '|') {
 				if (c == '\t' && !premode)
 					*s = ' ';
@@ -277,7 +277,7 @@ normalChar:
 /* Framing characters like [] around an anchor are unnecessary here,
  * because we already frame it in braces.
  * Get rid of these characters, even in premode. */
-	for (s = w = buf; c = *s; ++s) {
+	for (s = w = buf; (c = *s); ++s) {
 		char open, close, linkchar;
 		if (!strchr("{[(<", c))
 			goto putc;
@@ -339,7 +339,7 @@ putc:
 /* Now compress the implied linebreaks into one. */
 	premode = false;
 	ss = 0;
-	for (s = buf; c = *s; ++s) {
+	for (s = buf; (c = *s); ++s) {
 		if (c == InternalCodeChar && isdigitByte(s[1])) {
 			n = strtol(s + 1, &s, 10);
 			if (*s == '*') {
@@ -852,7 +852,7 @@ char *htmlReformat(char *buf)
 
 /* It's a little thing really, but the blank line at the top of each frame annoys me */
 	fmark = new;
-	while (fmark = strstr(fmark + 1, "*`--\n\n")) {
+	while ((fmark = strstr(fmark + 1, "*`--\n\n"))) {
 		if (isdigit(fmark[-1]))
 			strmove(fmark + 5, fmark + 6);
 	}
@@ -874,7 +874,7 @@ void extractEmailAddresses(char *line)
 	char *mark;		/* start of current entry */
 	char quote = 0, c;
 
-	for (s = t = mark = line; c = *s; ++s) {
+	for (s = t = mark = line; (c = *s); ++s) {
 		if (c == ',' && !quote) {
 			mark = t + 1;
 			c = ' ';
@@ -918,7 +918,7 @@ append:
 
 	*t = 0;
 	spaceCrunch(line, true, false);
-	for (s = line; c = *s; ++s)
+	for (s = line; (c = *s); ++s)
 		if (c == ' ')
 			*s = ',';
 	if (*line)
@@ -1148,7 +1148,7 @@ void iso2utf(const uchar * inbuf, int inbuflen, uchar ** outbuf_p,
 	int ucode;
 
 	if (!inbuflen) {
-		*outbuf_p = emptyString;
+		*outbuf_p = (uchar *) emptyString;
 		*outbuflen_p = 0;
 		return;
 	}
@@ -1160,7 +1160,7 @@ void iso2utf(const uchar * inbuf, int inbuflen, uchar ** outbuf_p,
 			++nacount;
 	}
 
-	outbuf = allocString(inbuflen + nacount + 1);
+	outbuf = allocMem(inbuflen + nacount + 1);
 	for (i = j = 0; i < inbuflen; ++i) {
 		c = inbuf[i];
 		if (c < 0x80) {
@@ -1187,12 +1187,12 @@ void utf2iso(const uchar * inbuf, int inbuflen, uchar ** outbuf_p,
 	int ucode;
 
 	if (!inbuflen) {
-		*outbuf_p = emptyString;
+		*outbuf_p = (uchar *) emptyString;
 		*outbuflen_p = 0;
 		return;
 	}
 
-	outbuf = allocString(inbuflen + 1);
+	outbuf = allocMem(inbuflen + 1);
 	for (i = j = 0; i < inbuflen; ++i) {
 		c = inbuf[i];
 
@@ -1260,7 +1260,7 @@ void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 	i = j = 0;
 	while (i < inbuflen) {
 		c = (uchar) inbuf[i];
-		if (!inutf8 || (c & 0xc0) != 0xc0 && (c & 0xfe) != 0xfe) {
+		if (!inutf8 || ((c & 0xc0) != 0xc0 && (c & 0xfe) != 0xfe)) {
 			unicode = c;	// that was easy
 			++i;
 		} else {
@@ -1296,7 +1296,8 @@ void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 			continue;
 		}
 // utf16, a bit trickier but not too bad.
-		if (unicode <= 0xd7ff || unicode >= 0xe000 && unicode <= 0xffff) {
+		if (unicode <= 0xd7ff
+		    || (unicode >= 0xe000 && unicode <= 0xffff)) {
 			if (outbig) {
 				outbuf[j++] = ((unicode >> 8) & 0xff);
 				outbuf[j++] = (unicode & 0xff);

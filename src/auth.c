@@ -28,7 +28,7 @@ bool getUserPass(const char *url, char *creds, bool find_proxy)
 	const char *dir, *dirend;
 	struct httpAuth *a;
 	struct httpAuth *found = NULL;
-	int l, d1len, d2len;
+	int d1len, d2len;
 
 	getDirURL(url, &dir, &dirend);
 	d2len = dirend - dir;
@@ -55,9 +55,7 @@ bool getUserPass(const char *url, char *creds, bool find_proxy)
 	return (found != NULL);
 }				/* getUserPass */
 
-bool
-addWebAuthorization(const char *url,
-		    const char *credentials, bool proxy)
+bool addWebAuthorization(const char *url, const char *credentials, bool proxy)
 {
 	struct httpAuth *a;
 	const char *host;
@@ -65,7 +63,6 @@ addWebAuthorization(const char *url,
 	int port, dl;
 	bool urlProx = isProxyURL(url);
 	bool updated = true;
-	char *p;
 
 	if (proxy) {
 		if (!urlProx) {
@@ -87,9 +84,8 @@ addWebAuthorization(const char *url,
 		if (a->proxy == proxy &&
 		    a->port == port &&
 		    stringEqualCI(a->host, host) &&
-		    (proxy ||
-		     dl == strlen(a->directory)
-		     && !memcmp(a->directory, dir, dl))) {
+		    (proxy || (dl == strlen(a->directory)
+			       && !memcmp(a->directory, dir, dl)))) {
 			nzFree(a->user_password);
 			break;
 		}

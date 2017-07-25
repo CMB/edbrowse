@@ -129,7 +129,7 @@ locateOptions(const struct htmlTag *sel, const char *input,
 	char *disp, *val;
 	int disp_l, val_l;
 	int len = strlen(input);
-	int i, n, pmc, cnt;
+	int i, n, pmc;
 	const char *s, *e;	/* start and end of an option */
 	char *iopt;		/* individual option */
 
@@ -338,8 +338,6 @@ This line sets the current frame, then we're ready to roll.
 
 void jClearSync(void)
 {
-	int cx;			/* edbrowse context */
-	struct ebWindow *w;
 	if (cw->browseMode) {
 		cw->sank = false;
 		return;
@@ -567,7 +565,7 @@ void runScriptsPending(void)
 {
 	struct htmlTag *t;
 	struct inputChange *ic;
-	int j, l;
+	int j;
 	char *jtxt;
 	const char *js_file;
 	int ln;
@@ -716,15 +714,15 @@ top:
 	if (change)
 		goto top;
 
-	if (v = js_reset) {
+	if ((v = js_reset)) {
 		js_reset = 0;
-		if (t = tagFromJavaVar(v))
+		if ((t = tagFromJavaVar(v)))
 			formReset(t);
 	}
 
-	if (v = js_submit) {
+	if ((v = js_submit)) {
 		js_submit = 0;
-		if (t = tagFromJavaVar(v)) {
+		if ((t = tagFromJavaVar(v))) {
 			char *post;
 			bool rc = infPush(t->seqno, &post);
 			if (rc)
@@ -763,7 +761,6 @@ static bool jsDoorway(void)
 char *htmlParse(char *buf, int remote)
 {
 	char *a, *newbuf;
-	struct htmlTag *t;
 
 	if (tagList)
 		i_printfExit(MSG_HtmlNotreentrant);
@@ -970,7 +967,7 @@ This works because undo is disabled in browse mode.
 static void
 updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
 {
-	int ln, idx, n, plen;
+	int ln, n, plen;
 	char *p, *s, *t, *new;
 
 	if (locateTagInBuffer(tagno, &ln, &p, &s, &t)) {
@@ -980,7 +977,7 @@ updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
 		strcpy(new + (s - p), newtext);
 		memcpy(new + strlen(new), t, plen - (t - p));
 		free(cw->map[ln].text);
-		cw->map[ln].text = new;
+		cw->map[ln].text = (pst) new;
 		if (notify)
 			displayLine(ln);
 		return;
@@ -1037,7 +1034,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 	}
 
 	if (itype >= INP_RADIO) {
-		if (newtext[0] != '+' && newtext[0] != '-' || newtext[1]) {
+		if ((newtext[0] != '+' && newtext[0] != '-') || newtext[1]) {
 			setError(MSG_InputRadio);
 			return false;
 		}
@@ -1159,7 +1156,7 @@ static void resetVar(struct htmlTag *t)
 	} else if (itype != INP_HIDDEN && itype != INP_SELECT)
 		updateFieldInBuffer(t->seqno, w, false, false);
 
-	if (itype >= INP_TEXT && itype <= INP_FILE || itype == INP_TA) {
+	if ((itype >= INP_TEXT && itype <= INP_FILE) || itype == INP_TA) {
 		nzFree(t->value);
 		t->value = cloneString(t->rvalue);
 	}
@@ -1386,7 +1383,7 @@ static bool formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 /* dynamicvalue needs to be freed with nzFree. */
 	const char *value;
 	char fsep = '&';	/* field separator */
-	bool noname = false, rc;
+	bool rc;
 	bool bval;
 
 /* js could rebuild an option list then submit the form. */
@@ -1442,9 +1439,8 @@ static bool formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 			if (!bval)
 				continue;
 			if (!name)
-				noname = true;
-			if (value && !*value)
-				value = 0;
+				if (value && !*value)
+					value = 0;
 			if (itype == INP_CHECKBOX && value == 0)
 				value = "on";
 			goto success;
@@ -1466,8 +1462,6 @@ static bool formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 			int cx = t->lic;
 			char *cxbuf;
 			int cxlen;
-			if (!name)
-				noname = true;
 			if (cx) {
 				if (fsep == '-') {
 					char cxstring[12];
@@ -2023,8 +2017,8 @@ If the text is the same every time that's fine, but it's new tags each time,
 and new internal numbers each time, and that use to trip this algorithm.
 *********************************************************************/
 
-	removeHiddenNumbers(snap, 0);
-	removeHiddenNumbers(newbuf, 0);
+	removeHiddenNumbers((pst) snap, 0);
+	removeHiddenNumbers((pst) newbuf, 0);
 	if (stringEqual(snap, newbuf))
 		goto done;
 	frontBackDiff(snap, newbuf);
@@ -2068,7 +2062,7 @@ void delTags(int startRange, int endRange)
 {
 	pst p;
 	int j, tagno, action;
-	struct htmlTag *t, *last_td;
+	struct htmlTag *t;
 
 /* no javascript, no cause to ever rerender */
 	if (!cf->jcx)
@@ -2076,11 +2070,10 @@ void delTags(int startRange, int endRange)
 
 	for (j = startRange; j <= endRange; ++j) {
 		p = fetchLine(j, -1);
-		last_td = 0;
 		for (; *p != '\n'; ++p) {
 			if (*p != InternalCodeChar)
 				continue;
-			tagno = strtol(p + 1, (char **)&p, 10);
+			tagno = strtol((char *)p + 1, (char **)&p, 10);
 /* could be 0, but should never be negative */
 			if (tagno <= 0)
 				continue;
@@ -2094,6 +2087,7 @@ void delTags(int startRange, int endRange)
 				t->deleted = true;
 #if 0
 /* this seems to cause more trouble than it's worth */
+			struct htmlTag *last_td = 0;
 			if (action == TAGACT_TD) {
 				printf("td%d\n", tagno);
 				if (last_td)
@@ -2242,7 +2236,7 @@ static struct jsTimer *soonest(void)
 		return 0;
 	foreach(t, timerList) {
 		if (!best_t || t->sec < best_t->sec ||
-		    t->sec == best_t->sec && t->ms < best_t->ms)
+		    (t->sec == best_t->sec && t->ms < best_t->ms))
 			best_t = t;
 	}
 	return best_t;
@@ -2270,7 +2264,7 @@ bool timerWait(int *delay_sec, int *delay_ms)
 	}
 
 	currentTime();
-	if (now_sec > jt->sec || now_sec == jt->sec && now_ms >= jt->ms)
+	if (now_sec > jt->sec || (now_sec == jt->sec && now_ms >= jt->ms))
 		*delay_sec = *delay_ms = 0;
 	else {
 		*delay_sec = jt->sec - now_sec;
@@ -2318,8 +2312,9 @@ void runTimers(void)
 
 	currentTime();
 
-	while (jt = soonest()) {
-		if (jt->sec > now_sec || jt->sec == now_sec && jt->ms > now_ms)
+	while ((jt = soonest())) {
+		if (jt->sec > now_sec
+		    || (jt->sec == now_sec && jt->ms > now_ms))
 			break;
 
 		cf = jt->frame;
@@ -2361,7 +2356,6 @@ We need to fix this someday, though it is a very rare low runner case.
 
 void javaOpensWindow(const char *href, const char *name)
 {
-	struct htmlTag *t;
 	char *copy, *r;
 	const char *a;
 	bool replace = false;
@@ -2564,7 +2558,6 @@ ab:
 	add->parent = parent;
 	add->deleted = false;
 
-fixnodes:
 	t = add;
 	debugPrint(4, "fixup %s %d", a_name, t->seqno);
 	action = t->action;
@@ -3018,7 +3011,7 @@ unparen:
 		liCheck(t);
 		tagInStream(tagno);
 		if (!currentA) {
-			if (a = attribVal(t, "alt")) {
+			if ((a = attribVal(t, "alt"))) {
 				u = altText(a);
 				a = NULL;
 /* see if js has changed the alt tag */

@@ -217,10 +217,10 @@ bool receiveCookie(const char *url, const char *str)
 
 	c->server = cloneString(server);
 
-	if (date = extractHeaderParam(str, "expires")) {
+	if ((date = extractHeaderParam(str, "expires"))) {
 		c->expires = parseHeaderDate(date);
 		nzFree(date);
-	} else if (date = extractHeaderParam(str, "max-age")) {
+	} else if ((date = extractHeaderParam(str, "max-age"))) {
 		int n = stringIsNum(date);
 		if (n >= 0) {
 			time_t now = time(0);
@@ -261,7 +261,7 @@ bool receiveCookie(const char *url, const char *str)
 		}
 	}
 
-	if (s = extractHeaderParam(str, "secure")) {
+	if ((s = extractHeaderParam(str, "secure"))) {
 		c->secure = true;
 		nzFree(s);
 	}
@@ -294,7 +294,6 @@ static bool spoonfeed = true;
 void cookiesFromJar(void)
 {
 	char *cbuf, *s, *t;
-	FILE *f;
 	int n, cnt, expired;
 	char *cbuf_end;
 	time_t now;

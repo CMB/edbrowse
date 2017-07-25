@@ -62,7 +62,7 @@ void unpercentURL(char *url)
 	char c, *u, *w;
 	int n;
 	u = w = url;
-	while (c = *u) {
+	while ((c = *u)) {
 		++u;
 		if (c == '+')
 			c = ' ';
@@ -91,7 +91,7 @@ void unpercentString(char *s)
 {
 	char c, *u, *w;
 	u = w = s;
-	while (c = *u) {
+	while ((c = *u)) {
 		++u;
 		if (c == '+')
 			c = ' ';
@@ -370,7 +370,7 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 	if (a < 0)
 		return false;
 
-	if (free_syntax = protocols[a].free_syntax) {
+	if ((free_syntax = protocols[a].free_syntax)) {
 		if (data)
 			*data = p;
 		if (dalen)
@@ -740,7 +740,7 @@ static void snipLastSegment(char **path, int *pathLen)
 static void squashDirectories(char *url)
 {
 	char *dd = (char *)getDataURL(url);
-	char *s, *t, *end;
+	char *s, *end;
 	char *inPath = NULL;
 	char *outPath;
 	int outPathLen = 0;
@@ -842,7 +842,7 @@ out_n:
 	}
 
 	if (rel[0] == '/' && rel[1] == '/') {
-		if (s = strstr(base, "//")) {
+		if ((s = strstr(base, "//"))) {
 			strncpy(n, base, s - base);
 			n[s - base] = 0;
 		} else
@@ -932,9 +932,9 @@ bool sameURL(const char *s, const char *t)
 		return false;
 
 /* lop off hash */
-	if (u = findHash(s))
+	if ((u = findHash(s)))
 		p = u;
-	if (u = findHash(t))
+	if ((u = findHash(t)))
 		q = u;
 
 /* It's ok if one says http and the other implies it. */
@@ -1027,7 +1027,7 @@ char *encodePostData(const char *s)
 	if (s == emptyString)
 		return emptyString;
 	post = initString(&l);
-	while (c = *s++) {
+	while ((c = *s++)) {
 		if (isalnumByte(c))
 			goto putc;
 		if (strchr("-._~*()!", c))
