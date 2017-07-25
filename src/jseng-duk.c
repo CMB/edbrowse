@@ -175,6 +175,7 @@ static void *watch_heapptr(int idx)
 		watch_alloc = a;
 	}
 	watch_list[watch_n++] = p;
+	return p;
 }
 
 int js_main(int argc, char **argv)
