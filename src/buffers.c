@@ -582,6 +582,8 @@ addchar:
 			jdb_mode = false;
 			puts("bye");
 			jSideEffects();
+// in case you changed objects that in turn change the screen.
+			rerender(false);
 		} else {
 			char *result =
 			    jsRunScriptResult(cf->winobj, s, "jdb", 1);
