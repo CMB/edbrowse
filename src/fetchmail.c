@@ -2328,7 +2328,7 @@ static char *headerShow(struct MHINFO *w, bool top)
 			strcat(buf, "Sent ");
 			strcat(buf, w->date);
 		}
-		if (w->reply) {
+		if (w->reply[0]) {
 			if (!w->date[0])
 				strcat(buf, "From ");
 			else

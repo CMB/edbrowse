@@ -857,7 +857,7 @@ static void domLink(struct htmlTag *t, const char *classname,	/* instantiate thi
 	jsobjtype master;
 	jsobjtype alist = 0;
 	jsobjtype io = 0;	/* input object */
-	unsigned length;
+	int length;
 	bool dupname = false;
 /* some strings from the html tag */
 	const char *symname = t->name;
