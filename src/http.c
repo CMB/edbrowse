@@ -2451,7 +2451,9 @@ static int frameExpandLine(int ln)
 	int tagno, start;
 	const char *s;
 	struct htmlTag *t;
-	struct ebFrame *save_cf, *last_f;
+	struct ebFrame *save_cf, *new_cf, *last_f;
+	jsobjtype cdo;		// contentDocument object
+	struct htmlTag *cdt;	// contentDocument tag
 
 	line = fetchLine(ln, -1);
 	s = stringInBufLine((char *)line, "Frame ");
@@ -2511,6 +2513,7 @@ So check for serverData null here. Once again we pop the frame.
 		return 0;
 	}
 
+	new_cf = cf;
 	if (changeFileName) {
 		nzFree(cf->fileName);
 		cf->fileName = changeFileName;
@@ -2539,8 +2542,13 @@ So check for serverData null here. Once again we pop the frame.
 /* call the tidy parser to build the html nodes */
 	html2nodes(serverData, true);
 	nzFree(serverData);	/* don't need it any more */
+	serverData = 0;
 	htmlGenerated = false;
-	htmlNodesIntoTree(start, t);
+// in the edbrowse world, the only child of the frame tag
+// is the contentDocument tag.
+	cdt = t->firstchild;
+	htmlNodesIntoTree(start, cdt);
+	cdt->step = 0;
 	prerender(0);
 	if (isJSAlive) {
 		decorate(0);
@@ -2559,6 +2567,11 @@ So check for serverData null here. Once again we pop the frame.
 
 	t->f1 = cf;
 	cf = save_cf;
+	if (isJSAlive) {
+		cdo = new_cf->docobj;
+		cdt->jv = cdo;
+		set_property_object(t->jv, "contentDocument", cdo);
+	}
 	return 0;
 }				/* frameExpandLine */
 
@@ -2617,16 +2630,19 @@ bool reexpandFrame(void)
 {
 	int j, start;
 	struct htmlTag *t, *frametag;
+	jsobjtype cdo;		// contentDocument object
+	struct htmlTag *cdt;	// contentDocument tag
 
 /* cut the children off from the frame tag */
 	cf = newloc_f;
 	frametag = cf->frametag;
-	for (t = frametag->firstchild; t; t = t->sibling) {
+	cdt = frametag->firstchild;
+	for (t = cdt->firstchild; t; t = t->sibling) {
 		t->deleted = true;
 		t->step = 100;
 		t->parent = 0;
 	}
-	frametag->firstchild = 0;
+	cdt->firstchild = 0;
 
 	delTimers(cf);
 	delInputChanges(cf);
@@ -2669,12 +2685,15 @@ bool reexpandFrame(void)
 	prepareForBrowse(serverData, serverDataLen);
 	if (javaOK(cf->fileName))
 		createJavaContext();
+
 	start = cw->numTags;
 /* call the tidy parser to build the html nodes */
 	html2nodes(serverData, true);
 	nzFree(serverData);	/* don't need it any more */
+	serverData = 0;
 	htmlGenerated = false;
-	htmlNodesIntoTree(start, frametag);
+	htmlNodesIntoTree(start, cdt);
+	cdt->step = 0;
 	prerender(0);
 	if (isJSAlive) {
 		decorate(0);
@@ -2688,6 +2707,18 @@ bool reexpandFrame(void)
 	j = strlen(cf->fileName);
 	cf->fileName = reallocMem(cf->fileName, j + 8);
 	strcat(cf->fileName, ".browse");
+
+	if (isJSAlive) {
+		struct ebFrame *save_cf;
+		cdo = cf->docobj;
+		cdt->jv = cdo;
+// have to point contentDocument to the new document object,
+// but that requires a change of context.
+		save_cf = cf;
+		cf = frametag->f0;
+		set_property_object(frametag->jv, "contentDocument", cdo);
+		cf = save_cf;
+	}
 
 	return true;
 }				/* reexpandFrame */

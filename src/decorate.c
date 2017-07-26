@@ -1167,6 +1167,8 @@ static void jsNode(struct htmlTag *t, bool opentag)
 	int action = t->action;
 	const struct htmlTag *above;
 	const char *a;
+	jsobjtype cdo;		// contentDocument object
+	struct htmlTag *cdt;	// contentDocument tag
 
 /* all the js variables are on the open tag */
 	if (!opentag)
@@ -1187,8 +1189,6 @@ Needless to say that's not good!
 	debugPrint(6, "decorate %s %d", t->info->name, t->seqno);
 
 	switch (action) {
-		jsobjtype cd;	/* contentDocument */
-		jsobjtype cdbody;	/* contentDocument.body */
 
 	case TAGACT_TEXT:
 		t->jv = instantiate(cf->docobj, fakePropName(), "TextNode");
@@ -1328,11 +1328,12 @@ Needless to say that's not good!
 		set_property_number(t->jv, "nodeType", 1);
 /* frames have contentDocument below, even though it is not populated
  * with the frame's dom as of this version of edbrowse. */
-		cd = instantiate(t->jv, "contentDocument", "Document");
-		cdbody = instantiate(cd, "body", "Body");
-		instantiate(cdbody, "style", 0);
-		instantiate_url(cd, "location", t->href);
-/* perhaps other stuff that a frame document always needs */
+		cdt = newTag("document");
+		t->firstchild = cdt;
+		cdt->parent = t;
+		cdo = instantiate(t->jv, "contentDocument", "Document");
+		cdt->jv = cdo;
+		cdt->step = 2;	// already decorated
 		break;
 
 	case TAGACT_IMAGE:
@@ -1447,6 +1448,7 @@ const struct tagInfo availableTags[] = {
 	{"div", "a divided section", TAGACT_DIV, 5, 1},
 	{"map", "a map of images", TAGACT_NOP, 5, 0},
 	{"blockquote", "a quoted paragraph", TAGACT_NOP, 10, 1},
+	{"document", "a document", TAGACT_NOP, 5, 1},
 	{"h1", "a level 1 header", TAGACT_NOP, 10, 1},
 	{"h2", "a level 2 header", TAGACT_NOP, 10, 1},
 	{"h3", "a level 3 header", TAGACT_NOP, 10, 1},
