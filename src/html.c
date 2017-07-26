@@ -16,6 +16,8 @@ static void javaSetsTimeout(int n, const char *jsrc, jsobjtype to,
 #define SLEEP sleep
 #endif // _MSC_VER y/n
 
+#if 0
+// not sure where I was gonna use these.
 static const char *const handlers[] = {
 	"onmousemove", "onmouseover", "onmouseout", "onmouseup", "onmousedown",
 	"onclick", "ondblclick", "onblur", "onfocus",
@@ -24,6 +26,7 @@ static const char *const handlers[] = {
 	"onkeypress", "onkeyup", "onkeydown",
 	0
 };
+#endif
 
 static jsobjtype js_reset, js_submit;
 uchar browseLocal;
