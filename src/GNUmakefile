@@ -22,9 +22,8 @@ CFLAGS += -g -ggdb
 CXXFLAGS += -g -ggdb
 endif
 
-ifneq ($(EBSTRICT),)
+#  check for errors and mid level warnings.
 CFLAGS += -Wall
-endif
 
 #  Normal load flags
 LDFLAGS += $(STRIP)

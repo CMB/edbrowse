@@ -13,6 +13,8 @@ Environment variable JSGC forces duktape garbage collection after every script.
 Environment variable JS1 keeps edbrowse and js in one process.
 These are for development and testing, and could go away.
 
+Clean up compiler warnings so we can use the -Wall flag.
+
 3.6.3:
 Maintain a cache of http files.
 Provides faster access to websites that are visited often.
