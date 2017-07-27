@@ -578,7 +578,9 @@ time_t parseHeaderDate(const char *date)
 	temptm = localtime(&now);
 	if (temptm == NULL)
 		goto fail;
+#ifndef _MSC_VER
 	utcoffset = temptm->tm_gmtoff;
+#endif
 
 	if (isdigitByte(date[0]) && isdigitByte(date[1]) &&
 	    isdigitByte(date[2]) && isdigitByte(date[3]) && date[4] == '-') {
