@@ -951,7 +951,7 @@ static duk_ret_t native_insbf(duk_context * cx)
 	}
 
 /* push the other elements down */
-	for (i = length; i > mark; --i) {
+	for (i = length; i > (unsigned)mark; --i) {
 		duk_get_prop_index(cx, -1, i - 1);
 		duk_put_prop_index(cx, -2, i);
 	}

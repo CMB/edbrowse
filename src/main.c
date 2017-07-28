@@ -1473,9 +1473,9 @@ putc:
 		case 19:	/* keycol */
 			if (!isdigitByte(*v))
 				cfgLine0(MSG_EBRC_KeyNotNb);
-			td->key1 = strtol(v, &v, 10);
+			td->key1 = (uchar) strtol(v, &v, 10);
 			if (*v == ',' && isdigitByte(v[1]))
-				td->key2 = strtol(v + 1, &v, 10);
+				td->key2 = (uchar) strtol(v + 1, &v, 10);
 			if (td->key1 > td->ncols || td->key2 > td->ncols)
 				cfgLine1(MSG_EBRC_KeyOutRange, td->ncols);
 			continue;
