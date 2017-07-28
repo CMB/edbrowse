@@ -207,7 +207,7 @@ struct listHead inputChangesPending = {
 };
 
 /* Javascript has changed an input field */
-static void javaSetsTagVar(jsobjtype v, const char *newtext)
+void javaSetsTagVar(jsobjtype v, const char *newtext)
 {
 	struct htmlTag *t = tagFromJavaVar(v);
 	if (!t)
@@ -223,7 +223,7 @@ static void javaSetsTagVar(jsobjtype v, const char *newtext)
 	t->value = cloneString(newtext);
 }				/* javaSetsTagVar */
 
-static void javaSetsInner(jsobjtype v, const char *newtext, char c)
+void javaSetsInner(jsobjtype v, const char *newtext, char c)
 {
 	struct inputChange *ic;
 	struct htmlTag *t = tagFromJavaVar(v);
@@ -293,7 +293,7 @@ static bool garbageSweep2(struct ebWindow *w, jsobjtype p)
 	return false;
 }
 
-static void garbageSweep1(jsobjtype p)
+void garbageSweep1(jsobjtype p)
 {
 	struct ebWindow *w;
 	int i;
@@ -327,6 +327,7 @@ f{ form submit or reset }
 l{ linking objects together in a tree }
 g{garbage collection threw away this object
 Any or all of these could be coded in the side effects string.
+This does not happen in one process, when JS1=1.
 *********************************************************************/
 
 static void processEffects(void)
@@ -535,6 +536,7 @@ static int readMessage(void)
 	}
 
 	if (head.side) {
+// This never happens in one process.
 		effects = allocMem(head.side + 1);
 		if (readFromJS(effects, head.side) < 0) {
 			free(effects);

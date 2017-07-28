@@ -151,6 +151,13 @@ static void watch_free(void *udata, void *p)
 		sprintf(e, "g{%p", p);
 		effectString(e);
 		endeffect();
+		if (js1) {
+			effects[eff_l - 1] = 0;
+			debugPrint(4, "%s", effects);
+			garbageSweep1(p);
+			nzFree(effects);
+			effects = initString(&eff_l);
+		}
 		watch_list[i] = watch_list[--watch_n];
 		break;
 	}
@@ -287,8 +294,10 @@ static void writeHeader(void)
 		ipm = initString(&ipm_l);
 	writeToEb(&head, sizeof(head));
 
-/* send out the error message and side effects, if present. */
-/* Edbrowse will expect these before any returned values. */
+// send out the error message and side effects, if present.
+// Edbrowse will expect these before any returned values.
+// If one process, then there will be no side effects, since they happen
+// in real time. In other words, the effects string is empty.
 	if (head.side) {
 		writeToEb(effects, head.side);
 		nzFree(effects);
@@ -382,6 +391,18 @@ static duk_ret_t native_new_location(duk_context * cx)
 		effectString("n{");	// }
 		effectString(s);
 		endeffect();
+		if (js1) {
+			char *t;
+			effects[eff_l - 1] = 0;
+			debugPrint(4, "%s", effects);
+			effects[eff_l - 5] = 0;
+/* url on one line, name of window on next line */
+			t = strchr(effects, '\n');
+			*t = 0;
+			javaOpensWindow(effects + 2, t + 1);
+			nzFree(effects);
+			effects = initString(&eff_l);
+		}
 	}
 	return 0;
 }
@@ -553,6 +574,16 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	endeffect();
 	nzFree(run);
 
+	if (js1) {
+		effects[eff_l - 1] = 0;
+		debugPrint(4, "%s", effects);
+		effects[eff_l - 5] = 0;
+		char *t = strchr(effects, '|') + 1;
+		javaSetsInner(thisobj, t, 'h');
+		nzFree(effects);
+		effects = initString(&eff_l);
+	}
+
 	debugPrint(5, "setter h 2");
 	return 0;
 }
@@ -582,6 +613,15 @@ static duk_ret_t setter_innerText(duk_context * cx)
 	effectChar('|');
 	effectString(h);
 	endeffect();
+	if (js1) {
+		effects[eff_l - 1] = 0;
+		debugPrint(4, "%s", effects);
+		effects[eff_l - 5] = 0;
+		char *t = strchr(effects, '|') + 1;
+		javaSetsInner(thisobj, t, 't');
+		nzFree(effects);
+		effects = initString(&eff_l);
+	}
 	debugPrint(5, "setter t 2");
 	return 0;
 }
@@ -611,8 +651,29 @@ static duk_ret_t setter_value(duk_context * cx)
 	effectChar('=');
 	effectString(h);
 	endeffect();
+	if (js1) {
+		char *t = strchr(effects, '=');
+		effects[eff_l - 1] = 0;
+		debugPrint(4, "%s", effects);
+		effects[eff_l - 5] = 0;
+		*t++ = 0;
+		prepareForField(t);
+		javaSetsTagVar(thisobj, t);
+		nzFree(effects);
+		effects = initString(&eff_l);
+	}
 	debugPrint(5, "setter v 2");
 	return 0;
+}
+
+static void linkageNow(char linkmode, jsobjtype o)
+{
+	effects[eff_l - 1] = 0;
+	debugPrint(4, "%s", effects);
+	effects[eff_l - 5] = 0;
+	javaSetsLinkage(false, linkmode, o, strchr(effects, ',') + 1);
+	nzFree(effects);
+	effects = initString(&eff_l);
 }
 
 static duk_ret_t native_log_element(duk_context * cx)
@@ -625,6 +686,8 @@ static duk_ret_t native_log_element(duk_context * cx)
 	sprintf(e, "l{c|%s,%s 0x0, 0x0, ", pointer2string(newobj), tag);
 	effectString(e);
 	endeffect();
+	if (js1)
+		linkageNow('c', newobj);
 	duk_pop(cx);
 // create the innerHTML member with its setter, this has to be done in C.
 	duk_push_string(cx, "innerHTML");
@@ -738,6 +801,24 @@ static void set_timeout(duk_context * cx, bool isInterval)
 	effectChar('|');
 	effectChar((isInterval ? '1' : '0'));
 	endeffect();
+
+	if (js1) {
+		struct inputChange *ic;
+		effects[eff_l - 1] = 0;
+		debugPrint(4, "%s", effects);
+		ic = allocMem(sizeof(struct inputChange) + strlen(fname));
+		ic->major = 't';
+		ic->minor = (isInterval ? '1' : '0');
+		ic->f0 = cf;
+// Yeah I know, this isn't a pointer to htmlTag.
+		ic->t = to;
+		ic->tagno = n;
+		strcpy(ic->value, fname);
+		addToListBack(&inputChangesPending, ic);
+		nzFree(effects);
+		effects = initString(&eff_l);
+	}
+
 	debugPrint(5, "timer 2");
 }
 
@@ -760,6 +841,22 @@ static duk_ret_t native_clearTimeout(duk_context * cx)
 	sprintf(nstring, "t{0|-|%s|0", pointer2string(obj));	// }
 	effectString(nstring);
 	endeffect();
+
+	if (js1) {
+		struct inputChange *ic;
+		effects[eff_l - 1] = 0;
+		debugPrint(4, "%s", effects);
+		ic = allocMem(sizeof(struct inputChange));
+		ic->major = 't';
+		ic->minor = '0';
+		ic->f0 = cf;
+		ic->t = obj;
+		ic->tagno = 0;
+		strcpy(ic->value, "-");
+		addToListBack(&inputChangesPending, ic);
+		nzFree(effects);
+		effects = initString(&eff_l);
+	}
 // We should unlink this from window, so gc can clean it up.
 // We'd have to save the fakePropName to do that.
 	return 0;
@@ -791,6 +888,15 @@ static void dwrite(duk_context * cx, bool newline)
 	if (newline)
 		effectChar('\n');
 	endeffect();
+	if (js1) {
+		effects[eff_l - 1] = 0;
+		debugPrint(4, "%s", effects);
+		effects[eff_l - 5] = 0;
+		dwStart();
+		stringAndString(&cf->dw, &cf->dw_l, effects + 2);
+		nzFree(effects);
+		effects = initString(&eff_l);
+	}
 }
 
 static duk_ret_t native_doc_write(duk_context * cx)
@@ -833,6 +939,7 @@ static const char *embedNodeName(jsobjtype obj)
 		if (length >= MAXTAGNAME)
 			length = MAXTAGNAME - 1;
 		strncpy(b, nodeName, length);
+		b[length] = 0;
 	}
 	duk_pop_2(jcx);
 	return b;
@@ -892,6 +999,9 @@ static void append0(duk_context * cx, bool side)
 	effectString(childname);
 	effectString(" 0x0, ");
 	endeffect();
+	if (js1)
+		linkageNow('a', thisobj);
+
 done:
 	debugPrint(5, "append 2");
 }
@@ -981,6 +1091,9 @@ static duk_ret_t native_insbf(duk_context * cx)
 	effectString(itemname);
 	effectChar(' ');
 	endeffect();
+	if (js1)
+		linkageNow('b', thisobj);
+
 done:
 	debugPrint(5, "before 2");
 	return 1;
@@ -1042,6 +1155,8 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	effectString(childname);
 	effectString(" 0x0, ");
 	endeffect();
+	if (js1)
+		linkageNow('r', thisobj);
 
 done:
 	duk_pop(cx);		// the argument
@@ -1133,6 +1248,13 @@ static duk_ret_t native_formSubmit(duk_context * cx)
 	effectString("f{s");	// }
 	effectString(pointer2string(thisobj));
 	endeffect();
+	if (js1) {
+		effects[eff_l - 1] = 0;
+		debugPrint(4, "%s", effects);
+		javaSubmitsForm(thisobj, false);
+		nzFree(effects);
+		effects = initString(&eff_l);
+	}
 	return 0;
 }
 
@@ -1145,6 +1267,13 @@ static duk_ret_t native_formReset(duk_context * cx)
 	effectString("f{r");	// }
 	effectString(pointer2string(thisobj));
 	endeffect();
+	if (js1) {
+		effects[eff_l - 1] = 0;
+		debugPrint(4, "%s", effects);
+		javaSubmitsForm(thisobj, true);
+		nzFree(effects);
+		effects = initString(&eff_l);
+	}
 	return 0;
 }
 
@@ -1209,10 +1338,16 @@ static bool foldinCookie(const char *newcook)
 		nzFree(nc);
 		return false;
 	}
-// looks ok, pass back to edbrowse
-	effectString("c{");	// }
-	effectString(newcook);
-	endeffect();
+
+	duk_get_global_string(jcx, "eb$url");
+	receiveCookie(duk_get_string(jcx, -1), newcook);
+	duk_pop(jcx);
+	if (!js1) {
+// pass back to the edbrowse process
+		effectString("c{");	// }
+		effectString(newcook);
+		endeffect();
+	}
 
 	++s;
 	save = *s;
@@ -1253,13 +1388,6 @@ static duk_ret_t native_setcook(duk_context * cx)
 	debugPrint(5, "cook 1");
 	if (newcook) {
 		foldinCookie(newcook);
-		if (!js1) {
-// foldinCookie passes the cookie back up to the parent process, but the js
-// process, this process, might need the cookie as well for XHR.
-			duk_get_global_string(cx, "eb$url");
-			receiveCookie(duk_get_string(cx, -1), newcook);
-			duk_pop(cx);
-		}
 	}
 	debugPrint(5, "cook 2");
 	return 0;

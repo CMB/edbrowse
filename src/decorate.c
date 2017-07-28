@@ -1577,7 +1577,7 @@ struct htmlTag *newTag(const char *name)
 			break;
 
 	if (!ti->name[0]) {
-		debugPrint(3, "warning, created node %s reverts to generic",
+		debugPrint(4, "warning, created node %s reverts to generic",
 			   name);
 		ti = availableTags + 2;
 	}

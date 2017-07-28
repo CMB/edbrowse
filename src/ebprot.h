@@ -61,7 +61,10 @@ bool ebConnect(void) ;
 int goSelect(int *startLine, char **rbuf) ;
 
 /* sourcefile=ebjs.c */
+void javaSetsTagVar(jsobjtype v, const char *newtext);
+void javaSetsInner(jsobjtype v, const char *newtext, char c);
 void dwStart(void);
+void garbageSweep1(jsobjtype p);
 void createJavaContext(void) ;
 void freeJavaContext(struct ebFrame *f) ;
 void js_shutdown(void) ;
