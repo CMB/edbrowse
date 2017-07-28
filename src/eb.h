@@ -43,6 +43,7 @@
 #include <direct.h> // for _mkdir, ...
 #include <conio.h>  // for _kbhit, getch, getche
 #include <stdint.h> // for UINT32_MAX
+#include "vsprtf.h" // for WIN32 asprintf, vasprintf, ...
 #else
 #include <unistd.h>
 #endif
