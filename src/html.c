@@ -12,6 +12,7 @@ static void javaSetsTimeout(int n, const char *jsrc, jsobjtype to,
 
 #ifdef _MSC_VER			// sleep(secs) macro
 #define SLEEP(a) Sleep(a * 1000)
+extern int gettimeofday(struct timeval *tp, void *tzp); // from tidys.lib
 #else // !_MSC_VER
 #define SLEEP sleep
 #endif // _MSC_VER y/n
