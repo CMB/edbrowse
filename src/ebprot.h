@@ -96,9 +96,7 @@ char *get_property_option(jsobjtype obj) ;
 void setupJavaDom(void) ;
 char *get_property_url(jsobjtype owner, bool action) ;
 void rebuildSelectors(void);
-jsobjtype run_function_object(jsobjtype obj, const char *name);
 bool run_function_bool(jsobjtype obj, const char *name);
-void run_function_objargs(jsobjtype obj, const char *name, int nargs, ...);
 void run_function_onearg(jsobjtype obj, const char *name, jsobjtype o);
 void set_basehref(const char *b);
 
@@ -380,7 +378,11 @@ int js_main(int argc, char **argv);
 enum ej_proptype has_property_nat(jsobjtype obj, const char *name) ;
 void delete_property_nat(jsobjtype obj, const char *name) ;
 char *get_property_string_nat(jsobjtype obj, const char *name) ;
+int get_property_number_nat(jsobjtype parent, const char *name) ;
+double get_property_float_nat(jsobjtype parent, const char *name) ;
+bool get_property_bool_nat(jsobjtype parent, const char *name) ;
 jsobjtype get_property_object_nat(jsobjtype parent, const char *name) ;
+jsobjtype get_property_function_nat(jsobjtype parent, const char *name) ;
 jsobjtype get_array_element_object_nat(jsobjtype obj, int idx) ;
 int set_property_string_nat(jsobjtype obj, const char *name, const char *value) ;
 int set_property_number_nat(jsobjtype obj, const char *name, int n) ;
@@ -393,6 +395,7 @@ jsobjtype instantiate_array_element_nat(jsobjtype array, int idx, const char *cl
 jsobjtype instantiate_nat(jsobjtype parent, const char *name, const char *classname) ;
 int set_property_function_nat(jsobjtype parent, const char *name, const char *body) ;
 int get_arraylength_nat(jsobjtype a);
+bool run_function_bool_nat(jsobjtype obj, const char *name);
 void run_function_onearg_nat(jsobjtype obj, const char *name, jsobjtype o);
 void processMessage1(void);
 

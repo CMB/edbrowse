@@ -297,18 +297,11 @@ void garbageSweep1(jsobjtype p)
 {
 	struct ebWindow *w;
 	int i;
-
-// current window is the most likely.
-	if (garbageSweep2(cw, p))
-		return;
-
 	for (i = 1; i < MAXSESSION; ++i) {
 		w = sessionList[i].lw;
 		if (!w)
 			continue;
 		do {
-			if (w == cw)
-				continue;
 			if (garbageSweep2(w, p))
 				return;
 		} while ((w = w->prev));
@@ -1704,7 +1697,9 @@ void rebuildSelectors(void)
 
 }				/* rebuildSelectors */
 
+#if 0
 /* run a function with no args that returns an object */
+/* no native version of this, and not sure why I thought I needed it. */
 jsobjtype run_function_object(jsobjtype obj, const char *name)
 {
 	run_function(obj, name, 0, NULL);
@@ -1722,6 +1717,7 @@ jsobjtype run_function_object(jsobjtype obj, const char *name)
 	propval = 0;
 	return NULL;
 }				/* run_function_object */
+#endif
 
 /* run a function with no args that returns a boolean */
 bool run_function_bool(jsobjtype obj, const char *name)
@@ -1747,7 +1743,8 @@ bool run_function_bool(jsobjtype obj, const char *name)
 	return true;
 }				/* run_function_bool */
 
-void run_function_objargs(jsobjtype obj, const char *name, int nargs, ...)
+static void run_function_objargs(jsobjtype obj, const char *name, int nargs,
+				 ...)
 {
 /* lazy, limit of 20 args */
 	jsobjtype argv[20];

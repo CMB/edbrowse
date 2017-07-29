@@ -521,7 +521,7 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	jsobjtype thisobj;
 	char *run;
 	int run_l;
-	const char *h = duk_to_string(cx, 0);
+	const char *h = duk_to_string(cx, -1);
 	if (!h)			// should never happen
 		h = emptyString;
 	debugPrint(5, "setter h 1");
@@ -541,6 +541,7 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	} else {
 // no child nodes array, don't do anything.
 // This should never happen.
+		duk_pop_n(cx, 3);
 		debugPrint(5, "setter h 3");
 		return 0;
 	}
@@ -599,7 +600,7 @@ static duk_ret_t getter_innerText(duk_context * cx)
 static duk_ret_t setter_innerText(duk_context * cx)
 {
 	jsobjtype thisobj;
-	const char *h = duk_to_string(cx, 0);
+	const char *h = duk_to_string(cx, -1);
 	if (!h)			// should never happen
 		h = emptyString;
 	debugPrint(5, "setter t 1");
@@ -637,7 +638,7 @@ static duk_ret_t getter_value(duk_context * cx)
 static duk_ret_t setter_value(duk_context * cx)
 {
 	jsobjtype thisobj;
-	const char *h = duk_to_string(cx, 0);
+	const char *h = duk_to_string(cx, -1);
 	if (!h)			// should never happen
 		h = emptyString;
 	debugPrint(5, "setter v 1");
@@ -678,8 +679,8 @@ static void linkageNow(char linkmode, jsobjtype o)
 
 static duk_ret_t native_log_element(duk_context * cx)
 {
-	jsobjtype newobj = watch_heapptr(0);
-	const char *tag = duk_get_string(cx, 1);
+	jsobjtype newobj = watch_heapptr(-2);
+	const char *tag = duk_get_string(cx, -1);
 	char e[60];
 	debugPrint(5, "log el 1");
 // pass the newly created node over to edbrowse
@@ -1574,6 +1575,58 @@ jsobjtype get_property_object_nat(jsobjtype parent, const char *name)
 	return o;
 }				/* get_property_object_nat */
 
+jsobjtype get_property_function_nat(jsobjtype parent, const char *name)
+{
+	jsobjtype o = NULL;
+	duk_push_heapptr(jcx, parent);
+	duk_get_prop_string(jcx, -1, name);
+	if (duk_is_function(jcx, -1))
+		o = watch_heapptr(-1);
+	duk_pop_2(jcx);
+	return o;
+}				/* get_property_function_nat */
+
+int get_property_number_nat(jsobjtype parent, const char *name)
+{
+	int n = -1;
+	duk_push_heapptr(jcx, parent);
+	duk_get_prop_string(jcx, -1, name);
+	if (duk_is_number(jcx, -1)) {
+		double d = duk_get_number(jcx, -1);
+		n = d;		// truncate
+	}
+	duk_pop_2(jcx);
+	return n;
+}				/* get_property_number_nat */
+
+double get_property_float_nat(jsobjtype parent, const char *name)
+{
+	double d = -1;
+	duk_push_heapptr(jcx, parent);
+	duk_get_prop_string(jcx, -1, name);
+	if (duk_is_number(jcx, -1))
+		d = duk_get_number(jcx, -1);
+	duk_pop_2(jcx);
+	return d;
+}				/* get_property_float_nat */
+
+bool get_property_bool_nat(jsobjtype parent, const char *name)
+{
+	bool b = false;
+	duk_push_heapptr(jcx, parent);
+	duk_get_prop_string(jcx, -1, name);
+	if (duk_is_number(jcx, -1)) {
+		if (duk_get_number(jcx, -1))
+			b = true;
+	}
+	if (duk_is_boolean(jcx, -1)) {
+		if (duk_get_boolean(jcx, -1))
+			b = true;
+	}
+	duk_pop_2(jcx);
+	return b;
+}				/* get_property_bool_nat */
+
 int set_property_string_nat(jsobjtype parent, const char *name,
 			    const char *value)
 {
@@ -1714,6 +1767,31 @@ static void processError(void)
 	}
 	duk_pop(jcx);
 }
+
+// No arguments; returns abool.
+bool run_function_bool_nat(jsobjtype parent, const char *name)
+{
+	duk_push_heapptr(jcx, parent);
+	if (!duk_get_prop_string(jcx, -1, name) || !duk_is_function(jcx, -1)) {
+#if 0
+		if (!errorMessage)
+			asprintf(&errorMessage, "no such function %s", name);
+#endif
+		duk_pop_2(jcx);
+		return false;
+	}
+	duk_insert(jcx, -2);
+	if (!duk_pcall_method(jcx, 0)) {
+		bool rc = false;
+		if (duk_is_boolean(jcx, -1))
+			rc = duk_get_boolean(jcx, -1);
+		duk_pop(jcx);
+		return rc;
+	}
+// error in execution
+	processError();
+	return false;
+}				/* run_function_bool_nat */
 
 // The single argument to the function has to be an object.
 void run_function_onearg_nat(jsobjtype parent, const char *name,
