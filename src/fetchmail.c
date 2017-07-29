@@ -462,7 +462,7 @@ static void scanFolder(CURL * handle, struct FOLDER *f, bool allmessages)
 	char *envp_end;
 	int envp_l;
 
-	if (!f->nmsgs || !(allmessages && !f->unread)) {
+	if (!f->nmsgs || (!allmessages && !f->unread)) {
 		i_puts(MSG_NoMessages);
 		return;
 	}
