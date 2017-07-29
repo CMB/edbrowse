@@ -58,6 +58,7 @@ static int javaDisCount;
 static struct DBTABLE dbtables[MAXDBT];
 static int numTables;
 volatile bool intFlag;
+bool curlActive;
 bool ismc, isimap, passMail;
 char whichproc = 'e';		// edbrowse
 bool js1;			// all in one process
@@ -324,7 +325,7 @@ void eb_curl_global_init(void)
 		if (curl_init_status != CURLE_OK)
 			goto libcurl_init_fail;
 	}
-	if (cookieFile && whichproc == 'e') {
+	if (cookieFile && whichproc == 'e' && !ismc) {
 		curl_init_status =
 		    curl_easy_setopt(global_http_handle, CURLOPT_COOKIEJAR,
 				     cookieFile);
@@ -341,6 +342,7 @@ void eb_curl_global_init(void)
 			     global_share_handle);
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
+	curlActive = true;
 	return;
 
 libcurl_init_fail:
@@ -358,8 +360,10 @@ void ebClose(int n)
 	bg_jobs(true);
 	dbClose();
 	js_shutdown();
-	mergeCookies();
-	eb_curl_global_cleanup();
+	if (curlActive) {
+		mergeCookies();
+		eb_curl_global_cleanup();
+	}
 	exit(n);
 }				/* ebClose */
 
@@ -575,12 +579,6 @@ int main(int argc, char **argv)
 	}
 	account = localAccount;
 
-// With config file read, we can now set up the global http handle
-// with certificate file and cookie jar etc.
-	eb_curl_global_init();
-	cookiesFromJar();
-	setupEdbrowseCache();
-
 	for (; argc && argv[0][0] == '-'; ++argv, --argc) {
 		char *s = *argv;
 		++s;
@@ -629,6 +627,7 @@ int main(int argc, char **argv)
 			if (!*s) {
 				ismc = true;	/* running as a mail client */
 				allowJS = false;	/* no javascript in mail client */
+				eb_curl_global_init();
 				++argv, --argc;
 				if (!argc || !dofetch)
 					break;

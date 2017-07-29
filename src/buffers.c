@@ -3747,7 +3747,13 @@ et_go:
 		if (isdigitByte(*t))
 			account = strtol(t, (char **)&t, 10);
 		if (!*t) {
-/* send mail */
+// In case we haven't started curl yet.
+			if (!curlActive) {
+				eb_curl_global_init();
+// we don't need cookies and cache for email, but http might follow.
+				cookiesFromJar();
+				setupEdbrowseCache();
+			}
 			return sendMailCurrent(account, dosig);
 		} else {
 			setError(MSG_SMBadChar);

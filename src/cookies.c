@@ -192,6 +192,8 @@ bool receiveCookie(const char *url, const char *str)
 	const char *p, *q, *server;
 	char *date, *s;
 
+	if (!curlActive)
+		return false;
 	debugPrint(3, "cookie %s", str);
 
 	server = getHostURL(url);
@@ -412,11 +414,14 @@ void sendCookies(char **s, int *l, const char *url, bool issecure)
 	time_t now;
 	struct curl_slist *known_cookies = NULL;
 	struct curl_slist *cursor = NULL;
-	curl_easy_getinfo(global_http_handle, CURLINFO_COOKIELIST,
-			  &known_cookies);
 
+	if (!curlActive)
+		return;
 	if (!url || !server || !data)
 		return;
+
+	curl_easy_getinfo(global_http_handle, CURLINFO_COOKIELIST,
+			  &known_cookies);
 
 	if (data > url && data[-1] == '/')
 		data--;
@@ -534,6 +539,8 @@ void mergeCookies(void)
 	if (!cookieFile)
 		return;
 	if (whichproc != 'e')
+		return;
+	if (ismc)
 		return;
 
 	spoonfeed = false;

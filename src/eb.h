@@ -250,6 +250,7 @@ extern int jsPool;		/* size of js pool in megabytes */
 extern int webTimeout, mailTimeout;
 extern uchar browseLocal;
 extern bool sqlPresent;		/* Was edbrowse compiled with SQL built in? */
+extern bool curlActive; // is curl running?
 extern bool ismc;		/* Is the program running as a mail client? */
 extern bool isimap;		/* Is the program running as an imap client? */
 extern bool js1; // run as one process, not a separate js process

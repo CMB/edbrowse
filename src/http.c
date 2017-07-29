@@ -897,6 +897,12 @@ bool httpConnect(const char *url, bool down_ok, bool webpage,
 		return false;
 	}
 
+	if (!curlActive) {
+		eb_curl_global_init();
+		cookiesFromJar();
+		setupEdbrowseCache();
+	}
+
 	if (stringEqualCI(prot, "http") || stringEqualCI(prot, "https")) {
 		;		/* ok for now */
 	} else if (stringEqualCI(prot, "ftp") ||

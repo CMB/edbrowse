@@ -9,6 +9,10 @@ Issue the ipass command to enter a password without echo.
 Curl authorization negotiations enabled or disabled via the can toggle command.
 This is a workaround for problems with NTLM.
 
+Parallel instances of edbrowse don't clobber each other's cookies when they exit and write the common cookie jar.
+See mergeCookies() in cookies.c.
+curl does not become active until you need it.
+
 Environment variable JSGC forces duktape garbage collection after every script.
 Environment variable JS1 keeps edbrowse and js in one process.
 These are for development and testing, and could go away.
