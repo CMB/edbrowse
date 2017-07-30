@@ -1161,7 +1161,12 @@ c.prototype.attachEvent = window.attachEvent;
 // Form has children for sure, but if we add <input> to Form,
 // we also have to add it to the array Form.elements.
 // So there are some nodes that we have to do outside this loop.
-for(var cn in {HtmlObj, Head, Body, Frame, Anchor, Element, Lister, Listitem, Tbody, Table, Div, Span, Trow, Cell, P, Script}) {
+for(var cn in {HtmlObj, Head, Body, Frame,
+Anchor, Element, Lister, Listitem, Tbody, Table, Div,
+Span, Trow, Cell, P, Script,
+// The following nodes shouldn't have any children, but the various
+// children methods could be called on them anyways.
+TextNode, Image, Option, Link, Meta}) {
 var c = window[cn];
 // c is class and cn is classname.
 // get elements below
@@ -1302,15 +1307,4 @@ Array.prototype.getAttribute = document.getAttribute;
 Array.prototype.setAttribute = document.setAttribute;
 Array.prototype.hasAttribute = document.hasAttribute;
 Array.prototype.removeAttribute = document.removeAttribute;
-
-// Nodes that are stand-alone and shouldn't have any children.
-for(var cn in {TextNode, Image, Option, Link, Meta}) {
-var c = window[cn];
-c.prototype.hasChildren = eb$falsefunction;
-c.prototype.hasAttribute = document.hasAttribute;
-c.prototype.getAttribute = document.getAttribute;
-c.prototype.setAttribute = document.setAttribute;
-c.prototype.removeAttribute = document.removeAttribute;
-c.prototype.cloneNode = document.cloneNode;
-}
 
