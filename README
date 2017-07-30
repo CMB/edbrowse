@@ -251,6 +251,8 @@ Manage all the js objects corresponding to the web page in edbrowse.
 All the js details are hidden in this file.
 this is encapsulation, hiding the js library from the rest of edbrowse.
 It might be possible, for instance, to build jseng-v8.c, based upon v8 etc.
+Earlier versions of edbrowse used jseng-moz.cpp, around the Mozilla Spider Monkey javascript engine.
+That file is no longer part of this source tree, but can be extracted from git.
 
 src/html-tidy.c:
 Use tidy5 to parse html and return a tree of nodes.
