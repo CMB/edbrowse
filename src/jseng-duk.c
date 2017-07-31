@@ -122,66 +122,78 @@ static enum ej_proptype proptype;
 static char *runscript;
 static duk_context *context0;
 
-// We only need a wrapper around duktape free, but if you don't provide
-// all 3 functions it won't call any of them.
+/* wrappers around duktape alloc functions: add our own header */
+struct jsdata_wrap {
+	uint64_t header;
+	char data[0];
+};
+#define container_of(addr, type, member) ({                     \
+        const typeof(((type *) 0)->member) * __mptr = (addr);   \
+        (type *)((char *) __mptr - offsetof(type, member)); })
+
 
 static void *watch_malloc(void *udata, size_t n)
 {
-	return malloc(n);
+	struct jsdata_wrap *w = malloc(n+sizeof(struct jsdata_wrap));
+
+	if (!w)
+		return NULL;
+
+	w->header = 0;
+	return w->data;
 }
 
 static void *watch_realloc(void *udata, void *p, size_t n)
 {
-	return realloc(p, n);
-}
+	struct jsdata_wrap *w;
 
-static void **watch_list;
-static int watch_n, watch_alloc;
+	if (!p)
+		return watch_malloc(udata, n);
+
+	w = container_of(p, struct jsdata_wrap, data);
+
+	if (w->header != 0)
+		debugPrint(1, "realloc with a watched pointer, shouldn't happen");
+
+	w = realloc(w, n+sizeof(struct jsdata_wrap));
+	return w->data;
+}
 
 static void watch_free(void *udata, void *p)
 {
 	int i;
 	char e[40];
+	struct jsdata_wrap *w;
+
 	if (!p)
 		return;
-	free(p);
-	for (i = 0; i < watch_n; ++i) {
-		if (watch_list[i] != p)
-			continue;
-		sprintf(e, "g{%p", p);
-		effectString(e);
-		endeffect();
-		if (js1) {
-			effects[eff_l - 1] = 0;
-			debugPrint(4, "%s", effects);
-			garbageSweep1(p);
-			nzFree(effects);
-			effects = initString(&eff_l);
-		}
-		watch_list[i] = watch_list[--watch_n];
-		break;
+
+	w = container_of(p, struct jsdata_wrap, data);
+	i = w->header;
+	free(w);
+	if (!i)
+		return;
+
+	sprintf(e, "g{%p", p);
+	effectString(e);
+	endeffect();
+	if (js1) {
+		effects[eff_l - 1] = 0;
+		debugPrint(4, "%s", effects);
+		garbageSweep1(p);
+		nzFree(effects);
+		effects = initString(&eff_l);
 	}
 }
 
 // Wrapper around get_heapptr()
 static void *watch_heapptr(int idx)
 {
-	int i, a;
 	void *p = duk_get_heapptr(jcx, idx);
-	for (i = 0; i < watch_n; ++i)
-		if (watch_list[i] == p)
-			return p;
-// not found, add it to the list
-	a = watch_alloc;
-	if (watch_n == a) {
-/* make more room */
-		a = a / 2 * 3;
-		debugPrint(3, "%d heap pointers", a);
-		watch_list =
-		    (void **)reallocMem(watch_list, a * sizeof(void *));
-		watch_alloc = a;
-	}
-	watch_list[watch_n++] = p;
+
+	struct jsdata_wrap *w = container_of(p, struct jsdata_wrap, data);
+	w->header = 1;
+
 	return p;
 }
 
@@ -197,9 +209,6 @@ int js_main(int argc, char **argv)
 	}
 
 	effects = initString(&eff_l);
-	watch_n = 0;
-	watch_alloc = 512;
-	watch_list = (void **)allocMem(watch_alloc * sizeof(void *));
 
 	context0 =
 	    duk_create_heap(watch_malloc, watch_realloc, watch_free, 0, 0);
