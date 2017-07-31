@@ -693,6 +693,8 @@ static duk_ret_t native_log_element(duk_context * cx)
 	jsobjtype newobj = watch_heapptr(-2);
 	const char *tag = duk_get_string(cx, -1);
 	char e[60];
+	if (!newobj || !tag)
+		return 0;
 	debugPrint(5, "log el 1");
 // pass the newly created node over to edbrowse
 	sprintf(e, "l{c|%s,%s 0x0, 0x0, ", pointer2string(newobj), tag);
@@ -850,6 +852,8 @@ static duk_ret_t native_clearTimeout(duk_context * cx)
 {
 	jsobjtype obj = watch_heapptr(0);
 	char nstring[60];
+	if (!obj)
+		return 0;
 	sprintf(nstring, "t{0|-|%s|0", pointer2string(obj));	// }
 	effectString(nstring);
 	endeffect();
