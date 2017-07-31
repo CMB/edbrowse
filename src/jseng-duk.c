@@ -131,10 +131,9 @@ struct jsdata_wrap {
         const typeof(((type *) 0)->member) * __mptr = (addr);   \
         (type *)((char *) __mptr - offsetof(type, member)); })
 
-
 static void *watch_malloc(void *udata, size_t n)
 {
-	struct jsdata_wrap *w = malloc(n+sizeof(struct jsdata_wrap));
+	struct jsdata_wrap *w = malloc(n + sizeof(struct jsdata_wrap));
 
 	if (!w)
 		return NULL;
@@ -153,9 +152,10 @@ static void *watch_realloc(void *udata, void *p, size_t n)
 	w = container_of(p, struct jsdata_wrap, data);
 
 	if (w->header != 0)
-		debugPrint(1, "realloc with a watched pointer, shouldn't happen");
+		debugPrint(1,
+			   "realloc with a watched pointer, shouldn't happen");
 
-	w = realloc(w, n+sizeof(struct jsdata_wrap));
+	w = realloc(w, n + sizeof(struct jsdata_wrap));
 	return w->data;
 }
 
@@ -190,10 +190,12 @@ static void watch_free(void *udata, void *p)
 static void *watch_heapptr(int idx)
 {
 	void *p = duk_get_heapptr(jcx, idx);
-
-	struct jsdata_wrap *w = container_of(p, struct jsdata_wrap, data);
-	w->header = 1;
-
+// p could be null if the entity on the stack is not an object.
+	if (p) {
+		struct jsdata_wrap *w =
+		    container_of(p, struct jsdata_wrap, data);
+		w->header = 1;
+	}
 	return p;
 }
 
