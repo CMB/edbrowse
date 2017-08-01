@@ -2460,7 +2460,6 @@ static int frameExpandLine(int ln)
 	const char *s;
 	struct htmlTag *t;
 	struct ebFrame *save_cf, *new_cf, *last_f;
-	jsobjtype cdo;		// contentDocument object
 	struct htmlTag *cdt;	// contentDocument tag
 
 	line = fetchLine(ln, -1);
@@ -2576,10 +2575,15 @@ So check for serverData null here. Once again we pop the frame.
 	t->f1 = cf;
 	cf = save_cf;
 	if (isJSAlive) {
+		jsobjtype cdo;	// contentDocument object
+		jsobjtype cna;	// childNodes array
 		cdo = new_cf->docobj;
 		cdt->jv = cdo;
 		set_property_object(t->jv, "contentDocument", cdo);
+		cna = get_property_object(t->jv, "childNodes");
+		set_array_element_object(cna, 0, cdo);
 	}
+
 	return 0;
 }				/* frameExpandLine */
 
@@ -2638,7 +2642,6 @@ bool reexpandFrame(void)
 {
 	int j, start;
 	struct htmlTag *t, *frametag;
-	jsobjtype cdo;		// contentDocument object
 	struct htmlTag *cdt;	// contentDocument tag
 
 /* cut the children off from the frame tag */
@@ -2718,6 +2721,8 @@ bool reexpandFrame(void)
 
 	if (isJSAlive) {
 		struct ebFrame *save_cf;
+		jsobjtype cdo;	// contentDocument object
+		jsobjtype cna;	// childNodes array
 		cdo = cf->docobj;
 		cdt->jv = cdo;
 // have to point contentDocument to the new document object,
@@ -2725,6 +2730,8 @@ bool reexpandFrame(void)
 		save_cf = cf;
 		cf = frametag->f0;
 		set_property_object(frametag->jv, "contentDocument", cdo);
+		cna = get_property_object(frametag->jv, "childNodes");
+		set_array_element_object(cna, 0, cdo);
 		cf = save_cf;
 	}
 

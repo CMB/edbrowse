@@ -435,7 +435,7 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 	int j;
 	int action = t->action;
 	const char *a;		/* usually an attribute */
-	struct htmlTag *u;
+	struct htmlTag *u, *v, *cdt;
 
 	debugPrint(6, "prend %c%s %d%s",
 		   (opentag ? ' ' : '/'), t->info->name,
@@ -693,13 +693,16 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 	case TAGACT_FRAME:
 		if (opentag)
 			break;
-/* since this browser supports frames, we don't show the text inside */
-		for (u = t->firstchild; u; u = u->sibling) {
-			u->parent = 0;
+		cdt = newTag("document");
+/* Cut all the children away from t */
+		for (u = t->firstchild; u; u = v) {
+			v = u->sibling;
+			u->sibling = u->parent = 0;
 			u->deleted = true;
 			u->step = 100;
 		}
-		t->firstchild = 0;
+		t->firstchild = cdt;
+		cdt->parent = t;
 		break;
 
 	}			/* switch */
@@ -1167,8 +1170,6 @@ static void jsNode(struct htmlTag *t, bool opentag)
 	int action = t->action;
 	const struct htmlTag *above;
 	const char *a;
-	jsobjtype cdo;		// contentDocument object
-	struct htmlTag *cdt;	// contentDocument tag
 
 /* all the js variables are on the open tag */
 	if (!opentag)
@@ -1326,14 +1327,6 @@ Needless to say that's not good!
 	case TAGACT_FRAME:
 		domLink(t, "Frame", "src", "frames", cf->winobj, 0);
 		set_property_number(t->jv, "nodeType", 1);
-/* frames have contentDocument below, even though it is not populated
- * with the frame's dom as of this version of edbrowse. */
-		cdt = newTag("document");
-		t->firstchild = cdt;
-		cdt->parent = t;
-		cdo = instantiate(t->jv, "contentDocument", "Document");
-		cdt->jv = cdo;
-		cdt->step = 2;	// already decorated
 		break;
 
 	case TAGACT_IMAGE:
@@ -1363,8 +1356,13 @@ Needless to say that's not good!
 		return;		/* nothing else to do */
 
 /* js tree mirrors the dom tree. */
-	if (t->parent && t->parent->jv)
+	if (t->parent && t->parent->jv) {
 		run_function_onearg(t->parent->jv, "eb$apch1", t->jv);
+// special code for frame.contentDocument.
+		if (t->parent->action == TAGACT_FRAME)
+			set_property_object(t->parent->jv, "contentDocument",
+					    t->jv);
+	}
 
 	if (!t->parent) {
 		if (innerParent)
