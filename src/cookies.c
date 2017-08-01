@@ -146,7 +146,6 @@ static CURLcode cookieForLibcurl(const struct cookie *c)
 {
 	CURLcode ret;
 	char *cookLine = netscapeCookieLine(c);
-	debugPrint(3, "cookie for libcurl");
 	ret =
 	    curl_easy_setopt(global_http_handle, CURLOPT_COOKIELIST, cookLine);
 	nzFree(cookLine);

@@ -12,7 +12,7 @@ static void javaSetsTimeout(int n, const char *jsrc, jsobjtype to,
 
 #ifdef _MSC_VER			// sleep(secs) macro
 #define SLEEP(a) Sleep(a * 1000)
-extern int gettimeofday(struct timeval *tp, void *tzp); // from tidys.lib
+extern int gettimeofday(struct timeval *tp, void *tzp);	// from tidys.lib
 #else // !_MSC_VER
 #define SLEEP sleep
 #endif // _MSC_VER y/n
@@ -454,7 +454,12 @@ static void runGeneratedHtml(struct htmlTag *t, const char *h, const char *pre)
 				break;
 			++pre;
 			sscanf(pre, "%p", &v);
-			tagList[l + j]->jv = v;
+// sanity check
+			if (j < 0 || l + j >= cw->numTags || !tagList[l + j])
+				debugPrint(1, "l %d j %d num %d", l, j,
+					   cw->numTags);
+			else
+				tagList[l + j]->jv = v;
 			while (*pre && *pre != ',')
 				++pre;
 		}
