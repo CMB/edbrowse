@@ -2512,17 +2512,18 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
  * any subsequent traversal would fall into an infinite loop. */
 	if (add->parent) {	/* already linked in */
 		if (debugLevel >= 3) {
-			printf("linkage cycle, cannot link %s %d into %s %d",
-			       a_name, add->seqno, p_name, parent->seqno);
+			debugPrint(3,
+				   "linkage cycle, cannot link %s %d into %s %d",
+				   a_name, add->seqno, p_name, parent->seqno);
 			if (type == 'b') {
 				before = tagFromJavaVar(b_j);
-				printf(" before %s %d", b_name,
-				       (before ? before->seqno : -1));
+				debugPrint(3, "before %s %d", b_name,
+					   (before ? before->seqno : -1));
 			}
-			printf(", as the child already has parent %s %d\n",
-			       add->parent->info->name, add->parent->seqno);
-			printf
-			    ("Aborting the link, some data may not be rendered.\n");
+			debugPrint(3, "the child already has parent %s %d",
+				   add->parent->info->name, add->parent->seqno);
+			debugPrint(3,
+				   "Aborting the link, some data may not be rendered.");
 		}
 		return;
 	}

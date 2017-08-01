@@ -949,8 +949,18 @@ nodeToReturn.appendChild(eb$clone(current_item,true));
 
 // now for the strings.
 for (var item in nodeToCopy) {
-if (typeof nodeToCopy[item] == 'string' && nodeToCopy[item] !== '')
+if (typeof nodeToCopy[item] == 'string') {
+// don't copy strings that are really setters; we'll be copying inner$html
+// as a true string so won't need to copy innerHTML, and shouldn't.
+if(item == "innerHTML")
+continue;
+if(item == "innerText")
+continue;
+if(item == "value" &&
+!(nodeToCopy instanceof Array) && !(nodeToCopy instanceof Option))
+continue;
 nodeToReturn[item] = nodeToCopy[item];
+}
 }
 
 // copy style object if present and its subordinate strings.
