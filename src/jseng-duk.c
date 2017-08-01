@@ -1150,7 +1150,7 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	}
 
 /* push the other elements down */
-	for (i = mark + 1; i < length; --i) {
+	for (i = mark + 1; i < length; ++i) {
 		duk_get_prop_index(cx, -1, i);
 		duk_put_prop_index(cx, -2, i - 1);
 	}
