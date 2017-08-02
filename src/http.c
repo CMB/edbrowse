@@ -2582,6 +2582,9 @@ So check for serverData null here. Once again we pop the frame.
 		set_property_object(t->jv, "contentDocument", cdo);
 		cna = get_property_object(t->jv, "childNodes");
 		set_array_element_object(cna, 0, cdo);
+// run the frame unload function if it is there.
+// I assume it should run in the higher context.
+		run_function_bool(t->jv, "onload");
 	}
 
 	return 0;

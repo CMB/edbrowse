@@ -1326,6 +1326,7 @@ Needless to say that's not good!
 
 	case TAGACT_FRAME:
 		domLink(t, "Frame", "src", "frames", cf->winobj, 0);
+		set_onhandlers(t);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
