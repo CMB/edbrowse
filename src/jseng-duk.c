@@ -782,7 +782,10 @@ static void set_timeout(duk_context * cx, bool isInterval)
 	duk_push_string(cx, fakePropName());
 // Create a timer object.
 	duk_get_global_string(cx, "Timer");
-	duk_new(cx, 0);
+	if (duk_pnew(cx, 0)) {
+		duk_pop_n(cx, 4);
+		goto done;
+	}
 // stack now has function global fakePropertyName timer-object.
 	to = watch_heapptr(-1);
 // protect this timer from the garbage collector.
@@ -830,6 +833,7 @@ static void set_timeout(duk_context * cx, bool isInterval)
 		effects = initString(&eff_l);
 	}
 
+done:
 	debugPrint(5, "timer 2");
 }
 
@@ -1840,7 +1844,7 @@ jsobjtype instantiate_array_nat(jsobjtype parent, const char *name)
 	}
 	duk_pop(jcx);
 	duk_get_global_string(jcx, "Array");
-	duk_new(jcx, 0);
+	duk_pnew(jcx, 0);
 	a = watch_heapptr(-1);
 	duk_put_prop_string(jcx, -2, name);
 	duk_pop(jcx);
@@ -1866,7 +1870,10 @@ jsobjtype instantiate_nat(jsobjtype parent, const char *name,
 			classname);
 		exit(8);
 	}
-	duk_new(jcx, 0);
+	if (duk_pnew(jcx, 0)) {
+		duk_pop_2(jcx);
+		return 0;
+	}
 	a = watch_heapptr(-1);
 	duk_put_prop_string(jcx, -2, name);
 	duk_pop(jcx);
@@ -1881,7 +1888,10 @@ jsobjtype instantiate_array_element_nat(jsobjtype parent, int idx,
 		classname = "Object";
 	duk_push_heapptr(jcx, parent);
 	duk_get_global_string(jcx, classname);
-	duk_new(jcx, 0);
+	if (duk_pnew(jcx, 0)) {
+		duk_pop_2(jcx);
+		return 0;
+	}
 	a = watch_heapptr(-1);
 	duk_put_prop_index(jcx, -2, idx);
 	duk_pop(jcx);
