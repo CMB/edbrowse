@@ -56,6 +56,7 @@ void processMessage1(void);
 static void processMessage2(void);
 static void createContext(void);
 static void writeHeader(void);
+static void processError(void);
 
 static duk_context *jcx;
 static jsobjtype winobj;	/* window object */
@@ -783,7 +784,8 @@ static void set_timeout(duk_context * cx, bool isInterval)
 // Create a timer object.
 	duk_get_global_string(cx, "Timer");
 	if (duk_pnew(cx, 0)) {
-		duk_pop_n(cx, 4);
+		processError();
+		duk_pop_n(cx, 3);
 		goto done;
 	}
 // stack now has function global fakePropertyName timer-object.
@@ -1871,7 +1873,8 @@ jsobjtype instantiate_nat(jsobjtype parent, const char *name,
 		exit(8);
 	}
 	if (duk_pnew(jcx, 0)) {
-		duk_pop_2(jcx);
+		processError();
+		duk_pop(jcx);
 		return 0;
 	}
 	a = watch_heapptr(-1);
@@ -1889,7 +1892,8 @@ jsobjtype instantiate_array_element_nat(jsobjtype parent, int idx,
 	duk_push_heapptr(jcx, parent);
 	duk_get_global_string(jcx, classname);
 	if (duk_pnew(jcx, 0)) {
-		duk_pop_2(jcx);
+		processError();
+		duk_pop(jcx);
 		return 0;
 	}
 	a = watch_heapptr(-1);
