@@ -1846,7 +1846,11 @@ jsobjtype instantiate_array_nat(jsobjtype parent, const char *name)
 	}
 	duk_pop(jcx);
 	duk_get_global_string(jcx, "Array");
-	duk_pnew(jcx, 0);
+	if (duk_pnew(jcx, 0)) {
+		processError();
+		duk_pop(jcx);
+		return 0;
+	}
 	a = watch_heapptr(-1);
 	duk_put_prop_string(jcx, -2, name);
 	duk_pop(jcx);
