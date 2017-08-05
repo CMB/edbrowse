@@ -279,9 +279,9 @@ pole wprowadzania nie może zawierać znaków końca linii
 brak pól wprowadzania
 brak odnośników
 brak przycisków
-wiele pól wprowadzania obecnych, użyj %c1 do %c%d
-wiele odnośników obecnych, użyj %c1 do %c%d
-wiele przycisków obecnych, użyj %c1 do %c%d
+wiele pól wprowadzania obecnych, użyj %s1 do %s%d
+wiele odnośników obecnych, użyj %s1 do %s%d
+wiele przycisków obecnych, użyj %s1 do %s%d
 nie udało się wczytać danych z serwera
 %s nie jest URLem
 pobieranie zakończone.

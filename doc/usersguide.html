@@ -2198,7 +2198,9 @@ If you would like your password to not be displayed on screen when you type it,
 you can use ipass (or ipass2 if the password is the second field) to get a no-echo
 prompt for your password.
 When printing anything you entered with ipass, or if the input field type is password,
-you will get wildcards back.
+you will get stars back, consistent with other browsers.
+However, if you submit a form, and the debug level is 3 or higher, you will see the password in plain text as edbrowse prints the fields it is sending to the server.
+Users rarely run in debug mode, so this is not an issue.
 
 <P>
 You can use i&lt;7 to pull the contents of session 7 into the current input field.

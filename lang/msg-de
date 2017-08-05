@@ -279,9 +279,9 @@ kann Zeilenumbrüche nicht in ein Eingabefeld einfügen
 keine eingabefelder vorhanden
 keine Links vorhanden
 keine Schalter vorhanden
-mehrere Eingabefelder vorhanden, nutzen Sie %c1 bis %c%d
-mehrere Links vorhanden, nutzen Sie %c1 bis %c%d
-mehrere Schalter vorhanden, nutzen Sie %c1 bis %c%d
+mehrere Eingabefelder vorhanden, nutzen Sie %s1 bis %s%d
+mehrere Links vorhanden, nutzen Sie %s1 bis %s%d
+mehrere Schalter vorhanden, nutzen Sie %s1 bis %s%d
 konnte Daten nicht vom Server lesen
 %s ist keine URL
 Download abgeschlossen

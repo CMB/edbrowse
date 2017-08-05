@@ -279,9 +279,9 @@ cannot embed newlines in an input field
 no input fields present
 no links present
 no buttons present
-multiple input fields present, please use %c1 through %c%d
-multiple links present, please use %c1 through %c%d
-multiple buttons present, please use %c1 through %c%d
+multiple input fields present, please use %s1 through %s%d
+multiple links present, please use %s1 through %s%d
+multiple buttons present, please use %s1 through %s%d
 could not read the data from the server
 %s is not a url
 download complete

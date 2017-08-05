@@ -279,9 +279,9 @@ impossível embutir novas linhas num campo de entrada
 sem campos de entrada presentes
 sem linques presentes
 sem botões presentes
-presentes vários campos de entrada; por favor use %c1 até %c%d
-presentes vários linques; por favor use %c1 até %c%d
-presentes; por favor use %c1 até %c%d
+presentes vários campos de entrada; por favor use %s1 até %s%d
+presentes vários linques; por favor use %s1 até %s%d
+presentes; por favor use %s1 até %s%d
 não consegui ler os dados do servidor
 %s não é uma URL
 transferência completa
