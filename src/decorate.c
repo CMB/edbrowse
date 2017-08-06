@@ -1360,24 +1360,23 @@ Needless to say that's not good!
 
 /* js tree mirrors the dom tree. */
 /* but head and body link to document */
-	linked_in = true;
+	linked_in = false;
 	if (action == TAGACT_HEAD || action == TAGACT_BODY) {
 		run_function_onearg(cf->docobj, "eb$apch1", t->jv);
+		linked_in = true;
 	} else {
 		if (t->parent && t->parent->jv) {
 			run_function_onearg(t->parent->jv, "eb$apch1", t->jv);
+			linked_in = true;
 // special code for frame.contentDocument.
 			if (t->parent->action == TAGACT_FRAME)
 				set_property_object(t->parent->jv,
 						    "contentDocument", t->jv);
 		}
 
-		if (!t->parent) {
-			if (innerParent)
-				run_function_onearg(innerParent, "eb$apch1",
-						    t->jv);
-			else
-				linked_in = false;
+		if (!t->parent && innerParent) {
+			run_function_onearg(innerParent, "eb$apch1", t->jv);
+			linked_in = true;
 		}
 	}
 
