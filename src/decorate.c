@@ -1170,6 +1170,7 @@ static void jsNode(struct htmlTag *t, bool opentag)
 	int action = t->action;
 	const struct htmlTag *above;
 	const char *a;
+	bool linked_in;
 
 /* all the js variables are on the open tag */
 	if (!opentag)
@@ -1188,6 +1189,7 @@ Needless to say that's not good!
 		return;
 
 	debugPrint(6, "decorate %s %d", t->info->name, t->seqno);
+	fakePropLast[0] = 0;
 
 	switch (action) {
 
@@ -1358,6 +1360,7 @@ Needless to say that's not good!
 
 /* js tree mirrors the dom tree. */
 /* but head and body link to document */
+	linked_in = true;
 	if (action == TAGACT_HEAD || action == TAGACT_BODY) {
 		run_function_onearg(cf->docobj, "eb$apch1", t->jv);
 	} else {
@@ -1373,14 +1376,16 @@ Needless to say that's not good!
 			if (innerParent)
 				run_function_onearg(innerParent, "eb$apch1",
 						    t->jv);
+			else
+				linked_in = false;
 		}
 	}
 
-/* TextNode linked to document/gc to protect if from garbage collection,
- * but now it is linked to its parent, and even if it isn't,
- * we don't need it hanging around anyways. */
-	if (action == TAGACT_TEXT)
+	if (linked_in && fakePropLast[0]) {
+// Node linked to document/gc to protect if from garbage collection,
+// but now it is linked to its parent.
 		delete_property(cf->docobj, fakePropLast);
+	}
 
 /* set innerHTML from the source html, if this tag supports it */
 	if (ti->bits & TAG_INNERHTML)
