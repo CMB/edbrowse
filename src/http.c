@@ -2579,7 +2579,7 @@ So check for serverData null here. Once again we pop the frame.
 		jsobjtype cna;	// childNodes array
 		cdo = new_cf->docobj;
 		cdt->jv = cdo;
-		set_property_object(t->jv, "contentDocument", cdo);
+		set_property_object(t->jv, "content$Document", cdo);
 		cna = get_property_object(t->jv, "childNodes");
 		set_array_element_object(cna, 0, cdo);
 // run the frame unload function if it is there.
@@ -2732,7 +2732,7 @@ bool reexpandFrame(void)
 // but that requires a change of context.
 		save_cf = cf;
 		cf = frametag->f0;
-		set_property_object(frametag->jv, "contentDocument", cdo);
+		set_property_object(frametag->jv, "content$Document", cdo);
 		cna = get_property_object(frametag->jv, "childNodes");
 		set_array_element_object(cna, 0, cdo);
 		cf = save_cf;
