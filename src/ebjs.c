@@ -799,6 +799,10 @@ char *jsRunScriptResult(jsobjtype obj, const char *str, const char *filename,
 	char *s;
 
 // this never runs from the j process.
+	if (whichproc == 'j') {
+		debugPrint(1, "jsRunScript run from the js process");
+		return NULL;
+	}
 
 	if (!allowJS || !cf->winobj)
 		return NULL;
@@ -956,8 +960,21 @@ static int get_property(jsobjtype obj, const char *name)
 char *get_property_string(jsobjtype obj, const char *name)
 {
 	char *s;
+	if (!allowJS || !cf->winobj)
+		return 0;
+	if (!obj) {
+		debugPrint(3, "get_property_string(0, %s)", name);
+		return 0;
+	}
 	if (whichproc == 'j')
 		return get_property_string_nat(obj, name);
+	if (js1) {
+		debugPrint(5, "> get %s", name);
+		set_js_globals();
+		s = get_property_string_nat(obj, name);
+		debugPrint(5, "< %s", debugString(s));
+		return s;
+	}
 	get_property(obj, name);
 	s = propval;
 	propval = 0;
@@ -969,6 +986,21 @@ char *get_property_string(jsobjtype obj, const char *name)
 int get_property_number(jsobjtype obj, const char *name)
 {
 	int n = -1;
+	if (!obj) {
+		debugPrint(3, "get_property_number(0, %s)", name);
+		return -1;
+	}
+	if (whichproc == 'j')
+		return get_property_number_nat(obj, name);
+	if (!allowJS || !cf->winobj)
+		return -1;
+	if (js1) {
+		debugPrint(5, "> get %s", name);
+		set_js_globals();
+		n = get_property_number_nat(obj, name);
+		debugPrint(5, "< %d", n);
+		return n;
+	}
 	get_property(obj, name);
 	if (!propval)
 		return n;
@@ -981,6 +1013,21 @@ int get_property_number(jsobjtype obj, const char *name)
 double get_property_float(jsobjtype obj, const char *name)
 {
 	double n = 0.0, d;
+	if (!obj) {
+		debugPrint(3, "get_property_float(0, %s)", name);
+		return n;
+	}
+	if (whichproc == 'j')
+		return get_property_float_nat(obj, name);
+	if (!allowJS || !cf->winobj)
+		return n;
+	if (js1) {
+		debugPrint(5, "> get %s", name);
+		set_js_globals();
+		n = get_property_float_nat(obj, name);
+		debugPrint(5, "< %lf", n);
+		return n;
+	}
 	get_property(obj, name);
 	if (!propval)
 		return n;
@@ -994,6 +1041,21 @@ double get_property_float(jsobjtype obj, const char *name)
 bool get_property_bool(jsobjtype obj, const char *name)
 {
 	bool n = false;
+	if (!obj) {
+		debugPrint(3, "get_property_bool(0, %s)", name);
+		return n;
+	}
+	if (whichproc == 'j')
+		return get_property_bool_nat(obj, name);
+	if (!allowJS || !cf->winobj)
+		return n;
+	if (js1) {
+		debugPrint(5, "> get %s", name);
+		set_js_globals();
+		n = get_property_bool_nat(obj, name);
+		debugPrint(5, "< %s", (n ? "treu" : "false"));
+		return n;
+	}
 	get_property(obj, name);
 	if (!propval)
 		return n;
@@ -1004,12 +1066,25 @@ bool get_property_bool(jsobjtype obj, const char *name)
 	return n;
 }				/* get_property_bool */
 
-/* get a js object, as a member of another object */
+/* get a js object as a member of another object */
 jsobjtype get_property_object(jsobjtype parent, const char *name)
 {
 	jsobjtype child = 0;
+	if (!parent) {
+		debugPrint(3, "get_property_object(0, %s)", name);
+		return child;
+	}
 	if (whichproc == 'j')
 		return get_property_object_nat(parent, name);
+	if (!allowJS || !cf->winobj)
+		return child;
+	if (js1) {
+		debugPrint(5, "> get %s", name);
+		set_js_globals();
+		child = get_property_object_nat(parent, name);
+		debugPrint(5, "< %p", child);
+		return child;
+	}
 	get_property(parent, name);
 	if (!propval)
 		return child;
@@ -1023,6 +1098,21 @@ jsobjtype get_property_object(jsobjtype parent, const char *name)
 jsobjtype get_property_function(jsobjtype parent, const char *name)
 {
 	jsobjtype child = 0;
+	if (!parent) {
+		debugPrint(3, "get_property_function(0, %s)", name);
+		return child;
+	}
+	if (whichproc == 'j')
+		return get_property_function_nat(parent, name);
+	if (!allowJS || !cf->winobj)
+		return child;
+	if (js1) {
+		debugPrint(5, "> get %s", name);
+		set_js_globals();
+		child = get_property_function_nat(parent, name);
+		debugPrint(5, "< %p", child);
+		return child;
+	}
 	get_property(parent, name);
 	if (!propval)
 		return child;
@@ -1037,15 +1127,7 @@ jsobjtype get_property_function(jsobjtype parent, const char *name)
 static int get_array_element(jsobjtype obj, int idx)
 {
 	propval = 0;
-	if (!allowJS || !cf->winobj)
-		return -1;
-	if (!obj) {
-		debugPrint(3, "get_array_element(0, %d)", idx);
-		return -1;
-	}
-
 	debugPrint(5, "> get [%d]", idx);
-
 	head.cmd = EJ_CMD_GETAREL;
 	head.n = idx;
 	head.obj = obj;
@@ -1060,8 +1142,21 @@ static int get_array_element(jsobjtype obj, int idx)
 jsobjtype get_array_element_object(jsobjtype obj, int idx)
 {
 	jsobjtype p = 0;
+	if (!allowJS || !cf->winobj)
+		return p;
+	if (!obj) {
+		debugPrint(3, "get_array_element_object(0, %d)", idx);
+		return p;
+	}
 	if (whichproc == 'j')
 		return get_array_element_object_nat(obj, idx);
+	if (js1) {
+		debugPrint(5, "> get [%d]", idx);
+		set_js_globals();
+		p = get_array_element_object_nat(obj, idx);
+		debugPrint(5, "< %p", p);
+		return p;
+	}
 	get_array_element(obj, idx);
 	if (!propval)
 		return p;
@@ -1075,16 +1170,7 @@ jsobjtype get_array_element_object(jsobjtype obj, int idx)
 static int set_property(jsobjtype obj, const char *name,
 			const char *value, enum ej_proptype proptype)
 {
-
-	if (!allowJS || !cf->winobj)
-		return -1;
-	if (!obj) {
-		debugPrint(3, "set_property(0, %s, %s)", name, value);
-		return -1;
-	}
-
 	debugPrint(5, "> set %s=%s", name, debugString(value));
-
 	head.cmd = EJ_CMD_SETPROP;
 	head.obj = obj;
 	head.proptype = proptype;
@@ -1108,18 +1194,46 @@ static int set_property(jsobjtype obj, const char *name,
 
 int set_property_string(jsobjtype obj, const char *name, const char *value)
 {
+	if (!allowJS || !cf->winobj)
+		return -1;
+	if (!obj) {
+		debugPrint(3, "set_property_string(0, %s, %s)", name, value);
+		return -1;
+	}
 	if (whichproc == 'j')
 		return set_property_string_nat(obj, name, value);
 	if (value == NULL)
 		value = emptyString;
+	if (js1) {
+		int rc;
+		debugPrint(5, "> set %s=%s", name, debugString(value));
+		set_js_globals();
+		rc = set_property_string_nat(obj, name, value);
+		debugPrint(5, "< ok");
+		return rc;
+	}
 	return set_property(obj, name, value, EJ_PROP_STRING);
 }				/* set_property_string */
 
 int set_property_number(jsobjtype obj, const char *name, int n)
 {
 	char buf[20];
+	if (!allowJS || !cf->winobj)
+		return -1;
+	if (!obj) {
+		debugPrint(3, "set_property_number(0, %s, %d)", name, n);
+		return -1;
+	}
 	if (whichproc == 'j')
 		return set_property_number_nat(obj, name, n);
+	if (js1) {
+		int rc;
+		debugPrint(5, "> set %s=%d", name, n);
+		set_js_globals();
+		rc = set_property_number_nat(obj, name, n);
+		debugPrint(5, "< ok");
+		return rc;
+	}
 	sprintf(buf, "%d", n);
 	return set_property(obj, name, buf, EJ_PROP_INT);
 }				/* set_property_number */
@@ -1127,8 +1241,22 @@ int set_property_number(jsobjtype obj, const char *name, int n)
 int set_property_float(jsobjtype obj, const char *name, double n)
 {
 	char buf[32];
+	if (!allowJS || !cf->winobj)
+		return -1;
+	if (!obj) {
+		debugPrint(3, "set_property(0, %s, %lf)", name, n);
+		return -1;
+	}
 	if (whichproc == 'j')
 		return set_property_float_nat(obj, name, n);
+	if (js1) {
+		int rc;
+		debugPrint(5, "> set %s=%lf", name, n);
+		set_js_globals();
+		rc = set_property_float_nat(obj, name, n);
+		debugPrint(5, "< ok");
+		return rc;
+	}
 	sprintf(buf, "%lf", n);
 	return set_property(obj, name, buf, EJ_PROP_FLOAT);
 }				/* set_property_float */
@@ -1136,8 +1264,22 @@ int set_property_float(jsobjtype obj, const char *name, double n)
 int set_property_bool(jsobjtype obj, const char *name, bool n)
 {
 	char buf[8];
+	if (!allowJS || !cf->winobj)
+		return -1;
+	if (!obj) {
+		debugPrint(3, "set_property(0, %s, %d)", name, n);
+		return -1;
+	}
 	if (whichproc == 'j')
 		return set_property_bool_nat(obj, name, n);
+	if (js1) {
+		int rc;
+		debugPrint(5, "> set %s=%s", name, (n ? "true" : "false"));
+		set_js_globals();
+		rc = set_property_bool_nat(obj, name, n);
+		debugPrint(5, "< ok");
+		return rc;
+	}
 	strcpy(buf, (n ? "1" : "0"));
 	return set_property(obj, name, buf, EJ_PROP_BOOL);
 }				/* set_property_bool */
@@ -1145,8 +1287,22 @@ int set_property_bool(jsobjtype obj, const char *name, bool n)
 int set_property_object(jsobjtype parent, const char *name, jsobjtype child)
 {
 	char buf[32];
+	if (!allowJS || !cf->winobj)
+		return -1;
+	if (!parent) {
+		debugPrint(3, "set_property_object(0, %s, %p)", name, child);
+		return -1;
+	}
 	if (whichproc == 'j')
 		return set_property_object_nat(parent, name, child);
+	if (js1) {
+		int rc;
+		debugPrint(5, "> set %s=%p", name, child);
+		set_js_globals();
+		rc = set_property_object_nat(parent, name, child);
+		debugPrint(5, "< ok");
+		return rc;
+	}
 	sprintf(buf, "%p", child);
 	return set_property(parent, name, buf, EJ_PROP_OBJECT);
 }				/* set_property_object */
@@ -1154,14 +1310,22 @@ int set_property_object(jsobjtype parent, const char *name, jsobjtype child)
 jsobjtype instantiate_array(jsobjtype parent, const char *name)
 {
 	jsobjtype p = 0;
-
+	if (!allowJS || !cf->winobj)
+		return p;
+	if (!parent) {
+		debugPrint(3, "instantiate_array(0, %s)", name);
+		return p;
+	}
 	if (whichproc == 'j')
 		return instantiate_array_nat(parent, name);
 
-	if (!allowJS || !cf->winobj || !parent)
-		return 0;
-
 	debugPrint(5, "> new array %s", name);
+	if (js1) {
+		set_js_globals();
+		p = instantiate_array_nat(parent, name);
+		debugPrint(5, "< ok");
+		return p;
+	}
 
 	head.cmd = EJ_CMD_SETPROP;
 	head.obj = parent;
@@ -1188,12 +1352,7 @@ jsobjtype instantiate_array(jsobjtype parent, const char *name)
 static int set_array_element(jsobjtype array, int idx,
 			     const char *value, enum ej_proptype proptype)
 {
-
-	if (!allowJS || !cf->winobj || !array)
-		return -1;
-
 	debugPrint(5, "> set [%d]=%s", idx, debugString(value));
-
 	head.cmd = EJ_CMD_SETAREL;
 	head.obj = array;
 	head.proptype = proptype;
@@ -1215,8 +1374,22 @@ static int set_array_element(jsobjtype array, int idx,
 int set_array_element_object(jsobjtype array, int idx, jsobjtype child)
 {
 	char buf[32];
+	if (!allowJS || !cf->winobj)
+		return -1;
+	if (!array) {
+		debugPrint(3, "set_array_element_object(0, %d)", idx);
+		return -1;
+	}
 	if (whichproc == 'j')
 		return set_array_element_object_nat(array, idx, child);
+	if (js1) {
+		int rc;
+		debugPrint(5, "> set [%d]=%p", idx, child);
+		set_js_globals();
+		rc = set_array_element_object_nat(array, idx, child);
+		debugPrint(5, "< ok");
+		return rc;
+	}
 	sprintf(buf, "%p", child);
 	return set_array_element(array, idx, buf, EJ_PROP_OBJECT);
 }				/* set_array_element_object */
@@ -1225,8 +1398,22 @@ jsobjtype instantiate_array_element(jsobjtype array, int idx,
 				    const char *classname)
 {
 	jsobjtype p = 0;
+	if (!allowJS || !cf->winobj)
+		return p;
+	if (!array) {
+		debugPrint(3, "instantiate_array_element(0, %d, %s)", idx,
+			   classname);
+		return p;
+	}
 	if (whichproc == 'j')
 		return instantiate_array_element_nat(array, idx, classname);
+	if (js1) {
+		debugPrint(5, "> set [%d]=%s", idx, classname);
+		set_js_globals();
+		p = instantiate_array_element_nat(array, idx, classname);
+		debugPrint(5, "< ok");
+		return p;
+	}
 	set_array_element(array, idx, classname, EJ_PROP_INSTANCE);
 	if (!propval)
 		return p;
@@ -1243,14 +1430,23 @@ jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname)
 {
 	jsobjtype p = 0;
 
+	if (!allowJS || !cf->winobj)
+		return p;
+	if (!parent) {
+		debugPrint(3, "instantiate(0, %s, %s)", name, classname);
+		return p;
+	}
 	if (whichproc == 'j')
 		return instantiate_nat(parent, name, classname);
 
-	if (!allowJS || !cf->winobj || !parent)
-		return 0;
-
 	debugPrint(5, "> instantiate %s %s", name,
 		   (classname ? classname : "object"));
+	if (js1) {
+		set_js_globals();
+		p = instantiate_nat(parent, name, classname);
+		debugPrint(5, "< ok");
+		return p;
+	}
 
 	head.cmd = EJ_CMD_SETPROP;
 	head.obj = parent;
@@ -1280,10 +1476,24 @@ jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname)
 
 int set_property_function(jsobjtype parent, const char *name, const char *body)
 {
+	if (!allowJS || !cf->winobj)
+		return -1;
+	if (!parent) {
+		debugPrint(3, "set_property_function(0, %s)", name);
+		return -1;
+	}
 	if (whichproc == 'j')
 		return set_property_function_nat(parent, name, body);
 	if (!body)
 		body = emptyString;
+	if (js1) {
+		int rc;
+		debugPrint(5, "> set %s=%s", name, debugString(body));
+		set_js_globals();
+		rc = set_property_function_nat(parent, name, body);
+		debugPrint(5, "< ok");
+		return rc;
+	}
 	return set_property(parent, name, body, EJ_PROP_FUNCTION);
 /* should this really return the function created, like instantiate()? */
 }				/* set_property_function */

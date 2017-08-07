@@ -1606,6 +1606,8 @@ char *get_property_string_nat(jsobjtype parent, const char *name)
 		s = pointer2string(o);
 	} else
 		s = duk_to_string(jcx, -1);
+	if (!s)
+		s = emptyString;
 	s0 = cloneString(s);
 	duk_pop_2(jcx);
 	return s0;
