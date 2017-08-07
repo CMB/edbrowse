@@ -83,6 +83,10 @@ enum ej_varupdates {
  * between the two processes. */
 typedef void *jsobjtype;
 
+extern jsobjtype jcx; // the javascript context
+extern jsobjtype winobj;	// window object
+extern jsobjtype docobj;	// document object
+
 struct EJ_MSG {
 	int magic;		/* sanity check */
 	enum ej_cmd cmd;

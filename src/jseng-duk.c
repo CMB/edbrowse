@@ -54,13 +54,12 @@ static struct ebWindow in_js_cw;
 static void readMessage(void);
 void processMessage1(void);
 static void processMessage2(void);
-static void createContext(void);
 static void writeHeader(void);
 static void processError(void);
 
-static duk_context *jcx;
-static jsobjtype winobj;	/* window object */
-static jsobjtype docobj;	/* document object */
+jsobjtype jcx;			// the javascript context
+jsobjtype winobj;		// window object
+jsobjtype docobj;		// document object
 
 static struct ebWindow *save_cw;
 static struct ebFrame *save_cf;
@@ -1428,7 +1427,7 @@ static duk_ret_t native_setcook(duk_context * cx)
 	return 0;
 }
 
-static void createContext(void)
+void createJavaContext_nat(void)
 {
 	duk_push_thread_new_globalenv(context0);
 	jcx = duk_get_context(context0, -1);
@@ -1518,7 +1517,19 @@ static void createContext(void)
 	startCookie();		// so document.cookie will work properly
 
 // setupJavaDom() in ebjs.c does the rest.
-}				/* createContext */
+}				/* createJavaContext_nat */
+
+void freeJavaContext_nat(void)
+{
+	int i, top = duk_get_top(context0);
+	for (i = 0; i < top; ++i) {
+		if (jcx == duk_get_context(context0, i)) {
+			duk_remove(context0, i);
+			debugPrint(3, "remove js context %d", i);
+			break;
+		}
+	}
+}				/* freeJavaContext_nat */
 
 // determine the type of the element on the top of the stack.
 static enum ej_proptype top_proptype(void)
@@ -2090,7 +2101,7 @@ void processMessage1(void)
 
 	if (head.cmd == EJ_CMD_CREATE) {
 /* this one is special */
-		createContext();
+		createJavaContext_nat();
 		if (!head.highstat) {
 			head.jcx = jcx;
 			head.winobj = winobj;
@@ -2101,19 +2112,12 @@ void processMessage1(void)
 		return;
 	}
 
-	jcx = (duk_context *) head.jcx;
+	jcx = head.jcx;
 	winobj = head.winobj;
 	docobj = head.docobj;
 
 	if (head.cmd == EJ_CMD_DESTROY) {
-		int i, top = duk_get_top(context0);
-		for (i = 0; i < top; ++i) {
-			if (jcx == duk_get_context(context0, i)) {
-				duk_remove(context0, i);
-				debugPrint(3, "remove js context %d", i);
-				break;
-			}
-		}
+		freeJavaContext_nat();
 		head.n = head.proplength = 0;
 		writeHeader();
 		return;

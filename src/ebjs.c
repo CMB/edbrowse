@@ -628,6 +628,12 @@ static int writeHeader(void)
 	return writeToJS(&head, sizeof(head));
 }				/* writeHeader */
 
+// In one process, set the context variables before the function call.
+// This is accoplished by the head of the message in 2 processes.
+#define set_js_globals_f(f) (jcx = f->jcx, winobj = f->winobj, docobj = f->docobj)
+#define set_js_globals() set_js_globals_f(cf)
+#define get_js_globals() (cf->jcx = jcx, cf->winobj = winobj, cf->docobj = docobj)
+
 static const char *debugString(const char *v)
 {
 	if (!v)
@@ -683,6 +689,19 @@ void createJavaContext(void)
 
 	debugPrint(5, "> create context for session %d", context);
 
+	if (js1) {
+		createJavaContext_nat();
+		get_js_globals();
+		if (jcx) {
+			debugPrint(5, "< ok");
+			setupJavaDom();
+		} else {
+			debugPrint(5, "< error");
+			i_puts(MSG_JavaContextError);
+		}
+		return;
+	}
+
 	memset(&head, 0, sizeof(head));
 	head.cmd = EJ_CMD_CREATE;
 	if (writeHeader())
@@ -717,7 +736,15 @@ void freeJavaContext(struct ebFrame *f)
 	if (!f->winobj)
 		return;
 
-	debugPrint(5, "> free context session %d", context);
+	debugPrint(5, "> free frame %p", f);
+
+	if (js1) {
+		set_js_globals_f(f);
+		freeJavaContext_nat();
+		f->jcx = f->winobj = f->docobj = 0;
+		debugPrint(5, "< ok");
+		return;
+	}
 
 	head.magic = EJ_MAGIC;
 	head.cmd = EJ_CMD_DESTROY;
@@ -731,7 +758,7 @@ void freeJavaContext(struct ebFrame *f)
 	if (readMessage())
 		return;
 	ack5();
-	f->jcx = f->winobj = 0;
+	f->jcx = f->winobj = f->docobj = 0;
 }				/* freeJavaContext */
 
 void js_shutdown(void)
@@ -833,6 +860,14 @@ enum ej_proptype has_property(jsobjtype obj, const char *name)
 
 	debugPrint(5, "> has %s", name);
 
+	if (js1) {
+		enum ej_proptype p;
+		set_js_globals();
+		p = has_property_nat(obj, name);
+		debugPrint(5, "< %d", p);
+		return p;
+	}
+
 	head.cmd = EJ_CMD_HASPROP;
 	head.n = strlen(name);
 	head.obj = obj;
@@ -860,6 +895,12 @@ void delete_property(jsobjtype obj, const char *name)
 		return;
 
 	debugPrint(5, "> delete %s", name);
+	if (js1) {
+		set_js_globals();
+		delete_property_nat(obj, name);
+		debugPrint(5, "< ok");
+		return;
+	}
 
 	head.cmd = EJ_CMD_DELPROP;
 	head.obj = obj;

@@ -375,6 +375,8 @@ void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p)
 /* sourcefile=jseng-moz.cpp */
 int js_main(int argc, char **argv);
 // the native versions of the api functions in ebjs.c
+void createJavaContext_nat(void);
+void freeJavaContext_nat(void);
 enum ej_proptype has_property_nat(jsobjtype obj, const char *name) ;
 void delete_property_nat(jsobjtype obj, const char *name) ;
 char *get_property_string_nat(jsobjtype obj, const char *name) ;
