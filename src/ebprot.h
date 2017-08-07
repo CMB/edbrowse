@@ -372,7 +372,7 @@ char *encodePostData(const char *s) ;
 char *decodePostData(const char *data, const char *name, int seqno) ;
 void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p) ;
 
-/* sourcefile=jseng-moz.cpp */
+/* sourcefile=jseng-duk.c */
 int js_main(int argc, char **argv);
 // the native versions of the api functions in ebjs.c
 void createJavaContext_nat(void);
@@ -400,4 +400,5 @@ int get_arraylength_nat(jsobjtype a);
 bool run_function_bool_nat(jsobjtype obj, const char *name);
 void run_function_onearg_nat(jsobjtype obj, const char *name, jsobjtype o);
 void processMessage1(void);
+char *run_script_nat(const char *s);
 

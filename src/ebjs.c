@@ -199,8 +199,6 @@ static void js_kill(void)
 
 /* String description of side effects, as a result of running js code. */
 static char *effects;
-/* source file containing the js code */
-static const char *jsSourceFile;
 /* queue of edbrowse buffer changes produced by running js - see eb.h */
 struct listHead inputChangesPending = {
 	&inputChangesPending, &inputChangesPending
@@ -800,14 +798,27 @@ char *jsRunScriptResult(jsobjtype obj, const char *str, const char *filename,
 	int rc;
 	char *s;
 
-	if (!allowJS || !cf->winobj || !obj)
-		return 0;
+// this never runs from the j process.
 
+	if (!allowJS || !cf->winobj)
+		return NULL;
 	if (!str || !str[0])
-		return 0;
+		return NULL;
 
 	debugPrint(5, "> script:");
-	debugPrint(6, "%s", str);
+
+	if (js1) {
+		char *result;
+		jsSourceFile = filename;
+		jsLineno = lineno;
+		set_js_globals();
+		whichproc = 'j';
+		result = run_script_nat(str);
+		whichproc = 'e';
+		jsSourceFile = NULL;
+		debugPrint(5, "< ok");
+		return result;
+	}
 
 	head.cmd = EJ_CMD_SCRIPT;
 	head.obj = obj;		/* this, in js */

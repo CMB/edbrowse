@@ -86,6 +86,8 @@ typedef void *jsobjtype;
 extern jsobjtype jcx; // the javascript context
 extern jsobjtype winobj;	// window object
 extern jsobjtype docobj;	// document object
+extern const char *jsSourceFile; // sourcefile providing the javascript
+extern int jsLineno; // line number
 
 struct EJ_MSG {
 	int magic;		/* sanity check */

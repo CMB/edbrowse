@@ -60,6 +60,8 @@ static void processError(void);
 jsobjtype jcx;			// the javascript context
 jsobjtype winobj;		// window object
 jsobjtype docobj;		// document object
+const char *jsSourceFile;	// sourcefile providing the javascript
+int jsLineno;			// line number
 
 static struct ebWindow *save_cw;
 static struct ebFrame *save_cf;
@@ -1793,7 +1795,8 @@ int set_property_function_nat(jsobjtype parent, const char *name,
 Error object is at the top of the duktape stack.
 Extract the line number, call stack, and error message,
 the latter being error.toString().
-Leave the result in errorMessage, which is automatically sent to edbrowse.
+Leave the result in errorMessage, which is sent to edbrowse in the 2 process
+model, or printed right now if JS1 is set.
 Pop the error object when done.
 *********************************************************************/
 
@@ -1802,9 +1805,13 @@ static void processError(void)
 	const char *callstack = emptyString;
 	int offset = 0;
 	char *cut, *s;
+
+	if (!js1)
+		jsLineno = head.lineno;
 	if (duk_get_prop_string(jcx, -1, "lineNumber"))
 		offset = duk_get_int(jcx, -1);
 	duk_pop(jcx);
+
 	if (duk_get_prop_string(jcx, -1, "stack"))
 		callstack = duk_to_string(jcx, -1);
 	nzFree(errorMessage);
@@ -1815,7 +1822,10 @@ static void processError(void)
 		errorMessage = cloneString(callstack);
 	}
 	if (offset) {
-		head.lineno += (offset - 1);
+		if (js1)
+			jsLineno += (offset - 1);
+		else
+			head.lineno += (offset - 1);
 // symtax error message includes the relative line number, which is confusing
 // since edbrowse prints the absolute line number.
 		cut = strstr(errorMessage, " (line ");
@@ -1828,6 +1838,25 @@ static void processError(void)
 		}
 	}
 	duk_pop(jcx);
+
+	if (!js1)
+		return;
+
+// In one process we can print it right now, since we might not be using
+// interprocess messages to run the javascript.
+	if (debugLevel >= 3) {
+/* print message, this will be in English, and mostly for our debugging */
+		if (jsSourceFile) {
+			if (debugFile)
+				fprintf(debugFile, "%s line %d: ",
+					jsSourceFile, jsLineno);
+			else
+				printf("%s line %d: ", jsSourceFile, jsLineno);
+		}
+		debugPrint(3, "%s", errorMessage);
+	}
+	free(errorMessage);
+	errorMessage = 0;
 }
 
 // No arguments; returns abool.
@@ -2168,7 +2197,7 @@ static void processMessage2(void)
 /* head.obj should be a valid object or 0 */
 	jsobjtype parent = head.obj;
 	jsobjtype child;
-	const char *s;
+	const char *s, *gc;
 	bool rc;		/* return code */
 	bool setret;		/* does setting a property produce a return? */
 
@@ -2200,12 +2229,11 @@ static void processMessage2(void)
 		writeHeader();
 		if (head.proplength)
 			writeToEb(s, head.proplength);
-		duk_pop(jcx);
-		{
-			const char *gc = getenv("JSGC");
-			if (gc && *gc)
-				duk_gc(jcx, 0);
-		}
+		if (!rc)
+			duk_pop(jcx);
+		gc = getenv("JSGC");
+		if (gc && *gc)
+			duk_gc(jcx, 0);
 		break;
 
 	case EJ_CMD_HASPROP:
@@ -2328,3 +2356,29 @@ propreturn:
 		exit(6);
 	}
 }				/* processMessage2 */
+
+// Like EJ_CMD_SCRIT above, but without all the message header stuff.
+char *run_script_nat(const char *s)
+{
+	char *result = 0;
+	bool rc;
+	const char *gc;
+/* skip past utf8 byte order mark if present */
+	if (!strncmp(s, "\xef\xbb\xbf", 3))
+		s += 3;
+	rc = duk_peval_string(jcx, s);
+	if (!rc) {
+		s = duk_to_string(jcx, -1);
+		if (s && !*s)
+			s = 0;
+		if (s)
+			result = cloneString(s);
+		duk_pop(jcx);
+	} else {
+		processError();
+	}
+	gc = getenv("JSGC");
+	if (gc && *gc)
+		duk_gc(jcx, 0);
+	return result;
+}
