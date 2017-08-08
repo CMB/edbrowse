@@ -1826,6 +1826,7 @@ void html_from_setter(jsobjtype inner, const char *h)
 	int l = 0;
 	debugPrint(4, "Generated {%s}", h);
 	if (js1) {
+		struct htmlTag *u, *v;
 		t = tagFromJavaVar(inner);
 		if (!t) {
 			debugPrint(1,
@@ -1835,6 +1836,14 @@ void html_from_setter(jsobjtype inner, const char *h)
 		}
 		debugPrint(4, "parse under %s %d", t->info->name, t->seqno);
 		l = cw->numTags;
+/* Cut all the children away from t */
+		for (u = t->firstchild; u; u = v) {
+			v = u->sibling;
+			u->sibling = u->parent = 0;
+			u->deleted = true;
+			u->step = 100;
+		}
+		t->firstchild = NULL;
 	} else {
 		initTagArray();
 	}
