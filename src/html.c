@@ -2459,7 +2459,8 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 	}
 // Postpone anything other than create until after js is finished,
 // so we can query js variables.
-	if (!after) {
+// But no need for that in one process.
+	if (!after && !js1) {
 		struct inputChange *ic;
 		ic = allocMem(sizeof(struct inputChange) + strlen(rest));
 // Yeah I know, this isn't a pointer to htmlTag.

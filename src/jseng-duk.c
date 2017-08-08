@@ -620,22 +620,21 @@ static duk_ret_t setter_value(duk_context * cx)
 	duk_put_prop_string(cx, -2, "val$ue");
 	thisobj = watch_heapptr(-1);
 	duk_pop(cx);
-	effectString("v{");	// }
-	effectString(pointer2string(thisobj));
-	effectChar('=');
-	effectString(h);
-	endeffect();
+
 	if (js1) {
-		char *t = strchr(effects, '=');
-		effects[eff_l - 1] = 0;
-		debugPrint(4, "%s", effects);
-		effects[eff_l - 5] = 0;
-		*t++ = 0;
+		char *t = cloneString(h);
 		prepareForField(t);
+		debugPrint(4, "value %p=%s", thisobj, t);
 		javaSetsTagVar(thisobj, t);
-		nzFree(effects);
-		effects = initString(&eff_l);
+		nzFree(t);
+	} else {
+		effectString("v{");	// }
+		effectString(pointer2string(thisobj));
+		effectChar('=');
+		effectString(h);
+		endeffect();
 	}
+
 	debugPrint(5, "setter v 2");
 	return 0;
 }
@@ -658,9 +657,8 @@ static duk_ret_t setter_cd(duk_context * cx)
 
 static void linkageNow(char linkmode, jsobjtype o)
 {
-	effects[eff_l - 1] = 0;
-	debugPrint(4, "%s", effects);
 	effects[eff_l - 5] = 0;
+	debugPrint(4, "linkset %s", effects + 2);
 	javaSetsLinkage(false, linkmode, o, strchr(effects, ',') + 1);
 	nzFree(effects);
 	effects = initString(&eff_l);
