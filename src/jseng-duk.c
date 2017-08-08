@@ -708,7 +708,6 @@ static void set_timeout(duk_context * cx, bool isInterval)
 	jsobjtype to;		// timer object
 	int top = duk_get_top(cx);
 	int n = 1000;		/* default number of milliseconds */
-	char nstring[20];
 	char fname[48];		/* function name */
 	const char *fstr;	/* function string */
 	const char *s;
@@ -787,30 +786,18 @@ static void set_timeout(duk_context * cx, bool isInterval)
 		      DUK_DEFPROP_CLEAR_CONFIGURABLE));
 // leaves just the timer object on the stack, which is what we want.
 
-	sprintf(nstring, "t{%d|", n);	// }
-	effectString(nstring);
-	effectString(fname);
-	effectChar('|');
-	effectString(pointer2string(to));
-	effectChar('|');
-	effectChar((isInterval ? '1' : '0'));
-	endeffect();
-
 	if (js1) {
-		struct inputChange *ic;
-		effects[eff_l - 1] = 0;
-		debugPrint(4, "%s", effects);
-		ic = allocMem(sizeof(struct inputChange) + strlen(fname));
-		ic->major = 't';
-		ic->minor = (isInterval ? '1' : '0');
-		ic->f0 = cf;
-// Yeah I know, this isn't a pointer to htmlTag.
-		ic->t = to;
-		ic->tagno = n;
-		strcpy(ic->value, fname);
-		addToListBack(&inputChangesPending, ic);
-		nzFree(effects);
-		effects = initString(&eff_l);
+		javaSetsTimeout(n, fname, to, isInterval);
+	} else {
+		char nstring[20];
+		sprintf(nstring, "t{%d|", n);	// }
+		effectString(nstring);
+		effectString(fname);
+		effectChar('|');
+		effectString(pointer2string(to));
+		effectChar('|');
+		effectChar((isInterval ? '1' : '0'));
+		endeffect();
 	}
 
 done:
@@ -832,29 +819,17 @@ static duk_ret_t native_setInterval(duk_context * cx)
 static duk_ret_t native_clearTimeout(duk_context * cx)
 {
 	jsobjtype obj = watch_heapptr(0);
-	char nstring[60];
 	if (!obj)
 		return 0;
-	sprintf(nstring, "t{0|-|%s|0", pointer2string(obj));	// }
-	effectString(nstring);
-	endeffect();
-
 	if (js1) {
-		struct inputChange *ic;
-		effects[eff_l - 1] = 0;
-		debugPrint(4, "%s", effects);
-		ic = allocMem(sizeof(struct inputChange));
-		ic->major = 't';
-		ic->minor = '0';
-		ic->f0 = cf;
-		ic->t = obj;
-		ic->tagno = 0;
-		strcpy(ic->value, "-");
-		addToListBack(&inputChangesPending, ic);
-		nzFree(effects);
-		effects = initString(&eff_l);
+		javaSetsTimeout(0, "-", obj, false);
+	} else {
+		char nstring[20];
+		sprintf(nstring, "t{0|-|%s|0", pointer2string(obj));	// }
+		effectString(nstring);
+		endeffect();
 	}
-// We should unlink this from window, so gc can clean it up.
+// We should unlink this timer from window so gc can clean it up.
 // We'd have to save the fakePropName to do that.
 	return 0;
 }

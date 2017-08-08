@@ -5,9 +5,6 @@
 
 #include "eb.h"
 
-static void javaSetsTimeout(int n, const char *jsrc, jsobjtype to,
-			    bool isInterval);
-
 #define handlerPresent(obj, name) (has_property(obj, name) == EJ_PROP_FUNCTION)
 
 #ifdef _MSC_VER			// sleep(secs) macro
@@ -2186,8 +2183,7 @@ struct listHead timerList = {
 	&timerList, &timerList
 };
 
-static void javaSetsTimeout(int n, const char *jsrc, jsobjtype to,
-			    bool isInterval)
+void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 {
 	struct jsTimer *jt;
 
@@ -2235,7 +2231,7 @@ Hey, the spec says you can't run faster than 10ms; well for us it's 600ms.
 	jt->timerObject = to;
 	jt->frame = cf;
 	addToListBack(&timerList, jt);
-	debugPrint(4, "timer %d %s\n", n, jsrc);
+	debugPrint(4, "timer %d %s", n, jsrc);
 }				/* javaSetsTimeout */
 
 static struct jsTimer *soonest(void)

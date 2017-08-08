@@ -149,6 +149,7 @@ void runningError(int msg, ...) ;
 void rerender(bool notify);
 void delTags(int startRange, int endRange);
 extern void runOnload(void);
+void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval);
 bool timerWait(int *delay_sec, int *delay_ms);
 void delTimers(struct ebFrame *f);
 void delInputChanges(struct ebFrame *f);
