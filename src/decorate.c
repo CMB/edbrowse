@@ -879,10 +879,10 @@ static void domLink(struct htmlTag *t, const char *classname,	/* instantiate thi
 This could be a duplicate name.
 Yes, that really happens.
 Link to the first tag having this name,
-and link the second tag under a fake name, so gc won't throw it away.
+and link the second tag under a fake name so gc won't throw it away.
 Or - it could be a duplicate name because multiple radio buttons
 all share the same name.
-The first time, we create the array,
+The first time we create the array,
 and thereafter we just link under that array.
 Or - and this really does happen -
 an input tag could have the name action, colliding with form.action.
@@ -934,12 +934,16 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 *********************************************************************/
 
 		if (!symname && idname) {
+			membername = idname;
 /* id= must not displace submit, reset, or action.
- * Example www.startpage.com, where id=submit */
-			if (!stringEqual(idname, "submit") &&
-			    !stringEqual(idname, "reset") &&
-			    !stringEqual(idname, "action"))
-				membername = idname;
+ * Example www.startpage.com, where id=submit.
+ * Nor should it collide with any other tag (ID is unique),
+ * nor should it collide with another attribute, such as document.cookie and
+ * <div ID=cookie> in www.orange.com. */
+			if (has_property(owner, membername) ||
+			    (stringEqual(idname, "action") && list
+			     && stringEqual(list, "elements")))
+				membername = NULL;
 		} else if (symname && !dupname) {
 			membername = symname;
 		}
@@ -1069,16 +1073,7 @@ call out to process those and add them to the object */
 "Html" does not appear ever to be encountered */
 
 	if (stringEqual(classname, "Body")) {
-/* here are a few attributes that come in with the body */
 		set_property_object(cf->docobj, "body", io);
-		set_property_number(io, "clientHeight", 768);
-		set_property_number(io, "clientWidth", 1024);
-		set_property_number(io, "offsetHeight", 768);
-		set_property_number(io, "offsetWidth", 1024);
-		set_property_number(io, "scrollHeight", 768);
-		set_property_number(io, "scrollWidth", 1024);
-		set_property_number(io, "scrollTop", 0);
-		set_property_number(io, "scrollLeft", 0);
 		set_property_object(cf->docobj, "documentElement", io);
 	}
 

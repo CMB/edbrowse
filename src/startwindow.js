@@ -896,8 +896,19 @@ Head = function(){}
 Meta = function(){}
 Link = function(){}
 Body = function(){}
+// Some screen attributes that are suppose to be there.
+Body.prototype. clientHeight = 768;
+Body.prototype. clientWidth = 1024;
+Body.prototype. offsetHeight = 768;
+Body.prototype. offsetWidth = 1024;
+Body.prototype. scrollHeight = 768;
+Body.prototype. scrollWidth = 1024;
+Body.prototype. scrollTop = 0;
+Body.prototype. scrollLeft = 0;
 Base = function(){}
 Form = function(){}
+Form.prototype.submit = eb$formSubmit;
+Form.prototype.reset = eb$formReset;
 Element = function(){}
 Image = function(){}
 Frame = function(){}
@@ -1273,9 +1284,6 @@ Form.prototype.hasAttribute = document.hasAttribute;
 Form.prototype.removeAttribute = document.removeAttribute;
 
 Form.prototype.cloneNode = document.cloneNode;
-
-Form.prototype.submit = eb$formSubmit;
-Form.prototype.reset = eb$formReset;
 
 /* The select element in a form is itself an array, so the children functions have
  * to be on array prototype, except appendchild is to have no side effects,
