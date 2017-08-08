@@ -2173,6 +2173,8 @@ struct jsTimer {
 	time_t sec;
 	int ms;
 	bool isInterval;
+	bool running;
+	bool deleted;
 	int jump_sec;		/* for interval */
 	int jump_ms;
 	jsobjtype timerObject;
@@ -2195,8 +2197,13 @@ void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 		foreach(jt, timerList) {
 			if (jt->timerObject == to) {
 				debugPrint(4, "timer delete");
-				delFromList(jt);
-				nzFree(jt);
+// a running timer will naturally delete itself.
+				if (jt->running) {
+					jt->deleted = true;
+				} else {
+					delFromList(jt);
+					nzFree(jt);
+				}
 				return;
 			}
 		}
@@ -2204,7 +2211,7 @@ void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 		return;
 	}
 
-	jt = allocMem(sizeof(struct jsTimer));
+	jt = allocZeroMem(sizeof(struct jsTimer));
 	jt->sec = n / 1000;
 	jt->ms = n % 1000;
 	jt->isInterval = isInterval;
@@ -2339,12 +2346,13 @@ We need to fix this someday, though it is a very rare low runner case.
 			jSyncup(true);
 /* Oops, jSyncup could have changed the frame. */
 		cf = jt->frame;
+		jt->running = true;
 		run_function_bool(jt->timerObject, "onclick");
+		jt->running = false;
 
-		if (!jt->isInterval) {
+		if (!jt->isInterval || jt->deleted) {
 			delFromList(jt);
 			nzFree(jt);
-			jt = NULL;
 		} else {
 			jt->sec = now_sec + jt->jump_sec;
 			jt->ms = now_ms + jt->jump_ms;
