@@ -368,20 +368,18 @@ static duk_ret_t native_new_location(duk_context * cx)
 {
 	const char *s = duk_to_string(cx, -1);
 	if (s && *s) {
-		effectString("n{");	// }
-		effectString(s);
-		endeffect();
 		if (js1) {
-			char *t;
-			effects[eff_l - 1] = 0;
-			debugPrint(4, "%s", effects);
-			effects[eff_l - 5] = 0;
+			char *t = cloneString(s);
 /* url on one line, name of window on next line */
-			t = strchr(effects, '\n');
-			*t = 0;
-			javaOpensWindow(effects + 2, t + 1);
-			nzFree(effects);
-			effects = initString(&eff_l);
+			char *u = strchr(t, '\n');
+			*u++ = 0;
+			debugPrint(4, "window %s|%s", t, u);
+			javaOpensWindow(t, u);
+			nzFree(t);
+		} else {
+			effectString("n{");	// }
+			effectString(s);
+			endeffect();
 		}
 	}
 	return 0;
@@ -582,19 +580,14 @@ static duk_ret_t setter_innerText(duk_context * cx)
 	duk_put_prop_string(cx, -2, "inner$Text");
 	thisobj = watch_heapptr(-1);
 	duk_pop(cx);
-	effectString("i{t");	// }
-	effectString(pointer2string(thisobj));
-	effectChar('|');
-	effectString(h);
-	endeffect();
 	if (js1) {
-		effects[eff_l - 1] = 0;
-		debugPrint(4, "%s", effects);
-		effects[eff_l - 5] = 0;
-		char *t = strchr(effects, '|') + 1;
-		javaSetsInner(thisobj, t, 't');
-		nzFree(effects);
-		effects = initString(&eff_l);
+		javaSetsInner(thisobj, h, 't');
+	} else {
+		effectString("i{t");	// }
+		effectString(pointer2string(thisobj));
+		effectChar('|');
+		effectString(h);
+		endeffect();
 	}
 	debugPrint(5, "setter t 2");
 	return 0;
@@ -855,19 +848,18 @@ static void dwrite(duk_context * cx, bool newline)
 		duk_push_string(cx, emptyString);
 	}
 	s = duk_get_string(cx, 0);
-	effectString("w{");	// }
-	effectString(s);
-	if (newline)
-		effectChar('\n');
-	endeffect();
 	if (js1) {
-		effects[eff_l - 1] = 0;
-		debugPrint(4, "%s", effects);
-		effects[eff_l - 5] = 0;
+		debugPrint(4, "dwrite:%s", s);
 		dwStart();
-		stringAndString(&cf->dw, &cf->dw_l, effects + 2);
-		nzFree(effects);
-		effects = initString(&eff_l);
+		stringAndString(&cf->dw, &cf->dw_l, s);
+		if (newline)
+			stringAndChar(&cf->dw, &cf->dw_l, '\n');
+	} else {
+		effectString("w{");	// }
+		effectString(s);
+		if (newline)
+			effectChar('\n');
+		endeffect();
 	}
 }
 
@@ -1217,15 +1209,13 @@ static duk_ret_t native_formSubmit(duk_context * cx)
 	duk_push_this(cx);
 	thisobj = watch_heapptr(-1);
 	duk_pop(cx);
-	effectString("f{s");	// }
-	effectString(pointer2string(thisobj));
-	endeffect();
 	if (js1) {
-		effects[eff_l - 1] = 0;
-		debugPrint(4, "%s", effects);
+		debugPrint(4, "submit %p", thisobj);
 		javaSubmitsForm(thisobj, false);
-		nzFree(effects);
-		effects = initString(&eff_l);
+	} else {
+		effectString("f{s");	// }
+		effectString(pointer2string(thisobj));
+		endeffect();
 	}
 	return 0;
 }
@@ -1236,15 +1226,13 @@ static duk_ret_t native_formReset(duk_context * cx)
 	duk_push_this(cx);
 	thisobj = watch_heapptr(-1);
 	duk_pop(cx);
-	effectString("f{r");	// }
-	effectString(pointer2string(thisobj));
-	endeffect();
 	if (js1) {
-		effects[eff_l - 1] = 0;
-		debugPrint(4, "%s", effects);
+		debugPrint(4, "reset %p", thisobj);
 		javaSubmitsForm(thisobj, true);
-		nzFree(effects);
-		effects = initString(&eff_l);
+	} else {
+		effectString("f{r");	// }
+		effectString(pointer2string(thisobj));
+		endeffect();
 	}
 	return 0;
 }

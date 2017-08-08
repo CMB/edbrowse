@@ -331,6 +331,10 @@ static void processEffects(void)
 
 	if (!effects)
 		return;
+	if (js1) {
+		puts("you shouldn't be handling side effects in 1 process mode!");
+		exit(1);
+	}
 
 	s = effects;
 	while ((c = *s)) {	/* another effect */
