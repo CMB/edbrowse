@@ -399,6 +399,5 @@ int set_property_function_nat(jsobjtype parent, const char *name, const char *bo
 int get_arraylength_nat(jsobjtype a);
 bool run_function_bool_nat(jsobjtype obj, const char *name);
 void run_function_onearg_nat(jsobjtype obj, const char *name, jsobjtype o);
-void processMessage1(void);
 char *run_script_nat(const char *s);
 

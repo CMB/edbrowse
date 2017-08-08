@@ -1822,10 +1822,25 @@ checkattributes:
  * with the correct winobj and docobj etc. */
 void html_from_setter(jsobjtype inner, const char *h)
 {
-	initTagArray();
+	struct htmlTag *t = NULL;
+	int l = 0;
+	debugPrint(4, "Generated {%s}", h);
+	if (js1) {
+		t = tagFromJavaVar(inner);
+		if (!t) {
+			debugPrint(1,
+				   "innerHTML finds no tag for %p, cannot parse",
+				   inner);
+			return;
+		}
+		debugPrint(4, "parse under %s %d", t->info->name, t->seqno);
+		l = cw->numTags;
+	} else {
+		initTagArray();
+	}
 	html2nodes(h, false);
 	htmlGenerated = true;
-	htmlNodesIntoTree(0, NULL);
+	htmlNodesIntoTree(l, t);
 	prerender(0);
 	innerParent = inner;
 	decorate(0);

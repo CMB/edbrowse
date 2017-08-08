@@ -52,7 +52,7 @@ static int pipe_in, pipe_out;
 static struct ebWindow in_js_cw;
 
 static void readMessage(void);
-void processMessage1(void);
+static void processMessage1(void);
 static void processMessage2(void);
 static void writeHeader(void);
 static void processError(void);
@@ -63,19 +63,10 @@ jsobjtype docobj;		// document object
 const char *jsSourceFile;	// sourcefile providing the javascript
 int jsLineno;			// line number
 
-static struct ebWindow *save_cw;
-static struct ebFrame *save_cf;
 static bool save_ref, save_plug;
 
 static void cwSetup(void)
 {
-	if (js1) {
-		save_cw = cw;
-		save_cf = cf;
-		cw = &in_js_cw;
-		cf = &(cw->f0);
-		cf->owner = cw;
-	}
 	cf->winobj = winobj;
 	cf->docobj = docobj;
 	cf->hbase = get_property_string_nat(winobj, "eb$base");
@@ -89,8 +80,6 @@ static void cwBringdown(void)
 	cw->ft = 0;
 	nzFree(cf->hbase);
 	cf->hbase = 0;
-	if (js1)
-		cw = save_cw, cf = save_cf;
 }				/* cwBringdown */
 
 static struct EJ_MSG head;
@@ -162,7 +151,6 @@ static void *watch_realloc(void *udata, void *p, size_t n)
 static void watch_free(void *udata, void *p)
 {
 	int i;
-	char e[40];
 	struct jsdata_wrap *w;
 
 	if (!p)
@@ -174,15 +162,14 @@ static void watch_free(void *udata, void *p)
 	if (!i)
 		return;
 
-	sprintf(e, "g{%p", p);
-	effectString(e);
-	endeffect();
 	if (js1) {
-		effects[eff_l - 1] = 0;
-		debugPrint(4, "%s", effects);
+		debugPrint(4, "gc %p", p);
 		garbageSweep1(p);
-		nzFree(effects);
-		effects = initString(&eff_l);
+	} else {
+		char e[40];
+		sprintf(e, "g{%p", p);	// }
+		effectString(e);
+		endeffect();
 	}
 }
 
@@ -555,29 +542,22 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	stringAndString(&run, &run_l, "</body>");
 
 // now turn the html into objects
-	cwSetup();
+	if (!js1)
+		cwSetup();
 	html_from_setter(thisobj, run);
 
-	effectString("i{h");	// }
-	effectString(pointer2string(thisobj));
-	effectChar('|');
-	effectString(run);
-	effectChar('@');
-	packDecoration();
-	cwBringdown();
-	endeffect();
-	nzFree(run);
-
-	if (js1) {
-		effects[eff_l - 1] = 0;
-		debugPrint(4, "%s", effects);
-		effects[eff_l - 5] = 0;
-		char *t = strchr(effects, '|') + 1;
-		javaSetsInner(thisobj, t, 'h');
-		nzFree(effects);
-		effects = initString(&eff_l);
+	if (!js1) {
+		effectString("i{h");	// }
+		effectString(pointer2string(thisobj));
+		effectChar('|');
+		effectString(run);
+		effectChar('@');
+		packDecoration();
+		cwBringdown();
+		endeffect();
 	}
 
+	nzFree(run);
 	debugPrint(5, "setter h 2");
 	return 0;
 }
@@ -2103,7 +2083,7 @@ static char *run_function(jsobjtype parent, const char *name)
 }				/* run_function */
 
 /* process each message from edbrowse and respond appropriately */
-void processMessage1(void)
+static void processMessage1(void)
 {
 	readMessage();
 	head.highstat = EJ_HIGH_OK;
