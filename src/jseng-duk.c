@@ -63,8 +63,6 @@ jsobjtype docobj;		// document object
 const char *jsSourceFile;	// sourcefile providing the javascript
 int jsLineno;			// line number
 
-static bool save_ref, save_plug;
-
 static void cwSetup(void)
 {
 	cf->winobj = winobj;
@@ -635,8 +633,43 @@ static duk_ret_t setter_value(duk_context * cx)
 // contentDocument getter setter; this is a bit complicated.
 static duk_ret_t getter_cd(duk_context * cx)
 {
-// Just a place holder for now.
+	bool found;
+	jsobjtype thisobj;
+
 	duk_push_this(cx);
+	thisobj = watch_heapptr(-1);
+	found = duk_get_prop_string(cx, -1, "eb$auto");
+	duk_pop(cx);
+	if (!found) {
+// need to expand.
+		duk_push_true(cx);
+		duk_put_prop_string(cx, -2, "eb$auto");
+		if (js1) {
+// must switch to edbrowse mode, then back to js mode.
+// Have to save all the global variables, because other js scrips will be
+// running in another context.
+// Having all these global variables isn't great programming.
+			jsobjtype save_jcx = jcx;
+			jsobjtype save_winobj = winobj;
+			jsobjtype save_docobj = docobj;
+			const char *save_src = jsSourceFile;
+			int save_lineno = jsLineno;
+			bool save_plug = pluginsOn;
+			pluginsOn = false;
+			whichproc = 'e';
+			frameExpandLine(0, thisobj);
+			whichproc = 'j';
+			jcx = save_jcx;
+			winobj = save_winobj;
+			docobj = save_docobj;
+			jsSourceFile = save_src;
+			jsLineno = save_lineno;
+			pluginsOn = save_plug;
+		} else {
+			debugPrint(1, "cannot autoexpand frames without JS1");
+		}
+	}
+
 	duk_get_prop_string(cx, -1, "content$Document");
 	duk_remove(cx, -2);
 	return 1;
@@ -1140,6 +1173,7 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 		char *outgoing_xhrbody = NULL;
 		int responseLength = 0;
 		char *a = NULL, methchar = '?';
+		bool save_ref, save_plug;
 
 		if (incoming_payload && *incoming_payload) {
 			if (incoming_method

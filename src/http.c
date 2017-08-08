@@ -2420,7 +2420,6 @@ const char *findProxyForURL(const char *url)
  * Pass a range of lines; you can expand all the frames in one go.
  * Return false if there is a problem fetching a web page,
  * or if none of the lines are frames. */
-static int frameExpandLine(int lineNumber);
 static int frameContractLine(int lineNumber);
 static const char *stringInBufLine(const char *s, const char *t);
 bool frameExpand(bool expand, int ln1, int ln2)
@@ -2431,7 +2430,7 @@ bool frameExpand(bool expand, int ln1, int ln2)
 
 	for (ln = ln1; ln <= ln2; ++ln) {
 		if (expand)
-			p = frameExpandLine(ln);
+			p = frameExpandLine(ln, NULL);
 		else
 			p = frameContractLine(ln);
 		if (p > problem)
@@ -2453,7 +2452,7 @@ bool frameExpand(bool expand, int ln1, int ln2)
  1 line is not a frame.
  2 frame doesn't have a valid url.
  3 Problem fetching the rul or rendering the page.  */
-static int frameExpandLine(int ln)
+int frameExpandLine(int ln, jsobjtype fo)
 {
 	pst line;
 	int tagno, start;
@@ -2462,16 +2461,22 @@ static int frameExpandLine(int ln)
 	struct ebFrame *save_cf, *new_cf, *last_f;
 	struct htmlTag *cdt;	// contentDocument tag
 
-	line = fetchLine(ln, -1);
-	s = stringInBufLine((char *)line, "Frame ");
-	if (!s)
-		return 1;
-	if ((s = strchr(s, InternalCodeChar)) == NULL)
-		return 2;
-	tagno = strtol(s + 1, (char **)&s, 10);
-	if (tagno < 0 || tagno >= cw->numTags || *s != '{')
-		return 2;
-	t = tagList[tagno];
+	if (fo) {
+		t = tagFromJavaVar(fo);
+		if (!t)
+			return 1;
+	} else {
+		line = fetchLine(ln, -1);
+		s = stringInBufLine((char *)line, "Frame ");
+		if (!s)
+			return 1;
+		if ((s = strchr(s, InternalCodeChar)) == NULL)
+			return 2;
+		tagno = strtol(s + 1, (char **)&s, 10);
+		if (tagno < 0 || tagno >= cw->numTags || *s != '{')
+			return 2;
+		t = tagList[tagno];
+	}
 	if (t->action != TAGACT_FRAME)
 		return 1;
 
@@ -2574,6 +2579,8 @@ So check for serverData null here. Once again we pop the frame.
 
 	t->f1 = cf;
 	cf = save_cf;
+	if (fo)
+		t->contracted = true;
 	if (isJSAlive) {
 		jsobjtype cdo;	// contentDocument object
 		jsobjtype cna;	// childNodes array

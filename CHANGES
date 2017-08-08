@@ -1,5 +1,10 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.7.1:
+Automatically expand a frame when javascript tries to access its objects.
+Otherwise it won't expand unti you expand it explicitly.
+This saves resources; don't fetch and expand a frame unless it is needed.
+
 3.7.0:
 Switch from Mozilla js to Duktape js.
 

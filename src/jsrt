@@ -293,6 +293,7 @@ yecht package</A>
 onload="alert&nbsp;('expanding the frame dude')">
 you shouldn't see this stuff
 </iframe>
+<A onclick="alert('first node ' + frames[0].contentDocument.body.firstChild.nodeName)">first node</a>
 
 <form method=POST name=questionnaire
 action=http://localhost:1500/origact
