@@ -254,9 +254,6 @@ extern bool curlActive; // is curl running?
 extern bool ismc;		/* Is the program running as a mail client? */
 extern bool isimap;		/* Is the program running as an imap client? */
 extern bool js1; // run as one process, not a separate js process
-extern char *ipm; // interprocess message simulation
-extern int ipm_l; // length of interprocess message
-extern char *ipm_c; // message cursor
 extern bool down_bg;		/* download in background */
 extern char whichproc; // which edbrowse-xx process
 extern char showProgress; // feedback as a file is downloaded

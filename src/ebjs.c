@@ -426,9 +426,6 @@ static void processEffects(void)
 	effects = 0;
 }				/* processEffects */
 
-char *ipm, *ipm_c;
-int ipm_l;
-
 /* Read some data from the js process.
  * Close things down if there is any trouble from the read.
  * Returns 0 for ok or -1 for bad read. */
@@ -442,11 +439,6 @@ static int readFromJS(void *data_p, int n)
 	}
 	if (n == 0)
 		return 0;
-	if (js1) {
-		memcpy(data_p, ipm_c, n);
-		ipm_c += n;
-		return 0;
-	}
 	while (n > 0) {
 		rc = read(pipe_in[0], bytes_p, n);
 		debugPrint(7, "js read %d", rc);
@@ -472,10 +464,6 @@ static int writeToJS(const void *data_p, int n)
 	}
 	if (n == 0)
 		return 0;
-	if (js1) {
-		stringAndBytes(&ipm, &ipm_l, data_p, n);
-		return 0;
-	}
 	rc = write(pipe_out[1], data_p, n);
 	if (rc == n)
 		return 0;
@@ -495,16 +483,6 @@ static int readMessage(void)
 {
 	int l;
 	char *msg;		/* error message from js */
-
-	if (js1) {
-// process the message we sent in the current process,
-// so we can then read the response.
-// Pretend like it's the js process, so we call the native methods.
-		whichproc = 'j';
-		processMessage1();
-		whichproc = 'e';
-		ipm_c = ipm;
-	}
 
 	if (readFromJS(&head, sizeof(head)) < 0)
 		return -1;	/* read failed */
@@ -587,11 +565,6 @@ static int readMessage(void)
 		propval[l] = 0;
 	}
 
-	if (js1) {
-		nzFree(ipm);
-		ipm = 0;
-	}
-
 /* sometimes you want to stop at the first js error, but sometimes you don't */
 #if 0
 	if (head.msglen && debugLevel >= 5) {
@@ -629,8 +602,6 @@ static int writeHeader(void)
 	head.jcx = cf->jcx;
 	head.winobj = cf->winobj;
 	head.docobj = cf->docobj;
-	if (js1)
-		ipm = initString(&ipm_l);
 	return writeToJS(&head, sizeof(head));
 }				/* writeHeader */
 
@@ -757,8 +728,6 @@ void freeJavaContext(struct ebFrame *f)
 	head.jcx = f->jcx;
 	head.winobj = f->winobj;
 	head.docobj = f->docobj;
-	if (js1)
-		ipm = initString(&ipm_l);
 	if (writeToJS(&head, sizeof(head)))
 		return;
 	if (readMessage())

@@ -259,11 +259,6 @@ static void readFromEb(void *data_p, int n)
 	unsigned char *bytes_p = (unsigned char *)data_p;
 	if (n == 0)
 		return;
-	if (js1) {
-		memcpy(data_p, ipm_c, n);
-		ipm_c += n;
-		return;
-	}
 	while (n > 0) {
 		rc = read(pipe_in, bytes_p, n);
 		if (rc <= 0) {
@@ -280,10 +275,6 @@ static void writeToEb(const void *data_p, int n)
 	int rc;
 	if (n == 0)
 		return;
-	if (js1) {
-		stringAndBytes(&ipm, &ipm_l, data_p, n);
-		return;
-	}
 	rc = write(pipe_out, data_p, n);
 	if (rc == n)
 		return;
@@ -300,8 +291,6 @@ static void writeHeader(void)
 	if (errorMessage)
 		head.msglen = strlen(errorMessage);
 
-	if (js1)
-		ipm = initString(&ipm_l);
 	writeToEb(&head, sizeof(head));
 
 // send out the error message and side effects, if present.
@@ -342,8 +331,6 @@ static void readMessage(void)
 {
 	enum ej_cmd cmd;
 
-	if (js1)
-		ipm_c = ipm;
 	readFromEb(&head, sizeof(head));
 
 	if (head.magic != EJ_MAGIC) {
@@ -376,10 +363,6 @@ static void readMessage(void)
 	}
 
 /* and that's the whole message */
-	if (js1) {
-		nzFree(ipm);
-		ipm = 0;
-	}
 }				/* readMessage */
 
 #if 0
