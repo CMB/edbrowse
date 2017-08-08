@@ -436,6 +436,10 @@ static int readFromJS(void *data_p, int n)
 {
 	unsigned char *bytes_p = (unsigned char *)data_p;
 	int rc;
+	if (js1) {
+		puts("you shouldn't be reading from the js process in 1 process mode!");
+		exit(1);
+	}
 	if (n == 0)
 		return 0;
 	if (js1) {
@@ -462,6 +466,10 @@ static int readFromJS(void *data_p, int n)
 static int writeToJS(const void *data_p, int n)
 {
 	int rc;
+	if (js1) {
+		puts("you shouldn't be rwriting to the js process in 1 process mode!");
+		exit(1);
+	}
 	if (n == 0)
 		return 0;
 	if (js1) {
@@ -799,7 +807,7 @@ char *jsRunScriptResult(jsobjtype obj, const char *str, const char *filename,
 	char *s;
 
 // this never runs from the j process.
-	if (whichproc == 'j') {
+	if (whichproc != 'e') {
 		debugPrint(1, "jsRunScript run from the js process");
 		return NULL;
 	}
@@ -1544,8 +1552,22 @@ static int run_function(jsobjtype obj, const char *name, int argc,
 
 int get_arraylength(jsobjtype a)
 {
+	if (!allowJS || !cf->winobj)
+		return -1;
+	if (!a) {
+		debugPrint(3, "get_arraylength(0)");
+		return -1;
+	}
 	if (whichproc == 'j')
 		return get_arraylength_nat(a);
+	debugPrint(5, "> get length");
+	if (js1) {
+		int l;
+		set_js_globals();
+		l = get_arraylength_nat(a);
+		debugPrint(5, "< ok");
+		return l;
+	}
 	head.cmd = EJ_CMD_ARLEN;
 	head.obj = a;
 	if (writeHeader())
@@ -1647,13 +1669,6 @@ char *get_property_option(jsobjtype obj)
 		return 0;
 	return get_property_string(oo, "value");
 }				/* get_property_option */
-
-/*********************************************************************
-When an element is created without a name, it is not linked to its
-owner (via that name), and could be cleared via garbage collection.
-This is a disaster!
-Create a fake name, so we can attach the element.
-*********************************************************************/
 
 #ifdef DOSLIKE			// port of uname(p), and struct utsname
 struct utsname {
@@ -1984,6 +1999,24 @@ jsobjtype run_function_object(jsobjtype obj, const char *name)
 /* run a function with no args that returns a boolean */
 bool run_function_bool(jsobjtype obj, const char *name)
 {
+	if (!allowJS || !cf->winobj)
+		return false;
+	if (!obj) {
+		debugPrint(3, "run_function_bool(0, %s", name);
+		return false;
+	}
+	if (whichproc == 'j')
+		return run_function_bool_nat(obj, name);
+	if (js1) {
+		bool rc;
+		debugPrint(5, "> function %s", name);
+		set_js_globals();
+		whichproc = 'j';	// this line is totally important!
+		rc = run_function_bool_nat(obj, name);
+		whichproc = 'e';
+		debugPrint(5, "< %s", (rc ? "true" : "false"));
+		return rc;
+	}
 	run_function(obj, name, 0, NULL);
 	if (!propval)
 		return true;
@@ -2032,8 +2065,23 @@ static void run_function_objargs(jsobjtype obj, const char *name, int nargs,
 
 void run_function_onearg(jsobjtype obj, const char *name, jsobjtype a)
 {
+	if (!allowJS || !cf->winobj)
+		return;
+	if (!obj) {
+		debugPrint(3, "run_function_onearg(0, %s", name);
+		return;
+	}
 	if (whichproc == 'j') {
 		run_function_onearg_nat(obj, name, a);
+		return;
+	}
+	if (js1) {
+		debugPrint(5, "> function %s", name);
+		set_js_globals();
+		whichproc = 'j';	// this line is totally important!
+		run_function_onearg_nat(obj, name, a);
+		whichproc = 'e';
+		debugPrint(5, "< ok");
 		return;
 	}
 	run_function_objargs(obj, name, 1, a);
