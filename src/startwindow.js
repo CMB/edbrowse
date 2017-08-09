@@ -36,7 +36,7 @@ eb$formReset = function() { print("reset"); }
 
 // other names for window
 self = top = parent = window;
-// parent could be changed if this is a frame in a larger frameset.
+// parent and top could be changed if this is a frame in a larger frameset.
 
 /* An ok (object keys) function for javascript/dom debugging.
  * This is in concert with the jdb command in edbrowse.

@@ -2490,7 +2490,7 @@ int frameExpandLine(int ln, jsobjtype fo)
 	if (!s)
 		return 2;
 
-	save_cf = cf;
+	save_cf = cf = t->f0;
 /* have to push a new frame before we read the web page */
 	for (last_f = &(cw->f0); last_f->next; last_f = last_f->next) ;
 	last_f->next = cf = allocZeroMem(sizeof(struct ebFrame));
@@ -2563,11 +2563,20 @@ So check for serverData null here. Once again we pop the frame.
 	cdt->step = 0;
 	prerender(0);
 	if (isJSAlive) {
+		jsobjtype topobj;
 		decorate(0);
 		set_basehref(cf->hbase);
 		runScriptsPending();
 		runOnload();
 		runScriptsPending();
+
+// parent points to the containing frame.
+		set_property_object(cf->winobj, "parent", save_cf->winobj);
+// And top points to the top.
+		cf = save_cf;
+		topobj = get_property_object(cf->winobj, "top");
+		cf = new_cf;
+		set_property_object(cf->winobj, "top", topobj);
 		set_property_string(cf->docobj, "readyState", "complete");
 	}
 
