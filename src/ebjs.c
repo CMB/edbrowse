@@ -1742,8 +1742,8 @@ void setupJavaDom(void)
 
 	set_property_string(d, "referrer", cw->referrer);
 	instantiate_url(d, "URL", cf->fileName);
-	instantiate_url(d, "location", cf->fileName);
-	instantiate_url(w, "location", cf->fileName);
+	set_property_string(d, "location", cf->fileName);
+	set_property_string(w, "location", cf->fileName);
 	set_property_string(d, "domain", getHostURL(cf->fileName));
 }				/* setupJavaDom */
 
