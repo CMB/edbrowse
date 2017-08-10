@@ -437,7 +437,14 @@ top:
 		if (rc < 0)
 			goto interrupt;
 		if (rc == 0) {	/* timeout */
+			inInput = false;
 			runTimers();
+			inInput = true;
+			if (newlocation && intFlag) {
+				i_puts(MSG_RedirectionInterrupted);
+				goto top;
+			}
+			intFlag = false;
 /* in case a timer set document.location to a new page, or opens a new window */
 			if (newlocation) {
 				debugPrint(2, "redirect %s", newlocation);

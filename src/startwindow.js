@@ -103,6 +103,9 @@ dumptree(c);
 alert("}");
 }
 
+// This is our bailout function, it references a variable that does not exist.
+function eb$stopexec() { return javascript$interrupt; }
+
 /* Some visual attributes of the window.
  * These are just guesses.
  * Better to have something than nothing at all. */

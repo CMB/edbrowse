@@ -365,8 +365,10 @@ curl_progress(void *unused, double dl_total, double dl_now,
 	      double ul_total, double ul_now)
 {
 	int ret = 0;
+// ^c will interrupt an http or ftp download.
+// Perhaps that is hanging, and blocking edbrowse.
 	if (intFlag) {
-		intFlag = false;
+		i_puts(MSG_Interrupted);
 		ret = 1;
 	}
 	return ret;
@@ -1540,7 +1542,10 @@ void ebcurl_setError(CURLcode curlret, const char *url)
 		break;
 
 	case CURLE_ABORTED_BY_CALLBACK:
+#if 0
+// this is printed by the callback function
 		setError(MSG_Interrupted);
+#endif
 		break;
 /* These all look like session initiation failures. */
 	case CURLE_FTP_WEIRD_SERVER_REPLY:

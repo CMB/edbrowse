@@ -605,6 +605,8 @@ top:
 		t->step = 3;	/* now running the script */
 		if (!t->jv)
 			continue;
+		if (intFlag)
+			continue;
 
 		prepareScript(t);
 
@@ -2127,10 +2129,16 @@ void runOnload(void)
 
 	if (!isJSAlive)
 		return;
+	if (intFlag)
+		return;
 
 /* window and document onload */
 	run_function_bool(cf->winobj, "onload");
+	if (intFlag)
+		return;
 	run_function_bool(cf->docobj, "onload");
+	if (intFlag)
+		return;
 
 	fn = -1;
 	for (i = 0; i < cw->numTags; ++i) {
@@ -2144,12 +2152,18 @@ void runOnload(void)
 			++fn;
 		if (!t->jv)
 			continue;
-		if (action == TAGACT_BODY && t->onload)
+		if (action == TAGACT_BODY && t->onload) {
 			run_function_bool(t->jv, "onload");
+			if (intFlag)
+				return;
+		}
 		if (action == TAGACT_BODY && t->onunload)
 			unloadHyperlink("document.body.onunload", "Body");
-		if (action == TAGACT_FORM && t->onload)
+		if (action == TAGACT_FORM && t->onload) {
 			run_function_bool(t->jv, "onload");
+			if (intFlag)
+				return;
+		}
 /* tidy5 says there is no form.onunload */
 		if (action == TAGACT_FORM && t->onunload) {
 			char formfunction[48];

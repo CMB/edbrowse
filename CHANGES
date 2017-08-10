@@ -5,6 +5,10 @@ Automatically expand a frame when javascript tries to access its objects.
 Otherwise it won't expand unti you expand it explicitly.
 This saves resources; don't fetch and expand a frame unless it is needed.
 
+^c interrupts javascript, if that javascript calls our native methods. It also interrupts http fetch.
+Hit ^c if the browsing is taking too darn long - however - the page may not render properly or completely.
+Don't do this if you are using this page for ecommerce or something vital.
+
 3.7.0:
 Switch from Mozilla js to Duktape js.
 

@@ -484,6 +484,20 @@ static jsobjtype string2pointer(const char *s)
 	return p;
 }				/* string2pointer */
 
+// Sometimes control c can interrupt long running javascript, if the script
+// calls our native methods.
+static void jsInterruptCheck(void)
+{
+	if (!(js1 & intFlag))
+		return;
+	i_puts(MSG_Interrupted);
+	duk_get_global_string(jcx, "eb$stopexec");
+// this next line should fail and stop the script!
+	duk_call(jcx, 0);
+// It didn't stop the script, oh well.
+	duk_pop(jcx);
+}
+
 static duk_ret_t getter_innerHTML(duk_context * cx)
 {
 	duk_push_this(cx);
@@ -501,6 +515,7 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	if (!h)			// should never happen
 		h = emptyString;
 	debugPrint(5, "setter h 1");
+	jsInterruptCheck();
 	duk_push_this(cx);
 // remove the preexisting children.
 	if (duk_get_prop_string(cx, -1, "childNodes") && duk_is_array(cx, -1)) {
@@ -636,6 +651,7 @@ static duk_ret_t getter_cd(duk_context * cx)
 	bool found;
 	jsobjtype thisobj;
 
+	jsInterruptCheck();
 	duk_push_this(cx);
 	thisobj = watch_heapptr(-1);
 	found = duk_get_prop_string(cx, -1, "eb$auto");
@@ -683,6 +699,7 @@ static duk_ret_t setter_cd(duk_context * cx)
 
 static void linkageNow(char linkmode, jsobjtype o)
 {
+	jsInterruptCheck();
 	effects[eff_l - 5] = 0;
 	debugPrint(4, "linkset %s", effects + 2);
 	javaSetsLinkage(false, linkmode, o, strchr(effects, ',') + 1);
@@ -698,6 +715,7 @@ static duk_ret_t native_log_element(duk_context * cx)
 	if (!newobj || !tag)
 		return 0;
 	debugPrint(5, "log el 1");
+	jsInterruptCheck();
 // pass the newly created node over to edbrowse
 	sprintf(e, "l{c|%s,%s 0x0, 0x0, ", pointer2string(newobj), tag);
 	effectString(e);
@@ -1197,6 +1215,13 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 		if (js1) {
 			pluginsOn = save_plug;
 			sendReferrer = save_ref;
+			if (intFlag) {
+				duk_get_global_string(cx, "eb$stopexec");
+// this next line should fail and stop the script!
+				duk_call(cx, 0);
+// It didn't stop the script, oh well.
+				duk_pop(cx);
+			}
 		}
 		if (outgoing_xhrheaders == NULL)
 			outgoing_xhrheaders = emptyString;
