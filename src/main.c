@@ -61,7 +61,7 @@ volatile bool intFlag;
 bool curlActive;
 bool ismc, isimap, passMail;
 char whichproc = 'e';		// edbrowse
-bool js1;			// all in one process
+bool js1 = true;		// all in one process
 bool inInput, listNA;
 int fileSize;
 char *dbarea, *dblogin, *dbpw;	/* to log into the database */
@@ -533,9 +533,9 @@ int main(int argc, char **argv)
 	progname = argv[0];
 	++argv, --argc;
 
-	js1var = getenv("JS1");
+	js1var = getenv("JS2");
 	if (js1var && *js1var)
-		js1 = true;
+		js1 = false;
 
 // look for --mode on the arg list.
 	if (stringEqual(argv[0], "--mode")) {

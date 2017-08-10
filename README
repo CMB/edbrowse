@@ -282,13 +282,9 @@ Interface between edbrowse main process and edbrowse js process.
 Sends interprocess messages to the child to manipulate the js objects,
 and returns the result back to edbrowse parent.
 Think of edbrowse child as the js server, and edbrowse parent as the client.
-Set the environment variable JS1 to any nonempty string and edbrowse runs as one process,
-simulating the 2 processes inside.
-The simulation is serial; edbrowse runs, then js, then edbrowse, then js, etc,
-just as it is when the processes are separate.
-The JS1 feature could be discontinued at any time,
-or we may decide to keep everything in one process in the future.
-This is internal, and does not affect the user interface.
+Set the environment variable JS2 to any nonempty string to run as 2 processes, as described above.
+This is legacy however; edbrowse typically runs as one process, simulating client server inside, and the JS2 feature may go away.
+This is all internal, and does not affect the user interface.
 
 src/jsrt:
 This is the javascript regression test for edbrowse.
