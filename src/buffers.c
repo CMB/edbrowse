@@ -1615,7 +1615,7 @@ fromdisk:
 	if (fileSize == 0) {	/* empty file */
 		if (!inframe) {
 			cw->dot = endRange;
-			free(rbuf);
+			nzFree(rbuf);
 		}
 		return true;
 	}
@@ -1637,6 +1637,7 @@ gotdata:
 		}
 		rbuf[j] = 0;
 		fileSize = j;
+		serverDataLen = fileSize;
 #endif
 
 		if (iuConvert) {
@@ -1654,6 +1655,8 @@ gotdata:
 				utfLow(rbuf, fileSize, &tbuf, &fileSize, bom);
 				nzFree(rbuf);
 				rbuf = tbuf;
+				serverData = rbuf;
+				serverDataLen = fileSize;
 			} else {
 				looks_8859_utf8((uchar *) rbuf, fileSize,
 						&is8859, &isutf8);
@@ -1670,6 +1673,8 @@ gotdata:
 						(uchar **) & tbuf, &fileSize);
 					nzFree(rbuf);
 					rbuf = tbuf;
+					serverData = rbuf;
+					serverDataLen = fileSize;
 				}
 				if (!cons_utf8 && isutf8) {
 					if (debugLevel >= 2 || (debugLevel == 1
@@ -1681,6 +1686,8 @@ gotdata:
 						(uchar **) & tbuf, &fileSize);
 					nzFree(rbuf);
 					rbuf = tbuf;
+					serverData = rbuf;
+					serverDataLen = fileSize;
 				}
 				if (cons_utf8 && isutf8) {
 // Strip off the leading bom, if any, and no we're not going to put it back.
@@ -1689,6 +1696,7 @@ gotdata:
 						fileSize -= 3;
 						memmove(rbuf, rbuf + 3,
 							fileSize);
+						serverDataLen = fileSize-3;
 					}
 				}
 			}
@@ -1733,7 +1741,10 @@ gotdata:
 intext:
 	rc = addTextToBuffer((const pst)rbuf, fileSize, endRange,
 			     !isURL(filename));
-	free(rbuf);
+	nzFree(rbuf);
+
+	serverData = 0;
+	serverDataLen = 0;
 	return rc;
 }				/* readFile */
 
