@@ -1703,7 +1703,7 @@ gotdata:
 						fileSize -= 3;
 						memmove(rbuf, rbuf + 3,
 							fileSize);
-						serverDataLen = fileSize-3;
+						serverDataLen = fileSize - 3;
 					}
 				}
 			}
@@ -1749,9 +1749,6 @@ intext:
 	rc = addTextToBuffer((const pst)rbuf, fileSize, endRange,
 			     !isURL(filename));
 	nzFree(rbuf);
-
-	serverData = 0;
-	serverDataLen = 0;
 	return rc;
 }				/* readFile */
 
