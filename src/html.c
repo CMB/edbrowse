@@ -2230,9 +2230,9 @@ void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 	jt->ms = n % 1000;
 	jt->isInterval = isInterval;
 	if (isInterval) {
-/* the spec says you can't run a timer less than 10 ms */
+/* the spec says you can't run a timer less than 10 ms but here we currently use 600 ms. This really should be a configurable limit */
 
-		if (n < 10)
+		if (n < 600)
 			n = 10;
 		jt->jump_sec = n / 1000, jt->jump_ms = n % 1000;
 	}
