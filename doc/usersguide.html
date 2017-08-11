@@ -2725,14 +2725,13 @@ but javascript evolves, like any other language or standard,
 and I just couldn't keep up.
 
 <P>
-The third version, which is the "latest and greatest", uses a javascript engine from Mozilla.com,
-which is open source under the Mozzilla Public License.
+The third version uses an open source javascript engine, originally Mozilla js, and now, as of version 3.7.0, Duktape js.
 This allows me to leverage, rather than reinvent, some 70,000 lines of code -
 and somebody else is maintaining that code as javascript evolves.
 
 <P>
 Edbrowse does not support all the features of client side DOM javascript,
-and it never will.
+and it probably never will.
 For example, many websites use javascript to change images
 on the fly as you move your mouse around the screen.
 This has no meaning in edbrowse.
@@ -2753,6 +2752,16 @@ See the disclaimer at the top of this users guide.
 <P>
 You can also disable javascript for specific domains.
 This will be discussed later in the edbrowse config file.
+
+<P>
+If a page is slow to browse, it may be running a lot of javascript, or it could be fetching files from the internet.
+In either case, you can interrupt the process by hitting control C.
+Javascript stops, and the page browses with the information it has at hand.
+This is fine if you're just reading a newspaper article and you don't want to wait for all the advertising to come into place,
+but you should never do this on an e-commerce site, or a banking site, or a site whose operation is mission critical.
+If the javascript does not run to completion, we cannot guarantee the proper operation of that website.
+You might wind up ordering a $37,000 elephant instead of
+$37 worth of printer supplies.
 
 <H3> <A NAME=valid> Validating Forms </A> </H3>
 
