@@ -2199,6 +2199,10 @@ struct listHead timerList = {
 	&timerList, &timerList
 };
 
+/* the spec says you can't run a timer less than 10 ms but here we currently use
+ * 600 ms. This really should be a configurable limit */
+int timerResolution = 600;
+
 void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 {
 	struct jsTimer *jt;
@@ -2230,10 +2234,9 @@ void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 	jt->ms = n % 1000;
 	jt->isInterval = isInterval;
 	if (isInterval) {
-/* the spec says you can't run a timer less than 10 ms but here we currently use 600 ms. This really should be a configurable limit */
 
-		if (n < 600)
-			n = 10;
+		if (n < timerResolution)
+			n = timerResolution;
 		jt->jump_sec = n / 1000, jt->jump_ms = n % 1000;
 	}
 	currentTime();
@@ -2322,8 +2325,7 @@ void delInputChanges(struct ebFrame *f)
 		ic->major = 'x';
 }				/* delInputChanges */
 
-void runTimer
-(void)
+void runTimer(void)
 {
 	struct jsTimer *jt;
 	struct ebWindow *save_cw = cw;
@@ -2332,8 +2334,7 @@ void runTimer
 	currentTime();
 
 	if ((jt = soonest())
-	    && !(jt->sec > now_sec
-	    || (jt->sec == now_sec && jt->ms > now_ms))) {
+	    && !(jt->sec > now_sec || (jt->sec == now_sec && jt->ms > now_ms))) {
 		cf = jt->frame;
 		cw = cf->owner;
 
