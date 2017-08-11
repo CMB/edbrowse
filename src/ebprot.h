@@ -153,7 +153,7 @@ void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval);
 bool timerWait(int *delay_sec, int *delay_ms);
 void delTimers(struct ebFrame *f);
 void delInputChanges(struct ebFrame *f);
-void runTimers(void);
+void runTimer(void);
 void javaOpensWindow(const char *href, const char *name) ;
 void javaSetsLinkage(bool after, char type, jsobjtype p, const char *rest);
 

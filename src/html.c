@@ -2230,18 +2230,10 @@ void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 	jt->ms = n % 1000;
 	jt->isInterval = isInterval;
 	if (isInterval) {
-/*********************************************************************
-I'm not willing to churn, firing a timer every few milliseconds.
-Some websites with intervals of 50ms or less take over the edbrowse process,
-wherein stdin can't get a word in edgewise.
-The user is literally locked out.
-This is almost always fast-paced visual effects, which are lost on us.
-Slowing things down should not cause any trouble,
-and it lets me type at the keyboard.
-Hey, the spec says you can't run faster than 10ms; well for us it's 600ms.
-*********************************************************************/
-		if (n < 600)
-			n = 600;
+/* the spec says you can't run a timer less than 10 ms */
+
+		if (n < 10)
+			n = 10;
 		jt->jump_sec = n / 1000, jt->jump_ms = n % 1000;
 	}
 	currentTime();
@@ -2330,7 +2322,8 @@ void delInputChanges(struct ebFrame *f)
 		ic->major = 'x';
 }				/* delInputChanges */
 
-void runTimers(void)
+void runTimer
+(void)
 {
 	struct jsTimer *jt;
 	struct ebWindow *save_cw = cw;
@@ -2338,11 +2331,9 @@ void runTimers(void)
 
 	currentTime();
 
-	while ((jt = soonest())) {
-		if (jt->sec > now_sec
-		    || (jt->sec == now_sec && jt->ms > now_ms))
-			break;
-
+	if ((jt = soonest())
+	    && !(jt->sec > now_sec
+	    || (jt->sec == now_sec && jt->ms > now_ms))) {
 		cf = jt->frame;
 		cw = cf->owner;
 
@@ -2379,7 +2370,7 @@ We need to fix this someday, though it is a very rare low runner case.
 
 	cw = save_cw;
 	cf = save_cf;
-}				/* runTimers */
+}				/* runTimer */
 
 void javaOpensWindow(const char *href, const char *name)
 {
