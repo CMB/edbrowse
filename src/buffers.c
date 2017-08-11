@@ -3014,6 +3014,11 @@ findField(const char *line, int ftype, int n,
 		while (strchr(urlok, *s))
 			++s;
 		h = pullString1(ss, s);
+// When a url ends in period, that is almost always the end of the sentence,
+// Please check out www.foobar.com/snork.
+// and rarely part of the url.
+		if (s[-1] == '.')
+			h[s - ss - 1] = 0;
 		unpercentURL(h);
 		if (!isURL(h)) {
 			free(h);
