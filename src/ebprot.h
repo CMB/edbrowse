@@ -64,7 +64,6 @@ int goSelect(int *startLine, char **rbuf) ;
 void javaSetsTagVar(jsobjtype v, const char *newtext);
 void javaSetsInner(jsobjtype v, const char *newtext);
 void dwStart(void);
-void garbageSweep1(jsobjtype p);
 void createJavaContext(void) ;
 void freeJavaContext(struct ebFrame *f) ;
 char *jsRunScriptResult(jsobjtype obj, const char *str, const char *filename, int lineno) ;
@@ -371,6 +370,8 @@ char *decodePostData(const char *data, const char *name, int seqno) ;
 void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p) ;
 
 /* sourcefile=jseng-duk.c */
+void connectTagObject(struct htmlTag *t, jsobjtype p);
+void disconnectTagObject(struct htmlTag *t);
 int js_main(void);
 // the native versions of the api functions in ebjs.c
 void createJavaContext_nat(void);

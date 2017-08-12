@@ -2597,7 +2597,8 @@ So check for serverData null here. Once again we pop the frame.
 		jsobjtype cdo;	// contentDocument object
 		jsobjtype cna;	// childNodes array
 		cdo = new_cf->docobj;
-		cdt->jv = cdo;
+		disconnectTagObject(cdt);
+		connectTagObject(cdt, cdo);
 		set_property_object(t->jv, "content$Document", cdo);
 		cna = get_property_object(t->jv, "childNodes");
 		set_array_element_object(cna, 0, cdo);
@@ -2745,7 +2746,8 @@ bool reexpandFrame(void)
 		jsobjtype cdo;	// contentDocument object
 		jsobjtype cna;	// childNodes array
 		cdo = cf->docobj;
-		cdt->jv = cdo;
+		disconnectTagObject(cdt);
+		connectTagObject(cdt, cdo);
 // have to point contentDocument to the new document object,
 // but that requires a change of context.
 		save_cf = cf;

@@ -101,66 +101,6 @@ void dwStart(void)
 	stringAndString(&cf->dw, &cf->dw_l, "<!DOCTYPE public><body>");
 }				/* dwStart */
 
-static void garbageCollect(struct htmlTag *t)
-{
-	struct htmlTag *c, *parent;
-	debugPrint(5, "kill tag %s %d", t->info->name, t->seqno);
-	t->dead = true;
-	t->jv = NULL;
-	t->step = 100;
-// unlink it from the tree above.
-	parent = t->parent;
-	if (parent) {
-		t->parent = NULL;
-		if (parent->firstchild == t)
-			parent->firstchild = t->sibling;
-		else {
-			c = parent->firstchild;
-			if (c) {
-				for (; c->sibling; c = c->sibling) {
-					if (c->sibling != t)
-						continue;
-					c->sibling = t->sibling;
-					break;
-				}
-			}
-		}
-	}
-// perhaps we should kill off all the nodes below this one.
-}
-
-static bool garbageSweep2(struct ebWindow *w, jsobjtype p)
-{
-	int i;
-	struct htmlTag *t;
-	if (!w->tags)
-		return false;
-	for (i = 0; i < w->numTags; ++i) {
-		t = w->tags[i];
-		if (t->jv != p || t->dead)
-			continue;
-// this is the one to kill.
-		garbageCollect(t);
-		return true;
-	}
-	return false;
-}
-
-void garbageSweep1(jsobjtype p)
-{
-	struct ebWindow *w;
-	int i;
-	for (i = 1; i < MAXSESSION; ++i) {
-		w = sessionList[i].lw;
-		if (!w)
-			continue;
-		do {
-			if (garbageSweep2(w, p))
-				return;
-		} while ((w = w->prev));
-	}
-}
-
 #define set_js_globals_f(f) (jcx = f->jcx, winobj = f->winobj, docobj = f->docobj)
 #define set_js_globals() set_js_globals_f(cf)
 #define get_js_globals() (cf->jcx = jcx, cf->winobj = winobj, cf->docobj = docobj)
@@ -904,7 +844,12 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 			break;
 		}
 
-		t->jv = oo;	/* should already equal oo */
+		if (t->jv != oo) {
+// not sure how this would ever happen.
+			disconnectTagObject(t);
+			connectTagObject(t, oo);
+		}
+
 		t->rchecked = get_property_bool(oo, "defaultSelected");
 		check2 = get_property_bool(oo, "selected");
 		if (check2) {
@@ -941,7 +886,7 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 			if (t->controller != sel)
 				continue;
 /* option is gone in js, disconnect this option tag from its select */
-			t->jv = 0;
+			disconnectTagObject(t);
 			t->controller = 0;
 			t->action = TAGACT_NOP;
 			changed = true;
@@ -953,7 +898,7 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 			t = newTag("option");
 			t->lic = i2;
 			t->controller = sel;
-			t->jv = oo;
+			connectTagObject(t, oo);
 			t->step = 2;	// already decorated
 			t->textval = get_property_string(oo, "text");
 			t->value = get_property_string(oo, "value");

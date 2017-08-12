@@ -423,9 +423,9 @@ void htmlMetaHelper(struct htmlTag *t)
 }				/* htmlMetaHelper */
 
 /* pre is the predecoration from edbrowse-js, if appropriate */
-static void runGeneratedHtml(struct htmlTag *t, const char *h, const char *pre)
+static void runGeneratedHtml(struct htmlTag *t, const char *h)
 {
-	int j, l = cw->numTags;
+	int l = cw->numTags;
 
 	if (t)
 		debugPrint(4, "parse under %s %d", t->info->name, t->seqno);
@@ -437,31 +437,7 @@ static void runGeneratedHtml(struct htmlTag *t, const char *h, const char *pre)
 	htmlGenerated = true;
 	htmlNodesIntoTree(l, t);
 	prerender(0);
-
-	if (pre) {
-		for (j = l; j < cw->numTags; ++j) {
-			t = tagList[j];
-			if (t->step < 2)
-				t->step = 2;	/* already decorated */
-		}
-		while (*pre == ',') {
-			jsobjtype v;
-			j = strtol(pre + 1, (char **)&pre, 10);
-			if (*pre != '=')
-				break;
-			++pre;
-			sscanf(pre, "%p", &v);
-// sanity check
-			if (j < 0 || l + j >= cw->numTags || !tagList[l + j])
-				debugPrint(1, "l %d j %d num %d", l, j,
-					   cw->numTags);
-			else
-				tagList[l + j]->jv = v;
-			while (*pre && *pre != ',')
-				++pre;
-		}
-	} else
-		decorate(0);
+	decorate(0);
 }				/* runGeneratedHtml */
 
 /* helper function to prepare an html script.
@@ -586,7 +562,7 @@ void runScriptsPending(void)
  * appears inline where the script is. */
 	if (cf->dw) {
 		stringAndString(&cf->dw, &cf->dw_l, "</body>\n");
-		runGeneratedHtml(NULL, cf->dw, NULL);
+		runGeneratedHtml(NULL, cf->dw);
 		nzFree(cf->dw);
 		cf->dw = 0;
 		cf->dw_l = 0;
@@ -633,7 +609,7 @@ top:
 /* look for document.write from this script */
 		if (cf->dw) {
 			stringAndString(&cf->dw, &cf->dw_l, "</body>\n");
-			runGeneratedHtml(t, cf->dw, NULL);
+			runGeneratedHtml(t, cf->dw);
 			nzFree(cf->dw);
 			cf->dw = 0;
 			cf->dw_l = 0;
@@ -1766,7 +1742,7 @@ static struct htmlTag *tagFromJavaVar2(jsobjtype v, const char *tagname)
 		debugPrint(3, "cannot create tag node %s", tagname);
 		return 0;
 	}
-	t->jv = v;
+	connectTagObject(t, v);
 /* this node now has a js object, don't decorate it again. */
 	t->step = 2;
 /* and don't render it unless it is linked into the active tree */

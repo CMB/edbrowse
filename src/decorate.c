@@ -1066,7 +1066,7 @@ call out to process those and add them to the object */
 		set_property_string(io, "class", htmlclass);
 	}
 
-	t->jv = io;
+	connectTagObject(t, io);
 
 	set_property_string(io, "nodeName", t->info->name);
 /* documentElement is now set in the "Body" case because the 
@@ -1144,7 +1144,7 @@ static void optionJS(struct htmlTag *t)
 	if (!sel->jv)
 		return;
 
-	t->jv = establish_js_option(sel->jv, t->lic);
+	connectTagObject(t, establish_js_option(sel->jv, t->lic));
 	set_property_string(t->jv, "text", t->textval);
 	set_property_string(t->jv, "value", t->value);
 	set_property_string(t->jv, "nodeName", "option");
@@ -1189,7 +1189,9 @@ Needless to say that's not good!
 	switch (action) {
 
 	case TAGACT_TEXT:
-		t->jv = instantiate(cf->docobj, fakePropName(), "TextNode");
+		connectTagObject(t,
+				 instantiate(cf->docobj, fakePropName(),
+					     "TextNode"));
 		if (t->jv) {
 			const char *w = t->textval;
 			if (!w)
@@ -1540,6 +1542,7 @@ void freeTags(struct ebWindow *w)
 		nzFree(t->classname);
 		nzFree(t->js_file);
 		nzFree(t->innerHTML);
+		disconnectTagObject(t);
 
 		a = (char **)t->attributes;
 		if (a) {

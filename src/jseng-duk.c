@@ -52,7 +52,10 @@ static duk_context *context0;
 
 /* wrappers around duktape alloc functions: add our own header */
 struct jsdata_wrap {
-	uint64_t header;
+	union {
+		uint64_t header;
+		struct htmlTag *t;
+	} u;
 	char data[0];
 };
 #define jsdata_of(p) ((struct jsdata_wrap*)((char*)(p)-sizeof(struct jsdata_wrap)))
@@ -60,11 +63,9 @@ struct jsdata_wrap {
 static void *watch_malloc(void *udata, size_t n)
 {
 	struct jsdata_wrap *w = malloc(n + sizeof(struct jsdata_wrap));
-
 	if (!w)
 		return NULL;
-
-	w->header = 0;
+	w->u.t = 0;
 	return w->data;
 }
 
@@ -76,42 +77,75 @@ static void *watch_realloc(void *udata, void *p, size_t n)
 		return watch_malloc(udata, n);
 
 	w = jsdata_of(p);
-
-	if (w->header != 0)
+	if (w->u.t != 0)
 		debugPrint(1,
 			   "realloc with a watched pointer, shouldn't happen");
-
 	w = realloc(w, n + sizeof(struct jsdata_wrap));
 	return w->data;
 }
 
+static void killTag(struct htmlTag *t)
+{
+	struct htmlTag *c, *parent;
+	debugPrint(5, "kill tag %s %d", t->info->name, t->seqno);
+	t->dead = true;
+	t->deleted = true;
+	t->jv = NULL;
+	t->step = 100;
+
+// unlink it from the tree above.
+	parent = t->parent;
+	if (parent) {
+		t->parent = NULL;
+		if (parent->firstchild == t)
+			parent->firstchild = t->sibling;
+		else {
+			c = parent->firstchild;
+			if (c) {
+				for (; c->sibling; c = c->sibling) {
+					if (c->sibling != t)
+						continue;
+					c->sibling = t->sibling;
+					break;
+				}
+			}
+		}
+	}
+}
+
 static void watch_free(void *udata, void *p)
 {
-	int i;
+	struct htmlTag *t;
 	struct jsdata_wrap *w;
 
 	if (!p)
 		return;
 
 	w = jsdata_of(p);
-	i = w->header;
+	t = w->u.t;
 	free(w);
-	if (!i)
-		return;
-	debugPrint(4, "gc %p", p);
-	garbageSweep1(p);
+	if (t) {
+		debugPrint(4, "gc %p", p);
+		killTag(t);
+	}
 }
 
-// Wrapper around get_heapptr()
-static void *watch_heapptr(int idx)
+void connectTagObject(struct htmlTag *t, jsobjtype p)
 {
-	void *p = duk_get_heapptr(jcx, idx);
-// p could be null if the entity on the stack is not an object.
-	if (p) {
-		struct jsdata_wrap *w = jsdata_of(p);
-		w->header = 1;
-	}
-	return p;
+	struct jsdata_wrap *w = jsdata_of(p);
+	w->u.t = t;
+	t->jv = p;
+}
+
+void disconnectTagObject(struct htmlTag *t)
+{
+	struct jsdata_wrap *w;
+	jsobjtype p = t->jv;
+	if (!p)
+		return;
+	w = jsdata_of(p);
+	w->u.t = NULL;
+	t->jv = NULL;
 }
 
 int js_main(void)
@@ -293,7 +327,7 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	duk_insert(cx, -2);
 	duk_put_prop_string(cx, -2, "inner$HTML");
 
-	thisobj = watch_heapptr(-1);
+	thisobj = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
 
 // Put some tags around the html, so tidy can parse it.
@@ -329,7 +363,7 @@ static duk_ret_t setter_innerText(duk_context * cx)
 	duk_push_this(cx);
 	duk_insert(cx, -2);
 	duk_put_prop_string(cx, -2, "inner$Text");
-	thisobj = watch_heapptr(-1);
+	thisobj = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
 	javaSetsInner(thisobj, h);
 	debugPrint(5, "setter t 2");
@@ -355,7 +389,7 @@ static duk_ret_t setter_value(duk_context * cx)
 	duk_push_this(cx);
 	duk_insert(cx, -2);
 	duk_put_prop_string(cx, -2, "val$ue");
-	thisobj = watch_heapptr(-1);
+	thisobj = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
 	t = cloneString(h);
 	prepareForField(t);
@@ -375,7 +409,7 @@ static duk_ret_t getter_cd(duk_context * cx)
 
 	jsInterruptCheck();
 	duk_push_this(cx);
-	thisobj = watch_heapptr(-1);
+	thisobj = duk_get_heapptr(cx, -1);
 	found = duk_get_prop_string(cx, -1, "eb$auto");
 	duk_pop(cx);
 	if (!found) {
@@ -425,7 +459,7 @@ static void linkageNow(char linkmode, jsobjtype o)
 
 static duk_ret_t native_log_element(duk_context * cx)
 {
-	jsobjtype newobj = watch_heapptr(-2);
+	jsobjtype newobj = duk_get_heapptr(cx, -2);
 	const char *tag = duk_get_string(cx, -1);
 	char e[60];
 	if (!newobj || !tag)
@@ -524,7 +558,7 @@ static void set_timeout(duk_context * cx, bool isInterval)
 		goto done;
 	}
 // stack now has function global fakePropertyName timer-object.
-	to = watch_heapptr(-1);
+	to = duk_get_heapptr(cx, -1);
 // protect this timer from the garbage collector.
 	duk_def_prop(cx, 1,
 		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
@@ -564,7 +598,7 @@ static duk_ret_t native_setInterval(duk_context * cx)
 
 static duk_ret_t native_clearTimeout(duk_context * cx)
 {
-	jsobjtype obj = watch_heapptr(0);
+	jsobjtype obj = duk_get_heapptr(cx, 0);
 	if (!obj)
 		return 0;
 	javaSetsTimeout(0, "-", obj, false);
@@ -658,9 +692,9 @@ static void append0(duk_context * cx, bool side)
 		return;
 
 	debugPrint(5, "append 1");
-	child = watch_heapptr(0);
+	child = duk_get_heapptr(cx, 0);
 	duk_push_this(cx);
-	thisobj = watch_heapptr(-1);
+	thisobj = duk_get_heapptr(cx, -1);
 	if (!duk_get_prop_string(cx, -1, "childNodes") || !duk_is_array(cx, -1)) {
 		duk_pop_2(cx);
 		goto done;
@@ -669,7 +703,7 @@ static void append0(duk_context * cx, bool side)
 // see if it's already there.
 	for (i = 0; i < length; ++i) {
 		duk_get_prop_index(cx, -1, i);
-		if (child == watch_heapptr(-1)) {
+		if (child == duk_get_heapptr(cx, -1)) {
 // child was already there, just return.
 			duk_pop_n(cx, 3);
 			goto done;
@@ -731,10 +765,10 @@ static duk_ret_t native_insbf(duk_context * cx)
 		return 0;
 
 	debugPrint(5, "before 1");
-	child = watch_heapptr(0);
-	item = watch_heapptr(1);
+	child = duk_get_heapptr(cx, 0);
+	item = duk_get_heapptr(cx, 1);
 	duk_push_this(cx);
-	thisobj = watch_heapptr(-1);
+	thisobj = duk_get_heapptr(cx, -1);
 	duk_get_prop_string(cx, -1, "childNodes");
 	if (!duk_is_array(cx, -1)) {
 		duk_pop_n(cx, 3);
@@ -744,7 +778,7 @@ static duk_ret_t native_insbf(duk_context * cx)
 	mark = -1;
 	for (i = 0; i < length; ++i) {
 		duk_get_prop_index(cx, -1, i);
-		h = watch_heapptr(-1);
+		h = duk_get_heapptr(cx, -1);
 		if (child == h) {
 			duk_pop_n(cx, 4);
 			goto done;
@@ -808,9 +842,9 @@ static duk_ret_t native_removeChild(duk_context * cx)
 // top of stack must be the object to remove.
 	if (!duk_is_object(cx, -1))
 		goto done;
-	child = watch_heapptr(-1);
+	child = duk_get_heapptr(cx, -1);
 	duk_push_this(cx);
-	thisobj = watch_heapptr(-1);
+	thisobj = duk_get_heapptr(cx, -1);
 	duk_get_prop_string(cx, -1, "childNodes");
 	if (!duk_is_array(cx, -1)) {
 		duk_pop_2(cx);
@@ -820,7 +854,7 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	mark = -1;
 	for (i = 0; i < length; ++i) {
 		duk_get_prop_index(cx, -1, i);
-		h = watch_heapptr(-1);
+		h = duk_get_heapptr(cx, -1);
 		if (h == child)
 			mark = i;
 		duk_pop(cx);
@@ -942,7 +976,7 @@ static duk_ret_t native_formSubmit(duk_context * cx)
 {
 	jsobjtype thisobj;
 	duk_push_this(cx);
-	thisobj = watch_heapptr(-1);
+	thisobj = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
 	debugPrint(4, "submit %p", thisobj);
 	javaSubmitsForm(thisobj, false);
@@ -953,7 +987,7 @@ static duk_ret_t native_formReset(duk_context * cx)
 {
 	jsobjtype thisobj;
 	duk_push_this(cx);
-	thisobj = watch_heapptr(-1);
+	thisobj = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
 	debugPrint(4, "reset %p", thisobj);
 	javaSubmitsForm(thisobj, true);
@@ -1081,10 +1115,10 @@ void createJavaContext_nat(void)
 // the global object, which will become window,
 // and the document object.
 	duk_push_global_object(jcx);
-	winobj = watch_heapptr(0);
+	winobj = duk_get_heapptr(jcx, 0);
 	duk_push_string(jcx, "document");
 	duk_push_object(jcx);
-	docobj = watch_heapptr(2);
+	docobj = duk_get_heapptr(jcx, 2);
 	duk_def_prop(jcx, 0,
 		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
 		      DUK_DEFPROP_CLEAR_WRITABLE |
@@ -1242,7 +1276,7 @@ char *get_property_string_nat(jsobjtype parent, const char *name)
 	if (duk_is_object(jcx, -1)) {
 /* special code here to return the object pointer */
 /* That's what edbrowse is going to want. */
-		jsobjtype o = watch_heapptr(-1);
+		jsobjtype o = duk_get_heapptr(jcx, -1);
 		s = pointer2string(o);
 	} else
 		s = duk_to_string(jcx, -1);
@@ -1259,7 +1293,7 @@ jsobjtype get_property_object_nat(jsobjtype parent, const char *name)
 	duk_push_heapptr(jcx, parent);
 	duk_get_prop_string(jcx, -1, name);
 	if (duk_is_object(jcx, -1))
-		o = watch_heapptr(-1);
+		o = duk_get_heapptr(jcx, -1);
 	duk_pop_2(jcx);
 	return o;
 }				/* get_property_object_nat */
@@ -1270,7 +1304,7 @@ jsobjtype get_property_function_nat(jsobjtype parent, const char *name)
 	duk_push_heapptr(jcx, parent);
 	duk_get_prop_string(jcx, -1, name);
 	if (duk_is_function(jcx, -1))
-		o = watch_heapptr(-1);
+		o = duk_get_heapptr(jcx, -1);
 	duk_pop_2(jcx);
 	return o;
 }				/* get_property_function_nat */
@@ -1545,7 +1579,7 @@ jsobjtype instantiate_array_nat(jsobjtype parent, const char *name)
 	jsobjtype a;
 	duk_push_heapptr(jcx, parent);
 	if (duk_get_prop_string(jcx, -1, name) && duk_is_array(jcx, -1)) {
-		a = watch_heapptr(-1);
+		a = duk_get_heapptr(jcx, -1);
 		duk_pop_2(jcx);
 		return a;
 	}
@@ -1556,7 +1590,7 @@ jsobjtype instantiate_array_nat(jsobjtype parent, const char *name)
 		duk_pop(jcx);
 		return 0;
 	}
-	a = watch_heapptr(-1);
+	a = duk_get_heapptr(jcx, -1);
 	duk_put_prop_string(jcx, -2, name);
 	duk_pop(jcx);
 	return a;
@@ -1569,7 +1603,7 @@ jsobjtype instantiate_nat(jsobjtype parent, const char *name,
 	duk_push_heapptr(jcx, parent);
 	if (duk_get_prop_string(jcx, -1, name) && duk_is_object(jcx, -1)) {
 // I'll assume the object is of the proper class.
-		a = watch_heapptr(-1);
+		a = duk_get_heapptr(jcx, -1);
 		duk_pop_2(jcx);
 		return a;
 	}
@@ -1586,7 +1620,7 @@ jsobjtype instantiate_nat(jsobjtype parent, const char *name,
 		duk_pop(jcx);
 		return 0;
 	}
-	a = watch_heapptr(-1);
+	a = duk_get_heapptr(jcx, -1);
 	duk_put_prop_string(jcx, -2, name);
 	duk_pop(jcx);
 	return a;
@@ -1605,7 +1639,7 @@ jsobjtype instantiate_array_element_nat(jsobjtype parent, int idx,
 		duk_pop(jcx);
 		return 0;
 	}
-	a = watch_heapptr(-1);
+	a = duk_get_heapptr(jcx, -1);
 	duk_put_prop_index(jcx, -2, idx);
 	duk_pop(jcx);
 	return a;
@@ -1626,7 +1660,7 @@ jsobjtype get_array_element_object_nat(jsobjtype parent, int idx)
 	duk_push_heapptr(jcx, parent);
 	duk_get_prop_index(jcx, -1, idx);
 	if (duk_is_object(jcx, -1))
-		a = watch_heapptr(-1);
+		a = duk_get_heapptr(jcx, -1);
 	duk_pop_2(jcx);
 	return a;
 }
