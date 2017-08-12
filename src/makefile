@@ -43,7 +43,7 @@ LIBS +=		-lodbc
 EBOBJS +=	dbstubs.o
 .endif
 
-$(EBOBJS): eb.h ebprot.h messages.h ebjs.h
+$(EBOBJS): eb.h ebprot.h messages.h
 dbodbc.o dbinfx.o dbops.o: dbapi.h
 
 .c.o:

@@ -2203,8 +2203,6 @@ static void background_download(struct eb_curl_callback_data *data)
 		return;
 	}
 
-/* child doesn't need javascript */
-	js_disconnect();
 /* ignore interrupt, not sure about quit and hangup */
 	signal(SIGINT, SIG_IGN);
 	data->down_state = 4;
@@ -2680,7 +2678,6 @@ bool reexpandFrame(void)
 	cdt->firstchild = 0;
 
 	delTimers(cf);
-	delInputChanges(cf);
 	freeJavaContext(cf);
 	nzFree(cf->dw);
 	cf->dw = 0;

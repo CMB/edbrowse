@@ -151,7 +151,7 @@ and http redirection.
    side effects of running javascript.
    Tree of nodes internal to edbrowse.
    Dynamic node linkage.
-5: messages to and from the javascript process, url resolution, tidy html nodes.
+5: messages to and from javascript, url resolution, tidy html nodes.
 6: show javascript to be executed
 7: reformatted regular expressions, breakline chunks, read from js.
 8: text lines freed, debug garbage collection
@@ -278,13 +278,9 @@ Each is converted into a const string in src/ebrc.c,
 thus src/ebrc.c is not a source file.
 
 src/ebjs.c:
-Interface between edbrowse main process and edbrowse js process.
-Sends interprocess messages to the child to manipulate the js objects,
-and returns the result back to edbrowse parent.
-Think of edbrowse child as the js server, and edbrowse parent as the client.
-Set the environment variable JS2 to any nonempty string to run as 2 processes, as described above.
-This is legacy however; edbrowse typically runs as one process, simulating client server inside, and the JS2 feature may go away.
-This is all internal, and does not affect the user interface.
+Interface between edbrowse and the javascript engine.
+Functions to manipulate the js objects,
+which then return the results back to edbrowse.
 
 src/jsrt:
 This is the javascript regression test for edbrowse.

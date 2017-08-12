@@ -1,16 +1,13 @@
 /*********************************************************************
 This is the back-end process for javascript.
 This is the server, and edbrowse is the client.
-We receive interprocess messages from edbrowse,
+We receive commands from edbrowse,
 getting and setting properties for various DOM objects.
 
 This is the duktape version.
-If you package this with the mozilla js libraries,
+If you package this with the duktape js libraries,
 you will need to include the MIT open source license,
 along with the GPL, general public license.
-
-The interface between this process and edbrowse is defined in ebjs.h.
-There should be no other local header files common to both.
 
 Exit codes are as follows:
 0 terminate normally, as directed by edbrowse
@@ -37,24 +34,6 @@ Exit codes are as follows:
 
 #include <duktape.h>
 
-static void usage(void)
-{
-	fprintf(stderr, "Usage:  edbrowse-js pipe_in pipe_out\n");
-	exit(1);
-}				/* usage */
-
-/* arguments, as indicated by the above */
-static int pipe_in, pipe_out;
-
-/* Here is an instance of the edbrowse window that exists for parsing
- * html from inside javascript. It belongs to edbrowse-js,
- * and isn't associated with a particular buffer on the edbrowse side. */
-static struct ebWindow in_js_cw;
-
-static void readMessage(void);
-static void processMessage1(void);
-static void processMessage2(void);
-static void writeHeader(void);
 static void processError(void);
 
 jsobjtype jcx;			// the javascript context
@@ -63,52 +42,12 @@ jsobjtype docobj;		// document object
 const char *jsSourceFile;	// sourcefile providing the javascript
 int jsLineno;			// line number
 
-static void cwSetup(void)
-{
-	cf->winobj = winobj;
-	cf->docobj = docobj;
-	cf->hbase = get_property_string_nat(winobj, "eb$base");
-	cf->baseset = true;
-}				/* cwSetup */
-
-static void cwBringdown(void)
-{
-	freeTags(cw);
-	nzFree(cw->ft);		/* title could have been set by prerender */
-	cw->ft = 0;
-	nzFree(cf->hbase);
-	cf->hbase = 0;
-}				/* cwBringdown */
-
-static struct EJ_MSG head;
 static char *errorMessage;
 static char *effects;
 static int eff_l;
 #define effectString(s) stringAndString(&effects, &eff_l, (s))
 #define effectChar(s) stringAndChar(&effects, &eff_l, (s))
-#define endeffect() effectString("`~@}\n");
 
-/* pack the decoration of a tree into the effects string */
-static void packDecoration(void)
-{
-	struct htmlTag *t;
-	int j;
-	if (!cw->tags)		/* should never happen */
-		return;
-	for (j = 0; j < cw->numTags; ++j) {
-		char line[60];
-		t = tagList[j];
-		if (!t->jv)
-			continue;
-		sprintf(line, ",%d=%p", j, t->jv);
-		effectString(line);
-	}
-}				/* packDecoration */
-
-static char *membername;
-static char *propval;
-static enum ej_proptype proptype;
-static char *runscript;
 static duk_context *context0;
 
 /* wrappers around duktape alloc functions: add our own header */
@@ -159,16 +98,8 @@ static void watch_free(void *udata, void *p)
 	free(w);
 	if (!i)
 		return;
-
-	if (js1) {
-		debugPrint(4, "gc %p", p);
-		garbageSweep1(p);
-	} else {
-		char e[40];
-		sprintf(e, "g{%p", p);	// }
-		effectString(e);
-		endeffect();
-	}
+	debugPrint(4, "gc %p", p);
+	garbageSweep1(p);
 }
 
 // Wrapper around get_heapptr()
@@ -183,202 +114,30 @@ static void *watch_heapptr(int idx)
 	return p;
 }
 
-int js_main(int argc, char **argv)
+int js_main(void)
 {
-	if (!js1) {
-		if (argc != 2)
-			usage();
-		pipe_in = stringIsNum(argv[0]);
-		pipe_out = stringIsNum(argv[1]);
-		if (pipe_in < 0 || pipe_out < 0)
-			usage();
-	}
-
 	effects = initString(&eff_l);
-
 	context0 =
 	    duk_create_heap(watch_malloc, watch_realloc, watch_free, 0, 0);
 	if (!context0) {
 		fprintf(stderr,
 			"Cannot create javascript runtime environment\n");
-		if (!js1) {
-/* send a message to edbrowse, so it can disable javascript,
- * so we don't get this same error on every browse. */
-			head.highstat = EJ_HIGH_PROC_FAIL;
-			head.lowstat = EJ_LOW_RUNTIME;
-			writeHeader();
-			exit(4);
-		} else {
-			return 4;
-		}
+		return 4;
 	}
-
-	if (js1)
-		return 0;
-
-	cw = &in_js_cw;
-	cf = &(cw->f0);
-	cf->owner = cw;
-
-	readConfigFile();
-	setupEdbrowseCache();
-	eb_curl_global_init();
-	cookiesFromJar();
-	pluginsOn = false;
-	sendReferrer = false;
-
-/* edbrowse catches interrupt, this process ignores it. */
-/* Use quit to terminate, or kill from another console. */
-/* If edbrowse quits then this process also quits via broken pipe. */
-	signal(SIGINT, SIG_IGN);
-
-	while (true)
-		processMessage1();
+	return 0;
 }				/* js_main */
-
-/* read from and write to edbrowse */
-
-static void readFromEb(void *data_p, int n)
-{
-	int rc;
-	unsigned char *bytes_p = (unsigned char *)data_p;
-	if (n == 0)
-		return;
-	while (n > 0) {
-		rc = read(pipe_in, bytes_p, n);
-		if (rc <= 0) {
-/* Oops - can't read from the process any more */
-			exit(2);
-		}
-		n -= rc;
-		bytes_p += rc;
-	}
-}				/* readFromEb */
-
-static void writeToEb(const void *data_p, int n)
-{
-	int rc;
-	if (n == 0)
-		return;
-	rc = write(pipe_out, data_p, n);
-	if (rc == n)
-		return;
-/* Oops - can't write to the process any more */
-	fprintf(stderr, "js cannot communicate with edbrowse\n");
-	exit(2);
-}				/* writeToEb */
-
-static void writeHeader(void)
-{
-	head.magic = EJ_MAGIC;
-	head.side = eff_l;
-	head.msglen = 0;
-	if (errorMessage)
-		head.msglen = strlen(errorMessage);
-
-	writeToEb(&head, sizeof(head));
-
-// send out the error message and side effects, if present.
-// Edbrowse will expect these before any returned values.
-// If one process, then there will be no side effects, since they happen
-// in real time. In other words, the effects string is empty.
-	if (head.side) {
-		writeToEb(effects, head.side);
-		nzFree(effects);
-		effects = initString(&eff_l);
-	}
-
-	if (head.msglen) {
-		writeToEb(errorMessage, head.msglen);
-		nzFree(errorMessage);
-		errorMessage = 0;
-	}
-
-/* That's the header, you may still need to send a returned value */
-}				/* writeHeader */
-
-/* this is allocated */
-static char *readString(int n)
-{
-	char *s;
-	if (!n)
-		return 0;
-	s = allocString(n + 1);
-	readFromEb(s, n);
-	s[n] = 0;
-	return s;
-}				/* readString */
-
-/* Read the entire message, so we can process it and move on,
- * without any sync errors. This means we must read the property or run script
- * or anything else passed along. */
-static void readMessage(void)
-{
-	enum ej_cmd cmd;
-
-	readFromEb(&head, sizeof(head));
-
-	if (head.magic != EJ_MAGIC) {
-		fprintf(stderr,
-			"Messages between js and edbrowse are out of sync\n");
-		exit(3);
-	}
-
-	cmd = head.cmd;
-
-	if (cmd == EJ_CMD_SCRIPT) {
-		if (head.proplength)
-			runscript = readString(head.proplength);
-	}
-
-	if (cmd == EJ_CMD_HASPROP ||
-	    cmd == EJ_CMD_GETPROP ||
-	    cmd == EJ_CMD_CALL ||
-	    cmd == EJ_CMD_SETPROP || cmd == EJ_CMD_DELPROP) {
-		if (head.n)
-			membername = readString(head.n);
-	}
-
-/* property in function call is | separated list of object args */
-	if (cmd == EJ_CMD_SETPROP || cmd == EJ_CMD_SETAREL ||
-	    cmd == EJ_CMD_CALL || cmd == EJ_CMD_VARUPDATE) {
-		proptype = head.proptype;
-		if (head.proplength)
-			propval = readString(head.proplength);
-	}
-
-/* and that's the whole message */
-}				/* readMessage */
-
-#if 0
-static void misconfigure(int n)
-{
-/* there may already be a larger error */
-	if (head.highstat > EJ_HIGH_CX_FAIL)
-		return;
-	head.highstat = EJ_HIGH_CX_FAIL;
-	head.lowstat = EJ_LOW_VARS;
-	head.lineno = n;
-}				/* misconfigure */
-#endif
 
 static duk_ret_t native_new_location(duk_context * cx)
 {
 	const char *s = duk_to_string(cx, -1);
 	if (s && *s) {
-		if (js1) {
-			char *t = cloneString(s);
+		char *t = cloneString(s);
 /* url on one line, name of window on next line */
-			char *u = strchr(t, '\n');
-			*u++ = 0;
-			debugPrint(4, "window %s|%s", t, u);
-			javaOpensWindow(t, u);
-			nzFree(t);
-		} else {
-			effectString("n{");	// }
-			effectString(s);
-			endeffect();
-		}
+		char *u = strchr(t, '\n');
+		*u++ = 0;
+		debugPrint(4, "window %s|%s", t, u);
+		javaOpensWindow(t, u);
+		nzFree(t);
 	}
 	return 0;
 }
@@ -477,18 +236,11 @@ static const char *pointer2string(const jsobjtype obj)
 	return pbuf;
 }				/* pointer2string */
 
-static jsobjtype string2pointer(const char *s)
-{
-	jsobjtype p;
-	sscanf(s, "%p", &p);
-	return p;
-}				/* string2pointer */
-
 // Sometimes control c can interrupt long running javascript, if the script
 // calls our native methods.
 static void jsInterruptCheck(void)
 {
-	if (!(js1 & intFlag))
+	if (!intFlag)
 		return;
 	i_puts(MSG_Interrupted);
 	duk_get_global_string(jcx, "eb$stopexec");
@@ -553,21 +305,7 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	stringAndString(&run, &run_l, "</body>");
 
 // now turn the html into objects
-	if (!js1)
-		cwSetup();
 	html_from_setter(thisobj, run);
-
-	if (!js1) {
-		effectString("i{h");	// }
-		effectString(pointer2string(thisobj));
-		effectChar('|');
-		effectString(run);
-		effectChar('@');
-		packDecoration();
-		cwBringdown();
-		endeffect();
-	}
-
 	nzFree(run);
 	debugPrint(5, "setter h 2");
 	return 0;
@@ -593,15 +331,7 @@ static duk_ret_t setter_innerText(duk_context * cx)
 	duk_put_prop_string(cx, -2, "inner$Text");
 	thisobj = watch_heapptr(-1);
 	duk_pop(cx);
-	if (js1) {
-		javaSetsInner(thisobj, h, 't');
-	} else {
-		effectString("i{t");	// }
-		effectString(pointer2string(thisobj));
-		effectChar('|');
-		effectString(h);
-		endeffect();
-	}
+	javaSetsInner(thisobj, h);
 	debugPrint(5, "setter t 2");
 	return 0;
 }
@@ -617,6 +347,7 @@ static duk_ret_t getter_value(duk_context * cx)
 static duk_ret_t setter_value(duk_context * cx)
 {
 	jsobjtype thisobj;
+	char *t;
 	const char *h = duk_to_string(cx, -1);
 	if (!h)			// should never happen
 		h = emptyString;
@@ -626,20 +357,11 @@ static duk_ret_t setter_value(duk_context * cx)
 	duk_put_prop_string(cx, -2, "val$ue");
 	thisobj = watch_heapptr(-1);
 	duk_pop(cx);
-
-	if (js1) {
-		char *t = cloneString(h);
-		prepareForField(t);
-		debugPrint(4, "value %p=%s", thisobj, t);
-		javaSetsTagVar(thisobj, t);
-		nzFree(t);
-	} else {
-		effectString("v{");	// }
-		effectString(pointer2string(thisobj));
-		effectChar('=');
-		effectString(h);
-		endeffect();
-	}
+	t = cloneString(h);
+	prepareForField(t);
+	debugPrint(4, "value %p=%s", thisobj, t);
+	javaSetsTagVar(thisobj, t);
+	nzFree(t);
 
 	debugPrint(5, "setter v 2");
 	return 0;
@@ -658,32 +380,27 @@ static duk_ret_t getter_cd(duk_context * cx)
 	duk_pop(cx);
 	if (!found) {
 // need to expand.
-		duk_push_true(cx);
-		duk_put_prop_string(cx, -2, "eb$auto");
-		if (js1) {
-// must switch to edbrowse mode, then back to js mode.
 // Have to save all the global variables, because other js scrips will be
 // running in another context.
 // Having all these global variables isn't great programming.
-			jsobjtype save_jcx = jcx;
-			jsobjtype save_winobj = winobj;
-			jsobjtype save_docobj = docobj;
-			const char *save_src = jsSourceFile;
-			int save_lineno = jsLineno;
-			bool save_plug = pluginsOn;
-			pluginsOn = false;
-			whichproc = 'e';
-			frameExpandLine(0, thisobj);
-			whichproc = 'j';
-			jcx = save_jcx;
-			winobj = save_winobj;
-			docobj = save_docobj;
-			jsSourceFile = save_src;
-			jsLineno = save_lineno;
-			pluginsOn = save_plug;
-		} else {
-			debugPrint(1, "cannot autoexpand frames without JS1");
-		}
+		jsobjtype save_jcx = jcx;
+		jsobjtype save_winobj = winobj;
+		jsobjtype save_docobj = docobj;
+		const char *save_src = jsSourceFile;
+		int save_lineno = jsLineno;
+		bool save_plug = pluginsOn;
+		duk_push_true(cx);
+		duk_put_prop_string(cx, -2, "eb$auto");
+		pluginsOn = false;
+		whichproc = 'e';
+		frameExpandLine(0, thisobj);
+		whichproc = 'j';
+		jcx = save_jcx;
+		winobj = save_winobj;
+		docobj = save_docobj;
+		jsSourceFile = save_src;
+		jsLineno = save_lineno;
+		pluginsOn = save_plug;
 	}
 
 	duk_get_prop_string(cx, -1, "content$Document");
@@ -700,7 +417,6 @@ static duk_ret_t setter_cd(duk_context * cx)
 static void linkageNow(char linkmode, jsobjtype o)
 {
 	jsInterruptCheck();
-	effects[eff_l - 5] = 0;
 	debugPrint(4, "linkset %s", effects + 2);
 	javaSetsLinkage(false, linkmode, o, strchr(effects, ',') + 1);
 	nzFree(effects);
@@ -719,9 +435,7 @@ static duk_ret_t native_log_element(duk_context * cx)
 // pass the newly created node over to edbrowse
 	sprintf(e, "l{c|%s,%s 0x0, 0x0, ", pointer2string(newobj), tag);
 	effectString(e);
-	endeffect();
-	if (js1)
-		linkageNow('c', newobj);
+	linkageNow('c', newobj);
 	duk_pop(cx);
 // create the innerHTML member with its setter, this has to be done in C.
 	duk_push_string(cx, "innerHTML");
@@ -830,19 +544,7 @@ static void set_timeout(duk_context * cx, bool isInterval)
 		      DUK_DEFPROP_CLEAR_CONFIGURABLE));
 // leaves just the timer object on the stack, which is what we want.
 
-	if (js1) {
-		javaSetsTimeout(n, fname, to, isInterval);
-	} else {
-		char nstring[20];
-		sprintf(nstring, "t{%d|", n);	// }
-		effectString(nstring);
-		effectString(fname);
-		effectChar('|');
-		effectString(pointer2string(to));
-		effectChar('|');
-		effectChar((isInterval ? '1' : '0'));
-		endeffect();
-	}
+	javaSetsTimeout(n, fname, to, isInterval);
 
 done:
 	debugPrint(5, "timer 2");
@@ -865,14 +567,7 @@ static duk_ret_t native_clearTimeout(duk_context * cx)
 	jsobjtype obj = watch_heapptr(0);
 	if (!obj)
 		return 0;
-	if (js1) {
-		javaSetsTimeout(0, "-", obj, false);
-	} else {
-		char nstring[20];
-		sprintf(nstring, "t{0|-|%s|0", pointer2string(obj));	// }
-		effectString(nstring);
-		endeffect();
-	}
+	javaSetsTimeout(0, "-", obj, false);
 // We should unlink this timer from window so gc can clean it up.
 // We'd have to save the fakePropName to do that.
 	return 0;
@@ -880,10 +575,9 @@ static duk_ret_t native_clearTimeout(duk_context * cx)
 
 static duk_ret_t native_win_close(duk_context * cx)
 {
-	if (head.highstat <= EJ_HIGH_CX_FAIL) {
-		head.highstat = EJ_HIGH_CX_FAIL;
-		head.lowstat = EJ_LOW_CLOSE;
-	}
+	i_puts(MSG_PageDone);
+// I should probably freeJavaContext and close down javascript,
+// but not sure I can do that while the js function is still running.
 	return 0;
 }
 
@@ -899,19 +593,11 @@ static void dwrite(duk_context * cx, bool newline)
 		duk_push_string(cx, emptyString);
 	}
 	s = duk_get_string(cx, 0);
-	if (js1) {
-		debugPrint(4, "dwrite:%s", s);
-		dwStart();
-		stringAndString(&cf->dw, &cf->dw_l, s);
-		if (newline)
-			stringAndChar(&cf->dw, &cf->dw_l, '\n');
-	} else {
-		effectString("w{");	// }
-		effectString(s);
-		if (newline)
-			effectChar('\n');
-		endeffect();
-	}
+	debugPrint(4, "dwrite:%s", s);
+	dwStart();
+	stringAndString(&cf->dw, &cf->dw_l, s);
+	if (newline)
+		stringAndChar(&cf->dw, &cf->dw_l, '\n');
 }
 
 static duk_ret_t native_doc_write(duk_context * cx)
@@ -1013,9 +699,7 @@ static void append0(duk_context * cx, bool side)
 	effectChar(',');
 	effectString(childname);
 	effectString(" 0x0, ");
-	endeffect();
-	if (js1)
-		linkageNow('a', thisobj);
+	linkageNow('a', thisobj);
 
 done:
 	debugPrint(5, "append 2");
@@ -1105,9 +789,7 @@ static duk_ret_t native_insbf(duk_context * cx)
 	effectChar(',');
 	effectString(itemname);
 	effectChar(' ');
-	endeffect();
-	if (js1)
-		linkageNow('b', thisobj);
+	linkageNow('b', thisobj);
 
 done:
 	debugPrint(5, "before 2");
@@ -1169,9 +851,7 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	effectChar(',');
 	effectString(childname);
 	effectString(" 0x0, ");
-	endeffect();
-	if (js1)
-		linkageNow('r', thisobj);
+	linkageNow('r', thisobj);
 
 done:
 	duk_pop(cx);		// the argument
@@ -1204,24 +884,20 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 			incoming_url = a;
 		}
 
-		if (js1) {
-			save_plug = pluginsOn;
-			save_ref = sendReferrer;
-		}
+		save_plug = pluginsOn;
+		save_ref = sendReferrer;
 		httpConnect(incoming_url, false, false, true,
 			    &outgoing_xhrheaders, &outgoing_xhrbody,
 			    &responseLength);
 		nzFree(a);
-		if (js1) {
-			pluginsOn = save_plug;
-			sendReferrer = save_ref;
-			if (intFlag) {
-				duk_get_global_string(cx, "eb$stopexec");
+		pluginsOn = save_plug;
+		sendReferrer = save_ref;
+		if (intFlag) {
+			duk_get_global_string(cx, "eb$stopexec");
 // this next line should fail and stop the script!
-				duk_call(cx, 0);
+			duk_call(cx, 0);
 // It didn't stop the script, oh well.
-				duk_pop(cx);
-			}
+			duk_pop(cx);
 		}
 		if (outgoing_xhrheaders == NULL)
 			outgoing_xhrheaders = emptyString;
@@ -1268,14 +944,8 @@ static duk_ret_t native_formSubmit(duk_context * cx)
 	duk_push_this(cx);
 	thisobj = watch_heapptr(-1);
 	duk_pop(cx);
-	if (js1) {
-		debugPrint(4, "submit %p", thisobj);
-		javaSubmitsForm(thisobj, false);
-	} else {
-		effectString("f{s");	// }
-		effectString(pointer2string(thisobj));
-		endeffect();
-	}
+	debugPrint(4, "submit %p", thisobj);
+	javaSubmitsForm(thisobj, false);
 	return 0;
 }
 
@@ -1285,14 +955,8 @@ static duk_ret_t native_formReset(duk_context * cx)
 	duk_push_this(cx);
 	thisobj = watch_heapptr(-1);
 	duk_pop(cx);
-	if (js1) {
-		debugPrint(4, "reset %p", thisobj);
-		javaSubmitsForm(thisobj, true);
-	} else {
-		effectString("f{r");	// }
-		effectString(pointer2string(thisobj));
-		endeffect();
-	}
+	debugPrint(4, "reset %p", thisobj);
+	javaSubmitsForm(thisobj, true);
 	return 0;
 }
 
@@ -1361,12 +1025,6 @@ static bool foldinCookie(const char *newcook)
 	duk_get_global_string(jcx, "eb$url");
 	receiveCookie(duk_get_string(jcx, -1), newcook);
 	duk_pop(jcx);
-	if (!js1) {
-// pass back to the edbrowse process
-		effectString("c{");	// }
-		effectString(newcook);
-		endeffect();
-	}
 
 	++s;
 	save = *s;
@@ -1417,8 +1075,6 @@ void createJavaContext_nat(void)
 	duk_push_thread_new_globalenv(context0);
 	jcx = duk_get_context(context0, -1);
 	if (!jcx) {
-		head.highstat = EJ_HIGH_HEAP_FAIL;
-		head.lowstat = EJ_LOW_CX;
 		return;
 	}
 	debugPrint(3, "create js context %d", duk_get_top(context0) - 1);
@@ -1575,6 +1231,7 @@ char *get_property_string_nat(jsobjtype parent, const char *name)
 {
 	const char *s;
 	char *s0;
+	enum ej_proptype proptype;
 	duk_push_heapptr(jcx, parent);
 	duk_get_prop_string(jcx, -1, name);
 	proptype = top_proptype();
@@ -1791,8 +1448,6 @@ static void processError(void)
 	int offset = 0;
 	char *cut, *s;
 
-	if (!js1)
-		jsLineno = head.lineno;
 	if (duk_get_prop_string(jcx, -1, "lineNumber"))
 		offset = duk_get_int(jcx, -1);
 	duk_pop(jcx);
@@ -1807,10 +1462,7 @@ static void processError(void)
 		errorMessage = cloneString(callstack);
 	}
 	if (offset) {
-		if (js1)
-			jsLineno += (offset - 1);
-		else
-			head.lineno += (offset - 1);
+		jsLineno += (offset - 1);
 // symtax error message includes the relative line number, which is confusing
 // since edbrowse prints the absolute line number.
 		cut = strstr(errorMessage, " (line ");
@@ -1824,11 +1476,6 @@ static void processError(void)
 	}
 	duk_pop(jcx);
 
-	if (!js1)
-		return;
-
-// In one process we can print it right now, since we might not be using
-// interprocess messages to run the javascript.
 	if (debugLevel >= 3) {
 /* print message, this will be in English, and mostly for our debugging */
 		if (jsSourceFile) {
@@ -1984,365 +1631,6 @@ jsobjtype get_array_element_object_nat(jsobjtype parent, int idx)
 	return a;
 }
 
-/* based on propval and proptype */
-static void set_property_generic(jsobjtype parent, const char *name)
-{
-	int n;
-	double d;
-	jsobjtype child, newobj;
-
-	switch (proptype) {
-	case EJ_PROP_STRING:
-		set_property_string_nat(parent, name, propval);
-		break;
-
-	case EJ_PROP_INT:
-		n = atoi(propval);
-		set_property_number_nat(parent, name, n);
-		break;
-
-	case EJ_PROP_BOOL:
-		n = atoi(propval);
-		set_property_bool_nat(parent, name, n);
-		break;
-
-	case EJ_PROP_FLOAT:
-		d = atof(propval);
-		set_property_float_nat(parent, name, d);
-		break;
-
-	case EJ_PROP_OBJECT:
-		child = string2pointer(propval);
-		set_property_object_nat(parent, name, child);
-		break;
-
-	case EJ_PROP_INSTANCE:
-		newobj = instantiate_nat(parent, name, propval);
-		nzFree(propval);
-childreturn:
-		propval = cloneString(pointer2string(newobj));
-		break;
-
-	case EJ_PROP_ARRAY:
-		newobj = instantiate_array_nat(parent, name);
-		goto childreturn;
-
-	case EJ_PROP_FUNCTION:
-		set_property_function_nat(parent, name, propval);
-		break;
-
-	default:
-		fprintf(stderr, "Unexpected property type %d from edbrowse\n",
-			proptype);
-		exit(7);
-	}
-}				/* set_property_generic */
-
-/*********************************************************************
-run a javascript function and return the result.
-If the result is an object then the pointer, as a string, is returned.
-The string is always allocated, you must free it.
-At entry, propval, if nonzero, is a | separated list of arguments
-to the function, assuming all args are objects.
-*********************************************************************/
-
-static char *run_function(jsobjtype parent, const char *name)
-{
-	bool rc;
-	int argc = 0;
-	const char *s, *t;
-	char *s0;
-	jsobjtype o;
-
-	proptype = EJ_PROP_NONE;
-	duk_push_heapptr(jcx, parent);
-	if (!duk_get_prop_string(jcx, -1, name) || !duk_is_function(jcx, -1)) {
-		nzFree(propval);
-		propval = 0;
-#if 0
-		if (!errorMessage)
-			asprintf(&errorMessage, "no such function %s", name);
-#endif
-		duk_pop_2(jcx);
-		return NULL;
-	}
-// switch function and parent so that parent becomes the this binding.
-	duk_insert(jcx, -2);
-
-	if (!propval)
-		propval = emptyString;
-	for (s = propval; *s; s = t) {
-		t = strchr(s, '|') + 1;
-		o = string2pointer(s);
-		duk_push_heapptr(jcx, o);
-		++argc;
-	}
-	nzFree(propval);
-	propval = 0;
-
-	rc = duk_pcall_method(jcx, argc);
-	if (rc) {		// error during function execution
-		processError();
-		return 0;
-	}
-
-	proptype = top_proptype();
-	if (proptype == EJ_PROP_NONE) {
-		duk_pop(jcx);
-		return NULL;
-	}
-	if (duk_is_object(jcx, -1)) {
-		o = watch_heapptr(-1);
-		s = pointer2string(o);
-	} else {
-		s = duk_to_string(jcx, -1);
-	}
-	s0 = cloneString(s);
-	duk_pop(jcx);
-	return s0;
-}				/* run_function */
-
-/* process each message from edbrowse and respond appropriately */
-static void processMessage1(void)
-{
-	readMessage();
-	head.highstat = EJ_HIGH_OK;
-	head.lowstat = EJ_LOW_OK;
-	head.side = head.msglen = 0;
-
-	if (head.cmd == EJ_CMD_EXIT)
-		exit(0);
-
-	if (head.cmd == EJ_CMD_CREATE) {
-/* this one is special */
-		createJavaContext_nat();
-		if (!head.highstat) {
-			head.jcx = jcx;
-			head.winobj = winobj;
-			head.docobj = docobj;
-		}
-		head.n = head.proplength = 0;
-		writeHeader();
-		return;
-	}
-
-	jcx = head.jcx;
-	winobj = head.winobj;
-	docobj = head.docobj;
-
-	if (head.cmd == EJ_CMD_DESTROY) {
-		freeJavaContext_nat();
-		head.n = head.proplength = 0;
-		writeHeader();
-		return;
-	}
-
-	if (head.cmd == EJ_CMD_VARUPDATE) {
-		switch (head.lineno) {
-			char *t;
-		case EJ_VARUPDATE_XHR:
-			allowXHR = head.n;
-			break;
-		case EJ_VARUPDATE_DEBUG:
-			debugLevel = head.n;
-			break;
-		case EJ_VARUPDATE_VERIFYCERT:
-			verifyCertificates = head.n;
-			break;
-		case EJ_VARUPDATE_USERAGENT:
-			t = userAgents[head.n];
-			if (t)
-				currentAgent = t;
-			break;
-		case EJ_VARUPDATE_CURLAUTHNEG:
-			curlAuthNegotiate = head.n;
-			break;
-		case EJ_VARUPDATE_FILENAME:
-			nzFree(cf->fileName);
-			cf->fileName = propval;
-			break;
-		case EJ_VARUPDATE_DEBUGFILE:
-			setDebugFile(propval);
-			nzFree(propval);
-			break;
-		}
-
-		head.n = head.proplength = 0;
-		propval = 0;
-//                      no acknowledgement needed
-//                      writeHeader();
-		return;
-	}
-
-	processMessage2();
-}
-
-static void processMessage2(void)
-{
-/* head.obj should be a valid object or 0 */
-	jsobjtype parent = head.obj;
-	jsobjtype child;
-	const char *s, *gc;
-	bool rc;		/* return code */
-	bool setret;		/* does setting a property produce a return? */
-
-	switch (head.cmd) {
-	case EJ_CMD_SCRIPT:
-		propval = 0;
-		s = runscript;
-/* skip past utf8 byte order mark if present */
-		if (!strncmp(s, "\xef\xbb\xbf", 3))
-			s += 3;
-		head.n = 0;
-		head.proplength = 0;
-		proptype = EJ_PROP_NONE;
-		rc = duk_peval_string(jcx, s);
-		s = 0;
-		if (!rc) {
-			head.n = 1;
-			s = duk_to_string(jcx, -1);
-			if (s && !*s)
-				s = 0;
-			if (s)
-				head.proplength = strlen(s);
-		} else {
-// error in executing the script.
-			processError();
-		}
-		nzFree(runscript);
-		runscript = 0;
-		writeHeader();
-		if (head.proplength)
-			writeToEb(s, head.proplength);
-		if (!rc)
-			duk_pop(jcx);
-		gc = getenv("JSGC");
-		if (gc && *gc)
-			duk_gc(jcx, 0);
-		break;
-
-	case EJ_CMD_HASPROP:
-		head.proptype = has_property_nat(parent, membername);
-		nzFree(membername);
-		membername = 0;
-		head.n = head.proplength = 0;
-		writeHeader();
-		break;
-
-	case EJ_CMD_DELPROP:
-		delete_property_nat(parent, membername);
-		nzFree(membername);
-		membername = 0;
-		head.n = head.proplength = 0;
-		writeHeader();
-		break;
-
-	case EJ_CMD_GETPROP:
-		propval = get_property_string_nat(parent, membername);
-		nzFree(membername);
-		membername = 0;
-		head.n = head.proplength = 0;
-		head.proptype = EJ_PROP_NONE;
-		if (propval) {
-			head.proplength = strlen(propval);
-			head.proptype = proptype;
-		}
-		writeHeader();
-		if (propval)
-			writeToEb(propval, head.proplength);
-		nzFree(propval);
-		propval = 0;
-		break;
-
-	case EJ_CMD_SETPROP:
-/* does this set_property return something? */
-		setret = false;
-		if (head.proptype == EJ_PROP_ARRAY
-		    || head.proptype == EJ_PROP_INSTANCE)
-			setret = true;
-		set_property_generic(parent, membername);
-		nzFree(membername);
-		membername = 0;
-propreturn:
-		head.n = head.proplength = 0;
-		if (setret) {
-			if (propval)
-				head.proplength = strlen(propval);
-		} else {
-			nzFree(propval);
-			propval = 0;
-		}
-		writeHeader();
-		if (setret && propval) {
-			writeToEb(propval, head.proplength);
-			nzFree(propval);
-			propval = 0;
-		}
-		break;
-
-	case EJ_CMD_GETAREL:
-		child = get_array_element_object_nat(parent, head.n);
-		propval = 0;	/* should already be 0 */
-		head.proplength = 0;
-		if (child) {
-			propval = cloneString(pointer2string(child));
-			head.proplength = strlen(propval);
-			head.proptype = EJ_PROP_OBJECT;
-		}
-		writeHeader();
-		if (propval)
-			writeToEb(propval, head.proplength);
-		nzFree(propval);
-		propval = 0;
-		break;
-
-	case EJ_CMD_SETAREL:
-		setret = false;
-		if (head.proptype == EJ_PROP_INSTANCE) {
-			child = instantiate_array_element_nat(parent,
-							      head.n, propval);
-			nzFree(propval);
-			propval = 0;
-			setret = true;
-			propval = cloneString(pointer2string(child));
-		}
-		if (head.proptype == EJ_PROP_OBJECT && propval) {
-			child = string2pointer(propval);
-			set_array_element_object_nat(parent, head.n, child);
-			nzFree(propval);
-			propval = 0;
-		}
-		goto propreturn;
-
-	case EJ_CMD_ARLEN:
-		head.n = get_arraylength_nat(parent);
-		head.proplength = 0;
-		writeHeader();
-		break;
-
-	case EJ_CMD_CALL:
-		propval = run_function(parent, membername);
-		nzFree(membername);
-		membername = 0;
-		head.proplength = head.n = 0;
-		if (propval)
-			head.proplength = strlen(propval);
-		head.proptype = proptype;
-		writeHeader();
-		if (propval)
-			writeToEb(propval, head.proplength);
-		nzFree(propval);
-		propval = 0;
-		break;
-
-	default:
-		fprintf(stderr, "Unexpected message command %d from edbrowse\n",
-			head.cmd);
-		exit(6);
-	}
-}				/* processMessage2 */
-
-// Like EJ_CMD_SCRIT above, but without all the message header stuff.
 char *run_script_nat(const char *s)
 {
 	char *result = 0;

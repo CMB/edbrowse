@@ -1824,29 +1824,26 @@ void html_from_setter(jsobjtype inner, const char *h)
 {
 	struct htmlTag *t = NULL;
 	int l = 0;
+	struct htmlTag *u, *v;
 	debugPrint(4, "Generated {%s}", h);
-	if (js1) {
-		struct htmlTag *u, *v;
-		t = tagFromJavaVar(inner);
-		if (!t) {
-			debugPrint(1,
-				   "innerHTML finds no tag for %p, cannot parse",
-				   inner);
-			return;
-		}
-		debugPrint(4, "parse under %s %d", t->info->name, t->seqno);
-		l = cw->numTags;
-/* Cut all the children away from t */
-		for (u = t->firstchild; u; u = v) {
-			v = u->sibling;
-			u->sibling = u->parent = 0;
-			u->deleted = true;
-			u->step = 100;
-		}
-		t->firstchild = NULL;
-	} else {
-		initTagArray();
+	t = tagFromJavaVar(inner);
+	if (!t) {
+		debugPrint(1,
+			   "innerHTML finds no tag for %p, cannot parse",
+			   inner);
+		return;
 	}
+	debugPrint(4, "parse under %s %d", t->info->name, t->seqno);
+	l = cw->numTags;
+/* Cut all the children away from t */
+	for (u = t->firstchild; u; u = v) {
+		v = u->sibling;
+		u->sibling = u->parent = 0;
+		u->deleted = true;
+		u->step = 100;
+	}
+	t->firstchild = NULL;
+
 	html2nodes(h, false);
 	htmlGenerated = true;
 	htmlNodesIntoTree(l, t);

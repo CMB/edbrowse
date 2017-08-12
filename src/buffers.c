@@ -826,7 +826,6 @@ static void freeWindow(struct ebWindow *w)
 	for (f = &w->f0; f; f = fnext) {
 		fnext = f->next;
 		delTimers(f);
-		delInputChanges(f);
 		freeJavaContext(f);
 		nzFree(f->dw);
 		nzFree(f->hbase);
@@ -3414,13 +3413,11 @@ static int twoLetter(const char *line, const char **runThis)
 	if (line[0] == 'd' && line[1] == 'b' && isdigitByte(line[2])
 	    && !line[3]) {
 		debugLevel = line[2] - '0';
-		update_var_in_js(EJ_VARUPDATE_DEBUG);
 		return true;
 	}
 
 	if (!strncmp(line, "db>", 3)) {
 		setDebugFile(line + 3);
-		update_var_in_js(EJ_VARUPDATE_DEBUGFILE);
 		return true;
 	}
 
@@ -3455,7 +3452,6 @@ static int twoLetter(const char *line, const char **runThis)
 		currentAgent = t;
 		if (helpMessagesOn || debugLevel >= 1)
 			eb_puts(currentAgent);
-		update_var_in_js(EJ_VARUPDATE_USERAGENT);
 		return true;
 	}
 
@@ -3688,7 +3684,6 @@ et_go:
 		cw->mustrender = false;
 		for (f = &cw->f0; f; f = f->next) {
 			delTimers(f);
-			delInputChanges(f);
 			freeJavaContext(f);
 			f->jcx = NULL;
 			nzFree(f->dw);
@@ -3899,7 +3894,6 @@ et_go:
 		allowXHR ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(allowXHR + MSG_XhrOff);
-		update_var_in_js(EJ_VARUPDATE_XHR);
 		return true;
 	}
 
@@ -3921,7 +3915,6 @@ et_go:
 		curlAuthNegotiate ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(curlAuthNegotiate + MSG_CurlNoAuthNegotiate);
-		update_var_in_js(EJ_VARUPDATE_CURLAUTHNEG);
 		return true;
 	}
 
@@ -3958,7 +3951,6 @@ et_go:
 		verifyCertificates ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(verifyCertificates + MSG_CertifyOff);
-		update_var_in_js(EJ_VARUPDATE_VERIFYCERT);
 		return true;
 	}
 

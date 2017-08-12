@@ -570,7 +570,6 @@ The old page doesn't matter any more.
 void runScriptsPending(void)
 {
 	struct htmlTag *t;
-	struct inputChange *ic;
 	int j;
 	char *jtxt;
 	const char *js_file;
@@ -642,82 +641,6 @@ top:
 
 		change = true;
 	}
-
-/* look for an run innerHTML */
-	foreach(ic, inputChangesPending) {
-		struct htmlTag *u, *v;
-		char *h;
-		if (ic->major != 'i' || ic->minor != 'h')
-			continue;
-		ic->major = 'x';
-/* Cut all the children away from t */
-		t = ic->t;
-		for (u = t->firstchild; u; u = v) {
-			v = u->sibling;
-			u->sibling = u->parent = 0;
-			u->deleted = true;
-			u->step = 100;
-		}
-		t->firstchild = NULL;
-		h = strstr(ic->value, "</body>@");
-		if (h) {
-			h += 7;
-			*h++ = 0;
-		} else
-			h = emptyString;
-		runGeneratedHtml(t, ic->value, h);
-// innerHTML could create a new script to run.
-		change = true;
-	}
-
-/* innerText */
-	foreach(ic, inputChangesPending) {
-		char *v;
-		int side;
-		if (ic->major != 'i' || ic->minor != 't')
-			continue;
-		ic->major = 'x';
-		t = ic->t;
-/* the tag should always be a textarea tag. */
-/* Not sure what to do if it's not. */
-		if (t->action != TAGACT_INPUT || t->itype != INP_TA) {
-			debugPrint(3,
-				   "innerText is applied to tag %d that is not a textarea.",
-				   t->seqno);
-			continue;
-		}
-/* 2 parts: innerText copies over to textarea->value
- * if js has not already done so,
- * and the text replaces what was in the side buffer. */
-		v = ic->value;
-		set_property_string(t->jv, "value", v);
-		side = t->lic;
-		if (side <= 0 || side >= MAXSESSION || side == context)
-			continue;
-		if (sessionList[side].lw == NULL)
-			continue;
-		if (cw->browseMode)
-			i_printf(MSG_BufferUpdated, side);
-		sideBuffer(side, v, -1, 0);
-	}
-
-/* linkages */
-	foreach(ic, inputChangesPending) {
-		if (ic->major != 'l')
-			continue;
-		ic->major = 'x';
-		javaSetsLinkage(true, ic->minor, ic->t, ic->value);
-	}
-
-/* timers set and cleared */
-	foreach(ic, inputChangesPending) {
-		if (ic->major != 't')
-			continue;
-		ic->major = 'x';
-		javaSetsTimeout(ic->tagno, ic->value, ic->t, ic->minor - '0');
-	}
-
-	freeList(&inputChangesPending);
 
 	if (change)
 		goto top;
@@ -2317,14 +2240,6 @@ void delTimers(struct ebFrame *f)
 	debugPrint(4, "%d timers deleted", delcount);
 }				/* delTimers */
 
-void delInputChanges(struct ebFrame *f)
-{
-	struct inputChange *ic;
-	foreach(ic, inputChangesPending)
-	    if (ic->f0 == f)
-		ic->major = 'x';
-}				/* delInputChanges */
-
 void runTimer(void)
 {
 	struct jsTimer *jt;
@@ -2465,22 +2380,6 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 		if (parent)
 			debugPrint(4, "linkage, %s %d created",
 				   p_name, parent->seqno);
-		return;
-	}
-// Postpone anything other than create until after js is finished,
-// so we can query js variables.
-// But no need for that in one process.
-	if (!after && !js1) {
-		struct inputChange *ic;
-		ic = allocMem(sizeof(struct inputChange) + strlen(rest));
-// Yeah I know, this isn't a pointer to htmlTag.
-		ic->t = p_j;
-		ic->tagno = 0;
-		ic->major = 'l';
-		ic->minor = type;
-		ic->f0 = cf;
-		strcpy(ic->value, rest);
-		addToListBack(&inputChangesPending, ic);
 		return;
 	}
 

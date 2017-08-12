@@ -54,7 +54,7 @@ EBOBJS += dbstubs.o
 endif
 
 #  Header file dependencies.
-$(EBOBJS) : eb.h ebprot.h messages.h ebjs.h
+$(EBOBJS) : eb.h ebprot.h messages.h
 dbodbc.o dbinfx.o dbops.o : dbapi.h
 
 startwindow.c: startwindow.js

@@ -199,7 +199,7 @@ endif(BUILD_SHARED_LIB)
 #EBOBJS = main.o buffers.o url.o sendmail.o fetchmail.o \
 #	html.o format.o cookies.o stringfile.o messages.o ebjs.o plugin.o
 #  Header file dependencies.
-#$(EBOBJS) : eb.h ebprot.h messages.h ebjs.h
+#$(EBOBJS) : eb.h ebprot.h messages.h
 
 # see tools/build*.pl scripts
 file(GLOB LANG_EBRC_FILES "lang/ebrc-*")
@@ -290,7 +290,6 @@ set(${name}_HDRS
     ${dir}/eb.h
     ${dir}/ebprot.h
     ${dir}/messages.h
-    ${dir}/ebjs.h
     )
 if (MSVC)
     list(APPEND ${name}_SRCS win32/vsprtf.c win32/dirent.c)

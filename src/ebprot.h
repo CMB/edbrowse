@@ -62,13 +62,11 @@ int goSelect(int *startLine, char **rbuf) ;
 
 /* sourcefile=ebjs.c */
 void javaSetsTagVar(jsobjtype v, const char *newtext);
-void javaSetsInner(jsobjtype v, const char *newtext, char c);
+void javaSetsInner(jsobjtype v, const char *newtext);
 void dwStart(void);
 void garbageSweep1(jsobjtype p);
 void createJavaContext(void) ;
 void freeJavaContext(struct ebFrame *f) ;
-void js_shutdown(void) ;
-void js_disconnect(void);
 char *jsRunScriptResult(jsobjtype obj, const char *str, const char *filename, int lineno) ;
 void jsRunScript(jsobjtype obj, const char *str, const char *filename, int lineno) ;
 enum ej_proptype has_property(jsobjtype obj, const char *name) ;
@@ -91,7 +89,6 @@ jsobjtype instantiate_array_element(jsobjtype array, int idx, const char *classn
 jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname) ;
 int set_property_function(jsobjtype parent, const char *name, const char *body) ;
 int get_arraylength(jsobjtype a);
-void update_var_in_js(int varid);
 char *get_property_option(jsobjtype obj) ;
 void setupJavaDom(void) ;
 char *get_property_url(jsobjtype owner, bool action) ;
@@ -152,7 +149,6 @@ extern void runOnload(void);
 void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval);
 bool timerWait(int *delay_sec, int *delay_ms);
 void delTimers(struct ebFrame *f);
-void delInputChanges(struct ebFrame *f);
 void runTimer(void);
 void javaOpensWindow(const char *href, const char *name) ;
 void javaSetsLinkage(bool after, char type, jsobjtype p, const char *rest);
@@ -375,7 +371,7 @@ char *decodePostData(const char *data, const char *name, int seqno) ;
 void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p) ;
 
 /* sourcefile=jseng-duk.c */
-int js_main(int argc, char **argv);
+int js_main(void);
 // the native versions of the api functions in ebjs.c
 void createJavaContext_nat(void);
 void freeJavaContext_nat(void);
