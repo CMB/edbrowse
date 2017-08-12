@@ -502,7 +502,7 @@ static void set_timeout(duk_context * cx, bool isInterval)
 	int n = 1000;		/* default number of milliseconds */
 	char fname[48];		/* function name */
 	const char *fstr;	/* function string */
-	const char *s;
+	const char *s, *fpn;
 
 	if (top == 0)
 		return;		// no args
@@ -549,7 +549,8 @@ static void set_timeout(duk_context * cx, bool isInterval)
 	}
 
 	duk_push_global_object(cx);
-	duk_push_string(cx, fakePropName());
+	fpn = fakePropName();
+	duk_push_string(cx, fpn);
 // Create a timer object.
 	duk_get_global_string(cx, "Timer");
 	if (duk_pnew(cx, 0)) {
@@ -576,6 +577,8 @@ static void set_timeout(duk_context * cx, bool isInterval)
 		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_CLEAR_ENUMERABLE |
 		      DUK_DEFPROP_SET_WRITABLE |
 		      DUK_DEFPROP_CLEAR_CONFIGURABLE));
+	duk_push_string(cx, fpn);
+	duk_put_prop_string(cx, -2, "backlink");
 // leaves just the timer object on the stack, which is what we want.
 
 	javaSetsTimeout(n, fname, to, isInterval);
@@ -602,8 +605,6 @@ static duk_ret_t native_clearTimeout(duk_context * cx)
 	if (!obj)
 		return 0;
 	javaSetsTimeout(0, "-", obj, false);
-// We should unlink this timer from window so gc can clean it up.
-// We'd have to save the fakePropName to do that.
 	return 0;
 }
 

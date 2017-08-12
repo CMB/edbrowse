@@ -2118,6 +2118,12 @@ void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 				if (jt->running) {
 					jt->deleted = true;
 				} else {
+					char *gc_name =
+					    get_property_string(jt->timerObject,
+								"backlink");
+					if (gc_name)
+						delete_property(cf->winobj,
+								gc_name);
 					delFromList(jt);
 					nzFree(jt);
 				}
@@ -2248,6 +2254,10 @@ We need to fix this someday, though it is a very rare low runner case.
 		jt->running = false;
 
 		if (!jt->isInterval || jt->deleted) {
+			char *gc_name =
+			    get_property_string(jt->timerObject, "backlink");
+			if (gc_name)
+				delete_property(cf->winobj, gc_name);
 			delFromList(jt);
 			nzFree(jt);
 		} else {
