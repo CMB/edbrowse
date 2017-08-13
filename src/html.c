@@ -346,7 +346,7 @@ void jClearSync(void)
 /* when we are able to jSyncup windows other than the foreground window,
  * which we can't do yet, then the rest of this will make sense. */
 #if 0
-	for (cx = 1; cx < MAXSESSION; ++cx) {
+	for (cx = 1; cx <= maxSession; ++cx) {
 		w = sessionList[cx].lw;
 		while (w) {
 			w->sank = false;

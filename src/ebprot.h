@@ -170,6 +170,7 @@ void decorate(int start);
 void freeTags(struct ebWindow *w) ;
 struct htmlTag *newTag(const char *tagname) ;
 void initTagArray(void);
+void tag_gc(void);
 void htmlNodesIntoTree(int start, struct htmlTag *attach);
 void underKill(struct htmlTag *t);
 void killTag(struct htmlTag *t);

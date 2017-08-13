@@ -71,6 +71,7 @@ bool curlAuthNegotiate = false;
 int context = 1;
 pst linePending;
 struct ebSession sessionList[MAXSESSION], *cs;
+int maxSession;
 static pthread_mutex_t share_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #define MAXNOJS 500

@@ -19,7 +19,7 @@ static void markAllDead(void)
 	struct ebFrame *f;
 	bool killed = false;
 
-	for (cx = 1; cx < MAXSESSION; ++cx) {
+	for (cx = 1; cx <= maxSession; ++cx) {
 		w = sessionList[cx].lw;
 		while (w) {
 			for (f = &w->f0; f; f = f->next) {

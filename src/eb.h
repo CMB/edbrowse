@@ -449,6 +449,7 @@ struct ebSession {
 };
 extern struct ebSession sessionList[];
 extern struct ebSession *cs;	/* current session */
+extern int maxSession;
 
 /* The information on an html tag */
 #define MAXTAGNAME 12

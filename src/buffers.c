@@ -884,6 +884,8 @@ static void cxInit(int cx)
 	if (sessionList[cx].lw)
 		i_printfExit(MSG_DoubleInit, cx);
 	sessionList[cx].fw = sessionList[cx].lw = lw;
+	if (cx > maxSession)
+		maxSession = cx;
 }				/* cxInit */
 
 bool cxQuit(int cx, int action)
@@ -3857,7 +3859,7 @@ et_go:
 	}
 
 	if (stringEqual(line, "bflist")) {
-		for (n = 1; n < MAXSESSION; ++n) {
+		for (n = 1; n <= maxSession; ++n) {
 			struct ebWindow *lw = sessionList[n].lw;
 			if (!lw)
 				continue;
@@ -4802,7 +4804,7 @@ replaceframe:
 			return true;
 /* look around for another active session */
 		while (true) {
-			if (++cx == MAXSESSION)
+			if (++cx > maxSession)
 				cx = 1;
 			if (cx == context)
 				ebClose(0);

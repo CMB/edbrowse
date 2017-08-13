@@ -1416,6 +1416,29 @@ static void pushTag(struct htmlTag *t)
 	tagCountCheck();
 }				/* pushTag */
 
+// garbage collect the dead tags.
+void tag_gc(void)
+{
+	int cx;			/* edbrowse context */
+	struct ebWindow *w;
+	int i, j;
+
+	for (cx = 1; cx <= maxSession; ++cx) {
+		for (w = sessionList[cx].lw; w; w = w->prev) {
+			if (!w->tags)
+				continue;
+// Don't bother unless a third of the tags are dead.
+			if (w->deadTags * 3 < w->numTags)
+				continue;
+// ok let's crunch.
+			for (i = j = 0; i < w->numTags; ++i)
+				if (!w->tags[i]->dead)
+					w->tags[j++] = w->tags[i];
+			w->numTags = j;
+		}
+	}
+}
+
 /* first three have to be in this order */
 const struct tagInfo availableTags[] = {
 	{"html", "html", TAGACT_ZERO},
