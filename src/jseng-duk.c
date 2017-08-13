@@ -104,6 +104,8 @@ static void watch_free(void *udata, void *p)
 void connectTagObject(struct htmlTag *t, jsobjtype p)
 {
 	struct jsdata_wrap *w = jsdata_of(p);
+	if (w->u.t)
+		debugPrint(1, "multiple tags connect to js pointer %p", p);
 	w->u.t = t;
 	t->jv = p;
 }
@@ -115,6 +117,12 @@ void disconnectTagObject(struct htmlTag *t)
 	if (!p)
 		return;
 	w = jsdata_of(p);
+	if (w->u.t == NULL)
+		debugPrint(1, "tag already disconnected from pointer %p", p);
+	else if (w->u.t != t)
+		debugPrint(1,
+			   "tag disconnecting from pointer %p which is connected to some other tag",
+			   p);
 	w->u.t = NULL;
 	t->jv = NULL;
 }
