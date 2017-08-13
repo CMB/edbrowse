@@ -9,6 +9,9 @@ This saves resources; don't fetch and expand a frame unless it is needed.
 Hit ^c if the browsing is taking too darn long - however - the page may not render properly or completely.
 Don't do this if you are using this page for ecommerce or something vital.
 
+Keep edbrowse in 1 process. Don't fork a javascript process to make all the js calls.
+There are many technical reasons why 1 process is a better design.
+
 3.7.0:
 Switch from Mozilla js to Duktape js.
 

@@ -26,7 +26,6 @@ char *currentAgent, *currentReferrer;
 bool allowRedirection = true, allowJS = true, sendReferrer = true;
 bool allowXHR = true;
 bool ftpActive;
-int jsPool = 32;
 int webTimeout = 20, mailTimeout = 0;
 int displayLength = 500;
 int verifyCertificates = 1;
@@ -61,7 +60,6 @@ volatile bool intFlag;
 bool curlActive;
 bool ismc, isimap, passMail;
 char whichproc = 'e';		// edbrowse
-bool js1 = true;		// all in one process
 bool inInput, listNA;
 int fileSize;
 char *dbarea, *dblogin, *dbpw;	/* to log into the database */
@@ -325,7 +323,7 @@ void eb_curl_global_init(void)
 		if (curl_init_status != CURLE_OK)
 			goto libcurl_init_fail;
 	}
-	if (cookieFile && whichproc == 'e' && !ismc) {
+	if (cookieFile && !ismc) {
 		curl_init_status =
 		    curl_easy_setopt(global_http_handle, CURLOPT_COOKIEJAR,
 				     cookieFile);
@@ -359,7 +357,6 @@ void ebClose(int n)
 {
 	bg_jobs(true);
 	dbClose();
-	js_shutdown();
 	if (curlActive) {
 		mergeCookies();
 		eb_curl_global_cleanup();
@@ -397,8 +394,7 @@ static void setupEdbrowseTempDirectory(void)
 /* no such directory, try to make it */
 /* this temp edbrowse directory is used by everyone system wide */
 		if (mkdir(ebTempDir, 0777)) {
-			if (whichproc == 'e')
-				i_printf(MSG_TempDir, ebTempDir);
+			i_printf(MSG_TempDir, ebTempDir);
 			ebTempDir = 0;
 			return;
 		}
@@ -411,8 +407,7 @@ static void setupEdbrowseTempDirectory(void)
 	if (fileTypeByName(ebUserDir, false) != 'd') {
 /* no such directory, try to make it */
 		if (mkdir(ebUserDir, 0700)) {
-			if (whichproc == 'e')
-				i_printf(MSG_TempDir, ebUserDir);
+			i_printf(MSG_TempDir, ebUserDir);
 			ebUserDir = 0;
 			return;
 		}
@@ -436,7 +431,6 @@ int main(int argc, char **argv)
 	int cx, account;
 	bool rc, doConfig = true;
 	bool dofetch = false, domail = false;
-	const char *js1var;
 	static char agent0[64] = "edbrowse/";
 
 #ifndef _MSC_VER		// port setlinebuf(stdout);, if required...
@@ -532,34 +526,6 @@ int main(int argc, char **argv)
 
 	progname = argv[0];
 	++argv, --argc;
-
-	js1var = getenv("JS2");
-	if (js1var && *js1var)
-		js1 = false;
-
-// look for --mode on the arg list.
-	if (stringEqual(argv[0], "--mode")) {
-		if (js1) {
-			fprintf(stderr,
-				"edbrowse should not run with --mode and JS1 set\n");
-			exit(2);
-		}
-		char *m;
-		if (argc == 1)
-			i_printfExit(MSG_Usage);
-		m = argv[1];
-		argv += 2;
-		argc -= 2;
-		if (stringEqual(m, "js"))
-			whichproc = 'j';
-		else if (stringEqual(m, "curl"))
-			whichproc = 'c';
-		else
-			i_printfExit(MSG_Usage);
-	}
-
-	if (whichproc == 'j')
-		return js_main(argc, argv);
 
 	ttySaveSettings();
 	initializeReadline();
@@ -1061,7 +1027,6 @@ void unreadConfigFile(void)
 
 	webTimeout = mailTimeout = 0;
 	displayLength = 500;
-	jsPool = 32;
 
 	setDataSource(NULL);
 	setHTTPLanguage(NULL);
@@ -1083,7 +1048,7 @@ static const char *const keywords[] = {
 	"downdir", "maildir", "agent",
 	"jar", "nojs", "cachedir",
 	"webtimer", "mailtimer", "certfile", "datasource", "proxy",
-	"linelength", "localizeweb", "jspool", "novs", "cachesize",
+	"linelength", "localizeweb", "notused33", "novs", "cachesize",
 	"adbook", 0
 };
 
@@ -1594,14 +1559,6 @@ putc:
 /* We should probably allow autodetection of language. */
 /* E.G., the keyword auto indicates that you want autodetection. */
 			setHTTPLanguage(v);
-			continue;
-
-		case 33:	/* jspool */
-			jsPool = atoi(v);
-			if (jsPool < 2)
-				jsPool = 2;
-			if (jsPool > 1000)
-				jsPool = 1000;
 			continue;
 
 		case 34:	/* novs */
