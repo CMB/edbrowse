@@ -84,35 +84,6 @@ static void *watch_realloc(void *udata, void *p, size_t n)
 	return w->data;
 }
 
-static void killTag(struct htmlTag *t)
-{
-	struct htmlTag *c, *parent;
-	debugPrint(5, "kill tag %s %d", t->info->name, t->seqno);
-	t->dead = true;
-	t->deleted = true;
-	t->jv = NULL;
-	t->step = 100;
-
-// unlink it from the tree above.
-	parent = t->parent;
-	if (parent) {
-		t->parent = NULL;
-		if (parent->firstchild == t)
-			parent->firstchild = t->sibling;
-		else {
-			c = parent->firstchild;
-			if (c) {
-				for (; c->sibling; c = c->sibling) {
-					if (c->sibling != t)
-						continue;
-					c->sibling = t->sibling;
-					break;
-				}
-			}
-		}
-	}
-}
-
 static void watch_free(void *udata, void *p)
 {
 	struct htmlTag *t;
