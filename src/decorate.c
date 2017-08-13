@@ -1820,7 +1820,7 @@ checkattributes:
 	}
 }				/* intoTree */
 
-static void underKill(struct htmlTag *t)
+void underKill(struct htmlTag *t)
 {
 	struct htmlTag *u, *v;
 	for (u = t->firstchild; u; u = v) {

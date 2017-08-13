@@ -171,6 +171,7 @@ void freeTags(struct ebWindow *w) ;
 struct htmlTag *newTag(const char *tagname) ;
 void initTagArray(void);
 void htmlNodesIntoTree(int start, struct htmlTag *attach);
+void underKill(struct htmlTag *t);
 void killTag(struct htmlTag *t);
 void html_from_setter( jsobjtype innerParent, const char *h);
 

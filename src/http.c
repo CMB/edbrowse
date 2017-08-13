@@ -2664,19 +2664,14 @@ static const char *stringInBufLine(const char *s, const char *t)
 bool reexpandFrame(void)
 {
 	int j, start;
-	struct htmlTag *t, *frametag;
+	struct htmlTag *frametag;
 	struct htmlTag *cdt;	// contentDocument tag
 
-/* cut the children off from the frame tag */
 	cf = newloc_f;
 	frametag = cf->frametag;
 	cdt = frametag->firstchild;
-	for (t = cdt->firstchild; t; t = t->sibling) {
-		t->deleted = true;
-		t->step = 100;
-		t->parent = 0;
-	}
-	cdt->firstchild = 0;
+// Cut away objects from the previous document, which are now inaccessible.
+	underKill(cdt);
 
 	delTimers(cf);
 	freeJavaContext(cf);
