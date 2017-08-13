@@ -105,7 +105,7 @@ static Bool TIDY_CALL tidyErrorHandler(TidyDoc tdoc, TidyReportLevel lvl,
 				       uint line, uint col, ctmbstr mssg)
 {
 	if (debugLevel >= 3)
-		debugPrint(3, "line %d column %d: %s", line, col, mssg);
+		debugPrint(4, "line %d column %d: %s", line, col, mssg);
 	return no;
 }				/* tidyErrorHandler */
 
