@@ -1405,9 +1405,9 @@ static void pushTag(struct htmlTag *t)
 {
 	int a = cw->allocTags;
 	if (cw->numTags == a) {
+		debugPrint(3, "%d tags, %d dead", a, cw->deadTags);
 /* make more room */
 		a = a / 2 * 3;
-		debugPrint(3, "%d tags", a);
 		cw->tags =
 		    (struct htmlTag **)reallocMem(cw->tags, a * sizeof(t));
 		cw->allocTags = a;
@@ -1564,7 +1564,7 @@ void freeTags(struct ebWindow *w)
 
 	free(w->tags);
 	w->tags = 0;
-	w->numTags = w->allocTags = 0;
+	w->numTags = w->allocTags = w->deadTags = 0;
 }				/* freeTags */
 
 struct htmlTag *newTag(const char *name)
@@ -1600,6 +1600,7 @@ void initTagArray(void)
 {
 	cw->numTags = 0;
 	cw->allocTags = 512;
+	cw->deadTags = 0;
 	cw->tags =
 	    (struct htmlTag **)allocMem(cw->allocTags *
 					sizeof(struct htmlTag *));
@@ -1642,6 +1643,8 @@ static void intoTree(struct htmlTag *parent)
 			if (parent) {
 				parent->balance = t, t->balance = parent;
 				t->dead = parent->dead;
+				if (t->dead)
+					++cw->deadTags;
 			}
 			debugPrint(4, "}");
 			return;
@@ -1650,6 +1653,7 @@ static void intoTree(struct htmlTag *parent)
 		if (treeDisable) {
 			debugPrint(4, "node skip %s", t->info->name);
 			t->dead = true;
+			++cw->deadTags;
 			intoTree(t);
 			continue;
 		}
@@ -1663,6 +1667,7 @@ static void intoTree(struct htmlTag *parent)
 			if (action == TAGACT_HEAD) {
 				debugPrint(4, "node skip %s", t->info->name);
 				t->dead = true;
+				++cw->deadTags;
 				treeDisable = true;
 				intoTree(t);
 				treeDisable = false;
@@ -1671,6 +1676,7 @@ static void intoTree(struct htmlTag *parent)
 			if (action == TAGACT_BODY) {
 				debugPrint(4, "node pass %s", t->info->name);
 				t->dead = true;
+				++cw->deadTags;
 				intoTree(t);
 				continue;
 			}
@@ -1833,8 +1839,11 @@ void killTag(struct htmlTag *t)
 	struct htmlTag *c, *parent;
 	debugPrint(4, "kill tag %s %d", t->info->name, t->seqno);
 	t->dead = true;
-	if (t->balance)
+	++cw->deadTags;
+	if (t->balance) {
 		t->balance->dead = true;
+		++cw->deadTags;
+	}
 	t->deleted = true;
 	t->jv = NULL;
 
