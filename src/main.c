@@ -26,7 +26,6 @@ char *currentAgent, *currentReferrer;
 bool allowRedirection = true, allowJS = true, sendReferrer = true;
 bool allowXHR = true;
 bool ftpActive;
-int jsPool = 32;
 int webTimeout = 20, mailTimeout = 0;
 int displayLength = 500;
 int verifyCertificates = 1;
@@ -1028,7 +1027,6 @@ void unreadConfigFile(void)
 
 	webTimeout = mailTimeout = 0;
 	displayLength = 500;
-	jsPool = 32;
 
 	setDataSource(NULL);
 	setHTTPLanguage(NULL);
@@ -1050,7 +1048,7 @@ static const char *const keywords[] = {
 	"downdir", "maildir", "agent",
 	"jar", "nojs", "cachedir",
 	"webtimer", "mailtimer", "certfile", "datasource", "proxy",
-	"linelength", "localizeweb", "jspool", "novs", "cachesize",
+	"linelength", "localizeweb", "notused33", "novs", "cachesize",
 	"adbook", 0
 };
 
@@ -1561,14 +1559,6 @@ putc:
 /* We should probably allow autodetection of language. */
 /* E.G., the keyword auto indicates that you want autodetection. */
 			setHTTPLanguage(v);
-			continue;
-
-		case 33:	/* jspool */
-			jsPool = atoi(v);
-			if (jsPool < 2)
-				jsPool = 2;
-			if (jsPool > 1000)
-				jsPool = 1000;
 			continue;
 
 		case 34:	/* novs */
