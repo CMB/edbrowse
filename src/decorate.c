@@ -1405,7 +1405,7 @@ static void pushTag(struct htmlTag *t)
 {
 	int a = cw->allocTags;
 	if (cw->numTags == a) {
-		debugPrint(3, "%d tags, %d dead", a, cw->deadTags);
+		debugPrint(4, "%d tags, %d dead", a, cw->deadTags);
 /* make more room */
 		a = a / 2 * 3;
 		cw->tags =
@@ -1434,8 +1434,21 @@ void tag_gc(void)
 			for (i = j = 0; i < w->numTags; ++i)
 				if (!w->tags[i]->dead)
 					w->tags[j++] = w->tags[i];
+			debugPrint(4, "tag_gc from %d to %d", w->numTags, j);
 			w->numTags = j;
+			w->deadTags = 0;
 		}
+	}
+}
+
+void tag_gc1(void)
+{
+	static time_t last_gc;
+	time_t t;
+	time(&t);
+	if (!last_gc || t > last_gc + 10) {
+		tag_gc();
+		last_gc = t;
 	}
 }
 

@@ -409,6 +409,9 @@ top:
 	last_rl = 0;
 	s = 0;
 
+// I guess this is as good a place as any to collect dead tags.
+	tag_gc1();
+
 	if (timerWait(&delay_sec, &delay_ms)) {
 /* timers are pending, use select to wait on input or run the first timer. */
 		fd_set channels;
