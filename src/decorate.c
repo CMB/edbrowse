@@ -57,7 +57,7 @@ void traverseAll(int start)
 
 	for (i = start; i < cw->numTags; ++i) {
 		t = tagList[i];
-		if (!t->parent && !t->slash && t->step < 100)
+		if (!t->parent && !t->slash && !t->dead)
 			traverseNode(t);
 	}
 
@@ -435,7 +435,7 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 	int j;
 	int action = t->action;
 	const char *a;		/* usually an attribute */
-	struct htmlTag *u, *v, *cdt;
+	struct htmlTag *cdt;
 
 	debugPrint(6, "prend %c%s %d%s",
 		   (opentag ? ' ' : '/'), t->info->name,
@@ -693,14 +693,11 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 	case TAGACT_FRAME:
 		if (opentag)
 			break;
+// If somebody wrote <frame><p><a></frame> then there could be tags under
+// frame in the tree, but they don't mean anything.
+// Cut all the children away from t.
+		underKill(t);
 		cdt = newTag("document");
-/* Cut all the children away from t */
-		for (u = t->firstchild; u; u = v) {
-			v = u->sibling;
-			u->sibling = u->parent = 0;
-			u->deleted = true;
-			u->step = 100;
-		}
 		t->firstchild = cdt;
 		cdt->parent = t;
 		break;
@@ -1642,19 +1639,17 @@ static void intoTree(struct htmlTag *parent)
 	while (tree_pos < cw->numTags) {
 		t = tagList[tree_pos++];
 		if (t->slash) {
-			if (parent)
+			if (parent) {
 				parent->balance = t, t->balance = parent;
+				t->dead = parent->dead;
+			}
 			debugPrint(4, "}");
 			return;
 		}
-#if 0
-		if (!parent)
-			t->topnode = true;
-#endif
 
 		if (treeDisable) {
 			debugPrint(4, "node skip %s", t->info->name);
-			t->step = 100;
+			t->dead = true;
 			intoTree(t);
 			continue;
 		}
@@ -1667,7 +1662,7 @@ static void intoTree(struct htmlTag *parent)
 			action = t->action;
 			if (action == TAGACT_HEAD) {
 				debugPrint(4, "node skip %s", t->info->name);
-				t->step = 100;
+				t->dead = true;
 				treeDisable = true;
 				intoTree(t);
 				treeDisable = false;
@@ -1675,7 +1670,7 @@ static void intoTree(struct htmlTag *parent)
 			}
 			if (action == TAGACT_BODY) {
 				debugPrint(4, "node pass %s", t->info->name);
-				t->step = 100;
+				t->dead = true;
 				intoTree(t);
 				continue;
 			}
@@ -1838,9 +1833,10 @@ void killTag(struct htmlTag *t)
 	struct htmlTag *c, *parent;
 	debugPrint(4, "kill tag %s %d", t->info->name, t->seqno);
 	t->dead = true;
+	if (t->balance)
+		t->balance->dead = true;
 	t->deleted = true;
 	t->jv = NULL;
-	t->step = 100;
 
 // unlink it from the tree above.
 	parent = t->parent;
