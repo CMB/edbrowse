@@ -1417,10 +1417,12 @@ static void pushTag(struct htmlTag *t)
 }				/* pushTag */
 
 // garbage collect the dead tags.
+static void freeTag(struct htmlTag *t);
 void tag_gc(void)
 {
 	int cx;			/* edbrowse context */
 	struct ebWindow *w;
+	struct htmlTag *t;
 	int i, j;
 
 	for (cx = 1; cx <= maxSession; ++cx) {
@@ -1431,9 +1433,13 @@ void tag_gc(void)
 			if (w->deadTags * 3 < w->numTags)
 				continue;
 // ok let's crunch.
-			for (i = j = 0; i < w->numTags; ++i)
-				if (!w->tags[i]->dead)
-					w->tags[j++] = w->tags[i];
+			for (i = j = 0; i < w->numTags; ++i) {
+				t = w->tags[i];
+				if (t->dead)
+					freeTag(t);
+				else
+					w->tags[j++] = t;
+			}
 			debugPrint(4, "tag_gc from %d to %d", w->numTags, j);
 			w->numTags = j;
 			w->deadTags = 0;
@@ -1540,6 +1546,40 @@ const struct tagInfo availableTags[] = {
 	{"", NULL, 0}
 };
 
+static void freeTag(struct htmlTag *t)
+{
+	char **a;
+	nzFree(t->textval);
+	nzFree(t->name);
+	nzFree(t->id);
+	nzFree(t->value);
+	cnzFree(t->rvalue);
+	nzFree(t->href);
+	nzFree(t->classname);
+	nzFree(t->js_file);
+	nzFree(t->innerHTML);
+
+	a = (char **)t->attributes;
+	if (a) {
+		while (*a) {
+			nzFree(*a);
+			++a;
+		}
+		free(t->attributes);
+	}
+
+	a = (char **)t->atvals;
+	if (a) {
+		while (*a) {
+			nzFree(*a);
+			++a;
+		}
+		free(t->atvals);
+	}
+
+	free(t);
+}
+
 void freeTags(struct ebWindow *w)
 {
 	int i, n;
@@ -1564,38 +1604,9 @@ void freeTags(struct ebWindow *w)
 
 	e = w->tags;
 	for (i = 0; i < w->numTags; ++i, ++e) {
-		char **a;
 		t = *e;
-		nzFree(t->textval);
-		nzFree(t->name);
-		nzFree(t->id);
-		nzFree(t->value);
-		cnzFree(t->rvalue);
-		nzFree(t->href);
-		nzFree(t->classname);
-		nzFree(t->js_file);
-		nzFree(t->innerHTML);
 		disconnectTagObject(t);
-
-		a = (char **)t->attributes;
-		if (a) {
-			while (*a) {
-				nzFree(*a);
-				++a;
-			}
-			free(t->attributes);
-		}
-
-		a = (char **)t->atvals;
-		if (a) {
-			while (*a) {
-				nzFree(*a);
-				++a;
-			}
-			free(t->atvals);
-		}
-
-		free(t);
+		freeTag(t);
 	}
 
 	free(w->tags);
