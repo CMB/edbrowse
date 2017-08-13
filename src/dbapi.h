@@ -80,7 +80,7 @@ By designating a couple of these exception codes,
 the application can direct error recovery at a high level.
 *********************************************************************/
 
-#define EXCSQLMISC 1		/* miscelaneous SQL errors not covered below */
+#define EXCSQLMISC 1		/* miscellaneous SQL errors not covered below */
 #define EXCSYNTAX 2		/* syntax error in SQL statement */
 #define EXCFILENAME 3		/* this filename cannot be used by SQL */
 #define EXCCONVERT 4		/* cannot convert/compare the columns/constants in the SQL statement */

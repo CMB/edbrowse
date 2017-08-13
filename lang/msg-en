@@ -224,7 +224,7 @@ buffer %d contains more than one line
 cannot open %s
 cannot read from %s
 input text contains nulls
-line contains an embeded carriage return
+line contains an embedded carriage return
 first line of %s is too long
 file is currently in buffer - please use the rf command to refresh
 cannot browse a binary file
@@ -414,7 +414,7 @@ the data contains newlines
 line contains too many fields, please do not introduce any pipes into the text
 line contains too few fields, please do not remove any pipes from the text
 no primary key column for this table
-miscelaneous sql error %d
+miscellaneous sql error %d
 cannot delete more than 100 rows at a time
 cannot change a key column
 cannot change a blob field

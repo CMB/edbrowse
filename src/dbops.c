@@ -25,7 +25,7 @@ bool rv_blobAppend;
 /* text descriptions corresponding to our generic SQL error codes */
 /* This has yet to be internationalized. */
 const char *sqlErrorList[] = { 0,
-	"miscelaneous SQL error",
+	"miscellaneous SQL error",
 	"syntax error in SQL statement",
 	"filename cannot be used by SQL",
 	"cannot convert/compare the columns/constants in the SQL statement",

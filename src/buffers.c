@@ -4343,7 +4343,7 @@ Run the entered edbrowse command.
 This is indirectly recursive, as in g/x/d
 Pass in the ed command, and return success or failure.
 We assume it has been turned into a C string.
-This means no embeded nulls.
+This means no embedded nulls.
 If you want to use null in a search or substitute, use \0.
 *********************************************************************/
 
