@@ -1926,8 +1926,11 @@ and new internal numbers each time, and that use to trip this algorithm.
 
 	removeHiddenNumbers((pst) snap, 0);
 	removeHiddenNumbers((pst) newbuf, 0);
-	if (stringEqual(snap, newbuf))
+	if (stringEqual(snap, newbuf)) {
+		if (rr_command)
+			i_puts(MSG_NoChange);
 		goto done;
+	}
 	frontBackDiff(snap, newbuf);
 
 	if (sameBack2 == sameFront) {	/* delete */
