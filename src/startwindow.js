@@ -752,24 +752,22 @@ getPropertyValue: function (n)         {
                 } else {
                         return this.style[n];
                 }
-        }
+        },
+
 }
 
-getComputedStyle = function(n) {
+getComputedStyle = function(e,pe) {
+	// disregarding pseudoelements for now
         obj = new CSSStyleDeclaration;
-        obj.element = this;
-        obj.style = new Array;
-        obj.style.push({n:obj.style[n]});
-        return obj;
+        obj.element = e;
+        obj.style = e.style;
+        return obj.style;
 }
 
-document.defaultView = function() { return this.style; }
+document.defaultView = function() { return window; }
 
-document.defaultView.getComputedStyle = function() {
-        obj = new CSSStyleDeclaration;
-        obj.element = document;
-        obj.style = document.style;
-        return obj;
+document.defaultView.getComputedStyle = function(e,pe) {
+	return window.getComputedStyle(e,pe);
 }
 
 // @author Originally implemented by Yehuda Katz

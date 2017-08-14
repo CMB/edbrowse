@@ -838,6 +838,29 @@ if(document.metas[1].content != "Snoopy")
 fail(163);
 // add tests for getAttribute etc, once Meta is actually a class in startwindow.js.
 
+test_computedstyle();
+function test_computedstyle()
+{
+var el = document.createElement("p");
+el.style = {"bgcolor":"white","color":"red"};
+var lbg = document.defaultView.getComputedStyle(el,'').bgcolor
+if (lbg == "white")
+{
+// pass
+} else {
+fail(164);
+}
+}
+
+
+
+
+
+
+
+
+
+
 </script>
 
 </body>
