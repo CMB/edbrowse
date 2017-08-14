@@ -42,10 +42,6 @@ return;
 }
 for (n=0; n < amount; ++n)
 {
-// exercise a bit of math
-if ((n % 10000) == 0)
-alert(Math.floor(n/10000));
-// fill the array
 memhog[n] = {};
 }
 alert("Array successfully created with " + amount + " objects");
@@ -851,15 +847,6 @@ if (lbg == "white")
 fail(164);
 }
 }
-
-
-
-
-
-
-
-
-
 
 </script>
 

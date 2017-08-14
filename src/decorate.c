@@ -1416,8 +1416,11 @@ static void pushTag(struct htmlTag *t)
 	tagCountCheck();
 }				/* pushTag */
 
-// garbage collect the dead tags.
 static void freeTag(struct htmlTag *t);
+
+// garbage collect the dead tags.
+// You must rerender after this runs, so that the buffer has no dead tags,
+// and the remaining tags have their new numbers embedded in the buffer.
 void tag_gc(void)
 {
 	int cx;			/* edbrowse context */
@@ -1435,14 +1438,18 @@ void tag_gc(void)
 // ok let's crunch.
 			for (i = j = 0; i < w->numTags; ++i) {
 				t = w->tags[i];
-				if (t->dead)
+				if (t->dead) {
 					freeTag(t);
-				else
+				} else {
+					t->seqno = j;
 					w->tags[j++] = t;
+				}
 			}
 			debugPrint(4, "tag_gc from %d to %d", w->numTags, j);
 			w->numTags = j;
 			w->deadTags = 0;
+
+// rerender the buffer at this point.
 		}
 	}
 }
