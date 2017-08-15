@@ -1427,7 +1427,7 @@ static void freeTag(struct htmlTag *t);
 void tag_gc(void)
 {
 	int cx;			/* edbrowse context */
-	struct ebWindow *w;
+	struct ebWindow *w, *save_cw;
 	struct htmlTag *t;
 	int i, j;
 
@@ -1438,6 +1438,15 @@ void tag_gc(void)
 // Don't bother unless a third of the tags are dead.
 			if (w->deadTags * 3 < w->numTags)
 				continue;
+
+// sync any changed fields before we muck with the tags.
+			save_cw = cw;
+			cw = w;
+			cf = &(cw->f0);
+			jSyncup(true);
+			cw = save_cw;
+			cf = &(cw->f0);
+
 // ok let's crunch.
 			for (i = j = 0; i < w->numTags; ++i) {
 				t = w->tags[i];
@@ -1452,7 +1461,11 @@ void tag_gc(void)
 			w->numTags = j;
 			w->deadTags = 0;
 
-// rerender the buffer at this point.
+// We must rerender when we return to this window,
+// or at the input loop if this is the current window.
+// Tags have been renumbered, need to rebuild the text buffer accordingly.
+			w->mustrender = true;
+			w->nextrender = 0;
 		}
 	}
 }
