@@ -744,9 +744,9 @@ CSSStyleDeclaration = function(){
 };
 
 CSSStyleDeclaration.prototype.getPropertyValue = function(p) {
-                if (this[n] == undefined)                
-                        this[n] = "";
-                        return this[n];
+                if (this[p] == undefined)                
+                        this[p] = "";
+                        return this[p];
 }
 
 // pages seem to want document.style to exist
