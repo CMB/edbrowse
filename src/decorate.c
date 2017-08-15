@@ -817,6 +817,7 @@ static jsobjtype establish_js_option(jsobjtype obj, int idx)
 {
 	jsobjtype oa;		/* option array */
 	jsobjtype oo;		/* option object */
+	jsobjtype so;		// style object
 	jsobjtype fo;		/* form object */
 
 	if ((oa = get_property_object(obj, "options")) == NULL)
@@ -830,7 +831,8 @@ static jsobjtype establish_js_option(jsobjtype obj, int idx)
 		set_property_object(oo, "form", fo);
 	instantiate_array(oo, "childNodes");
 	instantiate_array(oo, "attributes");
-	instantiate(oo, "style", 0);
+	so = instantiate(oo, "style", "CSSStyleDeclaration");
+	set_property_object(so, "element", oo);
 
 	return oo;
 }				/* establish_js_option */
@@ -979,7 +981,8 @@ anything to put under it, just like it gets childNodes whether
 or not there are any.  After that, there is a conditional step.
 If this node contains style='' of one or more name-value pairs,
 call out to process those and add them to the object */
-			so = instantiate(io, "style", 0);
+			so = instantiate(io, "style", "CSSStyleDeclaration");
+			set_property_object(so, "element", io);
 /* now if there are any style pairs to unpack,
  processStyles can rely on obj.style existing */
 			if (stylestring)

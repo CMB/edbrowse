@@ -126,8 +126,6 @@ document.bgcolor = "white";
 document.readyState = "loading";
 document.nodeType = 9;
 document.implementation = {};
-// pages seem to want document.style to exist
-document.style = {"bgcolor":"white"};
 
 screen = new Object;
 screen.height = 768;
@@ -417,7 +415,8 @@ this.tagName = "text";
 this.nodeValue = this.data;
 this.nodeType=3;
 this.ownerDocument = document;
-this.style = new Object;
+this.style = new CSSStyleDeclaration;
+this.style.element = this;
 this.className = new String;
 /* A text node chould never have children, and does not need childNodes array,
  * but there is improper html out there <text> <stuff> </text>
@@ -741,27 +740,22 @@ Document = function(){}
 
 CSSStyleDeclaration = function(){
         this.element = null;
-        this.style = null;
+        this.style = this;
 };
 
-CSSStyleDeclaration.prototype = {
-getPropertyValue: function (n)         {
-                if (this.style[n] == undefined)                 {
-                        this.style[n] = 0;
-                        return 0;
-                } else {
-                        return this.style[n];
-                }
-        },
-
+CSSStyleDeclaration.prototype.getPropertyValue = function(p) {
+                if (this[n] == undefined)                
+                        this[n] = "";
+                        return this[n];
 }
+
+// pages seem to want document.style to exist
+document.style = new CSSStyleDeclaration();
+document.style.bgcolor = "white";
 
 getComputedStyle = function(e,pe) {
 	// disregarding pseudoelements for now
-        obj = new CSSStyleDeclaration;
-        obj.element = e;
-        obj.style = e.style;
-        return obj.style;
+return e.style;
 }
 
 document.defaultView = function() { return window; }
@@ -977,9 +971,11 @@ nodeToReturn[item] = nodeToCopy[item];
 
 // copy style object if present and its subordinate strings.
 if (typeof nodeToCopy.style == "object") {
-nodeToReturn.style = {};
+nodeToReturn.style = new CSSStyleDeclaration();
+nodeToReturn.style.element = nodeToReturn;
 for (var item in nodeToCopy.style){
-if (typeof nodeToCopy.style[item] == 'string')
+if (typeof nodeToCopy.style[item] == 'string' ||
+typeof nodeToCopy.style[item] == 'number')
 nodeToReturn.style[item] = nodeToCopy.style[item];
 }
 }
@@ -1059,7 +1055,8 @@ c = new Element();
 
 /* ok, for some element types this perhaps doesn't make sense,
 * but for most visible ones it does and I doubt it matters much */
-c.style = new Object;
+c.style = new CSSStyleDeclaration;
+c.style.element = c;
 c.childNodes = new Array;
 c.attributes = new Array;
 c.nodeName = t;
