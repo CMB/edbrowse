@@ -301,10 +301,10 @@ onload=formLoad(this.name) onunload=formUnload(this.name)>
 function catdog(item) { alert('fluffy'); if(item.checked&&document.questionnaire.dog.checked) alert('chased by dog'); }
 
 // Let javascript generate another javascript tag
-document.writeln("<script language=JavaScript>document.writeln('Subject: ');<" + "/script>");
+document.writeln("<script language=JavaScript>document.writeln('Nested Script ');<" + "/script>");
 </script>
 
-<input type='hidden' name='id' value='eklhad'>
+Subject: <input type='hidden' name='id' value='eklhad'>
 <input type='hidden' name='password' value='secret'>
 <input type='text' name='subject' size='50' maxlength='80'>
 <br>State and zip:
@@ -652,7 +652,7 @@ new Window("http://edbrowse.org");
 else alert("ok, never mind");
 }
 function formLoad(name) { onlv++; alert("form " + name + " loading");
-var t = document.createTextNode("Created text before ");
+var t = document.createTextNode("Created Text");
 document.body.appendChild(t);
 var s = document.createElement("script");
 s.data = "lastScript()";
@@ -665,13 +665,13 @@ var onlv = 77;
 
 /* last script to run automatically; loaded by the form.onload function */
 function lastScript() {
-document.writeln("Created script running");
+document.writeln(" Last Script");
 }
 
 setTimeout("joker()", 30000);
 function joker() {
 alert("30 seconds have passed!");
-var j = document.createTextNode(" And some extra text");
+var j = document.createTextNode(" And the timer text");
 document.body.appendChild(j);
 }
 

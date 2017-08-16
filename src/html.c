@@ -556,13 +556,11 @@ void runScriptsPending(void)
 	if (newlocation && newloc_r)
 		return;
 
-/* if onclick code or some such does document write, where does that belong?
- * I don't know, I'll just put it at the end.
- * As you see below, document.write that comes from a specific javascript
- * appears inline where the script is. */
+// Not sure where document.write objects belong.
+// For now I'm putting them under body.
 	if (cf->dw) {
 		stringAndString(&cf->dw, &cf->dw_l, "</body>\n");
-		runGeneratedHtml(NULL, cf->dw);
+		runGeneratedHtml(cf->bodytag, cf->dw);
 		nzFree(cf->dw);
 		cf->dw = 0;
 		cf->dw_l = 0;
@@ -609,7 +607,7 @@ top:
 /* look for document.write from this script */
 		if (cf->dw) {
 			stringAndString(&cf->dw, &cf->dw_l, "</body>\n");
-			runGeneratedHtml(t, cf->dw);
+			runGeneratedHtml(cf->bodytag, cf->dw);
 			nzFree(cf->dw);
 			cf->dw = 0;
 			cf->dw_l = 0;

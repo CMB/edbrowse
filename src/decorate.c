@@ -1264,6 +1264,7 @@ Needless to say that's not good!
 		domLink(t, "Body", 0, "bodies", cf->docobj, 0);
 		set_onhandlers(t);
 		set_property_number(t->jv, "nodeType", 1);
+		cf->bodytag = t;
 		break;
 
 	case TAGACT_OL:
