@@ -412,7 +412,7 @@ top:
 // I guess this is as good a place as any to collect dead tags.
 #if 0
 // Not ready to do this yet, have to coordinate this with rerender.
-	tag_gc1();
+	tag_gc();
 #endif
 
 	if (timerWait(&delay_sec, &delay_ms)) {

@@ -1466,19 +1466,9 @@ void tag_gc(void)
 // or at the input loop if this is the current window.
 // Tags have been renumbered, need to rebuild the text buffer accordingly.
 			w->mustrender = true;
-			w->nextrender = 0;
+			if (w != cw)
+				w->nextrender = 0;
 		}
-	}
-}
-
-void tag_gc1(void)
-{
-	static time_t last_gc;
-	time_t t;
-	time(&t);
-	if (!last_gc || t > last_gc + 10) {
-		tag_gc();
-		last_gc = t;
 	}
 }
 
