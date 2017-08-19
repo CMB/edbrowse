@@ -581,6 +581,8 @@ bool run_function_bool(jsobjtype obj, const char *name)
 		debugPrint(3, "run_function_bool(0, %s", name);
 		return false;
 	}
+	if (intFlag)
+		return false;
 	if (whichproc == 'j')
 		return run_function_bool_nat(obj, name);
 	debugPrint(5, "> function %s", name);
