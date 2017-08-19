@@ -68,7 +68,7 @@ void traverseAll(int start)
 static int nopt;		/* number of options */
 /* None of these tags nest, so it is reasonable to talk about
  * the current open tag. */
-static struct htmlTag *currentForm, *currentSel, *currentOpt;
+static struct htmlTag *currentForm, *currentSel, *currentOpt, *currentStyle;
 static struct htmlTag *currentTitle, *currentScript, *currentTA;
 static struct htmlTag *currentA;
 static char *radioCheck;
@@ -467,6 +467,12 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 			break;
 		}
 
+		if (currentStyle) {
+			currentStyle->textval = cloneString(t->textval);
+			t->deleted = true;
+			break;
+		}
+
 		if (currentScript) {
 			currentScript->textval = cloneString(t->textval);
 			t->deleted = true;
@@ -611,6 +617,15 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 		t->textval = emptyString;
 		break;
 
+	case TAGACT_STYLE:
+		if (!opentag) {
+			currentStyle = 0;
+			break;
+		}
+		currentStyle = t;
+		t->textval = emptyString;
+		break;
+
 	case TAGACT_SELECT:
 		if (opentag) {
 			currentSel = t;
@@ -714,6 +729,7 @@ void prerender(int start)
 
 	currentForm = currentSel = currentOpt = NULL;
 	currentTitle = currentScript = currentTA = NULL;
+	currentStyle = NULL;
 	nzFree(radioCheck);
 	radioCheck = 0;
 	traverse_callback = prerenderNode;
