@@ -1518,8 +1518,10 @@ bool run_function_bool_nat(jsobjtype parent, const char *name)
 		return false;
 	}
 	duk_insert(jcx, -2);
+	debugPrint(3, "execute %s", name);
 	if (!duk_pcall_method(jcx, 0)) {
 		bool rc = false;
+		debugPrint(3, "execution complete");
 		if (duk_is_boolean(jcx, -1))
 			rc = duk_get_boolean(jcx, -1);
 		duk_pop(jcx);
@@ -1527,6 +1529,7 @@ bool run_function_bool_nat(jsobjtype parent, const char *name)
 	}
 // error in execution
 	processError();
+	debugPrint(3, "execution complete");
 	return false;
 }				/* run_function_bool_nat */
 
