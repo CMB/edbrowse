@@ -87,9 +87,11 @@ if(nn === "option" && top.text)
 extra = top.text;
 if(nn === "a" && top.href)
 extra = top.href.toString();
+if(nn === "base" && top.href)
+extra = top.href.toString();
 if(extra.length) extra = ' ' + extra;
 // some tags should never have anything below them so skip the parentheses notation for these.
-if((nn == "meta" || nn == "link" ||nn == "text" || nn == "image" || nn == "option") && top.childNodes.length == 0) {
+if((nn == "base" || nn == "meta" || nn == "link" ||nn == "text" || nn == "image" || nn == "option") && top.childNodes.length == 0) {
 alert(nn + extra);
 return;
 }
@@ -203,6 +205,7 @@ document.heads = new Array;
 document.bases = new Array;
 document.links = new Array;
 document.metas = new Array;
+document.styles = new Array;
 document.bodies = new Array;
 document.forms = new Array;
 document.elements = new Array;
@@ -1005,6 +1008,10 @@ t = "img";
 case "img":
 c = new Image();
 break;
+case "cssstyledeclaration":
+case "style":
+c = new CSSStyleDeclaration;
+break;
 case "script":
 c = new Script();
 break;
@@ -1055,8 +1062,12 @@ c = new Element();
 
 /* ok, for some element types this perhaps doesn't make sense,
 * but for most visible ones it does and I doubt it matters much */
+if(c instanceof CSSStyleDeclaration) {
+c.element = c;
+} else {
 c.style = new CSSStyleDeclaration;
 c.style.element = c;
+}
 c.childNodes = new Array;
 c.attributes = new Array;
 c.nodeName = t;
@@ -1180,7 +1191,7 @@ c.prototype.attachEvent = window.attachEvent;
 // Form has children for sure, but if we add <input> to Form,
 // we also have to add it to the array Form.elements.
 // So there are some nodes that we have to do outside this loop.
-for(var cn in {HtmlObj, Head, Body, Frame,
+for(var cn in {HtmlObj, Head, Body, CSSStyleDeclaration, Frame,
 Anchor, Element, Lister, Listitem, Tbody, Table, Div,
 Span, Trow, Cell, P, Script,
 // The following nodes shouldn't have any children, but the various

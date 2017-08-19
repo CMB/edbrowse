@@ -980,13 +980,17 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 anything to put under it, just like it gets childNodes whether
 or not there are any.  After that, there is a conditional step.
 If this node contains style='' of one or more name-value pairs,
-call out to process those and add them to the object */
-			so = instantiate(io, "style", "CSSStyleDeclaration");
-			set_property_object(so, "element", io);
+call out to process those and add them to the object.
+Don't do any of this if the tag is itself <style>. */
+			if (t->action != TAGACT_STYLE) {
+				so = instantiate(io, "style",
+						 "CSSStyleDeclaration");
+				set_property_object(so, "element", io);
 /* now if there are any style pairs to unpack,
  processStyles can rely on obj.style existing */
-			if (stylestring)
-				processStyles(so, stylestring);
+				if (stylestring)
+					processStyles(so, stylestring);
+			}
 
 /* Other attributes that are expected by pages, even if they
  * aren't populated at domLink-time */
@@ -997,7 +1001,7 @@ call out to process those and add them to the object */
 			set_property_object(io, "ownerDocument", cf->docobj);
 
 /* in the special case of form, also need an array of elements */
-			if (stringEqual(classname, "Form"))
+			if (t->action == TAGACT_FORM)
 				instantiate_array(io, "elements");
 		}
 
@@ -1056,7 +1060,7 @@ call out to process those and add them to the object */
 	if (href && href_url)
 		instantiate_url(io, href, href_url);
 
-	if (stringEqual(classname, "Element")) {
+	if (t->action == TAGACT_INPUT) {
 /* link back to the form that owns the element */
 		set_property_object(io, "form", owner);
 	}
@@ -1072,12 +1076,12 @@ call out to process those and add them to the object */
 /* documentElement is now set in the "Body" case because the 
 "Html" does not appear ever to be encountered */
 
-	if (stringEqual(classname, "Body")) {
+	if (t->action == TAGACT_BODY) {
 		set_property_object(cf->docobj, "body", io);
 		set_property_object(cf->docobj, "documentElement", io);
 	}
 
-	if (stringEqual(classname, "Head")) {
+	if (t->action == TAGACT_HEAD) {
 		set_property_object(cf->docobj, "head", io);
 	}
 
@@ -1204,6 +1208,13 @@ Needless to say that's not good!
 		domLink(t, "Meta", 0, "metas", cf->docobj, 0);
 		a = attribVal(t, "content");
 		set_property_string(t->jv, "content", a);
+		set_property_number(t->jv, "nodeType", 1);
+		break;
+
+	case TAGACT_STYLE:
+		domLink(t, "CSSStyleDeclaration", 0, "styles", cf->docobj, 0);
+		a = attribVal(t, "type");
+		set_property_string(t->jv, "type", a);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
@@ -1350,6 +1361,8 @@ Needless to say that's not good!
 // Don't know what this tag is, or it's not semantically important,
 // so just call it an html element.
 		domLink(t, "Element", 0, 0, cf->docobj, 0);
+		if (t->action == TAGACT_BASE && t->href)
+			instantiate_url(t->jv, "href", t->href);
 		break;
 	}			/* switch */
 
@@ -1496,6 +1509,7 @@ const struct tagInfo availableTags[] = {
 	{"bgsound", "background music", TAGACT_MUSIC, 0, 4},
 	{"audio", "audio passage", TAGACT_MUSIC, 0, 4},
 	{"meta", "a meta tag", TAGACT_META, 0, 4},
+	{"style", "a style tag", TAGACT_STYLE, 0, 2},
 	{"link", "a link tag", TAGACT_LINK, 0, 4},
 	{"img", "an image", TAGACT_IMAGE, 0, 4},
 	{"image", "an image", TAGACT_IMAGE, 0, 4},
