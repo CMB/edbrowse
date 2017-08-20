@@ -715,6 +715,26 @@ document.location$2.href = h;
 }
 }});
 
+// The Attr class and getAttributeNode().
+Attr = function(){ this.isId = this.specified = false; this.owner = null; this.name = ""; }
+
+Object.defineProperty(Attr.prototype, "value", {
+get: function() { return this.owner.getAttribute(this.name); },
+set: function(v) {
+this.owner.setAttribute(this.name, v);
+this.specified = true;
+return;
+}});
+
+document.getAttributeNode = function(s) {
+var n = new Attr;
+n.owner = this;
+n.name = s;
+if(this.getAttribute(s) != undefined)
+n.specified = true;
+return n;
+}
+
 // The Option class, these are choices in a dropdown list.
 Option = function() {
 this.nodeName = "option";
@@ -1230,6 +1250,7 @@ c.prototype.hasAttribute = document.hasAttribute;
 c.prototype.getAttribute = document.getAttribute;
 c.prototype.setAttribute = document.setAttribute;
 c.prototype.removeAttribute = document.removeAttribute;
+c.prototype.getAttributeNode = document.getAttributeNode;
 // clone
 c.prototype.cloneNode = document.cloneNode;
 // visual
@@ -1300,6 +1321,7 @@ Form.prototype.getAttribute = document.getAttribute;
 Form.prototype.setAttribute = document.setAttribute;
 Form.prototype.hasAttribute = document.hasAttribute;
 Form.prototype.removeAttribute = document.removeAttribute;
+Form.prototype.getAttributeNode = document.getAttributeNode;
 
 Form.prototype.cloneNode = document.cloneNode;
 
@@ -1343,6 +1365,7 @@ Array.prototype.getAttribute = document.getAttribute;
 Array.prototype.setAttribute = document.setAttribute;
 Array.prototype.hasAttribute = document.hasAttribute;
 Array.prototype.removeAttribute = document.removeAttribute;
+Array.prototype.getAttributeNode = document.getAttributeNode;
 
 /*********************************************************************
 The rest of this file contains open source software form third parties.
