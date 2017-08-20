@@ -1230,8 +1230,12 @@ Needless to say that's not good!
 	case TAGACT_STYLE:
 		domLink(t, "CSSStyleDeclaration", 0, "styles", cf->docobj, 0);
 		a = attribVal(t, "type");
+		if (!a)
+			a = emptyString;
 		set_property_string(t->jv, "type", a);
 		set_property_number(t->jv, "nodeType", 1);
+		if (t->textval && t->textval[0])
+			set_property_string(t->jv, "data", t->textval);
 		break;
 
 	case TAGACT_SCRIPT:
@@ -1256,6 +1260,7 @@ Needless to say that's not good!
 		}
 		set_property_number(t->jv, "nodeType", 1);
 		break;
+
 	case TAGACT_FORM:
 		domLink(t, "Form", "action", "forms", cf->docobj, 0);
 		set_onhandlers(t);

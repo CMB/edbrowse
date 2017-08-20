@@ -194,7 +194,7 @@ navigator.plugins = [];
 // must be filled in at run time based on the config file.
 // This line lets us run querySelectorAll in stand alone mode,
 // it is overwritten at startup by edbrowse.
-navigator.userAgent = "edbrowse/3.7.0";
+navigator.userAgent = "edbrowse/3.0.0";
 
 /* There's no history in edbrowse. */
 /* Only the current file is known, hence length is 1. */
@@ -773,6 +773,7 @@ Document = function(){}
 CSSStyleDeclaration = function(){
         this.element = null;
         this.style = this;
+this.attributes = new Array;
 };
 
 CSSStyleDeclaration.prototype.getPropertyValue = function(p) {
@@ -1225,7 +1226,7 @@ Anchor, Element, Lister, Listitem, Tbody, Table, Div,
 Span, Trow, Cell, P, Script,
 // The following nodes shouldn't have any children, but the various
 // children methods could be called on them anyways.
-TextNode, Image, Option, Link, Meta}) {
+Area, TextNode, Image, Option, Link, Meta}) {
 var c = window[cn];
 // c is class and cn is classname.
 // get elements below
@@ -2081,23 +2082,21 @@ A querySelectorAll function to turn a css styole selector into an array of nodes
 https://github.com/yiminghe/query-selector.git
 Snapshot taken on 08/20/2017.  query-selector-standalone-debug.js
 Minimized code is available, but I thought it more confusing than helpful.
-Other websites use this same function, e.g. nasa.gov,
-so I renamed our version to eb$qs, so they won't collide.
 *********************************************************************/
 
-var eb$qs = null;
+var querySelectorAll = null;
 
 // Can't run this until the dom framework is in place; it creates new div tags etc.
 function eb$qs$start()
 {
-if(eb$qs) return false;
+if(querySelectorAll) return false;
 
 /*
 Copyright 2014, query-selector@1.0.6
 MIT Licensed
 build time: Thu, 16 Oct 2014 03:51:57 GMT
 */
-eb$qs = (function(){ var module = {};
+querySelectorAll = (function(){ var module = {};
 
 var _querySelector_;
 _querySelector_ = function (exports) {
@@ -2311,6 +2310,7 @@ _querySelector_ = function (exports) {
       }(),
       getElementsByTagName: getElementsByTagName,
       getSimpleAttr: function (el, name) {
+//  alert(el ? el.nodeName : "empty");
         var ret = el && el.getAttributeNode(name);
         if (ret && ret.specified) {
           return 'value' in ret ? ret.value : ret.nodeValue;
@@ -5242,3 +5242,43 @@ return _querySelector_;
 
 return true;
 }
+
+// Now put it all together!
+function cssPopulate()
+{
+cssParser = new cssjs;
+cssList = [];
+
+// <style> tags in the html.
+var a = document.getElementsByTagName("style");
+var i, j, k, t;
+for(i=0; i<a.length; ++i) {
+t = a[i];
+if(t.data)
+cssList = cssList.concat(cssParser.parseCSS(t.data));
+}
+
+// <link type=text/css> tags in the html.
+a = document.getElementsByTagName("link");
+for(i=0; i<a.length; ++i) {
+t = a[i];
+if(t.type && t.type.toLowerCase() === "text/css" && t.data)
+cssList = cssList.concat(cssParser.parseCSS(t.data));
+}
+
+// Keep cssList around in case we create new nodes,
+// which should inherit these css attributes.
+
+// Ok here we go.
+for(i=0; i<cssList; ++i) {
+var d = cssList[i]; // css descriptor
+a = querySelectorAll(d.selector);
+for(j=0; j<a.length; ++j) {
+t = a[j];
+for(k=0; k<d.rules.length; ++k)
+if(!t.style.hasAttribute(d.rules[k].name))
+t.style.setAttribute(d.rules[k].name, d.rules[k].value);
+}
+}
+}
+
