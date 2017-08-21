@@ -773,7 +773,6 @@ Document = function(){}
 CSSStyleDeclaration = function(){
         this.element = null;
         this.style = this;
-this.attributes = new Array;
 };
 
 CSSStyleDeclaration.prototype.getPropertyValue = function(p) {
@@ -5294,12 +5293,16 @@ t = a[j];
 // If an element is specified then we only key on that.
 if(e && e != t) continue;
 for(k=0; k<d.rules.length; ++k) {
+var propname = d.rules[k].directive;
+var propval = d.rules[k].value;
+// Need to convert white-space to whiteSpace, I guess.
+propname = propname.replace(/\-(\w)/g, function(all, letter) {return letter.toUpperCase();});
 if(destination) {
-if(!destination.hasAttribute(d.rules[k].directive))
-destination.setAttribute(d.rules[k].directive, d.rules[k].value);
+if(!destination[propname])
+destination[propname] = propval;
 } else {
-if(!t.style.hasAttribute(d.rules[k].directive))
-t.style.setAttribute(d.rules[k].directive, d.rules[k].value);
+if(!t.style[propname])
+t.style[propname] = propval;
 }
 }
 }
