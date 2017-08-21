@@ -1378,6 +1378,43 @@ Needless to say that's not good!
 // Title is not a node, more like an attribute of the page.
 		break;
 
+	case TAGACT_LINK:
+		domLink(t, "Link", "href", "links", cf->docobj, 0);
+		set_property_number(t->jv, "nodeType", 1);
+		a = attribVal(t, "type");
+		if (a)
+			set_property_string(t->jv, "type", a);
+// Fetch the css file so we can apply its attributes.
+		if (!t->href)
+			break;
+		if (!a || !stringEqualCI(a, "text/css"))
+			break;
+		a = NULL;
+		if (browseLocal && !isURL(t->href)) {
+			if (!fileIntoMemory
+			    (t->href, &serverData, &serverDataLen)) {
+				if (debugLevel >= 1)
+					i_printf(MSG_GetLocalCSS, errorMsg);
+			} else {
+				a = serverData;
+			}
+		} else if (httpConnect(t->href, false, false, true, 0, 0, 0)) {
+			if (ht_code == 200) {
+				a = serverData;
+			} else {
+				nzFree(serverData);
+				if (debugLevel >= 3)
+					i_printf(MSG_GetCSS, t->href, ht_code);
+			}
+		} else {
+			if (debugLevel >= 3)
+				i_printf(MSG_GetCSS2, errorMsg);
+		}
+		if (a)
+			set_property_string(t->jv, "data", a);
+		cnzFree(a);
+		break;
+
 	default:
 // Don't know what this tag is, or it's not semantically important,
 // so just call it an html element.

@@ -692,6 +692,7 @@ char *htmlParse(char *buf, int remote)
 	if (isJSAlive) {
 		decorate(0);
 		set_basehref(cf->hbase);
+		run_function_bool(cf->winobj, "eb$qs$start");
 		runScriptsPending();
 		runOnload();
 		runScriptsPending();

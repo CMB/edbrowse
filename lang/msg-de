@@ -433,9 +433,9 @@ kann eine Ansicht nicht verändern
 Feld deaktiviert
 SPNEGO Authentisierungsmethode deaktiviert
 SPNEGO Authentisierungsmethode aktiviert
-0
-0
-0
+konnte lokales CSS nicht abrufen, %s\n
+konnte CSS von %s nicht abrufen, Code %ld\n
+konnte CSS nicht abrufen, %s\n
 0
 0
 0

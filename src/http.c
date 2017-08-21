@@ -1285,7 +1285,9 @@ they go where they go, so this doesn't come up very often.
 
 			/* only try realm on first try - prevents loop */
 			if (strcmp(creds_buf, ":") == 0)
-				got_creds = getUserPassRealm(urlcopy, creds_buf, ht_auth_realm);
+				got_creds =
+				    getUserPassRealm(urlcopy, creds_buf,
+						     ht_auth_realm);
 
 			if (!got_creds) {
 				i_printf(MSG_AuthRequired, urlcopy,
@@ -1294,7 +1296,8 @@ they go where they go, so this doesn't come up very often.
 				got_creds = read_credentials(creds_buf);
 			}
 			if (got_creds) {
-				addWebAuthorization(urlcopy, creds_buf, false, ht_auth_realm);
+				addWebAuthorization(urlcopy, creds_buf, false,
+						    ht_auth_realm);
 				curl_easy_setopt(h, CURLOPT_USERPWD, creds_buf);
 				nzFree(serverData);
 				serverData = emptyString;
@@ -2604,6 +2607,7 @@ So check for serverData null here. Once again we pop the frame.
 		jsobjtype topobj;
 		decorate(0);
 		set_basehref(cf->hbase);
+		run_function_bool(cf->winobj, "eb$qs$start");
 		runScriptsPending();
 		runOnload();
 		runScriptsPending();
@@ -2761,6 +2765,7 @@ bool reexpandFrame(void)
 	if (isJSAlive) {
 		decorate(0);
 		set_basehref(cf->hbase);
+		run_function_bool(cf->winobj, "eb$qs$start");
 		runScriptsPending();
 		runOnload();
 		runScriptsPending();

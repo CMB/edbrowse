@@ -6,6 +6,9 @@
 <base href="http://yyy.zzz.com">
 <!-- tidy5 says this is not a valid tag any more -->
 <bgsound src=whatever.mid>
+<style>
+body { background: white; color: black; }
+</style>
 </head>
 
 <body onload=bodyLoad() onunload=bodyUnload()>
@@ -847,6 +850,9 @@ if (lbg == "white")
 fail(164);
 }
 }
+
+if(document.body.style.getAttribute("color") != "black")
+fail(165);
 
 </script>
 

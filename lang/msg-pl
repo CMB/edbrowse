@@ -433,9 +433,9 @@ nie można zmodyfikować widoku
 pole włączony
 SPNEGO curl auth disabled
 SPNEGO curl auth enabled
-0
-0
-0
+nie można pobrać lokalnego CSS, %s\n
+nie można pobrać CSS z %s, kod %ld\n
+nie można pobrać CSS, %s\n
 0
 0
 0

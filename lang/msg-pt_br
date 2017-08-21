@@ -433,9 +433,9 @@ impossível modificar um panorama
 campo de entrada desligado
 Autorização SPNEGO habilitada
 Autorização SPNEGO desabilitada
-0
-0
-0
+não consegui trazer o CSS local; %s\n
+não consegui trazer o CSS de %s; código %ld\n
+não consegui trazer o CSS; %s\n
 0
 0
 0

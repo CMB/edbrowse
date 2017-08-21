@@ -5240,6 +5240,8 @@ _querySelector_ = function (exports) {
 return _querySelector_;
 })();
 
+cssPopulate();
+
 return true;
 }
 
@@ -5270,14 +5272,21 @@ cssList = cssList.concat(cssParser.parseCSS(t.data));
 // which should inherit these css attributes.
 
 // Ok here we go.
-for(i=0; i<cssList; ++i) {
+for(i=0; i<cssList.length; ++i) {
 var d = cssList[i]; // css descriptor
-a = querySelectorAll(d.selector);
+var sel = d.selector;
+// certain modifiers not supported in this static view.
+// a:link is the same as a.
+sel = sel.replace(/:link$/, "");
+// :hover :visited etc are dynamic an not relevant here.
+if(sel.match(/:(hover|visited|active)$/))
+continue;
+a = querySelectorAll(sel);
 for(j=0; j<a.length; ++j) {
 t = a[j];
 for(k=0; k<d.rules.length; ++k)
-if(!t.style.hasAttribute(d.rules[k].name))
-t.style.setAttribute(d.rules[k].name, d.rules[k].value);
+if(!t.style.hasAttribute(d.rules[k].directive))
+t.style.setAttribute(d.rules[k].directive, d.rules[k].value);
 }
 }
 }

@@ -433,9 +433,9 @@ impossible de modifier une vue
 champ désactivé
 authentification SPNEGO désactivée
 authentification SPNEGO activée
-0
-0
-0
+impossible de charger localement CSS, %s\n
+impossible de charger CSS depuis %s, code %ld\n
+impossible de charger CSS, %s\n
 0
 0
 0
