@@ -8,6 +8,7 @@
 <bgsound src=whatever.mid>
 <style>
 body { background: white; color: black; }
+.nut {color: blue; }
 </style>
 </head>
 
@@ -438,7 +439,7 @@ Wyoming
 <!-- this generates and error, but not sure why.
 http://www.w3schools.com/html/html_form_input_types.asp -->
 <input type=number maxlength=5 name="zip code" readonly value="&#56;8888">
-<span id=almond></span>
+<span id=almond class=nut></span>
 <table class=filbert><tr><td></td></tr><tr id=pecan><td></td></tr></table>
 Colors will change with the state, A through M or N through Z.
 <br>My favorite colors are:
@@ -837,19 +838,8 @@ if(document.metas[1].content != "Snoopy")
 fail(163);
 // add tests for getAttribute etc, once Meta is actually a class in startwindow.js.
 
-test_computedstyle();
-function test_computedstyle()
-{
-var el = document.createElement("p");
-el.style = {"bgcolor":"white","color":"red"};
-var lbg = document.defaultView.getComputedStyle(el,'').bgcolor
-if (lbg == "white")
-{
-// pass
-} else {
+if(document.defaultView.getComputedStyle(document.getElementById("almond"),'').color != "blue")
 fail(164);
-}
-}
 
 if(document.body.style.getAttribute("color") != "black")
 fail(165);

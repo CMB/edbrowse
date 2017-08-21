@@ -788,14 +788,16 @@ document.style.bgcolor = "white";
 
 getComputedStyle = function(e,pe) {
 	// disregarding pseudoelements for now
-return e.style;
+s = new CSSStyleDeclaration;
+s.element = e;
+// This is a rather inefficient use of cssApply, but it is hardly ever called.
+cssApply(e, s);
+return s;
 }
 
 document.defaultView = function() { return window; }
 
-document.defaultView.getComputedStyle = function(e,pe) {
-	return window.getComputedStyle(e,pe);
-}
+document.defaultView.getComputedStyle = getComputedStyle;
 
 // @author Originally implemented by Yehuda Katz
 // And since then, from envjs, by Thatcher et al
@@ -5240,20 +5242,21 @@ _querySelector_ = function (exports) {
 return _querySelector_;
 })();
 
-cssPopulate();
+cssGather();
+cssApply();
 
 return true;
 }
 
 // Now put it all together!
-function cssPopulate()
+function cssGather()
 {
 cssParser = new cssjs;
 cssList = [];
 
 // <style> tags in the html.
 var a = document.getElementsByTagName("style");
-var i, j, k, t;
+var i, t;
 for(i=0; i<a.length; ++i) {
 t = a[i];
 if(t.data)
@@ -5270,10 +5273,14 @@ cssList = cssList.concat(cssParser.parseCSS(t.data));
 
 // Keep cssList around in case we create new nodes,
 // which should inherit these css attributes.
+}
 
-// Ok here we go.
+function cssApply(e, destination)
+{
+var i, j, k;
+var a, t, d;
 for(i=0; i<cssList.length; ++i) {
-var d = cssList[i]; // css descriptor
+d = cssList[i]; // css descriptor
 var sel = d.selector;
 // certain modifiers not supported in this static view.
 // a:link is the same as a.
@@ -5284,9 +5291,17 @@ continue;
 a = querySelectorAll(sel);
 for(j=0; j<a.length; ++j) {
 t = a[j];
-for(k=0; k<d.rules.length; ++k)
+// If an element is specified then we only key on that.
+if(e && e != t) continue;
+for(k=0; k<d.rules.length; ++k) {
+if(destination) {
+if(!destination.hasAttribute(d.rules[k].directive))
+destination.setAttribute(d.rules[k].directive, d.rules[k].value);
+} else {
 if(!t.style.hasAttribute(d.rules[k].directive))
 t.style.setAttribute(d.rules[k].directive, d.rules[k].value);
+}
+}
 }
 }
 }
