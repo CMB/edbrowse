@@ -130,7 +130,7 @@ const struct MIMETYPE *findMimeByFile(const char *filename)
 	const char *post, *s;
 	post = filename + strlen(filename);
 	for (s = post - 1; s >= filename && *s != '.' && *s != '/'; --s) ;
-	if (*s != '.')
+	if (s < filename || *s != '.')
 		return NULL;
 	++s;
 	if (post >= s + sizeof(suffix))
