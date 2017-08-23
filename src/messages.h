@@ -17,22 +17,22 @@ Each file lang/msg-* must have exactly this many lines.
 #define EdbrowseMessageCount 659
 
 // English
-extern const char *msg_en[], *ebrc_en;
+extern const char *msg_en[], ebrc_en[];
 
 // French, Erwin Bliesenick, erwinb@no-log.org
-extern const char *msg_fr[], *ebrc_fr;
+extern const char *msg_fr[], ebrc_fr[];
 
 // Brazilian Portuguese, Cleverson Casarin, clcaul@gmail.com
-extern const char *msg_pt_br[], *ebrc_pt_br;
+extern const char *msg_pt_br[], ebrc_pt_br[];
 
 // German, Sebastian Humenda, shumenda@gmx.de
-extern const char *msg_de[], *ebrc_de;
+extern const char *msg_de[], ebrc_de[];
 
 // Polish, Wojciech Gac, wojciech.s.gac@gmail.com
-extern const char *msg_pl[], *ebrc_pl;
+extern const char *msg_pl[], ebrc_pl[];
 
 // Russian, Wojciech Gac, wojciech.s.gac@gmail.com
-extern const char *msg_ru[], *ebrc_ru;
+extern const char *msg_ru[], ebrc_ru[];
 
 /*********************************************************************
 This file and lang/msg-en line up.
