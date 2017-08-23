@@ -153,7 +153,7 @@ static void scan_http_headers(bool fromCallback)
 
 	if (!ht_cdfn && (v = find_http_header("content-disposition"))) {
 		char *s = strstrCI(v, "filename=");
-		if (s) {
+		if (s && !strncmp(v, "attachment", 10)) {
 			s += 9;
 			if (*s == '"') {
 				char *t;
