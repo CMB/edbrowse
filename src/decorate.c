@@ -123,9 +123,15 @@ static void makeButton(void)
 
 struct htmlTag *findOpenTag(struct htmlTag *t, int action)
 {
-	while ((t = t->parent))
+	int count = 0;
+	while ((t = t->parent)) {
 		if (t->action == action)
 			return t;
+		if (++count == 10000) {	// tree shouldn't be this deep
+			debugPrint(1, "infinite loop in findOpenTag()");
+			break;
+		}
+	}
 	return 0;
 }				/* findOpenTag */
 

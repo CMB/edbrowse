@@ -2395,8 +2395,12 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 	}
 
 /* check and see if this link would turn the tree into a circle, whence
- * any subsequent traversal would fall into an infinite loop. */
-	if (add->parent) {	/* already linked in */
+ * any subsequent traversal would fall into an infinite loop.
+ * Child node must not have a parent, and, must not link into itself.
+ * Oddly enough the latter seems to happen on acid3.acidtests.org,
+ * linking body into body, and body at the top has no parent,
+ * so passes the "no parent" test, whereupon I had to add the second test. */
+	if (add->parent || add == parent) {
 		if (debugLevel >= 3) {
 			debugPrint(3,
 				   "linkage cycle, cannot link %s %d into %s %d",
@@ -2406,8 +2410,11 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 				debugPrint(3, "before %s %d", b_name,
 					   (before ? before->seqno : -1));
 			}
-			debugPrint(3, "the child already has parent %s %d",
-				   add->parent->info->name, add->parent->seqno);
+			if (add->parent)
+				debugPrint(3,
+					   "the child already has parent %s %d",
+					   add->parent->info->name,
+					   add->parent->seqno);
 			debugPrint(3,
 				   "Aborting the link, some data may not be rendered.");
 		}
