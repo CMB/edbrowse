@@ -12,6 +12,9 @@ Don't do this if you are using this page for ecommerce or something vital.
 Keep edbrowse in 1 process. Don't fork a javascript process to make all the js calls.
 There are many technical reasons why 1 process is a better design.
 
+The keyword jspool is no longer used in the .ebrc config file.  This
+was needed for Mozilla JS, but it is not needed for Duktape.
+
 Gather keyword value pairs from <style> tags and css files and apply them to the corresponding javascript objects.
 Implement getComputedStyle().
 
