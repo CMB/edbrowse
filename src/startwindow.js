@@ -5261,7 +5261,7 @@ t = a[i];
 if(t.data) {
 // the jotform parser doesn't handle comments properly. I don't need them,
 // so just strip them out via a preprocessing regexp.
-var data2 = eb$uncomment(t.data);
+var data2 = t.data.replace(/\/\*[\u0000-\uffff]*?\*\//g, '');
 cssList = cssList.concat(cssParser.parseCSS(data2));
 }
 }
@@ -5271,7 +5271,7 @@ a = document.getElementsByTagName("link");
 for(i=0; i<a.length; ++i) {
 t = a[i];
 if(t.type && t.type.toLowerCase() === "text/css" && t.data) {
-var data2 = eb$uncomment(t.data);
+var data2 = t.data.replace(/\/\*[\u0000-\uffff]*?\*\//g, '');
 cssList = cssList.concat(cssParser.parseCSS(data2));
 }
 }
@@ -5315,19 +5315,3 @@ t.style[propname] = propval;
 }
 }
 
-// Remove C style comments from a string.
-// Why don't I just use a regexp and remove all comments in one go?
-// s = s.replace(/\/\*(.|\s)*?\*\//g, "");
-// Because that produces a regexp range error
-// on the <style> block in acid3.acidtests.org.
-function eb$uncomment(c)
-{
-while(true) {
-var i = c.indexOf("/*");
-if(i < 0) break;
-var j = c.indexOf("*/", i+2);
-if(j < 0) break;
-c = c.substr(0,i) + c.substr(j+2);
-}
-return c;
-}
