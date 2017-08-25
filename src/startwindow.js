@@ -5262,6 +5262,8 @@ if(t.data) {
 // the jotform parser doesn't handle comments properly. I don't need them,
 // so just strip them out via a preprocessing regexp.
 var data2 = t.data.replace(/\/\*[\u0000-\uffff]*?\*\//g, '');
+// Nor does it understand #\ 
+data2 = data2.replace(/#\\ [\u0000-\uffff]*?}/g, "");
 cssList = cssList.concat(cssParser.parseCSS(data2));
 }
 }
@@ -5272,6 +5274,7 @@ for(i=0; i<a.length; ++i) {
 t = a[i];
 if(t.type && t.type.toLowerCase() === "text/css" && t.data) {
 var data2 = t.data.replace(/\/\*[\u0000-\uffff]*?\*\//g, '');
+data2 = data2.replace(/#\\ [\u0000-\uffff]*?}/g, "");
 cssList = cssList.concat(cssParser.parseCSS(data2));
 }
 }
