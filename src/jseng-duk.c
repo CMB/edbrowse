@@ -495,11 +495,15 @@ static void set_timeout(duk_context * cx, bool isInterval)
 // now the function is the only thing on the stack.
 
 	if (duk_is_function(cx, 0)) {
+		duk_push_string(cx, "?");
+		duk_put_prop_string(cx, -2, "body");
 // We use to extract the function name in moz js, don't know how to do it here.
 		strcpy(fname, "javascript()");
 	} else if (duk_is_string(cx, 0)) {
+// need to make a copy of the source code.
+		char *body = cloneString(duk_get_string(cx, 0));
 // pull the function name out of the string, if that makes sense.
-		fstr = duk_get_string(cx, 0);
+		fstr = body;
 		strcpy(fname, "?");
 		s = fstr;
 		skipWhite(&s);
@@ -521,6 +525,9 @@ static void set_timeout(duk_context * cx, bool isInterval)
 		duk_push_string(cx, "timer");
 		duk_pcompile(cx, 0);
 // Now looks like a function object, just like the previous case.
+		duk_push_string(cx, body);
+		duk_put_prop_string(cx, -2, "body");
+		nzFree(body);
 	} else {
 // oops, not a function or a string.
 		duk_pop(cx);
@@ -1434,12 +1441,14 @@ int set_property_function_nat(jsobjtype parent, const char *name,
 			      const char *body)
 {
 	if (!body || !*body) {
-// null or empty function, just return null.
+// null or empty function, function will return null.
 		body = "null";
 	}
 	duk_push_string(jcx, body);
 	duk_push_string(jcx, name);
 	duk_pcompile(jcx, 0);
+	duk_push_string(jcx, body);
+	duk_put_prop_string(jcx, -2, "body");
 	duk_push_heapptr(jcx, parent);
 	duk_insert(jcx, -2);	// switch places
 	duk_put_prop_string(jcx, -2, name);
