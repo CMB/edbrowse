@@ -380,42 +380,43 @@ static duk_ret_t setter_value(duk_context * cx)
 	return 0;
 }
 
+static void forceFrameExpand(duk_context * cx, jsobjtype thisobj)
+{
+// Have to save all the global variables, because other js scrips will be
+// running in another context.
+// Having all these global variables isn't great programming.
+	jsobjtype save_jcx = jcx;
+	jsobjtype save_winobj = winobj;
+	jsobjtype save_docobj = docobj;
+	const char *save_src = jsSourceFile;
+	int save_lineno = jsLineno;
+	bool save_plug = pluginsOn;
+	duk_push_true(cx);
+	duk_put_prop_string(cx, -2, "eb$auto");
+	pluginsOn = false;
+	whichproc = 'e';
+	frameExpandLine(0, thisobj);
+	whichproc = 'j';
+	jcx = save_jcx;
+	winobj = save_winobj;
+	docobj = save_docobj;
+	jsSourceFile = save_src;
+	jsLineno = save_lineno;
+	pluginsOn = save_plug;
+}
+
 // contentDocument getter setter; this is a bit complicated.
 static duk_ret_t getter_cd(duk_context * cx)
 {
 	bool found;
 	jsobjtype thisobj;
-
 	jsInterruptCheck();
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
 	found = duk_get_prop_string(cx, -1, "eb$auto");
 	duk_pop(cx);
-	if (!found) {
-// need to expand.
-// Have to save all the global variables, because other js scrips will be
-// running in another context.
-// Having all these global variables isn't great programming.
-		jsobjtype save_jcx = jcx;
-		jsobjtype save_winobj = winobj;
-		jsobjtype save_docobj = docobj;
-		const char *save_src = jsSourceFile;
-		int save_lineno = jsLineno;
-		bool save_plug = pluginsOn;
-		duk_push_true(cx);
-		duk_put_prop_string(cx, -2, "eb$auto");
-		pluginsOn = false;
-		whichproc = 'e';
-		frameExpandLine(0, thisobj);
-		whichproc = 'j';
-		jcx = save_jcx;
-		winobj = save_winobj;
-		docobj = save_docobj;
-		jsSourceFile = save_src;
-		jsLineno = save_lineno;
-		pluginsOn = save_plug;
-	}
-
+	if (!found)
+		forceFrameExpand(cx, thisobj);
 	duk_get_prop_string(cx, -1, "content$Document");
 	duk_remove(cx, -2);
 	return 1;
@@ -423,6 +424,28 @@ static duk_ret_t getter_cd(duk_context * cx)
 
 // You can't really change contentDocument; this is a stub.
 static duk_ret_t setter_cd(duk_context * cx)
+{
+	return 0;
+}
+
+static duk_ret_t getter_cw(duk_context * cx)
+{
+	bool found;
+	jsobjtype thisobj;
+	jsInterruptCheck();
+	duk_push_this(cx);
+	thisobj = duk_get_heapptr(cx, -1);
+	found = duk_get_prop_string(cx, -1, "eb$auto");
+	duk_pop(cx);
+	if (!found)
+		forceFrameExpand(cx, thisobj);
+	duk_get_prop_string(cx, -1, "content$Window");
+	duk_remove(cx, -2);
+	return 1;
+}
+
+// You can't really change contentWindow; this is a stub.
+static duk_ret_t setter_cw(duk_context * cx)
 {
 	return 0;
 }
@@ -1414,6 +1437,7 @@ int set_property_float_nat(jsobjtype parent, const char *name, double n)
 int set_property_object_nat(jsobjtype parent, const char *name, jsobjtype child)
 {
 	duk_push_heapptr(jcx, parent);
+
 // Special code for frame.contentDocument
 	if (stringEqual(name, "contentDocument")) {
 		bool rc;
@@ -1431,6 +1455,24 @@ int set_property_object_nat(jsobjtype parent, const char *name, jsobjtype child)
 			name = "content$Document";
 		}
 	}
+
+	if (stringEqual(name, "contentWindow")) {
+		bool rc;
+		duk_get_global_string(jcx, "Frame");
+		rc = duk_instanceof(jcx, -2, -1);
+		duk_pop(jcx);
+		if (rc) {
+			duk_push_string(jcx, name);
+			duk_push_c_function(jcx, getter_cw, 0);
+			duk_push_c_function(jcx, setter_cw, 1);
+			duk_def_prop(jcx, -4,
+				     (DUK_DEFPROP_HAVE_SETTER |
+				      DUK_DEFPROP_HAVE_GETTER |
+				      DUK_DEFPROP_SET_ENUMERABLE));
+			name = "content$Window";
+		}
+	}
+
 	duk_push_heapptr(jcx, child);
 	duk_put_prop_string(jcx, -2, name);
 	duk_pop(jcx);

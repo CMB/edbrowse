@@ -2634,6 +2634,7 @@ So check for serverData null here. Once again we pop the frame.
 		t->contracted = true;
 	if (isJSAlive) {
 		jsobjtype cdo;	// contentDocument object
+		jsobjtype cwo;	// contentWindow object
 		jsobjtype cna;	// childNodes array
 		cdo = new_cf->docobj;
 		disconnectTagObject(cdt);
@@ -2641,6 +2642,8 @@ So check for serverData null here. Once again we pop the frame.
 		set_property_object(t->jv, "content$Document", cdo);
 		cna = get_property_object(t->jv, "childNodes");
 		set_array_element_object(cna, 0, cdo);
+		cwo = new_cf->winobj;
+		set_property_object(t->jv, "content$Window", cwo);
 // run the frame unload function if it is there.
 // I assume it should run in the higher context.
 		run_function_bool(t->jv, "onload");
@@ -2779,8 +2782,10 @@ bool reexpandFrame(void)
 	if (isJSAlive) {
 		struct ebFrame *save_cf;
 		jsobjtype cdo;	// contentDocument object
+		jsobjtype cwo;	// contentWindow object
 		jsobjtype cna;	// childNodes array
 		cdo = cf->docobj;
+		cwo = cf->winobj;
 		disconnectTagObject(cdt);
 		connectTagObject(cdt, cdo);
 // have to point contentDocument to the new document object,
@@ -2790,6 +2795,7 @@ bool reexpandFrame(void)
 		set_property_object(frametag->jv, "content$Document", cdo);
 		cna = get_property_object(frametag->jv, "childNodes");
 		set_array_element_object(cna, 0, cdo);
+		set_property_object(frametag->jv, "content$Window", cwo);
 		cf = save_cf;
 	}
 

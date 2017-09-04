@@ -1444,9 +1444,12 @@ Needless to say that's not good!
 			run_function_onearg(t->parent->jv, "eb$apch1", t->jv);
 			linked_in = true;
 // special code for frame.contentDocument.
-			if (t->parent->action == TAGACT_FRAME)
+			if (t->parent->action == TAGACT_FRAME) {
 				set_property_object(t->parent->jv,
 						    "contentDocument", t->jv);
+				set_property_object(t->parent->jv,
+						    "contentWindow", t->jv);
+			}
 		}
 
 		if (!t->parent && innerParent) {
