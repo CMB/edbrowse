@@ -5311,11 +5311,15 @@ var sel = d.selector;
 // @directives are not selectors.
 if(sel.match(/^@/))
 continue;
+sel = sel.replace(/^}/, "");
 // a:link is the same as a.
-sel = sel.replace(/:link$/, "");
+sel = sel.replace(/:link\b/, "");
 // :hover :visited etc are dynamic an not relevant here.
-if(sel.match(/:(hover|visited|active)$/))
+if(sel.match(/:(hover|visited|active|after|before)\b/))
 continue;
+if (sel.match(/-moz-|-webkit-|-ms\b/))
+continue;
+sel = sel.trim();
 a = querySelectorAll(sel);
 for(j=0; j<a.length; ++j) {
 t = a[j];
