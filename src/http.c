@@ -2528,8 +2528,13 @@ int frameExpandLine(int ln, jsobjtype fo)
 	}
 
 	s = t->href;
-	if (!s)
-		return 2;
+	if (!s) {
+// No source. If this is your request then return an error.
+// But if we're dipping into the objects then it needs to expand
+// into a separate window, a separate js space, with an empty body.
+		if (!fo)
+			return 2;
+	}
 
 	save_cf = cf = t->f0;
 /* have to push a new frame before we read the web page */
@@ -2537,17 +2542,18 @@ int frameExpandLine(int ln, jsobjtype fo)
 	last_f->next = cf = allocZeroMem(sizeof(struct ebFrame));
 	cf->owner = cw;
 	cf->frametag = t;
-	debugPrint(2, "fetch frame %s", s);
-	if (!readFileArgv(s)) {
+	debugPrint(2, "fetch frame %s", (s ? s : "empty"));
+	if (s) {
+		if (!readFileArgv(s)) {
 /* serverData was never set, or was freed do to some other error. */
 /* We just need to pop the frame and return. */
-		fileSize = -1;	/* don't print 0 */
-		nzFree(cf->fileName);
-		free(cf);
-		last_f->next = 0;
-		cf = save_cf;
-		return 3;
-	}
+			fileSize = -1;	/* don't print 0 */
+			nzFree(cf->fileName);
+			free(cf);
+			last_f->next = 0;
+			cf = save_cf;
+			return 3;
+		}
 
 /*********************************************************************
 readFile could return success and yet serverData is null.
@@ -2557,13 +2563,17 @@ It can, if the frame is a youtube video, which is not unusual at all.
 So check for serverData null here. Once again we pop the frame.
 *********************************************************************/
 
-	if (serverData == NULL) {
-		nzFree(cf->fileName);
-		free(cf);
-		last_f->next = 0;
-		cf = save_cf;
-		fileSize = -1;
-		return 0;
+		if (serverData == NULL) {
+			nzFree(cf->fileName);
+			free(cf);
+			last_f->next = 0;
+			cf = save_cf;
+			fileSize = -1;
+			return 0;
+		}
+	} else {
+		serverData = cloneString("<body></body>");
+		serverDataLen = strlen(serverData);
 	}
 
 	new_cf = cf;
