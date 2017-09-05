@@ -773,6 +773,7 @@ Document = function(){}
 CSSStyleDeclaration = function(){
         this.element = null;
         this.style = this;
+	 this.attributes = new Array;
 };
 
 CSSStyleDeclaration.prototype.getPropertyValue = function(p) {
@@ -787,7 +788,7 @@ document.style.bgcolor = "white";
 
 getComputedStyle = function(e,pe) {
 	// disregarding pseudoelements for now
-s = new CSSStyleDeclaration;
+var s = new CSSStyleDeclaration;
 s.element = e;
 // This is a rather inefficient use of cssApply, but it is hardly ever called.
 cssApply(e, s);
@@ -1122,6 +1123,23 @@ c.nodeType = 8;
 return c;
 }
 
+Event = function(options){
+    // event state is kept read-only by forcing
+    // a new object for each event.  This may not
+    // be appropriate in the long run and we'll
+    // have to decide if we simply dont adhere to
+    // the read-only restriction of the specification
+    this._bubbles = true;
+    this._cancelable = true;
+    this._cancelled = false;
+    this._currentTarget = null;
+    this._target = null;
+    this._eventPhase = Event.AT_TARGET;
+    this._timeStamp = new Date().getTime();
+    this._preventDefault = false;
+    this._stopPropagation = false;
+};
+
 /*********************************************************************
 This is our addEventListener function.
 It is bound to window, which is ok because window has such a function
@@ -1136,6 +1154,7 @@ Third arg is not used cause I don't understand it.
 
 function addEventListener(ev, handler, notused)
 {
+ev_before_changes = ev;
 ev = "on" + ev;
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
@@ -1149,7 +1168,7 @@ this[ev] = undefined;
 }
 this[evarray] = a;
 eval(
-'this.' + ev + ' = function(){ var a = this.' + evarray + '; if(this.' + evorig + ') this.' + evorig + '(); for(var i = 0; i<a.length; ++i) {a[i]();} };');
+'this.' + ev + ' = function(){ var a = this.' + evarray + '; if(this.' + evorig + ') this.' + evorig + '(); for(var i = 0; i<a.length; ++i) {var tempEvent = new Event;tempEvent.type = "' + ev_before_changes + '";a[i](tempEvent);} };');
 }
 this[evarray].push(handler);
 }
@@ -1198,7 +1217,7 @@ this[ev] = undefined;
 }
 this[evarray] = a;
 eval(
-'this.' + ev + ' = function(){ var a = this.' + evarray + '; if(this.' + evorig + ') this.' + evorig + '(); for(var i = 0; i<a.length; ++i) a[i](); };');
+'this.' + ev + ' = function(){ var a = this.' + evarray + '; if(this.' + evorig + ') this.' + evorig + '(); for(var i = 0; i<a.length; ++i) {var tempEvent = new Event;tempEvent.type = "' + ev + '";a[i](tempEvent);} };');
 }
 this[evarray].push(handler);
 }
@@ -1363,12 +1382,13 @@ Object.defineProperty(Array.prototype, "firstChild", { get: function() { return 
 Object.defineProperty(Array.prototype, "lastChild", { get: function() { return this[this.length-1]; } });
 Object.defineProperty(Array.prototype, "nextSibling", { get: function() { return eb$getSibling(this,"next"); } });
 Object.defineProperty(Array.prototype, "previousSibling", { get: function() { return eb$getSibling(this,"previous"); } });
+
 Array.prototype.getAttribute = document.getAttribute;
 Array.prototype.setAttribute = document.setAttribute;
 Array.prototype.hasAttribute = document.hasAttribute;
 Array.prototype.removeAttribute = document.removeAttribute;
 Array.prototype.getAttributeNode = document.getAttributeNode;
-
+Array.prototype.item = function(x) { return this[x] };
 /*********************************************************************
 The rest of this file contains open source software form third parties.
 These functions are useful to edbrowse, particularly in the area
