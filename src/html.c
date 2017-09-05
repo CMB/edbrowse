@@ -1865,7 +1865,7 @@ void rerender(bool rr_command)
 {
 	char *a, *snap, *newbuf;
 	int j;
-	int markdot;
+	int markdot, addtop;
 
 	debugPrint(4, "rerender");
 	cw->mustrender = false;
@@ -1903,14 +1903,19 @@ void rerender(bool rr_command)
 /* mark dot, so it stays in place */
 	cw->labels[MARKDOT] = cw->dot;
 	frontBackDiff(snap, newbuf);
+	addtop = 0;
 	if (sameBack1 > sameFront)
 		delText(sameFront + 1, sameBack1);
-	if (sameBack2 > sameFront)
+	if (sameBack2 > sameFront) {
 		addTextToBuffer((pst) newChunkStart,
 				newChunkEnd - newChunkStart, sameFront, false);
+		addtop = sameFront + 1;
+	}
 	markdot = cw->labels[MARKDOT];
 	if (markdot)
 		cw->dot = markdot;
+	else if (addtop)
+		cw->dot = addtop;
 	cw->undoable = false;
 
 /*********************************************************************
