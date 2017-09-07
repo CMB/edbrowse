@@ -1071,11 +1071,8 @@ Don't do any of this if the tag is itself <style>. */
 		set_property_string(io, "name", symname);
 
 	if (idname) {
-/* io.id becomes idname, and idMaster.idname becomes io
- * In case of forms, v.id should remain undefined.  So we can have
- * a form field named "id". */
-		if (!stringEqual(classname, "Form"))
-			set_property_string(io, "id", idname);
+/* io.id becomes idname, and idMaster.idname becomes io */
+		set_property_string(io, "id", idname);
 		master = get_property_object(cf->docobj, "idMaster");
 		set_property_object(master, idname, io);
 	}
