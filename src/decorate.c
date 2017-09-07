@@ -356,7 +356,8 @@ void htmlInputHelper(struct htmlTag *t)
 	const char *s = attribVal(t, "type");
 	if (stringEqual(t->info->name, "button")) {
 		n = INP_BUTTON;
-	} else if (s) {
+	}
+	if (s) {
 		n = stringInListCI(inp_types, s);
 		if (n < 0) {
 			n = stringInListCI(inp_others, s);
