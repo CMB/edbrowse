@@ -308,7 +308,8 @@ function catdog(item) { alert('fluffy'); if(item.checked&&document.questionnaire
 document.writeln("<script language=JavaScript>document.writeln('Nested Script ');<" + "/script>");
 </script>
 
-Subject: <input type='hidden' name='id' value='eklhad'>
+<P>
+Subject: <input type='hidden' name='who' value='eklhad'>
 <input type='hidden' name='password' value='secret'>
 <input type='text' name='subject' size='50' maxlength='80'>
 <br>State and zip:
@@ -493,7 +494,7 @@ onclick="alert('rock and roll')">
 // I'll push the button for you
 document.questionnaire.b.onclick();
 if(document.questionnaire.result.getAttribute("value") != 90) fail(85);
-if(document.questionnaire.id.value != "eklhad") fail(86);
+if(document.questionnaire.who.value != "eklhad") fail(86);
 if(document.forms[0].elements[1].value != "secret") fail(87);
 
 // prototype objects, use the Circle model
@@ -530,11 +531,11 @@ with(document.questionnaire) {
 if(!(dog.checked && dog.defaultChecked)) fail(100);
 if(cat.checked || cat.defaultChecked) fail(101);
 if(dog.type != "checkbox" || money.type != "radio" || money.length != 4) fail(102);
-if(id.type != "hidden" || subject.type != "text") fail(103);
+if(who.type != "hidden" || subject.type != "text") fail(103);
 if(b0.type != "reset" || b1.type != "submit") fail(104);
 if(body.type != "textarea" || b.type != "button") fail(105);
 if(state.type != "select-one" || colors.type != "select-multiple") fail(106);
-if(id.defaultValue != "eklhad") fail(107);
+if(who.defaultValue != "eklhad") fail(107);
 if(body.value.substring(10,19) != "brilliant") fail(108);
 // focus and blur are ignored
 dog.focus();
@@ -564,7 +565,7 @@ if(n != 299) fail(119);
 var ilo = {a:document.questionnaire, b:9+5*3};
 if(typeof ilo.a != "object") fail(120);
 if(ilo.b != 24) fail(121);
-if(ilo.a.id.value != "eklhad") fail(122);
+if(ilo.a.who.value != "eklhad") fail(122);
 
 /* the URL class, most of the setters are in startwindow.js */
 /* malformed url, not sure what to do here */

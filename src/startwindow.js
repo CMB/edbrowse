@@ -956,6 +956,26 @@ Script = function(){}
 Timer = function(){}
 
 /*********************************************************************
+When a script runs it may call document.write. But where to put those nodes?
+I think they belong under the script object, I think that's intuitive,
+but most browsers put them under body,
+or at least under the parent of the script object,
+but always in position, as though they were right here in place of the script.
+This function lifts the nodes from the script object to its parent,
+in position, just after the script.
+*********************************************************************/
+
+function eb$uplift(s)
+{
+var p = s.parentNode;
+if(!p) return; // should never happen
+var before = s.nextSibling;
+while(s.firstChild)
+if(before) p.insertBefore(s.firstChild, before);
+else p.appendChild(s.firstChild);
+}
+
+/*********************************************************************
 This creates a copy of the node and its children recursively.
 The argument 'deep' refers to whether or not the clone will recurs.
 eb$clone is a helper function that is not tied to any particular prototype.
@@ -1154,7 +1174,7 @@ Third arg is not used cause I don't understand it.
 
 function addEventListener(ev, handler, notused)
 {
-ev_before_changes = ev;
+var ev_before_changes = ev;
 ev = "on" + ev;
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html

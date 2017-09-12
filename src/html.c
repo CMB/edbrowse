@@ -533,6 +533,11 @@ static void prepareScript(struct htmlTag *t)
 	nzFree(js_text);
 	filepart = getFileURL(js_file, true);
 	t->js_file = cloneString(filepart);
+
+// A side effect of tidy + edbrowse is that the text of the script is a
+// childNode of script, but I don't think it should be.
+	if (t->firstchild)
+		run_function_onearg(t->jv, "removeChild", t->firstchild->jv);
 }				/* prepareScript */
 
 /*********************************************************************
@@ -607,10 +612,11 @@ top:
 /* look for document.write from this script */
 		if (cf->dw) {
 			stringAndString(&cf->dw, &cf->dw_l, "</body>\n");
-			runGeneratedHtml(cf->bodytag, cf->dw);
+			runGeneratedHtml(t, cf->dw);
 			nzFree(cf->dw);
 			cf->dw = 0;
 			cf->dw_l = 0;
+			run_function_onearg(cf->winobj, "eb$uplift", t->jv);
 		}
 
 		change = true;
