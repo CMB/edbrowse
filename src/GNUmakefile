@@ -57,8 +57,8 @@ endif
 $(EBOBJS) : eb.h ebprot.h messages.h
 dbodbc.o dbinfx.o dbops.o : dbapi.h
 
-startwindow.c: startwindow.js
-	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/startwindow.c
+startwindow.c: startwindow.js third.js
+	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/third.js thirdJS src/startwindow.c
 
 ebrc.c: ../lang/ebrc-*
 	cd .. ; ./tools/buildebrcstring.pl

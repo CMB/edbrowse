@@ -217,10 +217,10 @@ find_program(PERL perl)
 if (PERL)
     add_custom_command(
         OUTPUT ${GEN_SOURCES}
-        COMMAND perl -f tools/buildsourcestring.pl src/startwindow.js startWindowJS src/startwindow.c
+        COMMAND perl -f tools/buildsourcestring.pl src/startwindow.js startWindowJS src/third.js thirdJS src/startwindow.c
         COMMAND perl -f tools/buildebrcstring.pl
         COMMAND perl -f tools/buildmsgstrings.pl
-        DEPENDS ${LANG_EBRC_FILES} ${LANG_MSG_FILES} src/startwindow.js
+        DEPENDS ${LANG_EBRC_FILES} ${LANG_MSG_FILES} src/startwindow.js src/third.js
             tools/buildsourcestring.pl
             tools/buildebrcstring.pl
             tools/buildmsgstrings.pl

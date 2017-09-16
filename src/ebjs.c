@@ -690,6 +690,7 @@ void setupJavaDom(void)
 		"german", "russian",
 	};
 	extern const char startWindowJS[];
+	extern const char thirdJS[];
 
 	set_property_object(w, "window", w);
 
@@ -697,6 +698,7 @@ void setupJavaDom(void)
  * These are all the things that do not depend on the platform,
  * OS, configurations, etc. */
 	jsRunScript(w, startWindowJS, "StartWindow", 1);
+	jsRunScript(w, thirdJS, "Third", 1);
 
 	nav = get_property_object(w, "navigator");
 	if (nav == NULL)

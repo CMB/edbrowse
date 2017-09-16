@@ -267,8 +267,14 @@ It is converted into a const string in src/startwindow.c,
 thus src/startwindow.c is not a source file.
 As you write functions to support DOM,
 your first preference is to write them in src/startwindow.js.
-Failing this, write them in C, using the api in src/ebjs.c.
+Failing this, write them in C, using the functions in src/ebjs.c.
 Failing this, and as a last resort, write them as native code in the js engine.
+
+src/third.js:
+Third party open source javascript routines that are useful to edbrowse.
+These are snapshots; you will need to update third.js, i.e. grab a new
+snapshot, as this software evolves.
+It's a bit of overhead, but we're doing it, so distributers don't have to.
 
 lang/ebrc-*:
 Default .ebrc config file that is written to your home directory,
