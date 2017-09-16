@@ -1575,6 +1575,8 @@ bool run_function_bool_nat(jsobjtype parent, const char *name)
 		debugPrint(3, "execution complete");
 		if (duk_is_boolean(jcx, -1))
 			rc = duk_get_boolean(jcx, -1);
+		if (duk_is_number(jcx, -1))
+			rc = (duk_get_number(jcx, -1) != 0);
 		duk_pop(jcx);
 		return rc;
 	}

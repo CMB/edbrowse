@@ -2099,52 +2099,18 @@ static void debrowseSuffix(char *s)
 	}
 }				/* debrowseSuffix */
 
-static char *get_interactive_shell(const char *sh)
-{
-	char *ishell = NULL;
-#ifdef DOSLIKE
-	return cloneString(sh);
-#else
-	if (asprintf(&ishell, "exec %s -i", sh) == -1)
-		i_printfExit(MSG_NoMem);
-	return ishell;
-#endif
-}				/* get_interactive_shell */
-
-static bool shellEscape(const char *line)
+// macro substitutions within the command line.
+// '_ filename, '. current line, '- last line, '+ next line,
+// 'x line labeled x. Replace only if there are no letters around it.
+// isn't will not become isn + the line labeled t.
+static char *apostropheMacros(const char *line)
 {
 	char *newline, *s;
 	const char *t;
 	pst p;
 	char key;
 	int linesize, pass, n;
-	char *sh;
-	char *interactive_shell_cmd = NULL;
 
-#ifdef DOSLIKE
-/* cmd.exe is the windows shell */
-	sh = "cmd";
-#else
-/* preferred shell */
-	sh = getenv("SHELL");
-	if (!sh || !*sh)
-		sh = "/bin/sh";
-#endif
-
-	linesize = strlen(line);
-	if (!linesize) {
-/* interactive shell */
-		if (!isInteractive) {
-			setError(MSG_SessionBackground);
-			return false;
-		}
-		interactive_shell_cmd = get_interactive_shell(sh);
-		eb_system(interactive_shell_cmd, true);
-		nzFree(interactive_shell_cmd);
-		return true;
-	}
-
-/* Make substitutions within the command line. */
 	for (pass = 1; pass <= 2; ++pass) {
 		for (t = line; *t; ++t) {
 			if (*t != '\'')
@@ -2167,16 +2133,16 @@ static bool shellEscape(const char *line)
 				}
 				continue;
 			}
-			/* '_ filename */
+
 			if (key == '.' || key == '-' || key == '+') {
 				n = cw->dot;
 				if (key == '-')
 					--n;
 				if (key == '+')
 					++n;
-				if (n > cw->dol || n == 0) {
+				if (n > cw->dol || n <= 0) {
 					setError(MSG_OutOfRange, key);
-					return false;
+					return NULL;
 				}
 frombuf:
 				++t;
@@ -2188,7 +2154,7 @@ frombuf:
 					if (perl2c((char *)p)) {
 						free(p);
 						setError(MSG_ShellNull);
-						return false;
+						return NULL;
 					}
 					strcpy(s, (char *)p);
 					s += strlen(s);
@@ -2196,16 +2162,16 @@ frombuf:
 				}
 				continue;
 			}
-			/* '. current line */
+
 			if (islowerByte(key)) {
 				n = cw->labels[key - 'a'];
 				if (!n) {
 					setError(MSG_NoLabel, key);
-					return false;
+					return NULL;
 				}
 				goto frombuf;
 			}
-			/* 'x the line labeled x */
+
 addchar:
 			if (pass == 1)
 				++linesize;
@@ -2218,6 +2184,52 @@ addchar:
 		else
 			*s = 0;
 	}			/* two passes */
+
+	return newline;
+}
+
+static char *get_interactive_shell(const char *sh)
+{
+	char *ishell = NULL;
+#ifdef DOSLIKE
+	return cloneString(sh);
+#else
+	if (asprintf(&ishell, "exec %s -i", sh) == -1)
+		i_printfExit(MSG_NoMem);
+	return ishell;
+#endif
+}				/* get_interactive_shell */
+
+static bool shellEscape(const char *line)
+{
+	char *sh, *newline;
+	char *interactive_shell_cmd = NULL;
+
+#ifdef DOSLIKE
+/* cmd.exe is the windows shell */
+	sh = "cmd";
+#else
+/* preferred shell */
+	sh = getenv("SHELL");
+	if (!sh || !*sh)
+		sh = "/bin/sh";
+#endif
+
+	if (!line[0]) {
+/* interactive shell */
+		if (!isInteractive) {
+			setError(MSG_SessionBackground);
+			return false;
+		}
+		interactive_shell_cmd = get_interactive_shell(sh);
+		eb_system(interactive_shell_cmd, true);
+		nzFree(interactive_shell_cmd);
+		return true;
+	}
+
+	newline = apostropheMacros(line);
+	if (!newline)
+		return false;
 
 /* Run the command.  Note that this routine returns success
  * even if the shell command failed.
