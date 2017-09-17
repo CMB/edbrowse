@@ -2874,6 +2874,8 @@ and you have the full power of the editor, including the undo command.
 In browse mode, the jdb (javascript debug) command
 directs subsequent input to the javascript engine, containing the objects associated with the current web page.
 Type document.body.childNodes to see a list of the nodes under the body of the web page.
+If the output is long, you can redirect it into a file by using tab (expression tab file).
+I didn't want to use &gt; since that is a valid javascript operator.
 A predefined ok (object keys) command lists all the members of an object.
 Type period by itself, or qt, to return to edbrowse.
 It is best to enter jdb with debug level 3, so you can see any javascript syntax or reference errors.

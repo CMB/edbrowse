@@ -599,11 +599,26 @@ addchar:
 // in case you changed objects that in turn change the screen.
 			rerender(false);
 		} else {
-			char *result =
-			    jsRunScriptResult(cf->winobj, s, "jdb", 1);
-			if (result)
-				puts(result);
+			char *resfile = NULL;
+			char *result;
+			FILE *f = NULL;
+// tab indicates redirection, since > might be a greater than operator.
+			resfile = strchr(s, '\t');
+			if (resfile)
+				*resfile++ = 0;
+			result = jsRunScriptResult(cf->winobj, s, "jdb", 1);
+			if (resfile)
+				f = fopen(resfile, "w");
+			if (result) {
+				if (f) {
+					fprintf(f, "%s\n", result);
+					printf("%d bytes\n", strlen(result));
+				} else
+					puts(result);
+			}
 			nzFree(result);
+			if (f)
+				fclose(f);
 		}
 		goto top;
 	}
