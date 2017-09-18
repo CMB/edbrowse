@@ -603,9 +603,13 @@ addchar:
 			char *result;
 			FILE *f = NULL;
 // tab indicates redirection, since > might be a greater than operator.
-			resfile = strchr(s, '\t');
-			if (resfile)
-				*resfile++ = 0;
+			resfile = strstr(s, "^>");
+			if (resfile) {
+				*resfile = 0;
+				resfile += 2;
+				while (isspace(*resfile))
+					++resfile;
+			}
 			result = jsRunScriptResult(cf->winobj, s, "jdb", 1);
 			if (resfile)
 				f = fopen(resfile, "w");
