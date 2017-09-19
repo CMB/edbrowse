@@ -49,6 +49,7 @@ static int eff_l;
 #define effectChar(s) stringAndChar(&effects, &eff_l, (s))
 
 static duk_context *context0;
+static jsobjtype context0_obj;
 
 /* wrappers around duktape alloc functions: add our own header */
 struct jsdata_wrap {
@@ -137,6 +138,11 @@ int js_main(void)
 			"Cannot create javascript runtime environment\n");
 		return 4;
 	}
+	duk_push_global_object(context0);
+	duk_push_boolean(context0, false);
+	duk_put_prop_string(context0, -2, "compiled");
+	context0_obj = duk_get_heapptr(context0, -1);
+	duk_pop(context0);
 	return 0;
 }				/* js_main */
 
@@ -1118,9 +1124,8 @@ void createJavaContext_nat(void)
 {
 	duk_push_thread_new_globalenv(context0);
 	jcx = duk_get_context(context0, -1);
-	if (!jcx) {
+	if (!jcx)
 		return;
-	}
 	debugPrint(3, "create js context %d", duk_get_top(context0) - 1);
 // the global object, which will become window,
 // and the document object.
@@ -1184,6 +1189,16 @@ void createJavaContext_nat(void)
 	duk_put_prop_string(jcx, -2, "eb$insbf");
 	duk_push_c_function(jcx, native_removeChild, 1);
 	duk_put_prop_string(jcx, -2, "removeChild");
+	duk_pop(jcx);
+
+// Link to the master context.
+	duk_push_global_object(jcx);
+	duk_push_string(jcx, "eb$master");
+	duk_push_heapptr(jcx, context0_obj);
+	duk_def_prop(jcx, -3,
+		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
+		      DUK_DEFPROP_CLEAR_WRITABLE |
+		      DUK_DEFPROP_CLEAR_CONFIGURABLE));
 	duk_pop(jcx);
 
 // Sequence is to set cf->fileName, then createContext(), so for a short time,

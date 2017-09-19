@@ -20,6 +20,7 @@ using some clever code I found on the internet.
 
 if(typeof window === "undefined") {
 window = (function() { return this; })();
+eb$master = {compiled: false};
 document = new Object;
 // Stubs for native methods that are normally provided by edbrowse.
 // Example: eb$puts, which we can replace with print,
@@ -80,7 +81,9 @@ document.nodeName = "document"; // in case you want to start at the top.
 // Print the first line of text for a text node, and no braces
 // because nothing should be below a text node.
 // You can make this more elaborate and informative if you wish.
-function dumptree(top) {
+if(!eb$master.compiled) {
+
+eb$master.dumptree = function(top) {
 var nn = top.nodeName.toLowerCase();
 var extra = "";
 if(nn === "text" && top.data) {
@@ -110,6 +113,34 @@ dumptree(c);
 }
 alert("}");
 }
+
+// Show the scripts, where they come from, type, length, whether deminimized.
+eb$master.showscripts = function()
+{
+var i, s, m;
+for(i=0; i<document.scripts.length; ++i) {
+s = document.scripts[i];
+m = i + ": ";
+if(s.type) m += s.type;
+else m += "default";
+m += " ";
+if(s.src) {
+var ss = s.src.toString();
+if(ss.match(/^data:/)) ss = "data";
+m += ss;
+} else {
+m += "inline";
+}
+m += " length " + s.data.length;
+if(s.expanded) m += " deminimized";
+alert(m);
+}
+}
+
+}
+
+dumptree = eb$master.dumptree;
+showscripts = eb$master.showscripts;
 
 // This is our bailout function, it references a variable that does not exist.
 function eb$stopexec() { return javascript$interrupt; }
@@ -148,7 +179,8 @@ function alert(s) { eb$puts(s); }
 
 // The web console, one argument, print based on debugLevel.
 // First a helper function, then the console object.
-eb$logtime = function(debug, level, obj) {
+if(!eb$master.compiled) {
+eb$master.eb$logtime = function(debug, level, obj) {
 var today=new Date();
 var h=today.getHours();
 var m=today.getMinutes();
@@ -160,11 +192,15 @@ if(s < 10) s = "0" + s;
 eb$logputs(debug, "console " + level + " [" + h + ":" + m + ":" + s + "] " + obj);
 }
 
-console = new Object;
-console.log = function(obj) { eb$logtime(3, "log", obj); }
-console.info = function(obj) { eb$logtime(3, "info", obj); }
-console.warn = function(obj) { eb$logtime(3, "warn", obj); }
-console.error = function(obj) { eb$logtime(3, "error", obj); }
+eb$master.console = {
+log: function(obj) { eb$logtime(3, "log", obj); },
+info: function(obj) { eb$logtime(3, "info", obj); },
+warn: function(obj) { eb$logtime(3, "warn", obj); },
+error: function(obj) { eb$logtime(3, "error", obj); }
+};
+}
+eb$logtime = eb$master.eb$logtime;
+console = eb$master.console;
 
 eb$nullfunction = function() { return null; }
 eb$voidfunction = function() { }
@@ -1435,27 +1471,5 @@ if(s.data.length / linecount <= 1000) return;
 s.original = s.data;
 s.data = escodegen.generate(esprima.parse(s.data));
 s.expanded = true;
-}
-
-function showscripts()
-{
-var i, s, m;
-for(i=0; i<document.scripts.length; ++i) {
-s = document.scripts[i];
-m = i + ": ";
-if(s.type) m += s.type;
-else m += "default";
-m += " ";
-if(s.src) {
-var ss = s.src.toString();
-if(ss.match(/^data:/)) ss = "data";
-m += ss;
-} else {
-m += "inline";
-}
-m += " length " + s.data.length;
-if(s.expanded) m += " deminimized";
-alert(m);
-}
 }
 

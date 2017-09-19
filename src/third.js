@@ -15828,3 +15828,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   });
   require('/tools/entry-point.js');
 }.call(this, this));
+
+// This should be the last line of this file.
+// It indicates all functions have been compiled.
+eb$master.compiled = true;
