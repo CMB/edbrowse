@@ -2128,7 +2128,7 @@ static char *apostropheMacros(const char *line)
 	const char *t;
 	pst p;
 	char key;
-	int linesize, pass, n;
+	int linesize = 0, pass, n;
 
 	for (pass = 1; pass <= 2; ++pass) {
 		for (t = line; *t; ++t) {
