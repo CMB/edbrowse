@@ -206,7 +206,7 @@ static void scan_http_headers(bool fromCallback)
 	}
 	if (!ht_auth_realm[0] && (v = find_http_header("WWW-Authenticate"))) {
 		char *realm, *end;
-		if ((realm = strcasestr(v, "realm="))) {
+		if ((realm = strstrCI(v, "realm="))) {
 			realm += 6;
 			if (strchr("'\"", realm[0])) {
 				end = strchr(realm + 1, realm[0]);
