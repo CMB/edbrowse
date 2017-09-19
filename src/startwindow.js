@@ -275,56 +275,62 @@ frames = new Array;
 // implementation of getElementsByTagName, getElementsByName, and getElementsByClassName.
 // These are recursive as they descend through the tree of nodes.
 
-document.getElementsByTagName = function(s) { 
+if(!eb$master.compiled) {
+eb$master.getElementsByTagName = function(s) { 
 s = s.toLowerCase();
-return document.eb$gebtn(this, s);
+return eb$master.eb$gebtn(this, s);
 }
-document.eb$gebtn = function(top, s) { 
+eb$master.eb$gebtn = function(top, s) { 
 var a = new Array;
 if(s === '*' || (top.nodeName && top.nodeName.toLowerCase() === s))
 a.push(top);
 if(top.childNodes) {
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
-a = a.concat(document.eb$gebtn(c, s));
+a = a.concat(eb$master.eb$gebtn(c, s));
 }
 }
 return a;
 }
 
-document.getElementsByName = function(s) { 
+eb$master.getElementsByName = function(s) { 
 s = s.toLowerCase();
-return document.eb$gebn(this, s);
+return eb$master.eb$gebn(this, s);
 }
-document.eb$gebn = function(top, s) { 
+eb$master.eb$gebn = function(top, s) { 
 var a = new Array;
 if(s === '*' || (top.name && top.name.toLowerCase() === s))
 a.push(top);
 if(top.childNodes) {
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
-a = a.concat(document.eb$gebn(c, s));
+a = a.concat(eb$master.eb$gebn(c, s));
 }
 }
 return a;
 }
 
-document.getElementsByClassName = function(s) { 
+eb$master.getElementsByClassName = function(s) { 
 s = s.toLowerCase();
-return document.eb$gebcn(this, s);
+return eb$master.eb$gebcn(this, s);
 }
-document.eb$gebcn = function(top, s) { 
+eb$master.eb$gebcn = function(top, s) { 
 var a = new Array;
 if(s === '*' || (top.className && top.className.toLowerCase() === s))
 a.push(top);
 if(top.childNodes) {
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
-a = a.concat(document.eb$gebcn(c, s));
+a = a.concat(eb$master.eb$gebcn(c, s));
 }
 }
 return a;
 }
+} // master compile
+
+document.getElementsByTagName = eb$master.getElementsByTagName;
+document.getElementsByClassName = eb$master.getElementsByClassName;
+document.getElementsByName = eb$master.getElementsByName;
 
 document.idMaster = new Object;
 document.getElementById = function(s) { 
@@ -335,7 +341,7 @@ return document.idMaster[s];
 //but offer the legacy document.all.tags method.
 document.all = new Object;
 document.all.tags = function(s) { 
-return document.eb$gebtn(document.body, s.toLowerCase());
+return eb$master.eb$gebtn(document.body, s.toLowerCase());
 }
 
 /*********************************************************************
@@ -344,15 +350,16 @@ the third using attributes as an array.
 This may be overkill - I don't know.
 *********************************************************************/
 
-document.getAttribute = function(name) { return this[name.toLowerCase()]; }
-document.hasAttribute = function(name) { if (this[name.toLowerCase()]) return true; else return false; }
-document.setAttribute = function(name, v) { 
+if(!eb$master.compiled) {
+eb$master.getAttribute = function(name) { return this[name.toLowerCase()]; }
+eb$master.hasAttribute = function(name) { if (this[name.toLowerCase()]) return true; else return false; }
+eb$master.setAttribute = function(name, v) { 
 var n = name.toLowerCase();
 this[n] = v; 
 this.attributes[n] = v;
 this.attributes.push(n);
 }
-document.removeAttribute = function(name) {
+eb$master.removeAttribute = function(name) {
     var n = name.toLowerCase();
     if (this[n]) delete this[n];
 if(this.attributes[n]) delete this.attributes[n];
@@ -363,6 +370,11 @@ break;
 }
 }
 }
+} // master compile
+document.getAttribute = eb$master.getAttribute;
+document.setAttribute = eb$master.setAttribute;
+document.hasAttribute = eb$master.hasAttribute;
+document.removeAttribute = eb$master.removeAttribute;
 
 /*********************************************************************
 Here comes a bunch of stuff regarding the childNodes array,
@@ -380,17 +392,18 @@ and passses the remove side effect back to edbrowse.
 The same reasoning holds for insertBefore.
 *********************************************************************/
 
-document.appendChild = function(c) {
+if(!eb$master.compiled) {
+eb$master.appendChild = function(c) {
 if(c.parentNode) c.parentNode.removeChild(c);
 return this.eb$apch2(c);
 }
 
-document.insertBefore = function(c, t) {
+eb$master.insertBefore = function(c, t) {
 if(c.parentNode) c.parentNode.removeChild(c);
 return this.eb$insbf(c, t);
 }
 
-function eb$getSibling(obj,direction)
+eb$master.eb$getSibling = function (obj,direction)
 {
 if (typeof obj.parentNode == 'undefined') {
 // need calling node to have parent and it doesn't, error
@@ -405,8 +418,7 @@ if (j == l) {
 // child not found under parent, error
 return null;
 }
-switch(direction)
-{
+switch(direction) {
 case "previous":
 return (j > 0 ? pn.childNodes[j-1] : null);
 break;
@@ -418,6 +430,9 @@ default:
 return null;
 }
 }
+} // master compile
+document.appendChild = eb$master.appendChild;
+document.insertBefore = eb$master.insertBefore;
 
 document.childNodes = new Array;
 // We'll make another childNodes array belowe every node in the tree.
@@ -430,12 +445,13 @@ Object.defineProperty(document, "lastChild", {
 get: function() { return document.childNodes[document.childNodes.length-1]; }
 });
 Object.defineProperty(document, "nextSibling", {
-get: function() { return eb$getSibling(this,"next"); }
+get: function() { return eb$master.eb$getSibling(this,"next"); }
 });
 Object.defineProperty(document, "previousSibling", {
-get: function() { return eb$getSibling(this,"previous"); }
+get: function() { return eb$master.eb$getSibling(this,"previous"); }
 });
-document.replaceChild = function(newc, oldc) {
+if(!eb$master.compiled) {
+eb$master.replaceChild = function(newc, oldc) {
 var lastentry;
 var l = this.childNodes.length;
 var nextinline;
@@ -456,6 +472,8 @@ this.insertBefore(newc, nextinline);
 break;
 }
 }
+} // master compile
+document.replaceChild = eb$master.replaceChild;
 
 // The first DOM class is the easiest: textNode.
 // No weird native methods or side effects.
@@ -1327,8 +1345,8 @@ c.prototype.removeChild = document.removeChild;
 c.prototype.replaceChild = document.replaceChild;
 Object.defineProperty(c.prototype, "firstChild", { get: function() { return this.childNodes[0]; } });
 Object.defineProperty(c.prototype, "lastChild", { get: function() { return this.childNodes[this.childNodes.length-1]; } });
-Object.defineProperty(c.prototype, "nextSibling", { get: function() { return eb$getSibling(this,"next"); } });
-Object.defineProperty(c.prototype, "previousSibling", { get: function() { return eb$getSibling(this,"previous"); } });
+Object.defineProperty(c.prototype, "nextSibling", { get: function() { return eb$master.eb$getSibling(this,"next"); } });
+Object.defineProperty(c.prototype, "previousSibling", { get: function() { return eb$master.eb$getSibling(this,"previous"); } });
 // attributes
 c.prototype.hasAttribute = document.hasAttribute;
 c.prototype.getAttribute = document.getAttribute;
@@ -1398,8 +1416,8 @@ this.elements.removeChild(item);
 Form.prototype.replaceChild = document.replaceChild;
 Object.defineProperty(Form.prototype, "firstChild", { get: function() { return this.childNodes[0]; } });
 Object.defineProperty(Form.prototype, "lastChild", { get: function() { return this.childNodes[this.childNodes.length-1]; } });
-Object.defineProperty(Form.prototype, "nextSibling", { get: function() { return eb$getSibling(this,"next"); } });
-Object.defineProperty(Form.prototype, "previousSibling", { get: function() { return eb$getSibling(this,"previous"); } });
+Object.defineProperty(Form.prototype, "nextSibling", { get: function() { return eb$master.eb$getSibling(this,"next"); } });
+Object.defineProperty(Form.prototype, "previousSibling", { get: function() { return eb$master.eb$getSibling(this,"previous"); } });
 
 Form.prototype.getAttribute = document.getAttribute;
 Form.prototype.setAttribute = document.setAttribute;
@@ -1443,8 +1461,8 @@ Array.prototype.hasChildNodes = document.hasChildNodes;
 Array.prototype.replaceChild = document.replaceChild;
 Object.defineProperty(Array.prototype, "firstChild", { get: function() { return this[0]; } });
 Object.defineProperty(Array.prototype, "lastChild", { get: function() { return this[this.length-1]; } });
-Object.defineProperty(Array.prototype, "nextSibling", { get: function() { return eb$getSibling(this,"next"); } });
-Object.defineProperty(Array.prototype, "previousSibling", { get: function() { return eb$getSibling(this,"previous"); } });
+Object.defineProperty(Array.prototype, "nextSibling", { get: function() { return eb$master.eb$getSibling(this,"next"); } });
+Object.defineProperty(Array.prototype, "previousSibling", { get: function() { return eb$master.eb$getSibling(this,"previous"); } });
 
 Array.prototype.getAttribute = document.getAttribute;
 Array.prototype.setAttribute = document.setAttribute;
