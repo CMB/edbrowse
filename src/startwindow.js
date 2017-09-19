@@ -114,12 +114,19 @@ dumptree(c);
 alert("}");
 }
 
-// Show the scripts, where they come from, type, length, whether deminimized.
+/*********************************************************************
+Show the scripts, where they come from, type, length, whether deminimized.
+Careful! This is compiled once.
+If you refer to document.scripts you are stuck with that set of scripts forever.
+Use this.document.scripts for the scripts in the current window.
+*********************************************************************/
+
 eb$master.showscripts = function()
 {
 var i, s, m;
-for(i=0; i<document.scripts.length; ++i) {
-s = document.scripts[i];
+var slist = this.document.scripts;
+for(i=0; i<slist.length; ++i) {
+s = slist[i];
 m = i + ": ";
 if(s.type) m += s.type;
 else m += "default";

@@ -5,9 +5,12 @@ Keep third party open source javascript routines in a separate file third.js.
 Licenses are included in that file.
 
 Deminimize javascript, so line numbers in error messages
-actually convey useful information. demin command toggles this feature.
-It's just for debugging. Third party software performs this function;
-we fold it into edbrowse in third.js.
+actually convey useful information. The demin command toggles this feature.
+Third party software, in third.js, performs the deminimization.
+
+Compile most js functions once in the master window,
+and reference them from all the other windows.
+This saves time and space.
 
 3.7.1:
 Automatically expand a frame when javascript tries to access its objects.

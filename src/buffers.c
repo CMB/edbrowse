@@ -602,7 +602,7 @@ addchar:
 			char *resfile = NULL;
 			char *result;
 			FILE *f = NULL;
-// tab indicates redirection, since > might be a greater than operator.
+// ^> indicates redirection, since > might be a greater than operator.
 			resfile = strstr(s, "^>");
 			if (resfile) {
 				*resfile = 0;
