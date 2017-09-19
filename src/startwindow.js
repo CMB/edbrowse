@@ -1432,7 +1432,30 @@ if(s.data.substr(i,1) === '\n') ++linecount;
 if(s.data.length / linecount <= 1000) return;
 
 // Ok, run it through the deminimizer.
+s.original = s.data;
 s.data = escodegen.generate(esprima.parse(s.data));
 s.expanded = true;
+}
+
+function showscripts()
+{
+var i, s, m;
+for(i=0; i<document.scripts.length; ++i) {
+s = document.scripts[i];
+m = i + ": ";
+if(s.type) m += s.type;
+else m += "default";
+m += " ";
+if(s.src) {
+var ss = s.src.toString();
+if(ss.match(/^data:/)) ss = "data";
+m += ss;
+} else {
+m += "inline";
+}
+m += " length " + s.data.length;
+if(s.expanded) m += " deminimized";
+alert(m);
+}
 }
 
