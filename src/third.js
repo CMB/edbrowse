@@ -5,6 +5,13 @@ Licenses and links are included here.
 These are snapshots; you will need to update this file, i.e. grab a new
 snapshot, as the software evolves.
 
+Being huge, these functions are compiled once in the master window,
+then referenced from every other window.
+Sometimes I have to change the function definitions to support this.
+Keep this in mind as you do your updates; it's not a simple cut&paste.
+Large blocks of code are inside an if(eb$master.compiled == false) block,
+so it only recompiles the first time; then the links are at the bottom.
+
 The first two projects, from jotform,
 parse css, and apply css attributes to the corresponding objects.
 This is almost pointless in a browser that does not draw the screen, except,
@@ -720,12 +727,9 @@ Snapshot taken on 08/20/2017.  query-selector-standalone-debug.js
 Minimized code is available, but I thought it more confusing than helpful.
 *********************************************************************/
 
-var querySelectorAll = null;
-
 // Can't run this until the dom framework is in place; it creates new div tags etc.
 function eb$qs$start()
 {
-if(querySelectorAll) return false;
 
 /*
 Copyright 2014, query-selector@1.0.6
@@ -3878,8 +3882,6 @@ return _querySelector_;
 
 cssGather();
 cssApply();
-
-return true;
 }
 
 // Gather css tags from the html and apply them to the js objects.
@@ -3997,6 +3999,8 @@ License for Esprima:
           (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
           THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
+
+if(!eb$master.compiled) {
 
 (function webpackUniversalModuleDefinition(root, factory) {
 /* istanbul ignore next */
@@ -15828,6 +15832,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   });
   require('/tools/entry-point.js');
 }.call(this, this));
+
+eb$master.esprima = esprima;
+eb$master.escodegen = escodegen;
+} else { // master compile
+esprima = eb$master.esprima;
+escodegen = eb$master.escodegen;
+}
 
 // This should be the last line of this file.
 // It indicates all functions have been compiled.
