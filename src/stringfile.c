@@ -20,6 +20,7 @@ bool showHiddenFiles, isInteractive;
 int debugLevel = 1;
 FILE *debugFile = NULL;
 char *debugFileName;
+bool demin = false;
 char *downDir, *home;
 
 /*********************************************************************

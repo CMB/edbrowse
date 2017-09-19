@@ -538,6 +538,10 @@ static void prepareScript(struct htmlTag *t)
 // childNode of script, but I don't think it should be.
 	if (t->firstchild)
 		run_function_onearg(t->jv, "removeChild", t->firstchild->jv);
+
+// deminimize the code if we're debugging.
+	if (demin)
+		run_function_onearg(cf->winobj, "eb$demin", t->jv);
 }				/* prepareScript */
 
 /*********************************************************************

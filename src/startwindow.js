@@ -1410,3 +1410,29 @@ Array.prototype.removeAttribute = document.removeAttribute;
 Array.prototype.getAttributeNode = document.getAttributeNode;
 Array.prototype.item = function(x) { return this[x] };
 
+// Deminimize javascript for debugging purposes.
+// Then the line numbers in the error messages actually mean something.
+// This is only called when debugging is on. Users won't invoke this machinery.
+// Argument is the script object.
+// escodegen.generate and esprima.parse are found in third.js.
+function eb$demin(s)
+{
+if(! s instanceof Script) return;
+if(s.demin) return; // already expanded
+s.demin = true;
+s.expanded = false;
+if(! s.data) return;
+if(! s.src) return;
+
+// If the script is original source, then deminimizing it makes things worse.
+// Don't deminimize if average line length is less than 1000.
+var i, linecount = 0;
+for(i=0; i<s.data.length; ++i)
+if(s.data.substr(i,1) === '\n') ++linecount;
+if(s.data.length / linecount <= 1000) return;
+
+// Ok, run it through the deminimizer.
+s.data = escodegen.generate(esprima.parse(s.data));
+s.expanded = true;
+}
+

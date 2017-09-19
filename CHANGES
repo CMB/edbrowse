@@ -4,6 +4,11 @@ Here are some changes introduced by recent versions of edbrowse.
 Keep third party open source javascript routines in a separate file third.js.
 Licenses are included in that file.
 
+Deminimize javascript, so line numbers in error messages
+actually convey useful information. demin command toggles this feature.
+It's just for debugging. Third party software performs this function;
+we fold it into edbrowse in third.js.
+
 3.7.1:
 Automatically expand a frame when javascript tries to access its objects.
 Otherwise it won't expand unti you expand it explicitly.

@@ -436,8 +436,8 @@ SPNEGO curl auth enabled
 could not fetch local CSS, %s\n
 could not fetch CSS from %s, code %ld\n
 could not fetch CSS, %s\n
-0
-0
+don't deminimize javascript
+deminimize javascript
 0
 0
 0

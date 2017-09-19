@@ -3993,6 +3993,13 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "demin")) {
+		demin ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(demin + MSG_DeminOff);
+		return true;
+	}
+
 	if (stringEqual(line, "hf")) {
 		showHiddenFiles ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
