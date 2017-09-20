@@ -1,0 +1,78 @@
+#!/usr/bin/perl -w
+
+# The logic of this program is replicated in buildsourcestring.pl.
+# If you change something here you must also change it there. Sorry.
+# This is a stand alone program to see what is going on.
+# cat ../src/*.js | uncomment > /tmp/unc
+# And then test with
+# duk /tmp/unc
+
+# When startwindow.js and third.js are turned into strings
+# they represent 60% of the edbrowse binary. It's crazy.
+# This program removes the comments, because the comments just don't matter.
+# That cuts 210K off the executable image.
+# Other minimizations might be possible, but I really want to retain
+# the variable names for our error messages.
+# I could zip compress and decompress the rest, maybe, some day.
+# I could lop off another 25K trivially by realizing the  bytes are ascii,
+# except for a few utf8 in a comment that I don't care about.
+
+# This is not a general purpose comment remover;
+# x = "zy/*yz"; will throw this off the tracks.
+# And regular expressions like var re = /abc\/*def/;
+# I assume, and have verified to some extent, that such constructs do not exist
+# in our particular files.
+# If you take new snapshots or add new software to third.js
+# you'll want to reverify this.
+
+# I retain line feeds, so error at line 3456 is really at 3456.
+# Other comment strippers don't do this.
+
+my $in_cmt = 0; # in a block comment
+
+while(<>) {
+
+# In a block comment Look for */
+if($in_cmt) {
+if(s:.*?\*/::) {
+$in_cmt = 0;
+# comment closed, there's probably nothing left on the line, but continue on anyways.
+} else {
+print "\n"; # retain line numbers
+next;
+}
+}
+
+# leading whitespace
+s/^\t* *//;
+
+# dos cr at the end
+s/\r//;
+
+# // at beginning or after semicolon or brace is comment.
+s:^ *//.*::;
+s:([;{}]) *//.*:$1:;
+
+# /* comment */ on one line.
+# Careful, I found "/*" in the file, so I use the look behind construct.
+# /* without a quote or apostrophe before it starts the comment.
+# Also found a regexp with \/* in it, so don't allow prior backslash
+s:(?<![\\"'])/\*.*?\*/(?!["'])::g;
+
+# Start of block comment.
+if(s:(?<![\\"'])/\*.*::) {
+$in_cmt = 1;
+}
+
+# whitespace at the end
+s/ *$//;
+
+# semicolons are optional in js.
+# Remove if at the end of a line or before a brace.
+# This seems like it should work but it doesn't.
+# the semi on line before  (function() {  is needed.
+#s/;$//;
+s/; *}/}/g;
+
+print;
+}

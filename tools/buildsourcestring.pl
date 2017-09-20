@@ -1,9 +1,13 @@
 #!/usr/bin/perl -w
 #  Turn a file into a NUL-terminated char array containing the contents of that file.
 # Windows has a limit of 16380 single-byte characters.
+
 use strict;
 use warnings;
 use English;
+
+my $strip_comments = 1; # set this to strip out comments
+my $in_cmt = 0; # in a block comment
 
 sub prt($) { print shift; }
 
@@ -44,6 +48,32 @@ if ( -f $infile ) {
         chomp $line;
 #  in case \r is not removed on windows
         $line =~ s/\r*$//;
+
+if($strip_comments) {
+# Strip out js comments.
+# These regular expressionsm are replicated in uncomment.
+# If you change something here you must also change it there. Sorry.
+# Comments, which are desperately needed, can be found over there.
+# If unsure, set $strip_comments to 0 and run again.
+if($in_cmt) {
+if($line =~ s:.*?\*/::) {
+$in_cmt = 0;
+} else {
+$line = ""; # retain line numbers
+}
+}
+$line =~ s/^\t* *//;
+$line =~ s:^ *//.*::;
+$line =~ s:([;{}]) *//.*:$1:;
+$line =~ s:(?<![\\"'])/\*.*?\*/(?!["'])::g;
+if($line =~ s:(?<![\\"'])/\*.*::) {
+$in_cmt = 1;
+}
+$line =~ s/ *$//;
+$line =~ s/; *}/}/g;
+}
+
+# switch to hex bytes.
         $line =~ s/(.)/sprintf("0x%02x, ", ord($1))/ge;
 	if (($OSNAME eq "MSWin32") || ($OSNAME eq "MSWin64")) {
 		$line .= " 0x0d, 0x0a,";
@@ -63,6 +93,3 @@ if ( -f $infile ) {
 
 close OUTF;
 exit(0);    
-
-# eof
-
