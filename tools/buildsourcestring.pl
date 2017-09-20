@@ -8,6 +8,7 @@ use English;
 
 my $strip_comments = 1; # set this to strip out comments
 my $in_cmt = 0; # in a block comment
+my $last_semi = 0;
 
 sub prt($) { print shift; }
 
@@ -70,6 +71,9 @@ if($line =~ s:(?<![\\"'])/\*.*::) {
 $in_cmt = 1;
 }
 $line =~ s/ *$//;
+$line =~ s/^([(\[])/;$1/ if $last_semi;
+$last_semi = 0 if length $line;
+$last_semi = 1 if $line =~ s/;$//;
 $line =~ s/; *}/}/g;
 }
 

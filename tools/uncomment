@@ -10,7 +10,7 @@
 # When startwindow.js and third.js are turned into strings
 # they represent 60% of the edbrowse binary. It's crazy.
 # This program removes the comments, because the comments just don't matter.
-# That cuts 210K off the executable image.
+# That cuts 218K off the executable image.
 # Other minimizations might be possible, but I really want to retain
 # the variable names for our error messages.
 # I could zip compress and decompress the rest, maybe, some day.
@@ -29,6 +29,7 @@
 # Other comment strippers don't do this.
 
 my $in_cmt = 0; # in a block comment
+my $last_semi = 0;
 
 while(<>) {
 
@@ -71,7 +72,9 @@ s/ *$//;
 # Remove if at the end of a line or before a brace.
 # This seems like it should work but it doesn't.
 # the semi on line before  (function() {  is needed.
-#s/;$//;
+s/^([(\[])/;$1/ if $last_semi;
+$last_semi = 0 if /./;
+$last_semi = 1 if s/;$//;
 s/; *}/}/g;
 
 print;
