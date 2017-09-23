@@ -1144,6 +1144,9 @@ break;
 case "td":
 c = new Cell();
 break;
+case "canvas":
+c = new Canvas();
+break;
 case "select":
 /* select and radio are special form elements in that they are intrinsically
  * arrays, with all the options as array elements,
@@ -1487,7 +1490,8 @@ Array.prototype.item = function(x) { return this[x] };
 // This is only called when debugging is on. Users won't invoke this machinery.
 // Argument is the script object.
 // escodegen.generate and esprima.parse are found in third.js.
-function eb$demin(s)
+if(!eb$master.compiled) {
+eb$master.eb$demin = function(s)
 {
 if(! s instanceof Script) return;
 if(s.demin) return; // already expanded
@@ -1508,4 +1512,15 @@ s.original = s.data;
 s.data = escodegen.generate(esprima.parse(s.data));
 s.expanded = true;
 }
+} // master compile
+eb$demin = eb$master.eb$demin;
+
+// Canvas method draws a picture. That's meaningless for us,
+// but it still has to be there.
+if(!eb$master.compiled) {
+eb$master.Canvas = function() {
+this.getContext = { beginPath: eb$nullfunction, moveTo: eb$nullfunction, lineTo: eb$nullfunction, stroke:eb$nullfunction};
+}
+} // master compile
+Canvas = eb$master.Canvas;
 
