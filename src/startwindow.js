@@ -1204,7 +1204,8 @@ c.nodeType = 8;
 return c;
 }
 
-Event = function(options){
+if(!eb$master.compiled) {
+eb$master.Event = function(options){
     // event state is kept read-only by forcing
     // a new object for each event.  This may not
     // be appropriate in the long run and we'll
@@ -1233,7 +1234,7 @@ first arg is a string like click, second arg is a js handler,
 Third arg is not used cause I don't understand it.
 *********************************************************************/
 
-function addEventListener(ev, handler, notused)
+eb$master.addEventListener = function(ev, handler, notused)
 {
 var ev_before_changes = ev;
 ev = "on" + ev;
@@ -1257,7 +1258,7 @@ this[evarray].push(handler);
 // here is remove, the opposite of add.
 // what if every handler is removed and there is an empty array?
 // the assumption is that this is not a problem
-function removeEventListener(ev, handler, notused)
+eb$master.removeEventListener = function(ev, handler, notused)
 {
 ev = "on" + ev;
 var evarray = ev + "$$array"; // array of handlers
@@ -1284,7 +1285,7 @@ return;
 }
 
 // For grins let's put in the other standard.
-function attachEvent(ev, handler)
+eb$master. attachEvent = function(ev, handler)
 {
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
@@ -1303,9 +1304,19 @@ eval(
 this[evarray].push(handler);
 }
 
+} // master compile
+
+Event = eb$master.Event;
+addEventListener = eb$master.addEventListener;
+removeEventListener = eb$master.removeEventListener;
+attachEvent = eb$master.attachEvent;
+
 document.addEventListener = window.addEventListener;
-document.attachEvent = window.attachEvent;
 document.removeEventListener = window.removeEventListener;
+document.attachEvent = window.attachEvent;
+
+// Some websites expect an onhashchange handler from the get-go.
+onhashchange = eb$truefunction;
 
 (function() {
 for(var cn in {Body, Form, Element, Anchor}) {
