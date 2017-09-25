@@ -1361,6 +1361,11 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_FRAME:
+// about:blank means a blank frame with no sourcefile.
+		if (stringEqual(t->href, "about:blank")) {
+			nzFree(t->href);
+			t->href = 0;
+		}
 		domLink(t, "Frame", "src", "frames", cf->winobj, 0);
 		set_onhandlers(t);
 		set_property_number(t->jv, "nodeType", 1);

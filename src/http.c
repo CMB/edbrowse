@@ -2534,6 +2534,9 @@ int frameExpandLine(int ln, jsobjtype fo)
 // into a separate window, a separate js space, with an empty body.
 		if (!fo)
 			return 2;
+// After expansion we need to be able to expand it,
+// because there's something there, well maybe.
+		t->href = cloneString("#");
 	}
 
 	save_cf = cf = t->f0;

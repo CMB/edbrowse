@@ -152,6 +152,14 @@ showscripts = eb$master.showscripts;
 // This is our bailout function, it references a variable that does not exist.
 function eb$stopexec() { return javascript$interrupt; }
 
+eb$nullfunction = function() { return null; }
+eb$voidfunction = function() { }
+eb$truefunction = function() { return true; }
+eb$falsefunction = function() { return false; }
+
+focus = blur = scroll = eb$voidfunction;
+document.focus = document.blur = document.open = document.close = eb$voidfunction;
+
 /* Some visual attributes of the window.
  * These are just guesses.
  * Better to have something than nothing at all. */
@@ -171,7 +179,41 @@ name = "unspecifiedFrame";
 document.bgcolor = "white";
 document.readyState = "loading";
 document.nodeType = 9;
-document.implementation = {};
+
+// Can't put implementation object into master
+// until createElement and all of our classes are in master.
+document.implementation = {
+/*********************************************************************
+This is my tentative implementation of hasFeature:
+hasFeature: function(mod, v) {
+// tidy claims html5 so we'll run with that
+var supported = { "html": "5", "Core": "?", "XML": "?"};
+if(!supported[mod]) return false;
+if(v == undefined) return true; // no version specified
+return (v <= supported[mod]);
+},
+But this page says we're moving to a world where this function is always true,
+https://developer.mozilla.org/en-US/docs/Web/API/Document/implementation
+so I don't know what the point is.
+*********************************************************************/
+hasFeature: eb$truefunction,
+createDocumentType: function(tag, pubid, sysid) {
+// I really don't know what this function is suppose to do.
+var tagstrip = tag.replace(/:.*/, "");
+return document.createElement(tagstrip);
+},
+// https://developer.mozilla.org/en-US/docs/Web/API/DOMImplementation/createHTMLDocument
+createHTMLDocument: function(t) {
+if(t == undefined) t = "Empty"; // the title
+// put it in a paragraph, just cause we have to put it somewhere.
+var p = document.createElement("p");
+p.innerHTML = "<iframe></iframe>";
+var d = p.firstChild; // this is the created document
+// This reference will expand the document via the setter.
+d.contentDocument.title = t;
+return d.contentDocument;
+}
+};
 
 screen = new Object;
 screen.height = 768;
@@ -208,14 +250,6 @@ error: function(obj) { eb$logtime(3, "error", obj); }
 }
 eb$logtime = eb$master.eb$logtime;
 console = eb$master.console;
-
-eb$nullfunction = function() { return null; }
-eb$voidfunction = function() { }
-eb$truefunction = function() { return true; }
-eb$falsefunction = function() { return false; }
-
-focus = blur = scroll = eb$voidfunction;
-document.focus = document.blur = document.open = document.close = eb$voidfunction;
 
 Object.defineProperty(document, "cookie", {
 get: eb$getcook, set: eb$setcook});
@@ -1104,6 +1138,16 @@ nodeToReturn[url] = new URL(u.href);
 return nodeToReturn;
 }
 
+/*********************************************************************
+importNode seems to be the same as cloneNode, except it is copying a tree
+of objects from another context into the current context.
+But this is how duktape works by default.
+foo.s = cloneNode(bar.s);
+If bar is in another context that's ok, we read those objects and create
+copies of them in the current context.
+*********************************************************************/
+document.importNode = function(src, deep) { return src.cloneNode(deep); }
+
 document.createElement = function(s) { 
 var c;
 var t = s.toLowerCase();
@@ -1369,6 +1413,7 @@ c.prototype.removeAttribute = document.removeAttribute;
 c.prototype.getAttributeNode = document.getAttributeNode;
 // clone
 c.prototype.cloneNode = document.cloneNode;
+c.prototype.importNode = document.importNode;
 // visual
 c.prototype.focus = focus;
 c.prototype.blur = blur;
@@ -1440,6 +1485,7 @@ Form.prototype.removeAttribute = document.removeAttribute;
 Form.prototype.getAttributeNode = document.getAttributeNode;
 
 Form.prototype.cloneNode = document.cloneNode;
+Form.prototype.importNode = document.importNode;
 
 /* The select element in a form is itself an array, so the children functions have
  * to be on array prototype, except appendchild is to have no side effects,
