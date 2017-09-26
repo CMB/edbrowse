@@ -505,7 +505,7 @@ download via SCP:
 .ebrc: linha %d, keycol tem que ser número ou número,número
 .ebrc: linha %d, keycol fora do intervalo; especificadas somente %d colunas
 .ebrc: o catálogo de endereços %s não é um arquivo regular
-0
+javascript erro de sintaxe
 .ebrc: %s não é um diretório
 .ebrc: linha %d, agentes do usuário em excesso; o limite é 9
 .ebrc: cookie jar %s não é um arquivo regular

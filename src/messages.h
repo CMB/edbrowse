@@ -605,7 +605,7 @@ enum {
 	MSG_EBRC_KeyNotNb,
 	MSG_EBRC_KeyOutRange,
 	MSG_EBRC_AbNotFile,
-	MSG_notused508,
+	MSG_CompileError,
 	MSG_EBRC_NotDir,
 	MSG_EBRC_ManyAgents,
 	MSG_EBRC_JarNotFile,

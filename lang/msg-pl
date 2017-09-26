@@ -505,7 +505,7 @@ nie podano pliku z certyfikatem SSL; bezpieczne połączenie nie może zostać z
 .ebrc: wiersz %d, klucz powinien być postaci 'liczba' lub 'liczba,liczba'
 .ebrc: wiersz %d, klucz poza zasięgiem; podano tylko %d kolumn
 .ebrc: książka adresowa %s nie jest regularnym plikiem
-0
+javascript błąd składniowy
 .ebrc: %s nie jest katalogiem
 .ebrc: wiersz %d, zbyt wiele agentów użytkownika, limit 9
 .ebrc: plik ciastek %s nie jest regularnym plikiem

@@ -505,7 +505,7 @@ Caractères nuls à la ligne %d
 .ebrc : ligne %d, la colonne index ne peut être que numérique
 .ebrc : colonne index hors limites; seules %d colonnes ont été spécifiées
 .ebrc : le carnet d'adresses %s n'est pas un fichier régulier
-0
+javascript erreur de syntaxe
 .ebrc : %s n'est pas un répertoire
 .ebrc : ligne %d, trop d'agents utilisateurs, la limite est de 9
 .ebrc : le récipient de cookies n'est pas un fichier régulier

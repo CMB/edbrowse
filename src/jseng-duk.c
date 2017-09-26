@@ -36,6 +36,17 @@ Exit codes are as follows:
 
 static void processError(void);
 
+static duk_ret_t native_error_stub_0(duk_context * cx)
+{
+	return 0;
+}
+
+static duk_ret_t native_error_stub_1(duk_context * cx)
+{
+	i_puts(MSG_CompileError);
+	return 0;
+}
+
 jsobjtype jcx;			// the javascript context
 jsobjtype winobj;		// window object
 jsobjtype docobj;		// document object
@@ -554,7 +565,10 @@ static void set_timeout(duk_context * cx, bool isInterval)
 		}
 // compile the string under the filename timer
 		duk_push_string(cx, "timer");
-		duk_pcompile(cx, 0);
+		if (duk_pcompile(cx, 0)) {
+			processError();
+			duk_push_c_function(cx, native_error_stub_0, 0);
+		}
 // Now looks like a function object, just like the previous case.
 		duk_push_string(cx, body);
 		duk_put_prop_string(cx, -2, "body");
@@ -1505,7 +1519,10 @@ int set_property_function_nat(jsobjtype parent, const char *name,
 	}
 	duk_push_string(jcx, body);
 	duk_push_string(jcx, name);
-	duk_pcompile(jcx, 0);
+	if (duk_pcompile(jcx, 0)) {
+		processError();
+		duk_push_c_function(jcx, native_error_stub_1, 0);
+	}
 	duk_push_string(jcx, body);
 	duk_put_prop_string(jcx, -2, "body");
 	duk_push_heapptr(jcx, parent);

@@ -505,7 +505,7 @@ scp download:
 .ebrc: line %d, keycol should be number or number,number
 .ebrc: line %d, keycol is out of range; only %d columns specified
 .ebrc: address book %s is not a regular file
-0
+javascript syntax error
 .ebrc: %s is not a directory
 .ebrc: line %d, too many user agents, limit 9
 .ebrc: cookie jar %s is not a regular file

@@ -297,7 +297,7 @@ you shouldn't see this stuff
 
 <form method=POST name=questionnaire
 action=http://localhost:1500/origact
-onsubmit='return submitFunction(questionnaire)'
+onsubmit='return submitFunction(this)'
 onreset='return resetFunction()'
 onload=formLoad(this.name) onunload=formUnload(this.name)>
 

@@ -505,7 +505,7 @@ SCP download:
 .ebrc: Zeile %d, keycol sollte Zahl oder Zahl,zahl enthalten
 .ebrc: Zeile %d, keycol außerhalb des Bereichs, lediglich %d Spalten definiert
 .ebrc: Adressbuch %s ist keine reguläre Datei
-0
+javascript Syntaxfehler
 .ebrc: %s ist kein Verzeichnis
 .ebrc: Zeile %d, zu viele User-Agents, maximal 9
 .ebrc: Cookie-Datei ist keine reguläre Datei
