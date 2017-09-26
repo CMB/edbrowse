@@ -391,6 +391,7 @@ static void forceFrameExpand(duk_context * cx, jsobjtype thisobj)
 // Have to save all the global variables, because other js scrips will be
 // running in another context.
 // Having all these global variables isn't great programming.
+	struct ebFrame *save_cf = cf;
 	jsobjtype save_jcx = jcx;
 	jsobjtype save_winobj = winobj;
 	jsobjtype save_docobj = docobj;
@@ -403,6 +404,7 @@ static void forceFrameExpand(duk_context * cx, jsobjtype thisobj)
 	whichproc = 'e';
 	frameExpandLine(0, thisobj);
 	whichproc = 'j';
+	cf = save_cf;
 	jcx = save_jcx;
 	winobj = save_winobj;
 	docobj = save_docobj;

@@ -59,6 +59,8 @@ It handles any side effects that occur from running js.
 innerHTML tags generated, form input values set, timers,
 form.reset(), form.submit(), document.location = url, etc.
 Every js activity should start with jSyncup() and end with jSideEffects().
+WARNING: this routine mucks with cf, so you need to set it afterwards,
+the button being pushed or the onclick code or whatever frame is appropriate.
 *********************************************************************/
 
 void jSideEffects(void)
@@ -550,6 +552,9 @@ This includes document.write, linkages, perhaps even form.submit.
 Things stop however if we detect document.location = new_url,
 i.e. a page replacement, as indicated by the newlocation variable being set.
 The old page doesn't matter any more.
+I run the scripts linked to the current frame.
+That way the scripts in a subframe will run, then return, then the scripts
+in the parent frame pick up where they left off.
 *********************************************************************/
 
 void runScriptsPending(void)
@@ -583,6 +588,8 @@ top:
 		if (t->action != TAGACT_SCRIPT)
 			continue;
 		if (t->step >= 3)
+			continue;
+		if (t->f0 != cf)
 			continue;
 		t->step = 3;	/* now running the script */
 		if (!t->jv)
