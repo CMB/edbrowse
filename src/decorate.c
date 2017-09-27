@@ -1000,35 +1000,34 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 /* not an array; needs the childNodes array beneath it for the children */
 			instantiate_array(io, "childNodes");
 
-/* deal with the 'styles' here */
-/* object will get 'style' regardless of whether there is
+/* in the special case of form, also need an array of elements */
+			if (t->action == TAGACT_FORM)
+				instantiate_array(io, "elements");
+		}
+
+/* deal with the 'styles' here.
+object will get 'style' regardless of whether there is
 anything to put under it, just like it gets childNodes whether
 or not there are any.  After that, there is a conditional step.
 If this node contains style='' of one or more name-value pairs,
 call out to process those and add them to the object.
 Don't do any of this if the tag is itself <style>. */
-			if (t->action != TAGACT_STYLE) {
-				so = instantiate(io, "style",
-						 "CSSStyleDeclaration");
-				set_property_object(so, "element", io);
+		if (t->action != TAGACT_STYLE) {
+			so = instantiate(io, "style", "CSSStyleDeclaration");
+			set_property_object(so, "element", io);
 /* now if there are any style pairs to unpack,
  processStyles can rely on obj.style existing */
-				if (stylestring)
-					processStyles(so, stylestring);
-			}
+			if (stylestring)
+				processStyles(so, stylestring);
+		}
 
 /* Other attributes that are expected by pages, even if they
  * aren't populated at domLink-time */
-			set_property_string(io, "className", "");
-			set_property_string(io, "class", "");
-			set_property_string(io, "nodeValue", "");
-			instantiate_array(io, "attributes");
-			set_property_object(io, "ownerDocument", cf->docobj);
-
-/* in the special case of form, also need an array of elements */
-			if (t->action == TAGACT_FORM)
-				instantiate_array(io, "elements");
-		}
+		set_property_string(io, "className", "");
+		set_property_string(io, "class", "");
+		set_property_string(io, "nodeValue", "");
+		instantiate_array(io, "attributes");
+		set_property_object(io, "ownerDocument", cf->docobj);
 
 		if (membername == symname) {
 /* link to document.all */

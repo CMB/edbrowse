@@ -1201,9 +1201,9 @@ c.nodeName = t;
 c.tagName = t;
 c.options = c;
 c.childNodes = c;
+c.style = new CSSStyleDeclaration;
 c.selectedIndex = -1;
 c.value = "";
-// no style, and childNodes already self-linked, so just return.
 eb$logElement(c, t);
 return c;
 case "option":
@@ -1569,4 +1569,7 @@ this.getContext = { beginPath: eb$nullfunction, moveTo: eb$nullfunction, lineTo:
 }
 } // master compile
 Canvas = eb$master.Canvas;
+
+// This isn't efficient, but it doesn't come up very often.
+document.querySelector = function(x) { return querySelectorAll(x)[0] }
 

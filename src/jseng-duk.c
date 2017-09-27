@@ -1593,6 +1593,9 @@ static void processError(void)
 // No arguments; returns abool.
 bool run_function_bool_nat(jsobjtype parent, const char *name)
 {
+	int dbl = 3;		// debug level
+	if (stringEqual(name, "ontimer"))
+		dbl = 4;
 	duk_push_heapptr(jcx, parent);
 	if (!duk_get_prop_string(jcx, -1, name) || !duk_is_function(jcx, -1)) {
 #if 0
@@ -1603,10 +1606,10 @@ bool run_function_bool_nat(jsobjtype parent, const char *name)
 		return false;
 	}
 	duk_insert(jcx, -2);
-	debugPrint(3, "execute %s", name);
+	debugPrint(dbl, "execute %s", name);
 	if (!duk_pcall_method(jcx, 0)) {
 		bool rc = false;
-		debugPrint(3, "execution complete");
+		debugPrint(dbl, "execution complete");
 		if (duk_is_boolean(jcx, -1))
 			rc = duk_get_boolean(jcx, -1);
 		if (duk_is_number(jcx, -1))
