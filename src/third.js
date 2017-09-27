@@ -3943,6 +3943,11 @@ for(j=0; j<a.length; ++j) {
 t = a[j];
 // If an element is specified then we only key on that.
 if(e && e != t) continue;
+// style object should be there, but just in case...
+if(!destination && !t.style) {
+console.warn((t.nodeName ? t.nodeName : "?") + " object is missing style");
+t.style = new CSSStyleDeclaration;
+}
 for(k=0; k<d.rules.length; ++k) {
 var propname = d.rules[k].directive;
 var propval = d.rules[k].value;

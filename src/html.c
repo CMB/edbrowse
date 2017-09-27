@@ -2271,7 +2271,7 @@ We need to fix this someday, though it is a very rare low runner case.
 /* Oops, jSyncup could have changed the frame. */
 		cf = jt->frame;
 		jt->running = true;
-		run_function_bool(jt->timerObject, "onclick");
+		run_function_bool(jt->timerObject, "ontimer");
 		jt->running = false;
 
 		if (!jt->isInterval || jt->deleted) {

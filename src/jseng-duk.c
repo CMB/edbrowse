@@ -598,11 +598,11 @@ static void set_timeout(duk_context * cx, bool isInterval)
 		      DUK_DEFPROP_SET_CONFIGURABLE));
 	duk_pop(cx);		// don't need global any more
 
-// function is onclickable
+// function is contained in an ontimer handler
 	duk_push_heapptr(cx, to);
 	duk_insert(cx, 0);	// switch places
 // now stack is timer_object function
-	duk_push_string(cx, "onclick");
+	duk_push_string(cx, "ontimer");
 	duk_insert(cx, 1);
 	duk_def_prop(cx, 0,
 		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_CLEAR_ENUMERABLE |
