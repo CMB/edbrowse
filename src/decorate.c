@@ -759,9 +759,7 @@ jsobjtype instantiate_url(jsobjtype parent, const char *name, const char *url)
 static void handlerSet(jsobjtype ev, const char *name, const char *code)
 {
 	char *newcode = allocMem(strlen(code) + 60);
-	char *s, *t;
-
-	strcpy(newcode, "(function(t$is){");
+	strcpy(newcode, "(function(){");
 
 /*********************************************************************
 I read somewhere, long ago, that handlers are suppose to run in the context of
@@ -776,24 +774,10 @@ So I tried wrapping the code in
 (function() { code })();
 Then it doesn't matter if the code is just expression, or return expression.
 But should the with clauses be inside or outside the function?
-One way wouldn't parse, and the other way lost the this binding,
+Also, the this binding was lost,
 which is absolutely necessary.
-I was left with the kludge of removing the leading return,
-so return expression became expression, and that compiles, and runs,
-and leaves a value on the stack, which duktape treats as the return value.
-That was fine, but then freecarrierlookup.com
-has onclick="expression; return false;"
-I'm sure if we look around we'll find more complicated expressions
-if(conditional) return x; else return y;
-So deleting a leading return doesn't work.
-I really need the anonymous function. What to do?
-Well this is more awkward than I wanted, but might work.
-Go through the code and replace each instance of this with t$is,
-but only the stand alone word this, not xthis or this_z etc,
-and perhaps not this in quotes as in alert("this is it");
-Then wrap the code in
-(function(t$is){ code })(this);
-Now wherever it happens to return it returns, and I don't lose the this binding.
+Sami taught me how to get the binding back, via the .bind method,
+which is pretty dog gone cool.
 But what about the with clauses?
 Well so far I haven't found an example that needs with(document) around it,
 so I'm not going to worry about that right now.
@@ -806,37 +790,13 @@ so I'm not going to worry about that right now.
 
 	strcat(newcode, code);
 
-	for (s = newcode; *s; ++s) {
-		char c = *s;
-// skip past quoted string
-		if (c == '"' || c == '\'') {
-			for (t = s + 1; *t; ++t) {
-				if (*t == c)
-					break;
-				if (*t == '\\' && t[1])
-					++t;
-			}
-			if (*t)
-				s = t;
-			continue;
-		}
-		if (strncmp(s, "this", 4))
-			continue;
-		if (isalnum(s[4]) || s[4] == '_' || s[4] == '$')
-			continue;
-		if (isalnum(s[-1]) || s[-1] == '_' || s[-1] == '$')
-			continue;
-		s[1] = '$';
-	}
-
 /*********************************************************************
 	if (hasform)
 		strcat(newcode, " }");
 	strcat(newcode, " }");
 *********************************************************************/
 
-	strcat(newcode, " })(this)");
-
+	strcat(newcode, " }.bind(this))()");
 	set_property_function(ev, name, newcode);
 	nzFree(newcode);
 }				/* handlerSet */
