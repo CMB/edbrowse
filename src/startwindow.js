@@ -1561,14 +1561,34 @@ s.expanded = true;
 } // master compile
 eb$demin = eb$master.eb$demin;
 
+if(!eb$master.compiled) {
 // Canvas method draws a picture. That's meaningless for us,
 // but it still has to be there.
-if(!eb$master.compiled) {
 eb$master.Canvas = function() {
 this.getContext = { beginPath: eb$nullfunction, moveTo: eb$nullfunction, lineTo: eb$nullfunction, stroke:eb$nullfunction};
 }
+
+/*********************************************************************
+AudioContext, for playing music etc.
+This one we could implement, but I'm not sure if we should.
+If speech comes out of the same speakers as music, as it often does,
+you might not want to hear it, you might rather see the url, or have a button
+to push, and then you call up the music only if / when you want it.
+Not sure what to do, so it's pretty much stubs for now.
+*********************************************************************/
+eb$master.AudioContext = function() {
+this.outputLatency = 1.0;
+this.createMediaElementSource = eb$voidfunction;
+this.createMediaStreamSource = eb$voidfunction;
+this.createMediaStreamDestination = eb$voidfunction;
+this.createMediaStreamTrackSource = eb$voidfunction;
+this.suspend = eb$voidfunction;
+this.close = eb$voidfunction;
+}
 } // master compile
+
 Canvas = eb$master.Canvas;
+AudioContext = eb$master.AudioContext;
 
 // This isn't efficient, but it doesn't come up very often.
 document.querySelector = function(x) { return querySelectorAll(x)[0] }
