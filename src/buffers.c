@@ -616,7 +616,7 @@ addchar:
 			if (result) {
 				if (f) {
 					fprintf(f, "%s\n", result);
-					printf("%d bytes\n", strlen(result));
+					printf("%zu bytes\n", strlen(result));
 				} else
 					puts(result);
 			}
