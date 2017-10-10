@@ -1279,12 +1279,17 @@ Or maybe URL.prototype.addEventListener = addEventListener
 to cover all the instantiated objects in one go.
 first arg is a string like click, second arg is a js handler,
 Third arg is not used cause I don't understand it.
+It calls a lower level function to do the work, which is also called by
+attachEvent, as these are almost exactly the same functions.
 *********************************************************************/
 
-eb$master.addEventListener = function(ev, handler, notused)
+eb$master.addEventListener = function(ev, handler, notused) { this.eb$listen(ev,handler, true); }
+eb$master.attachEvent = function(ev, handler) { this.eb$listen(ev,handler, false); }
+
+eb$master.eb$listen = function(ev, handler, addon)
 {
 var ev_before_changes = ev;
-ev = "on" + ev;
+if(addon) ev = "on" + ev;
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
 if(!this[evarray]) {
@@ -1297,7 +1302,7 @@ this[ev] = undefined;
 }
 this[evarray] = a;
 eval(
-'this.' + ev + ' = function(){ var a = this.' + evarray + '; if(this.' + evorig + ') this.' + evorig + '(); for(var i = 0; i<a.length; ++i) {var tempEvent = new Event;tempEvent.type = "' + ev_before_changes + '";a[i](tempEvent);} };');
+'this["' + ev + '"] = function(){ var a = this["' + evarray + '"]; if(this["' + evorig + '"]) this["' + evorig + '"](); for(var i = 0; i<a.length; ++i) {var tempEvent = new Event;tempEvent.type = "' + ev_before_changes + '";a[i](tempEvent);} };');
 }
 this[evarray].push(handler);
 }
@@ -1331,33 +1336,15 @@ return;
 }
 }
 
-// For grins let's put in the other standard.
-eb$master. attachEvent = function(ev, handler)
-{
-var evarray = ev + "$$array"; // array of handlers
-var evorig = ev + "$$orig"; // original handler from html
-if(!this[evarray]) {
-/* attaching the first handler */
-var a = new Array;
-/* was there already a function from before? */
-if(this[ev]) {
-this[evorig] = this[ev];
-this[ev] = undefined;
-}
-this[evarray] = a;
-eval(
-'this.' + ev + ' = function(){ var a = this.' + evarray + '; if(this.' + evorig + ') this.' + evorig + '(); for(var i = 0; i<a.length; ++i) {var tempEvent = new Event;tempEvent.type = "' + ev + '";a[i](tempEvent);} };');
-}
-this[evarray].push(handler);
-}
-
 } // master compile
 
 Event = eb$master.Event;
+eb$listen = eb$master.eb$listen;
 addEventListener = eb$master.addEventListener;
 removeEventListener = eb$master.removeEventListener;
 attachEvent = eb$master.attachEvent;
 
+document.eb$listen = window.eb$listen;
 document.addEventListener = window.addEventListener;
 document.removeEventListener = window.removeEventListener;
 document.attachEvent = window.attachEvent;
@@ -1369,6 +1356,7 @@ onhashchange = eb$truefunction;
 for(var cn in {Body, Form, Element, Anchor}) {
 var c = window[cn];
 // c is class and cn is classname.
+c.prototype.eb$listen = window.eb$listen;
 c.prototype.addEventListener = window.addEventListener;
 c.prototype.removeEventListener = window.removeEventListener;
 c.prototype.attachEvent = window.attachEvent;
@@ -1565,7 +1553,7 @@ if(!eb$master.compiled) {
 // Canvas method draws a picture. That's meaningless for us,
 // but it still has to be there.
 eb$master.Canvas = function() {
-this.getContext = { beginPath: eb$nullfunction, moveTo: eb$nullfunction, lineTo: eb$nullfunction, stroke:eb$nullfunction};
+this.getContext = function(x) { return { beginPath: eb$nullfunction, moveTo: eb$nullfunction, lineTo: eb$nullfunction, stroke:eb$nullfunction}};
 }
 
 /*********************************************************************
