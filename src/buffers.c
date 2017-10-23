@@ -5157,7 +5157,7 @@ switchsession:
 					i_puts(MSG_NJGoing);
 				jsgo = jsh = false;
 			}
-/* because I am setting allocatedLine to h, I don't have to free it */
+// because I am setting allocatedLine to h, it will get freed on the next go round.
 			line = allocatedLine = h;
 			first = *line;
 			setError(-1);
@@ -5318,56 +5318,40 @@ switchsession:
 									     1,
 									     n);
 						plen = pstLength((pst) p);
-						if (plen > sizeof(newline))
-							plen = sizeof(newline);
-						memcpy(newline, p, plen);
+						allocatedLine =
+						    allocMem(plen + 1);
+						memcpy(allocatedLine, p, plen);
+						allocatedLine[plen] = 0;
 						n = plen;
 						nzFree(p);
 					} else {
-						int fd;
-						fromfile = true;
 						if (!envFile(line, &line))
 							return false;
-						fd = open(line,
-							  O_RDONLY | O_TEXT);
-						if (fd < 0) {
-							setError(MSG_NoOpen,
-								 line);
+						if (!fileIntoMemory
+						    (line, &allocatedLine, &n))
 							return false;
-						}
-						n = read(fd, newline,
-							 sizeof(newline));
-						close(fd);
-						if (n < 0) {
-							setError(MSG_NoRead,
-								 line);
-							return false;
-						}
+						fromfile = true;
 					}
 					for (j = 0; j < n; ++j) {
-						if (newline[j] == 0) {
+						if (allocatedLine[j] == 0) {
 							setError(MSG_InputNull,
 								 line);
 							return false;
 						}
-						if (newline[j] == '\r'
+						if (allocatedLine[j] == '\r'
 						    && !fromfile && j < n - 1
-						    && newline[j + 1] != '\n') {
+						    && allocatedLine[j + 1] !=
+						    '\n') {
 							setError(MSG_InputCR);
 							return false;
 						}
-						if (newline[j] == '\r'
-						    || newline[j] == '\n')
+						if (allocatedLine[j] == '\r'
+						    || allocatedLine[j] == '\n')
 							break;
 					}
-					if (j == sizeof(newline)) {
-						setError(MSG_FirstLineLong,
-							 line);
-						return false;
-					}
-					newline[j] = 0;
-					prepareForField(newline);
-					line = newline;
+					allocatedLine[j] = 0;
+					prepareForField(allocatedLine);
+					line = allocatedLine;
 					scmd = '=';
 				}
 
