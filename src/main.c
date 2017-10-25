@@ -687,6 +687,11 @@ int main(int argc, char **argv)
 		cxSwitch(cx, false);
 		if (cx == 1)
 			runEbFunction("init");
+		if (file[0] == '<') {
+			runEbFunction(file+1);
+			++argv, --argc;
+			continue;
+		}
 		changeFileName = 0;
 		cf->fileName = cloneString(file);
 		cf->firstURL = cloneString(file);
