@@ -546,7 +546,7 @@ katalog domowy nie jest zdefiniowany w zmiennej $HOME
 %s nie jest katalogiem
 nie podano kont pocztowych, sprawdź swój plik konfiguracyjny .ebrc
 nieprawidłowy numer konta, użyj numeru od 1 do %d
-edbrowse  -v    (pokaż wersję)\nedbrowse -h (ta wiadomość)\nedbrowse -c (edytuj plik konfiguracyjny)\nedbrowse [-e] [-d#] -f[#] (pobierz pocztę) \nedbrowse  [-e] [-d#] -[p]m    (czytaj nieprzeczytane wiadomości)\nedbrowse  [-e] [-d#] -[p]fm[#]    (pobierz pocztę i czytaj nieprzeczytane wiadomości)\nedbrowse  [-e] [-d#] -m[#] adres1 adres2 ... plik [+załączniki]\nedbrowse  [-e] [-d#] plik1 plik2 ...
+edbrowse  -v    (pokaż wersję)\nedbrowse -h (ta wiadomość)\nedbrowse -c (edytuj plik konfiguracyjny)\nedbrowse [-d#] -f[#] (pobierz pocztę) \nedbrowse  [-d#] -[p]m    (czytaj nieprzeczytane wiadomości)\nedbrowse  [-d#] -[p]fm[#]    (pobierz pocztę i czytaj nieprzeczytane wiadomości)\nedbrowse  [-d#] -m[#] adres1 adres2 ... plik [+załączniki]\nedbrowse  [-e] [-d#] plik1 plik2 ...
 podaj co najmniej jednego odbiorcę i plik do wysłania
 podaj co najmniej jednego odbiorcę i plik do wysłania, przed załącznikami
 zbyt wiele plików otwartych jednocześnie, limit %d

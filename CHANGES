@@ -12,6 +12,8 @@ Compile most js functions once in the master window,
 and reference them from all the other windows.
 This saves time and space.
 
+If an argument is <func then edbrowse runs that function, rather than reading in a file or url.
+
 3.7.1:
 Automatically expand a frame when javascript tries to access its objects.
 Otherwise it won't expand unti you expand it explicitly.

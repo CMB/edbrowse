@@ -546,7 +546,7 @@ persönlicher Ordner nicht mit $HOME definiert
 %s ist kein Verzeichnis
 keine Emailkonten angegeben, prüfen Sie .ebrc-Konfigurationsdatei
 ungültige Kontonummer, nutzen Sie 1-%d
-edbrowse -v (zeige Version)\nedbrowse -h (diese nachricht)\nedbrowse -c (editiere Konfigurationsdatei)\nedbrowse [-e] [-d#] -f[#] (rufe Emails ab) \nedbrowse [-e] [-d#] -[p]m (lies ungelesene Nachrichten)\nedbrowse [-e] [-d#] -[p]fm[#] (rufe Emails ab und lies ungelesene Nachrichten)\nedbrowse [-e] [-d#] -m[#] Adresse1 Adresse2 ... Datei [+Anhang]\nedbrowse [-e] [-d#] Datei1 Datei2 ...
+edbrowse -v (zeige Version)\nedbrowse -h (diese nachricht)\nedbrowse -c (editiere Konfigurationsdatei)\nedbrowse [-d#] -f[#] (rufe Emails ab) \nedbrowse [-d#] -[p]m (lies ungelesene Nachrichten)\nedbrowse [-d#] -[p]fm[#] (rufe Emails ab und lies ungelesene Nachrichten)\nedbrowse [-d#] -m[#] Adresse1 Adresse2 ... Datei [+Anhang]\nedbrowse [-e] [-d#] Datei1 Datei2 ...
 bitte mindestens einen Empfänger und den zu versenden Anhang angeben
 bitte geben Sie mind. einen Empfänger und die zu sendende Datei an bevor Sie Dateien anhängen
 zu viele Dateien gleichzeitig offen, maximal %d

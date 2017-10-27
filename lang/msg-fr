@@ -546,7 +546,7 @@ Votre répertoire personnel n'est pas défini par la variable $HOME
 %s n'est pas un répertoire
 Pas de comptes de courrier définis, vérifiez votre fichier .ebrc
 Numéro de compte de courrier invalide, utilisez svp de 1 à %d
-edbrowse  -v    (montre version)\nedbrowse -h (ce message)\nedbrowse -c (edit fichier config)\nedbrowse  [-e] [-d#] -[p]m#    (lecture courrier \nedbrowse  [-e] [-d#] -m# adresse1 adresse2 ... fichier [+pièces jointes]\nedbrowse  [-e] [-d#] fichier1 fichier2 ...
+edbrowse  -v    (montre version)\nedbrowse -h (ce message)\nedbrowse -c (edit fichier config)\nedbrowse  [-d#] -[p]m#    (lecture courrier \nedbrowse  [-d#] -m# adresse1 adresse2 ... fichier [+pièces jointes]\nedbrowse  [-e] [-d#] fichier1 fichier2 ...
 Définissez s'il vous plaît au moins un destinataire et le fichier à envoyer
 Définissez s'il vous plaît au moins un destinataire et le fichier à envoyer, avant vos pièces jointes
 Trop de fichiers ouverts, la limite est de %d

@@ -1055,12 +1055,23 @@ This is similar to f, by itself, which prints the current file.
 
 <H3> <A NAME=usage> Usage </A> </H3>
 
-type `edbrowse -h' to produce the usage message.
+<P>
+type `edbrowse -h' to produce the following usage message.
 You will see the -f, -fm, and -m options used in several different ways;
 just ignore them for now.
-These three options cause edbrowse to act as a mail retriever or interactive
+These options cause edbrowse to act as a mail retriever or interactive
 mail client.
 This will be discussed later.
+
+<PRE><font size=3 face=Arial,Helvetica,sans-serif>edbrowse  -v    (show version)
+edbrowse -h (this message)
+edbrowse -c (edit config file)
+edbrowse [-d#] -f[#] (fetch mail) 
+edbrowse  [-d#] -[p]m    (read pending mail)
+edbrowse  [-d#] -[p]fm[#]    (fetch mail and read pending mail)
+edbrowse  [-d#] -m[#] address1 address2 ... file [+attachments]
+edbrowse  [-e] [-d#] file1 file2 ...
+</font></PRE>
 
 <P>
 The -dx option sets the debug level to x, where x is between 0 and 9.
@@ -1101,10 +1112,19 @@ Edbrowse reads these files into corresponding sessions
 and starts in session 1.
 If there are no arguments, you start in session 1
 with no text and no associated file.
+If the file is a url, then that web page is fetched from the internet and browsed.
+Finally, if the file begins with a less than sign,
+edbrowse "&lt;func arg1 arg2",
+then the named edbrowse function is run with its arguments.
+These functions are part of your config file and will be described later.
+The function runs in its own session, as though it were a file or a url.
+Often the function will load a file or url on your behalf, so that is what you want.
+Files, urls, and functions can be intermixed on the command line.
+They are processed in order.
 
 <P>
 If you like this program, and you want it to be your primary editor,
-you can set the following Unix alias.
+you can set the following bash alias.
 
 <P>
 alias e="/usr/bin/edbrowse"
