@@ -104,7 +104,15 @@ have some fixes for known issues that have been reported upstream.
 
 Finally, you need the Duktape javascript engine and header file.
 If this is not part of your distribution, download from github, compile, and install.
-https://github.com/svaarala/duktape/releases/download/v2.1.0/duktape-2.1.0.tar.xz
+
+git clone https://github.com/svaarala/duktape.git
+cd duktape
+make dist
+cd dist
+make -f Makefile.sharedlibrary
+make -f Makefile.sharedlibrary install (as root)
+make -f Makefile.cmdline
+ln -s `pwd`/duk /usr/local/bin/duk (as root)
 
 If you want database access, you need unixODBC and unixODBC-devel.
 Select the odbc option via:
@@ -117,7 +125,7 @@ unixODBC version 2.2.14 seems to satisfy edbrowse with odbc.
 
 Edbrowse creates a system wide temp directory if it is not already present.
 This is /tmp/.edbrowse in Unix, and $(TEMP)/edbrowse in Windows.
-This directory contains a subdirectory per user, mod 700, for added security.
+This directory contains a subdirectory per user, mod 700 for added security.
 Thus one user cannot spy on the temp files, perhaps sensitive internet data,
 of another user.
 However, true multiuser security requires a root job at startup,
