@@ -512,7 +512,7 @@ javascript erro de sintaxe
 .ebrc: não posso criar a cookie jar %s
 .ebrc: diretivas no js em excesso; o limit é %d
 .ebrc: linha %d, o domínio %s não possui ponto
-0
+impossível acessar %s, (seguro)
 .ebrc: arquivo de certificados SSL %s não é um arquivo regular
 .ebrc: arquivo de certificados SSL %s não existe ou não é legível.
 .ebrc: linha %d, palavra-chave %s não foi implementada ainda

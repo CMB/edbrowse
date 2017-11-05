@@ -612,7 +612,7 @@ enum {
 	MSG_EBRC_JarNoWrite,
 	MSG_EBRC_NoJS,
 	MSG_EBRC_DomainDot,
-	MSG_notused515,
+	MSG_NoAccessSecure,
 	MSG_EBRC_SSLNoFile,
 	MSG_EBRC_SSLNoRead,
 	MSG_EBRC_KeywordNYI,

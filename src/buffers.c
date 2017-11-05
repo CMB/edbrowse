@@ -1623,9 +1623,13 @@ static bool readFile(const char *filename, const char *post)
 	}
 
 fromdisk:
-/* reading a file from disk */
-	filetype = fileTypeByName(filename, false);
+// reading a file from disk.
 	fileSize = 0;
+// for security reasons, this cannot be a frame in a web page.
+	if (!frameSecurityFile(filename))
+		return false;
+
+	filetype = fileTypeByName(filename, false);
 	if (filetype == 'd') {
 		if (!inframe)
 			return readDirectory(filename);

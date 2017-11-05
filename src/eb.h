@@ -357,8 +357,9 @@ struct ebFrame {
 	char *fileName;		/* name of file or url */
 	char *firstURL;		/* before http redirection */
 	char *hbase; /* base for href references */
-	bool baseset; /* <base> tag has been seen */
-	bool f_encoded:1; /* filename is url encoded */
+	bool baseset; // <base> tag has been seen
+	bool f_encoded; // filename is url encoded
+	bool fromcurl; // data comes from the internet
 	char *dw;		/* document.write string */
 	int dw_l;		/* length of the above */
 // document.writes go under the body.

@@ -191,6 +191,7 @@ bool shortRefreshDelay(void);
 bool httpConnect(const char *url, bool down_ok, bool webpage, bool f_encoded, char **headers_p, char **body_p, int *bodlen_p);
 void ebcurl_setError(CURLcode curlret, const char *url) ;
 void setHTTPLanguage(const char *lang) ;
+int prompt_and_read(int prompt, char *buffer, int buffer_length, int error_message, bool hide_echo);
 int ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data, size_t size, void *unused) ;
 int bg_jobs(bool iponly);
 void addNovsHost(char *host) ;
@@ -201,8 +202,7 @@ bool frameExpand(bool expand, int ln1, int ln2);
 int frameExpandLine(int ln, jsobjtype fo);
 struct htmlTag *line2frame(int ln);
 bool reexpandFrame(void);
-int prompt_and_read(int prompt, char *buffer, int buffer_length, int error_message, bool hide_echo);
-
+bool frameSecurityFile(const char *thisfile);
 
 /* sourcefile=main.c */
 const char *mailRedirect(const char *to, const char *from, const char *reply, const char *subj) ;

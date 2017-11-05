@@ -512,7 +512,7 @@ javascript błąd składniowy
 .ebrc: nie można utworzyć pliku ciastek %s
 .ebrc: zbyt wiele dyrektyw JS, limit %d
 .ebrc: wiersz %d, domena %s nie zawiera kropki
-0
+nie można odczytać %s, (bezpieczne)
 .ebrc: plik z certyfikatem SSL %s nie jest regularnym plikiem
 .ebrc: plik z certyfikatem SSL %s nie istnieje lub nie jest do odczytu
 .ebrc: wiersz %d, słowo kluczowe %s nie jest zaimplementowane

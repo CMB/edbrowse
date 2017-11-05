@@ -512,7 +512,7 @@ javascript Syntaxfehler
 .ebrc: kann Cookie-Datei %s nicht erstellen
 .ebrc: zu viele js-Anweisungen, maximal %d
 .ebrc: Zeile %d, Adresse %s enthält keinen Punkt
-0
+kann auf %s nicht zugreifen, (gesichert)
 .ebrc: Datei %s für SSL-Zertifikate ist keine reguläre Datei
 .ebrc: SSL-Zertifikatsdatei %s existiert nicht oder kann nicht gelesen werden
 .ebrc: Zeile %d, Schlüsselwort %s nocht nicht implementiert

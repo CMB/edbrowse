@@ -390,7 +390,7 @@ $%s n'est pas définie
 ~%s n'est pas définie
 0
 les données du cadre ne sont pas de l'html
-0
+ sûr
 0
 0
 erreur inattendue d'évaluation du modèle shell
@@ -512,7 +512,7 @@ javascript erreur de syntaxe
 .ebrc : impossible de créer   le récipient de cookies
 .ebrc : trop de directives no js, la limite est de %d
 .ebrc : ligne %d, le domaine ne contient pas de point
-0
+impossible d'accéder à %s, (sûr)
 .ebrc : le fichier de certificats SSL n'est pas un fichier régulier
 .ebrc :  fichier de certificats SSL absent ou illisible
 .ebrc : ligne %d, le mot-clé %s n'est pas encore implémenté

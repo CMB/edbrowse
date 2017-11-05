@@ -512,7 +512,7 @@ javascript syntax error
 .ebrc: cannot create cookie jar %s
 .ebrc: too many no js directives, limit %d
 .ebrc: line %d, domain %s does not contain a dot
-0
+cannot access %s, (secure)
 .ebrc: SSL certificate file %s is not a regular file
 .ebrc: SSL certificate file %s does not exist or is not readable.
 .ebrc: line %d, keyword %s is not yet implemented

@@ -932,6 +932,8 @@ bool httpConnect(const char *url, bool down_ok, bool webpage,
 		setupEdbrowseCache();
 	}
 
+	cf->fromcurl = true;
+
 	if (stringEqualCI(prot, "http") || stringEqualCI(prot, "https")) {
 		;		/* ok for now */
 	} else if (stringEqualCI(prot, "ftp") ||
@@ -2814,3 +2816,16 @@ bool reexpandFrame(void)
 
 	return true;
 }				/* reexpandFrame */
+
+// Make sure a web page is not trying to read a local file.
+bool frameSecurityFile(const char *thisfile)
+{
+	struct ebFrame *f = &cf->owner->f0;
+	for (; f != cf; f = f->next) {
+		if (!f->fromcurl)
+			continue;
+		setError(MSG_NoAccessSecure, thisfile);
+		return false;
+	}
+	return true;
+}
