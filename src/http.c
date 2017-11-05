@@ -2502,6 +2502,7 @@ int frameExpandLine(int ln, jsobjtype fo)
 	const char *s;
 	struct htmlTag *t;
 	struct ebFrame *save_cf, *new_cf, *last_f;
+	uchar save_local;
 	struct htmlTag *cdt;	// contentDocument tag
 
 	if (fo) {
@@ -2599,6 +2600,7 @@ So check for serverData null here. Once again we pop the frame.
  * but I'm too lazy to do that right now, so I'll just assume it's good. */
 
 	cf->hbase = cloneString(cf->fileName);
+	save_local = browseLocal;
 	browseLocal = !isURL(cf->fileName);
 	prepareForBrowse(serverData, serverDataLen);
 	if (javaOK(cf->fileName))
@@ -2645,6 +2647,7 @@ So check for serverData null here. Once again we pop the frame.
 
 	t->f1 = cf;
 	cf = save_cf;
+	browseLocal = save_local;
 	if (fo)
 		t->contracted = true;
 	if (isJSAlive) {
@@ -2723,6 +2726,7 @@ bool reexpandFrame(void)
 	int j, start;
 	struct htmlTag *frametag;
 	struct htmlTag *cdt;	// contentDocument tag
+	uchar save_local;
 
 	cf = newloc_f;
 	frametag = cf->frametag;
@@ -2766,6 +2770,7 @@ bool reexpandFrame(void)
 	fileSize = -1;
 
 	cf->hbase = cloneString(cf->fileName);
+	save_local = browseLocal;
 	browseLocal = !isURL(cf->fileName);
 	prepareForBrowse(serverData, serverDataLen);
 	if (javaOK(cf->fileName))
@@ -2793,6 +2798,7 @@ bool reexpandFrame(void)
 	j = strlen(cf->fileName);
 	cf->fileName = reallocMem(cf->fileName, j + 8);
 	strcat(cf->fileName, ".browse");
+	browseLocal = save_local;
 
 	if (isJSAlive) {
 		struct ebFrame *save_cf;
