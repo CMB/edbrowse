@@ -104,8 +104,8 @@ static void traverseTidy(void)
 static Bool TIDY_CALL tidyErrorHandler(TidyDoc tdoc, TidyReportLevel lvl,
 				       uint line, uint col, ctmbstr mssg)
 {
-	if (debugLevel >= 3)
-		debugPrint(4, "line %d column %d: %s", line, col, mssg);
+	if (debugLevel >= 4 && lvl != TidyInfo)
+		debugPrint(4, "%s", mssg);
 	return no;
 }				/* tidyErrorHandler */
 
