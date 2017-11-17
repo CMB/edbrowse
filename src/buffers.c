@@ -1066,6 +1066,9 @@ bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail)
 	int i, j, linecount = 0;
 	struct lineMap *t;
 
+	if (!length)		// nothing to add
+		return true;
+
 	for (i = 0; i < length; ++i)
 		if (inbuf[i] == '\n') {
 			++linecount;
