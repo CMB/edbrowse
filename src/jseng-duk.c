@@ -1590,7 +1590,23 @@ static void processError(void)
 	errorMessage = 0;
 }
 
-// No arguments; returns abool.
+/*********************************************************************
+No arguments; returns abool.
+This function is typically used for handlers: onclick, onchange, onsubmit, onload, etc.
+The return value is sometimes significant.
+If a hyperlink has an onclick function, and said function returns false,
+the hyperlink is not followed.
+If onsubmit returns false the form does not submit.
+And yet this opens a can of worms. Here is my default behavior for corner cases.
+I generally want the browser to continue, unless the function
+explicitly says false, or fails.
+the function doesn't exist. (false)
+The function encounters an error during execution. (false)
+The function returns a bogus type like object, or a string like foo
+that is not true or false. (true)
+The function returns undefined. (true)
+*********************************************************************/
+
 bool run_function_bool_nat(jsobjtype parent, const char *name)
 {
 	int dbl = 3;		// debug level
@@ -1608,12 +1624,17 @@ bool run_function_bool_nat(jsobjtype parent, const char *name)
 	duk_insert(jcx, -2);
 	debugPrint(dbl, "execute %s", name);
 	if (!duk_pcall_method(jcx, 0)) {
-		bool rc = false;
+		bool rc = true;
 		debugPrint(dbl, "execution complete");
 		if (duk_is_boolean(jcx, -1))
 			rc = duk_get_boolean(jcx, -1);
 		if (duk_is_number(jcx, -1))
 			rc = (duk_get_number(jcx, -1) != 0);
+		if (duk_is_string(jcx, -1)) {
+			const char *b = duk_get_string(jcx, -1);
+			if (stringEqualCI(b, "false"))
+				rc = false;
+		}
 		duk_pop(jcx);
 		return rc;
 	}
