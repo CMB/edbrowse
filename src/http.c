@@ -1047,7 +1047,7 @@ mimestream:
 			goto curl_fail;
 	}
 
-	if (sendReferrer && currentReferrer) {
+	if (sendReferrer && isURL(currentReferrer)) {
 		const char *post2 = strchr(currentReferrer, '\1');
 		if (!post2)
 			post2 = currentReferrer + strlen(currentReferrer);
@@ -2550,7 +2550,12 @@ int frameExpandLine(int ln, jsobjtype fo)
 	cf->frametag = t;
 	debugPrint(2, "fetch frame %s", (s ? s : "empty"));
 	if (s) {
-		if (!readFileArgv(s)) {
+		bool rc;
+		currentReferrer = cloneString(save_cf->fileName);
+		rc = readFileArgv(s);
+		nzFree(currentReferrer);
+		currentReferrer = NULL;
+		if (!rc) {
 /* serverData was never set, or was freed do to some other error. */
 /* We just need to pop the frame and return. */
 			fileSize = -1;	/* don't print 0 */
@@ -2727,6 +2732,7 @@ bool reexpandFrame(void)
 	struct htmlTag *frametag;
 	struct htmlTag *cdt;	// contentDocument tag
 	uchar save_local;
+	bool rc;
 
 	cf = newloc_f;
 	frametag = cf->frametag;
@@ -2746,8 +2752,12 @@ bool reexpandFrame(void)
 	cf->f_encoded = false;
 	nzFree(cf->firstURL);
 	cf->firstURL = 0;
+	currentReferrer = cloneString(cf->fileName);
 
-	if (!readFileArgv(cf->fileName)) {
+	rc = readFileArgv(cf->fileName);
+	nzFree(currentReferrer);
+	currentReferrer = NULL;
+	if (!rc) {
 /* serverData was never set, or was freed do to some other error. */
 		fileSize = -1;	/* don't print 0 */
 		return false;
