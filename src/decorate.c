@@ -21,6 +21,7 @@ nodeFunction traverse_callback;
 /* possible callback functions in this file */
 static void prerenderNode(struct htmlTag *node, bool opentag);
 static void jsNode(struct htmlTag *node, bool opentag);
+static void pushAttributes(const struct htmlTag *t);
 
 static void processStyles(jsobjtype so, const char *stylestring);
 
@@ -1471,7 +1472,45 @@ Needless to say that's not good!
 /* set innerHTML from the source html, if this tag supports it */
 	if (ti->bits & TAG_INNERHTML)
 		establish_inner(t->jv, t->innerHTML, 0, false);
+
+// If the tag has foo=bar as an attribute, pass this forward to javascript.
+	pushAttributes(t);
 }				/* jsNode */
+
+static void pushAttributes(const struct htmlTag *t)
+{
+	int i;
+	const char **a = t->attributes;
+	const char **v = t->atvals;
+	if (!a)
+		return;
+	for (i = 0; a[i]; ++i) {
+// There are some exceptions, some attributes that we handle individually.
+		const char *const exclist[] = {
+			"childNodes", "parentNode", "nodeName", "nodeType",
+			    "nodeValue",
+			"onclick", "onchange", "onsubmit", "onreset", "onload",
+			    "onunload",
+			"attributes",
+			"name", "id", "class",
+			"checked", "value", "type", "style",
+			"href", "src", "action",
+			0
+		};
+		const char *u;
+		if (stringInListCI(exclist, a[i]) >= 0)
+			continue;
+// Should we drop attribute name to lower case? I don't, for now.
+		u = v[i];
+		if (!u)
+			u = emptyString;
+// There may be some, like multiple or readonly, that should be set to true,
+// not the empty string. I haven't dealt with those yet.
+// Should I call setAttribute, with its side effects, or is just setting
+// the property good enough??
+		set_property_string(t->jv, a[i], u);
+	}
+}				/* pushAttributes */
 
 /* decorate the tree of nodes with js objects */
 void decorate(int start)
