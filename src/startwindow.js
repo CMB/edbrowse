@@ -410,6 +410,16 @@ document.setAttribute = eb$master.setAttribute;
 document.hasAttribute = eb$master.hasAttribute;
 document.removeAttribute = eb$master.removeAttribute;
 
+// Local storage, this is per window.
+localStorage = new Object;
+localStorage.attributes = new Array;
+localStorage.getAttribute = eb$master.getAttribute;
+localStorage.getItem = localStorage.getAttribute;
+localStorage.setAttribute = eb$master.setAttribute;
+localStorage.setItem = localStorage.setAttribute;
+localStorage.removeAttribute = eb$master.removeAttribute;
+localStorage.removeItem = localStorage.removeAttribute;
+
 /*********************************************************************
 Here comes a bunch of stuff regarding the childNodes array,
 holding the children under a given html node.
@@ -921,9 +931,11 @@ this.async = false;
 
 this.method = method || "GET";
 this.url = eb$resolveURL(url);
+this.url = encodeURI(this.url);
 this.status = 0;
 this.statusText = "";
 this.onreadystatechange();
+this.onload();
 },
 setRequestHeader: function(header, value){
 this.headers[header] = value;
@@ -969,6 +981,7 @@ this.readyState = 4;
 this.status = 200;
 this.statusText = "OK";
 this.onreadystatechange();
+this.onload();
 }
 
 },
@@ -977,6 +990,8 @@ this.aborted = true;
 },
 onreadystatechange: function(){
 //Instance specific
+},
+onload: function(){
 },
 getResponseHeader: function(header){
 var rHeader, returnedHeaders;
@@ -1049,6 +1064,7 @@ Cell = function(){}
 P = function(){}
 Script = function(){}
 Timer = function(){}
+Audio = function(){}
 
 /*********************************************************************
 When a script runs it may call document.write. But where to put those nodes?
@@ -1190,6 +1206,9 @@ c = new Cell();
 break;
 case "canvas":
 c = new Canvas();
+break;
+case "audio":
+c = new Audio();
 break;
 case "select":
 /* select and radio are special form elements in that they are intrinsically
@@ -1353,7 +1372,7 @@ document.attachEvent = window.attachEvent;
 onhashchange = eb$truefunction;
 
 (function() {
-for(var cn in {Body, Form, Element, Anchor}) {
+for(var cn in {Body, Form, Element, Anchor, Image}) {
 var c = window[cn];
 // c is class and cn is classname.
 c.prototype.eb$listen = window.eb$listen;
@@ -1373,7 +1392,7 @@ Anchor, Element, Lister, Listitem, Tbody, Table, Div,
 Span, Trow, Cell, P, Script,
 // The following nodes shouldn't have any children, but the various
 // children methods could be called on them anyways.
-Area, TextNode, Image, Option, Link, Meta}) {
+Area, TextNode, Image, Option, Link, Meta, Audio}) {
 var c = window[cn];
 // c is class and cn is classname.
 // get elements below
@@ -1553,7 +1572,7 @@ if(!eb$master.compiled) {
 // Canvas method draws a picture. That's meaningless for us,
 // but it still has to be there.
 eb$master.Canvas = function() {
-this.getContext = function(x) { return { beginPath: eb$nullfunction, moveTo: eb$nullfunction, lineTo: eb$nullfunction, stroke:eb$nullfunction}};
+this.getContext = function(x) { return { addHitRegion: eb$nullfunction, arc: eb$nullfunction, arcTo: eb$nullfunction, beginPath: eb$nullfunction, bezierCurveTo: eb$nullfunction, clearHitRegions: eb$nullfunction, clearRect: eb$nullfunction, clip: eb$nullfunction, closePath: eb$nullfunction, createImageData: eb$nullfunction, createLinearGradient: eb$nullfunction, createPattern: eb$nullfunction, createRadialGradient: eb$nullfunction, drawFocusIfNeeded: eb$nullfunction, drawImage: eb$nullfunction, drawWidgetAsOnScreen: eb$nullfunction, drawWindow: eb$nullfunction, ellipse: eb$nullfunction, fill: eb$nullfunction, fillRect: eb$nullfunction, fillText: eb$nullfunction, getImageData: eb$nullfunction, getLineDash: eb$nullfunction, isPointInPath: eb$nullfunction, isPointInStroke: eb$nullfunction, lineTo: eb$nullfunction, measureText: eb$nullfunction, moveTo: eb$nullfunction, putImageData: eb$nullfunction, quadraticCurveTo: eb$nullfunction, rect: eb$nullfunction, removeHitRegion: eb$nullfunction, resetTransform: eb$nullfunction, restore: eb$nullfunction, rotate: eb$nullfunction, save: eb$nullfunction, scale: eb$nullfunction, scrollPathIntoView: eb$nullfunction, setLineDash: eb$nullfunction, setTransform: eb$nullfunction, stroke: eb$nullfunction, strokeRect: eb$nullfunction, strokeText: eb$nullfunction, transform: eb$nullfunction, translate: eb$nullfunction }};
 }
 
 /*********************************************************************
@@ -1573,6 +1592,7 @@ this.createMediaStreamTrackSource = eb$voidfunction;
 this.suspend = eb$voidfunction;
 this.close = eb$voidfunction;
 }
+
 } // master compile
 
 Canvas = eb$master.Canvas;
