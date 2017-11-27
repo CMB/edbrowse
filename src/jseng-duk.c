@@ -1599,12 +1599,15 @@ the hyperlink is not followed.
 If onsubmit returns false the form does not submit.
 And yet this opens a can of worms. Here is my default behavior for corner cases.
 I generally want the browser to continue, unless the function
-explicitly says false, or fails.
-the function doesn't exist. (false)
-The function encounters an error during execution. (false)
-The function returns a bogus type like object, or a string like foo
-that is not true or false. (true)
-The function returns undefined. (true)
+explicitly says false.
+Edbrowse should do as much as it can for the casual user.
+Javascript function returns boolean. Pass this value back.
+Function returns number. nonzero is true and zero is false.
+Function returns string. "false" is false and everything else is true.
+Function returns a bogus type like object. true
+Function returns undefined. true
+Function doesn't exist. true, unless debugging.
+Function encounters an error during execution. true, unless debugging.
 *********************************************************************/
 
 bool run_function_bool_nat(jsobjtype parent, const char *name)
@@ -1619,7 +1622,7 @@ bool run_function_bool_nat(jsobjtype parent, const char *name)
 			asprintf(&errorMessage, "no such function %s", name);
 #endif
 		duk_pop_2(jcx);
-		return false;
+		return (debugLevel < 3);
 	}
 	duk_insert(jcx, -2);
 	debugPrint(dbl, "execute %s", name);
@@ -1641,7 +1644,7 @@ bool run_function_bool_nat(jsobjtype parent, const char *name)
 // error in execution
 	processError();
 	debugPrint(3, "execution complete");
-	return false;
+	return (debugLevel < 3);
 }				/* run_function_bool_nat */
 
 // The single argument to the function has to be an object.
