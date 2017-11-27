@@ -1288,6 +1288,11 @@ eb$master.Event = function(options){
     this._stopPropagation = false;
 };
 
+// place holder functions. What should these do?
+eb$master.Event.prototype.initCustomEvent = function(e, bubble, cancel, details) { };
+
+eb$master.createEvent = function(unused) { return new Event(); }
+
 /*********************************************************************
 This is our addEventListener function.
 It is bound to window, which is ok because window has such a function
@@ -1362,11 +1367,13 @@ eb$listen = eb$master.eb$listen;
 addEventListener = eb$master.addEventListener;
 removeEventListener = eb$master.removeEventListener;
 attachEvent = eb$master.attachEvent;
+attachEvent = eb$master.attachEvent;
 
 document.eb$listen = window.eb$listen;
 document.addEventListener = window.addEventListener;
 document.removeEventListener = window.removeEventListener;
 document.attachEvent = window.attachEvent;
+document.createEvent = eb$master.createEvent;
 
 // Some websites expect an onhashchange handler from the get-go.
 onhashchange = eb$truefunction;
