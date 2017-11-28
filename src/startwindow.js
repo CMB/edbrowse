@@ -1378,17 +1378,6 @@ document.createEvent = eb$master.createEvent;
 // Some websites expect an onhashchange handler from the get-go.
 onhashchange = eb$truefunction;
 
-(function() {
-for(var cn in {Body, Form, Element, Anchor, Image}) {
-var c = window[cn];
-// c is class and cn is classname.
-c.prototype.eb$listen = window.eb$listen;
-c.prototype.addEventListener = window.addEventListener;
-c.prototype.removeEventListener = window.removeEventListener;
-c.prototype.attachEvent = window.attachEvent;
-}
-})();
-
 // Add prototype methods to the standard nodes, nodes that have children,
 // and the normal set of methods to go with those children.
 // Form has children for sure, but if we add <input> to Form,
@@ -1431,6 +1420,11 @@ c.prototype.importNode = document.importNode;
 // visual
 c.prototype.focus = focus;
 c.prototype.blur = blur;
+// events
+c.prototype.eb$listen = window.eb$listen;
+c.prototype.addEventListener = window.addEventListener;
+c.prototype.removeEventListener = window.removeEventListener;
+c.prototype.attachEvent = window.attachEvent;
 }
 
 /*********************************************************************
@@ -1500,6 +1494,10 @@ Form.prototype.getAttributeNode = document.getAttributeNode;
 
 Form.prototype.cloneNode = document.cloneNode;
 Form.prototype.importNode = document.importNode;
+Form.prototype.eb$listen = window.eb$listen;
+Form.prototype.addEventListener = window.addEventListener;
+Form.prototype.removeEventListener = window.removeEventListener;
+Form.prototype.attachEvent = window.attachEvent;
 
 /* The select element in a form is itself an array, so the children functions have
  * to be on array prototype, except appendchild is to have no side effects,
