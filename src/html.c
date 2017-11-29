@@ -1014,17 +1014,12 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		updateFieldInBuffer(tagno, newtext, notify, true);
 	}
 
-	if (itype >= INP_RADIO && tagHandler(t->seqno, "onclick")) {
-		if (!isJSAlive)
-			runningError(MSG_NJNoOnclick);
-		else {
-			jSyncup(false);
-			cf = t->f0;
-			run_function_bool(t->jv, "onclick");
-			jSideEffects();
-			if (js_redirects)
-				return true;
-		}
+	if (itype >= INP_RADIO) {
+// The change has already been made;
+// if onclick returns false, should that have prevented the change??
+		handlerGoBrowse(t, "onclick");
+		if (js_redirects)
+			return true;
 	}
 
 	if (itype >= INP_TEXT && itype <= INP_SELECT &&
@@ -1552,14 +1547,10 @@ bool infPush(int tagno, char **post_string)
 			runningError(itype ==
 				     INP_BUTTON ? MSG_NJNoAction :
 				     MSG_NJNoOnclick);
-		else {
-			if (t->jv)
-				run_function_bool(t->jv, "onclick");
-			jSideEffects();
-			if (js_redirects)
-				return true;
-		}
 	}
+	handlerGoBrowse(t, "onclick");
+	if (js_redirects)
+		return true;
 
 	if (itype == INP_BUTTON) {
 		if (isJSAlive && t->jv && !handlerPresent(t->jv, "onclick")) {
@@ -1786,11 +1777,34 @@ void javaSubmitsForm(jsobjtype v, bool reset)
 
 bool handlerGoBrowse(const struct htmlTag *t, const char *name)
 {
+	bool first = true;
+	bool rc = true;
 	if (!isJSAlive)
 		return true;
-	if (!t->jv)
-		return true;
-	return run_function_bool(t->jv, name);
+	do {
+		if (!t->jv)
+			continue;
+		if (!handlerPresent(t->jv, name))
+			continue;
+		if (first) {
+			jSyncup(false);
+			cf = t->f0;
+			first = false;
+		}
+		rc = run_function_bool(t->jv, name);
+	} while (rc && (t = t->parent));
+// And finally check handler on the document.
+	if (rc && handlerPresent(cf->docobj, name)) {
+		if (first) {
+			jSyncup(false);
+			cf = t->f0;
+			first = false;
+		}
+		rc = run_function_bool(cf->docobj, name);
+	}
+	if (!first)
+		jSideEffects();
+	return rc;
 }				/* handlerGoBrowse */
 
 /* Javascript errors, we need to see these no matter what. */

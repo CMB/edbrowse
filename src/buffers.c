@@ -5170,26 +5170,18 @@ switchsession:
 			setError(-1);
 			rc = false;
 			if (jsgo) {
-/* javascript might update fields */
 /* The program might depend on the mouseover code running first */
-				if (over) {
-					jSyncup(false);
-					cf = tag->f0;
-					rc = handlerGoBrowse(tag,
-							     "onmouseover");
-					jSideEffects();
-					if (newlocation)
-						goto redirect;
-				}
+				rc = handlerGoBrowse(tag, "onmouseover");
+				if (newlocation)
+					goto redirect;
+				if (!over)
+					rc = false;
 			}
 /* This is the only handler where false tells the browser to do something else. */
 			if (!rc && !jsdead)
 				set_property_string(cf->winobj, "status", h);
-			if (jsgo && click) {
-				jSyncup(false);
-				cf = tag->f0;
+			if (jsgo) {
 				rc = handlerGoBrowse(tag, "onclick");
-				jSideEffects();
 				if (newlocation)
 					goto redirect;
 				if (!rc)
