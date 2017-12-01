@@ -1488,9 +1488,9 @@ static void pushAttributes(const struct htmlTag *t)
 // There are some exceptions, some attributes that we handle individually.
 		const char *const exclist[] = {
 			"childNodes", "parentNode", "nodeName", "nodeType",
-			    "nodeValue",
+			"nodeValue",
 			"onclick", "onchange", "onsubmit", "onreset", "onload",
-			    "onunload",
+			"onunload",
 			"attributes",
 			"name", "id", "class",
 			"checked", "value", "type", "style",
@@ -1611,6 +1611,8 @@ const struct tagInfo availableTags[] = {
 	{"sup", "a superscript", TAGACT_SUP, 0, 0},
 	{"ovb", "an overbar", TAGACT_OVB, 0, 0},
 	{"font", "a font", TAGACT_NOP, 0, 0},
+	{"cite", "a citation", TAGACT_NOP, 0, 0},
+	{"tt", "teletype", TAGACT_NOP, 0, 0},
 	{"center", "centered text", TAGACT_P, 2, 5},
 	{"caption", "a caption", TAGACT_NOP, 5, 0},
 	{"head", "the html header information", TAGACT_HEAD, 0, 5},
