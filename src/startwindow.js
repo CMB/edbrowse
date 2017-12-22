@@ -1101,7 +1101,14 @@ function eb$clone(nodeToCopy,deep)
 var nodeToReturn;
 var i;
 
-// special case for array, which is the select node.
+// bring over event handlers - among other reasons why, this is tested for
+// in the Supports tests in newer versions of jquery.
+// It's a function pointer, no real way to copy it, just pass it back.
+if (typeof nodeToCopy == 'function')
+return nodeToCopy;
+
+// special case for array, which is the select node,
+// or an array of event handlers.
 if(nodeToCopy instanceof Array) {
 nodeToReturn = new Array;
 for(i = 0; i < nodeToCopy.length; ++i)
@@ -1117,8 +1124,12 @@ nodeToReturn.appendChild(eb$clone(current_item,true));
 }
 }
 
-// now for the strings.
+// now for strings and functions.
 for (var item in nodeToCopy) {
+if (typeof nodeToCopy[item] == 'function') {
+nodeToReturn[item] = nodeToCopy[item];
+}
+
 if (typeof nodeToCopy[item] == 'string') {
 // don't copy strings that are really setters; we'll be copying inner$html
 // as a true string so won't need to copy innerHTML, and shouldn't.
@@ -1164,6 +1175,10 @@ copies of them in the current context.
 *********************************************************************/
 document.importNode = function(src, deep) { return src.cloneNode(deep); }
 
+document.createElementNS = function(nsurl,s) {
+return document.createElement(s);
+}
+
 document.createElement = function(s) { 
 var c;
 var t = s.toLowerCase();
@@ -1173,6 +1188,10 @@ c = new Body();
 break;
 case "a":
 c = new Anchor();
+// Warning: these properties are placeholders; I suspect they should be
+// getter setter functions that act upon a.href, but not sure yet.
+c.protocol = "";
+c.pathname = "";
 break;
 case "image":
 t = "img";
@@ -1277,21 +1296,36 @@ eb$master.Event = function(options){
     // be appropriate in the long run and we'll
     // have to decide if we simply dont adhere to
     // the read-only restriction of the specification
-    this._bubbles = true;
-    this._cancelable = true;
-    this._cancelled = false;
-    this._currentTarget = null;
-    this._target = null;
-    this._eventPhase = Event.AT_TARGET;
-    this._timeStamp = new Date().getTime();
-    this._preventDefault = false;
-    this._stopPropagation = false;
+    this.bubbles = true;
+    this.cancelable = true;
+    this.cancelled = false;
+    this.currentTarget = null;
+    this.target = null;
+    this.eventPhase = Event.AT_TARGET;
+    this.timeStamp = new Date().getTime();
 };
 
 // place holder functions. What should these do?
 eb$master.Event.prototype.initCustomEvent = function(e, bubble, cancel, details) { };
 
 eb$master.createEvent = function(unused) { return new Event(); }
+
+eb$master.dispatchEvent = function (e) {
+var eval_string = "try { this['" + e._type + "']()} catch (e) {alert('event not found')}";
+eval(eval_string);
+};
+
+eb$master.Event.prototype.preventDefault = function(){
+      this.preventDefault = true;
+}
+
+eb$master.Event.prototype.stopPropagation = function(){
+        if(this.cancelable){
+            this.cancelled = true;
+            this.bubbles = false;
+        }
+    }
+
 
 /*********************************************************************
 This is our addEventListener function.
@@ -1313,7 +1347,13 @@ eb$master.attachEvent = function(ev, handler) { this.eb$listen(ev,handler, false
 eb$master.eb$listen = function(ev, handler, addon)
 {
 var ev_before_changes = ev;
-if(addon) ev = "on" + ev;
+if(addon) {
+ev = "on" + ev;
+} else {
+// for attachEvent, if onclick is passed in, you are actually listening for 'click'
+ev = ev.replace(/^on/, "");
+}
+
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
 if(!this[evarray]) {
@@ -1367,13 +1407,13 @@ eb$listen = eb$master.eb$listen;
 addEventListener = eb$master.addEventListener;
 removeEventListener = eb$master.removeEventListener;
 attachEvent = eb$master.attachEvent;
-attachEvent = eb$master.attachEvent;
 
 document.eb$listen = window.eb$listen;
 document.addEventListener = window.addEventListener;
 document.removeEventListener = window.removeEventListener;
 document.attachEvent = window.attachEvent;
 document.createEvent = eb$master.createEvent;
+document.dispatchEvent = eb$master.dispatchEvent;
 
 // Some websites expect an onhashchange handler from the get-go.
 onhashchange = eb$truefunction;
@@ -1605,4 +1645,4 @@ AudioContext = eb$master.AudioContext;
 
 // This isn't efficient, but it doesn't come up very often.
 document.querySelector = function(x) { return querySelectorAll(x)[0] }
-
+Head.prototype.querySelector = function(x) { return querySelectorAll(x)[0] }
