@@ -1788,18 +1788,18 @@ bool handlerGoBrowse(const struct htmlTag *t, const char *name)
 			continue;
 		if (first) {
 			jSyncup(false);
-			cf = t->f0;
 			first = false;
 		}
+		cf = t->f0;
 		rc = run_function_bool(t->jv, name);
 	} while (rc && (t = t->parent));
 // And finally check handler on the document.
 	if (rc && handlerPresent(cf->docobj, name)) {
 		if (first) {
 			jSyncup(false);
-			cf = t->f0;
 			first = false;
 		}
+		cf = &(cw->f0);
 		rc = run_function_bool(cf->docobj, name);
 	}
 	if (!first)
