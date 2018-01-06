@@ -659,6 +659,28 @@ imap_done:
 	puts("end of folder");
 }				/* scanFolder */
 
+// \" is an escaped quote inside the string.
+static char *nextRealQuote(char *p)
+{
+	char *q = p, *r;
+	char c;
+	for (; (c = *p); ++p) {
+		if (c == '\\' && p[1] == '"') {
+			*q++ = '"';
+			++p;
+			continue;
+		}
+		if (c == '"')
+			break;
+		*q++ = c;
+	}
+	if (!c)
+		return 0;
+	for (r = q; q <= p; ++q)
+		*q = ' ';
+	return r;
+}
+
 static void envelopes(CURL * handle, struct FOLDER *f)
 {
 	int j;
@@ -731,7 +753,7 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		if (*t != '"')
 			continue;
 		++t;
-		u = strchr(t, '"');
+		u = nextRealQuote(t);
 		if (!u)
 			continue;
 		*u = 0;
@@ -745,7 +767,7 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		if (strncmp(t, "((\"", 3))
 			goto doref;
 		t += 3;
-		u = strchr(t, '"');
+		u = nextRealQuote(t);
 		if (!u)
 			goto doref;
 		*u = 0;
