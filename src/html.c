@@ -1794,6 +1794,7 @@ bool handlerGoBrowse(const struct htmlTag *t, const char *name)
 		rc = run_function_bool(t->jv, name);
 	} while (rc && (t = t->parent));
 // And finally check handler on the document.
+	cf = &(cw->f0);
 	if (rc && handlerPresent(cf->docobj, name)) {
 		if (first) {
 			jSyncup(false);
