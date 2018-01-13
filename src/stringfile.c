@@ -834,34 +834,43 @@ is ported to other operating systems.
 /* Return the type of a file.
  * Make it a capital letter if you are going through a link.
  * I think this will work on Windows, not sure.
- * But the link feature is Unix specific. */
+ * But the link feature is Unix specific.
+ * Remember the stat structure for other things. */
+struct stat this_stat;
+static bool this_waslink, this_brokenlink;
 
 char fileTypeByName(const char *name, bool showlink)
 {
-	struct stat buf;
 	bool islink = false;
 	char c;
 	int mode;
 
+	this_waslink = false;
+	this_brokenlink = false;
+
 #ifdef DOSLIKE
-	if (stat(name, &buf)) {
+	if (stat(name, &this_stat)) {
+		this_brokenlink = true;
 		setError(MSG_NoAccess, name);
 		return 0;
 	}
-	mode = buf.st_mode & S_IFMT;
+	mode = this_stat.st_mode & S_IFMT;
 #else // !DOSLIKE
 
-	if (lstat(name, &buf)) {
+	if (lstat(name, &this_stat)) {
+		this_brokenlink = true;
 		setError(MSG_NoAccess, name);
 		return 0;
 	}
-	mode = buf.st_mode & S_IFMT;
+	mode = this_stat.st_mode & S_IFMT;
 	if (mode == S_IFLNK) {	/* symbolic link */
-		islink = true;
+		islink = this_waslink = true;
 /* If this fails, I'm guessing it's just a file. */
-		if (stat(name, &buf))
+		if (stat(name, &this_stat)) {
+			this_brokenlink = true;
 			return (showlink ? 'F' : 0);
-		mode = buf.st_mode & S_IFMT;
+		}
+		mode = this_stat.st_mode & S_IFMT;
 	}
 #endif // DOSLIKE y/n
 
@@ -1001,17 +1010,15 @@ bool lsattrChars(const char *buf, char *dest)
 
 /* expand the ls attributes for a file into a static string. */
 /* This assumes user/group names will not be too long. */
+/* Assumes we just called fileTypeByName. */
 char *lsattr(const char *path, const char *flags)
 {
 	static char buf[200 + ABSPATH];
 	char p[40];
-	struct stat st, lst;
 	struct passwd *pwbuf;
 	struct group *grpbuf;
 	char *s;
 	int l, modebits;
-	bool sympath = false;	// user is requesting symlink path
-	bool statyes = true;	// stat call succeeds
 	char newpath[ABSPATH];
 
 	buf[0] = 0;
@@ -1019,23 +1026,10 @@ char *lsattr(const char *path, const char *flags)
 	if (!path || !path[0] || !flags || !flags[0])
 		return buf;
 
-	if (strchr(flags, 'y'))
-		sympath = true;
-
-/* we already glommed onto this file through the directory listing;
- * it ought to be there, except for broken symlink. */
-	if (stat(path, &st)) {
-		statyes = false;
-		if (!sympath)
-			return buf;
-	}
-
 	while (*flags) {
 		if (buf[0])
 			strcat(buf, " ");
-
-/* exception when asking for information on a broken symlink */
-		if (!statyes && *flags != 'y') {
+		if (this_brokenlink) {
 			strcat(buf, "?");
 			++flags;
 			continue;
@@ -1043,37 +1037,37 @@ char *lsattr(const char *path, const char *flags)
 
 		switch (*flags) {
 		case 't':
-			strcat(buf, conciseTime(st.st_mtime));
+			strcat(buf, conciseTime(this_stat.st_mtime));
 			break;
 		case 'l':
-			sprintf(p, "%lld", (long long)st.st_size);
+			sprintf(p, "%lld", (long long)this_stat.st_size);
 #ifndef DOSLIKE
 p:
 #endif // #ifndef DOSLIKE
 			strcat(buf, p);
 			break;
 		case 's':
-			strcat(buf, conciseSize(st.st_size));
+			strcat(buf, conciseSize(this_stat.st_size));
 			break;
 #ifndef DOSLIKE
 /* not sure any of these work under windows */
 
 		case 'i':
-			sprintf(p, "%lu", (unsigned long)st.st_ino);
+			sprintf(p, "%lu", (unsigned long)this_stat.st_ino);
 			goto p;
 		case 'k':
-			sprintf(p, "%lu", (unsigned long)st.st_nlink);
+			sprintf(p, "%lu", (unsigned long)this_stat.st_nlink);
 			goto p;
 		case 'm':
 			strcpy(p, "-");
-			if (st.st_rdev)
+			if (this_stat.st_rdev)
 				sprintf(p, "%d/%d",
-					(int)(st.st_rdev >> 8),
-					(int)(st.st_rdev & 0xff));
+					(int)(this_stat.st_rdev >> 8),
+					(int)(this_stat.st_rdev & 0xff));
 			goto p;
 		case 'p':
 			s = buf + strlen(buf);
-			pwbuf = getpwuid(st.st_uid);
+			pwbuf = getpwuid(this_stat.st_uid);
 			if (pwbuf) {
 				l = strlen(pwbuf->pw_name);
 				if (l > 20)
@@ -1081,10 +1075,10 @@ p:
 				strncpy(s, pwbuf->pw_name, l);
 				s[l] = 0;
 			} else
-				sprintf(s, "%d", st.st_uid);
+				sprintf(s, "%d", this_stat.st_uid);
 			s += strlen(s);
 			*s++ = ' ';
-			grpbuf = getgrgid(st.st_gid);
+			grpbuf = getgrgid(this_stat.st_gid);
 			if (grpbuf) {
 				l = strlen(grpbuf->gr_name);
 				if (l > 20)
@@ -1092,10 +1086,10 @@ p:
 				strncpy(s, grpbuf->gr_name, l);
 				s[l] = 0;
 			} else
-				sprintf(s, "%d", st.st_gid);
+				sprintf(s, "%d", this_stat.st_gid);
 			s += strlen(s);
 			*s++ = ' ';
-			modebits = st.st_mode;
+			modebits = this_stat.st_mode;
 			modebits &= 07777;
 			if (modebits & 07000)
 				*s++ = '0' + (modebits >> 9);
@@ -1109,12 +1103,7 @@ p:
 			break;
 
 		case 'y':
-			if (lstat(path, &lst)) {
-/* Wow, this call should always succeed */
-				strcat(buf, "?");
-				break;
-			}
-			if ((lst.st_mode & S_IFMT) != S_IFLNK) {
+			if (!this_waslink) {
 				strcat(buf, "-");
 				break;
 			}
@@ -1346,14 +1335,19 @@ const char *nextScanFile(const char *base)
 	return 0;
 }				/* nextScanFile */
 
-/* compare routine for quicksort */
+/* compare routine for quicksort directory scan */
+static bool dir_reverse;
 static int dircmp(const void *s, const void *t)
 {
-	return strcoll((const char *)((const struct lineMap *)s)->text,
-		       (const char *)((const struct lineMap *)t)->text);
+	int rc = strcoll((const char *)((const struct lineMap *)s)->text,
+			 (const char *)((const struct lineMap *)t)->text);
+	if (dir_reverse)
+		rc = -rc;
+	return rc;
 }				/* dircmp */
 
-bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
+bool sortedDirList(const char *dir, struct lineMap ** map_p, int *count_p,
+		   int othersort, bool reverse)
 {
 	const char *f;
 	int linecount = 0, cap;
@@ -1381,8 +1375,12 @@ bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p)
 	if (!linecount)
 		return true;
 
-/* sort the entries */
-	qsort(map, linecount, LMSIZE, dircmp);
+// Sort the entries alphabetical,
+// unless we plan to sort them some other way.
+	if (!othersort) {
+		dir_reverse = reverse;
+		qsort(map, linecount, LMSIZE, dircmp);
+	}
 
 	return true;
 }				/* sortedDirList */

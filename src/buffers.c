@@ -30,7 +30,6 @@ static bool pcre_utf8_error_stop = false;
 /* Static variables for this file. */
 
 static uchar dirWrite;		/* directories read write */
-static char lsformat[12];	/* size date etc on a directory listing */
 static uchar endMarks;		/* ^ $ on printed lines */
 static bool jdb_mode;
 static struct ebFrame *jdb_frame;
@@ -1424,6 +1423,45 @@ static bool joinText(void)
 	return true;
 }				/* joinText */
 
+// directory sort record, for nonalphabetical sorts.
+struct DSR {
+	int idx;
+	union {
+		time_t t;
+		size_t z;
+	} u;
+};
+static struct DSR *dsr_list;
+extern struct stat this_stat;
+static char ls_sort;		// sort method for directory listing
+static bool ls_reverse;		// reverse sort
+static char lsformat[12];	/* size date etc on a directory listing */
+
+/* compare routine for quicksort directory scan */
+static int dircmp(const void *s, const void *t)
+{
+	const struct DSR *q = s;
+	const struct DSR *r = t;
+	int rc;
+	if (ls_sort == 1) {
+		rc = 0;
+		if (q->u.z < r->u.z)
+			rc = -1;
+		if (q->u.z > r->u.z)
+			rc = 1;
+	}
+	if (ls_sort == 2) {
+		rc = 0;
+		if (q->u.t < r->u.t)
+			rc = -1;
+		if (q->u.t > r->u.t)
+			rc = 1;
+	}
+	if (ls_reverse)
+		rc = -rc;
+	return rc;
+}
+
 /* Read the contents of a directory into the current buffer */
 static bool readDirectory(const char *filename)
 {
@@ -1440,7 +1478,8 @@ static bool readDirectory(const char *filename)
 /* Understand that the empty string now means / */
 
 /* get the files, or fail if there is a problem */
-	if (!sortedDirList(filename, &newpiece, &linecount))
+	if (!sortedDirList
+	    (filename, &newpiece, &linecount, ls_sort, ls_reverse))
 		return false;
 	if (!cw->dol) {
 		cw->dirMode = true;
@@ -1457,6 +1496,9 @@ static bool readDirectory(const char *filename)
 		nzFree(backpiece);
 		goto success;
 	}
+
+	if (ls_sort)
+		dsr_list = allocZeroMem(sizeof(struct DSR) * linecount);
 
 /* change 0 to nl and count bytes */
 	fileSize = 0;
@@ -1478,6 +1520,8 @@ static bool readDirectory(const char *filename)
 		*t = '\n';
 		len = t - mptr->text;
 		fileSize += len + 1;
+		if (ls_sort)
+			dsr_list[j].idx = j;
 		if (!abspath)
 			continue;	/* should never happen */
 
@@ -1512,12 +1556,19 @@ static bool readDirectory(const char *filename)
 				mptr->ds1 = c;
 			++fileSize;
 		}
+// If sorting a different way, get the attribute.
+		if (ls_sort) {
+			if (ls_sort == 1)
+				dsr_list[j].u.z = this_stat.st_size;
+			if (ls_sort == 2)
+				dsr_list[j].u.t = this_stat.st_mtime;
+		}
 
 /* extra stat entries on the line */
 		if (!lsformat[0])
 			continue;
 		v = lsattr(abspath, lsformat);
-		if (!v || !*v)
+		if (!*v)
 			continue;
 		len = strlen(v);
 		fileSize += len + 1;
@@ -1535,6 +1586,27 @@ static bool readDirectory(const char *filename)
 			*t = 0;
 		}
 	}			/* loop fixing files in the directory scan */
+
+	if (ls_sort) {
+		struct lineMap *tmp;
+		qsort(dsr_list, linecount, sizeof(struct DSR), dircmp);
+// Now I have to remap everything.
+		tmp = allocMem(LMSIZE * linecount);
+		for (j = 0; j < linecount; ++j)
+			tmp[j] = newpiece[dsr_list[j].idx];
+		free(newpiece);
+		newpiece = tmp;
+		if (backpiece) {
+			tmp = allocMem(LMSIZE * (linecount + 2));
+			for (j = 0; j < linecount; ++j)
+				tmp[j + 1] = backpiece[dsr_list[j].idx + 1];
+			memset(tmp, 0, LMSIZE);
+			memset(tmp + linecount + 1, 0, LMSIZE);
+			free(backpiece);
+			backpiece = tmp;
+		}
+		free(dsr_list);
+	}
 
 	addToMap(linecount, endRange);
 	cw->r_map = backpiece;
@@ -3565,15 +3637,33 @@ static int twoLetter(const char *line, const char **runThis)
 			i_printfExit(MSG_NoNlOnDir, file);
 		*t = 0;
 		path = makeAbsPath(file);
-		*t = '\n';
-		if (!path)
-			t = emptyString;
-		else
+		*t = '\n';	// put it back
+		t = emptyString;
+		if (path && fileTypeByName(path, true))
 			t = lsattr(path, lsmode);
 		if (*t)
 			eb_puts(t);
 		else
 			i_puts(MSG_Inaccess);
+		return true;
+	}
+
+	if (!strncmp(line, "dsrt", 4)
+	    && (line[4] == '+' || line[4] == '-' || line[4] == '=') &&
+	    line[5] && !line[6] && strchr("ast", line[5])) {
+		ls_sort = 0;
+		if (line[5] == 's')
+			ls_sort = 1;
+		if (line[5] == 't')
+			ls_sort = 2;
+		ls_reverse = false;
+		if (line[4] == '-')
+			ls_reverse = true;
+		if (helpMessagesOn) {
+			if (ls_reverse)
+				i_printf(MSG_Reverse);
+			i_puts(MSG_SortAlpha + ls_sort);
+		}
 		return true;
 	}
 
