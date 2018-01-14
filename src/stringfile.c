@@ -21,6 +21,7 @@ int debugLevel = 1;
 FILE *debugFile = NULL;
 char *debugFileName;
 bool demin = false;
+bool gotimers = true;
 char *downDir, *home;
 
 /*********************************************************************

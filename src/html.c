@@ -2268,6 +2268,10 @@ void runTimer(void)
 
 	if ((jt = soonest())
 	    && !(jt->sec > now_sec || (jt->sec == now_sec && jt->ms > now_ms))) {
+
+		if (!gotimers)
+			goto skip_execution;
+
 		cf = jt->frame;
 		cw = cf->owner;
 
@@ -2288,6 +2292,7 @@ We need to fix this someday, though it is a very rare low runner case.
 		jt->running = true;
 		run_function_bool(jt->timerObject, "ontimer");
 		jt->running = false;
+skip_execution:
 
 		if (!jt->isInterval || jt->deleted) {
 			char *gc_name =
@@ -2303,7 +2308,8 @@ We need to fix this someday, though it is a very rare low runner case.
 				jt->ms -= 1000, ++jt->sec;
 		}
 
-		jSideEffects();
+		if (gotimers)
+			jSideEffects();
 	}
 
 	cw = save_cw;

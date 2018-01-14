@@ -561,15 +561,15 @@ sem linha nova na entrada do diretório %s
 sem fecho > na linha %d
 fieldInBuffer não encontrou a etiqueta %d newtext %s
 impossível refazer a cookie jar %s
-0
+inverter 
 o cliente de recepção de cartas é interativo e não pode rodar em segundo plano
 diretório para caixa de entrada não especificado no arquivo .ebrc
 não posso mudar para o diretório %s
 0
 usuário ou senha inválido
-0
-0
-0
+ordenar alfabético
+ordenar por tamanho
+ordenar por data
 0
 0
 o código da etiqueta %d possui o caractere inválido %c a seguir

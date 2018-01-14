@@ -252,6 +252,7 @@ extern CURL *global_http_handle;
 extern CURLSH *global_share_handle;
 extern int debugLevel;		/* 0 to 9 */
 extern bool demin; // deminimize javascript
+extern bool gotimers; // run javascript timers
 extern FILE *debugFile;
 extern char *debugFileName;
 extern char *sslCerts;		/* ssl certificates to validate the secure server */

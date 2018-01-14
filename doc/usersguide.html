@@ -529,6 +529,14 @@ dr : directory is readonly
 <br>ls : same as lsst
 <br>ls=lt : display length and time of all files in subsequent directory scans
 <br>ls= : just list the files in a directory scan
+<br>sort=a : sort files alphabetically
+<br>sort=t : sort files by mod time
+<br>sort=s : sort files by size
+<br>sort+a : same as sort=a
+<br>sort-a : reverse alphabetical
+<br>sort-t : reverse mod time
+<br>sort-s : reverse size
+<br>rf : refresh directory scan, useful if you have changed ls or sort parameters
 <P>
 Browse an html file or a web page
 <P>
@@ -613,6 +621,7 @@ db3 : set debug level, 0 through 9
 <br>db&gt;/tmp/edbrowse.out : redirect debugging output to a file
 <br>jdb : javascript debugger, dot to exit
 <br>demin : deminimize javascript (toggle)
+<br>timers : disable javascript timers (toggle)
 
 <H3> <A NAME=tips> Tips for Avoiding Line Numbers </A> </H3>
 
@@ -1474,6 +1483,12 @@ The same holds for /sys.
 If you search for the year 2014, you won't find anything, because the date and time are extras that are not part of the file name.
 Searches and substitutes apply to file names only.
 If you want to view the entire text as text, write it to a file, or to another session.
+
+<P>
+Files are sorted alphabetically, according to your locale.
+Use the command sort+a for the standard alphabetical sort, and sort-a for a reverse alphabetical sort.
+sort+t sorts by modification time, from oldest to newest, and sort-t reverses this, with the newest files at the top.
+sort+s and sort-s sort by file size.
 
 <H3> <A NAME=case> Upper/Lower Case </A> </H3>
 

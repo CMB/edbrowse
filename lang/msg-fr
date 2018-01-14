@@ -561,15 +561,15 @@ Pas de retour-chariot après la ligne du répertoire %s
 Pas de caractère  > dans la ligne %d
 FieldInBuffer ne peut trouver le tag %d nouveau texte %s
 Impossible de reconstruire votre récipient %s de cookies
-0
+inversion du tri 
 Le client de courrier est interactif, et ne peut être lancé en arrière-fond
 répertoire de courrier non défini dans votre fichier .ebrc
 Ne peut aller dans le répertoire %s
 0
 nom utilisateur / mot de passe invalide
-0
-0
-0
+tri par ordre alphabétique
+tri par taille
+tri par date
 0
 0
 Le tag %d est suivi d'un caractère %c erroné

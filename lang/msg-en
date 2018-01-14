@@ -583,8 +583,8 @@ Unable to create javascript context.
 Unable to create javascript window object.
 0
 Unable to create document object for javascript.
-0
-0
+timers disabled
+timers enabled
 error allocating %zu bytes
 error callocating %zu bytes
 reallocMem(p,0)

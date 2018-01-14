@@ -3648,7 +3648,7 @@ static int twoLetter(const char *line, const char **runThis)
 		return true;
 	}
 
-	if (!strncmp(line, "dsrt", 4)
+	if (!strncmp(line, "sort", 4)
 	    && (line[4] == '+' || line[4] == '-' || line[4] == '=') &&
 	    line[5] && !line[6] && strchr("ast", line[5])) {
 		ls_sort = 0;
@@ -4094,6 +4094,13 @@ et_go:
 		demin ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(demin + MSG_DeminOff);
+		return true;
+	}
+
+	if (stringEqual(line, "timers")) {
+		gotimers ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(gotimers + MSG_TimersOff);
 		return true;
 	}
 
