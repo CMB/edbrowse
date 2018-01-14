@@ -614,9 +614,10 @@ void debugPrint(int lev, const char *msg, ...)
 	va_list p;
 	if (lev > debugLevel)
 		return;
-	va_start(p, msg);
 	if (!debugFile || lev <= 2) {
+		va_start(p, msg);
 		vprintf(msg, p);
+		va_end(p);
 		printf("\n");
 	}
 	if (debugFile) {
@@ -625,10 +626,11 @@ void debugPrint(int lev, const char *msg, ...)
 			fclose(debugFile);
 			ebClose(3);
 		}
+		va_start(p, msg);
 		vfprintf(debugFile, msg, p);
+		va_end(p);
 		fprintf(debugFile, "\n");
 	}
-	va_end(p);
 	if (lev == 0 && !memcmp(msg, "warning", 7))
 		eeCheck();
 }				/* debugPrint */
