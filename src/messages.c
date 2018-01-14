@@ -149,6 +149,8 @@ void i_puts(int msg)
 	eb_puts(i_getString(msg));
 }				/* i_puts */
 
+static void eb_vprintf(const char *fmt, va_list args);
+
 void i_printf(int msg, ...)
 {
 	const char *realmsg = i_getString(msg);
@@ -156,6 +158,11 @@ void i_printf(int msg, ...)
 	va_start(p, msg);
 	eb_vprintf(realmsg, p);
 	va_end(p);
+	if (debugFile) {
+		va_start(p, msg);
+		vfprintf(debugFile, realmsg, p);
+		va_end(p);
+	}
 }				/* i_printf */
 
 /* Print and exit.  This puts newline on, like puts. */
@@ -167,6 +174,12 @@ void i_printfExit(int msg, ...)
 	eb_vprintf(realmsg, p);
 	nl();
 	va_end(p);
+	if (debugFile) {
+		va_start(p, msg);
+		vfprintf(debugFile, realmsg, p);
+		fprintf(debugFile, "\n");
+		va_end(p);
+	}
 	ebClose(99);
 }				/* i_printfExit */
 
@@ -370,7 +383,7 @@ void eb_puts(const char *s)
 		fprintf(debugFile, "%s\n", s);
 }				/* eb_puts */
 
-void eb_vprintf(const char *fmt, va_list args)
+static void eb_vprintf(const char *fmt, va_list args)
 {
 #ifdef DOSLIKE
 	wchar_t *chars = NULL;
@@ -380,6 +393,7 @@ void eb_vprintf(const char *fmt, va_list args)
 	char *a;		// result of vasprintf
 	output_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (GetConsoleMode(output_handle, &mode) == 0) {
+// this is better than doing nothing.
 		vprintf(fmt, args);
 		return;
 	}
@@ -398,7 +412,4 @@ void eb_vprintf(const char *fmt, va_list args)
 #else
 	vprintf(fmt, args);
 #endif
-
-	if (debugFile)
-		vfprintf(debugFile, fmt, args);
-}				/* eb_printf */
+}				/* eb_vprintf */
