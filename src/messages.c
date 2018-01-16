@@ -23,6 +23,7 @@ bool errorExit;
 void selectLanguage(void)
 {
 	char *s = getenv("LANG");	// This is likely to fail in windows
+	char *dot;
 
 // default English
 	strcpy(eb_language, "en");
@@ -70,6 +71,9 @@ void selectLanguage(void)
 	strncpy(eb_language, s, 7);
 	eb_language[7] = 0;
 	caseShift(eb_language, 'l');
+	dot = strchr(eb_language, '.');
+	if (dot)
+		*dot = 0;
 
 	if (!strncmp(eb_language, "en", 2))
 		return;		/* english is already the default */
