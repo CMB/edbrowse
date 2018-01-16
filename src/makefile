@@ -21,7 +21,7 @@ MOZJS_LIBS !=	pkg-config --libs ${MOZJS}
 # CPPFLAGS +=	${MOZJS_CPPFLAGS}
 # CXXFLAGS +=	${MOZJS_CXXFLAGS}
 
-LIBS =		-lpcre -lcurl -lreadline -lncurses ${TIDY5_LIBS} -lduktape -lm
+LIBS =		-lpcre -lcurl -lreadline ${TIDY5_LIBS} -lduktape -lm
 
 # Add PREFIX to search paths.  These should go after everything else is in.
 CPPFLAGS +=	-I${PREFIX}/include

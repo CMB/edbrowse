@@ -34,7 +34,7 @@ LDFLAGS += $(STRIP)
 ESQLDFLAGS = $(STRIP)
 
 #  Libraries for edbrowse.
-LDLIBS = -lpcre -lcurl -lreadline -lncurses -ltidy -lduktape -lm
+LDLIBS = -lpcre -lcurl -lreadline -ltidy -lduktape -lm
 #  legacy mozilla js
 JSLIB = -lmozjs-24
 
