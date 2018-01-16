@@ -1423,6 +1423,7 @@ onhashchange = eb$truefunction;
 // Form has children for sure, but if we add <input> to Form,
 // we also have to add it to the array Form.elements.
 // So there are some nodes that we have to do outside this loop.
+(function() {
 for(var cn in {HtmlObj, Head, Body, CSSStyleDeclaration, Frame,
 Anchor, Element, Lister, Listitem, Tbody, Table, Div,
 Span, Trow, Cell, P, Script,
@@ -1466,6 +1467,7 @@ c.prototype.addEventListener = window.addEventListener;
 c.prototype.removeEventListener = window.removeEventListener;
 c.prototype.attachEvent = window.attachEvent;
 }
+})();
 
 /*********************************************************************
 As promised, Form is weird.
