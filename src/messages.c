@@ -10,8 +10,9 @@
 #include <locale.h>
 
 /* English by default */
-static const char **messageArray = msg_en;
-int eb_lang = 1;
+static const char **messageArray;
+char eb_language[8];
+int eb_lang;
 /* startup .ebrc files in various languages */
 const char *ebrc_string;
 bool cons_utf8, iuConvert = true;
@@ -21,8 +22,12 @@ bool errorExit;
 
 void selectLanguage(void)
 {
-	char buf[8];
 	char *s = getenv("LANG");	// This is likely to fail in windows
+
+// default English
+	strcpy(eb_language, "en");
+	eb_lang = 1;
+	messageArray = msg_en;
 	ebrc_string = ebrc_en;
 
 #ifndef DOSLIKE
@@ -62,35 +67,37 @@ void selectLanguage(void)
 	setlocale(LC_TIME, "C");
 #endif // DOSLIKE y/n
 
-	strncpy(buf, s, 7);
-	buf[7] = 0;
-	caseShift(buf, 'l');
+	strncpy(eb_language, s, 7);
+	eb_language[7] = 0;
+	caseShift(eb_language, 'l');
 
-	if (!strncmp(buf, "en", 2))
-		return;		/* english is default */
+	if (!strncmp(eb_language, "en", 2))
+		return;		/* english is already the default */
 
-	if (!strncmp(buf, "fr", 2)) {
+	if (!strncmp(eb_language, "fr", 2)) {
 		eb_lang = 2;
 		messageArray = msg_fr;
 		ebrc_string = ebrc_fr;
+		type8859 = 1;
 		return;
 	}
 
-	if (!strncmp(buf, "pt_br", 5)) {
+	if (!strncmp(eb_language, "pt_br", 5)) {
 		eb_lang = 3;
 		messageArray = msg_pt_br;
 		ebrc_string = ebrc_pt_br;
+		type8859 = 1;
 		return;
 	}
 
-	if (!strncmp(buf, "pl", 2)) {
+	if (!strncmp(eb_language, "pl", 2)) {
 		eb_lang = 4;
 		messageArray = msg_pl;
 		type8859 = 2;
 		return;
 	}
 
-	if (!strncmp(buf, "de", 2)) {
+	if (!strncmp(eb_language, "de", 2)) {
 		eb_lang = 5;
 		messageArray = msg_de;
 		ebrc_string = ebrc_de;
@@ -98,7 +105,7 @@ void selectLanguage(void)
 		return;
 	}
 
-	if (!strncmp(buf, "ru", 2)) {
+	if (!strncmp(eb_language, "ru", 2)) {
 		eb_lang = 6;
 		messageArray = msg_ru;
 		type8859 = 5;

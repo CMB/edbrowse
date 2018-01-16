@@ -441,6 +441,7 @@ int main(int argc, char **argv)
 #endif // !_MSC_VER
 
 	selectLanguage();
+	setHTTPLanguage(eb_language);
 
 /* Establish the home directory, and standard edbrowse files thereunder. */
 	home = getenv("HOME");
@@ -688,7 +689,7 @@ int main(int argc, char **argv)
 		if (cx == 1)
 			runEbFunction("init");
 		if (file[0] == '<') {
-			runEbFunction(file+1);
+			runEbFunction(file + 1);
 			++argv, --argc;
 			continue;
 		}
@@ -1035,7 +1036,7 @@ void unreadConfigFile(void)
 	displayLength = 500;
 
 	setDataSource(NULL);
-	setHTTPLanguage(NULL);
+	setHTTPLanguage(eb_language);
 	deleteNovsHosts();
 }				/* unreadConfigFile */
 

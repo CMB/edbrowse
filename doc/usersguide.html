@@ -386,13 +386,18 @@ Some websites offer their contents in multiple languages.
 For example, twitter.com has an English version,
 a French version, and so forth.
 It is possible to select the language when requesting the page.
-Edbrowse supports this via the localizeweb keyword in its configuration
-file.
+Edbrowse supports this via the localizeweb keyword in its configuration file.
 For instance, the following entry in .ebrc indicates that you want the
 French version, when it is available.
 
 <P>
 localizeweb = fr
+
+<P>
+If not specified, edbrowse defers to the environment variable $LANG, which is set on almost every system.
+Thus you rarely need to set localizeweb in your config file.
+If LANG is not set, the default is English.
+Edbrowse always sends a language designator to the web servers, because some websites, such as amazon.com, will not run properly without it.
 
 <hr>
 <H2> Chapter 2, Quick Reference Guide </H2>
