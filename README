@@ -38,10 +38,81 @@ The doc directory also includes a sample config file.
 
 ------------------------------------------------------------
 
-Ok, I'm going to assume you've read the documentation.
+OK, I'm going to assume you've read the documentation.
 No need to repeat all that here.
 You're here because you want to compile and/or package the program,
 or modify the source in some way.  Great!
+
+Requirements:
+
+pcre:
+As you may know, edbrowse was originally a perl script.
+As such, it was only natural to use perl regular expressions for
+the search/substitute functions in the editor.
+Once you've experienced the power of perl regexp, you'll never
+go back to ed.  So I use the perl-compatible regular expression
+library, /lib/libpcre.so.0, available on most Linux systems.
+
+If you don't have this file, check your installation disks.
+the pcre and pcre-devel packages might be there, just not installed.
+You need version 8.10 or higher.
+
+Note that my files include <pcre.h>.
+Some distributions put it in /usr/include/pcre/pcre.h,
+so you'll have to adjust the source, the -I path, or make a link.
+
+libcurl:
+You also need libcurl and libcurl-devel,
+which is included in almost every Linux distro.
+This is used for ftp, http, and https.
+Check for /usr/include/curl/curl.h
+Edbrowse requires version 7.29.0 or later.  If you compiled with a version
+prior to 7.29.0, the program will inform you that you need to upgrade.
+If you have to compile curl from source, be sure to specify
+--ENABLE-VERSION-SYMBOLS (or some such) at the configure script.
+
+tidy:
+Edbrowse now uses the tidy-html5 HTML parser.  So there are a couple
+of things to install for this prerequisite.
+The tidy-html5 compilation process uses cmake.  Please either use your
+package manager to get cmake (for instance, apt-get install cmake),
+or follow the instructions at http://www.cmake.org/download/
+
+Once you have cmake, download the latest tidy-html5 code from:
+https://github.com/htacg/tidy-html5/archive/master.zip
+Unzip and cd to build/cmake
+cmake ../..
+make install
+Now the latest tidy-html5 library will be available to edbrowse.
+Edbrowse requires tidy-html5 version 5.1.25 or greater,
+and might not work properly, or even compile with an earlier version.
+Note that the latest tagged version is 5.1.25, but 5.1.26 and later
+have some fixes for known issues that have been reported upstream.
+
+duktape:
+Finally, you need the Duktape javascript engine and header file.
+If this is not part of your distribution, download from github, compile, and install.
+
+git clone https://github.com/svaarala/duktape.git
+cd duktape
+make dist
+cd dist
+make -f Makefile.sharedlibrary
+make -f Makefile.sharedlibrary install (as root)
+make -f Makefile.cmdline
+ln -s `pwd`/duk /usr/local/bin/duk (as root)
+
+unixODBC:
+If you want database access, you need unixODBC and unixODBC-devel.
+Select the odbc option via:
+make BUILD_EDBR_ODBC=on in the src directory, or from build,
+cmake -DBUILD_EDBR_ODBC:BOOL=ON ..
+ODBC has been very stable for a long time.
+unixODBC version 2.2.14 seems to satisfy edbrowse with odbc.
+
+------------------------------------------------------------
+
+Compiling edbrowse:
 
 cmake can be used to build and install edbrowse in Windows, linux, or Mac OS X.
 visual C studio is assumed on Windows.
@@ -61,65 +132,6 @@ make
 Be careful here.  Apple distributes an ancient version of tidy-html.
 You're going to have to take steps to insure that they do not collide.
 Perhaps your best bet is to get edbrowse from MacPorts.
-
-As you may know, edbrowse was originally a perl script.
-As such, it was only natural to use perl regular expressions for
-the search/substitute functions in the editor.
-Once you've experienced the power of perl regexp, you'll never
-go back to ed.  So I use the perl compatible regular expression
-library, /lib/libpcre.so.0, available on most Linux systems.
-If you don't have this file, check your installation disks.
-the pcre and pcre-devel packages might be there, just not installed.
-You need version 8.10 or higher.
-
-Note that my files include <pcre.h>.
-Some distributions put it in /usr/include/pcre/pcre.h,
-so you'll have to adjust the source, the -I path, or make a link.
-
-You also need libcurl and libcurl-devel,
-which is included in almost every Linux distro.
-This is used for ftp, http, and https.
-Check for /usr/include/curl/curl.h
-Edbrowse requires version 7.29.0 or later.  If you compiled with a version
-prior to 7.29.0, the program will inform you that you need to upgrade.
-If you have to compile curl from source, be sure to specify
---ENABLE-VERSION-SYMBOLS (or some such) at the configure script.
-
-Edbrowse now uses the tidy-html5 HTML parser.  So there are a couple
-of things to install for this prerequisite.
-The tidy-html5 compilation process uses cmake.  Please either use your
-package manager to get cmake (for instance, apt-get install cmake),
-or follow the instructions at http://www.cmake.org/download/
-
-Once you have cmake, download the latest tidy-html5 code from:
-https://github.com/htacg/tidy-html5/archive/master.zip
-Unzip and cd to build/cmake
-cmake ../..
-make install
-Now the latest tidy-html5 library will be available to edbrowse.
-Edbrowse requires tidy-html5 version 5.1.25 or greater,
-and might not work properly, or even compile with an earlier version.
-Note that the latest tagged version is 5.1.25, but 5.1.26 and later
-have some fixes for known issues that have been reported upstream.
-
-Finally, you need the Duktape javascript engine and header file.
-If this is not part of your distribution, download from github, compile, and install.
-
-git clone https://github.com/svaarala/duktape.git
-cd duktape
-make dist
-cd dist
-make -f Makefile.sharedlibrary
-make -f Makefile.sharedlibrary install (as root)
-make -f Makefile.cmdline
-ln -s `pwd`/duk /usr/local/bin/duk (as root)
-
-If you want database access, you need unixODBC and unixODBC-devel.
-Select the odbc option via:
-make BUILD_EDBR_ODBC=on in the src directory, or from build,
-cmake -DBUILD_EDBR_ODBC:BOOL=ON ..
-ODBC has been very stable for a long time.
-unixODBC version 2.2.14 seems to satisfy edbrowse with odbc.
 
 ------------------------------------------------------------
 
