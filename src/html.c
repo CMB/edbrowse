@@ -2402,6 +2402,11 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 	int action;
 	char *jst;		// java string
 
+// Some functions in third.js create, link, and then remove nodes, before
+// there is a document. Don't run any side effects in this case.
+	if (!cw->tags)
+		return;
+
 	sscanf(rest, "%s %p,%s %p,%s ", p_name, &a_j, a_name, &b_j, b_name);
 	if (type == 'c') {	/* create */
 		parent = tagFromJavaVar2(p_j, p_name);

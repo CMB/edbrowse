@@ -727,10 +727,6 @@ Snapshot taken on 08/20/2017.  query-selector-standalone-debug.js
 Minimized code is available, but I thought it more confusing than helpful.
 *********************************************************************/
 
-// Can't run this until the dom framework is in place; it creates new div tags etc.
-function eb$qs$start()
-{
-
 /*
 Copyright 2014, query-selector@1.0.6
 MIT Licensed
@@ -3880,6 +3876,10 @@ _querySelector_ = function (exports) {
 return _querySelector_;
 })();
 
+document.querySelectorAll = querySelectorAll;
+
+function eb$qs$start()
+{
 cssGather();
 cssApply();
 }
