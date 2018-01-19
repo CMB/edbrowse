@@ -23,8 +23,8 @@ JavaScript-Interpreter ist abgestürzt, alle aktuellen JavaScript-Sitzungen wurd
 überprüfe SSL-Verbindungen
 zeige keine versteckten Dateien im Verzeichnismodus
 zeige versteckte Dateien im Verzeichnismodus
-Konnte Kindprozess für edbrowse.js nicht starten, JavaScript wurde deaktiviert.
-Edbrowse.js konnte nicht ausgeführt werden, JavaScript wurde deaktiviert.
+0
+0
 Endmarker aus
 Endmarker auf gelisteten Zeilen
 Endmarker an
@@ -59,7 +59,7 @@ Benutzername
 Benutzername zu lang, Grenze bei %d Zeichen
 Passwort: 
 Passwort zu lang, maximal %d Zeichen
-Konnte mit edbrowse.js nicht kommunizieren, JavaScript deaktiviert.
+0
 Warnung: auf das Verzeichnis kann nicht zugegriffen werden, die Auflistung wird leer sein
 Disaster, Fehlermeldung der Länge %d ist zu lang
 Zeile %d: 
@@ -95,7 +95,7 @@ kann Datei %s nicht erstellen, Anhang wurde verworfen\n
 kann Datei %s nicht schreiben, Anhang wurde verworfen\n
 keine Mails
 %d Nachrichten
-JavaScript Interprozess-Nachrichten sind nicht mehr synchronisiert.
+0
 ungültige Zeichen nach dem Kommando ls
 h\tgibt diese Hilfe aus\nq\tbeendet das Programm\nLeertaste\tWeiterlesen der Nachricht\nn\twechsle zur nächsten Nachricht\nd\tlösche Nachricht\nw\tspeichere die Nachricht in einer Datei und lösche sie\nu\tspeichere die Nachricht unformatiert in eine Datei und lösche sie
 kann Datei %s nicht erstellen
@@ -157,7 +157,7 @@ alle Zeilen passen auf dem Ausdruck v
 keine der markierten Zeilen wurden erfolgreich entfernt
 Operation unterbrochen
 kein Treffer
-JavaScript Objekte fehlen oder sind fehlerhaft. %d\n
+0
 Agent Nummer %c ist nicht definiert
 konnte neues Verzeichnis nicht ausgeben
 konnte aktuelles Verzeichnis nicht anzeigen
@@ -225,7 +225,7 @@ kann %s nicht öffnen
 kann %s nicht lesen
 eingegebener Text enthält Nullbytes
 Zeile enthält einen Zeilenumbruch
-erste Zeile von %s ist zu lang
+0
 Datei ist momentan in einem Puffer, nutzen Sie rf zum aktualisieren
 Binärdatei nicht im Browsermodus verfügbar
 kann leere Datei nicht im Browsermodus anzeigen
@@ -234,7 +234,7 @@ bereits am Browsen
 Marke %s nicht gefunden
 i im Browsermodus nicht verfügbar
 kann Einfügekommando nicht aus einer Edbrowse-Funktion heraus starten
-Kann nicht mit Edbrowse-js kommunizieren, JavaScript nicht aktiv
+0
 Kommando %c noch nicht implementiert
 %d ist außerhalb des Bereichs
 keine Option enthält die Zeichenkette %s
@@ -578,11 +578,11 @@ htmlParse() kann nicht erneut aufgerufen werden
 unerwarteter Eingabetyp in eingabeformular
 list = 0 in tagFromJavaVar()
 0
-konnte keinen Speicher für JavaScript-Operationen bekommen
-konnte JavaScript-Kontext nicht erstellen
-konnte kein Fensterobjekt für JavaScript erstellen
 0
-kann Dokumentobjekt nicht erstellen
+konnte JavaScript-Kontext nicht erstellen
+0
+0
+0
 0
 0
 Fehler beim Anfordern von %zu Bytes
@@ -654,6 +654,6 @@ SSL-Verbindungsfehler in libcurl: %s
 Eingabe-tty
 zeilenweise Eingabe
 0
-Schwerwiegender Fehler in dieser Sitzung, JavaScript wird geschlossen
+0
 Ausführung des Kommandos fehlgeschlagen, das System gab %d zurück
 0

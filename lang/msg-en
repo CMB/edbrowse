@@ -23,8 +23,8 @@ don't verify ssl connections (less secure)
 verify ssl connections
 don't show hidden files in directory mode
 show hidden files in directory mode
-Unable to fork child process for edbrowse-js, javascript has been disabled.
-Unable to exec edbrowse-js, javascript has been disabled.
+0
+0
 end markers off
 end markers on listed lines
 end markers on
@@ -59,7 +59,7 @@ Username:
 user name too long, limit %d characters
 Password: 
 password too long, limit %d characters
-Unable to communicate with edbrowse-js, javascript has been disabled.
+0
 warning, the directory is inaccessible - the listing will be empty
 disaster, error message length %d is too long\n
 line %d: 
@@ -95,7 +95,7 @@ cannot create file %s, attachment is discarded\n
 cannot write to file %s, attachment is discarded\n
 no mail
 %d messages\n
-Javascript interprocess messages are out of sync.
+0
 invalid characters after the ls command
 h\tprint this help message.\nq\tquit this program.\nspace\tread more of this email.\nn\tnext email.\nd\tdelete this email.\nw\twrite this email to a file and delete it.\nu\twrite this email unformatted to a file and delete it.
 cannot create file %s\n
@@ -157,7 +157,7 @@ all lines match the v pattern
 none of the marked lines were successfully modified
 operation interrupted
 no match
-Javascript objects are missing or misconfigured. %d\n
+0
 agent number %c is not defined
 could not print new directory
 could not establish current directory
@@ -225,7 +225,7 @@ cannot open %s
 cannot read from %s
 input text contains nulls
 line contains an embedded carriage return
-first line of %s is too long
+0
 file is currently in buffer - please use the rf command to refresh
 cannot browse a binary file
 cannot browse an empty file
@@ -234,7 +234,7 @@ already browsing
 label %s is not found
 i not available in browse mode
 cannot run an insert command from an edbrowse function
-Unable to communicate with edbrowse-js, javascript is closed.
+0
 command %c not yet implemented
 %d is out of range
 no options contain the string %s
@@ -578,11 +578,11 @@ htmlParse() is not reentrant.
 unexpected input type in submitForm()
 list = 0 in tagFromJavaVar()
 0
-Could not allocate memory for javascript operations.
-Unable to create javascript context.
-Unable to create javascript window object.
 0
-Unable to create document object for javascript.
+Unable to create javascript context.
+0
+0
+0
 timers disabled
 timers enabled
 error allocating %zu bytes
@@ -654,6 +654,6 @@ SSL connect error in libcurl: %s
 input tty
 input readline()
 0
-Unrecoverable JavaScript error in this session, javascript is closed.
+0
 Command execution failed, system() returned %d
 0

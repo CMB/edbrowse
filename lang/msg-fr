@@ -23,8 +23,8 @@ pas de vérification des connexions ssl (moins sûr)
 vérification des connexions ssl
 ne pas afficher les fichiers cachés en mode répertoire
 afficher les fichiers cachés en mode répertoire
-Impossible de lancer un sous-processus pour edbrowse-js : javascript a été désactivé.
-Impossible de lancer edbrowse-js : javascript a été désactivé.
+0
+0
 marqueurs de fin de ligne désactivés
 marqueurs de fin de ligne activés pour les lignes listées
 marqueurs de fin de ligne activés
@@ -59,7 +59,7 @@ Nom d'utilisateur:
 nom d'utilisateur trop long, la limite est de %d caractères
 Mot de passe: 
 nom de passe trop long, la limite est de %d caractères
-Impossible de communiquer avec edbrowse-js : javascript a été désactivé.
+0
 attention, répertoire inaccessible - la liste des fichiers sera vide
 désastre, message d'erreur %d trop long\n
 ligne %d: 
@@ -95,7 +95,7 @@ impossible de créer le fichier %s, pièce jointe ignorée\n
 impossible de sauvegarder le fichier %s, pièce jointe ignorée\n
 pas de courrier
 %d messages\n
-Messages d'interprocessus javascript désynchronisés.
+0
 commande ls suivie de caractères invalides
 h\taffiche ce message d'aide.\nq\tquitte ce programme.\nx\tquitte sans rien modifier sur le serveur de courrier.\nespace\tcontinuer la lecture de ce message.\nn\taller au message suivant.\nd\teffacer ce message.\nw\tsauvegarder ce message et l'effacer.\nu\tsauvegader ce message non formaté puis l'effacer.
 création du fichier %s impossible\n
@@ -157,7 +157,7 @@ toutes les lignes correspondent au modèle v
 aucune des lignes marquées n'a pu être modifiée avec succès
 opération interrompue
 pas de correspondance
-Objets javascript manquants ou mal configurés. %d\n
+0
 l'agent numéro %c n'est pas défini
 impossible d'afficher le nouveau répertoire
 impossible d'établir le répertoire courant
@@ -225,7 +225,7 @@ impossible d'ouvrir %s
 impossible de lire %s
 le texte entré contient des caractères nuls
 il y a un retour-chariot dans la ligne
-le première ligne de %s est trop longue
+0
 le fichier est actuellement dans le tampon - utilisez la commande rf pour le réafficher
 navigation impossible dans un fichier binaire
 navigation impossible dans un fichier vide
@@ -234,7 +234,7 @@ en cours de navigation
 label %s non trouvé
 i impossible en mode navigation
 impossible de lancer une commande d'insertion à partir d'une fonction d'edbrowse
-Communication avec javascript impossible : javascript est fermé.
+0
 commande %c non implémentée
 %d hors limites
 aucune option ne contient la chaîne %s
@@ -578,11 +578,11 @@ HtmlParse() n'est pas réentrant
 Type de données inattendu dans submitForm()
 List = 0 dans tagFromJavaVar()
 0
-Impossible d'allouer de la mémoire pour les opérations javascript
-Impossible de créer un contexte javascript
-Impossible de créer un objet fenêtre pour javascript
 0
-Impossible de créer un document objet pour javascript
+Impossible de créer un contexte javascript
+0
+0
+0
 0
 0
 Erreur alloc de %zu octets
@@ -654,6 +654,6 @@ Erreur de connexion SSL dans libcurl: %s
 entrées tty
 entrées readline()
 0
-Erreur Javascript irrécupérable dans cette session, javascript est fermé.
+0
 La commande a échoué, le système a renvoyé %d
 0

@@ -23,8 +23,8 @@ não verifica conexões SSL (menos seguro)
 verifica conexões SSL
 não exibe arquivos ocultos no modo diretório
 exibe arquivos ocultos no modo diretório
-Impossível bifurcar processo filho para edbrowse-js, Javascript foi desabilitado.
-Impossível executar edbrowse-js, Javascript foi desabilitado.
+0
+0
 marcadores de fim desligados
 marcadores de fim em linhas listadas
 marcadores de fim ligados
@@ -59,7 +59,7 @@ Nome de usuário:
 nome de usuário longo demais; limite %d caracteres
 Senha: 
 senha longa demais; limite %d caracteres
-Impossível comunicar-se com edbrowse-js, Javascript foi desabilitado.
+0
 aviso: diretório inacessível - listagem ficará vazia
 catástrofe; mensagem de erro %d é comprida demais\n
 linha %d: 
@@ -95,7 +95,7 @@ impossível criar o arquivo %s; anexo descartado\n
 impossível escrever no arquivo %s; anexo descartado\n
 sem cartas
 %d mensagens\n
-Mensagens interprocessos de Javascript não estão em sincronia.
+0
 caracteres inválidos após o comando ls
 h\tmostra esta mensagem de ajuda.\nq\tsai do programa.\nespaço\tcontinua a ler esta carta.\nn\tvai para próxima carta.\nd\tapaga carta.\nw\tguarda carta em arquivo e apaga carta.\nu\tguarda carta em arquivo sem formatar e apaga carta
 impossível criar o arquivo %s\n
@@ -157,7 +157,7 @@ todas as linhas condizem com o padrão v
 nenhuma linha marcada modificada com sucesso
 operação interrompida
 nada similar
-Objetos Javascript estão faltando ou desconfigurados. %d\n
+0
 agente número %c não definido
 não foi possível mostrar diretório novo
 não foi possível estabelecer o diretório atual
@@ -225,7 +225,7 @@ impossível abrir %s
 impossível ler a partir de %s
 texto de entrada contém caracteres nulos
 a linha possui um retorno de carro embutido
-a primeira linha do %s é comprida demais
+0
 arquivo atualmente no buffer - use por favor o comando rf para atualizar
 impossível navegar num arquivo binário
 impossível navegar num arquivo vazio
@@ -234,7 +234,7 @@ já está navegando
 rótulo %s não achado
 i não disponível em modo navegação
 impossível executar um comando insert a partir de uma função do edbrowse
-Impossível comunicar-se com edbrowse-js, Javascript está fechado.
+0
 comando %c ainda não implementado
 %d está fora do intervalo
 não há opções com a cadeia %s
@@ -578,11 +578,11 @@ htmlParse() não é reentrante.
 dipo de entrada inesperado na submitForm()
 lista = 0 in tagFromJavaVar()
 0
-não consegui alocar memória para operação Javascript.
-impossível criar contexto Javascript 
-impossível criar objeto de janela para o Javascript
 0
-impossível criar objeto de documento para o Javascript
+impossível criar contexto Javascript 
+0
+0
+0
 0
 0
 erro a alocar %zu bytes
@@ -654,6 +654,6 @@ Erro de conexão SSL na libcurl: %s
 TTY de entrada
 linha de entrada()
 0
-Erro não-reparável de javascript nesta sessão, javascript está fechado.
+0
 Execução de comando falhou; system() retornou %d
 0

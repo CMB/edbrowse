@@ -23,8 +23,8 @@ nie weryfikuj połączeń SSL (mniej bezpieczne)
 weryfikuj połączenia SSL
 nie pokazuj ukrytych plików w trybie katalogu
 pokazuj ukryte pliki w trybie katalogu
-Nie można utworzyć procesu potomnego dla edbrowse-js, JavaScript został wyłączony.
-Nie można wykonać polecenia edbrowse-js, JavaScript został wyłączony.
+0
+0
 znaczniki końca linii wyłączone
 znaczniki końca linii włączone dla wyświetlonych linii
 znaczniki końca linii włączone
@@ -59,7 +59,7 @@ Nazwa użytkownika:
 nazwa użytkownika zbyt długa, ograniczenie do %d znaków
 Hasło: 
 hasło zbyt długie, ograniczenie do %d znaków
-Nie można skomunikować się z edbrowse-js, JavaScript został wyłączony.
+0
 uwaga, katalog jest niedostępny - lista zawartości będzie pusta
 katastrofa, długość wiadomości o błędzie %d - zbyt duża
 wiersz %d: 
@@ -95,7 +95,7 @@ nie można utworzyć pliku %s, załącznik odrzucony\n
 nie można zapisać pliku %s, załącznik odrzucony\n
 brak poczty
 %d wiadomości\n
-Komunikacja między procesami JavaScript jest rozsynchronizowana.
+0
 niedozwolone znaki po poleceniu 'ls'
 h\twydrukuj ten wątek pomocy.\nq\tzakończ ten program.\nspacja\tczytaj więcej z tej wiadomości.\nn\tprzejdź do następnej wiadomości pocztowej.\nd\tusuń tę wiadomość.\nw\tzapisz tę wiadomość do pliku i usuń ją.\nu\tzapisz tę wiadomość do pliku w postaci niesformatowanej i usuń ją.
 nie można utworzyć pliku %s\n
@@ -157,7 +157,7 @@ wszystkie wiersze pasują do wzorca 'v'
 żaden z zaznaczonych wierszy nie został poprawnie zmodyfikowany
 operacja przerwana
 brak pasujących wyników
-Brak obiektów JavaScript, lub zostały one błędnie skonfigurowane. %d\n
+0
 agent numer %c nie został zdefiniowany
 nie można wyświetlić nowego katalogu
 nie można wykryć bieżącego katalogu
@@ -225,7 +225,7 @@ nie można otworzyć %s
 nie można wczytać %s
 wprowadzony tekst zawiera puste znaki
 wiersz zawiera znak powrotu karetki
-pierwszy wiersz %s jest zbyt długi
+0
 plik jest obecnie w buforze - użyj polecenia 'rf' by odświeżyć
 nie można przeglądać pliku binarnego
 nie można przeglądać pustego pliku
@@ -234,7 +234,7 @@ już przeglądasz
 etykieta %s nie znaleziona
 'i' nie znalezione w trybie przeglądania
 nie można wywołać polecenia wstawienia z funkcji edbrowse
-Nie można skomunikować się z edbrowse-js, JavaScript został zamknięty.
+0
 polecenie %c nie zaimplementowane
 %d jest poza zakresem
 żadna opcja nie zawiera ciągu %s
@@ -578,11 +578,11 @@ Funkcja htmlParse() nie jest wielobieżna (reentrant).
 nieoczekiwany typ danych wejściowych w funkcji submitForm()
 lista = 0 w tagFromJavaVar()
 0
-nie można zaalokować pamięci dla operacji JavaScript
-nie można utworzyć kontekstu JavaScript
-nie można utworzyć obiektu 'window' JavaScript
 0
-nie można utworzyć obiektu 'document' JavaScript
+nie można utworzyć kontekstu JavaScript
+0
+0
+0
 0
 0
 błąd alokacji %zu bajtów
@@ -654,6 +654,6 @@ błąd połączenia SSL w libcurl: %s
 konsola wejścia (tty)
 wejście readline()
 0
-Nienaprawialny błąd JavaScript w bieżącej sesji, JavaScript został zamknięty
+0
 Wykonanie polecenia zakończone niepowodzeniem, system() zwrócił %d
 0
