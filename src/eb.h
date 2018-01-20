@@ -138,26 +138,16 @@ typedef uchar *pst;		/* perl string */
 #define TableCellChar '\3'
 
 /* How long can an absolute path be? */
-#define ABSPATH 264 // max length of an absolute pathname, in windows or unix
-/* How long can a regular expression be? */
-#define MAXRE 400
-/* How long can an entered line be? */
-#define MAXTTYLINE 256
-/* The longest string, in certain contexts. */
-#define MAXSTRLEN 1024
-/* How about user login and password? */
-#define MAXUSERPASS 40
-/* Number of pop3 mail accounts */
-#define MAXACCOUNT 100
-/* Number of mime types */
-#define MAXMIME 40
-/* Number of proxy entries */
-#define MAXPROXY 200
-/* number of db tables */
-#define MAXDBT 100
-#define MAXTCOLS 40
-/* How many sessions open concurrently */
-#define MAXSESSION 1000
+#define ABSPATH 1024 // max length of an absolute pathname
+#define MAXRE 512 // max length of a regular expression
+#define MAXTTYLINE 256 // max length of an entered line
+#define MAXUSERPASS 40 // user name or password
+#define MAXACCOUNT 100 // number of email accounts
+#define MAXMIME 40 // number of mime types
+#define MAXPROXY 200 // number of proxy entries
+#define MAXDBT 100 // number of configured database tables
+#define MAXTCOLS 40 // columns in a configured table
+#define MAXSESSION 1000 // concurrent edbrowse sessions
 /* Allocation increment for a growing string, that we don't expect
  * to get too large.  This must be a power of 2. */
 #define ALLOC_GR        0x100
