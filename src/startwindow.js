@@ -59,7 +59,7 @@ ok = Object.keys = Object.keys || (function () {
 		], 
 		DontEnumsLength = DontEnums.length; 
 		return function (o) { 
-		if (typeof o != "object" && typeof o != "function" || o === null) 
+		if (typeof o !== "object" && typeof o !== "function" || o === null) 
 		throw new TypeError("Object.keys called on a non-object");
 		var result = []; 
 		for (var name in o) { 
@@ -449,7 +449,7 @@ return this.eb$insbf(c, t);
 
 eb$master.eb$getSibling = function (obj,direction)
 {
-if (typeof obj.parentNode == 'undefined') {
+if (typeof obj.parentNode === 'undefined') {
 // need calling node to have parent and it doesn't, error
 return null;
 }
@@ -900,7 +900,9 @@ cssApply(e, s);
 return s;
 }
 
-document.defaultView = function() { return window; }
+Object.defineProperty(document, "defaultView", {
+get: function() { return window; }
+});
 
 document.defaultView.getComputedStyle = getComputedStyle;
 
@@ -1090,33 +1092,43 @@ else p.appendChild(s.firstChild);
 This creates a copy of the node and its children recursively.
 The argument 'deep' refers to whether or not the clone will recurs.
 eb$clone is a helper function that is not tied to any particular prototype.
+It's frickin complicated, so set cloneDebug to debug it.
 *********************************************************************/
 
 document.cloneNode = function(deep) {
 return eb$clone (this,deep);
 }
 
+cloneDebug = false;
+
 function eb$clone(nodeToCopy,deep)
 {
 var nodeToReturn;
 var i;
 
+// We should always be cloning a node.
+if(cloneDebug) alert("clone " + nodeToCopy.nodeName + " {");
+
 // bring over event handlers - among other reasons why, this is tested for
 // in the Supports tests in newer versions of jquery.
 // It's a function pointer, no real way to copy it, just pass it back.
-if (typeof nodeToCopy == 'function')
+/*
+if (typeof nodeToCopy === 'function')
 return nodeToCopy;
+*/
 
 // special case for array, which is the select node,
 // or an array of event handlers.
 if(nodeToCopy instanceof Array) {
 nodeToReturn = new Array;
+if(cloneDebug) alert("self children length " + nodeToCopy.length);
 for(i = 0; i < nodeToCopy.length; ++i)
 nodeToReturn.push(eb$clone(nodeToCopy[i]));
 } else {
 
 nodeToReturn = document.createElement(nodeToCopy.nodeName);
 if (deep && nodeToCopy.childNodes) {
+if(cloneDebug) alert("children length " + nodeToCopy.childNodes.length);
 for(i = 0; i < nodeToCopy.childNodes.length; ++i) {
 var current_item = nodeToCopy.childNodes[i];
 nodeToReturn.appendChild(eb$clone(current_item,true));
@@ -1126,11 +1138,26 @@ nodeToReturn.appendChild(eb$clone(current_item,true));
 
 // now for strings and functions.
 for (var item in nodeToCopy) {
-if (typeof nodeToCopy[item] == 'function') {
+// don't copy the things that come from prototype
+if(!nodeToCopy.hasOwnProperty(item)) continue;
+
+if (typeof nodeToCopy[item] === 'function') {
+if(cloneDebug) alert("copy function " + item);
 nodeToReturn[item] = nodeToCopy[item];
 }
 
-if (typeof nodeToCopy[item] == 'string') {
+// what if an onevent$$array is among the items during a recursive copy?
+// this will bring it over, which is needed for the event to run on the copy
+if(nodeToCopy[item] instanceof Array && item !== "childNodes") {
+if(cloneDebug) alert("copy array " + item + " with " + nodeToCopy[item].length + " members");
+nodeToReturn[item] = new Array;
+for(i = 0; i < nodeToCopy[item].length; ++i) {
+nodeToReturn[item].push(nodeToCopy[item][i]);
+}
+}
+
+
+if (typeof nodeToCopy[item] === 'string') {
 // don't copy strings that are really setters; we'll be copying inner$html
 // as a true string so won't need to copy innerHTML, and shouldn't.
 if(item == "innerHTML")
@@ -1140,28 +1167,36 @@ continue;
 if(item == "value" &&
 !(nodeToCopy instanceof Array) && !(nodeToCopy instanceof Option))
 continue;
+if(cloneDebug) alert("copy string " + item);
 nodeToReturn[item] = nodeToCopy[item];
 }
 }
 
 // copy style object if present and its subordinate strings.
-if (typeof nodeToCopy.style == "object") {
+if (typeof nodeToCopy.style === "object") {
+if(cloneDebug) alert("copy style");
 nodeToReturn.style = new CSSStyleDeclaration();
 nodeToReturn.style.element = nodeToReturn;
 for (var item in nodeToCopy.style){
-if (typeof nodeToCopy.style[item] == 'string' ||
-typeof nodeToCopy.style[item] == 'number')
+if (typeof nodeToCopy.style[item] === 'string' ||
+typeof nodeToCopy.style[item] === 'number') {
+if(cloneDebug) alert("copy attribute " + item);
 nodeToReturn.style[item] = nodeToCopy.style[item];
+}
 }
 }
 
 // copy any objects of class URL.
 for (var url in nodeToCopy) {
+if(!nodeToCopy.hasOwnProperty(url)) continue;
 var u = nodeToCopy[url];
-if(typeof u == "object" && u instanceof URL)
+if(typeof u === "object" && u instanceof URL) {
+if(cloneDebug) alert("copy URL " + url);
 nodeToReturn[url] = new URL(u.href);
 }
+}
 
+if(cloneDebug) alert("}");
 return nodeToReturn;
 }
 
@@ -1485,9 +1520,9 @@ Form.prototype.getElementsByClassName = document.getElementsByClassName;
 function eb$formname(parent, child)
 {
 var s;
-if(typeof child.name == "string")
+if(typeof child.name === "string")
 s = child.name;
-else if(typeof child.id == "string")
+else if(typeof child.id === "string")
 s = child.id;
 else return;
 // Is it ok if name is "action"? I'll assume it is,

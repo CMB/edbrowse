@@ -78,7 +78,7 @@ You can even see this from the command line.
 	curl https://weloveanimals.me
 You'll either get the communication error or not.
 Unfortunately you have very little say in the curl configuration, your distribution does what it does.
-Fedora links against gnutls, but most distributions use openssl, so you're probably ok.
+Fedora links curl against gnutls, but most distributions use openssl, so you're probably ok.
 Of course you can build curl from source if you must.
 
 tidy:
@@ -184,7 +184,7 @@ and http redirection.
    Dynamic node linkage.
 5: messages to and from javascript, url resolution, tidy html nodes.
 6: show javascript to be executed
-7: reformatted regular expressions, breakline chunks, read from js.
+7: reformatted regular expressions, breakline chunks.
 8: text lines freed, debug garbage collection
 9: not used
 
@@ -200,7 +200,7 @@ Read and parse the config file.
 Entry point.
 Command line options.
 Invoke mail client if mail options are present.
-If run as editor/browser, treat arguments as files or URLs
+If run as an editor/browser, treat arguments as files or URLs
 and read them into buffers.
 Read commands from stdin and invoke them via the command
 interpreter in buffers.c.
@@ -272,9 +272,21 @@ Edbrowse status and error messages in various languages.
 Each is converted into a const array of messages in src/msg-strings.c,
 thus src/msg-strings.c is not a source file.
 
+lang/ebrc-*:
+Default .ebrc config file that is written to your home directory
+if you have no such file.
+Different files for different languages.
+Each is converted into a const string in src/ebrc.c,
+thus src/ebrc.c is not a source file.
+
 src/decorate.c:
 Decorate the tree with js objects corresponding to the html nodes
 if js is enabled.
+
+src/ebjs.c:
+Interface between edbrowse and the javascript engine.
+Functions to manipulate the js objects,
+which then return the results back to edbrowse.
 
 src/jseng-duk.c:
 The javascript engine built around the duktape js library.
@@ -285,12 +297,6 @@ It might be possible, for instance, to build jseng-v8.c, based upon v8 etc.
 Earlier versions of edbrowse used jseng-moz.cpp, around the Mozilla Spider Monkey javascript engine.
 That file is no longer part of this source tree, but can be extracted from git.
 
-src/html-tidy.c:
-Use tidy5 to parse html and return a tree of nodes.
-This is another form of encapsulation.
-We could, in the future, write html-foo.c, having the same interface,
-if we prefer parser foo instead.
-
 src/startwindow.js:
 Javascript that is run at the start of each session.
 This creates certain classes and methods that client js will need.
@@ -298,26 +304,20 @@ It is converted into a const string in src/startwindow.c,
 thus src/startwindow.c is not a source file.
 As you write functions to support DOM,
 your first preference is to write them in src/startwindow.js.
-Failing this, write them in C, using the functions in src/ebjs.c.
-Failing this, and as a last resort, write them as native code in the js engine.
+Failing this, write them in C, using the interface in src/ebjs.c.
+Failing this, and as a last resort, write them as native code around the js engine.
+
+src/html-tidy.c:
+Use tidy5 to parse html and return a tree of nodes.
+This is another form of encapsulation.
+We could, in the future, write html-foo.c, having the same interface,
+if we prefer parser foo instead.
 
 src/third.js:
 Third party open source javascript routines that are useful to edbrowse.
 These are snapshots; you will need to update third.js, i.e. grab a new
 snapshot, as this software evolves.
 It's a bit of overhead, but we're doing it, so distributors don't have to.
-
-lang/ebrc-*:
-Default .ebrc config file that is written to your home directory,
-if you have no such file.
-Different files for different languages.
-Each is converted into a const string in src/ebrc.c,
-thus src/ebrc.c is not a source file.
-
-src/ebjs.c:
-Interface between edbrowse and the javascript engine.
-Functions to manipulate the js objects,
-which then return the results back to edbrowse.
 
 src/jsrt:
 This is the javascript regression test for edbrowse.
@@ -344,7 +344,7 @@ but it's probably easier just to go through odbc.
 
 Error conventions.
 Unix commands return 0 for ok and a negative number for a problem.
-Some of my functions work this way, but many return
+Some of my functions work this way, but most return
 true for success and false for error.
 The error message is left in a buffer, which you can see by typing h
 in the /bin/ed style.

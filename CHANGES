@@ -16,7 +16,7 @@ This saves time and space.
 
 If an argument is <func then edbrowse runs that function, rather than reading in a file or url.
 
-Sort directory entries by file size or file mod time.
+Sort directory entries by file size or mod time or locale alphabetical (the default).
 
 3.7.1:
 Automatically expand a frame when javascript tries to access its objects.
