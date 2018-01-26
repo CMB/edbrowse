@@ -1415,9 +1415,7 @@ eb$master.attachEvent = function(ev, handler) { this.eb$listen(ev,handler, false
 eb$master.eb$listen = function(ev, handler, addon)
 {
 var ev_before_changes = ev;
-if(addon) {
-ev = "on" + ev;
-} else {
+if(!addon) {
 // for attachEvent, if onclick is passed in, you are actually listening for 'click'
 ev = ev.replace(/^on/, "");
 }
@@ -1444,7 +1442,6 @@ this[evarray].push(handler);
 // the assumption is that this is not a problem
 eb$master.removeEventListener = function(ev, handler, notused)
 {
-ev = "on" + ev;
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
 // remove original html handler after other events have been added.
