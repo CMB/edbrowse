@@ -1385,7 +1385,12 @@ Needless to say that's not good!
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
-	case TAGACT_FOOT:
+	case TAGACT_HEADER:
+		domLink(t, "Header", 0, "headers", cf->docobj, 0);
+		set_property_number(t->jv, "nodeType", 1);
+		break;
+
+	case TAGACT_FOOTER:
 		domLink(t, "Footer", 0, "footers", cf->docobj, 0);
 		set_property_number(t->jv, "nodeType", 1);
 		break;
@@ -1634,7 +1639,8 @@ const struct tagInfo availableTags[] = {
 	{"image", "an image", TAGACT_IMAGE, 0, 4},
 	{"br", "a line break", TAGACT_BR, 1, 4},
 	{"p", "a paragraph", TAGACT_P, 2, 5},
-	{"footer", "a footer", TAGACT_FOOT, 2, 5},
+	{"header", "a header", TAGACT_HEADER, 2, 5},
+	{"footer", "a footer", TAGACT_FOOTER, 2, 5},
 	{"div", "a divided section", TAGACT_DIV, 5, 1},
 	{"map", "a map of images", TAGACT_NOP, 5, 0},
 	{"blockquote", "a quoted paragraph", TAGACT_NOP, 10, 1},

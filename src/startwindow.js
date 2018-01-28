@@ -15,11 +15,11 @@ Example: eb$newLocation, a native method that redirects this web page to another
 It would be nice to run this file stand-alone, outside of edbrowse,
 even if the functionality is limited.
 To this end, I create the window object if it isn't already there,
-using some clever code I found on the internet.
+using the obvious window = this.
 *********************************************************************/
 
 if(typeof window === "undefined") {
-window = (function() { return this; })();
+window = this;
 eb$master = {compiled: false};
 document = new Object;
 // Stubs for native methods that are normally provided by edbrowse.
@@ -300,6 +300,7 @@ document.divs = new Array;
 document.htmlobjs = new Array;
 document.scripts = new Array;
 document.paragraphs = new Array;
+document.headers = new Array;
 document.footers = new Array;
 document.tables = new Array;
 document.spans = new Array;
@@ -1063,6 +1064,7 @@ Span = function(){}
 Trow = function(){}
 Cell = function(){}
 P = function(){}
+Header = function(){}
 Footer = function(){}
 Script = function(){}
 Timer = function(){}
@@ -1311,6 +1313,9 @@ break;
 case "p":
 c = new P();
 break;
+case "header":
+c = new Header();
+break;
 case "footer":
 c = new Footer();
 break;
@@ -1526,7 +1531,7 @@ onhashchange = eb$truefunction;
 (function() {
 var cnlist = ["HtmlObj", "Head", "Body", "CSSStyleDeclaration", "Frame",
 "Anchor", "Element", "Lister", "Listitem", "Tbody", "Table", "Div",
-"Span", "Trow", "Cell", "P", "Script", "Footer",
+"Span", "Trow", "Cell", "P", "Script", "Header", "Footer",
 // The following nodes shouldn't have any children, but the various
 // children methods could be called on them anyways.
 "Area", "TextNode", "Image", "Option", "Link", "Meta", "Audio"];
