@@ -1080,7 +1080,9 @@ Don't do any of this if the tag is itself <style>. */
 	}
 
 	if (href && href_url)
-		instantiate_url(io, href, href_url);
+// This use to be instantiate_url, but with the new side effects
+// on Anchor, Image, etc, we can just set the string.
+		set_property_string(io, href, href_url);
 
 	if (t->action == TAGACT_INPUT) {
 /* link back to the form that owns the element */
@@ -1383,6 +1385,11 @@ Needless to say that's not good!
 		set_property_number(t->jv, "nodeType", 1);
 		break;
 
+	case TAGACT_FOOT:
+		domLink(t, "Footer", 0, "footers", cf->docobj, 0);
+		set_property_number(t->jv, "nodeType", 1);
+		break;
+
 	case TAGACT_TITLE:
 		if (cw->ft)
 			set_property_string(cf->docobj, "title", cw->ft);
@@ -1627,6 +1634,7 @@ const struct tagInfo availableTags[] = {
 	{"image", "an image", TAGACT_IMAGE, 0, 4},
 	{"br", "a line break", TAGACT_BR, 1, 4},
 	{"p", "a paragraph", TAGACT_P, 2, 5},
+	{"footer", "a footer", TAGACT_FOOT, 2, 5},
 	{"div", "a divided section", TAGACT_DIV, 5, 1},
 	{"map", "a map of images", TAGACT_NOP, 5, 0},
 	{"blockquote", "a quoted paragraph", TAGACT_NOP, 10, 1},

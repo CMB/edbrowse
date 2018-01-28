@@ -300,6 +300,7 @@ document.divs = new Array;
 document.htmlobjs = new Array;
 document.scripts = new Array;
 document.paragraphs = new Array;
+document.footers = new Array;
 document.tables = new Array;
 document.spans = new Array;
 document.images = new Array;
@@ -390,8 +391,9 @@ eb$master.hasAttribute = function(name) { if (this[name.toLowerCase()]) return t
 eb$master.setAttribute = function(name, v) { 
 var n = name.toLowerCase();
 this[n] = v; 
-this.attributes[n] = v;
+if(!this.attributes[n])
 this.attributes.push(n);
+this.attributes[n] = v;
 }
 eb$master.removeAttribute = function(name) {
     var n = name.toLowerCase();
@@ -804,7 +806,7 @@ return this.toString().split(s);
 Object.defineProperty(window, "location", {
 get: function() { return window.location$2; },
 set: function(h) {
-if(typeof window.location$2 === "undefined") {
+if(!window.location$2) {
 window.location$2 = new URL(h);
 } else {
 window.location$2.href = h;
@@ -813,7 +815,7 @@ window.location$2.href = h;
 Object.defineProperty(document, "location", {
 get: function() { return document.location$2; },
 set: function(h) {
-if(typeof document.location$2 === "undefined") {
+if(!document.location$2) {
 document.location$2 = new URL(h);
 } else {
 document.location$2.href = h;
@@ -1061,9 +1063,106 @@ Span = function(){}
 Trow = function(){}
 Cell = function(){}
 P = function(){}
+Footer = function(){}
 Script = function(){}
 Timer = function(){}
 Audio = function(){}
+
+/*********************************************************************
+If foo is an anchor, then foo.href = blah
+builds the url object, there are a lot of side effects here.
+Same for form.action, script.src, etc.
+This is modeled after window.location.
+*********************************************************************/
+
+Object.defineProperty(Anchor.prototype, "href", {
+get: function() { return this.href$2; },
+set: function(h) {
+if(!this.href$2) {
+this.href$2 = new URL(h);
+} else {
+this.href$2.href = h;
+}
+}});
+
+Object.defineProperty(Image.prototype, "src", {
+get: function() { return this.href$2; },
+set: function(h) {
+if(!this.href$2) {
+this.href$2 = new URL(h);
+} else {
+this.href$2.href = h;
+}
+}});
+
+Object.defineProperty(Link.prototype, "href", {
+get: function() { return this.href$2; },
+set: function(h) {
+if(!this.href$2) {
+this.href$2 = new URL(h);
+} else {
+this.href$2.href = h;
+}
+}});
+
+Object.defineProperty(Script.prototype, "src", {
+get: function() { return this.href$2; },
+set: function(h) {
+if(!this.href$2) {
+this.href$2 = new URL(h);
+} else {
+this.href$2.href = h;
+}
+}});
+
+Object.defineProperty(Frame.prototype, "src", {
+get: function() { return this.href$2; },
+set: function(h) {
+if(!this.href$2) {
+this.href$2 = new URL(h);
+} else {
+this.href$2.href = h;
+}
+}});
+
+Object.defineProperty(Form.prototype, "action", {
+get: function() { return this.href$2; },
+set: function(h) {
+if(!this.href$2) {
+this.href$2 = new URL(h);
+} else {
+this.href$2.href = h;
+}
+}});
+
+Object.defineProperty(Area.prototype, "href", {
+get: function() { return this.href$2; },
+set: function(h) {
+if(!this.href$2) {
+this.href$2 = new URL(h);
+} else {
+this.href$2.href = h;
+}
+}});
+
+/*********************************************************************
+Some websites refer to A.protocol, which has not explicitly been set.
+I assume they mean A.href.protocol, the protocol of the url object.
+Do we have to do this for every component of the URL object,
+and for every class that has such an object? I don't know.
+*********************************************************************/
+
+(function() {
+var cnlist = ["Anchor", "Image", "Script", "Link", "Area", "Form", "Frame"];
+for(var i=0; i<cnlist.length; ++i) {
+var cn = cnlist[i]; // class name
+var piecelist = ["protocol", "pathname", "host", "search", "hostname", "port"];
+for(var j=0; j<piecelist.length; ++j) {
+var piece = piecelist[j];
+eval('Object.defineProperty(' + cn + '.prototype, "' + piece + '", {get: function() { return this.href$2 ? this.href$2.' + piece + ' : null},set: function(x) { if(this.href$2) this.href$2.' + piece + ' = x; }});');
+}
+}
+})();
 
 /*********************************************************************
 When a script runs it may call document.write. But where to put those nodes?
@@ -1149,6 +1248,9 @@ nodeToReturn[item] = nodeToReturn;
 continue;
 }
 
+// Look for a link from A to B within the tree of nodes,
+// A.foo = B, and try to preserve that link in the new tree, A1.foo = B1,
+// rather like tar or cpio preserving hard links.
 if(typeof nodeToCopy[item] === "object" && kids) {
 for(j=0; j<kids.length; ++j) {
 if(kids[j] !== nodeToCopy[item]) continue;
@@ -1256,10 +1358,6 @@ c = new Body();
 break;
 case "a":
 c = new Anchor();
-// Warning: these properties are placeholders; I suspect they should be
-// getter setter functions that act upon a.href, but not sure yet.
-c.protocol = "";
-c.pathname = "";
 break;
 case "image":
 t = "img";
@@ -1278,6 +1376,9 @@ c = new Div();
 break;
 case "p":
 c = new P();
+break;
+case "footer":
+c = new Footer();
 break;
 case "table":
 c = new Table();
@@ -1489,12 +1590,14 @@ onhashchange = eb$truefunction;
 // we also have to add it to the array Form.elements.
 // So there are some nodes that we have to do outside this loop.
 (function() {
-for(var cn in {HtmlObj, Head, Body, CSSStyleDeclaration, Frame,
-Anchor, Element, Lister, Listitem, Tbody, Table, Div,
-Span, Trow, Cell, P, Script,
+var cnlist = ["HtmlObj", "Head", "Body", "CSSStyleDeclaration", "Frame",
+"Anchor", "Element", "Lister", "Listitem", "Tbody", "Table", "Div",
+"Span", "Trow", "Cell", "P", "Script", "Footer",
 // The following nodes shouldn't have any children, but the various
 // children methods could be called on them anyways.
-Area, TextNode, Image, Option, Link, Meta, Audio}) {
+"Area", "TextNode", "Image", "Option", "Link", "Meta", "Audio"];
+for(var i=0; i<cnlist.length; ++i) {
+var cn = cnlist[i];
 var c = window[cn];
 // c is class and cn is classname.
 // get elements below

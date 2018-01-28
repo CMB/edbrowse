@@ -1548,7 +1548,7 @@ bool infPush(int tagno, char **post_string)
 				     INP_BUTTON ? MSG_NJNoAction :
 				     MSG_NJNoOnclick);
 	}
-	handlerGoBrowse(t, "onclick");
+	handlerGoBrowse((t ? t : form), "onclick");
 	if (js_redirects)
 		return true;
 
@@ -2681,6 +2681,16 @@ li_hide:
 		currentA = (opentag ? t : 0);
 		if (!retainTag)
 			break;
+// Javascript might have set or changed this url.
+		if (t->jv) {
+// js might have set, or changed, the url.
+			char *new_url = get_property_url(t->jv, false);
+			if (new_url) {
+				nzFree(t->href);
+				t->href = resolveURL(cf->hbase, new_url);
+				nzFree(new_url);
+			}
+		}
 		if (!t->href) {
 // onclick turns this into a hyperlink.
 			if (tagHandler(tagno, "onclick"))
