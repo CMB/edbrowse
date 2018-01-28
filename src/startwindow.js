@@ -1164,6 +1164,8 @@ nodeToReturn.appendChild(eb$clone(current_item,true));
 }
 }
 
+var lostElements = false;
+
 // now for strings and functions and stuff.
 for (var item in nodeToCopy) {
 // don't copy the things that come from prototype
@@ -1202,6 +1204,7 @@ if(j < kids.length) continue;
 // An array of attributes, or event handlers etc.
 if(nodeToCopy[item] instanceof Array) {
 nodeToReturn[item] = new Array;
+
 // Ok we need some special code here for form.elements.
 if(item === "elements" && nodeToCopy.nodeName === "form" && kids) {
 if(cloneDebug) alert("copy form elements with " + nodeToCopy[item].length + " members");
@@ -1211,9 +1214,36 @@ if(kids[j] !== nodeToCopy[item][i]) continue;
 nodeToReturn[item].push(nodeToReturn.childNodes[j]);
 break;
 }
+if(j == kids.length) {
+nodeToReturn[item].push(null);
+lostElements = true;
+if(cloneDebug) alert("oops, element " + i + " not linked");
+}
 }
 continue;
 }
+
+// special code here for an array of radio buttons.
+if(nodeToCopy.nodeName === "form" && nodeToCopy[item].nodeName === "radio" && kids) {
+var a1 = nodeToCopy[item];
+var a2 = nodeToReturn[item];
+if(cloneDebug) alert("copy radio " + item + " with " + a1.length + " buttons");
+a2.type = a1.type;
+a2.nodeName = a1.nodeName;
+a2.class = a1.class;
+a2.className = a1.className;
+a2.nodeValue = a1.nodeValue;
+for(i = 0; i < a1.length; ++i) {
+for(j=0; j<kids.length; ++j) {
+if(kids[j] !== a1[i]) continue;
+nodeToReturn[item].push(nodeToReturn.childNodes[j]);
+break;
+}
+if(cloneDebug && j == kids.length) alert("oops, button " + i + " not linked");
+}
+continue;
+}
+
 // It's a regular array.
 if(cloneDebug) alert("copy array " + item + " with " + nodeToCopy[item].length + " members");
 nodeToReturn[item] = new Array;
@@ -1241,6 +1271,18 @@ alert("copy string " + item + " = " + showstring);
 nodeToReturn[item] = nodeToCopy[item];
 continue;
 }
+
+if (typeof nodeToCopy[item] === 'number') {
+if(cloneDebug) alert("copy number " + item + " = " + nodeToCopy[item]);
+nodeToReturn[item] = nodeToCopy[item];
+continue;
+}
+
+if (typeof nodeToCopy[item] === 'boolean') {
+if(cloneDebug) alert("copy boolean " + item + " = " + nodeToCopy[item]);
+nodeToReturn[item] = nodeToCopy[item];
+continue;
+}
 }
 
 // copy style object if present and its subordinate strings.
@@ -1264,6 +1306,27 @@ var u = nodeToCopy[url];
 if(typeof u === "object" && u instanceof URL) {
 if(cloneDebug) alert("copy URL " + url);
 nodeToReturn[url] = new URL(u.href);
+}
+}
+
+// This is an ugly patch for radio button arrays that don't get linked into the elements array.
+if(lostElements) {
+var e1 = nodeToCopy.elements;
+var e2 = nodeToReturn.elements;
+if(cloneDebug) alert("looking for lost radio elements");
+for(i=0; i<e2.length; ++i) {
+if(e2[i]) continue;
+if(e1[i].nodeName !== "radio") {
+if(cloneDebug) alert("oops, lost element " + i + " is type " + e1[i].nodeName);
+continue;
+}
+for (var item in nodeToCopy) {
+if(!nodeToCopy.hasOwnProperty(item)) continue;
+if(nodeToCopy[item] !== e1[i]) continue;
+e2[i] = nodeToReturn[item];
+if(cloneDebug) alert("patching element " + i + " through to " + item);
+break;
+}
 }
 }
 
