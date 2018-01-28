@@ -1070,92 +1070,26 @@ Audio = function(){}
 
 /*********************************************************************
 If foo is an anchor, then foo.href = blah
-builds the url object, there are a lot of side effects here.
+builds the url object; there are a lot of side effects here.
 Same for form.action, script.src, etc.
 This is modeled after window.location.
-*********************************************************************/
-
-Object.defineProperty(Anchor.prototype, "href", {
-get: function() { return this.href$2; },
-set: function(h) {
-if(!this.href$2) {
-this.href$2 = new URL(h);
-} else {
-this.href$2.href = h;
-}
-}});
-
-Object.defineProperty(Image.prototype, "src", {
-get: function() { return this.href$2; },
-set: function(h) {
-if(!this.href$2) {
-this.href$2 = new URL(h);
-} else {
-this.href$2.href = h;
-}
-}});
-
-Object.defineProperty(Link.prototype, "href", {
-get: function() { return this.href$2; },
-set: function(h) {
-if(!this.href$2) {
-this.href$2 = new URL(h);
-} else {
-this.href$2.href = h;
-}
-}});
-
-Object.defineProperty(Script.prototype, "src", {
-get: function() { return this.href$2; },
-set: function(h) {
-if(!this.href$2) {
-this.href$2 = new URL(h);
-} else {
-this.href$2.href = h;
-}
-}});
-
-Object.defineProperty(Frame.prototype, "src", {
-get: function() { return this.href$2; },
-set: function(h) {
-if(!this.href$2) {
-this.href$2 = new URL(h);
-} else {
-this.href$2.href = h;
-}
-}});
-
-Object.defineProperty(Form.prototype, "action", {
-get: function() { return this.href$2; },
-set: function(h) {
-if(!this.href$2) {
-this.href$2 = new URL(h);
-} else {
-this.href$2.href = h;
-}
-}});
-
-Object.defineProperty(Area.prototype, "href", {
-get: function() { return this.href$2; },
-set: function(h) {
-if(!this.href$2) {
-this.href$2 = new URL(h);
-} else {
-this.href$2.href = h;
-}
-}});
-
-/*********************************************************************
+Furthermore, there may be shortcuts associated with these url members.
 Some websites refer to A.protocol, which has not explicitly been set.
 I assume they mean A.href.protocol, the protocol of the url object.
 Do we have to do this for every component of the URL object,
-and for every class that has such an object? I don't know.
+and for every class that has such an object?
+I don't know, but here we go.
+This is a loop over classes, then a loop over url components.
+Leading ; gets around a parsing ambiguity with the previous Audio statement.
 *********************************************************************/
 
-(function() {
+; (function() {
 var cnlist = ["Anchor", "Image", "Script", "Link", "Area", "Form", "Frame"];
+var ulist = ["href", "src", "src", "href", "href", "action", "src"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
+var u = ulist[i]; // url name
+eval('Object.defineProperty(' + cn + '.prototype, "' + u + '", { get: function() { return this.href$2; }, set: function(h) { if(!this.href$2) { this.href$2 = new URL(h); } else { this.href$2.href = h; } }});');
 var piecelist = ["protocol", "pathname", "host", "search", "hostname", "port"];
 for(var j=0; j<piecelist.length; ++j) {
 var piece = piecelist[j];
