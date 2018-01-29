@@ -693,7 +693,13 @@ Object.defineProperty(URL.prototype, "href", {
   get: function() {return this.href$val; },
   set: function(v) {
 var inconstruct = true;
-if(this.href$val) inconstruct = false;
+if(this.href$val) {
+// Ok, we already had a url, and here's nother one.
+// I think we're suppose to resolve it against what was already there,
+// so that /foo against www.xyz.com becomes www.xyz.com/foobar
+v = eb$resolveURL(this.href$val, v);
+inconstruct = false;
+}
 this.href$val = v;
 // initialize components to empty,
 // then fill them in from href if they are present */
@@ -932,7 +938,7 @@ this.async = false;
 // this.async = (async === false)?false:true;
 
 this.method = method || "GET";
-this.url = eb$resolveURL(url);
+this.url = eb$resolveURL(eb$base, url);
 this.url = encodeURI(this.url);
 this.status = 0;
 this.statusText = "";
@@ -1075,23 +1081,39 @@ If foo is an anchor, then foo.href = blah
 builds the url object; there are a lot of side effects here.
 Same for form.action, script.src, etc.
 This is modeled after window.location.
-Furthermore, there may be shortcuts associated with these url members.
+
+I believe that a new URL should be resolved against the base, that is,
+/foobar becomes www.xyz.com/foobar, though I'm not sure.
+We ought not do this in the generic URL class, but for these assignments, I think yes.
+The URL class already resolves when updating a URL,
+so this is just for a new url A.href = "/foobar";
+
+There is no base when html is first processed, so start with an empty string,
+so we don't seg fault. resolveURL does nothing in this case.
+When base is set, and more html is generated and parsed, the url is resolved
+in html, and then again here in js.
+The first time it becomes its own url, then remains so,
+I don't think this is a problem, but not entirely sure.
+
+There may be shortcuts associated with these url members.
+
 Some websites refer to A.protocol, which has not explicitly been set.
 I assume they mean A.href.protocol, the protocol of the url object.
 Do we have to do this for every component of the URL object,
 and for every class that has such an object?
 I don't know, but here we go.
 This is a loop over classes, then a loop over url components.
-Leading ; gets around a parsing ambiguity with the previous Audio statement.
 *********************************************************************/
 
-; (function() {
+eb$base = "";
+
+(function() {
 var cnlist = ["Anchor", "Image", "Script", "Link", "Area", "Form", "Frame"];
 var ulist = ["href", "src", "src", "href", "href", "action", "src"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
 var u = ulist[i]; // url name
-eval('Object.defineProperty(' + cn + '.prototype, "' + u + '", { get: function() { return this.href$2; }, set: function(h) { if(!this.href$2) { this.href$2 = new URL(h); } else { this.href$2.href = h; } }});');
+eval('Object.defineProperty(' + cn + '.prototype, "' + u + '", { get: function() { return this.href$2; }, set: function(h) { if(!this.href$2) { if(typeof h === "string" && h.length) this.href$2 = new URL(eb$resolveURL(eb$base,h)); } else { this.href$2.href = h; } }});');
 var piecelist = ["protocol", "pathname", "host", "search", "hostname", "port"];
 for(var j=0; j<piecelist.length; ++j) {
 var piece = piecelist[j];
@@ -1206,6 +1228,7 @@ if(nodeToCopy[item] instanceof Array) {
 nodeToReturn[item] = new Array;
 
 // Ok we need some special code here for form.elements.
+// Probably need the very same code for Table.rows and Trow.cells.
 if(item === "elements" && nodeToCopy.nodeName === "form" && kids) {
 if(cloneDebug) alert("copy form elements with " + nodeToCopy[item].length + " members");
 for(i = 0; i < nodeToCopy[item].length; ++i) {
@@ -1771,8 +1794,9 @@ if(! s.data) return;
 if(! s.src) return;
 
 // If the script is original source, then deminimizing it makes things worse.
-// Don't deminimize if average line length is less than 1000.
-var i, linecount = 0;
+// Don't deminimize if short, or if average line length is less than 1000.
+if(s.data.length < 1000) return;
+var i, linecount = 1;
 for(i=0; i<s.data.length; ++i)
 if(s.data.substr(i,1) === '\n') ++linecount;
 if(s.data.length / linecount <= 1000) return;

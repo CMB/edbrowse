@@ -1968,6 +1968,12 @@ checkattributes:
 			t->value = cloneString(v);
 			t->rvalue = cloneString(v);
 		}
+// Resolve href against the base, but wait a minute, what if it's <p href=blah>
+// and we're not suppose to resolve it? I don't ask about the parent node.
+// Well, in general, I don't carry the href attribute into the js node.
+// I only do it when it is relevant, such as <a> or <area>.
+// See the exceptions in pushAttributes() in this file.
+// I know, it's confusing.
 		if ((j = stringInListCI(t->attributes, "href")) >= 0) {
 			v = t->atvals[j];
 			if (v && !*v)

@@ -452,7 +452,9 @@ static void prepareScript(struct htmlTag *t)
 	const char *a;
 	const char *filepart;
 
-/* If no language is specified, javascript is default. */
+// If no language is specified, javascript is default.
+// language and type really need to dip into javascript attributes,
+// in case js has set or change them.  Not yet implemented.
 	a = attribVal(t, "language");
 	if (a && (!memEqualCI(a, "javascript", 10) || isalphaByte(a[10])))
 		return;
@@ -474,6 +476,18 @@ static void prepareScript(struct htmlTag *t)
  * Just leave it at t->js_ln */
 	if (cf->fileName && !t->scriptgen)
 		js_file = cf->fileName;
+
+	if (t->jv) {
+// js might have set, or changed, the source url.
+		char *new_url = get_property_url(t->jv, false);
+		if (new_url && *new_url) {
+			if (!t->href || !stringEqual(t->href, new_url))
+				debugPrint(3, "js replaces script %s with %s",
+					   t->href, new_url);
+			nzFree(t->href);
+			t->href = new_url;
+		}
+	}
 
 	if (t->href) {		/* fetch the javascript page */
 		if (javaOK(t->href)) {
@@ -1602,10 +1616,9 @@ bool infPush(int tagno, char **post_string)
 	if (form->jv && isJSAlive) {
 		char *jh = get_property_url(form->jv, true);
 		if (jh && (!action || !stringEqual(jh, action))) {
-/* Tie action to the form tag, to plug a small memory leak */
 			nzFree(form->href);
-			form->href = resolveURL(cf->hbase, jh);
-			action = form->href;
+			action = form->href = jh;
+			jh = NULL;
 		}
 		nzFree(jh);
 	}
@@ -2685,10 +2698,13 @@ li_hide:
 		if (t->jv) {
 // js might have set, or changed, the url.
 			char *new_url = get_property_url(t->jv, false);
-			if (new_url) {
+			if (new_url && *new_url) {
+				if (!t->href || !stringEqual(t->href, new_url))
+					debugPrint(3,
+						   "js replaces anchor %s with %s",
+						   t->href, new_url);
 				nzFree(t->href);
-				t->href = resolveURL(cf->hbase, new_url);
-				nzFree(new_url);
+				t->href = new_url;
 			}
 		}
 		if (!t->href) {
