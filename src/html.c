@@ -580,13 +580,18 @@ void runScriptsPending(void)
 	int ln;
 	bool change;
 	jsobjtype v;
+	struct ebFrame *f, *save_cf = cf;
 
 	if (newlocation && newloc_r)
 		return;
 
 // Not sure where document.write objects belong.
 // For now I'm putting them under body.
-	if (cf->dw) {
+// Each write corresponds to the frame containing document.write.
+	for (f = &(cw->f0); f; f = f->next) {
+		if (!f->dw)
+			continue;
+		cf = f;
 		stringAndString(&cf->dw, &cf->dw_l, "</body>\n");
 		runGeneratedHtml(cf->bodytag, cf->dw);
 		nzFree(cf->dw);
@@ -603,14 +608,13 @@ top:
 			continue;
 		if (t->step >= 3)
 			continue;
-		if (t->f0 != cf)
-			continue;
 		t->step = 3;	/* now running the script */
 		if (!t->jv)
 			continue;
 		if (intFlag)
 			continue;
 
+		cf = t->f0;
 		prepareScript(t);
 
 		jtxt = get_property_string(t->jv, "data");
@@ -631,8 +635,10 @@ top:
 		debugPrint(3, "execution complete");
 		nzFree(jtxt);
 
-		if (newlocation && newloc_r)
+		if (newlocation && newloc_r) {
+			cf = save_cf;
 			return;
+		}
 
 /* look for document.write from this script */
 		if (cf->dw) {
@@ -667,6 +673,8 @@ top:
 				showError();
 		}
 	}
+
+	cf = save_cf;
 }				/* runScriptsPending */
 
 void preFormatCheck(int tagno, bool * pretag, bool * slash)
@@ -1115,6 +1123,8 @@ static void formReset(const struct htmlTag *form)
 	struct htmlTag *t;
 	int i, itype;
 	char *display;
+
+	cf = form->f0;
 
 	rebuildSelectors();
 

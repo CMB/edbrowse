@@ -1423,6 +1423,12 @@ break;
 case "audio":
 c = new Audio();
 break;
+case "document":
+c = new Document();
+break;
+case "iframe": case "frame":
+c = new Frame();
+break;
 case "select":
 /* select and radio are special form elements in that they are intrinsically
  * arrays, with all the options as array elements,
@@ -1468,6 +1474,15 @@ c.class = new String;
 c.className = new String;
 c.ownerDocument = document;
 eb$logElement(c, t);
+
+if(c instanceof Frame) {
+var d = document.createElement("document");
+c.content$Document = c.content$Window = d;
+Object.defineProperty(c, "contentDocument", { get: eb$getter_cd });
+Object.defineProperty(c, "contentWindow", { get: eb$getter_cw });
+c.appendChild(d);
+}
+
 return c;
 } 
 

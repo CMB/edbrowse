@@ -651,10 +651,27 @@ static duk_ret_t native_win_close(duk_context * cx)
 	return 0;
 }
 
+// find the frame, in the current window, that goes with this.
+// Used by document.write to put the html in the right frame.
+static struct ebFrame *thisFrame(duk_context * cx)
+{
+	jsobjtype thisobj;
+	struct ebFrame *f;
+	duk_push_this(cx);
+	thisobj = duk_get_heapptr(cx, -1);
+	duk_pop(cx);
+	for (f = &(cw->f0); f; f = f->next) {
+		if (f->docobj == thisobj)
+			break;
+	}
+	return f;
+}
+
 static void dwrite(duk_context * cx, bool newline)
 {
 	int top = duk_get_top(cx);
 	const char *s;
+	struct ebFrame *f, *save_cf = cf;
 	if (top) {
 		duk_push_string(cx, emptyString);
 		duk_insert(cx, 0);
@@ -664,10 +681,20 @@ static void dwrite(duk_context * cx, bool newline)
 	}
 	s = duk_get_string(cx, 0);
 	debugPrint(4, "dwrite:%s", s);
+	f = thisFrame(cx);
+	if (!f)
+		debugPrint(3,
+			   "no frame found for document.write, using the default");
+	else {
+		if (f != cf)
+			debugPrint(3, "document.write on a different frame");
+		cf = f;
+	}
 	dwStart();
 	stringAndString(&cf->dw, &cf->dw_l, s);
 	if (newline)
 		stringAndChar(&cf->dw, &cf->dw_l, '\n');
+	cf = save_cf;
 }
 
 static duk_ret_t native_doc_write(duk_context * cx)
@@ -1191,6 +1218,10 @@ void createJavaContext_nat(void)
 	duk_put_global_string(jcx, "eb$getcook");
 	duk_push_c_function(jcx, native_setcook, 1);
 	duk_put_global_string(jcx, "eb$setcook");
+	duk_push_c_function(jcx, getter_cd, 0);
+	duk_put_global_string(jcx, "eb$getter_cd");
+	duk_push_c_function(jcx, getter_cw, 0);
+	duk_put_global_string(jcx, "eb$getter_cw");
 
 	duk_push_heapptr(jcx, docobj);	// native document methods
 	duk_push_c_function(jcx, native_doc_write, DUK_VARARGS);
