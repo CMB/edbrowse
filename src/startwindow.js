@@ -119,12 +119,21 @@ Show the scripts, where they come from, type, length, whether deminimized.
 Careful! This is compiled once.
 If you refer to document.scripts you are stuck with that set of scripts forever.
 Use this.document.scripts for the scripts in the current window.
+Note that dynamically created scripts via document.createElement("script")
+won't appear in this list.
+This is the html created scripts only.
+Pass an argument of 1, or true, to use getElementsByTagname instead.
+Then use document.scripts2 for the resulting list of scripts.
+The second list is generally longer than the first,
+and indexes need not correspond.
 *********************************************************************/
 
-eb$master.showscripts = function()
+eb$master.showscripts = function(tagname)
 {
 var i, s, m;
 var slist = this.document.scripts;
+if(tagname)
+slist = this.document.scripts2 = this.document.getElementsByTagName("script");
 for(i=0; i<slist.length; ++i) {
 s = slist[i];
 m = i + ": ";
