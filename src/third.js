@@ -9,7 +9,7 @@ Being huge, these functions are compiled once in the master window,
 then referenced from every other window.
 Sometimes I have to change the function definitions to support this.
 Keep this in mind as you do your updates; it's not a simple cut&paste.
-Large blocks of code are inside an if(eb$master.compiled == false) block,
+Large blocks of code are inside an if(mw0.compiled == false) block,
 so it only recompiles the first time; then the links are at the bottom.
 
 The first two projects, from jotform,
@@ -4005,7 +4005,7 @@ License for Esprima:
           THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-if(!eb$master.compiled) {
+if(!mw0.compiled) {
 
 (function webpackUniversalModuleDefinition(root, factory) {
 /* istanbul ignore next */
@@ -15838,13 +15838,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   require('/tools/entry-point.js');
 }.call(this, this));
 
-eb$master.esprima = esprima;
-eb$master.escodegen = escodegen;
+mw0.esprima = esprima;
+mw0.escodegen = escodegen;
 } else { // master compile
-esprima = eb$master.esprima;
-escodegen = eb$master.escodegen;
+esprima = mw0.esprima;
+escodegen = mw0.escodegen;
 }
 
 // This should be the last line of this file.
 // It indicates all functions have been compiled.
-eb$master.compiled = true;
+mw0.compiled = true;

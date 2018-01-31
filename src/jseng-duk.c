@@ -172,6 +172,18 @@ static duk_ret_t native_new_location(duk_context * cx)
 	return 0;
 }
 
+static duk_ret_t native_mywin(duk_context * cx)
+{
+	duk_push_global_object(cx);
+	return 1;
+}
+
+static duk_ret_t native_mydoc(duk_context * cx)
+{
+	duk_get_global_string(cx, "document");
+	return 1;
+}
+
 static duk_ret_t native_puts(duk_context * cx)
 {
 	printf("%s\n", duk_to_string(cx, -1));
@@ -1186,6 +1198,10 @@ void createJavaContext_nat(void)
 // bind native functions here
 	duk_push_c_function(jcx, native_new_location, 1);
 	duk_put_global_string(jcx, "eb$newLocation");
+	duk_push_c_function(jcx, native_mywin, 0);
+	duk_put_global_string(jcx, "my$win");
+	duk_push_c_function(jcx, native_mydoc, 0);
+	duk_put_global_string(jcx, "my$doc");
 	duk_push_c_function(jcx, native_puts, 1);
 	duk_put_global_string(jcx, "eb$puts");
 	duk_push_c_function(jcx, native_logputs, 2);
@@ -1238,9 +1254,10 @@ void createJavaContext_nat(void)
 	duk_put_prop_string(jcx, -2, "removeChild");
 	duk_pop(jcx);
 
-// Link to the master context.
+// Link to the master context, i.e. the master window.
+// This is denoted mw0 throughout.
 	duk_push_global_object(jcx);
-	duk_push_string(jcx, "eb$master");
+	duk_push_string(jcx, "mw0");
 	duk_push_heapptr(jcx, context0_obj);
 	duk_def_prop(jcx, -3,
 		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
