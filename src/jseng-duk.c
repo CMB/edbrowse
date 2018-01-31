@@ -196,7 +196,7 @@ static duk_ret_t native_logputs(duk_context * cx)
 	const char *s = duk_to_string(cx, 1);
 	duk_remove(cx, 0);
 	if (debugLevel >= minlev && s && *s)
-		puts(s);
+		debugPrint(3, "%s", s);
 	return 0;
 }
 

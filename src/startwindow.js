@@ -33,6 +33,8 @@ eb$getcook = function(member) { return "cookies"; }
 eb$setcook = function(value, member) { print(" new cookie " + value); }
 eb$formSubmit = function() { print("submit"); }
 eb$formReset = function() { print("reset"); }
+my$win = function() { return window; }
+my$doc = function() { return document; }
 document.eb$apch2 = function(c) { alert("append " + c.nodeName  + " to " + this.nodeName); this.childNodes.push(c); }
 document.head = {};
 document.head.childNodes = [];
@@ -281,6 +283,8 @@ document.spans = [];
 document.images = [];
 document.areas = [];
 frames = [];
+// to debug a.href = object or other weird things.
+hrefset$p = []; hrefset$a = [];
 
 /*********************************************************************
 The URL class is head-spinning in its complexity and its side effects.
@@ -604,7 +608,7 @@ var ulist = ["href", "src", "src", "href", "href", "action", "src"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
 var u = ulist[i]; // url name
-eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + u + '", { get: function() { return this.href$2; }, set: function(h) { if(!this.href$2) { if(typeof h === "string" && h.length) this.href$2 = new mw0.URL(eb$resolveURL(my$win().eb$base,h)); } else { this.href$2.href = h; } }});');
+eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + u + '", { get: function() { return this.href$2; }, set: function(h) { if(h instanceof URL) h = h.toString(); if(typeof h !== "string") { console.warn("hrefset " + typeof h); hrefset$p.push("' + cn + '"); hrefset$a.push(h); return; } if(!h.length) { /* dont know what to do here. */ return; } if(!this.href$2) { this.href$2 = new mw0.URL(eb$resolveURL(my$win().eb$base,h)); } else { this.href$2.href = h; } }});');
 var piecelist = ["protocol", "pathname", "host", "search", "hostname", "port"];
 for(var j=0; j<piecelist.length; ++j) {
 var piece = piecelist[j];
