@@ -1177,6 +1177,8 @@ static duk_ret_t native_setcook(duk_context * cx)
 
 void createJavaContext_nat(void)
 {
+	static int seqno;
+
 	duk_push_thread_new_globalenv(context0);
 	jcx = duk_get_context(context0, -1);
 	if (!jcx)
@@ -1252,6 +1254,9 @@ void createJavaContext_nat(void)
 	duk_put_prop_string(jcx, -2, "eb$insbf");
 	duk_push_c_function(jcx, native_removeChild, 1);
 	duk_put_prop_string(jcx, -2, "removeChild");
+// for debugging.
+	duk_push_number(jcx, ++seqno);
+	duk_put_prop_string(jcx, -2, "eb$seq");
 	duk_pop(jcx);
 
 // Link to the master context, i.e. the master window.

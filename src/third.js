@@ -3943,7 +3943,7 @@ continue;
 if (sel.match(/-moz-|-webkit-|-ms\b/))
 continue;
 sel = sel.trim();
-a = querySelectorAll(sel);
+a = w.querySelectorAll(sel);
 for(j=0; j<a.length; ++j) {
 t = a[j];
 // If an element is specified then we only key on that.
