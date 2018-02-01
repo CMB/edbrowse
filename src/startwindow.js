@@ -218,13 +218,13 @@ eb$logputs(debug, "console " + level + " [" + h + ":" + m + ":" + s + "] " + obj
 }
 
 mw0.console = {
-log: function(obj) { eb$logtime(3, "log", obj); },
-info: function(obj) { eb$logtime(3, "info", obj); },
-warn: function(obj) { eb$logtime(3, "warn", obj); },
-error: function(obj) { eb$logtime(3, "error", obj); }
+log: function(obj) { mw0.eb$logtime(3, "log", obj); },
+info: function(obj) { mw0.eb$logtime(3, "info", obj); },
+warn: function(obj) { mw0.eb$logtime(3, "warn", obj); },
+error: function(obj) { mw0.eb$logtime(3, "error", obj); }
 };
+mw0.console.info("master compile");
 } // master compile
-eb$logtime = mw0.eb$logtime;
 console = mw0.console;
 
 Object.defineProperty(document, "cookie", {
@@ -928,14 +928,20 @@ kids = nodeToCopy.childNodes;
 
 // We should always be cloning a node.
 if(cloneDebug) alert("clone " + nodeToCopy.nodeName + " {");
+if(cloneDebug) {
+if(kids) alert("kids " + kids.length);
+else alert("no kids, type " + (typeof nodeToCopy.childNodes) + ", instance " + (nodeToCopy.childNodes instanceof Array));
+}
 
 // special case for array, which is a select node or a list of radio buttons.
 if(nodeToCopy instanceof Array) {
 nodeToReturn = [];
-if(cloneDebug) alert("self children length " + nodeToCopy.length);
 nodeToReturn.childNodes = nodeToReturn;
+if(deep) {
+if(cloneDebug) alert("self children length " + nodeToCopy.length);
 for(i = 0; i < nodeToCopy.length; ++i)
-nodeToReturn.push(mw0.eb$clone(nodeToCopy[i]));
+nodeToReturn.push(mw0.eb$clone(nodeToCopy[i], true));
+}
 } else {
 
 nodeToReturn = mw0.createElement(nodeToCopy.nodeName);

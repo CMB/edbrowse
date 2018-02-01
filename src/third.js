@@ -7,10 +7,10 @@ snapshot, as the software evolves.
 
 Being huge, these functions are compiled once in the master window,
 then referenced from every other window.
-Sometimes I have to change the function definitions to support this.
-Keep this in mind as you do your updates; it's not a simple cut&paste.
 Large blocks of code are inside an if(mw0.compiled == false) block,
 so it only recompiles the first time; then the links are at the bottom.
+Sometimes I have to change the functions just a bit to support this.
+Keep this in mind as you do your updates; it's not always a simple cut&paste.
 
 The first two projects, from jotform,
 parse css, and apply css attributes to the corresponding objects.
@@ -3878,7 +3878,9 @@ return _querySelector_;
 
 document.querySelectorAll = querySelectorAll;
 
-function eb$qs$start()
+if(!mw0.compiled) {
+
+mw0.eb$qs$start = function()
 {
 cssGather();
 cssApply();
@@ -3886,13 +3888,15 @@ cssApply();
 
 // Gather css tags from the html and apply them to the js objects.
 // These are our functions; wrappers around the above.
-function cssGather()
+mw0.cssGather = function()
 {
-cssParser = new cssjs;
-cssList = [];
+var w = my$win();
+var d = my$doc();
+var cssParser = new cssjs;
+w.cssList = [];
 
 // <style> tags in the html.
-var a = document.getElementsByTagName("style");
+var a = d.getElementsByTagName("style");
 var i, t;
 for(i=0; i<a.length; ++i) {
 t = a[i];
@@ -3902,28 +3906,29 @@ if(t.data) {
 var data2 = t.data.replace(/\/\*[\u0000-\uffff]*?\*\//g, '');
 // Nor does it understand #\ 
 data2 = data2.replace(/#\\ [\u0000-\uffff]*?}/g, "");
-cssList = cssList.concat(cssParser.parseCSS(data2));
+w.cssList = w.cssList.concat(cssParser.parseCSS(data2));
 }
 }
 
 // <link type=text/css> tags in the html.
-a = document.getElementsByTagName("link");
+a = d.getElementsByTagName("link");
 for(i=0; i<a.length; ++i) {
 t = a[i];
 if(t.type && t.type.toLowerCase() === "text/css" && t.data) {
 var data2 = t.data.replace(/\/\*[\u0000-\uffff]*?\*\//g, '');
 data2 = data2.replace(/#\\ [\u0000-\uffff]*?}/g, "");
-cssList = cssList.concat(cssParser.parseCSS(data2));
+w.cssList = w.cssList.concat(cssParser.parseCSS(data2));
 }
 }
 }
 
-function cssApply(e, destination)
+mw0.cssApply = function(e, destination)
 {
+var w = my$win();
 var i, j, k;
 var a, t, d;
-for(i=0; i<cssList.length; ++i) {
-d = cssList[i]; // css descriptor
+for(i=0; i<w.cssList.length; ++i) {
+d = w.cssList[i]; // css descriptor
 var sel = d.selector;
 // certain modifiers not supported in this static view.
 // @directives are not selectors.
@@ -3965,7 +3970,11 @@ t.style[propname] = propval;
 }
 }
 
+} // master compile
 
+cssGather = mw0.cssGather;
+cssApply = mw0.cssApply;
+eb$qs$start = mw0.eb$qs$start;
 
 /*********************************************************************
 Next third-party libraries: Esprima, which converts javascript code into
