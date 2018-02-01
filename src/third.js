@@ -41,7 +41,13 @@ https://github.com/jotform/css.js.git
 Snapshot taken on 08/20/2017.
 https://raw.githubusercontent.com/jotform/css.js/master/css.js
 Minimized code is available, but I thought it more confusing than helpful.
+
+WARNING: if you take an updated snapshot, don't just cut and paste;
+you have to replace document with my$doc() wherever it appears.
+This because it is in the master window.
 *********************************************************************/
+
+if(!mw0.compiled) {
 
 /* jshint unused:false */
 /* global base64_decode, CSSWizardView, window, console, jQuery */
@@ -695,13 +701,13 @@ Minimized code is available, but I thought it more confusing than helpful.
       return this.testMode('create style #' + id, css); //if test mode, just pass result to callback
     }
 
-    var __el = document.getElementById(id);
+    var __el = my$doc().getElementById(id);
     if (__el) {
       __el.parentNode.removeChild(__el);
     }
 
-    var head = document.head || document.getElementsByTagName('head')[0],
-      style = document.createElement('style');
+    var head = my$doc().head || my$doc().getElementsByTagName('head')[0],
+      style = my$doc().createElement('style');
 
     style.id = id;
     style.type = 'text/css';
@@ -711,13 +717,15 @@ Minimized code is available, but I thought it more confusing than helpful.
     if (style.styleSheet && !style.sheet) {
       style.styleSheet.cssText = css;
     } else {
-      style.appendChild(document.createTextNode(css));
+      style.appendChild(my$doc().createTextNode(css));
     }
   };
 
   global.cssjs = fi;
 
 })(this);
+
+mw0.cssjs = cssjs;
 
 /*********************************************************************
 A querySelectorAll function to turn a css styole selector into an array of nodes.
@@ -786,7 +794,7 @@ _querySelector_ = function (exports) {
       contenteditable: 'contentEditable'
     };
     var ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
-    var doc = typeof document !== 'undefined' ? document : {};
+    var doc = typeof my$doc() !== 'undefined' ? my$doc() : {};
     function numberify(s) {
       var c = 0;
       // convert '1.2.3.4' to 1.234
@@ -881,7 +889,7 @@ _querySelector_ = function (exports) {
     };
     if (doc.createElement) {
       var div = doc.createElement('div');
-      div.appendChild(document.createComment(''));
+      div.appendChild(my$doc().createComment(''));
       if (div.getElementsByTagName('*').length) {
         getElementsByTagName = function (name, context) {
           var nodes = context.getElementsByTagName(name), needsFilter = name === '*';
@@ -3793,7 +3801,7 @@ _querySelector_ = function (exports) {
       if (seeds) {
         context = context || seeds[0].ownerDocument;
       }
-      contextDocument = context && context.ownerDocument || typeof document !== 'undefined' && document;
+      contextDocument = context && context.ownerDocument || typeof my$doc() !== 'undefined' && my$doc();
       if (context && context.nodeType === 9 && !contextDocument) {
         contextDocument = context;
       }
@@ -3876,6 +3884,11 @@ _querySelector_ = function (exports) {
 return _querySelector_;
 })();
 
+mw0.querySelectorAll = querySelectorAll;
+} else { // master compile
+querySelectorAll = mw0.querySelectorAll;
+}
+
 document.querySelectorAll = querySelectorAll;
 
 if(!mw0.compiled) {
@@ -3892,7 +3905,10 @@ mw0.cssGather = function()
 {
 var w = my$win();
 var d = my$doc();
-var cssParser = new cssjs;
+//  debug, make sure we're accessing the right css and objects,
+//  even though all this stuff is in the master window.
+//  alert(d.eb$seq + "," + w.document.eb$seq);
+var cssParser = new mw0.cssjs;
 w.cssList = [];
 
 // <style> tags in the html.
@@ -3925,6 +3941,7 @@ w.cssList = w.cssList.concat(cssParser.parseCSS(data2));
 mw0.cssApply = function(e, destination)
 {
 var w = my$win();
+//  alert("," + w.document.eb$seq);
 var i, j, k;
 var a, t, d;
 for(i=0; i<w.cssList.length; ++i) {
@@ -3943,7 +3960,9 @@ continue;
 if (sel.match(/-moz-|-webkit-|-ms\b/))
 continue;
 sel = sel.trim();
-a = w.querySelectorAll(sel);
+a = querySelectorAll(sel);
+//  This one only good for body.
+//  alert(a[0].nodeName + "," + a[0].parentNode.eb$seq);
 for(j=0; j<a.length; ++j) {
 t = a[j];
 // If an element is specified then we only key on that.

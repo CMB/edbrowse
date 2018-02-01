@@ -223,7 +223,8 @@ info: function(obj) { mw0.eb$logtime(3, "info", obj); },
 warn: function(obj) { mw0.eb$logtime(3, "warn", obj); },
 error: function(obj) { mw0.eb$logtime(3, "error", obj); }
 };
-mw0.console.info("master compile");
+
+//  mw0.console.info("master compile");
 } // master compile
 console = mw0.console;
 
