@@ -923,18 +923,20 @@ var nodeToReturn;
 var i, j;
 var kids = null;
 
-if(typeof nodeToCopy.childNodes === "object" && nodeToCopy.childNodes instanceof Array)
+// WARNING: don't use instanceof Array here.
+// See the comments in the Array.prototype section.
+if(Array.isArray(nodeToCopy.childNodes))
 kids = nodeToCopy.childNodes;
 
 // We should always be cloning a node.
 if(cloneDebug) alert("clone " + nodeToCopy.nodeName + " {");
 if(cloneDebug) {
 if(kids) alert("kids " + kids.length);
-else alert("no kids, type " + (typeof nodeToCopy.childNodes) + ", instance " + (nodeToCopy.childNodes instanceof Array));
+else alert("no kids, type " + typeof nodeToCopy.childNodes);
 }
 
 // special case for array, which is a select node or a list of radio buttons.
-if(nodeToCopy instanceof Array) {
+if(Array.isArray(nodeToCopy)) {
 nodeToReturn = [];
 nodeToReturn.childNodes = nodeToReturn;
 if(deep) {
@@ -992,7 +994,7 @@ if(j < kids.length) continue;
 }
 
 // An array of attributes, or event handlers etc.
-if(nodeToCopy[item] instanceof Array) {
+if(Array.isArray(nodeToCopy[item])) {
 nodeToReturn[item] = [];
 
 // Ok we need some special code here for form.elements.
@@ -1052,7 +1054,7 @@ continue;
 if(item == "innerText")
 continue;
 if(item == "value" &&
-!(nodeToCopy instanceof Array) && !(nodeToCopy instanceof Option))
+!Array.isArray(nodeToCopy) && !(nodeToCopy instanceof Option))
 continue;
 if(cloneDebug) {
 var showstring = nodeToCopy[item];
@@ -1375,50 +1377,6 @@ mw0.Form.prototype.eb$listen = mw0.eb$listen;
 mw0.Form.prototype.addEventListener = mw0.addEventListener;
 mw0.Form.prototype.removeEventListener = mw0.removeEventListener;
 mw0.Form.prototype.attachEvent = mw0.attachEvent;
-
-/* The select element in a form is itself an array, so the children functions have
- * to be on array prototype, except appendchild is to have no side effects,
- * because select options are maintained by rebuildSelectors(), so appendChild
- * is just array.push(). */
-Array.prototype.appendChild = function(child) {
-// check to see if it's already there
-for(var i=0; i<this.length; ++i)
-if(this[i] == child)
-return child;
-this.push(child);return child; }
-/* insertBefore maps to splice, but we have to find the element. */
-/* This prototype assumes all elements are objects. */
-Array.prototype.insertBefore = function(newobj, item) {
-// check to see if it's already there
-for(var i=0; i<this.length; ++i)
-if(this[i] == newobj)
-return newobj;
-for(var i=0; i<this.length; ++i)
-if(this[i] == item) {
-this.splice(i, 0, newobj);
-return newobj;
-}
-}
-Array.prototype.removeChild = function(item) {
-for(var i=0; i<this.length; ++i)
-if(this[i] == item) {
-this.splice(i, 1);
-return;
-}
-}
-Array.prototype.hasChildNodes = mw0.hasChildNodes;
-Array.prototype.replaceChild = mw0.replaceChild;
-Object.defineProperty(Array.prototype, "firstChild", { get: function() { return this[0]; } });
-Object.defineProperty(Array.prototype, "lastChild", { get: function() { return this[this.length-1]; } });
-Object.defineProperty(Array.prototype, "nextSibling", { get: function() { return mw0.eb$getSibling(this,"next"); } });
-Object.defineProperty(Array.prototype, "previousSibling", { get: function() { return mw0.eb$getSibling(this,"previous"); } });
-
-Array.prototype.getAttribute = mw0.getAttribute;
-Array.prototype.setAttribute = mw0.setAttribute;
-Array.prototype.hasAttribute = mw0.hasAttribute;
-Array.prototype.removeAttribute = mw0.removeAttribute;
-Array.prototype.getAttributeNode = mw0.getAttributeNode;
-Array.prototype.item = function(x) { return this[x] };
 
 mw0.createElementNS = function(nsurl,s) {
 return mw0.createElement(s);
@@ -1810,7 +1768,6 @@ return mw0.eb$gebtn(document.body, s.toLowerCase());
 Option = mw0.Option;
 XMLHttpRequest = mw0.XMLHttpRequest;
 eb$demin = mw0.eb$demin;
-
 eb$uplift = mw0.eb$uplift;
 
 document.getElementsByTagName = mw0.getElementsByTagName;
@@ -1854,6 +1811,80 @@ localStorage.setAttribute = mw0.setAttribute;
 localStorage.setItem = localStorage.setAttribute;
 localStorage.removeAttribute = mw0.removeAttribute;
 localStorage.removeItem = localStorage.removeAttribute;
+
+/*********************************************************************
+The select element in a form is itself an array, so the children functions have
+to be on array prototype, except appendchild is to have no side effects,
+because select options are maintained by rebuildSelectors(), so appendChild
+is just array.push().
+Why am I setting these prototype methods here, instead of the master window?
+Because Array in one window is different from Array in another.
+Try it in jdb:
+Array === frames[0].contentWindow.Array;
+Array is a native method, but different per context - so says duktape.
+Thus Array.prototype is different in each context as well.
+That's good in a way, since a web page will on occasion add something
+to Array.prototype and we wouldn't want that to spill over into
+unrelated web pages.
+But it means I have to set these Array.prototype methods per context.
+In contrast, our classes, like Div and URL,
+are defined in the master window and global across edbrowse.
+When I set Form.prototype.appendChild that's good for everyone.
+But what if a web page mucks with Form.prototype?
+That affects all the other pages!
+Well such a behavior would be very nonstandard, other browsers don't make dom
+classes with prototypes the way we do, so websites
+aren't going to use that mechanism, so I think we're ok.
+But I could be wrong, and some day we may find this spillover
+unacceptable, and at that point I would have to move
+all our classes out of the master window and back into each context.
+Another consequence of separate Arrays is that a function in the
+master window should never use instanceof Array.
+It may work when called from one context and fail when called from another.
+If I built our classes per context, and not in the master window,
+that would be problematic because then I couldn't use instanceof URL
+and instanceof Option, as I do today.
+*********************************************************************/
+
+Array.prototype.appendChild = function(child) {
+// check to see if it's already there
+for(var i=0; i<this.length; ++i)
+if(this[i] == child)
+return child;
+this.push(child);return child; }
+/* insertBefore maps to splice, but we have to find the element. */
+/* This prototype assumes all elements are objects. */
+Array.prototype.insertBefore = function(newobj, item) {
+// check to see if it's already there
+for(var i=0; i<this.length; ++i)
+if(this[i] == newobj)
+return newobj;
+for(var i=0; i<this.length; ++i)
+if(this[i] == item) {
+this.splice(i, 0, newobj);
+return newobj;
+}
+}
+Array.prototype.removeChild = function(item) {
+for(var i=0; i<this.length; ++i)
+if(this[i] == item) {
+this.splice(i, 1);
+return;
+}
+}
+Array.prototype.hasChildNodes = mw0.hasChildNodes;
+Array.prototype.replaceChild = mw0.replaceChild;
+Object.defineProperty(Array.prototype, "firstChild", { get: function() { return this[0]; } });
+Object.defineProperty(Array.prototype, "lastChild", { get: function() { return this[this.length-1]; } });
+Object.defineProperty(Array.prototype, "nextSibling", { get: function() { return mw0.eb$getSibling(this,"next"); } });
+Object.defineProperty(Array.prototype, "previousSibling", { get: function() { return mw0.eb$getSibling(this,"previous"); } });
+
+Array.prototype.getAttribute = mw0.getAttribute;
+Array.prototype.setAttribute = mw0.setAttribute;
+Array.prototype.hasAttribute = mw0.hasAttribute;
+Array.prototype.removeAttribute = mw0.removeAttribute;
+Array.prototype.getAttributeNode = mw0.getAttributeNode;
+Array.prototype.item = function(x) { return this[x] };
 
 // On the first call this setter just creates the url, the location of the
 // current web page, But on the next call it has the side effect of replacing

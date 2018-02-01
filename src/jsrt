@@ -26,7 +26,7 @@ them they will fail, because some depend on variables that were
 set by others.  Yeah, it's ugly. */
 
 var udef = "undefined";
-function fail(n) { alert("failed "+n); close(); }
+function fail(n) { alert("failed "+n); }
 
 var popwin = new Window("http://www.moreAndMoreCrap.com/BuyNow.html", "obnoxious_ad", "width=72");
 
@@ -844,6 +844,17 @@ fail(164);
 
 if(document.body.style.color != "black")
 fail(165);
+
+// Create a frame and access something from its window.
+(function() {
+var fn = document.createElement("iframe");
+if(fn.contentWindow.height !== 768) fail(167);
+if(fn.contentDocument.style.bgcolor !== "white") fail(168);
+// This function produces a memory leak; the window goes away
+// when this function goes away, but edbrowse retains it via
+// context0 in jseng-duk.c.
+// Well it does go away when the window closes, I suppose that's good enough.
+})();
 
 </script>
 
