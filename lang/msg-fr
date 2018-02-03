@@ -59,7 +59,7 @@ Nom d'utilisateur:
 nom d'utilisateur trop long, la limite est de %d caractères
 Mot de passe: 
 nom de passe trop long, la limite est de %d caractères
-0
+%s
 attention, répertoire inaccessible - la liste des fichiers sera vide
 désastre, message d'erreur %d trop long\n
 ligne %d: 

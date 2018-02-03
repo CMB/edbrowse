@@ -59,7 +59,7 @@ Benutzername
 Benutzername zu lang, Grenze bei %d Zeichen
 Passwort: 
 Passwort zu lang, maximal %d Zeichen
-0
+%s
 Warnung: auf das Verzeichnis kann nicht zugegriffen werden, die Auflistung wird leer sein
 Disaster, Fehlermeldung der Länge %d ist zu lang
 Zeile %d: 

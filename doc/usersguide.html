@@ -624,7 +624,7 @@ Debug
 <P>
 db3 : set debug level, 0 through 9
 <br>db&gt;/tmp/edbrowse.out : redirect debugging output to a file
-<br>jdb : javascript debugger, dot to exit
+<br>jdb : javascript debugger, bye to exit
 <br>demin : deminimize javascript (toggle)
 <br>timers : disable javascript timers (toggle)
 
@@ -2918,14 +2918,21 @@ and you have the full power of the editor, including the undo command.
 <H3> <A NAME=jex> Javascript Debugger </A> </H3>
 
 In browse mode, the jdb (javascript debug) command
-directs subsequent input to the javascript engine, containing the objects associated with the current web page.
-Type document.body.childNodes to see a list of the nodes under the body of the web page.
-If the output is long, you can redirect it into a file by using ^&gt; (expression ^&gt; file).
+directs subsequent input to the javascript engine containing the objects associated with the current web page,
+specifically, the frame associated with the current line number.
+Type dumptree(document) to see the structure of the document.
+If the output of any command is long, you can redirect it into a file by using the ^&gt symbol, as in expression ^&gt; file.
 I didn't want to use &gt; since that is a valid javascript operator.
 A predefined ok (object keys) command lists all the members of an object.
-Type period by itself, or qt, to return to edbrowse.
+showscripts(0), and showscripts(1), show you the scripts from html, and under the document tree, respectively.
+Type period by itself, or bye, to return to edbrowse.
 It is best to enter jdb with debug level 3, so you can see any javascript syntax or reference errors.
 This feature is for developers, and is not very helpful for end users.
+
+<P>
+A few edbrowse commands are valid inside the javascript debugger.
+These are the db command to change debug level, and e number to jump to another edbrowse session.
+This lets you look at other files and do other things while debugging javascript.
 
 <hr>
 <H2> Chapter 6, Edbrowse Scripts and the Configuration File </H2>

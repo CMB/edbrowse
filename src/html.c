@@ -321,7 +321,7 @@ This line sets the current frame, then we're ready to roll.
 			cx = t->lic;
 			if (!cx)
 				continue;
-/* The unfold command should never fail */
+// unfoldBuffer could fail if we have quit that session.
 			if (!unfoldBuffer(cx, false, &cxbuf, &j))
 				continue;
 			set_property_string(t->jv, "value", cxbuf);

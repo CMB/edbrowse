@@ -159,7 +159,7 @@ enum {
 	MSG_UserNameLong,
 	MSG_Password,
 	MSG_PasswordLong,
-	MSG_notused62,
+	MSG_String,
 	MSG_NoDirNoList,
 	MSG_ErrorMessageLong,
 	MSG_LineX,

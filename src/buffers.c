@@ -31,8 +31,6 @@ static bool pcre_utf8_error_stop = false;
 
 static uchar dirWrite;		/* directories read write */
 static uchar endMarks;		/* ^ $ on printed lines */
-static bool jdb_mode;
-static struct ebFrame *jdb_frame;
 /* The valid edbrowse commands. */
 static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^<";
 /* Commands that can be done in browse mode. */
@@ -192,6 +190,8 @@ static int apparentSizeW(const struct ebWindow *w, bool browsing)
 {
 	int ln, size = 0;
 	pst p;
+	if (!w)
+		return -1;
 	for (ln = 1; ln <= w->dol; ++ln) {
 		p = w->map[ln].text;
 		while (*p != '\n') {
@@ -312,6 +312,22 @@ static void printDot(void)
 	else
 		i_puts(MSG_Empty);
 }				/* printDot */
+
+// These commands pass through jdb and on to normal edbrowse processing.
+static bool jdb_passthrough(const char *s)
+{
+	int i;
+	if (s[0] == 'd' && s[1] == 'b' && isdigit(s[2]) && s[3] == 0)
+		return true;
+	if (s[0] == 'e' && isdigit(s[1])) {
+		for (i = 2; s[i]; ++i)
+			if (!isdigit(s[i]))
+				break;
+		if (!s[i])
+			return true;
+	}
+	return false;
+}
 
 /* By default, readline's filename completion appends a single space
  * character to a filename when there are no alternative completions.
@@ -589,10 +605,13 @@ addchar:
 	if (debugFile)
 		fputc('\n', debugFile);
 
-	if (jdb_mode) {
-		cf = jdb_frame;
-		if (stringEqual(s, ".") || stringEqual(s, "qt")) {
-			jdb_mode = false;
+	if (cw->jdb_frame) {
+// some edbrowse commands pass through.
+		if (jdb_passthrough(s))
+			goto eb_line;
+		cf = cw->jdb_frame;
+		if (stringEqual(s, ".") || stringEqual(s, "bye")) {
+			cw->jdb_frame = NULL;
 			puts("bye");
 			jSideEffects();
 // in case you changed objects that in turn change the screen.
@@ -626,6 +645,7 @@ addchar:
 		goto top;
 	}
 
+eb_line:
 /* rest of edbrowse expects this line to be nl terminated */
 	s[j] = '\n';
 	return (uchar *) s;
@@ -994,11 +1014,14 @@ void cxSwitch(int cx, bool interactive)
 	context = cx;
 	if (interactive && debugLevel) {
 		if (created)
-			i_puts(MSG_SessionNew);
+			i_printf(MSG_SessionNew);
 		else if (cf->fileName)
-			eb_puts(cf->fileName);
+			i_printf(MSG_String, cf->fileName);
 		else
-			i_puts(MSG_NoFile);
+			i_printf(MSG_NoFile);
+		if (cw->jdb_frame)
+			i_printf(MSG_String, " jdb");
+		eb_puts("");
 	}
 
 /* The next line is required when this function is called from main(),
@@ -3773,18 +3796,17 @@ pwd:
 			setError(MSG_NoBrowse);
 			return false;
 		}
+		if (!isJSAlive) {
+			setError(MSG_JavaOff);
+			return false;
+		}
 /* debug the js context of the frame you are in */
 		t = line2frame(cw->dot);
 		if (t)
 			cf = t->f1;
 		else
 			selfFrame();
-		jdb_frame = cf;
-		if (!isJSAlive) {
-			setError(MSG_JavaOff);
-			return false;
-		}
-		jdb_mode = true;
+		cw->jdb_frame = cf;
 		jSyncup(false);
 		return true;
 	}
@@ -4972,12 +4994,14 @@ replaceframe:
 				return false;
 			s = sessionList[cx].lw->f0.fileName;
 			if (s)
-				printf("%s", s);
+				i_printf(MSG_String, s);
 			else
 				i_printf(MSG_NoFile);
 			if (sessionList[cx].lw->binMode)
 				i_printf(MSG_BinaryBrackets);
-			nl();
+			if (cw->jdb_frame)
+				i_printf(MSG_String, " jdb");
+			eb_puts("");
 			return true;
 		}		/* another session */
 		if (first) {

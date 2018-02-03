@@ -59,7 +59,7 @@ Username:
 user name too long, limit %d characters
 Password: 
 password too long, limit %d characters
-0
+%s
 warning, the directory is inaccessible - the listing will be empty
 disaster, error message length %d is too long\n
 line %d: 

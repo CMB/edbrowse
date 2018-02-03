@@ -59,7 +59,7 @@ Nome de usuário:
 nome de usuário longo demais; limite %d caracteres
 Senha: 
 senha longa demais; limite %d caracteres
-0
+%s
 aviso: diretório inacessível - listagem ficará vazia
 catástrofe; mensagem de erro %d é comprida demais\n
 linha %d: 

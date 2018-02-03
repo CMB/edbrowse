@@ -59,7 +59,7 @@ Nazwa użytkownika:
 nazwa użytkownika zbyt długa, ograniczenie do %d znaków
 Hasło: 
 hasło zbyt długie, ograniczenie do %d znaków
-0
+%s
 uwaga, katalog jest niedostępny - lista zawartości będzie pusta
 katastrofa, długość wiadomości o błędzie %d - zbyt duża
 wiersz %d: 
