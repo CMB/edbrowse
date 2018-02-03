@@ -157,10 +157,27 @@ if(s.expanded) m += " deminimized";
 alert(m);
 }
 }
+
+// run an expression in a loop.
+mw0.aloop = function(s$$, t$$, exp$$)
+{
+if(Array.isArray(s$$)) {
+mw0.aloop(0, s$$.length, t$$);
+return;
+}
+if(typeof s$$ !== "number" || typeof t$$ !== "number" || typeof exp$$ !== "string") {
+alert("aloop(array, expression) or aloop(start, end, expression)");
+return;
+}
+for(var i=s$$; i<t$$; ++i)
+eval(exp$$);
+}
+
 } // master compile
 
 dumptree = mw0.dumptree;
 showscripts = mw0.showscripts;
+aloop = mw0.aloop;
 
 // This is our bailout function, it references a variable that does not exist.
 function eb$stopexec() { return javascript$interrupt; }

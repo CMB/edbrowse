@@ -18,6 +18,8 @@ If an argument is <func then edbrowse runs that function, rather than reading in
 
 Sort directory entries by file size or mod time or locale alphabetical (the default).
 
+Run some edbrowse commands in the javascript debugger, particularly e number to switch to another session.
+
 3.7.1:
 Automatically expand a frame when javascript tries to access its objects.
 Otherwise it won't expand unti you expand it explicitly.
