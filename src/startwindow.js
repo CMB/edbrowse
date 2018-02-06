@@ -1184,6 +1184,7 @@ mw0.Event.prototype.initCustomEvent = function(e, bubble, cancel, details) { };
 mw0.createEvent = function(unused) { return new Event; }
 
 mw0.dispatchEvent = function (e) {
+if(eventDebug) alert("dispatch " + this.nodeName + "." + e._type);
 var eval_string = "try { this['" + e._type + "']()} catch (e) {alert('event not found')}";
 eval(eval_string);
 };
@@ -1211,6 +1212,7 @@ Third arg is not used cause I don't understand it.
 It calls a lower level function to do the work, which is also called by
 attachEvent, as these are almost exactly the same functions.
 A similar design applies for removeEventListener and detachEvent.
+It's frickin complicated, so set eventDebug to debug it.
 *********************************************************************/
 
 mw0.addEventListener = function(ev, handler, notused) { this.eb$listen(ev,handler, true); }
@@ -1221,7 +1223,7 @@ mw0.detachEvent = function(ev, handler) { this.eb$unlisten(ev,handler, false); }
 mw0.eb$listen = function(ev, handler, addon)
 {
 var ev_before_changes = ev;
-//  alert("listen " + this.nodeName + " " + addon);
+if(eventDebug)  alert((addon ? "listen " : "attach ") + this.nodeName + "." + ev);
 if(addon) {
 ev = "on" + ev;
 } else {
@@ -1252,7 +1254,7 @@ this[evarray].push(handler);
 mw0.eb$unlisten = function(ev, handler, addon)
 {
 var ev_before_changes = ev;
-//  alert("unlisten " + this.nodeName + " " + addon);
+if(eventDebug)  alert((addon ? "unlisten " : "detach ") + this.nodeName + "." + ev);
 if(addon) {
 ev = "on" + ev;
 } else {
@@ -1339,6 +1341,7 @@ c.prototype.addEventListener = mw0.addEventListener;
 c.prototype.removeEventListener = mw0.removeEventListener;
 c.prototype.attachEvent = mw0.attachEvent;
 c.prototype.detachEvent = mw0.attachEvent;
+c.prototype.dispatchEvent = mw0.dispatchEvent;
 }
 })();
 
@@ -1414,6 +1417,7 @@ mw0.Form.prototype.addEventListener = mw0.addEventListener;
 mw0.Form.prototype.removeEventListener = mw0.removeEventListener;
 mw0.Form.prototype.attachEvent = mw0.attachEvent;
 mw0.Form.prototype.detachEvent = mw0.attachEvent;
+mw0.Form.prototype.dispatchEvent = mw0.attachEvent;
 
 mw0.createElementNS = function(nsurl,s) {
 return mw0.createElement(s);
@@ -1781,14 +1785,16 @@ addEventListener = mw0.addEventListener;
 removeEventListener = mw0.removeEventListener;
 attachEvent = mw0.attachEvent;
 detachEvent = mw0.detachEvent;
+dispatchEvent = mw0.dispatchEvent;
 document.eb$listen = mw0.eb$listen;
 document.eb$unlisten = mw0.eb$unlisten;
 document.addEventListener = mw0.addEventListener;
 document.removeEventListener = mw0.removeEventListener;
 document.attachEvent = mw0.attachEvent;
 document.detachEvent = mw0.detachEvent;
-document.createEvent = mw0.createEvent;
 document.dispatchEvent = mw0.dispatchEvent;
+document.createEvent = mw0.createEvent;
+eventDebug = false;
 
 document.createElement = mw0.createElement;
 document.createElementNS = mw0.createElementNS;

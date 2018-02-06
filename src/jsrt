@@ -650,7 +650,12 @@ olist[3] = oo;
 }
 }
 
-function bodyLoad() { alert("body loading"); }
+function bodyLoad() {
+alert("body loading");
+var e = document.createEvent();
+e._type = "load";
+document.dispatchEvent(e);
+}
 function bodyUnload() {
 if(confirm("Go to the edbrowse home page?"))
 new Window("http://edbrowse.org");
@@ -664,7 +669,7 @@ s.data = "lastScript()";
 document.body.appendChild(s);
 }
 function formUnload(name) { alert("form " + name + " unloading"); }
-function docLoad() { alert("doc loader attached"); }
+function docLoad() { alert("document loading"); }
 document.attachEvent("onload", docLoad);
 var onlv = 77;
 
