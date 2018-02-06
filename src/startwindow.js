@@ -79,6 +79,8 @@ ok = Object.keys = Object.keys || (function () {
 
 // Dump the tree below a node, this is for debugging.
 document.nodeName = "document"; // in case you want to start at the top.
+window.nodeName = "window";
+
 // Print the first line of text for a text node, and no braces
 // because nothing should be below a text node.
 // You can make this more elaborate and informative if you wish.
@@ -1217,7 +1219,10 @@ mw0.attachEvent = function(ev, handler) { this.eb$listen(ev,handler, false); }
 mw0.eb$listen = function(ev, handler, addon)
 {
 var ev_before_changes = ev;
-if(!addon) {
+//  alert("listen " + this.nodeName + " " + addon);
+if(addon) {
+ev = "on" + ev;
+} else {
 // for attachEvent, if onclick is passed in, you are actually listening for 'click'
 ev = ev.replace(/^on/, "");
 }
@@ -1244,6 +1249,7 @@ this[evarray].push(handler);
 // the assumption is that this is not a problem
 mw0.removeEventListener = function(ev, handler, notused)
 {
+ev = "on" + ev;
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
 // remove original html handler after other events have been added.

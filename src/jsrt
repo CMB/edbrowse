@@ -780,10 +780,10 @@ function test_removeListener()
 var x1 = document.createElement("a");
 var x1click = function(){ alert('ok') };
 x1.addEventListener("click",x1click,0);
-if(typeof x1.click$$array[0] != "function")
+if(typeof x1.onclick$$array[0] != "function")
 fail(159);
 x1.removeEventListener("click",x1click);
-if(x1.click$$array.length)
+if(x1.onclick$$array.length)
 fail(160);
 }
 
