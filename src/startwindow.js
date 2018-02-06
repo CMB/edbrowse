@@ -1203,18 +1203,20 @@ mw0.Event.prototype.stopPropagation = function(){
 This is our addEventListener function.
 It is bound to window, which is ok because window has such a function
 to listen to load and unload.
-Later on we will bind it to document and to other elements via
-element.addEventListener = addEventListener
-Or maybe URL.prototype.addEventListener = addEventListener
+Later on we will bind it to document and to other nodes via
+class.prototype.addEventListener = addEventListener,
 to cover all the instantiated objects in one go.
 first arg is a string like click, second arg is a js handler,
 Third arg is not used cause I don't understand it.
 It calls a lower level function to do the work, which is also called by
 attachEvent, as these are almost exactly the same functions.
+A similar design applies for removeEventListener and detachEvent.
 *********************************************************************/
 
 mw0.addEventListener = function(ev, handler, notused) { this.eb$listen(ev,handler, true); }
 mw0.attachEvent = function(ev, handler) { this.eb$listen(ev,handler, false); }
+mw0.removeEventListener = function(ev, handler, notused) { this.eb$unlisten(ev,handler, true); }
+mw0.detachEvent = function(ev, handler) { this.eb$unlisten(ev,handler, false); }
 
 mw0.eb$listen = function(ev, handler, addon)
 {
@@ -1244,12 +1246,19 @@ eval(
 this[evarray].push(handler);
 }
 
-// here is remove, the opposite of add.
+// here is unlisten, the opposite of listen.
 // what if every handler is removed and there is an empty array?
-// the assumption is that this is not a problem
-mw0.removeEventListener = function(ev, handler, notused)
+// the assumption is that this is not a problem.
+mw0.eb$unlisten = function(ev, handler, addon)
 {
+var ev_before_changes = ev;
+//  alert("unlisten " + this.nodeName + " " + addon);
+if(addon) {
 ev = "on" + ev;
+} else {
+ev = ev.replace(/^on/, "");
+}
+
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
 // remove original html handler after other events have been added.
@@ -1325,9 +1334,11 @@ c.prototype.focus = focus;
 c.prototype.blur = blur;
 // events
 c.prototype.eb$listen = mw0.eb$listen;
+c.prototype.eb$unlisten = mw0.eb$unlisten;
 c.prototype.addEventListener = mw0.addEventListener;
 c.prototype.removeEventListener = mw0.removeEventListener;
 c.prototype.attachEvent = mw0.attachEvent;
+c.prototype.detachEvent = mw0.attachEvent;
 }
 })();
 
@@ -1398,9 +1409,11 @@ mw0.Form.prototype.getAttributeNode = mw0.getAttributeNode;
 mw0.Form.prototype.cloneNode = mw0.cloneNode;
 mw0.Form.prototype.importNode = mw0.importNode;
 mw0.Form.prototype.eb$listen = mw0.eb$listen;
+mw0.Form.prototype.eb$unlisten = mw0.eb$listen;
 mw0.Form.prototype.addEventListener = mw0.addEventListener;
 mw0.Form.prototype.removeEventListener = mw0.removeEventListener;
 mw0.Form.prototype.attachEvent = mw0.attachEvent;
+mw0.Form.prototype.detachEvent = mw0.attachEvent;
 
 mw0.createElementNS = function(nsurl,s) {
 return mw0.createElement(s);
@@ -1763,13 +1776,17 @@ document.createTextNode = mw0.createTextNode;
 
 Event = mw0.Event;
 eb$listen = mw0.eb$listen;
+eb$unlisten = mw0.eb$unlisten;
 addEventListener = mw0.addEventListener;
 removeEventListener = mw0.removeEventListener;
 attachEvent = mw0.attachEvent;
+detachEvent = mw0.detachEvent;
 document.eb$listen = mw0.eb$listen;
+document.eb$unlisten = mw0.eb$unlisten;
 document.addEventListener = mw0.addEventListener;
 document.removeEventListener = mw0.removeEventListener;
 document.attachEvent = mw0.attachEvent;
+document.detachEvent = mw0.detachEvent;
 document.createEvent = mw0.createEvent;
 document.dispatchEvent = mw0.dispatchEvent;
 
