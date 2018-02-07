@@ -594,6 +594,17 @@ bool run_function_bool(jsobjtype obj, const char *name)
 	return rc;
 }				/* run_function_bool */
 
+bool run_event_bool(jsobjtype obj, const char *pname, const char *evname)
+{
+	bool evdebug = false;
+	if (!handlerPresent(obj, evname))
+		return true;
+	evdebug = get_property_bool(cf->winobj, "eventDebug");
+	if (evdebug)
+		printf("ttrigger %s.%s\n", pname, evname);
+	return run_function_bool(obj, evname);
+}
+
 void run_function_onearg(jsobjtype obj, const char *name, jsobjtype a)
 {
 	if (!allowJS || !cf->winobj)

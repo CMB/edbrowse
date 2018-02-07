@@ -71,6 +71,7 @@ void freeJavaContext(struct ebFrame *f) ;
 char *jsRunScriptResult(jsobjtype obj, const char *str, const char *filename, int lineno) ;
 void jsRunScript(jsobjtype obj, const char *str, const char *filename, int lineno) ;
 enum ej_proptype has_property(jsobjtype obj, const char *name) ;
+#define handlerPresent(obj, name) (has_property(obj, name) == EJ_PROP_FUNCTION)
 void delete_property(jsobjtype obj, const char *name) ;
 char *get_property_string(jsobjtype obj, const char *name) ;
 int get_property_number(jsobjtype obj, const char *name) ;
@@ -95,6 +96,7 @@ void setupJavaDom(void) ;
 char *get_property_url(jsobjtype owner, bool action) ;
 void rebuildSelectors(void);
 bool run_function_bool(jsobjtype obj, const char *name);
+bool run_event_bool(jsobjtype obj, const char *pname, const char *eevname);
 void run_function_onearg(jsobjtype obj, const char *name, jsobjtype o);
 void set_basehref(const char *b);
 
@@ -142,7 +144,7 @@ bool infReplace(int tagno, const char *newtext, bool notify) ;
 bool infPush(int tagno, char **post_string) ;
 struct htmlTag *tagFromJavaVar(jsobjtype v);
 void javaSubmitsForm(jsobjtype v, bool reset) ;
-bool handlerGoBrowse(const struct htmlTag *t, const char *name) ;
+bool bubble_event(const struct htmlTag *t, const char *name) ;
 void runningError(int msg, ...) ;
 void rerender(bool notify);
 void delTags(int startRange, int endRange);

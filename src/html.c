@@ -5,8 +5,6 @@
 
 #include "eb.h"
 
-#define handlerPresent(obj, name) (has_property(obj, name) == EJ_PROP_FUNCTION)
-
 #ifdef _MSC_VER			// sleep(secs) macro
 #define SLEEP(a) Sleep(a * 1000)
 extern int gettimeofday(struct timeval *tp, void *tzp);	// from tidys.lib
@@ -1039,7 +1037,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 	if (itype >= INP_RADIO) {
 // The change has already been made;
 // if onclick returns false, should that have prevented the change??
-		handlerGoBrowse(t, "onclick");
+		bubble_event(t, "onclick");
 		if (js_redirects)
 			return true;
 	}
@@ -1051,7 +1049,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		else {
 			jSyncup(false);
 			cf = t->f0;
-			run_function_bool(t->jv, "onchange");
+			run_event_bool(t->jv, t->info->name, "onchange");
 			jSideEffects();
 			if (js_redirects)
 				return true;
@@ -1572,7 +1570,7 @@ bool infPush(int tagno, char **post_string)
 				     INP_BUTTON ? MSG_NJNoAction :
 				     MSG_NJNoOnclick);
 	}
-	handlerGoBrowse((t ? t : form), "onclick");
+	bubble_event((t ? t : form), "onclick");
 	if (js_redirects)
 		return true;
 
@@ -1592,8 +1590,8 @@ bool infPush(int tagno, char **post_string)
 			else {
 				rc = true;
 				if (form->jv)
-					rc = run_function_bool(form->jv,
-							       "onreset");
+					rc = run_event_bool(form->jv,
+							    "form", "onreset");
 				jSideEffects();
 				if (!rc)
 					return true;
@@ -1612,7 +1610,8 @@ bool infPush(int tagno, char **post_string)
 		else {
 			rc = true;
 			if (form->jv)
-				rc = run_function_bool(form->jv, "onsubmit");
+				rc = run_event_bool(form->jv, "form",
+						    "onsubmit");
 			jSideEffects();
 			if (!rc)
 				return true;
@@ -1798,15 +1797,13 @@ void javaSubmitsForm(jsobjtype v, bool reset)
 		js_submit = v;
 }				/* javaSubmitsForm */
 
-bool handlerGoBrowse(const struct htmlTag *t, const char *name)
+bool bubble_event(const struct htmlTag *t, const char *name)
 {
 	bool first = true;
 	bool rc = true;
-	bool eventDebug = false;
 
 	if (!isJSAlive)
 		return true;
-	eventDebug = get_property_bool(cf->winobj, "eventDebug");
 
 	do {
 		if (!t->jv)
@@ -1818,9 +1815,7 @@ bool handlerGoBrowse(const struct htmlTag *t, const char *name)
 			first = false;
 		}
 		cf = t->f0;
-		if (eventDebug)
-			printf("ttrigger %s.%s\n", t->info->name, name);
-		rc = run_function_bool(t->jv, name);
+		rc = run_event_bool(t->jv, t->info->name, name);
 	} while (rc && (t = t->parent));
 // And finally check handler on the document.
 	cf = &(cw->f0);
@@ -1830,14 +1825,12 @@ bool handlerGoBrowse(const struct htmlTag *t, const char *name)
 			first = false;
 		}
 		cf = &(cw->f0);
-		if (eventDebug)
-			printf("ttrigger document.%s\n", name);
-		rc = run_function_bool(cf->docobj, name);
+		rc = run_event_bool(cf->docobj, "document", name);
 	}
 	if (!first)
 		jSideEffects();
 	return rc;
-}				/* handlerGoBrowse */
+}				/* bubble_event */
 
 /* Javascript errors, we need to see these no matter what. */
 void runningError(int msg, ...)
@@ -2109,8 +2102,8 @@ void runOnload(void)
 		return;
 
 /* window and document onload */
-	run_function_bool(cf->winobj, "onload");
-	run_function_bool(cf->docobj, "onload");
+	run_event_bool(cf->winobj, "window", "onload");
+	run_event_bool(cf->docobj, "document", "onload");
 
 	fn = -1;
 	for (i = 0; i < cw->numTags; ++i) {
@@ -2125,11 +2118,11 @@ void runOnload(void)
 		if (!t->jv)
 			continue;
 		if (action == TAGACT_BODY && t->onload)
-			run_function_bool(t->jv, "onload");
+			run_event_bool(t->jv, "body", "onload");
 		if (action == TAGACT_BODY && t->onunload)
 			unloadHyperlink("document.body.onunload", "Body");
 		if (action == TAGACT_FORM && t->onload)
-			run_function_bool(t->jv, "onload");
+			run_event_bool(t->jv, "form", "onload");
 /* tidy5 says there is no form.onunload */
 		if (action == TAGACT_FORM && t->onunload) {
 			char formfunction[48];

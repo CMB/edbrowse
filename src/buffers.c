@@ -5292,7 +5292,7 @@ switchsession:
 			rc = false;
 			if (jsgo) {
 /* The program might depend on the mouseover code running first */
-				rc = handlerGoBrowse(tag, "onmouseover");
+				rc = bubble_event(tag, "onmouseover");
 				if (newlocation)
 					goto redirect;
 				if (!over)
@@ -5302,7 +5302,7 @@ switchsession:
 			if (!rc && !jsdead)
 				set_property_string(cf->winobj, "status", h);
 			if (jsgo) {
-				rc = handlerGoBrowse(tag, "onclick");
+				rc = bubble_event(tag, "onclick");
 				if (newlocation)
 					goto redirect;
 				if (!rc)

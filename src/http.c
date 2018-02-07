@@ -2669,7 +2669,7 @@ So check for serverData null here. Once again we pop the frame.
 		set_property_object(t->jv, "content$Window", cwo);
 // run the frame unload function if it is there.
 // I assume it should run in the higher context.
-		run_function_bool(t->jv, "onload");
+		run_event_bool(t->jv, t->info->name, "onload");
 	}
 
 	return 0;
