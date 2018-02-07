@@ -1340,7 +1340,7 @@ c.prototype.eb$unlisten = mw0.eb$unlisten;
 c.prototype.addEventListener = mw0.addEventListener;
 c.prototype.removeEventListener = mw0.removeEventListener;
 c.prototype.attachEvent = mw0.attachEvent;
-c.prototype.detachEvent = mw0.attachEvent;
+c.prototype.detachEvent = mw0.detachEvent;
 c.prototype.dispatchEvent = mw0.dispatchEvent;
 }
 })();
@@ -1416,8 +1416,8 @@ mw0.Form.prototype.eb$unlisten = mw0.eb$listen;
 mw0.Form.prototype.addEventListener = mw0.addEventListener;
 mw0.Form.prototype.removeEventListener = mw0.removeEventListener;
 mw0.Form.prototype.attachEvent = mw0.attachEvent;
-mw0.Form.prototype.detachEvent = mw0.attachEvent;
-mw0.Form.prototype.dispatchEvent = mw0.attachEvent;
+mw0.Form.prototype.detachEvent = mw0.detachEvent;
+mw0.Form.prototype.dispatchEvent = mw0.dispatchEvent;
 
 mw0.createElementNS = function(nsurl,s) {
 return mw0.createElement(s);

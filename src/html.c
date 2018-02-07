@@ -1802,8 +1802,12 @@ bool handlerGoBrowse(const struct htmlTag *t, const char *name)
 {
 	bool first = true;
 	bool rc = true;
+	bool eventDebug = false;
+
 	if (!isJSAlive)
 		return true;
+	eventDebug = get_property_bool(cf->winobj, "eventDebug");
+
 	do {
 		if (!t->jv)
 			continue;
@@ -1814,6 +1818,8 @@ bool handlerGoBrowse(const struct htmlTag *t, const char *name)
 			first = false;
 		}
 		cf = t->f0;
+		if (eventDebug)
+			printf("ttrigger %s.%s\n", t->info->name, name);
 		rc = run_function_bool(t->jv, name);
 	} while (rc && (t = t->parent));
 // And finally check handler on the document.
@@ -1824,6 +1830,8 @@ bool handlerGoBrowse(const struct htmlTag *t, const char *name)
 			first = false;
 		}
 		cf = &(cw->f0);
+		if (eventDebug)
+			printf("ttrigger document.%s\n", name);
 		rc = run_function_bool(cf->docobj, name);
 	}
 	if (!first)
