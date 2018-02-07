@@ -317,6 +317,8 @@ static void printDot(void)
 static bool jdb_passthrough(const char *s)
 {
 	int i;
+	if (s[0] == '!')
+		return true;
 	if (s[0] == 'd' && s[1] == 'b' && isdigit(s[2]) && s[3] == 0)
 		return true;
 	if (s[0] == 'e' && isdigit(s[1])) {
@@ -326,6 +328,10 @@ static bool jdb_passthrough(const char *s)
 		if (!s[i])
 			return true;
 	}
+	if (stringEqual(s, "bflist") || stringEqual(s, "bglist"))
+		return true;
+	if (stringEqual(s, "timers") || stringEqual(s, "demin"))
+		return true;
 	return false;
 }
 
