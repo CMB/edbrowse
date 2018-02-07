@@ -653,7 +653,7 @@ olist[3] = oo;
 function bodyLoad() {
 alert("body loading");
 var e = document.createEvent();
-e._type = "load";
+e._type = "onsnork";
 document.dispatchEvent(e);
 }
 function bodyUnload() {
@@ -670,7 +670,7 @@ document.body.appendChild(s);
 }
 function formUnload(name) { alert("form " + name + " unloading"); }
 function docLoad() { alert("document loading"); }
-document.attachEvent("onload", docLoad);
+document.addEventListener("snork", docLoad);
 var onlv = 77;
 
 /* last script to run automatically; loaded by the form.onload function */

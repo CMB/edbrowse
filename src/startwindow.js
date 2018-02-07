@@ -1213,13 +1213,18 @@ Third arg is not used cause I don't understand it.
 It calls a lower level function to do the work, which is also called by
 attachEvent, as these are almost exactly the same functions.
 A similar design applies for removeEventListener and detachEvent.
-It's frickin complicated, so set eventDebug to debug it.
+However, attachEvent is deprecated, and disabled by default.
+This is frickin complicated, so set eventDebug to debug it.
 *********************************************************************/
 
+mw0.attachOn = false;
+
 mw0.addEventListener = function(ev, handler, notused) { this.eb$listen(ev,handler, true); }
-mw0.attachEvent = function(ev, handler) { this.eb$listen(ev,handler, false); }
 mw0.removeEventListener = function(ev, handler, notused) { this.eb$unlisten(ev,handler, true); }
+if(mw0.attachOn) {
+mw0.attachEvent = function(ev, handler) { this.eb$listen(ev,handler, false); }
 mw0.detachEvent = function(ev, handler) { this.eb$unlisten(ev,handler, false); }
+}
 
 mw0.eb$listen = function(ev, handler, addon)
 {
@@ -1340,8 +1345,10 @@ c.prototype.eb$listen = mw0.eb$listen;
 c.prototype.eb$unlisten = mw0.eb$unlisten;
 c.prototype.addEventListener = mw0.addEventListener;
 c.prototype.removeEventListener = mw0.removeEventListener;
+if(mw0.attachOn) {
 c.prototype.attachEvent = mw0.attachEvent;
 c.prototype.detachEvent = mw0.detachEvent;
+}
 c.prototype.dispatchEvent = mw0.dispatchEvent;
 }
 })();
@@ -1416,8 +1423,10 @@ mw0.Form.prototype.eb$listen = mw0.eb$listen;
 mw0.Form.prototype.eb$unlisten = mw0.eb$listen;
 mw0.Form.prototype.addEventListener = mw0.addEventListener;
 mw0.Form.prototype.removeEventListener = mw0.removeEventListener;
+if(mw0.attachOn) {
 mw0.Form.prototype.attachEvent = mw0.attachEvent;
 mw0.Form.prototype.detachEvent = mw0.detachEvent;
+}
 mw0.Form.prototype.dispatchEvent = mw0.dispatchEvent;
 
 mw0.createElementNS = function(nsurl,s) {
@@ -1429,7 +1438,7 @@ var c;
 var t = s.toLowerCase();
 if(!t.match(/^[a-z\d_]+$/)) {
 console.error("createElement argument " + t);
-t = "Element";
+t = "xyz";
 }
 switch(t) { 
 case "body":
@@ -1512,7 +1521,7 @@ c.childNodes = [];
 return c;
 default:
 /* eb$puts("createElement default " + s); */
-c = new Element;
+c = new Span;
 }
 
 /* ok, for some element types this perhaps doesn't make sense,
@@ -1785,15 +1794,17 @@ eb$listen = mw0.eb$listen;
 eb$unlisten = mw0.eb$unlisten;
 addEventListener = mw0.addEventListener;
 removeEventListener = mw0.removeEventListener;
-attachEvent = mw0.attachEvent;
-detachEvent = mw0.detachEvent;
 dispatchEvent = mw0.dispatchEvent;
 document.eb$listen = mw0.eb$listen;
 document.eb$unlisten = mw0.eb$unlisten;
 document.addEventListener = mw0.addEventListener;
 document.removeEventListener = mw0.removeEventListener;
+if(mw0.attachOn) {
+attachEvent = mw0.attachEvent;
+detachEvent = mw0.detachEvent;
 document.attachEvent = mw0.attachEvent;
 document.detachEvent = mw0.detachEvent;
+}
 document.dispatchEvent = mw0.dispatchEvent;
 document.createEvent = mw0.createEvent;
 eventDebug = false;
