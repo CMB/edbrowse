@@ -320,10 +320,10 @@ void formControl(struct htmlTag *t, bool namecheck)
 	}
 	if (cform)
 		t->controller = cform;
-	else if (itype != INP_BUTTON)
+	else if (itype != INP_BUTTON && !htmlGenerated)
 		debugPrint(3, "%s is not part of a fill-out form",
 			   t->info->desc);
-	if (namecheck && !myname)
+	if (namecheck && !myname && !htmlGenerated)
 		debugPrint(3, "%s does not have a name", t->info->desc);
 }				/* formControl */
 

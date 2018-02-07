@@ -2633,6 +2633,7 @@ So check for serverData null here. Once again we pop the frame.
 		runScriptsPending();
 		runOnload();
 		runScriptsPending();
+		rebuildSelectors();
 
 // parent points to the containing frame.
 		set_property_object(cf->winobj, "parent", save_cf->winobj);
@@ -2802,6 +2803,7 @@ bool reexpandFrame(void)
 		runScriptsPending();
 		runOnload();
 		runScriptsPending();
+		rebuildSelectors();
 		set_property_string(cf->docobj, "readyState", "complete");
 	}
 

@@ -733,6 +733,7 @@ char *htmlParse(char *buf, int remote)
 		runScriptsPending();
 		runOnload();
 		runScriptsPending();
+		rebuildSelectors();
 	}
 
 	a = render(0);
@@ -878,7 +879,7 @@ void infShow(int tagno, const char *search)
 		printf("%3d %s\n", cnt, v->textval);
 	}
 	if (!show) {
-		if (!search)
+		if (!*search)
 			i_puts(MSG_NoOptions);
 		else
 			i_printf(MSG_NoOptionsMatch, search);
@@ -2799,6 +2800,9 @@ nop:
 	case TAGACT_INPUT:
 		if (!opentag)
 			break;
+// value has to be something.
+		if (!t->value)
+			t->value = emptyString;
 		itype = t->itype;
 		if (itype == INP_HIDDEN)
 			break;

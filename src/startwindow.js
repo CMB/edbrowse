@@ -103,7 +103,8 @@ if(nn === "base" && top.href)
 extra = top.href.toString();
 if(extra.length) extra = ' ' + extra;
 // some tags should never have anything below them so skip the parentheses notation for these.
-if((nn == "base" || nn == "meta" || nn == "link" ||nn == "text" || nn == "image" || nn == "option") && top.childNodes.length == 0) {
+if((nn == "base" || nn == "meta" || nn == "link" ||nn == "text" || nn == "image" || nn == "option") &&
+(!top.childNodes || top.childNodes.length == 0)) {
 alert(nn + extra);
 return;
 }
@@ -1505,6 +1506,7 @@ case "option":
 c = new Option;
 c.nodeName = t;
 c.tagName = t;
+c.childNodes = [];
 // we don't log options because rebuildSelectors() checks
 // the dropdown lists after every js run.
 return c;
