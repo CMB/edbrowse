@@ -120,25 +120,20 @@ alert("}");
 
 /*********************************************************************
 Show the scripts, where they come from, type, length, whether deminimized.
-Careful! This is compiled once.
-If you refer to document.scripts you are stuck with that set of scripts forever.
-A native function my$doc() helps us out with this.
-Dynamically created scripts via document.createElement("script")
-won't appear in this list.
-This is the html created scripts only.
-Pass an argument of 1, or true, to use getElementsByTagname instead.
-Then use document.scripts2 for the resulting list of scripts.
-The second list is generally longer than the first,
-and indexes need not correspond.
+This uses getElementsByTagname() so you see all the scripts,
+not just those that were in the original html.
+The list is left in $ss for convenient access.
+Careful! This is compiled only once in the master window,
+so how do I get at your document, and leave $ss in your window?
+The native functions my$doc() and my$win() help with that.
 *********************************************************************/
 
-mw0.showscripts = function(tagname)
+mw0.showscripts = function()
 {
 var i, s, m;
 var d = my$doc();
-var slist = d.scripts;
-if(tagname)
-slist = d.scripts2 = d.getElementsByTagName("script");
+var w = my$win();
+var slist = d.getElementsByTagName("script");
 for(i=0; i<slist.length; ++i) {
 s = slist[i];
 m = i + ": ";
@@ -159,6 +154,7 @@ m += " length ?";
 if(s.expanded) m += " deminimized";
 alert(m);
 }
+w.$ss = slist;
 }
 
 // run an expression in a loop.

@@ -2929,7 +2929,8 @@ This feature is for developers, and is not very helpful for end users.
 If the output of any command is long, you can redirect it into a file by using the ^&gt symbol, as in expression ^&gt; file.
 I didn't want to use &gt; since that is a valid javascript operator.
 A predefined ok (object keys) command lists all the members of an object.
-showscripts(0), and showscripts(1), show you the scripts from html, and under the document tree, respectively.
+showscripts() shows you the scripts in the current document, even generated scripts.
+These will be left in $ss.
 Type dumptree(document) to see the structure of the document.
 Use aloop(0,5,expression) to evaluate the expression as i runs from 0 to 4.
 Use aloop(y,expression) to run over the length of the array y.
