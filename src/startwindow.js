@@ -1014,8 +1014,14 @@ if(j < kids.length) continue;
 if(Array.isArray(nodeToCopy[item])) {
 nodeToReturn[item] = [];
 
-// Ok we need some special code here for form.elements.
-// Probably need the very same code for Table.rows and Trow.cells.
+/*********************************************************************
+Ok we need some special code here for form.elements.
+This isn't general enough, because the input tags could be
+inside tables and paragraphs etc within the form.
+Input nodes are not always direct children of the form, but oh well,
+it's a start.
+*********************************************************************/
+
 if(item === "elements" && nodeToCopy.nodeName === "form" && kids) {
 if(cloneDebug) alert("copy form elements with " + nodeToCopy[item].length + " members");
 for(i = 0; i < nodeToCopy[item].length; ++i) {
@@ -1028,6 +1034,39 @@ if(j == kids.length) {
 nodeToReturn[item].push(null);
 lostElements = true;
 if(cloneDebug) alert("oops, element " + i + " not linked");
+}
+}
+continue;
+}
+
+// Need the very same code for Table.rows and Trow.cells.
+if(item === "rows" && (nodeToCopy.nodeName === "table" || nodeToCopy.nodeName === "tbody") && kids) {
+if(cloneDebug) alert("copy rows with " + nodeToCopy[item].length + " members");
+for(i = 0; i < nodeToCopy[item].length; ++i) {
+for(j=0; j<kids.length; ++j) {
+if(kids[j] !== nodeToCopy[item][i]) continue;
+nodeToReturn[item].push(nodeToReturn.childNodes[j]);
+break;
+}
+if(j == kids.length) {
+nodeToReturn[item].push(null);
+if(cloneDebug) alert("oops, row " + i + " not linked");
+}
+}
+continue;
+}
+
+if(item === "cells" && nodeToCopy.nodeName === "trow" && kids) {
+if(cloneDebug) alert("copy cells with " + nodeToCopy[item].length + " members");
+for(i = 0; i < nodeToCopy[item].length; ++i) {
+for(j=0; j<kids.length; ++j) {
+if(kids[j] !== nodeToCopy[item][i]) continue;
+nodeToReturn[item].push(nodeToReturn.childNodes[j]);
+break;
+}
+if(j == kids.length) {
+nodeToReturn[item].push(null);
+if(cloneDebug) alert("oops, cell " + i + " not linked");
 }
 }
 continue;

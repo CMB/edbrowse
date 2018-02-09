@@ -18,6 +18,7 @@
 char emptyString[] = "";
 bool showHiddenFiles, isInteractive;
 int debugLevel = 1;
+bool debugClone, debugEvent;
 FILE *debugFile = NULL;
 char *debugFileName;
 bool demin = false;

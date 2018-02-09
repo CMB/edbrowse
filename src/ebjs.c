@@ -769,6 +769,10 @@ void setupJavaDom(void)
 	set_property_string(d, "location", cf->fileName);
 	set_property_string(w, "location", cf->fileName);
 	set_property_string(d, "domain", getHostURL(cf->fileName));
+	if (debugClone)
+		set_property_bool(cf->winobj, "cloneDebug", true);
+	if (debugEvent)
+		set_property_bool(cf->winobj, "eventDebug", true);
 }				/* setupJavaDom */
 
 /* Get the url from a url object, special wrapper.

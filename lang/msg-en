@@ -23,8 +23,8 @@ don't verify ssl connections (less secure)
 verify ssl connections
 don't show hidden files in directory mode
 show hidden files in directory mode
-0
-0
+debug cloneNode disabled
+debug cloneNode enabled
 end markers off
 end markers on listed lines
 end markers on
@@ -577,8 +577,8 @@ tag code %d has bad character %c following
 htmlParse() is not reentrant.
 unexpected input type in submitForm()
 list = 0 in tagFromJavaVar()
-0
-0
+debug events disabled
+debug events enabled
 Unable to create javascript context.
 0
 0

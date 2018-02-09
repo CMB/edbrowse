@@ -321,6 +321,8 @@ static bool jdb_passthrough(const char *s)
 		return true;
 	if (s[0] == 'd' && s[1] == 'b' && isdigit(s[2]) && s[3] == 0)
 		return true;
+	if (stringEqual(s, "dbe") || stringEqual(s, "dbc"))
+		return true;
 	if (s[0] == 'e' && isdigit(s[1])) {
 		for (i = 2; s[i]; ++i)
 			if (!isdigit(s[i]))
@@ -4115,6 +4117,24 @@ et_go:
 		verifyCertificates ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(verifyCertificates + MSG_CertifyOff);
+		return true;
+	}
+
+	if (stringEqual(line, "dbc")) {
+		debugClone ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(debugClone + MSG_DebugCloneOff);
+		if (isJSAlive)
+			set_property_bool(cf->winobj, "cloneDebug", debugClone);
+		return true;
+	}
+
+	if (stringEqual(line, "dbe")) {
+		debugEvent ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(debugEvent + MSG_DebugEventOff);
+		if (isJSAlive)
+			set_property_bool(cf->winobj, "eventDebug", debugEvent);
 		return true;
 	}
 
