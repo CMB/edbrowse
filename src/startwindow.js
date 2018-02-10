@@ -716,7 +716,7 @@ this.nodeType=3;
 this.ownerDocument = my$doc();
 this.style = new CSSStyleDeclaration;
 this.style.element = this;
-this.className = new String;
+this.className = "";
 /* A text node chould never have children, and does not need childNodes array,
  * but there is improper html out there <text> <stuff> </text>
  * which has to put stuff under the text node, so against this
@@ -934,41 +934,40 @@ eb$clone is a helper function that is not tied to any particular prototype.
 It's frickin complicated, so set cloneDebug to debug it.
 *********************************************************************/
 
-mw0.eb$clone = function(nodeToCopy,deep)
+mw0.eb$clone = function(node1,deep)
 {
-var nodeToReturn;
+var node2;
 var i, j;
 var kids = null;
 
 // WARNING: don't use instanceof Array here.
 // See the comments in the Array.prototype section.
-if(Array.isArray(nodeToCopy.childNodes))
-kids = nodeToCopy.childNodes;
+if(Array.isArray(node1.childNodes))
+kids = node1.childNodes;
 
 // We should always be cloning a node.
-if(cloneDebug) alert("clone " + nodeToCopy.nodeName + " {");
+if(cloneDebug) alert("clone " + node1.nodeName + " {");
 if(cloneDebug) {
 if(kids) alert("kids " + kids.length);
-else alert("no kids, type " + typeof nodeToCopy.childNodes);
+else alert("no kids, type " + typeof node1.childNodes);
 }
 
 // special case for array, which is a select node or a list of radio buttons.
-if(Array.isArray(nodeToCopy)) {
-nodeToReturn = [];
-nodeToReturn.childNodes = nodeToReturn;
+if(Array.isArray(node1)) {
+node2 = [];
+node2.childNodes = node2;
 if(deep) {
-if(cloneDebug) alert("self children length " + nodeToCopy.length);
-for(i = 0; i < nodeToCopy.length; ++i)
-nodeToReturn.push(mw0.eb$clone(nodeToCopy[i], true));
+if(cloneDebug) alert("self children length " + node1.length);
+for(i = 0; i < node1.length; ++i)
+node2.push(mw0.eb$clone(node1[i], true));
 }
 } else {
 
-nodeToReturn = mw0.createElement(nodeToCopy.nodeName);
+node2 = mw0.createElement(node1.nodeName);
 if (deep && kids) {
-if(cloneDebug) alert("children length " + kids.length);
 for(i = 0; i < kids.length; ++i) {
 var current_item = kids[i];
-nodeToReturn.appendChild(mw0.eb$clone(current_item,true));
+node2.appendChild(mw0.eb$clone(current_item,true));
 }
 }
 }
@@ -976,133 +975,122 @@ nodeToReturn.appendChild(mw0.eb$clone(current_item,true));
 var lostElements = false;
 
 // now for strings and functions and stuff.
-for (var item in nodeToCopy) {
+for (var item in node1) {
 // don't copy the things that come from prototype
-if(!nodeToCopy.hasOwnProperty(item)) continue;
+if(!node1.hasOwnProperty(item)) continue;
 
 // children already handled
-if(item === "childNodes") continue;
+if(item === "childNodes" || item === "parentNode") continue;
 
-if (typeof nodeToCopy[item] === 'function') {
+if (typeof node1[item] === 'function') {
 if(cloneDebug) alert("copy function " + item);
-nodeToReturn[item] = nodeToCopy[item];
+node2[item] = node1[item];
 continue;
 }
 
-if(nodeToCopy[item] === nodeToCopy) {
+if(node1[item] === node1) {
 if(cloneDebug) alert("selflink through " + item);
-nodeToReturn[item] = nodeToReturn;
+node2[item] = node2;
 continue;
-}
-
-// Look for a link from A to B within the tree of nodes,
-// A.foo = B, and try to preserve that link in the new tree, A1.foo = B1,
-// rather like tar or cpio preserving hard links.
-if(typeof nodeToCopy[item] === "object" && kids) {
-for(j=0; j<kids.length; ++j) {
-if(kids[j] !== nodeToCopy[item]) continue;
-// item could be 3, as in array[3]. That's already set. We want type conversion here.
-if(j == item) break;
-if(cloneDebug) alert("link " + item + " to child[" + j + "]");
-nodeToReturn[item] = nodeToReturn.childNodes[j];
-break;
-}
-if(j < kids.length) continue;
 }
 
 // An array of attributes, or event handlers etc.
-if(Array.isArray(nodeToCopy[item])) {
-nodeToReturn[item] = [];
+if(Array.isArray(node1[item])) {
+node2[item] = [];
 
 /*********************************************************************
-Ok we need some special code here for form.elements.
-This isn't general enough, because the input tags could be
-inside tables and paragraphs etc within the form.
-Input nodes are not always direct children of the form, but oh well,
-it's a start.
+Ok we need some special code here for form.elements,
+an array of input nodes within the form.
+We are preserving links, rather like tar or cpio.
+The same must be done for an array of rows beneath <table>,
+or an array of cells in a row, and perhaps others.
 *********************************************************************/
 
-if(item === "elements" && nodeToCopy.nodeName === "form" && kids) {
-if(cloneDebug) alert("copy form elements with " + nodeToCopy[item].length + " members");
-for(i = 0; i < nodeToCopy[item].length; ++i) {
-for(j=0; j<kids.length; ++j) {
-if(kids[j] !== nodeToCopy[item][i]) continue;
-nodeToReturn[item].push(nodeToReturn.childNodes[j]);
-break;
-}
-if(j == kids.length) {
-nodeToReturn[item].push(null);
-lostElements = true;
-if(cloneDebug) alert("oops, element " + i + " not linked");
-}
-}
-continue;
-}
-
-// Need the very same code for Table.rows and Trow.cells.
-if(item === "rows" && (nodeToCopy.nodeName === "table" || nodeToCopy.nodeName === "tbody") && kids) {
-if(cloneDebug) alert("copy rows with " + nodeToCopy[item].length + " members");
-for(i = 0; i < nodeToCopy[item].length; ++i) {
-for(j=0; j<kids.length; ++j) {
-if(kids[j] !== nodeToCopy[item][i]) continue;
-nodeToReturn[item].push(nodeToReturn.childNodes[j]);
-break;
-}
-if(j == kids.length) {
-nodeToReturn[item].push(null);
-if(cloneDebug) alert("oops, row " + i + " not linked");
+if(item === "elements" && node1.nodeName === "form" ||
+item === "rows" && (node1.nodeName === "table" || node1.nodeName === "tbody") ||
+item === "cells" && node1.nodeName === "trow") {
+if(cloneDebug) alert("linking " + node1.nodeName + "." + item + " with " + node1[item].length + " members");
+for(i = 0; i < node1[item].length; ++i) {
+var p = mw0.findObject(node1, node1[item][i], "");
+if(p.length) {
+node2[item].push(mw0.correspondingObject(node2, p));
+} else {
+node2[item].push(null);
+if(cloneDebug) alert("oops, member " + i + " not linked");
+if(item === "elements") lostElements = true;
 }
 }
 continue;
 }
 
-if(item === "cells" && nodeToCopy.nodeName === "trow" && kids) {
-if(cloneDebug) alert("copy cells with " + nodeToCopy[item].length + " members");
-for(i = 0; i < nodeToCopy[item].length; ++i) {
-for(j=0; j<kids.length; ++j) {
-if(kids[j] !== nodeToCopy[item][i]) continue;
-nodeToReturn[item].push(nodeToReturn.childNodes[j]);
-break;
-}
-if(j == kids.length) {
-nodeToReturn[item].push(null);
-if(cloneDebug) alert("oops, cell " + i + " not linked");
-}
-}
-continue;
-}
-
-// special code here for an array of radio buttons.
-if(nodeToCopy.nodeName === "form" && nodeToCopy[item].nodeName === "radio" && kids) {
-var a1 = nodeToCopy[item];
-var a2 = nodeToReturn[item];
-if(cloneDebug) alert("copy radio " + item + " with " + a1.length + " buttons");
+// special code here for an array of radio buttons within a form.
+if(node1.nodeName === "form" && node1[item].nodeName === "radio") {
+var a1 = node1[item];
+var a2 = node2[item];
+if(cloneDebug) alert("linking form.radio " + item + " with " + a1.length + " buttons");
 a2.type = a1.type;
 a2.nodeName = a1.nodeName;
 a2.class = a1.class;
 a2.className = a1.className;
 a2.nodeValue = a1.nodeValue;
 for(i = 0; i < a1.length; ++i) {
-for(j=0; j<kids.length; ++j) {
-if(kids[j] !== a1[i]) continue;
-nodeToReturn[item].push(nodeToReturn.childNodes[j]);
-break;
+var p = mw0.findObject(node1, a1[i], "");
+if(p.length) {
+a2.push(mw0.correspondingObject(node2, p));
+} else {
+a2.push(null);
+if(cloneDebug) alert("oops, button " + i + " not linked");
 }
-if(cloneDebug && j == kids.length) alert("oops, button " + i + " not linked");
 }
 continue;
 }
 
+// We could link from a form through a name
+// to an array of options.  <select name = color>
+// I'll test for a self-link to options.
+if(node1[item].options && node1[item].options === node1[item]) {
+; // don't do anything
+} else {
 // It's a regular array.
-if(cloneDebug) alert("copy array " + item + " with " + nodeToCopy[item].length + " members");
-nodeToReturn[item] = [];
-for(i = 0; i < nodeToCopy[item].length; ++i) {
-nodeToReturn[item].push(nodeToCopy[item][i]);
+if(cloneDebug) alert("copy array " + item + " with " + node1[item].length + " members");
+node2[item] = [];
+for(i = 0; i < node1[item].length; ++i) {
+node2[item].push(node1[item][i]);
+}
+continue;
+}
+}
+
+if(typeof node1[item] === "object") {
+// An object, not an array.
+
+if(item === "style") continue; // handled later
+if(item === "ownerDocument") continue; // handled by createElement
+if(item.match(/^\d+$/)) continue; // option index in a select array
+
+// Check for URL objects.
+if(node1[item] instanceof URL) {
+var u = node1[item];
+if(cloneDebug) alert("copy URL " + item);
+node2[item] = new URL(u.href);
+continue;
+}
+
+// Look for a link from A to B within the tree of nodes,
+// A.foo = B, and try to preserve that link in the new tree, A1.foo = B1,
+// rather like tar or cpio preserving hard links.
+var p = mw0.findObject(node1, node1[item], "");
+if(p.length) {
+if(cloneDebug) alert("link " + item + " " + p.substr(1));
+node2[item] = mw0.correspondingObject(node2, p);
+} else {
+// I don't think we should point to a generic object that we don't know anything about.
+if(cloneDebug) alert("unknown object " + item);
 }
 continue;
 }
 
-if (typeof nodeToCopy[item] === 'string') {
+if (typeof node1[item] === 'string') {
 // don't copy strings that are really setters; we'll be copying inner$html
 // as a true string so won't need to copy innerHTML, and shouldn't.
 if(item == "innerHTML")
@@ -1110,58 +1098,48 @@ continue;
 if(item == "innerText")
 continue;
 if(item == "value" &&
-!Array.isArray(nodeToCopy) && !(nodeToCopy instanceof Option))
+!Array.isArray(node1) && !(node1 instanceof Option))
 continue;
 if(cloneDebug) {
-var showstring = nodeToCopy[item];
+var showstring = node1[item];
 if(showstring.length > 20) showstring = "long";
 alert("copy string " + item + " = " + showstring);
 }
-nodeToReturn[item] = nodeToCopy[item];
+node2[item] = node1[item];
 continue;
 }
 
-if (typeof nodeToCopy[item] === 'number') {
-if(cloneDebug) alert("copy number " + item + " = " + nodeToCopy[item]);
-nodeToReturn[item] = nodeToCopy[item];
+if (typeof node1[item] === 'number') {
+if(cloneDebug) alert("copy number " + item + " = " + node1[item]);
+node2[item] = node1[item];
 continue;
 }
 
-if (typeof nodeToCopy[item] === 'boolean') {
-if(cloneDebug) alert("copy boolean " + item + " = " + nodeToCopy[item]);
-nodeToReturn[item] = nodeToCopy[item];
+if (typeof node1[item] === 'boolean') {
+if(cloneDebug) alert("copy boolean " + item + " = " + node1[item]);
+node2[item] = node1[item];
 continue;
 }
 }
 
 // copy style object if present and its subordinate strings.
-if (typeof nodeToCopy.style === "object") {
+if (typeof node1.style === "object") {
 if(cloneDebug) alert("copy style");
-nodeToReturn.style = new CSSStyleDeclaration;
-nodeToReturn.style.element = nodeToReturn;
-for (var item in nodeToCopy.style){
-if (typeof nodeToCopy.style[item] === 'string' ||
-typeof nodeToCopy.style[item] === 'number') {
+node2.style = new CSSStyleDeclaration;
+node2.style.element = node2;
+for (var item in node1.style){
+if (typeof node1.style[item] === 'string' ||
+typeof node1.style[item] === 'number') {
 if(cloneDebug) alert("copy attribute " + item);
-nodeToReturn.style[item] = nodeToCopy.style[item];
+node2.style[item] = node1.style[item];
 }
-}
-}
-
-// copy any objects of class URL.
-for (var url in nodeToCopy) {
-if(!nodeToCopy.hasOwnProperty(url)) continue;
-var u = nodeToCopy[url];
-if(typeof u === "object" && u instanceof URL) {
-if(cloneDebug) alert("copy URL " + url);
-nodeToReturn[url] = new URL(u.href);
 }
 }
 
 // This is an ugly patch for radio button arrays that don't get linked into the elements array.
 if(lostElements) {
-var e1 = nodeToCopy.elements;
-var e2 = nodeToReturn.elements;
+var e1 = node1.elements;
+var e2 = node2.elements;
 if(cloneDebug) alert("looking for lost radio elements");
 for(i=0; i<e2.length; ++i) {
 if(e2[i]) continue;
@@ -1169,10 +1147,10 @@ if(e1[i].nodeName !== "radio") {
 if(cloneDebug) alert("oops, lost element " + i + " is type " + e1[i].nodeName);
 continue;
 }
-for (var item in nodeToCopy) {
-if(!nodeToCopy.hasOwnProperty(item)) continue;
-if(nodeToCopy[item] !== e1[i]) continue;
-e2[i] = nodeToReturn[item];
+for (var item in node1) {
+if(!node1.hasOwnProperty(item)) continue;
+if(node1[item] !== e1[i]) continue;
+e2[i] = node2[item];
 if(cloneDebug) alert("patching element " + i + " through to " + item);
 break;
 }
@@ -1180,11 +1158,38 @@ break;
 }
 
 if(cloneDebug) alert("}");
-return nodeToReturn;
+return node2;
 }
 
 mw0.cloneNode = function(deep) {
 return mw0.eb$clone (this,deep);
+}
+
+// Look recursively down the tree for an object.
+// This is a helper function for cloneNode.
+mw0.findObject = function(top, obj, path) {
+if(!Array.isArray(top.childNodes))
+return "";
+var kids = top.childNodes;
+for(var i=0; i<kids.length; ++i) {
+var c = kids[i];
+var p = path + "," + i;
+if(c === obj) return p; // found it!
+var r = mw0.findObject(c, obj, p);
+if(r.length) return r;
+}
+return "";
+}
+
+// The inverse of the above.
+mw0.correspondingObject = function(top, p) {
+var c = top;
+while(p.length) {
+p = p.substr(1);
+c = c.childNodes[parseInt(p.replace(/,.*/, ""))];
+p = p.replace(/^\d+/, "");
+}
+return c;
 }
 
 /*********************************************************************
