@@ -3944,6 +3944,12 @@ var w = my$win();
 //  alert("," + w.document.eb$seq);
 var i, j, k;
 var a, t, d;
+// Fudge things, so if e is present, we only look at e.
+var save_children = null;
+if(e) {
+save_children = e.childNodes;
+e.childNodes = [];
+}
 for(i=0; i<w.cssList.length; ++i) {
 d = w.cssList[i]; // css descriptor
 var sel = d.selector;
@@ -3960,7 +3966,7 @@ continue;
 if (sel.match(/-moz-|-webkit-|-ms\b/))
 continue;
 sel = sel.trim();
-a = querySelectorAll(sel);
+a = querySelectorAll(sel, e);
 //  This one only good for body.
 //  alert(a[0].nodeName + "," + a[0].parentNode.eb$seq);
 for(j=0; j<a.length; ++j) {
@@ -3986,6 +3992,7 @@ t.style[propname] = propval;
 }
 }
 }
+if(e) e.childNodes = save_children;
 }
 }
 

@@ -698,7 +698,6 @@ mw0.getComputedStyle = function(e,pe) {
 	// disregarding pseudoelements for now
 var s = new CSSStyleDeclaration;
 s.element = e;
-// This is a rather inefficient use of cssApply, but it is hardly ever called.
 cssApply(e, s);
 return s;
 }
