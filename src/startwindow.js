@@ -573,6 +573,7 @@ mw0.Form = function(){}
 mw0.Form.prototype = {
 submit: eb$formSubmit, reset: eb$formReset};
 mw0.Element = function(){}
+mw0.HTMLElement = function(){}
 mw0.Image = function(){}
 mw0.Frame = function(){}
 mw0.Anchor = function(){}
@@ -1340,7 +1341,7 @@ Again, leading ; to avert a parsing ambiguity.
 
 ; (function() {
 var cnlist = ["HtmlObj", "Head", "Body", "CSSStyleDeclaration", "Frame",
-"Anchor", "Element", "Lister", "Listitem", "Tbody", "Table", "Div",
+"Anchor", "Element","HTMLElement", "Lister", "Listitem", "Tbody", "Table", "Div",
 "Span", "Trow", "Cell", "P", "Script", "Header", "Footer",
 // The following nodes shouldn't have any children, but the various
 // children methods could be called on them anyways.
@@ -1664,11 +1665,15 @@ this.async = false;
 // this.async = (async === false)?false:true;
 this.method = method || "GET";
 this.url = eb$resolveURL(my$win().eb$base, url);
-this.url = encodeURI(this.url);
 this.status = 0;
 this.statusText = "";
-this.onreadystatechange();
-this.onload();
+// When the major libraries are used, they overload XHR left and right.
+// Some versions use onreadystatechange.  This has been replaced by onload in,
+// for instance, newer versions of jquery.  It can cause problems to call the
+// one that is not being used at that moment, so my remedy here is to attempt
+// both of them inside of a try-catch
+try { this.onreadystatechange(); } catch (e) { }
+try { this.onload(); } catch (e) {}
 },
 setRequestHeader: function(header, value){
 this.headers[header] = value;
@@ -1709,8 +1714,13 @@ if ((!this.aborted) && this.responseText.length > 0){
 this.readyState = 4;
 this.status = 200;
 this.statusText = "OK";
-this.onreadystatechange();
-this.onload();
+// When the major libraries are used, they overload XHR left and right.
+// Some versions use onreadystatechange.  This has been replaced by onload in,
+// for instance, newer versions of jquery.  It can cause problems to call the
+// one that is not being used at that moment, so my remedy here is to attempt
+// both of them inside of a try-catch
+try { this.onreadystatechange(); } catch (e) { }
+try { this.onload(); } catch (e) {}
 }
 
 },
@@ -1796,6 +1806,7 @@ Body = mw0.Body;
 Base = mw0.Base;
 Form = mw0.Form;
 Element = mw0.Element;
+HTMLElement = mw0.HTMLElement;
 Image = mw0.Image;
 Frame = mw0.Frame;
 Anchor = mw0.Anchor;
