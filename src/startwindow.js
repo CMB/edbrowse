@@ -2087,7 +2087,6 @@ continue;
 // c is single quote or double quote.
 t += m;
 s = s.substr(m.length);
-slen = s.length;
 if(c === '"')
 m = s.match(/^([^"\\]|\\.)*?"/);
 else
@@ -2101,6 +2100,70 @@ t += m;
 s = s.substr(m.length);
 }
 return t;
+}
+
+mw0.cssPieces = function(s) {
+var a = [];
+var ao;
+var p = "";
+var bc = 0; // brace count
+while(s.length) {
+var slen;
+// look for the start of a string or a brace.
+var m = s.match(/^[\u0000-\uffff]*?['"{}]/);
+if(!m) // nothing recognizable
+break;
+m = m[0];
+var c = m.substr(-1);
+if(c === '"' || c === "'") { // string
+p += m;
+s = s.substr(m.length);
+if(c === '"')
+m = s.match(/^([^"\\]|\\.)*?"/);
+else
+m = s.match(/^([^'\\]|\\.)*?'/);
+if(!m) {
+console.error("unterminated string " + c + s.substr(0,20));
+break;
+}
+m = m[0];
+p += m;
+s = s.substr(m.length);
+continue;
+}
+// { or }
+p += m.replace(/.$/, "");
+s = s.substr(m.length);
+if(c === '}') {
+p += c;
+if(--bc < 0) {
+console.error("unexpected }" + s.substr(0,20));
+break;
+}
+if(bc) continue;
+// bc is 0, end of the descriptor
+ao.rhs = p;
+p = "";
+continue;
+}
+// now open brace.
+if(bc) {
+p += c;
+++bc;
+// remember the highest brace nesting.
+if(bc > ao.bc) ao.bc = bc;
+continue;
+}
+// A new descripter is found.
+ao = {};
+ao.lhs = p.replace(/^\s+/, "").replace(/\s+$/, "");
+ao.rhs = "";
+ao.understood = false;
+a.push(ao);
+ao.bc = bc = 1;
+p = c;
+}
+return a;
 }
 
 } // master compile
