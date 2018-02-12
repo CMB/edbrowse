@@ -2032,3 +2032,64 @@ onhashchange = eb$truefunction;
 // This isn't efficient, but it doesn't come up very often.
 document.querySelector = function(x) { return querySelectorAll(x)[0] }
 
+if(!mw0.compiled) {
+// Uncomment javascript or css.
+// This could grow as n^2 with the length of the string.
+// Maybe rewrite this some day stepping through the chars
+// of the string and maintaining states.
+// For now I just wanted to make something work.
+// Note, I munged with some strings and regexps so they wouldn't trip
+// up the rather simplistic uncommment routine in ../tools/buildsourcestring.pl.
+
+mw0.uncomment = function(s) {
+var t = "";
+while(s.length) {
+var slen;
+var m = s.match(/^[\u0000-\uffff]*?("|'|\/\*|\/\/)/);
+if(!m) return t+s;
+m = m[0];
+// got a string or a comment. Last character will tell.
+var c = m.substr(-1);
+if(c === '/') {
+t += m.replace(/..$/, "");
+s = s.substr(m.length);
+slen = s.length;
+s = s.replace(/^.*?\n/, "");
+if(s.length === slen) {
+console.error("unterminated comment /"+"/" + s.substr(0,20));
+return t + "/" + "/" + s;
+}
+t += '\n';
+continue;
+}
+if(c === '*') {
+t += m.replace(/..$/, "");
+s = s.substr(m.length);
+slen = s.length;
+s = s.replace(/^[\u0000-\uffff]*?\*[/]/, "");
+if(s.length === slen) {
+console.error("unterminated comment /"+"*" + s.substr(0,20));
+return t + "/" + "*" + s;
+}
+continue;
+}
+// c is single quote or double quote.
+t += m;
+s = s.substr(m.length);
+slen = s.length;
+if(c === '"')
+m = s.match(/^([^"\\]|\\.)*?"/);
+else
+m = s.match(/^([^'\\]|\\.)*?'/);
+if(!m) {
+console.error("unterminated string " + c + s.substr(0,20));
+return t+s;
+}
+m = m[0];
+t += m;
+s = s.substr(m.length);
+}
+return t;
+}
+
+} // master compile
