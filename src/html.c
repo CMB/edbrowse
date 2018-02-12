@@ -2677,7 +2677,7 @@ li_hide:
 		retainTag = false;
 		invisible = opentag;
 /* special case for noscript with no js */
-		if (stringEqual(ti->name, "noscript") && !cf->jcx)
+		if (action == TAGACT_NOSCRIPT && !cf->jcx)
 			invisible = false;
 	}
 

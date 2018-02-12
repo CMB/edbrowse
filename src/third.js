@@ -3953,11 +3953,12 @@ e.childNodes = [];
 for(i=0; i<w.cssList.length; ++i) {
 d = w.cssList[i]; // css descriptor
 var sel = d.selector;
+// bug in the css parsing machinery
+sel = sel.replace(/^ *} */, "");
 // certain modifiers not supported in this static view.
 // @directives are not selectors.
 if(sel.match(/^@/))
 continue;
-sel = sel.replace(/^}/, "");
 // a:link is the same as a.
 sel = sel.replace(/:link\b/, "");
 // :hover :visited etc are dynamic an not relevant here.
@@ -3965,6 +3966,11 @@ if(sel.match(/:(hover|visited|active|after|before)\b/))
 continue;
 if (sel.match(/-moz-|-webkit-|-ms\b/))
 continue;
+// Finally a bug in querySelectorAll; it doesn't recognize a class name
+// that starts with dash, and it stops at the first such error.
+// This doesn't solve the problem but at least it keeps things rolling.
+// We need to fix this stuff, or rewrite it.
+if(sel.match(/\.-/)) continue;
 sel = sel.trim();
 a = querySelectorAll(sel, e);
 //  This one only good for body.

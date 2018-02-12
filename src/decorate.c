@@ -437,6 +437,8 @@ char *displayOptions(const struct htmlTag *sel)
 	return opt;
 }				/* displayOptions */
 
+static struct htmlTag *exciseTag;
+
 static void prerenderNode(struct htmlTag *t, bool opentag)
 {
 	int itype;		/* input type */
@@ -451,10 +453,24 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 
 	if (t->step >= 1)
 		return;
-	if (!opentag)
+	if (!opentag) {
 		t->step = 1;
+		if (exciseTag) {
+			if (t == exciseTag)
+				exciseTag = 0;
+			else {
+				t->step = 3;
+				return;
+			}
+		}
+	}
 
 	switch (action) {
+	case TAGACT_NOSCRIPT:
+		if (allowJS && opentag)
+			exciseTag = t;
+		break;
+
 	case TAGACT_TEXT:
 		if (!opentag || !t->textval)
 			break;
@@ -714,11 +730,12 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 		break;
 
 	case TAGACT_FRAME:
-		if (opentag)
+		if (opentag) {
+			exciseTag = t;
 			break;
-// If somebody wrote <frame><p><a></frame> then there could be tags under
-// frame in the tree, but they don't mean anything.
-// Cut all the children away from t.
+		}
+// If somebody wrote <frame><p><a></frame>, those tags should be excised,
+// but just in case...
 		underKill(t);
 		cdt = newTag("document");
 		t->firstchild = cdt;
@@ -741,6 +758,7 @@ void prerender(int start)
 	nzFree(radioCheck);
 	radioCheck = 0;
 	traverse_callback = prerenderNode;
+	exciseTag = 0;
 	traverseAll(start);
 	currentForm = NULL;
 	nzFree(radioCheck);
@@ -1680,7 +1698,7 @@ const struct tagInfo availableTags[] = {
 	{"address", "an address block", TAGACT_NOP, 1, 0},
 	{"style", "a style block", TAGACT_NOP, 0, 2},
 	{"script", "a script", TAGACT_SCRIPT, 0, 0},
-	{"noscript", "no script section", TAGACT_NOP, 0, 2},
+	{"noscript", "no script section", TAGACT_NOSCRIPT, 0, 2},
 	{"noframes", "no frames section", TAGACT_NOP, 0, 2},
 	{"embed", "embedded html", TAGACT_MUSIC, 0, 4},
 	{"noembed", "no embed section", TAGACT_NOP, 0, 2},
