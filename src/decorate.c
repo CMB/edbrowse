@@ -709,7 +709,7 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 	case TAGACT_SPAN:
 		if (!opentag)
 			break;
-		if (!(a = t->classname))
+		if (!(a = t->class))
 			break;
 		if (stringEqualCI(a, "sup"))
 			action = TAGACT_SUP;
@@ -910,7 +910,6 @@ static void domLink(struct htmlTag *t, const char *classname,	/* instantiate thi
 	const char *idname = t->id;
 	const char *membername = 0;	/* usually symname */
 	const char *href_url = t->href;
-	const char *htmlclass = t->classname;
 	const char *stylestring = attribVal(t, "style");
 	jsobjtype so = 0;	/* obj.style */
 
@@ -1042,7 +1041,6 @@ Don't do any of this if the tag is itself <style>. */
 
 /* Other attributes that are expected by pages, even if they
  * aren't populated at domLink-time */
-		set_property_string(io, "className", "");
 		set_property_string(io, "class", "");
 		set_property_string(io, "nodeValue", "");
 		instantiate_array(io, "attributes");
@@ -1105,11 +1103,6 @@ Don't do any of this if the tag is itself <style>. */
 	if (t->action == TAGACT_INPUT) {
 /* link back to the form that owns the element */
 		set_property_object(io, "form", owner);
-	}
-
-	if (htmlclass) {
-		set_property_string(io, "className", htmlclass);
-		set_property_string(io, "class", htmlclass);
 	}
 
 	connectTagObject(t, io);
@@ -1522,7 +1515,7 @@ static void pushAttributes(const struct htmlTag *t)
 			"onclick", "onchange", "onsubmit", "onreset", "onload",
 			"onunload",
 			"attributes",
-			"name", "id", "class",
+			"name", "id",
 			"checked", "value", "type", "style",
 			"href", "src", "action",
 			0
@@ -1727,7 +1720,7 @@ static void freeTag(struct htmlTag *t)
 	nzFree(t->value);
 	cnzFree(t->rvalue);
 	nzFree(t->href);
-	nzFree(t->classname);
+	nzFree(t->class);
 	nzFree(t->js_file);
 	nzFree(t->innerHTML);
 
@@ -1977,7 +1970,7 @@ checkattributes:
 			v = t->atvals[j];
 			if (v && !*v)
 				v = 0;
-			t->classname = cloneString(v);
+			t->class = cloneString(v);
 		}
 		if ((j = stringInListCI(t->attributes, "value")) >= 0) {
 			v = t->atvals[j];

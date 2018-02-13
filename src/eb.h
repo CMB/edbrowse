@@ -525,9 +525,7 @@ struct htmlTag {
 	int ninp;		/* number of nonhidden inputs */
 	char *name, *id, *value, *href;
 	const char *rvalue; /* for reset */
-/* class=foo becomes className = "foo" when you carry from html to javascript,
- * don't ask me why. */
-	char *classname;
+	char *class;
 	char *innerHTML; /* the html string under this tag */
 	int inner;		/* for inner html */
 };

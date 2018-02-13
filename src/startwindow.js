@@ -716,7 +716,7 @@ this.nodeType=3;
 this.ownerDocument = my$doc();
 this.style = new CSSStyleDeclaration;
 this.style.element = this;
-this.className = "";
+this.class = "";
 /* A text node chould never have children, and does not need childNodes array,
  * but there is improper html out there <text> <stuff> </text>
  * which has to put stuff under the text node, so against this
@@ -791,7 +791,7 @@ return mw0.eb$gebcn(this, s);
 
 mw0.eb$gebcn = function(top, s) { 
 var a = [];
-if(s === '*' || (top.className && top.className.toLowerCase() === s))
+if(s === '*' || (top.class && top.class.toLowerCase() === s))
 a.push(top);
 if(top.childNodes) {
 for(var i=0; i<top.childNodes.length; ++i) {
@@ -1031,7 +1031,6 @@ if(cloneDebug) alert("linking form.radio " + item + " with " + a1.length + " but
 a2.type = a1.type;
 a2.nodeName = a1.nodeName;
 a2.class = a1.class;
-a2.className = a1.className;
 a2.nodeValue = a1.nodeValue;
 for(i = 0; i < a1.length; ++i) {
 var p = mw0.findObject(node1, a1[i], "");
@@ -1373,6 +1372,7 @@ c.prototype.hasAttribute = mw0.hasAttribute;
 c.prototype.getAttribute = mw0.getAttribute;
 c.prototype.setAttribute = mw0.setAttribute;
 c.prototype.removeAttribute = mw0.removeAttribute;
+Object.defineProperty(c.prototype, "className", { get: function() { return this.getAttribute("class"); }, set: function(h) { this.setAttribute("class", h); }});
 c.prototype.getAttributeNode = mw0.getAttributeNode;
 // clone
 c.prototype.cloneNode = mw0.cloneNode;
@@ -1579,7 +1579,6 @@ c.tagName = t;
 c.nodeType = 1;
 c.nodeValue = undefined;
 c.class = "";
-c.className = "";
 c.ownerDocument = my$doc();
 eb$logElement(c, t);
 
@@ -2485,6 +2484,53 @@ l.explain = "multiple";
 if(total == 1) l.explain = l.selectors[0].explain;
 }
 }
+}
+
+mw0.qsaMatch = function(node, sel) {
+var s, c, a, v, u, j, k;
+// check the tag
+if(sel.tag && (!node.nodeName || sel.tag !== node.nodeName))
+return false;
+// step through the modifyers
+for(j=0; j<sel.length; ++j) {
+s = sel[j];
+if(s.substr(0,1) == ".")
+s = '[class~=' + s.substr(1);
+if(s.substr(0,1) == "#")
+s = '[id=' + s.substr(1);
+c = s.substr(0,1);
+s = s.substr(1);
+switch(c) {
+case '[':
+a = s.replace(/~?=.*/, "");
+v = s.replace(/^.*?=/, "");
+u = undefined;
+if(node.getAttribute) u = node.getAttribute(a);
+if(!u) return false;
+if(!s.match(/~=/)) {
+if(u === v) continue;
+return false;
+}
+u = u.split(/\s+/);
+for(k=0; k<u.length; ++k)
+if(v === u[k]) break;
+if(k < u.length) continue;
+return false;
+case ':':
+if(s == "link") continue;
+if(s == "first-child") {
+if(node.parentNode.firstchild === node) continue;
+return false;
+}
+if(s == "last-child") {
+if(node.parentNode.lastchild === node) continue;
+return false;
+}
+return false; // unrecognized
+}
+}
+
+return true; // all modifiers pass
 }
 
 } // master compile
