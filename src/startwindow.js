@@ -2054,7 +2054,7 @@ if(!mw0.compiled) {
 
 mw0.uncomment = function(s) {
 var t = "";
-while(s.length) {
+while(s) {
 var slen;
 var m = s.match(/^[\u0000-\uffff]*?("|'|\/\*|\/\/)/);
 if(!m) return t+s;
@@ -2102,15 +2102,39 @@ s = s.substr(m.length);
 return t;
 }
 
+/*********************************************************************
+Compile the css descriptors.
+The return is an array of descriptors present in the string,
+which in turn comes from a css file or a <style> html tag.
+Each descriptor is an object, no surprise there.
+lhs and rhs are the left and right sides, as strings,
+the selector(s) and the rules.
+selectors is an array of objects, one object per selector.
+p,div produces two selectors, for <p> and for <div>.
+In fact selector[j] is more than an object, it is itself an array,
+a chain of atomic selectors joined by combinators.
+See https://www.w3.org/TR/CSS21/selector.html#grouping for the details.
+So a > b c produces an array of length 3.
+Now each element in this array is another array, the tag name
+and a conjuction of modifiers.
+div[x="foo"][y="bar"]
+So it's a 4 dimensional structure: descriptors, selectors,
+combined atomic selectors, and modifiers.
+Beyond this, and parallel to selectors, are rules.
+This is an array of attribute=value pairs, as in color=green.
+*********************************************************************/
+
 mw0.cssPieces = function(s) {
-var a = [];
-var ao;
-var p = "";
+var a = []; // the returned array
+var ao; // high level array object
+var so; // selector object
+var m, slen, p = "";
 var bc = 0; // brace count
-while(s.length) {
-var slen;
+
+// Start by separating the descriptors.
+while(s) {
 // look for the start of a string or a brace.
-var m = s.match(/^[\u0000-\uffff]*?['"{}]/);
+m = s.match(/^[\u0000-\uffff]*?['"{}]/);
 if(!m) // nothing recognizable
 break;
 m = m[0];
@@ -2156,14 +2180,217 @@ continue;
 }
 // A new descripter is found.
 ao = {};
-ao.lhs = p.replace(/^\s+/, "").replace(/\s+$/, "");
+ao.lhs = p.trim();
 ao.rhs = "";
-ao.understood = false;
+ao.nyi = false; // not yet implemented
 a.push(ao);
 ao.bc = bc = 1;
 p = c;
 }
+
+// Now let's try to understand the selectors.
+for(var i=0; i<a.length; ++i) {
+ao = a[i];
+s = ao.lhs;
+
+if(!s) {
+ao.nyi = true, ao.explain = "empty selectors";
+continue;
+}
+// leading @ doesn't apply to edbrowse.
+if(s.substr(0,1) == "@") {
+ao.nyi = true, ao.explain = "@";
+continue;
+}
+if(ao.bc > 1) {
+ao.nyi = true, ao.explain = "nested braces";
+continue;
+}
+
+ao.selectors = [];
+so = []; // building the first selector
+ao.selectors.push(so);
+p = "";
+while(s) {
+m = s.match(/^([\u0000-\uffff]*?)('|"|[\s+>,]+)/);
+if(!m) { // end of the string
+p += s;
+so.push('`'+p);
+break;
+}
+p += m[1];
+s = s.substr(m[0].length);
+m = m[2];
+// This is pass 2, all strings are ok.
+if(m == '"' || m == "'") {
+p += m;
+if(m === '"')
+m = s.match(/^([^"\\]|\\.)*?"/);
+else
+m = s.match(/^([^'\\]|\\.)*?'/);
+m = m[0];
+p += m;
+s = s.substr(m.length);
+continue;
+}
+// now it's a separator or a combinator.
+// Two such in a row implies an empty piece.
+if(!s || m.match(/[,>+].*[,>+]/)) {
+ao.nyi = true, ao.explain = "empty selector";
+break;
+}
+m = m.replace(/\s/g, "");
+if(!m) m = ' ';
+if(m != ',') {
+so.push(m + p);
+p = "";
+continue;
+}
+so.push('`'+p);
+so = []; // building the next selector
+ao.selectors.push(so);
+p = "";
+}
+}
+
+// Turn the chains around; combinators apply right to left.
+for(var i=0; i<a.length; ++i) {
+ao = a[i];
+if(ao.nyi) continue;
+for(var j=0; j<ao.selectors.length; ++j) {
+so = ao.selectors[j];
+var chain = [];
+chain.nyi = false;
+while(so.length) {
+p = so.pop();
+var q = [];
+q.part = p.substr(1);
+q.combin = p.substr(0,1);
+q.nyi = false;
+chain.push(q);
+mw0.css1sel(q);
+if(q.nyi && !chain.nyi) chain.nyi = true, chain.explain = q.explain;
+}
+ao.selectors[j] = chain;
+}
+}
+
 return a;
+}
+
+// Analyze one component of a selector.
+// It will be a tag name followed by a series of modifiers.
+mw0.css1sel = function(q) {
+var s = q.part;
+var m = s.match(/^(.*?)[.#[:]/);
+if(m) m = m[1]; else m = s;
+s = s.substr(m.length);
+if(m == '*') m = "";
+m = m.toLowerCase();
+if(m && !m.match(/^[a-z][a-z0-9]*$/)) {
+q.nyi = true, q.explain = "bad tag";
+return;
+}
+q.tag = m;
+
+if(!s) return; // no modifiers
+
+// Step through the modifyers.
+while(true) {
+// At the top of this loop the first char indicates the modifier.
+p = s.substr(0,1);
+s = s.substr(1);
+while(true) {
+m = s.match(/^(.*?)([.#[:'"])/);
+if(!m) {
+mw0.css1mod(q, p+s);
+return;
+}
+if(m[2] == '"' || m[2] == "'") {
+p += m[0];
+s = s.substr(m[0].length);
+if(m[2] === '"')
+m = s.match(/^([^"\\]|\\.)*?"/);
+else
+m = s.match(/^([^'\\]|\\.)*?'/);
+m = m[0], p += m, s = s.substr(m.length);
+continue;
+}
+mw0.css1mod(q, p+m[1]);
+s = s.substr(m[1].length);
+break;
+}
+}
+}
+
+// Check the sanity of a modifier, relative to what we support,
+// which is not everything!
+mw0.css1mod = function(q, s) {
+q.push(s);
+if(s.length == 1) {
+q.nyi = true, q.explain = "empty modifier";
+return;
+}
+switch(s.substr(0,1)) {
+case '.':
+if(!s.match(/^.[a-zA-Z-][a-zA-Z0-9-]*$/)) {
+q.nyi = true, q.explain = "bad class";
+return;
+}
+break;
+case '#':
+if(!s.match(/^#[a-zA-Z-][a-zA-Z0-9-]*$/)) {
+q.nyi = true, q.explain = "bad id";
+return;
+}
+break;
+case ':':
+if(s == ":hover" || s == ":visited" || s == ":active") {
+q.nyi = true, q.explain = "dynamic";
+return;
+}
+if(s != ":link" && s != ":first-child" && s != ":last-child") {
+q.nyi = true, q.explain = ": unsupported";
+return;
+}
+break;
+case '[':
+if(s.substr(-1) != ']') {
+q.nyi = true, q.explain = "[ no ]";
+return;
+}
+if(!s.match(/=/)) {
+q.nyi = true, q.explain = "[ no =";
+return;
+}
+break;
+}
+}
+
+// gather the broken selectors into an array for review and debugging.
+mw0.cssBroken = function() {
+var w = my$win();
+w.css$nyi = [];
+var list = w.cssList;
+for(var i=0; i<list.length; ++i) {
+var l = list[i];
+if(l.nyi) {
+if(l.explain != "@")
+css$nyi.push(l);
+continue;
+}
+// Looks good but we have to check below.
+var total = l.selectors.length;
+var good = 0, bad = 0, bad1 = 0;
+for(j=0; j<total; ++j)
+if(l.selectors[j].nyi) { ++bad; if(l.selectors[j].explain != "dynamic") ++bad1; } else ++good;
+if(bad1) css$nyi.push(l);
+if(bad == total) {
+l.nyi = true;
+l.explain = "multiple";
+if(total == 1) l.explain = l.selectors[0].explain;
+}
+}
 }
 
 } // master compile
