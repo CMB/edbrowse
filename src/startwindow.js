@@ -2275,6 +2275,74 @@ ao.selectors[j] = chain;
 }
 }
 
+// Now for the rules.
+for(var i=0; i<a.length; ++i) {
+ao = a[i];
+if(ao.nyi) continue;
+ao.rules = [];
+s = ao.rhs;
+s = s.replace(/^{\s*/, "").replace(/\s*}$/, "");
+if(!s) {
+ao.nyi = true, ao.explain = "empty rules";
+continue;
+}
+p = "";
+while(s) {
+m = s.match(/^([\u0000-\uffff]*?)('|"|\s*;\s*)/);
+if(!m) { // end of the string
+p += s;
+if(p) ao.rules.push(p);
+break;
+}
+p += m[1];
+s = s.substr(m[0].length);
+m = m[2];
+// This is pass 2, all strings are ok.
+if(m == '"' || m == "'") {
+p += m;
+if(m === '"')
+m = s.match(/^([^"\\]|\\.)*?"/);
+else
+m = s.match(/^([^'\\]|\\.)*?'/);
+m = m[0];
+p += m;
+s = s.substr(m.length);
+continue;
+}
+// Now it's a separator.
+if(p) ao.rules.push(p);
+p = "";
+}
+
+if(ao.rules.length == 0) {
+ao.nyi = true, ao.explain = "empty rules";
+continue;
+}
+
+// Verify and objectify the rules.
+for(var j=0; j<ao.rules.length; ++j) {
+s = ao.rules[j];
+if(!s.match(/:/)) {
+ao.nyi = true, ao.explain = "rule no :";
+break;
+}
+m = s.match(/^([a-zA-Z-][a-zA-Z0-9-]*?): */);
+if(!m) {
+ao.nyi = true, ao.explain = "bad attribute";
+break;
+}
+var q = {atname: m[1]};
+s = s.substr(m[0].length);
+s = mw0.cssUnstring(s);
+if(s === undefined) {
+ao.nyi = true, ao.explain = "bad value";
+break;
+}
+q.atval = s;
+ao.rules[j] = q;
+}
+}
+
 return a;
 }
 
@@ -2326,6 +2394,7 @@ break;
 // Check the sanity of a modifier, relative to what we support,
 // which is not everything!
 mw0.css1mod = function(q, s) {
+var m;
 q.push(s);
 if(s.length == 1) {
 q.nyi = true, q.explain = "empty modifier";
@@ -2363,8 +2432,33 @@ if(!s.match(/=/)) {
 q.nyi = true, q.explain = "[ no =";
 return;
 }
+s = s.replace(/.$/, "");
+m = s.match(/^.[a-zA-Z-][a-zA-Z0-9-]*?~?=/);
+if(!m) {
+q.nyi = true, q.explain = "bad attribute";
+return;
+}
+if(!s.match(/['"]/)) break;
+s = s.substr(m[0].length);
+s = mw0.cssUnstring(s);
+if(s === undefined) {
+q.nyi = true, q.explain = "bad value";
+return;
+}
+// s has been reconstructed
+q.pop();
+q.push(m[0] + s);
 break;
 }
+}
+
+mw0.cssUnstring = function(s) {
+if(s.match(/['"]/)) {
+if(!s.match(/^'.*'$/) && !s.match(/^".*"$/))
+return undefined;
+try { s = eval(s); } catch(e) { return undefined; }
+}
+return s;
 }
 
 // gather the broken selectors into an array for review and debugging.
