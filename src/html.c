@@ -2711,10 +2711,13 @@ li_hide:
 // js might have set, or changed, the url.
 			char *new_url = get_property_url(t->jv, false);
 			if (new_url && *new_url) {
+#if 0
+// This happens a lot and isn't terribly noteworthy
 				if (!t->href || !stringEqual(t->href, new_url))
 					debugPrint(3,
 						   "js replaces anchor %s with %s",
 						   t->href, new_url);
+#endif
 				nzFree(t->href);
 				t->href = new_url;
 			}

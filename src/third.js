@@ -17,6 +17,8 @@ parse css, and apply css attributes to the corresponding objects.
 This is almost pointless in a browser that does not draw the screen, except,
 some websites test for the presence of these values, and so they must be there.
 Both projects are copyright under the MIT license, as shown below.
+Note however that these projects are no longer used;
+we rolled our own instead.
 
 The MIT License (MIT)
 Copyright (c) 2015 JotForm
@@ -46,6 +48,8 @@ WARNING: if you take an updated snapshot, don't just cut and paste;
 you have to replace document with my$doc() wherever it appears.
 This because it is in the master window.
 *********************************************************************/
+
+if(false) {
 
 if(!mw0.compiled) {
 
@@ -4007,6 +4011,8 @@ if(e) e.childNodes = save_children;
 cssGather = mw0.cssGather;
 cssApply = mw0.cssApply;
 eb$qs$start = mw0.eb$qs$start;
+
+}
 
 /*********************************************************************
 Next third-party libraries: Esprima, which converts javascript code into

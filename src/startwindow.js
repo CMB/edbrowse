@@ -2041,9 +2041,6 @@ return Window.apply(this, arguments);
 // Some websites expect an onhashchange handler from the get-go.
 onhashchange = eb$truefunction;
 
-// This isn't efficient, but it doesn't come up very often.
-document.querySelector = function(x) { return querySelectorAll(x)[0] }
-
 if(!mw0.compiled) {
 // Uncomment javascript or css.
 // This could grow as n^2 with the length of the string.
@@ -2709,6 +2706,7 @@ if(i2 == a2.length) g2 = false;
 return a3;
 }
 
+// querySelectorAll on a compiled group
 mw0.qsa2 = function(sel)
 {
 var a = [];
@@ -2718,7 +2716,7 @@ a = mw0.qsaMerge(a, mw0.qsa1(sel[k]));
 return a;
 }
 
-mw0.querySelectorAll1 = function(selstring, startpoint)
+mw0.querySelectorAll = function(selstring, startpoint)
 {
 if(startpoint) {
 console.error("qsa startpoint not yet implemented");
@@ -2743,7 +2741,7 @@ return [];
 return mw0.qsa2(v);
 }
 
-mw0.cssGather1 = function()
+mw0.cssGather = function()
 {
 var w = my$win();
 var d = my$doc();
@@ -2773,7 +2771,7 @@ w.cssList = w.cssList.concat(mw0.cssPieces(data2));
 mw0.cssBroken();
 }
 
-mw0.cssApply1 = function(e, destination)
+mw0.cssApply = function(e, destination)
 {
 var w = my$win();
 var i, j, k;
@@ -2781,6 +2779,8 @@ var a, t, d;
 for(i=0; i<w.cssList.length; ++i) {
 d = w.cssList[i]; // css descriptor
 if(d.nyi) continue;
+// put this alert in to see which ones are slow
+//  alert(i);
 var sel = d.selectors;
 if(e) {
 if(!mw0.qsaMatchGroup(e, sel)) continue;
@@ -2813,11 +2813,17 @@ t.style[propname] = propval;
 }
 }
 
-mw0.eb$qs$start1 = function()
+mw0.eb$qs$start = function()
 {
 mw0.qsaPrep();
-mw0.cssGather1();
-mw0.cssApply1();
+mw0.cssGather();
+mw0.cssApply();
 }
 
 } // master compile
+
+eb$qs$start = mw0.eb$qs$start;
+querySelectorAll = document.querySelectorAll = mw0.querySelectorAll;
+// This isn't efficient, but it doesn't come up very often.
+document.querySelector = function(x) { return querySelectorAll(x)[0] }
+

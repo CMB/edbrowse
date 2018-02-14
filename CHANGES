@@ -20,6 +20,9 @@ Sort directory entries by file size or mod time or locale alphabetical (the defa
 
 Run some edbrowse commands in the javascript debugger, particularly e number to switch to another session.
 
+Write our own cssGather and querySelectorAll routines,
+since the jotform routines don't seem to meet our needs.
+
 3.7.1:
 Automatically expand a frame when javascript tries to access its objects.
 Otherwise it won't expand unti you expand it explicitly.
