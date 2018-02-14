@@ -2645,9 +2645,44 @@ var w = my$win(), d = my$doc();
 var taglen = -1, classlen = -1;
 var lowclass;
 var a = [];
+var sel0 = sel[0], sel1;
 var j, k;
+var stream = null;
+
+// Here is some optimization for  .foo *
+// everything below class foo. This really does happen.
+// Or even .foo a every anchor below class foo.
+//  Other optimizations might be possible.
+if(sel.length > 1 && !sel0.length &&
+((sel1 = sel[1]).length) &&
+(sel1.combin == " " || sel1.combin == ">") &&
+sel1[0].match(/^[.#]/)) {
+var stream2;
+var s = sel1[0];
+if(s.substr(0,1) == '#') {
+stream2 = [d.getElementById(s.substr(1))];
+if(stream2[0] == undefined) stream2 = [];
+} else {
+s = s.substr(1);
+stream2 = w.qsaHashClass[s];
+if(!stream2) stream2 = [];
+}
+stream = [];
+for(j=0; j<stream2.length; ++j) {
+var more;
+if(sel1.combin == '>') {
+more = stream2[j].childNodes;
+} else {
+more = stream2[j].getElementsByTagName("*");
+more.splice(0,1);
+}
+if(more)
+stream = mw0.qsaMerge(stream, more);
+}
+}
+
+if(!stream) {
 // hash based on the first component of the chain
-var sel0 = sel[0];
 if(sel0.tag) {
 if(! w.qsaHashNode[sel0.tag]) return a;
 taglen = w.qsaHashNode[sel0.tag].length;
@@ -2655,18 +2690,34 @@ taglen = w.qsaHashNode[sel0.tag].length;
 // class with a short list?
 for(k=0; k<sel0.length; ++k) {
 var s = sel0[k];
+if(s.substr(0,1) == '#') {
+// id will always win the day
+stream = [d.getElementById(s.substr(1))];
+if(stream[0] == undefined) stream = [];
+break;
+}
 if(s.substr(0,1) != ".") continue;
 s = s.substr(1);
 if(!w.qsaHashClass[s]) return a;
 if(classlen < 0 || w.qsaHashClass[s].length < classlen)
 classlen = w.qsaHashClass[s].length, lowclass = s;
 }
+}
 
-var stream = w.qsaHashNode["@"];
+if(!stream) {
+// hasn't been set by optimizations or by #id
+stream = w.qsaHashNode["@"];
 if(taglen > 0) stream = w.qsaHashNode[sel0.tag];
 if(classlen < taglen &&classlen > 0) stream = w.qsaHashClass[lowclass];
-for(j=0; j<stream.length; ++j)
-if(mw0.qsaMatchChain(stream[j], sel)) a.push(stream[j]);
+}
+
+for(j=0; j<stream.length; ++j) {
+var sj = stream[j];
+// simple tag test for efficiency
+if(sel0.tag && sj.nodeName && sel0.tag != sj.nodeName) continue;
+if(mw0.qsaMatchChain(sj, sel)) a.push(sj);
+}
+
 return a;
 }
 
@@ -2779,7 +2830,7 @@ var a, t, d;
 for(i=0; i<w.cssList.length; ++i) {
 d = w.cssList[i]; // css descriptor
 if(d.nyi) continue;
-// put this alert in to see which ones are slow
+// uncomment this alert to see which ones are slow
 //  alert(i);
 var sel = d.selectors;
 if(e) {
