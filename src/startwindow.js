@@ -2461,9 +2461,23 @@ break;
 mw0.cssUnstring = function(s)
 {
 if(s.match(/['"]/)) {
-if(!s.match(/^'.*'$/) && !s.match(/^".*"$/))
-return undefined;
-try { s = eval(s); } catch(e) { return undefined; }
+var p = "";
+while(s) {
+var m = s.match(/^([\u0000-\uffff]*?)(['"])/);
+if(!m) { p += s; break; }
+p += m[1];
+var c = m[2];
+s = s.substr(m[0].length);
+if(c === '"')
+m = s.match(/^([^"\\]|\\.)*?"/);
+else
+m = s.match(/^([^'\\]|\\.)*?'/);
+c += m[0];
+// I don't know how this eval could fail, but just to be safe...
+try { p += eval(c); } catch(e) { }
+s = s.substr(m[0].length);
+}
+s = p;
 }
 return s;
 }
