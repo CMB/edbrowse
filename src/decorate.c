@@ -869,6 +869,8 @@ static jsobjtype establish_js_option(jsobjtype obj, int idx)
 	if ((oo = instantiate_array_element(oa, idx, "Option")) == NULL)
 		return NULL;
 
+	set_property_object(oo, "parentNode", oa);
+
 /* option.form = select.form */
 	fo = get_property_object(obj, "form");
 	if (fo)

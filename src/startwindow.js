@@ -699,7 +699,7 @@ mw0.getComputedStyle = function(e,pe) {
 	// disregarding pseudoelements for now
 var s = new CSSStyleDeclaration;
 s.element = e;
-cssApply(e, s);
+mw0.cssApply(e, s);
 return s;
 }
 
@@ -1960,7 +1960,7 @@ Array.prototype.appendChild = function(child) {
 for(var i=0; i<this.length; ++i)
 if(this[i] == child)
 return child;
-this.push(child);return child; }
+this.push(child); child.parentNode = this;return child; }
 /* insertBefore maps to splice, but we have to find the element. */
 /* This prototype assumes all elements are objects. */
 Array.prototype.insertBefore = function(newobj, item) {
@@ -1971,6 +1971,7 @@ return newobj;
 for(var i=0; i<this.length; ++i)
 if(this[i] == item) {
 this.splice(i, 0, newobj);
+newobj.parentNode = this;
 return newobj;
 }
 }
@@ -1978,6 +1979,7 @@ Array.prototype.removeChild = function(item) {
 for(var i=0; i<this.length; ++i)
 if(this[i] == item) {
 this.splice(i, 1);
+delete this.parentNode;
 return;
 }
 }
@@ -2051,7 +2053,8 @@ if(!mw0.compiled) {
 // Note, I munged with some strings and regexps so they wouldn't trip
 // up the rather simplistic uncommment routine in ../tools/buildsourcestring.pl.
 
-mw0.uncomment = function(s) {
+mw0.uncomment = function(s)
+{
 var t = "";
 while(s) {
 var slen;
@@ -2123,7 +2126,8 @@ Beyond this, and parallel to selectors, are rules.
 This is an array of attribute=value pairs, as in color=green.
 *********************************************************************/
 
-mw0.cssPieces = function(s) {
+mw0.cssPieces = function(s)
+{
 var a = []; // the returned array
 var ao; // high level array object
 var so; // selector object
@@ -2347,7 +2351,9 @@ return a;
 
 // Analyze one component of a selector.
 // It will be a tag name followed by a series of modifiers.
-mw0.css1sel = function(q) {
+mw0.css1sel = function(q)
+{
+var p;
 var s = q.part;
 var m = s.match(/^(.*?)[.#[:]/);
 if(m) m = m[1]; else m = s;
@@ -2392,7 +2398,8 @@ break;
 
 // Check the sanity of a modifier, relative to what we support,
 // which is not everything!
-mw0.css1mod = function(q, s) {
+mw0.css1mod = function(q, s)
+{
 var m;
 q.push(s);
 if(s.length == 1) {
@@ -2437,21 +2444,24 @@ if(!m) {
 q.nyi = true, q.explain = "bad attribute";
 return;
 }
-if(!s.match(/['"]/)) break;
+if(s.match(/['"]/)) {
 s = s.substr(m[0].length);
 s = mw0.cssUnstring(s);
 if(s === undefined) {
 q.nyi = true, q.explain = "bad value";
 return;
 }
+s = m[0] + s;
+}
 // s has been reconstructed
 q.pop();
-q.push(m[0] + s);
+q.push(s);
 break;
 }
 }
 
-mw0.cssUnstring = function(s) {
+mw0.cssUnstring = function(s)
+{
 if(s.match(/['"]/)) {
 if(!s.match(/^'.*'$/) && !s.match(/^".*"$/))
 return undefined;
@@ -2461,7 +2471,8 @@ return s;
 }
 
 // gather the broken selectors into an array for review and debugging.
-mw0.cssBroken = function() {
+mw0.cssBroken = function()
+{
 var w = my$win();
 w.css$nyi = [];
 var list = w.cssList;
@@ -2475,7 +2486,7 @@ continue;
 // Looks good but we have to check below.
 var total = l.selectors.length;
 var good = 0, bad = 0, bad1 = 0;
-for(j=0; j<total; ++j)
+for(var j=0; j<total; ++j)
 if(l.selectors[j].nyi) { ++bad; if(l.selectors[j].explain != "dynamic") ++bad1; } else ++good;
 if(bad1) css$nyi.push(l);
 if(bad == total) {
@@ -2484,9 +2495,11 @@ l.explain = "multiple";
 if(total == 1) l.explain = l.selectors[0].explain;
 }
 }
+if(css$nyi.length) console.warn("unsupported css selectors " + css$nyi.length + " out of " + cssList.length);
 }
 
-mw0.qsaMatch = function(node, sel) {
+mw0.qsaMatch = function(node, sel)
+{
 var s, c, a, v, u, j, k;
 // check the tag
 if(sel.tag && (!node.nodeName || sel.tag !== node.nodeName))
@@ -2519,11 +2532,11 @@ return false;
 case ':':
 if(s == "link") continue;
 if(s == "first-child") {
-if(node.parentNode.firstchild === node) continue;
+if(node.parentNode && node.parentNode.firstChild === node) continue;
 return false;
 }
 if(s == "last-child") {
-if(node.parentNode.lastchild === node) continue;
+if(node.parentNode && node.parentNode.lastChild === node) continue;
 return false;
 }
 return false; // unrecognized
@@ -2531,6 +2544,280 @@ return false; // unrecognized
 }
 
 return true; // all modifiers pass
+}
+
+mw0.qsaMatchChain = function(node, sel)
+{
+if(!sel.length) // should never happen
+return false;
+// base node matches the first selector
+if(!mw0.qsaMatch(node, sel[0])) return false;
+for(var k=1; k<sel.length; ++k) {
+var combin = sel[k].combin;
+if(combin == '+') {
+node = node.previousSibling;
+if(!node) return false;
+if(mw0.qsaMatch(node, sel[k])) continue;
+return false;
+}
+if(combin == '>') {
+node = node.parentNode;
+if(!node) return false;
+if(mw0.qsaMatch(node, sel[k])) continue;
+return false;
+}
+// any ancestor
+while(node = node.parentNode) if(mw0.qsaMatch(node, sel[k])) break;
+if(!node) return false;
+}
+return true;
+}
+
+mw0.qsaMatchGroup = function (node, sel)
+{
+for(var k=0; k<sel.length; ++k) {
+if(sel[k].nyi) continue;
+if(mw0.qsaMatchChain(node, sel[k])) return true;
+}
+return false;
+}
+
+mw0.qsaTest = function(node, s)
+{
+var v = mw0.cssPieces(s + "{color:green}");
+v = v[0];
+if(v.nyi) { alert("bad selector " + v.explain); return false; }
+v = v.selectors[0];
+if(v.nyi) { alert("bad selector " + v.explain); return false; }
+return mw0.qsaMatch(node, v[0]);
+}
+
+mw0.qsaTestChain = function(node, s)
+{
+var v = mw0.cssPieces(s + "{color:green}");
+v = v[0];
+if(v.nyi) { alert("bad selector " + v.explain); return false; }
+v = v.selectors[0];
+if(v.nyi) { alert("bad selector " + v.explain); return false; }
+return mw0.qsaMatchChain(node, v);
+}
+
+// Hash nodes by tag and class.
+mw0.qsaPrep = function()
+{
+var w = my$win();
+var d = my$doc();
+var n;
+var qsasn = 0; // querySelectorAll sequence number
+w.qsaHashNode = {};
+w.qsaHashClass = {};
+// every node is under @
+var all = [];
+w.qsaHashNode["@"] = all;
+var a = d.getElementsByTagName("*");
+// skip past document node
+for(var i=1; i<a.length; ++i) {
+var ao = a[i];
+ao.qsasn = ++qsasn;
+all.push(ao);
+n = ao.nodeName;
+if(n) {
+if(!w.qsaHashNode[n]) w.qsaHashNode[n] = [];
+w.qsaHashNode[n].push(ao);
+}
+n = ao.class;
+if(n) {
+if(!w.qsaHashClass[n]) w.qsaHashClass[n] = [];
+w.qsaHashClass[n].push(ao);
+var parts = n.split(/\s+/);
+if(parts.length > 1) {
+for(j=0; j<parts.length; ++j) {
+n = parts[j];
+if(!w.qsaHashClass[n]) w.qsaHashClass[n] = [];
+w.qsaHashClass[n].push(ao);
+}
+}
+}
+}
+}
+
+// querySelectorAll on one compiled chain
+mw0.qsa1 = function(sel)
+{
+var w = my$win(), d = my$doc();
+var taglen = -1, classlen = -1;
+var lowclass;
+var a = [];
+var j, k;
+// hash based on the first component of the chain
+var sel0 = sel[0];
+if(sel0.tag) {
+if(! w.qsaHashNode[sel0.tag]) return a;
+taglen = w.qsaHashNode[sel0.tag].length;
+}
+// class with a short list?
+for(k=0; k<sel0.length; ++k) {
+var s = sel0[k];
+if(s.substr(0,1) != ".") continue;
+s = s.substr(1);
+if(!w.qsaHashClass[s]) return a;
+if(classlen < 0 || w.qsaHashClass[s].length < classlen)
+classlen = w.qsaHashClass[s].length, lowclass = s;
+}
+
+var stream = w.qsaHashNode["@"];
+if(taglen > 0) stream = w.qsaHashNode[sel0.tag];
+if(classlen < taglen &&classlen > 0) stream = w.qsaHashClass[lowclass];
+for(j=0; j<stream.length; ++j)
+if(mw0.qsaMatchChain(stream[j], sel)) a.push(stream[j]);
+return a;
+}
+
+// comma separated group of selectors, sort-merge the resulting lists.
+mw0.qsaMerge = function(a1, a2)
+{
+var a3 = [];
+var i1 = 0, i2 = 0, v1, v2, g1 = true, g2 = true;
+if(!a1.length) return a2;
+if(!a2.length) return a1;
+while(g1|g2) {
+if(!g1) {
+a3.push(a2[i2++]);
+if(i2 == a2.length) g2 = false;
+continue;
+}
+if(!g2) {
+a3.push(a1[i1++]);
+if(i1 == a1.length) g1 = false;
+continue;
+}
+v1 = a1[i1].qsasn;
+v2 = a2[i2].qsasn;
+if(v1 < v2) {
+a3.push(a1[i1++]);
+if(i1 == a1.length) g1 = false;
+} else if(v2 < v1) {
+a3.push(a2[i2++]);
+if(i2 == a2.length) g2 = false;
+} else {
+i1++;
+a3.push(a2[i2++]);
+if(i1 == a1.length) g1 = false;
+if(i2 == a2.length) g2 = false;
+}
+}
+return a3;
+}
+
+mw0.qsa2 = function(sel)
+{
+var a = [];
+for(var k=0; k<sel.length; ++k)
+if(!sel[k].nyi)
+a = mw0.qsaMerge(a, mw0.qsa1(sel[k]));
+return a;
+}
+
+mw0.querySelectorAll1 = function(selstring, startpoint)
+{
+if(startpoint) {
+console.error("qsa startpoint not yet implemented");
+return [];
+}
+// compile the selector
+var v = mw0.cssPieces(mw0.uncomment(selstring + "{color:green}"));
+if(v.length != 1) {
+console.error("querySelectorAll(" + selstring +") yields " + v.length + " descriptors");
+return [];
+}
+v = v[0];
+if(v.nyi) {
+console.error("querySelectorAll(" + selstring +") nyi " + v.explain);
+return [];
+}
+v = v.selectors;
+if(v.length == 1 && v[0].nyi) {
+console.error("querySelectorAll(" + selstring +") nyi " + v[0].explain);
+return [];
+}
+return mw0.qsa2(v);
+}
+
+mw0.cssGather1 = function()
+{
+var w = my$win();
+var d = my$doc();
+w.cssList = [];
+
+// <style> tags in the html.
+var a = d.getElementsByTagName("style");
+var i, t;
+for(i=0; i<a.length; ++i) {
+t = a[i];
+if(t.data) {
+var data2 = mw0.uncomment(t.data);
+w.cssList = w.cssList.concat(mw0.cssPieces(data2));
+}
+}
+
+// <link type=text/css> tags in the html.
+a = d.getElementsByTagName("link");
+for(i=0; i<a.length; ++i) {
+t = a[i];
+if(t.type && t.type.toLowerCase() === "text/css" && t.data) {
+var data2 = mw0.uncomment(t.data);
+w.cssList = w.cssList.concat(mw0.cssPieces(data2));
+}
+}
+
+mw0.cssBroken();
+}
+
+mw0.cssApply1 = function(e, destination)
+{
+var w = my$win();
+var i, j, k;
+var a, t, d;
+for(i=0; i<w.cssList.length; ++i) {
+d = w.cssList[i]; // css descriptor
+if(d.nyi) continue;
+var sel = d.selectors;
+if(e) {
+if(!mw0.qsaMatchGroup(e, sel)) continue;
+a = [e];
+} else {
+a = mw0.qsa2(sel);
+}
+for(j=0; j<a.length; ++j) {
+t = a[j];
+// style object should be there, but just in case...
+if(!destination && !t.style) {
+console.warn((t.nodeName ? t.nodeName : "?") + " object is missing style");
+t.style = new CSSStyleDeclaration;
+}
+for(k=0; k<d.rules.length; ++k) {
+var propname = d.rules[k].atname;
+var propval = d.rules[k].atval;
+// Need to convert white-space to whiteSpace, I guess.
+propname = propname.replace(/\-(\w)/g, function(all, letter) {return letter.toUpperCase();});
+//  alert(t.nodeName + " " + propname + " " + propval);
+if(destination) {
+if(!destination[propname])
+destination[propname] = propval;
+} else {
+if(!t.style[propname])
+t.style[propname] = propval;
+}
+}
+}
+}
+}
+
+mw0.eb$qs$start1 = function()
+{
+mw0.qsaPrep();
+mw0.cssGather1();
+mw0.cssApply1();
 }
 
 } // master compile
