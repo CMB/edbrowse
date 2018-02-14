@@ -2600,125 +2600,18 @@ if(v.nyi) { alert("bad selector " + v.explain); return false; }
 return mw0.qsaMatchChain(node, v);
 }
 
-// Hash nodes by tag and class.
-mw0.qsaPrep = function()
-{
-var w = my$win();
-var d = my$doc();
-var n;
-var qsasn = 0; // querySelectorAll sequence number
-w.qsaHashNode = {};
-w.qsaHashClass = {};
-// every node is under @
-var all = [];
-w.qsaHashNode["@"] = all;
-var a = d.getElementsByTagName("*");
-// skip past document node
-for(var i=1; i<a.length; ++i) {
-var ao = a[i];
-ao.qsasn = ++qsasn;
-all.push(ao);
-n = ao.nodeName;
-if(n) {
-if(!w.qsaHashNode[n]) w.qsaHashNode[n] = [];
-w.qsaHashNode[n].push(ao);
-}
-n = ao.class;
-if(n) {
-if(!w.qsaHashClass[n]) w.qsaHashClass[n] = [];
-w.qsaHashClass[n].push(ao);
-var parts = n.split(/\s+/);
-if(parts.length > 1) {
-for(j=0; j<parts.length; ++j) {
-n = parts[j];
-if(!w.qsaHashClass[n]) w.qsaHashClass[n] = [];
-w.qsaHashClass[n].push(ao);
-}
-}
-}
-}
-}
-
 // querySelectorAll on one compiled chain
 mw0.qsa1 = function(sel)
 {
-var w = my$win(), d = my$doc();
-var taglen = -1, classlen = -1;
-var lowclass;
+var stream = mw0.qsaList;
 var a = [];
-var sel0 = sel[0], sel1;
-var j, k;
-var stream = null;
-
-// Here is some optimization for  .foo *
-// everything below class foo. This really does happen.
-// Or even .foo a every anchor below class foo.
-//  Other optimizations might be possible.
-if(sel.length > 1 && !sel0.length &&
-((sel1 = sel[1]).length) &&
-(sel1.combin == " " || sel1.combin == ">") &&
-sel1[0].match(/^[.#]/)) {
-var stream2;
-var s = sel1[0];
-if(s.substr(0,1) == '#') {
-stream2 = [d.getElementById(s.substr(1))];
-if(stream2[0] == undefined) stream2 = [];
-} else {
-s = s.substr(1);
-stream2 = w.qsaHashClass[s];
-if(!stream2) stream2 = [];
-}
-stream = [];
-for(j=0; j<stream2.length; ++j) {
-var more;
-if(sel1.combin == '>') {
-more = stream2[j].childNodes;
-} else {
-more = stream2[j].getElementsByTagName("*");
-more.splice(0,1);
-}
-if(more)
-stream = mw0.qsaMerge(stream, more);
-}
-}
-
-if(!stream) {
-// hash based on the first component of the chain
-if(sel0.tag) {
-if(! w.qsaHashNode[sel0.tag]) return a;
-taglen = w.qsaHashNode[sel0.tag].length;
-}
-// class with a short list?
-for(k=0; k<sel0.length; ++k) {
-var s = sel0[k];
-if(s.substr(0,1) == '#') {
-// id will always win the day
-stream = [d.getElementById(s.substr(1))];
-if(stream[0] == undefined) stream = [];
-break;
-}
-if(s.substr(0,1) != ".") continue;
-s = s.substr(1);
-if(!w.qsaHashClass[s]) return a;
-if(classlen < 0 || w.qsaHashClass[s].length < classlen)
-classlen = w.qsaHashClass[s].length, lowclass = s;
-}
-}
-
-if(!stream) {
-// hasn't been set by optimizations or by #id
-stream = w.qsaHashNode["@"];
-if(taglen > 0) stream = w.qsaHashNode[sel0.tag];
-if(classlen < taglen &&classlen > 0) stream = w.qsaHashClass[lowclass];
-}
-
-for(j=0; j<stream.length; ++j) {
+var sel0 = sel[0];
+for(var j=0; j<stream.length; ++j) {
 var sj = stream[j];
 // simple tag test for efficiency
 if(sel0.tag && sj.nodeName && sel0.tag != sj.nodeName) continue;
 if(mw0.qsaMatchChain(sj, sel)) a.push(sj);
 }
-
 return a;
 }
 
@@ -2770,10 +2663,6 @@ return a;
 
 mw0.querySelectorAll = function(selstring, startpoint)
 {
-if(startpoint) {
-console.error("qsa startpoint not yet implemented");
-return [];
-}
 // compile the selector
 var v = mw0.cssPieces(mw0.uncomment(selstring + "{color:green}"));
 if(v.length != 1) {
@@ -2790,6 +2679,14 @@ if(v.length == 1 && v[0].nyi) {
 console.error("querySelectorAll(" + selstring +") nyi " + v[0].explain);
 return [];
 }
+
+if(startpoint)
+mw0.qsaList = startpoint.getElementsByTagName("*");
+else
+mw0.qsaList = my$doc().getElementsByTagName("*");
+for(var i=0; i<mw0.qsaList.length; ++i)
+mw0.qsaList[i].qsasn = i; // qsa sequence number
+
 return mw0.qsa2(v);
 }
 
@@ -2826,41 +2723,20 @@ mw0.cssBroken();
 mw0.cssApply = function(e, destination)
 {
 var w = my$win();
-var i, j, k;
-var a, t, d;
+var i, k, d;
 for(i=0; i<w.cssList.length; ++i) {
 d = w.cssList[i]; // css descriptor
 if(d.nyi) continue;
-// uncomment this alert to see which ones are slow
-//  alert(i);
 var sel = d.selectors;
-if(e) {
 if(!mw0.qsaMatchGroup(e, sel)) continue;
-a = [e];
-} else {
-a = mw0.qsa2(sel);
-}
-for(j=0; j<a.length; ++j) {
-t = a[j];
-// style object should be there, but just in case...
-if(!destination && !t.style) {
-console.warn((t.nodeName ? t.nodeName : "?") + " object is missing style");
-t.style = new CSSStyleDeclaration;
-}
 for(k=0; k<d.rules.length; ++k) {
 var propname = d.rules[k].atname;
 var propval = d.rules[k].atval;
 // Need to convert white-space to whiteSpace, I guess.
 propname = propname.replace(/\-(\w)/g, function(all, letter) {return letter.toUpperCase();});
-//  alert(t.nodeName + " " + propname + " " + propval);
-if(destination) {
+//  alert(e.nodeName + " " + propname + " " + propval);
 if(!destination[propname])
 destination[propname] = propval;
-} else {
-if(!t.style[propname])
-t.style[propname] = propval;
-}
-}
 }
 }
 }
@@ -2878,7 +2754,6 @@ n.style$2.eb$done = true;
 mw0.eb$qs$start = function()
 {
 var d = my$doc();
-mw0.qsaPrep();
 mw0.cssGather();
 var a = d.getElementsByTagName('*');
 // skip past document element
