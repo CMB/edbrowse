@@ -12,7 +12,8 @@ body { background: white; color: black; }
 </style>
 </head>
 
-<body onload=bodyLoad() onunload=bodyUnload()>
+<body onload=bodyLoad() onunload=bodyUnload()
+style="font-size: 1.0em">
 <script type=text/javascript language=JavaScript>
 /* This is the javascript regression test for edbrowse.
 It attempts to exercise all the implemented features of javascript,
@@ -847,8 +848,8 @@ fail(163);
 if(document.defaultView.getComputedStyle(document.getElementById("almond"),'').whiteSpace != "snork")
 fail(164);
 
-if(document.body.style.color != "black")
-fail(165);
+if(document.body.style.color != "black") fail(165);
+if(document.body.style.fontSize != "1.0em") fail(169);
 
 // Create a frame and access something from its window.
 (function() {

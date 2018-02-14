@@ -939,6 +939,7 @@ mw0.eb$clone = function(node1,deep)
 var node2;
 var i, j;
 var kids = null;
+var debug = my$win().cloneDebug;
 
 // WARNING: don't use instanceof Array here.
 // See the comments in the Array.prototype section.
@@ -946,8 +947,8 @@ if(Array.isArray(node1.childNodes))
 kids = node1.childNodes;
 
 // We should always be cloning a node.
-if(cloneDebug) alert("clone " + node1.nodeName + " {");
-if(cloneDebug) {
+if(debug) alert("clone " + node1.nodeName + " {");
+if(debug) {
 if(kids) alert("kids " + kids.length);
 else alert("no kids, type " + typeof node1.childNodes);
 }
@@ -957,7 +958,7 @@ if(Array.isArray(node1)) {
 node2 = [];
 node2.childNodes = node2;
 if(deep) {
-if(cloneDebug) alert("self children length " + node1.length);
+if(debug) alert("self children length " + node1.length);
 for(i = 0; i < node1.length; ++i)
 node2.push(mw0.eb$clone(node1[i], true));
 }
@@ -983,13 +984,13 @@ if(!node1.hasOwnProperty(item)) continue;
 if(item === "childNodes" || item === "parentNode") continue;
 
 if (typeof node1[item] === 'function') {
-if(cloneDebug) alert("copy function " + item);
+if(debug) alert("copy function " + item);
 node2[item] = node1[item];
 continue;
 }
 
 if(node1[item] === node1) {
-if(cloneDebug) alert("selflink through " + item);
+if(debug) alert("selflink through " + item);
 node2[item] = node2;
 continue;
 }
@@ -1009,14 +1010,14 @@ or an array of cells in a row, and perhaps others.
 if(item === "elements" && node1.nodeName === "form" ||
 item === "rows" && (node1.nodeName === "table" || node1.nodeName === "tbody") ||
 item === "cells" && node1.nodeName === "trow") {
-if(cloneDebug) alert("linking " + node1.nodeName + "." + item + " with " + node1[item].length + " members");
+if(debug) alert("linking " + node1.nodeName + "." + item + " with " + node1[item].length + " members");
 for(i = 0; i < node1[item].length; ++i) {
 var p = mw0.findObject(node1, node1[item][i], "");
 if(p.length) {
 node2[item].push(mw0.correspondingObject(node2, p));
 } else {
 node2[item].push(null);
-if(cloneDebug) alert("oops, member " + i + " not linked");
+if(debug) alert("oops, member " + i + " not linked");
 if(item === "elements") lostElements = true;
 }
 }
@@ -1027,7 +1028,7 @@ continue;
 if(node1.nodeName === "form" && node1[item].nodeName === "radio") {
 var a1 = node1[item];
 var a2 = node2[item];
-if(cloneDebug) alert("linking form.radio " + item + " with " + a1.length + " buttons");
+if(debug) alert("linking form.radio " + item + " with " + a1.length + " buttons");
 a2.type = a1.type;
 a2.nodeName = a1.nodeName;
 a2.class = a1.class;
@@ -1038,7 +1039,7 @@ if(p.length) {
 a2.push(mw0.correspondingObject(node2, p));
 } else {
 a2.push(null);
-if(cloneDebug) alert("oops, button " + i + " not linked");
+if(debug) alert("oops, button " + i + " not linked");
 }
 }
 continue;
@@ -1051,7 +1052,7 @@ if(node1[item].options && node1[item].options === node1[item]) {
 ; // don't do anything
 } else {
 // It's a regular array.
-if(cloneDebug) alert("copy array " + item + " with " + node1[item].length + " members");
+if(debug) alert("copy array " + item + " with " + node1[item].length + " members");
 node2[item] = [];
 for(i = 0; i < node1[item].length; ++i) {
 node2[item].push(node1[item][i]);
@@ -1070,7 +1071,7 @@ if(item.match(/^\d+$/)) continue; // option index in a select array
 // Check for URL objects.
 if(node1[item] instanceof URL) {
 var u = node1[item];
-if(cloneDebug) alert("copy URL " + item);
+if(debug) alert("copy URL " + item);
 node2[item] = new URL(u.href);
 continue;
 }
@@ -1080,11 +1081,11 @@ continue;
 // rather like tar or cpio preserving hard links.
 var p = mw0.findObject(node1, node1[item], "");
 if(p.length) {
-if(cloneDebug) alert("link " + item + " " + p.substr(1));
+if(debug) alert("link " + item + " " + p.substr(1));
 node2[item] = mw0.correspondingObject(node2, p);
 } else {
 // I don't think we should point to a generic object that we don't know anything about.
-if(cloneDebug) alert("unknown object " + item);
+if(debug) alert("unknown object " + item);
 }
 continue;
 }
@@ -1099,7 +1100,7 @@ continue;
 if(item == "value" &&
 !Array.isArray(node1) && !(node1 instanceof Option))
 continue;
-if(cloneDebug) {
+if(debug) {
 var showstring = node1[item];
 if(showstring.length > 20) showstring = "long";
 alert("copy string " + item + " = " + showstring);
@@ -1109,13 +1110,13 @@ continue;
 }
 
 if (typeof node1[item] === 'number') {
-if(cloneDebug) alert("copy number " + item + " = " + node1[item]);
+if(debug) alert("copy number " + item + " = " + node1[item]);
 node2[item] = node1[item];
 continue;
 }
 
 if (typeof node1[item] === 'boolean') {
-if(cloneDebug) alert("copy boolean " + item + " = " + node1[item]);
+if(debug) alert("copy boolean " + item + " = " + node1[item]);
 node2[item] = node1[item];
 continue;
 }
@@ -1123,13 +1124,13 @@ continue;
 
 // copy style object if present and its subordinate strings.
 if (typeof node1.style === "object") {
-if(cloneDebug) alert("copy style");
+if(debug) alert("copy style");
 node2.style = new CSSStyleDeclaration;
 node2.style.element = node2;
 for (var item in node1.style){
 if (typeof node1.style[item] === 'string' ||
 typeof node1.style[item] === 'number') {
-if(cloneDebug) alert("copy attribute " + item);
+if(debug) alert("copy attribute " + item);
 node2.style[item] = node1.style[item];
 }
 }
@@ -1139,24 +1140,24 @@ node2.style[item] = node1.style[item];
 if(lostElements) {
 var e1 = node1.elements;
 var e2 = node2.elements;
-if(cloneDebug) alert("looking for lost radio elements");
+if(debug) alert("looking for lost radio elements");
 for(i=0; i<e2.length; ++i) {
 if(e2[i]) continue;
 if(e1[i].nodeName !== "radio") {
-if(cloneDebug) alert("oops, lost element " + i + " is type " + e1[i].nodeName);
+if(debug) alert("oops, lost element " + i + " is type " + e1[i].nodeName);
 continue;
 }
 for (var item in node1) {
 if(!node1.hasOwnProperty(item)) continue;
 if(node1[item] !== e1[i]) continue;
 e2[i] = node2[item];
-if(cloneDebug) alert("patching element " + i + " through to " + item);
+if(debug) alert("patching element " + i + " through to " + item);
 break;
 }
 }
 }
 
-if(cloneDebug) alert("}");
+if(debug) alert("}");
 return node2;
 }
 
@@ -1224,7 +1225,7 @@ mw0.Event.prototype.initCustomEvent = function(e, bubble, cancel, details) { };
 mw0.createEvent = function(unused) { return new Event; }
 
 mw0.dispatchEvent = function (e) {
-if(eventDebug) alert("dispatch " + this.nodeName + "." + e._type);
+if(my$win().eventDebug) alert("dispatch " + this.nodeName + "." + e._type);
 var eval_string = "try { this['" + e._type + "']()} catch (e) {alert('event not found')}";
 eval(eval_string);
 };
@@ -1268,7 +1269,7 @@ mw0.detachEvent = function(ev, handler) { this.eb$unlisten(ev,handler, false); }
 mw0.eb$listen = function(ev, handler, addon)
 {
 var ev_before_changes = ev;
-if(eventDebug)  alert((addon ? "listen " : "attach ") + this.nodeName + "." + ev);
+if(my$win().eventDebug)  alert((addon ? "listen " : "attach ") + this.nodeName + "." + ev);
 if(addon) {
 ev = "on" + ev;
 } else {
@@ -1299,7 +1300,7 @@ this[evarray].push(handler);
 mw0.eb$unlisten = function(ev, handler, addon)
 {
 var ev_before_changes = ev;
-if(eventDebug)  alert((addon ? "unlisten " : "detach ") + this.nodeName + "." + ev);
+if(my$win().eventDebug)  alert((addon ? "unlisten " : "detach ") + this.nodeName + "." + ev);
 if(addon) {
 ev = "on" + ev;
 } else {
@@ -2864,11 +2865,35 @@ t.style[propname] = propval;
 }
 }
 
+// apply all the css attributes for a style under the node n.
+// This is done on demand by a getter.
+mw0.dostyle = function(n)
+{
+if(!n.style$2.eb$done) {
+mw0.cssApply(n, n.style$2);
+n.style$2.eb$done = true;
+}
+}
+
 mw0.eb$qs$start = function()
 {
+var d = my$doc();
 mw0.qsaPrep();
 mw0.cssGather();
-mw0.cssApply();
+var a = d.getElementsByTagName('*');
+// skip past document element
+for(var i=1; i<a.length; ++i) {
+var n = a[i]; // node
+if(n instanceof CSSStyleDeclaration) // should never happen
+continue;
+// there should always be a style object
+if(!(n.style instanceof CSSStyleDeclaration)) continue;
+n.style$2 = n.style;
+delete n.style;
+Object.defineProperty(n, "style", { get: function() { mw0.dostyle(this); return this.style$2; }});
+// cloneNode will read style as CSSStyleDeclaration, copy it,
+// not copy the getter, and it actually works.
+}
 }
 
 } // master compile

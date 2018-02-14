@@ -2140,8 +2140,17 @@ static void processStyles(jsobjtype so, const char *stylestring)
 			trimWhite(s);
 			trimWhite(sv);
 // the property name has to be nonempty
-			if (*s)
+			if (*s) {
+// foo-bar has to become fooBar
+				char *t, *w;
+				for (t = w = s; *t; ++t)
+					if (*t == '-' && isalpha(t[1]))
+						t[1] = toupper(t[1]);
+					else
+						*w++ = *t;
+				*w = 0;
 				set_property_string(so, s, sv);
+			}
 		}
 	}
 	nzFree(workstring);
