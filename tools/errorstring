@@ -38,6 +38,6 @@ rm /tmp/elines
 ln=$((ln+100))
 symbol=`sed <messages.h -e "$ln!d" -e 's/[ ,]*$//' -e 's/^[ 	]*//'`
 echo $symbol
-fgrep -l "$symbol" *.c *.cpp
+fgrep -l "$symbol" *.c
 
 exit 0

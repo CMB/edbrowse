@@ -1632,17 +1632,14 @@ bool infPush(int tagno, char **post_string)
 		}
 		nzFree(jh);
 	}
-#if 0
 // if no action, or action is "#", the default is the current location.
 // And yet, with onclick on the submit button, no action means no action,
 // so maybe I just leave it alone.
-	if (!action || stringEqual(action, "#")) {
+	if ((!action || stringEqual(action, "#")) && !(t && t->onclick))
 		action = cf->hbase;
-	}
-#endif
 
 	if (!action) {
-		if (t->onclick) {
+		if (t && t->onclick) {
 // the onclick code might have done what we needed.
 			return true;
 		}
