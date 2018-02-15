@@ -2629,12 +2629,6 @@ So check for serverData null here. Once again we pop the frame.
 		jsobjtype topobj;
 		decorate(0);
 		set_basehref(cf->hbase);
-		run_function_bool(cf->winobj, "eb$qs$start");
-		runScriptsPending();
-		runOnload();
-		runScriptsPending();
-		rebuildSelectors();
-
 // parent points to the containing frame.
 		set_property_object(cf->winobj, "parent", save_cf->winobj);
 // And top points to the top.
@@ -2642,6 +2636,12 @@ So check for serverData null here. Once again we pop the frame.
 		topobj = get_property_object(cf->winobj, "top");
 		cf = new_cf;
 		set_property_object(cf->winobj, "top", topobj);
+		set_property_object(cf->winobj, "frameElement", t->jv);
+		run_function_bool(cf->winobj, "eb$qs$start");
+		runScriptsPending();
+		runOnload();
+		runScriptsPending();
+		rebuildSelectors();
 		set_property_string(cf->docobj, "readyState", "complete");
 	}
 
@@ -2734,10 +2734,15 @@ bool reexpandFrame(void)
 	struct htmlTag *cdt;	// contentDocument tag
 	uchar save_local;
 	bool rc;
+jsobjtype save_top, save_parent, save_fe;
 
 	cf = newloc_f;
 	frametag = cf->frametag;
 	cdt = frametag->firstchild;
+save_top = get_property_object(cf->winobj, "top");
+save_parent = get_property_object(cf->winobj, "parent");
+save_fe = get_property_object(cf->winobj, "frameElement");
+
 // Cut away objects from the previous document, which are now inaccessible.
 	underKill(cdt);
 
@@ -2799,6 +2804,9 @@ bool reexpandFrame(void)
 	if (isJSAlive) {
 		decorate(0);
 		set_basehref(cf->hbase);
+set_property_object(cf->winobj, "top", save_top);
+set_property_object(cf->winobj, "parent", save_parent);
+set_property_object(cf->winobj, "frameElement", save_fe);
 		run_function_bool(cf->winobj, "eb$qs$start");
 		runScriptsPending();
 		runOnload();
