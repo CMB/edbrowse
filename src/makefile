@@ -12,15 +12,6 @@ BUILD_EDBR_ODBC ?= off
 PERL !=		which perl
 TIDY5_LIBS ?=	-ltidy
 
-#  legacy; edbrowse now uses duktape
-MOZJS ?=	mozjs-24	# Name of mozjs pkg-config(1) module.
-MOZJS_CPPFLAGS != pkg-config --cflags-only-I ${MOZJS}
-MOZJS_CXXFLAGS != pkg-config --cflags-only-other ${MOZJS}
-MOZJS_LIBS !=	pkg-config --libs ${MOZJS}
-
-# CPPFLAGS +=	${MOZJS_CPPFLAGS}
-# CXXFLAGS +=	${MOZJS_CXXFLAGS}
-
 LIBS =		-lpcre -lcurl -lreadline ${TIDY5_LIBS} -lduktape -lm
 
 # Add PREFIX to search paths.  These should go after everything else is in.
@@ -48,9 +39,6 @@ dbodbc.o dbinfx.o dbops.o: dbapi.h
 
 .c.o:
 	${CC} ${CFLAGS} ${CPPFLAGS} -c -o $@ $<
-
-.cpp.o:
-	${CC} ${CXXFLAGS} ${CPPFLAGS} -c -o $@ $<
 
 startwindow.c: startwindow.js third.js
 	cd .. ; ${PERL} -w ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/third.js thirdJS src/startwindow.c
