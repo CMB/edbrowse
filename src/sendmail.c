@@ -11,8 +11,7 @@
 #define MAXRECAT 100		/* max number of recipients or attachments */
 #define MAXMSLINE 1024		/* max mail server line */
 
-char serverLine[MAXMSLINE];
-int mssock;			/* mail server socket */
+static char serverLine[MAXMSLINE];
 static bool doSignature;
 static char subjectLine[400];
 static int mailAccount;
