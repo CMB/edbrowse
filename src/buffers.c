@@ -3001,8 +3001,8 @@ replaceText(const char *line, int len, const char *rhs,
 					stringAndChar(&r, &rlen, '\\');
 				stringAndChar(&r, &rlen, d);
 				continue;
-			}
-			/* backslash */
+			}	// \ cases
+
 			if (c == '$' && isdigitByte(d)) {
 				int y, z;
 				t += 2;
@@ -3015,6 +3015,15 @@ replaceText(const char *line, int len, const char *rhs,
 					continue;
 				span = z - y;
 				stringAndBytes(&r, &rlen, line + y, span);
+				continue;
+			}
+
+			if (c == '%' && d == 'l' &&
+			    !strncmp(t + 2, "ine", 3) && !isalnum(t[5])) {
+				char numstring[12];
+				sprintf(numstring, "%d", ln);
+				stringAndString(&r, &rlen, numstring);
+				t += 5;
 				continue;
 			}
 

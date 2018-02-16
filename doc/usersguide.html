@@ -461,6 +461,7 @@ s/x/y/ : replace x with y on the current line
 <br>s : repeat the previous substitute command
 <br>s/x/y/2 : replace the second instance of x with y on the current line
 <br>4,7s/x/y/g : replace all instances of x with y on lines 4 through 7
+<br>s/a\(.\)c/a$1$1c/ : duplicate the letter between a and c
 <br>s, : replace comma space with newline, break line in two
 <br>s. : replace period space with newline, break line in two
 <br>s?2 : break line at the second question mark
@@ -482,6 +483,7 @@ s/x/y/ : replace x with y on the current line
 <br>uc : convert line to upper case
 <br>s/foo/uc : convert foo to FOO on the current line
 <br>s/\bfoo\b/mc/g : convert foo to Foo, but not foobar
+<br>,s/$/ %line/ : put the line number at the end of each line
 <P>
 Files and Sessions
 <P>
