@@ -437,8 +437,6 @@ char *displayOptions(const struct htmlTag *sel)
 	return opt;
 }				/* displayOptions */
 
-static struct htmlTag *exciseTag;
-
 static void prerenderNode(struct htmlTag *t, bool opentag)
 {
 	int itype;		/* input type */
@@ -453,22 +451,14 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 
 	if (t->step >= 1)
 		return;
-	if (!opentag) {
+	if (!opentag)
 		t->step = 1;
-		if (exciseTag) {
-			if (t == exciseTag)
-				exciseTag = 0;
-			else {
-				t->step = 3;
-				return;
-			}
-		}
-	}
 
 	switch (action) {
 	case TAGACT_NOSCRIPT:
-		if (allowJS && opentag)
-			exciseTag = t;
+// If javascript is enabled kill everything under noscript
+		if (allowJS && !opentag)
+			underKill(t);
 		break;
 
 	case TAGACT_TEXT:
@@ -730,12 +720,9 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 		break;
 
 	case TAGACT_FRAME:
-		if (opentag) {
-			exciseTag = t;
+		if (opentag)
 			break;
-		}
 // If somebody wrote <frame><p><a></frame>, those tags should be excised,
-// but just in case...
 		underKill(t);
 		cdt = newTag("document");
 		t->firstchild = cdt;
@@ -758,7 +745,6 @@ void prerender(int start)
 	nzFree(radioCheck);
 	radioCheck = 0;
 	traverse_callback = prerenderNode;
-	exciseTag = 0;
 	traverseAll(start);
 	currentForm = NULL;
 	nzFree(radioCheck);
