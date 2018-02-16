@@ -44,7 +44,18 @@ bool tagHandler(int seqno, const char *name)
 		return false;
 	if (!isJSAlive)
 		return false;
-	return handlerPresent(t->jv, name);
+	if (!handlerPresent(t->jv, name))
+		return false;
+
+	if (stringEqual(name, "onclick"))
+		t->onclick = true;
+	if (stringEqual(name, "onsubmit"))
+		t->onsubmit = true;
+	if (stringEqual(name, "onreset"))
+		t->onreset = true;
+	if (stringEqual(name, "onchange"))
+		t->onchange = true;
+	return true;
 }				/* tagHandler */
 
 static void formReset(const struct htmlTag *form);
@@ -1560,11 +1571,6 @@ bool infPush(int tagno, char **post_string)
 		return false;
 	}
 
-	if (!form && itype != INP_BUTTON) {
-		setError(MSG_NotInForm);
-		return false;
-	}
-
 	if (t && tagHandler(t->seqno, "onclick")) {
 		if (!isJSAlive)
 			runningError(itype ==
@@ -1574,17 +1580,26 @@ bool infPush(int tagno, char **post_string)
 	bubble_event((t ? t : form), "onclick");
 	if (js_redirects)
 		return true;
+// At this point onclick has run, be it button or submit or reset
 
 	if (itype == INP_BUTTON) {
-		if (isJSAlive && t->jv && !handlerPresent(t->jv, "onclick")) {
+		if (isJSAlive && t->jv && !t->onclick) {
 			setError(MSG_ButtonNoJS);
 			return false;
 		}
 		return true;
 	}
+// Now submit or reset
 
 	if (itype == INP_RESET) {
-/* Before we reset, run the onreset code */
+		if (!form) {
+			setError(MSG_NotInForm);
+			return false;
+		}
+// Before we reset, run the onreset code.
+// I read somewhere that onreset and onsubmit only run if you
+// pushed the button - rather like onclick.
+// Thus t, the reset button, must be nonzero.
 		if (t && tagHandler(form->seqno, "onreset")) {
 			if (!isJSAlive)
 				runningError(MSG_NJNoReset);
@@ -1603,8 +1618,12 @@ bool infPush(int tagno, char **post_string)
 		formReset(form);
 		return true;
 	}
-
-	/* Before we submit, run the onsubmit code */
+// now it's submit
+	if (!form && !(t && t->onclick)) {
+		setError(MSG_NotInForm);
+		return false;
+	}
+	// Before we submit, run the onsubmit code
 	if (t && tagHandler(form->seqno, "onsubmit")) {
 		if (!isJSAlive)
 			runningError(MSG_NJNoSubmit);
@@ -1634,17 +1653,12 @@ bool infPush(int tagno, char **post_string)
 	}
 // if no action, or action is "#", the default is the current location.
 // And yet, with onclick on the submit button, no action means no action,
-// so maybe I just leave it alone.
-	if ((!action || stringEqual(action, "#")) && !(t && t->onclick))
-		action = cf->hbase;
-
-	if (!action) {
-		if (t && t->onclick) {
-// the onclick code might have done what we needed.
+// and I believe the same is true for onsubmit.
+// Just assume javascript has done the submit.
+	if (!action || stringEqual(action, "#")) {
+		if (t && (t->onclick | form->onsubmit))
 			return true;
-		}
-		setError(MSG_FormNoURL);
-		return false;
+		action = cf->hbase;
 	}
 
 	prot = getProtURL(action);
