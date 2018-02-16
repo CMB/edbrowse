@@ -445,11 +445,14 @@ Object.defineProperty(mw0.URL.prototype, "href", {
   get: function() {return this.href$val; },
   set: function(v) {
 var inconstruct = true;
+if(v instanceof URL) v = v.toString();
+if(v === null || v === undefined) v = "";
+if(typeof v != "string") return;
 if(this.href$val) {
 // Ok, we already had a url, and here's nother one.
 // I think we're suppose to resolve it against what was already there,
 // so that /foo against www.xyz.com becomes www.xyz.com/foobar
-v = eb$resolveURL(this.href$val, v);
+if(v) v = eb$resolveURL(this.href$val, v);
 inconstruct = false;
 }
 this.href$val = v;
@@ -628,7 +631,7 @@ var ulist = ["href", "src", "src", "href", "href", "action", "src"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
 var u = ulist[i]; // url name
-eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + u + '", { get: function() { return this.href$2; }, set: function(h) { if(h instanceof URL) h = h.toString(); if(typeof h !== "string") { console.warn("hrefset " + typeof h); hrefset$p.push("' + cn + '"); hrefset$a.push(h); return; } if(!h.length) { /* dont know what to do here. */ return; } if(!this.href$2) { this.href$2 = new mw0.URL(eb$resolveURL(my$win().eb$base,h)); } else { this.href$2.href = h; } }});');
+eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + u + '", { get: function() { return this.href$2; }, set: function(h) { if(h instanceof URL) h = h.toString(); if(h === null || h === undefined) h = ""; if(typeof h !== "string") { console.warn("hrefset " + typeof h); hrefset$p.push("' + cn + '"); hrefset$a.push(h); return; } if(!this.href$2) { this.href$2 = new mw0.URL(h ? eb$resolveURL(my$win().eb$base,h) : h) } else { if(!this.href$2.href$val && h) h =  eb$resolveURL(my$win().eb$base,h); this.href$2.href = h; } }});');
 var piecelist = ["protocol", "pathname", "host", "search", "hostname", "port"];
 for(var j=0; j<piecelist.length; ++j) {
 var piece = piecelist[j];
