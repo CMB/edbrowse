@@ -565,7 +565,6 @@ return this.toString().split(s);
 // Here are the DOM classes with generic constructors.
 
 mw0.Head = function(){}
-mw0.Head.prototype.querySelector = function(x) { return querySelectorAll(x)[0] }
 mw0.Meta = function(){}
 mw0.Link = function(){}
 mw0.Body = function(){}
@@ -2619,7 +2618,9 @@ if(v.nyi) { alert("bad selector " + v.explain); return false; }
 return mw0.qsaMatchChain(node, v);
 }
 
-// querySelectorAll on one compiled chain
+// querySelectorAll on one compiled chain.
+// Stop at the first if qsaFirst is set.
+mw0.qsaFirst = false;
 mw0.qsa1 = function(sel)
 {
 var stream = mw0.qsaList;
@@ -2629,7 +2630,10 @@ for(var j=0; j<stream.length; ++j) {
 var sj = stream[j];
 // simple tag test for efficiency
 if(sel0.tag && sj.nodeName && sel0.tag != sj.nodeName) continue;
-if(mw0.qsaMatchChain(sj, sel)) a.push(sj);
+if(mw0.qsaMatchChain(sj, sel)) {
+a.push(sj);
+if(mw0.qsaFirst) break;
+}
 }
 return a;
 }
@@ -2708,6 +2712,16 @@ mw0.qsaList[i].qsasn = i; // qsa sequence number
 
 return mw0.qsa2(v);
 }
+
+mw0.querySelector = function(selstring, startpoint)
+{
+mw0.qsaFirst = true;
+var a = querySelectorAll(selstring, startpoint);
+mw0.qsaFirst = false;
+return (a.length ? a[0] : undefined);
+}
+
+mw0.Head.prototype.querySelector = mw0.querySelector;
 
 mw0.cssGather = function()
 {
@@ -2794,6 +2808,5 @@ Object.defineProperty(n, "style", { get: function() { mw0.dostyle(this); return 
 
 eb$qs$start = mw0.eb$qs$start;
 querySelectorAll = document.querySelectorAll = mw0.querySelectorAll;
-// This isn't efficient, but it doesn't come up very often.
-document.querySelector = function(x) { return querySelectorAll(x)[0] }
+querySelector = document.querySelector = mw0.querySelector;
 
