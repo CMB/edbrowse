@@ -566,6 +566,10 @@ mw0.URL.prototype.slice = function(from, to) {
 return this.toString().slice(from, to);
 }
 
+mw0.URL.prototype.charAt = function(n) {
+return this.toString().charAt(n);
+}
+
 // Here are the DOM classes with generic constructors.
 
 mw0.Head = function(){}
