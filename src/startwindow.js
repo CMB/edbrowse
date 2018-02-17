@@ -562,6 +562,10 @@ mw0.URL.prototype.split = function(s) {
 return this.toString().split(s);
 }
 
+mw0.URL.prototype.slice = function(from, to) {
+return this.toString().slice(from, to);
+}
+
 // Here are the DOM classes with generic constructors.
 
 mw0.Head = function(){}
