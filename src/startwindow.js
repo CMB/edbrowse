@@ -526,6 +526,32 @@ mw0.URL.prototype.toString = function() {
 return this.href$val;
 }
 
+Object.defineProperty(mw0.URL.prototype, "length", { get: function() { return this.toString().length; }});
+
+mw0.URL.prototype.concat = function(s) { 
+return this.toString().concat(s);
+}
+
+mw0.URL.prototype.startsWith = function(s) { 
+return this.toString().startsWith(s);
+}
+
+mw0.URL.prototype.endsWith = function(s) { 
+return this.toString().endsWith(s);
+}
+
+mw0.URL.prototype.includes = function(s) { 
+return this.toString().includes(s);
+}
+
+/*
+Can't turn URL.search into String.search, because search is already a property
+of URL, that is, the search portion of the URL.
+mw0.URL.prototype.search = function(s) { 
+return this.toString().search(s);
+}
+*/
+
 mw0.URL.prototype.indexOf = function(s) { 
 return this.toString().indexOf(s);
 }
@@ -568,6 +594,14 @@ return this.toString().slice(from, to);
 
 mw0.URL.prototype.charAt = function(n) {
 return this.toString().charAt(n);
+}
+
+mw0.URL.prototype.charCodeAt = function(n) {
+return this.toString().charCodeAt(n);
+}
+
+mw0.URL.prototype.trim = function() {
+return this.toString().trim();
 }
 
 // Here are the DOM classes with generic constructors.
