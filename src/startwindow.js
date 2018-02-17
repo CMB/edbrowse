@@ -630,7 +630,7 @@ var ulist = ["href", "src", "src", "href", "href", "action", "src"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
 var u = ulist[i]; // url name
-eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + u + '", { get: function() { return this.href$2; }, set: function(h) { if(h instanceof URL) h = h.toString(); if(h === null || h === undefined) h = ""; if(typeof h !== "string") { console.warn("hrefset " + typeof h); hrefset$p.push("' + cn + '"); hrefset$a.push(h); return; } if(!this.href$2) { this.href$2 = new mw0.URL(h ? eb$resolveURL(my$win().eb$base,h) : h) } else { if(!this.href$2.href$val && h) h =  eb$resolveURL(my$win().eb$base,h); this.href$2.href = h; } }});');
+eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + u + '", { get: function() { return this.href$2; }, set: function(h) { if(h instanceof URL) h = h.toString(); if(h === null || h === undefined) h = ""; if(typeof h !== "string") { console.warn("hrefset " + typeof h); var w = my$win(); w.hrefset$p.push("' + cn + '"); w.hrefset$a.push(h); return; } if(!this.href$2) { this.href$2 = new mw0.URL(h ? eb$resolveURL(my$win().eb$base,h) : h) } else { if(!this.href$2.href$val && h) h =  eb$resolveURL(my$win().eb$base,h); this.href$2.href = h; } }});');
 var piecelist = ["protocol", "pathname", "host", "search", "hostname", "port"];
 for(var j=0; j<piecelist.length; ++j) {
 var piece = piecelist[j];
@@ -2496,7 +2496,7 @@ for(var i=0; i<list.length; ++i) {
 var l = list[i];
 if(l.nyi) {
 if(l.explain != "@")
-css$nyi.push(l);
+w.css$nyi.push(l);
 continue;
 }
 // Looks good but we have to check below.
@@ -2504,14 +2504,14 @@ var total = l.selectors.length;
 var good = 0, bad = 0, bad1 = 0;
 for(var j=0; j<total; ++j)
 if(l.selectors[j].nyi) { ++bad; if(l.selectors[j].explain != "dynamic") ++bad1; } else ++good;
-if(bad1) css$nyi.push(l);
+if(bad1) w.css$nyi.push(l);
 if(bad == total) {
 l.nyi = true;
 l.explain = "multiple";
 if(total == 1) l.explain = l.selectors[0].explain;
 }
 }
-if(css$nyi.length) console.warn("unsupported css selectors " + css$nyi.length + " out of " + cssList.length);
+if(w.css$nyi.length) console.warn("unsupported css selectors " + w.css$nyi.length + " out of " + w.cssList.length);
 }
 
 mw0.qsaMatch = function(node, sel)
@@ -2723,33 +2723,57 @@ return (a.length ? a[0] : undefined);
 
 mw0.Head.prototype.querySelector = mw0.querySelector;
 
-mw0.cssGather = function()
+mw0.cssGather1 = function()
 {
 var w = my$win();
 var d = my$doc();
-w.cssList = [];
-
+w.cssSource = [];
 // <style> tags in the html.
 var a = d.getElementsByTagName("style");
 var i, t;
 for(i=0; i<a.length; ++i) {
 t = a[i];
-if(t.data) {
-var data2 = mw0.uncomment(t.data);
-w.cssList = w.cssList.concat(mw0.cssPieces(data2));
+if(t.data) w.cssSource.push({data: t.data});
 }
-}
-
 // <link type=text/css> tags in the html.
 a = d.getElementsByTagName("link");
 for(i=0; i<a.length; ++i) {
 t = a[i];
-if(t.type && t.type.toLowerCase() === "text/css" && t.data) {
-var data2 = mw0.uncomment(t.data);
-w.cssList = w.cssList.concat(mw0.cssPieces(data2));
+if(t.type && t.type.toLowerCase() === "text/css") {
+if(t.data) w.cssSource.push({data: t.data});
+else if(t.href) w.cssSource.push({src: t.href});
+}
 }
 }
 
+mw0.cssGather2 = function()
+{
+var w = my$win();
+var d = my$doc();
+if(w.cssList) return; // already done
+w.cssList = [];
+var xhr = new XMLHttpRequest;
+xhr.method = "GET";
+var a = w.cssSource;
+var i, t;
+for(i=0; i<a.length; ++i) {
+t = a[i];
+if(t.src) {
+if(!t.src.protocol) {
+console.error("css file " + t.src + " has no protocol, cannot fetch");
+continue;
+}
+xhr.url = t.src;
+xhr.send("", 0);
+t.data = xhr.responseText;
+if(!t.data) {
+console.error("css file " + t.src + " has no data");
+continue;
+}
+}
+if(t.data)
+w.cssList = w.cssList.concat(mw0.cssPieces(mw0.uncomment(t.data)));
+}
 mw0.cssBroken();
 }
 
@@ -2757,6 +2781,7 @@ mw0.cssApply = function(e, destination)
 {
 var w = my$win();
 var i, k, d;
+mw0.cssGather2();
 for(i=0; i<w.cssList.length; ++i) {
 d = w.cssList[i]; // css descriptor
 if(d.nyi) continue;
@@ -2787,12 +2812,12 @@ n.style$2.eb$done = true;
 mw0.eb$qs$start = function()
 {
 var d = my$doc();
-mw0.cssGather();
+mw0.cssGather1();
 var a = d.getElementsByTagName('*');
 // skip past document element
 for(var i=1; i<a.length; ++i) {
 var n = a[i]; // node
-if(n instanceof CSSStyleDeclaration) // should never happen
+if(n instanceof CSSStyleDeclaration) // <style>
 continue;
 // there should always be a style object
 if(!(n.style instanceof CSSStyleDeclaration)) continue;

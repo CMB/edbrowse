@@ -501,7 +501,7 @@ static void prepareScript(struct htmlTag *t)
 	if (t->href) {		/* fetch the javascript page */
 		if (javaOK(t->href)) {
 			bool from_data = isDataURI(t->href);
-			debugPrint(3, "java source %s",
+			debugPrint(3, "js source %s",
 				   !from_data ? t->href : "data URI");
 			if (from_data) {
 				char *mediatype;
@@ -1641,7 +1641,7 @@ bool infPush(int tagno, char **post_string)
 	}
 
 	action = form->href;
-/* But we defer to the java variable */
+/* But we defer to the js variable */
 	if (form->jv && isJSAlive) {
 		char *jh = get_property_url(form->jv, true);
 		if (jh && (!action || !stringEqual(jh, action))) {
@@ -2436,7 +2436,7 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 	jsobjtype *a_j, *b_j;
 	char p_name[MAXTAGNAME], a_name[MAXTAGNAME], b_name[MAXTAGNAME];
 	int action;
-	char *jst;		// java string
+	char *jst;		// javascript string
 
 // Some functions in third.js create, link, and then remove nodes, before
 // there is a document. Don't run any side effects in this case.

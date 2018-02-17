@@ -1184,6 +1184,50 @@ static void optionJS(struct htmlTag *t)
 	}
 }				/* optionJS */
 
+static void link_css(struct htmlTag *t)
+{
+	const char *a = attribVal(t, "type");
+	if (a)
+		set_property_string(t->jv, "type", a);
+// Fetch the css file so we can apply its attributes.
+	if (!t->href)
+		return;
+	if (!a || !stringEqualCI(a, "text/css"))
+		return;
+	a = NULL;
+	if (browseLocal && !isURL(t->href)) {
+		debugPrint(3, "css source %s", t->href);
+		if (!fileIntoMemory(t->href, &serverData, &serverDataLen)) {
+			if (debugLevel >= 1)
+				i_printf(MSG_GetLocalCSS, errorMsg);
+		} else {
+			a = serverData;
+			serverData = NULL;
+			serverDataLen = 0;
+		}
+	} else if (!allowXHR) {
+// we can defer the fetch from the internet, if xhr is allowed
+		debugPrint(3, "css source %s", t->href);
+		if (httpConnect(t->href, false, false, true, 0, 0, 0)) {
+			if (ht_code == 200) {
+				a = serverData;
+			} else {
+				nzFree(serverData);
+				if (debugLevel >= 3)
+					i_printf(MSG_GetCSS, t->href, ht_code);
+			}
+			serverData = NULL;
+			serverDataLen = 0;
+		} else {
+			if (debugLevel >= 3)
+				i_printf(MSG_GetCSS2, errorMsg);
+		}
+	}
+	if (a)
+		set_property_string(t->jv, "data", a);
+	cnzFree(a);
+}				/* link_css */
+
 static jsobjtype innerParent;
 
 static void jsNode(struct htmlTag *t, bool opentag)
@@ -1403,38 +1447,7 @@ Needless to say that's not good!
 	case TAGACT_LINK:
 		domLink(t, "Link", "href", "links", cf->docobj, 0);
 		set_property_number(t->jv, "nodeType", 1);
-		a = attribVal(t, "type");
-		if (a)
-			set_property_string(t->jv, "type", a);
-// Fetch the css file so we can apply its attributes.
-		if (!t->href)
-			break;
-		if (!a || !stringEqualCI(a, "text/css"))
-			break;
-		a = NULL;
-		if (browseLocal && !isURL(t->href)) {
-			if (!fileIntoMemory
-			    (t->href, &serverData, &serverDataLen)) {
-				if (debugLevel >= 1)
-					i_printf(MSG_GetLocalCSS, errorMsg);
-			} else {
-				a = serverData;
-			}
-		} else if (httpConnect(t->href, false, false, true, 0, 0, 0)) {
-			if (ht_code == 200) {
-				a = serverData;
-			} else {
-				nzFree(serverData);
-				if (debugLevel >= 3)
-					i_printf(MSG_GetCSS, t->href, ht_code);
-			}
-		} else {
-			if (debugLevel >= 3)
-				i_printf(MSG_GetCSS2, errorMsg);
-		}
-		if (a)
-			set_property_string(t->jv, "data", a);
-		cnzFree(a);
+		link_css(t);
 		break;
 
 	default:

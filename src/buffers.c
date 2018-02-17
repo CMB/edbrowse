@@ -3141,7 +3141,7 @@ findField(const char *line, int ftype, int n,
 		if (tagp)
 			*tagp = t;
 		if (href && isJSAlive && t->jv) {
-/* defer to the java variable for the reference */
+/* defer to the js variable for the reference */
 			char *jh = get_property_url(t->jv, false);
 			if (jh) {
 				if (!*href || !stringEqual(*href, jh)) {

@@ -995,6 +995,7 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 
 		save_plug = pluginsOn;
 		save_ref = sendReferrer;
+		debugPrint(3, "xhr %s", incoming_url);
 		httpConnect(incoming_url, false, false, true,
 			    &outgoing_xhrheaders, &outgoing_xhrbody,
 			    &responseLength);
