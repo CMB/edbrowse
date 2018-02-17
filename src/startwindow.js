@@ -2436,11 +2436,13 @@ if(s.substr(-1) != ']') {
 q.nyi = true, q.explain = "[ no ]";
 return;
 }
+s = s.replace(/.$/, "");
 if(!s.match(/=/)) {
-q.nyi = true, q.explain = "[ no =";
+if(!s.match(/^.[a-zA-Z-][a-zA-Z0-9-]*$/)) {
+q.nyi = true, q.explain = "bad attribute";
 return;
 }
-s = s.replace(/.$/, "");
+} else {
 m = s.match(/^.[a-zA-Z-][a-zA-Z0-9-]*?~?=/);
 if(!m) {
 q.nyi = true, q.explain = "bad attribute";
@@ -2454,6 +2456,7 @@ q.nyi = true, q.explain = "bad value";
 return;
 }
 s = m[0] + s;
+}
 }
 // s has been reconstructed
 q.pop();
@@ -2532,10 +2535,11 @@ s = s.substr(1);
 switch(c) {
 case '[':
 a = s.replace(/~?=.*/, "");
-v = s.replace(/^.*?=/, "");
-u = undefined;
-if(node.getAttribute) u = node.getAttribute(a);
+u = node[a];
 if(!u) return false;
+if(!s.match(/=/))
+return true;
+v = s.replace(/^.*?=/, "");
 if(!s.match(/~=/)) {
 if(u === v) continue;
 return false;
@@ -2703,10 +2707,12 @@ console.error("querySelectorAll(" + selstring +") nyi " + v[0].explain);
 return [];
 }
 
-if(startpoint)
+if(startpoint) {
 mw0.qsaList = startpoint.getElementsByTagName("*");
-else
+} else {
 mw0.qsaList = my$doc().getElementsByTagName("*");
+mw0.qsaList.splice(0,1);
+}
 for(var i=0; i<mw0.qsaList.length; ++i)
 mw0.qsaList[i].qsasn = i; // qsa sequence number
 
