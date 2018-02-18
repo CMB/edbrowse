@@ -1325,13 +1325,22 @@ static enum ej_proptype top_proptype(void)
 	return EJ_PROP_NONE;	/* don't know */
 }				/* top_proptype */
 
-enum ej_proptype has_property_nat(jsobjtype parent, const char *name)
+enum ej_proptype typeof_property_nat(jsobjtype parent, const char *name)
 {
 	enum ej_proptype l;
 	duk_push_heapptr(jcx, parent);
 	duk_get_prop_string(jcx, -1, name);
 	l = top_proptype();
 	duk_pop_2(jcx);
+	return l;
+}
+
+bool has_property_nat(jsobjtype parent, const char *name)
+{
+	bool l;
+	duk_push_heapptr(jcx, parent);
+	l = duk_has_prop_string(jcx, -1, name);
+	duk_pop(jcx);
 	return l;
 }
 

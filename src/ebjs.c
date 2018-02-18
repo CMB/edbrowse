@@ -192,26 +192,47 @@ void jsRunScript(jsobjtype obj, const char *str, const char *filename,
 	nzFree(s);
 }				/* jsRunScript */
 
-/* does the member exist? */
-enum ej_proptype has_property(jsobjtype obj, const char *name)
+/* does the member exist in the object or its prototype? */
+bool has_property(jsobjtype obj, const char *name)
+{
+	bool p = false;
+
+	if (!obj) {
+		debugPrint(3, "has_property(0, %s)", name);
+		return false;
+	}
+	if (whichproc == 'j')
+		return has_property_nat(obj, name);
+	if (!allowJS || !cf->winobj)
+		return false;
+
+	debugPrint(5, "> has %s", name);
+	set_js_globals();
+	p = has_property_nat(obj, name);
+	debugPrint(5, "< %s", (p ? "true" : "false"));
+	return p;
+}				/* has_property */
+
+/* return the type of the member */
+enum ej_proptype typeof_property(jsobjtype obj, const char *name)
 {
 	enum ej_proptype p;
 
 	if (!obj) {
-		debugPrint(3, "has_property(0, %s)", name);
+		debugPrint(3, "typeof_property(0, %s)", name);
 		return EJ_PROP_NONE;
 	}
 	if (whichproc == 'j')
-		return has_property_nat(obj, name);
+		return typeof_property_nat(obj, name);
 	if (!allowJS || !cf->winobj)
 		return EJ_PROP_NONE;
 
 	debugPrint(5, "> has %s", name);
 	set_js_globals();
-	p = has_property_nat(obj, name);
+	p = typeof_property_nat(obj, name);
 	debugPrint(5, "< %d", p);
 	return p;
-}				/* has_property */
+}				/* typeof_property */
 
 void delete_property(jsobjtype obj, const char *name)
 {
@@ -785,16 +806,14 @@ char *get_property_url(jsobjtype owner, bool action)
 	jsobjtype uo = 0;	/* url object */
 
 	if (action) {
-		mtype = has_property(owner, "action");
+		mtype = typeof_property(owner, "action");
 		if (mtype == EJ_PROP_STRING)
 			return get_property_string(owner, "action");
 		if (mtype != EJ_PROP_OBJECT)
 			return 0;
 		uo = get_property_object(owner, "action");
-		if (has_property(uo, "actioncrash"))
-			return 0;
 	} else {
-		mtype = has_property(owner, "href");
+		mtype = typeof_property(owner, "href");
 		if (mtype == EJ_PROP_STRING)
 			return get_property_string(owner, "href");
 		if (mtype == EJ_PROP_OBJECT)
@@ -802,7 +821,7 @@ char *get_property_url(jsobjtype owner, bool action)
 		else if (mtype)
 			return 0;
 		if (!uo) {
-			mtype = has_property(owner, "src");
+			mtype = typeof_property(owner, "src");
 			if (mtype == EJ_PROP_STRING)
 				return get_property_string(owner, "src");
 			if (mtype == EJ_PROP_OBJECT)

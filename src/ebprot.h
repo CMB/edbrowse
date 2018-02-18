@@ -70,8 +70,9 @@ void createJavaContext(void) ;
 void freeJavaContext(struct ebFrame *f) ;
 char *jsRunScriptResult(jsobjtype obj, const char *str, const char *filename, int lineno) ;
 void jsRunScript(jsobjtype obj, const char *str, const char *filename, int lineno) ;
-enum ej_proptype has_property(jsobjtype obj, const char *name) ;
-#define handlerPresent(obj, name) (has_property(obj, name) == EJ_PROP_FUNCTION)
+enum ej_proptype typeof_property(jsobjtype obj, const char *name) ;
+bool has_property(jsobjtype obj, const char *name) ;
+#define handlerPresent(obj, name) (typeof_property(obj, name) == EJ_PROP_FUNCTION)
 void delete_property(jsobjtype obj, const char *name) ;
 char *get_property_string(jsobjtype obj, const char *name) ;
 int get_property_number(jsobjtype obj, const char *name) ;
@@ -384,7 +385,8 @@ int js_main(void);
 // the native versions of the api functions in ebjs.c
 void createJavaContext_nat(void);
 void freeJavaContext_nat(void);
-enum ej_proptype has_property_nat(jsobjtype obj, const char *name) ;
+enum ej_proptype typeof_property_nat(jsobjtype obj, const char *name) ;
+bool has_property_nat(jsobjtype obj, const char *name) ;
 void delete_property_nat(jsobjtype obj, const char *name) ;
 char *get_property_string_nat(jsobjtype obj, const char *name) ;
 int get_property_number_nat(jsobjtype parent, const char *name) ;

@@ -788,7 +788,7 @@ Well so far I haven't found an example that needs with(document) around it,
 so I'm not going to worry about that right now.
 
 	strcpy(newcode, "with(document) { ");
-	enum ej_proptype hasform = has_property(ev, "form");
+	enum ej_proptype hasform = typeof_property(ev, "form");
 	if (hasform)
 		strcat(newcode, "with(this.form) { ");
 *********************************************************************/
@@ -904,7 +904,7 @@ static void domLink(struct htmlTag *t, const char *classname,	/* instantiate thi
 	debugPrint(5, "domLink %s.%d name %s",
 		   classname, radiosel, (symname ? symname : emptyString));
 
-	if (symname && has_property(owner, symname)) {
+	if (symname && typeof_property(owner, symname)) {
 /*********************************************************************
 This could be a duplicate name.
 Yes, that really happens.
@@ -917,28 +917,9 @@ and thereafter we just link under that array.
 Or - and this really does happen -
 an input tag could have the name action, colliding with form.action.
 I have no idea what to do here.
-I will assume the tag displaces the action.
-That means javascript cannot change the action of the form,
-which it rarely does anyways.
-When it refers to form.action, that will be the input tag.
-I'll check for that one first.
-Yeah, it makes my head spin too.
+radiosel is 1 for radio buttons and 2 for select.
 *********************************************************************/
 
-		if (stringEqual(symname, "action")) {
-			jsobjtype ao;	/* action object */
-			ao = get_property_object(owner, symname);
-			if (ao == NULL)
-				return;
-/* actioncrash tells me if we've already had this collision */
-			if (!has_property(ao, "actioncrash")) {
-				delete_property(owner, symname);
-/* advance, as though this were not found */
-				goto afterfound;
-			}
-		}
-
-/* radiosel is 1 for radio buttons and 2 for select */
 		if (radiosel == 1) {
 /* name present and radio buttons, name should be the array of buttons */
 			io = get_property_object(owner, symname);
@@ -950,11 +931,9 @@ Yeah, it makes my head spin too.
 		}
 	}
 
-afterfound:
 /* The input object is nonzero if&only if the input is a radio button,
  * and not the first button in the set, thus it isce the array containing
  * these buttons. */
-
 	if (io == NULL) {
 /*********************************************************************
 Ok, the above condition does not hold.
@@ -965,18 +944,16 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 
 		if (!symname && idname) {
 			membername = idname;
-/* id= must not displace submit, reset, or action.
- * Example www.startpage.com, where id=submit.
- * Nor should it collide with any other tag (ID is unique),
- * nor should it collide with another attribute, such as document.cookie and
- * <div ID=cookie> in www.orange.com. */
-			if (has_property(owner, membername) ||
-			    (stringEqual(idname, "action") && list
-			     && stringEqual(list, "elements")))
-				membername = NULL;
 		} else if (symname && !dupname) {
 			membername = symname;
 		}
+/* id= must not displace submit, reset, or action in form.
+ * Example www.startpage.com, where id=submit.
+ * nor should it collide with another attribute, such as document.cookie and
+ * <div ID=cookie> in www.orange.com.
+ * This call checks for the name in the object and its prototype. */
+		if (has_property(owner, membername))
+			membername = NULL;
 		if (!membername)
 			membername = fakePropName();
 
@@ -1052,9 +1029,11 @@ Don't do any of this if the tag is itself <style>. */
 			if (length < 0)
 				return;
 			set_array_element_object(alist, length, io);
-			if (symname && !dupname)
+			if (symname && !dupname
+			    && !has_property(alist, symname))
 				set_property_object(alist, symname, io);
-			if (idname && membername != idname)
+			if (idname && membername != idname
+			    && !has_property(alist, idname))
 				set_property_object(alist, idname, io);
 		}		/* list indicated */
 	}
@@ -1530,6 +1509,11 @@ static void pushAttributes(const struct htmlTag *t)
 		};
 		const char *u;
 		if (stringInListCI(exclist, a[i]) >= 0)
+			continue;
+// I surely haven't thought of everything, so check generally.
+// Maybe I forgot firstChild or whatever.
+// See if the name is specifically in the prototype.
+		if (has_property(t->jv, a[i]) && !typeof_property(t->jv, a[i]))
 			continue;
 // Should we drop attribute name to lower case? I don't, for now.
 		u = v[i];

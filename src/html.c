@@ -2601,7 +2601,7 @@ ab:
 	case TAGACT_SELECT:
 		t->action = TAGACT_INPUT;
 		t->itype = INP_SELECT;
-		if (has_property(t->jv, "multiple"))
+		if (typeof_property(t->jv, "multiple"))
 			t->multiple = true;
 		formControl(t, true);
 		break;
