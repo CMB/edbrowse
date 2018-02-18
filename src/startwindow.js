@@ -749,6 +749,58 @@ mw0.cssApply(e, s);
 return s;
 }
 
+// insert row into a table or tbody
+mw0.insertRow = function(idx) {
+if(idx === undefined) idx = -1;
+if(typeof idx !== "number") return null;
+var t = this;
+if(this.nodeName == "table") {
+// check for table bodies
+if(t.lastChild && t.lastChild.nodeName == "tbody")
+t = t.lastChild;
+}
+var nrows = t.childNodes.length;
+if(idx < 0) idx = nrows;
+if(idx > nrows) return null;
+var r = document.createElement("tr");
+if(idx == nrows)
+t.appendChild(r);
+else
+t.insertBefore(r, t.childNodes[idx]);
+return r;
+}
+mw0.Table.prototype.insertRow = mw0.insertRow;
+mw0.Tbody.prototype.insertRow = mw0.insertRow;
+
+mw0.deleteRow = function(r) {
+if(!(r instanceof mw0.Trow)) return;
+this.removeChild(r);
+}
+mw0.Table.prototype.deleteRow = mw0.deleteRow;
+mw0.Tbody.prototype.deleteRow = mw0.deleteRow;
+
+mw0.insertCell = function(idx) {
+if(idx === undefined) idx = -1;
+if(typeof idx !== "number") return null;
+var t = this;
+var n = t.childNodes.length;
+if(idx < 0) idx = n;
+if(idx > n) return null;
+var r = document.createElement("td");
+if(idx == n)
+t.appendChild(r);
+else
+t.insertBefore(r, t.childNodes[idx]);
+return r;
+}
+mw0.Trow.prototype.insertCell = mw0.insertCell;
+
+mw0.deleteCell = function(r) {
+if(!(r instanceof mw0.Cell)) return;
+this.removeChild(r);
+}
+mw0.Trow.prototype.deleteCell = mw0.deleteCell;
+
 mw0.TextNode = function() {
 this.data = "";
 if(arguments.length > 0) {
