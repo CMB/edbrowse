@@ -1189,11 +1189,11 @@ static void link_css(struct htmlTag *t)
 	const char *a = attribVal(t, "type");
 	if (a)
 		set_property_string(t->jv, "type", a);
-// Fetch the css file so we can apply its attributes.
 	if (!t->href)
 		return;
 	if (!a || !stringEqualCI(a, "text/css"))
 		return;
+// Fetch the css file so we can apply its attributes.
 	a = NULL;
 	if (browseLocal && !isURL(t->href)) {
 		debugPrint(3, "css source %s", t->href);
@@ -1201,16 +1201,23 @@ static void link_css(struct htmlTag *t)
 			if (debugLevel >= 1)
 				i_printf(MSG_GetLocalCSS, errorMsg);
 		} else {
-			a = serverData;
+			a = force_utf8(serverData, serverDataLen);
+			if (!a)
+				a = serverData;
+			else
+				nzFree(serverData);
 			serverData = NULL;
 			serverDataLen = 0;
 		}
-	} else if (!allowXHR) {
-// we can defer the fetch from the internet, if xhr is allowed
+	} else {
 		debugPrint(3, "css source %s", t->href);
 		if (httpConnect(t->href, false, false, true, 0, 0, 0)) {
 			if (ht_code == 200) {
-				a = serverData;
+				a = force_utf8(serverData, serverDataLen);
+				if (!a)
+					a = serverData;
+				else
+					nzFree(serverData);
 			} else {
 				nzFree(serverData);
 				if (debugLevel >= 3)

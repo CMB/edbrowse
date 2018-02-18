@@ -159,7 +159,7 @@ int js_main(void)
 
 static duk_ret_t native_new_location(duk_context * cx)
 {
-	const char *s = duk_to_string(cx, -1);
+	const char *s = duk_safe_to_string(cx, -1);
 	if (s && *s) {
 		char *t = cloneString(s);
 /* url on one line, name of window on next line */
@@ -186,14 +186,14 @@ static duk_ret_t native_mydoc(duk_context * cx)
 
 static duk_ret_t native_puts(duk_context * cx)
 {
-	printf("%s\n", duk_to_string(cx, -1));
+	printf("%s\n", duk_safe_to_string(cx, -1));
 	return 0;
 }
 
 static duk_ret_t native_logputs(duk_context * cx)
 {
 	int minlev = duk_get_int(cx, 0);
-	const char *s = duk_to_string(cx, 1);
+	const char *s = duk_safe_to_string(cx, 1);
 	duk_remove(cx, 0);
 	if (debugLevel >= minlev && s && *s)
 		debugPrint(3, "%s", s);
@@ -207,9 +207,9 @@ static duk_ret_t native_prompt(duk_context * cx)
 	int top = duk_get_top(cx);
 	char inbuf[80];
 	if (top > 0) {
-		msg = duk_to_string(cx, 0);
+		msg = duk_safe_to_string(cx, 0);
 		if (top > 1)
-			answer = duk_to_string(cx, 1);
+			answer = duk_safe_to_string(cx, 1);
 	}
 	if (msg && *msg) {
 		char c, *s;
@@ -239,7 +239,7 @@ static duk_ret_t native_prompt(duk_context * cx)
 
 static duk_ret_t native_confirm(duk_context * cx)
 {
-	const char *msg = duk_to_string(cx, 0);
+	const char *msg = duk_safe_to_string(cx, 0);
 	bool answer = false, first = true;
 	char c = 'n';
 	char inbuf[80];
@@ -305,7 +305,7 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	jsobjtype thisobj;
 	char *run;
 	int run_l;
-	const char *h = duk_to_string(cx, -1);
+	const char *h = duk_safe_to_string(cx, -1);
 	if (!h)			// should never happen
 		h = emptyString;
 	debugPrint(5, "setter h 1");
@@ -364,7 +364,7 @@ static duk_ret_t getter_innerText(duk_context * cx)
 static duk_ret_t setter_innerText(duk_context * cx)
 {
 	jsobjtype thisobj;
-	const char *h = duk_to_string(cx, -1);
+	const char *h = duk_safe_to_string(cx, -1);
 	if (!h)			// should never happen
 		h = emptyString;
 	debugPrint(5, "setter t 1");
@@ -390,7 +390,7 @@ static duk_ret_t setter_value(duk_context * cx)
 {
 	jsobjtype thisobj;
 	char *t;
-	const char *h = duk_to_string(cx, -1);
+	const char *h = duk_safe_to_string(cx, -1);
 	if (!h)			// should never happen
 		h = emptyString;
 	debugPrint(5, "setter v 1");
@@ -972,7 +972,7 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 {
 	debugPrint(5, "xhr 1");
 	if (allowXHR) {
-		const char *incoming_url = duk_to_string(cx, 0);
+		const char *incoming_url = duk_safe_to_string(cx, 0);
 		const char *incoming_method = duk_get_string(cx, 1);
 //              const char *incoming_headers = duk_get_string(cx, 2);
 		const char *incoming_payload = duk_get_string(cx, 3);
@@ -1374,7 +1374,7 @@ char *get_property_string_nat(jsobjtype parent, const char *name)
 		jsobjtype o = duk_get_heapptr(jcx, -1);
 		s = pointer2string(o);
 	} else
-		s = duk_to_string(jcx, -1);
+		s = duk_safe_to_string(jcx, -1);
 	if (!s)
 		s = emptyString;
 	s0 = cloneString(s);
@@ -1829,12 +1829,9 @@ char *run_script_nat(const char *s)
 	char *result = 0;
 	bool rc;
 	const char *gc;
-/* skip past utf8 byte order mark if present */
-	if (!strncmp(s, "\xef\xbb\xbf", 3))
-		s += 3;
 	rc = duk_peval_string(jcx, s);
 	if (!rc) {
-		s = duk_to_string(jcx, -1);
+		s = duk_safe_to_string(jcx, -1);
 		if (s && !*s)
 			s = 0;
 		if (s)

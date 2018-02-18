@@ -521,23 +521,35 @@ static void prepareScript(struct htmlTag *t)
 						i_printf(MSG_GetLocalJS,
 							 errorMsg);
 				} else {
-					js_text = serverData;
-					prepareForBrowse(js_text,
-							 serverDataLen);
+					js_text =
+					    force_utf8(serverData,
+						       serverDataLen);
+					if (!js_text)
+						js_text = serverData;
+					else
+						nzFree(serverData);
+					serverData = NULL;
+					serverDataLen = 0;
 				}
 			} else
 			    if (httpConnect
 				(t->href, false, false, true, 0, 0, 0)) {
 				if (ht_code == 200) {
-					js_text = serverData;
-					prepareForBrowse(js_text,
-							 serverDataLen);
+					js_text =
+					    force_utf8(serverData,
+						       serverDataLen);
+					if (!js_text)
+						js_text = serverData;
+					else
+						nzFree(serverData);
 				} else {
 					nzFree(serverData);
 					if (debugLevel >= 3)
 						i_printf(MSG_GetJS,
 							 t->href, ht_code);
 				}
+				serverData = NULL;
+				serverDataLen = 0;
 			} else {
 				if (debugLevel >= 3)
 					i_printf(MSG_GetJS2, errorMsg);

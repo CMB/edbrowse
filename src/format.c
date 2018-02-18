@@ -1486,6 +1486,40 @@ void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 	*outbuflen_p = obuf_l - 2;
 }				/* utfLow */
 
+// Convert from whatever it is to utf8, for javascript and css.
+// Result parameter is the new string, or null if no conversion.
+// But, if the original string is utf8, I remove the bom.
+// Also turn \0 into spaces.
+char *force_utf8(char *buf, int buflen)
+{
+	char *tbuf, *s;
+	int bom = byteOrderMark((const uchar *)buf, buflen);
+	if (bom) {
+		debugPrint(3, "text type is %s%s",
+			   ((bom & 4) ? "big " : ""),
+			   ((bom & 2) ? "utf32" : "utf16"));
+		if (debugLevel >= 3)
+			i_puts(MSG_ConvUtf8);
+		utfLow(buf, buflen, &tbuf, &buflen, bom);
+// get rid of \0
+		for (s = tbuf; s < tbuf + buflen; ++s)
+			if (!*s)
+				*s = ' ';
+*s = 0;
+		return tbuf;
+	}
+// Strip off the leading bom, if any, and no we're not going to put it back.
+	if (buflen >= 3 && !memcmp(buf, "\xef\xbb\xbf", 3)) {
+		buflen -= 3;
+		memmove(buf, buf + 3, buflen);
+buf[buflen] = 0;
+	}
+	for (s = buf; s < buf + buflen; ++s)
+		if (!*s)
+			*s = ' ';
+	return NULL;
+}
+
 static char base64_chars[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 

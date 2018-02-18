@@ -2789,7 +2789,9 @@ for(i=0; i<a.length; ++i) {
 t = a[i];
 if(t.type && t.type.toLowerCase() === "text/css") {
 if(t.data) w.cssSource.push({data: t.data});
+/* css file fetch is no longer deferred.
 else if(t.href) w.cssSource.push({src: t.href});
+*/
 }
 }
 }
@@ -2807,6 +2809,7 @@ var i, t;
 for(i=0; i<a.length; ++i) {
 t = a[i];
 if(t.src) {
+// css file fetch is no longer deferred; this code should not execute.
 if(!t.src.protocol) {
 console.error("css file " + t.src + " has no protocol, cannot fetch");
 continue;

@@ -23,6 +23,8 @@ Run some edbrowse commands in the javascript debugger, particularly e number to 
 Write our own cssGather and querySelectorAll routines,
 since the jotform routines don't seem to meet our needs.
 
+Convert javascript or css files from utf16 or utf32 into utf8 before processing.
+
 3.7.1:
 Automatically expand a frame when javascript tries to access its objects.
 Otherwise it won't expand unti you expand it explicitly.

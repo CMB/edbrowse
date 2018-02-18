@@ -125,6 +125,7 @@ void utf2iso(const uchar *inbuf, int inbuflen, uchar **outbuf_p, int *outbuflen_
 void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p, bool inutf8, bool out32, bool outbig);
 char *uni2utf8(unsigned int unichar);
 void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p, int bom);
+char *force_utf8( char *buf, int buflen);
 char *base64Encode(const char *inbuf, int inlen, bool lines);
 void iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
 bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l);
