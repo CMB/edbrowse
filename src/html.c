@@ -652,7 +652,9 @@ top:
  * and hope the error messages line up. */
 		if (ln > 1)
 			++ln;
+		set_property_object(cf->docobj, "currentScript", t->jv);
 		jsRunScript(cf->winobj, jtxt, js_file, ln);
+		delete_property(cf->docobj, "currentScript");
 		debugPrint(3, "execution complete");
 		nzFree(jtxt);
 

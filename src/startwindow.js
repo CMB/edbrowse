@@ -159,6 +159,14 @@ alert(m);
 w.$ss = slist;
 }
 
+mw0.searchscripts = function(t)
+{
+var w = my$win();
+if(!w.$ss) mw0.showscripts();
+for(var i=0; i<w.$ss.length; ++i)
+if(w.$ss[i].data && w.$ss[i].data.indexOf(t) >= 0) alert(i);
+}
+
 // run an expression in a loop.
 mw0.aloop = function(s$$, t$$, exp$$)
 {
@@ -178,6 +186,7 @@ eval(exp$$);
 
 dumptree = mw0.dumptree;
 showscripts = mw0.showscripts;
+searchscripts = mw0.searchscripts;
 aloop = mw0.aloop;
 
 // This is our bailout function, it references a variable that does not exist.
