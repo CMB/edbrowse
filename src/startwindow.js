@@ -2179,12 +2179,16 @@ So I had to write a specific routine to find the close of the string.
 
 mw0.closeString = function(s, terminate)
 {
+if(!s) return "";
 for(var i=0; i<s.length; ++i) {
 var c = s.charAt(i);
 if(c == terminate) return s.substr(0, i+1);
 if(c == '\\') ++i;
+// a css string should not contain an unescaped newline, so if you find one,
+// something is wrong or misaligned. End the string here.
+if(c == '\n') return s.substr(0, i+1);
 }
-return null;
+return "";
 }
 
 // Note, I munged with some strings and regexps so they wouldn't trip
