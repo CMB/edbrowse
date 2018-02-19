@@ -1131,6 +1131,31 @@ perform:
 		ht_cacheable = true;
 		curlret = fetch_internet(h);
 
+/*********************************************************************
+This is a one line workaround for an apparent bug in curl.
+The return CURLE_WRITE_ERROR means the data fetched from the internet
+could not be written to disk. And how does curl know?
+Because the callback function returns a lesser number of bytes.
+This is like write(), if it returns a lesser number
+of bytes then it was unable to write the entire block to disk.
+Ok, but I never return fewer bytes than was passed to me.
+I return the expected number of bytes, or -1 in the rare case
+that I want to abort the download.
+So you see, curl should never return this WRITE error.
+Yet it does, in version 7.58.0-2, on debian.
+And only on one page we have found so far:
+https://www.literotica.com/stories/new_submissions.php
+The entire page is downloaded, down to the very last byte,
+then the WRITE error is passed back.
+Well if it happens once it will happen elsewhere.
+Users will not be able to fetch pages from the internet, and not know why.
+The error message, can't write to disk, is not helpful at all.
+So this is a simple workaround.
+*********************************************************************/
+
+		if (curlret == CURLE_WRITE_ERROR)
+			curlret = CURLE_OK;
+
 		if (cbd.down_state == 6) {
 			curl_easy_cleanup(h);
 			goto mimestream;
@@ -2734,14 +2759,14 @@ bool reexpandFrame(void)
 	struct htmlTag *cdt;	// contentDocument tag
 	uchar save_local;
 	bool rc;
-jsobjtype save_top, save_parent, save_fe;
+	jsobjtype save_top, save_parent, save_fe;
 
 	cf = newloc_f;
 	frametag = cf->frametag;
 	cdt = frametag->firstchild;
-save_top = get_property_object(cf->winobj, "top");
-save_parent = get_property_object(cf->winobj, "parent");
-save_fe = get_property_object(cf->winobj, "frameElement");
+	save_top = get_property_object(cf->winobj, "top");
+	save_parent = get_property_object(cf->winobj, "parent");
+	save_fe = get_property_object(cf->winobj, "frameElement");
 
 // Cut away objects from the previous document, which are now inaccessible.
 	underKill(cdt);
@@ -2804,9 +2829,9 @@ save_fe = get_property_object(cf->winobj, "frameElement");
 	if (isJSAlive) {
 		decorate(0);
 		set_basehref(cf->hbase);
-set_property_object(cf->winobj, "top", save_top);
-set_property_object(cf->winobj, "parent", save_parent);
-set_property_object(cf->winobj, "frameElement", save_fe);
+		set_property_object(cf->winobj, "top", save_top);
+		set_property_object(cf->winobj, "parent", save_parent);
+		set_property_object(cf->winobj, "frameElement", save_fe);
 		run_function_bool(cf->winobj, "eb$qs$start");
 		runScriptsPending();
 		runOnload();
