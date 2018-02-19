@@ -2826,15 +2826,29 @@ nop:
 		goto nop;
 
 	case TAGACT_INPUT:
-		if (!opentag)
+		if (!retainTag)
 			break;
+		if (!opentag) {
+// button tag opens and closes, like anchor.
+// Check and make sure it's not </select>
+			if (!stringEqual(t->info->name, "button"))
+				break;
+// <button></button> with no text yields "push".
+			while (ns_l && isspace(ns[ns_l - 1]))
+				--ns_l;
+			if (ns_l >= 3 && ns[ns_l - 1] == '<'
+			    && isdigit(ns[ns_l - 2]))
+				stringAndString(&ns, &ns_l,
+						i_getString(MSG_Push));
+			ns_ic();
+			stringAndString(&ns, &ns_l, "0>");
+			break;
+		}
 // value has to be something.
 		if (!t->value)
 			t->value = emptyString;
 		itype = t->itype;
 		if (itype == INP_HIDDEN)
-			break;
-		if (!retainTag)
 			break;
 		liCheck(t);
 		if (itype == INP_TA) {
@@ -2850,6 +2864,9 @@ nop:
 		}
 		sprintf(hnum, "%c%d<", InternalCodeChar, tagno);
 		ns_hnum();
+// button stops here, until </button>
+		if (stringEqual(t->info->name, "button"))
+			break;
 		if (itype < INP_RADIO) {
 			if (t->value[0])
 				stringAndString(&ns, &ns_l, t->value);
