@@ -251,7 +251,6 @@ warn: function(obj) { mw0.eb$logtime(3, "warn", obj); },
 error: function(obj) { mw0.eb$logtime(3, "error", obj); }
 };
 
-//  mw0.console.info("master compile");
 } // master compile
 console = mw0.console;
 
@@ -681,7 +680,7 @@ var ulist = ["href", "src", "src", "href", "href", "action", "src"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
 var u = ulist[i]; // url name
-eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + u + '", { get: function() { return this.href$2; }, set: function(h) { if(h instanceof URL) h = h.toString(); if(h === null || h === undefined) h = ""; if(typeof h !== "string") { console.warn("hrefset " + typeof h); var w = my$win(); w.hrefset$p.push("' + cn + '"); w.hrefset$a.push(h); return; } if(!this.href$2) { this.href$2 = new mw0.URL(h ? eb$resolveURL(my$win().eb$base,h) : h) } else { if(!this.href$2.href$val && h) h =  eb$resolveURL(my$win().eb$base,h); this.href$2.href = h; } }});');
+eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + u + '", { get: function() { return this.href$2; }, set: function(h) { if(h instanceof URL) h = h.toString(); if(h === null || h === undefined) h = ""; if(typeof h !== "string") { eb$logputs(3, "hrefset " + typeof h); var w = my$win(); w.hrefset$p.push("' + cn + '"); w.hrefset$a.push(h); return; } if(!this.href$2) { this.href$2 = new mw0.URL(h ? eb$resolveURL(my$win().eb$base,h) : h) } else { if(!this.href$2.href$val && h) h =  eb$resolveURL(my$win().eb$base,h); this.href$2.href = h; } }});');
 var piecelist = ["protocol", "pathname", "host", "search", "hostname", "port"];
 for(var j=0; j<piecelist.length; ++j) {
 var piece = piecelist[j];
@@ -1054,10 +1053,10 @@ if(Array.isArray(node1.childNodes))
 kids = node1.childNodes;
 
 // We should always be cloning a node.
-if(debug) alert("clone " + node1.nodeName + " {");
+if(debug) eb$logputs(3, "clone " + node1.nodeName + " {");
 if(debug) {
-if(kids) alert("kids " + kids.length);
-else alert("no kids, type " + typeof node1.childNodes);
+if(kids) eb$logputs(3, "kids " + kids.length);
+else eb$logputs(3, "no kids, type " + typeof node1.childNodes);
 }
 
 // special case for array, which is a select node or a list of radio buttons.
@@ -1065,7 +1064,7 @@ if(Array.isArray(node1)) {
 node2 = [];
 node2.childNodes = node2;
 if(deep) {
-if(debug) alert("self children length " + node1.length);
+if(debug) eb$logputs(3, "self children length " + node1.length);
 for(i = 0; i < node1.length; ++i)
 node2.push(mw0.eb$clone(node1[i], true));
 }
@@ -1091,13 +1090,13 @@ if(!node1.hasOwnProperty(item)) continue;
 if(item === "childNodes" || item === "parentNode") continue;
 
 if (typeof node1[item] === 'function') {
-if(debug) alert("copy function " + item);
+if(debug) eb$logputs(3, "copy function " + item);
 node2[item] = node1[item];
 continue;
 }
 
 if(node1[item] === node1) {
-if(debug) alert("selflink through " + item);
+if(debug) eb$logputs(3, "selflink through " + item);
 node2[item] = node2;
 continue;
 }
@@ -1117,14 +1116,14 @@ or an array of cells in a row, and perhaps others.
 if(item === "elements" && node1.nodeName === "form" ||
 item === "rows" && (node1.nodeName === "table" || node1.nodeName === "tbody") ||
 item === "cells" && node1.nodeName === "trow") {
-if(debug) alert("linking " + node1.nodeName + "." + item + " with " + node1[item].length + " members");
+if(debug) eb$logputs(3, "linking " + node1.nodeName + "." + item + " with " + node1[item].length + " members");
 for(i = 0; i < node1[item].length; ++i) {
 var p = mw0.findObject(node1, node1[item][i], "");
 if(p.length) {
 node2[item].push(mw0.correspondingObject(node2, p));
 } else {
 node2[item].push(null);
-if(debug) alert("oops, member " + i + " not linked");
+if(debug) eb$logputs(3, "oops, member " + i + " not linked");
 if(item === "elements") lostElements = true;
 }
 }
@@ -1135,7 +1134,7 @@ continue;
 if(node1.nodeName === "form" && node1[item].nodeName === "radio") {
 var a1 = node1[item];
 var a2 = node2[item];
-if(debug) alert("linking form.radio " + item + " with " + a1.length + " buttons");
+if(debug) eb$logputs(3, "linking form.radio " + item + " with " + a1.length + " buttons");
 a2.type = a1.type;
 a2.nodeName = a1.nodeName;
 a2.class = a1.class;
@@ -1146,7 +1145,7 @@ if(p.length) {
 a2.push(mw0.correspondingObject(node2, p));
 } else {
 a2.push(null);
-if(debug) alert("oops, button " + i + " not linked");
+if(debug) eb$logputs(3, "oops, button " + i + " not linked");
 }
 }
 continue;
@@ -1159,7 +1158,7 @@ if(node1[item].options && node1[item].options === node1[item]) {
 ; // don't do anything
 } else {
 // It's a regular array.
-if(debug) alert("copy array " + item + " with " + node1[item].length + " members");
+if(debug) eb$logputs(3, "copy array " + item + " with " + node1[item].length + " members");
 node2[item] = [];
 for(i = 0; i < node1[item].length; ++i) {
 node2[item].push(node1[item][i]);
@@ -1178,7 +1177,7 @@ if(item.match(/^\d+$/)) continue; // option index in a select array
 // Check for URL objects.
 if(node1[item] instanceof URL) {
 var u = node1[item];
-if(debug) alert("copy URL " + item);
+if(debug) eb$logputs(3, "copy URL " + item);
 node2[item] = new URL(u.href);
 continue;
 }
@@ -1188,11 +1187,11 @@ continue;
 // rather like tar or cpio preserving hard links.
 var p = mw0.findObject(node1, node1[item], "");
 if(p.length) {
-if(debug) alert("link " + item + " " + p.substr(1));
+if(debug) eb$logputs(3, "link " + item + " " + p.substr(1));
 node2[item] = mw0.correspondingObject(node2, p);
 } else {
 // I don't think we should point to a generic object that we don't know anything about.
-if(debug) alert("unknown object " + item);
+if(debug) eb$logputs(3, "unknown object " + item);
 }
 continue;
 }
@@ -1210,20 +1209,20 @@ continue;
 if(debug) {
 var showstring = node1[item];
 if(showstring.length > 20) showstring = "long";
-alert("copy string " + item + " = " + showstring);
+eb$logputs(3, "copy string " + item + " = " + showstring);
 }
 node2[item] = node1[item];
 continue;
 }
 
 if (typeof node1[item] === 'number') {
-if(debug) alert("copy number " + item + " = " + node1[item]);
+if(debug) eb$logputs(3, "copy number " + item + " = " + node1[item]);
 node2[item] = node1[item];
 continue;
 }
 
 if (typeof node1[item] === 'boolean') {
-if(debug) alert("copy boolean " + item + " = " + node1[item]);
+if(debug) eb$logputs(3, "copy boolean " + item + " = " + node1[item]);
 node2[item] = node1[item];
 continue;
 }
@@ -1231,13 +1230,13 @@ continue;
 
 // copy style object if present and its subordinate strings.
 if (typeof node1.style === "object") {
-if(debug) alert("copy style");
+if(debug) eb$logputs(3, "copy style");
 node2.style = new CSSStyleDeclaration;
 node2.style.element = node2;
 for (var item in node1.style){
 if (typeof node1.style[item] === 'string' ||
 typeof node1.style[item] === 'number') {
-if(debug) alert("copy attribute " + item);
+if(debug) eb$logputs(3, "copy attribute " + item);
 node2.style[item] = node1.style[item];
 }
 }
@@ -1247,24 +1246,24 @@ node2.style[item] = node1.style[item];
 if(lostElements) {
 var e1 = node1.elements;
 var e2 = node2.elements;
-if(debug) alert("looking for lost radio elements");
+if(debug) eb$logputs(3, "looking for lost radio elements");
 for(i=0; i<e2.length; ++i) {
 if(e2[i]) continue;
 if(e1[i].nodeName !== "radio") {
-if(debug) alert("oops, lost element " + i + " is type " + e1[i].nodeName);
+if(debug) eb$logputs(3, "oops, lost element " + i + " is type " + e1[i].nodeName);
 continue;
 }
 for (var item in node1) {
 if(!node1.hasOwnProperty(item)) continue;
 if(node1[item] !== e1[i]) continue;
 e2[i] = node2[item];
-if(debug) alert("patching element " + i + " through to " + item);
+if(debug) eb$logputs(3, "patching element " + i + " through to " + item);
 break;
 }
 }
 }
 
-if(debug) alert("}");
+if(debug) eb$logputs(3, "}");
 return node2;
 }
 
@@ -1332,7 +1331,7 @@ mw0.Event.prototype.initCustomEvent = function(e, bubble, cancel, details) { };
 mw0.createEvent = function(unused) { return new Event; }
 
 mw0.dispatchEvent = function (e) {
-if(my$win().eventDebug) alert("dispatch " + this.nodeName + "." + e._type);
+if(my$win().eventDebug) eb$logputs(3, "dispatch " + this.nodeName + "." + e._type);
 var eval_string = "try { this['" + e._type + "']()} catch (e) {alert('event not found')}";
 eval(eval_string);
 };
@@ -1376,7 +1375,7 @@ mw0.detachEvent = function(ev, handler) { this.eb$unlisten(ev,handler, false); }
 mw0.eb$listen = function(ev, handler, addon)
 {
 var ev_before_changes = ev;
-if(my$win().eventDebug)  alert((addon ? "listen " : "attach ") + this.nodeName + "." + ev);
+if(my$win().eventDebug)  eb$logputs(3, (addon ? "listen " : "attach ") + this.nodeName + "." + ev);
 if(addon) {
 ev = "on" + ev;
 } else {
@@ -1407,7 +1406,7 @@ this[evarray].push(handler);
 mw0.eb$unlisten = function(ev, handler, addon)
 {
 var ev_before_changes = ev;
-if(my$win().eventDebug)  alert((addon ? "unlisten " : "detach ") + this.nodeName + "." + ev);
+if(my$win().eventDebug)  eb$logputs(3, (addon ? "unlisten " : "detach ") + this.nodeName + "." + ev);
 if(addon) {
 ev = "on" + ev;
 } else {
@@ -1585,7 +1584,7 @@ mw0.createElement = function(s) {
 var c;
 var t = s.toLowerCase();
 if(!t.match(/^[a-z\d_]+$/)) {
-console.error("createElement argument " + t);
+eb$logputs(3, "createElement argument " + t);
 t = "xyz";
 }
 switch(t) { 
@@ -2150,6 +2149,20 @@ return Window.apply(this, arguments);
 onhashchange = eb$truefunction;
 
 if(!mw0.compiled) {
+
+// if debugThrow is set, see all errors, even caught errors.
+Duktape.errCreate = function (e) {
+if(my$win().throwDebug) {
+var n = e.lineNumber;
+var msg = "";
+if(typeof n === "number")
+msg += "line " + n + ": ";
+msg += e.toString();
+eb$logputs(3, msg);
+}
+    return e;
+}
+
 // Uncomment javascript or css.
 // This could grow as n^2 with the length of the string.
 // Maybe rewrite this some day stepping through the chars
@@ -2174,7 +2187,7 @@ s = s.substr(m.length);
 slen = s.length;
 s = s.replace(/^.*?\n/, "");
 if(s.length === slen) {
-console.error("unterminated comment /"+"/" + s.substr(0,20));
+eb$logputs(3, "unterminated comment /"+"/" + s.substr(0,20));
 return t + "/" + "/" + s;
 }
 t += '\n';
@@ -2186,7 +2199,7 @@ s = s.substr(m.length);
 slen = s.length;
 s = s.replace(/^[\u0000-\uffff]*?\*[/]/, "");
 if(s.length === slen) {
-console.error("unterminated comment /"+"*" + s.substr(0,20));
+eb$logputs(3, "unterminated comment /"+"*" + s.substr(0,20));
 return t + "/" + "*" + s;
 }
 continue;
@@ -2199,7 +2212,7 @@ m = s.match(/^([^"\\]|\\.)*?"/);
 else
 m = s.match(/^([^'\\]|\\.)*?'/);
 if(!m) {
-console.error("unterminated string " + c + s.substr(0,20));
+eb$logputs(3, "unterminated string " + c + s.substr(0,20));
 return t+s;
 }
 m = m[0];
@@ -2255,7 +2268,7 @@ m = s.match(/^([^"\\]|\\.)*?"/);
 else
 m = s.match(/^([^'\\]|\\.)*?'/);
 if(!m) {
-console.error("unterminated string " + c + s.substr(0,20));
+eb$logputs(3, "unterminated string " + c + s.substr(0,20));
 break;
 }
 m = m[0];
@@ -2269,7 +2282,7 @@ s = s.substr(m.length);
 if(c === '}') {
 p += c;
 if(--bc < 0) {
-console.error("unexpected }" + s.substr(0,20));
+eb$logputs(3, "unexpected }" + s.substr(0,20));
 break;
 }
 if(bc) continue;
@@ -2617,7 +2630,7 @@ l.explain = "multiple";
 if(total == 1) l.explain = l.selectors[0].explain;
 }
 }
-if(w.css$nyi.length) console.warn("unsupported css selectors " + w.css$nyi.length + " out of " + w.cssList.length);
+if(w.css$nyi.length) eb$logputs(3, "unsupported css selectors " + w.css$nyi.length + " out of " + w.cssList.length);
 }
 
 mw0.qsaMatch = function(node, sel)
@@ -2796,17 +2809,17 @@ mw0.querySelectorAll = function(selstring, startpoint)
 // compile the selector
 var v = mw0.cssPieces(mw0.uncomment(selstring + "{color:green}"));
 if(v.length != 1) {
-console.error("querySelectorAll(" + selstring +") yields " + v.length + " descriptors");
+eb$logputs(3, "querySelectorAll(" + selstring +") yields " + v.length + " descriptors");
 return [];
 }
 v = v[0];
 if(v.nyi) {
-console.error("querySelectorAll(" + selstring +") nyi " + v.explain);
+eb$logputs(3, "querySelectorAll(" + selstring +") nyi " + v.explain);
 return [];
 }
 v = v.selectors;
 if(v.length == 1 && v[0].nyi) {
-console.error("querySelectorAll(" + selstring +") nyi " + v[0].explain);
+eb$logputs(3, "querySelectorAll(" + selstring +") nyi " + v[0].explain);
 return [];
 }
 
@@ -2872,14 +2885,14 @@ t = a[i];
 if(t.src) {
 // css file fetch is no longer deferred; this code should not execute.
 if(!t.src.protocol) {
-console.error("css file " + t.src + " has no protocol, cannot fetch");
+eb$logputs(3, "css file " + t.src + " has no protocol, cannot fetch");
 continue;
 }
 xhr.url = t.src;
 xhr.send("", 0);
 t.data = xhr.responseText;
 if(!t.data) {
-console.error("css file " + t.src + " has no data");
+eb$logputs(3, "css file " + t.src + " has no data");
 continue;
 }
 }
@@ -2946,4 +2959,5 @@ Object.defineProperty(n, "style", { get: function() { mw0.dostyle(this); return 
 eb$qs$start = mw0.eb$qs$start;
 querySelectorAll = document.querySelectorAll = mw0.querySelectorAll;
 querySelector = document.querySelector = mw0.querySelector;
+throwDebug = false;
 

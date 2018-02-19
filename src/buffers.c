@@ -321,7 +321,8 @@ static bool jdb_passthrough(const char *s)
 		return true;
 	if (s[0] == 'd' && s[1] == 'b' && isdigit(s[2]) && s[3] == 0)
 		return true;
-	if (stringEqual(s, "dbe") || stringEqual(s, "dbc"))
+	if (stringEqual(s, "dbev") || stringEqual(s, "dbcn") ||
+	    stringEqual(s, "dber"))
 		return true;
 	if (s[0] == 'e' && isdigit(s[1])) {
 		for (i = 2; s[i]; ++i)
@@ -4129,7 +4130,7 @@ et_go:
 		return true;
 	}
 
-	if (stringEqual(line, "dbc")) {
+	if (stringEqual(line, "dbcn")) {
 		debugClone ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(debugClone + MSG_DebugCloneOff);
@@ -4138,12 +4139,21 @@ et_go:
 		return true;
 	}
 
-	if (stringEqual(line, "dbe")) {
+	if (stringEqual(line, "dbev")) {
 		debugEvent ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(debugEvent + MSG_DebugEventOff);
 		if (isJSAlive)
 			set_property_bool(cf->winobj, "eventDebug", debugEvent);
+		return true;
+	}
+
+	if (stringEqual(line, "dber")) {
+		debugThrow ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(debugThrow + MSG_DebugThrowOff);
+		if (isJSAlive)
+			set_property_bool(cf->winobj, "throwDebug", debugThrow);
 		return true;
 	}
 

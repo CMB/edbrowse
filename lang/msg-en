@@ -438,8 +438,8 @@ could not fetch CSS from %s, code %ld\n
 could not fetch CSS, %s\n
 don't deminimize javascript
 deminimize javascript
-0
-0
+debug js errors disabled
+debug js errors enabled
 0
 0
 0

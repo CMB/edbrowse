@@ -794,6 +794,8 @@ void setupJavaDom(void)
 		set_property_bool(cf->winobj, "cloneDebug", true);
 	if (debugEvent)
 		set_property_bool(cf->winobj, "eventDebug", true);
+	if (debugThrow)
+		set_property_bool(cf->winobj, "throwDebug", true);
 }				/* setupJavaDom */
 
 /* Get the url from a url object, special wrapper.
