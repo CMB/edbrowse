@@ -947,13 +947,16 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 		} else if (symname && !dupname) {
 			membername = symname;
 		}
-/* id= must not displace submit, reset, or action in form.
+/* id= or name= must not displace submit, reset, or action in form.
  * Example www.startpage.com, where id=submit.
  * nor should it collide with another attribute, such as document.cookie and
  * <div ID=cookie> in www.orange.com.
  * This call checks for the name in the object and its prototype. */
-		if (has_property(owner, membername))
+		if (has_property(owner, membername)) {
+			debugPrint(3, "membername overload %s.%s", classname,
+				   membername);
 			membername = NULL;
+		}
 		if (!membername)
 			membername = fakePropName();
 
@@ -1032,7 +1035,7 @@ Don't do any of this if the tag is itself <style>. */
 			if (symname && !dupname
 			    && !has_property(alist, symname))
 				set_property_object(alist, symname, io);
-			if (idname && membername != idname
+			if (idname && symname != idname
 			    && !has_property(alist, idname))
 				set_property_object(alist, idname, io);
 		}		/* list indicated */
@@ -1497,11 +1500,8 @@ static void pushAttributes(const struct htmlTag *t)
 	for (i = 0; a[i]; ++i) {
 // There are some exceptions, some attributes that we handle individually.
 		const char *const exclist[] = {
-			"childNodes", "parentNode", "nodeName", "nodeType",
-			"nodeValue",
 			"onclick", "onchange", "onsubmit", "onreset", "onload",
 			"onunload",
-			"attributes",
 			"name", "id",
 			"checked", "value", "type", "style",
 			"href", "src", "action",
@@ -1511,10 +1511,13 @@ static void pushAttributes(const struct htmlTag *t)
 		if (stringInListCI(exclist, a[i]) >= 0)
 			continue;
 // I surely haven't thought of everything, so check generally.
-// Maybe I forgot firstChild or whatever.
+// Maybe they wrote <a firstChild=foo>
 // See if the name is specifically in the prototype.
-		if (has_property(t->jv, a[i]) && !typeof_property(t->jv, a[i]))
+		if (has_property(t->jv, a[i]) && !typeof_property(t->jv, a[i])) {
+			debugPrint(3, "html attribute overload %s.%s",
+				   t->info->name, a[i]);
 			continue;
+		}
 // Should we drop attribute name to lower case? I don't, for now.
 		u = v[i];
 		if (!u)

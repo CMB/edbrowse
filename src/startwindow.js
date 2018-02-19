@@ -2163,14 +2163,32 @@ eb$logputs(3, msg);
     return e;
 }
 
-// Uncomment javascript or css.
-// This could grow as n^2 with the length of the string.
-// Maybe rewrite this some day stepping through the chars
-// of the string and maintaining states.
-// For now I just wanted to make something work.
+/*********************************************************************
+Uncomment javascript or css.
+In theory this could grow as n^2 with the length of the string.
+In practice it doesn't seem to be a problem, except fore one area.
+When we find " we need to find the closing " for that string,
+understanding that \" is part of the string.
+This regexp works
+m = s.match(/^([^"\\]|\\.)*?"/);
+except if the string is long it causes a recursion limit error in the
+duktape regexp machinery.
+There's an alternation with each character and it grows exponentially.
+So I had to write a specific routine to find the close of the string.
+*********************************************************************/
+
+mw0.closeString = function(s, terminate)
+{
+for(var i=0; i<s.length; ++i) {
+var c = s.charAt(i);
+if(c == terminate) return s.substr(0, i+1);
+if(c == '\\') ++i;
+}
+return null;
+}
+
 // Note, I munged with some strings and regexps so they wouldn't trip
 // up the rather simplistic uncommment routine in ../tools/buildsourcestring.pl.
-
 mw0.uncomment = function(s)
 {
 var t = "";
@@ -2207,15 +2225,11 @@ continue;
 // c is single quote or double quote.
 t += m;
 s = s.substr(m.length);
-if(c === '"')
-m = s.match(/^([^"\\]|\\.)*?"/);
-else
-m = s.match(/^([^'\\]|\\.)*?'/);
+m = mw0.closeString(s, c);
 if(!m) {
 eb$logputs(3, "unterminated string " + c + s.substr(0,20));
 return t+s;
 }
-m = m[0];
 t += m;
 s = s.substr(m.length);
 }
@@ -2263,15 +2277,11 @@ var c = m.substr(-1);
 if(c === '"' || c === "'") { // string
 p += m;
 s = s.substr(m.length);
-if(c === '"')
-m = s.match(/^([^"\\]|\\.)*?"/);
-else
-m = s.match(/^([^'\\]|\\.)*?'/);
+m = mw0.closeString(s, c);
 if(!m) {
 eb$logputs(3, "unterminated string " + c + s.substr(0,20));
 break;
 }
-m = m[0];
 p += m;
 s = s.substr(m.length);
 continue;
@@ -2345,11 +2355,7 @@ m = m[2];
 // This is pass 2, all strings are ok.
 if(m == '"' || m == "'") {
 p += m;
-if(m === '"')
-m = s.match(/^([^"\\]|\\.)*?"/);
-else
-m = s.match(/^([^'\\]|\\.)*?'/);
-m = m[0];
+m = mw0.closeString(s, m);
 p += m;
 s = s.substr(m.length);
 continue;
@@ -2421,11 +2427,7 @@ m = m[2];
 // This is pass 2, all strings are ok.
 if(m == '"' || m == "'") {
 p += m;
-if(m === '"')
-m = s.match(/^([^"\\]|\\.)*?"/);
-else
-m = s.match(/^([^'\\]|\\.)*?'/);
-m = m[0];
+m = mw0.closeString(s, m);
 p += m;
 s = s.substr(m.length);
 continue;
@@ -2500,11 +2502,8 @@ return;
 if(m[2] == '"' || m[2] == "'") {
 p += m[0];
 s = s.substr(m[0].length);
-if(m[2] === '"')
-m = s.match(/^([^"\\]|\\.)*?"/);
-else
-m = s.match(/^([^'\\]|\\.)*?'/);
-m = m[0], p += m, s = s.substr(m.length);
+m = mw0.closeString(s, m[2]);
+p += m, s = s.substr(m.length);
 continue;
 }
 mw0.css1mod(q, p+m[1]);
@@ -2591,14 +2590,11 @@ if(!m) { p += s; break; }
 p += m[1];
 var c = m[2];
 s = s.substr(m[0].length);
-if(c === '"')
-m = s.match(/^([^"\\]|\\.)*?"/);
-else
-m = s.match(/^([^'\\]|\\.)*?'/);
-c += m[0];
+m = mw0.closeString(s, c);
+c += m;
 // I don't know how this eval could fail, but just to be safe...
 try { p += eval(c); } catch(e) { }
-s = s.substr(m[0].length);
+s = s.substr(m.length);
 }
 s = p;
 }
