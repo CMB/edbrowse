@@ -181,8 +181,8 @@ if(typeof s$$ !== "number" || typeof t$$ !== "number" || typeof exp$$ !== "strin
 alert("aloop(array, expression) or aloop(start, end, expression)");
 return;
 }
-for(var i=s$$; i<t$$; ++i)
-eval(exp$$);
+exp$$ = "for(var i=" + s$$ +"; i<" + t$$ +"; ++i){" + exp$$ + "}";
+my$win().eval(exp$$);
 }
 
 } // master compile
@@ -683,7 +683,7 @@ var ulist = ["href", "src", "src", "href", "href", "action", "src"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
 var u = ulist[i]; // url name
-eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + u + '", { get: function() { return this.href$2; }, set: function(h) { if(h instanceof URL) h = h.toString(); if(h === null || h === undefined) h = ""; if(typeof h !== "string") { alert3("hrefset " + typeof h); var w = my$win(); w.hrefset$p.push("' + cn + '"); w.hrefset$a.push(h); return; } if(!this.href$2) { this.href$2 = new mw0.URL(h ? eb$resolveURL(my$win().eb$base,h) : h) } else { if(!this.href$2.href$val && h) h =  eb$resolveURL(my$win().eb$base,h); this.href$2.href = h; } }});');
+eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + u + '", { get: function() { return this.href$2; }, set: function(h) { if(h instanceof URL) h = h.toString(); if(h === null || h === undefined) h = ""; var w = my$win(); if(typeof h !== "string") { alert3("hrefset " + typeof h); w.hrefset$p.push("' + cn + '"); w.hrefset$a.push(h); return; } if(!this.href$2) { this.href$2 = new mw0.URL(h ? eb$resolveURL(w.eb$base,h) : h) } else { if(!this.href$2.href$val && h) h =  eb$resolveURL(w.eb$base,h); this.href$2.href = h; } }});');
 var piecelist = ["protocol", "pathname", "host", "search", "hostname", "port"];
 for(var j=0; j<piecelist.length; ++j) {
 var piece = piecelist[j];
@@ -2326,6 +2326,7 @@ ao = {};
 ao.lhs = p.trim();
 ao.rhs = "";
 ao.nyi = false; // not yet implemented
+ao.gentext = false; // this selector generates text
 a.push(ao);
 ao.bc = bc = 1;
 p = c;
@@ -2409,8 +2410,14 @@ q.nyi = false;
 chain.push(q);
 mw0.css1sel(q);
 if(q.nyi && !chain.nyi) chain.nyi = true, chain.explain = q.explain;
+if(chain.length == 1) {
+// before and after should only be on the base node of the chain
+if(q.before) chain.before = true;
+if(q.after) chain.after = true;
+}
 }
 ao.selectors[j] = chain;
+if(chain.before || chain.after) ao.gentext = true;
 }
 }
 
@@ -2546,6 +2553,8 @@ if(s == ":hover" || s == ":visited" || s == ":active" || s == ":focus") {
 q.nyi = true, q.explain = "dynamic";
 return;
 }
+if(s == ":before") { q.before = q.nyi = true; q.explain = "before"; q.pop(); return; }
+if(s == ":after") { q.after = q.nyi = true; q.explain = "after"; q.pop(); return; }
 if(s != ":link" && s != ":first-child" && s != ":last-child") {
 q.nyi = true, q.explain = ": unsupported";
 return;
