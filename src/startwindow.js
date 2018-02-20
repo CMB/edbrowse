@@ -316,6 +316,13 @@ frames = [];
 // to debug a.href = object or other weird things.
 hrefset$p = []; hrefset$a = [];
 
+// symbolic constants for compareDocumentPosition
+DOCUMENT_POSITION_DISCONNECTED = 1;
+DOCUMENT_POSITION_PRECEDING = 2;
+DOCUMENT_POSITION_FOLLOWING = 4;
+DOCUMENT_POSITION_CONTAINS = 8;
+DOCUMENT_POSITION_CONTAINED_BY = 16;
+
 /*********************************************************************
 The URL class is head-spinning in its complexity and its side effects.
 Almost all of these can be handled in JS,
@@ -1313,6 +1320,39 @@ copies of them in the current context.
 
 mw0.importNode = function(src, deep) { return src.cloneNode(deep); }
 
+/*********************************************************************
+compareDocumentPosition:
+The documentation I found was entirely unclear as to the meaning
+of preceding and following.
+Does A precede B if it appears first in a depth first search of the tree,
+or if it appears first wherein they have the same parent,
+or if they are siblings?
+I have no clue, so I'm going for the latter, partly because it's easy.
+That means the relationships are disjoint.
+A can't contain B and precede B simultaneously.
+So I don't know why they say these are bits in a bitmask.
+*********************************************************************/
+mw0.compareDocumentPosition = function(w)
+{
+if(this === w) return DOCUMENT_POSITION_DISCONNECTED;
+if(this.parentNode === w.parentNode) {
+if(this.nextSibling === w) return DOCUMENT_POSITION_FOLLOWING;
+if(this.previousSibling === w) return DOCUMENT_POSITION_PRECEDING;
+return DOCUMENT_POSITION_DISCONNECTED;
+}
+var t = this;
+while(t.parentNode) {
+t = t.parentNode;
+if(t === w) return DOCUMENT_POSITION_CONTAINED_BY;
+}
+var t = w;
+while(t.parentNode) {
+t = t.parentNode;
+if(t === this) return DOCUMENT_POSITION_CONTAINS;
+}
+return DOCUMENT_POSITION_DISCONNECTED;
+}
+
 // The Event class and various handlers.
 mw0.Event = function(options){
     // event state is kept read-only by forcing
@@ -1492,6 +1532,7 @@ c.prototype.getAttributeNode = mw0.getAttributeNode;
 // clone
 c.prototype.cloneNode = mw0.cloneNode;
 c.prototype.importNode = mw0.importNode;
+c.prototype.compareDocumentPosition = mw0.compareDocumentPosition;
 // visual
 c.prototype.focus = focus;
 c.prototype.blur = blur;
@@ -1574,6 +1615,7 @@ mw0.Form.prototype.removeAttribute = mw0.removeAttribute;
 mw0.Form.prototype.getAttributeNode = mw0.getAttributeNode;
 mw0.Form.prototype.cloneNode = mw0.cloneNode;
 mw0.Form.prototype.importNode = mw0.importNode;
+mw0.Form.prototype.compareDocumentPosition = mw0.compareDocumentPosition;
 mw0.Form.prototype.eb$listen = mw0.eb$listen;
 mw0.Form.prototype.eb$unlisten = mw0.eb$listen;
 mw0.Form.prototype.addEventListener = mw0.addEventListener;
@@ -2025,6 +2067,7 @@ document.getAttributeNode = mw0.getAttributeNode;
 document.cloneNode = mw0.cloneNode;
 cloneDebug = false;
 document.importNode = mw0.importNode;
+document.compareDocumentPosition = mw0.compareDocumentPosition;
 
 // Local storage, this is per window.
 localStorage = {}
@@ -2111,6 +2154,15 @@ Array.prototype.hasAttribute = mw0.hasAttribute;
 Array.prototype.removeAttribute = mw0.removeAttribute;
 Array.prototype.getAttributeNode = mw0.getAttributeNode;
 Array.prototype.item = function(x) { return this[x] };
+Array.prototype.includes = function(x, start) {
+if(typeof start != "number") start = 0;
+var l = this.length;
+if(start < 0) start += l;
+if(start < 0) start = 0;
+for(var i=start; i<l; ++i)
+if(this[i] === x) return true;
+return false;
+}
 
 // On the first call this setter just creates the url, the location of the
 // current web page, But on the next call it has the side effect of replacing
