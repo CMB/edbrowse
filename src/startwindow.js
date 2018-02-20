@@ -2546,7 +2546,7 @@ return;
 }
 break;
 case ':':
-if(s == ":hover" || s == ":visited" || s == ":active") {
+if(s == ":hover" || s == ":visited" || s == ":active" || s == ":focus") {
 q.nyi = true, q.explain = "dynamic";
 return;
 }
@@ -2567,7 +2567,7 @@ q.nyi = true, q.explain = "bad attribute";
 return;
 }
 } else {
-m = s.match(/^.[a-zA-Z-][a-zA-Z0-9-]*?~?=/);
+m = s.match(/^.[a-zA-Z-][a-zA-Z0-9-]*?[~|]?=/);
 if(!m) {
 q.nyi = true, q.explain = "bad attribute";
 return;
@@ -2655,20 +2655,24 @@ c = s.substr(0,1);
 s = s.substr(1);
 switch(c) {
 case '[':
-a = s.replace(/~?=.*/, "");
+a = s.replace(/[~|]?=.*/, "");
 u = node[a];
 if(!u) return false;
 if(!s.match(/=/))
 return true;
 v = s.replace(/^.*?=/, "");
-if(!s.match(/~=/)) {
-if(u === v) continue;
-return false;
-}
+if(s.match(/~=/)) {
 u = u.split(/\s+/);
 for(k=0; k<u.length; ++k)
 if(v === u[k]) break;
 if(k < u.length) continue;
+return false;
+}
+if(s.match(/\|=/)) {
+u = u.replace(/-.*/, "");
+// fall through
+}
+if(u === v) continue;
 return false;
 case ':':
 if(s == "link") continue;
