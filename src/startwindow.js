@@ -1352,7 +1352,8 @@ mw0.Event.prototype.stopPropagation = function(){
     }
 
 // deprecated!
-mw0.Event.prototype.initEvent = eb$voidfunction;
+mw0.Event.prototype.initEvent = function(t, bubbles, cancel) {
+this._type = t, this.bubbles = bubbles, this.cancelable = cancel; }
 
 /*********************************************************************
 This is our addEventListener function.
