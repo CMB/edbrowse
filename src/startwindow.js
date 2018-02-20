@@ -1336,7 +1336,7 @@ mw0.createEvent = function(unused) { return new Event; }
 
 mw0.dispatchEvent = function (e) {
 if(my$win().eventDebug) alert3("dispatch " + this.nodeName + "." + e._type);
-var eval_string = "try { this['" + e._type + "']()} catch (e) {alert('event not found')}";
+var eval_string = "try { this['" + e._type + "']()} catch (e) {alert3('event not found')}";
 eval(eval_string);
 };
 
@@ -1350,6 +1350,9 @@ mw0.Event.prototype.stopPropagation = function(){
             this.bubbles = false;
         }
     }
+
+// deprecated!
+mw0.Event.prototype.initEvent = eb$voidfunction;
 
 /*********************************************************************
 This is our addEventListener function.

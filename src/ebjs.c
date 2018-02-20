@@ -622,7 +622,7 @@ bool run_event_bool(jsobjtype obj, const char *pname, const char *evname)
 		return true;
 	evdebug = get_property_bool(cf->winobj, "eventDebug");
 	if (evdebug)
-		printf("ttrigger %s.%s\n", pname, evname);
+		debugPrint(3, "trigger %s.%s", pname, evname);
 	return run_function_bool(obj, evname);
 }
 
