@@ -2337,7 +2337,7 @@ ao.nyi = true, ao.explain = "empty selectors";
 continue;
 }
 // leading @ doesn't apply to edbrowse.
-if(s.substr(0,1) == "@") {
+if(s.charAt(0) == "@") {
 ao.nyi = true, ao.explain = "@";
 continue;
 }
@@ -2400,7 +2400,7 @@ while(so.length) {
 p = so.pop();
 var q = [];
 q.part = p.substr(1);
-q.combin = p.substr(0,1);
+q.combin = p.charAt(0);
 q.nyi = false;
 chain.push(q);
 mw0.css1sel(q);
@@ -2458,6 +2458,10 @@ if(!s.match(/:/)) {
 ao.nyi = true, ao.explain = "rule no :";
 break;
 }
+// has to start with an identifyer, letters and hyphens, but look out,
+// I have to allow for a leading * or _
+// https://stackoverflow.com/questions/4563651/what-does-an-asterisk-do-in-a-css-property-name
+if(s.match(/^[_*]/)) continue;
 m = s.match(/^([a-zA-Z-][a-zA-Z0-9-]*?): */);
 if(!m) {
 ao.nyi = true, ao.explain = "bad attribute";
@@ -2500,7 +2504,7 @@ if(!s) return; // no modifiers
 // Step through the modifyers.
 while(true) {
 // At the top of this loop the first char indicates the modifier.
-p = s.substr(0,1);
+p = s.charAt(0);
 s = s.substr(1);
 while(true) {
 m = s.match(/^(.*?)([.#[:'"])/);
@@ -2532,19 +2536,7 @@ if(s.length == 1) {
 q.nyi = true, q.explain = "empty modifier";
 return;
 }
-switch(s.substr(0,1)) {
-case '.':
-if(!s.match(/^.[a-zA-Z-][a-zA-Z0-9-]*$/)) {
-q.nyi = true, q.explain = "bad class";
-return;
-}
-break;
-case '#':
-if(!s.match(/^#[a-zA-Z-][a-zA-Z0-9-]*$/)) {
-q.nyi = true, q.explain = "bad id";
-return;
-}
-break;
+switch(s.charAt(0)) {
 case ':':
 if(s == ":hover" || s == ":visited" || s == ":active" || s == ":focus") {
 q.nyi = true, q.explain = "dynamic";
@@ -2555,6 +2547,11 @@ q.nyi = true, q.explain = ": unsupported";
 return;
 }
 break;
+case '#':
+case '.':
+var propname = (s.charAt(0) == "." ? "[class~=" : "[id=");
+s = propname + s.substr(1) + "]";
+// fall through
 case '[':
 if(s.substr(-1) != ']') {
 q.nyi = true, q.explain = "[ no ]";
@@ -2647,11 +2644,7 @@ return false;
 // step through the modifyers
 for(j=0; j<sel.length; ++j) {
 s = sel[j];
-if(s.substr(0,1) == ".")
-s = '[class~=' + s.substr(1);
-if(s.substr(0,1) == "#")
-s = '[id=' + s.substr(1);
-c = s.substr(0,1);
+c = s.charAt(0);
 s = s.substr(1);
 switch(c) {
 case '[':
@@ -2940,7 +2933,7 @@ if(v.length != 1 || v[0].nyi) { alert3("bad selector " + v[0].explain); return; 
 var u = v[0].selectors[0];
 if(u.nyi) { alert3("bad selector " + u.explain); return; }
 var rules = v[0].rules;
-for(k=0; k<rules.length; ++k) {
+for(var k=0; k<rules.length; ++k) {
 var propname = rules[k].atname;
 var propval = rules[k].atval;
 propname = propname.replace(/\-(\w)/g, function(all, letter) {return letter.toUpperCase();});
