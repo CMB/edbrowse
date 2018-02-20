@@ -79,6 +79,9 @@ ok = Object.keys = Object.keys || (function () {
 		}; 
 		})(); 
 
+// print an error inline, at debug level 3 or higher.
+function alert3(s) { eb$logputs(3, s); }
+
 // Dump the tree below a node, this is for debugging.
 document.nodeName = "document"; // in case you want to start at the top.
 window.nodeName = "window";
@@ -680,7 +683,7 @@ var ulist = ["href", "src", "src", "href", "href", "action", "src"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
 var u = ulist[i]; // url name
-eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + u + '", { get: function() { return this.href$2; }, set: function(h) { if(h instanceof URL) h = h.toString(); if(h === null || h === undefined) h = ""; if(typeof h !== "string") { eb$logputs(3, "hrefset " + typeof h); var w = my$win(); w.hrefset$p.push("' + cn + '"); w.hrefset$a.push(h); return; } if(!this.href$2) { this.href$2 = new mw0.URL(h ? eb$resolveURL(my$win().eb$base,h) : h) } else { if(!this.href$2.href$val && h) h =  eb$resolveURL(my$win().eb$base,h); this.href$2.href = h; } }});');
+eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + u + '", { get: function() { return this.href$2; }, set: function(h) { if(h instanceof URL) h = h.toString(); if(h === null || h === undefined) h = ""; if(typeof h !== "string") { alert3("hrefset " + typeof h); var w = my$win(); w.hrefset$p.push("' + cn + '"); w.hrefset$a.push(h); return; } if(!this.href$2) { this.href$2 = new mw0.URL(h ? eb$resolveURL(my$win().eb$base,h) : h) } else { if(!this.href$2.href$val && h) h =  eb$resolveURL(my$win().eb$base,h); this.href$2.href = h; } }});');
 var piecelist = ["protocol", "pathname", "host", "search", "hostname", "port"];
 for(var j=0; j<piecelist.length; ++j) {
 var piece = piecelist[j];
@@ -742,6 +745,7 @@ mw0.CSSStyleDeclaration = function(){
         this.style = this;
 	 this.attributes = [];
 };
+mw0.CSSStyleDeclaration.prototype.toString = function() { return "style object"; }
 
 mw0.CSSStyleDeclaration.prototype.getPropertyValue = function(p) {
                 if (this[p] == undefined)                
@@ -1053,10 +1057,10 @@ if(Array.isArray(node1.childNodes))
 kids = node1.childNodes;
 
 // We should always be cloning a node.
-if(debug) eb$logputs(3, "clone " + node1.nodeName + " {");
+if(debug) alert3("clone " + node1.nodeName + " {");
 if(debug) {
-if(kids) eb$logputs(3, "kids " + kids.length);
-else eb$logputs(3, "no kids, type " + typeof node1.childNodes);
+if(kids) alert3("kids " + kids.length);
+else alert3("no kids, type " + typeof node1.childNodes);
 }
 
 // special case for array, which is a select node or a list of radio buttons.
@@ -1064,7 +1068,7 @@ if(Array.isArray(node1)) {
 node2 = [];
 node2.childNodes = node2;
 if(deep) {
-if(debug) eb$logputs(3, "self children length " + node1.length);
+if(debug) alert3("self children length " + node1.length);
 for(i = 0; i < node1.length; ++i)
 node2.push(mw0.eb$clone(node1[i], true));
 }
@@ -1090,13 +1094,13 @@ if(!node1.hasOwnProperty(item)) continue;
 if(item === "childNodes" || item === "parentNode") continue;
 
 if (typeof node1[item] === 'function') {
-if(debug) eb$logputs(3, "copy function " + item);
+if(debug) alert3("copy function " + item);
 node2[item] = node1[item];
 continue;
 }
 
 if(node1[item] === node1) {
-if(debug) eb$logputs(3, "selflink through " + item);
+if(debug) alert3("selflink through " + item);
 node2[item] = node2;
 continue;
 }
@@ -1116,14 +1120,14 @@ or an array of cells in a row, and perhaps others.
 if(item === "elements" && node1.nodeName === "form" ||
 item === "rows" && (node1.nodeName === "table" || node1.nodeName === "tbody") ||
 item === "cells" && node1.nodeName === "trow") {
-if(debug) eb$logputs(3, "linking " + node1.nodeName + "." + item + " with " + node1[item].length + " members");
+if(debug) alert3("linking " + node1.nodeName + "." + item + " with " + node1[item].length + " members");
 for(i = 0; i < node1[item].length; ++i) {
 var p = mw0.findObject(node1, node1[item][i], "");
 if(p.length) {
 node2[item].push(mw0.correspondingObject(node2, p));
 } else {
 node2[item].push(null);
-if(debug) eb$logputs(3, "oops, member " + i + " not linked");
+if(debug) alert3("oops, member " + i + " not linked");
 if(item === "elements") lostElements = true;
 }
 }
@@ -1134,7 +1138,7 @@ continue;
 if(node1.nodeName === "form" && node1[item].nodeName === "radio") {
 var a1 = node1[item];
 var a2 = node2[item];
-if(debug) eb$logputs(3, "linking form.radio " + item + " with " + a1.length + " buttons");
+if(debug) alert3("linking form.radio " + item + " with " + a1.length + " buttons");
 a2.type = a1.type;
 a2.nodeName = a1.nodeName;
 a2.class = a1.class;
@@ -1145,7 +1149,7 @@ if(p.length) {
 a2.push(mw0.correspondingObject(node2, p));
 } else {
 a2.push(null);
-if(debug) eb$logputs(3, "oops, button " + i + " not linked");
+if(debug) alert3("oops, button " + i + " not linked");
 }
 }
 continue;
@@ -1158,7 +1162,7 @@ if(node1[item].options && node1[item].options === node1[item]) {
 ; // don't do anything
 } else {
 // It's a regular array.
-if(debug) eb$logputs(3, "copy array " + item + " with " + node1[item].length + " members");
+if(debug) alert3("copy array " + item + " with " + node1[item].length + " members");
 node2[item] = [];
 for(i = 0; i < node1[item].length; ++i) {
 node2[item].push(node1[item][i]);
@@ -1177,7 +1181,7 @@ if(item.match(/^\d+$/)) continue; // option index in a select array
 // Check for URL objects.
 if(node1[item] instanceof URL) {
 var u = node1[item];
-if(debug) eb$logputs(3, "copy URL " + item);
+if(debug) alert3("copy URL " + item);
 node2[item] = new URL(u.href);
 continue;
 }
@@ -1187,11 +1191,11 @@ continue;
 // rather like tar or cpio preserving hard links.
 var p = mw0.findObject(node1, node1[item], "");
 if(p.length) {
-if(debug) eb$logputs(3, "link " + item + " " + p.substr(1));
+if(debug) alert3("link " + item + " " + p.substr(1));
 node2[item] = mw0.correspondingObject(node2, p);
 } else {
 // I don't think we should point to a generic object that we don't know anything about.
-if(debug) eb$logputs(3, "unknown object " + item);
+if(debug) alert3("unknown object " + item);
 }
 continue;
 }
@@ -1209,20 +1213,20 @@ continue;
 if(debug) {
 var showstring = node1[item];
 if(showstring.length > 20) showstring = "long";
-eb$logputs(3, "copy string " + item + " = " + showstring);
+alert3("copy string " + item + " = " + showstring);
 }
 node2[item] = node1[item];
 continue;
 }
 
 if (typeof node1[item] === 'number') {
-if(debug) eb$logputs(3, "copy number " + item + " = " + node1[item]);
+if(debug) alert3("copy number " + item + " = " + node1[item]);
 node2[item] = node1[item];
 continue;
 }
 
 if (typeof node1[item] === 'boolean') {
-if(debug) eb$logputs(3, "copy boolean " + item + " = " + node1[item]);
+if(debug) alert3("copy boolean " + item + " = " + node1[item]);
 node2[item] = node1[item];
 continue;
 }
@@ -1230,13 +1234,13 @@ continue;
 
 // copy style object if present and its subordinate strings.
 if (typeof node1.style === "object") {
-if(debug) eb$logputs(3, "copy style");
+if(debug) alert3("copy style");
 node2.style = new CSSStyleDeclaration;
 node2.style.element = node2;
 for (var item in node1.style){
 if (typeof node1.style[item] === 'string' ||
 typeof node1.style[item] === 'number') {
-if(debug) eb$logputs(3, "copy attribute " + item);
+if(debug) alert3("copy attribute " + item);
 node2.style[item] = node1.style[item];
 }
 }
@@ -1246,24 +1250,24 @@ node2.style[item] = node1.style[item];
 if(lostElements) {
 var e1 = node1.elements;
 var e2 = node2.elements;
-if(debug) eb$logputs(3, "looking for lost radio elements");
+if(debug) alert3("looking for lost radio elements");
 for(i=0; i<e2.length; ++i) {
 if(e2[i]) continue;
 if(e1[i].nodeName !== "radio") {
-if(debug) eb$logputs(3, "oops, lost element " + i + " is type " + e1[i].nodeName);
+if(debug) alert3("oops, lost element " + i + " is type " + e1[i].nodeName);
 continue;
 }
 for (var item in node1) {
 if(!node1.hasOwnProperty(item)) continue;
 if(node1[item] !== e1[i]) continue;
 e2[i] = node2[item];
-if(debug) eb$logputs(3, "patching element " + i + " through to " + item);
+if(debug) alert3("patching element " + i + " through to " + item);
 break;
 }
 }
 }
 
-if(debug) eb$logputs(3, "}");
+if(debug) alert3("}");
 return node2;
 }
 
@@ -1331,7 +1335,7 @@ mw0.Event.prototype.initCustomEvent = function(e, bubble, cancel, details) { };
 mw0.createEvent = function(unused) { return new Event; }
 
 mw0.dispatchEvent = function (e) {
-if(my$win().eventDebug) eb$logputs(3, "dispatch " + this.nodeName + "." + e._type);
+if(my$win().eventDebug) alert3("dispatch " + this.nodeName + "." + e._type);
 var eval_string = "try { this['" + e._type + "']()} catch (e) {alert('event not found')}";
 eval(eval_string);
 };
@@ -1375,7 +1379,7 @@ mw0.detachEvent = function(ev, handler) { this.eb$unlisten(ev,handler, false); }
 mw0.eb$listen = function(ev, handler, addon)
 {
 var ev_before_changes = ev;
-if(my$win().eventDebug)  eb$logputs(3, (addon ? "listen " : "attach ") + this.nodeName + "." + ev);
+if(my$win().eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev);
 if(addon) {
 ev = "on" + ev;
 } else {
@@ -1406,7 +1410,7 @@ this[evarray].push(handler);
 mw0.eb$unlisten = function(ev, handler, addon)
 {
 var ev_before_changes = ev;
-if(my$win().eventDebug)  eb$logputs(3, (addon ? "unlisten " : "detach ") + this.nodeName + "." + ev);
+if(my$win().eventDebug)  alert3((addon ? "unlisten " : "detach ") + this.nodeName + "." + ev);
 if(addon) {
 ev = "on" + ev;
 } else {
@@ -1584,7 +1588,7 @@ mw0.createElement = function(s) {
 var c;
 var t = s.toLowerCase();
 if(!t.match(/^[a-z\d_]+$/)) {
-eb$logputs(3, "createElement argument " + t);
+alert3("createElement argument " + t);
 t = "xyz";
 }
 switch(t) { 
@@ -2158,7 +2162,7 @@ var msg = "";
 if(typeof n === "number")
 msg += "line " + n + ": ";
 msg += e.toString();
-eb$logputs(3, msg);
+alert3(msg);
 }
     return e;
 }
@@ -2209,7 +2213,7 @@ s = s.substr(m.length);
 slen = s.length;
 s = s.replace(/^.*?\n/, "");
 if(s.length === slen) {
-eb$logputs(3, "unterminated comment /"+"/" + s.substr(0,20));
+alert3("unterminated comment /"+"/" + s.substr(0,20));
 return t + "/" + "/" + s;
 }
 t += '\n';
@@ -2221,7 +2225,7 @@ s = s.substr(m.length);
 slen = s.length;
 s = s.replace(/^[\u0000-\uffff]*?\*[/]/, "");
 if(s.length === slen) {
-eb$logputs(3, "unterminated comment /"+"*" + s.substr(0,20));
+alert3("unterminated comment /"+"*" + s.substr(0,20));
 return t + "/" + "*" + s;
 }
 continue;
@@ -2231,7 +2235,7 @@ t += m;
 s = s.substr(m.length);
 m = mw0.closeString(s, c);
 if(!m) {
-eb$logputs(3, "unterminated string " + c + s.substr(0,20));
+alert3("unterminated string " + c + s.substr(0,20));
 return t+s;
 }
 t += m;
@@ -2283,7 +2287,7 @@ p += m;
 s = s.substr(m.length);
 m = mw0.closeString(s, c);
 if(!m) {
-eb$logputs(3, "unterminated string " + c + s.substr(0,20));
+alert3("unterminated string " + c + s.substr(0,20));
 break;
 }
 p += m;
@@ -2296,7 +2300,7 @@ s = s.substr(m.length);
 if(c === '}') {
 p += c;
 if(--bc < 0) {
-eb$logputs(3, "unexpected }" + s.substr(0,20));
+alert3("unexpected }" + s.substr(0,20));
 break;
 }
 if(bc) continue;
@@ -2422,7 +2426,6 @@ while(s) {
 m = s.match(/^([\u0000-\uffff]*?)('|"|\s*;\s*)/);
 if(!m) { // end of the string
 p += s;
-if(p) ao.rules.push(p);
 break;
 }
 p += m[1];
@@ -2440,6 +2443,8 @@ continue;
 if(p) ao.rules.push(p);
 p = "";
 }
+
+if(p) ao.rules.push(p);
 
 if(ao.rules.length == 0) {
 ao.nyi = true, ao.explain = "empty rules";
@@ -2630,7 +2635,7 @@ l.explain = "multiple";
 if(total == 1) l.explain = l.selectors[0].explain;
 }
 }
-if(w.css$nyi.length) eb$logputs(3, "unsupported css selectors " + w.css$nyi.length + " out of " + w.cssList.length);
+if(w.css$nyi.length) alert3("unsupported css selectors " + w.css$nyi.length + " out of " + w.cssList.length);
 }
 
 mw0.qsaMatch = function(node, sel)
@@ -2721,9 +2726,8 @@ return false;
 mw0.qsaTest = function(node, s)
 {
 var v = mw0.cssPieces(s + "{color:green}");
-v = v[0];
-if(v.nyi) { alert("bad selector " + v.explain); return false; }
-v = v.selectors[0];
+if(v.length != 1 || v[0].nyi) { alert("bad selector " + v[0].explain); return false; }
+v = v[0].selectors[0];
 if(v.nyi) { alert("bad selector " + v.explain); return false; }
 return mw0.qsaMatch(node, v[0]);
 }
@@ -2809,17 +2813,17 @@ mw0.querySelectorAll = function(selstring, startpoint)
 // compile the selector
 var v = mw0.cssPieces(mw0.uncomment(selstring + "{color:green}"));
 if(v.length != 1) {
-eb$logputs(3, "querySelectorAll(" + selstring +") yields " + v.length + " descriptors");
+alert3("querySelectorAll(" + selstring +") yields " + v.length + " descriptors");
 return [];
 }
 v = v[0];
 if(v.nyi) {
-eb$logputs(3, "querySelectorAll(" + selstring +") nyi " + v.explain);
+alert3("querySelectorAll(" + selstring +") nyi " + v.explain);
 return [];
 }
 v = v.selectors;
 if(v.length == 1 && v[0].nyi) {
-eb$logputs(3, "querySelectorAll(" + selstring +") nyi " + v[0].explain);
+alert3("querySelectorAll(" + selstring +") nyi " + v[0].explain);
 return [];
 }
 
@@ -2885,14 +2889,14 @@ t = a[i];
 if(t.src) {
 // css file fetch is no longer deferred; this code should not execute.
 if(!t.src.protocol) {
-eb$logputs(3, "css file " + t.src + " has no protocol, cannot fetch");
+alert3("css file " + t.src + " has no protocol, cannot fetch");
 continue;
 }
 xhr.url = t.src;
 xhr.send("", 0);
 t.data = xhr.responseText;
 if(!t.data) {
-eb$logputs(3, "css file " + t.src + " has no data");
+alert3("css file " + t.src + " has no data");
 continue;
 }
 }
@@ -2923,6 +2927,22 @@ destination[propname] = propval;
 }
 }
 }
+
+// Apply rules to a given style object, which is this.
+Object.defineProperty(mw0.CSSStyleDeclaration.prototype, "cssText", {
+set: function(t) {
+var v = mw0.cssPieces("*{" + t + "}");
+if(v.length != 1 || v[0].nyi) { alert3("bad selector " + v[0].explain); return; }
+var u = v[0].selectors[0];
+if(u.nyi) { alert3("bad selector " + u.explain); return; }
+var rules = v[0].rules;
+for(k=0; k<rules.length; ++k) {
+var propname = rules[k].atname;
+var propval = rules[k].atval;
+propname = propname.replace(/\-(\w)/g, function(all, letter) {return letter.toUpperCase();});
+this[propname] = propval;
+}
+}});
 
 // apply all the css attributes for a style under the node n.
 // This is done on demand by a getter.
