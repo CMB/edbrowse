@@ -2799,6 +2799,12 @@ nop:
 					c = '\n';
 			}
 			stringAndChar(&ns, &ns_l, c);
+			if (opentag && ti->name[0] == 'h'
+			    && isdigit(ti->name[1])) {
+				strcpy(hnum, ti->name);
+				strcat(hnum, " ");
+				ns_hnum();
+			}
 		}
 /* tags with id= have to be part of the screen, so you can jump to them */
 		if (t->id && opentag && action != TAGACT_LI)

@@ -1,5 +1,8 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.7.3:
+Show heading information h1 through h6.
+
 3.7.2:
 Keep third party open source javascript routines in a separate file third.js.
 Licenses are included in that file.
