@@ -3601,11 +3601,14 @@ static int twoLetter(const char *line, const char **runThis)
 	}
 
 	if (line[0] == 'u' && line[1] == 'a' && isdigitByte(line[2])
-	    && !line[3]) {
-		char *t = userAgents[line[2] - '0'];
+	    && (!line[3] || (isdigitByte(line[3]) && !line[4]))) {
+		n = atoi(line + 2);
+		char *t = 0;
+		if (n < MAXAGENT)
+			t = userAgents[n];
 		cmd = 'e';
 		if (!t) {
-			setError(MSG_NoAgent, line[2]);
+			setError(MSG_NoAgent, n);
 			return false;
 		}
 		currentAgent = t;

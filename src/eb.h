@@ -143,6 +143,7 @@ typedef uchar *pst;		/* perl string */
 #define MAXTTYLINE 256 // max length of an entered line
 #define MAXUSERPASS 40 // user name or password
 #define MAXACCOUNT 100 // number of email accounts
+#define MAXAGENT 50 // number of user agents
 #define MAXMIME 40 // number of mime types
 #define MAXPROXY 200 // number of proxy entries
 #define MAXDBT 100 // number of configured database tables
@@ -179,7 +180,7 @@ extern char emptyString[];	/* use this whenever you would use "" */
  * door unless you are one of three approved browsers.
  * Tell them you're Explorer, and walk right in.
  * Anyways, this array holds up to 10 user agent strings. */
-extern char *userAgents[10], *currentAgent;
+extern char *userAgents[], *currentAgent;
 extern char *newlocation;
 extern int newloc_d; /* delay */
 extern bool newloc_r; /* location replaces this page */

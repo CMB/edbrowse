@@ -158,7 +158,7 @@ none of the marked lines were successfully modified
 operation interrupted
 no match
 0
-agent number %c is not defined
+agent number %d is not defined
 could not print new directory
 could not establish current directory
 invalid directory
