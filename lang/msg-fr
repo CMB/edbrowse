@@ -507,7 +507,7 @@ Caractères nuls à la ligne %d
 .ebrc : le carnet d'adresses %s n'est pas un fichier régulier
 javascript erreur de syntaxe
 .ebrc : %s n'est pas un répertoire
-.ebrc : ligne %d, trop d'agents utilisateurs, la limite est de 9
+.ebrc : ligne %d, trop d'agents utilisateurs, la limite est de %d
 .ebrc : le récipient de cookies n'est pas un fichier régulier
 .ebrc : impossible de créer   le récipient de cookies
 .ebrc : trop de directives no js, la limite est de %d

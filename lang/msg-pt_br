@@ -507,7 +507,7 @@ download via SCP:
 .ebrc: o catálogo de endereços %s não é um arquivo regular
 javascript erro de sintaxe
 .ebrc: %s não é um diretório
-.ebrc: linha %d, agentes do usuário em excesso; o limite é 9
+.ebrc: linha %d, agentes do usuário em excesso; o limite é %d
 .ebrc: cookie jar %s não é um arquivo regular
 .ebrc: não posso criar a cookie jar %s
 .ebrc: diretivas no js em excesso; o limit é %d

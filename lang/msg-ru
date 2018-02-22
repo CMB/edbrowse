@@ -507,7 +507,7 @@ scp download:
 .ebrc: address book %s is not a regular file
 javascript syntax error
 .ebrc: %s is not a directory
-.ebrc: line %d, too many user agents, limit 9
+.ebrc: line %d, too many user agents, limit %d
 .ebrc: cookie jar %s is not a regular file
 .ebrc: cannot create cookie jar %s
 .ebrc: too many no js directives, limit %d

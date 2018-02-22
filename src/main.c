@@ -21,7 +21,7 @@ char *recycleBin, *sigFile, *sigFileEnd;
 char *cacheDir;
 int cacheSize = 1000, cacheCount = 10000;
 char *ebTempDir, *ebUserDir;
-char *userAgents[MAXAGENT];
+char *userAgents[MAXAGENT + 1];
 char *currentAgent, *currentReferrer;
 bool allowRedirection = true, allowJS = true, sendReferrer = true;
 bool allowXHR = true;
@@ -1474,11 +1474,11 @@ putc:
 			continue;
 
 		case 22:	/* agent */
-			for (j = 0; j < 10; ++j)
+			for (j = 0; j < MAXAGENT; ++j)
 				if (!userAgents[j])
 					break;
 			if (j == MAXAGENT)
-				cfgLine0(MSG_EBRC_ManyAgents);
+				cfgLine1(MSG_EBRC_ManyAgents, MAXAGENT);
 			userAgents[j] = v;
 			continue;
 

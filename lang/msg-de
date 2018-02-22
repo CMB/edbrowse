@@ -507,7 +507,7 @@ SCP download:
 .ebrc: Adressbuch %s ist keine reguläre Datei
 javascript Syntaxfehler
 .ebrc: %s ist kein Verzeichnis
-.ebrc: Zeile %d, zu viele User-Agents, maximal 9
+.ebrc: Zeile %d, zu viele User-Agents, maximal %d
 .ebrc: Cookie-Datei ist keine reguläre Datei
 .ebrc: kann Cookie-Datei %s nicht erstellen
 .ebrc: zu viele js-Anweisungen, maximal %d

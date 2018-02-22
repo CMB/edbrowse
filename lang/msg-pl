@@ -507,7 +507,7 @@ nie podano pliku z certyfikatem SSL; bezpieczne połączenie nie może zostać z
 .ebrc: książka adresowa %s nie jest regularnym plikiem
 javascript błąd składniowy
 .ebrc: %s nie jest katalogiem
-.ebrc: wiersz %d, zbyt wiele agentów użytkownika, limit 9
+.ebrc: wiersz %d, zbyt wiele agentów użytkownika, limit %d
 .ebrc: plik ciastek %s nie jest regularnym plikiem
 .ebrc: nie można utworzyć pliku ciastek %s
 .ebrc: zbyt wiele dyrektyw JS, limit %d
