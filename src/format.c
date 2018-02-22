@@ -385,6 +385,32 @@ putc:
 		s = w;
 	}
 	*s = 0;
+
+/*********************************************************************
+Some hyperlinks are multiline, due to some html inside, and our interpretation
+of said html. This is just annoying, so pull it back down to one line.
+Same goes for <button>, but other input fields must remain as they are.
+Even submit, as shown by jsrt, if you submit the form it says b1=Send%20Message
+hence it would send a newline if there was one.
+*********************************************************************/
+
+	for (s = buf; (c = *s); ++s) {
+		if (c != InternalCodeChar)
+			continue;
+		n = strtol(s + 1, &s, 10);
+		if (*s == '<') {
+			if (!stringEqual(tagList[n]->info->name, "button"))
+				continue;
+		} else if (*s != '{')
+			continue;
+		for (a = s + 1; (c = *a); ++a) {
+			if (c == InternalCodeChar && a[1] == '0')
+				break;
+			if (c == '\n' || c == '\f')
+				*a = ' ';
+		}
+		s = a;
+	}
 }				/* anchorSwap */
 
 /*********************************************************************
@@ -1505,14 +1531,14 @@ char *force_utf8(char *buf, int buflen)
 		for (s = tbuf; s < tbuf + buflen; ++s)
 			if (!*s)
 				*s = ' ';
-*s = 0;
+		*s = 0;
 		return tbuf;
 	}
 // Strip off the leading bom, if any, and no we're not going to put it back.
 	if (buflen >= 3 && !memcmp(buf, "\xef\xbb\xbf", 3)) {
 		buflen -= 3;
 		memmove(buf, buf + 3, buflen);
-buf[buflen] = 0;
+		buf[buflen] = 0;
 	}
 	for (s = buf; s < buf + buflen; ++s)
 		if (!*s)
