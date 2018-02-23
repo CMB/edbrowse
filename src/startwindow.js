@@ -1602,6 +1602,7 @@ mw0.Form.prototype.removeChild = function(item) {
 this.removeChildNative(item);
 if(item.nodeName === "input" || item.nodeName === "select")
 this.elements.removeChild(item);
+return item;
 }
 mw0.Form.prototype.replaceChild = mw0.replaceChild;
 Object.defineProperty(mw0.Form.prototype, "firstChild", { get: function() { return this.childNodes[0]; } });
@@ -2139,8 +2140,9 @@ for(var i=0; i<this.length; ++i)
 if(this[i] == item) {
 this.splice(i, 1);
 delete this.parentNode;
-return;
+break;
 }
+return item;
 }
 Array.prototype.hasChildNodes = mw0.hasChildNodes;
 Array.prototype.replaceChild = mw0.replaceChild;

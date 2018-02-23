@@ -963,9 +963,8 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	linkageNow('r', thisobj);
 
 done:
-	duk_pop(cx);		// the argument
 	debugPrint(5, "remove 2");
-	return 0;
+	return 1;
 }
 
 static duk_ret_t native_fetchHTTP(duk_context * cx)
