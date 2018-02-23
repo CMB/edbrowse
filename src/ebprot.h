@@ -218,7 +218,7 @@ void setDataSource(char *v) ;
 bool runEbFunction(const char *line) ;
 struct DBTABLE *findTableDescriptor(const char *sn) ;
 struct DBTABLE *newTableDescriptor(const char *name) ;
-bool readConfigFile(void);
+void readConfigFile(void);
 
 /* sourcefile=plugin.c */
 const struct MIMETYPE *findMimeBySuffix(const char *suffix) ;

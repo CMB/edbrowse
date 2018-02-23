@@ -537,14 +537,16 @@ int main(int argc, char **argv)
 	pcre_free = nzFree;
 
 	if (argc && stringEqual(argv[0], "-c")) {
-		if (argc == 1)
+		if (argc == 1) {
 			*argv = configFile;
-		else
-			++argv, --argc;
-		doConfig = false;
-	} else {
-		readConfigFile();
+			doConfig = false;
+		} else {
+			configFile = argv[1];
+			argv += 2, argc -= 2;
+		}
 	}
+	if (doConfig)
+		readConfigFile();
 	account = localAccount;
 
 	for (; argc && argv[0][0] == '-'; ++argv, --argc) {
@@ -1061,13 +1063,13 @@ static const char *const keywords[] = {
 
 /* Read the config file and populate the corresponding data structures. */
 /* This routine succeeds, or aborts via one of these macros. */
-#define cfgAbort0(m) { i_printf(m); nl(); return false; }
-#define cfgAbort1(m, arg) { i_printf(m, arg); nl(); return false; }
-#define cfgLine0(m) { i_printf(m, ln); nl(); return false; }
-#define cfgLine1(m, arg) { i_printf(m, ln, arg); nl(); return false; }
-#define cfgLine1a(m, arg) { i_printf(m, arg, ln); nl(); return false; }
+#define cfgAbort0(m) { i_printf(m); nl(); return; }
+#define cfgAbort1(m, arg) { i_printf(m, arg); nl(); return; }
+#define cfgLine0(m) { i_printf(m, ln); nl(); return; }
+#define cfgLine1(m, arg) { i_printf(m, ln, arg); nl(); return; }
+#define cfgLine1a(m, arg) { i_printf(m, arg, ln); nl(); return; }
 
-bool readConfigFile(void)
+void readConfigFile(void)
 {
 	char *buf, *s, *t, *v, *q;
 	int buflen, n;
@@ -1088,10 +1090,11 @@ bool readConfigFile(void)
 
 	unreadConfigFile();
 
-	if (!fileTypeByName(configFile, false))
-		return true;	/* config file not present */
-	if (!fileIntoMemory(configFile, &buf, &buflen))
-		showErrorAbort();
+	if (!fileIntoMemory(configFile, &buf, &buflen)) {
+		i_printf(MSG_NoConfig, configFile);
+		return;
+	}
+
 /* An extra newline won't hurt. */
 	if (buflen && buf[buflen - 1] != '\n')
 		buf[buflen++] = '\n';
@@ -1802,5 +1805,4 @@ putback:
 
 	if (maxAccount && !localAccount)
 		localAccount = 1;
-	return true;
 }				/* readConfigFile */

@@ -1104,7 +1104,7 @@ edbrowse [-d#] -f[#] (fetch mail)
 edbrowse  [-d#] -[p]m    (read pending mail)
 edbrowse  [-d#] -[p]fm[#]    (fetch mail and read pending mail)
 edbrowse  [-d#] -m[#] address1 address2 ... file [+attachments]
-edbrowse  [-e] [-d#] file1 file2 ...
+edbrowse  [-c configfile] [-e] [-d#] file1 file2 ...
 </font></PRE>
 
 <P>
@@ -1114,7 +1114,7 @@ which prints the sizes of files as they are written and read.
 Some people like -d2, which prints the URLs
 as you jump to new web pages or submit forms online.
 Unless you are a developer, you probably don't want to go any higher than that.
-Remember, the debug level can be changed on the fly by using the dbx command (x between 0 and 9).
+Remember, the debug level can be changed interactively by using the dbx command (x between 0 and 9).
 You can direct debugging output to a file by `db&gt;filename',
 and you probably want to for db5 or above.
 
@@ -1125,14 +1125,12 @@ If there is a problem, you don't want to march on, executing the rest of the edb
 Note that set -e has the same effect in a bash script.
 
 <P>
-Use -c to suppress processing of, and edit, the .ebrc configuration file.
+Use -c alone to suppress processing of, and edit, the .ebrc configuration file.
 (This config file will be described later.)
 You might want to do this if your config file has syntax errors, which are displayed when edbrowse starts.
-Use the -c option to edit the config file directly.
-It is automatically loaded into buffer 1.
-Note that -c must be the first option.
+Your config file is automatically loaded into buffer 1.
 Make changes, save the file, and type `config' to reload the file.
-If there is another error you may need to make another change, save, and reconfig.
+If there is another error you may need to make another change, save, and config again.
 Continue until there are no errors.
 Processing of the config file stops at the first error, so you really want a clean run.
 
@@ -1141,10 +1139,15 @@ From within edbrowse, a file name of -c is treated as the config file.
 You can switch to a new session, view, edit, save, and reaply the config file without ever leaving edbrowse.
 
 <P>
+If the first arguments are -c filename, edbrowse uses filename as its config file, rather than the default file under your home directory.
+As long as this edbrowse process runs, -c referse to the file specified on the command line,
+as does the config command, which reprocesses the config file.
+
+<P>
 The arguments to edbrowse are the files to edit.
 Edbrowse reads these files into corresponding sessions
 and starts in session 1.
-If there are no arguments, you start in session 1
+If there are no arguments, edbrowse starts in session 1
 with no text and no associated file.
 If the file is a url, then that web page is fetched from the internet and browsed.
 Finally, if the file begins with a less than sign,

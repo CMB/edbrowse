@@ -195,7 +195,7 @@ enum {
 	MSG_AttNoWrite,
 	MSG_NoMail,
 	MSG_MessagesX,
-	MSG_notused98,
+	MSG_NoConfig,
 	MSG_LSBadChar,
 	MSG_MailHelp,
 	MSG_NoCreate,

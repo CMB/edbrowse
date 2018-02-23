@@ -95,7 +95,7 @@ impossível criar o arquivo %s; anexo descartado\n
 impossível escrever no arquivo %s; anexo descartado\n
 sem cartas
 %d mensagens\n
-0
+impossível abrir arquivo de configuração %s\n
 caracteres inválidos após o comando ls
 h\tmostra esta mensagem de ajuda.\nq\tsai do programa.\nespaço\tcontinua a ler esta carta.\nn\tvai para próxima carta.\nd\tapaga carta.\nw\tguarda carta em arquivo e apaga carta.\nu\tguarda carta em arquivo sem formatar e apaga carta
 impossível criar o arquivo %s\n
@@ -546,7 +546,7 @@ diretório home não definido por $HOME.
 %s não é um diretório
 nenhuma conta de e-mail especificada; confira por favor o arquivo de configuração .ebrc
 número de conta inválido; por favor use 1 até %d
-edbrowse -v (mostra a versão)\nedbrowse -h (esta mensagem)\nedbrowse -c (edita arquivo de configuração)\nedbrowse [-d#] -f[#] (recebe cartas)\nedbrowse [-d#] -[p]m (lê cartas pendentes)\nedbrowse [-d#] -[p]fm[#] (recebe cartas e lê as cartas pendentes)\nedbrowse [-d#] -m[#] endereço1 endereço2 ... arquivo [+anexos]\nedbrowse [-e] [-d#] arquivo1 arquivo2 ...
+edbrowse -v (mostra a versão)\nedbrowse -h (esta mensagem)\nedbrowse -c (edita arquivo de configuração)\nedbrowse [-d#] -f[#] (recebe cartas)\nedbrowse [-d#] -[p]m (lê cartas pendentes)\nedbrowse [-d#] -[p]fm[#] (recebe cartas e lê as cartas pendentes)\nedbrowse [-d#] -m[#] endereço1 endereço2 ... arquivo [+anexos]\nedbrowse [-c configuração] [-e] [-d#] arquivo1 arquivo2 ...
 por favor especifique ao menos um destinatário e o arquivo a enviar
 por favor especifique ao menos um destinatário e o arquivo a enviar, antes dos anexos
 demais arquivos abertos ao mesmo tempo; o limite é %d

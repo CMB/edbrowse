@@ -95,7 +95,7 @@ kann Datei %s nicht erstellen, Anhang wurde verworfen\n
 kann Datei %s nicht schreiben, Anhang wurde verworfen\n
 keine Mails
 %d Nachrichten
-0
+kann %s nicht öffnen Konfiguration fehlt %s\n
 ungültige Zeichen nach dem Kommando ls
 h\tgibt diese Hilfe aus\nq\tbeendet das Programm\nLeertaste\tWeiterlesen der Nachricht\nn\twechsle zur nächsten Nachricht\nd\tlösche Nachricht\nw\tspeichere die Nachricht in einer Datei und lösche sie\nu\tspeichere die Nachricht unformatiert in eine Datei und lösche sie
 kann Datei %s nicht erstellen
@@ -546,7 +546,7 @@ persönlicher Ordner nicht mit $HOME definiert
 %s ist kein Verzeichnis
 keine Emailkonten angegeben, prüfen Sie .ebrc-Konfigurationsdatei
 ungültige Kontonummer, nutzen Sie 1-%d
-edbrowse -v (zeige Version)\nedbrowse -h (diese nachricht)\nedbrowse -c (editiere Konfigurationsdatei)\nedbrowse [-d#] -f[#] (rufe Emails ab) \nedbrowse [-d#] -[p]m (lies ungelesene Nachrichten)\nedbrowse [-d#] -[p]fm[#] (rufe Emails ab und lies ungelesene Nachrichten)\nedbrowse [-d#] -m[#] Adresse1 Adresse2 ... Datei [+Anhang]\nedbrowse [-e] [-d#] Datei1 Datei2 ...
+edbrowse -v (zeige Version)\nedbrowse -h (diese nachricht)\nedbrowse -c (editiere Konfigurationsdatei)\nedbrowse [-d#] -f[#] (rufe Emails ab) \nedbrowse [-d#] -[p]m (lies ungelesene Nachrichten)\nedbrowse [-d#] -[p]fm[#] (rufe Emails ab und lies ungelesene Nachrichten)\nedbrowse [-d#] -m[#] Adresse1 Adresse2 ... Datei [+Anhang]\nedbrowse [-c Konfiguration] [-e] [-d#] Datei1 Datei2 ...
 bitte mindestens einen Empfänger und den zu versenden Anhang angeben
 bitte geben Sie mind. einen Empfänger und die zu sendende Datei an bevor Sie Dateien anhängen
 zu viele Dateien gleichzeitig offen, maximal %d
