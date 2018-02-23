@@ -251,7 +251,8 @@ mw0.console = {
 log: function(obj) { mw0.eb$logtime(3, "log", obj); },
 info: function(obj) { mw0.eb$logtime(3, "info", obj); },
 warn: function(obj) { mw0.eb$logtime(3, "warn", obj); },
-error: function(obj) { mw0.eb$logtime(3, "error", obj); }
+error: function(obj) { mw0.eb$logtime(3, "error", obj); },
+timeStamp: function(label) { if(label === undefined) label = "x"; return label.toString() + (new Date).getTime(); }
 };
 
 } // master compile
