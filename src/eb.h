@@ -363,6 +363,7 @@ struct ebFrame {
 	jsobjtype winobj;
 	jsobjtype docobj;	/* window.document */
 	const struct MIMETYPE *mt;
+	void *cssmaster;
 };
 extern struct ebFrame *cf;	/* current frame */
 

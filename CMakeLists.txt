@@ -276,6 +276,7 @@ set(${name}_SRCS
     ${dir}/decorate.c
     ${dir}/http.c
     ${dir}/auth.c
+    ${dir}/css.c
 	${dir}/html.c
     ${dir}/format.c
     ${dir}/cookies.c

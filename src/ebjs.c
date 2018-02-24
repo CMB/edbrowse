@@ -152,6 +152,7 @@ void freeJavaContext(struct ebFrame *f)
 	freeJavaContext_nat();
 	f->jcx = f->winobj = f->docobj = 0;
 	debugPrint(5, "< ok");
+	cssFree(f);
 }				/* freeJavaContext */
 
 /* Run some javascript code under the current window */

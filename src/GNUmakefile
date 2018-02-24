@@ -39,7 +39,7 @@ all: edbrowse
 EBOBJS = main.o buffers.o sendmail.o fetchmail.o cache.o \
 	html.o format.o cookies.o ebjs.o plugin.o ebrc.o \
 	messages.o url.o stringfile.o html-tidy.o decorate.o \
-	msg-strings.o http.o auth.o jseng-duk.o
+	msg-strings.o http.o auth.o css.o jseng-duk.o
 ifeq ($(BUILD_EDBR_ODBC),on)
 EBOBJS += dbodbc.o dbops.o
 LDLIBS += -lodbc
