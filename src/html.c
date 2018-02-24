@@ -515,8 +515,10 @@ static void prepareScript(struct htmlTag *t)
 						   "Unable to parse data URI containing JavaScript");
 				}
 			} else if (browseLocal && !isURL(t->href)) {
+				char *h = cloneString(t->href);
+				unpercentString(h);
 				if (!fileIntoMemory
-				    (t->href, &serverData, &serverDataLen)) {
+				    (h, &serverData, &serverDataLen)) {
 					if (debugLevel >= 1)
 						i_printf(MSG_GetLocalJS,
 							 errorMsg);
@@ -531,6 +533,7 @@ static void prepareScript(struct htmlTag *t)
 					serverData = NULL;
 					serverDataLen = 0;
 				}
+				nzFree(h);
 			} else
 			    if (httpConnect
 				(t->href, false, false, true, 0, 0, 0)) {

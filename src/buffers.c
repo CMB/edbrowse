@@ -5369,6 +5369,9 @@ switchsession:
 			}
 			if (nogo)
 				return true;
+// to access local files
+			if (!isURL(h))
+				unpercentString(h);
 		}
 	}
 
