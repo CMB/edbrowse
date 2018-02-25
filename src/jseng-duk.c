@@ -1182,6 +1182,51 @@ static duk_ret_t native_css_start(duk_context * cx)
 	return 0;
 }
 
+// querySelectorAll
+static duk_ret_t native_qsa(duk_context * cx)
+{
+	jsobjtype root = 0, ao;
+	const char *selstring = duk_get_string(cx, 0);
+	int top = duk_get_top(cx);
+	if (top > 2) {
+		duk_pop_n(cx, top - 2);
+		top = 2;
+	}
+	if (top == 2) {
+		if (duk_is_object(cx, 1))
+			root = duk_get_heapptr(cx, 1);
+		duk_pop(cx);
+	}
+	ao = querySelectorAll(selstring, root);
+	duk_pop(cx);
+	duk_push_heapptr(cx, ao);
+	return 1;
+}
+
+// querySelector
+static duk_ret_t native_qs(duk_context * cx)
+{
+	jsobjtype root = 0, ao;
+	const char *selstring = duk_get_string(cx, 0);
+	int top = duk_get_top(cx);
+	if (top > 2) {
+		duk_pop_n(cx, top - 2);
+		top = 2;
+	}
+	if (top == 2) {
+		if (duk_is_object(cx, 1))
+			root = duk_get_heapptr(cx, 1);
+		duk_pop(cx);
+	}
+	ao = querySelector(selstring, root);
+	duk_pop(cx);
+	if (ao)
+		duk_push_heapptr(cx, ao);
+	else
+		duk_push_undefined(cx);
+	return 1;
+}
+
 void createJavaContext_nat(void)
 {
 	static int seqno;
@@ -1249,6 +1294,11 @@ void createJavaContext_nat(void)
 	duk_put_global_string(jcx, "eb$getter_cw");
 	duk_push_c_function(jcx, native_css_start, 1);
 	duk_put_global_string(jcx, "cssDocLoad");
+// using different names for now, while testing and debugging
+	duk_push_c_function(jcx, native_qsa, DUK_VARARGS);
+	duk_put_global_string(jcx, "querySelectorAll_c");
+	duk_push_c_function(jcx, native_qs, DUK_VARARGS);
+	duk_put_global_string(jcx, "querySelector_c");
 
 	duk_push_heapptr(jcx, docobj);	// native document methods
 	duk_push_c_function(jcx, native_doc_write, DUK_VARARGS);

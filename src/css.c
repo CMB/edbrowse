@@ -25,7 +25,9 @@ e.g. www.stackoverflow.com with 5,050 descriptors.
 #define CSS_ERROR_AFTER 15
 #define CSS_ERROR_UNSUP 16
 #define CSS_ERROR_MULTIPLE 17
-#define CSS_ERROR_LAST 18
+#define CSS_ERROR_DELIM1 18
+#define CSS_ERROR_DELIM2 19
+#define CSS_ERROR_LAST 20
 
 static const char *const errorMessage[] = {
 	"ok",
@@ -46,6 +48,8 @@ static const char *const errorMessage[] = {
 	"after",
 	": unsupported",
 	"multiple",
+	"==========",
+	"==========",
 	0
 };
 
@@ -60,7 +64,7 @@ static void cssStats(void)
 	if (debugLevel < 3)
 		return;
 	stringAndNum(&s, &l, loadcount);
-	stringAndString(&s, &l, " selectors and rules");
+	stringAndString(&s, &l, " selectors + rules");
 	for (i = 1; i < CSS_ERROR_LAST; ++i) {
 		int n = errorBuckets[i];
 		if (!n)
@@ -371,9 +375,11 @@ top:
 				if (!a)
 					a = emptyString;
 				t = allocMem(strlen(s) + strlen(a) +
-					     strlen(iu3) + 1);
+					     strlen(iu3) + 24 + 1);
 				strcpy(t, s);
+				strcat(t, "@ebdelim1{}\n");
 				strcat(t, a);
+				strcat(t, "@ebdelim2{}\n");
 				strcat(t, iu3);
 				nzFree(a);
 				nzFree(s);
@@ -477,6 +483,15 @@ copy:		++s;
 		s = d->lhs;
 		if (!s[0]) {
 			d->error = CSS_ERROR_NOSEL;
+			continue;
+		}
+// our special code to insert a delimiter into debugging output
+		if (stringEqual(s, "@ebdelim1")) {
+			d->error = CSS_ERROR_DELIM1;
+			continue;
+		}
+		if (stringEqual(s, "@ebdelim2")) {
+			d->error = CSS_ERROR_DELIM2;
 			continue;
 		}
 // leading @ doesn't apply to edbrowse.
@@ -611,8 +626,10 @@ copy:		++s;
 		bool across = true;
 		uchar ec = CSS_ERROR_NONE;
 		if (d->error) {
-			++loadcount;
-			++errorBuckets[d->error];
+			if (d->error < CSS_ERROR_DELIM1) {
+				++loadcount;
+				++errorBuckets[d->error];
+			}
 			continue;
 		}
 		if (!d->selectors)	// should never happen
@@ -966,9 +983,10 @@ static void cssPiecesPrint(const struct desc *d)
 
 	if (!debugCSS)
 		return;
-	f = fopen("/tmp/css", "w");
+	f = fopen("/tmp/css", "a");
 	if (!f)
 		return;
+	fprintf(f, "%s start\n", errorMessage[CSS_ERROR_DELIM1]);
 	if (!d) {
 		fclose(f);
 		return;
@@ -976,7 +994,15 @@ static void cssPiecesPrint(const struct desc *d)
 
 	for (; d; d = d->next) {
 		if (d->error) {
-			fprintf(f, "<%s>%s\n", errorMessage[d->error], d->lhs);
+			if (d->error == CSS_ERROR_DELIM1)
+				fprintf(f, "%s open\n",
+					errorMessage[CSS_ERROR_DELIM1]);
+			else if (d->error == CSS_ERROR_DELIM2)
+				fprintf(f, "%s close\n",
+					errorMessage[CSS_ERROR_DELIM2]);
+			else
+				fprintf(f, "<%s>%s\n", errorMessage[d->error],
+					d->lhs);
 			continue;
 		}
 		for (sel = d->selectors; sel; sel = sel->next) {
@@ -1095,7 +1121,9 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 				cutc = *cut;
 				*cut = 0;	// I'll put it back
 			}
-			v = get_property_string_nat((t ? t->jv : obj), p + 1);
+			v = 0;
+			if (obj)
+				v = get_property_string_nat(obj, p + 1);
 			if (cut)
 				*cut = cutc;
 			if (!v || !*v)
@@ -1251,4 +1279,239 @@ next_a:	;
 	}
 
 	return true;
+}
+
+static bool matchfirst;
+static struct htmlTag **doclist;
+static int doclist_a, doclist_n;
+static struct ebFrame *doclist_f;
+
+// Match a selector against a list of nodes.
+// If list is not given then doclist is used - all nodes in the document.
+// the result is an allocated array of nodes from the list that match.
+static struct htmlTag **qsa1(struct htmlTag **list, const struct sel *sel)
+{
+	int i, n;
+	struct htmlTag *t;
+	struct htmlTag **a;
+	if (!list)
+		list = doclist;
+	if (matchfirst)
+		n = 1;
+	else {
+// allocate room for all, in case they all match.
+		for (n = 0; list[n]; ++n) ;
+	}
+	a = allocMem((n + 1) * sizeof(struct htmlTag *));
+	n = 0;
+	for (i = 0; (t = list[i]); ++i) {
+		if (qsaMatchChain(t, 0, sel)) {
+			a[n++] = t;
+			if (matchfirst)
+				break;
+		}
+	}
+	a[n] = 0;
+	if (!matchfirst)
+		a = reallocMem(a, (n + 1) * sizeof(struct htmlTag *));
+	return a;
+}
+
+// merge two lists of nodes, giving a third.
+static struct htmlTag **qsaMerge(struct htmlTag **list1, struct htmlTag **list2)
+{
+	int n1, n2, i1, i2, v1, v2, n;
+	struct htmlTag **a;
+	bool g1 = true, g2 = true;
+// make sure there's room for both lists
+	for (n1 = 0; list1[n1]; ++n1) ;
+	for (n2 = 0; list2[n2]; ++n2) ;
+	n = n1 + n2;
+	a = allocMem((n + 1) * sizeof(struct htmlTag *));
+	n = i1 = i2 = 0;
+	while (g1 | g2) {
+		if (!g1) {
+			a[n++] = list2[i2++];
+			if (i2 == n2)
+				g2 = false;
+			continue;
+		}
+		if (!g2) {
+			a[n++] = list1[i1++];
+			if (i1 == n1)
+				g1 = false;
+			continue;
+		}
+		v1 = list1[i1]->seqno;
+		v2 = list2[i2]->seqno;
+		if (v1 < v2) {
+			a[n++] = list1[i1++];
+			if (i1 == n1)
+				g1 = false;
+		} else if (v2 < v1) {
+			a[n++] = list2[i2++];
+			if (i2 == n2)
+				g2 = false;
+		} else {
+			i1++;
+			a[n++] = list2[i2++];
+			if (i1 == n1)
+				g1 = false;
+			if (i2 == n2)
+				g2 = false;
+		}
+	}
+	a[n] = 0;
+	return a;
+}
+
+// querySelectorAll on a group, uses merge above
+static struct htmlTag **qsa2(struct desc *d)
+{
+	struct htmlTag **a = 0, **a2, **a_new;
+	struct sel *sel;
+	for (sel = d->selectors; sel; sel = sel->next) {
+		if (sel->error)
+			continue;
+		a2 = qsa1(0, sel);
+		if (a) {
+			a_new = qsaMerge(a, a2);
+			nzFree(a);
+			nzFree(a2);
+			a = a_new;
+			if (matchfirst && a[0] && a[1])
+				a[1] = 0;
+		} else
+			a = a2;
+	}
+	return a;
+}
+
+// Build the list of nodes in the document.
+// Gee, this use to be one line of javascript, via getElementsByTagName().
+static void build1_doclist(struct htmlTag *t);
+static int doclist_cmp(const void *v1, const void *v2);
+static void build_doclist(struct htmlTag *top)
+{
+	doclist_n = 0;
+	doclist_a = 200;
+	doclist = allocMem((doclist_a + 1) * sizeof(struct htmlTag *));
+	if (top) {
+		doclist_f = top->f0;
+		build1_doclist(top);
+	} else {
+		int i;
+		struct htmlTag *t;
+		doclist_f = cf;
+		for (i = 0; i < cw->numTags; ++i) {
+			t = tagList[i];
+			if (!t->parent && !t->slash && !t->dead &&
+			    t->f0 == doclist_f)
+				build1_doclist(t);
+		}
+	}
+	doclist[doclist_n] = 0;
+	qsort(doclist, doclist_n, sizeof(struct htmlTag *), doclist_cmp);
+}
+
+// recursive
+static void build1_doclist(struct htmlTag *t)
+{
+	if (doclist_n == doclist_a) {
+		doclist_a += 200;
+		doclist =
+		    reallocMem(doclist,
+			       (doclist_a + 1) * sizeof(struct htmlTag *));
+	}
+	doclist[doclist_n++] = t;
+	for (t = t->firstchild; t; t = t->sibling)
+		build1_doclist(t);
+}
+
+static int doclist_cmp(const void *v1, const void *v2)
+{
+	const struct htmlTag *const *p1 = v1;
+	const struct htmlTag *const *p2 = v2;
+	int d = (*p1)->seqno - (*p2)->seqno;
+	return d;
+}
+
+static struct htmlTag **qsaInternal(const char *selstring, struct htmlTag *top)
+{
+	struct desc *d0;
+	struct htmlTag **a;
+// Compile the selector. The string has to be allocated.
+	char *s = allocMem(strlen(selstring) + 20);
+	sprintf(s, "%s{c:g}", selstring);
+	d0 = cssPieces(s);
+	if (!d0) {
+		debugPrint(3, "querySelectorAll(%s) yields no descriptors",
+			   selstring);
+		return 0;
+	}
+	if (d0->next) {
+		debugPrint(3,
+			   "querySelectorAll(%s) yields multiple descriptors",
+			   selstring);
+		cssPiecesFree(d0);
+		return 0;
+	}
+	if (d0->error) {
+		debugPrint(3, "querySelectorAll(%s): %s", selstring,
+			   errorMessage[d0->error]);
+		cssPiecesFree(d0);
+		return 0;
+	}
+	build_doclist(top);
+	a = qsa2(d0);
+	nzFree(doclist);
+	cssPiecesFree(d0);
+	return a;
+}
+
+// turn an array of html tags into an array of objects
+static jsobjtype objectize(struct htmlTag **list)
+{
+	int i;
+	const struct htmlTag *t;
+	delete_property_nat(cf->winobj, "qsagc");
+	jsobjtype ao = instantiate_array_nat(cf->winobj, "qsagc");
+	if (!ao || !list)
+		return ao;
+	for (i = 0; (t = list[i]); ++i) {
+		if (!t->jv)	// should never happen
+			continue;
+		set_array_element_object_nat(ao, i, t->jv);
+	}
+	return ao;
+}
+
+jsobjtype querySelectorAll(const char *selstring, jsobjtype topobj)
+{
+	struct htmlTag *top = 0, **a;
+	jsobjtype ao;
+	if (topobj)
+		top = tagFromJavaVar(topobj);
+	a = qsaInternal(selstring, top);
+	ao = objectize(a);
+	nzFree(a);
+	return ao;
+}
+
+// this one just returns the node
+jsobjtype querySelector(const char *selstring, jsobjtype topobj)
+{
+	struct htmlTag *top = 0, **a;
+	jsobjtype node = 0;
+	if (topobj)
+		top = tagFromJavaVar(topobj);
+	matchfirst = true;
+	a = qsaInternal(selstring, top);
+	matchfirst = false;
+	if (!a)
+		return 0;
+	if (a[0])
+		node = a[0]->jv;
+	nzFree(a);
+	return node;
 }

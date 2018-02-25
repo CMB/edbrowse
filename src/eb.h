@@ -78,14 +78,6 @@ typedef uchar bool;
 #define true 1
 #endif
 
-/* Some source files are shared between edbrowse, a C program,
- * and edbrowse-js, currently a C++ function program, thus the prototypes,
- * and some other structures, must be C protected. */
-#ifdef __cplusplus
-// Because of this line, you can't meaningfully run this file through indent.
-extern "C" {
-#endif
-
 // Opaque indicator of an object that can be shared
 // between edbrowse and the js engine.
 typedef void *jsobjtype;
@@ -585,9 +577,5 @@ extern nodeFunction traverse_callback;
 
 /* Symbolic constants for language independent messages */
 #include "messages.h"
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
