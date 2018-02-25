@@ -322,7 +322,7 @@ static bool jdb_passthrough(const char *s)
 	if (s[0] == 'd' && s[1] == 'b' && isdigit(s[2]) && s[3] == 0)
 		return true;
 	if (stringEqual(s, "dbev") || stringEqual(s, "dbcn") ||
-	    stringEqual(s, "dber"))
+	    stringEqual(s, "dber") || stringEqual(s, "dbcss"))
 		return true;
 	if (s[0] == 'e' && isdigit(s[1])) {
 		for (i = 2; s[i]; ++i)
@@ -4157,6 +4157,13 @@ et_go:
 			i_puts(debugThrow + MSG_DebugThrowOff);
 		if (isJSAlive)
 			set_property_bool(cf->winobj, "throwDebug", debugThrow);
+		return true;
+	}
+
+	if (stringEqual(line, "dbcss")) {
+		debugCSS ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(debugCSS + MSG_DebugCSSOff);
 		return true;
 	}
 

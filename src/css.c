@@ -7,6 +7,74 @@ e.g. www.stackoverflow.com with 5,050 descriptors.
 
 #include "eb.h"
 
+#define CSS_ERROR_NONE 0
+#define CSS_ERROR_NOSEL 1
+#define CSS_ERROR_AT 2
+#define CSS_ERROR_BRACES 3
+#define CSS_ERROR_SEL0 4
+#define CSS_ERROR_NORULE 5
+#define CSS_ERROR_COLON 6
+#define CSS_ERROR_RB 7
+#define CSS_ERROR_TAG 8
+#define CSS_ERROR_ATTR 9
+#define CSS_ERROR_RATTR 10
+#define CSS_ERROR_CLASS 11
+#define CSS_ERROR_ID 12
+#define CSS_ERROR_DYN 13
+#define CSS_ERROR_BEFORE 14
+#define CSS_ERROR_AFTER 15
+#define CSS_ERROR_UNSUP 16
+#define CSS_ERROR_MULTIPLE 17
+#define CSS_ERROR_LAST 18
+
+static const char *const errorMessage[] = {
+	"ok",
+	"no selectors",
+	"@",
+	"nested braces",
+	"empty selector",
+	"no rules",
+	"rule no :",
+	"modifier no ]",
+	"bad tag",
+	"bad selector attribute",
+	"bad rule attribute",
+	"bad class",
+	"bad id",
+	"dynamic",
+	"before",
+	"after",
+	": unsupported",
+	"multiple",
+	0
+};
+
+static int errorBuckets[CSS_ERROR_LAST];
+static int loadcount;
+
+static void cssStats(void)
+{
+	bool first = true;
+	int i, l;
+	char *s = initString(&l);
+	if (debugLevel < 3)
+		return;
+	stringAndNum(&s, &l, loadcount);
+	stringAndString(&s, &l, " selectors and rules");
+	for (i = 1; i < CSS_ERROR_LAST; ++i) {
+		int n = errorBuckets[i];
+		if (!n)
+			continue;
+		stringAndString(&s, &l, (first ? ": " : ", "));
+		first = false;
+		stringAndNum(&s, &l, n);
+		stringAndChar(&s, &l, ' ');
+		stringAndString(&s, &l, errorMessage[i]);
+	}
+	debugPrint(3, "%s", s);
+	nzFree(s);
+}
+
 static int closeString(char *s, char delim)
 {
 	int i;
@@ -138,9 +206,8 @@ struct desc {
 	struct desc *next;
 	char *lhs, *rhs;
 	short bc;		// brace count
-	bool nyi;		// not yet implemented
+	uchar error;
 	bool gentext;		// generates text
-	char *explain;
 	struct sel *selectors;
 	struct rule *rules;
 };
@@ -148,9 +215,9 @@ struct desc {
 // selector
 struct sel {
 	struct sel *next;
-	bool nyi, gentext;
+	uchar error;
+	bool gentext;
 	bool before, after;
-	char *explain;
 	struct asel *chain;
 };
 
@@ -159,9 +226,8 @@ struct asel {
 	struct asel *next;
 	char *tag;
 	char *part;
-	char *explain;
 	bool before, after;
-	bool nyi;
+	uchar error;
 	char combin;
 	struct mod *modifiers;
 };
@@ -229,7 +295,7 @@ copy:
 }
 
 // The input string is assumed allocated, it could be reallocated.
-void cssPieces(char *s)
+static struct desc *cssPieces(char *s)
 {
 	int bc = 0;		// brace count
 	struct desc *d1 = 0, *d2, *d = 0;
@@ -240,15 +306,9 @@ void cssPieces(char *s)
 	char *lhs;
 	char *a, *t;
 	char *iu1, *iu2, *iu3;	// for import url
-	struct cssmaster *cm;
 
-	cm = cf->cssmaster;
-	if (!cm)
-		cf->cssmaster = cm = allocZeroMem(sizeof(struct cssmaster));
-	if (cm->descriptors) {
-		cssPiecesFree(cm->descriptors);
-		cm->descriptors = 0;
-	}
+	loadcount = 0;
+	memset(errorBuckets, 0, sizeof(errorBuckets));
 
 top:
 	uncomment(s);
@@ -402,31 +462,30 @@ copy:		++s;
 // no descriptors, nothing to do,
 // except free the incoming string.
 		nzFree(lhs);
-		return;
+		cssPiecesPrint(0);
+		return NULL;
 	}
 // now the base string is at d1->lhs;
-
-	cm->descriptors = d1;
 
 // Now let's try to understand the selectors.
 	for (d = d1; d; d = d->next) {
 		char combin;
 		char *a1, *a2;	// bracket the atomic selector
 
-		if (d->nyi)
+		if (d->error)
 			continue;
 		s = d->lhs;
 		if (!s[0]) {
-			d->nyi = true, d->explain = "no selectors";
+			d->error = CSS_ERROR_NOSEL;
 			continue;
 		}
 // leading @ doesn't apply to edbrowse.
 		if (s[0] == '@') {
-			d->nyi = true, d->explain = "@";
+			d->error = CSS_ERROR_AT;
 			continue;
 		}
 		if (d->bc > 1) {
-			d->nyi = true, d->explain = "nested braces";
+			d->error = CSS_ERROR_BRACES;
 			continue;
 		}
 
@@ -465,8 +524,7 @@ copy:		++s;
 					a1 = s;
 					continue;
 				}
-				sel->nyi = true, sel->explain =
-				    "empty selector";
+				sel->error = CSS_ERROR_SEL0;
 				break;
 			}
 
@@ -490,8 +548,8 @@ copy:		++s;
 
 			cssAtomic(asel);
 // pass characteristics of the atomic selector back up to the selector
-			if (asel->nyi && !sel->nyi)
-				sel->nyi = true, sel->explain = asel->explain;
+			if (asel->error && !sel->error)
+				sel->error = asel->error;
 // before and after should only be on the base node of the chain
 			if (!sel->chain->next) {
 				if (asel->before)
@@ -513,11 +571,10 @@ copy:		++s;
 		if (a2 == a1) {	// empty piece
 			if (!sel) {
 				if (!d->selectors)
-					d->nyi = true, d->explain =
-					    "no selectors";
+					d->error = CSS_ERROR_NOSEL;
 				continue;
 			}
-			sel->nyi = true, sel->explain = "empty selector";
+			sel->error = CSS_ERROR_SEL0;
 			continue;
 		}
 		t = allocMem(a2 - a1 + 1);
@@ -537,8 +594,8 @@ copy:		++s;
 		sel->chain = asel;
 		asel->next = asel2;
 		cssAtomic(asel);
-		if (asel->nyi && !sel->nyi)
-			sel->nyi = true, sel->explain = asel->explain;
+		if (asel->error && !sel->error)
+			sel->error = asel->error;
 		if (!sel->chain->next) {
 			if (asel->before)
 				sel->before = true;
@@ -549,37 +606,44 @@ copy:		++s;
 		}
 	}
 
-// if all the selectors under d are nyi, then d is nyi
+// if all the selectors under d are in error, then d is error
 	for (d = d1; d; d = d->next) {
 		bool across = true;
-		char *explain = 0;
-		if (d->nyi)
+		uchar ec = CSS_ERROR_NONE;
+		if (d->error) {
+			++loadcount;
+			++errorBuckets[d->error];
 			continue;
+		}
 		if (!d->selectors)	// should never happen
 			continue;
 		for (sel = d->selectors; sel; sel = sel->next) {
-			if (!sel->nyi) {
+			++loadcount;
+			if (!sel->error) {
 				across = false;
-				break;
+				continue;
 			}
-			if (!explain)
-				explain = sel->explain;
-			else if (explain != sel->explain)
-				explain = "multiple";
+			if (!ec)
+				ec = sel->error;
+			else if (ec != sel->error)
+				ec = CSS_ERROR_MULTIPLE;
+			++errorBuckets[sel->error];
 		}
 		if (across)
-			d->nyi = true, d->explain = explain;
+			d->error = ec;
 	}
 
 // now for the rules
 	for (d = d1; d; d = d->next) {
 		char *r1, *r2;	// rule delimiters
 		struct rule *rule, *rule2;
-		if (d->nyi)
+		if (d->error)
 			continue;
+		++loadcount;
 		s = d->rhs;
 		if (!*s) {
-			d->nyi = true, d->explain = "no rules";
+			d->error = CSS_ERROR_NORULE;
+			++errorBuckets[d->error];
 			continue;
 		}
 		r1 = s;
@@ -622,19 +686,20 @@ lastrule:
 				if ((isdigit(*t) && t > r1) ||
 				    isalpha(*t) || *t == '-')
 					continue;
-				d->nyi = true, d->explain =
-				    "bad rule attribute";
+				d->error = CSS_ERROR_RATTR;
+				++errorBuckets[d->error];
 				break;
 			}
-			if (d->nyi)
+			if (d->error)
 				break;
 			if (!*t) {
-				d->nyi = true, d->explain = "rule no :";
+				d->error = CSS_ERROR_COLON;
+				++errorBuckets[d->error];
 				break;
 			}
 			if (t == r1) {
-				d->nyi = true, d->explain =
-				    "rule empty attribute";
+				d->error = CSS_ERROR_RATTR;
+				++errorBuckets[d->error];
 				break;
 			}
 			rule = allocZeroMem(sizeof(struct rule));
@@ -662,19 +727,22 @@ lastrule:
 				rule->atval = emptyString;
 			r1 = s;
 		}
-		if (r1 < s && !d->nyi && *r1 != '*' && *r1 != '_') {
+		if (r1 < s && !d->error && *r1 != '*' && *r1 != '_') {
 // There should have been a final ; but oops.
 // process the last rule as above.
 			r2 = s;
 			goto lastrule;
 		}
-		if (!d->rules)
-			d->nyi = true, d->explain = "no rules";
+		if (!d->rules) {
+			d->error = CSS_ERROR_NORULE;
+			++errorBuckets[d->error];
+		}
 	}
 
-/* to debug:
-*/
+	cssStats();
 	cssPiecesPrint(d1);
+
+	return d1;
 }
 
 // determine the tag, and build the chain of modifiers
@@ -699,7 +767,7 @@ static void cssAtomic(struct asel *a)
 			if ((isdigit(*t) && t > tag) ||
 			    isalpha(*t) || *t == '-')
 				continue;
-			a->nyi = true, a->explain = "bad tag";
+			a->error = CSS_ERROR_TAG;
 			nzFree(tag);
 			return;
 		}
@@ -759,22 +827,22 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 	case ':':
 		if (stringEqual(t, ":hover") || stringEqual(t, ":visited")
 		    || stringEqual(t, ":active") || stringEqual(t, ":focus")) {
-			a->nyi = true, a->explain = "dynamic";
+			a->error = CSS_ERROR_DYN;
 			return;
 		}
 		if (stringEqual(t, ":before")) {
-			a->before = a->nyi = true;
-			a->explain = "before";
+			a->before = true;
+			a->error = CSS_ERROR_BEFORE;
 			return;
 		}
 		if (stringEqual(t, ":after")) {
-			a->after = a->nyi = true;
-			a->explain = "after";
+			a->after = true;
+			a->error = CSS_ERROR_AFTER;
 			return;
 		}
 		if (!stringEqual(t, ":link") && !stringEqual(t, ":first-child")
 		    && !stringEqual(t, ":last-child")) {
-			a->nyi = true, a->explain = ": unsupported";
+			a->error = CSS_ERROR_UNSUP;
 			return;
 		}
 		break;
@@ -791,7 +859,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 
 	case '[':
 		if (t[n - 1] != ']') {
-			a->nyi = true, a->explain = "[ no ]";
+			a->error = CSS_ERROR_RB;
 			return;
 		}
 		t[--n] = 0;	// lop off ]
@@ -806,17 +874,28 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 				*w = tolower(c);
 			if ((isdigit(c) && w > t + 1) || isalpha(c) || c == '-')
 				continue;
-			propname = "bad attribute";
+			a->error = CSS_ERROR_ATTR;
 			if (h == '.')
-				propname = "bad class";
+				a->error = CSS_ERROR_CLASS;
 			if (h == '#')
-				propname = "bad id";
-			a->nyi = true, a->explain = propname;
+				a->error = CSS_ERROR_ID;
 			return;
 		}
 		if (*w)
 			unstring(w);
 	}			// switch
+}
+
+void cssDocLoad(char *start)
+{
+	struct cssmaster *cm = cf->cssmaster;
+	if (!cm)
+		cf->cssmaster = cm = allocZeroMem(sizeof(struct cssmaster));
+// This shouldn't be run twice for a given frame,
+// but sometimes we do anyways fore debugging.
+	if (cm->descriptors)
+		cssPiecesFree(cm->descriptors);
+	cm->descriptors = cssPieces(start);
 }
 
 static void cssPiecesFree(struct desc *d)
@@ -879,21 +958,32 @@ void cssFree(struct ebFrame *f)
 // for debugging
 static void cssPiecesPrint(const struct desc *d)
 {
-	FILE *f = fopen("/tmp/css", "w");
+	FILE *f;
 	const struct sel *sel;
 	const struct asel *asel;
 	const struct mod *mod;
 	const struct rule *r;
+
+	if (!debugCSS)
+		return;
+	f = fopen("/tmp/css", "w");
+	if (!f)
+		return;
+	if (!d) {
+		fclose(f);
+		return;
+	}
+
 	for (; d; d = d->next) {
-		if (d->nyi) {
-			fprintf(f, "<%s>%s\n", d->explain, d->lhs);
+		if (d->error) {
+			fprintf(f, "<%s>%s\n", errorMessage[d->error], d->lhs);
 			continue;
 		}
 		for (sel = d->selectors; sel; sel = sel->next) {
 			if (sel != d->selectors)
 				fprintf(f, ",");
-			if (sel->nyi)
-				fprintf(f, "<%s|", sel->explain);
+			if (sel->error)
+				fprintf(f, "<%s|", errorMessage[sel->error]);
 			for (asel = sel->chain; asel; asel = asel->next) {
 				char *tag = asel->tag;
 				if (!tag)
@@ -923,4 +1013,242 @@ static void cssPiecesPrint(const struct desc *d)
 		fprintf(f, "}\n");
 	}
 	fclose(f);
+}
+
+// Match a node against an atomic selector.
+// One of t or obj should be nonzero.
+// It's more efficient with t.
+static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
+{
+	bool rc;
+	struct mod *mod;
+	jsobjtype pobj;		// parent object
+
+	if (a->tag) {
+		const char *nn;
+		if (t)
+			nn = t->info->name;
+		else
+			nn = get_property_string_nat(obj, "nodeName");
+		if (nn) {
+			rc = stringEqual(nn, a->tag);
+			if (obj)
+				cnzFree(nn);
+			if (!rc)
+				return false;
+		}
+	}
+// step through the modifyers
+	for (mod = a->modifiers; mod; mod = mod->next) {
+		char *p = mod->part;
+		char c = p[0];
+		bool isclass = !strncmp(p, "[class~=", 8);
+		bool isid = !strncmp(p, "[id=", 4);
+
+// I'll assume that class and id, once set, are unchanging, like nodeName.
+		if (isclass && t) {
+			char *v = t->class;
+			char *u = p + 8;
+			int l = strlen(u);
+			char *q;
+			if ((!v || !*v) && t->jv)	// dip into js
+				t->class = v =
+				    get_property_string_nat(t->jv, "class");
+			if (!v)
+				v = emptyString;
+			while ((q = strstr(v, u))) {
+				v += l;
+				if (q > t->class && !isspace(q[-1]))
+					continue;
+				if (q[l] && !isspace(q[l]))
+					continue;
+				goto next_mod;
+			}
+			return false;
+		}
+
+		if (isid && t) {
+			char *v = t->id;
+			if ((!v || !*v) && t->jv)	// dip into js
+				t->id = v =
+				    get_property_string_nat(t->jv, "id");
+			if (!v)
+				v = emptyString;
+			if (stringEqual(v, p + 4))
+				goto next_mod;
+			return false;
+		}
+
+		if (t)
+			obj = t->jv;
+
+		if (c == '[') {
+			int l;
+			char cutc = 0;
+			char *value, *v, *v0, *q;
+			char *cut = strchr(p, '=');
+			if (cut) {
+				value = cut + 1;
+				l = strlen(value);
+				if (cut[-1] == '|' || cut[-1] == '~')
+					--cut;
+				cutc = *cut;
+				*cut = 0;	// I'll put it back
+			}
+			v = get_property_string_nat((t ? t->jv : obj), p + 1);
+			if (cut)
+				*cut = cutc;
+			if (!v || !*v)
+				return false;
+			if (!cutc) {
+				nzFree(v);
+				goto next_mod;
+			}
+			if (cutc == '=') {	// easy case
+				rc = stringEqual(v, value);
+				nzFree(v);
+				if (rc)
+					goto next_mod;
+				return false;
+			}
+			if (cutc == '|') {
+				rc = (!strncmp(v, value, l)
+				      && (v[l] == 0 || v[l] == '-'));
+				nzFree(v);
+				if (rc)
+					goto next_mod;
+				return false;
+			}
+// now value is a word inside v
+			v0 = v;
+			while ((q = strstr(v, value))) {
+				v += l;
+				if (q > v0 && !isspace(q[-1]))
+					continue;
+				if (q[l] && !isspace(q[l]))
+					continue;
+				nzFree(v0);
+				goto next_mod;
+			}
+			nzFree(v0);
+			return false;
+		}
+// At this point c should be a colon.
+		if (c != ':')
+			return false;
+
+		if (stringEqual(p, ":link"))
+			continue;
+
+		if (stringEqual(p, ":first-child")) {
+// t is more efficient, but this doesn't work for body and head,
+// which have no parent in our representation.
+			if (t && t->parent) {
+				if (t == t->parent->firstchild)
+					goto next_mod;
+				return false;
+			}
+// now by object
+			pobj = get_property_object_nat(obj, "parentNode");
+			if (!pobj)
+				return false;
+			if (get_property_object_nat(pobj, "firstChild") == obj)
+				goto next_mod;
+			return false;
+		}
+
+		if (stringEqual(p, ":last-child")) {
+			if (t && t->parent) {
+				if (!t->sibling)
+					goto next_mod;
+				return false;
+			}
+			pobj = get_property_object_nat(obj, "parentNode");
+			if (!pobj)
+				return false;
+			if (get_property_object_nat(pobj, "lastChild") == obj)
+				goto next_mod;
+			return false;
+		}
+
+		return false;	// unrecognized
+
+next_mod:	;
+	}
+
+	return true;		// all modifiers pass
+}
+
+static bool qsaMatchChain(struct htmlTag *t, jsobjtype obj, const struct sel *s)
+{
+	struct htmlTag *u;
+	char combin;
+	const struct asel *a = s->chain;
+	if (!a)			// should never happen
+		return false;
+// base node matches the first selector
+	if (!qsaMatch(t, obj, a))
+		return false;
+// now look down the rest of the chain
+	while ((a = a->next)) {
+		combin = a->combin;
+
+		if (combin == '+') {
+			if (t) {
+				if (!t->parent)
+					return false;
+				u = t->parent->firstchild;
+				if (!u || u == t)
+					return false;
+				for (; u; u = u->sibling)
+					if (u->sibling == t)
+						break;
+				if (!u)
+					return false;
+				t = u;
+				if (qsaMatch(t, obj, a))
+					continue;
+				return false;
+			}
+// now by objects
+			obj = get_property_object_nat(obj, "previousSibling");
+			if (!obj)
+				return false;
+			if (qsaMatch(t, obj, a))
+				continue;
+			return false;
+		}
+
+		if (combin == '>') {
+			if (t) {
+				t = t->parent;
+				if (!t)
+					return false;
+				if (qsaMatch(t, obj, a))
+					continue;
+				return false;
+			}
+			obj = get_property_object_nat(obj, "parentNode");
+			if (!obj)
+				return false;
+			if (qsaMatch(t, obj, a))
+				continue;
+			return false;
+		}
+// any ancestor
+		if (t) {
+			while ((t = t->parent))
+				if (qsaMatch(t, obj, a))
+					goto next_a;
+			return false;
+		}
+		while ((obj = get_property_object_nat(obj, "parentNode")))
+			if (qsaMatch(t, obj, a))
+				goto next_a;
+		return false;
+
+next_a:	;
+	}
+
+	return true;
 }

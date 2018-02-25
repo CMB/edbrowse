@@ -1176,9 +1176,9 @@ static duk_ret_t native_setcook(duk_context * cx)
 }
 
 // This is just for test, for now.
-static duk_ret_t native_css_cc(duk_context * cx)
+static duk_ret_t native_css_start(duk_context * cx)
 {
-	cssPieces(cloneString(duk_get_string(cx, -1)));
+	cssDocLoad(cloneString(duk_get_string(cx, -1)));
 	return 0;
 }
 
@@ -1247,8 +1247,8 @@ void createJavaContext_nat(void)
 	duk_put_global_string(jcx, "eb$getter_cd");
 	duk_push_c_function(jcx, getter_cw, 0);
 	duk_put_global_string(jcx, "eb$getter_cw");
-	duk_push_c_function(jcx, native_css_cc, 1);
-	duk_put_global_string(jcx, "cssCompile");
+	duk_push_c_function(jcx, native_css_start, 1);
+	duk_put_global_string(jcx, "cssDocLoad");
 
 	duk_push_heapptr(jcx, docobj);	// native document methods
 	duk_push_c_function(jcx, native_doc_write, DUK_VARARGS);

@@ -411,6 +411,6 @@ void run_function_onearg_nat(jsobjtype obj, const char *name, jsobjtype o);
 char *run_script_nat(const char *s);
 
 /* sourcefile=css.c */
-void cssPieces(char *s);
+void cssDocLoad(char *s);
 void cssFree(struct ebFrame *f);
 

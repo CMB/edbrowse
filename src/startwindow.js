@@ -2918,25 +2918,24 @@ mw0.cssGather1 = function()
 {
 var w = my$win();
 var d = my$doc();
+var css_all = "";
 w.cssSource = [];
 // <style> tags in the html.
 var a = d.getElementsByTagName("style");
 var i, t;
 for(i=0; i<a.length; ++i) {
 t = a[i];
-if(t.data) w.cssSource.push({data: t.data});
+if(t.data) w.cssSource.push({data: t.data}), css_all += t.data;
 }
 // <link type=text/css> tags in the html.
 a = d.getElementsByTagName("link");
 for(i=0; i<a.length; ++i) {
 t = a[i];
 if(t.type && t.type.toLowerCase() === "text/css") {
-if(t.data) w.cssSource.push({data: t.data});
-/* css file fetch is no longer deferred.
-else if(t.href) w.cssSource.push({src: t.href});
-*/
+if(t.data) w.cssSource.push({data: t.data}), css_all += t.data;
 }
 }
+cssDocLoad(css_all);
 }
 
 mw0.cssGather2 = function()
