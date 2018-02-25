@@ -417,4 +417,5 @@ jsobjtype querySelectorAll(const char *selstring, jsobjtype topobj);
 jsobjtype querySelector(const char *selstring, jsobjtype topobj);
 void cssAttributeCrunch(char *s);
 void cssApply(jsobjtype node, jsobjtype destination);
+void cssText(jsobjtype node, const char *rulestring);
 

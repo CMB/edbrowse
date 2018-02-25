@@ -1572,3 +1572,31 @@ void cssApply(jsobjtype node, jsobjtype destination)
 			do_rules(destination, d->rules, false);
 	}
 }
+
+void cssText(jsobjtype node, const char *rulestring)
+{
+	struct desc *d0;
+// Compile the selector. The string has to be allocated.
+	char *s = allocMem(strlen(rulestring) + 20);
+	sprintf(s, "*{%s}", rulestring);
+	d0 = cssPieces(s);
+	if (!d0) {
+		debugPrint(3, "cssText(%s) yields no descriptors", rulestring);
+		return;
+	}
+	if (d0->next) {
+		debugPrint(3,
+			   "cssText(%s) yields multiple descriptors",
+			   rulestring);
+		cssPiecesFree(d0);
+		return;
+	}
+	if (d0->error) {
+		debugPrint(3, "cssText(%s): %s", rulestring,
+			   errorMessage[d0->error]);
+		cssPiecesFree(d0);
+		return;
+	}
+	do_rules(node, d0->rules, true);
+	cssPiecesFree(d0);
+}

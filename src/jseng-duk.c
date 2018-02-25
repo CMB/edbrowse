@@ -1235,6 +1235,17 @@ static duk_ret_t native_cssApply(duk_context * cx)
 	return 0;
 }
 
+static duk_ret_t native_cssText(duk_context * cx)
+{
+	jsobjtype thisobj;
+	const char *rulestring = duk_get_string(cx, 0);
+	duk_push_this(cx);
+	thisobj = duk_get_heapptr(cx, -1);
+	cssText(thisobj, rulestring);
+	duk_pop_2(cx);
+	return 0;
+}
+
 void createJavaContext_nat(void)
 {
 	static int seqno;
@@ -1307,7 +1318,9 @@ void createJavaContext_nat(void)
 	duk_push_c_function(jcx, native_qs, DUK_VARARGS);
 	duk_put_global_string(jcx, "querySelector");
 	duk_push_c_function(jcx, native_cssApply, 2);
-	duk_put_global_string(jcx, "cssApply");
+	duk_put_global_string(jcx, "eb$cssApply");
+	duk_push_c_function(jcx, native_cssText, 1);
+	duk_put_global_string(jcx, "eb$cssText");
 
 	duk_push_heapptr(jcx, docobj);	// native document methods
 	duk_push_c_function(jcx, native_doc_write, DUK_VARARGS);

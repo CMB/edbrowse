@@ -764,7 +764,7 @@ mw0.getComputedStyle = function(e,pe) {
 	// disregarding pseudoelements for now
 var s = new CSSStyleDeclaration;
 s.element = e;
-cssApply(e, s);
+eb$cssApply(e, s);
 return s;
 }
 
@@ -2996,27 +2996,14 @@ destination[propname] = propval;
 */
 
 // Apply rules to a given style object, which is this.
-Object.defineProperty(mw0.CSSStyleDeclaration.prototype, "cssText", {
-set: function(t) {
-var v = mw0.cssPieces("*{" + t + "}");
-if(v.length != 1 || v[0].nyi) { alert3("bad selector " + v[0].explain); return; }
-var u = v[0].selectors[0];
-if(u.nyi) { alert3("bad selector " + u.explain); return; }
-var rules = v[0].rules;
-for(var k=0; k<rules.length; ++k) {
-var propname = rules[k].atname;
-var propval = rules[k].atval;
-propname = propname.replace(/\-(\w)/g, function(all, letter) {return letter.toUpperCase();});
-this[propname] = propval;
-}
-}});
+Object.defineProperty(mw0.CSSStyleDeclaration.prototype, "cssText", { set: eb$cssText });
 
 // apply all the css attributes for a style under the node n.
 // This is done on demand by a getter.
 mw0.dostyle = function(n)
 {
 if(!n.style$2.eb$done) {
-cssApply(n, n.style$2);
+eb$cssApply(n, n.style$2);
 n.style$2.eb$done = true;
 }
 }
