@@ -1400,15 +1400,11 @@ static void build_doclist(struct htmlTag *top)
 		doclist_f = top->f0;
 		build1_doclist(top);
 	} else {
-		int i;
-		struct htmlTag *t;
 		doclist_f = cf;
-		for (i = 0; i < cw->numTags; ++i) {
-			t = tagList[i];
-			if (!t->parent && !t->slash && !t->dead &&
-			    t->f0 == doclist_f)
-				build1_doclist(t);
-		}
+		if (cf->headtag)
+			build1_doclist(cf->headtag);
+		if (cf->bodytag)
+			build1_doclist(cf->bodytag);
 	}
 	doclist[doclist_n] = 0;
 	qsort(doclist, doclist_n, sizeof(struct htmlTag *), doclist_cmp);
@@ -1417,6 +1413,9 @@ static void build_doclist(struct htmlTag *top)
 // recursive
 static void build1_doclist(struct htmlTag *t)
 {
+// can't descend into another frame
+	if (t->f0 != doclist_f)
+		return;
 	if (doclist_n == doclist_a) {
 		doclist_a += 200;
 		doclist =
@@ -1472,16 +1471,16 @@ static struct htmlTag **qsaInternal(const char *selstring, struct htmlTag *top)
 // turn an array of html tags into an array of objects
 static jsobjtype objectize(struct htmlTag **list)
 {
-	int i;
+	int i, j;
 	const struct htmlTag *t;
 	delete_property_nat(cf->winobj, "qsagc");
 	jsobjtype ao = instantiate_array_nat(cf->winobj, "qsagc");
 	if (!ao || !list)
 		return ao;
-	for (i = 0; (t = list[i]); ++i) {
+	for (i = j = 0; (t = list[i]); ++i) {
 		if (!t->jv)	// should never happen
 			continue;
-		set_array_element_object_nat(ao, i, t->jv);
+		set_array_element_object_nat(ao, j++, t->jv);
 	}
 	return ao;
 }

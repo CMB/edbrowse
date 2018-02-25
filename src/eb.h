@@ -347,7 +347,7 @@ struct ebFrame {
 	char *dw;		/* document.write string */
 	int dw_l;		/* length of the above */
 // document.writes go under the body.
-	struct htmlTag *bodytag;
+	struct htmlTag *headtag, *bodytag;
 /* The javascript context and window corresponding to this url or frame.
  * If this is null then javascript is not operational for this frame.
  * We could still be browsing however, without javascript. */

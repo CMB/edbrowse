@@ -276,8 +276,7 @@ navigator.mimeTypes = [];
 navigator.plugins = [];
 // the rest of navigator, and of course the plugins,
 // must be filled in at run time based on the config file.
-// This line lets us run querySelectorAll in stand alone mode,
-// it is overwritten at startup by edbrowse.
+// This is overwritten at startup by edbrowse.
 navigator.userAgent = "edbrowse/3.0.0";
 
 /* There's no history in edbrowse. */
@@ -2873,6 +2872,7 @@ a = mw0.qsaMerge(a, mw0.qsa1(sel[k]));
 return a;
 }
 
+/* deprecated
 mw0.querySelectorAll = function(selstring, startpoint)
 {
 // compile the selector
@@ -2911,8 +2911,9 @@ var a = querySelectorAll(selstring, startpoint);
 mw0.qsaFirst = false;
 return (a.length ? a[0] : undefined);
 }
+*/
 
-mw0.Head.prototype.querySelector = mw0.querySelector;
+mw0.Head.prototype.querySelector = querySelector;
 
 mw0.cssGather1 = function()
 {
@@ -3041,7 +3042,7 @@ Object.defineProperty(n, "style", { get: function() { mw0.dostyle(this); return 
 } // master compile
 
 eb$qs$start = mw0.eb$qs$start;
-querySelectorAll = document.querySelectorAll = mw0.querySelectorAll;
-querySelector = document.querySelector = mw0.querySelector;
+document.querySelectorAll = querySelectorAll;
+document.querySelector = querySelector;
 throwDebug = false;
 

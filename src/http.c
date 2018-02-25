@@ -2688,6 +2688,7 @@ So check for serverData null here. Once again we pop the frame.
 		cdo = new_cf->docobj;
 		disconnectTagObject(cdt);
 		connectTagObject(cdt, cdo);
+		cdt->f0 = new_cf;
 		set_property_object(t->jv, "content$Document", cdo);
 		cna = get_property_object(t->jv, "childNodes");
 		set_array_element_object(cna, 0, cdo);
@@ -2854,6 +2855,7 @@ bool reexpandFrame(void)
 		cwo = cf->winobj;
 		disconnectTagObject(cdt);
 		connectTagObject(cdt, cdo);
+		cdt->f0 = cf;
 // have to point contentDocument to the new document object,
 // but that requires a change of context.
 		save_cf = cf;

@@ -1330,6 +1330,7 @@ Needless to say that's not good!
 	case TAGACT_HEAD:
 		domLink(t, "Head", 0, "heads", cf->docobj, 0);
 		set_property_number(t->jv, "nodeType", 1);
+		cf->headtag = t;
 		break;
 
 	case TAGACT_BODY:

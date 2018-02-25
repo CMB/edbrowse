@@ -1294,11 +1294,10 @@ void createJavaContext_nat(void)
 	duk_put_global_string(jcx, "eb$getter_cw");
 	duk_push_c_function(jcx, native_css_start, 1);
 	duk_put_global_string(jcx, "cssDocLoad");
-// using different names for now, while testing and debugging
 	duk_push_c_function(jcx, native_qsa, DUK_VARARGS);
-	duk_put_global_string(jcx, "querySelectorAll_c");
+	duk_put_global_string(jcx, "querySelectorAll");
 	duk_push_c_function(jcx, native_qs, DUK_VARARGS);
-	duk_put_global_string(jcx, "querySelector_c");
+	duk_put_global_string(jcx, "querySelector");
 
 	duk_push_heapptr(jcx, docobj);	// native document methods
 	duk_push_c_function(jcx, native_doc_write, DUK_VARARGS);
