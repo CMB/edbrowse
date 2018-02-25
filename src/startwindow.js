@@ -764,7 +764,7 @@ mw0.getComputedStyle = function(e,pe) {
 	// disregarding pseudoelements for now
 var s = new CSSStyleDeclaration;
 s.element = e;
-mw0.cssApply(e, s);
+cssApply(e, s);
 return s;
 }
 
@@ -2971,6 +2971,7 @@ w.cssList = w.cssList.concat(mw0.cssPieces(mw0.uncomment(t.data)));
 mw0.cssBroken();
 }
 
+/* deprecated
 mw0.cssApply = function(e, destination)
 {
 var w = my$win();
@@ -2992,6 +2993,7 @@ destination[propname] = propval;
 }
 }
 }
+*/
 
 // Apply rules to a given style object, which is this.
 Object.defineProperty(mw0.CSSStyleDeclaration.prototype, "cssText", {
@@ -3014,7 +3016,7 @@ this[propname] = propval;
 mw0.dostyle = function(n)
 {
 if(!n.style$2.eb$done) {
-mw0.cssApply(n, n.style$2);
+cssApply(n, n.style$2);
 n.style$2.eb$done = true;
 }
 }

@@ -2576,6 +2576,7 @@ ab:
 	action = t->action;
 	t->name = get_property_string(t->jv, "name");
 	t->id = get_property_string(t->jv, "id");
+	t->class = get_property_string(t->jv, "class");
 
 	switch (action) {
 	case TAGACT_INPUT:

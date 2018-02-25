@@ -515,9 +515,8 @@ struct htmlTag {
 	uchar itype;		/* input type = */
 	uchar itype_minor;
 	int ninp;		/* number of nonhidden inputs */
-	char *name, *id, *value, *href;
+	char *name, *id, *class, *nodeName, *value, *href;
 	const char *rvalue; /* for reset */
-	char *class;
 	char *innerHTML; /* the html string under this tag */
 	int inner;		/* for inner html */
 };

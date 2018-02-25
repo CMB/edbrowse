@@ -1713,10 +1713,11 @@ static void freeTag(struct htmlTag *t)
 	nzFree(t->textval);
 	nzFree(t->name);
 	nzFree(t->id);
+	nzFree(t->class);
+	nzFree(t->nodeName);
 	nzFree(t->value);
 	cnzFree(t->rvalue);
 	nzFree(t->href);
-	nzFree(t->class);
 	nzFree(t->js_file);
 	nzFree(t->innerHTML);
 
@@ -1799,6 +1800,7 @@ struct htmlTag *newTag(const char *name)
 	t->action = action;
 	t->info = ti;
 	t->seqno = cw->numTags;
+	t->nodeName = cloneString(name);
 	pushTag(t);
 	return t;
 }				/* newTag */
@@ -2135,14 +2137,7 @@ static void processStyles(jsobjtype so, const char *stylestring)
 			trimWhite(sv);
 // the property name has to be nonempty
 			if (*s) {
-// foo-bar has to become fooBar
-				char *t, *w;
-				for (t = w = s; *t; ++t)
-					if (*t == '-' && isalpha(t[1]))
-						t[1] = toupper(t[1]);
-					else
-						*w++ = *t;
-				*w = 0;
+				cssAttributeCrunch(s);
 				set_property_string(so, s, sv);
 			}
 		}

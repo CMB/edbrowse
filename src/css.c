@@ -730,6 +730,7 @@ lastrule:
 			a = allocMem(t - r1 + 1);
 			memcpy(a, r1, t - r1);
 			a[t - r1] = 0;
+			cssAttributeCrunch(a);
 			rule->atname = a;
 			++t;
 			while (isspace(*t))
@@ -1053,18 +1054,18 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 	if (a->tag) {
 		const char *nn;
 		if (t)
-			nn = t->info->name;
+			nn = t->nodeName;
 		else
 			nn = get_property_string_nat(obj, "nodeName");
-		if (nn) {
-			rc = stringEqual(nn, a->tag);
-			if (obj)
-				cnzFree(nn);
-			if (!rc)
-				return false;
-		}
+		if (!nn)	// should never happen
+			return false;
+		rc = stringEqual(nn, a->tag);
+		if (!t)
+			cnzFree(nn);
+		if (!rc)
+			return false;
 	}
-// step through the modifyers
+// now step through the modifyers
 	for (mod = a->modifiers; mod; mod = mod->next) {
 		char *p = mod->part;
 		char c = p[0];
@@ -1279,6 +1280,21 @@ next_a:	;
 	}
 
 	return true;
+}
+
+static bool qsaMatchGroup(struct htmlTag *t, jsobjtype obj,
+			  const struct desc *d)
+{
+	struct sel *sel;
+	if (d->error)
+		return false;
+	for (sel = d->selectors; sel; sel = sel->next) {
+		if (sel->error)
+			continue;
+		if (qsaMatchChain(t, obj, sel))
+			return true;
+	}
+	return false;
 }
 
 static bool matchfirst;
@@ -1513,4 +1529,46 @@ jsobjtype querySelector(const char *selstring, jsobjtype topobj)
 		node = a[0]->jv;
 	nzFree(a);
 	return node;
+}
+
+// foo-bar has to become fooBar
+void cssAttributeCrunch(char *s)
+{
+	char *t, *w;
+	for (t = w = s; *t; ++t)
+		if (*t == '-' && isalpha(t[1]))
+			t[1] = toupper(t[1]);
+		else
+			*w++ = *t;
+	*w = 0;
+}
+
+static void do_rules(jsobjtype obj, struct rule *r, bool force)
+{
+	if (!obj)
+		return;
+	for (; r; r = r->next) {
+// if it appears to be part of the prototype, and not the object,
+// I won't write it, even if force is true.
+		bool has = has_property_nat(obj, r->atname);
+		enum ej_proptype what = typeof_property_nat(obj, r->atname);
+		if (has && !what)
+			continue;
+		if (what && !force)
+			continue;
+		set_property_string_nat(obj, r->atname, r->atval);
+	}
+}
+
+void cssApply(jsobjtype node, jsobjtype destination)
+{
+	struct htmlTag *t = tagFromJavaVar(node);
+	struct cssmaster *cm = cf->cssmaster;
+	struct desc *d;
+	if (!cm)
+		return;
+	for (d = cm->descriptors; d; d = d->next) {
+		if (qsaMatchGroup(t, node, d))
+			do_rules(destination, d->rules, false);
+	}
 }

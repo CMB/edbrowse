@@ -1227,6 +1227,14 @@ static duk_ret_t native_qs(duk_context * cx)
 	return 1;
 }
 
+static duk_ret_t native_cssApply(duk_context * cx)
+{
+	if (duk_is_object(cx, 0) && duk_is_object(cx, 1))
+		cssApply(duk_get_heapptr(cx, 0), duk_get_heapptr(cx, 1));
+	duk_pop_2(cx);
+	return 0;
+}
+
 void createJavaContext_nat(void)
 {
 	static int seqno;
@@ -1298,6 +1306,8 @@ void createJavaContext_nat(void)
 	duk_put_global_string(jcx, "querySelectorAll");
 	duk_push_c_function(jcx, native_qs, DUK_VARARGS);
 	duk_put_global_string(jcx, "querySelector");
+	duk_push_c_function(jcx, native_cssApply, 2);
+	duk_put_global_string(jcx, "cssApply");
 
 	duk_push_heapptr(jcx, docobj);	// native document methods
 	duk_push_c_function(jcx, native_doc_write, DUK_VARARGS);

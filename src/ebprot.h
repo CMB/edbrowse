@@ -415,4 +415,6 @@ void cssDocLoad(char *s);
 void cssFree(struct ebFrame *f);
 jsobjtype querySelectorAll(const char *selstring, jsobjtype topobj);
 jsobjtype querySelector(const char *selstring, jsobjtype topobj);
+void cssAttributeCrunch(char *s);
+void cssApply(jsobjtype node, jsobjtype destination);
 
