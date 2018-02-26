@@ -266,7 +266,7 @@ static void convertNode(TidyNode node, int level, bool opentag)
 
 	switch (tidyNodeGetType(node)) {
 	case TidyNode_Text:
-		name = "Text";
+		name = "text";
 		break;
 	case TidyNode_Start:
 	case TidyNode_End:

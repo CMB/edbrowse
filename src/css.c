@@ -246,13 +246,14 @@ struct rule {
 };
 
 struct hashhead {
-	struct hashhead *next;
 	char *key;
 	struct htmlTag **body;
-	int a, n;
+	int n;
+	struct htmlTag *t;
 };
 
 static struct hashhead *hashtags, *hashids, *hashclasses;
+static int hashtags_n, hashids_n, hashclasses_n;
 
 struct cssmaster {
 	struct desc *descriptors;
@@ -1482,7 +1483,7 @@ static int doclist_cmp(const void *v1, const void *v2);
 static void build_doclist(struct htmlTag *top)
 {
 	doclist_n = 0;
-	doclist_a = 200;
+	doclist_a = 500;
 	doclist = allocMem((doclist_a + 1) * sizeof(struct htmlTag *));
 	if (top) {
 		doclist_f = top->f0;
@@ -1505,7 +1506,7 @@ static void build1_doclist(struct htmlTag *t)
 	if (t->f0 != doclist_f)
 		return;
 	if (doclist_n == doclist_a) {
-		doclist_a += 200;
+		doclist_a += 500;
 		doclist =
 		    reallocMem(doclist,
 			       (doclist_a + 1) * sizeof(struct htmlTag *));
@@ -1673,101 +1674,133 @@ void cssText(jsobjtype node, const char *rulestring)
 	cssPiecesFree(d0);
 }
 
+static int key_cmp(const void *s, const void *t)
+{
+// there shouldn't be any null or empty keys here.
+	return strcmp(((struct hashhead *)s)->key, ((struct hashhead *)t)->key);
+}
+
+// First two parameters are pass by address, so we can pass them back.
+// Third is true if keys are allocated.
+// Empty list is possible, corner case.
+static void hashSortCrunch(struct hashhead **hp, int *np, bool keyalloc)
+{
+	struct hashhead *h = *hp;
+	int n = *np;
+	struct hashhead *mark = 0, *v;
+	int i, j, distinct = 0;
+
+	if (n)
+		qsort(h, n, sizeof(struct hashhead), key_cmp);
+
+// /bin/uniq -c
+	for (i = 0; i < n; ++i) {
+		v = h + i;
+		if (!mark)
+			mark = v, v->n = 1, distinct = 1;
+		else if (stringEqual(mark->key, v->key))
+			++(mark->n), v->n = 0;
+		else
+			mark = v, v->n = 1, ++distinct;
+	}
+
+// now crunch
+	mark = 0;
+	for (i = 0; i < n; ++i) {
+		v = h + i;
+		if (!v->n) {	// same key
+			mark->body[j++] = v->t;
+			if (keyalloc)
+				nzFree(v->key);
+			continue;
+		}
+// it's a new key
+		if (!mark)
+			mark = h;
+		else
+			mark->body[j] = 0, ++mark;
+		if (mark < v)
+			(*mark) = (*v);
+		mark->body = allocMem((mark->n + 1) * sizeof(struct htmlTag *));
+		mark->body[0] = mark->t;
+		mark->t = 0;
+		j = 1;
+	}
+
+	if (mark) {
+		mark->body[j] = 0;
+		++mark;
+		if (mark - h != distinct)
+			printf("css hash mismatch %d versus %d\n", mark - h,
+			       distinct);
+		distinct = mark - h;
+	}
+// make sure there's something, even if distinct = 0
+	h = reallocMem(h, (distinct + 1) * sizeof(struct hashhead));
+	*hp = h, *np = distinct;
+}
+
 static void hashBuild(void)
 {
 	struct htmlTag *t;
-	int i;
-	struct hashhead *h, *h2;
+	int i, j, a;
+	struct hashhead *h;
 	static const char ws[] = " \t\r\n\f";	// white space
 	char *classcopy, *s, *u;
 
 	build_doclist(0);
 
-	for (i = 0; (t = doclist[i]); ++i) {
-
-// js has not run yet, this is a load time feature.
-// If t->class isn't set, there won't be a js counterpart,
-// don't waste your time checking.
-
-		if (t->nodeName && t->nodeName[0]) {
-			for (h = hashtags; h; h = h->next)
-				if (stringEqual(t->nodeName, h->key))
-					break;
-			if (!h) {
-				h = allocZeroMem(sizeof(struct hashhead));
-				h2 = hashtags;
-				hashtags = h;
-				h->next = h2;
-				h->a = 100;
-				h->body =
-				    allocMem(h->a * sizeof(struct htmlTag *));
-				h->key = cloneString(t->nodeName);
-			}
-			if (h->n == h->a) {
-				h->a += 100;
-				h->body =
-				    reallocMem(h->body,
-					       h->a * sizeof(struct htmlTag *));
-			}
-			h->body[h->n++] = t;
-		}
-
-		if (t->id && t->id[0]) {
-			for (h = hashids; h; h = h->next)
-				if (stringEqual(t->id, h->key))
-					break;
-			if (!h) {
-				h = allocZeroMem(sizeof(struct hashhead));
-				h2 = hashids;
-				hashids = h;
-				h->next = h2;
-				h->a = 100;
-				h->body =
-				    allocMem(h->a * sizeof(struct htmlTag *));
-				h->key = cloneString(t->id);
-			}
-			if (h->n == h->a) {
-				h->a += 100;
-				h->body =
-				    reallocMem(h->body,
-					       h->a * sizeof(struct htmlTag *));
-			}
-			h->body[h->n++] = t;
-		}
-// last one is class
-		if (!(t->class && t->class[0]))
+// tags first, every node should have a tag.
+	h = allocZeroMem(doclist_n * sizeof(struct hashhead));
+	for (i = j = 0; i < doclist_n; ++i) {
+		t = doclist[i];
+		if (!(t->nodeName && t->nodeName[0]))
 			continue;
+		h[j].key = t->nodeName;
+		h[j].t = t;
+		++j;
+	}
+	hashSortCrunch(&h, &j, false);
+	hashtags = h, hashtags_n = j;
 
-		for (h = hashclasses; h; h = h->next)
-			if (stringEqual(t->class, h->key))
-				break;
-		if (!h) {
-			h = allocZeroMem(sizeof(struct hashhead));
-			h2 = hashclasses;
-			hashclasses = h;
-			h->next = h2;
-			h->a = 100;
-			h->body = allocMem(h->a * sizeof(struct htmlTag *));
-			h->key = cloneString(t->class);
-		}
-		if (h->n == h->a) {
-			h->a += 100;
-			h->body =
-			    reallocMem(h->body,
-				       h->a * sizeof(struct htmlTag *));
-		}
-		h->body[h->n++] = t;
+// a lot of nodes won't have id, so this alloc is overkill, but oh well.
+	h = allocZeroMem(doclist_n * sizeof(struct hashhead));
+	for (i = j = 0; i < doclist_n; ++i) {
+		t = doclist[i];
+		if (!(t->id && t->id[0]))
+			continue;
+		h[j].key = t->id;
+		h[j].t = t;
+		++j;
+	}
+	hashSortCrunch(&h, &j, false);
+	hashids = h, hashids_n = j;
 
 /*********************************************************************
-class isn't as easy as the other two.
+Last one is class but it's tricky.
 If class is "foo bar", t must be hashed under foo and under bar.
 A combinatorial explosion is possible here.
 If class is "a b c d e" then we should hash under: "a" "b" "c" "d" "e"
 "a b" "b c" "c d" "d e" "a b c" "b c d" "c d e"
-"a b c d" "b c d e" and "abcde".
+"a b c d" "b c d e" and "a b c d e".
 I'm not going to worry about that.
 Just the indifidual words and the whole thing.
 *********************************************************************/
+
+	a = 500;
+	h = allocMem(a * sizeof(struct hashhead));
+	for (i = j = 0; i < doclist_n; ++i) {
+		t = doclist[i];
+		if (!(t->class && t->class[0]))
+			continue;
+		if (j == a) {
+			a += 500;
+			h = reallocMem(h, a * sizeof(struct hashhead));
+		}
+		classcopy = cloneString(t->class);
+		h[j].key = classcopy;
+		h[j].t = t;
+		++j;
 
 		if (!strpbrk(t->class, ws))
 			continue;	// no spaces
@@ -1782,28 +1815,13 @@ Just the indifidual words and the whole thing.
 			if (u)
 				cutc = *u, *u = 0;
 // s is the individual word
-
-			for (h = hashclasses; h; h = h->next)
-				if (stringEqual(s, h->key))
-					break;
-			if (!h) {
-				h = allocZeroMem(sizeof(struct hashhead));
-				h2 = hashclasses;
-				hashclasses = h;
-				h->next = h2;
-				h->a = 100;
-				h->body =
-				    allocMem(h->a * sizeof(struct htmlTag *));
-				h->key = cloneString(s);
+			if (j == a) {
+				a += 500;
+				h = reallocMem(h, a * sizeof(struct hashhead));
 			}
-			if (h->n == h->a) {
-				h->a += 100;
-				h->body =
-				    reallocMem(h->body,
-					       h->a * sizeof(struct htmlTag *));
-			}
-			h->body[h->n++] = t;
-
+			h[j].key = cloneString(s);
+			h[j].t = t;
+			++j;
 			if (!cutc)
 				break;
 			s = u + 1;
@@ -1813,44 +1831,42 @@ Just the indifidual words and the whole thing.
 
 		nzFree(classcopy);
 	}
+	hashSortCrunch(&h, &j, true);
+	hashclasses = h, hashclasses_n = j;
 }
 
 static void hashFree(void)
 {
-	struct hashhead *h, *h2;
-	h = hashtags;
-	while (h) {
-		nzFree(h->key);
-		nzFree(h->body);
-		h2 = h->next;
-		free(h);
-		h = h2;
+	struct hashhead *h;
+	int i;
+	for (i = 0; i < hashtags_n; ++i) {
+		h = hashtags + i;
+		free(h->body);
 	}
-	h = hashids;
-	while (h) {
-		nzFree(h->key);
-		nzFree(h->body);
-		h2 = h->next;
-		free(h);
-		h = h2;
+	free(hashtags);
+	hashtags = 0, hashtags_n = 0;
+	for (i = 0; i < hashids_n; ++i) {
+		h = hashids + i;
+		free(h->body);
 	}
-	h = hashclasses;
-	while (h) {
-		nzFree(h->key);
-		nzFree(h->body);
-		h2 = h->next;
-		free(h);
-		h = h2;
+	free(hashids);
+	hashids = 0, hashids_n = 0;
+	for (i = 0; i < hashclasses_n; ++i) {
+		h = hashclasses + i;
+		free(h->body);
+		free(h->key);
 	}
-	hashtags = hashids = hashclasses = 0;
+	free(hashclasses);
+	hashclasses = 0, hashclasses_n = 0;
 	nzFree(doclist);
-	doclist = 0;
+	doclist = 0, doclist_n = 0;
 }
 
 static void hashPrint(void)
 {
 	FILE *f;
 	struct hashhead *h;
+	int i;
 	if (!debugCSS)
 		return;
 	f = fopen(cssDebugFile, "a");
@@ -1858,14 +1874,20 @@ static void hashPrint(void)
 		return;
 	fprintf(f, "nodes %d\n", doclist_n);
 	fprintf(f, "tags:\n");
-	for (h = hashtags; h; h = h->next)
+	for (i = 0; i < hashtags_n; ++i) {
+		h = hashtags + i;
 		fprintf(f, "%s %d\n", h->key, h->n);
+	}
 	fprintf(f, "ids:\n");
-	for (h = hashids; h; h = h->next)
+	for (i = 0; i < hashids_n; ++i) {
+		h = hashids + i;
 		fprintf(f, "%s %d\n", h->key, h->n);
+	}
 	fprintf(f, "classes:\n");
-	for (h = hashclasses; h; h = h->next)
+	for (i = 0; i < hashclasses_n; ++i) {
+		h = hashclasses + i;
 		fprintf(f, "%s %d\n", h->key, h->n);
+	}
 	fprintf(f, "nodes end\n");
 	fclose(f);
 }
