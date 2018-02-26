@@ -2273,22 +2273,7 @@ n.style$2.eb$done = true;
 
 mw0.eb$qs$start = function()
 {
-var d = my$doc();
 mw0.cssGather();
-var a = d.getElementsByTagName('*');
-// skip past document element
-for(var i=1; i<a.length; ++i) {
-var n = a[i]; // node
-if(n instanceof CSSStyleDeclaration) // <style>
-continue;
-// there should always be a style object
-if(!(n.style instanceof CSSStyleDeclaration)) continue;
-n.style$2 = n.style;
-delete n.style;
-Object.defineProperty(n, "style", { get: function() { mw0.dostyle(this); return this.style$2; }});
-// cloneNode will read style as CSSStyleDeclaration, copy it,
-// not copy the getter, and it actually works.
-}
 }
 
 } // master compile

@@ -238,6 +238,7 @@ struct mod {
 	struct mod *next;
 	char *part;
 	bool before, after;
+	bool isclass, isid;
 };
 
 struct rule {
@@ -263,9 +264,16 @@ static void cssPiecesFree(struct desc *d);
 static void cssPiecesPrint(const struct desc *d);
 static void cssAtomic(struct asel *a);
 static void cssModify(struct asel *a, const char *m1, const char *m2);
+static bool onematch, bulkmatch, bulktotal;
+static struct htmlTag **doclist;
+static int doclist_a, doclist_n;
+static struct ebFrame *doclist_f;
+static void build_doclist(struct htmlTag *top);
 static void hashBuild(void);
 static void hashFree(void);
 static void hashPrint(void);
+static struct htmlTag **bestListAtomic(struct asel *a);
+static void cssEverybody(void);
 
 // Step back through a css string looking for the base url.
 // The result is allocated.
@@ -915,6 +923,10 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 
 	case '#':
 	case '.':
+		if (h == '.')
+			mod->isclass = true;
+		else
+			mod->isid = true;
 		propname = (h == '.' ? "[class~=" : "[id=");
 		w = allocMem(n + strlen(propname) + 1);
 		sprintf(w, "%s%s]", propname, t + 1);
@@ -974,9 +986,13 @@ void cssDocLoad(char *start)
 			fclose(f);
 		}
 	}
+	build_doclist(0);
 	hashBuild();
 	hashPrint();
+	cssEverybody();
+	debugPrint(3, "%d css assignments", bulktotal);
 	hashFree();
+	nzFree(doclist);
 }
 
 static void cssPiecesFree(struct desc *d)
@@ -1114,6 +1130,9 @@ static void cssPiecesPrint(const struct desc *d)
 // Match a node against an atomic selector.
 // One of t or obj should be nonzero.
 // It's more efficient with t.
+// If bulkmatch is true, then the document has loaded and no js has run.
+// If t->class is not set, there's no point dipping into js
+// to see if it has been set dynamically by a script.
 static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 {
 	bool rc;
@@ -1138,16 +1157,14 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 	for (mod = a->modifiers; mod; mod = mod->next) {
 		char *p = mod->part;
 		char c = p[0];
-		bool isclass = !strncmp(p, "[class~=", 8);
-		bool isid = !strncmp(p, "[id=", 4);
 
 // I'll assume that class and id, once set, are unchanging, like nodeName.
-		if (isclass && t) {
+		if (mod->isclass && t) {
 			char *v = t->class;
 			char *u = p + 8;
 			int l = strlen(u);
 			char *q;
-			if ((!v || !*v) && t->jv)	// dip into js
+			if ((!v || !*v) && !bulkmatch && t->jv)	// dip into js
 				t->class = v =
 				    get_property_string_nat(t->jv, "class");
 			if (!v)
@@ -1163,9 +1180,9 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			return false;
 		}
 
-		if (isid && t) {
+		if (mod->isid && t) {
 			char *v = t->id;
-			if ((!v || !*v) && t->jv)	// dip into js
+			if ((!v || !*v) && !bulkmatch && t->jv)	// dip into js
 				t->id = v =
 				    get_property_string_nat(t->jv, "id");
 			if (!v)
@@ -1178,7 +1195,11 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 		if (t)
 			obj = t->jv;
 
+// for bulkmatch we use the attributes on t,
+// not js, t is faster.
+
 		if (c == '[') {
+			bool valloc = false;
 			int l;
 			char cutc = 0;
 			char *value, *v, *v0, *q;
@@ -1192,19 +1213,25 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 				*cut = 0;	// I'll put it back
 			}
 			v = 0;
-			if (obj)
+			if (bulkmatch && t)
+				v = (char *)attribVal(t, p + 1);
+			else if (obj) {
 				v = get_property_string_nat(obj, p + 1);
+				valloc = true;
+			}
 			if (cut)
 				*cut = cutc;
 			if (!v || !*v)
 				return false;
 			if (!cutc) {
-				nzFree(v);
+				if (valloc)
+					nzFree(v);
 				goto next_mod;
 			}
 			if (cutc == '=') {	// easy case
 				rc = stringEqual(v, value);
-				nzFree(v);
+				if (valloc)
+					nzFree(v);
 				if (rc)
 					goto next_mod;
 				return false;
@@ -1212,7 +1239,8 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			if (cutc == '|') {
 				rc = (!strncmp(v, value, l)
 				      && (v[l] == 0 || v[l] == '-'));
-				nzFree(v);
+				if (valloc)
+					nzFree(v);
 				if (rc)
 					goto next_mod;
 				return false;
@@ -1225,10 +1253,12 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 					continue;
 				if (q[l] && !isspace(q[l]))
 					continue;
-				nzFree(v0);
+				if (valloc)
+					nzFree(v0);
 				goto next_mod;
 			}
-			nzFree(v0);
+			if (valloc)
+				nzFree(v0);
 			return false;
 		}
 // At this point c should be a colon.
@@ -1366,38 +1396,33 @@ static bool qsaMatchGroup(struct htmlTag *t, jsobjtype obj,
 	return false;
 }
 
-static bool matchfirst;
-static struct htmlTag **doclist;
-static int doclist_a, doclist_n;
-static struct ebFrame *doclist_f;
-
 // Match a selector against a list of nodes.
 // If list is not given then doclist is used - all nodes in the document.
 // the result is an allocated array of nodes from the list that match.
-static struct htmlTag **qsa1(struct htmlTag **list, const struct sel *sel)
+static struct htmlTag **qsa1(const struct sel *sel)
 {
-	int i, n;
+	int i, n = 1;
 	struct htmlTag *t;
-	struct htmlTag **a;
-	if (!list)
-		list = doclist;
-	if (matchfirst)
-		n = 1;
-	else {
+	struct htmlTag **a, **list = bestListAtomic(sel->chain);
+	if (!onematch && list) {
 // allocate room for all, in case they all match.
 		for (n = 0; list[n]; ++n) ;
 	}
 	a = allocMem((n + 1) * sizeof(struct htmlTag *));
+	if (!list) {
+		a[0] = 0;
+		return a;
+	}
 	n = 0;
 	for (i = 0; (t = list[i]); ++i) {
 		if (qsaMatchChain(t, 0, sel)) {
 			a[n++] = t;
-			if (matchfirst)
+			if (onematch)
 				break;
 		}
 	}
 	a[n] = 0;
-	if (!matchfirst)
+	if (!onematch)
 		a = reallocMem(a, (n + 1) * sizeof(struct htmlTag *));
 	return a;
 }
@@ -1462,13 +1487,13 @@ static struct htmlTag **qsa2(struct desc *d)
 	for (sel = d->selectors; sel; sel = sel->next) {
 		if (sel->error)
 			continue;
-		a2 = qsa1(0, sel);
+		a2 = qsa1(sel);
 		if (a) {
 			a_new = qsaMerge(a, a2);
 			nzFree(a);
 			nzFree(a2);
 			a = a_new;
-			if (matchfirst && a[0] && a[1])
+			if (onematch && a[0] && a[1])
 				a[1] = 0;
 		} else
 			a = a2;
@@ -1593,9 +1618,9 @@ jsobjtype querySelector(const char *selstring, jsobjtype topobj)
 	jsobjtype node = 0;
 	if (topobj)
 		top = tagFromJavaVar(topobj);
-	matchfirst = true;
+	onematch = true;
 	a = qsaInternal(selstring, top);
-	matchfirst = false;
+	onematch = false;
 	if (!a)
 		return 0;
 	if (a[0])
@@ -1629,6 +1654,7 @@ static void do_rules(jsobjtype obj, struct rule *r, bool force)
 			continue;
 		if (what && !force)
 			continue;
+		++bulktotal;
 		set_property_string_nat(obj, r->atname, r->atval);
 	}
 }
@@ -1690,8 +1716,7 @@ static void hashSortCrunch(struct hashhead **hp, int *np, bool keyalloc)
 	struct hashhead *mark = 0, *v;
 	int i, j, distinct = 0;
 
-	if (n)
-		qsort(h, n, sizeof(struct hashhead), key_cmp);
+	qsort(h, n, sizeof(struct hashhead), key_cmp);
 
 // /bin/uniq -c
 	for (i = 0; i < n; ++i) {
@@ -1890,4 +1915,94 @@ static void hashPrint(void)
 	}
 	fprintf(f, "nodes end\n");
 	fclose(f);
+}
+
+// use binary search to find the key in a hashlist
+static struct hashhead *findKey(struct hashhead *list, int n, const char *key)
+{
+	struct hashhead *h;
+	int rc, i, l = -1, r = n;
+	while (r - l > 1) {
+		i = (l + r) / 2;
+		h = list + i;
+		rc = strcmp(h->key, key);
+		if (!rc)
+			return h;
+		if (rc > 0)
+			r = i;
+		else
+			l = i;
+	}
+	return 0;		// not found
+}
+
+// Return the best list to scan for a given atomic selector.
+// This could be no list at all, if the selector includes .foo,
+// and there is no node of class foo.
+// Or it could be doclist if there is no tag and no class or id modifiers.
+static struct htmlTag **bestListAtomic(struct asel *a)
+{
+	struct mod *mod;
+	struct hashhead *h, *best_h;
+	int n, best_n = 0;
+
+	if (!bulkmatch)
+		return doclist;
+
+	if (a->tag) {
+		h = findKey(hashtags, hashtags_n, a->tag);
+		if (!h)
+			return 0;
+		best_n = h->n, best_h = h;
+	}
+
+	for (mod = a->modifiers; mod; mod = mod->next) {
+		if (mod->isid) {
+			h = findKey(hashids, hashids_n, mod->part + 4);
+			if (!h)
+				return 0;
+			n = h->n;
+			if (!best_n || n < best_n)
+				best_n = n, best_h = h;
+		}
+		if (mod->isclass) {
+			h = findKey(hashclasses, hashclasses_n, mod->part + 8);
+			if (!h)
+				return 0;
+			n = h->n;
+			if (!best_n || n < best_n)
+				best_n = n, best_h = h;
+		}
+	}
+
+	return (best_n ? best_h->body : doclist);
+}
+
+// Cross all selectors and all nodes at document load time.
+// Assumes the hash tables have been built.
+static void cssEverybody(void)
+{
+	struct cssmaster *cm = cf->cssmaster;
+	struct desc *d = cm->descriptors;
+	struct htmlTag **a, **u;
+	jsobjtype style;
+	struct htmlTag *t;
+	bulkmatch = true;
+	bulktotal = 0;
+	for (; d; d = d->next) {
+		if (d->error)
+			continue;
+		a = qsa2(d);
+		if (!a)
+			continue;
+		for (u = a; (t = *u); ++u) {
+			if (!t->jv)
+				continue;
+			style = get_property_object_nat(t->jv, "style");
+			if (style)
+				do_rules(style, d->rules, false);
+		}
+		nzFree(a);
+	}
+	bulkmatch = false;
 }
