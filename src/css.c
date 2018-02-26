@@ -7,6 +7,8 @@ e.g. www.stackoverflow.com with 5,050 descriptors.
 
 #include "eb.h"
 
+#define cssDebugFile "/tmp/css"
+
 #define CSS_ERROR_NONE 0
 #define CSS_ERROR_NOSEL 1
 #define CSS_ERROR_AT 2
@@ -18,15 +20,13 @@ e.g. www.stackoverflow.com with 5,050 descriptors.
 #define CSS_ERROR_TAG 8
 #define CSS_ERROR_ATTR 9
 #define CSS_ERROR_RATTR 10
-#define CSS_ERROR_CLASS 11
-#define CSS_ERROR_ID 12
-#define CSS_ERROR_DYN 13
-#define CSS_ERROR_BEFORE 14
-#define CSS_ERROR_AFTER 15
-#define CSS_ERROR_UNSUP 16
-#define CSS_ERROR_MULTIPLE 17
-#define CSS_ERROR_DELIM 18
-#define CSS_ERROR_LAST 19
+#define CSS_ERROR_DYN 11
+#define CSS_ERROR_BEFORE 12
+#define CSS_ERROR_AFTER 13
+#define CSS_ERROR_UNSUP 14
+#define CSS_ERROR_MULTIPLE 15
+#define CSS_ERROR_DELIM 16
+#define CSS_ERROR_LAST 17
 
 static const char *const errorMessage[] = {
 	"ok",
@@ -40,8 +40,6 @@ static const char *const errorMessage[] = {
 	"bad tag",
 	"bad selector attribute",
 	"bad rule attribute",
-	"bad class",
-	"bad id",
 	"dynamic",
 	"before",
 	"after",
@@ -251,18 +249,22 @@ struct hashhead {
 	struct hashhead *next;
 	char *key;
 	struct htmlTag **body;
-	int body_a, body_n;
+	int a, n;
 };
+
+static struct hashhead *hashtags, *hashids, *hashclasses;
 
 struct cssmaster {
 	struct desc *descriptors;
-	struct hashhead *hashtags, *hashclasses, *hashids;
 };
 
 static void cssPiecesFree(struct desc *d);
 static void cssPiecesPrint(const struct desc *d);
 static void cssAtomic(struct asel *a);
 static void cssModify(struct asel *a, const char *m1, const char *m2);
+static void hashBuild(void);
+static void hashFree(void);
+static void hashPrint(void);
 
 // Step back through a css string looking for the base url.
 // The result is allocated.
@@ -938,14 +940,17 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 			if ((isdigit(c) && w > t + 1) || isalpha(c) || c == '-')
 				continue;
 			a->error = CSS_ERROR_ATTR;
-			if (h == '.')
-				a->error = CSS_ERROR_CLASS;
-			if (h == '#')
-				a->error = CSS_ERROR_ID;
 			return;
 		}
-		if (*w)
-			unstring(w);
+		if (!*w)
+			break;
+		unstring(w);
+// [foo=] isn't well defined. I'm going to call it [foo]
+		if (w[1])
+			break;
+		*w-- = 0;
+		if (*w == '|' || *w == '~')
+			*w = 0;
 	}			// switch
 }
 
@@ -959,13 +964,18 @@ void cssDocLoad(char *start)
 	if (cm->descriptors)
 		cssPiecesFree(cm->descriptors);
 	cm->descriptors = cssPieces(start);
-	if (debugCSS && cm->descriptors) {
-		FILE *f = fopen("/tmp/css", "a");
+	if (!cm->descriptors)
+		return;
+	if (debugCSS) {
+		FILE *f = fopen(cssDebugFile, "a");
 		if (f) {
 			fprintf(f, "%s end\n", errorMessage[CSS_ERROR_DELIM]);
 			fclose(f);
 		}
 	}
+	hashBuild();
+	hashPrint();
+	hashFree();
 }
 
 static void cssPiecesFree(struct desc *d)
@@ -1036,7 +1046,7 @@ static void cssPiecesPrint(const struct desc *d)
 
 	if (!debugCSS)
 		return;
-	f = fopen("/tmp/css", "a");
+	f = fopen(cssDebugFile, "a");
 	if (!f)
 		return;
 	if (!d) {
@@ -1403,6 +1413,10 @@ static struct htmlTag **qsaMerge(struct htmlTag **list1, struct htmlTag **list2)
 	n = n1 + n2;
 	a = allocMem((n + 1) * sizeof(struct htmlTag *));
 	n = i1 = i2 = 0;
+	if (!n1)
+		g1 = false;
+	if (!n2)
+		g2 = false;
 	while (g1 | g2) {
 		if (!g1) {
 			a[n++] = list2[i2++];
@@ -1657,4 +1671,201 @@ void cssText(jsobjtype node, const char *rulestring)
 	}
 	do_rules(node, d0->rules, true);
 	cssPiecesFree(d0);
+}
+
+static void hashBuild(void)
+{
+	struct htmlTag *t;
+	int i;
+	struct hashhead *h, *h2;
+	static const char ws[] = " \t\r\n\f";	// white space
+	char *classcopy, *s, *u;
+
+	build_doclist(0);
+
+	for (i = 0; (t = doclist[i]); ++i) {
+
+// js has not run yet, this is a load time feature.
+// If t->class isn't set, there won't be a js counterpart,
+// don't waste your time checking.
+
+		if (t->nodeName && t->nodeName[0]) {
+			for (h = hashtags; h; h = h->next)
+				if (stringEqual(t->nodeName, h->key))
+					break;
+			if (!h) {
+				h = allocZeroMem(sizeof(struct hashhead));
+				h2 = hashtags;
+				hashtags = h;
+				h->next = h2;
+				h->a = 100;
+				h->body =
+				    allocMem(h->a * sizeof(struct htmlTag *));
+				h->key = cloneString(t->nodeName);
+			}
+			if (h->n == h->a) {
+				h->a += 100;
+				h->body =
+				    reallocMem(h->body,
+					       h->a * sizeof(struct htmlTag *));
+			}
+			h->body[h->n++] = t;
+		}
+
+		if (t->id && t->id[0]) {
+			for (h = hashids; h; h = h->next)
+				if (stringEqual(t->id, h->key))
+					break;
+			if (!h) {
+				h = allocZeroMem(sizeof(struct hashhead));
+				h2 = hashids;
+				hashids = h;
+				h->next = h2;
+				h->a = 100;
+				h->body =
+				    allocMem(h->a * sizeof(struct htmlTag *));
+				h->key = cloneString(t->id);
+			}
+			if (h->n == h->a) {
+				h->a += 100;
+				h->body =
+				    reallocMem(h->body,
+					       h->a * sizeof(struct htmlTag *));
+			}
+			h->body[h->n++] = t;
+		}
+// last one is class
+		if (!(t->class && t->class[0]))
+			continue;
+
+		for (h = hashclasses; h; h = h->next)
+			if (stringEqual(t->class, h->key))
+				break;
+		if (!h) {
+			h = allocZeroMem(sizeof(struct hashhead));
+			h2 = hashclasses;
+			hashclasses = h;
+			h->next = h2;
+			h->a = 100;
+			h->body = allocMem(h->a * sizeof(struct htmlTag *));
+			h->key = cloneString(t->class);
+		}
+		if (h->n == h->a) {
+			h->a += 100;
+			h->body =
+			    reallocMem(h->body,
+				       h->a * sizeof(struct htmlTag *));
+		}
+		h->body[h->n++] = t;
+
+/*********************************************************************
+class isn't as easy as the other two.
+If class is "foo bar", t must be hashed under foo and under bar.
+A combinatorial explosion is possible here.
+If class is "a b c d e" then we should hash under: "a" "b" "c" "d" "e"
+"a b" "b c" "c d" "d e" "a b c" "b c d" "c d e"
+"a b c d" "b c d e" and "abcde".
+I'm not going to worry about that.
+Just the indifidual words and the whole thing.
+*********************************************************************/
+
+		if (!strpbrk(t->class, ws))
+			continue;	// no spaces
+
+		classcopy = cloneString(t->class);
+		s = classcopy;
+		while (isspace(*s))
+			++s;
+		while (*s) {
+			char cutc = 0;	// cut character
+			u = strpbrk(s, ws);
+			if (u)
+				cutc = *u, *u = 0;
+// s is the individual word
+
+			for (h = hashclasses; h; h = h->next)
+				if (stringEqual(s, h->key))
+					break;
+			if (!h) {
+				h = allocZeroMem(sizeof(struct hashhead));
+				h2 = hashclasses;
+				hashclasses = h;
+				h->next = h2;
+				h->a = 100;
+				h->body =
+				    allocMem(h->a * sizeof(struct htmlTag *));
+				h->key = cloneString(s);
+			}
+			if (h->n == h->a) {
+				h->a += 100;
+				h->body =
+				    reallocMem(h->body,
+					       h->a * sizeof(struct htmlTag *));
+			}
+			h->body[h->n++] = t;
+
+			if (!cutc)
+				break;
+			s = u + 1;
+			while (isspace(*s))
+				++s;
+		}
+
+		nzFree(classcopy);
+	}
+}
+
+static void hashFree(void)
+{
+	struct hashhead *h, *h2;
+	h = hashtags;
+	while (h) {
+		nzFree(h->key);
+		nzFree(h->body);
+		h2 = h->next;
+		free(h);
+		h = h2;
+	}
+	h = hashids;
+	while (h) {
+		nzFree(h->key);
+		nzFree(h->body);
+		h2 = h->next;
+		free(h);
+		h = h2;
+	}
+	h = hashclasses;
+	while (h) {
+		nzFree(h->key);
+		nzFree(h->body);
+		h2 = h->next;
+		free(h);
+		h = h2;
+	}
+	hashtags = hashids = hashclasses = 0;
+	nzFree(doclist);
+	doclist = 0;
+}
+
+static void hashPrint(void)
+{
+	FILE *f;
+	struct hashhead *h;
+	if (!debugCSS)
+		return;
+	f = fopen(cssDebugFile, "a");
+	if (!f)
+		return;
+	fprintf(f, "nodes %d\n", doclist_n);
+	fprintf(f, "tags:\n");
+	for (h = hashtags; h; h = h->next)
+		fprintf(f, "%s %d\n", h->key, h->n);
+	fprintf(f, "ids:\n");
+	for (h = hashids; h; h = h->next)
+		fprintf(f, "%s %d\n", h->key, h->n);
+	fprintf(f, "classes:\n");
+	for (h = hashclasses; h; h = h->next)
+		fprintf(f, "%s %d\n", h->key, h->n);
+	fprintf(f, "nodes end\n");
+	fclose(f);
 }
