@@ -25,9 +25,8 @@ e.g. www.stackoverflow.com with 5,050 descriptors.
 #define CSS_ERROR_AFTER 15
 #define CSS_ERROR_UNSUP 16
 #define CSS_ERROR_MULTIPLE 17
-#define CSS_ERROR_DELIM1 18
-#define CSS_ERROR_DELIM2 19
-#define CSS_ERROR_LAST 20
+#define CSS_ERROR_DELIM 18
+#define CSS_ERROR_LAST 19
 
 static const char *const errorMessage[] = {
 	"ok",
@@ -248,14 +247,59 @@ struct rule {
 	char *atname, *atval;
 };
 
+struct hashhead {
+	struct hashhead *next;
+	char *key;
+	struct htmlTag **body;
+	int body_a, body_n;
+};
+
 struct cssmaster {
 	struct desc *descriptors;
+	struct hashhead *hashtags, *hashclasses, *hashids;
 };
 
 static void cssPiecesFree(struct desc *d);
 static void cssPiecesPrint(const struct desc *d);
 static void cssAtomic(struct asel *a);
 static void cssModify(struct asel *a, const char *m1, const char *m2);
+
+// Step back through a css string looking for the base url.
+// The result is allocated.
+static char *cssBase(const char *start, const char *end)
+{
+	char which;
+	char *a, *t;
+	int l, nest = 0;
+	for (; end >= start; --end) {
+		if (*end != '@')
+			continue;
+		if (strncmp(end, "@ebdelim", 8))
+			continue;
+		which = end[8];
+		if (which == '2') {
+			++nest;
+			continue;
+		}
+		if (which == '1') {
+			--nest;
+			if (nest >= 0)
+				continue;
+extract:
+			end += 9;
+			t = strstr(end, "{}\n");
+			l = t - end;
+			a = allocMem(l + 1);
+			memcpy(a, end, l);
+			a[l] = 0;
+			return a;
+		}
+		if (which == '0')
+			goto extract;
+	}
+// we shouldn't be here
+	return emptyString;
+}
 
 /*********************************************************************
 This is a really simple version of unstring. I don't decode \37 or \u1f.
@@ -327,6 +371,7 @@ top:
 			iu2 += 4;
 			t = iu2;
 			while ((c = *t)) {
+				char *lasturl, *newurl;
 				if (c == '"' || c == '\'') {
 					n = closeString(t + 1, c);
 					if (n < 0)	// should never happen
@@ -347,12 +392,15 @@ top:
 				if (*t)
 					++t;
 				iu3 = t;
+				lasturl = cssBase(s, iu2);
 				unstring(iu2);
-				debugPrint(3, "css source %s", iu2);
+				newurl = resolveURL(lasturl, iu2);
+				nzFree(lasturl);
+				debugPrint(3, "css source %s", newurl);
 				*iu1 = 0;
 				a = NULL;
 				if (httpConnect
-				    (iu2, false, false, true, 0, 0, 0)) {
+				    (newurl, false, false, true, 0, 0, 0)) {
 					if (ht_code == 200) {
 						a = force_utf8(serverData,
 							       serverDataLen);
@@ -364,7 +412,8 @@ top:
 						nzFree(serverData);
 						if (debugLevel >= 3)
 							i_printf(MSG_GetCSS,
-								 iu2, ht_code);
+								 newurl,
+								 ht_code);
 					}
 					serverData = NULL;
 					serverDataLen = 0;
@@ -375,13 +424,13 @@ top:
 				if (!a)
 					a = emptyString;
 				t = allocMem(strlen(s) + strlen(a) +
-					     strlen(iu3) + 24 + 1);
-				strcpy(t, s);
-				strcat(t, "@ebdelim1{}\n");
-				strcat(t, a);
-				strcat(t, "@ebdelim2{}\n");
-				strcat(t, iu3);
+					     strlen(newurl) + strlen(iu3) + 26 +
+					     1);
+				sprintf(t,
+					"%s\n@ebdelim1%s{}\n%s\n@ebdelim2{}\n%s",
+					s, newurl, a, iu3);
 				nzFree(a);
+				nzFree(newurl);
 				nzFree(s);
 				s = t;
 				goto top;
@@ -486,12 +535,8 @@ copy:		++s;
 			continue;
 		}
 // our special code to insert a delimiter into debugging output
-		if (stringEqual(s, "@ebdelim1")) {
-			d->error = CSS_ERROR_DELIM1;
-			continue;
-		}
-		if (stringEqual(s, "@ebdelim2")) {
-			d->error = CSS_ERROR_DELIM2;
+		if (!strncmp(s, "@ebdelim", 8)) {
+			d->error = CSS_ERROR_DELIM;
 			continue;
 		}
 // leading @ doesn't apply to edbrowse.
@@ -626,7 +671,7 @@ copy:		++s;
 		bool across = true;
 		uchar ec = CSS_ERROR_NONE;
 		if (d->error) {
-			if (d->error < CSS_ERROR_DELIM1) {
+			if (d->error < CSS_ERROR_DELIM) {
 				++loadcount;
 				++errorBuckets[d->error];
 			}
@@ -914,6 +959,13 @@ void cssDocLoad(char *start)
 	if (cm->descriptors)
 		cssPiecesFree(cm->descriptors);
 	cm->descriptors = cssPieces(start);
+	if (debugCSS && cm->descriptors) {
+		FILE *f = fopen("/tmp/css", "a");
+		if (f) {
+			fprintf(f, "%s end\n", errorMessage[CSS_ERROR_DELIM]);
+			fclose(f);
+		}
+	}
 }
 
 static void cssPiecesFree(struct desc *d)
@@ -987,7 +1039,6 @@ static void cssPiecesPrint(const struct desc *d)
 	f = fopen("/tmp/css", "a");
 	if (!f)
 		return;
-	fprintf(f, "%s start\n", errorMessage[CSS_ERROR_DELIM1]);
 	if (!d) {
 		fclose(f);
 		return;
@@ -995,13 +1046,20 @@ static void cssPiecesPrint(const struct desc *d)
 
 	for (; d; d = d->next) {
 		if (d->error) {
-			if (d->error == CSS_ERROR_DELIM1)
-				fprintf(f, "%s open\n",
-					errorMessage[CSS_ERROR_DELIM1]);
-			else if (d->error == CSS_ERROR_DELIM2)
-				fprintf(f, "%s close\n",
-					errorMessage[CSS_ERROR_DELIM2]);
-			else
+			if (d->error == CSS_ERROR_DELIM) {
+				char which = d->lhs[8];
+				if (which == '0')
+					fprintf(f, "%s start %s\n",
+						errorMessage[d->error],
+						d->lhs + 9);
+				if (which == '1')
+					fprintf(f, "%s open %s\n",
+						errorMessage[d->error],
+						d->lhs + 9);
+				if (which == '2')
+					fprintf(f, "%s close\n",
+						errorMessage[d->error]);
+			} else
 				fprintf(f, "<%s>%s\n", errorMessage[d->error],
 					d->lhs);
 			continue;

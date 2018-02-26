@@ -2239,16 +2239,20 @@ w.cssSource = [];
 // <style> tags in the html.
 var a = d.getElementsByTagName("style");
 var i, t;
+if(a.length)
+css_all += "@ebdelim0" + w.eb$base + "{}\n";
 for(i=0; i<a.length; ++i) {
 t = a[i];
-if(t.data) w.cssSource.push({data: t.data}), css_all += t.data;
+if(t.data) w.cssSource.push({data: t.data, src:w.eb$base}), css_all += t.data;
 }
 // <link type=text/css> tags in the html.
 a = d.getElementsByTagName("link");
 for(i=0; i<a.length; ++i) {
 t = a[i];
-if(t.type && t.type.toLowerCase() === "text/css") {
-if(t.data) w.cssSource.push({data: t.data}), css_all += t.data;
+if(t.type && t.type.toLowerCase() === "text/css" && t.data) {
+w.cssSource.push({data: t.data, src:t.href});
+css_all += "@ebdelim0" + t.href + "{}\n";
+css_all += t.data;
 }
 }
 eb$cssDocLoad(css_all);
