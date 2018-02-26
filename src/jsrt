@@ -472,7 +472,7 @@ Amount of objects to create <input type="text" id="fill_amount" name="fill_amoun
 <input type=button name=hog value="memory hog" onclick=memfill()>
 <input type=button name=mclear value="memory clear" onclick="memhog.length = 0">
 <br>
-<input type=button onclick="memshow()" name="mshow" value="show memory length">
+<button onclick="memshow()" name="mshow">show memory length</button>
 <input type=button name=goodbye value="jump away"
 onclick="alert('page is being replaced'); window.location.href='http://www.cartercenter.org';">
 <br>Message Body:
@@ -853,6 +853,11 @@ if(document.body.style.color != "black") fail(165);
 if(document.body.style.fontSize != "1.0em") fail(169);
 if(querySelector(".filbert #pecan").nodeName != "tr")
 fail(170);
+if(querySelector("text + #bird").nodeName != "input")
+fail(171);
+document.body.style.cssText = "ele-fitz:ger' a'ld";
+if(document.body.style.eleFitz != "ger ald")
+fail(172);
 
 // Create a frame and access something from its window.
 (function() {
