@@ -1446,7 +1446,7 @@ this[ev] = undefined;
 }
 this[evarray] = a;
 eval(
-'this["' + ev + '"] = function(){ var a = this["' + evarray + '"]; if(this["' + evorig + '"]) this["' + evorig + '"](); for(var i = 0; i<a.length; ++i) {var tempEvent = new Event;tempEvent.type = "' + ev_before_changes + '";a[i](tempEvent);} };');
+'this["' + ev + '"] = function(){ var a = this["' + evarray + '"]; var rc; if(this["' + evorig + '"]) { rc = this["' + evorig + '"](); if(!rc) return false; } for(var i = 0; i<a.length; ++i) {var tempEvent = new Event; tempEvent.type = "' + ev_before_changes + '"; rc = a[i](tempEvent); if(!rc) return false; } return true; };');
 }
 this[evarray].push(handler);
 }
