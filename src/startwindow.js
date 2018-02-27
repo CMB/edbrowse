@@ -2231,19 +2231,6 @@ onhashchange = eb$truefunction;
 
 if(!mw0.compiled) {
 
-// if debugThrow is set, see all errors, even caught errors.
-Duktape.errCreate = function (e) {
-if(my$win().throwDebug) {
-var n = e.lineNumber;
-var msg = "";
-if(typeof n === "number")
-msg += "line " + n + ": ";
-msg += e.toString();
-alert3(msg);
-}
-    return e;
-}
-
 mw0.Head.prototype.querySelector = querySelector;
 
 mw0.cssGather = function()
@@ -2297,5 +2284,18 @@ mw0.cssGather();
 eb$qs$start = mw0.eb$qs$start;
 document.querySelectorAll = querySelectorAll;
 document.querySelector = querySelector;
+
+// if debugThrow is set, see all errors, even caught errors.
+Duktape.errCreate = function (e) {
+if(throwDebug) {
+var n = e.lineNumber;
+var msg = "";
+if(typeof n === "number")
+msg += "line " + n + ": ";
+msg += e.toString();
+alert3(msg);
+}
+    return e;
+}
 throwDebug = false;
 
