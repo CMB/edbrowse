@@ -4164,6 +4164,8 @@ et_go:
 		debugCSS ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(debugCSS + MSG_DebugCSSOff);
+		if (debugCSS)
+			unlink("/tmp/css");
 		return true;
 	}
 
