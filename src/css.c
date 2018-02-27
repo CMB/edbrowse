@@ -21,12 +21,13 @@ e.g. www.stackoverflow.com with 5,050 descriptors.
 #define CSS_ERROR_ATTR 9
 #define CSS_ERROR_RATTR 10
 #define CSS_ERROR_DYN 11
-#define CSS_ERROR_BEFORE 12
-#define CSS_ERROR_AFTER 13
-#define CSS_ERROR_UNSUP 14
-#define CSS_ERROR_MULTIPLE 15
-#define CSS_ERROR_DELIM 16
-#define CSS_ERROR_LAST 17
+#define CSS_ERROR_INJECTNULL 12
+#define CSS_ERROR_INJECTHIGH 13
+#define CSS_ERROR_PE 14
+#define CSS_ERROR_UNSUP 15
+#define CSS_ERROR_MULTIPLE 16
+#define CSS_ERROR_DELIM 17
+#define CSS_ERROR_LAST 18
 
 static const char *const errorMessage[] = {
 	"ok",
@@ -41,8 +42,9 @@ static const char *const errorMessage[] = {
 	"bad selector attribute",
 	"bad rule attribute",
 	"dynamic",
-	"before",
-	"after",
+	"inject null",
+	"inject high",
+	"pseudo element",
 	": unsupported",
 	"multiple",
 	"==========",
@@ -208,7 +210,7 @@ struct desc {
 	char *lhs, *rhs;
 	short bc;		// brace count
 	uchar error;
-	bool gentext;		// generates text
+	bool content;		// rhs includes content=blah
 	struct sel *selectors;
 	struct rule *rules;
 };
@@ -217,7 +219,6 @@ struct desc {
 struct sel {
 	struct sel *next;
 	uchar error;
-	bool gentext;
 	bool before, after;
 	struct asel *chain;
 };
@@ -237,7 +238,6 @@ struct asel {
 struct mod {
 	struct mod *next;
 	char *part;
-	bool before, after;
 	bool isclass, isid;
 };
 
@@ -265,6 +265,7 @@ static void cssPiecesPrint(const struct desc *d);
 static void cssAtomic(struct asel *a);
 static void cssModify(struct asel *a, const char *m1, const char *m2);
 static bool onematch, bulkmatch, bulktotal;
+static char matchtype;		// 0 plain 1 before 2 after
 static struct htmlTag **doclist;
 static int doclist_a, doclist_n;
 static struct ebFrame *doclist_f;
@@ -621,16 +622,6 @@ copy:		++s;
 // pass characteristics of the atomic selector back up to the selector
 			if (asel->error && !sel->error)
 				sel->error = asel->error;
-// before and after should only be on the base node of the chain
-			if (!sel->chain->next) {
-				if (asel->before)
-					sel->before = true;
-				if (asel->after)
-					sel->after = true;
-				if (sel->before | sel->after)
-					d->gentext = sel->gentext = true;
-			}
-
 			if (combin == ',')
 				sel = 0;
 			a1 = s;
@@ -667,13 +658,32 @@ copy:		++s;
 		cssAtomic(asel);
 		if (asel->error && !sel->error)
 			sel->error = asel->error;
-		if (!sel->chain->next) {
-			if (asel->before)
-				sel->before = true;
-			if (asel->after)
-				sel->after = true;
-			if (sel->before | sel->after)
-				d->gentext = sel->gentext = true;
+	}
+
+// pull before and after up from atomic selector to selector
+	for (d = d1; d; d = d->next) {
+		if (d->error)
+			continue;
+		for (sel = d->selectors; sel; sel = sel->next) {
+			if (sel->error)
+				continue;
+			for (asel = sel->chain; asel; asel = asel->next) {
+				if (asel->before) {
+// before and after should only be on the base node of the chain
+					if (asel == sel->chain)
+						sel->before = true;
+					else
+						sel->error =
+						    CSS_ERROR_INJECTHIGH;
+				}
+				if (asel->after) {
+					if (asel == sel->chain)
+						sel->after = true;
+					else
+						sel->error =
+						    CSS_ERROR_INJECTHIGH;
+				}
+			}
 		}
 	}
 
@@ -681,17 +691,11 @@ copy:		++s;
 	for (d = d1; d; d = d->next) {
 		bool across = true;
 		uchar ec = CSS_ERROR_NONE;
-		if (d->error) {
-			if (d->error < CSS_ERROR_DELIM) {
-				++loadcount;
-				++errorBuckets[d->error];
-			}
+		if (d->error)
 			continue;
-		}
 		if (!d->selectors)	// should never happen
 			continue;
 		for (sel = d->selectors; sel; sel = sel->next) {
-			++loadcount;
 			if (!sel->error) {
 				across = false;
 				continue;
@@ -700,7 +704,6 @@ copy:		++s;
 				ec = sel->error;
 			else if (ec != sel->error)
 				ec = CSS_ERROR_MULTIPLE;
-			++errorBuckets[sel->error];
 		}
 		if (across)
 			d->error = ec;
@@ -716,9 +719,9 @@ copy:		++s;
 		s = d->rhs;
 		if (!*s) {
 			d->error = CSS_ERROR_NORULE;
-			++errorBuckets[d->error];
 			continue;
 		}
+
 		r1 = s;
 		while ((c = *s)) {
 			if (c == '"' || c == '\'') {
@@ -760,19 +763,16 @@ lastrule:
 				    isalpha(*t) || *t == '-')
 					continue;
 				d->error = CSS_ERROR_RATTR;
-				++errorBuckets[d->error];
 				break;
 			}
 			if (d->error)
 				break;
 			if (!*t) {
 				d->error = CSS_ERROR_COLON;
-				++errorBuckets[d->error];
 				break;
 			}
 			if (t == r1) {
 				d->error = CSS_ERROR_RATTR;
-				++errorBuckets[d->error];
 				break;
 			}
 			rule = allocZeroMem(sizeof(struct rule));
@@ -797,20 +797,79 @@ lastrule:
 				a[r2 - t] = 0;
 				rule->atval = a;
 				unstring(a);
+
+/*********************************************************************
+In theory, :before and :after can inject text, but they rarely do.
+They usually inject whitespace with a contrastihng background color
+or an interesting image or decoration, before or after a button or whatever.
+This means nothing to edbrowse.
+Look for content other than whitespace.
+Also, oranges.com uses content=none, I assume none is a reserved word for "".
+If content is real then set a flag.
+*********************************************************************/
+
+				if (stringEqual(rule->atname, "content") &&
+				    !stringEqual(a, "none")) {
+					while (*a) {
+						if (!isspace(*a)) {
+							d->content = true;
+							break;
+						}
+						++a;
+					}
+				}
+
 			} else
 				rule->atval = emptyString;
 			r1 = s;
 		}
+
 		if (r1 < s && !d->error && *r1 != '*' && *r1 != '_') {
 // There should have been a final ; but oops.
 // process the last rule as above.
 			r2 = s;
 			goto lastrule;
 		}
+
 		if (!d->rules) {
 			d->error = CSS_ERROR_NORULE;
-			++errorBuckets[d->error];
+			continue;
 		}
+// check for before after with no content
+		if (d->content)
+			continue;
+		for (sel = d->selectors; sel; sel = sel->next)
+			if (sel->before | sel->after)
+				sel->error = CSS_ERROR_INJECTNULL;
+	}
+
+// gather error statistics
+	for (d = d1; d; d = d->next) {
+		bool across = true;
+		uchar ec = CSS_ERROR_NONE;
+		if (d->error) {
+			if (d->error < CSS_ERROR_DELIM) {
+				++loadcount;
+				++errorBuckets[d->error];
+			}
+			continue;
+		}
+		if (!d->selectors)	// should never happen
+			continue;
+		for (sel = d->selectors; sel; sel = sel->next) {
+			++loadcount;
+			if (!sel->error) {
+				across = false;
+				continue;
+			}
+			if (!ec)
+				ec = sel->error;
+			else if (ec != sel->error)
+				ec = CSS_ERROR_MULTIPLE;
+			++errorBuckets[sel->error];
+		}
+		if (across)
+			d->error = ec;
 	}
 
 	cssStats();
@@ -906,12 +965,17 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 		}
 		if (stringEqual(t, ":before")) {
 			a->before = true;
-			a->error = CSS_ERROR_BEFORE;
 			return;
 		}
 		if (stringEqual(t, ":after")) {
 			a->after = true;
-			a->error = CSS_ERROR_AFTER;
+			return;
+		}
+		if (stringEqual(t, ":first-line") ||
+		    stringEqual(t, ":last-line") ||
+		    stringEqual(t, ":first-letter") ||
+		    stringEqual(t, ":last-letter")) {
+			a->error = CSS_ERROR_PE;
 			return;
 		}
 		if (!stringEqual(t, ":link") && !stringEqual(t, ":first-child")
@@ -1139,6 +1203,11 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 	struct mod *mod;
 	jsobjtype pobj;		// parent object
 
+	if ((a->before && matchtype != 1) ||
+	    (a->after && matchtype != 2) ||
+	    (!(a->before | a->after) && matchtype))
+		return false;
+
 	if (a->tag) {
 		const char *nn;
 		if (t)
@@ -1265,7 +1334,8 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 		if (c != ':')
 			return false;
 
-		if (stringEqual(p, ":link"))
+		if (stringEqual(p, ":link") ||
+		    stringEqual(p, ":before") || stringEqual(p, ":after"))
 			continue;
 
 		if (stringEqual(p, ":first-child")) {
@@ -1306,6 +1376,22 @@ next_mod:	;
 
 	return true;		// all modifiers pass
 }
+
+/*********************************************************************
+There's an important optimization we don't do.
+qsa1 picks the best list based on the atomic selector it is looking at,
+but if you look at the entire chain you can sometimes do better.
+This really happens.
+.foobar * {color:green}
+Everything below the node of class foobar is green.
+Right now * matches every node, then we march up the tree to see if
+.foobar is abov it, and if yes then the chain matches and it's green.
+It would be better to build a new list dynamically, everything below .foobar,
+and apply the rules to those nodes, which we were going to do anyways.
+Well these under * chains are somewhat rare,
+and the routine runs fast enough, even on stackoverflow.com, the worst site,
+so I'm not going to implement chain level optimization today.
+*********************************************************************/
 
 static bool qsaMatchChain(struct htmlTag *t, jsobjtype obj, const struct sel *s)
 {
@@ -1403,7 +1489,17 @@ static struct htmlTag **qsa1(const struct sel *sel)
 {
 	int i, n = 1;
 	struct htmlTag *t;
-	struct htmlTag **a, **list = bestListAtomic(sel->chain);
+	struct htmlTag **a, **list;
+
+	if ((sel->before && matchtype != 1) ||
+	    (sel->after && matchtype != 2) ||
+	    (!(sel->before | sel->after) && matchtype)) {
+		a = allocMem((n + 1) * sizeof(struct htmlTag *));
+		a[0] = 0;
+		return a;
+	}
+
+	list = bestListAtomic(sel->chain);
 	if (!onematch && list) {
 // allocate room for all, in case they all match.
 		for (n = 0; list[n]; ++n) ;
@@ -1643,20 +1739,63 @@ void cssAttributeCrunch(char *s)
 
 static void do_rules(jsobjtype obj, struct rule *r, bool force)
 {
+	char *s;
+	int sl;
+	jsobjtype textobj;
+	static const char jl[] = "text 0x0, 0x0";
+
 	if (!obj)
 		return;
-	for (; r; r = r->next) {
+
+	if (!matchtype) {
+		for (; r; r = r->next) {
 // if it appears to be part of the prototype, and not the object,
 // I won't write it, even if force is true.
-		bool has = has_property_nat(obj, r->atname);
-		enum ej_proptype what = typeof_property_nat(obj, r->atname);
-		if (has && !what)
-			continue;
-		if (what && !force)
-			continue;
-		++bulktotal;
-		set_property_string_nat(obj, r->atname, r->atval);
+			bool has = has_property_nat(obj, r->atname);
+			enum ej_proptype what =
+			    typeof_property_nat(obj, r->atname);
+			if (has && !what)
+				continue;
+			if (what && !force)
+				continue;
+			++bulktotal;
+			set_property_string_nat(obj, r->atname, r->atval);
+		}
+		return;
 	}
+// this is before and after, injecting text
+	s = initString(&sl);
+	for (; r; r = r->next) {
+		if (!stringEqual(r->atname, "content"))
+			continue;
+		if (stringEqual(r->atval, "none"))
+			continue;
+		if (sl)
+			stringAndChar(&s, &sl, ' ');
+		stringAndString(&s, &sl, r->atval);
+	}
+	if (!sl)		// should never happen
+		return;
+// put a space between the injected text and the original text
+	stringAndChar(&s, &sl, ' ');
+	if (matchtype == 2) {
+// oops, space belongs on the other side
+		memmove(s + 1, s, sl - 1);
+		s[0] = ' ';
+	}
+
+	textobj = instantiate_nat(cf->winobj, "eb$inject", "TextNode");
+	if (!textobj)		// should never happen
+		return;
+	set_property_string_nat(textobj, "data", s);
+	nzFree(s);
+	javaSetsLinkage(false, 'c', textobj, jl);
+	if (matchtype == 1)
+		run_function_onearg_nat(obj, "prependChild", textobj);
+	else
+		run_function_onearg_nat(obj, "appendChild", textobj);
+// It is now linked in and safe from gc
+	delete_property_nat(cf->winobj, "eb$inject");
 }
 
 void cssApply(jsobjtype node, jsobjtype destination)
@@ -1983,26 +2122,37 @@ static struct htmlTag **bestListAtomic(struct asel *a)
 static void cssEverybody(void)
 {
 	struct cssmaster *cm = cf->cssmaster;
-	struct desc *d = cm->descriptors;
+	struct desc *d0 = cm->descriptors, *d;
 	struct htmlTag **a, **u;
 	jsobjtype style;
 	struct htmlTag *t;
+
 	bulkmatch = true;
 	bulktotal = 0;
-	for (; d; d = d->next) {
-		if (d->error)
-			continue;
-		a = qsa2(d);
-		if (!a)
-			continue;
-		for (u = a; (t = *u); ++u) {
-			if (!t->jv)
+	for (matchtype = 0; matchtype <= 2; ++matchtype) {
+		for (d = d0; d; d = d->next) {
+			if (d->error)
 				continue;
-			style = get_property_object_nat(t->jv, "style");
-			if (style)
+			a = qsa2(d);
+			if (!a)
+				continue;
+			for (u = a; (t = *u); ++u) {
+				if (!t->jv)
+					continue;
+				if (matchtype)
+					style = t->jv;
+				else {
+					style =
+					    get_property_object_nat(t->jv,
+								    "style");
+					if (!style)
+						continue;
+				}
 				do_rules(style, d->rules, false);
+			}
+			nzFree(a);
 		}
-		nzFree(a);
 	}
 	bulkmatch = false;
+	matchtype = 0;
 }

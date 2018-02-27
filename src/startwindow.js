@@ -943,6 +943,11 @@ if(c.parentNode) c.parentNode.removeChild(c);
 return this.eb$apch2(c);
 }
 
+mw0.prependChild = function(c) {
+if(this.childNodes.length) this.insertBefore(c, this.childNodes[0]);
+else this.appendChild(c);
+}
+
 mw0.insertBefore = function(c, t) {
 if(c.parentNode) c.parentNode.removeChild(c);
 return this.eb$insbf(c, t);
@@ -1514,6 +1519,7 @@ c.prototype.getElementsByClassName = mw0.getElementsByClassName;
 // children
 c.prototype.hasChildNodes = mw0.hasChildNodes;
 c.prototype.appendChild = mw0.appendChild;
+c.prototype.prependChild = mw0.prependChild;
 c.prototype.insertBefore = mw0.insertBefore;
 c.prototype.replaceChild = mw0.replaceChild;
 // These are native, so it's ok to bounce off of document.
@@ -1598,6 +1604,7 @@ this.elements.insertBefore(newobj, item);
 mw0.eb$formname(this, newobj);
 }
 }
+mw0.Form.prototype.prependChild = mw0.prependChild;
 mw0.Form.prototype.hasChildNodes = mw0.hasChildNodes;
 mw0.Form.prototype.removeChildNative = document.removeChild;
 mw0.Form.prototype.removeChild = function(item) {
@@ -2044,6 +2051,7 @@ document.getElementsByTagName = mw0.getElementsByTagName;
 document.getElementsByClassName = mw0.getElementsByClassName;
 document.getElementsByName = mw0.getElementsByName;
 document.appendChild = mw0.appendChild;
+document.prependChild = mw0.prependChild;
 document.insertBefore = mw0.insertBefore;
 document.replaceChild = mw0.replaceChild;
 document.hasChildNodes = mw0.hasChildNodes;
@@ -2137,6 +2145,7 @@ newobj.parentNode = this;
 return newobj;
 }
 }
+Array.prototype.prependChild = mw0.prependChild;
 Array.prototype.removeChild = function(item) {
 for(var i=0; i<this.length; ++i)
 if(this[i] == item) {

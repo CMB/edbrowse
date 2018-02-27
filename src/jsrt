@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+<!-- browse length 637 -->
 <head id=boom>
 <meta content=Snoopy>
 <title>Edbrowse js regression test</title>
@@ -9,6 +10,8 @@
 <style>
 body { background: white; color: black; }
 .nut {color: blue; white-space: snork" \""; }
+.nut:after {waste:crap; content:zip; }
+p.inject:before { content:My }
 </style>
 </head>
 
@@ -310,8 +313,8 @@ function catdog(item) { alert('fluffy'); if(item.checked&&document.questionnaire
 document.writeln("<script language=JavaScript>document.writeln('Nested Script ');<" + "/script>");
 </script>
 
-<P>
-Subject: <input type='hidden' name='who' value='eklhad'>
+<P class=inject>
+subject: <input type='hidden' name='who' value='eklhad'>
 <input type='hidden' name='password' value='secret'>
 <input type='text' name='subject' size='50' maxlength='80'>
 <br>State and zip:
@@ -858,6 +861,10 @@ fail(171);
 document.body.style.cssText = "ele-fitz:ger' a'ld";
 if(document.body.style.eleFitz != "ger ald")
 fail(172);
+if(document.getElementsByClassName("inject")[0].firstChild.data != "My ")
+fail(173);
+if(document.spans[0].lastChild.data != " zip")
+fail(174);
 
 // Create a frame and access something from its window.
 (function() {
