@@ -722,6 +722,36 @@ if(before) p.insertBefore(s.firstChild, before);
 else p.appendChild(s.firstChild);
 }
 
+mw0.qsaWrap = function(s)
+{
+var a = querySelectorAll(s, this);
+// base node is not included, even if it matches
+for(var i=0; i<a.length; ++i)
+if(a[i] === this) {
+a.splice(i, 1);
+break;
+}
+return a;
+}
+
+mw0.qsWrap = function(s)
+{
+var item = querySelector(s, this);
+if(!item)
+return item;
+if(item !== this)
+return item;
+// Crap, I got the base element,
+// have to do it the less efficient way.
+var a = querySelectorAll(s, this);
+for(var i=0; i<a.length; ++i)
+if(a[i] === this) {
+a.splice(i, 1);
+break;
+}
+return a[0];
+}
+
 // Canvas method draws a picture. That's meaningless for us,
 // but it still has to be there.
 mw0.Canvas = function() {
@@ -1516,6 +1546,8 @@ var c = mw0[cn];
 c.prototype.getElementsByTagName = mw0.getElementsByTagName;
 c.prototype.getElementsByName = mw0.getElementsByName;
 c.prototype.getElementsByClassName = mw0.getElementsByClassName;
+c.prototype.querySelectorAll = mw0.qsaWrap;
+c.prototype.querySelector = mw0.qsWrap;
 // children
 c.prototype.hasChildNodes = mw0.hasChildNodes;
 c.prototype.appendChild = mw0.appendChild;
@@ -1570,6 +1602,8 @@ linnk form[element.name] to that element.
 mw0.Form.prototype.getElementsByTagName = mw0.getElementsByTagName;
 mw0.Form.prototype.getElementsByName = mw0.getElementsByName;
 mw0.Form.prototype.getElementsByClassName = mw0.getElementsByClassName;
+mw0.Form.prototype.querySelectorAll = mw0.qsaWrap;
+mw0.Form.prototype.querySelector = mw0.qsWrap;
 
 mw0.eb$formname = function(parent, child)
 {
@@ -2057,6 +2091,8 @@ eb$uplift = mw0.eb$uplift;
 document.getElementsByTagName = mw0.getElementsByTagName;
 document.getElementsByClassName = mw0.getElementsByClassName;
 document.getElementsByName = mw0.getElementsByName;
+document.querySelectorAll = mw0.qsaWrap;
+document.querySelector = mw0.qsWrap;
 document.appendChild = mw0.appendChild;
 document.prependChild = mw0.prependChild;
 document.insertBefore = mw0.insertBefore;
@@ -2231,8 +2267,6 @@ onhashchange = eb$truefunction;
 
 if(!mw0.compiled) {
 
-mw0.Head.prototype.querySelector = querySelector;
-
 mw0.cssGather = function()
 {
 var w = my$win();
@@ -2282,8 +2316,6 @@ mw0.cssGather();
 } // master compile
 
 eb$qs$start = mw0.eb$qs$start;
-document.querySelectorAll = querySelectorAll;
-document.querySelector = querySelector;
 
 // if debugThrow is set, see all errors, even caught errors.
 Duktape.errCreate = function (e) {
