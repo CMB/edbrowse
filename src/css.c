@@ -238,7 +238,7 @@ struct asel {
 struct mod {
 	struct mod *next;
 	char *part;
-	bool isclass, isid;
+	bool isclass, isid, negate;
 };
 
 struct rule {
@@ -911,6 +911,10 @@ static void cssAtomic(struct asel *a)
 		return;
 	m1 = s;
 	++s;
+// special code for :not(:whatever)
+	if (!strncmp(s, "not(", 4) && s[4])
+		s += 5;
+
 	while ((c = *s)) {
 		if (c == '"' || c == '\'') {
 			n = closeString(s + 1, c);
@@ -926,6 +930,9 @@ static void cssAtomic(struct asel *a)
 		cssModify(a, m1, s);
 		m1 = s;
 		++s;
+// special code for :not(:whatever)
+		if (!strncmp(s, "not(", 4) && s[4])
+			s += 5;
 	}
 
 // last modifier
@@ -943,6 +950,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 	t = allocMem(n + 1);
 	memcpy(t, m1, n);
 	t[n] = 0;
+
 	mod = allocZeroMem(sizeof(struct mod));
 	mod->part = t;
 // add this to the end of the chain
@@ -954,6 +962,15 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 	} else
 		a->modifiers = mod;
 
+// :not(foo) is jquery css syntax, whatever that is,
+// and can have any kind of complex selector inside,
+// but I'll do at least the simplest case, :not(modifier)
+	if (!strncmp(t, ":not(", 5) && t[n - 1] == ')') {
+		t[--n] = 0;
+		strmove(t, t + 5);
+		n -= 5;
+		mod->negate = true;
+	}
 // See if the modifier makes sense
 	h = t[0];
 	switch (h) {
@@ -1008,7 +1025,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 		for (w = t + 1; (c = *w); ++w) {
 			if (c == '=')
 				break;
-			if ((c == '|' || c == '~') && w[1] == '=') {
+			if (strchr("|~^*", c) && w[1] == '=') {
 				++w;
 				break;
 			}
@@ -1026,8 +1043,14 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 		if (w[1])
 			break;
 		*w-- = 0;
-		if (*w == '|' || *w == '~')
+		if (strchr("|~^*", *w))
 			*w = 0;
+		break;
+
+	default:
+// we could get here via :not(crap)
+		a->error = CSS_ERROR_UNSUP;
+		return;
 	}			// switch
 }
 
@@ -1172,7 +1195,9 @@ static void cssPiecesPrint(const struct desc *d)
 						 ' ' ? '^' : asel->combin));
 				fprintf(f, "%s", tag);
 				for (mod = asel->modifiers; mod;
-				     mod = mod->next)
+				     mod = mod->next) {
+					if (mod->negate)
+						fprintf(f, "~");
 					if (!strncmp(mod->part, "[class~=", 8))
 						fprintf(f, ".%s",
 							mod->part + 8);
@@ -1181,6 +1206,7 @@ static void cssPiecesPrint(const struct desc *d)
 							mod->part + 4);
 					else
 						fprintf(f, "%s", mod->part);
+				}
 			}
 		}
 		fprintf(f, "{");
@@ -1225,6 +1251,7 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 // now step through the modifyers
 	for (mod = a->modifiers; mod; mod = mod->next) {
 		char *p = mod->part;
+		bool negate = mod->negate;
 		char c = p[0];
 
 // I'll assume that class and id, once set, are unchanging, like nodeName.
@@ -1244,8 +1271,12 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 					continue;
 				if (q[l] && !isspace(q[l]))
 					continue;
+				if (negate)
+					return false;
 				goto next_mod;
 			}
+			if (negate)
+				goto next_mod;
 			return false;
 		}
 
@@ -1256,7 +1287,7 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 				    get_property_string_nat(t->jv, "id");
 			if (!v)
 				v = emptyString;
-			if (stringEqual(v, p + 4))
+			if (stringEqual(v, p + 4) ^ negate)
 				goto next_mod;
 			return false;
 		}
@@ -1276,7 +1307,7 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			if (cut) {
 				value = cut + 1;
 				l = strlen(value);
-				if (cut[-1] == '|' || cut[-1] == '~')
+				if (strchr("|~^*", cut[-1]))
 					--cut;
 				cutc = *cut;
 				*cut = 0;	// I'll put it back
@@ -1290,15 +1321,20 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			}
 			if (cut)
 				*cut = cutc;
-			if (!v || !*v)
+			if (!v || !*v) {
+				if (negate)
+					goto next_mod;
 				return false;
+			}
 			if (!cutc) {
 				if (valloc)
 					nzFree(v);
+				if (negate)
+					return false;
 				goto next_mod;
 			}
 			if (cutc == '=') {	// easy case
-				rc = stringEqual(v, value);
+				rc = (stringEqual(v, value) ^ negate);
 				if (valloc)
 					nzFree(v);
 				if (rc)
@@ -1308,6 +1344,23 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			if (cutc == '|') {
 				rc = (!strncmp(v, value, l)
 				      && (v[l] == 0 || v[l] == '-'));
+				rc ^= negate;
+				if (valloc)
+					nzFree(v);
+				if (rc)
+					goto next_mod;
+				return false;
+			}
+			if (cutc == '^') {
+				rc = (!strncmp(v, value, l) ^ negate);
+				if (valloc)
+					nzFree(v);
+				if (rc)
+					goto next_mod;
+				return false;
+			}
+			if (cutc == '*') {
+				rc = ((! !strstr(v, value)) ^ negate);
 				if (valloc)
 					nzFree(v);
 				if (rc)
@@ -1324,10 +1377,14 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 					continue;
 				if (valloc)
 					nzFree(v0);
+				if (negate)
+					return false;
 				goto next_mod;
 			}
 			if (valloc)
 				nzFree(v0);
+			if (negate)
+				goto next_mod;
 			return false;
 		}
 // At this point c should be a colon.
@@ -1342,7 +1399,7 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 // t is more efficient, but this doesn't work for body and head,
 // which have no parent in our representation.
 			if (t && t->parent) {
-				if (t == t->parent->firstchild)
+				if ((t == t->parent->firstchild) ^ negate)
 					goto next_mod;
 				return false;
 			}
@@ -1350,21 +1407,23 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			pobj = get_property_object_nat(obj, "parentNode");
 			if (!pobj)
 				return false;
-			if (get_property_object_nat(pobj, "firstChild") == obj)
+			if ((get_property_object_nat(pobj, "firstChild") ==
+			     obj) ^ negate)
 				goto next_mod;
 			return false;
 		}
 
 		if (stringEqual(p, ":last-child")) {
 			if (t && t->parent) {
-				if (!t->sibling)
+				if (!t->sibling ^ negate)
 					goto next_mod;
 				return false;
 			}
 			pobj = get_property_object_nat(obj, "parentNode");
 			if (!pobj)
 				return false;
-			if (get_property_object_nat(pobj, "lastChild") == obj)
+			if ((get_property_object_nat(pobj, "lastChild") ==
+			     obj) ^ negate)
 				goto next_mod;
 			return false;
 		}
@@ -2096,6 +2155,8 @@ static struct htmlTag **bestListAtomic(struct asel *a)
 	}
 
 	for (mod = a->modifiers; mod; mod = mod->next) {
+		if (mod->negate)
+			continue;
 		if (mod->isid) {
 			h = findKey(hashids, hashids_n, mod->part + 4);
 			if (!h)
