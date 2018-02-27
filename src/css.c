@@ -996,7 +996,8 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 			return;
 		}
 		if (!stringEqual(t, ":link") && !stringEqual(t, ":first-child")
-		    && !stringEqual(t, ":last-child")) {
+		    && !stringEqual(t, ":last-child")
+		    && !stringEqual(t, ":checked")) {
 			a->error = CSS_ERROR_UNSUP;
 			return;
 		}
@@ -1394,6 +1395,22 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 		if (stringEqual(p, ":link") ||
 		    stringEqual(p, ":before") || stringEqual(p, ":after"))
 			continue;
+
+		if (stringEqual(p, ":checked")) {
+			if (bulkmatch) {
+				if (t->checked ^ negate)
+					goto next_mod;
+				return false;
+			}
+// This is very dynamic, better go to the js world.
+			if (obj)
+				rc = get_property_bool_nat(obj, "checked");
+			else
+				rc = t->checked;
+			if (rc ^ negate)
+				goto next_mod;
+			return false;
+		}
 
 		if (stringEqual(p, ":first-child")) {
 // t is more efficient, but this doesn't work for body and head,
