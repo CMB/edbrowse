@@ -606,6 +606,9 @@ static void set_timeout(duk_context * cx, bool isInterval)
 		goto done;
 	}
 // stack now has function global fakePropertyName timer-object.
+// classs is milliseconds, for debugging
+	duk_push_int(cx, n);
+	duk_put_prop_string(jcx, -2, "class");
 	to = duk_get_heapptr(cx, -1);
 // protect this timer from the garbage collector.
 	duk_def_prop(cx, 1,
@@ -1754,6 +1757,39 @@ Function doesn't exist. true, unless debugging.
 Function encounters an error during execution. true, unless debugging.
 *********************************************************************/
 
+// For debugging; please leave the stack the way you found it.
+static void uptrace(jsobjtype node)
+{
+	if (debugLevel < 3)
+		return;
+	duk_push_heapptr(jcx, node);
+	while (true) {
+		const char *nn, *cn;	// node name class name
+		char nnbuf[20];
+		if (duk_get_prop_string(jcx, -1, "nodeName"))
+			nn = duk_to_string(jcx, -1);
+		else
+			nn = "?";
+		strncpy(nnbuf, nn, 20);
+		nnbuf[20 - 1] = 0;
+		if (!nnbuf[0])
+			strcpy(nnbuf, "?");
+		duk_pop(jcx);
+		if (duk_get_prop_string(jcx, -1, "class"))
+			cn = duk_to_string(jcx, -1);
+		else
+			cn = "?";
+		debugPrint(3, "%s.%s", nnbuf, (cn[0] ? cn : "?"));
+		duk_pop(jcx);
+		if (!duk_get_prop_string(jcx, -1, "parentNode")) {
+// we're done.
+			duk_pop_2(jcx);
+			break;
+		}
+		duk_remove(jcx, -2);
+	}
+}
+
 bool run_function_bool_nat(jsobjtype parent, const char *name)
 {
 	int dbl = 3;		// debug level
@@ -1788,6 +1824,7 @@ bool run_function_bool_nat(jsobjtype parent, const char *name)
 // error in execution
 	processError();
 	debugPrint(3, "failure on %p.%s()", parent, name);
+	uptrace(parent);
 	debugPrint(3, "execution complete");
 	return (debugLevel < 3);
 }				/* run_function_bool_nat */
@@ -1815,6 +1852,7 @@ void run_function_onearg_nat(jsobjtype parent, const char *name,
 // error in execution
 	processError();
 	debugPrint(3, "failure on %p.%s[]", parent, name);
+	uptrace(parent);
 }				/* run_function_onearg_nat */
 
 jsobjtype instantiate_array_nat(jsobjtype parent, const char *name)
@@ -1831,6 +1869,7 @@ jsobjtype instantiate_array_nat(jsobjtype parent, const char *name)
 	if (duk_pnew(jcx, 0)) {
 		processError();
 		debugPrint(3, "failure on %p.%s = []", parent, name);
+		uptrace(parent);
 		duk_pop(jcx);
 		return 0;
 	}
@@ -1863,6 +1902,7 @@ jsobjtype instantiate_nat(jsobjtype parent, const char *name,
 		processError();
 		debugPrint(3, "failure on %p.%s = new %s", parent, name,
 			   classname);
+		uptrace(parent);
 		duk_pop(jcx);
 		return 0;
 	}
@@ -1884,6 +1924,7 @@ jsobjtype instantiate_array_element_nat(jsobjtype parent, int idx,
 		processError();
 		debugPrint(3, "failure on %p[%d] = new %s", parent, idx,
 			   classname);
+		uptrace(parent);
 		duk_pop(jcx);
 		return 0;
 	}

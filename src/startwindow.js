@@ -658,7 +658,7 @@ mw0.P = function(){}
 mw0.Header = function(){}
 mw0.Footer = function(){}
 mw0.Script = function(){}
-mw0.Timer = function(){}
+mw0.Timer = function(){this.nodeName = "timer";}
 mw0.Audio = function(){}
 
 /*********************************************************************
@@ -1588,7 +1588,7 @@ mw0.Form.prototype.appendChildNative = mw0.appendChild;
 mw0.Form.prototype.appendChild = function(newobj) {
 this.appendChildNative(newobj);
 if(newobj.nodeName === "input" || newobj.nodeName === "select") {
-this.elements.appendChild(newobj);
+this.elements.push(newobj);
 mw0.eb$formname(this, newobj);
 }
 }
@@ -1599,8 +1599,11 @@ mw0.Form.prototype.insertBeforeNative = mw0.insertBefore;
 mw0.Form.prototype.insertBefore = function(newobj, item) {
 this.insertBeforeNative(newobj, item);
 if(newobj.nodeName === "input" || newobj.nodeName === "select") {
-// the following won't work unless item is also type input.
-this.elements.insertBefore(newobj, item);
+for(var i=0; i<this.elements.length; ++i)
+if(this.elements[i] == item) {
+this.elements.splice(i, 0, newobj);
+break;
+}
 mw0.eb$formname(this, newobj);
 }
 }
@@ -1610,7 +1613,11 @@ mw0.Form.prototype.removeChildNative = document.removeChild;
 mw0.Form.prototype.removeChild = function(item) {
 this.removeChildNative(item);
 if(item.nodeName === "input" || item.nodeName === "select")
-this.elements.removeChild(item);
+for(var i=0; i<this.elements.length; ++i)
+if(this.elements[i] == item) {
+this.elements.splice(i, 1);
+break;
+}
 return item;
 }
 mw0.Form.prototype.replaceChild = mw0.replaceChild;
