@@ -1608,18 +1608,12 @@ static void gopher_ls_line(char *line)
 	stringAndString(&serverData, &serverDataLen, "<br>\n");
 
 // i or 3 is informational, 3 being an error.
-// 1 and 7 are hyperlinks, don't know about the others.
-	if (!strchr("17h", first)) {
-		if (first != 'i' && first != '3') {
-			char what[8];
-			sprintf(what, "<%c> ", first);
-			stringAndString(&serverData, &serverDataLen, what);
-		}
+	if (first == 'i' || first == '3') {
 		prepHtmlString(text);
 		stringAndChar(&serverData, &serverDataLen, '\n');
 		return;
 	}
-// 1 7 h are hyperlinks
+// everything else becomes hyperlink
 	if (host) {
 		char qc = '"';
 // I just assume host and path can be quoted with either " or '
@@ -1656,6 +1650,8 @@ static void gopher_ls_line(char *line)
 	}
 
 	s = strchr(text, '(');
+	if (s && s == text)
+		s = 0;
 	if (s)
 		*s = 0;
 	prepHtmlString(text);

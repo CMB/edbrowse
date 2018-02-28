@@ -7,6 +7,8 @@ Specify a different config file on the command line.
 
 Rewrite the css parser and querySelectorAll machinery in C for efficiency and flexibility.
 
+Support for gopher.
+
 3.7.2:
 Keep third party open source javascript routines in a separate file third.js.
 Licenses are included in that file.

@@ -89,6 +89,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#cook> Cookies </A>
 <LI><A HREF=#ssl> Secure Connections </A>
 <LI><A HREF=#ftp> FTP Retrievals </A>
+<LI><A HREF=#gopher> Gopher Support </A>
 <LI><A HREF=#proxy> Proxy Servers </A>
 <LI><A HREF=#frame> Frames </A>
 </UL>
@@ -2637,6 +2638,7 @@ but don't let that stop you from making your online purchases.
 
 <H3> <A NAME=ftp> FTP Retrievals </A> </H3>
 
+<P>
 This browser supports the retrieval of ftp files and directories.
 You can provide an FTP URL like:
 ftp://ftp.random.com/tarball.tar.gz
@@ -2682,8 +2684,16 @@ and the other works well when the server is behind a router.
 You can specify ftp mode active by entering the command `fma',
 or ftp mode passive by `fmp'.
 
+<H3> <A NAME=gopher> Gopher Support </A> </H3>
+
+<P>
+Gopher is similar to ftp, providing an easy way to download files from a public site.
+Edbrowse supports this via the gopher:// protocol.
+Once again, directory listings are converted into html, so you can activate a hyperlink and procede to a submenu or download a file.
+
 <H3> <A NAME=proxy> Proxy Servers </A> </H3>
 
+<P>
 A proxy server is a web server that sits between your web browser and remote websites.
 It intercepts your requests for web pages and forwards them to the system that hosts
 the site you are browsing.
