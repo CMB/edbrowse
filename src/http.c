@@ -1567,8 +1567,8 @@ static void ftp_listing(void)
 /* Format a line from a gopher directory. */
 static void gopher_ls_line(char *line)
 {
+	int prot;
 	char first, *text, *pathname, *host, *s;
-	int prot = 70;
 	int l = strlen(line);
 	if (l && line[l - 1] == '\r')
 		line[--l] = 0;
@@ -1595,7 +1595,8 @@ static void gopher_ls_line(char *line)
 			s = strchr(host, '\t');
 			if (s) {
 				*s++ = 0;
-				prot = atoi(s);
+				if (*s)
+					prot = atoi(s);
 			}
 		}
 	}
@@ -1608,7 +1609,7 @@ static void gopher_ls_line(char *line)
 
 // i or 3 is informational, 3 being an error.
 // 1 and 7 are hyperlinks, don't know about the others.
-	if (first != '1' && first != '7') {
+	if (!strchr("17h", first)) {
 		if (first != 'i' && first != '3') {
 			char what[8];
 			sprintf(what, "<%c> ", first);
@@ -1618,23 +1619,38 @@ static void gopher_ls_line(char *line)
 		stringAndChar(&serverData, &serverDataLen, '\n');
 		return;
 	}
-// type 1 is a hyperlink
+// 1 7 h are hyperlinks
 	if (host) {
 		char qc = '"';
 // I just assume host and path can be quoted with either " or '
 		if (strchr(host, qc)	// should never happen
-		    || (pathname && strchr(pathname, qc)))
+		    || strchr(pathname, qc))
 			qc = '\'';
 		stringAndString(&serverData, &serverDataLen, "<a href=x");
 		serverData[serverDataLen - 1] = qc;
-		stringAndString(&serverData, &serverDataLen, "gopher://");
-		stringAndString(&serverData, &serverDataLen, host);
-		if (prot != 70) {
-			stringAndChar(&serverData, &serverDataLen, ':');
-			stringAndNum(&serverData, &serverDataLen, prot);
+		if (!strncmp(pathname, "URL:", 4)) {
+			stringAndString(&serverData, &serverDataLen,
+					pathname + 4);
+		} else {
+			stringAndString(&serverData, &serverDataLen,
+					(first ==
+					 'h' ? "http://" : "gopher://"));
+			stringAndString(&serverData, &serverDataLen, host);
+			if (prot) {
+				stringAndChar(&serverData, &serverDataLen, ':');
+				stringAndNum(&serverData, &serverDataLen, prot);
+			}
+// gopher requires us to inject the  "first" directive into the path. Wow.
+			if (pathname[0] == '/' && pathname[1]) {
+				stringAndChar(&serverData, &serverDataLen, '/');
+				stringAndChar(&serverData, &serverDataLen,
+					      first);
+				stringAndString(&serverData, &serverDataLen,
+						pathname + 1);
+			} else
+				stringAndString(&serverData, &serverDataLen,
+						pathname);
 		}
-		if (pathname)
-			stringAndString(&serverData, &serverDataLen, pathname);
 		stringAndChar(&serverData, &serverDataLen, qc);
 		stringAndChar(&serverData, &serverDataLen, '>');
 	}
