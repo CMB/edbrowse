@@ -1942,6 +1942,7 @@ static bool gopherConnect(const char *url, bool f_encoded)
 	int protLength;		/* length of "gopher://" */
 	bool transfer_success = false;
 	bool has_slash;
+	char *s;
 	CURLcode curlret = CURLE_OK;
 
 	is_http = false;
@@ -1969,6 +1970,16 @@ static bool gopherConnect(const char *url, bool f_encoded)
 /* don't download a directory listing, we want to see that */
 	cbd.down_state = (has_slash ? 0 : 1);
 	down_msg = MSG_GopherDownload;
+// That's the default, let the leading character override
+	s = strchr(urlcopy + protLength, '/');
+	if (s && s[1]) {
+// almost every file type downwloads.
+		cbd.down_state = 1;
+		if (strchr("017", s[1]))
+			cbd.down_state = 0;
+		if (s[1] == '1' || s[1] == '7')
+			has_slash = true;
+	}
 
 perform:
 	curlret = fetch_internet(h);
