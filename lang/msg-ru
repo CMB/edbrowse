@@ -157,7 +157,7 @@ cannot open config file %s\n
 ни одна из помеченных строк успешно модифицирована
 операция прервана
 нет соответствия
-0
+This gopher directory listing is empty.
 агент номер %d не определен
 не можно выписать нового каталога
 не можно создать текущего каталога
@@ -225,7 +225,7 @@ cannot open %s
 cannot read from %s
 input text contains nulls
 line contains an embedded carriage return
-0
+gopher download: 
 file is currently in buffer - please use the rf command to refresh
 cannot browse a binary file
 cannot browse an empty file

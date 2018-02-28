@@ -157,7 +157,7 @@ todas as linhas condizem com o padrão v
 nenhuma linha marcada modificada com sucesso
 operação interrompida
 nada similar
-0
+Esta listagem do diretório gopher está vazia.
 agente número %d não definido
 não foi possível mostrar diretório novo
 não foi possível estabelecer o diretório atual
@@ -225,7 +225,7 @@ impossível abrir %s
 impossível ler a partir de %s
 texto de entrada contém caracteres nulos
 a linha possui um retorno de carro embutido
-0
+download via gopher: 
 arquivo atualmente no buffer - use por favor o comando rf para atualizar
 impossível navegar num arquivo binário
 impossível navegar num arquivo vazio

@@ -157,7 +157,7 @@ wszystkie wiersze pasują do wzorca 'v'
 żaden z zaznaczonych wierszy nie został poprawnie zmodyfikowany
 operacja przerwana
 brak pasujących wyników
-0
+Lista zawartości tego katalogu gopher jest pusta
 agent numer %d nie został zdefiniowany
 nie można wyświetlić nowego katalogu
 nie można wykryć bieżącego katalogu
@@ -225,7 +225,7 @@ nie można otworzyć %s
 nie można wczytać %s
 wprowadzony tekst zawiera puste znaki
 wiersz zawiera znak powrotu karetki
-0
+ściąganie gopher: 
 plik jest obecnie w buforze - użyj polecenia 'rf' by odświeżyć
 nie można przeglądać pliku binarnego
 nie można przeglądać pustego pliku

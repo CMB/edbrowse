@@ -157,7 +157,7 @@ alle Zeilen passen auf dem Ausdruck v
 keine der markierten Zeilen wurden erfolgreich entfernt
 Operation unterbrochen
 kein Treffer
-0
+Diese gopher-Auflistung ist leer
 Agent Nummer %d ist nicht definiert
 konnte neues Verzeichnis nicht ausgeben
 konnte aktuelles Verzeichnis nicht anzeigen
@@ -225,7 +225,7 @@ kann %s nicht öffnen
 kann %s nicht lesen
 eingegebener Text enthält Nullbytes
 Zeile enthält einen Zeilenumbruch
-0
+gopher download:
 Datei ist momentan in einem Puffer, nutzen Sie rf zum aktualisieren
 Binärdatei nicht im Browsermodus verfügbar
 kann leere Datei nicht im Browsermodus anzeigen

@@ -278,6 +278,7 @@ static CURLcode fetch_internet(CURL * h)
 
 static bool ftpConnect(const char *url, const char *user, const char *pass,
 		       bool f_encoded);
+static bool gopherConnect(const char *url, bool f_encoded);
 static bool read_credentials(char *buffer);
 static size_t curl_header_callback(char *header_line, size_t size, size_t nmemb,
 				   struct eb_curl_callback_data *data);
@@ -936,6 +937,8 @@ bool httpConnect(const char *url, bool down_ok, bool webpage,
 
 	if (stringEqualCI(prot, "http") || stringEqualCI(prot, "https")) {
 		;		/* ok for now */
+	} else if (stringEqualCI(prot, "gopher")) {
+		return gopherConnect(url, f_encoded);
 	} else if (stringEqualCI(prot, "ftp") ||
 		   stringEqualCI(prot, "ftps") ||
 		   stringEqualCI(prot, "scp") ||
@@ -1428,8 +1431,32 @@ curl_fail:
 	return transfer_status;
 }				/* httpConnect */
 
-/* Format a line from an ftp ls. */
-static void ftpls(char *line)
+// copy text over to serverData but change < to &lt; etc,
+// since this data will be browsed as if it were html.
+static void prepHtmlString(const char *q)
+{
+	char c;
+	if (!strpbrk(q, "<>&")) {	// no bad characters
+		stringAndString(&serverData, &serverDataLen, q);
+		return;
+	}
+	for (; (c = *q); ++q) {
+		char *meta = 0;
+		if (c == '<')
+			meta = "&lt;";
+		if (c == '>')
+			meta = "&gt;";
+		if (c == '&')
+			meta = "&amp;";
+		if (meta)
+			stringAndString(&serverData, &serverDataLen, meta);
+		else
+			stringAndChar(&serverData, &serverDataLen, c);
+	}
+}
+
+/* Format a line from an ftp directory. */
+static void ftp_ls_line(char *line)
 {
 	int l = strlen(line);
 	int j;
@@ -1503,32 +1530,13 @@ static void ftpls(char *line)
 		}
 	}
 
-	if (!strpbrk(line, "<>&")) {
-		stringAndString(&serverData, &serverDataLen, line);
-	} else {
-		char c, *q;
-		for (q = line; (c = *q); ++q) {
-			char *meta = 0;
-			if (c == '<')
-				meta = "&lt;";
-			if (c == '>')
-				meta = "&gt;";
-			if (c == '&')
-				meta = "&amp;";
-			if (meta)
-				stringAndString(&serverData, &serverDataLen,
-						meta);
-			else
-				stringAndChar(&serverData, &serverDataLen, c);
-		}
-	}
-
+	prepHtmlString(line);
 	stringAndChar(&serverData, &serverDataLen, '\n');
-}				/* ftpls */
+}				/* ftp_ls_line */
 
-/* parse_directory_listing: convert an FTP-style listing to html. */
-/* Repeatedly calls ftpls to parse each line of the data. */
-static void parse_directory_listing(void)
+/* ftp_listing: convert an FTP-style listing to html. */
+/* Repeatedly calls ftp_ls_line to parse each line of the data. */
+static void ftp_listing(void)
 {
 	char *s, *t;
 	char *incomingData = serverData;
@@ -1547,14 +1555,132 @@ static void parse_directory_listing(void)
 			if (!t || t >= incomingData + incomingLen)
 				break;	/* should never happen */
 			*t = 0;
-			ftpls(s);
+			ftp_ls_line(s);
 			s = t + 1;
 		}
 	}
 
 	stringAndString(&serverData, &serverDataLen, "</body></html>\n");
 	nzFree(incomingData);
-}				/* parse_directory_listing */
+}				/* ftp_listing */
+
+/* Format a line from a gopher directory. */
+static void gopher_ls_line(char *line)
+{
+	char first, *text, *pathname, *host, *s;
+	int prot = 70;
+	int l = strlen(line);
+	if (l && line[l - 1] == '\r')
+		line[--l] = 0;
+
+// first character is the type of line
+	first = 'i';
+	if (line[0])
+		first = *line++;
+// . alone ends the listing
+	if (first == '.')
+		return;
+
+// cut into pieces by tabs.
+	pathname = host = 0;
+	text = line;
+	s = strchr(line, '\t');
+	if (s) {
+		*s++ = 0;
+		pathname = s;
+		s = strchr(pathname, '\t');
+		if (s) {
+			*s++ = 0;
+			host = s;
+			s = strchr(host, '\t');
+			if (s) {
+				*s++ = 0;
+				prot = atoi(s);
+			}
+		}
+	}
+
+	while (*text == ' ')
+		++text;
+
+// gopher is very much line oriented.
+	stringAndString(&serverData, &serverDataLen, "<br>\n");
+
+// i or 3 is informational, 3 being an error.
+// 1 and 7 are hyperlinks, don't know about the others.
+	if (first != '1' && first != '7') {
+		if (first != 'i' && first != '3') {
+			char what[8];
+			sprintf(what, "<%c> ", first);
+			stringAndString(&serverData, &serverDataLen, what);
+		}
+		prepHtmlString(text);
+		stringAndChar(&serverData, &serverDataLen, '\n');
+		return;
+	}
+// type 1 is a hyperlink
+	if (host) {
+		char qc = '"';
+// I just assume host and path can be quoted with either " or '
+		if (strchr(host, qc)	// should never happen
+		    || (pathname && strchr(pathname, qc)))
+			qc = '\'';
+		stringAndString(&serverData, &serverDataLen, "<a href=x");
+		serverData[serverDataLen - 1] = qc;
+		stringAndString(&serverData, &serverDataLen, "gopher://");
+		stringAndString(&serverData, &serverDataLen, host);
+		if (prot != 70) {
+			stringAndChar(&serverData, &serverDataLen, ':');
+			stringAndNum(&serverData, &serverDataLen, prot);
+		}
+		if (pathname)
+			stringAndString(&serverData, &serverDataLen, pathname);
+		stringAndChar(&serverData, &serverDataLen, qc);
+		stringAndChar(&serverData, &serverDataLen, '>');
+	}
+
+	s = strchr(text, '(');
+	if (s)
+		*s = 0;
+	prepHtmlString(text);
+	if (host)
+		stringAndString(&serverData, &serverDataLen, "</a>");
+	if (s) {
+		*s = '(';
+		prepHtmlString(s);
+	}
+	stringAndChar(&serverData, &serverDataLen, '\n');
+}				/* gopher_ls_line */
+
+/* gopher_listing: convert a gopher-style listing to html. */
+/* Repeatedly calls gopher_ls_line to parse each line of the data. */
+static void gopher_listing(void)
+{
+	char *s, *t;
+	char *incomingData = serverData;
+	int incomingLen = serverDataLen;
+	serverData = initString(&serverDataLen);
+	stringAndString(&serverData, &serverDataLen, "<html>\n<body>\n");
+
+	if (!incomingLen) {
+		i_stringAndMessage(&serverData, &serverDataLen,
+				   MSG_GopherEmptyDir);
+	} else {
+
+		s = incomingData;
+		while (s < incomingData + incomingLen) {
+			t = strchr(s, '\n');
+			if (!t || t >= incomingData + incomingLen)
+				break;	/* should never happen */
+			*t = 0;
+			gopher_ls_line(s);
+			s = t + 1;
+		}
+	}
+
+	stringAndString(&serverData, &serverDataLen, "</body></html>\n");
+	nzFree(incomingData);
+}				/* gopher_listing */
 
 void ebcurl_setError(CURLcode curlret, const char *url)
 {
@@ -1766,13 +1892,13 @@ perform:
 			if (curlret != CURLE_OK)
 				transfer_success = false;
 			else {
-				parse_directory_listing();
+				ftp_listing();
 				transfer_success = true;
 			}
 		}
 	} else if (curlret == CURLE_OK) {
-		if (has_slash == true)
-			parse_directory_listing();
+		if (has_slash)
+			ftp_listing();
 		transfer_success = true;
 	} else
 		transfer_success = false;
@@ -1795,6 +1921,108 @@ ftp_transfer_fail:
 
 	return transfer_success;
 }				/* ftpConnect */
+
+/* Like httpConnect, but for gopher */
+static bool gopherConnect(const char *url, bool f_encoded)
+{
+	CURL *h;		// the curl handle for gopher
+	struct eb_curl_callback_data cbd;
+	int protLength;		/* length of "gopher://" */
+	bool transfer_success = false;
+	bool has_slash;
+	CURLcode curlret = CURLE_OK;
+
+	is_http = false;
+	protLength = strchr(url, ':') - url + 3;
+	cbd.buffer = &serverData;
+	cbd.length = &serverDataLen;
+	cbd.down_state = 0;
+	cbd.down_file = cbd.down_file2 = NULL;
+	cbd.down_length = 0;
+	h = http_curl_init(&cbd);
+	if (!h)
+		goto gopher_transfer_fail;
+	serverData = initString(&serverDataLen);
+	urlSanitize(url, 0, f_encoded);
+
+/* libcurl appends an implicit slash to URLs like "gopher://foo.com".
+* Be explicit, so that edbrowse knows if we have a directory. */
+	if (!strchr(urlcopy + protLength, '/'))
+		strcpy(urlcopy + urlcopy_l, "/");
+	curlret = setCurlURL(h, urlcopy);
+	if (curlret != CURLE_OK)
+		goto gopher_transfer_fail;
+
+	has_slash = urlcopy[strlen(urlcopy) - 1] == '/';
+/* don't download a directory listing, we want to see that */
+	cbd.down_state = (has_slash ? 0 : 1);
+	down_msg = MSG_GopherDownload;
+
+perform:
+	curlret = fetch_internet(h);
+
+	if (cbd.down_state == 5) {
+/* user has directed a download of this file in the background. */
+		background_download(&cbd);
+		if (cbd.down_state == 4)
+			goto perform;
+	}
+
+	if (cbd.down_state == 3 || cbd.down_state == -1) {
+/* set this to null so we don't push a new buffer */
+		serverData = NULL;
+		cnzFree(cbd.down_file);
+		curl_easy_cleanup(h);
+		return false;
+	}
+
+	if (cbd.down_state == 4) {
+		if (curlret != CURLE_OK) {
+			ebcurl_setError(curlret, urlcopy);
+			showError();
+			exit(2);
+		}
+		i_printf(MSG_DownSuccess);
+		printf(": %s\n", cbd.down_file2);
+		exit(0);
+	}
+
+	if (*(cbd.length) >= CHUNKSIZE && showProgress == 'd')
+		nl();		/* We printed dots, so terminate them with newline */
+
+	if (cbd.down_state == 2) {
+		close(cbd.down_fd);
+		setError(MSG_DownSuccess);
+		serverData = NULL;
+		cnzFree(cbd.down_file);
+		curl_easy_cleanup(h);
+		return false;
+	}
+
+	if (curlret == CURLE_OK) {
+		if (has_slash)
+			gopher_listing();
+		transfer_success = true;
+	} else
+		transfer_success = false;
+
+gopher_transfer_fail:
+	if (h)
+		curl_easy_cleanup(h);
+	if (transfer_success == false) {
+		if (curlret != CURLE_OK)
+			ebcurl_setError(curlret, urlcopy);
+		nzFree(serverData);
+		serverData = 0;
+		serverDataLen = 0;
+	}
+	if (transfer_success == true && !stringEqual(url, urlcopy))
+		changeFileName = urlcopy;
+	else
+		nzFree(urlcopy);
+
+	return transfer_success;
+}				/* gopherConnect */
 
 /* If the user has asked for locale-specific responses, then build an
  * appropriate Accept-Language: header. */

@@ -157,7 +157,7 @@ toutes les lignes correspondent au modèle v
 aucune des lignes marquées n'a pu être modifiée avec succès
 opération interrompue
 pas de correspondance
-0
+Ce répertoire gopher est vide.
 l'agent numéro %d n'est pas défini
 impossible d'afficher le nouveau répertoire
 impossible d'établir le répertoire courant
@@ -225,7 +225,7 @@ impossible d'ouvrir %s
 impossible de lire %s
 le texte entré contient des caractères nuls
 il y a un retour-chariot dans la ligne
-0
+téléchargement gopher: 
 le fichier est actuellement dans le tampon - utilisez la commande rf pour le réafficher
 navigation impossible dans un fichier binaire
 navigation impossible dans un fichier vide

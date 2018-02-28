@@ -157,7 +157,7 @@ all lines match the v pattern
 none of the marked lines were successfully modified
 operation interrupted
 no match
-0
+This gopher directory listing is empty.
 agent number %d is not defined
 could not print new directory
 could not establish current directory
@@ -225,7 +225,7 @@ cannot open %s
 cannot read from %s
 input text contains nulls
 line contains an embedded carriage return
-0
+gopher download: 
 file is currently in buffer - please use the rf command to refresh
 cannot browse a binary file
 cannot browse an empty file
