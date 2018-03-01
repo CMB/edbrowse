@@ -1942,6 +1942,7 @@ static bool gopherConnect(const char *url, bool f_encoded)
 	int protLength;		/* length of "gopher://" */
 	bool transfer_success = false;
 	bool has_slash;
+	char first = 0;
 	char *s;
 	CURLcode curlret = CURLE_OK;
 
@@ -1972,12 +1973,12 @@ static bool gopherConnect(const char *url, bool f_encoded)
 	down_msg = MSG_GopherDownload;
 // That's the default, let the leading character override
 	s = strchr(urlcopy + protLength, '/');
-	if (s && s[1]) {
+	if (s && (first = s[1])) {
 // almost every file type downwloads.
 		cbd.down_state = 1;
-		if (strchr("017", s[1]))
+		if (strchr("017", first))
 			cbd.down_state = 0;
-		if (s[1] == '1' || s[1] == '7')
+		if (first == '1' || first == '7')
 			has_slash = true;
 	}
 
@@ -2032,17 +2033,32 @@ perform:
 gopher_transfer_fail:
 	if (h)
 		curl_easy_cleanup(h);
-	if (transfer_success == false) {
+	if (!transfer_success) {
 		if (curlret != CURLE_OK)
 			ebcurl_setError(curlret, urlcopy);
 		nzFree(serverData);
 		serverData = 0;
 		serverDataLen = 0;
 	}
-	if (transfer_success == true && !stringEqual(url, urlcopy))
+
+	if (transfer_success && !stringEqual(url, urlcopy))
 		changeFileName = urlcopy;
 	else
 		nzFree(urlcopy);
+
+	if (transfer_success && first == '0') {
+// it's a text file, neeed to undos.
+// The curl callback function always makes sure there is an extra byte at the end.
+		serverData[serverDataLen] = 0;
+		int i, j;
+		for (i = j = 0; i < serverDataLen; ++i) {
+			if (serverData[i] == '\r' && serverData[i + 1] == '\n')
+				continue;
+			serverData[j++] = serverData[i];
+		}
+		serverData[j] = 0;
+		serverDataLen = j;
+	}
 
 	return transfer_success;
 }				/* gopherConnect */
