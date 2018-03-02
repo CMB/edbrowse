@@ -19,11 +19,7 @@ CURLSH *global_share_handle;
 bool pluginsOn = true;
 bool down_bg;			/* download in background */
 char showProgress = 'd';	// dots
-
-static CURL *down_h;
-static int down_pid;		/* pid of the downloading child process */
-static bool down_permitted;
-static int down_msg;
+static char *httpLanguage;	/* outgoing */
 
 struct BG_JOB {
 	struct BG_JOB *next, *prev;
@@ -32,30 +28,20 @@ struct BG_JOB {
 	int file2;		// offset into filename
 	char file[4];
 };
-struct listHead down_jobs = {
+static struct listHead down_jobs = {
 	&down_jobs, &down_jobs
 };
 
-static void background_download(struct eb_curl_callback_data *data);
-static void setup_download(struct eb_curl_callback_data *data);
-static CURL *http_curl_init(struct eb_curl_callback_data *cbd);
-
-static char *http_headers;
-static int http_headers_len;
-static char *httpLanguage;	/* outgoing */
-long ht_code;			/* example, 404 */
-static char ht_error[CURL_ERROR_SIZE + 1];
-/* an assortment of variables that are gleaned from the incoming http headers */
-/* http content type is used in many places, and isn't arbitrarily long
- * or case sensitive, so keep our own sanitized copy. */
-static char ht_content[60];
-static char *ht_charset;	/* extra content info such as charset */
-int ht_length;			/* http content length */
-static char *ht_cdfn;		/* http content disposition file name */
-static time_t ht_modtime;	/* http modification time */
-static char *ht_etag;		/* the etag in the header */
-static bool ht_cacheable;
-static char ht_auth_realm[60];	/* WWW-Authenticate realm header */
+static void background_download(struct i_get *g);
+static void setup_download(struct i_get *g);
+static CURL *http_curl_init(struct i_get *g);
+static size_t curl_header_callback(char *header_line, size_t size, size_t nmemb,
+				   struct i_get *g);
+// the data callback is global, used by fetchmail.c
+static bool ftpConnect(struct i_get *g);
+static bool gopherConnect(struct i_get *g);
+static bool read_credentials(char *buffer);
+static const char *message_for_response_code(int code);
 
 /*********************************************************************
 This function is called for a new web page, by http refresh,
@@ -89,15 +75,14 @@ void gotoLocation(char *url, int delay, bool rf)
 
 /* string is allocated. Quotes are removed. No other processing is done.
  * You may need to decode %xx bytes or such. */
-static char *find_http_header(const char *name)
+static char *find_http_header(struct i_get *g, const char *name)
 {
 	char *s, *t, *u, *v;
 	int namelen = strlen(name);
-
-	if (!http_headers)
+	char *h = g->headers;
+	if (!h)
 		return NULL;
-
-	for (s = http_headers; *s; s = v) {
+	for (s = h; *s; s = v) {
 /* find start of next line */
 		v = strchr(s, '\n');
 		if (!v)
@@ -134,24 +119,24 @@ static char *find_http_header(const char *name)
 	return NULL;
 }				/* find_http_header */
 
-static void scan_http_headers(bool fromCallback)
+static void scan_http_headers(struct i_get *g, bool fromCallback)
 {
 	char *v;
 
-	if (!ht_content[0] && (v = find_http_header("content-type"))) {
-		strncpy(ht_content, v, sizeof(ht_content) - 1);
-		caseShift(ht_content, 'l');
+	if (!g->content[0] && (v = find_http_header(g, "content-type"))) {
+		strncpy(g->content, v, sizeof(g->content) - 1);
+		caseShift(g->content, 'l');
 		nzFree(v);
-		debugPrint(3, "content %s", ht_content);
-		ht_charset = strchr(ht_content, ';');
-		if (ht_charset)
-			*ht_charset++ = 0;
+		debugPrint(3, "content %s", g->content);
+		g->charset = strchr(g->content, ';');
+		if (g->charset)
+			*(g->charset)++ = 0;
 /* The protocol, such as rtsp, could have already set the mime type. */
-		if (!cf->mt)
-			cf->mt = findMimeByContent(ht_content);
+		if (g->pg_ok && !cf->mt)
+			cf->mt = findMimeByContent(g->content);
 	}
 
-	if (!ht_cdfn && (v = find_http_header("content-disposition"))) {
+	if (!g->cdfn && (v = find_http_header(g, "content-disposition"))) {
 		char *s = strstrCI(v, "filename=");
 		if (s && !strncmp(v, "attachment", 10)) {
 			s += 9;
@@ -162,49 +147,49 @@ static void scan_http_headers(bool fromCallback)
 				if (t)
 					*t = 0;
 			}
-			ht_cdfn = cloneString(s);
-			debugPrint(3, "disposition filename %s", ht_cdfn);
+			g->cdfn = cloneString(s);
+			debugPrint(4, "disposition filename %s", g->cdfn);
 		}
 		nzFree(v);
 	}
 
-	if (!ht_length && (v = find_http_header("content-length"))) {
-		ht_length = atoi(v);
+	if (!g->hcl && (v = find_http_header(g, "content-length"))) {
+		g->hcl = atoi(v);
 		nzFree(v);
-		if (ht_length)
-			debugPrint(3, "content length %d", ht_length);
+		if (g->hcl)
+			debugPrint(4, "content length %d", g->hcl);
 	}
 
-	if (!ht_etag && (v = find_http_header("etag"))) {
-		ht_etag = v;
-		debugPrint(3, "etag %s", ht_etag);
+	if (!g->etag && (v = find_http_header(g, "etag"))) {
+		g->etag = v;
+		debugPrint(4, "etag %s", g->etag);
 	}
 
-	if (ht_cacheable && (v = find_http_header("cache-control"))) {
+	if (g->cacheable && (v = find_http_header(g, "cache-control"))) {
 		caseShift(v, 'l');
 		if (strstr(v, "no-cache")) {
-			ht_cacheable = false;
-			debugPrint(3, "no cache");
+			g->cacheable = false;
+			debugPrint(4, "no cache");
 		}
 		nzFree(v);
 	}
 
-	if (ht_cacheable && (v = find_http_header("pragma"))) {
+	if (g->cacheable && (v = find_http_header(g, "pragma"))) {
 		caseShift(v, 'l');
 		if (strstr(v, "no-cache")) {
-			ht_cacheable = false;
-			debugPrint(3, "no cache");
+			g->cacheable = false;
+			debugPrint(4, "no cache");
 		}
 		nzFree(v);
 	}
 
-	if (!ht_modtime && (v = find_http_header("last-modified"))) {
-		ht_modtime = parseHeaderDate(v);
-		if (ht_modtime)
-			debugPrint(3, "mod date %s", v);
+	if (!g->modtime && (v = find_http_header(g, "last-modified"))) {
+		g->modtime = parseHeaderDate(v);
+		if (g->modtime)
+			debugPrint(4, "mod date %s", v);
 		nzFree(v);
 	}
-	if (!ht_auth_realm[0] && (v = find_http_header("WWW-Authenticate"))) {
+	if (!g->auth_realm[0] && (v = find_http_header(g, "WWW-Authenticate"))) {
 		char *realm, *end;
 		if ((realm = strstrCI(v, "realm="))) {
 			realm += 6;
@@ -217,15 +202,15 @@ static void scan_http_headers(bool fromCallback)
 			}
 			if (end) {
 				int sz = end - realm;
-				if (sz > sizeof(ht_auth_realm) - 1)
-					sz = sizeof(ht_auth_realm) - 1;
-				memcpy(ht_auth_realm, realm, sz);
-				ht_auth_realm[sz] = 0;
+				if (sz > sizeof(g->auth_realm) - 1)
+					sz = sizeof(g->auth_realm) - 1;
+				memcpy(g->auth_realm, realm, sz);
+				g->auth_realm[sz] = 0;
 			} else {
-				strncpy(ht_auth_realm, realm,
-					sizeof(ht_auth_realm) - 1);
+				strncpy(g->auth_realm, realm,
+					sizeof(g->auth_realm) - 1);
 			}
-			debugPrint(3, "auth realm %s", ht_auth_realm);
+			debugPrint(4, "auth realm %s", g->auth_realm);
 		}
 		nzFree(v);
 	}
@@ -233,56 +218,49 @@ static void scan_http_headers(bool fromCallback)
 	if (fromCallback)
 		return;
 
-	if ((newlocation == NULL) && (v = find_http_header("location"))) {
+	if (!g->newloc && (v = find_http_header(g, "location"))) {
 		unpercentURL(v);
-		gotoLocation(v, -1, true);
+		g->newloc = v;
 	}
 
-	if ((v = find_http_header("refresh"))) {
+	if (!g->newloc && (v = find_http_header(g, "refresh"))) {
 		int delay;
 		if (parseRefresh(v, &delay)) {
 			unpercentURL(v);
-			gotoLocation(v, delay, true);
-/* string is passed to somewhere else, set v to null so it is not freed */
+			g->newloc = v;
+			g->newloc_d = delay;
 			v = NULL;
 		}
 		nzFree(v);
 	}
 }				/* scan_http_headers */
 
+static void i_get_free(struct i_get *g, bool nodata)
+{
+	if (nodata) {
+		nzFree(g->buffer);
+		g->buffer = 0;
+		g->length = 0;
+		nzFree(g->referrer);
+	}
+	nzFree(g->headers);
+	nzFree(g->urlcopy);
+	nzFree(g->cdfn);
+	nzFree(g->etag);
+	nzFree(g->newloc);
+	cnzFree(g->down_file);
+}
+
 /* actually run the curl request, http or ftp or whatever */
-static bool is_http;
-static CURLcode fetch_internet(CURL * h)
+static CURLcode fetch_internet(struct i_get *g)
 {
 	CURLcode curlret;
-	down_h = h;
-/* this should already be 0 */
-	nzFree(newlocation);
-	newlocation = NULL;
-	nzFree(http_headers);
-	http_headers = initString(&http_headers_len);
-	ht_content[0] = 0;
-	ht_charset = NULL;
-	nzFree(ht_cdfn);
-	ht_cdfn = NULL;
-	nzFree(ht_etag);
-	ht_etag = NULL;
-	ht_length = 0;
-	ht_modtime = 0;
-	ht_auth_realm[0] = 0;
-	curlret = curl_easy_perform(h);
-	if (is_http)
-		scan_http_headers(false);
+	g->headers = initString(&g->headers_len);
+	curlret = curl_easy_perform(g->h);
+	if (g->is_http)
+		scan_http_headers(g, false);
 	return curlret;
 }				/* fetch_internet */
-
-static bool ftpConnect(const char *url, const char *user, const char *pass,
-		       bool f_encoded);
-static bool gopherConnect(const char *url, bool f_encoded);
-static bool read_credentials(char *buffer);
-static size_t curl_header_callback(char *header_line, size_t size, size_t nmemb,
-				   struct eb_curl_callback_data *data);
-static const char *message_for_response_code(int code);
 
 /* Callback used by libcurl. Captures data from http, ftp, pop3, etc.
  * download states:
@@ -295,81 +273,81 @@ static const char *message_for_response_code(int code);
 * 5 disk download background prefork
  * 6 mime type says this should be a stream */
 size_t
-eb_curl_callback(char *incoming, size_t size, size_t nitems,
-		 struct eb_curl_callback_data *data)
+eb_curl_callback(char *incoming, size_t size, size_t nitems, struct i_get * g)
 {
 	size_t num_bytes = nitems * size;
 	int dots1, dots2, rc;
 
-	if (data->down_state == 1 && is_http) {
+	if (g->down_state == 1 && g->is_http) {
 /* don't do a download unless the code is 200. */
-		curl_easy_getinfo(down_h, CURLINFO_RESPONSE_CODE, &ht_code);
-		if (ht_code != 200)
-			data->down_state = 0;
+		curl_easy_getinfo(g->h, CURLINFO_RESPONSE_CODE, &(g->code));
+		if (g->code != 200)
+			g->down_state = 0;
 	}
 
-	if (data->down_state == 1) {
-		if (ht_length == 0) {
+	if (g->down_state == 1) {
+		if (g->hcl == 0) {
 // http should always set http content length, this is just for ftp.
 // And ftp downloading a file always has state = 1 on the first data block.
 			double d_size = 0.0;	// download size, if we can get it
-			curl_easy_getinfo(down_h,
+			curl_easy_getinfo(g->h,
 					  CURLINFO_CONTENT_LENGTH_DOWNLOAD,
 					  &d_size);
-			ht_length = d_size;
-			if (ht_length < 0)
-				ht_length = 0;
+			g->hcl = d_size;
+			if (g->hcl < 0)
+				g->hcl = 0;
 		}
 
 /* state 1, first data block, ask the user */
-		setup_download(data);
-		if (data->down_state == 0)
+		setup_download(g);
+		if (g->down_state == 0)
 			goto showdots;
-		if (data->down_state == -1 || data->down_state == 5)
+		if (g->down_state == -1 || g->down_state == 5)
 			return -1;
 	}
 
-	if (data->down_state == 2 || data->down_state == 4) {	/* to disk */
-		rc = write(data->down_fd, incoming, num_bytes);
+	if (g->down_state == 2 || g->down_state == 4) {	/* to disk */
+		rc = write(g->down_fd, incoming, num_bytes);
 		if (rc == num_bytes) {
-			if (data->down_state == 4) {
+			if (g->down_state == 4) {
 #if 0
 // Deliberately delay background download, to get several running in parallel
 // for testing purposes.
-				if (data->down_length == 0)
+				if (g->down_length == 0)
 					sleep(17);
-				data->down_length += rc;
+				g->down_length += rc;
 #endif
 				return rc;
 			}
 			goto showdots;
 		}
-		if (data->down_state == 2) {
-			setError(MSG_NoWrite2, data->down_file);
+		if (g->down_state == 2) {
+// has to be the foreground http thread, so ok to call setError
+			setError(MSG_NoWrite2, g->down_file);
 			return -1;
 		}
-		i_printf(MSG_NoWrite2, data->down_file);
+		i_printf(MSG_NoWrite2, g->down_file);
 		printf(", ");
 		i_puts(MSG_DownAbort);
 		exit(1);
 	}
 
 showdots:
-	dots1 = *(data->length) / CHUNKSIZE;
-	if (data->down_state == 0)
-		stringAndBytes(data->buffer, data->length, incoming, num_bytes);
+	dots1 = g->length / CHUNKSIZE;
+	if (g->down_state == 0)
+		stringAndBytes(&g->buffer, &g->length, incoming, num_bytes);
 	else
-		*(data->length) += num_bytes;
-	dots2 = *(data->length) / CHUNKSIZE;
+		g->length += num_bytes;
+	dots2 = g->length / CHUNKSIZE;
 	if (showProgress != 'q' && dots1 < dots2) {
 		if (showProgress == 'd') {
 			for (; dots1 < dots2; ++dots1)
 				putchar('.');
 			fflush(stdout);
 		}
-		if (showProgress == 'c' && ht_length)
+		if (showProgress == 'c' && g->hcl)
 			printf("%d/%d\n", dots2,
-			       (ht_length + CHUNKSIZE - 1) / CHUNKSIZE);
+			       (g->hcl + CHUNKSIZE - 1) / CHUNKSIZE);
 	}
 	return num_bytes;
 }
@@ -439,8 +417,6 @@ int base64Decode(char *start, char **end)
 	bool equals;
 	int ret = GOOD_BASE64_DECODE;
 	char c, *q, *r;
-/* Since this is a copy, and the unpacked version is always
- * smaller, just unpack it inline. */
 	mod = 0;
 	equals = false;
 	for (q = r = start; q < b64_end; ++q) {
@@ -526,38 +502,6 @@ unpackUploadedFile(const char *post, const char *boundary,
 	*postb = post2;
 	*postb_l = b1 - post2;
 }				/* unpackUploadedFile */
-
-/* Pull a keyword: attribute out of an internet header. */
-/* Seems like nobody uses this. */
-#if 0
-static char *extractHeaderItem(const char *head, const char *end,
-			       const char *item, const char **ptr)
-{
-	int ilen = strlen(item);
-	const char *f, *g;
-	char *h = 0;
-	for (f = head; f < end - ilen - 1; f++) {
-		if (*f != '\n')
-			continue;
-		if (!memEqualCI(f + 1, item, ilen))
-			continue;
-		f += ilen;
-		if (f[1] != ':')
-			continue;
-		f += 2;
-		while (*f == ' ')
-			++f;
-		for (g = f; g < end && *g >= ' '; g++) ;
-		while (g > f && g[-1] == ' ')
-			--g;
-		h = pullString1(f, g);
-		if (ptr)
-			*ptr = f;
-		break;
-	}
-	return h;
-}				/* extractHeaderItem */
-#endif
 
 /* This is a global function; it is called from cookies.c */
 char *extractHeaderParam(const char *str, const char *item)
@@ -804,69 +748,61 @@ bool parseRefresh(char *ref, int *delay_p)
 	return false;
 }				/* parseRefresh */
 
-/* Return true if we waited for the duration, false if interrupted.
- * I don't know how to do this in Windows. */
-bool shortRefreshDelay(void)
+bool shortRefreshDelay(const char *r, int d)
 {
 /* the value 10 seconds is somewhat arbitrary */
-	if (newloc_d < 10)
+	if (d < 10)
 		return true;
-	i_printf(MSG_RedirectDelayed, newlocation, newloc_d);
+	i_printf(MSG_RedirectDelayed, r, d);
 	return false;
 }				/* shortRefreshDelay */
-
-static char *urlcopy;
-static int urlcopy_l;
 
 // encode the url, if it was supplied by the user.
 // Otherwise just make a copy.
 // Either way there is room for one more char at the end.
-static void urlSanitize(const char *url, const char *post, bool f_encoded)
+static void urlSanitize(struct i_get *g, const char *post)
 {
 	const char *portloc;
+	const char *url = g->url;
 
-	if (f_encoded && !looksPercented(url, post)) {
+	if (g->f_encoded && !looksPercented(url, post)) {
 		debugPrint(2, "Warning, url %s doesn't look encoded", url);
-		f_encoded = false;
+		g->f_encoded = false;
 	}
 
-	if (!f_encoded) {
-		urlcopy = percentURL(url, post);
-		urlcopy_l = strlen(urlcopy);
+	if (!g->f_encoded) {
+		g->urlcopy = percentURL(url, post);
+		g->urlcopy_l = strlen(g->urlcopy);
 	} else {
 		if (post)
-			urlcopy_l = post - url;
+			g->urlcopy_l = post - url;
 		else
-			urlcopy_l = strlen(url);
-		urlcopy = allocMem(urlcopy_l + 2);
-		strncpy(urlcopy, url, urlcopy_l);
-		urlcopy[urlcopy_l] = 0;
+			g->urlcopy_l = strlen(url);
+		g->urlcopy = allocMem(g->urlcopy_l + 2);
+		strncpy(g->urlcopy, url, g->urlcopy_l);
+		g->urlcopy[g->urlcopy_l] = 0;
 	}
 
 // get rid of : in http://this.that.com:/path, curl can't handle it.
-	getPortLocURL(urlcopy, &portloc, 0);
+	getPortLocURL(g->urlcopy, &portloc, 0);
 	if (portloc && !isdigit(portloc[1])) {
 		const char *s = portloc + strcspn(portloc, "/?#\1");
 		strmove((char *)portloc, s);
-		urlcopy_l = strlen(urlcopy);
+		g->urlcopy_l = strlen(g->urlcopy);
 	}
 }				/* urlSanitize */
 
-// Last three are result parameters, for http headers and body strings.
-// Set to 0 if you don't want these passed back in this way.
-bool httpConnect(const char *url, bool down_ok, bool webpage,
-		 bool f_encoded, char **headers_p, char **body_p, int *bodlen_p)
+bool httpConnect(struct i_get *g)
 {
+	const char *url = g->url;
 	char *cacheData = NULL;
 	int cacheDataLen = 0;
 	CURL *h;		// the curl http handle
-	struct eb_curl_callback_data cbd;
 	char *referrer = NULL;
 	CURLcode curlret = CURLE_OK;
 	struct curl_slist *custom_headers = NULL;
 	struct curl_slist *tmp_headers = NULL;
 	const struct MIMETYPE *mt;
-	char user[MAXUSERPASS], pass[MAXUSERPASS];
 	char creds_buf[MAXUSERPASS * 2 + 1];	/* creds abr. for credentials */
 	int creds_len = 0;
 	bool still_fetching = true;
@@ -883,47 +819,47 @@ bool httpConnect(const char *url, bool down_ok, bool webpage,
 	bool post_request = false;
 	bool head_request = false;
 
-	if (headers_p)
-		*headers_p = 0;
-	if (body_p)
-		*body_p = 0;
-	if (bodlen_p)
-		*bodlen_p = 0;
-
-	urlcopy = NULL;
-	serverData = NULL;
-	serverDataLen = 0;
 	strcpy(creds_buf, ":");	/* Flush stale username and password. */
-	cf->mt = NULL;		/* should already be null */
 
 	host = getHostURL(url);
 	if (!host) {
-		setError(MSG_DomainEmpty);
+// only the foreground http thread uses setError,
+// the traditional /bin/ed error system.
+		if (g->foreground)
+			setError(MSG_DomainEmpty);
 		return false;
 	}
 
 /* Pull user password out of the url */
-	user[0] = pass[0] = 0;
 	s = getUserURL(url);
 	if (s) {
-		if (strlen(s) >= sizeof(user) - 2) {
-			setError(MSG_UserNameLong, sizeof(user));
+		if (strlen(s) >= sizeof(g->user) - 2) {
+			if (g->foreground)
+				setError(MSG_UserNameLong, sizeof(g->user));
 			return false;
 		}
-		strcpy(user, s);
+		strcpy(g->user, s);
 	}
 	s = getPassURL(url);
 	if (s) {
-		if (strlen(s) >= sizeof(pass) - 2) {
-			setError(MSG_PasswordLong, sizeof(pass));
+		if (strlen(s) >= sizeof(g->pass) - 2) {
+			if (g->foreground)
+				setError(MSG_PasswordLong, sizeof(g->pass));
 			return false;
 		}
-		strcpy(pass, s);
+		strcpy(g->pass, s);
+	}
+
+	if (g->pg_ok) {
+// plugins can only be ok from one thread, the interactive thread
+// that calls up web pages at the user's behest.
+		cf->mt = 0;	// should already be 0
 	}
 
 	prot = getProtURL(url);
 	if (!prot) {
-		setError(MSG_WebProtBad, "(?)");
+		if (g->foreground)
+			setError(MSG_WebProtBad, "(?)");
 		return false;
 	}
 
@@ -933,57 +869,44 @@ bool httpConnect(const char *url, bool down_ok, bool webpage,
 		setupEdbrowseCache();
 	}
 
-	cf->fromcurl = true;
-
 	if (stringEqualCI(prot, "http") || stringEqualCI(prot, "https")) {
 		;		/* ok for now */
 	} else if (stringEqualCI(prot, "gopher")) {
-		return gopherConnect(url, f_encoded);
+		return gopherConnect(g);
 	} else if (stringEqualCI(prot, "ftp") ||
 		   stringEqualCI(prot, "ftps") ||
 		   stringEqualCI(prot, "scp") ||
 		   stringEqualCI(prot, "tftp") || stringEqualCI(prot, "sftp")) {
-		return ftpConnect(url, user, pass, f_encoded);
-	} else if ((cf->mt = findMimeByProtocol(prot)) && pluginsOn
+		return ftpConnect(g);
+	} else if (g->pg_ok && (cf->mt = findMimeByProtocol(prot))
 		   && cf->mt->stream) {
 mimestream:
-/* set this to null so we don't push a new buffer */
-		nzFree(serverData);
-		serverData = NULL;
-		serverDataLen = 0;
 /* could jump back here after a redirect, so use urlcopy if it is there */
-		cmd = pluginCommand(cf->mt, (urlcopy ? urlcopy : url),
+		cmd = pluginCommand(cf->mt, (g->urlcopy ? g->urlcopy : url),
 				    NULL, NULL);
-		nzFree(urlcopy);
-		urlcopy = NULL;
-		if (!cmd)
-			return false;
-		eb_system(cmd, true);
+		if (cmd)
+			eb_system(cmd, true);
 		nzFree(cmd);
+		i_get_free(g, true);
 		return true;
 	} else {
-		setError(MSG_WebProtBad, prot);
+		if (g->foreground)
+			setError(MSG_WebProtBad, prot);
 		return false;
 	}
 
 /* Ok, it's http, but the suffix could force a plugin */
-	if ((cf->mt = findMimeByURL(url)) && pluginsOn && cf->mt->stream)
+	if (g->pg_ok && (cf->mt = findMimeByURL(url)) && cf->mt->stream)
 		goto mimestream;
 
 /* if invoked from a playlist */
-	if (currentReferrer && pluginsOn
-	    && (mt = findMimeByURL(currentReferrer)) && mt->stream) {
+	if (g->pg_ok && g->thisfile
+	    && (mt = findMimeByURL(g->thisfile)) && mt->stream) {
 		cf->mt = mt;
 		goto mimestream;
 	}
 
-	cbd.buffer = &serverData;
-	cbd.length = &serverDataLen;
-	cbd.down_state = 0;
-	cbd.down_file = cbd.down_file2 = NULL;
-	cbd.down_length = 0;
-	down_permitted = down_ok;
-	h = http_curl_init(&cbd);
+	h = http_curl_init(g);
 	if (!h)
 		return false;
 
@@ -1001,21 +924,18 @@ mimestream:
 
 	post = strchr(url, '\1');
 	postb = 0;
-	urlSanitize(url, post, f_encoded);
+	urlSanitize(g, post);
 
 	if (post) {
 		post_request = true;
 		post++;
 
-		if (strncmp(post, "`mfd~", 5)) ;	/* No need to do anything, not multipart. */
-
-		else {
+		if (strncmp(post, "`mfd~", 5) == 0) {
 			int multipart_header_len = 0;
 			char *multipart_header =
 			    initString(&multipart_header_len);
 			char thisbound[24];
 			post += 5;
-
 			stringAndString(&multipart_header,
 					&multipart_header_len,
 					"Content-Type: multipart/form-data; boundary=");
@@ -1029,7 +949,6 @@ mimestream:
 			custom_headers = tmp_headers;
 			/* curl_slist_append made a copy of multipart_header. */
 			nzFree(multipart_header);
-
 			memcpy(thisbound, post, s - post);
 			thisbound[s - post] = 0;
 			post = s + 2;
@@ -1050,26 +969,24 @@ mimestream:
 			goto curl_fail;
 	}
 
-	if (sendReferrer && isURL(currentReferrer)) {
-		const char *post2 = strchr(currentReferrer, '\1');
+	if (sendReferrer && isURL(g->thisfile)) {
+		const char *post2 = strchr(g->thisfile, '\1');
 		if (!post2)
-			post2 = currentReferrer + strlen(currentReferrer);
-		if (post2 - currentReferrer >= 7
+			post2 = g->thisfile + strlen(g->thisfile);
+		if (post2 - g->thisfile >= 7
 		    && !memcmp(post2 - 7, ".browse", 7))
 			post2 -= 7;
-		nzFree(cw->referrer);
-		cw->referrer = cloneString(currentReferrer);
-		cw->referrer[post2 - currentReferrer] = 0;
-		referrer = cw->referrer;
+		g->referrer = cloneString(g->thisfile);
+		g->referrer[post2 - g->thisfile] = 0;
+		referrer = g->referrer;
 	}
-
 	curlret = curl_easy_setopt(h, CURLOPT_REFERER, referrer);
 	if (curlret != CURLE_OK)
 		goto curl_fail;
 	curlret = curl_easy_setopt(h, CURLOPT_HTTPHEADER, custom_headers);
 	if (curlret != CURLE_OK)
 		goto curl_fail;
-	curlret = setCurlURL(h, urlcopy);
+	curlret = setCurlURL(h, g->urlcopy);
 	if (curlret != CURLE_OK)
 		goto curl_fail;
 
@@ -1077,13 +994,13 @@ mimestream:
 	 * libcurl won't send it to the server unless server gave a 401 response.
 	 * Libcurl selects the most secure form of auth provided by server. */
 
-	if (user[0] && pass[0]) {
-		strcpy(creds_buf, user);
+	if (g->user[0] && g->pass[0]) {
+		strcpy(creds_buf, g->user);
 		creds_len = strlen(creds_buf);
 		creds_buf[creds_len] = ':';
-		strcpy(creds_buf + creds_len + 1, pass);
+		strcpy(creds_buf + creds_len + 1, g->pass);
 	} else
-		getUserPass(urlcopy, creds_buf, false);
+		getUserPass(g->urlcopy, creds_buf, false);
 
 /*
  * If the URL didn't have user and password, and getUserPass failed,
@@ -1100,39 +1017,33 @@ mimestream:
  * process than libcurl gives us.
  * Decide whether to accept the redirection, using the following criteria.
  * Does user permit redirects?  Will we exceed maximum allowable redirects?
- * Is the destination in the fetch history?
  * We may be asked for authentication.  In that case, grab username and
  * password from the user.  If the server accepts the username and password,
  * then add it to the list of authentication records.  */
 
 	still_fetching = true;
-	serverData = initString(&serverDataLen);
+	g->buffer = initString(&g->length);
 
-	if (!post_request && presentInCache(urlcopy)) {
+	if (!post_request && presentInCache(g->urlcopy)) {
 		head_request = true;
 		curl_easy_setopt(h, CURLOPT_NOBODY, 1l);
 	}
 
 	while (still_fetching == true) {
 		char *redir = NULL;
-		cbd.length = &serverDataLen;
-// An earlier 302 redirection could set content type = application/binary,
-// which in turn sets state = 1, which is ignored since 302 takes precedence.
-// So state might still be 1, set it back to 0.
-		cbd.down_state = 0;
 
 // recheck suffix after a redirect
-		if (redirect_count &&
-		    (cf->mt = findMimeByURL(urlcopy)) && pluginsOn
-		    && cf->mt->stream) {
+		if (redirect_count && g->pg_ok &&
+		    (cf->mt = findMimeByURL(g->urlcopy)) && cf->mt->stream) {
 			curl_easy_cleanup(h);
+			nzFree(g->referrer);
 			goto mimestream;
 		}
 
 perform:
-		is_http = true;
-		ht_cacheable = true;
-		curlret = fetch_internet(h);
+		g->is_http = true;
+		g->cacheable = true;
+		curlret = fetch_internet(g);
 
 /*********************************************************************
 This is a one line workaround for an apparent bug in curl.
@@ -1159,8 +1070,9 @@ So this is a simple workaround.
 		if (curlret == CURLE_WRITE_ERROR)
 			curlret = CURLE_OK;
 
-		if (cbd.down_state == 6) {
+		if (g->down_state == 6) {
 			curl_easy_cleanup(h);
+			nzFree(g->referrer);
 			goto mimestream;
 		}
 
@@ -1177,92 +1089,89 @@ they go where they go, so this doesn't come up very often.
 *********************************************************************/
 
 		if (head_request) {
-			if (cbd.down_state == 1) {
-				setup_download(&cbd);
+			if (g->down_state == 1) {
+				setup_download(g);
 /* now we have our answer */
 			}
 
-			if (cbd.down_state != 0) {
+			if (g->down_state != 0) {
 				curl_easy_setopt(h, CURLOPT_NOBODY, 0l);
 				head_request = false;
 				debugPrint(3, "switch to get for download %d",
-					   cbd.down_state);
+					   g->down_state);
 			}
 
-			if (cbd.down_state == 2) {
+			if (g->down_state == 2) {
 				curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE,
-						  &ht_code);
-				if (ht_code == 200)
+						  &g->code);
+				if (g->code == 200)
 					goto perform;
 			}
 		}
 
-		if (cbd.down_state == 5) {
+		if (g->down_state == 5) {
 /* user has directed a download of this file in the background. */
-			background_download(&cbd);
-			if (cbd.down_state == 4)
+			background_download(g);
+			if (g->down_state == 4)
 				goto perform;
 		}
 
-		if (cbd.down_state == 3 || cbd.down_state == -1) {
-/* set this to null so we don't push a new buffer */
-			serverData = NULL;
-			cnzFree(cbd.down_file);
+		if (g->down_state == 3 || g->down_state == -1) {
+			i_get_free(g, true);
 			curl_easy_cleanup(h);
 			return false;
 		}
 
-		if (cbd.down_state == 4) {
-			if (curlret != CURLE_OK) {
-				ebcurl_setError(curlret, urlcopy);
-				showError();
-				exit(2);
-			}
+		if (g->down_state == 4) {
+			if (curlret != CURLE_OK)
+				ebcurl_setError(curlret, g->urlcopy, 2,
+						g->error);
 			i_printf(MSG_DownSuccess);
-			printf(": %s\n", cbd.down_file2);
+			printf(": %s\n", g->down_file2);
 			exit(0);
 		}
 
-		if (*(cbd.length) >= CHUNKSIZE && showProgress == 'd')
+		if (g->length >= CHUNKSIZE && showProgress == 'd')
 			nl();	/* We printed dots, so terminate them with newline */
 
-		if (cbd.down_state == 2) {
-			close(cbd.down_fd);
-			cnzFree(cbd.down_file);
+		if (g->down_state == 2) {
+			close(g->down_fd);
+			i_get_free(g, true);
 			setError(MSG_DownSuccess);
-			serverData = NULL;
 			curl_easy_cleanup(h);
 			return false;
 		}
 
 		if (curlret != CURLE_OK)
 			goto curl_fail;
-		curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &ht_code);
+		curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &g->code);
 		if (curlret != CURLE_OK)
 			goto curl_fail;
 
-		debugPrint(3, "http code %ld", ht_code);
+		debugPrint(3, "http code %ld", g->code);
 
 /* refresh header is an alternate form of redirection */
-		if (newlocation && newloc_d >= 0) {
-			if (shortRefreshDelay()) {
-				ht_code = 302;
+		if (g->newloc && g->newloc_d >= 0) {
+			if (shortRefreshDelay(g->newloc, g->newloc_d)) {
+				g->code = 302;
 			} else {
-				nzFree(newlocation);
-				newlocation = 0;
+				nzFree(g->newloc);
+				g->newloc = 0;
 			}
 		}
 
+		redir = g->newloc;
+		g->newloc = 0;
+
 		if (allowRedirection &&
-		    ((ht_code >= 301 && ht_code <= 303) ||
-		     (ht_code >= 307 && ht_code <= 308))) {
-			redir = newlocation;
+		    ((g->code >= 301 && g->code <= 303) ||
+		     (g->code >= 307 && g->code <= 308))) {
 			if (redir)
-				redir = resolveURL(urlcopy, redir);
+				redir = resolveURL(g->urlcopy, redir);
 			still_fetching = false;
 			if (redir == NULL) {
 				/* Redirected, but we don't know where to go. */
-				i_printf(MSG_RedirectNoURL, ht_code);
+				i_printf(MSG_RedirectNoURL, g->code);
 				transfer_status = true;
 			} else if (redirect_count >= 10) {
 				i_puts(MSG_RedirectMany);
@@ -1270,20 +1179,21 @@ they go where they go, so this doesn't come up very often.
 				nzFree(redir);
 			} else {	/* redirection looks good. */
 				strcpy(creds_buf, ":");	/* Flush stale data. */
-				nzFree(urlcopy);
-				urlcopy = redir;
-				unpercentURL(urlcopy);
+				nzFree(g->urlcopy);
+				g->urlcopy = redir;
+				unpercentURL(g->urlcopy);
+				g->urlcopy_l = strlen(g->urlcopy);
 
 /* Convert POST request to GET request after redirection. */
 /* This should only be done for 301 through 303 */
-				if (ht_code < 307) {
+				if (g->code < 307) {
 					curl_easy_setopt(h, CURLOPT_HTTPGET, 1);
 					post_request = false;
 				}
 /* I think there is more work to do for 307 308,
  * pasting the prior post string onto the new URL. Not sure about this. */
 
-				getUserPass(urlcopy, creds_buf, false);
+				getUserPass(g->urlcopy, creds_buf, false);
 
 				curlret =
 				    curl_easy_setopt(h, CURLOPT_USERPWD,
@@ -1291,47 +1201,62 @@ they go where they go, so this doesn't come up very often.
 				if (curlret != CURLE_OK)
 					goto curl_fail;
 
-				curlret = setCurlURL(h, urlcopy);
+				curlret = setCurlURL(h, g->urlcopy);
 				if (curlret != CURLE_OK)
 					goto curl_fail;
 
-				if (!post_request && presentInCache(urlcopy)) {
+				if (!post_request && presentInCache(g->urlcopy)) {
 					head_request = true;
 					curl_easy_setopt(h, CURLOPT_NOBODY, 1l);
 				}
-
-				nzFree(serverData);
-				serverData = emptyString;
-				serverDataLen = 0;
-				redirect_count += 1;
+// This is unusual in that we're using the i_get structure again,
+// so we need to reset some parts of it and not others.
+				nzFree(g->buffer);
+				g->buffer = initString(&g->length);
+// This 302 redirection could set content type = application/binary,
+// which in turn sets state = 1, which is ignored since 302 takes precedence.
+// So state might still be 1, set it back to 0.
+				g->down_state = 0;
+				g->code = 0;
+				nzFree(g->headers);
+				g->headers = 0;
+				g->headers_len = 0;
+				g->content[0] = 0;
+				g->charset = 0;
+				g->hcl = 0;
+				nzFree(g->cdfn);
+				g->cdfn = 0;
+				g->modtime = 0;
+				nzFree(g->etag);
+				g->etag = 0;
+				++redirect_count;
 				still_fetching = true;
 				name_changed = true;
-				debugPrint(2, "redirect %s", urlcopy);
+				debugPrint(2, "redirect %s", g->urlcopy);
 			}
 		}
 
-		else if (ht_code == 401 && !proceed_unauthenticated) {
+		else if (g->code == 401 && !proceed_unauthenticated) {
 			bool got_creds = false;
 
 			/* only try realm on first try - prevents loop */
-			if (strcmp(creds_buf, ":") == 0)
+			if (stringEqual(creds_buf, ":"))
 				got_creds =
-				    getUserPassRealm(urlcopy, creds_buf,
-						     ht_auth_realm);
-
+				    getUserPassRealm(g->urlcopy, creds_buf,
+						     g->auth_realm);
 			if (!got_creds) {
-				i_printf(MSG_AuthRequired, urlcopy,
-					 ht_auth_realm);
+				i_printf(MSG_AuthRequired, g->urlcopy,
+					 g->auth_realm);
 				nl();
 				got_creds = read_credentials(creds_buf);
 			}
 			if (got_creds) {
-				addWebAuthorization(urlcopy, creds_buf, false,
-						    ht_auth_realm);
+				addWebAuthorization(g->urlcopy, creds_buf,
+						    false, g->auth_realm);
 				curl_easy_setopt(h, CURLOPT_USERPWD, creds_buf);
-				nzFree(serverData);
-				serverData = emptyString;
-				serverDataLen = 0;
+				nzFree(g->buffer);
+				g->buffer = emptyString;
+				g->length = 0;
 			} else {
 /* User aborted the login process, try and at least get something. */
 				proceed_unauthenticated = true;
@@ -1339,11 +1264,11 @@ they go where they go, so this doesn't come up very often.
 		} else {	/* not redirect, not 401 */
 			if (head_request) {
 				if (fetchCache
-				    (urlcopy, ht_etag, ht_modtime, &cacheData,
-				     &cacheDataLen)) {
-					nzFree(serverData);
-					serverData = cacheData;
-					serverDataLen = cacheDataLen;
+				    (g->urlcopy, g->etag, g->modtime,
+				     &cacheData, &cacheDataLen)) {
+					nzFree(g->buffer);
+					g->buffer = cacheData;
+					g->length = cacheDataLen;
 					still_fetching = false;
 					transfer_status = true;
 				} else {
@@ -1354,11 +1279,12 @@ they go where they go, so this doesn't come up very often.
 					--redirect_count;
 				}
 			} else {
-				if (ht_code == 200 && ht_cacheable &&
-				    (ht_modtime || ht_etag) &&
-				    cbd.down_state == 0)
-					storeCache(urlcopy, ht_etag, ht_modtime,
-						   serverData, serverDataLen);
+				if (g->code == 200 && g->cacheable &&
+				    (g->modtime || g->etag) &&
+				    g->down_state == 0)
+					storeCache(g->urlcopy, g->etag,
+						   g->modtime, g->buffer,
+						   g->length);
 				still_fetching = false;
 				transfer_status = true;
 			}
@@ -1368,76 +1294,60 @@ they go where they go, so this doesn't come up very often.
 curl_fail:
 	if (custom_headers)
 		curl_slist_free_all(custom_headers);
-// Don't need the handle any more.
 	curl_easy_cleanup(h);
 
 	if (curlret != CURLE_OK)
-		ebcurl_setError(curlret, urlcopy);
+		ebcurl_setError(curlret, g->urlcopy, (g->foreground ? 0 : 1),
+				g->error);
 
-	nzFree(newlocation);
-	newlocation = 0;
-
-	if (transfer_status == false) {
-		nzFree(serverData);
-		serverData = NULL;
-		serverDataLen = 0;
-		nzFree(urlcopy);	/* Free it on transfer failure. */
-	} else {
-		if ((ht_code != 200 && ht_code != 201 &&
-		     (webpage || debugLevel >= 2)) ||
-		    (ht_code == 201 && debugLevel >= 3))
+	if (transfer_status) {
+		if ((g->code != 200 && g->code != 201 &&
+		     (g->foreground || debugLevel >= 2)) ||
+		    (g->code == 201 && debugLevel >= 3))
 			i_printf(MSG_HTTPError,
-				 ht_code, message_for_response_code(ht_code));
+				 g->code, message_for_response_code(g->code));
 		if (name_changed)
-			changeFileName = urlcopy;
+			g->cfn = g->urlcopy;
 		else
-			nzFree(urlcopy);	/* Don't need it anymore. */
+			nzFree(g->urlcopy);	/* Don't need it anymore. */
+		g->urlcopy = 0;
 	}
 
 	nzFree(postb);
 
 /* see if http header has set the filename */
-	if (ht_cdfn) {
-		nzFree(changeFileName);
-		changeFileName = ht_cdfn;
-		ht_cdfn = NULL;
+	if (g->cdfn) {
+		nzFree(g->cfn);
+		g->cfn = g->cdfn;
+		g->cdfn = NULL;
 	}
 
 /* Check for plugin to run here */
-	if (transfer_status && ht_code == 200 && cf->mt && pluginsOn &&
+	if (g->pg_ok && transfer_status && g->code == 200 && cf->mt &&
 	    !cf->mt->stream && !cf->mt->outtype && cf->mt->program) {
 		bool rc = playServerData();
-		nzFree(serverData);
-		serverData = NULL;
-		serverDataLen = 0;
+		i_get_free(g, true);
 		return rc;
 	}
 
-	if (transfer_status) {
-		if (headers_p) {
-			*headers_p = http_headers;
+	if (transfer_status && g->headers_p) {
+		*g->headers_p = g->headers;
 // The string is your responsibility now.
-			http_headers = 0;
-		}
-		if (body_p) {
-			*body_p = serverData;
-			*bodlen_p = serverDataLen;
-// The string is your responsibility now.
-			serverData = 0;
-			serverDataLen = 0;
-		}
+		g->headers = 0;
 	}
+
+	i_get_free(g, !transfer_status);
 
 	return transfer_status;
 }				/* httpConnect */
 
-// copy text over to serverData but change < to &lt; etc,
+// copy text over to the buffer but change < to &lt; etc,
 // since this data will be browsed as if it were html.
-static void prepHtmlString(const char *q)
+static void prepHtmlString(struct i_get *g, const char *q)
 {
 	char c;
 	if (!strpbrk(q, "<>&")) {	// no bad characters
-		stringAndString(&serverData, &serverDataLen, q);
+		stringAndString(&g->buffer, &g->length, q);
 		return;
 	}
 	for (; (c = *q); ++q) {
@@ -1449,14 +1359,14 @@ static void prepHtmlString(const char *q)
 		if (c == '&')
 			meta = "&amp;";
 		if (meta)
-			stringAndString(&serverData, &serverDataLen, meta);
+			stringAndString(&g->buffer, &g->length, meta);
 		else
-			stringAndChar(&serverData, &serverDataLen, c);
+			stringAndChar(&g->buffer, &g->length, c);
 	}
 }
 
 /* Format a line from an ftp directory. */
-static void ftp_ls_line(char *line)
+static void ftp_ls_line(struct i_get *g, char *line)
 {
 	int l = strlen(line);
 	int j;
@@ -1465,10 +1375,10 @@ static void ftp_ls_line(char *line)
 
 /* blank line becomes paragraph break */
 	if (!l || (memEqualCI(line, "total ", 6) && stringIsNum(line + 6))) {
-		stringAndString(&serverData, &serverDataLen, "<P>\n");
+		stringAndString(&g->buffer, &g->length, "<P>\n");
 		return;
 	}
-	stringAndString(&serverData, &serverDataLen, "<br>");
+	stringAndString(&g->buffer, &g->length, "<br>");
 
 	for (j = 0; line[j]; ++j)
 		if (!strchr("-rwxdls", line[j]))
@@ -1508,45 +1418,43 @@ static void ftp_ls_line(char *line)
 			char qc = '"';
 			if (strchr(q, qc))
 				qc = '\'';
-			stringAndString(&serverData, &serverDataLen,
-					"<A HREF=x");
-			serverData[serverDataLen - 1] = qc;
+			stringAndString(&g->buffer, &g->length, "<A HREF=x");
+			g->buffer[g->length - 1] = qc;
 			t = strstr(q, " -> ");
 			if (t)
-				stringAndBytes(&serverData, &serverDataLen, q,
+				stringAndBytes(&g->buffer, &g->length, q,
 					       t - q);
 			else
-				stringAndString(&serverData, &serverDataLen, q);
-			stringAndChar(&serverData, &serverDataLen, qc);
-			stringAndChar(&serverData, &serverDataLen, '>');
-			stringAndString(&serverData, &serverDataLen, q);
-			stringAndString(&serverData, &serverDataLen, "</A>");
+				stringAndString(&g->buffer, &g->length, q);
+			stringAndChar(&g->buffer, &g->length, qc);
+			stringAndChar(&g->buffer, &g->length, '>');
+			stringAndString(&g->buffer, &g->length, q);
+			stringAndString(&g->buffer, &g->length, "</A>");
 			if (line[0] == 'd')
-				stringAndChar(&serverData, &serverDataLen, '/');
-			stringAndString(&serverData, &serverDataLen, ": ");
-			stringAndNum(&serverData, &serverDataLen, fsize);
-			stringAndChar(&serverData, &serverDataLen, '\n');
+				stringAndChar(&g->buffer, &g->length, '/');
+			stringAndString(&g->buffer, &g->length, ": ");
+			stringAndNum(&g->buffer, &g->length, fsize);
+			stringAndChar(&g->buffer, &g->length, '\n');
 			return;
 		}
 	}
 
-	prepHtmlString(line);
-	stringAndChar(&serverData, &serverDataLen, '\n');
+	prepHtmlString(g, line);
+	stringAndChar(&g->buffer, &g->length, '\n');
 }				/* ftp_ls_line */
 
 /* ftp_listing: convert an FTP-style listing to html. */
 /* Repeatedly calls ftp_ls_line to parse each line of the data. */
-static void ftp_listing(void)
+static void ftp_listing(struct i_get *g)
 {
 	char *s, *t;
-	char *incomingData = serverData;
-	int incomingLen = serverDataLen;
-	serverData = initString(&serverDataLen);
-	stringAndString(&serverData, &serverDataLen, "<html>\n<body>\n");
+	char *incomingData = g->buffer;
+	int incomingLen = g->length;
+	g->buffer = initString(&g->length);
+	stringAndString(&g->buffer, &g->length, "<html>\n<body>\n");
 
 	if (!incomingLen) {
-		i_stringAndMessage(&serverData, &serverDataLen,
-				   MSG_FTPEmptyDir);
+		i_stringAndMessage(&g->buffer, &g->length, MSG_FTPEmptyDir);
 	} else {
 
 		s = incomingData;
@@ -1555,17 +1463,17 @@ static void ftp_listing(void)
 			if (!t || t >= incomingData + incomingLen)
 				break;	/* should never happen */
 			*t = 0;
-			ftp_ls_line(s);
+			ftp_ls_line(g, s);
 			s = t + 1;
 		}
 	}
 
-	stringAndString(&serverData, &serverDataLen, "</body></html>\n");
+	stringAndString(&g->buffer, &g->length, "</body></html>\n");
 	nzFree(incomingData);
 }				/* ftp_listing */
 
 /* Format a line from a gopher directory. */
-static void gopher_ls_line(char *line)
+static void gopher_ls_line(struct i_get *g, char *line)
 {
 	int prot;
 	char first, *text, *pathname, *host, *s;
@@ -1605,12 +1513,12 @@ static void gopher_ls_line(char *line)
 		++text;
 
 // gopher is very much line oriented.
-	stringAndString(&serverData, &serverDataLen, "<br>\n");
+	stringAndString(&g->buffer, &g->length, "<br>\n");
 
 // i or 3 is informational, 3 being an error.
 	if (first == 'i' || first == '3') {
-		prepHtmlString(text);
-		stringAndChar(&serverData, &serverDataLen, '\n');
+		prepHtmlString(g, text);
+		stringAndChar(&g->buffer, &g->length, '\n');
 		return;
 	}
 // everything else becomes hyperlink
@@ -1620,33 +1528,31 @@ static void gopher_ls_line(char *line)
 		if (strchr(host, qc)	// should never happen
 		    || strchr(pathname, qc))
 			qc = '\'';
-		stringAndString(&serverData, &serverDataLen, "<a href=x");
-		serverData[serverDataLen - 1] = qc;
+		stringAndString(&g->buffer, &g->length, "<a href=x");
+		g->buffer[g->length - 1] = qc;
 		if (!strncmp(pathname, "URL:", 4)) {
-			stringAndString(&serverData, &serverDataLen,
-					pathname + 4);
+			stringAndString(&g->buffer, &g->length, pathname + 4);
 		} else {
-			stringAndString(&serverData, &serverDataLen,
+			stringAndString(&g->buffer, &g->length,
 					(first ==
 					 'h' ? "http://" : "gopher://"));
-			stringAndString(&serverData, &serverDataLen, host);
+			stringAndString(&g->buffer, &g->length, host);
 			if (prot) {
-				stringAndChar(&serverData, &serverDataLen, ':');
-				stringAndNum(&serverData, &serverDataLen, prot);
+				stringAndChar(&g->buffer, &g->length, ':');
+				stringAndNum(&g->buffer, &g->length, prot);
 			}
 // gopher requires us to inject the  "first" directive into the path. Wow.
 			if (pathname[0] == '/' && pathname[1]) {
-				stringAndChar(&serverData, &serverDataLen, '/');
-				stringAndChar(&serverData, &serverDataLen,
-					      first);
-				stringAndString(&serverData, &serverDataLen,
+				stringAndChar(&g->buffer, &g->length, '/');
+				stringAndChar(&g->buffer, &g->length, first);
+				stringAndString(&g->buffer, &g->length,
 						pathname + 1);
 			} else
-				stringAndString(&serverData, &serverDataLen,
+				stringAndString(&g->buffer, &g->length,
 						pathname);
 		}
-		stringAndChar(&serverData, &serverDataLen, qc);
-		stringAndChar(&serverData, &serverDataLen, '>');
+		stringAndChar(&g->buffer, &g->length, qc);
+		stringAndChar(&g->buffer, &g->length, '>');
 	}
 
 	s = strchr(text, '(');
@@ -1654,29 +1560,28 @@ static void gopher_ls_line(char *line)
 		s = 0;
 	if (s)
 		*s = 0;
-	prepHtmlString(text);
+	prepHtmlString(g, text);
 	if (host)
-		stringAndString(&serverData, &serverDataLen, "</a>");
+		stringAndString(&g->buffer, &g->length, "</a>");
 	if (s) {
 		*s = '(';
-		prepHtmlString(s);
+		prepHtmlString(g, s);
 	}
-	stringAndChar(&serverData, &serverDataLen, '\n');
+	stringAndChar(&g->buffer, &g->length, '\n');
 }				/* gopher_ls_line */
 
 /* gopher_listing: convert a gopher-style listing to html. */
 /* Repeatedly calls gopher_ls_line to parse each line of the data. */
-static void gopher_listing(void)
+static void gopher_listing(struct i_get *g)
 {
 	char *s, *t;
-	char *incomingData = serverData;
-	int incomingLen = serverDataLen;
-	serverData = initString(&serverDataLen);
-	stringAndString(&serverData, &serverDataLen, "<html>\n<body>\n");
+	char *incomingData = g->buffer;
+	int incomingLen = g->length;
+	g->buffer = initString(&g->length);
+	stringAndString(&g->buffer, &g->length, "<html>\n<body>\n");
 
 	if (!incomingLen) {
-		i_stringAndMessage(&serverData, &serverDataLen,
-				   MSG_GopherEmptyDir);
+		i_stringAndMessage(&g->buffer, &g->length, MSG_GopherEmptyDir);
 	} else {
 
 		s = incomingData;
@@ -1685,18 +1590,21 @@ static void gopher_listing(void)
 			if (!t || t >= incomingData + incomingLen)
 				break;	/* should never happen */
 			*t = 0;
-			gopher_ls_line(s);
+			gopher_ls_line(g, s);
 			s = t + 1;
 		}
 	}
 
-	stringAndString(&serverData, &serverDataLen, "</body></html>\n");
+	stringAndString(&g->buffer, &g->length, "</body></html>\n");
 	nzFree(incomingData);
 }				/* gopher_listing */
 
-void ebcurl_setError(CURLcode curlret, const char *url)
+// action: 0 traditional set, 1 print, 2 print and exit
+void ebcurl_setError(CURLcode curlret, const char *url, int action,
+		     const char *curl_error)
 {
 	const char *host = NULL, *protocol = NULL;
+	void (*fn) (int, ...);
 	protocol = getProtURL(url);
 	host = getHostURL(url);
 
@@ -1704,52 +1612,62 @@ void ebcurl_setError(CURLcode curlret, const char *url)
 	if (!host)
 		host = emptyString;
 
-	switch (curlret) {
+	fn = (action ? i_printf : setError);
 
+	switch (curlret) {
 	case CURLE_UNSUPPORTED_PROTOCOL:
-		setError(MSG_WebProtBad, protocol);
+		(*fn) (MSG_WebProtBad, protocol);
 		break;
+
 	case CURLE_URL_MALFORMAT:
-		setError(MSG_BadURL, url);
+		(*fn) (MSG_BadURL, url);
 		break;
+
 	case CURLE_COULDNT_RESOLVE_HOST:
-		setError(MSG_IdentifyHost, host);
+		(*fn) (MSG_IdentifyHost, host);
 		break;
+
 	case CURLE_REMOTE_ACCESS_DENIED:
-		setError(MSG_RemoteAccessDenied);
+		(*fn) (MSG_RemoteAccessDenied);
 		break;
+
 	case CURLE_TOO_MANY_REDIRECTS:
-		setError(MSG_RedirectMany);
+		(*fn) (MSG_RedirectMany);
 		break;
 
 	case CURLE_OPERATION_TIMEDOUT:
-		setError(MSG_Timeout);
+		(*fn) (MSG_Timeout);
 		break;
+
 	case CURLE_PEER_FAILED_VERIFICATION:
 	case CURLE_SSL_CACERT:
-		setError(MSG_NoCertify, host);
+		(*fn) (MSG_NoCertify, host);
 		break;
 
 	case CURLE_GOT_NOTHING:
 	case CURLE_RECV_ERROR:
-		setError(MSG_WebRead);
+		(*fn) (MSG_WebRead);
 		break;
+
 	case CURLE_SEND_ERROR:
-		setError(MSG_CurlSendData);
+		(*fn) (MSG_CurlSendData);
 		break;
+
 	case CURLE_COULDNT_CONNECT:
-		setError(MSG_WebConnect, host);
+		(*fn) (MSG_WebConnect, host);
 		break;
+
 	case CURLE_FTP_CANT_GET_HOST:
-		setError(MSG_FTPConnect);
+		(*fn) (MSG_FTPConnect);
 		break;
 
 	case CURLE_ABORTED_BY_CALLBACK:
 #if 0
 // this is printed by the callback function
-		setError(MSG_Interrupted);
+		(*fn) (MSG_Interrupted);
 #endif
 		break;
+
 /* These all look like session initiation failures. */
 	case CURLE_FTP_WEIRD_SERVER_REPLY:
 	case CURLE_FTP_WEIRD_PASS_REPLY:
@@ -1758,129 +1676,123 @@ void ebcurl_setError(CURLcode curlret, const char *url)
 	case CURLE_FTP_COULDNT_SET_ASCII:
 	case CURLE_FTP_COULDNT_SET_BINARY:
 	case CURLE_FTP_PORT_FAILED:
-		setError(MSG_FTPSession);
+		(*fn) (MSG_FTPSession);
 		break;
 
 	case CURLE_FTP_USER_PASSWORD_INCORRECT:
-		setError(MSG_LogPass);
+		(*fn) (MSG_LogPass);
 		break;
 
 	case CURLE_FTP_COULDNT_RETR_FILE:
-		setError(MSG_FTPTransfer);
+		(*fn) (MSG_FTPTransfer);
 		break;
 
 	case CURLE_SSL_CONNECT_ERROR:
-		setError(MSG_SSLConnectError, ht_error);
+		(*fn) (MSG_SSLConnectError, curl_error);
 		break;
 
 	case CURLE_LOGIN_DENIED:
-		setError(MSG_LogPass);
+		(*fn) (MSG_LogPass);
 		break;
 
 	default:
-		setError(MSG_CurlCatchAll, curl_easy_strerror(curlret));
+		(*fn) (MSG_CurlCatchAll, curl_easy_strerror(curlret));
 		break;
 	}
+
+	if (action)
+		i_printf(MSG_String, "\n");
+	if (action == 2)
+		exit(2);
 }				/* ebcurl_setError */
 
 /* Like httpConnect, but for ftp */
-static bool ftpConnect(const char *url, const char *user, const char *pass,
-		       bool f_encoded)
+static bool ftpConnect(struct i_get *g)
 {
 	CURL *h;		// the curl handle for ftp
-	struct eb_curl_callback_data cbd;
 	int protLength;		/* length of "ftp://" */
 	bool transfer_success = false;
 	bool has_slash, is_scp;
 	CURLcode curlret = CURLE_OK;
 	char creds_buf[MAXUSERPASS * 2 + 1];
 	size_t creds_len = 0;
+	const char *url = g->url;
 
-	is_http = false;
 	protLength = strchr(url, ':') - url + 3;
 /* scp is somewhat unique among the protocols handled here */
 	is_scp = memEqualCI(url, "scp", 3);
 
-	if (user[0] && pass[0]) {
-		strcpy(creds_buf, user);
+	if (g->user[0] && g->pass[0]) {
+		strcpy(creds_buf, g->user);
 		creds_len = strlen(creds_buf);
 		creds_buf[creds_len] = ':';
-		strcpy(creds_buf + creds_len + 1, pass);
+		strcpy(creds_buf + creds_len + 1, g->pass);
 	} else if (memEqualCI(url, "ftp", 3)) {
 		strcpy(creds_buf, "anonymous:ftp@example.com");
 	}
 
-	cbd.buffer = &serverData;
-	cbd.length = &serverDataLen;
-	cbd.down_state = 0;
-	cbd.down_file = cbd.down_file2 = NULL;
-	cbd.down_length = 0;
-	h = http_curl_init(&cbd);
+	g->down_state = 0;
+	g->down_file = g->down_file2 = NULL;
+	g->down_length = 0;
+	h = http_curl_init(g);
 	if (!h)
 		goto ftp_transfer_fail;
 	curlret = curl_easy_setopt(h, CURLOPT_USERPWD, creds_buf);
 	if (curlret != CURLE_OK)
 		goto ftp_transfer_fail;
 
-	serverData = initString(&serverDataLen);
-	urlSanitize(url, 0, f_encoded);
+	g->buffer = initString(&g->length);
+	urlSanitize(g, 0);
 
 /* libcurl appends an implicit slash to URLs like "ftp://foo.com".
 * Be explicit, so that edbrowse knows that we have a directory. */
 
-	if (!strchr(urlcopy + protLength, '/'))
-		strcpy(urlcopy + urlcopy_l, "/");
+	if (!strchr(g->urlcopy + protLength, '/'))
+		strcpy(g->urlcopy + g->urlcopy_l, "/");
 
-	curlret = setCurlURL(h, urlcopy);
+	curlret = setCurlURL(h, g->urlcopy);
 	if (curlret != CURLE_OK)
 		goto ftp_transfer_fail;
 
-	has_slash = urlcopy[urlcopy_l] == '/';
+	has_slash = g->urlcopy[g->urlcopy_l] == '/';
 /* don't download a directory listing, we want to see that */
 /* Fetching a directory will fail in the special case of scp. */
-	cbd.down_state = (has_slash ? 0 : 1);
-	down_msg = MSG_FTPDownload;
+	g->down_state = (has_slash ? 0 : 1);
+	g->down_msg = MSG_FTPDownload;
 	if (is_scp)
-		down_msg = MSG_SCPDownload;
-	cbd.length = &serverDataLen;
+		g->down_msg = MSG_SCPDownload;
 
 perform:
-	curlret = fetch_internet(h);
+	curlret = fetch_internet(g);
 
-	if (cbd.down_state == 5) {
+	if (g->down_state == 5) {
 /* user has directed a download of this file in the background. */
-		background_download(&cbd);
-		if (cbd.down_state == 4)
+		background_download(g);
+		if (g->down_state == 4)
 			goto perform;
 	}
 
-	if (cbd.down_state == 3 || cbd.down_state == -1) {
-/* set this to null so we don't push a new buffer */
-		serverData = NULL;
-		cnzFree(cbd.down_file);
+	if (g->down_state == 3 || g->down_state == -1) {
+		i_get_free(g, true);
 		curl_easy_cleanup(h);
 		return false;
 	}
 
-	if (cbd.down_state == 4) {
-		if (curlret != CURLE_OK) {
-			ebcurl_setError(curlret, urlcopy);
-			showError();
-			exit(2);
-		}
+	if (g->down_state == 4) {
+		if (curlret != CURLE_OK)
+			ebcurl_setError(curlret, g->urlcopy, 2, g->error);
 		i_printf(MSG_DownSuccess);
-		printf(": %s\n", cbd.down_file2);
+		printf(": %s\n", g->down_file2);
 		exit(0);
 	}
 
-	if (*(cbd.length) >= CHUNKSIZE && showProgress == 'd')
+	if (g->length >= CHUNKSIZE && showProgress == 'd')
 		nl();		/* We printed dots, so terminate them with newline */
 
-	if (cbd.down_state == 2) {
-		close(cbd.down_fd);
+	if (g->down_state == 2) {
+		close(g->down_fd);
 		setError(MSG_DownSuccess);
-		serverData = NULL;
-		cnzFree(cbd.down_file);
+		i_get_free(g, true);
 		curl_easy_cleanup(h);
 		return false;
 	}
@@ -1892,140 +1804,129 @@ perform:
 		if (has_slash | is_scp)
 			transfer_success = false;
 		else {		/* try appending a slash. */
-			strcpy(urlcopy + urlcopy_l, "/");
-			cbd.down_state = 0;
-			cnzFree(cbd.down_file);
-			cbd.down_file = 0;
-			curlret = setCurlURL(h, urlcopy);
+			strcpy(g->urlcopy + g->urlcopy_l, "/");
+			g->down_state = 0;
+			cnzFree(g->down_file);
+			g->down_file = 0;
+			curlret = setCurlURL(h, g->urlcopy);
 			if (curlret != CURLE_OK)
 				goto ftp_transfer_fail;
 
-			curlret = fetch_internet(h);
+			curlret = fetch_internet(g);
 			if (curlret != CURLE_OK)
 				transfer_success = false;
 			else {
-				ftp_listing();
+				ftp_listing(g);
 				transfer_success = true;
 			}
 		}
 	} else if (curlret == CURLE_OK) {
 		if (has_slash)
-			ftp_listing();
+			ftp_listing(g);
 		transfer_success = true;
 	} else
 		transfer_success = false;
 
 ftp_transfer_fail:
-// Don't need the handle any more
 	if (h)
 		curl_easy_cleanup(h);
 	if (transfer_success == false) {
 		if (curlret != CURLE_OK)
-			ebcurl_setError(curlret, urlcopy);
-		nzFree(serverData);
-		serverData = 0;
-		serverDataLen = 0;
+			ebcurl_setError(curlret, g->urlcopy,
+					(g->foreground ? 0 : 1), g->error);
+		i_get_free(g, true);
 	}
-	if (transfer_success == true && !stringEqual(url, urlcopy))
-		changeFileName = urlcopy;
+	if (transfer_success == true && !stringEqual(url, g->urlcopy))
+		g->cfn = g->urlcopy;
 	else
-		nzFree(urlcopy);
+		nzFree(g->urlcopy);
+	g->urlcopy = 0;
+
+	i_get_free(g, false);
 
 	return transfer_success;
 }				/* ftpConnect */
 
 /* Like httpConnect, but for gopher */
-static bool gopherConnect(const char *url, bool f_encoded)
+static bool gopherConnect(struct i_get *g)
 {
 	CURL *h;		// the curl handle for gopher
-	struct eb_curl_callback_data cbd;
 	int protLength;		/* length of "gopher://" */
 	bool transfer_success = false;
 	bool has_slash;
 	char first = 0;
 	char *s;
 	CURLcode curlret = CURLE_OK;
+	const char *url = g->url;
 
-	is_http = false;
 	protLength = strchr(url, ':') - url + 3;
-	cbd.buffer = &serverData;
-	cbd.length = &serverDataLen;
-	cbd.down_state = 0;
-	cbd.down_file = cbd.down_file2 = NULL;
-	cbd.down_length = 0;
-	h = http_curl_init(&cbd);
+	h = http_curl_init(g);
 	if (!h)
 		goto gopher_transfer_fail;
-	serverData = initString(&serverDataLen);
-	urlSanitize(url, 0, f_encoded);
+	g->buffer = initString(&g->length);
+	urlSanitize(g, 0);
 
 /* libcurl appends an implicit slash to URLs like "gopher://foo.com".
 * Be explicit, so that edbrowse knows if we have a directory. */
-	if (!strchr(urlcopy + protLength, '/'))
-		strcpy(urlcopy + urlcopy_l, "/");
-	curlret = setCurlURL(h, urlcopy);
+	if (!strchr(g->urlcopy + protLength, '/'))
+		strcpy(g->urlcopy + g->urlcopy_l, "/");
+	curlret = setCurlURL(h, g->urlcopy);
 	if (curlret != CURLE_OK)
 		goto gopher_transfer_fail;
 
-	has_slash = urlcopy[strlen(urlcopy) - 1] == '/';
+	has_slash = g->urlcopy[strlen(g->urlcopy) - 1] == '/';
 /* don't download a directory listing, we want to see that */
-	cbd.down_state = (has_slash ? 0 : 1);
-	down_msg = MSG_GopherDownload;
+	g->down_state = (has_slash ? 0 : 1);
+	g->down_msg = MSG_GopherDownload;
 // That's the default, let the leading character override
-	s = strchr(urlcopy + protLength, '/');
+	s = strchr(g->urlcopy + protLength, '/');
 	if (s && (first = s[1])) {
 // almost every file type downwloads.
-		cbd.down_state = 1;
+		g->down_state = 1;
 		if (strchr("017", first))
-			cbd.down_state = 0;
+			g->down_state = 0;
 		if (first == '1' || first == '7')
 			has_slash = true;
 	}
 
 perform:
-	curlret = fetch_internet(h);
+	curlret = fetch_internet(g);
 
-	if (cbd.down_state == 5) {
+	if (g->down_state == 5) {
 /* user has directed a download of this file in the background. */
-		background_download(&cbd);
-		if (cbd.down_state == 4)
+		background_download(g);
+		if (g->down_state == 4)
 			goto perform;
 	}
 
-	if (cbd.down_state == 3 || cbd.down_state == -1) {
-/* set this to null so we don't push a new buffer */
-		serverData = NULL;
-		cnzFree(cbd.down_file);
+	if (g->down_state == 3 || g->down_state == -1) {
+		i_get_free(g, true);
 		curl_easy_cleanup(h);
 		return false;
 	}
 
-	if (cbd.down_state == 4) {
-		if (curlret != CURLE_OK) {
-			ebcurl_setError(curlret, urlcopy);
-			showError();
-			exit(2);
-		}
+	if (g->down_state == 4) {
+		if (curlret != CURLE_OK)
+			ebcurl_setError(curlret, g->urlcopy, 2, g->error);
 		i_printf(MSG_DownSuccess);
-		printf(": %s\n", cbd.down_file2);
+		printf(": %s\n", g->down_file2);
 		exit(0);
 	}
 
-	if (*(cbd.length) >= CHUNKSIZE && showProgress == 'd')
+	if (g->length >= CHUNKSIZE && showProgress == 'd')
 		nl();		/* We printed dots, so terminate them with newline */
 
-	if (cbd.down_state == 2) {
-		close(cbd.down_fd);
+	if (g->down_state == 2) {
+		close(g->down_fd);
 		setError(MSG_DownSuccess);
-		serverData = NULL;
-		cnzFree(cbd.down_file);
+		i_get_free(g, true);
 		curl_easy_cleanup(h);
 		return false;
 	}
 
 	if (curlret == CURLE_OK) {
 		if (has_slash)
-			gopher_listing();
+			gopher_listing(g);
 		transfer_success = true;
 	} else
 		transfer_success = false;
@@ -2035,29 +1936,29 @@ gopher_transfer_fail:
 		curl_easy_cleanup(h);
 	if (!transfer_success) {
 		if (curlret != CURLE_OK)
-			ebcurl_setError(curlret, urlcopy);
-		nzFree(serverData);
-		serverData = 0;
-		serverDataLen = 0;
+			ebcurl_setError(curlret, g->urlcopy,
+					(g->foreground ? 0 : 1), g->error);
+		i_get_free(g, true);
 	}
 
-	if (transfer_success && !stringEqual(url, urlcopy))
-		changeFileName = urlcopy;
+	if (transfer_success && !stringEqual(url, g->urlcopy))
+		g->cfn = g->urlcopy;
 	else
-		nzFree(urlcopy);
+		nzFree(g->urlcopy);
+	g->urlcopy = 0;
 
 	if (transfer_success && first == '0') {
 // it's a text file, neeed to undos.
 // The curl callback function always makes sure there is an extra byte at the end.
-		serverData[serverDataLen] = 0;
+		g->buffer[g->length] = 0;
 		int i, j;
-		for (i = j = 0; i < serverDataLen; ++i) {
-			if (serverData[i] == '\r' && serverData[i + 1] == '\n')
+		for (i = j = 0; i < g->length; ++i) {
+			if (g->buffer[i] == '\r' && g->buffer[i + 1] == '\n')
 				continue;
-			serverData[j++] = serverData[i];
+			g->buffer[j++] = g->buffer[i];
 		}
-		serverData[j] = 0;
-		serverDataLen = j;
+		g->buffer[j] = 0;
+		g->length = j;
 	}
 
 	return transfer_success;
@@ -2100,13 +2001,14 @@ my_curl_safeSocket(void *clientp, curl_socket_t socketfd, curlsocktype purpose)
 #endif // _MSC_VER y/n
 }
 
-static CURL *http_curl_init(struct eb_curl_callback_data *cbd)
+static CURL *http_curl_init(struct i_get *g)
 {
 	CURLcode curl_init_status = CURLE_OK;
 	int curl_auth;
 	CURL *h = curl_easy_init();
 	if (h == NULL)
 		goto libcurl_init_fail;
+	g->h = h;
 	curl_init_status =
 	    curl_easy_setopt(h, CURLOPT_SHARE, global_share_handle);
 	if (curl_init_status != CURLE_OK)
@@ -2114,9 +2016,9 @@ static CURL *http_curl_init(struct eb_curl_callback_data *cbd)
 /* Lots of these setopt calls shouldn't fail.  They just diddle a struct. */
 	curl_easy_setopt(h, CURLOPT_SOCKOPTFUNCTION, my_curl_safeSocket);
 	curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, eb_curl_callback);
-	curl_easy_setopt(h, CURLOPT_WRITEDATA, cbd);
+	curl_easy_setopt(h, CURLOPT_WRITEDATA, g);
 	curl_easy_setopt(h, CURLOPT_HEADERFUNCTION, curl_header_callback);
-	curl_easy_setopt(h, CURLOPT_HEADERDATA, cbd);
+	curl_easy_setopt(h, CURLOPT_HEADERDATA, g);
 	if (debugLevel >= 4)
 		curl_easy_setopt(h, CURLOPT_VERBOSE, 1);
 	curl_easy_setopt(h, CURLOPT_DEBUGFUNCTION, ebcurl_debug_handler);
@@ -2153,8 +2055,8 @@ static CURL *http_curl_init(struct eb_curl_callback_data *cbd)
 	curl_easy_setopt(h, CURLOPT_HTTPAUTH, curl_auth);
 
 /* The next few setopt calls could allocate or perform file I/O. */
-	ht_error[0] = '\0';
-	curl_init_status = curl_easy_setopt(h, CURLOPT_ERRORBUFFER, ht_error);
+	g->error[0] = '\0';
+	curl_init_status = curl_easy_setopt(h, CURLOPT_ERRORBUFFER, g->error);
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
 	curl_init_status = curl_easy_setopt(h, CURLOPT_ENCODING, "");
@@ -2357,29 +2259,29 @@ static bool read_credentials(char *buffer)
  * Gather all the http headers into one long string. */
 static size_t
 curl_header_callback(char *header_line, size_t size, size_t nmemb,
-		     struct eb_curl_callback_data *data)
+		     struct i_get *g)
 {
 	size_t bytes_in_line = size * nmemb;
-	stringAndBytes(&http_headers, &http_headers_len,
+	stringAndBytes(&g->headers, &g->headers_len,
 		       header_line, bytes_in_line);
 
-	scan_http_headers(true);
-	if (down_permitted && data->down_state == 0) {
+	scan_http_headers(g, true);
+	if (g->down_ok && g->down_state == 0) {
 		if (cf->mt && cf->mt->stream && pluginsOn) {
 /* I don't think this ever happens, since streams are indicated by the protocol,
  * and we wouldn't even get here, but just in case -
  * stop the download and set the flag so we can pass this url
  * to the program that handles this kind of stream. */
-			data->down_state = 6;
+			g->down_state = 6;
 			return -1;
 		}
-		if (ht_content[0] && !memEqualCI(ht_content, "text/", 5) &&
-		    !memEqualCI(ht_content, "application/xhtml+xml", 21) &&
-		    (!pluginsOn || !cf->mt || cf->mt->download)) {
-			data->down_state = 1;
-			down_msg = MSG_Down;
+		if (g->content[0] && !memEqualCI(g->content, "text/", 5) &&
+		    !memEqualCI(g->content, "application/xhtml+xml", 21) &&
+		    (!g->pg_ok || !cf->mt || cf->mt->download)) {
+			g->down_state = 1;
+			g->down_msg = MSG_Down;
 			debugPrint(3, "potential download based on type %s",
-				   ht_content);
+				   g->content);
 		}
 	}
 
@@ -2406,7 +2308,7 @@ int
 ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
 		     size_t size, void *unused)
 {
-	static bool last_curlin = false;
+	static bool last_curlin = false;	// this static not threadsafe
 	FILE *f = debugFile ? debugFile : stdout;
 
 	if (info_desc == CURLINFO_HEADER_OUT) {
@@ -2427,7 +2329,7 @@ ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
 }				/* ebcurl_debug_handler */
 
 /* At this point, down_state = 1 */
-static void setup_download(struct eb_curl_callback_data *data)
+static void setup_download(struct i_get *g)
 {
 	const char *filepart;
 	const char *answer;
@@ -2435,28 +2337,28 @@ static void setup_download(struct eb_curl_callback_data *data)
 
 /* if not run from a terminal then just return. */
 	if (!isInteractive) {
-		data->down_state = 0;
+		g->down_state = 0;
 		return;
 	}
 
 /* If file is changed to a playlist or some such, just return */
-	if (ht_cdfn && (mt = findMimeByURL(ht_cdfn)) && mt->stream) {
+	if (g->pg_ok && g->cdfn && (mt = findMimeByURL(g->cdfn)) && mt->stream) {
 		debugPrint(3, "download aborted due to stream plugin");
-		data->down_state = 0;
+		g->down_state = 0;
 		return;
 	}
 
-	filepart = getFileURL(urlcopy, true);
+	filepart = getFileURL(g->urlcopy, true);
 top:
-	answer = getFileName(down_msg, filepart, false, true);
+	answer = getFileName(g->down_msg, filepart, false, true);
 /* space for a filename means read into memory */
 	if (stringEqual(answer, " ")) {
-		data->down_state = 0;	/* in memory download */
+		g->down_state = 0;	/* in memory download */
 		return;
 	}
 
 	if (stringEqual(answer, "x") || stringEqual(answer, "X")) {
-		data->down_state = -1;
+		g->down_state = -1;
 		setError(MSG_DownAbort);
 		return;
 	}
@@ -2466,31 +2368,30 @@ top:
 		goto top;
 	}
 
-	data->down_fd = creat(answer, 0666);
-	if (data->down_fd < 0) {
+	g->down_fd = creat(answer, 0666);
+	if (g->down_fd < 0) {
 		i_printf(MSG_NoCreate2, answer);
 		nl();
 		goto top;
 	}
-// free down_file, but not down_file2
-	data->down_file = data->down_file2 = cloneString(answer);
+// we will free down_file, but not down_file2
+	g->down_file = g->down_file2 = cloneString(answer);
 	if (downDir) {
 		int l = strlen(downDir);
-		if (!strncmp(data->down_file2, downDir, l)) {
-			data->down_file2 += l;
-			if (data->down_file2[0] == '/')
-				++data->down_file2;
+		if (!strncmp(g->down_file2, downDir, l)) {
+			g->down_file2 += l;
+			if (g->down_file2[0] == '/')
+				++g->down_file2;
 		}
 	}
-	data->down_state = (down_bg ? 5 : 2);
-	data->length = &data->down_length;
+	g->down_state = (down_bg ? 5 : 2);
 }				/* setup_download */
 
 #ifdef _MSC_VER			// need fork()
 /* At this point, down_state = 5 */
-static void background_download(struct eb_curl_callback_data *data)
+static void background_download(struct i_get *g)
 {
-	data->down_state = -1;
+	g->down_state = -1;
 /* perhaps a better error message here */
 	setError(MSG_DownAbort);
 	return;
@@ -2504,11 +2405,11 @@ int bg_jobs(bool iponly)
 #else // !_MSC_VER
 
 /* At this point, down_state = 5 */
-static void background_download(struct eb_curl_callback_data *data)
+static void background_download(struct i_get *g)
 {
-	down_pid = fork();
+	int down_pid = fork();
 	if (down_pid < 0) {	/* should never happen */
-		data->down_state = -1;
+		g->down_state = -1;
 /* perhaps a better error message here */
 		setError(MSG_DownAbort);
 		return;
@@ -2516,20 +2417,20 @@ static void background_download(struct eb_curl_callback_data *data)
 
 	if (down_pid) {		/* parent */
 		struct BG_JOB *job;
-		close(data->down_fd);
+		close(g->down_fd);
 /* the error message here isn't really an error, but a progress message */
 		setError(MSG_DownProgress);
-		data->down_state = 3;
+		g->down_state = 3;
 
 /* push job onto the list for tracking and display */
-		job = allocMem(sizeof(struct BG_JOB) + strlen(data->down_file));
+		job = allocMem(sizeof(struct BG_JOB) + strlen(g->down_file));
 		job->pid = down_pid;
 		job->state = 4;
-		strcpy(job->file, data->down_file);
-		job->file2 = data->down_file2 - data->down_file;
+		strcpy(job->file, g->down_file);
+		job->file2 = g->down_file2 - g->down_file;
 // round file size up to the nearest chunk.
 // This will come out 0 only if the true size is 0.
-		job->fsize = ((ht_length + (CHUNKSIZE - 1)) / CHUNKSIZE);
+		job->fsize = ((g->hcl + (CHUNKSIZE - 1)) / CHUNKSIZE);
 		addToListBack(&down_jobs, job);
 
 		return;
@@ -2537,7 +2438,7 @@ static void background_download(struct eb_curl_callback_data *data)
 
 /* ignore interrupt, not sure about quit and hangup */
 	signal(SIGINT, SIG_IGN);
-	data->down_state = 4;
+	g->down_state = 4;
 }				/* background_download */
 
 /* show background jobs and return the number of jobs pending */
@@ -2842,11 +2743,7 @@ int frameExpandLine(int ln, jsobjtype fo)
 	cf->frametag = t;
 	debugPrint(2, "fetch frame %s", (s ? s : "empty"));
 	if (s) {
-		bool rc;
-		currentReferrer = cloneString(save_cf->fileName);
-		rc = readFileArgv(s);
-		nzFree(currentReferrer);
-		currentReferrer = NULL;
+		bool rc = readFileArgv(s, false);
 		if (!rc) {
 /* serverData was never set, or was freed do to some other error. */
 /* We just need to pop the frame and return. */
@@ -3051,11 +2948,7 @@ bool reexpandFrame(void)
 	cf->f_encoded = false;
 	nzFree(cf->firstURL);
 	cf->firstURL = 0;
-	currentReferrer = cloneString(cf->fileName);
-
-	rc = readFileArgv(cf->fileName);
-	nzFree(currentReferrer);
-	currentReferrer = NULL;
+	rc = readFileArgv(cf->fileName, false);
 	if (!rc) {
 /* serverData was never set, or was freed do to some other error. */
 		fileSize = -1;	/* don't print 0 */
@@ -3142,7 +3035,7 @@ bool frameSecurityFile(const char *thisfile)
 {
 	struct ebFrame *f = &cf->owner->f0;
 	for (; f != cf; f = f->next) {
-		if (!f->fromcurl)
+		if (!isURL(f->fileName))
 			continue;
 		setError(MSG_NoAccessSecure, thisfile);
 		return false;

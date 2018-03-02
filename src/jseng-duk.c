@@ -974,15 +974,14 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 {
 	debugPrint(5, "xhr 1");
 	if (allowXHR) {
+		struct i_get g;
 		const char *incoming_url = duk_safe_to_string(cx, 0);
 		const char *incoming_method = duk_get_string(cx, 1);
 //              const char *incoming_headers = duk_get_string(cx, 2);
 		const char *incoming_payload = duk_get_string(cx, 3);
 		char *outgoing_xhrheaders = NULL;
 		char *outgoing_xhrbody = NULL;
-		int responseLength = 0;
 		char *a = NULL, methchar = '?';
-		bool save_ref, save_plug;
 
 		if (incoming_payload && *incoming_payload) {
 			if (incoming_method
@@ -995,15 +994,15 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 			incoming_url = a;
 		}
 
-		save_plug = pluginsOn;
-		save_ref = sendReferrer;
 		debugPrint(3, "xhr %s", incoming_url);
-		httpConnect(incoming_url, false, false, true,
-			    &outgoing_xhrheaders, &outgoing_xhrbody,
-			    &responseLength);
+		memset(&g, 0, sizeof(g));
+		g.thisfile = cf->fileName;
+		g.f_encoded = true;
+		g.url = incoming_url;
+		g.headers_p = &outgoing_xhrheaders;
+		httpConnect(&g);
+		outgoing_xhrbody = g.buffer;
 		nzFree(a);
-		pluginsOn = save_plug;
-		sendReferrer = save_ref;
 		if (intFlag) {
 			duk_get_global_string(cx, "eb$stopexec");
 // this next line should fail and stop the script!

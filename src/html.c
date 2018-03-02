@@ -460,6 +460,8 @@ static void prepareScript(struct htmlTag *t)
 	char *js_text = 0;
 	const char *a;
 	const char *filepart;
+	char *b;
+	int blen;
 
 // If no language is specified, javascript is default.
 // language and type really need to dip into javascript attributes,
@@ -517,50 +519,46 @@ static void prepareScript(struct htmlTag *t)
 			} else if (browseLocal && !isURL(t->href)) {
 				char *h = cloneString(t->href);
 				unpercentString(h);
-				if (!fileIntoMemory
-				    (h, &serverData, &serverDataLen)) {
+				if (!fileIntoMemory(h, &b, &blen)) {
 					if (debugLevel >= 1)
 						i_printf(MSG_GetLocalJS,
 							 errorMsg);
 				} else {
-					js_text =
-					    force_utf8(serverData,
-						       serverDataLen);
+					js_text = force_utf8(b, blen);
 					if (!js_text)
-						js_text = serverData;
+						js_text = b;
 					else
-						nzFree(serverData);
-					serverData = NULL;
-					serverDataLen = 0;
+						nzFree(b);
 				}
 				nzFree(h);
-			} else
-			    if (httpConnect
-				(t->href, false, false, true, 0, 0, 0)) {
-				if (ht_code == 200) {
-					js_text =
-					    force_utf8(serverData,
-						       serverDataLen);
-					if (!js_text)
-						js_text = serverData;
-					else
-						nzFree(serverData);
-				} else {
-					nzFree(serverData);
-					if (debugLevel >= 3)
-						i_printf(MSG_GetJS,
-							 t->href, ht_code);
-				}
-				serverData = NULL;
-				serverDataLen = 0;
 			} else {
-				if (debugLevel >= 3)
-					i_printf(MSG_GetJS2, errorMsg);
+				struct i_get g;
+				memset(&g, 0, sizeof(g));
+				g.thisfile = cf->fileName;
+				g.f_encoded = true;
+				g.url = t->href;
+				if (httpConnect(&g)) {
+					if (g.code == 200) {
+						js_text =
+						    force_utf8(g.buffer,
+							       g.length);
+						if (!js_text)
+							js_text = g.buffer;
+						else
+							nzFree(g.buffer);
+					} else {
+						nzFree(g.buffer);
+						if (debugLevel >= 3)
+							i_printf(MSG_GetJS,
+								 g.url, g.code);
+					}
+				} else {
+					if (debugLevel >= 3)
+						i_printf(MSG_GetJS2, errorMsg);
+				}
 			}
 			t->js_ln = 1;
 			js_file = (!from_data ? t->href : "data_URI");
-			nzFree(changeFileName);
-			changeFileName = NULL;
 		}
 	} else {
 		js_text = t->textval;

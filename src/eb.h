@@ -179,16 +179,51 @@ extern bool newloc_r; /* location replaces this page */
 extern struct ebFrame *newloc_f; /* frame calling for new web page */
 extern const char *ebrc_string; /* default ebrc file */
 
-struct eb_curl_callback_data {
-// where to put the captured data.
-	char **buffer;
-	int *length;
+// Get data from the internet. Zero the structure, set the
+// members you need, then call httpConnect.
+struct i_get {
+// the data returned from the internet fetch
+	char *buffer;
+	int length;
+// in case you want the headers
+	char **headers_p;
+	const char *url;
+	char *urlcopy;
+	int urlcopy_l;
+	char *cfn; // changed filename
+	const char *thisfile;
+	char *referrer;
+	char user[MAXUSERPASS], pass[MAXUSERPASS];
+	CURL *h;
 // State of download to disk, see http.c for state values.
 	int down_state;
 	int down_fd;	/* downloading file descriptor */
+	int down_msg;
 	const char *down_file;	/* downloading filename */
 	const char *down_file2;	/* without download directory */
 	int down_length;
+	bool down_ok;
+	bool f_encoded;
+	bool foreground;
+	bool pg_ok; // watch for plugins
+	bool is_http;
+	bool cacheable;
+	char error[CURL_ERROR_SIZE + 1];
+	long code;		/* example, 404 */
+/* an assortment of variables that are gleaned from the incoming http headers */
+	char *headers;
+	int headers_len;
+/* http content type is used in many places, and isn't arbitrarily long
+ * or case sensitive, so keep our own sanitized copy. */
+	char content[60];
+	char *charset;	/* extra content info such as charset */
+int hcl;			/* http content length */
+	char *cdfn;		/* http content disposition file name */
+	time_t modtime;	/* http modification time */
+	char *etag;		/* the etag in the header */
+	char auth_realm[60];	/* WWW-Authenticate realm header */
+	char *newloc;
+	int newloc_d;
 };
 
 struct MACCOUNT {		/* pop3 account */
@@ -267,7 +302,6 @@ extern bool curlAuthNegotiate;  /* try curl negotiate (SPNEGO) auth */
 extern bool listNA;		/* list nonascii chars */
 extern bool inInput;		/* reading line from standard in */
 extern int fileSize;		/* when reading/writing files */
-extern long ht_code;		/* http code, like 404 file not found */
 extern char errorMsg[];		/* generated error message */
 extern int localAccount;	/* this is the smtp server for outgoing mail */
 extern char *mailDir;		/* move to this directory when fetching mail */
@@ -298,7 +332,6 @@ extern char *addressFile;	/* your address book */
 extern char *serverData;
 extern int serverDataLen;
 extern char *breakLineResult;
-extern char *currentReferrer;
 extern char *home;		/* home directory */
 extern char *recycleBin;	/* holds deleted files */
 extern char *configFile, *sigFile, *sigFileEnd;
@@ -343,7 +376,6 @@ struct ebFrame {
 	char *hbase; /* base for href references */
 	bool baseset; // <base> tag has been seen
 	bool f_encoded; // filename is url encoded
-	bool fromcurl; // data comes from the internet
 	char *dw;		/* document.write string */
 	int dw_l;		/* length of the above */
 // document.writes go under the body.

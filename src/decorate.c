@@ -1168,6 +1168,9 @@ static void optionJS(struct htmlTag *t)
 
 static void link_css(struct htmlTag *t)
 {
+	struct i_get g;
+	char *b;
+	int blen;
 	const char *a = attribVal(t, "type");
 	if (a)
 		set_property_string(t->jv, "type", a);
@@ -1179,34 +1182,34 @@ static void link_css(struct htmlTag *t)
 	a = NULL;
 	if (browseLocal && !isURL(t->href)) {
 		debugPrint(3, "css source %s", t->href);
-		if (!fileIntoMemory(t->href, &serverData, &serverDataLen)) {
+		if (!fileIntoMemory(t->href, &b, &blen)) {
 			if (debugLevel >= 1)
 				i_printf(MSG_GetLocalCSS, errorMsg);
 		} else {
-			a = force_utf8(serverData, serverDataLen);
+			a = force_utf8(b, blen);
 			if (!a)
-				a = serverData;
+				a = b;
 			else
-				nzFree(serverData);
-			serverData = NULL;
-			serverDataLen = 0;
+				nzFree(b);
 		}
 	} else {
 		debugPrint(3, "css source %s", t->href);
-		if (httpConnect(t->href, false, false, true, 0, 0, 0)) {
-			if (ht_code == 200) {
-				a = force_utf8(serverData, serverDataLen);
+		memset(&g, 0, sizeof(g));
+		g.thisfile = cf->fileName;
+		g.f_encoded = true;
+		g.url = t->href;
+		if (httpConnect(&g)) {
+			if (g.code == 200) {
+				a = force_utf8(g.buffer, g.length);
 				if (!a)
-					a = serverData;
+					a = g.buffer;
 				else
-					nzFree(serverData);
+					nzFree(g.buffer);
 			} else {
-				nzFree(serverData);
+				nzFree(g.buffer);
 				if (debugLevel >= 3)
-					i_printf(MSG_GetCSS, t->href, ht_code);
+					i_printf(MSG_GetCSS, g.url, g.code);
 			}
-			serverData = NULL;
-			serverDataLen = 0;
 		} else {
 			if (debugLevel >= 3)
 				i_printf(MSG_GetCSS2, errorMsg);

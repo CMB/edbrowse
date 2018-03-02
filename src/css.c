@@ -383,6 +383,7 @@ top:
 			iu2 += 4;
 			t = iu2;
 			while ((c = *t)) {
+				struct i_get g;
 				char *lasturl, *newurl;
 				if (c == '"' || c == '\'') {
 					n = closeString(t + 1, c);
@@ -410,25 +411,25 @@ top:
 				nzFree(lasturl);
 				debugPrint(3, "css source %s", newurl);
 				*iu1 = 0;
+				memset(&g, 0, sizeof(g));
+				g.thisfile = cf->fileName;
+				g.f_encoded = true;
+				g.url = newurl;
 				a = NULL;
-				if (httpConnect
-				    (newurl, false, false, true, 0, 0, 0)) {
-					if (ht_code == 200) {
-						a = force_utf8(serverData,
-							       serverDataLen);
+				if (httpConnect(&g)) {
+					if (g.code == 200) {
+						a = force_utf8(g.buffer,
+							       g.length);
 						if (!a)
-							a = serverData;
+							a = g.buffer;
 						else
-							nzFree(serverData);
+							nzFree(g.buffer);
 					} else {
-						nzFree(serverData);
+						nzFree(g.buffer);
 						if (debugLevel >= 3)
 							i_printf(MSG_GetCSS,
-								 newurl,
-								 ht_code);
+								 g.url, g.code);
 					}
-					serverData = NULL;
-					serverDataLen = 0;
 				} else {
 					if (debugLevel >= 3)
 						i_printf(MSG_GetCSS2, errorMsg);

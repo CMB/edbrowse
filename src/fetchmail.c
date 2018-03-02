@@ -287,9 +287,18 @@ static struct FOLDER *folderByName(char *line)
 }				/* folderByName */
 
 /* data block for the curl ccallback write function in http.c */
-static struct eb_curl_callback_data callback_data = {
-	&mailstring, &mailstring_l
-};
+static struct i_get callback_data;
+
+static CURLcode getMailData(CURL * handle)
+{
+	CURLcode res;
+	callback_data.buffer = initString(&callback_data.length);
+	res = curl_easy_perform(handle);
+	mailstring = callback_data.buffer;
+	mailstring_l = callback_data.length;
+	callback_data.buffer = 0;
+	return res;
+}
 
 /* imap emails come in through the headers, not the data.
  * No kidding! I don't understand it either.
@@ -392,12 +401,10 @@ static bool imapSearch(CURL * handle, struct FOLDER *f, char *line)
 	strcat(cust_cmd, line);
 	strcat(cust_cmd, "\"");
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
-	mailstring = initString(&mailstring_l);
-	res = curl_easy_perform(handle);
+	res = getMailData(handle);
 	if (res != CURLE_OK) {
 		nzFree(mailstring);
-		ebcurl_setError(res, mailbox_url);
-		showError();
+		ebcurl_setError(res, mailbox_url, 1, emptyString);
 		return false;
 	}
 
@@ -472,13 +479,11 @@ static void scanFolder(CURL * handle, struct FOLDER *f, bool allmessages)
 		i_printfExit(MSG_MemAllocError, strlen(f->path) + 12);
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
 	free(t);
-	mailstring = initString(&mailstring_l);
-	res = curl_easy_perform(handle);
+	res = getMailData(handle);
 	nzFree(mailstring);
 	if (res != CURLE_OK) {
 abort:
-		ebcurl_setError(res, mailbox_url);
-		showError();
+		ebcurl_setError(res, mailbox_url, 1, emptyString);
 		i_puts(MSG_EndFolder);
 		return;
 	}
@@ -555,13 +560,16 @@ imap_done:
  */
 			curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION,
 					 imap_header_callback);
+			callback_data.buffer =
+			    initString(&callback_data.length);
 			res = curl_easy_perform(handle);
 /* and put things back */
+			nzFree(callback_data.buffer);
 			curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, NULL);
 			undosOneMessage();
 			if (res != CURLE_OK) {
-				ebcurl_setError(res, mailbox_url);
-				showError();
+				ebcurl_setError(res, mailbox_url, 1,
+						emptyString);
 				nzFree(mailstring);
 				goto action;
 			}
@@ -616,8 +624,7 @@ imap_done:
 				curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
 						 t);
 				free(t);
-				mailstring = initString(&mailstring_l);
-				res = curl_easy_perform(handle);
+				res = getMailData(handle);
 				nzFree(mailstring);
 				if (res != CURLE_OK)
 					goto abort;
@@ -638,8 +645,7 @@ imap_done:
 			continue;
 		sprintf(cust_cmd, "STORE %d +Flags \\Deleted", mif->seqno);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
-		mailstring = initString(&mailstring_l);
-		res = curl_easy_perform(handle);
+		res = getMailData(handle);
 		nzFree(mailstring);
 		if (res != CURLE_OK)
 			goto abort;
@@ -650,7 +656,7 @@ imap_done:
 /* things deleted, time to expunge */
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "EXPUNGE");
 		mailstring = initString(&mailstring_l);
-		res = curl_easy_perform(handle);
+		res = getMailData(handle);
 		nzFree(mailstring);
 		if (res != CURLE_OK)
 			goto abort;
@@ -693,10 +699,9 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 
 #if 0
 // nobody is using the uid, don't fetch it, save time.
-		mailstring = initString(&mailstring_l);
 		sprintf(cust_cmd, "FETCH %d UID", mif->seqno);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
-		res = curl_easy_perform(handle);
+		res = getMailData(handle);
 		if (res != CURLE_OK)
 			goto abort;
 		t = strstr(mailstring, "FETCH (UID ");
@@ -710,14 +715,12 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		nzFree(mailstring);
 #endif
 
-		mailstring = initString(&mailstring_l);
 		sprintf(cust_cmd, "FETCH %d ALL", mif->seqno);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
-		res = curl_easy_perform(handle);
+		res = getMailData(handle);
 		if (res != CURLE_OK) {
 //abort:
-			ebcurl_setError(res, mailbox_url);
-			showErrorAbort();
+			ebcurl_setError(res, mailbox_url, 2, emptyString);
 		}
 
 		mif->cbase = mailstring;
@@ -813,7 +816,7 @@ doref:
 		if (!u)
 			goto doflags;
 		*u = 0;
-		mif->refer = t;
+		mif->refer = t;	// not used
 		t = u + 1;
 
 doflags:
@@ -853,12 +856,9 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 		i_printfExit(MSG_MemAllocError, strlen(f->path) + 12);
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
 	free(t);
-	mailstring = initString(&mailstring_l);
-	res = curl_easy_perform(handle);
-	if (res != CURLE_OK) {
-		ebcurl_setError(res, mailbox_url);
-		showErrorAbort();
-	}
+	res = getMailData(handle);
+	if (res != CURLE_OK)
+		ebcurl_setError(res, mailbox_url, 2, emptyString);
 
 /* look for message count */
 	t = strstr(mailstring, " EXISTS");
@@ -972,16 +972,12 @@ static CURL *newFetchmailHandle(const char *username, const char *password)
 		i_printfExit(MSG_LibcurlNoInit);
 
 	res = curl_easy_setopt(handle, CURLOPT_USERNAME, username);
-	if (res != CURLE_OK) {
-		ebcurl_setError(res, mailbox_url);
-		showErrorAbort();
-	}
+	if (res != CURLE_OK)
+		ebcurl_setError(res, mailbox_url, 1, emptyString);
 
 	res = curl_easy_setopt(handle, CURLOPT_PASSWORD, password);
-	if (res != CURLE_OK) {
-		ebcurl_setError(res, mailbox_url);
-		showErrorAbort();
-	}
+	if (res != CURLE_OK)
+		ebcurl_setError(res, mailbox_url, 2, emptyString);
 
 	return handle;
 }				/* newFetchmailHandle */
@@ -1013,8 +1009,6 @@ static CURLcode fetchOneMessage(CURL * handle, int message_number)
 {
 	CURLcode res = CURLE_OK;
 
-	mailstring = initString(&mailstring_l);
-
 	res = setCurlURL(handle, message_url);
 	if (res != CURLE_OK)
 		return res;
@@ -1025,7 +1019,7 @@ static CURLcode fetchOneMessage(CURL * handle, int message_number)
 	if (res != CURLE_OK)
 		return res;
 
-	res = curl_easy_perform(handle);
+	res = getMailData(handle);
 	undosOneMessage();
 	if (res != CURLE_OK)
 		return res;
@@ -1045,14 +1039,12 @@ static CURLcode fetchOneMessage(CURL * handle, int message_number)
 static CURLcode deleteOneMessage(CURL * handle)
 {
 	CURLcode res = curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "DELE");
-
 	if (res != CURLE_OK)
 		return res;
 	res = curl_easy_setopt(handle, CURLOPT_NOBODY, 1L);
 	if (res != CURLE_OK)
 		return res;
-	res = curl_easy_perform(handle);
-
+	res = getMailData(handle);
 	return res;
 }				/* deleteOneMessage */
 
@@ -1065,7 +1057,7 @@ static CURLcode count_messages(CURL * handle, int *message_count)
 	if (res != CURLE_OK)
 		return res;
 
-	res = curl_easy_perform(handle);
+	res = getMailData(handle);
 	if (res != CURLE_OK)
 		return res;
 
@@ -1153,7 +1145,6 @@ int fetchMail(int account)
 	unreadBase = 0;
 	unreadStats();
 
-	mailstring = initString(&mailstring_l);
 	mail_handle = newFetchmailHandle(login, pass);
 	res = count_messages(mail_handle, &message_count);
 	if (res != CURLE_OK)
@@ -1167,7 +1158,6 @@ int fetchMail(int account)
 			i_printfExit(MSG_MemAllocError,
 				     strlen(mailbox_url) + 11);
 		}
-		nzFree(mailstring);
 		res = fetchOneMessage(mail_handle, message_number);
 		if (res != CURLE_OK)
 			goto fetchmail_cleanup;
@@ -1182,10 +1172,8 @@ int fetchMail(int account)
 fetchmail_cleanup:
 	if (message_url)
 		url_for_error = message_url;
-	if (res != CURLE_OK) {
-		ebcurl_setError(res, url_for_error);
-		showError();
-	}
+	if (res != CURLE_OK)
+		ebcurl_setError(res, url_for_error, 1, emptyString);
 	curl_easy_cleanup(mail_handle);
 	nzFree(message_url);
 	nzFree(mailbox_url);

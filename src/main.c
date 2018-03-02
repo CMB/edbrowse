@@ -22,7 +22,7 @@ char *cacheDir;
 int cacheSize = 1000, cacheCount = 10000;
 char *ebTempDir, *ebUserDir;
 char *userAgents[MAXAGENT + 1];
-char *currentAgent, *currentReferrer;
+char *currentAgent;
 bool allowRedirection = true, allowJS = true, sendReferrer = true;
 bool allowXHR = true;
 bool ftpActive;
@@ -700,7 +700,7 @@ int main(int argc, char **argv)
 		cf->firstURL = cloneString(file);
 		if (isSQL(file))
 			cw->sqlMode = true;
-		rc = readFileArgv(file);
+		rc = readFileArgv(file, true);
 		if (fileSize >= 0)
 			debugPrint(1, "%d", fileSize);
 		fileSize = -1;

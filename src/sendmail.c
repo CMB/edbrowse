@@ -741,7 +741,7 @@ static CURL *newSendmailHandle(const struct MACCOUNT *account,
 
 new_handle_cleanup:
 	if (res != CURLE_OK) {
-		ebcurl_setError(res, outurl);
+		ebcurl_setError(res, outurl, 0, emptyString);
 		curl_easy_cleanup(handle);
 		handle = NULL;
 	}
@@ -783,7 +783,7 @@ sendMailSMTP(const struct MACCOUNT *account, const char *reply,
 
 smtp_cleanup:
 	if (res != CURLE_OK)
-		ebcurl_setError(res, smtp_url);
+		ebcurl_setError(res, smtp_url, 0, emptyString);
 	if (handle)
 		curl_easy_cleanup(handle);
 	curl_slist_free_all(recipient_slist);

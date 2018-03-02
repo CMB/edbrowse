@@ -1651,7 +1651,8 @@ success:
 
 /* Read a file, or url, into the current buffer.
  * Post/get data is passed, via the second parameter, if it's a URL. */
-static bool readFile(const char *filename, const char *post)
+static bool readFile(const char *filename, const char *post, bool newbuf,
+		     const char *fromthis)
 {
 	char *rbuf;		/* read buffer */
 	int readSize;		/* should agree with fileSize */
@@ -1673,16 +1674,27 @@ static bool readFile(const char *filename, const char *post)
 	}
 
 	if (isURL(filename)) {
-		bool down_ok = false;
-		if (!inframe && cmd != 'r')
-			down_ok = true;
-		rc = httpConnect(filename, down_ok, true, f_encoded, 0, 0, 0);
-		if (!rc) {
-/* The error could have occured after redirection */
-			nzFree(changeFileName);
-			changeFileName = 0;
-			return false;
+		struct i_get g;
+		memset(&g, 0, sizeof(g));
+		if (newbuf) {
+			if (!inframe)
+				g.down_ok = true;
+			g.pg_ok = pluginsOn;
 		}
+		g.f_encoded = f_encoded;
+		g.foreground = true;
+		g.url = filename;
+		g.thisfile = fromthis;
+		rc = httpConnect(&g);
+		serverData = g.buffer;
+		serverDataLen = g.length;
+		if (!rc)
+			return false;
+		changeFileName = g.cfn;
+		if (newbuf)
+			cw->referrer = g.referrer;
+		else
+			nzFree(g.referrer);
 
 /* We got some data.  Any warnings along the way have been printed,
  * like 404 file not found, but it's still worth continuing. */
@@ -1715,7 +1727,7 @@ static bool readFile(const char *filename, const char *post)
 		rc = sqlReadRows(filename, &rbuf);
 		if (!rc) {
 			nzFree(rbuf);
-			if (!cw->dol && cmd != 'r') {
+			if (!cw->dol && newbuf) {
 				cw->sqlMode = false;
 				nzFree(cf->fileName);
 				cf->fileName = 0;
@@ -1744,7 +1756,7 @@ fromdisk:
 		return false;
 	}
 
-	if ((cmd == 'e' || cmd == 'b') && !cf->mt)
+	if (newbuf && !cf->mt)
 		cf->mt = findMimeByFile(filename);
 
 	nopound = cloneString(filename);
@@ -1891,10 +1903,11 @@ intext:
 }				/* readFile */
 
 /* from the command line */
-bool readFileArgv(const char *filename)
+bool readFileArgv(const char *filename, bool newbuf)
 {
 	cmd = 'e';
-	return readFile(filename, emptyString);
+	return readFile(filename, emptyString, newbuf,
+			(newbuf ? 0 : cf->fileName));
 }				/* readFileArgv */
 
 /* Write a range to a file. */
@@ -4581,6 +4594,7 @@ bool runCommand(const char *line)
 	int tagno;
 	const char *s = NULL;
 	static char newline[MAXTTYLINE];
+	char *thisfile;
 
 	selfFrame();
 	if (allocatedLine) {
@@ -4588,8 +4602,6 @@ bool runCommand(const char *line)
 		allocatedLine = 0;
 	}
 
-	nzFree(currentReferrer);
-	currentReferrer = NULL;
 	js_redirects = false;
 
 	cmd = icmd = 'p';
@@ -4747,7 +4759,7 @@ bool runCommand(const char *line)
 /* meta http refresh could send to another page */
 		if (newlocation) {
 replaceframe:
-			if (!shortRefreshDelay()) {
+			if (!shortRefreshDelay(newlocation, newloc_d)) {
 				nzFree(newlocation);
 				newlocation = 0;
 			} else {
@@ -4819,11 +4831,6 @@ replaceframe:
 		setError(MSG_UnknownCommand, cmd);
 		return (globSub = false);
 	}
-
-/* set the referrer if you are following a linnk,
- * as opposed to entering a b command and jumping somewhere else completely. */
-	if (strchr("giI", cmd))
-		currentReferrer = cloneString(cf->fileName);
 
 	first = *line;
 	if (cmd == 'w' && first == '+')
@@ -5596,6 +5603,7 @@ rebrowse:
 		cw->undoable = cw->changeMode = false;
 		startRange = endRange = 0;
 		changeFileName = 0;	/* should already be zero */
+		thisfile = cf->fileName;
 		w = createWindow();
 		cw = w;		/* we might wind up putting this back */
 		selfFrame();
@@ -5629,7 +5637,7 @@ rebrowse:
 				cw->sqlMode = true;
 			if (icmd == 'g' && !nogo && isURL(line))
 				debugPrint(2, "*%s", line);
-			j = readFile(line, emptyString);
+			j = readFile(line, emptyString, (cmd != 'r'), thisfile);
 		}
 		w->undoable = w->changeMode = false;
 		cw = cs->lw;	/* put it back, for now */
@@ -5709,7 +5717,7 @@ browse:
 		}
 
 		if (newlocation) {
-			if (!shortRefreshDelay()) {
+			if (!shortRefreshDelay(newlocation, newloc_d)) {
 				nzFree(newlocation);
 				newlocation = 0;
 			} else {
@@ -5847,7 +5855,7 @@ afterdelete:
 				strmove(strchr(newline, ']') + 1, line);
 				line = newline;
 			}
-			j = readFile(line, emptyString);
+			j = readFile(line, emptyString, (cmd != 'r'), 0);
 			if (!serverData)
 				fileSize = -1;
 			return j;
