@@ -24,12 +24,15 @@ static struct listHead authlist = { &authlist, &authlist };
 
 bool getUserPass(const char *url, char *creds, bool find_proxy)
 {
-	const char *host = getHostURL(url);
 	int port = getPortURL(url);
+	char host[MAXHOSTLEN];
 	const char *dir, *dirend;
 	struct httpAuth *a;
 	struct httpAuth *found = NULL;
 	int d1len, d2len;
+
+	if (!getProtHostURL(url, NULL, host))
+		return false;
 
 	getDirURL(url, &dir, &dirend);
 	d2len = dirend - dir;
@@ -58,10 +61,13 @@ bool getUserPass(const char *url, char *creds, bool find_proxy)
 
 bool getUserPassRealm(const char *url, char *creds, const char *realm)
 {
-	const char *host = getHostURL(url);
+	char host[MAXHOSTLEN];
 	int port = getPortURL(url);
 	struct httpAuth *a;
 	struct httpAuth *found = NULL;
+
+	if (!getProtHostURL(url, NULL, host))
+		return false;
 
 	foreach(a, authlist) {
 		if (found == NULL && stringEqualCI(a->host, host) &&
@@ -84,8 +90,8 @@ bool
 addWebAuthorization(const char *url,
 		    const char *credentials, bool proxy, const char *realm)
 {
+	char host[MAXHOSTLEN];
 	struct httpAuth *a;
-	const char *host;
 	const char *dir = 0, *dirend;
 	int port, dl;
 	bool urlProx = isProxyURL(url);
@@ -99,7 +105,8 @@ addWebAuthorization(const char *url,
 	} else if (urlProx)
 		url = getDataURL(url);
 
-	host = getHostURL(url);
+	if (!getProtHostURL(url, NULL, host))
+		return false;
 	port = getPortURL(url);
 	if (!proxy) {
 		getDirURL(url, &dir, &dirend);

@@ -133,6 +133,8 @@ typedef uchar *pst;		/* perl string */
 #define ABSPATH 1024 // max length of an absolute pathname
 #define MAXRE 512 // max length of a regular expression
 #define MAXTTYLINE 256 // max length of an entered line
+#define MAXHOSTLEN 400
+#define MAXPROTLEN 12
 #define MAXUSERPASS 40 // user name or password
 #define MAXACCOUNT 100 // number of email accounts
 #define MAXAGENT 50 // number of user agents

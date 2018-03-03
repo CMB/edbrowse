@@ -200,7 +200,6 @@ int bg_jobs(bool iponly);
 void addNovsHost(char *host);
 void deleteNovsHosts(void);
 CURLcode setCurlURL(CURL * h, const char *url);
-const char *findProxyForURL(const char *url);
 bool frameExpand(bool expand, int ln1, int ln2);
 int frameExpandLine(int ln, jsobjtype fo);
 struct htmlTag *line2frame(int ln);
@@ -364,9 +363,7 @@ bool isBrowseableURL(const char *url) ;
 bool isDataURI(const char *u);
 const char *getProtURL(const char *url) ; //?
 const char *getHostURL(const char *url) ; //?
-const char *getHostPassURL(const char *url) ; //?
-const char *getUserURL(const char *url) ; //?
-const char *getPassURL(const char *url) ; //?
+bool getProtHostURL(const char *url, char *pp, char *hp);
 int getCredsURL(const char *url, char *buf);
 const char *getDataURL(const char *url) ;
 void getDirURL(const char *url, const char **start_p, const char **end_p) ;

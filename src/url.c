@@ -6,7 +6,7 @@
 #include "eb.h"
 
 struct PROTOCOL {
-	const char prot[12];
+	const char prot[MAXPROTLEN];
 	int port;
 	bool free_syntax;
 	bool need_slashes;
@@ -347,12 +347,12 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 		}
 		p += 3;
 	} else {		/* nothing yet */
-		if (p && p - url < 12 && p[1] == '/') {
+		if (p && p - url < MAXPROTLEN && p[1] == '/') {
 			for (q = url; q < p; ++q)
 				if (!isalphaByte(*q))
 					break;
 			if (q == p) {	/* some protocol we don't know */
-				char qprot[12];
+				char qprot[MAXPROTLEN];
 				memcpy(qprot, url, p - url);
 				qprot[p - url] = 0;
 //                              setError(MSG_BadProt, qprot);
@@ -481,7 +481,7 @@ bool isDataURI(const char *u)
 
 const char *getProtURL(const char *url)
 {
-	static char buf[12];
+	static char buf[MAXPROTLEN];
 	int l;
 	const char *s;
 	int rc = parseURL(url, &s, &l, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -492,7 +492,7 @@ const char *getProtURL(const char *url)
 	return buf;
 }				/* getProtURL */
 
-static char hostbuf[400];
+static char hostbuf[MAXHOSTLEN];
 const char *getHostURL(const char *url)
 {
 	int l;
@@ -527,74 +527,28 @@ const char *getHostURL(const char *url)
 	return hostbuf;
 }				/* getHostURL */
 
-const char *getHostPassURL(const char *url)
+bool getProtHostURL(const char *url, char *pp, char *hp)
 {
-	int hl;
-	const char *h, *z, *u;
-	char *t;
+	int l1, l2;
+	const char *s1, *s2;
 	bool fs;
-	int rc = parseURL(url, 0, 0, &u, 0, 0, 0, &h, &hl, 0, 0, 0, 0, 0, &fs);
-	if (rc <= 0 || !h || fs)
-		return 0;
-	z = h;
-	t = hostbuf;
-	if (u)
-		z = u, hl += h - u, t += h - u;
-	if (hl >= sizeof(hostbuf)) {
-		setError(MSG_DomainLong);
-		return 0;
+	int rc =
+	    parseURL(url, &s1, &l1, 0, 0, 0, 0, &s2, &l2, 0, 0, 0, 0, 0, &fs);
+	if (rc <= 0 || fs || !s2)
+		return false;
+	if (pp) {
+		*pp = 0;
+		if (s1) {
+			memcpy(pp, s1, l1);
+			pp[l1] = 0;
+		}
 	}
-	memcpy(hostbuf, z, hl);
-	hostbuf[hl] = 0;
-/* domain names must be ascii */
-	for (; *t; ++t)
-		*t &= 0x7f;
-	return hostbuf;
-}				/* getHostPassURL */
-
-const char *getUserURL(const char *url)
-{
-	static char buf[MAXUSERPASS];
-	int l;
-	const char *s;
-	bool fs;
-	int rc = parseURL(url, 0, 0, &s, &l, 0, 0, 0, 0, 0, 0, 0, 0, 0, &fs);
-	if (rc <= 0)
-		return 0;
-	if (fs)
-		return emptyString;
-	if (!s)
-		return emptyString;
-	if (l >= sizeof(buf)) {
-		setError(MSG_UserNameLong2);
-		return 0;
+	if (hp) {
+		memcpy(hp, s2, l2);
+		hp[l2] = 0;
 	}
-	memcpy(buf, s, l);
-	buf[l] = 0;
-	return buf;
-}				/* getUserURL */
-
-const char *getPassURL(const char *url)
-{
-	static char buf[MAXUSERPASS];
-	int l;
-	const char *s;
-	bool fs;
-	int rc = parseURL(url, 0, 0, 0, 0, &s, &l, 0, 0, 0, 0, 0, 0, 0, &fs);
-	if (rc <= 0)
-		return 0;
-	if (fs)
-		return emptyString;
-	if (!s)
-		return emptyString;
-	if (l >= sizeof(buf)) {
-		setError(MSG_PasswordLong2);
-		return 0;
-	}
-	memcpy(buf, s, l);
-	buf[l] = 0;
-	return buf;
-}				/* getPassURL */
+	return true;
+}				/* getProtHostURL */
 
 // return user:password. Fails only if user or password too long.
 int getCredsURL(const char *url, char *buf)

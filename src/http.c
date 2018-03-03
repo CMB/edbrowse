@@ -37,11 +37,11 @@ static void setup_download(struct i_get *g);
 static CURL *http_curl_init(struct i_get *g);
 static size_t curl_header_callback(char *header_line, size_t size, size_t nmemb,
 				   struct i_get *g);
-// the data callback is global, used by fetchmail.c
 static bool ftpConnect(struct i_get *g, char *creds_buf);
 static bool gopherConnect(struct i_get *g);
 static bool read_credentials(char *buffer);
 static const char *message_for_response_code(int code);
+static const char *findProxyForURL(const char *url);
 
 /* string is allocated. Quotes are removed. No other processing is done.
  * You may need to decode %xx bytes or such. */
@@ -753,8 +753,7 @@ bool httpConnect(struct i_get *g)
 	const struct MIMETYPE *mt;
 	char creds_buf[MAXUSERPASS * 2 + 2];	/* creds abr. for credentials */
 	bool still_fetching = true;
-	const char *host;
-	const char *prot;
+	char prot[MAXPROTLEN], host[MAXHOSTLEN];
 	char *cmd;
 	const char *post, *s;
 	char *postb = NULL;
@@ -767,8 +766,7 @@ bool httpConnect(struct i_get *g)
 	bool head_request = false;
 	int n;
 
-	host = getHostURL(url);
-	if (!host) {
+	if (!getProtHostURL(url, prot, host)) {
 // only the foreground http thread uses setError,
 // the traditional /bin/ed error system.
 		if (g->foreground)
@@ -793,13 +791,6 @@ bool httpConnect(struct i_get *g)
 // plugins can only be ok from one thread, the interactive thread
 // that calls up web pages at the user's behest.
 		cf->mt = 0;	// should already be 0
-	}
-
-	prot = getProtURL(url);
-	if (!prot) {
-		if (g->foreground)
-			setError(MSG_WebProtBad, "(?)");
-		return false;
 	}
 
 	if (!curlActive) {
@@ -1416,7 +1407,7 @@ static void ftp_listing(struct i_get *g)
 /* Format a line from a gopher directory. */
 static void gopher_ls_line(struct i_get *g, char *line)
 {
-	int prot;
+	int port;
 	char first, *text, *pathname, *host, *s;
 	int l = strlen(line);
 	if (l && line[l - 1] == '\r')
@@ -1445,7 +1436,7 @@ static void gopher_ls_line(struct i_get *g, char *line)
 			if (s) {
 				*s++ = 0;
 				if (*s)
-					prot = atoi(s);
+					port = atoi(s);
 			}
 		}
 	}
@@ -1478,9 +1469,9 @@ static void gopher_ls_line(struct i_get *g, char *line)
 					(first ==
 					 'h' ? "http://" : "gopher://"));
 			stringAndString(&g->buffer, &g->length, host);
-			if (prot) {
+			if (port) {
 				stringAndChar(&g->buffer, &g->length, ':');
-				stringAndNum(&g->buffer, &g->length, prot);
+				stringAndNum(&g->buffer, &g->length, port);
 			}
 // gopher requires us to inject the  "first" directive into the path. Wow.
 			if (pathname[0] == '/' && pathname[1]) {
@@ -1544,20 +1535,19 @@ static void gopher_listing(struct i_get *g)
 void ebcurl_setError(CURLcode curlret, const char *url, int action,
 		     const char *curl_error)
 {
-	const char *host = NULL, *protocol = NULL;
+	char prot[MAXPROTLEN], host[MAXHOSTLEN];
 	void (*fn) (int, ...);
-	protocol = getProtURL(url);
-	host = getHostURL(url);
 
+	if (!getProtHostURL(url, prot, host)) {
 /* this should never happen */
-	if (!host)
-		host = emptyString;
+		prot[0] = host[0] = 0;
+	}
 
 	fn = (action ? i_printf : setError);
 
 	switch (curlret) {
 	case CURLE_UNSUPPORTED_PROTOCOL:
-		(*fn) (MSG_WebProtBad, protocol);
+		(*fn) (MSG_WebProtBad, prot);
 		break;
 
 	case CURLE_URL_MALFORMAT:
@@ -2504,15 +2494,14 @@ void deleteNovsHosts(void)
 
 CURLcode setCurlURL(CURL * h, const char *url)
 {
-	const char *host;
+	char host[MAXHOSTLEN];
 	unsigned long verify;
 	const char *proxy = findProxyForURL(url);
 	if (!proxy)
 		proxy = "";
 	else
 		debugPrint(3, "proxy %s", proxy);
-	host = getHostURL(url);
-	if (!host)		// should never happen
+	if (!getProtHostURL(url, NULL, host))
 		return CURLE_URL_MALFORMAT;
 	verify = mustVerifyHost(host);
 	curl_easy_setopt(h, CURLOPT_PROXY, proxy);
@@ -2578,9 +2567,14 @@ domain:
 	return 0;
 }				/* findProxyInternal */
 
-const char *findProxyForURL(const char *url)
+static const char *findProxyForURL(const char *url)
 {
-	return findProxyInternal(getProtURL(url), getHostURL(url));
+	char prot[MAXPROTLEN], host[MAXHOSTLEN];
+	if (!getProtHostURL(url, prot, host)) {
+/* this should never happen */
+		return 0;
+	}
+	return findProxyInternal(prot, host);
 }				/* findProxyForURL */
 
 /* expand a frame inline.
