@@ -2814,6 +2814,15 @@ So check for serverData null here. Once again we pop the frame.
 	htmlNodesIntoTree(start, cdt);
 	cdt->step = 0;
 	prerender(0);
+
+/*********************************************************************
+At this point cdt->step is 1; the html tree is built, but not decorated.
+Well I put the object on cdt manually. Besides, we don't want to set up
+the fake cdt object and the getter that auto-expands the frame,
+we did that before and now it's being expanded. So bump step up to 2.
+*********************************************************************/
+	cdt->step = 2;
+
 	if (isJSAlive) {
 		jsobjtype topobj;
 		decorate(0);
@@ -2852,13 +2861,14 @@ So check for serverData null here. Once again we pop the frame.
 		cdo = new_cf->docobj;
 		disconnectTagObject(cdt);
 		connectTagObject(cdt, cdo);
+// Should I switch this tag into the new frame? I don't really know.
 		cdt->f0 = new_cf;
 		set_property_object(t->jv, "content$Document", cdo);
 		cna = get_property_object(t->jv, "childNodes");
 		set_array_element_object(cna, 0, cdo);
 		cwo = new_cf->winobj;
 		set_property_object(t->jv, "content$Window", cwo);
-// run the frame unload function if it is there.
+// run the frame onload function if it is there.
 // I assume it should run in the higher context.
 		run_event_bool(t->jv, t->info->name, "onload");
 	}
@@ -2987,6 +2997,7 @@ bool reexpandFrame(void)
 	htmlNodesIntoTree(start, cdt);
 	cdt->step = 0;
 	prerender(0);
+	cdt->step = 2;
 	if (isJSAlive) {
 		decorate(0);
 		set_basehref(cf->hbase);
@@ -3015,6 +3026,7 @@ bool reexpandFrame(void)
 		cwo = cf->winobj;
 		disconnectTagObject(cdt);
 		connectTagObject(cdt, cdo);
+// Should I switch this tag into the new frame? I don't really know.
 		cdt->f0 = cf;
 // have to point contentDocument to the new document object,
 // but that requires a change of context.
