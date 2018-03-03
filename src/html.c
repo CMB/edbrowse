@@ -367,6 +367,34 @@ void jClearSync(void)
 #endif
 }				/* jClearSync */
 
+/*********************************************************************
+This function is called for a new web page, by http refresh,
+or by document.location = new_url, or by new Window().
+If delay is 0 or less then the action should happen now.
+The refresh parameter means replace the current page.
+This is false only if js creates a new window, which should stack up on top of the old.
+*********************************************************************/
+
+char *newlocation;
+int newloc_d;			/* possible delay */
+bool newloc_r;			/* replace the buffer */
+struct ebFrame *newloc_f;	/* frame calling for new web page */
+bool js_redirects;
+static void gotoLocation(char *url, int delay, bool rf)
+{
+	if (newlocation && delay >= newloc_d) {
+		nzFree(url);
+		return;
+	}
+	nzFree(newlocation);
+	newlocation = url;
+	newloc_d = delay;
+	newloc_r = rf;
+	newloc_f = cf;
+	if (!delay)
+		js_redirects = true;
+}				/* gotoLocation */
+
 /* helper function for meta tag */
 void htmlMetaHelper(struct htmlTag *t)
 {
@@ -535,7 +563,7 @@ static void prepareScript(struct htmlTag *t)
 				struct i_get g;
 				memset(&g, 0, sizeof(g));
 				g.thisfile = cf->fileName;
-				g.f_encoded = true;
+				g.uriEncoded = true;
 				g.url = t->href;
 				if (httpConnect(&g)) {
 					if (g.code == 200) {

@@ -193,7 +193,6 @@ struct i_get {
 	char *cfn; // changed filename
 	const char *thisfile;
 	char *referrer;
-	char user[MAXUSERPASS], pass[MAXUSERPASS];
 	CURL *h;
 // State of download to disk, see http.c for state values.
 	int down_state;
@@ -203,7 +202,7 @@ struct i_get {
 	const char *down_file2;	/* without download directory */
 	int down_length;
 	bool down_ok;
-	bool f_encoded;
+	bool uriEncoded;
 	bool foreground;
 	bool pg_ok; // watch for plugins
 	bool is_http;
@@ -375,7 +374,7 @@ struct ebFrame {
 	char *firstURL;		/* before http redirection */
 	char *hbase; /* base for href references */
 	bool baseset; // <base> tag has been seen
-	bool f_encoded; // filename is url encoded
+	bool uriEncoded; // filename is url encoded
 	char *dw;		/* document.write string */
 	int dw_l;		/* length of the above */
 // document.writes go under the body.
@@ -403,8 +402,7 @@ struct ebWindow {
 	int r_dot, r_dol;
 	struct ebFrame f0; /* first frame */
 	struct ebFrame *jdb_frame; // if in jdb mode
-/* is the referrer the original web page or the individual frame? */
-	char *referrer;
+	char *referrer; // another web page that brought this one to life
 	char *baseDirName;	/* when scanning a directory */
 	char *ft, *fd, *fk;	/* title, description, keywords */
 	char *mailInfo;

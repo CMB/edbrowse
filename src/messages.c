@@ -121,6 +121,16 @@ void selectLanguage(void)
 */
 }				/* selectLanguage */
 
+/*********************************************************************
+WARNING: this routine, which is at the heart of the international prints
+i_puts i_printf, is not threadsafe in iso8859 mode.
+Well utf8 has been the default console standard for 15 years now,
+and I'm almost ready to chuck iso8859 altogether, so for now,
+let's just say you can't use threading in 8859 mode.
+If you try to turn it on via the bg (background) command, I won't let you.
+I really don't think this will come up, everybody is utf8 by now.
+*********************************************************************/
+
 const char *i_getString(int msg)
 {
 	const char **a = messageArray;

@@ -58,7 +58,7 @@ static bool globSub;		/* in the midst of a g// command */
 static bool inscript;		/* run from inside an edbrowse function */
 static int lastq, lastqq;
 static char icmd;		/* input command, usually the same as cmd */
-static bool f_encoded;
+static bool uriEncoded;
 
 /*********************************************************************
  * If a rendered line contains a hyperlink, the link is indicated
@@ -1681,7 +1681,7 @@ static bool readFile(const char *filename, const char *post, bool newbuf,
 				g.down_ok = true;
 			g.pg_ok = pluginsOn;
 		}
-		g.f_encoded = f_encoded;
+		g.uriEncoded = uriEncoded;
 		g.foreground = true;
 		g.url = filename;
 		g.thisfile = fromthis;
@@ -1690,9 +1690,9 @@ static bool readFile(const char *filename, const char *post, bool newbuf,
 		serverDataLen = g.length;
 		if (!rc)
 			return false;
-		changeFileName = g.cfn;
+		changeFileName = g.cfn;	// allocated
 		if (newbuf)
-			cw->referrer = g.referrer;
+			cw->referrer = g.referrer;	// allocated
 		else
 			nzFree(g.referrer);
 
@@ -3786,7 +3786,7 @@ pwd:
 		sprintf(allocatedLine, "%c %s", cmd, cf->fileName);
 		debrowseSuffix(allocatedLine);
 		*runThis = allocatedLine;
-		f_encoded = cf->f_encoded;
+		uriEncoded = cf->uriEncoded;
 		return 2;
 	}
 
@@ -4605,7 +4605,7 @@ bool runCommand(const char *line)
 	js_redirects = false;
 
 	cmd = icmd = 'p';
-	f_encoded = false;
+	uriEncoded = false;
 	skipWhite(&line);
 	first = *line;
 
@@ -5301,7 +5301,7 @@ switchsession:
 			jsdead = !isJSAlive;
 			click = dclick = over = false;
 			cmd = 'b';
-			f_encoded = true;
+			uriEncoded = true;
 			if (endRange > startRange) {
 				setError(MSG_RangeCmd, "g");
 				return false;
@@ -5561,7 +5561,7 @@ switchsession:
 					line = allocatedLine;
 					first = *line;
 					cmd = 'b';
-					f_encoded = true;
+					uriEncoded = true;
 				}
 
 			} else
@@ -5574,7 +5574,7 @@ switchsession:
 
 rebrowse:
 	if (cmd == 'e' || (cmd == 'b' && first && first != '#')) {
-//  printf("ifetch %d %s\n", f_encoded, line);
+//  printf("ifetch %d %s\n", uriEncoded, line);
 		if (cf->fileName && !noStack && sameURL(line, cf->fileName)) {
 			if (stringEqual(line, cf->fileName)) {
 				setError(MSG_AlreadyInBuffer);
@@ -5607,7 +5607,7 @@ rebrowse:
 		w = createWindow();
 		cw = w;		/* we might wind up putting this back */
 		selfFrame();
-		cf->f_encoded = f_encoded;
+		cf->uriEncoded = uriEncoded;
 /* Check for sendmail link */
 		if (cmd == 'b' && memEqualCI(line, "mailto:", 7)) {
 			char *addr, *subj, *body;
@@ -5674,7 +5674,7 @@ rebrowse:
 		if (changeFileName) {
 			nzFree(w->f0.fileName);
 			w->f0.fileName = changeFileName;
-			w->f0.f_encoded = true;
+			w->f0.uriEncoded = true;
 			changeFileName = 0;
 		}
 /* Some files we just can't browse */
@@ -5731,7 +5731,7 @@ redirect:
 				newlocation = 0;
 				debugPrint(2, "redirect %s", line);
 				icmd = cmd = 'b';
-				f_encoded = true;
+				uriEncoded = true;
 				first = *line;
 				if (intFlag) {
 					i_puts(MSG_RedirectionInterrupted);

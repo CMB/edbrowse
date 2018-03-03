@@ -38,40 +38,10 @@ static CURL *http_curl_init(struct i_get *g);
 static size_t curl_header_callback(char *header_line, size_t size, size_t nmemb,
 				   struct i_get *g);
 // the data callback is global, used by fetchmail.c
-static bool ftpConnect(struct i_get *g);
+static bool ftpConnect(struct i_get *g, char *creds_buf);
 static bool gopherConnect(struct i_get *g);
 static bool read_credentials(char *buffer);
 static const char *message_for_response_code(int code);
-
-/*********************************************************************
-This function is called for a new web page, by http refresh,
-or by http redirection,
-or by document.location = new_url, or by new Window().
-If delay is 0 or less then the action should happen now.
--1 is from http header location:
-The refresh parameter means replace the current page.
-This is false only if js creates a new window, which should stack up on top of the old.
-*********************************************************************/
-
-char *newlocation;
-int newloc_d;			/* possible delay */
-bool newloc_r;			/* replace the buffer */
-struct ebFrame *newloc_f;	/* frame calling for new web page */
-bool js_redirects;
-void gotoLocation(char *url, int delay, bool rf)
-{
-	if (newlocation && delay >= newloc_d) {
-		nzFree(url);
-		return;
-	}
-	nzFree(newlocation);
-	newlocation = url;
-	newloc_d = delay;
-	newloc_r = rf;
-	newloc_f = cf;
-	if (!delay)
-		js_redirects = true;
-}				/* gotoLocation */
 
 /* string is allocated. Quotes are removed. No other processing is done.
  * You may need to decode %xx bytes or such. */
@@ -193,7 +163,7 @@ static void scan_http_headers(struct i_get *g, bool fromCallback)
 		char *realm, *end;
 		if ((realm = strstrCI(v, "realm="))) {
 			realm += 6;
-			if (strchr("'\"", realm[0])) {
+			if (realm[0] == '"' || realm[0] == '\'') {
 				end = strchr(realm + 1, realm[0]);
 				realm++;
 			} else {
@@ -219,6 +189,7 @@ static void scan_http_headers(struct i_get *g, bool fromCallback)
 		return;
 
 	if (!g->newloc && (v = find_http_header(g, "location"))) {
+// as though a user had typed it in
 		unpercentURL(v);
 		g->newloc = v;
 	}
@@ -241,7 +212,6 @@ static void i_get_free(struct i_get *g, bool nodata)
 		nzFree(g->buffer);
 		g->buffer = 0;
 		g->length = 0;
-		nzFree(g->referrer);
 	}
 	nzFree(g->headers);
 	nzFree(g->urlcopy);
@@ -255,6 +225,7 @@ static void i_get_free(struct i_get *g, bool nodata)
 static CURLcode fetch_internet(struct i_get *g)
 {
 	CURLcode curlret;
+	g->buffer = initString(&g->length);
 	g->headers = initString(&g->headers_len);
 	curlret = curl_easy_perform(g->h);
 	if (g->is_http)
@@ -262,7 +233,7 @@ static CURLcode fetch_internet(struct i_get *g)
 	return curlret;
 }				/* fetch_internet */
 
-/* Callback used by libcurl. Captures data from http, ftp, pop3, etc.
+/* Callback used by libcurl. Captures data from http, ftp, pop3, gopher.
  * download states:
  * -1 user aborted the download
  * 0 standard in-memory download
@@ -314,7 +285,7 @@ eb_curl_callback(char *incoming, size_t size, size_t nitems, struct i_get * g)
 // Deliberately delay background download, to get several running in parallel
 // for testing purposes.
 				if (g->down_length == 0)
-					sleep(17);
+					sleep(12);
 				g->down_length += rc;
 #endif
 				return rc;
@@ -322,13 +293,15 @@ eb_curl_callback(char *incoming, size_t size, size_t nitems, struct i_get * g)
 			goto showdots;
 		}
 		if (g->down_state == 2) {
-// has to be the foreground http thread, so ok to call setError
+// has to be the foreground http thread, so ok to call setErro,
+// which is not threadsafe.
 			setError(MSG_NoWrite2, g->down_file);
 			return -1;
 		}
 		i_printf(MSG_NoWrite2, g->down_file);
 		printf(", ");
 		i_puts(MSG_DownAbort);
+// return -1;
 		exit(1);
 	}
 
@@ -502,31 +475,6 @@ unpackUploadedFile(const char *post, const char *boundary,
 	*postb = post2;
 	*postb_l = b1 - post2;
 }				/* unpackUploadedFile */
-
-/* This is a global function; it is called from cookies.c */
-char *extractHeaderParam(const char *str, const char *item)
-{
-	int le = strlen(item), lp;
-	const char *s = str;
-/* ; denotes the next param */
-/* Even the first param has to be preceeded by ; */
-	while ((s = strchr(s, ';'))) {
-		while (*s && (*s == ';' || (uchar) * s <= ' '))
-			s++;
-		if (!memEqualCI(s, item, le))
-			continue;
-		s += le;
-		while (*s && ((uchar) * s <= ' ' || *s == '='))
-			s++;
-		if (!*s)
-			return emptyString;
-		lp = 0;
-		while ((uchar) s[lp] >= ' ' && s[lp] != ';')
-			lp++;
-		return pullString(s, lp);
-	}
-	return NULL;
-}				/* extractHeaderParam */
 
 /* Date format is:    Mon, 03 Jan 2000 21:29:33 GMT|[+-]nnnn */
 			/* Or perhaps:     Sun Nov  6 08:49:37 1994 */
@@ -765,12 +713,12 @@ static void urlSanitize(struct i_get *g, const char *post)
 	const char *portloc;
 	const char *url = g->url;
 
-	if (g->f_encoded && !looksPercented(url, post)) {
+	if (g->uriEncoded && !looksPercented(url, post)) {
 		debugPrint(2, "Warning, url %s doesn't look encoded", url);
-		g->f_encoded = false;
+		g->uriEncoded = false;
 	}
 
-	if (!g->f_encoded) {
+	if (!g->uriEncoded) {
 		g->urlcopy = percentURL(url, post);
 		g->urlcopy_l = strlen(g->urlcopy);
 	} else {
@@ -803,8 +751,7 @@ bool httpConnect(struct i_get *g)
 	struct curl_slist *custom_headers = NULL;
 	struct curl_slist *tmp_headers = NULL;
 	const struct MIMETYPE *mt;
-	char creds_buf[MAXUSERPASS * 2 + 1];	/* creds abr. for credentials */
-	int creds_len = 0;
+	char creds_buf[MAXUSERPASS * 2 + 2];	/* creds abr. for credentials */
 	bool still_fetching = true;
 	const char *host;
 	const char *prot;
@@ -818,8 +765,7 @@ bool httpConnect(struct i_get *g)
 	bool name_changed = false;
 	bool post_request = false;
 	bool head_request = false;
-
-	strcpy(creds_buf, ":");	/* Flush stale username and password. */
+	int n;
 
 	host = getHostURL(url);
 	if (!host) {
@@ -831,23 +777,16 @@ bool httpConnect(struct i_get *g)
 	}
 
 /* Pull user password out of the url */
-	s = getUserURL(url);
-	if (s) {
-		if (strlen(s) >= sizeof(g->user) - 2) {
-			if (g->foreground)
-				setError(MSG_UserNameLong, sizeof(g->user));
-			return false;
-		}
-		strcpy(g->user, s);
+	n = getCredsURL(url, creds_buf);
+	if (n == 1) {
+		if (g->foreground)
+			setError(MSG_UserNameLong, MAXUSERPASS);
+		return false;
 	}
-	s = getPassURL(url);
-	if (s) {
-		if (strlen(s) >= sizeof(g->pass) - 2) {
-			if (g->foreground)
-				setError(MSG_PasswordLong, sizeof(g->pass));
-			return false;
-		}
-		strcpy(g->pass, s);
+	if (n == 2) {
+		if (g->foreground)
+			setError(MSG_PasswordLong, MAXUSERPASS);
+		return false;
 	}
 
 	if (g->pg_ok) {
@@ -877,7 +816,7 @@ bool httpConnect(struct i_get *g)
 		   stringEqualCI(prot, "ftps") ||
 		   stringEqualCI(prot, "scp") ||
 		   stringEqualCI(prot, "tftp") || stringEqualCI(prot, "sftp")) {
-		return ftpConnect(g);
+		return ftpConnect(g, creds_buf);
 	} else if (g->pg_ok && (cf->mt = findMimeByProtocol(prot))
 		   && cf->mt->stream) {
 mimestream:
@@ -976,10 +915,10 @@ mimestream:
 		if (post2 - g->thisfile >= 7
 		    && !memcmp(post2 - 7, ".browse", 7))
 			post2 -= 7;
-		g->referrer = cloneString(g->thisfile);
-		g->referrer[post2 - g->thisfile] = 0;
-		referrer = g->referrer;
+		referrer = cloneString(g->thisfile);
+		referrer[post2 - g->thisfile] = 0;
 	}
+// We keep the same referrer even after redirections, which I think is right.
 	curlret = curl_easy_setopt(h, CURLOPT_REFERER, referrer);
 	if (curlret != CURLE_OK)
 		goto curl_fail;
@@ -994,18 +933,11 @@ mimestream:
 	 * libcurl won't send it to the server unless server gave a 401 response.
 	 * Libcurl selects the most secure form of auth provided by server. */
 
-	if (g->user[0] && g->pass[0]) {
-		strcpy(creds_buf, g->user);
-		creds_len = strlen(creds_buf);
-		creds_buf[creds_len] = ':';
-		strcpy(creds_buf + creds_len + 1, g->pass);
-	} else
+	if (stringEqual(creds_buf, ":"))
 		getUserPass(g->urlcopy, creds_buf, false);
 
-/*
- * If the URL didn't have user and password, and getUserPass failed,
- * then creds_buf == "".
- */
+// If the URL didn't have user and password, and getUserPass failed,
+// then creds_buf = ":".
 	curlret = curl_easy_setopt(h, CURLOPT_USERPWD, creds_buf);
 	if (curlret != CURLE_OK)
 		goto curl_fail;
@@ -1022,7 +954,6 @@ mimestream:
  * then add it to the list of authentication records.  */
 
 	still_fetching = true;
-	g->buffer = initString(&g->length);
 
 	if (!post_request && presentInCache(g->urlcopy)) {
 		head_request = true;
@@ -1036,13 +967,11 @@ mimestream:
 		if (redirect_count && g->pg_ok &&
 		    (cf->mt = findMimeByURL(g->urlcopy)) && cf->mt->stream) {
 			curl_easy_cleanup(h);
-			nzFree(g->referrer);
 			goto mimestream;
 		}
 
 perform:
-		g->is_http = true;
-		g->cacheable = true;
+		g->is_http = g->cacheable = true;
 		curlret = fetch_internet(g);
 
 /*********************************************************************
@@ -1072,7 +1001,6 @@ So this is a simple workaround.
 
 		if (g->down_state == 6) {
 			curl_easy_cleanup(h);
-			nzFree(g->referrer);
 			goto mimestream;
 		}
 
@@ -1119,15 +1047,23 @@ they go where they go, so this doesn't come up very often.
 		if (g->down_state == 3 || g->down_state == -1) {
 			i_get_free(g, true);
 			curl_easy_cleanup(h);
+			nzFree(referrer);
 			return false;
 		}
 
 		if (g->down_state == 4) {
-			if (curlret != CURLE_OK)
-				ebcurl_setError(curlret, g->urlcopy, 2,
+			if (curlret != CURLE_OK) {
+				ebcurl_setError(curlret, g->urlcopy, 1,
 						g->error);
-			i_printf(MSG_DownSuccess);
-			printf(": %s\n", g->down_file2);
+			} else {
+				i_printf(MSG_DownSuccess);
+				printf(": %s\n", g->down_file2);
+			}
+// We're going to exit, so don't need to do this stuff,
+// but some day this might be the end of a thread, not the end of a process.
+			i_get_free(g, true);
+			curl_easy_cleanup(h);
+			nzFree(referrer);
 			exit(0);
 		}
 
@@ -1139,6 +1075,7 @@ they go where they go, so this doesn't come up very often.
 			i_get_free(g, true);
 			setError(MSG_DownSuccess);
 			curl_easy_cleanup(h);
+			nzFree(referrer);
 			return false;
 		}
 
@@ -1194,7 +1131,6 @@ they go where they go, so this doesn't come up very often.
  * pasting the prior post string onto the new URL. Not sure about this. */
 
 				getUserPass(g->urlcopy, creds_buf, false);
-
 				curlret =
 				    curl_easy_setopt(h, CURLOPT_USERPWD,
 						     creds_buf);
@@ -1212,7 +1148,7 @@ they go where they go, so this doesn't come up very often.
 // This is unusual in that we're using the i_get structure again,
 // so we need to reset some parts of it and not others.
 				nzFree(g->buffer);
-				g->buffer = initString(&g->length);
+				g->buffer = 0;
 // This 302 redirection could set content type = application/binary,
 // which in turn sets state = 1, which is ignored since 302 takes precedence.
 // So state might still be 1, set it back to 0.
@@ -1327,6 +1263,7 @@ curl_fail:
 	    !cf->mt->stream && !cf->mt->outtype && cf->mt->program) {
 		bool rc = playServerData();
 		i_get_free(g, true);
+		nzFree(referrer);
 		return rc;
 	}
 
@@ -1337,6 +1274,10 @@ curl_fail:
 	}
 
 	i_get_free(g, !transfer_status);
+	if (transfer_status)
+		g->referrer = referrer;
+	else
+		nzFree(referrer);
 
 	return transfer_status;
 }				/* httpConnect */
@@ -1701,35 +1642,27 @@ void ebcurl_setError(CURLcode curlret, const char *url, int action,
 	}
 
 	if (action)
-		i_printf(MSG_String, "\n");
+		nl();
 	if (action == 2)
 		exit(2);
 }				/* ebcurl_setError */
 
 /* Like httpConnect, but for ftp */
-static bool ftpConnect(struct i_get *g)
+static bool ftpConnect(struct i_get *g, char *creds_buf)
 {
 	CURL *h;		// the curl handle for ftp
 	int protLength;		/* length of "ftp://" */
 	bool transfer_success = false;
 	bool has_slash, is_scp;
 	CURLcode curlret = CURLE_OK;
-	char creds_buf[MAXUSERPASS * 2 + 1];
-	size_t creds_len = 0;
 	const char *url = g->url;
 
 	protLength = strchr(url, ':') - url + 3;
 /* scp is somewhat unique among the protocols handled here */
 	is_scp = memEqualCI(url, "scp", 3);
 
-	if (g->user[0] && g->pass[0]) {
-		strcpy(creds_buf, g->user);
-		creds_len = strlen(creds_buf);
-		creds_buf[creds_len] = ':';
-		strcpy(creds_buf + creds_len + 1, g->pass);
-	} else if (memEqualCI(url, "ftp", 3)) {
+	if (stringEqual(creds_buf, ":") && memEqualCI(url, "ftp", 3))
 		strcpy(creds_buf, "anonymous:ftp@example.com");
-	}
 
 	g->down_state = 0;
 	g->down_file = g->down_file2 = NULL;
@@ -1741,12 +1674,10 @@ static bool ftpConnect(struct i_get *g)
 	if (curlret != CURLE_OK)
 		goto ftp_transfer_fail;
 
-	g->buffer = initString(&g->length);
 	urlSanitize(g, 0);
 
 /* libcurl appends an implicit slash to URLs like "ftp://foo.com".
 * Be explicit, so that edbrowse knows that we have a directory. */
-
 	if (!strchr(g->urlcopy + protLength, '/'))
 		strcpy(g->urlcopy + g->urlcopy_l, "/");
 
@@ -1863,7 +1794,6 @@ static bool gopherConnect(struct i_get *g)
 	h = http_curl_init(g);
 	if (!h)
 		goto gopher_transfer_fail;
-	g->buffer = initString(&g->length);
 	urlSanitize(g, 0);
 
 /* libcurl appends an implicit slash to URLs like "gopher://foo.com".
@@ -2328,7 +2258,8 @@ ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
 	return 0;
 }				/* ebcurl_debug_handler */
 
-/* At this point, down_state = 1 */
+// At this point, down_state = 1
+// Only runs from the foreground thread, does not have to be threadsafe.
 static void setup_download(struct i_get *g)
 {
 	const char *filepart;
@@ -2780,7 +2711,7 @@ So check for serverData null here. Once again we pop the frame.
 	if (changeFileName) {
 		nzFree(cf->fileName);
 		cf->fileName = changeFileName;
-		cf->f_encoded = true;
+		cf->uriEncoded = true;
 		changeFileName = 0;
 	} else {
 		cf->fileName = cloneString(s);
@@ -2955,7 +2886,7 @@ bool reexpandFrame(void)
 	nzFree(cf->fileName);
 	cf->fileName = newlocation;
 	newlocation = 0;
-	cf->f_encoded = false;
+	cf->uriEncoded = false;
 	nzFree(cf->firstURL);
 	cf->firstURL = 0;
 	rc = readFileArgv(cf->fileName, false);
@@ -2974,7 +2905,7 @@ bool reexpandFrame(void)
 	if (changeFileName) {
 		nzFree(cf->fileName);
 		cf->fileName = changeFileName;
-		cf->f_encoded = true;
+		cf->uriEncoded = true;
 		changeFileName = 0;
 	}
 

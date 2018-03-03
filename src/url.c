@@ -45,8 +45,6 @@ struct PROTOCOL {
 	"irc", 0, false, false, false}, {
 "", 0},};
 
-static bool free_syntax;
-
 static int protocolByName(const char *p, int l)
 {
 	int i;
@@ -127,7 +125,7 @@ void unpercentString(char *s)
  * Google has commas in encoded URLs, and wikipedia has parentheses,
  * so those are (sort of) ok. */
 static const char percentable[] = "+,()!*'[]$";
-static char hexdigits[] = "0123456789abcdef";
+static const char hexdigits[] = "0123456789abcdef";
 #define ESCAPED_CHAR_LENGTH 3
 
 char *percentURL(const char *start, const char *end)
@@ -274,7 +272,8 @@ understanding that there should not be query_string and post data simultaneously
 static int parseURL(const char *url, const char **proto, int *prlen, const char **user, int *uslen, const char **pass, int *palen,	/* ftp protocol */
 		    const char **host, int *holen,
 		    const char **portloc, int *port,
-		    const char **data, int *dalen, const char **post)
+		    const char **data, int *dalen, const char **post,
+		    bool * freep)
 {
 	const char *p, *q, *pp;
 	int a;
@@ -305,7 +304,8 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 		*dalen = 0;
 	if (post)
 		*post = NULL;
-	free_syntax = false;
+	if (freep)
+		*freep = false;
 
 	if (!url)
 		return -1;
@@ -322,7 +322,7 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 			++q;
 		skipWhite(&q);
 		if (!*q)
-			return false;
+			return 0;
 		a = protocolByName(url, p - url);
 	}
 	if (a >= 0) {
@@ -333,8 +333,11 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 		if (p[1] != '/' || p[2] != '/') {
 			if (protocols[a].need_slashes) {
 				if (p[1] != '/') {
+/* don't call setError, it makes all these routines not threadsafe,
+ * and I don't think anybody uses the error messages anyways.
 					setError(MSG_ProtExpected,
 						 protocols[a].prot);
+*/
 					return -1;
 				}
 /* We got one out of two slashes, I'm going to call it good */
@@ -352,7 +355,7 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 				char qprot[12];
 				memcpy(qprot, url, p - url);
 				qprot[p - url] = 0;
-				setError(MSG_BadProt, qprot);
+//                              setError(MSG_BadProt, qprot);
 				return -1;
 			}
 		}
@@ -370,11 +373,13 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 	if (a < 0)
 		return false;
 
-	if ((free_syntax = protocols[a].free_syntax)) {
+	if (protocols[a].free_syntax) {
 		if (data)
 			*data = p;
 		if (dalen)
 			*dalen = strlen(p);
+		if (freep)
+			*freep = true;
 		return true;
 	}
 
@@ -416,7 +421,7 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 		if (pp > q + 1) {
 			n = strtol(q + 1, (char **)&cc, 10);
 			if (cc != pp || !isdigitByte(q[1])) {
-				setError(MSG_BadPort);
+//                              setError(MSG_BadPort);
 				return -1;
 			}
 			if (port)
@@ -448,14 +453,14 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 
 bool isURL(const char *url)
 {
-	int j = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	int j = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 	if (j < 0)
 		return false;
 	return j;
 }				/* isURL */
 
-/* non-FTP URLs are always browsable.  FTP URLs are browsable if they end with
-* a slash. */
+// non-FTP URLs are always browsable.  FTP URLs are browsable if they end with
+//a slash. gopher urls are a bit more complicated, not yet implemented.
 bool isBrowseableURL(const char *url)
 {
 	if (isURL(url))
@@ -479,7 +484,7 @@ const char *getProtURL(const char *url)
 	static char buf[12];
 	int l;
 	const char *s;
-	int rc = parseURL(url, &s, &l, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	int rc = parseURL(url, &s, &l, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 	if (rc <= 0)
 		return 0;
 	memcpy(buf, s, l);
@@ -494,10 +499,9 @@ const char *getHostURL(const char *url)
 	const char *s;
 	char *t;
 	char c, d;
-	int rc = parseURL(url, 0, 0, 0, 0, 0, 0, &s, &l, 0, 0, 0, 0, 0);
-	if (rc <= 0)
-		return 0;
-	if (free_syntax)
+	bool fs;
+	int rc = parseURL(url, 0, 0, 0, 0, 0, 0, &s, &l, 0, 0, 0, 0, 0, &fs);
+	if (rc <= 0 || fs)
 		return 0;
 	if (!s)
 		return emptyString;
@@ -528,10 +532,9 @@ const char *getHostPassURL(const char *url)
 	int hl;
 	const char *h, *z, *u;
 	char *t;
-	int rc = parseURL(url, 0, 0, &u, 0, 0, 0, &h, &hl, 0, 0, 0, 0, 0);
-	if (rc <= 0 || !h)
-		return 0;
-	if (free_syntax)
+	bool fs;
+	int rc = parseURL(url, 0, 0, &u, 0, 0, 0, &h, &hl, 0, 0, 0, 0, 0, &fs);
+	if (rc <= 0 || !h || fs)
 		return 0;
 	z = h;
 	t = hostbuf;
@@ -554,10 +557,11 @@ const char *getUserURL(const char *url)
 	static char buf[MAXUSERPASS];
 	int l;
 	const char *s;
-	int rc = parseURL(url, 0, 0, &s, &l, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	bool fs;
+	int rc = parseURL(url, 0, 0, &s, &l, 0, 0, 0, 0, 0, 0, 0, 0, 0, &fs);
 	if (rc <= 0)
 		return 0;
-	if (free_syntax)
+	if (fs)
 		return emptyString;
 	if (!s)
 		return emptyString;
@@ -575,10 +579,11 @@ const char *getPassURL(const char *url)
 	static char buf[MAXUSERPASS];
 	int l;
 	const char *s;
-	int rc = parseURL(url, 0, 0, 0, 0, &s, &l, 0, 0, 0, 0, 0, 0, 0);
+	bool fs;
+	int rc = parseURL(url, 0, 0, 0, 0, &s, &l, 0, 0, 0, 0, 0, 0, 0, &fs);
 	if (rc <= 0)
 		return 0;
-	if (free_syntax)
+	if (fs)
 		return emptyString;
 	if (!s)
 		return emptyString;
@@ -591,23 +596,60 @@ const char *getPassURL(const char *url)
 	return buf;
 }				/* getPassURL */
 
+// return user:password. Fails only if user or password too long.
+int getCredsURL(const char *url, char *buf)
+{
+	int l1, l2;
+	const char *s1, *s2;
+	bool fs;
+	int rc =
+	    parseURL(url, 0, 0, &s1, &l1, &s2, &l2, 0, 0, 0, 0, 0, 0, 0, &fs);
+	strcpy(buf, ":");
+	if (rc <= 0 || fs)
+		return 0;
+	if (s1 && l1 > MAXUSERPASS)
+		return 1;
+	if (s2 && l2 > MAXUSERPASS)
+		return 2;
+	if (s1)
+		strncpy(buf, s1, l1);
+	else
+		l1 = 0;
+	buf[l1++] = ':';
+	if (s2)
+		strncpy(buf + l1, s2, l2);
+	else
+		l2 = 0;
+	buf[l1 + l2] = 0;
+	return 0;
+}
+
 const char *getDataURL(const char *url)
 {
 	const char *s;
-	int rc = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &s, 0, 0);
+	int rc = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &s, 0, 0, 0);
 	if (rc <= 0)
 		return 0;
 	return s;
 }				/* getDataURL */
 
+// return null for free syntax
+static const char *getDataURL1(const char *url)
+{
+	const char *s;
+	bool fs;
+	int rc = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &s, 0, 0, &fs);
+	if (rc <= 0 || fs)
+		return 0;
+	return s;
+}				/* getDataURL1 */
+
 void getDirURL(const char *url, const char **start_p, const char **end_p)
 {
-	const char *dir = getDataURL(url);
+	const char *dir = getDataURL1(url);
 	const char *end;
 	static const char myslash[] = "/";
 	if (!dir || dir == url)
-		goto slash;
-	if (free_syntax)
 		goto slash;
 	if (!strchr("#?\1", *dir)) {
 		if (*--dir != '/')
@@ -687,10 +729,10 @@ char *getFileURL(const char *url, bool chophash)
 
 bool getPortLocURL(const char *url, const char **portloc, int *port)
 {
-	int rc = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, portloc, port, 0, 0, 0);
-	if (rc <= 0)
-		return false;
-	if (free_syntax)
+	bool fs;
+	int rc =
+	    parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, portloc, port, 0, 0, 0, &fs);
+	if (rc <= 0 || fs)
 		return false;
 	return true;
 }				/* getPortLocURL */
@@ -698,10 +740,9 @@ bool getPortLocURL(const char *url, const char **portloc, int *port)
 int getPortURL(const char *url)
 {
 	int port;
-	int rc = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, &port, 0, 0, 0);
-	if (rc <= 0)
-		return 0;
-	if (free_syntax)
+	bool fs;
+	int rc = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, &port, 0, 0, 0, &fs);
+	if (rc <= 0 || fs)
 		return 0;
 	return port;
 }				/* getPortURL */
@@ -840,7 +881,7 @@ out_n:
 		goto squash;
 	}
 
-	if (parseURL(rel, &s, &l, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) > 0) {
+	if (parseURL(rel, &s, &l, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) > 0) {
 /* has a protocol */
 		n[0] = 0;
 		if (s != rel) {
@@ -875,7 +916,7 @@ out_n:
 	}
 /* This is a relative change, paste it on after the last slash */
 	s = base;
-	if (parseURL(base, 0, 0, 0, 0, 0, 0, &p, 0, 0, 0, 0, 0, 0) > 0 && p)
+	if (parseURL(base, 0, 0, 0, 0, 0, 0, &p, 0, 0, 0, 0, 0, 0, 0) > 0 && p)
 		s = p;
 	for (p = 0; *s; ++s) {
 		if (*s == '/')

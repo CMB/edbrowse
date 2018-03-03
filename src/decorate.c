@@ -1196,7 +1196,7 @@ static void link_css(struct htmlTag *t)
 		debugPrint(3, "css source %s", t->href);
 		memset(&g, 0, sizeof(g));
 		g.thisfile = cf->fileName;
-		g.f_encoded = true;
+		g.uriEncoded = true;
 		g.url = t->href;
 		if (httpConnect(&g)) {
 			if (g.code == 200) {

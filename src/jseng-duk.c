@@ -997,7 +997,7 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 		debugPrint(3, "xhr %s", incoming_url);
 		memset(&g, 0, sizeof(g));
 		g.thisfile = cf->fileName;
-		g.f_encoded = true;
+		g.uriEncoded = true;
 		g.url = incoming_url;
 		g.headers_p = &outgoing_xhrheaders;
 		httpConnect(&g);

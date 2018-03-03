@@ -41,6 +41,31 @@ static int count_tabs(const char *the_string)
 	return num_tabs;
 }				/* count_tabs */
 
+// Extract an item from the cookie line; result is allocated.
+static char *extractHeaderParam(const char *str, const char *item)
+{
+	int le = strlen(item), lp;
+	const char *s = str;
+/* ; denotes the next param */
+/* Even the first param has to be preceeded by ; */
+	while ((s = strchr(s, ';'))) {
+		while (*s && (*s == ';' || (uchar) * s <= ' '))
+			s++;
+		if (!memEqualCI(s, item, le))
+			continue;
+		s += le;
+		while (*s && ((uchar) * s <= ' ' || *s == '='))
+			s++;
+		if (!*s)
+			return emptyString;
+		lp = 0;
+		while ((uchar) s[lp] >= ' ' && s[lp] != ';')
+			lp++;
+		return pullString(s, lp);
+	}
+	return NULL;
+}				/* extractHeaderParam */
+
 #define FIELDS_PER_COOKIE_LINE 7
 
 static struct cookie *cookie_from_netscape_line(char *cookie_line)

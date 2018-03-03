@@ -413,7 +413,7 @@ top:
 				*iu1 = 0;
 				memset(&g, 0, sizeof(g));
 				g.thisfile = cf->fileName;
-				g.f_encoded = true;
+				g.uriEncoded = true;
 				g.url = newurl;
 				a = NULL;
 				if (httpConnect(&g)) {
