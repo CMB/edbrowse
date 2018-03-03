@@ -935,7 +935,6 @@ mimestream:
 
 	if (stringEqual(creds_buf, ":"))
 		getUserPass(g->urlcopy, creds_buf, false);
-
 // If the URL didn't have user and password, and getUserPass failed,
 // then creds_buf = ":".
 	curlret = curl_easy_setopt(h, CURLOPT_USERPWD, creds_buf);
@@ -1118,8 +1117,8 @@ they go where they go, so this doesn't come up very often.
 				strcpy(creds_buf, ":");	/* Flush stale data. */
 				nzFree(g->urlcopy);
 				g->urlcopy = redir;
-				unpercentURL(g->urlcopy);
 				g->urlcopy_l = strlen(g->urlcopy);
+				redir = NULL;
 
 /* Convert POST request to GET request after redirection. */
 /* This should only be done for 301 through 303 */
@@ -1180,18 +1179,19 @@ they go where they go, so this doesn't come up very often.
 				got_creds =
 				    getUserPassRealm(g->urlcopy, creds_buf,
 						     g->auth_realm);
-			if (!got_creds) {
+			if (!got_creds && g->foreground) {
 				i_printf(MSG_AuthRequired, g->urlcopy,
 					 g->auth_realm);
 				nl();
 				got_creds = read_credentials(creds_buf);
 			}
-			if (got_creds) {
+			if (got_creds && g->foreground)
 				addWebAuthorization(g->urlcopy, creds_buf,
 						    false, g->auth_realm);
+			if (got_creds) {
 				curl_easy_setopt(h, CURLOPT_USERPWD, creds_buf);
 				nzFree(g->buffer);
-				g->buffer = emptyString;
+				g->buffer = 0;
 				g->length = 0;
 			} else {
 /* User aborted the login process, try and at least get something. */

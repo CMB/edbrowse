@@ -82,15 +82,14 @@ bool getUserPassRealm(const char *url, char *creds, const char *realm)
 
 bool
 addWebAuthorization(const char *url,
-		    const char *credentials, bool proxy,
-		    const char *realm)
+		    const char *credentials, bool proxy, const char *realm)
 {
 	struct httpAuth *a;
 	const char *host;
 	const char *dir = 0, *dirend;
 	int port, dl;
 	bool urlProx = isProxyURL(url);
-	bool updated = true;
+	bool updated = false;
 
 	if (proxy) {
 		if (!urlProx) {
@@ -114,27 +113,29 @@ addWebAuthorization(const char *url,
 		    stringEqualCI(a->host, host) &&
 		    (proxy || (dl == strlen(a->directory)
 			       && !memcmp(a->directory, dir, dl)))) {
-			nzFree(a->user_password);
+			char *s = cloneString(credentials);
+			char *t = a->user_password;
+			a->user_password = s;
+			nzFree(t);
+			updated = true;
 			break;
 		}
 	}
 
-	if (a == (struct httpAuth *)&authlist) {
-		updated = false;
+	if (!updated) {
 		a = allocZeroMem(sizeof(struct httpAuth));
+		a->proxy = proxy;
+		a->port = port;
+		if (!a->host)
+			a->host = cloneString(host);
+		if (dir && !a->directory)
+			a->directory = pullString1(dir, dirend);
+		if (realm && !a->realm)
+			a->realm = cloneString(realm);
+		a->user_password = cloneString(credentials);
 		addToListFront(&authlist, a);
 	}
 
-	a->proxy = proxy;
-	a->port = port;
-	if (!a->host)
-		a->host = cloneString(host);
-	if (dir && !a->directory)
-		a->directory = pullString1(dir, dirend);
-	if (realm && !a->realm)
-		a->realm = cloneString(realm);
-
-	a->user_password = cloneString(credentials);
 	debugPrint(3, "%s authorization for %s%s",
 		   updated ? "updated" : "new", a->host, a->directory);
 	return true;
