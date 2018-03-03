@@ -967,6 +967,7 @@ static CURL *newFetchmailHandle(const char *username, const char *password)
 	if (debugLevel >= 4)
 		curl_easy_setopt(handle, CURLOPT_VERBOSE, 1);
 	curl_easy_setopt(handle, CURLOPT_DEBUGFUNCTION, ebcurl_debug_handler);
+	curl_easy_setopt(handle, CURLOPT_DEBUGDATA, &callback_data);
 	res = curl_easy_setopt(handle, CURLOPT_CAINFO, sslCerts);
 	if (res != CURLE_OK)
 		i_printfExit(MSG_LibcurlNoInit);

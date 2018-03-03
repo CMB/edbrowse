@@ -690,6 +690,7 @@ static CURL *newSendmailHandle(const struct MACCOUNT *account,
 			       const char *outurl, const char *reply,
 			       struct curl_slist *recipients)
 {
+	static struct i_get g;
 	CURLcode res = CURLE_OK;
 	CURL *handle = curl_easy_init();
 	if (!handle) {
@@ -706,6 +707,7 @@ static CURL *newSendmailHandle(const struct MACCOUNT *account,
 	if (debugLevel >= 4)
 		curl_easy_setopt(handle, CURLOPT_VERBOSE, 1);
 	curl_easy_setopt(handle, CURLOPT_DEBUGFUNCTION, ebcurl_debug_handler);
+	curl_easy_setopt(handle, CURLOPT_DEBUGDATA, &g);
 	res = curl_easy_setopt(handle, CURLOPT_CAINFO, sslCerts);
 	if (res != CURLE_OK) {
 		goto new_handle_cleanup;

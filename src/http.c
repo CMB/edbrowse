@@ -1024,6 +1024,7 @@ they go where they go, so this doesn't come up very often.
 						  &g->code);
 				if (g->code == 200)
 					goto perform;
+				g->down_state = 0;
 			}
 		}
 
@@ -1942,6 +1943,7 @@ static CURL *http_curl_init(struct i_get *g)
 	if (debugLevel >= 4)
 		curl_easy_setopt(h, CURLOPT_VERBOSE, 1);
 	curl_easy_setopt(h, CURLOPT_DEBUGFUNCTION, ebcurl_debug_handler);
+	curl_easy_setopt(h, CURLOPT_DEBUGDATA, g);
 	curl_easy_setopt(h, CURLOPT_NOPROGRESS, 0);
 	curl_easy_setopt(h, CURLOPT_PROGRESSFUNCTION, curl_progress);
 	curl_easy_setopt(h, CURLOPT_CONNECTTIMEOUT, webTimeout);
@@ -2226,24 +2228,22 @@ prettify_network_text(const char *text, size_t size, FILE * destination)
 
 int
 ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
-		     size_t size, void *unused)
+		     size_t size, struct i_get *g)
 {
-	static bool last_curlin = false;	// this static not threadsafe
 	FILE *f = debugFile ? debugFile : stdout;
-
 	if (info_desc == CURLINFO_HEADER_OUT) {
 		fprintf(f, "curl>\n");
 		prettify_network_text(data, size, f);
 	} else if (info_desc == CURLINFO_HEADER_IN) {
-		if (!last_curlin)
+		if (!g->last_curlin)
 			fprintf(f, "curl<\n");
 		prettify_network_text(data, size, f);
 	} else;			/* Do nothing.  We don't care about this piece of data. */
 
 	if (info_desc == CURLINFO_HEADER_IN)
-		last_curlin = true;
+		g->last_curlin = true;
 	else if (info_desc)
-		last_curlin = false;
+		g->last_curlin = false;
 
 	return 0;
 }				/* ebcurl_debug_handler */
