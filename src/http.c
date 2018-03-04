@@ -1490,9 +1490,7 @@ static void gopher_ls_line(struct i_get *g, char *line)
 		if (!strncmp(pathname, "URL:", 4)) {
 			stringAndString(&g->buffer, &g->length, pathname + 4);
 		} else {
-			stringAndString(&g->buffer, &g->length,
-					(first ==
-					 'h' ? "http://" : "gopher://"));
+			stringAndString(&g->buffer, &g->length, "gopher://");
 			stringAndString(&g->buffer, &g->length, host);
 			if (port) {
 				stringAndChar(&g->buffer, &g->length, ':');
