@@ -1759,12 +1759,22 @@ fromdisk:
 	if (newbuf && !cf->mt)
 		cf->mt = findMimeByFile(filename);
 
-	nopound = cloneString(filename);
-	rbuf = findHash(nopound);
-	if (rbuf && !filetype)
-		*rbuf = 0;
-	rc = fileIntoMemory(nopound, &rbuf, &fileSize);
-	nzFree(nopound);
+// Optimize; don't read a file into buffer if you're
+// just going to process it.
+	if (cf->mt && cf->mt->outtype && pluginsOn && !access(filename, 4)
+	    && cmd == 'b' && newbuf) {
+		rc = runPluginCommand(cf->mt, 0, filename, 0, 0, &rbuf,
+				      &fileSize);
+	} else {
+
+		nopound = cloneString(filename);
+		rbuf = findHash(nopound);
+		if (rbuf && !filetype)
+			*rbuf = 0;
+		rc = fileIntoMemory(nopound, &rbuf, &fileSize);
+		nzFree(nopound);
+	}
+
 	if (!rc)
 		return false;
 	serverData = rbuf;
@@ -5961,7 +5971,7 @@ bool browseCurrentBuffer(void)
 	if (cf->fileName)
 		remote = isURL(cf->fileName);
 
-	if (cf->mt && cf->mt->outtype)
+	if (cf->mt && cf->mt->outtype && isURL(cf->fileName))
 		bmode = 3;
 	else
 /* A mail message often contains lots of html tags,
