@@ -252,7 +252,7 @@ struct MIMETYPE {
 	char *urlmatch;
 	char *content;
 	char outtype;
-	bool stream, download;
+	bool down_url, no_url;
 };
 extern struct MIMETYPE mimetypes[];
 extern int maxMime;		/* how many mime types specified */

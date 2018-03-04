@@ -15,8 +15,6 @@ Run audio players, pdf converters, etc, based on suffix or content-type.
  * may be required.
  * Fails if /tmp/.edbrowse does not exist or cannot be created. */
 static char *tempin, *tempout;
-static char *suffixin;		/* suffix of input file */
-static char *suffixout;		/* suffix of output file */
 
 static bool makeTempFilename(const char *suffix, int idx, bool output)
 {
@@ -28,6 +26,8 @@ static bool makeTempFilename(const char *suffix, int idx, bool output)
 		return false;
 	}
 
+	if (!suffix)
+		suffix = "eb";
 	if (asprintf(&filename, "%s/pf%d-%d.%s",
 		     ebUserDir, getpid(), idx, suffix) < 0)
 		i_printfExit(MSG_MemAllocError, strlen(ebUserDir) + 24);
@@ -39,7 +39,6 @@ static bool makeTempFilename(const char *suffix, int idx, bool output)
 	} else {
 		nzFree(tempin);
 		tempin = filename;
-		suffixin = tempin + strlen(tempin) - strlen(suffix);
 	}
 
 	return true;
@@ -75,29 +74,78 @@ const struct MIMETYPE *findMimeBySuffix(const char *suffix)
 	return NULL;
 }				/* findMimeBySuffix */
 
-/* This looks for a match on suffix or on the url string */
-const struct MIMETYPE *findMimeByURL(const char *url)
+static char *file2suffix(const char *filename)
 {
-	char suffix[12];
-	const char *post, *s, *t;
-	const struct MIMETYPE *mt;
-	const struct MIMETYPE *m;
-	int i, j, l, url_length;
+	static char suffix[12];
+	const char *post, *s;
+	post = filename + strlen(filename);
+	for (s = post - 1; s >= filename && *s != '.' && *s != '/'; --s) ;
+	if (s < filename || *s != '.')
+		return NULL;
+	++s;
+	if (post >= s + sizeof(suffix))
+		return NULL;
+	strncpy(suffix, s, post - s);
+	suffix[post - s] = 0;
+	return suffix;
+}
 
+static char *url2suffix(const char *url)
+{
+	static char suffix[12];
+	const char *post, *s;
 	post = url + strcspn(url, "?\1");
 	for (s = post - 1; s >= url && *s != '.' && *s != '/'; --s) ;
-	if (*s == '.') {
-		++s;
-		if (post < s + sizeof(suffix)) {
-			strncpy(suffix, s, post - s);
-			suffix[post - s] = 0;
-			mt = findMimeBySuffix(suffix);
-			if (mt)
-				return mt;
+	if (s < url || *s != '.')
+		return NULL;
+	++s;
+	if (post >= s + sizeof(suffix))
+		return NULL;
+	strncpy(suffix, s, post - s);
+	suffix[post - s] = 0;
+	return suffix;
+}
+
+const struct MIMETYPE *findMimeByProtocol(const char *prot)
+{
+	int i;
+	int len = strlen(prot);
+	const struct MIMETYPE *m = mimetypes;
+	for (i = 0; i < maxMime; ++i, ++m) {
+		const char *s = m->prot, *t;
+		if (!s)
+			continue;
+		while (*s) {
+			t = strchr(s, ',');
+			if (!t)
+				t = s + strlen(s);
+			if (t - s == len && memEqualCI(s, prot, len))
+				return m;
+			if (*t)
+				++t;
+			s = t;
 		}
 	}
 
-/* not by suffix, let's look for a url match */
+	return NULL;
+}				/* findMimeByProtocol */
+
+// look for match on protocol, suffix, or url string
+const struct MIMETYPE *findMimeByURL(const char *url)
+{
+	const char *prot, *suffix;
+	const struct MIMETYPE *mt, *m;
+	int i, j, l, url_length;
+	char *s, *t;
+
+// protocol first, it seems higher precedence.
+	if ((prot = getProtURL(url)) && (mt = findMimeByProtocol(prot)))
+		return mt;
+
+	if ((suffix = url2suffix(url)) && (mt = findMimeBySuffix(suffix)))
+		return mt;
+
+/* not by protocol or suffix, let's look for a url match */
 	url_length = strlen(url);
 	m = mimetypes;
 	for (i = 0; i < maxMime; ++i, ++m) {
@@ -126,18 +174,10 @@ const struct MIMETYPE *findMimeByURL(const char *url)
 
 const struct MIMETYPE *findMimeByFile(const char *filename)
 {
-	char suffix[12];
-	const char *post, *s;
-	post = filename + strlen(filename);
-	for (s = post - 1; s >= filename && *s != '.' && *s != '/'; --s) ;
-	if (s < filename || *s != '.')
-		return NULL;
-	++s;
-	if (post >= s + sizeof(suffix))
-		return NULL;
-	strncpy(suffix, s, post - s);
-	suffix[post - s] = 0;
-	return findMimeBySuffix(suffix);
+	char *suffix = file2suffix(filename);
+	if (suffix)
+		return findMimeBySuffix(suffix);
+	return NULL;
 }				/* findMimeByFile */
 
 const struct MIMETYPE *findMimeByContent(const char *content)
@@ -165,56 +205,61 @@ const struct MIMETYPE *findMimeByContent(const char *content)
 	return NULL;
 }				/* findMimeByContent */
 
-const struct MIMETYPE *findMimeByProtocol(const char *prot)
+bool runPluginCommand(const struct MIMETYPE * m,
+		      const char *inurl, const char *infile, const char *indata,
+		      int inlength, char **outdata, int *outlength)
 {
-	int i;
-	int len = strlen(prot);
-	const struct MIMETYPE *m = mimetypes;
-
-	for (i = 0; i < maxMime; ++i, ++m) {
-		const char *s = m->prot, *t;
-		if (!s)
-			continue;
-		while (*s) {
-			t = strchr(s, ',');
-			if (!t)
-				t = s + strlen(s);
-			if (t - s == len && memEqualCI(s, prot, len))
-				return m;
-			if (*t)
-				++t;
-			s = t;
-		}
-	}
-
-	return NULL;
-}				/* findMimeByProtocol */
-
-/* The result is allocated */
-char *pluginCommand(const struct MIMETYPE *m,
-		    const char *infile, const char *outfile, const char *suffix)
-{
-	int len, inlen, outlen;
 	const char *s;
 	char *cmd, *t;
+	char *outfile;
+	char *suffix;
+	int len, inlen, outlen;
+	bool has_o = false;
 
-	if (!suffix)
-		suffix = emptyString;
-	if (!infile)
-		infile = emptyString;
-	if (!outfile)
-		outfile = emptyString;
+	if (indata) {
+// calling function has gathered the data for us,
+// maybe we could pipe it to the program but for now
+// I'm just putting it in a temp file having the same suffix.
+		suffix = NULL;
+		if (infile)
+			suffix = file2suffix(infile);
+		else
+			suffix = url2suffix(inurl);
+		++tempIndex;
+		if (!makeTempFilename(suffix, tempIndex, false))
+			return false;
+		if (!memoryOutToFile(tempin, indata, inlength,
+				     MSG_TempNoCreate2, MSG_NoWrite2))
+			return false;
+		infile = tempin;
+	} else if (inurl)
+		infile = inurl;
+
+// reserve an output file, whether we need it or not
+	++tempIndex;
+	suffix = "out";
+	if (m->outtype == 't')
+		suffix = "txt";
+	if (m->outtype == 'h')
+		suffix = "html";
+	if (!makeTempFilename(suffix, tempIndex, true)) {
+		if (indata)
+			unlink(tempin);
+		return false;
+	}
+	outfile = tempout;
 
 	len = 0;
+	inlen = shellProtectLength(infile);
+	outlen = shellProtectLength(outfile);
 	for (s = m->program; *s; ++s) {
 		if (*s == '%' && s[1] == 'i') {
-			inlen = shellProtectLength(infile);
 			len += inlen;
 			++s;
 			continue;
 		}
 		if (*s == '%' && s[1] == 'o') {
-			outlen = shellProtectLength(outfile);
+			has_o = true;
 			len += outlen;
 			++s;
 			continue;
@@ -223,8 +268,10 @@ char *pluginCommand(const struct MIMETYPE *m,
 	}
 	++len;
 
-	cmd = allocMem(len);
+// reserve space for > outfile
+	cmd = allocMem(len + outlen + 3);
 	t = cmd;
+// pass 2
 	for (s = m->program; *s; ++s) {
 		if (*s == '%' && s[1] == 'i') {
 			shellProtect(t, infile);
@@ -242,9 +289,42 @@ char *pluginCommand(const struct MIMETYPE *m,
 	}
 	*t = 0;
 
+// if there is no output, or the program has %o, then just run it,
+// otherwise we have to pipe its output over to outdata,
+// which should be present.
+// There's no popen on windows, and I'm lazy besides, so just tack on
+// > outfile, which is less efficient but oh well.
+	if (m->outtype && !has_o) {
+		strcat(cmd, " > ");
+		strcat(cmd, outfile);
+	}
+
 	debugPrint(3, "plugin %s", cmd);
-	return cmd;
-}				/* pluginCommand */
+
+// time to run the command.
+	if (eb_system(cmd, !m->outtype) < 0)
+		goto success;
+
+	if (!outdata)		// not capturing output
+		goto success;
+	if (!fileIntoMemory(outfile, outdata, outlength))
+		goto fail;
+	if (indata)
+		cnzFree(indata);
+// fall through
+
+success:
+	if (indata)
+		unlink(tempin);
+	unlink(tempout);
+	return true;
+
+fail:
+	if (indata)
+		unlink(tempin);
+	unlink(tempout);
+	return false;
+}
 
 /* play the contents of the current buffer, or otherwise
  * act upon it based on the program corresponding to its mine type.
@@ -253,14 +333,8 @@ char *pluginCommand(const struct MIMETYPE *m,
 int playBuffer(const char *line, const char *playfile)
 {
 	const struct MIMETYPE *mt = cf->mt;
-	static char sufbuf[12];
-	char *cmd;
-	const char *suffix = NULL;
-	char *buf;
-	int buflen;
-	char *infile;
+	const char *suffix;
 	char c = line[2];
-
 	if (c && c != '.')
 		return 2;
 
@@ -283,224 +357,54 @@ int playBuffer(const char *line, const char *playfile)
 
 	if (playfile) {
 /* play the file passed in */
-		suffix = strrchr(playfile, '.') + 1;
-		strcpy(sufbuf, suffix);
-		suffix = sufbuf;
-		mt = findMimeBySuffix(suffix);
+		mt = findMimeByFile(playfile);
 		if (!mt || mt->outtype) {
+			suffix = file2suffix(playfile);
+			if (!suffix)
+				suffix = "?";
 			setError(MSG_SuffixBad, suffix);
 			return 0;
 		}
-		cmd = pluginCommand(mt, playfile, 0, suffix);
-		if (!cmd)
+		return runPluginCommand(mt, 0, playfile, 0, 0, 0, 0);
+	}
+// current buffer
+	if (c) {
+		mt = findMimeBySuffix(line + 3);
+		if (!mt || mt->outtype) {
+			setError(MSG_SuffixBad, line + 3);
 			return 0;
-		goto play_command;
+		}
 	}
 
-	if (!mt) {
-/* need to determine the mime type */
-		if (c == '.') {
-			suffix = line + 3;
+	suffix = NULL;
+	if (!mt && cf->fileName) {
+		if (isURL(cf->fileName)) {
+			suffix = url2suffix(cf->fileName);
+			cf->mt = mt = findMimeByURL(cf->fileName);
 		} else {
-			if (cf->fileName) {
-				const char *endslash;
-				suffix = strrchr(cf->fileName, '.');
-				endslash = strrchr(cf->fileName, '/');
-				if (suffix && endslash && endslash > suffix)
-					suffix = NULL;
-			}
-			if (!suffix) {
-				setError(MSG_NoSuffix);
-				return 0;
-			}
-			++suffix;
+			suffix = file2suffix(cf->fileName);
+			cf->mt = mt = findMimeByFile(cf->fileName);
 		}
-		if (strlen(suffix) > 5) {
-			setError(MSG_SuffixLong);
-			return 0;
-		}
-		mt = findMimeBySuffix(suffix);
-		if (!mt) {
+	}
+	if (!mt || mt->outtype) {
+		if (suffix)
 			setError(MSG_SuffixBad, suffix);
-			return 0;
-		}
-		cf->mt = mt;
-	}
-
-	if (!suffix) {
-		suffix = mt->suffix;
-		if (!suffix)
-			suffix = "x";
-		else {
-			int i;
-			for (i = 0; i < sizeof(sufbuf) - 1; ++i) {
-				if (mt->suffix[i] == ',' || mt->suffix[i] == 0)
-					break;
-				sufbuf[i] = mt->suffix[i];
-			}
-			sufbuf[i] = 0;
-			suffix = sufbuf;
-		}
-	}
-
-	if (mt->outtype) {
-		setError(MSG_SuffixBad, suffix);
+		else
+			setError(MSG_NoSuffix);
 		return 0;
 	}
 
-	++tempIndex;
-	if (!makeTempFilename(suffix, tempIndex, false))
-		return 0;
-	infile = tempin;
-	if (!isURL(cf->fileName) && !access(cf->fileName, 4) && !cw->changeMode)
-		infile = cf->fileName;
-	cmd = pluginCommand(mt, infile, 0, suffix);
-	if (!cmd)
-		return 0;
-	if (infile == tempin) {
-		if (!unfoldBuffer(context, false, &buf, &buflen)) {
-			nzFree(cmd);
-			return 0;
-		}
-		if (!memoryOutToFile(tempin, buf, buflen,
-				     MSG_TempNoCreate2, MSG_NoWrite2)) {
-			unlink(tempin);
-			nzFree(cmd);
-			nzFree(buf);
-			return 0;
-		}
-		nzFree(buf);
+	if (cf->fileName) {
+		if (isURL(cf->fileName))
+			return runPluginCommand(mt, cf->fileName, 0, 0, 0, 0,
+						0);
+		else
+			return runPluginCommand(mt, 0, cf->fileName, 0, 0, 0,
+						0);
 	}
-
-play_command:
-	eb_system(cmd, true);
-
-	if (!cw->dirMode && infile == tempin)
-		unlink(tempin);
-	nzFree(cmd);
-
-	return 1;
-}				/* playBuffer */
-
-bool playServerData(void)
-{
-	const struct MIMETYPE *mt = cf->mt;
-	char *cmd;
-	const char *suffix = mt->suffix;
-
-	if (!suffix)
-		suffix = "x";
-	else {
-		static char sufbuf[12];
-		int i;
-		for (i = 0; i < sizeof(sufbuf) - 1; ++i) {
-			if (mt->suffix[i] == ',' || mt->suffix[i] == 0)
-				break;
-			sufbuf[i] = mt->suffix[i];
-		}
-		sufbuf[i] = 0;
-		suffix = sufbuf;
-	}
-
-	++tempIndex;
-	if (!makeTempFilename(suffix, tempIndex, false))
-		return false;
-	cmd = pluginCommand(cf->mt, tempin, 0, suffix);
-	if (!cmd)
-		return false;
-	if (!memoryOutToFile(tempin, serverData, serverDataLen,
-			     MSG_TempNoCreate2, MSG_NoWrite2)) {
-		unlink(tempin);
-		nzFree(cmd);
-		return false;
-	}
-	eb_system(cmd, true);
-
-	unlink(tempin);
-	nzFree(cmd);
-
-	return true;
-}				/* playServerData */
-
-/* return the name of the output file, or 0 upon failure */
-/* Return "|" if output is in memory and not in a temp file. */
-char *runPluginConverter(const char *buf, int buflen)
-{
-	const struct MIMETYPE *mt = cf->mt;
-	char *cmd;
-	const char *suffix = mt->suffix;
-	bool ispipe = !strstr(mt->program, "%o");
-	bool rc;
-	char *infile;
-	int system_ret = 0;
-
-	if (!suffix)
-		suffix = "x";
-	else {
-		static char sufbuf[12];
-		int i;
-		for (i = 0; i < sizeof(sufbuf) - 1; ++i) {
-			if (mt->suffix[i] == ',' || mt->suffix[i] == 0)
-				break;
-			sufbuf[i] = mt->suffix[i];
-		}
-		sufbuf[i] = 0;
-		suffix = sufbuf;
-	}
-
-	++tempIndex;
-	if (!makeTempFilename(suffix, tempIndex, false))
-		return 0;
-	suffixout = (cf->mt->outtype == 'h' ? "html" : "txt");
-	++tempIndex;
-	if (!makeTempFilename(suffixout, tempIndex, true))
-		return 0;
-	infile = tempin;
-	if (!isURL(cf->fileName) && !access(cf->fileName, 4) && !cw->changeMode)
-		infile = cf->fileName;
-	cmd = pluginCommand(cf->mt, infile, tempout, suffix);
-	if (!cmd)
-		return NULL;
-	if (infile == tempin) {
-		if (!memoryOutToFile(tempin, buf, buflen,
-				     MSG_TempNoCreate2, MSG_NoWrite2)) {
-			unlink(tempin);
-			nzFree(cmd);
-			return NULL;
-		}
-	}
-#ifndef DOSLIKE
-/* no popen call in windows I guess */
-	if (ispipe) {
-		FILE *p = popen(cmd, "r");
-		if (!p) {
-			setError(MSG_NoSpawn, cmd, errno);
-			if (infile == tempin)
-				unlink(tempin);
-			nzFree(cmd);
-			return NULL;
-		}
-/* borrow a global data array */
-		rc = fdIntoMemory(fileno(p), &serverData, &serverDataLen);
-		fclose(p);
-		if (infile == tempin)
-			unlink(tempin);
-		nzFree(cmd);
-		if (rc)
-			return "|";
-		nzFree(serverData);
-		serverData = NULL;
-		return NULL;
-	}
-#endif // #ifndef DOSLIKE
-
-	system_ret = eb_system(cmd, false);
-
-	if (infile == tempin)
-		unlink(tempin);
-	nzFree(cmd);
-	if (!system_ret)
-		return tempout;
-	else
-		return NULL;
-}				/* runPluginConverter */
+// buffer has no name.
+// I could unfold it into a string and pass it to runPluginCommand that way,
+// but this just never happens, so I don't care.
+	setError(MSG_NoSuffix);
+	return 0;
+}

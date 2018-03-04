@@ -49,7 +49,8 @@ static int protocolByName(const char *p, int l)
 {
 	int i;
 	for (i = 0; protocols[i].prot[0]; i++)
-		if (memEqualCI(protocols[i].prot, p, l))
+		if (strlen(protocols[i].prot) == l &&
+		    memEqualCI(protocols[i].prot, p, l))
 			return i;
 	return -1;
 }				/* protocolByName */
@@ -269,11 +270,11 @@ but I allow, at the end of this, control a followed by post data, with the
 understanding that there should not be query_string and post data simultaneously.
 *********************************************************************/
 
-static int parseURL(const char *url, const char **proto, int *prlen, const char **user, int *uslen, const char **pass, int *palen,	/* ftp protocol */
-		    const char **host, int *holen,
-		    const char **portloc, int *port,
-		    const char **data, int *dalen, const char **post,
-		    bool * freep)
+static bool parseURL(const char *url, const char **proto, int *prlen, const char **user, int *uslen, const char **pass, int *palen,	/* ftp protocol */
+		     const char **host, int *holen,
+		     const char **portloc, int *port,
+		     const char **data, int *dalen, const char **post,
+		     bool * freep)
 {
 	const char *p, *q, *pp;
 	int a;
@@ -308,11 +309,21 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 		*freep = false;
 
 	if (!url)
-		return -1;
+		return false;
 
 /* Find the leading protocol:// */
 	a = -1;
 	p = strchr(url, ':');
+	if (p) {
+		for (q = url; q < p; ++q)
+			if (!isalnumByte(*q))
+				break;
+		if (q < p)
+			p = 0;
+		if (isdigit(url[0]))
+			p = 0;
+	}
+
 	if (p) {
 /* You have to have something after the colon */
 		q = p + 1;
@@ -322,58 +333,30 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 			++q;
 		skipWhite(&q);
 		if (!*q)
-			return 0;
-		a = protocolByName(url, p - url);
-	}
-	if (a >= 0) {
+			return false;
 		if (proto)
 			*proto = url;
 		if (prlen)
 			*prlen = p - url;
-		if (p[1] != '/' || p[2] != '/') {
-			if (protocols[a].need_slashes) {
-				if (p[1] != '/') {
-/* don't call setError, it makes all these routines not threadsafe,
- * and I don't think anybody uses the error messages anyways.
-					setError(MSG_ProtExpected,
-						 protocols[a].prot);
-*/
-					return -1;
-				}
-/* We got one out of two slashes, I'm going to call it good */
-				++p;
-			}
-			p -= 2;
-		}
-		p += 3;
-	} else {		/* nothing yet */
-		if (p && p - url < MAXPROTLEN && p[1] == '/') {
-			for (q = url; q < p; ++q)
-				if (!isalphaByte(*q))
-					break;
-			if (q == p) {	/* some protocol we don't know */
-				char qprot[MAXPROTLEN];
-				memcpy(qprot, url, p - url);
-				qprot[p - url] = 0;
-//                              setError(MSG_BadProt, qprot);
-				return -1;
-			}
-		}
-		if (httpDefault(url)) {
-			static const char http[] = "http://";
-			if (proto)
-				*proto = http;
-			if (prlen)
-				*prlen = 4;
-			a = 1;
-			p = url;
-		}
-	}
-
-	if (a < 0)
+		a = protocolByName(url, p - url);
+		if (a < 0 && q == p + 1)
+			return false;
+		if (a >= 0 && !protocols[a].need_slashes)
+			++p;
+		else
+			p = q;
+	} else if (httpDefault(url)) {
+		static const char http[] = "http://";
+		if (proto)
+			*proto = http;
+		if (prlen)
+			*prlen = 4;
+		a = 1;
+		p = url;
+	} else
 		return false;
 
-	if (protocols[a].free_syntax) {
+	if (a < 0 || protocols[a].free_syntax) {
 		if (data)
 			*data = p;
 		if (dalen)
@@ -382,6 +365,9 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 			*freep = true;
 		return true;
 	}
+
+	if (a < 0)
+		return true;	// don't know anything else
 
 /* find the end of the domain */
 	q = p + strcspn(p, "@?#/\1");
@@ -410,7 +396,7 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 // only domain characters allowed
 	for (pp = p; pp < q; ++pp)
 		if (!isalnumByte(*pp) && *pp != '.' && *pp != '-')
-			return -1;
+			return false;
 	if (host)
 		*host = p;
 	if (holen)
@@ -422,7 +408,7 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 			n = strtol(q + 1, (char **)&cc, 10);
 			if (cc != pp || !isdigitByte(q[1])) {
 //                              setError(MSG_BadPort);
-				return -1;
+				return false;
 			}
 			if (port)
 				*port = n;
@@ -453,10 +439,7 @@ static int parseURL(const char *url, const char **proto, int *prlen, const char 
 
 bool isURL(const char *url)
 {
-	int j = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-	if (j < 0)
-		return false;
-	return j;
+	return parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }				/* isURL */
 
 // non-FTP URLs are always browsable.  FTP URLs are browsable if they end with
@@ -484,9 +467,10 @@ const char *getProtURL(const char *url)
 	static char buf[MAXPROTLEN];
 	int l;
 	const char *s;
-	int rc = parseURL(url, &s, &l, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-	if (rc <= 0)
+	if (!parseURL(url, &s, &l, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
 		return 0;
+	if (l >= MAXPROTLEN)
+		l = MAXPROTLEN - 1;
 	memcpy(buf, s, l);
 	buf[l] = 0;
 	return buf;
@@ -500,8 +484,8 @@ const char *getHostURL(const char *url)
 	char *t;
 	char c, d;
 	bool fs;
-	int rc = parseURL(url, 0, 0, 0, 0, 0, 0, &s, &l, 0, 0, 0, 0, 0, &fs);
-	if (rc <= 0 || fs)
+	bool rc = parseURL(url, 0, 0, 0, 0, 0, 0, &s, &l, 0, 0, 0, 0, 0, &fs);
+	if (!rc || fs)
 		return 0;
 	if (!s)
 		return emptyString;
@@ -532,20 +516,25 @@ bool getProtHostURL(const char *url, char *pp, char *hp)
 	int l1, l2;
 	const char *s1, *s2;
 	bool fs;
-	int rc =
-	    parseURL(url, &s1, &l1, 0, 0, 0, 0, &s2, &l2, 0, 0, 0, 0, 0, &fs);
-	if (rc <= 0 || fs || !s2)
+	if (!parseURL(url, &s1, &l1, 0, 0, 0, 0, &s2, &l2, 0, 0, 0, 0, 0, &fs))
 		return false;
 	if (pp) {
 		*pp = 0;
 		if (s1) {
+			if (l1 >= MAXPROTLEN)
+				l1 = MAXPROTLEN - 1;
 			memcpy(pp, s1, l1);
 			pp[l1] = 0;
 		}
 	}
 	if (hp) {
-		memcpy(hp, s2, l2);
-		hp[l2] = 0;
+		*hp = 0;
+		if (s2) {
+			if (l2 >= MAXHOSTLEN)
+				l2 = MAXHOSTLEN - 1;
+			memcpy(hp, s2, l2);
+			hp[l2] = 0;
+		}
 	}
 	return true;
 }				/* getProtHostURL */
@@ -556,10 +545,10 @@ int getCredsURL(const char *url, char *buf)
 	int l1, l2;
 	const char *s1, *s2;
 	bool fs;
-	int rc =
+	bool rc =
 	    parseURL(url, 0, 0, &s1, &l1, &s2, &l2, 0, 0, 0, 0, 0, 0, 0, &fs);
 	strcpy(buf, ":");
-	if (rc <= 0 || fs)
+	if (!rc || fs)
 		return 0;
 	if (s1 && l1 > MAXUSERPASS)
 		return 1;
@@ -581,8 +570,8 @@ int getCredsURL(const char *url, char *buf)
 const char *getDataURL(const char *url)
 {
 	const char *s;
-	int rc = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &s, 0, 0, 0);
-	if (rc <= 0)
+	bool rc = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &s, 0, 0, 0);
+	if (!rc)
 		return 0;
 	return s;
 }				/* getDataURL */
@@ -592,8 +581,8 @@ static const char *getDataURL1(const char *url)
 {
 	const char *s;
 	bool fs;
-	int rc = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &s, 0, 0, &fs);
-	if (rc <= 0 || fs)
+	bool rc = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &s, 0, 0, &fs);
+	if (!rc || fs)
 		return 0;
 	return s;
 }				/* getDataURL1 */
@@ -684,9 +673,9 @@ char *getFileURL(const char *url, bool chophash)
 bool getPortLocURL(const char *url, const char **portloc, int *port)
 {
 	bool fs;
-	int rc =
+	bool rc =
 	    parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, portloc, port, 0, 0, 0, &fs);
-	if (rc <= 0 || fs)
+	if (!rc || fs)
 		return false;
 	return true;
 }				/* getPortLocURL */
@@ -695,8 +684,8 @@ int getPortURL(const char *url)
 {
 	int port;
 	bool fs;
-	int rc = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, &port, 0, 0, 0, &fs);
-	if (rc <= 0 || fs)
+	bool rc = parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, &port, 0, 0, 0, &fs);
+	if (!rc || fs)
 		return 0;
 	return port;
 }				/* getPortURL */

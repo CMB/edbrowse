@@ -101,7 +101,6 @@ static void scan_http_headers(struct i_get *g, bool fromCallback)
 		g->charset = strchr(g->content, ';');
 		if (g->charset)
 			*(g->charset)++ = 0;
-/* The protocol, such as rtsp, could have already set the mime type. */
 		if (g->pg_ok && !cf->mt)
 			cf->mt = findMimeByContent(g->content);
 	}
@@ -119,6 +118,8 @@ static void scan_http_headers(struct i_get *g, bool fromCallback)
 			}
 			g->cdfn = cloneString(s);
 			debugPrint(4, "disposition filename %s", g->cdfn);
+			if (g->pg_ok && !cf->mt)
+				cf->mt = findMimeByFile(g->cdfn);
 		}
 		nzFree(v);
 	}
@@ -754,7 +755,6 @@ bool httpConnect(struct i_get *g)
 	char creds_buf[MAXUSERPASS * 2 + 2];	/* creds abr. for credentials */
 	bool still_fetching = true;
 	char prot[MAXPROTLEN], host[MAXHOSTLEN];
-	char *cmd;
 	const char *post, *s;
 	char *postb = NULL;
 	int postb_l = 0;
@@ -773,6 +773,39 @@ bool httpConnect(struct i_get *g)
 			setError(MSG_DomainEmpty);
 		return false;
 	}
+// plugins can only be ok from one thread, the interactive thread
+// that calls up web pages at the user's behest.
+// None of this machinery need be threadsafe.
+	if (g->pg_ok && (mt = findMimeByURL(url)) &&
+	    !(mt->no_url | mt->down_url)) {
+		char *f;
+		urlSanitize(g, 0);
+mimestream:
+// don't have to fetch the data, the program can handle it.
+		nzFree(g->buffer);
+		g->buffer = 0;
+		f = g->urlcopy;
+		if (g->cdfn)	// content disposition file name
+			f = g->cdfn;
+		if (mt->outtype) {
+			runPluginCommand(mt, f, 0, 0, 0, &g->buffer,
+					 &g->length);
+			i_get_free(g, false);
+		} else {
+			runPluginCommand(mt, f, 0, 0, 0, 0, 0);
+			i_get_free(g, true);
+		}
+		return true;
+	}
+// if invoked from a playlist.
+// I don't think this really works.
+#if 0
+	if (g->pg_ok && g->thisfile &&
+	    (mt = findMimeByURL(g->thisfile)) && !(mt->no_url | mt->down_url)) {
+		urlSanitize(g, 0);
+		goto mimestream;
+	}
+#endif
 
 /* Pull user password out of the url */
 	n = getCredsURL(url, creds_buf);
@@ -785,12 +818,6 @@ bool httpConnect(struct i_get *g)
 		if (g->foreground)
 			setError(MSG_PasswordLong, MAXUSERPASS);
 		return false;
-	}
-
-	if (g->pg_ok) {
-// plugins can only be ok from one thread, the interactive thread
-// that calls up web pages at the user's behest.
-		cf->mt = 0;	// should already be 0
 	}
 
 	if (!curlActive) {
@@ -808,32 +835,10 @@ bool httpConnect(struct i_get *g)
 		   stringEqualCI(prot, "scp") ||
 		   stringEqualCI(prot, "tftp") || stringEqualCI(prot, "sftp")) {
 		return ftpConnect(g, creds_buf);
-	} else if (g->pg_ok && (cf->mt = findMimeByProtocol(prot))
-		   && cf->mt->stream) {
-mimestream:
-/* could jump back here after a redirect, so use urlcopy if it is there */
-		cmd = pluginCommand(cf->mt, (g->urlcopy ? g->urlcopy : url),
-				    NULL, NULL);
-		if (cmd)
-			eb_system(cmd, true);
-		nzFree(cmd);
-		i_get_free(g, true);
-		return true;
 	} else {
 		if (g->foreground)
 			setError(MSG_WebProtBad, prot);
 		return false;
-	}
-
-/* Ok, it's http, but the suffix could force a plugin */
-	if (g->pg_ok && (cf->mt = findMimeByURL(url)) && cf->mt->stream)
-		goto mimestream;
-
-/* if invoked from a playlist */
-	if (g->pg_ok && g->thisfile
-	    && (mt = findMimeByURL(g->thisfile)) && mt->stream) {
-		cf->mt = mt;
-		goto mimestream;
 	}
 
 	h = http_curl_init(g);
@@ -953,9 +958,10 @@ mimestream:
 	while (still_fetching == true) {
 		char *redir = NULL;
 
-// recheck suffix after a redirect
+// recheck the url after a redirect
 		if (redirect_count && g->pg_ok &&
-		    (cf->mt = findMimeByURL(g->urlcopy)) && cf->mt->stream) {
+		    (mt = findMimeByURL(g->urlcopy)) &&
+		    !(mt->no_url | mt->down_url)) {
 			curl_easy_cleanup(h);
 			goto mimestream;
 		}
@@ -990,6 +996,8 @@ So this is a simple workaround.
 			curlret = CURLE_OK;
 
 		if (g->down_state == 6) {
+// Header is indicated a plugin, by it content-type,
+// or by the suffix on content-disposition.
 			curl_easy_cleanup(h);
 			goto mimestream;
 		}
@@ -1223,25 +1231,54 @@ curl_fail:
 	if (custom_headers)
 		curl_slist_free_all(custom_headers);
 	curl_easy_cleanup(h);
+	nzFree(postb);
 
-	if (curlret != CURLE_OK)
+	if (curlret != CURLE_OK) {
 		ebcurl_setError(curlret, g->urlcopy, (g->foreground ? 0 : 1),
 				g->error);
-
-	if (transfer_status) {
-		if ((g->code != 200 && g->code != 201 &&
-		     (g->foreground || debugLevel >= 2)) ||
-		    (g->code == 201 && debugLevel >= 3))
-			i_printf(MSG_HTTPError,
-				 g->code, message_for_response_code(g->code));
-		if (name_changed)
-			g->cfn = g->urlcopy;
-		else
-			nzFree(g->urlcopy);	/* Don't need it anymore. */
-		g->urlcopy = 0;
+		nzFree(referrer);
+		i_get_free(g, true);
+		return false;
 	}
 
-	nzFree(postb);
+	if (!transfer_status) {
+		nzFree(referrer);
+		i_get_free(g, true);
+		return false;
+	}
+
+	if ((g->code != 200 && g->code != 201 &&
+	     (g->foreground || debugLevel >= 2)) ||
+	    (g->code == 201 && debugLevel >= 3))
+		i_printf(MSG_HTTPError,
+			 g->code, message_for_response_code(g->code));
+
+// We have data, is there a processing plugin to run here?
+#if 0
+	if (g->pg_ok) {
+		if (g->cdfn)
+			mt = findMimeByFile(g->cdfn);
+		else
+			mt = findMimeByURL(g->urlcopy);
+		if (mt && mt->outtype && mt->down_url && !mt->no_url) {
+// this call should replace the data
+			if (g->cdfn)
+				runPluginCommand(mt, 0, g->cdfn, g->buffer,
+						 g->length, &g->buffer,
+						 &g->length);
+			else
+				runPluginCommand(mt, g->urlcopy, 0, g->buffer,
+						 g->length, &g->buffer,
+						 &g->length);
+		}
+	}
+#endif
+
+	if (name_changed)
+		g->cfn = g->urlcopy;
+	else
+		nzFree(g->urlcopy);	/* Don't need it anymore. */
+	g->urlcopy = 0;
 
 /* see if http header has set the filename */
 	if (g->cdfn) {
@@ -1250,27 +1287,14 @@ curl_fail:
 		g->cdfn = NULL;
 	}
 
-/* Check for plugin to run here */
-	if (g->pg_ok && transfer_status && g->code == 200 && cf->mt &&
-	    !cf->mt->stream && !cf->mt->outtype && cf->mt->program) {
-		bool rc = playServerData();
-		i_get_free(g, true);
-		nzFree(referrer);
-		return rc;
-	}
-
-	if (transfer_status && g->headers_p) {
+	if (g->headers_p) {
 		*g->headers_p = g->headers;
 // The string is your responsibility now.
 		g->headers = 0;
 	}
 
-	i_get_free(g, !transfer_status);
-	if (transfer_status)
-		g->referrer = referrer;
-	else
-		nzFree(referrer);
-
+	i_get_free(g, false);
+	g->referrer = referrer;
 	return transfer_status;
 }				/* httpConnect */
 
@@ -2183,28 +2207,28 @@ static size_t
 curl_header_callback(char *header_line, size_t size, size_t nmemb,
 		     struct i_get *g)
 {
+	const struct MIMETYPE *mt;
 	size_t bytes_in_line = size * nmemb;
 	stringAndBytes(&g->headers, &g->headers_len,
 		       header_line, bytes_in_line);
 
 	scan_http_headers(g, true);
-	if (g->down_ok && g->down_state == 0) {
-		if (cf->mt && cf->mt->stream && pluginsOn) {
-/* I don't think this ever happens, since streams are indicated by the protocol,
- * and we wouldn't even get here, but just in case -
- * stop the download and set the flag so we can pass this url
- * to the program that handles this kind of stream. */
-			g->down_state = 6;
-			return -1;
-		}
-		if (g->content[0] && !memEqualCI(g->content, "text/", 5) &&
-		    !memEqualCI(g->content, "application/xhtml+xml", 21) &&
-		    (!g->pg_ok || !cf->mt || cf->mt->download)) {
-			g->down_state = 1;
-			g->down_msg = MSG_Down;
-			debugPrint(3, "potential download based on type %s",
-				   g->content);
-		}
+	mt = cf->mt;
+
+// a playable mime type causes a download interrupt
+	if (g->pg_ok && mt && !(mt->down_url | mt->no_url)) {
+		g->down_state = 6;
+		return -1;
+	}
+
+	if (g->down_ok && g->down_state == 0 &&
+	    !(mt && g->pg_ok && mt->down_url && !mt->no_url) &&
+	    g->content[0] && !memEqualCI(g->content, "text/", 5) &&
+	    !memEqualCI(g->content, "application/xhtml+xml", 21)) {
+		g->down_state = 1;
+		g->down_msg = MSG_Down;
+		debugPrint(3, "potential download based on type %s",
+			   g->content);
 	}
 
 	return bytes_in_line;
@@ -2254,17 +2278,9 @@ static void setup_download(struct i_get *g)
 {
 	const char *filepart;
 	const char *answer;
-	const struct MIMETYPE *mt;
 
 /* if not run from a terminal then just return. */
 	if (!isInteractive) {
-		g->down_state = 0;
-		return;
-	}
-
-/* If file is changed to a playlist or some such, just return */
-	if (g->pg_ok && g->cdfn && (mt = findMimeByURL(g->cdfn)) && mt->stream) {
-		debugPrint(3, "download aborted due to stream plugin");
 		g->down_state = 0;
 		return;
 	}

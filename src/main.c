@@ -1401,7 +1401,6 @@ putc:
 
 		case 11:	/* protocol */
 			mt->prot = v;
-			mt->stream = true;
 			continue;
 
 		case 12:	/* program */
@@ -1625,12 +1624,12 @@ nokeyword:
 			continue;
 		}
 
-		if (stringEqual(s, "download") && mimeblock == 1) {
-			mt->download = true;
+		if (stringEqual(s, "no_url") && mimeblock == 1) {
+			mt->no_url = true;
 			continue;
 		}
-		if (stringEqual(s, "stream") && mimeblock == 1) {
-			mt->stream = true;
+		if (stringEqual(s, "down_url") && mimeblock == 1) {
+			mt->down_url = true;
 			continue;
 		}
 

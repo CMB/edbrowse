@@ -224,10 +224,8 @@ const struct MIMETYPE *findMimeByURL(const char *url);
 const struct MIMETYPE *findMimeByFile(const char *filename);
 const struct MIMETYPE *findMimeByContent(const char *content);
 const struct MIMETYPE *findMimeByProtocol(const char *prot);
-char *pluginCommand(const struct MIMETYPE *m, const char *infile, const char *outfile, const char *suffix);
+bool runPluginCommand(const struct MIMETYPE *m, const char *inurl, const char *infile, const char *indata, int inlength, char **outdata, int *outlength);
 int playBuffer(const char *line, const char *playfile);
-bool playServerData(void);
-char *runPluginConverter(const char *buf, int buflen);
 
 /* sourcefile=sendmail.c */
 bool loadAddressBook(void) ;
@@ -420,4 +418,3 @@ void cssAttributeCrunch(char *s);
 void cssApply(jsobjtype node, jsobjtype destination);
 void cssText(jsobjtype node, const char *rulestring);
 
-// threadsafe

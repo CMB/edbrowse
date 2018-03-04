@@ -5984,22 +5984,14 @@ bool browseCurrentBuffer(void)
 
 	if (bmode == 3) {
 /* convert raw text via a plugin */
-		char *outfile = runPluginConverter(rawbuf, rawsize);
-		if (!outfile) {
-			nzFree(rawbuf);
+		if (isURL(cf->fileName))
+			rc = runPluginCommand(cf->mt, cf->fileName, 0, rawbuf,
+					      rawsize, &rawbuf, &rawsize);
+		else
+			rc = runPluginCommand(cf->mt, 0, cf->fileName, rawbuf,
+					      rawsize, &rawbuf, &rawsize);
+		if (!rc)
 			return false;
-		}
-		nzFree(rawbuf);
-		if (stringEqual(outfile, "|")) {
-			rawbuf = serverData;
-			rawsize = serverDataLen;
-			serverData = NULL;
-		} else {
-			rc = fileIntoMemory(outfile, &rawbuf, &rawsize);
-			unlink(outfile);
-			if (!rc)
-				return false;
-		}
 		iuReformat(rawbuf, rawsize, &tbuf, &tlen);
 		if (tbuf) {
 			nzFree(rawbuf);
