@@ -1883,15 +1883,14 @@ gopher_transfer_fail:
 			ebcurl_setError(curlret, g->urlcopy,
 					(g->foreground ? 0 : 1), g->error);
 		i_get_free(g, true);
+		return false;
 	}
 
-	if (transfer_success && !stringEqual(url, g->urlcopy))
+	if (!stringEqual(url, g->urlcopy))
 		g->cfn = g->urlcopy;
-	else
-		nzFree(g->urlcopy);
 	g->urlcopy = 0;
 
-	if (transfer_success && first == '0') {
+	if (first == '0') {
 // it's a text file, neeed to undos.
 // The curl callback function always makes sure there is an extra byte at the end.
 		g->buffer[g->length] = 0;
@@ -1905,7 +1904,7 @@ gopher_transfer_fail:
 		g->length = j;
 	}
 
-	return transfer_success;
+	return true;
 }				/* gopherConnect */
 
 /* If the user has asked for locale-specific responses, then build an
