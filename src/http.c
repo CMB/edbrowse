@@ -1827,7 +1827,7 @@ static bool gopherConnect(struct i_get *g)
 	if (s && (first = s[1])) {
 // almost every file type downwloads.
 		g->down_state = 1;
-		if (strchr("017", first))
+		if (strchr("017h", first))
 			g->down_state = 0;
 		if (first == '1' || first == '7')
 			has_slash = true;
