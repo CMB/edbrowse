@@ -1502,6 +1502,7 @@ static void gopher_ls_line(struct i_get *g, char *line)
 			if (pathname[0] == '/' && pathname[1]) {
 				stringAndChar(&g->buffer, &g->length, '/');
 				stringAndChar(&g->buffer, &g->length, first);
+				stringAndChar(&g->buffer, &g->length, '/');
 				stringAndString(&g->buffer, &g->length,
 						pathname + 1);
 			} else
