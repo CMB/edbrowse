@@ -1825,8 +1825,14 @@ static bool gopherConnect(struct i_get *g)
 // That's the default, let the leading character override
 	s = strchr(g->urlcopy + protLength, '/');
 	if (s && (first = s[1])) {
-// almost every file type downwloads.
+// almost every file type downloads.
 		g->down_state = 1;
+// 0 is tricky because "05" and "09" can mean binary
+// in doubt, treat as integer and skip leading 0s
+		while (first == '0' && isdigit(s[2])) {
+			s++;
+			first = s[1];
+		}
 		if (strchr("017h", first))
 			g->down_state = 0;
 		if (first == '1' || first == '7')
