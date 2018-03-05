@@ -1492,20 +1492,14 @@ static void gopher_ls_line(struct i_get *g, char *line)
 		} else {
 			stringAndString(&g->buffer, &g->length, "gopher://");
 			stringAndString(&g->buffer, &g->length, host);
-			if (port) {
+			if (port && port != 70) {
 				stringAndChar(&g->buffer, &g->length, ':');
 				stringAndNum(&g->buffer, &g->length, port);
 			}
 // gopher requires us to inject the  "first" directive into the path. Wow.
-			if (pathname[0] == '/' && pathname[1]) {
-				stringAndChar(&g->buffer, &g->length, '/');
-				stringAndChar(&g->buffer, &g->length, first);
-				stringAndChar(&g->buffer, &g->length, '/');
-				stringAndString(&g->buffer, &g->length,
-						pathname + 1);
-			} else
-				stringAndString(&g->buffer, &g->length,
-						pathname);
+			stringAndChar(&g->buffer, &g->length, '/');
+			stringAndChar(&g->buffer, &g->length, first);
+			stringAndString(&g->buffer, &g->length, pathname);
 		}
 		stringAndChar(&g->buffer, &g->length, qc);
 		stringAndChar(&g->buffer, &g->length, '>');
