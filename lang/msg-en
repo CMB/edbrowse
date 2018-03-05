@@ -89,7 +89,7 @@ Sorry, file %s already exists.\n
 abbreviated 
 empty attachment
 attachment 
-no buffers left, atachment discarded
+no buffers left, attachment discarded
 could not copy the attachment into buffer %d
 cannot create file %s, attachment is discarded\n
 cannot write to file %s, attachment is discarded\n
@@ -342,7 +342,7 @@ too many recipients, limit %d
 No address book specified, please check your .ebrc config file
 alias %s not found in your address book
 no recipients specified
-session %d is empty, cannot atach
+session %d is empty, cannot attach
 cannot access attachment %s
 file %s is not a regular file, cannot attach
 file %s is empty, cannot attach
