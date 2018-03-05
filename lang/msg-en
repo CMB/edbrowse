@@ -234,7 +234,7 @@ already browsing
 label %s is not found
 i not available in browse mode
 cannot run an insert command from an edbrowse function
-0
+several lines from %d to %d have been updated\n
 command %c not yet implemented
 %d is out of range
 no options contain the string %s
@@ -442,15 +442,15 @@ debug js errors disabled
 debug js errors enabled
 debug css disabled
 debug css enabled
-0
-0
-0
-0
-0
-0
-0
-0
-0
+lines %d and %d have been added\n
+lines %d and %d through %d have been added\n
+lines %d through %d and %d have been added\n
+lines %d and %d have been updated\n
+lines %d and %d through %d have been updated\n
+lines %d through %d and %d have been updated\n
+lines %d and %d have been deleted\n
+lines %d and %d through %d have been deleted\n
+lines %d through %d and %d have been deleted\n
 0
 0
 0

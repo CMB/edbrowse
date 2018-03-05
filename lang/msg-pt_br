@@ -234,7 +234,7 @@ já está navegando
 rótulo %s não achado
 i não disponível em modo navegação
 impossível executar um comando insert a partir de uma função do edbrowse
-0
+linhas de %d para %d foram atualizadas\n
 comando %c ainda não implementado
 %d está fora do intervalo
 não há opções com a cadeia %s
@@ -442,15 +442,15 @@ não consegui trazer o CSS; %s\n
 0
 0
 0
-0
-0
-0
-0
-0
-0
-0
-0
-0
+linhas %d e %d foram adicionadas\n
+linhas %d e %d a %d foram adicionadas\n
+linhas %d a %d e %d foram adicionadas\n
+linhas %d e %d foram atualizadas\n
+linhas %d e %d a %d foram atualizadas\n
+linhas %d a %d e %d foram atualizadas\n
+linhas %d e %d foram apagadas\n
+linhas %d e %d a %d foram apagadas\n
+linhas %d a %d e %d foram apagadas\n
 0
 0
 0

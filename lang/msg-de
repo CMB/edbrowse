@@ -234,7 +234,7 @@ bereits am Browsen
 Marke %s nicht gefunden
 i im Browsermodus nicht verfügbar
 kann Einfügekommando nicht aus einer Edbrowse-Funktion heraus starten
-0
+Zeilen von %d auf %d aktualisiert\n
 Kommando %c noch nicht implementiert
 %d ist außerhalb des Bereichs
 keine Option enthält die Zeichenkette %s
@@ -442,15 +442,15 @@ konnte CSS nicht abrufen, %s\n
 0
 0
 0
-0
-0
-0
-0
-0
-0
-0
-0
-0
+Zeilen %d und %d hinzugefügt\n
+Zeilen %d und %d bis %d hinzugefügt\n
+Zeilen %d bis %d und %d hinzugefügt\n
+Zeilen %d und %d aktualisiert\n
+Zeilen %d und %d bis %d aktualisiert\n
+Zeilen %d bis %d und %d aktualisiert\n
+Zeilen %d und %d gelöscht\n
+Zeilen %d und %d bis %d gelöscht\n
+Zeilen %d bis %d und %d gelöscht\n
 0
 0
 0

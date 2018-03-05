@@ -234,7 +234,7 @@ en cours de navigation
 label %s non trouvé
 i impossible en mode navigation
 impossible de lancer une commande d'insertion à partir d'une fonction d'edbrowse
-0
+les lignes du %d au %d ont été mises à jour\n
 commande %c non implémentée
 %d hors limites
 aucune option ne contient la chaîne %s
@@ -442,15 +442,15 @@ impossible de charger CSS, %s\n
 0
 0
 0
-0
-0
-0
-0
-0
-0
-0
-0
-0
+les lignes %d et %d ont été ajoutées\n
+les lignes %d et %d à %d ont été ajoutées\n
+les lignes %d à %d et %d ont été ajoutées\n
+les lignes %d et %d ont été mises à jour\n
+les lignes %d et %d à %d ont été mises à jour\n
+les lignes %d à %d et %d ont été mises à jour\n
+les lignes %d et %d ont été effacées\n
+les lignes %d et %d à %d ont été effacées\n
+les lignes %d à %d et %d ont été effacées\n
 0
 0
 0

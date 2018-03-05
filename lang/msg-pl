@@ -234,7 +234,7 @@ już przeglądasz
 etykieta %s nie znaleziona
 'i' nie znalezione w trybie przeglądania
 nie można wywołać polecenia wstawienia z funkcji edbrowse
-0
+wiersze od z %d na %d zostały zaktualizowane\n
 polecenie %c nie zaimplementowane
 %d jest poza zakresem
 żadna opcja nie zawiera ciągu %s
@@ -442,15 +442,15 @@ nie można pobrać CSS, %s\n
 0
 0
 0
-0
-0
-0
-0
-0
-0
-0
-0
-0
+wiersze od %d jak i %d zostały dodane\n
+wiersze od %d jak i %d do %d zostały dodane\n
+wiersze od %d do %d jak i %d zostały dodane\n
+wiersze od %d jak i %d zostały zaktualizowane\n
+wiersze od %d jak i %d do %d zostały zaktualizowane\n
+wiersze od %d do %d jak i %d zostały zaktualizowane\n
+wiersze od %d jak i %d zostało usuniętych\n
+wiersze od %d jak i %d do %d zostało usuniętych\n
+wiersze od %d do %d jak i %d zostało usuniętych\n
 0
 0
 0

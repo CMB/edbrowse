@@ -1913,16 +1913,34 @@ So this should do it.
 sameFront counts the lines from the top that are the same.
 We're here because the buffers are different, so sameFront will not equal $.
 Lines past sameBack1 and same back2 are the same to the bottom in the two buffers.
+To be a bit more sophisticated, front1z and front2z
+become nonzero if just one line was added, updated, or deleted at sameFront.
+they march on beyond this anomaly as far as they can.
+In the same way, back1z and back2z march backwards
+past a one line anomaly.
 *********************************************************************/
 
 static int sameFront, sameBack1, sameBack2;
+static int front1z, front2z, back1z, back2z;
 static const char *newChunkStart, *newChunkEnd;
+
+// need a reverse strchr to help us out.
+static const char *rstrchr(const char *s, const char *mark)
+{
+	for (--s; s > mark; --s)
+		if (s[-1] == '\n')
+			return s;
+	return (s == mark ? s : NULL);
+}
 
 static void frontBackDiff(const char *b1, const char *b2)
 {
 	const char *f1, *f2, *s1, *s2, *e1, *e2;
+	const char *g1, *g2, *h1, *h2;
 
-	sameFront = 0;
+	sameFront = front1z = front2z = 0;
+	back1z = back2z = 0;
+
 	s1 = b1, s2 = b2;
 	f1 = b1, f2 = b2;
 	while (*s1 == *s2 && *s1) {
@@ -1933,11 +1951,52 @@ static void frontBackDiff(const char *b1, const char *b2)
 		++s1, ++s2;
 	}
 
+	g1 = strchr(f1, '\n');
+	g2 = strchr(f2, '\n');
+	if (g1 && g2) {
+		++g1, ++g2;
+		h1 = strchr(g1, '\n');
+		h2 = strchr(g2, '\n');
+		if (h1 && h2) {
+			++h1, ++h2;
+			if (g1 - f1 == h2 - g2 && !memcmp(f1, g2, g1 - f1)) {
+				e1 = f1, e2 = g2;
+				s1 = g1, s2 = h2;
+				front1z = sameFront + 1;
+				front2z = sameFront + 2;
+			} else if (h1 - g1 == g2 - f2
+				   && !memcmp(g1, f2, h1 - g1)) {
+				e1 = g1, e2 = f2;
+				s1 = h1, s2 = g2;
+				front1z = sameFront + 2;
+				front2z = sameFront + 1;
+			} else if (h1 - g1 == h2 - g2
+				   && !memcmp(g1, g2, h1 - g1)) {
+				e1 = g1, e2 = g2;
+				s1 = h1, s2 = h2;
+				front1z = sameFront + 2;
+				front2z = sameFront + 2;
+			}
+		}
+	}
+
+	if (front1z) {
+		sameBack1 = front1z - 1, sameBack2 = front2z - 1;
+		while (*s1 == *s2 && *s1) {
+			if (*s1 == '\n')
+				++front1z, ++front2z;
+			++s1, ++s2;
+		}
+		if (!*s1) {
+			front1z = front2z = 0;
+			goto done;
+		}
+	}
+
 	s1 = b1 + strlen(b1);
 	s2 = b2 + strlen(b2);
 	while (s1 > f1 && s2 > f2 && s1[-1] == s2[-1])
 		--s1, --s2;
-
 	if (s1 == f1 && s2[-1] == '\n')
 		goto mark_e;
 	if (s2 == f2 && s1[-1] == '\n')
@@ -1945,10 +2004,9 @@ static void frontBackDiff(const char *b1, const char *b2)
 /* advance both pointers to newline or null */
 	while (*s1 && *s1 != '\n')
 		++s1, ++s2;
-/* these buffers should always end in nl, so the next if should always be true */
+/* these buffers should always end in newline, so the next if should always be true */
 	if (*s1 == '\n')
 		++s1, ++s2;
-
 mark_e:
 	e1 = s1, e2 = s2;
 
@@ -1966,9 +2024,201 @@ mark_e:
 	if (s2 > f2 && s2[-1] != '\n')	// should never happen
 		++sameBack2;
 
+	if (front1z) {
+// front2z can run past sameBack2 if lines are deleted.
+// This because front2z is computed before sameBack2.
+		while (front1z > sameBack1 || front2z > sameBack2)
+			--front1z, --front2z;
+		if (front1z <= sameFront || front2z <= sameFront)
+			front1z = front2z = 0;
+		goto done;
+	}
+
+	h1 = rstrchr(e1, f1);
+	h2 = rstrchr(e2, f2);
+	if (h1 && h2) {
+		g1 = rstrchr(h1, f1);
+		g2 = rstrchr(h2, f2);
+		if (g1 && g2) {
+			if (e1 - h1 == h2 - g2 && !memcmp(h1, g2, e1 - h1)) {
+				s1 = h1, s2 = g2;
+				back1z = sameBack1, back2z = sameBack2 - 1;
+			} else if (h1 - g1 == e2 - h2
+				   && !memcmp(g1, h2, h1 - g1)) {
+				s1 = g1, s2 = h2;
+				back1z = sameBack1 - 1, back2z = sameBack2;
+			} else if (h1 - g1 == h2 - g2
+				   && !memcmp(g1, g2, h1 - g1)) {
+				s1 = g1, s2 = g2;
+				back1z = sameBack1 - 1, back2z = sameBack2 - 1;
+			}
+		}
+	}
+
+	if (back1z) {
+		--s1, --s2;
+		while (*s1 == *s2 && s1 >= f1 && s2 >= f2) {
+			if (s1[-1] == '\n' && s2[-1] == '\n')
+				--back1z, --back2z;
+			--s1, --s2;
+		}
+	}
+
+done:
 	newChunkStart = f2;
 	newChunkEnd = e2;
 }				/* frontBackDiff */
+
+// Believe it or not, I have exercised all the pathways in this routine.
+// It's rather mind numbing.
+static bool reportZ(void)
+{
+// low and high operations are ad, update, delete
+	char oplow, ophigh;
+// lines affected in the second group
+	int act1, act2;
+	int d_start, d_end;
+
+	if (!front1z && !back1z)
+		return false;
+	debugPrint(4, "front %d back %d,%d front1z %d,%d back1z %d,%d",
+		   sameFront, sameBack1, sameBack2,
+		   front1z, front2z, back1z, back2z);
+
+	if (front1z) {
+		if (front2z > front1z)
+			oplow = 1;
+		if (front2z == front1z)
+			oplow = 2;
+		if (front2z < front1z)
+			oplow = 3;
+		act1 = sameBack1 - front1z;
+		act2 = sameBack2 - front2z;
+		ophigh = 2;
+		if (!act1)
+			ophigh = 1;
+		if (!act2)
+			ophigh = 3;
+// delete delete is the easy case, but very rare
+		if (oplow == 3 && ophigh == 3) {
+			if (act1 == 1)
+				i_printf(MSG_LineDeleteZ1, sameFront + 1,
+					 sameBack1);
+			else
+				i_printf(MSG_LineDeleteZ2, sameFront + 1,
+					 front1z + 1, sameBack1);
+			goto done;
+		}
+// double add is more common, and also unambiguous.
+// If this algorithm says we added 100 lines, then we added 100 lines.
+		if (oplow == 1 && ophigh == 1) {
+			if (act2 == 1)
+				i_printf(MSG_LineAddZ1, sameFront + 1,
+					 sameBack2);
+			else
+				i_printf(MSG_LineAddZ2, sameFront + 1,
+					 front2z + 1, sameBack2);
+			goto done;
+		}
+		if (oplow == 3) {
+// delete mixed with something else, and I just don't care about the delete.
+			if (ophigh == 1)
+				i_printf(MSG_LineAdd2, front2z + 1, sameBack2);
+			else if (act2 <= 10)
+				i_printf(MSG_LineUpdate3, front2z + 1,
+					 sameBack2);
+			else
+				i_printf(MSG_LineUpdateRange, front2z + 1,
+					 sameBack2);
+			goto done;
+		}
+		if (ophigh == 3) {
+// if the deleted block is big then report it, otherwise ignore it.
+			if (act1 >= 10)
+				i_printf(MSG_LineDelete2, act1, front1z);
+			else if (oplow == 1)
+				i_printf(MSG_LineAdd1, sameFront + 1);
+			else
+				i_printf(MSG_LineUpdate1, sameFront + 1);
+			goto done;
+		}
+// a mix of add and update, call it an update.
+// If the second group is big then switch to range message.
+		if (act2 > 10 && ophigh == 2)
+			i_printf(MSG_LineUpdateRange,
+				 (front2z - sameFront <
+				  10 ? sameFront + 1 : front2z + 1), sameBack2);
+		else if (act2 == 1)
+			i_printf(MSG_LineUpdateZ1, sameFront + 1, sameBack2);
+		else
+			i_printf(MSG_LineUpdateZ2, sameFront + 1, front2z + 1,
+				 sameBack2);
+		goto done;
+	}
+// At this point the single line change comes second,
+// we have to look at back1z and back2z.
+	d_start = sameBack2 - sameBack1;
+	d_end = back2z - back1z;
+	ophigh = 2;
+	if (d_end > d_start)
+		ophigh = 3;
+	if (d_end < d_start)
+		ophigh = 1;
+	act1 = back1z - sameFront - 1;
+	act2 = back2z - sameFront - 1;
+	oplow = 2;
+	if (!act1)
+		oplow = 1;
+	if (!act2)
+		oplow = 3;
+// delete delete is the easy case, but very rare
+	if (oplow == 3 && ophigh == 3) {
+// act1 should never be 1, because then one line was deleted earlier,
+// and we would be in the front1z case.
+		i_printf(MSG_LineDeleteZ3, sameFront + 1, back1z - 1,
+			 sameBack1);
+		goto done;
+	}
+// double add is more common, and also unambiguous.
+// If this algorithm says we added 100 lines, then we added 100 lines.
+	if (oplow == 1 && ophigh == 1) {
+		i_printf(MSG_LineAddZ3, sameFront + 1, back2z - 1, sameBack2);
+		goto done;
+	}
+	if (ophigh == 3) {
+// delete mixed with something else, and I just don't care about the delete.
+		if (oplow == 1)
+			i_printf(MSG_LineAdd2, sameFront + 1, back2z - 1);
+		else if (act2 <= 10)
+			i_printf(MSG_LineUpdate3, sameFront + 1, back2z - 1);
+		else
+			i_printf(MSG_LineUpdateRange, sameFront + 1,
+				 back2z - 1);
+		goto done;
+	}
+	if (oplow == 3) {
+// if the deleted block is big then report it, otherwise ignore it.
+		if (act1 >= 10)
+			i_printf(MSG_LineDelete2, act1, sameFront);
+		else if (ophigh == 1)
+			i_printf(MSG_LineAdd1, sameBack2);
+		else
+			i_printf(MSG_LineUpdate1, sameBack2);
+		goto done;
+	}
+// a mix of add and update, call it an update.
+// If the first group is big then switch to range message.
+	if (act2 > 10 && oplow == 2)
+		i_printf(MSG_LineUpdateRange,
+			 sameFront + 1,
+			 (sameBack2 - back2z < 10 ? sameBack2 : back2z - 1));
+	else
+		i_printf(MSG_LineUpdateZ3, sameFront + 1, back2z - 1,
+			 sameBack2);
+
+done:
+	return true;
+}
 
 static time_t now_sec;
 static int now_ms;
@@ -1980,12 +2230,18 @@ static void currentTime(void)
 	now_ms = tv.tv_usec / 1000;
 }				/* currentTime */
 
+static void silent(int msg, ...)
+{
+}
+
 /* Rerender the buffer and notify of any lines that have changed */
 void rerender(bool rr_command)
 {
 	char *a, *snap, *newbuf;
 	int j;
 	int markdot, addtop;
+	bool z;
+	void (*say_fn) (int, ...);
 
 	debugPrint(4, "rerender");
 	cw->mustrender = false;
@@ -2056,30 +2312,39 @@ and new internal numbers each time, and that use to trip this algorithm.
 		goto done;
 	}
 	frontBackDiff(snap, newbuf);
+	z = reportZ();
 
+// Even if the change has been reported above,
+// I march on here because it puts dot back where it belongs.
+	say_fn = (z ? silent : i_printf);
 	if (sameBack2 == sameFront) {	/* delete */
 		if (sameBack1 == sameFront + 1)
-			i_printf(MSG_LineDelete1, sameFront);
+			(*say_fn) (MSG_LineDelete1, sameFront);
 		else
-			i_printf(MSG_LineDelete2, sameBack1 - sameFront,
-				 sameFront);
+			(*say_fn) (MSG_LineDelete2, sameBack1 - sameFront,
+				   sameFront);
 	} else if (sameBack1 == sameFront) {
 		if (sameBack2 == sameFront + 1)
-			i_printf(MSG_LineAdd1, sameFront + 1);
+			(*say_fn) (MSG_LineAdd1, sameFront + 1);
 		else {
-			i_printf(MSG_LineAdd2, sameFront + 1, sameBack2);
+			(*say_fn) (MSG_LineAdd2, sameFront + 1, sameBack2);
 /* put dot back to the start of the new block */
 			if (!markdot)
 				cw->dot = sameFront + 1;
 		}
 	} else {
 		if (sameBack1 == sameFront + 1 && sameBack2 == sameFront + 1)
-			i_printf(MSG_LineUpdate1, sameFront + 1);
+			(*say_fn) (MSG_LineUpdate1, sameFront + 1);
 		else if (sameBack2 == sameFront + 1)
-			i_printf(MSG_LineUpdate2, sameBack1 - sameFront,
-				 sameFront + 1);
+			(*say_fn) (MSG_LineUpdate2, sameBack1 - sameFront,
+				   sameFront + 1);
 		else {
-			i_printf(MSG_LineUpdate3, sameFront + 1, sameBack2);
+			if (sameBack2 - sameFront <= 10)
+				(*say_fn) (MSG_LineUpdate3, sameFront + 1,
+					   sameBack2);
+			else
+				(*say_fn) (MSG_LineUpdateRange, sameFront + 1,
+					   sameBack2);
 /* put dot back to the start of the new block */
 			if (!markdot)
 				cw->dot = sameFront + 1;
