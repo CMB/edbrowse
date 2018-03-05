@@ -291,6 +291,8 @@ history.previous = "";
 history.back = eb$voidfunction;
 history.forward = eb$voidfunction;
 history.go = eb$voidfunction;
+history.pushState = eb$voidfunction;
+history.replaceState = eb$voidfunction;
 history.toString = function() {
  return "Sorry, edbrowse does not maintain a browsing history.";
 } 
