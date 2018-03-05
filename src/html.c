@@ -1297,7 +1297,7 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 	postDelimiter(fsep);
 	switch (fsep) {
 	case '&':
-		enc = encodePostData(name);
+		enc = encodePostData(name, NULL);
 		stringAndString(&pfs, &pfs_l, enc);
 		stringAndChar(&pfs, &pfs_l, '=');
 		nzFree(enc);
@@ -1322,7 +1322,7 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 
 	switch (fsep) {
 	case '&':
-		enc = encodePostData(val);
+		enc = encodePostData(val, NULL);
 		stringAndString(&pfs, &pfs_l, enc);
 		nzFree(enc);
 		break;

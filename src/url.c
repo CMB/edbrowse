@@ -989,7 +989,7 @@ retry:
 }				/* altText */
 
 /* get post data ready for a url. */
-char *encodePostData(const char *s)
+char *encodePostData(const char *s, const char *keep_chars)
 {
 	char *post, c;
 	int l;
@@ -999,11 +999,13 @@ char *encodePostData(const char *s)
 		return 0;
 	if (s == emptyString)
 		return emptyString;
+	if (!keep_chars)
+		keep_chars = "-._~*()!";
 	post = initString(&l);
 	while ((c = *s++)) {
 		if (isalnumByte(c))
 			goto putc;
-		if (strchr("-._~*()!", c))
+		if (strchr(keep_chars, c))
 			goto putc;
 		sprintf(buf, "%%%02X", (uchar) c);
 		stringAndString(&post, &l, buf);

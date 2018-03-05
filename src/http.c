@@ -1493,6 +1493,8 @@ static void gopher_ls_line(struct i_get *g, char *line)
 			qc = '\'';
 		stringAndString(&g->buffer, &g->length, "<a href=x");
 		g->buffer[g->length - 1] = qc;
+
+		pathname = encodePostData(pathname, "./-_$");
 		if (!strncmp(pathname, "URL:", 4)) {
 			stringAndString(&g->buffer, &g->length, pathname + 4);
 		} else {
@@ -1507,6 +1509,7 @@ static void gopher_ls_line(struct i_get *g, char *line)
 			stringAndChar(&g->buffer, &g->length, first);
 			stringAndString(&g->buffer, &g->length, pathname);
 		}
+		nzFree(pathname);
 		stringAndChar(&g->buffer, &g->length, qc);
 		stringAndChar(&g->buffer, &g->length, '>');
 	}
