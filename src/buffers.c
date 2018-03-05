@@ -4599,6 +4599,7 @@ bool runCommand(const char *line)
 	const struct htmlTag *tag = NULL;	/* event variables */
 	bool nogo = true, rc = true;
 	bool postSpace = false, didRange = false;
+	bool didread = false;
 	char first;
 	int cx = 0;		/* numeric suffix as in s/x/y/3 or w2 */
 	int tagno;
@@ -5648,6 +5649,7 @@ rebrowse:
 			if (icmd == 'g' && !nogo && isURL(line))
 				debugPrint(2, "*%s", line);
 			j = readFile(line, emptyString, (cmd != 'r'), thisfile);
+			didread = true;
 		}
 		w->undoable = w->changeMode = false;
 		cw = cs->lw;	/* put it back, for now */
@@ -5716,7 +5718,10 @@ browse:
 				debugPrint(1, "%d", fileSize);
 				fileSize = -1;
 			}
-			if (!browseCurrentBuffer()) {
+// If we read the data, from internet or a local file,
+// the processing plugin has already been run.
+// Don't run it again.
+			if (!browseCurrentBuffer(!didread)) {
 				if (icmd == 'b')
 					return false;
 				return true;
@@ -5866,6 +5871,7 @@ afterdelete:
 				line = newline;
 			}
 			j = readFile(line, emptyString, (cmd != 'r'), 0);
+			didread = true;
 			if (!serverData)
 				fileSize = -1;
 			return j;
@@ -5960,18 +5966,17 @@ void freeEmptySideBuffer(int n)
 	cxQuit(n, 3);
 }				/* freeEmptySideBuffer */
 
-bool browseCurrentBuffer(void)
+bool browseCurrentBuffer(bool doplug)
 {
 	char *rawbuf, *newbuf, *tbuf;
 	int rawsize, tlen, j;
-	bool rc, remote = false;
+	bool rc, remote;
 	bool save_ch = cw->changeMode;
 	uchar bmode = 0;
 
-	if (cf->fileName)
-		remote = isURL(cf->fileName);
+	remote = isURL(cf->fileName);
 
-	if (cf->mt && cf->mt->outtype && isURL(cf->fileName))
+	if (cf->mt && cf->mt->outtype && doplug)
 		bmode = 3;
 	else
 /* A mail message often contains lots of html tags,
