@@ -1,0 +1,659 @@
+EOF
+nessun file
+redirect
+sostituzioni globali
+sostituzioni locali
+case insensitive
+case sensitive
+cartelle in sola lettura
+cartelle scrivibili
+cartelle scrivibili per cancellazione
+nessuna redirezione http
+redirezione http
+non inviare referrer
+invia referrer
+javascript disabilitato
+javascript abilitato
+gestisco un binario come testo
+cerco files binari
+modalità passiva
+modalità attiva
+Il motore javascript non funziona più; tutte le sessioni javascript correnti sono state chiuse.
+non verificare le connessioni ssl (meno sicuro)
+verifica le connessioni ssl
+non mostrare i files nascosti quando in modalità cartelle
+mostra i files nascosti quando in modalità cartelle
+debug cloneNode disabilitato
+debug cloneNode abilitato
+end markers disattivo
+end markers sulle righe listate
+end markers attivo
+javascript disabilitato, nessuna azione intrapresa
+javascript disabilitato, vado direttamente all'url
+redirezione interrotta dall'utente
+vuoto
+nuova sessione
+nessun trailing newline
+modalità cartelle
+dati binari
+ok
+ [binario]
+nessun titolo
+nessuna descrizione
+non ci sono keywords
+sessione %d\n
+link SendMail.  Componi la tua mail, digita sm per inviare, poi ^ per tornare indietro.
+la riga %d è stata aggiornata\n
+h\tstampa questo messaggio di aiuto.\nq\tesce dal programma.\ns\tsmette di leggere da questa cartella.\nn\tcontinua dal prossimo messaggio.\nd\telimina questa mail.\nm\tsposta questa email ad un'altra cartella.\nspace\tleggi e gestisci questo messaggio.\n/\tcerca parole nel soggetto, nel campo from, o nel corpo del messaggio.\nl\timposta il limite di fetch per imap.
+s stringa, emails con la stringa nel soggetto\nf stringa, emails con la stringa nel campo from\nb stringa, emails con la stringa nel corpo del messaggio\nse non c'è un designatore, il soggetto è il default.
+non ci sono messaggi
+interrupt, digita qt per uscire completamente
+edbrowse è pronto
+la linea di comando contiene valori null; puoi usare \\0 in una stringa di ricerca/sostituzione per indicare il valori null
+autorizzazione richiesta - digita x per interrompere.
+troppe redirezioni
+successo
+directory
+redirect a %s ritardata di %d secondi\n
+Nome utente: 
+Nome utente troppo lungo, il limite è di %d caratteri
+Password: 
+password troppo lunga, il limite è di %d caratteri
+%s
+attezione, la cartella non è accessibile - il listato sarà vuoto
+un disastro, il messaggio di errore è eccessivamente lungo (%d)\n
+riga %d: 
+non in modalità cartelle
+il buffer %d è stato aggiornato\n
+no opzioni
+la form è stata resettata
+invio il form
+.ebrc: riga %d, outtype deve essere settato a t o h
+ molti
+ raccomandato
+]
+non ci sono opzioni che contengano la stringa %s\n
+invio mail a %s\n
+La tua informazione è stata inviata; attendi la risposta tramite una mail di ritorno.
+junk (mondizia)
+esci
+prossimo
+elimina
+plugins non attivi
+plugins attivi
+Impossibile configurare l'ambiente di esecuzione javascript, javascript ora disabilitato.
+fine del messaggio
+non ancora implementato
+nome file: 
+Mi spiace, il file %s esiste già.\n
+abbreviato 
+allegato vuoto
+allegato 
+non ci sono più buffers, allegato rimosso
+impossibile copiare l'allegato nel buffer %d
+impossibile creare il file %s, l'allegato è rimosso\n
+impossibile scrivere sul file %s, l'allegato è rimosso\n
+nessuna mail
+%d messaggi\n
+impossibile aprire il file di configurazione %s\n
+caratteri non validi dopo il comando ls
+h\tstampa questo messaggio di aiuto.\nq\tesce da questo programma.\nspazio\tleggi di più di questo messaggio.\nn\tprossima email.\nd\telimina questo messaggio.\nw\tscrive questa mail su un file e la elimina.\nu\tscrive questo messaggio non formattandolo su un file e poi lo elimina.
+impossibile creare il file %s\n
+impossibile scrivere sul file %s\n
+messaggio salvato, %d bytes
+ accodato
+Questa pagina è terminata, per favore usa il tasto indietro o esci.
+impossibile creare la cartella temporanea %s\n
+non ci sono errori
+autenticazione proxy per un url che non è di un proxy
+la sessione %d non è attiva
+sessione 0 non valida
+la sessione %d è fuori dai limiti, limite %d
+sei già nella sessione %d
+`w' atteso
+`w' atteso nella sessione %d
+Il tuo limite di 170 millioni di righe è stato raggiunto.\nSalva il tuo file, quindi esci e riavvia il programma.
+nome di percorso assoluto troppo lungo, limite di %d caratteri
+le cartelle sono in sola lettura, digita dw per abilitare le scritture sulle cartelle
+impossibile creare la cartella .Trash nella tua cartella home, per contenere i files eliminati
+impossibile rimuovere il file %s
+Impossibile muovere il file %s nel cestino, attiva la modalità dx per rimuovere attualmente il file
+la destinazione si trova nel blocco che stiamo muovendo o copiando
+nessuna modifica
+non posso unire una riga
+non posso leggere dal database in un altro file
+non posso leggere differenti tavole nella stessa sessione
+manca il nome del file
+dominio vuoto nell'url
+non posso scrivere su un url
+non posso scrivere su una tavola del database
+impossibile scrivere su un file vuoto
+impossibile creare %s
+impossibile scrivere su %s
+la sessione non è interattiva
+riga %c fuori range
+impossibile inserire valori nulli su un comando shell
+etichetta %c non settata
+delimitatore non valido
+nessuna stringa di ricerca ricordata
+nessuna stringa di sostituzione ricordata
+regular expression troppo lunga
+la linea finisce con un backslash
+chiusura ) non attesa
+la stringa di sostituzione può usare solamente da $1 a $9
+il modificatore %s non è preceduto da un carattere
+] di chiusura mancante
+) di chiusura mancante
+buffer vuoto
+errore nella regular expression, %s
+errore inatteso mentre era in corso l'evaluation della regular expression alla riga %d, probabilmente utf8 incorretto
+stringa di ricerca non trovata
+numero di riga troppo grande
+numbero di riga negativo
+nessuna regular expression presente dopo %c
+delimitatore mancante
+nessuna riga ha un match con il pattern g
+tutte le righe hanno un match per il pattern v
+nessuna delle righe selezionate è stata modificata con successo
+operazione interrotta
+nessun match
+Il listato di questa cartella gopher è vuoto.
+numero di agent %d non definito
+impossibile visualizzare la nuova cartella
+non posso stabilire quale sia la cartella corrente
+directory non valida
+impossibile ascoltare audio da un buffer vuoto
+impossibile attivare il playing dell'audio in modalità browser
+impossibile attivare il playing dell'audio in modalità cartelle
+impossibile attivare il playing dell'audio in modalità database
+il file non ha suffisso, usa pb.xxx per specificare un suffisso di tua scelta
+il suffisso è limitato a 4 caratteri
+il suffisso .%s non è un tipo mime riconosciuto, per favore controlla il tuo file di configurazione.
+nessun nome di file o url da aggiornare
+non in modalità database
+non in modalità browser
+il nome del file non contiene /
+il nome di file termina con /
+caratteri non validi dopo il comando sm
+devi specificare esattamente uno tra %s dopo il comando B
+la riga non contiene un %c aperto
+sia %c che %c sono sbilanciati su questa riga, prova B%c o B%c
+la riga non contiene una parentesi tonda, quadra o grafa sbilanciata
+impossibile trovare la riga che bilanci %c
+Il tuo file di configurazione di edbrowse è mancante; un file di configurazione di default è stato creato per te.\nPrima di lanciare edbrowse ancora, prenditi il tempo per personalizzare il tuo file di configurazione:\n%s\nedbrowse -c per editarlo\n
+la sessione %d è correntemente in modalità cartelle
+nessun nome di file
+fine del buffer
+non ci sono più righe da unire
+range non valido
+impossibile rompere righe in modalità cartelle
+impossibile rompere righe in modalità database
+impossibile rompere righe in modalità browser
+comando %c sconosciuto
+%c non disponibile in modalità cartelle
+%c non disponibile in modalità database
+%c non disponibile in modalità browser
+numero di riga zero
+nessuno spazio dopo il comando
+il comando %c non può essere applicato globalmente
+destinazione per una copia/spostamento non valida
+testo non atteso dopo il comando %c
+niente da annullare
+per favore digita k[a-z]
+impossibile etichettare un intero range
+svolgere il backup di 0 non è valido
+avviso: non ci sono buffers disponibili per gestire la finestra ausiliaria
+testo non atteso dopo il comando q
+impossibile cambiare il nome di una cartella
+impossibile cambiare il nome di una tavola
+impossibile accodare ad un altro buffer
+nessun file specificato
+impossibile scrivere sulla cartella; i files saranno modificati durante le operazioni
+impossibile scrivere sul database; le righe saranno modificate durante le operazioni
+testo non atteso dopo il comando ^
+non c'è testo precedente
+testo non atteso dopo il comando M
+spostato alla sessione %d\n
+non c'è testo precedente, impossibile effettuare il backup
+impossibile applicare il range %s ad un range
+g non disponibile in modalità database
+impossibile applicare il comando i%c ad un range
+impossibile usare i< in un comando globale
+il buffer %d è vuoto
+il buffer %d contiene più di una riga
+impossibile aprire %s
+impossibile leggere da %s
+il testo di input contiene valori nulli
+la riga contiene un carriage return
+download gopher: 
+il file è correntemente in un buffer - per favore usa il comando rf per aggiornare
+impossibile svolgere il browsing di un file binario
+impossibile svolgere il browsing di un file vuoto
+questo non sembra testo di cui si possa fare il browsing
+già svolgendo il browsing
+etichetta %s non trovata
+i non disponibile in modalità browser
+impossibile eseguire un comando insert da una funzione edbrowse
+varie righe da %d a %d sono state aggiornate\n
+comando %c non ancora implementato
+%d è fuori range
+non ci sono opzioni che contengano la stringa %s
+multiple opzioni contengono la stringa %s
+questo è un bottone; usa i* per premere il bottone
+questo è un bottone submit; usa i* per premere il bottone
+questo è un bottone reset; usa i* per premere il bottone
+questa è una textarea, devi editarla dalla sessione %d
+campo di sola lettura
+il campo di input non può contenere un carattere newline
+campo di input troppo lungo, il limite è di %d caratteri
+il campo va settato a + o -
+non puoi deselezionare un bottone radio; devi selezionarne un altro
+%s non è un file accessibile
+un numero è atteso
+la sessione %d contiene valori nulli
+l'invio di un file richiede method=post e enctype=multipart/form-data
+questo è un campo di input, non un bottone
+questo bottone non è parte di una form
+non c'è javascript associato a questo bottone
+la form non include un url di destinazione
+l'azione della form non è un url
+javascript non attivo, impossibile attivare questa form
+Questa form ha cambiato da https ad http, e ora non è sicuro
+impossibile svolgere il submit usando il protocollo %s
+%d è fuori range, per favore usa da %s1 ad %s%d
+%d è fuori range, per favore usa da %s1, o semplicemente %s
+impossibile sostituire multiple istanze della stringa vuota
+download interrotto.
+nessuna regular expression dopo %c
+multipli numeri specificati dopo il terzo delimitatore
+suffisso di submit inatteso dopo il terzo delimitatore
+non è possibile usare un suffisso numerico e il suffisso `g' simultaneamente
+mi spiace, non è possibile applicare il comando bl a righe più lunghe di %d bytes
+i dati di sostituzione contengono caratteri newline
+i dati di sostituzione contengono caratteri nulli
+un nome di directory non può contenere uno slash, un carattere newline o nullo
+il file di destinazione esiste già
+impossibile rinominare il file come %s
+impossibile inserire valori nulli in un campo di input
+impossibile inserire newlines in un campo di input
+non sono presenti campi di input
+non ci sono links
+non ci sono bottoni
+multipli campi di input sono presenti, usa %s1 fino a %s%d
+multipli links sono presenti, per favore usa da %s1 fino a %s%d
+multipli bottoni sono presenti, per favore usa da %s1 a %s%d
+impossibile leggere dati dal server
+%s non è un url
+download completato
+impossibile identificare %s nella rete
+il protocollo %s non è supportato da edbrowse, e non è incluso nei tipi mime definiti nel tuo file di configurazione
+attenzione: impossibile precaricare il <buffer %d> con il relativo testo iniziale\n
+download in corso
+impossibile connettersi ad %s
+download: 
+Il certificato per l'host %s non può essere verificato - connessione SSL interrotta
+inaccessibile
+h\tstampa questo messaggio di aiuto.\nq\tesce da questo programma.\ns\tinterrompe l'acquisizione di messaggi da questo folder.\nspazio\tleggi di più di questo messaggio.\nn\tprossima email.\nd\telimina questa email.\nm\tsposta questa email in un altro folder.\nw\tscrivi questa email su un file.\nW\tscrivi questo messaggio su un file e cancellalo.\nu\tscrivi questo messaggio non formattato su un file.\nU\tscrivi questo messaggio email non formattato su un file e lo elimina.\na\tcontrolla e salva allegato.
+la pagina web richiede l'autneticazione
+login interrotto
+la stringa di ricerca non può contenere quotes
+fine del folder
+download in foreground
+download in background
+completo
+fallito
+ftp non può connettersi all'host remoto
+trasferimento ftp fallito
+non ci sono folders
+Seleziona un folder mediante numbero o sottostringa.\nPreponi - solo per i messaggi non letti. q per uscire. l per cambiare il limite di fetch.
+in corso
+stop
+preleva %d alla volta\n
+non ci sono allegati
+.ebrc: keyword = valore in una funzione edbrowse alla riga %d
+visualizzo gli ultimi %d di %d messaggi\n
+l'inizializzazione della sessione ftp è fallita
+Push
+edbrowse non è stato compilato con il supporto per l'accesso ai database
+alias mancante nella rubrica, riga %d
+: mancante nella rubrica, riga %d
+l'alias nella rubrica alla riga %d è troppo lungo, il limite è di 15 caratteri
+email nella rubrica alla riga %d è troppo lungo, limite di 63 caratteri
+l'email alla riga %d non contiene il carattere @
+impossibile gestire spazio bianco in un indirizzo email in rubrica, alla riga %d
+caratteri non stampabili nell'alias o nell'indirizzo email presente in rubrica alla riga %d
+l'ultima riga nella tua rubrica non è terminata
+non ci sono cartelle che contengano %s\n
+folders multipli contengono %s\n
+cerca 
+limite 
+sposta in 
+attenzione: l'url della form specifica una sezione %s, che sarà ignorata\n
+il file %s è vuoto
+la tua email deve iniziare con subject:
+progress silenzioso
+la riga del soggetto è troppo lunga, il limite è di %d caratteri
+progress dots
+.signature non è un normale file
+impossibile accedere al file .signature
+non posso inviare mediante mail il file binario %s, magari deve essere un allegato?
+nessuno o tutti gli allegati devono essere dichiarati \"alternativamente\"
+troppi recipients, il limite è %d
+Nessuna rubrica specificata, per favore controlla il tuo file di configurazione .ebrc
+alias %s non trovato nella tua rubrica
+recipients non specificati
+sessione %d vuota, impossibile allegare
+impossibile accedere all'allegato %s
+%s non è un file normale, impossibile allegare
+il file è vuoto, impossibile allegare
+la riga dopo %d è stata eliminata\n
+%d righe dopo %d sono state eliminate\n
+la riga %d è stata aggiunta\n
+le righe da %d a %d sono state aggiunte\n
+progress count
+non stati specificati accounts di posta, per favore controlla il tuo file di configurazione
+numero di account %d non valido, per favore usa valori da 1 fino a %d
+impossibile inviare mail in modalità browser
+impossibile inviare mail in modalità database
+impossibile inviare mail in modalità cartelle
+impossibile inviare dati binari per posta, dovrebbe questo essere un allegato?
+impossibile inviare un file vuoto
+nessun recipient alla riga %d
+impossibile porre in cc o in bcc il primo recipient
+nessun allegato alla riga %d
+numero di account non valido alla riga %d
+nessuna cartella temp per edbrowse disponibile
+la riga %d deve iniziare con to: attach: alt: account: o subject:
+converto in utf16
+non sono stati specificati dei recipients, metti to: emailaddress all'inizio del tuo file
+%s:// atteso
+protocollo %s non riconosciuto
+il valore :port specificato alla fine del dominio non è valido
+il nome del dominio è troppo lungo
+nome utente troppo lungo
+password troppo lunga
+%d righe sono state sostituite con la riga %d\n
+le righe da %d a %d sono state aggiornate\n
+nessuna funzione specificata
+il nome della funzione deve contenere solo lettere e numeri
+nessuna funzione %s
+troppi argomenti
+~%d non ha argomento corrispondente
+impossibile lanciare (spawn) il sottocomando %s, errno %d
+impossibile creare il file temporaneo %s, errno %d
+troppoe tavole sql nella cache, limite %d
+%s non è un normale file
+converto in utf32
+impossibile leggere il contenuto di %s
+impossibile accedere a %s
+$%s non è definito
+~%s non è definito
+Vai
+i dati del frame non sono html
+ sicura
+ bymail
+Reset
+errore inatteso durante l'evaluation del pattern shell
+il frame non ha una pagina web associata
+il pattern shell ha un match con più di un file
+la riga diviene troppo lunga quando le variabili shell sono espanse
+il file di configurazione non specifica un database - impossibile connettersi
+impossibile connettersi al database - errore %d
+errore database %d
+non c'è una primary key per questa tavola
+il nome colonna %s è troppo lungo, il limite è di %d caratteri
+errore di sintassi nella where clause
+colonna %d fuori range
+colonne multiple hanno un riscontro per %s
+nessuna colonna ha riscontro per %s
+nessuna tavola chiamata %s
+nome colonna non valido
+impossibile selezionare più di una colonna blob alla volta
+i dati contengono pipes, che sono il mio delimitatore riservato
+i dati contengono caratteri newline
+la riga contiene troppi campi, per favore non introdurre pipes nel testo
+la riga contiene un numero di campi troppo ridotto, per favore non rimuovere pipes dal testo
+non c'è una colonna primary key per questa tavola
+errore sql miscellaneo %d
+impossibile eliminare più di 100 righe alla volta
+impossibile cambiare una colonna chiave
+impossibile modificare un campo blob
+impossbile modificare un campo di testo
+oops!  Ho eliminato %d righe, e %d record(s) del database sono stati affetti dall'operazione.
+oops!  Ho inserito %d righe, e %d records del database sono stati affetti dall'operazione.
+oops!  Ho aggiornato %d righe, e %d records del database sono stati affetti dall'operazione.
+alcune altre righe del database dipendono da questa
+la riga o la tavola è bloccata
+non hai il permesso di modificare il database in questo modo
+deadlock rilevato
+sto ponendo un valore null in una colonna not-null
+check constraint violato
+timeout database
+non posso modificare una view
+campo disabilitato
+autenticazione SPNEGO via curl disabilitata
+autenticazione SPNEGO via curl abilitata
+impossibile acquisire CSS locale, %s\n
+impossibile scaricare CSS da %s, codice %ld\n
+impossibile acquisire CSS, %s\n
+non deminimizzare javascript
+deminimizza javascript
+debug degli errori js disabilitato
+debug degli errori js abilitato
+debug css disabilitato
+debug css abilitato
+le righe %d e %d sono state aggiunte\n
+le righe %d e %d fino a %d sono state aggiunte\n
+le righe da %d a %d e %d sono state aggiunte\n
+le righe %d e %d sono state aggiornate\n
+le righe %d e %d fino a %d sono state aggiornate\n
+le righe da %d fino a %d e %d sono state aggiornate\n
+le righe %d e %d sono state eliminate\n
+le righe %d e %d fino a %d sono state eliminate\n
+le righe da %d fino a %d e %d sono state eliminate\n
+0
+0
+0
+0
+0
+0
+0
+caratteri non attesi dopo l'allegato codificato
+caratteri non validi nell'allegato codificato
+il comando %s non può essere applicato globalmente
+attenzione, il javascript non può essere invocato mediante un doppio click
+errore durante la risoluzione dell'opzione %s durante un sync o il submit di una form
+xhr disabilitato
+xhr abilitato
+impossibile acquisire javascript locale, %s\n
+impossibile scaricare javascript da %s, codice %ld\n
+impossibile scaricare javascript, %s\n
+javascript disabilitato, salto il codice relativo all'evento onclick
+javascript disabilitato, salto il codice relativo all'evento onchange
+javascript disabilitato, salto il codice relativo all'evento onreset
+javascript disabilitato, salto il codice relativo all'evento onsubmit
+impossibile trovare il tag html associato alla variabile javascript che sta essendo modificata
+per favore usa exp per espandere un frame
+attenzione: direttiva refresh scorretta, %s\n
+nuova finestra
+attenzione: redirezione http %ld, ma un nuovo url non è stato specificato\n
+attenzione: errore http %ld, %s\n
+non ci sono frame da espandere
+non ci sono frame da contrarre
+messaggi di aiuto abilitati
+download ftp: 
+nessun file di certificati ssl specificato; le connessioni sicure non possono essere verificate
+download tcp: 
+.ebrc: caratteri null alla riga %d
+.ebrc: nome funzione mancante alla riga %d
+.ebrc: il nome della funzione alla riga %d inizia con un numero
+.ebrc: il nome della funzione alla riga %d è troppo lungo, limite di 10 caratteri
+.ebrc: sintassi non corretta durante la definizione di una funzione alla riga %d
+.ebrc: riga %d, \"condition > file\" atteso
+.ebrc: riga %d, la filter rule non ha una stringa di riscontro
+.ebrc: riga %d, il riscontro su %s non è mai stato settato
+.ebrc: riga %d, troppi filtri per la posta
+.ebrc: keyword %s non riconosciuta alla riga %d
+.ebrc: riga %d, l'attributo %s non può essere settato fuori da un mail descriptor
+.ebrc: riga %d, l'attributo %s non può essere settato fuori da un plugin descriptor
+.ebrc: riga %d, l'attributo %s non può essere settato fuori da un table descriptor
+.ebrc: riga %d, l'attributo %s non può essere settato dentro un mail descriptor o un filter block
+.ebrc: riga %d, l'attributo %s non può essere settato dentro un plugin descriptor
+.ebrc: riga %d, l'attributo %s non può essere settato dentro un table descriptor
+.ebrc: riga %d, l'attributo %s è settato a <niente>
+.ebrc: riga %d, troppe colonne, il limite è %d
+.ebrc: riga %d, keycol deve essere un numero o numero,numero
+.ebrc: riga %d, keycol è fuori range; solo %d colonne specificate
+.ebrc: la rubrica %s non è un normale file
+errore di sintassi javascript
+.ebrc: %s non è una directory
+.ebrc: riga %d, troppi user agents, il limite è %d
+.ebrc: il cookie jar %s non è un normale file
+.ebrc: impossibile creare il cookie jar %s
+.ebrc: troppe direttive no js, il limite è %d
+.ebrc: riga %d, il dominio %s non contiene un punto
+impossibile accedere ad %s, (sicuro)
+.ebrc: il file certificati SSL %s non è un normale file
+.ebrc: il file certificati SSL %s non esiste o non è leggibile.
+.ebrc: riga %d, la keyword %s non è ancora stata implementata
+.ebrc: impostazione di multipli accounts di posta come default
+.ebrc: inserver mancante alla riga %d
+.ebrc: outserver mancante alla riga %d
+.ebrc: login mancante alla riga %d
+.ebrc: password mancante alla riga %d
+.ebrc: from mancante alla riga %d
+.ebrc: reply mancante alla riga %d
+.ebrc: type mancante alla riga %d
+.ebrc: description mancante alla riga %d
+.ebrc: suffisso o lista di protocolli mancante alla riga %d
+.ebrc: program mancante alla riga %d
+.ebrc: manca il nome della tavola alla riga %d
+.ebrc: nome corto mancante alla riga %d
+.ebrc: colonne mancanti alla riga %d
+.ebrc: } non atteso alla riga %d
+.ebrc: else alla riga %d non è parte di uno statement if
+.ebrc: testo scorretto alla riga %d
+.ebrc: riga %d, non è possibile iniziare una funzione, un mail/plugin descriptor, o un filter block dentro %s
+.ebrc: lo statement alla riga %d deve comparire dentro una funzione
+troppi accounts di posta nel file di configurazione .ebrc, riga %d
+troppi plugin blocks nel tuo file di configurazione .ebrc, limite %d
+troppe tavole sql nel tuo file di configurazione .ebrc, limite %d
+troppe funzioni nel tuo file di configurazione .ebrc, limite %d
+.ebrc: riga %d, le strutture di controllo sono nidificate troppo profondamente
+.ebrc: la funzione %s non è mai terminata
+.ebrc: un mail block o un plugin block non è mai terminato (EOF)
+home directory non definita da $HOME.
+%s non è una cartella
+non sono stati specificati accounts di posta, per favore controlla il tuo file di configurazione .ebrc
+numero di account non valido, per favore usa un valore da 1 a %d
+edbrowse  -v    (mostra la versione)\nedbrowse -h (questo messaggio)\nedbrowse -c (edita il file di configurazione)\nedbrowse [-d#] -f[#] (scarica le mail) \nedbrowse  [-d#] -[p]m    (legge nuovi messaggi)\nedbrowse  [-d#] -[p]fm[#]    (scarica le mail e legge nuovi messaggi)\nedbrowse  [-d#] -m[#] address1 address2 ... file [+allegati]\nedbrowse  [-c configfile] [-e] [-d#] file1 file2 ...
+per favore specifica almeno un recipient e il file da inviare
+per favore specifica almeno un recipient e il file da inviare, prima degli allegati
+troppi files aperti simultaneamente, limite %d
+sessione %d non valida in fetchLineContext()
+numero di riga %d non valido in fetchLineContext()
+troppe entries proxy nel file di configurazione .ebrc, limite %d
+sessione %d fuori range in cxActive
+double init nella sessione %d
+esco da una sessione non attiva %d
+nuovo pezzo vuoto in addToMap()
+newline non presente nella entry della directory %s
+non è presente un > di chiusura alla riga %d
+fieldInBuffer non può trovare il tag %d newtext %s
+impossibile ricostruire il tuo cookie jar %s
+reverse 
+il client fetchmail non è interattivo, e non può essere eseguito in background
+il file di configurazione .ebrc non specifica una directory mailbox
+Impossibile cambiare directory in %s
+0
+Password o login non validi
+ordina alfabeticamente
+ordina per dimensione
+ordina temporalmente
+0
+0
+il codice tag %d è seguito da un carattere non valido %c
+0
+htmlParse() non è reentrant.
+input type non atteso in submitForm()
+list = 0 in tagFromJavaVar()
+debug events disabilitati
+debug events abilitati
+Impossibile creare un javascript context.
+0
+0
+0
+timers disabilitato
+timers abilitato
+errore durante l'allocazione di %zu bytes
+errore durante l'allocazione mediante calloc di %zu bytes
+reallocMem(p,0)
+reallocMem(0,%zu)
+errore durante la ri-allocazione di %zu bytes
+stringInList(null,...)
+stringInListCI(null,...)
+charInList(null,...)
+puntatore nullo in pstLength
+impossibile usare ioctl() per gestire il terminale (tty)
+impossibile aprire %s
+impossibile creare, o scrivere su, %s
+chiamata a fopen() con modalità non valida %s
+/ fuori posto in getDirURL(%s)
+/ fuori posto in %s
+decodePostData(0,0)
+0
+0
+0
+impossibile rispondere in modalità cartelle
+impossibile rispondere in modalità database
+impossibile rispondere a un file vuoto
+impossibile rispondere a un file binario
+le righe subject and reply sono richieste
+attenzione, non c'è message ID da referenziare
+Scusa, gli headers della posta non sono disponibili.\nDevi iniziare con un messaggio email non formattato, browse, poi rispondi a tutti.
+l espande i caratteri di controllo in hex
+l espande caratteri di controllo e nonascii in hex
+Attenzione: le funzioni di ricerca/sostituzione non supporteranno caratteri utf8,\nvisto che la tua libreria PCRE non supporta questa funzionalità.\nexport PCREUTF8=off disabiliterà questa funzionalità e questo messaggio non verrà più visualizzato.
+converto ad iso8859
+converto in utf8
+non convertire da iso8859 a utf8
+converti automaticamente da iso8859 a utf8
+non posso copiare un albero di cartelle nel tuo cestino su un altro file system;\nusa cpio -p o cp -r dalla shell
+impossibile eliminare un albero di cartelle; usa rm -r dalla shell
+Inizializzazione di libcurl fallita.
+Il listato ftp della cartella è vuoto.
+ricerca e sostituisci usando ascii
+ricerca e sostituisci usando utf8
+Attenzione: potresti dover disabilitare (temporaneamente) la ricerca e la sostituzione utf8\nmediante il comando su8 perchè questo funzioni correttamente.
+la primary key comprende più di 3 colonne
+impossibile determinare il prossimo valore per la chiave seriale(0)
+I nomi delle tavole sono nel buffer %d\n
+datasource non specificata
+connessione alla datasource %s\n
+riga
+righe
+selezionato
+inserito
+aggiornato
+eliminato
+procedura eseguita
+tavola
+lo statement sql non è terminato da un punto e virgola finale, o una parentesi tonda destra sulla linea successiva
+statement di tipo update o delete senza una where clause
+accesso remoto negato
+Autenticazione richiesta per accedere a %s (%s)
+operazione fallita perchè la memoria non poteva essere allocata
+La tua versione di libcurl è più vecchia della versione %u.%u.%u.\nDevi aggiornare libcurl per usare edbrowse.
+timeout durante l'operazione
+impossibile inviare dati al server
+la libreria curl ha riportato il seguent messaggio di errore durante l'operazione richiesta: %s
+le foreign key per %s\n
+non acquisire colonne blob
+acquisisci colonne blob
+errore durante la connessione SSL in libcurl: %s
+tty di input
+readline() input
+0
+0
+Esecuzione del comando fallita, system() ha ritornato %d
+0
