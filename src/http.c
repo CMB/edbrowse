@@ -1433,7 +1433,7 @@ static void ftp_listing(struct i_get *g)
 static void gopher_ls_line(struct i_get *g, char *line)
 {
 	int port;
-	char first, *text, *pathname, *host, *s;
+	char first, *text, *pathname, *host, *s, *plus;
 	int l = strlen(line);
 	if (l && line[l - 1] == '\r')
 		line[--l] = 0;
@@ -1460,8 +1460,14 @@ static void gopher_ls_line(struct i_get *g, char *line)
 			s = strchr(host, '\t');
 			if (s) {
 				*s++ = 0;
-				if (*s)
+				if (*s) {
+					// Gopher+ servers add an extra \t+,
+					// which we need to truncate
+					plus = strchr(s, '\t');
+					if (plus)
+						*plus = 0;
 					port = atoi(s);
+				}
 			}
 		}
 	}
