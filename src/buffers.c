@@ -1765,6 +1765,10 @@ fromdisk:
 	    && cmd == 'b' && newbuf) {
 		rc = runPluginCommand(cf->mt, 0, filename, 0, 0, &rbuf,
 				      &fileSize);
+// browse command ran the plugin, but if it generates text,
+// then there's no need to browse the result.
+		if (cf->mt->outtype == 't')
+			cmd = 'e';
 	} else {
 
 		nopound = cloneString(filename);

@@ -210,7 +210,7 @@ bool runPluginCommand(const struct MIMETYPE * m,
 		      int inlength, char **outdata, int *outlength)
 {
 	const char *s;
-	char *cmd, *t;
+	char *cmd = NULL, *t;
 	char *outfile;
 	char *suffix;
 	int len, inlen, outlen;
@@ -290,10 +290,30 @@ bool runPluginCommand(const struct MIMETYPE * m,
 	*t = 0;
 
 // if there is no output, or the program has %o, then just run it,
-// otherwise we have to pipe its output over to outdata,
+// otherwise we have to send its output over to outdata,
 // which should be present.
-// There's no popen on windows, and I'm lazy besides, so just tack on
-// > outfile, which is less efficient but oh well.
+// There's no popen on windows, so here is a unix only
+// fragment to use popen, which can be more efficient.
+
+#ifndef DOSLIKE
+	if (m->outtype && !has_o) {
+		FILE *p;
+		bool rc;
+		debugPrint(3, "plugin %s", cmd);
+		p = popen(cmd, "r");
+		if (!p) {
+			setError(MSG_NoSpawn, cmd, errno);
+			goto fail;
+		}
+		rc = fdIntoMemory(fileno(p), outdata, outlength);
+		fclose(p);
+		if (!rc)
+			goto fail;
+		cnzFree(indata);
+		goto success;
+	}
+#endif
+
 	if (m->outtype && !has_o) {
 		strcat(cmd, " > ");
 		strcat(cmd, outfile);
@@ -309,17 +329,18 @@ bool runPluginCommand(const struct MIMETYPE * m,
 		goto success;
 	if (!fileIntoMemory(outfile, outdata, outlength))
 		goto fail;
-	if (indata)
-		cnzFree(indata);
+	cnzFree(indata);
 // fall through
 
 success:
+	nzFree(cmd);
 	if (indata)
 		unlink(tempin);
 	unlink(tempout);
 	return true;
 
 fail:
+	nzFree(cmd);
 	if (indata)
 		unlink(tempin);
 	unlink(tempout);
