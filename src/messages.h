@@ -34,15 +34,15 @@ extern const char *msg_pl[], ebrc_pl[];
 // Russian, Wojciech Gac, wojciech.s.gac@gmail.com
 extern const char *msg_ru[], ebrc_ru[];
 
+// Italian, Enrico Mioso, mrkiko.rs@gmail.com
+extern const char *msg_it[], ebrc_it[];
+
 /*********************************************************************
 This file and lang/msg-en line up.
 The constant at line 101 of messages.h corresponds
 to the English string at line 1 of lang/msg-en.
 to keep this alignment, even if you run this file through indent,
 this comment block is just the right size.
-*
-*
-*
 *
 *
 *
