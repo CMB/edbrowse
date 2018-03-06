@@ -360,6 +360,7 @@ bool isURL(const char *url) ;
 bool isBrowseableURL(const char *url) ;
 bool isDataURI(const char *u);
 const char *getProtURL(const char *url) ; //?
+bool missingProtURL(const char *url);
 const char *getHostURL(const char *url) ; //?
 bool getProtHostURL(const char *url, char *pp, char *hp);
 int getCredsURL(const char *url, char *buf);

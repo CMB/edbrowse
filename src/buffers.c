@@ -3583,6 +3583,19 @@ like rf (refresh), which could be a long url.
 *********************************************************************/
 
 static char *allocatedLine = 0;
+/*********************************************************************
+Uses of allocatedLine:
+rf sets allocatedLine to b currentFile
+f/  becomes  f lastComponent
+w/  becomes  w lastComponent
+g becomes b url  (going to a hyperlink)
+i<7 becomes i=contents of session 7
+i<file becomes i=contents of file
+i* becomes b url  for a submit button
+new location from javascript becomes b new url,
+	this frees the old allocatedLine if it was present.
+e url without http:// becomes http://url
+*********************************************************************/
 
 static int twoLetter(const char *line, const char **runThis)
 {
@@ -5590,7 +5603,7 @@ switchsession:
 rebrowse:
 	if (cmd == 'e' || (cmd == 'b' && first && first != '#')) {
 //  printf("ifetch %d %s\n", uriEncoded, line);
-		if (cf->fileName && !noStack && sameURL(line, cf->fileName)) {
+		if (!noStack && sameURL(line, cf->fileName)) {
 			if (stringEqual(line, cf->fileName)) {
 				setError(MSG_AlreadyInBuffer);
 				return false;
@@ -5646,6 +5659,18 @@ rebrowse:
 			if (j)
 				i_puts(MSG_MailHowto);
 		} else {
+
+/*********************************************************************
+Before we set the new file name, and before we call up the next web page,
+we have to make sure it has a protocol. Every url needs a protocol.
+*********************************************************************/
+
+			if (missingProtURL(line)) {
+				allocatedLine = allocMem(strlen(line) + 8);
+				sprintf(allocatedLine, "http://%s", line);
+				line = allocatedLine;
+			}
+
 			cf->fileName = cloneString(line);
 			cf->firstURL = cloneString(line);
 			if (isSQL(line))

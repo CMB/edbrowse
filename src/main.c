@@ -684,6 +684,7 @@ int main(int argc, char **argv)
 	cx = 0;
 	while (argc) {
 		char *file = *argv;
+		char *file2 = NULL;	// will be allocated
 		++cx;
 		if (cx == MAXSESSION)
 			i_printfExit(MSG_ManyOpen, MAXSESSION);
@@ -696,6 +697,14 @@ int main(int argc, char **argv)
 			continue;
 		}
 		changeFileName = 0;
+
+// Every URL needs a protocol.
+		if (missingProtURL(file)) {
+			file2 = allocMem(strlen(file) + 8);
+			sprintf(file2, "http://%s", file);
+			file = file2;
+		}
+
 		cf->fileName = cloneString(file);
 		cf->firstURL = cloneString(file);
 		if (isSQL(file))
@@ -711,6 +720,7 @@ int main(int argc, char **argv)
 			cf->fileName = changeFileName;
 			changeFileName = 0;
 		}
+		nzFree(file2);
 
 		cw->undoable = cw->changeMode = false;
 /* Browse the text if it's a url */

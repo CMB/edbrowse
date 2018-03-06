@@ -476,6 +476,17 @@ const char *getProtURL(const char *url)
 	return buf;
 }				/* getProtURL */
 
+// Is this a url without http:// in front?
+bool missingProtURL(const char *url)
+{
+	const char *s;
+	if (!parseURL(url, &s, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+		return false;	// not a url
+// protocol is always the start of url, unless url is a recognized
+// format like www.foo.bar.com, then s points to the static string "http://".
+	return (s != url);
+}
+
 static char hostbuf[MAXHOSTLEN];
 const char *getHostURL(const char *url)
 {
