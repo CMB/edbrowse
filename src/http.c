@@ -2759,6 +2759,8 @@ So check for serverData null here. Once again we pop the frame.
 // in the edbrowse world, the only child of the frame tag
 // is the contentDocument tag.
 	cdt = t->firstchild;
+// the placeholder document node will soon be orphaned.
+	delete_property(cdt->jv, "parentNode");
 	htmlNodesIntoTree(start, cdt);
 	cdt->step = 0;
 	prerender(0);
@@ -2814,6 +2816,8 @@ we did that before and now it's being expanded. So bump step up to 2.
 		set_property_object(t->jv, "content$Document", cdo);
 		cna = get_property_object(t->jv, "childNodes");
 		set_array_element_object(cna, 0, cdo);
+// Should we do this? For consistency I guess yes.
+		set_property_object(cdo, "parentNode", t->jv);
 		cwo = new_cf->winobj;
 		set_property_object(t->jv, "content$Window", cwo);
 // run the frame onload function if it is there.
@@ -2891,8 +2895,11 @@ bool reexpandFrame(void)
 	save_parent = get_property_object(cf->winobj, "parent");
 	save_fe = get_property_object(cf->winobj, "frameElement");
 
-// Cut away objects from the previous document, which are now inaccessible.
+// Cut away our tree nodes from the previous document, which are now inaccessible.
 	underKill(cdt);
+
+// the previous document node will soon be orphaned.
+	delete_property(cdt->jv, "parentNode");
 
 	delTimers(cf);
 	freeJavaContext(cf);
@@ -2983,6 +2990,8 @@ bool reexpandFrame(void)
 		set_property_object(frametag->jv, "content$Document", cdo);
 		cna = get_property_object(frametag->jv, "childNodes");
 		set_array_element_object(cna, 0, cdo);
+// Should we do this? For consistency I guess yes.
+		set_property_object(cdo, "parentNode", frametag->jv);
 		set_property_object(frametag->jv, "content$Window", cwo);
 		cf = save_cf;
 	}
