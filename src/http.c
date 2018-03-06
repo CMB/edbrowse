@@ -904,7 +904,9 @@ mimestream:
 			goto curl_fail;
 	}
 
-	if (sendReferrer && isURL(g->thisfile)) {
+	if (sendReferrer && isURL(g->thisfile) &&
+	    (memEqualCI(g->thisfile, "http:", 5)
+	     || memEqualCI(g->thisfile, "https:", 6))) {
 		char *p, *p2, *p3;
 		referrer = cloneString(g->thisfile);
 // lop off post data
@@ -916,19 +918,22 @@ mimestream:
 		if (p - referrer > 7 && !memcmp(p - 7, ".browse", 7))
 			p[-7] = 0;
 // excise login:password
-		p = referrer + strlen(prot);
-// url should start with protocol://  if it doesn't I don't know what to do.
 		p = strchr(referrer, ':');
-		if (p && p - referrer <= MAXPROTLEN) {
+		++p;
+		if (*p == '/')
 			++p;
-			if (*p == '/')
-				++p;
-			if (*p == '/')
-				++p;
-			p2 = strchr(p, '@');
-			p3 = strchr(p, '/');
-			if (p2 && (!p3 || p2 < p3))
-				strmove(p, p2 + 1);
+		if (*p == '/')
+			++p;
+		p2 = strchr(p, '@');
+		p3 = strchr(p, '/');
+		if (p2 && (!p3 || p2 < p3))
+			strmove(p, p2 + 1);
+// The current protocol should be http or https, we cleared out everything else.
+// But https to http is not allowed.   RFC 2616, section 15.1.3
+		p = strchr(referrer, ':');
+		if (strlen(prot) == 4 && p - referrer == 5) {
+			nzFree(referrer);
+			referrer = NULL;
 		}
 	}
 // We keep the same referrer even after redirections, which I think is right.
