@@ -905,16 +905,33 @@ mimestream:
 	}
 
 	if (sendReferrer && isURL(g->thisfile)) {
-		const char *post2 = strchr(g->thisfile, '\1');
-		if (!post2)
-			post2 = g->thisfile + strlen(g->thisfile);
-		if (post2 - g->thisfile >= 7
-		    && !memcmp(post2 - 7, ".browse", 7))
-			post2 -= 7;
+		char *p, *p2, *p3;
 		referrer = cloneString(g->thisfile);
-		referrer[post2 - g->thisfile] = 0;
+// lop off post data
+		p = strchr(referrer, '\1');
+		if (p)
+			*p = 0;
+// lop off .browse
+		p = referrer + strlen(referrer);
+		if (p - referrer > 7 && !memcmp(p - 7, ".browse", 7))
+			p[-7] = 0;
+// excise login:password
+		p = referrer + strlen(prot);
+		if (*p == ':') {
+// should always be :// here, not sure what to do if there isn't
+			++p;
+			if (*p == '/')
+				++p;
+			if (*p == '/')
+				++p;
+			p2 = strchr(p, '@');
+			p3 = strchr(p, '/');
+			if (p2 && (!p3 || p2 < p3))
+				strmove(p, p2 + 1);
+		}
 	}
 // We keep the same referrer even after redirections, which I think is right.
+// That's why it's here instead of inside the loop.
 	curlret = curl_easy_setopt(h, CURLOPT_REFERER, referrer);
 	if (curlret != CURLE_OK)
 		goto curl_fail;
