@@ -373,7 +373,7 @@ bool isProxyURL(const char *url) ;
 char *resolveURL(const char *base, const char *rel) ;
 bool sameURL(const char *s, const char *t) ;
 char *altText(const char *base) ; //?
-char *encodePostData(const char *s) ;
+char *encodePostData(const char *s, const char *keep_chars) ;
 char *decodePostData(const char *data, const char *name, int seqno) ;
 void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p) ;
 

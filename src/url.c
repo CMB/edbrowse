@@ -38,11 +38,11 @@ struct PROTOCOL {
 	"tn3270", 0, false, false, false}, {
 	"data", 0, true, false, false}, {
 	"javascript", 0, true, false, false}, {
-	"git", 0, false, false, false}, {
-	"svn", 0, false, false, false}, {
-	"gopher", 70, false, false, false}, {
+	"git", 0, false, true, false}, {
+	"svn", 0, false, true, false}, {
+	"gopher", 70, false, true, true}, {
 	"magnet", 0, false, false, false}, {
-	"irc", 0, false, false, false}, {
+	"irc", 0, false, true, false}, {
 "", 0},};
 
 static int protocolByName(const char *p, int l)
@@ -989,7 +989,7 @@ retry:
 }				/* altText */
 
 /* get post data ready for a url. */
-char *encodePostData(const char *s)
+char *encodePostData(const char *s, const char *keep_chars)
 {
 	char *post, c;
 	int l;
@@ -999,11 +999,13 @@ char *encodePostData(const char *s)
 		return 0;
 	if (s == emptyString)
 		return emptyString;
+	if (!keep_chars)
+		keep_chars = "-._~*()!";
 	post = initString(&l);
 	while ((c = *s++)) {
 		if (isalnumByte(c))
 			goto putc;
-		if (strchr("-._~*()!", c))
+		if (strchr(keep_chars, c))
 			goto putc;
 		sprintf(buf, "%%%02X", (uchar) c);
 		stringAndString(&post, &l, buf);

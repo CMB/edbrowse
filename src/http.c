@@ -1433,7 +1433,7 @@ static void ftp_listing(struct i_get *g)
 static void gopher_ls_line(struct i_get *g, char *line)
 {
 	int port;
-	char first, *text, *pathname, *host, *s;
+	char first, *text, *pathname, *host, *s, *plus;
 	int l = strlen(line);
 	if (l && line[l - 1] == '\r')
 		line[--l] = 0;
@@ -1460,8 +1460,14 @@ static void gopher_ls_line(struct i_get *g, char *line)
 			s = strchr(host, '\t');
 			if (s) {
 				*s++ = 0;
-				if (*s)
+				if (*s) {
+					// Gopher+ servers add an extra \t+,
+					// which we need to truncate
+					plus = strchr(s, '\t');
+					if (plus)
+						*plus = 0;
 					port = atoi(s);
+				}
 			}
 		}
 	}
@@ -1487,26 +1493,23 @@ static void gopher_ls_line(struct i_get *g, char *line)
 			qc = '\'';
 		stringAndString(&g->buffer, &g->length, "<a href=x");
 		g->buffer[g->length - 1] = qc;
+
+		pathname = encodePostData(pathname, "./-_$");
 		if (!strncmp(pathname, "URL:", 4)) {
 			stringAndString(&g->buffer, &g->length, pathname + 4);
 		} else {
 			stringAndString(&g->buffer, &g->length, "gopher://");
 			stringAndString(&g->buffer, &g->length, host);
-			if (port) {
+			if (port && port != 70) {
 				stringAndChar(&g->buffer, &g->length, ':');
 				stringAndNum(&g->buffer, &g->length, port);
 			}
 // gopher requires us to inject the  "first" directive into the path. Wow.
-			if (pathname[0] == '/' && pathname[1]) {
-				stringAndChar(&g->buffer, &g->length, '/');
-				stringAndChar(&g->buffer, &g->length, first);
-				stringAndChar(&g->buffer, &g->length, '/');
-				stringAndString(&g->buffer, &g->length,
-						pathname + 1);
-			} else
-				stringAndString(&g->buffer, &g->length,
-						pathname);
+			stringAndChar(&g->buffer, &g->length, '/');
+			stringAndChar(&g->buffer, &g->length, first);
+			stringAndString(&g->buffer, &g->length, pathname);
 		}
+		nzFree(pathname);
 		stringAndChar(&g->buffer, &g->length, qc);
 		stringAndChar(&g->buffer, &g->length, '>');
 	}
@@ -1825,8 +1828,14 @@ static bool gopherConnect(struct i_get *g)
 // That's the default, let the leading character override
 	s = strchr(g->urlcopy + protLength, '/');
 	if (s && (first = s[1])) {
-// almost every file type downwloads.
+// almost every file type downloads.
 		g->down_state = 1;
+// 0 is tricky because "05" and "09" can mean binary
+// in doubt, treat as integer and skip leading 0s
+		while (first == '0' && isdigit(s[2])) {
+			s++;
+			first = s[1];
+		}
 		if (strchr("017h", first))
 			g->down_state = 0;
 		if (first == '1' || first == '7')
