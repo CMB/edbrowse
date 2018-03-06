@@ -917,8 +917,9 @@ mimestream:
 			p[-7] = 0;
 // excise login:password
 		p = referrer + strlen(prot);
-		if (*p == ':') {
-// should always be :// here, not sure what to do if there isn't
+// url should start with protocol://  if it doesn't I don't know what to do.
+		p = strchr(referrer, ':');
+		if (p && p - referrer <= MAXPROTLEN) {
 			++p;
 			if (*p == '/')
 				++p;
