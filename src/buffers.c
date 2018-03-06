@@ -3142,8 +3142,7 @@ findField(const char *line, int ftype, int n,
 				t = tagList[j];
 				if (ftype == 1 && t->itype <= INP_SUBMIT)
 					continue;
-				if (ftype == 2 && t->itype > INP_SUBMIT
-				    && t->itype != INP_TA)
+				if (ftype == 2 && t->itype > INP_SUBMIT)
 					continue;
 				++nt;
 				if (!nm)
@@ -3164,20 +3163,26 @@ findField(const char *line, int ftype, int n,
 		*tagno = nm;
 	if (!ftype && nm) {
 		t = tagList[nm];
-		if (href)
-			*href = cloneString(t->href);
 		if (tagp)
 			*tagp = t;
-		if (href && isJSAlive && t->jv) {
+		if (t->action == TAGACT_A) {
+			if (href)
+				*href = cloneString(t->href);
+			if (href && isJSAlive && t->jv) {
 /* defer to the js variable for the reference */
-			char *jh = get_property_url(t->jv, false);
-			if (jh) {
-				if (!*href || !stringEqual(*href, jh)) {
-					nzFree(*href);
-					*href = jh;
-				} else
-					nzFree(jh);
+				char *jh = get_property_url(t->jv, false);
+				if (jh) {
+					if (!*href || !stringEqual(*href, jh)) {
+						nzFree(*href);
+						*href = jh;
+					} else
+						nzFree(jh);
+				}
 			}
+		} else {
+// This link is not an anchor, it's onclick on something else.
+			if (href)
+				*href = cloneString("#");
 		}
 	}
 
@@ -5259,7 +5264,7 @@ replaceframe:
 
 	if (cmd == 'e') {
 		if (cx) {
-switchsession:
+// switchsession:
 			if (!cxCompare(cx))
 				return false;
 			cxSwitch(cx, true);
@@ -5463,7 +5468,6 @@ switchsession:
 			if (cmd == 'i' && strchr("?=<*", c)) {
 				char *p;
 				int realtotal;
-				bool gobuffer;	/* for i* switch to buffer */
 				scmd = c;
 				line = s + 1;
 				first = *line;
@@ -5491,12 +5495,14 @@ switchsession:
 				}
 
 				cw->undoable = false;
+#if 0
 				gobuffer = (tagList[tagno]->itype == INP_TA);
 				if (gobuffer && scmd == '*') {
 					cx = tagList[tagno]->lic;
 					cmd = 'e';
 					goto switchsession;
 				}
+#endif
 
 				if (c == '<') {
 					bool fromfile = false;

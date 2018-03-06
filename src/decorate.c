@@ -1393,6 +1393,7 @@ Needless to say that's not good!
 	case TAGACT_OVB:
 		domLink(t, "Span", 0, "spans", cf->docobj, 0);
 		set_property_number(t->jv, "nodeType", 1);
+		set_onhandlers(t);
 		break;
 
 	case TAGACT_AREA:

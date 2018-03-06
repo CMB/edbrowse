@@ -3061,6 +3061,26 @@ li_hide:
 		ns_hnum();
 		break;
 
+// check for span onclick and make it look like a link.
+// Maybe we should do more than span, but just span for now.
+	case TAGACT_SPAN:
+		if (!t->onclick)
+			goto nop;
+		if (opentag) {
+			sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
+			ns_hnum();
+// If no text then we should be using the title attribute.
+			if (ns[ns_l - 1] == '{') {
+				const char *title = attribVal(t, "title");
+				if (title)
+					stringAndString(&ns, &ns_l, title);
+			}
+		} else {
+			sprintf(hnum, "%c0}", InternalCodeChar);
+			ns_hnum();
+		}
+		break;
+
 	case TAGACT_OL:
 	case TAGACT_UL:
 		t->lic = t->slic;
@@ -3076,7 +3096,6 @@ li_hide:
 	case TAGACT_OBJECT:
 	case TAGACT_BR:
 	case TAGACT_P:
-	case TAGACT_SPAN:
 	case TAGACT_NOP:
 nop:
 		if (invisible)
