@@ -3826,6 +3826,7 @@ pwd:
 		rc = playBuffer(line, NULL);
 		if (rc == 2)
 			goto no_action;
+		cmd = 'e';	// to see the error right away
 		return rc;
 	}
 
@@ -6038,7 +6039,17 @@ bool browseCurrentBuffer(void)
 			mt = findMimeByFile(cf->fileName);
 	}
 
-	if (mt && mt->outtype && !mt->from_file) {
+	if (mt && !mt->outtype) {
+		setError(MSG_NotConverter);
+		return false;
+	}
+
+	if (mt && mt->from_file) {
+		setError(MSG_PluginFile);
+		return false;
+	}
+
+	if (mt) {
 		if (cf->render1 && mt == cf->mt)
 			cf->render2 = true;
 		else

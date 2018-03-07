@@ -466,6 +466,10 @@ int playBuffer(const char *line, const char *playfile)
 			setError(MSG_SuffixBad, suffix);
 			return 0;
 		}
+		if (mt->outtype) {
+			setError(MSG_NotPlayer);
+			return 0;
+		}
 // If you had to specify suffix then we have to run from the buffer.
 		if (!unfoldBuffer(context, false, &buf, &buflen))
 			return 0;
@@ -484,11 +488,16 @@ int playBuffer(const char *line, const char *playfile)
 			mt = findMimeByFile(cf->fileName);
 		}
 	}
-	if (!mt || mt->outtype) {
+	if (!mt) {
 		if (suffix)
 			setError(MSG_SuffixBad, suffix);
 		else
 			setError(MSG_NoSuffix);
+		return 0;
+	}
+
+	if (mt->outtype) {
+		setError(MSG_NotPlayer);
 		return 0;
 	}
 

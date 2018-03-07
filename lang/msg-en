@@ -451,9 +451,9 @@ lines %d through %d and %d have been updated\n
 lines %d and %d have been deleted\n
 lines %d and %d through %d have been deleted\n
 lines %d through %d and %d have been deleted\n
-0
-0
-0
+plugin must run from a local file
+plugin is a converter, not a player
+plugin is a player, not a converter
 0
 0
 0
