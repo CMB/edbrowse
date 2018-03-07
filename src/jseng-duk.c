@@ -1111,6 +1111,7 @@ static bool foldinCookie(const char *newcook)
 	char *s;
 	char save;
 
+	debugPrint(4, "inject cookie %s", newcook);
 /* make a copy with ; in front */
 	j = strlen(newcook);
 	nc = allocString(j + 3);
@@ -1157,6 +1158,7 @@ add:
 	else
 		stringAndString(&cookieCopy, &cook_l, nc);
 	nzFree(nc);
+	debugPrint(4, "cookieCopy %s", cookieCopy);
 	return true;
 }				/* foldinCookie */
 
