@@ -30,7 +30,6 @@
 #include <sys/stat.h>
 #include <ctype.h>
 #include <string.h>
-#include <signal.h>
 #include <memory.h>
 #include <stdarg.h>
 #include <stdlib.h>

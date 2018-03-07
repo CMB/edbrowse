@@ -1108,7 +1108,7 @@ edbrowse [-d#] -f[#] (fetch mail)
 edbrowse  [-d#] -[p]m    (read pending mail)
 edbrowse  [-d#] -[p]fm[#]    (fetch mail and read pending mail)
 edbrowse  [-d#] -m[#] address1 address2 ... file [+attachments]
-edbrowse  [-c configfile] [-e] [-d#] file1 file2 ...
+edbrowse  [-c configfile] [-b] [-e] [-d#] file1 file2 ...
 </font></PRE>
 
 <P>
@@ -1148,6 +1148,14 @@ As long as this edbrowse process runs, -c referse to the file specified on the c
 as does the config command, which reprocesses the config file.
 
 <P>
+The -b option browses each file or url on the command line, or plays it if a plugin so indicates.
+Without -b, the urls are browsed.
+edbrowse this.example.com reads the data from the web page, prints the size in bytes, browses the page, and prints the size of the rendered text.
+The -b option causes the same thing to happen on a local file, e.g. if you have html files on your computer.
+It also activates any plugins that might render your file, e.g. pdf, or play your file, e.g. mp3.
+Plugins will be described later.
+
+<P>
 The arguments to edbrowse are the files to edit.
 Edbrowse reads these files into corresponding sessions
 and starts in session 1.
@@ -1159,7 +1167,7 @@ edbrowse "&lt;func arg1 arg2",
 then the named edbrowse function is run with its arguments.
 These functions are part of your config file and will be described later.
 The function runs in its own session, as though it were a file or a url.
-Often the function will load a file or url on your behalf, so that is what you want.
+Often the function will load a file or url on your behalf, so that is usually what you want.
 Files, urls, and functions can be intermixed on the command line.
 They are processed in order.
 
@@ -1173,7 +1181,6 @@ alias e="/usr/bin/edbrowse"
 <P>
 If you do this you can use `e filename'
 to edit a new file, whether you are inside edbrowse or at the shell prompt.
-Very convenient.
 
 <H3> <A NAME=bin> Binary Characters </A> </H3>
 

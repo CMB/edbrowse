@@ -7,6 +7,7 @@
 
 #include <pthread.h>
 #include <pcre.h>
+#include <signal.h>
 
 /* Define the globals that are declared in eb.h. */
 /* See eb.h for descriptive comments. */
@@ -430,7 +431,7 @@ static void setupEdbrowseTempDirectory(void)
 int main(int argc, char **argv)
 {
 	int cx, account;
-	bool rc, doConfig = true;
+	bool rc, doConfig = true, autobrowse = false;
 	bool dofetch = false, domail = false;
 	static char agent0[64] = "edbrowse/";
 
@@ -573,6 +574,11 @@ int main(int argc, char **argv)
 			continue;
 		}
 
+		if (stringEqual(s, "b")) {
+			autobrowse = true;
+			continue;
+		}
+
 		if (*s == 'p')
 			++s, passMail = true;
 
@@ -676,10 +682,6 @@ int main(int argc, char **argv)
 	}
 
 	signal(SIGINT, catchSig);
-#ifndef _MSC_VER		// port siginterrupt(SIGINT, 1); signal(SIGPIPE, SIG_IGN);, if required
-	siginterrupt(SIGINT, 1);
-	signal(SIGPIPE, SIG_IGN);
-#endif // !_MSC_VER
 
 	cx = 0;
 	while (argc) {
@@ -691,48 +693,70 @@ int main(int argc, char **argv)
 		cxSwitch(cx, false);
 		if (cx == 1)
 			runEbFunction("init");
+
+// function on the command line
 		if (file[0] == '<') {
 			runEbFunction(file + 1);
 			++argv, --argc;
 			continue;
 		}
+
 		changeFileName = 0;
-
+		file2 = allocMem(strlen(file) + 10);
 // Every URL needs a protocol.
-		if (missingProtURL(file)) {
-			file2 = allocMem(strlen(file) + 8);
-			sprintf(file2, "http://%s", file);
-			file = file2;
-		}
+		if (missingProtURL(file))
+			sprintf(file2 + 2, "http://%s", file);
+		else
+			strcpy(file2 + 2, file);
+		file = file2 + 2;
 
-		cf->fileName = cloneString(file);
-		cf->firstURL = cloneString(file);
-		if (isSQL(file))
-			cw->sqlMode = true;
-		rc = readFileArgv(file, true);
-		if (fileSize >= 0)
-			debugPrint(1, "%d", fileSize);
-		fileSize = -1;
-		if (!rc) {
-			showError();
-		} else if (changeFileName) {
-			nzFree(cf->fileName);
-			cf->fileName = changeFileName;
-			changeFileName = 0;
-		}
-		nzFree(file2);
-
-		cw->undoable = cw->changeMode = false;
-/* Browse the text if it's a url */
-		if (rc && isURL(cf->fileName) && ((cf->mt && cf->mt->outtype)
-						  ||
-						  isBrowseableURL
-						  (cf->fileName))) {
-			if (runCommand("b"))
-				debugPrint(1, "%d", fileSize);
+		if (autobrowse) {
+			const struct MIMETYPE *mt;
+			if (isURL(file))
+				mt = findMimeByURL(file);
 			else
+				mt = findMimeByFile(file);
+			if (mt && !mt->outtype)
+				playBuffer("pb", file);
+			else {
+				file2[0] = 'b';
+				file2[1] = ' ';
+				if (runCommand(file2))
+					debugPrint(1, "%d", fileSize);
+				else
+					showError();
+			}
+
+		} else {
+
+			cf->fileName = cloneString(file);
+			cf->firstURL = cloneString(file);
+			if (isSQL(file))
+				cw->sqlMode = true;
+			rc = readFileArgv(file, true);
+			if (fileSize >= 0)
+				debugPrint(1, "%d", fileSize);
+			fileSize = -1;
+			if (!rc) {
 				showError();
+			} else if (changeFileName) {
+				nzFree(cf->fileName);
+				cf->fileName = changeFileName;
+				changeFileName = 0;
+			}
+			cw->undoable = cw->changeMode = false;
+/* Browse the text if it's a url */
+			if (rc && isURL(cf->fileName)
+			    && ((cf->mt && cf->mt->outtype)
+				|| isBrowseableURL(cf->fileName))) {
+				if (runCommand("b"))
+					debugPrint(1, "%d", fileSize);
+				else
+					showError();
+			}
 		}
+
+		nzFree(file2);
 		++argv, --argc;
 	}			/* loop over files */
 	if (!cx) {		/* no files */

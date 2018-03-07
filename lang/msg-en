@@ -546,7 +546,7 @@ home directory not defined by $HOME.
 %s is not a directory
 no mail accounts specified, please check your .ebrc config file
 invalid account number, please use 1 through %d
-edbrowse  -v    (show version)\nedbrowse -h (this message)\nedbrowse -c (edit config file)\nedbrowse [-d#] -f[#] (fetch mail) \nedbrowse  [-d#] -[p]m    (read pending mail)\nedbrowse  [-d#] -[p]fm[#]    (fetch mail and read pending mail)\nedbrowse  [-d#] -m[#] address1 address2 ... file [+attachments]\nedbrowse  [-c configfile] [-e] [-d#] file1 file2 ...
+edbrowse  -v    (show version)\nedbrowse -h (this message)\nedbrowse -c (edit config file)\nedbrowse [-d#] -f[#] (fetch mail) \nedbrowse  [-d#] -[p]m    (read pending mail)\nedbrowse  [-d#] -[p]fm[#]    (fetch mail and read pending mail)\nedbrowse  [-d#] -m[#] address1 address2 ... file [+attachments]\nedbrowse  [-c configfile] [-e] [-b] [-d#] file1 file2 ...
 please specify at least one recipient and the file to send
 please specify at least one recipient and the file to send, before your attachments
 too many files open simultaneously, limit %d

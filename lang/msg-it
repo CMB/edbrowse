@@ -546,7 +546,7 @@ home directory non definita da $HOME.
 %s non è una cartella
 non sono stati specificati accounts di posta, per favore controlla il tuo file di configurazione .ebrc
 numero di account non valido, per favore usa un valore da 1 a %d
-edbrowse  -v    (mostra la versione)\nedbrowse -h (questo messaggio)\nedbrowse -c (edita il file di configurazione)\nedbrowse [-d#] -f[#] (scarica le mail) \nedbrowse  [-d#] -[p]m    (legge nuovi messaggi)\nedbrowse  [-d#] -[p]fm[#]    (scarica le mail e legge nuovi messaggi)\nedbrowse  [-d#] -m[#] address1 address2 ... file [+allegati]\nedbrowse  [-c configfile] [-e] [-d#] file1 file2 ...
+edbrowse  -v    (mostra la versione)\nedbrowse -h (questo messaggio)\nedbrowse -c (edita il file di configurazione)\nedbrowse [-d#] -f[#] (scarica le mail) \nedbrowse  [-d#] -[p]m    (legge nuovi messaggi)\nedbrowse  [-d#] -[p]fm[#]    (scarica le mail e legge nuovi messaggi)\nedbrowse  [-d#] -m[#] address1 address2 ... file [+allegati]\nedbrowse  [-c configfile] [-e] [-b] [-d#] file1 file2 ...
 per favore specifica almeno un recipient e il file da inviare
 per favore specifica almeno un recipient e il file da inviare, prima degli allegati
 troppi files aperti simultaneamente, limite %d

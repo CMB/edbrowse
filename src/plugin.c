@@ -359,6 +359,19 @@ int playBuffer(const char *line, const char *playfile)
 	if (c && c != '.')
 		return 2;
 
+	if (playfile) {
+/* play the file passed in */
+		mt = findMimeByFile(playfile);
+		if (!mt || mt->outtype) {
+			suffix = file2suffix(playfile);
+			if (!suffix)
+				suffix = "?";
+			setError(MSG_SuffixBad, suffix);
+			return 0;
+		}
+		return runPluginCommand(mt, 0, playfile, 0, 0, 0, 0);
+	}
+
 	if (!cw->dol) {
 		setError(cw->dirMode ? MSG_EmptyBuffer : MSG_AudioEmpty);
 		return 0;
@@ -376,19 +389,6 @@ int playBuffer(const char *line, const char *playfile)
 		return 0;
 	}
 
-	if (playfile) {
-/* play the file passed in */
-		mt = findMimeByFile(playfile);
-		if (!mt || mt->outtype) {
-			suffix = file2suffix(playfile);
-			if (!suffix)
-				suffix = "?";
-			setError(MSG_SuffixBad, suffix);
-			return 0;
-		}
-		return runPluginCommand(mt, 0, playfile, 0, 0, 0, 0);
-	}
-// current buffer
 	if (c) {
 		mt = findMimeBySuffix(line + 3);
 		if (!mt || mt->outtype) {
