@@ -118,8 +118,11 @@ static void scan_http_headers(struct i_get *g, bool fromCallback)
 			}
 			g->cdfn = cloneString(s);
 			debugPrint(4, "disposition filename %s", g->cdfn);
+// I'm not ready to do this part yet.
+#if 0
 			if (g->pg_ok && !cf->mt)
 				cf->mt = findMimeByFile(g->cdfn);
+#endif
 		}
 		nzFree(v);
 	}
@@ -764,6 +767,7 @@ bool httpConnect(struct i_get *g)
 	bool name_changed = false;
 	bool post_request = false;
 	bool head_request = false;
+	bool sxfirst = false;
 	int n;
 
 	if (!getProtHostURL(url, prot, host)) {
@@ -776,8 +780,8 @@ bool httpConnect(struct i_get *g)
 // plugins can only be ok from one thread, the interactive thread
 // that calls up web pages at the user's behest.
 // None of this machinery need be threadsafe.
-	if (g->pg_ok && (mt = findMimeByURL(url)) &&
-	    !(mt->no_url | mt->down_url)) {
+	if (g->pg_ok && (cf->mt = mt = findMimeByURL(url, &sxfirst)) &&
+	    !(mt->from_file | mt->down_url)) {
 		char *f;
 		urlSanitize(g, 0);
 mimestream:
@@ -785,11 +789,12 @@ mimestream:
 		nzFree(g->buffer);
 		g->buffer = 0;
 		f = g->urlcopy;
-		if (g->cdfn)	// content disposition file name
-			f = g->cdfn;
 		if (mt->outtype) {
 			runPluginCommand(mt, f, 0, 0, 0, &g->buffer,
 					 &g->length);
+			cf->render1 = true;
+			if (sxfirst)
+				cf->render2 = true;
 			i_get_free(g, false);
 		} else {
 			runPluginCommand(mt, f, 0, 0, 0, 0, 0);
@@ -801,7 +806,8 @@ mimestream:
 // I don't think this really works.
 #if 0
 	if (g->pg_ok && g->thisfile &&
-	    (mt = findMimeByURL(g->thisfile)) && !(mt->no_url | mt->down_url)) {
+	    (cf->mt = mt = findMimeByURL(g->thisfile))
+	    && !(mt->from_file | mt->down_url)) {
 		urlSanitize(g, 0);
 		goto mimestream;
 	}
@@ -983,8 +989,8 @@ mimestream:
 
 // recheck the url after a redirect
 		if (redirect_count && g->pg_ok &&
-		    (mt = findMimeByURL(g->urlcopy)) &&
-		    !(mt->no_url | mt->down_url)) {
+		    (cf->mt = mt = findMimeByURL(g->urlcopy, &sxfirst)) &&
+		    !(mt->from_file | mt->down_url)) {
 			curl_easy_cleanup(h);
 			goto mimestream;
 		}
@@ -1019,8 +1025,7 @@ So this is a simple workaround.
 			curlret = CURLE_OK;
 
 		if (g->down_state == 6) {
-// Header is indicated a plugin, by it content-type,
-// or by the suffix on content-disposition.
+// Header has indicated a plugin by content type or protocol or suffix.
 			curl_easy_cleanup(h);
 			goto mimestream;
 		}
@@ -1275,27 +1280,6 @@ curl_fail:
 	    (g->code == 201 && debugLevel >= 3))
 		i_printf(MSG_HTTPError,
 			 g->code, message_for_response_code(g->code));
-
-// We have data, is there a processing plugin to run here?
-#if 0
-	if (g->pg_ok) {
-		if (g->cdfn)
-			mt = findMimeByFile(g->cdfn);
-		else
-			mt = findMimeByURL(g->urlcopy);
-		if (mt && mt->outtype && mt->down_url && !mt->no_url) {
-// this call should replace the data
-			if (g->cdfn)
-				runPluginCommand(mt, 0, g->cdfn, g->buffer,
-						 g->length, &g->buffer,
-						 &g->length);
-			else
-				runPluginCommand(mt, g->urlcopy, 0, g->buffer,
-						 g->length, &g->buffer,
-						 &g->length);
-		}
-	}
-#endif
 
 	if (name_changed)
 		g->cfn = g->urlcopy;
@@ -2245,14 +2229,14 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb,
 	scan_http_headers(g, true);
 	mt = cf->mt;
 
-// a playable mime type causes a download interrupt
-	if (g->pg_ok && mt && !(mt->down_url | mt->no_url)) {
+// a from-the-web mime type causes a download interrupt
+	if (g->pg_ok && mt && !(mt->down_url | mt->from_file)) {
 		g->down_state = 6;
 		return -1;
 	}
 
 	if (g->down_ok && g->down_state == 0 &&
-	    !(mt && g->pg_ok && mt->down_url && !mt->no_url) &&
+	    !(mt && g->pg_ok && mt->down_url && !mt->from_file) &&
 	    g->content[0] && !memEqualCI(g->content, "text/", 5) &&
 	    !memEqualCI(g->content, "application/xhtml+xml", 21)) {
 		g->down_state = 1;

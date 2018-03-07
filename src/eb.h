@@ -251,7 +251,7 @@ struct MIMETYPE {
 	char *urlmatch;
 	char *content;
 	char outtype;
-	bool down_url, no_url;
+	bool down_url, from_file;
 };
 extern struct MIMETYPE mimetypes[];
 extern int maxMime;		/* how many mime types specified */
@@ -375,6 +375,9 @@ struct ebFrame {
 	char *fileName;		/* name of file or url */
 	char *firstURL;		/* before http redirection */
 	char *hbase; /* base for href references */
+	bool render1; // rendered via protocol or urlmatch
+	bool render2; // rendered via suffix
+	bool render1b;
 	bool baseset; // <base> tag has been seen
 	bool uriEncoded; // filename is url encoded
 	char *dw;		/* document.write string */

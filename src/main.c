@@ -712,8 +712,9 @@ int main(int argc, char **argv)
 
 		if (autobrowse) {
 			const struct MIMETYPE *mt;
+			bool sxfirst = false;
 			if (isURL(file))
-				mt = findMimeByURL(file);
+				mt = findMimeByURL(file, &sxfirst);
 			else
 				mt = findMimeByFile(file);
 			if (mt && !mt->outtype)
@@ -1658,8 +1659,8 @@ nokeyword:
 			continue;
 		}
 
-		if (stringEqual(s, "no_url") && mimeblock == 1) {
-			mt->no_url = true;
+		if (stringEqual(s, "from_file") && mimeblock == 1) {
+			mt->from_file = true;
 			continue;
 		}
 		if (stringEqual(s, "down_url") && mimeblock == 1) {

@@ -1708,6 +1708,30 @@ static bool readFile(const char *filename, const char *post, bool newbuf,
 			return true;
 		}
 
+		if (cf->mt && cf->mt->outtype &&
+		    pluginsOn &&
+		    (g.code == 200 || g.code == 201) &&
+		    !cf->render1 && cmd == 'b' && newbuf) {
+			bool sxfirst = false;
+			rc = runPluginCommand(cf->mt, filename, 0,
+					      rbuf, readSize, &rbuf, &readSize);
+			if (!rc) {
+				nzFree(rbuf);
+				fileSize = -1;
+				return false;
+			}
+			cf->render1 = true;
+// we have to look again, to see if it matched by suffix.
+// This call should always succeed.
+			if (findMimeByURL(cf->fileName, &sxfirst) && sxfirst)
+				cf->render2 = true;
+// browse command ran the plugin, but if it generates text,
+// then there's no need to browse the result.
+			if (cf->mt->outtype == 't')
+				cmd = 'e';
+			fileSize = readSize;
+		}
+
 		goto gotdata;
 	}
 
@@ -1765,6 +1789,7 @@ fromdisk:
 	    && cmd == 'b' && newbuf) {
 		rc = runPluginCommand(cf->mt, 0, filename, 0, 0, &rbuf,
 				      &fileSize);
+		cf->render1 = cf->render2 = true;
 // browse command ran the plugin, but if it generates text,
 // then there's no need to browse the result.
 		if (cf->mt->outtype == 't')
@@ -3889,6 +3914,9 @@ pwd:
 		undoCompare();
 		cw->undoable = false;
 		cw->browseMode = false;
+		cf->render2 = false;
+		if (cf->render1b)
+			cf->render1 = cf->render1b = false;
 		if (ub) {
 			debrowseSuffix(cf->fileName);
 			cw->nlMode = cw->rnlMode;
@@ -4621,7 +4649,6 @@ bool runCommand(const char *line)
 	const struct htmlTag *tag = NULL;	/* event variables */
 	bool nogo = true, rc = true;
 	bool postSpace = false, didRange = false;
-	bool didread = false;
 	char first;
 	int cx = 0;		/* numeric suffix as in s/x/y/3 or w2 */
 	int tagno;
@@ -5684,7 +5711,6 @@ we have to make sure it has a protocol. Every url needs a protocol.
 			if (icmd == 'g' && !nogo && isURL(line))
 				debugPrint(2, "*%s", line);
 			j = readFile(line, emptyString, (cmd != 'r'), thisfile);
-			didread = true;
 		}
 		w->undoable = w->changeMode = false;
 		cw = cs->lw;	/* put it back, for now */
@@ -5741,10 +5767,6 @@ browse:
 			return false;
 		}
 		if (!cw->browseMode) {
-			if (cw->binMode && (!cf->mt || !cf->mt->outtype)) {
-				setError(MSG_BrowseBinary);
-				return false;
-			}
 			if (!cw->dol) {
 				setError(MSG_BrowseEmpty);
 				return false;
@@ -5753,10 +5775,7 @@ browse:
 				debugPrint(1, "%d", fileSize);
 				fileSize = -1;
 			}
-// If we read the data, from internet or a local file,
-// the processing plugin has already been run.
-// Don't run it again.
-			if (!browseCurrentBuffer(!didread)) {
+			if (!browseCurrentBuffer()) {
 				if (icmd == 'b')
 					return false;
 				return true;
@@ -5906,7 +5925,6 @@ afterdelete:
 				line = newline;
 			}
 			j = readFile(line, emptyString, (cmd != 'r'), 0);
-			didread = true;
 			if (!serverData)
 				fileSize = -1;
 			return j;
@@ -6001,18 +6019,38 @@ void freeEmptySideBuffer(int n)
 	cxQuit(n, 3);
 }				/* freeEmptySideBuffer */
 
-bool browseCurrentBuffer(bool doplug)
+bool browseCurrentBuffer(void)
 {
 	char *rawbuf, *newbuf, *tbuf;
 	int rawsize, tlen, j;
 	bool rc, remote;
+	bool sxfirst = true;
 	bool save_ch = cw->changeMode;
 	uchar bmode = 0;
+	const struct MIMETYPE *mt = 0;
 
 	remote = isURL(cf->fileName);
 
-	if (cf->mt && cf->mt->outtype && doplug)
-		bmode = 3;
+	if (!cf->render2 && cf->fileName) {
+		if (remote)
+			mt = findMimeByURL(cf->fileName, &sxfirst);
+		else
+			mt = findMimeByFile(cf->fileName);
+	}
+
+	if (mt && mt->outtype && !mt->from_file) {
+		if (cf->render1 && mt == cf->mt)
+			cf->render2 = true;
+		else
+			bmode = 3;
+	}
+
+	if (!bmode && cw->binMode) {
+		setError(MSG_BrowseBinary);
+		return false;
+	}
+
+	if (bmode) ;		// ok
 	else
 /* A mail message often contains lots of html tags,
  * so we need to check for email headers first. */
@@ -6025,23 +6063,22 @@ bool browseCurrentBuffer(bool doplug)
 		return false;
 	}
 
-	rawbuf = NULL;
-	rawsize = 0;
-	if (bmode != 3 || remote || access(cf->fileName, 4)) {
-		if (!unfoldBuffer(context, false, &rawbuf, &rawsize))
-			return false;	/* should never happen */
-	}
+	if (!unfoldBuffer(context, false, &rawbuf, &rawsize))
+		return false;	/* should never happen */
 
 	if (bmode == 3) {
 /* convert raw text via a plugin */
-		if (isURL(cf->fileName))
-			rc = runPluginCommand(cf->mt, cf->fileName, 0, rawbuf,
+		if (remote)
+			rc = runPluginCommand(mt, cf->fileName, 0, rawbuf,
 					      rawsize, &rawbuf, &rawsize);
 		else
-			rc = runPluginCommand(cf->mt, 0, cf->fileName, rawbuf,
+			rc = runPluginCommand(mt, 0, cf->fileName, rawbuf,
 					      rawsize, &rawbuf, &rawsize);
 		if (!rc)
 			return false;
+		if (!cf->render1)
+			cf->render1b = true;
+		cf->render1 = cf->render2 = true;
 		iuReformat(rawbuf, rawsize, &tbuf, &tlen);
 		if (tbuf) {
 			nzFree(rawbuf);
@@ -6050,7 +6087,7 @@ bool browseCurrentBuffer(bool doplug)
 		}
 /* make it look like remote html, so we don't get a lot of errors printed */
 		remote = true;
-		bmode = (cf->mt->outtype == 'h' ? 2 : 0);
+		bmode = (mt->outtype == 'h' ? 2 : 0);
 		if (!allowRedirection)
 			bmode = 0;
 	}

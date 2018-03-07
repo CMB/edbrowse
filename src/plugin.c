@@ -131,21 +131,25 @@ const struct MIMETYPE *findMimeByProtocol(const char *prot)
 }				/* findMimeByProtocol */
 
 // look for match on protocol, suffix, or url string
-const struct MIMETYPE *findMimeByURL(const char *url)
+const struct MIMETYPE *findMimeByURL(const char *url, bool * sxfirst)
 {
 	const char *prot, *suffix;
 	const struct MIMETYPE *mt, *m;
 	int i, j, l, url_length;
 	char *s, *t;
 
-// protocol first, it seems higher precedence.
-	if ((prot = getProtURL(url)) && (mt = findMimeByProtocol(prot)))
-		return mt;
+// protocol first, unless sxfirst is set.
+	if (*sxfirst) {
+		if ((suffix = url2suffix(url))
+		    && (mt = findMimeBySuffix(suffix)))
+			return mt;
+	}
 
-	if ((suffix = url2suffix(url)) && (mt = findMimeBySuffix(suffix)))
+	if ((prot = getProtURL(url)) && (mt = findMimeByProtocol(prot))) {
 		return mt;
+		*sxfirst = false;
+	}
 
-/* not by protocol or suffix, let's look for a url match */
 	url_length = strlen(url);
 	m = mimetypes;
 	for (i = 0; i < maxMime; ++i, ++m) {
@@ -159,13 +163,23 @@ const struct MIMETYPE *findMimeByURL(const char *url)
 			l = t - s;
 			if (l && l <= url_length) {
 				for (j = 0; j + l <= url_length; ++j) {
-					if (memEqualCI(s, url + j, l))
+					if (memEqualCI(s, url + j, l)) {
+						*sxfirst = false;
 						return m;
+					}
 				}
 			}
 			if (*t)
 				++t;
 			s = t;
+		}
+	}
+
+	if (!*sxfirst) {
+		if ((suffix = url2suffix(url))
+		    && (mt = findMimeBySuffix(suffix))) {
+			*sxfirst = true;
+			return mt;
 		}
 	}
 
@@ -204,6 +218,54 @@ const struct MIMETYPE *findMimeByContent(const char *content)
 
 	return NULL;
 }				/* findMimeByContent */
+
+/*********************************************************************
+Notes on where and why runPluginCommand is run.
+
+The pb (play buffer) command, if the file has a plugin for playing, not rendering.
+.xxx will overrule all of this.
+As you would imagine, this runs through playBuffer() below.
+
+g in directory mode if the file is playable, also goes through playBuffer().
+
+If a new buffer, not an r command or fetching javascript
+in the background or some such, then httpConnect sets the plugin cf->mt,
+if such can be determine from protocol or content type or suffix.
+If this plugin is url allowed, and does not require url download,
+then run the plugin. Set cf->render if it's a rendering plugin.
+If rendered by suffix, then so indicate, but I've never seen this happen.
+Music players can take a url, converters not.
+pdftohtml for instance, doesn't take a url,
+you have to download the data from the internet,
+whence this plugin does not run, at least not yet, not from httpConnect.
+
+When browsing a new buffer, b whatever, and it's a local file,
+in readFile() in buffers.c, set cf->mt by suffix, and if it's rendering,
+call the plugin so we don't have to pull the entire file into memory,
+just the output of the plugin's converter.
+Change b to e if the output is text, cause there's no html to browse.
+This rendering will always be by suffix, there is no protocol or content type.
+Mark it accordingly.
+
+If we're browsing a new buffer, and httpConnect hasn't already rendered,
+and http code is 200 or 201,
+and cf->mt indicates render, then do so in readFile().
+Mark as rendered by url or by suffix.
+Again, if outtype is t then we can change b to e.
+
+In browseCurrentBuffer():
+If this has not yet been rendered by suffix,
+and you can find a plugin by suffix,
+and it renders,
+and it's different from the attached plugin,
+then render it now. Set render2.
+Why does it have to be different?
+Look at pdf.
+httpConnect might find it by content = application/pdf.
+That's not by suffix, so render2 is not set.
+Here we are and we find it by suffix, but it's the same plugin,
+so don't render it again.
+*********************************************************************/
 
 bool runPluginCommand(const struct MIMETYPE * m,
 		      const char *inurl, const char *infile, const char *indata,
@@ -353,8 +415,9 @@ fail:
 * 0 error, 1 success, 2 not a play buffer command */
 int playBuffer(const char *line, const char *playfile)
 {
-	const struct MIMETYPE *mt = cf->mt;
-	const char *suffix;
+	const struct MIMETYPE *mt = 0;
+	const char *suffix = NULL;
+	bool rc;
 	char c = line[2];
 	if (c && c != '.')
 		return 2;
@@ -362,13 +425,18 @@ int playBuffer(const char *line, const char *playfile)
 	if (playfile) {
 /* play the file passed in */
 		mt = findMimeByFile(playfile);
+// We wouldn't be here unless the file was playable,
+// so this check and error return isn't really necessary.
+#if 0
 		if (!mt || mt->outtype) {
 			suffix = file2suffix(playfile);
 			if (!suffix)
-				suffix = "?";
-			setError(MSG_SuffixBad, suffix);
+				setError(MSG_NoSuffix);
+			else
+				setError(MSG_SuffixBad, suffix);
 			return 0;
 		}
+#endif
 		return runPluginCommand(mt, 0, playfile, 0, 0, 0, 0);
 	}
 
@@ -384,27 +452,36 @@ int playBuffer(const char *line, const char *playfile)
 		setError(MSG_AudioDB);
 		return 0;
 	}
-	if (cw->dirMode && !playfile) {
+	if (cw->dirMode) {
 		setError(MSG_AudioDir);
 		return 0;
 	}
 
 	if (c) {
-		mt = findMimeBySuffix(line + 3);
-		if (!mt || mt->outtype) {
-			setError(MSG_SuffixBad, line + 3);
+		char *buf;
+		int buflen;
+		suffix = line + 3;
+		mt = findMimeBySuffix(suffix);
+		if (!mt) {
+			setError(MSG_SuffixBad, suffix);
 			return 0;
 		}
+// If you had to specify suffix then we have to run from the buffer.
+		if (!unfoldBuffer(context, false, &buf, &buflen))
+			return 0;
+		rc = runPluginCommand(mt, 0, line, buf, buflen, 0, 0);
+		nzFree(buf);
+		return rc;
 	}
 
-	suffix = NULL;
 	if (!mt && cf->fileName) {
 		if (isURL(cf->fileName)) {
+			bool sxfirst = true;
 			suffix = url2suffix(cf->fileName);
-			cf->mt = mt = findMimeByURL(cf->fileName);
+			mt = findMimeByURL(cf->fileName, &sxfirst);
 		} else {
 			suffix = file2suffix(cf->fileName);
-			cf->mt = mt = findMimeByFile(cf->fileName);
+			mt = findMimeByFile(cf->fileName);
 		}
 	}
 	if (!mt || mt->outtype) {
@@ -415,17 +492,9 @@ int playBuffer(const char *line, const char *playfile)
 		return 0;
 	}
 
-	if (cf->fileName) {
-		if (isURL(cf->fileName))
-			return runPluginCommand(mt, cf->fileName, 0, 0, 0, 0,
-						0);
-		else
-			return runPluginCommand(mt, 0, cf->fileName, 0, 0, 0,
-						0);
-	}
-// buffer has no name.
-// I could unfold it into a string and pass it to runPluginCommand that way,
-// but this just never happens, so I don't care.
-	setError(MSG_NoSuffix);
-	return 0;
+	if (isURL(cf->fileName))
+		rc = runPluginCommand(mt, cf->fileName, 0, 0, 0, 0, 0);
+	else
+		rc = runPluginCommand(mt, 0, cf->fileName, 0, 0, 0, 0);
+	return rc;
 }

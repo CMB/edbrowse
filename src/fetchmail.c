@@ -1298,7 +1298,7 @@ static char presentMail(void)
 			showErrorAbort();
 	}
 
-	browseCurrentBuffer(false);
+	browseCurrentBuffer();
 
 	if (!passMail) {
 		redirect = mailRedirect(lastMailInfo->to,

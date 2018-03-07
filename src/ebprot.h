@@ -26,7 +26,7 @@ bool runCommand(const char *line) ;
 bool edbrowseCommand(const char *line, bool script) ;
 int sideBuffer(int cx, const char *text, int textlen, const char *bufname);
 void freeEmptySideBuffer(int n);
-bool browseCurrentBuffer(bool doplug) ;
+bool browseCurrentBuffer(void) ;
 bool locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p);
 char *getFieldFromBuffer(int tagno);
 int fieldIsChecked(int tagno);
@@ -220,7 +220,7 @@ void readConfigFile(void);
 
 /* sourcefile=plugin.c */
 const struct MIMETYPE *findMimeBySuffix(const char *suffix);
-const struct MIMETYPE *findMimeByURL(const char *url);
+const struct MIMETYPE *findMimeByURL(const char *url, bool *sxfirst);
 const struct MIMETYPE *findMimeByFile(const char *filename);
 const struct MIMETYPE *findMimeByContent(const char *content);
 const struct MIMETYPE *findMimeByProtocol(const char *prot);
