@@ -1047,7 +1047,7 @@ If there is a leading byte order mark as per the previous routine, it's text.
 
 bool looksBinary(const uchar * buf, int buflen)
 {
-	int i, j, bincount = 0, charcount = 0;
+	int i, j, bincount = 0, charcount = 0, nullcount = 0;
 	uchar c;
 	uchar seed;
 
@@ -1057,8 +1057,10 @@ bool looksBinary(const uchar * buf, int buflen)
 	for (i = 0; i < buflen; ++i, ++charcount) {
 		c = buf[i];
 // 0 is ascii, but not really text, and very common in binary files.
-		if (c == 0)
-			++bincount;
+		if (c == 0) {
+			if (++nullcount >= 10)
+				return true;
+		}
 		if (c < 0x80)
 			continue;
 // could represent a utf8 character
@@ -1076,7 +1078,7 @@ binchar:
 		if (seed & 0x80)
 			goto binchar;
 // this is valid utf8 char, don't treat it as binary.
-		i += j;
+		i += j - 1;
 	}
 
 	return (bincount * 8 - 16 >= charcount);
