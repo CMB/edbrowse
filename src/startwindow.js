@@ -2006,6 +2006,36 @@ s.data = escodegen.generate(esprima.parse(s.data));
 s.expanded = true;
 }
 
+// Watch for an undefined variable in the running javascript.
+// If it tries to call foo.getAttribute() or some such,
+// push foo and a sequence number onto the $uv stack.
+mw0.eb$watch = function(s)
+{
+if(! s instanceof Script) return;
+if(! s.data) return;
+var w = my$win();
+var v = w.$uv$watch;
+if(!v) return; // should never happen
+// Build the regular expression with v folded in.
+// It's a string, so every \ has to be doubled.
+var r = RegExp("([\\w.\\[\\]]+)\\." + v + "( *[.(\\[])", "g");
+// functio nfor the right hand side
+function rhs(all, pre, post) {
+var w = my$win();
+var sn = w.$uv$sn;
+++sn;
+w.$uv$sn = sn;
+return "((" + pre + "." + v + "||mw0.eb$watch2(" + pre + "," + sn + "))," + pre +"." + v + ")" + post;
+}
+s.data = s.data.replace(r, rhs); // boom!
+}
+
+mw0.eb$watch2 = function(p, sn)
+{
+var w = my$win();
+w.$uv.push({parent:p, sn:sn});
+}
+
 } // master compile
 
 URL = mw0.URL;
@@ -2088,6 +2118,9 @@ return mw0.eb$gebtn(document.body, s.toLowerCase());
 Option = mw0.Option;
 XMLHttpRequest = mw0.XMLHttpRequest;
 eb$demin = mw0.eb$demin;
+eb$watch = mw0.eb$watch;
+$uv = [];
+$uv$sn = 0;
 eb$uplift = mw0.eb$uplift;
 
 document.getElementsByTagName = mw0.getElementsByTagName;

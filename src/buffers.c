@@ -3650,6 +3650,20 @@ static int twoLetter(const char *line, const char **runThis)
 		return true;
 	}
 
+	if (!strncmp(line, "uvw", 3)) {
+		const char *s = line + 3;
+		if (*s && *s != ' ')
+			return 2;
+		nzFree(uvw);
+		uvw = 0;
+		if (!*s)
+			return 1;
+		for (++s; *s == ' '; ++s) ;
+		if (*s)
+			uvw = cloneString(s);
+		return 1;
+	}
+
 	if (stringEqual(line, "bw")) {
 		cw->changeMode = false;
 		cw->quitMode = true;

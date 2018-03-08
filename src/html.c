@@ -608,6 +608,8 @@ static void prepareScript(struct htmlTag *t)
 // deminimize the code if we're debugging.
 	if (demin)
 		run_function_onearg(cf->winobj, "eb$demin", t->jv);
+	if (uvw)
+		run_function_onearg(cf->winobj, "eb$watch", t->jv);
 }				/* prepareScript */
 
 /*********************************************************************

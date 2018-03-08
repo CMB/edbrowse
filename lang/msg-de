@@ -451,9 +451,9 @@ Zeilen %d bis %d und %d aktualisiert\n
 Zeilen %d und %d gelöscht\n
 Zeilen %d und %d bis %d gelöscht\n
 Zeilen %d bis %d und %d gelöscht\n
-0
-0
-0
+Plugin muss von einer lokalen Datei gestartet werden
+das Plugin ist ein Konverter, kein Player
+das Plugin ist ein Player, kein Konverter
 0
 0
 0
@@ -561,15 +561,15 @@ keine neue Zeile in Verzeichnis %s
 kein abschließendes >-Zeichen in Zeile %d
 fieldInBuffer konnte Tag %d nicht finden, newtext %s
 kann Cookie-Datei %s nicht erneut schreiben
-0
+umgekehrt 
 Fetchmail-Client ist interaktiv und kann nicht im Hintergrund laufen
 Emailverzeichnis nicht in .ebrc-Datei angegeben
 kann nicht in Verzeichnis %s wechseln
 0
 Ungültiger Login oder Passwort
-0
-0
-0
+sortiere alphabetisch
+sortiere nach Größe
+sortiere nach Zeit
 0
 0
 Tag-Code %d wird von ungültigem Zeichen %c gefolgt

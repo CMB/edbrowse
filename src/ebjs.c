@@ -797,6 +797,8 @@ void setupJavaDom(void)
 		set_property_bool(cf->winobj, "eventDebug", true);
 	if (debugThrow)
 		set_property_bool(cf->winobj, "throwDebug", true);
+	if (uvw)
+		set_property_string(cf->winobj, "$uv$watch", uvw);
 }				/* setupJavaDom */
 
 /* Get the url from a url object, special wrapper.

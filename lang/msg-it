@@ -451,9 +451,9 @@ le righe da %d fino a %d e %d sono state aggiornate\n
 le righe %d e %d sono state eliminate\n
 le righe %d e %d fino a %d sono state eliminate\n
 le righe da %d fino a %d e %d sono state eliminate\n
-0
-0
-0
+il plugin deve essere eseguito su un file locale
+il plugin è un convertitore, non un player
+il plugin è un player, non n convertitore
 0
 0
 0
