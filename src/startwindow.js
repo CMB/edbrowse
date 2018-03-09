@@ -782,13 +782,40 @@ this.close = eb$voidfunction;
 // but my stubs for frames needs it.
 mw0.Document = function(){}
 
+mw0.CSSStyleSheet = function() {
+this.cssRules = [];
+}
+mw0.CSSStyleSheet.prototype.insertRule = function(r, idx)
+{
+var list = this.cssRules;
+(typeof idx == "number" && idx >= 0 && idx <= list.length || (idx = 0));
+if(idx == list.length)
+list.push(r);
+else
+list.splice(idx, 0, r);
+// There may be side effects here, I don't know.
+// For now I just want the method to exist so js will march on.
+}
+mw0.CSSStyleSheet.prototype.addRule = function(sel, r, idx)
+{
+var list = this.cssRules;
+  alert("pre " + idx);
+(typeof idx == "number" && idx >= 0 && idx <= list.length || (idx = list.length));
+  alert("post " + idx);
+r = sel + "{" + r + "}";
+if(idx == list.length)
+list.push(r);
+else
+list.splice(idx, 0, r);
+}
+
 mw0.CSSStyleDeclaration = function(){
         this.element = null;
         this.style = this;
 	 this.attributes = [];
+this.sheet = new mw0.CSSStyleSheet;
 };
 mw0.CSSStyleDeclaration.prototype.toString = function() { return "style object"; }
-
 mw0.CSSStyleDeclaration.prototype.getPropertyValue = function(p) {
                 if (this[p] == undefined)                
                         this[p] = "";
@@ -1539,7 +1566,8 @@ var cnlist = ["HtmlObj", "Head", "Body", "CSSStyleDeclaration", "Frame",
 "Span", "Trow", "Cell", "P", "Script", "Header", "Footer",
 // The following nodes shouldn't have any children, but the various
 // children methods could be called on them anyways.
-"Area", "TextNode", "Image", "Option", "Link", "Meta", "Audio"];
+// And getAttribute applies to just about everything.
+"Area", "TextNode", "Image", "Option", "Link", "Meta", "Audio", "Canvas"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i];
 var c = mw0[cn];
@@ -2069,6 +2097,7 @@ Audio = mw0.Audio;
 Canvas = mw0.Canvas;
 AudioContext = mw0.AudioContext;
 Document = mw0.Document;
+CSSStyleSheet = mw0.CSSStyleSheet;
 CSSStyleDeclaration = mw0.CSSStyleDeclaration;
 // pages seem to want document.style to exist
 document.style = new CSSStyleDeclaration;
