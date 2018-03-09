@@ -94,6 +94,17 @@ static char *url2suffix(const char *url)
 {
 	static char suffix[12];
 	const char *post, *s;
+// Need to skip past protocol and host, suffix should not be the suffix on the host.
+	s = strstr(url, "://");
+	if (!s)			// should never happen
+		s = url;
+	else
+		s += 3;
+	s = strchr(s, '/');
+	if (!s)
+		return 0;
+	url = s + 1;		// start here
+// lop off post data, get data, hash
 	post = url + strcspn(url, "?\1");
 	for (s = post - 1; s >= url && *s != '.' && *s != '/'; --s) ;
 	if (s < url || *s != '.')
