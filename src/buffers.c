@@ -1674,6 +1674,7 @@ static bool readFile(const char *filename, const char *post, bool newbuf,
 	}
 
 	if (isURL(filename)) {
+		const char *newfile;
 		const struct MIMETYPE *mt;
 		uchar sxfirst;
 		struct i_get g;
@@ -1711,6 +1712,8 @@ static bool readFile(const char *filename, const char *post, bool newbuf,
  * like 404 file not found, but it's still worth continuing. */
 		rbuf = serverData;
 		fileSize = readSize = serverDataLen;
+		if (g.code != 200 && g.code != 210)
+			cf->render1 = cf->render2 = true;
 
 		if (fileSize == 0) {	/* empty file */
 			nzFree(rbuf);
@@ -1719,12 +1722,11 @@ static bool readFile(const char *filename, const char *post, bool newbuf,
 			return true;
 		}
 
+		newfile = (changeFileName ? changeFileName : filename);
 		if (cf->mt && cf->mt->outtype &&
-		    pluginsOn &&
-		    (g.code == 200 || g.code == 201) &&
-		    !cf->render1 && cmd == 'b' && newbuf) {
+		    pluginsOn && !cf->render1 && cmd == 'b' && newbuf) {
 			sxfirst = 0;
-			rc = runPluginCommand(cf->mt, filename, 0,
+			rc = runPluginCommand(cf->mt, newfile, 0,
 					      rbuf, readSize, &rbuf, &readSize);
 			if (!rc) {
 				nzFree(rbuf);
@@ -1754,11 +1756,11 @@ Again the data is in buffer and we need to play it here.
 *********************************************************************/
 
 		sxfirst = 1;
-		mt = findMimeByURL(filename, &sxfirst);
+		mt = findMimeByURL(newfile, &sxfirst);
 		if (mt && !mt->outtype && sxfirst &&
-		    pluginsOn &&
-		    (g.code == 200 || g.code == 201) && cmd == 'b' && newbuf) {
-			rc = runPluginCommand(mt, filename, 0,
+		    pluginsOn && (g.code == 200 || g.code == 201) &&
+		    cmd == 'b' && newbuf) {
+			rc = runPluginCommand(mt, newfile, 0,
 					      rbuf, readSize, 0, 0);
 // rbuf has been freed by this command even if it didn't succeed.
 			serverData = NULL;
