@@ -46,7 +46,7 @@ static bool makeTempFilename(const char *suffix, int idx, bool output)
 
 static int tempIndex;
 
-const struct MIMETYPE *findMimeBySuffix(const char *suffix)
+static const struct MIMETYPE *findMimeBySuffix(const char *suffix)
 {
 	int i;
 	int len = strlen(suffix);
@@ -94,16 +94,31 @@ static char *url2suffix(const char *url)
 {
 	static char suffix[12];
 	const char *post, *s;
-// Need to skip past protocol and host, suffix should not be the suffix on the host.
-	s = strstr(url, "://");
-	if (!s)			// should never happen
-		s = url;
-	else
-		s += 3;
-	s = strchr(s, '/');
-	if (!s)
-		return 0;
-	url = s + 1;		// start here
+
+/*********************************************************************
+We need to skip past protocol and host, suffix should not be the suffix on the host.
+Example http://foo.bar.mobi when you have a suffix = mobi plugin.
+But the urls we create for our own purposes don't look like protocol://host/file
+They are what I call free_syntax in url.c.
+See the plugins and protocols for zip files in the edbrowse wiki.
+So I only run this check for the 3 recognized transport protocols
+that might bring data into the edbrowse buffer.
+The various ftp protocols all download data to files
+and don't run plugins at all. We don't have to check for those.
+*********************************************************************/
+
+	if (memEqualCI(url, "http:/", 6) ||
+	    memEqualCI(url, "https:/", 7) || memEqualCI(url, "gopher:/", 8)) {
+		s = strstr(url, "://");
+		if (!s)		// should never happen
+			s = url;
+		else
+			s += 3;
+		s = strchr(s, '/');
+		if (!s)
+			return 0;
+		url = s + 1;	// start here
+	}
 // lop off post data, get data, hash
 	post = url + strcspn(url, "?\1");
 	for (s = post - 1; s >= url && *s != '.' && *s != '/'; --s) ;
@@ -117,7 +132,7 @@ static char *url2suffix(const char *url)
 	return suffix;
 }
 
-const struct MIMETYPE *findMimeByProtocol(const char *prot)
+static const struct MIMETYPE *findMimeByProtocol(const char *prot)
 {
 	int i;
 	int len = strlen(prot);
@@ -142,24 +157,27 @@ const struct MIMETYPE *findMimeByProtocol(const char *prot)
 }				/* findMimeByProtocol */
 
 // look for match on protocol, suffix, or url string
-const struct MIMETYPE *findMimeByURL(const char *url, bool * sxfirst)
+const struct MIMETYPE *findMimeByURL(const char *url, uchar * sxfirst)
 {
 	const char *prot, *suffix;
 	const struct MIMETYPE *mt, *m;
 	int i, j, l, url_length;
 	char *s, *t;
 
-// protocol first, unless sxfirst is set.
-	if (*sxfirst) {
+// protocol first, unless sxfirst is 1, then suffix first.
+// If sxfirst = 2 then protocol only.
+	if (*sxfirst == 1) {
 		if ((suffix = url2suffix(url))
 		    && (mt = findMimeBySuffix(suffix)))
 			return mt;
 	}
 
 	if ((prot = getProtURL(url)) && (mt = findMimeByProtocol(prot))) {
+		*sxfirst = 0;
 		return mt;
-		*sxfirst = false;
 	}
+	if (*sxfirst == 2)
+		return 0;
 
 	url_length = strlen(url);
 	m = mimetypes;
@@ -175,7 +193,7 @@ const struct MIMETYPE *findMimeByURL(const char *url, bool * sxfirst)
 			if (l && l <= url_length) {
 				for (j = 0; j + l <= url_length; ++j) {
 					if (memEqualCI(s, url + j, l)) {
-						*sxfirst = false;
+						*sxfirst = 0;
 						return m;
 					}
 				}
@@ -189,7 +207,7 @@ const struct MIMETYPE *findMimeByURL(const char *url, bool * sxfirst)
 	if (!*sxfirst) {
 		if ((suffix = url2suffix(url))
 		    && (mt = findMimeBySuffix(suffix))) {
-			*sxfirst = true;
+			*sxfirst = 1;
 			return mt;
 		}
 	}
@@ -233,22 +251,30 @@ const struct MIMETYPE *findMimeByContent(const char *content)
 /*********************************************************************
 Notes on where and why runPluginCommand is run.
 
-The pb (play buffer) command, if the file has a plugin for playing, not rendering.
-.xxx will overrule all of this.
+The pb (play buffer) command,
+if the file has a suffix plugin for playing, not rendering.
+.xxx will overrule the suffix.
 As you would imagine, this runs through playBuffer() below.
+If you override with .xxx I spin the buffer data out to a temp file.
+I assume this is necessary, as the player would not accept the file
+with its current suffix or filename, or you downloaded it
+from the internet or some other source.
 
 g in directory mode if the file is playable, also goes through playBuffer().
 
-If a new buffer, not an r command or fetching javascript
-in the background or some such, then httpConnect sets the plugin cf->mt,
+If a new buffer, (not an r command or fetching javascript
+in the background or some such),
+or if the match is on protocol and the plugin is a converter,
+(whence the plugin is necessary just to get the data),
+then httpConnect sets the plugin cf->mt,
 if such can be determine from protocol or content type or suffix.
 If this plugin is url allowed, and does not require url download,
-then run the plugin. Set cf->render if it's a rendering plugin.
+then run the plugin. Set cf->render1 if it's a rendering plugin.
 If rendered by suffix, then so indicate, but I've never seen this happen.
 Music players can take a url, converters not.
 pdftohtml for instance, doesn't take a url,
 you have to download the data from the internet,
-whence this plugin does not run, at least not yet, not from httpConnect.
+whence this plugin does not run, at least not here, not from httpConnect.
 
 When browsing a new buffer, b whatever, and it's a local file,
 in readFile() in buffers.c, set cf->mt by suffix, and if it's rendering,
@@ -262,16 +288,22 @@ If we're browsing a new buffer, and httpConnect hasn't already rendered,
 and http code is 200 or 201,
 and cf->mt indicates render, then do so in readFile().
 Mark as rendered by url or by suffix.
-Again, if outtype is t then we can change b to e.
+Again, if outtype is t then change b to e.
+
+If we're browsing a new buffer, and http code is 200 or 201,
+and suffix indicates play, then do so in readFile().
+Return nothing, so we don't push a new buffer.
+
+If we're browsing a new buffer, and a suffix plugin would render,
+but plugins are inactive, change b to e so we don't go through browseCurrentBuffer().
 
 In browseCurrentBuffer():
-If this has not yet been rendered by suffix,
+If this has not yet been rendered via suffix,
 and you can find a plugin by suffix,
 and it renders,
 and it's different from the attached plugin,
 then render it now. Set render2.
-Why does it have to be different?
-Look at pdf.
+Why does it have to be different? Look at pdf.
 httpConnect might find it by content = application/pdf.
 That's not by suffix, so render2 is not set.
 Here we are and we find it by suffix, but it's the same plugin,
@@ -299,11 +331,15 @@ bool runPluginCommand(const struct MIMETYPE * m,
 		else
 			suffix = url2suffix(inurl);
 		++tempIndex;
-		if (!makeTempFilename(suffix, tempIndex, false))
+		if (!makeTempFilename(suffix, tempIndex, false)) {
+			cnzFree(indata);
 			return false;
+		}
 		if (!memoryOutToFile(tempin, indata, inlength,
-				     MSG_TempNoCreate2, MSG_NoWrite2))
+				     MSG_TempNoCreate2, MSG_NoWrite2)) {
+			cnzFree(indata);
 			return false;
+		}
 		infile = tempin;
 	} else if (inurl)
 		infile = inurl;
@@ -316,8 +352,10 @@ bool runPluginCommand(const struct MIMETYPE * m,
 	if (m->outtype == 'h')
 		suffix = "html";
 	if (!makeTempFilename(suffix, tempIndex, true)) {
-		if (indata)
+		if (indata) {
+			cnzFree(indata);
 			unlink(tempin);
+		}
 		return false;
 	}
 	outfile = tempout;
@@ -362,11 +400,13 @@ bool runPluginCommand(const struct MIMETYPE * m,
 	}
 	*t = 0;
 
-// if there is no output, or the program has %o, then just run it,
-// otherwise we have to send its output over to outdata,
-// which should be present.
-// There's no popen on windows, so here is a unix only
-// fragment to use popen, which can be more efficient.
+/*********************************************************************
+if there is no output, or the program has %o, then just run it,
+otherwise we have to send its output over to outdata,
+which should be present.
+There's no popen on windows, so here is a unix only
+fragment to use popen, which can be more efficient.
+*********************************************************************/
 
 #ifndef DOSLIKE
 	if (m->outtype && !has_o) {
@@ -382,7 +422,6 @@ bool runPluginCommand(const struct MIMETYPE * m,
 		fclose(p);
 		if (!rc)
 			goto fail;
-		cnzFree(indata);
 		goto success;
 	}
 #endif
@@ -402,20 +441,23 @@ bool runPluginCommand(const struct MIMETYPE * m,
 		goto success;
 	if (!fileIntoMemory(outfile, outdata, outlength))
 		goto fail;
-	cnzFree(indata);
 // fall through
 
 success:
 	nzFree(cmd);
-	if (indata)
+	if (indata) {
 		unlink(tempin);
+		cnzFree(indata);
+	}
 	unlink(tempout);
 	return true;
 
 fail:
 	nzFree(cmd);
-	if (indata)
+	if (indata) {
 		unlink(tempin);
+		cnzFree(indata);
+	}
 	unlink(tempout);
 	return false;
 }
@@ -484,14 +526,13 @@ int playBuffer(const char *line, const char *playfile)
 // If you had to specify suffix then we have to run from the buffer.
 		if (!unfoldBuffer(context, false, &buf, &buflen))
 			return 0;
-		rc = runPluginCommand(mt, 0, line, buf, buflen, 0, 0);
-		nzFree(buf);
-		return rc;
+// runPluginCommand always frees the input data.
+		return runPluginCommand(mt, 0, line, buf, buflen, 0, 0);
 	}
 
 	if (!mt && cf->fileName) {
 		if (isURL(cf->fileName)) {
-			bool sxfirst = true;
+			uchar sxfirst = 1;
 			suffix = url2suffix(cf->fileName);
 			mt = findMimeByURL(cf->fileName, &sxfirst);
 		} else {

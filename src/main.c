@@ -712,7 +712,7 @@ int main(int argc, char **argv)
 
 		if (autobrowse) {
 			const struct MIMETYPE *mt;
-			bool sxfirst = false;
+			uchar sxfirst = 0;
 			if (isURL(file))
 				mt = findMimeByURL(file, &sxfirst);
 			else

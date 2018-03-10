@@ -767,7 +767,7 @@ bool httpConnect(struct i_get *g)
 	bool name_changed = false;
 	bool post_request = false;
 	bool head_request = false;
-	bool sxfirst = false;
+	uchar sxfirst = 0;
 	int n;
 
 	if (!getProtHostURL(url, prot, host)) {
@@ -788,6 +788,7 @@ mimestream:
 // don't have to fetch the data, the program can handle it.
 		nzFree(g->buffer);
 		g->buffer = 0;
+		g->code = 200;
 		f = g->urlcopy;
 		if (mt->outtype) {
 			runPluginCommand(mt, f, 0, 0, 0, &g->buffer,

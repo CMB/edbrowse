@@ -1674,12 +1674,23 @@ static bool readFile(const char *filename, const char *post, bool newbuf,
 	}
 
 	if (isURL(filename)) {
+		const struct MIMETYPE *mt;
+		uchar sxfirst;
 		struct i_get g;
 		memset(&g, 0, sizeof(g));
 		if (newbuf) {
 			if (!inframe)
 				g.down_ok = true;
 			g.pg_ok = pluginsOn;
+		}
+// If the url matches on protocol, (and you should never write a plugin
+// that matches on the standard protocols), then we need this plugin
+// just to get the data.
+		if (!g.pg_ok) {
+			sxfirst = 2;
+			if ((mt = findMimeByURL(filename, &sxfirst))
+			    && mt->outtype)
+				g.pg_ok = true;
 		}
 		g.uriEncoded = uriEncoded;
 		g.foreground = true;
@@ -1712,7 +1723,7 @@ static bool readFile(const char *filename, const char *post, bool newbuf,
 		    pluginsOn &&
 		    (g.code == 200 || g.code == 201) &&
 		    !cf->render1 && cmd == 'b' && newbuf) {
-			bool sxfirst = false;
+			sxfirst = 0;
 			rc = runPluginCommand(cf->mt, filename, 0,
 					      rbuf, readSize, &rbuf, &readSize);
 			if (!rc) {
@@ -1731,6 +1742,35 @@ static bool readFile(const char *filename, const char *post, bool newbuf,
 				cmd = 'e';
 			fileSize = readSize;
 		}
+
+/*********************************************************************
+Almost all music players take a url, but if one doesn't, whence down_url is set,
+then here we are with data in buffer.
+Yes, browseCurrent Buffer checks the suffix, but only to render, not to play.
+We have to play here.
+This also comes up when the protocol is used to get the data into buffer,
+like extracting from a zip or tar archive.
+Again the data is in buffer and we need to play it here.
+*********************************************************************/
+
+		sxfirst = 1;
+		mt = findMimeByURL(filename, &sxfirst);
+		if (mt && !mt->outtype && sxfirst &&
+		    pluginsOn &&
+		    (g.code == 200 || g.code == 201) && cmd == 'b' && newbuf) {
+			rc = runPluginCommand(mt, filename, 0,
+					      rbuf, readSize, 0, 0);
+// rbuf has been freed by this command even if it didn't succeed.
+			serverData = NULL;
+			serverDataLen = 0;
+			cf->render2 = true;
+			return rc;
+		}
+// If we would browse this data but plugins are off then turn b into e.
+		if (mt && mt->outtype && sxfirst &&
+		    !pluginsOn &&
+		    (g.code == 200 || g.code == 201) && cmd == 'b' && newbuf)
+			cmd = 'e';
 
 		goto gotdata;
 	}
@@ -6039,7 +6079,7 @@ bool browseCurrentBuffer(void)
 	char *rawbuf, *newbuf, *tbuf;
 	int rawsize, tlen, j;
 	bool rc, remote;
-	bool sxfirst = true;
+	uchar sxfirst = 1;
 	bool save_ch = cw->changeMode;
 	uchar bmode = 0;
 	const struct MIMETYPE *mt = 0;
