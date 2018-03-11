@@ -432,7 +432,7 @@ top:
 					}
 				} else {
 					if (debugLevel >= 3)
-						i_printf(MSG_GetCSS2, errorMsg);
+						i_printf(MSG_GetCSS2);
 				}
 				if (!a)
 					a = emptyString;

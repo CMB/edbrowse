@@ -845,6 +845,10 @@ mimestream:
 	} else {
 		if (g->foreground)
 			setError(MSG_WebProtBad, prot);
+		else if (debugLevel >= 3) {
+			i_printf(MSG_WebProtBad, prot);
+			nl();
+		}
 		return false;
 	}
 

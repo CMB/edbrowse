@@ -1184,7 +1184,7 @@ static void link_css(struct htmlTag *t)
 		debugPrint(3, "css source %s", t->href);
 		if (!fileIntoMemory(t->href, &b, &blen)) {
 			if (debugLevel >= 1)
-				i_printf(MSG_GetLocalCSS, errorMsg);
+				i_printf(MSG_GetLocalCSS);
 		} else {
 			a = force_utf8(b, blen);
 			if (!a)
@@ -1212,7 +1212,7 @@ static void link_css(struct htmlTag *t)
 			}
 		} else {
 			if (debugLevel >= 3)
-				i_printf(MSG_GetCSS2, errorMsg);
+				i_printf(MSG_GetCSS2);
 		}
 	}
 	if (a)

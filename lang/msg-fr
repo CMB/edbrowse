@@ -286,7 +286,7 @@ impossible de lire les données sur le serveur
 %s n'est pas une url
 téléchargement terminé
 impossible d'identifier %s sur le réseau
-le protocole %s n'est pas supporté par edbrowse, et n'est pas défini dans les types mime de votre fichier de configuration
+le protocole %s n'est pas supporté par edbrowse
 attention : impossible de précharger le texte initial dans le <tampon %d>\n
 télachargement en cours
 connexion impossible à %s
@@ -433,9 +433,9 @@ impossible de modifier une vue
 champ désactivé
 authentification SPNEGO désactivée
 authentification SPNEGO activée
-impossible de charger localement CSS, %s\n
+impossible de charger localement CSS\n
 impossible de charger CSS depuis %s, code %ld\n
-impossible de charger CSS, %s\n
+impossible de charger CSS\n
 0
 0
 0
@@ -465,9 +465,9 @@ attention, javascript ne peut être invoqué par un double clic
 erreur de détermination de l'option %s pendant la synchronisation ou la soumission du formulaire
 xhr dédactivé
 xhr activé
-impossible de charger localement javascript, %s\n
+impossible de charger localement javascript\n
 impossible de charger javascript depuis %s, code %ld\n
-impossible de charger javascript, %s\n
+impossible de charger javascript\n
 javascript désactivé, code onclick ignoré
 javascript désactivé, code onchange ignoré
 javascript désactivé, code onreset ignoré

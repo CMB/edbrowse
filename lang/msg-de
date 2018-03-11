@@ -286,7 +286,7 @@ konnte Daten nicht vom Server lesen
 %s ist keine URL
 Download abgeschlossen
 kann %s nicht im Netzwerk finden
-Protokoll %s wird von Edbrowse nicht unterstützt und kein MIME-Typ in der Konfiguration angegeben
+Protokoll %s wird von Edbrowse nicht unterstützt
 Warnung, konnte Puffer %d nicht mit Text füllen\n
 Download läuft
 kann keine Verbindung zu %s herstellen
@@ -433,9 +433,9 @@ kann eine Ansicht nicht verändern
 Feld deaktiviert
 SPNEGO Authentisierungsmethode deaktiviert
 SPNEGO Authentisierungsmethode aktiviert
-konnte lokales CSS nicht abrufen, %s\n
+konnte lokales CSS nicht abrufen\n
 konnte CSS von %s nicht abrufen, Code %ld\n
-konnte CSS nicht abrufen, %s\n
+konnte CSS nicht abrufen\n
 0
 0
 0
@@ -465,9 +465,9 @@ Warnung, JavaScript kann nicht durch einen Doppelklick aktiviert werden
 Fehler beim Auflösen der Option %s beim Synchronisieren oder Versand des Formularfelds
 xhr deaktiviert
 xhr aktiviert
-konnte lokales JavaScript nicht abrufen, %s\n
+konnte lokales JavaScript nicht abrufen\n
 konnte JavaScript von %s nicht abrufen, Code %ld\n
-konnte JavaScript nicht abrufen, %s\n
+konnte JavaScript nicht abrufen\n
 JavaScript deaktiviert, überspringe Onclick-Code
 JavaScript deaktiviert, überspringe Onchange-Code
 JavaScript deaktiviert, überspringe Onreset-Code

@@ -286,7 +286,7 @@ nie udało się wczytać danych z serwera
 %s nie jest URLem
 pobieranie zakończone.
 nie można zidentyfikować %s w sieci
-protokół %s nie jest wspierany przez edbrowse i nie jest zawarty w typach MIME w pliku konfiguracyjnym
+protokół %s nie jest wspierany przez edbrowse
 uwaga: nie można załadować <bufora %d> z tekstem początkowym\n
 pobieranie w toku
 nie można się połączyć z %s
@@ -433,9 +433,9 @@ nie można zmodyfikować widoku
 pole włączony
 SPNEGO curl auth disabled
 SPNEGO curl auth enabled
-nie można pobrać lokalnego CSS, %s\n
+nie można pobrać lokalnego CSS\n
 nie można pobrać CSS z %s, kod %ld\n
-nie można pobrać CSS, %s\n
+nie można pobrać CSS\n
 0
 0
 0
@@ -465,9 +465,9 @@ uwaga, JavaScript nie może być wywołany podwójnym kliknięciem
 błąd użycia opcji %s podczas synchronizacji lub wysyłania formularza
 xhr włączony
 xhr wyłączony
-nie można pobrać lokalnego JavaScriptu, %s\n
+nie można pobrać lokalnego JavaScriptu\n
 nie można pobrać JavaScriptu z %s, kod %ld\n
-nie można pobrać JavaScriptu, %s\n
+nie można pobrać JavaScriptu\n
 JavaScript wyłączony, pomijanie kodu 'onclick'
 JavaScript wyłączony, pomijanie kodu 'onchange'
 JavaScript wyłączony, pomijanie kodu 'onreset'

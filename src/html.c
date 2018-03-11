@@ -549,8 +549,7 @@ static void prepareScript(struct htmlTag *t)
 				unpercentString(h);
 				if (!fileIntoMemory(h, &b, &blen)) {
 					if (debugLevel >= 1)
-						i_printf(MSG_GetLocalJS,
-							 errorMsg);
+						i_printf(MSG_GetLocalJS);
 				} else {
 					js_text = force_utf8(b, blen);
 					if (!js_text)
@@ -582,7 +581,7 @@ static void prepareScript(struct htmlTag *t)
 					}
 				} else {
 					if (debugLevel >= 3)
-						i_printf(MSG_GetJS2, errorMsg);
+						i_printf(MSG_GetJS2);
 				}
 			}
 			t->js_ln = 1;

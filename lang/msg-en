@@ -286,7 +286,7 @@ could not read the data from the server
 %s is not a url
 download complete
 cannot identify %s on the network
-the %s protocol is not supported by edbrowse, and is not included in the mime types in your config file
+the %s protocol is not supported by edbrowse
 warning: could not preload <buffer %d> with its initial text\n
 download in progress
 cannot connect to %s
@@ -433,9 +433,9 @@ cannot modify a view
 field is disabled
 SPNEGO curl auth disabled
 SPNEGO curl auth enabled
-could not fetch local CSS, %s\n
+could not fetch local CSS\n
 could not fetch CSS from %s, code %ld\n
-could not fetch CSS, %s\n
+could not fetch CSS\n
 don't deminimize javascript
 deminimize javascript
 debug js errors disabled
@@ -465,9 +465,9 @@ warning, javascript cannot be invoked by a double click
 error resolving option %s during sync or form submit
 xhr disabled
 xhr enabled
-could not fetch local javascript, %s\n
+could not fetch local javascript\n
 could not fetch javascript from %s, code %ld\n
-could not fetch javascript, %s\n
+could not fetch javascript\n
 javascript disabled, skipping the onclick code
 javascript disabled, skipping the onchange code
 javascript disabled, skipping the onreset code

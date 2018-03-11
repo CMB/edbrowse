@@ -286,7 +286,7 @@ impossibile leggere dati dal server
 %s non è un url
 download completato
 impossibile identificare %s nella rete
-il protocollo %s non è supportato da edbrowse, e non è incluso nei tipi mime definiti nel tuo file di configurazione
+il protocollo %s non è supportato da edbrowse
 attenzione: impossibile precaricare il <buffer %d> con il relativo testo iniziale\n
 download in corso
 impossibile connettersi ad %s
@@ -433,9 +433,9 @@ non posso modificare una view
 campo disabilitato
 autenticazione SPNEGO via curl disabilitata
 autenticazione SPNEGO via curl abilitata
-impossibile acquisire CSS locale, %s\n
+impossibile acquisire CSS locale\n
 impossibile scaricare CSS da %s, codice %ld\n
-impossibile acquisire CSS, %s\n
+impossibile acquisire CSS\n
 non deminimizzare javascript
 deminimizza javascript
 debug degli errori js disabilitato
@@ -465,9 +465,9 @@ attenzione, il javascript non può essere invocato mediante un doppio click
 errore durante la risoluzione dell'opzione %s durante un sync o il submit di una form
 xhr disabilitato
 xhr abilitato
-impossibile acquisire javascript locale, %s\n
+impossibile acquisire javascript locale\n
 impossibile scaricare javascript da %s, codice %ld\n
-impossibile scaricare javascript, %s\n
+impossibile scaricare javascript\n
 javascript disabilitato, salto il codice relativo all'evento onclick
 javascript disabilitato, salto il codice relativo all'evento onchange
 javascript disabilitato, salto il codice relativo all'evento onreset

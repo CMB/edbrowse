@@ -286,7 +286,7 @@ não consegui ler os dados do servidor
 %s não é uma URL
 transferência completa
 impossível identificar %s na rede
-o protocolo %s não é suportado pelo edbrowse e não está incluído nos tipos mime do arquivo de configuração
+o protocolo %s não é suportado pelo edbrowse
 aviso: não foi possível precarregar o <buffer %d> com o texto inicial do mesmo\n
 transferência em progresso
 não é possível conectar a %s
@@ -433,9 +433,9 @@ impossível modificar um panorama
 campo de entrada desligado
 Autorização SPNEGO habilitada
 Autorização SPNEGO desabilitada
-não consegui trazer o CSS local; %s\n
+não consegui trazer o CSS local\n
 não consegui trazer o CSS de %s; código %ld\n
-não consegui trazer o CSS; %s\n
+não consegui trazer o CSS\n
 0
 0
 0
@@ -465,9 +465,9 @@ aviso: o javascript não pode ser invocado por duplo clique
 erro a resolver a opção %s durante um sync ou submissão de formulário
 xhr desligado
 xhr ligado
-não consegui trazer o javascript local; %s\n
+não consegui trazer o javascript local\n
 não consegui trazer o javascript de %s; código %ld\n
-não consegui trazer o javascript; %s\n
+não consegui trazer o javascript\n
 javascript desligado; ignorando código onclick
 javascript desligado; ignorando onchange código
 javascript desligado; ignorando código onreset
