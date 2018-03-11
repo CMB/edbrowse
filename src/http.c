@@ -781,7 +781,7 @@ bool httpConnect(struct i_get *g)
 // that calls up web pages at the user's behest.
 // None of this machinery need be threadsafe.
 	if (g->pg_ok && (cf->mt = mt = findMimeByURL(url, &sxfirst)) &&
-	    !(mt->from_file | mt->down_url)) {
+	    !(mt->from_file | mt->down_url) && !(mt->outtype && g->playonly)) {
 		char *f;
 		urlSanitize(g, 0);
 mimestream:
@@ -803,16 +803,6 @@ mimestream:
 		}
 		return true;
 	}
-// if invoked from a playlist.
-// I don't think this really works.
-#if 0
-	if (g->pg_ok && g->thisfile &&
-	    (cf->mt = mt = findMimeByURL(g->thisfile))
-	    && !(mt->from_file | mt->down_url)) {
-		urlSanitize(g, 0);
-		goto mimestream;
-	}
-#endif
 
 /* Pull user password out of the url */
 	n = getCredsURL(url, creds_buf);
@@ -995,7 +985,8 @@ mimestream:
 // recheck the url after a redirect
 		if (redirect_count && g->pg_ok &&
 		    (cf->mt = mt = findMimeByURL(g->urlcopy, &sxfirst)) &&
-		    !(mt->from_file | mt->down_url)) {
+		    !(mt->from_file | mt->down_url) &&
+		    !(mt->outtype && g->playonly)) {
 			curl_easy_cleanup(h);
 			goto mimestream;
 		}
@@ -2235,7 +2226,8 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb,
 	mt = cf->mt;
 
 // a from-the-web mime type causes a download interrupt
-	if (g->pg_ok && mt && !(mt->down_url | mt->from_file)) {
+	if (g->pg_ok && mt && !(mt->down_url | mt->from_file) &&
+	    !(mt->outtype && g->playonly)) {
 		g->down_state = 6;
 		return -1;
 	}
@@ -2785,7 +2777,7 @@ we did that before and now it's being expanded. So bump step up to 2.
 *********************************************************************/
 	cdt->step = 2;
 
-	if (isJSAlive) {
+	if (cf->docobj) {
 		jsobjtype topobj;
 		decorate(0);
 		set_basehref(cf->hbase);
@@ -2816,7 +2808,7 @@ we did that before and now it's being expanded. So bump step up to 2.
 	browseLocal = save_local;
 	if (fo)
 		t->contracted = true;
-	if (isJSAlive) {
+	if (new_cf->docobj) {
 		jsobjtype cdo;	// contentDocument object
 		jsobjtype cwo;	// contentWindow object
 		jsobjtype cna;	// childNodes array
@@ -2965,7 +2957,7 @@ bool reexpandFrame(void)
 	cdt->step = 0;
 	prerender(0);
 	cdt->step = 2;
-	if (isJSAlive) {
+	if (cf->docobj) {
 		decorate(0);
 		set_basehref(cf->hbase);
 		set_property_object(cf->winobj, "top", save_top);
@@ -2984,7 +2976,7 @@ bool reexpandFrame(void)
 	strcat(cf->fileName, ".browse");
 	browseLocal = save_local;
 
-	if (isJSAlive) {
+	if (cf->docobj) {
 		struct ebFrame *save_cf;
 		jsobjtype cdo;	// contentDocument object
 		jsobjtype cwo;	// contentWindow object

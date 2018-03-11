@@ -206,6 +206,7 @@ struct i_get {
 	bool uriEncoded;
 	bool foreground;
 	bool pg_ok; // watch for plugins
+	bool playonly; // only player plugins
 	bool is_http;
 	bool cacheable;
 	bool last_curlin;

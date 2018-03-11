@@ -1682,8 +1682,8 @@ static bool readFile(const char *filename, const char *post, bool newbuf,
 		if (newbuf) {
 			if (!inframe)
 				g.down_ok = true;
-			g.pg_ok = pluginsOn;
 		}
+		g.pg_ok = pluginsOn;
 // If the url matches on protocol, (and you should never write a plugin
 // that matches on the standard protocols), then we need this plugin
 // just to get the data.
@@ -1693,6 +1693,8 @@ static bool readFile(const char *filename, const char *post, bool newbuf,
 			    && mt->outtype)
 				g.pg_ok = true;
 		}
+		if (g.pg_ok && inframe)
+			g.playonly = true;
 		g.uriEncoded = uriEncoded;
 		g.foreground = true;
 		g.url = filename;
@@ -1773,6 +1775,8 @@ Again the data is in buffer and we need to play it here.
 		    !pluginsOn &&
 		    (g.code == 200 || g.code == 201) && cmd == 'b' && newbuf)
 			cmd = 'e';
+		if (mt && !mt->outtype && !pluginsOn && cmd == 'b' && newbuf)
+			cf->render2 = true;
 
 		goto gotdata;
 	}
