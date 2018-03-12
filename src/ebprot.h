@@ -19,7 +19,7 @@ bool cxQuit(int cx, int action) ;
 void cxSwitch(int cx, bool interactive) ;
 bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail) ;
 void delText(int start, int end) ;
-bool readFileArgv(const char *filename, bool newbuf);
+bool readFileArgv(const char *filename, int fromframe);
 bool unfoldBufferW(const struct ebWindow *w, bool cr, char **data, int *len) ;
 bool unfoldBuffer(int cx, bool cr, char **data, int *len) ;
 bool runCommand(const char *line) ;

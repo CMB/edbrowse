@@ -2695,7 +2695,7 @@ int frameExpandLine(int ln, jsobjtype fo)
 	cf->frametag = t;
 	debugPrint(2, "fetch frame %s", (s ? s : "empty"));
 	if (s) {
-		bool rc = readFileArgv(s, false);
+		bool rc = readFileArgv(s, (fo ? 2 : 1));
 		if (!rc) {
 /* serverData was never set, or was freed do to some other error. */
 /* We just need to pop the frame and return. */
@@ -2917,7 +2917,7 @@ bool reexpandFrame(void)
 	cf->uriEncoded = false;
 	nzFree(cf->firstURL);
 	cf->firstURL = 0;
-	rc = readFileArgv(cf->fileName, false);
+	rc = readFileArgv(cf->fileName, 2);
 	if (!rc) {
 /* serverData was never set, or was freed do to some other error. */
 		fileSize = -1;	/* don't print 0 */

@@ -2340,7 +2340,8 @@ and new internal numbers each time, and that use to trip this algorithm.
 			(*say_fn) (MSG_LineUpdate2, sameBack1 - sameFront,
 				   sameFront + 1);
 		else {
-			if (sameBack2 - sameFront <= 10)
+			if (sameBack2 - sameFront <= 10 ||
+			    sameBack1 - sameFront <= 10)
 				(*say_fn) (MSG_LineUpdate3, sameFront + 1,
 					   sameBack2);
 			else

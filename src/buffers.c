@@ -1651,15 +1651,14 @@ success:
 
 /* Read a file, or url, into the current buffer.
  * Post/get data is passed, via the second parameter, if it's a URL. */
-static bool readFile(const char *filename, const char *post, bool newbuf,
-		     const char *fromthis)
+static bool readFile(const char *filename, const char *post, bool newwin,
+		     int fromframe, const char *fromthis)
 {
 	char *rbuf;		/* read buffer */
 	int readSize;		/* should agree with fileSize */
 	bool rc;		/* return code */
 	char *nopound;
 	char filetype;
-	bool inframe = (cf != &(cf->owner->f0));
 
 	serverData = 0;
 	serverDataLen = 0;
@@ -1679,24 +1678,27 @@ static bool readFile(const char *filename, const char *post, bool newbuf,
 		uchar sxfirst;
 		struct i_get g;
 		memset(&g, 0, sizeof(g));
-		if (newbuf) {
-			if (!inframe)
-				g.down_ok = true;
+		if (newwin)
+			g.down_ok = true;
+		if (fromframe <= 1) {
+			g.foreground = true;
+			g.pg_ok = pluginsOn;
 		}
-		g.pg_ok = pluginsOn;
+		if (g.pg_ok && fromframe == 1)
+			g.playonly = true;
 // If the url matches on protocol, (and you should never write a plugin
-// that matches on the standard protocols), then we need this plugin
+// that matches on the standard transport protocols), then we need this plugin
 // just to get the data.
-		if (!g.pg_ok) {
+		if (!g.pg_ok && !fromframe) {
 			sxfirst = 2;
 			if ((mt = findMimeByURL(filename, &sxfirst))
 			    && mt->outtype)
 				g.pg_ok = true;
 		}
-		if (g.pg_ok && inframe)
-			g.playonly = true;
-		g.uriEncoded = uriEncoded;
-		g.foreground = true;
+		if (fromframe)
+			g.uriEncoded = true;
+		else
+			g.uriEncoded = uriEncoded;
 		g.url = filename;
 		g.thisfile = fromthis;
 		rc = httpConnect(&g);
@@ -1705,7 +1707,7 @@ static bool readFile(const char *filename, const char *post, bool newbuf,
 		if (!rc)
 			return false;
 		changeFileName = g.cfn;	// allocated
-		if (newbuf)
+		if (newwin)
 			cw->referrer = g.referrer;	// allocated
 		else
 			nzFree(g.referrer);
@@ -1719,14 +1721,14 @@ static bool readFile(const char *filename, const char *post, bool newbuf,
 
 		if (fileSize == 0) {	/* empty file */
 			nzFree(rbuf);
-			if (!inframe)
+			if (!fromframe)
 				cw->dot = endRange;
 			return true;
 		}
 
 		newfile = (changeFileName ? changeFileName : filename);
 		if (cf->mt && cf->mt->outtype &&
-		    pluginsOn && !cf->render1 && cmd == 'b' && newbuf) {
+		    pluginsOn && !cf->render1 && cmd == 'b' && newwin) {
 			sxfirst = 0;
 			rc = runPluginCommand(cf->mt, newfile, 0,
 					      rbuf, readSize, &rbuf, &readSize);
@@ -1761,7 +1763,7 @@ Again the data is in buffer and we need to play it here.
 		mt = findMimeByURL(newfile, &sxfirst);
 		if (mt && !mt->outtype && sxfirst &&
 		    pluginsOn && (g.code == 200 || g.code == 201) &&
-		    cmd == 'b' && newbuf) {
+		    cmd == 'b' && newwin) {
 			rc = runPluginCommand(mt, newfile, 0,
 					      rbuf, readSize, 0, 0);
 // rbuf has been freed by this command even if it didn't succeed.
@@ -1773,15 +1775,15 @@ Again the data is in buffer and we need to play it here.
 // If we would browse this data but plugins are off then turn b into e.
 		if (mt && mt->outtype && sxfirst &&
 		    !pluginsOn &&
-		    (g.code == 200 || g.code == 201) && cmd == 'b' && newbuf)
+		    (g.code == 200 || g.code == 201) && cmd == 'b' && newwin)
 			cmd = 'e';
-		if (mt && !mt->outtype && !pluginsOn && cmd == 'b' && newbuf)
+		if (mt && !mt->outtype && !pluginsOn && cmd == 'b' && newwin)
 			cf->render2 = true;
 
 		goto gotdata;
 	}
 
-	if (isSQL(filename) && !inframe) {
+	if (isSQL(filename) && !fromframe) {
 		const char *t1, *t2;
 		if (!cw->sqlMode) {
 			setError(MSG_DBOtherFile);
@@ -1797,7 +1799,7 @@ Again the data is in buffer and we need to play it here.
 		rc = sqlReadRows(filename, &rbuf);
 		if (!rc) {
 			nzFree(rbuf);
-			if (!cw->dol && newbuf) {
+			if (!cw->dol && newwin) {
 				cw->sqlMode = false;
 				nzFree(cf->fileName);
 				cf->fileName = 0;
@@ -1820,19 +1822,19 @@ fromdisk:
 
 	filetype = fileTypeByName(filename, false);
 	if (filetype == 'd') {
-		if (!inframe)
+		if (!fromframe)
 			return readDirectory(filename);
 		setError(MSG_FrameNotHTML);
 		return false;
 	}
 
-	if (newbuf && !cf->mt)
+	if (newwin && !cf->mt)
 		cf->mt = findMimeByFile(filename);
 
 // Optimize; don't read a file into buffer if you're
 // just going to process it.
 	if (cf->mt && cf->mt->outtype && pluginsOn && !access(filename, 4)
-	    && cmd == 'b' && newbuf) {
+	    && cmd == 'b' && newwin) {
 		rc = runPluginCommand(cf->mt, 0, filename, 0, 0, &rbuf,
 				      &fileSize);
 		cf->render1 = cf->render2 = true;
@@ -1855,7 +1857,7 @@ fromdisk:
 	serverData = rbuf;
 	serverDataLen = fileSize;
 	if (fileSize == 0) {	/* empty file */
-		if (!inframe) {
+		if (!fromframe) {
 			cw->dot = endRange;
 			nzFree(rbuf);
 		}
@@ -1966,7 +1968,7 @@ gotdata:
 			}
 
 		}
-	} else if (inframe) {
+	} else if (fromframe) {
 		nzFree(rbuf);
 		setError(MSG_FrameNotHTML);
 		return false;
@@ -1975,7 +1977,7 @@ gotdata:
 		cw->binMode = true;
 	}
 
-	if (inframe) {
+	if (fromframe) {
 /* serverData holds the html text to browse */
 		return true;
 	}
@@ -1988,11 +1990,12 @@ intext:
 }				/* readFile */
 
 /* from the command line */
-bool readFileArgv(const char *filename, bool newbuf)
+bool readFileArgv(const char *filename, int fromframe)
 {
 	cmd = 'e';
-	return readFile(filename, emptyString, newbuf,
-			(newbuf ? 0 : cf->fileName));
+	bool newwin = !fromframe;
+	return readFile(filename, emptyString, newwin, fromframe,
+			(newwin ? 0 : cf->fileName));
 }				/* readFileArgv */
 
 /* Write a range to a file. */
@@ -5771,7 +5774,8 @@ we have to make sure it has a protocol. Every url needs a protocol.
 				cw->sqlMode = true;
 			if (icmd == 'g' && !nogo && isURL(line))
 				debugPrint(2, "*%s", line);
-			j = readFile(line, emptyString, (cmd != 'r'), thisfile);
+			j = readFile(line, emptyString, (cmd != 'r'), 0,
+				     thisfile);
 		}
 		w->undoable = w->changeMode = false;
 		cw = cs->lw;	/* put it back, for now */
@@ -5985,7 +5989,7 @@ afterdelete:
 				strmove(strchr(newline, ']') + 1, line);
 				line = newline;
 			}
-			j = readFile(line, emptyString, (cmd != 'r'), 0);
+			j = readFile(line, emptyString, (cmd != 'r'), 0, 0);
 			if (!serverData)
 				fileSize = -1;
 			return j;
