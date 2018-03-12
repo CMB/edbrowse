@@ -4861,6 +4861,7 @@ bool runCommand(const char *line)
 		line = "s`bl";
 	}
 
+expctr:
 /* special commands to expand and contract frames */
 	if (stringEqual(line, "exp") || stringEqual(line, "ctr")) {
 		if (globSub) {
@@ -5447,9 +5448,9 @@ replaceframe:
 			}
 
 			if (tag && tag->action == TAGACT_FRAME) {
-				setError(MSG_ExpGo);
 				nzFree(h);
-				return false;
+				line = "exp";
+				goto expctr;
 			}
 
 			if (tagno) {

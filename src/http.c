@@ -2671,7 +2671,8 @@ int frameExpandLine(int ln, jsobjtype fo)
 
 /* the easy case is if it's already been expanded before, we just unhide it. */
 	if (t->f1) {
-		t->contracted = false;
+		if (!fo)
+			t->contracted = false;
 		return 0;
 	}
 
