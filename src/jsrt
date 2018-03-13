@@ -442,7 +442,7 @@ Wyoming
 <option value=BH>
 90210
 </select>
-<!-- this generates and error, but not sure why.
+<!-- this generates an error, but not sure why.
 http://www.w3schools.com/html/html_form_input_types.asp -->
 <input type=number maxlength=5 name="zip code" readonly value="&#56;8888">
 <span id=almond class="nut rose"></span>
@@ -658,7 +658,7 @@ olist[3] = oo;
 function bodyLoad() {
 alert("body loading");
 var e = document.createEvent();
-e._type = "onsnork";
+e.type = "onsnork";
 document.dispatchEvent(e);
 }
 function bodyUnload() {

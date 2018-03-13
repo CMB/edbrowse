@@ -1436,17 +1436,6 @@ mw0.Event = function(options){
     this.timeStamp = new Date().getTime();
 };
 
-// place holder functions. What should these do?
-mw0.Event.prototype.initCustomEvent = function(e, bubble, cancel, details) { };
-
-mw0.createEvent = function(unused) { return new Event; }
-
-mw0.dispatchEvent = function (e) {
-if(my$win().eventDebug) alert3("dispatch " + this.nodeName + "." + e._type);
-var eval_string = "try { this['" + e._type + "']()} catch (e) {alert3('event not found')}";
-eval(eval_string);
-};
-
 mw0.Event.prototype.preventDefault = function(){
       this.preventDefault = true;
 }
@@ -1460,7 +1449,19 @@ mw0.Event.prototype.stopPropagation = function(){
 
 // deprecated!
 mw0.Event.prototype.initEvent = function(t, bubbles, cancel) {
-this._type = t, this.bubbles = bubbles, this.cancelable = cancel; }
+this.type = t, this.bubbles = bubbles, this.cancelable = cancel; }
+
+mw0.Event.prototype.initCustomEvent = function(t, bubbles, cancel, details) {
+// don't know what to do with details.
+this.initEvent(t, bubbles, cancel); }
+
+mw0.createEvent = function(unused) { return new Event; }
+
+mw0.dispatchEvent = function (e) {
+if(my$win().eventDebug) alert3("dispatch " + this.nodeName + "." + e.type);
+var eval_string = "try { this['" + e.type + "']()} catch (e) {alert3('event not found')}";
+eval(eval_string);
+};
 
 /*********************************************************************
 This is our addEventListener function.
