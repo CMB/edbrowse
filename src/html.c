@@ -788,6 +788,8 @@ char *htmlParse(char *buf, int remote)
 		runScriptsPending();
 		runOnload();
 		runScriptsPending();
+// Which runs first, onload or DOMContentLoaded? No idea.
+		run_event_bool(cf->docobj, "document", "onDOMContentLoaded");
 		rebuildSelectors();
 	}
 
@@ -2453,11 +2455,6 @@ void runOnload(void)
 			unloadHyperlink(formfunction, "Form");
 		}
 	}
-
-// Which runs first, onload or DOMContentLoaded? No idea.
-// Also, DOMContentLoaded should perhaps run through dispatchEvent(),
-// rather than this quick&dirty function call.
-	run_event_bool(cf->docobj, "document", "onDOMContentLoaded");
 }				/* runOnload */
 
 /*********************************************************************
