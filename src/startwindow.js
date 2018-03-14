@@ -84,6 +84,7 @@ ok = Object.keys = Object.keys || (function () {
 
 // print an error inline, at debug level 3 or higher.
 function alert3(s) { eb$logputs(3, s); }
+function alert4(s) { eb$logputs(4, s); }
 
 // Dump the tree below a node, this is for debugging.
 document.nodeName = "document"; // in case you want to start at the top.
@@ -2379,9 +2380,20 @@ mw0.eb$qs$start = function()
 mw0.cssGather();
 }
 
+// This is a stub.
+mw0.DOMParser = function() {
+return {parseFromString: function(t,y) {
+var d = my$doc();
+alert3("trying to use the DOM parser\n" + y + " <<< ");
+alert4(t);
+alert3(">>>");
+return d.createTextNode("DOMParser not yet implemented");
+}}};
+
 } // master compile
 
 eb$qs$start = mw0.eb$qs$start;
+DOMParser = mw0.DOMParser;
 
 // if debugThrow is set, see all errors, even caught errors.
 Duktape.errCreate = function (e) {
