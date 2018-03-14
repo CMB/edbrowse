@@ -695,7 +695,7 @@ var ulist = ["href", "src", "src", "href", "href", "action", "src"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
 var u = ulist[i]; // url name
-eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + u + '", { get: function() { return this.href$2; }, set: function(h) { if(h instanceof URL) h = h.toString(); if(h === null || h === undefined) h = ""; var w = my$win(); if(typeof h !== "string") { alert3("hrefset " + typeof h); w.hrefset$p.push("' + cn + '"); w.hrefset$a.push(h); return; } if(!this.href$2) { this.href$2 = new mw0.URL(h ? eb$resolveURL(w.eb$base,h) : h) } else { if(!this.href$2.href$val && h) h =  eb$resolveURL(w.eb$base,h); this.href$2.href = h; } }});');
+eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + u + '", { get: function() { if(!this.href$2) this.href$2 = new URL; return this.href$2; }, set: function(h) { if(h instanceof URL) h = h.toString(); if(h === null || h === undefined) h = ""; var w = my$win(); if(typeof h !== "string") { alert3("hrefset " + typeof h); w.hrefset$p.push("' + cn + '"); w.hrefset$a.push(h); return; } if(!this.href$2) { this.href$2 = new mw0.URL(h ? eb$resolveURL(w.eb$base,h) : h) } else { if(!this.href$2.href$val && h) h =  eb$resolveURL(w.eb$base,h); this.href$2.href = h; } }});');
 var piecelist = ["protocol", "pathname", "host", "search", "hostname", "port"];
 for(var j=0; j<piecelist.length; ++j) {
 var piece = piecelist[j];
