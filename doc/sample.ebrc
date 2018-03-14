@@ -1,4 +1,4 @@
-#  .ebrc: the configuration file for edbrowse (version 3.4.8 or above)
+#  .ebrc: the configuration file for edbrowse version 3.7.3
 #  This is a sample file.
 #  This file contains passwords - make sure it is not readable by others.
 #  chmod 600 .ebrc

@@ -1,5 +1,4 @@
-# .ebrc: exemplo de arquivo de configuração para edbrowse (versão
-# 3.5.4 ou superior)
+# .ebrc: exemplo de arquivo de configuração para edbrowse, versão 3.7.3
 
 # conta de e-mail; você pode ter várias.
 # uma conta do GMail, muita gente possui uma dessas hoje em dia.
@@ -16,8 +15,7 @@ reply = edbrowse@gmail.com
 }
 
 # Acesso Imap à sua conta do GMail.
-# Se esta continuar sendo a segunda conta de e-mail neste arquivo,
-# o acesso imap é:
+# Se esta continuar sendo a segunda conta de e-mail neste arquivo, o acesso imap é:
 # edbrowse -f2
 mail {
 imap
@@ -38,6 +36,7 @@ reply = edbrowse@gmail.com
 
 # Coloca arquivos baixados aqui. Tem que ser um caminho absoluto.
 # downdir = /home/usuario/downloads
+# Se ausente, os arquivos são baixados onde você estiver.
 
 # A cookie jar - onde são armazenados os cookies http.
 #jar = /home/usuario/externo/cookies
@@ -46,9 +45,16 @@ reply = edbrowse@gmail.com
 # certfile = /etc/ssl/cert.pem
 # certfile = /etc/pki/tls/cert.pem
 
+# o diretório que armazena o cache do edbrowse e o tamanho do cache em megabytes
+# cachedir = /b3/ebcache
+# cachesize = 200
+
+# limite de caracteres ao mostrar uma linha; linhas podem ser indefinidamente longas internamente.
+linelength = 700
+
 # aguarda 30 segundos uma resposta de um servidor da web
 webtimer = 30
-# aguarda 3 minutos uma resposta de um servidor da web
+# aguarda 3 minutos uma resposta de um servidor de e-mail
 mailtimer = 180
 
 # Redireciona e-mails com base na conta remetente ou destinatária.
@@ -67,7 +73,7 @@ type = audio/basic
 desc = arquivo de áudio num formato wave
 suffix = wav,voc,au,ogg
 content = audio/x-wav
-# %i é o arquivo temporário de entrada gerado pelo edbrowse
+# %i é o arquivo temporário de entrada gerado pelo edbrowse ou pela URL
 program = play -q %i
 }
 
@@ -79,6 +85,16 @@ content = audio/mpeg
 program = mpg123 -q -C %i
 }
 
+plugin {
+type = audio/x-pn-realaudio
+desc = ouvindo por streaming
+protocol = rtsp,pnm,sdp
+suffix = rm,ra,ram,m3u8
+urlmatch = youtube.com/watch?|youtube.com/embed/
+content = audio/x-scpls,application/pls+xml
+program = /usr/bin/mpv --really-quiet --load-unsafe-playlists %i
+}
+
 # este plug-in renderiza um arquivo ao invés de "reproduzir" o arquivo.
 plugin {
 type = pdf
@@ -88,35 +104,55 @@ content = application/pdf
 program = pdftohtml -i -noframes %i %o >/dev/null
 # indica que a saída é em html e não texto
 outtype = H
+#  indica que os dados têm que ser baixados; o pdftohtml não aceita uma URL
+down_url
+}
+
+plugin {
+type = rtf
+desc = arquivo de texto rico
+suffix = rtf
+content = application/rtf
+down_url
+program = catdoc %i
+# isto é texto e não html
+outtype = T
 }
 
 # Toda vez que você baixa uma página da internet,
-# o navegador se identifica para o servidor.
+# o navegador identifica-se para o servidor.
+# Heis alguns agentes alternativos, o padrão é edbrowse 3.7.3
 agent = Lynx/2.8.4rel.1 libwww-FM/2.14
 agent = Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; Win 9x 4.90)
 
 # OK, estamos prontos para escrever nosso primeiro script.
 # Que tal uma função para acessar o Google?
-# <gg elefantes tigres   vai chamar o Google
-# procurando elefantes e tigres juntamente.
+# Aí <gg elefantes tigres   vai chamar o Google,
+# procurando elefantes e também tigres.
 function+gg {
 b http://www.google.com
 /<>/ i=~0
 /</ i1*
-/^About/+2
+/h3/p
 }
 
-# procura no dicionário mariam-webster, ~1 é o parámetro 1,
-# a palavra a procurar.
+# a busca do Google não requer javascript
+nojs = google.com
+
+# procura no dicionário mariam-webster, ~1 é o parámetro 1, a palavra a procurar.
 # <mw elephant
 function+mw {
 b http://www.merriam-webster.com/dictionary/~1
+/spelling suggestion/X
+if(?) {
+/^h2 Definition/X
+}
+/./p
 }
 
 # Esta função é executada ao iniciar o edbrowse.
 function:init {
-# torna os diretórios graváveis,
-# de modo que você possa renomear ou apagar arquivos
+# torna os diretórios graváveis, de modo que você possa renomear ou apagar arquivos
 dw
 # Mostra o tamanho de cada arquivo numa listagem do diretório
 ls=s

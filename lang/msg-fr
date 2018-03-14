@@ -12,7 +12,7 @@ pas de redirection http
 redirection http
 ne pas envoyer le référent
 envoyer le référent
-javascript dédactivé
+javascript désactivé
 javascript activé
 binaire traité comme texte
 détection des fichiers binaires
