@@ -799,9 +799,7 @@ list.splice(idx, 0, r);
 mw0.CSSStyleSheet.prototype.addRule = function(sel, r, idx)
 {
 var list = this.cssRules;
-  alert("pre " + idx);
 (typeof idx == "number" && idx >= 0 && idx <= list.length || (idx = list.length));
-  alert("post " + idx);
 r = sel + "{" + r + "}";
 if(idx == list.length)
 list.push(r);
@@ -2047,14 +2045,17 @@ var v = w.$uv$watch;
 if(!v) return; // should never happen
 // Build the regular expression with v folded in.
 // It's a string, so every \ has to be doubled.
-var r = RegExp("([\\w.\\[\\]]+)\\." + v + "( *[.(\\[])", "g");
+var c1 = "[\\w.]+";
+var c2 = "[\\w.]*";
+var rs = "(" + c1 + "|" + c1 + "\\[" + c1 + "\\]" + c2 + "|" + c1 + "\\[" + c1 + "\\]" +  c2 + "\\[" + c1 + "\\]" + c2 + ")\\." + v + " *([(.\\[])";
+var r = RegExp(rs, "g");
 // functio nfor the right hand side
 function rhs(all, pre, post) {
 var w = my$win();
 var sn = w.$uv$sn;
 ++sn;
 w.$uv$sn = sn;
-return "((" + pre + "." + v + "||mw0.eb$watch2(" + pre + "," + sn + "))," + pre +"." + v + ")" + post;
+return "((" + pre + "." + v + "||mw0.eb$watch2(" + pre + "," + sn + "))," + pre +")." + v + post;
 }
 s.data = s.data.replace(r, rhs); // boom!
 }
