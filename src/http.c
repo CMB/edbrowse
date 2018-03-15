@@ -1277,6 +1277,10 @@ curl_fail:
 		i_printf(MSG_HTTPError,
 			 g->code, message_for_response_code(g->code));
 
+// with lopping off post data, or encoding the url,
+// it's easier to just assume the name has always changed,
+// even if there is no redirection.
+	name_changed = true;
 	if (name_changed)
 		g->cfn = g->urlcopy;
 	else
