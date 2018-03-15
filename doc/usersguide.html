@@ -2414,7 +2414,7 @@ www.search-engine.com?keywords=kangaroo.
 The text after the question mark is an encoded version of the data
 you entered into the form.
 It becomes part of the virtual URL.
-This is actually a good thing, as we shall see in the next section.
+This only applies to the get method; the post method sends the data through another channel.
 
 <P>
 Remember that buttons can run javascript, without being type submit or reset.
@@ -2493,13 +2493,6 @@ You can also write concise scripts that fill in the virtual
 form, simply by modifying the information after the question mark.
 This provides a simple command to retrieve the weather from any major city
 or the current price of any stock.
-
-<P>
-If the form uses the post, rather than the get method,
-the same data will appear,
-but the question mark is replaced with a control a.
-Unfortunately the control a is not visible, and this could cause confusion.
-When in doubt, list the line.
 
 <P>
 Under the A command,

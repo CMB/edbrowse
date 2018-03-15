@@ -764,7 +764,6 @@ bool httpConnect(struct i_get *g)
 	bool transfer_status = false;
 	bool proceed_unauthenticated = false;
 	int redirect_count = 0;
-	bool name_changed = false;
 	bool post_request = false;
 	bool head_request = false;
 	uchar sxfirst = 0;
@@ -1190,7 +1189,6 @@ they go where they go, so this doesn't come up very often.
 				g->etag = 0;
 				++redirect_count;
 				still_fetching = true;
-				name_changed = true;
 				debugPrint(2, "redirect %s", g->urlcopy);
 			}
 		}
@@ -1278,13 +1276,9 @@ curl_fail:
 			 g->code, message_for_response_code(g->code));
 
 // with lopping off post data, or encoding the url,
-// it's easier to just assume the name has always changed,
+// it's easier to just assume the name has changed,
 // even if there is no redirection.
-	name_changed = true;
-	if (name_changed)
-		g->cfn = g->urlcopy;
-	else
-		nzFree(g->urlcopy);	/* Don't need it anymore. */
+	g->cfn = g->urlcopy;
 	g->urlcopy = 0;
 
 /* see if http header has set the filename */
