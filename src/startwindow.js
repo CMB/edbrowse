@@ -2037,6 +2037,7 @@ s.expanded = true;
 // Watch for an undefined variable in the running javascript.
 // If it tries to call foo.getAttribute() or some such,
 // push foo and a sequence number onto the $uv stack.
+// trace is a reserved word that traces the code with alert3.
 mw0.eb$watch = function(s)
 {
 if(! s instanceof Script) return;
@@ -2044,6 +2045,15 @@ if(! s.data) return;
 var w = my$win();
 var v = w.$uv$watch;
 if(!v) return; // should never happen
+
+if(v == "trace") {
+if(w.$jt$c == 'z') w.$jt$c = 'a';
+else w.$jt$c = String.fromCharCode(w.$jt$c.charCodeAt(0) + 1);
+w.$jt$sn = 0;
+s.data = s.data.replace(/(\n *)(var )/g, mw0.jtfn2);
+return;
+}
+
 // Build the regular expression with v folded in.
 // It's a string, so every \ has to be doubled.
 var c1 = "[\\w.]+";
@@ -2066,6 +2076,19 @@ mw0.eb$watch2 = function(p, sn)
 var w = my$win();
 w.$uv.push({parent:p, sn:sn});
 }
+
+// trace functions; these only work on deminimized js.
+mw0.jtfn0 = function (a, b, punct)
+{
+var w = my$win();
+var c = w.$jt$c;
+var sn = w.$jt$sn;
+++sn;
+w.$jt$sn = sn;
+return a + "alert3('" + c + sn + "')" + punct + b;
+}
+mw0.jtfn1 = function (all, a, b) { return mw0.jtfn0(a, b, ','); }
+mw0.jtfn2 = function (all, a, b) { return mw0.jtfn0(a, b, ';'); }
 
 } // master compile
 
@@ -2153,6 +2176,8 @@ eb$demin = mw0.eb$demin;
 eb$watch = mw0.eb$watch;
 $uv = [];
 $uv$sn = 0;
+$jt$c = 'z';
+$jt$sn = 0;
 eb$uplift = mw0.eb$uplift;
 
 document.getElementsByTagName = mw0.getElementsByTagName;
