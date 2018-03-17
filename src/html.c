@@ -1983,7 +1983,7 @@ static void frontBackDiff(const char *b1, const char *b2)
 		}
 	}
 
-	if (front1z) {
+	if (front1z || front2z) {
 		sameBack1 = front1z - 1, sameBack2 = front2z - 1;
 		while (*s1 == *s2 && *s1) {
 			if (*s1 == '\n')
@@ -2027,7 +2027,7 @@ mark_e:
 	if (s2 > f2 && s2[-1] != '\n')	// should never happen
 		++sameBack2;
 
-	if (front1z) {
+	if (front1z || front2z) {
 // front2z can run past sameBack2 if lines are deleted.
 // This because front2z is computed before sameBack2.
 		while (front1z > sameBack1 || front2z > sameBack2)
@@ -2058,7 +2058,7 @@ mark_e:
 		}
 	}
 
-	if (back1z) {
+	if (back1z || back2z) {
 		--s1, --s2;
 		while (*s1 == *s2 && s1 >= f1 && s2 >= f2) {
 			if (s1[-1] == '\n' && s2[-1] == '\n')
@@ -2082,13 +2082,13 @@ static bool reportZ(void)
 	int act1, act2;
 	int d_start, d_end;
 
-	if (!front1z && !back1z)
+	if (!(front1z || front2z || back1z || back2z))
 		return false;
 	debugPrint(4, "front %d back %d,%d front1z %d,%d back1z %d,%d",
 		   sameFront, sameBack1, sameBack2,
 		   front1z, front2z, back1z, back2z);
 
-	if (front1z) {
+	if (front1z || front2z) {
 		if (front2z > front1z)
 			oplow = 1;
 		if (front2z == front1z)

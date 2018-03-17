@@ -17,6 +17,8 @@ Edbrowse messages in Italian.
 
 -b option causes command line arguments to browse or play.
 
+A better diff algorithm to report which lines have changed.
+
 3.7.2:
 Keep third party open source javascript routines in a separate file third.js.
 Licenses are included in that file.
