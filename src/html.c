@@ -788,8 +788,6 @@ char *htmlParse(char *buf, int remote)
 		runScriptsPending();
 		runOnload();
 		runScriptsPending();
-// Which runs first, onload or DOMContentLoaded? No idea.
-		run_event_bool(cf->docobj, "document", "onDOMContentLoaded");
 		rebuildSelectors();
 	}
 
@@ -2424,6 +2422,8 @@ void runOnload(void)
 
 	if (!isJSAlive)
 		return;
+
+	run_event_bool(cf->docobj, "document", "onDOMContentLoaded");
 
 /* window and document onload */
 	run_event_bool(cf->winobj, "window", "onload");

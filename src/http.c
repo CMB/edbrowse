@@ -2792,7 +2792,6 @@ we did that before and now it's being expanded. So bump step up to 2.
 		runScriptsPending();
 		runOnload();
 		runScriptsPending();
-		run_event_bool(cf->docobj, "document", "onDOMContentLoaded");
 		rebuildSelectors();
 		set_property_string(cf->docobj, "readyState", "complete");
 	}
@@ -2967,7 +2966,6 @@ bool reexpandFrame(void)
 		runScriptsPending();
 		runOnload();
 		runScriptsPending();
-		run_event_bool(cf->docobj, "document", "onDOMContentLoaded");
 		rebuildSelectors();
 		set_property_string(cf->docobj, "readyState", "complete");
 	}
