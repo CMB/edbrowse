@@ -815,6 +815,7 @@ mimestream:
 			setError(MSG_PasswordLong, MAXUSERPASS);
 		return false;
 	}
+	unpercentString(creds_buf);
 
 	if (!curlActive) {
 		eb_curl_global_init();
@@ -1783,7 +1784,6 @@ ftp_transfer_fail:
 		if (curlret != CURLE_OK)
 			ebcurl_setError(curlret, g->urlcopy,
 					(g->foreground ? 0 : 1), g->error);
-		i_get_free(g, true);
 	}
 	if (transfer_success == true && !stringEqual(url, g->urlcopy))
 		g->cfn = g->urlcopy;
@@ -1791,7 +1791,7 @@ ftp_transfer_fail:
 		nzFree(g->urlcopy);
 	g->urlcopy = 0;
 
-	i_get_free(g, false);
+	i_get_free(g, !transfer_success);
 
 	return transfer_success;
 }				/* ftpConnect */
