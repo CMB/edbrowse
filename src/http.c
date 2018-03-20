@@ -223,6 +223,9 @@ static void i_get_free(struct i_get *g, bool nodata)
 	nzFree(g->etag);
 	nzFree(g->newloc);
 	cnzFree(g->down_file);
+// should not be necessary, but just to be safe:
+	g->headers = g->urlcopy = g->cdfn = g->etag = g->newloc = 0;
+	g->down_file = 0;
 }
 
 /* actually run the curl request, http or ftp or whatever */

@@ -1913,10 +1913,11 @@ or a couple of adjacent lines, or a couple of nearby lines.
 So this should do it.
 sameFront counts the lines from the top that are the same.
 We're here because the buffers are different, so sameFront will not equal $.
+Lines after sameFront are different.
 Lines past sameBack1 and same back2 are the same to the bottom in the two buffers.
 To be a bit more sophisticated, front1z and front2z
 become nonzero if just one line was added, updated, or deleted at sameFront.
-they march on beyond this anomaly as far as they can.
+they march on beyond this point, as long as lines are the same.
 In the same way, back1z and back2z march backwards
 past a one line anomaly.
 *********************************************************************/
@@ -2313,6 +2314,7 @@ and new internal numbers each time, and that use to trip this algorithm.
 		goto done;
 	}
 	frontBackDiff(snap, newbuf);
+//      printf("front %d back %d,%d z %d,%d z %d,%d\n", sameFront, sameBack1, sameBack2, front1z, front2z, back1z, back2z);
 	z = reportZ();
 
 // Even if the change has been reported above,

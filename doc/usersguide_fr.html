@@ -622,6 +622,7 @@ db3 : niveau de déboguage (de 0 à 7)
 <br>dber : active debugging js error (bascule)
 <br>dbcss : active debugging css (bascule)
 <br>uvw getAttribute : variable indéfinie pour on getAttribute
+<br>uvw trace : trace l'exécution javascript
 
 <h3> <a name="tips"> Trucs pour éviter les numéros de ligne </a> </h3>
 
@@ -2529,7 +2530,8 @@ Si vous avez recherché l'information sur des kangourous, le nom de fichier pour
 ressembler à : www.recherche.com?keywords=kangourou.
 Le texte qui suit le point d'interrogation est une version codée des données du formulaire.
 Qui devient une partie de l'URL virtuelle.
-C'est une bonne chose, comme nous le verrons dans la prochaine section.
+Ceci ne s'applique que pour la méthode get; la méthode post envoie les données par un
+autre canal.
 </p>
 
 <p>
@@ -2613,13 +2615,6 @@ Vous pouvez également écrire des scripts concis qui «rempliront» le formulai
 simplement en modifiant les données après le point d'interrogation.
 Ceci fournit une commande simple pour consulter la météo de n'importe quelle ville 
 ou le cours actuel de n'importe quelle action.
-</p>
-
-<p>
-Si le formulaire emploie le POST, plutôt que la méthode GET, les mêmes données apparaîtront, 
-mais le point d'interrogation est remplacé avec le caractère «contrôle a».
-Malheureusement ce caractère est invisible, et ceci est source de confusion.
-Dans le doute, lister la ligne.
 </p>
 
 <p>
