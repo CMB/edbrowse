@@ -2297,7 +2297,10 @@ static void setup_download(struct i_get *g)
 		return;
 	}
 
-	filepart = getFileURL(g->urlcopy, true);
+	if (g->cdfn)
+		filepart = g->cdfn;
+	else
+		filepart = getFileURL(g->urlcopy, true);
 top:
 	answer = getFileName(g->down_msg, filepart, false, true);
 /* space for a filename means read into memory */

@@ -166,7 +166,7 @@ wikipedia article</A> for a history of edbrowse and an overview of its features.
 <H3> <A NAME=copy> Copyright Notice </A> </H3>
 
 <P>
-This program is copyright &copy; Karl Dahlke (and other authors and contributors), 2001-2015.
+This program is copyright &copy; Karl Dahlke (and other authors and contributors), 2001-2018.
 It is made available by the authors under the terms of the GNU General Public License (GPL),
 as articulated by the Free Software Foundation.
 It may be used for any purpose, and redistributed, provided this copyright notice is included.
@@ -305,8 +305,8 @@ Older pre-utf8 systems store each character in a single byte, with an iso8859 co
 <P>
 There's much more to say about charsets; this is merely a brief introduction.
 I need not go further, because edbrowse only supports iso8859-1 &#8660; utf8 at this time.
-Chinese, for example, requires 3 and 4 byte sequences, which map into unicode.
-Edbrowse doesn't handle this level of complexity at this time.
+Other iso8859 pages are not supported, and even iso8859-1 may drop off in the future,
+since utf8 is nearly universal.
 
 <P>
 The output and error messages,
@@ -679,7 +679,7 @@ Use the k command to mark them.
 For example, use ka and kb to mark the start and end of a block of text,
 while kc marks the new location.
 The move command is then 'a,'bm'c - with absolutely no line numbers.
-This is standard ed fair.
+This is standard ed fare.
 
 <P>
 To look for links on a web page, search for the left brace.
@@ -1090,7 +1090,7 @@ The following moves the data from one file to another.
 </font></PRE>
 
 <P>
-An e command, by itself, prints the current session, in case you've forgotten.
+An e command by itself prints the current session, in case you've forgotten.
 This is similar to f, by itself, which prints the current file.
 
 <H3> <A NAME=usage> Usage </A> </H3>
@@ -1151,7 +1151,7 @@ as does the config command, which reprocesses the config file.
 
 <P>
 The -b option browses each file or url on the command line, or plays it if a plugin so indicates.
-Without -b, the urls are browsed.
+Without -b, only the urls are browsed.
 edbrowse this.example.com reads the data from the web page, prints the size in bytes, browses the page, and prints the size of the rendered text.
 The -b option causes the same thing to happen on a local file, e.g. if you have html files on your computer.
 It also activates any plugins that might render your file, e.g. pdf, or play your file, e.g. mp3.
