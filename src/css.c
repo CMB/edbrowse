@@ -1972,8 +1972,8 @@ static void hashSortCrunch(struct hashhead **hp, int *np, bool keyalloc)
 		mark->body[j] = 0;
 		++mark;
 		if (mark - h != distinct)
-			printf("css hash mismatch %d versus %d\n", mark - h,
-			       distinct);
+			printf("css hash mismatch %zu versus %d\n",
+			       mark - h, distinct);
 		distinct = mark - h;
 	}
 // make sure there's something, even if distinct = 0
