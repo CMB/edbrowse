@@ -8,14 +8,13 @@
 .\"
 .\" Written by Kapil Hari Paranjape
 .\" based on the edbdoc.html file written by Karl Dahlke.
-.\" Last Modified on Wed,  9 May 2007 07:19:43 +0530
 .\" Include a Macro From Branden Robinson's WTFM.PDF
 .de URI
 \\$2 \(la URI: \\$1 \(ra\\$3
 ..
 .if \n[.g] .mso www.tmac
 .\" End if Include
-.TH edbrowse 1 2007-05-09 "edbrowse 3.2.1"
+.TH edbrowse 1 2018-05-01 "edbrowse 3.7.3"
 .SH NAME
 edbrowse \- text editor and web browser
 .SH SYNOPSIS
@@ -30,10 +29,7 @@ edbrowse \- text editor and web browser
 .I " ..."
 .LP
 .SH DESCRIPTION
-(This manual page was written for the Debian GNU/Linux distribution
-because the original program does not have a man page. Instead the
-program is documented in detail in the HTML documentation that
-accompanies the program; see below.)
+Complete documentation can be found in the user's guide; see below.
 .PP
 .BR edbrowse
 is a line-oriented text editor very similar to
@@ -70,13 +66,13 @@ for further details regarding the editing commands. Explanation of the
 browsing functions can be found in the HTML documentation.
 .PP
 .SH EXAMPLES
-To read the HTML documentation on a Debian system you can do
+To read the HTML documentation you can do
 .IP
-.BR "edbrowse file:///usr/share/doc/edbrowse/usersguide.html"
+.BR "edbrowse /usr/share/doc/edbrowse/usersguide.html"
 .PP
 To read (say) 20 lines of the buffer at a time starting from
 the top use the command
-.I `1z20'
+.I `0z20'
 followed by repeating
 .I `z' 
 to scroll another 20 lines at a time.
@@ -98,7 +94,7 @@ buffer to a file by the command \fIw file\fR.
 Display the usage message.
 .TP
 .B \-e
-Batch mode. This options causes 
+Batch mode. This option causes 
 .BR edbrowse
 to exit when it encounters an error.
 .TP
