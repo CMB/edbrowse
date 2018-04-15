@@ -233,6 +233,28 @@ else ()
 endif ()
 
 ###########################################################
+### 20180415 - Add man page gen, and install - also doc/usersguide.html
+if (UNIX)
+    # copy to build dir
+    configure_file( doc/man-edbrowse-debian.1 ${CMAKE_BINARY_DIR}/edbrowse.1 )
+    # find 'gzip' - warn if not...
+    find_program(GZIP_EXE gzip PATHS /bin )
+    if (GZIP_EXE)
+        # gzip it in place
+        execute_process(COMMAND ${GZIP_EXE} -f "edbrowse.1"
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            INPUT_FILE edbrowse.1
+            OUTPUT_FILE edbrowse.1.gz )
+        # install it
+        install(FILES ${CMAKE_BINARY_DIR}/edbrowse.1.gz DESTINATION "/usr/share/man/man1")
+    else ()
+        message(WARNING "Unable to locate 'gzip'! No man page...")
+    endif ()
+    # install user guide
+    install(FILES doc/usersguide.html DESTINATION "/usr/share/doc/edbrowse")
+endif ()
+
+###########################################################
 ### edbr static library of shared source - not currently used.
 #  set(name edbr-lib)
 #  set(dir src)
