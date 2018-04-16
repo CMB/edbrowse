@@ -1707,7 +1707,7 @@ bool infPush(int tagno, char **post_string)
 
 	prot = getProtURL(action);
 	if (!prot) {
-		if (t->onclick)
+		if (t && t->onclick)
 			return true;
 		setError(MSG_FormBadURL);
 		return false;
