@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" This man page is based on
+.\" This man page (mdoc - http://mandoc.bsd.lv/) is based on
 .\" https://github.com/CMB/edbrowse/wiki and
 .\" /usr/local/share/doc/edbrowse/usersguide.html
 .\"
@@ -55,7 +55,9 @@
 .Ar file1 file2 ...
 .Sh DESCRIPTION 
 .Nm 
-is a combination of editor, browser, and mail client text based. You can specify several mail accounts and indicate one by an index following the options.
+is a combination of editor, browser, and mail client text based. You can
+specify several mail accounts and indicate one by an index following the
+options.
 .Pp
 The
 .Sy options
@@ -66,7 +68,8 @@ print version
 .It Fl h
 print help
 .It Fl c
-without argument edit the default configuration file. If the first argument is
+without argument edit the default configuration file. If the first argument
+is
 .Sy -c
 .Em filename
 , edbrowse uses it as config file
@@ -79,7 +82,8 @@ specify an email account index [#]
 .It Fl f
 fetch mail from all accounts, except the ones that you have marked nofetch.
 .It Fl f[#]
-specify an index [#] to fetch mail from a single account. For instance, -f1 will fetch mail from the first mail account
+specify an index [#] to fetch mail from a single account. For instance, -f1
+will fetch mail from the first mail account
 .It Fl fm
 retrieve and read email (combine the -f and -m options)
 .It Fl pm pfm
@@ -97,9 +101,12 @@ show the sizes of files and web pages as they are read and written
 .It Fl d2
 show the url as you call up a web page and http redirection
 .It Fl d3
-javascript execution and errors: cookies, http codes, form data, and sql statements logged
+javascript execution and errors: cookies, http codes, form data, and sql
+statements logged
 .It Fl d4
-show the socket connections, http headers in and out, html syntax errors as per tidy5, tree of nodes internal to edbrowse, side effects of running javascript and dynamic node linkage
+show the socket connections, http headers in and out, html syntax errors as
+per tidy5, tree of nodes internal to edbrowse, side effects of running
+javascript and dynamic node linkage
 .It Fl d5
 messages to and from javascript, url resolution, tidy html nodes
 .It Fl d6
@@ -114,9 +121,13 @@ not used
 .Sh FILES
 $home/.ebrc is the configuration file
 .Sh DIAGNOSTICS
-The error message is left in a buffer, which you can see by typing 'h' in the /bin/ed style. Sometimes the error is displayed no matter what, like when you are reading or writing files.
+The error message is left in a buffer, which you can see by typing 'h' in
+the /bin/ed style. Sometimes the error is displayed no matter what, like
+when you are reading or writing files.
 .Pp
-Error messages are created according to your locale, i.e. in your language, if a translation is available. Some error messages in the database world have not yet been internationalized.
+Error messages are created according to your locale, i.e. in your language,
+if a translation is available. Some error messages in the database world
+have not yet been internationalized.
 .Sh SEE ALSO
 .Nm
 is, at first glance, a reimplementation of
