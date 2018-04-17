@@ -1,0 +1,133 @@
+.\"
+.\" Copyright (c) 2018 Alfonso S. Siciliano alfix86@gmail.com
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" This man page is based on
+.\" https://github.com/CMB/edbrowse/wiki and
+.\" /usr/local/share/doc/edbrowse/usersguide.html
+.\"
+
+.Dd $Mdocdate: April 16 2018 $ 
+.Dt EDBROWSE 1
+.Os 
+.Sh NAME 
+.Nm edbrowse 
+.Nd a Command Line Editor Browser
+.Sh SYNOPSIS 
+.Nm
+.Op Fl v
+.Op Fl h
+.Op Fl c
+.Nm
+.Op Fl d[#]
+.Op Fl f[#]
+.Op Fl [p]m
+.Op Fl [p]fm[#]
+.Nm
+.Op Fl d[#]
+.Fl m[#]
+.Ar addr1 addr2 ... file
+.Op Ar attachments
+.Nm
+.Op Fl d[#]
+.Op Fl e
+.Op Fl c Ar configFile
+.Ar file1 file2 ...
+.Sh DESCRIPTION 
+.Nm 
+is a combination of editor, browser, and mail client text based. You can specify several mail accounts and indicate one by an index following the options.
+.Pp
+The
+.Sy options
+are as follows:
+.Bl -tag -width indent
+.It Fl v
+print version
+.It Fl h
+print help
+.It Fl c
+without argument edit the default configuration file. If the first argument is
+.Sy -c
+.Em filename
+, edbrowse uses it as config file
+.It Fl e
+exit when it encounters an error, usually used by batch scripts
+.It Fl m
+with no other arguments, interactive mail reader
+.It m[#]
+specify an email account index [#]
+.It Fl f
+fetch mail from all accounts, except the ones that you have marked nofetch.
+.It Fl f[#]
+specify an index [#] to fetch mail from a single account. For instance, -f1 will fetch mail from the first mail account
+.It Fl fm
+retrieve and read email (combine the -f and -m options)
+.It Fl pm pfm
+like -f and -fm options but pass over the filters
+.El
+.Pp
+The
+.Sy debug
+options:
+.Bl -tag
+.It Fl d0
+silent
+.It Fl d1
+show the sizes of files and web pages as they are read and written
+.It Fl d2
+show the url as you call up a web page and http redirection
+.It Fl d3
+javascript execution and errors: cookies, http codes, form data, and sql statements logged
+.It Fl d4
+show the socket connections, http headers in and out, html syntax errors as per tidy5, tree of nodes internal to edbrowse, side effects of running javascript and dynamic node linkage
+.It Fl d5
+messages to and from javascript, url resolution, tidy html nodes
+.It Fl d6
+show javascript to be executed
+.It Fl d7
+reformatted regular expressions, breakline chunks
+.It Fl d8
+text lines freed, debug garbage collection
+.It Fl d9
+not used
+.El
+.Sh FILES
+$home/.ebrc is the configuration file
+.Sh DIAGNOSTICS
+The error message is left in a buffer, which you can see by typing 'h' in the /bin/ed style. Sometimes the error is displayed no matter what, like when you are reading or writing files.
+.Pp
+Error messages are created according to your locale, i.e. in your language, if a translation is available. Some error messages in the database world have not yet been internationalized.
+.Sh SEE ALSO
+.Nm
+is, at first glance, a reimplementation of
+.Xr ed 1
+.Pp
+Full guide
+.Pp
+.Sy edbrowse
+/usr/local/share/doc/edbrowse/usersguide.html
+.Sh AUTHORS
+.Nm
+was primarily written by Karl Dahlke <eklhad@comcast.net>.
+.Pp
+This manual page was written by Alfonso S. Siciliano <alfix86@gmail.com>.
