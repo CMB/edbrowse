@@ -235,8 +235,16 @@ endif ()
 ###########################################################
 ### 20180415 - Add man page gen, and install - also doc/usersguide.html
 if (UNIX)
+    FILE (GLOB UnixManFile "doc/man-edbrowse-debian.1")
+    set (UnixManDir "/usr/share/man/man1")
+    set (UnixDocDir "/usr/share/doc/edbrowse")
+    if (${CMAKE_SYSTEM_NAME} STREQUAL  "FreeBSD")
+	FILE (GLOB UnixManFile "doc/man-edbrowse-freebsd.1")
+        set (UnixManDir "/usr/local/man/man1")
+        set (UnixDocDir "/usr/local/share/doc/edbrowse")
+    endif()
     # copy to build dir
-    configure_file( doc/man-edbrowse-debian.1 ${CMAKE_BINARY_DIR}/edbrowse.1 )
+    configure_file( ${UnixManFile} ${CMAKE_BINARY_DIR}/edbrowse.1 )
     # find 'gzip' - warn if not...
     find_program(GZIP_EXE gzip PATHS /bin )
     if (GZIP_EXE)
@@ -246,12 +254,12 @@ if (UNIX)
             INPUT_FILE edbrowse.1
             OUTPUT_FILE edbrowse.1.gz )
         # install it
-        install(FILES ${CMAKE_BINARY_DIR}/edbrowse.1.gz DESTINATION "/usr/share/man/man1")
+	install(FILES ${CMAKE_BINARY_DIR}/edbrowse.1.gz DESTINATION UnixManDir)
     else ()
         message(WARNING "Unable to locate 'gzip'! No man page...")
     endif ()
     # install user guide
-    install(FILES doc/usersguide.html DESTINATION "/usr/share/doc/edbrowse")
+    install(FILES doc/usersguide.html DESTINATION UnixDocDir)
 endif ()
 
 ###########################################################
