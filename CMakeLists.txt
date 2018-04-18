@@ -254,12 +254,12 @@ if (UNIX)
             INPUT_FILE edbrowse.1
             OUTPUT_FILE edbrowse.1.gz )
         # install it
-	install(FILES ${CMAKE_BINARY_DIR}/edbrowse.1.gz DESTINATION UnixManDir)
+	install(FILES ${CMAKE_BINARY_DIR}/edbrowse.1.gz DESTINATION ${UnixManDir})
     else ()
         message(WARNING "Unable to locate 'gzip'! No man page...")
     endif ()
     # install user guide
-    install(FILES doc/usersguide.html DESTINATION UnixDocDir)
+    install(FILES doc/usersguide.html DESTINATION ${UnixDocDir})
 endif ()
 
 ###########################################################
