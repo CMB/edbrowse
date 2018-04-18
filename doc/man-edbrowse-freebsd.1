@@ -54,10 +54,10 @@
 .Op Fl c Ar configFile
 .Ar file1 file2 ...
 .Sh DESCRIPTION 
-.Nm 
+.Nm
 is a combination of editor, browser, and mail client text based. You can
-specify several mail accounts and indicate one by an index following the
-options.
+specify several mail accounts and indicate one by its index following the
+email options.
 .Pp
 The
 .Sy options
@@ -122,21 +122,19 @@ not used
 $home/.ebrc is the configuration file
 .Sh DIAGNOSTICS
 The error message is left in a buffer, which you can see by typing 'h' in
-the /bin/ed style. Sometimes the error is displayed no matter what, like
-when you are reading or writing files.
-.Pp
-Error messages are created according to your locale, i.e. in your language,
-if a translation is available. Some error messages in the database world
-have not yet been internationalized.
-.Sh SEE ALSO
-.Nm
-is, at first glance, a reimplementation of
+the
 .Xr ed 1
+style.
+.Sh SEE ALSO
+.Xr ed 1
+.Nm
+is, at first glance, a reimplementation of ed
 .Pp
 Full guide
+.Em userguide.html
+,type:
 .Pp
-.Sy edbrowse
-/usr/local/share/doc/edbrowse/usersguide.html
+.Dl edbrowse /usr/local/share/doc/edbrowse/usersguide.html
 .Sh AUTHORS
 .Nm
 was primarily written by Karl Dahlke <eklhad@comcast.net>.
