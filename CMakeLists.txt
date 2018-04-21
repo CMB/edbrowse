@@ -259,7 +259,7 @@ if (UNIX)
         message(WARNING "Unable to locate 'gzip'! No man page...")
     endif ()
     # install user guide
-    install(FILES doc/usersguide.html DESTINATION ${UnixDocDir})
+    install(FILES doc/usersguide.html doc/usersguide_fr.html doc/sample.ebrc doc/sample_fr.ebrc doc/sample_it.ebrc DESTINATION ${UnixDocDir})
 endif ()
 
 ###########################################################
