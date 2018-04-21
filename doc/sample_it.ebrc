@@ -17,8 +17,10 @@ outserver = smtp.comcast.net
 #  login e password
 login = kdahlke189603
 password = elephant
-#  Da chi viene questa email? Il tuo nome e un indirizzo di risposta
-#  Nota, ora è illegale contraffare email, quindi sii sicuro che il tuo nome sia realmente il tuo o della tua azienda e assicurati che l' indirizzo di risposta sia uno delle tue email o comunque sia inoltrato a te.
+#  Da chi viene questa email? Il tuo nome e un indirizzo di risposta.
+#  Nota, ora è illegale contraffare email, quindi sii sicuro che il tuo nome
+#  sia realmente il tuo o della tua azienda e assicurati che l' indirizzo di risposta
+#  sia uno delle tue email o comunque sia inoltrato a te.
 from = Karl Dahlke
 reply = kdahlke189603@comcast.net
 }
@@ -39,7 +41,7 @@ reply = eklhad@comcast.net
 #  L' account di mia moglie
 #  Lo controllo di tanto in tanto col suo permesso ovviamente.
 mail {
-#  Assolutamente di default non fare "fetch" di email da questo account.
+#  Di default non fare assolutamente "fetch" di email da questo account.
 nofetch
 inserver = mail.comcast.net
 outserver = smtp.comcast.net
@@ -51,7 +53,7 @@ reply = kdwife@comcast.net
 
 #  Il mio account di lavoro
 mail {
-#  Lo shortcut per  "eyemail" è definito in /etc/hosts.
+#  L' abbreviazione per "eyemail" è definita in /etc/hosts.
 #  Puoi fare in questo modo o usare il nome di dominio completo,
 #  come fatto con comcast prima.
 inserver = eyemail
@@ -75,11 +77,10 @@ reply = eklhad@gmail.com
 
 #  Queste sono tutte le mie email.
 #  Ora la mia rublica.
-#  Il formato è  alias:email:other non diamo peso a questi campi
+#  Il formato è  alias:email:other campi che non ci interessano
 adbook=/home/mylogin/outside/adbook
 
-#  Spostati in questa cartella quando recuperi le email, Dovrebbe essere un path assoluto.
-
+#  Muovi in questa cartella quando recuperi le email, Dovrebbe essere un path assoluto.
 maildir = /home/mylogin/mbox
 
 #  Metti i file scaricati qui. Dovrebbe essere un path assoluto.
@@ -135,8 +136,9 @@ content = audio/x-scpls,audio/mpeg,application/pls+xml
 program = /usr/bin/mpv --really-quiet %i
 }
 
-#  Qualche plugin "suona" il file, altri lo converto per migliorare la "leggibilità".
-#  Il parametro "outtype" è incato per ultimo
+#  Qualche plugin "suona" il file, altri lo converto per "leggibilità".
+#  Il parametro "outtype" è incato per ultimo.
+#  Imposta outtype = h per html o t per testo.
 #  Questo plugin è richiamato dal browser per interpretare un pdf.
 plugin {
 type = pdf
@@ -178,8 +180,8 @@ datasource = retail,mylogin,mypassword
 #  Vedi la documetazione di edbrowse per maggiori informazioni.
 table {
     tname = customers
-#  cnm è la mia abbreviazione criptica per "nome cliente"
-#  Qui voglio essere ciptico, dato che lo scriverò molto
+#  cnm è la mia misteriosa abbreviazione  per "nome cliente"
+#  Qui voglio essere misterioso, dato che lo scriverò molto
     tshort = cnm
     cols = custnum,firstname,lastname
 #  Specifica la chiave primaria, in questo caso, la prima colonna selezionata
@@ -196,10 +198,11 @@ table {
 
 
 #  Un' abbondanza di siti usa javascript solo per effetti grafici.
-#  Javascript tende ad essere complicato, per cui non lo analizzo correttamente e potresti incappare in molti errori noiosi.
+#  Javascript tende ad essere complicato, per cui, generalmente, non lo
+#  analizzo correttamente e potresti incappare in molti errori noiosi.
 #  Puoi disabilitare javascript sito per sito.
-#  Nota, meglio dire space.com piutosto di www.space.com,
-#  a meno che ci sia foo.space.com dove veramente hai bisogno di javascript.
+#  Nota, meglio dire space.com piuttosto di www.space.com,
+#  a meno che ci sia un foo.space.com dove veramente hai bisogno di javascript.
 nojs = space.com
 nojs = nasa.gov
 nojs = paypal.com
@@ -212,7 +215,7 @@ nojs = paypal.com
 #  Tutto bello e buono, ma qualche sito non ha rispetto per edbrowse.
 #  Puoi specificare un "agent" differente in questo file di configurazione,
 #  e attivarli con il comando `ua' (user agent).
-#  Con le seguenti linee nel tuo file di configurazione,
+#  Usa le seguenti linee nel tuo file di configurazione,
 #  puoi digitare ua1 per far finta di essere lynx e ua2 per fingere di essere Mozilla.
 #  Digitare ua0 per ripristinare l'idenificazione standard di edbrowse.
 
@@ -230,10 +233,10 @@ function+undos {
 #  Non è garantito che sia aggiornato;
 #  Google cambia la sua inerfaccia web di volta in volta.
 #  Infatti ogni script di "accesso web" richiede manutenzione,
-#  seguendo l' evoluzione del sito in questione.
+#  seguendo l' evoluzione del sito in esame.
 #  ~0 sta per tutti gli argomenti, in altre parole, il resto della linea.
-#  Quindi  <gg elefanti tigri   chiamerà google,
-#  cercando insieme elefanti e tigli.
+#  Quindi  <gg elefanti tigri   contatterà google,
+#  cercando elefanti e tigli insieme.
 function+gg {
 b http://www.google.com
 /<>/ i=~0
