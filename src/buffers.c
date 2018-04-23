@@ -1657,6 +1657,7 @@ static bool readFile(const char *filename, const char *post, bool newwin,
 	char *rbuf;		/* read buffer */
 	int readSize;		/* should agree with fileSize */
 	bool rc;		/* return code */
+	bool fileprot = false;
 	char *nopound;
 	char filetype;
 
@@ -1669,6 +1670,14 @@ static bool readFile(const char *filename, const char *post, bool newwin,
 			setError(MSG_MissingFileName);
 			return false;
 		}
+		fileprot = true;
+		changeFileName = cloneString(filename);
+		unpercentString(changeFileName);
+		if (stringEqual(filename, changeFileName)) {
+			free(changeFileName);
+			changeFileName = 0;
+		} else
+			filename = changeFileName;
 		goto fromdisk;
 	}
 
@@ -1817,24 +1826,28 @@ fromdisk:
 // reading a file from disk.
 	fileSize = 0;
 // for security reasons, this cannot be a frame in a web page.
-	if (!frameSecurityFile(filename))
+	if (!frameSecurityFile(filename)) {
+badfile:
+		nzFree(changeFileName);
+		changeFileName = 0;
 		return false;
+	}
 
 	filetype = fileTypeByName(filename, false);
 	if (filetype == 'd') {
 		if (!fromframe)
 			return readDirectory(filename);
 		setError(MSG_FrameNotHTML);
-		return false;
+		goto badfile;
 	}
 
-	if (newwin && !cf->mt)
+	if (newwin && !fileprot && !cf->mt)
 		cf->mt = findMimeByFile(filename);
 
 // Optimize; don't read a file into buffer if you're
 // just going to process it.
 	if (cf->mt && cf->mt->outtype && pluginsOn && !access(filename, 4)
-	    && cmd == 'b' && newwin) {
+	    && !fileprot && cmd == 'b' && newwin) {
 		rc = runPluginCommand(cf->mt, 0, filename, 0, 0, &rbuf,
 				      &fileSize);
 		cf->render1 = cf->render2 = true;
@@ -1853,7 +1866,7 @@ fromdisk:
 	}
 
 	if (!rc)
-		return false;
+		goto badfile;
 	serverData = rbuf;
 	serverDataLen = fileSize;
 	if (fileSize == 0) {	/* empty file */
@@ -1971,7 +1984,7 @@ gotdata:
 	} else if (fromframe) {
 		nzFree(rbuf);
 		setError(MSG_FrameNotHTML);
-		return false;
+		goto badfile;
 	} else if (binaryDetect & !cw->binMode) {
 		i_puts(MSG_BinaryData);
 		cw->binMode = true;
