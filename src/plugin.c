@@ -419,7 +419,7 @@ fragment to use popen, which can be more efficient.
 			goto fail;
 		}
 		rc = fdIntoMemory(fileno(p), outdata, outlength);
-		fclose(p);
+		pclose(p);
 		if (!rc)
 			goto fail;
 		goto success;
