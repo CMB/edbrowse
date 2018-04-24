@@ -1699,7 +1699,7 @@ bool infPush(int tagno, char **post_string)
 // And yet, with onclick on the submit button, no action means no action,
 // and I believe the same is true for onsubmit.
 // Just assume javascript has done the submit.
-	if (!action || stringEqual(action, "#")) {
+	if (!action || !*action || stringEqual(action, "#")) {
 		if (t && (t->onclick | form->onsubmit))
 			return true;
 		action = cf->hbase;
