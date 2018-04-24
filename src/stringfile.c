@@ -751,7 +751,7 @@ bool fileIntoMemory(const char *filename, char **data, int *len)
 	int fh;
 	char ftype = fileTypeByName(filename, false);
 	bool ret;
-	if (ftype && ftype != 'f') {
+	if (ftype && ftype != 'f' && ftype != 'p') {
 		setError(MSG_RegularFile, filename);
 		return false;
 	}
