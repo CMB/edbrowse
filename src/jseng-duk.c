@@ -26,12 +26,6 @@ Exit codes are as follows:
 
 #include "eb.h"
 
-#if !defined(__FreeBSD__)
-#include <malloc.h>
-#else
-#include <stdlib.h>
-#endif
-
 #ifdef DOSLIKE
 #include "vsprtf.h"
 #endif // DOSLIKE
