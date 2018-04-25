@@ -65,7 +65,7 @@ bool inInput, listNA;
 int fileSize;
 char *dbarea, *dblogin, *dbpw;	/* to log into the database */
 bool fetchBlobColumns;
-bool caseInsensitive, searchStringsAll;
+bool caseInsensitive, searchStringsAll, searchWrap = true;
 bool binaryDetect = true;
 bool inputReadLine;
 bool curlAuthNegotiate = false;

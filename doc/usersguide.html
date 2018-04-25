@@ -488,6 +488,7 @@ s/x/y/ : replace x with y on the current line
 <br>sg : substitution strings are global across sessions
 <br>sl : substitution strings are local to their sessions
 <br>su8 : search and substitute uses utf8 character sequences (toggle)
+<br>swrap : search with wrap (toggle)
 <br>g/x/ p : print every line that has an x
 <br>v/x/ p : print every line that does not have an x
 <br>v/x/i l : list every line that does not have x or X
@@ -730,7 +731,7 @@ Once you are accustomed to their power and flexibility,
 you'll never go back to ed.
 
 <P>
-Great!  You've read the perlre man page, and you're back.
+Great.  You've read the perlre man page, and you're back.
 Here are a few changes that I've made to perl regular expressions.
 I have found that ( and ) are almost always meant to be literal,
 as in searching for myFunction(),
@@ -888,6 +889,12 @@ when you thought you were in append mode, but you weren't.
 This program is less tolerant of whitespace than /bin/ed.
 <br>
 57 , 63 p      will not fly.
+
+<LI><P>
+When searching for a regular expression, both ed and edbrowse will wrap around the buffer, back to the beginning.
+Thus /./ on the last line prints the first line.
+This behavior can be turned on and off via the swrap command.
+Some people prefer to stop searching at the end of the buffer, without going back to the beginning.
 
 <LI><P>
 A single % on the right hand side of a substitution is replaced with the last right hand side.

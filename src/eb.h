@@ -318,7 +318,7 @@ extern char *ebTempDir;		/* edbrowse temp, such as /tmp/.edbrowse */
 extern char *ebUserDir;		/* $ebTempDir/nnn user ID appended */
 extern char *dbarea, *dblogin, *dbpw;	/* to log into the database */
 extern bool fetchBlobColumns;
-extern bool caseInsensitive, searchStringsAll;
+extern bool caseInsensitive, searchStringsAll, searchWrap;
 extern bool allowRedirection;	/* from http code 301, or http refresh */
 extern bool sendReferrer;	/* in the http header */
 extern bool allowJS;		/* javascript on */

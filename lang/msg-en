@@ -601,8 +601,8 @@ calling fopen() with invalid mode %s
 misplaced / in getDirURL(%s)
 misplaced / in %s
 decodePostData(0,0)
-0
-0
+search without wrap
+search with wrap
 0
 cannot reply in directory mode
 cannot reply in database mode

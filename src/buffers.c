@@ -2812,6 +2812,11 @@ static bool getRangePart(const char *line, int *lineno, const char **split)
 		while (true) {
 			char *subject;
 			ln += incr;
+			if (!searchWrap && (ln == 0 || ln > cw->dol)) {
+				pcre_free(re_cc);
+				setError(MSG_NotFound);
+				return false;
+			}
 			if (ln > cw->dol)
 				ln = 1;
 			if (ln == 0)
@@ -4230,6 +4235,13 @@ et_go:
 		binaryDetect ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(binaryDetect + MSG_BinaryIgnore);
+		return true;
+	}
+
+	if (stringEqual(line, "swrap")) {
+		searchWrap ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(searchWrap + MSG_WrapOff);
 		return true;
 	}
 
