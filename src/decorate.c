@@ -1703,6 +1703,8 @@ const struct tagInfo availableTags[] = {
 	{"b", "bold text", TAGACT_JS, 0, 0},
 	{"i", "italicized text", TAGACT_JS, 0, 0},
 	{"u", "underlined text", TAGACT_JS, 0, 0},
+	{"var", "variable text", TAGACT_JS, 0, 0},
+	{"kbd", "keyboard text", TAGACT_JS, 0, 0},
 	{"dfn", "definition text", TAGACT_JS, 0, 0},
 	{"q", "quoted text", TAGACT_JS, 0, 0},
 	{"abbr", "an abbreviation", TAGACT_JS, 0, 0},
