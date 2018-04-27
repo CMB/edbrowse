@@ -26,8 +26,8 @@ mostra i files nascosti quando in modalità cartelle
 debug cloneNode disabilitato
 debug cloneNode abilitato
 end markers disattivo
-end markers sulle righe listate
 end markers attivo
+0
 javascript disabilitato, nessuna azione intrapresa
 javascript disabilitato, vado direttamente all'url
 redirezione interrotta dall'utente
@@ -601,8 +601,8 @@ chiamata a fopen() con modalità non valida %s
 / fuori posto in getDirURL(%s)
 / fuori posto in %s
 decodePostData(0,0)
-0
-0
+cerca senza wrapping
+cerca con wrapping
 0
 impossibile rispondere in modalità cartelle
 impossibile rispondere in modalità database

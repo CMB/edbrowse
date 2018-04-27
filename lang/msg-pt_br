@@ -26,8 +26,8 @@ exibe arquivos ocultos no modo diretório
 0
 0
 marcadores de fim desligados
-marcadores de fim em linhas listadas
 marcadores de fim ligados
+0
 javascript desativado; nenhuma ação
 javascript está desativado;indo direto à URL
 redirecionamento interrompido pelo usuário
@@ -601,8 +601,8 @@ chamando fopen() em modo inválido %s
 / mal posicionada na getDirURL(%s)
 / mal posicionada na %s
 decodePostData(0,0)
-0
-0
+buscar não circulando
+buscar circulando
 0
 não é possível replicar em modo diretório
 não é possível replicar em modo banco de dados

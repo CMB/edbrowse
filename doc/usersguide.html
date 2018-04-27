@@ -447,9 +447,7 @@ p : print the current line
 <br>'a,'bp : print a range of lines marked with labels a and b
 <br>kb : mark the current line as b
 <br>l : list the current line, showing invisible chars and end markers
-<br>eo : end markers off
-<br>el : show end markers ^$ when a line is listed
-<br>ep : show end markers when a line is listed or printed
+<br>endm : show end markers ^$ on listed lines (toggle)
 <br>lna : expand all nonascii chars into hex when a line is listed (toggle)
 <br>n : print the current line with its line number
 <br>ll 1000 : line length 1000, show the first 1000 chars of each line
@@ -488,7 +486,7 @@ s/x/y/ : replace x with y on the current line
 <br>sg : substitution strings are global across sessions
 <br>sl : substitution strings are local to their sessions
 <br>su8 : search and substitute uses utf8 character sequences (toggle)
-<br>swrap : search with wrap (toggle)
+<br>sw : search with wrap (toggle)
 <br>g/x/ p : print every line that has an x
 <br>v/x/ p : print every line that does not have an x
 <br>v/x/i l : list every line that does not have x or X
@@ -565,9 +563,9 @@ b : browse the current file, which is assumed to be in html
 <br>b foo.html : edit the file foo.html and browse it
 <br>b url : fetch url from the internet and browse it
 <br>ub : unbrowse a file
-<br>ft : show the title of the current web page
-<br>fd : show the description of the current web page
-<br>fk : show the keywords of the current web page
+<br>title : show the title of the current web page
+<br>desc : show the description of the current web page
+<br>keyw : show the keywords of the current web page
 <br>rf : refresh the web page or directory listing
 <br>et : edit this web page as pure text
 <br>hr : http redirection (toggle)
@@ -836,10 +834,8 @@ You can escape an individual shell meta character with the backslash, as in fun\
 <LI><P>
 Many versions of ed place a $ at the end of a listed line,
 but this is not one of them, at least not by default.
-Use the command `el' to place end markers around listed lines.
+Use the command `endm' to place end markers around listed lines.
 Listed lines begin with ^ and end with $.
-Enter `ep' to place end markers around all printed lines.
-Use `eo' to turn end markers off.
 
 <LI><P>
 Capital Q does not quit the editor absolutely.
@@ -893,7 +889,7 @@ This program is less tolerant of whitespace than /bin/ed.
 <LI><P>
 When searching for a regular expression, both ed and edbrowse will wrap around the buffer, back to the beginning.
 Thus /./ on the last line prints the first line.
-This behavior can be turned on and off via the swrap command.
+This behavior can be turned on and off via the sw command.
 Some people prefer to stop searching at the end of the buffer, without going back to the beginning.
 
 <LI><P>
@@ -1894,7 +1890,7 @@ that attempts to be both sighted and blind friendly at the same time.
 <H3> <A NAME=title> Title, Description, Keywords </A> </H3>
 
 <P>
-While in browse mode, the commands ft, fd, and fk
+While in browse mode, the commands title, desc, and keyw
 produce the title, description, and keywords of the current web file respectively.
 These are normally not visible to the user.
 The title describes the web page in 80 characters or less.
@@ -1907,12 +1903,7 @@ these three attributes are readonly.
 If it is your web page,
 you can modify them by returning to the raw html.
 Web designers should pay close attention to the description and the keywords,
-else your pages will not be accessible via the standard search engines.
-
-<P>
-Note that `ft' prints the title of the web page,
-whereas `f t' (with a space) renames the current file to "t",
-which is probably not what you want.
+else your pages might not be accessible via the standard search engines.
 
 <H3> <A NAME=rf> The Refresh Command </A> </H3>
 
@@ -3463,7 +3454,7 @@ db0
 #  Assume directories can be modified
 dw
 #  Put beginning and end markers around listed lines
-el
+endm+
 #  Let session 99 hold your favorites, ready to surf.
 e99
 b $bookmarks

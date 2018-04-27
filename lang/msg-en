@@ -26,8 +26,8 @@ show hidden files in directory mode
 debug cloneNode disabled
 debug cloneNode enabled
 end markers off
-end markers on listed lines
 end markers on
+0
 javascript disabled, no action taken
 javascript is disabled, going straight to the url
 redirection interrupted by user

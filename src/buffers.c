@@ -30,7 +30,7 @@ static bool pcre_utf8_error_stop = false;
 /* Static variables for this file. */
 
 static uchar dirWrite;		/* directories read write */
-static uchar endMarks;		/* ^ $ on printed lines */
+static bool endMarks;		/* ^ $ on listed lines */
 /* The valid edbrowse commands. */
 static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^<";
 /* Commands that can be done in browse mode. */
@@ -260,7 +260,7 @@ void displayLine(int n)
 		stringAndNum(&output, &output_l, n);
 		stringAndChar(&output, &output_l, ' ');
 	}
-	if (endMarks == 2 || (endMarks && cmd == 'l'))
+	if (endMarks && cmd == 'l')
 		stringAndChar(&output, &output_l, '^');
 
 	while ((c = *s++) != '\n') {
@@ -297,7 +297,7 @@ void displayLine(int n)
 			}
 		}
 	}
-	if (endMarks == 2 || (endMarks && cmd == 'l'))
+	if (endMarks && cmd == 'l')
 		stringAndChar(&output, &output_l, '$');
 	eb_puts(output);
 
@@ -889,9 +889,9 @@ static void freeWindow(struct ebWindow *w)
 	}
 	freeWindowLines(w->map);
 	freeWindowLines(w->r_map);
-	nzFree(w->ft);
-	nzFree(w->fd);
-	nzFree(w->fk);
+	nzFree(w->htmltitle);
+	nzFree(w->htmldesc);
+	nzFree(w->htmlkey);
 	nzFree(w->mailInfo);
 	nzFree(w->referrer);
 	nzFree(w->baseDirName);
@@ -4025,12 +4025,12 @@ et_go:
 			nzFree(f->hbase);
 			f->hbase = 0;
 		}
-		nzFree(cw->ft);
-		cw->ft = 0;
-		nzFree(cw->fd);
-		cw->fd = 0;
-		nzFree(cw->fk);
-		cw->fk = 0;
+		nzFree(cw->htmltitle);
+		cw->htmltitle = 0;
+		nzFree(cw->htmldesc);
+		cw->htmldesc = 0;
+		nzFree(cw->htmlkey);
+		cw->htmlkey = 0;
 		nzFree(cw->mailInfo);
 		cw->mailInfo = 0;
 		if (ub)
@@ -4063,8 +4063,8 @@ et_go:
 		return 2;
 	}
 
-	if (line[0] == 'f' && line[2] == 0 &&
-	    (line[1] == 'd' || line[1] == 'k' || line[1] == 't')) {
+	if (stringEqual(line, "title") || stringEqual(line, "desc") ||
+	    stringEqual(line, "keyw")) {
 		const char *s;
 		int t;
 		cmd = 'e';
@@ -4072,12 +4072,12 @@ et_go:
 			setError(MSG_NoBrowse);
 			return false;
 		}
-		if (line[1] == 't')
-			s = cw->ft, t = MSG_NoTitle;
-		if (line[1] == 'd')
-			s = cw->fd, t = MSG_NoDesc;
-		if (line[1] == 'k')
-			s = cw->fk, t = MSG_NoKeywords;
+		if (line[0] == 't')
+			s = cw->htmltitle, t = MSG_NoTitle;
+		if (line[0] == 'd')
+			s = cw->htmldesc, t = MSG_NoDesc;
+		if (line[0] == 'k')
+			s = cw->htmlkey, t = MSG_NoKeywords;
 		if (s)
 			eb_puts(s);
 		else
@@ -4224,6 +4224,13 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "js+") || stringEqual(line, "js-")) {
+		allowJS = (line[2] == '+');
+		if (helpMessagesOn)
+			i_puts(allowJS + MSG_JavaOff);
+		return true;
+	}
+
 	if (stringEqual(line, "xhr")) {
 		allowXHR ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
@@ -4238,9 +4245,16 @@ et_go:
 		return true;
 	}
 
-	if (stringEqual(line, "swrap")) {
+	if (stringEqual(line, "sw")) {
 		searchWrap ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(searchWrap + MSG_WrapOff);
+		return true;
+	}
+
+	if (stringEqual(line, "sw+") || stringEqual(line, "sw-")) {
+		searchWrap = (line[2] == '+');
+		if (helpMessagesOn)
 			i_puts(searchWrap + MSG_WrapOff);
 		return true;
 	}
@@ -4385,24 +4399,24 @@ et_go:
 		return true;
 	}
 
-	if (stringEqual(line, "eo")) {
-		endMarks = 0;
+	if (stringEqual(line, "fbc+") || stringEqual(line, "fbc-")) {
+		fetchBlobColumns = (line[3] == '+');
 		if (helpMessagesOn)
-			i_puts(MSG_MarkOff);
+			i_puts(fetchBlobColumns + MSG_FetchBlobOff);
 		return true;
 	}
 
-	if (stringEqual(line, "el")) {
-		endMarks = 1;
-		if (helpMessagesOn)
-			i_puts(MSG_MarkList);
+	if (stringEqual(line, "endm")) {
+		endMarks ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(endMarks + MSG_MarkersOff);
 		return true;
 	}
 
-	if (stringEqual(line, "ep")) {
-		endMarks = 2;
+	if (stringEqual(line, "endm+") || stringEqual(line, "endm-")) {
+		endMarks = (line[4] == '+');
 		if (helpMessagesOn)
-			i_puts(MSG_MarkOn);
+			i_puts(endMarks + MSG_MarkersOff);
 		return true;
 	}
 
@@ -4671,7 +4685,7 @@ static char *showLinks(void)
 		stringAndString(&a, &a_l, h);
 		stringAndString(&a, &a_l, ">\n");
 /* get text from the html title if you can */
-		s = cw->ft;
+		s = cw->htmltitle;
 		if (s && *s) {
 			h2 = htmlEscape(s);
 			stringAndString(&a, &a_l, h2);

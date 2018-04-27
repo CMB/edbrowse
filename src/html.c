@@ -448,9 +448,9 @@ void htmlMetaHelper(struct htmlTag *t)
 	if (name) {
 		ptr = 0;
 		if (stringEqualCI(name, "description"))
-			ptr = &cw->fd;
+			ptr = &cw->htmldesc;
 		if (stringEqualCI(name, "keywords"))
-			ptr = &cw->fk;
+			ptr = &cw->htmlkey;
 		if (ptr && !*ptr && content) {
 			stripWhite(copy);
 			*ptr = copy;

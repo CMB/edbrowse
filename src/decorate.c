@@ -466,9 +466,9 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 			break;
 
 		if (currentTitle) {
-			if (!cw->ft) {
-				cw->ft = cloneString(t->textval);
-				spaceCrunch(cw->ft, true, false);
+			if (!cw->htmltitle) {
+				cw->htmltitle = cloneString(t->textval);
+				spaceCrunch(cw->htmltitle, true, false);
 			}
 			t->deleted = true;
 			break;
@@ -1433,8 +1433,8 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_TITLE:
-		if (cw->ft)
-			set_property_string(cf->docobj, "title", cw->ft);
+		if (cw->htmltitle)
+			set_property_string(cf->docobj, "title", cw->htmltitle);
 // Title is not a node, more like an attribute of the page.
 		break;
 
