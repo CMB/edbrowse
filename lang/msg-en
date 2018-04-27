@@ -1,10 +1,10 @@
 EOF
 no file
 redirect
-substitutions global
 substitutions local
-case insensitive
+substitutions global
 case sensitive
+case insensitive
 directories readonly
 directories writable
 directories writable with delete

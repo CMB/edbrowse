@@ -486,10 +486,8 @@ s/x/y/ : replace x with y on the current line
 <br>/x : same as /x/
 <br>/x/i : look for the line containing x or X
 <br>?x? : look backwards for x
-<br>ci : searches and substitutions are case insensitive
-<br>cs : searches and substitutions are case sensitive
-<br>sg : substitution strings are global across sessions
-<br>sl : substitution strings are local to their sessions
+<br>ci : searches and substitutions are case insensitive (toggle)
+<br>sg : substitution strings are global across sessions (toggle)
 <br>su8 : search and substitute uses utf8 character sequences (toggle)
 <br>sw : search with wrap (toggle)
 <br>g/x/ p : print every line that has an x
@@ -584,7 +582,7 @@ FTP or HTTP Downloads
 pdd : progress of download indicated by dots
 <br>pdc : progress of download indicated by megabyte count
 <br>pdq : progress of download quiet, no indicator
-<br>ftpam : ftp active mode (toggle)
+<br>ftpa : ftp active mode (toggle)
 <br>bg : download files in background (toggle)
 <br>bglist : list background downloads, complete or in progress
 <P>
@@ -912,7 +910,9 @@ You might need to use s.2 if the sentence begins with Mr. Flintstone.
 Type s by itself for s//%.
 
 <LI><P>
-The commands sg and sl make the remembered substitution and replacement strings global and local respectively.
+The sg command makes searches and substitutions global across editting sessions.
+This is a toggle, so type sg again to keep search strings local to their sessions.
+As with any toggle, you can enter sg+ or sg-.
 If you want to look at all instances of "foo" in all the files in the current directory,
 and change some of them to bar at your discretion,
 edit *, then enter sg to make substitution strings global to all edit sessions.
@@ -920,7 +920,7 @@ In the first session, search for foo, and replace some of them with bar.
 Type e2 to move to the next session, whence you can search using slash alone,
 because the string "foo" is applied to all sessions.
 Similarly, you can use % to refer to "bar".
-The sl command returns this editor to its local behavior,
+The sg- command returns this editor to its local behavior,
 where each file has its own search/replace strings.
 
 <LI><P>
@@ -2674,8 +2674,8 @@ The ftp mode, i.e. the style of data connection,
 can be either active or passive.
 One works well when the client is behind a router,
 and the other works well when the server is behind a router.
-You can specify ftp mode active by entering the command `ftpam+',
-or ftp mode passive by `ftpam-'.
+You can specify ftp mode active by entering the command `ftpa+',
+or ftp mode passive by `ftpa-'.
 
 <H3> <A NAME=gopher> Gopher Support </A> </H3>
 

@@ -1,10 +1,10 @@
 EOF - fin de fichier
 pas de fichier
 redirection
-substitutions globales
 substitutions locales
-insensible à la casse
+substitutions globales
 sensible à la casse
+insensible à la casse
 répertoires en lecture seule
 répertoires en lecture écriture
 répertoires en lecture écriture avec effacement

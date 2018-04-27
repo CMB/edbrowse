@@ -4116,31 +4116,31 @@ et_go:
 		}
 	}
 
-	if (stringEqual(line, "sg")) {
-		searchStringsAll = true;
-		if (helpMessagesOn)
-			i_puts(MSG_SubGlobal);
-		return true;
-	}
-
-	if (stringEqual(line, "sl")) {
-		searchStringsAll = false;
-		if (helpMessagesOn)
-			i_puts(MSG_SubLocal);
-		return true;
-	}
-
 	if (stringEqual(line, "ci")) {
-		caseInsensitive = true;
-		if (helpMessagesOn)
-			i_puts(MSG_CaseIns);
+		caseInsensitive ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(caseInsensitive + MSG_CaseSen);
 		return true;
 	}
 
-	if (stringEqual(line, "cs")) {
-		caseInsensitive = false;
+	if (stringEqual(line, "ci+") || stringEqual(line, "ci-")) {
+		caseInsensitive = (line[2] == '+');
 		if (helpMessagesOn)
-			i_puts(MSG_CaseSen);
+			i_puts(caseInsensitive + MSG_CaseSen);
+		return true;
+	}
+
+	if (stringEqual(line, "sg")) {
+		searchStringsAll ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(searchStringsAll + MSG_SubLocal);
+		return true;
+	}
+
+	if (stringEqual(line, "sg+") || stringEqual(line, "sg-")) {
+		searchStringsAll = (line[2] == '+');
+		if (helpMessagesOn)
+			i_puts(searchStringsAll + MSG_SubLocal);
 		return true;
 	}
 
@@ -4373,15 +4373,15 @@ et_go:
 		return true;
 	}
 
-	if (stringEqual(line, "ftpam")) {
+	if (stringEqual(line, "ftpa")) {
 		ftpActive ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(MSG_PassiveMode + ftpActive);
 		return true;
 	}
 
-	if (stringEqual(line, "ftpam+") || stringEqual(line, "ftpam-")) {
-		ftpActive = (line[5] == '+');
+	if (stringEqual(line, "ftpa+") || stringEqual(line, "ftpa-")) {
+		ftpActive = (line[4] == '+');
 		if (helpMessagesOn)
 			i_puts(ftpActive + MSG_PassiveMode);
 		return true;

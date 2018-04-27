@@ -1,10 +1,10 @@
 EOF - koniec pliku
 brak pliku
 przekierowanie
-globalne podstawienia
 lokalne podstawienia
-wielkość liter nieistotna
+globalne podstawienia
 wielkość liter istotna
+wielkość liter nieistotna
 katalogi tylko do odczytu
 katalogi z prawem zapisu
 katalogi z prawem zapisu (wraz z usuwaniem)
@@ -431,8 +431,8 @@ sprawdzić naruszenie więzów
 przekroczenie czasu dostępu do bazy danych
 nie można zmodyfikować widoku
 pole włączony
-SPNEGO curl auth disabled
-SPNEGO curl auth enabled
+SPNEGO curl włączony
+SPNEGO curl wyłączony
 nie można pobrać lokalnego CSS\n
 nie można pobrać CSS z %s, kod %ld\n
 nie można pobrać CSS\n
