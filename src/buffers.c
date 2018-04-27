@@ -316,13 +316,22 @@ static void printDot(void)
 // These commands pass through jdb and on to normal edbrowse processing.
 static bool jdb_passthrough(const char *s)
 {
+	static const char *const oklist[] = {
+		"dberr", "dberr+", "dberr-",
+		"dbcn", "dbcn+", "dbcn-",
+		"dbev", "dbev+", "dbev-",
+		"dbcss", "dbcss+", "dbcss-",
+		"timers", "timers+", "timers-",
+		"demin", "demin+", "demin-",
+		"xhr", "xhr+", "xhr-",
+		"bflist", "bglist", 0
+	};
 	int i;
 	if (s[0] == '!')
 		return true;
 	if (s[0] == 'd' && s[1] == 'b' && isdigit(s[2]) && s[3] == 0)
 		return true;
-	if (stringEqual(s, "dbev") || stringEqual(s, "dbcn") ||
-	    stringEqual(s, "dber") || stringEqual(s, "dbcss"))
+	if (stringInList(oklist, s) >= 0)
 		return true;
 	if (s[0] == 'e' && isdigit(s[1])) {
 		for (i = 2; s[i]; ++i)
@@ -331,10 +340,6 @@ static bool jdb_passthrough(const char *s)
 		if (!s[i])
 			return true;
 	}
-	if (stringEqual(s, "bflist") || stringEqual(s, "bglist"))
-		return true;
-	if (stringEqual(s, "timers") || stringEqual(s, "demin"))
-		return true;
 	return false;
 }
 
@@ -4167,9 +4172,23 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "hr+") || stringEqual(line, "hr-")) {
+		allowRedirection = (line[2] == '+');
+		if (helpMessagesOn)
+			i_puts(allowRedirection + MSG_RedirectionOff);
+		return true;
+	}
+
 	if (stringEqual(line, "pg")) {
 		pluginsOn ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(pluginsOn + MSG_PluginsOff);
+		return true;
+	}
+
+	if (stringEqual(line, "pg+") || stringEqual(line, "pg-")) {
+		pluginsOn = (line[2] == '+');
+		if (helpMessagesOn)
 			i_puts(pluginsOn + MSG_PluginsOff);
 		return true;
 	}
@@ -4180,6 +4199,17 @@ et_go:
 #else
 		down_bg ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(down_bg + MSG_DownForeground);
+#endif
+		return true;
+	}
+
+	if (stringEqual(line, "bg+") || stringEqual(line, "bg-")) {
+#ifdef DOSLIKE
+		puts("download in background not available on Windows at this time.");
+#else
+		down_bg = (line[2] == '+');
+		if (helpMessagesOn)
 			i_puts(down_bg + MSG_DownForeground);
 #endif
 		return true;
@@ -4210,9 +4240,23 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "iu+") || stringEqual(line, "iu-")) {
+		iuConvert = (line[2] == '+');
+		if (helpMessagesOn)
+			i_puts(iuConvert + MSG_IUConvertOff);
+		return true;
+	}
+
 	if (stringEqual(line, "sr")) {
 		sendReferrer ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(sendReferrer + MSG_RefererOff);
+		return true;
+	}
+
+	if (stringEqual(line, "sr+") || stringEqual(line, "sr-")) {
+		sendReferrer = (line[2] == '+');
+		if (helpMessagesOn)
 			i_puts(sendReferrer + MSG_RefererOff);
 		return true;
 	}
@@ -4231,6 +4275,20 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "H")) {
+		if (helpMessagesOn ^= 1)
+			if (debugLevel >= 1)
+				i_puts(MSG_HelpOn);
+		return true;
+	}
+
+	if (stringEqual(line, "H+") || stringEqual(line, "H-")) {
+		helpMessagesOn = (line[1] == '+');
+		if (helpMessagesOn && debugLevel >= 1)
+			i_puts(MSG_HelpOn);
+		return true;
+	}
+
 	if (stringEqual(line, "xhr")) {
 		allowXHR ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
@@ -4238,9 +4296,23 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "xhr+") || stringEqual(line, "xhr-")) {
+		allowXHR = (line[3] == '+');
+		if (helpMessagesOn)
+			i_puts(allowXHR + MSG_XhrOff);
+		return true;
+	}
+
 	if (stringEqual(line, "bd")) {
 		binaryDetect ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(binaryDetect + MSG_BinaryIgnore);
+		return true;
+	}
+
+	if (stringEqual(line, "bd+") || stringEqual(line, "bd-")) {
+		binaryDetect = (line[2] == '+');
+		if (helpMessagesOn)
 			i_puts(binaryDetect + MSG_BinaryIgnore);
 		return true;
 	}
@@ -4266,9 +4338,23 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "rl+") || stringEqual(line, "rl-")) {
+		inputReadLine = (line[2] == '+');
+		if (helpMessagesOn)
+			i_puts(inputReadLine + MSG_InputTTY);
+		return true;
+	}
+
 	if (stringEqual(line, "can")) {
 		curlAuthNegotiate ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(curlAuthNegotiate + MSG_CurlNoAuthNegotiate);
+		return true;
+	}
+
+	if (stringEqual(line, "can+") || stringEqual(line, "can-")) {
+		curlAuthNegotiate = (line[3] == '+');
+		if (helpMessagesOn)
 			i_puts(curlAuthNegotiate + MSG_CurlNoAuthNegotiate);
 		return true;
 	}
@@ -4280,11 +4366,24 @@ et_go:
 		return true;
 	}
 
-	if (line[0] == 'f' && line[1] == 'm' &&
-	    line[2] && strchr("pa", line[2]) && !line[3]) {
-		ftpActive = (line[2] == 'a');
+	if (stringEqual(line, "lna+") || stringEqual(line, "lna-")) {
+		listNA = (line[3] == '+');
+		if (helpMessagesOn)
+			i_puts(listNA + MSG_ListControl);
+		return true;
+	}
+
+	if (stringEqual(line, "ftpam")) {
+		ftpActive ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(MSG_PassiveMode + ftpActive);
+		return true;
+	}
+
+	if (stringEqual(line, "ftpam+") || stringEqual(line, "ftpam-")) {
+		ftpActive = (line[5] == '+');
+		if (helpMessagesOn)
+			i_puts(ftpActive + MSG_PassiveMode);
 		return true;
 	}
 
@@ -4309,9 +4408,25 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "vs+") || stringEqual(line, "vs-")) {
+		verifyCertificates = (line[2] == '+');
+		if (helpMessagesOn)
+			i_puts(verifyCertificates + MSG_CertifyOff);
+		return true;
+	}
+
 	if (stringEqual(line, "dbcn")) {
 		debugClone ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(debugClone + MSG_DebugCloneOff);
+		if (isJSAlive)
+			set_property_bool(cf->winobj, "cloneDebug", debugClone);
+		return true;
+	}
+
+	if (stringEqual(line, "dbcn+") || stringEqual(line, "dbcn-")) {
+		debugClone = (line[4] == '+');
+		if (helpMessagesOn)
 			i_puts(debugClone + MSG_DebugCloneOff);
 		if (isJSAlive)
 			set_property_bool(cf->winobj, "cloneDebug", debugClone);
@@ -4327,9 +4442,27 @@ et_go:
 		return true;
 	}
 
-	if (stringEqual(line, "dber")) {
+	if (stringEqual(line, "dbev+") || stringEqual(line, "dbev-")) {
+		debugEvent = (line[4] == '+');
+		if (helpMessagesOn)
+			i_puts(debugEvent + MSG_DebugEventOff);
+		if (isJSAlive)
+			set_property_bool(cf->winobj, "eventDebug", debugEvent);
+		return true;
+	}
+
+	if (stringEqual(line, "dberr")) {
 		debugThrow ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(debugThrow + MSG_DebugThrowOff);
+		if (isJSAlive)
+			set_property_bool(cf->winobj, "throwDebug", debugThrow);
+		return true;
+	}
+
+	if (stringEqual(line, "dberr+") || stringEqual(line, "dberr-")) {
+		debugThrow = (line[5] == '+');
+		if (helpMessagesOn)
 			i_puts(debugThrow + MSG_DebugThrowOff);
 		if (isJSAlive)
 			set_property_bool(cf->winobj, "throwDebug", debugThrow);
@@ -4345,9 +4478,25 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "dbcss+") || stringEqual(line, "dbcss-")) {
+		debugCSS = (line[5] == '+');
+		if (helpMessagesOn)
+			i_puts(debugCSS + MSG_DebugCSSOff);
+		if (debugCSS)
+			unlink("/tmp/css");
+		return true;
+	}
+
 	if (stringEqual(line, "demin")) {
 		demin ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(demin + MSG_DeminOff);
+		return true;
+	}
+
+	if (stringEqual(line, "demin+") || stringEqual(line, "demin-")) {
+		demin = (line[5] == '+');
+		if (helpMessagesOn)
 			i_puts(demin + MSG_DeminOff);
 		return true;
 	}
@@ -4359,6 +4508,13 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "timers+") || stringEqual(line, "timers-")) {
+		gotimers = (line[6] == '+');
+		if (helpMessagesOn)
+			i_puts(gotimers + MSG_TimersOff);
+		return true;
+	}
+
 	if (stringEqual(line, "hf")) {
 		showHiddenFiles ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
@@ -4366,9 +4522,23 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "hf+") || stringEqual(line, "hf-")) {
+		showHiddenFiles = (line[2] == '+');
+		if (helpMessagesOn)
+			i_puts(showHiddenFiles + MSG_HiddenOff);
+		return true;
+	}
+
 	if (stringEqual(line, "su8")) {
 		re_utf8 ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(re_utf8 + MSG_ReAscii);
+		return true;
+	}
+
+	if (stringEqual(line, "su8+") || stringEqual(line, "su8-")) {
+		re_utf8 = (line[3] == '+');
+		if (helpMessagesOn)
 			i_puts(re_utf8 + MSG_ReAscii);
 		return true;
 	}
@@ -5106,13 +5276,6 @@ replaceframe:
 
 	if (cmd == 'h') {
 		showError();
-		return true;
-	}
-
-	if (cmd == 'H') {
-		if (helpMessagesOn ^= 1)
-			if (debugLevel >= 1)
-				i_puts(MSG_HelpOn);
 		return true;
 	}
 

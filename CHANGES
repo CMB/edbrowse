@@ -5,6 +5,9 @@ Install man page and other documentation.
 
 Search for regular expressions with or without wrap.
 
+A uniform and consistent approach to toggle commands:
+foo (toggle), foo+ (enable), foo- (disable).
+
 3.7.3:
 Show heading information h1 through h6.
 

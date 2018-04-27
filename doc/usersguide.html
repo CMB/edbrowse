@@ -420,6 +420,11 @@ Edbrowse always sends a language designator to the web servers, because some web
 Here are the ed and edbrowse commands, all in one place.
 This is a quick reference guide.
 Most of these commands will not make sense until you read the rest of the documentation.
+Commands that are (toggle), such as js to turn javascript on and off, also admit a + or - suffix to explicitly enable or disable the feature.
+Thus js toggles javascript, js+ enables javascript, and js- disables javascript.
+The + and - variants are not listed.
+Toggle prints the state of the feature, on or off, it help messages are enabled or if the debug level is at least 1.
+Seting or clearing a mode only prints the message if help messages are on.
 
 <P>
 Exit the Program
@@ -579,8 +584,7 @@ FTP or HTTP Downloads
 pdd : progress of download indicated by dots
 <br>pdc : progress of download indicated by megabyte count
 <br>pdq : progress of download quiet, no indicator
-<br>fma : ftp mode active
-<br>fmp : ftp mode passive
+<br>ftpam : ftp active mode (toggle)
 <br>bg : download files in background (toggle)
 <br>bglist : list background downloads, complete or in progress
 <P>
@@ -642,7 +646,7 @@ db3 : set debug level, 0 through 9
 <br>timers : disable javascript timers (toggle)
 <br>dbcn : enable cloneNode debugging (toggle)
 <br>dbev : enable event debugging (toggle)
-<br>dber : enable js error debugging (toggle)
+<br>dberr : enable js error debugging (toggle)
 <br>dbcss : enable css debugging (toggle)
 <br>uvw getAttribute : undefined variable watch on getAttribute
 <br>uvw trace : trace through javascript execution
@@ -1262,7 +1266,7 @@ Issue one of the three commands shown above to undos the file.
 
 <P>
 Data is considered binary if it is sufficiently large
-(more than 50 bytes)
+(more than 50 bytes),
 and it contains a significant fraction of non-ascii or null characters (more than 25%).
 International text may contain scattered binary codes for accented letters,
 but most of the characters should still be ascii.
@@ -1282,29 +1286,20 @@ After that the buffer remains "binary", even if you delete all the data and read
 You must use the `e' command to get a fresh text buffer.
 
 <P>
-For the most part it doesn't really matter if the data is binary or text.
+For the most part it doesn't matter if the data is binary or text.
 Either way you can display and edit the data, and write it to a file.
-
-<P>
-Edbrowse tries to "do the right thing" under DOS/Windows.
-That is, it converts crlf to and from newline if it believes the file is text;
+However, edbrowse tries to "do the right thing" under DOS/Windows.
+It converts crlf to and from newline if it believes the file is text;
 and it leaves binary data alone.
 These distinctions are not relevant on Unix/Linux.
 
 <P>
-Although this approach is satisfactory for English and most European languages,
-it fails miserably for Asian languages, which definitely look like binary data.
-You can disable binary detection by entering the `bd' command.
-If you speak an Asian language,
-you may want to put this command in your init script,
-so edbrowse comes up the way you want -
-treating your international files as text files.
-
-<P>
-If you speak an Asian language, and you are running Windows,
-and binary detection is disabled,
-don't use this program to manipulate binary files,
-as they will get corrupted!
+Although this approach is satisfactory for utf8,
+it can fail for a large iso8859-1 file with lots of accented letters.
+Such looks binary, even though it is ascii.
+You can disable binary detection with the `bd' command, whence your file will remain ascii.
+This is a corner case, since utf8 is nearly universal.
+Therefore, the bd command is deprecated, and could go away in a future version of edbrowse.
 
 <H3> <A NAME=dir> Directory Scan, File Manager </A> </H3>
 
@@ -2679,8 +2674,8 @@ The ftp mode, i.e. the style of data connection,
 can be either active or passive.
 One works well when the client is behind a router,
 and the other works well when the server is behind a router.
-You can specify ftp mode active by entering the command `fma',
-or ftp mode passive by `fmp'.
+You can specify ftp mode active by entering the command `ftpam+',
+or ftp mode passive by `ftpam-'.
 
 <H3> <A NAME=gopher> Gopher Support </A> </H3>
 
@@ -3455,6 +3450,8 @@ db0
 dw
 #  Put beginning and end markers around listed lines
 endm+
+#  Use readline for input
+rl+
 #  Let session 99 hold your favorites, ready to surf.
 e99
 b $bookmarks
