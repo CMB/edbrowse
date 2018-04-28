@@ -155,6 +155,38 @@ int js_main(void)
 	return 0;
 }				/* js_main */
 
+// base64 encode
+static duk_ret_t native_btoa(duk_context * cx)
+{
+	char *t;
+	const char *s = duk_get_string(cx, 0);
+	if (!s)
+		s = emptyString;
+	t = base64Encode(s, strlen(s), false);
+	duk_pop(cx);
+	duk_push_string(cx, t);
+	nzFree(t);
+	return 1;
+}
+
+// base64 decode
+static duk_ret_t native_atob(duk_context * cx)
+{
+	char *t1, *t2;
+	const char *s = duk_get_string(cx, 0);
+	if (!s)
+		s = emptyString;
+	t1 = cloneString(s);
+	duk_pop(cx);
+	t2 = t1 + strlen(t1);
+	base64Decode(t1, &t2);
+// ignore errors for now.
+	*t2 = 0;
+	duk_push_string(cx, t1);
+	nzFree(t1);
+	return 1;
+}
+
 static duk_ret_t native_new_location(duk_context * cx)
 {
 	const char *s = duk_safe_to_string(cx, -1);
@@ -1279,6 +1311,10 @@ void createJavaContext_nat(void)
 	duk_put_global_string(jcx, "my$doc");
 	duk_push_c_function(jcx, native_puts, 1);
 	duk_put_global_string(jcx, "eb$puts");
+	duk_push_c_function(jcx, native_btoa, 1);
+	duk_put_global_string(jcx, "btoa");
+	duk_push_c_function(jcx, native_atob, 1);
+	duk_put_global_string(jcx, "atob");
 	duk_push_c_function(jcx, native_logputs, 2);
 	duk_put_global_string(jcx, "eb$logputs");
 	duk_push_c_function(jcx, native_prompt, DUK_VARARGS);
