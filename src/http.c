@@ -1850,6 +1850,7 @@ gopher_transfer_fail:
 void setHTTPLanguage(const char *lang)
 {
 	int httpLanguage_l;
+	char *s;
 
 	nzFree(httpLanguage);
 	httpLanguage = NULL;
@@ -1859,6 +1860,12 @@ void setHTTPLanguage(const char *lang)
 	httpLanguage = initString(&httpLanguage_l);
 	stringAndString(&httpLanguage, &httpLanguage_l, "Accept-Language: ");
 	stringAndString(&httpLanguage, &httpLanguage_l, lang);
+
+// Transliterate _ to -, some websites require this.
+// en-us not en_us
+	for (s = httpLanguage; *s; ++s)
+		if (*s == '_')
+			*s = '-';
 }				/* setHTTPLanguage */
 
 /* Set the FD_CLOEXEC flag on a socket newly-created by libcurl.
