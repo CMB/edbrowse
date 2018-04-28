@@ -1814,9 +1814,36 @@ void cssAttributeCrunch(char *s)
 	*w = 0;
 }
 
-static void do_rules(jsobjtype obj, struct rule *r, bool force)
+// replace each attr(foo) with the value of attribute foo
+static char *attrify(jsobjtype obj, char *line)
 {
 	char *s;
+	int sl;
+	char *t, *t1, *t2, *v;
+	s = initString(&sl);
+	for (t = line; *t; t = t2) {
+		t1 = strstr(t, "attr(");
+		if (!t1)
+			break;
+		t2 = strchr(t1, ')');
+		if (!t2)
+			break;
+		*t2++ = 0;
+		stringAndBytes(&s, &sl, t, t1 - t);
+		t1 += 5;
+		v = get_property_string(obj, t1);
+		if (v) {
+			stringAndString(&s, &sl, v);
+			nzFree(v);
+		}
+	}
+	stringAndString(&s, &sl, t);
+	return s;
+}
+
+static void do_rules(jsobjtype obj, struct rule *r, bool force)
+{
+	char *s, *s_attr;
 	int sl;
 	jsobjtype textobj;
 	static const char jl[] = "text 0x0, 0x0";
@@ -1853,6 +1880,7 @@ static void do_rules(jsobjtype obj, struct rule *r, bool force)
 	}
 	if (!sl)		// should never happen
 		return;
+
 // put a space between the injected text and the original text
 	stringAndChar(&s, &sl, ' ');
 	if (matchtype == 2) {
@@ -1860,10 +1888,16 @@ static void do_rules(jsobjtype obj, struct rule *r, bool force)
 		memmove(s + 1, s, sl - 1);
 		s[0] = ' ';
 	}
+// turn attr(foo) into obj[foo]
+	s_attr = attrify(obj, s);
+	nzFree(s);
+	s = s_attr;
 
 	textobj = instantiate_nat(cf->winobj, "eb$inject", "TextNode");
-	if (!textobj)		// should never happen
+	if (!textobj) {		// should never happen
+		nzFree(s);
 		return;
+	}
 	set_property_string_nat(textobj, "data", s);
 	nzFree(s);
 	javaSetsLinkage(false, 'c', textobj, jl);
