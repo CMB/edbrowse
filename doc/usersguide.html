@@ -410,6 +410,7 @@ If not specified, edbrowse defers to the environment variable $LANG, which is se
 Thus you rarely need to set localizeweb in your config file.
 If LANG is not set, the default is English.
 Edbrowse always sends a language designator to the web servers, because some websites, such as amazon.com, will not run properly without it.
+If you do set localizeweb yourself, be sure to set it to language code hyphen territory code.
 
 <hr>
 <H2> Chapter 2, Quick Reference Guide </H2>
@@ -566,9 +567,9 @@ b : browse the current file, which is assumed to be in html
 <br>b foo.html : edit the file foo.html and browse it
 <br>b url : fetch url from the internet and browse it
 <br>ub : unbrowse a file
-<br>title : show the title of the current web page
-<br>desc : show the description of the current web page
-<br>keyw : show the keywords of the current web page
+<br>ft : show the title of the current web page (file title)
+<br>fd : show the description of the current web page
+<br>fk : show the keywords of the current web page
 <br>rf : refresh the web page or directory listing
 <br>et : edit this web page as pure text
 <br>hr : http redirection (toggle)
@@ -1885,7 +1886,7 @@ that attempts to be both sighted and blind friendly at the same time.
 <H3> <A NAME=title> Title, Description, Keywords </A> </H3>
 
 <P>
-While in browse mode, the commands title, desc, and keyw
+While in browse mode, the commands ft, fd, and fk
 produce the title, description, and keywords of the current web file respectively.
 These are normally not visible to the user.
 The title describes the web page in 80 characters or less.

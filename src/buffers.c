@@ -4068,8 +4068,8 @@ et_go:
 		return 2;
 	}
 
-	if (stringEqual(line, "title") || stringEqual(line, "desc") ||
-	    stringEqual(line, "keyw")) {
+	if (stringEqual(line, "ft") || stringEqual(line, "fd") ||
+	    stringEqual(line, "fk")) {
 		const char *s;
 		int t;
 		cmd = 'e';
@@ -4077,11 +4077,11 @@ et_go:
 			setError(MSG_NoBrowse);
 			return false;
 		}
-		if (line[0] == 't')
+		if (line[1] == 't')
 			s = cw->htmltitle, t = MSG_NoTitle;
-		if (line[0] == 'd')
+		if (line[1] == 'd')
 			s = cw->htmldesc, t = MSG_NoDesc;
-		if (line[0] == 'k')
+		if (line[1] == 'k')
 			s = cw->htmlkey, t = MSG_NoKeywords;
 		if (s)
 			eb_puts(s);
