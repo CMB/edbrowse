@@ -3070,8 +3070,16 @@ li_hide:
 // check for span onclick and make it look like a link.
 // Maybe we should do more than span, but just span for now.
 	case TAGACT_SPAN:
+// If an onclick function, then turn this into a hyperlink, thus clickable.
+// At least one site adds the onclick function via javascript, not html.
+// But only at the start, so maybe we only need to check on the first render.
+// But maybe some other site adds onclick later. Do we have to check every time?
+// This rerender function is getting more and more js intensive!
+		if (!t->onclick && t->jv && handlerPresent(t->jv, "onclick"))
+			t->onclick = true;
 		if (!t->onclick)
 			goto nop;
+// this span has click, so turn into {text}
 		if (opentag) {
 			sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
 			ns_hnum();
