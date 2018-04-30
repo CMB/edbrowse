@@ -2241,7 +2241,7 @@ void rerender(bool rr_command)
 {
 	char *a, *snap, *newbuf;
 	int j;
-	int markdot, addtop;
+	int markdot, wasdot, addtop;
 	bool z;
 	void (*say_fn) (int, ...);
 
@@ -2279,7 +2279,7 @@ void rerender(bool rr_command)
 	}
 
 /* mark dot, so it stays in place */
-	cw->labels[MARKDOT] = cw->dot;
+	cw->labels[MARKDOT] = wasdot = cw->dot;
 	frontBackDiff(snap, newbuf);
 	addtop = 0;
 	if (sameBack1 > sameFront)
@@ -2292,6 +2292,8 @@ void rerender(bool rr_command)
 	markdot = cw->labels[MARKDOT];
 	if (markdot)
 		cw->dot = markdot;
+	else if (sameBack1 == sameBack2)
+		cw->dot = wasdot;
 	else if (addtop)
 		cw->dot = addtop;
 	cw->undoable = false;
