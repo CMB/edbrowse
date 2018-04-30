@@ -2924,6 +2924,7 @@ ab:
 static char *ns;
 static int ns_l;
 static bool invisible, tdfirst;
+static struct htmlTag *inv2;	// invisible via css
 static int listnest;		/* count nested lists */
 /* None of these tags nest, so it is reasonable to talk about
  * the current open tag. */
@@ -2989,6 +2990,25 @@ li_hide:
 	if (t->deleted) {
 		deltag = t;
 		goto li_hide;
+	}
+
+	if (inv2) {
+		if (inv2 == t)
+			inv2 = NULL;
+		return;
+	}
+
+	if (opentag) {
+// what is the visibility now?
+		uchar v_now = visi_status(t);
+// Warning: invisible then visible due to hover not yet implemented,
+// it is just visibile all the time.
+// So invisible doesn't mean we hide it, unless it was visible before.
+		if (v_now == VISI_HIDDEN && t->v_state == VISI_SHOW) {
+			inv2 = t;
+			return;
+		}
+		t->v_state = v_now;
 	}
 
 	if (!opentag && ti->bits & TAG_NOSLASH)
@@ -3436,6 +3456,7 @@ char *render(int start)
 {
 	ns = initString(&ns_l);
 	invisible = false;
+	inv2 = NULL;
 	listnest = 0;
 	currentForm = currentA = NULL;
 	traverse_callback = renderNode;

@@ -416,4 +416,9 @@ jsobjtype querySelector(const char *selstring, jsobjtype topobj);
 void cssAttributeCrunch(char *s);
 void cssApply(jsobjtype node, jsobjtype destination);
 void cssText(jsobjtype node, const char *rulestring);
+int visi_status(struct htmlTag *t);
+#define VISI_DEFAULT 0
+#define VISI_HIDDEN 1
+#define VISI_SHOW 2
+#define VISI_HOVER 3
 

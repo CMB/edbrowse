@@ -507,7 +507,8 @@ struct htmlTag {
 	struct htmlTag *balance;
 	struct ebFrame *f0; /* frame that owns this tag */
 	struct ebFrame *f1; /* subordinate frame if this is a <frame> tag */
-	jsobjtype jv;		/* corresponding java variable */
+	jsobjtype jv;		/* corresponding javascript variable */
+	jsobjtype style; // style object
 	int seqno;
 	char *js_file;
 	int js_ln;			/* line number of javascript */
@@ -521,6 +522,7 @@ struct htmlTag {
 /* the form that owns this input tag */
 	struct htmlTag *controller;
 	uchar step; /* prerender, decorate, runscript */
+	uchar v_state; // visibility via css
 	bool slash:1;		/* as in </A> */
 	bool textin:1; /* <a> some text </a> */
 	bool deleted:1; /* deleted from the current buffer */

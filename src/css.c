@@ -2269,3 +2269,40 @@ static void cssEverybody(void)
 	bulkmatch = false;
 	matchtype = 0;
 }
+
+// determine visibility status from style attributes.
+int visi_status(struct htmlTag *t)
+{
+	jsobjtype so;		// style object
+	char *v;
+	int rc = VISI_DEFAULT;
+
+	if (!isJSAlive || !t->jv)
+		return rc;
+	so = t->style;
+	if (!so)
+		so = get_property_object(t->jv, "style");
+	if (!so)
+		return rc;
+	t->style = so;
+
+	rc = VISI_SHOW;
+	v = get_property_string(so, "display");
+	if (v) {
+		if (stringEqual(v, "none"))
+			rc = VISI_HIDDEN;
+		nzFree(v);
+	}
+	if (rc == VISI_HIDDEN)
+		return rc;
+
+	v = get_property_string(so, "visibility");
+	if (v) {
+		if (stringEqual(v, "hidden"))
+			rc = VISI_HIDDEN;
+		nzFree(v);
+	}
+// code here for visible on hover, don't know how to do that yet.
+
+	return rc;
+}
