@@ -12,20 +12,10 @@ extern int gettimeofday(struct timeval *tp, void *tzp);	// from tidys.lib
 #define SLEEP sleep
 #endif // _MSC_VER y/n
 
-#if 0
-// not sure where I was gonna use these.
-static const char *const handlers[] = {
-	"onmousemove", "onmouseover", "onmouseout", "onmouseup", "onmousedown",
-	"onclick", "ondblclick", "onblur", "onfocus",
-	"onchange", "onsubmit", "onreset",
-	"onload", "onunload",
-	"onkeypress", "onkeyup", "onkeydown",
-	0
-};
-#endif
+uchar browseLocal;
+bool showHover = true;
 
 static jsobjtype js_reset, js_submit;
-uchar browseLocal;
 
 bool tagHandler(int seqno, const char *name)
 {
@@ -475,7 +465,7 @@ static void runGeneratedHtml(struct htmlTag *t, const char *h)
 	html2nodes(h, false);
 	htmlGenerated = true;
 	htmlNodesIntoTree(l, t);
-	prerender(0);
+	prerender(false);
 	decorate(0);
 }				/* runGeneratedHtml */
 
@@ -772,7 +762,7 @@ char *htmlParse(char *buf, int remote)
 	nzFree(buf);
 	htmlGenerated = false;
 	htmlNodesIntoTree(0, NULL);
-	prerender(0);
+	prerender(false);
 
 /* if the html doesn't use javascript, then there's
  * no point in generating it.
@@ -2236,6 +2226,8 @@ static void silent(int msg, ...)
 {
 }
 
+static int hov1count, hov2count, inv_count;
+
 /* Rerender the buffer and notify of any lines that have changed */
 void rerender(bool rr_command)
 {
@@ -2249,6 +2241,7 @@ void rerender(bool rr_command)
 	cw->mustrender = false;
 	time(&cw->nextrender);
 	cw->nextrender += 20;
+	hov1count = hov2count = inv_count = 0;
 
 	rebuildSelectors();
 
@@ -2267,6 +2260,23 @@ void rerender(bool rr_command)
 	a = render(0);
 	newbuf = htmlReformat(a);
 	nzFree(a);
+
+	if (rr_command && debugLevel >= 3) {
+		char buf[80];
+		buf[0] = 0;
+		if (hov1count + hov2count)
+			sprintf(buf, "%d nodes %s by hover",
+				hov1count + hov2count,
+				(hov1count ? "shown" : "hidden"));
+		if (inv_count) {
+			if (buf[0])
+				strcat(buf, ", ");
+			sprintf(buf + strlen(buf), "%d nodes hidden by css",
+				inv_count);
+		}
+		if (buf[0])
+			debugPrint(3, "%s", buf);
+	}
 
 /* the high runner case, most of the time nothing changes,
  * and we can check that efficiently with strcmp */
@@ -3003,14 +3013,19 @@ li_hide:
 	if (opentag) {
 // what is the visibility now?
 		uchar v_now = visi_status(t);
-// Warning: invisible then visible due to hover not yet implemented,
-// it is just visibile all the time.
-// So invisible doesn't mean we hide it, unless it was visible before.
-		if (v_now == VISI_HIDDEN && t->v_state == VISI_SHOW) {
+// gather some stats for debugging
+		if (v_now == VISI_HOVER) {
+			if (showHover)
+				++hov1count;
+			else
+				++hov2count;
+		}
+		if (v_now == VISI_HIDDEN)
+			++inv_count;
+		if (v_now == VISI_HIDDEN || (v_now == VISI_HOVER && !showHover)) {
 			inv2 = t;
 			return;
 		}
-		t->v_state = v_now;
 	}
 
 	if (!opentag && ti->bits & TAG_NOSLASH)

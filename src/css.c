@@ -1899,9 +1899,22 @@ static void do_rules(jsobjtype obj, struct rule *r, bool force)
 
 	if (matchtype)
 		obj = get_property_object(textobj, "style");
+// obj is now the style object, ready for attributes
 
 	s = initString(&sl);
 	for (; r; r = r->next) {
+
+// hover only looks for display visible
+		if (matchhover) {
+			if ((stringEqual(r->atname, "display") &&
+			     strlen(r->atval) && !stringEqual(r->atval, "none"))
+			    ||
+			    (stringEqual(r->atname, "visibility") &&
+			     strlen(r->atval)
+			     && !stringEqual(r->atval, "hidden")))
+				set_property_bool(obj, "hov$vis", true);
+			continue;
+		}
 // special code for before after content
 		if (matchtype && stringEqual(r->atname, "content")) {
 			if (stringEqual(r->atval, "none"))
@@ -2271,10 +2284,13 @@ static void cssEverybody(void)
 	struct htmlTag **a, **u;
 	jsobjtype style;
 	struct htmlTag *t;
+	int l;
 
 	bulkmatch = true;
 	bulktotal = 0;
-	for (matchtype = 0; matchtype <= 2; ++matchtype) {
+	for (l = 0; l < 6; ++l) {
+		matchhover = (l >= 3);
+		matchtype = l % 3;
 		for (d = d0; d; d = d->next) {
 			if (d->error)
 				continue;
@@ -2300,6 +2316,7 @@ static void cssEverybody(void)
 	}
 	bulkmatch = false;
 	matchtype = 0;
+	matchhover = false;
 }
 
 // determine visibility status from style attributes.
@@ -2325,8 +2342,6 @@ int visi_status(struct htmlTag *t)
 			rc = VISI_HIDDEN;
 		nzFree(v);
 	}
-	if (rc == VISI_HIDDEN)
-		return rc;
 
 	v = get_property_string(so, "visibility");
 	if (v) {
@@ -2334,7 +2349,12 @@ int visi_status(struct htmlTag *t)
 			rc = VISI_HIDDEN;
 		nzFree(v);
 	}
-// code here for visible on hover, don't know how to do that yet.
+
+	if (rc == VISI_HIDDEN) {
+// It is hidden, does it come to light on hover?
+		if (get_property_bool(so, "hov$vis"))
+			rc = VISI_HOVER;
+	}
 
 	return rc;
 }

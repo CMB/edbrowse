@@ -4529,6 +4529,24 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "hover")) {
+		showHover ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(showHover + MSG_HoverOff);
+		if (cw->browseMode && isJSAlive)
+			rerender(false);
+		return true;
+	}
+
+	if (stringEqual(line, "hover+") || stringEqual(line, "hover-")) {
+		showHover = (line[5] == '+');
+		if (helpMessagesOn)
+			i_puts(showHover + MSG_HoverOff);
+		if (cw->browseMode && isJSAlive)
+			rerender(false);
+		return true;
+	}
+
 	if (stringEqual(line, "su8")) {
 		re_utf8 ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)

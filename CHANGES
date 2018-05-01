@@ -8,6 +8,9 @@ Search for regular expressions with or without wrap.
 A uniform and consistent approach to toggle commands:
 foo (toggle), foo+ (enable), foo- (disable).
 
+Show or hide all the messages that are produced by hovering over things.
+This is the hover (toggle) command.
+
 3.7.3:
 Show heading information h1 through h6.
 

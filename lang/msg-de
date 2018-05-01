@@ -454,8 +454,8 @@ Zeilen %d bis %d und %d gelöscht\n
 Plugin muss von einer lokalen Datei gestartet werden
 das Plugin ist ein Konverter, kein Player
 das Plugin ist ein Player, kein Konverter
-0
-0
+verstecke eingeblendeten Text
+zeige eingeblendeten Text an
 0
 0
 unerwartete Zeichen nach dem kodierten Anhang
@@ -601,8 +601,8 @@ Aufruf von fopen() mit ungültigem Modus %s
 fehlplatzierter / in getDirURL(%s)
 fehlplatzierter / in %s
 decodePostData(0,0)
-0
-0
+Suche nicht am Anfang fortsetzen
+Suche am Anfang fortsetzen
 0
 Antworten im Verzeichnismodus unmöglich
 Antworten im Datenbankmodus unmöglich
