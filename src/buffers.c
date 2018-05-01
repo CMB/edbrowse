@@ -1740,6 +1740,11 @@ static bool readFile(const char *filename, const char *post, bool newwin,
 			return true;
 		}
 
+		if (g.csp) {
+			cf->mt = 0;
+			cf->render1 = cf->render2 = true;
+		}
+
 		newfile = (changeFileName ? changeFileName : filename);
 		if (cf->mt && cf->mt->outtype &&
 		    pluginsOn && !cf->render1 && cmd == 'b' && newwin) {
