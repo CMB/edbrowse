@@ -2362,7 +2362,7 @@ and new internal numbers each time, and that use to trip this algorithm.
 				(*say_fn) (MSG_LineUpdateRange, sameFront + 1,
 					   sameBack2);
 /* put dot back to the start of the new block */
-			if (!markdot)
+			if (!markdot && sameBack1 != sameBack2)
 				cw->dot = sameFront + 1;
 		}
 	}
