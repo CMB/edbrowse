@@ -210,7 +210,6 @@ struct desc {
 	char *lhs, *rhs;
 	short bc;		// brace count
 	uchar error;
-	bool content;		// rhs includes content=blah
 	struct sel *selectors;
 	struct rule *rules;
 };
@@ -219,7 +218,7 @@ struct desc {
 struct sel {
 	struct sel *next;
 	uchar error;
-	bool before, after;
+	bool before, after, hover;
 	struct asel *chain;
 };
 
@@ -228,7 +227,7 @@ struct asel {
 	struct asel *next;
 	char *tag;
 	char *part;
-	bool before, after;
+	bool before, after, hover;
 	uchar error;
 	char combin;
 	struct mod *modifiers;
@@ -266,6 +265,7 @@ static void cssAtomic(struct asel *a);
 static void cssModify(struct asel *a, const char *m1, const char *m2);
 static bool onematch, bulkmatch, bulktotal;
 static char matchtype;		// 0 plain 1 before 2 after
+static bool matchhover;		// match on :hover selectors.
 static struct htmlTag **doclist;
 static int doclist_a, doclist_n;
 static struct ebFrame *doclist_f;
@@ -669,6 +669,8 @@ copy:		++s;
 			if (sel->error)
 				continue;
 			for (asel = sel->chain; asel; asel = asel->next) {
+				if (asel->hover)
+					sel->hover = true;
 				if (asel->before) {
 // before and after should only be on the base node of the chain
 					if (asel == sel->chain)
@@ -948,9 +950,13 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 	h = t[0];
 	switch (h) {
 	case ':':
-		if (stringEqual(t, ":hover") || stringEqual(t, ":visited")
+		if (stringEqual(t, ":visited")
 		    || stringEqual(t, ":active") || stringEqual(t, ":focus")) {
 			a->error = CSS_ERROR_DYN;
+			return;
+		}
+		if (stringEqual(t, ":hover")) {
+			a->hover = true;
 			return;
 		}
 		if (stringEqual(t, ":before")) {
@@ -1191,22 +1197,22 @@ static void cssPiecesPrint(const struct desc *d)
 	fclose(f);
 }
 
-// Match a node against an atomic selector.
-// One of t or obj should be nonzero.
-// It's more efficient with t.
-// If bulkmatch is true, then the document has loaded and no js has run.
-// If t->class is not set, there's no point dipping into js
-// to see if it has been set dynamically by a script.
+/*********************************************************************
+Match a node against an atomic selector.
+One of t or obj should be nonzero. It's more efficient with t.
+If bulkmatch is true, then the document has loaded and no js has run.
+If t->class is not set, there's no point dipping into js
+to see if it has been set dynamically by a script.
+This is only called from qsaMatchChain, as part of a chain of atomic selectors.
+That chain is considered, or not considered, based on before after hover
+criteria in qsa2() and qsaMatchGroup(), so we need not test for those here.
+*********************************************************************/
+
 static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 {
 	bool rc;
 	struct mod *mod;
 	jsobjtype pobj;		// parent object
-
-	if ((a->before && matchtype != 1) ||
-	    (a->after && matchtype != 2) ||
-	    (!(a->before | a->after) && matchtype))
-		return false;
 
 	if (a->tag) {
 		const char *nn;
@@ -1365,7 +1371,7 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 		if (c != ':')
 			return false;
 
-		if (stringEqual(p, ":link") ||
+		if (stringEqual(p, ":link") || stringEqual(p, ":hover") ||
 		    stringEqual(p, ":before") || stringEqual(p, ":after"))
 			continue;
 
@@ -1440,6 +1446,7 @@ and apply the rules to those nodes, which we were going to do anyways.
 Well these under * chains are somewhat rare,
 and the routine runs fast enough, even on stackoverflow.com, the worst site,
 so I'm not going to implement chain level optimization today.
+Called from qsaMatchGroup and from qsa1.
 *********************************************************************/
 
 static bool qsaMatchChain(struct htmlTag *t, jsobjtype obj, const struct sel *s)
@@ -1516,6 +1523,7 @@ next_a:	;
 	return true;
 }
 
+// Only called from cssApply, as part of getComputedStyle.
 static bool qsaMatchGroup(struct htmlTag *t, jsobjtype obj,
 			  const struct desc *d)
 {
@@ -1525,28 +1533,27 @@ static bool qsaMatchGroup(struct htmlTag *t, jsobjtype obj,
 	for (sel = d->selectors; sel; sel = sel->next) {
 		if (sel->error)
 			continue;
+// Only the plain descriptors for getComputedStyle().
+		if (sel->before | sel->after | sel->hover)
+			continue;
 		if (qsaMatchChain(t, obj, sel))
 			return true;
 	}
 	return false;
 }
 
-// Match a selector against a list of nodes.
-// If list is not given then doclist is used - all nodes in the document.
-// the result is an allocated array of nodes from the list that match.
+/*********************************************************************
+Match a selector against a list of nodes.
+If list is not given then doclist is used - all nodes in the document.
+the result is an allocated array of nodes from the list that match.
+Only called from qsa2.
+*********************************************************************/
+
 static struct htmlTag **qsa1(const struct sel *sel)
 {
 	int i, n = 1;
 	struct htmlTag *t;
 	struct htmlTag **a, **list;
-
-	if ((sel->before && matchtype != 1) ||
-	    (sel->after && matchtype != 2) ||
-	    (!(sel->before | sel->after) && matchtype)) {
-		a = allocMem((n + 1) * sizeof(struct htmlTag *));
-		a[0] = 0;
-		return a;
-	}
 
 	list = bestListAtomic(sel->chain);
 	if (!onematch && list) {
@@ -1624,13 +1631,21 @@ static struct htmlTag **qsaMerge(struct htmlTag **list1, struct htmlTag **list2)
 	return a;
 }
 
-// querySelectorAll on a group, uses merge above
+// querySelectorAll on a group, uses merge above.
+// Called from javascript querySelectorAll and from cssEverybody.
+
 static struct htmlTag **qsa2(struct desc *d)
 {
 	struct htmlTag **a = 0, **a2, **a_new;
 	struct sel *sel;
 	for (sel = d->selectors; sel; sel = sel->next) {
 		if (sel->error)
+			continue;
+		if ((sel->before && matchtype != 1) ||
+		    (sel->after && matchtype != 2) ||
+		    (!(sel->before | sel->after) && matchtype))
+			continue;
+		if (sel->hover ^ matchhover)
 			continue;
 		a2 = qsa1(sel);
 		if (a) {
@@ -1813,9 +1828,31 @@ static char *attrify(jsobjtype obj, char *line)
 	return s;
 }
 
-// if matchtype = 0 we perform traditional assignments to the style object.
-// matchtype > 0 then obj is the node, and we must create a textNode
-// beneath it, for before or after.
+/*********************************************************************
+do_rules is called from 3 different places, under 3 very different contexts.
+1. getComputedStyle(node), creates a new style object s,
+loops through all the extant css descriptors, matches them against node,
+and then applies the rules to s.
+The obj argument is the newly created style object s.
+Because matchtype is 0, the before and after selectors don't match,
+and they shouldn't, because before after attributes
+wouldn't apply to node.style but rather node.textnode.style.
+matchhover is false so hover selectors won't match either, nor should they.
+2. The cssText setter on a style object.
+There are no selectors here, just rules, as supplied by the calling function.
+This is the easy case.
+obj is the style object, also supplied by the calling function.
+3. Apply all css descriptors to all nodes at javascript startup.
+This is indicated by bulkmatch = true.
+3a. matchtype is 0 for the plain selectors. obj = node.style.
+3b. matchtype is 1 for the before selectors. obj = node.
+3c. matchtype is 2 for the after selectors. obj = node.
+Then repeat 3a 3b 3c with matchhover = true.
+This is done only to see if the node becomes visible on hover.
+Only looking for display=something or visibility=visible.
+Set a flag if that is found.
+*********************************************************************/
+
 static void do_rules(jsobjtype obj, struct rule *r, bool force)
 {
 	char *s, *s_attr;

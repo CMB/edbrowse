@@ -2390,16 +2390,6 @@ eb$cssDocLoad(css_all);
 // Apply rules to a given style object, which is this.
 Object.defineProperty(mw0.CSSStyleDeclaration.prototype, "cssText", { set: eb$cssText });
 
-// apply all the css attributes for a style under the node n.
-// This is done on demand by a getter.
-mw0.dostyle = function(n)
-{
-if(!n.style$2.eb$done) {
-eb$cssApply(n, n.style$2);
-n.style$2.eb$done = true;
-}
-}
-
 mw0.eb$qs$start = function()
 {
 mw0.cssGather();

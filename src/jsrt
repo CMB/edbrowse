@@ -9,9 +9,10 @@
 <bgsound src=whatever.mid>
 <style>
 body { background: white; color: black; }
+body:hover { fly:windshield }
 .nut {color: blue; white-space: snork" \""; }
 .nut:after {waste:crap; content:zip; }
-p.inject:before { display:round }
+body p.inject:before { display:round }
 p.inject:before { content:My }
 </style>
 </head>
@@ -878,8 +879,8 @@ if(fn.contentDocument.style.bgcolor !== "white") fail(168);
 // Well it does go away when the window closes, I suppose that's good enough.
 })();
 
-if(querySelector(".inject").firstChild.style.display != "round")
-fail(175);
+if(querySelector(".inject").firstChild.style.display != "round") fail(175);
+if(document.body.style.fly) fail(176);
 
 </script>
 
