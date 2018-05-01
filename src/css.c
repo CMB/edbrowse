@@ -42,7 +42,7 @@ static const char *const errorMessage[] = {
 	"bad selector attribute",
 	"bad rule attribute",
 	"dynamic",
-	"inject null",
+	"not used",
 	"inject high",
 	"pseudo element",
 	": unsupported",
@@ -798,28 +798,6 @@ lastrule:
 				a[r2 - t] = 0;
 				rule->atval = a;
 				unstring(a);
-
-/*********************************************************************
-In theory, :before and :after can inject text, but they rarely do.
-They usually inject whitespace with a contrastihng background color
-or an interesting image or decoration, before or after a button or whatever.
-This means nothing to edbrowse.
-Look for content other than whitespace.
-Also, oranges.com uses content=none, I assume none is a reserved word for "".
-If content is real then set a flag.
-*********************************************************************/
-
-				if (stringEqual(rule->atname, "content") &&
-				    !stringEqual(a, "none")) {
-					while (*a) {
-						if (!isspace(*a)) {
-							d->content = true;
-							break;
-						}
-						++a;
-					}
-				}
-
 			} else
 				rule->atval = emptyString;
 			r1 = s;
@@ -836,12 +814,6 @@ If content is real then set a flag.
 			d->error = CSS_ERROR_NORULE;
 			continue;
 		}
-// check for before after with no content
-		if (d->content)
-			continue;
-		for (sel = d->selectors; sel; sel = sel->next)
-			if (sel->before | sel->after)
-				sel->error = CSS_ERROR_INJECTNULL;
 	}
 
 // gather error statistics
@@ -1841,44 +1813,80 @@ static char *attrify(jsobjtype obj, char *line)
 	return s;
 }
 
+// if matchtype = 0 we perform traditional assignments to the style object.
+// matchtype > 0 then obj is the node, and we must create a textNode
+// beneath it, for before or after.
 static void do_rules(jsobjtype obj, struct rule *r, bool force)
 {
 	char *s, *s_attr;
 	int sl;
-	jsobjtype textobj;
+	jsobjtype textobj, original = obj;
 	static const char jl[] = "text 0x0, 0x0";
 
 	if (!obj)
 		return;
 
-	if (!matchtype) {
-		for (; r; r = r->next) {
-// if it appears to be part of the prototype, and not the object,
-// I won't write it, even if force is true.
-			bool has = has_property_nat(obj, r->atname);
-			enum ej_proptype what =
-			    typeof_property_nat(obj, r->atname);
-			if (has && !what)
-				continue;
-			if (what && !force)
-				continue;
-			++bulktotal;
-			set_property_string_nat(obj, r->atname, r->atval);
+	if (matchtype == 1) {	// before
+		if (get_property_bool(obj, "inj$before")) {
+			textobj = get_property_object(obj, "firstChild");
+		} else {
+			textobj =
+			    instantiate_nat(cf->winobj, "eb$inject",
+					    "TextNode");
+			if (!textobj)	// should never happen
+				return;
+			javaSetsLinkage(false, 'c', textobj, jl);
+			run_function_onearg_nat(obj, "prependChild", textobj);
+// It is now linked in and safe from gc
+			delete_property_nat(cf->winobj, "eb$inject");
+			set_property_bool(obj, "inj$before", true);
 		}
-		return;
 	}
-// this is before and after, injecting text
+
+	if (matchtype == 2) {	// after
+		if (get_property_bool(obj, "inj$after")) {
+			textobj = get_property_object(obj, "lastChild");
+		} else {
+			textobj =
+			    instantiate_nat(cf->winobj, "eb$inject",
+					    "TextNode");
+			if (!textobj)	// should never happen
+				return;
+			javaSetsLinkage(false, 'c', textobj, jl);
+			run_function_onearg_nat(obj, "appendChild", textobj);
+// It is now linked in and safe from gc
+			delete_property_nat(cf->winobj, "eb$inject");
+			set_property_bool(obj, "inj$after", true);
+		}
+	}
+
+	if (matchtype)
+		obj = get_property_object(textobj, "style");
+
 	s = initString(&sl);
 	for (; r; r = r->next) {
-		if (!stringEqual(r->atname, "content"))
+// special code for before after content
+		if (matchtype && stringEqual(r->atname, "content")) {
+			if (stringEqual(r->atval, "none"))
+				continue;
+			if (sl)
+				stringAndChar(&s, &sl, ' ');
+			stringAndString(&s, &sl, r->atval);
 			continue;
-		if (stringEqual(r->atval, "none"))
+		}
+// if it appears to be part of the prototype, and not the object,
+// I won't write it, even if force is true.
+		bool has = has_property_nat(obj, r->atname);
+		enum ej_proptype what = typeof_property_nat(obj, r->atname);
+		if (has && !what)
 			continue;
-		if (sl)
-			stringAndChar(&s, &sl, ' ');
-		stringAndString(&s, &sl, r->atval);
+		if (what && !force)
+			continue;
+		++bulktotal;
+		set_property_string_nat(obj, r->atname, r->atval);
 	}
-	if (!sl)		// should never happen
+
+	if (!sl)
 		return;
 
 // put a space between the injected text and the original text
@@ -1889,24 +1897,11 @@ static void do_rules(jsobjtype obj, struct rule *r, bool force)
 		s[0] = ' ';
 	}
 // turn attr(foo) into obj[foo]
-	s_attr = attrify(obj, s);
+	s_attr = attrify(original, s);
 	nzFree(s);
 	s = s_attr;
-
-	textobj = instantiate_nat(cf->winobj, "eb$inject", "TextNode");
-	if (!textobj) {		// should never happen
-		nzFree(s);
-		return;
-	}
-	set_property_string_nat(textobj, "data", s);
+	set_property_string(textobj, "data", s);
 	nzFree(s);
-	javaSetsLinkage(false, 'c', textobj, jl);
-	if (matchtype == 1)
-		run_function_onearg_nat(obj, "prependChild", textobj);
-	else
-		run_function_onearg_nat(obj, "appendChild", textobj);
-// It is now linked in and safe from gc
-	delete_property_nat(cf->winobj, "eb$inject");
 }
 
 void cssApply(jsobjtype node, jsobjtype destination)

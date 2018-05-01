@@ -11,6 +11,7 @@
 body { background: white; color: black; }
 .nut {color: blue; white-space: snork" \""; }
 .nut:after {waste:crap; content:zip; }
+p.inject:before { display:round }
 p.inject:before { content:My }
 </style>
 </head>
@@ -876,6 +877,9 @@ if(fn.contentDocument.style.bgcolor !== "white") fail(168);
 // context0 in jseng-duk.c.
 // Well it does go away when the window closes, I suppose that's good enough.
 })();
+
+if(querySelector(".inject").firstChild.style.display != "round")
+fail(175);
 
 </script>
 
