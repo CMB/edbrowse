@@ -102,8 +102,7 @@ static void scan_http_headers(struct i_get *g, bool fromCallback)
 		g->charset = strchr(g->content, ';');
 		if (g->charset)
 			*(g->charset)++ = 0;
-		if (stringEqual(g->content, "text/html") ||
-		    stringEqual(g->content, "text/plain"))
+		if (stringEqual(g->content, "text/html"))
 			g->csp = true;
 		else if (g->pg_ok && !cf->mt)
 			cf->mt = findMimeByContent(g->content);
