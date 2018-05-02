@@ -3070,30 +3070,34 @@ li_hide:
 		if (!retainTag)
 			break;
 // Javascript might have set or changed this url.
-		if (t->jv) {
-// js might have set, or changed, the url.
+		if (opentag && t->jv) {
 			char *new_url = get_property_url(t->jv, false);
 			if (new_url && *new_url) {
-#if 0
-// This happens a lot and isn't terribly noteworthy
-				if (!t->href || !stringEqual(t->href, new_url))
-					debugPrint(3,
-						   "js replaces anchor %s with %s",
-						   t->href, new_url);
-#endif
 				nzFree(t->href);
 				t->href = new_url;
 			}
 		}
-		if (!t->href) {
+		if (opentag && !t->href) {
 // onclick turns this into a hyperlink.
 			if (tagHandler(tagno, "onclick"))
 				t->href = cloneString("#");
 		}
 		if (t->href) {
-			if (opentag)
+			if (opentag) {
 				sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
-			else
+				if (t->jv
+				    && (a =
+					get_property_string(t->jv, "title"))) {
+					if (showHover) {
+						++hov1count;
+						stringAndString(&ns, &ns_l, a);
+						stringAndChar(&ns, &ns_l, ' ');
+					} else {
+						++hov2count;
+					}
+					cnzFree(a);
+				}
+			} else
 				sprintf(hnum, "%c0}", InternalCodeChar);
 		} else {
 			if (opentag)

@@ -697,7 +697,7 @@ if(!document.getElementById("sphere").innerHTML.match(/^Surface area/))
 fail(145);
 album = document.getElementById("album");
 album.innerHTML =
-"Why don't we do it <A href=http://en.wikipedia.org/wiki/White_album style='color: red ;illegal;legit3:okay;'>in the road</A>?";
+"Why don't we do it <A title=White href=http://en.wikipedia.org/wiki/White_album style='color: red ;illegal;legit3:okay;'>in the road</A>?";
 /* all the js objects associated with this html should be here */
 var aa = album.getElementsByTagName("a")[0];
 if(!aa.href.match(/wikipedia.org/))
