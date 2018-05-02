@@ -4944,6 +4944,7 @@ bool runCommand(const char *line)
 	struct ebWindow *w = NULL;
 	const struct htmlTag *tag = NULL;	/* event variables */
 	bool nogo = true, rc = true;
+	bool emode = false;	// force e, not browse
 	bool postSpace = false, didRange = false;
 	char first;
 	int cx = 0;		/* numeric suffix as in s/x/y/3 or w2 */
@@ -5040,6 +5041,7 @@ bool runCommand(const char *line)
 
 	if (first == 'w' || first == 'v' || (first == 'g' && line[1]
 					     && strchr(valid_delim, line[1])
+					     && !stringEqual(line, "g-")
 					     && !stringEqual(line, "g?"))) {
 		didRange = true;
 		startRange = 1;
@@ -5551,9 +5553,10 @@ replaceframe:
 	}
 
 	/* go to a file in a directory listing */
-	if (cmd == 'g' && cw->dirMode && !first) {
+	if (cmd == 'g' && cw->dirMode && (!first || stringEqual(line, "-"))) {
 		char *p, *dirline;
-		const struct MIMETYPE *gmt;	/* the go mime type */
+		const struct MIMETYPE *gmt = 0;	/* the go mime type */
+		emode = (first == '-');
 		if (endRange > startRange) {
 			setError(MSG_RangeCmd, "g");
 			return false;
@@ -5567,7 +5570,8 @@ replaceframe:
 		cmd = 'e';
 		if (!dirline)
 			return false;
-		gmt = findMimeByFile(dirline);
+		if (!emode)
+			gmt = findMimeByFile(dirline);
 		if (pluginsOn && gmt) {
 			if (gmt->outtype)
 				cmd = 'b';
@@ -5605,6 +5609,8 @@ replaceframe:
 		j = strlen(line);
 		if (j && line[j - 1] == '?')
 			lookmode = true;
+		if (j && line[j - 1] == '-')
+			emode = true;
 
 		/* Check to see if g means run an sql command. */
 		if (!first) {
@@ -5640,7 +5646,7 @@ replaceframe:
 			else if (first == '$')
 				j = -1, ++s;
 		}
-		if (*s == '?')
+		if (*s == '?' || *s == '-')
 			++s;
 		if (!*s) {
 			if (cw->sqlMode) {
@@ -5650,7 +5656,7 @@ replaceframe:
 			jsh = jsgo = nogo = false;
 			jsdead = !isJSAlive;
 			click = dclick = over = false;
-			cmd = 'b';
+			cmd = (emode ? 'e' : 'b');
 			uriEncoded = true;
 			if (endRange > startRange) {
 				setError(MSG_RangeCmd, "g");
@@ -5664,6 +5670,8 @@ replaceframe:
 				fieldNumProblem(1, "g", j, n, n);
 				return false;
 			}
+			if (cw->browseMode && h[0] == '#')
+				emode = false, cmd = 'b';
 			jsh = memEqualCI(h, "javascript:", 11);
 
 			if (lookmode) {
@@ -5943,6 +5951,7 @@ rebrowse:
 			line = s;
 			first = '#';
 			cmd = 'b';
+			emode = false;
 			goto browse;
 		}
 
@@ -5982,6 +5991,7 @@ rebrowse:
 			if (j)
 				i_puts(MSG_MailHowto);
 		} else {
+			bool save_pg;
 
 /*********************************************************************
 Before we set the new file name, and before we call up the next web page,
@@ -6000,8 +6010,13 @@ we have to make sure it has a protocol. Every url needs a protocol.
 				cw->sqlMode = true;
 			if (icmd == 'g' && !nogo && isURL(line))
 				debugPrint(2, "*%s", line);
+// emode suppresses plugins, as well as browsing
+			save_pg = pluginsOn;
+			if (emode)
+				pluginsOn = false;
 			j = readFile(line, emptyString, (cmd != 'r'), 0,
 				     thisfile);
+			pluginsOn = save_pg;
 		}
 		w->undoable = w->changeMode = false;
 		cw = cs->lw;	/* put it back, for now */

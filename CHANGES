@@ -11,6 +11,8 @@ foo (toggle), foo+ (enable), foo- (disable).
 Show or hide all the messages that are produced by hovering over things.
 This is the hover (toggle) command.
 
+The g- command, go don't browse.
+
 3.7.3:
 Show heading information h1 through h6.
 

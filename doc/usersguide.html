@@ -590,6 +590,7 @@ pdd : progress of download indicated by dots
 Interact with a Web Page
 <P>
 g : go to the link on the current line
+<br>g- : go to the link, but don't browse, or render, or play
 <br>g2 : go to the second link on the current line
 <br>g$ : go to the last link on the current line
 <br>g? : print the url for the link on the current line
@@ -1980,6 +1981,9 @@ g$ activates the last link on the line.
 If a link spreads across multiple lines, you must be on the first of these lines,
 the line containing the left brace.
 Use g? to print the url - where you will go if you type g.
+g- goes to the link, but does not browse,
+or render (e.g. a pdf file), or play (e.g. an mp3 file).
+This bypasses your plugins and retrieves the raw file.
 
 <P>
 The g command can also act on a link that is written in raw text,
