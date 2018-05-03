@@ -2345,6 +2345,7 @@ Array.prototype.setAttribute = mw0.setAttribute;
 Array.prototype.hasAttribute = mw0.hasAttribute;
 Array.prototype.removeAttribute = mw0.removeAttribute;
 Array.prototype.getAttributeNode = mw0.getAttributeNode;
+Array.prototype.item = function(x) { return this[x] };
 Array.prototype.includes = function(x, start) {
 if(typeof start != "number") start = 0;
 var l = this.length;
