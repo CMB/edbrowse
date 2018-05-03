@@ -661,6 +661,7 @@ mw0.P = function(){}
 mw0.Header = function(){}
 mw0.Footer = function(){}
 mw0.Script = function(){}
+mw0.HTMLScriptElement = mw0.Script; // alias for Script, I guess
 mw0.Timer = function(){this.nodeName = "timer";}
 mw0.Audio = function(){}
 
@@ -811,7 +812,8 @@ list.splice(idx, 0, r);
 mw0.CSSStyleDeclaration = function(){
         this.element = null;
         this.style = this;
-	 this.attributes = [];
+	 this.attributes = new mw0.NamedNodeMap;
+this.attributes.owner = this;
 this.sheet = new mw0.CSSStyleSheet;
 };
 mw0.CSSStyleDeclaration.prototype.toString = function() { return "style object"; }
@@ -901,7 +903,8 @@ this.class = "";
  * unlikely occurence, I have to create the array.
  * I have to treat a text node like an html node. */
 this.childNodes = [];
-this.attributes = [];
+this.attributes = new mw0.NamedNodeMap;
+this.attributes.owner = this;
 }
 
 mw0.createTextNode = function(t) {
@@ -1063,9 +1066,30 @@ return null;
 }
 }
 
+// The Attr class and getAttributeNode().
+mw0.Attr = function(){ this.specified = false; this.owner = null; this.name = ""; }
+
+Object.defineProperty(mw0.Attr.prototype, "value", {
+get: function() { return this.owner[this.name]; },
+set: function(v) {
+this.owner.setAttribute(this.name, v);
+this.specified = true;
+return;
+}});
+
+mw0.Attr.prototype.isId = function() { return this.name === "id"; }
+
+// this is sort of an array and sort of not
+mw0.NamedNodeMap = function() { this.length = 0; }
+mw0.NamedNodeMap.prototype.push = function(s) { this[this.length++] = s; }
+mw0.NamedNodeMap.prototype.item = function(n) { return this[n]; }
+mw0.NamedNodeMap.prototype.getNamedItem = function(name) { return this[name.toLowerCase()]; }
+mw0.NamedNodeMap.prototype.setNamedItem = function(name, v) { this.owner.setAttribute(name, v);}
+mw0.NamedNodeMap.prototype.removeNamedItem = function(name) { this.owner.removeAttribute(name);}
+
 /*********************************************************************
 Set and clear attributes. This is done in 3 different ways,
-the third using attributes as an array.
+the third using attributes as a NamedNodeMap.
 This may be overkill - I don't know.
 *********************************************************************/
 
@@ -1074,40 +1098,43 @@ mw0.hasAttribute = function(name) { if (this[name.toLowerCase()]) return true; e
 mw0.setAttribute = function(name, v) { 
 var n = name.toLowerCase();
 this[n] = v; 
-if(!this.attributes[n])
-this.attributes.push(n);
-this.attributes[n] = v;
+if(this.attributes[n]) return;
+var a = new Attr();
+a.owner = this;
+a.name = n;
+a.specified = true;
+// don't have to set value because there is a getter that grabs value
+// from the html node, see Attr class.
+this.attributes.push(a);
+// easy hash access
+this.attributes[n] = a;
 }
 mw0.removeAttribute = function(name) {
     var n = name.toLowerCase();
     if (this[n]) delete this[n];
-if(this.attributes[n]) delete this.attributes[n];
-    for (var i=this.attributes.length - 1; i >= 0; --i) {
-        if (this.attributes[i] == n) {
-this.attributes.splice(i, 1);
-break;
+var a = this.attributes[n]; // hash access
+if(!a) return;
+// Have to roll our own splice.
+var found = false;
+for(var i=0; i<this.attributes.length-1; ++i) {
+if(!found && this.attributes[i] == a) found = true;
+if(found) this.attributes[i] = this.attributes[i+1];
 }
-}
+this.attributes.length--;
+delete this.attributes[n];
 }
 
-// The Attr class and getAttributeNode().
-mw0.Attr = function(){ this.isId = this.specified = false; this.owner = null; this.name = ""; }
-
-Object.defineProperty(mw0.Attr.prototype, "value", {
-get: function() { return this.owner.getAttribute(this.name); },
-set: function(v) {
-this.owner.setAttribute(this.name, v);
-this.specified = true;
-return;
-}});
-
-mw0.getAttributeNode = function(s) {
-var n = new Attr;
-n.owner = this;
-n.name = s;
-if(this.getAttribute(s) != undefined)
-n.specified = true;
-return n;
+mw0.getAttributeNode = function(name) {
+    var n = name.toLowerCase();
+// this returns undefined if no such attribute, is that right,
+// or should we return a new Attr node with no value?
+return this.attributes[n];
+/*
+a = new Attr;
+a.owner = this;
+a.name = n;
+return a;
+*/
 }
 
 /*********************************************************************
@@ -1178,7 +1205,7 @@ node2[item] = node2;
 continue;
 }
 
-// An array of attributes, or event handlers etc.
+// An array of event handlers etc.
 if(Array.isArray(node1[item])) {
 node2[item] = [];
 
@@ -1248,6 +1275,7 @@ if(typeof node1[item] === "object") {
 // An object, not an array.
 
 if(item === "style") continue; // handled later
+if(item === "attributes") continue; // handled later
 if(item === "ownerDocument") continue; // handled by createElement
 if(item.match(/^\d+$/)) continue; // option index in a select array
 
@@ -1306,7 +1334,7 @@ continue;
 }
 
 // copy style object if present and its subordinate strings.
-if (typeof node1.style === "object") {
+if (node1.style instanceof CSSStyleDeclaration) {
 if(debug) alert3("copy style");
 node2.style = new CSSStyleDeclaration;
 node2.style.element = node2;
@@ -1316,6 +1344,16 @@ typeof node1.style[item] === 'number') {
 if(debug) alert3("copy attribute " + item);
 node2.style[item] = node1.style[item];
 }
+}
+}
+
+if (node1.attributes instanceof NamedNodeMap) {
+if(debug) alert3("copy attributes");
+node2.attributes = new NamedNodeMap;
+node2.attributes.owner = node2;
+for(var l=0; l<node1.attributes.length; ++l) {
+if(debug) alert3("copy attribute " + node1.attributes[l].name);
+node2.setAttribute(node1.attributes[l].name, node1.attributes[l].value);
 }
 }
 
@@ -1812,7 +1850,8 @@ c.style = new CSSStyleDeclaration;
 c.style.element = c;
 }
 c.childNodes = [];
-c.attributes = [];
+c.attributes = new NamedNodeMap;
+c.attributes.owner = c;
 c.nodeName = t;
 c.tagName = t;
 c.nodeType = 1;
@@ -2118,6 +2157,7 @@ P = mw0.P;
 Header = mw0.Header;
 Footer = mw0.Footer;
 Script = mw0.Script;
+HTMLScriptElement = mw0.HTMLScriptElement;
 Timer = mw0.Timer;
 Audio = mw0.Audio;
 Canvas = mw0.Canvas;
@@ -2206,6 +2246,7 @@ get: function() { return mw0.eb$getSibling(this,"previous"); }
 });
 
 Attr = mw0.Attr;
+NamedNodeMap = mw0.NamedNodeMap;
 document.getAttribute = mw0.getAttribute;
 document.setAttribute = mw0.setAttribute;
 document.hasAttribute = mw0.hasAttribute;
@@ -2217,8 +2258,10 @@ document.importNode = mw0.importNode;
 document.compareDocumentPosition = mw0.compareDocumentPosition;
 
 // Local storage, this is per window.
+// This is NamedNodeMap, to take advantage of preexisting methods.
 localStorage = {}
-localStorage.attributes = [];
+localStorage.attributes = new NamedNodeMap;
+localStorage.attributes.owner = localStorage;
 localStorage.getAttribute = mw0.getAttribute;
 localStorage.getItem = localStorage.getAttribute;
 localStorage.setAttribute = mw0.setAttribute;
@@ -2302,7 +2345,6 @@ Array.prototype.setAttribute = mw0.setAttribute;
 Array.prototype.hasAttribute = mw0.hasAttribute;
 Array.prototype.removeAttribute = mw0.removeAttribute;
 Array.prototype.getAttributeNode = mw0.getAttributeNode;
-Array.prototype.item = function(x) { return this[x] };
 Array.prototype.includes = function(x, start) {
 if(typeof start != "number") start = 0;
 var l = this.length;

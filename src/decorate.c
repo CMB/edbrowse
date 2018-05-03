@@ -848,6 +848,7 @@ static jsobjtype establish_js_option(jsobjtype obj, int idx)
 	jsobjtype oa;		/* option array */
 	jsobjtype oo;		/* option object */
 	jsobjtype so;		// style object
+	jsobjtype ato;		// attributes object
 	jsobjtype fo;		/* form object */
 
 	if ((oa = get_property_object(obj, "options")) == NULL)
@@ -862,7 +863,8 @@ static jsobjtype establish_js_option(jsobjtype obj, int idx)
 	if (fo)
 		set_property_object(oo, "form", fo);
 	instantiate_array(oo, "childNodes");
-	instantiate_array(oo, "attributes");
+	ato = instantiate(oo, "attributes", "NamedNodeMap");
+	set_property_object(ato, "owner", oo);
 	so = instantiate(oo, "style", "CSSStyleDeclaration");
 	set_property_object(so, "element", oo);
 
@@ -900,6 +902,7 @@ static void domLink(struct htmlTag *t, const char *classname,	/* instantiate thi
 	const char *href_url = t->href;
 	const char *stylestring = attribVal(t, "style");
 	jsobjtype so = 0;	/* obj.style */
+	jsobjtype ato = 0;	/* obj.attributes */
 
 	debugPrint(5, "domLink %s.%d name %s",
 		   classname, radiosel, (symname ? symname : emptyString));
@@ -1011,7 +1014,8 @@ Don't do any of this if the tag is itself <style>. */
  * aren't populated at domLink-time */
 		set_property_string(io, "class", "");
 		set_property_string(io, "nodeValue", "");
-		instantiate_array(io, "attributes");
+		ato = instantiate(io, "attributes", "NamedNodeMap");
+		set_property_object(ato, "owner", io);
 		set_property_object(io, "ownerDocument", cf->docobj);
 
 		if (membername == symname) {
