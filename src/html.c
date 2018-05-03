@@ -601,6 +601,26 @@ static void prepareScript(struct htmlTag *t)
 		run_function_onearg(cf->winobj, "eb$watch", t->jv);
 }				/* prepareScript */
 
+static bool is_subframe(struct ebFrame *f1, struct ebFrame *f2)
+{
+	struct htmlTag *t;
+	int n;
+	if (f1 == f2)
+		return true;
+	while (true) {
+		for (n = 0; n < cw->numTags; ++n) {
+			t = tagList[n];
+			if (t->f1 == f1)
+				goto found;
+		}
+		return false;
+found:
+		f1 = t->f0;
+		if (f1 == f2)
+			return true;
+	}
+}
+
 /*********************************************************************
 Run pending scripts, and perform other actions that have been queued up by javascript.
 This includes document.write, linkages, perhaps even form.submit.
@@ -649,6 +669,8 @@ top:
 			continue;
 		if (t->step >= 3)
 			continue;
+		if (!is_subframe(t->f0, save_cf))
+			continue;
 		t->step = 3;	/* now running the script */
 		if (!t->jv)
 			continue;
@@ -664,6 +686,9 @@ top:
 		js_file = t->js_file;
 		if (!js_file)
 			js_file = "generated";
+		if (cf != save_cf)
+			debugPrint(1, "running script at a lower frame %s",
+				   js_file);
 		ln = t->js_ln;
 		if (!ln)
 			ln = 1;
