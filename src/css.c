@@ -1863,16 +1863,28 @@ static void do_rules(jsobjtype obj, struct rule *r, bool force)
 	if (!obj)
 		return;
 
-// before and after can't act on a select node,as that is an array,
-// the way I have implemented it, so sneaking in a text node
-// is sometimes treated as an option, and that is a disaster!
+/*********************************************************************
+before and after can't act on a select node,as that is an array,
+the way I have implemented it, so sneaking in a text node
+is sometimes treated as an option, and that is a disaster!
+Corner case? Not really, because some people write *:before, hitting every node.
+And if you do it twice the second call could add a text node
+to the text node you just added in the first call, and so on,
+so we don't want to apply before or after to text nodes.
+Or options, or perhaps other nodes.
+*********************************************************************/
+
 	if (matchtype) {
-		bool isselect = false;
+		bool forbidden = false;
+		static const char *const noafter[] = {
+			"select", "text", "option", "head", "meta", "link",
+			    "script", 0
+		};
 		s = get_property_string(obj, "nodeName");
-		if (s && stringEqual(s, "select"))
-			isselect = true;
+		if (s && stringInList(noafter, s) >= 0)
+			forbidden = true;
 		nzFree(s);
-		if (isselect)
+		if (forbidden)
 			return;
 	}
 
