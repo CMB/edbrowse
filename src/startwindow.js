@@ -628,7 +628,16 @@ mw0.URL.prototype.trim = function() {
 return this.toString().trim();
 }
 
-// Here are the DOM classes with generic constructors.
+/*********************************************************************
+Here are the DOM classes with generic constructors.
+But first, the Node class, which is suppose to be the parent class
+of all the others. Javascript can't inherit like that, which is a bummer.
+Still, I include Node because some javascript will interrogate Node to see
+which methods all the nodes possess?
+Do we support appendchild?   etc.
+*********************************************************************/
+
+mw0.Node = function(){}
 
 mw0.Head = function(){}
 mw0.Meta = function(){}
@@ -1605,7 +1614,7 @@ var cnlist = ["HtmlObj", "Head", "Body", "CSSStyleDeclaration", "Frame",
 // The following nodes shouldn't have any children, but the various
 // children methods could be called on them anyways.
 // And getAttribute applies to just about everything.
-"Area", "TextNode", "Image", "Option", "Link", "Meta", "Audio", "Canvas"];
+"Node", "Area", "TextNode", "Image", "Option", "Link", "Meta", "Audio", "Canvas"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i];
 var c = mw0[cn];
@@ -2132,6 +2141,7 @@ mw0.jtfn2 = function (all, a, b) { return mw0.jtfn0(a, b, ';'); }
 } // master compile
 
 URL = mw0.URL;
+Node = mw0.Node;
 Head = mw0.Head;
 Meta = mw0.Meta;
 Link = mw0.Link;
