@@ -1863,6 +1863,19 @@ static void do_rules(jsobjtype obj, struct rule *r, bool force)
 	if (!obj)
 		return;
 
+// before and after can't act on a select node,as that is an array,
+// the way I have implemented it, so sneaking in a text node
+// is sometimes treated as an option, and that is a disaster!
+	if (matchtype) {
+		bool isselect = false;
+		s = get_property_string(obj, "nodeName");
+		if (s && stringEqual(s, "select"))
+			isselect = true;
+		nzFree(s);
+		if (isselect)
+			return;
+	}
+
 	if (matchtype == 1) {	// before
 		if (get_property_bool(obj, "inj$before")) {
 			textobj = get_property_object(obj, "firstChild");
