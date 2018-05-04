@@ -1175,12 +1175,17 @@ static void link_css(struct htmlTag *t)
 	struct i_get g;
 	char *b;
 	int blen;
-	const char *a = attribVal(t, "type");
-	if (a)
-		set_property_string(t->jv, "type", a);
+	const char *a;
+	const char *a1 = attribVal(t, "type");
+	const char *a2 = attribVal(t, "rel");
+	if (a1)
+		set_property_string(t->jv, "type", a1);
+	if (a2)
+		set_property_string(t->jv, "rel", a2);
 	if (!t->href)
 		return;
-	if (!a || !stringEqualCI(a, "text/css"))
+	if ((!a1 || !stringEqualCI(a1, "text/css")) &&
+	    (!a2 || !stringEqualCI(a2, "stylesheet")))
 		return;
 // Fetch the css file so we can apply its attributes.
 	a = NULL;

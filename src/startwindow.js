@@ -2421,7 +2421,9 @@ if(t.data) w.cssSource.push({data: t.data, src:w.eb$base}), css_all += t.data;
 a = d.getElementsByTagName("link");
 for(i=0; i<a.length; ++i) {
 t = a[i];
-if(t.type && t.type.toLowerCase() === "text/css" && t.data) {
+if(t.data && (
+t.type && t.type.toLowerCase() == "text/css" ||
+t.rel && t.rel.toLowerCase() == "stylesheet")) {
 w.cssSource.push({data: t.data, src:t.href});
 css_all += "@ebdelim0" + t.href + "{}\n";
 css_all += t.data;
