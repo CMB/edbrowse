@@ -939,7 +939,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 	char c, h;
 	int n = m2 - m1;
 	static const char *const okcolon[] = {
-		"first-child", "last-child", "link", "checked",
+		"first-child", "last-child", "only-child", "link", "checked",
 		"empty", "disabled", "enabled", "read-only", "read-write",
 		0
 	};
@@ -983,6 +983,13 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 			a->hover = true;
 			return;
 		}
+// :lang(it) [lang=it]
+		if (!strncmp(t, ":lang(", 6) && t[n - 1] == ')') {
+			h = t[0] = '[';
+			t[5] = '=';
+			t[n - 1] = ']';
+			goto bracket;
+		}
 		if (stringEqual(t, ":before")) {
 			a->before = true;
 			return;
@@ -1018,6 +1025,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 		n = strlen(t);
 // fall through
 
+bracket:
 	case '[':
 		if (t[n - 1] != ']') {
 			a->error = CSS_ERROR_RB;
@@ -1451,6 +1459,24 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 				return false;
 			if ((get_property_object_nat(pobj, "lastChild") ==
 			     obj) ^ negate)
+				goto next_mod;
+			return false;
+		}
+
+		if (stringEqual(p, ":only-child")) {
+			if (t && t->parent) {
+				if (((!t->sibling)
+				     && t->parent->firstchild == t) ^ negate)
+					goto next_mod;
+				return false;
+			}
+			pobj = get_property_object_nat(obj, "parentNode");
+			if (!pobj)
+				return false;
+			if ((get_property_object_nat(pobj, "firstChild") == obj
+			     && get_property_object_nat(pobj,
+							"lastChild") == obj)
+			    ^ negate)
 				goto next_mod;
 			return false;
 		}
