@@ -13,7 +13,7 @@ extern int gettimeofday(struct timeval *tp, void *tzp);	// from tidys.lib
 #endif // _MSC_VER y/n
 
 uchar browseLocal;
-bool showHover = true;
+bool showHover = false;
 
 static jsobjtype js_reset, js_submit;
 
@@ -2251,6 +2251,24 @@ static void silent(int msg, ...)
 {
 }
 
+// Is there an active tag below?
+static bool activeBelow(struct htmlTag *t)
+{
+	bool rc;
+	int action = t->action;
+	if (action == TAGACT_INPUT || action == TAGACT_SELECT ||
+	    action == TAGACT_A || (action == TAGACT_SPAN && t->onclick))
+		return true;
+	t = t->firstchild;
+	while (t) {
+		rc = activeBelow(t);
+		if (rc)
+			return rc;
+		t = t->sibling;
+	}
+	return false;
+}
+
 static int hov1count, hov2count, inv_count;
 
 /* Rerender the buffer and notify of any lines that have changed */
@@ -3038,18 +3056,20 @@ li_hide:
 	if (opentag) {
 // what is the visibility now?
 		uchar v_now = visi_status(t);
-// gather some stats for debugging
-		if (v_now == VISI_HOVER) {
-			if (showHover)
-				++hov1count;
-			else
-				++hov2count;
-		}
-		if (v_now == VISI_HIDDEN)
+		if (v_now == VISI_HIDDEN) {
 			++inv_count;
-		if (v_now == VISI_HIDDEN || (v_now == VISI_HOVER && !showHover)) {
 			inv2 = t;
 			return;
+		}
+// I never hide hover text if it is hyperlinks or buttons or such.
+		if (v_now == VISI_HOVER && !activeBelow(t)) {
+			if (showHover)
+				++hov1count;
+			else {
+				++hov2count;
+				inv2 = t;
+				return;
+			}
 		}
 	}
 
