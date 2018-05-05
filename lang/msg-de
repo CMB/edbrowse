@@ -456,8 +456,8 @@ das Plugin ist ein Konverter, kein Player
 das Plugin ist ein Player, kein Konverter
 verstecke eingeblendeten Text
 zeige eingeblendeten Text an
-0
-0
+verstecke css Text
+zeige css Text an
 unerwartete Zeichen nach dem kodierten Anhang
 ungültige Zeichen im kodierten Anhang
 Kommando %s kann nicht global angewandt werden

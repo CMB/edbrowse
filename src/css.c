@@ -1998,6 +1998,7 @@ Or options, or perhaps other nodes.
 	s = s_attr;
 	set_property_string(textobj, "data", s);
 	nzFree(s);
+	set_property_bool(textobj, "inj$css", true);
 }
 
 void cssApply(jsobjtype node, jsobjtype destination)

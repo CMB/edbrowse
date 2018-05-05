@@ -13,7 +13,7 @@ extern int gettimeofday(struct timeval *tp, void *tzp);	// from tidys.lib
 #endif // _MSC_VER y/n
 
 uchar browseLocal;
-bool showHover = false;
+bool showHover, showInject;
 
 static jsobjtype js_reset, js_submit;
 
@@ -2269,7 +2269,7 @@ static bool activeBelow(struct htmlTag *t)
 	return false;
 }
 
-static int hov1count, hov2count, inv_count;
+static int hov1count, hov2count, inv_count, inj1count, inj2count;
 
 /* Rerender the buffer and notify of any lines that have changed */
 void rerender(bool rr_command)
@@ -2284,7 +2284,7 @@ void rerender(bool rr_command)
 	cw->mustrender = false;
 	time(&cw->nextrender);
 	cw->nextrender += 20;
-	hov1count = hov2count = inv_count = 0;
+	hov1count = hov2count = inv_count = inj1count = inj2count = 0;
 
 	rebuildSelectors();
 
@@ -2305,7 +2305,7 @@ void rerender(bool rr_command)
 	nzFree(a);
 
 	if (rr_command && debugLevel >= 3) {
-		char buf[80];
+		char buf[120];
 		buf[0] = 0;
 		if (hov1count + hov2count)
 			sprintf(buf, "%d nodes %s by hover",
@@ -2314,8 +2314,15 @@ void rerender(bool rr_command)
 		if (inv_count) {
 			if (buf[0])
 				strcat(buf, ", ");
-			sprintf(buf + strlen(buf), "%d nodes hidden by css",
-				inv_count);
+			sprintf(buf + strlen(buf),
+				"%d nodes hidden by css display", inv_count);
+		}
+		if (inj1count + inj2count) {
+			if (buf[0])
+				strcat(buf, ", ");
+			sprintf(buf + strlen(buf), "%d nodes %s by css inject",
+				inj1count + inj2count,
+				(inj1count ? "shown" : "hidden"));
 		}
 		if (buf[0])
 			debugPrint(3, "%s", buf);
@@ -3067,6 +3074,16 @@ li_hide:
 				++hov1count;
 			else {
 				++hov2count;
+				inv2 = t;
+				return;
+			}
+		}
+		if (action == TAGACT_TEXT && t->jv &&
+		    get_property_bool(t->jv, "inj$css")) {
+			if (showInject)
+				++inj1count;
+			else {
+				++inj2count;
 				inv2 = t;
 				return;
 			}
