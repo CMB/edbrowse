@@ -347,6 +347,8 @@ static void unstring(char *s)
 			++s;
 			continue;
 		}
+		if (c == '\\' && s[1])
+			c = *++s;
 copy:
 		*w++ = c;
 		++s;
@@ -856,7 +858,7 @@ lastrule:
 // determine the tag, and build the chain of modifiers
 static void cssAtomic(struct asel *a)
 {
-	char c;
+	char c, last_c;
 	char *m1;		// demarkate the modifier
 	int n;
 	char *s = a->part;
@@ -890,16 +892,20 @@ static void cssAtomic(struct asel *a)
 	if (!strncmp(s, "not(", 4) && s[4])
 		s += 5;
 
+	last_c = 0;
 	while ((c = *s)) {
 		if (c == '"' || c == '\'') {
+			last_c = 0;
 			n = closeString(s + 1, c);
 			if (n < 0)	// should never happen
 				break;
 			s += n + 1;
 			continue;
 		}
-		if (!strchr(".[#:", c)) {
+// I assume \ is an escape, though this could fail  foo\\:
+		if (!strchr(".[#:", c) || last_c == '\\') {
 			++s;
+			last_c = c;
 			continue;
 		}
 		cssModify(a, m1, s);
@@ -1002,6 +1008,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 			return;
 		}
 		t[--n] = 0;	// lop off ]
+		unstring(t);
 		for (w = t + 1; (c = *w); ++w) {
 			if (c == '=')
 				break;
@@ -1011,14 +1018,16 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 			}
 			if (isupper(c))
 				*w = tolower(c);
+// I guess almost anything can be an attribute.
+#if 0
 			if ((isdigit(c) && w > t + 1) || isalpha(c) || c == '-')
 				continue;
 			a->error = CSS_ERROR_ATTR;
 			return;
+#endif
 		}
 		if (!*w)
 			break;
-		unstring(w);
 // [foo=] isn't well defined. I'm going to call it [foo]
 		if (w[1])
 			break;
@@ -1878,7 +1887,7 @@ Or options, or perhaps other nodes.
 		bool forbidden = false;
 		static const char *const noafter[] = {
 			"select", "text", "option", "head", "meta", "link",
-			    "script", 0
+			"script", 0
 		};
 		s = get_property_string(obj, "nodeName");
 		if (s && stringInList(noafter, s) >= 0)
