@@ -1024,7 +1024,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 		for (w = t + 1; (c = *w); ++w) {
 			if (c == '=')
 				break;
-			if (strchr("|~^*", c) && w[1] == '=') {
+			if (strchr("|~^$*", c) && w[1] == '=') {
 				++w;
 				break;
 			}
@@ -1044,7 +1044,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 		if (w[1])
 			break;
 		*w-- = 0;
-		if (strchr("|~^*", *w))
+		if (strchr("|~^$*", *w))
 			*w = 0;
 		break;
 
@@ -1308,7 +1308,7 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			if (cut) {
 				value = cut + 1;
 				l = strlen(value);
-				if (strchr("|~^*", cut[-1]))
+				if (strchr("|~^$*", cut[-1]))
 					--cut;
 				cutc = *cut;
 				*cut = 0;	// I'll put it back
@@ -1354,6 +1354,19 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			}
 			if (cutc == '^') {
 				rc = (!strncmp(v, value, l) ^ negate);
+				if (valloc)
+					nzFree(v);
+				if (rc)
+					goto next_mod;
+				return false;
+			}
+			if (cutc == '$') {
+				int l1 = strlen(v);
+				int l2 = strlen(value);
+				rc = false;
+				if (l1 >= l2)
+					rc = !strncmp(v + l1 - l2, value, l);
+				rc ^= negate;
 				if (valloc)
 					nzFree(v);
 				if (rc)
