@@ -85,6 +85,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#entry> Data Entry </A>
 <LI><A HREF=#textarea> Text Areas </A>
 <LI><A HREF=#button> Push The Button </A>
+<LI><A HREF=#hover> Hover Text </A>
 <LI><A HREF=#addr> Web And Email Addresses </A>
 <LI><A HREF=#cook> Cookies </A>
 <LI><A HREF=#ssl> Secure Connections </A>
@@ -612,7 +613,6 @@ g : go to the link on the current line
 <br>xhr : allow XHR (toggle)
 <br>rr : rerender the screen, to reflect asynchronous javascript changes
 <br>hover : show all hover text (toggle)
-<br>csst : show css text injected into the document
 <P>
 Mail Client
 <P>
@@ -2336,6 +2336,7 @@ when there are multiple input fields, or multiple buttons, on the current line.
 
 <H3> <A NAME=textarea> Text Areas </A> </H3>
 
+<P>
 Some internet forms allow you to type freely, as in "Please enter your comments here."
 This is done inside a window within the screen,
 having a fixed number of rows and columns,
@@ -2389,6 +2390,7 @@ Thus your carefully crafted comments are on their way.
 
 <H3> <A NAME=button> Push The Button </A> </H3>
 
+<P>
 If the third input field on the current line is a reset or submit button,
 press the button via i3*.
 The reset button puts the input fields back to their original values,
@@ -2422,8 +2424,47 @@ Remember that buttons can run javascript, without being type submit or reset.
 These are all pressed by the i* command.
 If more than one button is on the current line, any style of button, then i* is not sufficient; you have to specify which button, as in i3*.
 
+<H3> <A NAME=hover> Hover Text </A> </H3>
+
+<P>
+Some websites cause text to appear when you hover over a link or icon; then it disappears when you move the mouse away.
+Edbrowse has nothing analogous to a mouse hovering over an icon, so we had to think of something else.
+
+<P>
+Hover text is usually explanatory, and rarely essential.
+Since the goal of edbrowse is minimal output, edbrowse does not display this text by default.
+However, you can turn it on with the hover command.
+All the hover text appears, all over the page.
+It might be nice to hover over a particular line, but so far this has proved problematic.
+It's not clear what if anything you can hover over, and the message might pop up on a different part of the screen, that is, 50 lines down in the buffer.
+For now, the approach is to reveal all hover text wherever it appears, and if you like, you can save the two buffers and diff to read the lines that have changed.
+You probably only need to do this once on a website that you will be visiting again and again.
+Once you have read the hover explanations you probably won't need to read them in the future, whereupon you can run with hover disabled.
+
+<P>
+In rare cases, hovering over an icon reveals links or buttons.
+Because they are active elements, these are shown all the time.
+You need to know that these links or buttons are available.
+In other words, edbrowse only hides hover text.
+
+<P>
+Cascading style sheets (css) also injects text into the page, but this tends to be based on element type or class.
+Put a star in front of every paragraph that has class=footnote.
+Put a right arrow after every hyperlink with class=external, taking you to another website.
+Put a green circle in front of every input field with class=required, a required field.
+These little symbols are primarily visual, and of almost no value to edbrowse users.
+Once again they are hidden by default.
+They are not strictly hover text, but these are also revealed by the hover command.
+As mentioned earlier,
+the injected characters or emojis are helpful visual reminders of the nodes they adorn, and are rarely vital;
+however, there are a few websites where the injected text is explanatory, and might be worth reading at least once.
+
+<P>
+The hover command does not show or hide text unless javascript is enabled.
+
 <H3> <A NAME=addr> Web And Email Addresses </A> </H3>
 
+<P>
 The capital A command shows you the web addresses behind
 the links on the current line.
 Each web address will be surrounded by &lt;a&gt; and &lt;/a&gt; tags,

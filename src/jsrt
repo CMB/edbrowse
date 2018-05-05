@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<!-- browse length 630, +7 css, +6 hover -->
+<!-- browse length 630, 643 with hover -->
 <head id=boom>
 <meta content=Snoopy>
 <title>Edbrowse js regression test</title>

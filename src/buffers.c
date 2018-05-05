@@ -4551,7 +4551,7 @@ et_go:
 			rerender(false);
 		return true;
 	}
-
+#if 0
 	if (stringEqual(line, "csst")) {
 		showInject ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
@@ -4569,6 +4569,7 @@ et_go:
 			rerender(false);
 		return true;
 	}
+#endif
 
 	if (stringEqual(line, "su8")) {
 		re_utf8 ^= 1;

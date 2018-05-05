@@ -3080,7 +3080,7 @@ li_hide:
 		}
 		if (action == TAGACT_TEXT && t->jv &&
 		    get_property_bool(t->jv, "inj$css")) {
-			if (showInject)
+			if (showHover)
 				++inj1count;
 			else {
 				++inj2count;
