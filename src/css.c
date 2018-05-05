@@ -313,17 +313,15 @@ extract:
 	return emptyString;
 }
 
-/*********************************************************************
-This is a really simple version of unstring. I don't decode \37 or \u1f.
-Just \t and \n, and \ anything else is just the next character.
-Improve this some day.
-*********************************************************************/
-
 static void unstring(char *s)
 {
 	char *w = s;
 	char qc = 0;		// quote character
 	char c;
+	char hexin[12];
+	const char *r;
+	unsigned long uc;	// unicode character
+	int i;
 	while ((c = *s)) {
 		if (qc) {	// in quotes
 			if (c == qc) {
@@ -340,7 +338,19 @@ static void unstring(char *s)
 				c = '\n';
 			if (c == 't')
 				c = '\t';
-			goto copy;
+			if (!isxdigit(c))
+				goto copy;
+			for (i = 0; i < 8; ++i)
+				if (isxdigit(s[i]))
+					hexin[i] = s[i];
+			hexin[i] = 0;
+			sscanf(hexin, "%lx", &uc);
+// convert to utf8
+			r = uni2utf8(uc);
+			strcpy(w, r);
+			w += strlen(r);
+			s += i - 1;
+			continue;
 		}
 		if (c == '"' || c == '\'') {
 			qc = c;
