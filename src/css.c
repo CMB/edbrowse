@@ -343,13 +343,15 @@ static void unstring(char *s)
 			for (i = 0; i < 8; ++i)
 				if (isxdigit(s[i]))
 					hexin[i] = s[i];
+				else
+					break;
 			hexin[i] = 0;
 			sscanf(hexin, "%lx", &uc);
 // convert to utf8
 			r = uni2utf8(uc);
 			strcpy(w, r);
 			w += strlen(r);
-			s += i - 1;
+			s += i;
 			continue;
 		}
 		if (c == '"' || c == '\'') {
