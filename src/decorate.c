@@ -1521,6 +1521,9 @@ static void pushAttributes(const struct htmlTag *t)
 			"href", "src", "action",
 			0
 		};
+		const char *const dotrue[] = {
+			"multiple", "readonly", "disabled", 0
+		};
 		const char *u;
 		if (stringInListCI(exclist, a[i]) >= 0)
 			continue;
@@ -1536,10 +1539,12 @@ static void pushAttributes(const struct htmlTag *t)
 		u = v[i];
 		if (!u)
 			u = emptyString;
-// There may be some, like multiple or readonly, that should be set to true,
-// not the empty string. I haven't dealt with those yet.
-// Should I call setAttribute, with its side effects, or is just setting
-// the property good enough??
+// There are some, like multiple or readonly, that should be set to true,
+// not the empty string.
+		if (!*u && stringInList(dotrue, a[i]) >= 0) {
+			set_property_bool(t->jv, a[i], true);
+			continue;
+		}
 		set_property_string(t->jv, a[i], u);
 	}
 }				/* pushAttributes */

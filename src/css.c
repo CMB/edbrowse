@@ -938,6 +938,12 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 	char *t, *w, *propname;
 	char c, h;
 	int n = m2 - m1;
+	static const char *const okcolon[] = {
+		"first-child", "last-child", "link", "checked",
+		"empty", "disabled", "enabled",
+		0
+	};
+
 	if (n == 1)		// empty
 		return;
 	t = allocMem(n + 1);
@@ -992,9 +998,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 			a->error = CSS_ERROR_PE;
 			return;
 		}
-		if (!stringEqual(t, ":link") && !stringEqual(t, ":first-child")
-		    && !stringEqual(t, ":last-child")
-		    && !stringEqual(t, ":checked")) {
+		if (stringInList(okcolon, t + 1) < 0) {
 			a->error = CSS_ERROR_UNSUP;
 			return;
 		}
@@ -1030,13 +1034,6 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 			}
 			if (isupper(c))
 				*w = tolower(c);
-// I guess almost anything can be an attribute.
-#if 0
-			if ((isdigit(c) && w > t + 1) || isalpha(c) || c == '-')
-				continue;
-			a->error = CSS_ERROR_ATTR;
-			return;
-#endif
 		}
 		if (!*w)
 			break;
@@ -1454,6 +1451,43 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 				return false;
 			if ((get_property_object_nat(pobj, "lastChild") ==
 			     obj) ^ negate)
+				goto next_mod;
+			return false;
+		}
+
+		if (stringEqual(p, ":empty")) {
+			if (t) {
+				if ((!t->firstchild) ^ negate)
+					goto next_mod;
+				return false;
+			}
+			if ((!get_property_object_nat(obj, "firstChild")) ^
+			    negate)
+				goto next_mod;
+			return false;
+		}
+
+		if (stringEqual(p, ":enabled") || stringEqual(p, ":disabled")) {
+			char *v;
+			rc = false;
+			if (t) {
+				if (t->action == TAGACT_INPUT) {
+					rc = t->disabled;
+					if (p[1] == 'e')
+						rc ^= 1;
+				}
+				if (rc ^ negate)
+					goto next_mod;
+				return false;
+			}
+			v = get_property_string(obj, "nodeName");
+			if (v && stringEqual(v, "input")) {
+				rc = get_property_bool(obj, "disabled");
+				if (p[1] == 'e')
+					rc ^= 1;
+			}
+			nzFree(v);
+			if (rc ^ negate)
 				goto next_mod;
 			return false;
 		}
