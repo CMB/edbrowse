@@ -940,7 +940,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 	int n = m2 - m1;
 	static const char *const okcolon[] = {
 		"first-child", "last-child", "link", "checked",
-		"empty", "disabled", "enabled",
+		"empty", "disabled", "enabled", "read-only", "read-write",
 		0
 	};
 
@@ -1468,25 +1468,27 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 		}
 
 		if (stringEqual(p, ":enabled") || stringEqual(p, ":disabled")) {
-			char *v;
 			rc = false;
-			if (t) {
-				if (t->action == TAGACT_INPUT) {
-					rc = t->disabled;
-					if (p[1] == 'e')
-						rc ^= 1;
-				}
-				if (rc ^ negate)
-					goto next_mod;
-				return false;
-			}
-			v = get_property_string(obj, "nodeName");
-			if (v && stringEqual(v, "input")) {
+			if (t)
+				rc = t->disabled;
+			else
 				rc = get_property_bool(obj, "disabled");
-				if (p[1] == 'e')
-					rc ^= 1;
-			}
-			nzFree(v);
+			if (p[1] == 'e')
+				rc ^= 1;
+			if (rc ^ negate)
+				goto next_mod;
+			return false;
+		}
+
+		if (stringEqual(p, ":read-only")
+		    || stringEqual(p, ":read-write")) {
+			rc = false;
+			if (t)
+				rc = t->rdonly;
+			else
+				rc = get_property_bool(obj, "readonly");
+			if (p[6] == 'w')
+				rc ^= 1;
 			if (rc ^ negate)
 				goto next_mod;
 			return false;
