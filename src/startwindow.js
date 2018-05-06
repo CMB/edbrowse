@@ -1756,7 +1756,9 @@ mw0.Form.prototype.detachEvent = mw0.detachEvent;
 mw0.Form.prototype.dispatchEvent = mw0.dispatchEvent;
 
 mw0.createElementNS = function(nsurl,s) {
-return mw0.createElement(s);
+var u = mw0.createElement(s);
+u.namespaceURI = new mw0.URL(nsurl);
+return u;
 }
 
 mw0.createElement = function(s) { 
