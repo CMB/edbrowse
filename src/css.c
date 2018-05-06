@@ -589,7 +589,7 @@ copy:		++s;
 			}
 			combin = 0;	// look for combinator
 			a2 = s;
-			while (strchr(", \t\n\r>+", c)) {
+			while (strchr(", \t\n\r>~+", c)) {
 				if (isspace(c)) {
 					if (!combin)
 						combin = ' ';
@@ -1582,6 +1582,33 @@ static bool qsaMatchChain(struct htmlTag *t, jsobjtype obj, const struct sel *s)
 				return false;
 			if (qsaMatch(t, obj, a))
 				continue;
+			return false;
+		}
+
+		if (combin == '~') {
+			if (t) {
+				if (!t->parent)
+					return false;
+				u = t->parent->firstchild;
+// possibly we should loop backwards not forwards,
+// but I don't have reverse links.
+				for (; u; u = u->sibling) {
+					if (u == t)
+						break;
+					if (!qsaMatch(u, obj, a))
+						continue;
+					t = u;
+					goto next_a;
+				}
+				return false;
+			}
+// Objects loop backwards.
+			while ((obj =
+				get_property_object_nat(obj,
+							"previousSibling"))) {
+				if (qsaMatch(t, obj, a))
+					goto next_a;
+			}
 			return false;
 		}
 
