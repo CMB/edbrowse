@@ -1102,7 +1102,7 @@ the third using attributes as a NamedNodeMap.
 This may be overkill - I don't know.
 *********************************************************************/
 
-mw0.getAttribute = function(name) { return this[name.toLowerCase()]; }
+mw0.getAttribute = function(name) { var v = this[name.toLowerCase()]; return typeof(v) == "undefined" ? null : v; }
 mw0.hasAttribute = function(name) { if (this[name.toLowerCase()]) return true; else return false; }
 mw0.setAttribute = function(name, v) { 
 var n = name.toLowerCase();
@@ -1135,9 +1135,9 @@ delete this.attributes[n];
 
 mw0.getAttributeNode = function(name) {
     var n = name.toLowerCase();
-// this returns undefined if no such attribute, is that right,
+// this returns null if no such attribute, is that right,
 // or should we return a new Attr node with no value?
-return this.attributes[n];
+return this.attributes[n] ? this.attributes[n] : null;
 /*
 a = new Attr;
 a.owner = this;
