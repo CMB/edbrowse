@@ -82,6 +82,7 @@ p.cen { text-align: center; }
 <li><a href="#entry"> Saisie de données </a></li>
 <li><a href="#textarea"> Zones de texte </a></li>
 <li><a href="#button"> Appuyez sur le bouton </a></li>
+<li><a href="#hover"> Texte au survol </a></li>
 <li><a href="#addr"> Adresses Web et mail </a></li>
 <li><a href="#cook"> Cookies </a></li>
 <li><a href="#ssl"> Connexions sécurisées </a></li>
@@ -385,8 +386,11 @@ si elle est disponible.
 <p>
 	Si non précisé, Edbrowse se réfère à la variable d'environnement $LANG, laquelle est positionnée sur pratiquement tous les systèmes.
 	Ainsi vous n'aurez que rarement besoin de préciser localizeweb dans votre fichier de configuration.
-	Si $LANG n'est pas défini, c'est de l'anglais pas défaut.
-	Edbrowse envoie toujours une désignation de lagage aux serveurs web, parce que certains sites, comma amazon.con, ne fonctionnent pas correctement sans.
+	Si $LANG n'est pas défini, c'est de l'anglais par défaut.
+	Edbrowse envoie toujours une désignation de langage aux serveurs web, parce que certains sites, comma amazon.con, ne fonctionnent pas correctement sans.
+	If you do set localizeweb yourself, be sure to set it to language code hyphen territory code.
+  Si vous définissez localizeweb, assurez-vous de définir avec le code de langue le code de région ou département 
+  (ex. FR-NAQ Fr Nouvelle-Aquitaine ou FR-33 Gironde)
 </p>
 
 <hr>
@@ -395,8 +399,13 @@ si elle est disponible.
 <h3> <a name="guide"> Guide de référence rapide </a> </h3>
 Liste de toutes les commandes d'ed et d'Edbrowse, toutes regroupées.
 C'est un guide de référence rapide.
-La plupart de ces commandes n'auront pas de sens si vous ne lisez pas le reste 
-de la documentation.
+La plupart de ces commandes n'auront pas de sens si vous ne lisez pas le reste de la documentation.
+Les commandes "bascule" comme js pour activer ou désactiver javascript, 
+admettent également en suffixe un + ou un - pour activer ou désactiver explicitement la fonctionnalité.
+Les variantes + et - ne sont pas listées.
+La commande "bascule" affiche l'état de la fonctionnalité, active ou non, si les messages d'aide sont activés 
+ou si le niveau de déboguage esu au moins à 1.
+Activer ou désactiver un mode n'affiche le message que si les messages d'aide sont activés.
 
 <p>
 Quitter le programme
@@ -423,9 +432,7 @@ p : affiche la ligne courante
 <br>'a,'bp : affiche les lignes repérées par les étiquettes a et b
 <br>kb : marque la ligne courante avec l'étiquette b
 <br>l : liste la ligne courante, affichant les caractères invisibles et les marqueurs de fin de ligne
-<br>eo : marqueurs de fin désactivés
-<br>el : affiche les marqueurs de fin ^$ quand une ligne est listée
-<br>ep : affiche les marqueurs de fin quand une ligne est listée ou affichée
+<br>endm : afficher les marqueurs de début et fin de lignes ^$ des lignes listées (bascule)
 <br>lna : affiche les caractères nonascii en hexadécimal uand une ligne est listée (bascule)
 <br>n : affiche la ligne courante avec son numéro de ligne
 <br>ll 1000 : longueur de ligne 1000, affiche les 1000 premiers caractères de chaque ligne
@@ -459,10 +466,9 @@ s/x/y/ : remplace x par y dans la ligne courante
 <br>/x: idem que /x/
 <br>/x/i: cherche la ligne contenant x ou X
 <br>?x? : recherche x en arrière
-<br>ci : les recherches et les substitutions sont insensibles à la casse
-<br>cs : les recherches et les substitutions sont sensibles à la casse
-<br>sg : les chaînes de substitution sont globales pour toutes les sessions
-<br>sl : les chaînes de substitution sont locales à leurs sessions 
+<br>ci : les recherches et les substitutions sont insensibles à la casse (bascule)
+<br>sg : les chaînes de substitution sont globales pour toutes les sessions (bascule)
+<br>sw : recherche circulaire (bascule)
 <br>su8: Utiliser utf-8 dans recherche et remplacement (bascule)
 <br>g/x/ p : affiche toutes les lignes contenant x x
 <br>v/x/ p : affiche toutes les lignes ne contenant pas x
@@ -540,7 +546,7 @@ b : navigue dans le fichier courant, considéré comme étant du HTML
 <br>b foo.html : éditr et navigue dans le fichier foo.html
 <br>b URL : se connecte à URL et naviguer
 <br>ub : quitte le mode navigation du fichier courant
-<br>ft : affiche le titre de la page Web courante
+<br>ft : affiche le titre de la page Web courante (titre du fichier)
 <br>fd : affiche la description de la page Web courante
 <br>fk : affiche les mots-clés de la page Web courante
 <br>rf : rafraîchit la page WEB ou la liste des fichiers
@@ -556,8 +562,7 @@ Téléchargements FTP ou HTTP
 pdd : indicateur d'avancement du téléchargement indiqué par des points
 <br>pdc : indicateur d'avancement du téléchargement indiqué par un nombre
 <br>pdq : pas d'indicateur d'avancement du téléchargement 
-<br>fma : mode FTP actif
-<br>fmp : mode FTP passif
+<br>ftpa : mode ftp actif ou passif (bascule)
 <br>bg : télécharge les fichiers en tâche de fond (bascule)
 <br>bglist : liste les téléchargements en tâche de fond, terminés ou en cours
 <p>
@@ -584,6 +589,7 @@ g : suit le lien sur la ligne courante
 <br>js : activation javascript (bascule)
 <br>xhr :  permet le XHR (bascule)
 <br>rr : rafraîchit  l'écran, afin de refléter les modifications javascript asynchrones 
+<br>hover : affiche le texte survolé (bascule)
 <p>
 Client Mail
 </p>
@@ -619,7 +625,7 @@ db3 : niveau de déboguage (de 0 à 7)
 <br>timers : désactive les timers javascript (bascule)
 <br>dbcn : active debugging cloneNode (bascule)
 <br>dbev : active debugging event (bascule)
-<br>dber : active debugging js error (bascule)
+<br>dberr : active debugging erreurs js (bascule)
 <br>dbcss : active debugging css (bascule)
 <br>uvw getAttribute : variable indéfinie pour on getAttribute
 <br>uvw trace : trace l'exécution javascript
@@ -713,7 +719,7 @@ des expressions régulières sous Perl.
 Une fois accoutumés à leur puissance et flexibilité, vous ne reviendrez jamais à Ed.
 
 <p>
-Super ! Vous avez lu la page de man de perlre, et vous voilà de retour.
+Super. Vous avez lu la page de man de perlre, et vous voilà de retour.
 Voici quelques changements par rapport aux expressions régulières de Perl.
 J'ai constaté que «(and)» est presque toujours considéré comme un littéral, 
 comme en recherchant maFunction (), aussi j'ai inversé la signification des parenthèses 
@@ -833,13 +839,10 @@ dans jolie\*maison.
 
 <p>
 <li>
-Beaucoup de versions de ed placent un «$» à la fin d'une ligne dans le tampon, 
+Beaucoup de versions de ed placent un «$» à la fin d'une ligne listée, 
 mais ce n'est pas le cas ici, au moins pas par défaut.
-Employez la commande «el» pour délimiter les lignes.
+Employez la commande «endm» pour délimiter les lignes listées.
 Les lignes présentes dans le tampon débutent par ^ et se terminent par $.
-Tapez «ep» pour placer ces marqueurs autour de toutes les lignes affichées 
-du tampon.
-Utilisez «eo» pour enlever les marqueurs.
 </li>
 </p>
 
@@ -914,6 +917,15 @@ Ce programme est moins tolérant vis-à-vis des espaces que /bin/ed.
 
 <p>
 <li>
+Dans une recherche avec expression régulière, aussi bien ed que edbrowse effectuent une
+recherche circulaire, du début à la fin puis retour au début.
+Ce comportement peut être activé ou désactivé par la commande sw.
+Certains préfèrent stopper la recherche en fin de tampon, sans revenir au début.
+</li>
+</p>
+
+<p>
+<li>
 Un seul «%» en fin de substitution est remplacé par la dernière partie droite. 
 Quelques versions de ed fonctionnent ainsi, d'autres non.
 </li>
@@ -935,8 +947,11 @@ Taper s pour «s//% ».
 
 <p>
 <li>
-Les commandes «sg» et «sl» rendent respectivement globales et locales les chaînes de 
-substitution.Si vous voulez chercher tous les «foo» dans tous les fichiers du 
+La commande sg rend globales les chaînes de recherche et de subtitution, 
+pour toutes les sessions d'édition.
+C'est une bascule, ainsi retaper sg rend les chaînes de recherche locales à leurs sessions.
+Comme pour toutes les bascules, vous pouvez tapet sg+ ou sg-.
+Si vous voulez chercher tous les «foo» dans tous les fichiers du 
 répertoire courant, et remplacer certains d'entre eux par «toto» :
 taper *, (éditer tous les fichiers), puis «sg» pour rendre globales les chaînes 
 de substitution.Dans la première session, chercher «foo», et remplacer certains 
@@ -944,9 +959,8 @@ d'entre eux par «toto».Taper «e2» pour ouvrir une deuxième session,
 où vous pouvez rechercher en utilisant seulement le caractère «/», parce que 
 la chaîne «foo» est globale à toutes les sessions.
 De même, vous pouvez utiliser «%» pour se référer à «toto».
-La commande «sl» revient au comportement local de l'éditeur, 
+La commande sg-revient au comportement local de l'éditeur, 
 où chaque fichier possède ses propres chaînes de recherche et de remplacement.
-.
 </li>
 </p>
 
@@ -1347,10 +1361,7 @@ Vous devez employer la commande «e» pour obtenir un nouveau tampon ASCII.
 Pour la plupart d'entre nous, il n'importe pas vraiment si les données sont  
 binaires ou ASCII.
 Dans l'un ou l'autre cas, vous pouvez afficher et éditer les données, 
-et les sauvegarder dans un fichier.
-</p>
-
-<p>
+et les sauvegarder dans un fichier. 
 Ce programme essaie «de se comporter correctement» sous DOS/Windows.
 C'est-à-dire, il convertit les crlf et retours-chariots s'il pense que le fichier 
 est un fichier texte ; et il laisse des données binaires intactes.
@@ -1358,19 +1369,13 @@ Ces distinctions sont sans objet sur Unix/Linux.
 </p>
 
 <p>
-Bien que cette approche soit satisfaisante pour l'anglais et la plupart 
-des langues européennes, elle échoue misérablement pour les langues asiatiques, 
-très semblables aux données binaires.
-Vous pouvez neutraliser la détection binaire en tapant la commande «bd».
-Si vous parlez une langue asiatique, mettez cette commande dans votre script d'init, 
-ainsi Edbrowse est lancé de la manière que vous voulez - traiter vos fichiers 
-internationaux comme fichiers textes.
-</p>
-
-<p>
-Si vous parlez une langue asiatique, et si vous employez Windows, et si la détection binaire 
-est désactivée, n'employez pas ce programme pour travailler sur des fichiers binaires, 
-car ils seront corrompus! 
+Bien que cette approche soit satisfaisante pour l'utf8,
+elle peut échouer pour de gros fichiers iso8859-1 avec beaucoup de lettres accentuées.
+Ce genre de fichier ressemble à unn ficheir binaire, même si c'est de l'ascii.
+Vous pouvez neutraliser la détection binaire en tapant la commande «bd», 
+pour traiter ce fichier comme ascii.
+C'est un cas rare, depuis que utf8 est devenu quasi-universel.
+C'est pourquoi cette commande bd est obsolète, et pourrait diparaître dans une future version de edbrowse.
 </p>
 
 <h3> <a name="dir"> Listing de répertoire, gestionnaire de fichiers </a> </h3>
@@ -1982,14 +1987,8 @@ par mot-clé.
 Comme le reste de la page, ces trois attributs sont non modifiables.
 Si c'est votre page Web, vous pouvez les modifier en revenant au mode HTML brut.
 Les concepteurs Web devraient prêter une attention particulière à la description 
-et les mots-clés, sans quoi leurs pages pourraient être inaccessibles via les moteurs de recherche 
+et les mots-clés, sans quoi vos pages pourraient être inaccessibles via les moteurs de recherche 
 standards.
-
-<p>
-Notez que «ft » affiche le titre de la page Web, tandis que «f t» (avec un espace) 
-renomme le fichier courant en «t», 
-ce qui n'est probablement pas ce que vous souhaitez.
-</p>
 
 <h3> <a name="rf"> La commande de réaffichage </a> </h3>
 
@@ -2064,7 +2063,10 @@ De lui-même, «g» suit le lien sur la ligne courante, «g2» suit le deuxième
 ligne courante, et «4g» suit le lien sur la ligne 4.
 Si un lien s'affiche sur plusieurs lignes, vous devez être sur la première ligne, 
 celle qui contient l'accolade gauche.
-Utilisez g? pour afficher l'url - l'endroit où vous voullez aller en tapant g.
+Utilisez g? pour afficher l'url - l'endroit où vous voulez aller en tapant g.
+g- va au lien mais sans navigation,
+ou sans traitement (ex. un fichier pdf), or sans le jouer (ex un fichier mp3).
+Ceci contourne les plugins et récupère le fichier brut.
 </p>
 
 <p>
@@ -2446,6 +2448,7 @@ zones de saisie de texte, ou plusieurs boutons, sur la ligne courante.
 
 <h3> <a name="textarea"> Zones de texte </a> </h3>
 
+<p>
 Quelques formulaires Internet vous permettent de taper quelque chose librement, 
 du genre «écrivez svp vos commentaires ici ». 
 Ceci se fait dans une fenêtre à l'écran, ayant un nombre fixe de lignes et de colonnes, 
@@ -2501,6 +2504,7 @@ Ainsi vos commentaires soigneusement travaillés seront envoyés.
 
 <h3> <a name="button"> Pousser le bouton </a> </h3>
 
+<p>
 Si la troisième zone de saisie sur la ligne courante est un bouton de validation ou 
 d'annulation, vous pouvez l'enfoncer en tapant «i3*».
 Le bouton d'annulation réinitialise toutes les zones du formulaire, 
@@ -2541,6 +2545,48 @@ Si plus d'un bouton est présent sur la ligne courante, n'importe quel style de 
  alors i* n'est pas suffisant; vous devez spécifier quel bouton, comme dans i3*.
 </p>
 
+<h3> <A NAME=hover> Texte au survol </A> </h3>
+
+<P>Certains sites web laissent apparaître un texte lorqu'on passe sur un lien ou une icône; 
+puis il disparaît quand on éloigne la souris.
+Edbrowse n'a rien de comparable à une souris survolant une icône, 
+donc il faut penser à quelque chose de semblable.
+
+<P>
+Un texte au survol (un texte-bulle) est souvent explicatif, et rarement essentiel.
+Comme le but de Edbrowse est de limiter les sorties, edbrowse n'affiche pas ce texte par défaut.
+Cependant, vous pouvez l'activer avec la commande hover.
+Tous les textes-bulles apparaissent, sur toute la page.
+Il serait agréable de survoler une ligne particulière, mais aller jusque-là est difficile à envisager.
+Ce ne serait pas très lisible si un pour un élémént que vous pouvez survoler affiche quelque chose 
+ailleurs sur l'écran, par exemple 50 lignes plus bas dans le tampon.
+Pour l'heure, l'approche est d'afficher tous les textes-bulles à l'endroit où ils apparaissent et, 
+si vous le désirez, vous pouvez esauvegarder deux tampons et faire un diff pour lire les lignes 
+qui ont été modifiées.
+Vous n'aurez besoin de ceci qu'une seule fois sur un site web que vous consulterez plus tard régulièrement.
+Une fois que vous aurez lu les bulles explicatives vous ne voudrez probablement plus les lire 
+à l'avenir, et vous pourrez consulter ce site avec la commande hover désactivée.
+
+<P>
+Dans de rares cas, le survol d'une icône affiche des leins ou des boutons.
+Parce que ce sont des éléments actifs, ils sont affichés en permanence.
+Vous avez besoin de savoir que ces liens ou boutons sont disponibles.
+Dans d'autres terme, edbrowse ne cache que les textes-bulles.
+
+<P>
+Les feuilles de style en cascade (css) injectent également du texte dans la page, 
+mais ceci tend à se fonder sur le type d'élémént ou la classe.
+Mettre une étoile avant chaque paragraphe qui a class=footnote.
+Mettre une flèche droite après chaque lien avec class=external, vous envoyant sur une autre site.
+Ces petits symboles sont surtout visuels, mas ils sont égalemnt révélés par la 
+commande hover.
+Comme évoqué précedemment, les caractères injectés ou emojis sont des rappels visuels des noeuds 
+qu'ils décorent, et sont rarement indispensables; cependant, il y a de rares sites ou le texte 
+injécté est explicatif, et devrait être lu en premier.
+
+<P>
+La commande hover n'affiche ni ne cache les textes-bulles si javascript n'est pas activé.
+
 <h3> <a name="addr"> Adresses Web et Email </a> </h3>
 
 La commande «A» majuscule montre les adresses Web sous les liens sur la ligne courante.
@@ -2551,8 +2597,6 @@ Ajoutez ces dernières à votre fichier de signets par «w+ $bookmarks»,
 si vous avez renseigné la variable d'environnement $bookmarks.
 Ils seront placés à la fin ; vous pouvez les déplacer dans le fichier plus tard, 
 une fois «hors ligne».
-Pour les connectés en RTC, le temps de connexion est précieux, et ne devrait pas être perdu 
-à réarranger des fichiers de signets.
 En conclusion, employer la commande ^ pour retourner à la page Web que vous regardiez.
 Voici à quoi elle pourrait ressembler :
 
@@ -2619,7 +2663,7 @@ ou le cours actuel de n'importe quelle action.
 
 <p>
 Avec la commande A, le texte du nouveau lien hypertexte créé est le titre de la page courante.
-S'il n'y a aps de titre, le texte du lien est repris de l'URL, lequel est vraiment 
+S'il n'y a pas de titre, le texte du lien est repris de l'URL, lequel est vraiment 
 suboptimal.
 Dans ce cas, vous pourriez changer le texte du lien.
 Heureusement, la majorité des pages internet ont un titre.
@@ -2820,7 +2864,7 @@ Si le serveur n'est pas de type Unix, vous recevrez le listing de répertoire en
 Le mode ftp, c'est-à-dire le modèle de connexion, peut être actif ou passif.
 L'un fonctionne bien quand le client est derrière un routeur, et l'autre quand le 
 serveur est derrière un routeur.
-Vous pouvez indiquer le mode de ftp actif par la commande «fma», ou passif par «fmp».
+Vous pouvez indiquer le mode de ftp actif par la commande «ftpa+», ou passif par «ftpa-».
 </p>
 
 <H3> <A NAME=gopher> Support de Gopher </A> </H3>
@@ -3723,7 +3767,9 @@ db0
 # supposent que des répertoires sont en lecture/écriture
 dw
 # pour les lignes affichées, mettre marqueurs de début et de fin 
-el
+endm+
+# utilisez la bibliothèque readline pour les entrées
+rl+
 # mettre les favoris dans la session 99 : on sera prêt à surfer.
 e99
 b $bookmarks

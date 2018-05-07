@@ -454,8 +454,8 @@ les lignes %d à %d et %d ont été effacées\n
 Le plugin doit être lancé à partir d'un fichier local
 Le plugin est un convertisseur, pas un lecteur
 Le plugin est un lecteur, pas un convertisseur
-0
-0
+cacher bulles de texte
+montrer bulles de texte
 0
 0
 caractères inattendus après la pièce jointe encodée
@@ -601,8 +601,8 @@ Mode d'appel %s de fopen() invalide
 / mal placé dans getDirUrl(%s)
 / mal placé dans %s
 decodePostData(0,0)
-0
-0
+recherche non circulaire
+recherche circulaire
 0
 impossible de répondre en mode répertoire
 impossible de répondre en mode base de données

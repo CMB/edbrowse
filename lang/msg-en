@@ -456,8 +456,8 @@ plugin is a converter, not a player
 plugin is a player, not a converter
 hide hover text
 show hover text
-hide css text
-show css text
+0
+0
 unexpected characters after the encoded attachment
 invalid characters in the encoded attachment
 the %s command cannot be applied globally
