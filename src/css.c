@@ -2119,8 +2119,12 @@ void cssApply(jsobjtype node, jsobjtype destination)
 void cssText(jsobjtype node, const char *rulestring)
 {
 	struct desc *d0;
+	char *s;
+// check arguments.
+	if (!node || !rulestring)
+		return;
 // Compile the selector. The string has to be allocated.
-	char *s = allocMem(strlen(rulestring) + 20);
+	s = allocMem(strlen(rulestring) + 20);
 	sprintf(s, "*{%s}", rulestring);
 	d0 = cssPieces(s);
 	if (!d0) {
