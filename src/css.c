@@ -1837,6 +1837,8 @@ static struct htmlTag **qsaInternal(const char *selstring, struct htmlTag *top)
 	struct desc *d0;
 	struct htmlTag **a;
 // Compile the selector. The string has to be allocated.
+	if (!selstring)
+		selstring = emptyString;
 	char *s = allocMem(strlen(selstring) + 20);
 	sprintf(s, "%s{c:g}", selstring);
 	d0 = cssPieces(s);

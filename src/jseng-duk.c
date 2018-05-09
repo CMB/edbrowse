@@ -216,7 +216,10 @@ static duk_ret_t native_mydoc(duk_context * cx)
 
 static duk_ret_t native_puts(duk_context * cx)
 {
-	printf("%s\n", duk_safe_to_string(cx, -1));
+	const char *s = duk_safe_to_string(cx, -1);
+	if (!s)
+		s = emptyString;
+	puts(s);
 	return 0;
 }
 
@@ -725,14 +728,18 @@ static void dwrite(duk_context * cx, bool newline)
 		duk_push_string(cx, emptyString);
 	}
 	s = duk_get_string(cx, 0);
+	if (!s || !*s)
+		return;
 	debugPrint(4, "dwrite:%s", s);
 	f = thisFrame(cx);
 	if (!f)
 		debugPrint(3,
 			   "no frame found for document.write, using the default");
 	else {
+#if 0
 		if (f != cf)
 			debugPrint(3, "document.write on a different frame");
+#endif
 		cf = f;
 	}
 	dwStart();
@@ -1013,6 +1020,8 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 		char *outgoing_xhrbody = NULL;
 		char *a = NULL, methchar = '?';
 
+		if (!incoming_url)
+			incoming_url = emptyString;
 		if (incoming_payload && *incoming_payload) {
 			if (incoming_method
 			    && stringEqualCI(incoming_method, "post"))
@@ -1066,7 +1075,12 @@ static duk_ret_t native_resolveURL(duk_context * cx)
 {
 	const char *base = duk_get_string(cx, -2);
 	const char *rel = duk_get_string(cx, -1);
-	char *outgoing_url = resolveURL(base, rel);
+	char *outgoing_url;
+	if (!base)
+		base = emptyString;
+	if (!rel)
+		rel = emptyString;
+	outgoing_url = resolveURL(base, rel);
 	if (outgoing_url == NULL)
 		outgoing_url = emptyString;
 	duk_pop_2(cx);
@@ -1110,13 +1124,14 @@ static int cook_l;
 
 static void startCookie(void)
 {
-	nzFree(cookieCopy);
-	cookieCopy = initString(&cook_l);
-	stringAndString(&cookieCopy, &cook_l, "; ");
 	const char *url = cf->fileName;
 	bool secure = false;
 	const char *proto;
 	char *s;
+
+	nzFree(cookieCopy);
+	cookieCopy = initString(&cook_l);
+	stringAndString(&cookieCopy, &cook_l, "; ");
 
 	if (url) {
 		proto = getProtURL(url);
@@ -1209,7 +1224,6 @@ static duk_ret_t native_setcook(duk_context * cx)
 	return 0;
 }
 
-// This is just for test, for now.
 static duk_ret_t native_css_start(duk_context * cx)
 {
 	cssDocLoad(cloneString(duk_get_string(cx, -1)));
