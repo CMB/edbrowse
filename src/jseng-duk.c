@@ -1243,10 +1243,14 @@ static duk_ret_t native_qsa(duk_context * cx)
 	if (top == 2) {
 		if (duk_is_object(cx, 1))
 			root = duk_get_heapptr(cx, 1);
+	}
+	if (!root) {
+		duk_push_this(cx);
+		root = duk_get_heapptr(cx, -1);
 		duk_pop(cx);
 	}
 	ao = querySelectorAll(selstring, root);
-	duk_pop(cx);
+	duk_pop_n(cx, top);
 	duk_push_heapptr(cx, ao);
 	return 1;
 }
@@ -1264,10 +1268,14 @@ static duk_ret_t native_qs(duk_context * cx)
 	if (top == 2) {
 		if (duk_is_object(cx, 1))
 			root = duk_get_heapptr(cx, 1);
+	}
+	if (!root) {
+		duk_push_this(cx);
+		root = duk_get_heapptr(cx, -1);
 		duk_pop(cx);
 	}
 	ao = querySelector(selstring, root);
-	duk_pop(cx);
+	duk_pop_n(cx, top);
 	if (ao)
 		duk_push_heapptr(cx, ao);
 	else
