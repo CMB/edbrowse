@@ -388,7 +388,7 @@ struct ebFrame {
 	char *dw;		/* document.write string */
 	int dw_l;		/* length of the above */
 // document.writes go under the body.
-	struct htmlTag *headtag, *bodytag;
+	struct htmlTag *htmltag, *headtag, *bodytag;
 /* The javascript context and window corresponding to this url or frame.
  * If this is null then javascript is not operational for this frame.
  * We could still be browsing however, without javascript. */
@@ -564,7 +564,7 @@ struct htmlTag {
 
 /* htmlTag.action */
 enum {
-	TAGACT_ZERO, TAGACT_A, TAGACT_INPUT, TAGACT_TITLE, TAGACT_TA,
+	TAGACT_HTML, TAGACT_A, TAGACT_INPUT, TAGACT_TITLE, TAGACT_TA,
 	TAGACT_BUTTON, TAGACT_SELECT, TAGACT_OPTION,
 	TAGACT_NOP, TAGACT_JS, TAGACT_H, TAGACT_SUB, TAGACT_SUP, TAGACT_OVB,
 	TAGACT_OL, TAGACT_UL, TAGACT_DL,

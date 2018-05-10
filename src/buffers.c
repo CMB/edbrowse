@@ -5714,6 +5714,8 @@ replaceframe:
 				jsgo = true;
 			jsgo |= jsh;
 			nogo = stringEqual(h, "#");
+			if (!*h)
+				nogo = true;
 			nogo |= jsh;
 			debugPrint(5, "go %d nogo %d jsh %d dead %d", jsgo,
 				   nogo, jsh, jsdead);

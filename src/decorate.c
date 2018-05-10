@@ -228,7 +228,7 @@ innerHTML is wrong, and doesn't match the tree of nodes
 or the original source.
 innerHTML comes to us from tidy, after it has fixed (sometimes broken) things.
 Add <script> to the above, browse, jdb, and look at document.body.innerHTML.
-It does not match the source, in fact it represent the tree *before* we fixed it.
+It does not match the source, in fact it represents the tree *before* we fixed it.
 There really isn't anything I can do about that.
 In so many ways, the better approach is to fix tidy, but sometimes that is out of our hands.
 *********************************************************************/
@@ -1082,8 +1082,7 @@ Don't do any of this if the tag is itself <style>. */
 	connectTagObject(t, io);
 
 	set_property_string(io, "nodeName", t->info->name);
-/* documentElement is now set in the "Body" case because the 
-"Html" does not appear ever to be encountered */
+	set_property_number(io, "nodeType", 1);
 
 	if (t->action == TAGACT_BODY) {
 		set_property_object(cf->docobj, "body", io);
@@ -1161,6 +1160,7 @@ static void optionJS(struct htmlTag *t)
 	set_property_string(t->jv, "text", t->textval);
 	set_property_string(t->jv, "value", t->value);
 	set_property_string(t->jv, "nodeName", "option");
+	set_property_number(t->jv, "nodeType", 1);
 	set_property_bool(t->jv, "selected", t->checked);
 	set_property_bool(t->jv, defsel, t->checked);
 
@@ -1264,6 +1264,7 @@ Needless to say that's not good!
 		connectTagObject(t,
 				 instantiate(cf->docobj, fakePropName(),
 					     "TextNode"));
+// nodeName and nodeType set in constructor
 		if (t->jv) {
 			const char *w = t->textval;
 			if (!w)
@@ -1272,11 +1273,13 @@ Needless to say that's not good!
 		}
 		break;
 
+	case TAGACT_HTML:
+		domLink(t, "HTML", 0, 0, cf->docobj, 0);
+		cf->htmltag = t;
+		break;
+
 	case TAGACT_META:
 		domLink(t, "Meta", 0, "metas", cf->docobj, 0);
-		a = attribVal(t, "content");
-		set_property_string(t->jv, "content", a);
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_STYLE:
@@ -1285,7 +1288,6 @@ Needless to say that's not good!
 		if (!a)
 			a = emptyString;
 		set_property_string(t->jv, "type", a);
-		set_property_number(t->jv, "nodeType", 1);
 		if (t->textval && t->textval[0])
 			set_property_string(t->jv, "data", t->textval);
 		break;
@@ -1295,9 +1297,6 @@ Needless to say that's not good!
 		a = attribVal(t, "type");
 		if (a)
 			set_property_string(t->jv, "type", a);
-		a = attribVal(t, "language");
-		if (a)
-			set_property_string(t->jv, "language", a);
 		a = attribVal(t, "src");
 		if (a) {
 			set_property_string(t->jv, "src", a);
@@ -1310,45 +1309,38 @@ Needless to say that's not good!
 		} else {
 			set_property_string(t->jv, "data", "");
 		}
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_FORM:
 		domLink(t, "Form", "action", "forms", cf->docobj, 0);
 		set_onhandlers(t);
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_INPUT:
 		formControlJS(t);
 		if (t->itype == INP_TA)
 			establish_inner(t->jv, t->value, 0, true);
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_OPTION:
 		optionJS(t);
 // The parent child relationship has already been established,
 // don't break, just return;
-		set_property_number(t->jv, "nodeType", 1);
 		return;
 
 	case TAGACT_A:
 		domLink(t, "Anchor", "href", "anchors", cf->docobj, 0);
 		set_onhandlers(t);
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_HEAD:
 		domLink(t, "Head", 0, "heads", cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
 		cf->headtag = t;
 		break;
 
 	case TAGACT_BODY:
 		domLink(t, "Body", 0, "bodies", cf->docobj, 0);
 		set_onhandlers(t);
-		set_property_number(t->jv, "nodeType", 1);
 		cf->bodytag = t;
 		break;
 
@@ -1356,19 +1348,16 @@ Needless to say that's not good!
 	case TAGACT_UL:
 	case TAGACT_DL:
 		domLink(t, "Lister", 0, 0, cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_LI:
 		domLink(t, "Listitem", 0, 0, cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_TABLE:
 		domLink(t, "Table", 0, "tables", cf->docobj, 0);
 /* create the array of rows under the table */
 		instantiate_array(t->jv, "rows");
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_TR:
@@ -1376,24 +1365,20 @@ Needless to say that's not good!
 			domLink(t, "Trow", 0, "rows", above->jv, 0);
 			instantiate_array(t->jv, "cells");
 		}
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_TD:
 		if ((above = t->controller) && above->jv) {
 			domLink(t, "Cell", 0, "cells", above->jv, 0);
 		}
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_DIV:
 		domLink(t, "Div", 0, "divs", cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_OBJECT:
 		domLink(t, "HtmlObj", 0, "htmlobjs", cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_SPAN:
@@ -1401,13 +1386,11 @@ Needless to say that's not good!
 	case TAGACT_SUP:
 	case TAGACT_OVB:
 		domLink(t, "Span", 0, "spans", cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
 		set_onhandlers(t);
 		break;
 
 	case TAGACT_AREA:
 		domLink(t, "Area", "href", "areas", cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_FRAME:
@@ -1418,27 +1401,22 @@ Needless to say that's not good!
 		}
 		domLink(t, "Frame", "src", "frames", cf->winobj, 0);
 		set_onhandlers(t);
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_IMAGE:
 		domLink(t, "Image", "src", "images", cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_P:
 		domLink(t, "P", 0, "paragraphs", cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_HEADER:
 		domLink(t, "Header", 0, "headers", cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_FOOTER:
 		domLink(t, "Footer", 0, "footers", cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_TITLE:
@@ -1449,7 +1427,6 @@ Needless to say that's not good!
 
 	case TAGACT_LINK:
 		domLink(t, "Link", "href", "links", cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
 		link_css(t);
 		break;
 
@@ -1468,32 +1445,43 @@ Needless to say that's not good!
 /* js tree mirrors the dom tree. */
 /* but head and body link to document */
 	linked_in = false;
+
+	if (t->parent && t->parent->jv) {
+		run_function_onearg(t->parent->jv, "eb$apch1", t->jv);
+		linked_in = true;
+// special code for frame.contentDocument.
+		if (t->parent->action == TAGACT_FRAME) {
+			set_property_object(t->parent->jv,
+					    "contentDocument", t->jv);
+			set_property_object(t->parent->jv,
+					    "contentWindow", t->jv);
+		}
+	}
+
 	if (action == TAGACT_HEAD || action == TAGACT_BODY) {
 		run_function_onearg(cf->docobj, "eb$apch1", t->jv);
 		linked_in = true;
-	} else {
-		if (t->parent && t->parent->jv) {
-			run_function_onearg(t->parent->jv, "eb$apch1", t->jv);
-			linked_in = true;
-// special code for frame.contentDocument.
-			if (t->parent->action == TAGACT_FRAME) {
-				set_property_object(t->parent->jv,
-						    "contentDocument", t->jv);
-				set_property_object(t->parent->jv,
-						    "contentWindow", t->jv);
-			}
-		}
+	}
 
-		if (!t->parent && innerParent) {
-			run_function_onearg(innerParent, "eb$apch1", t->jv);
-			linked_in = true;
-		}
+	if (!t->parent && innerParent) {
+// this is the top of innerHTML or some such.
+// It is never html head or body, as those are skipped.
+		run_function_onearg(innerParent, "eb$apch1", t->jv);
+		linked_in = true;
 	}
 
 	if (linked_in && fakePropLast[0]) {
 // Node linked to document/gc to protect if from garbage collection,
 // but now it is linked to its parent.
 		delete_property(cf->docobj, fakePropLast);
+	}
+
+	if (!linked_in) {
+// html and the title text are the only two things that don't get linked in,
+// as far as I know, but check at level 4.
+		debugPrint(4, "tag %s not linked in", ti->name);
+		if (action == TAGACT_TEXT)
+			debugPrint(4, "text %s\n", t->textval);
 	}
 
 /* set innerHTML from the source html, if this tag supports it */
@@ -1634,7 +1622,7 @@ void tag_gc(void)
 
 /* first three have to be in this order */
 const struct tagInfo availableTags[] = {
-	{"html", "html", TAGACT_ZERO},
+	{"html", "html", TAGACT_HTML},
 	{"base", "base reference for relative URLs", TAGACT_BASE, 0, 4},
 	{"object", "an html object", TAGACT_OBJECT, 5, 1},
 	{"a", "an anchor", TAGACT_A, 0, 1},
@@ -1800,7 +1788,6 @@ struct htmlTag *newTag(const char *name)
 {
 	struct htmlTag *t;
 	const struct tagInfo *ti;
-	int action;
 
 	for (ti = availableTags; ti->name[0]; ++ti)
 		if (stringEqualCI(ti->name, name))
@@ -1812,12 +1799,9 @@ struct htmlTag *newTag(const char *name)
 		ti = availableTags + 2;
 	}
 
-	if ((action = ti->action) == TAGACT_ZERO)
-		return 0;
-
 	t = (struct htmlTag *)allocZeroMem(sizeof(struct htmlTag));
+	t->action = ti->action;
 	t->f0 = cf;		/* set current frame */
-	t->action = action;
 	t->info = ti;
 	t->seqno = cw->numTags;
 	t->nodeName = cloneString(name);
@@ -1903,7 +1887,7 @@ static void intoTree(struct htmlTag *parent)
 				treeDisable = false;
 				continue;
 			}
-			if (action == TAGACT_BODY) {
+			if (action == TAGACT_HTML || action == TAGACT_BODY) {
 				debugPrint(4, "node pass %s", t->info->name);
 				t->dead = true;
 				++cw->deadTags;

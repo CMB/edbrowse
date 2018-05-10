@@ -1431,8 +1431,8 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 		}
 
 		if (stringEqual(p, ":first-child")) {
-// t is more efficient, but this doesn't work for body and head,
-// which have no parent in our representation.
+// t is more efficient, but this doesn't work for html,
+// which has no parent in our representation.
 			if (t && t->parent) {
 				if ((t == t->parent->firstchild) ^ negate)
 					goto next_mod;
@@ -1798,10 +1798,15 @@ static void build_doclist(struct htmlTag *top)
 		build1_doclist(top);
 	} else {
 		doclist_f = cf;
-		if (cf->headtag)
-			build1_doclist(cf->headtag);
-		if (cf->bodytag)
-			build1_doclist(cf->bodytag);
+// the html tag should always be there
+		if (cf->htmltag)
+			build1_doclist(cf->htmltag);
+		else {
+			if (cf->headtag)
+				build1_doclist(cf->headtag);
+			if (cf->bodytag)
+				build1_doclist(cf->bodytag);
+		}
 	}
 	doclist[doclist_n] = 0;
 	qsort(doclist, doclist_n, sizeof(struct htmlTag *), doclist_cmp);

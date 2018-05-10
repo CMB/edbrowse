@@ -639,6 +639,7 @@ Do we support appendchild?   etc.
 
 mw0.Node = function(){}
 
+mw0.HTML = function(){}
 mw0.Head = function(){}
 mw0.Meta = function(){}
 mw0.Link = function(){}
@@ -1608,7 +1609,7 @@ Again, leading ; to avert a parsing ambiguity.
 *********************************************************************/
 
 ; (function() {
-var cnlist = ["HtmlObj", "Head", "Body", "CSSStyleDeclaration", "Frame",
+var cnlist = ["HTML", "HtmlObj", "Head", "Body", "CSSStyleDeclaration", "Frame",
 "Anchor", "Element","HTMLElement", "Lister", "Listitem", "Tbody", "Table", "Div",
 "Span", "Trow", "Cell", "P", "Script", "Header", "Footer",
 // The following nodes shouldn't have any children, but the various
@@ -2144,6 +2145,7 @@ mw0.jtfn2 = function (all, a, b) { return mw0.jtfn0(a, b, ';'); }
 
 URL = mw0.URL;
 Node = mw0.Node;
+HTML = mw0.HTML;
 Head = mw0.Head;
 Meta = mw0.Meta;
 Link = mw0.Link;
