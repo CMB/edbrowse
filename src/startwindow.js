@@ -318,6 +318,9 @@ document.tables = [];
 document.spans = [];
 document.images = [];
 document.areas = [];
+// styleSheets is a placeholder for now; I don't know what to do with it.
+document.styleSheets = [];
+
 frames = [];
 // to debug a.href = object or other weird things.
 hrefset$p = []; hrefset$a = [];
@@ -2069,9 +2072,7 @@ if(s.demin) return; // already expanded
 s.demin = true;
 s.expanded = false;
 if(! s.data) return;
-if(! s.src) return;
 
-// If the script is original source, then deminimizing it makes things worse.
 // Don't deminimize if short, or if average line length is less than 1000.
 if(s.data.length < 1000) return;
 var i, linecount = 1;
