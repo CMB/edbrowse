@@ -6261,7 +6261,12 @@ afterdelete:
 	}
 
 	if (cmd == 's') {
+		pst p;
 		j = substituteText(line);
+// special case, if last line became empty and nlMode is true.
+		if (cw->dol && cw->nlMode &&
+		    (p = fetchLine(cw->dol, -1)) && p[0] == '\n')
+			delText(cw->dol, cw->dol);
 		if (j < 0) {
 			globSub = false;
 			j = false;
