@@ -263,7 +263,7 @@ static void cssPiecesFree(struct desc *d);
 static void cssPiecesPrint(const struct desc *d);
 static void cssAtomic(struct asel *a);
 static void cssModify(struct asel *a, const char *m1, const char *m2);
-static bool onematch, bulkmatch, bulktotal;
+static bool onematch, skiproot, bulkmatch, bulktotal;
 static char matchtype;		// 0 plain 1 before 2 after
 static bool matchhover;		// match on :hover selectors.
 static struct htmlTag **doclist;
@@ -1689,7 +1689,11 @@ static struct htmlTag **qsa1(const struct sel *sel)
 		return a;
 	}
 	n = 0;
-	for (i = 0; (t = list[i]); ++i) {
+// querySelectorAll does not match the root, only everything below.
+	i = 0;
+	if (skiproot && list[i])
+		++i;
+	for (; (t = list[i]); ++i) {
 		if (qsaMatchChain(t, 0, sel)) {
 			a[n++] = t;
 			if (onematch)
@@ -1799,9 +1803,9 @@ static void build_doclist(struct htmlTag *top)
 	} else {
 		doclist_f = cf;
 // the html tag should always be there
-		if (cf->htmltag)
+		if (cf->htmltag) {
 			build1_doclist(cf->htmltag);
-		else {
+		} else {
 			if (cf->headtag)
 				build1_doclist(cf->headtag);
 			if (cf->bodytag)
@@ -1866,6 +1870,7 @@ static struct htmlTag **qsaInternal(const char *selstring, struct htmlTag *top)
 		return 0;
 	}
 	build_doclist(top);
+	skiproot = ! !top;
 	a = qsa2(d0);
 	nzFree(doclist);
 	cssPiecesFree(d0);
@@ -2448,6 +2453,8 @@ static void cssEverybody(void)
 
 	bulkmatch = true;
 	bulktotal = 0;
+	skiproot = false;
+
 	for (l = 0; l < 6; ++l) {
 		matchhover = (l >= 3);
 		matchtype = l % 3;
