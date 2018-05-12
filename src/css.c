@@ -266,6 +266,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2);
 static bool onematch, skiproot, bulkmatch, bulktotal;
 static char matchtype;		// 0 plain 1 before 2 after
 static bool matchhover;		// match on :hover selectors.
+static jsobjtype rootobj;
 static struct htmlTag **doclist;
 static int doclist_a, doclist_n;
 static struct ebFrame *doclist_f;
@@ -941,6 +942,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 	static const char *const okcolon[] = {
 		"first-child", "last-child", "only-child", "link", "checked",
 		"empty", "disabled", "enabled", "read-only", "read-write",
+		"scope", "root",
 		0
 	};
 
@@ -1481,6 +1483,42 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			return false;
 		}
 
+		if (stringEqual(p, ":root") || stringEqual(p, ":scope")) {
+/*********************************************************************
+You know what's missing from :root? The stand alone selector :root,
+which some say should match the current node.
+Thing is, all selectors are suppose to match the nodes below,
+not including the current node. So * matches everything below.
+I thus make a list of the nodes below and use that to start the chain.
+Therefore :root will never match.
+Should I make an exception for :root? If so, how best to implement it?
+Meantime, this code manages :root up the chain, as in :root>div,
+all the div sections just below the current node.
+*********************************************************************/
+			if (t) {
+				if (!rootobj) {
+					if ((t->action == TAGACT_HTML) ^ negate)
+						goto next_mod;
+					return false;
+				}
+				if ((t->jv == rootobj) ^ negate)
+					goto next_mod;
+				return false;
+			}
+			if (!rootobj) {
+				const char *a =
+				    get_property_string(obj, "nodeName");
+				rc = (a && stringEqual(a, "document"));
+				cnzFree(a);
+				if (rc ^ negate)
+					goto next_mod;
+				return false;
+			}
+			if ((obj == rootobj) ^ negate)
+				goto next_mod;
+			return false;
+		}
+
 		if (stringEqual(p, ":empty")) {
 			if (t) {
 				if ((!t->firstchild) ^ negate)
@@ -1898,6 +1936,7 @@ jsobjtype querySelectorAll(const char *selstring, jsobjtype topobj)
 {
 	struct htmlTag *top = 0, **a;
 	jsobjtype ao;
+	rootobj = topobj;
 	if (topobj)
 		top = tagFromJavaVar(topobj);
 	a = qsaInternal(selstring, top);
@@ -1911,6 +1950,7 @@ jsobjtype querySelector(const char *selstring, jsobjtype topobj)
 {
 	struct htmlTag *top = 0, **a;
 	jsobjtype node = 0;
+	rootobj = topobj;
 	if (topobj)
 		top = tagFromJavaVar(topobj);
 	onematch = true;
@@ -2115,13 +2155,19 @@ Or options, or perhaps other nodes.
 	set_property_bool(textobj, "inj$css", true);
 }
 
+// This is the native function for getComputedStyle
 void cssApply(jsobjtype node, jsobjtype destination)
 {
 	struct htmlTag *t = tagFromJavaVar(node);
 	struct cssmaster *cm = cf->cssmaster;
 	struct desc *d;
+
+// I think the root is document, not the current node, but that is not clear.
+	rootobj = 0;
+
 	if (!cm)
 		return;
+
 	for (d = cm->descriptors; d; d = d->next) {
 		if (qsaMatchGroup(t, node, d))
 			do_rules(destination, d->rules, false);
@@ -2454,6 +2500,7 @@ static void cssEverybody(void)
 	bulkmatch = true;
 	bulktotal = 0;
 	skiproot = false;
+	rootobj = NULL;
 
 	for (l = 0; l < 6; ++l) {
 		matchhover = (l >= 3);
