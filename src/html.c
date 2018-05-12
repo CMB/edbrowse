@@ -2269,7 +2269,7 @@ static bool activeBelow(struct htmlTag *t)
 	return false;
 }
 
-static int hov1count, hov2count, inv_count, inj1count, inj2count;
+static int hovcount, invcount, injcount;
 
 /* Rerender the buffer and notify of any lines that have changed */
 void rerender(bool rr_command)
@@ -2284,7 +2284,7 @@ void rerender(bool rr_command)
 	cw->mustrender = false;
 	time(&cw->nextrender);
 	cw->nextrender += 20;
-	hov1count = hov2count = inv_count = inj1count = inj2count = 0;
+	hovcount = invcount = injcount = 0;
 
 	rebuildSelectors();
 
@@ -2307,22 +2307,19 @@ void rerender(bool rr_command)
 	if (rr_command && debugLevel >= 3) {
 		char buf[120];
 		buf[0] = 0;
-		if (hov1count + hov2count)
-			sprintf(buf, "%d nodes %s by hover",
-				hov1count + hov2count,
-				(hov1count ? "shown" : "hidden"));
-		if (inv_count) {
+		if (hovcount)
+			sprintf(buf, "%d nodes under hover", hovcount);
+		if (invcount) {
 			if (buf[0])
 				strcat(buf, ", ");
 			sprintf(buf + strlen(buf),
-				"%d nodes hidden by css display", inv_count);
+				"%d nodes invisible", invcount);
 		}
-		if (inj1count + inj2count) {
+		if (injcount) {
 			if (buf[0])
 				strcat(buf, ", ");
-			sprintf(buf + strlen(buf), "%d nodes %s by css inject",
-				inj1count + inj2count,
-				(inj1count ? "shown" : "hidden"));
+			sprintf(buf + strlen(buf), "%d nodes injected by css",
+				injcount);
 		}
 		if (buf[0])
 			debugPrint(3, "%s", buf);
@@ -2986,7 +2983,7 @@ ab:
 static char *ns;
 static int ns_l;
 static bool invisible, tdfirst;
-static struct htmlTag *inv2;	// invisible via css
+static struct htmlTag *inv2, *inv3;	// invisible via css
 static int listnest;		/* count nested lists */
 /* None of these tags nest, so it is reasonable to talk about
  * the current open tag. */
@@ -3060,30 +3057,38 @@ li_hide:
 		return;
 	}
 
+	if (inv3 == t) {
+		inv3 = NULL;
+		stringAndString(&ns, &ns_l, "\r}>\r");
+		return;
+	}
+
 	if (opentag) {
 // what is the visibility now?
 		uchar v_now = visi_status(t);
+// first some stats
+		if (v_now == VISI_HIDDEN)
+			++invcount;
+		if (v_now == VISI_HOVER)
+			++hovcount;
 		if (v_now == VISI_HIDDEN) {
-			++inv_count;
-			inv2 = t;
-			return;
-		}
-// I never hide hover text if it is hyperlinks or buttons or such.
-		if (v_now == VISI_HOVER && !activeBelow(t)) {
-			if (showHover)
-				++hov1count;
-			else {
-				++hov2count;
+			if (!showHover) {
 				inv2 = t;
 				return;
 			}
+			if (!inv3) {
+				inv3 = t;
+				stringAndString(&ns, &ns_l, "\r<{\r");
+			}
+		}
+		if (!showHover && v_now == VISI_HOVER && !activeBelow(t)) {
+			inv2 = t;
+			return;
 		}
 		if (action == TAGACT_TEXT && t->jv &&
 		    get_property_bool(t->jv, "inj$css")) {
-			if (showHover)
-				++inj1count;
-			else {
-				++inj2count;
+			++injcount;
+			if (!showHover) {
 				inv2 = t;
 				return;
 			}
@@ -3150,12 +3155,10 @@ li_hide:
 				if (t->jv
 				    && (a =
 					get_property_string(t->jv, "title"))) {
+					++hovcount;
 					if (showHover) {
-						++hov1count;
 						stringAndString(&ns, &ns_l, a);
 						stringAndChar(&ns, &ns_l, ' ');
-					} else {
-						++hov2count;
 					}
 					cnzFree(a);
 				}
@@ -3539,7 +3542,7 @@ char *render(int start)
 {
 	ns = initString(&ns_l);
 	invisible = false;
-	inv2 = NULL;
+	inv2 = inv3 = NULL;
 	listnest = 0;
 	currentForm = currentA = NULL;
 	traverse_callback = renderNode;
