@@ -2435,10 +2435,17 @@ alert3(">>>");
 return d.createTextNode("DOMParser not yet implemented");
 }}};
 
+mw0.XMLSerializer = function(){}
+mw0.XMLSerializer.prototype.serializeToString = function(root) {
+alert3("trying to use XMLSerializer");
+return "<div>XMLSerializer not yet implemented</div>"; }
+
 } // master compile
 
 eb$qs$start = mw0.eb$qs$start;
 DOMParser = mw0.DOMParser;
+XMLSerializer = mw0.XMLSerializer;
+document.xmlVersion = 0;
 
 // if debugThrow is set, see all errors, even caught errors.
 Duktape.errCreate = function (e) {
