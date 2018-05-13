@@ -646,6 +646,13 @@ mw0.HTML = function(){}
 mw0.Head = function(){}
 mw0.Meta = function(){}
 mw0.Link = function(){}
+// It's a list but why would it ever be more than one?
+Object.defineProperty(mw0.Link.prototype, "relList", {
+get: function() { var a = this.rel ? [this.rel] : [];
+// edbrowse only supports stylesheet
+a.supports = function(s) { return s === "stylesheet"; }
+return a;
+}});
 mw0.Body = function(){}
 // Some screen attributes that are suppose to be there.
 mw0.Body.prototype = {
@@ -1754,6 +1761,9 @@ t = "img";
 case "img":
 c = new Image;
 break;
+case "link":
+c = new Link;
+break;
 case "cssstyledeclaration":
 case "style":
 c = new CSSStyleDeclaration;
@@ -2243,6 +2253,7 @@ document.importNode = mw0.importNode;
 document.compareDocumentPosition = mw0.compareDocumentPosition;
 
 // Local storage, this is per window.
+// Then there's sessionStorage, and honestly I don't understand the difference.
 // This is NamedNodeMap, to take advantage of preexisting methods.
 localStorage = {}
 localStorage.attributes = new NamedNodeMap;
@@ -2253,6 +2264,26 @@ localStorage.setAttribute = mw0.setAttribute;
 localStorage.setItem = localStorage.setAttribute;
 localStorage.removeAttribute = mw0.removeAttribute;
 localStorage.removeItem = localStorage.removeAttribute;
+localStorage.clear = function() {
+var l;
+while(l = localStorage.attributes.length)
+localStorage.removeItem(localStorage.attributes[l-1].name);
+}
+
+sessionStorage = {}
+sessionStorage.attributes = new NamedNodeMap;
+sessionStorage.attributes.owner = sessionStorage;
+sessionStorage.getAttribute = mw0.getAttribute;
+sessionStorage.getItem = sessionStorage.getAttribute;
+sessionStorage.setAttribute = mw0.setAttribute;
+sessionStorage.setItem = sessionStorage.setAttribute;
+sessionStorage.removeAttribute = mw0.removeAttribute;
+sessionStorage.removeItem = sessionStorage.removeAttribute;
+sessionStorage.clear = function() {
+var l;
+while(l = sessionStorage.attributes.length)
+sessionStorage.removeItem(sessionStorage.attributes[l-1].name);
+}
 
 /*********************************************************************
 The select element in a form is itself an array, so the children functions have
