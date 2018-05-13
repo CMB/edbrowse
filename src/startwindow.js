@@ -2460,6 +2460,14 @@ mw0.cssGather();
 mw0.DOMParser = function() {
 return {parseFromString: function(t,y) {
 var d = my$doc();
+if(y == "text/html" || y == "text/xml") {
+var v = d.createElement("div");
+v.innerHTML = t;
+return v;
+}
+if(y == "text/plain") {
+return d.createTextNode(t);
+}
 alert3("trying to use the DOM parser\n" + y + " <<< ");
 alert4(t);
 alert3(">>>");
