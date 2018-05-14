@@ -1214,6 +1214,19 @@ static void link_css(struct htmlTag *t)
 					a = g.buffer;
 				else
 					nzFree(g.buffer);
+// acid3 test[0] says we don't process this file if it's content type is
+// text/html. Should I test for anything outside of text/css?
+// For now I insist it be missing or text/css or text/plain.
+// A similar test is performed in css.c after httpConnect.
+				if (g.content[0]
+				    && !stringEqual(g.content, "text/css")
+				    && !stringEqual(g.content, "text/plain")) {
+					debugPrint(3,
+						   "css supressed because content type is %s",
+						   g.content);
+					cnzFree(a);
+					a = NULL;
+				}
 			} else {
 				nzFree(g.buffer);
 				if (debugLevel >= 3)

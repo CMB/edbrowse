@@ -439,6 +439,18 @@ top:
 							a = g.buffer;
 						else
 							nzFree(g.buffer);
+						if (g.content[0]
+						    && !stringEqual(g.content,
+								    "text/css")
+						    && !stringEqual(g.content,
+								    "text/plain"))
+						{
+							debugPrint(3,
+								   "css supressed because content type is %s",
+								   g.content);
+							cnzFree(a);
+							a = NULL;
+						}
 					} else {
 						nzFree(g.buffer);
 						if (debugLevel >= 3)
