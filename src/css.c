@@ -446,7 +446,7 @@ top:
 								    "text/plain"))
 						{
 							debugPrint(3,
-								   "css supressed because content type is %s",
+								   "css suppressed because content type is %s",
 								   g.content);
 							cnzFree(a);
 							a = NULL;

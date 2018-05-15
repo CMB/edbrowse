@@ -295,7 +295,7 @@ y directory</A>
 yecht package</A>
 -->
 
-<iframe src=http://www.edbrowse.org/jsfrm
+<iframe src=http://www.edbrowse.org/jsfrm.html
 onload="alert&nbsp;('expanding the frame dude')">
 you shouldn't see this stuff
 </iframe>

@@ -469,8 +469,8 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 			if (!cw->htmltitle) {
 				cw->htmltitle = cloneString(t->textval);
 				spaceCrunch(cw->htmltitle, true, false);
-				t->deleted = true;
 			}
+			t->deleted = true;
 			break;
 		}
 
@@ -1212,7 +1212,7 @@ static void link_css(struct htmlTag *t)
 				    && !stringEqual(g.content, "text/css")
 				    && !stringEqual(g.content, "text/plain")) {
 					debugPrint(3,
-						   "css supressed because content type is %s",
+						   "css suppressed because content type is %s",
 						   g.content);
 					cnzFree(a);
 					a = NULL;

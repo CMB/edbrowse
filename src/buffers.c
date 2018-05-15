@@ -156,7 +156,7 @@ addchar:
  * Sometimes the returned line is changed,
  * and if it happens sometimes, we may as well make the new copy
  * all the time, even if the line doesn't change, to be consistent.
- * You can supress the copy feature with -1. */
+ * You can suppress the copy feature with -1. */
 
 static pst fetchLineContext(int n, int show, int cx)
 {
@@ -1743,6 +1743,16 @@ static bool readFile(const char *filename, const char *post, bool newwin,
 		if (g.csp) {
 			cf->mt = 0;
 			cf->render1 = cf->render2 = true;
+		}
+// acid says a frame has to be text/html, not even text/plain.
+		if (fromframe && g.content[0]
+		    && !stringEqual(g.content, "text/html")) {
+			debugPrint(3,
+				   "frame suppressed because content type is %s",
+				   g.content);
+			nzFree(serverData);
+			serverData = cloneString("<body></body>");
+			serverDataLen = strlen(serverData);
 		}
 
 		newfile = (changeFileName ? changeFileName : filename);
