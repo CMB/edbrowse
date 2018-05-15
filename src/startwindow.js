@@ -645,6 +645,7 @@ mw0.Node = function(){}
 mw0.HTML = function(){}
 mw0.Head = function(){}
 mw0.Meta = function(){}
+mw0.Title = function(){}
 mw0.Link = function(){}
 // It's a list but why would it ever be more than one?
 Object.defineProperty(mw0.Link.prototype, "relList", {
@@ -1589,7 +1590,7 @@ Again, leading ; to avert a parsing ambiguity.
 *********************************************************************/
 
 ; (function() {
-var cnlist = ["HTML", "HtmlObj", "Head", "Body", "CSSStyleDeclaration", "Frame",
+var cnlist = ["HTML", "HtmlObj", "Head", "Title", "Body", "CSSStyleDeclaration", "Frame",
 "Anchor", "Element","HTMLElement", "Lister", "Listitem", "Tbody", "Table", "Div",
 "Span", "Trow", "Cell", "P", "Script", "Header", "Footer",
 // The following nodes shouldn't have any children, but the various
@@ -2129,6 +2130,7 @@ Node = mw0.Node;
 HTML = mw0.HTML;
 Head = mw0.Head;
 Meta = mw0.Meta;
+Title = mw0.Title;
 Link = mw0.Link;
 Body = mw0.Body;
 Base = mw0.Base;
