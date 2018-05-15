@@ -1753,6 +1753,7 @@ static bool readFile(const char *filename, const char *post, bool newwin,
 			nzFree(serverData);
 			serverData = cloneString("<body></body>");
 			serverDataLen = strlen(serverData);
+			return true;
 		}
 
 		newfile = (changeFileName ? changeFileName : filename);
