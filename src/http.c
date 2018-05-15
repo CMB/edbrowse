@@ -2682,7 +2682,8 @@ So check for serverData null here. Once again we pop the frame.
 
 /* If we got some data it has to be html.
  * I should check for that, something like htmlTest in html.c,
- * but I'm too lazy to do that right now, so I'll just assume it's good. */
+ * but I'm too lazy to do that right now, so I'll just assume it's good.
+ * Also, we have verified content-type = text/html, so that's pretty good. */
 
 	cf->hbase = cloneString(cf->fileName);
 	save_local = browseLocal;
@@ -2754,6 +2755,7 @@ we did that before and now it's being expanded. So bump step up to 2.
 		cdo = new_cf->docobj;
 		disconnectTagObject(cdt);
 		connectTagObject(cdt, cdo);
+		cdt->style = 0;
 // Should I switch this tag into the new frame? I don't really know.
 		cdt->f0 = new_cf;
 		set_property_object(t->jv, "content$Document", cdo);
@@ -2924,6 +2926,7 @@ bool reexpandFrame(void)
 		cwo = cf->winobj;
 		disconnectTagObject(cdt);
 		connectTagObject(cdt, cdo);
+		cdt->style = 0;
 // Should I switch this tag into the new frame? I don't really know.
 		cdt->f0 = cf;
 // have to point contentDocument to the new document object,
