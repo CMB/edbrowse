@@ -36,10 +36,6 @@ eb$formReset = function() { print("reset"); }
 my$win = function() { return window; }
 my$doc = function() { return document; }
 document.eb$apch2 = function(c) { alert("append " + c.nodeName  + " to " + this.nodeName); this.childNodes.push(c); }
-document.head = {};
-document.head.childNodes = [];
-document.body = {};
-document.body.childNodes = [];
 querySelectorAll = function() { return [] ; }
 querySelector = function() { return {} ; }
 eb$cssText = function(){}
@@ -264,6 +260,35 @@ console = mw0.console;
 
 Object.defineProperty(document, "cookie", {
 get: eb$getcook, set: eb$setcook});
+
+Object.defineProperty(document, "documentElement", {
+get: function() { return this.firstChild; }});
+Object.defineProperty(document, "head", {
+get: function() { var e = this.firstChild;
+if(!e) return null;
+var s = e.firstChild;
+return s && s.nodeName == "head" ? s : null;},
+set: function(h) { var e = this.firstChild;
+if(!e) return;
+var s = e.firstChild;
+if(s && s.nodeName == "head")
+e.removeChild(s);
+if(h)
+e.prependChild(h);
+}});
+Object.defineProperty(document, "body", {
+get: function() { var e = this.firstChild;
+if(!e) return null;
+var s = e.lastChild;
+return s && s.nodeName == "body" ? s : null;},
+set: function(b) { var e = this.firstChild;
+if(!e) return;
+var s = e.lastChild;
+if(s && s.nodeName == "body")
+e.removeChild(s);
+if(b)
+e.appendChild(b);
+}});
 
 navigator = new Object;
 navigator.appName = "edbrowse";

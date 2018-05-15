@@ -1083,16 +1083,6 @@ Don't do any of this if the tag is itself <style>. */
 
 	set_property_string(io, "nodeName", t->info->name);
 	set_property_number(io, "nodeType", 1);
-
-	if (t->action == TAGACT_BODY) {
-		set_property_object(cf->docobj, "body", io);
-		set_property_object(cf->docobj, "documentElement", io);
-	}
-
-	if (t->action == TAGACT_HEAD) {
-		set_property_object(cf->docobj, "head", io);
-	}
-
 }				/* domLink */
 
 static const char defvl[] = "defaultValue";
@@ -1456,7 +1446,6 @@ Needless to say that's not good!
 		return;		/* nothing else to do */
 
 /* js tree mirrors the dom tree. */
-/* but head and body link to document */
 	linked_in = false;
 
 	if (t->parent && t->parent->jv) {
@@ -1471,7 +1460,7 @@ Needless to say that's not good!
 		}
 	}
 
-	if (action == TAGACT_HEAD || action == TAGACT_BODY) {
+	if (action == TAGACT_HTML) {
 		run_function_onearg(cf->docobj, "eb$apch1", t->jv);
 		linked_in = true;
 	}
@@ -1490,11 +1479,9 @@ Needless to say that's not good!
 	}
 
 	if (!linked_in) {
-// html and the title text are the only two things that don't get linked in,
-// as far as I know, but check at level 4.
-		debugPrint(4, "tag %s not linked in", ti->name);
+		debugPrint(1, "tag %s not linked in", ti->name);
 		if (action == TAGACT_TEXT)
-			debugPrint(4, "text %s\n", t->textval);
+			debugPrint(1, "text %s\n", t->textval);
 	}
 
 /* set innerHTML from the source html, if this tag supports it */
