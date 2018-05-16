@@ -2026,8 +2026,8 @@ intext:
 /* from the command line */
 bool readFileArgv(const char *filename, int fromframe)
 {
-	cmd = 'e';
 	bool newwin = !fromframe;
+	cmd = 'e';
 	return readFile(filename, emptyString, newwin, fromframe,
 			(newwin ? 0 : cf->fileName));
 }				/* readFileArgv */
@@ -3774,8 +3774,8 @@ static int twoLetter(const char *line, const char **runThis)
 
 	if (line[0] == 'u' && line[1] == 'a' && isdigitByte(line[2])
 	    && (!line[3] || (isdigitByte(line[3]) && !line[4]))) {
-		n = atoi(line + 2);
 		char *t = 0;
+		n = atoi(line + 2);
 		if (n < MAXAGENT)
 			t = userAgents[n];
 		cmd = 'e';

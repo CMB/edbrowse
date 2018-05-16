@@ -1895,10 +1895,11 @@ static struct htmlTag **qsaInternal(const char *selstring, struct htmlTag *top)
 {
 	struct desc *d0;
 	struct htmlTag **a;
+	char *s;
 // Compile the selector. The string has to be allocated.
 	if (!selstring)
 		selstring = emptyString;
-	char *s = allocMem(strlen(selstring) + 20);
+	s = allocMem(strlen(selstring) + 20);
 	sprintf(s, "%s{c:g}", selstring);
 	d0 = cssPieces(s);
 	if (!d0) {
@@ -1932,8 +1933,9 @@ static jsobjtype objectize(struct htmlTag **list)
 {
 	int i, j;
 	const struct htmlTag *t;
+	jsobjtype ao;
 	delete_property_nat(cf->winobj, "qsagc");
-	jsobjtype ao = instantiate_array_nat(cf->winobj, "qsagc");
+	ao = instantiate_array_nat(cf->winobj, "qsagc");
 	if (!ao || !list)
 		return ao;
 	for (i = j = 0; (t = list[i]); ++i) {
@@ -2115,6 +2117,8 @@ Or options, or perhaps other nodes.
 
 	s = initString(&sl);
 	for (; r; r = r->next) {
+		bool has;
+		enum ej_proptype what;
 
 // hover only looks for display visible
 		if (matchhover) {
@@ -2138,8 +2142,8 @@ Or options, or perhaps other nodes.
 		}
 // if it appears to be part of the prototype, and not the object,
 // I won't write it, even if force is true.
-		bool has = has_property_nat(obj, r->atname);
-		enum ej_proptype what = typeof_property_nat(obj, r->atname);
+		has = has_property_nat(obj, r->atname);
+		what = typeof_property_nat(obj, r->atname);
 		if (has && !what)
 			continue;
 		if (what && !force)

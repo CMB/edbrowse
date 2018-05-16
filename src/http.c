@@ -426,9 +426,9 @@ time_t parseHeaderDate(const char *date)
 	struct tm *temptm = NULL;
 	struct tm tm;
 	long utcoffset = 0;
+	const char *date0 = date;	// remember for debugging
 	memset(&tm, 0, sizeof(struct tm));
 	tm.tm_isdst = -1;
-	const char *date0 = date;	// remember for debugging
 
 	now = time(NULL);
 	temptm = localtime(&now);
@@ -1833,8 +1833,8 @@ gopher_transfer_fail:
 	if (first == '0') {
 // it's a text file, neeed to undos.
 // The curl callback function always makes sure there is an extra byte at the end.
-		g->buffer[g->length] = 0;
 		int i, j;
+		g->buffer[g->length] = 0;
 		for (i = j = 0; i < g->length; ++i) {
 			if (g->buffer[i] == '\r' && g->buffer[i + 1] == '\n')
 				continue;

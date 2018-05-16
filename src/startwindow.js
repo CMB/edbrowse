@@ -908,7 +908,7 @@ this.data += arguments[0];
 this.nodeName = "text";
 this.tagName = "text";
 this.nodeValue = this.data;
-this.nodeType=3;
+this.nodeType = 3;
 this.ownerDocument = my$doc();
 this.style = new CSSStyleDeclaration;
 this.style.element = this;
@@ -1876,6 +1876,8 @@ c.attributes.owner = c;
 c.nodeName = t;
 c.tagName = t;
 c.nodeType = 1;
+if(t == "document")
+c.nodeType = 9;
 c.nodeValue = undefined;
 c.class = "";
 c.ownerDocument = my$doc();
@@ -2526,4 +2528,60 @@ alert3(msg);
     return e;
 }
 throwDebug = false;
+
+// here comes the iterator
+if(!mw0.compiled) {
+mw0.NodeFilter = {
+SHOW_ALL:-1,
+SHOW_ELEMENT:1,
+SHOW_ATTRIBUTE:2,
+SHOW_TEXT:4,
+SHOW_CDATA_SECTION:8,
+SHOW_ENTITY_REFERENCE:16,
+SHOW_ENTITY:32,
+SHOW_PROCESSING_INSTRUCTION:64,
+SHOW_COMMENT:128,
+SHOW_DOCUMENT:256,
+SHOW_DOCUMENT_TYPE:512,
+SHOW_DOCUMENT_FRAGMENT:1024,
+SHOW_NOTATION:2048,
+// not sure of the values for these
+FILTER_ACCEPT:1,
+FILTER_REJECT:2,
+FILTER_SKIP:3,
+};
+
+// This implementation is not a "tree walkter"; it only works
+// on the nodes of the DOM tree.
+mw0.createNodeIterator = function(root, mask, callback, unused)
+{
+o = {}; // the created iterator object
+// let's reuse some software
+o.list = mw0.eb$gebtn(root, "*");
+// apply filters
+var i, j;
+for(i=j=0; i<o.list.length; ++i) {
+var alive = true;
+var nt = o.list[i].nodeType;
+if(nt == 9 && !(mask&NodeFilter.SHOW_DOCUMENT))
+alive = false;
+if(nt == 3 && !(mask&NodeFilter.SHOW_TEXT))
+alive = false;
+if(nt == 1 && !(mask&NodeFilter.SHOW_ELEMENT))
+alive = false;
+if(nt == 11 && !(mask&NodeFilter.SHOW_DOCUMENT_FRAGMENT))
+alive = false;
+if(nt == 8 && !(mask&NodeFilter.SHOW_COMMENT))
+alive = false;
+if(alive)
+o.list[j++] = o.list[i];
+}
+o.list.length = j;
+return o;
+}
+
+} // master compile
+
+NodeFilter = mw0.NodeFilter;
+document.createNodeIterator = mw0.createNodeIterator;
 
