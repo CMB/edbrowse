@@ -482,7 +482,7 @@ sem freimes a expandir
 sem freimes a contrair
 mensagens de ajuda ligadas
 download via FTP: 
-nenhum arquivo de certificados SSL; conexões seguras não podem ser verificadas
+0
 download via SCP: 
 .ebrc: caracteres nulos na linha %d
 .ebrc: falta nome de função na linha %d

@@ -482,7 +482,7 @@ brak ramek do rozwinięcia
 brak ramek do zwinięcia
 wiadomości pomocnicze włączone
 ściąganie ftp: 
-nie podano pliku z certyfikatem SSL; bezpieczne połączenie nie może zostać zweryfikowane
+0
 ściąganie scp: 
 .ebrc: znaki zerowe w wierszu %d
 .ebrc: brak nazwy funkcji w wierszu %d

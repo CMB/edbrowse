@@ -482,7 +482,7 @@ pas de cadres à déployer
 pas de cadres à réduire
 messages d'aide activés
 téléchargement ftp: 
-pas de fichier de certificats ssl; les connexions sécurisées ne pourront être vérifiées
+0
 téléchargement scp: 
 Caractères nuls à la ligne %d
 .ebrc : pas de nom de fonction à la ligne %d

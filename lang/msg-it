@@ -482,7 +482,7 @@ non ci sono frame da espandere
 non ci sono frame da contrarre
 messaggi di aiuto abilitati
 download ftp: 
-nessun file di certificati ssl specificato; le connessioni sicure non possono essere verificate
+0
 download tcp: 
 .ebrc: caratteri null alla riga %d
 .ebrc: nome funzione mancante alla riga %d

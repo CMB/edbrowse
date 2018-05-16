@@ -582,7 +582,7 @@ enum {
 	MSG_NoFrame2,
 	MSG_HelpOn,
 	MSG_FTPDownload,
-	MSG_NoCertFile,
+	MSG_notused485,
 	MSG_SCPDownload,
 	MSG_EBRC_Nulls,
 	MSG_EBRC_NoFnName,

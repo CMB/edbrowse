@@ -482,7 +482,7 @@ warning: http error %ld, %s\n
 0
 help messages on
 ftp download: 
-no ssl certificate file specified; secure connections cannot be verified
+0
 scp download: 
 .ebrc: null characters at line %d
 .ebrc: missing function name at line %d

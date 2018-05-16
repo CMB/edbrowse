@@ -95,7 +95,7 @@ mw0.dumptree = function(top) {
 var nn = top.nodeName.toLowerCase();
 var extra = "";
 if(nn === "text" && top.data) {
-extra = top.data;
+extra = top.data.toString();
 extra = extra.replace(/^[ \t\n]*/, "");
 var l = extra.indexOf('\n');
 if(l >= 0) extra = extra.substr(0,l);
