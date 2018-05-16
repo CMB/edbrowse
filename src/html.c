@@ -3113,14 +3113,15 @@ li_hide:
 
 	switch (action) {
 	case TAGACT_TEXT:
-		if (!t->textval && t->jv) {
-/* A text node from html should always contain a string. But if this node
- * is created by document.createTextNode(), the string is
- * down in the member "data". */
-			t->textval = get_property_string(t->jv, "data");
-/* Unfortunately this does not reflect subsequent changes to TextNode.data.
- * either we query js every time, on every piece of text,
- * or we include a setter so that TextNode.data assignment has a side effect. */
+		if (t->jv) {
+// defer to the javascript text.
+// either we query js every time, on every piece of text, as we do now,
+// or we include a setter so that TextNode.data assignment has a side effect.
+			char *u = get_property_string(t->jv, "data");
+			if (u) {
+				nzFree(t->textval);
+				t->textval = u;
+			}
 		}
 		if (!t->textval)
 			break;
