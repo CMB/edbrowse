@@ -41,10 +41,6 @@ reply = edbrowse@gmail.com
 # Le récipient à cookies - où nous stockons les cookies.
 #jar = /home/monlogin/outside/cookies
 
-# fichier des certificats ssl
-# certfile = /etc/ssl/cert.pem
-# certfile = /etc/pki/tls/cert.pem
-
 # attend la réponse d'un serveur web pendant 30 secondes
 webtimer = 30
 # attend la réponse d'un serveur mail pendant 3 minutes

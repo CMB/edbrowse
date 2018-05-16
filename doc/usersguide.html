@@ -2606,6 +2606,7 @@ Still, a future version of edbrowse might use one global http server to get arou
 
 <H3> <A NAME=ssl> Secure Connections </A> </H3>
 
+<P>
 Edbrowse supports the most common method of encrypting web traffic,
 HTTP over SSL/TLS, colloquially known as secure http.
 Websites that support
@@ -2617,17 +2618,13 @@ The traffic is encrypted, i.e. mathematically scrambled,
 and cannot be intercepted by a nefarious third party.
 
 <P>
-Edbrowse will verify ssl connections
-if you supply a file of ssl certificates.
+Edbrowse will verify ssl connections,
+based on a file of certificates provided by the system.
 This is an antispoofing measure, to make sure a hacker isn't posing as your bank,
 trying to steal your account numbers and passwords.
-On some Linux distributions, you can run `cd /etc/ssl/certs ; cat * >../edbrowse-certs'
-to capture ssl certificates that are as current as your linux system.
-If you don't have or create this file,
-or, if you don't specify its location in your config file,
-you will not be able to verify secure connections, and you will be warned accordingly.
-Some browsers don't have this feature at all, so it's not the end of the world,
-but in general it's a good idea to verify your secure connections,
+You can provide your own file of certificates, or point to a different file, using the certfile directive, but this is not recommended.
+The system file is probably your best bet.
+In general it's a good idea to verify secure connections,
 unless it prevents you from getting to a website whose authenticity you accept at face value.
 In that case you can use the vs command to turn the feature off.
 This is a toggle command; type vs again to turn the feature on.
@@ -3127,6 +3124,7 @@ certfile = /etc/pki/tls/cert.pem
 <P>
 Specify the file that holds the certificates for secure connections.
 This was explained in the section on <A HREF=#ssl>secure connections</A>.
+This can usually be omitted, whereupon edbrowse uses the system's certificate file.
 
 <P>
 maildir = /home/mylogin/mbox

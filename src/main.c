@@ -318,13 +318,6 @@ void eb_curl_global_init(void)
 	global_http_handle = curl_easy_init();
 	if (global_http_handle == NULL)
 		goto libcurl_init_fail;
-	if (sslCerts) {
-		curl_init_status =
-		    curl_easy_setopt(global_http_handle, CURLOPT_CAINFO,
-				     sslCerts);
-		if (curl_init_status != CURLE_OK)
-			goto libcurl_init_fail;
-	}
 	if (cookieFile && !ismc) {
 		curl_init_status =
 		    curl_easy_setopt(global_http_handle, CURLOPT_COOKIEJAR,
@@ -612,9 +605,6 @@ int main(int argc, char **argv)
 
 		i_printfExit(MSG_Usage);
 	}			/* options */
-
-	if (!sslCerts && doConfig && debugLevel >= 1)
-		i_puts(MSG_NoCertFile);
 
 	srand(time(0));
 
@@ -1833,9 +1823,6 @@ putback:
 
 	if (mailblock | mimeblock)
 		cfgAbort0(MSG_EBRC_MNotClosed);
-
-	if (!sslCerts)
-		verifyCertificates = 0;
 
 	if (maxAccount && !localAccount)
 		localAccount = 1;

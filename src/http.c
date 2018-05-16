@@ -2472,6 +2472,8 @@ CURLcode setCurlURL(CURL * h, const char *url)
 	curl_easy_setopt(h, CURLOPT_PROXY, proxy);
 	curl_easy_setopt(h, CURLOPT_SSL_VERIFYPEER, verify);
 	curl_easy_setopt(h, CURLOPT_SSL_VERIFYHOST, (verify ? 2 : 0));
+	if (sslCerts)
+		curl_easy_setopt(h, CURLOPT_CAINFO, sslCerts);
 	return curl_easy_setopt(h, CURLOPT_URL, url);
 }				/* setCurlURL */
 

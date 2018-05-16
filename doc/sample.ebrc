@@ -91,10 +91,6 @@ downdir = /home/mylogin/downloads
 #  Do not hand edit the cookie file, unless you know what you are doing!
 jar = /home/mylogin/outside/cookies
 
-#  file of ssl certificates
-#  If you put your file here, it will be shared with lynx, and perhaps other browsers.
-certfile = /etc/ssl/cert.pem
-
 #  wait 30 seconds for a response from a web server
 webtimer = 30
 #  wait 3 minutes for a response from a mail server

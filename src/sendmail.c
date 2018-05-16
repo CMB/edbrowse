@@ -708,10 +708,6 @@ static CURL *newSendmailHandle(const struct MACCOUNT *account,
 		curl_easy_setopt(handle, CURLOPT_VERBOSE, 1);
 	curl_easy_setopt(handle, CURLOPT_DEBUGFUNCTION, ebcurl_debug_handler);
 	curl_easy_setopt(handle, CURLOPT_DEBUGDATA, &g);
-	res = curl_easy_setopt(handle, CURLOPT_CAINFO, sslCerts);
-	if (res != CURLE_OK) {
-		goto new_handle_cleanup;
-	}
 
 	if (account->outssl == 2)
 		curl_easy_setopt(handle, CURLOPT_USE_SSL, CURLUSESSL_ALL);

@@ -95,10 +95,6 @@ downdir = /home/monlogin/téléchargements
 
 jar = /home/monlogin/outside/cookies
 
-# fichier des certificats ssl
-# si vous mettez ce fichier ici, il pourra être partagé avec lynx et peut-être d'autres navigateurs
-certfile = /etc/ssl/cert.pem
-
 #  attendre 30 secondes la réponse d'un serveur web
 webtimer = 30
 #  attendre 3 minutes la réponse d'un serveur mail mail

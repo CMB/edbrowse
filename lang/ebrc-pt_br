@@ -41,10 +41,6 @@ reply = edbrowse@gmail.com
 # A cookie jar - onde são armazenados os cookies http.
 #jar = /home/usuario/externo/cookies
 
-# arquivo de certificados ssl
-# certfile = /etc/ssl/cert.pem
-# certfile = /etc/pki/tls/cert.pem
-
 # o diretório que armazena o cache do edbrowse e o tamanho do cache em megabytes
 # cachedir = /b3/ebcache
 # cachesize = 200
