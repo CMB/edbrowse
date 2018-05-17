@@ -3078,7 +3078,12 @@ li_hide:
 			}
 			if (!inv3) {
 				inv3 = t;
-				stringAndString(&ns, &ns_l, "\r<{\r");
+// merge adjacent invisible sections together
+				if (ns_l >= 4
+				    && stringEqual(ns + ns_l - 4, "\r}>\r"))
+					ns_l -= 4;
+				else
+					stringAndString(&ns, &ns_l, "\r<{\r");
 			}
 		}
 		if (!showHover && v_now == VISI_HOVER && !activeBelow(t)) {

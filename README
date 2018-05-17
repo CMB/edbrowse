@@ -323,6 +323,12 @@ src/jsrt:
 This is the javascript regression test for edbrowse.
 It exercises some of the javascript DOM interactions.
 
+src/acid3:
+A snapshot of http://acid3.acidtests.org, with modifications,
+so that some or all of the acid tests pass under edbrowse.
+This is a work in progress.
+My modifications are indicated by the comment   //@`
+
 win32/dirent.c:
 Access directories in Windows.
 

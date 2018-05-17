@@ -2551,13 +2551,23 @@ FILTER_REJECT:2,
 FILTER_SKIP:3,
 };
 
-// This implementation is not a "tree walkter"; it only works
-// on the nodes of the DOM tree.
+// This implementation only works on the nodes of a tree
 mw0.createNodeIterator = function(root, mask, callback, unused)
 {
 o = {}; // the created iterator object
+if(typeof callback != "function") callback = null;
+o.callback = callback;
+if(typeof mask != "number")
+mask = 0xffffffff;
 // let's reuse some software
+if(root instanceof Object) {
 o.list = mw0.eb$gebtn(root, "*");
+if(!root.nodeType)
+alert3("NodeIterator root object is not a node");
+} else {
+o.list = [];
+alert3("NodeIterator root is not an object");
+}
 // apply filters
 var i, j;
 for(i=j=0; i<o.list.length; ++i) {
@@ -2577,6 +2587,115 @@ if(alive)
 o.list[j++] = o.list[i];
 }
 o.list.length = j;
+o.idx = 0;
+o.bump = function(incr) {
+var n = this.idx;
+if(incr > 0) --n;
+while(true) {
+n += incr;
+if(n < 0 || n >= this.list.length) return null;
+var a = this.list[n];
+var rc = NodeFilter.FILTER_ACCEPT;
+if(this.callback) rc = this.callback(a);
+if(rc == NodeFilter.FILTER_ACCEPT) { if(incr > 0) ++n; this.idx = n; return a; }
+// I don't understand the difference between skip and reject
+}
+}
+o.nextNode = function() { return this.bump(1); }
+o.previousNode = function() { return this.bump(-1); }
+return o;
+}
+
+mw0.createTreeWalker = function(root, mask, callback, unused)
+{
+o = {}; // the created iterator object
+if(typeof callback != "function") callback = null;
+o.callback = callback;
+if(typeof mask != "number")
+mask = 0xffffffff;
+if(root instanceof Object) {
+o.list = mw0.eb$gebtn(root, "*");
+if(!root.nodeType)
+alert3("TreeWalker root object is not a node");
+o.currentNode = root;
+} else {
+o.list = [];
+alert3("TreeWalker root is not an object");
+o.currentNode = null;
+}
+// apply filters
+var i, j;
+for(i=j=0; i<o.list.length; ++i) {
+var alive = true;
+var nt = o.list[i].nodeType;
+if(nt == 9 && !(mask&NodeFilter.SHOW_DOCUMENT))
+alive = false;
+if(nt == 3 && !(mask&NodeFilter.SHOW_TEXT))
+alive = false;
+if(nt == 1 && !(mask&NodeFilter.SHOW_ELEMENT))
+alive = false;
+if(nt == 11 && !(mask&NodeFilter.SHOW_DOCUMENT_FRAGMENT))
+alive = false;
+if(nt == 8 && !(mask&NodeFilter.SHOW_COMMENT))
+alive = false;
+if(alive)
+o.list[j++] = o.list[i];
+}
+o.list.length = j;
+o.bump = function(incr) {
+var n = this.list.indexOf(this.currentNode);
+if(n < 0 || n >= this.list.length) return null;
+while(true) {
+n += incr;
+if(n < 0 || n >= this.list.length) return null;
+var a = this.list[n];
+var rc = NodeFilter.FILTER_ACCEPT;
+if(this.callback) rc = this.callback(a);
+if(rc == NodeFilter.FILTER_ACCEPT) { this.currentNode = a; return a; }
+}
+}
+o.nextNode = function() { return this.bump(1); }
+o.previousNode = function() { return this.bump(-1); }
+o.endkid = function(incr) {
+if(!(this.currentNode instanceof Object)) return null;
+var a = incr > 0 ? this.currentNode.firstChild : this.currentNode.lastChild;
+while(a) {
+if(this.list.indexOf(a) >= 0) {
+var rc = NodeFilter.FILTER_ACCEPT;
+if(this.callback) rc = this.callback(a);
+if(rc == NodeFilter.FILTER_ACCEPT) { this.currentNode = a; return a; }
+}
+a = incr > 0 ? a.nextSibling() : a.previousSibling();
+}
+return null;
+}
+o.firstChild = function() { return this.endkid(1); }
+o.lastChild = function() { return this.endkid(-1); }
+o.nextkid = function(incr) {
+if(!(this.currentNode instanceof Object)) return null;
+var a = incr > 0 ? this.currentNode.nextSibling : this.currentNode.previousSibling;
+while(a) {
+if(this.list.indexOf(a) >= 0) {
+var rc = NodeFilter.FILTER_ACCEPT;
+if(this.callback) rc = this.callback(a);
+if(rc == NodeFilter.FILTER_ACCEPT) { this.currentNode = a; return a; }
+}
+a = incr > 0 ? a.nextSibling() : a.previousSibling();
+}
+return null;
+}
+o.nextSibling = function() { return this.nextkid(1); }
+o.previousSibling = function() { return this.nextkid(-1); }
+o.parentNode = function() {
+if(!(this.currentNode instanceof Object)) return null;
+var a = this.currentNode.parentNode;
+if(a && this.list.indexOf(a) >= 0) {
+var rc = NodeFilter.FILTER_ACCEPT;
+if(this.callback) rc = this.callback(a);
+if(rc == NodeFilter.FILTER_ACCEPT) { this.currentNode = a; return a; }
+}
+return null;
+}
 return o;
 }
 
@@ -2584,4 +2703,5 @@ return o;
 
 NodeFilter = mw0.NodeFilter;
 document.createNodeIterator = mw0.createNodeIterator;
+document.createTreeWalker = mw0.createTreeWalker;
 
