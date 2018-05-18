@@ -5548,7 +5548,8 @@ replaceframe:
 				return false;
 			}
 			cw->histLabel = label->prev;
-			cw->dot = label->label;
+			if (label->label) /* could be 0 because of line deletion */
+				cw->dot = label->label;
 			free(label);
 			--cx;
 		}
