@@ -1224,7 +1224,7 @@ static int *nextLabel(int *label)
 	if (label == NULL)
 		return cw->labels;
 
-	if (label - cw->labels < MARKLETTERS)
+	if (label >= cw->labels && label - cw->labels < MARKLETTERS)
 		return label + 1;
 
 	/* first history label */
