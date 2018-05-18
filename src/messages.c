@@ -227,7 +227,7 @@ Thus I don't need the i_ prefix.
 char errorMsg[1024];
 
 /* Show the error message, not just the question mark, after these commands. */
-static const char showerror_cmd[] = "AbefMqrw^";
+static const char showerror_cmd[] = "AbefMqrw^&";
 
 /* Set the error message.  Type h to see the message. */
 void setError(int msg, ...)

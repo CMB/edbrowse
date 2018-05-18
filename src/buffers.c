@@ -1219,20 +1219,21 @@ static char *makeAbsPath(const char *f)
 	return path;
 }				/* makeAbsPath */
 
-int *nextLabel(int *label) {
+static int *nextLabel(int *label)
+{
 	if (label == NULL)
 		return cw->labels;
 
 	if (label - cw->labels < MARKLETTERS)
-		return label+1;
+		return label + 1;
 
 	/* first history label */
 	if (label - cw->labels == MARKLETTERS)
-		return (int*)cw->histLabel;
+		return (int *)cw->histLabel;
 
 	/* previous history label. */
 	/* in both case we rely on label being first element of the struct */
-	return (int*)((struct histLabel*)label)->prev;
+	return (int *)((struct histLabel *)label)->prev;
 }
 
 /* Delete a block of text. */
@@ -4033,6 +4034,7 @@ pwd:
 
 	if (stringEqual(line, "ub") || stringEqual(line, "et")) {
 		struct ebFrame *f;
+		struct histLabel *label, *lnext;
 		ub = (line[0] == 'u');
 		rc = true;
 		cmd = 'e';
@@ -4072,6 +4074,12 @@ et_go:
 			nzFree(f->hbase);
 			f->hbase = 0;
 		}
+		lnext = cw->histLabel;
+		while ((label = lnext)) {
+			lnext = label->prev;
+			free(label);
+		}
+		cw->histLabel = 0;
 		nzFree(cw->htmltitle);
 		cw->htmltitle = 0;
 		nzFree(cw->htmldesc);
@@ -5419,7 +5427,8 @@ replaceframe:
 	if (!postSpace) {
 		cx = stringIsNum(line);
 		if (!cx) {
-			setError((cmd == '^') ? MSG_Backup0 : MSG_Session0);
+			setError((cmd == '^'
+				  || cmd == '&') ? MSG_Backup0 : MSG_Session0);
 			return false;
 		}
 		if (cx < 0)
@@ -5525,7 +5534,7 @@ replaceframe:
 		return writeFile(line, writeMode);
 	}
 
-	if (cmd == '&') { /* jump back key */
+	if (cmd == '&') {	/* jump back key */
 		if (first && !cx) {
 			setError(MSG_ArrowAfter);
 			return false;
@@ -6218,7 +6227,8 @@ redirect:
 		for (i = 1; i <= cw->dol; ++i) {
 			char *p = (char *)fetchLine(i, -1);
 			if (lineHasTag(p, newhash)) {
-				struct histLabel *label = allocMem(sizeof(struct histLabel));
+				struct histLabel *label =
+				    allocMem(sizeof(struct histLabel));
 				label->label = cw->dot;
 				label->prev = cw->histLabel;
 				cw->histLabel = label;
