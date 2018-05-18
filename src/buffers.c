@@ -32,9 +32,9 @@ static bool pcre_utf8_error_stop = false;
 static uchar dirWrite;		/* directories read write */
 static bool endMarks;		/* ^ $ on listed lines */
 /* The valid edbrowse commands. */
-static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^<";
+static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^&<";
 /* Commands that can be done in browse mode. */
-static const char browse_cmd[] = "AbBdDefghHiklMnpqsvwXz=^<";
+static const char browse_cmd[] = "AbBdDefghHiklMnpqsvwXz=^&<";
 /* Commands for sql mode. */
 static const char sql_cmd[] = "AadDefghHiklmnpqrsvwXz=^<";
 /* Commands for directory mode. */
@@ -880,6 +880,7 @@ static void undoPush(void)
 static void freeWindow(struct ebWindow *w)
 {
 	struct ebFrame *f, *fnext;
+	struct histLabel *label, *lnext;
 	freeTags(w);
 	for (f = &w->f0; f; f = fnext) {
 		fnext = f->next;
@@ -891,6 +892,11 @@ static void freeWindow(struct ebWindow *w)
 		nzFree(f->firstURL);
 		if (f != &w->f0)
 			free(f);
+	}
+	lnext = w->histLabel;
+	while ((label = lnext)) {
+		lnext = label->prev;
+		free(label);
 	}
 	freeWindowLines(w->map);
 	freeWindowLines(w->r_map);
@@ -1213,10 +1219,27 @@ static char *makeAbsPath(const char *f)
 	return path;
 }				/* makeAbsPath */
 
+int *nextLabel(int *label) {
+	if (label == NULL)
+		return cw->labels;
+
+	if (label - cw->labels < MARKLETTERS)
+		return label+1;
+
+	/* first history label */
+	if (label - cw->labels == MARKLETTERS)
+		return (int*)cw->histLabel;
+
+	/* previous history label. */
+	/* in both case we rely on label being first element of the struct */
+	return (int*)((struct histLabel*)label)->prev;
+}
+
 /* Delete a block of text. */
 void delText(int start, int end)
 {
-	int i, j, ln;
+	int i, ln;
+	int *label = NULL;
 
 /* browse has no undo command */
 	if (cw->browseMode) {
@@ -1228,23 +1251,23 @@ void delText(int start, int end)
 
 	if (end == cw->dol)
 		cw->nlMode = false;
-	j = end - start + 1;
+	i = end - start + 1;
 	memmove(cw->map + start, cw->map + end + 1,
 		(cw->dol - end + 1) * LMSIZE);
 
 /* move the labels */
-	for (i = 0; i < MARKLETTERS; ++i) {
-		ln = cw->labels[i];
+	while ((label = nextLabel(label))) {
+		ln = *label;
 		if (ln < start)
 			continue;
 		if (ln <= end) {
-			cw->labels[i] = 0;
+			*label = 0;
 			continue;
 		}
-		cw->labels[i] -= j;
+		*label -= i;
 	}
 
-	cw->dol -= j;
+	cw->dol -= i;
 	cw->dot = start;
 	if (cw->dot > cw->dol)
 		cw->dot = cw->dol;
@@ -1357,6 +1380,7 @@ static bool moveCopy(void)
 	struct lineMap *map = cw->map;
 	struct lineMap *newmap, *t;
 	int lowcut, highcut, diff, i, ln;
+	int *label = NULL;
 
 	if (dl > sr && dl < er) {
 		setError(MSG_DestInBlock);
@@ -1404,8 +1428,8 @@ static bool moveCopy(void)
 		highcut = dl;
 		diff = dl - er;
 	}
-	for (i = 0; i < MARKLETTERS; ++i) {
-		ln = cw->labels[i];
+	while ((label = nextLabel(label))) {
+		ln = *label;
 		if (ln < lowcut)
 			continue;
 		if (ln >= highcut)
@@ -1415,7 +1439,7 @@ static bool moveCopy(void)
 		} else {
 			ln += (dl < sr ? n_lines : -n_lines);
 		}
-		cw->labels[i] = ln;
+		*label = ln;
 	}			/* loop over labels */
 
 	cw->dot = endRange;
@@ -3802,13 +3826,13 @@ static int twoLetter(const char *line, const char **runThis)
 		return rc;
 	}
 
-/* ^^^^ is the same as ^4 */
-	if (line[0] == '^' && line[1] == '^') {
+/* ^^^^ is the same as ^4; same with &*/
+	if ((line[0] == '^' || line[0] == '&') && line[1] == line[0]) {
 		const char *t = line + 2;
-		while (*t == '^')
+		while (*t == line[0])
 			++t;
 		if (!*t) {
-			sprintf(shortline, "^%ld", (long)(t - line));
+			sprintf(shortline, "%c%ld", line[0], (long)(t - line));
 			return 2;
 		}
 	}
@@ -5501,6 +5525,29 @@ replaceframe:
 		return writeFile(line, writeMode);
 	}
 
+	if (cmd == '&') { /* jump back key */
+		if (first && !cx) {
+			setError(MSG_ArrowAfter);
+			return false;
+		}
+		if (!cx)
+			cx = 1;
+		while (cx) {
+			struct histLabel *label = cw->histLabel;
+			if (!label) {
+				setError(MSG_NoPrevious);
+				return false;
+			}
+			cw->histLabel = label->prev;
+			cw->dot = label->label;
+			free(label);
+			--cx;
+		}
+		printDot();
+		return true;
+
+	}
+
 	if (cmd == '^') {	/* back key, pop the stack */
 		if (first && !cx) {
 			setError(MSG_ArrowAfter);
@@ -6171,6 +6218,10 @@ redirect:
 		for (i = 1; i <= cw->dol; ++i) {
 			char *p = (char *)fetchLine(i, -1);
 			if (lineHasTag(p, newhash)) {
+				struct histLabel *label = allocMem(sizeof(struct histLabel));
+				label->label = cw->dot;
+				label->prev = cw->histLabel;
+				cw->histLabel = label;
 				cw->dot = i;
 				printDot();
 				nzFree(newhash);
