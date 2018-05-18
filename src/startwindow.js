@@ -99,6 +99,7 @@ extra = top.data.toString();
 extra = extra.replace(/^[ \t\n]*/, "");
 var l = extra.indexOf('\n');
 if(l >= 0) extra = extra.substr(0,l);
+if(extra.length > 120) extra = extra.substr(0,120);
 }
 if(nn === "option" && top.text)
 extra = top.text;
@@ -262,32 +263,46 @@ Object.defineProperty(document, "cookie", {
 get: eb$getcook, set: eb$setcook});
 
 Object.defineProperty(document, "documentElement", {
-get: function() { return this.firstChild; }});
+get: function() { var e = this.firstChild;
+if(!e) { alert("missing html node"); return null; }
+if(e.nodeName != "html") alert("html node name " + e.nodeName);
+return e; }});
 Object.defineProperty(document, "head", {
 get: function() { var e = this.firstChild;
 if(!e) return null;
-var s = e.firstChild;
-return s && s.nodeName == "head" ? s : null;},
+// nasa.gov adds text nodes to <html>, so we have to search for head and body
+for(var i=0; i<e.childNodes.length; ++i)
+if(e.childNodes[i].nodeName == "head") return e.childNodes[i];
+alert("missing head node"); return null;},
 set: function(h) { var e = this.firstChild;
 if(!e) return;
-var s = e.firstChild;
-if(s && s.nodeName == "head")
-e.removeChild(s);
-if(h)
-e.prependChild(h);
+var i;
+for(i=0; i<e.childNodes.length; ++i)
+if(e.childNodes[i].nodeName == "head") break;
+if(i < e.childNodes.length) e.removeChild(e.childNodes[i]); else i=0;
+if(h) {
+if(h.nodeName != "head") { alert("head replaced with node " + h.nodeName); h.nodeName = "head"; }
+if(i == e.childNodes.length) e.appendChild(h);
+else e.insertBefore(h, e.childNodes[i]);
+}
 }});
 Object.defineProperty(document, "body", {
 get: function() { var e = this.firstChild;
 if(!e) return null;
-var s = e.lastChild;
-return s && s.nodeName == "body" ? s : null;},
+for(var i=0; i<e.childNodes.length; ++i)
+if(e.childNodes[i].nodeName == "body") return e.childNodes[i];
+alert("missing body node"); return null;},
 set: function(b) { var e = this.firstChild;
 if(!e) return;
-var s = e.lastChild;
-if(s && s.nodeName == "body")
-e.removeChild(s);
-if(b)
-e.appendChild(b);
+var i;
+for(i=0; i<e.childNodes.length; ++i)
+if(e.childNodes[i].nodeName == "body") break;
+if(i < e.childNodes.length) e.removeChild(e.childNodes[i]);
+if(b) {
+if(b.nodeName != "body") { alert("body replaced with node " + b.nodeName); b.nodeName = "body"; }
+if(i == e.childNodes.length) e.appendChild(b);
+else e.insertBefore(b, e.childNodes[i]);
+}
 }});
 
 navigator = new Object;
@@ -1564,7 +1579,7 @@ this[ev] = undefined;
 }
 this[evarray] = a;
 eval(
-'this["' + ev + '"] = function(){ var a = this["' + evarray + '"]; var rc; if(this["' + evorig + '"]) { rc = this["' + evorig + '"](); if(!rc) return false; } for(var i = 0; i<a.length; ++i) {var tempEvent = new Event; tempEvent.type = "' + ev_before_changes + '"; rc = a[i](tempEvent); if(!rc) return false; } return true; };');
+'this["' + ev + '"] = function(){ var a = this["' + evarray + '"]; var rc; if(this["' + evorig + '"]) { rc = this["' + evorig + '"](); if(!rc) return false; } for(var i = 0; i<a.length; ++i) a[i].did$run = false; for(var i = 0; i<a.length; ++i) {if(a[i].did$run) continue; a[i].did$run = true; var tempEvent = new Event; tempEvent.type = "' + ev_before_changes + '"; rc = a[i](tempEvent); if(!rc) return false; i = -1; } return true; };');
 }
 this[evarray].push(handler);
 }
