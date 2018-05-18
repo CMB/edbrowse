@@ -2061,13 +2061,15 @@ And if you do it twice the second call could add a text node
 to the text node you just added in the first call, and so on,
 so we don't want to apply before or after to text nodes.
 Or options, or perhaps other nodes.
+Don't inject text nodes under <html>, or you screw up the traditional
+head body structure of the document.
 *********************************************************************/
 
 	if (matchtype) {
 		bool forbidden = false;
 		static const char *const noafter[] = {
 			"select", "text", "option", "head", "meta", "link",
-			"script", 0
+			"script", "html", 0
 		};
 		s = get_property_string(obj, "nodeName");
 		if (s && stringInList(noafter, s) >= 0)

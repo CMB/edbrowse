@@ -264,16 +264,17 @@ get: eb$getcook, set: eb$setcook});
 
 Object.defineProperty(document, "documentElement", {
 get: function() { var e = this.firstChild;
-if(!e) { alert("missing html node"); return null; }
-if(e.nodeName != "html") alert("html node name " + e.nodeName);
+if(!e) { alert3("missing html node"); return null; }
+if(e.nodeName != "html") alert3("html node name " + e.nodeName);
 return e; }});
 Object.defineProperty(document, "head", {
 get: function() { var e = this.firstChild;
 if(!e) return null;
-// nasa.gov adds text nodes to <html>, so we have to search for head and body
+// In case somebody adds extra nodes under <html>, I search for head and body.
+// But it should always be head, body.
 for(var i=0; i<e.childNodes.length; ++i)
 if(e.childNodes[i].nodeName == "head") return e.childNodes[i];
-alert("missing head node"); return null;},
+alert3("missing head node"); return null;},
 set: function(h) { var e = this.firstChild;
 if(!e) return;
 var i;
@@ -281,7 +282,7 @@ for(i=0; i<e.childNodes.length; ++i)
 if(e.childNodes[i].nodeName == "head") break;
 if(i < e.childNodes.length) e.removeChild(e.childNodes[i]); else i=0;
 if(h) {
-if(h.nodeName != "head") { alert("head replaced with node " + h.nodeName); h.nodeName = "head"; }
+if(h.nodeName != "head") { alert3("head replaced with node " + h.nodeName); h.nodeName = "head"; }
 if(i == e.childNodes.length) e.appendChild(h);
 else e.insertBefore(h, e.childNodes[i]);
 }
@@ -291,7 +292,7 @@ get: function() { var e = this.firstChild;
 if(!e) return null;
 for(var i=0; i<e.childNodes.length; ++i)
 if(e.childNodes[i].nodeName == "body") return e.childNodes[i];
-alert("missing body node"); return null;},
+alert3("missing body node"); return null;},
 set: function(b) { var e = this.firstChild;
 if(!e) return;
 var i;
@@ -299,7 +300,7 @@ for(i=0; i<e.childNodes.length; ++i)
 if(e.childNodes[i].nodeName == "body") break;
 if(i < e.childNodes.length) e.removeChild(e.childNodes[i]);
 if(b) {
-if(b.nodeName != "body") { alert("body replaced with node " + b.nodeName); b.nodeName = "body"; }
+if(b.nodeName != "body") { alert3("body replaced with node " + b.nodeName); b.nodeName = "body"; }
 if(i == e.childNodes.length) e.appendChild(b);
 else e.insertBefore(b, e.childNodes[i]);
 }
