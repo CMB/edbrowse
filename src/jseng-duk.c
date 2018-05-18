@@ -792,6 +792,7 @@ static const char *embedNodeName(jsobjtype obj)
 		b[length] = 0;
 	}
 	duk_pop_2(jcx);
+	caseShift(b, 'l');
 	return b;
 }				/* embedNodeName */
 

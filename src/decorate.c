@@ -903,6 +903,7 @@ static void domLink(struct htmlTag *t, const char *classname,	/* instantiate thi
 	const char *stylestring = attribVal(t, "style");
 	jsobjtype so = 0;	/* obj.style */
 	jsobjtype ato = 0;	/* obj.attributes */
+	char upname[MAXTAGNAME];
 
 	debugPrint(5, "domLink %s.%d name %s",
 		   classname, radiosel, (symname ? symname : emptyString));
@@ -971,7 +972,7 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 				return;
 			if (radiosel == 1) {
 				set_property_string(io, "type", "radio");
-				set_property_string(io, "nodeName", "radio");
+				set_property_string(io, "nodeName", "RADIO");
 			} else {
 /* I've read some docs that say select is itself an array,
  * and then references itself as an array of options.
@@ -1081,7 +1082,10 @@ Don't do any of this if the tag is itself <style>. */
 
 	connectTagObject(t, io);
 
-	set_property_string(io, "nodeName", t->info->name);
+	strcpy(upname, t->info->name);
+	caseShift(upname, 'u');
+	set_property_string(io, "nodeName", upname);
+	set_property_string(io, "tagName", upname);
 	set_property_number(io, "nodeType", 1);
 }				/* domLink */
 
@@ -1149,7 +1153,7 @@ static void optionJS(struct htmlTag *t)
 	connectTagObject(t, establish_js_option(sel->jv, t->lic));
 	set_property_string(t->jv, "text", t->textval);
 	set_property_string(t->jv, "value", t->value);
-	set_property_string(t->jv, "nodeName", "option");
+	set_property_string(t->jv, "nodeName", "OPTION");
 	set_property_number(t->jv, "nodeType", 1);
 	set_property_bool(t->jv, "selected", t->checked);
 	set_property_bool(t->jv, defsel, t->checked);

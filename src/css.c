@@ -1268,7 +1268,7 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			nn = get_property_string_nat(obj, "nodeName");
 		if (!nn)	// should never happen
 			return false;
-		rc = stringEqual(nn, a->tag);
+		rc = stringEqualCI(nn, a->tag);
 		if (!t)
 			cnzFree(nn);
 		if (!rc)
@@ -1526,7 +1526,7 @@ all the div sections just below the current node.
 			if (!rootobj) {
 				const char *a =
 				    get_property_string(obj, "nodeName");
-				rc = (a && stringEqual(a, "document"));
+				rc = (a && stringEqualCI(a, "document"));
 				cnzFree(a);
 				if (rc ^ negate)
 					goto next_mod;
@@ -2074,11 +2074,11 @@ in fact it's easier to list the tags that allow it.
 	if (matchtype) {
 		bool forbidden = true;
 		static const char *const ok2inject[] = {
-			"a", "address", "blockquote", "body", "button",
-			    "caption", "cite",
-			"div", "footer", "h1", "h2", "h3", "h4", "h5", "h6",
-			"header", "label", "li", "menu", "object",
-			"p", "span", "td", "th", "xmp",
+			"A", "ADDRESS", "BLOCKQUOTE", "BODY", "BUTTON",
+			"CAPTION", "CITE",
+			"DIV", "FOOTER", "H1", "H2", "H3", "H4", "H5", "H6",
+			"HEADER", "LABEL", "LI", "MENU", "OBJECT",
+			"P", "SPAN", "TD", "TH", "XMP",
 			0
 		};
 		s = get_property_string(obj, "nodeName");

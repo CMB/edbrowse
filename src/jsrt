@@ -856,9 +856,9 @@ fail(164);
 
 if(document.body.style.color != "black") fail(165);
 if(document.body.style.fontSize != "1.0em") fail(169);
-if(querySelector(".filbert #pecan").nodeName != "tr")
+if(querySelector(".filbert #pecan").nodeName != "TR")
 fail(170);
-if(querySelector("text + #bird").nodeName != "input")
+if(querySelector("text + #bird").nodeName != "INPUT")
 fail(171);
 document.body.style.cssText = "ele-fitz:ger' a'ld";
 if(document.body.style.eleFitz != "ger ald")

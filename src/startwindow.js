@@ -83,8 +83,8 @@ function alert3(s) { eb$logputs(3, s); }
 function alert4(s) { eb$logputs(4, s); }
 
 // Dump the tree below a node, this is for debugging.
-document.nodeName = "document"; // in case you want to start at the top.
-window.nodeName = "window";
+document.nodeName = "DOCUMENT"; // in case you want to start at the top.
+window.nodeName = "WINDOW";
 
 // Print the first line of text for a text node, and no braces
 // because nothing should be below a text node.
@@ -265,7 +265,7 @@ get: eb$getcook, set: eb$setcook});
 Object.defineProperty(document, "documentElement", {
 get: function() { var e = this.firstChild;
 if(!e) { alert3("missing html node"); return null; }
-if(e.nodeName != "html") alert3("html node name " + e.nodeName);
+if(e.nodeName != "HTML") alert3("html node name " + e.nodeName);
 return e; }});
 Object.defineProperty(document, "head", {
 get: function() { var e = this.firstChild;
@@ -273,16 +273,16 @@ if(!e) return null;
 // In case somebody adds extra nodes under <html>, I search for head and body.
 // But it should always be head, body.
 for(var i=0; i<e.childNodes.length; ++i)
-if(e.childNodes[i].nodeName == "head") return e.childNodes[i];
+if(e.childNodes[i].nodeName == "HEAD") return e.childNodes[i];
 alert3("missing head node"); return null;},
 set: function(h) { var e = this.firstChild;
 if(!e) return;
 var i;
 for(i=0; i<e.childNodes.length; ++i)
-if(e.childNodes[i].nodeName == "head") break;
+if(e.childNodes[i].nodeName == "HEAD") break;
 if(i < e.childNodes.length) e.removeChild(e.childNodes[i]); else i=0;
 if(h) {
-if(h.nodeName != "head") { alert3("head replaced with node " + h.nodeName); h.nodeName = "head"; }
+if(h.nodeName != "HEAD") { alert3("head replaced with node " + h.nodeName); h.nodeName = "HEAD"; }
 if(i == e.childNodes.length) e.appendChild(h);
 else e.insertBefore(h, e.childNodes[i]);
 }
@@ -291,16 +291,16 @@ Object.defineProperty(document, "body", {
 get: function() { var e = this.firstChild;
 if(!e) return null;
 for(var i=0; i<e.childNodes.length; ++i)
-if(e.childNodes[i].nodeName == "body") return e.childNodes[i];
+if(e.childNodes[i].nodeName == "BODY") return e.childNodes[i];
 alert3("missing body node"); return null;},
 set: function(b) { var e = this.firstChild;
 if(!e) return;
 var i;
 for(i=0; i<e.childNodes.length; ++i)
-if(e.childNodes[i].nodeName == "body") break;
+if(e.childNodes[i].nodeName == "BODY") break;
 if(i < e.childNodes.length) e.removeChild(e.childNodes[i]);
 if(b) {
-if(b.nodeName != "body") { alert3("body replaced with node " + b.nodeName); b.nodeName = "body"; }
+if(b.nodeName != "BODY") { alert3("body replaced with node " + b.nodeName); b.nodeName = "BODY"; }
 if(i == e.childNodes.length) e.appendChild(b);
 else e.insertBefore(b, e.childNodes[i]);
 }
@@ -724,7 +724,7 @@ mw0.Header = function(){}
 mw0.Footer = function(){}
 mw0.Script = function(){}
 mw0.HTMLScriptElement = mw0.Script; // alias for Script, I guess
-mw0.Timer = function(){this.nodeName = "timer";}
+mw0.Timer = function(){this.nodeName = "TIMER";}
 mw0.Audio = function(){}
 
 /*********************************************************************
@@ -868,9 +868,9 @@ mw0.insertRow = function(idx) {
 if(idx === undefined) idx = -1;
 if(typeof idx !== "number") return null;
 var t = this;
-if(this.nodeName == "table") {
+if(this.nodeName == "TABLE") {
 // check for table bodies
-if(t.lastChild && t.lastChild.nodeName == "tbody")
+if(t.lastChild && t.lastChild.nodeName == "TBODY")
 t = t.lastChild;
 }
 var nrows = t.childNodes.length;
@@ -921,8 +921,7 @@ if(arguments.length > 0) {
 // data always has to be a string
 this.data$2 += arguments[0];
 }
-this.nodeName = "text";
-this.tagName = "text";
+this.nodeName = this.tagName = "TEXT";
 this.nodeValue = this.data$2;
 this.nodeType = 3;
 this.ownerDocument = my$doc();
@@ -955,7 +954,7 @@ return c;
 
 // The Option class, these are choices in a dropdown list.
 mw0.Option = function() {
-this.nodeName = "option";
+this.nodeName = "OPTION";
 this.text = this.value = "";
 if(arguments.length > 0)
 this.text = arguments[0];
@@ -1261,9 +1260,9 @@ The same must be done for an array of rows beneath <table>,
 or an array of cells in a row, and perhaps others.
 *********************************************************************/
 
-if(item === "elements" && node1.nodeName === "form" ||
-item === "rows" && (node1.nodeName === "table" || node1.nodeName === "tbody") ||
-item === "cells" && node1.nodeName === "trow") {
+if(item === "elements" && node1.nodeName === "FORM" ||
+item === "rows" && (node1.nodeName === "TABLE" || node1.nodeName === "TBODY") ||
+item === "cells" && node1.nodeName === "TR") {
 if(debug) alert3("linking " + node1.nodeName + "." + item + " with " + node1[item].length + " members");
 for(i = 0; i < node1[item].length; ++i) {
 var p = mw0.findObject(node1, node1[item][i], "");
@@ -1279,7 +1278,7 @@ continue;
 }
 
 // special code here for an array of radio buttons within a form.
-if(node1.nodeName === "form" && node1[item].nodeName === "radio") {
+if(node1.nodeName === "FORM" && node1[item].nodeName === "RADIO") {
 var a1 = node1[item];
 var a2 = node2[item];
 if(debug) alert3("linking form.radio " + item + " with " + a1.length + " buttons");
@@ -1385,7 +1384,7 @@ node2.style.element = node2;
 for (var item in node1.style){
 if (typeof node1.style[item] === 'string' ||
 typeof node1.style[item] === 'number') {
-if(debug) alert3("copy attribute " + item);
+if(debug) alert3("copy stattr " + item);
 node2.style[item] = node1.style[item];
 }
 }
@@ -1408,7 +1407,7 @@ var e2 = node2.elements;
 if(debug) alert3("looking for lost radio elements");
 for(i=0; i<e2.length; ++i) {
 if(e2[i]) continue;
-if(e1[i].nodeName !== "radio") {
+if(e1[i].nodeName !== "RADIO") {
 if(debug) alert3("oops, lost element " + i + " is type " + e1[i].nodeName);
 continue;
 }
@@ -1733,7 +1732,7 @@ parent[s] = child;
 mw0.Form.prototype.appendChildNative = mw0.appendChild;
 mw0.Form.prototype.appendChild = function(newobj) {
 this.appendChildNative(newobj);
-if(newobj.nodeName === "input" || newobj.nodeName === "select") {
+if(newobj.nodeName === "INPUT" || newobj.nodeName === "SELECT") {
 this.elements.push(newobj);
 mw0.eb$formname(this, newobj);
 }
@@ -1744,7 +1743,7 @@ mw0.Form.prototype.eb$insbf = document.eb$insbf;
 mw0.Form.prototype.insertBeforeNative = mw0.insertBefore;
 mw0.Form.prototype.insertBefore = function(newobj, item) {
 this.insertBeforeNative(newobj, item);
-if(newobj.nodeName === "input" || newobj.nodeName === "select") {
+if(newobj.nodeName === "INPUT" || newobj.nodeName === "SELECT") {
 for(var i=0; i<this.elements.length; ++i)
 if(this.elements[i] == item) {
 this.elements.splice(i, 0, newobj);
@@ -1758,7 +1757,7 @@ mw0.Form.prototype.hasChildNodes = mw0.hasChildNodes;
 mw0.Form.prototype.removeChildNative = document.removeChild;
 mw0.Form.prototype.removeChild = function(item) {
 this.removeChildNative(item);
-if(item.nodeName === "input" || item.nodeName === "select")
+if(item.nodeName === "INPUT" || item.nodeName === "SELECT")
 for(var i=0; i<this.elements.length; ++i)
 if(this.elements[i] == item) {
 this.elements.splice(i, 1);
@@ -1868,8 +1867,7 @@ case "select":
  * and also "options" or "childNodes" linked to itself
  * so it looks like it has children in the usual way. */
 c = [];
-c.nodeName = t;
-c.tagName = t;
+c.nodeName = c.tagName = t.toUpperCase();
 c.options = c;
 c.childNodes = c;
 c.style = new CSSStyleDeclaration;
@@ -1879,8 +1877,7 @@ eb$logElement(c, t);
 return c;
 case "option":
 c = new Option;
-c.nodeName = t;
-c.tagName = t;
+c.nodeName = c.tagName = "OPTION";
 c.childNodes = [];
 // we don't log options because rebuildSelectors() checks
 // the dropdown lists after every js run.
@@ -1901,8 +1898,7 @@ c.style.element = c;
 c.childNodes = [];
 c.attributes = new NamedNodeMap;
 c.attributes.owner = c;
-c.nodeName = t;
-c.tagName = t;
+c.nodeName = c.tagName = t.toUpperCase();
 c.nodeType = 1;
 if(t == "document")
 c.nodeType = 9;
