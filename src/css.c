@@ -600,6 +600,12 @@ copy:		++s;
 				s += n + 1;
 				continue;
 			}
+// Ambiguous, ~ is combinator or part of [foo~=bar].
+// Simplistic check here for ~=
+			if (c == '~' && s[1] == '=') {
+				++s;
+				continue;
+			}
 			combin = 0;	// look for combinator
 			a2 = s;
 			while (strchr(", \t\n\r>~+", c)) {

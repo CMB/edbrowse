@@ -95,7 +95,7 @@ mw0.dumptree = function(top) {
 var nn = top.nodeName.toLowerCase();
 var extra = "";
 if(nn === "text" && top.data) {
-extra = top.data.toString();
+extra = top.data;
 extra = extra.replace(/^[ \t\n]*/, "");
 var l = extra.indexOf('\n');
 if(l >= 0) extra = extra.substr(0,l);
@@ -916,14 +916,14 @@ this.removeChild(r);
 mw0.Trow.prototype.deleteCell = mw0.deleteCell;
 
 mw0.TextNode = function() {
-this.data = "";
+this.data$2 = "";
 if(arguments.length > 0) {
-// do your best to turn the arg into a string.
-this.data += arguments[0];
+// data always has to be a string
+this.data$2 += arguments[0];
 }
 this.nodeName = "text";
 this.tagName = "text";
-this.nodeValue = this.data;
+this.nodeValue = this.data$2;
 this.nodeType = 3;
 this.ownerDocument = my$doc();
 this.style = new CSSStyleDeclaration;
@@ -938,6 +938,13 @@ this.childNodes = [];
 this.attributes = new mw0.NamedNodeMap;
 this.attributes.owner = this;
 }
+
+// setter insures data is always a string, because roving javascript might
+// node.data = 7;  ...  if(node.data.match(/x/) ...
+// and boom! It blows up because Number doesn't have a match function.
+Object.defineProperty(mw0.TextNode.prototype, "data", {
+get: function() { return this.data$2; },
+set: function(s) { this.data$2 = s + ""; }});
 
 mw0.createTextNode = function(t) {
 if(t == undefined) t = "";
@@ -971,6 +978,9 @@ var a = [];
 if(s === '*' || (top.nodeName && top.nodeName.toLowerCase() === s))
 a.push(top);
 if(top.childNodes) {
+// don't descend into another frame.
+// Look for iframe.document.html, meaning the frame is expanded.
+if(!(top instanceof Frame) || !top.firstChild.firstChild)
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
 a = a.concat(mw0.eb$gebtn(c, s));
@@ -989,6 +999,7 @@ var a = [];
 if(s === '*' || (top.name && top.name.toLowerCase() === s))
 a.push(top);
 if(top.childNodes) {
+if(!(top instanceof Frame) || !top.firstChild.firstChild)
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
 a = a.concat(mw0.eb$gebn(c, s));
@@ -1007,6 +1018,7 @@ var a = [];
 if(s === '*' || (top.class && top.class.toLowerCase() === s))
 a.push(top);
 if(top.childNodes) {
+if(!(top instanceof Frame) || !top.firstChild.firstChild)
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
 a = a.concat(mw0.eb$gebcn(c, s));
