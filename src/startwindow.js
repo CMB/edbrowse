@@ -348,7 +348,6 @@ document.styles = [];
 document.bodies = [];
 document.forms = [];
 document.elements = [];
-document.anchors = [];
 document.divs = [];
 document.htmlobjs = [];
 document.scripts = [];
@@ -358,7 +357,6 @@ document.footers = [];
 document.tables = [];
 document.spans = [];
 document.images = [];
-document.areas = [];
 // styleSheets is a placeholder for now; I don't know what to do with it.
 document.styleSheets = [];
 

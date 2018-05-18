@@ -1029,6 +1029,10 @@ Don't do any of this if the tag is itself <style>. */
 			if (stringEqual(symname, "action"))
 				set_property_bool(io, "actioncrash", true);
 		}
+// only anchors with href go into links[]
+		if (list && stringEqual(list, "links") &&
+		    !attribPresent(t, "href"))
+			list = 0;
 
 		if (list)
 			alist = get_property_object(owner, list);
@@ -1336,7 +1340,7 @@ Needless to say that's not good!
 		return;
 
 	case TAGACT_A:
-		domLink(t, "Anchor", "href", "anchors", cf->docobj, 0);
+		domLink(t, "Anchor", "href", "links", cf->docobj, 0);
 		set_onhandlers(t);
 		break;
 
@@ -1397,7 +1401,7 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_AREA:
-		domLink(t, "Area", "href", "areas", cf->docobj, 0);
+		domLink(t, "Area", "href", "links", cf->docobj, 0);
 		break;
 
 	case TAGACT_FRAME:
@@ -1433,7 +1437,7 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_LINK:
-		domLink(t, "Link", "href", "links", cf->docobj, 0);
+		domLink(t, "Link", "href", 0, cf->docobj, 0);
 		link_css(t);
 		break;
 
