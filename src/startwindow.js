@@ -921,7 +921,7 @@ if(arguments.length > 0) {
 // data always has to be a string
 this.data$2 += arguments[0];
 }
-this.nodeName = this.tagName = "TEXT";
+this.nodeName = "#text";
 this.nodeValue = this.data$2;
 this.nodeType = 3;
 this.ownerDocument = my$doc();
