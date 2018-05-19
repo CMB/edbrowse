@@ -94,7 +94,7 @@ if(!mw0.compiled) {
 mw0.dumptree = function(top) {
 var nn = top.nodeName.toLowerCase();
 var extra = "";
-if(nn === "text" && top.data) {
+if(nn === "#text" && top.data) {
 extra = top.data;
 extra = extra.replace(/^[ \t\n]*/, "");
 var l = extra.indexOf('\n');
@@ -109,7 +109,7 @@ if(nn === "base" && top.href)
 extra = top.href.toString();
 if(extra.length) extra = ' ' + extra;
 // some tags should never have anything below them so skip the parentheses notation for these.
-if((nn == "base" || nn == "meta" || nn == "link" ||nn == "text" || nn == "image" || nn == "option") &&
+if((nn == "base" || nn == "meta" || nn == "link" ||nn == "#text" || nn == "image" || nn == "option" || nn == "input" || nn == "script") &&
 (!top.childNodes || top.childNodes.length == 0)) {
 alert(nn + extra);
 return;
