@@ -5177,6 +5177,7 @@ expctr:
 			return false;
 		}
 		jSyncup(false);
+		cw->dot = startRange;
 		if (!frameExpand((line[0] == 'e'), startRange, endRange))
 			showError();
 /* meta http refresh could send to another page */
@@ -5548,7 +5549,7 @@ replaceframe:
 				return false;
 			}
 			cw->histLabel = label->prev;
-			if (label->label) /* could be 0 because of line deletion */
+			if (label->label)	/* could be 0 because of line deletion */
 				cw->dot = label->label;
 			free(label);
 			--cx;
@@ -5650,6 +5651,7 @@ replaceframe:
 			setError(MSG_RangeCmd, "g");
 			return false;
 		}
+		cw->dot = endRange;
 		p = (char *)fetchLine(endRange, -1);
 		j = pstLength((pst) p);
 		--j;
@@ -5759,6 +5761,7 @@ replaceframe:
 				fieldNumProblem(1, "g", j, n, n);
 				return false;
 			}
+			cw->dot = endRange;
 			if (cw->browseMode && h[0] == '#')
 				emode = false, cmd = 'b';
 			jsh = memEqualCI(h, "javascript:", 11);
