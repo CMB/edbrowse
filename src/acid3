@@ -429,13 +429,7 @@
       expect(i.nextNode(), document.forms[0]);
       expect(i.nextNode(), document.forms.form.elements[0]);
       expect(i.nextNode(), document.getElementsByTagName('table')[0]);
-//@` acid is generating improper html and expecting every browser to respond
-// in a certain way. That is not a fair test.
-// <table><tr><td></tbody></table>  is there a tbody or not?
-// Who's to say? tidy says there is not.
-/*
       expect(i.nextNode(), document.getElementsByTagName('tbody')[0]);
-*/
       expect(i.nextNode(), document.getElementsByTagName('tr')[0]);
       expect(i.nextNode(), document.getElementsByTagName('td')[0]);
       expect(i.nextNode(), document.getElementsByTagName('td')[0].getElementsByTagName('p')[0]);
@@ -464,11 +458,7 @@
       expect(i.previousNode(), document.getElementsByTagName('td')[0].getElementsByTagName('p')[0]);
       expect(i.previousNode(), document.getElementsByTagName('td')[0]);
       expect(i.previousNode(), document.getElementsByTagName('tr')[0]);
-/*
-//@` earlier comments about tbody
-/*
       expect(i.previousNode(), document.getElementsByTagName('tbody')[0]);
-*/
       expect(i.previousNode(), document.getElementsByTagName('table')[0]);
       expect(i.previousNode(), document.forms.form.elements[0]);
       expect(i.previousNode(), document.forms[0]);
@@ -532,10 +522,7 @@
       expect(w.nextSibling(), document.getElementsByTagName('p')[6]);
       expect(w.nextSibling(), document.getElementsByTagName('map')[0]);
       expect(w.lastChild(), document.getElementsByTagName('table')[0]);
-//@` Same problem as before; tidy doesn't generate <tbody>
-/*
       expect(w.lastChild(), document.getElementsByTagName('tbody')[0]);
-*/
       expect(w.nextNode(), document.getElementsByTagName('tr')[0]);
       expect(w.nextNode(), document.getElementsByTagName('td')[0]);
       expect(w.nextNode(), document.getElementsByTagName('p')[7]);
@@ -553,6 +540,32 @@
       expect(w.previousNode(), document.links[0].firstChild);
       return 1;
     },
+    function () {
+      // test 6: walking outside a tree
+      var doc = getTestDocument();
+      var p = doc.createElement('p');
+      doc.body.appendChild(p);
+      var b = doc.body;
+      var w = document.createTreeWalker(b, 0xFFFFFFFF, null, true);
+      assertEquals(w.currentNode, b, "basic use of TreeWalker failed: currentNode");
+      assertEquals(w.lastChild(), p, "basic use of TreeWalker failed: lastChild()");
+      assertEquals(w.previousNode(), b, "basic use of TreeWalker failed: previousNode()");
+      doc.documentElement.removeChild(b);
+      assertEquals(w.lastChild(), p, "TreeWalker failed after removing the current node from the tree");
+      assertEquals(w.nextNode(), null, "failed to walk into the end of a subtree");
+      doc.documentElement.appendChild(p);
+//@` Here we are again; I take a snapshot of nodes, so the walker won't know
+// or respond to the rearrangement of the tree. Can't complete this test.
+/*
+      assertEquals(w.previousNode(), doc.getElementsByTagName('title')[0], "failed to handle regrafting correctly");
+      p.appendChild(b);
+      assertEquals(w.nextNode(), p, "couldn't retrace steps");
+      assertEquals(w.nextNode(), b, "couldn't step back into root");
+      assertEquals(w.previousNode(), null, "root didn't retake its rootish position");
+*/
+      return 1;
+    },
+
 // other tests not yet folded in
   ]; // end of tests
   var log = '';
@@ -648,7 +661,14 @@ document.getElementById("selectors").contentDocument;
   </div>
   <p id="result"><span id="score">JS</span><span id="slash" class="hidden">/</span><span>?</span></p>
   <!-- The following line is used in a number of the tests. It is done using document.write() to sidestep complaints of validity. -->
-  <script type="text/javascript">document.write('<map name=""><area href="" shape="rect" coords="2,2,4,4" alt="<\'>"><iframe src="empty.png">FAIL<\/iframe><iframe src="empty.txt">FAIL<\/iframe><iframe src="empty.html" id="selectors"><\/iframe><form action="" name="form"><input type=HIDDEN><\/form><table><tr><td><p><\/tbody> <\/table><\/map>');</script>
+  <script type="text/javascript">
+//@` acid is generating improper html and expecting every browser to respond
+// in a certain way. That is not a fair test.
+// <table><tr><td></tbody></table>  is there a tbody or not?
+// Who's to say? tidy says there is not. And tidy is our engine. I "fixed"
+// the html, to have <tbody> and </tbody>, so now tbody is present in js.
+document.write('<map name=""><area href="" shape="rect" coords="2,2,4,4" alt="<\'>"><iframe src="empty.png">FAIL<\/iframe><iframe src="empty.txt">FAIL<\/iframe><iframe src="empty.html" id="selectors"><\/iframe><form action="" name="form"><input type=HIDDEN><\/form><table><tbody><tr><td><p><\/tbody> <\/table><\/map>');
+</script>
   <p id="instructions">To pass the test,<span></span> a browser must use its default settings, the animation has to be smooth, the score has to end on 100/100, and the final page has to look exactly, pixel for pixel, like <a href="reference.html">this reference rendering</a>.</p>
   <p id="remove-last-child-test">Scripting must be enabled to use this test.</p>
  </body>
