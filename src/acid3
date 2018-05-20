@@ -622,6 +622,30 @@
       return 1;
     },
 
+    // bucket 2: DOM2 Core and DOM2 Events
+    // Core
+    function () {
+      // test 17: hasAttribute
+      // missing attribute
+      assert(!document.getElementsByTagName('map')[0].hasAttribute('id'), "hasAttribute failure for 'id' on map");
+      // implied attribute
+      assert(!document.getElementsByTagName('form')[0].hasAttribute('method'), "hasAttribute failure for 'method' on form");
+      // actually present attribute
+      assert(document.getElementsByTagName('form')[0].hasAttribute('action'), "hasAttribute failure for 'action' on form");
+      assertEquals(document.getElementsByTagName('form')[0].getAttribute('action'), '', "attribute 'action' on form has wrong value");
+      return 2;
+    },
+    function () {
+      // test 18: nodeType (this test also relies on accurate parsing of the document)
+      assertEquals(document.nodeType, 9, "document nodeType wrong");
+      assertEquals(document.documentElement.nodeType, 1, "element nodeType wrong");
+// COMMENTED OUT FOR 2011 UPDATE - turns out instead of dropping Attr entirely, as Acid3 originally expected, the API is just being refactored
+//      if (document.createAttribute) // support for attribute nodes is optional in Acid3, because attribute nodes might be removed from DOM Core in the future.
+//        assertEquals(document.createAttribute('test').nodeType, 2, "attribute nodeType wrong"); // however, if they're supported, they'd better work
+      assertEquals(document.getElementById('score').firstChild.nodeType, 3, "text node nodeType wrong");
+      assertEquals(document.firstChild.nodeType, 10, "DOCTYPE nodeType wrong");
+      return 2;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';

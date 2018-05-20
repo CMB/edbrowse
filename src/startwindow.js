@@ -263,19 +263,19 @@ Object.defineProperty(document, "cookie", {
 get: eb$getcook, set: eb$setcook});
 
 Object.defineProperty(document, "documentElement", {
-get: function() { var e = this.firstChild;
+get: function() { var e = this.lastChild;
 if(!e) { alert3("missing html node"); return null; }
 if(e.nodeName != "HTML") alert3("html node name " + e.nodeName);
 return e; }});
 Object.defineProperty(document, "head", {
-get: function() { var e = this.firstChild;
+get: function() { var e = this.documentElement;
 if(!e) return null;
 // In case somebody adds extra nodes under <html>, I search for head and body.
 // But it should always be head, body.
 for(var i=0; i<e.childNodes.length; ++i)
 if(e.childNodes[i].nodeName == "HEAD") return e.childNodes[i];
 alert3("missing head node"); return null;},
-set: function(h) { var e = this.firstChild;
+set: function(h) { var e = this.documentElement;
 if(!e) return;
 var i;
 for(i=0; i<e.childNodes.length; ++i)
@@ -288,12 +288,12 @@ else e.insertBefore(h, e.childNodes[i]);
 }
 }});
 Object.defineProperty(document, "body", {
-get: function() { var e = this.firstChild;
+get: function() { var e = this.documentElement;
 if(!e) return null;
 for(var i=0; i<e.childNodes.length; ++i)
 if(e.childNodes[i].nodeName == "BODY") return e.childNodes[i];
 alert3("missing body node"); return null;},
-set: function(b) { var e = this.firstChild;
+set: function(b) { var e = this.documentElement;
 if(!e) return;
 var i;
 for(i=0; i<e.childNodes.length; ++i)
@@ -686,6 +686,7 @@ mw0.HTML = function(){}
 mw0.HTML.prototype = {
 clientHeight: 768,  clientWidth: 1024,  offsetHeight: 768,  offsetWidth: 1024,
  scrollHeight: 768,  scrollWidth: 1024,  scrollTop: 0,  scrollLeft: 0};
+mw0.DocType = function(){ this.nodeType = 10, this.nodeName = "DOCTYPE";}
 mw0.Head = function(){}
 mw0.Meta = function(){}
 mw0.Title = function(){}
@@ -2195,6 +2196,7 @@ mw0.jtfn2 = function (all, a, b) { return mw0.jtfn0(a, b, ';'); }
 URL = mw0.URL;
 Node = mw0.Node;
 HTML = mw0.HTML;
+DocType = mw0.DocType;
 Head = mw0.Head;
 Meta = mw0.Meta;
 Title = mw0.Title;
@@ -2522,6 +2524,8 @@ Object.defineProperty(mw0.CSSStyleDeclaration.prototype, "cssText", { set: eb$cs
 
 mw0.eb$qs$start = function()
 {
+// This is a stub for now.
+my$doc().prependChild(new DocType);
 mw0.cssGather();
 }
 
