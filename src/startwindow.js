@@ -1702,6 +1702,18 @@ c.prototype.dispatchEvent = mw0.dispatchEvent;
 }
 })();
 
+// nodes that we don't want to add children to, even if asked to do so.
+; (function() {
+var cnlist = ["HtmlObj", "Title", "CSSStyleDeclaration", "Script",
+"Node", "Area", "TextNode", "Image", "Option", "Link", "Meta", "Audio", "Canvas"];
+for(var i=0; i<cnlist.length; ++i) {
+var cn = cnlist[i];
+var c = mw0[cn];
+eval('c.prototype.appendChild = function() { alert3("adding children to ' + cn + '");}');
+eval('c.prototype.prependChild = function() { alert3("adding children to ' + cn + '");}');
+}
+})();
+
 /*********************************************************************
 As promised, Form is weird.
 If you add an input to a form, it adds under childNodes in the usual way,
@@ -1806,6 +1818,9 @@ t = "xyz";
 switch(t) { 
 case "body":
 c = new Body;
+break;
+case "object":
+c = new HtmlObj;
 break;
 case "a":
 c = new Anchor;

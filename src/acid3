@@ -586,6 +586,42 @@
       }
       return 1;
     },
+    function () {
+      // test 15: HTTP - Content-Type: text/plain
+      assert(!notifications['empty.txt'], "privilege escalation security bug: text file ran script");
+      var iframe = document.getElementsByTagName('iframe')[1];
+      assert(iframe, "no <iframe> support");
+      if (iframe && iframe.contentDocument) {
+        var ps = iframe.contentDocument.getElementsByTagName('p');
+        if (ps.length > 0) {
+          if (ps[0].firstChild && ps[0].firstChild.data && ps[0].firstChild.data == 'FAIL')
+            fail("text/plain file was parsed as HTML");
+        }
+      }
+      return 1;
+    },
+    function () {
+      // test 16: <object> handling and HTTP status codes
+      var oC = document.createElement('object');
+      oC.appendChild(document.createTextNode("FAIL"));
+      var oB = document.createElement('object');
+      var oA = document.createElement('object');
+      oA.data = "support-a.png";
+      oB.data = "support-b.png";
+      oB.appendChild(oC);
+      oC.data = "support-c.png";
+      oA.appendChild(oB);
+      document.getElementsByTagName("map")[0].appendChild(oA);
+      // assuming the above didn't raise any exceptions, this test has passed
+      // (the real test is whether the rendering is correct)
+//@` But edbrowse doesn't implement objects at all. Don't know what to do
+// with object.data, probably fold in the png images, but edbrowse
+// wouldn't render those images anyways, so I don't know.
+// For now I don't add any children to objects, so all you get is object a below map.
+// But object c is the only one with a proper png file, so again I don't know.
+      return 1;
+    },
+
 // other tests not yet folded in
   ]; // end of tests
   var log = '';
@@ -610,8 +646,9 @@
 // Other browsers expand all frames at the start anyways.
 // Expand on the first call to update, harmless on subsequent calls.
 frames[2].contentDocument;
-//@` And test 14 expands the png frame
+//@` And test 14 expands the png frame and test 15 expands the text frame
 frames[0].contentDocument;
+frames[1].contentDocument;
 
     if (index < tests.length) {
       var zeroPaddedIndex = index < 10 ? '0' + index : index;
