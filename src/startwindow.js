@@ -682,6 +682,10 @@ Do we support appendchild?   etc.
 mw0.Node = function(){}
 
 mw0.HTML = function(){}
+// Some screen attributes that are suppose to be there.
+mw0.HTML.prototype = {
+clientHeight: 768,  clientWidth: 1024,  offsetHeight: 768,  offsetWidth: 1024,
+ scrollHeight: 768,  scrollWidth: 1024,  scrollTop: 0,  scrollLeft: 0};
 mw0.Head = function(){}
 mw0.Meta = function(){}
 mw0.Title = function(){}
@@ -694,7 +698,6 @@ a.supports = function(s) { return s === "stylesheet"; }
 return a;
 }});
 mw0.Body = function(){}
-// Some screen attributes that are suppose to be there.
 mw0.Body.prototype = {
 clientHeight: 768,  clientWidth: 1024,  offsetHeight: 768,  offsetWidth: 1024,
  scrollHeight: 768,  scrollWidth: 1024,  scrollTop: 0,  scrollLeft: 0};

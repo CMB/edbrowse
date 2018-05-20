@@ -566,6 +566,26 @@
       return 1;
     },
 
+//@` I never saw a website use the Range object, ever,
+// or for that matter, NodeIterator or TreeWalker.
+// I implemented the last two just to satisfy acid3, and Range looks 4 times
+// as complicated as TreeWalker, so I'm gonna skip the Range tests for now,
+// unless you can show me a real world website that uses it.
+// On to test 14.
+    function () {
+      // test 14: HTTP - Content-Type: image/png
+      assert(!notifications['empty.png'], "privilege escalation security bug: PNG ran script");
+      var iframe = document.getElementsByTagName('iframe')[0];
+      assert(iframe, "no <iframe> support");
+      if (iframe && iframe.contentDocument) {
+        var ps = iframe.contentDocument.getElementsByTagName('p');
+        if (ps.length > 0) {
+          if (ps[0].firstChild && ps[0].firstChild.data && ps[0].firstChild.data == 'FAIL')
+            fail("PNG was parsed as HTML.");
+        }
+      }
+      return 1;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';
@@ -584,11 +604,15 @@
 // selectors and apply different style attributes.  Ugh!
     span.nextSibling.removeAttribute('class'); // no-op after first loop
     span.nextSibling.nextSibling.firstChild.data = tests.length; // no-op after first loop
+
 //@` Expand the selectors frame, so it doesn't have to expand on test 1,
 // which makes that test seem unnaturally slow and triggers a timing error message.
 // Other browsers expand all frames at the start anyways.
 // Expand on the first call to update, harmless on subsequent calls.
-document.getElementById("selectors").contentDocument;
+frames[2].contentDocument;
+//@` And test 14 expands the png frame
+frames[0].contentDocument;
+
     if (index < tests.length) {
       var zeroPaddedIndex = index < 10 ? '0' + index : index;
       try {

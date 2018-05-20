@@ -1776,9 +1776,9 @@ static bool readFile(const char *filename, const char *post, bool newwin,
 				   "frame suppressed because content type is %s",
 				   g.content);
 			nzFree(serverData);
-			serverData = cloneString("<body></body>");
-			serverDataLen = strlen(serverData);
-			return true;
+			serverData = 0;
+			serverDataLen = 0;
+			return false;
 		}
 
 		newfile = (changeFileName ? changeFileName : filename);
