@@ -1042,19 +1042,34 @@ before we put it somewhere else.
 This is a call to removeChild, also native, which unlinks in js,
 and passses the remove side effect back to edbrowse.
 The same reasoning holds for insertBefore.
+These functions also check for a hierarchy error using isabove().
+In fact we may as well throw the exception here.
 *********************************************************************/
 
+mw0.isabove = function(a, b)
+{
+var j = 0;
+while(b) {
+if(b == a) { e = new Error; e.HIERARCHY_REQUEST_ERR = e.code = 3; throw e; }
+if(++j == 1000) { alert3("isabove loop"); break; }
+b = b.parentNode;
+}
+}
+
 mw0.appendChild = function(c) {
+mw0.isabove(c, this);
 if(c.parentNode) c.parentNode.removeChild(c);
 return this.eb$apch2(c);
 }
 
 mw0.prependChild = function(c) {
+mw0.isabove(c, this);
 if(this.childNodes.length) this.insertBefore(c, this.childNodes[0]);
 else this.appendChild(c);
 }
 
 mw0.insertBefore = function(c, t) {
+mw0.isabove(c, this);
 if(c.parentNode) c.parentNode.removeChild(c);
 return this.eb$insbf(c, t);
 }
@@ -1700,6 +1715,8 @@ c.prototype.attachEvent = mw0.attachEvent;
 c.prototype.detachEvent = mw0.detachEvent;
 }
 c.prototype.dispatchEvent = mw0.dispatchEvent;
+// constants
+c.prototype.ELEMENT_NODE = 1, c.prototype.TEXT_NODE = 3, c.prototype.COMMENT_NODE = 8, c.prototype.DOCUMENT_NODE = 9, c.prototype.DOCUMENT_TYPE_NODE = 10, c.prototype.DOCUMENT_FRAGMENT_NODE = 11;
 }
 })();
 
@@ -1802,6 +1819,7 @@ mw0.Form.prototype.attachEvent = mw0.attachEvent;
 mw0.Form.prototype.detachEvent = mw0.detachEvent;
 }
 mw0.Form.prototype.dispatchEvent = mw0.dispatchEvent;
+mw0.Form.prototype.ELEMENT_NODE = 1, mw0.Form.prototype.TEXT_NODE = 3, mw0.Form.prototype.COMMENT_NODE = 8, mw0.Form.prototype.DOCUMENT_NODE = 9, mw0.Form.prototype.DOCUMENT_TYPE_NODE = 10, mw0.Form.prototype.DOCUMENT_FRAGMENT_NODE = 11;
 
 mw0.createElementNS = function(nsurl,s) {
 var u = mw0.createElement(s);
@@ -2259,6 +2277,7 @@ document.detachEvent = mw0.detachEvent;
 document.dispatchEvent = mw0.dispatchEvent;
 document.createEvent = mw0.createEvent;
 eventDebug = false;
+document.ELEMENT_NODE = 1, document.TEXT_NODE = 3, document.COMMENT_NODE = 8, document.DOCUMENT_NODE = 9, document.DOCUMENT_TYPE_NODE = 10, document.DOCUMENT_FRAGMENT_NODE = 11;
 
 document.createElement = mw0.createElement;
 document.createElementNS = mw0.createElementNS;
@@ -2432,6 +2451,7 @@ Array.prototype.setAttribute = mw0.setAttribute;
 Array.prototype.hasAttribute = mw0.hasAttribute;
 Array.prototype.removeAttribute = mw0.removeAttribute;
 Array.prototype.getAttributeNode = mw0.getAttributeNode;
+Array.prototype.ELEMENT_NODE = 1, Array.prototype.TEXT_NODE = 3, Array.prototype.COMMENT_NODE = 8, Array.prototype.DOCUMENT_NODE = 9, Array.prototype.DOCUMENT_TYPE_NODE = 10, Array.prototype.DOCUMENT_FRAGMENT_NODE = 11;
 Array.prototype.item = function(x) { return this[x] };
 Array.prototype.includes = function(x, start) {
 if(typeof start != "number") start = 0;

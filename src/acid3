@@ -646,6 +646,22 @@
       assertEquals(document.firstChild.nodeType, 10, "DOCTYPE nodeType wrong");
       return 2;
     },
+    function () {
+      // test 19: value of constants
+      var e = null;
+      try {
+        document.body.appendChild(document.documentElement);
+         // raises a HIERARCHY_REQUEST_ERR
+      } catch (err) {
+        e = err;
+      }
+      assertEquals(document.DOCUMENT_FRAGMENT_NODE, 11, "document DOCUMENT_FRAGMENT_NODE constant missing or wrong");
+      assertEquals(document.body.COMMENT_NODE, 8, "element COMMENT_NODE constant missing or wrong");
+      assertEquals(document.createTextNode('').ELEMENT_NODE, 1, "text node ELEMENT_NODE constant missing or wrong");
+      assert(e.HIERARCHY_REQUEST_ERR == 3, "exception HIERARCHY_REQUEST_ERR constant missing or wrong")
+      assertEquals(e.code, 3, "incorrect exception raised from appendChild()");
+      return 2;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';
