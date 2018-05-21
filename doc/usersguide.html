@@ -601,7 +601,7 @@ g : go to the link on the current line
 <br>,exp : expand all frames
 <br>ctr : contract a frame
 <br>^ : the back key, go back to the web page you were looking at before
-<br>& : internal link back key, go back to line before following internal link
+<br>&amp; : internal link back key, go back to line before following internal link
 <br>i=xyz : set the input field on the current line to xyz
 <br>i2=xyz : set the second input field on the current line to xyz
 <br>i2* : push the second button on the current line, usually submit or reset
@@ -2086,11 +2086,12 @@ Following an internal link to another section in the current document
 does not push anything onto the stack.
 In other words, ^ will not take you back to where you were.
 In fact, it will take you up to the previous web page, which is not what you want.
-Instead, a separate per-page history is accessible with the & key.
-You can use &3 or && similarily to ^, but only do so when you know
+Instead, a separate per-page history is accessible with the &amp; key.
+You can use &amp;3 or &amp;&amp;&amp;, similar to ^, but only do so when you know
 how far back you want to go.
-An alternative if you often want to go back to the table of content is to
-mark the current position with kr the return to it via the label 'r
+An alternative, if you often want to go back to the table of contents, is to
+mark the current position with kr, then return to it via the label 'r.
+Even with this label set, &amp; is often more convenient, since it takes you back to the last heading you jumped on, whence you can procede down the table of contents to the next section that interests you.
 
 <H3> <A NAME=move> The M Command </A> </H3>
 

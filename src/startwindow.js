@@ -1661,7 +1661,7 @@ Again, leading ; to avert a parsing ambiguity.
 ; (function() {
 var cnlist = ["HTML", "HtmlObj", "Head", "Title", "Body", "CSSStyleDeclaration", "Frame",
 "Anchor", "Element","HTMLElement", "Lister", "Listitem", "Tbody", "Table", "Div",
-"Span", "Trow", "Cell", "P", "Script", "Header", "Footer",
+"Form", "Span", "Trow", "Cell", "P", "Script", "Header", "Footer",
 // The following nodes shouldn't have any children, but the various
 // children methods could be called on them anyways.
 // And getAttribute applies to just about everything.
@@ -1741,12 +1741,6 @@ When adding an input element to a form,
 linnk form[element.name] to that element.
 *********************************************************************/
 
-mw0.Form.prototype.getElementsByTagName = mw0.getElementsByTagName;
-mw0.Form.prototype.getElementsByName = mw0.getElementsByName;
-mw0.Form.prototype.getElementsByClassName = mw0.getElementsByClassName;
-mw0.Form.prototype.querySelectorAll = querySelectorAll;
-mw0.Form.prototype.querySelector = querySelector;
-
 mw0.eb$formname = function(parent, child)
 {
 var s;
@@ -1768,9 +1762,6 @@ this.elements.push(newobj);
 mw0.eb$formname(this, newobj);
 }
 }
-mw0.Form.prototype.eb$apch1 = document.eb$apch1;
-mw0.Form.prototype.eb$apch2 = document.eb$apch2;
-mw0.Form.prototype.eb$insbf = document.eb$insbf;
 mw0.Form.prototype.insertBeforeNative = mw0.insertBefore;
 mw0.Form.prototype.insertBefore = function(newobj, item) {
 this.insertBeforeNative(newobj, item);
@@ -1783,8 +1774,6 @@ break;
 mw0.eb$formname(this, newobj);
 }
 }
-mw0.Form.prototype.prependChild = mw0.prependChild;
-mw0.Form.prototype.hasChildNodes = mw0.hasChildNodes;
 mw0.Form.prototype.removeChildNative = document.removeChild;
 mw0.Form.prototype.removeChild = function(item) {
 this.removeChildNative(item);
@@ -1796,30 +1785,6 @@ break;
 }
 return item;
 }
-mw0.Form.prototype.replaceChild = mw0.replaceChild;
-Object.defineProperty(mw0.Form.prototype, "firstChild", { get: function() { return this.childNodes[0]; } });
-Object.defineProperty(mw0.Form.prototype, "lastChild", { get: function() { return this.childNodes[this.childNodes.length-1]; } });
-Object.defineProperty(mw0.Form.prototype, "nextSibling", { get: function() { return mw0.eb$getSibling(this,"next"); } });
-Object.defineProperty(mw0.Form.prototype, "previousSibling", { get: function() { return mw0.eb$getSibling(this,"previous"); } });
-
-mw0.Form.prototype.getAttribute = mw0.getAttribute;
-mw0.Form.prototype.setAttribute = mw0.setAttribute;
-mw0.Form.prototype.hasAttribute = mw0.hasAttribute;
-mw0.Form.prototype.removeAttribute = mw0.removeAttribute;
-mw0.Form.prototype.getAttributeNode = mw0.getAttributeNode;
-mw0.Form.prototype.cloneNode = mw0.cloneNode;
-mw0.Form.prototype.importNode = mw0.importNode;
-mw0.Form.prototype.compareDocumentPosition = mw0.compareDocumentPosition;
-mw0.Form.prototype.eb$listen = mw0.eb$listen;
-mw0.Form.prototype.eb$unlisten = mw0.eb$listen;
-mw0.Form.prototype.addEventListener = mw0.addEventListener;
-mw0.Form.prototype.removeEventListener = mw0.removeEventListener;
-if(mw0.attachOn) {
-mw0.Form.prototype.attachEvent = mw0.attachEvent;
-mw0.Form.prototype.detachEvent = mw0.detachEvent;
-}
-mw0.Form.prototype.dispatchEvent = mw0.dispatchEvent;
-mw0.Form.prototype.ELEMENT_NODE = 1, mw0.Form.prototype.TEXT_NODE = 3, mw0.Form.prototype.COMMENT_NODE = 8, mw0.Form.prototype.DOCUMENT_NODE = 9, mw0.Form.prototype.DOCUMENT_TYPE_NODE = 10, mw0.Form.prototype.DOCUMENT_FRAGMENT_NODE = 11;
 
 mw0.createElementNS = function(nsurl,s) {
 var u = mw0.createElement(s);
