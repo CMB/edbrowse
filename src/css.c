@@ -3,6 +3,8 @@ Parse css files into css descriptors, and apply those descriptors to nodes.
 All this was written in js but was too slow.
 Some sites have thousands of descriptors and hundreds of nodes,
 e.g. www.stackoverflow.com with 5,050 descriptors.
+Other than visi_status(), these are all called from running js,
+so can use the native api around the js engine.
 *********************************************************************/
 
 #include "eb.h"
@@ -1525,7 +1527,7 @@ all the div sections just below the current node.
 			}
 			if (!rootobj) {
 				const char *a =
-				    get_property_string(obj, "nodeName");
+				    get_property_string_nat(obj, "nodeName");
 				rc = (a && stringEqualCI(a, "document"));
 				cnzFree(a);
 				if (rc ^ negate)
@@ -1554,7 +1556,7 @@ all the div sections just below the current node.
 			if (t)
 				rc = t->disabled;
 			else
-				rc = get_property_bool(obj, "disabled");
+				rc = get_property_bool_nat(obj, "disabled");
 			if (p[1] == 'e')
 				rc ^= 1;
 			if (rc ^ negate)
@@ -1568,7 +1570,7 @@ all the div sections just below the current node.
 			if (t)
 				rc = t->rdonly;
 			else
-				rc = get_property_bool(obj, "readonly");
+				rc = get_property_bool_nat(obj, "readonly");
 			if (p[6] == 'w')
 				rc ^= 1;
 			if (rc ^ negate)
@@ -2013,7 +2015,7 @@ static char *attrify(jsobjtype obj, char *line)
 		*t2++ = 0;
 		stringAndBytes(&s, &sl, t, t1 - t);
 		t1 += 5;
-		v = get_property_string(obj, t1);
+		v = get_property_string_nat(obj, t1);
 		if (v) {
 			stringAndString(&s, &sl, v);
 			nzFree(v);
@@ -2081,7 +2083,7 @@ in fact it's easier to list the tags that allow it.
 			"P", "SPAN", "TD", "TH", "XMP",
 			0
 		};
-		s = get_property_string(obj, "nodeName");
+		s = get_property_string_nat(obj, "nodeName");
 		if (s && stringInList(ok2inject, s) >= 0)
 			forbidden = false;
 		nzFree(s);
@@ -2090,8 +2092,8 @@ in fact it's easier to list the tags that allow it.
 	}
 
 	if (matchtype == 1) {	// before
-		if (get_property_bool(obj, "inj$before")) {
-			textobj = get_property_object(obj, "firstChild");
+		if (get_property_bool_nat(obj, "inj$before")) {
+			textobj = get_property_object_nat(obj, "firstChild");
 		} else {
 			textobj =
 			    instantiate_nat(cf->winobj, "eb$inject",
@@ -2102,13 +2104,13 @@ in fact it's easier to list the tags that allow it.
 			run_function_onearg_nat(obj, "prependChild", textobj);
 // It is now linked in and safe from gc
 			delete_property_nat(cf->winobj, "eb$inject");
-			set_property_bool(obj, "inj$before", true);
+			set_property_bool_nat(obj, "inj$before", true);
 		}
 	}
 
 	if (matchtype == 2) {	// after
-		if (get_property_bool(obj, "inj$after")) {
-			textobj = get_property_object(obj, "lastChild");
+		if (get_property_bool_nat(obj, "inj$after")) {
+			textobj = get_property_object_nat(obj, "lastChild");
 		} else {
 			textobj =
 			    instantiate_nat(cf->winobj, "eb$inject",
@@ -2119,12 +2121,12 @@ in fact it's easier to list the tags that allow it.
 			run_function_onearg_nat(obj, "appendChild", textobj);
 // It is now linked in and safe from gc
 			delete_property_nat(cf->winobj, "eb$inject");
-			set_property_bool(obj, "inj$after", true);
+			set_property_bool_nat(obj, "inj$after", true);
 		}
 	}
 
 	if (matchtype)
-		obj = get_property_object(textobj, "style");
+		obj = get_property_object_nat(textobj, "style");
 // obj is now the style object, ready for attributes
 
 	s = initString(&sl);
@@ -2140,7 +2142,7 @@ in fact it's easier to list the tags that allow it.
 			    (stringEqual(r->atname, "visibility") &&
 			     strlen(r->atval)
 			     && !stringEqual(r->atval, "hidden")))
-				set_property_bool(obj, "hov$vis", true);
+				set_property_bool_nat(obj, "hov$vis", true);
 			continue;
 		}
 // special code for before after content
@@ -2178,9 +2180,9 @@ in fact it's easier to list the tags that allow it.
 	s_attr = attrify(original, s);
 	nzFree(s);
 	s = s_attr;
-	set_property_string(textobj, "data", s);
+	set_property_string_nat(textobj, "data", s);
 	nzFree(s);
-	set_property_bool(textobj, "inj$css", true);
+	set_property_bool_nat(textobj, "inj$css", true);
 }
 
 // This is the native function for getComputedStyle

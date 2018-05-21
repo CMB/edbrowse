@@ -1722,7 +1722,7 @@ c.prototype.ELEMENT_NODE = 1, c.prototype.TEXT_NODE = 3, c.prototype.COMMENT_NOD
 
 // nodes that we don't want to add children to, even if asked to do so.
 ; (function() {
-var cnlist = ["HtmlObj", "Title", "CSSStyleDeclaration", "Script",
+var cnlist = ["HtmlObj", "Title", "Script",
 "Node", "Area", "TextNode", "Image", "Option", "Link", "Meta", "Audio", "Canvas"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i];
