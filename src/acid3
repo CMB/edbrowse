@@ -662,6 +662,20 @@
       assertEquals(e.code, 3, "incorrect exception raised from appendChild()");
       return 2;
     },
+    function () {
+      // test 20: nulls bytes in various places
+      assert(!document.getElementById('bucket1\0error'), "null in getElementById() probably terminated string");
+      var ok = true;
+      try {
+        document.createElement('form\0div');
+        ok = false;
+      } catch (e) {
+        if (e.code != 5)
+          ok = false;
+      }
+      assert(ok, "didn't raise the right exception for null byte in createElement()");
+      return 2;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';

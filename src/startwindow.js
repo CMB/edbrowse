@@ -1797,6 +1797,10 @@ var c;
 var t = s.toLowerCase();
 if(!t.match(/^[a-z\d_]+$/)) {
 alert3("createElement argument " + t);
+// acid3 says we should throw an exception if string contains null,
+// but what about bogus strings. www.oranges.com sends us some very
+// strange strings that I don't know what to do with.
+if(t.match(/\0/)) { e = new Error; e.code = 5; throw e; }
 t = "xyz";
 }
 switch(t) { 
