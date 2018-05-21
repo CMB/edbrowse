@@ -627,24 +627,24 @@ bool run_event_bool(jsobjtype obj, const char *pname, const char *evname)
 	return run_function_bool(obj, evname);
 }
 
-void run_function_onearg(jsobjtype obj, const char *name, jsobjtype a)
+int run_function_onearg(jsobjtype obj, const char *name, jsobjtype a)
 {
+	int rc;
 	if (!allowJS || !cf->winobj)
-		return;
+		return 0;
 	if (!obj) {
 		debugPrint(3, "run_function_onearg(0, %s", name);
-		return;
+		return 0;
 	}
-	if (whichproc == 'j') {
-		run_function_onearg_nat(obj, name, a);
-		return;
-	}
+	if (whichproc == 'j')
+		return run_function_onearg_nat(obj, name, a);
 	debugPrint(5, "> function %s", name);
 	set_js_globals();
 	whichproc = 'j';	// this line is totally important!
-	run_function_onearg_nat(obj, name, a);
+	rc = run_function_onearg_nat(obj, name, a);
 	whichproc = 'e';
 	debugPrint(5, "< ok");
+	return rc;
 }				/* run_function_onearg */
 
 /*********************************************************************

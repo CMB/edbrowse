@@ -3,8 +3,9 @@ Parse css files into css descriptors, and apply those descriptors to nodes.
 All this was written in js but was too slow.
 Some sites have thousands of descriptors and hundreds of nodes,
 e.g. www.stackoverflow.com with 5,050 descriptors.
-Other than visi_status(), these are all called from running js,
-so can use the native api around the js engine.
+These functions are all called from running js,
+so can use the native api around the js engine,
+which is a tad faster.
 *********************************************************************/
 
 #include "eb.h"
@@ -1282,8 +1283,7 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 		bool negate = mod->negate;
 		char c = p[0];
 
-// I'll assume that class and id, once set, are unchanging, like nodeName.
-		if (mod->isclass && t) {
+		if (mod->isclass && t && bulkmatch) {
 			char *v = t->class;
 			char *u = p + 8;
 			int l = strlen(u);
@@ -2050,8 +2050,9 @@ Only looking for display=something or visibility=visible.
 Set a flag if that is found.
 *********************************************************************/
 
-static void do_rules(jsobjtype obj, struct rule *r, bool force)
+static void do_rules(jsobjtype obj, struct rule *r0)
 {
+	struct rule *r, *r2;
 	char *s, *s_attr;
 	int sl;
 	jsobjtype textobj, original = obj;
@@ -2130,9 +2131,14 @@ in fact it's easier to list the tags that allow it.
 // obj is now the style object, ready for attributes
 
 	s = initString(&sl);
-	for (; r; r = r->next) {
+	for (r = r0; r; r = r->next) {
 		bool has;
 		enum ej_proptype what;
+
+// only the first one counts.
+		for (r2 = r0; r2 != r; r2 = r2->next)
+			if (stringEqual(r2->atname, r->atname))
+				goto next_rule;
 
 // hover only looks for display visible
 		if (matchhover) {
@@ -2155,15 +2161,16 @@ in fact it's easier to list the tags that allow it.
 			continue;
 		}
 // if it appears to be part of the prototype, and not the object,
-// I won't write it, even if force is true.
+// I won't write it.
 		has = has_property_nat(obj, r->atname);
 		what = typeof_property_nat(obj, r->atname);
 		if (has && !what)
 			continue;
-		if (what && !force)
-			continue;
 		++bulktotal;
 		set_property_string_nat(obj, r->atname, r->atval);
+
+next_rule:
+		;
 	}
 
 	if (!sl)
@@ -2200,7 +2207,7 @@ void cssApply(jsobjtype node, jsobjtype destination)
 
 	for (d = cm->descriptors; d; d = d->next) {
 		if (qsaMatchGroup(t, node, d))
-			do_rules(destination, d->rules, false);
+			do_rules(destination, d->rules);
 	}
 }
 
@@ -2232,7 +2239,7 @@ void cssText(jsobjtype node, const char *rulestring)
 		cssPiecesFree(d0);
 		return;
 	}
-	do_rules(node, d0->rules, true);
+	do_rules(node, d0->rules);
 	cssPiecesFree(d0);
 }
 
@@ -2553,7 +2560,7 @@ static void cssEverybody(void)
 					if (!style)
 						continue;
 				}
-				do_rules(style, d->rules, false);
+				do_rules(style, d->rules);
 			}
 			nzFree(a);
 		}
@@ -2561,44 +2568,4 @@ static void cssEverybody(void)
 	bulkmatch = false;
 	matchtype = 0;
 	matchhover = false;
-}
-
-// determine visibility status from style attributes.
-int visi_status(struct htmlTag *t)
-{
-	jsobjtype so;		// style object
-	char *v;
-	int rc = VISI_DEFAULT;
-
-	if (!isJSAlive || !t->jv)
-		return rc;
-	so = t->style;
-	if (!so)
-		so = get_property_object(t->jv, "style");
-	if (!so)
-		return rc;
-	t->style = so;
-
-	rc = VISI_SHOW;
-	v = get_property_string(so, "display");
-	if (v) {
-		if (stringEqual(v, "none"))
-			rc = VISI_HIDDEN;
-		nzFree(v);
-	}
-
-	v = get_property_string(so, "visibility");
-	if (v) {
-		if (stringEqual(v, "hidden"))
-			rc = VISI_HIDDEN;
-		nzFree(v);
-	}
-
-	if (rc == VISI_HIDDEN) {
-// It is hidden, does it come to light on hover?
-		if (get_property_bool(so, "hov$vis"))
-			rc = VISI_HOVER;
-	}
-
-	return rc;
 }

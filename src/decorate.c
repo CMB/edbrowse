@@ -900,6 +900,7 @@ static void domLink(struct htmlTag *t, const char *classname,	/* instantiate thi
 	const char *idname = t->id;
 	const char *membername = 0;	/* usually symname */
 	const char *href_url = t->href;
+	const char *tcn = t->class;
 	const char *stylestring = attribVal(t, "style");
 	jsobjtype so = 0;	/* obj.style */
 	jsobjtype ato = 0;	/* obj.attributes */
@@ -1013,7 +1014,10 @@ Don't do any of this if the tag is itself <style>. */
 
 /* Other attributes that are expected by pages, even if they
  * aren't populated at domLink-time */
-		set_property_string(io, "class", "");
+		if (!tcn)
+			tcn = emptyString;
+		set_property_string(io, "class", tcn);
+		set_property_string(io, "last$class", tcn);
 		set_property_string(io, "nodeValue", "");
 		ato = instantiate(io, "attributes", "NamedNodeMap");
 		set_property_object(ato, "owner", io);
@@ -1509,10 +1513,10 @@ static void pushAttributes(const struct htmlTag *t)
 		return;
 	for (i = 0; a[i]; ++i) {
 // There are some exceptions, some attributes that we handle individually.
-		const char *const exclist[] = {
+		static const char *const exclist[] = {
 			"onclick", "onchange", "onsubmit", "onreset", "onload",
 			"onunload",
-			"name", "id",
+			"name", "id", "class",
 			"checked", "value", "type", "style",
 			"href", "src", "action",
 			0

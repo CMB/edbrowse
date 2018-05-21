@@ -48,10 +48,10 @@
   #bucket5 { font-size: 36px; margin-left: 13px; padding-left: 0; padding-right: 94px; margin-right: 25px; }
   #bucket6 { font-size: 40px; margin-left: -10px; padding-left: 104px; padding-right: -10px; }
 
-//@` Changing these classes from z to zP is suppose to bring the bucket
+//@` Changing these classes from z to zP or zPP etc brings the bucket
 // paragraphs back to light, as the original z class had a rule that said
-// invisible, but I don't recompute css as the class changes,
-// so it remains hidden. Use the hover command.
+// invisible, but the paragraphs are empty of text,
+// it's just the background color that changes, so we don't see it.
 
   /* colours for them */
   .z, .zP, .zPP, .zPPP, .zPPPP, .zPPPPP { background: black; }
@@ -572,6 +572,14 @@
 // as complicated as TreeWalker, so I'm gonna skip the Range tests for now,
 // unless you can show me a real world website that uses it.
 // On to test 14.
+    function() { return 1; }, // test 7
+    function() { return 1; }, // test 8
+    function() { return 1; }, // test 9
+    function() { return 1; }, // test 10
+    function() { return 1; }, // test 11
+    function() { return 1; }, // test 12
+    function() { return 1; }, // test 13
+
     function () {
       // test 14: HTTP - Content-Type: image/png
       assert(!notifications['empty.png'], "privilege escalation security bug: PNG ran script");
@@ -757,7 +765,7 @@ frames[1].contentDocument;
       var elapsedTime = ((endTime - startTime) - (delay * tests.length)) / 1000;
       log += "Total elapsed time: " + elapsedTime.toFixed(2) + "s";
       if (errors == 0)
-        log += "\nNo JS errors and no timing issues.\nWas the rendering pixel-for-pixel perfect too?";
+        log += "\nNo JS errors and no timing issues, but tests 7 through 13 are postponed.\nWas the rendering pixel-for-pixel perfect too?";
   alert(log);
     }
   }

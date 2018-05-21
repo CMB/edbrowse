@@ -99,7 +99,7 @@ char *get_property_url(jsobjtype owner, bool action) ;
 void rebuildSelectors(void);
 bool run_function_bool(jsobjtype obj, const char *name);
 bool run_event_bool(jsobjtype obj, const char *pname, const char *eevname);
-void run_function_onearg(jsobjtype obj, const char *name, jsobjtype o);
+int run_function_onearg(jsobjtype obj, const char *name, jsobjtype o);
 void set_basehref(const char *b);
 
 /* sourcefile=fetchmail.c */
@@ -405,7 +405,7 @@ jsobjtype instantiate_nat(jsobjtype parent, const char *name, const char *classn
 int set_property_function_nat(jsobjtype parent, const char *name, const char *body) ;
 int get_arraylength_nat(jsobjtype a);
 bool run_function_bool_nat(jsobjtype obj, const char *name);
-void run_function_onearg_nat(jsobjtype obj, const char *name, jsobjtype o);
+int run_function_onearg_nat(jsobjtype obj, const char *name, jsobjtype o);
 char *run_script_nat(const char *s);
 
 /* sourcefile=css.c */
@@ -416,9 +416,4 @@ jsobjtype querySelector(const char *selstring, jsobjtype topobj);
 void cssAttributeCrunch(char *s);
 void cssApply(jsobjtype node, jsobjtype destination);
 void cssText(jsobjtype node, const char *rulestring);
-int visi_status(struct htmlTag *t);
-#define VISI_DEFAULT 0
-#define VISI_HIDDEN 1
-#define VISI_SHOW 2
-#define VISI_HOVER 3
 

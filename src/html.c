@@ -3063,15 +3063,24 @@ li_hide:
 		return;
 	}
 
-	if (opentag) {
+	if (!opentag && ti->bits & TAG_NOSLASH)
+		return;
+
+// We'll be fetching js attributes for display, so we should set the frame.
+// f0 should always be nonzero.
+	if (t->f0)
+		cf = t->f0;
+
+	if (opentag && t->jv) {
 // what is the visibility now?
-		uchar v_now = visi_status(t);
+		uchar v_now =
+		    run_function_onearg(cf->winobj, "eb$visible", t->jv);
 // first some stats
-		if (v_now == VISI_HIDDEN)
+		if (v_now == 1)
 			++invcount;
-		if (v_now == VISI_HOVER)
+		if (v_now == 3)
 			++hovcount;
-		if (v_now == VISI_HIDDEN) {
+		if (v_now == 1) {
 			if (!showHover) {
 				inv2 = t;
 				return;
@@ -3086,7 +3095,7 @@ li_hide:
 					stringAndString(&ns, &ns_l, "\r<{\r");
 			}
 		}
-		if (!showHover && v_now == VISI_HOVER && !activeBelow(t)) {
+		if (!showHover && v_now == 3 && !activeBelow(t)) {
 			inv2 = t;
 			return;
 		}
@@ -3099,11 +3108,6 @@ li_hide:
 			}
 		}
 	}
-
-	if (!opentag && ti->bits & TAG_NOSLASH)
-		return;
-
-	cf = t->f0;
 
 	retainTag = true;
 	if (invisible)
@@ -3546,6 +3550,7 @@ unparen:
 /* returns an allocated string */
 char *render(int start)
 {
+	struct ebFrame *save_cf = cf;
 	ns = initString(&ns_l);
 	invisible = false;
 	inv2 = inv3 = NULL;
@@ -3553,5 +3558,6 @@ char *render(int start)
 	currentForm = currentA = NULL;
 	traverse_callback = renderNode;
 	traverseAll(start);
+	cf = save_cf;
 	return ns;
 }				/* render */

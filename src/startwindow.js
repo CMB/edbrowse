@@ -1302,6 +1302,7 @@ if(debug) alert3("linking form.radio " + item + " with " + a1.length + " buttons
 a2.type = a1.type;
 a2.nodeName = a1.nodeName;
 a2.class = a1.class;
+a2.last$class = a1.last$class;
 a2.nodeValue = a1.nodeValue;
 for(i = 0; i < a1.length; ++i) {
 var p = mw0.findObject(node1, a1[i], "");
@@ -2518,6 +2519,49 @@ my$doc().prependChild(new DocType);
 mw0.cssGather();
 }
 
+/*********************************************************************
+This function doesn't do all it should, and I'm not even sure what it should do.
+If class changes from x to y, it throws out the old style completely,
+and rebuilds a new style using getComputedStyle().
+If prior javascript had specifically set style.foo = "bar", that's gone.
+Maybe that's the right thing to do, maybe not.
+Styles for other nodes are not recomputed.
+Maybe they should be, maybe not.
+We might have selectors .x P and .y P, thus changing P below,
+but that change is not made.
+Thing is, we'd have to recompute every node in the tree if we wanted to be sure.
+I'm assuming the class change does not ripple up or down or sideways,
+and affects only the current node.
+Finally, any hover effects from .y are not considered, just as they are not
+considered in getComputedStyle().
+And any hover effects from .x are lost.
+Injected text, as in .x:before { content:hello } remains.
+I don't know if that's right either.
+*********************************************************************/
+
+mw0.eb$visible = function(t)
+{
+var rc = 2; // show by default
+var so; // style object
+if(!t || !(so = t.style)) return 0;
+// If class has changed, recompute style
+var c1 = t.last$class;
+var c2 = t.class;
+if(!c1) c1 = "";
+if(!c2) c2 = "";
+if(c1 != c2) {
+t.last$class = c2;
+var so = getComputedStyle(t, 0);
+t.style = so;
+}
+if(so.display == "none" || so.visibility == "hidden") {
+rc = 1;
+// It is hidden, does it come to light on hover?
+if(so.hov$vis) rc = 3;
+}
+return rc;
+}
+
 // This is a stub.
 mw0.DOMParser = function() {
 return {parseFromString: function(t,y) {
@@ -2544,6 +2588,7 @@ return "<div>XMLSerializer not yet implemented</div>"; }
 } // master compile
 
 eb$qs$start = mw0.eb$qs$start;
+eb$visible = mw0.eb$visible;
 DOMParser = mw0.DOMParser;
 XMLSerializer = mw0.XMLSerializer;
 document.xmlVersion = 0;
