@@ -578,6 +578,7 @@ g : suit le lien sur la ligne courante
 <br>,exp : affiche (déploie) tous les cadres
 <br>ctr : contracte un cadre
 <br>^ : la touche de retour, retourne à la page Web précédente
+<br>& : touche de retour pour lien internes à une page Web, retourne à la ligne avant de suivre une référence
 <br>i=xyz : remplit le formulaire sur ligne courante avec 'xyz'
 <br>i2=xyz : place le deuxième formulaire de la ligne courante avec 'xyz'
 <br>i2* : appuie sur le 2ème bouton de la ligne courante, habituellement envoyer ou remettre à zéro
@@ -2165,10 +2166,11 @@ Suivre un lien interne à une autre section dans le document courant
 ne pousse rien sur la pile.
 En d'autres termes, «^» ne vous renverra pas où vous étiez.
 En fait, il vous renverra à la page Web précédente, ce qui n'est pas ce que vous vouliez.
-Si vous voulez jeter un coup d'oeil à l'annexe I, puis revenir, 
-marquer la position actuelle avec «kr».
-Après avoir visité l'annexe, employer l'étiquette «'r» pour revenir 
-où vous étiez dans le fichier.
+À la place, vous pouvez utiliser la touche «&» qui conserve l'historique des liens
+internes à une page.
+Alternativement, si vous retournez souvent à la table des matières par exemple,
+vous pouvez marquer la position actuelle avec «kr» puis, quand vous voulez y
+revenir, employer l'étiquette «'r» qui vous ramennera à la position enregistrée.
 </p>
 
 <h3> <a name="move"> La commande M </a> </h3>
