@@ -1120,7 +1120,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		else {
 			jSyncup(false);
 			cf = t->f0;
-			run_event_bool(t->jv, t->info->name, "onchange");
+			run_event_bool(t->jv, t->info->name, "onchange", 0);
 			jSideEffects();
 			if (js_redirects)
 				return true;
@@ -1666,7 +1666,8 @@ bool infPush(int tagno, char **post_string)
 				rc = true;
 				if (form->jv)
 					rc = run_event_bool(form->jv,
-							    "form", "onreset");
+							    "form", "onreset",
+							    0);
 				jSideEffects();
 				if (!rc)
 					return true;
@@ -1690,7 +1691,7 @@ bool infPush(int tagno, char **post_string)
 			rc = true;
 			if (form->jv)
 				rc = run_event_bool(form->jv, "form",
-						    "onsubmit");
+						    "onsubmit", 0);
 			jSideEffects();
 			if (!rc)
 				return true;
@@ -1870,11 +1871,15 @@ void javaSubmitsForm(jsobjtype v, bool reset)
 
 bool bubble_event(const struct htmlTag *t, const char *name)
 {
-	bool first = true;
-	bool rc = true;
+	const struct htmlTag *t0 = t;
+	bool first = true, rc = true;
+	jsobjtype e;		// the event object
+	struct ebFrame *save_cf = cf;
 
-	if (!isJSAlive)
+	if (!isJSAlive || !t0->jv)
 		return true;
+
+	e = create_event(t0->jv, name);
 
 	do {
 		if (!t->jv)
@@ -1886,8 +1891,11 @@ bool bubble_event(const struct htmlTag *t, const char *name)
 			first = false;
 		}
 		cf = t->f0;
-		rc = run_event_bool(t->jv, t->info->name, name);
+		rc = run_event_bool(t->jv, t->info->name, name, e);
+		if (get_property_bool(e, "cancelled"))
+			goto done;
 	} while (rc && (t = t->parent));
+
 // And finally check handler on the document.
 	cf = &(cw->f0);
 	if (rc && handlerPresent(cf->docobj, name)) {
@@ -1896,10 +1904,16 @@ bool bubble_event(const struct htmlTag *t, const char *name)
 			first = false;
 		}
 		cf = &(cw->f0);
-		rc = run_event_bool(cf->docobj, "document", name);
+		rc = run_event_bool(cf->docobj, "document", name, e);
 	}
+
+done:
 	if (!first)
 		jSideEffects();
+	cf = save_cf;
+	if (rc && get_property_bool(e, "prev$default"))
+		rc = false;
+	unlink_event(t0->jv);
 	return rc;
 }				/* bubble_event */
 
@@ -2480,15 +2494,18 @@ void runOnload(void)
 	int i, action;
 	int fn;			/* form number */
 	struct htmlTag *t;
+	jsobjtype e;		// onload event
 
 	if (!isJSAlive)
 		return;
 
-	run_event_bool(cf->docobj, "document", "onDOMContentLoaded");
+	run_event_bool(cf->docobj, "document", "onDOMContentLoaded", 0);
+
+	e = create_event(cf->winobj, "onload");
 
 /* window and document onload */
-	run_event_bool(cf->winobj, "window", "onload");
-	run_event_bool(cf->docobj, "document", "onload");
+	run_event_bool(cf->winobj, "window", "onload", e);
+	run_event_bool(cf->docobj, "document", "onload", e);
 
 	fn = -1;
 	for (i = 0; i < cw->numTags; ++i) {
@@ -2503,11 +2520,11 @@ void runOnload(void)
 		if (!t->jv)
 			continue;
 		if (action == TAGACT_BODY && t->onload)
-			run_event_bool(t->jv, "body", "onload");
+			run_event_bool(t->jv, "body", "onload", e);
 		if (action == TAGACT_BODY && t->onunload)
 			unloadHyperlink("document.body.onunload", "Body");
 		if (action == TAGACT_FORM && t->onload)
-			run_event_bool(t->jv, "form", "onload");
+			run_event_bool(t->jv, "form", "onload", e);
 /* tidy5 says there is no form.onunload */
 		if (action == TAGACT_FORM && t->onunload) {
 			char formfunction[48];
@@ -2516,6 +2533,8 @@ void runOnload(void)
 			unloadHyperlink(formfunction, "Form");
 		}
 	}
+
+	unlink_event(cf->winobj);
 }				/* runOnload */
 
 /*********************************************************************

@@ -98,27 +98,29 @@ void setupJavaDom(void) ;
 char *get_property_url(jsobjtype owner, bool action) ;
 void rebuildSelectors(void);
 bool run_function_bool(jsobjtype obj, const char *name);
-bool run_event_bool(jsobjtype obj, const char *pname, const char *eevname);
+jsobjtype create_event(jsobjtype parent, const char *evname);
+void unlink_event(jsobjtype parent);
+bool run_event_bool(jsobjtype obj, const char *pname, const char *evname, jsobjtype evobj);
 int run_function_onearg(jsobjtype obj, const char *name, jsobjtype o);
 void set_basehref(const char *b);
 
 /* sourcefile=fetchmail.c */
-int fetchMail(int account) ;
-int fetchAllMail(void) ;
-void scanMail(void) ;
-bool emailTest(void) ;
+int fetchMail(int account);
+int fetchAllMail(void);
+void scanMail(void);
+bool emailTest(void);
 void mail64Error(int err);
-char *emailParse(char *buf) ;
-bool setupReply(bool all) ;
+char *emailParse(char *buf);
+bool setupReply(bool all);
 
 /* sourcefile=format.c */
-void prepareForBrowse(char *h, int h_len) ;
+void prepareForBrowse(char *h, int h_len);
 void prepareForField(char *h);
-bool breakLine(const char *line, int len, int *newlen) ;
-void breakLineSetup(void) ;
-char *htmlReformat(char *buf) ;
-void extractEmailAddresses(char *line) ;
-void cutDuplicateEmails(char *tolist, char *cclist, const char *reply) ;
+bool breakLine(const char *line, int len, int *newlen);
+void breakLineSetup(void);
+char *htmlReformat(char *buf);
+void extractEmailAddresses(char *line);
+void cutDuplicateEmails(char *tolist, char *cclist, const char *reply);
 int byteOrderMark(const uchar *buf, int buflen);
 bool looksBinary(const unsigned char *buf, int buflen);
 void looks_8859_utf8(const uchar *buf, int buflen, bool * iso_p, bool * utf8_p);

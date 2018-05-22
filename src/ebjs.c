@@ -616,15 +616,44 @@ bool run_function_bool(jsobjtype obj, const char *name)
 	return rc;
 }				/* run_function_bool */
 
-bool run_event_bool(jsobjtype obj, const char *pname, const char *evname)
+jsobjtype create_event(jsobjtype parent, const char *evname)
 {
-	bool evdebug = false;
+	jsobjtype e;
+	const char *evname1 = evname;
+	if (evname[0] == 'o' && evname[1] == 'n')
+		evname1 += 2;
+// gc$event protects from garbage collection
+	e = instantiate(parent, "gc$event", "Event");
+	set_property_string(e, "type", evname1);
+	return e;
+}
+
+void unlink_event(jsobjtype parent)
+{
+	delete_property(parent, "gc$event");
+}
+
+bool run_event_bool(jsobjtype obj, const char *pname, const char *evname,
+		    jsobjtype evobj)
+{
+	int rc;
+	jsobjtype eo = evobj;	// event object
 	if (!handlerPresent(obj, evname))
 		return true;
-	evdebug = get_property_bool(cf->winobj, "eventDebug");
-	if (evdebug)
-		debugPrint(3, "trigger %s.%s", pname, evname);
-	return run_function_bool(obj, evname);
+	if (debugLevel >= 3) {
+		bool evdebug = get_property_bool(cf->winobj, "eventDebug");
+		if (evdebug)
+			debugPrint(3, "trigger %s.%s", pname, evname);
+	}
+// if no event object, create one.
+// It's a one time event that doesn't propagate, like DOMContentLoaded
+// or form.onsubmit etc.
+	if (!eo)
+		eo = create_event(obj, evname);
+	rc = run_function_onearg(obj, evname, eo);
+	if (eo != evobj)
+		unlink_event(obj);
+	return rc;
 }
 
 int run_function_onearg(jsobjtype obj, const char *name, jsobjtype a)

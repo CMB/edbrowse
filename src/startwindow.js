@@ -124,6 +124,17 @@ dumptree(c);
 alert("}");
 }
 
+mw0.uptrace = function(t)
+{
+while(t) {
+var msg = t.nodeName;
+if(t.class) msg += "." + t.class;
+if(t.id) msg += "#" + t.id;
+alert(msg);
+t = t.parentNode;
+}
+}
+
 /*********************************************************************
 Show the scripts, where they come from, type, length, whether deminimized.
 This uses getElementsByTagname() so you see all the scripts,
@@ -189,6 +200,7 @@ my$win().eval(exp$$);
 } // master compile
 
 dumptree = mw0.dumptree;
+uptrace = mw0.uptrace;
 showscripts = mw0.showscripts;
 searchscripts = mw0.searchscripts;
 aloop = mw0.aloop;
@@ -761,7 +773,17 @@ var ulist = ["href", "src", "src", "href", "href", "action", "src"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
 var u = ulist[i]; // url name
-eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + u + '", { get: function() { if(!this.href$2) this.href$2 = new URL; return this.href$2; }, set: function(h) { if(h instanceof URL) h = h.toString(); if(h === null || h === undefined) h = ""; var w = my$win(); if(typeof h !== "string") { alert3("hrefset " + typeof h); w.hrefset$p.push("' + cn + '"); w.hrefset$a.push(h); return; } if(!this.href$2) { this.href$2 = new mw0.URL(h ? eb$resolveURL(w.eb$base,h) : h) } else { if(!this.href$2.href$val && h) h =  eb$resolveURL(w.eb$base,h); this.href$2.href = h; } }});');
+eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + u + '", { \
+get: function() { if(!this.href$2) this.href$2 = new URL; return this.href$2; }, \
+set: function(h) { if(h instanceof URL) h = h.toString(); \
+if(h === null || h === undefined) h = ""; \
+var w = my$win(); \
+if(typeof h !== "string") { alert3("hrefset " + typeof h); \
+w.hrefset$p.push("' + cn + '"); \
+w.hrefset$a.push(h); \
+return; } \
+if(!this.href$2) { this.href$2 = new mw0.URL(h ? eb$resolveURL(w.eb$base,h) : h) } else { if(!this.href$2.href$val && h) h =  eb$resolveURL(w.eb$base,h); \
+this.href$2.href = h; } }});');
 var piecelist = ["protocol", "pathname", "host", "search", "hostname", "port"];
 for(var j=0; j<piecelist.length; ++j) {
 var piece = piecelist[j];
@@ -1050,7 +1072,7 @@ mw0.isabove = function(a, b)
 {
 var j = 0;
 while(b) {
-if(b == a) { e = new Error; e.HIERARCHY_REQUEST_ERR = e.code = 3; throw e; }
+if(b == a) { var e = new Error; e.HIERARCHY_REQUEST_ERR = e.code = 3; throw e; }
 if(++j == 1000) { alert3("isabove loop"); break; }
 b = b.parentNode;
 }
@@ -1599,7 +1621,7 @@ mw0.Event = function(options){
 };
 
 mw0.Event.prototype.preventDefault = function(){
-      this.preventDefault = true;
+      this.prev$default = true;
 }
 
 mw0.Event.prototype.stopPropagation = function(){
@@ -1652,7 +1674,6 @@ mw0.detachEvent = function(ev, handler) { this.eb$unlisten(ev,handler, false); }
 
 mw0.eb$listen = function(ev, handler, addon)
 {
-var ev_before_changes = ev;
 if(my$win().eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev);
 if(addon) {
 ev = "on" + ev;
@@ -1673,7 +1694,18 @@ this[ev] = undefined;
 }
 this[evarray] = a;
 eval(
-'this["' + ev + '"] = function(){ var a = this["' + evarray + '"]; var rc; if(this["' + evorig + '"]) { rc = this["' + evorig + '"](); if(!rc) return false; } for(var i = 0; i<a.length; ++i) a[i].did$run = false; for(var i = 0; i<a.length; ++i) {if(a[i].did$run) continue; a[i].did$run = true; var tempEvent = new Event; tempEvent.type = "' + ev_before_changes + '"; rc = a[i](tempEvent); if(!rc) return false; i = -1; } return true; };');
+'this["' + ev + '"] = function(e){ var rc, a = this["' + evarray + '"]; \
+if(this["' + evorig + '"]) { alert3("fire orig"); rc = this["' + evorig + '"](e); \
+if(!rc) return false; } \
+for(var i = 0; i<a.length; ++i) a[i].did$run = false; \
+for(var i = 0; i<a.length; ++i) {if(a[i].did$run) continue; \
+a[i].did$run = true; \
+alert3("fire " + i); rc = a[i](e); \
+if(!rc) return false; \
+if(e.cancelled) return true; \
+i = -1; \
+} return true; };');
+
 }
 this[evarray].push(handler);
 }
@@ -1866,7 +1898,7 @@ alert3("createElement argument " + t);
 // acid3 says we should throw an exception if string contains null,
 // but what about bogus strings. www.oranges.com sends us some very
 // strange strings that I don't know what to do with.
-if(t.match(/\0/)) { e = new Error; e.code = 5; throw e; }
+if(t.match(/\0/)) { var e = new Error; e.code = 5; throw e; }
 t = "xyz";
 }
 switch(t) { 
@@ -2698,7 +2730,7 @@ FILTER_SKIP:3,
 // This implementation only works on the nodes of a tree
 mw0.createNodeIterator = function(root, mask, callback, unused)
 {
-o = {}; // the created iterator object
+var o = {}; // the created iterator object
 if(typeof callback != "function") callback = null;
 o.callback = callback;
 if(typeof mask != "number")
@@ -2752,7 +2784,7 @@ return o;
 
 mw0.createTreeWalker = function(root, mask, callback, unused)
 {
-o = {}; // the created iterator object
+var o = {}; // the created iterator object
 if(typeof callback != "function") callback = null;
 o.callback = callback;
 if(typeof mask != "number")

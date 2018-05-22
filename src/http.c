@@ -2771,7 +2771,7 @@ we did that before and now it's being expanded. So bump step up to 2.
 		set_property_object(t->jv, "content$Window", cwo);
 // run the frame onload function if it is there.
 // I assume it should run in the higher context.
-		run_event_bool(t->jv, t->info->name, "onload");
+		run_event_bool(t->jv, t->info->name, "onload", 0);
 	}
 
 	return 0;
