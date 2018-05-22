@@ -1497,6 +1497,7 @@ That means the relationships are disjoint.
 A can't contain B and precede B simultaneously.
 So I don't know why they say these are bits in a bitmask.
 *********************************************************************/
+
 mw0.compareDocumentPosition = function(w)
 {
 if(this === w) return DOCUMENT_POSITION_DISCONNECTED;
@@ -1516,6 +1517,31 @@ t = t.parentNode;
 if(t === this) return DOCUMENT_POSITION_CONTAINS;
 }
 return DOCUMENT_POSITION_DISCONNECTED;
+}
+
+// classList
+// First the functions that will hang off the array to be returned.
+mw0.classListRemove = function() {
+for(var i=0; i<arguments.length; ++i) {
+for(var j=0; j<this.length; ++j) {
+if(arguments[i] != this[j]) continue;
+this.splice(j, 1);
+--j;
+}
+}
+this.node.class = this.join(' ');
+}
+
+mw0.classList = function(node) {
+var c = node.class;
+if(!c) c = "";
+// turn string into array
+var a = c.replace(/^\s+/, "").replace(/\s+$/, "").split(/\s+/);
+// remember the node you came from
+a.node = node;
+// attach functions
+a.remove = mw0.classListRemove;
+return a;
 }
 
 // The Event class and various handlers.
@@ -1718,6 +1744,7 @@ c.prototype.detachEvent = mw0.detachEvent;
 c.prototype.dispatchEvent = mw0.dispatchEvent;
 // constants
 c.prototype.ELEMENT_NODE = 1, c.prototype.TEXT_NODE = 3, c.prototype.COMMENT_NODE = 8, c.prototype.DOCUMENT_NODE = 9, c.prototype.DOCUMENT_TYPE_NODE = 10, c.prototype.DOCUMENT_FRAGMENT_NODE = 11;
+Object.defineProperty(c.prototype, "classList", { get : function() { return mw0.classList(this);}});
 }
 })();
 
@@ -2422,6 +2449,7 @@ Array.prototype.hasAttribute = mw0.hasAttribute;
 Array.prototype.removeAttribute = mw0.removeAttribute;
 Array.prototype.getAttributeNode = mw0.getAttributeNode;
 Array.prototype.ELEMENT_NODE = 1, Array.prototype.TEXT_NODE = 3, Array.prototype.COMMENT_NODE = 8, Array.prototype.DOCUMENT_NODE = 9, Array.prototype.DOCUMENT_TYPE_NODE = 10, Array.prototype.DOCUMENT_FRAGMENT_NODE = 11;
+Object.defineProperty(Array.prototype, "classList", { get : function() { return mw0.classList(this);}});
 Array.prototype.item = function(x) { return this[x] };
 Array.prototype.includes = function(x, start) {
 if(typeof start != "number") start = 0;
@@ -2607,7 +2635,7 @@ alert3(msg);
 }
 throwDebug = false;
 
-// here comes the iterator
+// here comes the Iterator and Walker
 if(!mw0.compiled) {
 mw0.NodeFilter = {
 SHOW_ALL:-1,
