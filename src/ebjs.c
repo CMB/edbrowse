@@ -653,6 +653,9 @@ bool run_event_bool(jsobjtype obj, const char *pname, const char *evname,
 	rc = run_function_onearg(obj, evname, eo);
 	if (eo != evobj)
 		unlink_event(obj);
+// no return or some other return is treated as true in this case
+	if (rc < 0)
+		rc = true;
 	return rc;
 }
 

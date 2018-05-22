@@ -1888,9 +1888,10 @@ bool run_function_bool_nat(jsobjtype parent, const char *name)
 }				/* run_function_bool_nat */
 
 // The single argument to the function has to be an object.
+// Returns -1 if the return is not int or bool
 int run_function_onearg_nat(jsobjtype parent, const char *name, jsobjtype child)
 {
-	int rc = 0;
+	int rc = -1;
 	duk_push_heapptr(jcx, parent);
 	if (!duk_get_prop_string(jcx, -1, name) || !duk_is_function(jcx, -1)) {
 #if 0
@@ -1916,7 +1917,7 @@ int run_function_onearg_nat(jsobjtype parent, const char *name, jsobjtype child)
 	processError();
 	debugPrint(3, "failure on %p.%s[]", parent, name);
 	uptrace(parent);
-	return 0;
+	return rc;
 }				/* run_function_onearg_nat */
 
 jsobjtype instantiate_array_nat(jsobjtype parent, const char *name)

@@ -1696,12 +1696,12 @@ this[evarray] = a;
 eval(
 'this["' + ev + '"] = function(e){ var rc, a = this["' + evarray + '"]; \
 if(this["' + evorig + '"]) { alert3("fire orig"); rc = this["' + evorig + '"](e); \
-if(!rc) return false; } \
+if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; } \
 for(var i = 0; i<a.length; ++i) a[i].did$run = false; \
 for(var i = 0; i<a.length; ++i) {if(a[i].did$run) continue; \
 a[i].did$run = true; \
 alert3("fire " + i); rc = a[i](e); \
-if(!rc) return false; \
+if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; \
 if(e.cancelled) return true; \
 i = -1; \
 } return true; };');
