@@ -1532,6 +1532,40 @@ this.splice(j, 1);
 this.node.class = this.join(' ');
 }
 
+mw0.classListAdd = function() {
+for(var i=0; i<arguments.length; ++i) {
+for(var j=0; j<this.length; ++j)
+if(arguments[i] == this[j]) break;
+if(j == this.length) this.push(arguments[i]);
+}
+this.node.class = this.join(' ');
+}
+
+mw0.classListReplace = function(o, n) {
+if(!o) return;
+if(!n) { this.remove(o); return; }
+for(var j=0; j<this.length; ++j)
+if(o == this[j]) { this[j] = n; break; }
+this.node.class = this.join(' ');
+}
+
+mw0.classListContains = function(t) {
+if(!t) return false;
+for(var j=0; j<this.length; ++j)
+if(t == this[j]) return true;
+return false;
+}
+
+mw0.classListToggle = function(t, force) {
+if(!t) return false;
+if(arguments.length > 1) {
+if(force) this.add(t); else this.remove(t);
+return force;
+}
+if(this.contains(t)) { this.remove(t); return false; }
+this.add(t); return true;
+}
+
 mw0.classList = function(node) {
 var c = node.class;
 if(!c) c = "";
@@ -1541,6 +1575,10 @@ var a = c.replace(/^\s+/, "").replace(/\s+$/, "").split(/\s+/);
 a.node = node;
 // attach functions
 a.remove = mw0.classListRemove;
+a.add = mw0.classListAdd;
+a.replace = mw0.classListReplace;
+a.contains = mw0.classListContains;
+a.toggle = mw0.classListToggle;
 return a;
 }
 
