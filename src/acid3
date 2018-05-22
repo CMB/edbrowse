@@ -684,6 +684,36 @@
       assert(ok, "didn't raise the right exception for null byte in createElement()");
       return 2;
     },
+    function () {
+      // test 21: basic namespace stuff
+      var element = document.createElementNS('http://ns.example.com/', 'prefix:localname');
+      assertEquals(element.tagName, 'prefix:localname', "wrong tagName");
+      assertEquals(element.nodeName, 'prefix:localname', "wrong nodeName");
+      assertEquals(element.prefix, 'prefix', "wrong prefix");
+      assertEquals(element.localName, 'localname', "wrong localName");
+      assertEquals(element.namespaceURI, 'http://ns.example.com/', "wrong namespaceURI");
+      return 2;
+    },
+    function () {
+      // test 22: createElement() with invalid tag names
+      var test = function (name) {
+        var result;
+        try {
+          var div = document.createElement(name);
+        } catch (e) {
+          result = e;
+        }
+        assert(result, "no exception for createElement('" + name + "')");
+        assertEquals(result.code, 5, "wrong exception for createElement('" + name + "')"); // INVALID_CHARACTER_ERR
+      }
+      test('<div>');
+      test('0div');
+      test('di v');
+      test('di<v');
+      test('-div');
+      test('.div');
+      return 2;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';

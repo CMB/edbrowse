@@ -1893,13 +1893,11 @@ return u;
 mw0.createElement = function(s) { 
 var c;
 var t = s.toLowerCase();
-if(!t.match(/^[a-z\d_]+$/)) {
-alert3("createElement argument " + t);
-// acid3 says we should throw an exception if string contains null,
-// but what about bogus strings. www.oranges.com sends us some very
-// strange strings that I don't know what to do with.
-if(t.match(/\0/)) { var e = new Error; e.code = 5; throw e; }
-t = "xyz";
+if(!t.match(/^[a-z:\d_]+$/) || t.match(/^\d/)) {
+alert3("createElement(" + t + ')');
+// acid3 says we should throw an exception here.
+// But we get these kinds of strings from www.oranges.com
+var e = new Error; e.code = 5; throw e;
 }
 switch(t) { 
 case "body":
@@ -2000,11 +1998,17 @@ c.style.element = c;
 c.childNodes = [];
 c.attributes = new NamedNodeMap;
 c.attributes.owner = c;
+// Split on : if this comes from a name space
+var colon = t.split(':');
+if(colon.length == 2) {
+c.nodeName = c.tagName = t;
+c.prefix = colon[0], c.localName = colon[1];
+} else {
 c.nodeName = c.tagName = t.toUpperCase();
+}
 c.nodeType = 1;
 if(t == "document")
 c.nodeType = 9;
-c.nodeValue = undefined;
 c.class = "";
 c.ownerDocument = my$doc();
 eb$logElement(c, t);
