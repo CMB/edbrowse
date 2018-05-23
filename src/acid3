@@ -752,6 +752,21 @@
       assertEquals(document.body.getAttribute('onload'), "update()  /* this attribute's value is tested in one of the tests */ ", "onload value wrong");
       return 2;
     },
+    function() { return 2; }, // test 25
+    function() { return 2; }, // test 26
+    function() { return 2; }, // test 27
+    function () {
+      // test 28: getElementById()
+      // ...and name=""
+      assert(document.getElementById('form') !== document.getElementsByTagName('form')[0], "getElementById() searched on 'name'");
+      // ...and a space character as the ID
+      var div = document.createElement('div');
+      div.appendChild(document.createTextNode('FAIL'));
+      div.id = " ";
+      document.body.appendChild(div); // it's hidden by CSS
+      assert(div === document.getElementById(" "), "getElementById() didn't return the right element");
+      return 2;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';
@@ -833,7 +848,7 @@ frames[1].contentDocument;
       var elapsedTime = ((endTime - startTime) - (delay * tests.length)) / 1000;
       log += "Total elapsed time: " + elapsedTime.toFixed(2) + "s";
       if (errors == 0)
-        log += "\nNo JS errors and no timing issues, but tests 7 through 13 are postponed.\nWas the rendering pixel-for-pixel perfect too?";
+        log += "\nNo JS errors and no timing issues, but 10 tests were skipped.\nWas the rendering pixel-for-pixel perfect too?";
   alert(log);
     }
   }
