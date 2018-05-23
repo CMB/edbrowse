@@ -1714,9 +1714,20 @@ int set_property_object_nat(jsobjtype parent, const char *name, jsobjtype child)
 	return 0;
 }				/* set_property_object_nat */
 
+// handler.toString = function() { return this.body; }
+static duk_ret_t native_fntos(duk_context * cx)
+{
+	duk_push_this(cx);
+	duk_get_prop_string(jcx, -1, "body");
+	duk_remove(cx, -2);
+	return 1;
+}
+
 int set_property_function_nat(jsobjtype parent, const char *name,
 			      const char *body)
 {
+	char *body2, *s;
+	int l;
 	if (!body || !*body) {
 // null or empty function, function will return null.
 		body = "null";
@@ -1728,8 +1739,19 @@ int set_property_function_nat(jsobjtype parent, const char *name,
 		debugPrint(3, "compile error for %p.%s", parent, name);
 		duk_push_c_function(jcx, native_error_stub_1, 0);
 	}
-	duk_push_string(jcx, body);
+// At this point I have to undo the mashinations performed by handlerSet().
+	s = body2 = cloneString(body);
+	l = strlen(s);
+	if (l > 16 && stringEqual(s + l - 16, " }.bind(this))()")) {
+		s[l - 16] = 0;
+		if (!strncmp(s, "(function(){", 12))
+			s += 12;
+	}
+	duk_push_string(jcx, s);
+	nzFree(body2);
 	duk_put_prop_string(jcx, -2, "body");
+	duk_push_c_function(jcx, native_fntos, 0);
+	duk_put_prop_string(jcx, -2, "toString");
 	duk_push_heapptr(jcx, parent);
 	duk_insert(jcx, -2);	// switch places
 	duk_put_prop_string(jcx, -2, name);

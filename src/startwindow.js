@@ -1643,8 +1643,9 @@ mw0.createEvent = function(unused) { return new Event; }
 
 mw0.dispatchEvent = function (e) {
 if(my$win().eventDebug) alert3("dispatch " + this.nodeName + "." + e.type);
-var eval_string = "try { this['" + e.type + "']()} catch (e) {alert3('event not found')}";
-eval(eval_string);
+try {
+this[e.type](e);
+} catch (e) {alert3("handler error"); }
 };
 
 /*********************************************************************
@@ -1891,7 +1892,8 @@ if(!nsurl) nsurl = "";
 u.namespaceURI = new mw0.URL(nsurl);
 // prefix and url have to fit together, I guess.
 // I don't understand any of this.
-if(!u.prefix) u.prefix = "";
+if(!u.prefix && !s.match(/^:/))
+u.prefix = "html", u.localName = s;
 if(u.prefix == "prefix") {
 ; // ok
 } else if(u.prefix == "html") {
