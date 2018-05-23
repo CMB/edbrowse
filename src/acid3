@@ -748,11 +748,8 @@
     },
     function () {
       // test 24: event handler attributes
-//@` This is a one line test, and it fails because tidy crunches whitespace
-// in attribute values. I'm sure that's a bug.
-// I have changed the test, and hope to put it back once the bug is fixed.
-//       assertEquals(document.body.getAttribute('onload'), "update()  /* this attribute's value is tested in one of the tests */ ", "onload value wrong");
-      assertEquals(document.body.getAttribute('onload'), "update() /* this attribute's value is tested in one of the tests */", "onload value wrong");
+//@` be sure to set TidyLiteralAttribs, or this test will fail.
+      assertEquals(document.body.getAttribute('onload'), "update()  /* this attribute's value is tested in one of the tests */ ", "onload value wrong");
       return 2;
     },
 // other tests not yet folded in
