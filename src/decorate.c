@@ -890,7 +890,6 @@ static void domLink(struct htmlTag *t, const char *classname,	/* instantiate thi
 		    const char *href, const char *list,	/* next member of this array */
 		    jsobjtype owner, int radiosel)
 {
-	jsobjtype master;
 	jsobjtype alist = 0;
 	jsobjtype io = 0;	/* input object */
 	int length;
@@ -1024,12 +1023,6 @@ Don't do any of this if the tag is itself <style>. */
 		set_property_object(io, "ownerDocument", cf->docobj);
 
 		if (membername == symname) {
-/* link to document.all */
-			master = get_property_object(cf->docobj, "all");
-			if (master == NULL)
-				return;
-			set_property_object(master, symname, io);
-
 			if (stringEqual(symname, "action"))
 				set_property_bool(io, "actioncrash", true);
 		}
@@ -1071,12 +1064,8 @@ Don't do any of this if the tag is itself <style>. */
 	if (symname)
 		set_property_string(io, "name", symname);
 
-	if (idname) {
-/* io.id becomes idname, and idMaster.idname becomes io */
+	if (idname)
 		set_property_string(io, "id", idname);
-		master = get_property_object(cf->docobj, "idMaster");
-		set_property_object(master, idname, io);
-	}
 
 	if (href && href_url)
 // This use to be instantiate_url, but with the new side effects

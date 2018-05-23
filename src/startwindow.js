@@ -1031,6 +1031,27 @@ a = a.concat(mw0.eb$gebn(c, s));
 return a;
 }
 
+mw0.getElementById = function(s) { 
+s = s.toLowerCase();
+var a = mw0.eb$gebi(this, s);
+return a.length ? a[0] : null;
+}
+
+// this could stop when it finds the first match, it just doesn't
+mw0.eb$gebi = function(top, s) { 
+var a = [];
+if(s === '*' || (top.id && top.id.toLowerCase() === s))
+a.push(top);
+if(top.childNodes) {
+if(!(top instanceof Frame) || !top.firstChild.firstChild)
+for(var i=0; i<top.childNodes.length; ++i) {
+var c = top.childNodes[i];
+a = a.concat(mw0.eb$gebi(c, s));
+}
+}
+return a;
+}
+
 mw0.getElementsByClassName = function(s) { 
 s = s.toLowerCase();
 return mw0.eb$gebcn(this, s);
@@ -2382,10 +2403,6 @@ document.createElementNS = mw0.createElementNS;
 document.createDocumentFragment = mw0.createDocumentFragment;
 document.createComment = mw0.createComment;
 document.implementation = mw0.implementation;
-document.idMaster = {};
-document.getElementById = function(s) { 
-return document.idMaster[s]; 
-}
 // originally ms extension pre-DOM, we don't fully support it
 //but offer the legacy document.all.tags method.
 document.all = {};
@@ -2406,6 +2423,7 @@ eb$uplift = mw0.eb$uplift;
 document.getElementsByTagName = mw0.getElementsByTagName;
 document.getElementsByClassName = mw0.getElementsByClassName;
 document.getElementsByName = mw0.getElementsByName;
+document.getElementById = mw0.getElementById;
 document.querySelectorAll = querySelectorAll;
 document.querySelector = querySelector;
 document.appendChild = mw0.appendChild;
