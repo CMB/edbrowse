@@ -2694,14 +2694,13 @@ if(!t || !(so = t.style)) return 0;
 // If class has changed, recompute style
 var c1 = t.last$class;
 var c2 = t.class;
-if(!c1) c1 = "";
-if(!c2) c2 = "";
-if(c1 != c2) {
+if(!c2) c2 = ""; // should never happen
+if(typeof c1 == "undefined" || c1 != c2) {
 t.last$class = c2;
 var so = getComputedStyle(t, 0);
 t.style = so;
 }
-if(so.display == "none" || so.visibility == "hidden") {
+if(so.display == "none" || so.visibility == "hidden" || so.color == "transparent") {
 rc = 1;
 // It is hidden, does it come to light on hover?
 if(so.hov$vis) rc = 3;

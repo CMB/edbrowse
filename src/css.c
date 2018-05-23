@@ -178,6 +178,10 @@ static void trim(char *s)
 	n = strlen(s);
 	while (n && isspace(s[n - 1]))
 		--n;
+/* allow for space at the end of a selector or rule. #foo\   */
+	if (isspace(s[n]) && n && s[n - 1] == '\\' &&
+	    (n == 1 || s[n - 2] != '\\'))
+		++n;
 	s[n] = 0;
 }
 
@@ -380,7 +384,7 @@ static struct desc *cssPieces(char *s)
 	struct sel *sel, *sel2;
 	struct asel *asel, *asel2;
 	int n;
-	char c;
+	char c, last_c;
 	char *lhs;
 	char *a, *t;
 	char *iu1, *iu2, *iu3;	// for import url
@@ -595,17 +599,25 @@ copy:		++s;
 		a1 = s;		// start of the atomic selector
 		sel = 0;	// the selector being built
 
+		last_c = 0;
 		while ((c = *s)) {
 			if (c == '"' || c == '\'') {
 				n = closeString(s + 1, c);
 				if (n < 0)	// should never happen
 					break;
 				s += n + 1;
+				last_c = 0;
 				continue;
 			}
 // Ambiguous, ~ is combinator or part of [foo~=bar].
 // Simplistic check here for ~=
 			if (c == '~' && s[1] == '=') {
+				last_c = c;
+				++s;
+				continue;
+			}
+			if (last_c == '\\') {
+				last_c = 0;
 				++s;
 				continue;
 			}
@@ -619,14 +631,17 @@ copy:		++s;
 					if (combin && combin != ' ')
 						break;
 					combin = c;
+					last_c = c;
 				}
 				c = *++s;
 			}
 			if (!combin) {
+				last_c = c;
 				++s;
 				continue;
 			}
 // it's a combinator or separator
+			last_c = c;
 			if (a2 == a1) {	// empty piece
 // I'll allow it if it's just an extra comma
 				if (combin == ',' && !sel) {
@@ -2149,6 +2164,10 @@ in fact it's easier to list the tags that allow it.
 			     strlen(r->atval)
 			     && !stringEqual(r->atval, "hidden")))
 				set_property_bool_nat(obj, "hov$vis", true);
+// what about color anything other than transparent?
+// I didn't record why it was hidden, so color=red could unhide it,
+// or it could just change the color.
+// I don't think you'd want to do either of these on hover, so I don't know.
 			continue;
 		}
 // special code for before after content
