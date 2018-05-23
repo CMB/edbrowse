@@ -714,6 +714,38 @@
       test('.div');
       return 2;
     },
+    function () {
+      // test 23: createElementNS() with invalid tag names
+      var test = function (name, ns, code) {
+        var result;
+        try {
+          var div = document.createElementNS(ns, name);
+        } catch (e) {
+          result = e;
+        }
+        assert(result, "no exception for createElementNS('" + ns + "', '" + name + "')");
+        assertEquals(result.code, code, "wrong exception for createElementNS('" + ns + "', '" + name + "')");
+      }
+      test('<div>', null, 5);
+      test('0div', null, 5);
+      test('di v', null, 5);
+      test('di<v', null, 5);
+      test('-div', null, 5);
+      test('.div', null, 5);
+      test('<div>', "http://example.com/", 5);
+      test('0div', "http://example.com/", 5);
+      test('di<v', "http://example.com/", 5);
+      test('-div', "http://example.com/", 5);
+      test('.div', "http://example.com/", 5);
+      test(':div', null, 14);
+      test(':div', "http://example.com/", 14);
+      test('d:iv', null, 14);
+      test('xml:test', "http://example.com/", 14);
+      test('xmlns:test', "http://example.com/", 14); // (technically a DOM3 Core test)
+      test('x:test', "http://www.w3.org/2000/xmlns/", 14); // (technically a DOM3 Core test)
+      document.createElementNS("http://www.w3.org/2000/xmlns/", 'xmlns:test'); // (technically a DOM3 Core test)
+      return 2;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';

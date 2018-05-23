@@ -1885,8 +1885,30 @@ return item;
 }
 
 mw0.createElementNS = function(nsurl,s) {
+var mismatch = false;
 var u = mw0.createElement(s);
+if(!nsurl) nsurl = "";
 u.namespaceURI = new mw0.URL(nsurl);
+// prefix and url have to fit together, I guess.
+// I don't understand any of this.
+if(!u.prefix) u.prefix = "";
+if(u.prefix == "prefix") {
+; // ok
+} else if(u.prefix == "html") {
+if(nsurl != "http://www.w3.org/1999/xhtml") mismatch = true;
+} else if(u.prefix == "svg") {
+if(nsurl != "http://www.w3.org/2000/svg") mismatch = true;
+} else if(u.prefix == "xbl") {
+if(nsurl != "http://www.mozilla.org/xbl") mismatch = true;
+} else if(u.prefix == "xul") {
+if(nsurl != "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul") mismatch = true;
+} else if(u.prefix == "xmlns") {
+if(nsurl != "http://www.w3.org/2000/xmlns/") mismatch = true;
+} else mismatch = true;
+if(mismatch) {
+alert3("createElementNS(" + nsurl + "," + s + ')');
+var e = new Error; e.code = 14; throw e;
+}
 return u;
 }
 
