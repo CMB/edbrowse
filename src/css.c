@@ -1308,7 +1308,7 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			return false;
 		}
 
-		if (mod->isid && t) {
+		if (mod->isid && t && bulkmatch) {
 			char *v = t->id;
 			if ((!v || !*v) && !bulkmatch && t->jv)	// dip into js
 				t->id = v =
