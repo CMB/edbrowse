@@ -2080,7 +2080,7 @@ in fact it's easier to list the tags that allow it.
 			"A", "ADDRESS", "BLOCKQUOTE", "BODY", "BUTTON",
 			"CAPTION", "CITE",
 			"DIV", "FOOTER", "H1", "H2", "H3", "H4", "H5", "H6",
-			"HEADER", "LABEL", "LI", "MENU", "OBJECT",
+			"HEADER", "LABEL", "LI", "MENU",
 			"P", "SPAN", "TD", "TH", "XMP",
 			0
 		};

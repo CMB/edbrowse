@@ -1820,16 +1820,19 @@ Object.defineProperty(c.prototype, "classList", { get : function() { return mw0.
 })();
 
 // nodes that we don't want to add children to, even if asked to do so.
+// I guess this turned out to be a bad idea.
+/*
 ; (function() {
 var cnlist = ["HtmlObj", "Title", "Script",
 "Node", "Area", "TextNode", "Image", "Option", "Link", "Meta", "Audio", "Canvas"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i];
 var c = mw0[cn];
-eval('c.prototype.appendChild = function() { alert3("adding children to ' + cn + '");}');
-eval('c.prototype.prependChild = function() { alert3("adding children to ' + cn + '");}');
+eval('c.prototype.appendChild = function(c) { alert3("adding children to ' + cn + '");return c; }');
+eval('c.prototype.prependChild = function() { alert3("adding children to ' + cn + '");return c; }');
 }
 })();
+*/
 
 /*********************************************************************
 As promised, Form is weird.

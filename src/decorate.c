@@ -1636,7 +1636,7 @@ void tag_gc(void)
 const struct tagInfo availableTags[] = {
 	{"html", "html", TAGACT_HTML},
 	{"base", "base reference for relative URLs", TAGACT_BASE, 0, 4},
-	{"object", "an html object", TAGACT_OBJECT, 5, 1},
+	{"object", "an html object", TAGACT_OBJECT, 5, 3},
 	{"a", "an anchor", TAGACT_A, 0, 1},
 	{"input", "an input item", TAGACT_INPUT, 0, 4},
 	{"element", "an input element", TAGACT_INPUT, 0, 4},
