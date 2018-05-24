@@ -715,7 +715,7 @@ mw0.Body.prototype = {
 clientHeight: 768,  clientWidth: 1024,  offsetHeight: 768,  offsetWidth: 1024,
  scrollHeight: 768,  scrollWidth: 1024,  scrollTop: 0,  scrollLeft: 0};
 mw0.Base = function(){}
-mw0.Form = function(){}
+mw0.Form = function(){ this.elements = []; }
 mw0.Form.prototype = {
 submit: eb$formSubmit, reset: eb$formReset};
 mw0.Element = function(){}
@@ -725,13 +725,13 @@ mw0.Frame = function(){}
 mw0.Anchor = function(){}
 mw0.Lister = function(){}
 mw0.Listitem = function(){}
-mw0.Tbody = function(){}
-mw0.Table = function(){}
+mw0.Tbody = function(){ this.rows = []; }
+mw0.Table = function(){ this.rows = []; this.tBodies = []; }
 mw0.Div = function(){}
 mw0.HtmlObj = function(){}
 mw0.Area = function(){}
 mw0.Span = function(){}
-mw0.Trow = function(){}
+mw0.Trow = function(){ this.cells = []; }
 mw0.Cell = function(){}
 mw0.P = function(){}
 mw0.Header = function(){}
@@ -1277,7 +1277,11 @@ node2.push(mw0.eb$clone(node1[i], true));
 }
 } else {
 
+if(node1.nodeName == "#text")
+node2 = mw0.createTextNode();
+else
 node2 = mw0.createElement(node1.nodeName);
+
 if (deep && kids) {
 for(i = 0; i < kids.length; ++i) {
 var current_item = kids[i];
@@ -1310,7 +1314,6 @@ continue;
 
 // An array of event handlers etc.
 if(Array.isArray(node1[item])) {
-node2[item] = [];
 
 /*********************************************************************
 Ok we need some special code here for form.elements,
@@ -1318,24 +1321,17 @@ an array of input nodes within the form.
 We are preserving links, rather like tar or cpio.
 The same must be done for an array of rows beneath <table>,
 or an array of cells in a row, and perhaps others.
+But the thing is, we don't have to do that, because appendChild
+does it for us for these various classes.
 *********************************************************************/
 
 if(item === "elements" && node1.nodeName === "FORM" ||
 item === "rows" && (node1.nodeName === "TABLE" || node1.nodeName === "TBODY") ||
-item === "cells" && node1.nodeName === "TR") {
-if(debug) alert3("linking " + node1.nodeName + "." + item + " with " + node1[item].length + " members");
-for(i = 0; i < node1[item].length; ++i) {
-var p = mw0.findObject(node1, node1[item][i], "");
-if(p.length) {
-node2[item].push(mw0.correspondingObject(node2, p));
-} else {
-node2[item].push(null);
-if(debug) alert3("oops, member " + i + " not linked");
-if(item === "elements") lostElements = true;
-}
-}
+item === "tBodies" && node1.nodeName === "TABLE" ||
+item === "cells" && node1.nodeName === "TR")
 continue;
-}
+
+node2[item] = [];
 
 // special code here for an array of radio buttons within a form.
 if(node1.nodeName === "FORM" && node1[item].nodeName === "RADIO") {
@@ -1443,6 +1439,7 @@ if(debug) alert3("copy style");
 node2.style = new CSSStyleDeclaration;
 node2.style.element = node2;
 for (var item in node1.style){
+if(!node1.style.hasOwnProperty(item)) continue;
 if (typeof node1.style[item] === 'string' ||
 typeof node1.style[item] === 'number') {
 if(debug) alert3("copy stattr " + item);
@@ -1909,6 +1906,106 @@ break;
 return item;
 }
 
+// rows under a table body
+mw0.Tbody.prototype.appendChildNative = mw0.appendChild;
+mw0.Tbody.prototype.appendChild = function(newobj) {
+this.appendChildNative(newobj);
+if(newobj.nodeName === "TR") // shouldn't be anything other than TR
+this.rows.push(newobj);
+}
+mw0.Tbody.prototype.insertBeforeNative = mw0.insertBefore;
+mw0.Tbody.prototype.insertBefore = function(newobj, item) {
+this.insertBeforeNative(newobj, item);
+if(newobj.nodeName === "TR")
+for(var i=0; i<this.rows.length; ++i)
+if(this.rows[i] == item) {
+this.rows.splice(i, 0, newobj);
+break;
+}
+}
+mw0.Tbody.prototype.removeChildNative = document.removeChild;
+mw0.Tbody.prototype.removeChild = function(item) {
+this.removeChildNative(item);
+if(item.nodeName === "TR")
+for(var i=0; i<this.rows.length; ++i)
+if(this.rows[i] == item) {
+this.rows.splice(i, 1);
+break;
+}
+return item;
+}
+
+// rows or bodies under a table
+mw0.Table.prototype.appendChildNative = mw0.appendChild;
+mw0.Table.prototype.appendChild = function(newobj) {
+this.appendChildNative(newobj);
+if(newobj.nodeName === "TR")
+this.rows.push(newobj);
+if(newobj.nodeName === "TBODY")
+this.tBodies.push(newobj);
+}
+mw0.Table.prototype.insertBeforeNative = mw0.insertBefore;
+mw0.Table.prototype.insertBefore = function(newobj, item) {
+this.insertBeforeNative(newobj, item);
+if(newobj.nodeName === "TR")
+for(var i=0; i<this.rows.length; ++i)
+if(this.rows[i] == item) {
+this.rows.splice(i, 0, newobj);
+break;
+}
+if(newobj.nodeName === "TBODY")
+for(var i=0; i<this.tBodies.length; ++i)
+if(this.tBodies[i] == item) {
+this.tBodies.splice(i, 0, newobj);
+break;
+}
+}
+mw0.Table.prototype.removeChildNative = document.removeChild;
+mw0.Table.prototype.removeChild = function(item) {
+this.removeChildNative(item);
+if(item.nodeName === "TR")
+for(var i=0; i<this.rows.length; ++i)
+if(this.rows[i] == item) {
+this.rows.splice(i, 1);
+break;
+}
+if(item.nodeName === "TBODY")
+for(var i=0; i<this.tBodies.length; ++i)
+if(this.tBodies[i] == item) {
+this.tBodies.splice(i, 1);
+break;
+}
+return item;
+}
+
+mw0.Trow.prototype.appendChildNative = mw0.appendChild;
+mw0.Trow.prototype.appendChild = function(newobj) {
+this.appendChildNative(newobj);
+if(newobj.nodeName === "TD") // shouldn't be anything other than TD
+this.cells.push(newobj);
+}
+mw0.Trow.prototype.insertBeforeNative = mw0.insertBefore;
+mw0.Trow.prototype.insertBefore = function(newobj, item) {
+this.insertBeforeNative(newobj, item);
+if(newobj.nodeName === "TD")
+for(var i=0; i<this.cells.length; ++i)
+if(this.cells[i] == item) {
+this.cells.splice(i, 0, newobj);
+break;
+}
+}
+mw0.Trow.prototype.removeChildNative = document.removeChild;
+mw0.Trow.prototype.removeChild = function(item) {
+this.removeChildNative(item);
+if(item.nodeName === "TD")
+for(var i=0; i<this.cells.length; ++i)
+if(this.cells[i] == item) {
+this.cells.splice(i, 1);
+break;
+}
+return item;
+}
+
 mw0.createElementNS = function(nsurl,s) {
 var mismatch = false;
 var u = mw0.createElement(s);
@@ -1964,6 +2061,9 @@ c = new Image;
 break;
 case "link":
 c = new Link;
+break;
+case "meta":
+c = new Meta;
 break;
 case "cssstyledeclaration":
 case "style":
@@ -2030,6 +2130,13 @@ c.childNodes = [];
 // we don't log options because rebuildSelectors() checks
 // the dropdown lists after every js run.
 return c;
+case "form":
+c = new Form;
+break;
+case "input":
+case "element":
+c = new Element;
+break;
 default:
 /* eb$puts("createElement default " + s); */
 c = new Span;

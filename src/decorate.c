@@ -686,9 +686,17 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 		}
 		break;
 
-	case TAGACT_TR:
+	case TAGACT_TBODY:
 		if (opentag)
 			t->controller = findOpenTag(t, TAGACT_TABLE);
+		break;
+
+	case TAGACT_TR:
+		if (opentag) {
+			t->controller = findOpenTag(t, TAGACT_TBODY);
+			if (!t->controller)
+				t->controller = findOpenTag(t, TAGACT_TABLE);
+		}
 		break;
 
 	case TAGACT_TD:
@@ -835,6 +843,7 @@ static void set_onhandlers(const struct htmlTag *t)
 }				/* set_onhandlers */
 
 static char fakePropLast[24];
+static jsobjtype fakePropParent;
 static const char *fakePropName(void)
 {
 	static int idx = 0;
@@ -961,8 +970,10 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 				   membername);
 			membername = NULL;
 		}
-		if (!membername)
+		if (!membername) {
 			membername = fakePropName();
+			fakePropParent = owner;
+		}
 
 		if (radiosel) {
 /* The first radio button, or input type=select */
@@ -986,13 +997,8 @@ or id= if there is no name=, or a fake name just to protect it from gc.
 			io = instantiate(owner, membername, classname);
 			if (io == NULL)
 				return;
-
 /* not an array; needs the childNodes array beneath it for the children */
 			instantiate_array(io, "childNodes");
-
-/* in the special case of form, also need an array of elements */
-			if (t->action == TAGACT_FORM)
-				instantiate_array(io, "elements");
 		}
 
 /* deal with the 'styles' here.
@@ -1360,21 +1366,21 @@ Needless to say that's not good!
 
 	case TAGACT_TABLE:
 		domLink(t, "Table", 0, "tables", cf->docobj, 0);
-/* create the array of rows under the table */
-		instantiate_array(t->jv, "rows");
+		break;
+
+	case TAGACT_TBODY:
+		if ((above = t->controller) && above->jv)
+			domLink(t, "Tbody", 0, "tBodies", above->jv, 0);
 		break;
 
 	case TAGACT_TR:
-		if ((above = t->controller) && above->jv) {
+		if ((above = t->controller) && above->jv)
 			domLink(t, "Trow", 0, "rows", above->jv, 0);
-			instantiate_array(t->jv, "cells");
-		}
 		break;
 
 	case TAGACT_TD:
-		if ((above = t->controller) && above->jv) {
+		if ((above = t->controller) && above->jv)
 			domLink(t, "Cell", 0, "cells", above->jv, 0);
-		}
 		break;
 
 	case TAGACT_DIV:
@@ -1476,7 +1482,7 @@ Needless to say that's not good!
 	if (linked_in && fakePropLast[0]) {
 // Node linked to document/gc to protect if from garbage collection,
 // but now it is linked to its parent.
-		delete_property(cf->docobj, fakePropLast);
+		delete_property(fakePropParent, fakePropLast);
 	}
 
 	if (!linked_in) {
