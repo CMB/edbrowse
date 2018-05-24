@@ -794,6 +794,30 @@
 */
       return 2;
     },
+    function () {
+      // test 30: dispatchEvent()
+      var count = 0;
+      var ok = true;
+      var test = function (event) {
+        if (event.detail != 6)
+          ok = false;
+        count++;
+      };
+      // test event listener addition
+      document.getElementById('result').addEventListener('test', test, false);
+      // test event creation
+      var event = document.createEvent('UIEvents');
+      event.initUIEvent('test', true, false, null, 6);
+      // test event dispatch on elements and text nodes
+      assert(document.getElementById('score').dispatchEvent(event), "dispatchEvent #1 failed");
+      assert(document.getElementById('score').nextSibling.dispatchEvent(event), "dispatchEvent #2 failed");
+      // test event listener removal
+      document.getElementById('result').removeEventListener('test', test, false);
+      assert(document.getElementById('score').dispatchEvent(event), "dispatchEvent #3 failed");
+      assertEquals(count, 2, "unexpected number of events handled");
+      assert(ok, "unexpected events handled");
+      return 2;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';

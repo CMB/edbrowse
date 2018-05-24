@@ -660,7 +660,7 @@ olist[3] = oo;
 function bodyLoad() {
 alert("body loading");
 var e = document.createEvent();
-e.type = "onsnork";
+e.type = "snork";
 document.dispatchEvent(e);
 }
 function bodyUnload() {

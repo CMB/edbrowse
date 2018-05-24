@@ -1638,32 +1638,37 @@ mw0.Event = function(options){
     this.timeStamp = new Date().getTime();
 };
 
-mw0.Event.prototype.preventDefault = function(){
-      this.prev$default = true;
-}
+mw0.Event.prototype.preventDefault = function(){       this.prev$default = true; }
 
-mw0.Event.prototype.stopPropagation = function(){
-        if(this.cancelable){
-            this.cancelled = true;
-            this.bubbles = false;
-        }
-    }
+mw0.Event.prototype.stopPropagation = function(){ if(this.cancelable){ this.cancelled = true; this.bubbles = false; } }
 
 // deprecated!
 mw0.Event.prototype.initEvent = function(t, bubbles, cancel) {
 this.type = t, this.bubbles = bubbles, this.cancelable = cancel; }
 
-mw0.Event.prototype.initCustomEvent = function(t, bubbles, cancel, details) {
-// don't know what to do with details.
-this.initEvent(t, bubbles, cancel); }
+mw0.Event.prototype.initUIEvent = function(t, bubbles, cancel, unused, detail) {
+this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = detail; }
+
+mw0.Event.prototype.initCustomEvent = function(t, bubbles, cancel, detail) {
+this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = detail; }
 
 mw0.createEvent = function(unused) { return new Event; }
 
 mw0.dispatchEvent = function (e) {
 if(my$win().eventDebug) alert3("dispatch " + this.nodeName + "." + e.type);
-try {
-this[e.type](e);
-} catch (e) {alert3("handler error"); }
+var t = this;
+var rc = true;
+while(t) {
+var fn = "on" + e.type;
+if(typeof t[fn] == "function") {
+if(my$win().eventDebug) alert3("trigger " + t.nodeName + "." + e.type);
+var r = t[fn](e);
+if((typeof r == "boolean" || typeof r == "number") && !r) { rc = false; break; }
+if(e.cancelled) break;
+}
+t = t.parentNode;
+}
+return rc;
 };
 
 /*********************************************************************
