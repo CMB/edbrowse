@@ -702,6 +702,10 @@ mw0.DocType = function(){ this.nodeType = 10, this.nodeName = "DOCTYPE";}
 mw0.Head = function(){}
 mw0.Meta = function(){}
 mw0.Title = function(){}
+Object.defineProperty(mw0.Title.prototype, "text", {
+get: function(){ return this.firstChild && this.firstChild.nodeName == "#text" && this.firstChild.data || "";}
+// setter should change the title of the document, not yet implemented
+});
 mw0.Link = function(){}
 // It's a list but why would it ever be more than one?
 Object.defineProperty(mw0.Link.prototype, "relList", {
