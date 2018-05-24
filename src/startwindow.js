@@ -2013,8 +2013,14 @@ if(!nsurl) nsurl = "";
 u.namespaceURI = new mw0.URL(nsurl);
 // prefix and url have to fit together, I guess.
 // I don't understand any of this.
-if(!u.prefix && !s.match(/^:/))
-u.prefix = "html", u.localName = s;
+if(!s.match(/:/)) {
+// no colon, let it pass
+u.prefix = "";
+u.localName = s.toLowerCase();
+u.tagName = u.nodeName = u.nodeName.toLowerCase();
+return u;
+}
+// There's a colon, and a prefix, and it has to be real.
 if(u.prefix == "prefix") {
 ; // ok
 } else if(u.prefix == "html") {
