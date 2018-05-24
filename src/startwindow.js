@@ -719,6 +719,20 @@ mw0.Form = function(){ this.elements = []; }
 mw0.Form.prototype = {
 submit: eb$formSubmit, reset: eb$formReset};
 mw0.Element = function(){}
+mw0.Element.prototype.click = function() {
+// as though the user had clicked on this
+if(this.nodeName == "button" || this.type == "button" ||
+this.type == "reset" || this.type == "submit") {
+var e = new Event;
+e.initEvent("click", true, true);
+var rc = this.dispatchEvent(e); // run the onclick code
+if(rc && this.form) {
+// do what the tag says to do
+if(this.type == "submit") this.form.submit();
+if(this.type == "reset") this.form.reset();
+}
+}
+}
 mw0.HTMLElement = function(){}
 mw0.Image = function(){}
 mw0.Frame = function(){}
@@ -1656,12 +1670,14 @@ mw0.createEvent = function(unused) { return new Event; }
 
 mw0.dispatchEvent = function (e) {
 if(my$win().eventDebug) alert3("dispatch " + this.nodeName + "." + e.type);
+e.target = this;
 var t = this;
 var rc = true;
 while(t) {
 var fn = "on" + e.type;
 if(typeof t[fn] == "function") {
 if(my$win().eventDebug) alert3("trigger " + t.nodeName + "." + e.type);
+e.currentTarget = t;
 var r = t[fn](e);
 if((typeof r == "boolean" || typeof r == "number") && !r) { rc = false; break; }
 if(e.cancelled) break;
@@ -1726,7 +1742,6 @@ for(var i = 0; i<a.length; ++i) {if(a[i].did$run) continue; \
 a[i].did$run = true; \
 alert3("fire " + i); rc = a[i](e); \
 if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; \
-if(e.cancelled) return true; \
 i = -1; \
 } return true; };');
 

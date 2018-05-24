@@ -766,6 +766,9 @@
 // it was tidy generated, but what if the tag is <form name=z id=z>
 // I'd rather have a false positive than a false negative.
 // So this test is commented out.
+// The test passes if you don't do tidyCleanAndRepair,
+// but a lot of other things go wrong if we don't clean up the html,
+// so let's not throw the baby out with the bathwater.
 /*
       assert(document.getElementById('form') !== document.getElementsByTagName('form')[0], "getElementById() searched on 'name'");
 */
@@ -816,6 +819,46 @@
       assert(document.getElementById('score').dispatchEvent(event), "dispatchEvent #3 failed");
       assertEquals(count, 2, "unexpected number of events handled");
       assert(ok, "unexpected events handled");
+      return 2;
+    },
+    function () {
+      // test 31: event.stopPropagation() and capture
+      // we're going to use an input element because we can cause events to bubble from it
+      var input = document.createElement('input');
+      var div = document.createElement('div');
+      div.appendChild(input);
+      document.body.appendChild(div);
+      // the test will consist of two event handlers:
+      var ok = true;
+      var captureCount = 0;
+      var testCapture = function (event) {
+  alert("capture");
+        ok = ok &&
+             (event.type == 'click') &&
+             (event.target == input) &&
+             (event.currentTarget == div) &&
+             (event.eventPhase == 1) &&
+             (event.bubbles) &&
+             (event.cancelable);
+        captureCount++;
+        event.stopPropagation(); // this shouldn't stop it from firing both times on the div element
+      };
+      var testBubble = function (event) {
+  alert("bubble");
+        ok = false;
+      };
+      // one of which is added twice:
+      div.addEventListener('click', function (event) { testCapture(event) }, true);
+      div.addEventListener('click', function (event) { testCapture(event) }, true);
+      div.addEventListener('click', testBubble, false);
+      // we cause an event to bubble like this:
+      input.type = 'reset';
+      input.click();
+      // cleanup afterwards
+      document.body.removeChild(div);
+      // capture handler should have been called twice
+      assertEquals(captureCount, 2, "capture handler called the wrong number of times");
+      assert(ok, "capture handler called incorrectly");
       return 2;
     },
 // other tests not yet folded in
