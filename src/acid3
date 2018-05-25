@@ -859,6 +859,35 @@
       assert(ok, "capture handler called incorrectly");
       return 2;
     },
+    function () {
+      // test 32: events bubbling through Document node
+      // event handler:
+      var ok = true;
+      var count = 0;
+      var test = function (event) {
+        count += 1;
+        if (event.eventPhase != 3)
+          ok = false;
+      }
+      // register event handler
+      document.body.addEventListener('click', test, false);
+      // create an element that bubbles an event, and bubble it
+      var input = document.createElement('input');
+      var div = document.createElement('div');
+      div.appendChild(input);
+      document.body.appendChild(div);
+      input.type = 'reset';
+      input.click();
+      // unregister event handler
+      document.body.removeEventListener('click', test, false);
+      // check that it's removed for good
+      input.click();
+      // remove the newly added elements
+      document.body.removeChild(div);
+      assertEquals(count, 1, "capture handler called the wrong number of times");
+      assert(ok, "capture handler called incorrectly");
+      return 2;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';

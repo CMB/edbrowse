@@ -1652,7 +1652,7 @@ mw0.Event = function(options){
     this.cancelled = false;
     this.currentTarget = null;
     this.target = null;
-    this.eventPhase = Event.AT_TARGET;
+    this.eventPhase = 0;
     this.timeStamp = new Date().getTime();
 };
 
@@ -1692,11 +1692,14 @@ if(e.cancelled) return true;
 }
 }
 if(!e.bubbles) return true;
-e.eventPhase = 2;
+e.eventPhase = 3;
 while(l < pathway.length) {
 t = pathway[l++];
 var fn = "on" + e.type;
 if(typeof t[fn] == "function") {
+// If function was just put here, not part of addEventListener,
+// don't run it on the second phase or you're running it twice.
+if(!t[fn + "$$array"]) continue;
 if(my$win().eventDebug) alert3("bubble " + t.nodeName + "." + e.type);
 e.currentTarget = t;
 var r = t[fn](e);
@@ -1758,13 +1761,14 @@ this[ev] = undefined;
 this[evarray] = a;
 eval(
 'this["' + ev + '"] = function(e){ var rc, a = this["' + evarray + '"]; \
-if(this["' + evorig + '"] && e.eventPhase == 1) { alert3("fire orig"); rc = this["' + evorig + '"](e); \
+var savePhase = e.eventPhase; var attarget = (e.target == e.currentTarget); \
+if(this["' + evorig + '"] && e.eventPhase == 1) { alert3("fire orig"); if(attarget) e.eventPhase = 2; rc = this["' + evorig + '"](e); e.eventPhase = savePhase; \
 if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; } \
 for(var i = 0; i<a.length; ++i) a[i].did$run = false; \
 for(var i = 0; i<a.length; ++i) {if(a[i].did$run) continue; \
-if(e.eventPhase == 1 && !a[i].do$capture || e.eventPhase == 2 && !a[i].do$bubble) continue; \
-a[i].did$run = true; \
-alert3("fire " + i); rc = a[i](e); \
+if(e.eventPhase == 1 && !a[i].do$capture || e.eventPhase == 3 && !a[i].do$bubble) continue; \
+a[i].did$run = true; if(attarget) e.eventPhase = 2; \
+alert3("fire " + i); rc = a[i](e); e.eventPhase = savePhase; \
 if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; \
 i = -1; \
 } return true; };');
