@@ -1686,6 +1686,9 @@ var fn = "on" + e.type;
 if(typeof t[fn] == "function") {
 if(my$win().eventDebug) alert3("capture " + t.nodeName + "." + e.type);
 e.currentTarget = t;
+// Some mashinations to set phase = 2 when it's a direct function,
+// not the listener function I created.
+if(!t[fn + "$$array"]) e.eventPhase = 2;
 var r = t[fn](e);
 if((typeof r == "boolean" || typeof r == "number") && !r) return false;
 if(e.cancelled) return true;
