@@ -832,7 +832,6 @@
       var ok = true;
       var captureCount = 0;
       var testCapture = function (event) {
-  alert("capture");
         ok = ok &&
              (event.type == 'click') &&
              (event.target == input) &&
@@ -844,7 +843,6 @@
         event.stopPropagation(); // this shouldn't stop it from firing both times on the div element
       };
       var testBubble = function (event) {
-  alert("bubble");
         ok = false;
       };
       // one of which is added twice:

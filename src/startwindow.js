@@ -1658,7 +1658,7 @@ mw0.Event = function(options){
 
 mw0.Event.prototype.preventDefault = function(){       this.prev$default = true; }
 
-mw0.Event.prototype.stopPropagation = function(){ if(this.cancelable){ this.cancelled = true; this.bubbles = false; } }
+mw0.Event.prototype.stopPropagation = function(){ if(this.cancelable)this.cancelled = true; }
 
 // deprecated!
 mw0.Event.prototype.initEvent = function(t, bubbles, cancel) {
@@ -1676,19 +1676,35 @@ mw0.dispatchEvent = function (e) {
 if(my$win().eventDebug) alert3("dispatch " + this.nodeName + "." + e.type);
 e.target = this;
 var t = this;
-var rc = true;
-while(t) {
+var pathway = [];
+while(t) pathway.push(t), t=t.parentNode;
+var l = pathway.length;
+e.eventPhase = 1; // capture
+while(l) {
+t = pathway[--l];
 var fn = "on" + e.type;
 if(typeof t[fn] == "function") {
-if(my$win().eventDebug) alert3("trigger " + t.nodeName + "." + e.type);
+if(my$win().eventDebug) alert3("capture " + t.nodeName + "." + e.type);
 e.currentTarget = t;
 var r = t[fn](e);
-if((typeof r == "boolean" || typeof r == "number") && !r) { rc = false; break; }
-if(e.cancelled) break;
+if((typeof r == "boolean" || typeof r == "number") && !r) return false;
+if(e.cancelled) return true;
 }
-t = t.parentNode;
 }
-return rc;
+if(!e.bubbles) return true;
+e.eventPhase = 2;
+while(l < pathway.length) {
+t = pathway[l++];
+var fn = "on" + e.type;
+if(typeof t[fn] == "function") {
+if(my$win().eventDebug) alert3("bubble " + t.nodeName + "." + e.type);
+e.currentTarget = t;
+var r = t[fn](e);
+if((typeof r == "boolean" || typeof r == "number") && !r) return false;
+if(e.cancelled) return true;
+}
+}
+return true;
 };
 
 /*********************************************************************
@@ -1709,14 +1725,14 @@ This is frickin complicated, so set eventDebug to debug it.
 
 mw0.attachOn = false;
 
-mw0.addEventListener = function(ev, handler, notused) { this.eb$listen(ev,handler, true); }
-mw0.removeEventListener = function(ev, handler, notused) { this.eb$unlisten(ev,handler, true); }
+mw0.addEventListener = function(ev, handler, iscapture) { this.eb$listen(ev,handler, iscapture, true); }
+mw0.removeEventListener = function(ev, handler, iscapture) { this.eb$unlisten(ev,handler, iscapture, true); }
 if(mw0.attachOn) {
-mw0.attachEvent = function(ev, handler) { this.eb$listen(ev,handler, false); }
-mw0.detachEvent = function(ev, handler) { this.eb$unlisten(ev,handler, false); }
+mw0.attachEvent = function(ev, handler) { this.eb$listen(ev,handler, true, false); }
+mw0.detachEvent = function(ev, handler) { this.eb$unlisten(ev,handler, true, false); }
 }
 
-mw0.eb$listen = function(ev, handler, addon)
+mw0.eb$listen = function(ev, handler, iscapture, addon)
 {
 if(my$win().eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev);
 if(addon) {
@@ -1725,6 +1741,9 @@ ev = "on" + ev;
 // for attachEvent, if onclick is passed in, you are actually listening for 'click'
 ev = ev.replace(/^on/, "");
 }
+
+if(iscapture) handler.do$capture = true;
+else handler.do$bubble = true;
 
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
@@ -1739,10 +1758,11 @@ this[ev] = undefined;
 this[evarray] = a;
 eval(
 'this["' + ev + '"] = function(e){ var rc, a = this["' + evarray + '"]; \
-if(this["' + evorig + '"]) { alert3("fire orig"); rc = this["' + evorig + '"](e); \
+if(this["' + evorig + '"] && e.eventPhase == 1) { alert3("fire orig"); rc = this["' + evorig + '"](e); \
 if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; } \
 for(var i = 0; i<a.length; ++i) a[i].did$run = false; \
 for(var i = 0; i<a.length; ++i) {if(a[i].did$run) continue; \
+if(e.eventPhase == 1 && !a[i].do$capture || e.eventPhase == 2 && !a[i].do$bubble) continue; \
 a[i].did$run = true; \
 alert3("fire " + i); rc = a[i](e); \
 if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; \
@@ -1756,9 +1776,8 @@ this[evarray].push(handler);
 // here is unlisten, the opposite of listen.
 // what if every handler is removed and there is an empty array?
 // the assumption is that this is not a problem.
-mw0.eb$unlisten = function(ev, handler, addon)
+mw0.eb$unlisten = function(ev, handler, iscapture, addon)
 {
-var ev_before_changes = ev;
 if(my$win().eventDebug)  alert3((addon ? "unlisten " : "detach ") + this.nodeName + "." + ev);
 if(addon) {
 ev = "on" + ev;
@@ -1783,8 +1802,10 @@ if(this[evarray]) {
 var a = this[evarray]; // shorthand
 for(var i = 0; i<a.length; ++i)
 if(a[i] == handler) {
+if(iscapture && a[i].do$capture || !iscapture && a[i].do$bubble) {
 a.splice(i, 1);
 return;
+}
 }
 }
 }

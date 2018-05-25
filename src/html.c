@@ -1871,49 +1871,19 @@ void javaSubmitsForm(jsobjtype v, bool reset)
 
 bool bubble_event(const struct htmlTag *t, const char *name)
 {
-	const struct htmlTag *t0 = t;
-	bool first = true, rc = true;
 	jsobjtype e;		// the event object
 	struct ebFrame *save_cf = cf;
-
-	if (!isJSAlive || !t0->jv)
+	bool rc;
+	if (!isJSAlive || !t->jv)
 		return true;
-
-	e = create_event(t0->jv, name);
-
-	do {
-		if (!t->jv)
-			continue;
-		if (!handlerPresent(t->jv, name))
-			continue;
-		if (first) {
-			jSyncup(false);
-			first = false;
-		}
-		cf = t->f0;
-		rc = run_event_bool(t->jv, t->info->name, name, e);
-		if (get_property_bool(e, "cancelled"))
-			goto done;
-	} while (rc && (t = t->parent));
-
-// And finally check handler on the document.
-	cf = &(cw->f0);
-	if (rc && handlerPresent(cf->docobj, name)) {
-		if (first) {
-			jSyncup(false);
-			first = false;
-		}
-		cf = &(cw->f0);
-		rc = run_event_bool(cf->docobj, "document", name, e);
-	}
-
-done:
-	if (!first)
-		jSideEffects();
+	e = create_event(t->jv, name);
+	jSyncup(false);
+	rc = run_function_onearg(t->jv, "dispatchEvent", e);
+	jSideEffects();
 	cf = save_cf;
 	if (rc && get_property_bool(e, "prev$default"))
 		rc = false;
-	unlink_event(t0->jv);
+	unlink_event(t->jv);
 	return rc;
 }				/* bubble_event */
 

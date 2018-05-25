@@ -625,6 +625,8 @@ jsobjtype create_event(jsobjtype parent, const char *evname)
 // gc$event protects from garbage collection
 	e = instantiate(parent, "gc$event", "Event");
 	set_property_string(e, "type", evname1);
+	set_property_bool(e, "bubbles", true);
+	set_property_bool(e, "cancelable", true);
 	return e;
 }
 
