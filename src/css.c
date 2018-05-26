@@ -1098,13 +1098,12 @@ bracket:
 	}			// switch
 }
 
-void cssDocLoad(char *start)
+void cssDocLoad(char *start, bool assign)
 {
 	struct cssmaster *cm = cf->cssmaster;
 	if (!cm)
 		cf->cssmaster = cm = allocZeroMem(sizeof(struct cssmaster));
-// This shouldn't be run twice for a given frame,
-// but sometimes we do anyways fore debugging.
+// This could be run again and again, if the style nodes change.
 	if (cm->descriptors)
 		cssPiecesFree(cm->descriptors);
 	cm->descriptors = cssPieces(start);
@@ -1117,6 +1116,10 @@ void cssDocLoad(char *start)
 			fclose(f);
 		}
 	}
+
+	if (!assign)
+		return;
+
 	build_doclist(0);
 	hashBuild();
 	hashPrint();

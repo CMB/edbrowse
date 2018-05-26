@@ -2796,22 +2796,16 @@ onhashchange = eb$truefunction;
 
 if(!mw0.compiled) {
 
-mw0.cssGather = function()
+mw0.cssGather = function(assign)
 {
 var w = my$win();
 var d = my$doc();
 var css_all = "";
 w.cssSource = [];
-// <style> tags in the html.
-var a = d.getElementsByTagName("style");
-var i, t;
-if(a.length)
-css_all += "@ebdelim0" + w.eb$base + "{}\n";
-for(i=0; i<a.length; ++i) {
-t = a[i];
-if(t.data) w.cssSource.push({data: t.data, src:w.eb$base}), css_all += t.data;
-}
-// <link type=text/css> tags in the html.
+var a, i, t;
+// Usually <link> tags come before <style> tags, and thus take precedence.
+// But it doesn't have to be this way; we should probably take
+// <link> and <style> tags in tree order.
 a = d.getElementsByTagName("link");
 for(i=0; i<a.length; ++i) {
 t = a[i];
@@ -2823,7 +2817,15 @@ css_all += "@ebdelim0" + t.href + "{}\n";
 css_all += t.data;
 }
 }
-eb$cssDocLoad(css_all);
+// <style> tags in the html.
+a = d.getElementsByTagName("style");
+if(a.length)
+css_all += "@ebdelim0" + w.eb$base + "{}\n";
+for(i=0; i<a.length; ++i) {
+t = a[i];
+if(t.data) w.cssSource.push({data: t.data, src:w.eb$base}), css_all += t.data;
+}
+eb$cssDocLoad(css_all, assign);
 }
 
 // Apply rules to a given style object, which is this.
@@ -2833,7 +2835,7 @@ mw0.eb$qs$start = function()
 {
 // This is a stub for now.
 my$doc().prependChild(new DocType);
-mw0.cssGather();
+mw0.cssGather(true);
 }
 
 /*********************************************************************

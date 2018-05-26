@@ -1227,7 +1227,7 @@ static duk_ret_t native_setcook(duk_context * cx)
 
 static duk_ret_t native_css_start(duk_context * cx)
 {
-	cssDocLoad(cloneString(duk_get_string(cx, -1)));
+	cssDocLoad(cloneString(duk_get_string(cx, 0)), duk_get_boolean(cx, 1));
 	return 0;
 }
 
@@ -1372,7 +1372,7 @@ void createJavaContext_nat(void)
 	duk_put_global_string(jcx, "eb$getter_cd");
 	duk_push_c_function(jcx, getter_cw, 0);
 	duk_put_global_string(jcx, "eb$getter_cw");
-	duk_push_c_function(jcx, native_css_start, 1);
+	duk_push_c_function(jcx, native_css_start, 2);
 	duk_put_global_string(jcx, "eb$cssDocLoad");
 	duk_push_c_function(jcx, native_qsa, DUK_VARARGS);
 	duk_put_global_string(jcx, "querySelectorAll");
