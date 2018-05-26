@@ -2331,7 +2331,12 @@ headerstring+=": ";
 headerstring+=v2;
 headerstring+=",";
 }
-var entire_http_response =  eb$fetchHTTP(this.url,this.method,headerstring,data);
+var urlcopy = this.url;
+if(urlcopy.match(/[!*'";\[\]$\u0000-\u0020\u007f-\uffff]/)) {
+alert3("xhr url was not encoded");
+urlcopy = encodeURI(urlcopy);
+}
+var entire_http_response =  eb$fetchHTTP(urlcopy,this.method,headerstring,data);
 var responsebody_array = entire_http_response.split("\r\n\r\n");
 var http_headers = responsebody_array[0];
 responsebody_array[0] = "";
