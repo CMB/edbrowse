@@ -262,8 +262,15 @@ struct hashhead {
 static struct hashhead *hashtags, *hashids, *hashclasses;
 static int hashtags_n, hashids_n, hashclasses_n;
 
+struct shortcache {
+	struct shortcache *next;
+	char *url;
+	char *data;
+};
+
 struct cssmaster {
 	struct desc *descriptors;
+	struct shortcache *cache;
 };
 
 static void cssPiecesFree(struct desc *d);
@@ -283,6 +290,35 @@ static void hashFree(void);
 static void hashPrint(void);
 static struct htmlTag **bestListAtomic(struct asel *a);
 static void cssEverybody(void);
+
+static char *fromShortCache(const char *url)
+{
+	struct shortcache *c;
+	struct cssmaster *cm = cf->cssmaster;
+	if (!cm)
+		return 0;
+	for (c = cm->cache; c; c = c->next)
+		if (stringEqual(url, c->url)) {
+			debugPrint(3, "shortcache %s", url);
+			return c->data;
+		}
+	return 0;
+}
+
+static void intoShortCache(const char *url, char *data)
+{
+	struct shortcache *c;
+	struct cssmaster *cm = cf->cssmaster;
+	if (!cm) {
+// don't know how this could ever happen.
+		cf->cssmaster = cm = allocZeroMem(sizeof(struct cssmaster));
+	}
+	c = allocMem(sizeof(struct shortcache));
+	c->next = cm->cache;
+	cm->cache = c;
+	c->url = cloneString(url);
+	c->data = data;
+}
 
 // Step back through a css string looking for the base url.
 // The result is allocated.
@@ -431,13 +467,14 @@ top:
 				unstring(iu2);
 				newurl = resolveURL(lasturl, iu2);
 				nzFree(lasturl);
-				debugPrint(3, "css source %s", newurl);
 				*iu1 = 0;
+				if ((a = fromShortCache(newurl)))
+					goto imported_data;
+				debugPrint(3, "css source %s", newurl);
 				memset(&g, 0, sizeof(g));
 				g.thisfile = cf->fileName;
 				g.uriEncoded = true;
 				g.url = newurl;
-				a = NULL;
 				if (httpConnect(&g)) {
 					if (g.code == 200) {
 						a = force_utf8(g.buffer,
@@ -470,13 +507,13 @@ top:
 				}
 				if (!a)
 					a = emptyString;
+				intoShortCache(newurl, a);
+imported_data:
 				t = allocMem(strlen(s) + strlen(a) +
-					     strlen(newurl) + strlen(iu3) + 26 +
-					     1);
+					     strlen(newurl) + strlen(iu3) + 27);
 				sprintf(t,
 					"%s\n@ebdelim1%s{}\n%s\n@ebdelim2{}\n%s",
 					s, newurl, a, iu3);
-				nzFree(a);
 				nzFree(newurl);
 				nzFree(s);
 				s = t;
@@ -1183,11 +1220,18 @@ static void cssPiecesFree(struct desc *d)
 
 void cssFree(struct ebFrame *f)
 {
+	struct shortcache *c;
 	struct cssmaster *cm = f->cssmaster;
 	if (!cm)
 		return;
 	if (cm->descriptors)
 		cssPiecesFree(cm->descriptors);
+	while ((c = cm->cache)) {
+		cm->cache = c->next;
+		nzFree(c->url);
+		nzFree(c->data);
+		free(c);
+	}
 	free(cm);
 	f->cssmaster = 0;
 }
