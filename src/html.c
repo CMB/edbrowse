@@ -687,7 +687,7 @@ top:
 		if (!js_file)
 			js_file = "generated";
 		if (cf != save_cf)
-			debugPrint(1, "running script at a lower frame %s",
+			debugPrint(4, "running script at a lower frame %s",
 				   js_file);
 		ln = t->js_ln;
 		if (!ln)

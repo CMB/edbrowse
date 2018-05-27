@@ -365,44 +365,40 @@ static void unstring(char *s)
 	unsigned long uc;	// unicode character
 	int i;
 	while ((c = *s)) {
-		if (qc) {	// in quotes
-			if (c == qc) {
-				qc = 0;
-				++s;
-				continue;
-			}
-			if (c != '\\')
-				goto copy;
-			if (!s[1])
-				goto copy;
-			c = *++s;
-			if (c == 'n')
-				c = '\n';
-			if (c == 't')
-				c = '\t';
-			if (!isxdigit(c))
-				goto copy;
-			for (i = 0; i < 4; ++i)
-				if (isxdigit(s[i]))
-					hexin[i] = s[i];
-				else
-					break;
-			hexin[i] = 0;
-			sscanf(hexin, "%lx", &uc);
-// convert to utf8
-			r = uni2utf8(uc);
-			strcpy(w, r);
-			w += strlen(r);
-			s += i;
+		if (c == qc) {	// in quotes
+			qc = 0;
+			++s;
 			continue;
 		}
-		if (c == '"' || c == '\'') {
+		if (!qc && (c == '"' || c == '\'')) {
 			qc = c;
 			++s;
 			continue;
 		}
-		if (c == '\\' && s[1])
-			c = *++s;
+		if (c != '\\')
+			goto copy;
+		if (!s[1])
+			goto copy;
+		c = *++s;
+		if (c == 'n')
+			c = '\n';
+		if (c == 't')
+			c = '\t';
+		if (!isxdigit(c))
+			goto copy;
+		for (i = 0; i < 4; ++i)
+			if (isxdigit(s[i]))
+				hexin[i] = s[i];
+			else
+				break;
+		hexin[i] = 0;
+		sscanf(hexin, "%lx", &uc);
+// convert to utf8
+		r = uni2utf8(uc);
+		strcpy(w, r);
+		w += strlen(r);
+		s += i;
+		continue;
 copy:
 		*w++ = c;
 		++s;
@@ -1164,7 +1160,8 @@ void cssDocLoad(jsobjtype thisobj, char *start, bool pageload)
 		cf->cssmaster = cm = allocZeroMem(sizeof(struct cssmaster));
 // This could be run again and again, if the style nodes change.
 	if (cm->descriptors) {
-		debugPrint(3, "free and rebuild css descriptors");
+		debugPrint(3,
+			   "free and recompile css descriptors due to dom changes");
 		cssPiecesFree(cm->descriptors);
 	}
 	cm->descriptors = cssPieces(start);
