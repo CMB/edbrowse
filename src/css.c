@@ -298,10 +298,8 @@ static char *fromShortCache(const char *url)
 	if (!cm)
 		return 0;
 	for (c = cm->cache; c; c = c->next)
-		if (stringEqual(url, c->url)) {
-			debugPrint(3, "shortcache %s", url);
+		if (stringEqual(url, c->url))
 			return c->data;
-		}
 	return 0;
 }
 
@@ -384,7 +382,7 @@ static void unstring(char *s)
 				c = '\t';
 			if (!isxdigit(c))
 				goto copy;
-			for (i = 0; i < 8; ++i)
+			for (i = 0; i < 4; ++i)
 				if (isxdigit(s[i]))
 					hexin[i] = s[i];
 				else
@@ -1139,17 +1137,39 @@ bracket:
 	}			// switch
 }
 
-void cssDocLoad(char *start, bool pageload)
+static void frameFromWindow(jsobjtype thisobj)
 {
-	struct cssmaster *cm = cf->cssmaster;
+	struct ebFrame *f;
+	for (f = &(cw->f0); f; f = f->next)
+		if (f->winobj == thisobj)
+			break;
+	if (f) {
+		if (f != cf) {
+			cf = f;
+			set_js_globals();
+		}
+	} else {
+		debugPrint(3, " can't find frame for window object %p",
+			   thisobj);
+	}
+}
+
+void cssDocLoad(jsobjtype thisobj, char *start, bool pageload)
+{
+	struct ebFrame *save_cf = cf;
+	struct cssmaster *cm;
+	frameFromWindow(thisobj);
+	cm = cf->cssmaster;
 	if (!cm)
 		cf->cssmaster = cm = allocZeroMem(sizeof(struct cssmaster));
 // This could be run again and again, if the style nodes change.
-	if (cm->descriptors)
+	if (cm->descriptors) {
+		debugPrint(3, "free and rebuild css descriptors");
 		cssPiecesFree(cm->descriptors);
+	}
 	cm->descriptors = cssPieces(start);
 	if (!cm->descriptors)
-		return;
+		goto done;
 	if (debugCSS) {
 		FILE *f = fopen(cssDebugFile, "a");
 		if (f) {
@@ -1159,7 +1179,7 @@ void cssDocLoad(char *start, bool pageload)
 	}
 
 	if (!pageload)
-		return;
+		goto done;
 
 	cssStats();
 
@@ -1170,6 +1190,10 @@ void cssDocLoad(char *start, bool pageload)
 	debugPrint(3, "%d css assignments", bulktotal);
 	hashFree();
 	nzFree(doclist);
+
+done:
+	cf = save_cf;
+	set_js_globals();
 }
 
 static void cssPiecesFree(struct desc *d)
@@ -2279,7 +2303,7 @@ where "this" is not the window object, then we have to make some changes.
 
 void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination)
 {
-	struct ebFrame *f, *save_cf = cf;
+	struct ebFrame *save_cf = cf;
 	struct htmlTag *t = tagFromJavaVar(node);
 	struct cssmaster *cm;
 	struct desc *d;
@@ -2287,21 +2311,10 @@ void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination)
 	if (!t)			// should never happen
 		return;
 
-	for (f = &(cw->f0); f; f = f->next)
-		if (f->winobj == thisobj)
-			break;
-	if (f) {
-		if (f != cf) {
-			cf = f;
-			set_js_globals();
-		}
-	} else {
-		debugPrint(3, "getComputedStyle couldn't find current frame");
-	}
-
-	cm = cf->cssmaster;
+	frameFromWindow(thisobj);
 // I think the root is document, not the current node, but that is not clear.
 	rootobj = 0;
+	cm = cf->cssmaster;
 	if (!cm)
 		goto done;
 

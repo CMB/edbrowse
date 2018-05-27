@@ -411,7 +411,7 @@ int run_function_onearg_nat(jsobjtype obj, const char *name, jsobjtype o);
 char *run_script_nat(const char *s);
 
 /* sourcefile=css.c */
-void cssDocLoad(char *s, bool assign);
+void cssDocLoad(jsobjtype thisobj, char *s, bool pageload);
 void cssFree(struct ebFrame *f);
 jsobjtype querySelectorAll(const char *selstring, jsobjtype topobj);
 jsobjtype querySelector(const char *selstring, jsobjtype topobj);

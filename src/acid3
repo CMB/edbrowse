@@ -888,6 +888,61 @@
       assert(ok, "capture handler called incorrectly");
       return 2;
     },
+
+    // bucket 3: DOM2 Views, DOM2 Style, and Selectors
+    function () {
+      // test 33: basic tests for selectors - classes, attributes
+      var p;
+      var builder = function(doc) {
+        p = doc.createElement("p");
+        doc.body.appendChild(p);
+      };
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        p.className = "selectorPingTest";
+        var good = add(".selectorPingTest");
+        add(".SelectorPingTest");
+        add(".selectorpingtest");
+        expect(doc.body, 0, "failure 1");
+        expect(p, good, "failure 2");
+      });
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        p.className = 'a\u0020b\u0009c\u000Ad\u000De\u000Cf\u2003g\u3000h';
+        var good = add(".a.b.c.d.e.f\\2003g\\3000h");
+        expect(p, good, "whitespace error in class processing");
+      });
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        p.className = "selectorPingTest";
+        var good = add("[class=selectorPingTest]");
+        add("[class=SelectorPingTest]");
+        add("[class=selectorpingtest]");
+        expect(doc.body, 0, "failure 3");
+        expect(p, good, "class attribute matching failed");
+      });
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        p.className = "selectorPingTest";
+        var good = add("[title=selectorPingTest]");
+        add("[title=SelectorPingTest]");
+        add("[title=selectorpingtest]");
+        expect(doc.body, 0, "failure 4");
+        expect(p, 0, "failure 5");
+        p.title = "selectorPingTest";
+        expect(doc.body, 0, "failure 6");
+        expect(p, good, "failure 7");
+      });
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        p.setAttribute('align', 'right and left');
+        var good = add("[align=\"right and left\"]");
+        add("[align=left]");
+        add("[align=right]");
+        expect(p, good, "align attribute mismatch");
+      });
+      return 3;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';

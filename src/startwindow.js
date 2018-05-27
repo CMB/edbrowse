@@ -918,12 +918,10 @@ Nodes are created, and technically their class changed,
 in that there was no node and no class before, and that induces a call
 to getComputedStyle, and that fetches the file, again.
 The imported css file could be fetched 100 times just to load the page.
-Until that is fixed, I can't perform these dynamic calculations.
+I get around this by the shortcache feature in css.c.
 *********************************************************************/
 
-/*
 mw0.cssGather(false, this);
-*/
 
 eb$cssApply(this, e, s);
 return s;
@@ -2857,7 +2855,12 @@ t = a[i];
 if(t.css$data) w.cssSource.push({data: t.css$data, src:w.eb$base}), css_all += t.css$data;
 }
 
-eb$cssDocLoad(css_all, pageload);
+// If the css didn't change, then no need to rebuild the selectors
+if(!pageload && css_all == w.last$css_all)
+return;
+
+w.last$css_all = css_all;
+eb$cssDocLoad(w, css_all, pageload);
 }
 
 // Apply rules to a given style object, which is this.
