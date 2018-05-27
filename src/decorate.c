@@ -1138,6 +1138,7 @@ static void optionJS(struct htmlTag *t)
 {
 	struct htmlTag *sel = t->controller;
 	const char *tx = t->textval;
+	const char *cl = t->class;
 
 	if (!sel)
 		return;
@@ -1160,6 +1161,10 @@ static void optionJS(struct htmlTag *t)
 	set_property_number(t->jv, "nodeType", 1);
 	set_property_bool(t->jv, "selected", t->checked);
 	set_property_bool(t->jv, defsel, t->checked);
+	if (!cl)
+		cl = emptyString;
+	set_property_string(t->jv, "class", cl);
+	set_property_string(t->jv, "last$class", cl);
 
 	if (t->checked && !sel->multiple) {
 		set_property_number(sel->jv, "selectedIndex", t->lic);
@@ -1280,6 +1285,9 @@ Needless to say that's not good!
 			if (!w)
 				w = emptyString;
 			set_property_string(t->jv, "data", w);
+			w = (t->class ? t->class : emptyString);
+			set_property_string(t->jv, "class", w);
+			set_property_string(t->jv, "last$class", w);
 		}
 		break;
 

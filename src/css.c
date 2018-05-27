@@ -2214,23 +2214,52 @@ next_rule:
 	set_property_bool_nat(textobj, "inj$css", true);
 }
 
-// This is the native function for getComputedStyle
-void cssApply(jsobjtype node, jsobjtype destination)
+/*********************************************************************
+This is the native function for getComputedStyle().
+If you call frames[i].contentWindow.getComputedStyle(), it is very important
+that we apply the css for that frame, not the frame we are currently in.
+For that reason, the first argument is "this", which I assume is a global
+window object. I march down the frames and find it, and that is the root for
+the css rules. If there's ever a document.head.getComputedStyle or some such,
+where "this" is not the window object, then we have to make some changes.
+*********************************************************************/
+
+void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination)
 {
+	struct ebFrame *f, *save_cf = cf;
 	struct htmlTag *t = tagFromJavaVar(node);
-	struct cssmaster *cm = cf->cssmaster;
+	struct cssmaster *cm;
 	struct desc *d;
 
+	if (!t)			// should never happen
+		return;
+
+	for (f = &(cw->f0); f; f = f->next)
+		if (f->winobj == thisobj)
+			break;
+	if (f) {
+		if (f != cf) {
+			cf = f;
+			set_js_globals();
+		}
+	} else {
+		debugPrint(3, "getComputedStyle couldn't find current frame");
+	}
+
+	cm = cf->cssmaster;
 // I think the root is document, not the current node, but that is not clear.
 	rootobj = 0;
-
 	if (!cm)
-		return;
+		goto done;
 
 	for (d = cm->descriptors; d; d = d->next) {
 		if (qsaMatchGroup(t, node, d))
 			do_rules(destination, d->rules);
 	}
+
+done:
+	cf = save_cf;
+	set_js_globals();
 }
 
 void cssText(jsobjtype node, const char *rulestring)

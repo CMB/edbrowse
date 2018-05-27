@@ -400,6 +400,10 @@ struct ebFrame {
 };
 extern struct ebFrame *cf;	/* current frame */
 
+#define set_js_globals_f(f) (jcx = f->jcx, winobj = f->winobj, docobj = f->docobj)
+#define set_js_globals() set_js_globals_f(cf)
+#define get_js_globals() (cf->jcx = jcx, cf->winobj = winobj, cf->docobj = docobj)
+
 /* single linked list for internal jump history */
 struct histLabel {
 	int label; /* label must be first element */

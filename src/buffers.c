@@ -4033,7 +4033,7 @@ pwd:
 	}
 
 	if (stringEqual(line, "ub") || stringEqual(line, "et")) {
-		struct ebFrame *f;
+		struct ebFrame *f, *fnext;
 		struct histLabel *label, *lnext;
 		ub = (line[0] == 'u');
 		rc = true;
@@ -4065,15 +4065,25 @@ et_go:
 		}
 		freeTags(cw);
 		cw->mustrender = false;
-		for (f = &cw->f0; f; f = f->next) {
+		for (f = &cw->f0; f; f = fnext) {
+			fnext = f->next;
 			delTimers(f);
 			freeJavaContext(f);
-			f->jcx = NULL;
 			nzFree(f->dw);
-			f->dw = 0;
 			nzFree(f->hbase);
-			f->hbase = 0;
+			nzFree(f->firstURL);
+			if (f != &cw->f0) {
+				nzFree(f->fileName);
+				free(f);
+			} else {
+				f->jcx = f->winobj = f->docobj = 0;
+				f->dw = 0;
+				f->dw_l = 0;
+				f->hbase = 0;
+				f->firstURL = 0;
+			}
 		}
+		cw->f0.next = 0;
 		lnext = cw->histLabel;
 		while ((label = lnext)) {
 			lnext = label->prev;

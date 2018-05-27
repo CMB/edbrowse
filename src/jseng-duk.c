@@ -1286,9 +1286,10 @@ static duk_ret_t native_qs(duk_context * cx)
 
 static duk_ret_t native_cssApply(duk_context * cx)
 {
-	if (duk_is_object(cx, 0) && duk_is_object(cx, 1))
-		cssApply(duk_get_heapptr(cx, 0), duk_get_heapptr(cx, 1));
-	duk_pop_2(cx);
+	if (duk_is_object(cx, 1) && duk_is_object(cx, 2))
+		cssApply(duk_get_heapptr(cx, 0), duk_get_heapptr(cx, 1),
+			 duk_get_heapptr(cx, 2));
+	duk_pop_n(cx, 3);
 	return 0;
 }
 
@@ -1378,7 +1379,7 @@ void createJavaContext_nat(void)
 	duk_put_global_string(jcx, "querySelectorAll");
 	duk_push_c_function(jcx, native_qs, DUK_VARARGS);
 	duk_put_global_string(jcx, "querySelector");
-	duk_push_c_function(jcx, native_cssApply, 2);
+	duk_push_c_function(jcx, native_cssApply, 3);
 	duk_put_global_string(jcx, "eb$cssApply");
 	duk_push_c_function(jcx, native_cssText, 1);
 	duk_put_global_string(jcx, "eb$cssText");

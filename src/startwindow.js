@@ -901,7 +901,7 @@ mw0.getComputedStyle = function(e,pe) {
 	// disregarding pseudoelements for now
 var s = new CSSStyleDeclaration;
 s.element = e;
-eb$cssApply(e, s);
+eb$cssApply(this, e, s);
 return s;
 }
 
