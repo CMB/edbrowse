@@ -943,6 +943,38 @@
       });
       return 3;
     },
+    function () {
+      // test 34: :lang() and [|=]
+      var div1;
+      var div2;
+      var p;
+      var builder = function(doc) {
+        div1 = doc.createElement('div');
+        div1.setAttribute("lang", "english");
+        div1.setAttribute("class", "widget-tree");
+        doc.body.appendChild(div1);
+        div2 = doc.createElement('div');
+        div2.setAttribute("lang", "en-GB");
+        div2.setAttribute("class", "WIDGET");
+        doc.body.appendChild(div2);
+        p = doc.createElement('p');
+        div2.appendChild(p);
+      };
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var lang_en = add(":lang(en)");
+        expect(div1, 0, "lang=english should not be matched by :lang(en)");
+        expect(div2, lang_en, "lang=en-GB should be matched by :lang(en)");
+        expect(p, lang_en, "descendants inheriting lang=en-GB should be matched by :lang(en)");
+      });
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var class_widget = add("[class|=widget]");
+        expect(div1, class_widget, "class attribute should be supported by |= attribute selectors");
+        expect(div2, 0, "class attribute is case-sensitive");
+      });
+      return 3;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';

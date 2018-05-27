@@ -1056,12 +1056,10 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 			a->hover = true;
 			return;
 		}
-// :lang(it) [lang=it]
+// :lang(it) becomes [lang|=it], but more
 		if (!strncmp(t, ":lang(", 6) && t[n - 1] == ')') {
-			h = t[0] = '[';
-			t[5] = '=';
-			t[n - 1] = ']';
-			goto bracket;
+			t[n - 1] = 0;
+			return;
 		}
 		if (stringEqual(t, ":before")) {
 			a->before = true;
@@ -1098,7 +1096,6 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 		n = strlen(t);
 // fall through
 
-bracket:
 	case '[':
 		if (t[n - 1] != ']') {
 			a->error = CSS_ERROR_RB;
@@ -1336,6 +1333,49 @@ static void cssPiecesPrint(const struct desc *d)
 }
 
 /*********************************************************************
+This is a special routine for the selector :lang(foo).
+You could almost replace it with :[lang=|foo], except, that same selector
+is compared against all the ancestors. Ugh.
+*********************************************************************/
+
+static bool languageSpecial(struct htmlTag *t, jsobjtype obj, const char *lang)
+{
+	char *v;
+	bool valloc;
+	int rc, l = strlen(lang);
+
+top:
+	v = 0;
+	valloc = false;
+	if (t)
+		obj = t->jv;
+	if (bulkmatch && t)
+		v = (char *)attribVal(t, "lang");
+	else if (obj) {
+		v = get_property_string_nat(obj, "lang");
+		valloc = true;
+	}
+	if (!v)
+		goto up;
+
+	rc = (strncmp(v, lang, l) || !(v[l] == 0 || v[l] == '-'));
+	if (valloc)
+		nzFree(v);
+	return !rc;
+
+up:
+	if (t) {
+		if ((t = t->parent) && t->action != TAGACT_FRAME)
+			goto top;
+		return false;
+	}
+	if ((obj = get_property_object_nat(obj, "parentNode")) &&
+	    get_property_number_nat(obj, "nodeType") != 9)
+		goto top;
+	return false;
+}
+
+/*********************************************************************
 Match a node against an atomic selector.
 One of t or obj should be nonzero. It's more efficient with t.
 If bulkmatch is true, then the document has loaded and no js has run.
@@ -1524,6 +1564,12 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 		if (stringEqual(p, ":link") || stringEqual(p, ":hover") ||
 		    stringEqual(p, ":before") || stringEqual(p, ":after"))
 			continue;
+
+		if (!strncmp(p, ":lang(", 6)) {
+			if (languageSpecial(t, obj, p + 6) ^ negate)
+				goto next_mod;
+			return false;
+		}
 
 		if (stringEqual(p, ":checked")) {
 			if (bulkmatch) {
@@ -1768,10 +1814,10 @@ static bool qsaMatchChain(struct htmlTag *t, jsobjtype obj, const struct sel *s)
 					continue;
 				return false;
 			}
-			if (get_property_number(obj, "numType") == 9)
-				return false;
 			obj = get_property_object_nat(obj, "parentNode");
 			if (!obj)
+				return false;
+			if (get_property_number_nat(obj, "numType") == 9)
 				return false;
 			if (qsaMatch(t, obj, a))
 				continue;
@@ -1784,8 +1830,8 @@ static bool qsaMatchChain(struct htmlTag *t, jsobjtype obj, const struct sel *s)
 					goto next_a;
 			return false;
 		}
-		while (get_property_number(obj, "nodeType") != 9
-		       && (obj = get_property_object_nat(obj, "parentNode")))
+		while ((obj = get_property_object_nat(obj, "parentNode")) &&
+		       get_property_number_nat(obj, "nodeType") != 9)
 			if (qsaMatch(t, obj, a))
 				goto next_a;
 		return false;
