@@ -896,11 +896,35 @@ mw0.CSSStyleDeclaration.prototype.getPropertyValue = function(p) {
                         this[p] = "";
                         return this[p];
 }
+Object.defineProperty(mw0.CSSStyleDeclaration.prototype, "css$data", {
+get: function() { var s = ""; for(var i=0; i<this.childNodes.length; ++i) if(this.childNodes[i].nodeName == "#text") s += this.childNodes[i].data; return s; }});
 
 mw0.getComputedStyle = function(e,pe) {
 	// disregarding pseudoelements for now
 var s = new CSSStyleDeclaration;
 s.element = e;
+
+/*********************************************************************
+What if js has added or removed style objects from the tree?
+Maybe the selectors and rules are different from when they were first compiled.
+Does this ever happen? It does in acid test 33.
+Does it ever happen in the real world? I don't know.
+If not, this is a big waste of time and resources.
+How big? Well not too bad I guess.
+Strings are parsed in C, which is pretty fast,
+but it really falls flat when the css has @import which pulls in another
+css file, and now we have to fetch that file on every call to getComputedStyle.
+Nodes are created, and technically their class changed,
+in that there was no node and no class before, and that induces a call
+to getComputedStyle, and that fetches the file, again.
+The imported css file could be fetched 100 times just to load the page.
+Until that is fixed, I can't perform these dynamic calculations.
+*********************************************************************/
+
+/*
+mw0.cssGather(false, this);
+*/
+
 eb$cssApply(this, e, s);
 return s;
 }
@@ -1677,7 +1701,11 @@ if(my$win().eventDebug) alert3("dispatch " + this.nodeName + "." + e.type);
 e.target = this;
 var t = this;
 var pathway = [];
-while(t) pathway.push(t), t=t.parentNode;
+while(t) {
+pathway.push(t);
+if(t.nodeType == 9) break; // don't go past document up to a higher frame
+t=t.parentNode;
+}
 var l = pathway.length;
 e.eventPhase = 1; // capture
 while(l) {
@@ -2796,36 +2824,40 @@ onhashchange = eb$truefunction;
 
 if(!mw0.compiled) {
 
-mw0.cssGather = function(assign)
+mw0.cssGather = function(pageload, newwin)
 {
 var w = my$win();
-var d = my$doc();
+if(!pageload && newwin && newwin.eb$visible) w = newwin;
+var d =w.document;
 var css_all = "";
 w.cssSource = [];
 var a, i, t;
+
 // Usually <link> tags come before <style> tags, and thus take precedence.
 // But it doesn't have to be this way; we should probably take
 // <link> and <style> tags in tree order.
 a = d.getElementsByTagName("link");
 for(i=0; i<a.length; ++i) {
 t = a[i];
-if(t.data && (
+if(t.css$data && (
 t.type && t.type.toLowerCase() == "text/css" ||
 t.rel && t.rel.toLowerCase() == "stylesheet")) {
-w.cssSource.push({data: t.data, src:t.href});
+w.cssSource.push({data: t.css$data, src:t.href});
 css_all += "@ebdelim0" + t.href + "{}\n";
-css_all += t.data;
+css_all += t.css$data;
 }
 }
+
 // <style> tags in the html.
 a = d.getElementsByTagName("style");
 if(a.length)
 css_all += "@ebdelim0" + w.eb$base + "{}\n";
 for(i=0; i<a.length; ++i) {
 t = a[i];
-if(t.data) w.cssSource.push({data: t.data, src:w.eb$base}), css_all += t.data;
+if(t.css$data) w.cssSource.push({data: t.css$data, src:w.eb$base}), css_all += t.css$data;
 }
-eb$cssDocLoad(css_all, assign);
+
+eb$cssDocLoad(css_all, pageload);
 }
 
 // Apply rules to a given style object, which is this.

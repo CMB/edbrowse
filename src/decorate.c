@@ -482,7 +482,6 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 		}
 
 		if (currentStyle) {
-			currentStyle->textval = cloneString(t->textval);
 			t->deleted = true;
 			break;
 		}
@@ -637,7 +636,6 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 			break;
 		}
 		currentStyle = t;
-		t->textval = emptyString;
 		break;
 
 	case TAGACT_SELECT:
@@ -1240,7 +1238,7 @@ static void link_css(struct htmlTag *t)
 		}
 	}
 	if (a)
-		set_property_string(t->jv, "data", a);
+		set_property_string(t->jv, "css$data", a);
 	cnzFree(a);
 }				/* link_css */
 
@@ -1306,8 +1304,6 @@ Needless to say that's not good!
 		if (!a)
 			a = emptyString;
 		set_property_string(t->jv, "type", a);
-		if (t->textval && t->textval[0])
-			set_property_string(t->jv, "data", t->textval);
 		break;
 
 	case TAGACT_SCRIPT:

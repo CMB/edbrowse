@@ -657,6 +657,11 @@ copy:		++s;
 			t[a2 - a1] = 0;
 			asel = allocZeroMem(sizeof(struct asel));
 			asel->part = t;
+// rare corner case, :link is really a:link
+			if (stringEqual(t, ":link")) {
+				nzFree(t);
+				asel->part = cloneString("a:link");
+			}
 			asel->combin = combin;
 			if (!sel) {
 				sel = allocZeroMem(sizeof(struct sel));
@@ -898,7 +903,6 @@ lastrule:
 			d->error = ec;
 	}
 
-	cssStats();
 	cssPiecesPrint(d1);
 
 	return d1;
@@ -1098,7 +1102,7 @@ bracket:
 	}			// switch
 }
 
-void cssDocLoad(char *start, bool assign)
+void cssDocLoad(char *start, bool pageload)
 {
 	struct cssmaster *cm = cf->cssmaster;
 	if (!cm)
@@ -1117,8 +1121,10 @@ void cssDocLoad(char *start, bool assign)
 		}
 	}
 
-	if (!assign)
+	if (!pageload)
 		return;
+
+	cssStats();
 
 	build_doclist(0);
 	hashBuild();
@@ -1691,12 +1697,14 @@ static bool qsaMatchChain(struct htmlTag *t, jsobjtype obj, const struct sel *s)
 		if (combin == '>') {
 			if (t) {
 				t = t->parent;
-				if (!t)
+				if (!t || t->action == TAGACT_FRAME)
 					return false;
 				if (qsaMatch(t, obj, a))
 					continue;
 				return false;
 			}
+			if (get_property_number(obj, "numType") == 9)
+				return false;
 			obj = get_property_object_nat(obj, "parentNode");
 			if (!obj)
 				return false;
@@ -1704,14 +1712,15 @@ static bool qsaMatchChain(struct htmlTag *t, jsobjtype obj, const struct sel *s)
 				continue;
 			return false;
 		}
-// any ancestor
+// Last combinator is space, any ancestor.
 		if (t) {
-			while ((t = t->parent))
+			while ((t = t->parent) && t->action != TAGACT_FRAME)
 				if (qsaMatch(t, obj, a))
 					goto next_a;
 			return false;
 		}
-		while ((obj = get_property_object_nat(obj, "parentNode")))
+		while (get_property_number(obj, "nodeType") != 9
+		       && (obj = get_property_object_nat(obj, "parentNode")))
 			if (qsaMatch(t, obj, a))
 				goto next_a;
 		return false;
