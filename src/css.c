@@ -1068,12 +1068,11 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 			t[n - 1] = 0;
 			return;
 		}
-		if (!strncmp(t, ":nth-child(", 11) && t[n - 1] == ')') {
-			t[n - 1] = 0;
-			spaceCrunch(t, false, false);
-			return;
-		}
-		if (!strncmp(t, ":nth-last-child(", 16) && t[n - 1] == ')') {
+		if (t[n - 1] == ')' &&
+		    (!strncmp(t, ":nth-child(", 11) ||
+		     !strncmp(t, ":nth-last-child(", 16) ||
+		     !strncmp(t, ":nth-of-type(", 13) ||
+		     !strncmp(t, ":nth-last-of-type(", 18))) {
 			t[n - 1] = 0;
 			spaceCrunch(t, false, false);
 			return;
@@ -1793,14 +1792,19 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 		}
 
 		if (!strncmp(p, ":nth-child(", 11) ||
-		    !strncmp(p, ":nth-last-child(", 16)) {
+		    !strncmp(p, ":nth-last-child(", 16) ||
+		    !strncmp(p, ":nth-of-type(", 13) ||
+		    !strncmp(p, ":nth-last-of-type(", 18)) {
 			int coef, constant, d;
-			bool n_present = false, d_present = false, last = false;
+			bool n_present = false, d_present = false, last =
+			    false, oftype = false;
 			char *s;
 
 			if (p[5] == 'l')
 				last = true;
-			p += (last ? 16 : 11);
+			if (strstr(p, "of-type"))
+				oftype = true;
+			p = strchr(p, '(') + 1;
 			if (stringEqual(p, "even"))
 				p = "2n";
 			if (stringEqual(p, "odd"))
@@ -1850,6 +1854,8 @@ nth_good:
 
 			ns = spread(t, obj);
 			ns = spreadElem(ns);
+			if (oftype)
+				ns = spreadType(ns);
 			if (!ns) {
 				if (negate)
 					goto next_mod;
