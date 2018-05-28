@@ -1022,6 +1022,9 @@ this.nodeName = "#comment";
 this.nodeType = 8;
 this.ownerDocument = my$doc();
 this.class = this.last$class = "";
+this.childNodes = [];
+this.attributes = new mw0.NamedNodeMap;
+this.attributes.owner = this;
 }
 
 mw0.createComment = function(t) {
@@ -1335,6 +1338,8 @@ node2.push(mw0.eb$clone(node1[i], true));
 
 if(node1.nodeName == "#text")
 node2 = mw0.createTextNode();
+else if(node1.nodeName == "#comment")
+node2 = mw0.createComment();
 else
 node2 = mw0.createElement(node1.nodeName);
 
@@ -1875,7 +1880,7 @@ var cnlist = ["HTML", "HtmlObj", "Head", "Title", "Body", "CSSStyleDeclaration",
 // The following nodes shouldn't have any children, but the various
 // children methods could be called on them anyways.
 // And getAttribute applies to just about everything.
-"Node", "Area", "TextNode", "Image", "Option", "Link", "Meta", "Audio", "Canvas"];
+"Comment", "Node", "Area", "TextNode", "Image", "Option", "Link", "Meta", "Audio", "Canvas"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i];
 var c = mw0[cn];
@@ -2597,8 +2602,9 @@ document.defaultView = window;
 document.defaultView.getComputedStyle = mw0.getComputedStyle;
 
 TextNode = mw0.TextNode;
-Comment = mw0.Comment;
 document.createTextNode = mw0.createTextNode;
+Comment = mw0.Comment;
+document.createComment = mw0.createComment;
 
 Event = mw0.Event;
 eb$listen = mw0.eb$listen;
@@ -2624,7 +2630,6 @@ document.ELEMENT_NODE = 1, document.TEXT_NODE = 3, document.COMMENT_NODE = 8, do
 document.createElement = mw0.createElement;
 document.createElementNS = mw0.createElementNS;
 document.createDocumentFragment = mw0.createDocumentFragment;
-document.createComment = mw0.createComment;
 document.implementation = mw0.implementation;
 // originally ms extension pre-DOM, we don't fully support it
 //but offer the legacy document.all.tags method.
