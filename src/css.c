@@ -644,11 +644,15 @@ copy:		++s;
 			}
 // Ambiguous, ~ is combinator or part of [foo~=bar].
 // Simplistic check here for ~=
-			if (c == '~' && s[1] == '=') {
+// Ambiguous, + is combinator or part of "nth_child(n+3)
+// Simplistic check here, next selector should not begin with a digit
+			if ((c == '~' && s[1] == '=') ||
+			    (c == '+' && isdigit(s[1]))) {
 				last_c = c;
 				++s;
 				continue;
 			}
+
 			if (last_c == '\\') {
 				last_c = 0;
 				++s;
@@ -1061,6 +1065,16 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 // :lang(it) becomes [lang|=it], but more
 		if (!strncmp(t, ":lang(", 6) && t[n - 1] == ')') {
 			t[n - 1] = 0;
+			return;
+		}
+		if (!strncmp(t, ":nth-child(", 11) && t[n - 1] == ')') {
+			t[n - 1] = 0;
+			spaceCrunch(t, false, false);
+			return;
+		}
+		if (!strncmp(t, ":nth-last-child(", 16) && t[n - 1] == ')') {
+			t[n - 1] = 0;
+			spaceCrunch(t, false, false);
 			return;
 		}
 		if (stringEqual(t, ":before")) {
@@ -1746,6 +1760,98 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 		if (!strncmp(p, ":lang(", 6)) {
 			if (languageSpecial(t, obj, p + 6) ^ negate)
 				goto next_mod;
+			return false;
+		}
+
+		if (!strncmp(p, ":nth-child(", 11) ||
+		    !strncmp(p, ":nth-last-child(", 16)) {
+			int coef, constant, d;
+			bool n_present = false, d_present = false, last = false;
+			char *s;
+
+			if (p[5] == 'l')
+				last = true;
+			p += (last ? 16 : 11);
+			if (stringEqual(p, "even"))
+				p = "2n";
+			if (stringEqual(p, "odd"))
+				p = "2n+1";
+
+// parse the formula
+			s = p;
+			if (*s == '-')
+				++s;
+			if (!*s)
+				goto nth_bad;
+			if (isdigit(*s))
+				d = strtol(s, &s, 10), d_present = true;
+			if (!*s) {
+				constant = (*p == '-' ? -d : d);
+				goto nth_good;
+			}
+			if (*s != 'n')
+				goto nth_bad;
+			n_present = true;
+			if (d_present)
+				coef = (*p == '-' ? -d : d);
+			else
+				coef = (*p == '-' ? -1 : 1);
+			++s;
+			constant = 0;
+			if (!*s)
+				goto nth_good;
+			if (*s != '+' && *s != '-')
+				goto nth_bad;
+			if (*s == '+')
+				++s;
+			constant = 1;
+			if (*s == '-')
+				constant = -1, ++s;
+			if (!isdigit(*s))
+				goto nth_bad;
+			d = strtol(s, &s, 10);
+			if (*s)
+				goto nth_bad;
+			constant *= d;
+
+nth_good:
+// prevent divide by 0   :nth_child(0n+3)
+			if (n_present && coef == 0)
+				n_present = false;
+
+			ns = spread(t, obj);
+			ns = spreadElem(ns);
+			if (!ns) {
+				if (negate)
+					goto next_mod;
+				return false;
+			}
+// find myself
+			for (i = 0; i < ns; ++i)
+				if (sibs[i].myself)
+					break;
+			rc = false;
+			if (i < ns) {
+				if (last)
+					i = (ns - 1) - i;
+				++i;	// numbers start at 1
+				if (n_present) {
+					i -= constant;
+					if (i % coef)
+						rc = false;
+					else
+						rc = (i / coef) >= 0;
+				} else {
+					rc = (i == constant);
+				}
+			}
+			free(sibs);
+			return rc;
+
+nth_bad:
+			debugPrint(3,
+				   "unrecognized nth_child(%s), treating as false",
+				   p);
 			return false;
 		}
 

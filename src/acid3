@@ -1154,6 +1154,68 @@
       });
       return 3;
     },
+    function () {
+      // test 39: :nth-child, :nth-last-child
+      var ps;
+      var builder = function(doc) {
+        ps = [
+          doc.createElement('p'),
+          doc.createElement('p'),
+          doc.createElement('p'),
+          doc.createElement('p'),
+          doc.createElement('p'),
+          doc.createElement('p'),
+          doc.createElement('p'),
+          doc.createElement('p'),
+          doc.createElement('p'),
+          doc.createElement('p'),
+          doc.createElement('p'),
+          doc.createElement('p'),
+          doc.createElement('p')
+        ];
+        for (var i = 0; i < ps.length; i += 1)
+          doc.body.appendChild(ps[i]);
+      };
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var match = add(":nth-child(odd)");
+        for (var i = 0; i < ps.length; i += 1)
+          expect(ps[i], i % 2 ? 0 : match, ":nth-child(odd) failed with child " + i);
+      });
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var match = add(":nth-child(even)");
+        for (var i = 0; i < ps.length; i += 1)
+          expect(ps[i], i % 2 ? match : 0 , ":nth-child(even) failed with child " + i);
+      });
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var match = add(":nth-child(odd)");
+        doc.body.removeChild(ps[5]);
+        for (var i = 0; i < 5; i += 1)
+          expect(ps[i], i % 2 ? 0 : match, ":nth-child(odd) failed after removal with child " + i);
+        for (var i = 6; i < ps.length; i += 1)
+          expect(ps[i], i % 2 ? match : 0, ":nth-child(odd) failed after removal with child " + i);
+      });
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var match = add(":nth-child(even)");
+        doc.body.removeChild(ps[5]);
+        for (var i = 0; i < 5; i += 1)
+          expect(ps[i], i % 2 ? match : 0, ":nth-child(even) failed after removal with child " + i);
+        for (var i = 6; i < ps.length; i += 1)
+          expect(ps[i], i % 2 ? 0 : match, ":nth-child(even) failed after removal with child " + i);
+      });
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var match = add(":nth-child(-n+3)");
+        for (var i = 0; i < 3; i += 1)
+          expect(ps[i], match, ":nth-child(-n+3) failed with child " + i);
+        for (var i = 3; i < ps.length; i += 1)
+          expect(ps[i], 0, ":nth-child(-n+3) failed with child " + i);
+      });
+      return 3;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';
