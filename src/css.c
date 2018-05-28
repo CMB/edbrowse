@@ -1018,6 +1018,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 	int n = m2 - m1;
 	static const char *const okcolon[] = {
 		"first-child", "last-child", "only-child", "link", "checked",
+		"first-of-type", "last-of-type", "only-of-type",
 		"empty", "disabled", "enabled", "read-only", "read-write",
 		"scope", "root",
 		0
@@ -1502,6 +1503,34 @@ static int spreadElem(int ns)
 	return j;
 }
 
+// Restrict the list further to elements of the same type
+static int spreadType(int ns)
+{
+	int i, j;
+	char mytype[MAXTAGNAME];
+	if (!ns)
+		return 0;
+// find myself
+	for (i = 0; i < ns; ++i)
+		if (sibs[i].myself)
+			break;
+	if (i == ns) {
+		free(sibs);
+		return 0;
+	}
+	strcpy(mytype, sibs[i].tag);
+	for (i = j = 0; i < ns; ++i) {
+		if (!stringEqual(sibs[i].tag, mytype))
+			continue;
+		if (i > j)
+			sibs[j] = sibs[i];
+		++j;
+	}
+	if (!j)
+		free(sibs);
+	return j;
+}
+
 // Like spread but for children, not siblings. Still I use the sibs array.
 static int spreadKids(struct htmlTag *t, jsobjtype obj)
 {
@@ -1873,9 +1902,14 @@ nth_bad:
 
 		if (stringEqual(p, ":first-child") ||
 		    stringEqual(p, ":last-child") ||
-		    stringEqual(p, ":only-child")) {
+		    stringEqual(p, ":only-child") ||
+		    stringEqual(p, ":first-of-type") ||
+		    stringEqual(p, ":last-of-type") ||
+		    stringEqual(p, ":only-of-type")) {
 			ns = spread(t, obj);
 			ns = spreadElem(ns);
+			if (strstr(p, "of-type"))
+				ns = spreadType(ns);
 			if (!ns) {
 				if (negate)
 					goto next_mod;

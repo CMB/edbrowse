@@ -1216,6 +1216,89 @@
       });
       return 3;
     },
+    function () {
+      // test 40: :first-of-type, :last-of-type, :only-of-type, :nth-of-type, :nth-last-of-type
+      var elements;
+      var builder = function(doc) {
+        elements = [
+          doc.createElement('p'),
+          doc.createElement('div'),
+          doc.createElement('div'),
+          doc.createElement('p'),
+          doc.createElement('p'),
+          doc.createElement('p'),
+          doc.createElement('div'),
+          doc.createElement('address'),
+          doc.createElement('div'),
+          doc.createElement('div'),
+          doc.createElement('div'),
+          doc.createElement('p'),
+          doc.createElement('div'),
+          doc.createElement('p')
+        ];
+        for (var i = 0; i < elements.length; i += 1)
+          doc.body.appendChild(elements[i]);
+      };
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var match = add(":first-of-type");
+        var values = [1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0];
+        for (var i = 0; i < elements.length; i += 1)
+          expect(elements[i], values[i] ? match : 0, "part 1:" + i);
+      });
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var match = add(":last-of-type");
+        var values = [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1];
+        for (var i = 0; i < elements.length; i += 1)
+          expect(elements[i], values[i] ? match : 0, "part 2:" + i);
+      });
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var match = add(":only-of-type");
+        var values = [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0];
+        for (var i = 0; i < elements.length; i += 1)
+          expect(elements[i], values[i] ? match : 0, "part 3:" + i);
+      });
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var match = add(":nth-of-type(3n-1)");
+        var values = [0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0];
+        for (var i = 0; i < elements.length; i += 1)
+          expect(elements[i], values[i] ? match : 0, "part 4:" + i);
+      });
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var match = add(":nth-of-type(3n+1)");
+        var values = [1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0];
+        for (var i = 0; i < elements.length; i += 1)
+          expect(elements[i], values[i] ? match : 0, "part 5:" + i);
+      });
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var match = add(":nth-last-of-type(2n)");
+        var values = [1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0];
+        for (var i = 0; i < elements.length; i += 1)
+          expect(elements[i], values[i] ? match : 0, "part 6:" + i);
+      });
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var match = add(":nth-last-of-type(-5n+3)");
+        var values;
+        values = [0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0];
+        for (var i = 0; i < elements.length; i += 1)
+          expect(elements[i], values[i] ? match : 0, "part 7:" + i);
+        doc.body.appendChild(doc.createElement('blockquote'));
+        values = [0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0];
+        for (var i = 0; i < elements.length; i += 1)
+          expect(elements[i], values[i] ? match : 0, "part 8:" + i);
+        doc.body.appendChild(doc.createElement('div'));
+        values = [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0];
+        for (var i = 0; i < elements.length; i += 1)
+          expect(elements[i], values[i] ? match : 0, "part 9:" + i);
+      });
+      return 3;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';
