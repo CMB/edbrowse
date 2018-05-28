@@ -975,6 +975,38 @@
       });
       return 3;
     },
+    function () {
+      // test 35: :first-child
+      selectorTest(function (doc, add, expect) {
+        var notFirst = 0;
+        var first = add(":first-child");
+        var p1 = doc.createElement("p");
+        doc.body.appendChild(doc.createTextNode(" TEST "));
+        doc.body.appendChild(p1);
+        expect(doc.documentElement, notFirst, "root element, with no parent node, claims to be a :first-child");
+        expect(doc.documentElement.firstChild, first, "first child of root node didn't match :first-child");
+        expect(doc.documentElement.firstChild.firstChild, first, "failure 3");
+        expect(doc.body, notFirst, "failure 4");
+        expect(p1, first, "failure 5");
+        var p2 = doc.createElement("p");
+        doc.body.appendChild(p2);
+        expect(doc.body, notFirst, "failure 6");
+        expect(p1, first, "failure 7");
+        expect(p2, notFirst, "failure 8");
+        var p0 = doc.createElement("p");
+        doc.body.insertBefore(p0, p1);
+        expect(doc.body, notFirst, "failure 9");
+        expect(p0, first, "failure 10");
+        expect(p1, notFirst, ":first-child still applies to element that was previously a first child");
+        expect(p2, notFirst, "failure 12");
+        doc.body.insertBefore(p0, p2);
+        expect(doc.body, notFirst, "failure 13");
+        expect(p1, first, "failure 14");
+        expect(p0, notFirst, "failure 15");
+        expect(p2, notFirst, "failure 16");
+      });
+      return 3;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';

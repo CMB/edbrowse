@@ -1365,7 +1365,7 @@ top:
 
 up:
 	if (t) {
-		if ((t = t->parent) && t->action != TAGACT_FRAME)
+		if ((t = t->parent) && t->action != TAGACT_DOC)
 			goto top;
 		return false;
 	}
@@ -1373,6 +1373,109 @@ up:
 	    get_property_number_nat(obj, "nodeType") != 9)
 		goto top;
 	return false;
+}
+
+/*********************************************************************
+A helpful spread routine to find the siblings of where you are.
+Returns 0 if you are at the top and siblings are not meaningful.
+Otherwise allocate an array, which you must free.
+Return is the length of the aray.
+*********************************************************************/
+
+struct sibnode {
+	char tag[MAXTAGNAME];
+	int nodeType;
+	int myself;
+};
+static struct sibnode *sibs;
+
+static int spread(struct htmlTag *t, jsobjtype obj)
+{
+	int ns = 0;		// number of siblings
+	int i, ntype, me_index = -1;
+	jsobjtype pobj, children, w;
+
+	if (t) {
+		struct htmlTag *tp, *u;
+		if (!(tp = t->parent) || tp->action == TAGACT_DOC)
+			return 0;
+		for ((u = tp->firstchild); u; u = u->sibling) {
+			if (u == t)
+				me_index = ns;
+			++ns;
+		}
+		if (me_index < 0)	// should never happen
+			return 0;
+		sibs = allocMem(sizeof(struct sibnode) * ns);
+		for (i = 0, (u = tp->firstchild); i < ns; ++i, u = u->sibling) {
+			strcpy(sibs[i].tag, u->info->name);
+			ntype = 1;
+			if (u->action == TAGACT_TEXT)
+				ntype = 3;
+			if (u->action == TAGACT_DOC)
+				ntype = 9;
+			sibs[i].nodeType = ntype;
+			sibs[i].myself = (i == me_index);
+		}
+		return ns;
+	}
+// bummer, have to go by objects
+	pobj = get_property_object_nat(obj, "parentNode");
+	if (!pobj || get_property_number_nat(pobj, "nodeType") == 9)
+		return 0;
+	children = get_property_object_nat(pobj, "childNodes");
+	if (!children)
+		return 0;
+	ns = get_arraylength_nat(children);
+	if (!ns)
+		return 0;
+	sibs = allocMem(sizeof(struct sibnode) * ns);
+	for (i = 0; i < ns; ++i) {
+		char *v;
+		int l;
+		w = get_array_element_object_nat(children, i);
+		if (!w) {	// should never happen
+			free(sibs);
+			return 0;
+		}
+		sibs[i].nodeType = get_property_number_nat(w, "nodeType");
+		v = get_property_string_nat(w, "nodeName");
+		if (!v) {
+			strcpy(sibs[i].tag, "@x");
+		} else {
+			l = strlen(v);
+			if (l >= MAXTAGNAME)
+				l = MAXTAGNAME - 1;
+			strncpy(sibs[i].tag, v, l);
+			sibs[i].tag[l] = 0;
+			nzFree(v);
+		}
+		sibs[i].myself = 0;
+		if (w == obj)
+			sibs[i].myself = 1, me_index = i;
+	}
+	if (me_index >= 0)
+		return ns;
+	free(sibs);
+	return 0;
+}
+
+// when we only need elements, do nothing if ns == 0
+static int spreadElem(int ns)
+{
+	int i, j;
+	if (!ns)
+		return 0;
+	for (i = j = 0; i < ns; ++i) {
+		if (sibs[i].nodeType != 1)
+			continue;
+		if (i > j)
+			sibs[j] = sibs[i];
+		++j;
+	}
+	if (!j)
+		free(sibs);
+	return j;
 }
 
 /*********************************************************************
@@ -1390,7 +1493,6 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 {
 	bool rc;
 	struct mod *mod;
-	jsobjtype pobj;		// parent object
 
 	if (a->tag) {
 		const char *nn;
@@ -1411,6 +1513,7 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 		char *p = mod->part;
 		bool negate = mod->negate;
 		char c = p[0];
+		int ns;
 
 		if (mod->isclass && t && bulkmatch) {
 			char *v = t->class;
@@ -1587,53 +1690,24 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			return false;
 		}
 
-		if (stringEqual(p, ":first-child")) {
-// t is more efficient, but this doesn't work for html,
-// which has no parent in our representation.
-			if (t && t->parent) {
-				if ((t == t->parent->firstchild) ^ negate)
+		if (stringEqual(p, ":first-child") ||
+		    stringEqual(p, ":last-child") ||
+		    stringEqual(p, ":only-child")) {
+			ns = spread(t, obj);
+			ns = spreadElem(ns);
+			if (!ns) {
+				if (negate)
 					goto next_mod;
 				return false;
 			}
-// now by object
-			pobj = get_property_object_nat(obj, "parentNode");
-			if (!pobj)
-				return false;
-			if ((get_property_object_nat(pobj, "firstChild") ==
-			     obj) ^ negate)
-				goto next_mod;
-			return false;
-		}
-
-		if (stringEqual(p, ":last-child")) {
-			if (t && t->parent) {
-				if (!t->sibling ^ negate)
-					goto next_mod;
-				return false;
-			}
-			pobj = get_property_object_nat(obj, "parentNode");
-			if (!pobj)
-				return false;
-			if ((get_property_object_nat(pobj, "lastChild") ==
-			     obj) ^ negate)
-				goto next_mod;
-			return false;
-		}
-
-		if (stringEqual(p, ":only-child")) {
-			if (t && t->parent) {
-				if (((!t->sibling)
-				     && t->parent->firstchild == t) ^ negate)
-					goto next_mod;
-				return false;
-			}
-			pobj = get_property_object_nat(obj, "parentNode");
-			if (!pobj)
-				return false;
-			if ((get_property_object_nat(pobj, "firstChild") == obj
-			     && get_property_object_nat(pobj,
-							"lastChild") == obj)
-			    ^ negate)
+			if (p[1] == 'f')
+				rc = sibs[0].myself;
+			if (p[1] == 'l')
+				rc = sibs[ns - 1].myself;
+			if (p[1] == 'o')
+				rc = (ns == 1 && sibs[0].myself);
+			free(sibs);
+			if (rc ^ negate)
 				goto next_mod;
 			return false;
 		}
@@ -1808,7 +1882,7 @@ static bool qsaMatchChain(struct htmlTag *t, jsobjtype obj, const struct sel *s)
 		if (combin == '>') {
 			if (t) {
 				t = t->parent;
-				if (!t || t->action == TAGACT_FRAME)
+				if (!t || t->action == TAGACT_DOC)
 					return false;
 				if (qsaMatch(t, obj, a))
 					continue;
@@ -1825,7 +1899,7 @@ static bool qsaMatchChain(struct htmlTag *t, jsobjtype obj, const struct sel *s)
 		}
 // Last combinator is space, any ancestor.
 		if (t) {
-			while ((t = t->parent) && t->action != TAGACT_FRAME)
+			while ((t = t->parent) && t->action != TAGACT_DOC)
 				if (qsaMatch(t, obj, a))
 					goto next_a;
 			return false;
