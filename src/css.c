@@ -132,9 +132,11 @@ static void uncomment(char *s)
 		if (s[1] == '/') {
 // Look out! People actually write @import url(http://blah) with no quotes,
 // and the slashes trip the comment syntax, so check for this,
-// in a rather crude way.
+// in a rather crude way.  Also url(//blah)
 			if (s - s0 >= 3 && s[-1] == ':' &&
 			    islower(s[-2]) && islower(s[-3]))
+				goto copy;
+			if (s - s0 >= 4 && !strncmp(s - 4, "url(", 4))
 				goto copy;
 			for (n = 2; s[n]; ++n)
 				if (s[n] == '\n')
