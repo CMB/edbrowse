@@ -1388,6 +1388,10 @@ struct sibnode {
 	char tag[MAXTAGNAME];
 	int nodeType;
 	int myself;
+	union {
+		struct htmlTag *t;
+		jsobjtype j;
+	} u;
 };
 static struct sibnode *sibs;
 
@@ -1396,6 +1400,8 @@ static int spread(struct htmlTag *t, jsobjtype obj)
 	int ns = 0;		// number of siblings
 	int i, ntype, me_index = -1;
 	jsobjtype pobj, children, w;
+
+	sibs = NULL;
 
 	if (t) {
 		struct htmlTag *tp, *u;
@@ -1416,6 +1422,8 @@ static int spread(struct htmlTag *t, jsobjtype obj)
 				ntype = 3;
 			if (u->action == TAGACT_DOC)
 				ntype = 9;
+			if (u->action == TAGACT_COMMENT)
+				ntype = 8;
 			sibs[i].nodeType = ntype;
 			sibs[i].myself = (i == me_index);
 		}
@@ -1480,6 +1488,71 @@ static int spreadElem(int ns)
 	return j;
 }
 
+// Like spread but for children, not siblings. Still I use the sibs array.
+static int spreadKids(struct htmlTag *t, jsobjtype obj)
+{
+	int ns = 0;		// number of children
+	int i, ntype;
+	jsobjtype children, w;
+
+	sibs = NULL;
+
+	if (t) {
+		struct htmlTag *u;
+		for ((u = t->firstchild); u; u = u->sibling)
+			++ns;
+		if (!ns)
+			return 0;
+		sibs = allocMem(sizeof(struct sibnode) * ns);
+		for (i = 0, (u = t->firstchild); i < ns; ++i, u = u->sibling) {
+			strcpy(sibs[i].tag, u->info->name);
+			ntype = 1;
+			if (u->action == TAGACT_TEXT)
+				ntype = 3;
+			if (u->action == TAGACT_DOC)
+				ntype = 9;
+			if (u->action == TAGACT_COMMENT)
+				ntype = 8;
+			sibs[i].nodeType = ntype;
+			sibs[i].myself = 0;
+			sibs[i].u.t = u;
+		}
+		return ns;
+	}
+
+	children = get_property_object_nat(obj, "childNodes");
+	if (!children)
+		return 0;
+	ns = get_arraylength_nat(children);
+	if (!ns)
+		return 0;
+	sibs = allocMem(sizeof(struct sibnode) * ns);
+	for (i = 0; i < ns; ++i) {
+		char *v;
+		int l;
+		w = get_array_element_object_nat(children, i);
+		if (!w) {	// should never happen
+			free(sibs);
+			return 0;
+		}
+		sibs[i].nodeType = get_property_number_nat(w, "nodeType");
+		v = get_property_string_nat(w, "nodeName");
+		if (!v) {
+			strcpy(sibs[i].tag, "@x");
+		} else {
+			l = strlen(v);
+			if (l >= MAXTAGNAME)
+				l = MAXTAGNAME - 1;
+			strncpy(sibs[i].tag, v, l);
+			sibs[i].tag[l] = 0;
+			nzFree(v);
+		}
+		sibs[i].myself = 0;
+		sibs[i].u.j = w;
+	}
+	return ns;
+}
+
 /*********************************************************************
 Match a node against an atomic selector.
 One of t or obj should be nonzero. It's more efficient with t.
@@ -1515,7 +1588,7 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 		char *p = mod->part;
 		bool negate = mod->negate;
 		char c = p[0];
-		int ns;
+		int i, ntype, ns;
 
 		if (mod->isclass && t && bulkmatch) {
 			char *v = t->class;
@@ -1751,13 +1824,44 @@ all the div sections just below the current node.
 		}
 
 		if (stringEqual(p, ":empty")) {
-			if (t) {
-				if ((!t->firstchild) ^ negate)
-					goto next_mod;
-				return false;
+			ns = spreadKids(t, obj);
+			rc = true;	// empty
+			for (i = 0; i < ns; ++i) {
+				jsobjtype w;
+				char *v;
+				ntype = sibs[i].nodeType;
+				if (ntype == 8)	// comment
+					continue;
+				if (ntype != 3) {	// not text node
+					rc = false;
+					break;
+				}
+// text node has to be empty.
+				if (t) {
+					struct htmlTag *u = sibs[i].u.t;
+					if (bulkmatch) {
+						if (u->textval && *u->textval) {
+							rc = false;
+							break;
+						}
+						continue;
+					}
+					w = u->jv;
+				} else {
+					w = sibs[i].u.j;
+				}
+				if (!w) {	// should not happen
+					rc = false;
+					break;
+				}
+				v = get_property_string_nat(w, "data");
+				rc = (!v || !*v);
+				nzFree(v);
+				if (!rc)
+					break;
 			}
-			if ((!get_property_object_nat(obj, "firstChild")) ^
-			    negate)
+			nzFree(sibs);
+			if (rc ^ negate)
 				goto next_mod;
 			return false;
 		}

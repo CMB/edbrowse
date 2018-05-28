@@ -1007,6 +1007,153 @@
       });
       return 3;
     },
+    function () {
+      // test 36: :last-child
+      var p1;
+      var p2;
+      var builder = function(doc) {
+        p1 = doc.createElement('p');
+        p2 = doc.createElement('p');
+        doc.body.appendChild(p1);
+        doc.body.appendChild(p2);
+      };
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var last = add(":last-child");
+        expect(p1, 0, "control test for :last-child failed");
+        expect(p2, last, "last child did not match :last-child");
+        doc.body.appendChild(p1);
+        expect(p2, 0, ":last-child matched element with a following sibling");
+        expect(p1, last, "failure 4");
+        p1.appendChild(p2);
+        expect(p2, last, "failure 5");
+        expect(p1, last, "failure 6");
+      });
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var last = add(":last-child");
+        expect(p1, 0, "failure 7");
+        expect(p2, last, "failure 8");
+        doc.body.insertBefore(p2, p1);
+        expect(p2, 0, "failure 9");
+        expect(p1, last, "failure 10");
+      });
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var last = add(":last-child");
+        expect(p1, 0, "failure 11");
+        expect(p2, last, "failure 12");
+        doc.body.removeChild(p2);
+        expect(p1, last, "failure 13");
+        assertEquals(p1.nextSibling, null, "failure 14");
+        assertEquals(p2.parentNode, null, "failure 15");
+      });
+      return 3;
+    },
+    function () {
+      // test 37: :only-child
+      var p1;
+      var p2;
+      var builder = function(doc) {
+        p1 = doc.createElement('p');
+        p2 = doc.createElement('p');
+        doc.body.appendChild(p1);
+        doc.body.appendChild(p2);
+      };
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var only = add(":only-child");
+        expect(p1, 0, "control test for :only-child failed");
+        expect(p2, 0, "failure 2");
+        doc.body.removeChild(p2);
+        expect(p1, only, ":only-child did not match only child");
+        p1.appendChild(p2);
+        expect(p2, only, "failure 4");
+        expect(p1, only, "failure 5");
+      });
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var only = add(":only-child");
+        expect(p1, 0, "failure 6");
+        expect(p2, 0, "failure 7");
+        doc.body.removeChild(p1);
+        expect(p2, only, "failure 8");
+        p2.appendChild(p1);
+        expect(p2, only, "failure 9");
+        expect(p1, only, "failure 10");
+      });
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var only = add(":only-child");
+        expect(p1, 0, "failure 11");
+        expect(p2, 0, "failure 12");
+        var span1 = doc.createElement('span');
+        p1.appendChild(span1);
+        expect(p1, 0, "failure 13");
+        expect(p2, 0, "failure 14");
+        expect(span1, only, "failure 15");
+        var span2 = doc.createElement('span');
+        p1.appendChild(span2);
+        expect(p1, 0, "failure 16");
+        expect(p2, 0, "failure 17");
+        expect(span1, 0, "failure 18");
+        expect(span2, 0, "failure 19");
+      });
+      selectorTest(function (doc, add, expect) {
+        builder(doc);
+        var only = add(":only-child");
+        expect(p1, 0, "failure 20");
+        expect(p2, 0, "failure 21");
+        var span1 = doc.createElement('span');
+        p2.appendChild(span1);
+        expect(p1, 0, "failure 22");
+        expect(p2, 0, "failure 23");
+        expect(span1, only, "failure 24");
+        var span2 = doc.createElement('span');
+        p2.insertBefore(span2, span1);
+        expect(p1, 0, "failure 25");
+        expect(p2, 0, "failure 26");
+        expect(span1, 0, "failure 27");
+        expect(span2, 0, "failure 28");
+      });
+      return 3;
+    },
+    function () {
+      // test 38: :empty
+      selectorTest(function (doc, add, expect) {
+        var empty = add(":empty");
+        var p = doc.createElement('p');
+        doc.body.appendChild(p);
+        expect(p, empty, "empty p element didn't match :empty");
+        var span = doc.createElement('span');
+        p.appendChild(span);
+        expect(p, 0, "adding children didn't stop the element matching :empty");
+        expect(span, empty, "empty span element didn't match :empty");
+        p.removeChild(span);
+        expect(p, empty, "removing all children didn't make the element match :empty");
+        p.appendChild(doc.createComment("c"));
+        p.appendChild(doc.createTextNode(""));
+        expect(p, empty, "element with a comment node and an empty text node didn't match :empty");
+        p.appendChild(doc.createTextNode(""));
+        expect(p, empty, "element with a comment node and two empty text nodes didn't match :empty");
+        p.lastChild.data = " ";
+        expect(p, 0, "adding text to a text node didn't make the element non-:empty");
+        assertEquals(p.childNodes.length, 3, "text nodes may have merged");
+// COMMENTED OUT FOR 2011 UPDATE - replaceWholeText() might go away entirely
+//        p.childNodes[1].replaceWholeText("");
+//        assertEquals(p.childNodes.length, 1, "replaceWholeText('') didn't remove text nodes");
+// REPLACEMENT:
+        assertEquals(p.childNodes[1].nodeType, 3, "missing text node before first removal");
+        p.removeChild(p.childNodes[1]);
+        assertEquals(p.childNodes[1].nodeType, 3, "missing text node before second removal");
+        p.removeChild(p.childNodes[1]);
+// END REPLACEMENT TEST
+        expect(p, empty, "element with a comment node only didn't match :empty");
+        p.appendChild(doc.createElementNS("http://example.com/", "test"));
+        expect(p, 0, "adding an element in a namespace didn't make the element non-:empty");
+      });
+      return 3;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';

@@ -1016,6 +1016,21 @@ eb$logElement(c, "text");
 return c;
 }
 
+mw0.Comment = function(t) {
+this.data = t;
+this.nodeName = "#comment";
+this.nodeType = 8;
+this.ownerDocument = my$doc();
+this.class = this.last$class = "";
+}
+
+mw0.createComment = function(t) {
+if(t == undefined) t = "";
+var c = new Comment(t);
+eb$logElement(c, "comment");
+return c;
+}
+
 // The Option class, these are choices in a dropdown list.
 mw0.Option = function() {
 this.nodeName = "OPTION";
@@ -2269,12 +2284,6 @@ c.nodeType = 11;
 return c;
 }
 
-mw0.createComment = function() {
-var c = mw0.createElement("comment");
-c.nodeType = 8;
-return c;
-}
-
 mw0.implementation = {
 /*********************************************************************
 This is my tentative implementation of hasFeature:
@@ -2571,6 +2580,7 @@ document.defaultView = window;
 document.defaultView.getComputedStyle = mw0.getComputedStyle;
 
 TextNode = mw0.TextNode;
+Comment = mw0.Comment;
 document.createTextNode = mw0.createTextNode;
 
 Event = mw0.Event;
