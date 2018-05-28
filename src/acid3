@@ -1299,6 +1299,119 @@
       });
       return 3;
     },
+    function () {
+      // test 41: :root, :not()
+      selectorTest(function (doc, add, expect) {
+        var match = add(":not(:root)");
+        var p = doc.createElement('p');
+        doc.body.appendChild(p);
+        expect(doc.documentElement, 0, "root was :not(:root)");
+        expect(doc.documentElement.childNodes[0], match,"head was not :not(:root)");
+        expect(doc.documentElement.childNodes[1], match,"body was not :not(:root)");
+        expect(doc.documentElement.childNodes[0].firstChild, match,"title was not :not(:root)");
+        expect(p, match,"p was not :not(:root)");
+      });
+      return 3;
+    },
+    function () {
+      // test 42: +, ~, >, and ' ' in dynamic situations
+      selectorTest(function (doc, add, expect) {
+        var div1 = doc.createElement('div');
+        div1.id = "div1";
+        doc.body.appendChild(div1);
+        var div2 = doc.createElement('div');
+        doc.body.appendChild(div2);
+        var div3 = doc.createElement('div');
+        doc.body.appendChild(div3);
+        var div31 = doc.createElement('div');
+        div3.appendChild(div31);
+        var div311 = doc.createElement('div');
+        div31.appendChild(div311);
+        var div3111 = doc.createElement('div');
+        div311.appendChild(div3111);
+        var match = add("#div1 ~ div div + div > div");
+        expect(div1, 0, "failure 1");
+        expect(div2, 0, "failure 2");
+        expect(div3, 0, "failure 3");
+        expect(div31, 0, "failure 4");
+        expect(div311, 0, "failure 5");
+        expect(div3111, 0, "failure 6");
+        var div310 = doc.createElement('div');
+        div31.insertBefore(div310, div311);
+        expect(div1, 0, "failure 7");
+        expect(div2, 0, "failure 8");
+        expect(div3, 0, "failure 9");
+        expect(div31, 0, "failure 10");
+        expect(div310, 0, "failure 11");
+        expect(div311, 0, "failure 12");
+        expect(div3111, match, "rule did not start matching after change");
+      });
+      selectorTest(function (doc, add, expect) {
+        var div1 = doc.createElement('div');
+        div1.id = "div1";
+        doc.body.appendChild(div1);
+        var div2 = doc.createElement('div');
+        div1.appendChild(div2);
+        var div3 = doc.createElement('div');
+        div2.appendChild(div3);
+        var div4 = doc.createElement('div');
+        div3.appendChild(div4);
+        var div5 = doc.createElement('div');
+        div4.appendChild(div5);
+        var div6 = doc.createElement('div');
+        div5.appendChild(div6);
+        var match = add("#div1 > div div > div");
+        expect(div1, 0, "failure 14");
+        expect(div2, 0, "failure 15");
+        expect(div3, 0, "failure 16");
+        expect(div4, match, "failure 17");
+        expect(div5, match, "failure 18");
+        expect(div6, match, "failure 19");
+        var p34 = doc.createElement('p');
+        div3.insertBefore(p34, div4);
+        p34.insertBefore(div4, null);
+        expect(div1, 0, "failure 20");
+        expect(div2, 0, "failure 21");
+        expect(div3, 0, "failure 22");
+        expect(p34, 0, "failure 23");
+        expect(div4, 0, "failure 24");
+        expect(div5, match, "failure 25");
+        expect(div6, match, "failure 26");
+      });
+      selectorTest(function (doc, add, expect) {
+        var div1 = doc.createElement('div');
+        div1.id = "div1";
+        doc.body.appendChild(div1);
+        var div2 = doc.createElement('div');
+        div1.appendChild(div2);
+        var div3 = doc.createElement('div');
+        div2.appendChild(div3);
+        var div4 = doc.createElement('div');
+        div3.appendChild(div4);
+        var div5 = doc.createElement('div');
+        div4.appendChild(div5);
+        var div6 = doc.createElement('div');
+        div5.appendChild(div6);
+        var match = add("#div1 > div div > div");
+        expect(div1, 0, "failure 27");
+        expect(div2, 0, "failure 28");
+        expect(div3, 0, "failure 29");
+        expect(div4, match, "failure 30");
+        expect(div5, match, "failure 31");
+        expect(div6, match, "failure 32");
+        var p23 = doc.createElement('p');
+        div2.insertBefore(p23, div3);
+        p23.insertBefore(div3, null);
+        expect(div1, 0, "failure 33");
+        expect(div2, 0, "failure 34");
+        expect(div3, 0, "failure 35");
+        expect(p23, 0, "failure 36");
+        expect(div4, match, "failure 37");
+        expect(div5, match, "failure 38");
+        expect(div6, match, "failure 39");
+      });
+      return 3;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';

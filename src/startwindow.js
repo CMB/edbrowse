@@ -1167,6 +1167,7 @@ else this.appendChild(c);
 }
 
 mw0.insertBefore = function(c, t) {
+if(!t) return this.appendChild(c);
 mw0.isabove(c, this);
 if(c.parentNode) c.parentNode.removeChild(c);
 return this.eb$insbf(c, t);
@@ -1974,10 +1975,13 @@ if(newobj.nodeName === "INPUT" || newobj.nodeName === "SELECT") {
 this.elements.push(newobj);
 mw0.eb$formname(this, newobj);
 }
+return newobj;
 }
 mw0.Form.prototype.insertBeforeNative = mw0.insertBefore;
 mw0.Form.prototype.insertBefore = function(newobj, item) {
-this.insertBeforeNative(newobj, item);
+if(!item) return this.appendChild(newobj);
+var r = this.insertBeforeNative(newobj, item);
+if(!r) return null;
 if(newobj.nodeName === "INPUT" || newobj.nodeName === "SELECT") {
 for(var i=0; i<this.elements.length; ++i)
 if(this.elements[i] == item) {
@@ -1986,6 +1990,7 @@ break;
 }
 mw0.eb$formname(this, newobj);
 }
+return newobj;
 }
 mw0.Form.prototype.removeChildNative = document.removeChild;
 mw0.Form.prototype.removeChild = function(item) {
@@ -2005,16 +2010,20 @@ mw0.Tbody.prototype.appendChild = function(newobj) {
 this.appendChildNative(newobj);
 if(newobj.nodeName === "TR") // shouldn't be anything other than TR
 this.rows.push(newobj);
+return newobj;
 }
 mw0.Tbody.prototype.insertBeforeNative = mw0.insertBefore;
 mw0.Tbody.prototype.insertBefore = function(newobj, item) {
-this.insertBeforeNative(newobj, item);
+if(!item) return this.appendChild(newobj);
+var r = this.insertBeforeNative(newobj, item);
+if(!r) return null;
 if(newobj.nodeName === "TR")
 for(var i=0; i<this.rows.length; ++i)
 if(this.rows[i] == item) {
 this.rows.splice(i, 0, newobj);
 break;
 }
+return newobj;
 }
 mw0.Tbody.prototype.removeChildNative = document.removeChild;
 mw0.Tbody.prototype.removeChild = function(item) {
@@ -2036,10 +2045,13 @@ if(newobj.nodeName === "TR")
 this.rows.push(newobj);
 if(newobj.nodeName === "TBODY")
 this.tBodies.push(newobj);
+return newobj;
 }
 mw0.Table.prototype.insertBeforeNative = mw0.insertBefore;
 mw0.Table.prototype.insertBefore = function(newobj, item) {
-this.insertBeforeNative(newobj, item);
+if(!item) return this.appendChild(newobj);
+var r = this.insertBeforeNative(newobj, item);
+if(!r) return null;
 if(newobj.nodeName === "TR")
 for(var i=0; i<this.rows.length; ++i)
 if(this.rows[i] == item) {
@@ -2052,6 +2064,7 @@ if(this.tBodies[i] == item) {
 this.tBodies.splice(i, 0, newobj);
 break;
 }
+return newobj;
 }
 mw0.Table.prototype.removeChildNative = document.removeChild;
 mw0.Table.prototype.removeChild = function(item) {
@@ -2076,16 +2089,20 @@ mw0.Trow.prototype.appendChild = function(newobj) {
 this.appendChildNative(newobj);
 if(newobj.nodeName === "TD") // shouldn't be anything other than TD
 this.cells.push(newobj);
+return newobj;
 }
 mw0.Trow.prototype.insertBeforeNative = mw0.insertBefore;
 mw0.Trow.prototype.insertBefore = function(newobj, item) {
-this.insertBeforeNative(newobj, item);
+if(!item) return this.appendChild(newobj);
+var r = this.insertBeforeNative(newobj, item);
+if(!r) return null;
 if(newobj.nodeName === "TD")
 for(var i=0; i<this.cells.length; ++i)
 if(this.cells[i] == item) {
 this.cells.splice(i, 0, newobj);
 break;
 }
+return newobj;
 }
 mw0.Trow.prototype.removeChildNative = document.removeChild;
 mw0.Trow.prototype.removeChild = function(item) {
@@ -2740,6 +2757,7 @@ this.push(child); child.parentNode = this;return child; }
 /* insertBefore maps to splice, but we have to find the element. */
 /* This prototype assumes all elements are objects. */
 Array.prototype.insertBefore = function(newobj, item) {
+if(!item) return this.appendChild(newobj);
 // check to see if it's already there
 for(var i=0; i<this.length; ++i)
 if(this[i] == newobj)

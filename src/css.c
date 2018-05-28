@@ -2062,110 +2062,124 @@ Well these under * chains are somewhat rare,
 and the routine runs fast enough, even on stackoverflow.com, the worst site,
 so I'm not going to implement chain level optimization today.
 Called from qsaMatchGroup and from qsa1.
+This is recursive, since we must explore every path.
 *********************************************************************/
 
-static bool qsaMatchChain(struct htmlTag *t, jsobjtype obj, const struct sel *s)
+static bool qsaMatchChain(struct htmlTag *t, jsobjtype obj,
+			  const struct asel *a)
 {
 	struct htmlTag *u;
-	char combin;
-	const struct asel *a = s->chain;
+
 	if (!a)			// should never happen
 		return false;
-// base node matches the first selector
-	if (!qsaMatch(t, obj, a))
-		return false;
+
+	switch (a->combin) {
+	case ',':
+// this is the base node; it has to match.
+		if (!qsaMatch(t, obj, a))
+			break;
 // now look down the rest of the chain
-	while ((a = a->next)) {
-		combin = a->combin;
+onetime:
+		if (!a->next)
+			return true;
+		return qsaMatchChain(t, obj, a->next);
 
-		if (combin == '+') {
-			if (t) {
-				if (!t->parent)
-					return false;
-				u = t->parent->firstchild;
-				if (!u || u == t)
-					return false;
-				for (; u; u = u->sibling)
-					if (u->sibling == t)
-						break;
-				if (!u)
-					return false;
-				t = u;
-				if (qsaMatch(t, obj, a))
-					continue;
-				return false;
-			}
-// now by objects
-			obj = get_property_object_nat(obj, "previousSibling");
-			if (!obj)
-				return false;
-			if (qsaMatch(t, obj, a))
-				continue;
-			return false;
-		}
-
-		if (combin == '~') {
-			if (t) {
-				if (!t->parent)
-					return false;
-				u = t->parent->firstchild;
-// possibly we should loop backwards not forwards,
-// but I don't have reverse links.
-				for (; u; u = u->sibling) {
-					if (u == t)
-						break;
-					if (!qsaMatch(u, obj, a))
-						continue;
-					t = u;
-					goto next_a;
-				}
-				return false;
-			}
-// Objects loop backwards.
-			while ((obj =
-				get_property_object_nat(obj,
-							"previousSibling"))) {
-				if (qsaMatch(t, obj, a))
-					goto next_a;
-			}
-			return false;
-		}
-
-		if (combin == '>') {
-			if (t) {
-				t = t->parent;
-				if (!t || t->action == TAGACT_DOC)
-					return false;
-				if (qsaMatch(t, obj, a))
-					continue;
-				return false;
-			}
-			obj = get_property_object_nat(obj, "parentNode");
-			if (!obj)
-				return false;
-			if (get_property_number_nat(obj, "numType") == 9)
-				return false;
-			if (qsaMatch(t, obj, a))
-				continue;
-			return false;
-		}
-// Last combinator is space, any ancestor.
+	case '+':
 		if (t) {
-			while ((t = t->parent) && t->action != TAGACT_DOC)
-				if (qsaMatch(t, obj, a))
-					goto next_a;
-			return false;
+			if (!t->parent)
+				break;
+			u = t->parent->firstchild;
+			if (!u || u == t)
+				break;
+			for (; u; u = u->sibling)
+				if (u->sibling == t)
+					break;
+			if (!u)
+				break;
+			if (!qsaMatch(u, obj, a))
+				break;
+			t = u;
+			goto onetime;
+		}
+// now by objects
+		obj = get_property_object_nat(obj, "previousSibling");
+		if (!obj)
+			break;
+		if (!qsaMatch(t, obj, a))
+			break;
+		goto onetime;
+
+	case '~':
+		if (t) {
+			if (!t->parent)
+				break;
+			u = t->parent->firstchild;
+			for (; u; u = u->sibling) {
+				if (u == t)
+					return false;
+				if (!qsaMatch(u, obj, a))
+					continue;
+				if (!a->next)
+					return true;
+				if (qsaMatchChain(u, obj, a->next))
+					return true;
+			}
+			break;
+		}
+		while ((obj = get_property_object_nat(obj, "previousSibling"))) {
+			if (!qsaMatch(t, obj, a))
+				continue;
+			if (!a->next)
+				return true;
+			if (qsaMatchChain(t, obj, a->next))
+				return true;
+		}
+		break;
+
+	case '>':
+		if (t) {
+			t = t->parent;
+			if (!t || t->action == TAGACT_DOC)
+				break;
+			if (!qsaMatch(t, obj, a))
+				break;
+			goto onetime;
+		}
+		obj = get_property_object_nat(obj, "parentNode");
+		if (!obj)
+			break;
+		if (get_property_number_nat(obj, "numType") == 9)
+			break;
+		if (!qsaMatch(t, obj, a))
+			break;
+		goto onetime;
+
+	case ' ':
+		if (t) {
+			while ((t = t->parent) && t->action != TAGACT_DOC) {
+				if (!qsaMatch(t, obj, a))
+					continue;
+				if (!a->next)
+					return true;
+				if (qsaMatchChain(t, obj, a->next))
+					return true;
+			}
+			break;
 		}
 		while ((obj = get_property_object_nat(obj, "parentNode")) &&
-		       get_property_number_nat(obj, "nodeType") != 9)
-			if (qsaMatch(t, obj, a))
-				goto next_a;
-		return false;
+		       get_property_number_nat(obj, "nodeType") != 9) {
+			if (!qsaMatch(t, obj, a))
+				continue;
+			if (!a->next)
+				return true;
+			if (qsaMatchChain(t, obj, a->next))
+				return true;
+		}
+		break;
 
-next_a:	;
-	}
+	}			// switch
 
-	return true;
+	return false;
 }
 
 // Only called from cssApply, as part of getComputedStyle.
@@ -2181,7 +2195,7 @@ static bool qsaMatchGroup(struct htmlTag *t, jsobjtype obj,
 // Only the plain descriptors for getComputedStyle().
 		if (sel->before | sel->after | sel->hover)
 			continue;
-		if (qsaMatchChain(t, obj, sel))
+		if (qsaMatchChain(t, obj, sel->chain))
 			return true;
 	}
 	return false;
@@ -2216,7 +2230,7 @@ static struct htmlTag **qsa1(const struct sel *sel)
 	if (skiproot && list[i])
 		++i;
 	for (; (t = list[i]); ++i) {
-		if (qsaMatchChain(t, 0, sel)) {
+		if (qsaMatchChain(t, 0, sel->chain)) {
 			a[n++] = t;
 			if (onematch)
 				break;
