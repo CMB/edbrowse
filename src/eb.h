@@ -571,6 +571,7 @@ struct htmlTag {
 	const char *rvalue; /* for reset */
 	char *innerHTML; /* the html string under this tag */
 	int inner;		/* for inner html */
+	int highspec; // specificity of a selector that matches this node
 };
 
 /* htmlTag.action */

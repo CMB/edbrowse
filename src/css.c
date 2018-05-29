@@ -24,7 +24,7 @@ which is a tad faster.
 #define CSS_ERROR_ATTR 9
 #define CSS_ERROR_RATTR 10
 #define CSS_ERROR_DYN 11
-#define CSS_ERROR_INJECTNULL 12
+#define CSS_ERROR_TAGLINK 12
 #define CSS_ERROR_INJECTHIGH 13
 #define CSS_ERROR_PE 14
 #define CSS_ERROR_UNSUP 15
@@ -45,7 +45,7 @@ static const char *const errorMessage[] = {
 	"bad selector attribute",
 	"bad rule attribute",
 	"dynamic",
-	"not used",
+	"tag link",
 	"inject high",
 	"pseudo element",
 	": unsupported",
@@ -221,6 +221,7 @@ struct desc {
 	uchar error;
 	struct sel *selectors;
 	struct rule *rules;
+	int highspec;		// specificity when this descriptor matches
 };
 
 // selector
@@ -229,6 +230,7 @@ struct sel {
 	uchar error;
 	bool before, after, hover;
 	struct asel *chain;
+	int spec;		// specificity
 };
 
 // atomic selector
@@ -236,7 +238,7 @@ struct asel {
 	struct asel *next;
 	char *tag;
 	char *part;
-	bool before, after, hover;
+	bool before, after, hover, link;
 	uchar error;
 	char combin;
 	struct mod *modifiers;
@@ -405,6 +407,43 @@ copy:
 		++s;
 	}
 	*w = 0;
+}
+
+// This is a crude measure of specificity, contained in a 5 digit number.
+static int specificity(const struct sel *sel)
+{
+	const struct asel *a = sel->chain;
+	const struct mod *mod;
+	int n = 0;
+	int level = 1000;
+	int cnt;
+	while (a && level) {
+		cnt = 0;
+		for (mod = a->modifiers; mod; mod = mod->next) {
+			if (mod->negate)
+				continue;
+			if (!cnt)
+				++cnt;
+			++cnt;
+			if (cnt == 8)
+				break;
+		}
+		if (a->tag)
+			++cnt;
+		n += level * cnt;
+		level /= 10;
+		a = a->next;
+	}
+
+// need something positive here
+	if (!n) {
+// each atomic has no tag and only "not() modifiers.
+// Set n to 1 + the number of not modifiers on the first atomic
+		n = 1;
+		for (mod = sel->chain->modifiers; mod; mod = mod->next)
+			++n;
+	}
+	return n;
 }
 
 // The input string is assumed allocated, it could be reallocated.
@@ -693,11 +732,6 @@ copy:		++s;
 			t[a2 - a1] = 0;
 			asel = allocZeroMem(sizeof(struct asel));
 			asel->part = t;
-// rare corner case, :link is really a:link
-			if (stringEqual(t, ":link")) {
-				nzFree(t);
-				asel->part = cloneString("a:link");
-			}
 			asel->combin = combin;
 			if (!sel) {
 				sel = allocZeroMem(sizeof(struct sel));
@@ -778,6 +812,13 @@ copy:		++s;
 						sel->error =
 						    CSS_ERROR_INJECTHIGH;
 				}
+				if (asel->link) {
+					if (!asel->tag)
+						asel->tag = cloneString("a");
+					else if (!stringEqual(asel->tag, "a")) {
+						sel->error = CSS_ERROR_TAGLINK;
+					}
+				}
 			}
 		}
 	}
@@ -792,6 +833,8 @@ copy:		++s;
 			continue;
 		for (sel = d->selectors; sel; sel = sel->next) {
 			if (!sel->error) {
+// as good a time as any to compute specificity
+				sel->spec = specificity(sel);
 				across = false;
 				continue;
 			}
@@ -1016,7 +1059,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 	char c, h;
 	int n = m2 - m1;
 	static const char *const okcolon[] = {
-		"first-child", "last-child", "only-child", "link", "checked",
+		"first-child", "last-child", "only-child", "checked",
 		"first-of-type", "last-of-type", "only-of-type",
 		"empty", "disabled", "enabled", "read-only", "read-write",
 		"scope", "root",
@@ -1060,6 +1103,10 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 		}
 		if (stringEqual(t, ":hover")) {
 			a->hover = true;
+			return;
+		}
+		if (stringEqual(t, ":link")) {
+			a->link = true;
 			return;
 		}
 // :lang(it) becomes [lang|=it], but more
@@ -2208,22 +2255,23 @@ onetime:
 }
 
 // Only called from cssApply, as part of getComputedStyle.
-static bool qsaMatchGroup(struct htmlTag *t, jsobjtype obj,
-			  const struct desc *d)
+static bool qsaMatchGroup(struct htmlTag *t, jsobjtype obj, struct desc *d)
 {
 	struct sel *sel;
 	if (d->error)
 		return false;
+	d->highspec = 0;
 	for (sel = d->selectors; sel; sel = sel->next) {
 		if (sel->error)
 			continue;
 // Only the plain descriptors for getComputedStyle().
 		if (sel->before | sel->after | sel->hover)
 			continue;
-		if (qsaMatchChain(t, obj, sel->chain))
-			return true;
+		if (qsaMatchChain(t, obj, sel->chain) &&
+		    sel->spec > d->highspec)
+			d->highspec = sel->spec;
 	}
-	return false;
+	return (d->highspec > 0);
 }
 
 /*********************************************************************
@@ -2257,6 +2305,8 @@ static struct htmlTag **qsa1(const struct sel *sel)
 	for (; (t = list[i]); ++i) {
 		if (qsaMatchChain(t, 0, sel->chain)) {
 			a[n++] = t;
+			if (sel->spec > t->highspec)
+				t->highspec = sel->spec;
 			if (onematch)
 				break;
 		}
@@ -2385,6 +2435,7 @@ static void build1_doclist(struct htmlTag *t)
 			       (doclist_a + 1) * sizeof(struct htmlTag *));
 	}
 	doclist[doclist_n++] = t;
+	t->highspec = 0;
 // can't descend into another frame
 	if (t->action == TAGACT_FRAME)
 		return;
@@ -2551,13 +2602,15 @@ Only looking for display=something or visibility=visible.
 Set a flag if that is found.
 *********************************************************************/
 
-static void do_rules(jsobjtype obj, struct rule *r0)
+static void do_rules(jsobjtype obj, struct rule *r0, int highspec)
 {
-	struct rule *r, *r2;
+	struct rule *r;
 	char *s, *s_attr;
 	int sl;
 	jsobjtype textobj, original = obj;
 	static const char jl[] = "text 0x0, 0x0";
+	char *a;
+	int spec;
 
 	if (!obj)
 		return;
@@ -2636,11 +2689,6 @@ in fact it's easier to list the tags that allow it.
 		bool has;
 		enum ej_proptype what;
 
-// only the first one counts.
-		for (r2 = r0; r2 != r; r2 = r2->next)
-			if (stringEqual(r2->atname, r->atname))
-				goto next_rule;
-
 // hover only looks for display visible
 		if (matchhover) {
 			if ((stringEqual(r->atname, "display") &&
@@ -2671,11 +2719,21 @@ in fact it's easier to list the tags that allow it.
 		what = typeof_property_nat(obj, r->atname);
 		if (has && !what)
 			continue;
-		++bulktotal;
-		set_property_string_nat(obj, r->atname, r->atval);
 
-next_rule:
-		;
+// only write if the specificity is higher
+		a = allocMem(strlen(r->atname) + 6);
+		sprintf(a, "%s$$scy", r->atname);
+		spec = get_property_number_nat(obj, a);
+		if (spec >= highspec) {
+			free(a);
+			continue;
+		}
+
+		if (bulkmatch)
+			++bulktotal;
+		set_property_string_nat(obj, r->atname, r->atval);
+		set_property_number_nat(obj, a, highspec);
+		free(a);
 	}
 
 	if (!sl)
@@ -2726,7 +2784,7 @@ void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination)
 
 	for (d = cm->descriptors; d; d = d->next) {
 		if (qsaMatchGroup(t, node, d))
-			do_rules(destination, d->rules);
+			do_rules(destination, d->rules, d->highspec);
 	}
 
 done:
@@ -2762,7 +2820,7 @@ void cssText(jsobjtype node, const char *rulestring)
 		cssPiecesFree(d0);
 		return;
 	}
-	do_rules(node, d0->rules);
+	do_rules(node, d0->rules, 100000);
 	cssPiecesFree(d0);
 }
 
@@ -3083,7 +3141,7 @@ static void cssEverybody(void)
 					if (!style)
 						continue;
 				}
-				do_rules(style, d->rules);
+				do_rules(style, d->rules, t->highspec);
 			}
 			nzFree(a);
 		}

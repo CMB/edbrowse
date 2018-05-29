@@ -2155,6 +2155,9 @@ static void processStyles(jsobjtype so, const char *stylestring)
 			if (*s) {
 				cssAttributeCrunch(s);
 				set_property_string(so, s, sv);
+// Should we set a specification level here, perhaps high,
+// so the css sheets don't overwrite it?
+// sv + "$$scy" = 99999;
 			}
 		}
 	}
