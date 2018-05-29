@@ -285,7 +285,6 @@ static bool matchhover;		// match on :hover selectors.
 static jsobjtype rootobj;
 static struct htmlTag **doclist;
 static int doclist_a, doclist_n;
-static struct ebFrame *doclist_f;
 static void build_doclist(struct htmlTag *top);
 static void hashBuild(void);
 static void hashFree(void);
@@ -1595,6 +1594,28 @@ static int spreadKids(struct htmlTag *t, jsobjtype obj)
 	return ns;
 }
 
+// Things like enabled, clik, read-only, only make sense for input fields;
+// they are false for other tags.
+static bool inputLike(struct htmlTag *t, jsobjtype obj)
+{
+	char *v;
+	bool rc;
+	static const char *const inputtags[] = {
+		"INPUT", "SELECT", "BUTTON", 0
+	};
+	if (t) {
+		int action = t->action;
+		return (action == TAGACT_INPUT || action == TAGACT_BUTTON ||
+			action == TAGACT_SELECT);
+	}
+	v = get_property_string_nat(obj, "nodeName");
+	if (!v || !*v)
+		return false;
+	rc = (stringInList(inputtags, v) >= 0);
+	nzFree(v);
+	return rc;
+}
+
 /*********************************************************************
 Match a node against an atomic selector.
 One of t or obj should be nonzero. It's more efficient with t.
@@ -1890,22 +1911,6 @@ nth_bad:
 			return false;
 		}
 
-		if (stringEqual(p, ":checked")) {
-			if (bulkmatch) {
-				if (t->checked ^ negate)
-					goto next_mod;
-				return false;
-			}
-// This is very dynamic, better go to the js world.
-			if (obj)
-				rc = get_property_bool_nat(obj, "checked");
-			else
-				rc = t->checked;
-			if (rc ^ negate)
-				goto next_mod;
-			return false;
-		}
-
 		if (stringEqual(p, ":first-child") ||
 		    stringEqual(p, ":last-child") ||
 		    stringEqual(p, ":only-child") ||
@@ -2014,12 +2019,15 @@ all the div sections just below the current node.
 
 		if (stringEqual(p, ":enabled") || stringEqual(p, ":disabled")) {
 			rc = false;
-			if (t)
-				rc = t->disabled;
-			else
-				rc = get_property_bool_nat(obj, "disabled");
-			if (p[1] == 'e')
-				rc ^= 1;
+			if (inputLike(t, obj)) {
+				if (t && bulkmatch)
+					rc = t->disabled;
+				else
+					rc = get_property_bool_nat(obj,
+								   "disabled");
+				if (p[1] == 'e')
+					rc ^= 1;
+			}
 			if (rc ^ negate)
 				goto next_mod;
 			return false;
@@ -2028,12 +2036,29 @@ all the div sections just below the current node.
 		if (stringEqual(p, ":read-only")
 		    || stringEqual(p, ":read-write")) {
 			rc = false;
-			if (t)
-				rc = t->rdonly;
-			else
-				rc = get_property_bool_nat(obj, "readonly");
-			if (p[6] == 'w')
-				rc ^= 1;
+			if (inputLike(t, obj)) {
+				if (t && bulkmatch)
+					rc = t->rdonly;
+				else
+					rc = get_property_bool_nat(obj,
+								   "readonly");
+				if (p[6] == 'w')
+					rc ^= 1;
+			}
+			if (rc ^ negate)
+				goto next_mod;
+			return false;
+		}
+
+		if (stringEqual(p, ":checked")) {
+			rc = false;
+			if (inputLike(t, obj)) {
+				if (t && bulkmatch)
+					rc = t->checked;
+				else
+					rc = get_property_bool_nat(obj,
+								   "checked");
+			}
 			if (rc ^ negate)
 				goto next_mod;
 			return false;
@@ -2334,10 +2359,8 @@ static void build_doclist(struct htmlTag *top)
 	doclist_a = 500;
 	doclist = allocMem((doclist_a + 1) * sizeof(struct htmlTag *));
 	if (top) {
-		doclist_f = top->f0;
 		build1_doclist(top);
 	} else {
-		doclist_f = cf;
 // the html tag should always be there
 		if (cf->htmltag) {
 			build1_doclist(cf->htmltag);
@@ -2355,9 +2378,6 @@ static void build_doclist(struct htmlTag *top)
 // recursive
 static void build1_doclist(struct htmlTag *t)
 {
-// can't descend into another frame
-	if (t->f0 != doclist_f)
-		return;
 	if (doclist_n == doclist_a) {
 		doclist_a += 500;
 		doclist =
@@ -2365,6 +2385,9 @@ static void build1_doclist(struct htmlTag *t)
 			       (doclist_a + 1) * sizeof(struct htmlTag *));
 	}
 	doclist[doclist_n++] = t;
+// can't descend into another frame
+	if (t->action == TAGACT_FRAME)
+		return;
 	for (t = t->firstchild; t; t = t->sibling)
 		build1_doclist(t);
 }

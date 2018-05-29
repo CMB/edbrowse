@@ -724,16 +724,26 @@ mw0.Form.prototype = {
 submit: eb$formSubmit, reset: eb$formReset};
 mw0.Element = function(){}
 mw0.Element.prototype.click = function() {
+var nn = this.nodeName, t = this.type;
 // as though the user had clicked on this
-if(this.nodeName == "button" || this.type == "button" ||
-this.type == "reset" || this.type == "submit") {
+if(nn == "button" || (nn == "INPUT" &&
+(t == "button" || t == "reset" || t == "submit" || t == "checkbox" || t == "radio"))) {
 var e = new Event;
 e.initEvent("click", true, true);
-var rc = this.dispatchEvent(e); // run the onclick code
-if(rc && this.form) {
+if(!this.dispatchEvent(e)) return;
 // do what the tag says to do
-if(this.type == "submit") this.form.submit();
-if(this.type == "reset") this.form.reset();
+if(this.form) {
+if(t == "submit") this.form.submit();
+if(t == "reset") this.form.reset();
+}
+if(t != "checkbox" && t != "radio") return;
+if(!this.checked) this.checked = false;
+this.checked ^= true; // toggle
+// if it's radio and checked we need to uncheck the others.
+if(this.form && this.checked && t == "radio" &&
+(nn = this.name) && (e = this.form[nn]) && Array.isArray(e)) {
+for(var i=0; i<e.length; ++i)
+if(e[i] != this) e[i].checked = false;
 }
 }
 }

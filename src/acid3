@@ -1412,6 +1412,67 @@
       });
       return 3;
     },
+    function () {
+      // test 43: :enabled, :disabled, :checked, etc
+      selectorTest(function (doc, add, expect) {
+        var input = doc.createElement('input');
+        input.type = 'checkbox';
+        doc.body.appendChild(input);
+        var neither = 0;
+        var both = add(":checked:enabled");
+        var checked = add(":checked");
+        var enabled = add(":enabled");
+        expect(doc.body, neither, "control failure");
+        expect(input, enabled, "input element didn't match :enabled");
+        input.click();
+        expect(input, both, "input element didn't match :checked");
+        input.disabled = true;
+        expect(input, checked, "failure 3");
+        input.checked = false;
+        expect(input, neither, "failure 4");
+        expect(doc.body, neither, "failure 5");
+      });
+      selectorTest(function (doc, add, expect) {
+        var input1 = doc.createElement('input');
+        input1.type = 'radio';
+        input1.name = 'radio';
+        doc.body.appendChild(input1);
+        var input2 = doc.createElement('input');
+        input2.type = 'radio';
+        input2.name = 'radio';
+        doc.body.appendChild(input2);
+        var checked = add(":checked");
+        expect(input1, 0, "failure 6");
+        expect(input2, 0, "failure 7");
+        input2.click();
+        expect(input1, 0, "failure 6");
+        expect(input2, checked, "failure 7");
+        input1.checked = true;
+        expect(input1, checked, "failure 8");
+        expect(input2, 0, "failure 9");
+        input2.setAttribute("checked", "checked"); // sets defaultChecked, doesn't change actual state
+        expect(input1, checked, "failure 10");
+        expect(input2, 0, "failure 11");
+        input1.type = "text";
+        expect(input1, 0, "text field matched :checked");
+      });
+      selectorTest(function (doc, add, expect) {
+        var input = doc.createElement('input');
+        input.type = 'button';
+        doc.body.appendChild(input);
+        var neither = 0;
+        var enabled = add(":enabled");
+        var disabled = add(":disabled");
+        add(":enabled:disabled");
+        expect(input, enabled, "failure 12");
+        input.disabled = true;
+        expect(input, disabled, "failure 13");
+        input.removeAttribute("disabled");
+        expect(input, enabled, "failure 14");
+        expect(doc.body, neither, "failure 15");
+      });
+      return 3;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';
