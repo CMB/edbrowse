@@ -1271,6 +1271,11 @@ This may be overkill - I don't know.
 mw0.getAttribute = function(name) { var v = this[name.toLowerCase()]; return typeof(v) == "undefined" ? null : v; }
 mw0.hasAttribute = function(name) { if (this[name.toLowerCase()]) return true; else return false; }
 mw0.setAttribute = function(name, v) { 
+// special code for style
+if(name == "style" && this.style instanceof CSSStyleDeclaration) {
+this.style.cssText = v;
+return;
+}
 var n = name.toLowerCase();
 this[n] = v; 
 if(this.attributes[n]) return;
