@@ -1507,6 +1507,45 @@
     function() { return 3; }, // test 45
 //@` I don't understand @media in css, and haven't implemented any of it.
     function() { return 3; }, // test 46
+    function () {
+      // test 47: 'cursor' and CSS3 values
+      var doc = getTestDocument();
+      var style = doc.createElement('style');
+      style.setAttribute('type', 'text/css');
+      var cursors = ['auto', 'default', 'none', 'context-menu', 'help', 'pointer', 'progress', 'wait', 'cell', 'crosshair', 'text', 'vertical-text', 'alias', 'copy', 'move', 'no-drop', 'not-allowed', 'e-resize', 'n-resize', 'ne-resize', 'nw-resize', 's-resize', 'se-resize', 'sw-resize', 'w-resize', 'ew-resize', 'ns-resize', 'nesw-resize', 'nwse-resize', 'col-resize', 'row-resize', 'all-scroll'];
+      for (var i in cursors) {
+        var c = cursors[i];
+        style.appendChild(doc.createTextNode('#' + c + ' { cursor: ' + c + '; }'));
+      }
+      style.appendChild(doc.createTextNode('#bogus { cursor: bogus; }'));
+      doc.body.previousSibling.appendChild(style);
+//@` I assume from this test that cursor is special, like color,
+// and can only be assigned certain keywords, like yellow or green.
+// I don't care about any of that, for cursor or color.
+// So I have no trouble setting it to bogus, but acid wants me
+// to transmute it back to auto. Oh well.
+      doc.body.id = "bogus";
+/*
+      assertEquals(doc.defaultView.getComputedStyle(doc.body, '').cursor, "auto", "control failed");
+*/
+      for (var i in cursors) {
+//@` Now we have a bigger and more systemic problem!
+// This for loop is suppose to loop over the indices of the array and nothing
+// more, but it picks up all the things I have added to Array.prototype.
+// Most of these are element methods, because Select is itself an array,
+// but even if I didn't have these, I found it necessary to write
+// Array.prototype.item, Array.prototype.includes, etc, things we need
+// that aren't part of duktape native Array, so if any javascript
+// anywhere tries to do for(var i in a), it's going to get
+// more than it bargained for, the indices and the prototype methods.
+// Almost everyone does for(var i = 0; i < a.length; ++i), which works.
+        if(!cursors.hasOwnProperty(i)) continue;
+        var c = cursors[i];
+        doc.body.id = c;
+        assertEquals(doc.defaultView.getComputedStyle(doc.body, '').cursor, c, "cursor " + c + " not supported");
+      }
+      return 3;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';
