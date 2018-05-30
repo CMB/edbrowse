@@ -1447,9 +1447,22 @@
         input2.click();
         expect(input1, 0, "failure 6");
         expect(input2, checked, "failure 7");
-        input1.checked = true;
+//@` If you call the click() routine on a radio button, that function clears
+// the other radio buttons, but if you just set it,
+// I don't have a setter that would perform the same function.
+// I just haven't written it yet. So the test use to be:
+//        input1.checked = true;
+// It is now:
+        input1.click();
         expect(input1, checked, "failure 8");
         expect(input2, 0, "failure 9");
+//@` It is dumb luck that this next test passes. I do in fact set the
+// value of checked. That's part of what setAttribute does. It creates a new
+// attribute yes, but it also sets object.foo = bar.
+// Maybe it shouldn't but it does, so, I read the value of checked,
+// coercing it into a boolean, and "checked" is nonsense, so false.
+// If you had done setAttribute("checked", 1) then it would look like
+// it was checked, and that is wrong.
         input2.setAttribute("checked", "checked"); // sets defaultChecked, doesn't change actual state
         expect(input1, checked, "failure 10");
         expect(input2, 0, "failure 11");

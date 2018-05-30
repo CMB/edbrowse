@@ -1643,24 +1643,60 @@ static int spreadKids(struct htmlTag *t, jsobjtype obj)
 
 // Things like enabled, clik, read-only, only make sense for input fields;
 // they are false for other tags.
-static bool inputLike(struct htmlTag *t, jsobjtype obj)
+static bool inputLike(struct htmlTag *t, jsobjtype obj, int flavor)
 {
 	char *v;
 	bool rc;
+	int j, action;
 	static const char *const inputtags[] = {
 		"INPUT", "SELECT", "BUTTON", 0
 	};
+	static const char *const clicktypes[] = {
+		"button", "submit", "reset", "checkbox", "radio", 0
+	};
+	static const char *const nwtypes[] = {
+		"button", "submit", "reset", "hidden", 0
+	};
 	if (t) {
-		int action = t->action;
-		return (action == TAGACT_INPUT || action == TAGACT_BUTTON ||
-			action == TAGACT_SELECT);
+		action = t->action;
+		rc = (action == TAGACT_INPUT || action == TAGACT_BUTTON ||
+		      action == TAGACT_SELECT);
+		if (!rc)
+			return false;
+	} else {
+		v = get_property_string_nat(obj, "nodeName");
+		if (!v || !*v)
+			return false;
+		j = stringInList(inputtags, v);
+		nzFree(v);
+		if (j < 0)
+			return false;
+		if (j == 0)
+			action = TAGACT_INPUT;
+		if (j == 1)
+			action = TAGACT_SELECT;
+		if (j == 2)
+			action = TAGACT_BUTTON;
 	}
-	v = get_property_string_nat(obj, "nodeName");
-	if (!v || !*v)
-		return false;
-	rc = (stringInList(inputtags, v) >= 0);
-	nzFree(v);
-	return rc;
+	if (flavor == 1) {	// clickable
+		v = get_property_string_nat(obj, "type");
+		rc = (action == TAGACT_BUTTON || (action == TAGACT_INPUT &&
+						  v
+						  && stringInList(clicktypes,
+								  v) >= 0));
+		nzFree(v);
+		return rc;
+	}
+	if (flavor == 2) {	// writable
+		v = get_property_string_nat(obj, "type");
+		rc = (action == TAGACT_SELECT || (action == TAGACT_INPUT &&
+						  v
+						  && stringInList(nwtypes,
+								  v) < 0));
+		nzFree(v);
+		return rc;
+	}
+	return true;
 }
 
 /*********************************************************************
@@ -2066,7 +2102,7 @@ all the div sections just below the current node.
 
 		if (stringEqual(p, ":enabled") || stringEqual(p, ":disabled")) {
 			rc = false;
-			if (inputLike(t, obj)) {
+			if (inputLike(t, obj, 0)) {
 				if (t && bulkmatch)
 					rc = t->disabled;
 				else
@@ -2083,7 +2119,7 @@ all the div sections just below the current node.
 		if (stringEqual(p, ":read-only")
 		    || stringEqual(p, ":read-write")) {
 			rc = false;
-			if (inputLike(t, obj)) {
+			if (inputLike(t, obj, 2)) {
 				if (t && bulkmatch)
 					rc = t->rdonly;
 				else
@@ -2099,7 +2135,7 @@ all the div sections just below the current node.
 
 		if (stringEqual(p, ":checked")) {
 			rc = false;
-			if (inputLike(t, obj)) {
+			if (inputLike(t, obj, 1)) {
 				if (t && bulkmatch)
 					rc = t->checked;
 				else

@@ -737,13 +737,16 @@ if(t == "submit") this.form.submit();
 if(t == "reset") this.form.reset();
 }
 if(t != "checkbox" && t != "radio") return;
-if(!this.checked) this.checked = false;
-this.checked ^= true; // toggle
+this.checked = (this.checked ? false : true);
 // if it's radio and checked we need to uncheck the others.
 if(this.form && this.checked && t == "radio" &&
 (nn = this.name) && (e = this.form[nn]) && Array.isArray(e)) {
 for(var i=0; i<e.length; ++i)
 if(e[i] != this) e[i].checked = false;
+} else // try it another way
+if(this.checked && t == "radio" && (e = this.parentNode.childNodes) && (nn = this.name)) {
+for(var i=0; i<e.length; ++i)
+if(e[i].nodeName == "INPUT" && e[i].type == t && e[i].name == nn &&e[i] != this) e[i].checked = false;
 }
 }
 }
