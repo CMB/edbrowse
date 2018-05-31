@@ -207,6 +207,8 @@ int frameExpandLine(int ln, jsobjtype fo);
 struct htmlTag *line2frame(int ln);
 bool reexpandFrame(void);
 bool frameSecurityFile(const char *thisfile);
+void unframe(jsobjtype fobj, jsobjtype newdoc);
+void unframe2(jsobjtype fobj);
 
 /* sourcefile=main.c */
 const char *mailRedirect(const char *to, const char *from, const char *reply, const char *subj);
@@ -228,13 +230,13 @@ bool runPluginCommand(const struct MIMETYPE *m, const char *inurl, const char *i
 int playBuffer(const char *line, const char *playfile);
 
 /* sourcefile=sendmail.c */
-bool loadAddressBook(void) ;
-const char *reverseAlias(const char *reply) ;
-bool encodeAttachment(const char *file, int ismail, bool webform, const char **type_p, const char **enc_p, char **data_p) ;
-char *makeBoundary(void) ;
-bool sendMail(int account, const char **recipients, const char *body, int subjat, const char **attachments, const char *refline, int nalt, bool dosig) ;
-bool validAccount(int n) ;
-bool sendMailCurrent(int sm_account, bool dosig) ;
+bool loadAddressBook(void);
+const char *reverseAlias(const char *reply);
+bool encodeAttachment(const char *file, int ismail, bool webform, const char **type_p, const char **enc_p, char **data_p);
+char *makeBoundary(void);
+bool sendMail(int account, const char **recipients, const char *body, int subjat, const char **attachments, const char *refline, int nalt, bool dosig);
+bool validAccount(int n);
+bool sendMailCurrent(int sm_account, bool dosig);
 
 /* sourcefile=messages.c */
 void eeCheck(void) ;
@@ -384,7 +386,7 @@ void disconnectTagObject(struct htmlTag *t);
 int js_main(void);
 // the native versions of the api functions in ebjs.c
 void createJavaContext_nat(void);
-void freeJavaContext_nat(void);
+void freeJavaContext_nat(jsobjtype cx);
 enum ej_proptype typeof_property_nat(jsobjtype obj, const char *name) ;
 bool has_property_nat(jsobjtype obj, const char *name) ;
 void delete_property_nat(jsobjtype obj, const char *name) ;

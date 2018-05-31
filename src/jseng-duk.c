@@ -514,6 +514,22 @@ static duk_ret_t setter_cw(duk_context * cx)
 	return 0;
 }
 
+static duk_ret_t native_unframe(duk_context * cx)
+{
+	if (duk_is_object(cx, 0))
+		unframe(duk_get_heapptr(cx, 0), duk_get_heapptr(cx, 1));
+	duk_pop_2(cx);
+	return 0;
+}
+
+static duk_ret_t native_unframe2(duk_context * cx)
+{
+	if (duk_is_object(cx, 0))
+		unframe2(duk_get_heapptr(cx, 0));
+	duk_pop(cx);
+	return 0;
+}
+
 static void linkageNow(char linkmode, jsobjtype o)
 {
 	jsInterruptCheck();
@@ -1340,6 +1356,10 @@ void createJavaContext_nat(void)
 	duk_put_global_string(jcx, "btoa");
 	duk_push_c_function(jcx, native_atob, 1);
 	duk_put_global_string(jcx, "atob");
+	duk_push_c_function(jcx, native_unframe, 2);
+	duk_put_global_string(jcx, "eb$unframe");
+	duk_push_c_function(jcx, native_unframe2, 1);
+	duk_put_global_string(jcx, "eb$unframe2");
 	duk_push_c_function(jcx, native_logputs, 2);
 	duk_put_global_string(jcx, "eb$logputs");
 	duk_push_c_function(jcx, native_prompt, DUK_VARARGS);
@@ -1432,11 +1452,11 @@ void createJavaContext_nat(void)
 // setupJavaDom() in ebjs.c does the rest.
 }				/* createJavaContext_nat */
 
-void freeJavaContext_nat(void)
+void freeJavaContext_nat(jsobjtype cx)
 {
 	int i, top = duk_get_top(context0);
 	for (i = 0; i < top; ++i) {
-		if (jcx == duk_get_context(context0, i)) {
+		if (cx == duk_get_context(context0, i)) {
 			duk_remove(context0, i);
 			debugPrint(3, "remove js context %d", i);
 			break;

@@ -141,11 +141,10 @@ q2 while in session 1.
 
 void freeJavaContext(struct ebFrame *f)
 {
-	if (!f->winobj)
+	if (!f->jcx)
 		return;
 	debugPrint(5, "> free frame %p", f);
-	set_js_globals_f(f);
-	freeJavaContext_nat();
+	freeJavaContext_nat(f->jcx);
 	f->jcx = f->winobj = f->docobj = 0;
 	debugPrint(5, "< ok");
 	cssFree(f);

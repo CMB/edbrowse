@@ -2587,6 +2587,7 @@ int frameExpandLine(int ln, jsobjtype fo)
 	pst line;
 	int tagno, start;
 	const char *s;
+	char *a;
 	struct htmlTag *t;
 	struct ebFrame *save_cf, *new_cf, *last_f;
 	uchar save_local;
@@ -2617,7 +2618,11 @@ int frameExpandLine(int ln, jsobjtype fo)
 			t->contracted = false;
 		return 0;
 	}
-
+// Check with js first, in case it changed.
+	if (t->jv && (a = get_property_url(t->jv, false)) && *a) {
+		nzFree(t->href);
+		t->href = a;
+	}
 	s = t->href;
 	if (!s) {
 // No source. If this is your request then return an error.
@@ -2770,7 +2775,7 @@ we did that before and now it's being expanded. So bump step up to 2.
 		cwo = new_cf->winobj;
 		set_property_object(t->jv, "content$Window", cwo);
 // run the frame onload function if it is there.
-// I assume it should run in the higher context.
+// I assume it should run in the higher frame.
 		run_event_bool(t->jv, t->info->name, "onload", 0);
 	}
 
@@ -2960,4 +2965,72 @@ bool frameSecurityFile(const char *thisfile)
 		return false;
 	}
 	return true;
+}
+
+static bool remember_contracted;
+
+// Undo the above,as though the frame were never expanded.
+void unframe(jsobjtype fobj, jsobjtype newdoc)
+{
+	int i, n;
+	struct htmlTag *t, *cdt;
+	jsobjtype cdo;
+	struct ebFrame *f, *f1;
+
+	t = tagFromJavaVar(fobj);
+	if (!t) {
+		debugPrint(1, "unframe couldn't find tag");
+		return;
+	}
+	if (!(cdt = t->firstchild) || cdt->action != TAGACT_DOC || cdt->sibling
+	    || !(cdo = cdt->jv)) {
+		debugPrint(1, "unframe child tag isn't right");
+		return;
+	}
+	underKill(cdt);
+	disconnectTagObject(cdt);
+	connectTagObject(cdt, newdoc);
+
+	f1 = t->f1;
+	t->f1 = 0;
+	remember_contracted = t->contracted;
+	if (f1 == cf) {
+		debugPrint(1,
+			   "deleting the current frame, this shouldn't happen, edbrowse is corrupt");
+		return;
+	}
+	for (f = &(cw->f0); f; f = f->next)
+		if (f->next == f1)
+			break;
+	if (!f) {
+		debugPrint(1, "unframe can't find prior frame to relink");
+		return;
+	}
+	f->next = f1->next;
+	delTimers(f1);
+	freeJavaContext(f1);
+	nzFree(f1->dw);
+	nzFree(f1->hbase);
+	nzFree(f1->fileName);
+	nzFree(f1->firstURL);
+	free(f1);
+
+// cdt use to belong to f1, which no longer exists.
+	cdt->f0 = f;		// back to its parent frame
+
+// A running frame could create nodes in its parent frame, or any other frame.
+	n = 0;
+	for (i = 0; i < cw->numTags; ++i) {
+		t = tagList[i];
+		if (t->f0 == f1)
+			t->f0 = f, ++n;
+	}
+	if (n)
+		debugPrint(3, "%d nodes pushed up to the parent frame", n);
+}
+
+void unframe2(jsobjtype fobj)
+{
+	struct htmlTag *t = tagFromJavaVar(fobj);
+	t->contracted = remember_contracted;
 }

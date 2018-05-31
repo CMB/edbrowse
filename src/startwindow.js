@@ -813,8 +813,22 @@ if(typeof h !== "string") { alert3("hrefset " + typeof h); \
 w.hrefset$p.push("' + cn + '"); \
 w.hrefset$a.push(h); \
 return; } \
+var last_href = (this.href$2 ? this.href$2.href$val : null); \
 if(!this.href$2) { this.href$2 = new mw0.URL(h ? eb$resolveURL(w.eb$base,h) : h) } else { if(!this.href$2.href$val && h) h =  eb$resolveURL(w.eb$base,h); \
-this.href$2.href = h; } }});');
+this.href$2.href = h; }  \
+var next_href = this.href$2.href$val; \
+/* special code for setting frame.src, redirect to a new page. */ \
+if(this instanceof Frame && this.content$Document && this.content$Document.lastChild && last_href != next_href && next_href) { \
+/* There is a nasty corner case here, dont know if it ever happens. What if we are replacing the running frame? window.parent.src = new_url; See if we can get around it this way. */ \
+if(w == this.content$Window) { w.location = next_href; return; } \
+var d = new Document; d.childNodes = []; d.attributes = new NamedNodeMap; d.attributes.owner = d; \
+d.nodeName = d.tagName = "DOCUMENT"; d.nodeType = 9; d.ownerDocument = my$doc(); \
+delete this.eb$auto; this.content$Document = this.content$Window = d; \
+eb$unframe(this, d); /* fix links on the edbrowse side */ \
+this.childNodes[0] = d; d.parentNode = this; \
+/* I can force the opening of this new frame, but should I? */ \
+this.contentDocument; eb$unframe2(this); \
+} }});');
 var piecelist = ["protocol", "pathname", "host", "search", "hostname", "port"];
 for(var j=0; j<piecelist.length; ++j) {
 var piece = piecelist[j];

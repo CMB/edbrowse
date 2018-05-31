@@ -655,6 +655,12 @@ addchar:
 			nzFree(result);
 			if (f)
 				fclose(f);
+			if (newlocation) {
+				puts("sorry, page redirection is not honored under jdb.");
+				nzFree(newlocation);
+				newlocation = 0;
+				newlocation = 0;
+			}
 		}
 		goto top;
 	}

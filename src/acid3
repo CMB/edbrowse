@@ -1513,7 +1513,18 @@
       var style = doc.createElement('style');
       style.setAttribute('type', 'text/css');
       var cursors = ['auto', 'default', 'none', 'context-menu', 'help', 'pointer', 'progress', 'wait', 'cell', 'crosshair', 'text', 'vertical-text', 'alias', 'copy', 'move', 'no-drop', 'not-allowed', 'e-resize', 'n-resize', 'ne-resize', 'nw-resize', 's-resize', 'se-resize', 'sw-resize', 'w-resize', 'ew-resize', 'ns-resize', 'nesw-resize', 'nwse-resize', 'col-resize', 'row-resize', 'all-scroll'];
+//@` Here we have a large and systemic problem!
+// This for loop is suppose to loop over the indices of the array and nothing
+// more, but it picks up all the things I have added to Array.prototype.
+// Most of these are element methods, because Select is itself an array,
+// but even if I didn't have these, I found it necessary to write
+// Array.prototype.item, Array.prototype.includes, etc, things we need
+// that aren't part of duktape native Array, so if any javascript
+// anywhere tries to do for(var i in a), it's going to get
+// more than it bargained for, the indices and the prototype methods.
+// Almost everyone does for(var i = 0; i < a.length; ++i), which works.
       for (var i in cursors) {
+        if(!cursors.hasOwnProperty(i)) continue;
         var c = cursors[i];
         style.appendChild(doc.createTextNode('#' + c + ' { cursor: ' + c + '; }'));
       }
@@ -1529,21 +1540,28 @@
       assertEquals(doc.defaultView.getComputedStyle(doc.body, '').cursor, "auto", "control failed");
 */
       for (var i in cursors) {
-//@` Now we have a bigger and more systemic problem!
-// This for loop is suppose to loop over the indices of the array and nothing
-// more, but it picks up all the things I have added to Array.prototype.
-// Most of these are element methods, because Select is itself an array,
-// but even if I didn't have these, I found it necessary to write
-// Array.prototype.item, Array.prototype.includes, etc, things we need
-// that aren't part of duktape native Array, so if any javascript
-// anywhere tries to do for(var i in a), it's going to get
-// more than it bargained for, the indices and the prototype methods.
-// Almost everyone does for(var i = 0; i < a.length; ++i), which works.
         if(!cursors.hasOwnProperty(i)) continue;
         var c = cursors[i];
         doc.body.id = c;
         assertEquals(doc.defaultView.getComputedStyle(doc.body, '').cursor, c, "cursor " + c + " not supported");
       }
+      return 3;
+    },
+
+    function () {
+      // test 48: :link and :visited
+      var iframe = document.getElementById("selectors");
+      var number = (new Date()).valueOf();
+      var a = document.createElement('a');
+      a.appendChild(document.createTextNode('YOU SHOULD NOT SEE THIS AT ALL')); // changed text when fixing http://dbaron.org/mozilla/visited-privacy
+      a.setAttribute('id', 'linktest');
+      a.setAttribute('class', 'pending');
+      a.setAttribute('href', iframe.getAttribute('src') + "?" + number);
+      document.getElementsByTagName('map')[0].appendChild(a);
+//@` I'm adding an alert here, so I can see that it is fetching the new page,
+// without having to run at db3
+      iframe.setAttribute("onload", "document.getElementById('linktest').removeAttribute('class');alert('refetch')");
+      iframe.src = a.getAttribute("href");
       return 3;
     },
 // other tests not yet folded in
