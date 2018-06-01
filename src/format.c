@@ -82,24 +82,10 @@ I'm willing to accept that for now.
 
 static void cellDelimiters(char *buf)
 {
-	char *lastcell = 0;
-	int cellcount = 0;
 	char *s;
-
-	for (s = buf; *s; ++s) {
-		if (*s == TableCellChar) {
+	for (s = buf; *s; ++s)
+		if (*s == TableCellChar)
 			*s = '|';
-			lastcell = s;
-			++cellcount;
-			continue;
-		}
-		if (!strchr("\f\r\n", *s))
-			continue;
-/* newline here, if just one cell delimiter then blank it out */
-		if (cellcount == 1)
-			*lastcell = ' ';
-		cellcount = 0;
-	}
 }				/* cellDelimiters */
 
 static void anchorSwap(char *buf)

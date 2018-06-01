@@ -757,8 +757,8 @@ mw0.Anchor = function(){}
 mw0.Lister = function(){}
 mw0.Listitem = function(){}
 mw0.tBody = function(){ this.rows = []; }
-mw0.tHead = function(){ this.cells = []; }
-mw0.tFoot = function(){ this.cells = []; }
+mw0.tHead = function(){ this.rows = []; }
+mw0.tFoot = function(){ this.rows = []; }
 mw0.tCap = function(){}
 mw0.Table = function(){ this.rows = []; this.tBodies = []; }
 mw0.Div = function(){}
@@ -957,16 +957,44 @@ eb$cssApply(this, e, s);
 return s;
 }
 
-// insert row into a table or tbody
+// It's crude, but just reindex all the rows in a table
+mw0.rowReindex = function(t) {
+// climb up to find Table
+while(!(t instanceof Table)) {
+if(t instanceof Frame) return;
+t = t.parentNode;
+if(!t) return;
+}
+
+var i, j, n = 0;
+var s; // section
+t.rows.length = 0;
+if(s = t.tHead) {
+for(j=0; j<s.rows.length; ++j)
+t.rows.push(s.rows[j]), s.rows[j].rowIndex = n++, s.rows[j].sectionRowIndex = j;
+}
+for(i=0; i<t.tBodies.length; ++i) {
+s = t.tBodies[i];
+for(j=0; j<s.rows.length; ++j)
+t.rows.push(s.rows[j]), s.rows[j].rowIndex = n++, s.rows[j].sectionRowIndex = j;
+}
+if(s = t.tFoot) {
+for(j=0; j<s.rows.length; ++j)
+t.rows.push(s.rows[j]), s.rows[j].rowIndex = n++, s.rows[j].sectionRowIndex = j;
+}
+
+// There shouldn't be rows under table, and not in a section, but maybe
+j = 0;
+for(s=t.firstChild; s; s=s.nextSibling)
+if(s instanceof tRow)
+t.rows.push(s), s.rowIndex = n++, s.sectionRowIndex = j;
+}
+
+// insert row into a table or body or head or foot
 mw0.insertRow = function(idx) {
 if(idx === undefined) idx = -1;
 if(typeof idx !== "number") return null;
 var t = this;
-if(this.nodeName == "TABLE") {
-// check for table bodies
-if(t.lastChild && t.lastChild.nodeName == "TBODY")
-t = t.lastChild;
-}
 var nrows = t.childNodes.length;
 if(idx < 0) idx = nrows;
 if(idx > nrows) return null;
@@ -979,6 +1007,8 @@ return r;
 }
 mw0.Table.prototype.insertRow = mw0.insertRow;
 mw0.tBody.prototype.insertRow = mw0.insertRow;
+mw0.tHead.prototype.insertRow = mw0.insertRow;
+mw0.tFoot.prototype.insertRow = mw0.insertRow;
 
 mw0.deleteRow = function(r) {
 if(!(r instanceof mw0.tRow)) return;
@@ -986,6 +1016,8 @@ this.removeChild(r);
 }
 mw0.Table.prototype.deleteRow = mw0.deleteRow;
 mw0.tBody.prototype.deleteRow = mw0.deleteRow;
+mw0.tHead.prototype.deleteRow = mw0.deleteRow;
+mw0.tFoot.prototype.deleteRow = mw0.deleteRow;
 
 mw0.insertCell = function(idx) {
 if(idx === undefined) idx = -1;
@@ -1002,54 +1034,47 @@ t.insertBefore(r, t.childNodes[idx]);
 return r;
 }
 mw0.tRow.prototype.insertCell = mw0.insertCell;
-mw0.tHead.prototype.insertCell = mw0.insertCell;
-mw0.tFoot.prototype.insertCell = mw0.insertCell;
 
 mw0.deleteCell = function(r) {
 if(!(r instanceof mw0.Cell)) return;
 this.removeChild(r);
 }
 mw0.tRow.prototype.deleteCell = mw0.deleteCell;
-mw0.tHead.prototype.deleteCell = mw0.deleteCell;
-mw0.tFoot.prototype.deleteCell = mw0.deleteCell;
 
 mw0.Table.prototype.createCaption = function()
 {
-this.deleteCaption();
+if(this.caption) return this.caption;
 var c = new tCap;
 this.appendChild(c);
-this.caption = c;
 return c;
 }
 mw0.Table.prototype.deleteCaption = function()
 {
-if(this.caption) { this.removeChild(this.caption); delete this.caption; }
+if(this.caption) this.removeChild(this.caption);
 }
 
 mw0.Table.prototype.createTHead = function()
 {
-this.deleteTHead();
+if(this.tHead) return this.tHead;
 var c = new tHead;
 this.prependChild(c);
-this.tHead = c;
 return c;
 }
 mw0.Table.prototype.deleteTHead = function()
 {
-if(this.tHead) { this.removeChild(this.tHead); delete this.tHead; }
+if(this.tHead) this.removeChild(this.tHead);
 }
 
 mw0.Table.prototype.createTFoot = function()
 {
-this.deleteTFoot();
+if(this.tFoot) return this.tFoot;
 var c = new tFoot;
 this.insertBefore(c, this.caption);
-this.tFoot = c;
 return c;
 }
 mw0.Table.prototype.deleteTFoot = function()
 {
-if(this.tFoot) { this.removeChild(this.tFoot); delete this.tFoot; }
+if(this.tFoot) this.removeChild(this.tFoot);
 }
 
 mw0.TextNode = function() {
@@ -1465,9 +1490,9 @@ does it for us for these various classes.
 *********************************************************************/
 
 if(item === "elements" && node1.nodeName === "FORM" ||
-item === "rows" && (node1.nodeName === "TABLE" || node1.nodeName === "TBODY") ||
+item === "rows" && (node1 instanceof Table || node1 instanceof tBody || node1 instanceof tHead || node1 instanceof tFoot) ||
 item === "tBodies" && node1.nodeName === "TABLE" ||
-item === "cells" && node1.nodeName === "TR")
+item === "cells" && node1 instanceof tRow)
 continue;
 
 node2[item] = [];
@@ -1972,6 +1997,7 @@ Again, leading ; to avert a parsing ambiguity.
 ; (function() {
 var cnlist = ["HTML", "HtmlObj", "Head", "Title", "Body", "CSSStyleDeclaration", "Frame",
 "Anchor", "Element","HTMLElement", "Lister", "Listitem", "tBody", "Table", "Div",
+"tHead", "tFoot", "tCap",
 "Form", "Span", "tRow", "Cell", "P", "Script", "Header", "Footer",
 // The following nodes shouldn't have any children, but the various
 // children methods could be called on them anyways.
@@ -2113,8 +2139,8 @@ return item;
 mw0.tBody.prototype.appendChildNative = mw0.appendChild;
 mw0.tBody.prototype.appendChild = function(newobj) {
 this.appendChildNative(newobj);
-if(newobj.nodeName === "TR") // shouldn't be anything other than TR
-this.rows.push(newobj);
+if(newobj instanceof tRow) // shouldn't be anything other than TR
+this.rows.push(newobj), mw0.rowReindex(this);
 return newobj;
 }
 mw0.tBody.prototype.insertBeforeNative = mw0.insertBefore;
@@ -2122,10 +2148,11 @@ mw0.tBody.prototype.insertBefore = function(newobj, item) {
 if(!item) return this.appendChild(newobj);
 var r = this.insertBeforeNative(newobj, item);
 if(!r) return null;
-if(newobj.nodeName === "TR")
+if(newobj instanceof tRow)
 for(var i=0; i<this.rows.length; ++i)
 if(this.rows[i] == item) {
 this.rows.splice(i, 0, newobj);
+mw0.rowReindex(this);
 break;
 }
 return newobj;
@@ -2133,23 +2160,48 @@ return newobj;
 mw0.tBody.prototype.removeChildNative = document.removeChild;
 mw0.tBody.prototype.removeChild = function(item) {
 this.removeChildNative(item);
-if(item.nodeName === "TR")
+if(item instanceof tRow)
 for(var i=0; i<this.rows.length; ++i)
 if(this.rows[i] == item) {
 this.rows.splice(i, 1);
+mw0.rowReindex(this);
 break;
 }
 return item;
 }
 
+// head and foot are just like body
+mw0.tHead.prototype.appendChildNative = mw0.appendChild;
+mw0.tHead.prototype.appendChild = mw0.tBody.prototype.appendChild;
+mw0.tHead.prototype.insertBeforeNative = mw0.insertBefore;
+mw0.tHead.prototype.insertBefore = mw0.tBody.prototype.insertBefore;
+mw0.tHead.prototype.removeChildNative = mw0.removeChild;
+mw0.tHead.prototype.removeChild = mw0.tBody.prototype.removeChild;
+mw0.tFoot.prototype.appendChildNative = mw0.appendChild;
+mw0.tFoot.prototype.appendChild = mw0.tBody.prototype.appendChild;
+mw0.tFoot.prototype.insertBeforeNative = mw0.insertBefore;
+mw0.tFoot.prototype.insertBefore = mw0.tBody.prototype.insertBefore;
+mw0.tFoot.prototype.removeChildNative = mw0.removeChild;
+mw0.tFoot.prototype.removeChild = mw0.tBody.prototype.removeChild;
+
 // rows or bodies under a table
 mw0.Table.prototype.appendChildNative = mw0.appendChild;
 mw0.Table.prototype.appendChild = function(newobj) {
 this.appendChildNative(newobj);
-if(newobj.nodeName === "TR")
-this.rows.push(newobj);
-if(newobj.nodeName === "TBODY")
+if(newobj instanceof tRow) mw0.rowReindex(this);
+if(newobj instanceof tBody) {
 this.tBodies.push(newobj);
+if(newobj.rows.length) mw0.rowReindex(this);
+}
+if(newobj instanceof tCap) this.caption = newobj;
+if(newobj instanceof tHead) {
+this.tHead = newobj;
+if(newobj.rows.length) mw0.rowReindex(this);
+}
+if(newobj instanceof tFoot) {
+this.tFoot = newobj;
+if(newobj.rows.length) mw0.rowReindex(this);
+}
 return newobj;
 }
 mw0.Table.prototype.insertBeforeNative = mw0.insertBefore;
@@ -2157,34 +2209,44 @@ mw0.Table.prototype.insertBefore = function(newobj, item) {
 if(!item) return this.appendChild(newobj);
 var r = this.insertBeforeNative(newobj, item);
 if(!r) return null;
-if(newobj.nodeName === "TR")
-for(var i=0; i<this.rows.length; ++i)
-if(this.rows[i] == item) {
-this.rows.splice(i, 0, newobj);
-break;
-}
-if(newobj.nodeName === "TBODY")
+if(newobj instanceof tRow) mw0.rowReindex(this);
+if(newobj instanceof tBody)
 for(var i=0; i<this.tBodies.length; ++i)
 if(this.tBodies[i] == item) {
 this.tBodies.splice(i, 0, newobj);
+if(newobj.rows.length) mw0.rowReindex(this);
 break;
+}
+if(newobj instanceof tCap) this.caption = newobj;
+if(newobj instanceof tHead) {
+this.tHead = newobj;
+if(newobj.rows.length) mw0.rowReindex(this);
+}
+if(newobj instanceof tFoot) {
+this.tFoot = newobj;
+if(newobj.rows.length) mw0.rowReindex(this);
 }
 return newobj;
 }
 mw0.Table.prototype.removeChildNative = document.removeChild;
 mw0.Table.prototype.removeChild = function(item) {
 this.removeChildNative(item);
-if(item.nodeName === "TR")
-for(var i=0; i<this.rows.length; ++i)
-if(this.rows[i] == item) {
-this.rows.splice(i, 1);
-break;
-}
-if(item.nodeName === "TBODY")
+if(item instanceof tRow) mw0.rowReindex(this);
+if(item instanceof tBody)
 for(var i=0; i<this.tBodies.length; ++i)
 if(this.tBodies[i] == item) {
 this.tBodies.splice(i, 1);
+if(item.rows.length) mw0.rowReindex(this);
 break;
+}
+if(item == this.caption) delete this.caption;
+if(item instanceof tHead) {
+if(item == this.tHead) delete this.tHead;
+if(item.rows.length) mw0.rowReindex(this);
+}
+if(item instanceof tFoot) {
+if(item == this.tFoot) delete this.tFoot;
+if(item.rows.length) mw0.rowReindex(this);
 }
 return item;
 }
@@ -2358,70 +2420,30 @@ alert3("createElement(" + t + ')');
 var e = new Error; e.code = 5; throw e;
 }
 switch(t) { 
-case "body":
-c = new Body;
-break;
-case "object":
-c = new HtmlObj;
-break;
-case "a":
-c = new Anchor;
-break;
-case "image":
-t = "img";
-case "img":
-c = new Image;
-break;
-case "link":
-c = new Link;
-break;
-case "meta":
-c = new Meta;
-break;
-case "cssstyledeclaration":
-case "style":
-c = new CSSStyleDeclaration;
-break;
-case "script":
-c = new Script;
-break;
-case "div":
-c = new Div;
-break;
-case "p":
-c = new P;
-break;
-case "header":
-c = new Header;
-break;
-case "footer":
-c = new Footer;
-break;
-case "table":
-c = new Table;
-break;
-case "tbody":
-c = new tBody;
-break;
-case "tr":
-c = new tRow;
-break;
-case "td":
-c = new Cell;
-break;
-case "canvas":
-c = new Canvas;
-break;
-case "audio":
-c = new Audio;
-break;
-case "document":
-c = new Document;
-break;
-case "iframe":
-case "frame":
-c = new Frame;
-break;
+case "body": c = new Body; break;
+case "object": c = new HtmlObj; break;
+case "a": c = new Anchor; break;
+case "image": t = "img";
+case "img": c = new Image; break;
+case "link": c = new Link; break;
+case "meta": c = new Meta; break;
+case "cssstyledeclaration": case "style": c = new CSSStyleDeclaration; break;
+case "script": c = new Script; break;
+case "div": c = new Div; break;
+case "p": c = new P; break;
+case "header": c = new Header; break;
+case "footer": c = new Footer; break;
+case "table": c = new Table; break;
+case "tbody": c = new tBody; break;
+case "tr": c = new tRow; break;
+case "td": c = new Cell; break;
+case "caption": c = new tCap; break;
+case "thead": c = new tHead; break;
+case "tfoot": c = new tFoot; break;
+case "canvas": c = new Canvas; break;
+case "audio": c = new Audio; break;
+case "document": c = new Document; break;
+case "iframe": case "frame": c = new Frame; break;
 case "select":
 /* select and radio are special form elements in that they are intrinsically
  * arrays, with all the options as array elements,
@@ -2443,13 +2465,8 @@ c.childNodes = [];
 // we don't log options because rebuildSelectors() checks
 // the dropdown lists after every js run.
 return c;
-case "form":
-c = new Form;
-break;
-case "input":
-case "element":
-c = new Element;
-break;
+case "form": c = new Form; break;
+case "input": case "element": c = new Element; break;
 default:
 /* eb$puts("createElement default " + s); */
 c = new Span;
@@ -2778,6 +2795,7 @@ Area = mw0.Area;
 Span = mw0.Span;
 tRow = mw0.tRow;
 Cell = mw0.Cell;
+rowReindex = mw0.rowReindex;
 P = mw0.P;
 Header = mw0.Header;
 Footer = mw0.Footer;

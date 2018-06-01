@@ -1627,6 +1627,44 @@
       assertEquals(table.childNodes.length, 0, "after deletion: childNodes.length");
       return 4;
     },
+    function () {
+      // test 50: construct a table, and see if the table is as expected
+      var table = document.createElement('table');
+      table.appendChild(document.createElement('tbody'));
+      var tr1 = document.createElement('tr');
+      table.appendChild(tr1);
+      table.appendChild(document.createElement('caption'));
+      table.appendChild(document.createElement('thead'));
+      // <table><tbody/><tr/><caption/><thead/>
+      table.insertBefore(table.firstChild.nextSibling, null); // move the <tr/> to the end
+      // <table><tbody/><caption/><thead/><tr/>
+      table.replaceChild(table.firstChild, table.lastChild); // move the <tbody/> to the end and remove the <tr>
+      // <table><caption/><thead/><tbody/>
+      var tr2 = table.tBodies[0].insertRow(0);
+      // <table><caption/><thead/><tbody><tr/><\tbody>     (the '\' is to avoid validation errors)
+      assertEquals(table.tBodies[0].rows[0].rowIndex, 0, "rowIndex broken");
+      assertEquals(table.tBodies[0].rows[0].sectionRowIndex, 0, "sectionRowIndex broken");
+      assertEquals(table.childNodes.length, 3, "wrong number of children");
+      assert(table.caption, "caption broken");
+      assert(table.tHead, "tHead broken");
+      assert(!table.tFoot, "tFoot broken");
+      assertEquals(table.tBodies.length, 1, "wrong number of tBodies");
+      assertEquals(table.rows.length, 1, "wrong number of rows");
+      assert(!tr1.parentNode, "orphan row has unexpected parent");
+      assertEquals(table.caption, table.createCaption(), "caption creation failed");
+      assertEquals(table.tFoot, null, "table has unexpected footer");
+      assertEquals(table.tHead, table.createTHead(), "header creation failed");
+      assertEquals(table.createTFoot(), table.tFoot, "footer creation failed");
+      // either: <table><caption/><thead/><tbody><tr/><\tbody><tfoot/>
+      //     or: <table><caption/><thead/><tfoot/><tbody><tr/><\tbody>
+      table.tHead.appendChild(tr1);
+      // either: <table><caption/><thead><tr/><\thead><tbody><tr/><\tbody><tfoot/>
+      //     or: <table><caption/><thead><tr/><\thead><tfoot/><tbody><tr/><\tbody>
+      assertEquals(table.rows[0], table.tHead.firstChild, "top row not in expected position");
+      assertEquals(table.rows.length, 2, "wrong number of rows after appending one");
+      assertEquals(table.rows[1], table.tBodies[0].firstChild, "second row not in expected position");
+      return 4;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';
@@ -1727,14 +1765,7 @@ frames[1].contentDocument;
   </div>
   <p id="result"><span id="score">JS</span><span id="slash" class="hidden">/</span><span>?</span></p>
   <!-- The following line is used in a number of the tests. It is done using document.write() to sidestep complaints of validity. -->
-  <script type="text/javascript">
-//@` acid is generating improper html and expecting every browser to respond
-// in a certain way. That is not a fair test.
-// <table><tr><td></tbody></table>  is there a tbody or not?
-// Who's to say? tidy says there is not. And tidy is our engine. I "fixed"
-// the html, to have <tbody> and </tbody>, so now tbody is present in js.
-document.write('<map name=""><area href="" shape="rect" coords="2,2,4,4" alt="<\'>"><iframe src="empty.png">FAIL<\/iframe><iframe src="empty.txt">FAIL<\/iframe><iframe src="empty.html" id="selectors"><\/iframe><form action="" name="form"><input type=HIDDEN><\/form><table><tbody><tr><td><p><\/tbody> <\/table><\/map>');
-</script>
+  <script type="text/javascript">document.write('<map name=""><area href="" shape="rect" coords="2,2,4,4" alt="<\'>"><iframe src="empty.png">FAIL<\/iframe><iframe src="empty.txt">FAIL<\/iframe><iframe src="empty.html" id="selectors"><\/iframe><form action="" name="form"><input type=HIDDEN><\/form><table><tr><td><p><\/tbody> <\/table><\/map>');</script>
   <p id="instructions">To pass the test,<span></span> a browser must use its default settings, the animation has to be smooth, the score has to end on 100/100, and the final page has to look exactly, pixel for pixel, like <a href="reference.html">this reference rendering</a>.</p>
   <p id="remove-last-child-test">Scripting must be enabled to use this test.</p>
  </body>

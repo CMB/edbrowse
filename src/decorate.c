@@ -136,6 +136,21 @@ struct htmlTag *findOpenTag(struct htmlTag *t, int action)
 	return 0;
 }				/* findOpenTag */
 
+static struct htmlTag *findOpenSection(struct htmlTag *t)
+{
+	int count = 0;
+	while ((t = t->parent)) {
+		if (t->action == TAGACT_TBODY || t->action == TAGACT_THEAD ||
+		    t->action == TAGACT_TFOOT)
+			return t;
+		if (++count == 10000) {	// tree shouldn't be this deep
+			debugPrint(1, "infinite loop in findOpenTag()");
+			break;
+		}
+	}
+	return 0;
+}				/* findOpenSection */
+
 struct htmlTag *findOpenList(struct htmlTag *t)
 {
 	while ((t = t->parent))
@@ -198,6 +213,70 @@ static void nestedAnchors(int start)
 		a1->sibling = a2;
 	}
 }				/* nestedAnchors */
+
+/*********************************************************************
+Tables are suppose to have bodies, I guess.
+So <table><tr> becomes <table><tbody><tr>
+Find each table and look at its children.
+Note the tags between sections, where section is tHead, tBody, or tFoot.
+If that span includes <tr>, then put those tags under a new tBody.
+*********************************************************************/
+
+static void insert_tbody1(struct htmlTag *s1, struct htmlTag *s2,
+			  struct htmlTag *tbl);
+static bool tagBelow(struct htmlTag *t, int action);
+
+static void insert_tbody(int start)
+{
+	int i, end = cw->numTags;
+	struct htmlTag *tbl, *s1, *s2;
+
+	for (i = start; i < end; ++i) {
+		tbl = tagList[i];
+		if (tbl->action != TAGACT_TABLE)
+			continue;
+		s1 = 0;
+		do {
+			s2 = (s1 ? s1->sibling : tbl->firstchild);
+			while (s2 && s2->action != TAGACT_TBODY
+			       && s2->action != TAGACT_THEAD
+			       && s2->action != TAGACT_TFOOT)
+				s2 = s2->sibling;
+			insert_tbody1(s1, s2, tbl);
+			s1 = s2;
+		} while (s1);
+	}
+}
+
+static void insert_tbody1(struct htmlTag *s1, struct htmlTag *s2,
+			  struct htmlTag *tbl)
+{
+	struct htmlTag *s1a = (s1 ? s1->sibling : tbl->firstchild);
+	struct htmlTag *u, *uprev, *tb;
+
+	if (s1a == s2)		// nothing between
+		return;
+
+	for (u = s1a; u != s2; u = u->sibling)
+		if (tagBelow(u, TAGACT_TR))
+			break;
+	if (u == s2)		// no rows below
+		return;
+
+	tb = newTag("tbody");
+	for (u = s1a; u != s2; u = u->sibling)
+		uprev = u, u->parent = tb;
+	if (s1)
+		s1->sibling = tb;
+	else
+		tbl->firstchild = tb;
+	if (s2) {
+		uprev->sibling = 0;
+		tb->sibling = s2;
+	}
+	tb->firstchild = s1a;
+	tb->parent = tbl;
+}
 
 /*********************************************************************
 Bad html will derail tidy, so that <a><div>stuff</div></a>
@@ -685,13 +764,15 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 		break;
 
 	case TAGACT_TBODY:
+	case TAGACT_THEAD:
+	case TAGACT_TFOOT:
 		if (opentag)
 			t->controller = findOpenTag(t, TAGACT_TABLE);
 		break;
 
 	case TAGACT_TR:
 		if (opentag) {
-			t->controller = findOpenTag(t, TAGACT_TBODY);
+			t->controller = findOpenSection(t);
 			if (!t->controller)
 				t->controller = findOpenTag(t, TAGACT_TABLE);
 		}
@@ -740,9 +821,10 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 
 void prerender(int start)
 {
-/* some cleanup routines to rearrange the tree, working around some tidy5 bugs. */
+/* some cleanup routines to rearrange the tree */
 	nestedAnchors(start);
 	emptyAnchors(start);
+	insert_tbody(start);
 	tableForm(start);
 
 	currentForm = currentSel = currentOpt = NULL;
@@ -1177,6 +1259,10 @@ static void jsNode(struct htmlTag *t, bool opentag)
 	const char *a;
 	bool linked_in;
 
+// run reindex at table close
+	if (action == TAGACT_TABLE && !opentag && t->jv)
+		run_function_onearg(cf->winobj, "rowReindex", t->jv);
+
 /* all the js variables are on the open tag */
 	if (!opentag)
 		return;
@@ -1297,6 +1383,20 @@ Needless to say that's not good!
 	case TAGACT_TBODY:
 		if ((above = t->controller) && above->jv)
 			domLink(t, "tBody", 0, "tBodies", above->jv, 0);
+		break;
+
+	case TAGACT_THEAD:
+		if ((above = t->controller) && above->jv) {
+			domLink(t, "tHead", 0, 0, above->jv, 0);
+			set_property_object(above->jv, "tHead", t->jv);
+		}
+		break;
+
+	case TAGACT_TFOOT:
+		if ((above = t->controller) && above->jv) {
+			domLink(t, "tFoot", 0, 0, above->jv, 0);
+			set_property_object(above->jv, "tFoot", t->jv);
+		}
 		break;
 
 	case TAGACT_TR:
@@ -1618,6 +1718,8 @@ const struct tagInfo availableTags[] = {
 	{"area", "an image map area", TAGACT_AREA, 0, 4},
 	{"table", "a table", TAGACT_TABLE, 10, 1},
 	{"tbody", "a table body", TAGACT_TBODY, 0, 1},
+	{"thead", "a table body", TAGACT_THEAD, 0, 1},
+	{"tfoot", "a table body", TAGACT_TFOOT, 0, 1},
 	{"tr", "a table row", TAGACT_TR, 5, 1},
 	{"td", "a table entry", TAGACT_TD, 0, 5},
 	{"th", "a table heading", TAGACT_TD, 0, 5},

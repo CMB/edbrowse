@@ -556,7 +556,7 @@ if(document.getElementById("hound").name != "dog") fail(110);
 if(document.getElementById("almond") != document.spans[0]) fail(111);
 // I'm not sure of any of this table row stuff
 if(document.getElementById("pecan") != document.tables[0].rows[1]) fail(112);
-if(document.getElementById("pecan").parentNode.className != "filbert") fail(115);
+if(document.getElementById("pecan").parentNode.parentNode.className != "filbert") fail(115);
 if(document.all.tags("FORM")[0] != document.questionnaire) fail(113);
 if(document.all.tags("span").length != 2) fail(114);
 
