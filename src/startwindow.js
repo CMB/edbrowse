@@ -1897,6 +1897,26 @@ return;
 }
 }
 
+mw0.contentText = function()
+{
+var t = this.getElementsByTagName("#text");
+var answer = "", part;
+for(var i=0; i<t.length; ++i) {
+var u = t[i];
+if(u.parentNode && u.parentNode.nodeName == "OPTION") continue;
+// any other texts we should skip?
+part = u.data.trim();
+if(!part) continue;
+if(answer) answer += '\n';
+answer += part;
+}
+return answer;
+}
+
+// There are subtle differences between contentText and textContent,
+// which I don't understand.
+mw0.textContent = mw0.contentText;
+
 /*********************************************************************
 Add prototype methods to the standard nodes, nodes that have children,
 and the normal set of methods to go with those children.
@@ -1966,6 +1986,8 @@ c.prototype.dispatchEvent = mw0.dispatchEvent;
 // constants
 c.prototype.ELEMENT_NODE = 1, c.prototype.TEXT_NODE = 3, c.prototype.COMMENT_NODE = 8, c.prototype.DOCUMENT_NODE = 9, c.prototype.DOCUMENT_TYPE_NODE = 10, c.prototype.DOCUMENT_FRAGMENT_NODE = 11;
 Object.defineProperty(c.prototype, "classList", { get : function() { return mw0.classList(this);}});
+c.prototype.contentText = mw0.contentText;
+c.prototype.textContent = mw0.textContent;
 }
 })();
 
