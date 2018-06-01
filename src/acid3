@@ -1577,6 +1577,56 @@
       iframe.onload();
       return 3;
     },
+
+    // bucket 4: HTML and the DOM
+    // Tables
+    function () {
+      // test 49: basic table accessor ping test create*, delete*, and *
+      // where * is caption, tHead, tFoot.
+      var table = document.createElement('table');
+      assert(!table.caption, "initially: caption");
+      assert(table.tBodies, "initially: tBodies");
+      assertEquals(table.tBodies.length, 0, "initially: tBodies.length");
+      assert(table.rows, "initially: rows");
+      assertEquals(table.rows.length, 0, "initially: rows.length");
+      assert(!table.tFoot, "initially: tFoot");
+      assert(!table.tHead, "initially: tHead");
+      var caption = table.createCaption();
+      var thead = table.createTHead();
+      var tfoot = table.createTFoot();
+      assertEquals(table.caption, caption, "after creation: caption");
+      assert(table.tBodies, "after creation: tBodies");
+      assertEquals(table.tBodies.length, 0, "after creation: tBodies.length");
+      assert(table.rows, "after creation: rows");
+      assertEquals(table.rows.length, 0, "after creation: rows.length");
+      assertEquals(table.tFoot, tfoot, "after creation: tFoot");
+      assertEquals(table.tHead, thead, "after creation: tHead");
+      assertEquals(table.childNodes.length, 3, "after creation: childNodes.length");
+      table.caption = caption; // no-op
+      table.tHead = thead; // no-op
+      table.tFoot = tfoot; // no-op
+      assertEquals(table.caption, caption, "after setting: caption");
+      assert(table.tBodies, "after setting: tBodies");
+      assertEquals(table.tBodies.length, 0, "after setting: tBodies.length");
+      assert(table.rows, "after setting: rows");
+      assertEquals(table.rows.length, 0, "after setting: rows.length");
+      assertEquals(table.tFoot, tfoot, "after setting: tFoot");
+      assertEquals(table.tHead, thead, "after setting: tHead");
+      assertEquals(table.childNodes.length, 3, "after setting: childNodes.length");
+      table.deleteCaption();
+      table.deleteTHead();
+      table.deleteTFoot();
+      assert(!table.caption, "after deletion: caption");
+      assert(table.tBodies, "after deletion: tBodies");
+      assertEquals(table.tBodies.length, 0, "after deletion: tBodies.length");
+      assert(table.rows, "after deletion: rows");
+      assertEquals(table.rows.length, 0, "after deletion: rows.length");
+      assert(!table.tFoot, "after deletion: tFoot");
+      assert(!table.tHead, "after deletion: tHead");
+      assert(!table.hasChildNodes(), "after deletion: hasChildNodes()");
+      assertEquals(table.childNodes.length, 0, "after deletion: childNodes.length");
+      return 4;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';

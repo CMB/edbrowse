@@ -756,13 +756,16 @@ mw0.Frame = function(){}
 mw0.Anchor = function(){}
 mw0.Lister = function(){}
 mw0.Listitem = function(){}
-mw0.Tbody = function(){ this.rows = []; }
+mw0.tBody = function(){ this.rows = []; }
+mw0.tHead = function(){ this.cells = []; }
+mw0.tFoot = function(){ this.cells = []; }
+mw0.tCap = function(){}
 mw0.Table = function(){ this.rows = []; this.tBodies = []; }
 mw0.Div = function(){}
 mw0.HtmlObj = function(){}
 mw0.Area = function(){}
 mw0.Span = function(){}
-mw0.Trow = function(){ this.cells = []; }
+mw0.tRow = function(){ this.cells = []; }
 mw0.Cell = function(){}
 mw0.P = function(){}
 mw0.Header = function(){}
@@ -975,14 +978,14 @@ t.insertBefore(r, t.childNodes[idx]);
 return r;
 }
 mw0.Table.prototype.insertRow = mw0.insertRow;
-mw0.Tbody.prototype.insertRow = mw0.insertRow;
+mw0.tBody.prototype.insertRow = mw0.insertRow;
 
 mw0.deleteRow = function(r) {
-if(!(r instanceof mw0.Trow)) return;
+if(!(r instanceof mw0.tRow)) return;
 this.removeChild(r);
 }
 mw0.Table.prototype.deleteRow = mw0.deleteRow;
-mw0.Tbody.prototype.deleteRow = mw0.deleteRow;
+mw0.tBody.prototype.deleteRow = mw0.deleteRow;
 
 mw0.insertCell = function(idx) {
 if(idx === undefined) idx = -1;
@@ -998,13 +1001,56 @@ else
 t.insertBefore(r, t.childNodes[idx]);
 return r;
 }
-mw0.Trow.prototype.insertCell = mw0.insertCell;
+mw0.tRow.prototype.insertCell = mw0.insertCell;
+mw0.tHead.prototype.insertCell = mw0.insertCell;
+mw0.tFoot.prototype.insertCell = mw0.insertCell;
 
 mw0.deleteCell = function(r) {
 if(!(r instanceof mw0.Cell)) return;
 this.removeChild(r);
 }
-mw0.Trow.prototype.deleteCell = mw0.deleteCell;
+mw0.tRow.prototype.deleteCell = mw0.deleteCell;
+mw0.tHead.prototype.deleteCell = mw0.deleteCell;
+mw0.tFoot.prototype.deleteCell = mw0.deleteCell;
+
+mw0.Table.prototype.createCaption = function()
+{
+this.deleteCaption();
+var c = new tCap;
+this.appendChild(c);
+this.caption = c;
+return c;
+}
+mw0.Table.prototype.deleteCaption = function()
+{
+if(this.caption) { this.removeChild(this.caption); delete this.caption; }
+}
+
+mw0.Table.prototype.createTHead = function()
+{
+this.deleteTHead();
+var c = new tHead;
+this.prependChild(c);
+this.tHead = c;
+return c;
+}
+mw0.Table.prototype.deleteTHead = function()
+{
+if(this.tHead) { this.removeChild(this.tHead); delete this.tHead; }
+}
+
+mw0.Table.prototype.createTFoot = function()
+{
+this.deleteTFoot();
+var c = new tFoot;
+this.insertBefore(c, this.caption);
+this.tFoot = c;
+return c;
+}
+mw0.Table.prototype.deleteTFoot = function()
+{
+if(this.tFoot) { this.removeChild(this.tFoot); delete this.tFoot; }
+}
 
 mw0.TextNode = function() {
 this.data$2 = "";
@@ -1925,8 +1971,8 @@ Again, leading ; to avert a parsing ambiguity.
 
 ; (function() {
 var cnlist = ["HTML", "HtmlObj", "Head", "Title", "Body", "CSSStyleDeclaration", "Frame",
-"Anchor", "Element","HTMLElement", "Lister", "Listitem", "Tbody", "Table", "Div",
-"Form", "Span", "Trow", "Cell", "P", "Script", "Header", "Footer",
+"Anchor", "Element","HTMLElement", "Lister", "Listitem", "tBody", "Table", "Div",
+"Form", "Span", "tRow", "Cell", "P", "Script", "Header", "Footer",
 // The following nodes shouldn't have any children, but the various
 // children methods could be called on them anyways.
 // And getAttribute applies to just about everything.
@@ -2064,15 +2110,15 @@ return item;
 }
 
 // rows under a table body
-mw0.Tbody.prototype.appendChildNative = mw0.appendChild;
-mw0.Tbody.prototype.appendChild = function(newobj) {
+mw0.tBody.prototype.appendChildNative = mw0.appendChild;
+mw0.tBody.prototype.appendChild = function(newobj) {
 this.appendChildNative(newobj);
 if(newobj.nodeName === "TR") // shouldn't be anything other than TR
 this.rows.push(newobj);
 return newobj;
 }
-mw0.Tbody.prototype.insertBeforeNative = mw0.insertBefore;
-mw0.Tbody.prototype.insertBefore = function(newobj, item) {
+mw0.tBody.prototype.insertBeforeNative = mw0.insertBefore;
+mw0.tBody.prototype.insertBefore = function(newobj, item) {
 if(!item) return this.appendChild(newobj);
 var r = this.insertBeforeNative(newobj, item);
 if(!r) return null;
@@ -2084,8 +2130,8 @@ break;
 }
 return newobj;
 }
-mw0.Tbody.prototype.removeChildNative = document.removeChild;
-mw0.Tbody.prototype.removeChild = function(item) {
+mw0.tBody.prototype.removeChildNative = document.removeChild;
+mw0.tBody.prototype.removeChild = function(item) {
 this.removeChildNative(item);
 if(item.nodeName === "TR")
 for(var i=0; i<this.rows.length; ++i)
@@ -2143,15 +2189,15 @@ break;
 return item;
 }
 
-mw0.Trow.prototype.appendChildNative = mw0.appendChild;
-mw0.Trow.prototype.appendChild = function(newobj) {
+mw0.tRow.prototype.appendChildNative = mw0.appendChild;
+mw0.tRow.prototype.appendChild = function(newobj) {
 this.appendChildNative(newobj);
 if(newobj.nodeName === "TD") // shouldn't be anything other than TD
 this.cells.push(newobj);
 return newobj;
 }
-mw0.Trow.prototype.insertBeforeNative = mw0.insertBefore;
-mw0.Trow.prototype.insertBefore = function(newobj, item) {
+mw0.tRow.prototype.insertBeforeNative = mw0.insertBefore;
+mw0.tRow.prototype.insertBefore = function(newobj, item) {
 if(!item) return this.appendChild(newobj);
 var r = this.insertBeforeNative(newobj, item);
 if(!r) return null;
@@ -2163,8 +2209,8 @@ break;
 }
 return newobj;
 }
-mw0.Trow.prototype.removeChildNative = document.removeChild;
-mw0.Trow.prototype.removeChild = function(item) {
+mw0.tRow.prototype.removeChildNative = document.removeChild;
+mw0.tRow.prototype.removeChild = function(item) {
 this.removeChildNative(item);
 if(item.nodeName === "TD")
 for(var i=0; i<this.cells.length; ++i)
@@ -2204,7 +2250,7 @@ Again, look at handle$cc().
 
 ; (function() {
 var cnlist = ["Body", "Anchor", "Div", "P", "Area", "Image",
-"Element","HTMLElement", "Lister", "Listitem", "Tbody", "Table", "Trow", "Cell",
+"Element","HTMLElement", "Lister", "Listitem", "tBody", "Table", "tRow", "Cell",
 "Form", "Span", "Header", "Footer"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i];
@@ -2355,10 +2401,10 @@ case "table":
 c = new Table;
 break;
 case "tbody":
-c = new Tbody;
+c = new tBody;
 break;
 case "tr":
-c = new Trow;
+c = new tRow;
 break;
 case "td":
 c = new Cell;
@@ -2721,13 +2767,16 @@ Frame = mw0.Frame;
 Anchor = mw0.Anchor;
 Lister = mw0.Lister;
 Listitem = mw0.Listitem;
-Tbody = mw0.Tbody;
+tBody = mw0.tBody;
+tHead = mw0.tHead;
+tFoot = mw0.tFoot;
+tCap = mw0.tCap;
 Table = mw0.Table;
 Div = mw0.Div;
 HtmlObj = mw0.HtmlObj;
 Area = mw0.Area;
 Span = mw0.Span;
-Trow = mw0.Trow;
+tRow = mw0.tRow;
 Cell = mw0.Cell;
 P = mw0.P;
 Header = mw0.Header;

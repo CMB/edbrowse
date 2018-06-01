@@ -1296,12 +1296,12 @@ Needless to say that's not good!
 
 	case TAGACT_TBODY:
 		if ((above = t->controller) && above->jv)
-			domLink(t, "Tbody", 0, "tBodies", above->jv, 0);
+			domLink(t, "tBody", 0, "tBodies", above->jv, 0);
 		break;
 
 	case TAGACT_TR:
 		if ((above = t->controller) && above->jv)
-			domLink(t, "Trow", 0, "rows", above->jv, 0);
+			domLink(t, "tRow", 0, "rows", above->jv, 0);
 		break;
 
 	case TAGACT_TD:
