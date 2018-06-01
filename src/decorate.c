@@ -767,79 +767,6 @@ jsobjtype instantiate_url(jsobjtype parent, const char *name, const char *url)
 	return uo;
 }				/* instantiate_url */
 
-static void handlerSet(jsobjtype ev, const char *name, const char *code)
-{
-	char *newcode = allocMem(strlen(code) + 60);
-	strcpy(newcode, "(function(){");
-
-/*********************************************************************
-I read somewhere, long ago, that handlers are suppose to run in the context of
-the document object and sometimes the form that houses them.
-So I should put with(document) and sometimes with(form) around the code.
-For onclick, the code just runs, but for onsubmit the code is suppose to
-return true or false.
-Mozilla had no trouble compiling and running  return true;  at top level.
-Duktape won't do that. Return has to be in a function.
-I even tried DUK_COMPILE_FUNCTION, no dice.
-So I tried wrapping the code in
-(function() { code })();
-Then it doesn't matter if the code is just expression, or return expression.
-But should the with clauses be inside or outside the function?
-Also, the this binding was lost,
-which is absolutely necessary.
-Sami taught me how to get the binding back, via the .bind method,
-which is pretty dog gone cool.
-But what about the with clauses?
-Well so far I haven't found an example that needs with(document) around it,
-so I'm not going to worry about that right now.
-
-	strcpy(newcode, "with(document) { ");
-	enum ej_proptype hasform = typeof_property(ev, "form");
-	if (hasform)
-		strcat(newcode, "with(this.form) { ");
-*********************************************************************/
-
-	strcat(newcode, code);
-
-/*********************************************************************
-	if (hasform)
-		strcat(newcode, " }");
-	strcat(newcode, " }");
-*********************************************************************/
-
-	strcat(newcode, " }.bind(this))()");
-	set_property_function(ev, name, newcode);
-	nzFree(newcode);
-}				/* handlerSet */
-
-static void set_onhandler(const struct htmlTag *t, const char *name)
-{
-	const char *s;
-	if (t->jv) {
-		s = attribVal(t, name);
-		if (s)
-			handlerSet(t->jv, name, s);
-	}
-}				/* set_onhandler */
-
-static void set_onhandlers(const struct htmlTag *t)
-{
-/* I don't do anything with onkeypress, onfocus, etc,
- * these are just the most common handlers */
-	if (t->onclick)
-		set_onhandler(t, "onclick");
-	if (t->onchange)
-		set_onhandler(t, "onchange");
-	if (t->onsubmit)
-		set_onhandler(t, "onsubmit");
-	if (t->onreset)
-		set_onhandler(t, "onreset");
-	if (t->onload)
-		set_onhandler(t, "onload");
-	if (t->onunload)
-		set_onhandler(t, "onunload");
-}				/* set_onhandlers */
-
 static char fakePropLast[24];
 static jsobjtype fakePropParent;
 static const char *fakePropName(void)
@@ -1110,8 +1037,6 @@ static void formControlJS(struct htmlTag *t)
 	if (!t->jv)
 		return;
 
-	set_onhandlers(t);
-
 	if (itype <= INP_RADIO) {
 		set_property_string(t->jv, "value", t->value);
 		if (itype != INP_FILE) {
@@ -1327,7 +1252,6 @@ Needless to say that's not good!
 
 	case TAGACT_FORM:
 		domLink(t, "Form", "action", "forms", cf->docobj, 0);
-		set_onhandlers(t);
 		break;
 
 	case TAGACT_INPUT:
@@ -1344,7 +1268,6 @@ Needless to say that's not good!
 
 	case TAGACT_A:
 		domLink(t, "Anchor", "href", "links", cf->docobj, 0);
-		set_onhandlers(t);
 		break;
 
 	case TAGACT_HEAD:
@@ -1354,7 +1277,6 @@ Needless to say that's not good!
 
 	case TAGACT_BODY:
 		domLink(t, "Body", 0, "bodies", cf->docobj, 0);
-		set_onhandlers(t);
 		cf->bodytag = t;
 		break;
 
@@ -1400,7 +1322,6 @@ Needless to say that's not good!
 	case TAGACT_SUP:
 	case TAGACT_OVB:
 		domLink(t, "Span", 0, "spans", cf->docobj, 0);
-		set_onhandlers(t);
 		break;
 
 	case TAGACT_AREA:
@@ -1414,7 +1335,6 @@ Needless to say that's not good!
 			t->href = 0;
 		}
 		domLink(t, "Frame", "src", "frames", cf->winobj, 0);
-		set_onhandlers(t);
 		break;
 
 	case TAGACT_IMAGE:
@@ -1513,23 +1433,28 @@ static void pushAttributes(const struct htmlTag *t)
 	for (i = 0; a[i]; ++i) {
 // There are some exceptions, some attributes that we handle individually.
 		static const char *const exclist[] = {
-			"onclick", "onchange", "onsubmit", "onreset", "onload",
-			"onunload",
 			"name", "id", "class",
 			"checked", "value", "type", "style",
 			"href", "src", "action",
 			0
 		};
-		const char *const dotrue[] = {
+		static const char *const dotrue[] = {
 			"multiple", "readonly", "disabled", 0
+		};
+		static const char *const handlers[] = {
+			"onload", "onunload", "onclick", "onchange",
+			"onsubmit", "onreset",
+			0
 		};
 		const char *u;
 		if (stringInListCI(exclist, a[i]) >= 0)
 			continue;
 // I surely haven't thought of everything, so check generally.
 // Maybe they wrote <a firstChild=foo>
-// See if the name is specifically in the prototype.
-		if (has_property(t->jv, a[i]) && !typeof_property(t->jv, a[i])) {
+// See if the name is in the prototype, and not a handler,
+// as handlers have setters.
+		if (has_property(t->jv, a[i]) && !typeof_property(t->jv, a[i])
+		    && stringInList(handlers, a[i]) < 0) {
 			debugPrint(3, "html attribute overload %s.%s",
 				   t->info->name, a[i]);
 			continue;

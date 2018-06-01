@@ -1832,15 +1832,13 @@ else handler.do$bubble = true;
 
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
+
 if(!this[evarray]) {
 /* attaching the first handler */
 var a = [];
 /* was there already a function from before? */
-if(this[ev]) {
-this[evorig] = this[ev];
-this[ev] = undefined;
-}
-this[evarray] = a;
+var prev_fn = this[ev];
+
 eval(
 'this["' + ev + '"] = function(e){ var rc, a = this["' + evarray + '"]; \
 var savePhase = e.eventPhase; var attarget = (e.target == e.currentTarget); \
@@ -1855,7 +1853,10 @@ if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; \
 i = -1; \
 } return true; };');
 
+if(prev_fn) this[evorig] = pref_fn;
+this[evarray] = a;
 }
+
 this[evarray].push(handler);
 }
 
@@ -2153,6 +2154,98 @@ break;
 return item;
 }
 
+/*********************************************************************
+acid test 48 sets frame.onclick to a string, then expects that function to run
+when the frame loads. There are two designs, both are complicated and subtle,
+and I'm not sure which one I like better. I implemented the first.
+1. Use a setter so that onload = function just carries the function through,
+but onload = string compiles the string into a function then sets onload
+to the function, as though you had done that in the first place.
+2. Allow functions or strings, but dispatch event, and the C event driver,
+check to see if it is a function or a string. If a string then compile it.
+There is probably a right answer here.
+Maybe there is some javascript somewhere that says
+a.onclick = "some_function(7,8,9)"; a.onclick();
+That would clinch it; 1 is the right answer.
+I don't know, but for now I implemented (1),
+and hope I don't have to recant some day and switch to (2).
+The compiled function has to run bound to this as the current node,
+and the current window as global, and trust me, it wasn't easy to set that up!
+You can see what I did in handle$cc().
+Then there's another complication. For onclick, the code just runs,
+but for onsubmit the code is suppose to return true or false.
+Mozilla had no trouble compiling and running  return true  at top level.
+Duktape won't do that. Return has to be in a function.
+So I wrap the code in (function (){ code })
+Then it doesn't matter if the code is just expression, or return expression.
+Again, look at handle$cc().
+*********************************************************************/
+
+; (function() {
+var cnlist = ["Body", "Anchor", "Div", "P", "Area", "Image",
+"Element","HTMLElement", "Lister", "Listitem", "Tbody", "Table", "Trow", "Cell",
+"Form", "Span", "Header", "Footer"];
+for(var i=0; i<cnlist.length; ++i) {
+var cn = cnlist[i];
+var evs = ["onclick"];
+for(var j=0; j<evs.length; ++j) {
+var evname = evs[j];
+eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
+get: function() { return this.' + evname + '$2; }, \
+set: function(f) { if(typeof f == "string") f = my$win().handle$cc(f, this); \
+if(typeof f == "function") { this.' + evname + '$2 = f; \
+/* I assume this clobbers the addEventListener system */ \
+delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
+}}})();
+
+; (function() {
+var cnlist = ["Body", "Script", "Link", "Form", "Image", "Frame",
+"Element"]; // only for <input type=image>
+// documentation also says <style> but I don't understand when that is loaded
+for(var i=0; i<cnlist.length; ++i) {
+var cn = cnlist[i];
+var evs = ["onload", "onunload"];
+for(var j=0; j<evs.length; ++j) {
+var evname = evs[j];
+eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
+get: function() { return this.' + evname + '$2; }, \
+set: function(f) { if(typeof f == "string") f = my$win().handle$cc(f, this); \
+if(typeof f == "function") { this.' + evname + '$2 = f; \
+/* I assume this clobbers the addEventListener system */ \
+delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
+}}})();
+// separate setters below for window and document
+
+; (function() {
+var cnlist = ["Form"];
+for(var i=0; i<cnlist.length; ++i) {
+var cn = cnlist[i];
+var evs = ["onsubmit", "onreset"];
+for(var j=0; j<evs.length; ++j) {
+var evname = evs[j];
+eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
+get: function() { return this.' + evname + '$2; }, \
+set: function(f) { if(typeof f == "string") f = my$win().handle$cc(f, this); \
+if(typeof f == "function") { this.' + evname + '$2 = f; \
+/* I assume this clobbers the addEventListener system */ \
+delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
+}}})();
+
+; (function() {
+var cnlist = ["Element"];
+for(var i=0; i<cnlist.length; ++i) {
+var cn = cnlist[i];
+var evs = ["onchange"];
+for(var j=0; j<evs.length; ++j) {
+var evname = evs[j];
+eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
+get: function() { return this.' + evname + '$2; }, \
+set: function(f) { if(typeof f == "string") f = my$win().handle$cc(f, this); \
+if(typeof f == "function") { this.' + evname + '$2 = f; \
+/* I assume this clobbers the addEventListener system */ \
+delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
+}}})();
+
 mw0.createElementNS = function(nsurl,s) {
 var mismatch = false;
 var u = mw0.createElement(s);
@@ -2194,7 +2287,7 @@ var t = s.toLowerCase();
 if(!t.match(/^[a-z:\d_]+$/) || t.match(/^\d/)) {
 alert3("createElement(" + t + ')');
 // acid3 says we should throw an exception here.
-// But we get these kinds of strings from www.oranges.com
+// But we get these kinds of strings from www.oranges.com all the time.
 var e = new Error; e.code = 5; throw e;
 }
 switch(t) { 
@@ -2718,6 +2811,28 @@ cloneDebug = false;
 document.importNode = mw0.importNode;
 document.compareDocumentPosition = mw0.compareDocumentPosition;
 
+function handle$cc(f, t) {
+var cf = eval("(function(){" + f + " }.bind(t))");
+cf.body = f;
+cf.toString = function() { return this.body; }
+return cf;
+}
+
+; (function() {
+var cnlist = ["document", "window"];
+for(var i=0; i<cnlist.length; ++i) {
+var cn = cnlist[i];
+var evs = ["onload", "onunload"];
+for(var j=0; j<evs.length; ++j) {
+var evname = evs[j];
+eval('Object.defineProperty(' + cn + ', "' + evname + '", { \
+get: function() { return this.' + evname + '$2; }, \
+set: function(f) { if(typeof f == "string") f = my$win().handle$cc(f, this); \
+if(typeof f == "function") { this.' + evname + '$2 = f; \
+/* I assume this clobbers the addEventListener system */ \
+delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
+}}})();
+
 // Local storage, this is per window.
 // Then there's sessionStorage, and honestly I don't understand the difference.
 // This is NamedNodeMap, to take advantage of preexisting methods.
@@ -2830,6 +2945,22 @@ Array.prototype.removeAttribute = mw0.removeAttribute;
 Array.prototype.getAttributeNode = mw0.getAttributeNode;
 Array.prototype.ELEMENT_NODE = 1, Array.prototype.TEXT_NODE = 3, Array.prototype.COMMENT_NODE = 8, Array.prototype.DOCUMENT_NODE = 9, Array.prototype.DOCUMENT_TYPE_NODE = 10, Array.prototype.DOCUMENT_FRAGMENT_NODE = 11;
 Object.defineProperty(Array.prototype, "classList", { get : function() { return mw0.classList(this);}});
+
+; (function() {
+var cnlist = ["Array"];
+for(var i=0; i<cnlist.length; ++i) {
+var cn = cnlist[i];
+var evs = ["onchange"];
+for(var j=0; j<evs.length; ++j) {
+var evname = evs[j];
+eval('Object.defineProperty(' + cn + '.prototype, "' + evname + '", { \
+get: function() { return this.' + evname + '$2; }, \
+set: function(f) { if(typeof f == "string") f = my$win().handle$cc(f, this); \
+if(typeof f == "function") { this.' + evname + '$2 = f; \
+/* I assume this clobbers the addEventListener system */ \
+delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
+}}})();
+
 Array.prototype.item = function(x) { return this[x] };
 Array.prototype.includes = function(x, start) {
 if(typeof start != "number") start = 0;

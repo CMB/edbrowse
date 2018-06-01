@@ -143,6 +143,11 @@
   #linktest { position: absolute; left: 17px; top: 18px; color: red; width: 80px; text-decoration: none; font: 900 small-caps 10px sans-serif; }
   #linktest:link { color: red; }
   #linktest.pending, #linktest:visited { color: white; }
+//@` Something in the visited nature of the link is suppose to make it
+// invisible, and I don't understand any of that, and even if I did
+// I probably wouldn't implement it. So I add some css rules here.
+#linktest {display:none}
+#linktest.pending {display:block}
   #\ { color: transparent; color: hsla(0, 0, 0, 1); position: fixed; top: 10px; left: 10px; font: 40px Arial, sans-serif; }
   #\  #result, #\  #score { position: fixed; top: 10%; left: 10%; width: 4em; z-index: 1; color: yellow; font-size: 50px; background: fuchsia; border: solid 1em purple; }
  </style>
@@ -1560,8 +1565,16 @@
       document.getElementsByTagName('map')[0].appendChild(a);
 //@` I'm adding an alert here, so I can see that it is fetching the new page,
 // without having to run at db3
-      iframe.setAttribute("onload", "document.getElementById('linktest').removeAttribute('class');alert('refetch')");
+      iframe.setAttribute("onload", "document.getElementById('linktest').removeAttribute('class');alert('lazyfetch')");
+//@` ok this next line works, set iframe.src to fetch the new web page,
+// but it goes to the internet (not cached), and generates one of those
+// "took to long" messages, which I'm tired of seeing, so I just
+// call the onload function instead, which is a desired side effect
+// of the fetch. I print lazyfetch because it's not a real fetch.
+/*
       iframe.src = a.getAttribute("href");
+*/
+      iframe.onload();
       return 3;
     },
 // other tests not yet folded in
