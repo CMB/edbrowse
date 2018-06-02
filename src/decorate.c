@@ -973,22 +973,24 @@ Ok, the above condition does not hold.
 We'll be creating a new object under owner, but through what name?
 The name= tag, unless it's a duplicate,
 or id= if there is no name=, or a fake name just to protect it from gc.
+That's how it was for a long time, but I think we only do this on form.
 *********************************************************************/
 
-		if (!symname && idname) {
-			membername = idname;
-		} else if (symname && !dupname) {
-			membername = symname;
-		}
+		if (t->action == TAGACT_INPUT && list) {
+			if (!symname && idname)
+				membername = idname;
+			else if (symname && !dupname)
+				membername = symname;
 /* id= or name= must not displace submit, reset, or action in form.
  * Example www.startpage.com, where id=submit.
  * nor should it collide with another attribute, such as document.cookie and
  * <div ID=cookie> in www.orange.com.
  * This call checks for the name in the object and its prototype. */
-		if (has_property(owner, membername)) {
-			debugPrint(3, "membername overload %s.%s", classname,
-				   membername);
-			membername = NULL;
+			if (has_property(owner, membername)) {
+				debugPrint(3, "membername overload %s.%s",
+					   classname, membername);
+				membername = NULL;
+			}
 		}
 		if (!membername) {
 			membername = fakePropName();
@@ -1048,10 +1050,6 @@ Don't do any of this if the tag is itself <style>. */
 		set_property_object(ato, "owner", io);
 		set_property_object(io, "ownerDocument", cf->docobj);
 
-		if (membername == symname) {
-			if (stringEqual(symname, "action"))
-				set_property_bool(io, "actioncrash", true);
-		}
 // only anchors with href go into links[]
 		if (list && stringEqual(list, "links") &&
 		    !attribPresent(t, "href"))
@@ -1067,9 +1065,11 @@ Don't do any of this if the tag is itself <style>. */
 			if (symname && !dupname
 			    && !has_property(alist, symname))
 				set_property_object(alist, symname, io);
+#if 0
 			if (idname && symname != idname
 			    && !has_property(alist, idname))
 				set_property_object(alist, idname, io);
+#endif
 		}		/* list indicated */
 	}
 

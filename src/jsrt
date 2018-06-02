@@ -309,7 +309,7 @@ onreset='return resetFunction()'
 onload=formLoad(this.name) onunload=formUnload(this.name)>
 
 <script language=JavaScript type=text/javascript>
-function catdog(item) { alert('fluffy'); if(item.checked&&document.questionnaire.dog.checked) alert('chased by dog'); }
+function catdog(item) { alert('fluffy'); if(item.checked&&document.forms[0].dog.checked) alert('chased by dog'); }
 
 // Let javascript generate another javascript tag
 document.writeln("<script language=JavaScript>document.writeln('Nested Script ');<" + "/script>");
@@ -499,9 +499,9 @@ onclick="alert('rock and roll')">
 
 <script type=text/javascript language=JavaScript>
 // I'll push the button for you
-document.questionnaire.b.onclick();
-if(document.questionnaire.result.value != 90) fail(85);
-if(document.questionnaire.who.value != "eklhad") fail(86);
+document.forms[0].b.onclick();
+if(document.forms[0].result.value != 90) fail(85);
+if(document.forms[0].who.value != "eklhad") fail(86);
 if(document.forms[0].elements[1].value != "secret") fail(87);
 
 // prototype objects, use the Circle model
@@ -534,7 +534,7 @@ a.firstLast();
 if(a.join('zz') != "25zz21zz17") fail(97);
 
 // check some of the element tags
-with(document.questionnaire) {
+with(document.forms[0]) {
 if(!(dog.checked && dog.defaultChecked)) fail(100);
 if(cat.checked || cat.defaultChecked) fail(101);
 if(dog.type != "checkbox" || money.type != "radio" || money.length != 4) fail(102);
@@ -557,7 +557,7 @@ if(document.getElementById("almond") != document.spans[0]) fail(111);
 // I'm not sure of any of this table row stuff
 if(document.getElementById("pecan") != document.tables[0].rows[1]) fail(112);
 if(document.getElementById("pecan").parentNode.parentNode.className != "filbert") fail(115);
-if(document.all.tags("FORM")[0] != document.questionnaire) fail(113);
+if(document.all.tags("FORM")[0] != document.forms[0]) fail(113);
 if(document.all.tags("span").length != 2) fail(114);
 
 n = 0;
@@ -569,7 +569,7 @@ n += (j*1+2)*a[j];
 if(n != 299) fail(119);
 
 /* inline object */
-var ilo = {a:document.questionnaire, b:9+5*3};
+var ilo = {a:document.forms[0], b:9+5*3};
 if(typeof ilo.a != "object") fail(120);
 if(ilo.b != 24) fail(121);
 if(ilo.a.who.value != "eklhad") fail(122);
@@ -611,7 +611,7 @@ if(document.head.id != "boom") fail(142);
 if(document.getElementsByTagName("head")[0].id != "boom") fail(143);
 
 function submitFunction(me) {
-if(document.questionnaire != me) fail(123);
+if(document.forms[0] != me) fail(123);
 var where = prompt("Enter m for mail, w for web, a to autosubmit, x to abort.", "x");
 me.action =
 (where == 'm' ? "mailto:eklhad@gmail.com" : "http://localhost:1200/foobar");

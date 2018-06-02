@@ -751,6 +751,16 @@ if(e[i].nodeName == "INPUT" && e[i].type == t && e[i].name == nn &&e[i] != this)
 }
 }
 }
+Object.defineProperty(mw0.Element.prototype, "name", {
+get: function() { return this.name$2; },
+set: function(n) { var f; if(f = this.form) {
+if(this.name$2 && f[this.name$2] == this) delete f[this.name$2];
+if(this.name$2 && f.elements[this.name$2] == this) delete f.elements[this.name$2];
+if(!f[n]) f[n] = this;
+if(!f.elements[n]) f.elements[n] = this;
+}
+this.name$2 = n;
+}});
 mw0.HTMLElement = function(){}
 mw0.Image = function(){}
 mw0.Frame = function(){}
@@ -2131,9 +2141,8 @@ s = child.name;
 else if(typeof child.id === "string")
 s = child.id;
 else return;
-// Is it ok if name is "action"? I'll assume it is,
-// but then there is no way to submit the form. Oh well.
-parent[s] = child;
+if(!parent[s]) parent[s] = child;
+if(!parent.elements[s]) parent.elements[s] = child;
 }
 
 mw0.Form.prototype.appendChildNative = mw0.appendChild;
@@ -2142,6 +2151,7 @@ if(!newobj) return null;
 this.appendChildNative(newobj);
 if(newobj.nodeName === "INPUT" || newobj.nodeName === "SELECT") {
 this.elements.push(newobj);
+newobj.form = this;
 mw0.eb$formname(this, newobj);
 }
 return newobj;
@@ -2158,6 +2168,7 @@ if(this.elements[i] == item) {
 this.elements.splice(i, 0, newobj);
 break;
 }
+newobj.form = this;
 mw0.eb$formname(this, newobj);
 }
 return newobj;
@@ -2166,11 +2177,15 @@ mw0.Form.prototype.removeChildNative = document.removeChild;
 mw0.Form.prototype.removeChild = function(item) {
 if(!item) return null;
 this.removeChildNative(item);
-if(item.nodeName === "INPUT" || item.nodeName === "SELECT")
+if(item.nodeName === "INPUT" || item.nodeName === "SELECT") {
 for(var i=0; i<this.elements.length; ++i)
 if(this.elements[i] == item) {
 this.elements.splice(i, 1);
 break;
+}
+delete item.form;
+if(item.name$2 && this[item.name$2] == item) delete this[item.name$2];
+if(item.name$2 && this.elements[item.name$2] == item) delete this.elements[item.name$2];
 }
 return item;
 }
