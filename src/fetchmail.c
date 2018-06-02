@@ -187,7 +187,7 @@ static void setFolders(void)
 {
 	struct FOLDER *f;
 	char *s, *t;
-	char *child;
+	char *child, *lbrk;
 	char qc;		/* quote character */
 
 	s = mailstring;
@@ -202,9 +202,11 @@ static void setFolders(void)
 	s = mailstring;
 	while ((t = strstr(s, "LIST (\\"))) {
 		s = t + 6;
+		lbrk = strpbrk(s, "\r\n");	// line break
+		if (!lbrk)
+			continue;
 		child = strstr(s, "Children");
-/* this should always be present */
-		if (!child)
+		if (!child || child > lbrk)
 			continue;
 /* HasChildren or HasNoChildren */
 		f->children = (child[-1] == 's');
@@ -216,10 +218,11 @@ static void setFolders(void)
 		if (child < s)	/* should never happen */
 			child = s;
 		strmove(child, t);
+		lbrk = strpbrk(s, "\r\n");	// recalculate
 		if (*s == '\\') {	/* there's a name */
 			++s;
 			t = strchr(s, ')');
-			if (!t)
+			if (!t || t > lbrk)
 				continue;
 			while (t > s && t[-1] == ' ')
 				--t;
@@ -232,9 +235,7 @@ static void setFolders(void)
 		} else
 			f->name = emptyString;
 /* now get the path */
-		t = strpbrk(s, "\r\n");
-		if (!t)
-			continue;
+		t = lbrk;
 		qc = ' ';
 		s = t - 1;
 		if (*s == '"')
