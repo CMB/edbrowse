@@ -500,7 +500,7 @@ onclick="alert('rock and roll')">
 <script type=text/javascript language=JavaScript>
 // I'll push the button for you
 document.questionnaire.b.onclick();
-if(document.questionnaire.result.getAttribute("value") != 90) fail(85);
+if(document.questionnaire.result.value != 90) fail(85);
 if(document.questionnaire.who.value != "eklhad") fail(86);
 if(document.forms[0].elements[1].value != "secret") fail(87);
 

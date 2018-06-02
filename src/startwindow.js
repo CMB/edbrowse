@@ -1364,7 +1364,19 @@ mw0.implicitMember = function(o, name) {
 return name === "elements" && o instanceof Form ||
 name === "rows" && (o instanceof Table || o instanceof tBody || o instanceof tHead || o instanceof tFoot) ||
 name === "tBodies" && o instanceof Table ||
-name === "cells" && o instanceof tRow;
+name === "cells" && o instanceof tRow ||
+name === "options" && o.nodeName === "SELECT";
+}
+
+// Like the above but for strings and numbers.
+// Called from getAttribute but not from cloneNode.
+mw0.implicitMember1 = function(o, name) {
+return name === "value" && o instanceof Element ||
+(name === "checked" || name === "defaultChecked") && o instanceof Element ||
+(name === "selected" || name === "defaultSelected") && o instanceof Option ||
+name === "selectedIndex" && o.nodeName === "SELECT" ||
+name === "length" && o instanceof Form;
+// there are probably others
 }
 
 /*********************************************************************
@@ -1375,7 +1387,7 @@ This may be overkill - I don't know.
 
 mw0.getAttribute = function(name) {
 name = name.toLowerCase();
-if(mw0.implicitMember(this, name)) return null;
+if(mw0.implicitMember(this, name) || mw0.implicitMember1(this, name)) return null;
 var v = this[name];
 if(v instanceof URL) return v.toString();
 var t = typeof v;
@@ -1390,6 +1402,7 @@ this.style.cssText = v;
 return;
 }
 var n = name.toLowerCase();
+if(mw0.implicitMember(this, n) || mw0.implicitMember1(this, n)) return;
 this[n] = v; 
 if(this.attributes[n]) return;
 var a = new Attr();

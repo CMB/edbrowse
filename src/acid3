@@ -1713,6 +1713,39 @@
       assertEquals(test.elements.length, test.length, "form element has inconsistent numbers of controls");
       return 4;
     },
+    function () {
+      // test 53: changing an <input> dynamically
+      var f = document.createElement('form');
+      var i = document.createElement('input');
+      i.name = 'first';
+      i.type = 'text';
+      i.value = 'test';
+      f.appendChild(i);
+      assertEquals(i.getAttribute('name'), 'first', "name attribute wrong");
+      assertEquals(i.name, 'first', "name property wrong");
+      assertEquals(i.getAttribute('type'), 'text', "type attribute wrong");
+      assertEquals(i.type, 'text', "type property wrong");
+      assert(!i.hasAttribute('value'), "value attribute wrong");
+      assertEquals(i.value, 'test', "value property wrong");
+      assertEquals(f.elements.length, 1, "form's elements array has wrong size");
+      assertEquals(f.elements[0], i, "form's element array doesn't have input control by index");
+      assertEquals(f.elements.first, i, "form's element array doesn't have input control by name");
+      assertEquals(f.elements.second, null, "form's element array has unexpected controls by name");
+      i.name = 'second';
+      i.type = 'password';
+      i.value = 'TEST';
+      assertEquals(i.getAttribute('name'), 'second', "name attribute wrong after change");
+      assertEquals(i.name, 'second', "name property wrong after change");
+      assertEquals(i.getAttribute('type'), 'password', "type attribute wrong after change");
+      assertEquals(i.type, 'password', "type property wrong after change");
+      assert(!i.hasAttribute('value'), "value attribute wrong after change");
+      assertEquals(i.value, 'TEST', "value property wrong after change");
+      assertEquals(f.elements.length, 1, "form's elements array has wrong size after change");
+      assertEquals(f.elements[0], i, "form's element array doesn't have input control by index after change");
+      assertEquals(f.elements.second, i, "form's element array doesn't have input control by name after change");
+      assertEquals(f.elements.first, null, "form's element array has unexpected controls by name after change");
+      return 4;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';
