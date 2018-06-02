@@ -722,6 +722,7 @@ mw0.Base = function(){}
 mw0.Form = function(){ this.elements = []; }
 mw0.Form.prototype = {
 submit: eb$formSubmit, reset: eb$formReset};
+Object.defineProperty(mw0.Form.prototype, "length", { get: function() { return this.elements.length;}});
 mw0.Element = function(){}
 mw0.Element.prototype.click = function() {
 var nn = this.nodeName, t = this.type;
@@ -1359,14 +1360,29 @@ mw0.NamedNodeMap.prototype.getNamedItem = function(name) { return this[name.toLo
 mw0.NamedNodeMap.prototype.setNamedItem = function(name, v) { this.owner.setAttribute(name, v);}
 mw0.NamedNodeMap.prototype.removeNamedItem = function(name) { this.owner.removeAttribute(name);}
 
+mw0.implicitMember = function(o, name) {
+return name === "elements" && o instanceof Form ||
+name === "rows" && (o instanceof Table || o instanceof tBody || o instanceof tHead || o instanceof tFoot) ||
+name === "tBodies" && o instanceof Table ||
+name === "cells" && o instanceof tRow;
+}
+
 /*********************************************************************
 Set and clear attributes. This is done in 3 different ways,
 the third using attributes as a NamedNodeMap.
 This may be overkill - I don't know.
 *********************************************************************/
 
-mw0.getAttribute = function(name) { var v = this[name.toLowerCase()]; return typeof(v) == "undefined" ? null : v; }
-mw0.hasAttribute = function(name) { if (this[name.toLowerCase()]) return true; else return false; }
+mw0.getAttribute = function(name) {
+name = name.toLowerCase();
+if(mw0.implicitMember(this, name)) return null;
+var v = this[name];
+if(v instanceof URL) return v.toString();
+var t = typeof v;
+if(t == "undefined") return null;
+// possibly any object should run through toString(), as we did with URL
+return v; }
+mw0.hasAttribute = function(name) { return this.getAttribute(name) !== null; }
 mw0.setAttribute = function(name, v) { 
 // special code for style
 if(name == "style" && this.style instanceof CSSStyleDeclaration) {
@@ -1498,14 +1514,10 @@ We are preserving links, rather like tar or cpio.
 The same must be done for an array of rows beneath <table>,
 or an array of cells in a row, and perhaps others.
 But the thing is, we don't have to do that, because appendChild
-does it for us for these various classes.
+does it for us, as side effects, for these various classes.
 *********************************************************************/
 
-if(item === "elements" && node1.nodeName === "FORM" ||
-item === "rows" && (node1 instanceof Table || node1 instanceof tBody || node1 instanceof tHead || node1 instanceof tFoot) ||
-item === "tBodies" && node1.nodeName === "TABLE" ||
-item === "cells" && node1 instanceof tRow)
-continue;
+if(mw0.implicitMember(node1, item)) continue;
 
 node2[item] = [];
 

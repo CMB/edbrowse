@@ -1704,6 +1704,15 @@
       assertEquals(table.tBodies.length, 0, "non-zero number of tBodies");
       return 4;
     },
+    function () {
+      // test 52: <form> and .elements
+      test = document.getElementsByTagName('form')[0];
+      assert(test.elements !== test, "form.elements === form");
+      assert(test.elements !== test.getAttribute('elements'), "form element has an elements content attribute");
+      assertEquals(test.elements.length, 1, "form element has unexpected number of controls");
+      assertEquals(test.elements.length, test.length, "form element has inconsistent numbers of controls");
+      return 4;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';
