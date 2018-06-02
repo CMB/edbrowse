@@ -206,11 +206,17 @@ static void setFolders(void)
 		if (!lbrk)
 			continue;
 		child = strstr(s, "Children");
-		if (!child || child > lbrk)
-			continue;
+		if (child && child < lbrk) {
 /* HasChildren or HasNoChildren */
-		f->children = (child[-1] == 's');
-		t = child + 8;
+			f->children = (child[-1] == 's');
+			t = child + 8;
+		} else {
+// Try another one.
+			child = strstr(s, "Inferiors");
+			if (!child || child > lbrk)
+				continue;
+			t = child + 10;
+		}
 		while (*t == ' ')
 			++t;
 		while (*child != '\\')
