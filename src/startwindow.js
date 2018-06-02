@@ -983,7 +983,6 @@ for(j=0; j<s.rows.length; ++j)
 t.rows.push(s.rows[j]), s.rows[j].rowIndex = n++, s.rows[j].sectionRowIndex = j;
 }
 
-// There shouldn't be rows under table, and not in a section, but maybe
 j = 0;
 for(s=t.firstChild; s; s=s.nextSibling)
 if(s instanceof tRow)
@@ -995,14 +994,25 @@ mw0.insertRow = function(idx) {
 if(idx === undefined) idx = -1;
 if(typeof idx !== "number") return null;
 var t = this;
-var nrows = t.childNodes.length;
+var nrows = t.rows.length;
 if(idx < 0) idx = nrows;
 if(idx > nrows) return null;
 var r = document.createElement("tr");
-if(idx == nrows)
-t.appendChild(r);
-else
-t.insertBefore(r, t.childNodes[idx]);
+if(!(t instanceof Table)) {
+if(idx == nrows) t.appendChild(r);
+else t.insertBefore(r, t.rows[idx]);
+} else {
+// put this row in the same section as the next row
+if(idx == nrows) {
+if(nrows) t.rows[nrows-1].parentNode.appendChild(r);
+else if(t.tHead) t.tHead.appendChild(r);
+else if(t.tBodies.length) t.tBodies[0].appendChild(r);
+else if(t.tFoot) t.tFoot.appendChild(r);
+// No sections, what now? acid test 51 suggests if should not go into the table.
+} else {
+t.rows[idx].parentNode.insertBefore(r, t.rows[idx]);
+}
+}
 return r;
 }
 mw0.Table.prototype.insertRow = mw0.insertRow;
@@ -1044,7 +1054,7 @@ mw0.tRow.prototype.deleteCell = mw0.deleteCell;
 mw0.Table.prototype.createCaption = function()
 {
 if(this.caption) return this.caption;
-var c = new tCap;
+var c = document.createElement("caption");
 this.appendChild(c);
 return c;
 }
@@ -1056,7 +1066,7 @@ if(this.caption) this.removeChild(this.caption);
 mw0.Table.prototype.createTHead = function()
 {
 if(this.tHead) return this.tHead;
-var c = new tHead;
+var c = document.createElement("thead");
 this.prependChild(c);
 return c;
 }
@@ -1068,7 +1078,7 @@ if(this.tHead) this.removeChild(this.tHead);
 mw0.Table.prototype.createTFoot = function()
 {
 if(this.tFoot) return this.tFoot;
-var c = new tFoot;
+var c = document.createElement("tfoot");
 this.insertBefore(c, this.caption);
 return c;
 }
@@ -1256,6 +1266,7 @@ b = b.parentNode;
 }
 
 mw0.appendChild = function(c) {
+if(!c) return null;
 mw0.isabove(c, this);
 if(c.parentNode) c.parentNode.removeChild(c);
 return this.eb$apch2(c);
@@ -1268,6 +1279,7 @@ else this.appendChild(c);
 }
 
 mw0.insertBefore = function(c, t) {
+if(!c) return null;
 if(!t) return this.appendChild(c);
 mw0.isabove(c, this);
 if(c.parentNode) c.parentNode.removeChild(c);
@@ -2101,6 +2113,7 @@ parent[s] = child;
 
 mw0.Form.prototype.appendChildNative = mw0.appendChild;
 mw0.Form.prototype.appendChild = function(newobj) {
+if(!newobj) return null;
 this.appendChildNative(newobj);
 if(newobj.nodeName === "INPUT" || newobj.nodeName === "SELECT") {
 this.elements.push(newobj);
@@ -2110,6 +2123,7 @@ return newobj;
 }
 mw0.Form.prototype.insertBeforeNative = mw0.insertBefore;
 mw0.Form.prototype.insertBefore = function(newobj, item) {
+if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
 var r = this.insertBeforeNative(newobj, item);
 if(!r) return null;
@@ -2125,6 +2139,7 @@ return newobj;
 }
 mw0.Form.prototype.removeChildNative = document.removeChild;
 mw0.Form.prototype.removeChild = function(item) {
+if(!item) return null;
 this.removeChildNative(item);
 if(item.nodeName === "INPUT" || item.nodeName === "SELECT")
 for(var i=0; i<this.elements.length; ++i)
@@ -2138,6 +2153,7 @@ return item;
 // rows under a table body
 mw0.tBody.prototype.appendChildNative = mw0.appendChild;
 mw0.tBody.prototype.appendChild = function(newobj) {
+if(!newobj) return null;
 this.appendChildNative(newobj);
 if(newobj instanceof tRow) // shouldn't be anything other than TR
 this.rows.push(newobj), mw0.rowReindex(this);
@@ -2145,6 +2161,7 @@ return newobj;
 }
 mw0.tBody.prototype.insertBeforeNative = mw0.insertBefore;
 mw0.tBody.prototype.insertBefore = function(newobj, item) {
+if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
 var r = this.insertBeforeNative(newobj, item);
 if(!r) return null;
@@ -2159,6 +2176,7 @@ return newobj;
 }
 mw0.tBody.prototype.removeChildNative = document.removeChild;
 mw0.tBody.prototype.removeChild = function(item) {
+if(!item) return null;
 this.removeChildNative(item);
 if(item instanceof tRow)
 for(var i=0; i<this.rows.length; ++i)
@@ -2175,18 +2193,19 @@ mw0.tHead.prototype.appendChildNative = mw0.appendChild;
 mw0.tHead.prototype.appendChild = mw0.tBody.prototype.appendChild;
 mw0.tHead.prototype.insertBeforeNative = mw0.insertBefore;
 mw0.tHead.prototype.insertBefore = mw0.tBody.prototype.insertBefore;
-mw0.tHead.prototype.removeChildNative = mw0.removeChild;
+mw0.tHead.prototype.removeChildNative = document.removeChild;
 mw0.tHead.prototype.removeChild = mw0.tBody.prototype.removeChild;
 mw0.tFoot.prototype.appendChildNative = mw0.appendChild;
 mw0.tFoot.prototype.appendChild = mw0.tBody.prototype.appendChild;
 mw0.tFoot.prototype.insertBeforeNative = mw0.insertBefore;
 mw0.tFoot.prototype.insertBefore = mw0.tBody.prototype.insertBefore;
-mw0.tFoot.prototype.removeChildNative = mw0.removeChild;
+mw0.tFoot.prototype.removeChildNative = document.removeChild;
 mw0.tFoot.prototype.removeChild = mw0.tBody.prototype.removeChild;
 
 // rows or bodies under a table
 mw0.Table.prototype.appendChildNative = mw0.appendChild;
 mw0.Table.prototype.appendChild = function(newobj) {
+if(!newobj) return null;
 this.appendChildNative(newobj);
 if(newobj instanceof tRow) mw0.rowReindex(this);
 if(newobj instanceof tBody) {
@@ -2206,6 +2225,7 @@ return newobj;
 }
 mw0.Table.prototype.insertBeforeNative = mw0.insertBefore;
 mw0.Table.prototype.insertBefore = function(newobj, item) {
+if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
 var r = this.insertBeforeNative(newobj, item);
 if(!r) return null;
@@ -2230,6 +2250,7 @@ return newobj;
 }
 mw0.Table.prototype.removeChildNative = document.removeChild;
 mw0.Table.prototype.removeChild = function(item) {
+if(!item) return null;
 this.removeChildNative(item);
 if(item instanceof tRow) mw0.rowReindex(this);
 if(item instanceof tBody)
@@ -2253,6 +2274,7 @@ return item;
 
 mw0.tRow.prototype.appendChildNative = mw0.appendChild;
 mw0.tRow.prototype.appendChild = function(newobj) {
+if(!newobj) return null;
 this.appendChildNative(newobj);
 if(newobj.nodeName === "TD") // shouldn't be anything other than TD
 this.cells.push(newobj);
@@ -2260,6 +2282,7 @@ return newobj;
 }
 mw0.tRow.prototype.insertBeforeNative = mw0.insertBefore;
 mw0.tRow.prototype.insertBefore = function(newobj, item) {
+if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
 var r = this.insertBeforeNative(newobj, item);
 if(!r) return null;
@@ -2273,6 +2296,7 @@ return newobj;
 }
 mw0.tRow.prototype.removeChildNative = document.removeChild;
 mw0.tRow.prototype.removeChild = function(item) {
+if(!item) return null;
 this.removeChildNative(item);
 if(item.nodeName === "TD")
 for(var i=0; i<this.cells.length; ++i)
@@ -2989,6 +3013,7 @@ and instanceof Option, as I do today.
 *********************************************************************/
 
 Array.prototype.appendChild = function(child) {
+if(!child) return null;
 // check to see if it's already there
 for(var i=0; i<this.length; ++i)
 if(this[i] == child)
@@ -2997,6 +3022,7 @@ this.push(child); child.parentNode = this;return child; }
 /* insertBefore maps to splice, but we have to find the element. */
 /* This prototype assumes all elements are objects. */
 Array.prototype.insertBefore = function(newobj, item) {
+if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
 // check to see if it's already there
 for(var i=0; i<this.length; ++i)
@@ -3011,6 +3037,7 @@ return newobj;
 }
 Array.prototype.prependChild = mw0.prependChild;
 Array.prototype.removeChild = function(item) {
+if(!item) return null;
 for(var i=0; i<this.length; ++i)
 if(this[i] == item) {
 this.splice(i, 1);

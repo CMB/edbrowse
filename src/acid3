@@ -1665,6 +1665,45 @@
       assertEquals(table.rows[1], table.tBodies[0].firstChild, "second row not in expected position");
       return 4;
     },
+    function () {
+      // test 51: test the ordering and creation of rows
+      var table = document.createElement('table');
+      var rows = [
+        document.createElement('tr'),    // 0: ends up first child of the tfoot
+        document.createElement('tr'),    // 1: goes at the end of the table
+        document.createElement('tr'),    // 2: becomes second child of thead
+        document.createElement('tr'),    // 3: becomes third child of the thead
+        document.createElement('tr'),    // 4: not in the table
+        table.insertRow(0),              // 5: not in the table
+        table.createTFoot().insertRow(0) // 6: ends up second in the tfoot
+      ];
+      rows[6].parentNode.appendChild(rows[0]);
+      table.appendChild(rows[1]);
+      table.insertBefore(document.createElement('thead'), table.firstChild);
+      table.firstChild.appendChild(rows[2]);
+      rows[2].parentNode.appendChild(rows[3]);
+      rows[4].appendChild(rows[5].parentNode);
+      table.insertRow(0);
+      table.tFoot.appendChild(rows[6]);
+      assertEquals(table.rows.length, 6, "wrong number of rows");
+      assertEquals(table.getElementsByTagName('tr').length, 6, "wrong number of tr elements");
+      assertEquals(table.childNodes.length, 3, "table has wrong number of children");
+      assertEquals(table.childNodes[0], table.tHead, "tHead isn't first");
+      assertEquals(table.getElementsByTagName('tr')[0], table.tHead.childNodes[0], "first tr isn't in tHead correctly");
+      assertEquals(table.getElementsByTagName('tr')[1], table.tHead.childNodes[1], "second tr isn't in tHead correctly");
+      assertEquals(table.getElementsByTagName('tr')[1], rows[2], "second tr is the wrong row");
+      assertEquals(table.getElementsByTagName('tr')[2], table.tHead.childNodes[2], "third tr isn't in tHead correctly");
+      assertEquals(table.getElementsByTagName('tr')[2], rows[3], "third tr is the wrong row");
+      assertEquals(table.childNodes[1], table.tFoot, "tFoot isn't second");
+      assertEquals(table.getElementsByTagName('tr')[3], table.tFoot.childNodes[0], "fourth tr isn't in tFoot correctly");
+      assertEquals(table.getElementsByTagName('tr')[3], rows[0], "fourth tr is the wrong row");
+      assertEquals(table.getElementsByTagName('tr')[4], table.tFoot.childNodes[1], "fifth tr isn't in tFoot correctly");
+      assertEquals(table.getElementsByTagName('tr')[4], rows[6], "fifth tr is the wrong row");
+      assertEquals(table.getElementsByTagName('tr')[5], table.childNodes[2], "sixth tr isn't in tFoot correctly");
+      assertEquals(table.getElementsByTagName('tr')[5], rows[1], "sixth tr is the wrong row");
+      assertEquals(table.tBodies.length, 0, "non-zero number of tBodies");
+      return 4;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';
