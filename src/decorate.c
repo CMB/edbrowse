@@ -252,10 +252,25 @@ static void insert_tbody1(struct htmlTag *s1, struct htmlTag *s2,
 			  struct htmlTag *tbl)
 {
 	struct htmlTag *s1a = (s1 ? s1->sibling : tbl->firstchild);
-	struct htmlTag *u, *uprev, *tb;
+	struct htmlTag *u, *uprev, *ns;	// new section
 
 	if (s1a == s2)		// nothing between
 		return;
+
+// Look for the direct html <table><tr><th>.
+// If th is anywhere else down the path, we won't find it.
+	if (!s1 && s1a->action == TAGACT_TR &&
+	    (u = s1a->firstchild) && stringEqual(u->info->name, "th")) {
+		ns = newTag("thead");
+		tbl->firstchild = ns;
+		ns->parent = tbl;
+		ns->firstchild = s1a;
+		s1a->parent = ns;
+		ns->sibling = s1a->sibling;
+		s1a->sibling = 0;
+		s1 = ns;
+		s1a = s1->sibling;
+	}
 
 	for (u = s1a; u != s2; u = u->sibling)
 		if (tagBelow(u, TAGACT_TR))
@@ -263,19 +278,17 @@ static void insert_tbody1(struct htmlTag *s1, struct htmlTag *s2,
 	if (u == s2)		// no rows below
 		return;
 
-	tb = newTag("tbody");
+	ns = newTag("tbody");
 	for (u = s1a; u != s2; u = u->sibling)
-		uprev = u, u->parent = tb;
+		uprev = u, u->parent = ns;
 	if (s1)
-		s1->sibling = tb;
+		s1->sibling = ns;
 	else
-		tbl->firstchild = tb;
-	if (s2) {
-		uprev->sibling = 0;
-		tb->sibling = s2;
-	}
-	tb->firstchild = s1a;
-	tb->parent = tbl;
+		tbl->firstchild = ns;
+	if (s2)
+		uprev->sibling = 0, ns->sibling = s2;
+	ns->firstchild = s1a;
+	ns->parent = tbl;
 }
 
 /*********************************************************************
