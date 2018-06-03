@@ -16,6 +16,8 @@ The g- command, go don't browse.
 
 The & command backs up through intrapage jumps, just as they ^ command backs up through pages on the stack.
 
+Imap client uses copy and delete if the server does not support the MOVE command.
+
 3.7.3:
 Show heading information h1 through h6.
 

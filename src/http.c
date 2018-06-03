@@ -2201,6 +2201,22 @@ ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
 		     size_t size, struct i_get *g)
 {
 	FILE *f = debugFile ? debugFile : stdout;
+
+// There's a special case where this function is used
+// by the imap client to see if the server is move capable.
+	if (ismc & isimap && info_desc == CURLINFO_HEADER_IN &&
+	    size > 17 && !strncmp(data, "* CAPABILITY IMAP", 17)) {
+		char *s;
+// data may not be null terminated; can't use strstr
+		for (s = data; s < data + size - 6; ++s)
+			if (!strncmp(s, " MOVE", 5) && isspace(s[5])) {
+				g->move_capable = true;
+				break;
+			}
+	}
+	if (debugLevel < 4)
+		return 0;
+
 	if (info_desc == CURLINFO_HEADER_OUT) {
 		fprintf(f, "curl>\n");
 		prettify_network_text(data, size, f);

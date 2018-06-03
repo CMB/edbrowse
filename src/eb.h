@@ -211,6 +211,7 @@ struct i_get {
 	bool is_http;
 	bool cacheable;
 	bool last_curlin;
+	bool move_capable;
 	char error[CURL_ERROR_SIZE + 1];
 	long code;		/* example, 404 */
 /* an assortment of variables that are gleaned from the incoming http headers */

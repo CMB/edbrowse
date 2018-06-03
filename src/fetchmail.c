@@ -180,6 +180,7 @@ static struct FOLDER {
 } *topfolders;
 static int n_folders;
 static char *tf_cbase;		/* base of strings for folder names and paths */
+static bool move_capable = false;
 
 /* This routine mucks with the passed in string, which was allocated
  * to receive data from the imap server. So leave it allocated. */
@@ -298,12 +299,22 @@ static struct i_get callback_data;
 
 static CURLcode getMailData(CURL * handle)
 {
+	static bool first_call = true;
 	CURLcode res;
 	callback_data.buffer = initString(&callback_data.length);
+	callback_data.move_capable = false;
 	res = curl_easy_perform(handle);
 	mailstring = callback_data.buffer;
 	mailstring_l = callback_data.length;
 	callback_data.buffer = 0;
+	if (first_call) {
+		move_capable = callback_data.move_capable;
+		if (debugLevel < 4)
+			curl_easy_setopt(handle, CURLOPT_VERBOSE, 0);
+		debugPrint(3, "imap is %smove capable",
+			   (move_capable ? "" : "not "));
+		first_call = false;
+	}
 	return res;
 }
 
@@ -533,12 +544,14 @@ action:
 			i_puts(MSG_ImapMessageHelp);
 			goto action;
 		}
+
 		if (key == 'q') {
 			i_puts(MSG_Quit);
 imap_done:
 			curl_easy_cleanup(handle);
 			exit(0);
 		}
+
 		if (key == '/') {
 			i_printf(MSG_Search);
 			fflush(stdout);
@@ -553,6 +566,7 @@ imap_done:
 				i_printf(MSG_MessagesX, f->nmsgs);
 			goto showmessages;
 		}
+
 		if (key == ' ') {
 /* download the email from the imap server */
 			sprintf(cust_cmd, "FETCH %d BODY[]", mif->seqno);
@@ -603,10 +617,12 @@ imap_done:
 			key = presentMail();
 /* presentMail has already freed mailstring */
 		}
+
 		if (key == 's') {
 			i_puts(MSG_Stop);
 			break;
 		}
+
 		if (key == 'l') {
 			i_printf(MSG_Limit);
 			fflush(stdout);
@@ -615,17 +631,17 @@ imap_done:
 			setLimit(inputline);
 			goto action;
 		}
+
 		if (key == 'm') {
 			struct FOLDER *g;
-			int j2;
-			struct MIF *mif2;
 			i_printf(MSG_MoveTo);
 			fflush(stdout);
 			if (!fgets(inputline, sizeof(inputline), stdin))
 				goto imap_done;
 			g = folderByName(inputline);
 			if (g && g != f) {
-				if (asprintf(&t, "MOVE %d \"%s\"",
+				if (asprintf(&t, "%s %d \"%s\"",
+					     (move_capable ? "MOVE" : "COPY"),
 					     mif->seqno, g->path) == -1)
 					i_printfExit(MSG_MemAllocError, 24);
 				curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
@@ -636,18 +652,24 @@ imap_done:
 				if (res != CURLE_OK)
 					goto abort;
 // The move command shifts all the sequence numbers down.
-				j2 = j + 1;
-				mif2 = mif + 1;
-				while (j2 < f->nfetch) {
-					--mif2->seqno;
-					++j2, ++mif2;
+				if (move_capable) {
+					int j2 = j + 1;
+					struct MIF *mif2 = mif + 1;
+					while (j2 < f->nfetch) {
+						--mif2->seqno;
+						++j2, ++mif2;
+					}
+				} else {
+					delflag = true;
 				}
 			}
 		}
+
 		if (key == 'd') {
 			delflag = true;
 			i_puts(MSG_Delete);
 		}
+
 		if (!delflag)
 			continue;
 		sprintf(cust_cmd, "STORE %d +Flags \\Deleted", mif->seqno);
@@ -971,8 +993,7 @@ static CURL *newFetchmailHandle(const char *username, const char *password)
 	curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, mailTimeout);
 	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, eb_curl_callback);
 	curl_easy_setopt(handle, CURLOPT_WRITEDATA, &callback_data);
-	if (debugLevel >= 4)
-		curl_easy_setopt(handle, CURLOPT_VERBOSE, 1);
+	curl_easy_setopt(handle, CURLOPT_VERBOSE, 1);
 	curl_easy_setopt(handle, CURLOPT_DEBUGFUNCTION, ebcurl_debug_handler);
 	curl_easy_setopt(handle, CURLOPT_DEBUGDATA, &callback_data);
 
