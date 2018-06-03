@@ -691,29 +691,6 @@ void set_basehref(const char *h)
 	set_property_string(cf->winobj, "eb$base", h);
 }				/* set_basehref */
 
-/* The object is a select-one field in the form, and this function returns
- * object.options[selectedIndex].value */
-char *get_property_option(jsobjtype obj)
-{
-	int n;
-	jsobjtype oa;		/* option array */
-	jsobjtype oo;		/* option object */
-
-	if (!allowJS || !cf->winobj || !obj)
-		return 0;
-
-	n = get_property_number(obj, "selectedIndex");
-	if (n < 0)
-		return 0;
-	oa = get_property_object(obj, "options");
-	if (!oa)
-		return 0;
-	oo = get_array_element_object(oa, n);
-	if (!oo)
-		return 0;
-	return get_property_string(oo, "value");
-}				/* get_property_option */
-
 #ifdef DOSLIKE			// port of uname(p), and struct utsname
 struct utsname {
 	char sysname[32];
@@ -904,6 +881,8 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 			continue;
 		if (t->controller != sel)
 			continue;
+		if (t->dead)
+			continue;
 
 /* find the corresponding option object */
 		if ((oo = get_array_element_object(oa, i2)) == NULL) {
@@ -915,7 +894,7 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 		}
 
 		if (t->jv != oo) {
-// not sure how this would ever happen.
+			debugPrint(5, "oo switch");
 			disconnectTagObject(t);
 			connectTagObject(t, oo);
 		}
@@ -988,13 +967,9 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 		return;
 	debugPrint(4, "selector %s has changed", selname);
 
-/* If js change the menu, it should have also changed select.value
- * according to the checked options, but did it?
- * Don't know, so I'm going to do it here. */
 	s = displayOptions(sel);
 	if (!s)
 		s = emptyString;
-	set_property_string(sel->jv, "value", s);
 	javaSetsTagVar(sel->jv, s);
 	nzFree(s);
 

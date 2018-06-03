@@ -917,7 +917,7 @@ static void establish_inner(jsobjtype obj, const char *start, const char *end,
 
 static void domLink(struct htmlTag *t, const char *classname,	/* instantiate this class */
 		    const char *href, const char *list,	/* next member of this array */
-		    jsobjtype owner, int radiosel)
+		    jsobjtype owner, bool isradio)
 {
 	jsobjtype alist = 0;
 	jsobjtype io = 0;	/* input object */
@@ -935,7 +935,7 @@ static void domLink(struct htmlTag *t, const char *classname,	/* instantiate thi
 	char upname[MAXTAGNAME];
 
 	debugPrint(5, "domLink %s.%d name %s",
-		   classname, radiosel, (symname ? symname : emptyString));
+		   classname, isradio, (symname ? symname : emptyString));
 
 	if (symname && typeof_property(owner, symname)) {
 /*********************************************************************
@@ -949,11 +949,10 @@ The first time we create the array,
 and thereafter we just link under that array.
 Or - and this really does happen -
 an input tag could have the name action, colliding with form.action.
-I have no idea what to do here.
-radiosel is 1 for radio buttons and 2 for select.
+don't overwrite form.action, or anything else that pre-exists.
 *********************************************************************/
 
-		if (radiosel == 1) {
+		if (isradio) {
 /* name present and radio buttons, name should be the array of buttons */
 			io = get_property_object(owner, symname);
 			if (io == NULL)
@@ -975,7 +974,6 @@ The name= tag, unless it's a duplicate,
 or id= if there is no name=, or a fake name just to protect it from gc.
 That's how it was for a long time, but I think we only do this on form.
 *********************************************************************/
-
 		if (t->action == TAGACT_INPUT && list) {
 			if (!symname && idname)
 				membername = idname;
@@ -986,7 +984,7 @@ That's how it was for a long time, but I think we only do this on form.
  * nor should it collide with another attribute, such as document.cookie and
  * <div ID=cookie> in www.orange.com.
  * This call checks for the name in the object and its prototype. */
-			if (has_property(owner, membername)) {
+			if (membername && has_property(owner, membername)) {
 				debugPrint(3, "membername overload %s.%s",
 					   classname, membername);
 				membername = NULL;
@@ -997,30 +995,22 @@ That's how it was for a long time, but I think we only do this on form.
 			fakePropParent = owner;
 		}
 
-		if (radiosel) {
-/* The first radio button, or input type=select */
-/* Either way the form element is suppose to be an array. */
+		if (isradio) {	// the first radio button
 			io = instantiate_array(owner, membername);
 			if (io == NULL)
 				return;
-			if (radiosel == 1) {
-				set_property_string(io, "type", "radio");
-				set_property_string(io, "nodeName", "RADIO");
-			} else {
-/* I've read some docs that say select is itself an array,
- * and then references itself as an array of options.
- * Self referencing? Really? Well it seems to work. */
-				set_property_object(io, "options", io);
-				set_property_object(io, "childNodes", io);
-				set_property_number(io, "selectedIndex", -1);
-			}
+			set_property_string(io, "type", "radio");
 		} else {
 /* A standard input element, just create it. */
+			jsobjtype ca;	// child array
 			io = instantiate(owner, membername, classname);
 			if (io == NULL)
 				return;
 /* not an array; needs the childNodes array beneath it for the children */
-			instantiate_array(io, "childNodes");
+			ca = instantiate_array(io, "childNodes");
+// childNodes and options are the same for Select
+			if (stringEqual(classname, "Select"))
+				set_property_object(io, "options", ca);
 		}
 
 /* deal with the 'styles' here.
@@ -1073,7 +1063,7 @@ Don't do any of this if the tag is itself <style>. */
 		}		/* list indicated */
 	}
 
-	if (radiosel == 1) {
+	if (isradio) {
 /* drop down to the element within the radio array, and return that element */
 /* w becomes the object associated with this radio button */
 /* io is, by assumption, an array */
@@ -1122,17 +1112,17 @@ static void formControlJS(struct htmlTag *t)
 	int itype = t->itype;
 	int isradio = itype == INP_RADIO;
 	int isselect = (itype == INP_SELECT) * 2;
+	const char *whichclass = (isselect ? "Select" : "Element");
 	const struct htmlTag *form = t->controller;
 
 	if (form && form->jv)
-		domLink(t, "Element", 0, "elements", form->jv,
-			isradio | isselect);
+		domLink(t, whichclass, 0, "elements", form->jv, isradio);
 	else
-		domLink(t, "Element", 0, 0, cf->docobj, isradio | isselect);
+		domLink(t, whichclass, 0, 0, cf->docobj, isradio);
 	if (!t->jv)
 		return;
 
-	if (itype <= INP_RADIO) {
+	if (itype <= INP_RADIO && !isselect) {
 		set_property_string(t->jv, "value", t->value);
 		if (itype != INP_FILE) {
 /* No default value on file, for security reasons */
@@ -1184,10 +1174,8 @@ static void optionJS(struct htmlTag *t)
 	set_property_string(t->jv, "class", cl);
 	set_property_string(t->jv, "last$class", cl);
 
-	if (t->checked && !sel->multiple) {
+	if (t->checked && !sel->multiple)
 		set_property_number(sel->jv, "selectedIndex", t->lic);
-		set_property_string(sel->jv, "value", t->value);
-	}
 }				/* optionJS */
 
 static void link_css(struct htmlTag *t)

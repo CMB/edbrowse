@@ -1636,8 +1636,14 @@ int set_property_string_nat(jsobjtype parent, const char *name,
 // that would only serve to confuse.
 		bool valsetter = true;
 		duk_get_global_string(jcx, "Option");
-		if (duk_is_array(jcx, -2) || duk_instanceof(jcx, -2, -1))
+		if (duk_instanceof(jcx, -2, -1))
 			valsetter = false;
+		duk_pop(jcx);
+		duk_get_global_string(jcx, "Select");
+		if (duk_instanceof(jcx, -2, -1)) {
+			valsetter = false;
+			puts("select.value set! This shouldn't happen.");
+		}
 		duk_pop(jcx);
 		if (valsetter)
 			setter = setter_value,

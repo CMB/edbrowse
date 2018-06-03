@@ -93,7 +93,6 @@ jsobjtype instantiate_array_element(jsobjtype array, int idx, const char *classn
 jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname) ;
 int set_property_function(jsobjtype parent, const char *name, const char *body) ;
 int get_arraylength(jsobjtype a);
-char *get_property_option(jsobjtype obj) ;
 void setupJavaDom(void) ;
 char *get_property_url(jsobjtype owner, bool action) ;
 void rebuildSelectors(void);

@@ -770,6 +770,13 @@ if(!f.elements[n]) f.elements[n] = this;
 this.name$2 = n;
 }});
 mw0.HTMLElement = function(){}
+mw0.Select = function() { this.selectedIndex = -1; this.value = ""; }
+Object.defineProperty(mw0.Select.prototype, "value", {
+get: function() {
+var a = this.options;
+var n = this.selectedIndex;
+return (this.multiple || n < 0 || n >= a.length) ? "" : a[n].value;
+}});
 mw0.Image = function(){}
 mw0.Frame = function(){}
 mw0.Anchor = function(){}
@@ -1383,7 +1390,7 @@ return name === "elements" && o instanceof Form ||
 name === "rows" && (o instanceof Table || o instanceof tBody || o instanceof tHead || o instanceof tFoot) ||
 name === "tBodies" && o instanceof Table ||
 name === "cells" && o instanceof tRow ||
-name === "options" && o.nodeName === "SELECT";
+name === "options" && o instanceof Select;
 }
 
 // Like the above but for strings and numbers.
@@ -1487,17 +1494,6 @@ if(kids) alert3("kids " + kids.length);
 else alert3("no kids, type " + typeof node1.childNodes);
 }
 
-// special case for array, which is a select node or a list of radio buttons.
-if(Array.isArray(node1)) {
-node2 = [];
-node2.childNodes = node2;
-if(deep) {
-if(debug) alert3("self children length " + node1.length);
-for(i = 0; i < node1.length; ++i)
-node2.push(mw0.eb$clone(node1[i], true));
-}
-} else {
-
 if(node1.nodeName == "#text")
 node2 = mw0.createTextNode();
 else if(node1.nodeName == "#comment")
@@ -1509,7 +1505,6 @@ if (deep && kids) {
 for(i = 0; i < kids.length; ++i) {
 var current_item = kids[i];
 node2.appendChild(mw0.eb$clone(current_item,true));
-}
 }
 }
 
@@ -2052,7 +2047,7 @@ Again, leading ; to avert a parsing ambiguity.
 
 ; (function() {
 var cnlist = ["HTML", "HtmlObj", "Head", "Title", "Body", "CSSStyleDeclaration", "Frame",
-"Anchor", "Element","HTMLElement", "Lister", "Listitem", "tBody", "Table", "Div",
+"Anchor", "Element","HTMLElement", "Select", "Lister", "Listitem", "tBody", "Table", "Div",
 "tHead", "tFoot", "tCap",
 "Form", "Span", "tRow", "Cell", "P", "Script", "Header", "Footer",
 // The following nodes shouldn't have any children, but the various
@@ -2118,21 +2113,6 @@ get: function() { return mw0.textUnder(this, 1); }});
 }
 })();
 
-// nodes that we don't want to add children to, even if asked to do so.
-// I guess this turned out to be a bad idea.
-/*
-; (function() {
-var cnlist = ["HtmlObj", "Title", "Script",
-"Node", "Area", "TextNode", "Image", "Option", "Link", "Meta", "Audio", "Canvas"];
-for(var i=0; i<cnlist.length; ++i) {
-var cn = cnlist[i];
-var c = mw0[cn];
-eval('c.prototype.appendChild = function(c) { alert3("adding children to ' + cn + '");return c; }');
-eval('c.prototype.prependChild = function() { alert3("adding children to ' + cn + '");return c; }');
-}
-})();
-*/
-
 /*********************************************************************
 As promised, Form is weird.
 If you add an input to a form, it adds under childNodes in the usual way,
@@ -2197,6 +2177,72 @@ if(item.name$2 && this[item.name$2] == item) delete this[item.name$2];
 if(item.name$2 && this.elements[item.name$2] == item) delete this.elements[item.name$2];
 }
 return item;
+}
+
+/*********************************************************************
+Look out! Select class maintains an array of options beneath,
+just as Form maintains an array of elements beneath, so you'd
+think we could copy the above code and tweak a few things, but no.
+Options under select lists are maintained by rebuildSelectors in ebjs.c.
+That is how we synchronize option lists.
+So we don't want to synchronize by side-effects.
+In other words, we don't want to pass the actions back to edbrowse,
+as appendChild does. So I kinda have to reproduce what they do
+here, with just js, and no action in C.
+*********************************************************************/
+
+mw0.Select.prototype.appendChild = function(newobj) {
+if(!newobj) return null;
+// should only be options!
+if(!(newobj instanceof Option)) return newobj;
+mw0.isabove(newobj, this);
+if(newobj.parentNode) newobj.parentNode.removeChild(newobj);
+this.childNodes.push(newobj); newobj.parentNode = this;
+return newobj;
+}
+mw0.Select.prototype.insertBefore = function(newobj, item) {
+var i;
+if(!newobj) return null;
+if(!item) return this.appendChild(newobj);
+if(!(newobj instanceof Option)) return newobj;
+mw0.isabove(newobj, this);
+if(newobj.parentNode) newobj.parentNode.removeChild(newobj);
+for(i=0; i<this.childNodes.length; ++i)
+if(this.childNodes[i] == item) {
+this.childNodes.splice(i, 0, newobj); newobj.parentNode = this;
+break;
+}
+if(i == this.childNodes.length) {
+// side effect, object is freeed from wherever it was.
+return null;
+}
+return newobj;
+}
+mw0.Select.prototype.removeChild = function(item) {
+var i;
+if(!item) return null;
+for(i=0; i<this.childNodes.length; ++i)
+if(this.childNodes[i] == item) {
+this.childNodes.splice(i, 1);
+delete item.parentNode;
+break;
+}
+if(i == this.childNodes.length) return null;
+return item;
+}
+
+mw0.Select.prototype.add = function(o, idx)
+{
+var n = this.options.length;
+if(typeof idx != "number" || idx < 0 || idx > n) idx = n;
+if(idx == n) this.appendChild(o);
+else this.insertBefore(o, this.options[idx]);
+}
+mw0.Select.prototype.remove = function(idx)
+{
+var n = this.options.length;
+if(typeof idx == "number" && idx >= 0 && idx < n)
+this.removeChild(this.options[idx]);
 }
 
 // rows under a table body
@@ -2434,7 +2480,7 @@ delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
 }}})();
 
 ; (function() {
-var cnlist = ["Element"];
+var cnlist = ["Element", "Select"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i];
 var evs = ["onchange"];
@@ -2517,20 +2563,7 @@ case "canvas": c = new Canvas; break;
 case "audio": c = new Audio; break;
 case "document": c = new Document; break;
 case "iframe": case "frame": c = new Frame; break;
-case "select":
-/* select and radio are special form elements in that they are intrinsically
- * arrays, with all the options as array elements,
- * and also "options" or "childNodes" linked to itself
- * so it looks like it has children in the usual way. */
-c = [];
-c.nodeName = c.tagName = t.toUpperCase();
-c.options = c;
-c.childNodes = c;
-c.style = new CSSStyleDeclaration;
-c.selectedIndex = -1;
-c.value = "";
-eb$logElement(c, t);
-return c;
+case "select": c = new Select; break;
 case "option":
 c = new Option;
 c.nodeName = c.tagName = "OPTION";
@@ -2554,6 +2587,7 @@ c.style = new CSSStyleDeclaration;
 c.style.element = c;
 }
 c.childNodes = [];
+if(c instanceof Select) c.options = c.childNodes;
 c.attributes = new NamedNodeMap;
 c.attributes.owner = c;
 // Split on : if this comes from a name space
@@ -2852,6 +2886,7 @@ Base = mw0.Base;
 Form = mw0.Form;
 Element = mw0.Element;
 HTMLElement = mw0.HTMLElement;
+Select = mw0.Select;
 Image = mw0.Image;
 Frame = mw0.Frame;
 Anchor = mw0.Anchor;
@@ -3028,10 +3063,6 @@ sessionStorage.removeItem(sessionStorage.attributes[l-1].name);
 }
 
 /*********************************************************************
-The select element in a form is itself an array, so the children functions have
-to be on array prototype, except appendchild is to have no side effects,
-because select options are maintained by rebuildSelectors(), so appendChild
-is just array.push().
 Why am I setting these prototype methods here, instead of the master window?
 Because Array in one window is different from Array in another.
 Try it in jdb:
@@ -3060,70 +3091,6 @@ If I built our classes per context, and not in the master window,
 that would be problematic because then I couldn't use instanceof URL
 and instanceof Option, as I do today.
 *********************************************************************/
-
-Array.prototype.appendChild = function(child) {
-if(!child) return null;
-// check to see if it's already there
-for(var i=0; i<this.length; ++i)
-if(this[i] == child)
-return child;
-this.push(child); child.parentNode = this;return child; }
-/* insertBefore maps to splice, but we have to find the element. */
-/* This prototype assumes all elements are objects. */
-Array.prototype.insertBefore = function(newobj, item) {
-if(!newobj) return null;
-if(!item) return this.appendChild(newobj);
-// check to see if it's already there
-for(var i=0; i<this.length; ++i)
-if(this[i] == newobj)
-return newobj;
-for(var i=0; i<this.length; ++i)
-if(this[i] == item) {
-this.splice(i, 0, newobj);
-newobj.parentNode = this;
-return newobj;
-}
-}
-Array.prototype.prependChild = mw0.prependChild;
-Array.prototype.removeChild = function(item) {
-if(!item) return null;
-for(var i=0; i<this.length; ++i)
-if(this[i] == item) {
-this.splice(i, 1);
-delete this.parentNode;
-break;
-}
-return item;
-}
-Array.prototype.hasChildNodes = mw0.hasChildNodes;
-Array.prototype.replaceChild = mw0.replaceChild;
-Object.defineProperty(Array.prototype, "firstChild", { get: function() { return this[0]; } });
-Object.defineProperty(Array.prototype, "lastChild", { get: function() { return this[this.length-1]; } });
-Object.defineProperty(Array.prototype, "nextSibling", { get: function() { return mw0.eb$getSibling(this,"next"); } });
-Object.defineProperty(Array.prototype, "previousSibling", { get: function() { return mw0.eb$getSibling(this,"previous"); } });
-
-Array.prototype.getAttribute = mw0.getAttribute;
-Array.prototype.setAttribute = mw0.setAttribute;
-Array.prototype.hasAttribute = mw0.hasAttribute;
-Array.prototype.removeAttribute = mw0.removeAttribute;
-Array.prototype.getAttributeNode = mw0.getAttributeNode;
-Array.prototype.ELEMENT_NODE = 1, Array.prototype.TEXT_NODE = 3, Array.prototype.COMMENT_NODE = 8, Array.prototype.DOCUMENT_NODE = 9, Array.prototype.DOCUMENT_TYPE_NODE = 10, Array.prototype.DOCUMENT_FRAGMENT_NODE = 11;
-Object.defineProperty(Array.prototype, "classList", { get : function() { return mw0.classList(this);}});
-
-; (function() {
-var cnlist = ["Array"];
-for(var i=0; i<cnlist.length; ++i) {
-var cn = cnlist[i];
-var evs = ["onchange"];
-for(var j=0; j<evs.length; ++j) {
-var evname = evs[j];
-eval('Object.defineProperty(' + cn + '.prototype, "' + evname + '", { \
-get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(typeof f == "string") f = my$win().handle$cc(f, this); \
-if(typeof f == "function") { this.' + evname + '$2 = f; \
-/* I assume this clobbers the addEventListener system */ \
-delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
-}}})();
 
 Array.prototype.item = function(x) { return this[x] };
 Array.prototype.includes = function(x, start) {

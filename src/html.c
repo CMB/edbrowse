@@ -294,18 +294,9 @@ This line sets the current frame, then we're ready to roll.
 /* set option.selected in js based on the option(s) in value */
 			locateOptions(t, (value ? value : t->value), 0, 0,
 				      true);
-/* This is totally confusing. In the case of select,
- * t->value is the value displayed on the screen,
- * but within js, select.value is the value of the option selected,
- * assuming multiple options are not allowed. */
 			if (value) {
 				nzFree(t->value);
 				t->value = value;
-			}
-			if (!t->multiple) {
-				value = get_property_option(t->jv);
-				set_property_string(t->jv, "value", value);
-				nzFree(value);
 			}
 			continue;
 		}

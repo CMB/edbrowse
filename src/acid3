@@ -1847,6 +1847,31 @@
       input3.parentNode.removeChild(input3);
       return 4;
     },
+    function () {
+      // test 57: HTMLSelectElement.add()
+      var s = document.createElement('select');
+      var o = document.createElement('option');
+      s.add(o, null);
+      assert(s.firstChild === o, "add() didn't add to firstChild");
+      assertEquals(s.childNodes.length, 1, "add() didn't add to childNodes");
+      assert(s.childNodes[0] === o, "add() didn't add to childNodes correctly");
+      assertEquals(s.options.length, 1, "add() didn't add to options");
+      assert(s.options[0] === o, "add() didn't add to options correctly");
+      return 4;
+    },
+    function () {
+      // test 58: HTMLOptionElement.defaultSelected
+      var s = document.createElement('select');
+      var o1 = document.createElement('option');
+      var o2 = document.createElement('option');
+      o2.defaultSelected = true;
+      var o3 = document.createElement('option');
+      s.appendChild(o1);
+      s.appendChild(o2);
+      s.appendChild(o3);
+      assert(s.options[s.selectedIndex] === o2, "defaultSelected didn't take");
+      return 4;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';
