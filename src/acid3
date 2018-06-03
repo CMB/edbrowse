@@ -1746,6 +1746,37 @@
       assertEquals(f.elements.first, null, "form's element array has unexpected controls by name after change");
       return 4;
     },
+    function () {
+      // test 54: changing a parsed <input>
+      var i = document.getElementsByTagName('input')[0];
+      // initial values
+//@` <input type=HIDDEN> tidy changes HIDDEN to hidden. It doesn't mess
+// with other attributes, but it "normalizes" type to lower case.
+// I don't think this is a problem, except here; so I changed to hidden.
+//    assertEquals(i.getAttribute('type'), 'HIDDEN', "input control's type content attribute was wrong");
+      assertEquals(i.getAttribute('type'), 'hidden', "input control's type content attribute was wrong");
+      assertEquals(i.type, 'hidden', "input control's type DOM attribute was wrong");
+      // change values
+      i.name = 'test';
+      assertEquals(i.parentNode.elements.test, i, "input control's form didn't update");
+      // check event handlers
+      i.parentNode.action = 'javascript:';
+      var called = false;
+      i.parentNode.onsubmit = function (arg) {
+        arg.preventDefault();
+        called = true;
+      };
+      i.type = 'submit';
+      i.click(); // synchronously dispatches a click event to the submit button, which submits the form, which calls onsubmit
+      assert(called, "click handler didn't dispatch properly");
+      i.type = 'hIdDeN';
+      // check numeric attributes
+      i.setAttribute('maxLength', '2');
+      var s = i.getAttribute('maxLength');
+      assert(s.match, "attribute is not a String");
+      assert(!s.MIN_VALUE, "attribute is a Number");
+      return 4;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';

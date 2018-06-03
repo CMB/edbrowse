@@ -332,8 +332,11 @@ static bool parseURL(const char *url, const char **proto, int *prlen, const char
 		if (*q == '/')
 			++q;
 		skipWhite(&q);
+#if 0
+// javascript: is technically a url
 		if (!*q)
 			return false;
+#endif
 		if (proto)
 			*proto = url;
 		if (prlen)

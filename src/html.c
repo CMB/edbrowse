@@ -1630,16 +1630,16 @@ bool infPush(int tagno, char **post_string)
 		return false;
 	}
 
-	if (t && tagHandler(t->seqno, "onclick")) {
-		if (!isJSAlive)
+	if (t) {
+		if (tagHandler(t->seqno, "onclick") && !isJSAlive)
 			runningError(itype ==
 				     INP_BUTTON ? MSG_NJNoAction :
 				     MSG_NJNoOnclick);
-	}
-	bubble_event((t ? t : form), "onclick");
-	if (js_redirects)
-		return true;
+		bubble_event(t, "onclick");
+		if (js_redirects)
+			return true;
 // At this point onclick has run, be it button or submit or reset
+	}
 
 	if (itype == INP_BUTTON) {
 		if (isJSAlive && t->jv && !t->onclick) {

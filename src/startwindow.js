@@ -734,8 +734,16 @@ e.initEvent("click", true, true);
 if(!this.dispatchEvent(e)) return;
 // do what the tag says to do
 if(this.form) {
-if(t == "submit") this.form.submit();
-if(t == "reset") this.form.reset();
+if(t == "submit") {
+e.initEvent("submit", true, true);
+if(this.dispatchEvent(e))
+this.form.submit();
+}
+if(t == "reset") {
+e.initEvent("reset", true, true);
+if(this.dispatchEvent(e))
+this.form.reset();
+}
 }
 if(t != "checkbox" && t != "radio") return;
 this.checked = (this.checked ? false : true);
@@ -1847,6 +1855,7 @@ mw0.Event = function(options){
     this.target = null;
     this.eventPhase = 0;
     this.timeStamp = new Date().getTime();
+this.prev$default = false;
 };
 
 mw0.Event.prototype.preventDefault = function(){       this.prev$default = true; }
@@ -1855,10 +1864,10 @@ mw0.Event.prototype.stopPropagation = function(){ if(this.cancelable)this.cancel
 
 // deprecated!
 mw0.Event.prototype.initEvent = function(t, bubbles, cancel) {
-this.type = t, this.bubbles = bubbles, this.cancelable = cancel; }
+this.type = t, this.bubbles = bubbles, this.cancelable = cancel; this.prev$default = false; }
 
 mw0.Event.prototype.initUIEvent = function(t, bubbles, cancel, unused, detail) {
-this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = detail; }
+this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = detail; this.prev$default = false; }
 
 mw0.Event.prototype.initCustomEvent = function(t, bubbles, cancel, detail) {
 this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = detail; }
@@ -1888,10 +1897,10 @@ e.currentTarget = t;
 if(!t[fn + "$$array"]) e.eventPhase = 2;
 var r = t[fn](e);
 if((typeof r == "boolean" || typeof r == "number") && !r) return false;
-if(e.cancelled) return true;
+if(e.cancelled) return !e.prev$default;
 }
 }
-if(!e.bubbles) return true;
+if(!e.bubbles) return !e.prev$default;
 e.eventPhase = 3;
 while(l < pathway.length) {
 t = pathway[l++];
@@ -1904,10 +1913,10 @@ if(my$win().eventDebug) alert3("bubble " + t.nodeName + "." + e.type);
 e.currentTarget = t;
 var r = t[fn](e);
 if((typeof r == "boolean" || typeof r == "number") && !r) return false;
-if(e.cancelled) return true;
+if(e.cancelled) return !e.prev$default;
 }
 }
-return true;
+return !e.prev$default;
 };
 
 /*********************************************************************
