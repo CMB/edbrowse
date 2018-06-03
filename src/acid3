@@ -1777,6 +1777,76 @@
       assert(!s.MIN_VALUE, "attribute is a Number");
       return 4;
     },
+    function () {
+      // test 55: moved checkboxes should keep their state
+      var container = document.getElementsByTagName("iframe")[0];
+      var input1 = document.createElement('input');
+      container.appendChild(input1);
+      input1.type = "checkbox";
+      input1.checked = true;
+      assert(input1.checked, "checkbox not checked after being checked (inserted first)");
+      var input2 = document.createElement('input');
+      input2.type = "checkbox";
+      container.appendChild(input2);
+      input2.checked = true;
+      assert(input2.checked, "checkbox not checked after being checked (inserted after type set)");
+      var input3 = document.createElement('input');
+      input3.type = "checkbox";
+      input3.checked = true;
+      container.appendChild(input3);
+      assert(input3.checked, "checkbox not checked after being checked (inserted after being checked)");
+      var target = document.getElementsByTagName("iframe")[1];
+      target.appendChild(input1);
+      target.appendChild(input2);
+      target.appendChild(input3);
+      assert(input1.checked, "checkbox 1 not checked after being moved");
+      assert(input2.checked, "checkbox 2 not checked after being moved");
+      assert(input3.checked, "checkbox 3 not checked after being moved");
+//@` I don't know why these aren't cleaned up. Maybe they are not visible
+// because the frame had a bad source. Well on edbrowse they're visible,
+// and annoying, so I'll get rid of them.
+      target.removeChild(input1);
+      target.removeChild(input2);
+      target.removeChild(input3);
+      return 4;
+    },
+    function () {
+      // test 56: cloned radio buttons should keep their state
+      var form = document.getElementsByTagName("form")[0];
+      var input1 = document.createElement('input');
+      input1.type = "radio";
+      input1.name = "radioGroup1";
+      form.appendChild(input1);
+      var input2 = input1.cloneNode(true);
+      input1.parentNode.appendChild(input2);
+      input1.checked = true;
+      assert(form.elements.radioGroup1, "radio group absent");
+      assert(input1.checked, "first radio button not checked");
+      assert(!input2.checked, "second radio button checked");
+//@` Again, no setter on checked to unset the other radio buttons; calling click instead
+//    input2.checked = true;
+      input2.click();
+      assert(!input1.checked, "first radio button checked");
+      assert(input2.checked, "second radio button not checked");
+      var input3 = document.createElement('input');
+      input3.type = "radio";
+      input3.name = "radioGroup2";
+      form.appendChild(input3);
+      assert(!input3.checked, "third radio button checked");
+      input3.checked = true;
+      assert(!input1.checked, "first radio button newly checked");
+      assert(input2.checked, "second radio button newly not checked");
+      assert(input3.checked, "third radio button not checked");
+//    input1.checked = true;
+      input1.click();
+      assert(input1.checked, "first radio button ended up not checked");
+      assert(!input2.checked, "second radio button ended up checked");
+      assert(input3.checked, "third radio button ended up not checked");
+      input1.parentNode.removeChild(input1);
+      input2.parentNode.removeChild(input2);
+      input3.parentNode.removeChild(input3);
+      return 4;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';
