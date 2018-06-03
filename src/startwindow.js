@@ -2197,6 +2197,8 @@ if(!newobj) return null;
 if(!(newobj instanceof Option)) return newobj;
 mw0.isabove(newobj, this);
 if(newobj.parentNode) newobj.parentNode.removeChild(newobj);
+var l = this.childNodes.length;
+if(newobj.defaultSelected) newobj.selected = true, this.selectedIndex = l;
 this.childNodes.push(newobj); newobj.parentNode = this;
 return newobj;
 }
@@ -2210,6 +2212,7 @@ if(newobj.parentNode) newobj.parentNode.removeChild(newobj);
 for(i=0; i<this.childNodes.length; ++i)
 if(this.childNodes[i] == item) {
 this.childNodes.splice(i, 0, newobj); newobj.parentNode = this;
+if(newobj.defaultSelected) newobj.selected = true, this.selectedIndex = i;
 break;
 }
 if(i == this.childNodes.length) {
