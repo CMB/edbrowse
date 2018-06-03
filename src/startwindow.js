@@ -1500,6 +1500,7 @@ else if(node1.nodeName == "#comment")
 node2 = mw0.createComment();
 else
 node2 = mw0.createElement(node1.nodeName);
+if(node1 == mw0.cloneRoot1) mw0.cloneRoot2 = node2;
 
 if (deep && kids) {
 for(i = 0; i < kids.length; ++i) {
@@ -1548,7 +1549,8 @@ if(mw0.implicitMember(node1, item)) continue;
 node2[item] = [];
 
 // special code here for an array of radio buttons within a form.
-if(node1.nodeName === "FORM" && node1[item].nodeName === "RADIO") {
+if(node1 instanceof Form && node1[item].length &&
+node1[item][0] instanceof Element && node1[item][0].name == item) {
 var a1 = node1[item];
 var a2 = node2[item];
 if(debug) alert3("linking form.radio " + item + " with " + a1.length + " buttons");
@@ -1558,9 +1560,9 @@ a2.class = a1.class;
 a2.last$class = a1.last$class;
 a2.nodeValue = a1.nodeValue;
 for(i = 0; i < a1.length; ++i) {
-var p = mw0.findObject(node1, a1[i], "");
+var p = mw0.findObject(a1[i]);
 if(p.length) {
-a2.push(mw0.correspondingObject(node2, p));
+a2.push(mw0.correspondingObject(p));
 } else {
 a2.push(null);
 if(debug) alert3("oops, button " + i + " not linked");
@@ -1569,12 +1571,6 @@ if(debug) alert3("oops, button " + i + " not linked");
 continue;
 }
 
-// We could link from a form through a name
-// to an array of options.  <select name = color>
-// I'll test for a self-link to options.
-if(node1[item].options && node1[item].options === node1[item]) {
-; // don't do anything
-} else {
 // It's a regular array.
 if(debug) alert3("copy array " + item + " with " + node1[item].length + " members");
 node2[item] = [];
@@ -1583,7 +1579,6 @@ node2[item].push(node1[item][i]);
 }
 continue;
 }
-}
 
 if(typeof node1[item] === "object") {
 // An object, not an array.
@@ -1591,7 +1586,6 @@ if(typeof node1[item] === "object") {
 if(item === "style") continue; // handled later
 if(item === "attributes") continue; // handled later
 if(item === "ownerDocument") continue; // handled by createElement
-if(item.match(/^\d+$/)) continue; // option index in a select array
 
 // Check for URL objects.
 if(node1[item] instanceof URL) {
@@ -1604,10 +1598,10 @@ continue;
 // Look for a link from A to B within the tree of nodes,
 // A.foo = B, and try to preserve that link in the new tree, A1.foo = B1,
 // rather like tar or cpio preserving hard links.
-var p = mw0.findObject(node1, node1[item], "");
+var p = mw0.findObject(node1[item]);
 if(p.length) {
-if(debug) alert3("link " + item + " " + p.substr(1));
-node2[item] = mw0.correspondingObject(node2, p);
+if(debug) alert3("link " + item + " " + p);
+node2[item] = mw0.correspondingObject(p);
 } else {
 // I don't think we should point to a generic object that we don't know anything about.
 if(debug) alert3("unknown object " + item);
@@ -1698,32 +1692,36 @@ return node2;
 }
 
 mw0.cloneNode = function(deep) {
+mw0.cloneRoot1 = this;
 return mw0.eb$clone (this,deep);
 }
 
 // Look recursively down the tree for an object.
 // This is a helper function for cloneNode.
-mw0.findObject = function(top, obj, path) {
-if(!Array.isArray(top.childNodes))
-return "";
-var kids = top.childNodes;
-for(var i=0; i<kids.length; ++i) {
-var c = kids[i];
-var p = path + "," + i;
-if(c === obj) return p; // found it!
-var r = mw0.findObject(c, obj, p);
-if(r.length) return r;
+mw0.findObject = function(t) {
+var p = "";
+while(t != mw0.cloneRoot1) {
+var up = t.parentNode;
+if(!up || up.nodeType == 9 || !up.childNodes) return "";
+var i;
+for(i=0; i<up.childNodes.length; ++i)
+if(up.childNodes[i] == t) break;
+if(i == up.childNodes.length) return "";
+p = "," + i + p;
+t = up;
 }
-return "";
+return p + ',';
 }
 
 // The inverse of the above.
-mw0.correspondingObject = function(top, p) {
-var c = top;
-while(p.length) {
+mw0.correspondingObject = function(p) {
+var c = mw0.cloneRoot2;
 p = p.substr(1);
-c = c.childNodes[parseInt(p.replace(/,.*/, ""))];
-p = p.replace(/^\d+/, "");
+while(p) {
+var j = p.replace(/,.*/, "");
+if(!c.childNodes || j >= c.childNodes.length) return "";
+c = c.childNodes[j];
+p = p.replace(/^\d+,/, "");
 }
 return c;
 }
