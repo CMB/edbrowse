@@ -361,6 +361,7 @@ document.bodies = [];
 document.forms = [];
 document.elements = [];
 document.divs = [];
+document.labels = [];
 document.htmlobjs = [];
 document.scripts = [];
 document.paragraphs = [];
@@ -788,6 +789,8 @@ mw0.tFoot = function(){ this.rows = []; }
 mw0.tCap = function(){}
 mw0.Table = function(){ this.rows = []; this.tBodies = []; }
 mw0.Div = function(){}
+mw0.Label = function(){}
+Object.defineProperty(mw0.Label.prototype, "htmlFor", { get: function() { return this.getAttribute("for"); }, set: function(h) { this.setAttribute("for", h); }});
 mw0.HtmlObj = function(){}
 mw0.Area = function(){}
 mw0.Span = function(){}
@@ -1390,6 +1393,8 @@ return name === "elements" && o instanceof Form ||
 name === "rows" && (o instanceof Table || o instanceof tBody || o instanceof tHead || o instanceof tFoot) ||
 name === "tBodies" && o instanceof Table ||
 name === "cells" && o instanceof tRow ||
+name === "className" ||
+name === "htmlFor" && o instanceof Label ||
 name === "options" && o instanceof Select;
 }
 
@@ -2053,7 +2058,7 @@ Again, leading ; to avert a parsing ambiguity.
 ; (function() {
 var cnlist = ["HTML", "HtmlObj", "Head", "Title", "Body", "CSSStyleDeclaration", "Frame",
 "Anchor", "Element","HTMLElement", "Select", "Lister", "Listitem", "tBody", "Table", "Div",
-"tHead", "tFoot", "tCap",
+"tHead", "tFoot", "tCap", "Label",
 "Form", "Span", "tRow", "Cell", "P", "Script", "Header", "Footer",
 // The following nodes shouldn't have any children, but the various
 // children methods could be called on them anyways.
@@ -2557,6 +2562,7 @@ case "meta": c = new Meta; break;
 case "cssstyledeclaration": case "style": c = new CSSStyleDeclaration; break;
 case "script": c = new Script; break;
 case "div": c = new Div; break;
+case "label": c = new Label; break;
 case "p": c = new P; break;
 case "header": c = new Header; break;
 case "footer": c = new Footer; break;
@@ -2907,6 +2913,7 @@ tFoot = mw0.tFoot;
 tCap = mw0.tCap;
 Table = mw0.Table;
 Div = mw0.Div;
+Label = mw0.Label;
 HtmlObj = mw0.HtmlObj;
 Area = mw0.Area;
 Span = mw0.Span;

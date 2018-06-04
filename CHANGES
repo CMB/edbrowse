@@ -10,9 +10,8 @@ foo (toggle), foo+ (enable), foo- (disable).
 
 Show or hide all the messages that are produced by hovering over things,
 or injected by css :before {content:foo}
-See the toggle commands hover and csst.
 
-The g- command, go don't browse.
+The g- command, go but don't browse.
 
 The & command backs up through intrapage jumps, just as they ^ command backs up through pages on the stack.
 
