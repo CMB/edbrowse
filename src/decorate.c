@@ -447,9 +447,9 @@ void htmlInputHelper(struct htmlTag *t)
 	int len;
 	char *myname = (t->name ? t->name : t->id);
 	const char *s = attribVal(t, "type");
-	if (stringEqual(t->info->name, "button")) {
-		n = INP_BUTTON;
-	}
+	bool isbutton = stringEqual(t->info->name, "button");
+
+	t->itype = (isbutton ? INP_BUTTON : INP_TEXT);
 	if (s) {
 		n = stringInListCI(inp_types, s);
 		if (n < 0) {
@@ -457,13 +457,15 @@ void htmlInputHelper(struct htmlTag *t)
 			if (n < 0)
 				debugPrint(3, "unrecognized input type %s", s);
 			else
-				t->itype_minor = n;
+				t->itype = INP_TEXT, t->itype_minor = n;
 			if (n == INP_PW)
 				t->masked = true;
-			n = INP_TEXT;
-		}
+		} else
+			t->itype = n;
 	}
-	t->itype = n;
+// button no type means submit
+	if (!s && isbutton)
+		t->itype = INP_SUBMIT;
 
 	s = attribVal(t, "maxlength");
 	len = 0;
@@ -1110,8 +1112,8 @@ static void formControlJS(struct htmlTag *t)
 {
 	const char *typedesc;
 	int itype = t->itype;
-	int isradio = itype == INP_RADIO;
-	int isselect = (itype == INP_SELECT) * 2;
+	bool isradio = (itype == INP_RADIO);
+	bool isselect = (itype == INP_SELECT);
 	const char *whichclass = (isselect ? "Select" : "Element");
 	const struct htmlTag *form = t->controller;
 

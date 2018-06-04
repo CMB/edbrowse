@@ -1872,6 +1872,19 @@
       assert(s.options[s.selectedIndex] === o2, "defaultSelected didn't take");
       return 4;
     },
+    function () {
+      // test 59: attributes of <button> elements
+      var button = document.createElement('button');
+      assertEquals(button.type, "submit", "<button> doesn't have type=submit");
+      button.setAttribute("type", "button");
+      assertEquals(button.type, "button", "<button type=button> doesn't have type=button");
+      button.removeAttribute("type");
+      assertEquals(button.type, "submit", "<button> doesn't have type=submit back");
+      button.setAttribute('value', 'apple');
+      button.appendChild(document.createTextNode('banana'));
+      assertEquals(button.value, 'apple', "wrong button value");
+      return 4;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';

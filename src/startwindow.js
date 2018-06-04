@@ -1412,7 +1412,11 @@ This may be overkill - I don't know.
 
 mw0.getAttribute = function(name) {
 name = name.toLowerCase();
-if(mw0.implicitMember(this, name) || mw0.implicitMember1(this, name)) return null;
+if(mw0.implicitMember(this, name)) return null;
+if(mw0.implicitMember1(this, name)) {
+// has to be a real attribute
+if(!this.attributes[name]) return null;
+}
 var v = this[name];
 if(v instanceof URL) return v.toString();
 var t = typeof v;
@@ -1427,7 +1431,7 @@ this.style.cssText = v;
 return;
 }
 var n = name.toLowerCase();
-if(mw0.implicitMember(this, n) || mw0.implicitMember1(this, n)) return;
+if(mw0.implicitMember(this, n)) return;
 this[n] = v; 
 if(this.attributes[n]) return;
 var a = new Attr();
@@ -1443,6 +1447,8 @@ this.attributes[n] = a;
 mw0.removeAttribute = function(name) {
     var n = name.toLowerCase();
     if (this[n]) delete this[n];
+// acid test 59 says there's some weirdness regarding button.type
+if(n === "type" && this.nodeName == "BUTTON") this[n] = "submit";
 var a = this.attributes[n]; // hash access
 if(!a) return;
 // Have to roll our own splice.
@@ -2574,6 +2580,7 @@ c.childNodes = [];
 return c;
 case "form": c = new Form; break;
 case "input": case "element": c = new Element; break;
+case "button": c = new Element; c.type = "submit"; break;
 default:
 /* eb$puts("createElement default " + s); */
 c = new Span;
