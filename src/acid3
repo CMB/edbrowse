@@ -1885,6 +1885,47 @@
       assertEquals(button.value, 'apple', "wrong button value");
       return 4;
     },
+    function () {
+      // test 60: className vs "class" vs attribute nodes
+      var span = document.getElementsByTagName('span')[0];
+      span.setAttribute('class', 'kittens');
+// COMMENTED OUT FOR 2011 UPDATE - turns out instead of dropping Attr entirely, as Acid3 originally expected, the API is just being refactored
+//      if (!span.getAttributeNode)
+//        return 4; // support for attribute nodes is optional in Acid3, because attribute nodes might be removed from DOM Core in the future.
+//      var attr = span.getAttributeNode('class');
+//      // however, if they're supported, they'd better work:
+//      assert(attr.specified, "attribute not specified");
+//      assertEquals(attr.value, 'kittens', "attribute value wrong");
+//      assertEquals(attr.name, 'class', "attribute name wrong");
+//      attr.value = 'ocelots';
+//      assertEquals(attr.value, 'ocelots', "attribute value wrong");
+//      assertEquals(span.className, 'ocelots', "setting attribute value failed to be reflected in className");
+      span.className = 'cats';
+//      assertEquals(attr.ownerElement.getAttribute('class'), 'cats', "setting attribute value failed to be reflected in getAttribute()");
+//      span.removeAttributeNode(attr);
+//      assert(attr.specified, "attribute not specified after removal");
+//      assert(!attr.ownerElement, "attribute still owned after removal");
+//      assert(!span.className, "element had class after removal");
+      return 4;
+    },
+    function () {
+      // test 61: className and the class attribute: space preservation
+      var p = document.createElement('p');
+      assert(!p.hasAttribute('class'), "element had attribute on creation");
+      p.setAttribute('class', ' te  st ');
+      assert(p.hasAttribute('class'), "element did not have attribute after setting");
+      assertEquals(p.getAttribute('class'), ' te  st ', "class attribute's value was wrong");
+      assertEquals(p.className, ' te  st ', "className was wrong");
+      p.className = p.className.replace(/ /g, '\n');
+      assert(p.hasAttribute('class'), "element did not have attribute after replacement");
+      assertEquals(p.getAttribute('class'), '\nte\n\nst\n', "class attribute's value was wrong after replacement");
+      assertEquals(p.className, '\nte\n\nst\n', "className was wrong after replacement");
+      p.className = '';
+      assert(p.hasAttribute('class'), "element lost attribute after being set to empty string");
+      assertEquals(p.getAttribute('class'), '', "class attribute's value was wrong after being emptied");
+      assertEquals(p.className, '', "className was wrong after being emptied");
+      return 4;
+    },
 // other tests not yet folded in
   ]; // end of tests
   var log = '';

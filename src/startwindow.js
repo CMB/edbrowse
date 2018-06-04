@@ -1400,6 +1400,7 @@ return name === "value" && o instanceof Element ||
 (name === "checked" || name === "defaultChecked") && o instanceof Element ||
 (name === "selected" || name === "defaultSelected") && o instanceof Option ||
 name === "selectedIndex" && o.nodeName === "SELECT" ||
+name === "class" || // acid test 61
 name === "length" && o instanceof Form;
 // there are probably others
 }
