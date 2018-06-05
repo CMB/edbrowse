@@ -53,6 +53,7 @@ static void js_start(void)
 }				/* js_start */
 
 /* Javascript has changed an input field */
+static void javaSetsInner(jsobjtype v, const char *newtext);
 void javaSetsTagVar(jsobjtype v, const char *newtext)
 {
 	struct htmlTag *t = tagFromJavaVar(v);
@@ -62,14 +63,14 @@ void javaSetsTagVar(jsobjtype v, const char *newtext)
 	    || t->itype == INP_FILE)
 		return;
 	if (t->itype == INP_TA) {
-		debugPrint(3, "textarea.value is being updated");
+		javaSetsInner(v, newtext);
 		return;
 	}
 	nzFree(t->value);
 	t->value = cloneString(newtext);
 }				/* javaSetsTagVar */
 
-void javaSetsInner(jsobjtype v, const char *newtext)
+static void javaSetsInner(jsobjtype v, const char *newtext)
 {
 	int side;
 	struct htmlTag *t = tagFromJavaVar(v);

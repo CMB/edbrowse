@@ -725,6 +725,7 @@ mw0.Form.prototype = {
 submit: eb$formSubmit, reset: eb$formReset};
 Object.defineProperty(mw0.Form.prototype, "length", { get: function() { return this.elements.length;}});
 mw0.Element = function(){}
+
 mw0.Element.prototype.click = function() {
 var nn = this.nodeName, t = this.type;
 // as though the user had clicked on this
@@ -760,6 +761,7 @@ if(e[i].nodeName == "INPUT" && e[i].type == t && e[i].name == nn &&e[i] != this)
 }
 }
 }
+
 Object.defineProperty(mw0.Element.prototype, "name", {
 get: function() { return this.name$2; },
 set: function(n) { var f; if(f = this.form) {
@@ -770,6 +772,47 @@ if(!f.elements[n]) f.elements[n] = this;
 }
 this.name$2 = n;
 }});
+
+// only meaningful for textarea
+Object.defineProperty(mw0.Element.prototype, "innerText", {
+get: function() { return this.type == "textarea" ? this.value : null },
+set: function(t) { if(this.type == "textarea") this.value = t; }});
+
+/*********************************************************************
+This is a special routine for textarea.innerHTML = "some html text";
+I assume, with very little data to go on, that the html is rendered
+in some fashion, i.e. turned into text, then pushed into the text area.
+This is just a first step. If there is a text node below then I
+cross that over to textarea.value. If it's anything more complicated
+than that, I throw up my hands and give up.
+Yes, I found this in the real world when trying to unsubscribe from
+	https://www.credomobile.com
+I remove the textNode below, because it would be rendered by edbrowse,
+and the text that was just put in the buffer would also be on the main page.
+Note the chain of setters.
+Javascript calls innerHTML, which is a setter written in C.
+That calls this routine, which pushes the rendered string into value,
+which is another setter, writtten in C.
+If all this works I'll be amazed.
+*********************************************************************/
+
+mw0.textarea$html$crossover = function(t)
+{
+if(!t || !(t instanceof Element) || t.type != "textarea")
+return;
+// It's a textarea - what is below?
+if(t.childNodes.length == 0) return; // nothing below
+var tn; // our textNode
+if(t.childNodes.length == 1 && (tn = t.firstChild) &&
+tn instanceof TextNode) {
+var d = (tn.data ? tn.data : "");
+t.value = d;
+t.removeChild(tn);
+return;
+}
+alert3("textarea.innerHTML is too complicated for me to render");
+}
+
 mw0.HTMLElement = function(){}
 mw0.Select = function() { this.selectedIndex = -1; this.value = ""; }
 Object.defineProperty(mw0.Select.prototype, "value", {
@@ -2094,7 +2137,10 @@ c.prototype.hasAttribute = mw0.hasAttribute;
 c.prototype.getAttribute = mw0.getAttribute;
 c.prototype.setAttribute = mw0.setAttribute;
 c.prototype.removeAttribute = mw0.removeAttribute;
+/* which one is it?
 Object.defineProperty(c.prototype, "className", { get: function() { return this.getAttribute("class"); }, set: function(h) { this.setAttribute("class", h); }});
+*/
+Object.defineProperty(c.prototype, "className", { get: function() { return this.class; }, set: function(h) { this.class = h; }});
 c.prototype.getAttributeNode = mw0.getAttributeNode;
 // clone
 c.prototype.cloneNode = mw0.cloneNode;
@@ -2586,7 +2632,8 @@ c.childNodes = [];
 // the dropdown lists after every js run.
 return c;
 case "form": c = new Form; break;
-case "input": case "element": c = new Element; break;
+case "input": case "element": case "textarea":
+c = new Element; if(t == "textarea") c.type = t; break;
 case "button": c = new Element; c.type = "submit"; break;
 default:
 /* eb$puts("createElement default " + s); */

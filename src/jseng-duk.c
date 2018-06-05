@@ -346,16 +346,7 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	duk_push_this(cx);
 // remove the preexisting children.
 	if (duk_get_prop_string(cx, -1, "childNodes") && duk_is_array(cx, -1)) {
-#if 0
-		int l = duk_get_length(cx, -1);
-// More efficient to remove them last to first.
-		while (l--) {
-			duk_get_prop_index(cx, -1, l);
-			native_removeChild(cx);
-		}
-#else
 		duk_set_length(cx, -1, 0);
-#endif
 	} else {
 // no child nodes array, don't do anything.
 // This should never happen.
@@ -383,31 +374,10 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	html_from_setter(thisobj, run);
 	nzFree(run);
 	debugPrint(5, "setter h 2");
-	return 0;
-}
 
-static duk_ret_t getter_innerText(duk_context * cx)
-{
-	duk_push_this(cx);
-	duk_get_prop_string(cx, -1, "inner$Text");
-	duk_remove(cx, -2);
-	return 1;
-}
+	run_function_onearg_nat(context0_obj, "textarea$html$crossover",
+				thisobj);
 
-static duk_ret_t setter_innerText(duk_context * cx)
-{
-	jsobjtype thisobj;
-	const char *h = duk_safe_to_string(cx, -1);
-	if (!h)			// should never happen
-		h = emptyString;
-	debugPrint(5, "setter t 1");
-	duk_push_this(cx);
-	duk_insert(cx, -2);
-	duk_put_prop_string(cx, -2, "inner$Text");
-	thisobj = duk_get_heapptr(cx, -1);
-	duk_pop(cx);
-	javaSetsInner(thisobj, h);
-	debugPrint(5, "setter t 2");
 	return 0;
 }
 
@@ -427,17 +397,16 @@ static duk_ret_t setter_value(duk_context * cx)
 	if (!h)			// should never happen
 		h = emptyString;
 	debugPrint(5, "setter v 1");
+	t = cloneString(h);
 	duk_push_this(cx);
 	duk_insert(cx, -2);
 	duk_put_prop_string(cx, -2, "val$ue");
 	thisobj = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
-	t = cloneString(h);
 	prepareForField(t);
 	debugPrint(4, "value %p=%s", thisobj, t);
 	javaSetsTagVar(thisobj, t);
 	nzFree(t);
-
 	debugPrint(5, "setter v 2");
 	return 0;
 }
@@ -1628,9 +1597,6 @@ int set_property_string_nat(jsobjtype parent, const char *name,
 	if (stringEqual(name, "innerHTML"))
 		setter = setter_innerHTML, getter = getter_innerHTML,
 		    altname = "inner$HTML";
-	if (stringEqual(name, "innerText"))
-		setter = setter_innerText, getter = getter_innerText,
-		    altname = "inner$Text";
 	if (stringEqual(name, "value")) {
 // This one is complicated. If option.value had side effects,
 // that would only serve to confuse.

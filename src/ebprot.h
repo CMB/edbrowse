@@ -65,7 +65,6 @@ int goSelect(int *startLine, char **rbuf) ;
 
 /* sourcefile=ebjs.c */
 void javaSetsTagVar(jsobjtype v, const char *newtext);
-void javaSetsInner(jsobjtype v, const char *newtext);
 void dwStart(void);
 void createJavaContext(void) ;
 void freeJavaContext(struct ebFrame *f) ;

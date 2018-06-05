@@ -906,7 +906,7 @@ static void establish_inner(jsobjtype obj, const char *start, const char *end,
 			    bool isText)
 {
 	const char *s = emptyString;
-	const char *name = (isText ? "innerText" : "innerHTML");
+	const char *name = (isText ? "value" : "innerHTML");
 	if (start) {
 		s = start;
 		if (end)
@@ -915,6 +915,10 @@ static void establish_inner(jsobjtype obj, const char *start, const char *end,
 	set_property_string(obj, name, s);
 	if (start && end)
 		nzFree((char *)s);
+// If this is a textarea, we haven't yet set up the innerHTML
+// getter and seter
+	if (isText)
+		set_property_string(obj, "innerHTML", emptyString);
 }				/* establish_inner */
 
 static void domLink(struct htmlTag *t, const char *classname,	/* instantiate this class */
