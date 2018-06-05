@@ -363,6 +363,11 @@ struct ebFrame *newloc_f;	/* frame calling for new web page */
 bool js_redirects;
 static void gotoLocation(char *url, int delay, bool rf)
 {
+	if (!allowRedirection) {
+		debugPrint(1, "javascript redirection disabled: %s", url);
+		nzFree(url);
+		return;
+	}
 	if (newlocation && delay >= newloc_d) {
 		nzFree(url);
 		return;
