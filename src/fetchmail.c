@@ -163,7 +163,7 @@ struct MIF {
 	char *subject, *from, *reply;
 	char *refer;
 	time_t sent;
-	bool seen;
+	bool seen, moved, deleted;
 };
 
 /* folders at the top of an imap system */
@@ -472,6 +472,46 @@ none:
 	return true;
 }				/* imapSearch */
 
+static void printEnvelope(const struct MIF *mif)
+{
+	char *envp;		// print the envelope concisely
+	char *envp_end;
+	int envp_l;
+	envp = initString(&envp_l);
+#if 0
+	if (!mif->seen)
+		stringAndChar(&envp, &envp_l, '*');
+#endif
+	stringAndString(&envp, &envp_l, mif->from);
+	stringAndString(&envp, &envp_l, ": ");
+	stringAndString(&envp, &envp_l, mif->subject);
+	if (mif->sent) {
+		stringAndChar(&envp, &envp_l, ' ');
+		stringAndString(&envp, &envp_l, conciseTime(mif->sent));
+	}
+	stringAndChar(&envp, &envp_l, ' ');
+	stringAndString(&envp, &envp_l, conciseSize(mif->size));
+	envp_end = envp + envp_l;
+	isoDecode(envp, &envp_end);
+	*envp_end = 0;
+// Resulting line could contain utf8, use the portable puts routine.
+	eb_puts(envp);
+	nzFree(envp);
+}
+
+static void viewAll(struct FOLDER *f, bool allmessages)
+{
+	int j;
+	struct MIF *mif = f->mlist;
+	for (j = 0; j < f->nfetch; ++j, ++mif) {
+		if (!allmessages && mif->seen)
+			continue;
+		if (mif->moved | mif->deleted)
+			continue;
+		printEnvelope(mif);
+	}
+}
+
 /* scan through the messages in a folder */
 static void scanFolder(CURL * handle, struct FOLDER *f, bool allmessages)
 {
@@ -483,9 +523,6 @@ static void scanFolder(CURL * handle, struct FOLDER *f, bool allmessages)
 	char cust_cmd[80];
 	char inputline[80];
 	bool yesdel = false, delflag;
-	char *envp;		// print the envelope concisely
-	char *envp_end;
-	int envp_l;
 
 	if (!f->nmsgs || (!allmessages && !f->unread)) {
 		i_puts(MSG_NoMessages);
@@ -513,31 +550,13 @@ showmessages:
 		if (!allmessages && mif->seen)
 			continue;
 
-// Print the envelope. From and subject could be encoded in various ways.
-		envp = initString(&envp_l);
-		if (!mif->seen)
-			stringAndChar(&envp, &envp_l, '*');
-		stringAndString(&envp, &envp_l, mif->from);
-		stringAndString(&envp, &envp_l, ": ");
-		stringAndString(&envp, &envp_l, mif->subject);
-		if (mif->sent) {
-			stringAndChar(&envp, &envp_l, ' ');
-			stringAndString(&envp, &envp_l, conciseTime(mif->sent));
-		}
-		stringAndChar(&envp, &envp_l, ' ');
-		stringAndString(&envp, &envp_l, conciseSize(mif->size));
-		envp_end = envp + envp_l;
-		isoDecode(envp, &envp_end);
-		*envp_end = 0;
-// Resulting line could contain utf8, use the portable puts routine.
-		eb_puts(envp);
-		nzFree(envp);
+		printEnvelope(mif);
 
 action:
 		delflag = false;
 		printf("? ");
 		fflush(stdout);
-		key = getLetter("h?qdslmn /");
+		key = getLetter("h?qvbfdslmn /");
 		printf("\b\b\b");
 		fflush(stdout);
 		if (key == '?' || key == 'h') {
@@ -618,6 +637,20 @@ imap_done:
 /* presentMail has already freed mailstring */
 		}
 
+		if (key == 'v') {
+			static const char delim[] = "----------";
+			puts(delim);
+			viewAll(f, allmessages);
+			puts(delim);
+			printEnvelope(mif);
+			goto action;
+		}
+
+		if (key == 'b' || key == 'f') {
+			i_puts(MSG_NYI);
+			goto action;
+		}
+
 		if (key == 's') {
 			i_puts(MSG_Stop);
 			break;
@@ -653,6 +686,7 @@ imap_done:
 					goto abort;
 // The move command shifts all the sequence numbers down.
 				if (move_capable) {
+					mif->moved = true;
 					int j2 = j + 1;
 					struct MIF *mif2 = mif + 1;
 					while (j2 < f->nfetch) {
@@ -678,6 +712,7 @@ imap_done:
 		nzFree(mailstring);
 		if (res != CURLE_OK)
 			goto abort;
+		mif->deleted = true;
 		yesdel = true;
 	}
 
@@ -1375,7 +1410,7 @@ key_command:
 /* interactive prompt depends on whether there is more text or not */
 	printf("%c ", displine > cw->dol ? '?' : '*');
 	fflush(stdout);
-	key = getLetter((isimap ? "qh? nwWuUasdm" : "qh? nwud"));
+	key = getLetter((isimap ? "qvbfh? nwWuUasdm" : "qh? nwud"));
 	printf("\b\b\b");
 	fflush(stdout);
 
@@ -1390,6 +1425,7 @@ key_command:
 
 	case 's':
 	case 'm':
+	case 'v':
 		goto afterinput;
 
 	case 'd':
@@ -1554,9 +1590,7 @@ afterinput:
 
 	if (delflag)
 		return 'd';
-	if (key == 's' || key == 'm')
-		return key;
-	return 'n';
+	return strchr("smvbf", key) ? key : 'n';
 }				/* presentMail */
 
 /* Here are the common keywords for mail header lines.
