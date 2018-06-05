@@ -2028,7 +2028,7 @@ if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; \
 i = -1; \
 } return true; };');
 
-if(prev_fn) this[evorig] = pref_fn;
+if(prev_fn) this[evorig] = prev_fn;
 this[evarray] = a;
 }
 
