@@ -1428,6 +1428,10 @@ Needless to say that's not good!
 		domLink(t, "HtmlObj", 0, "htmlobjs", cf->docobj, 0);
 		break;
 
+	case TAGACT_UNKNOWN:
+		domLink(t, "HTMLElement", 0, 0, cf->docobj, 0);
+		break;
+
 	case TAGACT_SPAN:
 	case TAGACT_SUB:
 	case TAGACT_SUP:
@@ -1671,6 +1675,7 @@ void tag_gc(void)
 const struct tagInfo availableTags[] = {
 	{"html", "html", TAGACT_HTML},
 	{"base", "base reference for relative URLs", TAGACT_BASE, 0, 4},
+	{"unknown0", "an html entity", TAGACT_UNKNOWN, 5, 1},
 	{"object", "an html object", TAGACT_OBJECT, 5, 3},
 	{"a", "an anchor", TAGACT_A, 0, 1},
 	{"input", "an input item", TAGACT_INPUT, 0, 4},

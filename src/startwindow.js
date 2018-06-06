@@ -2637,7 +2637,7 @@ c = new Element; if(t == "textarea") c.type = t; break;
 case "button": c = new Element; c.type = "submit"; break;
 default:
 /* eb$puts("createElement default " + s); */
-c = new Span;
+c = new HTMLElement;
 }
 
 /* ok, for some element types this perhaps doesn't make sense,
