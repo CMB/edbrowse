@@ -163,7 +163,7 @@ struct MIF {
 	char *subject, *from, *reply;
 	char *refer;
 	time_t sent;
-	bool seen, moved, deleted;
+	bool seen, gone;
 };
 
 /* folders at the top of an imap system */
@@ -506,10 +506,15 @@ static void viewAll(struct FOLDER *f, bool allmessages)
 	for (j = 0; j < f->nfetch; ++j, ++mif) {
 		if (!allmessages && mif->seen)
 			continue;
-		if (mif->moved | mif->deleted)
-			continue;
-		printEnvelope(mif);
+		if (!mif->gone)
+			printEnvelope(mif);
 	}
+}
+
+static void bulkMoveDelete(CURL * handle, struct FOLDER *f,
+			   struct MIF *this_mif, char subkey, bool allmessages)
+{
+	i_puts(MSG_NYI);
 }
 
 /* scan through the messages in a folder */
@@ -522,7 +527,7 @@ static void scanFolder(CURL * handle, struct FOLDER *f, bool allmessages)
 	char key;
 	char cust_cmd[80];
 	char inputline[80];
-	bool yesdel = false, delflag;
+	bool yesdel = false, delflag, bulkflag;
 
 	if (!f->nmsgs || (!allmessages && !f->unread)) {
 		i_puts(MSG_NoMessages);
@@ -553,7 +558,7 @@ showmessages:
 		printEnvelope(mif);
 
 action:
-		delflag = false;
+		delflag = bulkflag = false;
 		printf("? ");
 		fflush(stdout);
 		key = getLetter("h?qvbfdslmn /");
@@ -647,7 +652,13 @@ imap_done:
 		}
 
 		if (key == 'b' || key == 'f') {
-			i_puts(MSG_NYI);
+			char subkey;
+			i_printf(key == 'b' ? MSG_Batch : MSG_From);
+			fflush(stdout);
+			subkey = getLetter("mdx");
+			nl();
+			bulkMoveDelete(handle, f, mif, subkey, allmessages);
+			bulkflag = true;
 			goto action;
 		}
 
@@ -686,7 +697,7 @@ imap_done:
 					goto abort;
 // The move command shifts all the sequence numbers down.
 				if (move_capable) {
-					mif->moved = true;
+					mif->gone = true;
 					int j2 = j + 1;
 					struct MIF *mif2 = mif + 1;
 					while (j2 < f->nfetch) {
@@ -712,7 +723,7 @@ imap_done:
 		nzFree(mailstring);
 		if (res != CURLE_OK)
 			goto abort;
-		mif->deleted = true;
+		mif->gone = true;
 		yesdel = true;
 	}
 

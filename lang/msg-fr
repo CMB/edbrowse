@@ -44,7 +44,7 @@ pas de mots-clés
 session %d\n
 Envoi de courrier. Tapez votre courrier, tapez sm pour l'envoyer, puis ^ pour revenir.
 la ligne %d a été modifiée\n
-h\taffiche ce message d'aide.\nq\tquitte ce programme.\ns\tstoppe la lecture de ce dossier.\nn\tva au prochain message.\nd\tefface ce mail.\nm\tdéplace ce mail dans un autre dossier.\nespace\tlit et traite ce mail.\n/\trecherche des mots dans le sujet, l'expéditeur, ou le corps.\nl\tdéfinit la limite maximale de récupération pour imap.
+h\taffiche ce message d'aide\nq\tquitte ce programme\ns\tstoppe la lecture de ce dossier\nn\tva au prochain message\nd\tefface ce mail\nm\tdéplace ce mail dans un autre dossier\nv\tvoir tout\nb\ttraitement par lots\nf\tde\nespace\tlit et traite ce mail\n/\trecherche des mots dans le sujet, l'expéditeur, ou le corps\nl\tdéfinit la limite maximale de récupération pour imap
 s chaine, mails avec chaîne dans le sujet\nf chaîne, mails avec chaîne dans la ligne from\nb chaîne, mails avec chaîne dans le corps du message\nsans lettre repère, le sujet est par défaut.
 pas de messages
 interruption, tapez qt pour quitter complètement
@@ -97,7 +97,7 @@ pas de courrier
 %d messages\n
 impossible d'ouvrir fichier de configuration %s\n
 commande ls suivie de caractères invalides
-h\taffiche ce message d'aide.\nq\tquitte ce programme.\nx\tquitte sans rien modifier sur le serveur de courrier.\nespace\tcontinuer la lecture de ce message.\nn\taller au message suivant.\nd\teffacer ce message.\nw\tsauvegarder ce message et l'effacer.\nu\tsauvegader ce message non formaté puis l'effacer.
+h\taffiche ce message d'aide\nq\tquitte ce programme\nx\tquitte sans rien modifier sur le serveur de courrier\nespace\tcontinuer la lecture de ce message\nn\taller au message suivant\nd\teffacer ce message\nw\tsauvegarder ce message et l'effacer\nu\tsauvegader ce message non formaté puis l'effacer
 création du fichier %s impossible\n
 sauvegarde du fichier %s impossible\n
 courrier sauvegardé, %d octets
@@ -293,7 +293,7 @@ connexion impossible à %s
 téléchargement: 
 Le certificat de sécurité de l'hôte %s ne peut être vérifié - connexion SSL abandonnée
 inaccessible
-h\taffiche ce texte d'aide.\nq\tquitter ce programme.\nespace\taffiche la suite de ce courriel.\nn\tva au courriel suivant.\nd\tefface ce message.\nw\tsauvegarde ce message dans un fichier.\nW\tsauvegarde ce message dans un fichier puis l'efface.\nu\tsauvegarde ce message non formaté dans un fichier.\nU\tsauvegarde ce message dans un fichier puis l'efface.\na\tparcourt et sauvegarde les pièces attachées.\ns\tinterrompre la lecture des courriels de ce dossier.
+h\taffiche ce texte d'aide\nq\tquitter ce programme\nespace\taffiche la suite de ce courriel\nn\tva au courriel suivant\nd\tefface ce message\nv\tvoir tout\nb\ttraitement par lots\nf\tde\nw\tsauvegarde ce message dans un fichier\nW\tsauvegarde ce message dans un fichier puis l'efface\nu\tsauvegarde ce message non formaté dans un fichier\nU\tsauvegarde ce message dans un fichier puis l'efface\na\tparcourt et sauvegarde les pièces attachées\ns\tinterrompre la lecture des courriels de ce dossier
 la page web requiert une autorisation
 authentification abandonnée
 la chaîne de recherche ne peut comporter des guillemets
@@ -456,8 +456,8 @@ Le plugin est un convertisseur, pas un lecteur
 Le plugin est un lecteur, pas un convertisseur
 cacher bulles de texte
 montrer bulles de texte
-0
-0
+traitement par lots 
+de 
 caractères inattendus après la pièce jointe encodée
 caractères invalides dans la pièce jointe encodée
 0

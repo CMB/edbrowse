@@ -44,7 +44,7 @@ no keywords
 session %d\n
 SendMail link.  Compose your mail, type sm to send, then ^ to get back.
 line %d has been updated\n
-h\tprint this help message\nq\tquit this program\ns\tstop reading from this folder\nn\tcontinue to next message\nd\tdelete this email\nm\tmove this email to another folder\nv\tview all\nb\tbulk move or delete\nf\tfrom move or delete\nspace\tread and manage this email\n/\tsearch for words in subject, from, or body\nl\tset imap fetch limit
+h\tprint this help message\nq\tquit this program\ns\tstop reading from this folder\nn\tcontinue to next message\nd\tdelete this email\nm\tmove this email to another folder\nv\tview all\nb\tbatch move or delete\nf\tfrom move or delete\nspace\tread and manage this email\n/\tsearch for words in subject, from, or body\nl\tset imap fetch limit
 s string, emails with string in the subject\nf string, emails with string in the from line\nb string, emails with string in the message body\nif no letter designator, subject is default.
 no messages
 interrupt, type qt to quit completely
@@ -293,7 +293,7 @@ cannot connect to %s
 download: 
 The certificate for host %s could not be verified - SSL connection aborted
 inaccessible
-h\tprint this help message\nq\tquit this program\ns\tstop reading mail from this folder\nspace\tread more of this email\nn\tnext email\nd\tdelete this email\nm\tmove this email to another folder\nv\tview all\nb\tbulk move or delete\nf\tfrom move or delete\nw\twrite this email to a file\nW\twrite this email to a file and delete it\nu\twrite this email unformatted to a file\nU\twrite this email unformatted to a file and delete it\na\tscan and save attachments
+h\tprint this help message\nq\tquit this program\ns\tstop reading mail from this folder\nspace\tread more of this email\nn\tnext email\nd\tdelete this email\nm\tmove this email to another folder\nv\tview all\nb\tbatch move or delete\nf\tfrom move or delete\nw\twrite this email to a file\nW\twrite this email to a file and delete it\nu\twrite this email unformatted to a file\nU\twrite this email unformatted to a file and delete it\na\tscan and save attachments
 web page requires authorization
 login aborted
 search string cannot contain quotes
@@ -456,8 +456,8 @@ plugin is a converter, not a player
 plugin is a player, not a converter
 hide hover text
 show hover text
-0
-0
+batch 
+from 
 unexpected characters after the encoded attachment
 invalid characters in the encoded attachment
 the %s command cannot be applied globally

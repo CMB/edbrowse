@@ -1226,6 +1226,21 @@ this.selected = false;
 this.defaultSelected = false;
 }
 
+// boundingClientRect
+
+mw0.getBoundingClientRect = function(){
+var r = new Object;
+r.top = 0;
+r.bottom = 0;
+r.left = 0;
+r.right = 0;
+r.x = 0;
+r.y = 0;
+r.width = 0;
+r.height = 0;
+return r;
+}
+
 // implementation of getElementsByTagName, getElementsByName, and getElementsByClassName.
 // These are recursive as they descend through the tree of nodes.
 
@@ -2149,6 +2164,7 @@ c.prototype.compareDocumentPosition = mw0.compareDocumentPosition;
 // visual
 c.prototype.focus = focus;
 c.prototype.blur = blur;
+c.prototype.getBoundingClientRect = mw0.getBoundingClientRect; 
 // events
 c.prototype.eb$listen = mw0.eb$listen;
 c.prototype.eb$unlisten = mw0.eb$unlisten;
@@ -3069,6 +3085,7 @@ document.cloneNode = mw0.cloneNode;
 cloneDebug = false;
 document.importNode = mw0.importNode;
 document.compareDocumentPosition = mw0.compareDocumentPosition;
+document.getBoundingClientRect = mw0.getBoundingClientRect;
 
 function handle$cc(f, t) {
 var cf = eval("(function(){" + f + " }.bind(t))");
