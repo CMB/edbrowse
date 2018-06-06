@@ -4245,7 +4245,7 @@ n   continue to next message
 d   delete this email
 m   move this email to another folder
 v   view all
-b   bulk move or delete
+b   batch move or delete
 f   from move or delete
 space   read and manage this email
 /   search for words in subject, from, or body
@@ -4265,6 +4265,17 @@ Type `f Smith' to search for mail from Smith,
 or `b neutron star' to find all emails that talk about a neutron star.
 If there are thousands of matches, only the last 100 are shown.
 You can change this limit with the l command.
+
+<P>
+If there are 300 emails in your spam folder, there is an easy way to delete them all.
+Type v to view them all, just to make sure a valid email didn't wind up here.
+You don't want to delete anything good by mistake.
+Then type b for batch mode, then d to delete.
+Poof, they're gone.
+In the same way, you can batch move all the messages to another folder.
+However, move is more useful with the from clause.
+If the current message is from Fred Flintstone, type f, and edbrowse will print "from Fred Flintstone".
+Then type m cartoon, and all the messages from Fred Flintstone will move to the cartoon folder.
 
 <hr>
 <H2> Chapter 8, Database Access </H2>

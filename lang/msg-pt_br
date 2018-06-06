@@ -27,7 +27,7 @@ exibe arquivos ocultos no modo diretório
 0
 marcadores de fim desligados
 marcadores de fim ligados
-0
+nenhuma linha de
 javascript desativado; nenhuma ação
 javascript está desativado;indo direto à URL
 redirecionamento interrompido pelo usuário
@@ -44,7 +44,7 @@ sem palavras chave
 sessção %d\n
 linque de correio.  Escreva a carta, digite sm para enviar e depois ^ para voltar.
 linha %d atualizada\n
-h\timprime esta mensagem de ajuda.\nq\tsai deste programa.\ns\tpára de ler esta pasta.\nn\tprossegue para a próxima mensagem.\nd\tapaga este e-mail.\nm\tmove este e-mail para outra pasta.\nspace\tlê e gerencia este e-mail.\n/\tbusca palavras em assunto, de ou corpo.\nl\tconfigura limite de recepção do imap.
+h\timprime esta mensagem de ajuda\nq\tsai deste programa\ns\tpára de ler esta pasta\nn\tprossegue para a próxima mensagem\nd\tapaga este e-mail\nm\tmove este e-mail para outra pasta\nv\tver todos\nb\tmove ou apaga em massa\nf\tmove ou apaga por remetente\nspace\tlê e gerencia este e-mail\n/\tbusca palavras em assunto, de ou corpo\nl\tconfigura limite de recepção do imap
 s cadeia, e-mails com cadeia no assunto\nf cadeia, e-mails com cadeia na linha de\nb cadeia, e-mails com cadeia no corpo da mensagem\ncaso não haja letra designadora, o assunto é o padrão.
 nenhuma mensagem
 interrompendo; digite qt para sair completamente
@@ -97,7 +97,7 @@ sem cartas
 %d mensagens\n
 impossível abrir arquivo de configuração %s\n
 caracteres inválidos após o comando ls
-h\tmostra esta mensagem de ajuda.\nq\tsai do programa.\nespaço\tcontinua a ler esta carta.\nn\tvai para próxima carta.\nd\tapaga carta.\nw\tguarda carta em arquivo e apaga carta.\nu\tguarda carta em arquivo sem formatar e apaga carta
+h\tmostra esta mensagem de ajuda\nq\tsai do programa\nespaço\tcontinua a ler esta carta\nn\tvai para próxima carta\nd\tapaga carta\nw\tguarda carta em arquivo e apaga carta\nu\tguarda carta em arquivo sem formatar e apaga carta
 impossível criar o arquivo %s\n
 impossível escrever no arquivo %s\n
 carta salva; %d bytes
@@ -293,7 +293,7 @@ não é possível conectar a %s
 transferência: 
 o certificado do servidor %s não pôde ser verificado - conexão SSL abortada
 inacessível
-h\tescreve esta mensagem de ajuda.\nq\tsai deste programa.\nspace\tlê mais desta mensagem de e-mail.\nn\tvai para a próxima mensagem de e-mail.\nd\tapaga esta mensagem.\nw\tguarda esta mensagem em arquivo.\nW\tgrava esta mensagem em arquivo e a apaga.\nu\tgrava esta mensagem sem formatação em arquivo.\nU\tgrava esta mensagem sem formatação em arquivo e a apaga.\na\tprocura e salva anexos.\ns\tinterrompe a leitura de e-mails desta pasta.
+h\tescreve esta mensagem de ajuda\nq\tsai deste programa\nspace\tlê mais desta mensagem de e-mail\nn\tvai para a próxima mensagem de e-mail\nd\tapaga esta mensagem\nm\tmove este e-mail para outra pasta\nv\tver todos\nb\tmove ou apaga em massa\nf\tmove ou apaga por remetente\nw\tguarda esta mensagem em arquivo\nW\tgrava esta mensagem em arquivo e a apaga\nu\tgrava esta mensagem sem formatação em arquivo\nU\tgrava esta mensagem sem formatação em arquivo e a apaga\na\tprocura e salva anexos\ns\tinterrompe a leitura de e-mails desta pasta
 página da web requer autorização
 Login cancelado
 cadeia a buscar não pode conter aspas
@@ -456,8 +456,8 @@ plug-in é um conversor, não um reprodutor
 plug-in é um reprodutor, não um conversor
 ocultar texto de elementos clicáveis
 mostrar texto de elementos clicáveis
-0
-0
+em lote 
+de %s 
 caracteres inesperados após o anexo codificado
 caracteres inválidos no anexo codificado
 o comando %s não se aplica globalmente
@@ -482,7 +482,7 @@ sem freimes a expandir
 sem freimes a contrair
 mensagens de ajuda ligadas
 download via FTP: 
-0
+abortada
 download via SCP: 
 .ebrc: caracteres nulos na linha %d
 .ebrc: falta nome de função na linha %d

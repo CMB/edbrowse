@@ -27,7 +27,7 @@ pokazuj ukryte pliki w trybie katalogu
 0
 znaczniki końca linii wyłączone
 znaczniki końca linii włączone
-0
+brak polu nadawcy
 JavaScript wyłączony, brak akcji
 JavaScript wyłączony, idziemy wprost pod URL
 przekierowanie przerwane przez użytkownika
@@ -44,7 +44,7 @@ brak słów kluczowych
 sesja %d\n
 Odnośnik SendMail. Stwórz wiadomość, wpisz 'sm' by wysłać, potem '^' by wrócić
 wiersz %d został zaktualizowany\n
-h\twyświetl pomoc.\nq\tzakończ ten program.\ns\tzakończ odczyt tego katalogu.\nn\tidź do następnej wiadomości.\nd\tusuń tę wiadomość.\nm\tprzenieś tę wiadomość do innego katalogu.\nspacja\twczytaj wiadomość i zarządzaj nią.\n/\tszukaj słów w temacie, polu nadawcy lub treści.\nl\tustaw limit pobierania IMAP.
+h\twyświetl pomoc\nq\tzakończ ten program\ns\tzakończ odczyt tego katalogu\nn\tidź do następnej wiadomości\nd\tusuń tę wiadomość\nm\tprzenieś tę wiadomość do innego katalogu\nspacja\twczytaj wiadomość i zarządzaj nią\n/\tszukaj słów w temacie, polu nadawcy lub treści\nl\tustaw limit pobierania IMAP
 s string, wiadomości zawierające 'string' w temacie\nf string, wiadomości zawierające 'string' w polu nadawcy\nb string, wiadomości zawierające 'string' w treści\ngdy brak literowego polecenia, szukaj domyślnie w temacie.
 brak wiadomości
 przerwanie, wpisz 'qt' by zakończyć
@@ -97,7 +97,7 @@ brak poczty
 %d wiadomości\n
 nie można otworzyć plik konfiguracyjny %s\n
 niedozwolone znaki po poleceniu 'ls'
-h\twydrukuj ten wątek pomocy.\nq\tzakończ ten program.\nspacja\tczytaj więcej z tej wiadomości.\nn\tprzejdź do następnej wiadomości pocztowej.\nd\tusuń tę wiadomość.\nw\tzapisz tę wiadomość do pliku i usuń ją.\nu\tzapisz tę wiadomość do pliku w postaci niesformatowanej i usuń ją.
+h\twydrukuj ten wątek pomocy\nq\tzakończ ten program\nspacja\tczytaj więcej z tej wiadomości\nn\tprzejdź do następnej wiadomości pocztowej\nd\tusuń tę wiadomość\nw\tzapisz tę wiadomość do pliku i usuń ją\nu\tzapisz tę wiadomość do pliku w postaci niesformatowanej i usuń ją
 nie można utworzyć pliku %s\n
 nie można zapisać pliku %s\n
 poczta zapisana, %d bajtów
@@ -293,7 +293,7 @@ nie można się połączyć z %s
 pobieranie: 
 Ceryfikat hosta %s nie mógł być zweryfikowany - połączenie SSL anulowane
 nie można odczytać
-h\tpokaż treść tej pomocy.\nq\tzakończ ten program.\nspace\tprzeczytaj dalszą część tej wiadomości.\nn\tprzejdź do następnej wiadomości.\nd\tusuń tę wiadomość.\nw\tzapisz tę wiadomość do pliku.\nW\tzapisz tę wiadomość do pliku i usuń ją.\nu\tzapisz tę wiadomość do pliku w postaci niesformatowanej.\nU\tzapisz tę wiadomość do pliku w postaci niesformatowanej i usuń ją.\na\tprzeskanuj i zapisz załączniki.\ns\tzakończ czytanie poczty z tego katalogu.
+h\tpokaż treść tej pomocy\nq\tzakończ ten program\nspace\tprzeczytaj dalszą część tej wiadomości\nn\tprzejdź do następnej wiadomości\nd\tusuń tę wiadomość\nw\tzapisz tę wiadomość do pliku\nW\tzapisz tę wiadomość do pliku i usuń ją\nu\tzapisz tę wiadomość do pliku w postaci niesformatowanej\nU\tzapisz tę wiadomość do pliku w postaci niesformatowanej i usuń ją\na\tprzeskanuj i zapisz załączniki\ns\tzakończ czytanie poczty z tego katalogu
 strona wymaga autoryzacji
 logowanie anulowane
 fraza wyszukiwania nie może zawierać cudzysłowów
@@ -482,7 +482,7 @@ brak ramek do rozwinięcia
 brak ramek do zwinięcia
 wiadomości pomocnicze włączone
 ściąganie ftp: 
-0
+anulowane
 ściąganie scp: 
 .ebrc: znaki zerowe w wierszu %d
 .ebrc: brak nazwy funkcji w wierszu %d

@@ -509,23 +509,84 @@ static void viewAll(struct FOLDER *f)
 	}
 }
 
-static void bulkMoveDelete(CURL * handle, struct FOLDER *f,
-			   struct MIF *this_mif, char subkey)
+// 0 ok, -1 curl error, 1 something was deleted
+static int bulkMoveDelete(CURL * handle, struct FOLDER *f,
+			  struct MIF *this_mif, char key, char subkey,
+			  struct FOLDER *destination)
 {
-	i_puts(MSG_NYI);
+	CURLcode res = CURLE_OK;
+	char cust_cmd[80];
+	int j;
+	struct MIF *mif = f->mlist;
+	int mcnt = 0;		// move count
+	char *t, *fromline = 0;
+	bool yesdel = false;
+
+	if (key == 'f') {
+		fromline = this_mif->from;
+		if (!fromline[0]) {
+			i_puts(MSG_NoFromLine);
+			return 0;
+		}
+	}
+
+	for (j = 0; j < f->nfetch; ++j, ++mif) {
+		bool delflag = false;
+		if (mif->gone)
+			continue;
+		mif->seqno -= mcnt;
+		if (fromline && !stringEqual(fromline, mif->from))
+			continue;
+		if (subkey == 'm') {
+			if (asprintf(&t, "%s %d \"%s\"",
+				     (move_capable ? "MOVE" : "COPY"),
+				     mif->seqno, destination->path) == -1)
+				i_printfExit(MSG_MemAllocError, 24);
+			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
+			free(t);
+			res = getMailData(handle);
+			nzFree(mailstring);
+			if (res != CURLE_OK)
+				goto abort;
+// The move command shifts all the sequence numbers down.
+			if (move_capable) {
+				mif->gone = true;
+				++mcnt;
+			} else {
+				delflag = true;
+			}
+		}
+		if (subkey == 'd' || delflag) {
+			sprintf(cust_cmd, "STORE %d +Flags \\Deleted",
+				mif->seqno);
+			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
+					 cust_cmd);
+			res = getMailData(handle);
+			nzFree(mailstring);
+			if (res != CURLE_OK)
+				goto abort;
+			mif->gone = true;
+			yesdel = true;
+		}
+	}
+
+	return yesdel;
+
+abort:
+	return -1;
 }
 
 /* scan through the messages in a folder */
 static void scanFolder(CURL * handle, struct FOLDER *f)
 {
 	struct MIF *mif;
-	int j;
+	int j, rc;
 	CURLcode res = CURLE_OK;
 	char *t;
 	char key;
 	char cust_cmd[80];
 	char inputline[80];
-	bool yesdel = false, delflag, bulkflag;
+	bool yesdel = false, delflag;
 
 	if (!f->nmsgs) {
 		i_puts(MSG_NoMessages);
@@ -550,10 +611,12 @@ showmessages:
 
 	mif = f->mlist;
 	for (j = 0; j < f->nfetch; ++j, ++mif) {
+		if (mif->gone)
+			continue;
+reaction:
 		printEnvelope(mif);
-
 action:
-		delflag = bulkflag = false;
+		delflag = false;
 		printf("? ");
 		fflush(stdout);
 		key = getLetter("h?qvbfdslmn /");
@@ -641,19 +704,46 @@ imap_done:
 			puts(delim);
 			viewAll(f);
 			puts(delim);
-			printEnvelope(mif);
-			goto action;
+			goto reaction;
 		}
 
 		if (key == 'b' || key == 'f') {
 			char subkey;
-			i_printf(key == 'b' ? MSG_Batch : MSG_From);
+			struct FOLDER *g;
+			if (key == 'b')
+				i_printf(MSG_Batch);
+			else
+				i_printf(MSG_From, mif->from);
 			fflush(stdout);
 			subkey = getLetter("mdx");
-			nl();
-			bulkMoveDelete(handle, f, mif, subkey);
-			bulkflag = true;
-			goto action;
+			printf("\b");
+			if (subkey == 'x') {
+				i_puts(MSG_Abort);
+				goto reaction;
+			}
+			if (subkey == 'd')
+				i_puts(MSG_Delete);
+			if (subkey == 'm') {
+				i_printf(MSG_MoveTo);
+				fflush(stdout);
+				if (!fgets(inputline, sizeof(inputline), stdin))
+					goto imap_done;
+				g = folderByName(inputline);
+				if (!g || g == f) {
+// should have a better error message here.
+					i_puts(MSG_Abort);
+					goto reaction;
+				}
+			}
+			rc = bulkMoveDelete(handle, f, mif, key, subkey, g);
+			if (rc < 0)
+				goto abort;
+			if (rc)
+				yesdel = true;
+// If current mail is gone, step ahead.
+			if (mif->gone)
+				continue;
+			goto reaction;
 		}
 
 		if (key == 's') {
@@ -1427,6 +1517,8 @@ key_command:
 	case 's':
 	case 'm':
 	case 'v':
+	case 'f':
+	case 'b':
 		goto afterinput;
 
 	case 'd':

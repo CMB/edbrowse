@@ -27,7 +27,7 @@ afficher les fichiers cachés en mode répertoire
 0
 marqueurs de fin de ligne désactivés
 marqueurs de fin de ligne activés
-0
+pas de ligne from
 javascript désactivé, aucune action lancée
 javascript désactivé, on va directement à l'url
 redirection interrompue par l'utilisateur
@@ -44,7 +44,7 @@ pas de mots-clés
 session %d\n
 Envoi de courrier. Tapez votre courrier, tapez sm pour l'envoyer, puis ^ pour revenir.
 la ligne %d a été modifiée\n
-h\taffiche ce message d'aide\nq\tquitte ce programme\ns\tstoppe la lecture de ce dossier\nn\tva au prochain message\nd\tefface ce mail\nm\tdéplace ce mail dans un autre dossier\nv\tvoir tout\nb\ttraitement par lots\nf\tde\nespace\tlit et traite ce mail\n/\trecherche des mots dans le sujet, l'expéditeur, ou le corps\nl\tdéfinit la limite maximale de récupération pour imap
+h\taffiche ce message d'aide\nq\tquitte ce programme\ns\tstoppe la lecture de ce dossier\nn\tva au prochain message\nd\tefface ce mail\nm\tdéplace ce mail dans un autre dossier\nv\tvoir tout\nb\tdéplacement ou effacement par lot\nf\tdéplacement ou effacement par expéditeur\nespace\tlit et traite ce mail\n/\trecherche des mots dans le sujet, l'expéditeur, ou le corps\nl\tdéfinit la limite maximale de récupération pour imap
 s chaine, mails avec chaîne dans le sujet\nf chaîne, mails avec chaîne dans la ligne from\nb chaîne, mails avec chaîne dans le corps du message\nsans lettre repère, le sujet est par défaut.
 pas de messages
 interruption, tapez qt pour quitter complètement
@@ -293,7 +293,7 @@ connexion impossible à %s
 téléchargement: 
 Le certificat de sécurité de l'hôte %s ne peut être vérifié - connexion SSL abandonnée
 inaccessible
-h\taffiche ce texte d'aide\nq\tquitter ce programme\nespace\taffiche la suite de ce courriel\nn\tva au courriel suivant\nd\tefface ce message\nv\tvoir tout\nb\ttraitement par lots\nf\tde\nw\tsauvegarde ce message dans un fichier\nW\tsauvegarde ce message dans un fichier puis l'efface\nu\tsauvegarde ce message non formaté dans un fichier\nU\tsauvegarde ce message dans un fichier puis l'efface\na\tparcourt et sauvegarde les pièces attachées\ns\tinterrompre la lecture des courriels de ce dossier
+h\taffiche ce texte d'aide\nq\tquitter ce programme\nespace\taffiche la suite de ce courriel\nn\tva au courriel suivant\nd\tefface ce message\nv\tvoir tout\nb\tdéplacement ou effacement par lot\nf\tdéplacement ou effacement par expéditeur\nw\tsauvegarde ce message dans un fichier\nW\tsauvegarde ce message dans un fichier puis l'efface\nu\tsauvegarde ce message non formaté dans un fichier\nU\tsauvegarde ce message dans un fichier puis l'efface\na\tparcourt et sauvegarde les pièces attachées\ns\tinterrompre la lecture des courriels de ce dossier
 la page web requiert une autorisation
 authentification abandonnée
 la chaîne de recherche ne peut comporter des guillemets
@@ -457,7 +457,7 @@ Le plugin est un lecteur, pas un convertisseur
 cacher bulles de texte
 montrer bulles de texte
 traitement par lots 
-de 
+de %s 
 caractères inattendus après la pièce jointe encodée
 caractères invalides dans la pièce jointe encodée
 0
@@ -482,7 +482,7 @@ pas de cadres à déployer
 pas de cadres à réduire
 messages d'aide activés
 téléchargement ftp: 
-0
+abandonné
 téléchargement scp: 
 Caractères nuls à la ligne %d
 .ebrc : pas de nom de fonction à la ligne %d

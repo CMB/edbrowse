@@ -27,7 +27,7 @@ debug cloneNode disabled
 debug cloneNode enabled
 end markers off
 end markers on
-0
+no from line
 javascript disabled, no action taken
 javascript is disabled, going straight to the url
 redirection interrupted by user
@@ -457,7 +457,7 @@ plugin is a player, not a converter
 hide hover text
 show hover text
 batch 
-from 
+from %s 
 unexpected characters after the encoded attachment
 invalid characters in the encoded attachment
 the %s command cannot be applied globally
@@ -482,7 +482,7 @@ no frames to expand
 no frames to contract
 help messages on
 ftp download: 
-0
+aborted
 scp download: 
 .ebrc: null characters at line %d
 .ebrc: missing function name at line %d
