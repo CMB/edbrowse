@@ -305,7 +305,7 @@ failed
 ftp could not connect to remote host
 ftp transfer failed
 no folders present
-Select a folder by number or by substring.\nPrepend - for just the unread messages. q to quit. l to change fetch limit.
+Select a folder by number or by substring.\nq to quit. l to change fetch limit.
 in progress
 stop
 fetch %d at a time\n

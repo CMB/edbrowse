@@ -305,7 +305,7 @@ falhou
 o FTP não conseguiu conectar ao servidor remoto
 transferência FTP falhou
 nenhuma pasta presente
-Selecione uma pasta por número ou por subcadeia.\nAcrescente - para somente as mensagens não lidas; q para sair; l para mudar o limite de recepção.
+Selecione uma pasta por número ou por subcadeia.\nq para sair; l para mudar o limite de recepção.
 ativa
 interromper
 pegar %d de uma vez\n

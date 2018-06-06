@@ -499,26 +499,24 @@ static void printEnvelope(const struct MIF *mif)
 	nzFree(envp);
 }
 
-static void viewAll(struct FOLDER *f, bool allmessages)
+static void viewAll(struct FOLDER *f)
 {
 	int j;
 	struct MIF *mif = f->mlist;
 	for (j = 0; j < f->nfetch; ++j, ++mif) {
-		if (!allmessages && mif->seen)
-			continue;
 		if (!mif->gone)
 			printEnvelope(mif);
 	}
 }
 
 static void bulkMoveDelete(CURL * handle, struct FOLDER *f,
-			   struct MIF *this_mif, char subkey, bool allmessages)
+			   struct MIF *this_mif, char subkey)
 {
 	i_puts(MSG_NYI);
 }
 
 /* scan through the messages in a folder */
-static void scanFolder(CURL * handle, struct FOLDER *f, bool allmessages)
+static void scanFolder(CURL * handle, struct FOLDER *f)
 {
 	struct MIF *mif;
 	int j;
@@ -529,7 +527,7 @@ static void scanFolder(CURL * handle, struct FOLDER *f, bool allmessages)
 	char inputline[80];
 	bool yesdel = false, delflag, bulkflag;
 
-	if (!f->nmsgs || (!allmessages && !f->unread)) {
+	if (!f->nmsgs) {
 		i_puts(MSG_NoMessages);
 		return;
 	}
@@ -552,9 +550,6 @@ showmessages:
 
 	mif = f->mlist;
 	for (j = 0; j < f->nfetch; ++j, ++mif) {
-		if (!allmessages && mif->seen)
-			continue;
-
 		printEnvelope(mif);
 
 action:
@@ -583,7 +578,6 @@ imap_done:
 				goto imap_done;
 			if (!imapSearch(handle, f, inputline))
 				goto action;
-			allmessages = true;
 			if (f->nmsgs > f->nfetch)
 				i_printf(MSG_ShowLast, f->nfetch, f->nmsgs);
 			else
@@ -645,7 +639,7 @@ imap_done:
 		if (key == 'v') {
 			static const char delim[] = "----------";
 			puts(delim);
-			viewAll(f, allmessages);
+			viewAll(f);
 			puts(delim);
 			printEnvelope(mif);
 			goto action;
@@ -657,7 +651,7 @@ imap_done:
 			fflush(stdout);
 			subkey = getLetter("mdx");
 			nl();
-			bulkMoveDelete(handle, f, mif, subkey, allmessages);
+			bulkMoveDelete(handle, f, mif, subkey);
 			bulkflag = true;
 			goto action;
 		}
@@ -1137,7 +1131,6 @@ static CURLcode count_messages(CURL * handle, int *message_count)
 		struct FOLDER *f;
 		char inputline[80];
 		char *t;
-		bool allmessages;
 
 		setFolders();
 		if (!n_folders) {
@@ -1164,14 +1157,11 @@ input:
 			i_puts(MSG_Quit);
 			goto imap_done;
 		}
-		allmessages = true;
-		if (*t == '-')
-			allmessages = false, ++t;
 		f = folderByName(t);
 		if (!f)
 			goto input;
 		examineFolder(handle, f, false);
-		scanFolder(handle, f, allmessages);
+		scanFolder(handle, f);
 		goto input;
 	}
 
