@@ -1325,6 +1325,15 @@ return a;
 }
 
 /*********************************************************************
+If you append a documentFragment you're really appending all its kids.
+This is called by the various appendChild routines.
+Since we are appending many nodes, I'm not sure what to return.
+*********************************************************************/
+
+mw0.appendFragment = function(p, frag) { var c; while(c = frag.firstChild) p.appendChild(c); return null; }
+mw0.insertFragment = function(p, frag, l) { var c; while(c = frag.firstChild) p.insertBefore(c, l); return null; }
+
+/*********************************************************************
 Here comes a bunch of stuff regarding the childNodes array,
 holding the children under a given html node.
 The functions eb$apch1 and eb$apch2 are native. They perform appendChild in js.
@@ -1354,6 +1363,7 @@ b = b.parentNode;
 
 mw0.appendChild = function(c) {
 if(!c) return null;
+if(c.nodeType == 11) return mw0.appendFragment(this, c);
 mw0.isabove(c, this);
 if(c.parentNode) c.parentNode.removeChild(c);
 return this.eb$apch2(c);
@@ -1369,6 +1379,7 @@ mw0.insertBefore = function(c, t) {
 if(!c) return null;
 if(!t) return this.appendChild(c);
 mw0.isabove(c, this);
+if(c.nodeType == 11) return mw0.insertFragment(this, c, t);
 if(c.parentNode) c.parentNode.removeChild(c);
 return this.eb$insbf(c, t);
 }
@@ -2209,6 +2220,7 @@ if(!parent.elements[s]) parent.elements[s] = child;
 mw0.Form.prototype.appendChildNative = mw0.appendChild;
 mw0.Form.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
+if(newobj.nodeType == 11) return mw0.appendFragment(this, newobj);
 this.appendChildNative(newobj);
 if(newobj.nodeName === "INPUT" || newobj.nodeName === "SELECT") {
 this.elements.push(newobj);
@@ -2221,6 +2233,7 @@ mw0.Form.prototype.insertBeforeNative = mw0.insertBefore;
 mw0.Form.prototype.insertBefore = function(newobj, item) {
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
+if(newobj.nodeType == 11) return mw0.insertFragment(this, newobj, item);
 var r = this.insertBeforeNative(newobj, item);
 if(!r) return null;
 if(newobj.nodeName === "INPUT" || newobj.nodeName === "SELECT") {
@@ -2324,6 +2337,7 @@ this.removeChild(this.options[idx]);
 mw0.tBody.prototype.appendChildNative = mw0.appendChild;
 mw0.tBody.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
+if(newobj.nodeType == 11) return mw0.appendFragment(this, newobj);
 this.appendChildNative(newobj);
 if(newobj instanceof tRow) // shouldn't be anything other than TR
 this.rows.push(newobj), mw0.rowReindex(this);
@@ -2333,6 +2347,7 @@ mw0.tBody.prototype.insertBeforeNative = mw0.insertBefore;
 mw0.tBody.prototype.insertBefore = function(newobj, item) {
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
+if(newobj.nodeType == 11) return mw0.insertFragment(this, newobj, item);
 var r = this.insertBeforeNative(newobj, item);
 if(!r) return null;
 if(newobj instanceof tRow)
@@ -2376,6 +2391,7 @@ mw0.tFoot.prototype.removeChild = mw0.tBody.prototype.removeChild;
 mw0.Table.prototype.appendChildNative = mw0.appendChild;
 mw0.Table.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
+if(newobj.nodeType == 11) return mw0.appendFragment(this, newobj);
 this.appendChildNative(newobj);
 if(newobj instanceof tRow) mw0.rowReindex(this);
 if(newobj instanceof tBody) {
@@ -2397,6 +2413,7 @@ mw0.Table.prototype.insertBeforeNative = mw0.insertBefore;
 mw0.Table.prototype.insertBefore = function(newobj, item) {
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
+if(newobj.nodeType == 11) return mw0.insertFragment(this, newobj, item);
 var r = this.insertBeforeNative(newobj, item);
 if(!r) return null;
 if(newobj instanceof tRow) mw0.rowReindex(this);
@@ -2445,6 +2462,7 @@ return item;
 mw0.tRow.prototype.appendChildNative = mw0.appendChild;
 mw0.tRow.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
+if(newobj.nodeType == 11) return mw0.appendFragment(this, newobj);
 this.appendChildNative(newobj);
 if(newobj.nodeName === "TD") // shouldn't be anything other than TD
 this.cells.push(newobj);
@@ -2454,6 +2472,7 @@ mw0.tRow.prototype.insertBeforeNative = mw0.insertBefore;
 mw0.tRow.prototype.insertBefore = function(newobj, item) {
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
+if(newobj.nodeType == 11) return mw0.insertFragment(this, newobj, item);
 var r = this.insertBeforeNative(newobj, item);
 if(!r) return null;
 if(newobj.nodeName === "TD")
