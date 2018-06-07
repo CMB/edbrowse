@@ -416,6 +416,7 @@ q : quitte la session courante
 <br>!commande : commande shell 
 <br>! : shell interactif
 <br>cd : change de répertoire
+<br>config : relit le fichier de configuration
 <p>
 Entrées
 </p>
@@ -630,6 +631,13 @@ db3 : niveau de déboguage (de 0 à 7)
 <br>dbcss : active debugging css (bascule)
 <br>uvw getAttribute : variable indéfinie pour on getAttribute
 <br>uvw trace : trace l'exécution javascript
+<br>jdb : debugger javascript , bye pour sortir
+<br>ok(o) : affiche tous les membres d'un objet, certains pouvant être non énumérables
+<br>showscripts() : montre tous les scripts de l'arbre
+<br>searchscripts(string) : recherche de chaîne dans les scripts
+<br>aloop(array, string_on[i]) : exécute la chaîne pour chaque membre du tableau
+<br>uptrace(node) : remonte dans l'arbre à partir du noeud fourni
+<br>dumptree(node) : montre l'arbre sous le noeud fourni
 
 <h3> <a name="tips"> Trucs pour éviter les numéros de ligne </a> </h3>
 
@@ -672,12 +680,12 @@ C'est le standard de ed.
 </p>
 
 <p>
-Pour rechercher des liens sur une page Web, rechercher l'accolade droite.
+Pour rechercher des liens sur une page Web, rechercher l'accolade gauche.
 Certes, vous pouvez tomber sur une accolade littérale dans le texte, 
 mais ceci ne se produit pas très souvent.
 Vous pouvez accéder à un lien particulier en tapant «/{Next}/g».
 De même, vous pouvez rechercher des champs de saisie en recherchant 
-le signe plus grand que («&gt;».
+le signe plus grand que «&gt;».
 Ceci s'explique si vous connaissez le codage particulier des pages web. 
 Et naturellement, des opérations multiples peuvent être codées dans un script, 
 une importante fonctionnalité de Edbrowse.
@@ -725,7 +733,7 @@ Voici quelques changements par rapport aux expressions régulières de Perl.
 J'ai constaté que «(and)» est presque toujours considéré comme un littéral, 
 comme en recherchant maFunction (), aussi j'ai inversé la signification des parenthèses 
 échappées dans Perl.
-C'est-à-dire, «(and)» maintenant matche les caractères littéraux, et «\ (and \) marque 
+C'est-à-dire, «( and )» maintenant matche les caractères littéraux, et «\( et \) marquent 
 les sous-chaînes correspondant à l'expression.
 Ces sous-chaînes sont alors référencées, dans le texte de remplacement, de $1 à $9.
 De même, «| signifie le littéral |,» alors que «\|» signifie l'alternative.
@@ -833,7 +841,7 @@ obtenir tous les fichiers source C dans le tampon courant.
 La substitution de variable et l'expansion de noms de fichiers peuvent être totalement 
 supprimées en faisant précéder l'expression par l'apostrophe arrière.
 Si vous voulez réellement lire un fichier appelé *a?, tapez r `*a?.
-Vous pouvez échapper un caractère isolé meta du shell avec un slash arrière, comme 
+Vous pouvez échapper un meta caractère isolé du shell avec un slash arrière, comme 
 dans jolie\*maison.
 </p>
 </li>
@@ -1153,7 +1161,7 @@ Elle ressemble à la commande «f», qui indique le fichier courant.
 <h3> <a name="usage"> Utilisation </a> </h3>
 
 Tapez «Edbrowse -h» pour afficher le massage d'aide ci-dessous.
-Vous verrez les options «-f», «-fm», et «-m»,utilisées de différentes manières.
+Vous verrez les options «-f», «-fm», et «-m», utilisées de différentes manières.
 Ignorez-les pour l'instant.
 Ces trois options lancent Edbrowse en tant que client interactif de courrier.
 Nous y reviendrons.
@@ -1316,11 +1324,10 @@ expressions régulières de Perl.
 Les caractères échappés sont toujours affichés en hexadécimal, que la ligne soit 
 listée ou non.
 La plupart des terminaux et des émulateurs de terminal, y compris la console 
-Linux et mon adaptateur de parole, interprètent les séquences d'échappement comme 
-des commandes .
+Linux, interprètent les séquences d'échappement comme des commandes .
 Ainsi une séquence d'échappement présente dans un fichier binaire peut mettre 
-votre terminal ou votre adaptateur de la parole dans un état inattendu, 
-rendant le rétablissement difficile.
+votre terminal dans un état inattendu, rendant le rétablissement difficile.
+Utiliser /usr/bin/reset pour remettre le terminal dans son état normal.
 Il semble prudent d'afficher en permanence les caractères échappés comme 
 caractères visibles.
 Si vous n'avez aucune idée d'où ce «~1b» est venu, c'est probablement 
@@ -1344,9 +1351,9 @@ pour les lettres accentuées etc., mais la plupart des caractères devraient êt
 Par conséquent les fichiers binaires ne sont pas des fichiers texte internationaux.
 En fait vous ne pourrez pas probablement afficher ou éditer des données binaires 
 efficacement, au moins par ce programme.Mais ne vous laissez pas arrêter.
-A titre d'exercice, créer un programme exécutable affichant «bonjourmonde», 
+A titre d'exercice, créer un programme exécutable affichant «bonjour monde», 
 puis éditez l'exécutable en utilisant ce éditeur.
-Rechercher la chaîne «bonjour» et remplacer «monde» par «tonte».
+Rechercher la chaîne «bonjour monde» et remplacer «monde» par «tonte».
 Sauvegardez le fichier et relancez l'exécutable.
 Vous devriez maintenant voir «bonjour tonte».
 
@@ -1858,7 +1865,6 @@ Ainsi la lecture ligne par ligne se fait souvent selon l'ordre des phrases.
 Pour moi, c'est la manière optimale de regarder ou éditer un document -- tout document.
 Si vous lisez la version brute de ce manuel, sans naviguer dans le fichier, 
 vous verrez ce que je veux dire.
-Revoyez la commande de coupure de ligne ci-dessus.
 </p>
 
 <p>
@@ -1894,7 +1900,6 @@ numéro de pièce|quantité|prix
 Les champs vides en fin de ligne sont ignorés.
 Ce sont presque toujours des images -- parfois une ligne entière d'images -- 
 parfois une table entière d'images.
-L'utilisateur aveugle n'a pas besoin de lire les champs vides.
 </p>
 
 <p>
@@ -2263,7 +2268,7 @@ qui indique à Edbrowse comment jouer les fichiers wav, mp3, etc.
 Ceux-ci doivent être configurés, sans quoi la commande «pb» ne fonctionnera pas.
 Elle affichera quelque chose comme «je ne sais pas traiter un fichier mp3».
 C'est conforme à d'autres navigateurs, qui emploient des extensions pour jouer les 
-fichiers multimedia en provenace de l'internet.
+fichiers multimedia en provenance de l'internet.
 </p>
 
 <H3> <A NAME=heading> Titres </A> </H3>
@@ -2273,7 +2278,7 @@ Certaines pages contiennent des titres, du niveau 1 au niveau 6.
 Ces titres sont référencés de h1 à h6.
 Comme les accolades indiquent un lien, h2 indique un titre de second niveau.
 H2 ne fait pas partie du texte; c'est une balise.
-Vous pouvez sauter à un titre diffréent en utilisant las commandes ed classiques : 
+Vous pouvez sauter à un titre différent en utilisant les commandes ed classiques : 
 /h2 pour le le titre de niveau 2 suivant, ?h1 pour le titre de niveau 1 précédent 
 et /h\d pour le titre suivant de n'importe quel niveau.
 </p>
@@ -2387,7 +2392,7 @@ dans un menu à moins d'y être absolument obligées !
 
 <p>
 Il y a une certaine ambiguïté quand l'option est elle-même un nombre.
-Dans ce cas-ci j'exécute trois comparaisons.
+Dans ce cas-ci edbrowse exécute trois comparaisons.
 Si vous saisissez le nombre exact, cette option est choisie.
 Si le nombre que vous avez tapé n'est pas une des options, il est traité comme 
 numéro d'une entrée de menu.
@@ -2420,9 +2425,9 @@ Mettre suffisamment de caractères autour du «*» pour indiquer un fichier uniq
 </p>
 
 <p>
-Les zones de texte multiligne sont souvent utilisées pour capturer un paragraphe, un commentaire 
+Les zones de texte multiligne sont souvent utilisées pour taper un paragraphe, un commentaire 
 complexe. Mais certains sites s'attendent à ce que vous composiez votre commentaire sur une 
-seule ligne. Dans ca cas, changez de session et utilisez la puissance de l'éditeur.
+seule ligne d'édition. Dans ca cas, changez de session et utilisez la puissance de l'éditeur.
 Composez votre commentaire, tapez ,J pour le convertir en monoligne, revenez en arrière et 
 tapez i&lt;7 pour l'insérer dans la zone de saisie.
 </p>
@@ -2514,8 +2519,6 @@ Si la troisième zone de saisie sur la ligne courante est un bouton de validatio
 d'annulation, vous pouvez l'enfoncer en tapant «i3*».
 Le bouton d'annulation réinitialise toutes les zones du formulaire, 
 telles qu'elles étaient au premier chargement de la page web.
-
-<p>
 Le bouton de soumission envoie le formulaire au serveur à distance et attend une réponse.
 C'est comme suivre un lien Internet, mais ici vous envoyez quelques données avec la demande.
 Tapez «kangourou» dans un moteur de recherche et vous lirez bientôt une page Web 
@@ -2585,9 +2588,18 @@ Mettre une étoile avant chaque paragraphe qui a class=footnote.
 Mettre une flèche droite après chaque lien avec class=external, vous envoyant sur une autre site.
 Ces petits symboles sont surtout visuels, mas ils sont égalemnt révélés par la 
 commande hover.
-Comme évoqué précedemment, les caractères injectés ou emojis sont des rappels visuels des noeuds 
+Comme évoqué précédemment, les caractères injectés ou emojis sont des rappels visuels des noeuds 
 qu'ils décorent, et sont rarement indispensables; cependant, il y a de rares sites ou le texte 
 injécté est explicatif, et devrait être lu en premier.
+
+<P>
+Finalement, la commande hover affiche les sections rendues invisibles par css ou javascript.
+Elles sont affichées entre signes supérieur et inférieur, et accolades, par ex. &lt;{bonjour monde}&gt;.
+Elles peuvent être cachées parce non pertinentes pour vous, ou dans la situation actuelle.
+Pourquoi afficher le lien de commande si votre panier d'achats est vide ?
+Cependant, edbrowse est un travail en cours, et parfois une bogue laisse une section invisible, 
+alors qu'elle devrait être affichée.
+C'est pourquoi vous pouvez souhaiter de voir ce que vous manquez.
 
 <P>
 La commande hover n'affiche ni ne cache les textes-bulles si javascript n'est pas activé.
@@ -2679,7 +2691,7 @@ Un dernier avertissement au sujet des ajouts à votre fichier de signets.
 Disons que vous avez lancé votre commande «A», et avez modifié un peu la description.
 Maintenant le lien est correctement écrit, et vous voulez le sauvegarder.
 Vous tapez accidentellement «w $bookmarks», oubliant le signe plus.
-Au lieu d'ajouter le lien en fin de fichier, vous avez enregistré à la place de votre 
+Au lieu d'ajouter le lien en fin de fichier, vous avez enregistré le lien à la place de votre 
 fichier de signets.
 Des années des liens accumulés sont parties en fumée.
 Pour éviter cet accident désastreux, créez une macro pour l'ajout à votre fichier de signets.
@@ -3040,13 +3052,14 @@ et quelqu'un d'autre maintient ce code à mesure que Javascript évolue.
 
 <p>
 Edbrowse n'offre pas toutes les fonctionnalités de Javascript côté client (DOM), 
-et ne les offrira jamais.
+et ne les offrira probablement jamais.
 Par exemple, beaucoup de sites Web utilisent Javascript pour changer des images 
 à la volée au passage de la souris sur l'écran.
 Ceci n'a aucune signification dans Edbrowse.
 D'autres sites Web affichent de multiples fenêtres multiples, et vous laissent agir 
 sur ces sous-fenêtres en utilisant des icônes dans la fenêtre principale.
-Il serait très difficile simuler ce comportement dans un environnement.
+Il serait très difficile simuler ce comportement dans un environnement de ligne de commande, 
+mais peut-être pas impossible.
 </p>
 
 <p>
@@ -3096,7 +3109,7 @@ Quand vous poussez le bouton, vous verrez le message d'erreur,
 ou bien le formulaire sera envoyé, et une page de confirmation apparaîtra sous peu.
 
 <p>
-Dans certains cas la fonction de Javascript restructure vos données.
+Dans certains cas la fonction de Javascript reformate vos données.
 Elle peut compléter certains des champs «cachés» pour vous, 
 ou elle peut calculer la TVA et le prix d'achat en conséquence.
 C'est plus que la validation de formulaire, c'est du Javascript actif, 
@@ -3192,8 +3205,9 @@ tampon et vous aurez la pleine puissance de l'édiuer, commande annuler comprise
 </p>
 
 <h3> <A NAME=jex> Debugger Javascript </A> </H3>
-En mode navigation, la commande "jdb" redirige tous les entrées suivantes vers le moteur javascript, 
-contenant les objets associés à page web courante, spécifiquement le cadre associé à la ligne courante.
+En mode navigation, la commande "jdb" (debugger javascript) redirige tous les entrées suivantes 
+vers le moteur javascript, contenant les objets associés à page web courante, spécifiquement le 
+cadre associé à la ligne courante.
 Tapez un point, ou bye, pour revenir à edbrowse.
 Il est préférable d'entre la commande jdb avec un niveau de débogage à 3, pour voir ainsi toutes les 
 erreurs javascript de syntaxe ou de référence. Cette fonctionnalité est destinée aux 
@@ -3227,7 +3241,8 @@ Cela fonctionne si ce fichier est absent, mais s'il est présent,
 il doit être syntaxiquement correct.
 S'il y a une erreur, éditez le fichier de configuration, corrigez l'erreur, et 
 tapez "config" pour l'appliquer à nouveau.
-Recommencez jusqu'à ce qu'il n'y ait plus d'erreurs, ainsi vous aurez un 
+Recommencez jusqu'à ce qu'il n'y ait plus d'erreurs.
+La lecture du fichier de config s'arrêtte à la première erreur, ainsi vous aurez un 
 fonctionnement impeccable.
 Souvenez-vous que "edbrowse -c" vous permet d'éditer le fichier de configuration 
 directement. 
@@ -3289,7 +3304,7 @@ Quand Edbrowse voit cette ligne dans son fichier de configuration, il repère l'
 du fichier ««cookie-jar», et vérifie la validité de ce fichier.
 Si le fichier est un répertoire (ou quelque chose de bizarre), ou bien est inaccessible, 
 Edbrowse affiche un message d'erreur et quitte.
-Si cela se produit, utilisez l'option «-c» pour éditer votre fichier de configuration, 
+Si cela se produit, éditez votre fichier de configuration, 
 et modifiez le fichier des cookies.
 </p>
 
@@ -3336,7 +3351,7 @@ la zone temporaire sous Windows.
 La paramètre cachesize définit la taille du cache en mégaoctets. Par défaut, c'est 1000. 
 S'il est mis à 0, edbrowse ne met aucun fichier en cache.
 Lorsque que le cache est plein, edbrowse efface les 100 fichiers les plus anciens et continue.
-Edbrowse ne stocke pas plus de 10000 fichiers, même si le cahche peut en contenir davantage.
+Edbrowse ne stocke pas plus de 10000 fichiers, même si le cache peut en contenir davantage.
 </p>
 
 <p>
@@ -3428,7 +3443,7 @@ Indique les domaines qui n'ont pas besoin de Javascript.
 Vous pouvez éliminer les messages d'erreur agaçants et accélérer l'accès en 
 désactivant Javascript pour certains sites Web.
 Javascript ne sera pas lancé dans les pages de ces sites, 
-ni même recherché sur ces sites.
+ni même chargé sur ces sites.
 </p>
 
 <p>
@@ -3853,7 +3868,7 @@ en tant qu'élément du client «fetchmail».
 
 <h3> <a name="mt"> Descripteurs des plugins </a> </h3>
 
-Les types mime sont déterminés par l'extension dans le nom de fichier, ou dans 
+Les plugins sont déterminés par l'extension dans le nom de fichier, ou dans 
 certains cas par le protocole.
 Ils peuvent indiquer à Edbrowse d'utiliser /usr/bin/play pour jouer fichier.wav ou 
 fichier.voc, et /usr/bin/mpg123 pour jouer fichier.mp3, et ainsi de suite.
@@ -3951,6 +3966,10 @@ même si c'est un peu plus compliqué.
 La meilleure documentation étant un exemple, je vous propose un fichier de configuration 
 exemple avec de fausses données; Il est bien commenté.
 Vous pouvez le télécharger <A HREF=http://Edbrowse.org/sample.ebrc>ici</a>.
+Egalement disponible en
+<A href=sample_fr.ebrc>Français</A>
+and
+<A href=sample_it.ebrc>Italien</A>.
 
 <P><HR><P>
 <h2> Chapitre 7, Client de courrier</h2>
@@ -4047,10 +4066,10 @@ ou à une session d'Edbrowse.
 <p>
 Comme vous l'avez deviné, les lignes «to:» définissent les destinataires.
 Veuillez ne pas indiquer plus que quelques destinataires.
-Quelques serveurs, mon serveur mail inclus, limitent à 100 le nombre de destinataires.
+Quelques serveurs limitent à 100 le nombre de destinataires.
 Si vous dépassez ce nombre, les destinataires restants n'obtiennent 
 simplement pas leur courrier.
-De préférence, limiter votre «to:» lignes à une douzaine de lignes.
+De préférence, limiter votre «to:» lignes à une ou deux douzaines de lignes.
 </p>
 
 <p>
@@ -4091,7 +4110,7 @@ Elles ressemblent à d'autres hyperliens,
 mais elles envoient le mail à la personne appropriée.
 Si vous activez un lien «sendmail», vous serez placés en nouvelle session 
 d'édition avec les lignes «to» et de «subject» pré-remplies.
-Si l'URL n'indiquait pas de sujet, le sujet est simplement «Hello».
+Si l'URL n'indiquait pas de sujet, le sujet sera simplement «Hello».
 Vous voudrez probablement le remplacer par autre chose.
 Tapez votre message puis «sm» pour l'envoyer.
 Puis tapez «^» pour retourner à la page Web que vous consultiez.
@@ -4351,7 +4370,7 @@ envoyez «viens m'embrasser» à x, et il a disparu.
 Vous pouvez également employer ce dispositif pour bloquer les avertissements 
 d'autres fournisseurs d'accès internet, se plaignant que vous leur avez envoyé 
 des mails infectés par des virus.
-Vous non, naturellement, parce que vous êtes linux, avec un clirent non-standard.
+Vous non, naturellement, parce que vous êtes linux, avec un client non-standard.
 Votre adresse de réponse a été récupérée, et vous recevez donc l'avertissement 
 de virus, mais vous n'en avez vraiment rien à faire.
 C'est appelé rétrodiffusion.
@@ -4525,7 +4544,7 @@ interactive. Voici une capture d'écran.
  8 [Gmail]/Corbeille, 16 messages
 Select a folder by number or by substring.
 Choisissez un dossier par numéro ou par sous-chaîne.
-Prefixez par - uniquement les messages non lus. q pour quitter. l pour changer la limite maximale de récupération.
+q pour quitter. l pour changer la limite maximale de récupération.
 </font></PRE>
 
 <p>
@@ -4553,6 +4572,9 @@ s   arrête la lecture dans ce dossier
 n   message suivant
 d   efface cet email
 m   déplace ce mail dans un autre dossier
+v   voir tout
+b   déplacer ou effacer par lots
+f   déplacer ou effacer par expéditeur
 espace   lit et traite ce mail
 /   recherche des mots dans le sujet, l'expéditeur ou le corps du message
 l   définit la limite de récupération imap
@@ -4572,6 +4594,26 @@ Tapez "f Smith" pour rechercher les mails de Smith, ou "b étoile noire" pour tr
 tous les mails contenant étoile noire.
 S'il y des milliers sont trouvés, seuls les 100 derniers sont affichés. Vous pouvez 
 modifier cette limite avec la commande l.
+</p>
+
+<p>
+S'il ya 300 mails dasn votre dossier de spams, il y a un moyen simple de les effacer tous.
+Tapez v pour les voir tous, juste pour vous assurer qu'aucun mail valide n'est présent. 
+Vous ne voulez certainement pas effacer quelque chose de bien par erreur.
+Ensuite papez b pour mode de traitement pas lots (b pour batch), ensuite d pour effacer.
+pouf, ils sont partis.
+De la même façon, vous pouvez déplacer tous les messages dans un autre dossier.
+Cependant, le déplacement est plus utile avec la clause from.
+Si le message courant est de Fred Flinstone, tapez f, et edbrowse affichera "from Fred Flinstone".
+Tapez m dessins, et tous les messages de Fred Flinstone iraont dans le répertoire dessins.
+</p>
+
+<p>
+Les commandes create et delete créent ou effacent des répertoires.
+Tapez "create foo" pour créer le nouveau répertoire foo.
+Vous pouvez y déplacer des messages.
+Attention - si vous effacez foo, tous les messages dans foo seront effacés.
+Ceci dépend du serveur imap.
 </p>
 
 <hr>
