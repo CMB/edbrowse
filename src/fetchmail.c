@@ -178,18 +178,29 @@ static struct FOLDER {
 	int uidnext;		/* uid of next message */
 	struct MIF *mlist;	/* allocated */
 } *topfolders;
+
 static int n_folders;
 static char *tf_cbase;		/* base of strings for folder names and paths */
 static bool move_capable = false;
 
+static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats);
+
 /* This routine mucks with the passed in string, which was allocated
  * to receive data from the imap server. So leave it allocated. */
-static void setFolders(void)
+static void setFolders(CURL * handle)
 {
 	struct FOLDER *f;
 	char *s, *t;
 	char *child, *lbrk;
 	char qc;		/* quote character */
+	int i;
+
+// Reset things, in case called on refresh
+	nzFree(topfolders);
+	topfolders = 0;
+	nzFree(tf_cbase);
+	tf_cbase = 0;
+	n_folders = 0;
 
 	s = mailstring;
 	while ((t = strstr(s, "LIST (\\"))) {
@@ -265,6 +276,10 @@ static void setFolders(void)
  * are now part of the folders, name and path etc. */
 	tf_cbase = mailstring;
 	mailstring = 0;
+
+	f = topfolders;
+	for (i = 0; i < n_folders; ++i, ++f)
+		examineFolder(handle, f, true);
 }				/* setFolders */
 
 static struct FOLDER *folderByName(char *line)
@@ -1239,7 +1254,7 @@ static CURLcode count_messages(CURL * handle, int *message_count)
 		char inputline[80];
 		char *t;
 
-		setFolders();
+		setFolders(handle);
 		if (!n_folders) {
 			i_puts(MSG_NoFolders);
 imap_done:
@@ -1247,22 +1262,27 @@ imap_done:
 			exit(0);
 		}
 
-		f = topfolders;
-		for (i = 0; i < n_folders; ++i, ++f)
-			examineFolder(handle, f, true);
-
-input:
 		i_puts(MSG_SelectFolder);
+input:
 		if (!fgets(inputline, sizeof(inputline), stdin))
 			goto imap_done;
+		trimWhite(inputline);
+		if (stringEqual(inputline, "rf")) {
+			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, 0);
+			res = getMailData(handle);
+			if (res != CURLE_OK)
+				goto imap_done;
+			setFolders(handle);
+			goto input;
+		}
+		if (stringEqual(inputline, "q")) {
+			i_puts(MSG_Quit);
+			goto imap_done;
+		}
 		t = inputline;
 		if (*t == 'l' && isspace(t[1])) {
 			setLimit(t + 1);
 			goto input;
-		}
-		if (*t == 'q') {
-			i_puts(MSG_Quit);
-			goto imap_done;
 		}
 		f = folderByName(t);
 		if (!f)

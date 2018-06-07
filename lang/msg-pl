@@ -305,7 +305,7 @@ niepowodzenie
 ftp: nie można połączyć się ze zdalnym hostem
 ftp: transfer zakończony niepowodzeniem
 brak katalogów
-Wybierz katalog wg. numeru lub części nazwy.\n'q' by zakończyć. 'l' by zmienić limity pobierania.
+Wybierz katalog wg. numeru lub części nazwy.\n'q' by zakończyć, 'rf' by odświeżyć, 'l' by zmienić limity pobierania.
 w toku
 stop
 pobierz %d na raz\n

@@ -305,7 +305,7 @@ fallito
 ftp non può connettersi all'host remoto
 trasferimento ftp fallito
 non ci sono folders
-Seleziona un folder mediante numbero o sottostringa.\nq per uscire. l per cambiare il limite di fetch.
+Seleziona un folder mediante numbero o sottostringa.\nq per uscire, rf per aggiornare, l per cambiare il limite di fetch.
 in corso
 stop
 preleva %d alla volta\n

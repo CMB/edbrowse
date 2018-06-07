@@ -305,7 +305,7 @@ terminée
 connexion ftp impossible à l'hôte distant
 échec du transfert ftp
 pas de dossier présent
-Choisissez un dossier par numéro ou par sous-chaîne.\nq pour quitter. l pour changer la limite maximale de récupération.
+Choisissez un dossier par numéro ou par sous-chaîne.\nq pour quitter, rf pour le réafficher, l pour changer la limite maximale de récupération.
 active
 stop
 récupérer %d à la fois\n

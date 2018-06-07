@@ -305,7 +305,7 @@ fehlgeschlagen
 ftp konnte sich nicht zum entfernten Rechner verbinden
 FTP-Übertragung fehlgeschlagen
 keine Ordner vorhanden
-Wähle Ordner mittels Zahl oder Teilbegriff.\nq zum Verlassen, l um die Begrenzung für das Abholen zu ändern.
+Wähle Ordner mittels Zahl oder Teilbegriff.\nq zum Verlassen, rf zum aktualisieren, l um die Begrenzung für das Abholen zu ändern.
 Aufbau...
 stop
 hole %d auf einmal\n
