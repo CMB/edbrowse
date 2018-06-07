@@ -723,7 +723,7 @@ void setupJavaDom(void)
 	struct utsname ubuf;
 	int i;
 	char save_c;
-	static const char *languages[] = { 0,
+	static const char *const languages[] = { 0,
 		"english", "french", "portuguese", "polish",
 		"german", "russian", "italian",
 	};

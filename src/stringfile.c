@@ -972,13 +972,35 @@ char *conciseSize(size_t n)
 char *conciseTime(time_t t)
 {
 	static char buffer[20];
-	static const char *months[] = {
+	static const char *const englishMonths[] = {
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
+	static const char *const frenchMonths[] = {
+		"Janv", "Fév", "Mars", "Avr", "Mai", "Juin",
+		"Juill", "Août", "Sept", "Oct", "Nov", "Déc",
+		0
+	};
+	static const char *const portMonths[] = {
+		"Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+		"Jul", "Ago", "Set", "Out", "Nov", "Dec",
+	};
+	static const char *const germanMonths[] = {
+		"Jan", "Feb", "Mär", "Apr", "Mai", "Jun",
+		"Jul", "Aug", "Sep", "Okt", "Nov", "Dez",
+	};
+	static const char *const *const allMonths[] = { 0,
+		englishMonths,
+		frenchMonths,
+		portMonths,
+		englishMonths,
+		germanMonths,
+		englishMonths,
+		englishMonths,
+	};
 	struct tm *tm = localtime(&t);
 	sprintf(buffer, "%s %2d %d %02d:%02d",
-		months[tm->tm_mon], tm->tm_mday, tm->tm_year + 1900,
+		allMonths[eb_lang][tm->tm_mon], tm->tm_mday, tm->tm_year + 1900,
 		tm->tm_hour, tm->tm_min);
 	return buffer;
 }				/* conciseTime */

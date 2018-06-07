@@ -898,16 +898,16 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		t += 10;
 		while (*t == ' ')
 			++t;
-/* date first, and it must be quoted */
+// date first, and it must be quoted.
+// We don't use this date because it isn't standardized,
+// it's whatever the sender's email client puts on the Date field.
+// We use INTERNALDATE later.
 		if (*t != '"')
 			continue;
-		++t;
-		u = strchr(t, '"');
-		if (!u)
+		t = strchr(++t, '"');
+		if (!t)
 			continue;
-		*u = 0;
-		mif->sent = parseHeaderDate(t);
-		t = u + 1;
+		++t;
 
 /* subject next, I'll assume it is always quoted */
 		while (*t == ' ')
@@ -982,12 +982,29 @@ doflags:
 /* flags, mostly looking for has this been read */
 		u = strstr(t, "FLAGS (");
 		if (!u)
-			goto dosize;
+			goto dodate;
 		t = u + 7;
 		if (strstr(t, "\\Seen"))
 			mif->seen = true;
 		else
 			++f->unread;
+
+dodate:
+		u = strstr(t, "INTERNALDATE ");
+		if (!u)
+			goto dosize;
+		t = u + 13;
+		while (*t == ' ')
+			++t;
+		if (*t != '"')
+			goto dosize;
+		++t;
+		u = strchr(t, '"');
+		if (!u)
+			goto dosize;
+		*u = 0;
+		mif->sent = parseHeaderDate(t);
+		t = u + 1;
 
 dosize:
 		u = strstr(t, "SIZE ");

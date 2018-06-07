@@ -410,9 +410,10 @@ unpackUploadedFile(const char *post, const char *boundary,
 	*postb_l = b1 - post2;
 }				/* unpackUploadedFile */
 
-/* Date format is:    Mon, 03 Jan 2000 21:29:33 GMT|[+-]nnnn */
-			/* Or perhaps:     Sun Nov  6 08:49:37 1994 */
-/* or perhaps 1994-11-06 08:49:37.nnnnZ */
+// Date format is:    Mon, 03 Jan 2000 21:29:33 GMT|[+-]nnnn
+			// Or perhaps:     Sun Nov  6 08:49:37 1994
+// or perhaps: 1994-11-06 08:49:37.nnnnZ
+// or perhaps 06-Jun-2018 21:47:09 +nnnn
 time_t parseHeaderDate(const char *date)
 {
 	static const char *const months[12] = {
@@ -422,7 +423,8 @@ time_t parseHeaderDate(const char *date)
 	time_t t = 0;
 	int zone = 0;
 	time_t now = 0;
-	int y;			/* remember the type of format */
+	int y;			// the type of format, 0 through 3
+	int m;			// month
 	struct tm *temptm = NULL;
 	struct tm tm;
 	long utcoffset = 0;
@@ -437,6 +439,27 @@ time_t parseHeaderDate(const char *date)
 #ifndef _MSC_VER
 	utcoffset = temptm->tm_gmtoff;
 #endif
+
+	if (isdigitByte(date[0]) && isdigitByte(date[1]) &&
+	    date[2] == '-' && isalphaByte(date[3])) {
+		y = 3;
+		tm.tm_mday = atoi(date);
+		date += 3;
+		for (m = 0; m < 12; m++)
+			if (memEqualCI(date, months[m], 3))
+				goto f5;
+		goto fail;
+f5:
+		tm.tm_mon = m;
+		date += 3;
+		if (*date != '-' || !isdigitByte(date[1]))
+			goto fail;
+		tm.tm_year = atoi(date + 1) - 1900;
+		date += 5;
+		while (*date == ' ')
+			++date;
+		goto f3;
+	}
 
 	if (isdigitByte(date[0]) && isdigitByte(date[1]) &&
 	    isdigitByte(date[2]) && isdigitByte(date[3]) && date[4] == '-') {
@@ -466,11 +489,12 @@ time_t parseHeaderDate(const char *date)
 		if (*date != ' ' && *date != '-')
 			goto fail;
 		++date;
-		for (tm.tm_mon = 0; tm.tm_mon < 12; tm.tm_mon++)
-			if (memEqualCI(date, months[tm.tm_mon], 3))
+		for (m = 0; m < 12; m++)
+			if (memEqualCI(date, months[m], 3))
 				goto f1;
 		goto fail;
 f1:
+		tm.tm_mon = m;
 		date += 3;
 		if (*date == ' ') {
 			date++;
@@ -504,11 +528,12 @@ f1:
 	} else {
 /* second format */
 		y = 1;
-		for (tm.tm_mon = 0; tm.tm_mon < 12; tm.tm_mon++)
-			if (memEqualCI(date, months[tm.tm_mon], 3))
+		for (m = 0; m < 12; m++)
+			if (memEqualCI(date, months[m], 3))
 				goto f2;
 		goto fail;
 f2:
+		tm.tm_mon = m;
 		date += 3;
 		while (*date == ' ')
 			date++;
