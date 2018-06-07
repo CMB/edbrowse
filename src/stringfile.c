@@ -989,6 +989,11 @@ char *conciseTime(time_t t)
 		"Jan", "Feb", "Mär", "Apr", "Mai", "Jun",
 		"Jul", "Aug", "Sep", "Okt", "Nov", "Dez",
 	};
+	static const char *const italMonths[] = {
+		"Gen", "Feb", "Mar", "Apr", "Mag", "Giu",
+		"Lug", "Ago", "Set", "Ott", "Nov", "Dic",
+		0
+	};
 	static const char *const *const allMonths[] = { 0,
 		englishMonths,
 		frenchMonths,
@@ -996,7 +1001,7 @@ char *conciseTime(time_t t)
 		englishMonths,
 		germanMonths,
 		englishMonths,
-		englishMonths,
+		italMonths,
 	};
 	struct tm *tm = localtime(&t);
 	sprintf(buffer, "%s %2d %d %02d:%02d",

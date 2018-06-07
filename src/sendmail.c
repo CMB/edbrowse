@@ -569,9 +569,28 @@ static char *mailTimeString(void)
 	static char buf[48];
 	struct tm *cur_tm;
 	time_t now;
+	static const char months[] =
+	    "Jan\0Feb\0Mar\0Apr\0May\0Jun\0Jul\0Aug\0Sep\0Oct\0Nov\0Dec";
+	static const char wdays[] = "Sun\0Mon\0Tue\0Wed\0Thu\0Fri\0Sat";
+
 	time(&now);
 	cur_tm = localtime(&now);
+
+/*********************************************************************
 	strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S %z", cur_tm);
+That's what I use to do, but a user in France always got a date
+with French month and weekday, even though I setlocale(LC_TIME, "C");
+I changed C to en_US, still the French shines through.
+I don't understand it, so I just work around it.
+This is an internet standard, it's suppose to be English.
+*********************************************************************/
+
+	sprintf(buf, "%s, %02d %s ",
+		wdays + cur_tm->tm_wday * 4,
+		cur_tm->tm_mday, months + cur_tm->tm_mon * 4);
+// and strftime can do the rest.
+	strftime(buf + 12, sizeof(buf) - 12, "%Y %H:%M:%S %z", cur_tm);
+
 	return buf;
 }				/* mailTimeString */
 

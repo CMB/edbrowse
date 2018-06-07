@@ -44,7 +44,7 @@ non ci sono keywords
 sessione %d\n
 link SendMail.  Componi la tua mail, digita sm per inviare, poi ^ per tornare indietro.
 la riga %d è stata aggiornata\n
-h\tstampa questo messaggio di aiuto\nq\tesce dal programma\ns\tsmette di leggere da questa cartella\nn\tcontinua dal prossimo messaggio\nd\telimina questa mail\nm\tsposta questa email ad un'altra cartella\nspace\tleggi e gestisci questo messaggio\n/\tcerca parole nel soggetto, nel campo from, o nel corpo del messaggio\nl\timposta il limite di fetch per imap
+h\tstampa questo messaggio di aiuto\nq\tesce dal programma\ns\tsmette di leggere da questa cartella\nn\tcontinua dal prossimo messaggio\nd\telimina questa mail\nm\tsposta questa email ad un'altra cartella\nv\tvedi tutti\nb\tsposta o eliminatutti gli elementiselezionati\nf\tspostamento o eliminazione per mittente\nspace\tleggi e gestisci questo messaggio\n/\tcerca parole nel soggetto, nel campo from, o nel corpo del messaggio\nl\timposta il limite di fetch per imap
 s stringa, emails con la stringa nel soggetto\nf stringa, emails con la stringa nel campo from\nb stringa, emails con la stringa nel corpo del messaggio\nse non c'è un designatore, il soggetto è il default.
 non ci sono messaggi
 interrupt, digita qt per uscire completamente
@@ -293,7 +293,7 @@ impossibile connettersi ad %s
 download: 
 Il certificato per l'host %s non può essere verificato - connessione SSL interrotta
 inaccessibile
-h\tstampa questo messaggio di aiuto\nq\tesce da questo programma\ns\tinterrompe l'acquisizione di messaggi da questo folder\nspazio\tleggi di più di questo messaggio\nn\tprossima email\nd\telimina questa email\nm\tsposta questa email in un altro folder\nw\tscrivi questa email su un file\nW\tscrivi questo messaggio su un file e cancellalo\nu\tscrivi questo messaggio non formattato su un file\nU\tscrivi questo messaggio email non formattato su un file e lo elimina\na\tcontrolla e salva allegato
+h\tstampa questo messaggio di aiuto\nq\tesce da questo programma\ns\tinterrompe l'acquisizione di messaggi da questo folder\nspazio\tleggi di più di questo messaggio\nn\tprossima email\nd\telimina questa email\nm\tsposta questa email in un altro folder\nv\tvedi tutti\nb\tsposta o eliminatutti gli elementiselezionati\nf\tspostamento o eliminazione per mittente\nw\tscrivi questa email su un file\nW\tscrivi questo messaggio su un file e cancellalo\nu\tscrivi questo messaggio non formattato su un file\nU\tscrivi questo messaggio email non formattato su un file e lo elimina\na\tcontrolla e salva allegato
 la pagina web richiede l'autneticazione
 login interrotto
 la stringa di ricerca non può contenere quotes
@@ -456,8 +456,8 @@ il plugin è un convertitore, non un player
 il plugin è un player, non n convertitore
 nascondi testo hover
 mostra testo hover
-0
-0
+batch 
+da %s 
 caratteri non attesi dopo l'allegato codificato
 caratteri non validi nell'allegato codificato
 il comando %s non può essere applicato globalmente
