@@ -1268,6 +1268,7 @@ input:
 			goto imap_done;
 		trimWhite(inputline);
 		if (stringEqual(inputline, "rf")) {
+refresh:
 			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, 0);
 			res = getMailData(handle);
 			if (res != CURLE_OK)
@@ -1280,9 +1281,53 @@ input:
 			goto imap_done;
 		}
 		t = inputline;
+		if (t[0] == 'd' && t[1] == 'b' && isdigit(t[2]) && !t[3]) {
+			debugLevel = t[2] - '0';
+			curl_easy_setopt(handle, CURLOPT_VERBOSE,
+					 (debugLevel >= 4));
+			goto input;
+		}
 		if (*t == 'l' && isspace(t[1])) {
 			setLimit(t + 1);
 			goto input;
+		}
+		if (!strncmp(t, "create ", 7)) {
+			t += 7;
+			trimWhite(t);
+			if (!*t)
+				goto input;
+			if (asprintf(&t, "CREATE \"%s\"", t) < 0)
+				goto imap_done;
+			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
+			res = getMailData(handle);
+			nzFree(mailstring);
+			if (res != CURLE_OK) {
+				i_printf(MSG_NoCreate2, t);
+				nl();
+				free(t);
+				goto input;
+			}
+			free(t);
+			goto refresh;
+		}
+		if (!strncmp(t, "delete ", 7)) {
+			t += 7;
+			trimWhite(t);
+			if (!*t)
+				goto input;
+			if (asprintf(&t, "DELETE \"%s\"", t) < 0)
+				goto imap_done;
+			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
+			res = getMailData(handle);
+			nzFree(mailstring);
+			if (res != CURLE_OK) {
+				i_printf(MSG_NoAccess, t);
+				nl();
+				free(t);
+				goto input;
+			}
+			free(t);
+			goto refresh;
 		}
 		f = folderByName(t);
 		if (!f)

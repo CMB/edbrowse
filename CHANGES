@@ -18,6 +18,7 @@ The & command backs up through intrapage jumps, just as they ^ command backs up 
 Imap client uses copy and delete if the server does not support the MOVE command.
 
 Bulk move or delete from one imap folder to another.
+Create and delete imap folders.
 
 3.7.3:
 Show heading information h1 through h6.

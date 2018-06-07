@@ -4229,7 +4229,7 @@ Type q to quit, n for the next message, d to delete,
 or m to move this message to another folder.
 Again, you can specify the destination folder by number or by name.
 Type space to read the body of the email, and keep typing space,
-like more or less, to read as much of the email as you wish.
+like more, to read as much of the email as you wish.
 Type w to write the email formatted, or W to write and delete.
 Type u or U to save the email unformatted.
 Type a to save the attachments.
@@ -4276,6 +4276,13 @@ In the same way, you can batch move all the messages to another folder.
 However, move is more useful with the from clause.
 If the current message is from Fred Flintstone, type f, and edbrowse will print "from Fred Flintstone".
 Then type m cartoon, and all the messages from Fred Flintstone will move to the cartoon folder.
+
+<P>
+The create and delete commands will create new folders or delete existing folders.
+Just type `create foo' to create a new folder foo.
+You can move messages into it right away.
+Warning - if you delete foo, all the messages in foo could disappear.
+This will depend on the imap server.
 
 <hr>
 <H2> Chapter 8, Database Access </H2>
