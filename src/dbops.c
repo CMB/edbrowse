@@ -25,7 +25,7 @@ bool rv_blobAppend;
 /* text descriptions corresponding to our generic SQL error codes */
 /* This has yet to be internationalized. */
 const char *sqlErrorList[] = { 0,
-	"miscelaneous SQL error",
+	"miscellaneous SQL error",
 	"syntax error in SQL statement",
 	"filename cannot be used by SQL",
 	"cannot convert/compare the columns/constants in the SQL statement",
@@ -106,7 +106,7 @@ char *lineFormatStack(const char *line,	/* the sprintf-like formatting string */
 	const char *t, *perc;
 	char fmt[12];
 
-	if (parmv && argv || !parmv && !argv)
+	if ((parmv && argv) || (!parmv && !argv))
 		errorPrint
 		    ("@exactly one of the last two arguments to lineFormatStack should be null");
 
@@ -122,7 +122,7 @@ char *lineFormatStack(const char *line,	/* the sprintf-like formatting string */
 
 	while (*t) {		/* more text to format */
 /* copy up to the next % */
-		if (*t != '%' || t[1] == '%' && ++t) {
+		if (*t != '%' || (t[1] == '%' && ++t)) {
 			if (q - lfbuf >= LFBUFSIZE - 1)
 				errorPrint(lfoverflow, LFBUFSIZE);
 			*q++ = *t++;
@@ -189,10 +189,10 @@ char *lineFormatStack(const char *line,	/* the sprintf-like formatting string */
 			errorPrint(lfoverflow, LFBUFSIZE);
 
 /* check for null parameter */
-		if (pdir == 'c' && !n ||
-		    pdir == 's' && isnullstring((char *)n) ||
-		    pdir == 'f' && dn == nullfloat ||
-		    !strchr("scf", pdir) && isnull(n)) {
+		if ((pdir == 'c' && !n) ||
+		    (pdir == 's' && isnullstring((char *)n)) ||
+		    (pdir == 'f' && dn == nullfloat) ||
+		    (!strchr("scf", pdir) && isnull(n))) {
 			if (!len_given) {
 				char *q1;
 /* turn = %d to is null */
@@ -1346,14 +1346,13 @@ bool sqlAddRows(int ln)
 	char *u3;		/* line with pipes */
 	char *unld, *s;
 	int u1len, u2len, u3len;
-	int j, l, nkeys;
+	int j, l;
 	double dv;
 	char inp[256];
 	bool rc;
 
 	if (!setTable())
 		return false;
-	nkeys = keyCountCheck();
 
 	while (1) {
 		u1 = initString(&u1len);
@@ -1509,7 +1508,6 @@ static void cursor_comm(const char *stmt1, const char *stmt2,	/* the two select 
 	short cid1, cid2;	/* the cursor ID numbers */
 	char *line1, *line2, *s;	/* the two fetched rows */
 	void *blob1, *blob2;	/* one blob per table */
-	int blob1size, blob2size;
 	bool eof1, eof2, get1, get2;
 	int sortval1, sortval2;
 	char sortstring1[80], sortstring2[80];
@@ -1566,7 +1564,6 @@ static void cursor_comm(const char *stmt1, const char *stmt2,	/* the two select 
 						sql_mkinsupd());
 				if (rv_blobLoc) {
 					blob1 = rv_blobLoc;
-					blob1size = rv_blobSize;
 					errorPrint(noblob);
 				}
 			}	/* not eof */
@@ -1599,7 +1596,6 @@ static void cursor_comm(const char *stmt1, const char *stmt2,	/* the two select 
 						sql_mkinsupd());
 				if (rv_blobLoc) {
 					blob2 = rv_blobLoc;
-					blob2size = rv_blobSize;
 					errorPrint(noblob);
 				}
 			}	/* not eof */
@@ -1610,18 +1606,20 @@ static void cursor_comm(const char *stmt1, const char *stmt2,	/* the two select 
 		get1 = get2 = false;
 
 /* in cid2, but not in cid1 */
-		if (eof1 || !eof2 &&
-		    (sorttype == 'S' && strcmp(sortstring1, sortstring2) > 0 ||
-		     sorttype != 'S' && sortval1 > sortval2)) {
+		if (eof1 || (!eof2 &&
+			     ((sorttype == 'S'
+			       && strcmp(sortstring1, sortstring2) > 0)
+			      || (sorttype != 'S' && sortval1 > sortval2)))) {
 			(*f) ('>', line1, line2, passkey2);
 			get2 = true;
 			continue;
 		}
 
 /* in cid1, but not in cid2 */
-		if (eof2 || !eof1 &&
-		    (sorttype == 'S' && strcmp(sortstring1, sortstring2) < 0 ||
-		     sorttype != 'S' && sortval1 < sortval2)) {
+		if (eof2 || (!eof1 &&
+			     ((sorttype == 'S'
+			       && strcmp(sortstring1, sortstring2) < 0)
+			      || (sorttype != 'S' && sortval1 < sortval2)))) {
 			(*f) ('<', line1, line2, passkey1);
 			get1 = true;
 			continue;
@@ -1756,7 +1754,7 @@ int goSelect(int *startLine, char **rbuf)
 
 	j = pstLength(line);
 	cmd = initString(&cmdlen);
-	stringAndBytes(&cmd, &cmdlen, line, j);
+	stringAndBytes(&cmd, &cmdlen, (char *)line, j);
 	cmd[0] = ' ';
 
 	while (j == 1 || line[j - 2] != ';') {
@@ -1770,7 +1768,7 @@ int goSelect(int *startLine, char **rbuf)
 			break;
 		}
 		j = pstLength(line);
-		stringAndBytes(&cmd, &cmdlen, line, j);
+		stringAndBytes(&cmd, &cmdlen, (char *)line, j);
 	}
 
 /* Try to infer action from the first word of the command. */

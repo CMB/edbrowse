@@ -9,11 +9,6 @@ CFLAGS += -DEDBROWSE_ON_LINUX
 endif
 
 #  Flags for gcc compilation.
-#  This assumes js and js-devel have been installed.
-#  These are available packages on most distros.
-#  You also need pcre[-devel] and curl[-devel]
-
-JS_CXXFLAGS =-I/usr/include/mozjs-24
 
 # By default, we strip the executables.
 # Override this behavior by setting EBDEBUG to a nonempty string
@@ -21,8 +16,10 @@ STRIP=-s
 ifneq ($(EBDEBUG),)
 STRIP=
 CFLAGS += -g -ggdb
-CXXFLAGS += -g -ggdb
 endif
+
+#  check for errors and mid level warnings.
+CFLAGS += -Wall
 
 #  Normal load flags
 LDFLAGS += $(STRIP)
@@ -33,10 +30,7 @@ LDFLAGS += $(STRIP)
 ESQLDFLAGS = $(STRIP)
 
 #  Libraries for edbrowse.
-# Override JSLIB on the command-line, if your distro uses a different name.
-# E.G., make JSLIB=-lmozjs
-JSLIB = -lmozjs-24
-LDLIBS = -lpcre -lcurl -lreadline -lncurses -ltidy
+LDLIBS = -lpcre -lcurl -lreadline -ltidy -lduktape -lm
 
 #  Make the dynamically linked executable program by default.
 all: edbrowse
@@ -45,7 +39,7 @@ all: edbrowse
 EBOBJS = main.o buffers.o sendmail.o fetchmail.o cache.o \
 	html.o format.o cookies.o ebjs.o plugin.o ebrc.o \
 	messages.o url.o stringfile.o html-tidy.o decorate.o \
-	msg-strings.o http.o auth.o jseng-moz.o
+	msg-strings.o http.o auth.o css.o jseng-duk.o
 ifeq ($(BUILD_EDBR_ODBC),on)
 EBOBJS += dbodbc.o dbops.o
 LDLIBS += -lodbc
@@ -54,11 +48,11 @@ EBOBJS += dbstubs.o
 endif
 
 #  Header file dependencies.
-$(EBOBJS) : eb.h ebprot.h messages.h ebjs.h
+$(EBOBJS) : eb.h ebprot.h messages.h
 dbodbc.o dbinfx.o dbops.o : dbapi.h
 
-startwindow.c: startwindow.js
-	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/startwindow.c
+startwindow.c: startwindow.js third.js
+	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/third.js thirdJS src/startwindow.c
 
 ebrc.c: ../lang/ebrc-*
 	cd .. ; ./tools/buildebrcstring.pl
@@ -69,7 +63,7 @@ msg-strings.c: ../lang/msg-*
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.
 edbrowse: $(EBOBJS) startwindow.o
-	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) $(JSLIB) -lstdc++ -o $@
+	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 #  You probably need to be root to do this.
 install:
@@ -88,17 +82,7 @@ clean:
 	rm -f *.o edbrowse \
 	startwindow.c ebrc.c msg-strings.c
 
-jseng-moz.o: jseng-moz.cpp
-	$(CXX) -c $(CXXFLAGS) $(JS_CXXFLAGS) jseng-moz.cpp -o $@
-
 #  some hello world targets, for testing and debugging
 
-js_hello_moz : js_hello_moz.cpp
-	gcc $(JS_CXXFLAGS) js_hello_moz.cpp $(JSLIB) -lstdc++ -o js_hello_moz
-
-js_hello_v8 : js_hello_v8.cpp
-	gcc js_hello_v8.cpp -lv8 -lstdc++ -o js_hello_v8
-
-testsock : socket.c socket.h
-	gcc -DTEST_CONNECT socket.c -o testsock
-
+js_hello_duk: js_hello_duk.c
+	$(CC) js_hello_duk.c -o js_hello_duk -lduktape -lm

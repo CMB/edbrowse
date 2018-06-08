@@ -30,13 +30,11 @@ static bool pcre_utf8_error_stop = false;
 /* Static variables for this file. */
 
 static uchar dirWrite;		/* directories read write */
-static char lsformat[12];	/* size date etc on a directory listing */
-static uchar endMarks;		/* ^ $ on printed lines */
-static bool jexmode;
+static bool endMarks;		/* ^ $ on listed lines */
 /* The valid edbrowse commands. */
-static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^<";
+static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^&<";
 /* Commands that can be done in browse mode. */
-static const char browse_cmd[] = "AbBdDefghHiklMnpqsvwXz=^<";
+static const char browse_cmd[] = "AbBdDefghHiklMnpqsvwXz=^&<";
 /* Commands for sql mode. */
 static const char sql_cmd[] = "AadDefghHiklmnpqrsvwXz=^<";
 /* Commands for directory mode. */
@@ -60,7 +58,7 @@ static bool globSub;		/* in the midst of a g// command */
 static bool inscript;		/* run from inside an edbrowse function */
 static int lastq, lastqq;
 static char icmd;		/* input command, usually the same as cmd */
-static bool f_encoded;
+static bool uriEncoded;
 
 /*********************************************************************
  * If a rendered line contains a hyperlink, the link is indicated
@@ -83,7 +81,7 @@ static bool f_encoded;
  * But it makes so much sense!
  * If I move a line, the referenced hyperlink moves with it.
  * I don't have to update some other structure that says,
- * "At line 73, characters 29 through 47, that's hyperlink 17.
+ * "At line 73, characters 29 through 47, that's hyperlink 17."
  * I use to do it that way, and wow, what a lot of overhead
  * when you move lines about, or delete them, or make substitutions.
  * Yes, you really need to change rendered html text,
@@ -99,12 +97,16 @@ static bool f_encoded;
  * So now, certain sequences in the text are for internal use only.
  * This routine strips out these sequences, for display.
  * After all, you don't want to see those code characters.
- * You just want to see {Click here for more information}. */
+ * You just want to see {Click here for more information}.
+ *
+ * This also checks for special input fields that are masked and
+ * displays stars instead, whenever we would display formated text */
 
 void removeHiddenNumbers(pst p, uchar terminate)
 {
 	pst s, t, u;
 	uchar c, d;
+	int field;
 
 	s = t = p;
 	while ((c = *s) != terminate) {
@@ -118,14 +120,22 @@ addchar:
 		d = *u;
 		if (!isdigitByte(d))
 			goto addchar;
-		do {
-			d = *++u;
-		} while (isdigitByte(d));
+		field = strtol((char *)u, (char **)&u, 10);
+		d = *u;
 		if (d == '*') {
 			s = u + 1;
 			continue;
 		}
-		if (strchr("<>{}", d)) {
+		if (d == '<') {
+			if (tagList[field]->masked) {
+				*t++ = d;
+				while (*++u != InternalCodeChar)
+					*t++ = '*';
+			}
+			s = u;
+			continue;
+		}
+		if (strchr(">{}", d)) {
 			s = u;
 			continue;
 		}
@@ -146,14 +156,13 @@ addchar:
  * Sometimes the returned line is changed,
  * and if it happens sometimes, we may as well make the new copy
  * all the time, even if the line doesn't change, to be consistent.
- * You can supress the copy feature with -1. */
+ * You can suppress the copy feature with -1. */
 
 static pst fetchLineContext(int n, int show, int cx)
 {
 	struct ebWindow *lw = sessionList[cx].lw;
 	struct lineMap *map, *t;
-	int dol, idx;
-	unsigned len;
+	int dol;
 	pst p;			/* the resulting copy of the string */
 
 	if (!lw)
@@ -181,6 +190,8 @@ static int apparentSizeW(const struct ebWindow *w, bool browsing)
 {
 	int ln, size = 0;
 	pst p;
+	if (!w)
+		return -1;
 	for (ln = 1; ln <= w->dol; ++ln) {
 		p = w->map[ln].text;
 		while (*p != '\n') {
@@ -249,7 +260,7 @@ void displayLine(int n)
 		stringAndNum(&output, &output_l, n);
 		stringAndChar(&output, &output_l, ' ');
 	}
-	if (endMarks == 2 || endMarks && cmd == 'l')
+	if (endMarks && cmd == 'l')
 		stringAndChar(&output, &output_l, '^');
 
 	while ((c = *s++) != '\n') {
@@ -262,7 +273,7 @@ void displayLine(int n)
 				c = '<';
 			if (c == '\t')
 				c = '>';
-			if (c < ' ' || c == 0x7f || c >= 0x80 && listNA)
+			if (c < ' ' || c == 0x7f || (c >= 0x80 && listNA))
 				expand = true;
 		}		/* list */
 		if (expand) {
@@ -282,11 +293,11 @@ void displayLine(int n)
 			s = cw->r_map[n].text;
 			if (*s) {
 				stringAndChar(&output, &output_l, ' ');
-				stringAndString(&output, &output_l, s);
+				stringAndString(&output, &output_l, (char *)s);
 			}
 		}
 	}
-	if (endMarks == 2 || endMarks && cmd == 'l')
+	if (endMarks && cmd == 'l')
 		stringAndChar(&output, &output_l, '$');
 	eb_puts(output);
 
@@ -301,6 +312,36 @@ static void printDot(void)
 	else
 		i_puts(MSG_Empty);
 }				/* printDot */
+
+// These commands pass through jdb and on to normal edbrowse processing.
+static bool jdb_passthrough(const char *s)
+{
+	static const char *const oklist[] = {
+		"dberr", "dberr+", "dberr-",
+		"dbcn", "dbcn+", "dbcn-",
+		"dbev", "dbev+", "dbev-",
+		"dbcss", "dbcss+", "dbcss-",
+		"timers", "timers+", "timers-",
+		"demin", "demin+", "demin-",
+		"xhr", "xhr+", "xhr-",
+		"bflist", "bglist", 0
+	};
+	int i;
+	if (s[0] == '!')
+		return true;
+	if (s[0] == 'd' && s[1] == 'b' && isdigit(s[2]) && s[3] == 0)
+		return true;
+	if (stringInList(oklist, s) >= 0)
+		return true;
+	if (s[0] == 'e' && isdigit(s[1])) {
+		for (i = 2; s[i]; ++i)
+			if (!isdigit(s[i]))
+				break;
+		if (!s[i])
+			return true;
+	}
+	return false;
+}
 
 /* By default, readline's filename completion appends a single space
  * character to a filename when there are no alternative completions.
@@ -384,11 +425,10 @@ It is generally 20 seconds after the last render.
 
 pst inputLine(void)
 {
-	static uchar line[MAXTTYLINE];
+	static char line[MAXTTYLINE];
 	int i, j, len;
 	uchar c, d, e;
-	static char *last_rl;
-	uchar *s;
+	static char *last_rl, *s;
 	int delay_sec, delay_ms;
 
 top:
@@ -397,6 +437,12 @@ top:
 	nzFree(last_rl);
 	last_rl = 0;
 	s = 0;
+
+// I guess this is as good a place as any to collect dead tags.
+#if 0
+// Not ready to do this yet, have to coordinate this with rerender.
+	tag_gc();
+#endif
 
 	if (timerWait(&delay_sec, &delay_ms)) {
 /* timers are pending, use select to wait on input or run the first timer. */
@@ -426,8 +472,15 @@ top:
 		if (rc < 0)
 			goto interrupt;
 		if (rc == 0) {	/* timeout */
-dotimers:
-			runTimers();
+			inInput = false;
+			runTimer();
+			inInput = true;
+			if (newlocation && intFlag) {
+				i_puts(MSG_RedirectionInterrupted);
+				goto top;
+			}
+			intFlag = false;
+
 /* in case a timer set document.location to a new page, or opens a new window */
 			if (newlocation) {
 				debugPrint(2, "redirect %s", newlocation);
@@ -450,7 +503,7 @@ dotimers:
 						newlocation);
 					nzFree(newlocation);
 					newlocation = 0;
-					return s;
+					return (uchar *) s;
 				}
 			}
 			goto top;
@@ -467,9 +520,9 @@ dotimers:
 		last_rl = readline("");
 		if ((last_rl != NULL) && *last_rl)
 			add_history(last_rl);
-		s = (uchar *) last_rl;
+		s = last_rl;
 	} else {
-		while (fgets((char *)line, sizeof(line), stdin)) {
+		while (fgets(line, sizeof(line), stdin)) {
 /* A bug in my keyboard causes nulls to be entered from time to time. */
 			c = 0;
 			i = 0;
@@ -543,7 +596,7 @@ addchar:
 			unicode = strtol((char *)s + i + 2, &t, 16);
 			if (*t == ';')
 				++t;
-			i = (uchar *) t - s;
+			i = t - s;
 			if (cons_utf8) {
 				t = uni2utf8(unicode);
 				l = strlen(t);
@@ -566,24 +619,56 @@ addchar:
 	if (debugFile)
 		fputc('\n', debugFile);
 
-	if (jexmode) {
-		if (stringEqual(s, ".")) {
-			jexmode = false;
+	if (cw->jdb_frame) {
+// some edbrowse commands pass through.
+		if (jdb_passthrough(s))
+			goto eb_line;
+		cf = cw->jdb_frame;
+		if (stringEqual(s, ".") || stringEqual(s, "bye")) {
+			cw->jdb_frame = NULL;
 			puts("bye");
 			jSideEffects();
+// in case you changed objects that in turn change the screen.
+			rerender(false);
 		} else {
-			char *result =
-			    jsRunScriptResult(cf->winobj, s, "jdb", 1);
-			if (result)
-				puts(result);
+			char *resfile = NULL;
+			char *result;
+			FILE *f = NULL;
+// ^> indicates redirection, since > might be a greater than operator.
+			resfile = strstr(s, "^>");
+			if (resfile) {
+				*resfile = 0;
+				resfile += 2;
+				while (isspace(*resfile))
+					++resfile;
+			}
+			result = jsRunScriptResult(cf->winobj, s, "jdb", 1);
+			if (resfile)
+				f = fopen(resfile, "w");
+			if (result) {
+				if (f) {
+					fprintf(f, "%s\n", result);
+					printf("%zu bytes\n", strlen(result));
+				} else
+					puts(result);
+			}
 			nzFree(result);
+			if (f)
+				fclose(f);
+			if (newlocation) {
+				puts("sorry, page redirection is not honored under jdb.");
+				nzFree(newlocation);
+				newlocation = 0;
+				newlocation = 0;
+			}
 		}
 		goto top;
 	}
 
+eb_line:
 /* rest of edbrowse expects this line to be nl terminated */
 	s[j] = '\n';
-	return s;
+	return (uchar *) s;
 }				/* inputLine */
 
 static struct {
@@ -653,7 +738,7 @@ static void freeWindowLines(struct lineMap *map)
 	struct lineMap *t;
 	int cnt = 0;
 
-	if (t = map) {
+	if ((t = map)) {
 		for (++t; t->text; ++t) {
 			freeLine(t);
 			++cnt;
@@ -710,7 +795,7 @@ static void undoCompare(void)
 	struct lineMap *map = undoWindow.map;
 	struct lineMap *cmap2;
 	struct lineMap *s, *t;
-	int diff, ln, cnt = 0;
+	int diff, cnt = 0;
 
 	if (!cmap) {
 		debugPrint(6, "undoCompare no current map");
@@ -801,11 +886,11 @@ static void undoPush(void)
 static void freeWindow(struct ebWindow *w)
 {
 	struct ebFrame *f, *fnext;
+	struct histLabel *label, *lnext;
 	freeTags(w);
 	for (f = &w->f0; f; f = fnext) {
 		fnext = f->next;
 		delTimers(f);
-		delInputChanges(f);
 		freeJavaContext(f);
 		nzFree(f->dw);
 		nzFree(f->hbase);
@@ -814,11 +899,16 @@ static void freeWindow(struct ebWindow *w)
 		if (f != &w->f0)
 			free(f);
 	}
+	lnext = w->histLabel;
+	while ((label = lnext)) {
+		lnext = label->prev;
+		free(label);
+	}
 	freeWindowLines(w->map);
 	freeWindowLines(w->r_map);
-	nzFree(w->ft);
-	nzFree(w->fd);
-	nzFree(w->fk);
+	nzFree(w->htmltitle);
+	nzFree(w->htmldesc);
+	nzFree(w->htmlkey);
 	nzFree(w->mailInfo);
 	nzFree(w->referrer);
 	nzFree(w->baseDirName);
@@ -864,6 +954,8 @@ static void cxInit(int cx)
 	if (sessionList[cx].lw)
 		i_printfExit(MSG_DoubleInit, cx);
 	sessionList[cx].fw = sessionList[cx].lw = lw;
+	if (cx > maxSession)
+		maxSession = cx;
 }				/* cxInit */
 
 bool cxQuit(int cx, int action)
@@ -948,11 +1040,14 @@ void cxSwitch(int cx, bool interactive)
 	context = cx;
 	if (interactive && debugLevel) {
 		if (created)
-			i_puts(MSG_SessionNew);
+			i_printf(MSG_SessionNew);
 		else if (cf->fileName)
-			eb_puts(cf->fileName);
+			i_printf(MSG_String, cf->fileName);
 		else
-			i_puts(MSG_NoFile);
+			i_printf(MSG_NoFile);
+		if (cw->jdb_frame)
+			i_printf(MSG_String, " jdb");
+		eb_puts("");
 	}
 
 /* The next line is required when this function is called from main(),
@@ -1018,6 +1113,9 @@ bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail)
 {
 	int i, j, linecount = 0;
 	struct lineMap *t;
+
+	if (!length)		// nothing to add
+		return true;
 
 	for (i = 0; i < length; ++i)
 		if (inbuf[i] == '\n') {
@@ -1127,10 +1225,28 @@ static char *makeAbsPath(const char *f)
 	return path;
 }				/* makeAbsPath */
 
+static int *nextLabel(int *label)
+{
+	if (label == NULL)
+		return cw->labels;
+
+	if (label >= cw->labels && label - cw->labels < MARKLETTERS)
+		return label + 1;
+
+	/* first history label */
+	if (label - cw->labels == MARKLETTERS)
+		return (int *)cw->histLabel;
+
+	/* previous history label. */
+	/* in both case we rely on label being first element of the struct */
+	return (int *)((struct histLabel *)label)->prev;
+}
+
 /* Delete a block of text. */
 void delText(int start, int end)
 {
-	int i, j, ln;
+	int i, ln;
+	int *label = NULL;
 
 /* browse has no undo command */
 	if (cw->browseMode) {
@@ -1142,23 +1258,23 @@ void delText(int start, int end)
 
 	if (end == cw->dol)
 		cw->nlMode = false;
-	j = end - start + 1;
+	i = end - start + 1;
 	memmove(cw->map + start, cw->map + end + 1,
 		(cw->dol - end + 1) * LMSIZE);
 
 /* move the labels */
-	for (i = 0; i < MARKLETTERS; ++i) {
-		ln = cw->labels[i];
+	while ((label = nextLabel(label))) {
+		ln = *label;
 		if (ln < start)
 			continue;
 		if (ln <= end) {
-			cw->labels[i] = 0;
+			*label = 0;
 			continue;
 		}
-		cw->labels[i] -= j;
+		*label -= i;
 	}
 
-	cw->dol -= j;
+	cw->dol -= i;
 	cw->dot = start;
 	if (cw->dot > cw->dol)
 		cw->dot = cw->dol;
@@ -1209,7 +1325,7 @@ static bool delFiles(void)
 			return false;
 		}
 
-		if (dirWrite == 2 || *ftype && strchr("@<*^|", *ftype)) {
+		if (dirWrite == 2 || (*ftype && strchr("@<*^|", *ftype))) {
 unlink:
 			if (unlink(path)) {
 				setError(MSG_NoRemove, file);
@@ -1271,6 +1387,7 @@ static bool moveCopy(void)
 	struct lineMap *map = cw->map;
 	struct lineMap *newmap, *t;
 	int lowcut, highcut, diff, i, ln;
+	int *label = NULL;
 
 	if (dl > sr && dl < er) {
 		setError(MSG_DestInBlock);
@@ -1318,8 +1435,8 @@ static bool moveCopy(void)
 		highcut = dl;
 		diff = dl - er;
 	}
-	for (i = 0; i < MARKLETTERS; ++i) {
-		ln = cw->labels[i];
+	while ((label = nextLabel(label))) {
+		ln = *label;
 		if (ln < lowcut)
 			continue;
 		if (ln >= highcut)
@@ -1329,7 +1446,7 @@ static bool moveCopy(void)
 		} else {
 			ln += (dl < sr ? n_lines : -n_lines);
 		}
-		cw->labels[i] = ln;
+		*label = ln;
 	}			/* loop over labels */
 
 	cw->dot = endRange;
@@ -1374,6 +1491,45 @@ static bool joinText(void)
 	return true;
 }				/* joinText */
 
+// directory sort record, for nonalphabetical sorts.
+struct DSR {
+	int idx;
+	union {
+		time_t t;
+		size_t z;
+	} u;
+};
+static struct DSR *dsr_list;
+extern struct stat this_stat;
+static char ls_sort;		// sort method for directory listing
+static bool ls_reverse;		// reverse sort
+static char lsformat[12];	/* size date etc on a directory listing */
+
+/* compare routine for quicksort directory scan */
+static int dircmp(const void *s, const void *t)
+{
+	const struct DSR *q = s;
+	const struct DSR *r = t;
+	int rc;
+	if (ls_sort == 1) {
+		rc = 0;
+		if (q->u.z < r->u.z)
+			rc = -1;
+		if (q->u.z > r->u.z)
+			rc = 1;
+	}
+	if (ls_sort == 2) {
+		rc = 0;
+		if (q->u.t < r->u.t)
+			rc = -1;
+		if (q->u.t > r->u.t)
+			rc = 1;
+	}
+	if (ls_reverse)
+		rc = -rc;
+	return rc;
+}
+
 /* Read the contents of a directory into the current buffer */
 static bool readDirectory(const char *filename)
 {
@@ -1390,7 +1546,8 @@ static bool readDirectory(const char *filename)
 /* Understand that the empty string now means / */
 
 /* get the files, or fail if there is a problem */
-	if (!sortedDirList(filename, &newpiece, &linecount))
+	if (!sortedDirList
+	    (filename, &newpiece, &linecount, ls_sort, ls_reverse))
 		return false;
 	if (!cw->dol) {
 		cw->dirMode = true;
@@ -1408,6 +1565,9 @@ static bool readDirectory(const char *filename)
 		goto success;
 	}
 
+	if (ls_sort)
+		dsr_list = allocZeroMem(sizeof(struct DSR) * linecount);
+
 /* change 0 to nl and count bytes */
 	fileSize = 0;
 	mptr = newpiece;
@@ -1418,7 +1578,7 @@ static bool readDirectory(const char *filename)
 
 // make sure this gets done.
 		if (backpiece)
-			backpiece[j + 1].text = emptyString;
+			backpiece[j + 1].text = (uchar *) emptyString;
 
 		while (*t) {
 			if (*t == '\n')
@@ -1428,6 +1588,8 @@ static bool readDirectory(const char *filename)
 		*t = '\n';
 		len = t - mptr->text;
 		fileSize += len + 1;
+		if (ls_sort)
+			dsr_list[j].idx = j;
 		if (!abspath)
 			continue;	/* should never happen */
 
@@ -1462,29 +1624,57 @@ static bool readDirectory(const char *filename)
 				mptr->ds1 = c;
 			++fileSize;
 		}
+// If sorting a different way, get the attribute.
+		if (ls_sort) {
+			if (ls_sort == 1)
+				dsr_list[j].u.z = this_stat.st_size;
+			if (ls_sort == 2)
+				dsr_list[j].u.t = this_stat.st_mtime;
+		}
 
 /* extra stat entries on the line */
 		if (!lsformat[0])
 			continue;
 		v = lsattr(abspath, lsformat);
-		if (!v || !*v)
+		if (!*v)
 			continue;
 		len = strlen(v);
 		fileSize += len + 1;
 		if (cw->dirMode) {
-			backpiece[j + 1].text = cloneString(v);
+			backpiece[j + 1].text = (uchar *) cloneString(v);
 		} else {
 /* have to realloc at this point */
 			int l1 = t - mptr->text;
 			mptr->text = reallocMem(mptr->text, l1 + len + 3);
 			t = mptr->text + l1;
 			*t++ = ' ';
-			strcpy(t, v);
+			strcpy((char *)t, v);
 			t += len;
 			*t++ = '\n';
 			*t = 0;
 		}
 	}			/* loop fixing files in the directory scan */
+
+	if (ls_sort) {
+		struct lineMap *tmp;
+		qsort(dsr_list, linecount, sizeof(struct DSR), dircmp);
+// Now I have to remap everything.
+		tmp = allocMem(LMSIZE * linecount);
+		for (j = 0; j < linecount; ++j)
+			tmp[j] = newpiece[dsr_list[j].idx];
+		free(newpiece);
+		newpiece = tmp;
+		if (backpiece) {
+			tmp = allocMem(LMSIZE * (linecount + 2));
+			for (j = 0; j < linecount; ++j)
+				tmp[j + 1] = backpiece[dsr_list[j].idx + 1];
+			memset(tmp, 0, LMSIZE);
+			memset(tmp + linecount + 1, 0, LMSIZE);
+			free(backpiece);
+			backpiece = tmp;
+		}
+		free(dsr_list);
+	}
 
 	addToMap(linecount, endRange);
 	cw->r_map = backpiece;
@@ -1497,15 +1687,15 @@ success:
 
 /* Read a file, or url, into the current buffer.
  * Post/get data is passed, via the second parameter, if it's a URL. */
-static bool readFile(const char *filename, const char *post)
+static bool readFile(const char *filename, const char *post, bool newwin,
+		     int fromframe, const char *fromthis)
 {
 	char *rbuf;		/* read buffer */
 	int readSize;		/* should agree with fileSize */
-	int fh;			/* file handle */
 	bool rc;		/* return code */
+	bool fileprot = false;
 	char *nopound;
 	char filetype;
-	bool inframe = (cf != &(cf->owner->f0));
 
 	serverData = 0;
 	serverDataLen = 0;
@@ -1516,37 +1706,145 @@ static bool readFile(const char *filename, const char *post)
 			setError(MSG_MissingFileName);
 			return false;
 		}
+		fileprot = true;
+		changeFileName = cloneString(filename);
+		unpercentString(changeFileName);
+		if (stringEqual(filename, changeFileName)) {
+			free(changeFileName);
+			changeFileName = 0;
+		} else
+			filename = changeFileName;
 		goto fromdisk;
 	}
 
 	if (isURL(filename)) {
-		bool down_ok = false;
-		if (!inframe && cmd != 'r')
-			down_ok = true;
-		rc = httpConnect(filename, down_ok, true, f_encoded, 0, 0, 0);
-		if (!rc) {
-/* The error could have occured after redirection */
-			nzFree(changeFileName);
-			changeFileName = 0;
-			return false;
+		const char *newfile;
+		const struct MIMETYPE *mt;
+		uchar sxfirst;
+		struct i_get g;
+		memset(&g, 0, sizeof(g));
+		if (newwin)
+			g.down_ok = true;
+		if (fromframe <= 1) {
+			g.foreground = true;
+			g.pg_ok = pluginsOn;
 		}
+		if (g.pg_ok && fromframe == 1)
+			g.playonly = true;
+// If the url matches on protocol, (and you should never write a plugin
+// that matches on the standard transport protocols), then we need this plugin
+// just to get the data.
+		if (!g.pg_ok && !fromframe) {
+			sxfirst = 2;
+			if ((mt = findMimeByURL(filename, &sxfirst))
+			    && mt->outtype)
+				g.pg_ok = true;
+		}
+		if (fromframe)
+			g.uriEncoded = true;
+		else
+			g.uriEncoded = uriEncoded;
+		g.url = filename;
+		g.thisfile = fromthis;
+		rc = httpConnect(&g);
+		serverData = g.buffer;
+		serverDataLen = g.length;
+		if (!rc)
+			return false;
+		changeFileName = g.cfn;	// allocated
+		if (newwin)
+			cw->referrer = g.referrer;	// allocated
+		else
+			nzFree(g.referrer);
 
 /* We got some data.  Any warnings along the way have been printed,
  * like 404 file not found, but it's still worth continuing. */
 		rbuf = serverData;
 		fileSize = readSize = serverDataLen;
+		if (g.code != 200 && g.code != 210)
+			cf->render1 = cf->render2 = true;
 
 		if (fileSize == 0) {	/* empty file */
 			nzFree(rbuf);
-			if (!inframe)
+			if (!fromframe)
 				cw->dot = endRange;
 			return true;
 		}
 
+		if (g.csp) {
+			cf->mt = 0;
+			cf->render1 = cf->render2 = true;
+		}
+// acid says a frame has to be text/html, not even text/plain.
+		if (fromframe && g.content[0]
+		    && !stringEqual(g.content, "text/html")) {
+			debugPrint(3,
+				   "frame suppressed because content type is %s",
+				   g.content);
+			nzFree(serverData);
+			serverData = 0;
+			serverDataLen = 0;
+			return false;
+		}
+
+		newfile = (changeFileName ? changeFileName : filename);
+		if (cf->mt && cf->mt->outtype &&
+		    pluginsOn && !cf->render1 && cmd == 'b' && newwin) {
+			sxfirst = 0;
+			rc = runPluginCommand(cf->mt, newfile, 0,
+					      rbuf, readSize, &rbuf, &readSize);
+			if (!rc) {
+				nzFree(rbuf);
+				fileSize = -1;
+				return false;
+			}
+			cf->render1 = true;
+// we have to look again, to see if it matched by suffix.
+// This call should always succeed.
+			if (findMimeByURL(cf->fileName, &sxfirst) && sxfirst)
+				cf->render2 = true;
+// browse command ran the plugin, but if it generates text,
+// then there's no need to browse the result.
+			if (cf->mt->outtype == 't')
+				cmd = 'e';
+			fileSize = readSize;
+		}
+
+/*********************************************************************
+Almost all music players take a url, but if one doesn't, whence down_url is set,
+then here we are with data in buffer.
+Yes, browseCurrent Buffer checks the suffix, but only to render, not to play.
+We have to play here.
+This also comes up when the protocol is used to get the data into buffer,
+like extracting from a zip or tar archive.
+Again the data is in buffer and we need to play it here.
+*********************************************************************/
+
+		sxfirst = 1;
+		mt = findMimeByURL(newfile, &sxfirst);
+		if (mt && !mt->outtype && sxfirst &&
+		    pluginsOn && (g.code == 200 || g.code == 201) &&
+		    cmd == 'b' && newwin) {
+			rc = runPluginCommand(mt, newfile, 0,
+					      rbuf, readSize, 0, 0);
+// rbuf has been freed by this command even if it didn't succeed.
+			serverData = NULL;
+			serverDataLen = 0;
+			cf->render2 = true;
+			return rc;
+		}
+// If we would browse this data but plugins are off then turn b into e.
+		if (mt && mt->outtype && sxfirst &&
+		    !pluginsOn &&
+		    (g.code == 200 || g.code == 201) && cmd == 'b' && newwin)
+			cmd = 'e';
+		if (mt && !mt->outtype && !pluginsOn && cmd == 'b' && newwin)
+			cf->render2 = true;
+
 		goto gotdata;
 	}
 
-	if (isSQL(filename) && !inframe) {
+	if (isSQL(filename) && !fromframe) {
 		const char *t1, *t2;
 		if (!cw->sqlMode) {
 			setError(MSG_DBOtherFile);
@@ -1562,7 +1860,7 @@ static bool readFile(const char *filename, const char *post)
 		rc = sqlReadRows(filename, &rbuf);
 		if (!rc) {
 			nzFree(rbuf);
-			if (!cw->dol && cmd != 'r') {
+			if (!cw->dol && newwin) {
 				cw->sqlMode = false;
 				nzFree(cf->fileName);
 				cf->fileName = 0;
@@ -1577,40 +1875,63 @@ static bool readFile(const char *filename, const char *post)
 	}
 
 fromdisk:
-/* reading a file from disk */
-	filetype = fileTypeByName(filename, false);
+// reading a file from disk.
 	fileSize = 0;
-	if (filetype == 'd') {
-		if (!inframe)
-			return readDirectory(filename);
-		setError(MSG_FrameNotHTML);
+// for security reasons, this cannot be a frame in a web page.
+	if (!frameSecurityFile(filename)) {
+badfile:
+		nzFree(changeFileName);
+		changeFileName = 0;
 		return false;
 	}
 
-	if ((cmd == 'e' || cmd == 'b') && !cf->mt)
+	filetype = fileTypeByName(filename, false);
+	if (filetype == 'd') {
+		if (!fromframe)
+			return readDirectory(filename);
+		setError(MSG_FrameNotHTML);
+		goto badfile;
+	}
+
+	if (newwin && !fileprot && !cf->mt)
 		cf->mt = findMimeByFile(filename);
 
-	nopound = cloneString(filename);
-	rbuf = findHash(nopound);
-	if (rbuf && !filetype)
-		*rbuf = 0;
-	rc = fileIntoMemory(nopound, &rbuf, &fileSize);
-	nzFree(nopound);
+// Optimize; don't read a file into buffer if you're
+// just going to process it.
+	if (cf->mt && cf->mt->outtype && pluginsOn && !access(filename, 4)
+	    && !fileprot && cmd == 'b' && newwin) {
+		rc = runPluginCommand(cf->mt, 0, filename, 0, 0, &rbuf,
+				      &fileSize);
+		cf->render1 = cf->render2 = true;
+// browse command ran the plugin, but if it generates text,
+// then there's no need to browse the result.
+		if (cf->mt->outtype == 't')
+			cmd = 'e';
+	} else {
+
+		nopound = cloneString(filename);
+		rbuf = findHash(nopound);
+		if (rbuf && !filetype)
+			*rbuf = 0;
+		rc = fileIntoMemory(nopound, &rbuf, &fileSize);
+		nzFree(nopound);
+	}
+
 	if (!rc)
-		return false;
+		goto badfile;
 	serverData = rbuf;
 	serverDataLen = fileSize;
 	if (fileSize == 0) {	/* empty file */
-		if (!inframe) {
+		if (!fromframe) {
 			cw->dot = endRange;
-			free(rbuf);
+			nzFree(rbuf);
 		}
 		return true;
 	}
 
 gotdata:
 
-	if (!looksBinary(rbuf, fileSize)) {
+	if (!looksBinary((uchar *) rbuf, fileSize)) {
 		char *tbuf;
 
 /* looks like text.  In DOS, we should have compressed crlf.
@@ -1625,46 +1946,57 @@ gotdata:
 		}
 		rbuf[j] = 0;
 		fileSize = j;
+		serverDataLen = fileSize;
 #endif
 
 		if (iuConvert) {
-			bool isbig = false, is8859 = false, isutf8 = false;
+			bool is8859 = false, isutf8 = false;
 /* Classify this incoming text as ascii or 8859 or utf-x */
-			int bom = byteOrderMark(rbuf, fileSize);
+			int bom = byteOrderMark((uchar *) rbuf, fileSize);
 			if (bom) {
 				debugPrint(3, "text type is %s%s",
 					   ((bom & 4) ? "big " : ""),
 					   ((bom & 2) ? "utf32" : "utf16"));
-				if (debugLevel >= 2 || debugLevel == 1
-				    && !isURL(filename))
+				if (debugLevel >= 2 || (debugLevel == 1
+							&& !isURL(filename)))
 					i_puts(cons_utf8 ? MSG_ConvUtf8 :
 					       MSG_Conv8859);
 				utfLow(rbuf, fileSize, &tbuf, &fileSize, bom);
 				nzFree(rbuf);
 				rbuf = tbuf;
+				serverData = rbuf;
+				serverDataLen = fileSize;
 			} else {
-				looks_8859_utf8(rbuf, fileSize, &is8859,
-						&isutf8);
+				looks_8859_utf8((uchar *) rbuf, fileSize,
+						&is8859, &isutf8);
 				debugPrint(3, "text type is %s",
 					   (isutf8 ? "utf8"
 					    : (is8859 ? "8859" : "ascii")));
 				if (cons_utf8 && is8859) {
-					if (debugLevel >= 2 || debugLevel == 1
-					    && !isURL(filename))
+					if (debugLevel >= 2 || (debugLevel == 1
+								&&
+								!isURL
+								(filename)))
 						i_puts(MSG_ConvUtf8);
-					iso2utf(rbuf, fileSize, &tbuf,
-						&fileSize);
+					iso2utf((uchar *) rbuf, fileSize,
+						(uchar **) & tbuf, &fileSize);
 					nzFree(rbuf);
 					rbuf = tbuf;
+					serverData = rbuf;
+					serverDataLen = fileSize;
 				}
 				if (!cons_utf8 && isutf8) {
-					if (debugLevel >= 2 || debugLevel == 1
-					    && !isURL(filename))
+					if (debugLevel >= 2 || (debugLevel == 1
+								&&
+								!isURL
+								(filename)))
 						i_puts(MSG_Conv8859);
-					utf2iso(rbuf, fileSize, &tbuf,
-						&fileSize);
+					utf2iso((uchar *) rbuf, fileSize,
+						(uchar **) & tbuf, &fileSize);
 					nzFree(rbuf);
 					rbuf = tbuf;
+					serverData = rbuf;
+					serverDataLen = fileSize;
 				}
 				if (cons_utf8 && isutf8) {
 // Strip off the leading bom, if any, and no we're not going to put it back.
@@ -1673,6 +2005,7 @@ gotdata:
 						fileSize -= 3;
 						memmove(rbuf, rbuf + 3,
 							fileSize);
+						serverDataLen = fileSize - 3;
 					}
 				}
 			}
@@ -1700,16 +2033,16 @@ gotdata:
 			}
 
 		}
-	} else if (inframe) {
+	} else if (fromframe) {
 		nzFree(rbuf);
 		setError(MSG_FrameNotHTML);
-		return false;
+		goto badfile;
 	} else if (binaryDetect & !cw->binMode) {
 		i_puts(MSG_BinaryData);
 		cw->binMode = true;
 	}
 
-	if (inframe) {
+	if (fromframe) {
 /* serverData holds the html text to browse */
 		return true;
 	}
@@ -1717,15 +2050,17 @@ gotdata:
 intext:
 	rc = addTextToBuffer((const pst)rbuf, fileSize, endRange,
 			     !isURL(filename));
-	free(rbuf);
+	nzFree(rbuf);
 	return rc;
 }				/* readFile */
 
 /* from the command line */
-bool readFileArgv(const char *filename)
+bool readFileArgv(const char *filename, int fromframe)
 {
+	bool newwin = !fromframe;
 	cmd = 'e';
-	return readFile(filename, emptyString);
+	return readFile(filename, emptyString, newwin, fromframe,
+			(newwin ? 0 : cf->fileName));
 }				/* readFileArgv */
 
 /* Write a range to a file. */
@@ -1822,7 +2157,8 @@ badwrite:
 
 			if (name == cf->fileName && iuConvert) {
 				if (cw->iso8859Mode && cons_utf8) {
-					utf2iso((char *)p, len, &tp, &tlen);
+					utf2iso((uchar *) p, len,
+						(uchar **) & tp, &tlen);
 					if (alloc_p)
 						free(p);
 					alloc_p = true;
@@ -1834,7 +2170,8 @@ badwrite:
 				}
 
 				if (cw->utf8Mode && !cons_utf8) {
-					iso2utf((char *)p, len, &tp, &tlen);
+					iso2utf((uchar *) p, len,
+						(uchar **) & tp, &tlen);
 					if (alloc_p)
 						free(p);
 					alloc_p = true;
@@ -1882,7 +2219,7 @@ badline:
 			if (len && fwrite(suf, len, 1, fh) <= 0)
 				goto badline;
 			++len;	/* for nl */
-			extra = cw->r_map[i].text;
+			extra = (char *)cw->r_map[i].text;
 			l = strlen(extra);
 			if (l) {
 				if (fwrite(" ", 1, 1, fh) <= 0)
@@ -1940,12 +2277,11 @@ static bool readContext(int cx)
 	for (i = 1; i <= fardol; ++i, ++t) {
 		pst p = fetchLineContext(i, (lw->dirMode ? -1 : 1), cx);
 		int len = pstLength(p);
-		pst q;
 		if (lw->dirMode) {
 			char *suf = dirSuffixContext(i, cx);
 			char *q;
 			if (lw->r_map) {
-				char *extra = lw->r_map[i].text;
+				char *extra = (char *)lw->r_map[i].text;
 				int elen = strlen(extra);
 				q = allocMem(len + 4 + elen);
 				memcpy(q, p, len);
@@ -2007,15 +2343,15 @@ static bool writeContext(int cx)
 			p = fetchLine(i, (cw->dirMode ? -1 : 1));
 			len = pstLength(p);
 			if (cw->dirMode) {
-				pst q;
+				char *q;
 				char *suf = dirSuffix(i);
 				if (cw->r_map) {
-					char *extra = cw->r_map[i].text;
+					char *extra = (char *)cw->r_map[i].text;
 					int elen = strlen(extra);
 					q = allocMem(len + 4 + elen);
 					memcpy(q, p, len);
 					--len;
-					strcpy((char *)q + len, suf);
+					strcpy(q + len, suf);
 					if (elen) {
 						strcat(q, " ");
 						strcat(q, extra);
@@ -2026,10 +2362,10 @@ static bool writeContext(int cx)
 					memcpy(q, p, len);
 					--len;
 					strcat(suf, "\n");
-					strcpy((char *)q + len, suf);
+					strcpy(q + len, suf);
 				}
-				len = strlen((char *)q);
-				p = q;
+				len = strlen(q);
+				p = (pst) q;
 			}
 			t->text = p;
 			fileSize += len;
@@ -2059,52 +2395,18 @@ static void debrowseSuffix(char *s)
 	}
 }				/* debrowseSuffix */
 
-static char *get_interactive_shell(const char *sh)
-{
-	char *ishell = NULL;
-#ifdef DOSLIKE
-	return cloneString(sh);
-#else
-	if (asprintf(&ishell, "exec %s -i", sh) == -1)
-		i_printfExit(MSG_NoMem);
-	return ishell;
-#endif
-}				/* get_interactive_shell */
-
-static bool shellEscape(const char *line)
+// macro substitutions within the command line.
+// '_ filename, '. current line, '- last line, '+ next line,
+// 'x line labeled x. Replace only if there are no letters around it.
+// isn't will not become isn + the line labeled t.
+static char *apostropheMacros(const char *line)
 {
 	char *newline, *s;
 	const char *t;
 	pst p;
 	char key;
-	int linesize, pass, n;
-	char *sh;
-	char *interactive_shell_cmd = NULL;
+	int linesize = 0, pass, n;
 
-#ifdef DOSLIKE
-/* cmd.exe is the windows shell */
-	sh = "cmd";
-#else
-/* preferred shell */
-	sh = getenv("SHELL");
-	if (!sh || !*sh)
-		sh = "/bin/sh";
-#endif
-
-	linesize = strlen(line);
-	if (!linesize) {
-/* interactive shell */
-		if (!isInteractive) {
-			setError(MSG_SessionBackground);
-			return false;
-		}
-		interactive_shell_cmd = get_interactive_shell(sh);
-		eb_system(interactive_shell_cmd, true);
-		nzFree(interactive_shell_cmd);
-		return true;
-	}
-
-/* Make substitutions within the command line. */
 	for (pass = 1; pass <= 2; ++pass) {
 		for (t = line; *t; ++t) {
 			if (*t != '\'')
@@ -2127,16 +2429,16 @@ static bool shellEscape(const char *line)
 				}
 				continue;
 			}
-			/* '_ filename */
+
 			if (key == '.' || key == '-' || key == '+') {
 				n = cw->dot;
 				if (key == '-')
 					--n;
 				if (key == '+')
 					++n;
-				if (n > cw->dol || n == 0) {
+				if (n > cw->dol || n <= 0) {
 					setError(MSG_OutOfRange, key);
-					return false;
+					return NULL;
 				}
 frombuf:
 				++t;
@@ -2148,7 +2450,7 @@ frombuf:
 					if (perl2c((char *)p)) {
 						free(p);
 						setError(MSG_ShellNull);
-						return false;
+						return NULL;
 					}
 					strcpy(s, (char *)p);
 					s += strlen(s);
@@ -2156,16 +2458,16 @@ frombuf:
 				}
 				continue;
 			}
-			/* '. current line */
+
 			if (islowerByte(key)) {
 				n = cw->labels[key - 'a'];
 				if (!n) {
 					setError(MSG_NoLabel, key);
-					return false;
+					return NULL;
 				}
 				goto frombuf;
 			}
-			/* 'x the line labeled x */
+
 addchar:
 			if (pass == 1)
 				++linesize;
@@ -2178,6 +2480,52 @@ addchar:
 		else
 			*s = 0;
 	}			/* two passes */
+
+	return newline;
+}
+
+static char *get_interactive_shell(const char *sh)
+{
+	char *ishell = NULL;
+#ifdef DOSLIKE
+	return cloneString(sh);
+#else
+	if (asprintf(&ishell, "exec %s -i", sh) == -1)
+		i_printfExit(MSG_NoMem);
+	return ishell;
+#endif
+}				/* get_interactive_shell */
+
+static bool shellEscape(const char *line)
+{
+	char *sh, *newline;
+	char *interactive_shell_cmd = NULL;
+
+#ifdef DOSLIKE
+/* cmd.exe is the windows shell */
+	sh = "cmd";
+#else
+/* preferred shell */
+	sh = getenv("SHELL");
+	if (!sh || !*sh)
+		sh = "/bin/sh";
+#endif
+
+	if (!line[0]) {
+/* interactive shell */
+		if (!isInteractive) {
+			setError(MSG_SessionBackground);
+			return false;
+		}
+		interactive_shell_cmd = get_interactive_shell(sh);
+		eb_system(interactive_shell_cmd, true);
+		nzFree(interactive_shell_cmd);
+		return true;
+	}
+
+	newline = apostropheMacros(line);
+	if (!newline)
+		return false;
 
 /* Run the command.  Note that this routine returns success
  * even if the shell command failed.
@@ -2238,7 +2586,7 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 				return true;
 			}
 /* Interpret lead * or lone [ as literal */
-			if (strchr("*?+", c) || c == '[' && !line[1]) {
+			if (strchr("*?+", c) || (c == '[' && !line[1])) {
 				*e++ = '\\';
 				*e++ = c;
 				++line;
@@ -2255,7 +2603,7 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 		}
 	}
 	/* ebmuck tricks */
-	while (c = *line) {
+	while ((c = *line)) {
 		if (e >= re + MAXRE - 3) {
 			setError(MSG_RexpLong);
 			return false;
@@ -2288,7 +2636,7 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 				*e++ = d;
 				continue;
 			}
-			if (d == delim || ebmuck && !isleft && d == '&') {
+			if (d == delim || (ebmuck && !isleft && d == '&')) {
 				*e++ = d;
 				continue;
 			}
@@ -2308,7 +2656,8 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 
 /* Remember, I reverse the sense of ()| */
 		if (isleft) {
-			if (ebmuck && (c == '(' || c == ')' || c == '|') || c == '^' && line != start && !cc)	/* don't know why we have to do this */
+			if ((ebmuck && (c == '(' || c == ')' || c == '|'))
+			    || (c == '^' && line != start && !cc))
 				*e++ = '\\';
 			if (c == '$' && d && d != delim)
 				*e++ = '\\';
@@ -2515,6 +2864,11 @@ static bool getRangePart(const char *line, int *lineno, const char **split)
 		while (true) {
 			char *subject;
 			ln += incr;
+			if (!searchWrap && (ln == 0 || ln > cw->dol)) {
+				pcre_free(re_cc);
+				setError(MSG_NotFound);
+				return false;
+			}
 			if (ln > cw->dol)
 				ln = 1;
 			if (ln == 0)
@@ -2618,7 +2972,8 @@ static bool doGlobal(const char *line)
 			setError(MSG_RexpError2, i);
 			return false;
 		}
-		if (re_count < 0 && cmd == 'v' || re_count >= 0 && cmd == 'g') {
+		if ((re_count < 0 && cmd == 'v')
+		    || (re_count >= 0 && cmd == 'g')) {
 			++gcnt;
 			cw->map[i].gflag = true;
 		}
@@ -2682,7 +3037,7 @@ done:
 	return (errorMsg[0] == 0);
 }				/* doGlobal */
 
-static void fieldNumProblem(int desc, char c, int n, int nt, int nrt)
+static void fieldNumProblem(int desc, char *c, int n, int nt, int nrt)
 {
 	if (!nrt) {
 		setError(MSG_NoInputFields + desc);
@@ -2766,7 +3121,7 @@ replaceText(const char *line, int len, const char *rhs,
 
 		/* copy rhs, watching for $n */
 		t = rhs;
-		while (c = *t) {
+		while ((c = *t)) {
 			d = t[1];
 			if (c == '\\') {
 				t += 2;
@@ -2818,8 +3173,8 @@ replaceText(const char *line, int len, const char *rhs,
 					stringAndChar(&r, &rlen, '\\');
 				stringAndChar(&r, &rlen, d);
 				continue;
-			}
-			/* backslash */
+			}	// \ cases
+
 			if (c == '$' && isdigitByte(d)) {
 				int y, z;
 				t += 2;
@@ -2832,6 +3187,15 @@ replaceText(const char *line, int len, const char *rhs,
 					continue;
 				span = z - y;
 				stringAndBytes(&r, &rlen, line + y, span);
+				continue;
+			}
+
+			if (c == '%' && d == 'l' &&
+			    !strncmp(t + 2, "ine", 3) && !isalnum(t[5])) {
+				char numstring[12];
+				sprintf(numstring, "%d", ln);
+				stringAndString(&r, &rlen, numstring);
+				t += 5;
 				continue;
 			}
 
@@ -2922,8 +3286,7 @@ findField(const char *line, int ftype, int n,
 				t = tagList[j];
 				if (ftype == 1 && t->itype <= INP_SUBMIT)
 					continue;
-				if (ftype == 2 && t->itype > INP_SUBMIT
-				    && t->itype != INP_TA)
+				if (ftype == 2 && t->itype > INP_SUBMIT)
 					continue;
 				++nt;
 				if (!nm)
@@ -2944,20 +3307,26 @@ findField(const char *line, int ftype, int n,
 		*tagno = nm;
 	if (!ftype && nm) {
 		t = tagList[nm];
-		if (href)
-			*href = cloneString(t->href);
 		if (tagp)
 			*tagp = t;
-		if (href && isJSAlive && t->jv) {
-/* defer to the java variable for the reference */
-			char *jh = get_property_url(t->jv, false);
-			if (jh) {
-				if (!*href || !stringEqual(*href, jh)) {
-					nzFree(*href);
-					*href = jh;
-				} else
-					nzFree(jh);
+		if (t->action == TAGACT_A || t->action == TAGACT_FRAME) {
+			if (href)
+				*href = cloneString(t->href);
+			if (href && isJSAlive && t->jv) {
+/* defer to the js variable for the reference */
+				char *jh = get_property_url(t->jv, false);
+				if (jh) {
+					if (!*href || !stringEqual(*href, jh)) {
+						nzFree(*href);
+						*href = jh;
+					} else
+						nzFree(jh);
+				}
 			}
+		} else {
+// This link is not an anchor or frame, it's onclick on something else.
+			if (href)
+				*href = cloneString("#");
 		}
 	}
 
@@ -2980,6 +3349,11 @@ findField(const char *line, int ftype, int n,
 		while (strchr(urlok, *s))
 			++s;
 		h = pullString1(ss, s);
+// When a url ends in period, that is almost always the end of the sentence,
+// Please check out www.foobar.com/snork.
+// and rarely part of the url.
+		if (s[-1] == '.')
+			h[s - ss - 1] = 0;
 		unpercentURL(h);
 		if (!isURL(h)) {
 			free(h);
@@ -3089,7 +3463,7 @@ static int substituteText(const char *line)
 		if (*line) {	/* third delimiter */
 			++line;
 			subPrint = 0;
-			while (c = *line) {
+			while ((c = *line)) {
 				if (c == 'g') {
 					g_mode = true;
 					++line;
@@ -3175,7 +3549,7 @@ static int substituteText(const char *line)
 				findInputField(p, 1, whichField, &total,
 					       &realtotal, &tagno);
 				if (!tagno) {
-					fieldNumProblem(0, 'i', whichField,
+					fieldNumProblem(0, "i", whichField,
 							total, realtotal);
 					continue;
 				}
@@ -3358,6 +3732,19 @@ like rf (refresh), which could be a long url.
 *********************************************************************/
 
 static char *allocatedLine = 0;
+/*********************************************************************
+Uses of allocatedLine:
+rf sets allocatedLine to b currentFile
+f/  becomes  f lastComponent
+w/  becomes  w lastComponent
+g becomes b url  (going to a hyperlink)
+i<7 becomes i=contents of session 7
+i<file becomes i=contents of file
+i* becomes b url  for a submit button
+new location from javascript becomes b new url,
+	this frees the old allocatedLine if it was present.
+e url without http:// becomes http://url
+*********************************************************************/
 
 static int twoLetter(const char *line, const char **runThis)
 {
@@ -3374,13 +3761,26 @@ static int twoLetter(const char *line, const char **runThis)
 	if (line[0] == 'd' && line[1] == 'b' && isdigitByte(line[2])
 	    && !line[3]) {
 		debugLevel = line[2] - '0';
-		update_var_in_js(2);
 		return true;
 	}
 
 	if (!strncmp(line, "db>", 3)) {
 		setDebugFile(line + 3);
 		return true;
+	}
+
+	if (!strncmp(line, "uvw", 3)) {
+		const char *s = line + 3;
+		if (*s && *s != ' ')
+			return 2;
+		nzFree(uvw);
+		uvw = 0;
+		if (!*s)
+			return 1;
+		for (++s; *s == ' '; ++s) ;
+		if (*s)
+			uvw = cloneString(s);
+		return 1;
 	}
 
 	if (stringEqual(line, "bw")) {
@@ -3404,17 +3804,19 @@ static int twoLetter(const char *line, const char **runThis)
 	}
 
 	if (line[0] == 'u' && line[1] == 'a' && isdigitByte(line[2])
-	    && !line[3]) {
-		char *t = userAgents[line[2] - '0'];
+	    && (!line[3] || (isdigitByte(line[3]) && !line[4]))) {
+		char *t = 0;
+		n = atoi(line + 2);
+		if (n < MAXAGENT)
+			t = userAgents[n];
 		cmd = 'e';
 		if (!t) {
-			setError(MSG_NoAgent, line[2]);
+			setError(MSG_NoAgent, n);
 			return false;
 		}
 		currentAgent = t;
 		if (helpMessagesOn || debugLevel >= 1)
 			eb_puts(currentAgent);
-		update_var_in_js(4);
 		return true;
 	}
 
@@ -3431,13 +3833,13 @@ static int twoLetter(const char *line, const char **runThis)
 		return rc;
 	}
 
-/* ^^^^ is the same as ^4 */
-	if (line[0] == '^' && line[1] == '^') {
+/* ^^^^ is the same as ^4; same with &*/
+	if ((line[0] == '^' || line[0] == '&') && line[1] == line[0]) {
 		const char *t = line + 2;
-		while (*t == '^')
+		while (*t == line[0])
 			++t;
 		if (!*t) {
-			sprintf(shortline, "^%ld", (long)(t - line));
+			sprintf(shortline, "%c%ld", line[0], (long)(t - line));
 			return 2;
 		}
 	}
@@ -3482,15 +3884,33 @@ static int twoLetter(const char *line, const char **runThis)
 			i_printfExit(MSG_NoNlOnDir, file);
 		*t = 0;
 		path = makeAbsPath(file);
-		*t = '\n';
-		if (!path)
-			t = emptyString;
-		else
+		*t = '\n';	// put it back
+		t = emptyString;
+		if (path && fileTypeByName(path, true))
 			t = lsattr(path, lsmode);
 		if (*t)
 			eb_puts(t);
 		else
 			i_puts(MSG_Inaccess);
+		return true;
+	}
+
+	if (!strncmp(line, "sort", 4)
+	    && (line[4] == '+' || line[4] == '-' || line[4] == '=') &&
+	    line[5] && !line[6] && strchr("ast", line[5])) {
+		ls_sort = 0;
+		if (line[5] == 's')
+			ls_sort = 1;
+		if (line[5] == 't')
+			ls_sort = 2;
+		ls_reverse = false;
+		if (line[4] == '-')
+			ls_reverse = true;
+		if (helpMessagesOn) {
+			if (ls_reverse)
+				i_printf(MSG_Reverse);
+			i_puts(MSG_SortAlpha + ls_sort);
+		}
 		return true;
 	}
 
@@ -3539,6 +3959,7 @@ pwd:
 		rc = playBuffer(line, NULL);
 		if (rc == 2)
 			goto no_action;
+		cmd = 'e';	// to see the error right away
 		return rc;
 	}
 
@@ -3556,16 +3977,18 @@ pwd:
 		sprintf(allocatedLine, "%c %s", cmd, cf->fileName);
 		debrowseSuffix(allocatedLine);
 		*runThis = allocatedLine;
-		f_encoded = cf->f_encoded;
+		uriEncoded = cf->uriEncoded;
 		return 2;
 	}
 
 	if (stringEqual(line, "config")) {
 		readConfigFile();
 		setupEdbrowseCache();
-		curl_easy_setopt(global_http_handle, CURLOPT_COOKIEJAR,
-				 cookieFile);
-		curl_easy_setopt(global_http_handle, CURLOPT_CAINFO, sslCerts);
+		if (curlActive) {
+			if (cookieFile)
+				curl_easy_setopt(global_http_handle,
+						 CURLOPT_COOKIEJAR, cookieFile);
+		}
 		return true;
 	}
 
@@ -3594,12 +4017,14 @@ pwd:
 	}
 
 	if (stringEqual(line, "jdb")) {
-		char *cxbuf;
-		int cxbuflen;
 		const struct htmlTag *t;
 		cmd = 'e';
 		if (!cw->browseMode) {
 			setError(MSG_NoBrowse);
+			return false;
+		}
+		if (!isJSAlive) {
+			setError(MSG_JavaOff);
 			return false;
 		}
 /* debug the js context of the frame you are in */
@@ -3608,22 +4033,14 @@ pwd:
 			cf = t->f1;
 		else
 			selfFrame();
-		if (!isJSAlive) {
-			setError(MSG_JavaOff);
-			return false;
-		}
-		jexmode = true;
+		cw->jdb_frame = cf;
 		jSyncup(false);
-/* the sync could have changed cf */
-		if (t)
-			cf = t->f1;
-		else
-			selfFrame();
 		return true;
 	}
 
 	if (stringEqual(line, "ub") || stringEqual(line, "et")) {
-		struct ebFrame *f;
+		struct ebFrame *f, *fnext;
+		struct histLabel *label, *lnext;
 		ub = (line[0] == 'u');
 		rc = true;
 		cmd = 'e';
@@ -3634,6 +4051,9 @@ pwd:
 		undoCompare();
 		cw->undoable = false;
 		cw->browseMode = false;
+		cf->render2 = false;
+		if (cf->render1b)
+			cf->render1 = cf->render1b = false;
 		if (ub) {
 			debrowseSuffix(cf->fileName);
 			cw->nlMode = cw->rnlMode;
@@ -3651,22 +4071,37 @@ et_go:
 		}
 		freeTags(cw);
 		cw->mustrender = false;
-		for (f = &cw->f0; f; f = f->next) {
+		for (f = &cw->f0; f; f = fnext) {
+			fnext = f->next;
 			delTimers(f);
-			delInputChanges(f);
 			freeJavaContext(f);
-			f->jcx = NULL;
 			nzFree(f->dw);
-			f->dw = 0;
 			nzFree(f->hbase);
-			f->hbase = 0;
+			nzFree(f->firstURL);
+			if (f != &cw->f0) {
+				nzFree(f->fileName);
+				free(f);
+			} else {
+				f->jcx = f->winobj = f->docobj = 0;
+				f->dw = 0;
+				f->dw_l = 0;
+				f->hbase = 0;
+				f->firstURL = 0;
+			}
 		}
-		nzFree(cw->ft);
-		cw->ft = 0;
-		nzFree(cw->fd);
-		cw->fd = 0;
-		nzFree(cw->fk);
-		cw->fk = 0;
+		cw->f0.next = 0;
+		lnext = cw->histLabel;
+		while ((label = lnext)) {
+			lnext = label->prev;
+			free(label);
+		}
+		cw->histLabel = 0;
+		nzFree(cw->htmltitle);
+		cw->htmltitle = 0;
+		nzFree(cw->htmldesc);
+		cw->htmldesc = 0;
+		nzFree(cw->htmlkey);
+		cw->htmlkey = 0;
 		nzFree(cw->mailInfo);
 		cw->mailInfo = 0;
 		if (ub)
@@ -3699,8 +4134,8 @@ et_go:
 		return 2;
 	}
 
-	if (line[0] == 'f' && line[2] == 0 &&
-	    (line[1] == 'd' || line[1] == 'k' || line[1] == 't')) {
+	if (stringEqual(line, "ft") || stringEqual(line, "fd") ||
+	    stringEqual(line, "fk")) {
 		const char *s;
 		int t;
 		cmd = 'e';
@@ -3709,11 +4144,11 @@ et_go:
 			return false;
 		}
 		if (line[1] == 't')
-			s = cw->ft, t = MSG_NoTitle;
+			s = cw->htmltitle, t = MSG_NoTitle;
 		if (line[1] == 'd')
-			s = cw->fd, t = MSG_NoDesc;
+			s = cw->htmldesc, t = MSG_NoDesc;
 		if (line[1] == 'k')
-			s = cw->fk, t = MSG_NoKeywords;
+			s = cw->htmlkey, t = MSG_NoKeywords;
 		if (s)
 			eb_puts(s);
 		else
@@ -3733,7 +4168,13 @@ et_go:
 		if (isdigitByte(*t))
 			account = strtol(t, (char **)&t, 10);
 		if (!*t) {
-/* send mail */
+// In case we haven't started curl yet.
+			if (!curlActive) {
+				eb_curl_global_init();
+// we don't need cookies and cache for email, but http might follow.
+				cookiesFromJar();
+				setupEdbrowseCache();
+			}
 			return sendMailCurrent(account, dosig);
 		} else {
 			setError(MSG_SMBadChar);
@@ -3741,31 +4182,31 @@ et_go:
 		}
 	}
 
-	if (stringEqual(line, "sg")) {
-		searchStringsAll = true;
-		if (helpMessagesOn)
-			i_puts(MSG_SubGlobal);
-		return true;
-	}
-
-	if (stringEqual(line, "sl")) {
-		searchStringsAll = false;
-		if (helpMessagesOn)
-			i_puts(MSG_SubLocal);
-		return true;
-	}
-
 	if (stringEqual(line, "ci")) {
-		caseInsensitive = true;
-		if (helpMessagesOn)
-			i_puts(MSG_CaseIns);
+		caseInsensitive ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(caseInsensitive + MSG_CaseSen);
 		return true;
 	}
 
-	if (stringEqual(line, "cs")) {
-		caseInsensitive = false;
+	if (stringEqual(line, "ci+") || stringEqual(line, "ci-")) {
+		caseInsensitive = (line[2] == '+');
 		if (helpMessagesOn)
-			i_puts(MSG_CaseSen);
+			i_puts(caseInsensitive + MSG_CaseSen);
+		return true;
+	}
+
+	if (stringEqual(line, "sg")) {
+		searchStringsAll ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(searchStringsAll + MSG_SubLocal);
+		return true;
+	}
+
+	if (stringEqual(line, "sg+") || stringEqual(line, "sg-")) {
+		searchStringsAll = (line[2] == '+');
+		if (helpMessagesOn)
+			i_puts(searchStringsAll + MSG_SubLocal);
 		return true;
 	}
 
@@ -3797,9 +4238,23 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "hr+") || stringEqual(line, "hr-")) {
+		allowRedirection = (line[2] == '+');
+		if (helpMessagesOn)
+			i_puts(allowRedirection + MSG_RedirectionOff);
+		return true;
+	}
+
 	if (stringEqual(line, "pg")) {
 		pluginsOn ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(pluginsOn + MSG_PluginsOff);
+		return true;
+	}
+
+	if (stringEqual(line, "pg+") || stringEqual(line, "pg-")) {
+		pluginsOn = (line[2] == '+');
+		if (helpMessagesOn)
 			i_puts(pluginsOn + MSG_PluginsOff);
 		return true;
 	}
@@ -3815,13 +4270,24 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "bg+") || stringEqual(line, "bg-")) {
+#ifdef DOSLIKE
+		puts("download in background not available on Windows at this time.");
+#else
+		down_bg = (line[2] == '+');
+		if (helpMessagesOn)
+			i_puts(down_bg + MSG_DownForeground);
+#endif
+		return true;
+	}
+
 	if (stringEqual(line, "bglist")) {
 		bg_jobs(false);
 		return true;
 	}
 
 	if (stringEqual(line, "bflist")) {
-		for (n = 1; n < MAXSESSION; ++n) {
+		for (n = 1; n <= maxSession; ++n) {
 			struct ebWindow *lw = sessionList[n].lw;
 			if (!lw)
 				continue;
@@ -3840,9 +4306,23 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "iu+") || stringEqual(line, "iu-")) {
+		iuConvert = (line[2] == '+');
+		if (helpMessagesOn)
+			i_puts(iuConvert + MSG_IUConvertOff);
+		return true;
+	}
+
 	if (stringEqual(line, "sr")) {
 		sendReferrer ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(sendReferrer + MSG_RefererOff);
+		return true;
+	}
+
+	if (stringEqual(line, "sr+") || stringEqual(line, "sr-")) {
+		sendReferrer = (line[2] == '+');
+		if (helpMessagesOn)
 			i_puts(sendReferrer + MSG_RefererOff);
 		return true;
 	}
@@ -3854,11 +4334,38 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "js+") || stringEqual(line, "js-")) {
+		allowJS = (line[2] == '+');
+		if (helpMessagesOn)
+			i_puts(allowJS + MSG_JavaOff);
+		return true;
+	}
+
+	if (stringEqual(line, "H")) {
+		if (helpMessagesOn ^= 1)
+			if (debugLevel >= 1)
+				i_puts(MSG_HelpOn);
+		return true;
+	}
+
+	if (stringEqual(line, "H+") || stringEqual(line, "H-")) {
+		helpMessagesOn = (line[1] == '+');
+		if (helpMessagesOn && debugLevel >= 1)
+			i_puts(MSG_HelpOn);
+		return true;
+	}
+
 	if (stringEqual(line, "xhr")) {
 		allowXHR ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(allowXHR + MSG_XhrOff);
-		update_var_in_js(1);
+		return true;
+	}
+
+	if (stringEqual(line, "xhr+") || stringEqual(line, "xhr-")) {
+		allowXHR = (line[3] == '+');
+		if (helpMessagesOn)
+			i_puts(allowXHR + MSG_XhrOff);
 		return true;
 	}
 
@@ -3869,10 +4376,52 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "bd+") || stringEqual(line, "bd-")) {
+		binaryDetect = (line[2] == '+');
+		if (helpMessagesOn)
+			i_puts(binaryDetect + MSG_BinaryIgnore);
+		return true;
+	}
+
+	if (stringEqual(line, "sw")) {
+		searchWrap ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(searchWrap + MSG_WrapOff);
+		return true;
+	}
+
+	if (stringEqual(line, "sw+") || stringEqual(line, "sw-")) {
+		searchWrap = (line[2] == '+');
+		if (helpMessagesOn)
+			i_puts(searchWrap + MSG_WrapOff);
+		return true;
+	}
+
 	if (stringEqual(line, "rl")) {
 		inputReadLine ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(inputReadLine + MSG_InputTTY);
+		return true;
+	}
+
+	if (stringEqual(line, "rl+") || stringEqual(line, "rl-")) {
+		inputReadLine = (line[2] == '+');
+		if (helpMessagesOn)
+			i_puts(inputReadLine + MSG_InputTTY);
+		return true;
+	}
+
+	if (stringEqual(line, "can")) {
+		curlAuthNegotiate ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(curlAuthNegotiate + MSG_CurlNoAuthNegotiate);
+		return true;
+	}
+
+	if (stringEqual(line, "can+") || stringEqual(line, "can-")) {
+		curlAuthNegotiate = (line[3] == '+');
+		if (helpMessagesOn)
+			i_puts(curlAuthNegotiate + MSG_CurlNoAuthNegotiate);
 		return true;
 	}
 
@@ -3883,11 +4432,24 @@ et_go:
 		return true;
 	}
 
-	if (line[0] == 'f' && line[1] == 'm' &&
-	    line[2] && strchr("pa", line[2]) && !line[3]) {
-		ftpActive = (line[2] == 'a');
+	if (stringEqual(line, "lna+") || stringEqual(line, "lna-")) {
+		listNA = (line[3] == '+');
+		if (helpMessagesOn)
+			i_puts(listNA + MSG_ListControl);
+		return true;
+	}
+
+	if (stringEqual(line, "ftpa")) {
+		ftpActive ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(MSG_PassiveMode + ftpActive);
+		return true;
+	}
+
+	if (stringEqual(line, "ftpa+") || stringEqual(line, "ftpa-")) {
+		ftpActive = (line[4] == '+');
+		if (helpMessagesOn)
+			i_puts(ftpActive + MSG_PassiveMode);
 		return true;
 	}
 
@@ -3909,7 +4471,113 @@ et_go:
 		verifyCertificates ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(verifyCertificates + MSG_CertifyOff);
-		update_var_in_js(3);
+		return true;
+	}
+
+	if (stringEqual(line, "vs+") || stringEqual(line, "vs-")) {
+		verifyCertificates = (line[2] == '+');
+		if (helpMessagesOn)
+			i_puts(verifyCertificates + MSG_CertifyOff);
+		return true;
+	}
+
+	if (stringEqual(line, "dbcn")) {
+		debugClone ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(debugClone + MSG_DebugCloneOff);
+		if (isJSAlive)
+			set_property_bool(cf->winobj, "cloneDebug", debugClone);
+		return true;
+	}
+
+	if (stringEqual(line, "dbcn+") || stringEqual(line, "dbcn-")) {
+		debugClone = (line[4] == '+');
+		if (helpMessagesOn)
+			i_puts(debugClone + MSG_DebugCloneOff);
+		if (isJSAlive)
+			set_property_bool(cf->winobj, "cloneDebug", debugClone);
+		return true;
+	}
+
+	if (stringEqual(line, "dbev")) {
+		debugEvent ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(debugEvent + MSG_DebugEventOff);
+		if (isJSAlive)
+			set_property_bool(cf->winobj, "eventDebug", debugEvent);
+		return true;
+	}
+
+	if (stringEqual(line, "dbev+") || stringEqual(line, "dbev-")) {
+		debugEvent = (line[4] == '+');
+		if (helpMessagesOn)
+			i_puts(debugEvent + MSG_DebugEventOff);
+		if (isJSAlive)
+			set_property_bool(cf->winobj, "eventDebug", debugEvent);
+		return true;
+	}
+
+	if (stringEqual(line, "dberr")) {
+		debugThrow ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(debugThrow + MSG_DebugThrowOff);
+		if (isJSAlive)
+			set_property_bool(cf->winobj, "throwDebug", debugThrow);
+		return true;
+	}
+
+	if (stringEqual(line, "dberr+") || stringEqual(line, "dberr-")) {
+		debugThrow = (line[5] == '+');
+		if (helpMessagesOn)
+			i_puts(debugThrow + MSG_DebugThrowOff);
+		if (isJSAlive)
+			set_property_bool(cf->winobj, "throwDebug", debugThrow);
+		return true;
+	}
+
+	if (stringEqual(line, "dbcss")) {
+		debugCSS ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(debugCSS + MSG_DebugCSSOff);
+		if (debugCSS)
+			unlink("/tmp/css");
+		return true;
+	}
+
+	if (stringEqual(line, "dbcss+") || stringEqual(line, "dbcss-")) {
+		debugCSS = (line[5] == '+');
+		if (helpMessagesOn)
+			i_puts(debugCSS + MSG_DebugCSSOff);
+		if (debugCSS)
+			unlink("/tmp/css");
+		return true;
+	}
+
+	if (stringEqual(line, "demin")) {
+		demin ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(demin + MSG_DeminOff);
+		return true;
+	}
+
+	if (stringEqual(line, "demin+") || stringEqual(line, "demin-")) {
+		demin = (line[5] == '+');
+		if (helpMessagesOn)
+			i_puts(demin + MSG_DeminOff);
+		return true;
+	}
+
+	if (stringEqual(line, "timers")) {
+		gotimers ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(gotimers + MSG_TimersOff);
+		return true;
+	}
+
+	if (stringEqual(line, "timers+") || stringEqual(line, "timers-")) {
+		gotimers = (line[6] == '+');
+		if (helpMessagesOn)
+			i_puts(gotimers + MSG_TimersOff);
 		return true;
 	}
 
@@ -3920,9 +4588,60 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "hf+") || stringEqual(line, "hf-")) {
+		showHiddenFiles = (line[2] == '+');
+		if (helpMessagesOn)
+			i_puts(showHiddenFiles + MSG_HiddenOff);
+		return true;
+	}
+
+	if (stringEqual(line, "hover")) {
+		showHover ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(showHover + MSG_HoverOff);
+		if (cw->browseMode && isJSAlive)
+			rerender(false);
+		return true;
+	}
+
+	if (stringEqual(line, "hover+") || stringEqual(line, "hover-")) {
+		showHover = (line[5] == '+');
+		if (helpMessagesOn)
+			i_puts(showHover + MSG_HoverOff);
+		if (cw->browseMode && isJSAlive)
+			rerender(false);
+		return true;
+	}
+#if 0
+	if (stringEqual(line, "csst")) {
+		showInject ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(showInject + MSG_InjectOff);
+		if (cw->browseMode && isJSAlive)
+			rerender(false);
+		return true;
+	}
+
+	if (stringEqual(line, "csst+") || stringEqual(line, "csst-")) {
+		showInject = (line[4] == '+');
+		if (helpMessagesOn)
+			i_puts(showInject + MSG_InjectOff);
+		if (cw->browseMode && isJSAlive)
+			rerender(false);
+		return true;
+	}
+#endif
+
 	if (stringEqual(line, "su8")) {
 		re_utf8 ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(re_utf8 + MSG_ReAscii);
+		return true;
+	}
+
+	if (stringEqual(line, "su8+") || stringEqual(line, "su8-")) {
+		re_utf8 = (line[3] == '+');
+		if (helpMessagesOn)
 			i_puts(re_utf8 + MSG_ReAscii);
 		return true;
 	}
@@ -3953,24 +4672,24 @@ et_go:
 		return true;
 	}
 
-	if (stringEqual(line, "eo")) {
-		endMarks = 0;
+	if (stringEqual(line, "fbc+") || stringEqual(line, "fbc-")) {
+		fetchBlobColumns = (line[3] == '+');
 		if (helpMessagesOn)
-			i_puts(MSG_MarkOff);
+			i_puts(fetchBlobColumns + MSG_FetchBlobOff);
 		return true;
 	}
 
-	if (stringEqual(line, "el")) {
-		endMarks = 1;
-		if (helpMessagesOn)
-			i_puts(MSG_MarkList);
+	if (stringEqual(line, "endm")) {
+		endMarks ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(endMarks + MSG_MarkersOff);
 		return true;
 	}
 
-	if (stringEqual(line, "ep")) {
-		endMarks = 2;
+	if (stringEqual(line, "endm+") || stringEqual(line, "endm-")) {
+		endMarks = (line[4] == '+');
 		if (helpMessagesOn)
-			i_puts(MSG_MarkOn);
+			i_puts(endMarks + MSG_MarkersOff);
 		return true;
 	}
 
@@ -4029,12 +4748,12 @@ static bool balanceLine(const char *line)
 	int level = 0;
 	int i, direction, forward, backward;
 
-	if (c = *line) {
+	if ((c = *line)) {
 		if (!strchr(alllist, c) || line[1]) {
 			setError(MSG_BalanceChar, alllist);
 			return false;
 		}
-		if (t = strchr(openlist, c)) {
+		if ((t = strchr(openlist, c))) {
 			d = closelist[t - openlist];
 			direction = 1;
 		} else {
@@ -4086,8 +4805,8 @@ static bool balanceLine(const char *line)
 	i = endRange;
 	while ((i += direction) > 0 && i <= cw->dol) {
 		unbalanced(c, d, i, &backward, &forward);
-		if (direction > 0 && backward >= level ||
-		    direction < 0 && forward >= level) {
+		if ((direction > 0 && backward >= level) ||
+		    (direction < 0 && forward >= level)) {
 			cw->dot = i;
 			printDot();
 			return true;
@@ -4239,7 +4958,7 @@ static char *showLinks(void)
 		stringAndString(&a, &a_l, h);
 		stringAndString(&a, &a_l, ">\n");
 /* get text from the html title if you can */
-		s = cw->ft;
+		s = cw->htmltitle;
 		if (s && *s) {
 			h2 = htmlEscape(s);
 			stringAndString(&a, &a_l, h2);
@@ -4265,7 +4984,7 @@ static char *showLinks(void)
 		nzFree(h);
 	}
 
-	removeHiddenNumbers(a, 0);
+	removeHiddenNumbers((pst) a, 0);
 	return a;
 }				/* showLinks */
 
@@ -4294,7 +5013,7 @@ Run the entered edbrowse command.
 This is indirectly recursive, as in g/x/d
 Pass in the ed command, and return success or failure.
 We assume it has been turned into a C string.
-This means no embeded nulls.
+This means no embedded nulls.
 If you want to use null in a search or substitute, use \0.
 *********************************************************************/
 
@@ -4305,12 +5024,14 @@ bool runCommand(const char *line)
 	struct ebWindow *w = NULL;
 	const struct htmlTag *tag = NULL;	/* event variables */
 	bool nogo = true, rc = true;
+	bool emode = false;	// force e, not browse
 	bool postSpace = false, didRange = false;
 	char first;
 	int cx = 0;		/* numeric suffix as in s/x/y/3 or w2 */
 	int tagno;
 	const char *s = NULL;
 	static char newline[MAXTTYLINE];
+	char *thisfile;
 
 	selfFrame();
 	if (allocatedLine) {
@@ -4318,12 +5039,10 @@ bool runCommand(const char *line)
 		allocatedLine = 0;
 	}
 
-	nzFree(currentReferrer);
-	currentReferrer = NULL;
 	js_redirects = false;
 
 	cmd = icmd = 'p';
-	f_encoded = false;
+	uriEncoded = false;
 	skipWhite(&line);
 	first = *line;
 
@@ -4400,9 +5119,10 @@ bool runCommand(const char *line)
 		startRange = endRange = cw->dol;
 	}
 
-	if (first == 'w' || first == 'v' || first == 'g' &&
-	    line[1] && strchr(valid_delim, line[1]) &&
-	    !stringEqual(line, "g?")) {
+	if (first == 'w' || first == 'v' || (first == 'g' && line[1]
+					     && strchr(valid_delim, line[1])
+					     && !stringEqual(line, "g-")
+					     && !stringEqual(line, "g?"))) {
 		didRange = true;
 		startRange = 1;
 		if (cw->dol == 0)
@@ -4455,6 +5175,7 @@ bool runCommand(const char *line)
 		line = "s`bl";
 	}
 
+expctr:
 /* special commands to expand and contract frames */
 	if (stringEqual(line, "exp") || stringEqual(line, "ctr")) {
 		if (globSub) {
@@ -4472,12 +5193,13 @@ bool runCommand(const char *line)
 			return false;
 		}
 		jSyncup(false);
+		cw->dot = startRange;
 		if (!frameExpand((line[0] == 'e'), startRange, endRange))
 			showError();
 /* meta http refresh could send to another page */
 		if (newlocation) {
 replaceframe:
-			if (!shortRefreshDelay()) {
+			if (!shortRefreshDelay(newlocation, newloc_d)) {
 				nzFree(newlocation);
 				newlocation = 0;
 			} else {
@@ -4494,6 +5216,49 @@ replaceframe:
 		return true;
 	}
 
+	/* special command for hidden input */
+	if (!strncmp(line, "ipass", 5)) {
+		char *p;
+		char buffer[MAXUSERPASS];
+		int realtotal;
+		bool old_masked;
+		if (!cw->browseMode) {
+			setError(MSG_NoBrowse);
+			return false;
+		}
+		if (endRange > startRange) {
+			setError(MSG_RangeCmd, "ipass");
+			return false;
+		}
+
+		s = line + 5;
+		if (isdigitByte(*s))
+			cx = strtol(s, (char **)&s, 10);
+		else if (*s == '$')
+			cx = -1, ++s;
+		/* XXX try to guess cx if only one password input field? */
+
+		cw->dot = endRange;
+		p = (char *)fetchLine(cw->dot, -1);
+		findInputField(p, 1, cx, &n, &realtotal, &tagno);
+		debugPrint(5, "findField returns %d.%d", n, tagno);
+		if (!tagno) {
+			fieldNumProblem(0, "ipass", cx, n, realtotal);
+			return false;
+		}
+
+		prompt_and_read(MSG_Password, buffer, MAXUSERPASS,
+				MSG_PasswordLong, true);
+
+		old_masked = tagList[tagno]->masked;
+		tagList[tagno]->masked = true;
+
+		rc = infReplace(tagno, buffer, true);
+		if (!rc)
+			tagList[tagno]->masked = old_masked;
+		return rc;
+	}
+
 /* get the command */
 	cmd = *line;
 	if (cmd)
@@ -4506,11 +5271,6 @@ replaceframe:
 		setError(MSG_UnknownCommand, cmd);
 		return (globSub = false);
 	}
-
-/* set the referrer if you are following a linnk,
- * as opposed to entering a b command and jumping somewhere else completely. */
-	if (strchr("giI", cmd))
-		currentReferrer = cloneString(cf->fileName);
 
 	first = *line;
 	if (cmd == 'w' && first == '+')
@@ -4625,13 +5385,6 @@ replaceframe:
 		return true;
 	}
 
-	if (cmd == 'H') {
-		if (helpMessagesOn ^= 1)
-			if (debugLevel >= 1)
-				i_puts(MSG_HelpOn);
-		return true;
-	}
-
 	if (cmd == 'X') {
 		cw->dot = endRange;
 		return true;
@@ -4691,7 +5444,8 @@ replaceframe:
 	if (!postSpace) {
 		cx = stringIsNum(line);
 		if (!cx) {
-			setError((cmd == '^') ? MSG_Backup0 : MSG_Session0);
+			setError((cmd == '^'
+				  || cmd == '&') ? MSG_Backup0 : MSG_Session0);
 			return false;
 		}
 		if (cx < 0)
@@ -4718,7 +5472,7 @@ replaceframe:
 			return true;
 /* look around for another active session */
 		while (true) {
-			if (++cx == MAXSESSION)
+			if (++cx > maxSession)
 				cx = 1;
 			if (cx == context)
 				ebClose(0);
@@ -4738,12 +5492,14 @@ replaceframe:
 				return false;
 			s = sessionList[cx].lw->f0.fileName;
 			if (s)
-				printf("%s", s);
+				i_printf(MSG_String, s);
 			else
 				i_printf(MSG_NoFile);
 			if (sessionList[cx].lw->binMode)
 				i_printf(MSG_BinaryBrackets);
-			nl();
+			if (cw->jdb_frame)
+				i_printf(MSG_String, " jdb");
+			eb_puts("");
 			return true;
 		}		/* another session */
 		if (first) {
@@ -4793,6 +5549,30 @@ replaceframe:
 			return false;
 		}
 		return writeFile(line, writeMode);
+	}
+
+	if (cmd == '&') {	/* jump back key */
+		if (first && !cx) {
+			setError(MSG_ArrowAfter);
+			return false;
+		}
+		if (!cx)
+			cx = 1;
+		while (cx) {
+			struct histLabel *label = cw->histLabel;
+			if (!label) {
+				setError(MSG_NoPrevious);
+				return false;
+			}
+			cw->histLabel = label->prev;
+			if (label->label)	/* could be 0 because of line deletion */
+				cw->dot = label->label;
+			free(label);
+			--cx;
+		}
+		printDot();
+		return true;
+
 	}
 
 	if (cmd == '^') {	/* back key, pop the stack */
@@ -4879,13 +5659,15 @@ replaceframe:
 	}
 
 	/* go to a file in a directory listing */
-	if (cmd == 'g' && cw->dirMode && !first) {
-		char *p, *dirline, *endline;
-		const struct MIMETYPE *gmt;	/* the go mime type */
+	if (cmd == 'g' && cw->dirMode && (!first || stringEqual(line, "-"))) {
+		char *p, *dirline;
+		const struct MIMETYPE *gmt = 0;	/* the go mime type */
+		emode = (first == '-');
 		if (endRange > startRange) {
-			setError(MSG_RangeG);
+			setError(MSG_RangeCmd, "g");
 			return false;
 		}
+		cw->dot = endRange;
 		p = (char *)fetchLine(endRange, -1);
 		j = pstLength((pst) p);
 		--j;
@@ -4895,7 +5677,8 @@ replaceframe:
 		cmd = 'e';
 		if (!dirline)
 			return false;
-		gmt = findMimeByFile(dirline);
+		if (!emode)
+			gmt = findMimeByFile(dirline);
 		if (pluginsOn && gmt) {
 			if (gmt->outtype)
 				cmd = 'b';
@@ -4909,7 +5692,7 @@ replaceframe:
 
 	if (cmd == 'e') {
 		if (cx) {
-switchsession:
+// switchsession:
 			if (!cxCompare(cx))
 				return false;
 			cxSwitch(cx, true);
@@ -4933,6 +5716,8 @@ switchsession:
 		j = strlen(line);
 		if (j && line[j - 1] == '?')
 			lookmode = true;
+		if (j && line[j - 1] == '-')
+			emode = true;
 
 		/* Check to see if g means run an sql command. */
 		if (!first) {
@@ -4968,7 +5753,7 @@ switchsession:
 			else if (first == '$')
 				j = -1, ++s;
 		}
-		if (*s == '?')
+		if (*s == '?' || *s == '-')
 			++s;
 		if (!*s) {
 			if (cw->sqlMode) {
@@ -4978,10 +5763,10 @@ switchsession:
 			jsh = jsgo = nogo = false;
 			jsdead = !isJSAlive;
 			click = dclick = over = false;
-			cmd = 'b';
-			f_encoded = true;
+			cmd = (emode ? 'e' : 'b');
+			uriEncoded = true;
 			if (endRange > startRange) {
-				setError(MSG_RangeG);
+				setError(MSG_RangeCmd, "g");
 				return false;
 			}
 			p = (char *)fetchLine(endRange, -1);
@@ -4989,9 +5774,12 @@ switchsession:
 			debugPrint(5, "findField returns %d, %s", tagno, h);
 
 			if (!h) {
-				fieldNumProblem(1, 'g', j, n, n);
+				fieldNumProblem(1, "g", j, n, n);
 				return false;
 			}
+			cw->dot = endRange;
+			if (cw->browseMode && h[0] == '#')
+				emode = false, cmd = 'b';
 			jsh = memEqualCI(h, "javascript:", 11);
 
 			if (lookmode) {
@@ -5001,9 +5789,9 @@ switchsession:
 			}
 
 			if (tag && tag->action == TAGACT_FRAME) {
-				setError(MSG_ExpGo);
 				nzFree(h);
-				return false;
+				line = "exp";
+				goto expctr;
 			}
 
 			if (tagno) {
@@ -5015,6 +5803,8 @@ switchsession:
 				jsgo = true;
 			jsgo |= jsh;
 			nogo = stringEqual(h, "#");
+			if (!*h)
+				nogo = true;
 			nogo |= jsh;
 			debugPrint(5, "go %d nogo %d jsh %d dead %d", jsgo,
 				   nogo, jsh, jsdead);
@@ -5027,32 +5817,24 @@ switchsession:
 					i_puts(MSG_NJGoing);
 				jsgo = jsh = false;
 			}
-/* because I am setting allocatedLine to h, I don't have to free it */
+// because I am setting allocatedLine to h, it will get freed on the next go round.
 			line = allocatedLine = h;
 			first = *line;
 			setError(-1);
 			rc = false;
 			if (jsgo) {
-/* javascript might update fields */
 /* The program might depend on the mouseover code running first */
-				if (over) {
-					jSyncup(false);
-					cf = tag->f0;
-					rc = handlerGoBrowse(tag,
-							     "onmouseover");
-					jSideEffects();
-					if (newlocation)
-						goto redirect;
-				}
+				rc = bubble_event(tag, "onmouseover");
+				if (newlocation)
+					goto redirect;
+				if (!over)
+					rc = false;
 			}
 /* This is the only handler where false tells the browser to do something else. */
 			if (!rc && !jsdead)
 				set_property_string(cf->winobj, "status", h);
-			if (jsgo && click) {
-				jSyncup(false);
-				cf = tag->f0;
-				rc = handlerGoBrowse(tag, "onclick");
-				jSideEffects();
+			if (jsgo) {
+				rc = bubble_event(tag, "onclick");
 				if (newlocation)
 					goto redirect;
 				if (!rc)
@@ -5071,6 +5853,9 @@ switchsession:
 			}
 			if (nogo)
 				return true;
+// to access local files
+			if (!isURL(h))
+				unpercentString(h);
 		}
 	}
 
@@ -5080,7 +5865,7 @@ switchsession:
 			strcpy(newline, "//%");
 			line = newline;
 		} else if (strchr(",.;:!?)-\"", first) &&
-			   (!line[1] || isdigitByte(line[1]) && !line[2])) {
+			   (!line[1] || (isdigitByte(line[1]) && !line[2]))) {
 			char esc[2];
 			esc[0] = esc[1] = 0;
 			if (first == '.' || first == '?')
@@ -5103,9 +5888,9 @@ switchsession:
 		else if (*s == '$')
 			cx = -1, ++s;
 		c = *s;
-		if (c
-		    && (strchr(valid_delim, c) || cmd == 'i'
-			&& strchr("*<?=", c))) {
+		if (c &&
+		    (strchr(valid_delim, c) ||
+		     (cmd == 'i' && strchr("*<?=", c)))) {
 			if (!cw->browseMode && (cmd == 'i' || cx)) {
 				setError(MSG_NoBrowse);
 				return false;
@@ -5118,7 +5903,6 @@ switchsession:
 			if (cmd == 'i' && strchr("?=<*", c)) {
 				char *p;
 				int realtotal;
-				bool gobuffer;	/* for i* switch to buffer */
 				scmd = c;
 				line = s + 1;
 				first = *line;
@@ -5135,7 +5919,7 @@ switchsession:
 				debugPrint(5, "findField returns %d.%d", n,
 					   tagno);
 				if (!tagno) {
-					fieldNumProblem((c == '*' ? 2 : 0), 'i',
+					fieldNumProblem((c == '*' ? 2 : 0), "i",
 							cx, n, realtotal);
 					return false;
 				}
@@ -5146,12 +5930,14 @@ switchsession:
 				}
 
 				cw->undoable = false;
+#if 0
 				gobuffer = (tagList[tagno]->itype == INP_TA);
 				if (gobuffer && scmd == '*') {
 					cx = tagList[tagno]->lic;
 					cmd = 'e';
 					goto switchsession;
 				}
+#endif
 
 				if (c == '<') {
 					bool fromfile = false;
@@ -5188,56 +5974,40 @@ switchsession:
 									     1,
 									     n);
 						plen = pstLength((pst) p);
-						if (plen > sizeof(newline))
-							plen = sizeof(newline);
-						memcpy(newline, p, plen);
+						allocatedLine =
+						    allocMem(plen + 1);
+						memcpy(allocatedLine, p, plen);
+						allocatedLine[plen] = 0;
 						n = plen;
 						nzFree(p);
 					} else {
-						int fd;
-						fromfile = true;
 						if (!envFile(line, &line))
 							return false;
-						fd = open(line,
-							  O_RDONLY | O_TEXT);
-						if (fd < 0) {
-							setError(MSG_NoOpen,
-								 line);
+						if (!fileIntoMemory
+						    (line, &allocatedLine, &n))
 							return false;
-						}
-						n = read(fd, newline,
-							 sizeof(newline));
-						close(fd);
-						if (n < 0) {
-							setError(MSG_NoRead,
-								 line);
-							return false;
-						}
+						fromfile = true;
 					}
 					for (j = 0; j < n; ++j) {
-						if (newline[j] == 0) {
+						if (allocatedLine[j] == 0) {
 							setError(MSG_InputNull,
 								 line);
 							return false;
 						}
-						if (newline[j] == '\r'
+						if (allocatedLine[j] == '\r'
 						    && !fromfile && j < n - 1
-						    && newline[j + 1] != '\n') {
+						    && allocatedLine[j + 1] !=
+						    '\n') {
 							setError(MSG_InputCR);
 							return false;
 						}
-						if (newline[j] == '\r'
-						    || newline[j] == '\n')
+						if (allocatedLine[j] == '\r'
+						    || allocatedLine[j] == '\n')
 							break;
 					}
-					if (j == sizeof(newline)) {
-						setError(MSG_FirstLineLong,
-							 line);
-						return false;
-					}
-					newline[j] = 0;
-					prepareForField(newline);
-					line = newline;
+					allocatedLine[j] = 0;
+					prepareForField(allocatedLine);
+					line = allocatedLine;
 					scmd = '=';
 				}
 
@@ -5260,7 +6030,7 @@ switchsession:
 					line = allocatedLine;
 					first = *line;
 					cmd = 'b';
-					f_encoded = true;
+					uriEncoded = true;
 				}
 
 			} else
@@ -5272,9 +6042,9 @@ switchsession:
 	}
 
 rebrowse:
-	if (cmd == 'e' || cmd == 'b' && first && first != '#') {
-//  printf("ifetch %d %s\n", f_encoded, line);
-		if (cf->fileName && !noStack && sameURL(line, cf->fileName)) {
+	if (cmd == 'e' || (cmd == 'b' && first && first != '#')) {
+//  printf("ifetch %d %s\n", uriEncoded, line);
+		if (!noStack && sameURL(line, cf->fileName)) {
 			if (stringEqual(line, cf->fileName)) {
 				setError(MSG_AlreadyInBuffer);
 				return false;
@@ -5291,6 +6061,7 @@ rebrowse:
 			line = s;
 			first = '#';
 			cmd = 'b';
+			emode = false;
 			goto browse;
 		}
 
@@ -5302,10 +6073,11 @@ rebrowse:
 		cw->undoable = cw->changeMode = false;
 		startRange = endRange = 0;
 		changeFileName = 0;	/* should already be zero */
+		thisfile = cf->fileName;
 		w = createWindow();
 		cw = w;		/* we might wind up putting this back */
 		selfFrame();
-		cf->f_encoded = f_encoded;
+		cf->uriEncoded = uriEncoded;
 /* Check for sendmail link */
 		if (cmd == 'b' && memEqualCI(line, "mailto:", 7)) {
 			char *addr, *subj, *body;
@@ -5329,13 +6101,32 @@ rebrowse:
 			if (j)
 				i_puts(MSG_MailHowto);
 		} else {
+			bool save_pg;
+
+/*********************************************************************
+Before we set the new file name, and before we call up the next web page,
+we have to make sure it has a protocol. Every url needs a protocol.
+*********************************************************************/
+
+			if (missingProtURL(line)) {
+				allocatedLine = allocMem(strlen(line) + 8);
+				sprintf(allocatedLine, "http://%s", line);
+				line = allocatedLine;
+			}
+
 			cf->fileName = cloneString(line);
 			cf->firstURL = cloneString(line);
 			if (isSQL(line))
 				cw->sqlMode = true;
 			if (icmd == 'g' && !nogo && isURL(line))
 				debugPrint(2, "*%s", line);
-			j = readFile(line, emptyString);
+// emode suppresses plugins, as well as browsing
+			save_pg = pluginsOn;
+			if (emode)
+				pluginsOn = false;
+			j = readFile(line, emptyString, (cmd != 'r'), 0,
+				     thisfile);
+			pluginsOn = save_pg;
 		}
 		w->undoable = w->changeMode = false;
 		cw = cs->lw;	/* put it back, for now */
@@ -5372,7 +6163,7 @@ rebrowse:
 		if (changeFileName) {
 			nzFree(w->f0.fileName);
 			w->f0.fileName = changeFileName;
-			w->f0.f_encoded = true;
+			w->f0.uriEncoded = true;
 			changeFileName = 0;
 		}
 /* Some files we just can't browse */
@@ -5392,10 +6183,6 @@ browse:
 			return false;
 		}
 		if (!cw->browseMode) {
-			if (cw->binMode && (!cf->mt || !cf->mt->outtype)) {
-				setError(MSG_BrowseBinary);
-				return false;
-			}
 			if (!cw->dol) {
 				setError(MSG_BrowseEmpty);
 				return false;
@@ -5415,7 +6202,7 @@ browse:
 		}
 
 		if (newlocation) {
-			if (!shortRefreshDelay()) {
+			if (!shortRefreshDelay(newlocation, newloc_d)) {
 				nzFree(newlocation);
 				newlocation = 0;
 			} else {
@@ -5429,7 +6216,7 @@ redirect:
 				newlocation = 0;
 				debugPrint(2, "redirect %s", line);
 				icmd = cmd = 'b';
-				f_encoded = true;
+				uriEncoded = true;
 				first = *line;
 				if (intFlag) {
 					i_puts(MSG_RedirectionInterrupted);
@@ -5460,6 +6247,11 @@ redirect:
 		for (i = 1; i <= cw->dol; ++i) {
 			char *p = (char *)fetchLine(i, -1);
 			if (lineHasTag(p, newhash)) {
+				struct histLabel *label =
+				    allocMem(sizeof(struct histLabel));
+				label->label = cw->dot;
+				label->prev = cw->histLabel;
+				cw->histLabel = label;
 				cw->dot = i;
 				printDot();
 				nzFree(newhash);
@@ -5553,7 +6345,7 @@ afterdelete:
 				strmove(strchr(newline, ']') + 1, line);
 				line = newline;
 			}
-			j = readFile(line, emptyString);
+			j = readFile(line, emptyString, (cmd != 'r'), 0, 0);
 			if (!serverData)
 				fileSize = -1;
 			return j;
@@ -5563,7 +6355,12 @@ afterdelete:
 	}
 
 	if (cmd == 's') {
+		pst p;
 		j = substituteText(line);
+// special case, if last line became empty and nlMode is true.
+		if (cw->dol && cw->nlMode &&
+		    (p = fetchLine(cw->dol, -1)) && p[0] == '\n')
+			delText(cw->dol, cw->dol);
 		if (j < 0) {
 			globSub = false;
 			j = false;
@@ -5620,7 +6417,7 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 	if (textlen < 0) {
 		textlen = strlen(text);
 	} else {
-		cw->binMode = looksBinary(text, textlen);
+		cw->binMode = looksBinary((uchar *) text, textlen);
 	}
 	if (textlen) {
 		rc = addTextToBuffer((pst) text, textlen, 0, false);
@@ -5652,15 +6449,44 @@ bool browseCurrentBuffer(void)
 {
 	char *rawbuf, *newbuf, *tbuf;
 	int rawsize, tlen, j;
-	bool rc, remote = false;
+	bool rc, remote;
+	uchar sxfirst = 1;
 	bool save_ch = cw->changeMode;
 	uchar bmode = 0;
+	const struct MIMETYPE *mt = 0;
 
-	if (cf->fileName)
-		remote = isURL(cf->fileName);
+	remote = isURL(cf->fileName);
 
-	if (cf->mt && cf->mt->outtype)
-		bmode = 3;
+	if (!cf->render2 && cf->fileName) {
+		if (remote)
+			mt = findMimeByURL(cf->fileName, &sxfirst);
+		else
+			mt = findMimeByFile(cf->fileName);
+	}
+
+	if (mt && !mt->outtype) {
+		setError(MSG_NotConverter);
+		return false;
+	}
+
+	if (mt && mt->from_file) {
+		setError(MSG_PluginFile);
+		return false;
+	}
+
+	if (mt) {
+		if (cf->render1 && mt == cf->mt)
+			cf->render2 = true;
+		else
+			bmode = 3;
+	}
+
+	if (!bmode && cw->binMode) {
+		setError(MSG_BrowseBinary);
+		return false;
+	}
+
+	if (bmode) ;		// ok
 	else
 /* A mail message often contains lots of html tags,
  * so we need to check for email headers first. */
@@ -5673,31 +6499,22 @@ bool browseCurrentBuffer(void)
 		return false;
 	}
 
-	rawbuf = NULL;
-	rawsize = 0;
-	if (bmode != 3 || remote || access(cf->fileName, 4)) {
-		if (!unfoldBuffer(context, false, &rawbuf, &rawsize))
-			return false;	/* should never happen */
-	}
+	if (!unfoldBuffer(context, false, &rawbuf, &rawsize))
+		return false;	/* should never happen */
 
 	if (bmode == 3) {
 /* convert raw text via a plugin */
-		char *outfile = runPluginConverter(rawbuf, rawsize);
-		if (!outfile) {
-			nzFree(rawbuf);
+		if (remote)
+			rc = runPluginCommand(mt, cf->fileName, 0, rawbuf,
+					      rawsize, &rawbuf, &rawsize);
+		else
+			rc = runPluginCommand(mt, 0, cf->fileName, rawbuf,
+					      rawsize, &rawbuf, &rawsize);
+		if (!rc)
 			return false;
-		}
-		nzFree(rawbuf);
-		if (stringEqual(outfile, "|")) {
-			rawbuf = serverData;
-			rawsize = serverDataLen;
-			serverData = NULL;
-		} else {
-			rc = fileIntoMemory(outfile, &rawbuf, &rawsize);
-			unlink(outfile);
-			if (!rc)
-				return false;
-		}
+		if (!cf->render1)
+			cf->render1b = true;
+		cf->render1 = cf->render2 = true;
 		iuReformat(rawbuf, rawsize, &tbuf, &tlen);
 		if (tbuf) {
 			nzFree(rawbuf);
@@ -5706,7 +6523,7 @@ bool browseCurrentBuffer(void)
 		}
 /* make it look like remote html, so we don't get a lot of errors printed */
 		remote = true;
-		bmode = (cf->mt->outtype == 'h' ? 2 : 0);
+		bmode = (mt->outtype == 'h' ? 2 : 0);
 		if (!allowRedirection)
 			bmode = 0;
 	}
@@ -5808,7 +6625,7 @@ bool locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
 		for (s = p; (c = *s) != '\n'; ++s) {
 			if (c != InternalCodeChar)
 				continue;
-			if (!memcmp(s, search, n))
+			if (!strncmp(s, search, n))
 				break;
 		}
 		if (c == '\n')
@@ -5840,7 +6657,7 @@ char *getFieldFromBuffer(int tagno)
 int fieldIsChecked(int tagno)
 {
 	int ln;
-	char *p, *s, *t, *new;
+	char *p, *s, *t;
 	if (locateTagInBuffer(tagno, &ln, &p, &s, &t))
 		return (*s == '+');
 	return -1;

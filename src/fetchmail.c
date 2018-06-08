@@ -163,7 +163,7 @@ struct MIF {
 	char *subject, *from, *reply;
 	char *refer;
 	time_t sent;
-	bool seen;
+	bool seen, gone;
 };
 
 /* folders at the top of an imap system */
@@ -178,20 +178,32 @@ static struct FOLDER {
 	int uidnext;		/* uid of next message */
 	struct MIF *mlist;	/* allocated */
 } *topfolders;
+
 static int n_folders;
 static char *tf_cbase;		/* base of strings for folder names and paths */
+static bool move_capable = false;
+
+static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats);
 
 /* This routine mucks with the passed in string, which was allocated
  * to receive data from the imap server. So leave it allocated. */
-static void setFolders(void)
+static void setFolders(CURL * handle)
 {
 	struct FOLDER *f;
 	char *s, *t;
-	char *child;
+	char *child, *lbrk;
 	char qc;		/* quote character */
+	int i;
+
+// Reset things, in case called on refresh
+	nzFree(topfolders);
+	topfolders = 0;
+	nzFree(tf_cbase);
+	tf_cbase = 0;
+	n_folders = 0;
 
 	s = mailstring;
-	while (t = strstr(s, "LIST (\\")) {
+	while ((t = strstr(s, "LIST (\\"))) {
 		s = t + 7;
 		++n_folders;
 	}
@@ -200,15 +212,23 @@ static void setFolders(void)
 
 	f = topfolders;
 	s = mailstring;
-	while (t = strstr(s, "LIST (\\")) {
+	while ((t = strstr(s, "LIST (\\"))) {
 		s = t + 6;
-		child = strstr(s, "Children");
-/* this should always be present */
-		if (!child)
+		lbrk = strpbrk(s, "\r\n");	// line break
+		if (!lbrk)
 			continue;
+		child = strstr(s, "Children");
+		if (child && child < lbrk) {
 /* HasChildren or HasNoChildren */
-		f->children = (child[-1] == 's');
-		t = child + 8;
+			f->children = (child[-1] == 's');
+			t = child + 8;
+		} else {
+// Try another one.
+			child = strstr(s, "Inferiors");
+			if (!child || child > lbrk)
+				continue;
+			t = child + 10;
+		}
 		while (*t == ' ')
 			++t;
 		while (*child != '\\')
@@ -216,10 +236,11 @@ static void setFolders(void)
 		if (child < s)	/* should never happen */
 			child = s;
 		strmove(child, t);
+		lbrk = strpbrk(s, "\r\n");	// recalculate
 		if (*s == '\\') {	/* there's a name */
 			++s;
 			t = strchr(s, ')');
-			if (!t)
+			if (!t || t > lbrk)
 				continue;
 			while (t > s && t[-1] == ' ')
 				--t;
@@ -232,9 +253,7 @@ static void setFolders(void)
 		} else
 			f->name = emptyString;
 /* now get the path */
-		t = strpbrk(s, "\r\n");
-		if (!t)
-			continue;
+		t = lbrk;
 		qc = ' ';
 		s = t - 1;
 		if (*s == '"')
@@ -257,6 +276,10 @@ static void setFolders(void)
  * are now part of the folders, name and path etc. */
 	tf_cbase = mailstring;
 	mailstring = 0;
+
+	f = topfolders;
+	for (i = 0; i < n_folders; ++i, ++f)
+		examineFolder(handle, f, true);
 }				/* setFolders */
 
 static struct FOLDER *folderByName(char *line)
@@ -287,9 +310,28 @@ static struct FOLDER *folderByName(char *line)
 }				/* folderByName */
 
 /* data block for the curl ccallback write function in http.c */
-static struct eb_curl_callback_data callback_data = {
-	&mailstring, &mailstring_l
-};
+static struct i_get callback_data;
+
+static CURLcode getMailData(CURL * handle)
+{
+	static bool first_call = true;
+	CURLcode res;
+	callback_data.buffer = initString(&callback_data.length);
+	callback_data.move_capable = false;
+	res = curl_easy_perform(handle);
+	mailstring = callback_data.buffer;
+	mailstring_l = callback_data.length;
+	callback_data.buffer = 0;
+	if (first_call) {
+		move_capable = callback_data.move_capable;
+		if (debugLevel < 4)
+			curl_easy_setopt(handle, CURLOPT_VERBOSE, 0);
+		debugPrint(3, "imap is %smove capable",
+			   (move_capable ? "" : "not "));
+		first_call = false;
+	}
+	return res;
+}
 
 /* imap emails come in through the headers, not the data.
  * No kidding! I don't understand it either.
@@ -352,7 +394,6 @@ static void cleanFolder(struct FOLDER *f)
 static bool imapSearch(CURL * handle, struct FOLDER *f, char *line)
 {
 	char searchtype = 's';
-	char c;
 	char *t, *u;
 	CURLcode res;
 	int cnt;
@@ -393,12 +434,10 @@ static bool imapSearch(CURL * handle, struct FOLDER *f, char *line)
 	strcat(cust_cmd, line);
 	strcat(cust_cmd, "\"");
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
-	mailstring = initString(&mailstring_l);
-	res = curl_easy_perform(handle);
+	res = getMailData(handle);
 	if (res != CURLE_OK) {
 		nzFree(mailstring);
-		ebcurl_setError(res, mailbox_url);
-		showError();
+		ebcurl_setError(res, mailbox_url, 1, emptyString);
 		return false;
 	}
 
@@ -448,22 +487,123 @@ none:
 	return true;
 }				/* imapSearch */
 
+static void printEnvelope(const struct MIF *mif)
+{
+	char *envp;		// print the envelope concisely
+	char *envp_end;
+	int envp_l;
+	envp = initString(&envp_l);
+#if 0
+	if (!mif->seen)
+		stringAndChar(&envp, &envp_l, '*');
+#endif
+	stringAndString(&envp, &envp_l, mif->from);
+	stringAndString(&envp, &envp_l, ": ");
+	stringAndString(&envp, &envp_l, mif->subject);
+	if (mif->sent) {
+		stringAndChar(&envp, &envp_l, ' ');
+		stringAndString(&envp, &envp_l, conciseTime(mif->sent));
+	}
+	stringAndChar(&envp, &envp_l, ' ');
+	stringAndString(&envp, &envp_l, conciseSize(mif->size));
+	envp_end = envp + envp_l;
+	isoDecode(envp, &envp_end);
+	*envp_end = 0;
+// Resulting line could contain utf8, use the portable puts routine.
+	eb_puts(envp);
+	nzFree(envp);
+}
+
+static void viewAll(struct FOLDER *f)
+{
+	int j;
+	struct MIF *mif = f->mlist;
+	for (j = 0; j < f->nfetch; ++j, ++mif) {
+		if (!mif->gone)
+			printEnvelope(mif);
+	}
+}
+
+// 0 ok, -1 curl error, 1 something was deleted
+static int bulkMoveDelete(CURL * handle, struct FOLDER *f,
+			  struct MIF *this_mif, char key, char subkey,
+			  struct FOLDER *destination)
+{
+	CURLcode res = CURLE_OK;
+	char cust_cmd[80];
+	int j;
+	struct MIF *mif = f->mlist;
+	int mcnt = 0;		// move count
+	char *t, *fromline = 0;
+	bool yesdel = false;
+
+	if (key == 'f') {
+		fromline = this_mif->from;
+		if (!fromline[0]) {
+			i_puts(MSG_NoFromLine);
+			return 0;
+		}
+	}
+
+	for (j = 0; j < f->nfetch; ++j, ++mif) {
+		bool delflag = false;
+		if (mif->gone)
+			continue;
+		mif->seqno -= mcnt;
+		if (fromline && !stringEqual(fromline, mif->from))
+			continue;
+		if (subkey == 'm') {
+			if (asprintf(&t, "%s %d \"%s\"",
+				     (move_capable ? "MOVE" : "COPY"),
+				     mif->seqno, destination->path) == -1)
+				i_printfExit(MSG_MemAllocError, 24);
+			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
+			free(t);
+			res = getMailData(handle);
+			nzFree(mailstring);
+			if (res != CURLE_OK)
+				goto abort;
+// The move command shifts all the sequence numbers down.
+			if (move_capable) {
+				mif->gone = true;
+				++mcnt;
+			} else {
+				delflag = true;
+			}
+		}
+		if (subkey == 'd' || delflag) {
+			sprintf(cust_cmd, "STORE %d +Flags \\Deleted",
+				mif->seqno);
+			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
+					 cust_cmd);
+			res = getMailData(handle);
+			nzFree(mailstring);
+			if (res != CURLE_OK)
+				goto abort;
+			mif->gone = true;
+			yesdel = true;
+		}
+	}
+
+	return yesdel;
+
+abort:
+	return -1;
+}
+
 /* scan through the messages in a folder */
-static void scanFolder(CURL * handle, struct FOLDER *f, bool allmessages)
+static void scanFolder(CURL * handle, struct FOLDER *f)
 {
 	struct MIF *mif;
-	int j;
+	int j, rc;
 	CURLcode res = CURLE_OK;
 	char *t;
 	char key;
 	char cust_cmd[80];
 	char inputline[80];
 	bool yesdel = false, delflag;
-	char *envp;		// print the envelope concisely
-	char *envp_end;
-	int envp_l;
 
-	if (!f->nmsgs || !allmessages && !f->unread) {
+	if (!f->nmsgs) {
 		i_puts(MSG_NoMessages);
 		return;
 	}
@@ -473,13 +613,11 @@ static void scanFolder(CURL * handle, struct FOLDER *f, bool allmessages)
 		i_printfExit(MSG_MemAllocError, strlen(f->path) + 12);
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
 	free(t);
-	mailstring = initString(&mailstring_l);
-	res = curl_easy_perform(handle);
+	res = getMailData(handle);
 	nzFree(mailstring);
 	if (res != CURLE_OK) {
 abort:
-		ebcurl_setError(res, mailbox_url);
-		showError();
+		ebcurl_setError(res, mailbox_url, 1, emptyString);
 		i_puts(MSG_EndFolder);
 		return;
 	}
@@ -488,46 +626,29 @@ showmessages:
 
 	mif = f->mlist;
 	for (j = 0; j < f->nfetch; ++j, ++mif) {
-		if (!allmessages && mif->seen)
+		if (mif->gone)
 			continue;
-
-// Print the envelope. From and subject could be encoded in various ways.
-		envp = initString(&envp_l);
-		if (!mif->seen)
-			stringAndChar(&envp, &envp_l, '*');
-		stringAndString(&envp, &envp_l, mif->from);
-		stringAndString(&envp, &envp_l, ": ");
-		stringAndString(&envp, &envp_l, mif->subject);
-		if (mif->sent) {
-			stringAndChar(&envp, &envp_l, ' ');
-			stringAndString(&envp, &envp_l, conciseTime(mif->sent));
-		}
-		stringAndChar(&envp, &envp_l, ' ');
-		stringAndString(&envp, &envp_l, conciseSize(mif->size));
-		envp_end = envp + envp_l;
-		isoDecode(envp, &envp_end);
-		*envp_end = 0;
-// Resulting line could contain utf8, use the portable puts routine.
-		eb_puts(envp);
-		nzFree(envp);
-
+reaction:
+		printEnvelope(mif);
 action:
 		delflag = false;
 		printf("? ");
 		fflush(stdout);
-		key = getLetter("h?qdslmn /");
+		key = getLetter("h?qvbfdslmn /");
 		printf("\b\b\b");
 		fflush(stdout);
 		if (key == '?' || key == 'h') {
 			i_puts(MSG_ImapMessageHelp);
 			goto action;
 		}
+
 		if (key == 'q') {
 			i_puts(MSG_Quit);
 imap_done:
 			curl_easy_cleanup(handle);
 			exit(0);
 		}
+
 		if (key == '/') {
 			i_printf(MSG_Search);
 			fflush(stdout);
@@ -535,13 +656,13 @@ imap_done:
 				goto imap_done;
 			if (!imapSearch(handle, f, inputline))
 				goto action;
-			allmessages = true;
 			if (f->nmsgs > f->nfetch)
 				i_printf(MSG_ShowLast, f->nfetch, f->nmsgs);
 			else
 				i_printf(MSG_MessagesX, f->nmsgs);
 			goto showmessages;
 		}
+
 		if (key == ' ') {
 /* download the email from the imap server */
 			sprintf(cust_cmd, "FETCH %d BODY[]", mif->seqno);
@@ -556,13 +677,16 @@ imap_done:
  */
 			curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION,
 					 imap_header_callback);
+			callback_data.buffer =
+			    initString(&callback_data.length);
 			res = curl_easy_perform(handle);
 /* and put things back */
+			nzFree(callback_data.buffer);
 			curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, NULL);
 			undosOneMessage();
 			if (res != CURLE_OK) {
-				ebcurl_setError(res, mailbox_url);
-				showError();
+				ebcurl_setError(res, mailbox_url, 1,
+						emptyString);
 				nzFree(mailstring);
 				goto action;
 			}
@@ -589,10 +713,59 @@ imap_done:
 			key = presentMail();
 /* presentMail has already freed mailstring */
 		}
+
+		if (key == 'v') {
+			static const char delim[] = "----------";
+			puts(delim);
+			viewAll(f);
+			puts(delim);
+			goto reaction;
+		}
+
+		if (key == 'b' || key == 'f') {
+			char subkey;
+			struct FOLDER *g;
+			if (key == 'b')
+				i_printf(MSG_Batch);
+			else
+				i_printf(MSG_From, mif->from);
+			fflush(stdout);
+			subkey = getLetter("mdx");
+			printf("\b");
+			if (subkey == 'x') {
+				i_puts(MSG_Abort);
+				goto reaction;
+			}
+			if (subkey == 'd')
+				i_puts(MSG_Delete);
+			if (subkey == 'm') {
+				i_printf(MSG_MoveTo);
+				fflush(stdout);
+				if (!fgets(inputline, sizeof(inputline), stdin))
+					goto imap_done;
+				g = folderByName(inputline);
+				if (!g || g == f) {
+// should have a better error message here.
+					i_puts(MSG_Abort);
+					goto reaction;
+				}
+			}
+			rc = bulkMoveDelete(handle, f, mif, key, subkey, g);
+			if (rc < 0)
+				goto abort;
+			if (rc)
+				yesdel = true;
+// If current mail is gone, step ahead.
+			if (mif->gone)
+				continue;
+			goto reaction;
+		}
+
 		if (key == 's') {
 			i_puts(MSG_Stop);
 			break;
 		}
+
 		if (key == 'l') {
 			i_printf(MSG_Limit);
 			fflush(stdout);
@@ -601,49 +774,55 @@ imap_done:
 			setLimit(inputline);
 			goto action;
 		}
+
 		if (key == 'm') {
 			struct FOLDER *g;
-			int j2;
-			struct MIF *mif2;
 			i_printf(MSG_MoveTo);
 			fflush(stdout);
 			if (!fgets(inputline, sizeof(inputline), stdin))
 				goto imap_done;
 			g = folderByName(inputline);
 			if (g && g != f) {
-				if (asprintf(&t, "MOVE %d \"%s\"",
+				if (asprintf(&t, "%s %d \"%s\"",
+					     (move_capable ? "MOVE" : "COPY"),
 					     mif->seqno, g->path) == -1)
 					i_printfExit(MSG_MemAllocError, 24);
 				curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
 						 t);
 				free(t);
-				mailstring = initString(&mailstring_l);
-				res = curl_easy_perform(handle);
+				res = getMailData(handle);
 				nzFree(mailstring);
 				if (res != CURLE_OK)
 					goto abort;
 // The move command shifts all the sequence numbers down.
-				j2 = j + 1;
-				mif2 = mif + 1;
-				while (j2 < f->nfetch) {
-					--mif2->seqno;
-					++j2, ++mif2;
+				if (move_capable) {
+					mif->gone = true;
+					int j2 = j + 1;
+					struct MIF *mif2 = mif + 1;
+					while (j2 < f->nfetch) {
+						--mif2->seqno;
+						++j2, ++mif2;
+					}
+				} else {
+					delflag = true;
 				}
 			}
 		}
+
 		if (key == 'd') {
 			delflag = true;
 			i_puts(MSG_Delete);
 		}
+
 		if (!delflag)
 			continue;
 		sprintf(cust_cmd, "STORE %d +Flags \\Deleted", mif->seqno);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
-		mailstring = initString(&mailstring_l);
-		res = curl_easy_perform(handle);
+		res = getMailData(handle);
 		nzFree(mailstring);
 		if (res != CURLE_OK)
 			goto abort;
+		mif->gone = true;
 		yesdel = true;
 	}
 
@@ -651,7 +830,7 @@ imap_done:
 /* things deleted, time to expunge */
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "EXPUNGE");
 		mailstring = initString(&mailstring_l);
-		res = curl_easy_perform(handle);
+		res = getMailData(handle);
 		nzFree(mailstring);
 		if (res != CURLE_OK)
 			goto abort;
@@ -659,6 +838,28 @@ imap_done:
 
 	puts("end of folder");
 }				/* scanFolder */
+
+// \" is an escaped quote inside the string.
+static char *nextRealQuote(char *p)
+{
+	char *q = p, *r;
+	char c;
+	for (; (c = *p); ++p) {
+		if (c == '\\' && p[1] == '"') {
+			*q++ = '"';
+			++p;
+			continue;
+		}
+		if (c == '"')
+			break;
+		*q++ = c;
+	}
+	if (!c)
+		return 0;
+	for (r = q; q <= p; ++q)
+		*q = ' ';
+	return r;
+}
 
 static void envelopes(CURL * handle, struct FOLDER *f)
 {
@@ -672,10 +873,9 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 
 #if 0
 // nobody is using the uid, don't fetch it, save time.
-		mailstring = initString(&mailstring_l);
 		sprintf(cust_cmd, "FETCH %d UID", mif->seqno);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
-		res = curl_easy_perform(handle);
+		res = getMailData(handle);
 		if (res != CURLE_OK)
 			goto abort;
 		t = strstr(mailstring, "FETCH (UID ");
@@ -689,14 +889,12 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		nzFree(mailstring);
 #endif
 
-		mailstring = initString(&mailstring_l);
 		sprintf(cust_cmd, "FETCH %d ALL", mif->seqno);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
-		res = curl_easy_perform(handle);
+		res = getMailData(handle);
 		if (res != CURLE_OK) {
 //abort:
-			ebcurl_setError(res, mailbox_url);
-			showErrorAbort();
+			ebcurl_setError(res, mailbox_url, 2, emptyString);
 		}
 
 		mif->cbase = mailstring;
@@ -715,16 +913,16 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		t += 10;
 		while (*t == ' ')
 			++t;
-/* date first, and it must be quoted */
+// date first, and it must be quoted.
+// We don't use this date because it isn't standardized,
+// it's whatever the sender's email client puts on the Date field.
+// We use INTERNALDATE later.
 		if (*t != '"')
 			continue;
-		++t;
-		u = strchr(t, '"');
-		if (!u)
+		t = strchr(++t, '"');
+		if (!t)
 			continue;
-		*u = 0;
-		mif->sent = parseHeaderDate(t);
-		t = u + 1;
+		++t;
 
 /* subject next, I'll assume it is always quoted */
 		while (*t == ' ')
@@ -732,7 +930,7 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		if (*t != '"')
 			continue;
 		++t;
-		u = strchr(t, '"');
+		u = nextRealQuote(t);
 		if (!u)
 			continue;
 		*u = 0;
@@ -746,7 +944,7 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		if (strncmp(t, "((\"", 3))
 			goto doref;
 		t += 3;
-		u = strchr(t, '"');
+		u = nextRealQuote(t);
 		if (!u)
 			goto doref;
 		*u = 0;
@@ -792,19 +990,36 @@ doref:
 		if (!u)
 			goto doflags;
 		*u = 0;
-		mif->refer = t;
+		mif->refer = t;	// not used
 		t = u + 1;
 
 doflags:
 /* flags, mostly looking for has this been read */
 		u = strstr(t, "FLAGS (");
 		if (!u)
-			goto dosize;
+			goto dodate;
 		t = u + 7;
 		if (strstr(t, "\\Seen"))
 			mif->seen = true;
 		else
 			++f->unread;
+
+dodate:
+		u = strstr(t, "INTERNALDATE ");
+		if (!u)
+			goto dosize;
+		t = u + 13;
+		while (*t == ' ')
+			++t;
+		if (*t != '"')
+			goto dosize;
+		++t;
+		u = strchr(t, '"');
+		if (!u)
+			goto dosize;
+		*u = 0;
+		mif->sent = parseHeaderDate(t);
+		t = u + 1;
 
 dosize:
 		u = strstr(t, "SIZE ");
@@ -821,7 +1036,7 @@ dosize:
 /* examine the specified folder, gather message envelopes */
 static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 {
-	int i, j;
+	int j;
 	char *t;
 	CURLcode res;
 
@@ -832,12 +1047,9 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 		i_printfExit(MSG_MemAllocError, strlen(f->path) + 12);
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
 	free(t);
-	mailstring = initString(&mailstring_l);
-	res = curl_easy_perform(handle);
-	if (res != CURLE_OK) {
-		ebcurl_setError(res, mailbox_url);
-		showErrorAbort();
-	}
+	res = getMailData(handle);
+	if (res != CURLE_OK)
+		ebcurl_setError(res, mailbox_url, 2, emptyString);
 
 /* look for message count */
 	t = strstr(mailstring, " EXISTS");
@@ -911,7 +1123,7 @@ static void unreadStats(void)
 	unreadMin = 0;
 	unreadCount = 0;
 
-	while (f = nextScanFile(mailUnread)) {
+	while ((f = nextScanFile(mailUnread))) {
 		if (!stringIsNum(f))
 			continue;
 		n = atoi(f);
@@ -943,24 +1155,17 @@ static CURL *newFetchmailHandle(const char *username, const char *password)
 	curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, mailTimeout);
 	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, eb_curl_callback);
 	curl_easy_setopt(handle, CURLOPT_WRITEDATA, &callback_data);
-	if (debugLevel >= 4)
-		curl_easy_setopt(handle, CURLOPT_VERBOSE, 1);
+	curl_easy_setopt(handle, CURLOPT_VERBOSE, 1);
 	curl_easy_setopt(handle, CURLOPT_DEBUGFUNCTION, ebcurl_debug_handler);
-	res = curl_easy_setopt(handle, CURLOPT_CAINFO, sslCerts);
-	if (res != CURLE_OK)
-		i_printfExit(MSG_LibcurlNoInit);
+	curl_easy_setopt(handle, CURLOPT_DEBUGDATA, &callback_data);
 
 	res = curl_easy_setopt(handle, CURLOPT_USERNAME, username);
-	if (res != CURLE_OK) {
-		ebcurl_setError(res, mailbox_url);
-		showErrorAbort();
-	}
+	if (res != CURLE_OK)
+		ebcurl_setError(res, mailbox_url, 1, emptyString);
 
 	res = curl_easy_setopt(handle, CURLOPT_PASSWORD, password);
-	if (res != CURLE_OK) {
-		ebcurl_setError(res, mailbox_url);
-		showErrorAbort();
-	}
+	if (res != CURLE_OK)
+		ebcurl_setError(res, mailbox_url, 2, emptyString);
 
 	return handle;
 }				/* newFetchmailHandle */
@@ -992,8 +1197,6 @@ static CURLcode fetchOneMessage(CURL * handle, int message_number)
 {
 	CURLcode res = CURLE_OK;
 
-	mailstring = initString(&mailstring_l);
-
 	res = setCurlURL(handle, message_url);
 	if (res != CURLE_OK)
 		return res;
@@ -1004,7 +1207,7 @@ static CURLcode fetchOneMessage(CURL * handle, int message_number)
 	if (res != CURLE_OK)
 		return res;
 
-	res = curl_easy_perform(handle);
+	res = getMailData(handle);
 	undosOneMessage();
 	if (res != CURLE_OK)
 		return res;
@@ -1024,14 +1227,12 @@ static CURLcode fetchOneMessage(CURL * handle, int message_number)
 static CURLcode deleteOneMessage(CURL * handle)
 {
 	CURLcode res = curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "DELE");
-
 	if (res != CURLE_OK)
 		return res;
 	res = curl_easy_setopt(handle, CURLOPT_NOBODY, 1L);
 	if (res != CURLE_OK)
 		return res;
-	res = curl_easy_perform(handle);
-
+	res = getMailData(handle);
 	return res;
 }				/* deleteOneMessage */
 
@@ -1044,7 +1245,7 @@ static CURLcode count_messages(CURL * handle, int *message_count)
 	if (res != CURLE_OK)
 		return res;
 
-	res = curl_easy_perform(handle);
+	res = getMailData(handle);
 	if (res != CURLE_OK)
 		return res;
 
@@ -1052,9 +1253,8 @@ static CURLcode count_messages(CURL * handle, int *message_count)
 		struct FOLDER *f;
 		char inputline[80];
 		char *t;
-		bool allmessages;
 
-		setFolders();
+		setFolders(handle);
 		if (!n_folders) {
 			i_puts(MSG_NoFolders);
 imap_done:
@@ -1062,31 +1262,78 @@ imap_done:
 			exit(0);
 		}
 
-		f = topfolders;
-		for (i = 0; i < n_folders; ++i, ++f)
-			examineFolder(handle, f, true);
-
-input:
 		i_puts(MSG_SelectFolder);
+input:
 		if (!fgets(inputline, sizeof(inputline), stdin))
 			goto imap_done;
+		trimWhite(inputline);
+		if (stringEqual(inputline, "rf")) {
+refresh:
+			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, 0);
+			res = getMailData(handle);
+			if (res != CURLE_OK)
+				goto imap_done;
+			setFolders(handle);
+			goto input;
+		}
+		if (stringEqual(inputline, "q")) {
+			i_puts(MSG_Quit);
+			goto imap_done;
+		}
 		t = inputline;
+		if (t[0] == 'd' && t[1] == 'b' && isdigit(t[2]) && !t[3]) {
+			debugLevel = t[2] - '0';
+			curl_easy_setopt(handle, CURLOPT_VERBOSE,
+					 (debugLevel >= 4));
+			goto input;
+		}
 		if (*t == 'l' && isspace(t[1])) {
 			setLimit(t + 1);
 			goto input;
 		}
-		if (*t == 'q') {
-			i_puts(MSG_Quit);
-			goto imap_done;
+		if (!strncmp(t, "create ", 7)) {
+			t += 7;
+			trimWhite(t);
+			if (!*t)
+				goto input;
+			if (asprintf(&t, "CREATE \"%s\"", t) < 0)
+				goto imap_done;
+			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
+			res = getMailData(handle);
+			nzFree(mailstring);
+			if (res != CURLE_OK) {
+				i_printf(MSG_NoCreate2, t);
+				nl();
+				free(t);
+				goto input;
+			}
+			free(t);
+			goto refresh;
 		}
-		allmessages = true;
-		if (*t == '-')
-			allmessages = false, ++t;
+		if (!strncmp(t, "delete ", 7)) {
+			t += 7;
+			trimWhite(t);
+			if (!*t)
+				goto input;
+			if (asprintf(&t, "DELETE \"%s\"", t) < 0)
+				goto imap_done;
+			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
+			res = getMailData(handle);
+			nzFree(mailstring);
+			if (res != CURLE_OK) {
+				i_printf(MSG_NoAccess, t);
+				nl();
+				free(t);
+				goto input;
+			}
+			free(t);
+			goto refresh;
+		}
 		f = folderByName(t);
 		if (!f)
 			goto input;
 		examineFolder(handle, f, false);
-		scanFolder(handle, f, allmessages);
+		scanFolder(handle, f);
 		goto input;
 	}
 
@@ -1132,7 +1379,6 @@ int fetchMail(int account)
 	unreadBase = 0;
 	unreadStats();
 
-	mailstring = initString(&mailstring_l);
 	mail_handle = newFetchmailHandle(login, pass);
 	res = count_messages(mail_handle, &message_count);
 	if (res != CURLE_OK)
@@ -1146,7 +1392,6 @@ int fetchMail(int account)
 			i_printfExit(MSG_MemAllocError,
 				     strlen(mailbox_url) + 11);
 		}
-		nzFree(mailstring);
 		res = fetchOneMessage(mail_handle, message_number);
 		if (res != CURLE_OK)
 			goto fetchmail_cleanup;
@@ -1161,10 +1406,8 @@ int fetchMail(int account)
 fetchmail_cleanup:
 	if (message_url)
 		url_for_error = message_url;
-	if (res != CURLE_OK) {
-		ebcurl_setError(res, url_for_error);
-		showError();
-	}
+	if (res != CURLE_OK)
+		ebcurl_setError(res, url_for_error, 1, emptyString);
 	curl_easy_cleanup(mail_handle);
 	nzFree(message_url);
 	nzFree(mailbox_url);
@@ -1340,7 +1583,7 @@ key_command:
 /* interactive prompt depends on whether there is more text or not */
 	printf("%c ", displine > cw->dol ? '?' : '*');
 	fflush(stdout);
-	key = getLetter((isimap ? "qh? nwWuUasdm" : "qh? nwud"));
+	key = getLetter((isimap ? "qvbfh? nwWuUasdm" : "qh? nwud"));
 	printf("\b\b\b");
 	fflush(stdout);
 
@@ -1355,6 +1598,9 @@ key_command:
 
 	case 's':
 	case 'm':
+	case 'v':
+	case 'f':
+	case 'b':
 		goto afterinput;
 
 	case 'd':
@@ -1519,9 +1765,7 @@ afterinput:
 
 	if (delflag)
 		return 'd';
-	if (key == 's' || key == 'm')
-		return key;
-	return 'n';
+	return strchr("smvbf", key) ? key : 'n';
 }				/* presentMail */
 
 /* Here are the common keywords for mail header lines.
@@ -1593,7 +1837,7 @@ bool emailTest(void)
 		char *q;
 		char *p = (char *)fetchLine(i, -1);
 		char first = *p;
-		if (first == '\n' || first == '\r' && p[1] == '\n')
+		if (first == '\n' || (first == '\r' && p[1] == '\n'))
 			break;
 		if (first == ' ' || first == '\t')
 			continue;
@@ -1634,7 +1878,6 @@ void mail64Error(int err)
 
 static void unpackQP(struct MHINFO *w)
 {
-	uchar val;
 	char c, d, *q, *r;
 	for (q = r = w->start; q < w->end; ++q) {
 		c = *q;
@@ -2146,8 +2389,8 @@ static struct MHINFO *headerGlean(char *start, char *end)
 		if (w->error64 != GOOD_BASE64_DECODE)
 			mail64Error(w->error64);
 	}
-	if (w->ce == CE_64 && w->ct == CT_OTHER || w->ct == CT_APPLIC
-	    || w->cfn[0]) {
+	if ((w->ce == CE_64 && w->ct == CT_OTHER) ||
+	    w->ct == CT_APPLIC || w->cfn[0]) {
 		w->doAttach = true;
 		++nattach;
 		q = w->cfn;
@@ -2330,7 +2573,7 @@ static char *headerShow(struct MHINFO *w, bool top)
 			strcat(buf, "Sent ");
 			strcat(buf, w->date);
 		}
-		if (w->reply) {
+		if (w->reply[0]) {
 			if (!w->date[0])
 				strcat(buf, "From ");
 			else
@@ -2509,8 +2752,8 @@ static void formatMail(struct MHINFO *w, bool top)
 		++j;
 		if (subtype != CT_OTHER)
 			best = j;
-		if (mailIsHtml && subtype == CT_HTML ||
-		    !mailIsHtml && subtype == CT_TEXT)
+		if ((mailIsHtml && subtype == CT_HTML) ||
+		    (!mailIsHtml && subtype == CT_TEXT))
 			break;
 	}
 
@@ -2529,7 +2772,7 @@ static void formatMail(struct MHINFO *w, bool top)
 /* Browse the email file. */
 char *emailParse(char *buf)
 {
-	struct MHINFO *w, *v;
+	struct MHINFO *w;
 	nattach = nimages = 0;
 	firstAttach = 0;
 	mailIsHtml = ignoreImages = false;
@@ -2776,12 +3019,12 @@ static void writeReplyInfo(const char *addstring)
 static void readReplyInfo(void)
 {
 	int rfh;		/* reply file handle */
-	char *p;
+	const char *p;
 	int ln, major, minor;
 	char prestring[20];
 	char *buf;
 	int buflen;
-	char *s, *t, *cut;
+	char *s, *t;
 
 	if (cw->mailInfo)
 		return;		/* already there */
@@ -2789,7 +3032,7 @@ static void readReplyInfo(void)
 /* scan through the buffer looking for the Unformatted line,
  * but stop if you hit an email divider. */
 	for (ln = 1; ln <= cw->dol; ++ln) {
-		p = fetchLine(ln, -1);
+		p = (char *)fetchLine(ln, -1);
 		if (!memcmp
 		    (p,
 		     "======================================================================\n",

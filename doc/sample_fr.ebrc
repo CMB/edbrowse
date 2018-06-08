@@ -1,11 +1,9 @@
-#  .ebrc: le fichier de configuration pour edbrowse (version 2.2 ou au-dessus)
+#  .ebrc: le fichier de configuration pour edbrowse version 3.7.3
 #  C'est un fichier exemple.
 #  Ce fichier contient des mots de passe. 
 #  Assurez-vous qu'il ne soit pas lisible par d'autres
 #  chmod 600 .ebrc
 #  (Evidemment, les mots de passe de cet exemple sont faux...)
-
-# -----------------------------------------------------------------------
 
 #  D'abord les comptes mail : j'en ai plusieurs
 #  Le compte principal, chez mon fournisseur d'accès
@@ -13,6 +11,8 @@
 #  Le compte suivant est is -m2, et ainsi de suite.
 
 mail {
+# ne pas récupérer de mail sur ce compte quand -f est utilisé
+# pour récupérerr les maisl de tous les comptes
 nofetch
 #  Le serveur pop3 et le serveur smtp, pas forcément identiques.
 inserver = mail.comcast.net
@@ -21,17 +21,15 @@ outserver = smtp.comcast.net
 login = kdahlke189603
 password = elephant
 # qui est l'expéditeur ? Votre nom, et une adresse de réponse.
-# il est maintenant de illégal de créer unemail, ainsi assurez-vous
+# il est maintenant illégal de créer un faux mail, ainsi assurez-vous
 # que c'est vraiment votre nom, et assurez-vous que l'adresse de réponse
-# est bien l'un de vos comptes mail, ou qu'il est  ré-expédié.
+# est bien l'un de vos comptes mail, ou qu'il vous est ré-expédié.
 from = Karl Dahlke
 reply = kdahlke189603@comcast.net
 }
 
-
 #  mon compte personnel.
 #  un deuxième compte chez mon fournisseur d'accès
-.
 mail {
 inserver = mail.comcast.net
 outserver = smtp.comcast.net
@@ -43,11 +41,10 @@ from = Karl Dahlke
 reply = eklhad@comcast.net
 }
 
-
 #  le compte de mon épouse
 #  je teste de temps en temps, évidemment avec sa permission
-
 mail {
+# évidemment, je ne récupère rien ici par défaut
 nofetch
 inserver = mail.comcast.net
 outserver = smtp.comcast.net
@@ -58,11 +55,10 @@ reply = kdwife@comcast.net
 }
 
 #  mon compte au travail
+mail {
 #  L'alias "un_autre" est défini dans le fichier /etc/hosts.
 #  Vous pouvez faire pareil, ou définir le nom complet du serveur
 #  comme j'ai fait pour comcast.
-
-mail {
 inserver = un_autre
 outserver = un_autre
 login = karl.dahlke@my-work-domain.com
@@ -71,7 +67,7 @@ from = Karl Dahlke
 reply = karl.dahlke@my-work-domain.com
 }
 
-
+# un compte gmail, la plupart des gens en ont un aujourd'hui
 mail {
 inserver = pop.gmail.com
 outserver = smtp.gmail.com
@@ -82,49 +78,35 @@ from = Karl Dahlke
 reply = eklhad@gmail.com
 }
 
-# -----------------------------------------------------------------------
-
 #  Terminé pour les comptes mail
 #  Ci-dessous, mon carnet d'adresses
-#  le format est alias:adresse mail:autres champs.
+#  le format est alias:adresse mail:autres champs dont on ne ne se sert pas.
+adbook=/home/monlogin/outside/adbook
 
-adbook=/home/eklhad/outside/adbook
+#  répertoire de réception du courrier : ce doit être un chemin absolu
+maildir = /home/monlogin/mbox
 
-# -----------------------------------------------------------------------
-
-#  répertoire de réception du courrier
-
-maildir = /home/eklhad/mbox
-
-# -----------------------------------------------------------------------
+# répertoire de téléchargement : ce doit être un chemin absolu
+downdir = /home/monlogin/téléchargements
 
 #  récipient des cookies - où sont stockés les cookies http .
-#  Ce fichier contient des motes de passe, mettez-le en 0600
+#  Ce fichier contient des mots de passe, mettez-le en 0600
 #  ne touchez pas à ce fichier, sauf si vous savez ce que vous faites
 
-jar = /home/eklhad/outside/cookies
-
-# -----------------------------------------------------------------------
+jar = /home/monlogin/outside/cookies
 
 #  attendre 30 secondes la réponse d'un serveur web
 webtimer = 30
 #  attendre 3 minutes la réponse d'un serveur mail mail
 mailtimer = 180
 
-# -----------------------------------------------------------------------
-
-#  stockage des spams. C'est un fichier dans ma corbeille
-# -----------------------------------------------------------------------
-
 #  redirection des mails à partir de l'expéditeur ou du compte de destination
-
 fromfilter {
 fred flintstone > fredmail
 fred.flintstone@bedrock.us > fredmail
 jerk@hotmail.com > x
 word@m-w.com > -wod
 }
-
 
 tofilter {
 support@my-side-business.com > support
@@ -133,50 +115,66 @@ sales@my-side-business.com > sales
 me@my-regular-dayjob.com > work
 }
 
-# -----------------------------------------------------------------------
-
-#  Description des types mime et des programmes associés
+#  Description des types de fichiers et des plugins associés
 plugin {
 type = audio/basic
 desc = fichier audio au format wave
 suffix = wav,voc,au
 content = audio/x-wav
+# %i est le nom du fichier ou du flot de données
 program = play -q %i
 }
 
-plugin {
-type = audio/mp3
-desc = fichier audio au format mp3
-suffix = mp3
-content = audio/mpeg
-program = mpg123 -q -C %i
-}
-
+# on peut utiliser mplayer ou mpv : avec les mêmes arguments
 plugin {
 type = audio/x-pn-realaudio
-desc = stream audio
-suffix = rm,ra,ram
+desc = streaming audio
+protocol = rtsp,pnm,sdp,pls
+suffix = rm,ra,ram,ogg,mp3,mp4,m3u,m3u8
 urlmatch = .youtube.com/watch?
-stream
-protocol = rtsp,pnm
-content = audio/x-scpls
-program = /usr/bin/mplayer --really-quiet %i
+content = audio/x-scpls,audio/mpeg,application/pls+xml
+program = /usr/bin/mpv --really-quiet %i
 }
 
+# Quelques plugins jouent un fichier, d'autres le convertissent pour la lisibilité.
+# Le paramètre outtype indique la cible
+# mettez outtype = h pour de l'html ou t pour du texte
+# ce plugin est appelé par edbrowse pour afficher du pdf
 plugin {
 type = pdf
 desc = pdf file
 suffix = pdf
 content = application/pdf
+# le programme ne peut accéder au flot, les fichiers doivent être téléchargés
+down_url
+# %o est la sortie temporaire générée par le programme
 program = pdftohtml -i -noframes %i %o >/dev/null
 outtype = H
 }
 
-# -----------------------------------------------------------------------
+plugin {
+type = Word doc
+desc = Microsoft Word document, not docx
+suffix = doc
+content = application/msword
+down_url
+#  sans %o, la sortie est envoyée directement au tampon.
+program = catdoc %i
+outtype = T
+}
+
+# voyez le wiki edbrowse pour des plugins et des scripts d'accès
+# à des fichiers et répertoires zippés.
+
+# Serveurs proxy : ces entrées sont scannées dans l'ordre d'entrée
+# Trois champs : protocole domaine serveur
+# macompagnie.com autorise un accès direct à la machine hr
+# toutes les autres requêtes passent par le proxy
+proxy = http|https hr.macompagnie.com direct
+proxy = http|https|ftp * proxy.macompagnie.com
 
 # Accès à la base de données : spécifie le nom de la base,
 # le nom d'utilisateur et le mot de passe
-
 datasource = nom_base,nom_utilisateur,mot_de_passe
 
 #  extraits de la table clients de la base nom_base
@@ -200,8 +198,6 @@ table {
    keycol = 2
 }
 
-# -----------------------------------------------------------------------
-
 #  Beaucoup de sites utilisent javascript pour des effets visuels
 #  et ce javascript tend à se compliquer, que je ne peux généralement pas
 #  analyser correctement, et donc on obtient une quantité d'erreurs gênantes
@@ -217,14 +213,10 @@ nojs = paypal.com
 #  Chaque fois que vous chargez une page web de l'internet
 #  votre navigateur s'identifie auprès de l'hôte
 #  C'est automatique
-#  Edbrowse s'identifie lui-même comme "edbrowse/2.1.3",
+#  Edbrowse s'identifie lui-même comme "edbrowse/3.4.8",
 #  où le numéro après le slash signifie la version courante d'edbrowse
 #  Tout cela est bel et bon, mais certains sites n'ont aucun respect pour 
 #  edbrowse ou lynx.
-#  Ils ne vous laissent pas entrer tant que vous ne ressemblez pas
-#  à Internet Explorer ou Netscape
-#  Clickbank.com, un site de gestion de cartes bancaires, en est un exemple
-#  Alors que fait-on ? On ment !
 #  Vous pouvez définir plusieurs agents dans ce fichier de config
 #  et les activer avec la commande `ua' (user agent).
 #  Les lignes qui suivent vous permettent de taper
@@ -234,159 +226,37 @@ nojs = paypal.com
 agent = Lynx/2.8.4rel.1 libwww-FM/2.14
 agent = Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; Win 9x 4.90)
 
-# -----------------------------------------------------------------------
-
 #  Ok, vous êtes prêts à écrire votre premier script
 #  On commence par quelque chose de simple
-#  Supprimer les fins de ligne dos et décoder un fichier word
-#  Nul doute qu'un expert de Windows pourrait m'aider ici.
+#  Supprimer les fins de ligne dos 
 
-function+ud {
+function+undos {
 ,s/\r$//
 }
 
-function:uw {
-#  traite l'apostrophe
-,s/½/'/g
-#  élimine tout ce qui non-assi
-#  Désolé d'être aussi centré sur l'Anglais
-#  Cela va vous gêner si vous lisez un document Word en espagnol (et en français),
-#  vous perdrez les lettres non-ascii
-,s/[\0-\11\13\14\16-\37\200-\377]//g
-#  Ensuite, il y a beaucoup de lignes vides
-g/^ *$/ d
-#  Séparez les lignes après les retours-chariot.
-,bl
-#  éliminez toutes les déchets restants
-/^ !"#\$%&'()\*/,$d
-}
-
-# -----------------------------------------------------------------------
-
 #  Une fonction pour accéder à google
-#  Tout le fait, tout le temps
-#  J'appelle la page d'entrée, tape quelques mots-clé, 
-#  met le niveau de débogage à db2,
-#  et j'appuie sur le bouton chercher
-#  Ce qui me donne l'url
-#  C'est ce que fait ce sui suit, en y mettant ~0.
+#  Tout le monde le fait, tout le temps
+#  Pas certain que ce soit actuel
+#  Google change son interface web de temps en temps
+#  En fait tous les scripts d'accès au web nécessitent
+#  maintenance, parce que les sites web évoluent
 #  ~0 remplace tous les arguments, en d'autres termes, le reste de la ligne.
 #  Ainsi <gg éléphants tigres appelle google,
-#  pour chercher "éléphants tigres".
+#  pour chercher "éléphants et tigres".
 
 function+gg {
-b www.google.com/search?q=~0&hl=n&btnG=Google+Search&meta=
-#  Ok, on a récupéré la page google.
-#  Comment le sait-on ?  Regardez plus haut la ligne "function".
-#  Le signe + signifie stop s'il y a des erreurs
-#  Arrivé ici, je suppose qu'il n'y a eu aucune erreur
-#  Google a renvoyé les résultats
-#  Mais il y a plein de texte qui ne m'intéresse pas
-#  Aussi j'ai écrit une fonction de nettoyage de google
-#  qu'on va appeler maintenant
-#  Même si la fonction n'a pas été définie auparavant, cela fonctionne
-#  les références en avant sont permises
-<ggc
+b http://www.google.com
+/<>/ i=~0
+/</ i1*
+/^About/+2
 }
-
-#  La fonction de nettoyage des résultats google
-#  appelée dès que vous avez accédé à google
-#  mais vous voudrez l'appeler une nouvelle fois, 
-#  pour les 10 prochains résultats
-#  et les 10 suivants, etc.
-#  Voilà pourquoi j'en ai fait une fonction séparée
-#  Regardez la définition de la fonction et notez, pas de signe +
-#  Cela signifie que l'éxécution de la fonction se poursuivra,
-#  même s'il y a des erreurs
-#  Ceci nous permet d'effacer certaines lignes, si elles sont présentes
-#  Et si elles n'y sont pas, on a une erreur, et on continue.
-#  Ce n'est pas compliqué
-
-function:ggc {
-# TODO : vérifier les messages sur google.fr
-#  on se débarrasse des avertissements concernant les pdf
-g/^Your browser may not have a PDF reader available.$/d
-g/^{Similar pages}$/d
-#  les lignes après "suivant", peuvent disparaître
-/^{Suivant}$/+,$d
-#  les lignes du début et les stats peuvent disparaître
-1,/Résultats [\d.]+ secondes/d
-# déplace "Essayez avec cette orthographe" à la fin. On doit le garder
-/^Essayez avec cette orthographe:$/,/^DEssayez avec cette orthographe:$/+2m$
-#  encore des messages au départ dont nous n'avons pas besoin
-1,/^Categor[iesy]+: *|/d
-1,/{See your message here...}/d
-1,/^|Liens commerciaux$/d
-# Les deux premières lignes non vides et la 1ère ligne vide peuvent disparaître
-1g/./d
-1g/./d
-1g/^$/d
-#  remt "Essayez avec cette orthographe" en tête, si la ligne existe
-/^Did you mean:$/,$m0
-}
-
-# -----------------------------------------------------------------------
 
 #  chercher dans le dictionnaire mariam-webster
-
+# ~1 est le peramètre, le mot à chercher
+#  <mw elephant
 function+mw {
-#  Vous ne pouvez le voir, mais il y a un caratère de contrôle
-#  entre "dictionary" et "book".
-#  Ceci signifie qu'on emploie la méthode POST, au lieu de GET
-b www.m-w.com/cgi-bin/dictionarybook=Dictionary&va=~1
-<mwc
+b http://www.merriam-webster.com/dictionary/~1
 }
 
-function:mwc {
-/^{Get the Word of the Day/,$d
-1,/^Click on the Collegiate Thesaurus tab to look up the current word/+2d
-1,/^<>| *<Go>$/-d
-1,/^One entry found for/+d
-1,/^Suggestions for/-d
-}
 
-# -----------------------------------------------------------------------
-
-#  Nettoyage d'un article de www.space.com.
-#  if(*) signifie exécute si la commande précédente a réussi
-#  if(?) signifie exécute si la commande précédente a échoué
-#  Si on obtient... ?, c'est une question
-#  signifie qu'il y a eu une erreur
-#  Idem pour while(*), until(*), etc.
-#  Il y a auusi une construction loop(n) ,pour répéter quelque chose n fois.
-
-function:sca {
-#  ce qui est à la fin peut disparaître
-/^{Add these headlines to your site}$/,$d
-#  Tout ce qui est au début, avant le mot posted, peut disparaître
-1,/^posted/d
-if(*) {
-#  la première ligne est maintenant la date, peut disparaître
-1g/ 20\d\d$/d
-#  et maintenant une ligne vide
-1g/^$/d
-}
-#  On ne s'intéresse pas à la section appelée images, insérée
-#  après le premier paragraphe de l'article
-/^| *Images\|More Stories$/d
-if(*) {
-#  détruit quelques sections avant cette ligne, et après
-?^|SCIENCE TUESDAY\||TECH WEDNESDAY$?,-d
-.,/{>>Uplink your views}/d
-if(*){
-d
-} else {
-.,/^| *More Stories$/d
-.,/^| *Related SPACE.com STORIES$/d
-.,/^| *Related Links$/d
-.,/^| *Multimedia$/d
-until(?) {
-d
-.g/^|* *{.*}$/d
-}
-}
-#  et maintenant, affiche l'article
-,p
-}
-}
 

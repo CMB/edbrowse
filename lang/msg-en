@@ -1,10 +1,10 @@
 EOF
 no file
 redirect
-substitutions global
 substitutions local
-case insensitive
+substitutions global
 case sensitive
+case insensitive
 directories readonly
 directories writable
 directories writable with delete
@@ -23,11 +23,11 @@ don't verify ssl connections (less secure)
 verify ssl connections
 don't show hidden files in directory mode
 show hidden files in directory mode
-Unable to fork child process for edbrowse-js, javascript has been disabled.
-Unable to exec edbrowse-js, javascript has been disabled.
+debug cloneNode disabled
+debug cloneNode enabled
 end markers off
-end markers on listed lines
 end markers on
+no from line
 javascript disabled, no action taken
 javascript is disabled, going straight to the url
 redirection interrupted by user
@@ -44,7 +44,7 @@ no keywords
 session %d\n
 SendMail link.  Compose your mail, type sm to send, then ^ to get back.
 line %d has been updated\n
-h\tprint this help message.\nq\tquit this program.\ns\tstop reading from this folder.\nn\tcontinue to next message.\nd\tdelete this email.\nm\tmove this email to another folder.\nspace\tread and manage this email.\n/\tsearch for words in subject, from, or body.\nl\tset imap fetch limit.
+h\tprint this help message\nq\tquit this program\ns\tstop reading from this folder\nn\tcontinue to next message\nd\tdelete this email\nm\tmove this email to another folder\nv\tview all\nb\tbatch move or delete\nf\tfrom move or delete\nspace\tread and manage this email\n/\tsearch for words in subject, from, or body\nl\tset imap fetch limit
 s string, emails with string in the subject\nf string, emails with string in the from line\nb string, emails with string in the message body\nif no letter designator, subject is default.
 no messages
 interrupt, type qt to quit completely
@@ -59,7 +59,7 @@ Username:
 user name too long, limit %d characters
 Password: 
 password too long, limit %d characters
-Unable to communicate with edbrowse-js, javascript has been disabled.
+%s
 warning, the directory is inaccessible - the listing will be empty
 disaster, error message length %d is too long\n
 line %d: 
@@ -89,15 +89,15 @@ Sorry, file %s already exists.\n
 abbreviated 
 empty attachment
 attachment 
-no buffers left, atachment discarded
+no buffers left, attachment discarded
 could not copy the attachment into buffer %d
 cannot create file %s, attachment is discarded\n
 cannot write to file %s, attachment is discarded\n
 no mail
 %d messages\n
-Javascript interprocess messages are out of sync.
+cannot open config file %s\n
 invalid characters after the ls command
-h\tprint this help message.\nq\tquit this program.\nspace\tread more of this email.\nn\tnext email.\nd\tdelete this email.\nw\twrite this email to a file and delete it.\nu\twrite this email unformatted to a file and delete it.
+h\tprint this help message\nq\tquit this program\nspace\tread more of this email\nn\tnext email\nd\tdelete this email\nw\twrite this email to a file and delete it\nu\twrite this email unformatted to a file and delete it
 cannot create file %s\n
 cannot write to file %s\n
 mail saved, %d bytes
@@ -157,8 +157,8 @@ all lines match the v pattern
 none of the marked lines were successfully modified
 operation interrupted
 no match
-Javascript objects are missing or misconfigured. %d\n
-agent number %c is not defined
+This gopher directory listing is empty.
+agent number %d is not defined
 could not print new directory
 could not establish current directory
 invalid directory
@@ -215,7 +215,7 @@ no previous text
 unexpected text after the M command
 moved to session %d\n
 no previous text, cannot back up
-cannot apply the g command to a range
+cannot apply the %s command to a range
 g not available in database mode
 cannot apply the i%c command to a range
 cannot use i< in a global command
@@ -224,8 +224,8 @@ buffer %d contains more than one line
 cannot open %s
 cannot read from %s
 input text contains nulls
-line contains an embeded carriage return
-first line of %s is too long
+line contains an embedded carriage return
+gopher download: 
 file is currently in buffer - please use the rf command to refresh
 cannot browse a binary file
 cannot browse an empty file
@@ -234,7 +234,7 @@ already browsing
 label %s is not found
 i not available in browse mode
 cannot run an insert command from an edbrowse function
-Unable to communicate with edbrowse-js, javascript is closed.
+several lines from %d to %d have been updated\n
 command %c not yet implemented
 %d is out of range
 no options contain the string %s
@@ -260,8 +260,8 @@ the action of the form is not a url
 javascript is disabled, cannot activate this form
 This form has changed from https to http, and is now insecure
 cannot submit using protocol %s
-%d is out of range, please use %c1 through %c%d
-%d is out of range, please use %c1, or simply %c
+%d is out of range, please use %s1 through %s%d
+%d is out of range, please use %s1, or simply %s
 cannot replace multiple instances of the empty string
 download aborted.
 no regular expression after %c
@@ -279,21 +279,21 @@ cannot embed newlines in an input field
 no input fields present
 no links present
 no buttons present
-multiple input fields present, please use %c1 through %c%d
-multiple links present, please use %c1 through %c%d
-multiple buttons present, please use %c1 through %c%d
+multiple input fields present, please use %s1 through %s%d
+multiple links present, please use %s1 through %s%d
+multiple buttons present, please use %s1 through %s%d
 could not read the data from the server
 %s is not a url
 download complete
 cannot identify %s on the network
-the %s protocol is not supported by edbrowse, and is not included in the mime types in your config file
+the %s protocol is not supported by edbrowse
 warning: could not preload <buffer %d> with its initial text\n
 download in progress
 cannot connect to %s
 download: 
 The certificate for host %s could not be verified - SSL connection aborted
 inaccessible
-h\tprint this help message.\nq\tquit this program.\ns\tstop reading mail from this folder.\nspace\tread more of this email.\nn\tnext email.\nd\tdelete this email.\nm\tmove this email to another folder.\nw\twrite this email to a file.\nW\twrite this email to a file and delete it.\nu\twrite this email unformatted to a file.\nU\twrite this email unformatted to a file and delete it.\na\tscan and save attachments.
+h\tprint this help message\nq\tquit this program\ns\tstop reading mail from this folder\nspace\tread more of this email\nn\tnext email\nd\tdelete this email\nm\tmove this email to another folder\nv\tview all\nb\tbatch move or delete\nf\tfrom move or delete\nw\twrite this email to a file\nW\twrite this email to a file and delete it\nu\twrite this email unformatted to a file\nU\twrite this email unformatted to a file and delete it\na\tscan and save attachments
 web page requires authorization
 login aborted
 search string cannot contain quotes
@@ -305,7 +305,7 @@ failed
 ftp could not connect to remote host
 ftp transfer failed
 no folders present
-Select a folder by number or by substring.\nPrepend - for just the unread messages. q to quit. l to change fetch limit.
+Select a folder by number or by substring.\nq to quit, rf to refresh, l to change fetch limit.
 in progress
 stop
 fetch %d at a time\n
@@ -342,7 +342,7 @@ too many recipients, limit %d
 No address book specified, please check your .ebrc config file
 alias %s not found in your address book
 no recipients specified
-session %d is empty, cannot atach
+session %d is empty, cannot attach
 cannot access attachment %s
 file %s is not a regular file, cannot attach
 file %s is empty, cannot attach
@@ -414,7 +414,7 @@ the data contains newlines
 line contains too many fields, please do not introduce any pipes into the text
 line contains too few fields, please do not remove any pipes from the text
 no primary key column for this table
-miscelaneous sql error %d
+miscellaneous sql error %d
 cannot delete more than 100 rows at a time
 cannot change a key column
 cannot change a blob field
@@ -431,33 +431,33 @@ check constraint violated
 database timeout
 cannot modify a view
 field is disabled
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
+SPNEGO curl auth disabled
+SPNEGO curl auth enabled
+could not fetch local CSS\n
+could not fetch CSS from %s, code %ld\n
+could not fetch CSS\n
+don't deminimize javascript
+deminimize javascript
+debug js errors disabled
+debug js errors enabled
+debug css disabled
+debug css enabled
+lines %d and %d have been added\n
+lines %d and %d through %d have been added\n
+lines %d through %d and %d have been added\n
+lines %d and %d have been updated\n
+lines %d and %d through %d have been updated\n
+lines %d through %d and %d have been updated\n
+lines %d and %d have been deleted\n
+lines %d and %d through %d have been deleted\n
+lines %d through %d and %d have been deleted\n
+plugin must run from a local file
+plugin is a converter, not a player
+plugin is a player, not a converter
+hide hover text
+show hover text
+batch 
+from %s 
 unexpected characters after the encoded attachment
 invalid characters in the encoded attachment
 the %s command cannot be applied globally
@@ -465,9 +465,9 @@ warning, javascript cannot be invoked by a double click
 error resolving option %s during sync or form submit
 xhr disabled
 xhr enabled
-could not fetch local javascript, %s\n
+could not fetch local javascript\n
 could not fetch javascript from %s, code %ld\n
-could not fetch javascript, %s\n
+could not fetch javascript\n
 javascript disabled, skipping the onclick code
 javascript disabled, skipping the onchange code
 javascript disabled, skipping the onreset code
@@ -482,7 +482,7 @@ no frames to expand
 no frames to contract
 help messages on
 ftp download: 
-no ssl certificate file specified; secure connections cannot be verified
+aborted
 scp download: 
 .ebrc: null characters at line %d
 .ebrc: missing function name at line %d
@@ -505,14 +505,14 @@ scp download:
 .ebrc: line %d, keycol should be number or number,number
 .ebrc: line %d, keycol is out of range; only %d columns specified
 .ebrc: address book %s is not a regular file
-0
+javascript syntax error
 .ebrc: %s is not a directory
-.ebrc: line %d, too many user agents, limit 9
+.ebrc: line %d, too many user agents, limit %d
 .ebrc: cookie jar %s is not a regular file
 .ebrc: cannot create cookie jar %s
 .ebrc: too many no js directives, limit %d
 .ebrc: line %d, domain %s does not contain a dot
-0
+cannot access %s, (secure)
 .ebrc: SSL certificate file %s is not a regular file
 .ebrc: SSL certificate file %s does not exist or is not readable.
 .ebrc: line %d, keyword %s is not yet implemented
@@ -546,7 +546,7 @@ home directory not defined by $HOME.
 %s is not a directory
 no mail accounts specified, please check your .ebrc config file
 invalid account number, please use 1 through %d
-edbrowse  -v    (show version)\nedbrowse -h (this message)\nedbrowse -c (edit config file)\nedbrowse [-e] [-d#] -f[#] (fetch mail) \nedbrowse  [-e] [-d#] -[p]m    (read pending mail)\nedbrowse  [-e] [-d#] -[p]fm[#]    (fetch mail and read pending mail)\nedbrowse  [-e] [-d#] -m[#] address1 address2 ... file [+attachments]\nedbrowse  [-e] [-d#] file1 file2 ...
+edbrowse  -v    (show version)\nedbrowse -h (this message)\nedbrowse -c (edit config file)\nedbrowse [-d#] -f[#] (fetch mail) \nedbrowse  [-d#] -[p]m    (read pending mail)\nedbrowse  [-d#] -[p]fm[#]    (fetch mail and read pending mail)\nedbrowse  [-d#] -m[#] address1 address2 ... file [+attachments]\nedbrowse  [-c configfile] [-e] [-b] [-d#] file1 file2 ...
 please specify at least one recipient and the file to send
 please specify at least one recipient and the file to send, before your attachments
 too many files open simultaneously, limit %d
@@ -561,15 +561,15 @@ no newline on directory entry %s
 no closing > at line %d
 fieldInBuffer could not find tag %d newtext %s
 cannot rebuild your cookie jar %s
-0
+reverse 
 fetchmail client is interactive, and cannot run in the background
 mailbox directory not specified in your .ebrc file
 Cannot change directory to %s
 0
 Invalid login or password
-0
-0
-0
+sort alphabetically
+sort by size
+sort by time
 0
 0
 tag code %d has bad character %c following
@@ -577,14 +577,14 @@ tag code %d has bad character %c following
 htmlParse() is not reentrant.
 unexpected input type in submitForm()
 list = 0 in tagFromJavaVar()
-0
-Could not allocate memory for javascript operations.
+debug events disabled
+debug events enabled
 Unable to create javascript context.
-Unable to create javascript window object.
-0
-Unable to create document object for javascript.
 0
 0
+0
+timers disabled
+timers enabled
 error allocating %zu bytes
 error callocating %zu bytes
 reallocMem(p,0)
@@ -601,8 +601,8 @@ calling fopen() with invalid mode %s
 misplaced / in getDirURL(%s)
 misplaced / in %s
 decodePostData(0,0)
-0
-0
+search without wrap
+search with wrap
 0
 cannot reply in directory mode
 cannot reply in database mode
@@ -641,7 +641,7 @@ table
 sql statement is not terminated by a final semicolon, or a right bracket on the following line
 update or delete statement with no where clause
 remote access denied
-Authorization required to access %s
+Authorization required to access %s (%s)
 operation failed because memory could not be allocated
 Your version of libcurl is older than version %u.%u.%u.\nYou must upgrade libcurl in order to use edbrowse.
 operation timed out
@@ -654,6 +654,6 @@ SSL connect error in libcurl: %s
 input tty
 input readline()
 0
-Unrecoverable JavaScript error in this session, javascript is closed.
+0
 Command execution failed, system() returned %d
 0

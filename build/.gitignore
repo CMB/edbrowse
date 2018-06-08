@@ -17,4 +17,6 @@ COMMENTS.txt
 *.opensdf
 *.suo
 ipch/*
+edbrowse.*
+install_manifest.txt
 

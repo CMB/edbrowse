@@ -20,7 +20,9 @@ Use this program at your own risk.
 Netscape and Explorer are graphical browsers.
 Lynx and Links are screen browsers.
 This is a command line browser, the only one of its kind.
-The user's guide can be found in doc/usersguide.html (in this package).
+The user's guide can be found as doc/usersguide.html in this package,
+or online at http://edbrowse.org/usersguide.html.
+The online guide corresponds to the current release.
 Of course this reasoning is a bit circular.
 You need to use a browser to read the documentation,
 which describes how to use the browser.
@@ -36,10 +38,92 @@ The doc directory also includes a sample config file.
 
 ------------------------------------------------------------
 
-Ok, I'm going to assume you've read the documentation.
+OK, I'm going to assume you've read the documentation.
 No need to repeat all that here.
 You're here because you want to compile and/or package the program,
 or modify the source in some way.  Great!
+
+Requirements:
+
+pcre:
+As you may know, edbrowse was originally a perl script.
+As such, it was only natural to use perl regular expressions for
+the search/substitute functions in the editor.
+Once you've experienced the power of perl regexp, you'll never
+go back to ed.  So I use the perl-compatible regular expression
+library, /lib/libpcre.so.0, available on most Linux systems.
+
+If you don't have this file, check your installation disks.
+the pcre and pcre-devel packages might be there, just not installed.
+You need version 8.10 or higher.
+
+Note that my files include <pcre.h>.
+Some distributions put it in /usr/include/pcre/pcre.h,
+so you'll have to adjust the source, the -I path, or make a link.
+
+libcurl:
+You need libcurl and libcurl-devel,
+which are included in almost every Linux distro.
+This is used for ftp, http, and https.
+Check for /usr/include/curl/curl.h
+Edbrowse requires version 7.29.0 or later.  If you compiled with a version
+prior to 7.29.0, the program will inform you that you need to upgrade.
+If you have to compile curl from source, be sure to specify
+--ENABLE-VERSION-SYMBOLS at the configure script.
+curl can be configured to use openssl (the default) or gnutls.
+It's rare, but curl, and hence edbrowse, cannot access certain websites via gnutls.
+You get an error like this.
+Cannot communicate securely with peer: no common encryption algorithm(s).
+You can even see this from the command line.
+	curl https://weloveanimals.me
+You'll either get the communication error or not.
+Unfortunately you have very little say in the curl configuration, your distribution does what it does.
+Fedora links curl against gnutls, but most distributions use openssl, so you're probably ok.
+Of course you can build curl from source if you must.
+
+tidy:
+Edbrowse now uses the tidy-html5 HTML parser.  So there are a couple
+of things to install for this prerequisite.
+The tidy-html5 compilation process uses cmake.  Please either use your
+package manager to get cmake (for instance, apt-get install cmake),
+or follow the instructions at http://www.cmake.org/download/
+
+Once you have cmake, follow the latest tidy-html5 code from:
+git clone git://github.com/htacg/tidy-html5
+cd build/cmake
+cmake ../..
+make
+make install # as root
+Now the latest tidy-html5 library will be available to edbrowse.
+Edbrowse requires tidy-html5 version 5.1.25 or greater,
+and might not work properly, or even compile with an earlier version.
+Note that the latest tagged version is 5.1.25, but 5.1.26 and later
+have some fixes for known issues that have been reported upstream.
+
+duktape:
+Finally, you need the Duktape javascript engine and header file.
+If this is not part of your distribution, download from github, compile, and install.
+
+git clone https://github.com/svaarala/duktape.git
+cd duktape
+make dist
+cd dist
+make -f Makefile.sharedlibrary
+make -f Makefile.sharedlibrary install (as root)
+make -f Makefile.cmdline
+ln -s `pwd`/duk /usr/local/bin/duk (as root)
+
+unixODBC:
+If you want database access, you need unixODBC and unixODBC-devel.
+Select the odbc option via:
+make BUILD_EDBR_ODBC=on in the src directory, or from build,
+cmake -DBUILD_EDBR_ODBC:BOOL=ON ..
+ODBC has been very stable for a long time.
+unixODBC version 2.2.14 seems to satisfy edbrowse with odbc.
+
+------------------------------------------------------------
+
+Compiling edbrowse:
 
 cmake can be used to build and install edbrowse in Windows, linux, or Mac OS X.
 visual C studio is assumed on Windows.
@@ -60,75 +144,11 @@ Be careful here.  Apple distributes an ancient version of tidy-html.
 You're going to have to take steps to insure that they do not collide.
 Perhaps your best bet is to get edbrowse from MacPorts.
 
-As you may know, edbrowse was originally a perl script.
-As such, it was only natural to use perl regular expressions for
-the search/substitute functions in the editor.
-Once you've experienced the power of perl regexp, you'll never
-go back to ed.  So I use the perl compatible regular expression
-library, /lib/libpcre.so.0, available on most Linux systems.
-If you don't have this file, check your installation disks.
-the pcre and pcre-devel packages might be there, just not installed.
-You need version 8.10 or higher.
-
-Note that my files include <pcre.h>.
-Some distributions put it in /usr/include/pcre/pcre.h,
-so you'll have to adjust the source, the -I path, or make a link.
-
-You also need libcurl and libcurl-devel,
-which is included in almost every Linux distro.
-This is used for ftp, http, and https.
-Check for /usr/include/curl/curl.h
-Edbrowse requires version 7.29.0 or later.  If you compiled with a version
-prior to 7.29.0, the program will inform you that you need to upgrade.
-If you have to compile curl from source, be sure to specify
---ENABLE-VERSION-SYMBOLS (or some such) at the configure script.
-
-Edbrowse now uses the tidy-html5 HTML parser.  So there are a couple
-of things to install for this prerequisite.
-The tidy-html5 compilation process uses cmake.  Please either use your
-package manager to get cmake (for instance, apt-get install cmake),
-or follow the instructions at http://www.cmake.org/download/
-
-Once you have cmake, download the latest tidy-html5 code from:
-https://github.com/htacg/tidy-html5/archive/master.zip
-Unzip and cd to build/cmake
-cmake ../..
-make install
-Now the latest tidy-html5 library will be available to edbrowse.
-Edbrowse requires tidy-html5 version 5.1.25 or greater,
-and might not work properly, or even compile with an earlier version.
-Note that the latest tagged version is 5.1.25, but 5.1.26 and later
-have some fixes for known issues that have been reported upstream.
-
-Finally, you need the Spider Monkey javascript engine from Mozilla.org
-ftp://ftp.mozilla.org/pub/mozilla.org/js/
-Edbrowse 3.5.1 and higher requires Mozilla js version 2.4.
-If this is not available in your distribution, download into /usr/local,
-expand, cd js/src, ./configure, make, and make install.
-https://ftp.mozilla.org/pub/mozilla.org/js/mozjs-24.2.0.tar.bz2
-Lots of warning messages in the build, don't worry about those.
-This creates /usr/local/lib/libmozjs-24.so, and with /usr/local/lib
-already in my /etc/ld.so.conf, I thought I'd be fine,
-but I had to run ldconfig again anyways, not sure why.
-Back in your edbrowse/src directory,
-you may need to set some flags on the command line
-if you had to install Mozilla js as above.
-The following works for me.
-
-make JS_CXXFLAGS=-I/usr/local/include/mozjs-24 JSLIB=-lmozjs-24 edbrowse
-
-If you want database access, you need unixODBC and unixODBC-devel.
-Select the odbc option via:
-make BUILD_EDBR_ODBC=on in the src directory, or from build,
-cmake -DBUILD_EDBR_ODBC:BOOL=ON ..
-ODBC has been very stable for a long time.
-unixODBC version 2.2.14 seems to satisfy edbrowse with odbc.
-
 ------------------------------------------------------------
 
 Edbrowse creates a system wide temp directory if it is not already present.
 This is /tmp/.edbrowse in Unix, and $(TEMP)/edbrowse in Windows.
-This directory contains a subdirectory per user, mod 700, for added security.
+This directory contains a subdirectory per user, mod 700 for added security.
 Thus one user cannot spy on the temp files, perhaps sensitive internet data,
 of another user.
 However, true multiuser security requires a root job at startup,
@@ -157,14 +177,14 @@ Debug levels:
 and http redirection.
 3: javascript execution and errors.
    cookies, http codes, form data, and sql statements logged.
+4: show the socket connections, and the http headers in and out.
    html syntax errors as per tidy5.
-4: show the socket connections, and the http headers in and out
-   side effects of running javascript.
    Tree of nodes internal to edbrowse.
+   side effects of running javascript.
    Dynamic node linkage.
-5: messages to and from the javascript process, url resolution, tidy html nodes.
+5: messages to and from javascript, url resolution, tidy html nodes.
 6: show javascript to be executed
-7: reformatted regular expressions, breakline chunks, read from js.
+7: reformatted regular expressions, breakline chunks.
 8: text lines freed, debug garbage collection
 9: not used
 
@@ -180,7 +200,7 @@ Read and parse the config file.
 Entry point.
 Command line options.
 Invoke mail client if mail options are present.
-If run as editor/browser, treat arguments as files or URLs
+If run as an editor/browser, treat arguments as files or URLs
 and read them into buffers.
 Read commands from stdin and invoke them via the command
 interpreter in buffers.c.
@@ -202,12 +222,12 @@ based on the location of the current web page.
 src/format.c:
 Arrange text into lines and paragraphs.
 base64 encode and decode for email.
+Convert utf8, iso8859-1, unicode 16, unicode 32, etc.
 
 src/http.c:
 Send the http request, and read the data from the web server.
 Handles https connections as well,
 and 301/302 redirection.
-Uncompresses html data if necessary.
 ftp, sftp, download files, possibly in the background.
 
 src/html.c:
@@ -234,7 +254,7 @@ Send mail (smtp or smtps).  Encode attachments.
 src/fetchmail.c:
 Fetch mail (pop3 or pop3s or imap).  Decode attachments.
 Browse mail files, separate mime components.
-Delete emails, move emails to other imap folders, search on an imap server.
+Delete emails, move emails to other imap folders, search on the imap server.
 
 src/plugin.c:
 Determine the mime type of a file or web page and the corresponding plugin,
@@ -252,19 +272,40 @@ Edbrowse status and error messages in various languages.
 Each is converted into a const array of messages in src/msg-strings.c,
 thus src/msg-strings.c is not a source file.
 
+lang/ebrc-*:
+Default .ebrc config file that is written to your home directory
+if you have no such file.
+Different files for different languages.
+Each is converted into a const string in src/ebrc.c,
+thus src/ebrc.c is not a source file.
+
 src/decorate.c:
 Decorate the tree with js objects corresponding to the html nodes
 if js is enabled.
 
-src/jseng-moz.cpp:
-The javascript engine built around the mozilla js library.
+src/ebjs.c:
+Interface between edbrowse and the javascript engine.
+Functions to manipulate the js objects,
+which then return the results back to edbrowse.
+
+src/jseng-duk.c:
+The javascript engine built around the duktape js library.
 Manage all the js objects corresponding to the web page in edbrowse.
-Copy or link edbrowse to edbrowse-js;
-the latter executable runs the machinery in this file.
-It must be in the same bin as edbrowse.
 All the js details are hidden in this file.
 this is encapsulation, hiding the js library from the rest of edbrowse.
 It might be possible, for instance, to build jseng-v8.c, based upon v8 etc.
+Earlier versions of edbrowse used jseng-moz.cpp, around the Mozilla Spider Monkey javascript engine.
+That file is no longer part of this source tree, but can be extracted from git.
+
+src/startwindow.js:
+Javascript that is run at the start of each session.
+This creates certain classes and methods that client js will need.
+It is converted into a const string in src/startwindow.c,
+thus src/startwindow.c is not a source file.
+As you write functions to support DOM,
+your first preference is to write them in src/startwindow.js.
+Failing this, write them in C, using the interface in src/ebjs.c.
+Failing this, and as a last resort, write them as native code around the js engine.
 
 src/html-tidy.c:
 Use tidy5 to parse html and return a tree of nodes.
@@ -272,32 +313,21 @@ This is another form of encapsulation.
 We could, in the future, write html-foo.c, having the same interface,
 if we prefer parser foo instead.
 
-src/startwindow.js:
-Javascript that is run at the start of each session.
-This creates certain support methods that client js will need.
-It is converted into a const string in src/startwindow.c,
-thus src/startwindow.c is not a source file.
-As you write functions to support DOM,
-your first preference is to write them in src/startwindow.js.
-Failing this, write them in C, using the api in src/ebjs.c.
-Failing this, and as a last resort, write them as native code in the js engine.
-
-lang/ebrc-*:
-Default .ebrc config file that is written to your home directory,
-if you have no such file.
-Different files for different languages.
-Each is converted into a const string in src/ebrc.c,
-thus src/ebrc.c is not a source file.
-
-src/ebjs.c:
-Interface between edbrowse and edbrowse-js.
-Sends interprocess messages to js to manipulate the js objects,
-and returns the result back to edbrowse.
-Think of edbrowse-js as the js server, and edbrowse as the client.
+src/third.js:
+Third party open source javascript routines that are useful to edbrowse.
+These are snapshots; you will need to update third.js, i.e. grab a new
+snapshot, as this software evolves.
+It's a bit of overhead, but we're doing it, so distributors don't have to.
 
 src/jsrt:
 This is the javascript regression test for edbrowse.
 It exercises some of the javascript DOM interactions.
+
+src/acid3:
+A snapshot of http://acid3.acidtests.org, with modifications,
+so that some or all of the acid tests pass under edbrowse.
+This is a work in progress.
+My modifications are indicated by the comment   //@`
 
 win32/dirent.c:
 Access directories in Windows.
@@ -320,7 +350,7 @@ but it's probably easier just to go through odbc.
 
 Error conventions.
 Unix commands return 0 for ok and a negative number for a problem.
-Some of my functions work this way, but many return
+Some of my functions work this way, but most return
 true for success and false for error.
 The error message is left in a buffer, which you can see by typing h
 in the /bin/ed style.

@@ -1,10 +1,10 @@
 Fim do arquivo
 nenhum arquivo
 redireção
-substituição é global
 substituição é local
-não diferencia maiúsculas
+substituição é global
 diferencia maiúsculas
+não diferencia maiúsculas
 diretório é somente leitura
 diretório pode ser escrito
 diretório pode ser escrito e seu conteúdo apagado
@@ -23,11 +23,11 @@ não verifica conexões SSL (menos seguro)
 verifica conexões SSL
 não exibe arquivos ocultos no modo diretório
 exibe arquivos ocultos no modo diretório
-Impossível bifurcar processo filho para edbrowse-js, Javascript foi desabilitado.
-Impossível executar edbrowse-js, Javascript foi desabilitado.
+0
+0
 marcadores de fim desligados
-marcadores de fim em linhas listadas
 marcadores de fim ligados
+nenhuma linha de
 javascript desativado; nenhuma ação
 javascript está desativado;indo direto à URL
 redirecionamento interrompido pelo usuário
@@ -44,7 +44,7 @@ sem palavras chave
 sessção %d\n
 linque de correio.  Escreva a carta, digite sm para enviar e depois ^ para voltar.
 linha %d atualizada\n
-h\timprime esta mensagem de ajuda.\nq\tsai deste programa.\ns\tpára de ler esta pasta.\nn\tprossegue para a próxima mensagem.\nd\tapaga este e-mail.\nm\tmove este e-mail para outra pasta.\nspace\tlê e gerencia este e-mail.\n/\tbusca palavras em assunto, de ou corpo.\nl\tconfigura limite de recepção do imap.
+h\timprime esta mensagem de ajuda\nq\tsai deste programa\ns\tpára de ler esta pasta\nn\tprossegue para a próxima mensagem\nd\tapaga este e-mail\nm\tmove este e-mail para outra pasta\nv\tver todos\nb\tmove ou apaga em massa\nf\tmove ou apaga por remetente\nspace\tlê e gerencia este e-mail\n/\tbusca palavras em assunto, de ou corpo\nl\tconfigura limite de recepção do imap
 s cadeia, e-mails com cadeia no assunto\nf cadeia, e-mails com cadeia na linha de\nb cadeia, e-mails com cadeia no corpo da mensagem\ncaso não haja letra designadora, o assunto é o padrão.
 nenhuma mensagem
 interrompendo; digite qt para sair completamente
@@ -59,7 +59,7 @@ Nome de usuário:
 nome de usuário longo demais; limite %d caracteres
 Senha: 
 senha longa demais; limite %d caracteres
-Impossível comunicar-se com edbrowse-js, Javascript foi desabilitado.
+%s
 aviso: diretório inacessível - listagem ficará vazia
 catástrofe; mensagem de erro %d é comprida demais\n
 linha %d: 
@@ -95,9 +95,9 @@ impossível criar o arquivo %s; anexo descartado\n
 impossível escrever no arquivo %s; anexo descartado\n
 sem cartas
 %d mensagens\n
-Mensagens interprocessos de Javascript não estão em sincronia.
+impossível abrir arquivo de configuração %s\n
 caracteres inválidos após o comando ls
-h\tmostra esta mensagem de ajuda.\nq\tsai do programa.\nespaço\tcontinua a ler esta carta.\nn\tvai para próxima carta.\nd\tapaga carta.\nw\tguarda carta em arquivo e apaga carta.\nu\tguarda carta em arquivo sem formatar e apaga carta
+h\tmostra esta mensagem de ajuda\nq\tsai do programa\nespaço\tcontinua a ler esta carta\nn\tvai para próxima carta\nd\tapaga carta\nw\tguarda carta em arquivo e apaga carta\nu\tguarda carta em arquivo sem formatar e apaga carta
 impossível criar o arquivo %s\n
 impossível escrever no arquivo %s\n
 carta salva; %d bytes
@@ -157,8 +157,8 @@ todas as linhas condizem com o padrão v
 nenhuma linha marcada modificada com sucesso
 operação interrompida
 nada similar
-Objetos Javascript estão faltando ou desconfigurados. %d\n
-agente número %c não definido
+Esta listagem do diretório gopher está vazia.
+agente número %d não definido
 não foi possível mostrar diretório novo
 não foi possível estabelecer o diretório atual
 diretório inválido
@@ -215,7 +215,7 @@ sem texto anterior
 texto inesperado após o comando M
 movido para a sessão %d\n
 sem texto anterior; impossível copiar
-impossível aplicar comando g a um intervalo
+impossível aplicar comando %s a um intervalo
 g não disponível em modo banco de dados
 impossível aplicar comando i%c a um intervalo
 impossível usar i< num comando global
@@ -225,7 +225,7 @@ impossível abrir %s
 impossível ler a partir de %s
 texto de entrada contém caracteres nulos
 a linha possui um retorno de carro embutido
-a primeira linha do %s é comprida demais
+download via gopher: 
 arquivo atualmente no buffer - use por favor o comando rf para atualizar
 impossível navegar num arquivo binário
 impossível navegar num arquivo vazio
@@ -234,7 +234,7 @@ já está navegando
 rótulo %s não achado
 i não disponível em modo navegação
 impossível executar um comando insert a partir de uma função do edbrowse
-Impossível comunicar-se com edbrowse-js, Javascript está fechado.
+linhas de %d para %d foram atualizadas\n
 comando %c ainda não implementado
 %d está fora do intervalo
 não há opções com a cadeia %s
@@ -260,8 +260,8 @@ ação do formulário não é uma URL
 javascript desligado; impossível ativar este formulário
 formulário mudou de https para http e agora não é seguro
 impossível submeter usando protocolo %s
-%d fora do intervalo; por favor use %c1 até %c%d
-%d fora do intervalo; por favor use %c1 ou simplesmente %c
+%d fora do intervalo; por favor use %s1 até %s%d
+%d fora do intervalo; por favor use %s1 ou simplesmente %s
 impossível substituir várias ocorrências de uma cadeia vazia
 transferência abortada.
 sem expressão regular após %c
@@ -279,21 +279,21 @@ impossível embutir novas linhas num campo de entrada
 sem campos de entrada presentes
 sem linques presentes
 sem botões presentes
-presentes vários campos de entrada; por favor use %c1 até %c%d
-presentes vários linques; por favor use %c1 até %c%d
-presentes; por favor use %c1 até %c%d
+presentes vários campos de entrada; por favor use %s1 até %s%d
+presentes vários linques; por favor use %s1 até %s%d
+presentes; por favor use %s1 até %s%d
 não consegui ler os dados do servidor
 %s não é uma URL
 transferência completa
 impossível identificar %s na rede
-o protocolo %s não é suportado pelo edbrowse e não está incluído nos tipos mime do arquivo de configuração
+o protocolo %s não é suportado pelo edbrowse
 aviso: não foi possível precarregar o <buffer %d> com o texto inicial do mesmo\n
 transferência em progresso
 não é possível conectar a %s
 transferência: 
 o certificado do servidor %s não pôde ser verificado - conexão SSL abortada
 inacessível
-h\tescreve esta mensagem de ajuda.\nq\tsai deste programa.\nspace\tlê mais desta mensagem de e-mail.\nn\tvai para a próxima mensagem de e-mail.\nd\tapaga esta mensagem.\nw\tguarda esta mensagem em arquivo.\nW\tgrava esta mensagem em arquivo e a apaga.\nu\tgrava esta mensagem sem formatação em arquivo.\nU\tgrava esta mensagem sem formatação em arquivo e a apaga.\na\tprocura e salva anexos.\ns\tinterrompe a leitura de e-mails desta pasta.
+h\tescreve esta mensagem de ajuda\nq\tsai deste programa\nspace\tlê mais desta mensagem de e-mail\nn\tvai para a próxima mensagem de e-mail\nd\tapaga esta mensagem\nm\tmove este e-mail para outra pasta\nv\tver todos\nb\tmove ou apaga em massa\nf\tmove ou apaga por remetente\nw\tguarda esta mensagem em arquivo\nW\tgrava esta mensagem em arquivo e a apaga\nu\tgrava esta mensagem sem formatação em arquivo\nU\tgrava esta mensagem sem formatação em arquivo e a apaga\na\tprocura e salva anexos\ns\tinterrompe a leitura de e-mails desta pasta
 página da web requer autorização
 Login cancelado
 cadeia a buscar não pode conter aspas
@@ -305,7 +305,7 @@ falhou
 o FTP não conseguiu conectar ao servidor remoto
 transferência FTP falhou
 nenhuma pasta presente
-Selecione uma pasta por número ou por subcadeia.\nAcrescente - para somente as mensagens não lidas; q para sair; l para mudar o limite de recepção.
+Selecione uma pasta por número ou por subcadeia.\nq para sair; rf para atualizar; l para mudar o limite de recepção.
 ativa
 interromper
 pegar %d de uma vez\n
@@ -431,33 +431,33 @@ restrição de conferência violada
 tempo do banco de dados esgotado
 impossível modificar um panorama
 campo de entrada desligado
+Autorização SPNEGO habilitada
+Autorização SPNEGO desabilitada
+não consegui trazer o CSS local\n
+não consegui trazer o CSS de %s; código %ld\n
+não consegui trazer o CSS\n
 0
 0
 0
 0
 0
 0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
+linhas %d e %d foram adicionadas\n
+linhas %d e %d a %d foram adicionadas\n
+linhas %d a %d e %d foram adicionadas\n
+linhas %d e %d foram atualizadas\n
+linhas %d e %d a %d foram atualizadas\n
+linhas %d a %d e %d foram atualizadas\n
+linhas %d e %d foram apagadas\n
+linhas %d e %d a %d foram apagadas\n
+linhas %d a %d e %d foram apagadas\n
+plug-in tem que ser um arquivo local
+plug-in é um conversor, não um reprodutor
+plug-in é um reprodutor, não um conversor
+ocultar texto de elementos clicáveis
+mostrar texto de elementos clicáveis
+em lote 
+de %s 
 caracteres inesperados após o anexo codificado
 caracteres inválidos no anexo codificado
 o comando %s não se aplica globalmente
@@ -465,9 +465,9 @@ aviso: o javascript não pode ser invocado por duplo clique
 erro a resolver a opção %s durante um sync ou submissão de formulário
 xhr desligado
 xhr ligado
-não consegui trazer o javascript local; %s\n
+não consegui trazer o javascript local\n
 não consegui trazer o javascript de %s; código %ld\n
-não consegui trazer o javascript; %s\n
+não consegui trazer o javascript\n
 javascript desligado; ignorando código onclick
 javascript desligado; ignorando onchange código
 javascript desligado; ignorando código onreset
@@ -482,7 +482,7 @@ sem freimes a expandir
 sem freimes a contrair
 mensagens de ajuda ligadas
 download via FTP: 
-nenhum arquivo de certificados SSL; conexões seguras não podem ser verificadas
+abortada
 download via SCP: 
 .ebrc: caracteres nulos na linha %d
 .ebrc: falta nome de função na linha %d
@@ -505,14 +505,14 @@ download via SCP:
 .ebrc: linha %d, keycol tem que ser número ou número,número
 .ebrc: linha %d, keycol fora do intervalo; especificadas somente %d colunas
 .ebrc: o catálogo de endereços %s não é um arquivo regular
-0
+javascript erro de sintaxe
 .ebrc: %s não é um diretório
-.ebrc: linha %d, agentes do usuário em excesso; o limite é 9
+.ebrc: linha %d, agentes do usuário em excesso; o limite é %d
 .ebrc: cookie jar %s não é um arquivo regular
 .ebrc: não posso criar a cookie jar %s
 .ebrc: diretivas no js em excesso; o limit é %d
 .ebrc: linha %d, o domínio %s não possui ponto
-0
+impossível acessar %s, (seguro)
 .ebrc: arquivo de certificados SSL %s não é um arquivo regular
 .ebrc: arquivo de certificados SSL %s não existe ou não é legível.
 .ebrc: linha %d, palavra-chave %s não foi implementada ainda
@@ -546,7 +546,7 @@ diretório home não definido por $HOME.
 %s não é um diretório
 nenhuma conta de e-mail especificada; confira por favor o arquivo de configuração .ebrc
 número de conta inválido; por favor use 1 até %d
-edbrowse -v (mostra a versão)\nedbrowse -h (esta mensagem)\nedbrowse -c (edita arquivo de configuração)\nedbrowse [-e] [-d#] -f[#] (recebe cartas)\nedbrowse [-e] [-d#] -[p]m (lê cartas pendentes)\nedbrowse [-e] [-d#] -[p]fm[#] (recebe cartas e lê as cartas pendentes)\nedbrowse [-e] [-d#] -m[#] endereço1 endereço2 ... arquivo [+anexos]\nedbrowse [-e] [-d#] arquivo1 arquivo2 ...
+edbrowse -v (mostra a versão)\nedbrowse -h (esta mensagem)\nedbrowse -c (edita arquivo de configuração)\nedbrowse [-d#] -f[#] (recebe cartas)\nedbrowse [-d#] -[p]m (lê cartas pendentes)\nedbrowse [-d#] -[p]fm[#] (recebe cartas e lê as cartas pendentes)\nedbrowse [-d#] -m[#] endereço1 endereço2 ... arquivo [+anexos]\nedbrowse [-c configuração] [-e] [-b] [-d#] arquivo1 arquivo2 ...
 por favor especifique ao menos um destinatário e o arquivo a enviar
 por favor especifique ao menos um destinatário e o arquivo a enviar, antes dos anexos
 demais arquivos abertos ao mesmo tempo; o limite é %d
@@ -561,15 +561,15 @@ sem linha nova na entrada do diretório %s
 sem fecho > na linha %d
 fieldInBuffer não encontrou a etiqueta %d newtext %s
 impossível refazer a cookie jar %s
-0
+inverter 
 o cliente de recepção de cartas é interativo e não pode rodar em segundo plano
 diretório para caixa de entrada não especificado no arquivo .ebrc
 não posso mudar para o diretório %s
 0
 usuário ou senha inválido
-0
-0
-0
+ordenar alfabético
+ordenar por tamanho
+ordenar por data
 0
 0
 o código da etiqueta %d possui o caractere inválido %c a seguir
@@ -578,11 +578,11 @@ htmlParse() não é reentrante.
 dipo de entrada inesperado na submitForm()
 lista = 0 in tagFromJavaVar()
 0
-não consegui alocar memória para operação Javascript.
-impossível criar contexto Javascript 
-impossível criar objeto de janela para o Javascript
 0
-impossível criar objeto de documento para o Javascript
+impossível criar contexto Javascript 
+0
+0
+0
 0
 0
 erro a alocar %zu bytes
@@ -601,8 +601,8 @@ chamando fopen() em modo inválido %s
 / mal posicionada na getDirURL(%s)
 / mal posicionada na %s
 decodePostData(0,0)
-0
-0
+buscar não circulando
+buscar circulando
 0
 não é possível replicar em modo diretório
 não é possível replicar em modo banco de dados
@@ -641,7 +641,7 @@ tabela
 comando SQL não terminado por ponto e vírgula ou fecha colchetes na seguinte linha
 comando de atualizar ou apagar sem cláusula where
 acesso remoto negado
-Autorização necessária para acessar %s
+Autorização necessária para acessar %s (%s)
 operação falhou porque a memória não pôde ser alocada
 A sua versão de libcurl é mais velha que a %u.%u.%u.\nVocê tem que atualizá-la para usar o Edbrowse.
 tempo limite da operação esgotado
@@ -654,6 +654,6 @@ Erro de conexão SSL na libcurl: %s
 TTY de entrada
 linha de entrada()
 0
-Erro não-reparável de javascript nesta sessão, javascript está fechado.
+0
 Execução de comando falhou; system() retornou %d
 0

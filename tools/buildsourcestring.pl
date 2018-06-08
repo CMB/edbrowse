@@ -1,12 +1,16 @@
 #!/usr/bin/perl -w
-#  Turn a file into a C string containing the contents of that file.
+#  Turn a file into a NUL-terminated char array containing the contents of that file.
 # Windows has a limit of 16380 single-byte characters.
+
 use strict;
 use warnings;
+use English;
+
+my $strip_comments = 1; # set this to strip out comments
+my $in_cmt = 0; # in a block comment
+my $last_semi = 0;
 
 sub prt($) { print shift; }
-
-my $max_chars = 16380;
 
 my $nargs = $#ARGV;
 if($nargs < 2) {
@@ -39,24 +43,50 @@ if ( -f $infile ) {
     my @lines = <INF>;
     close INF;
     print OUTF "/* source file $inbase */\n";
-    print OUTF "const char *$stringname = \"\\\n";
-    my ($line,$len,$total);
-    $total = 0;
+    print OUTF "const char ${stringname}[] = {\n";
+    my ($line);
     foreach $line (@lines) {
         chomp $line;
 #  in case \r is not removed on windows
-$line =~ s/\r*$//;
-        $line =~ s/\\/\\\\/g;
-        $line =~ s/"/\\"/g;
-        $len = length($line) + 4;
-        if (($total + $len) > $max_chars) {
-            print OUTF "\"\n\"";
-            $total = 0;
-        }
-        print OUTF "$line\\n\\\n";
-        $total += $len + 4;
+        $line =~ s/\r*$//;
+
+if($strip_comments) {
+# Strip out js comments.
+# These regular expressionsm are replicated in uncomment.
+# If you change something here you must also change it there. Sorry.
+# Comments, which are desperately needed, can be found over there.
+# If unsure, set $strip_comments to 0 and run again.
+if($in_cmt) {
+if($line =~ s:.*?\*/::) {
+$in_cmt = 0;
+} else {
+$line = ""; # retain line numbers
+}
+}
+$line =~ s/^\t* *//;
+$line =~ s:^ *//.*::;
+$line =~ s:([;{}]) *//.*:$1:;
+$line =~ s:(?<![\\"'])/\*.*?\*/(?!["'])::g;
+if($line =~ s:(?<![\\"'])/\*.*::) {
+$in_cmt = 1;
+}
+$line =~ s/ *$//;
+$line =~ s/^([(\[])/;$1/ if $last_semi;
+$last_semi = 0 if length $line;
+$last_semi = 1 if $line =~ s/;$//;
+$line =~ s/; *}/}/g;
+}
+
+# switch to hex bytes.
+        $line =~ s/(.)/sprintf("0x%02x, ", ord($1))/ge;
+	if (($OSNAME eq "MSWin32") || ($OSNAME eq "MSWin64")) {
+		$line .= " 0x0d, 0x0a,";
+	} else {
+		$line .= " 0x0a,";
+	}
+        print OUTF "$line\n";
     }
-    print OUTF "\";\n";
+    print OUTF "0};\n";
     print OUTF "\n";
     prt("Content $infile written to $outfile\n");
 } else {
@@ -67,6 +97,3 @@ $line =~ s/\r*$//;
 
 close OUTF;
 exit(0);    
-
-# eof
-

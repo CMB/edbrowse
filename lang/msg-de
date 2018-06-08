@@ -1,10 +1,10 @@
 Ende
 keine Datei
 Weiterleitung
-globale Ersetzungen
 lokale Ersetzungen
-keine Groß- und Kleinschreibung beachten
+globale Ersetzungen
 Groß- und Kleinschreibung beachten
+keine Groß- und Kleinschreibung beachten
 Verzeichnisse nur lesbar
 Verzeichnisse schreibbar
 Verzeichnisse schreib- und löschbar
@@ -23,11 +23,11 @@ JavaScript-Interpreter ist abgestürzt, alle aktuellen JavaScript-Sitzungen wurd
 überprüfe SSL-Verbindungen
 zeige keine versteckten Dateien im Verzeichnismodus
 zeige versteckte Dateien im Verzeichnismodus
-Konnte Kindprozess für edbrowse.js nicht starten, JavaScript wurde deaktiviert.
-Edbrowse.js konnte nicht ausgeführt werden, JavaScript wurde deaktiviert.
+0
+0
 Endmarker aus
-Endmarker auf gelisteten Zeilen
 Endmarker an
+kein Absender
 Javascript deaktiviert, keine Aktion ausgeführt
 Javascript deaktiviert, gehe direkt zu der URL
 Weiterleitung durch Nutzer unterbrochen
@@ -44,7 +44,7 @@ keine Schlüsselwörter
 Sitzung %d\n
 SendMail Link. Schreiben Sie Ihre Email, sm zum Senden und ^ um zurückzugelangen
 Zeile %d aktualisiert\n
-h\tzeige Hilfe.\nq\tbeende Programm.\ns\tlese nicht weiter aus diesem Ordner.\nn\tweiter mit nächster Nachricht.\nd\tlösche Nachricht.\nm\tverschiebe Nachricht in anderen Ordner.\n<Leer>\tlese und verwalte Email.\n/\tsuche nach Wort in Betreff, Absender oder Nachricht.\nl\tsetze IMAP-Abrufobergrenze.
+h\tzeige Hilfe\nq\tbeende Programm\ns\tlese nicht weiter aus diesem Ordner\nn\tweiter mit nächster Nachricht\nd\tlösche Nachricht\nm\tverschiebe Nachricht in anderen Ordner\nv\tzeige alle\nb\tmehrfach verschieben oder löschen\nf\tverschiebe oder lösche von\n<Leer>\tlese und verwalte Email\n/\tsuche nach Wort in Betreff, Absender oder Nachricht\nl\tsetze IMAP-Abrufobergrenze
 s Zeichenkette, Emails mit der Zeichenkette im Betreff\nf Zeichenkette, Emails mit der Zeichenkette im Absender\nb Zeichenkette, Emails mit der Zeichenkette in der Nachricht\nStandard ist Betreff wenn kein Bezeichner angegeben.
 keine Nachrichten
 Unterbrechung, tippen Sie qt zum verlassen
@@ -59,7 +59,7 @@ Benutzername
 Benutzername zu lang, Grenze bei %d Zeichen
 Passwort: 
 Passwort zu lang, maximal %d Zeichen
-Konnte mit edbrowse.js nicht kommunizieren, JavaScript deaktiviert.
+%s
 Warnung: auf das Verzeichnis kann nicht zugegriffen werden, die Auflistung wird leer sein
 Disaster, Fehlermeldung der Länge %d ist zu lang
 Zeile %d: 
@@ -95,7 +95,7 @@ kann Datei %s nicht erstellen, Anhang wurde verworfen\n
 kann Datei %s nicht schreiben, Anhang wurde verworfen\n
 keine Mails
 %d Nachrichten
-JavaScript Interprozess-Nachrichten sind nicht mehr synchronisiert.
+kann %s nicht öffnen Konfiguration fehlt %s\n
 ungültige Zeichen nach dem Kommando ls
 h\tgibt diese Hilfe aus\nq\tbeendet das Programm\nLeertaste\tWeiterlesen der Nachricht\nn\twechsle zur nächsten Nachricht\nd\tlösche Nachricht\nw\tspeichere die Nachricht in einer Datei und lösche sie\nu\tspeichere die Nachricht unformatiert in eine Datei und lösche sie
 kann Datei %s nicht erstellen
@@ -157,8 +157,8 @@ alle Zeilen passen auf dem Ausdruck v
 keine der markierten Zeilen wurden erfolgreich entfernt
 Operation unterbrochen
 kein Treffer
-JavaScript Objekte fehlen oder sind fehlerhaft. %d\n
-Agent Nummer %c ist nicht definiert
+Diese gopher-Auflistung ist leer
+Agent Nummer %d ist nicht definiert
 konnte neues Verzeichnis nicht ausgeben
 konnte aktuelles Verzeichnis nicht anzeigen
 ungültiges Verzeichnis
@@ -215,7 +215,7 @@ kein vorheriger Text
 unerwarteter Text nach dem Kommando m
 0
 kein vorheriger Text, kann nicht sichern
-kann das g Kommando nicht auf einen Bereich anwenden
+kann das %s Kommando nicht auf einen Bereich anwenden
 g im Datenbankmodus nicht verfügbar
 kann das i%c Kommando nicht auf einen Bereich anwenden
 kann i< nicht in einem globalen Kommando verwenden
@@ -225,7 +225,7 @@ kann %s nicht öffnen
 kann %s nicht lesen
 eingegebener Text enthält Nullbytes
 Zeile enthält einen Zeilenumbruch
-erste Zeile von %s ist zu lang
+gopher download:
 Datei ist momentan in einem Puffer, nutzen Sie rf zum aktualisieren
 Binärdatei nicht im Browsermodus verfügbar
 kann leere Datei nicht im Browsermodus anzeigen
@@ -234,7 +234,7 @@ bereits am Browsen
 Marke %s nicht gefunden
 i im Browsermodus nicht verfügbar
 kann Einfügekommando nicht aus einer Edbrowse-Funktion heraus starten
-Kann nicht mit Edbrowse-js kommunizieren, JavaScript nicht aktiv
+Zeilen von %d auf %d aktualisiert\n
 Kommando %c noch nicht implementiert
 %d ist außerhalb des Bereichs
 keine Option enthält die Zeichenkette %s
@@ -260,8 +260,8 @@ die Aktion der Eingabemaske ist keine URL
 JavaScript ist deaktiviert, kann EingabeMaske nicht verwenden
 Die Eingabemaske hat von HTTPS auf HTTP gewechselt und ist nun unsicher
 kann nicht über Protokoll %s versenden
-%d ist außerhalb des Bereichs; nutzen Sie %c1 bis %c%d
-%d ist außerhalb des Bereichs; nutzen Sie %c1, oder einfach %c
+%d ist außerhalb des Bereichs; nutzen Sie %s1 bis %s%d
+%d ist außerhalb des Bereichs; nutzen Sie %s1, oder einfach %s
 kann nicht mehrere Vorkommen einer leeren Zeichenkette ersetzen
 Download abgebrochen
 kein regulärer Ausdruck nach Kommando %C
@@ -279,21 +279,21 @@ kann Zeilenumbrüche nicht in ein Eingabefeld einfügen
 keine eingabefelder vorhanden
 keine Links vorhanden
 keine Schalter vorhanden
-mehrere Eingabefelder vorhanden, nutzen Sie %c1 bis %c%d
-mehrere Links vorhanden, nutzen Sie %c1 bis %c%d
-mehrere Schalter vorhanden, nutzen Sie %c1 bis %c%d
+mehrere Eingabefelder vorhanden, nutzen Sie %s1 bis %s%d
+mehrere Links vorhanden, nutzen Sie %s1 bis %s%d
+mehrere Schalter vorhanden, nutzen Sie %s1 bis %s%d
 konnte Daten nicht vom Server lesen
 %s ist keine URL
 Download abgeschlossen
 kann %s nicht im Netzwerk finden
-Protokoll %s wird von Edbrowse nicht unterstützt und kein MIME-Typ in der Konfiguration angegeben
+Protokoll %s wird von Edbrowse nicht unterstützt
 Warnung, konnte Puffer %d nicht mit Text füllen\n
 Download läuft
 kann keine Verbindung zu %s herstellen
 Download: 
 Das Zertifikat von %s kann nicht überprüft werden, Verbindung getrennt
 kann nicht zugegriffen
-h\tgib diese Hilfe aus.\nq\tbeende Programm.\nLeertaste\tZeige Rest der Email-Nachricht.\nn\tnächste Email.\nd\tdiese Nachricht löschen.\nw\tschreibe Nachricht in Datei\nW\tschreibe Nachricht in Datei und lösche sie.\nu\tschreibe diese Nachricht unformatiert in eine Datei.\nU\tschreibe Nachricht unformatiert in Datei und lösche sie.\na\tscanne und speichere Anhänge.\ns\tlese keine Nachrichten mehr von diesem Ordner.
+h\tgib diese Hilfe aus\nq\tbeende Programm\nLeertaste\tZeige Rest der Email-Nachricht\nn\tnächste Email\nd\tdiese Nachricht löschen\nm\tverschiebe Nachricht in anderen Ordner\nv\tzeige alle\nb\tmehrfach verschieben oder löschen\nf\tverschiebe oder lösche von\nw\tschreibe Nachricht in Datei\nW\tschreibe Nachricht in Datei und lösche sie\nu\tschreibe diese Nachricht unformatiert in eine Datei\nU\tschreibe Nachricht unformatiert in Datei und lösche sie\na\tscanne und speichere Anhänge\ns\tlese keine Nachrichten mehr von diesem Ordner
 Webseite erfordert Anmeldung
 Anmeldung abgebrochen
 Suchtext kann keine Anführungszeichen enthalten
@@ -305,7 +305,7 @@ fehlgeschlagen
 ftp konnte sich nicht zum entfernten Rechner verbinden
 FTP-Übertragung fehlgeschlagen
 keine Ordner vorhanden
-Wähle Ordner mittels Zahl oder Teilbegriff.\nFür ungelesene Nachrichten - voranstellen, q zum Verlassen, l um die Begrenzung für das Abholen zu ändern.
+Wähle Ordner mittels Zahl oder Teilbegriff.\nq zum Verlassen, rf zum aktualisieren, l um die Begrenzung für das Abholen zu ändern.
 Aufbau...
 stop
 hole %d auf einmal\n
@@ -431,33 +431,33 @@ Bedingung nicht erfüllt
 Zeitüberschreitung in der Dantenbank
 kann eine Ansicht nicht verändern
 Feld deaktiviert
+SPNEGO Authentisierungsmethode deaktiviert
+SPNEGO Authentisierungsmethode aktiviert
+konnte lokales CSS nicht abrufen\n
+konnte CSS von %s nicht abrufen, Code %ld\n
+konnte CSS nicht abrufen\n
 0
 0
 0
 0
 0
 0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
+Zeilen %d und %d hinzugefügt\n
+Zeilen %d und %d bis %d hinzugefügt\n
+Zeilen %d bis %d und %d hinzugefügt\n
+Zeilen %d und %d aktualisiert\n
+Zeilen %d und %d bis %d aktualisiert\n
+Zeilen %d bis %d und %d aktualisiert\n
+Zeilen %d und %d gelöscht\n
+Zeilen %d und %d bis %d gelöscht\n
+Zeilen %d bis %d und %d gelöscht\n
+Plugin muss von einer lokalen Datei gestartet werden
+das Plugin ist ein Konverter, kein Player
+das Plugin ist ein Player, kein Konverter
+verstecke eingeblendeten Text
+zeige eingeblendeten Text an
+Mehrfachauswahl
+Von %s 
 unerwartete Zeichen nach dem kodierten Anhang
 ungültige Zeichen im kodierten Anhang
 Kommando %s kann nicht global angewandt werden
@@ -465,9 +465,9 @@ Warnung, JavaScript kann nicht durch einen Doppelklick aktiviert werden
 Fehler beim Auflösen der Option %s beim Synchronisieren oder Versand des Formularfelds
 xhr deaktiviert
 xhr aktiviert
-konnte lokales JavaScript nicht abrufen, %s\n
+konnte lokales JavaScript nicht abrufen\n
 konnte JavaScript von %s nicht abrufen, Code %ld\n
-konnte JavaScript nicht abrufen, %s\n
+konnte JavaScript nicht abrufen\n
 JavaScript deaktiviert, überspringe Onclick-Code
 JavaScript deaktiviert, überspringe Onchange-Code
 JavaScript deaktiviert, überspringe Onreset-Code
@@ -482,7 +482,7 @@ Keine Rahmen zum Ausklappen
 Keine Rahmen zum Zusammenklappen
 Hilfetexte aktiviert
 FTP download:
-keine Datei für SSL-Zertifikate angegeben, sichere Verbindungen können nicht überprüft werden.
+abgebrochen
 SCP download:
 .ebrc: Null-Zeichen in Zeile %d
 .ebrc: fehlender Funktionsname auf Zeile %d
@@ -505,14 +505,14 @@ SCP download:
 .ebrc: Zeile %d, keycol sollte Zahl oder Zahl,zahl enthalten
 .ebrc: Zeile %d, keycol außerhalb des Bereichs, lediglich %d Spalten definiert
 .ebrc: Adressbuch %s ist keine reguläre Datei
-0
+javascript Syntaxfehler
 .ebrc: %s ist kein Verzeichnis
-.ebrc: Zeile %d, zu viele User-Agents, maximal 9
+.ebrc: Zeile %d, zu viele User-Agents, maximal %d
 .ebrc: Cookie-Datei ist keine reguläre Datei
 .ebrc: kann Cookie-Datei %s nicht erstellen
 .ebrc: zu viele js-Anweisungen, maximal %d
 .ebrc: Zeile %d, Adresse %s enthält keinen Punkt
-0
+kann auf %s nicht zugreifen, (gesichert)
 .ebrc: Datei %s für SSL-Zertifikate ist keine reguläre Datei
 .ebrc: SSL-Zertifikatsdatei %s existiert nicht oder kann nicht gelesen werden
 .ebrc: Zeile %d, Schlüsselwort %s nocht nicht implementiert
@@ -546,7 +546,7 @@ persönlicher Ordner nicht mit $HOME definiert
 %s ist kein Verzeichnis
 keine Emailkonten angegeben, prüfen Sie .ebrc-Konfigurationsdatei
 ungültige Kontonummer, nutzen Sie 1-%d
-edbrowse -v (zeige Version)\nedbrowse -h (diese nachricht)\nedbrowse -c (editiere Konfigurationsdatei)\nedbrowse [-e] [-d#] -f[#] (rufe Emails ab) \nedbrowse [-e] [-d#] -[p]m (lies ungelesene Nachrichten)\nedbrowse [-e] [-d#] -[p]fm[#] (rufe Emails ab und lies ungelesene Nachrichten)\nedbrowse [-e] [-d#] -m[#] Adresse1 Adresse2 ... Datei [+Anhang]\nedbrowse [-e] [-d#] Datei1 Datei2 ...
+edbrowse -v (zeige Version)\nedbrowse -h (diese nachricht)\nedbrowse -c (editiere Konfigurationsdatei)\nedbrowse [-d#] -f[#] (rufe Emails ab) \nedbrowse [-d#] -[p]m (lies ungelesene Nachrichten)\nedbrowse [-d#] -[p]fm[#] (rufe Emails ab und lies ungelesene Nachrichten)\nedbrowse [-d#] -m[#] Adresse1 Adresse2 ... Datei [+Anhang]\nedbrowse [-c Konfiguration] [-e] [-b] [-d#] Datei1 Datei2 ...
 bitte mindestens einen Empfänger und den zu versenden Anhang angeben
 bitte geben Sie mind. einen Empfänger und die zu sendende Datei an bevor Sie Dateien anhängen
 zu viele Dateien gleichzeitig offen, maximal %d
@@ -561,15 +561,15 @@ keine neue Zeile in Verzeichnis %s
 kein abschließendes >-Zeichen in Zeile %d
 fieldInBuffer konnte Tag %d nicht finden, newtext %s
 kann Cookie-Datei %s nicht erneut schreiben
-0
+umgekehrt 
 Fetchmail-Client ist interaktiv und kann nicht im Hintergrund laufen
 Emailverzeichnis nicht in .ebrc-Datei angegeben
 kann nicht in Verzeichnis %s wechseln
 0
 Ungültiger Login oder Passwort
-0
-0
-0
+sortiere alphabetisch
+sortiere nach Größe
+sortiere nach Zeit
 0
 0
 Tag-Code %d wird von ungültigem Zeichen %c gefolgt
@@ -578,11 +578,11 @@ htmlParse() kann nicht erneut aufgerufen werden
 unerwarteter Eingabetyp in eingabeformular
 list = 0 in tagFromJavaVar()
 0
-konnte keinen Speicher für JavaScript-Operationen bekommen
-konnte JavaScript-Kontext nicht erstellen
-konnte kein Fensterobjekt für JavaScript erstellen
 0
-kann Dokumentobjekt nicht erstellen
+konnte JavaScript-Kontext nicht erstellen
+0
+0
+0
 0
 0
 Fehler beim Anfordern von %zu Bytes
@@ -601,8 +601,8 @@ Aufruf von fopen() mit ungültigem Modus %s
 fehlplatzierter / in getDirURL(%s)
 fehlplatzierter / in %s
 decodePostData(0,0)
-0
-0
+Suche nicht am Anfang fortsetzen
+Suche am Anfang fortsetzen
 0
 Antworten im Verzeichnismodus unmöglich
 Antworten im Datenbankmodus unmöglich
@@ -641,7 +641,7 @@ Tabelle
 SQL-Anweisung nicht durch Semikolon oder durch eckige Klammern auf der nächsten Zeile beendet
 aktualisieren oder entfernen Sie die Anweisung ohne where-Zweig
 Fernzugriff verweigert
-Authorisierung nötig für %s
+Authorisierung nötig für %s (%s)
 Operation schlug fehl, es konnte kein Speicher angefordert werden
 Ihre Version von libcurl ist älter als %u.%u.%u.\nSie müssen libcurl aktualisieren, um Edbrowse nutzen zu können.
 Zeitüberschreitung für Operation
@@ -654,6 +654,6 @@ SSL-Verbindungsfehler in libcurl: %s
 Eingabe-tty
 zeilenweise Eingabe
 0
-Schwerwiegender Fehler in dieser Sitzung, JavaScript wird geschlossen
+0
 Ausführung des Kommandos fehlgeschlagen, das System gab %d zurück
 0

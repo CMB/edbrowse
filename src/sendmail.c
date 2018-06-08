@@ -11,12 +11,8 @@
 #define MAXRECAT 100		/* max number of recipients or attachments */
 #define MAXMSLINE 1024		/* max mail server line */
 
-char serverLine[MAXMSLINE];
-static char spareLine[MAXMSLINE];
-int mssock;			/* mail server socket */
+static char serverLine[MAXMSLINE];
 static bool doSignature;
-static bool ssl_on;
-static const char *mailhost;
 static char subjectLine[400];
 static int mailAccount;
 
@@ -180,7 +176,7 @@ static char *qpEncode(const char *line)
 
 	newbuf = initString(&l);
 	for (s = line; (c = *s); ++s) {
-		if (c < '\n' && c != '\t' || c == '=') {
+		if ((c < '\n' && c != '\t') || c == '=') {
 			char expand[4];
 			sprintf(expand, "=%02X", (uchar) c);
 			stringAndString(&newbuf, &l, expand);
@@ -468,8 +464,8 @@ empty:
  * files uploaded from a web form need not be encoded, unless they contain
  * nulls, which is a quirk of my slapped together software. */
 
-	if (!webform && (buflen > 20 && nacount * 5 > buflen) ||
-	    webform && nullcount) {
+	if ((!webform && buflen > 20 && nacount * 5 > buflen) ||
+	    (webform && nullcount)) {
 		if (ismail) {
 			setError(MSG_MailBinary, file);
 			goto freefail;
@@ -503,11 +499,11 @@ empty:
 			for (s = buf; s < v; ++s) {
 				c = *s;
 /* do we have to =expand this character? */
-				if (c < '\n' && c != '\t' ||
+				if ((c < '\n' && c != '\t') ||
 				    c == '=' ||
 				    c == '\xff' ||
-				    (c == ' ' || c == '\t') && s < v - 1
-				    && s[1] == '\n') {
+				    ((c == ' ' || c == '\t') &&
+				     s < v - 1 && s[1] == '\n')) {
 					char expand[4];
 					sprintf(expand, "=%02X", (uchar) c);
 					stringAndString(&newbuf, &l, expand);
@@ -573,9 +569,28 @@ static char *mailTimeString(void)
 	static char buf[48];
 	struct tm *cur_tm;
 	time_t now;
+	static const char months[] =
+	    "Jan\0Feb\0Mar\0Apr\0May\0Jun\0Jul\0Aug\0Sep\0Oct\0Nov\0Dec";
+	static const char wdays[] = "Sun\0Mon\0Tue\0Wed\0Thu\0Fri\0Sat";
+
 	time(&now);
 	cur_tm = localtime(&now);
+
+/*********************************************************************
 	strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S %z", cur_tm);
+That's what I use to do, but a user in France always got a date
+with French month and weekday, even though I setlocale(LC_TIME, "C");
+I changed C to en_US, still the French shines through.
+I don't understand it, so I just work around it.
+This is an internet standard, it's suppose to be English.
+*********************************************************************/
+
+	sprintf(buf, "%s, %02d %s ",
+		wdays + cur_tm->tm_wday * 4,
+		cur_tm->tm_mday, months + cur_tm->tm_mon * 4);
+// and strftime can do the rest.
+	strftime(buf + 12, sizeof(buf) - 12, "%Y %H:%M:%S %z", cur_tm);
+
 	return buf;
 }				/* mailTimeString */
 
@@ -694,6 +709,7 @@ static CURL *newSendmailHandle(const struct MACCOUNT *account,
 			       const char *outurl, const char *reply,
 			       struct curl_slist *recipients)
 {
+	static struct i_get g;
 	CURLcode res = CURLE_OK;
 	CURL *handle = curl_easy_init();
 	if (!handle) {
@@ -710,10 +726,7 @@ static CURL *newSendmailHandle(const struct MACCOUNT *account,
 	if (debugLevel >= 4)
 		curl_easy_setopt(handle, CURLOPT_VERBOSE, 1);
 	curl_easy_setopt(handle, CURLOPT_DEBUGFUNCTION, ebcurl_debug_handler);
-	res = curl_easy_setopt(handle, CURLOPT_CAINFO, sslCerts);
-	if (res != CURLE_OK) {
-		goto new_handle_cleanup;
-	}
+	curl_easy_setopt(handle, CURLOPT_DEBUGDATA, &g);
 
 	if (account->outssl == 2)
 		curl_easy_setopt(handle, CURLOPT_USE_SSL, CURLUSESSL_ALL);
@@ -745,7 +758,7 @@ static CURL *newSendmailHandle(const struct MACCOUNT *account,
 
 new_handle_cleanup:
 	if (res != CURLE_OK) {
-		ebcurl_setError(res, outurl);
+		ebcurl_setError(res, outurl, 0, emptyString);
 		curl_easy_cleanup(handle);
 		handle = NULL;
 	}
@@ -787,7 +800,7 @@ sendMailSMTP(const struct MACCOUNT *account, const char *reply,
 
 smtp_cleanup:
 	if (res != CURLE_OK)
-		ebcurl_setError(res, smtp_url);
+		ebcurl_setError(res, smtp_url, 0, emptyString);
 	if (handle)
 		curl_easy_cleanup(handle);
 	curl_slist_free_all(recipient_slist);
@@ -801,7 +814,7 @@ sendMail(int account, const char **recipients, const char *body,
 	 int subjat, const char **attachments, const char *refline,
 	 int nalt, bool dosig)
 {
-	char *from, *fromiso, *reply, *login, *smlogin, *pass;
+	char *from, *fromiso, *reply;
 	const struct MACCOUNT *a, *ao, *localMail;
 	const char *s, *boundary;
 	char reccc[MAXRECAT];
@@ -810,7 +823,6 @@ sendMail(int account, const char **recipients, const char *body,
 	char *out = 0;
 	bool sendmail_success = false;
 	bool mustmime = false;
-	bool firstgreet = true;
 	bool firstrec;
 	const char *ct, *ce;
 	char *encoded = 0;
@@ -842,7 +854,7 @@ sendMail(int account, const char **recipients, const char *body,
 		return false;
 
 /* set copy flags */
-	for (j = 0; s = recipients[j]; ++j) {
+	for (j = 0; (s = recipients[j]); ++j) {
 		char cc = 0;
 		if (*s == '^' || *s == '?')
 			cc = *s++;
@@ -855,7 +867,7 @@ sendMail(int account, const char **recipients, const char *body,
 	}
 
 /* Look up aliases in the address book */
-	for (j = 0; s = recipients[j]; ++j) {
+	for (j = 0; (s = recipients[j]); ++j) {
 		if (strchr(s, '@'))
 			continue;
 		t = 0;
@@ -887,7 +899,7 @@ sendMail(int account, const char **recipients, const char *body,
 	}
 
 /* verify attachments are readable */
-	for (j = 0; s = attachments[j]; ++j) {
+	for (j = 0; (s = attachments[j]); ++j) {
 		if (!ismc && (cx = stringIsNum(s)) >= 0) {
 			if (!cxCompare(cx) || !cxActive(cx))
 				return false;
@@ -923,7 +935,7 @@ sendMail(int account, const char **recipients, const char *body,
 	out = initString(&j);
 
 	firstrec = true;
-	for (i = 0; s = recipients[i]; ++i) {
+	for (i = 0; (s = recipients[i]); ++i) {
 		if (reccc[i])
 			continue;
 		stringAndString(&out, &j, firstrec ? "To:" : ",\r\n  ");
@@ -934,7 +946,7 @@ sendMail(int account, const char **recipients, const char *body,
 		stringAndString(&out, &j, eol);
 
 	firstrec = true;
-	for (i = 0; s = recipients[i]; ++i) {
+	for (i = 0; (s = recipients[i]); ++i) {
 		if (reccc[i] != '^')
 			continue;
 		stringAndString(&out, &j, firstrec ? "CC:" : ",\r\n  ");
@@ -945,7 +957,7 @@ sendMail(int account, const char **recipients, const char *body,
 		stringAndString(&out, &j, eol);
 
 	firstrec = true;
-	for (i = 0; s = recipients[i]; ++i) {
+	for (i = 0; (s = recipients[i]); ++i) {
 		if (reccc[i] != '?')
 			continue;
 		stringAndString(&out, &j, firstrec ? "BCC:" : ",\r\n  ");
@@ -1010,7 +1022,7 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 	encoded = 0;
 
 	if (mustmime) {
-		for (i = 0; s = attachments[i]; ++i) {
+		for (i = 0; (s = attachments[i]); ++i) {
 			if (!encodeAttachment(s, 0, false, &ct, &ce, &encoded))
 				return false;
 			sprintf(serverLine, "%s--%s%sContent-Type: %s%s", eol,

@@ -5,36 +5,17 @@
 
 #include "eb.h"
 
-static void javaSetsTimeout(int n, const char *jsrc, jsobjtype to,
-			    bool isInterval);
-
-#define handlerPresent(obj, name) (has_property(obj, name) == EJ_PROP_FUNCTION)
-
 #ifdef _MSC_VER			// sleep(secs) macro
 #define SLEEP(a) Sleep(a * 1000)
+extern int gettimeofday(struct timeval *tp, void *tzp);	// from tidys.lib
 #else // !_MSC_VER
 #define SLEEP sleep
 #endif // _MSC_VER y/n
 
-static const char *const handlers[] = {
-	"onmousemove", "onmouseover", "onmouseout", "onmouseup", "onmousedown",
-	"onclick", "ondblclick", "onblur", "onfocus",
-	"onchange", "onsubmit", "onreset",
-	"onload", "onunload",
-	"onkeypress", "onkeyup", "onkeydown",
-	0
-};
-
-static const char *const inp_types[] = {
-	"reset", "button", "image", "submit",
-	"hidden",
-	"text", "password", "number", "file",
-	"select", "textarea", "radio", "checkbox",
-	0
-};
+uchar browseLocal;
+bool showHover, showInject;
 
 static jsobjtype js_reset, js_submit;
-uchar browseLocal;
 
 bool tagHandler(int seqno, const char *name)
 {
@@ -53,7 +34,18 @@ bool tagHandler(int seqno, const char *name)
 		return false;
 	if (!isJSAlive)
 		return false;
-	return handlerPresent(t->jv, name);
+	if (!handlerPresent(t->jv, name))
+		return false;
+
+	if (stringEqual(name, "onclick"))
+		t->onclick = true;
+	if (stringEqual(name, "onsubmit"))
+		t->onsubmit = true;
+	if (stringEqual(name, "onreset"))
+		t->onreset = true;
+	if (stringEqual(name, "onchange"))
+		t->onchange = true;
+	return true;
 }				/* tagHandler */
 
 static void formReset(const struct htmlTag *form);
@@ -66,6 +58,8 @@ It handles any side effects that occur from running js.
 innerHTML tags generated, form input values set, timers,
 form.reset(), form.submit(), document.location = url, etc.
 Every js activity should start with jSyncup() and end with jSideEffects().
+WARNING: this routine mucks with cf, so you need to set it afterwards,
+the button being pushed or the onclick code or whatever frame is appropriate.
 *********************************************************************/
 
 void jSideEffects(void)
@@ -137,7 +131,7 @@ locateOptions(const struct htmlTag *sel, const char *input,
 	char *disp, *val;
 	int disp_l, val_l;
 	int len = strlen(input);
-	int i, n, pmc, cnt;
+	int i, n, pmc;
 	const char *s, *e;	/* start and end of an option */
 	char *iopt;		/* individual option */
 
@@ -300,18 +294,9 @@ This line sets the current frame, then we're ready to roll.
 /* set option.selected in js based on the option(s) in value */
 			locateOptions(t, (value ? value : t->value), 0, 0,
 				      true);
-/* This is totally confusing. In the case of select,
- * t->value is the value displayed on the screen,
- * but within js, select.value is the value of the option selected,
- * assuming multiple options are not allowed. */
 			if (value) {
 				nzFree(t->value);
 				t->value = value;
-			}
-			if (!t->multiple) {
-				value = get_property_option(t->jv);
-				set_property_string(t->jv, "value", value);
-				nzFree(value);
 			}
 			continue;
 		}
@@ -326,7 +311,7 @@ This line sets the current frame, then we're ready to roll.
 			cx = t->lic;
 			if (!cx)
 				continue;
-/* The unfold command should never fail */
+// unfoldBuffer could fail if we have quit that session.
 			if (!unfoldBuffer(cx, false, &cxbuf, &j))
 				continue;
 			set_property_string(t->jv, "value", cxbuf);
@@ -346,8 +331,6 @@ This line sets the current frame, then we're ready to roll.
 
 void jClearSync(void)
 {
-	int cx;			/* edbrowse context */
-	struct ebWindow *w;
 	if (cw->browseMode) {
 		cw->sank = false;
 		return;
@@ -355,7 +338,7 @@ void jClearSync(void)
 /* when we are able to jSyncup windows other than the foreground window,
  * which we can't do yet, then the rest of this will make sense. */
 #if 0
-	for (cx = 1; cx < MAXSESSION; ++cx) {
+	for (cx = 1; cx <= maxSession; ++cx) {
 		w = sessionList[cx].lw;
 		while (w) {
 			w->sank = false;
@@ -364,6 +347,39 @@ void jClearSync(void)
 	}
 #endif
 }				/* jClearSync */
+
+/*********************************************************************
+This function is called for a new web page, by http refresh,
+or by document.location = new_url, or by new Window().
+If delay is 0 or less then the action should happen now.
+The refresh parameter means replace the current page.
+This is false only if js creates a new window, which should stack up on top of the old.
+*********************************************************************/
+
+char *newlocation;
+int newloc_d;			/* possible delay */
+bool newloc_r;			/* replace the buffer */
+struct ebFrame *newloc_f;	/* frame calling for new web page */
+bool js_redirects;
+static void gotoLocation(char *url, int delay, bool rf)
+{
+	if (!allowRedirection) {
+		debugPrint(1, "javascript redirection disabled: %s", url);
+		nzFree(url);
+		return;
+	}
+	if (newlocation && delay >= newloc_d) {
+		nzFree(url);
+		return;
+	}
+	nzFree(newlocation);
+	newlocation = url;
+	newloc_d = delay;
+	newloc_r = rf;
+	newloc_f = cf;
+	if (!delay)
+		js_redirects = true;
+}				/* gotoLocation */
 
 /* helper function for meta tag */
 void htmlMetaHelper(struct htmlTag *t)
@@ -418,9 +434,9 @@ void htmlMetaHelper(struct htmlTag *t)
 	if (name) {
 		ptr = 0;
 		if (stringEqualCI(name, "description"))
-			ptr = &cw->fd;
+			ptr = &cw->htmldesc;
 		if (stringEqualCI(name, "keywords"))
-			ptr = &cw->fk;
+			ptr = &cw->htmlkey;
 		if (ptr && !*ptr && content) {
 			stripWhite(copy);
 			*ptr = copy;
@@ -432,37 +448,21 @@ void htmlMetaHelper(struct htmlTag *t)
 }				/* htmlMetaHelper */
 
 /* pre is the predecoration from edbrowse-js, if appropriate */
-static void runGeneratedHtml(struct htmlTag *t, const char *h, const char *pre)
+static void runGeneratedHtml(struct htmlTag *t, const char *h)
 {
-	int j, l = cw->numTags;
+	int l = cw->numTags;
 
+	if (t)
+		debugPrint(4, "parse under %s %d", t->info->name, t->seqno);
+	else
+		debugPrint(4, "parse under top");
 	debugPrint(4, "Generated {%s}", h);
 
-	htmlGenerated = true;
 	html2nodes(h, false);
+	htmlGenerated = true;
 	htmlNodesIntoTree(l, t);
-	prerender(0);
-
-	if (pre) {
-		for (j = l; j < cw->numTags; ++j) {
-			t = tagList[j];
-			if (t->step < 2)
-				t->step = 2;	/* already decorated */
-		}
-		while (*pre == ',') {
-			jsobjtype v;
-			j = strtol(pre + 1, (char **)&pre, 10);
-			if (*pre != '=')
-				break;
-			++pre;
-			sscanf(pre, "%p", &v);
-			tagList[l + j]->jv = v;
-			while (*pre && *pre != ',')
-				++pre;
-		}
-	} else
-		decorate(0);
-	htmlGenerated = false;
+	prerender(false);
+	decorate(0);
 }				/* runGeneratedHtml */
 
 /* helper function to prepare an html script.
@@ -474,8 +474,12 @@ static void prepareScript(struct htmlTag *t)
 	char *js_text = 0;
 	const char *a;
 	const char *filepart;
+	char *b;
+	int blen;
 
-/* If no language is specified, javascript is default. */
+// If no language is specified, javascript is default.
+// language and type really need to dip into javascript attributes,
+// in case js has set or change them.  Not yet implemented.
 	a = attribVal(t, "language");
 	if (a && (!memEqualCI(a, "javascript", 10) || isalphaByte(a[10])))
 		return;
@@ -498,10 +502,22 @@ static void prepareScript(struct htmlTag *t)
 	if (cf->fileName && !t->scriptgen)
 		js_file = cf->fileName;
 
+	if (t->jv) {
+// js might have set, or changed, the source url.
+		char *new_url = get_property_url(t->jv, false);
+		if (new_url && *new_url) {
+			if (!t->href || !stringEqual(t->href, new_url))
+				debugPrint(3, "js replaces script %s with %s",
+					   t->href, new_url);
+			nzFree(t->href);
+			t->href = new_url;
+		}
+	}
+
 	if (t->href) {		/* fetch the javascript page */
 		if (javaOK(t->href)) {
 			bool from_data = isDataURI(t->href);
-			debugPrint(3, "java source %s",
+			debugPrint(3, "js source %s",
 				   !from_data ? t->href : "data URI");
 			if (from_data) {
 				char *mediatype;
@@ -515,37 +531,47 @@ static void prepareScript(struct htmlTag *t)
 						   "Unable to parse data URI containing JavaScript");
 				}
 			} else if (browseLocal && !isURL(t->href)) {
-				if (!fileIntoMemory
-				    (t->href, &serverData, &serverDataLen)) {
+				char *h = cloneString(t->href);
+				unpercentString(h);
+				if (!fileIntoMemory(h, &b, &blen)) {
 					if (debugLevel >= 1)
-						i_printf(MSG_GetLocalJS,
-							 errorMsg);
+						i_printf(MSG_GetLocalJS);
 				} else {
-					js_text = serverData;
-					prepareForBrowse(js_text,
-							 serverDataLen);
+					js_text = force_utf8(b, blen);
+					if (!js_text)
+						js_text = b;
+					else
+						nzFree(b);
 				}
-			} else
-			    if (httpConnect
-				(t->href, false, false, true, 0, 0, 0)) {
-				if (ht_code == 200) {
-					js_text = serverData;
-					prepareForBrowse(js_text,
-							 serverDataLen);
-				} else {
-					nzFree(serverData);
-					if (debugLevel >= 3)
-						i_printf(MSG_GetJS,
-							 t->href, ht_code);
-				}
+				nzFree(h);
 			} else {
-				if (debugLevel >= 3)
-					i_printf(MSG_GetJS2, errorMsg);
+				struct i_get g;
+				memset(&g, 0, sizeof(g));
+				g.thisfile = cf->fileName;
+				g.uriEncoded = true;
+				g.url = t->href;
+				if (httpConnect(&g)) {
+					if (g.code == 200) {
+						js_text =
+						    force_utf8(g.buffer,
+							       g.length);
+						if (!js_text)
+							js_text = g.buffer;
+						else
+							nzFree(g.buffer);
+					} else {
+						nzFree(g.buffer);
+						if (debugLevel >= 3)
+							i_printf(MSG_GetJS,
+								 g.url, g.code);
+					}
+				} else {
+					if (debugLevel >= 3)
+						i_printf(MSG_GetJS2);
+				}
 			}
 			t->js_ln = 1;
 			js_file = (!from_data ? t->href : "data_URI");
-			nzFree(changeFileName);
-			changeFileName = NULL;
 		}
 	} else {
 		js_text = t->textval;
@@ -558,7 +584,38 @@ static void prepareScript(struct htmlTag *t)
 	nzFree(js_text);
 	filepart = getFileURL(js_file, true);
 	t->js_file = cloneString(filepart);
+
+// A side effect of tidy + edbrowse is that the text of the script is a
+// childNode of script, but I don't think it should be.
+	if (t->firstchild)
+		run_function_onearg(t->jv, "removeChild", t->firstchild->jv);
+
+// deminimize the code if we're debugging.
+	if (demin)
+		run_function_onearg(cf->winobj, "eb$demin", t->jv);
+	if (uvw)
+		run_function_onearg(cf->winobj, "eb$watch", t->jv);
 }				/* prepareScript */
+
+static bool is_subframe(struct ebFrame *f1, struct ebFrame *f2)
+{
+	struct htmlTag *t;
+	int n;
+	if (f1 == f2)
+		return true;
+	while (true) {
+		for (n = 0; n < cw->numTags; ++n) {
+			t = tagList[n];
+			if (t->f1 == f1)
+				goto found;
+		}
+		return false;
+found:
+		f1 = t->f0;
+		if (f1 == f2)
+			return true;
+	}
+}
 
 /*********************************************************************
 Run pending scripts, and perform other actions that have been queued up by javascript.
@@ -566,29 +623,34 @@ This includes document.write, linkages, perhaps even form.submit.
 Things stop however if we detect document.location = new_url,
 i.e. a page replacement, as indicated by the newlocation variable being set.
 The old page doesn't matter any more.
+I run the scripts linked to the current frame.
+That way the scripts in a subframe will run, then return, then the scripts
+in the parent frame pick up where they left off.
 *********************************************************************/
 
 void runScriptsPending(void)
 {
 	struct htmlTag *t;
-	struct inputChange *ic;
-	int j, l;
+	int j;
 	char *jtxt;
 	const char *js_file;
 	int ln;
 	bool change;
 	jsobjtype v;
+	struct ebFrame *f, *save_cf = cf;
 
 	if (newlocation && newloc_r)
 		return;
 
-/* if onclick code or some such does document write, where does that belong?
- * I don't know, I'll just put it at the end.
- * As you see below, document.write that comes from a specific javascript
- * appears inline where the script is. */
-	if (cf->dw) {
+// Not sure where document.write objects belong.
+// For now I'm putting them under body.
+// Each write corresponds to the frame containing document.write.
+	for (f = &(cw->f0); f; f = f->next) {
+		if (!f->dw)
+			continue;
+		cf = f;
 		stringAndString(&cf->dw, &cf->dw_l, "</body>\n");
-		runGeneratedHtml(NULL, cf->dw, NULL);
+		runGeneratedHtml(cf->bodytag, cf->dw);
 		nzFree(cf->dw);
 		cf->dw = 0;
 		cf->dw_l = 0;
@@ -603,11 +665,15 @@ top:
 			continue;
 		if (t->step >= 3)
 			continue;
+		if (!is_subframe(t->f0, save_cf))
+			continue;
 		t->step = 3;	/* now running the script */
 		if (!t->jv)
 			continue;
-		change = true;
+		if (intFlag)
+			continue;
 
+		cf = t->f0;
 		prepareScript(t);
 
 		jtxt = get_property_string(t->jv, "data");
@@ -616,6 +682,9 @@ top:
 		js_file = t->js_file;
 		if (!js_file)
 			js_file = "generated";
+		if (cf != save_cf)
+			debugPrint(4, "running script at a lower frame %s",
+				   js_file);
 		ln = t->js_ln;
 		if (!ln)
 			ln = 1;
@@ -624,110 +693,42 @@ top:
  * and hope the error messages line up. */
 		if (ln > 1)
 			++ln;
+		set_property_object(cf->docobj, "currentScript", t->jv);
 		jsRunScript(cf->winobj, jtxt, js_file, ln);
+		delete_property(cf->docobj, "currentScript");
 		debugPrint(3, "execution complete");
 		nzFree(jtxt);
 
-		if (newlocation && newloc_r)
+		if (newlocation && newloc_r) {
+			cf = save_cf;
 			return;
+		}
 
 /* look for document.write from this script */
 		if (cf->dw) {
 			stringAndString(&cf->dw, &cf->dw_l, "</body>\n");
-			runGeneratedHtml(t, cf->dw, NULL);
+			runGeneratedHtml(t, cf->dw);
 			nzFree(cf->dw);
 			cf->dw = 0;
 			cf->dw_l = 0;
+			run_function_onearg(cf->winobj, "eb$uplift", t->jv);
 		}
-	}
 
-	if (change)
-		goto top;
-
-/* look for an run innerHTML */
-	foreach(ic, inputChangesPending) {
-		struct htmlTag *u, *v;
-		char *h;
-		if (ic->major != 'i' || ic->minor != 'h')
-			continue;
-		ic->major = 'x';
-/* Cut all the children away from t */
-		t = ic->t;
-		for (u = t->firstchild; u; u = v) {
-			v = u->sibling;
-			u->sibling = u->parent = 0;
-			u->deleted = true;
-			u->step = 100;
-		}
-		t->firstchild = NULL;
-		h = strstr(ic->value, "</body>@");
-		if (h) {
-			h += 7;
-			*h++ = 0;
-		} else
-			h = emptyString;
-		runGeneratedHtml(t, ic->value, h);
 		change = true;
 	}
 
 	if (change)
 		goto top;
 
-	foreach(ic, inputChangesPending) {
-		char *v;
-		int side;
-		if (ic->major != 'i' || ic->minor != 't')
-			continue;
-		ic->major = 'x';
-		t = ic->t;
-/* the tag should always be a textarea tag. */
-/* Not sure what to do if it's not. */
-		if (t->action != TAGACT_INPUT || t->itype != INP_TA) {
-			debugPrint(3,
-				   "innerText is applied to tag %d that is not a textarea.",
-				   t->seqno);
-			continue;
-		}
-/* 2 parts: innerText copies over to textarea->value
- * if js has not already done so,
- * and the text replaces what was in the side buffer. */
-		v = ic->value;
-		set_property_string(t->jv, "value", v);
-		side = t->lic;
-		if (side <= 0 || side >= MAXSESSION || side == context)
-			continue;
-		if (sessionList[side].lw == NULL)
-			continue;
-		if (cw->browseMode)
-			i_printf(MSG_BufferUpdated, side);
-		sideBuffer(side, v, -1, 0);
-	}
-
-	foreach(ic, inputChangesPending) {
-		if (ic->major != 'l')
-			continue;
-		ic->major = 'x';
-		javaSetsLinkage(true, ic->minor, ic->t, ic->value);
-	}
-
-	foreach(ic, inputChangesPending) {
-		if (ic->major != 't')
-			continue;
-		ic->major = 'x';
-		javaSetsTimeout(ic->tagno, ic->value, ic->t, ic->minor - '0');
-	}
-
-	freeList(&inputChangesPending);
-
-	if (v = js_reset) {
+	if ((v = js_reset)) {
 		js_reset = 0;
-		if (t = tagFromJavaVar(v))
+		if ((t = tagFromJavaVar(v)))
 			formReset(t);
 	}
 
-	if (v = js_submit) {
+	if ((v = js_submit)) {
 		js_submit = 0;
-		if (t = tagFromJavaVar(v)) {
+		if ((t = tagFromJavaVar(v))) {
 			char *post;
 			bool rc = infPush(t->seqno, &post);
 			if (rc)
@@ -736,6 +737,8 @@ top:
 				showError();
 		}
 	}
+
+	cf = save_cf;
 }				/* runScriptsPending */
 
 void preFormatCheck(int tagno, bool * pretag, bool * slash)
@@ -766,7 +769,6 @@ static bool jsDoorway(void)
 char *htmlParse(char *buf, int remote)
 {
 	char *a, *newbuf;
-	struct htmlTag *t;
 
 	if (tagList)
 		i_printfExit(MSG_HtmlNotreentrant);
@@ -779,8 +781,9 @@ char *htmlParse(char *buf, int remote)
 /* call the tidy parser to build the html nodes */
 	html2nodes(buf, true);
 	nzFree(buf);
+	htmlGenerated = false;
 	htmlNodesIntoTree(0, NULL);
-	prerender(0);
+	prerender(false);
 
 /* if the html doesn't use javascript, then there's
  * no point in generating it.
@@ -792,9 +795,11 @@ char *htmlParse(char *buf, int remote)
 	if (isJSAlive) {
 		decorate(0);
 		set_basehref(cf->hbase);
+		run_function_bool(cf->winobj, "eb$qs$start");
 		runScriptsPending();
 		runOnload();
 		runScriptsPending();
+		rebuildSelectors();
 	}
 
 	a = render(0);
@@ -902,8 +907,10 @@ void infShow(int tagno, const char *search)
 	printf("%s", s);
 	if (t->multiple)
 		i_printf(MSG_Many);
-	if (t->itype >= INP_TEXT && t->itype <= INP_NUMBER && t->lic)
+	if (t->itype == INP_TEXT && t->lic)
 		printf("[%d]", t->lic);
+	if (t->itype_minor != INP_NO_MINOR)
+		printf(" (%s)", inp_others[t->itype_minor]);
 	if (t->itype == INP_TA) {
 		const char *rows = attribVal(t, "rows");
 		const char *cols = attribVal(t, "cols");
@@ -938,7 +945,7 @@ void infShow(int tagno, const char *search)
 		printf("%3d %s\n", cnt, v->textval);
 	}
 	if (!show) {
-		if (!search)
+		if (!*search)
 			i_puts(MSG_NoOptions);
 		else
 			i_printf(MSG_NoOptionsMatch, search);
@@ -970,7 +977,7 @@ This works because undo is disabled in browse mode.
 static void
 updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
 {
-	int ln, idx, n, plen;
+	int ln, n, plen;
 	char *p, *s, *t, *new;
 
 	if (locateTagInBuffer(tagno, &ln, &p, &s, &t)) {
@@ -980,7 +987,7 @@ updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
 		strcpy(new + (s - p), newtext);
 		memcpy(new + strlen(new), t, plen - (t - p));
 		free(cw->map[ln].text);
-		cw->map[ln].text = new;
+		cw->map[ln].text = (pst) new;
 		if (notify)
 			displayLine(ln);
 		return;
@@ -997,6 +1004,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 	const struct htmlTag *form = t->controller;
 	char *display;
 	int itype = t->itype;
+	int itype_minor = t->itype_minor;
 	int newlen = strlen(newtext);
 	int i;
 
@@ -1030,14 +1038,13 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		return false;
 	}
 
-	if (itype >= INP_TEXT && itype <= INP_NUMBER && t->lic
-	    && newlen > t->lic) {
+	if (itype == INP_TEXT && t->lic && newlen > t->lic) {
 		setError(MSG_InputLong, t->lic);
 		return false;
 	}
 
 	if (itype >= INP_RADIO) {
-		if (newtext[0] != '+' && newtext[0] != '-' || newtext[1]) {
+		if ((newtext[0] != '+' && newtext[0] != '-') || newtext[1]) {
 			setError(MSG_InputRadio);
 			return false;
 		}
@@ -1066,7 +1073,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		}
 	}
 
-	if (itype == INP_NUMBER) {
+	if (itype_minor == INP_NUMBER) {
 		if (*newtext && stringIsNum(newtext) < 0) {
 			setError(MSG_NumberExpected);
 			return false;
@@ -1094,17 +1101,12 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		updateFieldInBuffer(tagno, newtext, notify, true);
 	}
 
-	if (itype >= INP_RADIO && tagHandler(t->seqno, "onclick")) {
-		if (!isJSAlive)
-			runningError(MSG_NJNoOnclick);
-		else {
-			jSyncup(false);
-			cf = t->f0;
-			run_function_bool(t->jv, "onclick");
-			jSideEffects();
-			if (js_redirects)
-				return true;
-		}
+	if (itype >= INP_RADIO) {
+// The change has already been made;
+// if onclick returns false, should that have prevented the change??
+		bubble_event(t, "onclick");
+		if (js_redirects)
+			return true;
 	}
 
 	if (itype >= INP_TEXT && itype <= INP_SELECT &&
@@ -1114,7 +1116,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		else {
 			jSyncup(false);
 			cf = t->f0;
-			run_function_bool(t->jv, "onchange");
+			run_event_bool(t->jv, t->info->name, "onchange", 0);
 			jSideEffects();
 			if (js_redirects)
 				return true;
@@ -1159,7 +1161,7 @@ static void resetVar(struct htmlTag *t)
 	} else if (itype != INP_HIDDEN && itype != INP_SELECT)
 		updateFieldInBuffer(t->seqno, w, false, false);
 
-	if (itype >= INP_TEXT && itype <= INP_FILE || itype == INP_TA) {
+	if ((itype >= INP_TEXT && itype <= INP_FILE) || itype == INP_TA) {
 		nzFree(t->value);
 		t->value = cloneString(t->rvalue);
 	}
@@ -1186,6 +1188,8 @@ static void formReset(const struct htmlTag *form)
 	struct htmlTag *t;
 	int i, itype;
 	char *display;
+
+	cf = form->f0;
 
 	rebuildSelectors();
 
@@ -1305,7 +1309,7 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 	postDelimiter(fsep);
 	switch (fsep) {
 	case '&':
-		enc = encodePostData(name);
+		enc = encodePostData(name, NULL);
 		stringAndString(&pfs, &pfs_l, enc);
 		stringAndChar(&pfs, &pfs_l, '=');
 		nzFree(enc);
@@ -1330,7 +1334,7 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 
 	switch (fsep) {
 	case '&':
-		enc = encodePostData(val);
+		enc = encodePostData(val, NULL);
 		stringAndString(&pfs, &pfs_l, enc);
 		nzFree(enc);
 		break;
@@ -1386,7 +1390,7 @@ static bool formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 /* dynamicvalue needs to be freed with nzFree. */
 	const char *value;
 	char fsep = '&';	/* field separator */
-	bool noname = false, rc;
+	bool rc;
 	bool bval;
 
 /* js could rebuild an option list then submit the form. */
@@ -1442,9 +1446,8 @@ static bool formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 			if (!bval)
 				continue;
 			if (!name)
-				noname = true;
-			if (value && !*value)
-				value = 0;
+				if (value && !*value)
+					value = 0;
 			if (itype == INP_CHECKBOX && value == 0)
 				value = "on";
 			goto success;
@@ -1466,8 +1469,6 @@ static bool formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 			int cx = t->lic;
 			char *cxbuf;
 			int cxlen;
-			if (!name)
-				noname = true;
 			if (cx) {
 				if (fsep == '-') {
 					char cxstring[12];
@@ -1625,43 +1626,44 @@ bool infPush(int tagno, char **post_string)
 		return false;
 	}
 
-	if (!form && itype != INP_BUTTON) {
-		setError(MSG_NotInForm);
-		return false;
-	}
-
-	if (t && tagHandler(t->seqno, "onclick")) {
-		if (!isJSAlive)
+	if (t) {
+		if (tagHandler(t->seqno, "onclick") && !isJSAlive)
 			runningError(itype ==
 				     INP_BUTTON ? MSG_NJNoAction :
 				     MSG_NJNoOnclick);
-		else {
-			if (t->jv)
-				run_function_bool(t->jv, "onclick");
-			jSideEffects();
-			if (js_redirects)
-				return true;
-		}
+		bubble_event(t, "onclick");
+		if (js_redirects)
+			return true;
+// At this point onclick has run, be it button or submit or reset
 	}
 
 	if (itype == INP_BUTTON) {
-		if (isJSAlive && t->jv && !handlerPresent(t->jv, "onclick")) {
+		if (isJSAlive && t->jv && !t->onclick) {
 			setError(MSG_ButtonNoJS);
 			return false;
 		}
 		return true;
 	}
+// Now submit or reset
 
 	if (itype == INP_RESET) {
-/* Before we reset, run the onreset code */
+		if (!form) {
+			setError(MSG_NotInForm);
+			return false;
+		}
+// Before we reset, run the onreset code.
+// I read somewhere that onreset and onsubmit only run if you
+// pushed the button - rather like onclick.
+// Thus t, the reset button, must be nonzero.
 		if (t && tagHandler(form->seqno, "onreset")) {
 			if (!isJSAlive)
 				runningError(MSG_NJNoReset);
 			else {
 				rc = true;
 				if (form->jv)
-					rc = run_function_bool(form->jv,
-							       "onreset");
+					rc = run_event_bool(form->jv,
+							    "form", "onreset",
+							    0);
 				jSideEffects();
 				if (!rc)
 					return true;
@@ -1672,15 +1674,20 @@ bool infPush(int tagno, char **post_string)
 		formReset(form);
 		return true;
 	}
-
-	/* Before we submit, run the onsubmit code */
+// now it's submit
+	if (!form && !(t && t->onclick)) {
+		setError(MSG_NotInForm);
+		return false;
+	}
+	// Before we submit, run the onsubmit code
 	if (t && tagHandler(form->seqno, "onsubmit")) {
 		if (!isJSAlive)
 			runningError(MSG_NJNoSubmit);
 		else {
 			rc = true;
 			if (form->jv)
-				rc = run_function_bool(form->jv, "onsubmit");
+				rc = run_event_bool(form->jv, "form",
+						    "onsubmit", 0);
 			jSideEffects();
 			if (!rc)
 				return true;
@@ -1690,35 +1697,35 @@ bool infPush(int tagno, char **post_string)
 	}
 
 	action = form->href;
-/* But we defer to the java variable */
+/* But we defer to the js variable */
 	if (form->jv && isJSAlive) {
 		char *jh = get_property_url(form->jv, true);
 		if (jh && (!action || !stringEqual(jh, action))) {
-/* Tie action to the form tag, to plug a small memory leak */
 			nzFree(form->href);
-			form->href = resolveURL(cf->hbase, jh);
-			action = form->href;
+			action = form->href = jh;
+			jh = NULL;
 		}
 		nzFree(jh);
 	}
-
-/* if no action, or action is "#", the default is the current location */
-	if (!action || stringEqual(action, "#")) {
+// if no action, or action is "#", the default is the current location.
+// And yet, with onclick on the submit button, no action means no action,
+// and I believe the same is true for onsubmit.
+// Just assume javascript has done the submit.
+	if (!action || !*action || stringEqual(action, "#")) {
+		if (t && (t->onclick | form->onsubmit))
+			return true;
 		action = cf->hbase;
 	}
 
-	if (!action) {
-		setError(MSG_FormNoURL);
+	prot = getProtURL(action);
+	if (!prot) {
+		if (t && t->onclick)
+			return true;
+		setError(MSG_FormBadURL);
 		return false;
 	}
 
 	debugPrint(2, "* %s", action);
-
-	prot = getProtURL(action);
-	if (!prot) {
-		setError(MSG_FormBadURL);
-		return false;
-	}
 
 	if (stringEqualCI(prot, "javascript")) {
 		if (!isJSAlive) {
@@ -1824,18 +1831,16 @@ struct htmlTag *tagFromJavaVar(jsobjtype v)
 
 	for (i = 0; i < cw->numTags; ++i) {
 		t = tagList[i];
-		if (t->jv == v)
+		if (t->jv == v && !t->dead)
 			return t;
 	}
 	return 0;
 }				/* tagFromJavaVar */
 
-/* Like the above but create it if you can't find it. */
-struct htmlTag *tagFromJavaVar2(jsobjtype v, const char *tagname)
+// Create a new tag for this pointer, only from document.createElement().
+static struct htmlTag *tagFromJavaVar2(jsobjtype v, const char *tagname)
 {
-	struct htmlTag *t = tagFromJavaVar(v);
-	if (t)
-		return t;
+	struct htmlTag *t;
 	if (!tagname)
 		return 0;
 	t = newTag(tagname);
@@ -1843,7 +1848,7 @@ struct htmlTag *tagFromJavaVar2(jsobjtype v, const char *tagname)
 		debugPrint(3, "cannot create tag node %s", tagname);
 		return 0;
 	}
-	t->jv = v;
+	connectTagObject(t, v);
 /* this node now has a js object, don't decorate it again. */
 	t->step = 2;
 /* and don't render it unless it is linked into the active tree */
@@ -1860,14 +1865,23 @@ void javaSubmitsForm(jsobjtype v, bool reset)
 		js_submit = v;
 }				/* javaSubmitsForm */
 
-bool handlerGoBrowse(const struct htmlTag *t, const char *name)
+bool bubble_event(const struct htmlTag *t, const char *name)
 {
-	if (!isJSAlive)
+	jsobjtype e;		// the event object
+	struct ebFrame *save_cf = cf;
+	bool rc;
+	if (!isJSAlive || !t->jv)
 		return true;
-	if (!t->jv)
-		return true;
-	return run_function_bool(t->jv, name);
-}				/* handlerGoBrowse */
+	e = create_event(t->jv, name);
+	jSyncup(false);
+	rc = run_function_onearg(t->jv, "dispatchEvent", e);
+	jSideEffects();
+	cf = save_cf;
+	if (rc && get_property_bool(e, "prev$default"))
+		rc = false;
+	unlink_event(t->jv);
+	return rc;
+}				/* bubble_event */
 
 /* Javascript errors, we need to see these no matter what. */
 void runningError(int msg, ...)
@@ -1894,17 +1908,36 @@ or a couple of adjacent lines, or a couple of nearby lines.
 So this should do it.
 sameFront counts the lines from the top that are the same.
 We're here because the buffers are different, so sameFront will not equal $.
+Lines after sameFront are different.
 Lines past sameBack1 and same back2 are the same to the bottom in the two buffers.
+To be a bit more sophisticated, front1z and front2z
+become nonzero if just one line was added, updated, or deleted at sameFront.
+they march on beyond this point, as long as lines are the same.
+In the same way, back1z and back2z march backwards
+past a one line anomaly.
 *********************************************************************/
 
 static int sameFront, sameBack1, sameBack2;
+static int front1z, front2z, back1z, back2z;
 static const char *newChunkStart, *newChunkEnd;
+
+// need a reverse strchr to help us out.
+static const char *rstrchr(const char *s, const char *mark)
+{
+	for (--s; s > mark; --s)
+		if (s[-1] == '\n')
+			return s;
+	return (s == mark ? s : NULL);
+}
 
 static void frontBackDiff(const char *b1, const char *b2)
 {
 	const char *f1, *f2, *s1, *s2, *e1, *e2;
+	const char *g1, *g2, *h1, *h2;
 
-	sameFront = 0;
+	sameFront = front1z = front2z = 0;
+	back1z = back2z = 0;
+
 	s1 = b1, s2 = b2;
 	f1 = b1, f2 = b2;
 	while (*s1 == *s2 && *s1) {
@@ -1915,11 +1948,52 @@ static void frontBackDiff(const char *b1, const char *b2)
 		++s1, ++s2;
 	}
 
+	g1 = strchr(f1, '\n');
+	g2 = strchr(f2, '\n');
+	if (g1 && g2) {
+		++g1, ++g2;
+		h1 = strchr(g1, '\n');
+		h2 = strchr(g2, '\n');
+		if (h1 && h2) {
+			++h1, ++h2;
+			if (g1 - f1 == h2 - g2 && !memcmp(f1, g2, g1 - f1)) {
+				e1 = f1, e2 = g2;
+				s1 = g1, s2 = h2;
+				front1z = sameFront + 1;
+				front2z = sameFront + 2;
+			} else if (h1 - g1 == g2 - f2
+				   && !memcmp(g1, f2, h1 - g1)) {
+				e1 = g1, e2 = f2;
+				s1 = h1, s2 = g2;
+				front1z = sameFront + 2;
+				front2z = sameFront + 1;
+			} else if (h1 - g1 == h2 - g2
+				   && !memcmp(g1, g2, h1 - g1)) {
+				e1 = g1, e2 = g2;
+				s1 = h1, s2 = h2;
+				front1z = sameFront + 2;
+				front2z = sameFront + 2;
+			}
+		}
+	}
+
+	if (front1z || front2z) {
+		sameBack1 = front1z - 1, sameBack2 = front2z - 1;
+		while (*s1 == *s2 && *s1) {
+			if (*s1 == '\n')
+				++front1z, ++front2z;
+			++s1, ++s2;
+		}
+		if (!*s1) {
+			front1z = front2z = 0;
+			goto done;
+		}
+	}
+
 	s1 = b1 + strlen(b1);
 	s2 = b2 + strlen(b2);
 	while (s1 > f1 && s2 > f2 && s1[-1] == s2[-1])
 		--s1, --s2;
-
 	if (s1 == f1 && s2[-1] == '\n')
 		goto mark_e;
 	if (s2 == f2 && s1[-1] == '\n')
@@ -1927,10 +2001,9 @@ static void frontBackDiff(const char *b1, const char *b2)
 /* advance both pointers to newline or null */
 	while (*s1 && *s1 != '\n')
 		++s1, ++s2;
-/* these buffers should always end in nl, so the next if should always be true */
+/* these buffers should always end in newline, so the next if should always be true */
 	if (*s1 == '\n')
 		++s1, ++s2;
-
 mark_e:
 	e1 = s1, e2 = s2;
 
@@ -1948,9 +2021,201 @@ mark_e:
 	if (s2 > f2 && s2[-1] != '\n')	// should never happen
 		++sameBack2;
 
+	if (front1z || front2z) {
+// front2z can run past sameBack2 if lines are deleted.
+// This because front2z is computed before sameBack2.
+		while (front1z > sameBack1 || front2z > sameBack2)
+			--front1z, --front2z;
+		if (front1z <= sameFront || front2z <= sameFront)
+			front1z = front2z = 0;
+		goto done;
+	}
+
+	h1 = rstrchr(e1, f1);
+	h2 = rstrchr(e2, f2);
+	if (h1 && h2) {
+		g1 = rstrchr(h1, f1);
+		g2 = rstrchr(h2, f2);
+		if (g1 && g2) {
+			if (e1 - h1 == h2 - g2 && !memcmp(h1, g2, e1 - h1)) {
+				s1 = h1, s2 = g2;
+				back1z = sameBack1, back2z = sameBack2 - 1;
+			} else if (h1 - g1 == e2 - h2
+				   && !memcmp(g1, h2, h1 - g1)) {
+				s1 = g1, s2 = h2;
+				back1z = sameBack1 - 1, back2z = sameBack2;
+			} else if (h1 - g1 == h2 - g2
+				   && !memcmp(g1, g2, h1 - g1)) {
+				s1 = g1, s2 = g2;
+				back1z = sameBack1 - 1, back2z = sameBack2 - 1;
+			}
+		}
+	}
+
+	if (back1z || back2z) {
+		--s1, --s2;
+		while (*s1 == *s2 && s1 >= f1 && s2 >= f2) {
+			if (s1[-1] == '\n' && s2[-1] == '\n')
+				--back1z, --back2z;
+			--s1, --s2;
+		}
+	}
+
+done:
 	newChunkStart = f2;
 	newChunkEnd = e2;
 }				/* frontBackDiff */
+
+// Believe it or not, I have exercised all the pathways in this routine.
+// It's rather mind numbing.
+static bool reportZ(void)
+{
+// low and high operations are ad, update, delete
+	char oplow, ophigh;
+// lines affected in the second group
+	int act1, act2;
+	int d_start, d_end;
+
+	if (!(front1z || front2z || back1z || back2z))
+		return false;
+	debugPrint(4, "front %d back %d,%d front1z %d,%d back1z %d,%d",
+		   sameFront, sameBack1, sameBack2,
+		   front1z, front2z, back1z, back2z);
+
+	if (front1z || front2z) {
+		if (front2z > front1z)
+			oplow = 1;
+		if (front2z == front1z)
+			oplow = 2;
+		if (front2z < front1z)
+			oplow = 3;
+		act1 = sameBack1 - front1z;
+		act2 = sameBack2 - front2z;
+		ophigh = 2;
+		if (!act1)
+			ophigh = 1;
+		if (!act2)
+			ophigh = 3;
+// delete delete is the easy case, but very rare
+		if (oplow == 3 && ophigh == 3) {
+			if (act1 == 1)
+				i_printf(MSG_LineDeleteZ1, sameFront + 1,
+					 sameBack1);
+			else
+				i_printf(MSG_LineDeleteZ2, sameFront + 1,
+					 front1z + 1, sameBack1);
+			goto done;
+		}
+// double add is more common, and also unambiguous.
+// If this algorithm says we added 100 lines, then we added 100 lines.
+		if (oplow == 1 && ophigh == 1) {
+			if (act2 == 1)
+				i_printf(MSG_LineAddZ1, sameFront + 1,
+					 sameBack2);
+			else
+				i_printf(MSG_LineAddZ2, sameFront + 1,
+					 front2z + 1, sameBack2);
+			goto done;
+		}
+		if (oplow == 3) {
+// delete mixed with something else, and I just don't care about the delete.
+			if (ophigh == 1)
+				i_printf(MSG_LineAdd2, front2z + 1, sameBack2);
+			else if (act2 <= 10)
+				i_printf(MSG_LineUpdate3, front2z + 1,
+					 sameBack2);
+			else
+				i_printf(MSG_LineUpdateRange, front2z + 1,
+					 sameBack2);
+			goto done;
+		}
+		if (ophigh == 3) {
+// if the deleted block is big then report it, otherwise ignore it.
+			if (act1 >= 10)
+				i_printf(MSG_LineDelete2, act1, front1z);
+			else if (oplow == 1)
+				i_printf(MSG_LineAdd1, sameFront + 1);
+			else
+				i_printf(MSG_LineUpdate1, sameFront + 1);
+			goto done;
+		}
+// a mix of add and update, call it an update.
+// If the second group is big then switch to range message.
+		if (act2 > 10 && ophigh == 2)
+			i_printf(MSG_LineUpdateRange,
+				 (front2z - sameFront <
+				  10 ? sameFront + 1 : front2z + 1), sameBack2);
+		else if (act2 == 1)
+			i_printf(MSG_LineUpdateZ1, sameFront + 1, sameBack2);
+		else
+			i_printf(MSG_LineUpdateZ2, sameFront + 1, front2z + 1,
+				 sameBack2);
+		goto done;
+	}
+// At this point the single line change comes second,
+// we have to look at back1z and back2z.
+	d_start = sameBack2 - sameBack1;
+	d_end = back2z - back1z;
+	ophigh = 2;
+	if (d_end > d_start)
+		ophigh = 3;
+	if (d_end < d_start)
+		ophigh = 1;
+	act1 = back1z - sameFront - 1;
+	act2 = back2z - sameFront - 1;
+	oplow = 2;
+	if (!act1)
+		oplow = 1;
+	if (!act2)
+		oplow = 3;
+// delete delete is the easy case, but very rare
+	if (oplow == 3 && ophigh == 3) {
+// act1 should never be 1, because then one line was deleted earlier,
+// and we would be in the front1z case.
+		i_printf(MSG_LineDeleteZ3, sameFront + 1, back1z - 1,
+			 sameBack1);
+		goto done;
+	}
+// double add is more common, and also unambiguous.
+// If this algorithm says we added 100 lines, then we added 100 lines.
+	if (oplow == 1 && ophigh == 1) {
+		i_printf(MSG_LineAddZ3, sameFront + 1, back2z - 1, sameBack2);
+		goto done;
+	}
+	if (ophigh == 3) {
+// delete mixed with something else, and I just don't care about the delete.
+		if (oplow == 1)
+			i_printf(MSG_LineAdd2, sameFront + 1, back2z - 1);
+		else if (act2 <= 10)
+			i_printf(MSG_LineUpdate3, sameFront + 1, back2z - 1);
+		else
+			i_printf(MSG_LineUpdateRange, sameFront + 1,
+				 back2z - 1);
+		goto done;
+	}
+	if (oplow == 3) {
+// if the deleted block is big then report it, otherwise ignore it.
+		if (act1 >= 10)
+			i_printf(MSG_LineDelete2, act1, sameFront);
+		else if (ophigh == 1)
+			i_printf(MSG_LineAdd1, sameBack2);
+		else
+			i_printf(MSG_LineUpdate1, sameBack2);
+		goto done;
+	}
+// a mix of add and update, call it an update.
+// If the first group is big then switch to range message.
+	if (act2 > 10 && oplow == 2)
+		i_printf(MSG_LineUpdateRange,
+			 sameFront + 1,
+			 (sameBack2 - back2z < 10 ? sameBack2 : back2z - 1));
+	else
+		i_printf(MSG_LineUpdateZ3, sameFront + 1, back2z - 1,
+			 sameBack2);
+
+done:
+	return true;
+}
 
 static time_t now_sec;
 static int now_ms;
@@ -1962,17 +2227,44 @@ static void currentTime(void)
 	now_ms = tv.tv_usec / 1000;
 }				/* currentTime */
 
+static void silent(int msg, ...)
+{
+}
+
+// Is there an active tag below?
+static bool activeBelow(struct htmlTag *t)
+{
+	bool rc;
+	int action = t->action;
+	if (action == TAGACT_INPUT || action == TAGACT_SELECT ||
+	    action == TAGACT_A || (action == TAGACT_SPAN && t->onclick))
+		return true;
+	t = t->firstchild;
+	while (t) {
+		rc = activeBelow(t);
+		if (rc)
+			return rc;
+		t = t->sibling;
+	}
+	return false;
+}
+
+static int hovcount, invcount, injcount;
+
 /* Rerender the buffer and notify of any lines that have changed */
 void rerender(bool rr_command)
 {
 	char *a, *snap, *newbuf;
 	int j;
-	int markdot;
+	int markdot, wasdot, addtop;
+	bool z;
+	void (*say_fn) (int, ...);
 
 	debugPrint(4, "rerender");
 	cw->mustrender = false;
 	time(&cw->nextrender);
 	cw->nextrender += 20;
+	hovcount = invcount = injcount = 0;
 
 	rebuildSelectors();
 
@@ -1992,6 +2284,27 @@ void rerender(bool rr_command)
 	newbuf = htmlReformat(a);
 	nzFree(a);
 
+	if (rr_command && debugLevel >= 3) {
+		char buf[120];
+		buf[0] = 0;
+		if (hovcount)
+			sprintf(buf, "%d nodes under hover", hovcount);
+		if (invcount) {
+			if (buf[0])
+				strcat(buf, ", ");
+			sprintf(buf + strlen(buf),
+				"%d nodes invisible", invcount);
+		}
+		if (injcount) {
+			if (buf[0])
+				strcat(buf, ", ");
+			sprintf(buf + strlen(buf), "%d nodes injected by css",
+				injcount);
+		}
+		if (buf[0])
+			debugPrint(3, "%s", buf);
+	}
+
 /* the high runner case, most of the time nothing changes,
  * and we can check that efficiently with strcmp */
 	if (stringEqual(newbuf, snap)) {
@@ -2003,16 +2316,23 @@ void rerender(bool rr_command)
 	}
 
 /* mark dot, so it stays in place */
-	cw->labels[MARKDOT] = cw->dot;
+	cw->labels[MARKDOT] = wasdot = cw->dot;
 	frontBackDiff(snap, newbuf);
+	addtop = 0;
 	if (sameBack1 > sameFront)
 		delText(sameFront + 1, sameBack1);
-	if (sameBack2 > sameFront)
+	if (sameBack2 > sameFront) {
 		addTextToBuffer((pst) newChunkStart,
 				newChunkEnd - newChunkStart, sameFront, false);
+		addtop = sameFront + 1;
+	}
 	markdot = cw->labels[MARKDOT];
 	if (markdot)
 		cw->dot = markdot;
+	else if (sameBack1 == sameBack2)
+		cw->dot = wasdot;
+	else if (addtop)
+		cw->dot = addtop;
 	cw->undoable = false;
 
 /*********************************************************************
@@ -2025,37 +2345,51 @@ If the text is the same every time that's fine, but it's new tags each time,
 and new internal numbers each time, and that use to trip this algorithm.
 *********************************************************************/
 
-	removeHiddenNumbers(snap, 0);
-	removeHiddenNumbers(newbuf, 0);
-	if (stringEqual(snap, newbuf))
+	removeHiddenNumbers((pst) snap, 0);
+	removeHiddenNumbers((pst) newbuf, 0);
+	if (stringEqual(snap, newbuf)) {
+		if (rr_command)
+			i_puts(MSG_NoChange);
 		goto done;
+	}
 	frontBackDiff(snap, newbuf);
+//      printf("front %d back %d,%d z %d,%d z %d,%d\n", sameFront, sameBack1, sameBack2, front1z, front2z, back1z, back2z);
+	z = reportZ();
 
+// Even if the change has been reported above,
+// I march on here because it puts dot back where it belongs.
+	say_fn = (z ? silent : i_printf);
 	if (sameBack2 == sameFront) {	/* delete */
 		if (sameBack1 == sameFront + 1)
-			i_printf(MSG_LineDelete1, sameFront);
+			(*say_fn) (MSG_LineDelete1, sameFront);
 		else
-			i_printf(MSG_LineDelete2, sameBack1 - sameFront,
-				 sameFront);
+			(*say_fn) (MSG_LineDelete2, sameBack1 - sameFront,
+				   sameFront);
 	} else if (sameBack1 == sameFront) {
 		if (sameBack2 == sameFront + 1)
-			i_printf(MSG_LineAdd1, sameFront + 1);
+			(*say_fn) (MSG_LineAdd1, sameFront + 1);
 		else {
-			i_printf(MSG_LineAdd2, sameFront + 1, sameBack2);
+			(*say_fn) (MSG_LineAdd2, sameFront + 1, sameBack2);
 /* put dot back to the start of the new block */
 			if (!markdot)
 				cw->dot = sameFront + 1;
 		}
 	} else {
 		if (sameBack1 == sameFront + 1 && sameBack2 == sameFront + 1)
-			i_printf(MSG_LineUpdate1, sameFront + 1);
+			(*say_fn) (MSG_LineUpdate1, sameFront + 1);
 		else if (sameBack2 == sameFront + 1)
-			i_printf(MSG_LineUpdate2, sameBack1 - sameFront,
-				 sameFront + 1);
+			(*say_fn) (MSG_LineUpdate2, sameBack1 - sameFront,
+				   sameFront + 1);
 		else {
-			i_printf(MSG_LineUpdate3, sameFront + 1, sameBack2);
+			if (sameBack2 - sameFront <= 10 ||
+			    sameBack1 - sameFront <= 10)
+				(*say_fn) (MSG_LineUpdate3, sameFront + 1,
+					   sameBack2);
+			else
+				(*say_fn) (MSG_LineUpdateRange, sameFront + 1,
+					   sameBack2);
 /* put dot back to the start of the new block */
-			if (!markdot)
+			if (!markdot && sameBack1 != sameBack2)
 				cw->dot = sameFront + 1;
 		}
 	}
@@ -2070,7 +2404,7 @@ void delTags(int startRange, int endRange)
 {
 	pst p;
 	int j, tagno, action;
-	struct htmlTag *t, *last_td;
+	struct htmlTag *t;
 
 /* no javascript, no cause to ever rerender */
 	if (!cf->jcx)
@@ -2078,11 +2412,10 @@ void delTags(int startRange, int endRange)
 
 	for (j = startRange; j <= endRange; ++j) {
 		p = fetchLine(j, -1);
-		last_td = 0;
 		for (; *p != '\n'; ++p) {
 			if (*p != InternalCodeChar)
 				continue;
-			tagno = strtol(p + 1, (char **)&p, 10);
+			tagno = strtol((char *)p + 1, (char **)&p, 10);
 /* could be 0, but should never be negative */
 			if (tagno <= 0)
 				continue;
@@ -2096,6 +2429,7 @@ void delTags(int startRange, int endRange)
 				t->deleted = true;
 #if 0
 /* this seems to cause more trouble than it's worth */
+			struct htmlTag *last_td = 0;
 			if (action == TAGACT_TD) {
 				printf("td%d\n", tagno);
 				if (last_td)
@@ -2126,13 +2460,19 @@ void runOnload(void)
 	int i, action;
 	int fn;			/* form number */
 	struct htmlTag *t;
+	jsobjtype e;		// onload event
 
 	if (!isJSAlive)
 		return;
 
+	run_event_bool(cf->docobj, "document", "onDOMContentLoaded", 0);
+
+	e = create_event(cf->winobj, "onload");
+	set_property_number(e, "eventPhase", 2);
+
 /* window and document onload */
-	run_function_bool(cf->winobj, "onload");
-	run_function_bool(cf->docobj, "onload");
+	run_event_bool(cf->winobj, "window", "onload", e);
+	run_event_bool(cf->docobj, "document", "onload", e);
 
 	fn = -1;
 	for (i = 0; i < cw->numTags; ++i) {
@@ -2146,12 +2486,12 @@ void runOnload(void)
 			++fn;
 		if (!t->jv)
 			continue;
-		if (action == TAGACT_BODY && t->onload)
-			run_function_bool(t->jv, "onload");
+		if (action == TAGACT_BODY && handlerPresent(t->jv, "onload"))
+			run_event_bool(t->jv, "body", "onload", e);
 		if (action == TAGACT_BODY && t->onunload)
 			unloadHyperlink("document.body.onunload", "Body");
-		if (action == TAGACT_FORM && t->onload)
-			run_function_bool(t->jv, "onload");
+		if (action == TAGACT_FORM && handlerPresent(t->jv, "onload"))
+			run_event_bool(t->jv, "form", "onload", e);
 /* tidy5 says there is no form.onunload */
 		if (action == TAGACT_FORM && t->onunload) {
 			char formfunction[48];
@@ -2160,6 +2500,8 @@ void runOnload(void)
 			unloadHyperlink(formfunction, "Form");
 		}
 	}
+
+	unlink_event(cf->winobj);
 }				/* runOnload */
 
 /*********************************************************************
@@ -2175,6 +2517,8 @@ struct jsTimer {
 	time_t sec;
 	int ms;
 	bool isInterval;
+	bool running;
+	bool deleted;
 	int jump_sec;		/* for interval */
 	int jump_ms;
 	jsobjtype timerObject;
@@ -2185,8 +2529,11 @@ struct listHead timerList = {
 	&timerList, &timerList
 };
 
-static void javaSetsTimeout(int n, const char *jsrc, jsobjtype to,
-			    bool isInterval)
+/* the spec says you can't run a timer less than 10 ms but here we currently use
+ * 600 ms. This really should be a configurable limit */
+int timerResolution = 600;
+
+void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 {
 	struct jsTimer *jt;
 
@@ -2198,8 +2545,19 @@ static void javaSetsTimeout(int n, const char *jsrc, jsobjtype to,
 		foreach(jt, timerList) {
 			if (jt->timerObject == to) {
 				debugPrint(4, "timer delete");
-				delFromList(jt);
-				nzFree(jt);
+// a running timer will naturally delete itself.
+				if (jt->running) {
+					jt->deleted = true;
+				} else {
+					char *gc_name =
+					    get_property_string(jt->timerObject,
+								"backlink");
+					if (gc_name)
+						delete_property(cf->winobj,
+								gc_name);
+					delFromList(jt);
+					nzFree(jt);
+				}
 				return;
 			}
 		}
@@ -2207,23 +2565,14 @@ static void javaSetsTimeout(int n, const char *jsrc, jsobjtype to,
 		return;
 	}
 
-	jt = allocMem(sizeof(struct jsTimer));
+	jt = allocZeroMem(sizeof(struct jsTimer));
 	jt->sec = n / 1000;
 	jt->ms = n % 1000;
 	jt->isInterval = isInterval;
 	if (isInterval) {
-/*********************************************************************
-I'm not willing to churn, firing a timer every few milliseconds.
-Some websites with intervals of 50ms or less take over the edbrowse process,
-wherein stdin can't get a word in edgewise.
-The user is literally locked out.
-This is almost always fast-paced visual effects, which are lost on us.
-Slowing things down should not cause any trouble,
-and it lets me type at the keyboard.
-Hey, the spec says you can't run faster than 10ms; well for us it's 600ms.
-*********************************************************************/
-		if (n < 600)
-			n = 600;
+
+		if (n < timerResolution)
+			n = timerResolution;
 		jt->jump_sec = n / 1000, jt->jump_ms = n % 1000;
 	}
 	currentTime();
@@ -2234,7 +2583,7 @@ Hey, the spec says you can't run faster than 10ms; well for us it's 600ms.
 	jt->timerObject = to;
 	jt->frame = cf;
 	addToListBack(&timerList, jt);
-	debugPrint(4, "timer %d %s\n", n, jsrc);
+	debugPrint(4, "timer %d %s", n, jsrc);
 }				/* javaSetsTimeout */
 
 static struct jsTimer *soonest(void)
@@ -2244,7 +2593,7 @@ static struct jsTimer *soonest(void)
 		return 0;
 	foreach(t, timerList) {
 		if (!best_t || t->sec < best_t->sec ||
-		    t->sec == best_t->sec && t->ms < best_t->ms)
+		    (t->sec == best_t->sec && t->ms < best_t->ms))
 			best_t = t;
 	}
 	return best_t;
@@ -2272,7 +2621,7 @@ bool timerWait(int *delay_sec, int *delay_ms)
 	}
 
 	currentTime();
-	if (now_sec > jt->sec || now_sec == jt->sec && now_ms >= jt->ms)
+	if (now_sec > jt->sec || (now_sec == jt->sec && now_ms >= jt->ms))
 		*delay_sec = *delay_ms = 0;
 	else {
 		*delay_sec = jt->sec - now_sec;
@@ -2304,15 +2653,7 @@ void delTimers(struct ebFrame *f)
 	debugPrint(4, "%d timers deleted", delcount);
 }				/* delTimers */
 
-void delInputChanges(struct ebFrame *f)
-{
-	struct inputChange *ic;
-	foreach(ic, inputChangesPending)
-	    if (ic->f0 == f)
-		ic->major = 'x';
-}				/* delInputChanges */
-
-void runTimers(void)
+void runTimer(void)
 {
 	struct jsTimer *jt;
 	struct ebWindow *save_cw = cw;
@@ -2320,9 +2661,11 @@ void runTimers(void)
 
 	currentTime();
 
-	while (jt = soonest()) {
-		if (jt->sec > now_sec || jt->sec == now_sec && jt->ms > now_ms)
-			break;
+	if ((jt = soonest())
+	    && !(jt->sec > now_sec || (jt->sec == now_sec && jt->ms > now_ms))) {
+
+		if (!gotimers)
+			goto skip_execution;
 
 		cf = jt->frame;
 		cw = cf->owner;
@@ -2341,12 +2684,18 @@ We need to fix this someday, though it is a very rare low runner case.
 			jSyncup(true);
 /* Oops, jSyncup could have changed the frame. */
 		cf = jt->frame;
-		run_function_bool(jt->timerObject, "onclick");
+		jt->running = true;
+		run_function_bool(jt->timerObject, "ontimer");
+		jt->running = false;
+skip_execution:
 
-		if (!jt->isInterval) {
+		if (!jt->isInterval || jt->deleted) {
+			char *gc_name =
+			    get_property_string(jt->timerObject, "backlink");
+			if (gc_name)
+				delete_property(cf->winobj, gc_name);
 			delFromList(jt);
 			nzFree(jt);
-			jt = NULL;
 		} else {
 			jt->sec = now_sec + jt->jump_sec;
 			jt->ms = now_ms + jt->jump_ms;
@@ -2354,16 +2703,16 @@ We need to fix this someday, though it is a very rare low runner case.
 				jt->ms -= 1000, ++jt->sec;
 		}
 
-		jSideEffects();
+		if (gotimers)
+			jSideEffects();
 	}
 
 	cw = save_cw;
 	cf = save_cf;
-}				/* runTimers */
+}				/* runTimer */
 
 void javaOpensWindow(const char *href, const char *name)
 {
-	struct htmlTag *t;
 	char *copy, *r;
 	const char *a;
 	bool replace = false;
@@ -2446,37 +2795,31 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 	jsobjtype *a_j, *b_j;
 	char p_name[MAXTAGNAME], a_name[MAXTAGNAME], b_name[MAXTAGNAME];
 	int action;
-	char *jst;		// java string
+	char *jst;		// javascript string
 
-// Postpone anything other than create until after js is finished,
-// so we can query js variables.
-	if (!after && type != 'c') {
-		struct inputChange *ic;
-		ic = allocMem(sizeof(struct inputChange) + strlen(rest));
-// Yeah I know, this isn't a pointer to htmlTag.
-		ic->t = p_j;
-		ic->tagno = 0;
-		ic->major = 'l';
-		ic->minor = type;
-		ic->f0 = cf;
-		strcpy(ic->value, rest);
-		addToListBack(&inputChangesPending, ic);
+// Some functions in third.js create, link, and then remove nodes, before
+// there is a document. Don't run any side effects in this case.
+	if (!cw->tags)
+		return;
+
+	sscanf(rest, "%s %p,%s %p,%s ", p_name, &a_j, a_name, &b_j, b_name);
+	if (type == 'c') {	/* create */
+		parent = tagFromJavaVar2(p_j, p_name);
+		if (parent)
+			debugPrint(4, "linkage, %s %d created",
+				   p_name, parent->seqno);
 		return;
 	}
 
-	sscanf(rest, "%s %p,%s %p,%s ", p_name, &a_j, a_name, &b_j, b_name);
+	parent = tagFromJavaVar(p_j);
 /* options are relinked by rebuildSelectors, not here. */
 	if (stringEqual(p_name, "option"))
-		return;
-
-	parent = tagFromJavaVar2(p_j, p_name);
-	if (type == 'c')	/* create */
 		return;
 
 	if (stringEqual(a_name, "option"))
 		return;
 
-	add = tagFromJavaVar2(a_j, a_name);
+	add = tagFromJavaVar(a_j);
 	if (!parent || !add)
 		return;
 
@@ -2504,26 +2847,34 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 	}
 
 /* check and see if this link would turn the tree into a circle, whence
- * any subsequent traversal would fall into an infinite loop. */
-	if (add->parent) {	/* already linked in */
+ * any subsequent traversal would fall into an infinite loop.
+ * Child node must not have a parent, and, must not link into itself.
+ * Oddly enough the latter seems to happen on acid3.acidtests.org,
+ * linking body into body, and body at the top has no parent,
+ * so passes the "no parent" test, whereupon I had to add the second test. */
+	if (add->parent || add == parent) {
 		if (debugLevel >= 3) {
-			printf("linkage cycle, cannot link %s %d into %s %d",
-			       a_name, add->seqno, p_name, parent->seqno);
+			debugPrint(3,
+				   "linkage cycle, cannot link %s %d into %s %d",
+				   a_name, add->seqno, p_name, parent->seqno);
 			if (type == 'b') {
-				before = tagFromJavaVar2(b_j, b_name);
-				printf(" before %s %d", b_name,
-				       (before ? before->seqno : -1));
+				before = tagFromJavaVar(b_j);
+				debugPrint(3, "before %s %d", b_name,
+					   (before ? before->seqno : -1));
 			}
-			printf(", as the child already has parent %s %d\n",
-			       add->parent->info->name, add->parent->seqno);
-			printf
-			    ("Aborting the link, some data may not be rendered.\n");
+			if (add->parent)
+				debugPrint(3,
+					   "the child already has parent %s %d",
+					   add->parent->info->name,
+					   add->parent->seqno);
+			debugPrint(3,
+				   "Aborting the link, some data may not be rendered.");
 		}
 		return;
 	}
 
 	if (type == 'b') {	/* insertBefore */
-		before = tagFromJavaVar2(b_j, b_name);
+		before = tagFromJavaVar(b_j);
 		if (!before)
 			return;
 		debugPrint(4, "linkage, %s %d linked into %s %d before %s %d",
@@ -2562,12 +2913,12 @@ ab:
 	add->parent = parent;
 	add->deleted = false;
 
-/* Bad news, we have to replicate some of the prerender logic here. */
-/* This node is attached to the tree, just like an html tag would be. */
 	t = add;
+	debugPrint(4, "fixup %s %d", a_name, t->seqno);
 	action = t->action;
 	t->name = get_property_string(t->jv, "name");
 	t->id = get_property_string(t->jv, "id");
+	t->class = get_property_string(t->jv, "class");
 
 	switch (action) {
 	case TAGACT_INPUT:
@@ -2598,7 +2949,7 @@ ab:
 	case TAGACT_SELECT:
 		t->action = TAGACT_INPUT;
 		t->itype = INP_SELECT;
-		if (has_property(t->jv, "multiple"))
+		if (typeof_property(t->jv, "multiple"))
 			t->multiple = true;
 		formControl(t, true);
 		break;
@@ -2618,6 +2969,7 @@ ab:
 static char *ns;
 static int ns_l;
 static bool invisible, tdfirst;
+static struct htmlTag *inv2, *inv3;	// invisible via css
 static int listnest;		/* count nested lists */
 /* None of these tags nest, so it is reasonable to talk about
  * the current open tag. */
@@ -2685,10 +3037,63 @@ li_hide:
 		goto li_hide;
 	}
 
+	if (inv2) {
+		if (inv2 == t)
+			inv2 = NULL;
+		return;
+	}
+
+	if (inv3 == t) {
+		inv3 = NULL;
+		stringAndString(&ns, &ns_l, "\r}>\r");
+		return;
+	}
+
 	if (!opentag && ti->bits & TAG_NOSLASH)
 		return;
 
-	cf = t->f0;
+// We'll be fetching js attributes for display, so we should set the frame.
+// f0 should always be nonzero.
+	if (t->f0)
+		cf = t->f0;
+
+	if (opentag && t->jv) {
+// what is the visibility now?
+		uchar v_now =
+		    run_function_onearg(cf->winobj, "eb$visible", t->jv);
+// first some stats
+		if (v_now == 1)
+			++invcount;
+		if (v_now == 3)
+			++hovcount;
+		if (v_now == 1) {
+			if (!showHover) {
+				inv2 = t;
+				return;
+			}
+			if (!inv3) {
+				inv3 = t;
+// merge adjacent invisible sections together
+				if (ns_l >= 4
+				    && stringEqual(ns + ns_l - 4, "\r}>\r"))
+					ns_l -= 4;
+				else
+					stringAndString(&ns, &ns_l, "\r<{\r");
+			}
+		}
+		if (!showHover && v_now == 3 && !activeBelow(t)) {
+			inv2 = t;
+			return;
+		}
+		if (action == TAGACT_TEXT && t->jv &&
+		    get_property_bool(t->jv, "inj$css")) {
+			++injcount;
+			if (!showHover) {
+				inv2 = t;
+				return;
+			}
+		}
+	}
 
 	retainTag = true;
 	if (invisible)
@@ -2697,20 +3102,21 @@ li_hide:
 		retainTag = false;
 		invisible = opentag;
 /* special case for noscript with no js */
-		if (stringEqual(ti->name, "noscript") && !cf->jcx)
+		if (action == TAGACT_NOSCRIPT && !cf->jcx)
 			invisible = false;
 	}
 
 	switch (action) {
 	case TAGACT_TEXT:
-		if (!t->textval && t->jv) {
-/* A text node from html should always contain a string. But if this node
- * is created by document.createTextNode(), the string is
- * down in the member "data". */
-			t->textval = get_property_string(t->jv, "data");
-/* Unfortunately this does not reflect subsequent changes to TextNode.data.
- * either we query js every time, on every piece of text,
- * or we include a setter so that TextNode.data assignment has a side effect. */
+		if (t->jv) {
+// defer to the javascript text.
+// either we query js every time, on every piece of text, as we do now,
+// or we include a setter so that TextNode.data assignment has a side effect.
+			char *u = get_property_string(t->jv, "data");
+			if (u) {
+				nzFree(t->textval);
+				t->textval = u;
+			}
 		}
 		if (!t->textval)
 			break;
@@ -2726,10 +3132,33 @@ li_hide:
 		currentA = (opentag ? t : 0);
 		if (!retainTag)
 			break;
+// Javascript might have set or changed this url.
+		if (opentag && t->jv) {
+			char *new_url = get_property_url(t->jv, false);
+			if (new_url && *new_url) {
+				nzFree(t->href);
+				t->href = new_url;
+			}
+		}
+		if (opentag && !t->href) {
+// onclick turns this into a hyperlink.
+			if (tagHandler(tagno, "onclick"))
+				t->href = cloneString("#");
+		}
 		if (t->href) {
-			if (opentag)
+			if (opentag) {
 				sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
-			else
+				if (t->jv
+				    && (a =
+					get_property_string(t->jv, "title"))) {
+					++hovcount;
+					if (showHover) {
+						stringAndString(&ns, &ns_l, a);
+						stringAndChar(&ns, &ns_l, ' ');
+					}
+					cnzFree(a);
+				}
+			} else
 				sprintf(hnum, "%c0}", InternalCodeChar);
 		} else {
 			if (opentag)
@@ -2738,6 +3167,34 @@ li_hide:
 				hnum[0] = 0;
 		}
 		ns_hnum();
+		break;
+
+// check for span onclick and make it look like a link.
+// Maybe we should do more than span, but just span for now.
+	case TAGACT_SPAN:
+// If an onclick function, then turn this into a hyperlink, thus clickable.
+// At least one site adds the onclick function via javascript, not html.
+// But only at the start, so maybe we only need to check on the first render.
+// But maybe some other site adds onclick later. Do we have to check every time?
+// This rerender function is getting more and more js intensive!
+		if (!t->onclick && t->jv && handlerPresent(t->jv, "onclick"))
+			t->onclick = true;
+		if (!t->onclick)
+			goto nop;
+// this span has click, so turn into {text}
+		if (opentag) {
+			sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
+			ns_hnum();
+// If no text then we should be using the title attribute.
+			if (ns[ns_l - 1] == '{') {
+				const char *title = attribVal(t, "title");
+				if (title)
+					stringAndString(&ns, &ns_l, title);
+			}
+		} else {
+			sprintf(hnum, "%c0}", InternalCodeChar);
+			ns_hnum();
+		}
 		break;
 
 	case TAGACT_OL:
@@ -2755,7 +3212,6 @@ li_hide:
 	case TAGACT_OBJECT:
 	case TAGACT_BR:
 	case TAGACT_P:
-	case TAGACT_SPAN:
 	case TAGACT_NOP:
 nop:
 		if (invisible)
@@ -2773,6 +3229,12 @@ nop:
 					c = '\n';
 			}
 			stringAndChar(&ns, &ns_l, c);
+			if (opentag && ti->name[0] == 'h'
+			    && isdigit(ti->name[1])) {
+				strcpy(hnum, ti->name);
+				strcat(hnum, " ");
+				ns_hnum();
+			}
 		}
 /* tags with id= have to be part of the screen, so you can jump to them */
 		if (t->id && opentag && action != TAGACT_LI)
@@ -2800,12 +3262,29 @@ nop:
 		goto nop;
 
 	case TAGACT_INPUT:
-		if (!opentag)
+		if (!retainTag)
 			break;
+		if (!opentag) {
+// button tag opens and closes, like anchor.
+// Check and make sure it's not </select>
+			if (!stringEqual(t->info->name, "button"))
+				break;
+// <button></button> with no text yields "push".
+			while (ns_l && isspace(ns[ns_l - 1]))
+				--ns_l;
+			if (ns_l >= 3 && ns[ns_l - 1] == '<'
+			    && isdigit(ns[ns_l - 2]))
+				stringAndString(&ns, &ns_l,
+						i_getString(MSG_Push));
+			ns_ic();
+			stringAndString(&ns, &ns_l, "0>");
+			break;
+		}
+// value has to be something.
+		if (!t->value)
+			t->value = emptyString;
 		itype = t->itype;
 		if (itype == INP_HIDDEN)
-			break;
-		if (!retainTag)
 			break;
 		liCheck(t);
 		if (itype == INP_TA) {
@@ -2821,6 +3300,9 @@ nop:
 		}
 		sprintf(hnum, "%c%d<", InternalCodeChar, tagno);
 		ns_hnum();
+// button stops here, until </button>
+		if (stringEqual(t->info->name, "button"))
+			break;
 		if (itype < INP_RADIO) {
 			if (t->value[0])
 				stringAndString(&ns, &ns_l, t->value);
@@ -3011,7 +3493,7 @@ unparen:
 		liCheck(t);
 		tagInStream(tagno);
 		if (!currentA) {
-			if (a = attribVal(t, "alt")) {
+			if ((a = attribVal(t, "alt"))) {
 				u = altText(a);
 				a = NULL;
 /* see if js has changed the alt tag */
@@ -3054,11 +3536,14 @@ unparen:
 /* returns an allocated string */
 char *render(int start)
 {
+	struct ebFrame *save_cf = cf;
 	ns = initString(&ns_l);
 	invisible = false;
+	inv2 = inv3 = NULL;
 	listnest = 0;
 	currentForm = currentA = NULL;
 	traverse_callback = renderNode;
 	traverseAll(start);
+	cf = save_cf;
 	return ns;
 }				/* render */

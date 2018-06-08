@@ -21,6 +21,7 @@ nodeFunction traverse_callback;
 /* possible callback functions in this file */
 static void prerenderNode(struct htmlTag *node, bool opentag);
 static void jsNode(struct htmlTag *node, bool opentag);
+static void pushAttributes(const struct htmlTag *t);
 
 static void processStyles(jsobjtype so, const char *stylestring);
 
@@ -50,7 +51,6 @@ void traverseAll(int start)
 	int i;
 
 	treeOverflow = false;
-
 	for (i = start; i < cw->numTags; ++i) {
 		t = tagList[i];
 		t->visited = false;
@@ -58,7 +58,7 @@ void traverseAll(int start)
 
 	for (i = start; i < cw->numTags; ++i) {
 		t = tagList[i];
-		if (!t->parent && !t->slash && t->step < 100)
+		if (!t->parent && !t->slash && !t->dead)
 			traverseNode(t);
 	}
 
@@ -69,7 +69,7 @@ void traverseAll(int start)
 static int nopt;		/* number of options */
 /* None of these tags nest, so it is reasonable to talk about
  * the current open tag. */
-static struct htmlTag *currentForm, *currentSel, *currentOpt;
+static struct htmlTag *currentForm, *currentSel, *currentOpt, *currentStyle;
 static struct htmlTag *currentTitle, *currentScript, *currentTA;
 static struct htmlTag *currentA;
 static char *radioCheck;
@@ -124,15 +124,36 @@ static void makeButton(void)
 
 struct htmlTag *findOpenTag(struct htmlTag *t, int action)
 {
-	while (t = t->parent)
+	int count = 0;
+	while ((t = t->parent)) {
 		if (t->action == action)
 			return t;
+		if (++count == 10000) {	// tree shouldn't be this deep
+			debugPrint(1, "infinite loop in findOpenTag()");
+			break;
+		}
+	}
 	return 0;
 }				/* findOpenTag */
 
+static struct htmlTag *findOpenSection(struct htmlTag *t)
+{
+	int count = 0;
+	while ((t = t->parent)) {
+		if (t->action == TAGACT_TBODY || t->action == TAGACT_THEAD ||
+		    t->action == TAGACT_TFOOT)
+			return t;
+		if (++count == 10000) {	// tree shouldn't be this deep
+			debugPrint(1, "infinite loop in findOpenTag()");
+			break;
+		}
+	}
+	return 0;
+}				/* findOpenSection */
+
 struct htmlTag *findOpenList(struct htmlTag *t)
 {
-	while (t = t->parent)
+	while ((t = t->parent))
 		if (t->action == TAGACT_OL || t->action == TAGACT_UL)
 			return t;
 	return 0;
@@ -194,6 +215,83 @@ static void nestedAnchors(int start)
 }				/* nestedAnchors */
 
 /*********************************************************************
+Tables are suppose to have bodies, I guess.
+So <table><tr> becomes <table><tbody><tr>
+Find each table and look at its children.
+Note the tags between sections, where section is tHead, tBody, or tFoot.
+If that span includes <tr>, then put those tags under a new tBody.
+*********************************************************************/
+
+static void insert_tbody1(struct htmlTag *s1, struct htmlTag *s2,
+			  struct htmlTag *tbl);
+static bool tagBelow(struct htmlTag *t, int action);
+
+static void insert_tbody(int start)
+{
+	int i, end = cw->numTags;
+	struct htmlTag *tbl, *s1, *s2;
+
+	for (i = start; i < end; ++i) {
+		tbl = tagList[i];
+		if (tbl->action != TAGACT_TABLE)
+			continue;
+		s1 = 0;
+		do {
+			s2 = (s1 ? s1->sibling : tbl->firstchild);
+			while (s2 && s2->action != TAGACT_TBODY
+			       && s2->action != TAGACT_THEAD
+			       && s2->action != TAGACT_TFOOT)
+				s2 = s2->sibling;
+			insert_tbody1(s1, s2, tbl);
+			s1 = s2;
+		} while (s1);
+	}
+}
+
+static void insert_tbody1(struct htmlTag *s1, struct htmlTag *s2,
+			  struct htmlTag *tbl)
+{
+	struct htmlTag *s1a = (s1 ? s1->sibling : tbl->firstchild);
+	struct htmlTag *u, *uprev, *ns;	// new section
+
+	if (s1a == s2)		// nothing between
+		return;
+
+// Look for the direct html <table><tr><th>.
+// If th is anywhere else down the path, we won't find it.
+	if (!s1 && s1a->action == TAGACT_TR &&
+	    (u = s1a->firstchild) && stringEqual(u->info->name, "th")) {
+		ns = newTag("thead");
+		tbl->firstchild = ns;
+		ns->parent = tbl;
+		ns->firstchild = s1a;
+		s1a->parent = ns;
+		ns->sibling = s1a->sibling;
+		s1a->sibling = 0;
+		s1 = ns;
+		s1a = s1->sibling;
+	}
+
+	for (u = s1a; u != s2; u = u->sibling)
+		if (tagBelow(u, TAGACT_TR))
+			break;
+	if (u == s2)		// no rows below
+		return;
+
+	ns = newTag("tbody");
+	for (u = s1a; u != s2; u = u->sibling)
+		uprev = u, u->parent = ns;
+	if (s1)
+		s1->sibling = ns;
+	else
+		tbl->firstchild = ns;
+	if (s2)
+		uprev->sibling = 0, ns->sibling = s2;
+	ns->firstchild = s1a;
+	ns->parent = tbl;
+}
+
+/*********************************************************************
 Bad html will derail tidy, so that <a><div>stuff</div></a>
 will push div outside the anchor, to render as  {} stuff
 m.facebook.com is loaded with them.
@@ -222,7 +320,7 @@ innerHTML is wrong, and doesn't match the tree of nodes
 or the original source.
 innerHTML comes to us from tidy, after it has fixed (sometimes broken) things.
 Add <script> to the above, browse, jdb, and look at document.body.innerHTML.
-It does not match the source, in fact it represent the tree *before* we fixed it.
+It does not match the source, in fact it represents the tree *before* we fixed it.
 There really isn't anything I can do about that.
 In so many ways, the better approach is to fix tidy, but sometimes that is out of our hands.
 *********************************************************************/
@@ -314,17 +412,16 @@ void formControl(struct htmlTag *t, bool namecheck)
 	}
 	if (cform)
 		t->controller = cform;
-	else if (itype != INP_BUTTON)
+	else if (itype != INP_BUTTON && itype != INP_SUBMIT && !htmlGenerated)
 		debugPrint(3, "%s is not part of a fill-out form",
 			   t->info->desc);
-	if (namecheck && !myname)
+	if (namecheck && !myname && !htmlGenerated)
 		debugPrint(3, "%s does not have a name", t->info->desc);
 }				/* formControl */
 
-static const char *const inp_types[] = {
+const char *const inp_types[] = {
 	"reset", "button", "image", "submit",
-	"hidden",
-	"text", "password", "number", "file",
+	"hidden", "text", "file",
 	"select", "textarea", "radio", "checkbox",
 	0
 };
@@ -336,10 +433,11 @@ they are equivalent to text. Just here to suppress warnings.
 List taken from https://www.tutorialspoint.com/html/html_input_tag.htm
 *********************************************************************/
 
-static const char *const inp_others[] = {
-	"date", "datetime", "datetime-local",
-	"month", "week", "time",
-	"email", "range", "search", "tel", "url", 0
+const char *const inp_others[] = {
+	"no_minor", "date", "datetime", "datetime-local",
+	"month", "week", "time", "email", "range",
+	"search", "tel", "url", "number", "password",
+	0
 };
 
 /* helper function for input tag */
@@ -349,18 +447,25 @@ void htmlInputHelper(struct htmlTag *t)
 	int len;
 	char *myname = (t->name ? t->name : t->id);
 	const char *s = attribVal(t, "type");
-	if (stringEqual(t->info->name, "button")) {
-		n = INP_BUTTON;
-	} else if (s) {
+	bool isbutton = stringEqual(t->info->name, "button");
+
+	t->itype = (isbutton ? INP_BUTTON : INP_TEXT);
+	if (s) {
 		n = stringInListCI(inp_types, s);
 		if (n < 0) {
 			n = stringInListCI(inp_others, s);
 			if (n < 0)
 				debugPrint(3, "unrecognized input type %s", s);
-			n = INP_TEXT;
-		}
+			else
+				t->itype = INP_TEXT, t->itype_minor = n;
+			if (n == INP_PW)
+				t->masked = true;
+		} else
+			t->itype = n;
 	}
-	t->itype = n;
+// button no type means submit
+	if (!s && isbutton)
+		t->itype = INP_SUBMIT;
 
 	s = attribVal(t, "maxlength");
 	len = 0;
@@ -432,7 +537,7 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 	int j;
 	int action = t->action;
 	const char *a;		/* usually an attribute */
-	struct htmlTag *u;
+	struct htmlTag *cdt;
 
 	debugPrint(6, "prend %c%s %d%s",
 		   (opentag ? ' ' : '/'), t->info->name,
@@ -444,14 +549,20 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 		t->step = 1;
 
 	switch (action) {
+	case TAGACT_NOSCRIPT:
+// If javascript is enabled kill everything under noscript
+		if (allowJS && !opentag)
+			underKill(t);
+		break;
+
 	case TAGACT_TEXT:
 		if (!opentag || !t->textval)
 			break;
 
 		if (currentTitle) {
-			if (!cw->ft) {
-				cw->ft = cloneString(t->textval);
-				spaceCrunch(cw->ft, true, false);
+			if (!cw->htmltitle) {
+				cw->htmltitle = cloneString(t->textval);
+				spaceCrunch(cw->htmltitle, true, false);
 			}
 			t->deleted = true;
 			break;
@@ -460,6 +571,11 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 		if (currentOpt) {
 			currentOpt->textval = cloneString(t->textval);
 			spaceCrunch(currentOpt->textval, true, false);
+			t->deleted = true;
+			break;
+		}
+
+		if (currentStyle) {
 			t->deleted = true;
 			break;
 		}
@@ -534,7 +650,7 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 					debugPrint(3,
 						   "unrecognized enctype, plese use multipart/form-data or application/x-www-form-urlencoded");
 			}
-			if (a = t->href) {
+			if ((a = t->href)) {
 				const char *prot = getProtURL(a);
 				if (prot) {
 					if (stringEqualCI(prot, "mailto"))
@@ -608,6 +724,14 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 		t->textval = emptyString;
 		break;
 
+	case TAGACT_STYLE:
+		if (!opentag) {
+			currentStyle = 0;
+			break;
+		}
+		currentStyle = t;
+		break;
+
 	case TAGACT_SELECT:
 		if (opentag) {
 			currentSel = t;
@@ -633,8 +757,10 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 /* like the other value fields, it can't be null */
 				t->rvalue = t->value = emptyString;
 			}
-			j = sideBuffer(0, t->value, -1, 0);
-			t->lic = j;
+			if (whichproc == 'e') {
+				j = sideBuffer(0, t->value, -1, 0);
+				t->lic = j;
+			}
 			currentTA = 0;
 		}
 		break;
@@ -652,9 +778,19 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 		}
 		break;
 
-	case TAGACT_TR:
+	case TAGACT_TBODY:
+	case TAGACT_THEAD:
+	case TAGACT_TFOOT:
 		if (opentag)
 			t->controller = findOpenTag(t, TAGACT_TABLE);
+		break;
+
+	case TAGACT_TR:
+		if (opentag) {
+			t->controller = findOpenSection(t);
+			if (!t->controller)
+				t->controller = findOpenTag(t, TAGACT_TABLE);
+		}
 		break;
 
 	case TAGACT_TD:
@@ -665,7 +801,7 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 	case TAGACT_SPAN:
 		if (!opentag)
 			break;
-		if (!(a = t->classname))
+		if (!(a = t->class))
 			break;
 		if (stringEqualCI(a, "sup"))
 			action = TAGACT_SUP;
@@ -688,13 +824,11 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 	case TAGACT_FRAME:
 		if (opentag)
 			break;
-/* since this browser supports frames, we don't show the text inside */
-		for (u = t->firstchild; u; u = u->sibling) {
-			u->parent = 0;
-			u->deleted = true;
-			u->step = 100;
-		}
-		t->firstchild = 0;
+// If somebody wrote <frame><p><a></frame>, those tags should be excised,
+		underKill(t);
+		cdt = newTag("document");
+		t->firstchild = cdt;
+		cdt->parent = t;
 		break;
 
 	}			/* switch */
@@ -702,13 +836,15 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 
 void prerender(int start)
 {
-/* some cleanup routines to rearrange the tree, working around some tidy5 bugs. */
+/* some cleanup routines to rearrange the tree */
 	nestedAnchors(start);
 	emptyAnchors(start);
+	insert_tbody(start);
 	tableForm(start);
 
 	currentForm = currentSel = currentOpt = NULL;
 	currentTitle = currentScript = currentTA = NULL;
+	currentStyle = NULL;
 	nzFree(radioCheck);
 	radioCheck = 0;
 	traverse_callback = prerenderNode;
@@ -728,55 +864,13 @@ jsobjtype instantiate_url(jsobjtype parent, const char *name, const char *url)
 	return uo;
 }				/* instantiate_url */
 
-static void handlerSet(jsobjtype ev, const char *name, const char *code)
-{
-	enum ej_proptype hasform = has_property(ev, "form");
-	char *newcode = allocMem(strlen(code) + 60);
-	strcpy(newcode, "with(document) { ");
-	if (hasform)
-		strcat(newcode, "with(this.form) { ");
-	strcat(newcode, code);
-	if (hasform)
-		strcat(newcode, " }");
-	strcat(newcode, " }");
-	set_property_function(ev, name, newcode);
-	nzFree(newcode);
-}				/* handlerSet */
-
-static void set_onhandler(const struct htmlTag *t, const char *name)
-{
-	const char *s;
-	if (t->jv) {
-		s = attribVal(t, name);
-		if (s)
-			handlerSet(t->jv, name, s);
-	}
-}				/* set_onhandler */
-
-static void set_onhandlers(const struct htmlTag *t)
-{
-/* I don't do anything with onkeypress, onfocus, etc,
- * these are just the most common handlers */
-	if (t->onclick)
-		set_onhandler(t, "onclick");
-	if (t->onchange)
-		set_onhandler(t, "onchange");
-	if (t->onsubmit)
-		set_onhandler(t, "onsubmit");
-	if (t->onreset)
-		set_onhandler(t, "onreset");
-	if (t->onload)
-		set_onhandler(t, "onload");
-	if (t->onunload)
-		set_onhandler(t, "onunload");
-}				/* set_onhandlers */
-
 static char fakePropLast[24];
+static jsobjtype fakePropParent;
 static const char *fakePropName(void)
 {
 	static int idx = 0;
 	++idx;
-	sprintf(fakePropLast, "gc$$%d", idx);
+	sprintf(fakePropLast, "gc$%c%d", whichproc, idx);
 	return fakePropLast;
 }				/*fakePropName */
 
@@ -784,6 +878,8 @@ static jsobjtype establish_js_option(jsobjtype obj, int idx)
 {
 	jsobjtype oa;		/* option array */
 	jsobjtype oo;		/* option object */
+	jsobjtype so;		// style object
+	jsobjtype ato;		// attributes object
 	jsobjtype fo;		/* form object */
 
 	if ((oa = get_property_object(obj, "options")) == NULL)
@@ -791,13 +887,17 @@ static jsobjtype establish_js_option(jsobjtype obj, int idx)
 	if ((oo = instantiate_array_element(oa, idx, "Option")) == NULL)
 		return NULL;
 
+	set_property_object(oo, "parentNode", oa);
+
 /* option.form = select.form */
 	fo = get_property_object(obj, "form");
 	if (fo)
 		set_property_object(oo, "form", fo);
 	instantiate_array(oo, "childNodes");
-	instantiate_array(oo, "attributes");
-	instantiate(oo, "style", 0);
+	ato = instantiate(oo, "attributes", "NamedNodeMap");
+	set_property_object(ato, "owner", oo);
+	so = instantiate(oo, "style", "CSSStyleDeclaration");
+	set_property_object(so, "element", oo);
 
 	return oo;
 }				/* establish_js_option */
@@ -806,7 +906,7 @@ static void establish_inner(jsobjtype obj, const char *start, const char *end,
 			    bool isText)
 {
 	const char *s = emptyString;
-	const char *name = (isText ? "innerText" : "innerHTML");
+	const char *name = (isText ? "value" : "innerHTML");
 	if (start) {
 		s = start;
 		if (end)
@@ -815,65 +915,50 @@ static void establish_inner(jsobjtype obj, const char *start, const char *end,
 	set_property_string(obj, name, s);
 	if (start && end)
 		nzFree((char *)s);
+// If this is a textarea, we haven't yet set up the innerHTML
+// getter and seter
+	if (isText)
+		set_property_string(obj, "innerHTML", emptyString);
 }				/* establish_inner */
 
 static void domLink(struct htmlTag *t, const char *classname,	/* instantiate this class */
 		    const char *href, const char *list,	/* next member of this array */
-		    jsobjtype owner, int radiosel)
+		    jsobjtype owner, bool isradio)
 {
-	jsobjtype master;
 	jsobjtype alist = 0;
 	jsobjtype io = 0;	/* input object */
-	unsigned length;
+	int length;
 	bool dupname = false;
 /* some strings from the html tag */
 	const char *symname = t->name;
 	const char *idname = t->id;
 	const char *membername = 0;	/* usually symname */
 	const char *href_url = t->href;
-	const char *htmlclass = t->classname;
+	const char *tcn = t->class;
 	const char *stylestring = attribVal(t, "style");
 	jsobjtype so = 0;	/* obj.style */
+	jsobjtype ato = 0;	/* obj.attributes */
+	char upname[MAXTAGNAME];
 
 	debugPrint(5, "domLink %s.%d name %s",
-		   classname, radiosel, (symname ? symname : emptyString));
+		   classname, isradio, (symname ? symname : emptyString));
 
-	if (symname && has_property(owner, symname)) {
+	if (symname && typeof_property(owner, symname)) {
 /*********************************************************************
 This could be a duplicate name.
 Yes, that really happens.
 Link to the first tag having this name,
-and link the second tag under a fake name, so gc won't throw it away.
+and link the second tag under a fake name so gc won't throw it away.
 Or - it could be a duplicate name because multiple radio buttons
 all share the same name.
-The first time, we create the array,
+The first time we create the array,
 and thereafter we just link under that array.
 Or - and this really does happen -
 an input tag could have the name action, colliding with form.action.
-I have no idea what to do here.
-I will assume the tag displaces the action.
-That means javascript cannot change the action of the form,
-which it rarely does anyways.
-When it refers to form.action, that will be the input tag.
-I'll check for that one first.
-Yeah, it makes my head spin too.
+don't overwrite form.action, or anything else that pre-exists.
 *********************************************************************/
 
-		if (stringEqual(symname, "action")) {
-			jsobjtype ao;	/* action object */
-			ao = get_property_object(owner, symname);
-			if (ao == NULL)
-				return;
-/* actioncrash tells me if we've already had this collision */
-			if (!has_property(ao, "actioncrash")) {
-				delete_property(owner, symname);
-/* advance, as though this were not found */
-				goto afterfound;
-			}
-		}
-
-/* radiosel is 1 for radio buttons and 2 for select */
-		if (radiosel == 1) {
+		if (isradio) {
 /* name present and radio buttons, name should be the array of buttons */
 			io = get_property_object(owner, symname);
 			if (io == NULL)
@@ -884,93 +969,87 @@ Yeah, it makes my head spin too.
 		}
 	}
 
-afterfound:
 /* The input object is nonzero if&only if the input is a radio button,
  * and not the first button in the set, thus it isce the array containing
  * these buttons. */
-
 	if (io == NULL) {
 /*********************************************************************
 Ok, the above condition does not hold.
 We'll be creating a new object under owner, but through what name?
 The name= tag, unless it's a duplicate,
 or id= if there is no name=, or a fake name just to protect it from gc.
+That's how it was for a long time, but I think we only do this on form.
 *********************************************************************/
-
-		if (!symname && idname) {
-/* id= must not displace submit, reset, or action.
- * Example www.startpage.com, where id=submit */
-			if (!stringEqual(idname, "submit") &&
-			    !stringEqual(idname, "reset") &&
-			    !stringEqual(idname, "action"))
+		if (t->action == TAGACT_INPUT && list) {
+			if (!symname && idname)
 				membername = idname;
-		} else if (symname && !dupname) {
-			membername = symname;
+			else if (symname && !dupname)
+				membername = symname;
+/* id= or name= must not displace submit, reset, or action in form.
+ * Example www.startpage.com, where id=submit.
+ * nor should it collide with another attribute, such as document.cookie and
+ * <div ID=cookie> in www.orange.com.
+ * This call checks for the name in the object and its prototype. */
+			if (membername && has_property(owner, membername)) {
+				debugPrint(3, "membername overload %s.%s",
+					   classname, membername);
+				membername = NULL;
+			}
 		}
-		if (!membername)
+		if (!membername) {
 			membername = fakePropName();
+			fakePropParent = owner;
+		}
 
-		if (radiosel) {
-/* The first radio button, or input type=select */
-/* Either way the form element is suppose to be an array. */
+		if (isradio) {	// the first radio button
 			io = instantiate_array(owner, membername);
 			if (io == NULL)
 				return;
-			if (radiosel == 1) {
-				set_property_string(io, "type", "radio");
-				set_property_string(io, "nodeName", "radio");
-			} else {
-/* I've read some docs that say select is itself an array,
- * and then references itself as an array of options.
- * Self referencing? Really? Well it seems to work. */
-				set_property_object(io, "options", io);
-				set_property_object(io, "childNodes", io);
-				set_property_number(io, "selectedIndex", -1);
-			}
+			set_property_string(io, "type", "radio");
 		} else {
 /* A standard input element, just create it. */
+			jsobjtype ca;	// child array
 			io = instantiate(owner, membername, classname);
 			if (io == NULL)
 				return;
-
 /* not an array; needs the childNodes array beneath it for the children */
-			instantiate_array(io, "childNodes");
+			ca = instantiate_array(io, "childNodes");
+// childNodes and options are the same for Select
+			if (stringEqual(classname, "Select"))
+				set_property_object(io, "options", ca);
+		}
 
-/* deal with the 'styles' here */
-/* object will get 'style' regardless of whether there is
+/* deal with the 'styles' here.
+object will get 'style' regardless of whether there is
 anything to put under it, just like it gets childNodes whether
 or not there are any.  After that, there is a conditional step.
 If this node contains style='' of one or more name-value pairs,
-call out to process those and add them to the object */
-			so = instantiate(io, "style", 0);
+call out to process those and add them to the object.
+Don't do any of this if the tag is itself <style>. */
+		if (t->action != TAGACT_STYLE) {
+			so = instantiate(io, "style", "CSSStyleDeclaration");
+			set_property_object(so, "element", io);
 /* now if there are any style pairs to unpack,
  processStyles can rely on obj.style existing */
 			if (stylestring)
 				processStyles(so, stylestring);
+		}
 
 /* Other attributes that are expected by pages, even if they
  * aren't populated at domLink-time */
-			set_property_string(io, "className", "");
-			set_property_string(io, "class", "");
-			set_property_string(io, "nodeValue", "");
-			instantiate_array(io, "attributes");
-			set_property_object(io, "ownerDocument", cf->docobj);
+		if (!tcn)
+			tcn = emptyString;
+		set_property_string(io, "class", tcn);
+		set_property_string(io, "last$class", tcn);
+		set_property_string(io, "nodeValue", "");
+		ato = instantiate(io, "attributes", "NamedNodeMap");
+		set_property_object(ato, "owner", io);
+		set_property_object(io, "ownerDocument", cf->docobj);
 
-/* in the special case of form, also need an array of elements */
-			if (stringEqual(classname, "Form"))
-				instantiate_array(io, "elements");
-		}
-
-		if (membername == symname) {
-/* link to document.all */
-			master = get_property_object(cf->docobj, "all");
-			if (master == NULL)
-				return;
-			set_property_object(master, symname, io);
-
-			if (stringEqual(symname, "action"))
-				set_property_bool(io, "actioncrash", true);
-		}
+// only anchors with href go into links[]
+		if (list && stringEqual(list, "links") &&
+		    !attribPresent(t, "href"))
+			list = 0;
 
 		if (list)
 			alist = get_property_object(owner, list);
@@ -979,14 +1058,18 @@ call out to process those and add them to the object */
 			if (length < 0)
 				return;
 			set_array_element_object(alist, length, io);
-			if (symname && !dupname)
+			if (symname && !dupname
+			    && !has_property(alist, symname))
 				set_property_object(alist, symname, io);
-			if (idname && membername != idname)
+#if 0
+			if (idname && symname != idname
+			    && !has_property(alist, idname))
 				set_property_object(alist, idname, io);
+#endif
 		}		/* list indicated */
 	}
 
-	if (radiosel == 1) {
+	if (isradio) {
 /* drop down to the element within the radio array, and return that element */
 /* w becomes the object associated with this radio button */
 /* io is, by assumption, an array */
@@ -1003,53 +1086,26 @@ call out to process those and add them to the object */
 	if (symname)
 		set_property_string(io, "name", symname);
 
-	if (idname) {
-/* io.id becomes idname, and idMaster.idname becomes io
- * In case of forms, v.id should remain undefined.  So we can have
- * a form field named "id". */
-		if (!stringEqual(classname, "Form"))
-			set_property_string(io, "id", idname);
-		master = get_property_object(cf->docobj, "idMaster");
-		set_property_object(master, idname, io);
-	}
+	if (idname)
+		set_property_string(io, "id", idname);
 
 	if (href && href_url)
-		instantiate_url(io, href, href_url);
+// This use to be instantiate_url, but with the new side effects
+// on Anchor, Image, etc, we can just set the string.
+		set_property_string(io, href, href_url);
 
-	if (stringEqual(classname, "Element")) {
+	if (t->action == TAGACT_INPUT) {
 /* link back to the form that owns the element */
 		set_property_object(io, "form", owner);
 	}
 
-	if (htmlclass) {
-		set_property_string(io, "className", htmlclass);
-		set_property_string(io, "class", htmlclass);
-	}
+	connectTagObject(t, io);
 
-	t->jv = io;
-
-	set_property_string(io, "nodeName", t->info->name);
-/* documentElement is now set in the "Body" case because the 
-"Html" does not appear ever to be encountered */
-
-	if (stringEqual(classname, "Body")) {
-/* here are a few attributes that come in with the body */
-		set_property_object(cf->docobj, "body", io);
-		set_property_number(io, "clientHeight", 768);
-		set_property_number(io, "clientWidth", 1024);
-		set_property_number(io, "offsetHeight", 768);
-		set_property_number(io, "offsetWidth", 1024);
-		set_property_number(io, "scrollHeight", 768);
-		set_property_number(io, "scrollWidth", 1024);
-		set_property_number(io, "scrollTop", 0);
-		set_property_number(io, "scrollLeft", 0);
-		set_property_object(cf->docobj, "documentElement", io);
-	}
-
-	if (stringEqual(classname, "Head")) {
-		set_property_object(cf->docobj, "head", io);
-	}
-
+	strcpy(upname, t->info->name);
+	caseShift(upname, 'u');
+	set_property_string(io, "nodeName", upname);
+	set_property_string(io, "tagName", upname);
+	set_property_number(io, "nodeType", 1);
 }				/* domLink */
 
 static const char defvl[] = "defaultValue";
@@ -1060,22 +1116,19 @@ static void formControlJS(struct htmlTag *t)
 {
 	const char *typedesc;
 	int itype = t->itype;
-	int isradio = itype == INP_RADIO;
-	int isselect = (itype == INP_SELECT) * 2;
-	char *myname = (t->name ? t->name : t->id);
+	bool isradio = (itype == INP_RADIO);
+	bool isselect = (itype == INP_SELECT);
+	const char *whichclass = (isselect ? "Select" : "Element");
 	const struct htmlTag *form = t->controller;
 
 	if (form && form->jv)
-		domLink(t, "Element", 0, "elements", form->jv,
-			isradio | isselect);
+		domLink(t, whichclass, 0, "elements", form->jv, isradio);
 	else
-		domLink(t, "Element", 0, 0, cf->docobj, isradio | isselect);
+		domLink(t, whichclass, 0, 0, cf->docobj, isradio);
 	if (!t->jv)
 		return;
 
-	set_onhandlers(t);
-
-	if (itype <= INP_RADIO) {
+	if (itype <= INP_RADIO && !isselect) {
 		set_property_string(t->jv, "value", t->value);
 		if (itype != INP_FILE) {
 /* No default value on file, for security reasons */
@@ -1099,6 +1152,7 @@ static void optionJS(struct htmlTag *t)
 {
 	struct htmlTag *sel = t->controller;
 	const char *tx = t->textval;
+	const char *cl = t->class;
 
 	if (!sel)
 		return;
@@ -1114,28 +1168,107 @@ static void optionJS(struct htmlTag *t)
 	if (!sel->jv)
 		return;
 
-	t->jv = establish_js_option(sel->jv, t->lic);
+	connectTagObject(t, establish_js_option(sel->jv, t->lic));
 	set_property_string(t->jv, "text", t->textval);
 	set_property_string(t->jv, "value", t->value);
-	set_property_string(t->jv, "nodeName", "option");
+	set_property_string(t->jv, "nodeName", "OPTION");
+	set_property_number(t->jv, "nodeType", 1);
 	set_property_bool(t->jv, "selected", t->checked);
 	set_property_bool(t->jv, defsel, t->checked);
+	if (!cl)
+		cl = emptyString;
+	set_property_string(t->jv, "class", cl);
+	set_property_string(t->jv, "last$class", cl);
 
-	if (t->checked && !sel->multiple) {
+	if (t->checked && !sel->multiple)
 		set_property_number(sel->jv, "selectedIndex", t->lic);
-		set_property_string(sel->jv, "value", t->value);
-	}
 }				/* optionJS */
+
+static void link_css(struct htmlTag *t)
+{
+	struct i_get g;
+	char *b;
+	int blen;
+	const char *a;
+	const char *a1 = attribVal(t, "type");
+	const char *a2 = attribVal(t, "rel");
+	if (a1)
+		set_property_string(t->jv, "type", a1);
+	if (a2)
+		set_property_string(t->jv, "rel", a2);
+	if (!t->href)
+		return;
+	if ((!a1 || !stringEqualCI(a1, "text/css")) &&
+	    (!a2 || !stringEqualCI(a2, "stylesheet")))
+		return;
+// Fetch the css file so we can apply its attributes.
+	a = NULL;
+	if (browseLocal && !isURL(t->href)) {
+		debugPrint(3, "css source %s", t->href);
+		if (!fileIntoMemory(t->href, &b, &blen)) {
+			if (debugLevel >= 1)
+				i_printf(MSG_GetLocalCSS);
+		} else {
+			a = force_utf8(b, blen);
+			if (!a)
+				a = b;
+			else
+				nzFree(b);
+		}
+	} else {
+		debugPrint(3, "css source %s", t->href);
+		memset(&g, 0, sizeof(g));
+		g.thisfile = cf->fileName;
+		g.uriEncoded = true;
+		g.url = t->href;
+		if (httpConnect(&g)) {
+			if (g.code == 200) {
+				a = force_utf8(g.buffer, g.length);
+				if (!a)
+					a = g.buffer;
+				else
+					nzFree(g.buffer);
+// acid3 test[0] says we don't process this file if it's content type is
+// text/html. Should I test for anything outside of text/css?
+// For now I insist it be missing or text/css or text/plain.
+// A similar test is performed in css.c after httpConnect.
+				if (g.content[0]
+				    && !stringEqual(g.content, "text/css")
+				    && !stringEqual(g.content, "text/plain")) {
+					debugPrint(3,
+						   "css suppressed because content type is %s",
+						   g.content);
+					cnzFree(a);
+					a = NULL;
+				}
+			} else {
+				nzFree(g.buffer);
+				if (debugLevel >= 3)
+					i_printf(MSG_GetCSS, g.url, g.code);
+			}
+		} else {
+			if (debugLevel >= 3)
+				i_printf(MSG_GetCSS2);
+		}
+	}
+	if (a)
+		set_property_string(t->jv, "css$data", a);
+	cnzFree(a);
+}				/* link_css */
 
 static jsobjtype innerParent;
 
 static void jsNode(struct htmlTag *t, bool opentag)
 {
-	int itype;		/* input type */
 	const struct tagInfo *ti = t->info;
 	int action = t->action;
 	const struct htmlTag *above;
 	const char *a;
+	bool linked_in;
+
+// run reindex at table close
+	if (action == TAGACT_TABLE && !opentag && t->jv)
+		run_function_onearg(cf->winobj, "rowReindex", t->jv);
 
 /* all the js variables are on the open tag */
 	if (!opentag)
@@ -1154,33 +1287,41 @@ Needless to say that's not good!
 		return;
 
 	debugPrint(6, "decorate %s %d", t->info->name, t->seqno);
+	fakePropLast[0] = 0;
 
 	switch (action) {
-		jsobjtype cd;	/* contentDocument */
-		jsobjtype cdbody;	/* contentDocument.body */
 
 	case TAGACT_TEXT:
-		t->jv = instantiate(cf->docobj, fakePropName(), "TextNode");
+		connectTagObject(t,
+				 instantiate(cf->docobj, fakePropName(),
+					     "TextNode"));
+// nodeName and nodeType set in constructor
 		if (t->jv) {
 			const char *w = t->textval;
 			if (!w)
 				w = emptyString;
 			set_property_string(t->jv, "data", w);
-			set_property_string(t->jv, "nodeName", "text");
-			set_property_number(t->jv, "nodeType", 3);
-/* A text node chould never have children, and does not need childNodes array,
- * but there is improper html out there <text> <stuff>
- * which has to put stuff under the text node, so against this
- * unlikely occurence, I have to create the array. */
-			instantiate_array(t->jv, "childNodes");
+			w = (t->class ? t->class : emptyString);
+			set_property_string(t->jv, "class", w);
+			set_property_string(t->jv, "last$class", w);
 		}
+		break;
+
+	case TAGACT_HTML:
+		domLink(t, "HTML", 0, 0, cf->docobj, 0);
+		cf->htmltag = t;
 		break;
 
 	case TAGACT_META:
 		domLink(t, "Meta", 0, "metas", cf->docobj, 0);
-		a = attribVal(t, "content");
-		set_property_string(t->jv, "content", a);
-		set_property_number(t->jv, "nodeType", 1);
+		break;
+
+	case TAGACT_STYLE:
+		domLink(t, "CSSStyleDeclaration", 0, "styles", cf->docobj, 0);
+		a = attribVal(t, "type");
+		if (!a)
+			a = emptyString;
+		set_property_string(t->jv, "type", a);
 		break;
 
 	case TAGACT_SCRIPT:
@@ -1188,9 +1329,6 @@ Needless to say that's not good!
 		a = attribVal(t, "type");
 		if (a)
 			set_property_string(t->jv, "type", a);
-		a = attribVal(t, "language");
-		if (a)
-			set_property_string(t->jv, "language", a);
 		a = attribVal(t, "src");
 		if (a) {
 			set_property_string(t->jv, "src", a);
@@ -1203,87 +1341,95 @@ Needless to say that's not good!
 		} else {
 			set_property_string(t->jv, "data", "");
 		}
-		set_property_number(t->jv, "nodeType", 1);
 		break;
+
 	case TAGACT_FORM:
 		domLink(t, "Form", "action", "forms", cf->docobj, 0);
-		set_onhandlers(t);
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_INPUT:
 		formControlJS(t);
 		if (t->itype == INP_TA)
 			establish_inner(t->jv, t->value, 0, true);
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_OPTION:
 		optionJS(t);
 // The parent child relationship has already been established,
 // don't break, just return;
-		set_property_number(t->jv, "nodeType", 1);
 		return;
 
 	case TAGACT_A:
-		domLink(t, "Anchor", "href", "anchors", cf->docobj, 0);
-		set_onhandlers(t);
-		set_property_number(t->jv, "nodeType", 1);
+		domLink(t, "Anchor", "href", "links", cf->docobj, 0);
 		break;
 
 	case TAGACT_HEAD:
 		domLink(t, "Head", 0, "heads", cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
+		cf->headtag = t;
 		break;
 
 	case TAGACT_BODY:
 		domLink(t, "Body", 0, "bodies", cf->docobj, 0);
-		set_onhandlers(t);
-		set_property_number(t->jv, "nodeType", 1);
+		cf->bodytag = t;
 		break;
 
 	case TAGACT_OL:
 	case TAGACT_UL:
 	case TAGACT_DL:
 		domLink(t, "Lister", 0, 0, cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_LI:
 		domLink(t, "Listitem", 0, 0, cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_TABLE:
 		domLink(t, "Table", 0, "tables", cf->docobj, 0);
-/* create the array of rows under the table */
-		instantiate_array(t->jv, "rows");
-		set_property_number(t->jv, "nodeType", 1);
+		break;
+
+	case TAGACT_TBODY:
+		if ((above = t->controller) && above->jv)
+			domLink(t, "tBody", 0, "tBodies", above->jv, 0);
+		break;
+
+	case TAGACT_THEAD:
+		if ((above = t->controller) && above->jv) {
+			domLink(t, "tHead", 0, 0, above->jv, 0);
+			set_property_object(above->jv, "tHead", t->jv);
+		}
+		break;
+
+	case TAGACT_TFOOT:
+		if ((above = t->controller) && above->jv) {
+			domLink(t, "tFoot", 0, 0, above->jv, 0);
+			set_property_object(above->jv, "tFoot", t->jv);
+		}
 		break;
 
 	case TAGACT_TR:
-		if ((above = t->controller) && above->jv) {
-			domLink(t, "Trow", 0, "rows", above->jv, 0);
-			instantiate_array(t->jv, "cells");
-		}
-		set_property_number(t->jv, "nodeType", 1);
+		if ((above = t->controller) && above->jv)
+			domLink(t, "tRow", 0, "rows", above->jv, 0);
 		break;
 
 	case TAGACT_TD:
-		if ((above = t->controller) && above->jv) {
+		if ((above = t->controller) && above->jv)
 			domLink(t, "Cell", 0, "cells", above->jv, 0);
-		}
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_DIV:
 		domLink(t, "Div", 0, "divs", cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
+		break;
+
+	case TAGACT_LABEL:
+		domLink(t, "Label", 0, "labels", cf->docobj, 0);
 		break;
 
 	case TAGACT_OBJECT:
 		domLink(t, "HtmlObj", 0, "htmlobjs", cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
+		break;
+
+	case TAGACT_UNKNOWN:
+		domLink(t, "HTMLElement", 0, 0, cf->docobj, 0);
 		break;
 
 	case TAGACT_SPAN:
@@ -1291,69 +1437,156 @@ Needless to say that's not good!
 	case TAGACT_SUP:
 	case TAGACT_OVB:
 		domLink(t, "Span", 0, "spans", cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_AREA:
-		domLink(t, "Area", "href", "areas", cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
+		domLink(t, "Area", "href", "links", cf->docobj, 0);
 		break;
 
 	case TAGACT_FRAME:
+// about:blank means a blank frame with no sourcefile.
+		if (stringEqual(t->href, "about:blank")) {
+			nzFree(t->href);
+			t->href = 0;
+		}
 		domLink(t, "Frame", "src", "frames", cf->winobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
-/* frames have contentDocument below, even though it is not populated
- * with the frame's dom as of this version of edbrowse. */
-		cd = instantiate(t->jv, "contentDocument", "Document");
-		cdbody = instantiate(cd, "body", "Body");
-		instantiate(cdbody, "style", 0);
-		instantiate_url(cd, "location", t->href);
-/* perhaps other stuff that a frame document always needs */
 		break;
 
 	case TAGACT_IMAGE:
 		domLink(t, "Image", "src", "images", cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
 		break;
 
 	case TAGACT_P:
 		domLink(t, "P", 0, "paragraphs", cf->docobj, 0);
-		set_property_number(t->jv, "nodeType", 1);
+		break;
+
+	case TAGACT_HEADER:
+		domLink(t, "Header", 0, "headers", cf->docobj, 0);
+		break;
+
+	case TAGACT_FOOTER:
+		domLink(t, "Footer", 0, "footers", cf->docobj, 0);
 		break;
 
 	case TAGACT_TITLE:
-		if (cw->ft)
-			set_property_string(cf->docobj, "title", cw->ft);
-		set_property_number(t->jv, "nodeType", 1);
+		if (cw->htmltitle)
+			set_property_string(cf->docobj, "title", cw->htmltitle);
+		domLink(t, "Title", 0, 0, cf->docobj, 0);
 		break;
 
+	case TAGACT_LINK:
+		domLink(t, "Link", "href", 0, cf->docobj, 0);
+		link_css(t);
+		break;
+
+	default:
+// Don't know what this tag is, or it's not semantically important,
+// so just call it an html element.
+		domLink(t, "Element", 0, 0, cf->docobj, 0);
+		if (t->action == TAGACT_BASE && t->href)
+			instantiate_url(t->jv, "href", t->href);
+		break;
 	}			/* switch */
 
 	if (!t->jv)
 		return;		/* nothing else to do */
 
 /* js tree mirrors the dom tree. */
-	if (t->parent && t->parent->jv)
-		run_function_onearg(t->parent->jv, "apch1$", t->jv);
+	linked_in = false;
 
-	if (!t->parent) {
-		if (innerParent)
-			run_function_onearg(innerParent, "apch1$", t->jv);
-/* head and body link to document */
-		else if (action == TAGACT_HEAD || action == TAGACT_BODY)
-			run_function_onearg(cf->docobj, "apch1$", t->jv);
+	if (t->parent && t->parent->jv) {
+		run_function_onearg(t->parent->jv, "eb$apch1", t->jv);
+		linked_in = true;
+// special code for frame.contentDocument.
+		if (t->parent->action == TAGACT_FRAME) {
+			set_property_object(t->parent->jv,
+					    "contentDocument", t->jv);
+			set_property_object(t->parent->jv,
+					    "contentWindow", t->jv);
+		}
 	}
 
-/* TextNode linked to document/gc to protect if from garbage collection,
- * but now it is linked to its parent, and even if it isn't,
- * we don't need it hanging around anyways. */
-	if (action == TAGACT_TEXT)
-		delete_property(cf->docobj, fakePropLast);
+	if (action == TAGACT_HTML) {
+		run_function_onearg(cf->docobj, "eb$apch1", t->jv);
+		linked_in = true;
+	}
+
+	if (!t->parent && innerParent) {
+// this is the top of innerHTML or some such.
+// It is never html head or body, as those are skipped.
+		run_function_onearg(innerParent, "eb$apch1", t->jv);
+		linked_in = true;
+	}
+
+	if (linked_in && fakePropLast[0]) {
+// Node linked to document/gc to protect if from garbage collection,
+// but now it is linked to its parent.
+		delete_property(fakePropParent, fakePropLast);
+	}
+
+	if (!linked_in) {
+		debugPrint(1, "tag %s not linked in", ti->name);
+		if (action == TAGACT_TEXT)
+			debugPrint(1, "text %s\n", t->textval);
+	}
 
 /* set innerHTML from the source html, if this tag supports it */
 	if (ti->bits & TAG_INNERHTML)
 		establish_inner(t->jv, t->innerHTML, 0, false);
+
+// If the tag has foo=bar as an attribute, pass this forward to javascript.
+	pushAttributes(t);
 }				/* jsNode */
+
+static void pushAttributes(const struct htmlTag *t)
+{
+	int i;
+	const char **a = t->attributes;
+	const char **v = t->atvals;
+	if (!a)
+		return;
+	for (i = 0; a[i]; ++i) {
+// There are some exceptions, some attributes that we handle individually.
+		static const char *const exclist[] = {
+			"name", "id", "class",
+			"checked", "value", "type", "style",
+			"href", "src", "action",
+			0
+		};
+		static const char *const dotrue[] = {
+			"multiple", "readonly", "disabled", 0
+		};
+		static const char *const handlers[] = {
+			"onload", "onunload", "onclick", "onchange",
+			"onsubmit", "onreset",
+			0
+		};
+		const char *u;
+		if (stringInListCI(exclist, a[i]) >= 0)
+			continue;
+// I surely haven't thought of everything, so check generally.
+// Maybe they wrote <a firstChild=foo>
+// See if the name is in the prototype, and not a handler,
+// as handlers have setters.
+		if (has_property(t->jv, a[i]) && !typeof_property(t->jv, a[i])
+		    && stringInList(handlers, a[i]) < 0) {
+			debugPrint(3, "html attribute overload %s.%s",
+				   t->info->name, a[i]);
+			continue;
+		}
+// Should we drop attribute name to lower case? I don't, for now.
+		u = v[i];
+		if (!u)
+			u = emptyString;
+// There are some, like multiple or readonly, that should be set to true,
+// not the empty string.
+		if (!*u && stringInList(dotrue, a[i]) >= 0) {
+			set_property_bool(t->jv, a[i], true);
+			continue;
+		}
+		set_property_string(t->jv, a[i], u);
+	}
+}				/* pushAttributes */
 
 /* decorate the tree of nodes with js objects */
 void decorate(int start)
@@ -1375,6 +1608,7 @@ static void pushTag(struct htmlTag *t)
 {
 	int a = cw->allocTags;
 	if (cw->numTags == a) {
+		debugPrint(4, "%d tags, %d dead", a, cw->deadTags);
 /* make more room */
 		a = a / 2 * 3;
 		cw->tags =
@@ -1385,11 +1619,64 @@ static void pushTag(struct htmlTag *t)
 	tagCountCheck();
 }				/* pushTag */
 
+static void freeTag(struct htmlTag *t);
+
+// garbage collect the dead tags.
+// You must rerender after this runs, so that the buffer has no dead tags,
+// and the remaining tags have their new numbers embedded in the buffer.
+void tag_gc(void)
+{
+	int cx;			/* edbrowse context */
+	struct ebWindow *w, *save_cw;
+	struct htmlTag *t;
+	int i, j;
+
+	for (cx = 1; cx <= maxSession; ++cx) {
+		for (w = sessionList[cx].lw; w; w = w->prev) {
+			if (!w->tags)
+				continue;
+// Don't bother unless a third of the tags are dead.
+			if (w->deadTags * 3 < w->numTags)
+				continue;
+
+// sync any changed fields before we muck with the tags.
+			save_cw = cw;
+			cw = w;
+			cf = &(cw->f0);
+			jSyncup(true);
+			cw = save_cw;
+			cf = &(cw->f0);
+
+// ok let's crunch.
+			for (i = j = 0; i < w->numTags; ++i) {
+				t = w->tags[i];
+				if (t->dead) {
+					freeTag(t);
+				} else {
+					t->seqno = j;
+					w->tags[j++] = t;
+				}
+			}
+			debugPrint(4, "tag_gc from %d to %d", w->numTags, j);
+			w->numTags = j;
+			w->deadTags = 0;
+
+// We must rerender when we return to this window,
+// or at the input loop if this is the current window.
+// Tags have been renumbered, need to rebuild the text buffer accordingly.
+			w->mustrender = true;
+			if (w != cw)
+				w->nextrender = 0;
+		}
+	}
+}
+
 /* first three have to be in this order */
 const struct tagInfo availableTags[] = {
-	{"html", "html", TAGACT_ZERO},
+	{"html", "html", TAGACT_HTML},
 	{"base", "base reference for relative URLs", TAGACT_BASE, 0, 4},
-	{"object", "an html object", TAGACT_OBJECT, 5, 1},
+	{"unknown0", "an html entity", TAGACT_UNKNOWN, 5, 1},
+	{"object", "an html object", TAGACT_OBJECT, 5, 3},
 	{"a", "an anchor", TAGACT_A, 0, 1},
 	{"input", "an input item", TAGACT_INPUT, 0, 4},
 	{"element", "an input element", TAGACT_INPUT, 0, 4},
@@ -1401,6 +1688,8 @@ const struct tagInfo availableTags[] = {
 	{"sup", "a superscript", TAGACT_SUP, 0, 0},
 	{"ovb", "an overbar", TAGACT_OVB, 0, 0},
 	{"font", "a font", TAGACT_NOP, 0, 0},
+	{"cite", "a citation", TAGACT_NOP, 0, 0},
+	{"tt", "teletype", TAGACT_NOP, 0, 0},
 	{"center", "centered text", TAGACT_P, 2, 5},
 	{"caption", "a caption", TAGACT_NOP, 5, 0},
 	{"head", "the html header information", TAGACT_HEAD, 0, 5},
@@ -1409,14 +1698,19 @@ const struct tagInfo availableTags[] = {
 	{"bgsound", "background music", TAGACT_MUSIC, 0, 4},
 	{"audio", "audio passage", TAGACT_MUSIC, 0, 4},
 	{"meta", "a meta tag", TAGACT_META, 0, 4},
+	{"style", "a style tag", TAGACT_STYLE, 0, 2},
 	{"link", "a link tag", TAGACT_LINK, 0, 4},
 	{"img", "an image", TAGACT_IMAGE, 0, 4},
 	{"image", "an image", TAGACT_IMAGE, 0, 4},
 	{"br", "a line break", TAGACT_BR, 1, 4},
 	{"p", "a paragraph", TAGACT_P, 2, 5},
+	{"header", "a header", TAGACT_HEADER, 2, 5},
+	{"footer", "a footer", TAGACT_FOOTER, 2, 5},
 	{"div", "a divided section", TAGACT_DIV, 5, 1},
 	{"map", "a map of images", TAGACT_NOP, 5, 0},
 	{"blockquote", "a quoted paragraph", TAGACT_NOP, 10, 1},
+	{"document", "a document", TAGACT_DOC, 5, 1},
+	{"comment", "a comment", TAGACT_COMMENT, 0, 2},
 	{"h1", "a level 1 header", TAGACT_NOP, 10, 1},
 	{"h2", "a level 2 header", TAGACT_NOP, 10, 1},
 	{"h3", "a level 3 header", TAGACT_NOP, 10, 1},
@@ -1433,13 +1727,15 @@ const struct tagInfo availableTags[] = {
 	{"dl", "a definition list", TAGACT_DL, 10, 1},
 	{"hr", "a horizontal line", TAGACT_HR, 5, 4},
 	{"form", "a form", TAGACT_FORM, 10, 1},
-	{"button", "a button", TAGACT_INPUT, 0, 4},
+	{"button", "a button", TAGACT_INPUT, 0, 1},
 	{"frame", "a frame", TAGACT_FRAME, 2, 0},
 	{"iframe", "a frame", TAGACT_FRAME, 2, 1},
 	{"map", "an image map", TAGACT_MAP, 2, 4},
 	{"area", "an image map area", TAGACT_AREA, 0, 4},
 	{"table", "a table", TAGACT_TABLE, 10, 1},
 	{"tbody", "a table body", TAGACT_TBODY, 0, 1},
+	{"thead", "a table body", TAGACT_THEAD, 0, 1},
+	{"tfoot", "a table body", TAGACT_TFOOT, 0, 1},
 	{"tr", "a table row", TAGACT_TR, 5, 1},
 	{"td", "a table entry", TAGACT_TD, 0, 5},
 	{"th", "a table heading", TAGACT_TD, 0, 5},
@@ -1452,18 +1748,20 @@ const struct tagInfo availableTags[] = {
 	{"address", "an address block", TAGACT_NOP, 1, 0},
 	{"style", "a style block", TAGACT_NOP, 0, 2},
 	{"script", "a script", TAGACT_SCRIPT, 0, 0},
-	{"noscript", "no script section", TAGACT_NOP, 0, 2},
+	{"noscript", "no script section", TAGACT_NOSCRIPT, 0, 2},
 	{"noframes", "no frames section", TAGACT_NOP, 0, 2},
 	{"embed", "embedded html", TAGACT_MUSIC, 0, 4},
 	{"noembed", "no embed section", TAGACT_NOP, 0, 2},
 	{"em", "emphasized text", TAGACT_JS, 0, 0},
-	{"label", "a label", TAGACT_JS, 0, 0},
+	{"label", "a label", TAGACT_LABEL, 0, 0},
 	{"strike", "emphasized text", TAGACT_JS, 0, 0},
 	{"s", "emphasized text", TAGACT_JS, 0, 0},
 	{"strong", "emphasized text", TAGACT_JS, 0, 0},
 	{"b", "bold text", TAGACT_JS, 0, 0},
 	{"i", "italicized text", TAGACT_JS, 0, 0},
 	{"u", "underlined text", TAGACT_JS, 0, 0},
+	{"var", "variable text", TAGACT_JS, 0, 0},
+	{"kbd", "keyboard text", TAGACT_JS, 0, 0},
 	{"dfn", "definition text", TAGACT_JS, 0, 0},
 	{"q", "quoted text", TAGACT_JS, 0, 0},
 	{"abbr", "an abbreviation", TAGACT_JS, 0, 0},
@@ -1471,6 +1769,41 @@ const struct tagInfo availableTags[] = {
 	{"frameset", "a frame set", TAGACT_JS, 0, 0},
 	{"", NULL, 0}
 };
+
+static void freeTag(struct htmlTag *t)
+{
+	char **a;
+	nzFree(t->textval);
+	nzFree(t->name);
+	nzFree(t->id);
+	nzFree(t->class);
+	nzFree(t->nodeName);
+	nzFree(t->value);
+	cnzFree(t->rvalue);
+	nzFree(t->href);
+	nzFree(t->js_file);
+	nzFree(t->innerHTML);
+
+	a = (char **)t->attributes;
+	if (a) {
+		while (*a) {
+			nzFree(*a);
+			++a;
+		}
+		free(t->attributes);
+	}
+
+	a = (char **)t->atvals;
+	if (a) {
+		while (*a) {
+			nzFree(*a);
+			++a;
+		}
+		free(t->atvals);
+	}
+
+	free(t);
+}
 
 void freeTags(struct ebWindow *w)
 {
@@ -1496,68 +1829,37 @@ void freeTags(struct ebWindow *w)
 
 	e = w->tags;
 	for (i = 0; i < w->numTags; ++i, ++e) {
-		char **a;
 		t = *e;
-		nzFree(t->textval);
-		nzFree(t->name);
-		nzFree(t->id);
-		nzFree(t->value);
-		cnzFree(t->rvalue);
-		nzFree(t->href);
-		nzFree(t->classname);
-		nzFree(t->js_file);
-		nzFree(t->innerHTML);
-
-		a = (char **)t->attributes;
-		if (a) {
-			while (*a) {
-				nzFree(*a);
-				++a;
-			}
-			free(t->attributes);
-		}
-
-		a = (char **)t->atvals;
-		if (a) {
-			while (*a) {
-				nzFree(*a);
-				++a;
-			}
-			free(t->atvals);
-		}
-
-		free(t);
+		disconnectTagObject(t);
+		freeTag(t);
 	}
 
 	free(w->tags);
 	w->tags = 0;
-	w->numTags = w->allocTags = 0;
+	w->numTags = w->allocTags = w->deadTags = 0;
 }				/* freeTags */
 
 struct htmlTag *newTag(const char *name)
 {
 	struct htmlTag *t;
 	const struct tagInfo *ti;
-	int action;
 
 	for (ti = availableTags; ti->name[0]; ++ti)
 		if (stringEqualCI(ti->name, name))
 			break;
 
 	if (!ti->name[0]) {
-		debugPrint(3, "warning, created node %s reverts to generic",
+		debugPrint(4, "warning, created node %s reverts to generic",
 			   name);
 		ti = availableTags + 2;
 	}
 
-	if ((action = ti->action) == TAGACT_ZERO)
-		return 0;
-
 	t = (struct htmlTag *)allocZeroMem(sizeof(struct htmlTag));
+	t->action = ti->action;
 	t->f0 = cf;		/* set current frame */
-	t->action = action;
 	t->info = ti;
 	t->seqno = cw->numTags;
+	t->nodeName = cloneString(name);
 	pushTag(t);
 	return t;
 }				/* newTag */
@@ -1567,6 +1869,7 @@ void initTagArray(void)
 {
 	cw->numTags = 0;
 	cw->allocTags = 512;
+	cw->deadTags = 0;
 	cw->tags =
 	    (struct htmlTag **)allocMem(cw->allocTags *
 					sizeof(struct htmlTag *));
@@ -1606,15 +1909,20 @@ static void intoTree(struct htmlTag *parent)
 	while (tree_pos < cw->numTags) {
 		t = tagList[tree_pos++];
 		if (t->slash) {
-			if (parent)
+			if (parent) {
 				parent->balance = t, t->balance = parent;
+				t->dead = parent->dead;
+				if (t->dead)
+					++cw->deadTags;
+			}
 			debugPrint(4, "}");
 			return;
 		}
 
 		if (treeDisable) {
 			debugPrint(4, "node skip %s", t->info->name);
-			t->step = 100;
+			t->dead = true;
+			++cw->deadTags;
 			intoTree(t);
 			continue;
 		}
@@ -1627,15 +1935,17 @@ static void intoTree(struct htmlTag *parent)
 			action = t->action;
 			if (action == TAGACT_HEAD) {
 				debugPrint(4, "node skip %s", t->info->name);
-				t->step = 100;
+				t->dead = true;
+				++cw->deadTags;
 				treeDisable = true;
 				intoTree(t);
 				treeDisable = false;
 				continue;
 			}
-			if (action == TAGACT_BODY) {
+			if (action == TAGACT_HTML || action == TAGACT_BODY) {
 				debugPrint(4, "node pass %s", t->info->name);
-				t->step = 100;
+				t->dead = true;
+				++cw->deadTags;
 				intoTree(t);
 				continue;
 			}
@@ -1717,7 +2027,7 @@ checkattributes:
 			v = t->atvals[j];
 			if (v && !*v)
 				v = 0;
-			t->classname = cloneString(v);
+			t->class = cloneString(v);
 		}
 		if ((j = stringInListCI(t->attributes, "value")) >= 0) {
 			v = t->atvals[j];
@@ -1726,6 +2036,12 @@ checkattributes:
 			t->value = cloneString(v);
 			t->rvalue = cloneString(v);
 		}
+// Resolve href against the base, but wait a minute, what if it's <p href=blah>
+// and we're not suppose to resolve it? I don't ask about the parent node.
+// Well, in general, I don't carry the href attribute into the js node.
+// I only do it when it is relevant, such as <a> or <area>.
+// See the exceptions in pushAttributes() in this file.
+// I know, it's confusing.
 		if ((j = stringInListCI(t->attributes, "href")) >= 0) {
 			v = t->atvals[j];
 			if (v && !*v)
@@ -1780,18 +2096,80 @@ checkattributes:
 	}
 }				/* intoTree */
 
-/* Parse some html, as generated by innerHTML or document.write.
- * This assumes in_js_cw has been set up properly,
- * with the correct winobj and docobj etc. */
+void underKill(struct htmlTag *t)
+{
+	struct htmlTag *u, *v;
+	for (u = t->firstchild; u; u = v) {
+		v = u->sibling;
+		u->sibling = u->parent = 0;
+		u->deleted = true;
+		if (!u->jv)
+			killTag(u);
+	}
+	t->firstchild = NULL;
+}
+
+void killTag(struct htmlTag *t)
+{
+	struct htmlTag *c, *parent;
+	debugPrint(4, "kill tag %s %d", t->info->name, t->seqno);
+	t->dead = true;
+	++cw->deadTags;
+	if (t->balance) {
+		t->balance->dead = true;
+		++cw->deadTags;
+	}
+	t->deleted = true;
+	t->jv = NULL;
+
+// unlink it from the tree above.
+	parent = t->parent;
+	if (parent) {
+		t->parent = NULL;
+		if (parent->firstchild == t)
+			parent->firstchild = t->sibling;
+		else {
+			c = parent->firstchild;
+			if (c) {
+				for (; c->sibling; c = c->sibling) {
+					if (c->sibling != t)
+						continue;
+					c->sibling = t->sibling;
+					break;
+				}
+			}
+		}
+	}
+
+	underKill(t);
+}
+
+/* Parse some html, as generated by innerHTML or document.write. */
 void html_from_setter(jsobjtype inner, const char *h)
 {
-	initTagArray();
+	struct htmlTag *t = NULL;
+	int l = 0;
+	debugPrint(4, "Generated {%s}", h);
+	t = tagFromJavaVar(inner);
+	if (!t) {
+		debugPrint(1,
+			   "innerHTML finds no tag for %p, cannot parse",
+			   inner);
+		return;
+	}
+	debugPrint(4, "parse under %s %d", t->info->name, t->seqno);
+	l = cw->numTags;
+
+/* Cut all the children away from t */
+	underKill(t);
+
 	html2nodes(h, false);
 	htmlGenerated = true;
-	htmlNodesIntoTree(0, NULL);
+	htmlNodesIntoTree(l, t);
 	prerender(0);
 	innerParent = inner;
 	decorate(0);
+	innerParent = 0;
 }				/* html_from_setter */
 
 static void processStyles(jsobjtype so, const char *stylestring)
@@ -1817,8 +2195,13 @@ static void processStyles(jsobjtype so, const char *stylestring)
 			trimWhite(s);
 			trimWhite(sv);
 // the property name has to be nonempty
-			if (*s)
+			if (*s) {
+				cssAttributeCrunch(s);
 				set_property_string(so, s, sv);
+// Should we set a specification level here, perhaps high,
+// so the css sheets don't overwrite it?
+// sv + "$$scy" = 99999;
+			}
 		}
 	}
 	nzFree(workstring);

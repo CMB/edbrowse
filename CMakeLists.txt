@@ -1,3 +1,4 @@
+# 20170727 - Reviewed warning list...
 # CMakeLists.txt generated 2015/09/20 00:38:06
 # by make2cmake.pl from F:\Projects\edbrowse\makefile
 
@@ -10,7 +11,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMakeModules)
 
 # ### NOTE: from sersguide.htm
 set( eb_MAJOR 3 )
-set( eb_MINOR 6 )
+set( eb_MINOR 7 )
 set( eb_POINT 3 )
 
 # Allow developer to select is Dynamic or static library built
@@ -28,36 +29,30 @@ endif()
 
 if(WIN32)
     if(MSVC)
-        # turn off various warnings
+        # turn off various warnings - reviewed 20170727
         set(WARNING_FLAGS "${WARNING_FLAGS} /wd4996")
         # foreach(warning 4244 4251 4267 4275 4290 4786 4305)
         # C4244: '=' : conversion from 'long' to 'unsigned char', possible loss of data
         # C4090: 'function' : different 'const' qualifiers
         # C4101: 'idx' : unreferenced local variable
-        # C4018: '>' : signed/unsigned mismatch
-        # C4800: 'JSBool' : forcing value to bool
-        # warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-        foreach(warning 4244 4101 4090 4018 4800 4267)
+        # C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+        foreach(warning 4090 4101 4244 4267)
             set(WARNING_FLAGS "${WARNING_FLAGS} /wd${warning}")
         endforeach()
-        set( MSVC_FLAGS "-DNOMINMAX -D_USE_MATH_DEFINES -D_CRT_SECURE_NO_WARNINGS -D_SCL_SECURE_NO_WARNINGS -D__CRT_NONSTDC_NO_WARNINGS" )
-        # tesing MSVC version - horrible kludge
+        set( MSVC_FLAGS "${MSVC_FLAGS} -D_CRT_SECURE_NO_WARNINGS")
+        # testing MSVC version - horrible kludge
         if (${MSVC_VERSION} EQUAL 1900)
             message(STATUS "*** MSVC version equals 1900 - adding HAVE_STRUCT_TIMESPEC")
             set( MSVC_FLAGS "${MSVC_FLAGS} -DHAVE_STRUCT_TIMESPEC")
         endif ()
-        # if (${MSVC_VERSION} EQUAL 1600)
-        #    set( MSVC_LD_FLAGS "/FORCE:MULTIPLE" )
-        # endif (${MSVC_VERSION} EQUAL 1600)
         # distinguish between debug and release libraries
         set( CMAKE_DEBUG_POSTFIX "d" )
     endif(MSVC)
     list(APPEND extra_LIBS ws2_32 Winmm odbc32)
     set( NOMINMAX 1 )
 else()
-    # unix/mac stuff
-    message(STATUS "*** Some of these gcc warnings should be looked at, and FIXED!")
-    set(WARNING_FLAGS "${WARNING_FLAGS} -Wno-char-subscripts -Wno-parentheses -Wno-unused-but-set-variable -Wno-unused-variable -Wno-pointer-sign -Wno-unused-function -Wno-return-type")
+    # unix/mac stuff - reviewed 20170727 - none at this time
+    # set(WARNING_FLAGS "${WARNING_FLAGS} -Wno-unused-but-set-variable -Wno-unused-variable")
 endif()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -124,19 +119,26 @@ else ()
     message(FATAL_ERROR "*** READLINE NOT FOUND")
 endif ()
 
-# MOZJS_FOUND
-# MOZJS_LIBRARY
-# MOZJS_INCLUDE_DIR
-find_package(MOZJS)
-if (MOZJS_FOUND)
-    message( STATUS "*** MOZJS found inc ${MOZJS_INCLUDE_DIR} lib ${MOZJS_LIBRARY}" )
-    include_directories( ${MOZJS_INCLUDE_DIR} )
-    list( APPEND add_LIBS ${MOZJS_LIBRARY} )
+# DUKTAPE_FOUND
+# DUKTAPE_LIBRARY
+# DUKTAPE_INCLUDE_DIR
+find_package(Duktape)
+if (DUKTAPE_FOUND)
+    message( STATUS "*** Duktape found inc ${DUKTAPE_INCLUDE_DIR} lib ${DUKTAPE_LIBRARY}" )
+    include_directories( ${DUKTAPE_INCLUDE_DIR} )
+    list( APPEND add_LIBS ${DUKTAPE_LIBRARY} )
+    # Fragment borrrowed and modified from modules included with cmake:
+    # Explicitly link -lm on most Unices.
+    if(UNIX AND NOT APPLE AND NOT BEOS AND NOT HAIKU)
+        find_library(MATH_LIBRARY m)
+        list( APPEND add_LIBS ${MATH_LIBRARY} )
+    # For Windows and Mac, don't need to explicitly include the math library
+    endif()
 else ()
-    message( FATAL_ERROR "*** MOZJS NOT FOUND, unable to proceed")
+    message( FATAL_ERROR "*** Duktape NOT FOUND, unable to proceed")
 endif ()
 
-if (WIN32 AND MOZJS_FOUND)
+if (WIN32)
     find_package(Threads)
     if(Threads_FOUND)
         list(APPEND add_LIBS winmm.lib ws2_32.lib)
@@ -197,7 +199,7 @@ endif(BUILD_SHARED_LIB)
 #EBOBJS = main.o buffers.o url.o sendmail.o fetchmail.o \
 #	html.o format.o cookies.o stringfile.o messages.o ebjs.o plugin.o
 #  Header file dependencies.
-#$(EBOBJS) : eb.h ebprot.h messages.h ebjs.h
+#$(EBOBJS) : eb.h ebprot.h messages.h
 
 # see tools/build*.pl scripts
 file(GLOB LANG_EBRC_FILES "lang/ebrc-*")
@@ -215,10 +217,10 @@ find_program(PERL perl)
 if (PERL)
     add_custom_command(
         OUTPUT ${GEN_SOURCES}
-        COMMAND perl -f tools/buildsourcestring.pl src/startwindow.js startWindowJS src/startwindow.c
+        COMMAND perl -f tools/buildsourcestring.pl src/startwindow.js startWindowJS src/third.js thirdJS src/startwindow.c
         COMMAND perl -f tools/buildebrcstring.pl
         COMMAND perl -f tools/buildmsgstrings.pl
-        DEPENDS ${LANG_EBRC_FILES} ${LANG_MSG_FILES} src/startwindow.js
+        DEPENDS ${LANG_EBRC_FILES} ${LANG_MSG_FILES} src/startwindow.js src/third.js
             tools/buildsourcestring.pl
             tools/buildebrcstring.pl
             tools/buildmsgstrings.pl
@@ -228,6 +230,36 @@ if (PERL)
     message(STATUS "*** Setup build of ebrc.c, msg-strings.c, and startwindow.c")
 else ()
     message(FATAL_ERROR, "Error: Can NOT locate 'perl'???")
+endif ()
+
+###########################################################
+### 20180415 - Add man page gen, and install - also doc/usersguide.html
+if (UNIX)
+    FILE (GLOB UnixManFile "doc/man-edbrowse-debian.1")
+    set (UnixManDir "/usr/share/man/man1")
+    set (UnixDocDir "/usr/share/doc/edbrowse")
+    if (${CMAKE_SYSTEM_NAME} STREQUAL  "FreeBSD")
+	FILE (GLOB UnixManFile "doc/man-edbrowse-freebsd.1")
+        set (UnixManDir "/usr/local/man/man1")
+        set (UnixDocDir "/usr/local/share/doc/edbrowse")
+    endif()
+    # copy to build dir
+    configure_file( ${UnixManFile} ${CMAKE_BINARY_DIR}/edbrowse.1 )
+    # find 'gzip' - warn if not...
+    find_program(GZIP_EXE gzip PATHS /bin )
+    if (GZIP_EXE)
+        # gzip it in place
+        execute_process(COMMAND ${GZIP_EXE} -f "edbrowse.1"
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            INPUT_FILE edbrowse.1
+            OUTPUT_FILE edbrowse.1.gz )
+        # install it
+	install(FILES ${CMAKE_BINARY_DIR}/edbrowse.1.gz DESTINATION ${UnixManDir})
+    else ()
+        message(WARNING "Unable to locate 'gzip'! No man page...")
+    endif ()
+    # install user guide
+    install(FILES doc/usersguide.html doc/usersguide_fr.html doc/sample.ebrc doc/sample_fr.ebrc doc/sample_it.ebrc DESTINATION ${UnixDocDir})
 endif ()
 
 ###########################################################
@@ -274,13 +306,14 @@ set(${name}_SRCS
     ${dir}/decorate.c
     ${dir}/http.c
     ${dir}/auth.c
+    ${dir}/css.c
 	${dir}/html.c
     ${dir}/format.c
     ${dir}/cookies.c
     ${dir}/cache.c
     ${dir}/ebjs.c
     ${dir}/plugin.c
-    ${dir}/jseng-moz.cpp
+    ${dir}/jseng-duk.c
     ${ODBC_SRCS}
     ${GEN_SOURCES}
     )
@@ -288,7 +321,6 @@ set(${name}_HDRS
     ${dir}/eb.h
     ${dir}/ebprot.h
     ${dir}/messages.h
-    ${dir}/ebjs.h
     )
 if (MSVC)
     list(APPEND ${name}_SRCS win32/vsprtf.c win32/dirent.c)

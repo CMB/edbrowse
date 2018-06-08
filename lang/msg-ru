@@ -2,10 +2,10 @@
 EOF - конец файла
 нет файла
 перенаправлить
-глобальные подстановки
 локальные подстановки
-нечувствительность к регистру
+глобальные подстановки
 чувствительность к регистру
+нечувствительность к регистру
 каталоги только для читания
 каталоги с возможностью записи
 каталоги с возможностью записи и удаления
@@ -24,11 +24,11 @@ JavaScript включён
 потверждать соединиения SSL
 не показывать скрытых файлов в режиме каталога
 показывать скрытые файлы в режиме каталога
-Не возможно создать потомного процесса для edbrowse-js, JavaScript выключён
-Не возможно исполнить edbrowse-js, JavaScript выключён
+0
+0
 конечные маркеры выключёны
-конечные маркеры на перечисленых строках
 конечные маркеры включёны
+no from line
 JavaScript выключён, ничего не сделано
 JavaScript выключён, иду прямо на URL
 перенаправление прервано пользователем
@@ -45,7 +45,7 @@ JavaScript выключён, иду прямо на URL
 сессия %d\n
 Связь SendMail. Пиши ваше сообщение, набири sm чтобы послать, потом ^ чтобы возвратить.
 строка %d актуализирована\n
-h\tотпечатывать это сообщение.\nq\tвыходить из программы.\ns\tвыключить чтение с этого каталога.\nn\tпродолжать к следующему сообщению.\nd\tудалить это сообщение.\nm\tпередвинуть сообщение в другой каталог.\nпробел\tчитать и управлять этим сообщением.\n/\tискать слов в теме, в поле \"От\" или теле сообщения.\nl\tставить лимит imap fetch.
+h\tотпечатывать это сообщение\nq\tвыходить из программы\ns\tвыключить чтение с этого каталога\nn\tпродолжать к следующему сообщению\nd\tудалить это сообщение\nm\tпередвинуть сообщение в другой каталог\nпробел\tчитать и управлять этим сообщением\n/\tискать слов в теме, в поле \"От\" или теле сообщения\nl\tставить лимит imap fetch
 s строка, сообщения содержающие строку в теме\nf строка, сообщения содержающие строку в поле \"От\"\nb строка, сообщения содержающие строку в теле\nесли нет буквы, тема по умолчанию.
 нет сообщений
 прерывание, набири qt чтобы полностью выйти
@@ -60,7 +60,7 @@ edbrowse готов
 Имя пользователя слишком долгое, лимит %d букв
 Пароль: 
 Пароль слишком долгий, лимит %d букв
-Общение с edbrowse-js невозможное, JavaScript выключён
+%s
 Внимание, каталог недоступен - список будет пустой
 Катастрофа, сообщение об ошибке слишком долгое: %d\n
 строка %d: 
@@ -96,9 +96,9 @@ edbrowse готов
 не можно записывать в файл %s, приложение отброшено\n
 нет почты
 %d сообщений\n
-межпроцессные сообщения JavaScript несинхронизированные.
+cannot open config file %s\n
  от 
-?\tвыписать эту сообщение о помощи.\nq\tвыходить из программы.\nspace\tчитать это сообщение далее.\nn\tперейди на следующее сообщение.\nd\tудалить это сообщение.\nw\tзаписать это сообщение в файл и удалить его.\nu\tзаписать это сообщение неформатированно в файл и удалить его.
+?\tвыписать эту сообщение о помощи\nq\tвыходить из программы\nspace\tчитать это сообщение далее\nn\tперейди на следующее сообщение\nd\tудалить это сообщение\nw\tзаписать это сообщение в файл и удалить его\nu\tзаписать это сообщение неформатированно в файл и удалить его
 не можно создать файла %s\n
 не можно записывать в файл %s\n
 сохранено сообщение, %d байтов
@@ -158,8 +158,8 @@ edbrowse готов
 ни одна из помеченных строк успешно модифицирована
 операция прервана
 нет соответствия
-объекты JavaScript отсутствующие или неправильно установленые %d\n
-агент номер %c не определен
+This gopher directory listing is empty.
+агент номер %d не определен
 не можно выписать нового каталога
 не можно создать текущего каталога
 каталог несостоятельный
@@ -437,6 +437,15 @@ $%s не определен
 0
 0
 0
+lines %d and %d have been added\n
+lines %d and %d through %d have been added\n
+lines %d through %d and %d have been added\n
+lines %d and %d have been updated\n
+lines %d and %d through %d have been updated\n
+lines %d through %d and %d have been updated\n
+lines %d and %d have been deleted\n
+lines %d and %d through %d have been deleted\n
+lines %d through %d and %d have been deleted\n
 0
 0
 0
@@ -513,7 +522,7 @@ JavaScript выключен, пропускаем код onsubmit
 .ebrc: cannot create cookie jar %s
 .ebrc: too many no js directives, limit %d
 .ebrc: line %d, domain %s does not contain a dot
-0
+cannot access %s, (secure)
 .ebrc: SSL certificate file %s is not a regular file
 .ebrc: SSL certificate file %s does not exist or is not readable.
 .ebrc: line %d, keyword %s is not yet implemented
@@ -547,7 +556,7 @@ home directory not defined by $HOME.
 %s is not a directory
 no mail accounts specified, please check your .ebrc config file
 invalid account number, please use 1 through %d
-edbrowse  -v    (show version)\nedbrowse -h (this message)\nedbrowse -c (edit config file)\nedbrowse [-e] [-d#] -f[#] (fetch mail) \nedbrowse  [-e] [-d#] -[p]m    (read pending mail)\nedbrowse  [-e] [-d#] -[p]fm[#]    (fetch mail and read pending mail)\nedbrowse  [-e] [-d#] -m[#] address1 address2 ... file [+attachments]\nedbrowse  [-e] [-d#] file1 file2 ...
+edbrowse -v    (show version)\nedbrowse -h (this message)\nedbrowse -c (edit config file)\nedbrowse [-d#] -f[#] (fetch mail) \nedbrowse  [-d#] -[p]m    (read pending mail)\nedbrowse  [-d#] -[p]fm[#]    (fetch mail and read pending mail)\nedbrowse  [-d#] -m[#] address1 address2 ... file [+attachments]\nedbrowse  [-c configfile] [-e] [-b] [-d#] file1 file2 ...
 please specify at least one recipient and the file to send
 please specify at least one recipient and the file to send, before your attachments
 too many files open simultaneously, limit %d
@@ -579,11 +588,11 @@ htmlParse() is not reentrant.
 unexpected input type in submitForm()
 list = 0 in tagFromJavaVar()
 0
-Could not allocate memory for javascript operations.
-Unable to create javascript context.
-Unable to create javascript window object.
 0
-Unable to create document object for javascript.
+Unable to create javascript context.
+0
+0
+0
 0
 0
 error allocating %zu bytes
@@ -642,7 +651,7 @@ table
 sql statement is not terminated by a final semicolon, or a right bracket on the following line
 update or delete statement with no where clause
 remote access denied
-Authorization required to access %s
+Authorization required to access %s (%s)
 operation failed because memory could not be allocated
 Your version of libcurl is older than version %u.%u.%u.\nYou must upgrade libcurl in order to use edbrowse.
 operation timed out
@@ -655,6 +664,6 @@ SSL connect error in libcurl: %s
 input tty
 input readline()
 0
-Unrecoverable JavaScript error in this session, javascript is closed.
+0
 Command execution failed, system() returned %d
 0

@@ -104,8 +104,8 @@ static void traverseTidy(void)
 static Bool TIDY_CALL tidyErrorHandler(TidyDoc tdoc, TidyReportLevel lvl,
 				       uint line, uint col, ctmbstr mssg)
 {
-	if (debugLevel >= 3)
-		debugPrint(3, "line %d column %d: %s", line, col, mssg);
+	if (debugLevel >= 4 && lvl != TidyInfo)
+		debugPrint(4, "%s", mssg);
 	return no;
 }				/* tidyErrorHandler */
 
@@ -125,6 +125,7 @@ void html2nodes(const char *htmltext, bool startpage)
 	tidyOptSetBool(tdoc, TidyEscapeScripts, no);
 	tidyOptSetBool(tdoc, TidyDropEmptyElems, no);
 	tidyOptSetBool(tdoc, TidyDropEmptyParas, no);
+	tidyOptSetBool(tdoc, TidyLiteralAttribs, yes);
 
 	tidySetCharEncoding(tdoc, (cons_utf8 ? "utf8" : "latin1"));
 
@@ -266,7 +267,7 @@ static void convertNode(TidyNode node, int level, bool opentag)
 
 	switch (tidyNodeGetType(node)) {
 	case TidyNode_Text:
-		name = "Text";
+		name = "text";
 		break;
 	case TidyNode_Start:
 	case TidyNode_End:
@@ -297,7 +298,7 @@ static void convertNode(TidyNode node, int level, bool opentag)
 		tidyBufClear(&tnv);
 		tidyNodeGetValue(tdoc, node, &tnv);
 		if (tnv.size) {
-			t->textval = cloneString(tnv.bp);
+			t->textval = cloneString((char *)tnv.bp);
 			tidyBufFree(&tnv);
 		}
 	}
@@ -316,6 +317,9 @@ static void convertNode(TidyNode node, int level, bool opentag)
 	while (tattr != NULL) {
 		t->attributes[i] = cloneString(tidyAttrName(tattr));
 		t->atvals[i] = cloneString(tidyAttrValue(tattr));
+		if (t->atvals[i] == NULL) {
+			t->atvals[i] = emptyString;
+		}
 		++i;
 		tattr = tidyAttrNext(tattr);
 	}
@@ -332,7 +336,7 @@ static void convertNode(TidyNode node, int level, bool opentag)
 /* But it's not the original html, it has been sanitized.
  * Warning! Memory consumed could, theoretically,
  * grow as the size of the document squared. */
-			t->innerHTML = cloneString(tnv.bp);
+			t->innerHTML = cloneString((char *)tnv.bp);
 			tagStrip(t->innerHTML);
 			tidyBufFree(&tnv);
 		}

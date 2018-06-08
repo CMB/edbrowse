@@ -1,8 +1,8 @@
-# .ebrc: Beispielkonfiguration für Edbrowse (version 3.5.4 oder höher)
+# .ebrc: Beispielkonfiguration für Edbrowse 3.7.3
 
-# Emailzugang, ggf. mehrere; beispielhaft ein Gmail-Konto (die Meisten haben
-# einen solchen heute)
-# Folgender Aufruf für Pop3-Zugang mit dem Gmail-Konto
+# Email-Konto, ggf. haben Sie mehrere
+# Ein Gmail-Konto haben, welche die meisten heutzutage haben.
+# Dies ist Pop3-Zugang, um Ihre Emails abzuholen.
 # edbrowse -fm1
 mail {
 inserver = pop.gmail.com
@@ -10,14 +10,14 @@ outserver = smtp.gmail.com
 secure
 login = edbrowse
 password = rhinoceros
-from = Herr Fuchs
+from = Donald Duck
 reply = edbrowse@gmail.com
 }
 
-# Imap-Zugang für ein Gmail-Konto
-# Wenn dies das zweite Konto in dieser Datei bleibt, ruf man Imap mit
+# Imap-Zugang für Ihr Gmail-Konto
+# Wenn dies das zweite Email-Konto in dieser Datei bleibt, dann erhalten sie
+# Imap durch
 # edbrowse -f2
-# auf.
 mail {
 imap
 inserver = imap.gmail.com
@@ -25,32 +25,37 @@ outserver = smtp.gmail.com
 secure
 login = edbrowse
 password = rhinoceros
-from = Frau Elster
+from = Donald Duck
 reply = edbrowse@gmail.com
 }
 
-# Füge Adressbuch hinzu
-#adbook=/home/meinkonto/ausserhalb/adbook
+# Füge Adressbuch hinzu.
+#adbook=/home/mylogin/outside/adbook
 
-# Posteingang; sollte ein absoluter Pfad sein.
-#maildir = /home/meinkonto/mbox
+# Posteingang, sollte ein absoluter Pfad sein.
+#maildir = /home/mylogin/mbox
 
-# Folgendes Verzeichnis für Downloads, sollte ein absoluter Pfad sein
-# downdir = /home/meinkonto/downloads
+# Heruntergeladene Dateien landen hier, sollte ein absoluter Pfad sein.
+# downdir = /home/mylogin/downloads
+# Wenn nicht angegeben, werden Dateien dort abgelegen, wo Sie sich gerade
+# befinden.
 
-# Der Cookie-Speicher (jar) in dem die HTTP-Cookies abgelegt werden.
-#jar = /home/meinkonto/ausserhalb/cookies
+# Der Cookie-Jar, in dem die Cookies gespeichert werden.
+#jar = /home/mylogin/outside/cookies
 
-# Datei mit SSL-Zertifikaten
-# certfile = /etc/ssl/cert.pem
-# certfile = /etc/pki/tls/cert.pem
+# Verzeichnis mit dem Zwischenspeicher von Edbrowse und dessen Größe.
+# cachedir = /b3/ebcache
+# cachesize = 200
 
-# warte 30 Sekunden auf Antworten vom Webserver
+# Maximale Zeilenlänge für das Anzeigen, innerhalb dessen beliebige Länge.
+linelength = 700
+
+# Warte 30 Sekunden auf Antwort von Webserver.
 webtimer = 30
-# warte 3 Minuten auf Antworten vom Mailserver
+# Warte 30 Minuten auf Antwort von Email-Server.
 mailtimer = 180
 
-# Leite Post abhängig vom Sender oder vom Zielkonto um
+# Leite post anhand des Senders oder des Zielkontos um
 fromfilter {
 fred flintstone > fredmail
 fred.flintstone@bedrock.us > fredmail
@@ -60,63 +65,97 @@ word@m-w.com > -wod
 
 # tofilter { }
 
-# Beschreibe MIME-Typen und plugins um diese auszurüfen.
+# Beschreibe MIME-Typen und die Plugins, um diese zu verwenden.
 plugin {
 type = audio/basic
-desc = Audiodatei im Wave-Format
->suffix = wav,voc,au,ogg
->content = audio/x-wav
-# %i: temporäre Eingabedatei, von Edbrowse generiert
+desc = audio file in a wave format
+suffix = wav,voc,au,ogg
+content = audio/x-wav
+# %i ist die von Edbrowse generierte temporäre Datei für die URL
 program = play -q %i
 }
 
 plugin {
 type = audio/mp3
-desc = Audiodatei im mp3-Format
+desc = audio file in mp3 format
 suffix = mp3
 content = audio/mpeg
 program = mpg123 -q -C %i
 }
 
-# dieses Plugin wandelt die Datei um, anstatt Sie anzuzeigen
+plugin {
+type = audio/x-pn-realaudio
+desc = streaming audio
+protocol = rtsp,pnm,sdp
+suffix = rm,ra,ram,m3u8
+urlmatch = youtube.com/watch?|youtube.com/embed/
+content = audio/x-scpls,application/pls+xml
+program = /usr/bin/mpv --really-quiet --load-unsafe-playlists %i
+}
+
+# Dieses Plugin rendert eine Datei, anstatt sie abzuspielen.
+# Dieses Plugin stellt die Datei dar, anstatt sie abzuspielen.
 plugin {
 type = pdf
-desc = PDF-Datei
+desc = pdf file
 suffix = pdf
 content = application/pdf
 program = pdftohtml -i -noframes %i %o >/dev/null
-# lege fest, dass Ausgabe HTML, kein reiner Text ist
+# Gib an, dass Ausgabe in HTML, nicht Text erfolgt.
 outtype = H
+# Gib an, dass pdftohtml die Datei herunterladen muss (nimmt URL).
+down_url
 }
 
-# Jedesmal wenn Sie eine Webseite aus dem Internet abrufen, weist sich Ihr
-# Browser mit seiner Kennzeichnung beim Host aus:
+plugin {
+type = rtf
+desc = rich text file
+suffix = rtf
+content = application/rtf
+down_url
+program = catdoc %i
+# Dies ist Text, kein HTML.
+outtype = T
+}
+
+# Jedesmal wenn Sie eine Datei aus dem Internet laden, identifiziert sich Ihr
+# Browser gegenüber dem Server.
+# Hier sind einige alternative Angaben, der Standard ist edbrowse 3.7.3.
 agent = Lynx/2.8.4rel.1 libwww-FM/2.14
 agent = Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; Win 9x 4.90)
 
-# Ok, nun ein erstes Skript
-# Warum nicht ein Skript um Google zu verwenden?
-# <gg Elefanten und Tiger sucht nach Elefanten und Tiger bei Google,
+# Nun sind wir bereit unser erstes Skript zu schreiben.
+# Wie wäre es mit einem Skript, um auf Google zuzugreifen.
+# <gg Elefanten Tiger ruft Google auf und sucht nach "Elefanten Tigern".
 function+gg {
 b http://www.google.com
 /<>/ i=~0
 /</ i1*
-/^About/+2
+/h3/p
 }
 
-# Nachschlagen im Mariam-Webster Wörterbuch, ~1 ist der Parameter (das Wort zum
-# Nachschlagen), <mw Elefant
+# Die Google-Suche benötigt kein JavaScript.
+nojs = google.com
+
+# mariam-webster Wörterbuchsuche, ~1 ist der erste Parameter, also das
+# nachzuschlagende Wort.
+# <mw Elephant
 function+mw {
 b http://www.merriam-webster.com/dictionary/~1
+/spelling suggestion/X
+if(?) {
+/^h2 Definition/X
+}
+/./p
 }
 
-# Folgende Funktion wird beim Edbrowse-Start ausgeführt:
+# Diese Funktion wird während des Starts von Edbrowse ausgeführt.
 function:init {
-# Verzeichnisse schreibbar, damit Dateien umbenannt oder gelöscht werden können
+# Mache Verzeichnis schreibbar, sodass Sie Dateien ändern und löschen können.
 dw
-# zeige Größe jeder Datei in Verzeichnisauflistung an
+# Gib die Größe jeder Datei in einer Verzeichnisauflistung an.
 ls=s
-# andere persönliche Einstellungen
+# Andere persönliche Einstellungen...
 }
 
-# und so weiter...
+# und viel mehr...

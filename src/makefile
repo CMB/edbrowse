@@ -12,16 +12,7 @@ BUILD_EDBR_ODBC ?= off
 PERL !=		which perl
 TIDY5_LIBS ?=	-ltidy
 
-MOZJS ?=	mozjs-24	# Name of mozjs pkg-config(1) module.
-MOZJS_CPPFLAGS != pkg-config --cflags-only-I ${MOZJS}
-MOZJS_CXXFLAGS != pkg-config --cflags-only-other ${MOZJS}
-MOZJS_LIBS !=	pkg-config --libs ${MOZJS}
-
-CPPFLAGS +=	${MOZJS_CPPFLAGS}
-CXXFLAGS +=	${MOZJS_CXXFLAGS}
-
-LIBS =		-lpcre -lcurl -lreadline -lncurses ${TIDY5_LIBS} ${MOZJS_LIBS} \
-		-lstdc++
+LIBS =		-lpcre -lcurl -lreadline ${TIDY5_LIBS} -lduktape -lm
 
 # Add PREFIX to search paths.  These should go after everything else is in.
 CPPFLAGS +=	-I${PREFIX}/include
@@ -34,7 +25,7 @@ all: edbrowse
 EBOBJS =	main.o buffers.o sendmail.o fetchmail.o cache.o \
 		html.o format.o cookies.o ebjs.o plugin.o ebrc.o \
 		messages.o url.o stringfile.o html-tidy.o decorate.o \
-		msg-strings.o http.o auth.o jseng-moz.o startwindow.o
+		msg-strings.o http.o auth.o css.o jseng-duk.o startwindow.o
 
 .if ${BUILD_EDBR_ODBC:L:Mon}
 EBOBJS +=	dbodbc.o dbinfx.o dbops.o
@@ -43,17 +34,14 @@ LIBS +=		-lodbc
 EBOBJS +=	dbstubs.o
 .endif
 
-$(EBOBJS): eb.h ebprot.h messages.h ebjs.h
+$(EBOBJS): eb.h ebprot.h messages.h
 dbodbc.o dbinfx.o dbops.o: dbapi.h
 
 .c.o:
 	${CC} ${CFLAGS} ${CPPFLAGS} -c -o $@ $<
 
-.cpp.o:
-	${CC} ${CXXFLAGS} ${CPPFLAGS} -c -o $@ $<
-
-startwindow.c: startwindow.js
-	cd .. ; ${PERL} -w ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/startwindow.c
+startwindow.c: startwindow.js third.js
+	cd .. ; ${PERL} -w ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/third.js thirdJS src/startwindow.c
 
 ebrc.c: ../lang/ebrc-*
 	cd .. ; ${PERL} -w ./tools/buildebrcstring.pl

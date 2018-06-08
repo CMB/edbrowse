@@ -42,10 +42,11 @@ void prepareForBrowse(char *h, int h_len)
 }				/* prepareForBrowse */
 
 /* An input field cannot contain newline, null, or the InternalCodeChar */
+// Revised June 2018, maybe newline is ok. We need it for textarea.
 void prepareForField(char *h)
 {
 	while (*h) {
-		if (*h == 0 || *h == '\n')
+		if (*h == 0)
 			*h = ' ';
 		if (*h == InternalCodeChar)
 			*h = InternalCodeCharAlternate;
@@ -127,7 +128,7 @@ static void anchorSwap(char *buf)
  * Don't do any of these transliterations in an input field. */
 
 	inputmode = false;
-	for (s = w = buf; c = *s; ++s) {
+	for (s = w = buf; (c = *s); ++s) {
 		d = s[1];
 		if (c == InternalCodeChar && isdigitByte(d)) {
 			strtol(s + 1, &ss, 10);
@@ -211,7 +212,7 @@ put1:
 /* a points to the prior anchor, which is swappable with following whitespace */
 		a = NULL;
 
-		for (s = buf; c = *s; ++s) {
+		for (s = buf; (c = *s); ++s) {
 			if (isspaceByte(c) || c == '|') {
 				if (c == '\t' && !premode)
 					*s = ' ';
@@ -277,7 +278,7 @@ normalChar:
 /* Framing characters like [] around an anchor are unnecessary here,
  * because we already frame it in braces.
  * Get rid of these characters, even in premode. */
-	for (s = w = buf; c = *s; ++s) {
+	for (s = w = buf; (c = *s); ++s) {
 		char open, close, linkchar;
 		if (!strchr("{[(<", c))
 			goto putc;
@@ -339,7 +340,7 @@ putc:
 /* Now compress the implied linebreaks into one. */
 	premode = false;
 	ss = 0;
-	for (s = buf; c = *s; ++s) {
+	for (s = buf; (c = *s); ++s) {
 		if (c == InternalCodeChar && isdigitByte(s[1])) {
 			n = strtol(s + 1, &s, 10);
 			if (*s == '*') {
@@ -385,6 +386,32 @@ putc:
 		s = w;
 	}
 	*s = 0;
+
+/*********************************************************************
+Some hyperlinks are multiline, due to some html inside, and our interpretation
+of said html. This is just annoying, so pull it back down to one line.
+Same goes for <button>, but other input fields must remain as they are.
+Even submit, as shown by jsrt, if you submit the form it says b1=Send%20Message
+hence it would send a newline if there was one.
+*********************************************************************/
+
+	for (s = buf; (c = *s); ++s) {
+		if (c != InternalCodeChar)
+			continue;
+		n = strtol(s + 1, &s, 10);
+		if (*s == '<') {
+			if (!stringEqual(tagList[n]->info->name, "button"))
+				continue;
+		} else if (*s != '{')
+			continue;
+		for (a = s + 1; (c = *a); ++a) {
+			if (c == InternalCodeChar && a[1] == '0')
+				break;
+			if (c == '\n' || c == '\f')
+				*a = ' ';
+		}
+		s = a;
+	}
 }				/* anchorSwap */
 
 /*********************************************************************
@@ -852,7 +879,7 @@ char *htmlReformat(char *buf)
 
 /* It's a little thing really, but the blank line at the top of each frame annoys me */
 	fmark = new;
-	while (fmark = strstr(fmark + 1, "*`--\n\n")) {
+	while ((fmark = strstr(fmark + 1, "*`--\n\n"))) {
 		if (isdigit(fmark[-1]))
 			strmove(fmark + 5, fmark + 6);
 	}
@@ -874,7 +901,7 @@ void extractEmailAddresses(char *line)
 	char *mark;		/* start of current entry */
 	char quote = 0, c;
 
-	for (s = t = mark = line; c = *s; ++s) {
+	for (s = t = mark = line; (c = *s); ++s) {
 		if (c == ',' && !quote) {
 			mark = t + 1;
 			c = ' ';
@@ -918,7 +945,7 @@ append:
 
 	*t = 0;
 	spaceCrunch(line, true, false);
-	for (s = line; c = *s; ++s)
+	for (s = line; (c = *s); ++s)
 		if (c == ' ')
 			*s = ',';
 	if (*line)
@@ -1019,21 +1046,23 @@ utf8 sequences are considered text characters.
 If there is a leading byte order mark as per the previous routine, it's text.
 *********************************************************************/
 
-bool looksBinary(const char *buf, int buflen)
+bool looksBinary(const uchar * buf, int buflen)
 {
-	int i, j, bincount = 0, charcount = 0;
-	char c;
+	int i, j, bincount = 0, charcount = 0, nullcount = 0;
+	uchar c;
 	uchar seed;
 
-	if (byteOrderMark((uchar *) buf, buflen))
+	if (byteOrderMark(buf, buflen))
 		return false;
 
 	for (i = 0; i < buflen; ++i, ++charcount) {
 		c = buf[i];
 // 0 is ascii, but not really text, and very common in binary files.
-		if (c == 0)
-			++bincount;
-		if (c >= 0)
+		if (c == 0) {
+			if (++nullcount >= 10)
+				return true;
+		}
+		if (c < 0x80)
 			continue;
 // could represent a utf8 character
 		seed = c;
@@ -1050,20 +1079,20 @@ binchar:
 		if (seed & 0x80)
 			goto binchar;
 // this is valid utf8 char, don't treat it as binary.
-		i += j;
+		i += j - 1;
 	}
 
 	return (bincount * 8 - 16 >= charcount);
 }				/* looksBinary */
 
-void looks_8859_utf8(const char *buf, int buflen, bool * iso_p, bool * utf8_p)
+void looks_8859_utf8(const uchar * buf, int buflen, bool * iso_p, bool * utf8_p)
 {
 	int utfcount = 0, isocount = 0;
 	int i, j, bothcount;
 
 	for (i = 0; i < buflen; ++i) {
-		char c = buf[i];
-		if (c >= 0)
+		uchar c = buf[i];
+		if (c < 0x80)
 			continue;
 /* This is the start of the nonascii sequence. */
 /* No second bit, it has to be iso. */
@@ -1073,11 +1102,11 @@ isogo:
 			continue;
 		}
 /* Next byte has to start with 10 to be utf8, else it's iso */
-		if (((uchar) buf[i + 1] & 0xc0) != 0x80)
+		if ((buf[i + 1] & 0xc0) != 0x80)
 			goto isogo;
 		c <<= 2;
 		for (j = i + 2; c < 0; ++j, c <<= 1)
-			if (((uchar) buf[j] & 0xc0) != 0x80)
+			if ((buf[j] & 0xc0) != 0x80)
 				goto isogo;
 		++utfcount;
 		i = j - 1;
@@ -1137,17 +1166,18 @@ static const int iso_unicodes[2][128] = {
 	 0xfa, 0x171, 0xfc, 0xfd, 0x163, 0x2d9},
 };
 
-void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
+void iso2utf(const uchar * inbuf, int inbuflen, uchar ** outbuf_p,
+	     int *outbuflen_p)
 {
 	int i, j;
 	int nacount = 0;
-	char c;
-	char *outbuf;
+	uchar c;
+	uchar *outbuf;
 	const int *isoarray = iso_unicodes[type8859 - 1];
 	int ucode;
 
 	if (!inbuflen) {
-		*outbuf_p = emptyString;
+		*outbuf_p = (uchar *) emptyString;
 		*outbuflen_p = 0;
 		return;
 	}
@@ -1155,14 +1185,14 @@ void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 /* count chars, so we can allocate */
 	for (i = 0; i < inbuflen; ++i) {
 		c = inbuf[i];
-		if (c < 0)
+		if (c >= 0x80)
 			++nacount;
 	}
 
-	outbuf = allocString(inbuflen + nacount + 1);
+	outbuf = allocMem(inbuflen + nacount + 1);
 	for (i = j = 0; i < inbuflen; ++i) {
 		c = inbuf[i];
-		if (c >= 0) {
+		if (c < 0x80) {
 			outbuf[j++] = c;
 			continue;
 		}
@@ -1176,34 +1206,34 @@ void iso2utf(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 	*outbuflen_p = j;
 }				/* iso2utf */
 
-void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
+void utf2iso(const uchar * inbuf, int inbuflen, uchar ** outbuf_p,
+	     int *outbuflen_p)
 {
 	int i, j, k;
-	char c;
-	char *outbuf;
+	uchar c;
+	uchar *outbuf;
 	const int *isoarray = iso_unicodes[type8859 - 1];
 	int ucode;
 
 	if (!inbuflen) {
-		*outbuf_p = emptyString;
+		*outbuf_p = (uchar *) emptyString;
 		*outbuflen_p = 0;
 		return;
 	}
 
-	outbuf = allocString(inbuflen + 1);
+	outbuf = allocMem(inbuflen + 1);
 	for (i = j = 0; i < inbuflen; ++i) {
 		c = inbuf[i];
 
 /* regular chars and nonascii chars that aren't utf8 pass through. */
 /* There shouldn't be any of the latter */
-		if (((uchar) c & 0xc0) != 0xc0) {
+		if ((c & 0xc0) != 0xc0) {
 			outbuf[j++] = c;
 			continue;
 		}
 
 /* Convertable into 11 bit */
-		if (((uchar) c & 0xe0) == 0xc0
-		    && ((uchar) inbuf[i + 1] & 0xc0) == 0x80) {
+		if ((c & 0xe0) == 0xc0 && (inbuf[i + 1] & 0xc0) == 0x80) {
 			ucode = c & 0x1f;
 			ucode <<= 6;
 			ucode |= (inbuf[i + 1] & 0x3f);
@@ -1221,7 +1251,7 @@ void utf2iso(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 		c <<= 1;
 		++i;
 		for (++i; c < 0; ++i, c <<= 1) {
-			if (((uchar) outbuf[i] & 0xc0) != 0x80)
+			if ((outbuf[i] & 0xc0) != 0x80)
 				break;
 		}
 		outbuf[j++] = '*';
@@ -1259,7 +1289,7 @@ void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 	i = j = 0;
 	while (i < inbuflen) {
 		c = (uchar) inbuf[i];
-		if (!inutf8 || (c & 0xc0) != 0xc0 && (c & 0xfe) != 0xfe) {
+		if (!inutf8 || ((c & 0xc0) != 0xc0 && (c & 0xfe) != 0xfe)) {
 			unicode = c;	// that was easy
 			++i;
 		} else {
@@ -1295,7 +1325,8 @@ void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 			continue;
 		}
 // utf16, a bit trickier but not too bad.
-		if (unicode <= 0xd7ff || unicode >= 0xe000 && unicode <= 0xffff) {
+		if (unicode <= 0xd7ff
+		    || (unicode >= 0xe000 && unicode <= 0xffff)) {
 			if (outbig) {
 				outbuf[j++] = ((unicode >> 8) & 0xff);
 				outbuf[j++] = (unicode & 0xff);
@@ -1484,6 +1515,40 @@ void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 	*outbuflen_p = obuf_l - 2;
 }				/* utfLow */
 
+// Convert from whatever it is to utf8, for javascript and css.
+// Result parameter is the new string, or null if no conversion.
+// But, if the original string is utf8, I remove the bom.
+// Also turn \0 into spaces.
+char *force_utf8(char *buf, int buflen)
+{
+	char *tbuf, *s;
+	int bom = byteOrderMark((const uchar *)buf, buflen);
+	if (bom) {
+		debugPrint(3, "text type is %s%s",
+			   ((bom & 4) ? "big " : ""),
+			   ((bom & 2) ? "utf32" : "utf16"));
+		if (debugLevel >= 3)
+			i_puts(MSG_ConvUtf8);
+		utfLow(buf, buflen, &tbuf, &buflen, bom);
+// get rid of \0
+		for (s = tbuf; s < tbuf + buflen; ++s)
+			if (!*s)
+				*s = ' ';
+		*s = 0;
+		return tbuf;
+	}
+// Strip off the leading bom, if any, and no we're not going to put it back.
+	if (buflen >= 3 && !memcmp(buf, "\xef\xbb\xbf", 3)) {
+		buflen -= 3;
+		memmove(buf, buf + 3, buflen);
+		buf[buflen] = 0;
+	}
+	for (s = buf; s < buf + buflen; ++s)
+		if (!*s)
+			*s = ' ';
+	return NULL;
+}
+
 static char base64_chars[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -1543,6 +1608,82 @@ char *base64Encode(const char *inbuf, int inlen, bool lines)
 	return outstr;
 }				/* base64Encode */
 
+uchar base64Bits(char c)
+{
+	if (isupperByte(c))
+		return c - 'A';
+	if (islowerByte(c))
+		return c - ('a' - 26);
+	if (isdigitByte(c))
+		return c - ('0' - 52);
+	if (c == '+')
+		return 62;
+	if (c == '/')
+		return 63;
+	return 64;		/* error */
+}				/* base64Bits */
+
+/*********************************************************************
+Decode some data in base64.
+This function operates on the data in-line.  It does not allocate a fresh
+string to hold the decoded data.  Since the data will be smaller than
+the base64 encoded representation, this cannot overflow.
+If you need to preserve the input, copy it first.
+start points to the start of the input
+*end initially points to the byte just after the end of the input
+Returns: GOOD_BASE64_DECODE on success, BAD_BASE64_DECODE or
+EXTRA_CHARS_BASE64_DECODE on error.
+When the function returns success, *end points to the end of the decoded
+data.  On failure, end points to the byte just past the end of
+what was successfully decoded.
+*********************************************************************/
+
+int base64Decode(char *start, char **end)
+{
+	char *b64_end = *end;
+	uchar val, leftover, mod;
+	bool equals;
+	int ret = GOOD_BASE64_DECODE;
+	char c, *q, *r;
+	mod = 0;
+	equals = false;
+	for (q = r = start; q < b64_end; ++q) {
+		c = *q;
+		if (isspaceByte(c))
+			continue;
+		if (equals) {
+			if (c == '=')
+				continue;
+			ret = EXTRA_CHARS_BASE64_DECODE;
+			break;
+		}
+		if (c == '=') {
+			equals = true;
+			continue;
+		}
+		val = base64Bits(c);
+		if (val & 64) {
+			ret = BAD_BASE64_DECODE;
+			break;
+		}
+		if (mod == 0) {
+			leftover = val << 2;
+		} else if (mod == 1) {
+			*r++ = (leftover | (val >> 4));
+			leftover = val << 4;
+		} else if (mod == 2) {
+			*r++ = (leftover | (val >> 2));
+			leftover = val << 6;
+		} else {
+			*r++ = (leftover | val);
+		}
+		++mod;
+		mod &= 3;
+	}
+	*end = r;
+	return ret;
+}				/* base64Decode */
+
 void
 iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 {
@@ -1553,14 +1694,16 @@ iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 	if (!iuConvert)
 		return;
 
-	looks_8859_utf8(inbuf, inbuflen, &is8859, &isutf8);
+	looks_8859_utf8((uchar *) inbuf, inbuflen, &is8859, &isutf8);
 	if (cons_utf8 && is8859) {
 		debugPrint(3, "converting to utf8");
-		iso2utf(inbuf, inbuflen, outbuf_p, outbuflen_p);
+		iso2utf((uchar *) inbuf, inbuflen, (uchar **) outbuf_p,
+			outbuflen_p);
 	}
 	if (!cons_utf8 && isutf8) {
 		debugPrint(3, "converting to iso8859");
-		utf2iso(inbuf, inbuflen, outbuf_p, outbuflen_p);
+		utf2iso((uchar *) inbuf, inbuflen, (uchar **) outbuf_p,
+			outbuflen_p);
 	}
 }				/* iuReformat */
 

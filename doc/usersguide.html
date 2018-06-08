@@ -80,14 +80,17 @@ p.cen { text-align: center; }
 <LI><A HREF=#back> The Back Key </A>
 <LI><A HREF=#move> The M Command </A>
 <LI><A HREF=#music> Background Music </A>
+<LI><A HREF=#heading> Headings </A>
 <LI><A HREF=#input> Input Fields </A>
 <LI><A HREF=#entry> Data Entry </A>
 <LI><A HREF=#textarea> Text Areas </A>
 <LI><A HREF=#button> Push The Button </A>
+<LI><A HREF=#hover> Hover Text </A>
 <LI><A HREF=#addr> Web And Email Addresses </A>
 <LI><A HREF=#cook> Cookies </A>
 <LI><A HREF=#ssl> Secure Connections </A>
 <LI><A HREF=#ftp> FTP Retrievals </A>
+<LI><A HREF=#gopher> Gopher Support </A>
 <LI><A HREF=#proxy> Proxy Servers </A>
 <LI><A HREF=#frame> Frames </A>
 </UL>
@@ -144,6 +147,7 @@ p.cen { text-align: center; }
 
 <H3> <A NAME="maint"> Maintainer </A> </H3>
 
+<P>
 The edbrowse home page is <A href=http://edbrowse.org>edbrowse.org</A>.
 <A HREF="mailto:maintainers@edbrowse.org">
 Chris Brannon</A>
@@ -151,6 +155,7 @@ is the current project maintainer and webmaster.
 
 <H3> <A NAME=auth> Author </A> </H3>
 
+<P>
 <A HREF=mailto:eklhad@gmail.com>
 Karl Dahlke</A>
 wrote the first version of edbrowse in perl, in 2001,
@@ -161,13 +166,15 @@ wikipedia article</A> for a history of edbrowse and an overview of its features.
 
 <H3> <A NAME=copy> Copyright Notice </A> </H3>
 
-This program is copyright &copy; Karl Dahlke (and other authors and contributors), 2001-2015.
+<P>
+This program is copyright &copy; Karl Dahlke (and other authors and contributors), 2001-2018.
 It is made available by the authors under the terms of the GNU General Public License (GPL),
 as articulated by the Free Software Foundation.
 It may be used for any purpose, and redistributed, provided this copyright notice is included.
 
 <H3> <A NAME=disclaim> Disclaimer </A> </H3>
 
+<P>
 Edbrowse is provided as-is,
 with no implied warranty of fitness for any particular purpose.
 It might trash your precious files.
@@ -181,6 +188,7 @@ By using this program, you agree to use it as-is.
 
 <H3> <A NAME=ack> Acknowledgements </A> </H3>
 
+<P>
 <A HREF=mailto:chris@the-brannons.com>
 Chris Brannon</A> wrote or modified at least 20% of the code,
 and provided valuable ideas for the overall design.
@@ -203,6 +211,7 @@ and they are given due credit in the Languages section below.
 
 <H3> <A NAME=over> Overview </A> </H3>
 
+<P>
 This program is, at first glance, a reimplementation of /bin/ed.
 In fact you might issue a few ed commands and not realize that you are
 actually running this program.
@@ -247,6 +256,7 @@ Experience with internet browsers and the associated terminology is also helpful
 
 <H3> <A NAME=lang> Other Languages </A> </H3>
 
+<P>
 First, a few words about character sets (charsets).
 English is easily contained within a byte stream, one letter per byte.
 In fact, each letter fits in 7 bits; the eighth bit is not needed, and is set to 0.
@@ -296,8 +306,8 @@ Older pre-utf8 systems store each character in a single byte, with an iso8859 co
 <P>
 There's much more to say about charsets; this is merely a brief introduction.
 I need not go further, because edbrowse only supports iso8859-1 &#8660; utf8 at this time.
-Chinese, for example, requires 3 and 4 byte sequences, which map into unicode.
-Edbrowse doesn't handle this level of complexity at this time.
+Other iso8859 pages are not supported, and even iso8859-1 may drop off in the future,
+since utf8 is nearly universal.
 
 <P>
 The output and error messages,
@@ -325,6 +335,9 @@ Polish: LANG=pl_pl by Wojciech Gac
 
 <P>
 German: LANG=de by Sebastian Humenda
+
+<P>
+Italian: LANG=it by Enrico Mioso
 
 <P>
 When an output or error message is displayed,
@@ -386,22 +399,34 @@ Some websites offer their contents in multiple languages.
 For example, twitter.com has an English version,
 a French version, and so forth.
 It is possible to select the language when requesting the page.
-Edbrowse supports this via the localizeweb keyword in its configuration
-file.
+Edbrowse supports this via the localizeweb keyword in its configuration file.
 For instance, the following entry in .ebrc indicates that you want the
 French version, when it is available.
 
 <P>
 localizeweb = fr
 
+<P>
+If not specified, edbrowse defers to the environment variable $LANG, which is set on almost every system.
+Thus you rarely need to set localizeweb in your config file.
+If LANG is not set, the default is English.
+Edbrowse always sends a language designator to the web servers, because some websites, such as amazon.com, will not run properly without it.
+If you do set localizeweb yourself, be sure to set it to language code hyphen territory code.
+
 <hr>
 <H2> Chapter 2, Quick Reference Guide </H2>
 
 <H3> <A NAME=guide> Quick Reference Guide </A> </H3>
 
+<P>
 Here are the ed and edbrowse commands, all in one place.
 This is a quick reference guide.
 Most of these commands will not make sense until you read the rest of the documentation.
+Commands that are (toggle), such as js to turn javascript on and off, also admit a + or - suffix to explicitly enable or disable the feature.
+Thus js toggles javascript, js+ enables javascript, and js- disables javascript.
+The + and - variants are not listed.
+Toggle prints the state of the feature, on or off, it help messages are enabled or if the debug level is at least 1.
+Seting or clearing a mode only prints the message if help messages are on.
 
 <P>
 Exit the Program
@@ -429,9 +454,7 @@ p : print the current line
 <br>'a,'bp : print a range of lines marked with labels a and b
 <br>kb : mark the current line as b
 <br>l : list the current line, showing invisible chars and end markers
-<br>eo : end markers off
-<br>el : show end markers ^$ when a line is listed
-<br>ep : show end markers when a line is listed or printed
+<br>endm : show end markers ^$ on listed lines (toggle)
 <br>lna : expand all nonascii chars into hex when a line is listed (toggle)
 <br>n : print the current line with its line number
 <br>ll 1000 : line length 1000, show the first 1000 chars of each line
@@ -456,6 +479,7 @@ s/x/y/ : replace x with y on the current line
 <br>s : repeat the previous substitute command
 <br>s/x/y/2 : replace the second instance of x with y on the current line
 <br>4,7s/x/y/g : replace all instances of x with y on lines 4 through 7
+<br>s/a\(.\)c/a$1$1c/ : duplicate the letter between a and c
 <br>s, : replace comma space with newline, break line in two
 <br>s. : replace period space with newline, break line in two
 <br>s?2 : break line at the second question mark
@@ -464,11 +488,10 @@ s/x/y/ : replace x with y on the current line
 <br>/x : same as /x/
 <br>/x/i : look for the line containing x or X
 <br>?x? : look backwards for x
-<br>ci : searches and substitutions are case insensitive
-<br>cs : searches and substitutions are case sensitive
-<br>sg : substitution strings are global across sessions
-<br>sl : substitution strings are local to their sessions
+<br>ci : searches and substitutions are case insensitive (toggle)
+<br>sg : substitution strings are global across sessions (toggle)
 <br>su8 : search and substitute uses utf8 character sequences (toggle)
+<br>sw : search with wrap (toggle)
 <br>g/x/ p : print every line that has an x
 <br>v/x/ p : print every line that does not have an x
 <br>v/x/i l : list every line that does not have x or X
@@ -477,6 +500,7 @@ s/x/y/ : replace x with y on the current line
 <br>uc : convert line to upper case
 <br>s/foo/uc : convert foo to FOO on the current line
 <br>s/\bfoo\b/mc/g : convert foo to Foo, but not foobar
+<br>,s/$/ %line/ : put the line number at the end of each line
 <P>
 Files and Sessions
 <P>
@@ -529,6 +553,14 @@ dr : directory is readonly
 <br>ls : same as lsst
 <br>ls=lt : display length and time of all files in subsequent directory scans
 <br>ls= : just list the files in a directory scan
+<br>sort=a : sort files alphabetically
+<br>sort=t : sort files by mod time
+<br>sort=s : sort files by size
+<br>sort+a : same as sort=a
+<br>sort-a : reverse alphabetical
+<br>sort-t : reverse mod time
+<br>sort-s : reverse size
+<br>rf : refresh directory scan, useful if you have changed ls or sort parameters
 <P>
 Browse an html file or a web page
 <P>
@@ -536,7 +568,7 @@ b : browse the current file, which is assumed to be in html
 <br>b foo.html : edit the file foo.html and browse it
 <br>b url : fetch url from the internet and browse it
 <br>ub : unbrowse a file
-<br>ft : show the title of the current web page
+<br>ft : show the title of the current web page (file title)
 <br>fd : show the description of the current web page
 <br>fk : show the keywords of the current web page
 <br>rf : refresh the web page or directory listing
@@ -545,20 +577,21 @@ b : browse the current file, which is assumed to be in html
 <br>vs : verify ssl connections (toggle)
 <br>sr : send referrer (toggle)
 <br>ua3 : pretend to be the third user agent in your config file
+<br>can : (curl auth negotiate) toggle SPNEGO type authentication, required for kerberos (krb5/gss)
 <P>
 FTP or HTTP Downloads
 <P>
 pdd : progress of download indicated by dots
 <br>pdc : progress of download indicated by megabyte count
 <br>pdq : progress of download quiet, no indicator
-<br>fma : ftp mode active
-<br>fmp : ftp mode passive
+<br>ftpa : ftp active mode (toggle)
 <br>bg : download files in background (toggle)
 <br>bglist : list background downloads, complete or in progress
 <P>
 Interact with a Web Page
 <P>
 g : go to the link on the current line
+<br>g- : go to the link, but don't browse, or render, or play
 <br>g2 : go to the second link on the current line
 <br>g$ : go to the last link on the current line
 <br>g? : print the url for the link on the current line
@@ -568,17 +601,19 @@ g : go to the link on the current line
 <br>,exp : expand all frames
 <br>ctr : contract a frame
 <br>^ : the back key, go back to the web page you were looking at before
+<br>&amp; : internal link back key, go back to line before following internal link
 <br>i=xyz : set the input field on the current line to xyz
 <br>i2=xyz : set the second input field on the current line to xyz
 <br>i2* : push the second button on the current line, usually submit or reset
 <br>i$* : push the last button on the current line
-<br>i* : switch to the buffer containing this textarea
 <br>i3? : describe the third input field on the current line
+<br>ipass2 : prompt for the content of the second input field, disabling echo
 <br>M4 : move this web page to session 4 and back up to the previous page
 <br>M : move this web page to an empty session and back up
 <br>js : allow javascript (toggle)
 <br>xhr : allow XHR (toggle)
 <br>rr : rerender the screen, to reflect asynchronous javascript changes
+<br>hover : show all hover text (toggle)
 <P>
 Mail Client
 <P>
@@ -609,10 +644,25 @@ Debug
 <P>
 db3 : set debug level, 0 through 9
 <br>db&gt;/tmp/edbrowse.out : redirect debugging output to a file
-<br>jdb : javascript debugger, dot to exit
+<br>demin : deminimize javascript (toggle)
+<br>timers : disable javascript timers (toggle)
+<br>dbcn : enable cloneNode debugging (toggle)
+<br>dbev : enable event debugging (toggle)
+<br>dberr : enable js error debugging (toggle)
+<br>dbcss : enable css debugging (toggle)
+<br>uvw getAttribute : undefined variable watch on getAttribute
+<br>uvw trace : trace through javascript execution
+<br>jdb : javascript debugger, bye to exit
+<br>ok(o) : list all the members of an object, some may not be enumerable
+<br>showscripts() : show scripts anywhere in the tree
+<br>searchscripts(string) : look for a string in the scripts
+<br>aloop(array, string_on[i]) : execute string on each member of the array
+<br>uptrace(node) : climb up the tree from a given node
+<br>dumptree(node) : show the tree below a given node
 
 <H3> <A NAME=tips> Tips for Avoiding Line Numbers </A> </H3>
 
+<P>
 If you haven't spent time using the ed editor, you may find this program awkward.
 It seems like you have to use line numbers,
 which are ever changing as text is edited.
@@ -641,7 +691,7 @@ Use the k command to mark them.
 For example, use ka and kb to mark the start and end of a block of text,
 while kc marks the new location.
 The move command is then 'a,'bm'c - with absolutely no line numbers.
-This is standard ed fair.
+This is standard ed fare.
 
 <P>
 To look for links on a web page, search for the left brace.
@@ -653,6 +703,7 @@ And of course, multiple operations can be scripted, an important feature of edbr
 
 <H3> <A NAME=mlist> Mailing List </A> </H3>
 
+<P>
 There is a mailing list for users of edbrowse and other command line utilities.
 You can join by sending mail to
 <A HREF=mailto:commandline-subscribe@yahoogroups.com?subject=Subscribe>
@@ -660,6 +711,7 @@ commandline-subscribe@yahoogroups.com</A>.
 
 <H3> <A NAME=wiki> Edbrowse Wiki </A> </H3>
 
+<P>
 There is a wiki devoted to edbrowse,
 including tips and tricks, and sample .ebrc configurations and functions.
 See <A href=http://edbrowse.org>edbrowse.org</A> for more information.
@@ -669,6 +721,7 @@ See <A href=http://edbrowse.org>edbrowse.org</A> for more information.
 
 <H3> <A NAME=dev> Important Deviations From /bin/ed </A> </H3>
 
+<P>
 Certain search/substitute commands may behave differently under this editor.
 This is because the regular expressions are interpreted
 by the perl compatible regular expression (pcre) library,
@@ -689,7 +742,7 @@ Once you are accustomed to their power and flexibility,
 you'll never go back to ed.
 
 <P>
-Great!  You've read the perlre man page, and you're back.
+Great.  You've read the perlre man page, and you're back.
 Here are a few changes that I've made to perl regular expressions.
 I have found that ( and ) are almost always meant to be literal,
 as in searching for myFunction(),
@@ -794,10 +847,8 @@ You can escape an individual shell meta character with the backslash, as in fun\
 <LI><P>
 Many versions of ed place a $ at the end of a listed line,
 but this is not one of them, at least not by default.
-Use the command `el' to place end markers around listed lines.
+Use the command `endm' to place end markers around listed lines.
 Listed lines begin with ^ and end with $.
-Enter `ep' to place end markers around all printed lines.
-Use `eo' to turn end markers off.
 
 <LI><P>
 Capital Q does not quit the editor absolutely.
@@ -849,6 +900,12 @@ This program is less tolerant of whitespace than /bin/ed.
 57 , 63 p      will not fly.
 
 <LI><P>
+When searching for a regular expression, both ed and edbrowse will wrap around the buffer, back to the beginning.
+Thus /./ on the last line prints the first line.
+This behavior can be turned on and off via the sw command.
+Some people prefer to stop searching at the end of the buffer, without going back to the beginning.
+
+<LI><P>
 A single % on the right hand side of a substitution is replaced with the last right hand side.
 Some versions of ed do this, some don't.
 
@@ -864,7 +921,9 @@ You might need to use s.2 if the sentence begins with Mr. Flintstone.
 Type s by itself for s//%.
 
 <LI><P>
-The commands sg and sl make the remembered substitution and replacement strings global and local respectively.
+The sg command makes searches and substitutions global across editting sessions.
+This is a toggle, so type sg again to keep search strings local to their sessions.
+As with any toggle, you can enter sg+ or sg-.
 If you want to look at all instances of "foo" in all the files in the current directory,
 and change some of them to bar at your discretion,
 edit *, then enter sg to make substitution strings global to all edit sessions.
@@ -872,7 +931,7 @@ In the first session, search for foo, and replace some of them with bar.
 Type e2 to move to the next session, whence you can search using slash alone,
 because the string "foo" is applied to all sessions.
 Similarly, you can use % to refer to "bar".
-The sl command returns this editor to its local behavior,
+The sg- command returns this editor to its local behavior,
 where each file has its own search/replace strings.
 
 <LI><P>
@@ -904,6 +963,7 @@ and the ability to browse an html file and edit its fill-out form.
 
 <H3> <A NAME=brace> Balancing Braces </A> </H3>
 
+<P>
 The capital B command is of interest to programmers,
 and will probably not be used by casual home users.
 It locates the line with the balancing brace, parenthesis, or bracket.
@@ -951,6 +1011,7 @@ static char openstring[] = "{block"; /* closing } is found elsewhere */
 
 <H3> <A NAME=cx> Context Switch </A> </H3>
 
+<P>
 This program allows you to edit multiple files at the same time,
 and transfer text between them.
 This is similar to the world of virtual terminals (Linux),
@@ -1047,17 +1108,28 @@ The following moves the data from one file to another.
 </font></PRE>
 
 <P>
-An e command, by itself, prints the current session, in case you've forgotten.
+An e command by itself prints the current session, in case you've forgotten.
 This is similar to f, by itself, which prints the current file.
 
 <H3> <A NAME=usage> Usage </A> </H3>
 
-type `edbrowse -h' to produce the usage message.
+<P>
+type `edbrowse -h' to produce the following usage message.
 You will see the -f, -fm, and -m options used in several different ways;
 just ignore them for now.
-These three options cause edbrowse to act as a mail retriever or interactive
+These options cause edbrowse to act as a mail retriever or interactive
 mail client.
 This will be discussed later.
+
+<PRE><font size=3 face=Arial,Helvetica,sans-serif>edbrowse  -v    (show version)
+edbrowse -h (this message)
+edbrowse -c (edit config file)
+edbrowse [-d#] -f[#] (fetch mail) 
+edbrowse  [-d#] -[p]m    (read pending mail)
+edbrowse  [-d#] -[p]fm[#]    (fetch mail and read pending mail)
+edbrowse  [-d#] -m[#] address1 address2 ... file [+attachments]
+edbrowse  [-c configfile] [-b] [-e] [-d#] file1 file2 ...
+</font></PRE>
 
 <P>
 The -dx option sets the debug level to x, where x is between 0 and 9.
@@ -1066,7 +1138,7 @@ which prints the sizes of files as they are written and read.
 Some people like -d2, which prints the URLs
 as you jump to new web pages or submit forms online.
 Unless you are a developer, you probably don't want to go any higher than that.
-Remember, the debug level can be changed on the fly by using the dbx command (x between 0 and 9).
+Remember, the debug level can be changed interactively by using the dbx command (x between 0 and 9).
 You can direct debugging output to a file by `db&gt;filename',
 and you probably want to for db5 or above.
 
@@ -1077,14 +1149,12 @@ If there is a problem, you don't want to march on, executing the rest of the edb
 Note that set -e has the same effect in a bash script.
 
 <P>
-Use -c to suppress processing of, and edit, the .ebrc configuration file.
+Use -c alone to suppress processing of, and edit, the .ebrc configuration file.
 (This config file will be described later.)
 You might want to do this if your config file has syntax errors, which are displayed when edbrowse starts.
-Use the -c option to edit the config file directly.
-It is automatically loaded into buffer 1.
-Note that -c must be the first option.
+Your config file is automatically loaded into buffer 1.
 Make changes, save the file, and type `config' to reload the file.
-If there is another error you may need to make another change, save, and reconfig.
+If there is another error you may need to make another change, save, and config again.
 Continue until there are no errors.
 Processing of the config file stops at the first error, so you really want a clean run.
 
@@ -1093,15 +1163,37 @@ From within edbrowse, a file name of -c is treated as the config file.
 You can switch to a new session, view, edit, save, and reaply the config file without ever leaving edbrowse.
 
 <P>
+If the first arguments are -c filename, edbrowse uses filename as its config file, rather than the default file under your home directory.
+As long as this edbrowse process runs, -c referse to the file specified on the command line,
+as does the config command, which reprocesses the config file.
+
+<P>
+The -b option browses each file or url on the command line, or plays it if a plugin so indicates.
+Without -b, only the urls are browsed.
+edbrowse this.example.com reads the data from the web page, prints the size in bytes, browses the page, and prints the size of the rendered text.
+The -b option causes the same thing to happen on a local file, e.g. if you have html files on your computer.
+It also activates any plugins that might render your file, e.g. pdf, or play your file, e.g. mp3.
+Plugins will be described later.
+
+<P>
 The arguments to edbrowse are the files to edit.
 Edbrowse reads these files into corresponding sessions
 and starts in session 1.
-If there are no arguments, you start in session 1
+If there are no arguments, edbrowse starts in session 1
 with no text and no associated file.
+If the file is a url, then that web page is fetched from the internet and browsed.
+Finally, if the file begins with a less than sign,
+edbrowse "&lt;func arg1 arg2",
+then the named edbrowse function is run with its arguments.
+These functions are part of your config file and will be described later.
+The function runs in its own session, as though it were a file or a url.
+Often the function will load a file or url on your behalf, so that is usually what you want.
+Files, urls, and functions can be intermixed on the command line.
+They are processed in order.
 
 <P>
 If you like this program, and you want it to be your primary editor,
-you can set the following Unix alias.
+you can set the following bash alias.
 
 <P>
 alias e="/usr/bin/edbrowse"
@@ -1109,10 +1201,10 @@ alias e="/usr/bin/edbrowse"
 <P>
 If you do this you can use `e filename'
 to edit a new file, whether you are inside edbrowse or at the shell prompt.
-Very convenient.
 
 <H3> <A NAME=bin> Binary Characters </A> </H3>
 
+<P>
 At all times, even when entering a file name, this program scans its input
 for binary codes.
 Use the three character sequence ~bd to enter the nonascii character 0xbd,
@@ -1183,8 +1275,9 @@ Issue one of the three commands shown above to undos the file.
 
 <H3> <A NAME=bfile> Binary Files </A> </H3>
 
+<P>
 Data is considered binary if it is sufficiently large
-(more than 50 bytes)
+(more than 50 bytes),
 and it contains a significant fraction of non-ascii or null characters (more than 25%).
 International text may contain scattered binary codes for accented letters,
 but most of the characters should still be ascii.
@@ -1204,32 +1297,24 @@ After that the buffer remains "binary", even if you delete all the data and read
 You must use the `e' command to get a fresh text buffer.
 
 <P>
-For the most part it doesn't really matter if the data is binary or text.
+For the most part it doesn't matter if the data is binary or text.
 Either way you can display and edit the data, and write it to a file.
-
-<P>
-Edbrowse tries to "do the right thing" under DOS/Windows.
-That is, it converts crlf to and from newline if it believes the file is text;
+However, edbrowse tries to "do the right thing" under DOS/Windows.
+It converts crlf to and from newline if it believes the file is text;
 and it leaves binary data alone.
 These distinctions are not relevant on Unix/Linux.
 
 <P>
-Although this approach is satisfactory for English and most European languages,
-it fails miserably for Asian languages, which definitely look like binary data.
-You can disable binary detection by entering the `bd' command.
-If you speak an Asian language,
-you may want to put this command in your init script,
-so edbrowse comes up the way you want -
-treating your international files as text files.
-
-<P>
-If you speak an Asian language, and you are running Windows,
-and binary detection is disabled,
-don't use this program to manipulate binary files,
-as they will get corrupted!
+Although this approach is satisfactory for utf8,
+it can fail for a large iso8859-1 file with lots of accented letters.
+Such looks binary, even though it is ascii.
+You can disable binary detection with the `bd' command, whence your file will remain ascii.
+This is a corner case, since utf8 is nearly universal.
+Therefore, the bd command is deprecated, and could go away in a future version of edbrowse.
 
 <H3> <A NAME=dir> Directory Scan, File Manager </A> </H3>
 
+<P>
 If you edit a directory
 you will see a list of all the visible files in that directory
 in alphabetical order,
@@ -1452,8 +1537,15 @@ If you search for the year 2014, you won't find anything, because the date and t
 Searches and substitutes apply to file names only.
 If you want to view the entire text as text, write it to a file, or to another session.
 
+<P>
+Files are sorted alphabetically, according to your locale.
+Use the command sort+a for the standard alphabetical sort, and sort-a for a reverse alphabetical sort.
+sort+t sorts by modification time, from oldest to newest, and sort-t reverses this, with the newest files at the top.
+sort+s and sort-s sort by file size.
+
 <H3> <A NAME=case> Upper/Lower Case </A> </H3>
 
+<P>
 The `lc' command converts a line to lower case,
 and `uc' converts it to upper case.
 Perl users will recognize these directives.
@@ -1475,6 +1567,7 @@ type ,s/\bfoo\b/uc/ig.
 
 <H3> <A NAME=bl> Break Line </A> </H3>
 
+<P>
 The `bl' command breaks the current line into sentences and phrases,
 each about 70 characters long.
 It also compresses white space and strips white space from the end of the line.
@@ -1515,13 +1608,12 @@ This is a must-have program for people who want a command line environment.
 
 <H3> <A NAME=race> Race Conditions </A> </H3>
 
+<P>
 Suppose you are writing a file,
 and edbrowse truncates the existing file,
 then the computer crashes before edbrowse can write the new data.
 When you bring your computer back to life,
 your file is empty, zero bytes, and all your work is lost.
-
-<P>
 This is a narrow window to be sure;
 the computer has to fail at precisely the wrong millisecond.
 To guard against this improbable calamity,
@@ -1531,7 +1623,7 @@ This way your data cannot be lost.
 Either the new or the old file will survive.
 
 <P>
-Then links came on the scene, hard links, and then symbolic links.
+Then links came on the scene, first hard links, and then symbolic links.
 Authors of ed and other editors had to scramble.
 You can't remove a link, write to temp,
 and move the temp file over to the link.
@@ -1546,8 +1638,6 @@ They had to revert back to the old truncate and write paradigm,
 and hope that nothing bad happens in between.
 And you know what, it never does.
 The window is just too small.
-
-<P>
 With this in mind, edbrowse doesn't mess with temp files at all.
 It truncates the file and writes out the data,
 hoping nothing will go wrong during the critical millisecond.
@@ -1577,6 +1667,7 @@ This feature is not in high demand.
 
 <H3> <A NAME=url> Accessing A URL </A> </H3>
 
+<P>
 Instead of invoking `e filename', you can invoke `e http://this.that.com/file.html',
 and the editor will retrieve the named file using the http protocol.
 The source (i.e. raw html) is made available for edit.
@@ -1635,6 +1726,7 @@ Use your best judgment.
 
 <H3> <A NAME=browse> Browse Mode </A> </H3>
 
+<P>
 If the editor contains html text, from any source,
 even html that you wrote yourself,
 you can type `b' to activate browse mode.
@@ -1760,6 +1852,7 @@ Type `ub' to revert back to the raw html.
 
 <H3> <A NAME=math> Technical, Math </A> </H3>
 
+<P>
 Most people never read technical web pages, but if you do...
 
 <P>
@@ -1802,6 +1895,7 @@ that attempts to be both sighted and blind friendly at the same time.
 
 <H3> <A NAME=title> Title, Description, Keywords </A> </H3>
 
+<P>
 While in browse mode, the commands ft, fd, and fk
 produce the title, description, and keywords of the current web file respectively.
 These are normally not visible to the user.
@@ -1815,15 +1909,11 @@ these three attributes are readonly.
 If it is your web page,
 you can modify them by returning to the raw html.
 Web designers should pay close attention to the description and the keywords,
-else your pages will not be accessible via the standard search engines.
-
-<P>
-Note that `ft' prints the title of the web page,
-whereas `f t' (with a space) renames the current file to "t",
-which is probably not what you want.
+else your pages might not be accessible via the standard search engines.
 
 <H3> <A NAME=rf> The Refresh Command </A> </H3>
 
+<P>
 Type `rf' to refresh the current file.
 This rereads the file or url into the current buffer.
 It does not push a new editing session onto the stack.
@@ -1847,6 +1937,7 @@ yet z will not appear in your directory scan until you type rf.
 
 <H3> <A NAME=hlink> Hyperlinks </A> </H3>
 
+<P>
 A link to another web page is enclosed in braces, like this:
 
 <P>
@@ -1898,6 +1989,9 @@ g$ activates the last link on the line.
 If a link spreads across multiple lines, you must be on the first of these lines,
 the line containing the left brace.
 Use g? to print the url - where you will go if you type g.
+g- goes to the link, but does not browse,
+or render (e.g. a pdf file), or play (e.g. an mp3 file).
+This bypasses your plugins and retrieves the raw file.
 
 <P>
 The g command can also act on a link that is written in raw text,
@@ -1909,6 +2003,7 @@ even though the file is not html and you've never issued a browse command.
 
 <H3> <A NAME=ilink> Internal Links </A> </H3>
 
+<P>
 Although most links lead to other web pages,
 some links point to other sections within the current web page.
 Again, you might be able to tell by context.
@@ -1932,6 +2027,7 @@ Enter z10 to read the first few lines of the appendix.
 
 <H3> <A NAME=back> The Back Key </A> </H3>
 
+<P>
 If you edit a new file via the `e', `b', or `g' command,
 and you already have text in the buffer,
 that text is bundled up and pushed onto a stack.
@@ -1996,9 +2092,12 @@ Following an internal link to another section in the current document
 does not push anything onto the stack.
 In other words, ^ will not take you back to where you were.
 In fact, it will take you up to the previous web page, which is not what you want.
-If you want to take a glance at Appendix I, and then return,
-mark the current position with `kr'.
-After you've visited the appendix, use the label 'r to return to your original location in the file.
+Instead, a separate per-page history is accessible with the &amp; key.
+You can use &amp;3 or &amp;&amp;&amp;, similar to ^, but only do so when you know
+how far back you want to go.
+An alternative, if you often want to go back to the table of contents, is to
+mark the current position with kr, then return to it via the label 'r.
+Even with this label set, &amp; is often more convenient, since it takes you back to the last heading you jumped on, whence you can procede down the table of contents to the next section that interests you.
 
 <H3> <A NAME=move> The M Command </A> </H3>
 
@@ -2052,6 +2151,7 @@ and print something like "moved to session 15".
 
 <H3> <A NAME=music> Background Music </A> </H3>
 
+<P>
 If you are trying to listen to a speech synthesizer,
 the last thing you need is background music.
 Instead of playing the song, I make it available to you through a hyperlink.
@@ -2080,8 +2180,19 @@ It will say something like,
 "I don't know how to process an mp3 file".
 This is consistent with other browsers, which use plugins to play multimedia files that are retrieved from the internet.
 
+<H3> <A NAME=heading> Headings </A> </H3>
+
+<P>
+Some web pages are written with headings, from level 1 to level 6.
+These headings are indicated by h1 through h6 respectively.
+Just as braces indicate a hyperlink, h2 indicates a second level heading.
+Thus h2 is not part of the text; it is a markup character.
+You can jump to different headings using the familiar ed commands:
+/h2 for the next level 2 heading, ?h1 for the previous level 1 heading, and /h\d for the next heading at any level.
+
 <H3> <A NAME=input> Input Fields </A> </H3>
 
+<P>
 The input fields of an on-line form are indicated by angle brackets.
 For example, a search engine might present the following form.
 
@@ -2124,6 +2235,7 @@ Thus the third line goes back to &lt;en&gt;, rather than &lt;&gt;.
 
 <H3> <A NAME=entry> Data Entry </A> </H3>
 
+<P>
 Filling out a form is relatively easy,
 once you are familiar with the overloaded `i' command.
 Yes, i by itself means insert text,
@@ -2192,13 +2304,27 @@ edbrowse performs a partial match on the options, looking for those digits as a 
 This may seem confusing, but it is usually what you want.
 
 <P>
+If you would like your password to not be displayed on screen when you type it,
+you can use ipass (or ipass2 if the password is the second field) to get a no-echo
+prompt for your password.
+When printing anything you entered with ipass, or if the input field type is password,
+you will get stars back, consistent with other browsers.
+However, if you submit a form, and the debug level is 3 or higher, you will see the password in plain text as edbrowse prints the fields it is sending to the server.
+Users rarely run in debug mode, so this is not an issue.
+
+<P>
 You can use i&lt;7 to pull the contents of session 7 into the current input field.
 Session 7 must have one line of text only.
 Similarly, i&lt;filename reads the contents of the file into the current input field.
-Again, the file should contain one line of text.
+Only the first line of text is read.
 The filename is expanded in the usual way.
 This includes wildcard expansion, as long as the expansion leads to one and only one file.
 Put enough characters around the * to designate a single file.
+
+<P>
+Text areas are often used to capture a paragraph, i.e. a complex thought, but some websites expect you to compose your thought in a one-line input field.
+In that case, switch to another session where you can use the power of the editor.
+Compose your thought, type ,J to put it all on one line, switch back, and type i&lt;7 to pull it into the input field.
 
 <P>
 Suppose you are entering your credit card number, all 16 digits, into a free text field.
@@ -2220,6 +2346,7 @@ when there are multiple input fields, or multiple buttons, on the current line.
 
 <H3> <A NAME=textarea> Text Areas </A> </H3>
 
+<P>
 Some internet forms allow you to type freely, as in "Please enter your comments here."
 This is done inside a window within the screen,
 having a fixed number of rows and columns,
@@ -2255,9 +2382,6 @@ In this example, session 2 was not active when browsing began.
 The browser allocated session 2 specifically for this input field.
 Type e2 to move to session 2, prepare your comments,
 then type e1 to return to the input form.
-Note, i* also takes you to the text area, like e2, as though you were pushing a button.
-(See more about buttons in the next section.)
-This is convenient for scripting, since you don't know ahead of time which buffer will be allocated for this purpose.
 
 <P>
 On most web pages the text area starts out blank,
@@ -2276,6 +2400,7 @@ Thus your carefully crafted comments are on their way.
 
 <H3> <A NAME=button> Push The Button </A> </H3>
 
+<P>
 If the third input field on the current line is a reset or submit button,
 press the button via i3*.
 The reset button puts the input fields back to their original values,
@@ -2302,16 +2427,64 @@ www.search-engine.com?keywords=kangaroo.
 The text after the question mark is an encoded version of the data
 you entered into the form.
 It becomes part of the virtual URL.
-This is actually a good thing, as we shall see in the next section.
+This only applies to the get method; the post method sends the data through another channel.
 
 <P>
-Remember that a textarea acts like a button, in that i* takes you to that editing session.
-also, buttons can simply run javascript, without being type submit or reset.
+Remember that buttons can run javascript, without being type submit or reset.
 These are all pressed by the i* command.
 If more than one button is on the current line, any style of button, then i* is not sufficient; you have to specify which button, as in i3*.
 
+<H3> <A NAME=hover> Hover Text </A> </H3>
+
+<P>
+Some websites cause text to appear when you hover over a link or icon; then it disappears when you move the mouse away.
+Edbrowse has nothing analogous to a mouse hovering over an icon, so we had to think of something else.
+
+<P>
+Hover text is usually explanatory, and rarely essential.
+Since the goal of edbrowse is minimal output, edbrowse does not display this text by default.
+However, you can turn it on with the hover command.
+All the hover text appears, all over the page.
+It might be nice to hover over a particular line, but so far this has proved problematic.
+It's not clear what if anything you can hover over, and the message might pop up on a different part of the screen, perhaps 20 lines down in the buffer.
+For now, the approach is to reveal all hover text wherever it appears.
+If you like, you can save the two buffers, and diff to read the lines that have changed.
+You probably only need to do this once on a website that you will be visiting again and again.
+Once you have read the hover explanations you probably won't need to read them in the future, whereupon you can run with hover disabled.
+
+<P>
+In rare cases, hovering over an icon reveals links or buttons.
+Because they are active elements, these are shown all the time.
+You need to know that these links or buttons are available.
+In other words, edbrowse only hides hover text, not hover links.
+
+<P>
+Cascading style sheets (css) also injects text into the page, but this tends to be based on element type or class.
+Put a star in front of every paragraph that has class=footnote.
+Put a right arrow after every hyperlink with class=external, taking you to another website.
+Put a green circle in front of every input field with class=required, a required field.
+These little symbols are primarily visual, and of almost no value to edbrowse users.
+Once again they are hidden by default.
+They are not strictly hover text, but these are also revealed by the hover command.
+As mentioned earlier,
+the injected characters or emojis are helpful visual reminders of the nodes they adorn, and are rarely vital;
+however, there are a few websites where the injected text is explanatory, and might be worth reading at least once.
+
+<P>
+Finally, the hover command shows the sections that are rendered invisible by css or javascript.
+These are in angle brackets and braces, e.g. &lt;{hello world}&gt;.
+These might be hidden because they are not relevant to you, or to your current situation.
+Why show the checkout link if there is nothing in your shopping cart?
+However, edbrowse javascript is still a work in progress, and sometimes a bug keeps a section invisible, when it should be shown.
+Thus you might want to see what you are missing.
+
+<P>
+The hover command does not show or hide text unless javascript is enabled.
+Without javascript, all the hover text and all the invisible sections are shown.
+
 <H3> <A NAME=addr> Web And Email Addresses </A> </H3>
 
+<P>
 The capital A command shows you the web addresses behind
 the links on the current line.
 Each web address will be surrounded by &lt;a&gt; and &lt;/a&gt; tags,
@@ -2384,13 +2557,6 @@ This provides a simple command to retrieve the weather from any major city
 or the current price of any stock.
 
 <P>
-If the form uses the post, rather than the get method,
-the same data will appear,
-but the question mark is replaced with a control a.
-Unfortunately the control a is not visible, and this could cause confusion.
-When in doubt, list the line.
-
-<P>
 Under the A command,
 the text of the newly created hyperlink is the title of the current page.
 If there is no title, the text of the link is drawn from the url,
@@ -2450,6 +2616,7 @@ Still, a future version of edbrowse might use one global http server to get arou
 
 <H3> <A NAME=ssl> Secure Connections </A> </H3>
 
+<P>
 Edbrowse supports the most common method of encrypting web traffic,
 HTTP over SSL/TLS, colloquially known as secure http.
 Websites that support
@@ -2461,17 +2628,13 @@ The traffic is encrypted, i.e. mathematically scrambled,
 and cannot be intercepted by a nefarious third party.
 
 <P>
-Edbrowse will verify ssl connections
-if you supply a file of ssl certificates.
+Edbrowse will verify ssl connections,
+based on a file of certificates provided by the system.
 This is an antispoofing measure, to make sure a hacker isn't posing as your bank,
 trying to steal your account numbers and passwords.
-On some Linux distributions, you can run `cd /etc/ssl/certs ; cat * >../edbrowse-certs'
-to capture ssl certificates that are as current as your linux system.
-If you don't have or create this file,
-or, if you don't specify its location in your config file,
-you will not be able to verify secure connections, and you will be warned accordingly.
-Some browsers don't have this feature at all, so it's not the end of the world,
-but in general it's a good idea to verify your secure connections,
+You can provide your own file of certificates, or point to a different file, using the certfile directive, but this is not recommended.
+The system file is probably your best bet.
+In general it's a good idea to verify secure connections,
 unless it prevents you from getting to a website whose authenticity you accept at face value.
 In that case you can use the vs command to turn the feature off.
 This is a toggle command; type vs again to turn the feature on.
@@ -2533,6 +2696,7 @@ but don't let that stop you from making your online purchases.
 
 <H3> <A NAME=ftp> FTP Retrievals </A> </H3>
 
+<P>
 This browser supports the retrieval of ftp files and directories.
 You can provide an FTP URL like:
 ftp://ftp.random.com/tarball.tar.gz
@@ -2575,11 +2739,19 @@ The ftp mode, i.e. the style of data connection,
 can be either active or passive.
 One works well when the client is behind a router,
 and the other works well when the server is behind a router.
-You can specify ftp mode active by entering the command `fma',
-or ftp mode passive by `fmp'.
+You can specify ftp mode active by entering the command `ftpa+',
+or ftp mode passive by `ftpa-'.
+
+<H3> <A NAME=gopher> Gopher Support </A> </H3>
+
+<P>
+Gopher is similar to ftp, providing an easy way to download files from a public site.
+Edbrowse supports this via the gopher:// protocol.
+Once again, directory listings are converted into html, so you can activate a hyperlink and procede to a submenu or download a file.
 
 <H3> <A NAME=proxy> Proxy Servers </A> </H3>
 
+<P>
 A proxy server is a web server that sits between your web browser and remote websites.
 It intercepts your requests for web pages and forwards them to the system that hosts
 the site you are browsing.
@@ -2714,14 +2886,13 @@ but javascript evolves, like any other language or standard,
 and I just couldn't keep up.
 
 <P>
-The third version, which is the "latest and greatest", uses a javascript engine from Mozilla.com,
-which is open source under the Mozzilla Public License.
+The third version uses an open source javascript engine, originally Mozilla js, and now, as of version 3.7.0, Duktape js.
 This allows me to leverage, rather than reinvent, some 70,000 lines of code -
 and somebody else is maintaining that code as javascript evolves.
 
 <P>
 Edbrowse does not support all the features of client side DOM javascript,
-and it never will.
+and it probably never will.
 For example, many websites use javascript to change images
 on the fly as you move your mouse around the screen.
 This has no meaning in edbrowse.
@@ -2742,6 +2913,16 @@ See the disclaimer at the top of this users guide.
 <P>
 You can also disable javascript for specific domains.
 This will be discussed later in the edbrowse config file.
+
+<P>
+If a page is slow to browse, it may be running a lot of javascript, or it could be fetching files from the internet.
+In either case, you can interrupt the process by hitting control C.
+Javascript stops, and the page browses with the information it has at hand.
+This is fine if you're just reading a newspaper article and you don't want to wait for all the advertising to come into place,
+but you should never do this on an e-commerce site, or a banking site, or a site whose operation is mission critical.
+If the javascript does not run to completion, we cannot guarantee the proper operation of that website.
+You might wind up ordering a $37,000 elephant instead of
+$37 worth of printer supplies.
 
 <H3> <A NAME=valid> Validating Forms </A> </H3>
 
@@ -2851,19 +3032,35 @@ and you have the full power of the editor, including the undo command.
 
 <H3> <A NAME=jex> Javascript Debugger </A> </H3>
 
+<P>
 In browse mode, the jdb (javascript debug) command
-directs subsequent input to the javascript engine, containing the objects associated with the current web page.
-Type document.body.childNodes to see a list of the nodes under the body of the web page.
-A predefined ok (object keys) command lists all the members of an object.
-Type period by itself to return to edbrowse.
+directs subsequent input to the javascript engine containing the objects associated with the current web page,
+specifically, the frame associated with the current line number.
+Type period by itself, or bye, to return to edbrowse.
 It is best to enter jdb with debug level 3, so you can see any javascript syntax or reference errors.
 This feature is for developers, and is not very helpful for end users.
+
+<P>
+If the output of any command is long, you can redirect it into a file by using the ^&gt symbol, as in expression ^&gt; file.
+I didn't want to use &gt; since that is a valid javascript operator.
+A predefined ok (object keys) command lists all the members of an object.
+showscripts() shows you the scripts in the current document, even generated scripts.
+These will be left in $ss.
+Type dumptree(document) to see the structure of the document.
+Use aloop(0,5,expression) to evaluate the expression as i runs from 0 to 4.
+Use aloop(y,expression) to run over the length of the array y.
+
+<P>
+A few edbrowse commands are valid inside the javascript debugger.
+These are: the db commands (to change debugging), e number (to jump to another edbrowse session and look at another file),
+bflist, bglist, timers, demin, and shell escapes.
 
 <hr>
 <H2> Chapter 6, Edbrowse Scripts and the Configuration File </H2>
 
 <H3> <A NAME=cfg> Config File </A> </H3>
 
+<P>
 At startup, edbrowse reads and parses a config file.
 It's ok if this file is missing, but if it is present
 it should be syntactically correct.
@@ -2937,6 +3134,7 @@ certfile = /etc/pki/tls/cert.pem
 <P>
 Specify the file that holds the certificates for secure connections.
 This was explained in the section on <A HREF=#ssl>secure connections</A>.
+This can usually be omitted, whereupon edbrowse uses the system's certificate file.
 
 <P>
 maildir = /home/mylogin/mbox
@@ -3039,18 +3237,6 @@ The above directive will also drop javascript from subdomains such as www.space.
 You can include a path or partial path after the domain, as in space.com/popups.
 This will block the popup ads that you don't want to see, which often generate edbrowse errors in any case.
 Subdomains are not considered when a path is given; the domain must match exactly.
-
-<P>
-jspool = 32
-
-<P>
-Allocate this many megabytes for javascript use.
-The default is 32 meg, as shown above.
-The minimum is 2 and the maximum is 1000.
-A couple of youtube pages will consume 4 meg of javascript, so don't aim low unless you are just using edbrowse to edit files.
-If you spend all day browsing, you better aim high,
-because javascript could unceremoniously fail, across the board, if it runs out of space.
-However, edbrowse will continue to run, and the javascript engine will restart with the next browse command.
 
 <P>
 novs = somesite.com
@@ -3329,7 +3515,9 @@ db0
 #  Assume directories can be modified
 dw
 #  Put beginning and end markers around listed lines
-el
+endm+
+#  Use readline for input
+rl+
 #  Let session 99 hold your favorites, ready to surf.
 e99
 b $bookmarks
@@ -3404,7 +3592,8 @@ as part of the fetchmail client.
 
 <H3> <A NAME=mt> Plugin Descriptors </A> </H3>
 
-Mime types are determined by the extension of the file, or in some cases the protocol.
+<P>
+Plugins are determined by the extension of the file, or in some cases the protocol.
 They might tell edbrowse to use /usr/bin/play to play file.wav or file.voc,
 and /usr/bin/mpg123 to play file.mp3, and so on.
 Rather than repeat it all here,
@@ -3418,19 +3607,16 @@ type = audio/mp3
 desc = audio file in mp3 format
 suffix = mp3
 content = audio/mpeg
-#  %i is replaced with the temp filename as generated by edbrowse
+#  %i is replaced with the mp3 file or the mp3 url
 program = mpg123 -q -C %i
 }
 </font></PRE>
 
 <P>
-This example handles an mp3 file, not an mp3 stream.
-See sample.ebrc for a more general plugin that passes either a stream or a file to a music player.
-<P>
-If you have pulled down a file from the internet that ends in .mp3,
-or has an http content-type of Audio/Mpeg,
-it will automatically play, and print ok when done.
-This autoplay feature can be disabled with the pg command that turns plugins on and off.
+This example handles an mp3 file or an mp3 stream.
+That works because mpg123 will play a local file or an mp3 stream from the internet.
+If mpg123 was limited to loca files on your computer, we would have to add the keyword down_url, whereupon a url is downloaded to a temp file and then played.
+The autoplay feature can be disabled with the pg command that turns plugins on and off.
 
 <P>
 If you have read an audio file into memory from your own computer,
@@ -3450,42 +3636,33 @@ use the urlmatch atribute for this.
 urlmatch = .youtube.com/watch?
 
 <P>
-The command `pb' could mean process buffer,as well as play buffer.
-For instance, a plugin descriptor might unzip a zip archive.
-
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>plugin {
-type = data/zip
-desc = a compressed zip archive
-suffix = zip
-program = unzip %i
-}
-</font></PRE>
-
-<P>
-Some plugins act upon a file, as described above, but others convert a file into something readable.
-These do not "play" the file; they are part of the browse command.
-Such a plugin is indicated by the outtype attribute.
-Set this to h if the output is in html, or t if the output is in text.
-With the following plugin in place, you can browse most pdf files and read them,
-whether they are on your own computer or on the internet.
-Other plugins could convert rich text, Word docs, Open Office docs, etc.
+Some plugins play files, and some plugins process files.
+The outtype attribute determines the type of plugin.
+In this example, a pdf file turns into html, where it can be browsed in the usual way.
 
 <PRE><font size=3 face=Arial,Helvetica,sans-serif>plugin {
 type = pdf
 desc = pdf file
 suffix = pdf
 content = application/pdf
-#  %o is the output file
+#  file must be local
+down_url
 program = pdftohtml -i -noframes %i %o >/dev/null
 outtype = H
 }
+</font></PRE>
 
-plugin {
+<P>
+Other plugins could convert rich text, Word docs, Open Office docs, etc.
+Set outtype to h if the output is in html, or t if the output is in text.
+
+<PRE><font size=3 face=Arial,Helvetica,sans-serif>plugin {
 type = Word doc
 desc = Microsoft Word document, not docx
 suffix = doc
 content = application/msword
-#  without %o, the output is piped directly into the buffer, more efficient.
+down_url
+#  without %o, the output is piped directly into the buffer
 program = catdoc %i
 outtype = T
 }
@@ -3502,6 +3679,10 @@ The best documentation is an example,
 so I have provided a sample config file with fake data.
 It is well commented.
 You can see a copy <A HREF=sample.ebrc>here</A>.
+Also available in
+<A href=sample_fr.ebrc>French</A>
+and
+<A href=sample_it.ebrc>Italian</A>.
 
 <hr>
 <H2> Chapter 7, Mail Client </H2>
@@ -4036,18 +4217,19 @@ Here is a sample screenshot.
  7 [Gmail]/Starred, 0 messages
  8 [Gmail]/Trash, 16 messages
 Select a folder by number or by substring.
-Prepend - for just the unread messages. q to quit. l to change fetch limit.
+q to quit. l to change fetch limit.
 </font></PRE>
 
 <P>
 Type 6, or spam, or just spa, and edbrowse takes you through the 7 messages in the Spam folder.
 It prints the sender, subject, date, and size of each email,
+also known as its envelope,
 and asks you what to do, similar to the pop3 client interface.
 Type q to quit, n for the next message, d to delete,
 or m to move this message to another folder.
 Again, you can specify the destination folder by number or by name.
 Type space to read the body of the email, and keep typing space,
-like more or less, to read as much of the email as you wish.
+like more, to read as much of the email as you wish.
 Type w to write the email formatted, or W to write and delete.
 Type u or U to save the email unformatted.
 Type a to save the attachments.
@@ -4056,15 +4238,18 @@ Type / to search for emails by subject, by sender, or by the text in the body of
 Finally type h for the help message, which looks like this.
 
 <PRE><font size=3 face=Arial,Helvetica,sans-serif>
-h   print this help message.
-q   quit this program.
-s   stop reading from this folder.
-n   continue to next message.
-d   delete this email.
-m   move this email to another folder.
-space   read and manage this email.
-/   search for words in subject, from, or body.
-l   set imap fetch limit.
+h   print this help message
+q   quit this program
+s   stop reading from this folder
+n   continue to next message
+d   delete this email
+m   move this email to another folder
+v   view all
+b   batch move or delete
+f   from move or delete
+space   read and manage this email
+/   search for words in subject, from, or body
+l   set imap fetch limit
 </font></PRE>
 
 <P>
@@ -4080,6 +4265,24 @@ Type `f Smith' to search for mail from Smith,
 or `b neutron star' to find all emails that talk about a neutron star.
 If there are thousands of matches, only the last 100 are shown.
 You can change this limit with the l command.
+
+<P>
+If there are 300 emails in your spam folder, there is an easy way to delete them all.
+Type v to view them all, just to make sure a valid email didn't wind up here.
+You don't want to delete anything good by mistake.
+Then type b for batch mode, then d to delete.
+Poof, they're gone.
+In the same way, you can batch move all the messages to another folder.
+However, move is more useful with the from clause.
+If the current message is from Fred Flintstone, type f, and edbrowse will print "from Fred Flintstone".
+Then type m cartoon, and all the messages from Fred Flintstone will move to the cartoon folder.
+
+<P>
+The create and delete commands will create new folders or delete existing folders.
+Just type `create foo' to create a new folder foo.
+You can move messages into it right away.
+Warning - if you delete foo, all the messages in foo could disappear.
+This will depend on the imap server.
 
 <hr>
 <H2> Chapter 8, Database Access </H2>

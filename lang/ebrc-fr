@@ -1,5 +1,4 @@
-# .ebrc: exemple de fichier de configuration pour edbrowse
-# (version 3.5.4 et au-dessus)
+# .ebrc: exemple de fichier de configuration pour edbrowse version 3.7.3
 
 # compte mail : vous pouvez en avoir plusieurs
 # un compte gmail : la plupart des gens en ont un aujourd'hui
@@ -42,10 +41,6 @@ reply = edbrowse@gmail.com
 # Le récipient à cookies - où nous stockons les cookies.
 #jar = /home/monlogin/outside/cookies
 
-# fichier des certificats ssl
-# certfile = /etc/ssl/cert.pem
-# certfile = /etc/pki/tls/cert.pem
-
 # attend la réponse d'un serveur web pendant 30 secondes
 webtimer = 30
 # attend la réponse d'un serveur mail pendant 3 minutes
@@ -67,7 +62,7 @@ type = audio/basic
 desc = audio file in a wave format
 suffix = wav,voc,au,ogg
 content = audio/x-wav
-# %i est le fichier temporaire généré par edbrowse
+# %i est le fichier généré / url
 program = play -q %i
 }
 
@@ -79,6 +74,16 @@ content = audio/mpeg
 program = mpg123 -q -C %i
 }
 
+plugin {
+type = audio/x-pn-realaudio
+desc = streaming audio
+protocol = rtsp,pnm,sdp
+suffix = rm,ra,ram,m3u8
+urlmatch = youtube.com/watch?|youtube.com/embed/
+content = audio/x-scpls,application/pls+xml
+program = /usr/bin/mpv --really-quiet --load-unsafe-playlists %i
+}
+
 # ce plugin affiche un fichier, plutôt que de le "jouer"
 plugin {
 type = pdf
@@ -88,6 +93,17 @@ content = application/pdf
 program = pdftohtml -i -noframes %i %o >/dev/null
 # indique que la sortie est de l'html, plutôt que du texte
 outtype = H
+down_url
+}
+
+plugin {
+type = rtf
+desc = rich text file
+suffix = rtf
+content = application/rtf
+down_url
+program = catdoc %i
+outtype = T
 }
 
 # A chaque fois que vous récupérez une page de l'internet,
@@ -103,14 +119,21 @@ function+gg {
 b http://www.google.com
 /<>/ i=~0
 /</ i1*
-/^About/+2
+/h3/p
 }
+
+nojs = google.com
 
 # recherche dans le dictionnaire merriam-webster, -1 est le 1er paramètre,
 # le mot cherché
 # <mv éléphant
 function+mw {
 b http://www.merriam-webster.com/dictionary/~1
+/spelling suggestion/X
+if(?) {
+/^h2 Definition/X
+}
+/./p
 }
 # Cette fonction s'exécute au démarrage de edbrowse
 function:init {

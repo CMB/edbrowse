@@ -10,8 +10,9 @@
 #include <locale.h>
 
 /* English by default */
-static const char **messageArray = msg_en;
-int eb_lang = 1;
+static const char **messageArray;
+char eb_language[8];
+int eb_lang;
 /* startup .ebrc files in various languages */
 const char *ebrc_string;
 bool cons_utf8, iuConvert = true;
@@ -21,8 +22,13 @@ bool errorExit;
 
 void selectLanguage(void)
 {
-	char buf[8];
 	char *s = getenv("LANG");	// This is likely to fail in windows
+	char *dot;
+
+// default English
+	strcpy(eb_language, "en");
+	eb_lang = 1;
+	messageArray = msg_en;
 	ebrc_string = ebrc_en;
 
 #ifndef DOSLIKE
@@ -44,6 +50,10 @@ void selectLanguage(void)
 
 	setlocale(LC_ALL, "");
 
+/* But LC_TIME controls time/date formatting, I.E., strftime.  The one
+ * place we do that, we need standard day/month abbreviations, not
+ * localized ones.  So LC_TIME needs to be C. */
+	setlocale(LC_TIME, "C");
 #else // DOSLIKE
 
 /* I'm going to assume Windows runs utf8 */
@@ -55,37 +65,43 @@ void selectLanguage(void)
 		return;
 	if (!*s)
 		return;
+	setlocale(LC_TIME, "C");
 #endif // DOSLIKE y/n
 
-	strncpy(buf, s, 7);
-	buf[7] = 0;
-	caseShift(buf, 'l');
+	strncpy(eb_language, s, 7);
+	eb_language[7] = 0;
+	caseShift(eb_language, 'l');
+	dot = strchr(eb_language, '.');
+	if (dot)
+		*dot = 0;
 
-	if (!strncmp(buf, "en", 2))
-		return;		/* english is default */
+	if (!strncmp(eb_language, "en", 2))
+		return;		/* english is already the default */
 
-	if (!strncmp(buf, "fr", 2)) {
+	if (!strncmp(eb_language, "fr", 2)) {
 		eb_lang = 2;
 		messageArray = msg_fr;
 		ebrc_string = ebrc_fr;
+		type8859 = 1;
 		return;
 	}
 
-	if (!strncmp(buf, "pt_br", 5)) {
+	if (!strncmp(eb_language, "pt_br", 5)) {
 		eb_lang = 3;
 		messageArray = msg_pt_br;
 		ebrc_string = ebrc_pt_br;
+		type8859 = 1;
 		return;
 	}
 
-	if (!strncmp(buf, "pl", 2)) {
+	if (!strncmp(eb_language, "pl", 2)) {
 		eb_lang = 4;
 		messageArray = msg_pl;
 		type8859 = 2;
 		return;
 	}
 
-	if (!strncmp(buf, "de", 2)) {
+	if (!strncmp(eb_language, "de", 2)) {
 		eb_lang = 5;
 		messageArray = msg_de;
 		ebrc_string = ebrc_de;
@@ -93,10 +109,17 @@ void selectLanguage(void)
 		return;
 	}
 
-	if (!strncmp(buf, "ru", 2)) {
+	if (!strncmp(eb_language, "ru", 2)) {
 		eb_lang = 6;
 		messageArray = msg_ru;
 		type8859 = 5;
+		return;
+	}
+
+	if (!strncmp(eb_language, "it", 2)) {
+		eb_lang = 7;
+		messageArray = msg_it;
+		type8859 = 1;
 		return;
 	}
 
@@ -104,6 +127,16 @@ void selectLanguage(void)
 	fprintf(stderr, "Sorry, language %s is not implemented\n", buf);
 */
 }				/* selectLanguage */
+
+/*********************************************************************
+WARNING: this routine, which is at the heart of the international prints
+i_puts i_printf, is not threadsafe in iso8859 mode.
+Well utf8 has been the default console standard for 15 years now,
+and I'm almost ready to chuck iso8859 altogether, so for now,
+let's just say you can't use threading in 8859 mode.
+If you try to turn it on via the bg (background) command, I won't let you.
+I really don't think this will come up, everybody is utf8 by now.
+*********************************************************************/
 
 const char *i_getString(int msg)
 {
@@ -126,7 +159,7 @@ const char *i_getString(int msg)
 		return s;
 
 /* We have to convert it. */
-	utf2iso(s, strlen(s), &t, &t_len);
+	utf2iso((uchar *) s, strlen(s), (uchar **) & t, &t_len);
 	strcpy(utfbuf, t);
 	nzFree(t);
 	return utfbuf;
@@ -144,6 +177,8 @@ void i_puts(int msg)
 	eb_puts(i_getString(msg));
 }				/* i_puts */
 
+static void eb_vprintf(const char *fmt, va_list args);
+
 void i_printf(int msg, ...)
 {
 	const char *realmsg = i_getString(msg);
@@ -151,6 +186,11 @@ void i_printf(int msg, ...)
 	va_start(p, msg);
 	eb_vprintf(realmsg, p);
 	va_end(p);
+	if (debugFile) {
+		va_start(p, msg);
+		vfprintf(debugFile, realmsg, p);
+		va_end(p);
+	}
 }				/* i_printf */
 
 /* Print and exit.  This puts newline on, like puts. */
@@ -162,6 +202,12 @@ void i_printfExit(int msg, ...)
 	eb_vprintf(realmsg, p);
 	nl();
 	va_end(p);
+	if (debugFile) {
+		va_start(p, msg);
+		vfprintf(debugFile, realmsg, p);
+		fprintf(debugFile, "\n");
+		va_end(p);
+	}
 	ebClose(99);
 }				/* i_printfExit */
 
@@ -181,7 +227,7 @@ Thus I don't need the i_ prefix.
 char errorMsg[1024];
 
 /* Show the error message, not just the question mark, after these commands. */
-static const char showerror_cmd[] = "AbefMqrw^";
+static const char showerror_cmd[] = "AbefMqrw^&";
 
 /* Set the error message.  Type h to see the message. */
 void setError(int msg, ...)
@@ -365,7 +411,7 @@ void eb_puts(const char *s)
 		fprintf(debugFile, "%s\n", s);
 }				/* eb_puts */
 
-void eb_vprintf(const char *fmt, va_list args)
+static void eb_vprintf(const char *fmt, va_list args)
 {
 #ifdef DOSLIKE
 	wchar_t *chars = NULL;
@@ -375,6 +421,7 @@ void eb_vprintf(const char *fmt, va_list args)
 	char *a;		// result of vasprintf
 	output_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (GetConsoleMode(output_handle, &mode) == 0) {
+// this is better than doing nothing.
 		vprintf(fmt, args);
 		return;
 	}
@@ -393,7 +440,4 @@ void eb_vprintf(const char *fmt, va_list args)
 #else
 	vprintf(fmt, args);
 #endif
-
-	if (debugFile)
-		vfprintf(debugFile, fmt, args);
-}				/* eb_printf */
+}				/* eb_vprintf */

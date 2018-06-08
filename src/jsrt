@@ -1,14 +1,24 @@
 <!DOCTYPE html>
 <html>
+<!-- browse length 630, 643 with hover -->
 <head id=boom>
 <meta content=Snoopy>
 <title>Edbrowse js regression test</title>
 <base href="http://yyy.zzz.com">
 <!-- tidy5 says this is not a valid tag any more -->
 <bgsound src=whatever.mid>
+<style>
+body { background: white; color: black; }
+body:hover { fly:windshield }
+.nut {color: blue; white-space: snork" \""; }
+.nut:after {waste:crap; content:zip; }
+body p.inject:before { display:round }
+p.inject:before { content:My }
+</style>
 </head>
 
-<body onload=bodyLoad() onunload=bodyUnload()>
+<body onload=bodyLoad() onunload=bodyUnload()
+style="font-size: 1.0em">
 <script type=text/javascript language=JavaScript>
 /* This is the javascript regression test for edbrowse.
 It attempts to exercise all the implemented features of javascript,
@@ -22,7 +32,7 @@ them they will fail, because some depend on variables that were
 set by others.  Yeah, it's ugly. */
 
 var udef = "undefined";
-function fail(n) { alert("failed "+n); close(); }
+function fail(n) { alert("failed "+n); }
 
 var popwin = new Window("http://www.moreAndMoreCrap.com/BuyNow.html", "obnoxious_ad", "width=72");
 
@@ -42,10 +52,6 @@ return;
 }
 for (n=0; n < amount; ++n)
 {
-// exercise a bit of math
-if ((n % 10000) == 0)
-alert(Math.floor(n/10000));
-// fill the array
 memhog[n] = {};
 }
 alert("Array successfully created with " + amount + " objects");
@@ -249,7 +255,6 @@ if(c2.constructor != Circle || oo.constructor != Object) fail(79);
 
 // the date object
 var d = new Date(2003,11,25,17,55,9);
-d.setYear(d.getYear()-1);
 if(d.getMonth() != 11 || d.getDate() != 25) fail(81);
 if(d.getHours() != 17 || d.getMinutes() != 55 || d.getSeconds() != 9) fail(82);
 if(d.constructor != Date || a.constructor != Array) fail(84);
@@ -290,24 +295,28 @@ y directory</A>
 yecht package</A>
 -->
 
-<iframe src=http://www.edbrowse.org/jsfrm>
+<iframe src=http://www.edbrowse.org/jsfrm.html
+onload="alert&nbsp;('expanding the frame dude')">
 you shouldn't see this stuff
 </iframe>
+<A onclick="alert('first node ' + frames[0].contentDocument.body.firstChild.nodeName)">first node</a>
 
 <form method=POST name=questionnaire
+class=betty-boop
 action=http://localhost:1500/origact
-onsubmit='return submitFunction(questionnaire)'
+onsubmit='return submitFunction(this)'
 onreset='return resetFunction()'
 onload=formLoad(this.name) onunload=formUnload(this.name)>
 
 <script language=JavaScript type=text/javascript>
-function catdog(item) { alert('fluffy'); if(item.checked&&document.questionnaire.dog.checked) alert('chased by dog'); }
+function catdog(item) { alert('fluffy'); if(item.checked&&document.forms[0].dog.checked) alert('chased by dog'); }
 
 // Let javascript generate another javascript tag
-document.writeln("<script language=JavaScript>document.writeln('Subject: ');<" + "/script>");
+document.writeln("<script language=JavaScript>document.writeln('Nested Script ');<" + "/script>");
 </script>
 
-<input type='hidden' name='id' value='eklhad'>
+<P class=inject>
+subject: <input type='hidden' name='who' value='eklhad'>
 <input type='hidden' name='password' value='secret'>
 <input type='text' name='subject' size='50' maxlength='80'>
 <br>State and zip:
@@ -435,10 +444,10 @@ Wyoming
 <option value=BH>
 90210
 </select>
-<!-- this generates and error, but not sure why.
+<!-- this generates an error, but not sure why.
 http://www.w3schools.com/html/html_form_input_types.asp -->
 <input type=number maxlength=5 name="zip code" readonly value="&#56;8888">
-<span id=almond></span>
+<span id=almond class="nut rose"></span>
 <table class=filbert><tr><td></td></tr><tr id=pecan><td></td></tr></table>
 Colors will change with the state, A through M or N through Z.
 <br>My favorite colors are:
@@ -468,7 +477,7 @@ Amount of objects to create <input type="text" id="fill_amount" name="fill_amoun
 <input type=button name=hog value="memory hog" onclick=memfill()>
 <input type=button name=mclear value="memory clear" onclick="memhog.length = 0">
 <br>
-<input type=button onclick="memshow()" name="mshow" value="show memory length">
+<button onclick="memshow()" name="mshow">show memory length</button>
 <input type=button name=goodbye value="jump away"
 onclick="alert('page is being replaced'); window.location.href='http://www.cartercenter.org';">
 <br>Message Body:
@@ -490,9 +499,9 @@ onclick="alert('rock and roll')">
 
 <script type=text/javascript language=JavaScript>
 // I'll push the button for you
-document.questionnaire.b.onclick();
-if(document.questionnaire.result.getAttribute("value") != 90) fail(85);
-if(document.questionnaire.id.value != "eklhad") fail(86);
+document.forms[0].b.onclick();
+if(document.forms[0].result.value != 90) fail(85);
+if(document.forms[0].who.value != "eklhad") fail(86);
 if(document.forms[0].elements[1].value != "secret") fail(87);
 
 // prototype objects, use the Circle model
@@ -525,15 +534,15 @@ a.firstLast();
 if(a.join('zz') != "25zz21zz17") fail(97);
 
 // check some of the element tags
-with(document.questionnaire) {
+with(document.forms[0]) {
 if(!(dog.checked && dog.defaultChecked)) fail(100);
 if(cat.checked || cat.defaultChecked) fail(101);
 if(dog.type != "checkbox" || money.type != "radio" || money.length != 4) fail(102);
-if(id.type != "hidden" || subject.type != "text") fail(103);
+if(who.type != "hidden" || subject.type != "text") fail(103);
 if(b0.type != "reset" || b1.type != "submit") fail(104);
 if(body.type != "textarea" || b.type != "button") fail(105);
 if(state.type != "select-one" || colors.type != "select-multiple") fail(106);
-if(id.defaultValue != "eklhad") fail(107);
+if(who.defaultValue != "eklhad") fail(107);
 if(body.value.substring(10,19) != "brilliant") fail(108);
 // focus and blur are ignored
 dog.focus();
@@ -547,8 +556,8 @@ if(document.getElementById("hound").name != "dog") fail(110);
 if(document.getElementById("almond") != document.spans[0]) fail(111);
 // I'm not sure of any of this table row stuff
 if(document.getElementById("pecan") != document.tables[0].rows[1]) fail(112);
-if(document.getElementById("pecan").parentNode.className != "filbert") fail(115);
-if(document.all.tags("FORM")[0] != document.questionnaire) fail(113);
+if(document.getElementById("pecan").parentNode.parentNode.class != "filbert") fail(115);
+if(document.all.tags("FORM")[0] != document.forms[0]) fail(113);
 if(document.all.tags("span").length != 2) fail(114);
 
 n = 0;
@@ -560,10 +569,10 @@ n += (j*1+2)*a[j];
 if(n != 299) fail(119);
 
 /* inline object */
-var ilo = {a:document.questionnaire, b:9+5*3};
+var ilo = {a:document.forms[0], b:9+5*3};
 if(typeof ilo.a != "object") fail(120);
 if(ilo.b != 24) fail(121);
-if(ilo.a.id.value != "eklhad") fail(122);
+if(ilo.a.who.value != "eklhad") fail(122);
 
 /* the URL class, most of the setters are in startwindow.js */
 /* malformed url, not sure what to do here */
@@ -602,7 +611,7 @@ if(document.head.id != "boom") fail(142);
 if(document.getElementsByTagName("head")[0].id != "boom") fail(143);
 
 function submitFunction(me) {
-if(document.questionnaire != me) fail(123);
+if(document.forms[0] != me) fail(123);
 var where = prompt("Enter m for mail, w for web, a to autosubmit, x to abort.", "x");
 me.action =
 (where == 'm' ? "mailto:eklhad@gmail.com" : "http://localhost:1200/foobar");
@@ -648,33 +657,38 @@ olist[3] = oo;
 }
 }
 
-function bodyLoad() { alert("body loading"); }
+function bodyLoad() {
+alert("body loading");
+var e = document.createEvent();
+e.type = "snork";
+document.dispatchEvent(e);
+}
 function bodyUnload() {
 if(confirm("Go to the edbrowse home page?"))
 new Window("http://edbrowse.org");
 else alert("ok, never mind");
 }
 function formLoad(name) { onlv++; alert("form " + name + " loading");
-var t = document.createTextNode("Created text before ");
+var t = document.createTextNode("Created Text");
 document.body.appendChild(t);
 var s = document.createElement("script");
 s.data = "lastScript()";
 document.body.appendChild(s);
 }
 function formUnload(name) { alert("form " + name + " unloading"); }
-function docLoad() { alert("doc loader attached"); }
-document.attachEvent("onload", docLoad);
+function docLoad() { alert("document loading"); }
+document.addEventListener("snork", docLoad, true);
 var onlv = 77;
 
 /* last script to run automatically; loaded by the form.onload function */
 function lastScript() {
-document.writeln("Created script running");
+document.writeln(" Last Script");
 }
 
 setTimeout("joker()", 30000);
 function joker() {
 alert("30 seconds have passed!");
-var j = document.createTextNode(" And some extra text");
+var j = document.createTextNode(" And the timer text");
 document.body.appendChild(j);
 }
 
@@ -683,7 +697,7 @@ if(!document.getElementById("sphere").innerHTML.match(/^Surface area/))
 fail(145);
 album = document.getElementById("album");
 album.innerHTML =
-"Why don't we do it <A href=http://en.wikipedia.org/wiki/White_album style='color: red ;illegal;legit3:okay;'>in the road</A>?";
+"Why don't we do it <A title=White href=http://en.wikipedia.org/wiki/White_album style='color: red ;illegal;legit3:okay;'>in the road</A>?";
 /* all the js objects associated with this html should be here */
 var aa = album.getElementsByTagName("a")[0];
 if(!aa.href.match(/wikipedia.org/))
@@ -836,6 +850,37 @@ fail(162);
 if(document.metas[1].content != "Snoopy")
 fail(163);
 // add tests for getAttribute etc, once Meta is actually a class in startwindow.js.
+
+if(document.defaultView.getComputedStyle(document.getElementById("almond"),'').whiteSpace != 'snork "')
+fail(164);
+
+if(document.body.style.color != "black") fail(165);
+if(document.body.style.fontSize != "1.0em") fail(169);
+if(querySelector(".filbert #pecan").nodeName != "TR")
+fail(170);
+if(querySelector("text + #bird").nodeName != "INPUT")
+fail(171);
+document.body.style.cssText = "ele-fitz:ger' a'ld";
+if(document.body.style.eleFitz != "ger ald")
+fail(172);
+if(document.getElementsByClassName("inject")[0].firstChild.data != "My ")
+fail(173);
+if(document.spans[0].lastChild.data != " zip")
+fail(174);
+
+// Create a frame and access something from its window.
+(function() {
+var fn = document.createElement("iframe");
+if(fn.contentWindow.height !== 768) fail(167);
+if(fn.contentDocument.style.bgcolor !== "white") fail(168);
+// This function produces a memory leak; the window goes away
+// when this function goes away, but edbrowse retains it via
+// context0 in jseng-duk.c.
+// Well it does go away when the window closes, I suppose that's good enough.
+})();
+
+if(querySelector(".inject").firstChild.style.display != "round") fail(175);
+if(document.body.style.fly) fail(176);
 
 </script>
 

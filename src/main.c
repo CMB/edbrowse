@@ -5,16 +5,16 @@
 
 #include "eb.h"
 
-#include <sys/stat.h>
 #include <pthread.h>
 #include <pcre.h>
+#include <signal.h>
 
 /* Define the globals that are declared in eb.h. */
 /* See eb.h for descriptive comments. */
 
 const char *progname;
 const char eol[] = "\r\n";
-const char *version = "3.6.3+";
+const char *version = "3.7.3";
 char *changeFileName;
 char *configFile, *addressFile, *cookieFile;
 char *mailDir, *mailUnread, *mailStash, *mailReply;
@@ -22,12 +22,11 @@ char *recycleBin, *sigFile, *sigFileEnd;
 char *cacheDir;
 int cacheSize = 1000, cacheCount = 10000;
 char *ebTempDir, *ebUserDir;
-char *userAgents[10];
-char *currentAgent, *currentReferrer;
+char *userAgents[MAXAGENT + 1];
+char *currentAgent;
 bool allowRedirection = true, allowJS = true, sendReferrer = true;
 bool allowXHR = true;
 bool ftpActive;
-int jsPool = 32;
 int webTimeout = 20, mailTimeout = 0;
 int displayLength = 500;
 int verifyCertificates = 1;
@@ -59,18 +58,21 @@ static int javaDisCount;
 static struct DBTABLE dbtables[MAXDBT];
 static int numTables;
 volatile bool intFlag;
+bool curlActive;
 bool ismc, isimap, passMail;
 char whichproc = 'e';		// edbrowse
 bool inInput, listNA;
 int fileSize;
 char *dbarea, *dblogin, *dbpw;	/* to log into the database */
 bool fetchBlobColumns;
-bool caseInsensitive, searchStringsAll;
+bool caseInsensitive, searchStringsAll, searchWrap = true;
 bool binaryDetect = true;
 bool inputReadLine;
+bool curlAuthNegotiate = false;
 int context = 1;
 pst linePending;
 struct ebSession sessionList[MAXSESSION], *cs;
+int maxSession;
 static pthread_mutex_t share_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #define MAXNOJS 500
@@ -100,8 +102,7 @@ const char *mailRedirect(const char *to, const char *from,
 
 	for (f = mailFilters; f->match; ++f) {
 		const char *m = f->match;
-		int mlen = strlen(m);
-		int j, k;
+		int k, mlen = strlen(m);
 
 		r = f->redirect;
 
@@ -211,9 +212,8 @@ static void catchSig(int n)
 
 bool isSQL(const char *s)
 {
-	char c;
-	const char *c1 = 0, *c2 = 0;
-	c = *s;
+	char c = *s;
+	const char *c1 = 0;
 
 	if (!sqlPresent)
 		goto no;
@@ -221,10 +221,11 @@ bool isSQL(const char *s)
 	if (isURL(s))
 		goto no;
 
+// look for word] or word:word]
 	if (!isalphaByte(c))
 		goto no;
 
-	for (++s; c = *s; ++s) {
+	for (++s; (c = *s); ++s) {
 		if (c == '_')
 			continue;
 		if (isalnumByte(c))
@@ -235,10 +236,8 @@ bool isSQL(const char *s)
 			c1 = s;
 			continue;
 		}
-		if (c == ']') {
-			c2 = s;
+		if (c == ']')
 			goto yes;
-		}
 	}
 
 no:
@@ -319,14 +318,7 @@ void eb_curl_global_init(void)
 	global_http_handle = curl_easy_init();
 	if (global_http_handle == NULL)
 		goto libcurl_init_fail;
-	if (sslCerts) {
-		curl_init_status =
-		    curl_easy_setopt(global_http_handle, CURLOPT_CAINFO,
-				     sslCerts);
-		if (curl_init_status != CURLE_OK)
-			goto libcurl_init_fail;
-	}
-	if (cookieFile && whichproc == 'e') {
+	if (cookieFile && !ismc) {
 		curl_init_status =
 		    curl_easy_setopt(global_http_handle, CURLOPT_COOKIEJAR,
 				     cookieFile);
@@ -343,6 +335,7 @@ void eb_curl_global_init(void)
 			     global_share_handle);
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
+	curlActive = true;
 	return;
 
 libcurl_init_fail:
@@ -359,8 +352,10 @@ void ebClose(int n)
 {
 	bg_jobs(true);
 	dbClose();
-	js_shutdown();
-	eb_curl_global_cleanup();
+	if (curlActive) {
+		mergeCookies();
+		eb_curl_global_cleanup();
+	}
 	exit(n);
 }				/* ebClose */
 
@@ -394,8 +389,7 @@ static void setupEdbrowseTempDirectory(void)
 /* no such directory, try to make it */
 /* this temp edbrowse directory is used by everyone system wide */
 		if (mkdir(ebTempDir, 0777)) {
-			if (whichproc == 'e')
-				i_printf(MSG_TempDir, ebTempDir);
+			i_printf(MSG_TempDir, ebTempDir);
 			ebTempDir = 0;
 			return;
 		}
@@ -408,8 +402,7 @@ static void setupEdbrowseTempDirectory(void)
 	if (fileTypeByName(ebUserDir, false) != 'd') {
 /* no such directory, try to make it */
 		if (mkdir(ebUserDir, 0700)) {
-			if (whichproc == 'e')
-				i_printf(MSG_TempDir, ebUserDir);
+			i_printf(MSG_TempDir, ebUserDir);
 			ebUserDir = 0;
 			return;
 		}
@@ -431,7 +424,7 @@ static void setupEdbrowseTempDirectory(void)
 int main(int argc, char **argv)
 {
 	int cx, account;
-	bool rc, doConfig = true;
+	bool rc, doConfig = true, autobrowse = false;
 	bool dofetch = false, domail = false;
 	static char agent0[64] = "edbrowse/";
 
@@ -442,6 +435,7 @@ int main(int argc, char **argv)
 #endif // !_MSC_VER
 
 	selectLanguage();
+	setHTTPLanguage(eb_language);
 
 /* Establish the home directory, and standard edbrowse files thereunder. */
 	home = getenv("HOME");
@@ -529,25 +523,6 @@ int main(int argc, char **argv)
 	progname = argv[0];
 	++argv, --argc;
 
-// look for --mode on the arg list.
-	if (stringEqual(argv[0], "--mode")) {
-		char *m;
-		if (argc == 1)
-			i_printfExit(MSG_Usage);
-		m = argv[1];
-		argv += 2;
-		argc -= 2;
-		if (stringEqual(m, "js"))
-			whichproc = 'j';
-		else if (stringEqual(m, "curl"))
-			whichproc = 'c';
-		else
-			i_printfExit(MSG_Usage);
-	}
-
-	if (whichproc == 'j')
-		return js_main(argc, argv);
-
 	ttySaveSettings();
 	initializeReadline();
 
@@ -556,21 +531,17 @@ int main(int argc, char **argv)
 	pcre_free = nzFree;
 
 	if (argc && stringEqual(argv[0], "-c")) {
-		if (argc == 1)
+		if (argc == 1) {
 			*argv = configFile;
-		else
-			++argv, --argc;
-		doConfig = false;
-	} else {
-		readConfigFile();
+			doConfig = false;
+		} else {
+			configFile = argv[1];
+			argv += 2, argc -= 2;
+		}
 	}
+	if (doConfig)
+		readConfigFile();
 	account = localAccount;
-
-// With config file read, we can now set up the global http handle
-// with certificate file and cookie jar etc.
-	eb_curl_global_init();
-	cookiesFromJar();
-	setupEdbrowseCache();
 
 	for (; argc && argv[0][0] == '-'; ++argv, --argc) {
 		char *s = *argv;
@@ -593,6 +564,11 @@ int main(int argc, char **argv)
 
 		if (stringEqual(s, "e")) {
 			errorExit = true;
+			continue;
+		}
+
+		if (stringEqual(s, "b")) {
+			autobrowse = true;
 			continue;
 		}
 
@@ -620,6 +596,7 @@ int main(int argc, char **argv)
 			if (!*s) {
 				ismc = true;	/* running as a mail client */
 				allowJS = false;	/* no javascript in mail client */
+				eb_curl_global_init();
 				++argv, --argc;
 				if (!argc || !dofetch)
 					break;
@@ -628,9 +605,6 @@ int main(int argc, char **argv)
 
 		i_printfExit(MSG_Usage);
 	}			/* options */
-
-	if (!sslCerts && doConfig && debugLevel >= 1)
-		i_puts(MSG_NoCertFile);
 
 	srand(time(0));
 
@@ -698,47 +672,82 @@ int main(int argc, char **argv)
 	}
 
 	signal(SIGINT, catchSig);
-#ifndef _MSC_VER		// port siginterrupt(SIGINT, 1); signal(SIGPIPE, SIG_IGN);, if required
-	siginterrupt(SIGINT, 1);
-	signal(SIGPIPE, SIG_IGN);
-#endif // !_MSC_VER
 
 	cx = 0;
 	while (argc) {
 		char *file = *argv;
+		char *file2 = NULL;	// will be allocated
 		++cx;
 		if (cx == MAXSESSION)
 			i_printfExit(MSG_ManyOpen, MAXSESSION);
 		cxSwitch(cx, false);
 		if (cx == 1)
 			runEbFunction("init");
-		changeFileName = 0;
-		cf->fileName = cloneString(file);
-		cf->firstURL = cloneString(file);
-		if (isSQL(file))
-			cw->sqlMode = true;
-		rc = readFileArgv(file);
-		if (fileSize >= 0)
-			debugPrint(1, "%d", fileSize);
-		fileSize = -1;
-		if (!rc) {
-			showError();
-		} else if (changeFileName) {
-			nzFree(cf->fileName);
-			cf->fileName = changeFileName;
-			changeFileName = 0;
+
+// function on the command line
+		if (file[0] == '<') {
+			runEbFunction(file + 1);
+			++argv, --argc;
+			continue;
 		}
 
-		cw->undoable = cw->changeMode = false;
-/* Browse the text if it's a url */
-		if (rc && isURL(cf->fileName) &&
-		    (cf->mt && cf->mt->outtype
-		     || isBrowseableURL(cf->fileName))) {
-			if (runCommand("b"))
-				debugPrint(1, "%d", fileSize);
+		changeFileName = 0;
+		file2 = allocMem(strlen(file) + 10);
+// Every URL needs a protocol.
+		if (missingProtURL(file))
+			sprintf(file2 + 2, "http://%s", file);
+		else
+			strcpy(file2 + 2, file);
+		file = file2 + 2;
+
+		if (autobrowse) {
+			const struct MIMETYPE *mt;
+			uchar sxfirst = 0;
+			if (isURL(file))
+				mt = findMimeByURL(file, &sxfirst);
 			else
+				mt = findMimeByFile(file);
+			if (mt && !mt->outtype)
+				playBuffer("pb", file);
+			else {
+				file2[0] = 'b';
+				file2[1] = ' ';
+				if (runCommand(file2))
+					debugPrint(1, "%d", fileSize);
+				else
+					showError();
+			}
+
+		} else {
+
+			cf->fileName = cloneString(file);
+			cf->firstURL = cloneString(file);
+			if (isSQL(file))
+				cw->sqlMode = true;
+			rc = readFileArgv(file, 0);
+			if (fileSize >= 0)
+				debugPrint(1, "%d", fileSize);
+			fileSize = -1;
+			if (!rc) {
 				showError();
+			} else if (changeFileName) {
+				nzFree(cf->fileName);
+				cf->fileName = changeFileName;
+				changeFileName = 0;
+			}
+			cw->undoable = cw->changeMode = false;
+/* Browse the text if it's a url */
+			if (rc && isURL(cf->fileName)
+			    && ((cf->mt && cf->mt->outtype)
+				|| isBrowseableURL(cf->fileName))) {
+				if (runCommand("b"))
+					debugPrint(1, "%d", fileSize);
+				else
+					showError();
+			}
 		}
+
+		nzFree(file2);
 		++argv, --argc;
 	}			/* loop over files */
 	if (!cx) {		/* no files */
@@ -871,7 +880,7 @@ bool runEbFunction(const char *line)
 	fncopy = cloneString(ip);
 	ip = fncopy;
 
-	while (code = *ip) {
+	while ((code = *ip)) {
 		if (intFlag) {
 			setError(MSG_Interrupted);
 			goto fail;
@@ -1052,10 +1061,9 @@ void unreadConfigFile(void)
 
 	webTimeout = mailTimeout = 0;
 	displayLength = 500;
-	jsPool = 32;
 
 	setDataSource(NULL);
-	setHTTPLanguage(NULL);
+	setHTTPLanguage(eb_language);
 	deleteNovsHosts();
 }				/* unreadConfigFile */
 
@@ -1074,19 +1082,19 @@ static const char *const keywords[] = {
 	"downdir", "maildir", "agent",
 	"jar", "nojs", "cachedir",
 	"webtimer", "mailtimer", "certfile", "datasource", "proxy",
-	"linelength", "localizeweb", "jspool", "novs", "cachesize",
+	"linelength", "localizeweb", "notused33", "novs", "cachesize",
 	"adbook", 0
 };
 
 /* Read the config file and populate the corresponding data structures. */
 /* This routine succeeds, or aborts via one of these macros. */
-#define cfgAbort0(m) { i_printf(m); nl(); return false; }
-#define cfgAbort1(m, arg) { i_printf(m, arg); nl(); return false; }
-#define cfgLine0(m) { i_printf(m, ln); nl(); return false; }
-#define cfgLine1(m, arg) { i_printf(m, ln, arg); nl(); return false; }
-#define cfgLine1a(m, arg) { i_printf(m, arg, ln); nl(); return false; }
+#define cfgAbort0(m) { i_printf(m); nl(); return; }
+#define cfgAbort1(m, arg) { i_printf(m, arg); nl(); return; }
+#define cfgLine0(m) { i_printf(m, ln); nl(); return; }
+#define cfgLine1(m, arg) { i_printf(m, ln, arg); nl(); return; }
+#define cfgLine1a(m, arg) { i_printf(m, arg, ln); nl(); return; }
 
-bool readConfigFile(void)
+void readConfigFile(void)
 {
 	char *buf, *s, *t, *v, *q;
 	int buflen, n;
@@ -1107,10 +1115,11 @@ bool readConfigFile(void)
 
 	unreadConfigFile();
 
-	if (!fileTypeByName(configFile, false))
-		return true;	/* config file not present */
-	if (!fileIntoMemory(configFile, &buf, &buflen))
-		showErrorAbort();
+	if (!fileIntoMemory(configFile, &buf, &buflen)) {
+		i_printf(MSG_NoConfig, configFile);
+		return;
+	}
+
 /* An extra newline won't hurt. */
 	if (buflen && buf[buflen - 1] != '\n')
 		buf[buflen++] = '\n';
@@ -1417,7 +1426,6 @@ putc:
 
 		case 11:	/* protocol */
 			mt->prot = v;
-			mt->stream = true;
 			continue;
 
 		case 12:	/* program */
@@ -1463,9 +1471,9 @@ putc:
 		case 19:	/* keycol */
 			if (!isdigitByte(*v))
 				cfgLine0(MSG_EBRC_KeyNotNb);
-			td->key1 = strtol(v, &v, 10);
+			td->key1 = (uchar) strtol(v, &v, 10);
 			if (*v == ',' && isdigitByte(v[1]))
-				td->key2 = strtol(v + 1, &v, 10);
+				td->key2 = (uchar) strtol(v + 1, &v, 10);
 			if (td->key1 > td->ncols || td->key2 > td->ncols)
 				cfgLine1(MSG_EBRC_KeyOutRange, td->ncols);
 			continue;
@@ -1493,11 +1501,11 @@ putc:
 			continue;
 
 		case 22:	/* agent */
-			for (j = 0; j < 10; ++j)
+			for (j = 0; j < MAXAGENT; ++j)
 				if (!userAgents[j])
 					break;
-			if (j == 10)
-				cfgLine0(MSG_EBRC_ManyAgents);
+			if (j == MAXAGENT)
+				cfgLine1(MSG_EBRC_ManyAgents, MAXAGENT);
 			userAgents[j] = v;
 			continue;
 
@@ -1587,14 +1595,6 @@ putc:
 			setHTTPLanguage(v);
 			continue;
 
-		case 33:	/* jspool */
-			jsPool = atoi(v);
-			if (jsPool < 2)
-				jsPool = 2;
-			if (jsPool > 1000)
-				jsPool = 1000;
-			continue;
-
 		case 34:	/* novs */
 			if (*v == '.')
 				++v;
@@ -1649,12 +1649,12 @@ nokeyword:
 			continue;
 		}
 
-		if (stringEqual(s, "download") && mimeblock == 1) {
-			mt->download = true;
+		if (stringEqual(s, "from_file") && mimeblock == 1) {
+			mt->from_file = true;
 			continue;
 		}
-		if (stringEqual(s, "stream") && mimeblock == 1) {
-			mt->stream = true;
+		if (stringEqual(s, "down_url") && mimeblock == 1) {
+			mt->down_url = true;
 			continue;
 		}
 
@@ -1676,13 +1676,15 @@ nokeyword:
 					cfgLine0(MSG_EBRC_NoReply);
 				if (act->secure)
 					act->inssl = act->outssl = 1;
-				if (!act->inport)
-					if (act->secure)
+				if (!act->inport) {
+					if (act->secure) {
 						act->inport =
 						    (act->imap ? 993 : 995);
-					else
+					} else {
 						act->inport =
 						    (act->imap ? 143 : 110);
+					}
+				}
 				if (!act->outport)
 					act->outport = (act->secure ? 465 : 25);
 				continue;
@@ -1822,10 +1824,6 @@ putback:
 	if (mailblock | mimeblock)
 		cfgAbort0(MSG_EBRC_MNotClosed);
 
-	if (!sslCerts)
-		verifyCertificates = 0;
-
 	if (maxAccount && !localAccount)
 		localAccount = 1;
-	return true;
 }				/* readConfigFile */

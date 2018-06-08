@@ -1,10 +1,10 @@
 EOF - koniec pliku
 brak pliku
 przekierowanie
-globalne podstawienia
 lokalne podstawienia
-wielkość liter nieistotna
+globalne podstawienia
 wielkość liter istotna
+wielkość liter nieistotna
 katalogi tylko do odczytu
 katalogi z prawem zapisu
 katalogi z prawem zapisu (wraz z usuwaniem)
@@ -23,11 +23,11 @@ nie weryfikuj połączeń SSL (mniej bezpieczne)
 weryfikuj połączenia SSL
 nie pokazuj ukrytych plików w trybie katalogu
 pokazuj ukryte pliki w trybie katalogu
-Nie można utworzyć procesu potomnego dla edbrowse-js, JavaScript został wyłączony.
-Nie można wykonać polecenia edbrowse-js, JavaScript został wyłączony.
+0
+0
 znaczniki końca linii wyłączone
-znaczniki końca linii włączone dla wyświetlonych linii
 znaczniki końca linii włączone
+brak polu nadawcy
 JavaScript wyłączony, brak akcji
 JavaScript wyłączony, idziemy wprost pod URL
 przekierowanie przerwane przez użytkownika
@@ -44,7 +44,7 @@ brak słów kluczowych
 sesja %d\n
 Odnośnik SendMail. Stwórz wiadomość, wpisz 'sm' by wysłać, potem '^' by wrócić
 wiersz %d został zaktualizowany\n
-h\twyświetl pomoc.\nq\tzakończ ten program.\ns\tzakończ odczyt tego katalogu.\nn\tidź do następnej wiadomości.\nd\tusuń tę wiadomość.\nm\tprzenieś tę wiadomość do innego katalogu.\nspacja\twczytaj wiadomość i zarządzaj nią.\n/\tszukaj słów w temacie, polu nadawcy lub treści.\nl\tustaw limit pobierania IMAP.
+h\twyświetl pomoc\nq\tzakończ ten program\ns\tzakończ odczyt tego katalogu\nn\tidź do następnej wiadomości\nd\tusuń tę wiadomość\nm\tprzenieś tę wiadomość do innego katalogu\nspacja\twczytaj wiadomość i zarządzaj nią\n/\tszukaj słów w temacie, polu nadawcy lub treści\nl\tustaw limit pobierania IMAP
 s string, wiadomości zawierające 'string' w temacie\nf string, wiadomości zawierające 'string' w polu nadawcy\nb string, wiadomości zawierające 'string' w treści\ngdy brak literowego polecenia, szukaj domyślnie w temacie.
 brak wiadomości
 przerwanie, wpisz 'qt' by zakończyć
@@ -59,7 +59,7 @@ Nazwa użytkownika:
 nazwa użytkownika zbyt długa, ograniczenie do %d znaków
 Hasło: 
 hasło zbyt długie, ograniczenie do %d znaków
-Nie można skomunikować się z edbrowse-js, JavaScript został wyłączony.
+%s
 uwaga, katalog jest niedostępny - lista zawartości będzie pusta
 katastrofa, długość wiadomości o błędzie %d - zbyt duża
 wiersz %d: 
@@ -95,9 +95,9 @@ nie można utworzyć pliku %s, załącznik odrzucony\n
 nie można zapisać pliku %s, załącznik odrzucony\n
 brak poczty
 %d wiadomości\n
-Komunikacja między procesami JavaScript jest rozsynchronizowana.
+nie można otworzyć plik konfiguracyjny %s\n
 niedozwolone znaki po poleceniu 'ls'
-h\twydrukuj ten wątek pomocy.\nq\tzakończ ten program.\nspacja\tczytaj więcej z tej wiadomości.\nn\tprzejdź do następnej wiadomości pocztowej.\nd\tusuń tę wiadomość.\nw\tzapisz tę wiadomość do pliku i usuń ją.\nu\tzapisz tę wiadomość do pliku w postaci niesformatowanej i usuń ją.
+h\twydrukuj ten wątek pomocy\nq\tzakończ ten program\nspacja\tczytaj więcej z tej wiadomości\nn\tprzejdź do następnej wiadomości pocztowej\nd\tusuń tę wiadomość\nw\tzapisz tę wiadomość do pliku i usuń ją\nu\tzapisz tę wiadomość do pliku w postaci niesformatowanej i usuń ją
 nie można utworzyć pliku %s\n
 nie można zapisać pliku %s\n
 poczta zapisana, %d bajtów
@@ -157,8 +157,8 @@ wszystkie wiersze pasują do wzorca 'v'
 żaden z zaznaczonych wierszy nie został poprawnie zmodyfikowany
 operacja przerwana
 brak pasujących wyników
-Brak obiektów JavaScript, lub zostały one błędnie skonfigurowane. %d\n
-agent numer %c nie został zdefiniowany
+Lista zawartości tego katalogu gopher jest pusta
+agent numer %d nie został zdefiniowany
 nie można wyświetlić nowego katalogu
 nie można wykryć bieżącego katalogu
 niewłaściwy katalog
@@ -215,7 +215,7 @@ brak poprzedniego tekstu
 nieoczekiwany tekst po poleceniu 'M'
 przeniesiono do sesji %d\n
 brak poprzedniego tekstu, nie można zapisać
-nie można zastosować polecenia 'g' do zakresu
+nie można zastosować polecenia '%s' do zakresu
 polecenie 'g' niedostępne w trybie bazy danych
 nie można zastosować polecenia 'i%c' do zakresu
 nie można użyć 'i<' w poleceniu globalnym
@@ -225,7 +225,7 @@ nie można otworzyć %s
 nie można wczytać %s
 wprowadzony tekst zawiera puste znaki
 wiersz zawiera znak powrotu karetki
-pierwszy wiersz %s jest zbyt długi
+ściąganie gopher: 
 plik jest obecnie w buforze - użyj polecenia 'rf' by odświeżyć
 nie można przeglądać pliku binarnego
 nie można przeglądać pustego pliku
@@ -234,7 +234,7 @@ już przeglądasz
 etykieta %s nie znaleziona
 'i' nie znalezione w trybie przeglądania
 nie można wywołać polecenia wstawienia z funkcji edbrowse
-Nie można skomunikować się z edbrowse-js, JavaScript został zamknięty.
+wiersze od z %d na %d zostały zaktualizowane\n
 polecenie %c nie zaimplementowane
 %d jest poza zakresem
 żadna opcja nie zawiera ciągu %s
@@ -260,8 +260,8 @@ akcja tego formularza nie jest URLem
 JavaScript jest wyłączony, nie można aktywować formularza
 Ten formularz zmienił się z http na https i nie jest teraz bezpieczny
 nie można wysłać używając protokołu %s
-%d jest poza zakresem, używaj %c1 do %c%d
-%d jest poza zakresem, użyj %c1 lub po prostu %c
+%d jest poza zakresem, używaj %s1 do %s%d
+%d jest poza zakresem, użyj %s1 lub po prostu %s
 nie można zamienić wielu instancji pustego ciągu znaków
 anulowano pobieranie.
 brak wyrażenia regularnego po %c
@@ -279,21 +279,21 @@ pole wprowadzania nie może zawierać znaków końca linii
 brak pól wprowadzania
 brak odnośników
 brak przycisków
-wiele pól wprowadzania obecnych, użyj %c1 do %c%d
-wiele odnośników obecnych, użyj %c1 do %c%d
-wiele przycisków obecnych, użyj %c1 do %c%d
+wiele pól wprowadzania obecnych, użyj %s1 do %s%d
+wiele odnośników obecnych, użyj %s1 do %s%d
+wiele przycisków obecnych, użyj %s1 do %s%d
 nie udało się wczytać danych z serwera
 %s nie jest URLem
 pobieranie zakończone.
 nie można zidentyfikować %s w sieci
-protokół %s nie jest wspierany przez edbrowse i nie jest zawarty w typach MIME w pliku konfiguracyjnym
+protokół %s nie jest wspierany przez edbrowse
 uwaga: nie można załadować <bufora %d> z tekstem początkowym\n
 pobieranie w toku
 nie można się połączyć z %s
 pobieranie: 
 Ceryfikat hosta %s nie mógł być zweryfikowany - połączenie SSL anulowane
 nie można odczytać
-h\tpokaż treść tej pomocy.\nq\tzakończ ten program.\nspace\tprzeczytaj dalszą część tej wiadomości.\nn\tprzejdź do następnej wiadomości.\nd\tusuń tę wiadomość.\nw\tzapisz tę wiadomość do pliku.\nW\tzapisz tę wiadomość do pliku i usuń ją.\nu\tzapisz tę wiadomość do pliku w postaci niesformatowanej.\nU\tzapisz tę wiadomość do pliku w postaci niesformatowanej i usuń ją.\na\tprzeskanuj i zapisz załączniki.\ns\tzakończ czytanie poczty z tego katalogu.
+h\tpokaż treść tej pomocy\nq\tzakończ ten program\nspace\tprzeczytaj dalszą część tej wiadomości\nn\tprzejdź do następnej wiadomości\nd\tusuń tę wiadomość\nw\tzapisz tę wiadomość do pliku\nW\tzapisz tę wiadomość do pliku i usuń ją\nu\tzapisz tę wiadomość do pliku w postaci niesformatowanej\nU\tzapisz tę wiadomość do pliku w postaci niesformatowanej i usuń ją\na\tprzeskanuj i zapisz załączniki\ns\tzakończ czytanie poczty z tego katalogu
 strona wymaga autoryzacji
 logowanie anulowane
 fraza wyszukiwania nie może zawierać cudzysłowów
@@ -305,7 +305,7 @@ niepowodzenie
 ftp: nie można połączyć się ze zdalnym hostem
 ftp: transfer zakończony niepowodzeniem
 brak katalogów
-Wybierz katalog wg. numeru lub części nazwy.\nPoprzedź '-' by wyświetlić jedynie nieprzeczytane wiadomości. 'q' by zakończyć. 'l' by zmienić limity pobierania.
+Wybierz katalog wg. numeru lub części nazwy.\n'q' by zakończyć, 'rf' by odświeżyć, 'l' by zmienić limity pobierania.
 w toku
 stop
 pobierz %d na raz\n
@@ -431,26 +431,26 @@ sprawdzić naruszenie więzów
 przekroczenie czasu dostępu do bazy danych
 nie można zmodyfikować widoku
 pole włączony
+SPNEGO curl włączony
+SPNEGO curl wyłączony
+nie można pobrać lokalnego CSS\n
+nie można pobrać CSS z %s, kod %ld\n
+nie można pobrać CSS\n
 0
 0
 0
 0
 0
 0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
+wiersze od %d jak i %d zostały dodane\n
+wiersze od %d jak i %d do %d zostały dodane\n
+wiersze od %d do %d jak i %d zostały dodane\n
+wiersze od %d jak i %d zostały zaktualizowane\n
+wiersze od %d jak i %d do %d zostały zaktualizowane\n
+wiersze od %d do %d jak i %d zostały zaktualizowane\n
+wiersze od %d jak i %d zostało usuniętych\n
+wiersze od %d jak i %d do %d zostało usuniętych\n
+wiersze od %d do %d jak i %d zostało usuniętych\n
 0
 0
 0
@@ -465,9 +465,9 @@ uwaga, JavaScript nie może być wywołany podwójnym kliknięciem
 błąd użycia opcji %s podczas synchronizacji lub wysyłania formularza
 xhr włączony
 xhr wyłączony
-nie można pobrać lokalnego JavaScriptu, %s\n
+nie można pobrać lokalnego JavaScriptu\n
 nie można pobrać JavaScriptu z %s, kod %ld\n
-nie można pobrać JavaScriptu, %s\n
+nie można pobrać JavaScriptu\n
 JavaScript wyłączony, pomijanie kodu 'onclick'
 JavaScript wyłączony, pomijanie kodu 'onchange'
 JavaScript wyłączony, pomijanie kodu 'onreset'
@@ -482,7 +482,7 @@ brak ramek do rozwinięcia
 brak ramek do zwinięcia
 wiadomości pomocnicze włączone
 ściąganie ftp: 
-nie podano pliku z certyfikatem SSL; bezpieczne połączenie nie może zostać zweryfikowane
+anulowane
 ściąganie scp: 
 .ebrc: znaki zerowe w wierszu %d
 .ebrc: brak nazwy funkcji w wierszu %d
@@ -505,14 +505,14 @@ nie podano pliku z certyfikatem SSL; bezpieczne połączenie nie może zostać z
 .ebrc: wiersz %d, klucz powinien być postaci 'liczba' lub 'liczba,liczba'
 .ebrc: wiersz %d, klucz poza zasięgiem; podano tylko %d kolumn
 .ebrc: książka adresowa %s nie jest regularnym plikiem
-0
+javascript błąd składniowy
 .ebrc: %s nie jest katalogiem
-.ebrc: wiersz %d, zbyt wiele agentów użytkownika, limit 9
+.ebrc: wiersz %d, zbyt wiele agentów użytkownika, limit %d
 .ebrc: plik ciastek %s nie jest regularnym plikiem
 .ebrc: nie można utworzyć pliku ciastek %s
 .ebrc: zbyt wiele dyrektyw JS, limit %d
 .ebrc: wiersz %d, domena %s nie zawiera kropki
-0
+nie można odczytać %s, (bezpieczne)
 .ebrc: plik z certyfikatem SSL %s nie jest regularnym plikiem
 .ebrc: plik z certyfikatem SSL %s nie istnieje lub nie jest do odczytu
 .ebrc: wiersz %d, słowo kluczowe %s nie jest zaimplementowane
@@ -546,7 +546,7 @@ katalog domowy nie jest zdefiniowany w zmiennej $HOME
 %s nie jest katalogiem
 nie podano kont pocztowych, sprawdź swój plik konfiguracyjny .ebrc
 nieprawidłowy numer konta, użyj numeru od 1 do %d
-edbrowse  -v    (pokaż wersję)\nedbrowse -h (ta wiadomość)\nedbrowse -c (edytuj plik konfiguracyjny)\nedbrowse [-e] [-d#] -f[#] (pobierz pocztę) \nedbrowse  [-e] [-d#] -[p]m    (czytaj nieprzeczytane wiadomości)\nedbrowse  [-e] [-d#] -[p]fm[#]    (pobierz pocztę i czytaj nieprzeczytane wiadomości)\nedbrowse  [-e] [-d#] -m[#] adres1 adres2 ... plik [+załączniki]\nedbrowse  [-e] [-d#] plik1 plik2 ...
+edbrowse  -v    (pokaż wersję)\nedbrowse -h (ta wiadomość)\nedbrowse -c (edytuj plik konfiguracyjny)\nedbrowse [-d#] -f[#] (pobierz pocztę) \nedbrowse  [-d#] -[p]m    (czytaj nieprzeczytane wiadomości)\nedbrowse  [-d#] -[p]fm[#]    (pobierz pocztę i czytaj nieprzeczytane wiadomości)\nedbrowse  [-d#] -m[#] adres1 adres2 ... plik [+załączniki]\nedbrowse  [-c konfiguracyjny] [-e] [-b] [-d#] plik1 plik2 ...
 podaj co najmniej jednego odbiorcę i plik do wysłania
 podaj co najmniej jednego odbiorcę i plik do wysłania, przed załącznikami
 zbyt wiele plików otwartych jednocześnie, limit %d
@@ -578,11 +578,11 @@ Funkcja htmlParse() nie jest wielobieżna (reentrant).
 nieoczekiwany typ danych wejściowych w funkcji submitForm()
 lista = 0 w tagFromJavaVar()
 0
-nie można zaalokować pamięci dla operacji JavaScript
-nie można utworzyć kontekstu JavaScript
-nie można utworzyć obiektu 'window' JavaScript
 0
-nie można utworzyć obiektu 'document' JavaScript
+nie można utworzyć kontekstu JavaScript
+0
+0
+0
 0
 0
 błąd alokacji %zu bajtów
@@ -641,7 +641,7 @@ tabela
 wyrażenie SQL nie jest zakończone średnikiem, lub prawym nawiasem w następnej linii
 wyrażenie 'update' lub 'delete' bez opcji 'where'
 odmowa zdalnego dostępu
-Autoryzacja wymagana aby odczytac %s
+Autoryzacja wymagana aby odczytac %s (%s)
 operacja zakończona niepowodzeniem z powodu błędu alokacji pamięci
 Twoja wersja libcurl jest starsza niż %u.%u.%u.\nMusisz zaktualizować by używać edbrowse
 przekroczenie czasu wykonania operacji
@@ -654,6 +654,6 @@ błąd połączenia SSL w libcurl: %s
 konsola wejścia (tty)
 wejście readline()
 0
-Nienaprawialny błąd JavaScript w bieżącej sesji, JavaScript został zamknięty
+0
 Wykonanie polecenia zakończone niepowodzeniem, system() zwrócił %d
 0
