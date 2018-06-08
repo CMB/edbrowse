@@ -1,4 +1,3 @@
-# coding: utf-8
 EOF - конец файла
 нет файла
 перенаправлить
@@ -432,11 +431,17 @@ $%s не определен
 таймаут базы данных
 не можна модифицировать вида
 поле отключенное
-0
-0
-0
-0
-0
+SPNEGO curl auth disabled
+SPNEGO curl auth enabled
+could not fetch local CSS\n
+could not fetch CSS from %s, code %ld\n
+could not fetch CSS\n
+don't deminimize javascript
+deminimize javascript
+debug js errors disabled
+debug js errors enabled
+debug css disabled
+debug css enabled
 lines %d and %d have been added\n
 lines %d and %d through %d have been added\n
 lines %d through %d and %d have been added\n
@@ -446,28 +451,13 @@ lines %d through %d and %d have been updated\n
 lines %d and %d have been deleted\n
 lines %d and %d through %d have been deleted\n
 lines %d through %d and %d have been deleted\n
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
+plugin must run from a local file
+plugin is a converter, not a player
+plugin is a player, not a converter
+hide hover text
+show hover text
+batch 
+from %s 
 неожыданные знаки после зашифрованного подключения
 неправильные знаки в зашифрованном подключении
 команда %s не может быть исполнена глобально
@@ -492,7 +482,7 @@ JavaScript выключен, пропускаем код onsubmit
 нет рамок для сокращения
 сообщение о помощи включено
 загрузка FTP: 
-не определено файла сертификата SSL; безопасные соединения не могут быть подтверждены
+0
 загрузка SCP: 
 .ebrc: знак NULL в строке %d
 .ebrc: отсутствующее имя функции в строке %d
@@ -517,7 +507,7 @@ JavaScript выключен, пропускаем код onsubmit
 .ebrc: записная книжка %s это нет регулярный файл
 0
 .ebrc: %s это нет каталог
-.ebrc: line %d, too many user agents, limit 9
+.ebrc: line %d, too many user agents, limit %d
 .ebrc: cookie jar %s is not a regular file
 .ebrc: cannot create cookie jar %s
 .ebrc: too many no js directives, limit %d
@@ -556,7 +546,7 @@ home directory not defined by $HOME.
 %s is not a directory
 no mail accounts specified, please check your .ebrc config file
 invalid account number, please use 1 through %d
-edbrowse -v    (show version)\nedbrowse -h (this message)\nedbrowse -c (edit config file)\nedbrowse [-d#] -f[#] (fetch mail) \nedbrowse  [-d#] -[p]m    (read pending mail)\nedbrowse  [-d#] -[p]fm[#]    (fetch mail and read pending mail)\nedbrowse  [-d#] -m[#] address1 address2 ... file [+attachments]\nedbrowse  [-c configfile] [-e] [-b] [-d#] file1 file2 ...
+edbrowse  -v    (show version)\nedbrowse -h (this message)\nedbrowse -c (edit config file)\nedbrowse [-d#] -f[#] (fetch mail) \nedbrowse  [-d#] -[p]m    (read pending mail)\nedbrowse  [-d#] -[p]fm[#]    (fetch mail and read pending mail)\nedbrowse  [-d#] -m[#] address1 address2 ... file [+attachments]\nedbrowse  [-c configfile] [-e] [-b] [-d#] file1 file2 ...
 please specify at least one recipient and the file to send
 please specify at least one recipient and the file to send, before your attachments
 too many files open simultaneously, limit %d
@@ -571,15 +561,15 @@ no newline on directory entry %s
 no closing > at line %d
 fieldInBuffer could not find tag %d newtext %s
 cannot rebuild your cookie jar %s
-0
+reverse 
 fetchmail client is interactive, and cannot run in the background
 mailbox directory not specified in your .ebrc file
 Cannot change directory to %s
 0
 Invalid login or password
-0
-0
-0
+sort alphabetically
+sort by size
+sort by time
 0
 0
 tag code %d has bad character %c following
@@ -587,14 +577,14 @@ tag code %d has bad character %c following
 htmlParse() is not reentrant.
 unexpected input type in submitForm()
 list = 0 in tagFromJavaVar()
-0
-0
+debug events disabled
+debug events enabled
 Unable to create javascript context.
 0
 0
 0
-0
-0
+timers disabled
+timers enabled
 error allocating %zu bytes
 error callocating %zu bytes
 reallocMem(p,0)
@@ -611,8 +601,8 @@ calling fopen() with invalid mode %s
 misplaced / in getDirURL(%s)
 misplaced / in %s
 decodePostData(0,0)
-0
-0
+search without wrap
+search with wrap
 0
 cannot reply in directory mode
 cannot reply in database mode
