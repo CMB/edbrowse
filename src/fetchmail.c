@@ -143,7 +143,7 @@ static int imapfetch = 100;
 
 static void setLimit(const char *t)
 {
-	skipWhite2(&t);
+	skipWhite(&t);
 	if (!isdigit(*t)) {
 		i_puts(MSG_NumberExpected);
 		return;
@@ -288,7 +288,7 @@ static struct FOLDER *folderByName(char *line)
 	struct FOLDER *f;
 	int cnt = 0;
 
-	trimWhite(line);
+	stripWhite(line);
 	if (!line[0])
 		return 0;
 
@@ -409,8 +409,7 @@ static bool imapSearch(CURL * handle, struct FOLDER *f, char *line)
 		return false;
 	}
 
-	skipWhite2(&line);
-	trimWhite(line);
+	stripWhite(line);
 	if (!line[0]) {
 		i_puts(MSG_Empty);
 		return false;
@@ -1266,7 +1265,8 @@ imap_done:
 input:
 		if (!fgets(inputline, sizeof(inputline), stdin))
 			goto imap_done;
-		trimWhite(inputline);
+		stripWhite(inputline);
+
 		if (stringEqual(inputline, "rf")) {
 refresh:
 			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, 0);
@@ -1276,10 +1276,12 @@ refresh:
 			setFolders(handle);
 			goto input;
 		}
+
 		if (stringEqual(inputline, "q")) {
 			i_puts(MSG_Quit);
 			goto imap_done;
 		}
+
 		t = inputline;
 		if (t[0] == 'd' && t[1] == 'b' && isdigit(t[2]) && !t[3]) {
 			debugLevel = t[2] - '0';
@@ -1287,48 +1289,79 @@ refresh:
 					 (debugLevel >= 4));
 			goto input;
 		}
+
 		if (*t == 'l' && isspace(t[1])) {
 			setLimit(t + 1);
 			goto input;
 		}
+
 		if (!strncmp(t, "create ", 7)) {
+			char *w;
 			t += 7;
-			trimWhite(t);
+			stripWhite(t);
 			if (!*t)
 				goto input;
-			if (asprintf(&t, "CREATE \"%s\"", t) < 0)
+			if (asprintf(&w, "CREATE \"%s\"", t) < 0)
 				goto imap_done;
-			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
+			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, w);
 			res = getMailData(handle);
+			free(w);
 			nzFree(mailstring);
 			if (res != CURLE_OK) {
 				i_printf(MSG_NoCreate2, t);
 				nl();
-				free(t);
 				goto input;
 			}
-			free(t);
 			goto refresh;
 		}
+
 		if (!strncmp(t, "delete ", 7)) {
+			char *w;
 			t += 7;
-			trimWhite(t);
+			stripWhite(t);
 			if (!*t)
 				goto input;
-			if (asprintf(&t, "DELETE \"%s\"", t) < 0)
+			if (asprintf(&w, "DELETE \"%s\"", t) < 0)
 				goto imap_done;
-			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
+			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, w);
 			res = getMailData(handle);
+			free(w);
 			nzFree(mailstring);
 			if (res != CURLE_OK) {
 				i_printf(MSG_NoAccess, t);
 				nl();
-				free(t);
 				goto input;
 			}
-			free(t);
 			goto refresh;
 		}
+
+		if (!strncmp(t, "rename ", 7)) {
+			char *u, *w;
+			t += 7;
+			stripWhite(t);
+			if (!*t)
+				goto input;
+			u = strchr(t, ' ');
+			if (!u)
+				goto input;
+			*u++ = 0;
+			stripWhite(u);
+			if (!*u)
+				goto input;
+			if (asprintf(&w, "RENAME \"%s\" \"%s\"", t, u) < 0)
+				goto imap_done;
+			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, w);
+			res = getMailData(handle);
+			free(w);
+			nzFree(mailstring);
+			if (res != CURLE_OK) {
+				i_printf(MSG_NoAccess, t);
+				nl();
+				goto input;
+			}
+			goto refresh;
+		}
+
 		f = folderByName(t);
 		if (!f)
 			goto input;

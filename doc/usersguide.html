@@ -4276,13 +4276,20 @@ In the same way, you can batch move all the messages to another folder.
 However, move is more useful with the from clause.
 If the current message is from Fred Flintstone, type f, and edbrowse will print "from Fred Flintstone".
 Then type m cartoon, and all the messages from Fred Flintstone will move to the cartoon folder.
+Warning, older imap servers, prior to 2013, implement move as a copy followed by delete.
+The delete does not take place until you reach the end of the folder.
+Thus, if you move a file on such a server, then type q to quit, or otherwise exit the program before reaching the end of your folder, you will log back in and find two copies of your message.
+You can avoid this by typing s, to stop reading the current folder; this will delete any messages marked for deletion.
+Newer servers implement move as a true move, whence this situation will never arise.
 
 <P>
 The create and delete commands will create new folders or delete existing folders.
-Just type `create foo' to create a new folder foo.
+Type `create foo' to create a new folder foo.
 You can move messages into it right away.
 Warning - if you delete foo, all the messages in foo could disappear.
 This will depend on the imap server.
+You can rename a folder via `rename foo bar'.
+This command assumes there is no whitespace in a folder's name.
 
 <hr>
 <H2> Chapter 8, Database Access </H2>
