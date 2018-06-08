@@ -223,7 +223,7 @@ buffer %d is empty
 buffer %d contains more than one line
 cannot open %s
 cannot read from %s
-input text contains nulls
+< text contains nulls
 line contains an embedded carriage return
 gopher download: 
 file is currently in buffer - please use the rf command to refresh

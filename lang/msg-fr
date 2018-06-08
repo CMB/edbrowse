@@ -223,7 +223,7 @@ le tampon %d est vide
 le tampon %d contient plus d'une ligne
 impossible d'ouvrir %s
 impossible de lire %s
-le texte entré contient des caractères nuls
+le texte < contient des caractères nuls
 il y a un retour-chariot dans la ligne
 téléchargement gopher: 
 le fichier est actuellement dans le tampon - utilisez la commande rf pour le réafficher

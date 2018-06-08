@@ -223,7 +223,7 @@ bufor %d jest pusty
 bufor %d zawiera więcej niż jeden wiersz
 nie można otworzyć %s
 nie można wczytać %s
-wprowadzony tekst zawiera puste znaki
+< tekst zawiera puste znaki
 wiersz zawiera znak powrotu karetki
 ściąganie gopher: 
 plik jest obecnie w buforze - użyj polecenia 'rf' by odświeżyć

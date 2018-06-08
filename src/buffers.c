@@ -3742,7 +3742,7 @@ i<7 becomes i=contents of session 7
 i<file becomes i=contents of file
 i* becomes b url  for a submit button
 new location from javascript becomes b new url,
-	this frees the old allocatedLine if it was present.
+	this one frees the old allocatedLine if it was present.
 e url without http:// becomes http://url
 *********************************************************************/
 
@@ -5008,6 +5008,62 @@ static bool lineHasTag(const char *p, const char *s)
 	return false;
 }				/* lineHasTag */
 
+static char *lessFile(const char *line)
+{
+	bool fromfile = false;
+	int j, n;
+	char *line2;
+	skipWhite(&line);
+	if (!*line) {
+		setError(MSG_NoFileSpecified);
+		return 0;
+	}
+	n = stringIsNum(line);
+	if (n >= 0) {
+		char *p;
+		int plen, dol;
+		if (!cxCompare(n) || !cxActive(n))
+			return 0;
+		dol = sessionList[n].lw->dol;
+		if (!dol) {
+			setError(MSG_BufferXEmpty, n);
+			return 0;
+		}
+		if (dol > 1) {
+			setError(MSG_BufferXLines, n);
+			return 0;
+		}
+		p = (char *)fetchLineContext(1, 1, n);
+		plen = pstLength((pst) p);
+		line2 = allocMem(plen + 1);
+		memcpy(line2, p, plen);
+		line2[plen] = 0;
+		n = plen;
+		nzFree(p);
+	} else {
+		if (!envFile(line, &line))
+			return 0;
+		if (!fileIntoMemory(line, &line2, &n))
+			return 0;
+		fromfile = true;
+	}
+	for (j = 0; j < n; ++j) {
+		if (line2[j] == 0) {
+			setError(MSG_LessNull);
+			return 0;
+		}
+		if (line2[j] == '\r'
+		    && !fromfile && j < n - 1 && line2[j + 1] != '\n') {
+			setError(MSG_InputCR);
+			return 0;
+		}
+		if (line2[j] == '\r' || line2[j] == '\n')
+			break;
+	}
+	line2[j] = 0;
+	return line2;
+}
+
 /*********************************************************************
 Run the entered edbrowse command.
 This is indirectly recursive, as in g/x/d
@@ -5930,82 +5986,11 @@ replaceframe:
 				}
 
 				cw->undoable = false;
-#if 0
-				gobuffer = (tagList[tagno]->itype == INP_TA);
-				if (gobuffer && scmd == '*') {
-					cx = tagList[tagno]->lic;
-					cmd = 'e';
-					goto switchsession;
-				}
-#endif
 
 				if (c == '<') {
-					bool fromfile = false;
-					if (globSub) {
-						setError(MSG_IG);
-						return (globSub = false);
-					}
-					skipWhite(&line);
-					if (!*line) {
-						setError(MSG_NoFileSpecified);
+					allocatedLine = lessFile(line);
+					if (!allocatedLine)
 						return false;
-					}
-					n = stringIsNum(line);
-					if (n >= 0) {
-						char *p;
-						int plen, dol;
-						if (!cxCompare(n)
-						    || !cxActive(n))
-							return false;
-						dol = sessionList[n].lw->dol;
-						if (!dol) {
-							setError
-							    (MSG_BufferXEmpty,
-							     n);
-							return false;
-						}
-						if (dol > 1) {
-							setError
-							    (MSG_BufferXLines,
-							     n);
-							return false;
-						}
-						p = (char *)fetchLineContext(1,
-									     1,
-									     n);
-						plen = pstLength((pst) p);
-						allocatedLine =
-						    allocMem(plen + 1);
-						memcpy(allocatedLine, p, plen);
-						allocatedLine[plen] = 0;
-						n = plen;
-						nzFree(p);
-					} else {
-						if (!envFile(line, &line))
-							return false;
-						if (!fileIntoMemory
-						    (line, &allocatedLine, &n))
-							return false;
-						fromfile = true;
-					}
-					for (j = 0; j < n; ++j) {
-						if (allocatedLine[j] == 0) {
-							setError(MSG_InputNull,
-								 line);
-							return false;
-						}
-						if (allocatedLine[j] == '\r'
-						    && !fromfile && j < n - 1
-						    && allocatedLine[j + 1] !=
-						    '\n') {
-							setError(MSG_InputCR);
-							return false;
-						}
-						if (allocatedLine[j] == '\r'
-						    || allocatedLine[j] == '\n')
-							break;
-					}
-					allocatedLine[j] = 0;
 					prepareForField(allocatedLine);
 					line = allocatedLine;
 					scmd = '=';

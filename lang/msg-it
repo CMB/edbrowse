@@ -223,7 +223,7 @@ il buffer %d è vuoto
 il buffer %d contiene più di una riga
 impossibile aprire %s
 impossibile leggere da %s
-il testo di input contiene valori nulli
+il testo di < contiene valori nulli
 la riga contiene un carriage return
 download gopher: 
 il file è correntemente in un buffer - per favore usa il comando rf per aggiornare

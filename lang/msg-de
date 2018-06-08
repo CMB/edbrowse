@@ -223,7 +223,7 @@ Puffer %d ist leer
 Puffer %d enthält mehr als eine Zeile
 kann %s nicht öffnen
 kann %s nicht lesen
-eingegebener Text enthält Nullbytes
+< Text enthält Nullbytes
 Zeile enthält einen Zeilenumbruch
 gopher download:
 Datei ist momentan in einem Puffer, nutzen Sie rf zum aktualisieren
