@@ -1041,7 +1041,6 @@ Don't do any of this if the tag is itself <style>. */
 			tcn = emptyString;
 		set_property_string(io, "class", tcn);
 		set_property_string(io, "last$class", tcn);
-		set_property_string(io, "nodeValue", "");
 		ato = instantiate(io, "attributes", "NamedNodeMap");
 		set_property_object(ato, "owner", io);
 		set_property_object(io, "ownerDocument", cf->docobj);

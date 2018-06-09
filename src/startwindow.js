@@ -1166,7 +1166,6 @@ if(arguments.length > 0) {
 this.data$2 += arguments[0];
 }
 this.nodeName = "#text";
-this.nodeValue = this.data$2;
 this.nodeType = 3;
 this.ownerDocument = my$doc();
 this.style = new CSSStyleDeclaration;
@@ -1639,7 +1638,6 @@ a2.type = a1.type;
 a2.nodeName = a1.nodeName;
 a2.class = a1.class;
 a2.last$class = a1.last$class;
-a2.nodeValue = a1.nodeValue;
 for(i = 0; i < a1.length; ++i) {
 var p = mw0.findObject(a1[i]);
 if(p.length) {
@@ -2193,6 +2191,9 @@ Object.defineProperty(c.prototype, "textContent", {
 get: function() { return mw0.textUnder(this, 0); }});
 Object.defineProperty(c.prototype, "contentText", {
 get: function() { return mw0.textUnder(this, 1); }});
+Object.defineProperty(c.prototype, "nodeValue", {
+get: function() { return this.nodeType == 3 ? this.data : null;},
+set: function(h) { if(this.nodeType == 3) this.data = h; }});
 }
 })();
 
