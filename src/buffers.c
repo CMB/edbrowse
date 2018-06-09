@@ -1225,6 +1225,42 @@ static char *makeAbsPath(const char *f)
 	return path;
 }				/* makeAbsPath */
 
+// Compress a/b/.. back to a, when going to a parent directory
+static void stripDotDot(char *path)
+{
+	int l = strlen(path);
+	char *u;
+	if (l < 3 || strncmp(path + l - 3, "/..", 3))
+		return;
+	if (l == 3) {		// parent of root is root
+		path[1] = 0;
+		return;
+	}
+	if (stringEqual(path, "./..")) {
+		strcpy(path, "..");
+		return;
+	}
+// lop it off; I may have to put it back later
+	l -= 3;
+	path[l] = 0;
+	if (l >= 2 && path[l - 1] == '.' && path[l - 2] == '.' &&
+	    (l == 2 || path[l - 3] == '/')) {
+		path[l] = '/';
+		return;
+	}
+	u = strrchr(path, '/');
+	if (u && u[1]) {
+// in case it was /bin
+		if (u == path)
+			u[1] = 0;
+		else
+			u[0] = 0;
+		return;
+	}
+// at this point it should be a directory in the current directory.
+	strcpy(path, ".");
+}
+
 static int *nextLabel(int *label)
 {
 	if (label == NULL)
@@ -5762,6 +5798,7 @@ replaceframe:
 		cmd = 'e';
 		if (!dirline)
 			return false;
+		stripDotDot(dirline);
 		if (!emode)
 			gmt = findMimeByFile(dirline);
 		if (pluginsOn && gmt) {

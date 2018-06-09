@@ -1354,8 +1354,6 @@ const char *nextScanFile(const char *base)
 		if (s[0] == '.') {
 			if (stringEqual(s, "."))
 				continue;
-			if (stringEqual(s, ".."))
-				continue;
 			if (!showHiddenFiles)
 				continue;
 		}
