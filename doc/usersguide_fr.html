@@ -4562,7 +4562,7 @@ Tapez a pour enregistrer les pièces attachées.
 Tapez l pour modifier la limite de récupération, c'est-à-dire le nombre de mails affichés 
 simultanément.
 Tapez / pour rechercher dans les mails par sujet, expéditeur ou dans le corps
-Tapez h pour l'aide, qui ressemble à ceci :
+Finalement tapez h pour l'aide, qui ressemble à ceci :
 </p>
 
 <PRE><font size=3 face=Arial,Helvetica,sans-serif>
@@ -4597,15 +4597,25 @@ modifier cette limite avec la commande l.
 </p>
 
 <p>
-S'il ya 300 mails dasn votre dossier de spams, il y a un moyen simple de les effacer tous.
+S'il ya 300 mails dans votre dossier de spams, il y a un moyen simple de les effacer tous.
 Tapez v pour les voir tous, juste pour vous assurer qu'aucun mail valide n'est présent. 
 Vous ne voulez certainement pas effacer quelque chose de bien par erreur.
-Ensuite papez b pour mode de traitement pas lots (b pour batch), ensuite d pour effacer.
+Ensuite tapez b pour mode de traitement pas lots (b pour batch), ensuite d pour effacer.
 pouf, ils sont partis.
 De la même façon, vous pouvez déplacer tous les messages dans un autre dossier.
 Cependant, le déplacement est plus utile avec la clause from.
 Si le message courant est de Fred Flinstone, tapez f, et edbrowse affichera "from Fred Flinstone".
 Tapez m dessins, et tous les messages de Fred Flinstone iraont dans le répertoire dessins.
+Attention, les anciens serveurs imap, antérieurs à 2013, implémentent le déplacement par une copie 
+suivie d'effacement.
+L'effacement ne s'effectue qu'après lecture complète du dossier.
+Ainsi, si vous déplacez un fichier sur ce type de serveur, puis si vous tapez q pour quitter, 
+ou bien  sortez du programme par un autre moyen avant lecture jusqu'à la fin du dossier, vous 
+retrouverez au prochain lancement deux copies de ce fichier.
+Vous pouvez éviter cela en tapant s, pour arrêter de lire le dossier courant; ceci effacera tout 
+message marqué pour effacement.
+Les serveurs récents implémentent le déplacement comme un vrai déplacement, ainsi cette situation 
+ne se produira jamais.
 </p>
 
 <p>
@@ -4614,6 +4624,8 @@ Tapez "create foo" pour créer le nouveau répertoire foo.
 Vous pouvez y déplacer des messages.
 Attention - si vous effacez foo, tous les messages dans foo seront effacés.
 Ceci dépend du serveur imap.
+Vous pouvez renommer un dossier via "rename foobar"
+Cette commande suppose que le nom du dossier ne contient pas d'espace.
 </p>
 
 <hr>
