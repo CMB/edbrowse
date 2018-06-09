@@ -3740,11 +3740,80 @@ w/  becomes  w lastComponent
 g becomes b url  (going to a hyperlink)
 i<7 becomes i=contents of session 7
 i<file becomes i=contents of file
+f<file becomes f contents of file
+e<file becomes e contents of file
+b<file becomes b contents of file
+w<file becomes w contents of file
+r<file becomes r contents of file
 i* becomes b url  for a submit button
 new location from javascript becomes b new url,
-	this one frees the old allocatedLine if it was present.
+	This one frees the old allocatedLine if it was present.
+	g could allocate a line for b url but then after browse
+	there is a new location to go to so must free that allocated line
+	and set the next one.
 e url without http:// becomes http://url
+	This one frees the old allocatedLine if it was present.
+	e<file could have made a new line with the contents of file,
+	now we have to free it and build another one.
+Speaking of e<file and its ilk, here is the function that
+reads in the data.
 *********************************************************************/
+
+static char *lessFile(const char *line)
+{
+	bool fromfile = false;
+	int j, n;
+	char *line2;
+	skipWhite(&line);
+	if (!*line) {
+		setError(MSG_NoFileSpecified);
+		return 0;
+	}
+	n = stringIsNum(line);
+	if (n >= 0) {
+		char *p;
+		int plen, dol;
+		if (!cxCompare(n) || !cxActive(n))
+			return 0;
+		dol = sessionList[n].lw->dol;
+		if (!dol) {
+			setError(MSG_BufferXEmpty, n);
+			return 0;
+		}
+		if (dol > 1) {
+			setError(MSG_BufferXLines, n);
+			return 0;
+		}
+		p = (char *)fetchLineContext(1, 1, n);
+		plen = pstLength((pst) p);
+		line2 = allocMem(plen + 1);
+		memcpy(line2, p, plen);
+		line2[plen] = 0;
+		n = plen;
+		nzFree(p);
+	} else {
+		if (!envFile(line, &line))
+			return 0;
+		if (!fileIntoMemory(line, &line2, &n))
+			return 0;
+		fromfile = true;
+	}
+	for (j = 0; j < n; ++j) {
+		if (line2[j] == 0) {
+			setError(MSG_LessNull);
+			return 0;
+		}
+		if (line2[j] == '\r'
+		    && !fromfile && j < n - 1 && line2[j + 1] != '\n') {
+			setError(MSG_InputCR);
+			return 0;
+		}
+		if (line2[j] == '\r' || line2[j] == '\n')
+			break;
+	}
+	line2[j] = 0;
+	return line2;
+}
 
 static int twoLetter(const char *line, const char **runThis)
 {
@@ -4130,6 +4199,22 @@ et_go:
 		allocatedLine = allocMem(strlen(t) + 8);
 /* ` prevents wildcard expansion, which normally happens on an f command */
 		sprintf(allocatedLine, "%c `%s", cmd, t);
+		*runThis = allocatedLine;
+		return 2;
+	}
+
+	if (strchr("bwref", line[0]) && line[1] == '<') {
+		allocatedLine = lessFile(line + 2);
+		if (allocatedLine == 0)
+			return false;
+		n = strlen(allocatedLine);
+		allocatedLine = reallocMem(allocatedLine, n + 4);
+		strmove(allocatedLine + 3, allocatedLine);
+		allocatedLine[0] = line[0];
+		allocatedLine[1] = ' ';
+		allocatedLine[2] = ' ';
+		if (!isURL(allocatedLine + 3))
+			allocatedLine[2] = '`';	// suppress wildcard expansion
 		*runThis = allocatedLine;
 		return 2;
 	}
@@ -5008,62 +5093,6 @@ static bool lineHasTag(const char *p, const char *s)
 	return false;
 }				/* lineHasTag */
 
-static char *lessFile(const char *line)
-{
-	bool fromfile = false;
-	int j, n;
-	char *line2;
-	skipWhite(&line);
-	if (!*line) {
-		setError(MSG_NoFileSpecified);
-		return 0;
-	}
-	n = stringIsNum(line);
-	if (n >= 0) {
-		char *p;
-		int plen, dol;
-		if (!cxCompare(n) || !cxActive(n))
-			return 0;
-		dol = sessionList[n].lw->dol;
-		if (!dol) {
-			setError(MSG_BufferXEmpty, n);
-			return 0;
-		}
-		if (dol > 1) {
-			setError(MSG_BufferXLines, n);
-			return 0;
-		}
-		p = (char *)fetchLineContext(1, 1, n);
-		plen = pstLength((pst) p);
-		line2 = allocMem(plen + 1);
-		memcpy(line2, p, plen);
-		line2[plen] = 0;
-		n = plen;
-		nzFree(p);
-	} else {
-		if (!envFile(line, &line))
-			return 0;
-		if (!fileIntoMemory(line, &line2, &n))
-			return 0;
-		fromfile = true;
-	}
-	for (j = 0; j < n; ++j) {
-		if (line2[j] == 0) {
-			setError(MSG_LessNull);
-			return 0;
-		}
-		if (line2[j] == '\r'
-		    && !fromfile && j < n - 1 && line2[j + 1] != '\n') {
-			setError(MSG_InputCR);
-			return 0;
-		}
-		if (line2[j] == '\r' || line2[j] == '\n')
-			break;
-	}
-	line2[j] = 0;
-	return line2;
-}
-
 /*********************************************************************
 Run the entered edbrowse command.
 This is indirectly recursive, as in g/x/d
@@ -5090,19 +5119,15 @@ bool runCommand(const char *line)
 	char *thisfile;
 
 	selfFrame();
-	if (allocatedLine) {
-		nzFree(allocatedLine);
-		allocatedLine = 0;
-	}
-
+	nzFree(allocatedLine);
+	allocatedLine = 0;
 	js_redirects = false;
-
 	cmd = icmd = 'p';
 	uriEncoded = false;
 	skipWhite(&line);
 	first = *line;
-
 	noStack = false;
+
 	if (!strncmp(line, "ReF@b", 5)) {
 		line += 4;
 		noStack = true;
@@ -5126,6 +5151,10 @@ bool runCommand(const char *line)
 
 /* Watch for successive q commands. */
 		lastq = lastqq, lastqq = 0;
+
+// force a noStack
+		if (!strncmp(line, "nostack ", 8))
+			noStack = true, line += 8, first = *line;
 
 /* special 2 letter commands - most of these change operational modes */
 		j = twoLetter(line, &line);
@@ -5988,6 +6017,10 @@ replaceframe:
 				cw->undoable = false;
 
 				if (c == '<') {
+					if (globSub) {
+						setError(MSG_IG);
+						return (globSub = false);
+					}
 					allocatedLine = lessFile(line);
 					if (!allocatedLine)
 						return false;
@@ -6094,9 +6127,10 @@ we have to make sure it has a protocol. Every url needs a protocol.
 *********************************************************************/
 
 			if (missingProtURL(line)) {
-				allocatedLine = allocMem(strlen(line) + 8);
-				sprintf(allocatedLine, "http://%s", line);
-				line = allocatedLine;
+				char *w = allocMem(strlen(line) + 8);
+				sprintf(w, "http://%s", line);
+				nzFree(allocatedLine);
+				line = allocatedLine = w;
 			}
 
 			cf->fileName = cloneString(line);
