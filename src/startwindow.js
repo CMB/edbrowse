@@ -84,6 +84,7 @@ function alert4(s) { eb$logputs(4, s); }
 
 // Dump the tree below a node, this is for debugging.
 document.nodeName = "DOCUMENT"; // in case you want to start at the top.
+document.tagName = "document";
 window.nodeName = "WINDOW";
 
 // Print the first line of text for a text node, and no braces
@@ -897,7 +898,7 @@ if(this instanceof Frame && this.content$Document && this.content$Document.lastC
 /* There is a nasty corner case here, dont know if it ever happens. What if we are replacing the running frame? window.parent.src = new_url; See if we can get around it this way. */ \
 if(w == this.content$Window) { w.location = next_href; return; } \
 var d = new Document; d.childNodes = []; d.attributes = new NamedNodeMap; d.attributes.owner = d; \
-d.nodeName = d.tagName = "DOCUMENT"; d.nodeType = 9; d.ownerDocument = my$doc(); \
+d.nodeName = "DOCUMENT"; d.tagName = "document"; d.nodeType = 9; d.ownerDocument = my$doc(); \
 delete this.eb$auto; this.content$Document = this.content$Window = d; \
 eb$unframe(this, d); /* fix links on the edbrowse side */ \
 this.childNodes[0] = d; d.parentNode = this; \
@@ -1175,7 +1176,7 @@ if(arguments.length > 0) {
 // data always has to be a string
 this.data$2 += arguments[0];
 }
-this.nodeName = "#text";
+this.nodeName = this.tagName = "#text";
 this.nodeType = 3;
 this.ownerDocument = my$doc();
 this.style = new CSSStyleDeclaration;
@@ -1220,6 +1221,7 @@ mw0.createComment = function(t) {
 if(t == undefined) t = "";
 var c = new Comment(t);
 eb$logElement(c, "comment");
+c.nodeName = c.tagName = "#comment";
 return c;
 }
 
@@ -2715,7 +2717,7 @@ c.nodeName = c.tagName = t.toUpperCase();
 }
 c.nodeType = 1;
 if(t == "document")
-c.nodeType = 9;
+c.nodeType = 9, c.tagName = "document";
 c.class = "";
 c.ownerDocument = my$doc();
 eb$logElement(c, t);
@@ -2734,6 +2736,7 @@ return c;
 mw0.createDocumentFragment = function() {
 var c = mw0.createElement("fragment");
 c.nodeType = 11;
+c.nodeName = c.tagName = "#document-fragment";
 return c;
 }
 
