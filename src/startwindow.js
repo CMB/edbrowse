@@ -1033,10 +1033,20 @@ in that there was no node and no class before, and that induces a call
 to getComputedStyle, and that fetches the file, again.
 The imported css file could be fetched 100 times just to load the page.
 I get around this by the shortcache feature in css.c.
+If the css has changed in any way, I recompile the descriptors
+and increment the css version, stored in css$ver;
+Any information we might have saved about nodes and descriptors,
+for speed and optimization, is lost if the version changes.
 *********************************************************************/
 
 mw0.cssGather(false, this);
+
+if(e.css$v != this.css$ver || e.last$class != e.class || e.last$id != e.id)
+e.css$out = "";
+
 eb$cssApply(this, e, s);
+
+e.last$class = e.class, e.last$id = e.id, e.css$v = this.css$ver;
 return s;
 }
 
@@ -3307,6 +3317,7 @@ if(!pageload && css_all == w.last$css_all)
 return;
 
 w.last$css_all = css_all;
+w.css$ver++;
 eb$cssDocLoad(w, css_all, pageload);
 }
 
@@ -3346,11 +3357,8 @@ var rc = 2; // show by default
 var so; // style object
 if(!t || !(so = t.style)) return 0;
 // If class has changed, recompute style
-var c1 = t.last$class;
-var c2 = t.class;
-if(!c2) c2 = ""; // should never happen
-if(typeof c1 == "undefined" || c1 != c2) {
-t.last$class = c2;
+if(t.class != t.last$class) {
+alert3("restyle " + t.nodeName + "." + t.last$class + ">" + t.class);
 var so = getComputedStyle(t, 0);
 t.style = so;
 }
@@ -3389,6 +3397,7 @@ return "<div>XMLSerializer not yet implemented</div>"; }
 
 eb$qs$start = mw0.eb$qs$start;
 eb$visible = mw0.eb$visible;
+css$ver = 0;
 DOMParser = mw0.DOMParser;
 XMLSerializer = mw0.XMLSerializer;
 document.xmlVersion = 0;
