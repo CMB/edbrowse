@@ -1394,8 +1394,9 @@ Ce classement est le même qu'avec /bin/ls, et il est déterminé par la variabl
 d'environnement LC_COLLATE.
 mettez LC_COLLATE=C pour un classement ascii traditionnel.
 (Employer l'option «hf» si vous voulez également voir les fichiers cachés). 
+(Ceci inclut le répertoire parent...)
 Tapez «g» pour aller à un de ces fichiers ou sous-répertoires.
-Tapez «^» pour revenir au répertoire parent.
+Tapez «^» pour revenir où vous étiez.
 Ceci est conforme avec le navigateur, où g est la commande go et ^ la commande de retour 
 en arrière. On en saura davantage plus tard.
 Vous pouvez traverser ainsi un arbre entier de répertoire comme si vous étiez 
@@ -2164,6 +2165,12 @@ S'il n'y a pas de nombre, simplement un message d'erreur, alors Edbrowse n'a pas
 de nouveau tampon.
 Il n'a pas obtenu le texte recherché.
 Taper «.» réaffichera la ligne affichée auparavant.
+</p>
+
+<p>
+Utilisez le préfixe nostack pour remplacer la page web courante, au lieu de l'empiler.
+Par exemple, "nostack b www.ibm.com" remplece votre page web courante par ibm.com,
+et ^ ne vous fera pas revenir où vous étiez, parce que cette page a disparu.
 </p>
 
 <p>

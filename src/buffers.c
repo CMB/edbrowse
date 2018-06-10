@@ -4238,7 +4238,9 @@ et_go:
 		*runThis = allocatedLine;
 		return 2;
 	}
-
+// If you want this feature, e< f< b< w< r<, uncomment this,
+// and be sure to document it in usersguide.
+#if 0
 	if (strchr("bwref", line[0]) && line[1] == '<') {
 		allocatedLine = lessFile(line + 2);
 		if (allocatedLine == 0)
@@ -4254,6 +4256,7 @@ et_go:
 		*runThis = allocatedLine;
 		return 2;
 	}
+#endif
 
 	if (stringEqual(line, "ft") || stringEqual(line, "fd") ||
 	    stringEqual(line, "fk")) {

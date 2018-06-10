@@ -989,6 +989,7 @@ mw0.CSSStyleDeclaration = function(){
         this.element = null;
         this.style = this;
 	 this.attributes = new mw0.NamedNodeMap;
+this.ownerDocument = my$doc();
 this.attributes.owner = this;
 this.sheet = new mw0.CSSStyleSheet;
 };
@@ -1003,7 +1004,17 @@ get: function() { var s = ""; for(var i=0; i<this.childNodes.length; ++i) if(thi
 
 mw0.getComputedStyle = function(e,pe) {
 	// disregarding pseudoelements for now
-var s = new CSSStyleDeclaration;
+var s;
+
+// Some sites call getComputedStyle on the same node over and over again.
+// http://songmeanings.com/songs/view/3530822107858535238/
+// Can we remember the previous call and just return the same style object?
+// Can we know that nothing has changed in between the two calls?
+// I can track when the tree changes, and even the class,
+// but what about individual attributes?
+// I haven't found a way to do this without breaking acid test 33 and others.
+
+s = new CSSStyleDeclaration;
 s.element = e;
 
 /*********************************************************************
@@ -1024,7 +1035,6 @@ I get around this by the shortcache feature in css.c.
 *********************************************************************/
 
 mw0.cssGather(false, this);
-
 eb$cssApply(this, e, s);
 return s;
 }
@@ -1360,6 +1370,8 @@ b = b.parentNode;
 }
 }
 
+mw0.treeBump = function(t) { if(t.ownerDocument) ++t.ownerDocument.tree$n; }
+
 mw0.appendChild = function(c) {
 if(!c) return null;
 if(c.nodeType == 11) return mw0.appendFragment(this, c);
@@ -1562,6 +1574,20 @@ var i, j;
 var kids = null;
 var debug = my$win().cloneDebug;
 
+if(node1 instanceof CSSStyleDeclaration) {
+if(debug) alert3("copy style");
+node2 = new mw0.CSSStyleDeclaration;
+for (var item in node1){
+if(!node1.hasOwnProperty(item)) continue;
+if (typeof node1[item] === 'string' ||
+typeof node1[item] === 'number') {
+if(debug) alert3("copy stattr " + item);
+node2[item] = node1[item];
+}
+}
+return node2;
+}
+
 // WARNING: don't use instanceof Array here.
 // See the comments in the Array.prototype section.
 if(Array.isArray(node1.childNodes))
@@ -1722,17 +1748,8 @@ continue;
 
 // copy style object if present and its subordinate strings.
 if (node1.style instanceof CSSStyleDeclaration) {
-if(debug) alert3("copy style");
-node2.style = new CSSStyleDeclaration;
+node2.style = mw0.eb$clone(node1.style, false);
 node2.style.element = node2;
-for (var item in node1.style){
-if(!node1.style.hasOwnProperty(item)) continue;
-if (typeof node1.style[item] === 'string' ||
-typeof node1.style[item] === 'number') {
-if(debug) alert3("copy stattr " + item);
-node2.style[item] = node1.style[item];
-}
-}
 }
 
 if (node1.attributes instanceof NamedNodeMap) {

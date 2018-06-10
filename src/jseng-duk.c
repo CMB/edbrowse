@@ -33,6 +33,7 @@ Exit codes are as follows:
 #include <duktape.h>
 
 static void processError(void);
+static void jsInterruptCheck(void);
 
 static duk_ret_t native_error_stub_0(duk_context * cx)
 {
@@ -230,6 +231,7 @@ static duk_ret_t native_logputs(duk_context * cx)
 	duk_remove(cx, 0);
 	if (debugLevel >= minlev && s && *s)
 		debugPrint(3, "%s", s);
+	jsInterruptCheck();
 	return 0;
 }
 
@@ -320,6 +322,7 @@ static void jsInterruptCheck(void)
 	i_puts(MSG_Interrupted);
 	duk_get_global_string(jcx, "eb$stopexec");
 // this next line should fail and stop the script!
+// Assuming we aren't in a try{} block.
 	duk_call(jcx, 0);
 // It didn't stop the script, oh well.
 	duk_pop(jcx);
