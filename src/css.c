@@ -84,18 +84,29 @@ static void cssStats(void)
 static int closeString(char *s, char delim)
 {
 	int i;
-	char c;
+	char c, qc = 0;		// quote character
+	if (delim != '[')
+		qc = delim;
 	for (i = 0; (c = s[i]); ++i) {
-		if (c == delim)
-			return i + 1;
+		if (c == qc) {	// close quote
+			if (delim == qc)
+				return i + 1;
+			qc = 0;
+			continue;
+		}
 		if (c == '\\') {
 			if (!s[++i])
 				return i;
+			continue;
 		}
 // a css string should not contain an unescaped newline, so if you find one,
 // something is wrong or misaligned. End the string here.
 		if (c == '\n')
 			return i + 1;
+		if (c == ']' && delim == '[' && !qc)
+			return i + 1;
+		if (!qc && (c == '"' || c == '\''))
+			qc = c;
 	}
 	return -1;
 }
@@ -672,7 +683,7 @@ copy:		++s;
 
 		last_c = 0;
 		while ((c = *s)) {
-			if (c == '"' || c == '\'') {
+			if (c == '"' || c == '\'' || c == '[') {
 				n = closeString(s + 1, c);
 				if (n < 0)	// should never happen
 					break;
@@ -682,6 +693,8 @@ copy:		++s;
 			}
 // Ambiguous, ~ is combinator or part of [foo~=bar].
 // Simplistic check here for ~=
+// I don't really need it any more, now that I treat [ stuf ] as a string.
+// But I still need the next one.
 // Ambiguous, + is combinator or part of "nth_child(n+3)
 // Simplistic check here, next selector should not begin with a digit
 			if ((c == '~' && s[1] == '=') ||
@@ -696,6 +709,7 @@ copy:		++s;
 				++s;
 				continue;
 			}
+
 			combin = 0;	// look for combinator
 			a2 = s;
 			while (strchr(", \t\n\r>~+", c)) {
@@ -1164,6 +1178,23 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 			return;
 		}
 		t[--n] = 0;	// lop off ]
+// remove whitespace from either side of =
+		w = strchr(t, '=');
+// I assume = is not in quotes, not part of the attribute name
+// Thus I'm postponing the call to unstring.
+		if (w) {
+			char *y = w + 1;
+			skipWhite2(&y);
+			if (y > w + 1)
+				strmove(w + 1, y);
+			if (strchr("|~^$*", w[-1]))
+				--w;
+			for (y = w - 1; isspace(*y); --y) ;
+			++y;
+			if (w > y)
+				strmove(y, w);
+		}
+// We might have had ["a "=b] now it's safe to undo the quotes
 		unstring(t);
 		for (w = t + 1; (c = *w); ++w) {
 			if (c == '=')
@@ -1787,6 +1818,7 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			char *cut = strchr(p, '=');
 			if (cut) {
 				value = cut + 1;
+				skipWhite2(&value);
 				l = strlen(value);
 				if (strchr("|~^$*", cut[-1]))
 					--cut;
