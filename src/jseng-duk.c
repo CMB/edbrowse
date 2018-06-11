@@ -319,7 +319,6 @@ static void jsInterruptCheck(void)
 {
 	if (!intFlag)
 		return;
-	i_puts(MSG_Interrupted);
 	duk_get_global_string(jcx, "eb$stopexec");
 // this next line should fail and stop the script!
 // Assuming we aren't in a try{} block.
@@ -1239,6 +1238,7 @@ static duk_ret_t native_qsa(duk_context * cx)
 		root = duk_get_heapptr(cx, -1);
 		duk_pop(cx);
 	}
+	jsInterruptCheck();
 	ao = querySelectorAll(selstring, root);
 	duk_pop_n(cx, top);
 	duk_push_heapptr(cx, ao);
@@ -1264,6 +1264,7 @@ static duk_ret_t native_qs(duk_context * cx)
 		root = duk_get_heapptr(cx, -1);
 		duk_pop(cx);
 	}
+	jsInterruptCheck();
 	ao = querySelector(selstring, root);
 	duk_pop_n(cx, top);
 	if (ao)
@@ -1275,6 +1276,7 @@ static duk_ret_t native_qs(duk_context * cx)
 
 static duk_ret_t native_cssApply(duk_context * cx)
 {
+	jsInterruptCheck();
 	if (duk_is_object(cx, 1) && duk_is_object(cx, 2))
 		cssApply(duk_get_heapptr(cx, 0), duk_get_heapptr(cx, 1),
 			 duk_get_heapptr(cx, 2));
@@ -1899,6 +1901,8 @@ bool run_function_bool_nat(jsobjtype parent, const char *name)
 		return rc;
 	}
 // error in execution
+	if (intFlag)
+		i_puts(MSG_Interrupted);
 	processError();
 	debugPrint(3, "failure on %p.%s()", parent, name);
 	uptrace(parent);
@@ -1933,6 +1937,8 @@ int run_function_onearg_nat(jsobjtype parent, const char *name, jsobjtype child)
 		return rc;
 	}
 // error in execution
+	if (intFlag)
+		i_puts(MSG_Interrupted);
 	processError();
 	debugPrint(3, "failure on %p.%s[]", parent, name);
 	uptrace(parent);
@@ -2044,6 +2050,8 @@ char *run_script_nat(const char *s)
 	bool rc;
 	const char *gc;
 	rc = duk_peval_string(jcx, s);
+	if (intFlag)
+		i_puts(MSG_Interrupted);
 	if (!rc) {
 		s = duk_safe_to_string(jcx, -1);
 		if (s && !*s)

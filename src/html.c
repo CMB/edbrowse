@@ -2464,18 +2464,28 @@ void runOnload(void)
 
 	if (!isJSAlive)
 		return;
+	if (intFlag)
+		return;
 
 	run_event_bool(cf->docobj, "document", "onDOMContentLoaded", 0);
+	if (intFlag)
+		return;
 
 	e = create_event(cf->winobj, "onload");
 	set_property_number(e, "eventPhase", 2);
 
 /* window and document onload */
 	run_event_bool(cf->winobj, "window", "onload", e);
+	if (intFlag)
+		goto done;
 	run_event_bool(cf->docobj, "document", "onload", e);
+	if (intFlag)
+		goto done;
 
 	fn = -1;
 	for (i = 0; i < cw->numTags; ++i) {
+		if (intFlag)
+			goto done;
 		t = tagList[i];
 		if (t->slash)
 			continue;
@@ -2501,6 +2511,7 @@ void runOnload(void)
 		}
 	}
 
+done:
 	unlink_event(cf->winobj);
 }				/* runOnload */
 
@@ -3059,8 +3070,11 @@ li_hide:
 
 	if (opentag && t->jv) {
 // what is the visibility now?
-		uchar v_now =
-		    run_function_onearg(cf->winobj, "eb$visible", t->jv);
+		uchar v_now = 2;
+		if (!intFlag)
+			v_now =
+			    run_function_onearg(cf->winobj, "eb$visible",
+						t->jv);
 // first some stats
 		if (v_now == 1)
 			++invcount;
