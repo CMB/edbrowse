@@ -292,7 +292,7 @@ static void cssPiecesFree(struct desc *d);
 static void cssPiecesPrint(const struct desc *d);
 static void cssAtomic(struct asel *a);
 static void cssModify(struct asel *a, const char *m1, const char *m2);
-static bool onematch, skiproot, bulkmatch, bulktotal;
+static bool onematch, skiproot, gcsmatch, bulkmatch, bulktotal;
 static char matchtype;		// 0 plain 1 before 2 after
 static bool matchhover;		// match on :hover selectors.
 static jsobjtype rootobj;
@@ -1767,14 +1767,12 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 		char c = p[0];
 		int i, ntype, ns;
 
-		if (mod->isclass && t && bulkmatch) {
+		if (mod->isclass && t
+		    && (bulkmatch || (gcsmatch && a->combin == ','))) {
 			char *v = t->class;
 			char *u = p + 8;
 			int l = strlen(u);
 			char *q;
-			if ((!v || !*v) && !bulkmatch && t->jv)	// dip into js
-				t->class = v =
-				    get_property_string_nat(t->jv, "class");
 			if (!v)
 				v = emptyString;
 			while ((q = strstr(v, u))) {
@@ -1792,11 +1790,9 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			return false;
 		}
 
-		if (mod->isid && t && bulkmatch) {
+		if (mod->isid && t
+		    && (bulkmatch || (gcsmatch && a->combin == ','))) {
 			char *v = t->id;
-			if ((!v || !*v) && !bulkmatch && t->jv)	// dip into js
-				t->id = v =
-				    get_property_string_nat(t->jv, "id");
 			if (!v)
 				v = emptyString;
 			if (stringEqual(v, p + 4) ^ negate)
@@ -2850,6 +2846,13 @@ void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination)
 	if (!cm)
 		goto done;
 
+// it's a getComputedStyle match
+	gcsmatch = true;
+	nzFree(t->class);
+	t->class = get_property_string_nat(node, "class");
+	nzFree(t->id);
+	t->id = get_property_string_nat(node, "id");
+
 	for (d = cm->descriptors; d; d = d->next) {
 		if (qsaMatchGroup(t, node, d))
 			do_rules(destination, d->rules, d->highspec);
@@ -2858,6 +2861,7 @@ void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination)
 done:
 	cf = save_cf;
 	set_js_globals();
+	gcsmatch = false;
 }
 
 void cssText(jsobjtype node, const char *rulestring)
