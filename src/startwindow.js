@@ -1547,6 +1547,9 @@ mw0.removeAttribute = function(name) {
     if (this[n]) delete this[n];
 // acid test 59 says there's some weirdness regarding button.type
 if(n === "type" && this.nodeName == "BUTTON") this[n] = "submit";
+// acid test 48 removes class before we can check its visibility.
+// class is undefined and last$class is undefined, so getComputedStyle is never called.
+if(n === "class" && !this.last$class) this.last$class = "@@";
 var a = this.attributes[n]; // hash access
 if(!a) return;
 // Have to roll our own splice.
@@ -1616,6 +1619,8 @@ if(node1.nodeName == "#text")
 node2 = mw0.createTextNode();
 else if(node1.nodeName == "#comment")
 node2 = mw0.createComment();
+else if(node1.nodeName == "#document-fragment")
+node2 = mw0.createDocumentFragment();
 else
 node2 = mw0.createElement(node1.nodeName);
 if(node1 == mw0.cloneRoot1) mw0.cloneRoot2 = node2;
