@@ -2199,6 +2199,7 @@ c.prototype.removeAttribute = mw0.removeAttribute;
 Object.defineProperty(c.prototype, "className", { get: function() { return this.getAttribute("class"); }, set: function(h) { this.setAttribute("class", h); }});
 */
 Object.defineProperty(c.prototype, "className", { get: function() { return this.class; }, set: function(h) { this.class = h; }});
+Object.defineProperty(c.prototype, "parentElement", { get: function() { return this.parentNode && this.parentNode.nodeType == 1 ? this.parentNode : null; }});
 c.prototype.getAttributeNode = mw0.getAttributeNode;
 // clone
 c.prototype.cloneNode = mw0.cloneNode;
