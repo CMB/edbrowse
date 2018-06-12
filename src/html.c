@@ -3056,7 +3056,9 @@ li_hide:
 
 	if (inv3 == t) {
 		inv3 = NULL;
-		stringAndString(&ns, &ns_l, "\r}>\r");
+// I tried to remove an empty invisible section,
+// but it's never really empty due to tag markers.
+		stringAndString(&ns, &ns_l, "\r}'\r");
 		return;
 	}
 
@@ -3089,10 +3091,10 @@ li_hide:
 				inv3 = t;
 // merge adjacent invisible sections together
 				if (ns_l >= 4
-				    && stringEqual(ns + ns_l - 4, "\r}>\r"))
+				    && stringEqual(ns + ns_l - 4, "\r}'\r"))
 					ns_l -= 4;
 				else
-					stringAndString(&ns, &ns_l, "\r<{\r");
+					stringAndString(&ns, &ns_l, "\r`{\r");
 			}
 		}
 		if (!showHover && v_now == 3 && !activeBelow(t)) {

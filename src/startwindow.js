@@ -3361,17 +3361,42 @@ mw0.eb$visible = function(t)
 var rc = 2; // show by default
 var so; // style object
 if(!t || !(so = t.style)) return 0;
+
 // If class has changed, recompute style
 if(t.class != t.last$class) {
 alert3("restyle " + t.nodeName + "." + t.last$class + ">" + t.class);
 var so = getComputedStyle(t, 0);
 t.style = so;
 }
-if(so.display == "none" || so.visibility == "hidden" || so.color == "transparent") {
+
+if(so.display == "none" || so.visibility == "hidden") {
 rc = 1;
 // It is hidden, does it come to light on hover?
 if(so.hov$vis) rc = 3;
 }
+
+/*********************************************************************
+Sometimes an input field or other node is marked color:transparent,
+but still it appears as an active element, and the text inside might be visible,
+so I only look for transparent on a text node.
+If no color then I climb up to find the first color.
+If that node changes color on hover, then I call it hover text.
+*********************************************************************/
+if(t instanceof TextNode && rc == 2) {
+while(t) {
+if(t.nodeType == 9) break; // don't go past document up to a higher frame
+var c;
+if((c = t.style.color) && c != "inherit") {
+if(c == "transparent") {
+rc = 1;
+if(t.style.hov$col) rc = 3;
+}
+break;
+}
+t = t.parentNode;
+}
+}
+
 return rc;
 }
 

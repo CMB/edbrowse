@@ -2763,9 +2763,11 @@ in fact it's easier to list the tags that allow it.
 			     && !stringEqual(r->atval, "hidden")))
 				set_property_bool_nat(obj, "hov$vis", true);
 // what about color anything other than transparent?
-// I didn't record why it was hidden, so color=red could unhide it,
-// or it could just change the color.
-// I don't think you'd want to do either of these on hover, so I don't know.
+// If invisible because color = transparent, then color = red unhides it.
+			if (stringEqual(r->atname, "color") &&
+			    strlen(r->atval)
+			    && !stringEqual(r->atval, "transparent"))
+				set_property_bool_nat(obj, "hov$col", true);
 			continue;
 		}
 // special code for before after content
