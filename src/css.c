@@ -2322,19 +2322,30 @@ onetime:
 static bool qsaMatchGroup(struct htmlTag *t, jsobjtype obj, struct desc *d)
 {
 	struct sel *sel;
+	FILE *f = 0;
 	if (d->error)
 		return false;
 	d->highspec = 0;
+	if (debugCSS)
+		f = fopen(cssDebugFile, "a");
 	for (sel = d->selectors; sel; sel = sel->next) {
 		if (sel->error)
 			continue;
 // Only the plain descriptors for getComputedStyle().
 		if (sel->before | sel->after | sel->hover)
 			continue;
-		if (qsaMatchChain(t, obj, sel->chain) &&
-		    sel->spec > d->highspec)
-			d->highspec = sel->spec;
+		if (qsaMatchChain(t, obj, sel->chain)) {
+// debug getComputedStyle, which can also be a directed debug
+// of the whole css system, focusing on a particular node.
+			if (f)
+				fprintf(f, "gcs|%s|%s|%d\n", d->lhs, d->rhs,
+					sel->spec);
+			if (sel->spec > d->highspec)
+				d->highspec = sel->spec;
+		}
 	}
+	if (f)
+		fclose(f);
 	return (d->highspec > 0);
 }
 
@@ -2764,8 +2775,7 @@ in fact it's easier to list the tags that allow it.
 				set_property_bool_nat(obj, "hov$vis", true);
 // what about color anything other than transparent?
 // If invisible because color = transparent, then color = red unhides it.
-			if (stringEqual(r->atname, "color") &&
-			    strlen(r->atval)
+			if (stringEqual(r->atname, "color") && strlen(r->atval)
 			    && !stringEqual(r->atval, "transparent"))
 				set_property_bool_nat(obj, "hov$col", true);
 			continue;
