@@ -19,6 +19,8 @@ Imap client uses copy and delete if the server does not support the MOVE command
 Bulk move or delete from one imap folder to another.
 Create, delete, and rename imap folders.
 
+Start using the acid tests to exercise edbrowse.
+
 3.7.3:
 Show heading information h1 through h6.
 

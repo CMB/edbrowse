@@ -1524,7 +1524,7 @@ Needless to say that's not good!
 	}
 
 	if (!linked_in) {
-		debugPrint(1, "tag %s not linked in", ti->name);
+		debugPrint(3, "tag %s not linked in", ti->name);
 		if (action == TAGACT_TEXT)
 			debugPrint(1, "text %s\n", t->textval);
 	}

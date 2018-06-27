@@ -13,7 +13,7 @@ extern int gettimeofday(struct timeval *tp, void *tzp);	// from tidys.lib
 #endif // _MSC_VER y/n
 
 uchar browseLocal;
-bool showHover, showInject;
+bool showHover;
 
 static jsobjtype js_reset, js_submit;
 

@@ -4736,26 +4736,6 @@ et_go:
 			rerender(false);
 		return true;
 	}
-#if 0
-	if (stringEqual(line, "csst")) {
-		showInject ^= 1;
-		if (helpMessagesOn || debugLevel >= 1)
-			i_puts(showInject + MSG_InjectOff);
-		if (cw->browseMode && isJSAlive)
-			rerender(false);
-		return true;
-	}
-
-	if (stringEqual(line, "csst+") || stringEqual(line, "csst-")) {
-		showInject = (line[4] == '+');
-		if (helpMessagesOn)
-			i_puts(showInject + MSG_InjectOff);
-		if (cw->browseMode && isJSAlive)
-			rerender(false);
-		return true;
-	}
-#endif
-
 	if (stringEqual(line, "su8")) {
 		re_utf8 ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)

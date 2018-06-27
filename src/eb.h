@@ -331,7 +331,6 @@ extern bool helpMessagesOn;	/* no need to type h */
 extern bool pluginsOn;		/* plugins are active */
 extern bool showHiddenFiles;	/* during directory scan */
 extern bool showHover; // messages that appear when you hover
-extern bool showInject; // messages that are injected by css
 extern int context;		/* which session (buffer) are we in? */
 extern pst linePending;
 extern char *changeFileName;
