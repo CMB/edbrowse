@@ -551,7 +551,7 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 	switch (action) {
 	case TAGACT_NOSCRIPT:
 // If javascript is enabled kill everything under noscript
-		if (allowJS && !opentag)
+		if (isJSAlive && !opentag)
 			underKill(t);
 		break;
 
