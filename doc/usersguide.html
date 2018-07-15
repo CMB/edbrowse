@@ -233,6 +233,46 @@ This allows blind  users to access the Internet
 through an application that is compatible with the linear nature of speech or braille.
 
 <P>
+Edbrowse presents the following features:
+
+<UL>
+<LI><P> Edbrowse can edit multiple files or browse multiple websites simultaneously, and transfer blocks of text between them in a manner similar to cut&amp;paste.
+For instance, <code>edbrowse *.c</code> accesses all the C sourcefiles in the current directory.
+<LI><P> The regular expressions of ed have been replaced with Perl Compatible Regular Expressions, which have more power and flexibility. This simplifies the task of finding or modifying text in a large document. You can, for instance, replace each instance of the word foo, not foot or food, but foo by itself, in upper or lower case, with the word bar, as long as foo is not followed by an exclamation point or a question mark. The change in regular expressions means edbrowse is not 100% backward compatible with ed, though it is close.
+<LI><P> Edbrowse can fetch a web page from the internet as easily as it opens a file on the current computer, using http, https, ftp, or gopher.
+Once the page is fetched into the active buffer, it can be browsed or rendered as text, using the b command.
+This supplements the other one-letter commands which were already part of ed.
+Once the page is browsed, the user can go to hyperlinks, or fill out and submit forms.
+<LI><P> The -fm option turns edbrowse into an interactive email client.
+It fetches mail from one or more pop3 accounts and presents these emails to the user one at a time, where they can be read, deleted, or saved to a file for future reference.
+Filters can automatically save certain emails to certain files, based on subject, sender, or destination email address.
+Other options cause edbrowse to send mail using smtp.
+imap is also supported.
+<LI><P> In database mode, edbrowse can access selected rows and columns of an sql table through odbc.
+The insert, substitute, and delete commands of edbrowse now correspond to the insert, update, and delete operations of a database respectively.
+This feature is well tested on some databases, and completely untested on others.
+Since text editing has consequences outside the context of the current buffer, there is no undo command.
+When a row is deleted, it is gone, without any chance of retrieval.
+Fortunately, referential integrity often prevents these unintended deletions.
+<LI><P> When editing a directory, each line of text corresponds to a file.
+Again, the substitute command renames a file, while the delete command removes a file, or moves it to your trash can, depending on your edbrowse configuration.
+There is no undo operation, thus moving files to the trash can is safer. However, this does not free up any disk space.
+<LI><P> The edbrowse configuration file can contain functions, similar to the .bashrc file in Linux.
+These functions can invoke other edbrowse commands, along with branching and loops based on the success of these commands.
+This simple example converts a text file from dos to unix by removing newline characters from the end of each line.
+If any changes were made, the file is written back to disk.
+The * in the if statement is true if the previous command was successful.
+</UL>
+
+<PRE><font size=3 face=Arial,Helvetica,sans-serif><code>function+undos {
+        ,s/\r$//
+        if(*) {
+                w
+        }
+}
+</code></font></PRE>
+
+<P>
 If edbrowse is not included in your distribution, there is a perl version, with fewer features,
 that you can bring up right away on any computer:
 Linux, Unix, Mac, Windows, etc.
@@ -344,7 +384,6 @@ When an output or error message is displayed,
 accented letters are printed using single bytes, vectoring through an iso8859 page,
 unless the string utf8 or utf-8 appears in $LANG,
 whence the nonascii characters are generated using utf8.
-LANG=fr-FR.UTF-8 is a common setting in France.
 Similarly, the contents of a buffer, be it a local document or an internet website,
 are displayed as single bytes or multi-byte sequences,
 according to $LANG.
