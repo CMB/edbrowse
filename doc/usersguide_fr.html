@@ -223,6 +223,61 @@ ou du braille.
 </p>
 
 <p>
+Les fonctionnalités de Edbrowse:
+<ul>
+<li><p> Edbrowse peut éditer de multiples fichiers ou naviguer dans de multiples sites web simultanément, et 
+transférer des portions de texte entre eux à la maniède d'un copier-coller.
+Par exemple, <code>edbrowse *.c</code> accède à tous les fichiers sources C du répertoire courant.
+<li><p> Les expressions régulières de ed ont été remplacées par les expressions régulières compatibles Perl, 
+plus puissantes et plus flexibles. Ceci facilite les opérations de recherche/remplacement de texte dans un 
+document long. Vous pouvez, par exemple, remplacer chaque instance du mot foo, mais pas food ou foot, 
+seulement foo, en majuscles ou en minuscules, avec le mot bar, tant que foo n'est pas suivi d'un point 
+d'exclamation ou d'interrogation. Ces modifications dans les expressions régulières indiquent que Edbrowse 
+n'est pas à 100% Ccompatible avec ed, bien que très proche.
+<li><p> Edbrowse peut récupérer une page web de l'internet aussi facilement qu'il ouvre un fichier de 
+l'ordinateur local, en utilisant hht, hhtps, ftp ou gopher.
+Dès que la page est chargée dans le tampon courant, elle peut être naviguée ou affichée en texte brut, par 
+la commande b.
+Ceci ajoute une autre commande aux commandes en une lettre déjà présentes dans ed. 
+Si la page est en mode navigation, on peut suivre les hyperliens, remplir ou soumettre des formulaires.
+<li><p> L'option -fm lance edbrowse en client mail interactif.
+Elle récupère le courrier d'un ou plusieurs comptes pop3 et les présente un par un à l'utilisateur, où ils 
+peuvent être lus, effacés ou sauvegardés pour usage futur.
+Des filtres peuvent enregistrer certains courriels dans certains fichiers, selon le sujet, l'expéditeur ou 
+l'adresse de destination.
+D'autres options permettent à edbroqse d'expédier des courriers en utilisant smtp.
+Imap est également supporté.
+<li><p> En mode base de données, Edbrowse peut accéder à des lignes et colonnes sélectionnées à travers odbc.
+Les commandes d'insertion, de substitution, d'effacement de Edbrowse correspondent alors aux opérations 
+d'insertion, substitution, d'effacement d'une base de données.
+Cette fonction a été très bien testée sur certaines bases de données, et pas du tout sur d'autres.
+Parce qu'édition de texte ici a des conséquences en dehors du contexte du tampon courant, il n'y a pas de 
+commande undo.
+Lorsqu'une ligne est effacée, elle disparaît, sans aucune chance de la retrouver.
+Par bonheur, l'intégrité référentielle évite souvent ces effacements intempestifs.
+<li><p> En mode édition de répertoire, chaque ligne de texte correspond à un fichier.
+Ici aussi, la commande de substitution renomme un fichier, la commande d'effacement l'efface ou le 
+déplace dans la corbeille, selon la configuration de Edbrowse.
+Il n'y a pas de commande undo, c'est pourquoi le déplacement d'un fichier dans la corbeille est plus 
+sûr. Mais cette commande ne libère pas d'espace disque.
+<li><p> Le fichier de configuration de Edbrowse peut conetnir des fonctions, un peu comme le fichier 
+.bashrc de Linux.
+Ces fonctions peuvent appeler d'autres commandes edbrowse, avec indirections et boucles basées sur le 
+succès de ces commandes.
+Ce simple exemple convertit un fichier texte de dos à unix en enlevant les retours de fin de ligne.
+Si un changement a été effectué, le fichier est sauvegardé sur disque.
+Le caractère * dans l'instruction if est vrai si la commande précédente est réussie.
+</ul>
+
+<PRE><font size=3 face=Arial,Helvetica,sans-serif><code>function+undos {
+        ,s/\r$//
+        if(*) {
+                w
+        }
+}
+</code></font></PRE>
+
+<p>
 Si Edbrowse n'est pas fourni par votre distribution, il existe une version en Perl,
  avec des fonctionnalités moindres, que vous pouvez utiliser sur n'importe quel ordinateur :
  Linux, Unix, Mac, Windows, etc. 
@@ -434,7 +489,7 @@ p : affiche la ligne courante
 <br>kb : marque la ligne courante avec l'étiquette b
 <br>l : liste la ligne courante, affichant les caractères invisibles et les marqueurs de fin de ligne
 <br>endm : afficher les marqueurs de début et fin de lignes ^$ des lignes listées (bascule)
-<br>lna : affiche les caractères nonascii en hexadécimal uand une ligne est listée (bascule)
+<br>lna : affiche les caractères nonascii en hexadécimal quand une ligne est listée (bascule)
 <br>n : affiche la ligne courante avec son numéro de ligne
 <br>ll 1000 : longueur de ligne 1000, affiche les 1000 premiers caractères de chaque ligne
 <br>z22 : affiche les 22 prochaines lignes
@@ -539,7 +594,7 @@ dr : le répertoire est en lecture seule
 <br>sort-a : tri par ordre alphabetique inverse
 <br>sort-t : tri par ordre inverse des dates de modification
 <br>sort-s : tri par ordre inverse de taille
-<br>rf : réactualise l'affichage du répertoire, utile si vous avez avez modifié les paramètres de ls ou de tri
+<br>rf : réactualise l'affichage du répertoire, utile si vous avez modifié les paramètres de ls ou de tri
 <p>
 Parcourir un fichier html ou une page web
 </p>
