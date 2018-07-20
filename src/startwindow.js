@@ -936,7 +936,55 @@ else p.appendChild(s.firstChild);
 // Canvas method draws a picture. That's meaningless for us,
 // but it still has to be there.
 mw0.Canvas = function() {
-this.getContext = function(x) { return { addHitRegion: eb$nullfunction, arc: eb$nullfunction, arcTo: eb$nullfunction, beginPath: eb$nullfunction, bezierCurveTo: eb$nullfunction, clearHitRegions: eb$nullfunction, clearRect: eb$nullfunction, clip: eb$nullfunction, closePath: eb$nullfunction, createImageData: eb$nullfunction, createLinearGradient: eb$nullfunction, createPattern: eb$nullfunction, createRadialGradient: eb$nullfunction, drawFocusIfNeeded: eb$nullfunction, drawImage: eb$nullfunction, drawWidgetAsOnScreen: eb$nullfunction, drawWindow: eb$nullfunction, ellipse: eb$nullfunction, fill: eb$nullfunction, fillRect: eb$nullfunction, fillText: eb$nullfunction, getImageData: eb$nullfunction, getLineDash: eb$nullfunction, isPointInPath: eb$nullfunction, isPointInStroke: eb$nullfunction, lineTo: eb$nullfunction, measureText: eb$nullfunction, moveTo: eb$nullfunction, putImageData: eb$nullfunction, quadraticCurveTo: eb$nullfunction, rect: eb$nullfunction, removeHitRegion: eb$nullfunction, resetTransform: eb$nullfunction, restore: eb$nullfunction, rotate: eb$nullfunction, save: eb$nullfunction, scale: eb$nullfunction, scrollPathIntoView: eb$nullfunction, setLineDash: eb$nullfunction, setTransform: eb$nullfunction, stroke: eb$nullfunction, strokeRect: eb$nullfunction, strokeText: eb$nullfunction, transform: eb$nullfunction, translate: eb$nullfunction }};
+this.getContext = function(x) { return { addHitRegion: eb$nullfunction,
+arc: eb$nullfunction,
+arcTo: eb$nullfunction,
+beginPath: eb$nullfunction,
+bezierCurveTo: eb$nullfunction,
+clearHitRegions: eb$nullfunction,
+clearRect: eb$nullfunction,
+clip: eb$nullfunction,
+closePath: eb$nullfunction,
+createImageData: eb$nullfunction,
+createLinearGradient: eb$nullfunction,
+createPattern: eb$nullfunction,
+createRadialGradient: eb$nullfunction,
+drawFocusIfNeeded: eb$nullfunction,
+drawImage: eb$nullfunction,
+drawWidgetAsOnScreen: eb$nullfunction,
+drawWindow: eb$nullfunction,
+ellipse: eb$nullfunction,
+fill: eb$nullfunction,
+fillRect: eb$nullfunction,
+fillText: eb$nullfunction,
+getImageData: eb$nullfunction,
+getLineDash: eb$nullfunction,
+isPointInPath: eb$nullfunction,
+isPointInStroke: eb$nullfunction,
+lineTo: eb$nullfunction,
+measureText: function(s) {
+// returns a TextMetrics object, whatever that is.
+// Height and width will depend on the font, but this is just a stub.
+return {height: 12, width: s.length * 7};
+},
+moveTo: eb$nullfunction,
+putImageData: eb$nullfunction,
+quadraticCurveTo: eb$nullfunction,
+rect: eb$nullfunction,
+removeHitRegion: eb$nullfunction,
+resetTransform: eb$nullfunction,
+restore: eb$nullfunction,
+rotate: eb$nullfunction,
+save: eb$nullfunction,
+scale: eb$nullfunction,
+scrollPathIntoView: eb$nullfunction,
+setLineDash: eb$nullfunction,
+setTransform: eb$nullfunction,
+stroke: eb$nullfunction,
+strokeRect: eb$nullfunction,
+strokeText: eb$nullfunction,
+transform: eb$nullfunction,
+translate: eb$nullfunction }};
 }
 
 /*********************************************************************
