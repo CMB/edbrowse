@@ -1116,8 +1116,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 			return true;
 	}
 
-	if (itype >= INP_TEXT && itype <= INP_SELECT &&
-	    tagHandler(t->seqno, "onchange")) {
+	if (itype >= INP_TEXT && tagHandler(t->seqno, "onchange")) {
 		if (!isJSAlive)
 			runningError(MSG_NJNoOnchange);
 		else {

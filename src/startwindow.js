@@ -2202,6 +2202,14 @@ answer += part;
 return answer;
 }
 
+mw0.newTextUnder = function(top, s, flavor)
+{
+var l = top.childNodes.length;
+for(i=l-1; i>=0; --i)
+top.removeChild(top.childNodes[i]);
+top.appendChild(document.createTextNode(s));
+}
+
 /*********************************************************************
 Add prototype methods to the standard nodes, nodes that have children,
 and the normal set of methods to go with those children.
@@ -2278,9 +2286,11 @@ c.prototype.dispatchEvent = mw0.dispatchEvent;
 c.prototype.ELEMENT_NODE = 1, c.prototype.TEXT_NODE = 3, c.prototype.COMMENT_NODE = 8, c.prototype.DOCUMENT_NODE = 9, c.prototype.DOCUMENT_TYPE_NODE = 10, c.prototype.DOCUMENT_FRAGMENT_NODE = 11;
 Object.defineProperty(c.prototype, "classList", { get : function() { return mw0.classList(this);}});
 Object.defineProperty(c.prototype, "textContent", {
-get: function() { return mw0.textUnder(this, 0); }});
+get: function() { return mw0.textUnder(this, 0); },
+set: function(s) { return mw0.newTextUnder(this, s, 0); }});
 Object.defineProperty(c.prototype, "contentText", {
-get: function() { return mw0.textUnder(this, 1); }});
+get: function() { return mw0.textUnder(this, 1); },
+set: function(s) { return mw0.newTextUnder(this, s, 1); }});
 Object.defineProperty(c.prototype, "nodeValue", {
 get: function() { return this.nodeType == 3 ? this.data : null;},
 set: function(h) { if(this.nodeType == 3) this.data = h; }});
