@@ -952,6 +952,13 @@ void infShow(int tagno, const char *search)
 	}
 }				/* infShow */
 
+static bool inputDisabled(const struct htmlTag *t)
+{
+	if (isJSAlive && t->jv)
+		return get_property_bool(t->jv, "disabled");
+	return t->disabled;
+}
+
 /*********************************************************************
 Update an input field in the current edbrowse buffer.
 This can be done for one of two reasons.
@@ -1028,7 +1035,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		setError(MSG_Readonly);
 		return false;
 	}
-	if (t->disabled) {
+	if (inputDisabled(t)) {
 		setError(MSG_Disabled);
 		return false;
 	}
@@ -1627,6 +1634,10 @@ bool infPush(int tagno, char **post_string)
 	}
 
 	if (t) {
+		if (inputDisabled(t)) {
+			setError(MSG_Disabled);
+			return false;
+		}
 		if (tagHandler(t->seqno, "onclick") && !isJSAlive)
 			runningError(itype ==
 				     INP_BUTTON ? MSG_NJNoAction :

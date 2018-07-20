@@ -725,7 +725,14 @@ mw0.Form = function(){ this.elements = []; }
 mw0.Form.prototype = {
 submit: eb$formSubmit, reset: eb$formReset};
 Object.defineProperty(mw0.Form.prototype, "length", { get: function() { return this.elements.length;}});
-mw0.Element = function(){}
+mw0.Element = function() { this.selectionStart = 0; this.selectionEnd = -1; this.selectionDirection = "none"; }
+
+// I really don't know what this function does, something visual I think.
+mw0.Element.prototype.setSelectionRange = function(s, e, dir) {
+if(typeof s == "number") this.selectionStart = s;
+if(typeof e == "number") this.selectionEnd = e;
+if(typeof dir == "string") this.selectionDirection = dir;
+}
 
 mw0.Element.prototype.click = function() {
 var nn = this.nodeName, t = this.type;
