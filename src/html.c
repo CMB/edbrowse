@@ -1689,6 +1689,9 @@ bool infPush(int tagno, char **post_string)
 		setError(MSG_NotInForm);
 		return false;
 	}
+// <button> could turn into submit, which we don't want to do if it is not in a form.
+	if (!form)
+		return true;
 	// Before we submit, run the onsubmit code
 	if (t && tagHandler(form->seqno, "onsubmit")) {
 		if (!isJSAlive)
