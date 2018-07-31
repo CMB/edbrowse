@@ -1057,6 +1057,21 @@ mw0.CSSStyleDeclaration.prototype.getPropertyValue = function(p) {
 }
 Object.defineProperty(mw0.CSSStyleDeclaration.prototype, "css$data", {
 get: function() { var s = ""; for(var i=0; i<this.childNodes.length; ++i) if(this.childNodes[i].nodeName == "#text") s += this.childNodes[i].data; return s; }});
+mw0.CSSStyleDeclaration.prototype.getProperty = function(p) {
+p = p.replace(/-./g, function(f){return f[1].toUpperCase()});
+return this[p] ? this[p] : "";
+}
+mw0.CSSStyleDeclaration.prototype.setProperty = function(p, v, prv) {
+p = p.replace(/-./g, function(f){return f[1].toUpperCase()});
+this[p] = v;
+var pri = p + "$pri";
+this[pri] = (prv === "important");
+}
+mw0.CSSStyleDeclaration.prototype.getPropertyPriority = function(p) {
+p = p.replace(/-./g, function(f){return f[1].toUpperCase()});
+var pri = p + "$pri";
+return this[pri] ? "important" : "";
+}
 
 mw0.getComputedStyle = function(e,pe) {
 	// disregarding pseudoelements for now
