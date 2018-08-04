@@ -846,8 +846,11 @@ bool runEbFunction(const char *line)
 		goto fail;
 	}
 
+// This or a downstream function could invoke config.
+// Don't know why anybody would do that!
+	fncopy = cloneString(ebScript[j]);
 /* skip past the leading \n */
-	ip = ebScript[j] + 1;
+	ip = fncopy + 1;
 	nofail = (ebScriptName[j][0] == '+');
 	nest = 0;
 	ok = true;
@@ -874,11 +877,6 @@ bool runEbFunction(const char *line)
 			*t = 0;
 		argl[j] = strlen(s);
 	}
-
-// This or a downstream function could invoke config.
-// Don't know why anybody would do that!
-	fncopy = cloneString(ip);
-	ip = fncopy;
 
 	while ((code = *ip)) {
 		if (intFlag) {
