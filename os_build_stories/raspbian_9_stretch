@@ -1,0 +1,54 @@
+cmake:
+
+    sudo apt-get install cmake
+
+xsltproc:
+
+    sudo apt-get install xsltproc
+
+tidy-html5:
+
+    git clone git://github.com/htacg/tidy-html5
+    cd tidy-html5/build/cmake
+    cmake ../..
+    make
+    sudo make install
+
+curl:
+
+    sudo apt-get install libcurl4-openssl-dev
+
+libpcre:
+
+    sudo apt-get install libpcre3-dev
+
+readline:
+
+    sudo apt-get install libreadline-dev
+
+python modules:
+
+    sudo apt-get install python-yaml
+
+duktape:
+  Even though duktape-dev and duktape are present, installing them didn't get duktape.h
+
+    git clone https://github.com/svaarala/duktape.git
+    cd duktape
+    make dist
+    cd dist
+    make -f Makefile.sharedlibrary
+    sudo make -f Makefile.sharedlibrary install
+    make -f Makefile.cmdline
+    sudo ln -s $(pwd)/duk /usr/local/bin/duk
+
+Make links to libraries in somewhere raspbian looks by default:
+
+    sudo ln -s /usr/local/lib/libduktape* /usr/lib/
+
+edbrowse:
+
+    cd build
+    cmake ..
+    make
+    sudo make install
