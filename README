@@ -43,6 +43,8 @@ No need to repeat all that here.
 You're here because you want to compile and/or package the program,
 or modify the source in some way.  Great!
 
+If you're lucky, a description of how to build on your OS is in os_build_stories.  Otherwise, follow the advice below and, upon success, create a story for your OS there.
+
 Requirements:
 
 pcre:
