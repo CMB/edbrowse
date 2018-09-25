@@ -23,8 +23,8 @@ nie weryfikuj połączeń SSL (mniej bezpieczne)
 weryfikuj połączenia SSL
 nie pokazuj ukrytych plików w trybie katalogu
 pokazuj ukryte pliki w trybie katalogu
-0
-0
+debugowanie cloneNode wyłączone
+debugowanie cloneNode włączone
 znaczniki końca linii wyłączone
 znaczniki końca linii włączone
 brak polu nadawcy
@@ -436,12 +436,12 @@ SPNEGO curl wyłączony
 nie można pobrać lokalnego CSS\n
 nie można pobrać CSS z %s, kod %ld\n
 nie można pobrać CSS\n
-0
-0
-0
-0
-0
-0
+nie przeprowadzaj deminifikacji JavaScript
+przeprowadzaj deminifikację JavaScript
+debugowanie błędów JS wyłączone
+debugowanie błędów JS włączone
+debugowanie CSS wyłączone
+debugowanie CSS włączone
 wiersze od %d jak i %d zostały dodane\n
 wiersze od %d jak i %d do %d zostały dodane\n
 wiersze od %d do %d jak i %d zostały dodane\n
@@ -451,13 +451,13 @@ wiersze od %d do %d jak i %d zostały zaktualizowane\n
 wiersze od %d jak i %d zostało usuniętych\n
 wiersze od %d jak i %d do %d zostało usuniętych\n
 wiersze od %d do %d jak i %d zostało usuniętych\n
-0
-0
-0
-0
-0
-0
-0
+wtyczka musi być uruchamiana z lokalnego pliku
+wtyczka jest konwerterem, a nie odtwarzaczem
+wtyczka jest odtwarzaczem, a nie konwerterem
+ukryj tekst podpowiedzi
+pokaż tekst podpowiedzi
+tryb wsadowy
+z %s
 nieoczekiwane znaki po zakodowanym załączniku
 nieprawidłowe znaki w zakodowanym ząłączniku
 polecenie %s nie może być wykonane globalnie
@@ -561,15 +561,15 @@ brak znaku nowej linii we wpisie z katalogiem %s
 brak zamykającego '>' w wierszu %d
 funkcja fieldInBuffer nie może znaleźć tagu %d newtext %s
 nie można odtworzyć Twojego pliku ciastek %s
-0
+odwróć
 klient Fetchmail jest interaktywny i nie może być uruchomiony w tle
 katalog skrzynki odbiorczej nie został podany w Twoim pliku .ebrc
 Nie można zmienić katalogu na %s
 0
 login lub hasło niepoprawne
-0
-0
-0
+sortuj alfabetycznie
+sortuj po rozmiarze
+sortuj po czasie
 0
 0
 po kodzie tagu %d następuje nieprawidłowy znak %c
@@ -577,14 +577,14 @@ po kodzie tagu %d następuje nieprawidłowy znak %c
 Funkcja htmlParse() nie jest wielobieżna (reentrant).
 nieoczekiwany typ danych wejściowych w funkcji submitForm()
 lista = 0 w tagFromJavaVar()
-0
-0
+debugowanie zdarzeń wyłączone
+debugowanie zdarzeń włączone
 nie można utworzyć kontekstu JavaScript
 0
 0
 0
-0
-0
+timery wyłączone
+timery włączone
 błąd alokacji %zu bajtów
 błąd alokacji (calloc) %zu bajtów
 reallocMem(p,0)
@@ -601,8 +601,8 @@ wywołanie fopen() z niewłaściwym trybem %s
 '/' w złym miejscu w getDirURL(%s)
 '/' w złym miejscu w %s
 decodePostData(0,0)
-0
-0
+szukaj bez zawijania
+szukaj z zawijaniem
 0
 nie można odpowiadać w trybie katalogu
 nie można odpowiadać w trybie bazy danych
