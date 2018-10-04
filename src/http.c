@@ -632,6 +632,8 @@ bool parseRefresh(char *ref, int *delay_p)
 	if (memEqualCI(u, "url=", 4)) {
 		char qc;
 		u += 4;
+		while (isspace(*u))
+			++u;
 		qc = *u;
 		if (qc == '"' || qc == '\'')
 			++u;
