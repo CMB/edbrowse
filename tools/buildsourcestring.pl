@@ -52,7 +52,7 @@ if ( -f $infile ) {
 
 if($strip_comments) {
 # Strip out js comments.
-# These regular expressionsm are replicated in uncomment.
+# These regular expressions are replicated in uncomment.
 # If you change something here you must also change it there. Sorry.
 # Comments, which are desperately needed, can be found over there.
 # If unsure, set $strip_comments to 0 and run again.
