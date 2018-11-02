@@ -441,3 +441,35 @@ static void eb_vprintf(const char *fmt, va_list args)
 	vprintf(fmt, args);
 #endif
 }				/* eb_vprintf */
+
+bool helpUtility(void)
+{
+	int cx;
+	extern const char qrg[];
+
+	if (!cxQuit(context, 0))
+		return false;
+
+// maybe we already have a buffer with the help guide in it
+	for (cx = 1; cx < MAXSESSION; ++cx) {
+		struct ebWindow *w = sessionList[cx].lw;
+		if (!w)
+			continue;
+		if (!w->f0.fileName)
+			continue;
+		if (!stringEqual(w->f0.fileName, "qrg.browse"))
+			continue;
+		cxSwitch(cx, false);
+		i_printf(MSG_MovedSession, cx);
+		return true;
+	}
+
+	cx = sideBuffer(0, qrg, -1, "qrg");
+	if (cx == 0)
+		return false;
+	cxSwitch(cx, false);
+	i_printf(MSG_MovedSession, cx);
+	browseCurrentBuffer();
+	cw->dot = 1;
+	return true;
+}

@@ -324,7 +324,7 @@ static bool jdb_passthrough(const char *s)
 		"timers", "timers+", "timers-",
 		"demin", "demin+", "demin-",
 		"xhr", "xhr+", "xhr-",
-		"bflist", "bglist", 0
+		"bflist", "bglist", "help", 0
 	};
 	int i;
 	if (s[0] == '!')
@@ -4421,6 +4421,10 @@ et_go:
 			nl();
 		}
 		return true;
+	}
+
+	if (stringEqual(line, "help")) {
+		return helpUtility();
 	}
 
 	if (stringEqual(line, "iu")) {

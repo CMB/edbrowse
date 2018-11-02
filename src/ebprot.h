@@ -252,6 +252,7 @@ void showErrorAbort(void) ;
 #if 0
 void i_caseShift(unsigned char *s, char action) ;
 #endif
+bool helpUtility(void);
 
 // sourcefile=stringfile.c
 // Everything in this file is threadsafe except those marked with @,
