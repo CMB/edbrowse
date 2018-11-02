@@ -54,7 +54,7 @@ dbodbc.o dbinfx.o dbops.o : dbapi.h
 startwindow.c: startwindow.js third.js
 	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/third.js thirdJS src/startwindow.c
 
-ebrc.c: ../lang/ebrc-*
+ebrc.c: ../lang/ebrc-* ../doc/usersguide.html
 	cd .. ; ./tools/buildebrcstring.pl
 
 msg-strings.c: ../lang/msg-*

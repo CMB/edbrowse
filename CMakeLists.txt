@@ -221,6 +221,7 @@ if (PERL)
         COMMAND perl -f tools/buildebrcstring.pl
         COMMAND perl -f tools/buildmsgstrings.pl
         DEPENDS ${LANG_EBRC_FILES} ${LANG_MSG_FILES} src/startwindow.js src/third.js
+            doc/usersguide.html
             tools/buildsourcestring.pl
             tools/buildebrcstring.pl
             tools/buildmsgstrings.pl
