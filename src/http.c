@@ -1557,7 +1557,9 @@ void ebcurl_setError(CURLcode curlret, const char *url, int action,
 		break;
 
 	case CURLE_PEER_FAILED_VERIFICATION:
+#if LIBCURL_VERSION_NUM < 0x073e00
 	case CURLE_SSL_CACERT:
+#endif
 		(*fn) (MSG_NoCertify, host);
 		break;
 
