@@ -4214,7 +4214,7 @@ et_go:
 		return rc;
 	}
 
-	if (stringEqual(line, "itext")) {
+	if (stringEqual(line, "ib")) {
 		cmd = 'e';
 		if (!cw->browseMode) {
 			setError(MSG_NoBrowse);

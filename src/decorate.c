@@ -758,10 +758,9 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 				t->rvalue = t->value = emptyString;
 			}
 #if 0
-			if (whichproc == 'e') {
-				j = sideBuffer(0, t->value, -1, 0);
-				t->lic = j;
-			}
+// When textarea buffers were allocated at browse time, before the ib command
+			if (whichproc == 'e')
+				t->lic = sideBuffer(0, t->value, -1, 0);
 #endif
 			currentTA = 0;
 		}

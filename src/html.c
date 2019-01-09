@@ -3322,6 +3322,10 @@ nop:
 				sprintf(hnum, "%c%d<buffer %d%c0>",
 					InternalCodeChar, t->seqno, j,
 					InternalCodeChar);
+			else if (t->value[0])
+				sprintf(hnum, "%c%d<buffer text%c0>",
+					InternalCodeChar, t->seqno,
+					InternalCodeChar);
 			else
 				sprintf(hnum, "%c%d<buffer ?%c0>",
 					InternalCodeChar, t->seqno,
@@ -3588,7 +3592,7 @@ void itext(void)
 	int n;
 	struct htmlTag *t;
 	char newtext[20];
-	bool change = false;
+	bool change = false, inp = false;
 
 	p = fetchLine(ln, -1);
 	while (*p != '\n') {
@@ -3599,6 +3603,7 @@ void itext(void)
 		n = strtol((char *)p + 1, (char **)&p, 10);
 		if (*p != '<')
 			continue;
+		inp = true;
 		t = tagList[n];
 		if (t->itype != INP_TA || t->lic)
 			continue;
@@ -3617,6 +3622,8 @@ void itext(void)
 
 	if (change)
 		displayLine(ln);
-	else
+	else if (inp)
 		i_puts(MSG_NoChange);
+	else
+		i_puts(MSG_NoInputFields);
 }

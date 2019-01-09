@@ -651,6 +651,7 @@ g : go to the link on the current line
 <br>i$* : push the last button on the current line
 <br>i3? : describe the third input field on the current line
 <br>ipass2 : prompt for the content of the second input field, disabling echo
+<br>ib : allocate an input buffer for this textarea
 <br>M4 : move this web page to session 4 and back up to the previous page
 <br>M : move this web page to an empty session and back up
 <br>js : allow javascript (toggle)
@@ -2423,12 +2424,13 @@ The editing session is chosen for you, and appears in the input field.
 Consider the following form.
 
 <PRE><font size=3 face=Arial,Helvetica,sans-serif>Enter your email address: &lt;&gt;
-Enter your comments: &lt;buffer 2&gt;
+Enter your comments: &lt;buffer ?&gt;
 </font></PRE>
 
 <P>
-In this example, session 2 was not active when browsing began.
-The browser allocated session 2 specifically for this input field.
+If you wish to enter any comments, you must allocate the buffer using the ib command.
+At this point &lt;buffer ?&gt; changes to &lt;buffer 2&gt; (or some such).
+Session 2 was not active when browsing began, but it is now.
 Type e2 to move to session 2, prepare your comments,
 then type e1 to return to the input form.
 
@@ -2439,13 +2441,14 @@ but this is not always the case.
 Be sure to check for pre-existing text before you start typing your thoughts.
 A particularly arrogant site might preload the text area with:
 "I love your website because:".
+Preset text is indicated by &lt;buffer text&gt; rather than &lt;buffer ?&gt;.
 
 <P>
 When you finally submit the form,
 as discussed in the next section,
 the text in buffer 2, associated with the second editing session,
-will replace the words "bufffer 2" in the input field.
-Thus your carefully crafted comments are on their way.
+will replace the words "bufffer 2" in the input field,
+and your carefully crafted comments are on their way.
 
 <H3> <A NAME=button> Push The Button </A> </H3>
 
