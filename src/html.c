@@ -3613,7 +3613,7 @@ void itext(void)
 // updateFieldInBuffer is crazy inefficient in that it searches through the
 // whole buffer, and we know it's on the current line, but really, how often
 // do you invoke this command?
-		updateFieldInBuffer(n, newtext, true, false);
+		updateFieldInBuffer(n, newtext, false, false);
 // And now all the pointers are invalid so break out.
 // If there's another textarea on the same line you have to issue the command
 // again, but really, how often does that happen?
