@@ -4214,6 +4214,20 @@ et_go:
 		return rc;
 	}
 
+	if (stringEqual(line, "itext")) {
+		cmd = 'e';
+		if (!cw->browseMode) {
+			setError(MSG_NoBrowse);
+			return false;
+		}
+		if (!cw->dot) {	// should never happen
+			setError(MSG_EmptyBuffer);
+			return false;
+		}
+		itext();
+		return true;
+	}
+
 	if (stringEqual(line, "f/") || stringEqual(line, "w/")) {
 		char *t;
 		cmd = line[0];

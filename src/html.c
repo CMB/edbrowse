@@ -3323,7 +3323,9 @@ nop:
 					InternalCodeChar, t->seqno, j,
 					InternalCodeChar);
 			else
-				strcpy(hnum, "<buffer ?>");
+				sprintf(hnum, "%c%d<buffer ?%c0>",
+					InternalCodeChar, t->seqno,
+					InternalCodeChar);
 			ns_hnum();
 			break;
 		}
@@ -3576,3 +3578,45 @@ char *render(int start)
 	cf = save_cf;
 	return ns;
 }				/* render */
+
+// Create buffers for text areas, so the user can type in comments or whatever
+// and send them to the website in a fill-out form.
+void itext(void)
+{
+	int ln = cw->dot;	// line number
+	pst p;			// the raw line to scan
+	int n;
+	struct htmlTag *t;
+	char newtext[20];
+	bool change = false;
+
+	p = fetchLine(ln, -1);
+	while (*p != '\n') {
+		if (*p != InternalCodeChar) {
+			++p;
+			continue;
+		}
+		n = strtol((char *)p + 1, (char **)&p, 10);
+		if (*p != '<')
+			continue;
+		t = tagList[n];
+		if (t->itype != INP_TA || t->lic)
+			continue;
+		t->lic = sideBuffer(0, t->value, -1, 0);
+		change = true;
+		sprintf(newtext, "buffer %d", t->lic);
+// updateFieldInBuffer is crazy inefficient in that it searches through the
+// whole buffer, and we know it's on the current line, but really, how often
+// do you invoke this command?
+		updateFieldInBuffer(n, newtext, true, false);
+// And now all the pointers are invalid so break out.
+// If there's another textarea on the same line you have to issue the command
+// again, but really, how often does that happen?
+		break;
+	}
+
+	if (change)
+		displayLine(ln);
+	else
+		i_puts(MSG_NoChange);
+}

@@ -757,10 +757,12 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 /* like the other value fields, it can't be null */
 				t->rvalue = t->value = emptyString;
 			}
+#if 0
 			if (whichproc == 'e') {
 				j = sideBuffer(0, t->value, -1, 0);
 				t->lic = j;
 			}
+#endif
 			currentTA = 0;
 		}
 		break;
