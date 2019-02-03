@@ -1298,6 +1298,13 @@ void delText(int start, int end)
 	memmove(cw->map + start, cw->map + end + 1,
 		(cw->dol - end + 1) * LMSIZE);
 
+	if (cw->dirMode && cw->r_map) {
+// if you are looking at directories with ls-s or some such,
+// we have to delete the corresponding stat information.
+		memmove(cw->r_map + start, cw->r_map + end + 1,
+			(cw->dol - end + 1) * LMSIZE);
+	}
+
 /* move the labels */
 	while ((label = nextLabel(label))) {
 		ln = *label;
@@ -1318,6 +1325,10 @@ void delText(int start, int end)
 	if (!cw->dol) {
 		free(cw->map);
 		cw->map = 0;
+		if (cw->dirMode && cw->r_map) {
+			free(cw->r_map);
+			cw->r_map = 0;
+		}
 	}
 }				/* delText */
 
