@@ -5,8 +5,8 @@
 CC ?=		cc
 CXX ?=		c++
 PREFIX ?=	/usr/local
-CFLAGS ?=	-Wall -Wextra
-CXXFLAGS ?=	-Wall -Wextra
+CFLAGS ?=	-Wall -Wextra -D_FILE_OFFSET_BITS=64
+CXXFLAGS ?=	-Wall -Wextra -D_FILE_OFFSET_BITS=64
 BUILD_EDBR_ODBC ?= off
 
 PERL !=		which perl

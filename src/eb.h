@@ -221,7 +221,7 @@ struct i_get {
  * or case sensitive, so keep our own sanitized copy. */
 	char content[60];
 	char *charset;	/* extra content info such as charset */
-int hcl;			/* http content length */
+long long hcl;			/* http content length */
 	char *cdfn;		/* http content disposition file name */
 	time_t modtime;	/* http modification time */
 	char *etag;		/* the etag in the header */

@@ -131,10 +131,10 @@ static void scan_http_headers(struct i_get *g, bool fromCallback)
 	}
 
 	if (!g->hcl && (v = find_http_header(g, "content-length"))) {
-		g->hcl = atoi(v);
+		sscanf(v, "%lld", &g->hcl);
 		nzFree(v);
 		if (g->hcl)
-			debugPrint(4, "content length %d", g->hcl);
+			debugPrint(4, "content length %lld", g->hcl);
 	}
 
 	if (!g->etag && (v = find_http_header(g, "etag"))) {
@@ -330,7 +330,7 @@ showdots:
 		}
 		if (showProgress == 'c' && g->hcl)
 			printf("%d/%d\n", dots2,
-			       (g->hcl + CHUNKSIZE - 1) / CHUNKSIZE);
+			       (int)((g->hcl + CHUNKSIZE - 1) / CHUNKSIZE));
 	}
 	return num_bytes;
 }
@@ -2408,7 +2408,8 @@ int bg_jobs(bool iponly)
 		printf("%s", j->file + j->file2);
 		if (j->fsize)
 			printf(" %d/%zu",
-			       (fileSizeByName(j->file) / CHUNKSIZE), j->fsize);
+			       (int)(fileSizeByName(j->file) / CHUNKSIZE),
+			       j->fsize);
 		nl();
 	}
 	if (part)

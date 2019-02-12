@@ -21,6 +21,9 @@ endif
 #  check for errors and mid level warnings.
 CFLAGS += -Wall
 
+# So edbrowse can show you the size of large files
+CFLAGS += -D_FILE_OFFSET_BITS=64
+
 #  Normal load flags
 LDFLAGS += $(STRIP)
 

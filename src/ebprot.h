@@ -323,8 +323,8 @@ bool memoryOutToFile(const char *filename, const char *data, int len, int msgcre
 void caseShift(char *s, char action) ;
 char fileTypeByName(const char *name, bool showlink) ;
 char fileTypeByHandle(int fd) ;
-int fileSizeByName(const char *name) ;
-int fileSizeByHandle(int fd) ;
+off_t fileSizeByName(const char *name) ;
+off_t fileSizeByHandle(int fd) ;
 time_t fileTimeByName(const char *name) ;
 char *conciseSize(size_t n); //?
 char *conciseTime(time_t t); //?

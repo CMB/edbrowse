@@ -1543,7 +1543,7 @@ struct DSR {
 	int idx;
 	union {
 		time_t t;
-		size_t z;
+		off_t z;
 	} u;
 };
 static struct DSR *dsr_list;

@@ -925,7 +925,7 @@ char fileTypeByHandle(int fd)
 	return c;
 }				/* fileTypeByHandle */
 
-int fileSizeByName(const char *name)
+off_t fileSizeByName(const char *name)
 {
 	struct stat buf;
 	if (stat(name, &buf)) {
@@ -935,7 +935,7 @@ int fileSizeByName(const char *name)
 	return buf.st_size;
 }				/* fileSizeByName */
 
-int fileSizeByHandle(int fd)
+off_t fileSizeByHandle(int fd)
 {
 	struct stat buf;
 	if (fstat(fd, &buf)) {
