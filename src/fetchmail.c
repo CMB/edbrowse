@@ -11,7 +11,7 @@
 #include "vsprtf.h"
 #endif
 
-#define MHLINE 200		/* length of a mail header line */
+#define MHLINE 400		/* length of a mail header line */
 /* headers and other information about an email */
 struct MHINFO {
 	struct MHINFO *next, *prev;
@@ -2173,6 +2173,13 @@ static struct MHINFO *headerGlean(char *start, char *end)
 		if (*q++ != ':')
 			continue;	/* should never happen */
 		for (vl = q; *vl == ' ' || *vl == '\t'; ++vl) ;
+		if (vl == t && t < end - 1 && (t[1] == ' ' || t[1] == '\t')) {
+// foobar: and that's all, maybe on the next line?
+			t = strchr(t + 1, '\n');
+			if (!t)
+				t = end - 1;	/* should never happen */
+			for (++vl; *vl == ' ' || *vl == '\t'; ++vl) ;
+		}
 		for (vr = t; vr > vl && (vr[-1] == ' ' || vr[-1] == '\t');
 		     --vr) ;
 		if (vr == vl)
