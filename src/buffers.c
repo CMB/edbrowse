@@ -4071,6 +4071,20 @@ pwd:
 		}
 	}
 
+	if (line[0] == 'f' && line[1] == 'l' && line[2] == 'l') {
+		c = line[3];
+		if (!c) {
+			printf("%d\n", formatLineLength);
+			return true;
+		}
+		if (isspaceByte(c) && isdigitByte(line[4])) {
+			formatLineLength = atoi(line + 4);
+			if (formatLineLength < 32)
+				formatLineLength = 32;
+			return true;
+		}
+	}
+
 	if (line[0] == 'p' && line[1] == 'b') {
 		rc = playBuffer(line, NULL);
 		if (rc == 2)

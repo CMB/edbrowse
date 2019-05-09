@@ -499,6 +499,7 @@ p : print the current line
 <br>lna : expand all nonascii chars into hex when a line is listed (toggle)
 <br>n : print the current line with its line number
 <br>ll 1000 : line length 1000, show the first 1000 chars of each line
+<br>fll 80 : format line length 80, cut lines to approx 80 chars, for convenience, or to fit the terminal
 <br>z22 : print the next 22 lines
 <br>z : print another 22 lines
 <br>= : print the number of lines in the file
@@ -1614,7 +1615,8 @@ type ,s/\bfoo\b/uc/ig.
 
 <P>
 The `bl' command breaks the current line into sentences and phrases,
-each about 70 characters long.
+each about 80 characters long.
+You can change this default with the fll (format line length) command.
 It also compresses white space and strips white space from the end of the line.
 If the line contains return characters,
 these are turned into line separators -
@@ -1650,6 +1652,10 @@ and apply bl to the range of lines that actually represents text.
 <P>
 You might be tempted to use bl to make Word documents readable, but use catdoc instead; it does a better job.
 This is a must-have program for people who want a command line environment.
+
+<P>
+This function is used to turn html text into sentences and phrases, with lines no longer than 80 columns, or 80 utf8 characters.
+Again, the fll command changes the format line length.
 
 <H3> <A NAME=race> Race Conditions </A> </H3>
 

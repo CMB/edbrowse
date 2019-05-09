@@ -3,6 +3,8 @@ Here are some changes introduced by recent versions of edbrowse.
 3.7.5:
 ib command to allocate input buffers for textareas.
 
+fll command to set the format line length.
+
 3.7.4:
 Install man page and other documentation.
 

@@ -424,7 +424,7 @@ static bool bl_overflow;
 /* This is a virtual column number, extra spaces for tab,
  * one space for emoji, and skipping over invisible anchors. */
 static int colno;
-static const int optimalLine = 80;	/* optimal line length */
+int formatLineLength = 80;	// for html formatting or the bl command
 static const int cutLineAfter = 36;	/* cut sentence after this column */
 static const int paraLine = 120;	/* paragraph in a line */
 static int longcut, pre_cr;
@@ -656,7 +656,7 @@ static void appendPrintableChunk(const char *chunk, int len, bool premode)
 	lspace = 0;
 	if (premode)
 		return;
-	if (colno <= optimalLine)
+	if (colno <= formatLineLength)
 		return;
 /* Oops, line is getting long.  Let's see where we can cut it. */
 	i = j = 0;
