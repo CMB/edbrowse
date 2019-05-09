@@ -422,7 +422,7 @@ The prefix bl means breakline.
 static char *bl_start, *bl_cursor, *bl_end;
 static bool bl_overflow;
 /* This is a virtual column number, extra spaces for tab,
- * and skipping over invisible anchors. */
+ * one space for emoji, and skipping over invisible anchors. */
 static int colno;
 static const int optimalLine = 80;	/* optimal line length */
 static const int cutLineAfter = 36;	/* cut sentence after this column */
@@ -638,7 +638,11 @@ static void appendPrintableChunk(const char *chunk, int len, bool premode)
 			continue;
 		}
 		if (visible) {
-			++colno;
+// each foreign char or emoji counts as one.
+// Ignore all but the first byte of a utf8.
+			if ((char)c >= 0	// ascii
+			    || (c & 0x40) == 0x40)
+				++colno;
 			continue;
 		}
 		if (isdigitByte(c))
