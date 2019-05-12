@@ -128,6 +128,7 @@ static bool readControl(void)
 	char *data;
 	int datalen;
 	struct CENTRY *e;
+	int ln = 1;
 
 	lseek(control_fh, 0L, 0);
 	if (!fdIntoMemory(control_fh, &data, &datalen))
@@ -136,7 +137,7 @@ static bool readControl(void)
 	numentries = 0;
 	e = entries;
 	endfile = data + datalen;
-	for (s = data; s != endfile; s = t) {
+	for (s = data; s != endfile; s = t, ++ln) {
 		t = strchr(s, '\n');
 		if (!t) {
 /* file does not end in newline; this should never happen! */
@@ -148,11 +149,21 @@ static bool readControl(void)
 		e->textlength = t - s;
 		e->url = s;
 		s = strchr(s, '\t');
+		if (!s || s >= t) {
+			debugPrint(3, "cache control file line %d is bogus",
+				   ln);
+			continue;
+		}
 		*s++ = 0;
 		e->filenumber = strtol(s, &s, 10);
 		++s;
 		e->etag = s;
 		s = strchr(s, '\t');
+		if (!s || s >= t) {
+			debugPrint(3, "cache control file line %d is bogus",
+				   ln);
+			continue;
+		}
 		*s++ = 0;
 		sscanf(s, "%d %d %d", &e->modtime, &e->accesstime, &e->pages);
 		++e, ++numentries;
@@ -161,15 +172,6 @@ static bool readControl(void)
 	cache_data = data;	/* remember to free this later */
 	return true;
 }				/* readControl */
-
-/* Truncate the control file in a portable way.
- * We already opened the file read write, so can't imagine why this wouldn't work. */
-static void clobber(void)
-{
-	int fh = open(cacheControl, O_WRONLY | O_TRUNC);
-	if (fh >= 0)
-		close(fh);
-}
 
 /* create an ascii equivalent for a record, this is allocated */
 static char *record2string(const struct CENTRY *e)
@@ -191,7 +193,7 @@ static bool writeControl(void)
 	FILE *f;
 
 	lseek(control_fh, 0L, 0);
-	clobber();
+	ftruncate(control_fh, 0l);
 /* buffered IO is more efficient */
 	f = fdopen(control_fh, "w");
 
@@ -205,7 +207,7 @@ static bool writeControl(void)
 		if (rc <= 0) {
 			fclose(f);
 			control_fh = -1;
-			clobber();
+			truncate(cacheControl, 0l);
 			return false;
 		}
 	}
@@ -305,13 +307,17 @@ static void clearCacheInternal(void)
 		unlink(cacheFile);
 	}
 
-	clobber();
+	truncate(cacheControl, 0l);
 }				/* clearCacheInternal */
 
+// This function is not used and has not been tested.
+// Maybe some day it will be invoked from an edbrowse command.
 void clearCache(void)
 {
 	if (!setLock())
 		return;
+	close(control_fh);
+	control_fh = -1;
 	clearCacheInternal();
 	free(cache_data);
 	clearLock();
