@@ -1179,6 +1179,7 @@ void iso2utf(const uchar * inbuf, int inbuflen, uchar ** outbuf_p,
 	uchar *outbuf;
 	const int *isoarray = iso_unicodes[type8859 - 1];
 	int ucode;
+	char *s;
 
 	if (!inbuflen) {
 		*outbuf_p = (uchar *) emptyString;
@@ -1189,11 +1190,15 @@ void iso2utf(const uchar * inbuf, int inbuflen, uchar ** outbuf_p,
 /* count chars, so we can allocate */
 	for (i = 0; i < inbuflen; ++i) {
 		c = inbuf[i];
-		if (c >= 0x80)
-			++nacount;
+		if (c >= 0x80) {
+			ucode = isoarray[c & 0x7f];
+			s = uni2utf8(ucode);
+			nacount += strlen(s) - 1;
+		}
 	}
 
 	outbuf = allocMem(inbuflen + nacount + 1);
+
 	for (i = j = 0; i < inbuflen; ++i) {
 		c = inbuf[i];
 		if (c < 0x80) {
@@ -1201,10 +1206,11 @@ void iso2utf(const uchar * inbuf, int inbuflen, uchar ** outbuf_p,
 			continue;
 		}
 		ucode = isoarray[c & 0x7f];
-		outbuf[j++] = (ucode >> 6) | 0xc0;
-		outbuf[j++] = (ucode & 0x3f) | 0x80;
+		s = uni2utf8(ucode);
+		strcpy((char *)outbuf + j, s);
+		j += strlen(s);
 	}
-	outbuf[j] = 0;		/* just for fun */
+	outbuf[j] = 0;
 
 	*outbuf_p = outbuf;
 	*outbuflen_p = j;
@@ -1251,6 +1257,25 @@ void utf2iso(const uchar * inbuf, int inbuflen, uchar ** outbuf_p,
 			}
 		}
 
+/* Convertable into 16 bit */
+		if ((c & 0xf0) == 0xe0 &&
+		    (inbuf[i + 1] & 0xc0) == 0x80 &&
+		    (inbuf[i + 2] & 0xc0) == 0x80) {
+			ucode = c & 0xf;
+			ucode <<= 6;
+			ucode |= (inbuf[i + 1] & 0x3f);
+			ucode <<= 6;
+			ucode |= (inbuf[i + 2] & 0x3f);
+			for (k = 0; k < 128; ++k)
+				if (isoarray[k] == ucode)
+					break;
+			if (k < 128) {
+				outbuf[j++] = k | 0x80;
+				i += 2;
+				continue;
+			}
+		}
+
 /* unicodes not found in our iso class are converted into stars */
 		c <<= 1;
 		++i;
@@ -1261,7 +1286,7 @@ void utf2iso(const uchar * inbuf, int inbuflen, uchar ** outbuf_p,
 		outbuf[j++] = '*';
 		--i;
 	}
-	outbuf[j] = 0;		/* just for fun */
+	outbuf[j] = 0;
 
 	*outbuf_p = outbuf;
 	*outbuflen_p = j;
