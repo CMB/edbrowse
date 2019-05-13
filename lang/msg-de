@@ -572,7 +572,7 @@ sortiere nach Größe
 sortiere nach Zeit
 konvertiere in unix
 konvertiere in dos
-Tag-Code %d wird von ungültigem Zeichen %c gefolgt
+Tag-Code %d wird von ungültigem Zeichen %c gefolgt\n
 0
 htmlParse() kann nicht erneut aufgerufen werden
 unerwarteter Eingabetyp in eingabeformular

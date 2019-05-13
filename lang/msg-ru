@@ -572,7 +572,7 @@ sort by size
 sort by time
 конвертируем в unix
 конвертируем в dos
-tag code %d has bad character %c following
+tag code %d has bad character %c following\n
 0
 htmlParse() is not reentrant.
 unexpected input type in submitForm()

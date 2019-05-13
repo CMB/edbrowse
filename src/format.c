@@ -840,8 +840,13 @@ char *htmlReformat(char *buf)
 		/* It's a tag */
 		tagno = strtol(h + 1, (char **)&nh, 10);
 		c = *nh++;
-		if (!c || !strchr("{}<>*", c))
-			i_printfExit(MSG_BadTagCode, tagno, c);
+		if (!c || !strchr("{}<>*", c)) {
+// this should never happen!
+			i_printf(MSG_BadTagCode, tagno, c);
+			appendOneChar('@');
+			nh = h + 1;
+			continue;
+		}
 		appendPrintableChunk(h, nh - h, premode);
 		preFormatCheck(tagno, &pretag, &slash);
 		if (pretag) {

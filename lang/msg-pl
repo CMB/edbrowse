@@ -572,7 +572,7 @@ login lub hasło niepoprawne
 0
 konwersja do unix
 konwersja do dos
-po kodzie tagu %d następuje nieprawidłowy znak %c
+po kodzie tagu %d następuje nieprawidłowy znak %c\n
 0
 Funkcja htmlParse() nie jest wielobieżna (reentrant).
 nieoczekiwany typ danych wejściowych w funkcji submitForm()

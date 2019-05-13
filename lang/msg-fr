@@ -572,7 +572,7 @@ tri par taille
 tri par date
 converti en unix
 converti en dos
-Le tag %d est suivi d'un caractère %c erroné
+Le tag %d est suivi d'un caractère %c erroné\n
 0
 HtmlParse() n'est pas réentrant
 Type de données inattendu dans submitForm()

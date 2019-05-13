@@ -572,7 +572,7 @@ ordina per dimensione
 ordina temporalmente
 converto in unix
 converto in dos
-il codice tag %d è seguito da un carattere non valido %c
+il codice tag %d è seguito da un carattere non valido %c\n
 0
 htmlParse() non è reentrant.
 input type non atteso in submitForm()
