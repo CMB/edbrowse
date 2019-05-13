@@ -261,13 +261,13 @@ Again, the substitute command renames a file, while the delete command removes a
 There is no undo operation, thus moving files to the trash can is safer. However, this does not free up any disk space.
 <LI><P> The edbrowse configuration file can contain functions, similar to the .bashrc file in Linux.
 These functions can invoke other edbrowse commands, along with branching and loops based on the success of these commands.
-This simple example converts a text file from dos to unix by removing newline characters from the end of each line.
+This simple example changes every x to y.
 If any changes were made, the file is written back to disk.
 The * in the if statement is true if the previous command was successful.
 </UL>
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif><code>function+undos {
-        ,s/\r$//
+<PRE><font size=3 face=Arial,Helvetica,sans-serif><code>function+xy {
+        ,s/x/y/g
         if(*) {
                 w
         }
@@ -403,7 +403,8 @@ Use the iu command to disable this feature.
 <P>
 When you write data out to the same file,
 e.g. if you have made some corrections or additions,
-edbrowse converts it back to its original single-byte iso8859 charset.
+edbrowse converts it back to its original single-byte iso8859 charset,
+and restores dos newline crlf sequences if the file was originally a dos text file.
 Thus you can send the edited file back to your friend,
 and it will be in his charset as he expects.
 However, if you write the data, or any portion of that data, into a new file,
@@ -1344,10 +1345,10 @@ You must use the `e' command to get a fresh text buffer.
 <P>
 For the most part it doesn't matter if the data is binary or text.
 Either way you can display and edit the data, and write it to a file.
-However, edbrowse tries to "do the right thing" under DOS/Windows.
+However, edbrowse tries to "do the right thing" for dos text files.
 It converts crlf to and from newline if it believes the file is text;
 and it leaves binary data alone.
-These distinctions are not relevant on Unix/Linux.
+This happens automatically under dos; it can be supressed with the iu command under unix, if you really want to see the carriage returns.
 
 <P>
 Although this approach is satisfactory for utf8,

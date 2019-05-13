@@ -570,8 +570,8 @@ nom utilisateur / mot de passe invalide
 tri par ordre alphabétique
 tri par taille
 tri par date
-0
-0
+converti en unix
+converti en dos
 Le tag %d est suivi d'un caractère %c erroné
 0
 HtmlParse() n'est pas réentrant

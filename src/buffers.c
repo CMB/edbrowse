@@ -1980,11 +1980,12 @@ gotdata:
 
 	if (!looksBinary((uchar *) rbuf, fileSize)) {
 		char *tbuf;
+		int i, j;
+		bool crlf_yes = false, crlf_no = false, dosmode = false;
 
-/* looks like text.  In DOS, we should have compressed crlf.
+/* looks like text.  In DOS, we should compress crlf.
  * Let's do that now. */
 #ifdef DOSLIKE
-		int i, j;
 		for (i = j = 0; i < fileSize; ++i) {
 			char c = rbuf[i];
 			if (c == '\r' && rbuf[i + 1] == '\n')
@@ -1994,6 +1995,42 @@ gotdata:
 		rbuf[j] = 0;
 		fileSize = j;
 		serverDataLen = fileSize;
+
+// if a utf32 file has unicode 2572, or 2572*256+x, it looks like \r\n,
+// and removing \r mungs the file from this point on.
+// This is a corner case that somebody needs to fix some day!
+
+#else
+
+// convert in unix, only if each \n has \r preceeding.
+		if (iuConvert) {
+			for (i = 0; i < fileSize; ++i) {
+				char c = rbuf[i];
+				if (c != '\n')
+					continue;
+				if (i && rbuf[i - 1] == '\r')
+					crlf_yes = true;
+				else
+					crlf_no = true;
+			}
+			if (crlf_yes && !crlf_no)
+				dosmode = true;
+		}
+
+		if (dosmode) {
+			if (debugLevel >= 2 || (debugLevel == 1
+						&& !isURL(filename)))
+				i_puts(MSG_ConvUnix);
+			for (i = j = 0; i < fileSize; ++i) {
+				char c = rbuf[i];
+				if (c == '\r' && rbuf[i + 1] == '\n')
+					continue;
+				rbuf[j++] = c;
+			}
+			rbuf[j] = 0;
+			fileSize = j;
+			serverDataLen = fileSize;
+		}
 #endif
 
 		if (iuConvert) {
@@ -2076,6 +2113,10 @@ gotdata:
 				if (is8859) {
 					cw->iso8859Mode = true;
 					debugPrint(3, "setting 8859 mode");
+				}
+				if (dosmode) {
+					cw->dosMode = true;
+					debugPrint(3, "setting dos mode");
 				}
 			}
 
@@ -2187,6 +2228,8 @@ badwrite:
 			      "\xff\xfe\x00\x00"), 4, 1, fh) <= 0)
 				goto badwrite;
 		}
+		if (cw->dosMode && debugLevel >= 1)
+			i_puts(MSG_ConvDos);
 	}
 
 	for (i = startRange; i <= endRange; ++i) {
@@ -2203,6 +2246,18 @@ badwrite:
 				--len;
 
 			if (name == cf->fileName && iuConvert) {
+				if (cw->dosMode && len && p[len - 1] == '\n') {
+// dos mode should not be set with utf16 or utf32; I hope.
+					tp = allocMem(len + 2);
+					memcpy(tp, p, len - 1);
+					memcpy(tp + len - 1, "\r\n", 3);
+					if (alloc_p)
+						free(p);
+					alloc_p = true;
+					p = (pst) tp;
+					++len;
+				}
+
 				if (cw->iso8859Mode && cons_utf8) {
 					utf2iso((uchar *) p, len,
 						(uchar **) & tp, &tlen);

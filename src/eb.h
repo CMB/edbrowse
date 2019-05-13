@@ -456,6 +456,7 @@ struct ebWindow {
 	bool utf32Mode:1;
 	bool bigMode:1; // big-endian
 	bool iso8859Mode:1;
+	bool dosMode:1; // \r\n
 	bool browseMode:1;	/* browsing html */
 	bool changeMode:1;	/* something has changed in this file */
 	bool quitMode:1;	/* you can quit this buffer any time */

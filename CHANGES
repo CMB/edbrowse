@@ -5,6 +5,11 @@ ib command to allocate input buffers for textareas.
 
 fll command to set the format line length.
 
+Convert dos \r\n newlines to simple \n.
+This always happened in the dos world, now it happens in unix too, unless you supress it with the iu command.
+Writing the same file back out converts newlines back.
+This follows the model of iso8859-1 to and from utf8.
+
 3.7.4:
 Install man page and other documentation.
 

@@ -570,8 +570,8 @@ Password o login non validi
 ordina alfabeticamente
 ordina per dimensione
 ordina temporalmente
-0
-0
+converto in unix
+converto in dos
 il codice tag %d è seguito da un carattere non valido %c
 0
 htmlParse() non è reentrant.

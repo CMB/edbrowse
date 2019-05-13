@@ -570,8 +570,8 @@ Invalid login or password
 sort alphabetically
 sort by size
 sort by time
-0
-0
+converting to unix
+converting to dos
 tag code %d has bad character %c following
 0
 htmlParse() is not reentrant.
