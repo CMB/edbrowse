@@ -4127,17 +4127,20 @@ pwd:
 	}
 
 	if (line[0] == 'f' && line[1] == 'l' && line[2] == 'l') {
+		char *s;
 		c = line[3];
 		if (!c) {
-			printf("%d\n", formatLineLength);
+			printf("%d%s\n", formatLineLength,
+			       (formatOverflow ? "+" : ""));
 			return true;
 		}
 		if (isspaceByte(c) && isdigitByte(line[4])) {
-			formatLineLength = atoi(line + 4);
+			formatLineLength = strtol(line + 4, &s, 10);
 			if (formatLineLength < 32)
 				formatLineLength = 32;
-			return true;
+			formatOverflow = (*s == '+');
 		}
+		return true;
 	}
 
 	if (line[0] == 'p' && line[1] == 'b') {

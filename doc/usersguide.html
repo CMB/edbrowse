@@ -500,7 +500,6 @@ p : print the current line
 <br>lna : expand all nonascii chars into hex when a line is listed (toggle)
 <br>n : print the current line with its line number
 <br>ll 1000 : line length 1000, show the first 1000 chars of each line
-<br>fll 80 : format line length 80, cut lines to approx 80 chars, for convenience, or to fit the terminal
 <br>z22 : print the next 22 lines
 <br>z : print another 22 lines
 <br>= : print the number of lines in the file
@@ -529,6 +528,8 @@ s/x/y/ : replace x with y on the current line
 <br>s. : replace period space with newline, break line in two
 <br>s?2 : break line at the second question mark
 <br>bl : break very long line into sentences and phrases
+<br>fll 80 : format line length 80, cut lines to 80 chars, perhaps to fit the terminal
+<br>fll 80+ : cut lines to 80 chars but allow some overflow so the next line isn't just one or two words.
 <br>/x/ : look for the line containing x
 <br>/x : same as /x/
 <br>/x/i : look for the line containing x or X
@@ -1616,9 +1617,13 @@ type ,s/\bfoo\b/uc/ig.
 
 <P>
 The `bl' command breaks the current line into sentences and phrases,
-each about 80 characters long.
+each no more than 80 characters long.
 You can change this default with the fll (format line length) command.
-It also compresses white space and strips white space from the end of the line.
+Some terminals are more than 80 characters wide.
+Use ffl 80+ to allow a little overflow, so the next line isn't just one or two words.
+
+<P>
+bl compresses white space and strips white space from the end of the line.
 If the line contains return characters,
 these are turned into line separators -
 places where the line will definitely be cut.
@@ -1628,7 +1633,8 @@ This is a modest attempt to keep indented text indented,
 if that makes any sense.
 Once bl is issued,
 physical lines will contain sentences or phrases, as delimited by punctuation,
-or by the newline/return characters embedded in the original text.
+or by the newline/return characters embedded in the original text, or by the format line length.
+A long line that has no spaces cannot be cut, and ramins long.
 
 <P>
 If one of the original lines, delimited by newline or return,
@@ -1655,8 +1661,10 @@ You might be tempted to use bl to make Word documents readable, but use catdoc i
 This is a must-have program for people who want a command line environment.
 
 <P>
-This function is used to turn html text into sentences and phrases, with lines no longer than 80 columns, or 80 utf8 characters.
+This function is also used to format html text into sentences and phrases, as part of the browse process, producing lines no longer than 80 columns, or 80 utf8 characters.
 Again, the fll command changes the format line length.
+Each character counts as one column, so wide characters, e.g. a line with several emojis, might cause an overflow on your terminal.
+Try fll 78 to give yourself some breathing room.
 
 <H3> <A NAME=race> Race Conditions </A> </H3>
 

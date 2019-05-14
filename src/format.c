@@ -425,6 +425,7 @@ static bool bl_overflow;
  * one space for emoji, and skipping over invisible anchors. */
 static int colno;
 int formatLineLength = 80;	// for html formatting or the bl command
+bool formatOverflow;
 static const int cutLineAfter = 36;	/* cut sentence after this column */
 static const int paraLine = 120;	/* paragraph in a line */
 static int longcut, pre_cr;
@@ -567,12 +568,14 @@ static void appendSpaceChunk(const char *chunk, int len, bool premode)
 		if (strchr(")\"|", d))
 			lright = colno, idxright = l;
 		lany = colno, idxany = l;
+		if (formatOverflow) {
 /* tack a short fragment onto the previous line. */
-		if (longcut && colno <= 15 && (nlc || lperiod == colno)) {
-			bl_start[longcut] = ' ';
-			if (!nlc)
-				len = spc = 0, nlc = 1;
-		}		/* pasting small fragment onto previous line */
+			if (longcut && colno <= 15 && (nlc || lperiod == colno)) {
+				bl_start[longcut] = ' ';
+				if (!nlc)
+					len = spc = 0, nlc = 1;
+			}	/* pasting small fragment onto previous line */
+		}
 	}			/* allowing line breaks */
 	if (lspace == 3)
 		nlc = 0;
