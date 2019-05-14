@@ -298,6 +298,11 @@ static void convertNode(TidyNode node, int level, bool opentag)
 		tidyBufClear(&tnv);
 		tidyNodeGetValue(tdoc, node, &tnv);
 		if (tnv.size) {
+// check here for &#0; or &#2; both of those are bad!
+			for (i = 0; i < tnv.size; ++i)
+				if (tnv.bp[i] == 0
+				    || tnv.bp[i] == InternalCodeChar)
+					tnv.bp[i] = InternalCodeCharAlternate;
 			t->textval = cloneString((char *)tnv.bp);
 			tidyBufFree(&tnv);
 		}
