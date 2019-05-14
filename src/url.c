@@ -211,6 +211,8 @@ char *htmlEscape0(const char *s, bool do_and)
 }				/* htmlEscape0 */
 
 /* Decide if it looks like a web url. */
+/* Don't do this in a href context  <a href=www.google.com> */
+static bool hrefContext;
 static bool httpDefault(const char *url)
 {
 	static const char *const domainSuffix[] = {
@@ -219,7 +221,10 @@ static bool httpDefault(const char *url)
 		"ca", "de", "jp", "nz", 0
 	};
 	int n, len;
-	const char *s, *lastdot, *end = url + strcspn(url, "/?#\1");
+	const char *s, *lastdot, *end;
+	if (hrefContext)
+		return false;
+	end = url + strcspn(url, "/?#\1");
 	if (end - url > 7 && stringEqual(end - 7, ".browse"))
 		end -= 7;
 	s = strrchr(url, ':');
@@ -804,6 +809,7 @@ char *resolveURL(const char *base, const char *rel)
 		return cloneString(rel);
 
 	debugPrint(5, "resolve(%s|%s)", base, rel);
+	hrefContext = true;
 	if (!base)
 		base = emptyString;
 	if (!rel)
@@ -817,6 +823,7 @@ char *resolveURL(const char *base, const char *rel)
 		strcpy(n, rel);
 out_n:
 		debugPrint(5, "= %s", n);
+		hrefContext = false;
 		return n;
 	}
 
@@ -843,13 +850,14 @@ out_n:
 		n[0] = 0;
 		if (s != rel) {
 /* It didn't have http in front of it before, put it on now. */
+/* This is old; it shouldn't happen any more. */
 			strncpy(n, s, l);
 			strcpy(n + l, "://");
 		}
 		strcat(n, rel);
 		goto squash;
 	}
-	/* relative is already a url */
+// at this point rel is not a url.
 	s = base;
 	if (rel[0] == '/') {
 		s = getDataURL(base);
