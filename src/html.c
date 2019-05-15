@@ -2522,6 +2522,10 @@ void runOnload(void)
 				fn);
 			unloadHyperlink(formfunction, "Form");
 		}
+		if (action == TAGACT_LINK && handlerPresent(t->jv, "onload"))
+			run_event_bool(t->jv, "link", "onload", e);
+		if (action == TAGACT_H && handlerPresent(t->jv, "onload"))
+			run_event_bool(t->jv, "h1", "onload", e);
 	}
 
 done:
@@ -3241,6 +3245,7 @@ li_hide:
 	case TAGACT_OBJECT:
 	case TAGACT_BR:
 	case TAGACT_P:
+	case TAGACT_H:
 	case TAGACT_NOP:
 nop:
 		if (invisible)
@@ -3258,8 +3263,7 @@ nop:
 					c = '\n';
 			}
 			stringAndChar(&ns, &ns_l, c);
-			if (opentag && ti->name[0] == 'h'
-			    && isdigit(ti->name[1])) {
+			if (opentag && action == TAGACT_H) {
 				strcpy(hnum, ti->name);
 				strcat(hnum, " ");
 				ns_hnum();
