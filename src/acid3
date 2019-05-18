@@ -1452,13 +1452,7 @@
         input2.click();
         expect(input1, 0, "failure 6");
         expect(input2, checked, "failure 7");
-//@` If you call the click() routine on a radio button, that function clears
-// the other radio buttons, but if you just set it,
-// I don't have a setter that would perform the same function.
-// I just haven't written it yet. So the test use to be:
-//        input1.checked = true;
-// It is now:
-        input1.click();
+        input1.checked = true;
         expect(input1, checked, "failure 8");
         expect(input2, 0, "failure 9");
 //@` It is dumb luck that this next test passes. I do in fact set the

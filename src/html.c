@@ -3354,8 +3354,13 @@ nop:
 			else if (itype == INP_BUTTON)
 				stringAndString(&ns, &ns_l,
 						i_getString(MSG_Push));
-		} else
+		} else {
+// in case js checked or unchecked
+			if (isJSAlive && t->jv)
+				t->checked =
+				    get_property_bool(t->jv, "checked");
 			stringAndChar(&ns, &ns_l, (t->checked ? '+' : '-'));
+		}
 		if (currentForm && (itype == INP_SUBMIT || itype == INP_IMAGE)) {
 			if (currentForm->secure)
 				stringAndString(&ns, &ns_l,

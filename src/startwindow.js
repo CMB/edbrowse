@@ -756,19 +756,39 @@ this.form.reset();
 }
 }
 if(t != "checkbox" && t != "radio") return;
-this.checked = (this.checked ? false : true);
+this.checked$2 = (this.checked$2 ? false : true);
 // if it's radio and checked we need to uncheck the others.
-if(this.form && this.checked && t == "radio" &&
+if(this.form && this.checked$2 && t == "radio" &&
 (nn = this.name) && (e = this.form[nn]) && Array.isArray(e)) {
 for(var i=0; i<e.length; ++i)
-if(e[i] != this) e[i].checked = false;
+if(e[i] != this) e[i].checked$2 = false;
 } else // try it another way
-if(this.checked && t == "radio" && (e = this.parentNode.childNodes) && (nn = this.name)) {
+if(this.checked$2 && t == "radio" && (e = this.parentNode.childNodes) && (nn = this.name)) {
 for(var i=0; i<e.length; ++i)
-if(e[i].nodeName == "INPUT" && e[i].type == t && e[i].name == nn &&e[i] != this) e[i].checked = false;
+if(e[i].nodeName == "INPUT" && e[i].type == t && e[i].name == nn &&e[i] != this) e[i].checked$2 = false;
 }
 }
 }
+
+// We only need this in the rare case of setting click and clearing
+// the other radio buttons. acid test 43
+Object.defineProperty(mw0.Element.prototype, "checked", {
+get: function() { return this.checked$2 ? true : false; },
+set: function(n) {
+if(typeof n !== "boolean") n = false;
+this.checked$2 = n;
+var nn = this.nodeName, t = this.type, e;
+// if it's radio and checked we need to uncheck the others.
+if(this.form && this.checked$2 && t == "radio" &&
+(nn = this.name) && (e = this.form[nn]) && Array.isArray(e)) {
+for(var i=0; i<e.length; ++i)
+if(e[i] != this) e[i].checked$2 = false;
+} else // try it another way
+if(this.checked$2 && t == "radio" && (e = this.parentNode.childNodes) && (nn = this.name)) {
+for(var i=0; i<e.length; ++i)
+if(e[i].nodeName == "INPUT" && e[i].type == t && e[i].name == nn &&e[i] != this) e[i].checked$2 = false;
+}
+}});
 
 Object.defineProperty(mw0.Element.prototype, "name", {
 get: function() { return this.name$2; },
