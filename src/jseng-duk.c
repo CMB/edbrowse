@@ -119,6 +119,7 @@ void connectTagObject(struct htmlTag *t, jsobjtype p)
 		debugPrint(1, "multiple tags connect to js pointer %p", p);
 	w->u.t = t;
 	t->jv = p;
+	set_property_number_nat(p, "eb$seqno", t->seqno);
 }
 
 void disconnectTagObject(struct htmlTag *t)

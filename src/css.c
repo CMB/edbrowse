@@ -29,8 +29,13 @@ which is a tad faster.
 #define CSS_ERROR_PE 14
 #define CSS_ERROR_UNSUP 15
 #define CSS_ERROR_MULTIPLE 16
-#define CSS_ERROR_DELIM 17
-#define CSS_ERROR_LAST 18
+#define CSS_ERROR_ATEMPTY 17
+#define CSS_ERROR_NOTMEDIA 18
+#define CSS_ERROR_BADMEDIA 19
+// DELIM is special not really an error, true errors come before
+#define CSS_ERROR_DELIM 20
+#define CSS_ERROR_ATPROC 21
+#define CSS_ERROR_LAST 22
 
 static const char *const errorMessage[] = {
 	"ok",
@@ -50,9 +55,12 @@ static const char *const errorMessage[] = {
 	"pseudo element",
 	": unsupported",
 	"multiple",
+	"@ empty",
+	"@ not media",
+	"@ bad media",
 	"==========",
-	"==========",
-	0
+	"@ processed",
+	"eof",
 };
 
 static int errorBuckets[CSS_ERROR_LAST];
@@ -233,6 +241,7 @@ struct desc {
 	struct sel *selectors;
 	struct rule *rules;
 	int highspec;		// specificity when this descriptor matches
+	bool underat;
 };
 
 // selector
@@ -421,7 +430,7 @@ copy:
 }
 
 // This is a crude measure of specificity, contained in a 5 digit number.
-static int specificity(const struct sel *sel)
+static int specificity(const struct sel *sel, bool underat)
 {
 	const struct asel *a = sel->chain;
 	const struct mod *mod;
@@ -454,6 +463,10 @@ static int specificity(const struct sel *sel)
 		for (mod = sel->chain->modifiers; mod; mod = mod->next)
 			++n;
 	}
+// @ media tag has more specificity; I have no idea how much more.
+	if (underat)
+		n += 10;
+
 	return n;
 }
 
@@ -467,7 +480,7 @@ static struct desc *cssPieces(char *s)
 	int n;
 	char c, last_c;
 	char *lhs;
-	char *a, *t;
+	char *a, *t, *at_end_marker = 0;
 	char *iu1, *iu2, *iu3;	// for import url
 
 	loadcount = 0;
@@ -593,6 +606,8 @@ top2:
 	lhs = s;
 
 	while ((c = *s)) {
+		if (s >= at_end_marker)
+			at_end_marker = 0;
 		if (c == '"' || c == '\'') {
 			n = closeString(s + 1, c);
 			if (n < 0) {
@@ -612,9 +627,100 @@ top2:
 				goto copy;
 // bc is 0, end of the descriptor
 			*s++ = 0;
-			lhs = s;
+			lhs = s;	// next descriptor
 			trim(d->lhs);
 			trim(d->rhs);
+
+// some special @ code here
+			t = d->lhs;
+			if (*t != '@')
+				goto past_at;
+// our special code to insert a delimiter into debugging output
+			if (!strncmp(t, "@ebdelim", 8)) {
+				d->error = CSS_ERROR_DELIM;
+				goto past_at;
+			}
+			if (d->bc > 2) {
+				d->error = CSS_ERROR_BRACES;
+				goto past_at;
+			}
+			if (d->bc == 1) {
+				d->error = CSS_ERROR_ATEMPTY;
+				goto past_at;
+			}
+			d->bc = 1;
+// look for media screen
+			++t;
+			skipWhite2(&t);
+			if (strncmp(t, "media", 5)) {
+				d->error = CSS_ERROR_NOTMEDIA;
+				goto past_at;
+			}
+			t += 5;
+			skipWhite2(&t);
+			if (strncmp(t, "screen", 6)) {
+				d->error = CSS_ERROR_NOTMEDIA;
+				goto past_at;
+			}
+			t += 6;
+			skipWhite2(&t);
+// I only handle and min or max width or height
+			if (strncmp(t, "and", 3)) {
+				d->error = CSS_ERROR_BADMEDIA;
+				goto past_at;
+			}
+			t += 3;
+			skipWhite2(&t);
+			if (*t != '(') {
+				d->error = CSS_ERROR_BADMEDIA;
+				goto past_at;
+			}
+			++t;
+			skipWhite2(&t);
+			if ((strncmp(t, "max", 3) && strncmp(t, "min", 3)) ||
+			    t[3] != '-' ||
+			    (strncmp(t + 4, "height", 6)
+			     && strncmp(t + 4, "width", 5))) {
+				d->error = CSS_ERROR_BADMEDIA;
+				goto past_at;
+			}
+			a = t + 9;
+			if (t[4] == 'h')
+				++a;
+			if (*a != ':' || !isdigit(a[1])) {
+				d->error = CSS_ERROR_BADMEDIA;
+				goto past_at;
+			}
+			n = strtol(a + 1, &a, 10);
+// no compound expressions, just (min-width:400px)
+			if (strcmp(a, "px)")) {
+				d->error = CSS_ERROR_BADMEDIA;
+				goto past_at;
+			}
+			d->error = CSS_ERROR_ATPROC;
+
+// screen is always 1024 by 768
+			if (t[1] == 'i' && t[4] == 'w' && n > 1024)
+				goto past_at;
+			if (t[1] == 'a' && t[4] == 'w' && n < 1024)
+				goto past_at;
+			if (t[1] == 'i' && t[4] == 'h' && n > 678)
+				goto past_at;
+			if (t[1] == 'a' && t[4] == 'h' && n < 678)
+				goto past_at;
+
+// These rules apply! Here comes some funky string manipulation.
+// The descriptors are in rhs.
+// I nulled out the trailing }, make it a space.
+			*--s = ' ';
+			at_end_marker = s;
+			lhs = s = d->rhs;
+			d->rhs = "follow";
+
+past_at:
+			if (d->bc > 1)
+				d->error = CSS_ERROR_BRACES;
+
 			if (!d1)
 				d1 = d2 = d;
 			else
@@ -636,12 +742,15 @@ top2:
 			*s++ = 0;
 			d->rhs = s;
 			d->bc = bc = 1;
+			if (at_end_marker)
+				d->underat = true;
 			continue;
 		}
 copy:		++s;
 	}
 
 	nzFree(d);
+
 	if (!d1) {
 // no descriptors, nothing to do,
 // except free the incoming string.
@@ -661,20 +770,6 @@ copy:		++s;
 		s = d->lhs;
 		if (!s[0]) {
 			d->error = CSS_ERROR_NOSEL;
-			continue;
-		}
-// our special code to insert a delimiter into debugging output
-		if (!strncmp(s, "@ebdelim", 8)) {
-			d->error = CSS_ERROR_DELIM;
-			continue;
-		}
-// leading @ doesn't apply to edbrowse.
-		if (s[0] == '@') {
-			d->error = CSS_ERROR_AT;
-			continue;
-		}
-		if (d->bc > 1) {
-			d->error = CSS_ERROR_BRACES;
 			continue;
 		}
 
@@ -848,7 +943,7 @@ copy:		++s;
 		for (sel = d->selectors; sel; sel = sel->next) {
 			if (!sel->error) {
 // as good a time as any to compute specificity
-				sel->spec = specificity(sel);
+				sel->spec = specificity(sel, d->underat);
 				across = false;
 				continue;
 			}

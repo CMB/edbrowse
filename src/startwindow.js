@@ -2753,7 +2753,7 @@ if(nsurl != "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul") mis
 if(nsurl != "http://www.w3.org/2000/xmlns/") mismatch = true;
 } else mismatch = true;
 if(mismatch) {
-alert3("createElementNS(" + nsurl + "," + s + ')');
+alert3("bad createElementNS(" + nsurl + "," + s + ')');
 var e = new Error; e.code = 14; throw e;
 }
 return u;
@@ -2763,7 +2763,7 @@ mw0.createElement = function(s) {
 var c;
 var t = s.toLowerCase();
 if(!t.match(/^[a-z:\d_]+$/) || t.match(/^\d/)) {
-alert3("createElement(" + t + ')');
+alert3("bad createElement(" + t + ')');
 // acid3 says we should throw an exception here.
 // But we get these kinds of strings from www.oranges.com all the time.
 var e = new Error; e.code = 5; throw e;
