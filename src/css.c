@@ -482,6 +482,7 @@ static struct desc *cssPieces(char *s)
 	char *lhs;
 	char *a, *t, *at_end_marker = 0;
 	char *iu1, *iu2, *iu3;	// for import url
+	bool atnot, atscreen, atall;
 
 	loadcount = 0;
 	memset(errorBuckets, 0, sizeof(errorBuckets));
@@ -649,66 +650,106 @@ top2:
 				goto past_at;
 			}
 			d->bc = 1;
-// look for media screen
+
+			atscreen = atall = atnot = false;
+
+// look for media screen|all
 			++t;
 			skipWhite2(&t);
-			if (strncmp(t, "media", 5)) {
+			if (strncmp(t, "media", 5) || isalnum(t[5])) {
 				d->error = CSS_ERROR_NOTMEDIA;
 				goto past_at;
 			}
 			t += 5;
 			skipWhite2(&t);
-			if (strncmp(t, "screen", 6)) {
-				d->error = CSS_ERROR_NOTMEDIA;
-				goto past_at;
+			if (!strncmp(t, "only", 4) && !isalnum(t[4])) {
+// only is meaningless
+				t += 4;
+				skipWhite2(&t);
 			}
-			t += 6;
-			skipWhite2(&t);
-// I only handle and min or max width or height
-			if (strncmp(t, "and", 3)) {
+			if (!strncmp(t, "not", 3) && !isalnum(t[3])) {
+				atnot = true;
+				t += 3;
+				skipWhite2(&t);
+			}
+			if (!strncmp(t, "screen", 6) && !isalnum(t[6])) {
+				atscreen = true;
+				t += 6;
+				skipWhite2(&t);
+			} else if (!strncmp(t, "all", 3) && !isalnum(t[3])) {
+				atall = true;
+				t += 3;
+				skipWhite2(&t);
+			} else {
 				d->error = CSS_ERROR_BADMEDIA;
 				goto past_at;
 			}
-			t += 3;
-			skipWhite2(&t);
+			if (!strncmp(t, "and", 3) && !isalnum(t[3])) {
+				t += 3;
+				skipWhite2(&t);
+			}
 			if (*t != '(') {
 				d->error = CSS_ERROR_BADMEDIA;
 				goto past_at;
 			}
 			++t;
 			skipWhite2(&t);
+// I only handle min or max on certain parameters
 			if ((strncmp(t, "max", 3) && strncmp(t, "min", 3)) ||
 			    t[3] != '-' || (strncmp(t + 4, "height", 6)
-					    && strncmp(t + 4, "width", 5))) {
+					    && strncmp(t + 4, "width", 5)
+					    && strncmp(t + 4, "color", 5)
+					    && strncmp(t + 4, "monochrome", 10))
+			    || (!atscreen && (t[4] == 'h' || t[4] == 'w'))) {
 				d->error = CSS_ERROR_BADMEDIA;
 				goto past_at;
 			}
 			a = t + 9;
 			if (t[4] == 'h')
 				++a;
-			if (*a != ':' || !isdigit(a[1])) {
+			if (t[4] == 'm')
+				a += 5;
+			if (*a != ':') {
 				d->error = CSS_ERROR_BADMEDIA;
 				goto past_at;
 			}
-			n = strtol(a + 1, &a, 10);
+			++a;
+			skipWhite2(&a);
+			if (!isdigit(*a)) {
+				d->error = CSS_ERROR_BADMEDIA;
+				goto past_at;
+			}
+			n = strtol(a, &a, 10);
 // no compound expressions, just (min-width:400px)
-			if (strcmp(a, "px)")) {
+// skip past px
+			if (a[0] == 'p' && a[1] == 'x')
+				a += 2;
+			if (strcmp(a, ")")) {
 				d->error = CSS_ERROR_BADMEDIA;
 				goto past_at;
 			}
+// This one we understand
 			d->error = CSS_ERROR_ATPROC;
 
 // screen is always 1024 by 768
-			if (t[1] == 'i' && t[4] == 'w' && n > 1024)
+			if (t[1] == 'i' && t[4] == 'w' && ((n > 1024) ^ atnot))
 				goto past_at;
-			if (t[1] == 'a' && t[4] == 'w' && n < 1024)
+			if (t[1] == 'a' && t[4] == 'w' && ((n < 1024) ^ atnot))
 				goto past_at;
-			if (t[1] == 'i' && t[4] == 'h' && n > 678)
+			if (t[1] == 'i' && t[4] == 'h' && ((n > 678) ^ atnot))
 				goto past_at;
-			if (t[1] == 'a' && t[4] == 'h' && n < 678)
+			if (t[1] == 'a' && t[4] == 'h' && ((n < 678) ^ atnot))
+				goto past_at;
+			if (t[1] == 'i' && t[4] == 'c' && ((n > 8) ^ atnot))
+				goto past_at;
+			if (t[1] == 'a' && t[4] == 'c' && ((n < 8) ^ atnot))
+				goto past_at;
+			if (t[1] == 'i' && t[4] == 'm' && ((n > 4) ^ atnot))
+				goto past_at;
+			if (t[1] == 'a' && t[4] == 'm' && ((n < 4) ^ atnot))
 				goto past_at;
 
-// These rules apply! Here comes some funky string manipulation.
+// Here comes some funky string manipulation.
 // The descriptors are in rhs.
 // I nulled out the trailing }, make it a space.
 			while (s[-1] == 0)
