@@ -678,9 +678,8 @@ top2:
 			++t;
 			skipWhite2(&t);
 			if ((strncmp(t, "max", 3) && strncmp(t, "min", 3)) ||
-			    t[3] != '-' ||
-			    (strncmp(t + 4, "height", 6)
-			     && strncmp(t + 4, "width", 5))) {
+			    t[3] != '-' || (strncmp(t + 4, "height", 6)
+					    && strncmp(t + 4, "width", 5))) {
 				d->error = CSS_ERROR_BADMEDIA;
 				goto past_at;
 			}
@@ -712,7 +711,8 @@ top2:
 // These rules apply! Here comes some funky string manipulation.
 // The descriptors are in rhs.
 // I nulled out the trailing }, make it a space.
-			*--s = ' ';
+			while (s[-1] == 0)
+				*--s = ' ';
 			at_end_marker = s;
 			lhs = s = d->rhs;
 			d->rhs = "follow";

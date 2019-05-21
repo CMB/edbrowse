@@ -126,6 +126,7 @@ void html2nodes(const char *htmltext, bool startpage)
 	tidyOptSetBool(tdoc, TidyDropEmptyElems, no);
 	tidyOptSetBool(tdoc, TidyDropEmptyParas, no);
 	tidyOptSetBool(tdoc, TidyLiteralAttribs, yes);
+	tidyOptSetBool(tdoc, TidyStyleTags, no);
 
 	tidySetCharEncoding(tdoc, (cons_utf8 ? "utf8" : "latin1"));
 
