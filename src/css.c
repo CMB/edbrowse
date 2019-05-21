@@ -681,8 +681,7 @@ top2:
 				t += 3;
 				skipWhite2(&t);
 			} else {
-				d->error = CSS_ERROR_BADMEDIA;
-				goto past_at;
+				atall = true;
 			}
 			if (!strncmp(t, "and", 3) && !isalnum(t[3])) {
 				t += 3;
@@ -694,13 +693,31 @@ top2:
 			}
 			++t;
 			skipWhite2(&t);
+// A well written website can skip the hover text, which edbrowse can't
+// manage very well, so we should respond to this one.
+			if (stringEqual(t, "hover)")
+			    || stringEqual(t, "any-hover)")
+			    || stringEqual(t, "pointer)")
+			    || stringEqual(t, "any-pointer)")
+			    || stringEqual(t, "inverted-colors)")) {
+				d->error = CSS_ERROR_ATPROC;
+				if (atnot)
+					goto at_reparse;
+				goto past_at;
+			}
+			if (stringEqual(t, "scripting)")) {
+				d->error = CSS_ERROR_ATPROC;
+				if (isJSAlive ^ atnot)
+					goto at_reparse;
+				goto past_at;
+			}
 // I only handle min or max on certain parameters
 			if ((strncmp(t, "max", 3) && strncmp(t, "min", 3)) ||
 			    t[3] != '-' || (strncmp(t + 4, "height", 6)
 					    && strncmp(t + 4, "width", 5)
 					    && strncmp(t + 4, "color", 5)
-					    && strncmp(t + 4, "monochrome", 10))
-			    || (!atscreen && (t[4] == 'h' || t[4] == 'w'))) {
+					    && strncmp(t + 4, "monochrome",
+						       10))) {
 				d->error = CSS_ERROR_BADMEDIA;
 				goto past_at;
 			}
@@ -731,6 +748,10 @@ top2:
 // This one we understand
 			d->error = CSS_ERROR_ATPROC;
 
+// not used warning
+			if (atscreen)
+				atscreen = true;
+
 // screen is always 1024 by 768
 			if (t[1] == 'i' && t[4] == 'w' && ((n > 1024) ^ atnot))
 				goto past_at;
@@ -749,6 +770,7 @@ top2:
 			if (t[1] == 'a' && t[4] == 'm' && ((n < 4) ^ atnot))
 				goto past_at;
 
+at_reparse:
 // Here comes some funky string manipulation.
 // The descriptors are in rhs.
 // I nulled out the trailing }, make it a space.
