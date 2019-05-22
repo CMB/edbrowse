@@ -347,8 +347,11 @@ static bool parseURL(const char *url, const char **proto, int *prlen, const char
 		if (prlen)
 			*prlen = p - url;
 		a = protocolByName(url, p - url);
+#if 0
+// not sure why I had this code
 		if (a < 0 && q == p + 1)
 			return false;
+#endif
 		if (a >= 0 && !protocols[a].need_slashes)
 			++p;
 		else
