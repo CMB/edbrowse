@@ -3465,7 +3465,7 @@ if(!t || !(so = t.style)) return 0;
 
 // If class has changed, recompute style
 if(t.class != t.last$class) {
-alert3("restyle " + t.nodeName + "." + t.last$class + ">" + t.class);
+alert4("restyle " + t.nodeName + "." + t.last$class + ">" + t.class);
 var so = getComputedStyle(t, 0);
 t.style = so;
 }

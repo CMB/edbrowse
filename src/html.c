@@ -2480,10 +2480,6 @@ void runOnload(void)
 	if (intFlag)
 		return;
 
-	run_event_bool(cf->docobj, "document", "onDOMContentLoaded", 0);
-	if (intFlag)
-		return;
-
 	e = create_event(cf->winobj, "onload");
 	set_property_number(e, "eventPhase", 2);
 
@@ -2513,6 +2509,8 @@ void runOnload(void)
 			run_event_bool(t->jv, "body", "onload", e);
 		if (action == TAGACT_BODY && t->onunload)
 			unloadHyperlink("document.body.onunload", "Body");
+		if (action == TAGACT_SCRIPT && handlerPresent(t->jv, "onload"))
+			run_event_bool(t->jv, "script", "onload", e);
 		if (action == TAGACT_FORM && handlerPresent(t->jv, "onload"))
 			run_event_bool(t->jv, "form", "onload", e);
 /* tidy5 says there is no form.onunload */
@@ -2527,6 +2525,10 @@ void runOnload(void)
 		if (action == TAGACT_H && handlerPresent(t->jv, "onload"))
 			run_event_bool(t->jv, "h1", "onload", e);
 	}
+
+	if (intFlag)
+		goto done;
+	run_event_bool(cf->docobj, "document", "onDOMContentLoaded", e);
 
 done:
 	unlink_event(cf->winobj);
