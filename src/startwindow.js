@@ -2220,6 +2220,33 @@ return;
 }
 }
 
+mw0.insertAdjacentHTML = function(flavor, h)
+{
+// easiest implementation is just to use the power of innerHTML
+var d = my$doc();
+var p = d.createElement("p");
+p.innerHTML = h; // the magic
+var s, parent = this.parentNode;
+switch(flavor) {
+case "beforebegin":
+while(s = p.firstChild)
+parent.insertBefore(s, this);
+break;
+case "afterbegin":
+while(s = p.lastChild)
+this.insertBefore(s, this.firstChild);
+break;
+case "beforeend":
+while(s = p.firstChild)
+this.appendChild(s);
+break;
+case "afterend":
+while(s = p.lastChild)
+parent.insertBefore(s, this.nextSibling);
+break;
+}
+}
+
 // There are subtle differences between contentText and textContent, which I don't grok.
 mw0.textUnder = function(top, flavor)
 {
@@ -2317,6 +2344,7 @@ c.prototype.attachEvent = mw0.attachEvent;
 c.prototype.detachEvent = mw0.detachEvent;
 }
 c.prototype.dispatchEvent = mw0.dispatchEvent;
+c.prototype.insertAdjacentHTML = mw0.insertAdjacentHTML;
 // constants
 c.prototype.ELEMENT_NODE = 1, c.prototype.TEXT_NODE = 3, c.prototype.COMMENT_NODE = 8, c.prototype.DOCUMENT_NODE = 9, c.prototype.DOCUMENT_TYPE_NODE = 10, c.prototype.DOCUMENT_FRAGMENT_NODE = 11;
 Object.defineProperty(c.prototype, "classList", { get : function() { return mw0.classList(this);}});
@@ -3181,6 +3209,7 @@ document.detachEvent = mw0.detachEvent;
 document.dispatchEvent = mw0.dispatchEvent;
 document.createEvent = mw0.createEvent;
 eventDebug = false;
+document.insertAdjacentHTML = mw0.insertAdjacentHTML;
 document.ELEMENT_NODE = 1, document.TEXT_NODE = 3, document.COMMENT_NODE = 8, document.DOCUMENT_NODE = 9, document.DOCUMENT_TYPE_NODE = 10, document.DOCUMENT_FRAGMENT_NODE = 11;
 
 document.createElement = mw0.createElement;
