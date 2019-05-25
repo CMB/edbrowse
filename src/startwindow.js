@@ -1600,6 +1600,7 @@ return name === "value" && o instanceof Element ||
 (name === "selected" || name === "defaultSelected") && o instanceof Option ||
 name === "selectedIndex" && o.nodeName === "SELECT" ||
 name === "class" || // acid test 61
+name === "id" || // acid test 17
 name === "length" && o instanceof Form;
 // there are probably others
 }
@@ -2882,6 +2883,7 @@ c.nodeType = 9, c.tagName = "document";
 c.class = "";
 c.ownerDocument = my$doc();
 eb$logElement(c, t);
+if(c.nodeType == 1) c.id = "";
 
 if(c instanceof Frame) {
 var d = mw0.createElement("document");
