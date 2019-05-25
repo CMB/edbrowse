@@ -2184,7 +2184,7 @@ for(var i = 0; i<a.length; ++i) a[i].did$run = false; \
 for(var i = 0; i<a.length; ++i) {if(a[i].did$run) continue; \
 if(e.eventPhase == 1 && !a[i].do$capture || e.eventPhase == 3 && !a[i].do$bubble) continue; \
 a[i].did$run = true; if(attarget) e.eventPhase = 2; \
-alert3("fire " + i); rc = a[i](e); e.eventPhase = savePhase; \
+alert3("fire " + i); rc = a[i].call(this,e); e.eventPhase = savePhase; \
 if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; \
 i = -1; \
 } return true; };');
