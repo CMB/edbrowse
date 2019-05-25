@@ -3358,6 +3358,7 @@ and instanceof Option, as I do today.
 *********************************************************************/
 
 Array.prototype.item = function(x) { return this[x] };
+Object.defineProperty(Array.prototype, "item", {configurable: false,  enumerable: false, writable: false});
 Array.prototype.includes = function(x, start) {
 if(typeof start != "number") start = 0;
 var l = this.length;
@@ -3367,6 +3368,7 @@ for(var i=start; i<l; ++i)
 if(this[i] === x) return true;
 return false;
 }
+Object.defineProperty(Array.prototype, "includes", {configurable: false,  enumerable: false, writable: false});
 
 // On the first call this setter just creates the url, the location of the
 // current web page, But on the next call it has the side effect of replacing
