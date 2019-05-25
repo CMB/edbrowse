@@ -1356,6 +1356,10 @@ return r;
 // These are recursive as they descend through the tree of nodes.
 
 mw0.getElementsByTagName = function(s) { 
+if(!s) { // missing or null argument
+alert3("getElementsByTagName(type " + typeof s + ")");
+return [];
+}
 s = s.toLowerCase();
 return mw0.eb$gebtn(this, s);
 }
@@ -1377,6 +1381,10 @@ return a;
 }
 
 mw0.getElementsByName = function(s) { 
+if(!s) { // missing or null argument
+alert3("getElementsByName(type " + typeof s + ")");
+return [];
+}
 s = s.toLowerCase();
 return mw0.eb$gebn(this, s);
 }
@@ -1396,6 +1404,10 @@ return a;
 }
 
 mw0.getElementById = function(s) { 
+if(!s) { // missing or null argument
+alert3("getElementById(type " + typeof s + ")");
+return null;
+}
 s = s.toLowerCase();
 var a = mw0.eb$gebi(this, s);
 return a.length ? a[0] : null;
@@ -2755,6 +2767,7 @@ delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
 mw0.createElementNS = function(nsurl,s) {
 var mismatch = false;
 var u = mw0.createElement(s);
+if(!u) return null;
 if(!nsurl) nsurl = "";
 u.namespaceURI = new mw0.URL(nsurl);
 // prefix and url have to fit together, I guess.
@@ -2789,6 +2802,10 @@ return u;
 
 mw0.createElement = function(s) { 
 var c;
+if(!s) { // a null or missing argument
+alert3("bad createElement( type" + typeof s + ')');
+return null;
+}
 var t = s.toLowerCase();
 if(!t.match(/^[a-z:\d_]+$/) || t.match(/^\d/)) {
 alert3("bad createElement(" + t + ')');
