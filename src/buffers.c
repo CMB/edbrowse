@@ -4124,6 +4124,8 @@ pwd:
 				displayLength = 80;
 			return true;
 		}
+		setError(MSG_NoSpaceAfter);
+		return false;
 	}
 
 	if (line[0] == 'f' && line[1] == 'l' && line[2] == 'l') {
@@ -4139,8 +4141,10 @@ pwd:
 			if (formatLineLength < 32)
 				formatLineLength = 32;
 			formatOverflow = (*s == '+');
+			return true;
 		}
-		return true;
+		setError(MSG_NoSpaceAfter);
+		return false;
 	}
 
 	if (line[0] == 'p' && line[1] == 'b') {
