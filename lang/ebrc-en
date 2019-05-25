@@ -119,7 +119,7 @@ outtype = T
 #  your browser identifies itself to the host.
 # Here are some alternate agents, default is edbrowse 3.7.3
 agent = Lynx/2.8.4rel.1 libwww-FM/2.14
-agent = Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; Win 9x 4.90)
+agent = Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1; WOW64; Trident/5.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; .NET4.0C; .NET4.0E)
 
 #  Ok, we're ready to write our first script.
 #  How about a function to access google.
@@ -130,6 +130,8 @@ b http://www.google.com
 /<>/ i=~0
 /</ i1*
 /h3/p
+#  Search results by h3 heading only works if google recognizes your browser,
+#  so you need to spoof to IE7.
 }
 
 # google search does not require javascript
@@ -153,6 +155,8 @@ dw
 # Display the size of each file in a directory listing
 ls=s
 # other personal settings
+#  you may want ua2, so google searches have headings, and perhaps for other websites.
+#  Nobody knows who edbrowse is.
 }
 
 # and much more...

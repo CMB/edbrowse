@@ -212,11 +212,11 @@ nojs = paypal.com
 #  You can specify different agents in this config file,
 #  and activate them with the `ua' (user agent) command.
 #  With the following lines in your config file,
-#  you can type ua1 to pretend to bee lynx, and ua2 to pretend to be Mozilla.
+#  you can type ua1 to pretend to bee lynx, and ua2 to pretend to be IE7.
 #  Type ua0 to resurrect the standard edbrowse identification.
 
 agent = Lynx/2.8.4rel.1 libwww-FM/2.14
-agent = Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; Win 9x 4.90)
+agent = Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1; WOW64; Trident/5.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; .NET4.0C; .NET4.0E)
 
 #  Ok, we're ready to write our first script.
 #  Let's start out with something simple, undos a file.
@@ -238,6 +238,9 @@ b http://www.google.com
 /<>/ i=~0
 /</ i1*
 /^About/+2
+#  If you want to step through the google results by h3 heading, you need ua2,
+#  that is, spoof to IE7. This became necessary on 05/25/2019.
+#  It's a good idea to spoof something; nobody knows who edbrowse is.
 }
 
 #  mariam-webster dictionary lookup, ~1 is parameter 1, the word to look up.
