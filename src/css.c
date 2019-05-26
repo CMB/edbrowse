@@ -269,6 +269,8 @@ struct mod {
 	struct mod *next;
 	char *part;
 	bool isclass, isid, negate;
+// chain is used only if negate is true, not(ul.lister), recursive
+	struct asel *notchain;
 };
 
 struct rule {
@@ -1441,12 +1443,32 @@ done:
 	set_js_globals();
 }
 
+static void chainFree(struct asel *asel)
+{
+	struct asel *asel2;
+	struct mod *mod, *mod2;
+	while (asel) {
+		mod = asel->modifiers;
+		while (mod) {
+			mod2 = mod->next;
+			nzFree(mod->part);
+			if (mod->notchain)
+				chainFree(mod->notchain);
+			free(mod);
+			mod = mod2;
+		}
+		nzFree(asel->part);
+		nzFree(asel->tag);
+		asel2 = asel->next;
+		free(asel);
+		asel = asel2;
+	}
+}
+
 static void cssPiecesFree(struct desc *d)
 {
 	struct desc *d2;
 	struct sel *sel, *sel2;
-	struct asel *asel, *asel2;
-	struct mod *mod, *mod2;
 	struct rule *r, *r2;
 	if (!d)
 		return;		// nothing to do
@@ -1454,21 +1476,7 @@ static void cssPiecesFree(struct desc *d)
 	while (d) {
 		sel = d->selectors;
 		while (sel) {
-			asel = sel->chain;
-			while (asel) {
-				mod = asel->modifiers;
-				while (mod) {
-					mod2 = mod->next;
-					nzFree(mod->part);
-					free(mod);
-					mod = mod2;
-				}
-				nzFree(asel->part);
-				nzFree(asel->tag);
-				asel2 = asel->next;
-				free(asel);
-				asel = asel2;
-			}
+			chainFree(sel->chain);
 			sel2 = sel->next;
 			free(sel);
 			sel = sel2;
@@ -1506,21 +1514,50 @@ void cssFree(struct ebFrame *f)
 }
 
 // for debugging
+static FILE *cssfile;
+static void chainPrint(struct asel *asel)
+{
+	const struct mod *mod;
+	while (asel) {
+		char *tag = asel->tag;
+		if (!tag)
+			tag = (asel->modifiers ? emptyString : "*");
+		if (asel->combin != ',')
+			fprintf(cssfile, "%c",
+				(asel->combin == ' ' ? '^' : asel->combin));
+		fprintf(cssfile, "%s", tag);
+		for (mod = asel->modifiers; mod; mod = mod->next) {
+			if (mod->negate) {
+				if (mod->notchain) {
+					fprintf(cssfile, "not(");
+					chainPrint(mod->notchain);
+					fprintf(cssfile, ")");
+				} else
+					fprintf(cssfile, "~");
+			}
+			if (!strncmp(mod->part, "[class~=", 8))
+				fprintf(cssfile, ".%s", mod->part + 8);
+			else if (!strncmp(mod->part, "[id=", 4))
+				fprintf(cssfile, "#%s", mod->part + 4);
+			else
+				fprintf(cssfile, "%s", mod->part);
+		}
+		asel = asel->next;
+	}
+}
+
 static void cssPiecesPrint(const struct desc *d)
 {
-	FILE *f;
 	const struct sel *sel;
-	const struct asel *asel;
-	const struct mod *mod;
 	const struct rule *r;
 
 	if (!debugCSS)
 		return;
-	f = fopen(cssDebugFile, "a");
-	if (!f)
+	cssfile = fopen(cssDebugFile, "a");
+	if (!cssfile)
 		return;
 	if (!d) {
-		fclose(f);
+		fclose(cssfile);
 		return;
 	}
 
@@ -1529,58 +1566,35 @@ static void cssPiecesPrint(const struct desc *d)
 			if (d->error == CSS_ERROR_DELIM) {
 				char which = d->lhs[8];
 				if (which == '0')
-					fprintf(f, "%s start %s\n",
+					fprintf(cssfile, "%s start %s\n",
 						errorMessage[d->error],
 						d->lhs + 9);
 				if (which == '1')
-					fprintf(f, "%s open %s\n",
+					fprintf(cssfile, "%s open %s\n",
 						errorMessage[d->error],
 						d->lhs + 9);
 				if (which == '2')
-					fprintf(f, "%s close\n",
+					fprintf(cssfile, "%s close\n",
 						errorMessage[d->error]);
 			} else
-				fprintf(f, "<%s>%s\n", errorMessage[d->error],
-					d->lhs);
+				fprintf(cssfile, "<%s>%s\n",
+					errorMessage[d->error], d->lhs);
 			continue;
 		}
 		for (sel = d->selectors; sel; sel = sel->next) {
 			if (sel != d->selectors)
-				fprintf(f, ",");
+				fprintf(cssfile, ",");
 			if (sel->error)
-				fprintf(f, "<%s|", errorMessage[sel->error]);
-			for (asel = sel->chain; asel; asel = asel->next) {
-				char *tag = asel->tag;
-				if (!tag)
-					tag =
-					    (asel->modifiers ? emptyString :
-					     "*");
-				if (asel->combin != ',')
-					fprintf(f, "%c",
-						(asel->combin ==
-						 ' ' ? '^' : asel->combin));
-				fprintf(f, "%s", tag);
-				for (mod = asel->modifiers; mod;
-				     mod = mod->next) {
-					if (mod->negate)
-						fprintf(f, "~");
-					if (!strncmp(mod->part, "[class~=", 8))
-						fprintf(f, ".%s",
-							mod->part + 8);
-					else if (!strncmp(mod->part, "[id=", 4))
-						fprintf(f, "#%s",
-							mod->part + 4);
-					else
-						fprintf(f, "%s", mod->part);
-				}
-			}
+				fprintf(cssfile, "<%s|",
+					errorMessage[sel->error]);
+			chainPrint(sel->chain);
 		}
-		fprintf(f, "{");
+		fprintf(cssfile, "{");
 		for (r = d->rules; r; r = r->next)
-			fprintf(f, "%s:%s;", r->atname, r->atval);
-		fprintf(f, "}\n");
+			fprintf(cssfile, "%s:%s;", r->atname, r->atval);
+		fprintf(cssfile, "}\n");
 	}
-	fclose(f);
+	fclose(cssfile);
 }
 
 /*********************************************************************
