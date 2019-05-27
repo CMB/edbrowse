@@ -2260,6 +2260,32 @@ break;
 }
 }
 
+mw0.htmlString = function(t)
+{
+if(t.nodeType == 3) return t.data;
+if(t.nodeType != 1) return "";
+var s = "<" + (t.nodeName ? t.nodeName : "x");
+if(t.class) s += ' class="' + t.class + '"';
+if(t.id) s += ' id="' + t.id + '"';
+s += '>';
+if(t.childNodes)
+for(var i=0; i<t.childNodes.length; ++i)
+s += mw0.htmlString(t.childNodes[i]);
+s += "</";
+s += (t.nodeName ? t.nodeName : "x");
+s += '>';
+return s;
+}
+
+mw0.outer$1 = function(t, h)
+{
+var p = t.parentNode;
+if(!p) return;
+t.innerHTML = h;
+while(t.lastChild) p.insertBefore(t.lastChild, t.nextSibling);
+p.removeChild(t);
+}
+
 // There are subtle differences between contentText and textContent, which I don't grok.
 mw0.textUnder = function(top, flavor)
 {
@@ -2358,6 +2384,9 @@ c.prototype.detachEvent = mw0.detachEvent;
 }
 c.prototype.dispatchEvent = mw0.dispatchEvent;
 c.prototype.insertAdjacentHTML = mw0.insertAdjacentHTML;
+// outerHTML is dynamic; should innerHTML be?
+Object.defineProperty(c.prototype, "outerHTML", { get: function() { return mw0.htmlString(this);},
+set: function(h) { mw0.outer$1(this,h); }});
 // constants
 c.prototype.ELEMENT_NODE = 1, c.prototype.TEXT_NODE = 3, c.prototype.COMMENT_NODE = 8, c.prototype.DOCUMENT_NODE = 9, c.prototype.DOCUMENT_TYPE_NODE = 10, c.prototype.DOCUMENT_FRAGMENT_NODE = 11;
 Object.defineProperty(c.prototype, "classList", { get : function() { return mw0.classList(this);}});
