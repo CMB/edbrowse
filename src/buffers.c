@@ -394,7 +394,10 @@ int select_stdin(struct timeval *ptv)
 
 /*********************************************************************
 Get a line from standard in.  Need not be a terminal.
-This routine returns the line in an allocated string.
+This routine returns the line in a string, which is allocated,
+but nonetheless you should not free it; I free it upon the next input call.
+It has to be allocated because of readline().
+
 ~xx is converted from hex, a way to enter nonascii chars.
 This is the opposite of displayLine() above.
 But you can't enter a newline this way; I won't permit it.

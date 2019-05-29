@@ -198,6 +198,19 @@ exp$$ = "for(var i=" + s$$ +"; i<" + t$$ +"; ++i){" + exp$$ + "}";
 my$win().eval(exp$$);
 }
 
+/*********************************************************************
+This is a crude implementation of a breakpoint.
+Insert eval($bp) into the js file you want to debug,
+where you want to see the local variables etc.
+. to exit, just like jdb.
+It is possible to change the local variables, . to exit, and resume execution,
+but should you?!
+For breakpoint with a line number,   eval($bpl+"(2183)")
+You can use edbrowse %line to get the line number:  s/^/eval($bpl+"(%line)");/
+*********************************************************************/
+
+mw0.$bp = "(function(l){if(l) alert('break at line ' + l); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}})";
+
 } // master compile
 
 dumptree = mw0.dumptree;
@@ -205,6 +218,8 @@ uptrace = mw0.uptrace;
 showscripts = mw0.showscripts;
 searchscripts = mw0.searchscripts;
 aloop = mw0.aloop;
+$bp = mw0.$bp + "(0)";
+$bpl = mw0.$bp;
 
 // This is our bailout function, it references a variable that does not exist.
 function eb$stopexec() { return javascript$interrupt; }
