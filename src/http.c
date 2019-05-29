@@ -2269,6 +2269,7 @@ static void setup_download(struct i_get *g)
 {
 	const char *filepart;
 	const char *answer;
+	char *fp2, *s;
 
 /* if not run from a terminal then just return. */
 	if (!isInteractive) {
@@ -2280,17 +2281,25 @@ static void setup_download(struct i_get *g)
 		filepart = g->cdfn;
 	else
 		filepart = getFileURL(g->urlcopy, true);
+// transliterate to get rid of /
+	fp2 = cloneString(filepart);
+	for (s = fp2; *s; ++s)
+		if (*s == '/' || *s == '\\')
+			*s = '_';
+
 top:
-	answer = getFileName(g->down_msg, filepart, false, true);
+	answer = getFileName(g->down_msg, fp2, false, true);
 /* space for a filename means read into memory */
 	if (stringEqual(answer, " ")) {
 		g->down_state = 0;	/* in memory download */
+		nzFree(fp2);
 		return;
 	}
 
 	if (stringEqual(answer, "x") || stringEqual(answer, "X")) {
 		g->down_state = -1;
 		setError(MSG_DownAbort);
+		nzFree(fp2);
 		return;
 	}
 
@@ -2305,6 +2314,9 @@ top:
 		nl();
 		goto top;
 	}
+
+	nzFree(fp2);
+
 // we will free down_file, but not down_file2
 	g->down_file = g->down_file2 = cloneString(answer);
 	if (downDir) {
@@ -2315,6 +2327,7 @@ top:
 				++g->down_file2;
 		}
 	}
+
 	g->down_state = (down_bg ? 5 : 2);
 }				/* setup_download */
 
