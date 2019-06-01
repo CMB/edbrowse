@@ -516,9 +516,14 @@ static void prepareScript(struct htmlTag *t)
 
 	if (t->href) {		/* fetch the javascript page */
 		if (javaOK(t->href)) {
+			const char *altsource = 0;
 			bool from_data = isDataURI(t->href);
+			if (!from_data)
+				altsource = fetchReplace(t->href);
+			if (!altsource)
+				altsource = t->href;
 			debugPrint(3, "js source %s",
-				   !from_data ? t->href : "data URI");
+				   !from_data ? altsource : "data URI");
 			if (from_data) {
 				char *mediatype;
 				int data_l = 0;
@@ -530,8 +535,8 @@ static void prepareScript(struct htmlTag *t)
 					debugPrint(3,
 						   "Unable to parse data URI containing JavaScript");
 				}
-			} else if (browseLocal && !isURL(t->href)) {
-				char *h = cloneString(t->href);
+			} else if (browseLocal && !isURL(altsource)) {
+				char *h = cloneString(altsource);
 				unpercentString(h);
 				if (!fileIntoMemory(h, &b, &blen)) {
 					if (debugLevel >= 1)
@@ -571,7 +576,7 @@ static void prepareScript(struct htmlTag *t)
 				}
 			}
 			t->js_ln = 1;
-			js_file = (!from_data ? t->href : "data_URI");
+			js_file = (!from_data ? altsource : "data_URI");
 		}
 	} else {
 		js_text = t->textval;

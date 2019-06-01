@@ -1190,6 +1190,8 @@ static void link_css(struct htmlTag *t)
 	const char *a;
 	const char *a1 = attribVal(t, "type");
 	const char *a2 = attribVal(t, "rel");
+	const char *altsource;
+
 	if (a1)
 		set_property_string(t->jv, "type", a1);
 	if (a2)
@@ -1199,11 +1201,15 @@ static void link_css(struct htmlTag *t)
 	if ((!a1 || !stringEqualCI(a1, "text/css")) &&
 	    (!a2 || !stringEqualCI(a2, "stylesheet")))
 		return;
+
 // Fetch the css file so we can apply its attributes.
 	a = NULL;
-	if (browseLocal && !isURL(t->href)) {
-		debugPrint(3, "css source %s", t->href);
-		if (!fileIntoMemory(t->href, &b, &blen)) {
+	altsource = fetchReplace(t->href);
+	if (!altsource)
+		altsource = t->href;
+	if (browseLocal && !isURL(altsource)) {
+		debugPrint(3, "css source %s", altsource);
+		if (!fileIntoMemory(altsource, &b, &blen)) {
 			if (debugLevel >= 1)
 				i_printf(MSG_GetLocalCSS);
 		} else {

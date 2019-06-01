@@ -421,6 +421,8 @@ static void setupEdbrowseTempDirectory(void)
  * So now you can edit *.c, on any operating system,
  * and it will do the right thing, with no work on my part. */
 
+static void loadReplacements(void);
+
 int main(int argc, char **argv)
 {
 	int cx, account;
@@ -529,6 +531,8 @@ int main(int argc, char **argv)
 /* Let's everybody use my malloc and free routines */
 	pcre_malloc = allocMem;
 	pcre_free = nzFree;
+
+	loadReplacements();
 
 	if (argc && stringEqual(argv[0], "-c")) {
 		if (argc == 1) {
@@ -845,7 +849,6 @@ bool runEbFunction(const char *line)
 		setError(MSG_NoSuchFunction, linecopy);
 		goto fail;
 	}
-
 // This or a downstream function could invoke config.
 // Don't know why anybody would do that!
 	fncopy = cloneString(ebScript[j]);
@@ -1825,3 +1828,72 @@ putback:
 	if (maxAccount && !localAccount)
 		localAccount = 1;
 }				/* readConfigFile */
+
+// local replacements for javascript and css
+struct JSR {
+	struct JSR *next;
+	char *url, *locf;
+};
+static struct JSR *jsr_top;
+
+const char *fetchReplace(const char *u)
+{
+	struct JSR *j = jsr_top;
+	const char *s;
+	int l;
+	if (!j)
+		return 0;	// high runner case
+// This feature only works if you are browsing a local website.
+// Save the home page to a file called base, add a <base> tag, and browse that.
+	if (!browseLocal)
+		return 0;
+	s = strchr(u, '?');
+	l = (s ? s - u : strlen(u));
+	while (j) {
+		if (!strncmp(j->url, u, l) && j->url[l] == 0)
+			return j->locf;
+		j = j->next;
+	}
+	return 0;
+}
+
+static void loadReplacements(void)
+{
+	FILE *f = fopen("jslocal", "r");
+	struct JSR *j;
+	char *s;
+	int n = 0;
+	char line[400];
+	if (!f)
+		return;
+	while (fgets(line, sizeof(line), f)) {
+		s = strchr(line, '\n');
+		if (!s) {
+			fprintf(stderr, "jslocal line too long\n");
+			return;
+		}
+		*s = 0;
+		if (s > line && s[-1] == '\r')
+			*--s = 0;
+		if (line[0] == '#' || line[0] == 0)
+			continue;
+		s = strchr(line, ':');
+		if (!s) {
+			fprintf(stderr, "jslocal line has no :\n");
+			continue;
+		}
+		*s++ = 0;
+		if (strchr(s, '?')) {
+			fprintf(stderr, "jslocal line has ?\n");
+			continue;
+		}
+		j = allocMem(sizeof(struct JSR));
+		j->locf = cloneString(line);
+		j->url = cloneString(s);
+		j->next = jsr_top;
+		jsr_top = j;
+		++n;
+	}
+	fclose(f);
+	debugPrint(3, "%d js or css file replacements", n);
+}

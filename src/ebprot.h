@@ -220,6 +220,7 @@ bool runEbFunction(const char *line);
 struct DBTABLE *findTableDescriptor(const char *sn);
 struct DBTABLE *newTableDescriptor(const char *name);
 void readConfigFile(void);
+const char *fetchReplace(const char *u);
 
 /* sourcefile=plugin.c */
 const struct MIMETYPE *findMimeByURL(const char *url, uchar *sxfirst);
@@ -238,20 +239,20 @@ bool validAccount(int n);
 bool sendMailCurrent(int sm_account, bool dosig);
 
 /* sourcefile=messages.c */
-void eeCheck(void) ;
+void eeCheck(void);
 void eb_puts(const char *s);
-void selectLanguage(void) ; //@ called once at startup
+void selectLanguage(void); //@ called once at startup
 const char *i_getString(int msg); //@ the i_ functions are ok in utf8 mode
-void i_puts(int msg) ;
-void i_printf(int msg, ...) ;
-void i_printfExit(int msg, ...) ;
-void i_stringAndMessage(char **s, int *l, int messageNum) ;
-void setError(int msg, ...) ; //? use these only in the foreground!
-void showError(void) ;
-void showErrorConditional(char cmd) ;
-void showErrorAbort(void) ;
+void i_puts(int msg);
+void i_printf(int msg, ...);
+void i_printfExit(int msg, ...);
+void i_stringAndMessage(char **s, int *l, int messageNum);
+void setError(int msg, ...); //? use these only in the foreground!
+void showError(void);
+void showErrorConditional(char cmd);
+void showErrorAbort(void);
 #if 0
-void i_caseShift(unsigned char *s, char action) ;
+void i_caseShift(unsigned char *s, char action);
 #endif
 bool helpUtility(void);
 
