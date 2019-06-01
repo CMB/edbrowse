@@ -191,7 +191,7 @@ var jslocal = "";
 var idx = 0;
 if(!w.$ss) mw0.showscripts();
 for(var i=0; i<w.$ss.length; ++i) {
-var s = $ss[i];
+var s = w.$ss[i];
 if(typeof s.data === "string" && s.data.length &&
 (s.src && s.src.length || s.expanded)) {
 var ss = "inline";
