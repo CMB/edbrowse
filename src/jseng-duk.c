@@ -225,6 +225,37 @@ static duk_ret_t native_puts(duk_context * cx)
 	return 0;
 }
 
+// write local file
+static duk_ret_t native_wlf(duk_context * cx)
+{
+	const char *s = duk_safe_to_string(cx, 0);
+	int len = strlen(s);
+	const char *filename = duk_safe_to_string(cx, 1);
+	int fh;
+	bool safe = false;
+	if (stringEqual(filename, "from") || stringEqual(filename, "jslocal"))
+		safe = true;
+	if (filename[0] == 'f') {
+		int i;
+		for (i = 1; isdigit(filename[i]); ++i) ;
+		if (i > 1 && (stringEqual(filename + i, ".js") ||
+			      stringEqual(filename + i, ".css")))
+			safe = true;
+	}
+	if (!safe)
+		return 0;
+	fh = open(filename, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0666);
+	if (fh < 0) {
+		fprintf(stderr, "cannot create file %s\n", filename);
+		return 0;
+	}
+	if (write(fh, s, len) < len)
+		fprintf(stderr, "cannot write file %s\n", filename);
+	close(fh);
+	return 0;
+	close(fh);
+}
+
 static duk_ret_t native_logputs(duk_context * cx)
 {
 	int minlev = duk_get_int(cx, 0);
@@ -1327,6 +1358,8 @@ void createJavaContext_nat(void)
 	duk_put_global_string(jcx, "my$doc");
 	duk_push_c_function(jcx, native_puts, 1);
 	duk_put_global_string(jcx, "eb$puts");
+	duk_push_c_function(jcx, native_wlf, 2);
+	duk_put_global_string(jcx, "eb$wlf");
 	duk_push_c_function(jcx, native_btoa, 1);
 	duk_put_global_string(jcx, "btoa");
 	duk_push_c_function(jcx, native_atob, 1);

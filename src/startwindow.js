@@ -183,6 +183,43 @@ for(var i=0; i<w.$ss.length; ++i)
 if(w.$ss[i].data && w.$ss[i].data.indexOf(t) >= 0) alert(i);
 }
 
+mw0.snapshot = function()
+{
+var w = my$win();
+eb$wlf('<base href="' + w.eb$base + '">\n', "from");
+var jslocal = "";
+var idx = 0;
+if(!w.$ss) mw0.showscripts();
+for(var i=0; i<w.$ss.length; ++i) {
+var s = $ss[i];
+if(typeof s.data === "string" && s.data.length &&
+(s.src && s.src.length || s.expanded)) {
+var ss = "inline";
+if(s.src && s.src.length) ss = s.src.toString();
+if(ss.match(/^data:/)) continue;
+// assumes the search piece of the url is spurious and unreliable
+ss = ss.replace(/\?.*/, "");
+++idx;
+eb$wlf(s.data, "f" + idx + ".js");
+jslocal += "f" + idx + ".js:" + ss + "\n";
+}
+}
+idx = 0;
+for(var i=0; i<w.cssSource.length; ++i) {
+var s = w.cssSource[i];
+if(typeof s.data === "string" && s.data.length &&
+s.src && s.src.length) {
+var ss = s.src.toString();
+// assumes the search piece of the url is spurious and unreliable
+ss = ss.replace(/\?.*/, "");
+++idx;
+eb$wlf(s.data, "f" + idx + ".css");
+jslocal += "f" + idx + ".css:" + ss + "\n";
+}
+}
+eb$wlf(jslocal, "jslocal");
+}
+
 // run an expression in a loop.
 mw0.aloop = function(s$$, t$$, exp$$)
 {
@@ -217,6 +254,7 @@ dumptree = mw0.dumptree;
 uptrace = mw0.uptrace;
 showscripts = mw0.showscripts;
 searchscripts = mw0.searchscripts;
+snapshot = mw0.snapshot;
 aloop = mw0.aloop;
 $bp = mw0.$bp + "(0)";
 $bpl = mw0.$bp;
