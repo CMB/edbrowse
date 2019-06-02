@@ -5922,7 +5922,7 @@ replaceframe:
 	if (cmd == 'g' && !(cw->sqlMode | cw->binMode)) {
 		char *p, *h;
 		int tagno;
-		bool click, dclick, over;
+		bool click, dclick;
 		bool jsh, jsgo, jsdead;
 		bool lookmode = false;
 
@@ -5975,7 +5975,7 @@ replaceframe:
 			}
 			jsh = jsgo = nogo = false;
 			jsdead = !isJSAlive;
-			click = dclick = over = false;
+			click = dclick = false;
 			cmd = (emode ? 'e' : 'b');
 			uriEncoded = true;
 			if (endRange > startRange) {
@@ -6008,7 +6008,6 @@ replaceframe:
 			}
 
 			if (tagno) {
-				over = tagHandler(tagno, "onmouseover");
 				click = tagHandler(tagno, "onclick");
 				dclick = tagHandler(tagno, "ondblclick");
 			}
@@ -6021,8 +6020,7 @@ replaceframe:
 			nogo |= jsh;
 			debugPrint(5, "go %d nogo %d jsh %d dead %d", jsgo,
 				   nogo, jsh, jsdead);
-			debugPrint(5, "click %d dclick %d over %d", click,
-				   dclick, over);
+			debugPrint(5, "click %d dclick %d", click, dclick);
 			if (jsgo & jsdead) {
 				if (nogo)
 					i_puts(MSG_NJNoAction);
@@ -6035,16 +6033,10 @@ replaceframe:
 			first = *line;
 			setError(-1);
 			rc = false;
-			if (jsgo) {
-/* The program might depend on the mouseover code running first */
-				rc = bubble_event(tag, "onmouseover");
-				if (newlocation)
-					goto redirect;
-				if (!over)
-					rc = false;
-			}
-/* This is the only handler where false tells the browser to do something else. */
-			if (!rc && !jsdead)
+// The website should not depend on the mouseover code running first.
+// edbrowse is more like a touchscreen, and there are such devices, so just go.
+// No mouseEnter, mouseOver, mouseExit, etc.
+			if (!jsdead)
 				set_property_string(cf->winobj, "status", h);
 			if (jsgo) {
 				rc = bubble_event(tag, "onclick");

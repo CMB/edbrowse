@@ -792,7 +792,7 @@ void setupJavaDom(void)
 	set_property_string(hist, "current", cf->fileName);
 
 	set_property_string(d, "referrer", cw->referrer);
-	instantiate_url(d, "URL", cf->fileName);
+	set_property_string(d, "URL", cf->fileName);
 	set_property_string(d, "location", cf->fileName);
 	set_property_string(w, "location", cf->fileName);
 	jsRunScript(w,
