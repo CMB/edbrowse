@@ -1870,6 +1870,7 @@ static void loadReplacements(void)
 		s = strchr(line, '\n');
 		if (!s) {
 			fprintf(stderr, "jslocal line too long\n");
+			fclose(f);
 			return;
 		}
 		*s = 0;

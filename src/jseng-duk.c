@@ -252,8 +252,9 @@ static duk_ret_t native_wlf(duk_context * cx)
 	if (write(fh, s, len) < len)
 		fprintf(stderr, "cannot write file %s\n", filename);
 	close(fh);
+	if (stringEqual(filename, "jslocal"))
+		writeShortCache();
 	return 0;
-	close(fh);
 }
 
 static duk_ret_t native_logputs(duk_context * cx)

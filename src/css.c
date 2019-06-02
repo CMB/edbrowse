@@ -343,6 +343,73 @@ static void intoShortCache(const char *url, char *data)
 	c->data = data;
 }
 
+void writeShortCache(void)
+{
+	struct shortcache *c;
+	FILE *f;
+	int n = 0;
+	struct cssmaster *cm = cf->cssmaster;
+	if (!cm)
+		return;
+	f = fopen("implocal", "w");
+	if (!f)
+		return;
+	for (c = cm->cache; c; c = c->next) {
+		char filename[20];
+		++n;
+		sprintf(filename, "i%d.css", n);
+		if (!memoryOutToFile(filename, c->data, strlen(c->data),
+				     MSG_TempNoCreate2, MSG_NoWrite2)) {
+/* oops, can't write the file */
+			unlink(filename);
+			showError();
+			continue;
+		}
+		fprintf(f, "%s:%s\n", filename, c->url);
+	}
+	fclose(f);
+}
+
+static void readShortCache(struct cssmaster *cm)
+{
+	FILE *f = fopen("implocal", "r");
+	struct shortcache *c;
+	char *s;
+	int length, n = 0;
+	char line[400];
+	if (!f)
+		return;
+	while (fgets(line, sizeof(line), f)) {
+		s = strchr(line, '\n');
+		if (!s) {
+			fprintf(stderr, "implocal line too long\n");
+			fclose(f);
+			return;
+		}
+		*s = 0;
+		if (s > line && s[-1] == '\r')
+			*--s = 0;
+		if (line[0] == '#' || line[0] == 0)
+			continue;
+		s = strchr(line, ':');
+		if (!s) {
+			fprintf(stderr, "jslocal line has no :\n");
+			continue;
+		}
+		*s++ = 0;
+		c = allocMem(sizeof(struct shortcache));
+		c->url = cloneString(s);
+		fileIntoMemory(line, &c->data, &length);
+		c->data = reallocMem(c->data, length + 1);
+		c->data[length] = 0;
+		c->next = cm->cache;
+		cm->cache = c;
+		++n;
+	}
+	fclose(f);
+	debugPrint(3, "%d import file replacements", n);
+}
+
 // Step back through a css string looking for the base url.
 // The result is allocated.
 static char *cssBase(const char *start, const char *end)
@@ -1406,8 +1473,10 @@ void cssDocLoad(jsobjtype thisobj, char *start, bool pageload)
 	struct cssmaster *cm;
 	frameFromWindow(thisobj);
 	cm = cf->cssmaster;
-	if (!cm)
+	if (!cm) {
 		cf->cssmaster = cm = allocZeroMem(sizeof(struct cssmaster));
+		readShortCache(cm);
+	}
 // This could be run again and again, if the style nodes change.
 	if (cm->descriptors) {
 		debugPrint(3,
