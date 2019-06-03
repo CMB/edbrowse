@@ -1654,6 +1654,7 @@ return name === "value" && o instanceof Element ||
 name === "selectedIndex" && o.nodeName === "SELECT" ||
 name === "class" || // acid test 61
 name === "id" || // acid test 17
+// was gonna put "name" here but acid test 53
 name === "length" && o instanceof Form;
 // there are probably others
 }
@@ -2965,7 +2966,7 @@ c.nodeType = 9, c.tagName = "document";
 c.class = "";
 c.ownerDocument = my$doc();
 eb$logElement(c, t);
-if(c.nodeType == 1) c.id = "";
+if(c.nodeType == 1) c.id = c.name = "";
 
 if(c instanceof Frame) {
 var d = mw0.createElement("document");
@@ -3170,7 +3171,7 @@ if(s.data.length < 1000) return;
 var i, linecount = 1;
 for(i=0; i<s.data.length; ++i)
 if(s.data.substr(i,1) === '\n') ++linecount;
-if(s.data.length / linecount <= 1000) return;
+if(s.data.length / linecount <= 400) return;
 
 // Ok, run it through the deminimizer.
 s.original = s.data;

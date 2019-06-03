@@ -1083,8 +1083,7 @@ Don't do any of this if the tag is itself <style>. */
 		io = w;
 	}
 
-	if (symname)
-		set_property_string(io, "name", symname);
+	set_property_string(io, "name", (symname ? symname : emptyString));
 	set_property_string(io, "id", (idname ? idname : emptyString));
 
 	if (href && href_url)
