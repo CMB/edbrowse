@@ -985,7 +985,7 @@ this.childNodes[0] = d; d.parentNode = this; \
 /* I can force the opening of this new frame, but should I? */ \
 this.contentDocument; eb$unframe2(this); \
 } }});');
-var piecelist = ["protocol", "pathname", "host", "search", "hostname", "port"];
+var piecelist = ["protocol", "pathname", "host", "search", "hostname", "port", "hash"];
 for(var j=0; j<piecelist.length; ++j) {
 var piece = piecelist[j];
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + piece + '", {get: function() { return this.href$2 ? this.href$2.' + piece + ' : null},set: function(x) { if(this.href$2) this.href$2.' + piece + ' = x; }});');

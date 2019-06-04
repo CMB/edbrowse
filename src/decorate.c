@@ -85,8 +85,6 @@ const char *attribVal(const struct htmlTag *t, const char *name)
 	if (j < 0)
 		return 0;
 	v = t->atvals[j];
-	if (!v || !*v)
-		return 0;
 	return v;
 }				/* attribVal */
 

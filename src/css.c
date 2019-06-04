@@ -2131,7 +2131,7 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			}
 			if (cut)
 				*cut = cutc;
-			if (!v || !*v)
+			if (!v)
 				return false;
 			if (!cutc) {
 				if (valloc)
