@@ -14,7 +14,7 @@ which is a tad faster.
 
 #define CSS_ERROR_NONE 0
 #define CSS_ERROR_NOSEL 1
-#define CSS_ERROR_AT 2
+#define CSS_ERROR_MANYNOT 2
 #define CSS_ERROR_BRACES 3
 #define CSS_ERROR_SEL0 4
 #define CSS_ERROR_NORULE 5
@@ -40,7 +40,7 @@ which is a tad faster.
 static const char *const errorMessage[] = {
 	"ok",
 	"no selectors",
-	"@",
+	"many selectors under not",
 	"nested braces",
 	"empty selector",
 	"no rules",
@@ -93,7 +93,8 @@ static int closeString(char *s, char delim)
 {
 	int i;
 	char c, qc = 0;		// quote character
-	if (delim != '[')
+	int pc = 0;		// paren count
+	if (delim == '"' || delim == '\'')
 		qc = delim;
 	for (i = 0; (c = s[i]); ++i) {
 		if (c == qc) {	// close quote
@@ -111,9 +112,15 @@ static int closeString(char *s, char delim)
 // something is wrong or misaligned. End the string here.
 		if (c == '\n')
 			return i + 1;
-		if (c == ']' && delim == '[' && !qc)
+		if (qc)
+			continue;
+		if (c == ']' && delim == '[')
 			return i + 1;
-		if (!qc && (c == '"' || c == '\''))
+		if (c == '(' && delim == '(')
+			++pc;
+		if (c == ')' && delim == '(' && --pc < 0)
+			return i + 1;
+		if (c == '"' || c == '\'')
 			qc = c;
 	}
 	return -1;
@@ -304,6 +311,7 @@ static void cssPiecesPrint(const struct desc *d);
 static void cssAtomic(struct asel *a);
 static void cssParseLeft(struct desc *d);
 static void cssModify(struct asel *a, const char *m1, const char *m2);
+static void chainFree(struct asel *asel);
 static bool onematch, skiproot, gcsmatch, bulkmatch, bulktotal;
 static char matchtype;		// 0 plain 1 before 2 after
 static bool matchhover;		// match on :hover selectors.
@@ -1143,7 +1151,14 @@ static void cssParseLeft(struct desc *d)
 			continue;
 		}
 // :not( code, rather like closing a string.
-// not yet implemented
+		if (!strncmp(s, ":not(", 5)) {
+			n = closeString(s + 5, '(');
+			if (n < 0)	// should never happen
+				break;
+			s += n + 5;
+			last_c = 0;
+			continue;
+		}
 
 		combin = 0;	// look for combinator
 		a2 = s;
@@ -1269,11 +1284,8 @@ static void cssAtomic(struct asel *a)
 		return;
 	m1 = s;
 	++s;
-// special code for :not(:whatever)
-	if (!strncmp(s, "not(", 4) && s[4])
-		s += 5;
-
 	last_c = 0;
+
 	while ((c = *s)) {
 		if (c == '"' || c == '\'') {
 			last_c = 0;
@@ -1283,18 +1295,25 @@ static void cssAtomic(struct asel *a)
 			s += n + 1;
 			continue;
 		}
+
+		if (s == m1 + 1 && !strncmp(m1, ":not(", 5)) {
+			last_c = 0;
+			n = closeString(s + 4, '(');
+			if (n < 0)	// should never happen
+				break;
+			s += n + 4;
+			continue;
+		}
 // I assume \ is an escape, though this could fail  foo\\:
 		if (!strchr(".[#:", c) || last_c == '\\') {
 			++s;
 			last_c = c;
 			continue;
 		}
+
 		cssModify(a, m1, s);
 		m1 = s;
 		++s;
-// special code for :not(:whatever)
-		if (!strncmp(s, "not(", 4) && s[4])
-			s += 5;
 	}
 
 // last modifier
@@ -1332,14 +1351,41 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 	} else
 		a->modifiers = mod;
 
-// :not(foo) is jquery css syntax, whatever that is,
-// and can have any kind of complex selector inside,
-// but I'll do at least the simplest case, :not(modifier)
-	if (!strncmp(t, ":not(", 5) && t[n - 1] == ')') {
+// Handle not() first because it's weird.
+	if (!strncmp(t, ":not(", 5)) {
+		struct desc d0;	// dummy descriptor for not()
+		if (t[n - 1] != ')') {
+			a->error = CSS_ERROR_UNSUP;
+			return;
+		}
 		t[--n] = 0;
 		strmove(t, t + 5);
 		n -= 5;
+		memset(&d0, 0, sizeof(d0));
+		d0.lhs = t;
+		cssParseLeft(&d0);
+		if (!d0.selectors)	//   :not()
+			return;
 		mod->negate = true;
+		if (d0.selectors->next) {
+// more than one chain beneath
+			struct sel *sel, *sel2;
+			sel = d0.selectors;
+			while (sel) {
+				chainFree(sel->chain);
+				sel2 = sel->next;
+				free(sel);
+				sel = sel2;
+			}
+			a->error = CSS_ERROR_MANYNOT;
+			return;
+		}
+// one chain, that's good
+		mod->notchain = d0.selectors->chain;
+		free(d0.selectors);
+		a->error = d0.error;	// pass the error upward
+// should we check for before after hover?
+		return;
 	}
 // See if the modifier makes sense
 	h = t[0];
@@ -1441,18 +1487,10 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 			if (isupper(c))
 				*w = tolower(c);
 		}
-		if (!*w)
-			break;
-// [foo=] isn't well defined. I'm going to call it [foo]
-		if (w[1])
-			break;
-		*w-- = 0;
-		if (strchr("|~^$*", *w))
-			*w = 0;
 		break;
 
 	default:
-// we could get here via :not(crap)
+// not sure how we would get here
 		a->error = CSS_ERROR_UNSUP;
 		return;
 	}			// switch
@@ -1606,11 +1644,12 @@ static void chainPrint(struct asel *asel)
 		for (mod = asel->modifiers; mod; mod = mod->next) {
 			if (mod->negate) {
 				if (mod->notchain) {
-					fprintf(cssfile, "not(");
+					fprintf(cssfile, ":not(");
 					chainPrint(mod->notchain);
 					fprintf(cssfile, ")");
 				} else
-					fprintf(cssfile, "~");
+					fprintf(cssfile, ":not()");
+				continue;
 			}
 			if (!strncmp(mod->part, "[class~=", 8))
 				fprintf(cssfile, ".%s", mod->part + 8);
@@ -2019,11 +2058,17 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 		char c = p[0];
 		int i, ntype, ns;
 
-// This not() recursion is not tested, and not even parsed yet.
-		if (negate && mod->notchain) {
-			if (qsaMatchChain(t, obj, mod->notchain))
-				return false;
+		if (!c)		// empty modifier
+			continue;
+
+		if (negate) {
+			if (mod->notchain) {
+				if (qsaMatchChain(t, obj, mod->notchain))
+					return false;
 // the notchain fails, which is what we want, so on we go.
+				continue;
+			}
+// empty not()
 			continue;
 		}
 
@@ -2041,12 +2086,8 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 					continue;
 				if (q[l] && !isspace(q[l]))
 					continue;
-				if (negate)
-					return false;
 				goto next_mod;
 			}
-			if (negate)
-				goto next_mod;
 			return false;
 		}
 
@@ -2055,7 +2096,7 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			char *v = t->id;
 			if (!v)
 				v = emptyString;
-			if (stringEqual(v, p + 4) ^ negate)
+			if (stringEqual(v, p + 4))
 				goto next_mod;
 			return false;
 		}
@@ -2090,20 +2131,15 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			}
 			if (cut)
 				*cut = cutc;
-			if (!v || !*v) {
-				if (negate)
-					goto next_mod;
+			if (!v || !*v)
 				return false;
-			}
 			if (!cutc) {
 				if (valloc)
 					nzFree(v);
-				if (negate)
-					return false;
 				goto next_mod;
 			}
 			if (cutc == '=') {	// easy case
-				rc = (stringEqual(v, value) ^ negate);
+				rc = (stringEqual(v, value));
 				if (valloc)
 					nzFree(v);
 				if (rc)
@@ -2113,7 +2149,6 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			if (cutc == '|') {
 				rc = (!strncmp(v, value, l)
 				      && (v[l] == 0 || v[l] == '-'));
-				rc ^= negate;
 				if (valloc)
 					nzFree(v);
 				if (rc)
@@ -2121,7 +2156,7 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 				return false;
 			}
 			if (cutc == '^') {
-				rc = (!strncmp(v, value, l) ^ negate);
+				rc = !strncmp(v, value, l);
 				if (valloc)
 					nzFree(v);
 				if (rc)
@@ -2134,7 +2169,6 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 				rc = false;
 				if (l1 >= l2)
 					rc = !strncmp(v + l1 - l2, value, l);
-				rc ^= negate;
 				if (valloc)
 					nzFree(v);
 				if (rc)
@@ -2142,7 +2176,7 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 				return false;
 			}
 			if (cutc == '*') {
-				rc = ((! !strstr(v, value)) ^ negate);
+				rc = (! !strstr(v, value));
 				if (valloc)
 					nzFree(v);
 				if (rc)
@@ -2159,14 +2193,10 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 					continue;
 				if (valloc)
 					nzFree(v0);
-				if (negate)
-					return false;
 				goto next_mod;
 			}
 			if (valloc)
 				nzFree(v0);
-			if (negate)
-				goto next_mod;
 			return false;
 		}
 // At this point c should be a colon.
@@ -2178,7 +2208,7 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			continue;
 
 		if (!strncmp(p, ":lang(", 6)) {
-			if (languageSpecial(t, obj, p + 6) ^ negate)
+			if (languageSpecial(t, obj, p + 6))
 				goto next_mod;
 			return false;
 		}
@@ -2248,11 +2278,8 @@ nth_good:
 			ns = spreadElem(ns);
 			if (oftype)
 				ns = spreadType(ns);
-			if (!ns) {
-				if (negate)
-					goto next_mod;
+			if (!ns)
 				return false;
-			}
 // find myself
 			for (i = 0; i < ns; ++i)
 				if (sibs[i].myself)
@@ -2292,11 +2319,8 @@ nth_bad:
 			ns = spreadElem(ns);
 			if (strstr(p, "of-type"))
 				ns = spreadType(ns);
-			if (!ns) {
-				if (negate)
-					goto next_mod;
+			if (!ns)
 				return false;
-			}
 			if (p[1] == 'f')
 				rc = sibs[0].myself;
 			if (p[1] == 'l')
@@ -2304,7 +2328,7 @@ nth_bad:
 			if (p[1] == 'o')
 				rc = (ns == 1 && sibs[0].myself);
 			free(sibs);
-			if (rc ^ negate)
+			if (rc)
 				goto next_mod;
 			return false;
 		}
@@ -2323,11 +2347,11 @@ all the div sections just below the current node.
 *********************************************************************/
 			if (t) {
 				if (!rootobj) {
-					if ((t->action == TAGACT_HTML) ^ negate)
+					if ((t->action == TAGACT_HTML))
 						goto next_mod;
 					return false;
 				}
-				if ((t->jv == rootobj) ^ negate)
+				if ((t->jv == rootobj))
 					goto next_mod;
 				return false;
 			}
@@ -2336,11 +2360,11 @@ all the div sections just below the current node.
 				    get_property_string_nat(obj, "nodeName");
 				rc = (a && stringEqualCI(a, "document"));
 				cnzFree(a);
-				if (rc ^ negate)
+				if (rc)
 					goto next_mod;
 				return false;
 			}
-			if ((obj == rootobj) ^ negate)
+			if ((obj == rootobj))
 				goto next_mod;
 			return false;
 		}
@@ -2383,7 +2407,7 @@ all the div sections just below the current node.
 					break;
 			}
 			nzFree(sibs);
-			if (rc ^ negate)
+			if (rc)
 				goto next_mod;
 			return false;
 		}
@@ -2399,7 +2423,7 @@ all the div sections just below the current node.
 				if (p[1] == 'e')
 					rc ^= 1;
 			}
-			if (rc ^ negate)
+			if (rc)
 				goto next_mod;
 			return false;
 		}
@@ -2416,7 +2440,7 @@ all the div sections just below the current node.
 				if (p[6] == 'w')
 					rc ^= 1;
 			}
-			if (rc ^ negate)
+			if (rc)
 				goto next_mod;
 			return false;
 		}
@@ -2430,7 +2454,7 @@ all the div sections just below the current node.
 					rc = get_property_bool_nat(obj,
 								   "checked");
 			}
-			if (rc ^ negate)
+			if (rc)
 				goto next_mod;
 			return false;
 		}
