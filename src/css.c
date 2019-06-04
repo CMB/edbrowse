@@ -1982,6 +1982,9 @@ That chain is considered, or not considered, based on before after hover
 criteria in qsa2() and qsaMatchGroup(), so we need not test for those here.
 *********************************************************************/
 
+static bool qsaMatchChain(struct htmlTag *t, jsobjtype obj,
+			  const struct asel *a);
+
 static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 {
 	bool rc;
@@ -2007,6 +2010,14 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 		bool negate = mod->negate;
 		char c = p[0];
 		int i, ntype, ns;
+
+// This not() recursion is not tested, and not even parsed yet.
+		if (negate && mod->notchain) {
+			if (qsaMatchChain(t, obj, mod->notchain))
+				return false;
+// the notchain fails, which is what we want, so on we go.
+			continue;
+		}
 
 		if (mod->isclass && t
 		    && (bulkmatch || (gcsmatch && a->combin == ','))) {
