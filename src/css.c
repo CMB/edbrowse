@@ -269,7 +269,7 @@ struct mod {
 	struct mod *next;
 	char *part;
 	bool isclass, isid, negate;
-// chain is used only if negate is true, not(ul.lister), recursive
+// notchain is used only if negate is true, not(ul.lister), recursive
 	struct asel *notchain;
 };
 
@@ -302,6 +302,7 @@ struct cssmaster {
 static void cssPiecesFree(struct desc *d);
 static void cssPiecesPrint(const struct desc *d);
 static void cssAtomic(struct asel *a);
+static void cssParseLeft(struct desc *d);
 static void cssModify(struct asel *a, const char *m1, const char *m2);
 static bool onematch, skiproot, gcsmatch, bulkmatch, bulktotal;
 static char matchtype;		// 0 plain 1 before 2 after
@@ -544,10 +545,10 @@ static struct desc *cssPieces(char *s)
 {
 	int bc = 0;		// brace count
 	struct desc *d1 = 0, *d2, *d = 0;
-	struct sel *sel, *sel2;
-	struct asel *asel, *asel2;
+	struct sel *sel;
+	struct asel *asel;
 	int n;
-	char c, last_c;
+	char c;
 	char *lhs;
 	char *a, *t, *at_end_marker = 0;
 	char *iu1, *iu2, *iu3;	// for import url
@@ -894,138 +895,9 @@ copy:		++s;
 
 // Now let's try to understand the selectors.
 	for (d = d1; d; d = d->next) {
-		char combin;
-		char *a1, *a2;	// bracket the atomic selector
-
 		if (d->error)
 			continue;
-		s = d->lhs;
-		if (!s[0]) {
-			d->error = CSS_ERROR_NOSEL;
-			continue;
-		}
-
-		a1 = s;		// start of the atomic selector
-		sel = 0;	// the selector being built
-
-		last_c = 0;
-		while ((c = *s)) {
-			if (c == '"' || c == '\'' || c == '[') {
-				n = closeString(s + 1, c);
-				if (n < 0)	// should never happen
-					break;
-				s += n + 1;
-				last_c = 0;
-				continue;
-			}
-// Ambiguous, ~ is combinator or part of [foo~=bar].
-// Simplistic check here for ~=
-// I don't really need it any more, now that I treat [ stuf ] as a string.
-// But I still need the next one.
-// Ambiguous, + is combinator or part of "nth_child(n+3)
-// Simplistic check here, next selector should not begin with a digit
-			if ((c == '~' && s[1] == '=') ||
-			    (c == '+' && isdigit(s[1]))) {
-				last_c = c;
-				++s;
-				continue;
-			}
-
-			if (last_c == '\\') {
-				last_c = 0;
-				++s;
-				continue;
-			}
-
-			combin = 0;	// look for combinator
-			a2 = s;
-			while (strchr(", \t\n\r>~+", c)) {
-				if (isspace(c)) {
-					if (!combin)
-						combin = ' ';
-				} else {
-					if (combin && combin != ' ')
-						break;
-					combin = c;
-					last_c = c;
-				}
-				c = *++s;
-			}
-			if (!combin) {
-				last_c = c;
-				++s;
-				continue;
-			}
-// it's a combinator or separator
-			last_c = c;
-			if (a2 == a1) {	// empty piece
-// I'll allow it if it's just an extra comma
-				if (combin == ',' && !sel) {
-					a1 = s;
-					continue;
-				}
-				sel->error = CSS_ERROR_SEL0;
-				break;
-			}
-
-			t = allocMem(a2 - a1 + 1);
-			memcpy(t, a1, a2 - a1);
-			t[a2 - a1] = 0;
-			asel = allocZeroMem(sizeof(struct asel));
-			asel->part = t;
-			asel->combin = combin;
-			if (!sel) {
-				sel = allocZeroMem(sizeof(struct sel));
-				if (!d->selectors)
-					d->selectors = sel2 = sel;
-				else
-					sel2->next = sel, sel2 = sel;
-			}
-// I'm reversing the order of the atomic selectors here
-			asel2 = sel->chain;
-			sel->chain = asel;
-			asel->next = asel2;
-
-			cssAtomic(asel);
-// pass characteristics of the atomic selector back up to the selector
-			if (asel->error && !sel->error)
-				sel->error = asel->error;
-			if (combin == ',')
-				sel = 0;
-			a1 = s;
-		}
-
-// This is the last piece, pretend like combin is a comma
-		combin = ',';
-		a2 = s;
-		if (a2 == a1) {	// empty piece
-			if (!sel) {
-				if (!d->selectors)
-					d->error = CSS_ERROR_NOSEL;
-				continue;
-			}
-			sel->error = CSS_ERROR_SEL0;
-			continue;
-		}
-		t = allocMem(a2 - a1 + 1);
-		memcpy(t, a1, a2 - a1);
-		t[a2 - a1] = 0;
-		asel = allocZeroMem(sizeof(struct asel));
-		asel->part = t;
-		asel->combin = combin;
-		if (!sel) {
-			sel = allocZeroMem(sizeof(struct sel));
-			if (!d->selectors)
-				d->selectors = sel;
-			else
-				sel2->next = sel;
-		}
-		asel2 = sel->chain;
-		sel->chain = asel;
-		asel->next = asel2;
-		cssAtomic(asel);
-		if (asel->error && !sel->error)
-			sel->error = asel->error;
+		cssParseLeft(d);
 	}
 
 // pull before and after up from atomic selector to selector
@@ -1228,7 +1100,143 @@ lastrule:
 	return d1;
 }
 
-// determine the tag, and build the chain of modifiers
+static void cssParseLeft(struct desc *d)
+{
+	char *s = d->lhs;
+	char *a1 = s;		// start of the atomic selector
+	char *a2, *t;
+	char c, last_c = 0, combin;
+	struct sel *sel = 0;	// the selector being built
+	struct sel *sel2;
+	struct asel *asel, *asel2;
+	int n;
+
+	if (!s[0]) {
+		d->error = CSS_ERROR_NOSEL;
+		return;
+	}
+
+	while ((c = *s)) {
+		if (c == '"' || c == '\'' || c == '[') {
+			n = closeString(s + 1, c);
+			if (n < 0)	// should never happen
+				break;
+			s += n + 1;
+			last_c = 0;
+			continue;
+		}
+// Ambiguous, ~ is combinator or part of [foo~=bar].
+// Simplistic check here for ~=
+// I don't really need it any more, now that I treat [ stuf ] as a string.
+// But I still need the next one.
+// Ambiguous, + is combinator or part of "nth_child(n+3)
+// Simplistic check here, next selector should not begin with a digit
+		if ((c == '~' && s[1] == '=') || (c == '+' && isdigit(s[1]))) {
+			last_c = c;
+			++s;
+			continue;
+		}
+
+		if (last_c == '\\') {
+			last_c = 0;
+			++s;
+			continue;
+		}
+// :not( code, rather like closing a string.
+// not yet implemented
+
+		combin = 0;	// look for combinator
+		a2 = s;
+		while (strchr(", \t\n\r>~+", c)) {
+			if (isspace(c)) {
+				if (!combin)
+					combin = ' ';
+			} else {
+				if (combin && combin != ' ')
+					break;
+				combin = c;
+				last_c = c;
+			}
+			c = *++s;
+		}
+		if (!combin) {
+			last_c = c;
+			++s;
+			continue;
+		}
+// it's a combinator or separator
+		last_c = c;
+		if (a2 == a1) {	// empty piece
+// I'll allow it if it's just an extra comma
+			if (combin == ',' && !sel) {
+				a1 = s;
+				continue;
+			}
+			sel->error = CSS_ERROR_SEL0;
+			break;
+		}
+
+		t = allocMem(a2 - a1 + 1);
+		memcpy(t, a1, a2 - a1);
+		t[a2 - a1] = 0;
+		asel = allocZeroMem(sizeof(struct asel));
+		asel->part = t;
+		asel->combin = combin;
+		if (!sel) {
+			sel = allocZeroMem(sizeof(struct sel));
+			if (!d->selectors)
+				d->selectors = sel2 = sel;
+			else
+				sel2->next = sel, sel2 = sel;
+		}
+// I'm reversing the order of the atomic selectors here
+		asel2 = sel->chain;
+		sel->chain = asel;
+		asel->next = asel2;
+
+		cssAtomic(asel);
+// pass characteristics of the atomic selector back up to the selector
+		if (asel->error && !sel->error)
+			sel->error = asel->error;
+		if (combin == ',')
+			sel = 0;
+		a1 = s;
+	}
+
+// This is the last piece, pretend like combin is a comma
+	combin = ',';
+	a2 = s;
+	if (a2 == a1) {		// empty piece
+		if (!sel) {
+			if (!d->selectors)
+				d->error = CSS_ERROR_NOSEL;
+			return;
+		}
+		sel->error = CSS_ERROR_SEL0;
+		return;
+	}
+	t = allocMem(a2 - a1 + 1);
+	memcpy(t, a1, a2 - a1);
+	t[a2 - a1] = 0;
+	asel = allocZeroMem(sizeof(struct asel));
+	asel->part = t;
+	asel->combin = combin;
+	if (!sel) {
+		sel = allocZeroMem(sizeof(struct sel));
+		if (!d->selectors)
+			d->selectors = sel;
+		else
+			sel2->next = sel;
+	}
+	asel2 = sel->chain;
+	sel->chain = asel;
+	asel->next = asel2;
+	cssAtomic(asel);
+	if (asel->error && !sel->error)
+		sel->error = asel->error;
+}
+
+// determine the tag and build the chain of modifiers
 static void cssAtomic(struct asel *a)
 {
 	char c, last_c;
