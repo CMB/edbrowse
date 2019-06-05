@@ -548,6 +548,120 @@ static int specificity(const struct sel *sel, bool underat)
 	return n;
 }
 
+static bool mediaPiece(struct desc *d, char *t)
+{
+	char *a;
+	int n;
+	bool atnot, atscreen, atall;
+
+	atscreen = atall = atnot = false;
+
+	if (!strncmp(t, "only", 4) && !isalnum(t[4])) {
+// only is meaningless
+		t += 4;
+		skipWhite2(&t);
+	}
+	if (!strncmp(t, "not", 3) && !isalnum(t[3])) {
+		atnot = true;
+		t += 3;
+		skipWhite2(&t);
+	}
+	if (!strncmp(t, "screen", 6) && !isalnum(t[6])) {
+		atscreen = true;
+		t += 6;
+		skipWhite2(&t);
+	} else if (!strncmp(t, "all", 3) && !isalnum(t[3])) {
+		atall = true;
+		t += 3;
+		skipWhite2(&t);
+	} else {
+		atall = true;
+	}
+	if (!strncmp(t, "and", 3) && !isalnum(t[3])) {
+		t += 3;
+		skipWhite2(&t);
+	}
+	if (*t != '(') {
+		d->error = CSS_ERROR_BADMEDIA;
+		return false;
+	}
+	++t;
+	skipWhite2(&t);
+// A well written website can skip the hover text, which edbrowse can't
+// manage very well, so we should respond to this one.
+	if (stringEqual(t, "hover)")
+	    || stringEqual(t, "any-hover)")
+	    || stringEqual(t, "pointer)")
+	    || stringEqual(t, "any-pointer)")
+	    || stringEqual(t, "inverted-colors)")) {
+		d->error = CSS_ERROR_ATPROC;
+		return atnot;
+	}
+	if (stringEqual(t, "scripting)")) {
+		d->error = CSS_ERROR_ATPROC;
+		return isJSAlive ^ atnot;
+	}
+// I only handle min or max on certain parameters
+	if ((strncmp(t, "max", 3) && strncmp(t, "min", 3)) ||
+	    t[3] != '-' || (strncmp(t + 4, "height", 6)
+			    && strncmp(t + 4, "width", 5)
+			    && strncmp(t + 4, "color", 5)
+			    && strncmp(t + 4, "monochrome", 10))) {
+		d->error = CSS_ERROR_BADMEDIA;
+		return false;
+	}
+	a = t + 9;
+	if (t[4] == 'h')
+		++a;
+	if (t[4] == 'm')
+		a += 5;
+	if (*a != ':') {
+		d->error = CSS_ERROR_BADMEDIA;
+		return false;
+	}
+	++a;
+	skipWhite2(&a);
+	if (!isdigit(*a)) {
+		d->error = CSS_ERROR_BADMEDIA;
+		return false;
+	}
+	n = strtol(a, &a, 10);
+// no compound expressions, just (min-width:400px)
+// skip past px
+	if (a[0] == 'p' && a[1] == 'x')
+		a += 2;
+	if (strcmp(a, ")")) {
+		d->error = CSS_ERROR_BADMEDIA;
+		return false;
+	}
+// This one we understand
+	d->error = CSS_ERROR_ATPROC;
+
+// not used warning
+	if (atscreen)
+		atscreen = true;
+
+// screen is always 1024 by 768
+	if (t[1] == 'i' && t[4] == 'w' && ((n > 1024) ^ atnot))
+		return false;
+	if (t[1] == 'a' && t[4] == 'w' && ((n < 1024) ^ atnot))
+		return false;
+	if (t[1] == 'i' && t[4] == 'h' && ((n > 678) ^ atnot))
+		return false;
+	if (t[1] == 'a' && t[4] == 'h' && ((n < 678) ^ atnot))
+		return false;
+	if (t[1] == 'i' && t[4] == 'c' && ((n > 8) ^ atnot))
+		return false;
+	if (t[1] == 'a' && t[4] == 'c' && ((n < 8) ^ atnot))
+		return false;
+	if (t[1] == 'i' && t[4] == 'm' && ((n > 4) ^ atnot))
+		return false;
+	if (t[1] == 'a' && t[4] == 'm' && ((n < 4) ^ atnot))
+		return false;
+
+	return true;
+}
+
 // The input string is assumed allocated, it could be reallocated.
 static struct desc *cssPieces(char *s)
 {
@@ -560,7 +674,6 @@ static struct desc *cssPieces(char *s)
 	char *lhs;
 	char *a, *t, *at_end_marker = 0;
 	char *iu1, *iu2, *iu3;	// for import url
-	bool atnot, atscreen, atall;
 
 	loadcount = 0;
 	memset(errorBuckets, 0, sizeof(errorBuckets));
@@ -728,10 +841,6 @@ top2:
 				goto past_at;
 			}
 			d->bc = 1;
-
-			atscreen = atall = atnot = false;
-
-// look for media screen|all
 			++t;
 			skipWhite2(&t);
 			if (strncmp(t, "media", 5) || isalnum(t[5])) {
@@ -740,115 +849,9 @@ top2:
 			}
 			t += 5;
 			skipWhite2(&t);
-			if (!strncmp(t, "only", 4) && !isalnum(t[4])) {
-// only is meaningless
-				t += 4;
-				skipWhite2(&t);
-			}
-			if (!strncmp(t, "not", 3) && !isalnum(t[3])) {
-				atnot = true;
-				t += 3;
-				skipWhite2(&t);
-			}
-			if (!strncmp(t, "screen", 6) && !isalnum(t[6])) {
-				atscreen = true;
-				t += 6;
-				skipWhite2(&t);
-			} else if (!strncmp(t, "all", 3) && !isalnum(t[3])) {
-				atall = true;
-				t += 3;
-				skipWhite2(&t);
-			} else {
-				atall = true;
-			}
-			if (!strncmp(t, "and", 3) && !isalnum(t[3])) {
-				t += 3;
-				skipWhite2(&t);
-			}
-			if (*t != '(') {
-				d->error = CSS_ERROR_BADMEDIA;
-				goto past_at;
-			}
-			++t;
-			skipWhite2(&t);
-// A well written website can skip the hover text, which edbrowse can't
-// manage very well, so we should respond to this one.
-			if (stringEqual(t, "hover)")
-			    || stringEqual(t, "any-hover)")
-			    || stringEqual(t, "pointer)")
-			    || stringEqual(t, "any-pointer)")
-			    || stringEqual(t, "inverted-colors)")) {
-				d->error = CSS_ERROR_ATPROC;
-				if (atnot)
-					goto at_reparse;
-				goto past_at;
-			}
-			if (stringEqual(t, "scripting)")) {
-				d->error = CSS_ERROR_ATPROC;
-				if (isJSAlive ^ atnot)
-					goto at_reparse;
-				goto past_at;
-			}
-// I only handle min or max on certain parameters
-			if ((strncmp(t, "max", 3) && strncmp(t, "min", 3)) ||
-			    t[3] != '-' || (strncmp(t + 4, "height", 6)
-					    && strncmp(t + 4, "width", 5)
-					    && strncmp(t + 4, "color", 5)
-					    && strncmp(t + 4, "monochrome",
-						       10))) {
-				d->error = CSS_ERROR_BADMEDIA;
-				goto past_at;
-			}
-			a = t + 9;
-			if (t[4] == 'h')
-				++a;
-			if (t[4] == 'm')
-				a += 5;
-			if (*a != ':') {
-				d->error = CSS_ERROR_BADMEDIA;
-				goto past_at;
-			}
-			++a;
-			skipWhite2(&a);
-			if (!isdigit(*a)) {
-				d->error = CSS_ERROR_BADMEDIA;
-				goto past_at;
-			}
-			n = strtol(a, &a, 10);
-// no compound expressions, just (min-width:400px)
-// skip past px
-			if (a[0] == 'p' && a[1] == 'x')
-				a += 2;
-			if (strcmp(a, ")")) {
-				d->error = CSS_ERROR_BADMEDIA;
-				goto past_at;
-			}
-// This one we understand
-			d->error = CSS_ERROR_ATPROC;
-
-// not used warning
-			if (atscreen)
-				atscreen = true;
-
-// screen is always 1024 by 768
-			if (t[1] == 'i' && t[4] == 'w' && ((n > 1024) ^ atnot))
-				goto past_at;
-			if (t[1] == 'a' && t[4] == 'w' && ((n < 1024) ^ atnot))
-				goto past_at;
-			if (t[1] == 'i' && t[4] == 'h' && ((n > 678) ^ atnot))
-				goto past_at;
-			if (t[1] == 'a' && t[4] == 'h' && ((n < 678) ^ atnot))
-				goto past_at;
-			if (t[1] == 'i' && t[4] == 'c' && ((n > 8) ^ atnot))
-				goto past_at;
-			if (t[1] == 'a' && t[4] == 'c' && ((n < 8) ^ atnot))
-				goto past_at;
-			if (t[1] == 'i' && t[4] == 'm' && ((n > 4) ^ atnot))
-				goto past_at;
-			if (t[1] == 'a' && t[4] == 'm' && ((n < 4) ^ atnot))
+			if (!mediaPiece(d, t))
 				goto past_at;
 
-at_reparse:
 // Here comes some funky string manipulation.
 // The descriptors are in rhs.
 // I nulled out the trailing }, make it a space.
