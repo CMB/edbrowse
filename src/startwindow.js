@@ -3461,6 +3461,7 @@ and instanceof Option, as I do today.
 
 Array.prototype.item = function(x) { return this[x] };
 Object.defineProperty(Array.prototype, "item", {configurable: false,  enumerable: false, writable: false});
+
 Array.prototype.includes = function(x, start) {
 if(typeof start != "number") start = 0;
 var l = this.length;
@@ -3471,6 +3472,17 @@ if(this[i] === x) return true;
 return false;
 }
 Object.defineProperty(Array.prototype, "includes", {configurable: false,  enumerable: false, writable: false});
+
+Array.from = function(o, fn, thisobj) {
+var k = arguments.length;
+var a = [];
+if(!k) return a;
+if(k > 1) alert3("Array.from no mapping support");
+var l = o.length;
+for(var i=0; i<l; ++i)
+a.push(o[i]);
+return a;
+}
 
 // On the first call this setter just creates the url, the location of the
 // current web page, But on the next call it has the side effect of replacing

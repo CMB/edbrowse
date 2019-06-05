@@ -532,6 +532,7 @@ var l = this.length-1;
 this[0] = this[l];
 this[l] = temp;
 };
+Object.defineProperty(Array.prototype, "firstLast", {configurable: false,  enumerable: false, writable: false});
 a = [17,21,25];
 a.firstLast();
 if(a.join('zz') != "25zz21zz17") fail(97);
