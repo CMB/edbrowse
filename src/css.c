@@ -556,6 +556,9 @@ static bool mediaPiece(struct desc *d, char *t)
 
 	atscreen = atall = atnot = false;
 
+	if (!*t)		// nothing there
+		return false;
+
 	if (!strncmp(t, "only", 4) && !isalnum(t[4])) {
 // only is meaningless
 		t += 4;
@@ -660,6 +663,42 @@ static bool mediaPiece(struct desc *d, char *t)
 		return false;
 
 	return true;
+}
+
+static bool media(struct desc *d, char *t)
+{
+	char *p = t;
+	char c;
+	int n;
+
+	while ((c = *t)) {
+		if (strchr("'\"[(", c)) {
+			n = closeString(t + 1, c);
+			if (n < 0) {	// should not happen
+				d->error = CSS_ERROR_BADMEDIA;
+				return false;
+			}
+			t += n + 1;
+			continue;
+		}
+		if (c == ',') {
+			*t = 0;
+			trim(p);
+			if (mediaPiece(d, p))
+				return true;
+			p = t + 1;
+		}
+		++t;
+	}
+
+// last piece
+	trim(p);
+	if (mediaPiece(d, p))
+		return true;
+
+	if (!d->error)
+		d->error = CSS_ERROR_ATPROC;
+	return false;
 }
 
 // The input string is assumed allocated, it could be reallocated.
@@ -849,7 +888,7 @@ top2:
 			}
 			t += 5;
 			skipWhite2(&t);
-			if (!mediaPiece(d, t))
+			if (!media(d, t))
 				goto past_at;
 
 // Here comes some funky string manipulation.
