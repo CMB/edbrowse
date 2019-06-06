@@ -1121,6 +1121,8 @@ mw0.CSSStyleDeclaration = function(){
 this.ownerDocument = my$doc();
 this.attributes.owner = this;
 this.sheet = new mw0.CSSStyleSheet;
+// I guess this is default behavior; acid 46
+this.textTransform = "none";
 };
 mw0.CSSStyleDeclaration.prototype.toString = function() { return "style object"; }
 mw0.CSSStyleDeclaration.prototype.getPropertyValue = function(p) {

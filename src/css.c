@@ -551,10 +551,8 @@ static int specificity(const struct sel *sel, bool underat)
 static bool mediaPiece(struct desc *d, char *t)
 {
 	char *a;
-	int n;
-	bool atnot, atscreen, atall;
-
-	atscreen = atall = atnot = false;
+	int n, s_width, s_height;
+	bool atnot = false, atsome = false;
 
 	if (!*t)		// nothing there
 		return false;
@@ -570,16 +568,23 @@ static bool mediaPiece(struct desc *d, char *t)
 		skipWhite2(&t);
 	}
 	if (!strncmp(t, "screen", 6) && !isalnum(t[6])) {
-		atscreen = true;
+		atsome = true;
 		t += 6;
 		skipWhite2(&t);
 	} else if (!strncmp(t, "all", 3) && !isalnum(t[3])) {
-		atall = true;
+		atsome = true;
 		t += 3;
 		skipWhite2(&t);
-	} else {
-		atall = true;
 	}
+
+and:
+	if (!*t) {
+		if (atsome)
+			return !atnot;
+		d->error = CSS_ERROR_BADMEDIA;
+		return false;
+	}
+
 	if (!strncmp(t, "and", 3) && !isalnum(t[3])) {
 		t += 3;
 		skipWhite2(&t);
@@ -592,17 +597,19 @@ static bool mediaPiece(struct desc *d, char *t)
 	skipWhite2(&t);
 // A well written website can skip the hover text, which edbrowse can't
 // manage very well, so we should respond to this one.
-	if (stringEqual(t, "hover)")
-	    || stringEqual(t, "any-hover)")
-	    || stringEqual(t, "pointer)")
-	    || stringEqual(t, "any-pointer)")
-	    || stringEqual(t, "inverted-colors)")) {
-		d->error = CSS_ERROR_ATPROC;
+	if (!strncmp(t, "hover)", 6)
+	    || !strncmp(t, "any-hover)", 10)
+	    || !strncmp(t, "pointer)", 8)
+	    || !strncmp(t, "any-pointer)", 12)
+	    || !strncmp(t, "inverted-colors)", 16))
 		return atnot;
-	}
-	if (stringEqual(t, "scripting)")) {
-		d->error = CSS_ERROR_ATPROC;
-		return isJSAlive ^ atnot;
+	if (!strncmp(t, "scripting)", 10)) {
+		if (!isJSAlive)
+			return atnot;
+		t += 10;
+		skipWhite2(&t);
+		atsome = true;
+		goto and;
 	}
 // I only handle min or max on certain parameters
 	if ((strncmp(t, "max", 3) && strncmp(t, "min", 3)) ||
@@ -610,6 +617,7 @@ static bool mediaPiece(struct desc *d, char *t)
 			    && strncmp(t + 4, "width", 5)
 			    && strncmp(t + 4, "color", 5)
 			    && strncmp(t + 4, "monochrome", 10))) {
+// not recognized
 		d->error = CSS_ERROR_BADMEDIA;
 		return false;
 	}
@@ -629,40 +637,43 @@ static bool mediaPiece(struct desc *d, char *t)
 		return false;
 	}
 	n = strtol(a, &a, 10);
-// no compound expressions, just (min-width:400px)
-// skip past px
+
+// screen is always 1024 by 768
+	s_width = 1024, s_height = 768;
+
+// px or em
 	if (a[0] == 'p' && a[1] == 'x')
 		a += 2;
-	if (strcmp(a, ")")) {
+	if (a[0] == 'e' && a[1] == 'm') {
+		a += 2;
+		s_width /= 16, s_height /= 16;
+	}
+	if (*a != ')') {
 		d->error = CSS_ERROR_BADMEDIA;
 		return false;
 	}
-// This one we understand
-	d->error = CSS_ERROR_ATPROC;
 
-// not used warning
-	if (atscreen)
-		atscreen = true;
+	if (t[1] == 'i' && t[4] == 'w' && n > s_width)
+		return atnot;
+	if (t[1] == 'a' && t[4] == 'w' && n < s_width)
+		return atnot;
+	if (t[1] == 'i' && t[4] == 'h' && n > s_height)
+		return atnot;
+	if (t[1] == 'a' && t[4] == 'h' && n < s_height)
+		return atnot;
+	if (t[1] == 'i' && t[4] == 'c' && n > 8)
+		return atnot;
+	if (t[1] == 'a' && t[4] == 'c' && n < 8)
+		return atnot;
+	if (t[1] == 'i' && t[4] == 'm' && n > 4)
+		return atnot;
+	if (t[1] == 'a' && t[4] == 'm' && n < 4)
+		return atnot;
 
-// screen is always 1024 by 768
-	if (t[1] == 'i' && t[4] == 'w' && ((n > 1024) ^ atnot))
-		return false;
-	if (t[1] == 'a' && t[4] == 'w' && ((n < 1024) ^ atnot))
-		return false;
-	if (t[1] == 'i' && t[4] == 'h' && ((n > 678) ^ atnot))
-		return false;
-	if (t[1] == 'a' && t[4] == 'h' && ((n < 678) ^ atnot))
-		return false;
-	if (t[1] == 'i' && t[4] == 'c' && ((n > 8) ^ atnot))
-		return false;
-	if (t[1] == 'a' && t[4] == 'c' && ((n < 8) ^ atnot))
-		return false;
-	if (t[1] == 'i' && t[4] == 'm' && ((n > 4) ^ atnot))
-		return false;
-	if (t[1] == 'a' && t[4] == 'm' && ((n < 4) ^ atnot))
-		return false;
-
-	return true;
+	t = a + 1;
+	skipWhite2(&t);
+	atsome = true;
+	goto and;
 }
 
 static bool media(struct desc *d, char *t)
@@ -890,6 +901,7 @@ top2:
 			skipWhite2(&t);
 			if (!media(d, t))
 				goto past_at;
+			d->error = CSS_ERROR_ATPROC;
 
 // Here comes some funky string manipulation.
 // The descriptors are in rhs.
