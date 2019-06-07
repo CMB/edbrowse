@@ -1679,6 +1679,7 @@ const struct tagInfo availableTags[] = {
 	{"unknown0", "an html entity", TAGACT_UNKNOWN, 5, 1},
 	{"object", "an html object", TAGACT_OBJECT, 5, 3},
 	{"a", "an anchor", TAGACT_A, 0, 1},
+	{"htmlanchorelement", "an anchor element", TAGACT_A, 0, 1},
 	{"input", "an input item", TAGACT_INPUT, 0, 4},
 	{"element", "an input element", TAGACT_INPUT, 0, 4},
 	{"title", "the title", TAGACT_TITLE, 0, 0},

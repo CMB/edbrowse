@@ -2931,6 +2931,7 @@ switch(t) {
 case "body": c = new Body; break;
 case "object": c = new HtmlObj; break;
 case "a": c = new Anchor; break;
+case "htmlanchorelement": c = new HTMLAnchorElement; break;
 case "image": t = "img";
 case "img": c = new Image; break;
 case "link": c = new Link; break;
