@@ -415,6 +415,7 @@ char *run_script_nat(const char *s);
 
 /* sourcefile=css.c */
 void writeShortCache(void);
+bool matchMedia(char *t);
 void cssDocLoad(jsobjtype thisobj, char *s, bool pageload);
 void cssFree(struct ebFrame *f);
 jsobjtype querySelectorAll(const char *selstring, jsobjtype topobj);

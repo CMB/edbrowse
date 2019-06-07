@@ -2290,6 +2290,22 @@ return;
 }
 }
 
+mw0.MediaQueryList = function()
+{
+this.matches = false;
+this.media = "";
+this.addListener = mw0.addEventListener;
+this.removeListener = mw0.removeEventListener;
+}
+
+mw0.matchMedia = function(s)
+{
+var q = new mw0.MediaQueryList;
+q.media = s;
+q.matches = eb$media(s);
+return q;
+}
+
 mw0.insertAdjacentHTML = function(flavor, h)
 {
 // easiest implementation is just to use the power of innerHTML
@@ -3301,6 +3317,8 @@ eb$unlisten = mw0.eb$unlisten;
 addEventListener = mw0.addEventListener;
 removeEventListener = mw0.removeEventListener;
 dispatchEvent = mw0.dispatchEvent;
+MediaQueryList = mw0.MediaQueryList;
+matchMedia = mw0.matchMedia;
 document.eb$listen = mw0.eb$listen;
 document.eb$unlisten = mw0.eb$unlisten;
 document.addEventListener = mw0.addEventListener;

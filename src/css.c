@@ -713,6 +713,13 @@ static bool media(struct desc *d, char *t)
 	return false;
 }
 
+// The above is used by window.matchMedia
+bool matchMedia(char *t)
+{
+	struct desc d0;
+	return media(&d0, t);
+}
+
 // The input string is assumed allocated, it could be reallocated.
 static struct desc *cssPieces(char *s)
 {

@@ -257,6 +257,20 @@ static duk_ret_t native_wlf(duk_context * cx)
 	return 0;
 }
 
+static duk_ret_t native_media(duk_context * cx)
+{
+	const char *s = duk_safe_to_string(cx, 0);
+	bool rc = false;
+	if (s && *s) {
+		char *t = cloneString(s);
+		rc = matchMedia(t);
+		nzFree(t);
+	}
+	duk_pop(cx);
+	duk_push_boolean(cx, rc);
+	return 1;
+}
+
 static duk_ret_t native_logputs(duk_context * cx)
 {
 	int minlev = duk_get_int(cx, 0);
@@ -1361,6 +1375,8 @@ void createJavaContext_nat(void)
 	duk_put_global_string(jcx, "eb$puts");
 	duk_push_c_function(jcx, native_wlf, 2);
 	duk_put_global_string(jcx, "eb$wlf");
+	duk_push_c_function(jcx, native_media, 1);
+	duk_put_global_string(jcx, "eb$media");
 	duk_push_c_function(jcx, native_btoa, 1);
 	duk_put_global_string(jcx, "btoa");
 	duk_push_c_function(jcx, native_atob, 1);
