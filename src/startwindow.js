@@ -3475,16 +3475,37 @@ return false;
 }
 Object.defineProperty(Array.prototype, "includes", {configurable: false,  enumerable: false, writable: false});
 
-Array.from = function(o, fn, thisobj) {
+Array.from = function(o) {
 var k = arguments.length;
 var a = [];
 if(!k) return a;
-if(k > 1) alert3("Array.from no mapping support");
 var l = o.length;
-for(var i=0; i<l; ++i)
-a.push(o[i]);
+for(var i=0; i<l; ++i) {
+var fn = null, thisobj = null;
+if(k >= 2) fn = arguments[1];
+if(k >= 3) thisobj = arguments[2];
+var w = o[i];
+if(fn) {
+if(thisobj) w = fn.call(thisobj, w);
+else w = fn(w);
+}
+a.push(w);
+}
 return a;
 }
+
+Array.prototype.map = function(fn, t) {
+var a = [];
+if(!fn) return a; // should never happen
+for(var i = 0; i<this.length; ++i) {
+var w = this[i];
+if(t) w = fn.call(t, w, i, this);
+else w = fn(w, i, this);
+a.push(w);
+}
+return a;
+}
+Object.defineProperty(Array.prototype, "map", {configurable: false,  enumerable: false, writable: false});
 
 // On the first call this setter just creates the url, the location of the
 // current web page, But on the next call it has the side effect of replacing
