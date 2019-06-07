@@ -267,6 +267,7 @@ eb$voidfunction = function() { }
 eb$truefunction = function() { return true; }
 eb$falsefunction = function() { return false; }
 
+scroll = scrollTo = scrollBy = scrollByLines = scrollByPages = eb$voidfunction;
 focus = blur = scroll = eb$voidfunction;
 document.focus = document.blur = document.open = document.close = eb$voidfunction;
 
@@ -906,6 +907,9 @@ return (this.multiple || n < 0 || n >= a.length) ? "" : a[n].value;
 mw0.Image = function(){}
 mw0.Frame = function(){}
 mw0.Anchor = function(){}
+mw0.HTMLAnchorElement = function(){}
+mw0.HTMLLinkElement = function(){}
+mw0.HTMLAreaElement = function(){}
 mw0.Lister = function(){}
 mw0.Listitem = function(){}
 mw0.tBody = function(){ this.rows = []; }
@@ -956,8 +960,8 @@ Leading ; averts a javascript parsing ambiguity.
 *********************************************************************/
 
 ; (function() {
-var cnlist = ["Anchor", "Image", "Script", "Link", "Area", "Form", "Frame"];
-var ulist = ["href", "src", "src", "href", "href", "action", "src"];
+var cnlist = ["Anchor", "HTMLAnchorElement", "Image", "Script", "Link", "Area", "Form", "Frame"];
+var ulist = ["href", "href", "src", "src", "href", "href", "action", "src"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
 var u = ulist[i]; // url name
@@ -2402,6 +2406,7 @@ Again, leading ; to avert a parsing ambiguity.
 ; (function() {
 var cnlist = ["HTML", "HtmlObj", "Head", "Title", "Body", "CSSStyleDeclaration", "Frame",
 "Anchor", "Element","HTMLElement", "Select", "Lister", "Listitem", "tBody", "Table", "Div",
+"HTMLAnchorElement", "HTMLLinkElement", "HTMLAreaElement",
 "tHead", "tFoot", "tCap", "Label",
 "Form", "Span", "tRow", "Cell", "P", "Script", "Header", "Footer",
 // The following nodes shouldn't have any children, but the various
@@ -2809,7 +2814,7 @@ Again, look at handle$cc().
 *********************************************************************/
 
 ; (function() {
-var cnlist = ["Body", "Anchor", "Div", "P", "Area", "Image",
+var cnlist = ["Body", "Anchor", "HTMLAnchorElement", "Div", "P", "Area", "Image",
 "Element","HTMLElement", "Lister", "Listitem", "tBody", "Table", "tRow", "Cell",
 "Form", "Span", "Header", "Footer"];
 for(var i=0; i<cnlist.length; ++i) {
@@ -3279,6 +3284,9 @@ Select = mw0.Select;
 Image = mw0.Image;
 Frame = mw0.Frame;
 Anchor = mw0.Anchor;
+HTMLAnchorElement = mw0.HTMLAnchorElement;
+HTMLLinkElement = mw0.HTMLLinkElement;
+HTMLAreaElement = mw0.HTMLAreaElement;
 Lister = mw0.Lister;
 Listitem = mw0.Listitem;
 tBody = mw0.tBody;
