@@ -2292,10 +2292,16 @@ return;
 
 mw0.MediaQueryList = function()
 {
+this.nodeName = "MediaQueryList";
 this.matches = false;
 this.media = "";
-this.addListener = mw0.addEventListener;
-this.removeListener = mw0.removeEventListener;
+this.addEventListener = mw0.addEventListener;
+this.removeEventListener = mw0.removeEventListener;
+// supporting the above:
+this.eb$listen = mw0.eb$listen;
+this.eb$unlisten = mw0.eb$unlisten;
+this.addListener = function(f) { this.addEventListener("mediaChange", f, false); }
+this.removeListener = function(f) { this.removeEventListener("mediaChange", f, false); }
 }
 
 mw0.matchMedia = function(s)
