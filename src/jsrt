@@ -806,6 +806,9 @@ if(x1.onclick$$array.length)
 fail(160);
 }
 
+// This comes after the original onsubmit function
+document.forms[0].addEventListener("submit", function(e) { alert("html submit");});
+
 // test_xhr() succeeds even if allowXHR is off, which is weird.
 // Not that I want it to fail if allowXHR is off either. IDK
 // and not sure I want to run this internet test every time. Maybe.

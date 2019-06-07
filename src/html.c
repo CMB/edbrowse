@@ -1704,8 +1704,7 @@ bool infPush(int tagno, char **post_string)
 		else {
 			rc = true;
 			if (form->jv)
-				rc = run_event_bool(form->jv, "form",
-						    "onsubmit", 0);
+				rc = bubble_event(form, "onsubmit");
 			jSideEffects();
 			if (!rc)
 				return true;
