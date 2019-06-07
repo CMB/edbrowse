@@ -271,10 +271,11 @@ focus = blur = scroll = eb$voidfunction;
 document.focus = document.blur = document.open = document.close = eb$voidfunction;
 
 /* Some visual attributes of the window.
- * These are just guesses.
+ * These are simulations as edbrowse has no screen.
  * Better to have something than nothing at all. */
 height = 768;
 width = 1024;
+devicePixelRatio = 1.0;
 // document.status is removed because it creates a conflict with
 // the status property of the XMLHttpRequest implementation
 defaultStatus = 0;

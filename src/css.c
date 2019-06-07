@@ -416,7 +416,8 @@ static void readShortCache(struct cssmaster *cm)
 		++n;
 	}
 	fclose(f);
-	debugPrint(3, "%d import file replacements", n);
+	if (n)
+		debugPrint(3, "%d import file replacements", n);
 }
 
 // Step back through a css string looking for the base url.
