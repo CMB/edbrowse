@@ -325,7 +325,16 @@ void clearCache(void)
 
 /* Fetch a file from cache. return true if fetched successfully,
 false if the file has not been cached or is stale.
-If true then the last access time is set to now. */
+If true then the last access time is set to now.
+The data is returned by the pointer provided; if there is no pointer
+for the length of the data, then the name of the cache file is returned instead,
+wherein the calling routine can access the file directly.
+You might think there is a race condition here; some other edbrowse
+process fills the cache and removes 100 files, but this file was just accessed,
+so is at the top of the list, and won't be removed.
+In other words, a destructive race condition is almost impossible. Some goofy
+characters are prepended to the filename to help us identify it as such. */
+
 bool fetchCache(const char *url, const char *etag, time_t modtime,
 		char **data, int *data_len)
 {
@@ -368,8 +377,15 @@ nomatch:
 
 match:
 	sprintf(cacheFile, "%s/%05d", cacheDir, e->filenumber);
-	if (!fileIntoMemory(cacheFile, data, data_len))
-		goto nomatch;
+	if (data_len) {
+		if (!fileIntoMemory(cacheFile, data, data_len))
+			goto nomatch;
+	} else {
+		char *a = allocMem(strlen(cacheFile) + 5 + 1);
+		sprintf(a, "`cfn~%s", cacheFile);
+		*data = a;
+	}
+
 /* file has been pulled from cache */
 /* have to update the access time */
 	e->accesstime = now_t / 8;

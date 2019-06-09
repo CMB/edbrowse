@@ -290,7 +290,8 @@ extern bool sqlPresent;		/* Was edbrowse compiled with SQL built in? */
 extern bool curlActive; // is curl running?
 extern bool ismc;		/* Is the program running as a mail client? */
 extern bool isimap;		/* Is the program running as an imap client? */
-extern bool down_bg;		/* download in background */
+extern bool down_bg;		// download in background
+extern bool down_abg;		// automatic download of js in background
 extern char whichproc; // which edbrowse-xx process
 extern char showProgress; // feedback as a file is downloaded
 extern char eb_language[];		/* edbrowse language, determined by $LANG */
@@ -345,8 +346,8 @@ extern char *recycleBin;	/* holds deleted files */
 extern char *configFile, *sigFile, *sigFileEnd;
 extern char *cookieFile;	/* persistent cookies */
 extern char *cacheDir;	/* directory for a persistent cache of http pages */
-extern int cacheSize; /* in megabytes */
-extern int cacheCount; /* number of cache files */
+extern int cacheSize; // in megabytes
+extern int cacheCount; // number of cache files
 
 struct listHead {
 	void *next;

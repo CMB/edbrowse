@@ -1579,6 +1579,7 @@ void cssDocLoad(jsobjtype thisobj, char *start, bool pageload)
 {
 	struct ebFrame *save_cf = cf;
 	struct cssmaster *cm;
+	bool recompile = false;
 	frameFromWindow(thisobj);
 	cm = cf->cssmaster;
 	if (!cm) {
@@ -1590,8 +1591,11 @@ void cssDocLoad(jsobjtype thisobj, char *start, bool pageload)
 		debugPrint(3,
 			   "free and recompile css descriptors due to dom changes");
 		cssPiecesFree(cm->descriptors);
+		recompile = true;
 	}
 	cm->descriptors = cssPieces(start);
+	if (recompile)
+		debugPrint(3, "css complete");
 	if (!cm->descriptors)
 		goto done;
 	if (debugCSS) {
