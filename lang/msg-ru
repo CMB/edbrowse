@@ -580,8 +580,8 @@ list = 0 in tagFromJavaVar()
 debug events disabled
 debug events enabled
 Unable to create javascript context.
-0
-0
+загрузка javascript на заднем плане
+загрузка javascript на переднем плане
 0
 timers disabled
 timers enabled

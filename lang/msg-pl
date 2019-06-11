@@ -580,8 +580,8 @@ lista = 0 w tagFromJavaVar()
 0
 0
 nie można utworzyć kontekstu JavaScript
-0
-0
+pobieranie javascript w głównym procesie
+pobieranie javascript w tle
 0
 0
 0

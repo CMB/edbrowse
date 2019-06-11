@@ -800,9 +800,37 @@ mimestream:
 		return false;
 	}
 
+// Fetch javascript or css in the background - fork at this point.
+#ifndef DOSLIKE
+	if (g->down_force) {
+		int pid = fork();
+		if (pid < 0) {	// should not happen
+// revert to synchronous fetch.
+			g->down_force = false;
+		} else if (pid) {
+			g->down_pid = pid;
+			return true;
+		} else {
+			nzFree(g->cdfn);	// should be zero
+			g->cdfn = jsBackFile(getpid());
+			g->down_fd = creat(g->cdfn, 0666);
+			if (g->down_fd < 0) {
+				i_printf(MSG_NoCreate2, g->cdfn);
+				nl();
+				exit(2);
+			}
+			g->down_file = g->down_file2 = cloneString(g->cdfn);
+			g->down_state = 4;
+		}
+	}
+#endif
+
 	h = http_curl_init(g);
-	if (!h)
+	if (!h) {		// should never happen
+		if (g->down_force)
+			exit(2);
 		return false;
+	}
 
 /* "Expect:" header causes some servers to lose.  Disable it. */
 	tmp_headers = curl_slist_append(custom_headers, "Expect:");
@@ -949,6 +977,34 @@ mimestream:
 			goto mimestream;
 		}
 
+		if (head_request && g->down_force) {
+// Maybe get the data right from the cache, so we don't have to
+// put it in a temp file.
+			g->is_http = g->cacheable = true;
+			curlret = fetch_internet(g);
+			if (curlret != CURLE_OK)
+				goto curl_fail;
+			curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &g->code);
+			if (curlret != CURLE_OK)
+				goto curl_fail;
+			debugPrint(3, "http code %ld", g->code);
+			if (g->code == 200 &&
+			    fetchCache(g->urlcopy, g->etag, g->modtime,
+				       &cacheData, 0)) {
+// this puts the cache file name into the temp file name,
+// which the parent will read
+				write(g->down_fd, cacheData, strlen(cacheData));
+				close(g->down_fd);
+				exit(0);
+			}
+// from cache didn't work out
+			curl_easy_setopt(h, CURLOPT_NOBODY, 0l);
+			head_request = false;
+		}
+
+		if (g->down_force)
+			ftruncate(g->down_fd, 0l);
+
 perform:
 		g->is_http = g->cacheable = true;
 		curlret = fetch_internet(g);
@@ -1036,7 +1092,23 @@ they go where they go, so this doesn't come up very often.
 			if (curlret != CURLE_OK) {
 				ebcurl_setError(curlret, g->urlcopy, 1,
 						g->error);
+				if (g->down_force)
+					exit(2);
 			} else {
+				if (g->down_force) {
+// maybe write back into cache
+					char *b;
+					int blen;
+					if (g->cacheable
+					    && (g->modtime || g->etag)
+					    && fileIntoMemory(g->down_file, &b,
+							      &blen)) {
+						storeCache(g->urlcopy, g->etag,
+							   g->modtime, b, blen);
+						nzFree(b);
+					}
+					exit(0);
+				}
 				i_printf(MSG_DownSuccess);
 				printf(": %s\n", g->down_file2);
 			}
@@ -1219,12 +1291,16 @@ curl_fail:
 				g->error);
 		nzFree(referrer);
 		i_get_free(g, true);
+		if (g->down_force)
+			exit(2);
 		return false;
 	}
 
 	if (!transfer_status) {
 		nzFree(referrer);
 		i_get_free(g, true);
+		if (g->down_force)
+			exit(2);
 		return false;
 	}
 
@@ -1233,6 +1309,9 @@ curl_fail:
 	    (g->code == 201 && debugLevel >= 3))
 		i_printf(MSG_HTTPError,
 			 g->code, message_for_response_code(g->code));
+
+	if (g->down_force)
+		exit(0);
 
 // with lopping off post data, or encoding the url,
 // it's easier to just assume the name has changed,
@@ -1280,6 +1359,16 @@ static void prepHtmlString(struct i_get *g, const char *q)
 		else
 			stringAndChar(&g->buffer, &g->length, c);
 	}
+}
+
+// file name of javascript downloaded in background
+// this is allocated
+char *jsBackFile(int pid)
+{
+	int l = strlen(ebUserDir) + 20;
+	char *a = allocMem(l);
+	sprintf(a, "%s/back%d", ebUserDir, pid);
+	return a;
 }
 
 /* Format a line from an ftp directory. */

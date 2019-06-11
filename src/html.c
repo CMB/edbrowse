@@ -10,6 +10,7 @@
 extern int gettimeofday(struct timeval *tp, void *tzp);	// from tidys.lib
 #else // !_MSC_VER
 #define SLEEP sleep
+#include <wait.h>
 #endif // _MSC_VER y/n
 
 uchar browseLocal;
@@ -466,9 +467,12 @@ static void runGeneratedHtml(struct htmlTag *t, const char *h)
 }				/* runGeneratedHtml */
 
 /* helper function to prepare an html script.
- * Fetch from the internetif src=url.
- * Some day we'll do these fetches in parallel in the background. */
-static void prepareScript(struct htmlTag *t)
+ * steps: 1 parsed as html, 2 decorated with a coresponding javascript object
+ * 3 downloading in background (not yet implemented),
+ * 4 data fetched and in the js world and possibly deminimized,
+ * 5 script has run, 6 script could not run. */
+
+void prepareScript(struct htmlTag *t)
 {
 	const char *js_file = "generated";
 	char *js_text = 0;
@@ -482,14 +486,14 @@ static void prepareScript(struct htmlTag *t)
 // in case js has set or change them.  Not yet implemented.
 	a = attribVal(t, "language");
 	if (a && (!memEqualCI(a, "javascript", 10) || isalphaByte(a[10])))
-		return;
+		goto fail;
 /* Also reject a script if a type is specified and it is not JS.
  * For instance, some JSON pairs in script tags on the amazon.com
  * homepage. */
 	a = attribVal(t, "type");
 	if (a && (!memEqualCI(a, "javascript", 10))
 	    && (!memEqualCI(a, "text/javascript", 15)))
-		return;
+		goto fail;
 
 /* It's javascript, run with the source or the inline text.
  * As per the starting line number, we cant distinguish between
@@ -512,94 +516,118 @@ static void prepareScript(struct htmlTag *t)
 			nzFree(t->href);
 			t->href = new_url;
 		}
+		t->async = get_property_bool(t->jv, "async");
+// A side effect of tidy + edbrowse is that the text of the script is a
+// childNode of script, but I don't think it should be.
+		if (t->firstchild && t->firstchild->action == TAGACT_TEXT)
+			run_function_onearg(t->jv, "removeChild",
+					    t->firstchild->jv);
 	}
 
 	if (t->href) {		/* fetch the javascript page */
-		if (javaOK(t->href)) {
-			const char *altsource = 0;
-			bool from_data = isDataURI(t->href);
-			if (!from_data)
-				altsource = fetchReplace(t->href);
-			if (!altsource)
-				altsource = t->href;
-			debugPrint(3, "js source %s",
-				   !from_data ? altsource : "data URI");
-			if (from_data) {
-				char *mediatype;
-				int data_l = 0;
-				if (parseDataURI(t->href, &mediatype,
-						 &js_text, &data_l)) {
-					prepareForBrowse(js_text, data_l);
-					nzFree(mediatype);
-				} else {
-					debugPrint(3,
-						   "Unable to parse data URI containing JavaScript");
-				}
-			} else if (browseLocal && !isURL(altsource)) {
-				char *h = cloneString(altsource);
-				unpercentString(h);
-				if (!fileIntoMemory(h, &b, &blen)) {
-					if (debugLevel >= 1)
-						i_printf(MSG_GetLocalJS);
-				} else {
-					js_text = force_utf8(b, blen);
-					if (!js_text)
-						js_text = b;
-					else
-						nzFree(b);
-				}
-				nzFree(h);
+		const char *altsource = 0;
+		bool from_data;
+		if (!javaOK(t->href))
+			goto fail;
+		from_data = isDataURI(t->href);
+		if (!from_data)
+			altsource = fetchReplace(t->href);
+		if (!altsource)
+			altsource = t->href;
+		debugPrint(3, "js source %s",
+			   !from_data ? altsource : "data URI");
+		if (from_data) {
+			char *mediatype;
+			int data_l = 0;
+			if (parseDataURI(t->href, &mediatype,
+					 &js_text, &data_l)) {
+				prepareForBrowse(js_text, data_l);
+				nzFree(mediatype);
 			} else {
-				struct i_get g;
-				memset(&g, 0, sizeof(g));
-				g.thisfile = cf->fileName;
-				g.uriEncoded = true;
-				g.url = t->href;
-				if (httpConnect(&g)) {
-					if (g.code == 200) {
-						js_text =
-						    force_utf8(g.buffer,
-							       g.length);
-						if (!js_text)
-							js_text = g.buffer;
-						else
-							nzFree(g.buffer);
-					} else {
-						nzFree(g.buffer);
-						if (debugLevel >= 3)
-							i_printf(MSG_GetJS,
-								 g.url, g.code);
-					}
-				} else {
-					if (debugLevel >= 3)
-						i_printf(MSG_GetJS2);
-				}
+				debugPrint(3,
+					   "Unable to parse data URI containing JavaScript");
+				goto fail;
 			}
-			t->js_ln = 1;
-			js_file = (!from_data ? altsource : "data_URI");
+		} else if (browseLocal && !isURL(altsource)) {
+			char *h = cloneString(altsource);
+			unpercentString(h);
+			if (!fileIntoMemory(h, &b, &blen)) {
+				if (debugLevel >= 1)
+					i_printf(MSG_GetLocalJS);
+				goto fail;
+			}
+			js_text = force_utf8(b, blen);
+			if (!js_text)
+				js_text = b;
+			else
+				nzFree(b);
+			nzFree(h);
+		} else {
+			struct i_get g;
+			memset(&g, 0, sizeof(g));
+			g.thisfile = cf->fileName;
+			g.uriEncoded = true;
+			g.url = t->href;
+			if (down_abg && !demin && !uvw)
+				g.down_force = true;
+			if (!httpConnect(&g)) {
+				if (debugLevel >= 3)
+					i_printf(MSG_GetJS2);
+				goto fail;
+			}
+			if (g.down_force) {
+				t->loadpid = g.down_pid;
+				t->js_ln = 1;
+				js_file = (!from_data ? altsource : "data_URI");
+				filepart = getFileURL(js_file, true);
+				t->js_file = cloneString(filepart);
+// stop here and wait for the child process to download
+				t->step = 3;
+				return;
+			}
+			if (g.code == 200) {
+				js_text = force_utf8(g.buffer, g.length);
+				if (!js_text)
+					js_text = g.buffer;
+				else
+					nzFree(g.buffer);
+			} else {
+				nzFree(g.buffer);
+				if (debugLevel >= 3)
+					i_printf(MSG_GetJS, g.url, g.code);
+			}
 		}
+		t->js_ln = 1;
+		js_file = (!from_data ? altsource : "data_URI");
 	} else {
 		js_text = t->textval;
 		t->textval = 0;
 	}
 
-	if (!js_text)
-		return;
+	if (!js_text) {
+// we can only run if javascript has supplied the code forr this scrip,
+// because we have none to offer.
+// Such code cannot be deminimized.
+		goto success;
+	}
 	set_property_string(t->jv, "data", js_text);
 	nzFree(js_text);
+
 	filepart = getFileURL(js_file, true);
 	t->js_file = cloneString(filepart);
-
-// A side effect of tidy + edbrowse is that the text of the script is a
-// childNode of script, but I don't think it should be.
-	if (t->firstchild)
-		run_function_onearg(t->jv, "removeChild", t->firstchild->jv);
 
 // deminimize the code if we're debugging.
 	if (demin)
 		run_function_onearg(cf->winobj, "eb$demin", t->jv);
 	if (uvw)
 		run_function_onearg(cf->winobj, "eb$watch", t->jv);
+
+success:
+	t->step = 4;
+	return;
+
+fail:
+	t->step = 6;
 }				/* prepareScript */
 
 static bool is_subframe(struct ebFrame *f1, struct ebFrame *f2)
@@ -637,9 +665,8 @@ void runScriptsPending(void)
 {
 	struct htmlTag *t;
 	int j;
-	char *jtxt;
-	const char *js_file;
-	int ln;
+	char *js_file, *js_text, *b;
+	int blen, ln;
 	bool change;
 	jsobjtype v;
 	struct ebFrame *f, *save_cf = cf;
@@ -666,23 +693,71 @@ top:
 
 	for (j = 0; j < cw->numTags; ++j) {
 		t = tagList[j];
-		if (t->action != TAGACT_SCRIPT)
+		if (t->action != TAGACT_SCRIPT || !t->jv || t->step >= 3)
 			continue;
-		if (t->step >= 3)
+		t->step = 3;	// now loading the script
+		if (intFlag)
+			continue;
+		cf = t->f0;
+		prepareScript(t);
+	}
+
+	for (j = 0; j < cw->numTags; ++j) {
+		t = tagList[j];
+		if (t->action != TAGACT_SCRIPT || !t->jv || t->step >= 5
+		    || t->step <= 2)
 			continue;
 		if (!is_subframe(t->f0, save_cf))
 			continue;
-		t->step = 3;	/* now running the script */
-		if (!t->jv)
-			continue;
+		if (t->step == 3) {
+// waiting for background process to load
+			int status;
+			js_file = jsBackFile(t->loadpid);
+			waitpid(t->loadpid, &status, 0);
+			if (!WIFEXITED(status) || WEXITSTATUS(status)) {
+				if (debugLevel >= 3)
+					i_printf(MSG_GetJS, t->href, 64);
+noload:
+				unlink(js_file);
+				nzFree(js_file);
+				t->step = 6;
+				continue;
+			}
+			if (!fileIntoMemory(js_file, &b, &blen)) {
+				if (debugLevel >= 3)
+					i_printf(MSG_GetJS2);
+				goto noload;
+			}
+// check for cache reference
+			if (!strncmp(b, "`cfn~", 5)) {
+				char *i_file = b;
+				bool rc = fileIntoMemory(i_file + 5, &b, &blen);
+				nzFree(i_file);
+				if (!rc) {
+					if (debugLevel >= 3)
+						i_printf(MSG_GetJS2);
+					goto noload;
+				}
+			}
+			js_text = force_utf8(b, blen);
+			if (!js_text)
+				js_text = b;
+			else
+				nzFree(b);
+			unlink(js_file);
+			nzFree(js_file);
+			set_property_string(t->jv, "data", js_text);
+			nzFree(js_text);
+			t->step = 4;	// loaded
+		}
+		t->step = 5;	// now running the script
+// inerrupt test should probably be higher up - before the wait
 		if (intFlag)
 			continue;
-
 		cf = t->f0;
-		prepareScript(t);
 
-		jtxt = get_property_string(t->jv, "data");
-		if (!jtxt || !*jtxt)
+		js_text = get_property_string(t->jv, "data");
+		if (!js_text || !*js_text)
 			continue;	/* nothing there */
 		js_file = t->js_file;
 		if (!js_file)
@@ -699,10 +774,10 @@ top:
 		if (ln > 1)
 			++ln;
 		set_property_object(cf->docobj, "currentScript", t->jv);
-		jsRunScript(cf->winobj, jtxt, js_file, ln);
+		jsRunScript(cf->winobj, js_text, js_file, ln);
 		delete_property(cf->docobj, "currentScript");
 		debugPrint(3, "execution complete");
-		nzFree(jtxt);
+		nzFree(js_text);
 
 		if (newlocation && newloc_r) {
 			cf = save_cf;

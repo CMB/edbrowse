@@ -1330,17 +1330,19 @@ Needless to say that's not good!
 		a = attribVal(t, "type");
 		if (a)
 			set_property_string(t->jv, "type", a);
-		a = attribVal(t, "src");
-		if (a) {
-			set_property_string(t->jv, "src", a);
-		} else {
-			set_property_string(t->jv, "src", "");
-		}
 		a = attribVal(t, "data");
 		if (a) {
 			set_property_string(t->jv, "data", a);
 		} else {
 			set_property_string(t->jv, "data", "");
+		}
+		a = attribVal(t, "src");
+		if (a) {
+			set_property_string(t->jv, "src", a);
+			if (down_abg && a[0])	// from another source, let's get it started
+				prepareScript(t);
+		} else {
+			set_property_string(t->jv, "src", "");
 		}
 		break;
 
@@ -1555,7 +1557,7 @@ static void pushAttributes(const struct htmlTag *t)
 			0
 		};
 		static const char *const dotrue[] = {
-			"multiple", "readonly", "disabled", 0
+			"multiple", "readonly", "disabled", "async", 0
 		};
 		static const char *const handlers[] = {
 			"onload", "onunload", "onclick", "onchange",
@@ -2012,6 +2014,8 @@ checkattributes:
 			t->disabled = true;
 		if (stringInListCI(t->attributes, "multiple") >= 0)
 			t->multiple = true;
+		if (stringInListCI(t->attributes, "async") >= 0)
+			t->async = true;
 		if ((j = stringInListCI(t->attributes, "name")) >= 0) {
 /* temporarily, make another copy; some day we'll just point to the value */
 			v = t->atvals[j];

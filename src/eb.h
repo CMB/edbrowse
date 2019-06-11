@@ -198,11 +198,13 @@ struct i_get {
 // State of download to disk, see http.c for state values.
 	int down_state;
 	int down_fd;	/* downloading file descriptor */
+	int down_pid;
 	int down_msg;
 	const char *down_file;	/* downloading filename */
 	const char *down_file2;	/* without download directory */
 	int down_length;
 	bool down_ok;
+	bool down_force;
 	bool uriEncoded;
 	bool foreground;
 	bool pg_ok; // watch for plugins
@@ -539,13 +541,15 @@ struct htmlTag {
 	const char **atvals;
 /* the form that owns this input tag */
 	struct htmlTag *controller;
-	uchar step; /* prerender, decorate, runscript */
+	int loadpid;
+	uchar step; // prerender, decorate, load script, runscript
 	bool slash:1;		/* as in </A> */
 	bool textin:1; /* <a> some text </a> */
 	bool deleted:1; /* deleted from the current buffer */
 	bool dead:1; // removed by garbage collection
 	bool contracted:1; /* frame is contracted */
 	bool multiple:1;
+	bool async:1; // asynchronous script
 	bool rdonly:1;
 	bool disabled:1;
 	bool clickable:1;	/* but not an input field */
