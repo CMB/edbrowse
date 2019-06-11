@@ -409,8 +409,7 @@ static void readShortCache(struct cssmaster *cm)
 		c = allocMem(sizeof(struct shortcache));
 		c->url = cloneString(s);
 		fileIntoMemory(line, &c->data, &length);
-		c->data = reallocMem(c->data, length + 1);
-		c->data[length] = 0;
+// fileIntoMemory puts a null byte on the end
 		c->next = cm->cache;
 		cm->cache = c;
 		++n;

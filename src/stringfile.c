@@ -60,8 +60,13 @@ void *reallocMem(void *p, size_t n)
 		i_printfExit(MSG_ReallocP);
 	if (!p)
 		i_printfExit(MSG_Realloc0, n);
-	if (p == emptyString)
-		return allocMem(n);
+	if (p == emptyString) {
+		p = allocMem(n);
+// keep the null byte that was present in emptyString.
+// fileIntoMemory() needs this to keep null on the end of an empty file
+// that was just read into memory.
+		*(char *)p = 0;
+	}
 	if (!(s = realloc(p, n)))
 		i_printfExit(MSG_ErrorRealloc, n);
 	return s;
