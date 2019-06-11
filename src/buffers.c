@@ -4508,8 +4508,7 @@ et_go:
 #endif
 		return true;
 	}
-#if 0
-	if (stringEqual(line, "bgjs")) {
+	if (stringEqual(line, "jsbg")) {
 #ifdef DOSLIKE
 		puts("download in background not available on Windows at this time.");
 #else
@@ -4520,7 +4519,7 @@ et_go:
 		return true;
 	}
 
-	if (stringEqual(line, "bgjs+") || stringEqual(line, "bgjs-")) {
+	if (stringEqual(line, "jsbg+") || stringEqual(line, "jsbg-")) {
 #ifdef DOSLIKE
 		puts("download in background not available on Windows at this time.");
 #else
@@ -4530,7 +4529,6 @@ et_go:
 #endif
 		return true;
 	}
-#endif
 
 	if (stringEqual(line, "bglist")) {
 		bg_jobs(false);

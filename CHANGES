@@ -11,6 +11,8 @@ Writing the same file back out converts newlines back.
 It can be controlled by the iu command.
 This follows the model of iso8859-1 to and from utf8.
 
+Download javascript files in parallel and in background, experimental.
+
 3.7.4:
 Install man page and other documentation.
 
