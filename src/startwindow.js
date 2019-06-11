@@ -1153,6 +1153,21 @@ var pri = p + "$pri";
 return this[pri] ? "important" : "";
 }
 
+mw0.cssTextGet = function() {
+var s = "";
+for(var k in this) {
+if(!k.match(/\$(\$scy|pri)$/)) continue;
+k=k.replace(/\$(\$scy|pri)$/, "");
+var l = this[k];
+if(l.match(/[ \t;"'{}]/)) {
+if(l.match(/"/)) l = "'" + l + "'";
+else l = '"' + l + '"';
+}
+s=s+ k + ':' + l + '; ';
+}
+return s;
+}
+
 mw0.getComputedStyle = function(e,pe) {
 	// disregarding pseudoelements for now
 var s;
@@ -3630,7 +3645,7 @@ eb$cssDocLoad(w, css_all, pageload);
 }
 
 // Apply rules to a given style object, which is this.
-Object.defineProperty(mw0.CSSStyleDeclaration.prototype, "cssText", { set: eb$cssText });
+Object.defineProperty(mw0.CSSStyleDeclaration.prototype, "cssText", { get: mw0.cssTextGet, set: eb$cssText });
 
 mw0.eb$qs$start = function()
 {

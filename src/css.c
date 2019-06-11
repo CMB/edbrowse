@@ -3232,6 +3232,10 @@ void cssText(jsobjtype node, const char *rulestring)
 // check arguments.
 	if (!node || !rulestring)
 		return;
+// Is this suppose to replace the existing properties, or add to them?
+// I have no idea; for now it just adds to them.
+	if (!*rulestring)
+		return;		// empty
 // Compile the selector. The string has to be allocated.
 	s = allocMem(strlen(rulestring) + 20);
 	sprintf(s, "*{%s}", rulestring);
