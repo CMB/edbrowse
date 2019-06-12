@@ -26,6 +26,8 @@
 # As of this writing it only saves 12.5%, same as the ascii algorithm.
 # Guess I shouldn't try to reinvent zip.    :)
 
+# You can save 25% by using 6 bits for any of the 63 most common bytes, then 0 and the next 5 bits for the next 32.
+
 # This is not a general purpose comment remover;
 # x = "zy/*yz"; will throw this off the tracks.
 # And regular expressions like var re = /abc\/*def/;

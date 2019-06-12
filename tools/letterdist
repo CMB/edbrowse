@@ -1,0 +1,5 @@
+#!/bin/sh
+# distribution of letters in the js files, looking for an easy compression algorithm.
+
+cat ../src/*.js | uncomment | sed 's/./&\
+/g' | sort | uniq -c | sed 's/^ *//' | sort -t' ' -r -n >/tmp/letters
