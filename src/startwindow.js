@@ -2143,7 +2143,7 @@ mw0.Event = function(options){
 this.prev$default = false;
 };
 
-mw0.Event.prototype.preventDefault = function(){       this.prev$default = true; }
+mw0.Event.prototype.preventDefault = function(){ this.prev$default = true; }
 
 mw0.Event.prototype.stopPropagation = function(){ if(this.cancelable)this.cancelled = true; }
 

@@ -14,8 +14,17 @@
 # Other minimizations might be possible, but I really want to retain
 # the variable names for our error messages.
 # I could zip compress and decompress the rest, maybe, some day.
-# I could lop off another 25K trivially by realizing the  bytes are ascii,
+# I could lop off another 12.5% 50K trivially by realizing the  bytes are ascii
 # except for a few utf8 in a comment that I don't care about.
+
+#  Here's an easy compression algorithm, based on nibbles.
+# Each byte is represented by 1 nibble, 2 if the first nibble is 0,
+# 4 if the first 2 nibbles are 0.
+# 1 nibble represents "0Ddfghmx,{'\\() "
+# 0 and the next nibble represents "aceilnoprstu=.\n"
+# 0 0 is followed by the actual byte.
+# As of this writing it only saves 12.5%, same as the ascii algorithm.
+# Guess I shouldn't try to reinvent zip.    :)
 
 # This is not a general purpose comment remover;
 # x = "zy/*yz"; will throw this off the tracks.
@@ -44,21 +53,21 @@ next;
 }
 }
 
-# leading whitespace
-s/^\t* *//;
-
-# dos cr at the end
-s/\r//;
-
-# // at beginning or after semicolon or brace is comment.
-s:^ *//.*::;
-s:([;{}]) *//.*:$1:;
-
 # /* comment */ on one line.
 # Careful, I found "/*" in the file, so I use the look behind construct.
 # /* without a quote or apostrophe before it starts the comment.
 # Also found a regexp with \/* in it, so don't allow prior backslash
 s:(?<![\\"'])/\*.*?\*/(?!["'])::g;
+
+# leading whitespace
+s/^[\t ]*//;
+
+# dos cr at the end
+s/\r//;
+
+# // at beginning or after semicolon or brace is comment.
+s:^//.*::;
+s:([;{}]) *//.*:$1:;
 
 # Start of block comment.
 if(s:(?<![\\"'])/\*.*::) {
@@ -67,6 +76,13 @@ $in_cmt = 1;
 
 # whitespace at the end
 s/ *$//;
+
+# whitespace around braces ad operators
+s/ *([(){}\[\]]) */$1/g;
+s/ +([=<>+\-|&]+) +/$1/g;
+
+# whitespace between arguments
+s/([,;:]) (\w)/$1$2/g;
 
 # semicolons are optional in js.
 # Remove if at the end of a line or before a brace.

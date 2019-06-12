@@ -63,14 +63,17 @@ $in_cmt = 0;
 $line = ""; # retain line numbers
 }
 }
-$line =~ s/^\t* *//;
-$line =~ s:^ *//.*::;
-$line =~ s:([;{}]) *//.*:$1:;
 $line =~ s:(?<![\\"'])/\*.*?\*/(?!["'])::g;
+$line =~ s/^[\t ]*//;
+$line =~ s:^//.*::;
+$line =~ s:([;{}]) *//.*:$1:;
 if($line =~ s:(?<![\\"'])/\*.*::) {
 $in_cmt = 1;
 }
 $line =~ s/ *$//;
+$line =~ s/ *([(){}\[\]]) */$1/g;
+$line =~ s/ +([=<>+\-|&]+) +/$1/g;
+$line =~ s/([,;:]) (\w)/$1$2/g;
 $line =~ s/^([(\[])/;$1/ if $last_semi;
 $last_semi = 0 if length $line;
 $last_semi = 1 if $line =~ s/;$//;
