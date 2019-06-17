@@ -2498,6 +2498,14 @@ set: function(s) { return mw0.newTextUnder(this, s, 1); }});
 Object.defineProperty(c.prototype, "nodeValue", {
 get: function() { return this.nodeType == 3 ? this.data : null;},
 set: function(h) { if(this.nodeType == 3) this.data = h; }});
+c.prototype.clientHeight = 16;
+c.prototype.clientWidth = 120;
+c.prototype.offsetHeight = 16;
+c.prototype.offsetWidth = 120;
+c.prototype.scrollHeight = 16;
+c.prototype.scrollWidth = 120;
+c.prototype.scrollTop = 0;
+c.prototype.scrollLeft = 0;
 }
 })();
 
@@ -2994,6 +3002,7 @@ c.element = c;
 c.style = new CSSStyleDeclaration;
 c.style.element = c;
 }
+c.dataset = {};
 c.childNodes = [];
 if(c instanceof Select) c.options = c.childNodes;
 c.attributes = new NamedNodeMap;

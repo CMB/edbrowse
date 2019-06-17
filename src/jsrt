@@ -500,6 +500,8 @@ We'll get back to you if we like what you have to say.
 onclick="alert('rock and roll')">
 </form>
 
+<DIV id=tag_with_data_attribute data-dog-food=abc></DIV>
+
 <script type=text/javascript language=JavaScript>
 // I'll push the button for you
 document.forms[0].b.onclick();
@@ -892,6 +894,8 @@ if(fn.contentDocument.style.bgcolor !== "white") fail(168);
 if(querySelector(".inject").firstChild.style.display != "round") fail(175);
 if(document.body.style.fly) fail(176);
 
+var dataset_test = document.getElementById("tag_with_data_attribute");
+if(dataset_test.dataset.dogFood !== "abc") fail(177);
 </script>
 
 </body>

@@ -1043,6 +1043,7 @@ Don't do any of this if the tag is itself <style>. */
 		ato = instantiate(io, "attributes", "NamedNodeMap");
 		set_property_object(ato, "owner", io);
 		set_property_object(io, "ownerDocument", cf->docobj);
+		instantiate(io, "dataset", "Object");
 
 // only anchors with href go into links[]
 		if (list && stringEqual(list, "links") &&
@@ -1567,6 +1568,7 @@ static void pushAttributes(const struct htmlTag *t)
 		const char *u;
 		if (stringInListCI(exclist, a[i]) >= 0)
 			continue;
+
 // I surely haven't thought of everything, so check generally.
 // Maybe they wrote <a firstChild=foo>
 // See if the name is in the prototype, and not a handler,
@@ -1587,6 +1589,19 @@ static void pushAttributes(const struct htmlTag *t)
 			set_property_bool(t->jv, a[i], true);
 			continue;
 		}
+// attributes on HTML tags that begin with "data-" should be available under a
+// "dataset" object in JS
+		if (strncmp(a[i], "data-", 5) == 0) {
+			jsobjtype dso = get_property_object(t->jv, "dataset");
+			if (dso) {
+// must convert to camelCase
+				char *a2 = cloneString(a[i] + 5);
+				cssAttributeCrunch(a2);
+				set_property_string(dso, a2, u);
+				nzFree(a2);
+			}
+		}
+// standard attribute here
 		set_property_string(t->jv, a[i], u);
 	}
 }				/* pushAttributes */
