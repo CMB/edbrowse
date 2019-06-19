@@ -3712,6 +3712,7 @@ If that node changes color on hover, then I call it hover text.
 if(t instanceof TextNode && rc == 2) {
 while(t) {
 if(t.nodeType == 9) break; // don't go past document up to a higher frame
+if(!t.style) break;
 var c;
 if((c = t.style.color) && c != "inherit") {
 if(c == "transparent") {
