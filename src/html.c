@@ -3286,6 +3286,13 @@ li_hide:
 // check for span onclick and make it look like a link.
 // Maybe we should do more than span, but just span for now.
 	case TAGACT_SPAN:
+// If nothing in the span then the title becomes important.
+		a = 0, u = 0;
+		if (!t->firstchild && opentag) {
+			a = attribVal(t, "title");
+			if (isJSAlive && t->jv)
+				u = get_property_string(t->jv, "title");
+		}
 // If an onclick function, then turn this into a hyperlink, thus clickable.
 // At least one site adds the onclick function via javascript, not html.
 // But only at the start, so maybe we only need to check on the first render.
@@ -3293,18 +3300,22 @@ li_hide:
 // This rerender function is getting more and more js intensive!
 		if (!t->onclick && t->jv && handlerPresent(t->jv, "onclick"))
 			t->onclick = true;
-		if (!t->onclick)
+		if (!t->onclick) {
+// regular span
+			if (u)
+				stringAndString(&ns, &ns_l, u), nzFree(u);
+			else if (a)
+				stringAndString(&ns, &ns_l, a);
 			goto nop;
+		}
 // this span has click, so turn into {text}
 		if (opentag) {
 			sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
 			ns_hnum();
-// If no text then we should be using the title attribute.
-			if (ns[ns_l - 1] == '{') {
-				const char *title = attribVal(t, "title");
-				if (title)
-					stringAndString(&ns, &ns_l, title);
-			}
+			if (u)
+				stringAndString(&ns, &ns_l, u), nzFree(u);
+			else if (a)
+				stringAndString(&ns, &ns_l, a);
 		} else {
 			sprintf(hnum, "%c0}", InternalCodeChar);
 			ns_hnum();
