@@ -3414,7 +3414,8 @@ findField(const char *line, int ftype, int n,
 		t = tagList[nm];
 		if (tagp)
 			*tagp = t;
-		if (t->action == TAGACT_A || t->action == TAGACT_FRAME) {
+		if (t->action == TAGACT_A || t->action == TAGACT_FRAME ||
+		    t->action == TAGACT_MUSIC) {
 			if (href)
 				*href = cloneString(t->href);
 			if (href && isJSAlive && t->jv) {

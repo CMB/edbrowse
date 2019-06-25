@@ -823,11 +823,19 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 	case TAGACT_FRAME:
 		if (opentag)
 			break;
-// If somebody wrote <frame><p><a></frame>, those tags should be excised,
+// If somebody wrote <frame><p>foo</frame>, those tags should be excised.
 		underKill(t);
 		cdt = newTag("document");
 		t->firstchild = cdt;
 		cdt->parent = t;
+		break;
+
+	case TAGACT_MUSIC:
+		if (opentag)
+			break;
+// If somebody wrote <audio><p>foo</audio>, those tags should be excised.
+// However <source> tags should be kept and/or expanded. Not yet implemented.
+		underKill(t);
 		break;
 
 	}			/* switch */
@@ -1481,6 +1489,10 @@ Needless to say that's not good!
 	case TAGACT_LINK:
 		domLink(t, "Link", "href", 0, cf->docobj, 0);
 		link_css(t);
+		break;
+
+	case TAGACT_MUSIC:
+		domLink(t, "Audio", "src", 0, cf->docobj, 0);
 		break;
 
 	default:

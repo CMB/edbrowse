@@ -960,8 +960,8 @@ Leading ; averts a javascript parsing ambiguity.
 *********************************************************************/
 
 ; (function() {
-var cnlist = ["Anchor", "HTMLAnchorElement", "Image", "Script", "Link", "Area", "Form", "Frame"];
-var ulist = ["href", "href", "src", "src", "href", "href", "action", "src"];
+var cnlist = ["Anchor", "HTMLAnchorElement", "Image", "Script", "Link", "Area", "Form", "Frame", "Audio"];
+var ulist = ["href", "href", "src", "src", "href", "href", "action", "src", "src"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
 var u = ulist[i]; // url name

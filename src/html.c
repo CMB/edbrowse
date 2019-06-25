@@ -3620,7 +3620,7 @@ unparen:
 		ns_hnum();
 		stringAndString(&ns, &ns_l,
 				(ti->name[0] ==
-				 'B' ? "Background Music" : "Audio passage"));
+				 'b' ? "Background Music" : "Audio passage"));
 		sprintf(hnum, "%c0}\r", InternalCodeChar);
 		ns_hnum();
 		break;
