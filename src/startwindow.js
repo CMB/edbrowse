@@ -3246,35 +3246,11 @@ var w = my$win();
 var v = w.$uv$watch;
 if(!v) return; // should never happen
 
-if(v == "trace") {
 if(w.$jt$c == 'z') w.$jt$c = 'a';
 else w.$jt$c = String.fromCharCode(w.$jt$c.charCodeAt(0) + 1);
 w.$jt$sn = 0;
 s.data = s.data.replace(/(\n *)(var )/g, mw0.jtfn2);
 return;
-}
-
-// Build the regular expression with v folded in.
-// It's a string, so every \ has to be doubled.
-var c1 = "[\\w.]+";
-var c2 = "[\\w.]*";
-var rs = "(" + c1 + "|" + c1 + "\\[" + c1 + "\\]" + c2 + "|" + c1 + "\\[" + c1 + "\\]" +  c2 + "\\[" + c1 + "\\]" + c2 + ")\\." + v + " *([(.\\[])";
-var r = RegExp(rs, "g");
-// functio nfor the right hand side
-function rhs(all, pre, post) {
-var w = my$win();
-var sn = w.$uv$sn;
-++sn;
-w.$uv$sn = sn;
-return "((" + pre + "." + v + "||mw0.eb$watch2(" + pre + "," + sn + "))," + pre +")." + v + post;
-}
-s.data = s.data.replace(r, rhs); // boom!
-}
-
-mw0.eb$watch2 = function(p, sn)
-{
-var w = my$win();
-w.$uv.push({parent:p, sn:sn});
 }
 
 // trace functions; these only work on deminimized js.
@@ -3283,9 +3259,11 @@ mw0.jtfn0 = function (a, b, punct)
 var w = my$win();
 var c = w.$jt$c;
 var sn = w.$jt$sn;
-++sn;
-w.$jt$sn = sn;
-return a + "alert3('" + c + sn + "')" + punct + b;
+w.$jt$sn = ++sn;
+var v = w.$uv$watch;
+if(v == 0 || v == "trace") v = "";
+else v = "+' '+" + v;
+return a + "alert3('" + c + sn + "'" + v + ")" + punct + b;
 }
 mw0.jtfn1 = function (all, a, b) { return mw0.jtfn0(a, b, ','); }
 mw0.jtfn2 = function (all, a, b) { return mw0.jtfn0(a, b, ';'); }
