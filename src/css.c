@@ -3055,11 +3055,12 @@ in fact it's easier to list the tags that allow it.
 	if (matchtype) {
 		bool forbidden = true;
 		static const char *const ok2inject[] = {
-			"A", "ADDRESS", "BLOCKQUOTE", "BODY", "BUTTON",
+			"A", "ADDRESS", "Q", "BLOCKQUOTE", "BODY", "BUTTON",
 			"CAPTION", "CITE",
 			"DIV", "FOOTER", "H1", "H2", "H3", "H4", "H5", "H6",
 			"HEADER", "LABEL", "LI", "MENU",
 			"P", "SPAN", "TD", "TH", "XMP",
+			"LISTING", "STRONG", "EM", "S", "STRIKE", "I", "U", "B",
 			0
 		};
 		s = get_property_string_nat(obj, "nodeName");
