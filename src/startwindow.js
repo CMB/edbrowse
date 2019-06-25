@@ -1663,6 +1663,8 @@ name === "rows" && (o instanceof Table || o instanceof tBody || o instanceof tHe
 name === "tBodies" && o instanceof Table ||
 name === "cells" && o instanceof tRow ||
 name === "className" ||
+// no clue what getAttribute("style") is suppose to do
+name === "style" ||
 name === "htmlFor" && o instanceof Label ||
 name === "options" && o instanceof Select;
 }
@@ -1702,12 +1704,12 @@ if(t == "undefined") return null;
 return v; }
 mw0.hasAttribute = function(name) { return this.getAttribute(name) !== null; }
 mw0.setAttribute = function(name, v) { 
+var n = name.toLowerCase();
 // special code for style
-if(name == "style" && this.style instanceof CSSStyleDeclaration) {
+if(n == "style" && this.style instanceof CSSStyleDeclaration) {
 this.style.cssText = v;
 return;
 }
-var n = name.toLowerCase();
 if(mw0.implicitMember(this, n)) return;
 this[n] = v; 
 if(this.attributes[n]) return;
@@ -1723,6 +1725,11 @@ this.attributes[n] = a;
 }
 mw0.removeAttribute = function(name) {
     var n = name.toLowerCase();
+// special code for style
+if(n == "style" && this.style instanceof CSSStyleDeclaration) {
+// wow I have no clue what this means but it happens, https://www.maersk.com
+return;
+}
     if (this[n]) delete this[n];
 // acid test 59 says there's some weirdness regarding button.type
 if(n === "type" && this.nodeName == "BUTTON") this[n] = "submit";
