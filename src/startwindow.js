@@ -3251,7 +3251,9 @@ if(!v) return; // should never happen
 if(w.$jt$c == 'z') w.$jt$c = 'a';
 else w.$jt$c = String.fromCharCode(w.$jt$c.charCodeAt(0) + 1);
 w.$jt$sn = 0;
-s.data = s.data.replace(/(\n *)(var )/g, mw0.jtfn2);
+// Watch out, tools/uncomment with muck with this regexp if we're not careful!
+// I escape a space with \ so it doesn't get crunched away.
+s.data = s.data.replace(/(\bfunction *\([a-zA-Z ,]*\)\ *{|\n *)(var |\n)/g, mw0.jtfn2);
 return;
 }
 
