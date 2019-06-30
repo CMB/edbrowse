@@ -818,7 +818,7 @@ if(this.form && this.checked$2 && t == "radio" &&
 for(var i=0; i<e.length; ++i)
 if(e[i] != this) e[i].checked$2 = false;
 } else // try it another way
-if(this.checked$2 && t == "radio" && (e = this.parentNode.childNodes) && (nn = this.name)) {
+if(this.checked$2 && t == "radio" && this.parentNode && (e = this.parentNode.childNodes) && (nn = this.name)) {
 for(var i=0; i<e.length; ++i)
 if(e[i].nodeName == "INPUT" && e[i].type == t && e[i].name == nn &&e[i] != this) e[i].checked$2 = false;
 }
@@ -839,7 +839,7 @@ if(this.form && this.checked$2 && t == "radio" &&
 for(var i=0; i<e.length; ++i)
 if(e[i] != this) e[i].checked$2 = false;
 } else // try it another way
-if(this.checked$2 && t == "radio" && (e = this.parentNode.childNodes) && (nn = this.name)) {
+if(this.checked$2 && t == "radio" && this.parentNode && (e = this.parentNode.childNodes) && (nn = this.name)) {
 for(var i=0; i<e.length; ++i)
 if(e[i].nodeName == "INPUT" && e[i].type == t && e[i].name == nn &&e[i] != this) e[i].checked$2 = false;
 }
