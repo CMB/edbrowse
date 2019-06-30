@@ -1565,7 +1565,7 @@ static void pushAttributes(const struct htmlTag *t)
 // There are some exceptions, some attributes that we handle individually.
 		static const char *const exclist[] = {
 			"name", "id", "class",
-			"checked", "value", "type", "style",
+			"checked", "value", "type",
 			"href", "src", "action",
 			0
 		};
@@ -1578,29 +1578,12 @@ static void pushAttributes(const struct htmlTag *t)
 			0
 		};
 		const char *u;
-		if (stringInListCI(exclist, a[i]) >= 0)
-			continue;
 
-// I surely haven't thought of everything, so check generally.
-// Maybe they wrote <a firstChild=foo>
-// See if the name is in the prototype, and not a handler,
-// as handlers have setters.
-		if (has_property(t->jv, a[i]) && !typeof_property(t->jv, a[i])
-		    && stringInList(handlers, a[i]) < 0) {
-			debugPrint(3, "html attribute overload %s.%s",
-				   t->info->name, a[i]);
-			continue;
-		}
 // Should we drop attribute name to lower case? I don't, for now.
 		u = v[i];
 		if (!u)
 			u = emptyString;
-// There are some, like multiple or readonly, that should be set to true,
-// not the empty string.
-		if (!*u && stringInList(dotrue, a[i]) >= 0) {
-			set_property_bool(t->jv, a[i], true);
-			continue;
-		}
+
 // attributes on HTML tags that begin with "data-" should be available under a
 // "dataset" object in JS
 		if (strncmp(a[i], "data-", 5) == 0) {
@@ -1612,9 +1595,32 @@ static void pushAttributes(const struct htmlTag *t)
 				set_property_string(dso, a2, u);
 				nzFree(a2);
 			}
+// I don't set the original attribute data-foo, should I?
+			continue;
 		}
+
+		if (stringEqual(a[i], "style"))	// no clue
+			continue;
+
+// Maybe they wrote <a firstChild=foo>
+// See if the name is in the prototype, and not a handler,
+// as handlers have setters.
+		if (has_property(t->jv, a[i]) && !typeof_property(t->jv, a[i])
+		    && stringInList(handlers, a[i]) < 0) {
+			debugPrint(3, "html attribute overload %s.%s",
+				   t->info->name, a[i]);
+			continue;
+		}
+// There are some, like multiple or readonly, that should be set to true,
+// not the empty string.
+		if (!*u && stringInList(dotrue, a[i]) >= 0) {
+			set_property_bool(t->jv, a[i], true);
+		} else {
 // standard attribute here
-		set_property_string(t->jv, a[i], u);
+			if (stringInListCI(exclist, a[i]) < 0)
+				set_property_string(t->jv, a[i], u);
+		}
+		run_function_onestring(t->jv, "markAttribute", a[i]);
 	}
 }				/* pushAttributes */
 

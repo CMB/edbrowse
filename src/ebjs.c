@@ -673,7 +673,27 @@ int run_function_onearg(jsobjtype obj, const char *name, jsobjtype a)
 	whichproc = 'e';
 	debugPrint(5, "< ok");
 	return rc;
-}				/* run_function_onearg */
+}
+
+void run_function_onestring(jsobjtype obj, const char *name, const char *s)
+{
+	if (!allowJS || !cf->winobj)
+		return;
+	if (!obj) {
+		debugPrint(3, "run_function_onestring(0, %s", name);
+		return;
+	}
+	if (whichproc == 'j') {
+		run_function_onestring_nat(obj, name, s);
+		return;
+	}
+	debugPrint(5, "> function %s", name);
+	set_js_globals();
+	whichproc = 'j';	// this line is totally important!
+	run_function_onestring_nat(obj, name, s);
+	whichproc = 'e';
+	debugPrint(5, "< ok");
+}
 
 /*********************************************************************
 Everything beyond this point is, perhaps, part of a DOM support layer

@@ -1996,6 +1996,33 @@ int run_function_onearg_nat(jsobjtype parent, const char *name, jsobjtype child)
 	return rc;
 }				/* run_function_onearg_nat */
 
+// The single argument to the function has to be a string.
+void run_function_onestring_nat(jsobjtype parent, const char *name,
+				const char *s)
+{
+	duk_push_heapptr(jcx, parent);
+	if (!duk_get_prop_string(jcx, -1, name) || !duk_is_function(jcx, -1)) {
+#if 0
+		if (!errorMessage)
+			asprintf(&errorMessage, "no such function %s", name);
+#endif
+		duk_pop_2(jcx);
+		return;
+	}
+	duk_insert(jcx, -2);
+	duk_push_string(jcx, s);	// s is the only argument
+	if (!duk_pcall_method(jcx, 1)) {
+		duk_pop(jcx);
+		return;
+	}
+// error in execution
+	if (intFlag)
+		i_puts(MSG_Interrupted);
+	processError();
+	debugPrint(3, "failure on %p.%s[]", parent, name);
+	uptrace(parent);
+}				/* run_function_onestring_nat */
+
 jsobjtype instantiate_array_nat(jsobjtype parent, const char *name)
 {
 	jsobjtype a;

@@ -100,6 +100,7 @@ jsobjtype create_event(jsobjtype parent, const char *evname);
 void unlink_event(jsobjtype parent);
 bool run_event_bool(jsobjtype obj, const char *pname, const char *evname, jsobjtype evobj);
 int run_function_onearg(jsobjtype obj, const char *name, jsobjtype o);
+void run_function_onestring(jsobjtype parent, const char *name, const char *s);
 void set_basehref(const char *b);
 
 /* sourcefile=fetchmail.c */
@@ -129,7 +130,7 @@ char *uni2utf8(unsigned int unichar);
 void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p, int bom);
 char *force_utf8( char *buf, int buflen);
 char *base64Encode(const char *inbuf, int inlen, bool lines);
-void iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p) ;
+void iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p);
 bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l);
 
 /* sourcefile=html.c */
@@ -413,6 +414,7 @@ int set_property_function_nat(jsobjtype parent, const char *name, const char *bo
 int get_arraylength_nat(jsobjtype a);
 bool run_function_bool_nat(jsobjtype obj, const char *name);
 int run_function_onearg_nat(jsobjtype obj, const char *name, jsobjtype o);
+void run_function_onestring_nat(jsobjtype parent, const char *name, const char *s);
 char *run_script_nat(const char *s);
 
 /* sourcefile=css.c */

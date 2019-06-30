@@ -1669,20 +1669,6 @@ name === "htmlFor" && o instanceof Label ||
 name === "options" && o instanceof Select;
 }
 
-// Like the above but for strings and numbers.
-// Called from getAttribute but not from cloneNode.
-mw0.implicitMember1 = function(o, name) {
-return name === "value" && o instanceof Element ||
-(name === "checked" || name === "defaultChecked") && o instanceof Element ||
-(name === "selected" || name === "defaultSelected") && o instanceof Option ||
-name === "selectedIndex" && o.nodeName === "SELECT" ||
-name === "class" || // acid test 61
-name === "id" || // acid test 17
-// was gonna put "name" here but acid test 53
-name === "length" && o instanceof Form;
-// there are probably others
-}
-
 /*********************************************************************
 Set and clear attributes. This is done in 3 different ways,
 the third using attributes as a NamedNodeMap.
@@ -1692,15 +1678,14 @@ This may be overkill - I don't know.
 mw0.getAttribute = function(name) {
 name = name.toLowerCase();
 if(mw0.implicitMember(this, name)) return null;
-if(mw0.implicitMember1(this, name)) {
 // has to be a real attribute
+if(!this.attributes) return null;
 if(!this.attributes[name]) return null;
-}
 var v = this[name];
 if(v instanceof URL) return v.toString();
 var t = typeof v;
 if(t == "undefined") return null;
-// possibly any object should run through toString(), as we did with URL
+// possibly any object should run through toString(), as we did with URL, idk
 return v; }
 mw0.hasAttribute = function(name) { return this.getAttribute(name) !== null; }
 mw0.setAttribute = function(name, v) { 
@@ -1711,7 +1696,8 @@ this.style.cssText = v;
 return;
 }
 if(mw0.implicitMember(this, n)) return;
-this[n] = v; 
+if(v !== "from@@html") this[n] = v; 
+if(!this.attributes) this.attributes = new NamedNodeMap;
 if(this.attributes[n]) return;
 var a = new Attr();
 a.owner = this;
@@ -1723,6 +1709,8 @@ this.attributes.push(a);
 // easy hash access
 this.attributes[n] = a;
 }
+mw0.markAttribute = function(name) { this.setAttribute(name, "from@@html"); }
+
 mw0.removeAttribute = function(name) {
     var n = name.toLowerCase();
 // special code for style
@@ -2462,6 +2450,7 @@ Object.defineProperty(c.prototype, "nextSibling", { get: function() { return mw0
 Object.defineProperty(c.prototype, "previousSibling", { get: function() { return mw0.eb$getSibling(this,"previous"); } });
 // attributes
 c.prototype.hasAttribute = mw0.hasAttribute;
+c.prototype.markAttribute = mw0.markAttribute;
 c.prototype.getAttribute = mw0.getAttribute;
 c.prototype.setAttribute = mw0.setAttribute;
 c.prototype.removeAttribute = mw0.removeAttribute;
@@ -2994,7 +2983,9 @@ c.childNodes = [];
 return c;
 case "form": c = new Form; break;
 case "input": case "element": case "textarea":
-c = new Element; if(t == "textarea") c.type = t; break;
+c = new Element;
+if(t == "textarea") c.type = t;
+break;
 case "button": c = new Element; c.type = "submit"; break;
 default:
 /* eb$puts("createElement default " + s); */
@@ -3014,6 +3005,10 @@ c.childNodes = [];
 if(c instanceof Select) c.options = c.childNodes;
 c.attributes = new NamedNodeMap;
 c.attributes.owner = c;
+if(t == "input") { // name and type are automatic attributes acid test 53
+c.setAttribute("name", "");
+c.setAttribute("type", "");
+}
 // Split on : if this comes from a name space
 var colon = t.split(':');
 if(colon.length == 2) {
@@ -3411,6 +3406,7 @@ NamedNodeMap = mw0.NamedNodeMap;
 document.getAttribute = mw0.getAttribute;
 document.setAttribute = mw0.setAttribute;
 document.hasAttribute = mw0.hasAttribute;
+document.markAttribute = mw0.markAttribute;
 document.removeAttribute = mw0.removeAttribute;
 document.getAttributeNode = mw0.getAttributeNode;
 document.cloneNode = mw0.cloneNode;
