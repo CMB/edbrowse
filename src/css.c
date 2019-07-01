@@ -1421,7 +1421,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 		}
 		t[--n] = 0;
 		strmove(t, t + 5);
-		n -= 5;
+		trim(t);
 		memset(&d0, 0, sizeof(d0));
 		d0.lhs = t;
 		cssParseLeft(&d0);
