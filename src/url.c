@@ -889,7 +889,7 @@ out_n:
 	for (p = 0; *s; ++s) {
 		if (*s == '/')
 			p = s;
-		if (strchr("?\1", *s))
+		if (strchr("#?\1", *s))
 			break;
 	}
 	if (!p) {
