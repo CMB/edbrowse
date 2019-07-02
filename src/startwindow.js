@@ -1020,8 +1020,8 @@ else p.appendChild(s.firstChild);
 
 // Canvas method draws a picture. That's meaningless for us,
 // but it still has to be there.
-mw0.Canvas = function() {
-this.getContext = function(x) { return { addHitRegion: eb$nullfunction,
+mw0.Canvas = function() {}
+mw0.Canvas.prototype.getContext = function(x) { return { addHitRegion: eb$nullfunction,
 arc: eb$nullfunction,
 arcTo: eb$nullfunction,
 beginPath: eb$nullfunction,
@@ -1070,6 +1070,10 @@ strokeRect: eb$nullfunction,
 strokeText: eb$nullfunction,
 transform: eb$nullfunction,
 translate: eb$nullfunction }};
+mw0.Canvas.prototype.toDataURL = function() {
+if(this.height === 0 || this.width === 0) return "data:,";
+// this is just a stub
+return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAADElEQVQImWNgoBMAAABpAAFEI8ARAAAAAElFTkSuQmCC";
 }
 
 /*********************************************************************
@@ -1688,6 +1692,13 @@ if(t == "undefined") return null;
 // possibly any object should run through toString(), as we did with URL, idk
 return v; }
 mw0.hasAttribute = function(name) { return this.getAttribute(name) !== null; }
+
+mw0.getAttributeNS = function(space, name) {
+if(space && !name.match(/:/)) name = space + ":" + name;
+return this.getAttribute(name);
+}
+mw0.hasAttributeNS = function(space, name) { return this.getAttributeNS(space, name) !== null;}
+
 mw0.setAttribute = function(name, v) { 
 var n = name.toLowerCase();
 // special code for style
@@ -1710,6 +1721,10 @@ this.attributes.push(a);
 this.attributes[n] = a;
 }
 mw0.markAttribute = function(name) { this.setAttribute(name, "from@@html"); }
+mw0.setAttributeNS = function(space, name, v) {
+if(space && !name.match(/:/)) name = space + ":" + name;
+this.setAttribute(name, v);
+}
 
 mw0.removeAttribute = function(name) {
     var n = name.toLowerCase();
@@ -1734,6 +1749,10 @@ if(found) this.attributes[i] = this.attributes[i+1];
 }
 this.attributes.length--;
 delete this.attributes[n];
+}
+mw0.removeAttributeNS = function(space, name) {
+if(space && !name.match(/:/)) name = space + ":" + name;
+this.removeAttribute(name);
 }
 
 mw0.getAttributeNode = function(name) {
@@ -2450,10 +2469,14 @@ Object.defineProperty(c.prototype, "nextSibling", { get: function() { return mw0
 Object.defineProperty(c.prototype, "previousSibling", { get: function() { return mw0.eb$getSibling(this,"previous"); } });
 // attributes
 c.prototype.hasAttribute = mw0.hasAttribute;
+c.prototype.hasAttributeNS = mw0.hasAttributeNS;
 c.prototype.markAttribute = mw0.markAttribute;
 c.prototype.getAttribute = mw0.getAttribute;
+c.prototype.getAttributeNS = mw0.getAttributeNS;
 c.prototype.setAttribute = mw0.setAttribute;
+c.prototype.setAttributeNS = mw0.setAttributeNS;
 c.prototype.removeAttribute = mw0.removeAttribute;
+c.prototype.removeAttributeNS = mw0.removeAttributeNS;
 /* which one is it?
 Object.defineProperty(c.prototype, "className", { get: function() { return this.getAttribute("class"); }, set: function(h) { this.setAttribute("class", h); }});
 */
@@ -3406,10 +3429,14 @@ get: function() { return mw0.eb$getSibling(this,"previous"); }
 Attr = mw0.Attr;
 NamedNodeMap = mw0.NamedNodeMap;
 document.getAttribute = mw0.getAttribute;
+document.getAttributeNS = mw0.getAttributeNS;
 document.setAttribute = mw0.setAttribute;
+document.setAttributeNS = mw0.setAttributeNS;
 document.hasAttribute = mw0.hasAttribute;
+document.hasAttributeNS = mw0.hasAttributeNS;
 document.markAttribute = mw0.markAttribute;
 document.removeAttribute = mw0.removeAttribute;
+document.removeAttributeNS = mw0.removeAttributeNS;
 document.getAttributeNode = mw0.getAttributeNode;
 document.cloneNode = mw0.cloneNode;
 cloneDebug = false;
@@ -3445,6 +3472,7 @@ delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
 localStorage = {}
 localStorage.attributes = new NamedNodeMap;
 localStorage.attributes.owner = localStorage;
+// tell me we don't have to do NS versions of all these.
 localStorage.getAttribute = mw0.getAttribute;
 localStorage.getItem = localStorage.getAttribute;
 localStorage.setAttribute = mw0.setAttribute;

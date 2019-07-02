@@ -819,7 +819,7 @@ char *resolveURL(const char *base, const char *rel)
 		rel = emptyString;
 	n = allocString(strlen(base) + strlen(rel) + 12);
 
-	if (rel[0] == '#' && !strchr(rel, '/')) {
+	if (rel[0] == '#') {
 /* This is an anchor for the current document, don't resolve. */
 /* I assume the base does not have a #fragment on the end; that is not part of the base. */
 /* Thus I won't get url#foo#bar */
