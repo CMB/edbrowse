@@ -755,7 +755,10 @@ mw0.HTML = function(){}
 mw0.HTML.prototype = {
 clientHeight: 768,  clientWidth: 1024,  offsetHeight: 768,  offsetWidth: 1024,
  scrollHeight: 768,  scrollWidth: 1024,  scrollTop: 0,  scrollLeft: 0};
+// is there a difference between DocType ad DocumentType?
 mw0.DocType = function(){ this.nodeType = 10, this.nodeName = "DOCTYPE";}
+mw0.DocumentType = function(){}
+mw0.CharacterData = function(){}
 mw0.Head = function(){}
 mw0.Meta = function(){}
 mw0.Title = function(){}
@@ -2483,6 +2486,7 @@ Object.defineProperty(c.prototype, "className", { get: function() { return this.
 Object.defineProperty(c.prototype, "className", { get: function() { return this.class; }, set: function(h) { this.class = h; }});
 Object.defineProperty(c.prototype, "parentElement", { get: function() { return this.parentNode && this.parentNode.nodeType == 1 ? this.parentNode : null; }});
 c.prototype.getAttributeNode = mw0.getAttributeNode;
+c.prototype.getClientRects = function(){ return []; }
 // clone
 c.prototype.cloneNode = mw0.cloneNode;
 c.prototype.importNode = mw0.importNode;
@@ -3301,6 +3305,8 @@ URL = mw0.URL;
 Node = mw0.Node;
 HTML = mw0.HTML;
 DocType = mw0.DocType;
+DocumentType = mw0.DocumentType;
+CharacterData = mw0.CharacterData;
 Head = mw0.Head;
 Meta = mw0.Meta;
 Title = mw0.Title;
