@@ -1529,6 +1529,17 @@ a = a.concat(mw0.eb$gebcn(c, s));
 return a;
 }
 
+mw0.nodeContains = function(n) {  return mw0.eb$cont(this, n); }
+
+mw0.eb$cont = function(top, n) { 
+if(top === n) return true;
+if(!top.childNodes) return false;
+if((top instanceof Frame) &&top.firstChild.firstChild) return false;
+for(var i=0; i<top.childNodes.length; ++i)
+if(mw0.eb$cont(top.childNodes[i], n)) return true;
+return false;
+}
+
 /*********************************************************************
 If you append a documentFragment you're really appending all its kids.
 This is called by the various appendChild routines.
@@ -2453,6 +2464,7 @@ var c = mw0[cn];
 c.prototype.getElementsByTagName = mw0.getElementsByTagName;
 c.prototype.getElementsByName = mw0.getElementsByName;
 c.prototype.getElementsByClassName = mw0.getElementsByClassName;
+c.prototype.contains = mw0.nodeContains;
 c.prototype.querySelectorAll = querySelectorAll;
 c.prototype.querySelector = querySelector;
 // children
@@ -3408,6 +3420,7 @@ eb$uplift = mw0.eb$uplift;
 
 document.getElementsByTagName = mw0.getElementsByTagName;
 document.getElementsByClassName = mw0.getElementsByClassName;
+document.contains = mw0.nodeContains;
 document.getElementsByName = mw0.getElementsByName;
 document.getElementById = mw0.getElementById;
 document.querySelectorAll = querySelectorAll;
