@@ -391,6 +391,18 @@ navigator.plugins = [];
 // must be filled in at run time based on the config file.
 // This is overwritten at startup by edbrowse.
 navigator.userAgent = "edbrowse/3.0.0";
+// might be useful to pretend like we have low bandwidth,
+// so the website doesn't send down all sorts of visual crap.
+navigator.connection = {
+downlink: 50,
+downlinkMax: 100,
+effectiveType: "2g",
+rtt: 8,
+saveData: false,
+type: "unknown",
+addEventListener: eb$voidfunction,
+removeEventListener: eb$voidfunction,
+};
 
 /* There's no history in edbrowse. */
 /* Only the current file is known, hence length is 1. */
