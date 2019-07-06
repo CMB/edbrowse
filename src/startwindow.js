@@ -2482,6 +2482,18 @@ Object.defineProperty(c.prototype, "firstChild", { get: function() { return (thi
 Object.defineProperty(c.prototype, "lastChild", { get: function() { return (this.childNodes && this.childNodes.length) ? this.childNodes[this.childNodes.length-1] : null; } });
 Object.defineProperty(c.prototype, "nextSibling", { get: function() { return mw0.eb$getSibling(this,"next"); } });
 Object.defineProperty(c.prototype, "previousSibling", { get: function() { return mw0.eb$getSibling(this,"previous"); } });
+// children is subtly different from childnodes; this code taken from
+// https://developer.mozilla.org/en-US/docs/Web/API/ParentNode/children
+    Object.defineProperty(c.prototype, 'children', {
+      get: function() {
+        var i = 0, node, nodes = this.childNodes, children = [];
+        while (node = nodes[i++]) {
+          if (node.nodeType === 1) {
+            children.push(node);
+          }
+        }
+        return children;
+}});
 // attributes
 c.prototype.hasAttribute = mw0.hasAttribute;
 c.prototype.hasAttributeNS = mw0.hasAttributeNS;
