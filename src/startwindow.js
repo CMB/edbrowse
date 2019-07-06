@@ -246,7 +246,7 @@ For breakpoint with a line number,   eval($bpl+"(2183)")
 You can use edbrowse %line to get the line number:  s/^/eval($bpl+"(%line)");/
 *********************************************************************/
 
-mw0.$bp = "(function(l){if(l) alert('break at line ' + l); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}})";
+mw0.$bp = "(function(l$ne){if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}})";
 
 } // master compile
 
@@ -2496,15 +2496,15 @@ Object.defineProperty(c.prototype, "nextSibling", { get: function() { return mw0
 Object.defineProperty(c.prototype, "previousSibling", { get: function() { return mw0.eb$getSibling(this,"previous"); } });
 // children is subtly different from childnodes; this code taken from
 // https://developer.mozilla.org/en-US/docs/Web/API/ParentNode/children
-    Object.defineProperty(c.prototype, 'children', {
-      get: function() {
-        var i = 0, node, nodes = this.childNodes, children = [];
-        while (node = nodes[i++]) {
-          if (node.nodeType === 1) {
-            children.push(node);
-          }
-        }
-        return children;
+Object.defineProperty(c.prototype, 'children', {
+get: function() {
+var i = 0, node, nodes = this.childNodes, children = [];
+if(!nodes) return children;
+while(i<nodes.length) {
+node = nodes[i++];
+if (node.nodeType === 1)  children.push(node);
+}
+return children;
 }});
 // attributes
 c.prototype.hasAttribute = mw0.hasAttribute;
