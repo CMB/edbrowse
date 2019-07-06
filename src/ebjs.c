@@ -710,6 +710,11 @@ void set_basehref(const char *h)
 	if (!h)
 		h = emptyString;
 	set_property_string(cf->winobj, "eb$base", h);
+// This is special code for snapshot simulations.
+// If the file jslocal is present, push base over to window.location etc,
+// as though you were running that page.
+	if (!access("jslocal", 4) && h[0])
+		run_function_bool(cf->winobj, "eb$base$snapshot");
 }				/* set_basehref */
 
 #ifdef DOSLIKE			// port of uname(p), and struct utsname

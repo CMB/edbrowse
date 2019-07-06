@@ -288,6 +288,19 @@ resizable = true;
 directories = false;
 name = "unspecifiedFrame";
 eb$base = "";
+function eb$base$snapshot() {
+document.URL = eb$base;
+var u = new URL(eb$base);
+// changing things behind the scenes, so as not to trigger redirection
+location$2.href$val = document.location$2.href$val = u.href$val;
+location$2.protocol$val = document.location$2.protocol$val = u.protocol$val;
+location$2.hostname$val = document.location$2.hostname$val = u.hostname$val;
+location$2.host$val = document.location$2.host$val = u.host$val;
+location$2.port$val = document.location$2.port$val = u.port$val;
+location$2.pathname$val = document.location$2.pathname$val = u.pathname$val;
+location$2.search$val = document.location$2.search$val = u.search$val;
+location$2.hash$val = document.location$2.hash$val = u.hash$val;
+}
 
 document.bgcolor = "white";
 document.readyState = "loading";
