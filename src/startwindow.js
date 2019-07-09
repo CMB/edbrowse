@@ -218,6 +218,7 @@ jslocal += "f" + idx + ".css:" + ss + "\n";
 }
 }
 eb$wlf(jslocal, "jslocal");
+alert(".   ub   ci+   /<head/r from   w base   qt");
 }
 
 // run an expression in a loop.
@@ -3587,7 +3588,7 @@ and instanceof Option, as I do today.
 *********************************************************************/
 
 Array.prototype.item = function(x) { return this[x] };
-Object.defineProperty(Array.prototype, "item", {configurable: false,  enumerable: false, writable: false});
+Object.defineProperty(Array.prototype, "item", { enumerable: false});
 
 Array.prototype.includes = function(x, start) {
 if(typeof start != "number") start = 0;
@@ -3598,7 +3599,7 @@ for(var i=start; i<l; ++i)
 if(this[i] === x) return true;
 return false;
 }
-Object.defineProperty(Array.prototype, "includes", {configurable: false,  enumerable: false, writable: false});
+Object.defineProperty(Array.prototype, "includes", { enumerable: false});
 
 Array.from = function(o) {
 var k = arguments.length;
@@ -3630,7 +3631,7 @@ a.push(w);
 }
 return a;
 }
-Object.defineProperty(Array.prototype, "map", {configurable: false,  enumerable: false, writable: false});
+Object.defineProperty(Array.prototype, "map", { enumerable: false});
 
 // On the first call this setter just creates the url, the location of the
 // current web page, But on the next call it has the side effect of replacing
