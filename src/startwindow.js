@@ -249,6 +249,8 @@ You can use edbrowse %line to get the line number:  s/^/eval($bpl+"(%line)");/
 
 mw0.$bp = "(function(l$ne){if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}})";
 
+mw0.$step = "(function(l$ne){ if(l$ne === $step$start) $step$lev = 2; if($step$lev == 0) return; if($step$lev == 1) { alert(l$ne); return; } if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}})";
+
 } // master compile
 
 dumptree = mw0.dumptree;
@@ -259,6 +261,11 @@ snapshot = mw0.snapshot;
 aloop = mw0.aloop;
 $bp = mw0.$bp + "(0)";
 $bpl = mw0.$bp;
+$step = mw0.$step;
+$step$lev = 1;
+$step$start = "";
+// First line of js in your snapshot could be
+// $step$lev = 0, $step$start = "c275";
 
 // This is our bailout function, it references a variable that does not exist.
 function eb$stopexec() { return javascript$interrupt; }
@@ -3328,9 +3335,9 @@ if(!v) return; // should never happen
 if(w.$jt$c == 'z') w.$jt$c = 'a';
 else w.$jt$c = String.fromCharCode(w.$jt$c.charCodeAt(0) + 1);
 w.$jt$sn = 0;
-// Watch out, tools/uncomment with muck with this regexp if we're not careful!
-// I escape a space with \ so it doesn't get crunched away.
-s.data = s.data.replace(/(\bfunction *\([a-zA-Z ,]*\)\ *{|\n *)(var |\n)/g, mw0.jtfn2);
+// Watch out, tools/uncomment will muck with this regexp if we're not careful!
+// I escape some characters with \ so they don't get crunched away.
+s.data = s.data.replace(/(\bfor \([^{}\n]*\)\ *{|\bif \([^{}\n]*\)\ *{|\bcatch \(\w*\)\ *{|\belse \{|\btry \{|\bfunction *\([a-zA-Z ,]*\)\ *{|\n *)(var |\n)/g, mw0.jtfn2);
 return;
 }
 
@@ -3341,10 +3348,12 @@ var w = my$win();
 var c = w.$jt$c;
 var sn = w.$jt$sn;
 w.$jt$sn = ++sn;
+/*
 var v = w.$uv$watch;
 if(v == 0 || v == "trace") v = "";
 else v = "+' '+" + v;
-return a + "alert3('" + c + sn + "'" + v + ")" + punct + b;
+*/
+return a + "eval($step+\"('" + c + sn + "')\")" + punct + b;
 }
 mw0.jtfn1 = function (all, a, b) { return mw0.jtfn0(a, b, ','); }
 mw0.jtfn2 = function (all, a, b) { return mw0.jtfn0(a, b, ';'); }
