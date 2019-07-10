@@ -3337,7 +3337,7 @@ else w.$jt$c = String.fromCharCode(w.$jt$c.charCodeAt(0) + 1);
 w.$jt$sn = 0;
 // Watch out, tools/uncomment will muck with this regexp if we're not careful!
 // I escape some characters with \ so they don't get crunched away.
-s.data = s.data.replace(/(\bfor \([^{}\n]*\)\ *{|\bif \([^{}\n]*\)\ *{|\bcatch \(\w*\)\ *{|\belse \{|\btry \{|\bfunction *\([a-zA-Z ,]*\)\ *{|\n *)(var |\n)/g, mw0.jtfn2);
+s.data = s.data.replace(/(\bdo \{|\bwhile \([{}\n]*\)\ *{|\bfor \([^{}\n]*\)\ *{|\bif \([^{}\n]*\)\ *{|\bcatch \(\w*\)\ *{|\belse \{|\btry \{|\bfunction *\([a-zA-Z ,]*\)\ *{|[^\n)]\n *)(var |\n)/g, mw0.jtfn2);
 return;
 }
 
