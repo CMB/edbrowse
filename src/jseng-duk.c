@@ -2128,16 +2128,16 @@ char *run_script_nat(const char *s)
 	bool rc;
 	const char *gc;
 	char *s2 = 0;
-// special debugging code to replace bpx and tracex with expanded macros.
+// special debugging code to replace bp@ and trace@ with expanded macros.
 // I use to call eval() but that uncovered a bug that I could never debug!
-	if (strstr(s, "bpx(") || strstr(s, "tracex(")) {
+	if (strstr(s, "bp@(") || strstr(s, "trace@(")) {
 		int l;
 		const char *u, *v1, *v2;
 		s2 = initString(&l);
 		u = s;
 		while (true) {
-			v1 = strstr(u, "bpx(");
-			v2 = strstr(u, "tracex(");
+			v1 = strstr(u, "bp@(");
+			v2 = strstr(u, "trace@(");
 			if (v1 && v2 && v2 < v1)
 				v1 = v2;
 			if (!v1)

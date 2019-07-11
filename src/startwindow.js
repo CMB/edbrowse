@@ -3303,9 +3303,7 @@ s.expanded = true;
 }
 
 // Watch for an undefined variable in the running javascript.
-// If it tries to call foo.getAttribute() or some such,
-// push foo and a sequence number onto the $uv stack.
-// trace is a reserved word that traces the code with alert3.
+// That's what it use to do, now it's a trace with possible breakpoints.
 mw0.eb$watch = function(s)
 {
 if(! s instanceof Script) return;
@@ -3330,7 +3328,7 @@ var w = my$win();
 var c = w.$jt$c;
 var sn = w.$jt$sn;
 w.$jt$sn = ++sn;
-return a + "trace" + "x(" + c + sn + ")" + b;
+return a + "trace" + "@(" + c + sn + ")" + b;
 }
 
 } // master compile
