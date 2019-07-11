@@ -236,21 +236,6 @@ exp$$ = "for(var i=" + s$$ +"; i<" + t$$ +"; ++i){" + exp$$ + "}";
 my$win().eval(exp$$);
 }
 
-/*********************************************************************
-This is a crude implementation of a breakpoint.
-Insert eval($bp) into the js file you want to debug,
-where you want to see the local variables etc.
-. to exit, just like jdb.
-It is possible to change the local variables, . to exit, and resume execution,
-but should you?!
-For breakpoint with a line number,   eval($bpl+"(2183)")
-You can use edbrowse %line to get the line number:  s/^/eval($bpl+"(%line)");/
-*********************************************************************/
-
-mw0.$bp = "(function(l$ne){if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}})";
-
-mw0.$step = "(function(l$ne){ if(l$ne === $step$start) $step$lev = 2; if($step$lev == 0) return; if($step$lev == 1) { alert(l$ne); return; } if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}})";
-
 } // master compile
 
 dumptree = mw0.dumptree;
@@ -259,12 +244,9 @@ showscripts = mw0.showscripts;
 searchscripts = mw0.searchscripts;
 snapshot = mw0.snapshot;
 aloop = mw0.aloop;
-$bp = mw0.$bp + "(0)";
-$bpl = mw0.$bp;
-$step = mw0.$step;
 $step$lev = 1;
 $step$start = "";
-// First line of js in your snapshot could be
+// First line of js in the base file of your snapshot could be
 // $step$lev = 0, $step$start = "c275";
 
 // This is our bailout function, it references a variable that does not exist.
@@ -3337,26 +3319,19 @@ else w.$jt$c = String.fromCharCode(w.$jt$c.charCodeAt(0) + 1);
 w.$jt$sn = 0;
 // Watch out, tools/uncomment will muck with this regexp if we're not careful!
 // I escape some characters with \ so they don't get crunched away.
-s.data = s.data.replace(/(\bdo \{|\bwhile \([{}\n]*\)\ *{|\bfor \([^{}\n]*\)\ *{|\bif \([^{}\n]*\)\ *{|\bcatch \(\w*\)\ *{|\belse \{|\btry \{|\bfunction *\([a-zA-Z ,]*\)\ *{|[^\n)]\n *)(var |\n)/g, mw0.jtfn2);
+s.data = s.data.replace(/(\bdo \{|\bwhile \([{}\n]*\)\ *{|\bfor \([^{}\n]*\)\ *{|\bif \([^{}\n]*\)\ *{|\bcatch \(\w*\)\ *{|\belse \{|\btry \{|\bfunction *\w*\([\w ,]*\)\ *{|[^\n)]\n *)(var |\n)/g, mw0.jtfn0);
 return;
 }
 
 // trace functions; these only work on deminimized js.
-mw0.jtfn0 = function (a, b, punct)
+mw0.jtfn0 = function (all, a, b)
 {
 var w = my$win();
 var c = w.$jt$c;
 var sn = w.$jt$sn;
 w.$jt$sn = ++sn;
-/*
-var v = w.$uv$watch;
-if(v == 0 || v == "trace") v = "";
-else v = "+' '+" + v;
-*/
-return a + "eval($step+\"('" + c + sn + "')\")" + punct + b;
+return a + "trace" + "x(" + c + sn + ")" + b;
 }
-mw0.jtfn1 = function (all, a, b) { return mw0.jtfn0(a, b, ','); }
-mw0.jtfn2 = function (all, a, b) { return mw0.jtfn0(a, b, ';'); }
 
 } // master compile
 

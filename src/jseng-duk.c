@@ -2127,7 +2127,38 @@ char *run_script_nat(const char *s)
 	char *result = 0;
 	bool rc;
 	const char *gc;
-	rc = duk_peval_string(jcx, s);
+	char *s2 = 0;
+// special debugging code to replace bpx and tracex with expanded macros.
+// I use to call eval() but that uncovered a bug that I could never debug!
+	if (strstr(s, "bpx(") || strstr(s, "tracex(")) {
+		int l;
+		const char *u, *v1, *v2;
+		s2 = initString(&l);
+		u = s;
+		while (true) {
+			v1 = strstr(u, "bpx(");
+			v2 = strstr(u, "tracex(");
+			if (v1 && v2 && v2 < v1)
+				v1 = v2;
+			if (!v1)
+				v1 = v2;
+			if (!v1)
+				break;
+			stringAndBytes(&s2, &l, u, v1 - u);
+			stringAndString(&s2, &l, (*v1 == 'b' ?
+						  "(function(l$ne){if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}})(\""
+						  :
+						  "(function(l$ne){ if(l$ne === $step$start) $step$lev = 2; if($step$lev == 0) return; if($step$lev == 1) { alert(l$ne); return; } if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}})(\""));
+			v1 = strchr(v1, '(') + 1;
+			v2 = strchr(v1, ')');
+			stringAndBytes(&s2, &l, v1, v2 - v1);
+			stringAndString(&s2, &l, "\");");
+			u = ++v2;
+		}
+		stringAndString(&s2, &l, u);
+	}
+	rc = duk_peval_string(jcx, (s2 ? s2 : s));
+	nzFree(s2);
 	if (intFlag)
 		i_puts(MSG_Interrupted);
 	if (!rc) {
