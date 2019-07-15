@@ -2148,7 +2148,7 @@ char *run_script_nat(const char *s)
 			stringAndString(&s2, &l, (*v1 == 'b' ?
 						  "(function(l$ne){if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}})(\""
 						  :
-						  "(function(l$ne){ if(l$ne === $step$start) $step$lev = 2; if($step$lev == 0) return; if($step$lev == 1) { alert(l$ne); return; } if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}})(\""));
+						  "(function(l$ne){ if(l$ne === step$go) step$l = 2; if(step$l == 0) return; if(step$l == 1) { alert(l$ne); return; } if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}})(\""));
 			v1 = strchr(v1, '(') + 1;
 			v2 = strchr(v1, ')');
 			stringAndBytes(&s2, &l, v1, v2 - v1);

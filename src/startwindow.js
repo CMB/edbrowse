@@ -236,6 +236,16 @@ exp$$ = "for(var i=" + s$$ +"; i<" + t$$ +"; ++i){" + exp$$ + "}";
 my$win().eval(exp$$);
 }
 
+// produce a stack for debugging purposes
+mw0.step$stack = function(){
+var s = "you shouldn't see this";
+try { 'use strict'; eval("yyz$"); } catch(e) { s = e.stack; }
+// Lop off some leading lines that don't mean anything.
+for(var i = 0; i<5; ++i)
+s = s.replace(/^.*\n/, "");
+return s;
+}
+
 } // master compile
 
 dumptree = mw0.dumptree;
@@ -244,10 +254,11 @@ showscripts = mw0.showscripts;
 searchscripts = mw0.searchscripts;
 snapshot = mw0.snapshot;
 aloop = mw0.aloop;
-$step$lev = 1;
-$step$start = "";
+step$stack = mw0.step$stack;
+step$l = 1;
+step$go = "";
 // First line of js in the base file of your snapshot could be
-// $step$lev = 0, $step$start = "c275";
+// step$l = 0, step$go = "c275";
 
 // This is our bailout function, it references a variable that does not exist.
 function eb$stopexec() { return javascript$interrupt; }
@@ -3316,7 +3327,9 @@ if(w.$jt$c == 'z') w.$jt$c = 'a';
 else w.$jt$c = String.fromCharCode(w.$jt$c.charCodeAt(0) + 1);
 w.$jt$sn = 0;
 // Watch out, tools/uncomment will muck with this regexp if we're not careful!
-// I escape some characters with \ so they don't get crunched away.
+// I escape some spaces with \ so they don't get crunched away.
+// First name the anonymous functions; then put in the trace points.
+s.data = s.data.replace(/(\bfunction *)(\([\w ,]*\)\ *{\n)/g, mw0.jtfn1);
 s.data = s.data.replace(/(\bdo \{|\bwhile \([{}\n]*\)\ *{|\bfor \([^{}\n]*\)\ *{|\bif \([^{}\n]*\)\ *{|\bcatch \(\w*\)\ *{|\belse \{|\btry \{|\bfunction *\w*\([\w ,]*\)\ *{|[^\n)]\n *)(var |\n)/g, mw0.jtfn0);
 return;
 }
@@ -3329,6 +3342,15 @@ var c = w.$jt$c;
 var sn = w.$jt$sn;
 w.$jt$sn = ++sn;
 return a + "trace" + "@(" + c + sn + ")" + b;
+}
+
+mw0.jtfn1 = function (all, a, b)
+{
+var w = my$win();
+var c = w.$jt$c;
+var sn = w.$jt$sn;
+w.$jt$sn = ++sn;
+return a + " " + c + "__" + sn + b;
 }
 
 } // master compile
