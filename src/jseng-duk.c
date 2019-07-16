@@ -1923,7 +1923,7 @@ static void uptrace(jsobjtype node)
 bool run_function_bool_nat(jsobjtype parent, const char *name)
 {
 	int dbl = 3;		// debug level
-	if (stringEqual(name, "ontimer") && !uvw)
+	if (stringEqual(name, "ontimer"))
 		dbl = 4;
 	duk_push_heapptr(jcx, parent);
 	if (!duk_get_prop_string(jcx, -1, name) || !duk_is_function(jcx, -1)) {

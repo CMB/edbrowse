@@ -753,8 +753,8 @@ enum {
 	MSG_SSLConnectError,
 	MSG_InputTTY,
 	MSG_InputReadLine,
-	MSG_notused656,
-	MSG_notused657,
+	MSG_DebugTraceOff,
+	MSG_DebugTraceOn,
 	MSG_SystemCmdFail,
 	MSG_notused659,
 };

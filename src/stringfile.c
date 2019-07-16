@@ -23,7 +23,7 @@ FILE *debugFile = NULL;
 char *debugFileName;
 bool demin = false;
 bool gotimers = true;
-char *uvw;
+bool uvw;
 char *downDir, *home;
 
 /*********************************************************************

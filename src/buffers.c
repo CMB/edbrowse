@@ -3944,20 +3944,6 @@ static int twoLetter(const char *line, const char **runThis)
 		return true;
 	}
 
-	if (!strncmp(line, "uvw", 3)) {
-		const char *s = line + 3;
-		if (*s && *s != ' ')
-			return 2;
-		nzFree(uvw);
-		uvw = 0;
-		if (!*s)
-			return 1;
-		for (++s; *s == ' '; ++s) ;
-		if (*s)
-			uvw = cloneString(s);
-		return 1;
-	}
-
 	if (stringEqual(line, "bw")) {
 		cw->changeMode = false;
 		cw->quitMode = true;
@@ -4818,6 +4804,20 @@ et_go:
 		demin = (line[5] == '+');
 		if (helpMessagesOn)
 			i_puts(demin + MSG_DeminOff);
+		return true;
+	}
+
+	if (stringEqual(line, "trace")) {
+		uvw ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(uvw + MSG_DebugTraceOff);
+		return true;
+	}
+
+	if (stringEqual(line, "trace+") || stringEqual(line, "trace-")) {
+		uvw = (line[5] == '+');
+		if (helpMessagesOn)
+			i_puts(uvw + MSG_DebugTraceOff);
 		return true;
 	}
 

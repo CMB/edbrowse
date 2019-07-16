@@ -3319,10 +3319,9 @@ mw0.eb$watch = function(s)
 {
 if(! s instanceof Script) return;
 if(! s.data) return;
+if(s.data.indexOf("trace"+"@(") >= 0) // already traced
+return;
 var w = my$win();
-var v = w.$uv$watch;
-if(!v) return; // should never happen
-
 if(w.$jt$c == 'z') w.$jt$c = 'a';
 else w.$jt$c = String.fromCharCode(w.$jt$c.charCodeAt(0) + 1);
 w.$jt$sn = 0;

@@ -653,7 +653,7 @@ fetch blob columns
 SSL connect error in libcurl: %s
 input tty
 input readline()
-0
-0
+no trace points
+trace points injected
 Command execution failed, system() returned %d
 0
