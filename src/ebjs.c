@@ -713,8 +713,11 @@ void set_basehref(const char *h)
 // This is special code for snapshot simulations.
 // If the file jslocal is present, push base over to window.location etc,
 // as though you were running that page.
-	if (!access("jslocal", 4) && h[0])
+	if (!access("jslocal", 4) && h[0]) {
 		run_function_bool(cf->winobj, "eb$base$snapshot");
+		nzFree(cf->fileName);
+		cf->fileName = cloneString(h);
+	}
 }				/* set_basehref */
 
 #ifdef DOSLIKE			// port of uname(p), and struct utsname
