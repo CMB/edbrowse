@@ -1068,7 +1068,7 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 			incoming_url = a;
 		}
 
-		debugPrint(3, "xhr %s", incoming_url);
+		debugPrint(3, "xhr send %s", incoming_url);
 		memset(&g, 0, sizeof(g));
 		g.thisfile = cf->fileName;
 		g.uriEncoded = true;

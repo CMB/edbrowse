@@ -3178,6 +3178,7 @@ this.async = false;
 // In the implementation in envjs, the line here was:
 // this.async = (async === false)?false:true;
 this.method = method || "GET";
+alert3("xhr open " + url);
 this.url = eb$resolveURL(my$win().eb$base, url);
 this.status = 0;
 this.statusText = "";
@@ -3206,6 +3207,11 @@ var urlcopy = this.url;
 if(urlcopy.match(/[!*'";\[\]$\u0000-\u0020\u007f-\uffff]/)) {
 alert3("xhr url was not encoded");
 urlcopy = encodeURI(urlcopy);
+}
+if(data) {
+alert3("xhr data " + data);
+// I assume the url is already encoded, but the data is not.  idk
+data = encodeURI(data);
 }
 var entire_http_response =  eb$fetchHTTP(urlcopy,this.method,headerstring,data);
 var responsebody_array = entire_http_response.split("\r\n\r\n");
