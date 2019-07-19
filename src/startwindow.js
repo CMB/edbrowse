@@ -3210,8 +3210,11 @@ urlcopy = encodeURI(urlcopy);
 }
 if(data) {
 alert3("xhr data " + data);
-// I assume the url is already encoded, but the data is not.  idk
+// no idea if data is already encoded or not.
+if(data.match(/[!*'";\[\]$\u0000-\u0020\u007f-\uffff]/)) {
+alert3("xhr data was not encoded");
 data = encodeURI(data);
+}
 }
 var entire_http_response =  eb$fetchHTTP(urlcopy,this.method,headerstring,data);
 var responsebody_array = entire_http_response.split("\r\n\r\n");

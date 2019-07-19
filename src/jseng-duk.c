@@ -2128,8 +2128,10 @@ char *run_script_nat(const char *s)
 	bool rc;
 	const char *gc;
 	char *s2 = 0;
+
 // special debugging code to replace bp@ and trace@ with expanded macros.
-// I use to call eval() but that uncovered a bug that I could never debug!
+// Warning: breakpoints and tracing can change the flow of execution
+// prior to duktape commit 67c891d9e075cc49281304ff5955cae24faa1496
 	if (strstr(s, "bp@(") || strstr(s, "trace@(")) {
 		int l;
 		const char *u, *v1, *v2;
@@ -2146,9 +2148,9 @@ char *run_script_nat(const char *s)
 				break;
 			stringAndBytes(&s2, &l, u, v1 - u);
 			stringAndString(&s2, &l, (*v1 == 'b' ?
-						  "(function(l$ne){if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,\""
+						  "(function(arg$,l$ne){if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,arguments,\""
 						  :
-						  "(function(l$ne){ if(l$ne === step$go) step$l = 2; if(step$l == 0) return; if(step$l == 1) { alert(l$ne); return; } if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,\""));
+						  "(function(arg$,l$ne){ if(l$ne === step$go) step$l = 2; if(step$l == 0) return; if(step$l == 1) { alert(l$ne); return; } if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,arguments,\""));
 			v1 = strchr(v1, '(') + 1;
 			v2 = strchr(v1, ')');
 			stringAndBytes(&s2, &l, v1, v2 - v1);
@@ -2157,6 +2159,7 @@ char *run_script_nat(const char *s)
 		}
 		stringAndString(&s2, &l, u);
 	}
+
 	rc = duk_peval_string(jcx, (s2 ? s2 : s));
 	nzFree(s2);
 	if (intFlag)
