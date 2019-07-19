@@ -13,6 +13,8 @@ This follows the model of iso8859-1 to and from utf8.
 
 Download javascript files in parallel and in background, experimental.
 
+trace and breakpoints in the deminimized, local javascript files.
+
 3.7.4:
 Install man page and other documentation.
 

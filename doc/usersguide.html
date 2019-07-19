@@ -711,6 +711,9 @@ db3 : set debug level, 0 through 9
 <br>dumptree(node) : show the tree below a given node
 <br>bp@(label) : inject this code into a js file for a simple breakpoint
 <br>step$stack() : show stack, usually from within a breakpoint
+<br>step$l = 0|1|2 : set the trace level for each step
+<br>step$go = label : set step$l to 2 at this point, breaking at each step thereafter
+<br>step$exp = expression : set step$l to 2 when expression is true, breaking at each step thereafter
 
 <H3> <A NAME=tips> Tips for Avoiding Line Numbers </A> </H3>
 
