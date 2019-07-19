@@ -928,6 +928,31 @@ mimestream:
 	curlret = curl_easy_setopt(h, CURLOPT_REFERER, referrer);
 	if (curlret != CURLE_OK)
 		goto curl_fail;
+
+// look for custom headers from the calling function
+	if (g->custom_h) {
+		const char *u, *v;
+		u = g->custom_h;
+		while (*u) {
+			int d;
+			char *w;
+			v = strchr(u, '\n');
+			if (!v)
+				break;
+			d = v - u;
+			w = allocMem(d + 1);
+			memcpy(w, u, d);
+			w[d] = 0;
+			tmp_headers = curl_slist_append(custom_headers, w);
+			if (tmp_headers == NULL)
+				i_printfExit(MSG_NoMem);
+			custom_headers = tmp_headers;
+			debugPrint(3, "custom %s", w);
+			nzFree(w);
+			u = v + 1;
+		}
+	}
+
 	curlret = curl_easy_setopt(h, CURLOPT_HTTPHEADER, custom_headers);
 	if (curlret != CURLE_OK)
 		goto curl_fail;

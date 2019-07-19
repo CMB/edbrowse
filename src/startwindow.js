@@ -3198,11 +3198,9 @@ var headerstring = "";
 for (var item in this.headers) {
 var v1=item;
 var v2=this.headers[item];
-headerstring+=v1;
-headerstring+=": ";
-headerstring+=v2;
-headerstring+=",";
+headerstring+=v1+': '+v2+'\n';
 }
+if(headerstring) alert("xhr headers " + headerstring);
 var urlcopy = this.url;
 if(urlcopy.match(/[!*'";\[\]$\u0000-\u0020\u007f-\uffff]/)) {
 alert3("xhr url was not encoded");
@@ -3211,10 +3209,12 @@ urlcopy = encodeURI(urlcopy);
 if(data) {
 alert3("xhr data " + data);
 // no idea if data is already encoded or not.
+/*
 if(data.match(/[!*'";\[\]$\u0000-\u0020\u007f-\uffff]/)) {
 alert3("xhr data was not encoded");
 data = encodeURI(data);
 }
+*/
 }
 var entire_http_response =  eb$fetchHTTP(urlcopy,this.method,headerstring,data);
 var responsebody_array = entire_http_response.split("\r\n\r\n");

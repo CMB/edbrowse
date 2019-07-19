@@ -1049,7 +1049,7 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 		struct i_get g;
 		const char *incoming_url = duk_safe_to_string(cx, 0);
 		const char *incoming_method = duk_get_string(cx, 1);
-//              const char *incoming_headers = duk_get_string(cx, 2);
+		const char *incoming_headers = duk_get_string(cx, 2);
 		const char *incoming_payload = duk_get_string(cx, 3);
 		char *outgoing_xhrheaders = NULL;
 		char *outgoing_xhrbody = NULL;
@@ -1073,6 +1073,7 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 		g.thisfile = cf->fileName;
 		g.uriEncoded = true;
 		g.url = incoming_url;
+		g.custom_h = incoming_headers;
 		g.headers_p = &outgoing_xhrheaders;
 		httpConnect(&g);
 		outgoing_xhrbody = g.buffer;
