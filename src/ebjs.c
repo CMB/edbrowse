@@ -824,7 +824,7 @@ void setupJavaDom(void)
 	set_property_string(d, "location", cf->fileName);
 	set_property_string(w, "location", cf->fileName);
 	jsRunScript(w,
-		    "window.location.replace = document.location.replace = function(s) { this.href = s; }",
+		    "window.location.replace = document.location.replace = function(s) { this.href = s; };Object.defineProperty(window.location,'replace',{enumerable:false});Object.defineProperty(document.location,'replace',{enumerable:false});",
 		    "locreplace", 1);
 	set_property_string(d, "domain", getHostURL(cf->fileName));
 	if (debugClone)
