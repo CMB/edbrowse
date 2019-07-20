@@ -191,7 +191,7 @@ struct i_get {
 	const char *url;
 	char *urlcopy;
 	int urlcopy_l;
-	const char *custom_h;
+	const char *custom_h; // custom http headers passed to curl
 	char *cfn; // changed filename
 	const char *thisfile;
 	char *referrer;

@@ -3312,13 +3312,16 @@ if(s.data.substr(i,1) === '\n') ++linecount;
 if(s.data.length / linecount <= 400) return;
 
 // Ok, run it through the deminimizer.
+if(window.escodegen) {
 s.original = s.data;
 s.data = escodegen.generate(esprima.parse(s.data));
 s.expanded = true;
+} else {
+alert("deminimization not available");
+}
 }
 
-// Watch for an undefined variable in the running javascript.
-// That's what it use to do, now it's a trace with possible breakpoints.
+// Trace with possible breakpoints.
 mw0.eb$watch = function(s)
 {
 if(! s instanceof Script) return;
