@@ -517,27 +517,32 @@ h += this.hash$val;
 }
 this.href$val = h;
 };
+Object.defineProperty(mw0.URL.prototype, "rebuild", {enumerable:false});
 
 // No idea why we can't just assign the property directly.
 // URL.prototype.protocol = { ... };
 Object.defineProperty(mw0.URL.prototype, "protocol", {
   get: function() {return this.protocol$val; },
-  set: function(v) { this.protocol$val = v; this.rebuild(); }
+  set: function(v) { this.protocol$val = v; this.rebuild(); },
+enumerable:true
 });
 
 Object.defineProperty(mw0.URL.prototype, "pathname", {
   get: function() {return this.pathname$val; },
-  set: function(v) { this.pathname$val = v; this.rebuild(); }
+  set: function(v) { this.pathname$val = v; this.rebuild(); },
+enumerable:true
 });
 
 Object.defineProperty(mw0.URL.prototype, "search", {
   get: function() {return this.search$val; },
-  set: function(v) { this.search$val = v; this.rebuild(); }
+  set: function(v) { this.search$val = v; this.rebuild(); },
+enumerable:true
 });
 
 Object.defineProperty(mw0.URL.prototype, "hash", {
   get: function() {return this.hash$val; },
-  set: function(v) { this.hash$val = v; this.rebuild(); }
+  set: function(v) { this.hash$val = v; this.rebuild(); },
+enumerable:true
 });
 
 Object.defineProperty(mw0.URL.prototype, "port", {
@@ -545,7 +550,8 @@ Object.defineProperty(mw0.URL.prototype, "port", {
   set: function(v) { this.port$val = v;
 if(this.hostname$val.length)
 this.host$val = this.hostname$val + ":" + v;
-this.rebuild(); }
+this.rebuild(); },
+enumerable:true
 });
 
 Object.defineProperty(mw0.URL.prototype, "hostname", {
@@ -553,7 +559,8 @@ Object.defineProperty(mw0.URL.prototype, "hostname", {
   set: function(v) { this.hostname$val = v;
 if(this.port$val)
 this.host$val = v + ":" +  this.port$val;
-this.rebuild(); }
+this.rebuild(); },
+enumerable:true
 });
 
 Object.defineProperty(mw0.URL.prototype, "host", {
@@ -568,7 +575,8 @@ this.port$val = parseInt(this.port$val);
 this.hostname$val = v;
 this.port$val = 0;
 }
-this.rebuild(); }
+this.rebuild(); },
+enumerable:true
 });
 
 mw0.eb$defport = {
@@ -609,23 +617,27 @@ var inconstruct = true;
 if(v instanceof URL) v = v.toString();
 if(v === null || v === undefined) v = "";
 if(typeof v != "string") return;
-if(this.href$val) {
+if(typeof this.href$val == "string") {
 // Ok, we already had a url, and here's nother one.
 // I think we're suppose to resolve it against what was already there,
 // so that /foo against www.xyz.com becomes www.xyz.com/foobar
 if(v) v = eb$resolveURL(this.href$val, v);
 inconstruct = false;
 }
+if(inconstruct) {
+Object.defineProperty(this, "href$val", {enumerable:false, writable:true, value:v});
+Object.defineProperty(this, "protocol$val", {enumerable:false, writable:true, value:""});
+Object.defineProperty(this, "hostname$val", {enumerable:false, writable:true, value:""});
+Object.defineProperty(this, "host$val", {enumerable:false, writable:true, value:""});
+Object.defineProperty(this, "port$val", {enumerable:false, writable:true, value:0});
+Object.defineProperty(this, "pathname$val", {enumerable:false, writable:true, value:""});
+Object.defineProperty(this, "search$val", {enumerable:false, writable:true, value:""});
+Object.defineProperty(this, "hash$val", {enumerable:false, writable:true, value:""});
+} else {
 this.href$val = v;
-// initialize components to empty,
-// then fill them in from href if they are present */
-this.protocol$val = "";
-this.hostname$val = "";
 this.port$val = 0;
-this.host$val = "";
-this.pathname$val = "";
-this.search$val = "";
-this.hash$val = "";
+this.protocol$val = this.host$val = this.hostname$val = this.pathname$val = this.search$val = this.hash$val = "";
+}
 if(v.match(/^[a-zA-Z]*:/)) {
 this.protocol$val = v.replace(/:.*/, "");
 this.protocol$val += ":";
@@ -680,30 +692,26 @@ if(!inconstruct && (this == my$win().location || this == my$doc().location)) {
 // replace the web page
 eb$newLocation('r' + this.href$val + '\n');
 }
-}
+},
+enumerable:true
 });
 
-mw0.URL.prototype.toString = function() { 
-return this.href$val;
-}
+mw0.URL.prototype.toString = function() {  return this.href$val; }
+Object.defineProperty(mw0.URL.prototype, "toString", {enumerable:false});
 
 Object.defineProperty(mw0.URL.prototype, "length", { get: function() { return this.toString().length; }});
 
-mw0.URL.prototype.concat = function(s) { 
-return this.toString().concat(s);
-}
+mw0.URL.prototype.concat = function(s) {  return this.toString().concat(s); }
+Object.defineProperty(mw0.URL.prototype, "concat", {enumerable:false});
 
-mw0.URL.prototype.startsWith = function(s) { 
-return this.toString().startsWith(s);
-}
+mw0.URL.prototype.startsWith = function(s) {  return this.toString().startsWith(s); }
+Object.defineProperty(mw0.URL.prototype, "startsWith", {enumerable:false});
 
-mw0.URL.prototype.endsWith = function(s) { 
-return this.toString().endsWith(s);
-}
+mw0.URL.prototype.endsWith = function(s) {  return this.toString().endsWith(s); }
+Object.defineProperty(mw0.URL.prototype, "endsWith", {enumerable:false});
 
-mw0.URL.prototype.includes = function(s) { 
-return this.toString().includes(s);
-}
+mw0.URL.prototype.includes = function(s) {  return this.toString().includes(s); }
+Object.defineProperty(mw0.URL.prototype, "includes", {enumerable:false});
 
 /*
 Can't turn URL.search into String.search, because search is already a property
@@ -713,57 +721,44 @@ return this.toString().search(s);
 }
 */
 
-mw0.URL.prototype.indexOf = function(s) { 
-return this.toString().indexOf(s);
-}
+mw0.URL.prototype.indexOf = function(s) {  return this.toString().indexOf(s); }
+Object.defineProperty(mw0.URL.prototype, "indexOf", {enumerable:false});
 
-mw0.URL.prototype.lastIndexOf = function(s) { 
-return this.toString().lastIndexOf(s);
-}
+mw0.URL.prototype.lastIndexOf = function(s) {  return this.toString().lastIndexOf(s); }
+Object.defineProperty(mw0.URL.prototype, "lastIndexOf", {enumerable:false});
 
-mw0.URL.prototype.substring = function(from, to) { 
-return this.toString().substring(from, to);
-}
+mw0.URL.prototype.substring = function(from, to) {  return this.toString().substring(from, to); }
+Object.defineProperty(mw0.URL.prototype, "substring", {enumerable:false});
 
-mw0.URL.prototype.substr = function(from, to) {
-return this.toString().substr(from, to);
-}
+mw0.URL.prototype.substr = function(from, to) {return this.toString().substr(from, to);}
+Object.defineProperty(mw0.URL.prototype, "substr", {enumerable:false});
 
-mw0.URL.prototype.toLowerCase = function() { 
-return this.toString().toLowerCase();
-}
+mw0.URL.prototype.toLowerCase = function() {  return this.toString().toLowerCase(); }
+Object.defineProperty(mw0.URL.prototype, "toLowerCase", {enumerable:false});
 
-mw0.URL.prototype.toUpperCase = function() { 
-return this.toString().toUpperCase();
-}
+mw0.URL.prototype.toUpperCase = function() {  return this.toString().toUpperCase(); }
+Object.defineProperty(mw0.URL.prototype, "toUpperCase", {enumerable:false});
 
-mw0.URL.prototype.match = function(s) { 
-return this.toString().match(s);
-}
+mw0.URL.prototype.match = function(s) {  return this.toString().match(s); }
+Object.defineProperty(mw0.URL.prototype, "match", {enumerable:false});
 
-mw0.URL.prototype.replace = function(s, t) { 
-return this.toString().replace(s, t);
-}
+mw0.URL.prototype.replace = function(s, t) {  return this.toString().replace(s, t); }
+Object.defineProperty(mw0.URL.prototype, "replace", {enumerable:false});
 
-mw0.URL.prototype.split = function(s) {
-return this.toString().split(s);
-}
+mw0.URL.prototype.split = function(s) { return this.toString().split(s); }
+Object.defineProperty(mw0.URL.prototype, "split", {enumerable:false});
 
-mw0.URL.prototype.slice = function(from, to) {
-return this.toString().slice(from, to);
-}
+mw0.URL.prototype.slice = function(from, to) { return this.toString().slice(from, to); }
+Object.defineProperty(mw0.URL.prototype, "slice", {enumerable:false});
 
-mw0.URL.prototype.charAt = function(n) {
-return this.toString().charAt(n);
-}
+mw0.URL.prototype.charAt = function(n) { return this.toString().charAt(n); }
+Object.defineProperty(mw0.URL.prototype, "charAt", {enumerable:false});
 
-mw0.URL.prototype.charCodeAt = function(n) {
-return this.toString().charCodeAt(n);
-}
+mw0.URL.prototype.charCodeAt = function(n) { return this.toString().charCodeAt(n); }
+Object.defineProperty(mw0.URL.prototype, "charCodeAt", {enumerable:false});
 
-mw0.URL.prototype.trim = function() {
-return this.toString().trim();
-}
+mw0.URL.prototype.trim = function() { return this.toString().trim(); }
+Object.defineProperty(mw0.URL.prototype, "trim", {enumerable:false});
 
 /*********************************************************************
 Here are the DOM classes with generic constructors.
@@ -3460,6 +3455,8 @@ return mw0.eb$gebtn(document.body, s.toLowerCase());
 
 Option = mw0.Option;
 XMLHttpRequest = mw0.XMLHttpRequest;
+// this form of XMLHttpRequest is deprecated, but still used in places.
+XDomainRequest = XMLHttpRequest;
 eb$demin = mw0.eb$demin;
 eb$watch = mw0.eb$watch;
 $uv = [];
