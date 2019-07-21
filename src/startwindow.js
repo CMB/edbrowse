@@ -2219,25 +2219,23 @@ if(t.nodeType == 9) break; // don't go past document up to a higher frame
 t=t.parentNode;
 }
 var l = pathway.length;
-e.eventPhase = 1; // capture
 while(l) {
 t = pathway[--l];
+e.eventPhase = (l?1:2); // capture or current target
 var fn = "on" + e.type;
 if(typeof t[fn] == "function") {
-if(my$win().eventDebug) alert3("capture " + t.nodeName + "." + e.type);
+if(my$win().eventDebug) alert3((l?"capture ":"current ") + t.nodeName + "." + e.type);
 e.currentTarget = t;
-// Some mashinations to set phase = 2 when it's a direct function,
-// not the listener function I created.
-if(!t[fn + "$$array"]) e.eventPhase = 2;
+if(!t[fn + "$$array"] && my$win().eventDebug) alert3("fire assigned");
 var r = t[fn](e);
 if((typeof r == "boolean" || typeof r == "number") && !r) return false;
 if(e.cancelled) return !e.prev$default;
 }
 }
 if(!e.bubbles) return !e.prev$default;
-e.eventPhase = 3;
 while(l < pathway.length) {
 t = pathway[l++];
+e.eventPhase = 3;
 var fn = "on" + e.type;
 if(typeof t[fn] == "function") {
 // If function was just put here, not part of addEventListener,
@@ -2280,7 +2278,7 @@ mw0.detachEvent = function(ev, handler) { this.eb$unlisten(ev,handler, true, fal
 
 mw0.eb$listen = function(ev, handler, iscapture, addon)
 {
-if(my$win().eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev);
+if(my$win().eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev + " for " + (iscapture?"capture":"bubble"));
 if(addon) {
 ev = "on" + ev;
 } else {
@@ -2302,14 +2300,12 @@ var prev_fn = this[ev];
 
 eval(
 'this["' + ev + '"] = function(e){ var rc, a = this["' + evarray + '"]; \
-var savePhase = e.eventPhase; var attarget = (e.target == e.currentTarget); \
-if(this["' + evorig + '"] && e.eventPhase == 1) { alert3("fire orig"); if(attarget) e.eventPhase = 2; rc = this["' + evorig + '"](e); e.eventPhase = savePhase; \
+if(this["' + evorig + '"] && e.eventPhase < 3) { alert3("fire orig"); rc = this["' + evorig + '"](e); \
 if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; } \
 for(var i = 0; i<a.length; ++i) a[i].did$run = false; \
 for(var i = 0; i<a.length; ++i) {if(a[i].did$run) continue; \
-if(e.eventPhase == 1 && !a[i].do$capture || e.eventPhase == 3 && !a[i].do$bubble) continue; \
-a[i].did$run = true; if(attarget) e.eventPhase = 2; \
-alert3("fire " + i); rc = a[i].call(this,e); e.eventPhase = savePhase; \
+if(e.eventPhase== 1 && !a[i].do$capture || e.eventPhase == 3 && !a[i].do$bubble) continue; \
+a[i].did$run = true; alert3("fire " + i); rc = a[i].call(this,e); \
 if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; \
 i = -1; \
 } return true; };');
@@ -2915,7 +2911,8 @@ for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(typeof f == "string") f = my$win().handle$cc(f, this); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?"overwrite ":"create ") + this.nodeName + ".' + evname + '"); \
+if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
 delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
@@ -2932,7 +2929,8 @@ for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(typeof f == "string") f = my$win().handle$cc(f, this); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?"overwrite ":"create ") + this.nodeName + ".' + evname + '"); \
+if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
 delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
@@ -2948,7 +2946,8 @@ for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(typeof f == "string") f = my$win().handle$cc(f, this); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?"overwrite ":"create ") + this.nodeName + ".' + evname + '"); \
+if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
 delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
@@ -2963,7 +2962,8 @@ for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(typeof f == "string") f = my$win().handle$cc(f, this); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?"overwrite ":"create ") + this.nodeName + ".' + evname + '"); \
+if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
 delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
@@ -3524,12 +3524,13 @@ return cf;
 var cnlist = ["document", "window"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i];
-var evs = ["onload", "onunload"];
+var evs = ["onload", "onunload", "onclick"];
 for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(' + cn + ', "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(typeof f == "string") f = my$win().handle$cc(f, this); \
+set: function(f) { if(eventDebug) alert3((this.'+evname+'?"overwrite ":"create ") + this.nodeName + ".' + evname + '"); \
+if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
 delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
