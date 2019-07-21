@@ -2914,9 +2914,15 @@ void javaSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 	sscanf(rest, "%s %p,%s %p,%s ", p_name, &a_j, a_name, &b_j, b_name);
 	if (type == 'c') {	/* create */
 		parent = tagFromJavaVar2(p_j, p_name);
-		if (parent)
+		if (parent) {
 			debugPrint(4, "linkage, %s %d created",
 				   p_name, parent->seqno);
+			if (parent->action == TAGACT_INPUT) {
+// we need to establish the getter and setter for value
+				set_property_string_nat(parent->jv, "value",
+							emptyString);
+			}
+		}
 		return;
 	}
 
