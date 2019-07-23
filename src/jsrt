@@ -509,6 +509,8 @@ if(document.forms[0].result.value != 90) fail(85);
 if(document.forms[0].who.value != "eklhad") fail(86);
 if(document.forms[0].elements[1].value != "secret") fail(87);
 
+document.onchange = function(e) { if(e.target == document.forms[0].cat) alert("dude you clicked on cat");}
+
 // prototype objects, use the Circle model
 Circle.prototype.q = 97;
 Circle.prototype.m = function(z) { return z*z*z; };

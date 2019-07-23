@@ -1188,25 +1188,23 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		updateFieldInBuffer(tagno, newtext, notify, true);
 	}
 
-	if (itype >= INP_RADIO) {
+	if (itype >= INP_TEXT) {
+		jSyncup(false);
+		cf = t->f0;
+		if (itype >= INP_RADIO) {
 // The change has already been made;
 // if onclick returns false, should that have prevented the change??
-		bubble_event(t, "onclick");
-		if (js_redirects)
-			return true;
-	}
-
-	if (itype >= INP_TEXT && tagHandler(t->seqno, "onchange")) {
-		if (!isJSAlive)
-			runningError(MSG_NJNoOnchange);
-		else {
-			jSyncup(false);
-			cf = t->f0;
-			run_event_bool(t->jv, t->info->name, "onchange", 0);
-			jSideEffects();
+			bubble_event(t, "onclick");
 			if (js_redirects)
 				return true;
 		}
+		bubble_event(t, "oninput");
+		if (js_redirects)
+			return true;
+		bubble_event(t, "onchange");
+		if (js_redirects)
+			return true;
+		jSideEffects();
 	}
 
 	return true;

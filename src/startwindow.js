@@ -2954,10 +2954,10 @@ delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
 }}})();
 
 ; (function() {
-var cnlist = ["Element", "Select"];
+var cnlist = ["Element", "Select", "Body", "Div"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i];
-var evs = ["onchange"];
+var evs = ["onchange", "oninput"];
 for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
@@ -3524,7 +3524,7 @@ return cf;
 var cnlist = ["document", "window"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i];
-var evs = ["onload", "onunload", "onclick"];
+var evs = ["onload", "onunload", "onclick", "onchange", "oninput"];
 for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(' + cn + ', "' + evname + '", { \
