@@ -255,7 +255,7 @@ searchscripts = mw0.searchscripts;
 snapshot = mw0.snapshot;
 aloop = mw0.aloop;
 step$stack = mw0.step$stack;
-step$l = 1;
+step$l = 0;
 step$go = "";
 // First line of js in the base file of your snapshot could be
 // step$l = 0, step$go = "c275";
@@ -3344,6 +3344,9 @@ return;
 // trace functions; these only work on deminimized js.
 mw0.jtfn0 = function (all, a, b)
 {
+// if code is not deminimized, this will inject
+// trace on every blank line, which is not good.
+if(b == "\n" && a.match(/\n/)) return a+b;
 var w = my$win();
 var c = w.$jt$c;
 var sn = w.$jt$sn;
