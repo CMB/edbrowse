@@ -2633,9 +2633,11 @@ struct listHead timerList = {
 	&timerList, &timerList
 };
 
-/* the spec says you can't run a timer less than 10 ms but here we currently use
- * 600 ms. This really should be a configurable limit */
-int timerResolution = 600;
+// the spec says you can't run a timer less than 10 ms but here we currently use
+// 900 ms. This really should be a configurable limit.
+// If less than 100ms the load average jumps way up.  e.g.nasa.gov
+// We only rerender the screen every 20 seconds or so anyways.
+int timerResolution = 900;
 
 void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 {
@@ -2670,15 +2672,12 @@ void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 	}
 
 	jt = allocZeroMem(sizeof(struct jsTimer));
+	if (n < timerResolution)
+		n = timerResolution;
 	jt->sec = n / 1000;
 	jt->ms = n % 1000;
-	jt->isInterval = isInterval;
-	if (isInterval) {
-
-		if (n < timerResolution)
-			n = timerResolution;
+	if ((jt->isInterval = isInterval))
 		jt->jump_sec = n / 1000, jt->jump_ms = n % 1000;
-	}
 	currentTime();
 	jt->sec += now_sec;
 	jt->ms += now_ms;
