@@ -68,6 +68,7 @@ void jSideEffects(void)
 	debugPrint(4, "jSideEffects starts");
 	runScriptsPending();
 	cw->mustrender = true;
+	rebuildSelectors();
 	debugPrint(4, "jSideEffects ends");
 }				/* jSideEffects */
 
@@ -1752,7 +1753,6 @@ bool infPush(int tagno, char **post_string)
 					rc = run_event_bool(form->jv,
 							    "form", "onreset",
 							    0);
-				jSideEffects();
 				if (!rc)
 					return true;
 				if (js_redirects)
@@ -1778,7 +1778,6 @@ bool infPush(int tagno, char **post_string)
 			rc = true;
 			if (form->jv)
 				rc = bubble_event(form, "onsubmit");
-			jSideEffects();
 			if (!rc)
 				return true;
 			if (js_redirects)
@@ -1823,7 +1822,6 @@ bool infPush(int tagno, char **post_string)
 			return false;
 		}
 		jsRunScript(form->jv, action, 0, 0);
-		jSideEffects();
 		return true;
 	}
 
@@ -1963,9 +1961,7 @@ bool bubble_event(const struct htmlTag *t, const char *name)
 	if (!isJSAlive || !t->jv)
 		return true;
 	e = create_event(t->jv, name);
-	jSyncup(false);
 	rc = run_function_onearg(t->jv, "dispatchEvent", e);
-	jSideEffects();
 	cf = save_cf;
 	if (rc && get_property_bool(e, "prev$default"))
 		rc = false;
@@ -2356,6 +2352,7 @@ void rerender(bool rr_command)
 	cw->nextrender += 20;
 	hovcount = invcount = injcount = 0;
 
+// not sure if we have to do this here
 	rebuildSelectors();
 
 	if (rr_command) {

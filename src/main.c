@@ -978,6 +978,7 @@ ahead:
 
 /* Here we go! */
 		debugPrint(3, "< %s", new);
+		jClearSync();
 		ok = edbrowseCommand(new, true);
 		free(new);
 

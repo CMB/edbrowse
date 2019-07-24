@@ -6061,7 +6061,9 @@ replaceframe:
 			if (!jsdead)
 				set_property_string(cf->winobj, "status", h);
 			if (jsgo) {
+				jSyncup(false);
 				rc = bubble_event(tag, "onclick");
+				jSideEffects();
 				if (newlocation)
 					goto redirect;
 				if (!rc)
@@ -6179,8 +6181,12 @@ replaceframe:
 				}
 
 				if (c == '*') {
+					struct ebFrame *save_cf = cf;
 					jSyncup(false);
-					if (!infPush(tagno, &allocatedLine))
+					c = infPush(tagno, &allocatedLine);
+					jSideEffects();
+					cf = save_cf;
+					if (!c)
 						return false;
 					if (newlocation)
 						goto redirect;

@@ -2233,6 +2233,7 @@ if(e.cancelled) return !e.prev$default;
 }
 }
 if(!e.bubbles) return !e.prev$default;
+++l; // step up from the target
 while(l < pathway.length) {
 t = pathway[l++];
 e.eventPhase = 3;
