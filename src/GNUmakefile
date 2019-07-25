@@ -54,8 +54,14 @@ endif
 $(EBOBJS) : eb.h ebprot.h messages.h
 dbodbc.o dbinfx.o dbops.o : dbapi.h
 
+#  Set EBDEMIN to a nonempty string to support dynamic js deminimization
+ifneq ($(EBDEMIN),)
 startwindow.c: startwindow.js third.js
 	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/third.js thirdJS src/startwindow.c
+else
+startwindow.c: startwindow.js endwindow.js
+	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/endwindow.js thirdJS src/startwindow.c
+endif
 
 ebrc.c: ../lang/ebrc-* ../doc/usersguide.html
 	cd .. ; ./tools/buildebrcstring.pl

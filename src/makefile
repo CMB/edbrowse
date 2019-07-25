@@ -40,8 +40,8 @@ dbodbc.o dbinfx.o dbops.o: dbapi.h
 .c.o:
 	${CC} ${CFLAGS} ${CPPFLAGS} -c -o $@ $<
 
-startwindow.c: startwindow.js third.js
-	cd .. ; ${PERL} -w ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/third.js thirdJS src/startwindow.c
+startwindow.c: startwindow.js endwindow.js
+	cd .. ; ${PERL} -w ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/endwindow.js thirdJS src/startwindow.c
 
 ebrc.c: ../lang/ebrc-* ../doc/usersguide.html
 	cd .. ; ${PERL} -w ./tools/buildebrcstring.pl
