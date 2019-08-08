@@ -1199,7 +1199,8 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 			if (js_redirects)
 				return true;
 		}
-		bubble_event(t, "oninput");
+		if (itype != INP_SELECT)
+			bubble_event(t, "oninput");
 		if (js_redirects)
 			return true;
 		bubble_event(t, "onchange");

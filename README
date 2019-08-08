@@ -106,6 +106,7 @@ If this is not part of your distribution, download from github, compile, and ins
 
 git clone https://github.com/svaarala/duktape.git
 cd duktape
+#  build the version for distribution, without all the debugging features
 make dist
 cd dist
 make -f Makefile.sharedlibrary
@@ -133,6 +134,10 @@ make
 Or, on linux, you can use the traditional makefiles.
 cd src
 make
+Linux makefile supports the environment variables EBDEBUG=on for
+symbolic debugging via gdb, and EBDEMIN=on for dynamic deminimization
+of javascript within edbrowse - also for debugging.
+Users and distributers will not need these options.
 
 On Mac OS X, you'll need to install tidy-html5.  It's not in macports
 yet.  Tell cmake about its location like this:
@@ -399,4 +404,45 @@ and the new buffer is compared with the old using a very simple diff algorithm.
 Edbrowse tells you if any lines have changed.
 
 Line 357 has been updated.
+
+Such updates are only printed every 20 seconds or so, since some visual websites change data, down in the lower left corner, a dozen times a second,
+and we don't need to see a continuous stream of update messages.
+However, if you submit something and that changes the screen, you want to know about that right away.
+Implementing all of this was not trivial!
+
+------------------------------------------------------------
+
+Some text is invisible as per css{display:none},
+and some text only comes to light if you hover over something.
+Edbrowse does not display this text, but sometimes edbrowse gets it wrong,
+so if the website seems sparse, like you're missing something important,
+use the hover command to reveal all of this text,
+even some sections that might not be relevant to your situation.
+Formerly invisible text looks like this.
+
+`{
+You are logged in as John Smith,
+if you are not John Smith please <log out>.
+}'
+
+This block might be invisible unless you are actually logged in.
+All text is displayed if javascript is disabled via the js- command,
+because css doesn't run without javascript.
+
+------------------------------------------------------------
+
+Use the help command for a quick list of all the edbrowse commands.
+This is a copy of the quick reference guide in usersguide.html.
+
+------------------------------------------------------------
+
+There is an in-built javascript dom debugger that you enter via the jdb command.
+. or bye to exit.
+Javascript expressions are evaluated, and the document objects are available.
+document.head is the head of your document <head>,
+document.body is the body <body>,
+document.body.firstChild is the first node under <body>, and so on.
+showscripts() shows all the javascripts, even those dynamically created.
+Such debugging is perhaps beyond the scope of this README file.
+Read the Debugging Javascript article in the edbrowse wiki.
 
