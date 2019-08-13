@@ -3156,6 +3156,7 @@ mw0.XMLHttpRequest = function(){
     this.headers = {};
     this.responseHeaders = {};
     this.aborted = false;//non-standard
+    this.withCredentials = true;
 };
 
 // defined by the standard: http://www.w3.org/TR/XMLHttpRequest/#xmlhttprequest
