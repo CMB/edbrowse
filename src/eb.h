@@ -403,6 +403,7 @@ struct ebFrame {
 	jsobjtype docobj;	/* window.document */
 	const struct MIMETYPE *mt;
 	void *cssmaster;
+	short jtmin;
 };
 extern struct ebFrame *cf;	/* current frame */
 

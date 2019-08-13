@@ -2634,10 +2634,16 @@ struct listHead timerList = {
 	&timerList, &timerList
 };
 
-// the spec says you can't run a timer less than 10 ms but here we currently use
-// 900 ms. This really should be a configurable limit.
-// If less than 100ms the load average jumps way up.  e.g.nasa.gov
-// We only rerender the screen every 20 seconds or so anyways.
+/*********************************************************************
+the spec says you can't run a timer less than 10 ms but here we currently use
+900 ms. This really should be a configurable limit.
+If less than 200ms the load average jumps way up.  e.g.nasa.gov
+We only rerender the screen every 20 seconds or so anyways.
+But, the acid test uses a timer to schedule each of its 100 tests,
+and is crazy slow if we throttle them.
+So ... the first few timers can run as fast  as they like,and we're ok
+with that, then timers slow down as we proceed.
+*********************************************************************/
 int timerResolution = 900;
 
 void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
@@ -2673,8 +2679,14 @@ void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 	}
 
 	jt = allocZeroMem(sizeof(struct jsTimer));
-	if (n < timerResolution)
-		n = timerResolution;
+	if (n < timerResolution) {
+		n = cf->jtmin;
+		if (!n)
+			n = 6;
+		if (n < timerResolution)
+			n += 4;
+		cf->jtmin = n;
+	}
 	jt->sec = n / 1000;
 	jt->ms = n % 1000;
 	if ((jt->isInterval = isInterval))
