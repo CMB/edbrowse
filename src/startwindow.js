@@ -1147,6 +1147,11 @@ else
 list.splice(idx, 0, r);
 }
 
+mw0.camelCase = function(t) {
+return t.replace(/-./g, function(f){return f[1].toUpperCase()});
+}
+mw0.dataCamel = function(t) { return mw0.camelCase(t.replace(/^data-/,"")); }
+
 mw0.CSSStyleDeclaration = function(){
         this.element = null;
         this.style = this;
@@ -1166,17 +1171,17 @@ mw0.CSSStyleDeclaration.prototype.getPropertyValue = function(p) {
 Object.defineProperty(mw0.CSSStyleDeclaration.prototype, "css$data", {
 get: function() { var s = ""; for(var i=0; i<this.childNodes.length; ++i) if(this.childNodes[i].nodeName == "#text") s += this.childNodes[i].data; return s; }});
 mw0.CSSStyleDeclaration.prototype.getProperty = function(p) {
-p = p.replace(/-./g, function(f){return f[1].toUpperCase()});
+p = mw0.camelCase(p);
 return this[p] ? this[p] : "";
 }
 mw0.CSSStyleDeclaration.prototype.setProperty = function(p, v, prv) {
-p = p.replace(/-./g, function(f){return f[1].toUpperCase()});
+p = mw0.camelCase(p);
 this[p] = v;
 var pri = p + "$pri";
 this[pri] = (prv === "important");
 }
 mw0.CSSStyleDeclaration.prototype.getPropertyPriority = function(p) {
-p = p.replace(/-./g, function(f){return f[1].toUpperCase()});
+p = mw0.camelCase(p);
 var pri = p + "$pri";
 return this[pri] ? "important" : "";
 }
@@ -1679,7 +1684,8 @@ return null;
 mw0.Attr = function(){ this.specified = false; this.owner = null; this.name = ""; }
 
 Object.defineProperty(mw0.Attr.prototype, "value", {
-get: function() { return this.owner[this.name]; },
+get: function() { var n = this.name;
+return n.substr(0,5) == "data-" ? (this.owner.dataset ? this.owner.dataset[mw0.dataCamel(n)] :  null)  : this.owner[n]; },
 set: function(v) {
 this.owner.setAttribute(this.name, v);
 this.specified = true;
@@ -1720,7 +1726,7 @@ if(mw0.implicitMember(this, name)) return null;
 // has to be a real attribute
 if(!this.attributes) return null;
 if(!this.attributes[name]) return null;
-var v = this[name];
+var v = this.attributes[name].value;
 if(v instanceof URL) return v.toString();
 var t = typeof v;
 if(t == "undefined") return null;
@@ -1735,25 +1741,30 @@ return this.getAttribute(name);
 mw0.hasAttributeNS = function(space, name) { return this.getAttributeNS(space, name) !== null;}
 
 mw0.setAttribute = function(name, v) { 
-var n = name.toLowerCase();
+name = name.toLowerCase();
 // special code for style
-if(n == "style" && this.style instanceof CSSStyleDeclaration) {
+if(name == "style" && this.style instanceof CSSStyleDeclaration) {
 this.style.cssText = v;
 return;
 }
-if(mw0.implicitMember(this, n)) return;
-if(v !== "from@@html") this[n] = v; 
+if(mw0.implicitMember(this, name)) return;
+if(v !== "from@@html") {
+if(name.substr(0,5) == "data-") {
+if(!this.dataset) this.dataset = {};
+this.dataset[mw0.dataCamel(name)] = v;
+} else this[name] = v; 
+}
 if(!this.attributes) this.attributes = new NamedNodeMap;
-if(this.attributes[n]) return;
+if(this.attributes[name]) return;
 var a = new Attr();
 a.owner = this;
-a.name = n;
+a.name = name;
 a.specified = true;
 // don't have to set value because there is a getter that grabs value
 // from the html node, see Attr class.
 this.attributes.push(a);
 // easy hash access
-this.attributes[n] = a;
+this.attributes[name] = a;
 }
 mw0.markAttribute = function(name) { this.setAttribute(name, "from@@html"); }
 mw0.setAttributeNS = function(space, name, v) {
@@ -1762,28 +1773,34 @@ this.setAttribute(name, v);
 }
 
 mw0.removeAttribute = function(name) {
-    var n = name.toLowerCase();
+    name = name.toLowerCase();
 // special code for style
-if(n == "style" && this.style instanceof CSSStyleDeclaration) {
+if(name == "style" && this.style instanceof CSSStyleDeclaration) {
 // wow I have no clue what this means but it happens, https://www.maersk.com
 return;
 }
-    if (this[n]) delete this[n];
+if(name.substr(0,5) == "data-") {
+var n = mw0.dataCamel(name);
+if(this.dataset && this.dataset[n]) delete this.dataset[n];
+} else {
+    if (this[name]) delete this[name];
+}
 // acid test 59 says there's some weirdness regarding button.type
-if(n === "type" && this.nodeName == "BUTTON") this[n] = "submit";
+if(name === "type" && this.nodeName == "BUTTON") this[name] = "submit";
 // acid test 48 removes class before we can check its visibility.
 // class is undefined and last$class is undefined, so getComputedStyle is never called.
-if(n === "class" && !this.last$class) this.last$class = "@@";
-var a = this.attributes[n]; // hash access
+if(name === "class" && !this.last$class) this.last$class = "@@";
+var a = this.attributes[name]; // hash access
 if(!a) return;
 // Have to roll our own splice.
-var found = false;
-for(var i=0; i<this.attributes.length-1; ++i) {
+var i, found = false;
+for(i=0; i<this.attributes.length-1; ++i) {
 if(!found && this.attributes[i] == a) found = true;
 if(found) this.attributes[i] = this.attributes[i+1];
 }
-this.attributes.length--;
-delete this.attributes[n];
+this.attributes.length = i;
+delete this.attributes[i];
+delete this.attributes[name];
 }
 mw0.removeAttributeNS = function(space, name) {
 if(space && !name.match(/:/)) name = space + ":" + name;
@@ -1791,14 +1808,14 @@ this.removeAttribute(name);
 }
 
 mw0.getAttributeNode = function(name) {
-    var n = name.toLowerCase();
+    name = name.toLowerCase();
 // this returns null if no such attribute, is that right,
 // or should we return a new Attr node with no value?
-return this.attributes[n] ? this.attributes[n] : null;
+return this.attributes[name] ? this.attributes[name] : null;
 /*
 a = new Attr;
 a.owner = this;
-a.name = n;
+a.name = name;
 return a;
 */
 }
