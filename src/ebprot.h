@@ -425,6 +425,7 @@ void cssDocLoad(jsobjtype thisobj, char *s, bool pageload);
 void cssFree(struct ebFrame *f);
 jsobjtype querySelectorAll(const char *selstring, jsobjtype topobj);
 jsobjtype querySelector(const char *selstring, jsobjtype topobj);
+bool querySelector0(const char *selstring, jsobjtype topobj);
 void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination);
 void cssText(jsobjtype node, const char *rulestring);
 

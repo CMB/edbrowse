@@ -312,7 +312,7 @@ static void cssAtomic(struct asel *a);
 static void cssParseLeft(struct desc *d);
 static void cssModify(struct asel *a, const char *m1, const char *m2);
 static void chainFree(struct asel *asel);
-static bool onematch, skiproot, gcsmatch, bulkmatch, bulktotal;
+static bool onematch, topmatch, skiproot, gcsmatch, bulkmatch, bulktotal;
 static char matchtype;		// 0 plain 1 before 2 after
 static bool matchhover;		// match on :hover selectors.
 static jsobjtype rootobj;
@@ -2872,6 +2872,8 @@ static void build1_doclist(struct htmlTag *t)
 	}
 	doclist[doclist_n++] = t;
 	t->highspec = 0;
+	if (topmatch)		// top only
+		return;
 // can't descend into another frame
 	if (t->action == TAGACT_FRAME)
 		return;
@@ -2918,6 +2920,8 @@ static struct htmlTag **qsaInternal(const char *selstring, struct htmlTag *top)
 	}
 	build_doclist(top);
 	skiproot = ! !top;
+	if (topmatch)
+		skiproot = false;
 	a = qsa2(d0);
 	nzFree(doclist);
 	cssPiecesFree(d0);
@@ -2972,6 +2976,24 @@ jsobjtype querySelector(const char *selstring, jsobjtype topobj)
 		node = a[0]->jv;
 	nzFree(a);
 	return node;
+}
+
+bool querySelector0(const char *selstring, jsobjtype topobj)
+{
+	struct htmlTag *top = 0, **a;
+	jsobjtype node = 0;
+	rootobj = topobj;
+	if (topobj)
+		top = tagFromJavaVar(topobj);
+	onematch = topmatch = true;
+	a = qsaInternal(selstring, top);
+	onematch = topmatch = false;
+	if (!a)
+		return false;
+	if (a[0])
+		node = a[0]->jv;
+	nzFree(a);
+	return (node ? true : false);
 }
 
 // replace each attr(foo) with the value of attribute foo

@@ -1322,6 +1322,22 @@ static duk_ret_t native_qs(duk_context * cx)
 	return 1;
 }
 
+// querySelector0
+static duk_ret_t native_qs0(duk_context * cx)
+{
+	jsobjtype root;
+	bool rc;
+	const char *selstring = duk_get_string(cx, 0);
+	duk_push_this(cx);
+	root = duk_get_heapptr(cx, -1);
+	duk_pop(cx);
+	jsInterruptCheck();
+	rc = querySelector0(selstring, root);
+	duk_pop(cx);
+	duk_push_boolean(cx, rc);
+	return 1;
+}
+
 static duk_ret_t native_cssApply(duk_context * cx)
 {
 	jsInterruptCheck();
@@ -1426,6 +1442,8 @@ void createJavaContext_nat(void)
 	duk_put_global_string(jcx, "querySelectorAll");
 	duk_push_c_function(jcx, native_qs, DUK_VARARGS);
 	duk_put_global_string(jcx, "querySelector");
+	duk_push_c_function(jcx, native_qs0, 1);
+	duk_put_global_string(jcx, "querySelector0");
 	duk_push_c_function(jcx, native_cssApply, 3);
 	duk_put_global_string(jcx, "eb$cssApply");
 	duk_push_c_function(jcx, native_cssText, 1);

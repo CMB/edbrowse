@@ -38,6 +38,7 @@ my$doc = function() { return document; }
 document.eb$apch2 = function(c) { alert("append " + c.nodeName  + " to " + this.nodeName); this.childNodes.push(c); }
 querySelectorAll = function() { return [] ; }
 querySelector = function() { return {} ; }
+querySelector0 = function() { return false; }
 eb$cssText = function(){}
 }
 
@@ -2502,6 +2503,7 @@ c.prototype.getElementsByClassName = mw0.getElementsByClassName;
 c.prototype.contains = mw0.nodeContains;
 c.prototype.querySelectorAll = querySelectorAll;
 c.prototype.querySelector = querySelector;
+c.prototype.matches = querySelector0;
 // children
 c.prototype.hasChildNodes = mw0.hasChildNodes;
 c.prototype.appendChild = mw0.appendChild;
@@ -3365,6 +3367,8 @@ mw0.jtfn0 = function (all, a, b)
 // if code is not deminimized, this will inject
 // trace on every blank line, which is not good.
 if(b == "\n" && a.match(/\n/)) return a+b;
+// I don't want to match on function(){var either.
+if(b != "\n" && !a.match(/\n/)) return a+b;
 var w = my$win();
 var c = w.$jt$c;
 var sn = w.$jt$sn;
