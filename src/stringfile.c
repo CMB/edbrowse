@@ -835,6 +835,18 @@ void caseShift(char *s, char action)
 	}			/* loop */
 }				/* caseShift */
 
+// foo-bar has to become fooBar
+void camelCase(char *s)
+{
+	char *t, *w;
+	for (t = w = s; *t; ++t)
+		if (*t == '-' && isalpha(t[1]))
+			t[1] = toupper(t[1]);
+		else
+			*w++ = *t;
+	*w = 0;
+}
+
 /*********************************************************************
 Manage files, directories, and terminal IO.
 You'll see some conditional compilation when this program

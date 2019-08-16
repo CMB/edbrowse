@@ -1591,7 +1591,7 @@ static void pushAttributes(const struct htmlTag *t)
 			if (dso) {
 // must convert to camelCase
 				char *a2 = cloneString(a[i] + 5);
-				cssAttributeCrunch(a2);
+				camelCase(a2);
 				set_property_string(dso, a2, u);
 				nzFree(a2);
 			}
@@ -2235,7 +2235,7 @@ static void processStyles(jsobjtype so, const char *stylestring)
 			trimWhite(sv);
 // the property name has to be nonempty
 			if (*s) {
-				cssAttributeCrunch(s);
+				camelCase(s);
 				set_property_string(so, s, sv);
 // Should we set a specification level here, perhaps high,
 // so the css sheets don't overwrite it?

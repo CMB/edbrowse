@@ -325,6 +325,7 @@ bool fdIntoMemory(int fd, char **data, int *len) ;
 bool fileIntoMemory(const char *filename, char **data, int *len) ;
 bool memoryOutToFile(const char *filename, const char *data, int len, int msgcreate, int msgwrite) ;
 void caseShift(char *s, char action) ;
+void camelCase(char *s);
 char fileTypeByName(const char *name, bool showlink) ;
 char fileTypeByHandle(int fd) ;
 off_t fileSizeByName(const char *name) ;
@@ -424,7 +425,6 @@ void cssDocLoad(jsobjtype thisobj, char *s, bool pageload);
 void cssFree(struct ebFrame *f);
 jsobjtype querySelectorAll(const char *selstring, jsobjtype topobj);
 jsobjtype querySelector(const char *selstring, jsobjtype topobj);
-void cssAttributeCrunch(char *s);
 void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination);
 void cssText(jsobjtype node, const char *rulestring);
 

@@ -1106,7 +1106,7 @@ lastrule:
 			a = allocMem(t - r1 + 1);
 			memcpy(a, r1, t - r1);
 			a[t - r1] = 0;
-			cssAttributeCrunch(a);
+			camelCase(a);
 			rule->atname = a;
 			++t;
 			while (isspace(*t))
@@ -2191,7 +2191,19 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			if (bulkmatch && t)
 				v = (char *)attribVal(t, p + 1);
 			else if (obj) {
-				v = get_property_string_nat(obj, p + 1);
+				if (!strncmp(p + 1, "data-", 5)) {
+					jsobjtype ds =
+					    get_property_object_nat(obj,
+								    "dataset");
+					if (ds) {
+						char *k = cloneString(p + 6);
+						camelCase(k);
+						v = get_property_string_nat(ds,
+									    k);
+						nzFree(k);
+					}
+				} else
+					v = get_property_string_nat(obj, p + 1);
 				valloc = true;
 			}
 			if (cut)
@@ -2960,18 +2972,6 @@ jsobjtype querySelector(const char *selstring, jsobjtype topobj)
 		node = a[0]->jv;
 	nzFree(a);
 	return node;
-}
-
-// foo-bar has to become fooBar
-void cssAttributeCrunch(char *s)
-{
-	char *t, *w;
-	for (t = w = s; *t; ++t)
-		if (*t == '-' && isalpha(t[1]))
-			t[1] = toupper(t[1]);
-		else
-			*w++ = *t;
-	*w = 0;
 }
 
 // replace each attr(foo) with the value of attribute foo
