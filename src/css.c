@@ -3050,7 +3050,7 @@ Set a flag if that is found.
 
 static void do_rules(jsobjtype obj, struct rule *r0, int highspec)
 {
-	struct rule *r;
+	struct rule *r, *r1;
 	char *s, *s_attr;
 	int sl;
 	jsobjtype textobj, original = obj;
@@ -3168,11 +3168,18 @@ in fact it's easier to list the tags that allow it.
 		if (has && !what)
 			continue;
 
-// only write if the specificity is higher
+// don't repeat an attribute. Hardly ever happens except for acid test 0.
+		for (r1 = r0; r1 != r; r1 = r1->next)
+			if (stringEqual(r1->atname, r->atname))
+				break;
+		if (r1 != r)
+			continue;
+
+// Don't write if the specificity is less
 		a = allocMem(strlen(r->atname) + 6);
 		sprintf(a, "%s$$scy", r->atname);
 		spec = get_property_number_nat(obj, a);
-		if (spec >= highspec) {
+		if (spec > highspec) {
 			free(a);
 			continue;
 		}

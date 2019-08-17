@@ -3727,12 +3727,10 @@ var css_all = "";
 w.cssSource = [];
 var a, i, t;
 
-// Usually <link> tags come before <style> tags, and thus take precedence.
-// But it doesn't have to be this way; we should probably take
-// <link> and <style> tags in tree order.
-a = d.getElementsByTagName("link");
+a = d.querySelectorAll("link,style");
 for(i=0; i<a.length; ++i) {
 t = a[i];
+if(t instanceof Link) {
 if(t.css$data && (
 t.type && t.type.toLowerCase() == "text/css" ||
 t.rel && t.rel.toLowerCase() == "stylesheet")) {
@@ -3741,14 +3739,13 @@ css_all += "@ebdelim0" + t.href + "{}\n";
 css_all += t.css$data;
 }
 }
-
-// <style> tags in the html.
-a = d.getElementsByTagName("style");
-if(a.length)
+if(t instanceof CSSStyleDeclaration) {
+if(t.css$data) {
+w.cssSource.push({data: t.css$data, src:w.eb$base});
 css_all += "@ebdelim0" + w.eb$base + "{}\n";
-for(i=0; i<a.length; ++i) {
-t = a[i];
-if(t.css$data) w.cssSource.push({data: t.css$data, src:w.eb$base}), css_all += t.css$data;
+css_all += t.css$data;
+}
+}
 }
 
 // If the css didn't change, then no need to rebuild the selectors
