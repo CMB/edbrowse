@@ -1165,6 +1165,7 @@ this.textTransform = "none";
 };
 mw0.CSSStyleDeclaration.prototype.toString = function() { return "style object"; }
 mw0.CSSStyleDeclaration.prototype.getPropertyValue = function(p) {
+p = mw0.camelCase(p);
                 if (this[p] == undefined)                
                         this[p] = "";
                         return this[p];
