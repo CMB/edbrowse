@@ -1284,9 +1284,11 @@ If it was set by the css system, and is no longer,
 maybe we shouldn't carry it across.
 Acid test: see how the slash comes back to light after class hidden is removed.
 <span id="slash" class="hidden">/</span>
+Specificity indicates it comes from css, except for 100000,
+which is style.cssText = "color:green", and that should carry across.
 *********************************************************************/
 
-if(!s[k] &&  e.style[k+"$$scy"]) continue;
+if(!s[k] &&  e.style[k+"$$scy"] < 100000) continue;
 
 // Ok carry this one across.
 s[k] = e.style[k];
