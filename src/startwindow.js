@@ -1160,8 +1160,6 @@ mw0.CSSStyleDeclaration = function(){
 this.ownerDocument = my$doc();
 this.attributes.owner = this;
 this.sheet = new mw0.CSSStyleSheet;
-// I guess this is default behavior; acid 46
-this.textTransform = "none";
 };
 mw0.CSSStyleDeclaration.prototype.toString = function() { return "style object"; }
 mw0.CSSStyleDeclaration.prototype.getPropertyValue = function(p) {
@@ -1207,13 +1205,15 @@ mw0.getComputedStyle = function(e,pe) {
 	// disregarding pseudoelements for now
 var s;
 
-// Some sites call getComputedStyle on the same node over and over again.
-// http://songmeanings.com/songs/view/3530822107858535238/
-// Can we remember the previous call and just return the same style object?
-// Can we know that nothing has changed in between the two calls?
-// I can track when the tree changes, and even the class,
-// but what about individual attributes?
-// I haven't found a way to do this without breaking acid test 33 and others.
+/*********************************************************************
+Some sites call getComputedStyle on the same node over and over again.
+http://songmeanings.com/songs/view/3530822107858535238/
+Can we remember the previous call and just return the same style object?
+Can we know that nothing has changed in between the two calls?
+I can track when the tree changes, and even the class,
+but what about individual attributes?
+I haven't found a way to do this without breaking acid test 33 and others.
+*********************************************************************/
 
 s = new CSSStyleDeclaration;
 s.element = e;
@@ -1239,14 +1239,66 @@ Any information we might have saved about nodes and descriptors,
 for speed and optimization, is lost if the version changes.
 *********************************************************************/
 
+// remember that this is the window object
 mw0.cssGather(false, this);
 
+/* I don't know where I was going with this.
 if(e.css$v != this.css$ver || e.last$class != e.class || e.last$id != e.id)
 e.css$out = "";
+*/
 
 eb$cssApply(this, e, s);
-
 e.last$class = e.class, e.last$id = e.id, e.css$v = this.css$ver;
+
+/*********************************************************************
+Now for the confusion.
+https://developer.mozilla.org/en-US/docs/Web/API/Window/getComputedStyle
+Very clearly states s is the result of css pages and <style> tags,
+and not javascript assigned values.
+
+  The returned object is the same {CSSStyleDeclaration} type as the object
+  returned from the element's {style} property.
+  However, the two objects have different purposes:
+  * The object from getComputedStyle is read-only,
+  and should be used to inspect the element's style — including those set by a
+  <style> element or an external stylesheet.
+  * The element.style object should be used to set styles on that element,
+  or inspect styles directly added to it from JavaScript manipulation or the
+  global style attribute.
+
+In stark contradiction to this paragraph,
+browsers carry the style attributes across no matter how they were set.
+Huh???
+Well we have to do the same so here we go.
+*********************************************************************/
+
+if(e.style) {
+for(var k in e.style) {
+if(!e.style.hasOwnProperty(k)) continue;
+if(k.match(/\$(\$scy|pri)$/)) continue;
+if(typeof e.style[k] == 'object') continue;
+
+/*********************************************************************
+This should be a real attribute now.
+If it was set by the css system, and is no longer,
+maybe we shouldn't carry it across.
+Acid test: see how the slash comes back to light after class hidden is removed.
+<span id="slash" class="hidden">/</span>
+*********************************************************************/
+
+if(!s[k] &&  e.style[k+"$$scy"]) continue;
+
+// Ok carry this one across.
+s[k] = e.style[k];
+}
+}
+
+if(!s.textTransform) {
+// I guess this is default behavior; acid 46
+s.textTransform = "none";
+// Are there other defaults I should know about?
+}
+
 return s;
 }
 
