@@ -2682,9 +2682,9 @@ void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 	if (n < timerResolution) {
 		n = cf->jtmin;
 		if (!n)
-			n = 6;
+			n = 10;
 		if (n < timerResolution)
-			n += 4;
+			n += 3;
 		cf->jtmin = n;
 	}
 	jt->sec = n / 1000;

@@ -775,6 +775,7 @@ mw0.Node = function(){}
 mw0.HTML = function(){}
 // Some screen attributes that are suppose to be there.
 mw0.HTML.prototype = {
+doScroll: eb$voidfunction,
 clientHeight: 768,  clientWidth: 1024,  offsetHeight: 768,  offsetWidth: 1024,
  scrollHeight: 768,  scrollWidth: 1024,  scrollTop: 0,  scrollLeft: 0};
 // is there a difference between DocType ad DocumentType?
@@ -798,6 +799,7 @@ return a;
 }});
 mw0.Body = function(){}
 mw0.Body.prototype = {
+doScroll: eb$voidfunction,
 clientHeight: 768,  clientWidth: 1024,  offsetHeight: 768,  offsetWidth: 1024,
  scrollHeight: 768,  scrollWidth: 1024,  scrollTop: 0,  scrollLeft: 0};
 mw0.Base = function(){}
@@ -943,11 +945,13 @@ mw0.tFoot = function(){ this.rows = []; }
 mw0.tCap = function(){}
 mw0.Table = function(){ this.rows = []; this.tBodies = []; }
 mw0.Div = function(){}
+mw0.Div.prototype.doScroll = eb$voidfunction;
 mw0.Label = function(){}
 Object.defineProperty(mw0.Label.prototype, "htmlFor", { get: function() { return this.getAttribute("for"); }, set: function(h) { this.setAttribute("for", h); }});
 mw0.HtmlObj = function(){}
 mw0.Area = function(){}
 mw0.Span = function(){}
+mw0.Span.prototype.doScroll = eb$voidfunction;
 mw0.tRow = function(){ this.cells = []; }
 mw0.Cell = function(){}
 mw0.P = function(){}
@@ -1297,7 +1301,7 @@ s[k] = e.style[k];
 }
 
 if(!s.textTransform) {
-// I guess this is default behavior; acid 46
+// I guess this is default behavior; acid test 46
 s.textTransform = "none";
 // Are there other defaults I should know about?
 }
