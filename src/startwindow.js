@@ -1248,7 +1248,6 @@ e.css$out = "";
 */
 
 eb$cssApply(this, e, s);
-e.last$class = e.class, e.last$id = e.id, e.css$v = this.css$ver;
 
 /*********************************************************************
 Now for the confusion.
@@ -1266,7 +1265,9 @@ and not javascript assigned values.
   or inspect styles directly added to it from JavaScript manipulation or the
   global style attribute.
 
-In stark contradiction to this paragraph,
+See - if js sets a style attribute directly it is not suppose to carry
+across to the new style object.
+But in stark contradiction to this paragraph,
 browsers carry the style attributes across no matter how they were set.
 Huh???
 Well we have to do the same so here we go.
@@ -3853,6 +3854,7 @@ if(t.class != t.last$class) {
 alert4("restyle " + t.nodeName + "." + t.last$class + ">" + t.class);
 var so = getComputedStyle(t, 0);
 t.style = so;
+t.last$class = t.class, t.last$id = t.id;
 }
 
 if(so.display == "none" || so.visibility == "hidden") {
