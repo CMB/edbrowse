@@ -65,6 +65,8 @@ the button being pushed or the onclick code or whatever frame is appropriate.
 
 void jSideEffects(void)
 {
+	if (!cw->browseMode || !isJSAlive)
+		return;
 	debugPrint(4, "jSideEffects starts");
 	runScriptsPending();
 	cw->mustrender = true;
