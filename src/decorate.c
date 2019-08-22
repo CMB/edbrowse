@@ -658,7 +658,8 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 						t->javapost = true;
 					else if (stringEqualCI(prot, "https"))
 						t->secure = true;
-					else if (!stringEqualCI(prot, "http"))
+					else if (!stringEqualCI(prot, "http") &&
+						 !stringEqualCI(prot, "gopher"))
 						debugPrint(3,
 							   "form cannot submit using protocol %s",
 							   prot);

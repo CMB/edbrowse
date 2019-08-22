@@ -1838,7 +1838,8 @@ bool infPush(int tagno, char **post_string)
 			setError(MSG_BecameInsecure);
 			return false;
 		}
-	} else if (!stringEqualCI(prot, "https")) {
+	} else if (!stringEqualCI(prot, "https") &&
+		   !stringEqualCI(prot, "gopher")) {
 		setError(MSG_SubmitProtBad, prot);
 		return false;
 	}
