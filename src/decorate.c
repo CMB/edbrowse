@@ -1594,8 +1594,9 @@ static void pushAttributes(const struct htmlTag *t)
 				camelCase(a2);
 				set_property_string(dso, a2, u);
 				nzFree(a2);
+				run_function_onestring(t->jv, "markAttribute",
+						       a[i]);
 			}
-// I don't set the original attribute data-foo, should I?
 			continue;
 		}
 
