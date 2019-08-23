@@ -255,7 +255,7 @@ static CURLcode fetch_internet(struct i_get *g)
 * 5 disk download background prefork
  * 6 mime type says this should be a stream */
 size_t
-eb_curl_callback(char *incoming, size_t size, size_t nitems, struct i_get * g)
+eb_curl_callback(char *incoming, size_t size, size_t nitems, struct i_get *g)
 {
 	size_t num_bytes = nitems * size;
 	int dots1, dots2, rc;
@@ -1558,14 +1558,18 @@ static void gopher_ls_line(struct i_get *g, char *line)
 		stringAndChar(&g->buffer, &g->length, '\n');
 		return;
 	}
-// everything else becomes hyperlink
+// everything else becomes hyperlink apart from item type 7 which becomes form
 	if (host) {
 		char qc = '"';
 // I just assume host and path can be quoted with either " or '
 		if (strchr(host, qc)	// should never happen
 		    || strchr(pathname, qc))
 			qc = '\'';
-		stringAndString(&g->buffer, &g->length, "<a href=x");
+		if (first != '7')
+			stringAndString(&g->buffer, &g->length, "<a href=x");
+		else
+			stringAndString(&g->buffer, &g->length,
+					"<form method='get' action=x");
 		g->buffer[g->length - 1] = qc;
 
 		pathname = encodePostData(pathname, "./-_$");
@@ -1593,9 +1597,15 @@ static void gopher_ls_line(struct i_get *g, char *line)
 		s = 0;
 	if (s)
 		*s = 0;
+
 	prepHtmlString(g, text);
-	if (host)
-		stringAndString(&g->buffer, &g->length, "</a>");
+	if (host) {
+		if (first == '7')
+			stringAndString(&g->buffer, &g->length,
+					" <input type='text' /> <input type='submit' /></form>");
+		else
+			stringAndString(&g->buffer, &g->length, "</a>");
+	}
 	if (s) {
 		*s = '(';
 		prepHtmlString(g, s);
@@ -1637,7 +1647,7 @@ void ebcurl_setError(CURLcode curlret, const char *url, int action,
 		     const char *curl_error)
 {
 	char prot[MAXPROTLEN], host[MAXHOSTLEN];
-	void (*fn) (int, ...);
+	void (*fn)(int, ...);
 
 	if (!getProtHostURL(url, prot, host)) {
 /* this should never happen */
@@ -2495,7 +2505,7 @@ static void background_download(struct i_get *g)
 		return;
 	}
 
-/* ignore interrupt, not sure about quit and hangup */
+	/* ignore interrupt, not sure about quit and hangup */
 	signal(SIGINT, SIG_IGN);
 	g->down_state = 4;
 }				/* background_download */
@@ -2829,7 +2839,7 @@ int frameExpandLine(int ln, jsobjtype fo)
 			return 3;
 		}
 
-/*********************************************************************
+       /*********************************************************************
 readFile could return success and yet serverData is null.
 This happens if httpConnect did something other than fetching data,
 like playing a stream. Does that happen, even in a frame?
@@ -3061,7 +3071,7 @@ bool reexpandFrame(void)
 		changeFileName = 0;
 	}
 
-/* don't print the size of what we just fetched */
+	/* don't print the size of what we just fetched */
 	fileSize = -1;
 
 	cf->hbase = cloneString(cf->fileName);
