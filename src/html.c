@@ -1906,6 +1906,10 @@ bool infPush(int tagno, char **post_string)
 		*post_string = 0;
 		return rc;
 	}
+// gopher submit is one input field with no name;
+// the leading = doesn't belong.
+	if (pfs[actlen] == '=' && stringEqualCI(prot, "gopher"))
+		strmove(pfs + actlen, pfs + actlen + 1);
 
 	*post_string = pfs;
 	return true;

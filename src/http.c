@@ -2839,7 +2839,7 @@ int frameExpandLine(int ln, jsobjtype fo)
 			return 3;
 		}
 
-       /*********************************************************************
+/*********************************************************************
 readFile could return success and yet serverData is null.
 This happens if httpConnect did something other than fetching data,
 like playing a stream. Does that happen, even in a frame?
