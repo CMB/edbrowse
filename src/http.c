@@ -1572,10 +1572,13 @@ static void gopher_ls_line(struct i_get *g, char *line)
 					"<form method='get' action=x");
 		g->buffer[g->length - 1] = qc;
 
-		pathname = encodePostData(pathname, "./-_$");
 		if (!strncmp(pathname, "URL:", 4)) {
+// Full URL in path so use it unencoded
 			stringAndString(&g->buffer, &g->length, pathname + 4);
+			pathname = 0;
 		} else {
+// Just a path
+			pathname = encodePostData(pathname, "./-_$");
 			stringAndString(&g->buffer, &g->length, "gopher://");
 			stringAndString(&g->buffer, &g->length, host);
 			if (port && port != 70) {
@@ -2839,7 +2842,7 @@ int frameExpandLine(int ln, jsobjtype fo)
 			return 3;
 		}
 
-/*********************************************************************
+       /*********************************************************************
 readFile could return success and yet serverData is null.
 This happens if httpConnect did something other than fetching data,
 like playing a stream. Does that happen, even in a frame?
