@@ -944,8 +944,7 @@ Only the first 500 characters of a line are displayed.
 The rest of the line is in the buffer, and can even be modified via a substitute command,
 but if you want to see it, you will need to split it,
 as in the doghouse example above.
-You can change the number of characters displayed by setting the linelength parameter in your config file,
-or by the ll command.
+You can change the number of characters displayed by using the ll command.
 
 <LI><P>
 a+ adds text, like a, but also adds the line you last typed,
@@ -3291,14 +3290,6 @@ These are decimal megabytes, not binary 0x100000 megabytes -
 there is only a slight difference.
 
 <P>
-linelength = 1000
-<P>
-Change the length of a printed line.
-The default is 500, and the minimum is 80.
-A line that exceeds its length is faithfully represented internally,
-but is truncated on the display, as indicated by trailing dots...
-
-<P>
 nojs = space.com
 <P>
 Specify domains that don't need javascript.
@@ -3306,8 +3297,6 @@ You can eliminate annoying error messages and speed up access
 by disabling javascript for certain websites.
 Javascript will not be run on pages within these domains,
 nor will it be fetched from these domains.
-
-<P>
 The above directive will also drop javascript from subdomains such as www.space.com.
 
 <P>

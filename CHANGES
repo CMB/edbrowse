@@ -1,5 +1,8 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.7.6
+Search function on gopher.
+
 3.7.5:
 ib command to allocate input buffers for textareas.
 

@@ -1084,7 +1084,7 @@ static const char *const keywords[] = {
 	"downdir", "maildir", "agent",
 	"jar", "nojs", "cachedir",
 	"webtimer", "mailtimer", "certfile", "datasource", "proxy",
-	"linelength", "localizeweb", "notused33", "novs", "cachesize",
+	"notused31", "localizeweb", "notused33", "novs", "cachesize",
 	"adbook", 0
 };
 
@@ -1583,12 +1583,6 @@ putc:
 			}
 			if (!stringEqualCI(v, "direct"))
 				px->proxy = v;
-			continue;
-
-		case 31:	/* linelength */
-			displayLength = atoi(v);
-			if (displayLength < 80)
-				displayLength = 80;
 			continue;
 
 		case 32:	/* localizeweb */
