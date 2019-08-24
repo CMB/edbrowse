@@ -280,6 +280,7 @@ extern bool debugClone, debugEvent, debugThrow, debugCSS;
 extern bool demin; // deminimize javascript
 extern bool uvw; // trace points
 extern bool gotimers; // run javascript timers
+extern int rr_interval; // rerender the screen after this many seconds
 extern FILE *debugFile;
 extern char *debugFileName;
 extern char *sslCerts;		/* ssl certificates to validate the secure server */

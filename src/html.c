@@ -2346,6 +2346,7 @@ static bool activeBelow(struct htmlTag *t)
 static int hovcount, invcount, injcount;
 
 /* Rerender the buffer and notify of any lines that have changed */
+int rr_interval = 20;
 void rerender(bool rr_command)
 {
 	char *a, *snap, *newbuf;
@@ -2357,7 +2358,7 @@ void rerender(bool rr_command)
 	debugPrint(4, "rerender");
 	cw->mustrender = false;
 	time(&cw->nextrender);
-	cw->nextrender += 20;
+	cw->nextrender += rr_interval;
 	hovcount = invcount = injcount = 0;
 
 // not sure if we have to do this here

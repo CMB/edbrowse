@@ -3964,6 +3964,11 @@ static int twoLetter(const char *line, const char **runThis)
 		return true;
 	}
 
+if(!strncmp(line, "rr ", 3) && isdigit(line[3])) {
+rr_interval = atoi(line+3);
+return true;
+}
+
 	if (line[0] == 'u' && line[1] == 'a' && isdigitByte(line[2])
 	    && (!line[3] || (isdigitByte(line[3]) && !line[4]))) {
 		char *t = 0;
