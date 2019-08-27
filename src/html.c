@@ -533,10 +533,11 @@ void prepareScript(struct htmlTag *t)
 		if (!javaOK(t->href))
 			goto fail;
 		from_data = isDataURI(t->href);
-		if (!from_data)
+		if (!from_data) {
 			altsource = fetchReplace(t->href);
-		if (!altsource)
-			altsource = t->href;
+			if (!altsource)
+				altsource = t->href;
+		}
 		debugPrint(3, "js source %s",
 			   !from_data ? altsource : "data URI");
 		if (from_data) {
@@ -557,6 +558,7 @@ void prepareScript(struct htmlTag *t)
 			if (!fileIntoMemory(h, &b, &blen)) {
 				if (debugLevel >= 1)
 					i_printf(MSG_GetLocalJS);
+				nzFree(h);
 				goto fail;
 			}
 			js_text = force_utf8(b, blen);
@@ -567,26 +569,33 @@ void prepareScript(struct htmlTag *t)
 			nzFree(h);
 		} else {
 			struct i_get g;
-			memset(&g, 0, sizeof(g));
-			g.thisfile = cf->fileName;
-			g.uriEncoded = true;
-			g.url = t->href;
-			if (down_abg && !demin && !uvw)
-				g.down_force = true;
-			if (!httpConnect(&g)) {
-				if (debugLevel >= 3)
-					i_printf(MSG_GetJS2);
-				goto fail;
+
+// this has to happen before threads spin off
+			if (!curlActive) {
+				eb_curl_global_init();
+				cookiesFromJar();
+				setupEdbrowseCache();
 			}
-			if (g.down_force) {
-				t->loadpid = g.down_pid;
+
+			if (down_abg && !demin && !uvw
+			    && !pthread_create(&t->loadthread, NULL,
+					       httpConnectBack2, (void *)t)) {
 				t->js_ln = 1;
-				js_file = (!from_data ? altsource : "data_URI");
+				js_file = altsource;
 				filepart = getFileURL(js_file, true);
 				t->js_file = cloneString(filepart);
 // stop here and wait for the child process to download
 				t->step = 3;
 				return;
+			}
+			memset(&g, 0, sizeof(g));
+			g.thisfile = cf->fileName;
+			g.uriEncoded = true;
+			g.url = t->href;
+			if (!httpConnect(&g)) {
+				if (debugLevel >= 3)
+					i_printf(MSG_GetJS2);
+				goto fail;
 			}
 			if (g.code == 200) {
 				js_text = force_utf8(g.buffer, g.length);
@@ -714,12 +723,11 @@ top:
 			continue;
 		if (t->step == 3) {
 // waiting for background process to load
-			int status;
-			js_file = jsBackFile(t->loadpid);
-			waitpid(t->loadpid, &status, 0);
-			if (!WIFEXITED(status) || WEXITSTATUS(status)) {
+			pthread_join(t->loadthread, NULL);
+			js_file = jsBackFile(t->loadtsn);
+			if (!t->loadsuccess) {
 				if (debugLevel >= 3)
-					i_printf(MSG_GetJS, t->href, 64);
+					i_printf(MSG_GetJS, t->href, t->hcode);
 noload:
 				unlink(js_file);
 				nzFree(js_file);
@@ -754,7 +762,7 @@ noload:
 			t->step = 4;	// loaded
 		}
 		t->step = 5;	// now running the script
-// inerrupt test should probably be higher up - before the wait
+// inerrupt test should probably be higher up - before the pthread_join
 		if (intFlag)
 			continue;
 		cf = t->f0;

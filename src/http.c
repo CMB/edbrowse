@@ -19,13 +19,13 @@ CURL *global_http_handle;
 CURLSH *global_share_handle;
 bool pluginsOn = true;
 bool down_bg;			// download in background
-bool down_abg;			// automatic download of js in background
+bool down_abg = true;		// auto download js in background
 char showProgress = 'd';	// dots
 static char *httpLanguage;	/* outgoing */
 
 struct BG_JOB {
 	struct BG_JOB *next, *prev;
-	int pid, state;
+	int state;
 	size_t fsize;		// file size
 	int file2;		// offset into filename
 	char file[4];
@@ -34,7 +34,6 @@ static struct listHead down_jobs = {
 	&down_jobs, &down_jobs
 };
 
-static void background_download(struct i_get *g);
 static void setup_download(struct i_get *g);
 static CURL *http_curl_init(struct i_get *g);
 static size_t curl_header_callback(char *header_line, size_t size, size_t nmemb,
@@ -230,6 +229,10 @@ static void i_get_free(struct i_get *g, bool nodata)
 // should not be necessary, but just to be safe:
 	g->headers = g->urlcopy = g->cdfn = g->etag = g->newloc = 0;
 	g->down_file = 0;
+	if (g->down_fd > 0) {
+		close(g->down_fd);
+		g->down_fd = 0;
+	}
 }
 
 /* actually run the curl request, http or ftp or whatever */
@@ -249,13 +252,13 @@ static CURLcode fetch_internet(struct i_get *g)
  * -1 user aborted the download
  * 0 standard in-memory download
  * 1 download but stop and ask user if he wants to download to disk
-* 2 disk download foreground
-* 3 disk download background parent
-* 4 disk download background child
-* 5 disk download background prefork
+* 2 disk download in foreground
+* 3 disk download parent thread
+* 4 disk download child thread
+* 5 disk download before the thread is spawned
  * 6 mime type says this should be a stream */
 size_t
-eb_curl_callback(char *incoming, size_t size, size_t nitems, struct i_get *g)
+eb_curl_callback(char *incoming, size_t size, size_t nitems, struct i_get * g)
 {
 	size_t num_bytes = nitems * size;
 	int dots1, dots2, rc;
@@ -307,13 +310,12 @@ eb_curl_callback(char *incoming, size_t size, size_t nitems, struct i_get *g)
 // has to be the foreground http thread, so ok to call setErro,
 // which is not threadsafe.
 			setError(MSG_NoWrite2, g->down_file);
-			return -1;
+		} else {
+			i_printf(MSG_NoWrite2, g->down_file);
+			printf(", ");
+			i_puts(MSG_DownAbort);
 		}
-		i_printf(MSG_NoWrite2, g->down_file);
-		printf(", ");
-		i_puts(MSG_DownAbort);
-// return -1;
-		exit(1);
+		return -1;
 	}
 
 showdots:
@@ -800,35 +802,23 @@ mimestream:
 		return false;
 	}
 
-// Fetch javascript or css in the background - fork at this point.
-#ifndef DOSLIKE
-	if (g->down_force) {
-		int pid = fork();
-		if (pid < 0) {	// should not happen
-// revert to synchronous fetch.
-			g->down_force = false;
-		} else if (pid) {
-			g->down_pid = pid;
-			return true;
-		} else {
-			nzFree(g->cdfn);	// should be zero
-			g->cdfn = jsBackFile(getpid());
-			g->down_fd = creat(g->cdfn, 0666);
-			if (g->down_fd < 0) {
-				i_printf(MSG_NoCreate2, g->cdfn);
-				nl();
-				exit(2);
-			}
-			g->down_file = g->down_file2 = cloneString(g->cdfn);
-			g->down_state = 4;
+	if (g->down_force == 2) {
+		nzFree(g->cdfn);	// should already be zero
+		g->cdfn = jsBackFile(g->tsn);
+		g->down_fd = creat(g->cdfn, 0666);
+		if (g->down_fd < 0) {
+			i_printf(MSG_NoCreate2, g->cdfn);
+			nl();
+			nzFree(g->cdfn);
+			return false;
 		}
+		g->down_file = g->down_file2 = cloneString(g->cdfn);
+		g->down_state = 4;
 	}
-#endif
 
 	h = http_curl_init(g);
 	if (!h) {		// should never happen
-		if (g->down_force)
-			exit(2);
+		i_get_free(g, false);
 		return false;
 	}
 
@@ -1002,7 +992,7 @@ mimestream:
 			goto mimestream;
 		}
 
-		if (head_request && g->down_force) {
+		if (head_request && g->down_force == 2) {
 // Maybe get the data right from the cache, so we don't have to
 // put it in a temp file.
 			g->is_http = g->cacheable = true;
@@ -1020,9 +1010,17 @@ mimestream:
 // which the parent will read
 				write(g->down_fd, cacheData, strlen(cacheData));
 				close(g->down_fd);
-				exit(0);
+				g->down_fd = 0;
+				nzFree(cacheData);
+				i_get_free(g, true);
+				return true;
 			}
 // from cache didn't work out
+			curl_easy_setopt(h, CURLOPT_NOBODY, 0l);
+			head_request = false;
+		}
+
+		if (head_request && g->down_force == 1) {
 			curl_easy_setopt(h, CURLOPT_NOBODY, 0l);
 			head_request = false;
 		}
@@ -1101,9 +1099,24 @@ they go where they go, so this doesn't come up very often.
 
 		if (g->down_state == 5) {
 /* user has directed a download of this file in the background. */
-			background_download(g);
-			if (g->down_state == 4)
-				goto perform;
+/* We spawn a thread to do this, then return, but g could go away */
+/* before the child thread has a chance to read its contents. */
+			struct i_get g0;
+			pthread_t tid;
+			nzFree(g->buffer);
+			g->buffer = NULL;
+			g->length = 0;
+			g0 = *g;	// structure copy
+			if (custom_headers)
+				curl_slist_free_all(custom_headers);
+			curl_easy_cleanup(h);
+			nzFree(postb);
+			nzFree(referrer);
+			pthread_create(&tid, NULL, httpConnectBack1,
+				       (void *)&g0);
+// I will assume the thread was created.
+// Don't call i_get_free(g); the child thread is using those strings.
+			return true;
 		}
 
 		if (g->down_state == 3 || g->down_state == -1) {
@@ -1114,35 +1127,45 @@ they go where they go, so this doesn't come up very often.
 		}
 
 		if (g->down_state == 4) {
+			bool r = true;
 			if (curlret != CURLE_OK) {
+				r = false;
 				ebcurl_setError(curlret, g->urlcopy, 1,
 						g->error);
-				if (g->down_force)
-					exit(2);
 			} else {
-				if (g->down_force) {
+				curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE,
+						  &(g->code));
+				if (g->code != 200) {
+					r = false;
+				} else {
+					if (g->down_force == 2) {
 // maybe write back into cache
-					char *b;
-					int blen;
-					if (g->cacheable
-					    && (g->modtime || g->etag)
-					    && fileIntoMemory(g->down_file, &b,
-							      &blen)) {
-						storeCache(g->urlcopy, g->etag,
-							   g->modtime, b, blen);
-						nzFree(b);
+						char *b;
+						int blen;
+						if (g->cacheable
+						    && (g->modtime || g->etag)
+						    &&
+						    fileIntoMemory(g->down_file,
+								   &b, &blen)) {
+							storeCache(g->urlcopy,
+								   g->etag,
+								   g->modtime,
+								   b, blen);
+							nzFree(b);
+						}
+					} else {
+						i_printf(MSG_DownSuccess);
+						printf(": %s\n", g->down_file2);
 					}
-					exit(0);
 				}
-				i_printf(MSG_DownSuccess);
-				printf(": %s\n", g->down_file2);
 			}
-// We're going to exit, so don't need to do this stuff,
-// but some day this might be the end of a thread, not the end of a process.
-			i_get_free(g, true);
+			if (custom_headers)
+				curl_slist_free_all(custom_headers);
 			curl_easy_cleanup(h);
+			nzFree(postb);
 			nzFree(referrer);
-			exit(0);
+			i_get_free(g, true);
+			return r;
 		}
 
 		if (g->length >= CHUNKSIZE && showProgress == 'd')
@@ -1316,16 +1339,12 @@ curl_fail:
 				g->error);
 		nzFree(referrer);
 		i_get_free(g, true);
-		if (g->down_force)
-			exit(2);
 		return false;
 	}
 
 	if (!transfer_status) {
 		nzFree(referrer);
 		i_get_free(g, true);
-		if (g->down_force)
-			exit(2);
 		return false;
 	}
 
@@ -1334,9 +1353,6 @@ curl_fail:
 	    (g->code == 201 && debugLevel >= 3))
 		i_printf(MSG_HTTPError,
 			 g->code, message_for_response_code(g->code));
-
-	if (g->down_force)
-		exit(0);
 
 // with lopping off post data, or encoding the url,
 // it's easier to just assume the name has changed,
@@ -1361,6 +1377,56 @@ curl_fail:
 	g->referrer = referrer;
 	return transfer_status;
 }				/* httpConnect */
+
+static int tsn;			// thread sequence number
+
+void *httpConnectBack1(void *ptr)
+{
+	struct i_get *g0 = ptr;
+	struct i_get g = *g0;	// structure copy
+	struct BG_JOB *job;
+	bool rc;
+	g.down_force = 1;
+	g.down_state = 4;
+// urlcopy will be recomputed on the next http call
+	nzFree(g.urlcopy);
+	g.urlcopy = 0;
+// Other things we should clean up?
+	++tsn;
+	debugPrint(3, "bg thread %d", tsn);
+	i_puts(MSG_DownProgress);
+/* push job onto the list for tracking and display */
+	job = allocMem(sizeof(struct BG_JOB) + strlen(g.down_file));
+	job->state = 4;
+	strcpy(job->file, g.down_file);
+	job->file2 = g.down_file2 - g.down_file;
+// round file size up to the nearest chunk.
+// This will come out 0 only if the true size is 0.
+	job->fsize = ((g.hcl + (CHUNKSIZE - 1)) / CHUNKSIZE);
+	addToListBack(&down_jobs, job);
+	rc = httpConnect(&g);
+	job->state = (rc ? 0 : -1);
+	return NULL;
+}
+
+void *httpConnectBack2(void *ptr)
+{
+	struct htmlTag *t = ptr;
+	bool rc;
+	struct i_get g;
+	memset(&g, 0, sizeof(g));
+	g.thisfile = cf->fileName;
+	g.uriEncoded = true;
+	g.url = t->href;
+	g.down_force = 2;
+	t->loadtsn = g.tsn = ++tsn;
+	debugPrint(3, "jsbg thread %d", tsn);
+	rc = httpConnect(&g);
+	t->loadsuccess = rc;
+	if (!rc)
+		t->hcode = g.code;
+	return NULL;
+}
 
 // copy text over to the buffer but change < to &lt; etc,
 // since this data will be browsed as if it were html.
@@ -1388,11 +1454,11 @@ static void prepHtmlString(struct i_get *g, const char *q)
 
 // file name of javascript downloaded in background
 // this is allocated
-char *jsBackFile(int pid)
+char *jsBackFile(int tsn)
 {
-	int l = strlen(ebUserDir) + 20;
+	int l = strlen(ebUserDir) + 30;
 	char *a = allocMem(l);
-	sprintf(a, "%s/back%d", ebUserDir, pid);
+	sprintf(a, "%s/back%d.%d", ebUserDir, getpid(), tsn);
 	return a;
 }
 
@@ -1650,7 +1716,7 @@ void ebcurl_setError(CURLcode curlret, const char *url, int action,
 		     const char *curl_error)
 {
 	char prot[MAXPROTLEN], host[MAXHOSTLEN];
-	void (*fn)(int, ...);
+	void (*fn) (int, ...);
 
 	if (!getProtHostURL(url, prot, host)) {
 /* this should never happen */
@@ -1770,9 +1836,6 @@ static bool ftpConnect(struct i_get *g, char *creds_buf)
 	if (stringEqual(creds_buf, ":") && memEqualCI(url, "ftp", 3))
 		strcpy(creds_buf, "anonymous:ftp@example.com");
 
-	g->down_state = 0;
-	g->down_file = g->down_file2 = NULL;
-	g->down_length = 0;
 	h = http_curl_init(g);
 	if (!h)
 		goto ftp_transfer_fail;
@@ -1794,19 +1857,30 @@ static bool ftpConnect(struct i_get *g, char *creds_buf)
 	has_slash = g->urlcopy[g->urlcopy_l] == '/';
 /* don't download a directory listing, we want to see that */
 /* Fetching a directory will fail in the special case of scp. */
-	g->down_state = (has_slash ? 0 : 1);
+	if (!g->down_force)
+		g->down_state = (has_slash ? 0 : 1);
+	g->down_length = 0;
 	g->down_msg = MSG_FTPDownload;
 	if (is_scp)
 		g->down_msg = MSG_SCPDownload;
 
-perform:
 	curlret = fetch_internet(g);
 
 	if (g->down_state == 5) {
 /* user has directed a download of this file in the background. */
-		background_download(g);
-		if (g->down_state == 4)
-			goto perform;
+/* We spawn a thread to do this, then return, but g could go away */
+/* before the child thread has a chance to read its contents. */
+		struct i_get g0;
+		pthread_t tid;
+		nzFree(g->buffer);
+		g->buffer = NULL;
+		g->length = 0;
+		g0 = *g;	// structure copy
+		curl_easy_cleanup(h);
+		pthread_create(&tid, NULL, httpConnectBack1, (void *)&g0);
+// I will assume the thread was created.
+// Don't call i_get_free(g); the child thread is using those strings.
+		return true;
 	}
 
 	if (g->down_state == 3 || g->down_state == -1) {
@@ -1816,11 +1890,17 @@ perform:
 	}
 
 	if (g->down_state == 4) {
-		if (curlret != CURLE_OK)
-			ebcurl_setError(curlret, g->urlcopy, 2, g->error);
-		i_printf(MSG_DownSuccess);
-		printf(": %s\n", g->down_file2);
-		exit(0);
+		bool r = true;
+		if (curlret != CURLE_OK) {
+			r = false;
+			ebcurl_setError(curlret, g->urlcopy, 1, g->error);
+		} else {
+			i_printf(MSG_DownSuccess);
+			printf(": %s\n", g->down_file2);
+		}
+		curl_easy_cleanup(h);
+		i_get_free(g, true);
+		return r;
 	}
 
 	if (g->length >= CHUNKSIZE && showProgress == 'd')
@@ -1912,6 +1992,7 @@ static bool gopherConnect(struct i_get *g)
 	has_slash = g->urlcopy[strlen(g->urlcopy) - 1] == '/';
 /* don't download a directory listing, we want to see that */
 	g->down_state = (has_slash ? 0 : 1);
+	g->down_length = 0;
 	g->down_msg = MSG_GopherDownload;
 // That's the default, let the leading character override
 	s = strchr(g->urlcopy + protLength, '/');
@@ -1930,14 +2011,26 @@ static bool gopherConnect(struct i_get *g)
 			has_slash = true;
 	}
 
-perform:
+	if (g->down_force)
+		g->down_state = 4;
+
 	curlret = fetch_internet(g);
 
 	if (g->down_state == 5) {
 /* user has directed a download of this file in the background. */
-		background_download(g);
-		if (g->down_state == 4)
-			goto perform;
+/* We spawn a thread to do this, then return, but g could go away */
+/* before the child thread has a chance to read its contents. */
+		struct i_get g0;
+		pthread_t tid;
+		nzFree(g->buffer);
+		g->buffer = NULL;
+		g->length = 0;
+		g0 = *g;	// structure copy
+		curl_easy_cleanup(h);
+		pthread_create(&tid, NULL, httpConnectBack1, (void *)&g0);
+// I will assume the thread was created.
+// Don't call i_get_free(g); the child thread is using those strings.
+		return true;
 	}
 
 	if (g->down_state == 3 || g->down_state == -1) {
@@ -1947,11 +2040,17 @@ perform:
 	}
 
 	if (g->down_state == 4) {
-		if (curlret != CURLE_OK)
-			ebcurl_setError(curlret, g->urlcopy, 2, g->error);
-		i_printf(MSG_DownSuccess);
-		printf(": %s\n", g->down_file2);
-		exit(0);
+		bool r = true;
+		if (curlret != CURLE_OK) {
+			r = false;
+			ebcurl_setError(curlret, g->urlcopy, 1, g->error);
+		} else {
+			i_printf(MSG_DownSuccess);
+			printf(": %s\n", g->down_file2);
+		}
+		curl_easy_cleanup(h);
+		i_get_free(g, true);
+		return r;
 	}
 
 	if (g->length >= CHUNKSIZE && showProgress == 'd')
@@ -2459,60 +2558,6 @@ top:
 	g->down_state = (down_bg ? 5 : 2);
 }				/* setup_download */
 
-#ifdef _MSC_VER			// need fork()
-/* At this point, down_state = 5 */
-static void background_download(struct i_get *g)
-{
-	g->down_state = -1;
-/* perhaps a better error message here */
-	setError(MSG_DownAbort);
-	return;
-}
-
-int bg_jobs(bool iponly)
-{
-	return 0;
-}
-
-#else // !_MSC_VER
-
-/* At this point, down_state = 5 */
-static void background_download(struct i_get *g)
-{
-	int down_pid = fork();
-	if (down_pid < 0) {	/* should never happen */
-		g->down_state = -1;
-/* perhaps a better error message here */
-		setError(MSG_DownAbort);
-		return;
-	}
-
-	if (down_pid) {		/* parent */
-		struct BG_JOB *job;
-		close(g->down_fd);
-/* the error message here isn't really an error, but a progress message */
-		setError(MSG_DownProgress);
-		g->down_state = 3;
-
-/* push job onto the list for tracking and display */
-		job = allocMem(sizeof(struct BG_JOB) + strlen(g->down_file));
-		job->pid = down_pid;
-		job->state = 4;
-		strcpy(job->file, g->down_file);
-		job->file2 = g->down_file2 - g->down_file;
-// round file size up to the nearest chunk.
-// This will come out 0 only if the true size is 0.
-		job->fsize = ((g->hcl + (CHUNKSIZE - 1)) / CHUNKSIZE);
-		addToListBack(&down_jobs, job);
-
-		return;
-	}
-
-	/* ignore interrupt, not sure about quit and hangup */
-	signal(SIGINT, SIG_IGN);
-	g->down_state = 4;
-}				/* background_download */
-
 /* show background jobs and return the number of jobs pending */
 /* if iponly is true then just show in progress */
 int bg_jobs(bool iponly)
@@ -2520,19 +2565,6 @@ int bg_jobs(bool iponly)
 	bool present = false, part;
 	int numback = 0;
 	struct BG_JOB *j;
-	int pid, status;
-
-/* gather exit status of background jobs */
-	foreach(j, down_jobs) {
-		if (j->state != 4)
-			continue;
-		pid = waitpid(j->pid, &status, WNOHANG);
-		if (!pid)
-			continue;
-		j->state = -1;
-		if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
-			j->state = 0;
-	}
 
 /* three passes */
 /* in progress */
@@ -2593,8 +2625,7 @@ int bg_jobs(bool iponly)
 		i_puts(MSG_Empty);
 
 	return numback;
-}				/* bg_jobs */
-#endif // #ifndef _MSC_VER // need fork()
+}
 
 static char **novs_hosts;
 size_t novs_hosts_avail;

@@ -2346,7 +2346,7 @@ However, attachEvent is deprecated, and disabled by default.
 This is frickin complicated, so set eventDebug to debug it.
 *********************************************************************/
 
-mw0.attachOn = false;
+mw0.attachOn = true;
 
 mw0.addEventListener = function(ev, handler, iscapture) { this.eb$listen(ev,handler, iscapture, true); }
 mw0.removeEventListener = function(ev, handler, iscapture) { this.eb$unlisten(ev,handler, iscapture, true); }

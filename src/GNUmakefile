@@ -33,7 +33,7 @@ LDFLAGS += $(STRIP)
 ESQLDFLAGS = $(STRIP)
 
 #  Libraries for edbrowse.
-LDLIBS = -lpcre -lcurl -lreadline -ltidy -lduktape -lm
+LDLIBS = -lpcre -lcurl -lreadline -ltidy -lduktape -lpthread -lm
 
 #  Make the dynamically linked executable program by default.
 all: edbrowse

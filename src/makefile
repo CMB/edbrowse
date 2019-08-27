@@ -12,7 +12,7 @@ BUILD_EDBR_ODBC ?= off
 PERL !=		which perl
 TIDY5_LIBS ?=	-ltidy
 
-LIBS =		-lpcre -lcurl -lreadline ${TIDY5_LIBS} -lduktape -lm
+LIBS =		-lpcre -lcurl -lreadline ${TIDY5_LIBS} -lduktape -lpthread -lm
 
 # Add PREFIX to search paths.  These should go after everything else is in.
 CPPFLAGS +=	-I${PREFIX}/include

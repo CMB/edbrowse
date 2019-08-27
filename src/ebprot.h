@@ -195,6 +195,8 @@ time_t parseHeaderDate(const char *date) ;
 bool parseRefresh(char *ref, int *delay_p) ;
 bool shortRefreshDelay(const char *r, int d);
 bool httpConnect(struct i_get *g);
+void *httpConnectBack1(void *ptr);
+void *httpConnectBack2(void *ptr);
 char *jsBackFile(int pid);
 void ebcurl_setError(CURLcode curlret, const char *url, int action, const char *curl_error);
 void setHTTPLanguage(const char *lang);

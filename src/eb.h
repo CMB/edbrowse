@@ -46,6 +46,7 @@
 #else
 #include <unistd.h>
 #endif
+#include <pthread.h>
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -199,13 +200,13 @@ struct i_get {
 // State of download to disk, see http.c for state values.
 	int down_state;
 	int down_fd;	/* downloading file descriptor */
-	int down_pid;
 	int down_msg;
 	const char *down_file;	/* downloading filename */
 	const char *down_file2;	/* without download directory */
 	int down_length;
 	bool down_ok;
-	bool down_force;
+	uchar down_force;
+	int tsn; // thread sequence number
 	bool uriEncoded;
 	bool foreground;
 	bool pg_ok; // watch for plugins
@@ -544,7 +545,10 @@ struct htmlTag {
 	const char **atvals;
 /* the form that owns this input tag */
 	struct htmlTag *controller;
-	int loadpid;
+	pthread_t loadthread;
+	int loadtsn; // thread sequence number
+	long hcode;
+	bool loadsuccess;
 	uchar step; // prerender, decorate, load script, runscript
 	bool slash:1;		/* as in </A> */
 	bool textin:1; /* <a> some text </a> */
