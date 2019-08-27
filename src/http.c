@@ -2805,6 +2805,7 @@ int frameExpandLine(int ln, jsobjtype fo)
 	int tagno, start;
 	const char *s;
 	char *a;
+	char *jssrc = 0;
 	struct htmlTag *t;
 	struct ebFrame *save_cf, *new_cf, *last_f;
 	uchar save_local;
@@ -2841,15 +2842,23 @@ int frameExpandLine(int ln, jsobjtype fo)
 		t->href = a;
 	}
 	s = t->href;
+
+// javascript in the src, what is this for?
+	if (s && !strncmp(s, "javascript:", 11)) {
+		jssrc = (char *)s;
+		s = 0;
+	}
+
 	if (!s) {
 // No source. If this is your request then return an error.
 // But if we're dipping into the objects then it needs to expand
 // into a separate window, a separate js space, with an empty body.
-		if (!fo)
+		if (!fo && !jssrc)
 			return 2;
 // After expansion we need to be able to expand it,
 // because there's something there, well maybe.
 		t->href = cloneString("#");
+// jssrc is the old href and we are responsible for it
 	}
 
 	save_cf = cf = t->f0;
@@ -2858,7 +2867,9 @@ int frameExpandLine(int ln, jsobjtype fo)
 	last_f->next = cf = allocZeroMem(sizeof(struct ebFrame));
 	cf->owner = cw;
 	cf->frametag = t;
-	debugPrint(2, "fetch frame %s", (s ? s : "empty"));
+	debugPrint(2, "fetch frame %s",
+		   (s ? s : (jssrc ? "javascript" : "empty")));
+
 	if (s) {
 		bool rc = readFileArgv(s, (fo ? 2 : 1));
 		if (!rc) {
@@ -2956,12 +2967,16 @@ we did that before and now it's being expanded. So bump step up to 2.
 		set_property_object(cf->winobj, "top", topobj);
 		set_property_object(cf->winobj, "frameElement", t->jv);
 		run_function_bool(cf->winobj, "eb$qs$start");
+		if (jssrc) {
+			jsRunScript(cf->winobj, jssrc, "frame.src", 1);
+		}
 		runScriptsPending();
 		runOnload();
 		runScriptsPending();
 		rebuildSelectors();
 		set_property_string(cf->docobj, "readyState", "complete");
 	}
+	nzFree(jssrc);
 
 	if (cf->fileName) {
 		int j = strlen(cf->fileName);

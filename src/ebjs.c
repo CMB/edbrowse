@@ -191,6 +191,11 @@ void jsRunScript(jsobjtype obj, const char *str, const char *filename,
 
 void jsRunData(jsobjtype obj, const char *filename, int lineno)
 {
+// this never runs from the j process.
+	if (whichproc != 'e') {
+		debugPrint(1, "jsRunData run from the js process");
+		return;
+	}
 	if (!allowJS || !cf->winobj || !obj)
 		return;
 	debugPrint(5, "> script:");
