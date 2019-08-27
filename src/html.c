@@ -10,7 +10,6 @@
 extern int gettimeofday(struct timeval *tp, void *tzp);	// from tidys.lib
 #else // !_MSC_VER
 #define SLEEP sleep
-#include <wait.h>
 #endif // _MSC_VER y/n
 
 uchar browseLocal;
