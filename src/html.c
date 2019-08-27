@@ -767,9 +767,6 @@ noload:
 			continue;
 		cf = t->f0;
 
-		js_text = get_property_string(t->jv, "data");
-		if (!js_text || !*js_text)
-			continue;	/* nothing there */
 		js_file = t->js_file;
 		if (!js_file)
 			js_file = "generated";
@@ -785,10 +782,9 @@ noload:
 		if (ln > 1)
 			++ln;
 		set_property_object(cf->docobj, "currentScript", t->jv);
-		jsRunScript(cf->winobj, js_text, js_file, ln);
+		jsRunData(t->jv, js_file, ln);
 		delete_property(cf->docobj, "currentScript");
 		debugPrint(3, "execution complete");
-		nzFree(js_text);
 
 		if (newlocation && newloc_r) {
 			cf = save_cf;

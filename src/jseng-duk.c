@@ -2198,3 +2198,37 @@ char *run_script_nat(const char *s)
 		duk_gc(jcx, 0);
 	return result;
 }
+
+// execute script.data code; more efficient than the above.
+void run_data_nat(jsobjtype o)
+{
+	bool rc;
+	const char *s, *gc;
+	duk_push_heapptr(jcx, o);
+	if (!duk_get_prop_string(jcx, -1, "data")) {
+// no data
+		duk_pop_2(jcx);
+		return;
+	}
+	s = duk_safe_to_string(jcx, -1);
+	if (!s || !*s)
+		return;
+// defer to the earlier routine if there are breakpoints
+	if (strstr(s, "bp@(") || strstr(s, "trace@(")) {
+		run_script_nat(s);
+		duk_pop_2(jcx);
+		return;
+	}
+	rc = duk_peval_string(jcx, s);
+	if (intFlag)
+		i_puts(MSG_Interrupted);
+	if (!rc) {
+		duk_pop_n(jcx, 3);
+	} else {
+		processError();
+		duk_pop_2(jcx);
+	}
+	gc = getenv("JSGC");
+	if (gc && *gc)
+		duk_gc(jcx, 0);
+}

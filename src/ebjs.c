@@ -189,6 +189,21 @@ void jsRunScript(jsobjtype obj, const char *str, const char *filename,
 	nzFree(s);
 }				/* jsRunScript */
 
+void jsRunData(jsobjtype obj, const char *filename, int lineno)
+{
+	if (!allowJS || !cf->winobj || !obj)
+		return;
+	debugPrint(5, "> script:");
+	jsSourceFile = filename;
+	jsLineno = lineno;
+	set_js_globals();
+	whichproc = 'j';
+	run_data_nat(obj);
+	whichproc = 'e';
+	jsSourceFile = NULL;
+	debugPrint(5, "< ok");
+}
+
 /* does the member exist in the object or its prototype? */
 bool has_property(jsobjtype obj, const char *name)
 {

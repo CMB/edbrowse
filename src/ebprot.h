@@ -70,6 +70,7 @@ void createJavaContext(void) ;
 void freeJavaContext(struct ebFrame *f) ;
 char *jsRunScriptResult(jsobjtype obj, const char *str, const char *filename, int lineno) ;
 void jsRunScript(jsobjtype obj, const char *str, const char *filename, int lineno) ;
+void jsRunData(jsobjtype obj, const char *filename, int lineno);
 enum ej_proptype typeof_property(jsobjtype obj, const char *name) ;
 bool has_property(jsobjtype obj, const char *name) ;
 #define handlerPresent(obj, name) (typeof_property(obj, name) == EJ_PROP_FUNCTION)
@@ -419,6 +420,7 @@ bool run_function_bool_nat(jsobjtype obj, const char *name);
 int run_function_onearg_nat(jsobjtype obj, const char *name, jsobjtype o);
 void run_function_onestring_nat(jsobjtype parent, const char *name, const char *s);
 char *run_script_nat(const char *s);
+void run_data_nat(jsobjtype o);
 
 /* sourcefile=css.c */
 void writeShortCache(void);
