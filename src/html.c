@@ -675,9 +675,8 @@ in the parent frame pick up where they left off.
 void runScriptsPending(void)
 {
 	struct htmlTag *t;
-	int j;
-	char *js_file, *js_text, *b;
-	int blen, ln;
+	char *js_file;
+	int j, ln;
 	bool change, async;
 	jsobjtype v;
 	struct ebFrame *f, *save_cf = cf;
@@ -732,16 +731,6 @@ passes:
 				t->step = 6;
 				continue;
 			}
-			b = t->value;
-			blen = strlen(b);
-			js_text = force_utf8(b, blen);
-			if (!js_text)
-				js_text = b;
-			else
-				nzFree(b);
-			t->value = 0;
-			set_property_string(t->jv, "data", js_text);
-			nzFree(js_text);
 			t->step = 4;	// loaded
 		}
 		t->step = 5;	// now running the script

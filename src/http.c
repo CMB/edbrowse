@@ -1368,9 +1368,18 @@ void *httpConnectBack2(void *ptr)
 	if (!rc)
 		t->hcode = g.code;
 	else {
+		char *b;
 // no idea why value would be nonzero
 		nzFree(t->value);
-		t->value = g.buffer;
+// Rarely, a js file is not in utf8; convert it here, inside the thread.
+		b = force_utf8(g.buffer, g.length);
+		if (!b)
+			b = g.buffer;
+		else
+			nzFree(g.buffer);
+// now put it into the script object
+		put_data_nat(t->f0->jcx, t->jv, b);
+		nzFree(b);
 	}
 	return NULL;
 }

@@ -420,6 +420,7 @@ int run_function_onearg_nat(jsobjtype obj, const char *name, jsobjtype o);
 void run_function_onestring_nat(jsobjtype parent, const char *name, const char *s);
 char *run_script_nat(const char *s);
 void run_data_nat(jsobjtype o);
+void put_data_nat(jsobjtype cx, jsobjtype o, const char *s);
 
 /* sourcefile=css.c */
 void writeShortCache(void);

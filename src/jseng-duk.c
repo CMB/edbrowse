@@ -2232,3 +2232,13 @@ void run_data_nat(jsobjtype o)
 	if (gc && *gc)
 		duk_gc(jcx, 0);
 }
+
+void put_data_nat(jsobjtype cx, jsobjtype o, const char *s)
+{
+	if (!cx || !o || !s || !*s)
+		return;
+	duk_push_heapptr(cx, o);
+	duk_push_string(cx, s);
+	duk_put_prop_string(cx, -2, "data");
+	duk_pop(cx);
+}
