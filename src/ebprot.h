@@ -131,13 +131,15 @@ char *uni2utf8(unsigned int unichar);
 void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p, int bom);
 char *force_utf8( char *buf, int buflen);
 char *base64Encode(const char *inbuf, int inlen, bool lines);
+uchar base64Bits(char c);
+int base64Decode(char *start, char **end);
 void iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p);
 bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l);
 
 /* sourcefile=html.c */
-bool tagHandler(int seqno, const char *name) ;
-void jSideEffects(void) ;
-void jSyncup(bool fromtimer) ;
+bool tagHandler(int seqno, const char *name);
+void jSideEffects(void);
+void jSyncup(bool fromtimer);
 void jClearSync(void);
 void htmlMetaHelper(struct htmlTag *t);
 void prepareScript(struct htmlTag *t);
@@ -190,8 +192,6 @@ void html_from_setter( jsobjtype innerParent, const char *h);
 
 /* sourcefile=http.c */
 size_t eb_curl_callback(char *incoming, size_t size, size_t nitems, struct i_get *g) ;
-uchar base64Bits(char c);
-int base64Decode(char *start, char **end);
 time_t parseHeaderDate(const char *date) ;
 bool parseRefresh(char *ref, int *delay_p) ;
 bool shortRefreshDelay(const char *r, int d);

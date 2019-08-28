@@ -1601,7 +1601,7 @@ char *force_utf8(char *buf, int buflen)
 	return NULL;
 }
 
-static char base64_chars[] =
+static const char base64_chars[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 /*

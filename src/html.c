@@ -678,7 +678,7 @@ void runScriptsPending(void)
 	int j;
 	char *js_file, *js_text, *b;
 	int blen, ln;
-	bool change;
+	bool change, async;
 	jsobjtype v;
 	struct ebFrame *f, *save_cf = cf;
 
@@ -713,10 +713,13 @@ top:
 		prepareScript(t);
 	}
 
+	async = false;
+passes:
+
 	for (j = 0; j < cw->numTags; ++j) {
 		t = tagList[j];
 		if (t->action != TAGACT_SCRIPT || !t->jv || t->step >= 5
-		    || t->step <= 2)
+		    || t->step <= 2 || t->async != async)
 			continue;
 		if (!is_subframe(t->f0, save_cf))
 			continue;
@@ -801,6 +804,11 @@ noload:
 		}
 
 		change = true;
+	}
+
+	if (!async) {
+		async = true;
+		goto passes;
 	}
 
 	if (change)
