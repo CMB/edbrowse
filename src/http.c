@@ -1368,11 +1368,8 @@ void *httpConnectBack2(void *ptr)
 	if (!rc)
 		t->hcode = g.code;
 	else {
-		char *b;
-// no idea why value would be nonzero
-		nzFree(t->value);
 // Rarely, a js file is not in utf8; convert it here, inside the thread.
-		b = force_utf8(g.buffer, g.length);
+		char *b = force_utf8(g.buffer, g.length);
 		if (!b)
 			b = g.buffer;
 		else
