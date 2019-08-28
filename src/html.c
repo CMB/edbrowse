@@ -720,7 +720,8 @@ passes:
 		if (t->action != TAGACT_SCRIPT || !t->jv || t->step >= 5
 		    || t->step <= 2 || t->async != async)
 			continue;
-		if (!is_subframe(t->f0, save_cf))
+		cf = t->f0;
+		if (!is_subframe(cf, save_cf))
 			continue;
 		if (t->step == 3) {
 // waiting for background process to load
@@ -731,13 +732,16 @@ passes:
 				t->step = 6;
 				continue;
 			}
+			set_property_string(t->jv, "data", t->value);
+			nzFree(t->value);
+			t->value = 0;
 			t->step = 4;	// loaded
 		}
 		t->step = 5;	// now running the script
+
 // inerrupt test should probably be higher up - before the pthread_join
 		if (intFlag)
 			continue;
-		cf = t->f0;
 
 		js_file = t->js_file;
 		if (!js_file)

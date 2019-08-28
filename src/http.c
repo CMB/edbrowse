@@ -1374,9 +1374,9 @@ void *httpConnectBack2(void *ptr)
 			b = g.buffer;
 		else
 			nzFree(g.buffer);
-// now put it into the script object
-		put_data_nat(t->f0->jcx, t->jv, b);
-		nzFree(b);
+// don't know why t->value would be anything
+		nzFree(t->value);
+		t->value = b;
 	}
 	return NULL;
 }
