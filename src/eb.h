@@ -206,7 +206,6 @@ struct i_get {
 	int down_length;
 	bool down_ok;
 	uchar down_force;
-	int tsn; // thread sequence number
 	bool uriEncoded;
 	bool foreground;
 	bool pg_ok; // watch for plugins
@@ -546,7 +545,6 @@ struct htmlTag {
 /* the form that owns this input tag */
 	struct htmlTag *controller;
 	pthread_t loadthread;
-	int loadtsn; // thread sequence number
 	long hcode;
 	bool loadsuccess;
 	uchar step; // prerender, decorate, load script, runscript

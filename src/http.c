@@ -324,7 +324,9 @@ showdots:
 	else
 		g->length += num_bytes;
 	dots2 = g->length / CHUNKSIZE;
-	if (showProgress != 'q' && dots1 < dots2) {
+// showing dots in parallel background download threads
+// gets jumbled and doesn't mean anything.
+	if (showProgress != 'q' && dots1 < dots2 && !g->down_force) {
 		if (showProgress == 'd') {
 			for (; dots1 < dots2; ++dots1)
 				putchar('.');
@@ -801,20 +803,6 @@ mimestream:
 		return false;
 	}
 
-	if (g->down_force == 2) {
-		nzFree(g->cdfn);	// should already be zero
-		g->cdfn = jsBackFile(g->tsn);
-		g->down_fd = creat(g->cdfn, 0666);
-		if (g->down_fd < 0) {
-			i_printf(MSG_NoCreate2, g->cdfn);
-			nl();
-			nzFree(g->cdfn);
-			return false;
-		}
-		g->down_file = g->down_file2 = cloneString(g->cdfn);
-		g->down_state = 4;
-	}
-
 	h = http_curl_init(g);
 	if (!h) {		// should never happen
 		i_get_free(g, false);
@@ -991,40 +979,12 @@ mimestream:
 			goto mimestream;
 		}
 
-		if (head_request && g->down_force == 2) {
-// Maybe get the data right from the cache, so we don't have to
-// put it in a temp file.
-			g->is_http = g->cacheable = true;
-			curlret = fetch_internet(g);
-			if (curlret != CURLE_OK)
-				goto curl_fail;
-			curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &g->code);
-			if (curlret != CURLE_OK)
-				goto curl_fail;
-			debugPrint(3, "http code %ld", g->code);
-			if (g->code == 200 &&
-			    fetchCache(g->urlcopy, g->etag, g->modtime,
-				       &cacheData, 0)) {
-// this puts the cache file name into the temp file name,
-// which the parent will read
-				write(g->down_fd, cacheData, strlen(cacheData));
-				close(g->down_fd);
-				g->down_fd = 0;
-				nzFree(cacheData);
-				i_get_free(g, true);
-				return true;
-			}
-// from cache didn't work out
-			curl_easy_setopt(h, CURLOPT_NOBODY, 0l);
-			head_request = false;
-		}
-
 		if (head_request && g->down_force == 1) {
 			curl_easy_setopt(h, CURLOPT_NOBODY, 0l);
 			head_request = false;
 		}
 
-		if (g->down_force)
+		if (g->down_force == 1)
 			ftruncate(g->down_fd, 0l);
 
 perform:
@@ -1137,25 +1097,8 @@ they go where they go, so this doesn't come up very often.
 				if (g->code != 200) {
 					r = false;
 				} else {
-					if (g->down_force == 2) {
-// maybe write back into cache
-						char *b;
-						int blen;
-						if (g->cacheable
-						    && (g->modtime || g->etag)
-						    &&
-						    fileIntoMemory(g->down_file,
-								   &b, &blen)) {
-							storeCache(g->urlcopy,
-								   g->etag,
-								   g->modtime,
-								   b, blen);
-							nzFree(b);
-						}
-					} else {
-						i_printf(MSG_DownSuccess);
-						printf(": %s\n", g->down_file2);
-					}
+					i_printf(MSG_DownSuccess);
+					printf(": %s\n", g->down_file2);
 				}
 			}
 			if (custom_headers)
@@ -1418,12 +1361,17 @@ void *httpConnectBack2(void *ptr)
 	g.uriEncoded = true;
 	g.url = t->href;
 	g.down_force = 2;
-	t->loadtsn = g.tsn = ++tsn;
+	++tsn;
 	debugPrint(3, "jsbg thread %d", tsn);
 	rc = httpConnect(&g);
 	t->loadsuccess = rc;
 	if (!rc)
 		t->hcode = g.code;
+	else {
+// no idea why value would be nonzero
+		nzFree(t->value);
+		t->value = g.buffer;
+	}
 	return NULL;
 }
 
@@ -1449,16 +1397,6 @@ static void prepHtmlString(struct i_get *g, const char *q)
 		else
 			stringAndChar(&g->buffer, &g->length, c);
 	}
-}
-
-// file name of javascript downloaded in background
-// this is allocated
-char *jsBackFile(int tsn)
-{
-	int l = strlen(ebUserDir) + 30;
-	char *a = allocMem(l);
-	sprintf(a, "%s/back%d.%d", ebUserDir, getpid(), tsn);
-	return a;
 }
 
 /* Format a line from an ftp directory. */

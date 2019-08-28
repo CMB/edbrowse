@@ -726,39 +726,20 @@ passes:
 		if (t->step == 3) {
 // waiting for background process to load
 			pthread_join(t->loadthread, NULL);
-			js_file = jsBackFile(t->loadtsn);
 			if (!t->loadsuccess) {
 				if (debugLevel >= 3)
 					i_printf(MSG_GetJS, t->href, t->hcode);
-noload:
-				unlink(js_file);
-				nzFree(js_file);
 				t->step = 6;
 				continue;
 			}
-			if (!fileIntoMemory(js_file, &b, &blen)) {
-				if (debugLevel >= 3)
-					i_printf(MSG_GetJS2);
-				goto noload;
-			}
-// check for cache reference
-			if (!strncmp(b, "`cfn~", 5)) {
-				char *i_file = b;
-				bool rc = fileIntoMemory(i_file + 5, &b, &blen);
-				nzFree(i_file);
-				if (!rc) {
-					if (debugLevel >= 3)
-						i_printf(MSG_GetJS2);
-					goto noload;
-				}
-			}
+			b = t->value;
+			blen = strlen(b);
 			js_text = force_utf8(b, blen);
 			if (!js_text)
 				js_text = b;
 			else
 				nzFree(b);
-			unlink(js_file);
-			nzFree(js_file);
+			t->value = 0;
 			set_property_string(t->jv, "data", js_text);
 			nzFree(js_text);
 			t->step = 4;	// loaded
