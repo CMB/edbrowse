@@ -1715,14 +1715,16 @@ bool infPush(int tagno, char **post_string)
 	}
 
 	if (itype == INP_BUTTON) {
+/* I use to error here, but click could be captured by a node higher up in the tree
+   and do what it is suppose to do, so we might not want an error here.
 		if (isJSAlive && t->jv && !t->onclick) {
 			setError(MSG_ButtonNoJS);
 			return false;
 		}
+*/
 		return true;
 	}
 // Now submit or reset
-
 	if (itype == INP_RESET) {
 		if (!form) {
 			setError(MSG_NotInForm);

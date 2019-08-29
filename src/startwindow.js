@@ -1246,11 +1246,6 @@ for speed and optimization, is lost if the version changes.
 // remember that this is the window object
 mw0.cssGather(false, this);
 
-/* I don't know where I was going with this.
-if(e.css$v != this.css$ver || e.last$class != e.class || e.last$id != e.id)
-e.css$out = "";
-*/
-
 eb$cssApply(this, e, s);
 
 /*********************************************************************
@@ -1307,6 +1302,50 @@ s.textTransform = "none";
 }
 
 return s;
+}
+
+// A different version, run when the class or id changes.
+// It writes the changes back to the style node, does not create a new one.
+mw0.computeStyleInline = function(e) {
+var s;
+
+// don't put a style under a style.
+// There are probably other nodes I should skip too.
+if(e instanceof CSSStyleDeclaration) return;
+if(e.nodeType != 1) return;
+
+// style object should already be there
+if(!e.style) {
+e.style = new CSSStyleDeclaration;
+e.style.element = e;
+}
+s = e.style;
+
+// This is called on a (possibly large) subtree of nodes,
+// so please verify the css style sheets before hand.
+// mw0.cssGather(false, this);
+
+// Unlike the above, we remove previous values that were set by css,
+// because css is being reapplied.
+// I don't know if we should just do this for the node that changed,
+// or for all its descendants.
+for(var k in s) {
+if(!s.hasOwnProperty(k)) continue;
+if(!k.match(/\$(\$scy|pri)$/)) continue;
+if(k.match(/\$\$scy$/) && s[k] == 100000) continue;
+// this one goes away
+delete s[k];
+delete s[k.replace(/\$(\$scy|pri)$/, "")];
+}
+
+// apply all the css rules
+eb$cssApply(my$win(), e, s);
+// style has been recomputed
+e.last$class = e.class, e.last$id = e.id;
+// descend into the children
+if(e.childNodes)
+for(var i=0; i<e.childNodes.length; ++i)
+mw0.computeStyleInline(e.childNodes[i]);
 }
 
 // It's crude, but just reindex all the rows in a table
@@ -1480,10 +1519,8 @@ this.data = t;
 this.nodeName = "#comment";
 this.nodeType = 8;
 this.ownerDocument = my$doc();
-this.class = this.last$class = "";
+this.class = "";
 this.childNodes = [];
-this.attributes = new mw0.NamedNodeMap;
-this.attributes.owner = this;
 }
 
 mw0.createComment = function(t) {
@@ -1851,6 +1888,7 @@ if(name === "type" && this.nodeName == "BUTTON") this[name] = "submit";
 // acid test 48 removes class before we can check its visibility.
 // class is undefined and last$class is undefined, so getComputedStyle is never called.
 if(name === "class" && !this.last$class) this.last$class = "@@";
+if(name === "id" && !this.last$id) this.last$id = "@@";
 var a = this.attributes[name]; // hash access
 if(!a) return;
 // Have to roll our own splice.
@@ -3855,12 +3893,12 @@ var rc = 2; // show by default
 var so; // style object
 if(!t || !(so = t.style)) return 0;
 
-// If class has changed, recompute style
-if(t.class != t.last$class) {
-alert4("restyle " + t.nodeName + "." + t.last$class + ">" + t.class);
-var so = getComputedStyle(t, 0);
-t.style = so;
-t.last$class = t.class, t.last$id = t.id;
+// If class has changed, recompute style.
+// If id has changed, recompute style, but I don't think that ever happens.
+if(t.class != t.last$class || t.id != t.last$id) {
+if(t.last$class) alert3("restyle " + t.nodeName + "." + t.last$class + "." + t.class);
+mw0.cssGather(false, my$win());
+mw0.computeStyleInline(t);
 }
 
 if(so.display == "none" || so.visibility == "hidden") {
