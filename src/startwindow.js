@@ -2343,10 +2343,12 @@ It calls a lower level function to do the work, which is also called by
 attachEvent, as these are almost exactly the same functions.
 A similar design applies for removeEventListener and detachEvent.
 However, attachEvent is deprecated, and disabled by default.
+If you turn it on it creates things like
+click$$array which should be onclick$$array
 This is frickin complicated, so set eventDebug to debug it.
 *********************************************************************/
 
-mw0.attachOn = true;
+mw0.attachOn = false;
 
 mw0.addEventListener = function(ev, handler, iscapture) { this.eb$listen(ev,handler, iscapture, true); }
 mw0.removeEventListener = function(ev, handler, iscapture) { this.eb$unlisten(ev,handler, iscapture, true); }
