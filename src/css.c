@@ -53,7 +53,7 @@ static const char *const errorMessage[] = {
 	"tag link",
 	"inject high",
 	"pseudo element",
-	": unsupported",
+	":unsupported",
 	"multiple",
 	"@ empty",
 	"@ not media",

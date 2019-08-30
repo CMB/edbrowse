@@ -4480,45 +4480,29 @@ et_go:
 	}
 
 	if (stringEqual(line, "bg")) {
-#ifdef DOSLIKE
-		puts("download in background not available on Windows at this time.");
-#else
 		down_bg ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(down_bg + MSG_DownForeground);
-#endif
 		return true;
 	}
 
 	if (stringEqual(line, "bg+") || stringEqual(line, "bg-")) {
-#ifdef DOSLIKE
-		puts("download in background not available on Windows at this time.");
-#else
 		down_bg = (line[2] == '+');
 		if (helpMessagesOn)
 			i_puts(down_bg + MSG_DownForeground);
-#endif
 		return true;
 	}
 	if (stringEqual(line, "jsbg")) {
-#ifdef DOSLIKE
-		puts("download in background not available on Windows at this time.");
-#else
 		down_abg ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(down_abg + MSG_JSDownForeground);
-#endif
 		return true;
 	}
 
 	if (stringEqual(line, "jsbg+") || stringEqual(line, "jsbg-")) {
-#ifdef DOSLIKE
-		puts("download in background not available on Windows at this time.");
-#else
 		down_abg = (line[4] == '+');
 		if (helpMessagesOn)
 			i_puts(down_abg + MSG_JSDownForeground);
-#endif
 		return true;
 	}
 

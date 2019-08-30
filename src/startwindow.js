@@ -3896,7 +3896,7 @@ if(!t || !(so = t.style)) return 0;
 // If class has changed, recompute style.
 // If id has changed, recompute style, but I don't think that ever happens.
 if(t.class != t.last$class || t.id != t.last$id) {
-if(t.last$class) alert3("restyle " + t.nodeName + "." + t.last$class + "." + t.class);
+if(t.last$class) alert3("restyle " + t.nodeName + "." + t.last$class + "." + t.class+"#"+t.last$id+"#"+t.id);
 mw0.cssGather(false, my$win());
 mw0.computeStyleInline(t);
 }
