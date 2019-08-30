@@ -834,7 +834,7 @@ static void append0(duk_context * cx, bool side)
 {
 	unsigned i, length;
 	jsobjtype child, thisobj;
-	char e[40];
+	char *e;
 	const char *thisname, *childname;
 
 /* we need one argument that is an object */
@@ -877,8 +877,9 @@ static void append0(duk_context * cx, bool side)
 /* pass this linkage information back to edbrowse, to update its dom tree */
 	thisname = embedNodeName(thisobj);
 	childname = embedNodeName(child);
-	sprintf(e, "l{a|%s,%s ", pointer2string(thisobj), thisname);
+	asprintf(&e, "l{a|%s,%s ", pointer2string(thisobj), thisname);
 	effectString(e);
+	free(e);
 	effectString(pointer2string(child));
 	effectChar(',');
 	effectString(childname);
@@ -906,7 +907,7 @@ static duk_ret_t native_insbf(duk_context * cx)
 	unsigned i, length;
 	int mark;
 	jsobjtype child, item, thisobj, h;
-	char e[40];
+	char *e;
 	const char *thisname, *childname, *itemname;
 
 /* we need two objects */
@@ -963,8 +964,9 @@ static duk_ret_t native_insbf(duk_context * cx)
 	thisname = embedNodeName(thisobj);
 	childname = embedNodeName(child);
 	itemname = embedNodeName(item);
-	sprintf(e, "l{b|%s,%s ", pointer2string(thisobj), thisname);
+	asprintf(&e, "l{b|%s,%s ", pointer2string(thisobj), thisname);
 	effectString(e);
+	free(e);
 	effectString(pointer2string(child));
 	effectChar(',');
 	effectString(childname);
@@ -985,7 +987,7 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	unsigned i, length;
 	int mark;
 	jsobjtype child, thisobj, h;
-	char e[40];
+	char *e;
 	const char *thisname, *childname;
 
 	debugPrint(5, "remove 1");
@@ -1029,8 +1031,9 @@ static duk_ret_t native_removeChild(duk_context * cx)
 /* pass this linkage information back to edbrowse, to update its dom tree */
 	thisname = embedNodeName(thisobj);
 	childname = embedNodeName(child);
-	sprintf(e, "l{r|%s,%s ", pointer2string(thisobj), thisname);
+	asprintf(&e, "l{r|%s,%s ", pointer2string(thisobj), thisname);
 	effectString(e);
+	free(e);
 	effectString(pointer2string(child));
 	effectChar(',');
 	effectString(childname);
