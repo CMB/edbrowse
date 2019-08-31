@@ -3869,17 +3869,22 @@ mw0.cssGather(true);
 
 /*********************************************************************
 This function doesn't do all it should, and I'm not even sure what it should do.
-If class changes from x to y, it throws out the old style completely,
-and rebuilds a new style using getComputedStyle().
-If prior javascript had specifically set style.foo = "bar", that's gone.
-Maybe that's the right thing to do, maybe not.
-Styles for other nodes are not recomputed.
-Maybe they should be, maybe not.
-We might have selectors .x P and .y P, thus changing P below,
-but that change is not made.
-Thing is, we'd have to recompute every node in the tree if we wanted to be sure.
-I'm assuming the class change does not ripple up or down or sideways,
-and affects only the current node.
+If class changes from x to y, it throws out the old css derived attributes
+and rebuilds the style using computeStyleInline().
+Rules with .x don't apply any more; rules with .y now apply.
+If prior javascript had specifically set style.foo = "bar",
+if will persist if foo was not derived from css;
+but it will go away and be recomputed if foo came from css.
+Maybe that's the right thing to do, maybe not, I don't know.
+In theory, changing class could effect the style of any node anywhere in the tree.
+In fact, setting any attribute in one node could change the style of any node
+anywhere in the tree.
+I don't recompute the styles for every node in the entire tree
+every time you set an attribute in a node;
+it would be tremendously slow!
+I only watch for changes to class or id,
+and when that happens I recompute styles for that node and the subtree below.
+That is my compromise.
 Finally, any hover effects from .y are not considered, just as they are not
 considered in getComputedStyle().
 And any hover effects from .x are lost.
