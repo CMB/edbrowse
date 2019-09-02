@@ -106,7 +106,8 @@ static void writeAttachment(struct MHINFO *w)
 		}
 	} else if (!stringEqual(atname, "x")) {
 		int fh =
-		    open(atname, O_WRONLY | O_BINARY | O_CREAT | O_TRUNC, 0666);
+		    open(atname, O_WRONLY | O_BINARY | O_CREAT | O_TRUNC,
+			 MODE_rw);
 		if (fh < 0) {
 			i_printf(MSG_AttNoSave, atname);
 			if (ismc)
@@ -1213,7 +1214,7 @@ static CURLcode fetchOneMessage(CURL * handle, int message_number)
 
 /* got the file, save it in unread */
 	sprintf(umf_end, "%d", unreadMax + message_number);
-	umfd = open(umf, O_WRONLY | O_TEXT | O_CREAT, 0666);
+	umfd = open(umf, O_WRONLY | O_TEXT | O_CREAT, MODE_rw);
 	if (umfd < 0)
 		i_printfExit(MSG_NoCreate, umf);
 	if (write(umfd, mailstring, mailstring_l) < mailstring_l)
@@ -1685,7 +1686,7 @@ saveMail:
 		goto afterinput;
 
 	exists = fileTypeByName(atname, false);
-	fh = open(atname, O_WRONLY | O_TEXT | O_CREAT | O_APPEND, 0666);
+	fh = open(atname, O_WRONLY | O_TEXT | O_CREAT | O_APPEND, MODE_rw);
 	if (fh < 0) {
 		i_printf(MSG_NoCreate, atname);
 		goto saveMail;
@@ -1730,7 +1731,7 @@ badsave:
 				rmfh =
 				    open(rmf,
 					 O_WRONLY | O_TEXT | O_CREAT | O_APPEND,
-					 0666);
+					 MODE_rw);
 				if (rmfh < 0)
 					break;
 				if (write(rmfh, mailstring, mailstring_l) <
@@ -3047,7 +3048,7 @@ nextline:
 static void writeReplyInfo(const char *addstring)
 {
 	int rfh;		/* reply file handle */
-	rfh = open(mailReply, O_WRONLY | O_APPEND | O_CREAT, 0666);
+	rfh = open(mailReply, O_WRONLY | O_APPEND | O_CREAT, MODE_private);
 	if (rfh < 0)
 		return;
 	write(rfh, addstring, 12);

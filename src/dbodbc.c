@@ -1045,7 +1045,7 @@ static void retsFromOdbc(void)
 			if (rv_blobAppend)
 				flags =
 				    O_WRONLY | O_BINARY | O_CREAT | O_APPEND;
-			fd = eopen(rv_blobFile, flags, 0666);
+			fd = eopen(rv_blobFile, flags, MODE_rw);
 			rc = SQL_SUCCESS;
 			while (true) {
 				int outbytes;

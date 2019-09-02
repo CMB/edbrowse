@@ -388,13 +388,15 @@ static void setupEdbrowseTempDirectory(void)
 	if (fileTypeByName(ebTempDir, false) != 'd') {
 /* no such directory, try to make it */
 /* this temp edbrowse directory is used by everyone system wide */
-		if (mkdir(ebTempDir, 0777)) {
+		if (mkdir(ebTempDir, MODE_rwx)) {
 			i_printf(MSG_TempDir, ebTempDir);
 			ebTempDir = 0;
 			return;
 		}
+#ifndef DOSLIKE
 // yes, we called mkdir with 777 above, but that was cut by umask.
-		chmod(ebTempDir, 0777);
+		chmod(ebTempDir, MODE_rwx);
+#endif
 	}
 // make room for user ID on the end
 	ebUserDir = allocMem(strlen(ebTempDir) + 20);
@@ -482,7 +484,7 @@ int main(int argc, char **argv)
 	sprintf(configFile, "%s/.ebrc", home);
 /* if not present then create it, as was done above */
 	if (fileTypeByName(configFile, false) == 0) {
-		int fh = creat(configFile, 0600);
+		int fh = creat(configFile, MODE_private);
 		if (fh >= 0) {
 			write(fh, ebrc_string, strlen(ebrc_string));
 			close(fh);
@@ -1516,7 +1518,8 @@ putc:
 			ftype = fileTypeByName(v, false);
 			if (ftype && ftype != 'f')
 				cfgAbort1(MSG_EBRC_JarNotFile, v);
-			j = open(v, O_WRONLY | O_APPEND | O_CREAT, 0600);
+			j = open(v, O_WRONLY | O_APPEND | O_CREAT,
+				 MODE_private);
 			if (j < 0)
 				cfgAbort1(MSG_EBRC_JarNoWrite, v);
 			close(j);

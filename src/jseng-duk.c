@@ -244,7 +244,7 @@ static duk_ret_t native_wlf(duk_context * cx)
 	}
 	if (!safe)
 		return 0;
-	fh = open(filename, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0666);
+	fh = open(filename, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, MODE_rw);
 	if (fh < 0) {
 		fprintf(stderr, "cannot create file %s\n", filename);
 		return 0;

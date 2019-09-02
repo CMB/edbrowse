@@ -94,7 +94,7 @@ void setupEdbrowseCache(void)
 	cacheControl = allocMem(strlen(cacheDir) + 11);
 	sprintf(cacheControl, "%s/control%02d", cacheDir, CACHECONTROLVERSION);
 /* make sure the control file exists, just for grins */
-	fh = open(cacheControl, O_WRONLY | O_APPEND | O_CREAT, 0600);
+	fh = open(cacheControl, O_WRONLY | O_APPEND | O_CREAT, MODE_private);
 	if (fh >= 0)
 		close(fh);
 
@@ -253,7 +253,8 @@ top:
 
 /* try every 10 ms, 100 times, for a total of 1 second */
 	for (i = 0; i < 100; ++i) {
-		lock_fh = open(cacheLock, O_WRONLY | O_EXCL | O_CREAT, 0666);
+		lock_fh =
+		    open(cacheLock, O_WRONLY | O_EXCL | O_CREAT, MODE_private);
 		if (lock_fh >= 0) {	/* got it */
 			close(lock_fh);
 			if (control_fh < 0) {

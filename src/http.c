@@ -2478,7 +2478,7 @@ top:
 		goto top;
 	}
 
-	g->down_fd = creat(answer, 0666);
+	g->down_fd = creat(answer, MODE_rw);
 	if (g->down_fd < 0) {
 		i_printf(MSG_NoCreate2, answer);
 		nl();

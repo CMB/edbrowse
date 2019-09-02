@@ -636,6 +636,14 @@ extern nodeFunction traverse_callback;
 #ifdef DOSLIKE
 /* windows mkdir takes only one argument */
 #define mkdir(a,b) _mkdir(a)
+// give the above we probably don't need rwx mode but here we go
+#define MODE_rw 0600
+#define MODE_rwx 0700
+#define MODE_private 0600
+#else
+#define MODE_rw 0666
+#define MODE_rwx 0777
+#define MODE_private 0600
 #endif
 
 /* function prototypes */

@@ -779,7 +779,8 @@ bool memoryOutToFile(const char *filename, const char *data, int len,
 /* specify the error messages */
 		     int msgcreate, int msgwrite)
 {
-	int fh = open(filename, O_CREAT | O_TRUNC | O_WRONLY | O_BINARY, 0666);
+	int fh =
+	    open(filename, O_CREAT | O_TRUNC | O_WRONLY | O_BINARY, MODE_rw);
 	if (fh < 0) {
 		setError(msgcreate, filename, errno);
 		return false;
