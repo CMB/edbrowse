@@ -985,7 +985,7 @@ mimestream:
 		}
 
 		if (g->down_force == 1)
-			ftruncate(g->down_fd, 0l);
+			truncate0(g->down_file, g->down_fd);
 
 perform:
 		g->is_http = g->cacheable = true;

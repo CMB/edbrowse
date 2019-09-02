@@ -193,7 +193,7 @@ static bool writeControl(void)
 	FILE *f;
 
 	lseek(control_fh, 0L, 0);
-	ftruncate(control_fh, 0l);
+	truncate0(cacheControl, control_fh);
 /* buffered IO is more efficient */
 	f = fdopen(control_fh, "w");
 
@@ -207,7 +207,7 @@ static bool writeControl(void)
 		if (rc <= 0) {
 			fclose(f);
 			control_fh = -1;
-			truncate(cacheControl, 0l);
+			truncate0(cacheControl, -1);
 			return false;
 		}
 	}
@@ -308,7 +308,7 @@ static void clearCacheInternal(void)
 		unlink(cacheFile);
 	}
 
-	truncate(cacheControl, 0l);
+	truncate0(cacheControl, -1);
 }				/* clearCacheInternal */
 
 // This function is not used and has not been tested.

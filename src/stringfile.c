@@ -794,6 +794,25 @@ bool memoryOutToFile(const char *filename, const char *data, int len,
 	return true;
 }				/* memoryOutToFile */
 
+// portable function to truncate to 0
+void truncate0(const char *filename, int fh)
+{
+#ifndef DOSLIKE
+// unix is easy
+	if (fh < 0)
+		truncate(filename, 0l);
+	else
+		ftruncate(fh, 0l);
+#else
+	int fh2;
+	if (fh >= 0)
+		lseek(fh, 0L, 0);
+	fh2 = open(filename, O_WRONLY | O_TRUNC);
+	if (fh2 >= 0)		// it should be
+		close(fh2);
+#endif
+}
+
 /* shift string to upper, lower, or mixed case */
 /* action is u, l, or m. */
 void caseShift(char *s, char action)

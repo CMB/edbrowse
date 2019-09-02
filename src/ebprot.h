@@ -326,6 +326,7 @@ void copyPstring(pst s, const pst t) ;
 bool fdIntoMemory(int fd, char **data, int *len) ;
 bool fileIntoMemory(const char *filename, char **data, int *len) ;
 bool memoryOutToFile(const char *filename, const char *data, int len, int msgcreate, int msgwrite) ;
+void truncate0(const char *filename, int fh);
 void caseShift(char *s, char action) ;
 void camelCase(char *s);
 char fileTypeByName(const char *name, bool showlink) ;
