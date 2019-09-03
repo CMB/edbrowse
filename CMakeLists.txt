@@ -167,6 +167,9 @@ if (WIN32)
     else ()
         message( FATAL "*** Threads NOT FOUNDunable to proceed")
     endif ()
+else ()
+    find_package (Threads)
+    list(APPEND add_LIBS ${CMAKE_THREAD_LIBS_INIT})
 endif ()
 
 if (BUILD_EDBR_ODBC) # if the user OPTION ON
