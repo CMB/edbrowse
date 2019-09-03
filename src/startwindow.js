@@ -1516,18 +1516,18 @@ return c;
 
 mw0.Comment = function(t) {
 this.data = t;
-this.nodeName = "#comment";
+this.nodeName = this.tagName = "#comment";
 this.nodeType = 8;
 this.ownerDocument = my$doc();
 this.class = "";
 this.childNodes = [];
+this.parentNode = null;
 }
 
 mw0.createComment = function(t) {
 if(t == undefined) t = "";
 var c = new Comment(t);
 eb$logElement(c, "comment");
-c.nodeName = c.tagName = "#comment";
 return c;
 }
 
@@ -1752,10 +1752,7 @@ mw0.hasChildNodes = function() { return (this.childNodes.length > 0); }
 
 mw0.eb$getSibling = function (obj,direction)
 {
-if (typeof obj.parentNode === 'undefined') {
-// need calling node to have parent and it doesn't, error
-return null;
-}
+if(!obj.parentNode) return null;
 var pn = obj.parentNode;
 var j, l;
 l = pn.childNodes.length;
@@ -2747,7 +2744,8 @@ return newobj;
 mw0.Form.prototype.removeChildNative = document.removeChild;
 mw0.Form.prototype.removeChild = function(item) {
 if(!item) return null;
-this.removeChildNative(item);
+if(!this.removeChildNative(item))
+return null;
 if(item.nodeName === "INPUT" || item.nodeName === "SELECT") {
 for(var i=0; i<this.elements.length; ++i)
 if(this.elements[i] == item) {
@@ -2809,7 +2807,7 @@ if(!item) return null;
 for(i=0; i<this.childNodes.length; ++i)
 if(this.childNodes[i] == item) {
 this.childNodes.splice(i, 1);
-delete item.parentNode;
+item.parentNode = null;
 break;
 }
 if(i == this.childNodes.length) return null;
@@ -2859,7 +2857,8 @@ return newobj;
 mw0.tBody.prototype.removeChildNative = document.removeChild;
 mw0.tBody.prototype.removeChild = function(item) {
 if(!item) return null;
-this.removeChildNative(item);
+if(!this.removeChildNative(item))
+return null;
 if(item instanceof tRow)
 for(var i=0; i<this.rows.length; ++i)
 if(this.rows[i] == item) {
@@ -2935,7 +2934,8 @@ return newobj;
 mw0.Table.prototype.removeChildNative = document.removeChild;
 mw0.Table.prototype.removeChild = function(item) {
 if(!item) return null;
-this.removeChildNative(item);
+if(!this.removeChildNative(item))
+return null;
 if(item instanceof tRow) mw0.rowReindex(this);
 if(item instanceof tBody)
 for(var i=0; i<this.tBodies.length; ++i)
@@ -2983,7 +2983,8 @@ return newobj;
 mw0.tRow.prototype.removeChildNative = document.removeChild;
 mw0.tRow.prototype.removeChild = function(item) {
 if(!item) return null;
-this.removeChildNative(item);
+if(!this.removeChildNative(item))
+return null;
 if(item.nodeName === "TD")
 for(var i=0; i<this.cells.length; ++i)
 if(this.cells[i] == item) {
@@ -3195,6 +3196,7 @@ c.style.element = c;
 c.dataset = {};
 c.childNodes = [];
 if(c instanceof Select) c.options = c.childNodes;
+c.parentNode = null;
 c.attributes = new NamedNodeMap;
 c.attributes.owner = c;
 if(t == "input") { // name and type are automatic attributes acid test 53

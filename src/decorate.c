@@ -1093,6 +1093,7 @@ Don't do any of this if the tag is itself <style>. */
 
 	set_property_string(io, "name", (symname ? symname : emptyString));
 	set_property_string(io, "id", (idname ? idname : emptyString));
+	set_property_string(io, "last$id", (idname ? idname : emptyString));
 
 	if (href && href_url)
 // This use to be instantiate_url, but with the new side effects

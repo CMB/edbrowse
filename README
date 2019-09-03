@@ -70,20 +70,15 @@ Edbrowse requires version 7.29.0 or later.  If you compiled with a version
 prior to 7.29.0, the program will inform you that you need to upgrade.
 If you have to compile curl from source, be sure to specify
 --ENABLE-VERSION-SYMBOLS at the configure script.
-curl can be configured to use openssl or gnutls.
-It's rare, but curl, and hence edbrowse, cannot access certain websites via gnutls.
-You get an error like this.
+It's rare, but curl, and hence edbrowse, cannot access certain websites,
+giving the message
 Cannot communicate securely with peer: no common encryption algorithm(s).
 You can even see this from the command line.
 	curl https://weloveanimals.me
 You'll either get the communication error or not.
-Unfortunately you have very little say in the curl configuration, your distribution does what it does.
-Fedora links curl against gnutls, but most distributions use openssl, so you're probably ok.
-Of course you can build curl from source if you must.
-https://askubuntu.com/questions/475670/how-to-build-curl-with-the-latest-openssl/475677
-The key line seems to be:
-./configure --with-nghttp2 --with-ssl --with-libssl-prefix=/usr/local/ssl
-Of course if the other curl is still on the system you have to make sure you build against and link against the one you just configured.
+This happens if openssl is too old
+or just doesn't support the ciphers that the website expects.
+This is beyond edbrowse, and beyond curl; you have to upgrade openssl.
 
 tidy:
 Edbrowse now uses the tidy-html5 HTML parser.  So there are a couple

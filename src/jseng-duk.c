@@ -993,14 +993,14 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	debugPrint(5, "remove 1");
 // top of stack must be the object to remove.
 	if (!duk_is_object(cx, -1))
-		goto done;
+		goto fail;
 	child = duk_get_heapptr(cx, -1);
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
 	duk_get_prop_string(cx, -1, "childNodes");
 	if (!duk_is_array(cx, -1)) {
 		duk_pop_2(cx);
-		goto done;
+		goto fail;
 	}
 	length = duk_get_length(cx, -1);
 	mark = -1;
@@ -1016,7 +1016,7 @@ static duk_ret_t native_removeChild(duk_context * cx)
 
 	if (mark < 0) {
 		duk_pop_2(cx);
-		goto done;
+		goto fail;
 	}
 
 /* push the other elements down */
@@ -1026,7 +1026,9 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	}
 	duk_set_length(cx, -1, length - 1);
 	duk_pop_2(cx);
-	duk_del_prop_string(cx, -1, "parentNode");
+// missing parentnode must always be null
+	duk_push_null(cx);
+	duk_put_prop_string(cx, -2, "parentNode");
 
 /* pass this linkage information back to edbrowse, to update its dom tree */
 	thisname = embedNodeName(thisobj);
@@ -1040,8 +1042,13 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	effectString(" 0x0, ");
 	linkageNow('r', thisobj);
 
-done:
 	debugPrint(5, "remove 2");
+	return 1;
+
+fail:
+	debugPrint(5, "remove 2");
+	duk_pop(cx);
+	duk_push_null(cx);
 	return 1;
 }
 

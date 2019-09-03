@@ -1,9 +1,13 @@
 Here are some changes introduced by recent versions of edbrowse.
 
-3.7.6
+3.7.5.1
 Search function on gopher.
 
-Use threads to download files in the background and in parallel.
+Use threads to download files in the background and in parallel, instead of processes.
+
+Get the windows port working again; it hasn't worked for a while.
+It didn't work because of fork; now that we are threaded it can comne back to life.
+That by itself seems worth releasing a mini-version.
 
 3.7.5:
 ib command to allocate input buffers for textareas.
