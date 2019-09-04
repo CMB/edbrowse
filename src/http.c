@@ -1122,8 +1122,16 @@ they go where they go, so this doesn't come up very often.
 			return false;
 		}
 
-		if (curlret != CURLE_OK)
-			goto curl_fail;
+		if (curlret != CURLE_OK) {
+			if (!head_request)
+				goto curl_fail;
+			ebcurl_setError(curlret, g->urlcopy, 1, g->error);
+			debugPrint(3, "switch from head to get");
+			curl_easy_setopt(h, CURLOPT_NOBODY, 0l);
+			head_request = false;
+			goto perform;
+		}
+// get http code
 		curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &g->code);
 		if (curlret != CURLE_OK)
 			goto curl_fail;
