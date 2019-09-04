@@ -3681,6 +3681,9 @@ unparen:
 char *render(int start)
 {
 	struct ebFrame *save_cf = cf;
+	for (cf = &cw->f0; cf; cf = cf->next)
+		if (cf->jcx)
+			set_property_bool(cf->winobj, "rr$start", true);
 	ns = initString(&ns_l);
 	invisible = false;
 	inv2 = inv3 = NULL;

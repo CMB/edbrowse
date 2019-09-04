@@ -2567,7 +2567,7 @@ return answer;
 mw0.newTextUnder = function(top, s, flavor)
 {
 var l = top.childNodes.length;
-for(i=l-1; i>=0; --i)
+for(var i=l-1; i>=0; --i)
 top.removeChild(top.childNodes[i]);
 top.appendChild(document.createTextNode(s));
 }
@@ -3905,9 +3905,13 @@ if(!t || !(so = t.style)) return 0;
 // If class has changed, recompute style.
 // If id has changed, recompute style, but I don't think that ever happens.
 if(t.class != t.last$class || t.id != t.last$id) {
+var w = my$win();
 if(t.last$class) alert3("restyle " + t.nodeName + "." + t.last$class + "." + t.class+"#"+t.last$id+"#"+t.id);
 else alert4("restyle " + t.nodeName + "." + t.last$class + "." + t.class+"#"+t.last$id+"#"+t.id);
-mw0.cssGather(false, my$win());
+if(w.rr$start) {
+mw0.cssGather(false, w);
+delete w.rr$start;
+}
 mw0.computeStyleInline(t);
 }
 
