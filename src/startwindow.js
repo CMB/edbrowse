@@ -1309,10 +1309,12 @@ return s;
 mw0.computeStyleInline = function(e) {
 var s;
 
+e.last$class = e.class, e.last$id = e.id;
+
 // don't put a style under a style.
 // There are probably other nodes I should skip too.
 if(e instanceof CSSStyleDeclaration) return;
-if(e.nodeType != 1) return;
+if(e.nodeType != 1 && e.nodeType != 3) return;
 
 // style object should already be there
 if(!e.style) {
@@ -1341,7 +1343,6 @@ delete s[k.replace(/\$(\$scy|pri)$/, "")];
 // apply all the css rules
 eb$cssApply(my$win(), e, s);
 // style has been recomputed
-e.last$class = e.class, e.last$id = e.id;
 // descend into the children
 if(e.childNodes)
 for(var i=0; i<e.childNodes.length; ++i)
@@ -1496,6 +1497,7 @@ this.class = "";
  * unlikely occurence, I have to create the array.
  * I have to treat a text node like an html node. */
 this.childNodes = [];
+this.parentNode = null;
 this.attributes = new mw0.NamedNodeMap;
 this.attributes.owner = this;
 }
@@ -3904,6 +3906,7 @@ if(!t || !(so = t.style)) return 0;
 // If id has changed, recompute style, but I don't think that ever happens.
 if(t.class != t.last$class || t.id != t.last$id) {
 if(t.last$class) alert3("restyle " + t.nodeName + "." + t.last$class + "." + t.class+"#"+t.last$id+"#"+t.id);
+else alert4("restyle " + t.nodeName + "." + t.last$class + "." + t.class+"#"+t.last$id+"#"+t.id);
 mw0.cssGather(false, my$win());
 mw0.computeStyleInline(t);
 }
