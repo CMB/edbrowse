@@ -687,6 +687,7 @@ static void urlSanitize(struct i_get *g, const char *post)
 		g->urlcopy = percentURL(url, post);
 		g->urlcopy_l = strlen(g->urlcopy);
 	} else {
+		char *frag;
 		if (post)
 			g->urlcopy_l = post - url;
 		else
@@ -694,6 +695,10 @@ static void urlSanitize(struct i_get *g, const char *post)
 		g->urlcopy = allocMem(g->urlcopy_l + 2);
 		strncpy(g->urlcopy, url, g->urlcopy_l);
 		g->urlcopy[g->urlcopy_l] = 0;
+// percentURL strips off the hash, so we need to here.
+		frag = findHash(g->urlcopy);
+		if (frag)
+			*frag = 0;
 	}
 
 // get rid of : in http://this.that.com:/path, curl can't handle it.
