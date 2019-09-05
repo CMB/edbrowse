@@ -3179,11 +3179,26 @@ li_hide:
 	if (opentag && t->jv) {
 // what is the visibility now?
 		uchar v_now = 2;
-		if (!intFlag)
-			v_now =
-			    run_function_onearg(cf->winobj, "eb$visible",
-						t->jv);
-// first some stats
+		t->disval =
+		    run_function_onearg(cf->winobj, "eb$visible", t->jv);
+		if (t->disval == 1)
+			v_now = 1;
+		if (t->disval == 2)
+			v_now = 3;
+		if (t->action == TAGACT_TEXT && v_now == 2) {
+			struct htmlTag *y = t;
+			while (y && y->f0 == cf) {
+				uchar dv = y->disval;
+				if (dv == DIS_TRANSPARENT)
+					v_now = 1;
+				if (dv == DIS_HOVERCOLOR)
+					v_now = 3;
+				if (dv >= DIS_COLOR)
+					break;
+				y = y->parent;
+			}
+		}
+// gather some stats
 		if (v_now == 1)
 			++invcount;
 		if (v_now == 3)

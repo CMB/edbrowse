@@ -579,6 +579,12 @@ struct htmlTag {
 	char subsup;		/* span turned into sup or sub */
 	uchar itype;		/* input type = */
 	uchar itype_minor;
+#define DIS_INVISIBLE 1
+#define DIS_HOVER 2
+#define DIS_COLOR 3
+#define DIS_TRANSPARENT 4
+#define DIS_HOVERCOLOR 5
+	uchar disval; // displayable value for the node
 	int ninp;		/* number of nonhidden inputs */
 	char *name, *id, *class, *nodeName, *value, *href;
 	const char *rvalue; /* for reset */
