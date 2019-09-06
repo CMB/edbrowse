@@ -705,11 +705,13 @@ top:
 		t = tagList[j];
 		if (t->action != TAGACT_SCRIPT || !t->jv || t->step >= 3)
 			continue;
-		t->step = 3;	// now loading the script
-		if (intFlag)
+		if (intFlag) {
+			t->step = 6;
 			continue;
+		}
 		cf = t->f0;
 		prepareScript(t);
+// step will now be 3, load in background, 4, loaded, or 6, failure.
 	}
 
 	async = false;
@@ -723,6 +725,10 @@ passes:
 		cf = t->f0;
 		if (!is_subframe(cf, save_cf))
 			continue;
+		if (intFlag) {
+			t->step = 6;
+			continue;
+		}
 		if (t->step == 3) {
 // waiting for background process to load
 			pthread_join(t->loadthread, NULL);
@@ -738,10 +744,6 @@ passes:
 			t->step = 4;	// loaded
 		}
 		t->step = 5;	// now running the script
-
-// inerrupt test should probably be higher up - before the pthread_join
-		if (intFlag)
-			continue;
 
 		js_file = t->js_file;
 		if (!js_file)

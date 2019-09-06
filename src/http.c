@@ -354,14 +354,15 @@ showdots:
  * All of the progress arguments to the function are unused. */
 
 static int
-curl_progress(void *unused, double dl_total, double dl_now,
+curl_progress(void *data_p, double dl_total, double dl_now,
 	      double ul_total, double ul_now)
 {
+	struct i_get *g = data_p;
 	int ret = 0;
-// ^c will interrupt an http or ftp download.
-// Perhaps that is hanging, and blocking edbrowse.
-	if (intFlag) {
-		i_puts(MSG_Interrupted);
+// ^c will interrupt an http or ftp download but not a background download
+	if (intFlag && g->down_force != 1) {
+		if (g->down_force == 0)
+			i_puts(MSG_Interrupted);
 		ret = 1;
 	}
 	return ret;
@@ -2127,6 +2128,7 @@ static CURL *http_curl_init(struct i_get *g)
 	curl_easy_setopt(h, CURLOPT_DEBUGDATA, g);
 	curl_easy_setopt(h, CURLOPT_NOPROGRESS, 0);
 	curl_easy_setopt(h, CURLOPT_PROGRESSFUNCTION, curl_progress);
+	curl_easy_setopt(h, CURLOPT_PROGRESSDATA, g);
 	curl_easy_setopt(h, CURLOPT_CONNECTTIMEOUT, webTimeout);
 	curl_easy_setopt(h, CURLOPT_USERAGENT, currentAgent);
 	curl_easy_setopt(h, CURLOPT_SSLVERSION, CURL_SSLVERSION_DEFAULT);
