@@ -483,6 +483,9 @@ void prepareScript(struct htmlTag *t)
 	char *b;
 	int blen;
 
+	if (intFlag)
+		goto fail;
+
 // If no language is specified, javascript is default.
 // language and type really need to dip into javascript attributes,
 // in case js has set or change them.  Not yet implemented.
@@ -705,10 +708,6 @@ top:
 		t = tagList[j];
 		if (t->action != TAGACT_SCRIPT || !t->jv || t->step >= 3)
 			continue;
-		if (intFlag) {
-			t->step = 6;
-			continue;
-		}
 		cf = t->f0;
 		prepareScript(t);
 // step will now be 3, load in background, 4, loaded, or 6, failure.

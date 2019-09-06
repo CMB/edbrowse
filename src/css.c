@@ -782,7 +782,7 @@ top:
 				g.thisfile = cf->fileName;
 				g.uriEncoded = true;
 				g.url = newurl;
-				if (httpConnect(&g)) {
+				if (!intFlag && httpConnect(&g)) {
 					if (g.code == 200) {
 						a = force_utf8(g.buffer,
 							       g.length);

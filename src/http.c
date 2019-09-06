@@ -1116,7 +1116,8 @@ they go where they go, so this doesn't come up very often.
 			return r;
 		}
 
-		if (g->length >= CHUNKSIZE && showProgress == 'd')
+		if (g->length >= CHUNKSIZE && showProgress == 'd'
+		    && !g->down_force)
 			nl();	/* We printed dots, so terminate them with newline */
 
 		if (g->down_state == 2) {
