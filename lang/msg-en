@@ -656,4 +656,5 @@ input readline()
 no trace points
 trace points injected
 Command execution failed, system() returned %d
-0
+don't show colors
+show colors

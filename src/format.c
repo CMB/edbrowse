@@ -1822,8 +1822,10 @@ uchar fromHex(char d, char e)
 	return ((((uchar) d) << 4) | (uchar) e);
 }				/* fromHex */
 
-// find the color closest to the rgb value
-const char *closeColor(const char *s)
+// find the color closest to the rgb value.
+// Input string is allocated; return is either the einput string
+// or another allocated string.
+char *closeColor(const char *s)
 {
 	const struct reserved {
 		const char *name;
@@ -1983,41 +1985,47 @@ const char *closeColor(const char *s)
 	if (!strncmp(s, "rgb(", 4)) {
 		t = s + 4;
 		if (!isdigit(*t))
-			goto echo;
+			goto fail;
 		r1 = strtol(t, (char **)&t, 10);
 		if (*t == ',')
 			++t;
 		while (*t == ' ')
 			++t;
 		if (!isdigit(*t))
-			goto echo;
+			goto fail;
 		g1 = strtol(t, (char **)&t, 10);
 		if (*t == ',')
 			++t;
 		while (*t == ' ')
 			++t;
 		if (!isdigit(*t))
-			goto echo;
+			goto fail;
 		b1 = strtol(t, (char **)&t, 10);
 		if (*t == ',')
 			++t;
 		while (*t == ' ')
 			++t;
 		if (*t != ')')
-			goto echo;
+			goto fail;
 	} else if (*s == '#' && isxdigit(s[1])) {
 		if (!isxdigit(s[2]) || !isxdigit(s[3]) || !isxdigit(s[4]) ||
 		    !isxdigit(s[5]) || !isxdigit(s[6]) || s[7])
-			goto echo;
+			goto fail;
 		r1 = fromHex(s[1], s[2]);
 		g1 = fromHex(s[3], s[4]);
 		b1 = fromHex(s[5], s[6]);
+	} else {
+// not an rgb format we recognize; should be just a word.
+		for (t = s; *t; ++t)
+			if (!isalpha(*t) && *t != ' ')
+				goto fail;
+		return (char *)s;
 	}
 
 	if (r1 < 0 || g1 < 0 || b1 < 0)
-		goto echo;
+		goto fail;
 	if (r1 > 255 || g1 > 255 || b1 > 255)
-		goto echo;
+		goto fail;
 
 // closest by rms; just check them all; kind of inefficient.
 	best_val = 255 * 255 * 3 + 1;
@@ -2028,8 +2036,8 @@ const char *closeColor(const char *s)
 		if (rms < best_val)
 			best_val = rms, best_c = c;
 	}
-	return best_c->name;
+	return cloneString(best_c->name);
 
-echo:
-	return s;
+fail:
+	return 0;
 }

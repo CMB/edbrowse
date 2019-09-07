@@ -338,6 +338,7 @@ extern bool helpMessagesOn;	/* no need to type h */
 extern bool pluginsOn;		/* plugins are active */
 extern bool showHiddenFiles;	/* during directory scan */
 extern bool showHover; // messages that appear when you hover
+extern bool doColors;
 extern int context;		/* which session (buffer) are we in? */
 extern pst linePending;
 extern char *changeFileName;
@@ -576,6 +577,7 @@ struct htmlTag {
 	bool doorway:1; /* doorway to javascript */
 	bool visited:1;
 	bool masked:1;
+	bool iscolor:1;
 	char subsup;		/* span turned into sup or sub */
 	uchar itype;		/* input type = */
 	uchar itype_minor;

@@ -14,6 +14,7 @@ extern int gettimeofday(struct timeval *tp, void *tzp);	// from tidys.lib
 
 uchar browseLocal;
 bool showHover;
+bool doColors;
 
 static jsobjtype js_reset, js_submit;
 
@@ -3093,6 +3094,28 @@ static int listnest;		/* count nested lists */
  * the current open tag. */
 static struct htmlTag *currentForm, *currentA;
 
+static char *backArrow(char *s)
+{
+	if (!s)
+		s = ns + ns_l;
+	while (s > ns) {
+		if ((uchar) (*--s) == 0xe2 && (uchar) s[1] == 0x89 &&
+		    ((uchar) s[2] == 0xaa || (uchar) s[2] == 0xab))
+			return s;
+	}
+	return 0;
+}
+
+static void swapArrow(void)
+{
+	char *s = ns + ns_l - 6;
+	if (s > ns &&
+	    !strncmp(s, "≫\0020", 5) && (s[5] == '>' || s[5] == '}')) {
+		strmove(s, s + 3);
+		strcpy(s + 3, "≫");
+	}
+}
+
 static void tagInStream(int tagno)
 {
 	char buf[32];
@@ -3133,6 +3156,7 @@ static void renderNode(struct htmlTag *t, bool opentag)
 	const struct tagInfo *ti = t->info;
 	int action = t->action;
 	char c;
+	bool endcolor;
 	bool retainTag;
 	const char *a;		/* usually an attribute */
 	char *u;
@@ -3167,6 +3191,12 @@ li_hide:
 // but it's never really empty due to tag markers.
 		stringAndString(&ns, &ns_l, "\r}'\r");
 		return;
+	}
+
+	endcolor = false;
+	if (doColors && !opentag && t->iscolor) {
+		stringAndString(&ns, &ns_l, "≫");
+		endcolor = true;
 	}
 
 	if (!opentag && ti->bits & TAG_NOSLASH)
@@ -3244,6 +3274,74 @@ li_hide:
 			invisible = false;
 	}
 
+	if (doColors && opentag) {
+		char *u0, *u1, *u2, *u3;
+		jsobjtype so;	// style object
+		char *color = 0, *recolor = 0;
+		t->iscolor = false;
+		so = get_property_object(t->jv, "style");
+		if (so)
+			color = get_property_string(so, "color");
+		if (!color || !color[0])
+			goto nocolor;
+		caseShift(color, 'l');
+		recolor = closeColor(color);
+		if (!recolor) {
+			nzFree(color);
+			goto nocolor;
+		}
+		if (recolor != color)
+			nzFree(color);
+		if (stringEqual(recolor, "inherit")) {	// not a color
+			nzFree(recolor);
+			goto nocolor;
+		}
+// is this the same as the previous?
+		u2 = backArrow(0);
+		if (!u2)
+			goto yescolor;
+		if ((uchar) u2[2] == 0xaa) {	// open
+			u1 = u2;
+			u2 = 0;	// no closing
+		} else {
+			u1 = backArrow(u2);
+			if (!u1 || (uchar) u1[2] != 0xaa)
+				goto yescolor;
+		}
+// back up to :
+		u0 = u1;
+		while (u0 > ns)
+			if (*--u0 == ':')
+				break;
+		if (*u0++ != ':' ||
+		    u1 - u0 != strlen(recolor) || memcmp(u0, recolor, u1 - u0))
+			goto yescolor;
+		if (!u2) {
+// it's the same color, orange inside orange
+			nzFree(recolor);
+			goto nocolor;
+		}
+// merge sections if there are no words in between
+		for (u3 = u2; *u3; ++u3) {
+			if (*u3 == InternalCodeChar)
+				for (++u3; isdigit(*u3); ++u3) ;
+			if (isalnum(*u3))
+				goto yescolor;
+		}
+		strmove(u2, u2 + 3);
+		ns_l -= 3;
+		nzFree(recolor);
+		t->iscolor = true;
+		goto nocolor;
+yescolor:
+		stringAndChar(&ns, &ns_l, ':');
+		stringAndString(&ns, &ns_l, recolor);
+		stringAndString(&ns, &ns_l, "≪");
+		nzFree(recolor);
+		t->iscolor = true;
+	}
+nocolor:
+
 	switch (action) {
 	case TAGACT_TEXT:
 		if (t->jv) {
@@ -3305,6 +3403,8 @@ li_hide:
 				hnum[0] = 0;
 		}
 		ns_hnum();
+		if (endcolor)
+			swapArrow();
 		break;
 
 // check for span onclick and make it look like a link.
@@ -3343,6 +3443,8 @@ li_hide:
 		} else {
 			sprintf(hnum, "%c0}", InternalCodeChar);
 			ns_hnum();
+			if (endcolor)
+				swapArrow();
 		}
 		break;
 
@@ -3379,6 +3481,19 @@ nop:
 					c = '\n';
 			}
 			stringAndChar(&ns, &ns_l, c);
+			if (doColors && t->iscolor &&
+			    ns_l > 4 && !memcmp(ns + ns_l - 4, "≪", 3)) {
+// move the newline before the color
+				char *u0 = ns + ns_l - 4;
+				while (u0 > ns)
+					if (*--u0 == ':')
+						break;
+				if (*u0 == ':') {
+					int j = strlen(u0);
+					memmove(u0 + 1, u0, j);
+					*u0 = c;
+				}
+			}
 			if (opentag && action == TAGACT_H) {
 				strcpy(hnum, ti->name);
 				strcat(hnum, " ");

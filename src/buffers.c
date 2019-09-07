@@ -4855,6 +4855,25 @@ et_go:
 			rerender(false);
 		return true;
 	}
+
+	if (stringEqual(line, "colors")) {
+		doColors ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(doColors + MSG_ColorOff);
+		if (cw->browseMode && isJSAlive)
+			rerender(false);
+		return true;
+	}
+
+	if (stringEqual(line, "colors+") || stringEqual(line, "colors-")) {
+		doColors = (line[6] == '+');
+		if (helpMessagesOn)
+			i_puts(doColors + MSG_ColorOff);
+		if (cw->browseMode && isJSAlive)
+			rerender(false);
+		return true;
+	}
+
 	if (stringEqual(line, "su8")) {
 		re_utf8 ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
