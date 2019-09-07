@@ -135,6 +135,8 @@ uchar base64Bits(char c);
 int base64Decode(char *start, char **end);
 void iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p);
 bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l);
+uchar fromHex(char d, char e) ;
+const char *closeColor(const char *s);
 
 /* sourcefile=html.c */
 bool tagHandler(int seqno, const char *name);
@@ -274,7 +276,6 @@ char *allocZeroString(size_t n) ;
 char *reallocString(void *p, size_t n) ;
 void nzFree(void *s) ;
 void cnzFree(const void *s) ;
-uchar fromHex(char d, char e) ;
 char *appendString(char *s, const char *p) ;
 char *prependString(char *s, const char *p) ;
 void skipWhite(const char **s) ;

@@ -100,17 +100,6 @@ void cnzFree(const void *v)
 	nzFree((void *)v);
 }				/* cnzFree */
 
-uchar fromHex(char d, char e)
-{
-	d |= 0x20, e |= 0x20;
-	if (d >= 'a')
-		d -= ('a' - '9' - 1);
-	if (e >= 'a')
-		e -= ('a' - '9' - 1);
-	d -= '0', e -= '0';
-	return ((((uchar) d) << 4) | (uchar) e);
-}				/* fromHex */
-
 char *appendString(char *s, const char *p)
 {
 	int slen = strlen(s);
