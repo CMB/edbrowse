@@ -1827,6 +1827,7 @@ uchar fromHex(char d, char e)
 // or another allocated string.
 char *closeColor(const char *s)
 {
+// indent formats an array of structures really weird; not like I would.
 	const struct reserved {
 		const char *name;
 		uchar r, g, b;

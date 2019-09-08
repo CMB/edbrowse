@@ -3106,6 +3106,14 @@ static char *backArrow(char *s)
 	return 0;
 }
 
+static char *backColon(char *s)
+{
+	while (s > ns)
+		if (*--s == ':')
+			break;
+	return s;
+}
+
 static void swapArrow(void)
 {
 	char *s = ns + ns_l - 6;
@@ -3195,9 +3203,38 @@ li_hide:
 
 	endcolor = false;
 	if (doColors && !opentag && t->iscolor) {
+		char *u0, *u1, *u3;
+// don't put a color around whitespace
+		u1 = backArrow(0);
+// there should always be a previous color marker
+		if (!u1)
+			goto nocolorend;
+		if ((uchar) u1[2] == 0xab)	// close
+			goto yescolorend;
+		for (u3 = u1 + 3; *u3; ++u3) {
+			if (*u3 == InternalCodeChar) {
+				for (++u3; isdigit(*u3); ++u3) ;
+				if (*u3 == '*' && !*++u3)
+					break;
+			}
+			if (!isspace(*u3))
+				goto yescolorend;
+		}
+		u0 = backColon(u1);
+		if (*u0 != ':')
+			goto yescolorend;
+		for (u3 = u0 + 1; u3 < u1; ++u3)
+			if (*u3 != ' ' && !isalpha(*u3))
+				goto yescolorend;
+		u1 += 3;
+		strmove(u0, u1);
+		ns_l -= (u1 - u0);
+		goto nocolorend;
+yescolorend:
 		stringAndString(&ns, &ns_l, "≫");
 		endcolor = true;
 	}
+nocolorend:
 
 	if (!opentag && ti->bits & TAG_NOSLASH)
 		return;
@@ -3309,10 +3346,7 @@ li_hide:
 				goto yescolor;
 		}
 // back up to :
-		u0 = u1;
-		while (u0 > ns)
-			if (*--u0 == ':')
-				break;
+		u0 = backColon(u1);
 		if (*u0++ != ':' ||
 		    u1 - u0 != strlen(recolor) || memcmp(u0, recolor, u1 - u0))
 			goto yescolor;
@@ -3485,9 +3519,7 @@ nop:
 			    ns_l > 4 && !memcmp(ns + ns_l - 4, "≪", 3)) {
 // move the newline before the color
 				char *u0 = ns + ns_l - 4;
-				while (u0 > ns)
-					if (*--u0 == ':')
-						break;
+				u0 = backColon(u0);
 				if (*u0 == ':') {
 					int j = strlen(u0);
 					memmove(u0 + 1, u0, j);
