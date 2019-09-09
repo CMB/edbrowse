@@ -656,5 +656,5 @@ readline() input
 0
 0
 Esecuzione del comando fallita, system() ha ritornato %d
-0
-0
+non mostrare colori
+mostra colori

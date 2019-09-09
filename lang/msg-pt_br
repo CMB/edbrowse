@@ -656,5 +656,5 @@ linha de entrada()
 0
 0
 Execução de comando falhou; system() retornou %d
-0
-0
+não mostrar cores
+mostrar cores

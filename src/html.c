@@ -2161,9 +2161,6 @@ static bool reportZ(void)
 
 	if (!(front1z || front2z || back1z || back2z))
 		return false;
-	debugPrint(4, "front %d back %d,%d front1z %d,%d back1z %d,%d",
-		   sameFront, sameBack1, sameBack2,
-		   front1z, front2z, back1z, back2z);
 
 	if (front1z || front2z) {
 		if (front2z > front1z)
@@ -2438,7 +2435,9 @@ and new internal numbers each time, and that use to trip this algorithm.
 		goto done;
 	}
 	frontBackDiff(snap, newbuf);
-//      printf("front %d back %d,%d z %d,%d z %d,%d\n", sameFront, sameBack1, sameBack2, front1z, front2z, back1z, back2z);
+	debugPrint(4, "front %d back %d,%d front z %d,%d back z %d,%d",
+		   sameFront, sameBack1, sameBack2,
+		   front1z, front2z, back1z, back2z);
 	z = reportZ();
 
 // Even if the change has been reported above,
@@ -3574,6 +3573,8 @@ nop:
 						i_getString(MSG_Push));
 			ns_ic();
 			stringAndString(&ns, &ns_l, "0>");
+			if (endcolor)
+				swapArrow();
 			break;
 		}
 // value has to be something.
