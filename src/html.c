@@ -13,10 +13,38 @@ extern int gettimeofday(struct timeval *tp, void *tzp);	// from tidys.lib
 #endif // _MSC_VER y/n
 
 uchar browseLocal;
-bool showHover;
-bool doColors;
+bool showHover, doColors;
+pthread_t jsbt;			// javascript background thread
 
 static jsobjtype js_reset, js_submit;
+
+void js_wait(void)
+{
+	if (jsbt) {
+		pthread_join(jsbt, NULL);
+		jsbt = 0;
+	}
+}
+
+bool js_inbackground(void)
+{
+	int rc;
+	if (!jsbt)
+		return false;
+	rc = pthread_tryjoin_np(jsbt, NULL);
+	if (!rc) {		// it's done
+		jsbt = 0;
+		return false;
+	}
+	if (rc == EBUSY)
+		return true;
+// there shouldn't be any other error, and if there is
+// I really don't know what to do.
+	debugPrint(3, "js background thread test returns %d", rc);
+	pthread_join(jsbt, NULL);
+	jsbt = 0;
+	return false;
+}
 
 bool tagHandler(int seqno, const char *name)
 {

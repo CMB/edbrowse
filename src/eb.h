@@ -88,6 +88,16 @@ extern jsobjtype docobj;	// document object
 extern const char *jsSourceFile; // sourcefile providing the javascript
 extern int jsLineno; // line number
 
+/*********************************************************************
+duktape is not threadsafe, so says the programmer's guide.
+So javascript runs in the foreground as we push buttons etc,
+or, there is at most one thread running javascript in the background,
+if we choose to implement that.
+Here is the js background thread. It is 0 if no thread is running.
+*********************************************************************/
+
+extern pthread_t jsbt;
+
 enum ej_proptype {
 	EJ_PROP_NONE,
 	EJ_PROP_STRING,
