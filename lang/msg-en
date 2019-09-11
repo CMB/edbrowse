@@ -565,7 +565,7 @@ reverse
 fetchmail client is interactive, and cannot run in the background
 mailbox directory not specified in your .ebrc file
 Cannot change directory to %s
-0
+javascript blocked
 Invalid login or password
 sort alphabetically
 sort by size
@@ -573,7 +573,7 @@ sort by time
 converting to unix
 converting to dos
 tag code %d has bad character %c following\n
-0
+Locked out for 45 seconds, killing operations on this session, results are unpredictable!
 htmlParse() is not reentrant.
 unexpected input type in submitForm()
 list = 0 in tagFromJavaVar()

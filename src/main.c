@@ -25,7 +25,7 @@ char *ebTempDir, *ebUserDir;
 char *userAgents[MAXAGENT + 1];
 char *currentAgent;
 bool allowRedirection = true, allowJS = true, sendReferrer = true;
-bool allowXHR = true;
+bool allowXHR = true, blockJS;
 bool ftpActive;
 int webTimeout = 20, mailTimeout = 0;
 int displayLength = 500;
@@ -58,6 +58,7 @@ static int javaDisCount;
 static struct DBTABLE dbtables[MAXDBT];
 static int numTables;
 volatile bool intFlag;
+time_t intStart;
 bool curlActive;
 bool ismc, isimap, passMail;
 char whichproc = 'e';		// edbrowse
@@ -197,17 +198,94 @@ bool javaOK(const char *url)
 	return true;
 }				/* javaOK */
 
+static void *inputForever(void *ptr);
+static pthread_t foreground_thread;
+static void finishBrowse(void)
+{
+	struct htmlTag *t;
+	int i, j;
+	char *a, *newbuf;
+	struct ebFrame *f;
+	whichproc = 'e';
+// tags should certainly be set
+	if (!tagList)
+		return;
+// set all scripts to complete
+	for (i = 0; i < cw->numTags; ++i) {
+		t = tagList[i];
+		if (t->action == TAGACT_SCRIPT)
+			t->step = 6;
+	}
+// kill any timers
+	for (f = &cw->f0; f; f = f->next)
+		delTimers(f);
+	if (cw->browseMode)
+		return;
+// We were in the middle of the browse command; this is typical.
+	if (allowJS) {
+		allowJS = false;
+		blockJS = true;
+		i_puts(MSG_JavaOff);
+	}
+	a = render(0);
+	newbuf = htmlReformat(a);
+	nzFree(a);
+	cw->rnlMode = cw->nlMode;
+	cw->nlMode = false;
+	cw->binMode = false;
+	cw->r_dot = cw->dot, cw->r_dol = cw->dol;
+	cw->dot = cw->dol = 0;
+	cw->r_map = cw->map;
+	cw->map = 0;
+	memcpy(cw->r_labels, cw->labels, sizeof(cw->labels));
+	memset(cw->labels, 0, sizeof(cw->labels));
+	j = strlen(newbuf);
+	addTextToBuffer((pst) newbuf, j, 0, false);
+	free(newbuf);
+	cw->undoable = false;
+	cw->changeMode = false;
+	if (cf->fileName) {
+		j = strlen(cf->fileName);
+		cf->fileName = reallocMem(cf->fileName, j + 8);
+		strcat(cf->fileName, ".browse");
+	}
+	cw->browseMode = true;
+}
+
 /* Catch interrupt and react appropriately. */
 static void catchSig(int n)
 {
+	time_t now;
+	pthread_t t1 = foreground_thread, t2;
+	int j;
 	intFlag = true;
-	if (inInput)
-		i_puts(MSG_EnterInterrupt);
 /* If we were reading from a file, or socket, this signal should
  * cause the read to fail.  Check for intFlag, so we know it was
  * interrupted, and not an io failure.
  * Then clean up appropriately. */
 	signal(SIGINT, catchSig);
+	if (inInput) {
+		i_puts(MSG_EnterInterrupt);
+		return;
+	}
+	if (!intStart) {	// first time hitting ^C
+		time(&intStart);
+		return;
+	}
+	time(&now);
+// should 45 seconds be configurable?
+	if (now < intStart + 45)
+		return;
+// Let's do something drastic here; start a new thread and exit the current one.
+	i_puts(MSG_IntForce);
+	if (whichproc == 'j')
+		finishBrowse();
+// Doing this stuff from a signal handler?  idk
+	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &j);
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &j);
+	if (pthread_create(&t2, NULL, inputForever, NULL))
+		return;		// didn't work
+	pthread_cancel(t1);
 }				/* catchSig */
 
 bool isSQL(const char *s)
@@ -765,6 +843,13 @@ int main(int argc, char **argv)
 	if (cx > 1)
 		cxSwitch(1, false);
 
+	inputForever(NULL);
+	return 0;
+}
+
+static void *inputForever(void *ptr)
+{
+	foreground_thread = pthread_self();
 	while (true) {
 		pst p = inputLine();
 		pst save_p = clonePstring(p);
@@ -777,7 +862,8 @@ int main(int argc, char **argv)
 			linePending = save_p;
 		}
 	}			/* infinite loop */
-}				/* main */
+	return NULL;
+}
 
 /* Find the balancing brace in an edbrowse function */
 static const char *balance(const char *ip, int direction)

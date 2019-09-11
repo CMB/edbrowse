@@ -318,6 +318,7 @@ extern bool passMail;		/* pass mail across the filters */
 extern bool errorExit;		/* exit on any error, for scripting purposes */
 extern bool isInteractive;
 extern volatile bool intFlag;	/* set this when interrupt signal is caught */
+extern time_t intStart;
 extern bool binaryDetect;
 extern bool inputReadLine;
 extern bool curlAuthNegotiate;  /* try curl negotiate (SPNEGO) auth */
@@ -341,6 +342,7 @@ extern bool caseInsensitive, searchStringsAll, searchWrap;
 extern bool allowRedirection;	/* from http code 301, or http refresh */
 extern bool sendReferrer;	/* in the http header */
 extern bool allowJS;		/* javascript on */
+extern bool blockJS; // javascript is blocked
 extern bool allowXHR;		/* xhr on */
 extern bool htmlGenerated;
 extern bool ftpActive;

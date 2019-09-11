@@ -437,6 +437,7 @@ pst inputLine(void)
 top:
 	intFlag = false;
 	inInput = true;
+	intStart = 0;
 	nzFree(last_rl);
 	last_rl = 0;
 	s = 0;
@@ -4557,6 +4558,12 @@ et_go:
 	}
 
 	if (stringEqual(line, "js")) {
+#if 0
+		if (blockJS) {
+			i_puts(MSG_JavaBlock);
+			return true;
+		}
+#endif
 		allowJS ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(allowJS + MSG_JavaOff);
@@ -4564,6 +4571,12 @@ et_go:
 	}
 
 	if (stringEqual(line, "js+") || stringEqual(line, "js-")) {
+#if 0
+		if (blockJS) {
+			i_puts(MSG_JavaBlock);
+			return true;
+		}
+#endif
 		allowJS = (line[2] == '+');
 		if (helpMessagesOn)
 			i_puts(allowJS + MSG_JavaOff);
