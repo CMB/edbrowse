@@ -271,7 +271,8 @@ eb$falsefunction = function() { return false; }
 
 scroll = scrollTo = scrollBy = scrollByLines = scrollByPages = eb$voidfunction;
 focus = blur = scroll = eb$voidfunction;
-document.focus = document.blur = document.open = document.close = eb$voidfunction;
+document.focus = document.blur = document.close = eb$voidfunction;
+document.open = function() { return this }
 
 /* Some visual attributes of the window.
  * These are simulations as edbrowse has no screen.
@@ -1165,30 +1166,38 @@ this.ownerDocument = my$doc();
 this.attributes.owner = this;
 this.sheet = new mw0.CSSStyleSheet;
 };
-mw0.CSSStyleDeclaration.prototype.toString = function() { return "style object"; }
-mw0.CSSStyleDeclaration.prototype.getPropertyValue = function(p) {
+mw0.CSSStyleDeclaration.prototype = {
+// these are default properties of a style object
+animationDelay:"",
+animationDuration:"",
+transitionDelay:"",
+transitionDuration:"",
+textTransform: "none", // acid test 46
+toString: function() { return "style object" },
+getPropertyValue: function(p) {
 p = mw0.camelCase(p);
                 if (this[p] == undefined)                
                         this[p] = "";
                         return this[p];
-}
-Object.defineProperty(mw0.CSSStyleDeclaration.prototype, "css$data", {
-get: function() { var s = ""; for(var i=0; i<this.childNodes.length; ++i) if(this.childNodes[i].nodeName == "#text") s += this.childNodes[i].data; return s; }});
-mw0.CSSStyleDeclaration.prototype.getProperty = function(p) {
+},
+getProperty: function(p) {
 p = mw0.camelCase(p);
 return this[p] ? this[p] : "";
-}
-mw0.CSSStyleDeclaration.prototype.setProperty = function(p, v, prv) {
+},
+setProperty: function(p, v, prv) {
 p = mw0.camelCase(p);
 this[p] = v;
 var pri = p + "$pri";
 this[pri] = (prv === "important");
-}
-mw0.CSSStyleDeclaration.prototype.getPropertyPriority = function(p) {
+},
+getPropertyPriority: function(p) {
 p = mw0.camelCase(p);
 var pri = p + "$pri";
 return this[pri] ? "important" : "";
 }
+};
+Object.defineProperty(mw0.CSSStyleDeclaration.prototype, "css$data", {
+get: function() { var s = ""; for(var i=0; i<this.childNodes.length; ++i) if(this.childNodes[i].nodeName == "#text") s += this.childNodes[i].data; return s; }});
 
 mw0.cssTextGet = function() {
 var s = "";
@@ -1293,12 +1302,6 @@ if(!s[k] &&  e.style[k+"$$scy"] < 100000) continue;
 // Ok carry this one across.
 s[k] = e.style[k];
 }
-}
-
-if(!s.textTransform) {
-// I guess this is default behavior; acid test 46
-s.textTransform = "none";
-// Are there other defaults I should know about?
 }
 
 return s;
