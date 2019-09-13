@@ -910,6 +910,9 @@ char *htmlParse(char *buf, int remote)
 		runScriptsPending();
 		runOnload();
 		runScriptsPending();
+		set_property_string(cf->docobj, "readyState", "complete");
+		run_event_bool(cf->docobj, "document", "onreadystatechange", 0);
+		runScriptsPending();
 		rebuildSelectors();
 	}
 
@@ -918,7 +921,6 @@ char *htmlParse(char *buf, int remote)
 	newbuf = htmlReformat(a);
 	nzFree(a);
 
-	set_property_string(cf->docobj, "readyState", "complete");
 	return newbuf;
 }				/* htmlParse */
 

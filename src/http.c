@@ -2933,8 +2933,10 @@ we did that before and now it's being expanded. So bump step up to 2.
 		runScriptsPending();
 		runOnload();
 		runScriptsPending();
-		rebuildSelectors();
 		set_property_string(cf->docobj, "readyState", "complete");
+		run_event_bool(cf->docobj, "document", "onreadystatechange", 0);
+		runScriptsPending();
+		rebuildSelectors();
 	}
 	nzFree(jssrc);
 
@@ -3109,8 +3111,10 @@ bool reexpandFrame(void)
 		runScriptsPending();
 		runOnload();
 		runScriptsPending();
-		rebuildSelectors();
 		set_property_string(cf->docobj, "readyState", "complete");
+		run_event_bool(cf->docobj, "document", "onreadystatechange", 0);
+		runScriptsPending();
+		rebuildSelectors();
 	}
 
 	j = strlen(cf->fileName);

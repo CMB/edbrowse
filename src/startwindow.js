@@ -2382,13 +2382,12 @@ Third arg is not used cause I don't understand it.
 It calls a lower level function to do the work, which is also called by
 attachEvent, as these are almost exactly the same functions.
 A similar design applies for removeEventListener and detachEvent.
-However, attachEvent is deprecated, and disabled by default.
-If you turn it on it creates things like
-click$$array which should be onclick$$array
+However, attachEvent is deprecated, and probably shouldn't be used.
+I have it enabled for now...
 This is frickin complicated, so set eventDebug to debug it.
 *********************************************************************/
 
-mw0.attachOn = false;
+mw0.attachOn = true;
 
 mw0.addEventListener = function(ev, handler, iscapture) { this.eb$listen(ev,handler, iscapture, true); }
 mw0.removeEventListener = function(ev, handler, iscapture) { this.eb$unlisten(ev,handler, iscapture, true); }
@@ -2402,9 +2401,6 @@ mw0.eb$listen = function(ev, handler, iscapture, addon)
 if(my$win().eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev + " for " + (iscapture?"capture":"bubble"));
 if(addon) {
 ev = "on" + ev;
-} else {
-// for attachEvent, if onclick is passed in, you are actually listening for 'click'
-ev = ev.replace(/^on/, "");
 }
 
 if(iscapture) handler.do$capture = true;
