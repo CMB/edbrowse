@@ -139,8 +139,6 @@ uchar fromHex(char d, char e) ;
 char *closeColor(const char *s);
 
 /* sourcefile=html.c */
-void js_wait(void);
-bool js_inbackground(void);
 bool tagHandler(int seqno, const char *name);
 void jSideEffects(void);
 void jSyncup(bool fromtimer);

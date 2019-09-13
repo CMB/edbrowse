@@ -3292,22 +3292,12 @@ mw0.XMLHttpRequest.DONE = 4;
 mw0.XMLHttpRequest.prototype = {
 open: function(method, url, async, user, password){
 this.readyState = 1;
-this.async = false;
-// Note: async is currently hardcoded to false
-// In the implementation in envjs, the line here was:
-// this.async = (async === false)?false:true;
+this.async = (async === false)?false:true;
 this.method = method || "GET";
-alert3("xhr open " + url);
+alert3("xhr " + (this.async ? "async " : "") + "open " + url);
 this.url = eb$resolveURL(my$win().eb$base, url);
 this.status = 0;
 this.statusText = "";
-// When the major libraries are used, they overload XHR left and right.
-// Some versions use onreadystatechange.  This has been replaced by onload in,
-// for instance, newer versions of jquery.  It can cause problems to call the
-// one that is not being used at that moment, so my remedy here is to attempt
-// both of them inside of a try-catch
-try { this.onreadystatechange(); } catch (e) { }
-try { this.onload(); } catch (e) {}
 },
 setRequestHeader: function(header, value){
 this.headers[header] = value;
@@ -3337,11 +3327,11 @@ data = encodeURI(data);
 }
 var entire_http_response =  eb$fetchHTTP(urlcopy,this.method,headerstring,data);
 var responsebody_array = entire_http_response.split("\r\n\r\n");
-var http_headers = responsebody_array[0];
-responsebody_array[0] = "";
-var responsebody = responsebody_array.join("\r\n\r\n");
-responsebody = responsebody.trim();
-this.responseText = responsebody;
+var success = parseInt(responsebody_array[0]);
+var code = parseInt(responsebody_array[1]);
+var http_headers = responsebody_array[2];
+responsebody_array[0] = responsebody_array[1] = responsebody_array[2] = "";
+this.responseText = responsebody_array.join("\r\n\r\n").trim();
 var hhc = http_headers.split("\r\n");
 var i=0;
 while (i < hhc.length) {
@@ -3352,33 +3342,28 @@ this.responseHeaders[value2] = value3.trim();
 i++;
 }
 
-try{
 this.readyState = 4;
-}catch(e){
-}
-
-if ((!this.aborted) && this.responseText.length > 0){
-this.readyState = 4;
-this.status = 200;
-this.statusText = "OK";
+if(success) {
+this.status = code;
+// need a real statusText for the codes
+this.statusText = (code == 200 ? "OK" : "http error " + code);
 // When the major libraries are used, they overload XHR left and right.
 // Some versions use onreadystatechange.  This has been replaced by onload in,
 // for instance, newer versions of jquery.  It can cause problems to call the
-// one that is not being used at that moment, so my remedy here is to attempt
-// both of them inside of a try-catch
-try { this.onreadystatechange(); } catch (e) { }
-try { this.onload(); } catch (e) {}
+// one that is not being used at that moment, so my remedy here is to have
+// empty functions in the prototype so I can call both of them.
+this.onreadystatechange();
+this.onload();
+} else {
+this.status = 0;
+this.statusText = "network error";
 }
 
 },
-abort: function(){
-this.aborted = true;
-},
-onreadystatechange: function(){
-//Instance specific
-},
-onload: function(){
-},
+abort: function(){ this.aborted = true; },
+onreadystatechange: function(){},
+onload: function(){},
+onerror: function(){},
 getResponseHeader: function(header){
 var rHeader, returnedHeaders;
 if (this.readyState < 3){

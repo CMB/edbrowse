@@ -19,6 +19,8 @@ pthread_t jsbt;			// javascript background thread
 static jsobjtype js_reset, js_submit;
 static const int asyncTimer = 250;
 
+#if 0
+// we're probably never going to run a background javascript thread
 void js_wait(void)
 {
 	if (jsbt) {
@@ -46,6 +48,7 @@ bool js_inbackground(void)
 	jsbt = 0;
 	return false;
 }
+#endif
 
 bool tagHandler(int seqno, const char *name)
 {

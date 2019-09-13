@@ -1064,6 +1064,7 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 		char *outgoing_xhrheaders = NULL;
 		char *outgoing_xhrbody = NULL;
 		char *a = NULL, methchar = '?';
+		bool rc;
 
 		if (!incoming_url)
 			incoming_url = emptyString;
@@ -1085,7 +1086,7 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 		g.url = incoming_url;
 		g.custom_h = incoming_headers;
 		g.headers_p = &outgoing_xhrheaders;
-		httpConnect(&g);
+		rc = httpConnect(&g);
 		outgoing_xhrbody = g.buffer;
 		nzFree(a);
 		if (intFlag) {
@@ -1101,7 +1102,11 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 			outgoing_xhrbody = emptyString;
 		duk_pop_n(cx, 4);
 		duk_push_string(cx, "");
+		duk_push_string(cx, "\r\n\r\n");
+		duk_push_int(cx, rc);
+		duk_push_int(cx, g.code);
 		duk_push_string(cx, outgoing_xhrheaders);
+		duk_join(cx, 3);
 		duk_push_string(cx, outgoing_xhrbody);
 		duk_join(cx, 2);
 		nzFree(outgoing_xhrheaders);
@@ -1110,7 +1115,8 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 // Can I just call startCookie() again to refresh the cookie copy?
 	} else {
 		duk_pop_n(cx, 4);
-		duk_push_string(cx, emptyString);
+		duk_push_string(cx,
+				"1\r\n\r\n200\r\n\r\nContent-Length:0\r\n\r\n");
 	}
 
 	debugPrint(5, "xhr 2");
