@@ -219,14 +219,14 @@ static void finishBrowse(void)
 // kill any timers
 	for (f = &cw->f0; f; f = f->next)
 		delTimers(f);
-	if (cw->browseMode)
-		return;
-// We were in the middle of the browse command; this is typical.
 	if (allowJS) {
 		allowJS = false;
 		blockJS = true;
 		i_puts(MSG_JavaOff);
 	}
+	if (cw->browseMode)
+		return;
+// We were in the middle of the browse command; this is typical.
 	a = render(0);
 	newbuf = htmlReformat(a);
 	nzFree(a);
@@ -282,6 +282,7 @@ static void catchSig(int n)
 		finishBrowse();
 // Doing this stuff from a signal handler?  idk
 	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &j);
+// without this line the thread never dies, and js runs, and the CPU churns.
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &j);
 	if (pthread_create(&t2, NULL, inputForever, NULL))
 		return;		// didn't work

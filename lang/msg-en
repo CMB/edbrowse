@@ -298,8 +298,8 @@ web page requires authorization
 login aborted
 search string cannot contain quotes
 end of folder
-download in foreground
-download in background
+download files in foreground
+download files in background
 complete
 failed
 ftp could not connect to remote host
