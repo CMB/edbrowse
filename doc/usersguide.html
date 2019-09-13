@@ -3042,12 +3042,25 @@ This will be discussed later in the edbrowse config file.
 <P>
 If a page is slow to browse, it may be running a lot of javascript, or it could be fetching files from the internet.
 In either case, you can interrupt the process by hitting control C.
-Javascript stops, and the page browses with the information it has at hand.
+Javascript stops at a breakpoint, if it can, and the page browses with the information it has at hand.
 This is fine if you're just reading a newspaper article and you don't want to wait for all the advertising to come into place,
 but you should never do this on an e-commerce site, or a banking site, or a site whose operation is mission critical.
 If the javascript does not run to completion, we cannot guarantee the proper operation of that website.
 You might wind up ordering a $37,000 elephant instead of
 $37 worth of printer supplies.
+
+<P>
+If you have been hitting control C for 45 seconds with no reaction,
+edbrowse forcibly interrupts the running javascript and issues this message.
+<P>
+No reaction for 45 seconds, operations aborted, results are unpredictable!
+<P>
+This is drastic, but some websites fall into an infinite loop, and this is better than being locked out of edbrowse forever.
+Javascript is disabled at this point.
+You can turn it back on - at your own risk.
+The javascript engine was interrupted in mid operation, and it's behavior is unpredictable if it starts executing somewhere else.
+However, I have tried it a few times and it seems to work.
+</p>
 
 <H3> <A NAME=valid> Validating Forms </A> </H3>
 

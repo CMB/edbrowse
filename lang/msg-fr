@@ -565,7 +565,7 @@ inversion du tri
 Le client de courrier est interactif, et ne peut être lancé en arrière-fond
 répertoire de courrier non défini dans votre fichier .ebrc
 Ne peut aller dans le répertoire %s
-0
+javascript bloqué
 nom utilisateur / mot de passe invalide
 tri par ordre alphabétique
 tri par taille
@@ -573,7 +573,7 @@ tri par date
 converti en unix
 converti en dos
 Le tag %d est suivi d'un caractère %c erroné\n
-0
+Bloqué depuis 45 secondes, opérations annulées dans cette session, résulatts imprévisibles !
 HtmlParse() n'est pas réentrant
 Type de données inattendu dans submitForm()
 List = 0 dans tagFromJavaVar()

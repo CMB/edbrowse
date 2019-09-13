@@ -565,7 +565,7 @@ umgekehrt
 Fetchmail-Client ist interaktiv und kann nicht im Hintergrund laufen
 Emailverzeichnis nicht in .ebrc-Datei angegeben
 kann nicht in Verzeichnis %s wechseln
-0
+Javascript blockiert
 Ungültiger Login oder Passwort
 sortiere alphabetisch
 sortiere nach Größe
@@ -573,7 +573,7 @@ sortiere nach Zeit
 konvertiere in unix
 konvertiere in dos
 Tag-Code %d wird von ungültigem Zeichen %c gefolgt\n
-0
+Keine Reaktion seit 45 Sekunden, beende Operationen dieser Sitzung; Ergebnisse sind unvorhersagbar.
 htmlParse() kann nicht erneut aufgerufen werden
 unerwarteter Eingabetyp in eingabeformular
 list = 0 in tagFromJavaVar()

@@ -573,7 +573,7 @@ sort by time
 converting to unix
 converting to dos
 tag code %d has bad character %c following\n
-Locked out for 45 seconds, killing operations on this session, results are unpredictable!
+No reaction for 45 seconds, operations aborted, results are unpredictable!
 htmlParse() is not reentrant.
 unexpected input type in submitForm()
 list = 0 in tagFromJavaVar()

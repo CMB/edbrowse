@@ -12,6 +12,8 @@ extern int gettimeofday(struct timeval *tp, void *tzp);	// from tidys.lib
 #define SLEEP sleep
 #endif // _MSC_VER y/n
 
+#define ASYNCTIMER 0
+
 uchar browseLocal;
 bool showHover, doColors;
 pthread_t jsbt;			// javascript background thread
@@ -693,6 +695,8 @@ found:
 	}
 }
 
+static void scriptSetsTimeout(struct htmlTag *t);
+
 /*********************************************************************
 Run pending scripts, and perform other actions that have been queued up by javascript.
 This includes document.write, linkages, perhaps even form.submit.
@@ -757,6 +761,16 @@ passes:
 			t->step = 6;
 			continue;
 		}
+#if ASYNCTIMER
+		if (async) {
+			if (!t->intimer) {
+				scriptSetsTimeout(t);
+				t->intimer = true;
+			}
+			continue;
+		}
+#endif
+
 		if (t->step == 3) {
 // waiting for background process to load
 			pthread_join(t->loadthread, NULL);
@@ -771,6 +785,7 @@ passes:
 			t->value = 0;
 			t->step = 4;	// loaded
 		}
+
 		t->step = 5;	// now running the script
 
 		js_file = t->js_file;
@@ -2643,6 +2658,7 @@ the code to execute, and the timer object, which becomes "this".
 struct jsTimer {
 	struct jsTimer *next, *prev;
 	struct ebFrame *frame;	/* edbrowse frame holding this timer */
+	struct htmlTag *t;	// for an asynchronous script
 	time_t sec;
 	int ms;
 	bool isInterval;
@@ -2726,6 +2742,24 @@ void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 	debugPrint(4, "timer %d %s", n, jsrc);
 }				/* javaSetsTimeout */
 
+static void scriptSetsTimeout(struct htmlTag *t)
+{
+	struct jsTimer *jt = allocZeroMem(sizeof(struct jsTimer));
+	jt->sec = 0;
+	jt->ms = ASYNCTIMER;
+	jt->isInterval = true;
+	jt->jump_sec = 0, jt->jump_ms = ASYNCTIMER;
+	currentTime();
+	jt->sec += now_sec;
+	jt->ms += now_ms;
+	if (jt->ms >= 1000)
+		jt->ms -= 1000, ++jt->sec;
+	jt->t = t;
+	jt->frame = cf;
+	addToListBack(&timerList, jt);
+	debugPrint(3, "timer script%d=%s", t->seqno, t->href);
+}				/* scriptSetsTimeout */
+
 static struct jsTimer *soonest(void)
 {
 	struct jsTimer *t, *best_t = 0;
@@ -2798,6 +2832,7 @@ void runTimer(void)
 	struct jsTimer *jt;
 	struct ebWindow *save_cw = cw;
 	struct ebFrame *save_cf = cf;
+	struct htmlTag *t;
 
 	currentTime();
 
@@ -2825,15 +2860,74 @@ We need to fix this someday, though it is a very rare low runner case.
 /* Oops, jSyncup could have changed the frame. */
 		cf = jt->frame;
 		jt->running = true;
-		run_function_bool(jt->timerObject, "ontimer");
+		if ((t = jt->t)) {
+// asynchronous script
+			if (t->step == 3) {	// background load
+				int rc =
+				    pthread_tryjoin_np(t->loadthread, NULL);
+				if (rc != 0 && rc != EBUSY) {
+// should never happen
+					debugPrint(3,
+						   "script background thread test returns %d",
+						   rc);
+					pthread_join(t->loadthread, NULL);
+					rc = 0;
+				}
+				if (!rc) {	// it's done
+					if (!t->loadsuccess) {
+						if (debugLevel >= 3)
+							i_printf(MSG_GetJS,
+								 t->href,
+								 t->hcode);
+						t->step = 6;
+					} else {
+						set_property_string(t->jv,
+								    "data",
+								    t->value);
+						nzFree(t->value);
+						t->value = 0;
+						t->step = 4;	// loaded
+					}
+				}
+			}
+			if (t->step == 4) {
+				char *js_file = t->js_file;
+				int ln = t->js_ln;
+				t->step = 5;	// running
+				if (!js_file)
+					js_file = "generated";
+				if (!ln)
+					ln = 1;
+				if (ln > 1)
+					++ln;
+				if (cf != save_cf)
+					debugPrint(4,
+						   "running script at a lower frame %s",
+						   js_file);
+				debugPrint(3, "async execute %s at %d", js_file,
+					   ln);
+				set_property_object(cf->docobj, "currentScript",
+						    t->jv);
+				jsRunData(t->jv, js_file, ln);
+				delete_property(cf->docobj, "currentScript");
+				debugPrint(3, "async execution complete");
+			}
+			if (t->step >= 5)
+				jt->deleted = true;
+		} else {
+			run_function_bool(jt->timerObject, "ontimer");
+		}
 		jt->running = false;
 skip_execution:
 
 		if (!jt->isInterval || jt->deleted) {
-			char *gc_name =
-			    get_property_string(jt->timerObject, "backlink");
-			if (gc_name)
-				delete_property(cf->winobj, gc_name);
+			if (jt->timerObject) {
+				char *gc_name =
+				    get_property_string(jt->timerObject,
+							"backlink");
+				if (gc_name)
+					delete_property(cf->winobj, gc_name);
+			}
 			delFromList(jt);
 			nzFree(jt);
 		} else {

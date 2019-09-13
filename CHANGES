@@ -3,6 +3,10 @@ Here are some changes introduced by recent versions of edbrowse.
 3.7.6
 colors command to show the colors of the web page.
 
+^C for 45 seconds causes a hard interrupt,
+spawn a new interactive thread and kill the current thread,
+kinda drastic but better than being locked out completely.
+
 3.7.5.1
 Search function on gopher.
 
