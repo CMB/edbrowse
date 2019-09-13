@@ -12,13 +12,12 @@ extern int gettimeofday(struct timeval *tp, void *tzp);	// from tidys.lib
 #define SLEEP sleep
 #endif // _MSC_VER y/n
 
-#define ASYNCTIMER 0
-
 uchar browseLocal;
 bool showHover, doColors;
 pthread_t jsbt;			// javascript background thread
 
 static jsobjtype js_reset, js_submit;
+static const int asyncTimer = 250;
 
 void js_wait(void)
 {
@@ -546,7 +545,7 @@ void prepareScript(struct htmlTag *t)
 // js might have set, or changed, the source url.
 		char *new_url = get_property_url(t->jv, false);
 		if (new_url && *new_url) {
-			if (!t->href || !stringEqual(t->href, new_url))
+			if (t->href && !stringEqual(t->href, new_url))
 				debugPrint(3, "js replaces script %s with %s",
 					   t->href, new_url);
 			nzFree(t->href);
@@ -610,7 +609,7 @@ void prepareScript(struct htmlTag *t)
 				setupEdbrowseCache();
 			}
 
-			if (down_abg && !demin && !uvw
+			if (down_jsbg && !demin && !uvw
 			    && !pthread_create(&t->loadthread, NULL,
 					       httpConnectBack2, (void *)t)) {
 				t->js_ln = 1;
@@ -761,15 +760,14 @@ passes:
 			t->step = 6;
 			continue;
 		}
-#if ASYNCTIMER
-		if (async) {
+
+		if (async && asyncTimer && down_jsbg) {
 			if (!t->intimer) {
 				scriptSetsTimeout(t);
 				t->intimer = true;
 			}
 			continue;
 		}
-#endif
 
 		if (t->step == 3) {
 // waiting for background process to load
@@ -797,7 +795,7 @@ passes:
 		ln = t->js_ln;
 		if (!ln)
 			ln = 1;
-		debugPrint(3, "execute %s at %d", js_file, ln);
+		debugPrint(3, "exec %s at %d", js_file, ln);
 /* if script is in the html it usually begins on the next line, so increment,
  * and hope the error messages line up. */
 		if (ln > 1)
@@ -805,7 +803,7 @@ passes:
 		set_property_object(cf->docobj, "currentScript", t->jv);
 		jsRunData(t->jv, js_file, ln);
 		delete_property(cf->docobj, "currentScript");
-		debugPrint(3, "execution complete");
+		debugPrint(3, "exec complete");
 
 		if (newlocation && newloc_r) {
 			cf = save_cf;
@@ -2746,9 +2744,9 @@ static void scriptSetsTimeout(struct htmlTag *t)
 {
 	struct jsTimer *jt = allocZeroMem(sizeof(struct jsTimer));
 	jt->sec = 0;
-	jt->ms = ASYNCTIMER;
+	jt->ms = asyncTimer;
 	jt->isInterval = true;
-	jt->jump_sec = 0, jt->jump_ms = ASYNCTIMER;
+	jt->jump_sec = 0, jt->jump_ms = asyncTimer;
 	currentTime();
 	jt->sec += now_sec;
 	jt->ms += now_ms;
@@ -2904,13 +2902,13 @@ We need to fix this someday, though it is a very rare low runner case.
 					debugPrint(4,
 						   "running script at a lower frame %s",
 						   js_file);
-				debugPrint(3, "async execute %s at %d", js_file,
+				debugPrint(3, "async exec %s at %d", js_file,
 					   ln);
 				set_property_object(cf->docobj, "currentScript",
 						    t->jv);
 				jsRunData(t->jv, js_file, ln);
 				delete_property(cf->docobj, "currentScript");
-				debugPrint(3, "async execution complete");
+				debugPrint(3, "async exec complete");
 			}
 			if (t->step >= 5)
 				jt->deleted = true;

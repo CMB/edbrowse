@@ -18,7 +18,7 @@ CURL *global_http_handle;
 CURLSH *global_share_handle;
 bool pluginsOn = true;
 bool down_bg;			// download in background
-bool down_abg = true;		// auto download js in background
+bool down_jsbg = true;		// download js in background
 char showProgress = 'd';	// dots
 static char *httpLanguage;	/* outgoing */
 

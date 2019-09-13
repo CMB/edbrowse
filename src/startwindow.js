@@ -3323,7 +3323,7 @@ var v1=item;
 var v2=this.headers[item];
 headerstring+=v1+': '+v2+'\n';
 }
-if(headerstring) alert3("xhr headers " + headerstring);
+if(headerstring) alert3("xhr headers " + headerstring.replace(/\n$/,''));
 var urlcopy = this.url;
 if(urlcopy.match(/[!*'";\[\]$\u0000-\u0020\u007f-\uffff]/)) {
 alert3("xhr url was not encoded");

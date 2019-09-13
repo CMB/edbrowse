@@ -7,6 +7,10 @@ colors command to show the colors of the web page.
 spawn a new interactive thread and kill the current thread,
 kinda drastic but better than being locked out completely.
 
+async scripts run on timers, after the page is loaded,
+this might make somewebsites come up faster.
+Under the control of the jsbg command, and asyncTimer in html.c
+
 3.7.5.1
 Search function on gopher.
 

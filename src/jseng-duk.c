@@ -1964,10 +1964,10 @@ bool run_function_bool_nat(jsobjtype parent, const char *name)
 		return (debugLevel < 3);
 	}
 	duk_insert(jcx, -2);
-	debugPrint(dbl, "execute %s", name);
+	debugPrint(dbl, "exec %s", name);
 	if (!duk_pcall_method(jcx, 0)) {
 		bool rc = true;
-		debugPrint(dbl, "execution complete");
+		debugPrint(dbl, "exec complete");
 		if (duk_is_boolean(jcx, -1))
 			rc = duk_get_boolean(jcx, -1);
 		if (duk_is_number(jcx, -1))
@@ -1986,7 +1986,7 @@ bool run_function_bool_nat(jsobjtype parent, const char *name)
 	processError();
 	debugPrint(3, "failure on %p.%s()", parent, name);
 	uptrace(parent);
-	debugPrint(3, "execution complete");
+	debugPrint(3, "exec complete");
 	return (debugLevel < 3);
 }				/* run_function_bool_nat */
 

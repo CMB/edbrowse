@@ -4494,16 +4494,16 @@ et_go:
 		return true;
 	}
 	if (stringEqual(line, "jsbg")) {
-		down_abg ^= 1;
+		down_jsbg ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
-			i_puts(down_abg + MSG_JSDownForeground);
+			i_puts(down_jsbg + MSG_JSDownForeground);
 		return true;
 	}
 
 	if (stringEqual(line, "jsbg+") || stringEqual(line, "jsbg-")) {
-		down_abg = (line[4] == '+');
+		down_jsbg = (line[4] == '+');
 		if (helpMessagesOn)
-			i_puts(down_abg + MSG_JSDownForeground);
+			i_puts(down_jsbg + MSG_JSDownForeground);
 		return true;
 	}
 

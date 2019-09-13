@@ -183,10 +183,10 @@ and http redirection.
    cookies, http codes, form data, and sql statements logged.
 4: show the socket connections, and the http headers in and out.
    html syntax errors as per tidy5.
-   Tree of nodes internal to edbrowse.
    side effects of running javascript.
    Dynamic node linkage.
 5: messages to and from javascript, url resolution, tidy html nodes.
+   Tree of nodes internal to edbrowse.
 6: show javascript to be executed
 7: reformatted regular expressions, breakline chunks.
 8: text lines freed, debug garbage collection

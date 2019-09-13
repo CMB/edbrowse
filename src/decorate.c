@@ -1350,7 +1350,7 @@ Needless to say that's not good!
 		a = attribVal(t, "src");
 		if (a) {
 			set_property_string(t->jv, "src", a);
-			if (down_abg && a[0])	// from another source, let's get it started
+			if (down_jsbg && a[0])	// from another source, let's get it started
 				prepareScript(t);
 		} else {
 			set_property_string(t->jv, "src", "");
@@ -1920,15 +1920,16 @@ static struct htmlTag *treeAttach;
 static int tree_pos;
 static bool treeDisable;
 static void intoTree(struct htmlTag *parent);
+static const int tdb = 5;	// tree debug level
 
 void htmlNodesIntoTree(int start, struct htmlTag *attach)
 {
 	treeAttach = attach;
 	tree_pos = start;
 	treeDisable = false;
-	debugPrint(4, "@@tree of nodes");
+	debugPrint(tdb, "@@tree of nodes");
 	intoTree(0);
-	debugPrint(4, "}\n@@end tree");
+	debugPrint(tdb, "}\n@@end tree");
 }				/* htmlNodesIntoTree */
 
 /* Convert a list of html nodes, properly nested open close, into a tree.
@@ -1942,9 +1943,9 @@ static void intoTree(struct htmlTag *parent)
 	int action;
 
 	if (!parent)
-		debugPrint(4, "root {");
+		debugPrint(tdb, "root {");
 	else
-		debugPrint(4, "%s %d {", parent->info->name, parent->seqno);
+		debugPrint(tdb, "%s %d {", parent->info->name, parent->seqno);
 
 	while (tree_pos < cw->numTags) {
 		t = tagList[tree_pos++];
@@ -1955,12 +1956,12 @@ static void intoTree(struct htmlTag *parent)
 				if (t->dead)
 					++cw->deadTags;
 			}
-			debugPrint(4, "}");
+			debugPrint(tdb, "}");
 			return;
 		}
 
 		if (treeDisable) {
-			debugPrint(4, "node skip %s", t->info->name);
+			debugPrint(tdb, "node skip %s", t->info->name);
 			t->dead = true;
 			++cw->deadTags;
 			intoTree(t);
@@ -1974,7 +1975,7 @@ static void intoTree(struct htmlTag *parent)
  * to the children below. */
 			action = t->action;
 			if (action == TAGACT_HEAD) {
-				debugPrint(4, "node skip %s", t->info->name);
+				debugPrint(tdb, "node skip %s", t->info->name);
 				t->dead = true;
 				++cw->deadTags;
 				treeDisable = true;
@@ -1983,7 +1984,7 @@ static void intoTree(struct htmlTag *parent)
 				continue;
 			}
 			if (action == TAGACT_HTML || action == TAGACT_BODY) {
-				debugPrint(4, "node pass %s", t->info->name);
+				debugPrint(tdb, "node pass %s", t->info->name);
 				t->dead = true;
 				++cw->deadTags;
 				intoTree(t);
@@ -1997,8 +1998,8 @@ static void intoTree(struct htmlTag *parent)
 				const char *w = "root";
 				if (treeAttach)
 					w = treeAttach->info->name;
-				debugPrint(4, "node up %s to %s", t->info->name,
-					   w);
+				debugPrint(tdb, "node up %s to %s",
+					   t->info->name, w);
 				t->parent = treeAttach;
 				if (treeAttach) {
 					struct htmlTag *c =
