@@ -762,7 +762,7 @@ passes:
 			continue;
 		}
 
-		if (async && asyncTimer && down_jsbg) {
+		if (async && asyncTimer && down_jsbg && cw->browseMode) {
 			if (!t->intimer) {
 				scriptSetsTimeout(t);
 				t->intimer = true;
@@ -2885,11 +2885,9 @@ We need to fix this someday, though it is a very rare low runner case.
 						t->step = 6;
 					} else {
 						if (t->action == TAGACT_SCRIPT) {
-							set_property_string(t->
-									    jv,
-									    "data",
-									    t->
-									    value);
+							set_property_string
+							    (t->jv, "data",
+							     t->value);
 							nzFree(t->value);
 							t->value = 0;
 						}

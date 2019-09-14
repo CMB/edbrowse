@@ -463,8 +463,8 @@ ungültige Zeichen im kodierten Anhang
 Kommando %s kann nicht global angewandt werden
 Warnung, JavaScript kann nicht durch einen Doppelklick aktiviert werden
 Fehler beim Auflösen der Option %s beim Synchronisieren oder Versand des Formularfelds
-xhr deaktiviert
-xhr aktiviert
+0
+0
 konnte lokales JavaScript nicht abrufen\n
 konnte JavaScript von %s nicht abrufen, Code %ld\n
 konnte JavaScript nicht abrufen\n

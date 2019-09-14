@@ -463,8 +463,8 @@ caratteri non validi nell'allegato codificato
 il comando %s non può essere applicato globalmente
 attenzione, il javascript non può essere invocato mediante un doppio click
 errore durante la risoluzione dell'opzione %s durante un sync o il submit di una form
-xhr disabilitato
-xhr abilitato
+0
+0
 impossibile acquisire javascript locale\n
 impossibile scaricare javascript da %s, codice %ld\n
 impossibile scaricare javascript\n
@@ -565,7 +565,7 @@ reverse
 il client fetchmail non è interattivo, e non può essere eseguito in background
 il file di configurazione .ebrc non specifica una directory mailbox
 Impossibile cambiare directory in %s
-0
+javascript bloccato
 Password o login non validi
 ordina alfabeticamente
 ordina per dimensione
@@ -573,7 +573,7 @@ ordina temporalmente
 converto in unix
 converto in dos
 il codice tag %d è seguito da un carattere non valido %c\n
-0
+Bloccato per 45 secondi, termino le operazioni in questa sessione, i risultati non sono prevedibili!
 htmlParse() non è reentrant.
 input type non atteso in submitForm()
 list = 0 in tagFromJavaVar()

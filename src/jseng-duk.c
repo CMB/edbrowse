@@ -1071,7 +1071,7 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 	duk_get_prop_string(cx, -1, "async");
 	async = duk_get_boolean(cx, -1);
 	duk_pop_2(cx);
-	if (!down_jsbg)
+	if (!(down_jsbg && cw->browseMode))
 		async = false;
 
 	if (!incoming_url)

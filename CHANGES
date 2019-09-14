@@ -11,6 +11,8 @@ async scripts run on timers, after the page is loaded,
 this might make somewebsites come up faster.
 Under the control of the jsbg command, and asyncTimer in html.c
 
+Asynchronous xhr, also controled by jsbg.
+
 3.7.5.1
 Search function on gopher.
 

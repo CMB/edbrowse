@@ -323,7 +323,6 @@ static bool jdb_passthrough(const char *s)
 		"dbcss", "dbcss+", "dbcss-",
 		"timers", "timers+", "timers-",
 		"demin", "demin+", "demin-",
-		"xhr", "xhr+", "xhr-",
 		"bflist", "bglist", "help", 0
 	};
 	int i;
@@ -4596,21 +4595,6 @@ et_go:
 			i_puts(MSG_HelpOn);
 		return true;
 	}
-#if 0
-	if (stringEqual(line, "xhr")) {
-		allowXHR ^= 1;
-		if (helpMessagesOn || debugLevel >= 1)
-			i_puts(allowXHR + MSG_XhrOff);
-		return true;
-	}
-
-	if (stringEqual(line, "xhr+") || stringEqual(line, "xhr-")) {
-		allowXHR = (line[3] == '+');
-		if (helpMessagesOn)
-			i_puts(allowXHR + MSG_XhrOff);
-		return true;
-	}
-#endif
 
 	if (stringEqual(line, "bd")) {
 		binaryDetect ^= 1;
