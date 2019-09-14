@@ -1088,6 +1088,39 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 	debugPrint(3, "xhr send %s", incoming_url);
 
 // async and sync are completely different
+	if (async) {
+		const char *fpn = fakePropName();
+		struct htmlTag *t = newTag("object");
+		t->deleted = true;	// do not render this tag
+		t->step = 3;
+		connectTagObject(t, thisobj);
+		duk_pop_n(cx, 4);
+// This routine will return, and javascript might stop altogether; do we need
+// to protect this object from garbage collection?
+		duk_push_global_object(cx);
+		duk_push_this(cx);
+		duk_push_string(cx, fpn);
+		duk_def_prop(cx, 0,
+			     (DUK_DEFPROP_HAVE_VALUE |
+			      DUK_DEFPROP_SET_ENUMERABLE |
+			      DUK_DEFPROP_CLEAR_WRITABLE |
+			      DUK_DEFPROP_SET_CONFIGURABLE));
+		duk_pop(cx);	// don't need global any more
+		duk_push_this(cx);
+		duk_push_string(cx, fpn);
+		duk_put_prop_string(cx, 0, "backlink");
+		duk_pop(cx);
+// That takes care of garbage collection.
+// Now everything has to be allocated.
+		t->href = (a ? a : cloneString(incoming_url));
+// overloading the innerHTML field
+		t->innerHTML = cloneString(incoming_headers);
+		scriptSetsTimeout(t);
+		pthread_create(&t->loadthread, NULL, httpConnectBack3,
+			       (void *)t);
+		duk_push_string(cx, "async");
+		return 1;
+	}
 
 	memset(&g, 0, sizeof(g));
 	g.thisfile = cf->fileName;

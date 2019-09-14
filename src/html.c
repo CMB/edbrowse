@@ -697,8 +697,6 @@ found:
 	}
 }
 
-static void scriptSetsTimeout(struct htmlTag *t);
-
 /*********************************************************************
 Run pending scripts, and perform other actions that have been queued up by javascript.
 This includes document.write, linkages, perhaps even form.submit.
@@ -2745,7 +2743,7 @@ void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 	debugPrint(4, "timer %d %s", n, jsrc);
 }				/* javaSetsTimeout */
 
-static void scriptSetsTimeout(struct htmlTag *t)
+void scriptSetsTimeout(struct htmlTag *t)
 {
 	struct jsTimer *jt = allocZeroMem(sizeof(struct jsTimer));
 	jt->sec = 0;
@@ -2760,7 +2758,9 @@ static void scriptSetsTimeout(struct htmlTag *t)
 	jt->t = t;
 	jt->frame = cf;
 	addToListBack(&timerList, jt);
-	debugPrint(3, "timer script%d=%s", t->seqno, t->href);
+	debugPrint(3, "timer %s%d=%s",
+		   (t->action == TAGACT_SCRIPT ? "script" : "xhr"),
+		   t->seqno, t->href);
 }				/* scriptSetsTimeout */
 
 static struct jsTimer *soonest(void)
@@ -2884,16 +2884,20 @@ We need to fix this someday, though it is a very rare low runner case.
 								 t->hcode);
 						t->step = 6;
 					} else {
-						set_property_string(t->jv,
-								    "data",
-								    t->value);
-						nzFree(t->value);
-						t->value = 0;
+						if (t->action == TAGACT_SCRIPT) {
+							set_property_string(t->
+									    jv,
+									    "data",
+									    t->
+									    value);
+							nzFree(t->value);
+							t->value = 0;
+						}
 						t->step = 4;	// loaded
 					}
 				}
 			}
-			if (t->step == 4) {
+			if (t->step == 4 && t->action == TAGACT_SCRIPT) {
 				char *js_file = t->js_file;
 				int ln = t->js_ln;
 				t->step = 5;	// running
@@ -2914,6 +2918,15 @@ We need to fix this someday, though it is a very rare low runner case.
 				jsRunData(t->jv, js_file, ln);
 				delete_property(cf->docobj, "currentScript");
 				debugPrint(3, "async exec complete");
+			}
+			if (t->step == 4 && t->action != TAGACT_SCRIPT) {
+				t->step = 5;
+				set_property_string(t->jv, "$entire", t->value);
+// could be large; it's worth freeing
+				nzFree(t->value);
+				t->value = 0;
+				run_function_bool(t->jv, "parseResponse");
+				jt->timerObject = t->jv;
 			}
 			if (t->step >= 5)
 				jt->deleted = true;

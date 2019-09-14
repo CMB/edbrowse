@@ -25,7 +25,7 @@ char *ebTempDir, *ebUserDir;
 char *userAgents[MAXAGENT + 1];
 char *currentAgent;
 bool allowRedirection = true, allowJS = true, sendReferrer = true;
-bool allowXHR = true, blockJS;
+bool blockJS;
 bool ftpActive;
 int webTimeout = 20, mailTimeout = 0;
 int displayLength = 500;

@@ -18,7 +18,7 @@ CURL *global_http_handle;
 CURLSH *global_share_handle;
 bool pluginsOn = true;
 bool down_bg;			// download in background
-bool down_jsbg = true;		// download js in background
+bool down_jsbg = false;		// download js in background
 char showProgress = 'd';	// dots
 static char *httpLanguage;	/* outgoing */
 
@@ -1398,6 +1398,48 @@ void *httpConnectBack2(void *ptr)
 
 void *httpConnectBack3(void *ptr)
 {
+	struct htmlTag *t = ptr;
+	bool rc;
+	struct i_get g;
+	char *outgoing_body = 0, *outgoing_headers = 0;
+	memset(&g, 0, sizeof(g));
+	g.thisfile = cf->fileName;
+	g.uriEncoded = true;
+	g.url = t->href;
+	g.custom_h = t->innerHTML;
+	g.headers_p = &outgoing_headers;
+	g.down_force = 2;
+	++tsn;
+	debugPrint(3, "xhr thread %d", tsn);
+	rc = httpConnect(&g);
+	outgoing_body = g.buffer;
+	t->loadsuccess = rc;
+	if (!rc)
+		t->hcode = g.code;
+	else {
+		char *a;
+		int l;
+// don't know why t->value would be anything
+		nzFree(t->value);
+		a = initString(&l);
+		if (outgoing_headers == 0)
+			outgoing_headers = emptyString;
+		if (outgoing_body == 0)
+			outgoing_body = emptyString;
+		stringAndNum(&a, &l, rc);
+		stringAndString(&a, &l, "\r\n\r\n");
+		stringAndNum(&a, &l, g.code);
+		stringAndString(&a, &l, "\r\n\r\n");
+		stringAndString(&a, &l, outgoing_headers);
+		stringAndString(&a, &l, outgoing_body);
+		while (l && isspace(a[l - 1]))
+			a[--l] = 0;
+		t->value = a;
+	}
+	nzFree(outgoing_headers);
+	nzFree(outgoing_body);
+	nzFree(t->innerHTML);
+	t->innerHTML = 0;
 	return NULL;
 }
 

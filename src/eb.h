@@ -343,7 +343,6 @@ extern bool allowRedirection;	/* from http code 301, or http refresh */
 extern bool sendReferrer;	/* in the http header */
 extern bool allowJS;		/* javascript on */
 extern bool blockJS; // javascript is blocked
-extern bool allowXHR;		/* xhr on */
 extern bool htmlGenerated;
 extern bool ftpActive;
 extern bool helpMessagesOn;	/* no need to type h */
