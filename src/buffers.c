@@ -4596,7 +4596,7 @@ et_go:
 			i_puts(MSG_HelpOn);
 		return true;
 	}
-
+#if 0
 	if (stringEqual(line, "xhr")) {
 		allowXHR ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
@@ -4610,6 +4610,7 @@ et_go:
 			i_puts(allowXHR + MSG_XhrOff);
 		return true;
 	}
+#endif
 
 	if (stringEqual(line, "bd")) {
 		binaryDetect ^= 1;

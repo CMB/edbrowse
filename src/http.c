@@ -1396,6 +1396,11 @@ void *httpConnectBack2(void *ptr)
 	return NULL;
 }
 
+void *httpConnectBack3(void *ptr)
+{
+	return NULL;
+}
+
 // copy text over to the buffer but change < to &lt; etc,
 // since this data will be browsed as if it were html.
 static void prepHtmlString(struct i_get *g, const char *q)

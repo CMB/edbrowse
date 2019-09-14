@@ -1054,70 +1054,74 @@ fail:
 
 static duk_ret_t native_fetchHTTP(duk_context * cx)
 {
+	jsobjtype thisobj;
+	struct i_get g;
+	const char *incoming_url = duk_safe_to_string(cx, 0);
+	const char *incoming_method = duk_get_string(cx, 1);
+	const char *incoming_headers = duk_get_string(cx, 2);
+	const char *incoming_payload = duk_get_string(cx, 3);
+	char *outgoing_xhrheaders = NULL;
+	char *outgoing_xhrbody = NULL;
+	char *a = NULL, methchar = '?';
+	bool rc, async;
+
 	debugPrint(5, "xhr 1");
-	if (allowXHR) {
-		struct i_get g;
-		const char *incoming_url = duk_safe_to_string(cx, 0);
-		const char *incoming_method = duk_get_string(cx, 1);
-		const char *incoming_headers = duk_get_string(cx, 2);
-		const char *incoming_payload = duk_get_string(cx, 3);
-		char *outgoing_xhrheaders = NULL;
-		char *outgoing_xhrbody = NULL;
-		char *a = NULL, methchar = '?';
-		bool rc;
+	duk_push_this(cx);
+	thisobj = duk_get_heapptr(cx, -1);
+	duk_get_prop_string(cx, -1, "async");
+	async = duk_get_boolean(cx, -1);
+	duk_pop_2(cx);
+	if (!down_jsbg)
+		async = false;
 
-		if (!incoming_url)
-			incoming_url = emptyString;
-		if (incoming_payload && *incoming_payload) {
-			if (incoming_method
-			    && stringEqualCI(incoming_method, "post"))
-				methchar = '\1';
-			if (asprintf(&a, "%s%c%s",
-				     incoming_url, methchar,
-				     incoming_payload) < 0)
-				i_printfExit(MSG_MemAllocError, 50);
-			incoming_url = a;
-		}
+	if (!incoming_url)
+		incoming_url = emptyString;
+	if (incoming_payload && *incoming_payload) {
+		if (incoming_method && stringEqualCI(incoming_method, "post"))
+			methchar = '\1';
+		if (asprintf(&a, "%s%c%s",
+			     incoming_url, methchar, incoming_payload) < 0)
+			i_printfExit(MSG_MemAllocError, 50);
+		incoming_url = a;
+	}
 
-		debugPrint(3, "xhr send %s", incoming_url);
-		memset(&g, 0, sizeof(g));
-		g.thisfile = cf->fileName;
-		g.uriEncoded = true;
-		g.url = incoming_url;
-		g.custom_h = incoming_headers;
-		g.headers_p = &outgoing_xhrheaders;
-		rc = httpConnect(&g);
-		outgoing_xhrbody = g.buffer;
-		nzFree(a);
-		if (intFlag) {
-			duk_get_global_string(cx, "eb$stopexec");
+	debugPrint(3, "xhr send %s", incoming_url);
+
+// async and sync are completely different
+
+	memset(&g, 0, sizeof(g));
+	g.thisfile = cf->fileName;
+	g.uriEncoded = true;
+	g.url = incoming_url;
+	g.custom_h = incoming_headers;
+	g.headers_p = &outgoing_xhrheaders;
+	rc = httpConnect(&g);
+	outgoing_xhrbody = g.buffer;
+	nzFree(a);
+	if (intFlag) {
+		duk_get_global_string(cx, "eb$stopexec");
 // this next line should fail and stop the script!
-			duk_call(cx, 0);
+		duk_call(cx, 0);
 // It didn't stop the script, oh well.
-			duk_pop(cx);
-		}
-		if (outgoing_xhrheaders == NULL)
-			outgoing_xhrheaders = emptyString;
-		if (outgoing_xhrbody == NULL)
-			outgoing_xhrbody = emptyString;
-		duk_pop_n(cx, 4);
-		duk_push_string(cx, "");
-		duk_push_string(cx, "\r\n\r\n");
-		duk_push_int(cx, rc);
-		duk_push_int(cx, g.code);
-		duk_push_string(cx, outgoing_xhrheaders);
-		duk_join(cx, 3);
-		duk_push_string(cx, outgoing_xhrbody);
-		duk_join(cx, 2);
-		nzFree(outgoing_xhrheaders);
-		nzFree(outgoing_xhrbody);
+		duk_pop(cx);
+	}
+	if (outgoing_xhrheaders == NULL)
+		outgoing_xhrheaders = emptyString;
+	if (outgoing_xhrbody == NULL)
+		outgoing_xhrbody = emptyString;
+	duk_pop_n(cx, 4);
+	duk_push_string(cx, "");
+	duk_push_string(cx, "\r\n\r\n");
+	duk_push_int(cx, rc);
+	duk_push_int(cx, g.code);
+	duk_push_string(cx, outgoing_xhrheaders);
+	duk_join(cx, 3);
+	duk_push_string(cx, outgoing_xhrbody);
+	duk_join(cx, 2);
+	nzFree(outgoing_xhrheaders);
+	nzFree(outgoing_xhrbody);
 // http fetch could bring new cookies into the current window.
 // Can I just call startCookie() again to refresh the cookie copy?
-	} else {
-		duk_pop_n(cx, 4);
-		duk_push_string(cx,
-				"1\r\n\r\n200\r\n\r\nContent-Length:0\r\n\r\n");
-	}
 
 	debugPrint(5, "xhr 2");
 	return 1;

@@ -3325,8 +3325,11 @@ data = encodeURI(data);
 }
 */
 }
-var entire_http_response =  eb$fetchHTTP(urlcopy,this.method,headerstring,data);
-var responsebody_array = entire_http_response.split("\r\n\r\n");
+this.$entire =  eb$fetchHTTP.call(this, urlcopy,this.method,headerstring,data);
+if(this.$entire != "async") this.parseResponse();
+},
+parseResponse: function(){
+var responsebody_array = this.$entire.split("\r\n\r\n");
 var success = parseInt(responsebody_array[0]);
 var code = parseInt(responsebody_array[1]);
 var http_headers = responsebody_array[2];
@@ -3358,7 +3361,6 @@ this.onload();
 this.status = 0;
 this.statusText = "network error";
 }
-
 },
 abort: function(){ this.aborted = true; },
 onreadystatechange: function(){},
