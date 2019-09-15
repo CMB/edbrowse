@@ -925,7 +925,7 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 	while (t && i2 < len2) {
 		t0 = t;
 /* there is more to both lists */
-		if (t->controller != sel || t->dead) {
+		if (t->controller != sel) {
 			t = t->same;
 			continue;
 		}
@@ -940,6 +940,13 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 
 		if (t->jv != oo) {
 			debugPrint(5, "oo switch");
+/*********************************************************************
+Ok, we freed up the old options, and garbage collection
+could well kill the tags that went with these options,
+i.e. the tags we're looking at now.
+I'm bringing the tags back to life.
+*********************************************************************/
+			t->dead = false;
 			disconnectTagObject(t);
 			connectTagObject(t, oo);
 		}
@@ -975,7 +982,7 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 /* one list or the other or both has run to the end */
 	if (i2 == len2) {
 		for (; t; t = t->same) {
-			if (t->controller != sel || t->dead) {
+			if (t->controller != sel) {
 				t0 = t;
 				continue;
 			}
