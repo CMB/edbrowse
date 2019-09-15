@@ -203,7 +203,7 @@ static pthread_t foreground_thread;
 static void finishBrowse(void)
 {
 	struct htmlTag *t;
-	int i, j;
+	int j;
 	char *a, *newbuf;
 	struct ebFrame *f;
 	whichproc = 'e';
@@ -211,11 +211,8 @@ static void finishBrowse(void)
 	if (!tagList)
 		return;
 // set all scripts to complete
-	for (i = 0; i < cw->numTags; ++i) {
-		t = tagList[i];
-		if (t->action == TAGACT_SCRIPT)
-			t->step = 6;
-	}
+	for (t = cw->scriptlist; t; t = t->same)
+		t->step = 6;
 // kill any timers
 	for (f = &cw->f0; f; f = f->next)
 		delTimers(f);

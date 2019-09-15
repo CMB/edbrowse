@@ -512,11 +512,9 @@ char *displayOptions(const struct htmlTag *sel)
 	const struct htmlTag *t;
 	char *opt;
 	int opt_l;
-	int i;
 
 	opt = initString(&opt_l);
-	for (i = 0; i < cw->numTags; ++i) {
-		t = tagList[i];
+	for (t = cw->optlist; t; t = t->same) {
 		if (t->controller != sel)
 			continue;
 		if (!t->checked)
@@ -1848,16 +1846,14 @@ static void freeTag(struct htmlTag *t)
 void freeTags(struct ebWindow *w)
 {
 	int i, n;
-	struct htmlTag *t;
-	struct htmlTag **e;
+	struct htmlTag *t, **e;
 
 /* if not browsing ... */
 	if (!(e = w->tags))
 		return;
 
 /* drop empty textarea buffers created by this session */
-	for (i = 0; i < w->numTags; ++i, ++e) {
-		t = *e;
+	for (t = w->inputlist; t; t = t->same) {
 		if (t->action != TAGACT_INPUT)
 			continue;
 		if (t->itype != INP_TA)
@@ -1867,7 +1863,6 @@ void freeTags(struct ebWindow *w)
 		freeEmptySideBuffer(n);
 	}			/* loop over tags */
 
-	e = w->tags;
 	for (i = 0; i < w->numTags; ++i, ++e) {
 		t = *e;
 		disconnectTagObject(t);
@@ -1881,7 +1876,7 @@ void freeTags(struct ebWindow *w)
 
 struct htmlTag *newTag(const char *name)
 {
-	struct htmlTag *t;
+	struct htmlTag *t, *t1, *t2 = 0;
 	const struct tagInfo *ti;
 
 	for (ti = availableTags; ti->name[0]; ++ti)
@@ -1901,6 +1896,34 @@ struct htmlTag *newTag(const char *name)
 	t->seqno = cw->numTags;
 	t->nodeName = cloneString(name);
 	pushTag(t);
+	if (t->action == TAGACT_SCRIPT) {
+		for (t1 = cw->scriptlist; t1; t1 = t1->same)
+			if (!t1->slash)
+				t2 = t1;
+		if (t2)
+			t2->same = t;
+		else
+			cw->scriptlist = t;
+	}
+	if (t->action == TAGACT_INPUT || t->action == TAGACT_SELECT ||
+	    t->action == TAGACT_TA) {
+		for (t1 = cw->inputlist; t1; t1 = t1->same)
+			if (!t1->slash)
+				t2 = t1;
+		if (t2)
+			t2->same = t;
+		else
+			cw->inputlist = t;
+	}
+	if (t->action == TAGACT_OPTION) {
+		for (t1 = cw->optlist; t1; t1 = t1->same)
+			if (!t1->slash)
+				t2 = t1;
+		if (t2)
+			t2->same = t;
+		else
+			cw->optlist = t;
+	}
 	return t;
 }				/* newTag */
 

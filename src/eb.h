@@ -461,6 +461,7 @@ struct ebWindow {
  * and used thereafter for hyperlinks, fill-out forms, etc. */
 	struct htmlTag **tags;
 	int numTags, allocTags, deadTags;
+	struct htmlTag *scriptlist, *inputlist, *optlist;
 	bool mustrender:1;
 	bool sank:1; /* jSyncup has been run */
 	bool lhs_yes:1;
@@ -540,6 +541,7 @@ struct htmlTag {
 	struct htmlTag *parent, *firstchild, *sibling;
 /* connect <foo> and </foo> */
 	struct htmlTag *balance;
+	struct htmlTag *same; // same action
 	struct ebFrame *f0; /* frame that owns this tag */
 	struct ebFrame *f1; /* subordinate frame if this is a <frame> tag */
 	jsobjtype jv;		/* corresponding javascript variable */

@@ -113,10 +113,8 @@ static struct htmlTag *locateOptionByName(const struct htmlTag *sel,
 	struct htmlTag *t, *em = 0, *pm = 0;
 	int pmcount = 0;	/* partial match count */
 	const char *s;
-	int i;
 
-	for (i = 0; i < cw->numTags; ++i) {
-		t = tagList[i];
+	for (t = cw->optlist; t; t = t->same) {
 		if (t->controller != sel)
 			continue;
 		if (!(s = t->textval))
@@ -144,10 +142,8 @@ static struct htmlTag *locateOptionByNum(const struct htmlTag *sel, int n)
 {
 	struct htmlTag *t;
 	int cnt = 0;
-	int i;
 
-	for (i = 0; i < cw->numTags; ++i) {
-		t = tagList[i];
+	for (t = cw->optlist; t; t = t->same) {
 		if (t->controller != sel)
 			continue;
 		if (!t->textval)
@@ -167,7 +163,7 @@ locateOptions(const struct htmlTag *sel, const char *input,
 	char *disp, *val;
 	int disp_l, val_l;
 	int len = strlen(input);
-	int i, n, pmc;
+	int n, pmc;
 	const char *s, *e;	/* start and end of an option */
 	char *iopt;		/* individual option */
 
@@ -179,8 +175,7 @@ locateOptions(const struct htmlTag *sel, const char *input,
 /* Uncheck all existing options, then check the ones selected. */
 		if (sel->jv && isJSAlive)
 			set_property_number(sel->jv, "selectedIndex", -1);
-		for (i = 0; i < cw->numTags; ++i) {
-			t = tagList[i];
+		for (t = cw->optlist; t; t = t->same) {
 			if (t->controller == sel && t->textval) {
 				t->checked = false;
 				if (t->jv && isJSAlive)
@@ -281,7 +276,7 @@ that's the way it goes.
 void jSyncup(bool fromtimer)
 {
 	struct htmlTag *t;
-	int itype, i, j, cx;
+	int itype, j, cx;
 	char *value, *cxbuf;
 
 	if (!cw->browseMode)
@@ -295,10 +290,7 @@ void jSyncup(bool fromtimer)
 	if (!fromtimer)
 		cw->nextrender = 0;
 
-	for (i = 0; i < cw->numTags; ++i) {
-		t = tagList[i];
-		if (t->action != TAGACT_INPUT)
-			continue;
+	for (t = cw->inputlist; t; t = t->same) {
 		itype = t->itype;
 		if (itype <= INP_HIDDEN)
 			continue;
@@ -712,7 +704,7 @@ void runScriptsPending(void)
 {
 	struct htmlTag *t;
 	char *js_file;
-	int j, ln;
+	int ln;
 	bool change, async;
 	jsobjtype v;
 	struct ebFrame *f, *save_cf = cf;
@@ -737,9 +729,8 @@ void runScriptsPending(void)
 top:
 	change = false;
 
-	for (j = 0; j < cw->numTags; ++j) {
-		t = tagList[j];
-		if (t->action != TAGACT_SCRIPT || !t->jv || t->step >= 3)
+	for (t = cw->scriptlist; t; t = t->same) {
+		if (!t->jv || t->step >= 3)
 			continue;
 		cf = t->f0;
 		prepareScript(t);
@@ -749,10 +740,8 @@ top:
 	async = false;
 passes:
 
-	for (j = 0; j < cw->numTags; ++j) {
-		t = tagList[j];
-		if (t->action != TAGACT_SCRIPT || !t->jv || t->step >= 5
-		    || t->step <= 2 || t->async != async)
+	for (t = cw->scriptlist; t; t = t->same) {
+		if (!t->jv || t->step >= 5 || t->step <= 2 || t->async != async)
 			continue;
 		cf = t->f0;
 		if (!is_subframe(cf, save_cf))
@@ -1012,7 +1001,7 @@ void infShow(int tagno, const char *search)
 {
 	const struct htmlTag *t = tagList[tagno], *v;
 	const char *s;
-	int i, cnt;
+	int cnt;
 	bool show;
 
 	s = inp_types[t->itype];
@@ -1046,8 +1035,7 @@ void infShow(int tagno, const char *search)
 /* If a search string is given, display the options containing that string. */
 	cnt = 0;
 	show = false;
-	for (i = 0; i < cw->numTags; ++i) {
-		v = tagList[i];
+	for (v = cw->optlist; v; v = v->same) {
 		if (v->controller != t)
 			continue;
 		if (!v->textval)
@@ -1127,7 +1115,6 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 	int itype = t->itype;
 	int itype_minor = t->itype_minor;
 	int newlen = strlen(newtext);
-	int i;
 
 /* sanity checks on the input */
 	if (itype <= INP_SUBMIT) {
@@ -1203,8 +1190,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 
 	if (itype == INP_RADIO && form && t->name && *newtext == '+') {
 /* clear the other radio button */
-		for (i = 0; i < cw->numTags; ++i) {
-			v = tagList[i];
+		for (v = cw->inputlist; v; v = v->same) {
 			if (v->controller != form)
 				continue;
 			if (v->itype != INP_RADIO)
@@ -1333,10 +1319,7 @@ static void formReset(const struct htmlTag *form)
 	}			/* loop over tags */
 
 /* loop again to look for select, now that options are set */
-	for (i = 0; i < cw->numTags; ++i) {
-		t = tagList[i];
-		if (t->action != TAGACT_INPUT)
-			continue;
+	for (t = cw->inputlist; t; t = t->same) {
 		if (t->controller != form)
 			continue;
 		itype = t->itype;
@@ -1504,7 +1487,7 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 static bool formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 {
 	const struct htmlTag *t;
-	int i, j, itype;
+	int j, itype;
 	char *name, *dynamicvalue = NULL;
 /* dynamicvalue needs to be freed with nzFree. */
 	const char *value;
@@ -1525,10 +1508,7 @@ static bool formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 		stringAndString(&pfs, &pfs_l, eol);
 	}
 
-	for (i = 0; i < cw->numTags; ++i) {
-		t = tagList[i];
-		if (t->action != TAGACT_INPUT)
-			continue;
+	for (t = cw->inputlist; t; t = t->same) {
 		if (t->controller != form)
 			continue;
 		itype = t->itype;
@@ -1627,13 +1607,10 @@ static bool formSubmit(const struct htmlTag *form, const struct htmlTag *submit)
 			char *s, *e;
 			if (!display) {	/* off the air */
 				struct htmlTag *v;
-				int i2;
 /* revert back to reset state */
-				for (i2 = 0; i2 < cw->numTags; ++i2) {
-					v = tagList[i2];
+				for (v = cw->optlist; v; v = v->same)
 					if (v->controller == t)
 						v->checked = v->rchecked;
-				}
 				display = displayOptions(t);
 			}
 			rc = locateOptions(t, display, 0, &dynamicvalue, false);

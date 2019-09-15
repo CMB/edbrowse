@@ -907,39 +907,34 @@ so this tells you the options underneath have changed.
 
 static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 {
-	int i1, i2, len1;
+	int i2 = 0;
 	bool check2;
 	char *s;
 	const char *selname;
 	bool changed = false;
-	struct htmlTag *t;
+	struct htmlTag *t, *t0 = 0;
 	jsobjtype oo;		/* option object */
 
-	len1 = cw->numTags;
-	i1 = i2 = 0;
 	selname = sel->name;
 	if (!selname)
 		selname = "?";
-	debugPrint(4, "testing selector %s %d %d", selname, len1, len2);
-
+	debugPrint(4, "testing selector %s %d", selname, len2);
 	sel->lic = (sel->multiple ? 0 : -1);
+	t = cw->optlist;
 
-	while (i1 < len1 && i2 < len2) {
+	while (t && i2 < len2) {
+		t0 = t;
 /* there is more to both lists */
-		t = tagList[i1++];
-		if (t->action != TAGACT_OPTION)
+		if (t->controller != sel || t->dead) {
+			t = t->same;
 			continue;
-		if (t->controller != sel)
-			continue;
-		if (t->dead)
-			continue;
+		}
 
 /* find the corresponding option object */
 		if ((oo = get_array_element_object(oa, i2)) == NULL) {
 /* Wow this shouldn't happen. */
 /* Guess I'll just pretend the array stops here. */
 			len2 = i2;
-			--i1;
 			break;
 		}
 
@@ -974,23 +969,27 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 			t->value = s;
 		} else
 			nzFree(s);
+		t = t->same;
 	}
 
 /* one list or the other or both has run to the end */
 	if (i2 == len2) {
-		for (; i1 < len1; ++i1) {
-			t = tagList[i1];
-			if (t->action != TAGACT_OPTION)
+		for (; t; t = t->same) {
+			if (t->controller != sel || t->dead) {
+				t0 = t;
 				continue;
-			if (t->controller != sel)
-				continue;
+			}
 /* option is gone in js, disconnect this option tag from its select */
 			disconnectTagObject(t);
 			t->controller = 0;
 			t->action = TAGACT_NOP;
+			if (t0)
+				t0->same = t->same;
+			else
+				cw->optlist = t->same;
 			changed = true;
 		}
-	} else if (i1 == len1) {
+	} else if (!t) {
 		for (; i2 < len2; ++i2) {
 			if ((oo = get_array_element_object(oa, i2)) == NULL)
 				break;
