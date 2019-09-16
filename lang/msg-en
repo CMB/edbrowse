@@ -538,7 +538,7 @@ cannot access %s, (secure)
 too many email accounts in your .ebrc config file, limit %d
 too many plugin blocks in your .ebrc config file, limit %d
 too many sql tables in your .ebrc config file, limit %d
-too many functions in your .ebrc config file, limit %d
+0
 .ebrc: line %d, control structures are nested too deeply
 .ebrc: function %s is not closed at eof
 .ebrc: mail or plugin block is not closed at EOF

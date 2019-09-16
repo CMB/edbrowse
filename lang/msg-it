@@ -538,7 +538,7 @@ impossibile accedere ad %s, (sicuro)
 troppi accounts di posta nel file di configurazione .ebrc, riga %d
 troppi plugin blocks nel tuo file di configurazione .ebrc, limite %d
 troppe tavole sql nel tuo file di configurazione .ebrc, limite %d
-troppe funzioni nel tuo file di configurazione .ebrc, limite %d
+0
 .ebrc: riga %d, le strutture di controllo sono nidificate troppo profondamente
 .ebrc: la funzione %s non è mai terminata
 .ebrc: un mail block o un plugin block non è mai terminato (EOF)

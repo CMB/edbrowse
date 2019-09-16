@@ -538,7 +538,7 @@ impossível acessar %s, (seguro)
 contas de e-mail demais no arquivo de configuração .ebrc; o limite é %d
 tipos plugin demais no arquivo de configuração .ebrc; o limite é %d
 tabelas SQL demais no arquivo de configuração .ebrc; o limite é %d
-funções demais no arquivo de configuração .ebrc; o limite é %d
+0
 .ebrc: linha %d, as estruturas de controle estão aninhadas até um nível alto demais
 .ebrc: função %s não se fecha no fim do arquivo
 .ebrc: mail ou bloco plugin não se fecha no fim do arquivo

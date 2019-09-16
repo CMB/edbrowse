@@ -638,7 +638,7 @@ enum {
 	MSG_EBRC_ManyAcc,
 	MSG_EBRC_ManyTypes,
 	MSG_EBRC_ManyTables,
-	MSG_EBRC_ManyFn,
+	MSG_notused541,
 	MSG_EBRC_TooDeeply,
 	MSG_EBRC_FnNotClosed,
 	MSG_EBRC_MNotClosed,

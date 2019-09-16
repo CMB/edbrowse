@@ -538,7 +538,7 @@ nie można odczytać %s, (bezpieczne)
 zbyt wiele kont pocztowych w Twoim pliku .ebrc, limit %d
 zbyt wiele typów Plugin w Twoim pliku .ebrc, limit %d
 zbyt wiele tabel SQL w Twoim pliku .ebrc, limit %d
-zbyt wiele funkcji w Twoim pliku .ebrc, limit %d
+0
 .ebrc: wiersz %d, zbyt głębokie zagnieżdżenie struktur kontrolnych
 .ebrc: funkcja %s nie jest domknięta przed końcem pliku
 .ebrc: blok poczty lub Plugin nie jest domknięty przed końcem pliku

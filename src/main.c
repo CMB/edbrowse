@@ -45,11 +45,6 @@ struct FILTERDESC {
 };
 static struct FILTERDESC mailFilters[MAXFILTER];
 static int n_filters;
-/* for edbrowse functions defined in the config file */
-#define MAXEBSCRIPT 500		// this many scripts
-#define MAXNEST 20		// nested blocks
-static char *ebScript[MAXEBSCRIPT + 1];
-static char *ebScriptName[MAXEBSCRIPT + 1];
 static struct DBTABLE dbtables[MAXDBT];
 static int numTables;
 volatile bool intFlag;
@@ -70,8 +65,6 @@ pst linePending;
 struct ebSession sessionList[MAXSESSION], *cs;
 int maxSession;
 static pthread_mutex_t share_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-#define MAXNOJS 500
 
 /*********************************************************************
 Redirect the incoming mail into a file, based on the subject or the sender.
@@ -382,8 +375,9 @@ void ebClose(int n)
 }				/* ebClose */
 
 static struct ebhost {
-// for novs and nojs
-	char type, *host;
+// j = nojs, v = novs, p = proxy, f = function
+	char type;
+	char *host;
 // for proxy entry we also have
 	char *prot, *domain;
 } *ebhosts;
@@ -976,6 +970,7 @@ static const char *balance(const char *ip, int direction)
 	return ip;
 }				/* balance */
 
+#define MAXNEST 20		// nested blocks
 /* Run an edbrowse function, as defined in the config file. */
 /* This function must be reentrant. */
 bool runEbFunction(const char *line)
@@ -1011,19 +1006,20 @@ bool runEbFunction(const char *line)
 			setError(MSG_BadFunctionName);
 			goto fail;
 		}
-	for (j = 0; ebScript[j]; ++j)
-		if (stringEqualCI(linecopy, ebScriptName[j] + 1))
+	for (j = 0; j < ebhosts_avail; ++j)
+		if (ebhosts[j].type == 'f' &&
+		    stringEqualCI(linecopy, ebhosts[j].prot + 1))
 			break;
-	if (!ebScript[j]) {
+	if (j == ebhosts_avail) {
 		setError(MSG_NoSuchFunction, linecopy);
 		goto fail;
 	}
 // This or a downstream function could invoke config.
 // Don't know why anybody would do that!
-	fncopy = cloneString(ebScript[j]);
+	fncopy = cloneString(ebhosts[j].host);
 /* skip past the leading \n */
 	ip = fncopy + 1;
-	nofail = (ebScriptName[j][0] == '+');
+	nofail = (ebhosts[j].prot[0] == '+');
 	nest = 0;
 	ok = true;
 
@@ -1211,8 +1207,6 @@ void unreadConfigFile(void)
 	maxMime = 0;
 	memset(dbtables, 0, sizeof(dbtables));
 	numTables = 0;
-	memset(ebScript, 0, sizeof(ebScript));
-	memset(ebScriptName, 0, sizeof(ebScriptName));
 	memset(userAgents + 1, 0, sizeof(userAgents) - sizeof(userAgents[0]));
 
 	addressFile = NULL;
@@ -1867,7 +1861,6 @@ nokeyword:
 				goto putback;
 /* This ends the function */
 			*s = 0;	/* null terminate the script */
-			++sn;
 			continue;
 		}
 
@@ -1942,11 +1935,10 @@ nokeyword:
 
 		if (c == 'f') {
 			stack[++nest] = c;
-			if (sn == MAXEBSCRIPT)
-				cfgAbort1(MSG_EBRC_ManyFn, sn);
-			ebScriptName[sn] = s + 2;
+			sn = ebhosts_avail;
 			t[-1] = 0;
-			ebScript[sn] = t;
+			add_ebhost(t, 'f');
+			ebhosts[sn].prot = s + 2;
 			goto putback;
 		}
 
@@ -1959,7 +1951,7 @@ putback:
 	}			/* loop over lines */
 
 	if (nest)
-		cfgAbort1(MSG_EBRC_FnNotClosed, ebScriptName[sn]);
+		cfgAbort1(MSG_EBRC_FnNotClosed, ebhosts[sn].prot + 1);
 
 	if (mailblock | mimeblock)
 		cfgAbort0(MSG_EBRC_MNotClosed);

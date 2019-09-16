@@ -538,7 +538,7 @@ kann auf %s nicht zugreifen, (gesichert)
 zu viele Emailkonten in .edbrc, maximal %d
 zu viele Plugin-Typen in .ebrc, maximal %d
 zu viele SQL-Tabellen in .ebrc, maximal %d
-zu viele Funktionen in .ebrc, maximal %d
+0
 .ebrc: Zeile %d, Kontrollstrukturen zu tief verschachtelt
 .ebrc: Funktion %s nicht vor Dateiende abgeschlossen
 .ebrc: Email- oder Plugin-Block nicht vor dem Dateiende beendet

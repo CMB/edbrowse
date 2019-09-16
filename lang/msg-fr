@@ -538,7 +538,7 @@ impossible d'accéder à %s, (sûr)
 Trop de comptes de courrier dans votre fichier de configuration, la limite est de %d
 Trop de types plugin dans votre fichier de configuration, la limite est de %d
 Trop de tables sql dans votre fichier de configuration, la limite est de %d
-Trop de fonctions dans votre fichier de configuration, la limite est de %d
+0
 .ebrc : ligne %d, trop de structures imbriquées
 .ebrc : la fonction %s n'est pas fermée
 .ebrc : le bloc plugin ou courrier n'est pas fermé
