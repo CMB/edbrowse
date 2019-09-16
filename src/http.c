@@ -2698,10 +2698,16 @@ A return of null means DIRECT, and this is the default
 if we don't match any of the proxy entries.
 *********************************************************************/
 
-static const char *findProxyInternal(const char *prot, const char *domain)
+static const char *findProxyForURL(const char *url)
 {
 	struct PXENT *px = proxyEntries;
 	int i;
+	char prot[MAXPROTLEN], host[MAXHOSTLEN];
+
+	if (!getProtHostURL(url, prot, host)) {
+/* this should never happen */
+		return 0;
+	}
 
 /* first match wins */
 	for (i = 0; i < maxproxy; ++i, ++px) {
@@ -2727,33 +2733,12 @@ static const char *findProxyInternal(const char *prot, const char *domain)
 		}
 
 domain:
-		if (px->domain) {
-			int l1 = strlen(px->domain);
-			int l2 = strlen(domain);
-			if (l1 > l2)
-				continue;
-			l2 -= l1;
-			if (!stringEqualCI(px->domain, domain + l2))
-				continue;
-			if (l2 && domain[l2 - 1] != '.')
-				continue;
-		}
-
-		return px->proxy;
+		if (!px->domain || patternMatchURL(url, px->domain))
+			return px->proxy;
 	}
 
 	return 0;
-}				/* findProxyInternal */
-
-static const char *findProxyForURL(const char *url)
-{
-	char prot[MAXPROTLEN], host[MAXHOSTLEN];
-	if (!getProtHostURL(url, prot, host)) {
-/* this should never happen */
-		return 0;
-	}
-	return findProxyInternal(prot, host);
-}				/* findProxyForURL */
+}
 
 /* expand a frame inline.
  * Pass a range of lines; you can expand all the frames in one go.
