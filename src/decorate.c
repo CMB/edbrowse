@@ -1570,6 +1570,7 @@ static void pushAttributes(const struct htmlTag *t)
 			0
 		};
 		static const char *const dotrue[] = {
+			"required",
 			"multiple", "readonly", "disabled", "async", 0
 		};
 		static const char *const handlers[] = {
@@ -1872,6 +1873,7 @@ void freeTags(struct ebWindow *w)
 	free(w->tags);
 	w->tags = 0;
 	w->numTags = w->allocTags = w->deadTags = 0;
+	w->inputlist = w->scriptlist = w->optlist = 0;
 }				/* freeTags */
 
 struct htmlTag *newTag(const char *name)

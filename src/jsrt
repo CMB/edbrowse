@@ -321,7 +321,7 @@ document.writeln("<script language=JavaScript>document.writeln('Nested Script ')
 <P class=inject>
 subject: <input type='hidden' name='who' value='eklhad'>
 <input type='hidden' name='password' value='secret'>
-<input type='text' name='subject' size='50' maxlength='80'>
+<input type='text' name='subject' size='50' maxlength='80' required>
 <br>State and zip:
 <select name=state onchange=newSelect(this)>
 <option selected value=-->
@@ -620,6 +620,7 @@ if(document.getElementsByTagName("head")[0].id != "boom") fail(143);
 
 function submitFunction(me) {
 if(document.forms[0] != me) fail(123);
+if(me.subject.validity.valueMissing) { alert("subject is required"); return false; }
 var where = prompt("Enter m for mail, w for web, a to autosubmit, x to abort.", "x");
 me.action =
 (where == 'm' ? "mailto:eklhad@gmail.com" : "http://localhost:1200/foobar");

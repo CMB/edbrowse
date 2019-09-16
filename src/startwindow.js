@@ -808,7 +808,39 @@ mw0.Form = function(){ this.elements = []; }
 mw0.Form.prototype = {
 submit: eb$formSubmit, reset: eb$formReset};
 Object.defineProperty(mw0.Form.prototype, "length", { get: function() { return this.elements.length;}});
-mw0.Element = function() { this.selectionStart = 0; this.selectionEnd = -1; this.selectionDirection = "none"; }
+
+mw0.Validity = function(){}
+mw0.Validity.prototype = {
+/*********************************************************************
+All these should be getters, or should they?
+Consider the tooLong attribute.
+tooLong could compare the length of the input with the maxlength attribute,
+that's what the gettter would do, but edbrowse already does that at entry time.
+In general, shouldn't edbrowse check for most r all of these on entry,
+so then most of these wouldn't have to be getters?
+patternMismatch on email and url, etc.
+One thing that always has to be a getter is valueMissing,
+cause it starts out empty of course, and is a required field.
+And valid is a getter, true if everything else is false.
+*********************************************************************/
+badInput: false,
+customError: false,
+patternMismatch: false,
+rangeOverflow: false,
+rangeUnderflow: false,
+stepMismatch: false,
+tooLong: false,
+tooShort: false,
+typeMismatch: false,
+}
+Object.defineProperty(mw0.Validity.prototype, "valueMissing", {
+get: function() {var o = this.owner;  return o.required && o.value == ""; }});
+Object.defineProperty(mw0.Validity.prototype, "valid", {
+get: function() { // only need to check items with getters
+return !(this.valueMissing)}});
+
+mw0.Element = function() { this.validity = new Validity, this.validity.owner = this}
+mw0.Element.prototype = {selectionStart: 0, selectionEnd: -1, selectionDirection: "none"}
 
 // I really don't know what this function does, something visual I think.
 mw0.Element.prototype.setSelectionRange = function(s, e, dir) {
@@ -925,7 +957,7 @@ alert3("textarea.innerHTML is too complicated for me to render");
 }
 
 mw0.HTMLElement = function(){}
-mw0.Select = function() { this.selectedIndex = -1; this.value = ""; }
+mw0.Select = function() { this.selectedIndex = -1; this.value = "";this.validity = new Validity, this.validity.owner = this}
 Object.defineProperty(mw0.Select.prototype, "value", {
 get: function() {
 var a = this.options;
@@ -3490,6 +3522,7 @@ Link = mw0.Link;
 Body = mw0.Body;
 Base = mw0.Base;
 Form = mw0.Form;
+Validity = mw0.Validity;
 Element = mw0.Element;
 HTMLElement = mw0.HTMLElement;
 Select = mw0.Select;

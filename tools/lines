@@ -1,0 +1,7 @@
+#  Count lines of code, just for grins.
+
+cd ../src
+cat `
+/bin/ls -1 *.h *.c startwindow.js |
+egrep -v "startwindow.c|msg-strings.c|ebrc.c"` |
+wc -l
