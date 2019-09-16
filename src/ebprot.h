@@ -207,9 +207,6 @@ void setHTTPLanguage(const char *lang);
 int prompt_and_read(int prompt, char *buffer, int buffer_length, int error_message, bool hide_echo);
 int ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data, size_t size, struct i_get *g);
 int bg_jobs(bool iponly);
-void add_ebhost(char *host, char type);
-void delete_ebhosts(void);
-void add_proxy(char *v);
 CURLcode setCurlURL(CURL * h, const char *url);
 bool frameExpand(bool expand, int ln1, int ln2);
 int frameExpandLine(int ln, jsobjtype fo);
@@ -221,11 +218,13 @@ void unframe2(jsobjtype fobj);
 
 /* sourcefile=main.c */
 const char *mailRedirect(const char *to, const char *from, const char *reply, const char *subj);
-bool javaOK(const char *url);
 void eb_curl_global_init(void);
 void ebClose(int n);
 bool isSQL(const char *s);
 void setDataSource(char *v);
+bool javaOK(const char *url);
+bool mustVerifyHost(const char *url);
+const char *findProxyForURL(const char *url);
 bool runEbFunction(const char *line);
 struct DBTABLE *findTableDescriptor(const char *sn);
 struct DBTABLE *newTableDescriptor(const char *name);

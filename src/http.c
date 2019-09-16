@@ -41,7 +41,6 @@ static bool ftpConnect(struct i_get *g, char *creds_buf);
 static bool gopherConnect(struct i_get *g);
 static bool read_credentials(char *buffer);
 static const char *message_for_response_code(int code);
-static const char *findProxyForURL(const char *url);
 
 /* string is allocated. Quotes are removed. No other processing is done.
  * You may need to decode %xx bytes or such. */
@@ -2632,89 +2631,6 @@ int bg_jobs(bool iponly)
 	return numback;
 }
 
-static struct ebhost {
-// for novs and nojs
-	char type, *host;
-// for proxy entry we also have
-	char *prot, *domain;
-} *ebhosts;
-static size_t ebhosts_avail, ebhosts_max;
-
-void add_ebhost(char *host, char type)
-{
-	if (ebhosts_max == 0) {
-		ebhosts_max = 32;
-		ebhosts = allocZeroMem(ebhosts_max * sizeof(struct ebhost));
-	} else if (ebhosts_avail >= ebhosts_max) {
-		ebhosts_max *= 2;
-		ebhosts =
-		    reallocMem(ebhosts, ebhosts_max * sizeof(struct ebhost));
-	}
-	ebhosts[ebhosts_avail].host = host;
-	ebhosts[ebhosts_avail++].type = type;
-}				/* add_ebhost */
-
-/* Return true if the cert for this host should be verified. */
-static bool mustVerifyHost(const char *url)
-{
-	int i;
-	if (!verifyCertificates)
-		return false;
-	for (i = 0; i < ebhosts_avail; i++)
-		if (ebhosts[i].type == 'v' &&
-		    patternMatchURL(url, ebhosts[i].host))
-			return false;
-	return true;
-}				/* mustVerifyHost */
-
-void delete_ebhosts(void)
-{
-	nzFree(ebhosts);
-	ebhosts = NULL;
-	ebhosts_avail = ebhosts_max = 0;
-}				/* delete_ebhosts */
-
-void add_proxy(char *v)
-{
-	char *q;
-	char *prot = 0, *domain = 0, *proxy = 0;
-	spaceCrunch(v, true, true);
-	q = strchr(v, ' ');
-	if (q) {
-		*q = 0;
-		if (!stringEqual(v, "*"))
-			prot = v;
-		v = q + 1;
-		q = strchr(v, ' ');
-		if (q) {
-			*q = 0;
-			if (!stringEqual(v, "*"))
-				domain = v;
-			v = q + 1;
-		}
-	}
-	if (!stringEqualCI(v, "direct"))
-		proxy = v;
-	add_ebhost(proxy, 'p');
-	ebhosts[ebhosts_avail - 1].prot = prot;
-	ebhosts[ebhosts_avail - 1].domain = domain;
-}
-
-// Are we ok to parse and execute javascript?
-bool javaOK(const char *url)
-{
-	int j;
-	if (!allowJS)
-		return false;
-	if (isDataURI(url))
-		return true;
-	for (j = 0; j < ebhosts_avail; ++j)
-		if (ebhosts[j].type == 'j' &&
-		    patternMatchURL(url, ebhosts[j].host))
-			return false;
-	return true;
-}				/* javaOK */
-
 CURLcode setCurlURL(CURL * h, const char *url)
 {
 	unsigned long verify;
@@ -2733,60 +2649,6 @@ CURLcode setCurlURL(CURL * h, const char *url)
 		curl_easy_setopt(h, CURLOPT_CAINFO, sslCerts);
 	return curl_easy_setopt(h, CURLOPT_URL, url);
 }				/* setCurlURL */
-
-/*********************************************************************
-Given a protocol and a domain, find the proxy server
-to mediate your request.
-This is the C version, using entries in .ebrc.
-There is a javascript version of the same name, that we will support later.
-This is a beginning, and it can be used even when javascript is disabled.
-A return of null means DIRECT, and this is the default
-if we don't match any of the proxy entries.
-*********************************************************************/
-
-static const char *findProxyForURL(const char *url)
-{
-	struct ebhost *px = ebhosts;
-	int i;
-	char prot[MAXPROTLEN], host[MAXHOSTLEN];
-
-	if (!getProtHostURL(url, prot, host)) {
-/* this should never happen */
-		return 0;
-	}
-
-/* first match wins */
-	for (i = 0; i < ebhosts_avail; ++i, ++px) {
-		if (px->type != 'p')
-			continue;
-
-		if (px->prot) {
-			char *s = px->prot;
-			char *t;
-			int rc;
-			while (*s) {
-				t = strchr(s, '|');
-				if (t)
-					*t = 0;
-				rc = stringEqualCI(s, prot);
-				if (t)
-					*t = '|';
-				if (rc)
-					goto domain;
-				if (!t)
-					break;
-				s = t + 1;
-			}
-			continue;
-		}
-
-domain:
-		if (!px->domain || patternMatchURL(url, px->domain))
-			return px->host;
-	}
-
-	return 0;
-}
 
 /* expand a frame inline.
  * Pass a range of lines; you can expand all the frames in one go.
