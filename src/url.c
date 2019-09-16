@@ -466,7 +466,7 @@ bool isBrowseableURL(const char *url)
 
 bool isDataURI(const char *u)
 {
-	return memEqualCI(u, "data:", 5);
+	return u && memEqualCI(u, "data:", 5);
 }				/* isDataURI */
 
 /* Helper functions to return pieces of the URL.
@@ -1155,3 +1155,40 @@ void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p)
 	if (body_p)
 		*body_p = decodePostData(url, "body", 0);
 }				/* decodeMailURL */
+
+// Does a url match a pattern, from an entry in .ebrc
+// edbrowse.org matches edbrowse.org and foo.edbrowse.org
+// edbrowse.org/foo matches edbrowse.org/foo/bar
+bool patternMatchURL(const char *url, const char *pattern)
+{
+	char prot[MAXPROTLEN], host[MAXHOSTLEN];
+	const char *path, *q;
+	int hl, dl, ql;
+	if (!url || !pattern)
+		return false;
+	if (!url[0] || !pattern[0])
+		return false;
+// This function has to be threadsafe, so I call getProtHostURL,
+// which is also threadsafe.
+	if (!getProtHostURL(url, prot, host))
+		return false;
+	hl = strlen(host);
+	path = getDataURL(url);
+	q = strchr(pattern, '/');
+	if (!q)
+		q = pattern + strlen(pattern);
+	dl = q - pattern;
+	if (dl > hl)
+		return false;
+	if (!memEqualCI(pattern, host + hl - dl, dl))
+		return false;
+	if (*q == '/') {
+		++q;
+		if (hl != dl || !path)
+			return false;
+		ql = strlen(q);
+		return !strncmp(q, path, ql) &&
+		    (path[ql] == 0 || path[ql] == '/');
+	}			/* domain/path was specified */
+	return hl == dl || host[hl - dl - 1] == '.';
+}

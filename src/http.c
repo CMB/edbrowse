@@ -2651,26 +2651,14 @@ void addNovsHost(char *host)
 }				/* addNovsHost */
 
 /* Return true if the cert for this host should be verified. */
-static bool mustVerifyHost(const char *host)
+static bool mustVerifyHost(const char *url)
 {
-	size_t this_host_len = strlen(host);
-	size_t i;
-
+	int i;
 	if (!verifyCertificates)
 		return false;
-
-	for (i = 0; i < novs_hosts_avail; i++) {
-		size_t l1 = strlen(novs_hosts[i]);
-		size_t l2 = this_host_len;
-		if (l1 > l2)
-			continue;
-		l2 -= l1;
-		if (!stringEqualCI(novs_hosts[i], host + l2))
-			continue;
-		if (l2 && host[l2 - 1] != '.')
-			continue;
-		return false;
-	}
+	for (i = 0; i < novs_hosts_avail; i++)
+		if (patternMatchURL(url, novs_hosts[i]))
+			return false;
 	return true;
 }				/* mustVerifyHost */
 
@@ -2683,16 +2671,13 @@ void deleteNovsHosts(void)
 
 CURLcode setCurlURL(CURL * h, const char *url)
 {
-	char host[MAXHOSTLEN];
 	unsigned long verify;
 	const char *proxy = findProxyForURL(url);
 	if (!proxy)
 		proxy = "";
 	else
 		debugPrint(3, "proxy %s", proxy);
-	if (!getProtHostURL(url, NULL, host))
-		return CURLE_URL_MALFORMAT;
-	verify = mustVerifyHost(host);
+	verify = mustVerifyHost(url);
 	curl_easy_setopt(h, CURLOPT_PROXY, proxy);
 	curl_easy_setopt(h, CURLOPT_SSL_VERIFYPEER, verify);
 	curl_easy_setopt(h, CURLOPT_SSL_VERIFYHOST, (verify ? 2 : 0));

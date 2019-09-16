@@ -390,6 +390,7 @@ char *altText(const char *base) ; //?
 char *encodePostData(const char *s, const char *keep_chars) ;
 char *decodePostData(const char *data, const char *name, int seqno) ;
 void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p) ;
+bool patternMatchURL(const char *url, const char *pattern);
 
 /* sourcefile=jseng-duk.c */
 void connectTagObject(struct htmlTag *t, jsobjtype p);

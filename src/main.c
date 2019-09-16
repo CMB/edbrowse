@@ -157,44 +157,14 @@ Are we ok to parse and execute javascript?
 
 bool javaOK(const char *url)
 {
-	int j, hl, dl;
-	const char *h, *d, *q, *path;
+	int j;
 	if (!allowJS)
 		return false;
-	if (!url)
-		return true;
 	if (isDataURI(url))
 		return true;
-	h = getHostURL(url);
-	if (!h)
-		return true;
-	hl = strlen(h);
-	path = getDataURL(url);
-	for (j = 0; j < javaDisCount; ++j) {
-		d = javaDis[j];
-		q = strchr(d, '/');
-		if (!q)
-			q = d + strlen(d);
-		dl = q - d;
-		if (dl > hl)
-			continue;
-		if (!memEqualCI(d, h + hl - dl, dl))
-			continue;
-		if (*q == '/') {
-			++q;
-			if (hl != dl)
-				continue;
-			if (!path)
-				continue;
-			if (strncmp(q, path, strlen(q)))
-				continue;
+	for (j = 0; j < javaDisCount; ++j)
+		if (patternMatchURL(url, javaDis[j]))
 			return false;
-		}		/* domain/path was specified */
-		if (hl == dl)
-			return false;
-		if (h[hl - dl - 1] == '.')
-			return false;
-	}
 	return true;
 }				/* javaOK */
 

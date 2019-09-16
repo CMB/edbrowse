@@ -3369,7 +3369,7 @@ This will block the popup ads that you don't want to see, which often generate e
 Subdomains are not considered when a path is given; the domain must match exactly.
 
 <P>
-novs = somesite.com
+novs = example.com
 <P>
 Indicate hostnames for which SSL certificate verification should not
 be performed.
@@ -3377,6 +3377,7 @@ This directive is useful for sites that use self-signed certificates,
 since these cannot be verified.
 It should probably not be used for anything serious, such as a site that
 is going to receive your credit card number.
+This directive includes subdomains, such as www.example.com.
 <P>
 inserver = pop3.some-domain.com
 <br>
