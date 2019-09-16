@@ -510,7 +510,7 @@ javascript syntax error
 .ebrc: line %d, too many user agents, limit %d
 .ebrc: cookie jar %s is not a regular file
 .ebrc: cannot create cookie jar %s
-.ebrc: too many no js directives, limit %d
+0
 .ebrc: line %d, domain %s does not contain a dot
 cannot access %s, (secure)
 .ebrc: SSL certificate file %s is not a regular file
@@ -552,7 +552,7 @@ please specify at least one recipient and the file to send, before your attachme
 too many files open simultaneously, limit %d
 invalid session %d in fetchLineContext()
 invalid line number %d in fetchLineContext()
-too many proxy entries in your .ebrc config file, limit %d
+0
 session %d out of range in cxActive
 double init on session %d
 quitting a nonactive session %d

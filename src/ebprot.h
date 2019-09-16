@@ -209,6 +209,7 @@ int ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data, siz
 int bg_jobs(bool iponly);
 void add_ebhost(char *host, char type);
 void delete_ebhosts(void);
+void add_proxy(char *v);
 CURLcode setCurlURL(CURL * h, const char *url);
 bool frameExpand(bool expand, int ln1, int ln2);
 int frameExpandLine(int ln, jsobjtype fo);

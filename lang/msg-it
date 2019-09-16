@@ -510,7 +510,7 @@ errore di sintassi javascript
 .ebrc: riga %d, troppi user agents, il limite è %d
 .ebrc: il cookie jar %s non è un normale file
 .ebrc: impossibile creare il cookie jar %s
-.ebrc: troppe direttive no js, il limite è %d
+0
 .ebrc: riga %d, il dominio %s non contiene un punto
 impossibile accedere ad %s, (sicuro)
 .ebrc: il file certificati SSL %s non è un normale file
@@ -552,7 +552,7 @@ per favore specifica almeno un recipient e il file da inviare, prima degli alleg
 troppi files aperti simultaneamente, limite %d
 sessione %d non valida in fetchLineContext()
 numero di riga %d non valido in fetchLineContext()
-troppe entries proxy nel file di configurazione .ebrc, limite %d
+0
 sessione %d fuori range in cxActive
 double init nella sessione %d
 esco da una sessione non attiva %d

@@ -2633,7 +2633,10 @@ int bg_jobs(bool iponly)
 }
 
 static struct ebhost {
+// for novs and nojs
 	char type, *host;
+// for proxy entry we also have
+	char *prot, *domain;
 } *ebhosts;
 static size_t ebhosts_avail, ebhosts_max;
 
@@ -2670,6 +2673,32 @@ void delete_ebhosts(void)
 	ebhosts = NULL;
 	ebhosts_avail = ebhosts_max = 0;
 }				/* delete_ebhosts */
+
+void add_proxy(char *v)
+{
+	char *q;
+	char *prot = 0, *domain = 0, *proxy = 0;
+	spaceCrunch(v, true, true);
+	q = strchr(v, ' ');
+	if (q) {
+		*q = 0;
+		if (!stringEqual(v, "*"))
+			prot = v;
+		v = q + 1;
+		q = strchr(v, ' ');
+		if (q) {
+			*q = 0;
+			if (!stringEqual(v, "*"))
+				domain = v;
+			v = q + 1;
+		}
+	}
+	if (!stringEqualCI(v, "direct"))
+		proxy = v;
+	add_ebhost(proxy, 'p');
+	ebhosts[ebhosts_avail - 1].prot = prot;
+	ebhosts[ebhosts_avail - 1].domain = domain;
+}
 
 // Are we ok to parse and execute javascript?
 bool javaOK(const char *url)
@@ -2717,7 +2746,7 @@ if we don't match any of the proxy entries.
 
 static const char *findProxyForURL(const char *url)
 {
-	struct PXENT *px = proxyEntries;
+	struct ebhost *px = ebhosts;
 	int i;
 	char prot[MAXPROTLEN], host[MAXHOSTLEN];
 
@@ -2727,7 +2756,9 @@ static const char *findProxyForURL(const char *url)
 	}
 
 /* first match wins */
-	for (i = 0; i < maxproxy; ++i, ++px) {
+	for (i = 0; i < ebhosts_avail; ++i, ++px) {
+		if (px->type != 'p')
+			continue;
 
 		if (px->prot) {
 			char *s = px->prot;
@@ -2751,7 +2782,7 @@ static const char *findProxyForURL(const char *url)
 
 domain:
 		if (!px->domain || patternMatchURL(url, px->domain))
-			return px->proxy;
+			return px->host;
 	}
 
 	return 0;

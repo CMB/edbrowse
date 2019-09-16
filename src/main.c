@@ -45,8 +45,6 @@ struct FILTERDESC {
 };
 static struct FILTERDESC mailFilters[MAXFILTER];
 static int n_filters;
-int maxproxy;
-struct PXENT proxyEntries[MAXPROXY];
 /* for edbrowse functions defined in the config file */
 #define MAXEBSCRIPT 500		// this many scripts
 #define MAXNEST 20		// nested blocks
@@ -1076,8 +1074,6 @@ void unreadConfigFile(void)
 	maxMime = 0;
 	memset(dbtables, 0, sizeof(dbtables));
 	numTables = 0;
-	memset(proxyEntries, 0, sizeof(proxyEntries));
-	maxproxy = 0;
 	memset(ebScript, 0, sizeof(ebScript));
 	memset(ebScriptName, 0, sizeof(ebScriptName));
 	memset(userAgents + 1, 0, sizeof(userAgents) - sizeof(userAgents[0]));
@@ -1144,7 +1140,6 @@ void readConfigFile(void)
 	char last[24];
 	int lidx = 0;
 	struct MACCOUNT *act;
-	struct PXENT *px;
 	struct MIMETYPE *mt;
 	struct DBTABLE *td;
 
@@ -1594,27 +1589,7 @@ putc:
 			continue;
 
 		case 30:	/* proxy */
-			if (maxproxy == MAXPROXY)
-				cfgAbort1(MSG_EBRC_NoPROXY, MAXPROXY);
-			px = proxyEntries + maxproxy;
-			maxproxy++;
-			spaceCrunch(v, true, true);
-			q = strchr(v, ' ');
-			if (q) {
-				*q = 0;
-				if (!stringEqual(v, "*"))
-					px->prot = v;
-				v = q + 1;
-				q = strchr(v, ' ');
-				if (q) {
-					*q = 0;
-					if (!stringEqual(v, "*"))
-						px->domain = v;
-					v = q + 1;
-				}
-			}
-			if (!stringEqualCI(v, "direct"))
-				px->proxy = v;
+			add_proxy(v);
 			continue;
 
 		case 32:	/* localizeweb */

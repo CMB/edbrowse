@@ -510,7 +510,7 @@ javascript erro de sintaxe
 .ebrc: linha %d, agentes do usuário em excesso; o limite é %d
 .ebrc: cookie jar %s não é um arquivo regular
 .ebrc: não posso criar a cookie jar %s
-.ebrc: diretivas no js em excesso; o limit é %d
+0
 .ebrc: linha %d, o domínio %s não possui ponto
 impossível acessar %s, (seguro)
 .ebrc: arquivo de certificados SSL %s não é um arquivo regular
@@ -552,7 +552,7 @@ por favor especifique ao menos um destinatário e o arquivo a enviar, antes dos 
 demais arquivos abertos ao mesmo tempo; o limite é %d
 sessão %d inválida na fetchLineContext()
 número de linha %d inválido na fetchLineContext()
-contas de proxy no arquivo de configuração .ebrc; o limite é %d
+0
 sessão %d fora do intervalo na cxActive
 init duplo na sessão %d
 fechando sessão não ativa %d

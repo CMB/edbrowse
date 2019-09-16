@@ -510,7 +510,7 @@ javascript błąd składniowy
 .ebrc: wiersz %d, zbyt wiele agentów użytkownika, limit %d
 .ebrc: plik ciastek %s nie jest regularnym plikiem
 .ebrc: nie można utworzyć pliku ciastek %s
-.ebrc: zbyt wiele dyrektyw JS, limit %d
+0
 .ebrc: wiersz %d, domena %s nie zawiera kropki
 nie można odczytać %s, (bezpieczne)
 .ebrc: plik z certyfikatem SSL %s nie jest regularnym plikiem
@@ -552,7 +552,7 @@ podaj co najmniej jednego odbiorcę i plik do wysłania, przed załącznikami
 zbyt wiele plików otwartych jednocześnie, limit %d
 nieprawidłowa sesja %d w fetchLineContext()
 nieprawidłowy numer wiersza %d w fetchLineContext()
-zbyt wiele kont proxy w Twoim pliku .ebrc, limit %d
+0
 sesja %d poza zakresem w cxActive
 podwójna inicjalizacja w sesji %d
 zamykam nieaktywną sesję %d

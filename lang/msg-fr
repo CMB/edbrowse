@@ -510,7 +510,7 @@ javascript erreur de syntaxe
 .ebrc : ligne %d, trop d'agents utilisateurs, la limite est de %d
 .ebrc : le récipient de cookies n'est pas un fichier régulier
 .ebrc : impossible de créer   le récipient de cookies
-.ebrc : trop de directives no js, la limite est de %d
+0
 .ebrc : ligne %d, le domaine ne contient pas de point
 impossible d'accéder à %s, (sûr)
 .ebrc : le fichier de certificats SSL n'est pas un fichier régulier
@@ -552,7 +552,7 @@ Définissez s'il vous plaît au moins un destinataire et le fichier à envoyer, 
 Trop de fichiers ouverts, la limite est de %d
 Session %d invalide dans la fonction fetchLineContext()
 Numéro %d de ligne invalide dans la fonction fetchLineContext()
-Trop de proxy dans votre fichier de configuration, la limite est de %d
+0
 La session %d est hors limites dans cxActive
 Double init dans la session %d
 Quitte la session %d inactive

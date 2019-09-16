@@ -253,14 +253,6 @@ struct MACCOUNT {		/* pop3 account */
 extern struct MACCOUNT accounts[];	/* all the email accounts */
 extern int maxAccount;		/* how many email accounts specified */
 
-struct PXENT {			/* proxy entry */
-	char *prot;		/* null means any */
-	char *domain;		/* null means any */
-	char *proxy;		/* null means direct */
-};
-extern struct PXENT proxyEntries[];
-extern int maxproxy;
-
 struct MIMETYPE {
 	char *type, *desc;
 	char *suffix, *prot, *program;

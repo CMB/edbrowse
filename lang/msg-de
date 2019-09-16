@@ -510,7 +510,7 @@ javascript Syntaxfehler
 .ebrc: Zeile %d, zu viele User-Agents, maximal %d
 .ebrc: Cookie-Datei ist keine reguläre Datei
 .ebrc: kann Cookie-Datei %s nicht erstellen
-.ebrc: zu viele js-Anweisungen, maximal %d
+0
 .ebrc: Zeile %d, Adresse %s enthält keinen Punkt
 kann auf %s nicht zugreifen, (gesichert)
 .ebrc: Datei %s für SSL-Zertifikate ist keine reguläre Datei
@@ -552,7 +552,7 @@ bitte geben Sie mind. einen Empfänger und die zu sendende Datei an bevor Sie Da
 zu viele Dateien gleichzeitig offen, maximal %d
 ungültige Sitzung %d im fetchLineContext()
 ungültige Zeilennummer %d im fetchLineContext()
-zu viele Proxy-Einträge in .ebrc, maximal %d
+0
 Sitzung %d außerhalb des Bereichs in cxActive
 doppelte Initialisierung in Sitzung %d
 Verlassen einer nicht-aktiven Sitzung %d
