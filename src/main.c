@@ -52,9 +52,6 @@ struct PXENT proxyEntries[MAXPROXY];
 #define MAXNEST 20		// nested blocks
 static char *ebScript[MAXEBSCRIPT + 1];
 static char *ebScriptName[MAXEBSCRIPT + 1];
-#define MAXNOJS 500
-static const char *javaDis[MAXNOJS];
-static int javaDisCount;
 static struct DBTABLE dbtables[MAXDBT];
 static int numTables;
 volatile bool intFlag;
@@ -77,8 +74,6 @@ int maxSession;
 static pthread_mutex_t share_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #define MAXNOJS 500
-static const char *javaDis[MAXNOJS];
-static int javaDisCount;
 
 /*********************************************************************
 Redirect the incoming mail into a file, based on the subject or the sender.
@@ -150,23 +145,6 @@ const char *mailRedirect(const char *to, const char *from,
 	r = reverseAlias(reply);
 	return r;
 }				/* mailRedirect */
-
-/*********************************************************************
-Are we ok to parse and execute javascript?
-*********************************************************************/
-
-bool javaOK(const char *url)
-{
-	int j;
-	if (!allowJS)
-		return false;
-	if (isDataURI(url))
-		return true;
-	for (j = 0; j < javaDisCount; ++j)
-		if (patternMatchURL(url, javaDis[j]))
-			return false;
-	return true;
-}				/* javaOK */
 
 static void *inputForever(void *ptr);
 static pthread_t foreground_thread;
@@ -1103,7 +1081,6 @@ void unreadConfigFile(void)
 	memset(ebScript, 0, sizeof(ebScript));
 	memset(ebScriptName, 0, sizeof(ebScriptName));
 	memset(userAgents + 1, 0, sizeof(userAgents) - sizeof(userAgents[0]));
-	javaDisCount = 0;
 
 	addressFile = NULL;
 	cookieFile = NULL;
@@ -1122,7 +1099,7 @@ void unreadConfigFile(void)
 
 	setDataSource(NULL);
 	setHTTPLanguage(eb_language);
-	deleteNovsHosts();
+	delete_ebhosts();
 }				/* unreadConfigFile */
 
 /* Order is important here: mail{}, mime{}, table{}, then global keywords */
@@ -1580,14 +1557,12 @@ putc:
 			continue;
 
 		case 24:	/* nojs */
-			if (javaDisCount == MAXNOJS)
-				cfgAbort1(MSG_EBRC_NoJS, MAXNOJS);
 			if (*v == '.')
 				++v;
 			q = strchr(v, '.');
 			if (!q || q[1] == 0)
 				cfgLine1(MSG_EBRC_DomainDot, v);
-			javaDis[javaDisCount++] = v;
+			add_ebhost(v, 'j');
 			continue;
 
 		case 25:	/* cachedir */
@@ -1654,7 +1629,7 @@ putc:
 			q = strchr(v, '.');
 			if (!q || q[1] == 0)
 				cfgLine1(MSG_EBRC_DomainDot, v);
-			addNovsHost(v);
+			add_ebhost(v, 'v');
 			continue;
 
 		case 35:	/* cachesize */

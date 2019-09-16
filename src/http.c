@@ -2180,7 +2180,6 @@ static CURL *http_curl_init(struct i_get *g)
 	curl_easy_setopt(h, CURLOPT_CONNECTTIMEOUT, webTimeout);
 	curl_easy_setopt(h, CURLOPT_USERAGENT, currentAgent);
 	curl_easy_setopt(h, CURLOPT_SSLVERSION, CURL_SSLVERSION_DEFAULT);
-	curl_easy_setopt(h, CURLOPT_USERAGENT, currentAgent);
 /* We're doing this manually for now.
 	curl_easy_setopt(h, CURLOPT_FOLLOWLOCATION, allowRedirection);
 */
@@ -2633,22 +2632,24 @@ int bg_jobs(bool iponly)
 	return numback;
 }
 
-static char **novs_hosts;
-size_t novs_hosts_avail;
-size_t novs_hosts_max;
+static struct ebhost {
+	char type, *host;
+} *ebhosts;
+static size_t ebhosts_avail, ebhosts_max;
 
-void addNovsHost(char *host)
+void add_ebhost(char *host, char type)
 {
-	if (novs_hosts_max == 0) {
-		novs_hosts_max = 32;
-		novs_hosts = allocZeroMem(novs_hosts_max * sizeof(char *));
-	} else if (novs_hosts_avail >= novs_hosts_max) {
-		novs_hosts_max *= 2;
-		novs_hosts =
-		    reallocMem(novs_hosts, novs_hosts_max * sizeof(char *));
+	if (ebhosts_max == 0) {
+		ebhosts_max = 32;
+		ebhosts = allocZeroMem(ebhosts_max * sizeof(struct ebhost));
+	} else if (ebhosts_avail >= ebhosts_max) {
+		ebhosts_max *= 2;
+		ebhosts =
+		    reallocMem(ebhosts, ebhosts_max * sizeof(struct ebhost));
 	}
-	novs_hosts[novs_hosts_avail++] = host;
-}				/* addNovsHost */
+	ebhosts[ebhosts_avail].host = host;
+	ebhosts[ebhosts_avail++].type = type;
+}				/* add_ebhost */
 
 /* Return true if the cert for this host should be verified. */
 static bool mustVerifyHost(const char *url)
@@ -2656,18 +2657,34 @@ static bool mustVerifyHost(const char *url)
 	int i;
 	if (!verifyCertificates)
 		return false;
-	for (i = 0; i < novs_hosts_avail; i++)
-		if (patternMatchURL(url, novs_hosts[i]))
+	for (i = 0; i < ebhosts_avail; i++)
+		if (ebhosts[i].type == 'v' &&
+		    patternMatchURL(url, ebhosts[i].host))
 			return false;
 	return true;
 }				/* mustVerifyHost */
 
-void deleteNovsHosts(void)
+void delete_ebhosts(void)
 {
-	nzFree(novs_hosts);
-	novs_hosts = NULL;
-	novs_hosts_avail = novs_hosts_max = 0;
-}				/* deleteNovsHosts */
+	nzFree(ebhosts);
+	ebhosts = NULL;
+	ebhosts_avail = ebhosts_max = 0;
+}				/* delete_ebhosts */
+
+// Are we ok to parse and execute javascript?
+bool javaOK(const char *url)
+{
+	int j;
+	if (!allowJS)
+		return false;
+	if (isDataURI(url))
+		return true;
+	for (j = 0; j < ebhosts_avail; ++j)
+		if (ebhosts[j].type == 'j' &&
+		    patternMatchURL(url, ebhosts[j].host))
+			return false;
+	return true;
+}				/* javaOK */
 
 CURLcode setCurlURL(CURL * h, const char *url)
 {
