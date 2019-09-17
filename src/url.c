@@ -707,8 +707,9 @@ char *getFileURL(const char *url, bool chophash)
 		if (h)
 			e = h;
 	}
-/* if slash at the end then back up to the prior slash */
-	if (e == s && s > url) {
+// if slash at the end then back up to the prior slash
+// /.browse is like / at the end
+	if (s > url && (e == s || (e - s == 7 && !strncmp(s, ".browse", 7)))) {
 		while (s > url && s[-1] == '/')
 			--s;
 		e = s;

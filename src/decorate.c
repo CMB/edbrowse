@@ -448,7 +448,7 @@ void htmlInputHelper(struct htmlTag *t)
 	bool isbutton = stringEqual(t->info->name, "button");
 
 	t->itype = (isbutton ? INP_BUTTON : INP_TEXT);
-	if (s) {
+	if (s && *s) {
 		n = stringInListCI(inp_types, s);
 		if (n < 0) {
 			n = stringInListCI(inp_others, s);
