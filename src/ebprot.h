@@ -223,6 +223,7 @@ void setDataSource(char *v);
 bool javaOK(const char *url);
 bool mustVerifyHost(const char *url);
 const char *findProxyForURL(const char *url);
+const char *findAgentForURL(const char *url);
 const char *mailRedirect(const char *to, const char *from, const char *reply, const char *subj);
 bool runEbFunction(const char *line);
 struct DBTABLE *findTableDescriptor(const char *sn);

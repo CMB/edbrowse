@@ -208,6 +208,7 @@ If run as an editor/browser, treat arguments as files or URLs
 and read them into buffers.
 Read commands from stdin and invoke them via the command
 interpreter in buffers.c.
+Handle interrupt.
 
 src/buffers.c:
 Manage all the text buffers.

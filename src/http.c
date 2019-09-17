@@ -2633,14 +2633,18 @@ int bg_jobs(bool iponly)
 
 CURLcode setCurlURL(CURL * h, const char *url)
 {
-	unsigned long verify;
+	unsigned long verify = mustVerifyHost(url);
 	const char *proxy = findProxyForURL(url);
+	const char *agent = findAgentForURL(url);
 	if (!proxy)
 		proxy = "";
 	else
-		debugPrint(3, "proxy %s", proxy);
-	verify = mustVerifyHost(url);
+		debugPrint(4, "proxy %s", proxy);
 	curl_easy_setopt(h, CURLOPT_PROXY, proxy);
+	if (agent) {
+		debugPrint(4, "agent %s", agent);
+		curl_easy_setopt(h, CURLOPT_USERAGENT, agent);
+	}
 	curl_easy_setopt(h, CURLOPT_SSL_VERIFYPEER, verify);
 	curl_easy_setopt(h, CURLOPT_SSL_VERIFYHOST, (verify ? 2 : 0));
 // certificate file is per handle, not global, so must be set here.

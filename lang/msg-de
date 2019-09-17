@@ -492,7 +492,7 @@ SCP download:
 .ebrc: Zeile %d, \"condition > file\" erwartet
 .ebrc: Filterregel hat keinen Match-String, Zeile %d
 .ebrc: Zeile %d, match für %s wird nirgends definiert
-0
+.ebrc: Zeile %d, Agent Nummer %d ist nicht definiert
 .ebrc: unbekanntes Schlüsselword %s in Zeile %d
 .ebrc: Zeile %d, Attribut %s kann nicht außerhalb eines Maildescriptors gesetzt werden
 .ebrc: Zeile %d, Attribut %s kann nicht außerhalb eines Plugin-Descriptors gesetzt werden

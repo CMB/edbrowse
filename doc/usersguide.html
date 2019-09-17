@@ -3493,11 +3493,15 @@ or ua2 to pretend to be Mozilla.
 Type ua0 to resurrect the standard edbrowse identification.
 
 <P>
-This feature was written pre-javascript,
-and is not 100% compatible with the navigator object.
-Navigator.userAgent returns the correct string, according to the agent you select,
-but other aspects of the navigator object do not change with the agent,
-and they should.
+agentsite = google.com 2
+
+<P>
+Pretend to be user agent 2, that is, Internet Explorer version 7,
+when talking to google.com or any of its subdomains.
+I chose this example because it became necessary as of 05/25/2019.
+google.com will not present the h3 headings on the search results unless you look like Internet Explorer.
+I don't know why, I'm just trying to go with the flow.
+Other sites are also particular about the type of browser, and none of them are looking for edbrowse.
 
 <H3> <A NAME=script> Edbrowse Functions </A> </H3>
 
@@ -3584,7 +3588,7 @@ function+gg {
 <br>
 #  Search results by h3 heading only works if google recognizes your browser,
 <br>
-#  so you need to spoof user agent to IE7.
+#  so you need to spoof user agent to IE7. Use agentsite to do this.
 <br>
 }
 

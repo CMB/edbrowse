@@ -492,7 +492,7 @@ anulowane
 .ebrc: wiersz %d, oczekiwano 'warunek > plik'
 .ebrc: wiersz %d, reguła filtracji nie posiada wzorca wyszukiwania
 .ebrc: wiersz %d, dopasowanie %s nie jest nigdzie ustawione
-0
+.ebrc: wiersz %d, agent numer %d nie został zdefiniowany
 .ebrc: nierozpoznane słowo kluczowe %s w wierszu %d
 .ebrc: wiersz %d, atrybut %s nie może być ustawiony poza deskryptorem poczty
 .ebrc: wiersz %d, atrybut %s nie może być ustawiony poza deskryptorem Plugin

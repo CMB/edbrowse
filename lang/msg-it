@@ -492,7 +492,7 @@ download tcp:
 .ebrc: riga %d, \"condition > file\" atteso
 .ebrc: riga %d, la filter rule non ha una stringa di riscontro
 .ebrc: riga %d, il riscontro su %s non è mai stato settato
-0
+.ebrc: riga %d, numero di agent %d non definito
 .ebrc: keyword %s non riconosciuta alla riga %d
 .ebrc: riga %d, l'attributo %s non può essere settato fuori da un mail descriptor
 .ebrc: riga %d, l'attributo %s non può essere settato fuori da un plugin descriptor

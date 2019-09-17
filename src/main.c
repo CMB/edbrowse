@@ -270,8 +270,9 @@ void ebClose(int n)
 
 static struct ebhost {
 // j = nojs, v = novs, p = proxy, f = function,
-// s = subject, t = to, r = reply
-	char type;
+// s = subject, t = to, r = reply, a = agentsite
+	char type, filler;
+	short n;
 // watch out, these fields are highly overloaded, depending on type
 	char *host;
 // for proxy entry we also have
@@ -405,6 +406,16 @@ domain:
 			return px->host;
 	}
 
+	return 0;
+}
+
+const char *findAgentForURL(const char *url)
+{
+	struct ebhost *px = ebhosts;
+	int i;
+	for (i = 0; i < ebhosts_avail; ++i, ++px)
+		if (px->type == 'a' && patternMatchURL(url, px->host))
+			return userAgents[px->n];
 	return 0;
 }
 
@@ -1201,7 +1212,7 @@ static const char *const keywords[] = {
 	"downdir", "maildir", "agent",
 	"jar", "nojs", "cachedir",
 	"webtimer", "mailtimer", "certfile", "datasource", "proxy",
-	"notused31", "localizeweb", "notused33", "novs", "cachesize",
+	"agentsite", "localizeweb", "notused33", "novs", "cachesize",
 	"adbook", 0
 };
 
@@ -1674,6 +1685,21 @@ putc:
 
 		case 30:	/* proxy */
 			add_proxy(v);
+			continue;
+
+		case 31:	// agentsite
+			spaceCrunch(v, true, true);
+			q = strchr(v, ' ');
+			if (!q || strchr(q + 1, ' ') ||
+			    (j = stringIsNum(q + 1)) < 0)
+				break;
+			if (j >= MAXAGENT || !userAgents[j]) {
+				cfgLine1(MSG_EBRC_NoAgent, j);
+				continue;
+			}
+			*q = 0;
+			add_ebhost(v, 'a');
+			ebhosts[ebhosts_avail - 1].n = j;
 			continue;
 
 		case 32:	/* localizeweb */

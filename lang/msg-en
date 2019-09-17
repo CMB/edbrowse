@@ -492,7 +492,7 @@ scp download:
 .ebrc: line %d, \"condition > file\" expected
 .ebrc: line %d, filter rule has no match string
 .ebrc: line %d, match on %s is set nowhere
-0
+.ebrc: line %d, agent number %d is not defined
 .ebrc: unrecognized keyword %s at line %d
 .ebrc: line %d, attribute %s canot be set outside of a mail descriptor
 .ebrc: line %d, attribute %s canot be set outside of a plugin descriptor
