@@ -414,16 +414,20 @@ const char *mailRedirect(const char *to, const char *from,
 	int rlen = strlen(reply);
 	int slen = strlen(subj);
 	int tlen = strlen(to);
-	int i;
-	struct ebhost *f;
-	const char *r;
+	int mlen;		// length of match string
+	int i, k;
+	struct ebhost *f = ebhosts;
+	const char *m, *r;	// match and redirect
 
-	f = ebhosts;
 	for (i = 0; i < ebhosts_avail; ++i, ++f) {
-		const char *m = f->prot;
-		int k, mlen = strlen(m);
-		r = f->host;
-		switch (f->type) {
+		char type = f->type;
+		if (strchr("rts", type)) {
+			m = f->prot;
+			mlen = strlen(m);
+			r = f->host;
+		}
+
+		switch (type) {
 		case 'r':
 			if (stringEqualCI(m, from))
 				return r;
