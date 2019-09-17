@@ -492,7 +492,7 @@ Caractères nuls à la ligne %d
 .ebrc : ligne %d,  \"condition > fichier\" attendu
 .ebrc : ligne %d, la règle de filtrage ne correspond à aucune chaîne
 .ebrc : ligne %d, la correspondance sur %s n'est pas définie
-.ebrc : ligne %d, trop de filtres de courrier
+0
 .ebrc : mot clé %s inconnu à la ligne %d
 .ebrc : ligne %d, l'attribut %s ne peut être défini hors d'un descripteur de courrier
 .ebrc : ligne %d, l'attribut %s ne peut être défini hors d'un descripteur plugin

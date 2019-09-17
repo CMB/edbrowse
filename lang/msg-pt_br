@@ -492,7 +492,7 @@ download via SCP:
 .ebrc: linha %d, esperado \"condição > arquivo\" 
 .ebrc: linha %d, regras de filtragem não têm cadeias a coincidir
 .ebrc: linha %d, critério em %s não está definido em lugar algum
-.ebrc: linha %d, filtros de e-mail em ecesso
+0
 .ebrc: palavra-chave desconhecida %s na linha %d
 .ebrc: linha %d, o atributo %s não pode ser definido fora de um descritor de mensagem
 .ebrc: linha %d, o atributo %s não pode ser definido fora de um descritor plugin

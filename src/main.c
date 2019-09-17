@@ -35,16 +35,6 @@ int localAccount, maxAccount;
 struct MACCOUNT accounts[MAXACCOUNT];
 int maxMime;
 struct MIMETYPE mimetypes[MAXMIME];
-/* filters to save emails in various files */
-#define MAXFILTER 500
-struct FILTERDESC {
-	const char *match;
-	const char *redirect;
-	char type;
-	long expire;
-};
-static struct FILTERDESC mailFilters[MAXFILTER];
-static int n_filters;
 static struct DBTABLE dbtables[MAXDBT];
 static int numTables;
 volatile bool intFlag;
@@ -77,65 +67,6 @@ This is the same convention as the from filters in .ebrc.
 If you don't want an alias to act as a redirect filter,
 put a ! at the beginning of the alias name.
 *********************************************************************/
-
-const char *mailRedirect(const char *to, const char *from,
-			 const char *reply, const char *subj)
-{
-	int rlen = strlen(reply);
-	int slen = strlen(subj);
-	int tlen = strlen(to);
-	struct FILTERDESC *f;
-	const char *r;
-
-	for (f = mailFilters; f->match; ++f) {
-		const char *m = f->match;
-		int k, mlen = strlen(m);
-
-		r = f->redirect;
-
-		switch (f->type) {
-		case 2:
-			if (stringEqualCI(m, from))
-				return r;
-			if (stringEqualCI(m, reply))
-				return r;
-			if (*m == '@' && mlen < rlen &&
-			    stringEqualCI(m, reply + rlen - mlen))
-				return r;
-			break;
-
-		case 3:
-			if (stringEqualCI(m, to))
-				return r;
-			if (*m == '@' && mlen < tlen
-			    && stringEqualCI(m, to + tlen - mlen))
-				return r;
-			break;
-
-		case 4:
-			if (mlen > slen)
-				break;
-			if (mlen == slen) {
-				if (stringEqualCI(m, subj))
-					return r;
-				break;
-			}
-/* a prefix or suffix match is ok */
-/* have to be at least half the subject line */
-			if (slen > mlen + mlen)
-				break;
-			if (memEqualCI(m, subj, mlen))
-				return r;
-			k = slen - mlen;
-			if (memEqualCI(m, subj + k, mlen))
-				return r;
-			break;
-		}		/* switch */
-	}			/* loop */
-
-	r = reverseAlias(reply);
-	return r;
-}				/* mailRedirect */
 
 static void *inputForever(void *ptr);
 static pthread_t foreground_thread;
@@ -224,43 +155,6 @@ static void catchSig(int n)
 		return;		// didn't work
 	pthread_cancel(t1);
 }				/* catchSig */
-
-bool isSQL(const char *s)
-{
-	char c = *s;
-	const char *c1 = 0;
-
-	if (!sqlPresent)
-		goto no;
-
-	if (isURL(s))
-		goto no;
-
-// look for word] or word:word]
-	if (!isalphaByte(c))
-		goto no;
-
-	for (++s; (c = *s); ++s) {
-		if (c == '_')
-			continue;
-		if (isalnumByte(c))
-			continue;
-		if (c == ':') {
-			if (c1)
-				goto no;
-			c1 = s;
-			continue;
-		}
-		if (c == ']')
-			goto yes;
-	}
-
-no:
-	return false;
-
-yes:
-	return true;
-}				/* isSQL */
 
 void setDataSource(char *v)
 {
@@ -375,8 +269,10 @@ void ebClose(int n)
 }				/* ebClose */
 
 static struct ebhost {
-// j = nojs, v = novs, p = proxy, f = function
+// j = nojs, v = novs, p = proxy, f = function,
+// s = subject, t = to, r = reply
 	char type;
+// watch out, these fields are highly overloaded, depending on type
 	char *host;
 // for proxy entry we also have
 	char *prot, *domain;
@@ -511,6 +407,65 @@ domain:
 
 	return 0;
 }
+
+const char *mailRedirect(const char *to, const char *from,
+			 const char *reply, const char *subj)
+{
+	int rlen = strlen(reply);
+	int slen = strlen(subj);
+	int tlen = strlen(to);
+	int i;
+	struct ebhost *f;
+	const char *r;
+
+	f = ebhosts;
+	for (i = 0; i < ebhosts_avail; ++i, ++f) {
+		const char *m = f->prot;
+		int k, mlen = strlen(m);
+		r = f->host;
+		switch (f->type) {
+		case 'r':
+			if (stringEqualCI(m, from))
+				return r;
+			if (stringEqualCI(m, reply))
+				return r;
+			if (*m == '@' && mlen < rlen &&
+			    stringEqualCI(m, reply + rlen - mlen))
+				return r;
+			break;
+
+		case 't':
+			if (stringEqualCI(m, to))
+				return r;
+			if (*m == '@' && mlen < tlen
+			    && stringEqualCI(m, to + tlen - mlen))
+				return r;
+			break;
+
+		case 's':
+			if (mlen > slen)
+				break;
+			if (mlen == slen) {
+				if (stringEqualCI(m, subj))
+					return r;
+				break;
+			}
+/* a prefix or suffix match is ok */
+/* have to be at least half the subject line */
+			if (slen > mlen + mlen)
+				break;
+			if (memEqualCI(m, subj, mlen))
+				return r;
+			k = slen - mlen;
+			if (memEqualCI(m, subj + k, mlen))
+				return r;
+			break;
+		}		/* switch */
+	}			/* loop */
+
+	r = reverseAlias(reply);
+	return r;
+}				/* mailRedirect */
 
 static void setupEdbrowseTempDirectory(void)
 {
@@ -1199,8 +1154,6 @@ void unreadConfigFile(void)
 	nzFree(configMemory);
 	configMemory = 0;
 
-	memset(mailFilters, 0, sizeof(mailFilters));
-	n_filters = 0;
 	memset(accounts, 0, sizeof(accounts));
 	maxAccount = localAccount = 0;
 	memset(mimetypes, 0, sizeof(mimetypes));
@@ -1467,12 +1420,8 @@ putc:
 				++v;
 			if (!*v)
 				cfgLine1(MSG_EBRC_MatchNowh, s);
-			if (n_filters == MAXFILTER - 1)
-				cfgLine0(MSG_EBRC_Filters);
-			mailFilters[n_filters].match = s;
-			mailFilters[n_filters].redirect = v;
-			mailFilters[n_filters].type = mailblock;
-			++n_filters;
+			add_ebhost(v, "xxrts"[mailblock]);
+			ebhosts[ebhosts_avail - 1].prot = s;
 			continue;
 		}
 

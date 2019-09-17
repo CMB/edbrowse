@@ -217,14 +217,13 @@ void unframe(jsobjtype fobj, jsobjtype newdoc);
 void unframe2(jsobjtype fobj);
 
 /* sourcefile=main.c */
-const char *mailRedirect(const char *to, const char *from, const char *reply, const char *subj);
 void eb_curl_global_init(void);
 void ebClose(int n);
-bool isSQL(const char *s);
 void setDataSource(char *v);
 bool javaOK(const char *url);
 bool mustVerifyHost(const char *url);
 const char *findProxyForURL(const char *url);
+const char *mailRedirect(const char *to, const char *from, const char *reply, const char *subj);
 bool runEbFunction(const char *line);
 struct DBTABLE *findTableDescriptor(const char *sn);
 struct DBTABLE *newTableDescriptor(const char *name);
@@ -370,6 +369,7 @@ char *htmlEscape0(const char *s, bool do_and);
 #define htmlEscape(s) htmlEscape0((s), true)
 #define htmlEscapeTextarea(s) htmlEscape0((s), false)
 bool isURL(const char *url) ;
+bool isSQL(const char *url);
 bool isBrowseableURL(const char *url) ;
 bool isDataURI(const char *u);
 const char *getProtURL(const char *url) ; //?

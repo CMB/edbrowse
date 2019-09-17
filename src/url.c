@@ -453,6 +453,43 @@ bool isURL(const char *url)
 	return parseURL(url, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }				/* isURL */
 
+bool isSQL(const char *s)
+{
+	char c = *s;
+	const char *c1 = 0;
+
+	if (!sqlPresent)
+		goto no;
+
+	if (isURL(s))
+		goto no;
+
+// look for word] or word:word]
+	if (!isalphaByte(c))
+		goto no;
+
+	for (++s; (c = *s); ++s) {
+		if (c == '_')
+			continue;
+		if (isalnumByte(c))
+			continue;
+		if (c == ':') {
+			if (c1)
+				goto no;
+			c1 = s;
+			continue;
+		}
+		if (c == ']')
+			goto yes;
+	}
+
+no:
+	return false;
+
+yes:
+	return true;
+}				/* isSQL */
+
 // non-FTP URLs are always browsable.  FTP URLs are browsable if they end with
 //a slash. gopher urls are a bit more complicated, not yet implemented.
 bool isBrowseableURL(const char *url)

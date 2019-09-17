@@ -592,7 +592,7 @@ enum {
 	MSG_EBRC_NoCondFile,
 	MSG_EBRC_NoMatchStr,
 	MSG_EBRC_MatchNowh,
-	MSG_EBRC_Filters,
+	MSG_notused495,
 	MSG_EBRC_BadKeyword,
 	MSG_EBRC_MailAttrOut,
 	MSG_EBRC_MimeAttrOut,
