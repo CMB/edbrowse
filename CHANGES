@@ -15,6 +15,8 @@ Asynchronous xhr, also controled by jsbg.
 
 agentsite in .ebrc to use different agents on different websites.
 
+fu command prints the file's url.
+
 3.7.5.1
 Search function on gopher.
 

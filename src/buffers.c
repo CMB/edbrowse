@@ -4355,7 +4355,7 @@ et_go:
 #endif
 
 	if (stringEqual(line, "ft") || stringEqual(line, "fd") ||
-	    stringEqual(line, "fk")) {
+	    stringEqual(line, "fk") || stringEqual(line, "fu")) {
 		const char *s;
 		int t;
 		cmd = 'e';
@@ -4369,6 +4369,8 @@ et_go:
 			s = cw->htmldesc, t = MSG_NoDesc;
 		if (line[1] == 'k')
 			s = cw->htmlkey, t = MSG_NoKeywords;
+		if (line[1] == 'u')
+			s = cw->f0.hbase, t = MSG_NoFileName;
 		if (s)
 			eb_puts(s);
 		else
@@ -5187,13 +5189,15 @@ static char *showLinks(void)
 	}
 
 	if (!a_l) {		/* nothing found yet */
-		if (!cf->fileName) {
-			setError(MSG_NoFileName);
-			return 0;
+		h = cloneString(cf->hbase);
+		if (!h) {
+			if (!cf->fileName) {
+				setError(MSG_NoFileName);
+				return 0;
+			}
+			h = htmlEscape(cf->fileName);
 		}
 
-		h = htmlEscape(cf->fileName);
-		debrowseSuffix(h);
 		stringAndString(&a, &a_l, "<br><a href=");
 		stringAndString(&a, &a_l, h);
 		stringAndString(&a, &a_l, ">\n");

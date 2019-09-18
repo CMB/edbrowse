@@ -621,6 +621,7 @@ b : browse the current file, either html, or email, or rendered by plugin
 <br>ft : show the title of the current web page (file title)
 <br>fd : show the description of the current web page
 <br>fk : show the keywords of the current web page
+<br>fu : print the file's underlying URL
 <br>rf : refresh the web page or directory listing
 <br>et : edit this web page as pure text
 <br>hr : http redirection (toggle)
@@ -1981,6 +1982,13 @@ If it is your web page,
 you can modify them by returning to the raw html.
 Web designers should pay close attention to the description and the keywords,
 else your pages might not be accessible via the standard search engines.
+
+<P>
+The fu command prints the file's url.
+This may be encoded, with a lot of percent signs.
+It does not change, even if you change the file name.
+This is the same string that is put into a bookmark if you issue the A command on a line without any links.
+See Web and Email Addresses below.
 
 <H3> <A NAME=rf> The Refresh Command </A> </H3>
 
