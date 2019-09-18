@@ -125,7 +125,7 @@ void unpercentString(char *s)
  * The order is important.
  * Google has commas in encoded URLs, and wikipedia has parentheses,
  * so those are (sort of) ok. */
-static const char percentable[] = "+,()'!*[]$";
+static const char percentable[] = "+,()'\"\\<>!*[]$";
 static const char hexdigits[] = "0123456789abcdef";
 #define ESCAPED_CHAR_LENGTH 3
 
