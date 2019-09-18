@@ -5158,14 +5158,14 @@ static char *showLinks(void)
 				nzFree(h);
 				continue;
 			}
-			/* mail link */
-			stringAndString(&a, &a_l, "<br><a href=");
+// quotes may be permitted in encoded urls, apostrophes never.
+			stringAndString(&a, &a_l, "<br><a href='");
 
 			if (memEqualCI(h, "javascript:", 11)) {
-				stringAndString(&a, &a_l, "javascript:>\n");
+				stringAndString(&a, &a_l, "javascript:'>\n");
 			} else if (!*h && (click | dclick)) {
 				char buf[20];
-				sprintf(buf, "%s>\n",
+				sprintf(buf, "%s'>\n",
 					click ? "onclick" : "ondblclick");
 				stringAndString(&a, &a_l, buf);
 			} else {
@@ -5174,7 +5174,7 @@ static char *showLinks(void)
 					stringAndString(&a, &a_l, h2);
 					nzFree(h2);
 				}
-				stringAndString(&a, &a_l, ">\n");
+				stringAndString(&a, &a_l, "'>\n");
 			}
 
 			nzFree(h);
@@ -5189,18 +5189,16 @@ static char *showLinks(void)
 	}
 
 	if (!a_l) {		/* nothing found yet */
-		h = cloneString(cf->hbase);
-		if (!h) {
-			if (!cf->fileName) {
+		if (!(h = cf->hbase)) {
+			if (!(h = cf->fileName)) {
 				setError(MSG_NoFileName);
 				return 0;
 			}
-			h = htmlEscape(cf->fileName);
 		}
-
-		stringAndString(&a, &a_l, "<br><a href=");
+		h = htmlEscape(h);
+		stringAndString(&a, &a_l, "<br><a href='");
 		stringAndString(&a, &a_l, h);
-		stringAndString(&a, &a_l, ">\n");
+		stringAndString(&a, &a_l, "'>\n");
 /* get text from the html title if you can */
 		s = cw->htmltitle;
 		if (s && *s) {

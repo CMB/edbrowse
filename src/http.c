@@ -929,7 +929,7 @@ mimestream:
 			if (tmp_headers == NULL)
 				i_printfExit(MSG_NoMem);
 			custom_headers = tmp_headers;
-			debugPrint(3, "custom %s", w);
+			debugPrint(4, "custom %s", w);
 			nzFree(w);
 			u = v + 1;
 		}
