@@ -912,6 +912,7 @@ static void freeWindow(struct ebWindow *w)
 	nzFree(w->htmltitle);
 	nzFree(w->htmldesc);
 	nzFree(w->htmlkey);
+	nzFree(w->saveURL);
 	nzFree(w->mailInfo);
 	nzFree(w->referrer);
 	nzFree(w->baseDirName);
@@ -4289,6 +4290,8 @@ et_go:
 		cw->htmldesc = 0;
 		nzFree(cw->htmlkey);
 		cw->htmlkey = 0;
+		nzFree(cw->saveURL);
+		cw->saveURL = 0;
 		nzFree(cw->mailInfo);
 		cw->mailInfo = 0;
 		if (ub)
@@ -4370,7 +4373,7 @@ et_go:
 		if (line[1] == 'k')
 			s = cw->htmlkey, t = MSG_NoKeywords;
 		if (line[1] == 'u')
-			s = cw->f0.hbase, t = MSG_NoFileName;
+			s = cw->saveURL, t = MSG_NoFileName;
 		if (s)
 			eb_puts(s);
 		else
@@ -5189,11 +5192,9 @@ static char *showLinks(void)
 	}
 
 	if (!a_l) {		/* nothing found yet */
-		if (!(h = cf->hbase)) {
-			if (!(h = cf->fileName)) {
-				setError(MSG_NoFileName);
-				return 0;
-			}
+		if (!(h = cw->saveURL)) {
+			setError(MSG_NoFileName);
+			return 0;
 		}
 		h = htmlEscape(h);
 		stringAndString(&a, &a_l, "<br><a href='");
@@ -6761,6 +6762,7 @@ bool browseCurrentBuffer(void)
 	free(newbuf);
 	cw->undoable = false;
 	cw->changeMode = save_ch;
+	cw->saveURL = cloneString(cf->fileName);
 
 	if (cf->fileName) {
 		j = strlen(cf->fileName);

@@ -389,7 +389,7 @@ struct ebFrame {
 	struct ebWindow *owner;
 	struct htmlTag *frametag;
 	char *fileName;		/* name of file or url */
-	char *firstURL;		/* before http redirection */
+	char *firstURL;		// before http redirection
 	char *hbase; /* base for href references */
 	bool render1; // rendered via protocol or urlmatch
 	bool render2; // rendered via suffix
@@ -437,6 +437,7 @@ struct ebWindow {
 	char *referrer; // another web page that brought this one to life
 	char *baseDirName;	/* when scanning a directory */
 	char *htmltitle, *htmldesc, *htmlkey;	/* title, description, keywords */
+	char *saveURL;		// for the fu command
 	char *mailInfo;
 	char lhs[MAXRE], rhs[MAXRE];	/* remembered substitution strings */
 	struct lineMap *map, *r_map;
