@@ -1030,6 +1030,35 @@ void cutDuplicateEmails(char *tolist, char *cclist, const char *reply)
 	}
 }				/* cutDuplicateEmails */
 
+bool isEmailAddress(const char *s)
+{
+	bool atfound = false, dotfound = false;
+	if (!s || !*s)
+		return false;
+	for (; *s; ++s) {
+		char c = *s;
+		if (c < 0)	// nonascii
+			return false;
+		if (atfound) {
+			if (!isalnum(c) && c != '.' && c != '-')
+				return false;
+			if (c == '.') {
+				if (s[1] == '.' || s[1] == 0 || s[-1] == '.'
+				    || s[-1] == '@')
+					return false;
+				dotfound = true;
+			}
+			continue;
+		}
+// I think anything is ok before the @, except space.
+		if (c <= ' ')
+			return false;
+		if (c == '@')
+			atfound = true;
+	}
+	return atfound & dotfound;
+}
+
 /* return 1 for utf16, 2 for utf32, ored with 4 for big endian */
 int byteOrderMark(const uchar * buf, int buflen)
 {

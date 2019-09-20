@@ -1169,11 +1169,6 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		return false;
 	}
 
-	if (itype == INP_TEXT && t->lic && newlen > t->lic) {
-		setError(MSG_InputLong, t->lic);
-		return false;
-	}
-
 	if (itype >= INP_RADIO) {
 		if ((newtext[0] != '+' && newtext[0] != '-') || newtext[1]) {
 			setError(MSG_InputRadio);
@@ -1184,8 +1179,6 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 			return false;
 		}
 	}
-
-/* Two lines, clear the "other" radio button, and set this one. */
 
 	if (itype == INP_SELECT) {
 		if (!locateOptions(t, newtext, 0, 0, false))
@@ -1204,11 +1197,24 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		}
 	}
 
-	if (itype_minor == INP_NUMBER) {
-		if (*newtext && stringIsNum(newtext) < 0) {
-			setError(MSG_NumberExpected);
-			return false;
-		}
+	if (itype == INP_TEXT && t->lic && newlen > t->lic) {
+		setError(MSG_InputLong, t->lic);
+		return false;
+	}
+
+	if (itype_minor == INP_NUMBER && (*newtext && stringIsNum(newtext) < 0)) {
+		setError(MSG_NumberExpected);
+		return false;
+	}
+
+	if (itype_minor == INP_EMAIL && (*newtext && !isEmailAddress(newtext))) {
+		setError(MSG_EmailInput);
+		return false;
+	}
+
+	if (itype_minor == INP_URL && (*newtext && !isURL(newtext))) {
+		setError(MSG_UrlInput);
+		return false;
 	}
 
 	if (itype == INP_RADIO && form && t->name && *newtext == '+') {

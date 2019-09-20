@@ -7,13 +7,19 @@ colors command to show the colors of the web page.
 spawn a new interactive thread and kill the current thread,
 kinda drastic but better than being locked out completely.
 
-async scripts run on timers, after the page is loaded,
-this might make somewebsites come up faster.
-Under the control of the jsbg command, and asyncTimer in html.c
+If a timer runs an async script after browse,
+it loads the js file in the background so you can keep working,
+then when the script is loaded it runs on a future timer.
+Under the control of the jsbg command.
 
 Asynchronous xhr, also controled by jsbg.
+Like the above, it loads the file in background and resumes
+execution on a future timer when the file is loaded.
 
 agentsite in .ebrc to use different agents on different websites.
+
+input.validity object.
+Only valueMissing is implemented.
 
 fu command prints the file's url.
 
