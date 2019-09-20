@@ -3367,14 +3367,13 @@ var code = parseInt(responsebody_array[1]);
 var http_headers = responsebody_array[2];
 responsebody_array[0] = responsebody_array[1] = responsebody_array[2] = "";
 this.responseText = responsebody_array.join("\r\n\r\n").trim();
-var hhc = http_headers.split("\r\n");
-var i=0;
-while (i < hhc.length) {
-var value1 = hhc[i]+":";
+var hhc = http_headers.split(/\r?\n/);
+for(var i=0; i<hhc.length; ++i) {
+var value1 = hhc[i];
+if(!value1.match(/:/)) continue;
 var value2 = value1.split(":")[0];
 var value3 = value1.split(":")[1];
 this.responseHeaders[value2] = value3.trim();
-i++;
 }
 
 this.readyState = 4;

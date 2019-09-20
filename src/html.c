@@ -787,6 +787,7 @@ passes:
 Ok this is subtle. I put it on a script tag, and t.jv.onload exists!
 That is the function that is run by xhr.
 So runOnload() comes along and runs it again, unless we do something.
+I will disconnect here, and also check for inxhr in runOnload().
 *********************************************************************/
 			disconnectTagObject(t);
 			t->dead = true;
@@ -2623,6 +2624,8 @@ void runOnload(void)
 			run_event_bool(t->jv, "body", "onload", e);
 		if (action == TAGACT_BODY && t->onunload)
 			unloadHyperlink("document.body.onunload", "Body");
+		if (t->inxhr)	// not a real script
+			continue;
 		if (action == TAGACT_SCRIPT && handlerPresent(t->jv, "onload"))
 			run_event_bool(t->jv, "script", "onload", e);
 		if (action == TAGACT_FORM && handlerPresent(t->jv, "onload"))
