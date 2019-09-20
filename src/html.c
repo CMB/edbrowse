@@ -768,13 +768,34 @@ passes:
 				t->step = 6;
 				continue;
 			}
-			set_property_string(t->jv, "data", t->value);
+			set_property_string(t->jv,
+					    (t->inxhr ? "$entire" : "data"),
+					    t->value);
 			nzFree(t->value);
 			t->value = 0;
 			t->step = 4;	// loaded
 		}
 
 		t->step = 5;	// now running the script
+
+		if (t->inxhr) {
+// xhr looks like an asynchronous script before browse
+			char *gc_name;
+			jsobjtype xo = t->jv;	// xhr object
+			run_function_bool(xo, "parseResponse");
+/*********************************************************************
+Ok this is subtle. I put it on a script tag, and t.jv.onload exists!
+That is the function that is run by xhr.
+So runOnload() comes along and runs it again, unless we do something.
+*********************************************************************/
+			disconnectTagObject(t);
+			t->dead = true;
+// allow garbage collection to recapture xo if it wants to
+			gc_name = get_property_string(xo, "backlink");
+			if (gc_name)
+				delete_property(cf->winobj, gc_name);
+			goto afterscript;
+		}
 
 		js_file = t->js_file;
 		if (!js_file)
@@ -795,6 +816,7 @@ passes:
 		delete_property(cf->docobj, "currentScript");
 		debugPrint(3, "exec complete");
 
+afterscript:
 		if (newlocation && newloc_r) {
 			cf = save_cf;
 			return;

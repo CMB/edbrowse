@@ -562,7 +562,8 @@ struct htmlTag {
 	bool contracted:1; /* frame is contracted */
 	bool multiple:1;
 	bool async:1; // asynchronous script
-	bool intimer:1; // asynchronous in timer
+	bool intimer:1; // asynchronous script in timer
+	bool inxhr:1; // script is really an xhr
 	bool rdonly:1;
 	bool disabled:1;
 	bool clickable:1;	/* but not an input field */

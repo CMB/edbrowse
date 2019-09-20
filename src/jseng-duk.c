@@ -1071,8 +1071,20 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 	duk_get_prop_string(cx, -1, "async");
 	async = duk_get_boolean(cx, -1);
 	duk_pop_2(cx);
-	if (!(down_jsbg && cw->browseMode))
+	if (!down_jsbg)
 		async = false;
+
+// asynchronous xhr before browse and after browse go down different paths.
+// So far I can't get the before browse path to work,
+// at least on nasa.gov, which has lots of xhrs in its onload code.
+// It calls getResponseHeader before it should, and readyState is still 1,
+// and it blows up, and I don't understand why.
+// It's probably not vital so just hold off on that for a bit.
+	if (!cw->browseMode)
+		async = false;
+
+// Given the above, I don't know if I should trust asynchronous xhr at all.
+//      async = false;
 
 	if (!incoming_url)
 		incoming_url = emptyString;
@@ -1090,9 +1102,12 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 // async and sync are completely different
 	if (async) {
 		const char *fpn = fakePropName();
-		struct htmlTag *t = newTag("object");
+		struct htmlTag *t =
+		    newTag(cw->browseMode ? "object" : "script");
 		t->deleted = true;	// do not render this tag
 		t->step = 3;
+		t->inxhr = true;
+		t->f0 = cf;
 		connectTagObject(t, thisobj);
 		duk_pop_n(cx, 4);
 // This routine will return, and javascript might stop altogether; do we need
@@ -1115,7 +1130,8 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 		t->href = (a ? a : cloneString(incoming_url));
 // overloading the innerHTML field
 		t->innerHTML = cloneString(incoming_headers);
-		scriptSetsTimeout(t);
+		if (cw->browseMode)
+			scriptSetsTimeout(t);
 		pthread_create(&t->loadthread, NULL, httpConnectBack3,
 			       (void *)t);
 		duk_push_string(cx, "async");
