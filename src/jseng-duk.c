@@ -1077,14 +1077,10 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 // asynchronous xhr before browse and after browse go down different paths.
 // So far I can't get the before browse path to work,
 // at least on nasa.gov, which has lots of xhrs in its onload code.
-// It calls getResponseHeader before it should, and readyState is still 1,
-// and it blows up, and I don't understand why.
-// It's probably not vital so just hold off on that for a bit.
+// It pushes things over to timers, which work, but the page is rendered
+// shortly after browse time instead of at browse time, which is annoying.
 	if (!cw->browseMode)
 		async = false;
-
-// Given the above, I don't know if I should trust asynchronous xhr at all.
-//      async = false;
 
 	if (!incoming_url)
 		incoming_url = emptyString;
@@ -1106,6 +1102,7 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 		    newTag(cw->browseMode ? "object" : "script");
 		t->deleted = true;	// do not render this tag
 		t->step = 3;
+		t->async = true;
 		t->inxhr = true;
 		t->f0 = cf;
 		connectTagObject(t, thisobj);
