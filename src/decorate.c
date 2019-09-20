@@ -1749,6 +1749,7 @@ const struct tagInfo availableTags[] = {
 	{"map", "a map of images", TAGACT_NOP, 5, 0},
 	{"blockquote", "a quoted paragraph", TAGACT_NOP, 10, 1},
 	{"document", "a document", TAGACT_DOC, 5, 1},
+	{"fragment", "a document fragment", TAGACT_FRAG, 5, 1},
 	{"comment", "a comment", TAGACT_COMMENT, 0, 2},
 	{"h1", "a level 1 header", TAGACT_H, 10, 1},
 	{"h2", "a level 2 header", TAGACT_H, 10, 1},
