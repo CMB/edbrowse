@@ -510,7 +510,7 @@ javascript Syntaxfehler
 .ebrc: Zeile %d, zu viele User-Agents, maximal %d
 .ebrc: Cookie-Datei ist keine reguläre Datei
 .ebrc: kann Cookie-Datei %s nicht erstellen
-0
+ungültiges Format für eine Email-Adresse
 .ebrc: Zeile %d, Adresse %s enthält keinen Punkt
 kann auf %s nicht zugreifen, (gesichert)
 .ebrc: Datei %s für SSL-Zertifikate ist keine reguläre Datei
@@ -538,7 +538,7 @@ kann auf %s nicht zugreifen, (gesichert)
 zu viele Emailkonten in .edbrc, maximal %d
 zu viele Plugin-Typen in .ebrc, maximal %d
 zu viele SQL-Tabellen in .ebrc, maximal %d
-0
+ungültiges Format für eine URL
 .ebrc: Zeile %d, Kontrollstrukturen zu tief verschachtelt
 .ebrc: Funktion %s nicht vor Dateiende abgeschlossen
 .ebrc: Email- oder Plugin-Block nicht vor dem Dateiende beendet

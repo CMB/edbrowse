@@ -510,7 +510,7 @@ javascript erreur de syntaxe
 .ebrc : ligne %d, trop d'agents utilisateurs, la limite est de %d
 .ebrc : le récipient de cookies n'est pas un fichier régulier
 .ebrc : impossible de créer   le récipient de cookies
-0
+format d'adresse mail impropre
 .ebrc : ligne %d, le domaine ne contient pas de point
 impossible d'accéder à %s, (sûr)
 .ebrc : le fichier de certificats SSL n'est pas un fichier régulier
@@ -538,7 +538,7 @@ impossible d'accéder à %s, (sûr)
 Trop de comptes de courrier dans votre fichier de configuration, la limite est de %d
 Trop de types plugin dans votre fichier de configuration, la limite est de %d
 Trop de tables sql dans votre fichier de configuration, la limite est de %d
-0
+format d'url impropre
 .ebrc : ligne %d, trop de structures imbriquées
 .ebrc : la fonction %s n'est pas fermée
 .ebrc : le bloc plugin ou courrier n'est pas fermé

@@ -482,6 +482,7 @@ var h = "";
 if(arguments.length > 0) h= arguments[0];
 this.href = h;
 }
+mw0.URL.domclass = "URL";
 
 /* rebuild the href string from its components.
  * Call this when a component changes.
@@ -771,26 +772,31 @@ which methods all the nodes possess?
 Do we support appendchild?   etc.
 *********************************************************************/
 
-mw0.Node = function(){}
+mw0.Node = function(){}; mw0.Node.domclass = "Node";
 
-mw0.HTML = function(){}
+mw0.HTML = function(){}; mw0.HTML.domclass = "HTML";
 // Some screen attributes that are suppose to be there.
-mw0.HTML.prototype = {
-doScroll: eb$voidfunction,
-clientHeight: 768,  clientWidth: 1024,  offsetHeight: 768,  offsetWidth: 1024,
- scrollHeight: 768,  scrollWidth: 1024,  scrollTop: 0,  scrollLeft: 0};
+mw0.HTML.prototype.doScroll = eb$voidfunction;
+mw0.HTML.prototype.clientHeight = 768;
+mw0.HTML.prototype.clientWidth = 1024;
+mw0.HTML.prototype.offsetHeight = 768;
+mw0.HTML.prototype.offsetWidth = 1024;
+mw0.HTML.prototype. scrollHeight = 768;
+mw0.HTML.prototype.scrollWidth = 1024;
+mw0.HTML.prototype.scrollTop = 0;
+mw0.HTML.prototype.scrollLeft = 0;
 // is there a difference between DocType ad DocumentType?
-mw0.DocType = function(){ this.nodeType = 10, this.nodeName = "DOCTYPE";}
-mw0.DocumentType = function(){}
-mw0.CharacterData = function(){}
-mw0.Head = function(){}
-mw0.Meta = function(){}
-mw0.Title = function(){}
+mw0.DocType = function(){ this.nodeType = 10, this.nodeName = "DOCTYPE";}; mw0.DocType.domclass = "DocType";
+mw0.DocumentType = function(){}; mw0.DocumentType.domclass = "DocumentType";
+mw0.CharacterData = function(){}; mw0.CharacterData.domclass = "CharacterData";
+mw0.Head = function(){}; mw0.Head.domclass = "Head";
+mw0.Meta = function(){}; mw0.Meta.domclass = "Meta";
+mw0.Title = function(){}; mw0.Title.domclass = "Title";
 Object.defineProperty(mw0.Title.prototype, "text", {
 get: function(){ return this.firstChild && this.firstChild.nodeName == "#text" && this.firstChild.data || "";}
 // setter should change the title of the document, not yet implemented
 });
-mw0.Link = function(){}
+mw0.Link = function(){}; mw0.Link.domclass = "Link";
 // It's a list but why would it ever be more than one?
 Object.defineProperty(mw0.Link.prototype, "relList", {
 get: function() { var a = this.rel ? [this.rel] : [];
@@ -798,19 +804,23 @@ get: function() { var a = this.rel ? [this.rel] : [];
 a.supports = function(s) { return s === "stylesheet"; }
 return a;
 }});
-mw0.Body = function(){}
-mw0.Body.prototype = {
-doScroll: eb$voidfunction,
-clientHeight: 768,  clientWidth: 1024,  offsetHeight: 768,  offsetWidth: 1024,
- scrollHeight: 768,  scrollWidth: 1024,  scrollTop: 0,  scrollLeft: 0};
-mw0.Base = function(){}
-mw0.Form = function(){ this.elements = []; }
-mw0.Form.prototype = {
-submit: eb$formSubmit, reset: eb$formReset};
+mw0.Body = function(){}; mw0.Body.domclass = "Body";
+mw0.Body.prototype.doScroll = eb$voidfunction;
+mw0.Body.prototype.clientHeight = 768;
+mw0.Body.prototype.clientWidth = 1024;
+mw0.Body.prototype.offsetHeight = 768;
+mw0.Body.prototype.offsetWidth = 1024;
+mw0.Body.prototype. scrollHeight = 768;
+mw0.Body.prototype.scrollWidth = 1024;
+mw0.Body.prototype.scrollTop = 0;
+mw0.Body.prototype.scrollLeft = 0;
+mw0.Base = function(){}; mw0.Base.domclass = "Base";
+mw0.Form = function(){ this.elements = []; }; mw0.Form.domclass = "Form";
+mw0.Form.prototype.submit = eb$formSubmit;
+mw0.Form.prototype.reset = eb$formReset;
 Object.defineProperty(mw0.Form.prototype, "length", { get: function() { return this.elements.length;}});
 
-mw0.Validity = function(){}
-mw0.Validity.prototype = {
+mw0.Validity = function(){}; mw0.Validity.domclass = "Validity";
 /*********************************************************************
 All these should be getters, or should they?
 Consider the tooLong attribute.
@@ -823,24 +833,25 @@ One thing that always has to be a getter is valueMissing,
 cause it starts out empty of course, and is a required field.
 And valid is a getter, true if everything else is false.
 *********************************************************************/
-badInput: false,
-customError: false,
-patternMismatch: false,
-rangeOverflow: false,
-rangeUnderflow: false,
-stepMismatch: false,
-tooLong: false,
-tooShort: false,
-typeMismatch: false,
-}
+mw0.Validity.prototype.badInput =
+mw0.Validity.prototype.customError =
+mw0.Validity.prototype.patternMismatch =
+mw0.Validity.prototype.rangeOverflow =
+mw0.Validity.prototype.rangeUnderflow =
+mw0.Validity.prototype.stepMismatch =
+mw0.Validity.prototype.tooLong =
+mw0.Validity.prototype.tooShort =
+mw0.Validity.prototype.typeMismatch = false;
 Object.defineProperty(mw0.Validity.prototype, "valueMissing", {
 get: function() {var o = this.owner;  return o.required && o.value == ""; }});
 Object.defineProperty(mw0.Validity.prototype, "valid", {
 get: function() { // only need to check items with getters
 return !(this.valueMissing)}});
 
-mw0.Element = function() { this.validity = new Validity, this.validity.owner = this}
-mw0.Element.prototype = {selectionStart: 0, selectionEnd: -1, selectionDirection: "none"}
+mw0.Element = function() { this.validity = new Validity, this.validity.owner = this}; mw0.Element.domclass = "Element";
+mw0.Element.prototype.selectionStart = 0;
+mw0.Element.prototype.selectionEnd = -1;
+mw0.Element.prototype.selectionDirection = "none";
 
 // I really don't know what this function does, something visual I think.
 mw0.Element.prototype.setSelectionRange = function(s, e, dir) {
@@ -956,44 +967,44 @@ return;
 alert3("textarea.innerHTML is too complicated for me to render");
 }
 
-mw0.HTMLElement = function(){}
-mw0.Select = function() { this.selectedIndex = -1; this.value = "";this.validity = new Validity, this.validity.owner = this}
+mw0.HTMLElement = function(){}; mw0.HTMLElement.domclass = "HTMLElement";
+mw0.Select = function() { this.selectedIndex = -1; this.value = "";this.validity = new Validity, this.validity.owner = this}; mw0.Select.domclass = "Select";
 Object.defineProperty(mw0.Select.prototype, "value", {
 get: function() {
 var a = this.options;
 var n = this.selectedIndex;
 return (this.multiple || n < 0 || n >= a.length) ? "" : a[n].value;
 }});
-mw0.Image = function(){}
-mw0.Frame = function(){}
-mw0.Anchor = function(){}
-mw0.HTMLAnchorElement = function(){}
-mw0.HTMLLinkElement = function(){}
-mw0.HTMLAreaElement = function(){}
-mw0.Lister = function(){}
-mw0.Listitem = function(){}
-mw0.tBody = function(){ this.rows = []; }
-mw0.tHead = function(){ this.rows = []; }
-mw0.tFoot = function(){ this.rows = []; }
-mw0.tCap = function(){}
-mw0.Table = function(){ this.rows = []; this.tBodies = []; }
-mw0.Div = function(){}
+mw0.Image = function(){}; mw0.Image.domclass = "Image";
+mw0.Frame = function(){}; mw0.Frame.domclass = "Frame";
+mw0.Anchor = function(){}; mw0.Anchor.domclass = "Anchor";
+mw0.HTMLAnchorElement = function(){}; mw0.HTMLAnchorElement.domclass = "HTMLAnchorElement";
+mw0.HTMLLinkElement = function(){}; mw0.HTMLLinkElement.domclass = "HTMLLinkElement";
+mw0.HTMLAreaElement = function(){}; mw0.HTMLAreaElement.domclass = "HTMLAreaElement";
+mw0.Lister = function(){}; mw0.Lister.domclass = "Lister";
+mw0.Listitem = function(){}; mw0.Listitem.domclass = "Listitem";
+mw0.tBody = function(){ this.rows = []; }; mw0.tBody.domclass = "tBody";
+mw0.tHead = function(){ this.rows = []; }; mw0.tHead.domclass = "tHead";
+mw0.tFoot = function(){ this.rows = []; }; mw0.tFoot.domclass = "tFoot";
+mw0.tCap = function(){}; mw0.tCap.domclass = "tCap";
+mw0.Table = function(){ this.rows = []; this.tBodies = []; }; mw0.Table.domclass = "Table";
+mw0.Div = function(){}; mw0.Div.domclass = "Div";
 mw0.Div.prototype.doScroll = eb$voidfunction;
-mw0.Label = function(){}
+mw0.Label = function(){}; mw0.Label.domclass = "Label";
 Object.defineProperty(mw0.Label.prototype, "htmlFor", { get: function() { return this.getAttribute("for"); }, set: function(h) { this.setAttribute("for", h); }});
-mw0.HtmlObj = function(){}
-mw0.Area = function(){}
-mw0.Span = function(){}
+mw0.HtmlObj = function(){}; mw0.HtmlObj.domclass = "HtmlObj";
+mw0.Area = function(){}; mw0.Area.domclass = "Area";
+mw0.Span = function(){}; mw0.Span.domclass = "Span";
 mw0.Span.prototype.doScroll = eb$voidfunction;
-mw0.tRow = function(){ this.cells = []; }
-mw0.Cell = function(){}
-mw0.P = function(){}
-mw0.Header = function(){}
-mw0.Footer = function(){}
-mw0.Script = function(){}
+mw0.tRow = function(){ this.cells = []; }; mw0.tRow.domclass = "tRow";
+mw0.Cell = function(){}; mw0.Cell.domclass = "Cell";
+mw0.P = function(){}; mw0.P.domclass = "P";
+mw0.Header = function(){}; mw0.Header.domclass = "Header";
+mw0.Footer = function(){}; mw0.Footer.domclass = "Footer";
+mw0.Script = function(){}; mw0.Script.domclass = "Script";
 mw0.HTMLScriptElement = mw0.Script; // alias for Script, I guess
-mw0.Timer = function(){this.nodeName = "TIMER";}
-mw0.Audio = function(){}
+mw0.Timer = function(){this.nodeName = "TIMER";}; mw0.Timer.domclass = "Timer";
+mw0.Audio = function(){}; mw0.Audio.domclass = "Audio";
 
 /*********************************************************************
 If foo is an anchor, then foo.href = blah
@@ -1082,7 +1093,7 @@ else p.appendChild(s.firstChild);
 
 // Canvas method draws a picture. That's meaningless for us,
 // but it still has to be there.
-mw0.Canvas = function() {}
+mw0.Canvas = function() {}; mw0.Canvas.domclass = "Canvas";
 mw0.Canvas.prototype.getContext = function(x) { return { addHitRegion: eb$nullfunction,
 arc: eb$nullfunction,
 arcTo: eb$nullfunction,
@@ -1155,16 +1166,14 @@ this.createMediaStreamTrackSource = eb$voidfunction;
 this.suspend = eb$voidfunction;
 this.close = eb$voidfunction;
 }
+mw0.AudioContext.domclass = "AudioContext";
 
 // Document class, I don't know what to make of this,
 // but my stubs for frames needs it.
-mw0.Document = function(){}
+mw0.Document = function(){}; mw0.Document.domclass = "Document";
 
-mw0.CSSStyleSheet = function() {
-this.cssRules = [];
-}
-mw0.CSSStyleSheet.prototype.insertRule = function(r, idx)
-{
+mw0.CSSStyleSheet = function() { this.cssRules = []; }; mw0.CSSStyleSheet.domclass = "CSSStyleSheet";
+mw0.CSSStyleSheet.prototype.insertRule = function(r, idx) {
 var list = this.cssRules;
 (typeof idx == "number" && idx >= 0 && idx <= list.length || (idx = 0));
 if(idx == list.length)
@@ -1174,8 +1183,7 @@ list.splice(idx, 0, r);
 // There may be side effects here, I don't know.
 // For now I just want the method to exist so js will march on.
 }
-mw0.CSSStyleSheet.prototype.addRule = function(sel, r, idx)
-{
+mw0.CSSStyleSheet.prototype.addRule = function(sel, r, idx) {
 var list = this.cssRules;
 (typeof idx == "number" && idx >= 0 && idx <= list.length || (idx = list.length));
 r = sel + "{" + r + "}";
@@ -1198,35 +1206,34 @@ this.ownerDocument = my$doc();
 this.attributes.owner = this;
 this.sheet = new mw0.CSSStyleSheet;
 };
-mw0.CSSStyleDeclaration.prototype = {
+mw0.CSSStyleDeclaration.domclass = "CSSStyleDeclaration";
 // these are default properties of a style object
-animationDelay:"",
-animationDuration:"",
-transitionDelay:"",
-transitionDuration:"",
-textTransform: "none", // acid test 46
-toString: function() { return "style object" },
-getPropertyValue: function(p) {
+mw0.CSSStyleDeclaration.prototype.animationDelay =
+mw0.CSSStyleDeclaration.prototype.animationDuration =
+mw0.CSSStyleDeclaration.prototype.transitionDelay =
+mw0.CSSStyleDeclaration.prototype.transitionDuration ="";
+mw0.CSSStyleDeclaration.prototype.textTransform = "none", // acid test 46
+mw0.CSSStyleDeclaration.prototype.toString = function() { return "style object" };
+mw0.CSSStyleDeclaration.prototype.getPropertyValue = function(p) {
 p = mw0.camelCase(p);
                 if (this[p] == undefined)                
                         this[p] = "";
                         return this[p];
-},
-getProperty: function(p) {
+};
+mw0.CSSStyleDeclaration.prototype.getProperty = function(p) {
 p = mw0.camelCase(p);
 return this[p] ? this[p] : "";
-},
-setProperty: function(p, v, prv) {
+};
+mw0.CSSStyleDeclaration.prototype.setProperty = function(p, v, prv) {
 p = mw0.camelCase(p);
 this[p] = v;
 var pri = p + "$pri";
 this[pri] = (prv === "important");
-},
-getPropertyPriority: function(p) {
+};
+mw0.CSSStyleDeclaration.prototype.getPropertyPriority = function(p) {
 p = mw0.camelCase(p);
 var pri = p + "$pri";
 return this[pri] ? "important" : "";
-}
 };
 Object.defineProperty(mw0.CSSStyleDeclaration.prototype, "css$data", {
 get: function() { var s = ""; for(var i=0; i<this.childNodes.length; ++i) if(this.childNodes[i].nodeName == "#text") s += this.childNodes[i].data; return s; }});
@@ -1536,6 +1543,7 @@ this.parentNode = null;
 this.attributes = new mw0.NamedNodeMap;
 this.attributes.owner = this;
 }
+mw0.TextNode.domclass = "TextNode";
 
 // setter insures data is always a string, because roving javascript might
 // node.data = 7;  ...  if(node.data.match(/x/) ...
@@ -1560,6 +1568,7 @@ this.class = "";
 this.childNodes = [];
 this.parentNode = null;
 }
+mw0.Comment.domclass = "Comment";
 
 mw0.createComment = function(t) {
 if(t == undefined) t = "";
@@ -1579,6 +1588,7 @@ this.value = arguments[1];
 this.selected = false;
 this.defaultSelected = false;
 }
+mw0.Option.domclass = "Option";
 
 // boundingClientRect
 
@@ -1813,7 +1823,7 @@ return null;
 }
 
 // The Attr class and getAttributeNode().
-mw0.Attr = function(){ this.specified = false; this.owner = null; this.name = ""; }
+mw0.Attr = function(){ this.specified = false; this.owner = null; this.name = ""; }; mw0.Attr.domclass = "Attr";
 
 Object.defineProperty(mw0.Attr.prototype, "value", {
 get: function() { var n = this.name;
@@ -1827,7 +1837,7 @@ return;
 mw0.Attr.prototype.isId = function() { return this.name === "id"; }
 
 // this is sort of an array and sort of not
-mw0.NamedNodeMap = function() { this.length = 0; }
+mw0.NamedNodeMap = function() { this.length = 0; }; mw0.NamedNodeMap.domclass = "NamedNodeMap";
 mw0.NamedNodeMap.prototype.push = function(s) { this[this.length++] = s; }
 mw0.NamedNodeMap.prototype.item = function(n) { return this[n]; }
 mw0.NamedNodeMap.prototype.getNamedItem = function(name) { return this[name.toLowerCase()]; }
@@ -2341,6 +2351,7 @@ mw0.Event = function(options){
     this.timeStamp = new Date().getTime();
 this.prev$default = false;
 };
+mw0.Event.domclass = "Event";
 
 mw0.Event.prototype.preventDefault = function(){ this.prev$default = true; }
 
@@ -2712,14 +2723,16 @@ set: function(s) { return mw0.newTextUnder(this, s, 1); }});
 Object.defineProperty(c.prototype, "nodeValue", {
 get: function() { return this.nodeType == 3 ? this.data : null;},
 set: function(h) { if(this.nodeType == 3) this.data = h; }});
+if(c !== mw0.Body) {
 c.prototype.clientHeight = 16;
 c.prototype.clientWidth = 120;
-c.prototype.offsetHeight = 16;
-c.prototype.offsetWidth = 120;
 c.prototype.scrollHeight = 16;
 c.prototype.scrollWidth = 120;
 c.prototype.scrollTop = 0;
 c.prototype.scrollLeft = 0;
+}
+c.prototype.offsetHeight = 16;
+c.prototype.offsetWidth = 120;
 }
 })();
 
@@ -3065,7 +3078,7 @@ for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?"overwrite ":"create ") + this.nodeName + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?"overwrite ":"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3083,7 +3096,7 @@ for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?"overwrite ":"create ") + this.nodeName + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?"overwrite ":"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3100,7 +3113,7 @@ for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?"overwrite ":"create ") + this.nodeName + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?"overwrite ":"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3116,7 +3129,7 @@ for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?"overwrite ":"create ") + this.nodeName + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?"overwrite ":"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3321,8 +3334,7 @@ mw0.XMLHttpRequest.HEADERS_RECEIVED = 2;
 mw0.XMLHttpRequest.LOADING = 3;
 mw0.XMLHttpRequest.DONE = 4;
 
-mw0.XMLHttpRequest.prototype = {
-open: function(method, url, async, user, password){
+mw0.XMLHttpRequest.prototype.open = function(method, url, async, user, password){
 this.readyState = 1;
 this.async = (async === false)?false:true;
 this.method = method || "GET";
@@ -3330,11 +3342,11 @@ alert3("xhr " + (this.async ? "async " : "") + "open " + url);
 this.url = eb$resolveURL(my$win().eb$base, url);
 this.status = 0;
 this.statusText = "";
-},
-setRequestHeader: function(header, value){
+};
+mw0.XMLHttpRequest.prototype.setRequestHeader = function(header, value){
 this.headers[header] = value;
-},
-send: function(data, parsedoc/*non-standard*/){
+};
+mw0.XMLHttpRequest.prototype.send = function(data, parsedoc/*non-standard*/){
 var headerstring = "";
 for (var item in this.headers) {
 var v1=item;
@@ -3359,8 +3371,8 @@ data = encodeURI(data);
 }
 this.$entire =  eb$fetchHTTP.call(this, urlcopy,this.method,headerstring,data);
 if(this.$entire != "async") this.parseResponse();
-},
-parseResponse: function(){
+};
+mw0.XMLHttpRequest.prototype.parseResponse = function(){
 var responsebody_array = this.$entire.split("\r\n\r\n");
 var success = parseInt(responsebody_array[0]);
 var code = parseInt(responsebody_array[1]);
@@ -3392,12 +3404,10 @@ this.onload();
 this.status = 0;
 this.statusText = "network error";
 }
-},
-abort: function(){ this.aborted = true; },
-onreadystatechange: function(){},
-onload: function(){},
-onerror: function(){},
-getResponseHeader: function(header){
+};
+mw0.XMLHttpRequest.prototype.abort = function(){ this.aborted = true; };
+mw0.XMLHttpRequest.prototype.onreadystatechange = mw0.XMLHttpRequest.prototype.onload = mw0.XMLHttpRequest.prototype.onerror = eb$voidfunction;
+mw0.XMLHttpRequest.prototype.getResponseHeader = function(header){
 var rHeader, returnedHeaders;
 if (this.readyState < 3){
 throw new Error("INVALID_STATE_ERR");
@@ -3414,8 +3424,8 @@ return returnedHeaders.join(", ");
 }
 }
 return null;
-},
-getAllResponseHeaders: function(){
+};
+mw0.XMLHttpRequest.prototype.getAllResponseHeaders = function(){
 var header, returnedHeaders = [];
 if (this.readyState < 3){
 throw new Error("INVALID_STATE_ERR");
@@ -3425,13 +3435,12 @@ returnedHeaders.push( header + ": " + this.responseHeaders[header] );
 }
 }
 return returnedHeaders.join("\r\n");
-},
-async: false,
-readyState: 0,
-responseText: "",
-status: 0,
-statusText: ""
 };
+mw0.XMLHttpRequest.prototype.async = false;
+mw0.XMLHttpRequest.prototype.readyState = 0;
+mw0.XMLHttpRequest.prototype.responseText = "";
+mw0.XMLHttpRequest.prototype.status = 0;
+mw0.XMLHttpRequest.prototype.statusText = "";
 
 // Deminimize javascript for debugging purposes.
 // Then the line numbers in the error messages actually mean something.
@@ -3677,7 +3686,7 @@ for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(' + cn + ', "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(eventDebug) alert3((this.'+evname+'?"overwrite ":"create ") + this.nodeName + ".' + evname + '"); \
+set: function(f) { if(eventDebug) alert3((this.'+evname+'?"overwrite ":"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
