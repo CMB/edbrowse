@@ -216,6 +216,12 @@ static duk_ret_t native_mydoc(duk_context * cx)
 	return 1;
 }
 
+static duk_ret_t native_hasfocus(duk_context * cx)
+{
+	duk_push_boolean(cx, (cf->owner == sessionList[context].lw));
+	return 1;
+}
+
 static duk_ret_t native_puts(duk_context * cx)
 {
 	const char *s = duk_safe_to_string(cx, -1);
@@ -1516,6 +1522,9 @@ void createJavaContext_nat(void)
 	duk_put_global_string(jcx, "eb$cssText");
 
 	duk_push_heapptr(jcx, docobj);	// native document methods
+
+	duk_push_c_function(jcx, native_hasfocus, 0);
+	duk_put_prop_string(jcx, -2, "hasFocus");
 	duk_push_c_function(jcx, native_doc_write, DUK_VARARGS);
 	duk_put_prop_string(jcx, -2, "write");
 	duk_push_c_function(jcx, native_doc_writeln, DUK_VARARGS);
