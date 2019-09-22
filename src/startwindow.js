@@ -2335,6 +2335,8 @@ a.toggle = mw0.classListToggle;
 return a;
 }
 
+mw0.ehsn = 0; // event handler sequence number
+
 // The Event class and various handlers.
 mw0.Event = function(options){
     // event state is kept read-only by forcing
@@ -2389,6 +2391,7 @@ if(my$win().eventDebug) alert3((l?"capture ":"current ") + t.nodeName + "." + e.
 e.currentTarget = t;
 if(!t[fn + "$$array"] && my$win().eventDebug) alert3("fire assigned");
 var r = t[fn](e);
+if(!t[fn + "$$array"] && my$win().eventDebug) alert3("endfire assigned");
 if((typeof r == "boolean" || typeof r == "number") && !r) return false;
 if(e.cancelled) return !e.prev$default;
 }
@@ -2441,14 +2444,11 @@ mw0.detachEvent = function(ev, handler) { this.eb$unlisten(ev,handler, true, fal
 
 mw0.eb$listen = function(ev, handler, iscapture, addon)
 {
-if(my$win().eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev + " for " + (iscapture?"capture":"bubble"));
-if(addon) {
-ev = "on" + ev;
-}
-
+if(!handler.ehsn) handler.ehsn = ++mw0.ehsn;
+if(my$win().eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev + " " + handler.ehsn + " for " + (iscapture?"capture":"bubble"));
+if(addon) ev = "on" + ev;
 if(iscapture) handler.do$capture = true;
 else handler.do$bubble = true;
-
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
 
@@ -2457,20 +2457,26 @@ if(!this[evarray]) {
 var a = [];
 /* was there already a function from before? */
 var prev_fn = this[ev];
+if(prev_fn) this[evorig] = prev_fn;
+  if(prev_fn) alert3(" move over " + this.nodeName + " " + evorig);
 
 eval(
 'this["' + ev + '"] = function(e){ var rc, a = this["' + evarray + '"]; \
-if(this["' + evorig + '"] && e.eventPhase < 3) { alert3("fire orig"); rc = this["' + evorig + '"](e); \
+if(this["' + evorig + '"] && e.eventPhase < 3) { \
+var ehsn = this["' + evorig + '"].ehsn; \
+if(ehsn) ehsn = " " + ehsn; else ehsn = ""; /* from int to string */ \
+alert3("fire orig" + ehsn); rc = this["' + evorig + '"](e); alert3("endfire" + ehsn); \
 if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; } \
 for(var i = 0; i<a.length; ++i) a[i].did$run = false; \
 for(var i = 0; i<a.length; ++i) {if(a[i].did$run) continue; \
 if(e.eventPhase== 1 && !a[i].do$capture || e.eventPhase == 3 && !a[i].do$bubble) continue; \
-a[i].did$run = true; alert3("fire " + i); rc = a[i].call(this,e); \
+var ehsn = a[i].ehsn; \
+if(ehsn) ehsn = " " + ehsn; else ehsn = ""; /* from int to string */ \
+a[i].did$run = true; alert3("fire" + ehsn); rc = a[i].call(this,e); alert3("endfire" + ehsn); \
 if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; \
 i = -1; \
 } return true; };');
 
-if(prev_fn) this[evorig] = prev_fn;
 this[evarray] = a;
 }
 
@@ -2482,7 +2488,8 @@ this[evarray].push(handler);
 // the assumption is that this is not a problem.
 mw0.eb$unlisten = function(ev, handler, iscapture, addon)
 {
-if(my$win().eventDebug)  alert3((addon ? "unlisten " : "detach ") + this.nodeName + "." + ev);
+var ehsn = (handler.ehsn ? handler.ehsn : 0);
+if(my$win().eventDebug)  alert3((addon ? "unlisten " : "detach ") + this.nodeName + "." + ev + " " + ehsn);
 if(addon) {
 ev = "on" + ev;
 } else {
@@ -3078,7 +3085,7 @@ for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?"overwrite ":"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$orig?"assimilate ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3096,7 +3103,7 @@ for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?"overwrite ":"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$orig?"assimilate ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3113,7 +3120,7 @@ for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?"overwrite ":"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$orig?"assimilate ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3129,7 +3136,7 @@ for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?"overwrite ":"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$orig?"assimilate ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3686,7 +3693,7 @@ for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(' + cn + ', "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(eventDebug) alert3((this.'+evname+'?"overwrite ":"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$orig?"assimilate ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
