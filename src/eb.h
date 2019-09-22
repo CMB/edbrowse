@@ -207,6 +207,7 @@ struct i_get {
 	const char *thisfile;
 	char *referrer;
 	CURL *h;
+	int tsn; // thread sequence number
 // State of download to disk, see http.c for state values.
 	int down_state;
 	int down_fd;	/* downloading file descriptor */

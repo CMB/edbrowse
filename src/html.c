@@ -2694,19 +2694,22 @@ So ... the first few timers can run as fast  as they like,and we're ok
 with that, then timers slow down as we proceed.
 *********************************************************************/
 int timerResolution = 900;
+static int tsn;			// timer sequence number
 
 void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 {
 	struct jsTimer *jt;
+	int seqno;
 
 	if (jsrc[0] == 0)
 		return;		/* nothing to run */
 
 	if (stringEqual(jsrc, "-")) {
+		seqno = get_property_number(to, "tsn");
 // delete a timer
 		foreach(jt, timerList) {
 			if (jt->timerObject == to) {
-				debugPrint(4, "timer delete");
+				debugPrint(4, "timer %d delete", seqno);
 // a running timer will naturally delete itself.
 				if (jt->running) {
 					jt->deleted = true;
@@ -2748,7 +2751,9 @@ void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 	jt->timerObject = to;
 	jt->frame = cf;
 	addToListBack(&timerList, jt);
-	debugPrint(4, "timer %d %s", n, jsrc);
+	seqno = ++tsn;
+	set_property_number(to, "tsn", seqno);
+	debugPrint(4, "timer %d %s", seqno, jsrc);
 }				/* javaSetsTimeout */
 
 void scriptSetsTimeout(struct htmlTag *t)
@@ -2768,7 +2773,7 @@ void scriptSetsTimeout(struct htmlTag *t)
 	addToListBack(&timerList, jt);
 	debugPrint(3, "timer %s%d=%s",
 		   (t->action == TAGACT_SCRIPT ? "script" : "xhr"),
-		   t->seqno, t->href);
+		   ++tsn, t->href);
 }				/* scriptSetsTimeout */
 
 static struct jsTimer *soonest(void)

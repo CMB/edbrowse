@@ -1142,7 +1142,11 @@ they go where they go, so this doesn't come up very often.
 		if (curlret != CURLE_OK)
 			goto curl_fail;
 
-		debugPrint(3, "http code %ld", g->code);
+		if (g->tsn)
+			debugPrint(3, "thread %d http code %ld", g->tsn,
+				   g->code);
+		else
+			debugPrint(3, "http code %ld", g->code);
 
 /* refresh header is an alternate form of redirection */
 		if (g->newloc && g->newloc_d >= 0) {
@@ -1348,7 +1352,7 @@ void *httpConnectBack1(void *ptr)
 	nzFree(g.urlcopy);
 	g.urlcopy = 0;
 // Other things we should clean up?
-	++tsn;
+	g.tsn = ++tsn;
 	debugPrint(3, "bg thread %d", tsn);
 	i_puts(MSG_DownProgress);
 /* push job onto the list for tracking and display */
@@ -1375,7 +1379,7 @@ void *httpConnectBack2(void *ptr)
 	g.uriEncoded = true;
 	g.url = t->href;
 	g.down_force = 2;
-	++tsn;
+	g.tsn = ++tsn;
 	debugPrint(3, "jsbg thread %d", tsn);
 	rc = httpConnect(&g);
 	t->loadsuccess = rc;
@@ -1408,7 +1412,7 @@ void *httpConnectBack3(void *ptr)
 	g.custom_h = t->innerHTML;
 	g.headers_p = &outgoing_headers;
 	g.down_force = 2;
-	++tsn;
+	g.tsn = ++tsn;
 	debugPrint(3, "xhr thread %d", tsn);
 	rc = httpConnect(&g);
 	outgoing_body = g.buffer;

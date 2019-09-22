@@ -218,7 +218,7 @@ static duk_ret_t native_mydoc(duk_context * cx)
 
 static duk_ret_t native_hasfocus(duk_context * cx)
 {
-	duk_push_boolean(cx, (cf->owner == sessionList[context].lw));
+	duk_push_boolean(cx, foregroundWindow);
 	return 1;
 }
 
@@ -2017,9 +2017,14 @@ static void uptrace(jsobjtype node)
 bool run_function_bool_nat(jsobjtype parent, const char *name)
 {
 	int dbl = 3;		// debug level
-	if (stringEqual(name, "ontimer"))
-		dbl = 4;
+	int seqno = -1;
 	duk_push_heapptr(jcx, parent);
+	if (stringEqual(name, "ontimer")) {
+		dbl = 4;
+		if (duk_get_prop_string(jcx, -1, "tsn"))
+			seqno = duk_get_int(jcx, -1);
+		duk_pop(jcx);
+	}
 	if (!duk_get_prop_string(jcx, -1, name) || !duk_is_function(jcx, -1)) {
 #if 0
 		if (!errorMessage)
@@ -2029,7 +2034,10 @@ bool run_function_bool_nat(jsobjtype parent, const char *name)
 		return (debugLevel < 3);
 	}
 	duk_insert(jcx, -2);
-	debugPrint(dbl, "exec %s", name);
+	if (seqno > 0)
+		debugPrint(dbl, "exec %s %d", name, seqno);
+	else
+		debugPrint(dbl, "exec %s", name);
 	if (!duk_pcall_method(jcx, 0)) {
 		bool rc = true;
 		debugPrint(dbl, "exec complete");
