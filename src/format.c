@@ -2038,16 +2038,22 @@ char *closeColor(const char *s)
 		if (*t != ')')
 			goto fail;
 	} else if (*s == '#' && isxdigit(s[1])) {
-		if (!isxdigit(s[2]) || !isxdigit(s[3]) || !isxdigit(s[4]) ||
-		    !isxdigit(s[5]) || !isxdigit(s[6]) || s[7])
+		if (!isxdigit(s[2]) || !isxdigit(s[3]))
 			goto fail;
-		r1 = fromHex(s[1], s[2]);
-		g1 = fromHex(s[3], s[4]);
-		b1 = fromHex(s[5], s[6]);
+		if (isxdigit(s[4]) && isxdigit(s[5]) && isxdigit(s[6])) {
+			r1 = fromHex(s[1], s[2]);
+			g1 = fromHex(s[3], s[4]);
+			b1 = fromHex(s[5], s[6]);
+		} else {
+// #xyz is short for #xxyyzz
+			r1 = fromHex(s[1], s[1]);
+			g1 = fromHex(s[2], s[2]);
+			b1 = fromHex(s[3], s[3]);
+		}
 	} else {
 // not an rgb format we recognize; should be just a word.
 		for (t = s; *t; ++t)
-			if (!isalpha(*t) && *t != ' ')
+			if (!isalpha(*t))
 				goto fail;
 		return (char *)s;
 	}
