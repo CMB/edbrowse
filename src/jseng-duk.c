@@ -433,6 +433,16 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	run_function_onearg_nat(context0_obj, "textarea$html$crossover",
 				thisobj);
 
+// mutation fix up from native code
+	duk_push_heapptr(cx, context0_obj);
+	duk_get_prop_string(cx, -1, "mutFixup");
+	if (duk_is_function(cx, -1)) {
+		duk_push_heapptr(cx, thisobj);
+		duk_push_boolean(cx, false);
+		duk_call(cx, 2);
+	}
+	duk_pop_2(cx);
+
 	return 0;
 }
 
@@ -1049,6 +1059,15 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	linkageNow('r', thisobj);
 
 	debugPrint(5, "remove 2");
+// mutation fix up from native code
+	duk_push_heapptr(cx, context0_obj);
+	duk_get_prop_string(cx, -1, "mutFixup");
+	if (duk_is_function(cx, -1)) {
+		duk_push_heapptr(cx, thisobj);
+		duk_push_boolean(cx, false);
+		duk_call(cx, 2);
+	}
+	duk_pop_2(cx);
 	return 1;
 
 fail:

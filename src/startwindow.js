@@ -1755,7 +1755,9 @@ if(!c) return null;
 if(c.nodeType == 11) return mw0.appendFragment(this, c);
 mw0.isabove(c, this);
 if(c.parentNode) c.parentNode.removeChild(c);
-return this.eb$apch2(c);
+var r = this.eb$apch2(c);
+mw0.mutFixup(this, false);
+return r;
 }
 
 mw0.prependChild = function(c) {
@@ -1770,7 +1772,9 @@ if(!t) return this.appendChild(c);
 mw0.isabove(c, this);
 if(c.nodeType == 11) return mw0.insertFragment(this, c, t);
 if(c.parentNode) c.parentNode.removeChild(c);
-return this.eb$insbf(c, t);
+var r = this.eb$insbf(c, t);
+mw0.mutFixup(this, false);
+return r;
 }
 
 mw0.replaceChild = function(newc, oldc) {
@@ -1897,7 +1901,7 @@ this.dataset[mw0.dataCamel(name)] = v;
 } else this[name] = v; 
 }
 if(!this.attributes) this.attributes = new NamedNodeMap;
-if(this.attributes[name]) return;
+if(!this.attributes[name]) {
 var a = new Attr();
 a.owner = this;
 a.name = name;
@@ -1907,6 +1911,8 @@ a.specified = true;
 this.attributes.push(a);
 // easy hash access
 this.attributes[name] = a;
+}
+mw0.mutFixup(this, true, name);
 }
 mw0.markAttribute = function(name) { this.setAttribute(name, "from@@html"); }
 mw0.setAttributeNS = function(space, name, v) {
@@ -1944,6 +1950,7 @@ if(found) this.attributes[i] = this.attributes[i+1];
 this.attributes.length = i;
 delete this.attributes[i];
 delete this.attributes[name];
+mw0.mutFixup(this, true, name);
 }
 mw0.removeAttributeNS = function(space, name) {
 if(space && !name.match(/:/)) name = space + ":" + name;
@@ -2828,6 +2835,7 @@ if(newobj.parentNode) newobj.parentNode.removeChild(newobj);
 var l = this.childNodes.length;
 if(newobj.defaultSelected) newobj.selected = true, this.selectedIndex = l;
 this.childNodes.push(newobj); newobj.parentNode = this;
+mw0.mutFixup(this, false);
 return newobj;
 }
 mw0.Select.prototype.insertBefore = function(newobj, item) {
@@ -2847,6 +2855,7 @@ if(i == this.childNodes.length) {
 // side effect, object is freeed from wherever it was.
 return null;
 }
+mw0.mutFixup(this, false);
 return newobj;
 }
 mw0.Select.prototype.removeChild = function(item) {
@@ -2859,6 +2868,7 @@ item.parentNode = null;
 break;
 }
 if(i == this.childNodes.length) return null;
+mw0.mutFixup(this, false);
 return item;
 }
 
@@ -4171,9 +4181,75 @@ return null;
 return o;
 }
 
+mw0.MutationObserver = function(f) {
+var w = my$win();
+w.mutList.push(this);
+this.callback = (f instanceof Function ? f : null);
+this.active = false;
+this.target = null;
+}
+mw0.MutationObserver.domclass = "MutationObserver";
+mw0.MutationObserver.prototype.disconnect = function() { this.active = false; }
+mw0.MutationObserver.prototype.observe = function(target, cfg) {
+if(typeof target != "object" || typeof cfg != "object" || !target.nodeType || target.nodeType != 1) {
+this.active = false;
+return;
+}
+this.target = target;
+this.attr = this.kids = this.subtree = false;
+if(cfg.attributes) this.attr = true;
+if(cfg.childList) this.kids = true;
+if(cfg.subtree) this.subtree = true;
+this.active = true;
+}
+mw0.MutationObserver.prototype.takeRecords = function() { return []}
+
+mw0.MutationRecord = function(){};
+mw0.MutationRecord.domclass = "MutationRecord";
+
+/*********************************************************************
+I'm going to call Fixup from appendChild, removeChild, setAttribute,
+anything that changes something we might be observing.
+If we are indeed observing, I call the callback function right away.
+That's now how we're suppose to do it.
+I am suppose to queue up the change records, then call the callback
+function later, after this script is done, asynchronously, maybe on a timer.
+I could combine a dozen "kids have changed" records into one, to say,
+"hey, the kids have changed."
+And an attribute change record etc.
+So they are expecting an array of change records.
+I send an array of length 1, 1 record, right now.
+It's just easier.
+*********************************************************************/
+
+mw0.mutFixup = function(b, isattr, atname) {
+var w = my$win();
+var list = w.mutList;
+// most of the time there are no observers, so loop over that first
+// and this function does nothing and doesn't slow things down too much.
+for(var j = 0; j < list.length; ++j) {
+var o = list[j]; // the observer
+if(!o.active) continue;
+if(isattr) { // the easy case
+if(o.attr && o.target == b) o.callback([{type: "attributes", attributeName: atname}], o);
+continue;
+}
+// ok a child of b has changed
+if(o.kids && o.target == b) { o.callback([{type: "childList"}], o); continue; }
+if(!o.subtree) continue;
+// climb up the tree
+for(var t = b; t && t.nodeType == 1; t = t.parentNode) {
+if(o.subtree && o.target == t) { o.callback([{type: "subtree"}], o); break; }
+}
+}
+}
+
 } // master compile
 
 NodeFilter = mw0.NodeFilter;
 document.createNodeIterator = mw0.createNodeIterator;
 document.createTreeWalker = mw0.createTreeWalker;
+MutationObserver = mw0.MutationObserver;
+MutationRecord = mw0.MutationRecord;
+mutList = [];
 
