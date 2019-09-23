@@ -1894,12 +1894,7 @@ this.style.cssText = v;
 return;
 }
 if(mw0.implicitMember(this, name)) return;
-if(v !== "from@@html") {
-if(name.substr(0,5) == "data-") {
-if(!this.dataset) this.dataset = {};
-this.dataset[mw0.dataCamel(name)] = v;
-} else this[name] = v; 
-}
+var oldv = null;
 if(!this.attributes) this.attributes = new NamedNodeMap;
 if(!this.attributes[name]) {
 var a = new Attr();
@@ -1911,8 +1906,16 @@ a.specified = true;
 this.attributes.push(a);
 // easy hash access
 this.attributes[name] = a;
+} else {
+oldv = this.attributes[name].value;
 }
-mw0.mutFixup(this, true, name);
+if(v !== "from@@html") {
+if(name.substr(0,5) == "data-") {
+if(!this.dataset) this.dataset = {};
+this.dataset[mw0.dataCamel(name)] = v;
+} else this[name] = v; 
+}
+mw0.mutFixup(this, true, name, oldv);
 }
 mw0.markAttribute = function(name) { this.setAttribute(name, "from@@html"); }
 mw0.setAttributeNS = function(space, name, v) {
@@ -1927,11 +1930,12 @@ if(name == "style" && this.style instanceof CSSStyleDeclaration) {
 // wow I have no clue what this means but it happens, https://www.maersk.com
 return;
 }
+var oldv = null;
 if(name.substr(0,5) == "data-") {
 var n = mw0.dataCamel(name);
-if(this.dataset && this.dataset[n]) delete this.dataset[n];
+if(this.dataset && this.dataset[n]) { oldv = this.dataset[n]; delete this.dataset[n]; }
 } else {
-    if (this[name]) delete this[name];
+    if (this[name]) { oldv = this[name]; delete this[name]; }
 }
 // acid test 59 says there's some weirdness regarding button.type
 if(name === "type" && this.nodeName == "BUTTON") this[name] = "submit";
@@ -1950,7 +1954,7 @@ if(found) this.attributes[i] = this.attributes[i+1];
 this.attributes.length = i;
 delete this.attributes[i];
 delete this.attributes[name];
-mw0.mutFixup(this, true, name);
+mw0.mutFixup(this, true, name, oldv);
 }
 mw0.removeAttributeNS = function(space, name) {
 if(space && !name.match(/:/)) name = space + ":" + name;
@@ -4088,8 +4092,7 @@ o.previousNode = function() { return this.bump(-1); }
 return o;
 }
 
-mw0.createTreeWalker = function(root, mask, callback, unused)
-{
+mw0.createTreeWalker = function(root, mask, callback, unused) {
 var o = {}; // the created iterator object
 if(typeof callback != "function") callback = null;
 o.callback = callback;
@@ -4184,7 +4187,7 @@ return o;
 mw0.MutationObserver = function(f) {
 var w = my$win();
 w.mutList.push(this);
-this.callback = (f instanceof Function ? f : null);
+this.callback = (typeof f == "function" ? f : eb$voidfunction);
 this.active = false;
 this.target = null;
 }
@@ -4222,7 +4225,7 @@ I send an array of length 1, 1 record, right now.
 It's just easier.
 *********************************************************************/
 
-mw0.mutFixup = function(b, isattr, atname) {
+mw0.mutFixup = function(b, isattr, atname, old) {
 var w = my$win();
 var list = w.mutList;
 // most of the time there are no observers, so loop over that first
@@ -4230,16 +4233,40 @@ var list = w.mutList;
 for(var j = 0; j < list.length; ++j) {
 var o = list[j]; // the observer
 if(!o.active) continue;
+var r; // mutation record
 if(isattr) { // the easy case
-if(o.attr && o.target == b) o.callback([{type: "attributes", attributeName: atname}], o);
+if(o.attr && o.target == b) {
+r = new MutationRecord;
+r.type = "attributes";
+r.attributeName = atname;
+r.target = b;
+r.oldValue = old;
+o.callback([r], o);
+}
 continue;
 }
 // ok a child of b has changed
-if(o.kids && o.target == b) { o.callback([{type: "childList"}], o); continue; }
+if(o.kids && o.target == b) {
+r = new MutationRecord;
+r.type = "childList";
+r.target = b;
+r.oldValue = null;
+// adddedNodes,  removedNodes, previousSibling, etc, not implemented.
+// There's a lot to this function that I'm not doing.
+o.callback([r], o);
+continue;
+}
 if(!o.subtree) continue;
 // climb up the tree
 for(var t = b; t && t.nodeType == 1; t = t.parentNode) {
-if(o.subtree && o.target == t) { o.callback([{type: "subtree"}], o); break; }
+if(o.subtree && o.target == t) {
+r = new MutationRecord;
+r.type = "childList";
+r.target = b;
+r.oldValue = null;
+o.callback([r], o);
+break;
+}
 }
 }
 }
