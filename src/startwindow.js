@@ -2445,8 +2445,8 @@ mw0.detachEvent = function(ev, handler) { this.eb$unlisten(ev,handler, true, fal
 mw0.eb$listen = function(ev, handler, iscapture, addon)
 {
 if(!handler.ehsn) handler.ehsn = ++mw0.ehsn;
-if(my$win().eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev + " " + handler.ehsn + " for " + (iscapture?"capture":"bubble"));
 if(addon) ev = "on" + ev;
+if(my$win().eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev.replace(/^on/,'') + " " + handler.ehsn + " for " + (iscapture?"capture":"bubble"));
 if(iscapture) handler.do$capture = true;
 else handler.do$bubble = true;
 var evarray = ev + "$$array"; // array of handlers
@@ -2458,7 +2458,6 @@ var a = [];
 /* was there already a function from before? */
 var prev_fn = this[ev];
 if(prev_fn) this[evorig] = prev_fn;
-  if(prev_fn) alert3(" move over " + this.nodeName + " " + evorig);
 
 eval(
 'this["' + ev + '"] = function(e){ var rc, a = this["' + evarray + '"]; \
@@ -2489,12 +2488,8 @@ this[evarray].push(handler);
 mw0.eb$unlisten = function(ev, handler, iscapture, addon)
 {
 var ehsn = (handler.ehsn ? handler.ehsn : 0);
-if(my$win().eventDebug)  alert3((addon ? "unlisten " : "detach ") + this.nodeName + "." + ev + " " + ehsn);
-if(addon) {
-ev = "on" + ev;
-} else {
-ev = ev.replace(/^on/, "");
-}
+if(addon) ev = "on" + ev;
+if(my$win().eventDebug)  alert3((addon ? "unlisten " : "detach ") + this.nodeName + "." + ev.replace(/^on/,'') + " " + ehsn);
 
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html

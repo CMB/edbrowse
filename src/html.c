@@ -917,7 +917,12 @@ char *htmlParse(char *buf, int remote)
 		freeJavaContext(cf);
 
 	if (isJSAlive) {
+// the "create handlers" messages aren't helpful here.
+		if (debugEvent && debugLevel >= 3)
+			set_property_bool(cf->winobj, "eventDebug", false);
 		decorate(0);
+		if (debugEvent && debugLevel >= 3)
+			set_property_bool(cf->winobj, "eventDebug", true);
 		set_basehref(cf->hbase);
 		run_function_bool(cf->winobj, "eb$qs$start");
 		runScriptsPending();
@@ -2774,6 +2779,7 @@ void scriptSetsTimeout(struct htmlTag *t)
 	debugPrint(3, "timer %s%d=%s",
 		   (t->action == TAGACT_SCRIPT ? "script" : "xhr"),
 		   ++tsn, t->href);
+	t->lic = tsn;
 }				/* scriptSetsTimeout */
 
 static struct jsTimer *soonest(void)
@@ -2922,8 +2928,8 @@ We need to fix this someday, though it is a very rare low runner case.
 					debugPrint(4,
 						   "running script at a lower frame %s",
 						   js_file);
-				debugPrint(3, "async exec %s at %d", js_file,
-					   ln);
+				debugPrint(3, "async exec %d %s at %d",
+					   t->lic, js_file, ln);
 				set_property_object(cf->docobj, "currentScript",
 						    t->jv);
 				jsRunData(t->jv, js_file, ln);
@@ -2936,6 +2942,7 @@ We need to fix this someday, though it is a very rare low runner case.
 // could be large; it's worth freeing
 				nzFree(t->value);
 				t->value = 0;
+				debugPrint(3, "run xhr %d", t->lic);
 				run_function_bool(t->jv, "parseResponse");
 				jt->timerObject = t->jv;
 			}
