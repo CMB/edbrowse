@@ -150,7 +150,7 @@ int js_main(void)
 		return 4;
 	}
 	duk_push_global_object(context0);
-	duk_push_boolean(context0, false);
+	duk_push_false(context0);
 	duk_put_prop_string(context0, -2, "compiled");
 	context0_obj = duk_get_heapptr(context0, -1);
 	duk_pop(context0);
@@ -390,7 +390,7 @@ static duk_ret_t getter_innerHTML(duk_context * cx)
 
 static duk_ret_t setter_innerHTML(duk_context * cx)
 {
-	jsobjtype thisobj;
+	jsobjtype thisobj, ca;
 	char *run;
 	int run_l;
 	const char *h = duk_safe_to_string(cx, -1);
@@ -409,6 +409,7 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 		debugPrint(5, "setter h 3");
 		return 0;
 	}
+	ca = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
 // stack now holds html and this
 	duk_insert(cx, -2);
@@ -438,8 +439,10 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	duk_get_prop_string(cx, -1, "mutFixup");
 	if (duk_is_function(cx, -1)) {
 		duk_push_heapptr(cx, thisobj);
-		duk_push_boolean(cx, false);
-		duk_call(cx, 2);
+		duk_push_false(cx);
+		duk_push_heapptr(cx, ca);
+		duk_push_null(cx);
+		duk_call(cx, 4);
 	}
 	duk_pop_2(cx);
 
@@ -1064,8 +1067,10 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	duk_get_prop_string(cx, -1, "mutFixup");
 	if (duk_is_function(cx, -1)) {
 		duk_push_heapptr(cx, thisobj);
-		duk_push_boolean(cx, false);
-		duk_call(cx, 2);
+		duk_push_false(cx);
+		duk_push_null(cx);
+		duk_push_heapptr(cx, child);
+		duk_call(cx, 4);
 	}
 	duk_pop_2(cx);
 	return 1;

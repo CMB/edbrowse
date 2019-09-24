@@ -1756,7 +1756,7 @@ if(c.nodeType == 11) return mw0.appendFragment(this, c);
 mw0.isabove(c, this);
 if(c.parentNode) c.parentNode.removeChild(c);
 var r = this.eb$apch2(c);
-mw0.mutFixup(this, false);
+mw0.mutFixup(this, false, c, null);
 return r;
 }
 
@@ -1773,7 +1773,7 @@ mw0.isabove(c, this);
 if(c.nodeType == 11) return mw0.insertFragment(this, c, t);
 if(c.parentNode) c.parentNode.removeChild(c);
 var r = this.eb$insbf(c, t);
-mw0.mutFixup(this, false);
+mw0.mutFixup(this, false, r, null);
 return r;
 }
 
@@ -2839,7 +2839,7 @@ if(newobj.parentNode) newobj.parentNode.removeChild(newobj);
 var l = this.childNodes.length;
 if(newobj.defaultSelected) newobj.selected = true, this.selectedIndex = l;
 this.childNodes.push(newobj); newobj.parentNode = this;
-mw0.mutFixup(this, false);
+mw0.mutFixup(this, false, newobj, null);
 return newobj;
 }
 mw0.Select.prototype.insertBefore = function(newobj, item) {
@@ -2859,7 +2859,7 @@ if(i == this.childNodes.length) {
 // side effect, object is freeed from wherever it was.
 return null;
 }
-mw0.mutFixup(this, false);
+mw0.mutFixup(this, false, newobj, null);
 return newobj;
 }
 mw0.Select.prototype.removeChild = function(item) {
@@ -2872,7 +2872,7 @@ item.parentNode = null;
 break;
 }
 if(i == this.childNodes.length) return null;
-mw0.mutFixup(this, false);
+mw0.mutFixup(this, false, null, item);
 return item;
 }
 
@@ -4225,7 +4225,15 @@ I send an array of length 1, 1 record, right now.
 It's just easier.
 *********************************************************************/
 
-mw0.mutFixup = function(b, isattr, atname, old) {
+mw0.mrList = function(x) {
+if(Array.isArray(x)) {
+// return a copy of the array
+return [].concat(x);
+}
+return x ? [x] : [];
+}
+
+mw0.mutFixup = function(b, isattr, y, z) {
 var w = my$win();
 var list = w.mutList;
 // most of the time there are no observers, so loop over that first
@@ -4238,9 +4246,9 @@ if(isattr) { // the easy case
 if(o.attr && o.target == b) {
 r = new MutationRecord;
 r.type = "attributes";
-r.attributeName = atname;
+r.attributeName = y;
 r.target = b;
-r.oldValue = old;
+r.oldValue = z;
 o.callback([r], o);
 }
 continue;
@@ -4251,8 +4259,11 @@ r = new MutationRecord;
 r.type = "childList";
 r.target = b;
 r.oldValue = null;
-// adddedNodes,  removedNodes, previousSibling, etc, not implemented.
+// nextSibling, previousSibling, etc, not implemented.
+// addedNodes only works in some situations.
 // There's a lot to this function that I'm not doing.
+r.addedNodes = mw0.mrList(y);
+r.removedNodes = mw0.mrList(z);
 o.callback([r], o);
 continue;
 }
@@ -4264,6 +4275,8 @@ r = new MutationRecord;
 r.type = "childList";
 r.target = b;
 r.oldValue = null;
+r.addedNodes = mw0.mrList(y);
+r.removedNodes = mw0.mrList(z);
 o.callback([r], o);
 break;
 }
