@@ -2152,7 +2152,7 @@ bool readFileArgv(const char *filename, int fromframe)
 	bool newwin = !fromframe;
 	cmd = 'e';
 	return readFile(filename, emptyString, newwin, fromframe,
-			(newwin ? 0 : cf->fileName));
+			(newwin ? 0 : cw->f0.fileName));
 }				/* readFileArgv */
 
 /* Write a range to a file. */
