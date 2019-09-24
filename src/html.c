@@ -12,43 +12,17 @@ extern int gettimeofday(struct timeval *tp, void *tzp);	// from tidys.lib
 #define SLEEP sleep
 #endif // _MSC_VER y/n
 
+// OSX has no pthread_tryjoin_np, so we can't do our
+// asynchronous timers under OSX, which is really no great loss.
+#ifdef __APPLE__
+#define pthread_tryjoin_np pthread_join
+#endif
+
 uchar browseLocal;
 bool showHover, doColors;
-pthread_t jsbt;			// javascript background thread
 
 static jsobjtype js_reset, js_submit;
 static const int asyncTimer = 250;
-
-#if 0
-// we're probably never going to run a background javascript thread
-void js_wait(void)
-{
-	if (jsbt) {
-		pthread_join(jsbt, NULL);
-		jsbt = 0;
-	}
-}
-
-bool js_inbackground(void)
-{
-	int rc;
-	if (!jsbt)
-		return false;
-	rc = pthread_tryjoin_np(jsbt, NULL);
-	if (!rc) {		// it's done
-		jsbt = 0;
-		return false;
-	}
-	if (rc == EBUSY)
-		return true;
-// there shouldn't be any other error, and if there is
-// I really don't know what to do.
-	debugPrint(3, "js background thread test returns %d", rc);
-	pthread_join(jsbt, NULL);
-	jsbt = 0;
-	return false;
-}
-#endif
 
 bool tagHandler(int seqno, const char *name)
 {
