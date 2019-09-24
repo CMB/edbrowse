@@ -390,7 +390,7 @@ static duk_ret_t getter_innerHTML(duk_context * cx)
 
 static duk_ret_t setter_innerHTML(duk_context * cx)
 {
-	jsobjtype thisobj, ca;
+	jsobjtype thisobj, c1, c2;
 	char *run;
 	int run_l;
 	const char *h = duk_safe_to_string(cx, -1);
@@ -401,7 +401,7 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	duk_push_this(cx);
 // remove the preexisting children.
 	if (duk_get_prop_string(cx, -1, "childNodes") && duk_is_array(cx, -1)) {
-		duk_set_length(cx, -1, 0);
+		c1 = duk_get_heapptr(cx, -1);
 	} else {
 // no child nodes array, don't do anything.
 // This should never happen.
@@ -409,14 +409,20 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 		debugPrint(5, "setter h 3");
 		return 0;
 	}
-	ca = duk_get_heapptr(cx, -1);
-	duk_pop(cx);
+// hold this away from garbage collection
+	duk_put_prop_string(cx, -2, "old$cn");
+// stack now holds html and this
+// make new childNodes array
+	duk_get_global_string(cx, "Array");
+	duk_pnew(cx, 0);
+	c2 = duk_get_heapptr(cx, -1);
+	duk_put_prop_string(cx, -2, "childNodes");
 // stack now holds html and this
 	duk_insert(cx, -2);
 	duk_put_prop_string(cx, -2, "inner$HTML");
+// stack now holds this
 
 	thisobj = duk_get_heapptr(cx, -1);
-	duk_pop(cx);
 
 // Put some tags around the html, so tidy can parse it.
 	run = initString(&run_l);
@@ -440,11 +446,14 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	if (duk_is_function(cx, -1)) {
 		duk_push_heapptr(cx, thisobj);
 		duk_push_false(cx);
-		duk_push_heapptr(cx, ca);
-		duk_push_null(cx);
+		duk_push_heapptr(cx, c2);
+		duk_push_heapptr(cx, c1);
 		duk_call(cx, 4);
 	}
+// stack is this mw0 retval
 	duk_pop_2(cx);
+	duk_del_prop_string(cx, -1, "old$cn");
+	duk_pop(cx);
 
 	return 0;
 }

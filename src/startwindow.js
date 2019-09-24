@@ -4233,6 +4233,19 @@ return [].concat(x);
 return x ? [x] : [];
 }
 
+mw0.mrKids = function(r, y, z) {
+r.type = "childList";
+r.oldValue = null;
+r.addedNodes = mw0.mrList(y);
+r.removedNodes = mw0.mrList(z);
+r.nextSibling = r.previousSibling = null; // this is usually right
+// if adding a single node then we can just compute the siblings
+if(y && y.nodeType)
+r.previousSibling = y.previousSibling, r.nextSibling = y.nextSibling;
+// if z is a node it is removeChild(), and is gone,
+// and no way to compute the siblings now, so it's just wrong.
+}
+
 mw0.mutFixup = function(b, isattr, y, z) {
 var w = my$win();
 var list = w.mutList;
@@ -4256,14 +4269,8 @@ continue;
 // ok a child of b has changed
 if(o.kids && o.target == b) {
 r = new MutationRecord;
-r.type = "childList";
 r.target = b;
-r.oldValue = null;
-// nextSibling, previousSibling, etc, not implemented.
-// addedNodes only works in some situations.
-// There's a lot to this function that I'm not doing.
-r.addedNodes = mw0.mrList(y);
-r.removedNodes = mw0.mrList(z);
+mw0.mrKids(r, y, z);
 o.callback([r], o);
 continue;
 }
@@ -4272,11 +4279,8 @@ if(!o.subtree) continue;
 for(var t = b; t && t.nodeType == 1; t = t.parentNode) {
 if(o.subtree && o.target == t) {
 r = new MutationRecord;
-r.type = "childList";
 r.target = b;
-r.oldValue = null;
-r.addedNodes = mw0.mrList(y);
-r.removedNodes = mw0.mrList(z);
+mw0.mrKids(r, y, z);
 o.callback([r], o);
 break;
 }
