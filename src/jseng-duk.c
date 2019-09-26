@@ -1077,7 +1077,8 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	if (duk_is_function(cx, -1)) {
 		duk_push_heapptr(cx, thisobj);
 		duk_push_false(cx);
-		duk_push_null(cx);
+// exception here, push an integer where the node was.
+		duk_push_int(cx, mark);
 		duk_push_heapptr(cx, child);
 		duk_call(cx, 4);
 	}

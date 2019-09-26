@@ -2872,7 +2872,7 @@ item.parentNode = null;
 break;
 }
 if(i == this.childNodes.length) return null;
-mw0.mutFixup(this, false, null, item);
+mw0.mutFixup(this, false, i, item);
 return item;
 }
 
@@ -4230,20 +4230,29 @@ if(Array.isArray(x)) {
 // return a copy of the array
 return [].concat(x);
 }
+if(typeof x == "number") return [];
 return x ? [x] : [];
 }
 
-mw0.mrKids = function(r, y, z) {
+mw0.mrKids = function(r, b, y, z) {
+r.target = b;
 r.type = "childList";
 r.oldValue = null;
 r.addedNodes = mw0.mrList(y);
 r.removedNodes = mw0.mrList(z);
-r.nextSibling = r.previousSibling = null; // this is usually right
+r.nextSibling = r.previousSibling = null; // this is for innerHTML
 // if adding a single node then we can just compute the siblings
-if(y && y.nodeType)
+if(y && y.nodeType && y.parentNode)
 r.previousSibling = y.previousSibling, r.nextSibling = y.nextSibling;
 // if z is a node it is removeChild(), and is gone,
-// and no way to compute the siblings now, so it's just wrong.
+// and y is the integer where it was.
+if(z && z.nodeType && typeof y == "number") {
+var c = b.childNodes;
+var l = c.length;
+r.nextSibling = y < l ? c[y] : null;
+--y;
+r.previousSibling = y >= 0 ? c[y] : null;
+}
 }
 
 mw0.mutFixup = function(b, isattr, y, z) {
@@ -4269,8 +4278,7 @@ continue;
 // ok a child of b has changed
 if(o.kids && o.target == b) {
 r = new MutationRecord;
-r.target = b;
-mw0.mrKids(r, y, z);
+mw0.mrKids(r, b, y, z);
 o.callback([r], o);
 continue;
 }
@@ -4279,8 +4287,7 @@ if(!o.subtree) continue;
 for(var t = b; t && t.nodeType == 1; t = t.parentNode) {
 if(o.subtree && o.target == t) {
 r = new MutationRecord;
-r.target = b;
-mw0.mrKids(r, y, z);
+mw0.mrKids(r, b, y, z);
 o.callback([r], o);
 break;
 }
