@@ -1322,15 +1322,17 @@ Thus an errant escape sequence from a binary file could send your terminal into 
 making recovery difficult.
 Use /usr/bin/reset to put the terminal back into a sane state.
 Thus it seems prudent to render escapes as ascii characters all the time.
-If you have no idea where that ~1b came from, it's probably a literal escape character
+If you have no idea where that ~1B came from, it's probably a literal escape character
 in your file.
+Control n and control o are also printed in hex, ~0E and ~0F, as they can also derail many terminal systems.
 
 <P>
 Returns and nulls are also converted into hex all the time.
 Thus an embedded return will not make one line look like two lines.
-You will usually see this when importing a dos or Windows text file.
+You might see this when importing a dos or Windows text file.
 Every line ends in ~0d.
 Issue one of the three commands shown above to undos the file.
+However, edbrowse usually converts these dos files automatically for you, unless you have disabled this feature with the iu command.
 
 <H3> <A NAME=bfile> Binary Files </A> </H3>
 

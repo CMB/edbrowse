@@ -265,7 +265,8 @@ void displayLine(int n)
 
 	while ((c = *s++) != '\n') {
 		bool expand = false;
-		if (c == 0 || c == '\r' || c == '\x1b')
+		if (c == 0 || c == '\r' || c == '\x1b' || c == '\x0e'
+		    || c == '\x0f')
 			expand = true;
 		if (cmd == 'l') {
 /* show tabs and backspaces, ed style */
