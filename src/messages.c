@@ -97,6 +97,7 @@ void selectLanguage(void)
 	if (!strncmp(eb_language, "pl", 2)) {
 		eb_lang = 4;
 		messageArray = msg_pl;
+		ebrc_string = ebrc_pl;
 		type8859 = 2;
 		return;
 	}
