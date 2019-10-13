@@ -63,7 +63,7 @@ startwindow.c: startwindow.js endwindow.js
 	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/endwindow.js thirdJS src/startwindow.c
 endif
 
-ebrc.c: ../lang/ebrc-* ../doc/usersguide.html
+ebrc.c: ../lang/ebrc-* ../doc/usersguide*.html
 	cd .. ; ./tools/buildebrcstring.pl
 
 msg-strings.c: ../lang/msg-*

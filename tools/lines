@@ -2,6 +2,6 @@
 
 cd ../src
 cat `
-/bin/ls -1 *.[ch] startwindow.js ../win32/*.[ch] ../tools/*.pl |
+/bin/ls -1 *.[ch] startwindow.js ../win32/*.[ch] ../tools/*.pl ../CMakeLists.txt |
 egrep -v "startwindow.c|msg-strings.c|ebrc.c"` |
 wc -l

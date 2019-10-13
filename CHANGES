@@ -23,6 +23,8 @@ Only valueMissing is implemented.
 
 fu command prints the file's url.
 
+Internationalized help command.
+
 3.7.5.1
 Search function on gopher.
 

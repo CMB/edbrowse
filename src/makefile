@@ -43,7 +43,7 @@ dbodbc.o dbinfx.o dbops.o: dbapi.h
 startwindow.c: startwindow.js endwindow.js
 	cd .. ; ${PERL} -w ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/endwindow.js thirdJS src/startwindow.c
 
-ebrc.c: ../lang/ebrc-* ../doc/usersguide.html
+ebrc.c: ../lang/ebrc-* ../doc/usersguide*.html
 	cd .. ; ${PERL} -w ./tools/buildebrcstring.pl
 
 msg-strings.c: ../lang/msg-*

@@ -213,7 +213,7 @@ ne peut mettre à jour la base de données; les lignes seront modifiées quand v
 texte inattendu après la commande ^
 pas de texte antérieur
 texte inattendu après la commande M
-0
+déplacé en session %d\n
 pas de texte antérieur, sauvegarde impossible
 impossible d'appliquer la commande %s à un intervalle
 g impossible en mode base de données

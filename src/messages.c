@@ -15,6 +15,7 @@ char eb_language[8];
 int eb_lang;
 /* startup .ebrc files in various languages */
 const char *ebrc_string;
+static const char *qrg_string;
 bool cons_utf8, iuConvert = true;
 char type8859 = 1;
 bool helpMessagesOn;
@@ -30,6 +31,7 @@ void selectLanguage(void)
 	eb_lang = 1;
 	messageArray = msg_en;
 	ebrc_string = ebrc_en;
+	qrg_string = qrg_en;
 
 #ifndef DOSLIKE
 	if (!s)
@@ -82,6 +84,7 @@ void selectLanguage(void)
 		eb_lang = 2;
 		messageArray = msg_fr;
 		ebrc_string = ebrc_fr;
+		qrg_string = qrg_fr;
 		type8859 = 1;
 		return;
 	}
@@ -90,6 +93,7 @@ void selectLanguage(void)
 		eb_lang = 3;
 		messageArray = msg_pt_br;
 		ebrc_string = ebrc_pt_br;
+		qrg_string = qrg_pt_br;
 		type8859 = 1;
 		return;
 	}
@@ -446,7 +450,6 @@ static void eb_vprintf(const char *fmt, va_list args)
 bool helpUtility(void)
 {
 	int cx;
-	extern const char qrg[];
 
 	if (!cxQuit(context, 0))
 		return false;
@@ -465,7 +468,7 @@ bool helpUtility(void)
 		return true;
 	}
 
-	cx = sideBuffer(0, qrg, -1, "qrg");
+	cx = sideBuffer(0, qrg_string, -1, "qrg");
 	if (cx == 0)
 		return false;
 	cxSwitch(cx, false);

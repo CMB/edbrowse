@@ -1,0 +1,258 @@
+<P>
+<!-- qrg start -->
+Comandos designados como "alternar",tais como js para ligar e desligar o javascript,aceitam também um sufixo + ou - para habilitar ou desabilitar explicitamente o recurso.
+Assim, js alterna o javascript, js+ habilita javascript e js- desabilita javascript.
+As variantes + e - não são listadas.
+Alternar imprime o estado do recurso, ligado ou desligado, se as mensagens de ajuda estiverem habilitadas ou se o nível de debug for pelo menos 1.
+Definir ou limpar um modo só imprime a mensagem se as mensagens de ajuda estiverem ligadas.
+
+<P>
+Sair do Programa
+<P>
+q: fecha a sessão atual
+<br>qt: fecha completamente o programa, quer você tenha gravado os arquivos ou não
+<br>bw: reservatório gravado (buffer written); já pode fechar a qualquer momento
+<br>!comando: escape de shell
+<br>!: shell interativo
+<br>cd: troca diretório
+<br>config: relê o arquivo de configuração
+<P>
+inserção
+<P>
+rl: usa readline() ao inserir (alterna)
+<P>
+Mostrar linhas no reservatório
+<P>
+p: imprime a linha atual
+<br>4,7p: imprime da linha 4 à 7
+<br>+3p: avança 3 linhas e imprime
+<br>+3: o mesmo que +3p, imprimir é o comando padrão
+<br>-: linha anterior
+<br>---: volta 3 linhas
+<br>'a,'bp: imprime um intervalo de linhas marcadas com os rótulos a e b
+<br>kb: marca a linha atual como b
+<br>l: lista a linha atual, mostrando caracteres invisíveis e marcas de fim
+<br>endm: mostra marcas de fim ^$ nas linhas listadas (alterna)
+<br>lna: expande para hex todos os caracteres não-ascii quando uma linha é listada (alterna)
+<br>n: imprime a linha atual com o número dela
+<br>ll 1000: linhas com comprimento 1000, mostra os primeiros 1000 caracteres de cada linha
+<br> ll: imprime o comprimento da linha atual
+<br>z22: imprime as próximas 22 linhas
+<br>z: imprime mais 22 linhas
+<br>=: imprime o número de linhas do arquivo
+<br>.=: imprime o número da linha atual
+<br>B: localiza a linha com a chave correspondente
+<br>B[: localiza a linha com o colchete correspondente
+<br>B(: localiza a linha com o parêntese correspondente
+<P>
+Mensagens de ajuda
+<P>
+h: ajuda,explica o último ponto de interrogação
+<br>H: mostra todas as mensagens de erro (alterna)
+<br>help: coloca este guia de referência num reservatório do edbrowse para exploração
+<P>
+Procurar e substituir
+<P>
+s/x/y/: substitui x por y na linha atual
+<br>s/x/y: substitui x por y e imprime o resultado
+<br>s//y/: usa a última cadeia substituída, neste caso x
+<br>s/x/%/: usa a última cadeia substituta
+<br>s: repete o comando anterior de substituição
+<br>s/x/y/2: substitui a segunda ocorrência de x por y na linha atual
+<br>4,7s/x/y/g: substitui todas as ocorrências de x por y nas linhas de 4 a 7
+<br>s/a\(.\)c/a$1$1c/: duplica a letra entre a e c
+<br>s,: substitui vírgula espaço por nova linha, quebra a linha em duas
+<br>s.: substitui ponto espaço por nova linha, quebra a linha em duas
+<br>s?2: quebra a linha no segundo ponto de interrogação
+<br>bl: quebra linha muito longa em sentenças e frases
+<br>fll 80: formata o comprimento da linha em 80,quebra as linhas em 80 caracteres,por exemplo para caber no terminal
+<br>fll 80+: quebra as linhas em 80 caracteres mas permite algumas maiores para que a próxima linha não seja só uma ou duas palavras
+<br>fll: imprime o comprimento da linha formatada
+<br>/x/: procura a linha que contém x
+<br>/x: o mesmo que /x/
+<br>/x/i: procura a linha que contém x ou X
+<br>?x?: procura x para trás
+<br>ci: buscas e substituições não diferenciam maiúsculas (alterna)
+<br>sg: cadeias para substituições são globais entre sessões (alterna)
+<br>su8: procura e substitui seqüências de caracteres UTF8 (alterna)
+<br>sw: procura circular (alterna)
+<br>g/x/ p: imprime todas as linhas que contiverem um x
+<br>v/x/ p: imprime todas as linhas que não contiverem x
+<br>v/x/i l: lista todas as linhas que não tiverem x ou X
+<br>lc: converte linha para minúsculas
+<br>mc: converte linha para maiúsculas ao início de palavras
+<br>uc: converte linha para maiúsculas
+<br>s/foo/uc: converte foo para FOO na linha atual
+<br>s/\bfoo\b/mc/g: converte foo para Foo,mas não foobar
+<br>,s/$/ %line/: coloca o número da linha ao final de cada linha
+<P>
+Arquivos e sessões
+<P>
+f: imprime o nome do arquivo atual
+<br>f foo: define o nome do arquivo como foo
+<br>f/: retém somente o último componente do nome do arquivo
+<br>e: imprime o número da sessão atual
+<br>e3: move para sessão 3
+<br>e foo: edita o arquivo chamado foo
+<br>r foo: lê o conteúdo de foo no reservatório atual
+<br>w foo: grava o reservatório atual em foo
+<br>w+ foo: acrescenta a foo
+<br>w/: escreve no último componente do nome do arquivo
+<br>e ~/projects/edbrowse/src/buf*.c: expande as máscaras se exatamente uma correspondência
+<br>e $EBSRC/buf*.c: expansão de variável
+<br>bflist: lista reservatórios (buffer list),todas as sessões do edbrowse e os nomes de seus arquivos
+<br>bd: detecção de binários em arquivos (alterna)
+<br>iu: converte automaticamente entre iso8859 e utf8(alterna)
+<P>
+Editar texto, muito parecido com o ed
+<P>
+u: desfaz o último comando
+<br>d: apaga a linha atual
+<br>1,$d: apaga todas as linhas, de 1 até eof
+<br>D: apaga a linha atual e imprime a próxima linha
+<br>i: insere texto antes da linha atual, termine com um ponto
+<br>c: altera a linha atual, insere um novo bloco de texto, termine com um ponto
+<br>a: adiciona texto após a linha atual, termine com um ponto
+<br>a+: inclui a linha que acabou de digitar, quando parecia que você estava em modo acrescentar
+<br>4,7m11: move linhas 4 a 7 para linha 11
+<br>4,7t11: copia linhas 4 a 7 para linha 11
+<br>3,4j: junta linhas 3 e 4 numa só
+<br>3,4J: junta linhas 3 e 4 numa só com um espaço no meio
+<P>
+Gestão de diretório
+<P>
+dr: diretório é somente leitura
+<br>dw: diretório aceita escrita e d moves arquivos para a lixeira
+<br>dx: diretório aceita escrita e d apaga os arquivos
+<br>hf: mostra arquivos ocultos na listagem do diretório (alterna)
+<br>lsl: lista comprimento do arquivo da linha atual, modo diretório apenas
+<br>lss: lista o tamanho aproximado do arquivo em kilobytes, megabytes etc.
+<br>lst: lista a data de modificação do arquivo
+<br>lsp: lista permissões do grupo do proprietário
+<br>lsi: lista o inode
+<br>lsk: lista o número de links rígidos
+<br>lsm: lista os números maior e menor
+<br>lsy: lista caminho de um link simbólico
+<br>lsX: verifica modo do diretório, bom para scripts
+<br>ls: o mesmo que lsst
+<br>ls=lt: mostra comprimento e data de todos os arquivos nas listagens subseqüentes de diretórios
+<br>ls=: lista apenas arquivos nas listagens de diretórios
+<br>sort=a: ordena arquivos alfabeticamente
+<br>sort=t: ordena arquivos por data de modificação
+<br>sort=s: ordena arquivos por tamanho
+<br>sort+a: o mesmo que sort=a
+<br>sort-a: alfabético ao reverso
+<br>sort-t: data de modificação ao reverso
+<br>sort-s: tamanho ao reverso
+<br>rf: atualiza listagem do diretório, útil se você alterou o ls ou parâmetros do sort
+<P>
+Navegar num arquivo html ou uma página web
+<P>
+b: navegar no arquivo atual, seja um html, um e-mail ou renderizado por plug-in
+<br>b foo.html: edita o arquivo foo.html e navega por ele
+<br>b url: trás a url da Internet e navega por ela
+<br>nostack b url: não gera uma janela nova, substitui a janela atual usando a nova url
+<br>ub: exibe código fonte de um arquivo
+<br>ft: mostra o título da página web atual (file title)
+<br>fd: mostra a descrição da página web atual
+<br>fk: mostra as palavras-chave da página web atual
+<br>fu: imprime a URL subjacente ao arquivo
+<br>rf: atualiza a página web ou listagem de diretório
+<br>et: edita esta página web como texto puro
+<br>hr: redirecionamento http (alterna)
+<br>vs: verifica conecções ssl (alterna)
+<br>sr: envia referrer(alterna)
+<br>ua3: finge ser o terceiro user agent do arquivo de configuração
+<br>can: (curl auth negotiate) alterna autenticação de tipo SPNEGO, necessária para o kerberos(krb5/gss)
+<P>
+Downloads por FTP ou HTTP
+<P>
+pdd: progresso do download indicado por pontos
+<br>pdc: progresso do download indicado por contagem de megabytes
+<br>pdq: progresso do download quieto, sem indicador
+<br>ftpa: modo ativo de ftp (alterna)
+<br>bg: baixa arquivos em segundo plano (alterna)
+<br>bglist: lista downloads em segundo plano, completos ou em progresso
+<br>jsbg: baixa arquivos javascript em segundo plano (alterna)
+<P>
+Interagir com uma página web
+<P>
+g: vai para o link da linha atual
+<br>g-: vai para o link mas não navega, nem renderiza ou toca
+<br>g2: vai para o segundo link da linha atual
+<br>g$: vai para o último link da linha atual
+<br>g?: imprime a URL do link da linha atual
+<br>g2?: imprime a URL do segundo link
+<br>g$?: imprime a URL do último link
+<br>exp: expande uma frame
+<br>,exp: expande todas as frames
+<br>ctr: recolhe uma frame
+<br>^: a tecla voltar, volta à página web que estava lendo antes
+<br>&amp;: tecla voltar interno, volta à linha que estava antes de ir para um link interno
+<br>i=xyz: insere xyz no campo de edição da linha atual
+<br>i2=xyz: insere xyz no segundo campo de edição da linha atual
+<br>i2*: aperta o segundo botão da linha atual, geralmente enviar ou limpar
+<br>i$*: aperta o último botão da linha atual
+<br>i3?: descreve o terceiro campo de edição da linha atual
+<br>ipass2: pergunta o conteúdo do segundo campo de edição, desabilitando eco
+<br>ib: aloca um reservatório de inserção para esta área textual
+<br>M4: move esta página web para sessão 4 e volta à página anterior
+<br>M: move esta página web para uma sessão vazia e volta
+<br>js: permite javascript(alterna)
+<br>rr: renderiza novamente a tela, para refletir mudanças assíncronas do javascript
+<br>rr 75: renderiza a tela automaticamente a cada 75 segundos
+<br>hover: mostra todos os clicáveis e textos invisíveis (alterna)
+<br>colors: mostra as cores da página
+<P>
+Cliente de e-mail
+<P>
+sm: envia e-mail [número da conta]
+<br>re: responde uma mensagem de e-mail
+<br>rea: responde a todos
+<P>
+Plug-ins
+<P>
+pb: toca reservatório (play buffer), geralmente áudio
+<br>pb.mp3: toca o reservatório atual como arquivo .mp3
+<br>pg: plug-ins ativados (alterna)
+<P>
+Acesso a bancos de dados
+<P>
+ds=fonte,login,senha: define a fonte dos dados
+<br>sht: mostra tabelas
+<br>shc: mostra colunas (e chave primária) da tabela atual
+<br>shf: mostra chaves estrangeiras da tabela atual
+<br>fbc: obtém colunas da bolha (alterna)
+<P>
+Funções do Edbrowse
+<P>
+&lt;foo arg1 arg2 &#8230;: chama a função foo, definida em seu arquivo .ebrc
+<br>X: torna esta linha a atual silenciosamente, usada freqüentemente em scripts
+<P>
+Debug
+<P>
+db3: define nível de debug, 0 a 9
+<br>db&gt;/tmp/edbrowse.out: redireciona a saída do debug para um arquivo
+<br>demin: desminimiza javascript (alterna)
+<br>timers: desabilita timers do javascript (alterna)
+<br>dbcn: habilita debugging do cloneNode (alterna)
+<br>dbev: habilita debugging de eventos (alterna)
+<br>dberr: habilita debugging de erros do js (alterna)
+<br>dbcss: habilita debugging de css (alterna)
+<br>trace: injeta pontos de rastreamento no javascript (alterna)
+<br>jdb: debugger do javascript, bye para sair
+<br>ok(o):lista todos os membros de um objeto, alguns podem não ser enumeráveis
+<br>showscripts(): mostra scripts em quaisquer lugares da árvore
+<br>searchscripts(cadeia): procura uma cadeia nos scripts
+<br>snapshot(): cria uma snapshot dos arquivos de javascript e css para debugging local
+<br>aloop(array,string_on[i]): executa cadeia em cada membro do array
+<br>uptrace(nó): escala a árvore para um dado nó
+<br>dumptree(nó): mostra a árvore abaixo para um dado nó
+<br>bp@(label): injeta este código num arquivo js para um ponto de interrupção simples
+<br>step$stack(): mostra pilha, geralmente de dentro dum ponto de interrupção
+<br>step$l=0|1|2: define o nível de rastreamento para cada passo
+<br>step$go=label: define o passo $l para 2 neste ponto, interrompendo a cada passo dali para frente
+<br>step$exp=expressão: define o passo $l para 2 quando expressão é verdadeira, interrompendo a cada passo dali para frente
+<br>arg$: referencia o objeto do argumento de dentro dum ponto de interrupção
+
+<H3></H3>

@@ -11,15 +11,22 @@ $s =~ s/ebrc-\w+/$& $&/g;
 # file name is hyphen, but C string has to be an underscore.
 $s =~ s/ ebrc-/ ebrc_/g;
 
-#  Extract the quick reference guide.
+#  Extract the quick reference guides.
+my @guides = glob "doc/usersguide*.html";
+for(my $j = 0; $j <= $#guides; ++$j) {
+my $p1 = $guides[$j];
+my $p2 = $p1;
+$p2 =~ s/doc\/usersguide/qrg/;
+$p2 =~ s/.html$//;
+$p2 .= "_en" if $p2 eq "qrg";
 my $in_qrg = 0;
-open F1, "doc/usersguide.html";
-open F2, ">src/qrg";
+open F1, "$p1";
+open F2, ">src/$p2";
 print F2 "<P>\n";
 while(<F1>) {
-$in_qrg = 1 if /\(toggle\),/;
+$in_qrg = 1 if /qrg start/;
 next if ! $in_qrg;
-$in_qrg = 0 if /H3/;
+$in_qrg = 0 if /<[hH]3/;
 next if ! $in_qrg;
 chomp;
 #  in case \r is not removed on windows
@@ -28,12 +35,18 @@ print F2 "$_\n";
 }
 close F1;
 close F2;
-
-$s = "src/qrg qrg $s";
+$s = "src/$p2 $p2 $s";
+}
 
 # Ready to go.
 system "perl -w tools/buildsourcestring.pl $s src/ebrc.c";
 
-unlink "src/qrg";
+for(my $j = 0; $j <= $#guides; ++$j) {
+my $p2 = $guides[$j];
+$p2 =~ s/doc\/usersguide/qrg/;
+$p2 =~ s/.html$//;
+$p2 .= "_en" if $p2 eq "qrg";
+unlink "src/$p2";
+}
 
 exit 0;

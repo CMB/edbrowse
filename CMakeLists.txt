@@ -207,6 +207,8 @@ endif(BUILD_SHARED_LIB)
 # see tools/build*.pl scripts
 file(GLOB LANG_EBRC_FILES "lang/ebrc-*")
 message(STATUS "Language ebrc files: LANG_EBRC_FILES=${LANG_EBRC_FILES}")
+file(GLOB DOC_GUIDE_FILES "doc/usersguide*.html")
+message(STATUS "Doc guide files: DOC_GUIDE_FILES=${DOC_GUIDE_FILES}")
 file(GLOB LANG_MSG_FILES "lang/msg-*")
 message(STATUS "Language msg files: LANG_MSG_FILES=${LANG_MSG_FILES}")
 
@@ -224,7 +226,7 @@ if (PERL)
         COMMAND perl -f tools/buildebrcstring.pl
         COMMAND perl -f tools/buildmsgstrings.pl
         DEPENDS ${LANG_EBRC_FILES} ${LANG_MSG_FILES} src/startwindow.js src/endwindow.js
-            doc/usersguide.html
+            ${DOC_GUIDE_FILES)
             tools/buildsourcestring.pl
             tools/buildebrcstring.pl
             tools/buildmsgstrings.pl
