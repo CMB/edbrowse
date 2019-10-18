@@ -1486,7 +1486,7 @@ static void ftp_ls_line(struct i_get *g, char *line)
 	stringAndString(&g->buffer, &g->length, "<br>");
 
 	for (j = 0; line[j]; ++j)
-		if (!strchr("-rwxdls", line[j]))
+		if (!strchr("-rwxdlsS", line[j]))
 			break;
 
 	if (j == 10 && line[j] == ' ') {	/* long list */
@@ -1862,7 +1862,7 @@ static bool ftpConnect(struct i_get *g, char *creds_buf)
 	if (curlret != CURLE_OK)
 		goto ftp_transfer_fail;
 
-	has_slash = g->urlcopy[g->urlcopy_l] == '/';
+	has_slash = g->urlcopy[g->urlcopy_l - 1] == '/';
 /* don't download a directory listing, we want to see that */
 /* Fetching a directory will fail in the special case of scp. */
 	if (!g->down_force)
