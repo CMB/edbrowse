@@ -1821,6 +1821,11 @@ static bool readFile(const char *filename, const char *post, bool newwin,
 		if (g.code != 200 && g.code != 210)
 			cf->render1 = cf->render2 = true;
 
+// Don't print "this doesn't look like browsable text"
+// if the content type is plain text.
+		if (memEqualCI(g.content, "text/plain", 10) && cmd == 'b')
+			cmd = 'e';
+
 		if (fileSize == 0) {	/* empty file */
 			nzFree(rbuf);
 			if (!fromframe)
