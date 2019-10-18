@@ -1752,6 +1752,11 @@ static bool readFile(const char *filename, const char *post, bool newwin,
 	serverData = 0;
 	serverDataLen = 0;
 
+	if (newwin) {
+		nzFree(cw->saveURL);
+		cw->saveURL = cloneString(filename);
+	}
+
 	if (memEqualCI(filename, "file://", 7)) {
 		filename += 7;
 		if (!*filename) {
@@ -4291,8 +4296,6 @@ et_go:
 		cw->htmldesc = 0;
 		nzFree(cw->htmlkey);
 		cw->htmlkey = 0;
-		nzFree(cw->saveURL);
-		cw->saveURL = 0;
 		nzFree(cw->mailInfo);
 		cw->mailInfo = 0;
 		if (ub)
@@ -6763,7 +6766,6 @@ bool browseCurrentBuffer(void)
 	free(newbuf);
 	cw->undoable = false;
 	cw->changeMode = save_ch;
-	cw->saveURL = cloneString(cf->fileName);
 
 	if (cf->fileName) {
 		j = strlen(cf->fileName);
