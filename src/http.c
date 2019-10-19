@@ -1856,7 +1856,7 @@ static bool ftpConnect(struct i_get *g, char *creds_buf)
 /* libcurl appends an implicit slash to URLs like "ftp://foo.com".
 * Be explicit, so that edbrowse knows that we have a directory. */
 	if (!strchr(g->urlcopy + protLength, '/'))
-		strcpy(g->urlcopy + g->urlcopy_l, "/");
+		strcpy(g->urlcopy + g->urlcopy_l++, "/");
 
 	curlret = setCurlURL(h, g->urlcopy);
 	if (curlret != CURLE_OK)
@@ -1929,7 +1929,7 @@ static bool ftpConnect(struct i_get *g, char *creds_buf)
 		if (has_slash | is_scp)
 			transfer_success = false;
 		else {		/* try appending a slash. */
-			strcpy(g->urlcopy + g->urlcopy_l, "/");
+			strcpy(g->urlcopy + g->urlcopy_l++, "/");
 			g->down_state = 0;
 			cnzFree(g->down_file);
 			g->down_file = 0;
