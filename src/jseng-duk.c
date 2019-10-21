@@ -1641,12 +1641,33 @@ static enum ej_proptype top_proptype(void)
 	return EJ_PROP_NONE;	/* don't know */
 }				/* top_proptype */
 
+/*********************************************************************
+http://theconversation.com/how-to-build-a-moon-base-120259
+creates a script object with getter on src, which throws an error if src
+is empty or syntactically invalid.
+I check for src in prepareScript(), to see if I need to load the page.
+It's just a get call, but the getter throws an error,
+and the get call is unprotected, and edbrowse aborts. Ouch!
+Here is a simple get property call that is  called through
+duk_safe_call() and thus protected.
+I hope it doesn't introduce too much overhead, because it is almost never
+needed, but nor do I want edbrowse to abort!
+*********************************************************************/
+
+static duk_ret_t protected_get(duk_context * cx, void *udata)
+{
+	const char *name = udata;
+	duk_get_prop_string(cx, -1, name);
+	return 1;
+}
+
 enum ej_proptype typeof_property_nat(jsobjtype parent, const char *name)
 {
 	enum ej_proptype l;
+	int rc;
 	duk_push_heapptr(jcx, parent);
-	duk_get_prop_string(jcx, -1, name);
-	l = top_proptype();
+	rc = duk_safe_call(jcx, protected_get, (void *)name, 0, 1);
+	l = rc ? 0 : top_proptype();
 	duk_pop_2(jcx);
 	return l;
 }

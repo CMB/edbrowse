@@ -706,6 +706,27 @@ top:
 	for (t = cw->scriptlist; t; t = t->same) {
 		if (!t->jv || t->step >= 3)
 			continue;
+
+/*********************************************************************
+js could create a script object, and not link it into the tree.
+Still it has a tag, and we see it.
+We may try to prepare it and then execute it, but there are two problems.
+1. Maybe it isn't ready, which is why it isn't linked into the tree.
+We should skip it and try again later.
+2. Maybe it was just an exercise, and will never be used.
+We move into prepareScrtipt(), and check some property of the script object.
+This trigggers garbage collection, and the object goes away.
+Our tag is marked dead in response, but we don't check for that in every step
+of preparation and execution.
+The next time we try to use this object in any way, it blows up.
+So it is best to skate past a script that is not linked into the tree.
+I am lazy for now, and just check that it has a parent.
+But it could have a parent like <P> and still not be linked into the tree.
+I should really march up the parent links until I see document.head or document.body.
+*********************************************************************/
+		if (!t->parent)
+			continue;
+
 		cf = t->f0;
 		prepareScript(t);
 // step will now be 3, load in background, 4, loaded, or 6, failure.
