@@ -1809,9 +1809,13 @@ static bool readFile(const char *filename, const char *post, bool newwin,
 		if (!rc)
 			return false;
 		changeFileName = g.cfn;	// allocated
-		if (newwin)
+		if (newwin) {
 			cw->referrer = g.referrer;	// allocated
-		else
+			if (g.cfn) {
+				nzFree(cw->saveURL);
+				cw->saveURL = cloneString(g.cfn);
+			}
+		} else
 			nzFree(g.referrer);
 
 /* We got some data.  Any warnings along the way have been printed,
