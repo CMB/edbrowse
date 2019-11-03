@@ -1063,7 +1063,7 @@ char *encodePostData(const char *s, const char *keep_chars)
 	if (s == emptyString)
 		return emptyString;
 	if (!keep_chars)
-		keep_chars = "-._~*()!";
+		keep_chars = "-._~()";
 	post = initString(&l);
 	while ((c = *s++)) {
 		if (isalnumByte(c))

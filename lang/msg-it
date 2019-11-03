@@ -510,7 +510,7 @@ errore di sintassi javascript
 .ebrc: riga %d, troppi user agents, il limite è %d
 .ebrc: il cookie jar %s non è un normale file
 .ebrc: impossibile creare il cookie jar %s
-0
+formato dell'indirizzo e-mail non corretto
 .ebrc: riga %d, il dominio %s non contiene un punto
 impossibile accedere ad %s, (sicuro)
 .ebrc: il file certificati SSL %s non è un normale file
@@ -538,7 +538,7 @@ impossibile accedere ad %s, (sicuro)
 troppi accounts di posta nel file di configurazione .ebrc, riga %d
 troppi plugin blocks nel tuo file di configurazione .ebrc, limite %d
 troppe tavole sql nel tuo file di configurazione .ebrc, limite %d
-0
+formato url non corretto
 .ebrc: riga %d, le strutture di controllo sono nidificate troppo profondamente
 .ebrc: la funzione %s non è mai terminata
 .ebrc: un mail block o un plugin block non è mai terminato (EOF)
