@@ -330,18 +330,20 @@ static bool parseURL(const char *url, const char **proto, int *prlen, const char
 	}
 
 	if (p) {
-/* You have to have something after the colon */
 		q = p + 1;
 		if (*q == '/')
 			++q;
 		if (*q == '/')
 			++q;
 		skipWhite(&q);
-#if 0
-// javascript: is technically a url
-		if (!*q)
-			return false;
-#endif
+
+		if (!*q) {
+// You have to have something after the colon
+// but javascript: is technically a url, I guess
+			if (strncmp(url, "javascript:", 11))
+				return false;
+		}
+
 		if (proto)
 			*proto = url;
 		if (prlen)
