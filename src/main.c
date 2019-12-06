@@ -506,7 +506,10 @@ static void setupEdbrowseTempDirectory(void)
 	ebTempDir = a;
 	userid = 0;
 #else
-	ebTempDir = "/tmp/.edbrowse";
+	ebTempDir = getenv("TMPDIR");
+	if (!ebTempDir) {
+		ebTempDir="/tmp/.edbrowse";
+	}
 	userid = geteuid();
 #endif
 
@@ -527,8 +530,8 @@ static void setupEdbrowseTempDirectory(void)
 #endif
 	}
 // make room for user ID on the end
-	ebUserDir = allocMem(strlen(ebTempDir) + 20);
-	sprintf(ebUserDir, "%s/%d", ebTempDir, userid);
+	ebUserDir = allocMem(strlen(ebTempDir) + 30);
+	sprintf(ebUserDir, "%s/edbrowse.%d", ebTempDir, userid);
 	if (fileTypeByName(ebUserDir, false) != 'd') {
 /* no such directory, try to make it */
 		if (mkdir(ebUserDir, 0700)) {
