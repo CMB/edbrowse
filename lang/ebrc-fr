@@ -142,6 +142,7 @@ function:init {
 dw
 # affiche la taille de chaque fichier dans un listing de répertoire
 ls=s
+ll 700
 # d'autres paramètres personnels
 }
 

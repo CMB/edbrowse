@@ -45,8 +45,6 @@ reply = edbrowse@gmail.com
 # cachedir = /b3/ebcache
 # cachesize = 200
 
-# limite de caracteres ao mostrar uma linha; linhas podem ser indefinidamente longas internamente.
-linelength = 700
 
 # aguarda 30 segundos uma resposta de um servidor da web
 webtimer = 30
@@ -152,6 +150,8 @@ function:init {
 dw
 # Mostra o tamanho de cada arquivo numa listagem do diretório
 ls=s
+# limite de caracteres ao mostrar uma linha; linhas podem ser indefinidamente longas internamente.
+ll 700
 # outras configurações pessoais
 }
 

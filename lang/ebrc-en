@@ -45,9 +45,6 @@ reply = edbrowse@gmail.com
 # cachedir = /b3/ebcache
 # cachesize = 200
 
-# character limit when displaying a line; lines can be arbitrarily long inside.
-linelength = 700
-
 #  wait 30 seconds for a response from a web server
 webtimer = 30
 #  wait 3 minutes for a response from a mail server
@@ -154,6 +151,8 @@ function:init {
 dw
 # Display the size of each file in a directory listing
 ls=s
+# character limit when displaying a line; lines can be arbitrarily long inside.
+ll 700
 # other personal settings
 #  you may want ua2, so google searches have headings, and perhaps for other websites.
 #  Nobody knows who edbrowse is.

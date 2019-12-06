@@ -47,9 +47,6 @@ reply = edbrowse@gmail.com
 # cachedir = /b3/ebcache
 # cachesize = 200
 
-# Maximale Zeilenlänge für das Anzeigen, innerhalb dessen beliebige Länge.
-linelength = 700
-
 # Warte 30 Sekunden auf Antwort von Webserver.
 webtimer = 30
 # Warte 30 Minuten auf Antwort von Email-Server.
@@ -155,6 +152,8 @@ function:init {
 dw
 # Gib die Größe jeder Datei in einer Verzeichnisauflistung an.
 ls=s
+# Maximale Zeilenlänge für das Anzeigen, innerhalb dessen beliebige Länge.
+ll 700
 # Andere persönliche Einstellungen...
 }
 

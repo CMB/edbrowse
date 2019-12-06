@@ -45,8 +45,6 @@ reply = edbrowse@gmail.com
 # cachedir = /b3/ebcache
 # cachesize = 200
 
-# Limit znaków przy wyświetlaniu wierszy; wiersze nie mają ograniczeń rzeczywistej długości.
-linelength = 700
 
 #  czekaj 30 sekund na odpowiedź serwera web
 webtimer = 30
@@ -154,6 +152,8 @@ function:init {
 dw
 # Wyświetlaj rozmiar każdego pliku w listingu katalogów
 ls=s
+# Limit znaków przy wyświetlaniu wierszy; wiersze nie mają ograniczeń rzeczywistej długości.
+ll 700
 # pozostałe ustawienia osobiste
 #  możesz potrzebować ua2 by wyszukiwania w Google miały nagłówki
 #  Nikt nie zna przeglądarki edbrowse.
