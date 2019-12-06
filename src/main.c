@@ -124,7 +124,6 @@ static void catchSig(int n)
 {
 	time_t now;
 	pthread_t t1 = foreground_thread, t2;
-	int j;
 	intFlag = true;
 /* If we were reading from a file, or socket, this signal should
  * cause the read to fail.  Check for intFlag, so we know it was
@@ -147,13 +146,13 @@ static void catchSig(int n)
 	i_puts(MSG_IntForce);
 	if (whichproc == 'j')
 		finishBrowse();
-// Doing this stuff from a signal handler?  idk
-	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &j);
-// without this line the thread never dies, and js runs, and the CPU churns.
-	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &j);
-	if (pthread_create(&t2, NULL, inputForever, NULL))
-		return;		// didn't work
-	pthread_cancel(t1);
+	if (t1 == pthread_self()) {
+		if (pthread_create(&t2, NULL, inputForever, NULL))
+			return;		// didn't work
+		pthread_exit(NULL);
+	} else {
+		pthread_kill(t1, SIGINT);
+	}
 }				/* catchSig */
 
 void setDataSource(char *v)
