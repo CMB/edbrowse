@@ -62,9 +62,8 @@
  * Some systems will define ushort in sys/types.h, others will not.
  * Unfortunately there is no #define symbol to key on;
  * no way to conditionally compile the following statement. */
-#ifdef DOSLIKE
+#if defined(DOSLIKE) || defined(__ANDROID__)
 typedef unsigned short ushort;
-typedef unsigned long ulong;
 #endif
 /* sys/types.h defines unsigned char as unchar.  I prefer uchar.
  * It is consistent with ushort uint and ulong, and doesn't remind
