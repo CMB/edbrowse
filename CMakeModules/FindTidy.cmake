@@ -25,6 +25,9 @@ if (_TIDY_ROOT)
 endif ()
 
 set(TIDY_NAMES tidy)
+if (${CMAKE_SYSTEM_NAME} STREQUAL  "FreeBSD")
+    set(TIDY_NAMES tidy5)
+endif ()
 
 if (_TIDY_SEARCHES)
     # Try each search configuration.
