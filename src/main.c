@@ -146,9 +146,9 @@ static void catchSig(int n)
 	i_puts(MSG_IntForce);
 	if (whichproc == 'j')
 		finishBrowse();
-	if (t1 == pthread_self()) {
+	if (pthread_equal(t1, pthread_self())) {
 		if (pthread_create(&t2, NULL, inputForever, NULL))
-			return;		// didn't work
+			return;	// didn't work
 		pthread_exit(NULL);
 	} else {
 		pthread_kill(t1, SIGINT);
