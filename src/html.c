@@ -923,7 +923,24 @@ char *htmlParse(char *buf, int remote)
 		runScriptsPending();
 		runOnload();
 		runScriptsPending();
+
+/*********************************************************************
 		set_property_string(cf->docobj, "readyState", "complete");
+This should work, and does almost every time, except for
+https://www.digicatapult.org.uk/
+which calls https://ajax.cloudflare.com/cdn-cgi/scripts/7089c43e/cloudflare-static/rocket-loader.min.js
+which replaces readyState with a getter and no setter.
+If we try to set it using this unprotected duktape call it aborts.
+I could add protection around set_property_string, or write a protected version
+thereof, and some day I might have to do that,
+but this is called only once per browse,
+so no impact on performance if we invoke a script,
+so for now I'm taking the easy way out.
+jsRunScript is protected.
+*********************************************************************/
+		jsRunScript(cf->winobj, "document.readyState='complete'",
+			    "readyState", 1);
+
 		run_event_bool(cf->docobj, "document", "onreadystatechange", 0);
 		runScriptsPending();
 		rebuildSelectors();

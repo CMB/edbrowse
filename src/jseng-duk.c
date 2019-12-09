@@ -1651,7 +1651,7 @@ and the get call is unprotected, and edbrowse aborts. Ouch!
 Here is a simple get property call that is  called through
 duk_safe_call() and thus protected.
 I hope it doesn't introduce too much overhead, because it is almost never
-needed, but nor do I want edbrowse to abort!
+needed, but neither do I want edbrowse to abort!
 *********************************************************************/
 
 static duk_ret_t protected_get(duk_context * cx, void *udata)

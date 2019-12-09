@@ -193,7 +193,7 @@ var idx = 0;
 if(!w.$ss) mw0.showscripts();
 for(var i=0; i<w.$ss.length; ++i) {
 var s = w.$ss[i];
-if(typeof s.data === "string" && s.data.length &&
+if(typeof s.data === "string" &&
 (s.src && s.src.length || s.expanded)) {
 var ss = "inline";
 if(s.src && s.src.length) ss = s.src.toString();
@@ -1002,6 +1002,8 @@ mw0.P = function(){}; mw0.P.domclass = "P";
 mw0.Header = function(){}; mw0.Header.domclass = "Header";
 mw0.Footer = function(){}; mw0.Footer.domclass = "Footer";
 mw0.Script = function(){}; mw0.Script.domclass = "Script";
+mw0.Script.prototype.type = "";
+mw0.Script.prototype.data = "";
 mw0.HTMLScriptElement = mw0.Script; // alias for Script, I guess
 mw0.Timer = function(){this.nodeName = "TIMER";}; mw0.Timer.domclass = "Timer";
 mw0.Audio = function(){}; mw0.Audio.domclass = "Audio";
