@@ -228,6 +228,12 @@ void eb_curl_global_init(void)
 		goto libcurl_init_fail;
 	if (cookieFile && !ismc) {
 		curl_init_status =
+		    curl_easy_setopt(global_http_handle, CURLOPT_COOKIEFILE,
+				     "");
+		if (curl_init_status != CURLE_OK) {
+			goto libcurl_init_fail;
+		}
+		curl_init_status =
 		    curl_easy_setopt(global_http_handle, CURLOPT_COOKIEJAR,
 				     cookieFile);
 		if (curl_init_status != CURLE_OK)

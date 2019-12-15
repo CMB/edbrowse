@@ -2167,6 +2167,10 @@ static CURL *http_curl_init(struct i_get *g)
 	    curl_easy_setopt(h, CURLOPT_SHARE, global_share_handle);
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
+	curl_init_status = curl_easy_setopt(h, CURLOPT_COOKIEFILE, "");
+	if (curl_init_status != CURLE_OK) {
+		goto libcurl_init_fail;
+	}
 /* Lots of these setopt calls shouldn't fail.  They just diddle a struct. */
 	curl_easy_setopt(h, CURLOPT_SOCKOPTFUNCTION, my_curl_safeSocket);
 	curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, eb_curl_callback);
