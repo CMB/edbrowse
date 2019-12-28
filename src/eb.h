@@ -144,7 +144,7 @@ typedef uchar *pst;		/* perl string */
 #define MAXTTYLINE 256 // max length of an entered line
 #define MAXHOSTLEN 400
 #define MAXPROTLEN 12
-#define MAXUSERPASS 40 // user name or password
+#define MAXUSERPASS 80 // user name or password
 #define MAXACCOUNT 100 // number of email accounts
 #define MAXAGENT 50 // number of user agents
 #define MAXMIME 40 // number of mime types
