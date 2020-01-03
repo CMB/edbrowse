@@ -3688,8 +3688,32 @@ document.importNode = mw0.importNode;
 document.compareDocumentPosition = mw0.compareDocumentPosition;
 document.getBoundingClientRect = mw0.getBoundingClientRect;
 
+/*********************************************************************
+Compile a string for a handler such as onclick or onload.
+Warning: this is not protected.
+set_property_string(anchorObject, "onclick", "snork 7 7")
+will run through a setter, which says this is a string to be compiled into
+a function, whence a syntax error will cause duktape to abort.
+Perhaps every call, or some calls, to set_property_string should be protected,
+as I had to do with typeof_property_nat in jseng_duk.c.
+Maybe I should bite the bullet and protect the calls to set_property_string.
+I already had to work around an abort when setting readyState = "complete",
+see this in html.c. It's ugly.
+On the other hand, I may want to do something specific when a handler doesn't compile.
+Put in a stub handler that returns true or something.
+So maybe it's worth having a specific try catch here.
+*********************************************************************/
+
 function handle$cc(f, t) {
-var cf = eval("(function(){" + f + " }.bind(t))");
+var cf; // the compiled function
+try {
+cf = eval("(function(){" + f + " }.bind(t))");
+} catch(e) {
+// don't just use eb$nullfunction, cause I'm going to put the source
+// onto cf.body, which might help with debugging.
+cf = eval("(function(){return true;})");
+alert3("handler syntax error <" + f + ">");
+}
 cf.body = f;
 cf.toString = function() { return this.body; }
 return cf;
