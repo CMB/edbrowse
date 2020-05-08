@@ -668,7 +668,7 @@ static void prerenderNode(struct htmlTag *t, bool opentag)
 			radioCheck = initString(&radio_l);
 		}
 		if (!opentag && currentForm) {
-			if (t->href && t->ninp && !t->submitted) {
+			if (t->ninp && !t->submitted) {
 				makeButton();
 				t->submitted = true;
 			}
