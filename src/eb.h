@@ -289,7 +289,7 @@ extern char *sslCerts;		/* ssl certificates to validate the secure server */
 extern int verifyCertificates;	/* is a certificate required for the ssl connection? */
 extern int displayLength;	// when printing a line
 extern int formatLineLength;	// when formatting html
-bool formatOverflow;
+extern bool formatOverflow;
 extern int webTimeout, mailTimeout;
 extern uchar browseLocal;
 extern bool sqlPresent;		/* Was edbrowse compiled with SQL built in? */
