@@ -1787,7 +1787,7 @@ const struct tagInfo availableTags[] = {
 	{"samp", "a block of sample text", TAGACT_NOP, 0, 0},
 	{"address", "an address block", TAGACT_NOP, 1, 0},
 	{"style", "a style block", TAGACT_NOP, 0, 2},
-	{"script", "a script", TAGACT_SCRIPT, 0, 0},
+	{"script", "a script", TAGACT_SCRIPT, 0, 1},
 	{"noscript", "no script section", TAGACT_NOSCRIPT, 0, 2},
 	{"noframes", "no frames section", TAGACT_NOP, 0, 2},
 	{"embed", "embedded html", TAGACT_MUSIC, 0, 4},
