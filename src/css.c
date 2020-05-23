@@ -1248,6 +1248,14 @@ static void cssParseLeft(struct desc *d)
 				a1 = s;
 				continue;
 			}
+// empty piece could be first in the selector, as in querySelector(">p")
+			if (!sel) {
+				sel = allocZeroMem(sizeof(struct sel));
+				if (!d->selectors)
+					d->selectors = sel2 = sel;
+				else
+					sel2->next = sel, sel2 = sel;
+			}
 			sel->error = CSS_ERROR_SEL0;
 			break;
 		}
