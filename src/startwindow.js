@@ -3511,7 +3511,7 @@ w.$jt$sn = 0;
 // I escape some spaces with \ so they don't get crunched away.
 // First name the anonymous functions; then put in the trace points.
 s.data = s.data.replace(/(\bfunction *)(\([\w ,]*\)\ *{\n)/g, mw0.jtfn1);
-s.data = s.data.replace(/(\bdo \{|\bwhile \([{}\n]*\)\ *{|\bfor \([^{}\n]*\)\ *{|\bif \([^{}\n]*\)\ *{|\bcatch \(\w*\)\ *{|\belse \{|\btry \{|\bfunction *\w*\([\w ,]*\)\ *{|[^\n)]\n *)(var |\n)/g, mw0.jtfn0);
+s.data = s.data.replace(/(\bdo \{|\bwhile \([^{}\n]*\)\ *{|\bfor \([^{}\n]*\)\ *{|\bif \([^{}\n]*\)\ *{|\bcatch \(\w*\)\ *{|\belse \{|\btry \{|\bfunction *\w*\([\w ,]*\)\ *{|[^\n)]\n *)(var |\n)/g, mw0.jtfn0);
 return;
 }
 
