@@ -990,6 +990,12 @@ mw0.tCap = function(){}; mw0.tCap.domclass = "tCap";
 mw0.Table = function(){ this.rows = []; this.tBodies = []; }; mw0.Table.domclass = "Table";
 mw0.Div = function(){}; mw0.Div.domclass = "Div";
 mw0.Div.prototype.doScroll = eb$voidfunction;
+mw0.Div.prototype.click = function() {
+// as though the user had clicked on this
+var e = new Event;
+e.initEvent("click", true, true);
+this.dispatchEvent(e);
+}
 mw0.Label = function(){}; mw0.Label.domclass = "Label";
 Object.defineProperty(mw0.Label.prototype, "htmlFor", { get: function() { return this.getAttribute("for"); }, set: function(h) { this.setAttribute("for", h); }});
 mw0.HtmlObj = function(){}; mw0.HtmlObj.domclass = "HtmlObj";
