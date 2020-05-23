@@ -3403,6 +3403,8 @@ var code = parseInt(responsebody_array[1]);
 var http_headers = responsebody_array[2];
 responsebody_array[0] = responsebody_array[1] = responsebody_array[2] = "";
 this.responseText = responsebody_array.join("\r\n\r\n").trim();
+// some want responseText, some just want response
+this.response = this.responseText;
 var hhc = http_headers.split(/\r?\n/);
 for(var i=0; i<hhc.length; ++i) {
 var value1 = hhc[i];
@@ -3463,6 +3465,7 @@ return returnedHeaders.join("\r\n");
 mw0.XMLHttpRequest.prototype.async = false;
 mw0.XMLHttpRequest.prototype.readyState = 0;
 mw0.XMLHttpRequest.prototype.responseText = "";
+mw0.XMLHttpRequest.prototype.response = "";
 mw0.XMLHttpRequest.prototype.status = 0;
 mw0.XMLHttpRequest.prototype.statusText = "";
 
