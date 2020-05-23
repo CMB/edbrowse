@@ -4343,7 +4343,16 @@ if(!Array.isArray(a)) return;
 var l = a.length;
 for(var i=0; i<l; ++i) a[i] = Math.floor(Math.random()*0x100000000);
 }
+
+mw0.rastep = 0;
+mw0.requestAnimationFrame = function() {
+// This absolutely doesn't do anything. What is edbrowse suppose to do with animation?
+return ++mw0.rastep;
+}
+
 } // master compile
 
 crypto = mw0.crypto;
+requestAnimationFrame = mw0.requestAnimationFrame;
+cancelAnimationFrame = eb$voidfunction;
 
