@@ -6288,6 +6288,9 @@ rebrowse:
 			nzFree(body);
 			if (j)
 				i_puts(MSG_MailHowto);
+// serverData doesn't mean anything here, but it has to be not null
+// for some code that is coming up.
+			serverData = emptyString;
 		} else {
 			bool save_pg;
 
