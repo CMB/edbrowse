@@ -4336,3 +4336,14 @@ MutationObserver = mw0.MutationObserver;
 MutationRecord = mw0.MutationRecord;
 mutList = [];
 
+if(!mw0.compiled) {
+mw0.crypto = {};
+mw0.crypto.getRandomValues = function(a) {
+if(!Array.isArray(a)) return;
+var l = a.length;
+for(var i=0; i<l; ++i) a[i] = Math.floor(Math.random()*0x100000000);
+}
+} // master compile
+
+crypto = mw0.crypto;
+
