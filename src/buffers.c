@@ -4535,7 +4535,9 @@ et_go:
 			if (!lw)
 				continue;
 			printf("%d: ", n);
-			if (lw->f0.fileName)
+			if (lw->htmltitle)
+				printf("%s", lw->htmltitle);
+			else if (lw->f0.fileName)
 				printf("%s", lw->f0.fileName);
 			nl();
 		}
