@@ -94,6 +94,7 @@ cmake ../..
 make
 make install # as root
 Now the latest tidy-html5 library will be available to edbrowse.
+you may have to run ldconfig to access this new library.
 Edbrowse requires tidy-html5 version 5.1.25 or greater,
 and might not work properly, or even compile with an earlier version.
 Note that the latest tagged version is 5.1.25, but 5.1.26 and later
@@ -113,6 +114,7 @@ make -f Makefile.sharedlibrary
 make -f Makefile.sharedlibrary install (as root)
 make -f Makefile.cmdline
 ln -s `pwd`/duk /usr/local/bin/duk (as root)
+you may have to run ldconfig to access this new library.
 
 unixODBC:
 If you want database access, you need unixODBC and unixODBC-devel.
