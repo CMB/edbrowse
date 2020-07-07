@@ -107,7 +107,8 @@ git clone https://github.com/svaarala/duktape.git
 cd duktape
 #  build the version for distribution, without all the debugging features
 make dist
-cd dist
+make dist/source
+cd dist/source
 make -f Makefile.sharedlibrary
 make -f Makefile.sharedlibrary install (as root)
 make -f Makefile.cmdline
