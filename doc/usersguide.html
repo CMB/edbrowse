@@ -1384,7 +1384,12 @@ in alphabetical order,
 according to your locale.
 This is the same order as /bin/ls, and is determined by the environment variable $LC_COLLATE.
 Set LC_COLLATE=C for traditional ascii order.
-Use the `hf' option to see the hidden files as well.
+Note: the Raspberry Pi (raspbian) seems to have a bug, wherein LC_ALL trumps LC_COLLATE. It's not suppose to but it does.
+So unset LC_ALL and set the other LC_ variables individually, according to your taste.
+Make sure LC_MESSAGES is set, so you can interact with linux in your language.
+
+<P>
+Use the `hf' option to see the hidden files, on Windows or Unix.
 (This includes the parent directory ..).
 Type g to go to one of these files or sub directories.
 Type ^ to get back to where you were.
