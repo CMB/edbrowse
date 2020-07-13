@@ -611,6 +611,7 @@ dr : directory is readonly
 <br>sort-t : reverse mod time
 <br>sort-s : reverse size
 <br>rf : refresh directory scan, useful if you have changed ls or sort parameters
+<br>M : move this directory to an empty session and back up
 <P>
 Browse an html file or a web page
 <P>
@@ -1405,6 +1406,15 @@ the go command will invoke a plugin if that is indicated by the suffix of the fi
 An mp3 file plays, and a pdf file is rendered into readable text.
 Use the `pg' toggle command to disable plugins if you don't want this automatic behavior.
 More on plugins later.
+
+<P>
+The capital M (move) command moves this directory to another session and backs up.
+Once again, we will find the same command in the browser.
+If you were in directory foo, and descended into directory bar, and you wish to look at both of them in parallel, type M, and bar moves to a new session, and you are back in foo, on the line that contains bar.
+You can now switch between the two directories; foo is not hidden on the stack.
+Use M6 to move the directory specifically to session 6; this will clobber session 6.
+If unsure, type M.
+Note, this command works just as well with files.
 
 <P>
 Like `ls -F', a subdirectory is indicated by a trailing slash.

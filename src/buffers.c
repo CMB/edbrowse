@@ -38,7 +38,7 @@ static const char browse_cmd[] = "AbBdDefghHiklMnpqsvwXz=^&<";
 /* Commands for sql mode. */
 static const char sql_cmd[] = "AadDefghHiklmnpqrsvwXz=^<";
 /* Commands for directory mode. */
-static const char dir_cmd[] = "AbdDefghHklmnpqsvwXz=^<";
+static const char dir_cmd[] = "AbdDefghHklMmnpqsvwXz=^<";
 /* Commands that work at line number 0, in an empty file. */
 static const char zero_cmd[] = "aAbefhHMqruwz=^<";
 /* Commands that expect a space afterward. */
