@@ -463,8 +463,8 @@ nieprawidłowe znaki w zakodowanym ząłączniku
 polecenie %s nie może być wykonane globalnie
 uwaga, JavaScript nie może być wywołany podwójnym kliknięciem
 błąd użycia opcji %s podczas synchronizacji lub wysyłania formularza
-0
-0
+nie można przenieś %s innego systemu plik
+nie można przenieś %s, errno %d
 nie można pobrać lokalnego JavaScriptu\n
 nie można pobrać JavaScriptu z %s, kod %ld\n
 nie można pobrać JavaScriptu\n

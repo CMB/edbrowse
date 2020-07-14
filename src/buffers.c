@@ -5,9 +5,9 @@
 
 #include "eb.h"
 
-#ifndef DOSLIKE			// no #include <sys/select.h>
+#ifndef DOSLIKE
 #include <sys/select.h>
-#endif // !DOSLIKE
+#endif
 
 /* If this include file is missing, you need the pcre package,
  * and the pcre-devel package. */
@@ -276,7 +276,7 @@ void displayLine(int n)
 				c = '>';
 			if (c < ' ' || c == 0x7f || (c >= 0x80 && listNA))
 				expand = true;
-		}		/* list */
+		}
 		if (expand) {
 			sprintf(buf, "~%02X", c), cnt += 3;
 			stringAndString(&output, &output_l, buf);
@@ -390,7 +390,7 @@ int select_stdin(struct timeval *ptv)
 	}
 	return res;
 }
-#endif // DOSLIKE
+#endif
 
 /*********************************************************************
 Get a line from standard in.  Need not be a terminal.
@@ -468,11 +468,11 @@ top:
 		tv.tv_usec = delay_ms * 1000;
 #ifdef DOSLIKE
 		rc = select_stdin(&tv);
-#else // !DOSLIKE
+#else
 		memset(&channels, 0, sizeof(channels));
 		FD_SET(0, &channels);
 		rc = select(1, &channels, 0, 0, &tv);
-#endif // DOSLIKE y/n
+#endif
 		if (rc < 0)
 			goto interrupt;
 		if (rc == 0) {	/* timeout */
@@ -1355,6 +1355,8 @@ static bool delFiles(void)
 		return false;
 	}
 
+	cmd = 'e';		// show errors
+
 	ln = startRange;
 	cnt = endRange - startRange + 1;
 	while (cnt--) {
@@ -1378,6 +1380,7 @@ static bool delFiles(void)
 		}
 
 		if (dirWrite == 2 || (*ftype && strchr("@<*^|", *ftype))) {
+			debugPrint(1, "%s ↓", file);
 unlink:
 			if (unlink(path)) {
 				setError(MSG_NoRemove, file);
@@ -1387,6 +1390,7 @@ unlink:
 		} else {
 			char bin[ABSPATH];
 			sprintf(bin, "%s/%s", recycleBin, file);
+			debugPrint(1, "%s → 🗑", file);
 			if (rename(path, bin)) {
 				if (errno == EXDEV) {
 					char *rmbuf;
@@ -1424,6 +1428,94 @@ unlink:
 
 	return true;
 }				/* delFiles */
+
+// Move files from one directory to another
+static bool moveFiles(void)
+{
+	struct ebWindow *cw1 = cw;
+	struct ebWindow *cw2 = sessionList[destLine].lw;
+	char *path1, *path2;
+	int ln, cnt;
+
+	cmd = 'e';		// show error messages
+	ln = startRange;
+	cnt = endRange - startRange + 1;
+	while (cnt--) {
+		char *file, *t, *ftype;
+		file = (char *)fetchLine(ln, 0);
+		t = strchr(file, '\n');
+		if (!t)
+			i_printfExit(MSG_NoNlOnDir, file);
+		*t = 0;
+		ftype = dirSuffix(ln);
+
+		debugPrint(1, "%s → %s", file, cw2->baseDirName);
+
+		path1 = makeAbsPath(file);
+		if (!path1) {
+			free(file);
+			return false;
+		}
+		path1 = cloneString(path1);
+
+		cw = cw2;
+		path2 = makeAbsPath(file);
+		cw = cw1;
+		if (!path2) {
+			free(file);
+			free(path1);
+			return false;
+		}
+
+		if (!access(path2, 0)) {
+			setError(MSG_DestFileExists);
+			free(file);
+			free(path1);
+			return false;
+		}
+
+		if (rename(path1, path2)) {
+			if (errno == EXDEV) {
+				char *rmbuf;
+				int rmlen;
+				if (*ftype) {
+					setError(MSG_MoveFileSystem, file);
+					free(file);
+					free(path1);
+					return false;
+				}
+				if (!fileIntoMemory(path1, &rmbuf, &rmlen)) {
+					free(file);
+					free(path1);
+					return false;
+				}
+				if (!memoryOutToFile(path2, rmbuf, rmlen,
+						     MSG_TempNoCreate2,
+						     MSG_NoWrite2)) {
+					free(file);
+					free(path1);
+					nzFree(rmbuf);
+					return false;
+				}
+				nzFree(rmbuf);
+				unlink(path1);
+				goto moved;
+			}
+
+			setError(MSG_MoveError, file, errno);
+			free(file);
+			free(path1);
+			return false;
+		}
+
+moved:
+		free(file);
+		free(path1);
+		delText(ln, ln);
+	}
+
+	return true;
+}
 
 /* Move or copy a block of text. */
 /* Uses range variables, hence no parameters. */
@@ -3018,8 +3110,6 @@ static bool getRangePart(const char *line, int *lineno, const char **split)
 		pcre_free(re_cc);
 /* and ln is the line that matches */
 	}
-
-	/* search pattern */
 	/* Now add or subtract from this number */
 	while ((first = *line) == '+' || first == '-') {
 		int add = 1;
@@ -3027,6 +3117,26 @@ static bool getRangePart(const char *line, int *lineno, const char **split)
 		if (isdigitByte(*line))
 			add = strtol(line, (char **)&line, 10);
 		ln += (first == '+' ? add : -add);
+	}
+
+	if (cw->dirMode && lineno == &destLine) {
+		if (ln >= MAXSESSION) {
+			setError(MSG_SessionHigh, ln, MAXSESSION - 1);
+			return false;
+		}
+		if (ln == context) {
+			setError(MSG_SessionCurrent, ln);
+			return false;
+		}
+		if (!sessionList[ln].lw || !sessionList[ln].lw->dirMode) {
+			char numstring[8];
+			sprintf(numstring, "%d", ln);
+			setError(MSG_NotDir, numstring);
+			return false;
+		}
+		*lineno = ln;
+		*split = line;
+		return true;
 	}
 
 	if (ln > cw->dol) {
@@ -4015,7 +4125,7 @@ static int twoLetter(const char *line, const char **runThis)
 		return rc;
 	}
 
-/* ^^^^ is the same as ^4; same with &*/
+/* ^^^^ is the same as ^4; same with & */
 	if ((line[0] == '^' || line[0] == '&') && line[1] == line[0]) {
 		const char *t = line + 2;
 		while (*t == line[0])
@@ -4031,7 +4141,7 @@ static int twoLetter(const char *line, const char **runThis)
 		bool setmode = false;
 		char *file, *path, *t;
 		const char *s = line + 2;
-		cmd = 'e';	/* so error messages are printed */
+		cmd = 'e';	// show error messages
 		skipWhite(&s);
 		if (*s == '=') {
 			setmode = true;
@@ -5079,7 +5189,7 @@ static bool balanceLine(const char *line)
 }				/* balanceLine */
 
 /* Unfold the buffer into one long, allocated string. */
-bool unfoldBufferW(const struct ebWindow * w, bool cr, char **data, int *len)
+bool unfoldBufferW(const struct ebWindow *w, bool cr, char **data, int *len)
 {
 	char *buf;
 	int l, ln;
@@ -5575,9 +5685,17 @@ replaceframe:
 /* move/copy destination, the third address */
 	if (cmd == 't' || cmd == 'm') {
 		if (!first) {
+			if (cw->dirMode) {
+				setError(MSG_BadDest);
+				return (globSub = false);
+			}
 			destLine = cw->dot;
 		} else {
 			if (!strchr(valid_laddr, first)) {
+				setError(MSG_BadDest);
+				return (globSub = false);
+			}
+			if (cw->dirMode && !isdigitByte(first)) {
 				setError(MSG_BadDest);
 				return (globSub = false);
 			}
@@ -6461,9 +6579,15 @@ redirect:
 		return doGlobal(line);
 	}
 
-	if (cmd == 'm' || cmd == 't') {
-		return moveCopy();
+	if (cmd == 'm' && cw->dirMode) {
+		j = moveFiles();
+		undoCompare();
+		cw->undoable = false;
+		return j;
 	}
+
+	if (cmd == 'm' || cmd == 't')
+		return moveCopy();
 
 	if (cmd == 'i') {
 		if (cw->browseMode) {

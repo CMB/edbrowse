@@ -1087,8 +1087,8 @@ char *lsattr(const char *path, const char *flags)
 	while (*flags) {
 		if (buf[0])
 			strcat(buf, " ");
-		if (this_brokenlink) {
-			strcat(buf, "?");
+		if (this_brokenlink && *flags != 'y') {
+			strcat(buf, "~");
 			++flags;
 			continue;
 		}
@@ -1168,7 +1168,7 @@ p:
 /* yes it's a link, read the path */
 			l = readlink(path, newpath, sizeof(newpath));
 			if (l <= 0)
-				strcat(buf, "?");
+				strcat(buf, "...");
 			else {
 				s = buf + strlen(buf);
 				strncpy(s, newpath, l);

@@ -463,8 +463,8 @@ caractères invalides dans la pièce jointe encodée
 0
 attention, javascript ne peut être invoqué par un double clic
 erreur de détermination de l'option %s pendant la synchronisation ou la soumission du formulaire
-0
-0
+impossible de déplacer %s un autre système de fichiers
+impossible de déplacer %s, errno %d
 impossible de charger localement javascript\n
 impossible de charger javascript depuis %s, code %ld\n
 impossible de charger javascript\n

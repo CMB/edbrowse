@@ -612,6 +612,9 @@ dr : directory is readonly
 <br>sort-s : reverse size
 <br>rf : refresh directory scan, useful if you have changed ls or sort parameters
 <br>M : move this directory to an empty session and back up
+<br> d : delete the file or move it to your trash can; theree is no undo
+<br>g/\.o$/d : delete all the .o files
+<br>.m3 : move this file to the directory in session 3; there is no undo
 <P>
 Browse an html file or a web page
 <P>
@@ -1576,6 +1579,7 @@ or lsm for the major and minor device numbers.
 (The last 5 do not apply on Windows.)
 These can be combined, e.g. lspk prints permissions and the number of hard links.
 ls is the same as lsst, size and mod time.
+Edbrowse prints ~ if the attributes cannot be acquired, e.g. asking the size of a broken symbolic link. The original symbol was a question mark, but that was easily confused with the question mark of an invalid command.
 
 <P>
 If you want file length and time to appear next to every file in a directory listing, then enter ls=lt.

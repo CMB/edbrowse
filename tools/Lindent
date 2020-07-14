@@ -1,4 +1,8 @@
 #!/bin/sh
+
+#  Warning: indent on the Raspberry Pi screws up block comments.
+#  I haven't figured out exactly why, but I did submit a bug report.
+
 PARAM="-npro -kr -i8 -ts8 -sob -l80 -ss -ncs -cp1"
 RES=`indent --version`
 V1=`echo $RES | cut -d' ' -f3 | cut -d'.' -f1`
@@ -15,4 +19,7 @@ elif [ $V1 -eq 2 ]; then
     fi
   fi
 fi
+
+#  params should be   -npro -kr -i8 -ts8 -sob -l80 -ss -ncs -cp1 -il0
+
 indent $PARAM "$@"

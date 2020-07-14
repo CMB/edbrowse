@@ -463,8 +463,8 @@ invalid characters in the encoded attachment
 the %s command cannot be applied globally
 warning, javascript cannot be invoked by a double click
 error resolving option %s during sync or form submit
-0
-0
+cannot move %s to another file system
+cannot move %s, errno %d
 could not fetch local javascript\n
 could not fetch javascript from %s, code %ld\n
 could not fetch javascript\n
