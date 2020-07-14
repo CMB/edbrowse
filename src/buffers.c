@@ -1080,7 +1080,7 @@ static void addToMap(int nlines, int destl)
 	}
 
 /* browse has no undo command */
-	if (!cw->browseMode)
+	if (!(cw->browseMode | cw->dirMode))
 		undoPush();
 
 /* adjust labels */
@@ -1142,7 +1142,7 @@ bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail)
 				i_puts(MSG_NoTrailing);
 		}
 	}
-	/* missing newline */
+
 	newpiece = t = allocZeroMem(linecount * LMSIZE);
 	i = 0;
 	while (i < length) {	/* another line */
@@ -1435,7 +1435,7 @@ static bool moveFiles(void)
 	struct ebWindow *cw1 = cw;
 	struct ebWindow *cw2 = sessionList[destLine].lw;
 	char *path1, *path2;
-	int ln, cnt;
+	int ln, cnt, dol;
 
 	cmd = 'e';		// show error messages
 	ln = startRange;
@@ -1509,9 +1509,26 @@ static bool moveFiles(void)
 		}
 
 moved:
-		free(file);
 		free(path1);
 		delText(ln, ln);
+// add it to the other directory
+*t++ = '\n';
+		cw = cw2;
+		dol = cw->dol;
+		addTextToBuffer((pst)file, t-file, dol, false);
+		free(file);
+		cw->dot = ++dol;
+		cw->map[dol].ds1 = ftype[0];
+		if(ftype[0])
+			cw->map[dol].ds2 = ftype[1];
+// if attributes were displayed in that directory - more work to do.
+// I just leave a space for them; I don't try to derive them.
+		if(cw->r_map) {
+			cw->r_map = reallocMem(cw->r_map, LMSIZE * (dol + 2));
+			memset(cw->r_map + dol, 0, LMSIZE*2);
+			cw->r_map[dol].text = (uchar*)emptyString;
+		}
+		cw = cw1; // put it back
 	}
 
 	return true;
