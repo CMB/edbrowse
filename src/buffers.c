@@ -38,7 +38,7 @@ static const char browse_cmd[] = "AbBdDefghHiklMnpqsvwXz=^&<";
 /* Commands for sql mode. */
 static const char sql_cmd[] = "AadDefghHiklmnpqrsvwXz=^<";
 /* Commands for directory mode. */
-static const char dir_cmd[] = "AbdDefghHklMmnpqsvwXz=^<";
+static const char dir_cmd[] = "AbdDefghHklMmnpqstvwXz=^<";
 /* Commands that work at line number 0, in an empty file. */
 static const char zero_cmd[] = "aAbefhHMqruwz=^<";
 /* Commands that expect a space afterward. */
@@ -1429,7 +1429,7 @@ unlink:
 	return true;
 }				/* delFiles */
 
-// Move files from one directory to another
+// Move or copy files from one directory to another
 static bool moveFiles(void)
 {
 	struct ebWindow *cw1 = cw;
@@ -1449,7 +1449,8 @@ static bool moveFiles(void)
 		*t = 0;
 		ftype = dirSuffix(ln);
 
-		debugPrint(1, "%s → %s", file, cw2->baseDirName);
+		debugPrint(1, "%s %s %s",
+		file, (icmd == 'm' ? "→" : "≡"), cw2->baseDirName);
 
 		path1 = makeAbsPath(file);
 		if (!path1) {
@@ -1474,12 +1475,13 @@ static bool moveFiles(void)
 			return false;
 		}
 
-		if (rename(path1, path2)) {
+		errno = EXDEV;
+		if (icmd == 't' || rename(path1, path2)) {
 			if (errno == EXDEV) {
 				char *rmbuf;
 				int rmlen, j;
 				if (*ftype || fileSizeByName(path1) > 200000000) {
-// let mv do the work
+// let mv or cp do the work
 					char *a, qc = '\'';
 					if(strchr(path1, qc) || strchr(path2, qc)) {
 						qc = '"';
@@ -1490,20 +1492,25 @@ static bool moveFiles(void)
 					if(strstr(path1, "\\\\") || strstr(path2, "\\\\"))
 						qc = 0;
 					if(!qc) {
-fs_fail:
-						setError(MSG_MoveFileSystem, file);
+						setError(MSG_MetaChar);
 						free(file);
 						free(path1);
 						return false;
 					}
-					asprintf(&a, "mv -n %c%s%c %c%s%c",
-					qc, path1, qc, qc, path2, qc);
+					asprintf(&a, "%s %c%s%c %c%s%c",
+					(icmd == 'm' ? "mv -n" : "cp -an"),
+					qc, path1, qc, qc, cw2->baseDirName, qc);
 					debugPrint(1, "\t%s", a);
 					j = system(a);
 					free(a);
-					if(j)
-						goto fs_fail;
-					unlink(path1);
+					if(j) {
+						setError((icmd == 'm' ? MSG_MoveFileSystem : MSG_CopyFail), file);
+						free(file);
+						free(path1);
+						return false;
+					}
+					if(icmd == 'm')
+						unlink(path1);
 					goto moved;
 				}
 // A small file, copy it ourselves.
@@ -1521,7 +1528,8 @@ fs_fail:
 					return false;
 				}
 				nzFree(rmbuf);
-				unlink(path1);
+				if(icmd == 'm')
+					unlink(path1);
 				goto moved;
 			}
 
@@ -1533,7 +1541,8 @@ fs_fail:
 
 moved:
 		free(path1);
-		delText(ln, ln);
+		if(icmd == 'm')
+			delText(ln, ln);
 // add it to the other directory
 *t++ = '\n';
 		cw = cw2;
@@ -6619,7 +6628,7 @@ redirect:
 		return doGlobal(line);
 	}
 
-	if (cmd == 'm' && cw->dirMode) {
+	if ((cmd == 'm' || cmd == 't') && cw->dirMode) {
 		j = moveFiles();
 		undoCompare();
 		cw->undoable = false;

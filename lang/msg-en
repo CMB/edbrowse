@@ -552,7 +552,7 @@ please specify at least one recipient and the file to send, before your attachme
 too many files open simultaneously, limit %d
 invalid session %d in fetchLineContext()
 invalid line number %d in fetchLineContext()
-0
+too many meta characters in the path
 session %d out of range in cxActive
 double init on session %d
 quitting a nonactive session %d
@@ -582,7 +582,7 @@ debug events enabled
 Unable to create javascript context.
 download javascript in foreground
 download javascript in background
-0
+cannot copy %s
 timers disabled
 timers enabled
 error allocating %zu bytes

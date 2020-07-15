@@ -615,6 +615,7 @@ dr : directory is readonly
 <br> d : delete the file or move it to your trash can; theree is no undo
 <br>g/\.o$/d : delete all the .o files
 <br>.m3 : move this file to the directory in session 3; there is no undo
+<br>.t3 : copy this file to the directory in session 3; there is no undo
 <P>
 Browse an html file or a web page
 <P>
@@ -1499,6 +1500,11 @@ This cannot be assured if the file is moved to another file system.
 The file must be copied, then deleted, giving it your ownership and the current time.
 In some cases, edbrowse may call upon /bin/mv to perform this operation.
 You can move a range of files by 'a,'bm5, or files matching a regular expression by g/re/ .m5.
+
+<P>
+Use .t5 to copy the file to the directory in session 5.
+Small files are copied by edbrowse; large files or special files or directory trees are copied by /bin/cp.
+As with move, this will not overwrite an existing file.
 
 <P>
 "What's the point of all this?" you may ask.
