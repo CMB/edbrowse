@@ -1492,6 +1492,15 @@ Symbolic links and special files are always deleted;
 there isn't much point in moving a link to the trash bin.
 
 <P>
+If sessions 1 and 5 both contain directories, you can move the current file from the first directory to the second by .m5.
+This does not move lines around like the editor; it moves the file from one session to another.
+The kernel rename function is used whenever possible, to preserve the underlying directory tree, ownership, permissions, or special attributes.
+This cannot be assured if the file is moved to another file system.
+The file must be copied, then deleted, giving it your ownership and the current time.
+In some cases, edbrowse may call upon /bin/mv to perform this operation.
+You can move a range of files by 'a,'bm5, or files matching a regular expression by g/re/ .m5.
+
+<P>
 "What's the point of all this?" you may ask.
 "What's wrong with the shell?"
 

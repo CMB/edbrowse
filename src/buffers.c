@@ -1477,13 +1477,36 @@ static bool moveFiles(void)
 		if (rename(path1, path2)) {
 			if (errno == EXDEV) {
 				char *rmbuf;
-				int rmlen;
-				if (*ftype) {
-					setError(MSG_MoveFileSystem, file);
-					free(file);
-					free(path1);
-					return false;
+				int rmlen, j;
+				if (*ftype || fileSizeByName(path1) > 200000000) {
+// let mv do the work
+					char *a, qc = '\'';
+					if(strchr(path1, qc) || strchr(path2, qc)) {
+						qc = '"';
+						if(strpbrk(path1, "\"$") || strpbrk(path2, "\"$"))
+// I can't easily turn this into a shell command, so just hang it.
+							qc = 0;
+					}
+					if(strstr(path1, "\\\\") || strstr(path2, "\\\\"))
+						qc = 0;
+					if(!qc) {
+fs_fail:
+						setError(MSG_MoveFileSystem, file);
+						free(file);
+						free(path1);
+						return false;
+					}
+					asprintf(&a, "mv -n %c%s%c %c%s%c",
+					qc, path1, qc, qc, path2, qc);
+					debugPrint(1, "\t%s", a);
+					j = system(a);
+					free(a);
+					if(j)
+						goto fs_fail;
+					unlink(path1);
+					goto moved;
 				}
+// A small file, copy it ourselves.
 				if (!fileIntoMemory(path1, &rmbuf, &rmlen)) {
 					free(file);
 					free(path1);
