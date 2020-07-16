@@ -552,7 +552,7 @@ bitte geben Sie mind. einen Empfänger und die zu sendende Datei an bevor Sie Da
 zu viele Dateien gleichzeitig offen, maximal %d
 ungültige Sitzung %d im fetchLineContext()
 ungültige Zeilennummer %d im fetchLineContext()
-0
+zu viele Sonderzeichen im Pfad
 Sitzung %d außerhalb des Bereichs in cxActive
 doppelte Initialisierung in Sitzung %d
 Verlassen einer nicht-aktiven Sitzung %d
@@ -582,7 +582,7 @@ list = 0 in tagFromJavaVar()
 konnte JavaScript-Kontext nicht erstellen
 Download javascript im Vordergrund
 Download javascript im Hintergrund
-0
+kann %s nicht kopieren
 0
 0
 Fehler beim Anfordern von %zu Bytes

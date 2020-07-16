@@ -1426,6 +1426,8 @@ unlink:
 		delText(ln, ln);
 	}
 
+// if you type D instead of d, I don't want to lose that.
+	cmd = icmd;
 	return true;
 }				/* delFiles */
 

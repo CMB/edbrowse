@@ -1,7 +1,7 @@
 Here are some changes introduced by recent versions of edbrowse.
 
 3.7.x
-Move files from one directory to another.
+Move or copy files from one directory to another.
 
 3.7.6
 colors command to show the colors of the web page.

@@ -552,7 +552,7 @@ por favor especifique ao menos um destinatário e o arquivo a enviar, antes dos 
 demais arquivos abertos ao mesmo tempo; o limite é %d
 sessão %d inválida na fetchLineContext()
 número de linha %d inválido na fetchLineContext()
-0
+metacaracteres demais no path
 sessão %d fora do intervalo na cxActive
 init duplo na sessão %d
 fechando sessão não ativa %d
@@ -582,7 +582,7 @@ lista = 0 in tagFromJavaVar()
 impossível criar contexto Javascript 
 transferir javascript em primeiro plano
 transferir javascript em segundo plano
-0
+não posso copiar %s
 0
 0
 erro a alocar %zu bytes
