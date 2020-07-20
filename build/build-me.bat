@@ -3,13 +3,12 @@
 @set DOTINST=0
 @set DOINSTALL=0
 
-@set TMPDIR=F:
 @set TMPRT=..
 @set TMPVER=1
 @set TMPPRJ=edbrowse
 @set TMPSRC=%TMPRT%
 @set TMPBGN=%TIME%
-@set TMPINS=..\..\software
+@set TMPINS=..\..\3rdParty.x64
 @set TMPCM=%TMPSRC%\CMakeLists.txt
 @set DOPAUSE=pause
 
@@ -22,8 +21,8 @@
 @if NOT EXIST %TMPCM% goto NOCM
 
 @set TMPLOG=bldlog-1.txt
-@set TMPOPTS=-DCMAKE_INSTALL_PREFIX=%TMPINS%
 
+@set TMPOPTS=-DCMAKE_INSTALL_PREFIX=%TMPINS%
 @REM 20151031 - Add OSBC support in WIN32 build
 @set TMPOPTS=%TMPOPTS% -DBUILD_EDBR_ODBC:BOOL=ON
 

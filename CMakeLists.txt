@@ -2,7 +2,7 @@
 # CMakeLists.txt generated 2015/09/20 00:38:06
 # by make2cmake.pl from F:\Projects\edbrowse\makefile
 
-cmake_minimum_required (VERSION 2.8.8)
+cmake_minimum_required (VERSION 3.6)
 
 project (edbrowse)
 
@@ -83,8 +83,9 @@ find_package(CURL)
 if (CURL_FOUND)
     message(STATUS "*** CURL found inc ${CURL_INCLUDE_DIRS} lib ${CURL_LIBRARIES}")
     include_directories( ${CURL_INCLUDE_DIRS} )
-    list( APPEND add_LIBS ${CURL_LIBRARIES} )
+    list( APPEND add_LIBS ${CURL_LIBRARIES} crypt32.lib Ws2_32.lib Wldap32.lib )
     message(STATUS "cURL version ${CURL_VERSION_STRING}")
+    add_definitions( -DCURL_STATICLIB )
 else ()
     message(FATAL_ERROR "*** CURL NOT FOUND")
 endif ()
@@ -98,6 +99,7 @@ if (PCRE_FOUND)
     include_directories( ${PCRE_INCLUDE_DIR} )
     list( APPEND add_LIBS ${PCRE_LIBRARY} )
     #message(STATUS "PCRE version ${PCREL_VERSION_STRING}")
+    add_definitions( -DPCRE_STATIC )
 else ()
     message(FATAL_ERROR "*** PCRE NOT FOUND")
 endif ()
@@ -184,7 +186,8 @@ if (BUILD_EDBR_ODBC) # if the user OPTION ON
         include_directories( ${ODBC_INCLUDE_DIRECTORIES} )
         list( APPEND add_LIBS ${ODBC_LIBRARIES} )
     else ()
-        message(STATUS "*** ODBC NOT FOUND")
+        message(STATUS "*** ODBC NOT FOUND - cancel BUILD_EDBR_ODBC")
+        set(BUILD_EDBR_ODBC 0)
     endif ()
 endif ()
     

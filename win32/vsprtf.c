@@ -78,7 +78,8 @@ int vasprintf (char **str, const char *fmt, va_list args)
 }
 
 /* SPECIAL CASE ONLY */
-#if (defined(_MSC_VER) && defined(NDEBUG))
+// #if (defined(_MSC_VER) && defined(NDEBUG))
+#if defined(_MSC_VER)
 /*  ***********************************************************************
     20171108: NOTE: At present this is defined in static libtidy, but only 
     in the Debug version. So this is a substitute for other than

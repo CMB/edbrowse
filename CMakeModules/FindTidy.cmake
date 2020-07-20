@@ -40,11 +40,11 @@ if (_TIDY_SEARCHES)
             PATH_SUFFIXES include include/tidy
             )
           # search for the STATIC version first
-          find_library(TIDY_LIBRARY_DBG
-            NAMES tidysd
-            PATHS ${search}
-            PATH_SUFFIXES lib
-            )
+          #find_library(TIDY_LIBRARY_DBG
+          #  NAMES tidysd
+          #  PATHS ${search}
+          #  PATH_SUFFIXES lib
+          #  )
           find_library(TIDY_LIBRARY_REL
             NAMES tidys
             PATHS ${search}

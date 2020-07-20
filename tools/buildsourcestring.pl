@@ -82,11 +82,7 @@ $line =~ s/; *}/}/g;
 
 # switch to hex bytes.
         $line =~ s/(.)/sprintf("0x%02x, ", ord($1))/ge;
-	if (($OSNAME eq "MSWin32") || ($OSNAME eq "MSWin64")) {
-		$line .= " 0x0d, 0x0a,";
-	} else {
 		$line .= " 0x0a,";
-	}
         print OUTF "$line\n";
     }
     print OUTF "0};\n";
