@@ -2357,7 +2357,7 @@ return a;
 mw0.ehsn = 0; // event handler sequence number
 
 // The Event class and various handlers.
-mw0.Event = function(options){
+mw0.Event = function(etype){
     // event state is kept read-only by forcing
     // a new object for each event.  This may not
     // be appropriate in the long run and we'll
@@ -2370,20 +2370,21 @@ mw0.Event = function(options){
     this.target = null;
     this.eventPhase = 0;
     this.timeStamp = new Date().getTime();
-this.prev$default = false;
+this.defaultPrevented = false;
+if(typeof etype == "string") this.type = etype;
 };
 mw0.Event.domclass = "Event";
 
-mw0.Event.prototype.preventDefault = function(){ this.prev$default = true; }
+mw0.Event.prototype.preventDefault = function(){ this.defaultPrevented = true; }
 
 mw0.Event.prototype.stopPropagation = function(){ if(this.cancelable)this.cancelled = true; }
 
 // deprecated!
 mw0.Event.prototype.initEvent = function(t, bubbles, cancel) {
-this.type = t, this.bubbles = bubbles, this.cancelable = cancel; this.prev$default = false; }
+this.type = t, this.bubbles = bubbles, this.cancelable = cancel; this.defaultPrevented = false; }
 
 mw0.Event.prototype.initUIEvent = function(t, bubbles, cancel, unused, detail) {
-this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = detail; this.prev$default = false; }
+this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = detail; this.defaultPrevented = false; }
 
 mw0.Event.prototype.initCustomEvent = function(t, bubbles, cancel, detail) {
 this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = detail; }
@@ -2412,10 +2413,10 @@ if(!t[fn + "$$array"] && my$win().eventDebug) alert3("fire assigned");
 var r = t[fn](e);
 if(!t[fn + "$$array"] && my$win().eventDebug) alert3("endfire assigned");
 if((typeof r == "boolean" || typeof r == "number") && !r) return false;
-if(e.cancelled) return !e.prev$default;
+if(e.cancelled) return !e.defaultPrevented;
 }
 }
-if(!e.bubbles) return !e.prev$default;
+if(!e.bubbles) return !e.defaultPrevented;
 ++l; // step up from the target
 while(l < pathway.length) {
 t = pathway[l++];
@@ -2429,10 +2430,10 @@ if(my$win().eventDebug) alert3("bubble " + t.nodeName + "." + e.type);
 e.currentTarget = t;
 var r = t[fn](e);
 if((typeof r == "boolean" || typeof r == "number") && !r) return false;
-if(e.cancelled) return !e.prev$default;
+if(e.cancelled) return !e.defaultPrevented;
 }
 }
-return !e.prev$default;
+return !e.defaultPrevented;
 };
 
 /*********************************************************************
