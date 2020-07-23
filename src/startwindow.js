@@ -2495,12 +2495,12 @@ if(ehsn) ehsn = " " + ehsn; else ehsn = ""; /* from int to string */ \
 alert3("fire orig" + ehsn); rc = this["' + evorig + '"](e); alert3("endfire" + ehsn); \
 if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; } \
 for(var i = 0; i<a.length; ++i) a[i].did$run = false; \
-for(var i = 0; i<a.length; ++i) {if(a[i].did$run) continue; \
-if(e.eventPhase== 1 && !a[i].do$capture || e.eventPhase == 3 && !a[i].do$bubble) continue; \
-var ehsn = a[i].ehsn; \
+for(var i = 0; i<a.length; ++i) { var h = a[i];if(h.did$run) continue; \
+if(e.eventPhase== 1 && !h.do$capture || e.eventPhase == 3 && !h.do$bubble) continue; \
+var ehsn = h.ehsn; \
 if(ehsn) ehsn = " " + ehsn; else ehsn = ""; /* from int to string */ \
-a[i].did$run = true; alert3("fire" + ehsn); rc = a[i].call(this,e); alert3("endfire" + ehsn); \
-if(a[i].do$once) { alert3("once"); this.removeEventListener(e.type, a[i], a[i].do$capture); } \
+h.did$run = true; alert3("fire" + ehsn); rc = h.call(this,e); alert3("endfire" + ehsn); \
+if(h.do$once) { alert3("once"); this.removeEventListener(e.type, h, h.do$capture); } \
 if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; \
 i = -1; \
 } return true; };');
