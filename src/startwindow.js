@@ -2464,11 +2464,19 @@ mw0.detachEvent = function(ev, handler) { this.eb$unlisten(ev,handler, true, fal
 
 mw0.eb$listen = function(ev, handler, iscapture, addon)
 {
-if(!handler.ehsn) handler.ehsn = ++mw0.ehsn;
 if(addon) ev = "on" + ev;
-if(my$win().eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev.replace(/^on/,'') + " " + handler.ehsn + " for " + (iscapture?"capture":"bubble"));
-if(iscapture) handler.do$capture = true;
-else handler.do$bubble = true;
+// legacy, iscapture could be boolean, or object, or missing
+var captype = typeof iscapture;
+if(captype == "boolean" && iscapture) handler.do$capture = true;
+if(captype == "object") {
+if(iscapture.capture || iscapture.useCapture) handler.do$capture = true;
+if(iscapture.once) handler.do$once = true;
+if(iscapture.passive) handler.do$passive = true; // don't know how to implement this yet
+}
+if(!handler.do$capture) handler.do$bubble = true;
+// event handler serial number, for debugging
+if(!handler.ehsn) handler.ehsn = ++mw0.ehsn;
+if(my$win().eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev.replace(/^on/,'') + " " + handler.ehsn + " for " + (handler.do$capture?"capture":"bubble"));
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
 
@@ -2492,6 +2500,7 @@ if(e.eventPhase== 1 && !a[i].do$capture || e.eventPhase == 3 && !a[i].do$bubble)
 var ehsn = a[i].ehsn; \
 if(ehsn) ehsn = " " + ehsn; else ehsn = ""; /* from int to string */ \
 a[i].did$run = true; alert3("fire" + ehsn); rc = a[i].call(this,e); alert3("endfire" + ehsn); \
+if(a[i].do$once) { alert3("once"); this.removeEventListener(e.type, a[i], a[i].do$capture); } \
 if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; \
 i = -1; \
 } return true; };');
