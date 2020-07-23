@@ -687,7 +687,7 @@ s.data = "lastScript()";
 document.body.appendChild(s);
 }
 function formUnload(name) { alert("form " + name + " unloading"); }
-function docLoad() { onlv += 8; }
+function docLoad(e) { onlv += 8; if(e.target != document) faile(179); }
 document.addEventListener("snork", docLoad, true);
 var onlv = 64;
 

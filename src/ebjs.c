@@ -649,11 +649,10 @@ void unlink_event(jsobjtype parent)
 	delete_property(parent, "gc$event");
 }
 
-bool run_event_bool(jsobjtype obj, const char *pname, const char *evname,
-		    jsobjtype evobj)
+bool run_event_bool(jsobjtype obj, const char *pname, const char *evname)
 {
 	int rc;
-	jsobjtype eo = evobj;	// event object
+	jsobjtype eo;	// created event object
 	if (!handlerPresent(obj, evname))
 		return true;
 	if (debugLevel >= 3) {
@@ -661,14 +660,12 @@ bool run_event_bool(jsobjtype obj, const char *pname, const char *evname,
 		if (evdebug)
 			debugPrint(3, "trigger %s.%s", pname, evname);
 	}
-// if no event object, create one.
-// It's a one time event that doesn't propagate, like DOMContentLoaded
-// or form.onsubmit etc.
-	if (!eo)
-		eo = create_event(obj, evname);
+	eo = create_event(obj, evname);
+	set_property_object(eo, "target", obj);
+	set_property_string(eo, "type", evname);
+	set_property_number(eo, "eventPhase", 2);
 	rc = run_function_onearg(obj, evname, eo);
-	if (eo != evobj)
-		unlink_event(obj);
+	unlink_event(obj);
 // no return or some other return is treated as true in this case
 	if (rc < 0)
 		rc = true;

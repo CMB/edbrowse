@@ -2873,7 +2873,7 @@ we did that before and now it's being expanded. So bump step up to 2.
 		runOnload();
 		runScriptsPending();
 		set_property_string(cf->docobj, "readyState", "complete");
-		run_event_bool(cf->docobj, "document", "onreadystatechange", 0);
+		run_event_bool(cf->docobj, "document", "onreadystatechange");
 		runScriptsPending();
 		rebuildSelectors();
 	}
@@ -2909,7 +2909,7 @@ we did that before and now it's being expanded. So bump step up to 2.
 		set_property_object(t->jv, "content$Window", cwo);
 // run the frame onload function if it is there.
 // I assume it should run in the higher frame.
-		run_event_bool(t->jv, t->info->name, "onload", 0);
+		run_event_bool(t->jv, t->info->name, "onload");
 	}
 
 	return 0;
@@ -3051,7 +3051,7 @@ bool reexpandFrame(void)
 		runOnload();
 		runScriptsPending();
 		set_property_string(cf->docobj, "readyState", "complete");
-		run_event_bool(cf->docobj, "document", "onreadystatechange", 0);
+		run_event_bool(cf->docobj, "document", "onreadystatechange");
 		runScriptsPending();
 		rebuildSelectors();
 	}

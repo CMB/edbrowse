@@ -941,7 +941,7 @@ jsRunScript is protected.
 		jsRunScript(cf->winobj, "document.readyState='complete'",
 			    "readyState", 1);
 
-		run_event_bool(cf->docobj, "document", "onreadystatechange", 0);
+		run_event_bool(cf->docobj, "document", "onreadystatechange");
 		runScriptsPending();
 		rebuildSelectors();
 	}
@@ -1810,8 +1810,7 @@ bool infPush(int tagno, char **post_string)
 				rc = true;
 				if (form->jv)
 					rc = run_event_bool(form->jv,
-							    "form", "onreset",
-							    0);
+							    "form", "onreset");
 				if (!rc)
 					return true;
 				if (js_redirects)
@@ -2611,21 +2610,17 @@ void runOnload(void)
 	int i, action;
 	int fn;			/* form number */
 	struct htmlTag *t;
-	jsobjtype e;		// onload event
 
 	if (!isJSAlive)
 		return;
 	if (intFlag)
 		return;
 
-	e = create_event(cf->winobj, "onload");
-	set_property_number(e, "eventPhase", 2);
-
 /* window and document onload */
-	run_event_bool(cf->winobj, "window", "onload", e);
+	run_event_bool(cf->winobj, "window", "onload");
 	if (intFlag)
 		goto done;
-	run_event_bool(cf->docobj, "document", "onload", e);
+	run_event_bool(cf->docobj, "document", "onload");
 	if (intFlag)
 		goto done;
 
@@ -2644,15 +2639,15 @@ void runOnload(void)
 		if (!t->jv)
 			continue;
 		if (action == TAGACT_BODY && handlerPresent(t->jv, "onload"))
-			run_event_bool(t->jv, "body", "onload", e);
+			run_event_bool(t->jv, "body", "onload");
 		if (action == TAGACT_BODY && t->onunload)
 			unloadHyperlink("document.body.onunload", "Body");
 		if (t->inxhr)	// not a real script
 			continue;
 		if (action == TAGACT_SCRIPT && handlerPresent(t->jv, "onload"))
-			run_event_bool(t->jv, "script", "onload", e);
+			run_event_bool(t->jv, "script", "onload");
 		if (action == TAGACT_FORM && handlerPresent(t->jv, "onload"))
-			run_event_bool(t->jv, "form", "onload", e);
+			run_event_bool(t->jv, "form", "onload");
 /* tidy5 says there is no form.onunload */
 		if (action == TAGACT_FORM && t->onunload) {
 			char formfunction[48];
@@ -2661,14 +2656,14 @@ void runOnload(void)
 			unloadHyperlink(formfunction, "Form");
 		}
 		if (action == TAGACT_LINK && handlerPresent(t->jv, "onload"))
-			run_event_bool(t->jv, "link", "onload", e);
+			run_event_bool(t->jv, "link", "onload");
 		if (action == TAGACT_H && handlerPresent(t->jv, "onload"))
-			run_event_bool(t->jv, "h1", "onload", e);
+			run_event_bool(t->jv, "h1", "onload");
 	}
 
 	if (intFlag)
 		goto done;
-	run_event_bool(cf->docobj, "document", "onDOMContentLoaded", e);
+	run_event_bool(cf->docobj, "document", "onDOMContentLoaded");
 
 done:
 	unlink_event(cf->winobj);

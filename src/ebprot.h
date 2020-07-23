@@ -99,7 +99,7 @@ void rebuildSelectors(void);
 bool run_function_bool(jsobjtype obj, const char *name);
 jsobjtype create_event(jsobjtype parent, const char *evname);
 void unlink_event(jsobjtype parent);
-bool run_event_bool(jsobjtype obj, const char *pname, const char *evname, jsobjtype evobj);
+bool run_event_bool(jsobjtype obj, const char *pname, const char *evname);
 int run_function_onearg(jsobjtype obj, const char *name, jsobjtype o);
 void run_function_onestring(jsobjtype parent, const char *name, const char *s);
 void set_basehref(const char *b);
