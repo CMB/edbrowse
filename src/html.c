@@ -942,6 +942,9 @@ jsRunScript is protected.
 			    "readyState", 1);
 
 		run_event_bool(cf->docobj, "document", "onreadystatechange");
+		run_event_bool(cf->winobj, "window", "onfocus");
+		run_event_bool(cf->docobj, "document", "onfocus");
+
 		runScriptsPending();
 		rebuildSelectors();
 	}
