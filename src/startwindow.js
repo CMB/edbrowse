@@ -2465,15 +2465,22 @@ mw0.detachEvent = function(ev, handler) { this.eb$unlisten(ev,handler, true, fal
 mw0.eb$listen = function(ev, handler, iscapture, addon)
 {
 if(addon) ev = "on" + ev;
+var iscap = false, once = false, passive = false;
 // legacy, iscapture could be boolean, or object, or missing
 var captype = typeof iscapture;
-if(captype == "boolean" && iscapture) handler.do$capture = true;
+if(captype == "boolean" && iscapture) iscap = true;
 if(captype == "object") {
-if(iscapture.capture || iscapture.useCapture) handler.do$capture = true;
-if(iscapture.once) handler.do$once = true;
-if(iscapture.passive) handler.do$passive = true; // don't know how to implement this yet
+if(iscapture.capture || iscapture.useCapture) iscap = true;
+if(iscapture.once) once = true;
+if(iscapture.passive) passive = true; // don't know how to implement this yet
 }
-if(!handler.do$capture) handler.do$bubble = true;
+if(!handler) {
+alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev.replace(/^on/,'') + " for " + (iscap?"capture":"bubble") + " with null handler");
+return;
+}
+if(iscap) handler.do$capture = true; else handler.do$bubble = true;
+if(once) handler.do$once = true;
+if(passive) handler.do$passive = true;
 // event handler serial number, for debugging
 if(!handler.ehsn) handler.ehsn = ++mw0.ehsn;
 if(my$win().eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev.replace(/^on/,'') + " " + handler.ehsn + " for " + (handler.do$capture?"capture":"bubble"));
