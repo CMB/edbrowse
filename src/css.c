@@ -197,6 +197,7 @@ abandon:
 
 static void trim(char *s)
 {
+int l = strlen(s);
 	int n;
 	for (n = 0; s[n]; ++n)
 		if (!isspace(s[n]))
@@ -211,6 +212,10 @@ static void trim(char *s)
 	    (n == 1 || s[n - 2] != '\\'))
 		++n;
 	s[n] = 0;
+// we may have to fill the trimmed area with spaces,
+// so make sure they are all zeros.
+	while(++n < l)
+		s[n] = 0;
 }
 
 /*********************************************************************
@@ -855,7 +860,7 @@ top2:
 	lhs = s;
 
 	while ((c = *s)) {
-		if (s >= at_end_marker)
+		if (at_end_marker && s >= at_end_marker)
 			at_end_marker = 0;
 		if (c == '"' || c == '\'') {
 			n = closeString(s + 1, c);
