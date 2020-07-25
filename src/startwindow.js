@@ -3499,12 +3499,12 @@ s.demin = true;
 s.expanded = false;
 if(! s.data) return;
 
-// Don't deminimize if short, or if average line length is less than 1000.
+// Don't deminimize if short, or if average line length is less than 120.
 if(s.data.length < 1000) return;
 var i, linecount = 1;
 for(i=0; i<s.data.length; ++i)
 if(s.data.substr(i,1) === '\n') ++linecount;
-if(s.data.length / linecount <= 400) return;
+if(s.data.length / linecount <= 120) return;
 
 // Ok, run it through the deminimizer.
 if(window.escodegen) {
