@@ -619,7 +619,7 @@ converti en utf8
 pas de conversion entre iso8859 et utf8
 conversion automatique entre iso8859 et utf8
 impossible de copier un répertoire dans la corbeille sur un autre système de fichiers;n utilisez cpio -p ou cp -r à partir du shell
-impossible de supprimer un répertoire; utilisez rm -r à partir du shell
+impossible de supprimer répertoire
 Echec à l'initialisation de libcurl.
 Ce répertoire ftp est vide.
 recherche et remplacement en ascii

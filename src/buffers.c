@@ -1343,7 +1343,7 @@ void delText(int start, int end)
 
 static bool delFiles(void)
 {
-	int ln, cnt;
+	int ln, cnt, j;
 
 	if (!dirWrite) {
 		setError(MSG_DirNoWrite);
@@ -1360,7 +1360,8 @@ static bool delFiles(void)
 	ln = startRange;
 	cnt = endRange - startRange + 1;
 	while (cnt--) {
-		char *file, *t, *path, *ftype;
+		char *file, *t, *path, *ftype, *a;
+		char qc = '\''; // quote character
 		file = (char *)fetchLine(ln, 0);
 		t = strchr(file, '\n');
 		if (!t)
@@ -1372,15 +1373,40 @@ static bool delFiles(void)
 			return false;
 		}
 
+// check formeta chars in path
+		if(strchr(path, qc)) {
+			qc = '"';
+			if(strpbrk(path, "\"$"))
+// I can't easily turn this into a shell command, so just hang it.
+				qc = 0;
+		}
+		if(strstr(path, "\\\\"))
+			qc = 0;
+
 		ftype = dirSuffix(ln);
+		if (dirWrite == 2 || (*ftype && strchr("@<*^|", *ftype)))
+			debugPrint(1, "%s ↓", file);
+		else
+			debugPrint(1, "%s → 🗑", file);
+
 		if (dirWrite == 2 && *ftype == '/') {
+			if(!qc) {
+				setError(MSG_MetaChar);
+				free(file);
+				return false;
+			}
+			asprintf(&a, "rm -rf %c%s%c",
+			qc, path, qc);
+			j = system(a);
+			free(a);
+			if(!j)
+				goto gone;
 			setError(MSG_NoDirDelete);
 			free(file);
 			return false;
 		}
 
 		if (dirWrite == 2 || (*ftype && strchr("@<*^|", *ftype))) {
-			debugPrint(1, "%s ↓", file);
 unlink:
 			if (unlink(path)) {
 				setError(MSG_NoRemove, file);
@@ -1390,13 +1416,25 @@ unlink:
 		} else {
 			char bin[ABSPATH];
 			sprintf(bin, "%s/%s", recycleBin, file);
-			debugPrint(1, "%s → 🗑", file);
 			if (rename(path, bin)) {
 				if (errno == EXDEV) {
 					char *rmbuf;
 					int rmlen;
-					if (*ftype == '/') {
-						setError(MSG_CopyMoveDir);
+					if (*ftype == '/' ||
+					fileSizeByName(path) > 200000000) {
+// let mv do the work
+						if(!qc) {
+							setError(MSG_MetaChar);
+							free(file);
+							return false;
+						}
+						asprintf(&a, "mv -n %c%s%c",
+						qc, path, qc);
+						j = system(a);
+						free(a);
+						if(!j)
+							goto gone;
+						setError(MSG_MoveFileSystem , path);
 						free(file);
 						return false;
 					}
@@ -1416,12 +1454,14 @@ unlink:
 					goto unlink;
 				}
 
+// some other rename error
 				setError(MSG_NoMoveToTrash, file);
 				free(file);
 				return false;
 			}
 		}
 
+gone:
 		free(file);
 		delText(ln, ln);
 	}
@@ -1502,7 +1542,6 @@ static bool moveFiles(void)
 					asprintf(&a, "%s %c%s%c %c%s%c",
 					(icmd == 'm' ? "mv -n" : "cp -an"),
 					qc, path1, qc, qc, cw2->baseDirName, qc);
-					debugPrint(1, "\t%s", a);
 					j = system(a);
 					free(a);
 					if(j) {

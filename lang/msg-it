@@ -619,7 +619,7 @@ converto in utf8
 non convertire da iso8859 a utf8
 converti automaticamente da iso8859 a utf8
 non posso copiare un albero di cartelle nel tuo cestino su un altro file system;\nusa cpio -p o cp -r dalla shell
-impossibile eliminare un albero di cartelle; usa rm -r dalla shell
+impossibile eliminare albero di cartelle
 Inizializzazione di libcurl fallita.
 Il listato ftp della cartella è vuoto.
 ricerca e sostituisci usando ascii

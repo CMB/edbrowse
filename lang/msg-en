@@ -619,7 +619,7 @@ converting to utf8
 do not convert between iso8859 and utf8
 automatically convert between iso8859 and utf8
 cannot copy a directory tree to your trash bin on another file system;\nuse cpio -p or cp -r from the shell
-cannot delete a directory tree; use rm -r from the shell
+could not remove directory tree
 Failed to initialize libcurl.
 This ftp directory listing is empty.
 search and substitute using ascii

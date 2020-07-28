@@ -619,7 +619,7 @@ convertendo para utf8
 não converta entre iso8859 e utf8
 converte automaticamente entre iso8859 e utf8
 Não posso copiar uma árvore de diretórios para uma lixeira em outro sistema de arquivos;\nUse cpio -p ou cp -r a partir do shell
-Não posso apagar uma árvore de diretórios; use rm -r a partir do shell
+Não posso apagar uma árvore diretórios
 Falha ao inicializar a biblioteca libcurl.
 Esta listagem do diretório FTP está vazia.
 procurar e substituir usando ASCII

@@ -619,7 +619,7 @@ konvertiere in utf8
 konvertiere nicht zwischen iso8859 und utf8
 konvertiere automatisch zwischen iso8859 und utf8
 Kann Verzeichnisbaum nicht von einem anderen Dateisystem aus in den Müll verschieben.\nNutzen Sie cpio -p oder cp -r von der Shell aus.
-Kann Verzeichnisbaum nicht löschen, nutzen Sie rm -r von der Shell
+Kann Verzeichnisbaum nicht löschen
 Fehler bei der Initialisierung von libcurl.
 Diese FTP-Auflistung ist leer
 Suchen und Ersetzen ittels ascii

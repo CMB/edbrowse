@@ -619,7 +619,7 @@ konwersja do UTF-8
 nie konwertuj pomiędzy ISO-8859 a UTF-8
 automatycznie konwertuj pomiędzy ISO-8859 a UTF-8
 nie można skopiować drzewa katalogów do kosza lub innego systemu plików;\nużyj 'cpio -p' lub 'cp -r' z poziomu powłoki
-nie można usunąć drzewa katalogów; użyj 'rm -r' z poziomu powłoki
+nie można usunąć drzewa katalogów
 Nie udało się zainicjalizować libcurl
 Lista zawartości tego katalogu FTP jest pusta
 wyszukiwanie i podstawianie z użyciem ASCII
