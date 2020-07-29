@@ -1385,9 +1385,9 @@ static bool delFiles(void)
 
 		ftype = dirSuffix(ln);
 		if (dirWrite == 2 || (*ftype && strchr("@<*^|", *ftype)))
-			debugPrint(1, "%s ↓", file);
+			debugPrint(1, "%s%s ↓", file, ftype);
 		else
-			debugPrint(1, "%s → 🗑", file);
+			debugPrint(1, "%s%s → 🗑", file, ftype);
 
 		if (dirWrite == 2 && *ftype == '/') {
 			if(!qc) {
@@ -1491,8 +1491,8 @@ static bool moveFiles(void)
 		*t = 0;
 		ftype = dirSuffix(ln);
 
-		debugPrint(1, "%s %s %s",
-		file, (icmd == 'm' ? "→" : "≡"), cw2->baseDirName);
+		debugPrint(1, "%s%s %s %s",
+		file, ftype, (icmd == 'm' ? "→" : "≡"), cw2->baseDirName);
 
 		path1 = makeAbsPath(file);
 		if (!path1) {
