@@ -134,12 +134,17 @@ static char *cut20(char *s)
 }
 
 // Remove the comments from a css string.
+// Watch out - url(http://stuf) or url(data base64 jklk33//ss88djdjj)
 static void uncomment(char *s)
 {
-	char *s0 = s, *w = s;
+	char *w = s;
 	int n;
-	char c;
+	char c, urlmode = 0;
 	while ((c = *s)) {
+		if (urlmode) { // copy up to paren
+			if (c == ')' || c == '\n') urlmode = 0;
+			goto copy;
+		}
 		if (c == '"' || c == '\'') {
 			n = closeString(s + 1, c);
 			if (n < 0) {
@@ -153,17 +158,13 @@ static void uncomment(char *s)
 			w += n;
 			continue;
 		}
+		if (c == 'u' && !strncmp(s, "url(", 4))
+			urlmode = 1;
+		if (c == '@' && !strncmp(s, "@ebdelim", 8))
+			urlmode = 1;
 		if (c != '/')
 			goto copy;
 		if (s[1] == '/') {
-// Look out! People actually write @import url(http://blah) with no quotes,
-// and the slashes trip the comment syntax, so check for this,
-// in a rather crude way.  Also url(//blah)
-			if (s - s0 >= 3 && s[-1] == ':' &&
-			    islower(s[-2]) && islower(s[-3]))
-				goto copy;
-			if (s - s0 >= 4 && !strncmp(s - 4, "url(", 4))
-				goto copy;
 			for (n = 2; s[n]; ++n)
 				if (s[n] == '\n')
 					break;
