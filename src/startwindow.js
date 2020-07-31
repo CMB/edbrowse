@@ -3912,6 +3912,11 @@ function open() {
 return Window.apply(this, arguments);
 }
 
+// nasa.gov and perhaps other sites check for self.constructor == Window.
+// That is, Window should be the constructor of window.
+// The constructor is Object by default.
+window.constructor = Window;
+
 // Some websites expect an onhashchange handler from the get-go.
 onhashchange = eb$truefunction;
 
