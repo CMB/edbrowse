@@ -4375,9 +4375,20 @@ mw0.requestAnimationFrame = function() {
 return ++mw0.rastep;
 }
 
+mw0.Set = function() { this.items=[]; }
+Object.defineProperty(mw0.Set.prototype, "size", {get:function(){return this.items.length}});
+mw0.Set.prototype.has = function(x) {return this.items.indexOf(x) >= 0;}
+mw0.Set.prototype.add = function(x) {if(!this.has(x)) this.items.push(x); return x; }
+mw0.Set.prototype.clear = function(){this.items.length = 0;}
+mw0.Set.prototype.delete = function(x) {var i = this.items.indexOf(x); if(i < 0) return false; this.items.splice(i,1); return true; }
+mw0.Set.prototype.foreach = function(fn,t) {
+for(var i=0; i<this.items.length; ++i)
+if(t) fn.call(t,this.items[i]); else fn(this.items[i]);
+}
 } // master compile
 
 crypto = mw0.crypto;
 requestAnimationFrame = mw0.requestAnimationFrame;
 cancelAnimationFrame = eb$voidfunction;
+Set = mw0.Set;
 
