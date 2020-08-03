@@ -5,8 +5,8 @@ http://www.fsf.org/licensing/licenses/gpl.html
 It may be used for any purpose, and redistributed,
 provided this copyright notice is included.
 
-This program uses libmozjs.so for javascript, and libcurl.so for http/ftp access.
-These are released under the Mozilla public license (mpl).
+This program uses libcurl.so for http/ftp access.
+This is released under the Mozilla public license (mpl).
 I didn't change any of the source; I merely link to these libraries.
 However, if you wish to release a version of edbrowse with these shared
 libraries included,
