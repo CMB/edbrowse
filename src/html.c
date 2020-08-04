@@ -623,7 +623,7 @@ void prepareScript(struct htmlTag *t)
 // Such code cannot be deminimized.
 		goto success;
 	}
-	set_property_string(t->jv, "data", js_text);
+	set_property_string(t->jv, "text", js_text);
 	nzFree(js_text);
 
 	filepart = getFileURL(js_file, true);
@@ -764,7 +764,7 @@ passes:
 				continue;
 			}
 			set_property_string(t->jv,
-					    (t->inxhr ? "$entire" : "data"),
+					    (t->inxhr ? "$entire" : "text"),
 					    t->value);
 			nzFree(t->value);
 			t->value = 0;
@@ -2915,7 +2915,7 @@ We need to fix this someday, though it is a very rare low runner case.
 					} else {
 						if (t->action == TAGACT_SCRIPT) {
 							set_property_string
-							    (t->jv, "data",
+							    (t->jv, "text",
 							     t->value);
 							nzFree(t->value);
 							t->value = 0;

@@ -683,7 +683,7 @@ onlv += 4;
 var t = document.createTextNode("Created Text");
 document.body.appendChild(t);
 var s = document.createElement("script");
-s.data = "lastScript()";
+s.text = "lastScript()";
 document.body.appendChild(s);
 }
 function formUnload(name) { alert("form " + name + " unloading"); }

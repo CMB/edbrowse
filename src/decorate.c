@@ -1339,11 +1339,11 @@ Needless to say that's not good!
 		a = attribVal(t, "type");
 		if (a)
 			set_property_string(t->jv, "type", a);
-		a = attribVal(t, "data");
+		a = attribVal(t, "text");
 		if (a) {
-			set_property_string(t->jv, "data", a);
+			set_property_string(t->jv, "text", a);
 		} else {
-			set_property_string(t->jv, "data", "");
+			set_property_string(t->jv, "text", "");
 		}
 		a = attribVal(t, "src");
 		if (a) {

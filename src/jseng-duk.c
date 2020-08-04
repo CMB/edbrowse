@@ -2337,13 +2337,13 @@ char *run_script_nat(const char *s)
 	return result;
 }
 
-// execute script.data code; more efficient than the above.
+// execute script.text code; more efficient than the above.
 void run_data_nat(jsobjtype o)
 {
 	bool rc;
 	const char *s, *gc;
 	duk_push_heapptr(jcx, o);
-	if (!duk_get_prop_string(jcx, -1, "data")) {
+	if (!duk_get_prop_string(jcx, -1, "text")) {
 // no data
 		duk_pop_2(jcx);
 		return;
@@ -2371,6 +2371,8 @@ void run_data_nat(jsobjtype o)
 		duk_gc(jcx, 0);
 }
 
+#if 0
+// This is never called; I don't know what it is.
 void put_data_nat(jsobjtype cx, jsobjtype o, const char *s)
 {
 	if (!cx || !o || !s || !*s)
@@ -2380,3 +2382,4 @@ void put_data_nat(jsobjtype cx, jsobjtype o, const char *s)
 	duk_put_prop_string(cx, -2, "data");
 	duk_pop(cx);
 }
+#endif

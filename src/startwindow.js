@@ -166,8 +166,8 @@ m += ss;
 } else {
 m += "inline";
 }
-if(typeof s.data === "string")
-m += " length " + s.data.length;
+if(typeof s.text === "string")
+m += " length " + s.text.length;
 else
 m += " length ?";
 if(s.expanded) m += " deminimized";
@@ -181,7 +181,7 @@ mw0.searchscripts = function(t)
 var w = my$win();
 if(!w.$ss) mw0.showscripts();
 for(var i=0; i<w.$ss.length; ++i)
-if(w.$ss[i].data && w.$ss[i].data.indexOf(t) >= 0) alert(i);
+if(w.$ss[i].text && w.$ss[i].text.indexOf(t) >= 0) alert(i);
 }
 
 mw0.snapshot = function()
@@ -193,7 +193,7 @@ var idx = 0;
 if(!w.$ss) mw0.showscripts();
 for(var i=0; i<w.$ss.length; ++i) {
 var s = w.$ss[i];
-if(typeof s.data === "string" &&
+if(typeof s.text === "string" &&
 (s.src && s.src.length || s.expanded)) {
 var ss = "inline";
 if(s.src && s.src.length) ss = s.src.toString();
@@ -201,7 +201,7 @@ if(ss.match(/^data:/)) continue;
 // assumes the search piece of the url is spurious and unreliable
 ss = ss.replace(/\?.*/, "");
 ++idx;
-eb$wlf(s.data, "f" + idx + ".js");
+eb$wlf(s.text, "f" + idx + ".js");
 jslocal += "f" + idx + ".js:" + ss + "\n";
 }
 }
@@ -1009,7 +1009,7 @@ mw0.Header = function(){}; mw0.Header.domclass = "Header";
 mw0.Footer = function(){}; mw0.Footer.domclass = "Footer";
 mw0.Script = function(){}; mw0.Script.domclass = "Script";
 mw0.Script.prototype.type = "";
-mw0.Script.prototype.data = "";
+mw0.Script.prototype.text = "";
 mw0.HTMLScriptElement = mw0.Script; // alias for Script, I guess
 mw0.Timer = function(){this.nodeName = "TIMER";}; mw0.Timer.domclass = "Timer";
 mw0.Audio = function(){}; mw0.Audio.domclass = "Audio";
@@ -3497,19 +3497,19 @@ if(! s instanceof Script) return;
 if(s.demin) return; // already expanded
 s.demin = true;
 s.expanded = false;
-if(! s.data) return;
+if(! s.text) return;
 
 // Don't deminimize if short, or if average line length is less than 120.
-if(s.data.length < 1000) return;
+if(s.text.length < 1000) return;
 var i, linecount = 1;
-for(i=0; i<s.data.length; ++i)
-if(s.data.substr(i,1) === '\n') ++linecount;
-if(s.data.length / linecount <= 120) return;
+for(i=0; i<s.text.length; ++i)
+if(s.text.substr(i,1) === '\n') ++linecount;
+if(s.text.length / linecount <= 120) return;
 
 // Ok, run it through the deminimizer.
 if(window.escodegen) {
-s.original = s.data;
-s.data = escodegen.generate(esprima.parse(s.data));
+s.original = s.text;
+s.text = escodegen.generate(esprima.parse(s.text));
 s.expanded = true;
 } else {
 alert("deminimization not available");
@@ -3520,8 +3520,8 @@ alert("deminimization not available");
 mw0.eb$watch = function(s)
 {
 if(! s instanceof Script) return;
-if(! s.data) return;
-if(s.data.indexOf("trace"+"@(") >= 0) // already traced
+if(! s.text) return;
+if(s.text.indexOf("trace"+"@(") >= 0) // already traced
 return;
 var w = my$win();
 if(w.$jt$c == 'z') w.$jt$c = 'a';
@@ -3530,8 +3530,8 @@ w.$jt$sn = 0;
 // Watch out, tools/uncomment will muck with this regexp if we're not careful!
 // I escape some spaces with \ so they don't get crunched away.
 // First name the anonymous functions; then put in the trace points.
-s.data = s.data.replace(/(\bfunction *)(\([\w ,]*\)\ *{\n)/g, mw0.jtfn1);
-s.data = s.data.replace(/(\bdo \{|\bwhile \([^{}\n]*\)\ *{|\bfor \([^{}\n]*\)\ *{|\bif \([^{}\n]*\)\ *{|\bcatch \(\w*\)\ *{|\belse \{|\btry \{|\bfunction *\w*\([\w ,]*\)\ *{|[^\n)]\n *)(var |\n)/g, mw0.jtfn0);
+s.text = s.text.replace(/(\bfunction *)(\([\w ,]*\)\ *{\n)/g, mw0.jtfn1);
+s.text = s.text.replace(/(\bdo \{|\bwhile \([^{}\n]*\)\ *{|\bfor \([^{}\n]*\)\ *{|\bif \([^{}\n]*\)\ *{|\bcatch \(\w*\)\ *{|\belse \{|\btry \{|\bfunction *\w*\([\w ,]*\)\ *{|[^\n)]\n *)(var |\n)/g, mw0.jtfn0);
 return;
 }
 
