@@ -809,6 +809,8 @@ I will disconnect here, and also check for inxhr in runOnload().
 			++ln;
 		set_property_object(cf->docobj, "currentScript", t->jv);
 		jsRunData(t->jv, js_file, ln);
+		if (t->js_file && handlerPresent(t->jv, "onload"))
+			run_event_bool(t->jv, "script", "onload");
 		delete_property(cf->docobj, "currentScript");
 		debugPrint(3, "exec complete");
 
@@ -2645,10 +2647,6 @@ void runOnload(void)
 			run_event_bool(t->jv, "body", "onload");
 		if (action == TAGACT_BODY && t->onunload)
 			unloadHyperlink("document.body.onunload", "Body");
-		if (t->inxhr)	// not a real script
-			continue;
-		if (action == TAGACT_SCRIPT && handlerPresent(t->jv, "onload"))
-			run_event_bool(t->jv, "script", "onload");
 		if (action == TAGACT_FORM && handlerPresent(t->jv, "onload"))
 			run_event_bool(t->jv, "form", "onload");
 /* tidy5 says there is no form.onunload */
@@ -2658,7 +2656,7 @@ void runOnload(void)
 				fn);
 			unloadHyperlink(formfunction, "Form");
 		}
-		if (action == TAGACT_LINK && handlerPresent(t->jv, "onload"))
+		if (action == TAGACT_LINK && t->href && handlerPresent(t->jv, "onload"))
 			run_event_bool(t->jv, "link", "onload");
 		if (action == TAGACT_H && handlerPresent(t->jv, "onload"))
 			run_event_bool(t->jv, "h1", "onload");
@@ -2943,6 +2941,8 @@ We need to fix this someday, though it is a very rare low runner case.
 				set_property_object(cf->docobj, "currentScript",
 						    t->jv);
 				jsRunData(t->jv, js_file, ln);
+				if (t->js_file && handlerPresent(t->jv, "onload"))
+					run_event_bool(t->jv, "script", "onload");
 				delete_property(cf->docobj, "currentScript");
 				debugPrint(3, "async exec complete");
 			}

@@ -15,6 +15,7 @@ body:hover { fly:windshield }
 body p.inject:before { display:round }
 p.inject:before { content:My }
 </style>
+<!-- this isn't an internet load of css so onload doesn't run -->
 <link type=foobar onload="onlv+=2">
 </head>
 
@@ -694,7 +695,7 @@ var onlv = 64;
 /* last script to run automatically; loaded by the form.onload function */
 function lastScript() {
 document.writeln(" Last Script");
-if(onlv != 95) fail(1000);
+if(onlv != 93) fail(1000);
 }
 
 setTimeout("joker()", 30000);
