@@ -2392,7 +2392,7 @@ this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = d
 mw0.createEvent = function(unused) { return new Event; }
 
 mw0.dispatchEvent = function (e) {
-if(my$win().eventDebug) alert3("dispatch " + this.nodeName + "." + (this.eb$seqno?this.eb$seqno:"?") + "." + e.type);
+if(my$win().eventDebug) alert3("dispatch " + this.nodeName + "[" + (this.eb$seqno?this.eb$seqno:"?") + "]." + e.type);
 e.target = this;
 var t = this;
 var pathway = [];

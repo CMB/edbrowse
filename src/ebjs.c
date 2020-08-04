@@ -659,7 +659,7 @@ bool run_event_bool(jsobjtype obj, const char *pname, const char *evname)
 		bool evdebug = get_property_bool(cf->winobj, "eventDebug");
 		if (evdebug) {
 			int seqno = get_property_number(obj, "eb$seqno");
-			debugPrint(3, "trigger %s.%d.%s", pname, seqno, evname);
+			debugPrint(3, "trigger %s[%d].%s", pname, seqno, evname);
 		}
 	}
 	eo = create_event(obj, evname);
