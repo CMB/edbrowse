@@ -984,14 +984,32 @@ time_t fileTimeByName(const char *name)
 char *conciseSize(size_t n)
 {
 	static char buf[32];
-	if (n >= (1 << 30))
-		sprintf(buf, "%luG", (unsigned long)n >> 30);
-	else if (n >= (1 << 20))
-		sprintf(buf, "%luM", (unsigned long)n >> 20);
-	else if (n >= (1 << 10))
-		sprintf(buf, "%luK", (unsigned long)n >> 10);
-	else
-		sprintf(buf, "%lu", (unsigned long)n);
+	unsigned long u, v;
+	if (n >= 1000000000) {
+		u = n/1000000000;
+		v = n/100000000 % 10;
+		if(u >= 10 || !v)
+			sprintf(buf, "%luG", u);
+		else
+			sprintf(buf, "%lu.%0luG", u, v);
+	} else if (n >= 1000000) {
+		u = n/1000000;
+		v = n/100000 % 10;
+		if(u >= 10 || !v)
+			sprintf(buf, "%luM", u);
+		else
+			sprintf(buf, "%lu.%0luM", u, v);
+	} else if (n >= 1000) {
+		u = n/1000;
+		v = n/100 % 10;
+		if(u >= 10 || !v)
+			sprintf(buf, "%luK", u);
+		else
+			sprintf(buf, "%lu.%0luK", u, v);
+	} else {
+		u = n;
+		sprintf(buf, "%lu", u);
+	}
 	return buf;
 }				/* conciseSize */
 
