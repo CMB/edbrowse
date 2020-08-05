@@ -672,6 +672,58 @@ The old page doesn't matter any more.
 I run the scripts linked to the current frame.
 That way the scripts in a subframe will run, then return, then the scripts
 in the parent frame pick up where they left off.
+The algorithm for which sripts to run when is far from obvious,
+and nowhere documented.
+I had to write several contrived web pages and run them through chrome
+and firefox and document the results.
+
+1. Scripts that come from the internet (src=url) are different from
+inline scripts, i.e. those that are part of the home page, or generated
+dynamically with s.text set.
+An internet script is loaded, that is, fetched from the internet and then run,
+and after that, it's onload handler is run.
+An inline script does not run its onload handler, even if it has one.
+
+2. <style> is inline, but <link href=url rel=stylesheet> is internet.
+As above, onload code is run after an internet css page is fetched.
+This is rather asynchronous, relative to the other scripts.
+Just run the onload code when you can.
+
+3. All the scripts on the home page run in sequence.
+Each internet script must fetch and run before the next script runs.
+Of course all the internet scripts can download in parallel, to save time,
+and I do that if down_jsbg is true,
+but still, we have to execute them in order.
+
+4. A script could have async set, and in theory I could
+skip that one and do the next one if it is available (postpone), or even do the
+async script in another thread, but I can't, because duktape is not threadsafe,
+as is clearly documented.
+So I allow for postponement, that is, two passes,
+the first pass runs scripts in order and skips async scripts,
+the second pass runs the async scripts.
+Pass 2 runs the async scripts in order, and it doesn't have to, but it's
+the easiest way to go, and how often do we have several async scripts,
+some ready several seconds before others? Not very often.
+
+5. These scripts can generate other scripts, which run in the next wave.
+However, if the generated script is inline, not from the internet,
+it runs right now.
+The first script pauses, runs the second script, then resumes.
+I demonstrated this in my contrived web page,
+but not sure it ever happens in the real world.
+If your second script sets s.text = "some code here",
+then why not embed that code in the first script and be done with it?
+So I haven't gone to the bother of implementing this.
+All generated scripts, inline and internet, run later.
+But if we wanted to implement this, you can probably follow the pattern
+set by URL and several other classes.
+Create a member text$2, that's where the code lives.
+A getter returns text$2 when you ask for text.
+A setter runs the code through eval(),
+then stores it in text$2 for future reference.
+All the C code deals with text$2 so there are no unintended side effects.
+So it's not too hard I suppose, but I haven't seen the need yet.
 *********************************************************************/
 
 void runScriptsPending(void)
@@ -809,7 +861,7 @@ I will disconnect here, and also check for inxhr in runOnload().
 			++ln;
 		set_property_object(cf->docobj, "currentScript", t->jv);
 		jsRunData(t->jv, js_file, ln);
-		if (t->js_file && handlerPresent(t->jv, "onload"))
+		if (t->js_file && !isDataURI(t->href) && handlerPresent(t->jv, "onload"))
 			run_event_bool(t->jv, "script", "onload");
 		delete_property(cf->docobj, "currentScript");
 		debugPrint(3, "exec complete");
@@ -831,6 +883,17 @@ afterscript:
 		}
 
 		change = true;
+	}
+
+// after each pass, see if there is a link onload to run.
+	for (t = cw->linklist; t; t = t->same) {
+		if(t->jv && t->lic == 1) {
+			if(handlerPresent(t->jv, "onload")) {
+				run_event_bool(t->jv, "link", "onload");
+				change = true;
+			}
+t->lic = 0;
+		}
 	}
 
 	if (!async) {
@@ -2656,8 +2719,6 @@ void runOnload(void)
 				fn);
 			unloadHyperlink(formfunction, "Form");
 		}
-		if (action == TAGACT_LINK && t->href && handlerPresent(t->jv, "onload"))
-			run_event_bool(t->jv, "link", "onload");
 		if (action == TAGACT_H && handlerPresent(t->jv, "onload"))
 			run_event_bool(t->jv, "h1", "onload");
 	}
@@ -2941,7 +3002,7 @@ We need to fix this someday, though it is a very rare low runner case.
 				set_property_object(cf->docobj, "currentScript",
 						    t->jv);
 				jsRunData(t->jv, js_file, ln);
-				if (t->js_file && handlerPresent(t->jv, "onload"))
+				if (t->js_file && !isDataURI(t->href) && handlerPresent(t->jv, "onload"))
 					run_event_bool(t->jv, "script", "onload");
 				delete_property(cf->docobj, "currentScript");
 				debugPrint(3, "async exec complete");

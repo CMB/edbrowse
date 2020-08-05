@@ -1261,8 +1261,11 @@ static void link_css(struct htmlTag *t)
 				i_printf(MSG_GetCSS2);
 		}
 	}
-	if (a)
+	if (a) {
 		set_property_string(t->jv, "css$data", a);
+// indicate we can run the onload function, if there is one
+		t->lic = 1;
+	}
 	cnzFree(a);
 }				/* link_css */
 
@@ -1874,7 +1877,7 @@ void freeTags(struct ebWindow *w)
 	free(w->tags);
 	w->tags = 0;
 	w->numTags = w->allocTags = w->deadTags = 0;
-	w->inputlist = w->scriptlist = w->optlist = 0;
+	w->inputlist = w->scriptlist = w->optlist = w->linklist = 0;
 }				/* freeTags */
 
 struct htmlTag *newTag(const char *name)
@@ -1907,6 +1910,15 @@ struct htmlTag *newTag(const char *name)
 			t2->same = t;
 		else
 			cw->scriptlist = t;
+	}
+	if (t->action == TAGACT_LINK) {
+		for (t1 = cw->linklist; t1; t1 = t1->same)
+			if (!t1->slash)
+				t2 = t1;
+		if (t2)
+			t2->same = t;
+		else
+			cw->linklist = t;
 	}
 	if (t->action == TAGACT_INPUT || t->action == TAGACT_SELECT ||
 	    t->action == TAGACT_TA) {

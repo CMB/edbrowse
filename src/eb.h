@@ -454,7 +454,7 @@ struct ebWindow {
  * and used thereafter for hyperlinks, fill-out forms, etc. */
 	struct htmlTag **tags;
 	int numTags, allocTags, deadTags;
-	struct htmlTag *scriptlist, *inputlist, *optlist;
+	struct htmlTag *scriptlist, *inputlist, *optlist, *linklist;
 	bool mustrender:1;
 	bool sank:1; /* jSyncup has been run */
 	bool lhs_yes:1;

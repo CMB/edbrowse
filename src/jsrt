@@ -720,7 +720,8 @@ fail(153);
 </script  	
 >
 
-<script type="text/javascript" src="data:text/javascript,var data_uri1_test %3d %22set%22%3b"></script>
+<!-- this script has a url but it's data, and doesn't load, so onload does not run -->
+<script type="text/javascript" src="data:text/javascript,var data_uri1_test %3d %22set%22%3b" onload="onlv+=2"></script>
 <script type="text/javascript" src="data:text/javascript;base64,dmFyIGRhdGFfdXJpMl90ZXN0ID0gInNldCI7Cg=="></script>
 
 <script type=text/javascript language=JavaScript>
