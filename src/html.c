@@ -731,11 +731,20 @@ It fires when the first wave of scripts is complete, but before the second wave 
 The startup argument tells runScriptsPending() we are calling it
 because a new page is being browsed.
 It should dispatch DOMContentLoaded after the first scripts have run.
+
+7. Generated scripts do not run unless and until they are connected to the tree.
+If they are connected later, that is when they run.
+This is true of both inline and internet.
+The first is problematic, because my implementation, in 5,
+that just calls eval(s.text) on a setter,
+would run all the time, whether the new script was connected or not.
+So my 5 implementation would fix one problem and create another.
+Not sure what to do about that.
 *********************************************************************/
 
 void runScriptsPending(bool startbrowse)
 {
-	struct htmlTag *t;
+	struct htmlTag *t, *up;
 	char *js_file;
 	int ln;
 	bool change, async;
@@ -763,27 +772,31 @@ top:
 	change = false;
 
 	for (t = cw->scriptlist; t; t = t->same) {
-		if (!t->jv || t->step >= 3)
+		if (t->dead || !t->jv || t->step >= 3)
 			continue;
 
 /*********************************************************************
-js could create a script object, and not link it into the tree.
-Still it has a tag, and we see it.
-We may try to prepare it and then execute it, but there are two problems.
+Scripts do not run unless connected to the tree; see point 7
+in the earlier comments.
+Climb up until we reach HEAD or BODY.
+If neither of these, then don't run the script, and in fact it's probably
+unsafe to prepare it.
 1. Maybe it isn't ready, which is why it isn't linked into the tree.
+Maybe script.src is still being constructed.
 We should skip it and try again later.
 2. Maybe it was just an exercise, and will never be used.
-We move into prepareScrtipt(), and check some property of the script object.
+We move into prepareScript(), and set some property of the script object.
 This trigggers garbage collection, and the object goes away.
 Our tag is marked dead in response, but we don't check for that in every step
 of preparation and execution.
 The next time we try to use this object in any way, it blows up.
 So it is best to skate past a script that is not linked into the tree.
-I am lazy for now, and just check that it has a parent.
-But it could have a parent like <P> and still not be linked into the tree.
-I should really march up the parent links until I see document.head or document.body.
+We skip past it here, and it isn't prepared, so it won't execute later.
 *********************************************************************/
-		if (!t->parent)
+		for(up = t; up; up = up->parent)
+			if(up->action == TAGACT_HEAD || up->action == TAGACT_BODY)
+				break;
+		if (!up)
 			continue;
 
 		cf = t->f0;
@@ -795,7 +808,7 @@ I should really march up the parent links until I see document.head or document.
 passes:
 
 	for (t = cw->scriptlist; t; t = t->same) {
-		if (!t->jv || t->step >= 5 || t->step <= 2 || t->async != async)
+		if (t->dead || !t->jv || t->step >= 5 || t->step <= 2 || t->async != async)
 			continue;
 		cf = t->f0;
 		if (!is_subframe(cf, save_cf))
@@ -894,7 +907,7 @@ afterscript:
 
 // after each pass, see if there is a link onload to run.
 	for (t = cw->linklist; t; t = t->same) {
-		if(t->jv && t->lic == 1) {
+		if(t->lic == 1 && t->jv && !t->dead) {
 			if(handlerPresent(t->jv, "onload")) {
 				run_event_bool(t->jv, "link", "onload");
 				change = true;
@@ -905,7 +918,7 @@ t->lic = 0;
 
 	if (!async) {
 		if(startbrowse)
-// I think it's save to use cf here, but let's be safe.
+// I think it's ok to use cf here, but let's be safe.
 			run_event_bool(save_cf->docobj, "document", "onDOMContentLoaded");
 		startbrowse = false;
 		async = true;
