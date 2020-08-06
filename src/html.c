@@ -74,7 +74,7 @@ void jSideEffects(void)
 	if (!cw->browseMode || !isJSAlive)
 		return;
 	debugPrint(4, "jSideEffects starts");
-	runScriptsPending();
+	runScriptsPending(false);
 	cw->mustrender = true;
 	rebuildSelectors();
 	debugPrint(4, "jSideEffects ends");
@@ -722,11 +722,18 @@ Create a member text$2, that's where the code lives.
 A getter returns text$2 when you ask for text.
 A setter runs the code through eval(),
 then stores it in text$2 for future reference.
+The inline script is executed now.
 All the C code deals with text$2 so there are no unintended side effects.
 So it's not too hard I suppose, but I haven't seen the need yet.
+
+6. DOMContentLoaded is a strange event.
+It fires when the first wave of scripts is complete, but before the second wave or any onload handlers etc.
+The startup argument tells runScriptsPending() we are calling it
+because a new page is being browsed.
+It should dispatch DOMContentLoaded after the first scripts have run.
 *********************************************************************/
 
-void runScriptsPending(void)
+void runScriptsPending(bool startbrowse)
 {
 	struct htmlTag *t;
 	char *js_file;
@@ -897,6 +904,10 @@ t->lic = 0;
 	}
 
 	if (!async) {
+		if(startbrowse)
+// I think it's save to use cf here, but let's be safe.
+			run_event_bool(save_cf->docobj, "document", "onDOMContentLoaded");
+		startbrowse = false;
 		async = true;
 		goto passes;
 	}
@@ -985,9 +996,9 @@ char *htmlParse(char *buf, int remote)
 			set_property_bool(cf->winobj, "eventDebug", true);
 		set_basehref(cf->hbase);
 		run_function_bool(cf->winobj, "eb$qs$start");
-		runScriptsPending();
+		runScriptsPending(true);
 		runOnload();
-		runScriptsPending();
+		runScriptsPending(false);
 
 /*********************************************************************
 		set_property_string(cf->docobj, "readyState", "complete");
@@ -1010,7 +1021,7 @@ jsRunScript is protected.
 		run_event_bool(cf->winobj, "window", "onfocus");
 		run_event_bool(cf->docobj, "document", "onfocus");
 
-		runScriptsPending();
+		runScriptsPending(false);
 		rebuildSelectors();
 	}
 
@@ -2722,10 +2733,6 @@ void runOnload(void)
 		if (action == TAGACT_H && handlerPresent(t->jv, "onload"))
 			run_event_bool(t->jv, "h1", "onload");
 	}
-
-	if (intFlag)
-		goto done;
-	run_event_bool(cf->docobj, "document", "onDOMContentLoaded");
 
 done:
 	unlink_event(cf->winobj);

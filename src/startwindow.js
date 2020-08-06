@@ -3119,7 +3119,7 @@ for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$orig?"assimilate ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3137,7 +3137,7 @@ for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$orig?"assimilate ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3154,7 +3154,7 @@ for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$orig?"assimilate ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3170,7 +3170,7 @@ for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$orig?"assimilate ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3754,7 +3754,7 @@ for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval('Object.defineProperty(' + cn + ', "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$orig?"assimilate ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$orig?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \

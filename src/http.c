@@ -2869,12 +2869,12 @@ we did that before and now it's being expanded. So bump step up to 2.
 		if (jssrc) {
 			jsRunScript(cf->winobj, jssrc, "frame.src", 1);
 		}
-		runScriptsPending();
+		runScriptsPending(true);
 		runOnload();
-		runScriptsPending();
+		runScriptsPending(false);
 		set_property_string(cf->docobj, "readyState", "complete");
 		run_event_bool(cf->docobj, "document", "onreadystatechange");
-		runScriptsPending();
+		runScriptsPending(false);
 		rebuildSelectors();
 	}
 	nzFree(jssrc);
@@ -3047,12 +3047,12 @@ bool reexpandFrame(void)
 		set_property_object(cf->winobj, "parent", save_parent);
 		set_property_object(cf->winobj, "frameElement", save_fe);
 		run_function_bool(cf->winobj, "eb$qs$start");
-		runScriptsPending();
+		runScriptsPending(true);
 		runOnload();
-		runScriptsPending();
+		runScriptsPending(false);
 		set_property_string(cf->docobj, "readyState", "complete");
 		run_event_bool(cf->docobj, "document", "onreadystatechange");
-		runScriptsPending();
+		runScriptsPending(false);
 		rebuildSelectors();
 	}
 

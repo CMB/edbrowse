@@ -146,7 +146,7 @@ void jSyncup(bool fromtimer);
 void jClearSync(void);
 void htmlMetaHelper(struct htmlTag *t);
 void prepareScript(struct htmlTag *t);
-void runScriptsPending(void);
+void runScriptsPending(bool startbrowse);
 void preFormatCheck(int tagno, bool * pretag, bool * slash) ;
 char *htmlParse(char *buf, int remote) ;
 bool htmlTest(void) ;
