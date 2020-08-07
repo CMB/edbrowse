@@ -728,7 +728,7 @@ So it's not too hard I suppose, but I haven't seen the need yet.
 
 6. DOMContentLoaded is a strange event.
 It fires when the first wave of scripts is complete, but before the second wave or any onload handlers etc.
-The startup argument tells runScriptsPending() we are calling it
+The startbrowse argument tells runScriptsPending() we are calling it
 because a new page is being browsed.
 It should dispatch DOMContentLoaded after the first scripts have run.
 
@@ -740,6 +740,11 @@ that just calls eval(s.text) on a setter,
 would run all the time, whether the new script was connected or not.
 So my 5 implementation would fix one problem and create another.
 Not sure what to do about that.
+
+8. Scripts are run in creation order, not in tree order.
+Or maybe the order is arbitrary and not prescribed,
+in which case creation order is fine.
+That is easiest, and it's what I do.
 *********************************************************************/
 
 void runScriptsPending(bool startbrowse)
