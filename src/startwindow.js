@@ -2699,7 +2699,9 @@ c.prototype.eb$apch2 = document.eb$apch2;
 c.prototype.eb$insbf = document.eb$insbf;
 c.prototype.removeChild = document.removeChild;
 Object.defineProperty(c.prototype, "firstChild", { get: function() { return (this.childNodes && this.childNodes.length) ? this.childNodes[0] : null; } });
+Object.defineProperty(c.prototype, "firstElementChild", { get: function() { var u = this.childNodes; if(!u) return null; for(var i=0; i<u.length; ++i) if(u[i].nodeType == 1) return u[i]; return null; }});
 Object.defineProperty(c.prototype, "lastChild", { get: function() { return (this.childNodes && this.childNodes.length) ? this.childNodes[this.childNodes.length-1] : null; } });
+Object.defineProperty(c.prototype, "lastElementChild", { get: function() { var u = this.childNodes; if(!u) return null; for(var i=u.length-1; i>=0; --i) if(u[i].nodeType == 1) return u[i]; return null; }});
 Object.defineProperty(c.prototype, "nextSibling", { get: function() { return mw0.eb$getSibling(this,"next"); } });
 Object.defineProperty(c.prototype, "previousSibling", { get: function() { return mw0.eb$getSibling(this,"previous"); } });
 // children is subtly different from childnodes; this code taken from
@@ -3691,10 +3693,17 @@ document.replaceChild = mw0.replaceChild;
 document.hasChildNodes = mw0.hasChildNodes;
 document.childNodes = [];
 // We'll make another childNodes array belowe every node in the tree.
+// document should always and only have two children: DOCTYPE and HTML
 Object.defineProperty(document, "firstChild", {
 get: function() { return document.childNodes[0]; }
 });
+Object.defineProperty(document, "firstElementChild", {
+get: function() { return document.childNodes[1]; }
+});
 Object.defineProperty(document, "lastChild", {
+get: function() { return document.childNodes[document.childNodes.length-1]; }
+});
+Object.defineProperty(document, "lastElementChild", {
 get: function() { return document.childNodes[document.childNodes.length-1]; }
 });
 Object.defineProperty(document, "nextSibling", {
