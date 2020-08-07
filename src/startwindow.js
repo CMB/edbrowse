@@ -3290,7 +3290,7 @@ case "tfoot": c = new tFoot; break;
 case "canvas": c = new Canvas; break;
 case "audio": case "video": c = new Audio; break;
 case "document": c = new Document; break;
-case "iframe": case "frame": c = new Frame; break;
+case "htmliframeelement": case "iframe": case "frame": c = new Frame; break;
 case "select": c = new Select; break;
 case "option":
 c = new Option;
@@ -3619,7 +3619,7 @@ Select = mw0.Select;
 Image = mw0.Image;
 Frame = mw0.Frame;
 // This is a placeholder for now. I don't know what HTMLIFrameElement is.
-//HTMLIFrameElement = mw0.Frame;
+HTMLIFrameElement = mw0.Frame;
 Anchor = mw0.Anchor;
 HTMLAnchorElement = mw0.HTMLAnchorElement;
 HTMLLinkElement = mw0.HTMLLinkElement;
@@ -4469,6 +4469,30 @@ for(var i=0; i<this.items.length; ++i)
 if(t) fn.call(t,this.keys[i], this.items[i]); else fn(this.keys[i], this.items[i]);
 }
 
+mw0.padStart = function(l2, v) {
+var l1 = this.length;
+var s = new String(this);
+if(l2 <= l1) return s;
+var l0 = l1;
+if(!v) v = " ";
+var l3 = v.length;
+while(l1+l3 <= l2) s = v+s, l1 += l3;
+if(l1 == l2) return s;
+v = v.substr(0,l2-l1);
+return s.substr(0,l1-l0) + v + s.substr(l1-l0);
+}
+mw0.padEnd = function(l2, v) {
+var l1 = this.length;
+var s = new String(this);
+if(l2 <= l1) return s;
+if(!v) v = " ";
+var l3 = v.length;
+while(l1+l3 <= l2) s = s+v, l1 += l3;
+if(l1 == l2) return s;
+v = v.substr(0,l2-l1);
+return s+v;
+}
+
 } // master compile
 
 crypto = mw0.crypto;
@@ -4476,4 +4500,6 @@ requestAnimationFrame = mw0.requestAnimationFrame;
 cancelAnimationFrame = eb$voidfunction;
 Set = mw0.Set;
 Map = mw0.Map;
+String.prototype.padStart = mw0.padStart;
+String.prototype.padEnd = mw0.padEnd;
 
