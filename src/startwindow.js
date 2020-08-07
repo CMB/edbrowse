@@ -4427,14 +4427,53 @@ mw0.Set.prototype.has = function(x) {return this.items.indexOf(x) >= 0;}
 mw0.Set.prototype.add = function(x) {if(!this.has(x)) this.items.push(x); return x; }
 mw0.Set.prototype.clear = function(){this.items.length = 0;}
 mw0.Set.prototype.delete = function(x) {var i = this.items.indexOf(x); if(i < 0) return false; this.items.splice(i,1); return true; }
-mw0.Set.prototype.foreach = function(fn,t) {
+mw0.Set.prototype.forEach = function(fn,t) {
 for(var i=0; i<this.items.length; ++i)
 if(t) fn.call(t,this.items[i]); else fn(this.items[i]);
 }
+
+mw0.Map = function() { this.keys = [], this.items=[]; }
+Object.defineProperty(mw0.Map.prototype, "size", {get:function(){return this.items.length}});
+mw0.Map.prototype.clear = function(){this.items.length = this.keys.length = 0;}
+mw0.Map.prototype.delete = function(k) {
+for(var i=0; i<this.keys.length; ++i)
+if(this.keys[i] === k) {
+this.keys.splice(i,1), this.items.splice(i,1);
+return true;
+}
+return false;
+}
+mw0.Map.prototype.get = function(k) {
+for(var i=0; i<this.keys.length; ++i)
+if(this.keys[i] === k)
+return this.items[i];
+return undefined;
+}
+mw0.Map.prototype.has = function(k) {
+for(var i=0; i<this.keys.length; ++i)
+if(this.keys[i] === k)
+return true;
+return false;
+}
+mw0.Map.prototype.set = function(k,v) {
+for(var i=0; i<this.keys.length; ++i)
+if(this.keys[i] === k) {
+this.items[i] = v;
+return this;
+}
+this.keys.push(k), this.items.push(v);
+return this;
+}
+mw0.Map.prototype.forEach = function(fn,t) {
+for(var i=0; i<this.items.length; ++i)
+if(t) fn.call(t,this.keys[i], this.items[i]); else fn(this.keys[i], this.items[i]);
+}
+
 } // master compile
 
 crypto = mw0.crypto;
 requestAnimationFrame = mw0.requestAnimationFrame;
 cancelAnimationFrame = eb$voidfunction;
 Set = mw0.Set;
+Map = mw0.Map;
 
