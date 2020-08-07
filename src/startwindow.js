@@ -1013,6 +1013,7 @@ mw0.Script.prototype.text = "";
 mw0.HTMLScriptElement = mw0.Script; // alias for Script, I guess
 mw0.Timer = function(){this.nodeName = "TIMER";}; mw0.Timer.domclass = "Timer";
 mw0.Audio = function(){}; mw0.Audio.domclass = "Audio";
+mw0.Audio.prototype.play = eb$voidfunction;
 
 /*********************************************************************
 If foo is an anchor, then foo.href = blah
@@ -3287,7 +3288,7 @@ case "caption": c = new tCap; break;
 case "thead": c = new tHead; break;
 case "tfoot": c = new tFoot; break;
 case "canvas": c = new Canvas; break;
-case "audio": c = new Audio; break;
+case "audio": case "video": c = new Audio; break;
 case "document": c = new Document; break;
 case "iframe": case "frame": c = new Frame; break;
 case "select": c = new Select; break;
@@ -3617,6 +3618,8 @@ HTMLElement = mw0.HTMLElement;
 Select = mw0.Select;
 Image = mw0.Image;
 Frame = mw0.Frame;
+// This is a placeholder for now. I don't know what HTMLIFrameElement is.
+//HTMLIFrameElement = mw0.Frame;
 Anchor = mw0.Anchor;
 HTMLAnchorElement = mw0.HTMLAnchorElement;
 HTMLLinkElement = mw0.HTMLLinkElement;
