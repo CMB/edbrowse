@@ -5056,7 +5056,7 @@ et_go:
 		return true;
 	}
 
-	if (stringEqual(line, "hover")) {
+	if (stringEqual(line, "showall")) {
 		showHover ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(showHover + MSG_HoverOff);
@@ -5065,7 +5065,7 @@ et_go:
 		return true;
 	}
 
-	if (stringEqual(line, "hover+") || stringEqual(line, "hover-")) {
+	if (stringEqual(line, "showall+") || stringEqual(line, "showall-")) {
 		showHover = (line[5] == '+');
 		if (helpMessagesOn)
 			i_puts(showHover + MSG_HoverOff);

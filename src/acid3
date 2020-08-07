@@ -237,9 +237,9 @@
       var last = document.getElementById('remove-last-child-test');
       var penultimate = last.previousSibling; // this should be the whitespace node
       penultimate = penultimate.previousSibling; // this should now be the actual penultimate element
-//@` tidy does not hand us whitespace nodes, so lastSibling
+//@` tidy does not hand us whitespace nodes, so previousSibling
 // does not hand us the whitespace between tags, as acid3 expects.
-// One call to lastSibling works in edbrowse, not two.
+// One call to previousSibling works in edbrowse, not two.
 // Better still, how bout the more portable
       penultimate = last.previousElementSibling;
       last.parentNode.removeChild(last);

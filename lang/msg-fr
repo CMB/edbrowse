@@ -455,7 +455,7 @@ Le plugin doit être lancé à partir d'un fichier local
 Le plugin est un convertisseur, pas un lecteur
 Le plugin est un lecteur, pas un convertisseur
 cacher bulles de texte
-montrer bulles de texte
+montrer toutes texte
 traitement par lots 
 de %s 
 caractères inattendus après la pièce jointe encodée

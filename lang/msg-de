@@ -455,7 +455,7 @@ Plugin muss von einer lokalen Datei gestartet werden
 das Plugin ist ein Konverter, kein Player
 das Plugin ist ein Player, kein Konverter
 verstecke eingeblendeten Text
-zeige eingeblendeten Text an
+zeige alle Text an
 Mehrfachauswahl
 Von %s 
 unerwartete Zeichen nach dem kodierten Anhang

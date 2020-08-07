@@ -623,7 +623,7 @@ g : suit le lien sur la ligne courante
 <br>js : activation javascript (bascule)
 <br>rr : rafraîchit  l'écran, afin de refléter les modifications javascript asynchrones 
 <br>rr 75 : rafraîchit l'écran toutes les 75 secondes
-<br>hover : affiche le texte survolé (bascule)
+<br>showall : affiche le texte survolé (bascule)
 <br>colors : montre les couleurs sur la page
 <p>
 Client Mail
@@ -2479,7 +2479,7 @@ donc il faut penser à quelque chose de semblable.
 <P>
 Un texte au survol (un texte-bulle) est souvent explicatif, et rarement essentiel. 
 Comme le but de Edbrowse est de limiter les sorties, edbrowse n'affiche pas ce texte par défaut. 
-Cependant, vous pouvez l'activer avec la commande hover. 
+Cependant, vous pouvez l'activer avec la commande showall. 
 Tous les textes-bulles apparaissent, sur toute la page. 
 Il serait agréable de survoler une ligne particulière, mais aller jusque-là est difficile à envisager. 
 Ce ne serait pas très lisible si un pour un élémént que vous pouvez survoler affiche quelque chose 
@@ -2489,7 +2489,7 @@ si vous le désirez, vous pouvez esauvegarder deux tampons et faire un diff pour
 qui ont été modifiées. 
 Vous n'aurez besoin de ceci qu'une seule fois sur un site web que vous consulterez plus tard régulièrement. 
 Une fois que vous aurez lu les bulles explicatives vous ne voudrez probablement plus les lire 
-à l'avenir, et vous pourrez consulter ce site avec la commande hover désactivée. 
+à l'avenir, et vous pourrez consulter ce site avec la commande showall désactivée. 
 
 <P>
 Dans de rares cas, le survol d'une icône affiche des liens ou des boutons. 
@@ -2503,13 +2503,13 @@ mais ceci tend à se fonder sur le type d'élémént ou la classe.
 Mettre une étoile avant chaque paragraphe qui a class=footnote. 
 Mettre une flèche droite après chaque lien avec class=external, vous envoyant sur une autre site. 
 Ces petits symboles sont surtout visuels, mas ils sont égalemnt révélés par la 
-commande hover. 
+commande showall. 
 Comme évoqué précédemment, les caractères injectés ou emojis sont des rappels visuels des noeuds 
 qu'ils décorent, et sont rarement indispensables; cependant, il y a de rares sites ou le texte 
 injécté est explicatif, et devrait être lu en premier. 
 
 <P>
-Finalement, la commande hover affiche les sections rendues invisibles par css ou javascript. 
+Finalement, la commande showall affiche les sections rendues invisibles par css ou javascript. 
 Elles sont affichées entre signes supérieur et inférieur, et accolades, par ex. &lt;{bonjour monde}&gt;. 
 Elles peuvent être cachées parce non pertinentes pour vous, ou dans la situation actuelle. 
 Pourquoi afficher le lien de commande si votre panier d'achats est vide ?
@@ -2518,7 +2518,7 @@ alors qu'elle devrait être affichée.
 C'est pourquoi vous pouvez souhaiter de voir ce que vous manquez. 
 
 <P>
-La commande hover n'affiche ni ne cache les textes-bulles si javascript n'est pas activé. 
+La commande showall n'affiche ni ne cache les textes-bulles si javascript n'est pas activé. 
 Sans javascript, toutes les bulles et toutes les sections invisibles sont affichées. 
 
 <H3> <A NAME="colors"> Couleurs dans la page </A> </H3>

@@ -454,8 +454,8 @@ lines %d through %d and %d have been deleted\n
 plugin must run from a local file
 plugin is a converter, not a player
 plugin is a player, not a converter
-hide hover text
-show hover text
+hide hover and invisible text
+show all text
 batch 
 from %s 
 unexpected characters after the encoded attachment

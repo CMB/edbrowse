@@ -672,7 +672,7 @@ g : go to the link on the current line
 <br>js : allow javascript (toggle)
 <br>rr : rerender the screen, to reflect asynchronous javascript changes
 <br>rr 75 : rerender the screen automatically every 75 seconds
-<br>hover : show all hover and invisible text (toggle)
+<br>showall : show all hover and invisible text (toggle)
 <br>colors : show the colors on the page
 <P>
 Mail Client
@@ -2567,14 +2567,14 @@ Edbrowse has nothing analogous to a mouse hovering over an icon, so we had to th
 <P>
 Hover text is usually explanatory, and rarely essential.
 Since the goal of edbrowse is minimal output, edbrowse does not display this text by default.
-However, you can turn it on with the hover command.
+However, you can turn it on with the showall command.
 All the hover text appears, all over the page.
 It might be nice to hover over a particular line, but so far this has proved problematic.
 It's not clear what if anything you can hover over, and the message might pop up on a different part of the screen, perhaps 20 lines down in the buffer.
 For now, the approach is to reveal all hover text wherever it appears.
 If you like, you can save the two buffers, and diff to read the lines that have changed.
 You probably only need to do this once on a website that you will be visiting again and again.
-Once you have read the hover explanations you probably won't need to read them in the future, whereupon you can run with hover disabled.
+Once you have read the hover explanations you probably won't need to read them in the future, whereupon you can run with showall disabled.
 
 <P>
 In rare cases, hovering over an icon reveals links or buttons.
@@ -2589,13 +2589,13 @@ Put a right arrow after every hyperlink with class=external, taking you to anoth
 Put a green circle in front of every input field with class=required, a required field.
 These little symbols are primarily visual, and of almost no value to edbrowse users.
 Once again they are hidden by default.
-They are not strictly hover text, but these are also revealed by the hover command.
+They are not strictly hover text, but these are also revealed by the showall command.
 As mentioned earlier,
 the injected characters or emojis are helpful visual reminders of the nodes they adorn, and are rarely vital;
 however, there are a few websites where the injected text is explanatory, and might be worth reading at least once.
 
 <P>
-Finally, the hover command shows the sections that are rendered invisible by css or javascript.
+Finally, the showall command shows the sections that are rendered invisible by css or javascript.
 These are in quotes and braces, e.g. `{hello world}'.
 These might be hidden because they are not relevant to you, or to your current situation.
 Why show the checkout link if there is nothing in your shopping cart?
@@ -2603,7 +2603,7 @@ However, edbrowse javascript is still a work in progress, and sometimes a bug ke
 Thus you might want to see what you are missing.
 
 <P>
-The hover command does not show or hide text unless javascript is enabled.
+The showall command does not show or hide text unless javascript is enabled.
 Without javascript, all the hover text and all the invisible sections are shown.
 
 <H3> <A NAME=colors> Colors on the Page </A> </H3>
