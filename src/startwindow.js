@@ -2494,8 +2494,12 @@ var a = [];
 var prev_fn = this[ev];
 if(prev_fn) this[evorig] = prev_fn;
 
+// Is thiis tag this event being watched?
+var extension = "";
+if(this[ev+"$$watch"]) extension = "$2";
+
 eval(
-'this["' + ev + '"] = function(e){ var rc, a = this["' + evarray + '"]; \
+'this["' + ev + extension + '"] = function(e){ var rc, a = this["' + evarray + '"]; \
 if(this["' + evorig + '"] && e.eventPhase < 3) { \
 var ehsn = this["' + evorig + '"].ehsn; \
 if(ehsn) ehsn = " " + ehsn; else ehsn = ""; /* from int to string */ \
@@ -3117,6 +3121,7 @@ var cn = cnlist[i];
 var evs = ["onclick"];
 for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
+eval('mw0.' + cn + '.prototype["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
 set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
@@ -3135,6 +3140,7 @@ var cn = cnlist[i];
 var evs = ["onload", "onunload"];
 for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
+eval('mw0.' + cn + '.prototype["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
 set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
@@ -3152,6 +3158,7 @@ var cn = cnlist[i];
 var evs = ["onsubmit", "onreset"];
 for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
+eval('mw0.' + cn + '.prototype["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
 set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
@@ -3168,6 +3175,7 @@ var cn = cnlist[i];
 var evs = ["onchange", "oninput"];
 for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
+eval('mw0.' + cn + '.prototype["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
 set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
@@ -3752,6 +3760,7 @@ var cn = cnlist[i];
 var evs = ["onload", "onunload", "onclick", "onchange", "oninput"];
 for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
+eval(cn + '["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(' + cn + ', "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
 set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$orig?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.domclass) + ".' + evname + '"); \
