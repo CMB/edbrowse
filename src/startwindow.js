@@ -1811,8 +1811,8 @@ mw0.hasChildNodes = function() { return (this.childNodes.length > 0); }
 
 mw0.eb$getSibling = function (obj,direction)
 {
-if(!obj.parentNode) return null;
 var pn = obj.parentNode;
+if(!pn) return null;
 var j, l;
 l = pn.childNodes.length;
 for (j=0; j<l; ++j)
@@ -1824,10 +1824,35 @@ return null;
 switch(direction) {
 case "previous":
 return (j > 0 ? pn.childNodes[j-1] : null);
-break;
 case "next":
 return (j < l-1 ? pn.childNodes[j+1] : null);
-break;
+default:
+// the function should always have been called with either 'previous' or 'next' specified
+return null;
+}
+}
+
+mw0.eb$getElementSibling = function (obj,direction)
+{
+var pn = obj.parentNode;
+if(!pn) return null;
+var j, l;
+l = pn.childNodes.length;
+for (j=0; j<l; ++j)
+if (pn.childNodes[j] == obj) break;
+if (j == l) {
+// child not found under parent, error
+return null;
+}
+switch(direction) {
+case "previous":
+for(--j; j>=0; --j)
+if(pn.childNodes[j].nodeType == 1) return pn.childNodes[j];
+return null;
+case "next":
+for(++j; j<l; ++j)
+if(pn.childNodes[j].nodeType == 1) return pn.childNodes[j];
+return null;
 default:
 // the function should always have been called with either 'previous' or 'next' specified
 return null;
@@ -2703,7 +2728,9 @@ Object.defineProperty(c.prototype, "firstElementChild", { get: function() { var 
 Object.defineProperty(c.prototype, "lastChild", { get: function() { return (this.childNodes && this.childNodes.length) ? this.childNodes[this.childNodes.length-1] : null; } });
 Object.defineProperty(c.prototype, "lastElementChild", { get: function() { var u = this.childNodes; if(!u) return null; for(var i=u.length-1; i>=0; --i) if(u[i].nodeType == 1) return u[i]; return null; }});
 Object.defineProperty(c.prototype, "nextSibling", { get: function() { return mw0.eb$getSibling(this,"next"); } });
+Object.defineProperty(c.prototype, "nextElementSibling", { get: function() { return mw0.eb$getElementSibling(this,"next"); } });
 Object.defineProperty(c.prototype, "previousSibling", { get: function() { return mw0.eb$getSibling(this,"previous"); } });
+Object.defineProperty(c.prototype, "previousElementSibling", { get: function() { return mw0.eb$getElementSibling(this,"previous"); } });
 // children is subtly different from childnodes; this code taken from
 // https://developer.mozilla.org/en-US/docs/Web/API/ParentNode/children
 Object.defineProperty(c.prototype, 'children', {
@@ -3695,23 +3722,21 @@ document.childNodes = [];
 // We'll make another childNodes array belowe every node in the tree.
 // document should always and only have two children: DOCTYPE and HTML
 Object.defineProperty(document, "firstChild", {
-get: function() { return document.childNodes[0]; }
-});
+get: function() { return document.childNodes[0]; }});
 Object.defineProperty(document, "firstElementChild", {
-get: function() { return document.childNodes[1]; }
-});
+get: function() { return document.childNodes[1]; }});
 Object.defineProperty(document, "lastChild", {
-get: function() { return document.childNodes[document.childNodes.length-1]; }
-});
+get: function() { return document.childNodes[document.childNodes.length-1]; }});
 Object.defineProperty(document, "lastElementChild", {
-get: function() { return document.childNodes[document.childNodes.length-1]; }
-});
+get: function() { return document.childNodes[document.childNodes.length-1]; }});
 Object.defineProperty(document, "nextSibling", {
-get: function() { return mw0.eb$getSibling(this,"next"); }
-});
+get: function() { return mw0.eb$getSibling(this,"next"); }});
+Object.defineProperty(document, "nextElementSibling", {
+get: function() { return mw0.eb$getElementSibling(this,"next"); }});
 Object.defineProperty(document, "previousSibling", {
-get: function() { return mw0.eb$getSibling(this,"previous"); }
-});
+get: function() { return mw0.eb$getSibling(this,"previous"); }});
+Object.defineProperty(document, "previousElementSibling", {
+get: function() { return mw0.eb$getElementSibling(this,"previous"); }});
 
 Attr = mw0.Attr;
 NamedNodeMap = mw0.NamedNodeMap;
