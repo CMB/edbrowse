@@ -52,32 +52,9 @@ frameElement = null;
  * This is in concert with the jdb command in edbrowse.
  * I know, it doesn't start with eb$ but I wanted an easy,
  * mnemonic command that I could type in quickly.
- * If a web page creates an ok function it will override this one. */
-ok = Object.keys = Object.keys || (function () { 
-		var hasOwnProperty = Object.prototype.hasOwnProperty, 
-		hasDontEnumBug = !{toString:null}.propertyIsEnumerable("toString"),
-		DontEnums = [ 
-		'toString', 'toLocaleString', 'valueOf', 'hasOwnProperty', 
-		'isPrototypeOf', 'propertyIsEnumerable', 'constructor' 
-		], 
-		DontEnumsLength = DontEnums.length; 
-		return function (o) { 
-		if (typeof o !== "object" && typeof o !== "function" || o === null) 
-		throw new TypeError("Object.keys called on a non-object");
-		var result = []; 
-		for (var name in o) { 
-		if (hasOwnProperty.call(o, name)) 
-		result.push(name); 
-		} 
-		if (hasDontEnumBug) { 
-		for (var i = 0; i < DontEnumsLength; i++) { 
-		if (hasOwnProperty.call(o, DontEnums[i]))
-		result.push(DontEnums[i]);
-		}
-		}
-		return result; 
-		}; 
-		})(); 
+ * If a web page creates an ok function it will override this one.
+And that does happen, e.g. the react system, so $ok is an alias for this. */
+ok = $ok = Object.keys;
 
 // print an error inline, at debug level 3 or higher.
 function alert3(s) { eb$logputs(3, s); }
