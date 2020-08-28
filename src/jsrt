@@ -312,6 +312,11 @@ onsubmit='return submitFunction(this)'
 onreset='return resetFunction()'
 onload=formLoad(this.name) onunload=formUnload(this.name)>
 
+<!-- we might want to test json some day. -->
+    <script type='application/json'>
+{"foo":736,"bar":737}
+</script>
+
 <script language=JavaScript type=text/javascript>
 function catdog(item) { alert('fluffy'); if(item.checked&&document.forms[0].dog.checked) alert('chased by dog'); }
 

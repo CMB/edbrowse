@@ -477,7 +477,6 @@ void prepareScript(struct htmlTag *t)
 {
 	const char *js_file = "generated";
 	char *js_text = 0;
-	const char *a;
 	const char *filepart;
 	char *b;
 	int blen;
@@ -485,22 +484,7 @@ void prepareScript(struct htmlTag *t)
 	if (intFlag)
 		goto fail;
 
-// If no language is specified, javascript is default.
-// language and type really need to dip into javascript attributes,
-// in case js has set or change them.  Not yet implemented.
-	a = attribVal(t, "language");
-	if (a && (!memEqualCI(a, "javascript", 10) || isalphaByte(a[10])))
-		goto fail;
-/* Also reject a script if a type is specified and it is not JS.
- * For instance, some JSON pairs in script tags on the amazon.com
- * homepage. */
-	a = attribVal(t, "type");
-	if (a && (!memEqualCI(a, "javascript", 10))
-	    && (!memEqualCI(a, "text/javascript", 15)))
-		goto fail;
-
-/* It's javascript, run with the source or the inline text.
- * As per the starting line number, we cant distinguish between
+/* As per the starting line number, we cant distinguish between
  * <script> foo </script>  and
  * <script>
  * foo
@@ -751,6 +735,7 @@ void runScriptsPending(bool startbrowse)
 {
 	struct htmlTag *t, *up;
 	char *js_file;
+	const char *a;
 	int ln;
 	bool change, async;
 	jsobjtype v;
@@ -870,6 +855,25 @@ I will disconnect here, and also check for inxhr in runOnload().
 			goto afterscript;
 		}
 
+// If no language is specified, javascript is default.
+		a = get_property_string(t->jv, "language");
+		if (a && *a && (!memEqualCI(a, "javascript", 10) || isalphaByte(a[10]))) {
+			debugPrint(3, "script language %s not executed", a);
+			cnzFree(a);
+			goto afterscript;
+		}
+		cnzFree(a);
+// Also reject a script if a type is specified and it is not JS.
+// For instance, some JSON pairs in script tags on amazon.com
+		a = get_property_string(t->jv, "type");
+		if (a && *a && (!memEqualCI(a, "javascript", 10))
+		    && (!memEqualCI(a, "text/javascript", 15))) {
+			debugPrint(3, "script type %s not executed", a);
+			cnzFree(a);
+			goto afterscript;
+		}
+		cnzFree(a);
+
 		js_file = t->js_file;
 		if (!js_file)
 			js_file = "generated";
@@ -886,6 +890,11 @@ I will disconnect here, and also check for inxhr in runOnload().
 			++ln;
 		set_property_object(cf->docobj, "currentScript", t->jv);
 		jsRunData(t->jv, js_file, ln);
+
+// I don't know when to run the onload function, before or after the script.
+// And should we run it for a json script or other non js script?
+// If so that's a problem, cause we already jumped ahead to afterscript:
+
 		if (t->js_file && !isDataURI(t->href) && handlerPresent(t->jv, "onload"))
 			run_event_bool(t->jv, "script", "onload");
 		delete_property(cf->docobj, "currentScript");
