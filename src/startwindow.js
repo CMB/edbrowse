@@ -4446,6 +4446,12 @@ for(var i=0; i<this.items.length; ++i)
 if(t) fn.call(t,this.keys[i], this.items[i]); else fn(this.keys[i], this.items[i]);
 }
 
+mw0.Reflect = function() {};
+mw0.Reflect.prototype.get = function(target,propertyKey)
+{
+return target[propertyKey];
+}
+
 mw0.padStart = function(l2, v) {
 var l1 = this.length;
 var s = new String(this);
@@ -4477,6 +4483,7 @@ requestAnimationFrame = mw0.requestAnimationFrame;
 cancelAnimationFrame = eb$voidfunction;
 Set = mw0.Set;
 Map = mw0.Map;
+Reflect = mw0.Reflect;
 String.prototype.padStart = mw0.padStart;
 String.prototype.padEnd = mw0.padEnd;
 
