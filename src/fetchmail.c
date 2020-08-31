@@ -996,6 +996,12 @@ doref:
 doflags:
 /* flags, mostly looking for has this been read */
 		u = strstr(t, "FLAGS (");
+		if(!u) {
+// sometimes flags and stuff comes at the beginning.
+// It should be somewhere!
+			t = mailstring;
+			u = strstr(t, "FLAGS (");
+		}
 		if (!u)
 			goto dodate;
 		t = u + 7;
