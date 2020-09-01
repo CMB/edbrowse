@@ -1479,6 +1479,11 @@ static bool moveFiles(void)
 	char *path1, *path2;
 	int ln, cnt, dol;
 
+	if (!dirWrite) {
+		setError(MSG_DirNoWrite);
+		return false;
+	}
+
 	cmd = 'e';		// show error messages
 	ln = startRange;
 	cnt = endRange - startRange + 1;
