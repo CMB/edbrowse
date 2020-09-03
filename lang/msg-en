@@ -311,7 +311,7 @@ stop
 fetch %d at a time\n
 no attachments
 .ebrc: keyword = value inside an edbrowse function at line %d
-showing last %d of %d messages\n
+0
 ftp session initialization failed
 Push
 edbrowse was not compiled with database access
@@ -658,3 +658,5 @@ trace points injected
 Command execution failed, system() returned %d
 don't show colors
 show colors
+showing last %d of %d messages\n
+showing first %d of %d messages\n

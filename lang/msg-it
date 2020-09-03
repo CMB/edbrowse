@@ -311,7 +311,7 @@ stop
 preleva %d alla volta\n
 non ci sono allegati
 .ebrc: keyword = valore in una funzione edbrowse alla riga %d
-visualizzo gli ultimi %d di %d messaggi\n
+0
 l'inizializzazione della sessione ftp è fallita
 Push
 edbrowse non è stato compilato con il supporto per l'accesso ai database
@@ -658,3 +658,5 @@ readline() input
 Esecuzione del comando fallita, system() ha ritornato %d
 non mostrare colori
 mostra colori
+visualizzo gli ultimi %d di %d messaggi\n
+visualizzo gli primo %d di %d messaggi\n

@@ -3,6 +3,8 @@ Here are some changes introduced by recent versions of edbrowse.
 3.7.x
 Move or copy files from one directory to another.
 
+imap can fetch the earliest emails, rather than the most recent.
+
 3.7.6
 colors command to show the colors of the web page.
 

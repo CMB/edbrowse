@@ -311,7 +311,7 @@ stop
 pobierz %d na raz\n
 brak załączników
 .ebrc: klucz = wartość wewnątrz funkcji edbrowse w wierszu %d
-pokazuję ostatnie %d z %d wiadomości\n
+0
 ftp: inicjalizacja sesji zakończona niepowodzeniem
 Pchnij
 edbrowse nie został skompilowany z dostępem do bazy danych
@@ -658,3 +658,5 @@ punkty inspekcji (trace) ustawione
 Wykonanie polecenia zakończone niepowodzeniem, system() zwrócił %d
 nie pokazuj kolorów
 pokazuj kolory
+pokazuję ostatnie %d z %d wiadomości\n
+pokazuję pierwszego %d z %d wiadomości\n

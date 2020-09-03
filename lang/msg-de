@@ -311,7 +311,7 @@ stop
 hole %d auf einmal\n
 keine Anhänge
 .ebrc: Schlüsselwort = Wert innerhalb einer Edbrowse-Funktion in Zeile %d
-zeige letzte %d von %d Nachrichten\n
+0
 ftp-Sitzung konnte nicht initialisiert werden
 Versenden
 Edbrowse wurde ohne Datenbankzugriff kompiliert
@@ -658,3 +658,5 @@ zeilenweise Eingabe
 Ausführung des Kommandos fehlgeschlagen, das System gab %d zurück
 zeige keine Farben
 zeige Farben
+zeige letzte %d von %d Nachrichten\n
+zeige erste %d von %d Nachrichten\n

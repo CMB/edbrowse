@@ -311,7 +311,7 @@ stop
 récupérer %d à la fois\n
 pas de pièces attachées
 .ebrc: mot-clé = valeur dans une fonction edbrowse à la ligne %d
-affichage des derniers %d de %d messages\n
+0
 ftp : échec de la session d'initialisation
 0
 edbrowse n'a pas été compilé avec l'accès aux bases de données
@@ -658,3 +658,5 @@ entrées readline()
 La commande a échoué, le système a renvoyé %d
 couleurs non affichés
 couleurs affichées
+affichage des derniers %d de %d messages\n
+affichage des premier %d de %d messages\n

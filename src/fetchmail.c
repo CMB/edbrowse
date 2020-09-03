@@ -141,15 +141,20 @@ static int mailstring_l;
 static char *mailbox_url, *message_url;
 
 static int imapfetch = 100;
+static bool earliest;
 
 static void setLimit(const char *t)
 {
+	char early = false;
 	skipWhite(&t);
+	if(*t == '-')
+		early = true, ++t;
 	if (!isdigit(*t)) {
 		i_puts(MSG_NumberExpected);
 		return;
 	}
 	imapfetch = atoi(t);
+	earliest = early;
 	if (imapfetch < 10)
 		imapfetch = 10;
 	i_printf(MSG_FetchN, imapfetch);
@@ -657,7 +662,7 @@ imap_done:
 			if (!imapSearch(handle, f, inputline))
 				goto action;
 			if (f->nmsgs > f->nfetch)
-				i_printf(MSG_ShowLast, f->nfetch, f->nmsgs);
+				i_printf(MSG_ShowLast + earliest, f->nfetch, f->nmsgs);
 			else
 				i_printf(MSG_MessagesX, f->nmsgs);
 			goto showmessages;
@@ -1073,7 +1078,7 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 	if (f->nfetch > imapfetch)
 		f->nfetch = imapfetch;
 	f->start = 1;
-	if (f->nmsgs > f->nfetch)
+	if (f->nmsgs > f->nfetch && !earliest)
 		f->start += (f->nmsgs - f->nfetch);
 
 	t = strstr(mailstring, "UIDNEXT ");
@@ -1111,7 +1116,7 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 	envelopes(handle, f);
 
 	if (f->nmsgs > f->nfetch)
-		printf("showing last %d of %d messages\n", f->nfetch, f->nmsgs);
+		i_printf(MSG_ShowLast + earliest, f->nfetch, f->nmsgs);
 	else
 		i_printf(MSG_MessagesX, f->nmsgs);
 }				/* examineFolder */

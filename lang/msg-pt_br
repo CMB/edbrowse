@@ -311,7 +311,7 @@ interromper
 pegar %d de uma vez\n
 sem anexos
 .ebrc: palavrachave = valor numa função do edbrowse na linha %d
-mostrando as últimas %d de %d mensagens\n
+0
 falha a iniciar sessão de FTP
 botão de ação
 o edbrowse não foi compilado com acesso a bancos de dado
@@ -658,3 +658,5 @@ linha de entrada()
 Execução de comando falhou; system() retornou %d
 não mostrar cores
 mostrar cores
+mostrando as últimas %d de %d mensagens\n
+mostrando as primeiro %d de %d mensagens\n
