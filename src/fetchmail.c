@@ -2175,6 +2175,22 @@ static struct MHINFO *headerGlean(char *start, char *end)
 				stringAndBytes(&w->tolist, &w->tolen, s, t - s);
 			if (linetype == 'y')
 				stringAndBytes(&w->cclist, &w->cclen, s, t - s);
+			if (linetype == 's') {
+				int l1, l2;
+				++s;
+				l1 = strlen(w->subject);
+				l2 = t - s;
+				if(l1 + l2 > MHLINE)
+					l2 = MHLINE - l1;
+				strncpy(w->subject + l1, s, l2);
+				if (t == end - 1 || (t[1] != ' ' && t[1] != '\t')) {
+					vl = w->subject;
+					mhReformat(vl);
+					vr = vl + strlen(vl);
+					isoDecode(vl, &vr);
+					*vr = 0;
+				}
+			}
 			continue;
 		}
 
@@ -2204,8 +2220,10 @@ static struct MHINFO *headerGlean(char *start, char *end)
 /* This is sort of a switch statement on the word */
 		if (memEqualCI(s, "subject:", q - s)) {
 			linetype = 's';
-			if (w->subject[0])
+			if (w->subject[0]) {
+				linetype = 0;
 				continue;
+			}
 /* get rid of forward/reply prefixes */
 			for (q = vl; q < vr; ++q) {
 				static const char *const prefix[] = {
@@ -2231,13 +2249,14 @@ static struct MHINFO *headerGlean(char *start, char *end)
 				vr -= j;
 				--q;	/* try again */
 			}
-			isoDecode(vl, &vr);
 			strncpy(w->subject, vl, vr - vl);
-/* If the subject is really long, spreads onto the next line,
- * I'll just use ... */
-			if (t < end - 1 && (t[1] == ' ' || t[1] == '\t'))
-				strcat(w->subject, "...");
-			mhReformat(w->subject);
+			if (t == end - 1 || (t[1] != ' ' && t[1] != '\t')) {
+				vl = w->subject;
+				mhReformat(vl);
+				vr = vl + strlen(vl);
+				isoDecode(vl, &vr);
+				*vr = 0;
+			}
 			continue;
 		}
 
