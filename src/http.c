@@ -2168,9 +2168,8 @@ static CURL *http_curl_init(struct i_get *g)
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
 	curl_init_status = curl_easy_setopt(h, CURLOPT_COOKIEFILE, "");
-	if (curl_init_status != CURLE_OK) {
+	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
-	}
 /* Lots of these setopt calls shouldn't fail.  They just diddle a struct. */
 	curl_easy_setopt(h, CURLOPT_SOCKOPTFUNCTION, my_curl_safeSocket);
 	curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, eb_curl_callback);
@@ -2213,6 +2212,14 @@ static CURL *http_curl_init(struct i_get *g)
 #endif
 	curl_easy_setopt(h, CURLOPT_HTTPAUTH, curl_auth);
 
+#if 0
+// in case you run into DH key too small
+// This may not be portable, e.g. curl compiled with gnutls;
+// though it is usually compiled with openssl.
+// Not sure of the best solution here.
+	curl_easy_setopt(h, CURLOPT_SSL_CIPHER_LIST, "DEFAULT@SECLEVEL=1");
+#endif
+
 /* The next few setopt calls could allocate or perform file I/O. */
 	g->error[0] = '\0';
 	curl_init_status = curl_easy_setopt(h, CURLOPT_ERRORBUFFER, g->error);
@@ -2221,6 +2228,7 @@ static CURL *http_curl_init(struct i_get *g)
 	curl_init_status = curl_easy_setopt(h, CURLOPT_ENCODING, "");
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
+
 	return h;
 
 libcurl_init_fail:
