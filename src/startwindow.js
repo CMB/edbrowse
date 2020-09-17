@@ -931,6 +931,7 @@ mw0.textarea$html$crossover = function(t)
 {
 if(!t || !(t instanceof Element) || t.type != "textarea")
 return;
+t.value = "";
 // It's a textarea - what is below?
 if(t.childNodes.length == 0) return; // nothing below
 var tn; // our textNode
