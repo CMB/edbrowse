@@ -1215,6 +1215,7 @@ they go where they go, so this doesn't come up very often.
 // So state might still be 1, set it back to 0.
 				g->down_state = 0;
 				g->code = 0;
+				g->csp = false;
 				nzFree(g->headers);
 				g->headers = 0;
 				g->headers_len = 0;
