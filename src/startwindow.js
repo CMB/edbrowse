@@ -1136,6 +1136,25 @@ if(this.height === 0 || this.width === 0) return "data:,";
 return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAADElEQVQImWNgoBMAAABpAAFEI8ARAAAAAElFTkSuQmCC";
 }
 
+mw0.postMessage = function (message,target_origin)
+{
+if (this.location.protocol + "//" + this.location.hostname == target_origin || target_origin == "*")
+{
+if (typeof this.onmessage == "function")
+{
+// whose responsibility is it to add the event handler?   The web developer's?
+// Because we (the browser implementers) don't have any way of knowing what in particular
+// they want the handler to actually do with the message.  Right?
+var me = new Event;
+me.name = "message";
+me.type = "message";
+me.data = message
+this.onmessage(me);
+}
+}
+}
+
+
 /*********************************************************************
 AudioContext, for playing music etc.
 This one we could implement, but I'm not sure if we should.
@@ -3626,6 +3645,7 @@ Timer = mw0.Timer;
 Audio = mw0.Audio;
 Canvas = mw0.Canvas;
 AudioContext = mw0.AudioContext;
+postMessage = mw0.postMessage;
 Document = mw0.Document;
 CSSStyleSheet = mw0.CSSStyleSheet;
 CSSStyleDeclaration = mw0.CSSStyleDeclaration;
