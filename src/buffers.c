@@ -1489,6 +1489,10 @@ static bool moveFiles(void)
 	cnt = endRange - startRange + 1;
 	while (cnt--) {
 		char *file, *t, *ftype;
+		bool iswin = false;
+#ifdef DOSLIKE
+		iswin = true;
+#endif
 		file = (char *)fetchLine(ln, 0);
 		t = strchr(file, '\n');
 		if (!t)
@@ -1527,7 +1531,7 @@ static bool moveFiles(void)
 			if (errno == EXDEV) {
 				char *rmbuf;
 				int rmlen, j;
-				if (*ftype || fileSizeByName(path1) > 200000000) {
+				if (!iswin || *ftype || fileSizeByName(path1) > 200000000) {
 // let mv or cp do the work
 					char *a, qc = '\'';
 					if(strchr(path1, qc) || strchr(path2, qc)) {
