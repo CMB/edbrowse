@@ -664,6 +664,7 @@ bool run_event_bool(jsobjtype obj, const char *pname, const char *evname)
 	}
 	eo = create_event(obj, evname);
 	set_property_object(eo, "target", obj);
+	set_property_object(eo, "currentTarget", obj);
 	set_property_string(eo, "type", evname);
 	set_property_number(eo, "eventPhase", 2);
 	rc = run_function_onearg(obj, evname, eo);
