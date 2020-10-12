@@ -107,6 +107,7 @@ enum ej_proptype {
 	EJ_PROP_ARRAY,
 	EJ_PROP_FUNCTION,
 	EJ_PROP_INSTANCE,
+	EJ_PROP_NULL,
 };
 
 /* ctype macros, when you're passing a byte,

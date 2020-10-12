@@ -1637,6 +1637,8 @@ static enum ej_proptype top_proptype(void)
 		if (duk_is_array(jcx, -1))
 			return EJ_PROP_ARRAY;
 		return EJ_PROP_OBJECT;
+	case DUK_TYPE_NULL:
+		return EJ_PROP_NULL;
 	}
 	return EJ_PROP_NONE;	/* don't know */
 }				/* top_proptype */
@@ -2036,11 +2038,31 @@ Function doesn't exist. true, unless debugging.
 Function encounters an error during execution. true, unless debugging.
 *********************************************************************/
 
-// For debugging; please leave the stack the way you found it.
+/*********************************************************************
+For debugging; please leave the stack the way you found it.
+As you climb up the tree, check for parentNode = null.
+null is an object so it passes the object test.
+This should never happen, but does in http://4x4dorogi.net
+Also check for recursion.
+If there is an error fetching nodeName or class, e.g. when the node is null,
+(if we didn't check for parentNode = null in the above website),
+then asking for nodeName causes yet another runtime error.
+This invokes our machinery again, including uptrace if debug is on,
+and it invokes the duktape machinery again as well.
+The resulting core dump has the stack so corrupted, that gdb is hopelessly confused.
+*********************************************************************/
+
 static void uptrace(jsobjtype node)
 {
+	static bool infunction = false;
+	int t;
 	if (debugLevel < 3)
 		return;
+	if(infunction) {
+		debugPrint(3, "uptrace recursion; this is unrecoverable!");
+		exit(1);
+	}
+	infunction = true;
 	duk_push_heapptr(jcx, node);
 	while (true) {
 		const char *nn, *cn;	// node name class name
@@ -2066,7 +2088,20 @@ static void uptrace(jsobjtype node)
 			break;
 		}
 		duk_remove(jcx, -2);
+		t = top_proptype();
+		if(t == EJ_PROP_NULL) {
+			debugPrint(3, "null");
+			duk_pop(jcx);
+			break;
+		}
+		if(t != EJ_PROP_OBJECT) {
+			debugPrint(3, "parentNode not object, type %d", t);
+			duk_pop(jcx);
+			break;
+		}
 	}
+	debugPrint(3, "end uptrace");
+	infunction = false;
 }
 
 bool run_function_bool_nat(jsobjtype parent, const char *name)
