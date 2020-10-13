@@ -1571,10 +1571,15 @@ void createJavaContext_nat(void)
 	duk_put_prop_string(jcx, -2, "eb$insbf");
 	duk_push_c_function(jcx, native_removeChild, 1);
 	duk_put_prop_string(jcx, -2, "removeChild");
-// for debugging.
+
+// document.ctx$ is the context number
 	duk_push_number(jcx, ++seqno);
+	duk_put_prop_string(jcx, -2, "ctx$");
+// document.eb$seqno = 0
+	duk_push_number(jcx, 0);
 	duk_put_prop_string(jcx, -2, "eb$seqno");
-	duk_pop(jcx);
+
+	duk_pop(jcx); // document
 
 // Link to the master context, i.e. the master window.
 // This is denoted mw0 throughout.
