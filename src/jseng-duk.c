@@ -1573,7 +1573,7 @@ void createJavaContext_nat(void)
 	duk_put_prop_string(jcx, -2, "removeChild");
 // for debugging.
 	duk_push_number(jcx, ++seqno);
-	duk_put_prop_string(jcx, -2, "eb$seq");
+	duk_put_prop_string(jcx, -2, "eb$seqno");
 	duk_pop(jcx);
 
 // Link to the master context, i.e. the master window.
@@ -2125,7 +2125,7 @@ bool run_function_bool_nat(jsobjtype parent, const char *name)
 	}
 	duk_insert(jcx, -2);
 	if (seqno > 0)
-		debugPrint(dbl, "exec %s %d", name, seqno);
+		debugPrint(dbl, "exec %s timer %d", name, seqno);
 	else
 		debugPrint(dbl, "exec %s", name);
 	if (!duk_pcall_method(jcx, 0)) {

@@ -858,7 +858,7 @@ I will disconnect here, and also check for inxhr in runOnload().
 // If no language is specified, javascript is default.
 		a = get_property_string(t->jv, "language");
 		if (a && *a && (!memEqualCI(a, "javascript", 10) || isalphaByte(a[10]))) {
-			debugPrint(3, "script language %s not executed", a);
+			debugPrint(3, "script tag %d language %s not executed", t->seqno, a);
 			cnzFree(a);
 			goto afterscript;
 		}
@@ -868,7 +868,7 @@ I will disconnect here, and also check for inxhr in runOnload().
 		a = get_property_string(t->jv, "type");
 		if (a && *a && (!memEqualCI(a, "javascript", 10))
 		    && (!memEqualCI(a, "text/javascript", 15))) {
-			debugPrint(3, "script type %s not executed", a);
+			debugPrint(3, "script tag %d type %s not executed", t->seqno, a);
 			cnzFree(a);
 			goto afterscript;
 		}
@@ -3031,7 +3031,7 @@ We need to fix this someday, though it is a very rare low runner case.
 					debugPrint(4,
 						   "running script at a lower frame %s",
 						   js_file);
-				debugPrint(3, "async exec %d %s at %d",
+				debugPrint(3, "async exec timer %d %s at %d",
 					   t->lic, js_file, ln);
 				set_property_object(cf->docobj, "currentScript",
 						    t->jv);
