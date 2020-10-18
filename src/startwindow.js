@@ -24,7 +24,8 @@ mw0 = {compiled: false};
 document = new Object;
 // Stubs for native methods that are normally provided by edbrowse.
 // Example: eb$puts, which we can replace with print,
-// which is native to the duktape shell.
+// or console.log, or anything present in the command line js interpreter.
+if(!window.print) print = console.log;
 eb$puts = print;
 eb$logputs = function(a,b) { print(b); }
 eb$newLocation = function (s) { print("new location " + s); }
@@ -4103,6 +4104,8 @@ XMLSerializer = mw0.XMLSerializer;
 document.xmlVersion = 0;
 
 // if debugThrow is set, see all errors, even caught errors.
+// This is only meaningful in duktape.
+if(typeof Duktape == "object") {
 Duktape.errCreate = function (e) {
 if(throwDebug) {
 var n = e.lineNumber;
@@ -4113,6 +4116,7 @@ msg += e.toString();
 alert3(msg);
 }
     return e;
+}
 }
 throwDebug = false;
 
