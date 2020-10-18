@@ -95,3 +95,9 @@ clean:
 
 js_hello_duk: js_hello_duk.c
 	$(CC) js_hello_duk.c -o js_hello_duk -lduktape -lm
+
+js_hello_v8 : js_hello_v8.cpp
+	gcc -I/usr/include/v8 js_hello_v8.cpp -lv8 -lstdc++ -o js_hello_v8
+
+hello: js_hello_duk js_hello_v8
+
