@@ -1,5 +1,15 @@
 /* Prototypes for edbrowse */
 
+/*********************************************************************
+Some time ago we used the Mozilla js engine, which is in c++.
+If we ever go back to that, or use v8 or any other c++ engine,
+we need to indicate that all the other functions are straight C.
+*********************************************************************/
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* sourcefile=auth.c */
 bool getUserPass(const char *url, char *creds, bool find_proxy) ;
 bool getUserPassRealm(const char *url, char *creds, const char *realm);
@@ -394,6 +404,21 @@ char *decodePostData(const char *data, const char *name, int seqno) ;
 void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p) ;
 bool patternMatchURL(const char *url, const char *pattern);
 
+/* sourcefile=css.c */
+void writeShortCache(void);
+bool matchMedia(char *t);
+void cssDocLoad(jsobjtype thisobj, char *s, bool pageload);
+void cssFree(struct ebFrame *f);
+jsobjtype querySelectorAll(const char *selstring, jsobjtype topobj);
+jsobjtype querySelector(const char *selstring, jsobjtype topobj);
+bool querySelector0(const char *selstring, jsobjtype topobj);
+void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination);
+void cssText(jsobjtype node, const char *rulestring);
+
+#ifdef __cplusplus
+}
+#endif
+
 /* sourcefile=jseng-duk.c */
 void connectTagObject(struct htmlTag *t, jsobjtype p);
 void disconnectTagObject(struct htmlTag *t);
@@ -427,15 +452,4 @@ int run_function_onearg_nat(jsobjtype obj, const char *name, jsobjtype o);
 void run_function_onestring_nat(jsobjtype parent, const char *name, const char *s);
 char *run_script_nat(const char *s);
 void run_data_nat(jsobjtype o);
-
-/* sourcefile=css.c */
-void writeShortCache(void);
-bool matchMedia(char *t);
-void cssDocLoad(jsobjtype thisobj, char *s, bool pageload);
-void cssFree(struct ebFrame *f);
-jsobjtype querySelectorAll(const char *selstring, jsobjtype topobj);
-jsobjtype querySelector(const char *selstring, jsobjtype topobj);
-bool querySelector0(const char *selstring, jsobjtype topobj);
-void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination);
-void cssText(jsobjtype node, const char *rulestring);
 
