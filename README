@@ -301,9 +301,13 @@ The javascript engine built around the duktape js library.
 Manage all the js objects corresponding to the web page in edbrowse.
 All the js details are hidden in this file.
 this is encapsulation, hiding the js library from the rest of edbrowse.
-It might be possible, for instance, to build jseng-v8.c, based upon v8 etc.
+It might be possible, for instance, to build jseng-v8.cpp, based upon v8 etc.
 Earlier versions of edbrowse used jseng-moz.cpp, around the Mozilla Spider Monkey javascript engine.
-That file is no longer part of this source tree, but can be extracted from git.
+We may yet go back to that; duktape is lagging behind.
+
+src/js_hello*
+Various hello world files to exercise various javascript engines.
+These are stand alone programs; build them (on linux) by make hello.
 
 src/startwindow.js:
 Javascript that is run at the start of each session.
@@ -419,7 +423,7 @@ Some text is invisible as per css{display:none},
 and some text only comes to light if you hover over something.
 Edbrowse does not display this text, but sometimes edbrowse gets it wrong,
 so if the website seems sparse, like you're missing something important,
-use the hover command to reveal all of this text,
+use the showall command to reveal all of this text,
 even some sections that might not be relevant to your situation.
 Formerly invisible text looks like this.
 
