@@ -27,6 +27,20 @@ static JSClass global_class = {
     &global_ops
 };
 
+// couple of native methods.
+// increment the ascii letters of a string
+static bool letterIncr(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+JSString *s = args[0].toString();
+// If argument is undefined or the wrong type, what is s?  nullptr?
+// If I then pass s, with the wrong type, to setString, what happens?
+args.rval().setString(s);
+  return true;
+}
+
+static bool iaflag; // interactive
+
 int main(int argc, const char *argv[])
 {
     JS_Init();
@@ -36,6 +50,8 @@ int main(int argc, const char *argv[])
         return 1;
     if (!JS::InitSelfHostedCode(cx))
         return 1;
+
+if(argc > 1 && !strcmp(argv[1], "-i")) iaflag = true;
 
     { // Scope for our various stack objects (JSAutoRequest, RootedObject), so they all go
       // out of scope before we JS_DestroyContext.
@@ -74,10 +90,52 @@ int main(int argc, const char *argv[])
         bool ok = JS::Evaluate(cx, opts, script, strlen(script), rval);
         if (!ok)
           return 1;
+      JSString *str = rval.toString();
+// str seems to be internal to rval, or manage by rval;
+// if I try delete str, free() says invalid pointer.
+char *es = JS_EncodeString(cx, str);
+      printf("%s\n", es);
+// should we use delete or free here; either seems to work.
+free(es);
+// The original hello program didn't free es, but who cares, exit(0),
+// thus these little sample programs sometimes leave out important details.
+
+if(iaflag) {
+char line[500];
+while(fgets(line, sizeof(line), stdin)) {
+// should check for line too long here
+script = line;
+        ok = JS::Evaluate(cx, opts, script, strlen(script), rval);
+if(!ok) puts("error");
+else {
+switch(JS_TypeOfValue(cx, rval)) {
+case JSTYPE_UNDEFINED: puts("undefined"); break;
+case JSTYPE_OBJECT: puts("object"); break;
+case JSTYPE_FUNCTION: puts("function"); break;
+case JSTYPE_STRING:
+str = rval.toString();
+es = JS_EncodeString(cx, str);
+      printf("%s\n", es);
+free(es);
+break;
+case JSTYPE_NUMBER:
+if(rval.isInt32())
+printf("%d\n", rval.toInt32());
+else printf("%f\n", rval.toDouble());
+break;
+case JSTYPE_BOOLEAN: puts(rval.toBoolean() ? "true" : "false"); break;
+// null is returned as object and doesn't trip this case, for some reason
+case JSTYPE_NULL: puts("null"); break;
+case JSTYPE_SYMBOL: puts("symbol"); break;
+case JSTYPE_LIMIT: puts("limit"); break;
+default: puts("what?"); break;
+}
+}
+}
+}
+
       }
 
-      JSString *str = rval.toString();
-      printf("%s\n", JS_EncodeString(cx, str));
     }
 
     JS_DestroyContext(cx);
