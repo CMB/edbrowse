@@ -4105,7 +4105,7 @@ document.xmlVersion = 0;
 
 // if debugThrow is set, see all errors, even caught errors.
 // This is only meaningful in duktape.
-if(typeof Duktape == "object") {
+if(window.Duktape) {
 Duktape.errCreate = function (e) {
 if(throwDebug) {
 var n = e.lineNumber;
@@ -4423,6 +4423,8 @@ mw0.requestAnimationFrame = function() {
 return ++mw0.rastep;
 }
 
+// only duktape needs the es6 stuff
+if(window.Duktape) {
 mw0.Set = function() { this.items=[]; }
 Object.defineProperty(mw0.Set.prototype, "size", {get:function(){return this.items.length}});
 mw0.Set.prototype.has = function(x) {return this.items.indexOf(x) >= 0;}
@@ -4500,15 +4502,18 @@ if(l1 == l2) return s;
 v = v.substr(0,l2-l1);
 return s+v;
 }
+}
 
 } // master compile
 
 crypto = mw0.crypto;
 requestAnimationFrame = mw0.requestAnimationFrame;
 cancelAnimationFrame = eb$voidfunction;
+if(window.Duktape) {
 Set = mw0.Set;
 Map = mw0.Map;
 Reflect = mw0.Reflect;
 String.prototype.padStart = mw0.padStart;
 String.prototype.padEnd = mw0.padEnd;
+}
 

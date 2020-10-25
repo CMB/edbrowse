@@ -25,12 +25,12 @@ static bool letterInc(JSContext *cx, unsigned argc, JS::Value *vp)
 // This only works for strings
 if(JS_TypeOfValue(cx, args[0]) ==  JSTYPE_STRING) {
 JSString *s = args[0].toString();
+// believe s is implicitly inside args[0], thus delete s isn't necessary, and blows up.
 char *es = JS_EncodeString(cx, s);
 for(int i = 0; es[i]; ++i) ++es[i];
-JSString *m = JS_NewStringCopyZ(cx, es);
+JS::RootedString m(cx, JS_NewStringCopyZ(cx, es));
 args.rval().setString(m);
 free(es);
-// why don't we need to free s, or m?
 } else {
 args.rval().setUndefined();
 }
@@ -46,7 +46,7 @@ if(JS_TypeOfValue(cx, args[0]) ==  JSTYPE_STRING) {
 JSString *s = args[0].toString();
 char *es = JS_EncodeString(cx, s);
 for(int i = 0; es[i]; ++i) --es[i];
-JSString *m = JS_NewStringCopyZ(cx, es);
+JS::RootedString m(cx, JS_NewStringCopyZ(cx, es));
 args.rval().setString(m);
 free(es);
 } else {
