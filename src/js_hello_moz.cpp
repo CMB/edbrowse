@@ -6,18 +6,8 @@
 #include "js/Initialization.h"
 
 static JSClassOps global_ops = {
-// I removed a nullptr, moz 60 has one less parameter I guess.
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    JS_GlobalObjectTraceHook
+// different members in different versions, so specfiy explicitly
+    trace : JS_GlobalObjectTraceHook
 };
 
 /* The class of the global object. */
@@ -40,6 +30,31 @@ args.rval().setString(s);
 }
 
 static bool iaflag; // interactive
+
+// I don't understand any of this. Code from:
+// http://mozilla.6506.n7.nabble.com/what-is-the-replacement-of-JS-SetErrorReporter-in-spidermonkey-60-td379888.html
+// I assume all these variables are somehow on stack
+// and get freed when the function returns.
+static void ReportJSException(JSContext *cx)
+{
+if(JS_IsExceptionPending(cx)) {
+JS::RootedValue exception(cx);
+if(JS_GetPendingException(cx,&exception) &&
+exception.isObject()) {
+// I don't think we need this line.
+// JS::AutoSaveExceptionState savedExc(cx);
+JS::Rooted<JSObject*> exceptionObject(cx,
+&exception.toObject());
+JSErrorReport *what =
+JS_ErrorFromException(cx,exceptionObject);
+if(what) {
+puts(what->message().c_str());
+// what->filename what->lineno
+}
+}
+JS_ClearPendingException(cx);
+}
+}
 
 int main(int argc, const char *argv[])
 {
@@ -106,10 +121,12 @@ while(fgets(line, sizeof(line), stdin)) {
 // should check for line too long here
 script = line;
         ok = JS::Evaluate(cx, opts, script, strlen(script), rval);
-if(!ok) puts("error");
-else {
+if(!ok) {
+ReportJSException(cx);
+} else {
 switch(JS_TypeOfValue(cx, rval)) {
-case JSTYPE_UNDEFINED: puts("undefined"); break;
+// This enum isn't in every version
+// case JSTYPE_UNDEFINED: puts("undefined"); break;
 case JSTYPE_OBJECT: puts("object"); break;
 case JSTYPE_FUNCTION: puts("function"); break;
 case JSTYPE_STRING:
@@ -128,7 +145,7 @@ case JSTYPE_BOOLEAN: puts(rval.toBoolean() ? "true" : "false"); break;
 case JSTYPE_NULL: puts("null"); break;
 case JSTYPE_SYMBOL: puts("symbol"); break;
 case JSTYPE_LIMIT: puts("limit"); break;
-default: puts("what?"); break;
+default: puts("undefined"); break;
 }
 }
 }
