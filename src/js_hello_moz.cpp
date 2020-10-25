@@ -18,16 +18,48 @@ static JSClass global_class = {
 };
 
 // couple of native methods.
-// increment the ascii letters of a string
-static bool letterIncr(JSContext *cx, unsigned argc, JS::Value *vp)
+// increment the ascii letters of a string.  "hat" becomes "ibu"
+static bool letterInc(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
+// This only works for strings
+if(JS_TypeOfValue(cx, args[0]) ==  JSTYPE_STRING) {
 JSString *s = args[0].toString();
-// If argument is undefined or the wrong type, what is s?  nullptr?
-// If I then pass s, with the wrong type, to setString, what happens?
-args.rval().setString(s);
+char *es = JS_EncodeString(cx, s);
+for(int i = 0; es[i]; ++i) ++es[i];
+JSString *m = JS_NewStringCopyZ(cx, es);
+args.rval().setString(m);
+free(es);
+// why don't we need to free s, or m?
+} else {
+args.rval().setUndefined();
+}
   return true;
 }
+
+// decrement the ascii letters of a string.
+static bool letterDec(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+// This only works for strings
+if(JS_TypeOfValue(cx, args[0]) ==  JSTYPE_STRING) {
+JSString *s = args[0].toString();
+char *es = JS_EncodeString(cx, s);
+for(int i = 0; es[i]; ++i) --es[i];
+JSString *m = JS_NewStringCopyZ(cx, es);
+args.rval().setString(m);
+free(es);
+} else {
+args.rval().setUndefined();
+}
+  return true;
+}
+
+static JSFunctionSpec nativeMethods[] = {
+  JS_FN("letterInc", letterInc, 1, 0),
+  JS_FN("letterDec", letterDec, 1, 0),
+  JS_FS_END
+};
 
 static bool iaflag; // interactive
 
@@ -91,8 +123,9 @@ if(argc > 1 && !strcmp(argv[1], "-i")) iaflag = true;
       { // Scope for JSAutoCompartment
         JSAutoCompartment ac(cx, global);
         JS_InitStandardClasses(cx, global);
+JS_DefineFunctions(cx, global, nativeMethods);
 
-        const char *script = "'hello'+' world, it is '+new Date()";
+        const char *script = "letterInc('gdkkn')+letterDec('!xpsme') + ', it is '+new Date()";
         const char *filename = "noname";
         int lineno = 1;
         JS::CompileOptions opts(cx);
