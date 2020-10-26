@@ -894,6 +894,92 @@ char *get_property_url(jsobjtype owner, bool action)
 }				/* get_property_url */
 
 /*********************************************************************
+See if a tag object is still rooted on the js side.
+If not, it could be garbage collected away. We could be accessing a bad pointer.
+Worse, it could be reallocated to a new object,
+so we're not even accessing the object we think we are.
+Imagine a timer fires and js rearranges the entire tree, but we haven't
+rerendered yet. You type g on a link.
+That line isn't even there, the tag is obsolete, its pointer is obsolete.
+Check for that here in the only way I think is safe, from the top.
+*********************************************************************/
+
+bool tagIsRooted(struct htmlTag *t)
+{
+struct htmlTag *u, *v = 0, *w;
+
+	for(u = t; u; v = u, u = u->parent) {
+		u->lic = -1;
+		if(!v)
+			continue;
+		for(w = u->firstchild; w; w = w->sibling) {
+			++u->lic;
+			if(w == v)
+				break;
+		}
+		if(!w) // this should never happen!
+			goto fail;
+// lic is the count of the child in the chain
+	}
+	u = v;
+
+/*********************************************************************
+We're at the top. Should be html.
+There's no other <html> tag, even if the page has subframes,
+so this should be a rock solid test.
+*********************************************************************/
+
+	if(u->action != TAGACT_HTML)
+		goto fail;
+
+// Now climb down the chain from u to t.
+// I don't know why we would ever click on or even examine a tag under <head>,
+// but I guess I'll allow for the possibility.
+	if(u->lic == 0) // head
+		u = u->firstchild;
+	else if(u->lic == 1) // body
+		u = u->firstchild->sibling;
+	else // should never happen
+		goto fail;
+
+	while(true) {
+		int i, len;
+		jsobjtype cn; // child nodes
+// Imagine removing an object from the tree, allocating a new one, and by sheer
+// bad luck, the new object gets the same pointer. Then put it back in the
+// same place in the tree. I've seen it happen.
+// Use our sseqno to defend against this.
+		if(get_property_number(u->jv, "eb$seqno") != u->seqno)
+			goto fail;
+		if(u == t)
+			break;
+		i = 0;
+		v = u->firstchild;
+		while(++i <= u->lic)
+			v = v->sibling;
+		if(!v->jv)
+			goto fail;
+// find v->jv in the children of u.
+		if(!(cn = get_property_object(u->jv, "childNodes")))
+			goto fail;
+		len = get_arraylength(cn);
+		for(i = 0; i < len; ++i)
+			if(get_array_element_object(cn, i) == v->jv) // found it
+				break;
+		if(i == len)
+			goto fail; // not found
+		u = v;
+	}
+
+	debugPrint(3, "%s is rooted", t->info->name);
+	return true; // properly rooted
+
+fail:
+	debugPrint(3, "%s is not rooted", t->info->name);
+	return false;
+}
+
+/*********************************************************************
 Javascript sometimes builds or rebuilds a submenu, based upon your selection
 in a primary menu. These new options must map back to html tags,
 and then to the dropdown list as you interact with the form.
@@ -1049,6 +1135,8 @@ void rebuildSelectors(void)
 		if (t->action != TAGACT_INPUT)
 			continue;
 		if (t->itype != INP_SELECT)
+			continue;
+		if(!tagIsRooted(t))
 			continue;
 
 /* there should always be an options array, if not then move on */
