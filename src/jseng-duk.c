@@ -32,8 +32,8 @@ Exit codes are as follows:
 
 #include <duktape.h>
 
-static void processError(void);
-static void jsInterruptCheck(void);
+static void processError(duk_context * cx);
+static void jsInterruptCheck(duk_context * cx);
 
 static duk_ret_t native_error_stub_0(duk_context * cx)
 {
@@ -46,9 +46,6 @@ static duk_ret_t native_error_stub_1(duk_context * cx)
 	return 0;
 }
 
-jsobjtype jcx;			// the javascript context
-jsobjtype winobj;		// window object
-jsobjtype docobj;		// document object
 const char *jsSourceFile;	// sourcefile providing the javascript
 int jsLineno;			// line number
 
@@ -65,7 +62,7 @@ static jsobjtype context0_obj;
 struct jsdata_wrap {
 	union {
 		uint64_t header;
-		struct htmlTag *t;
+		Tag *t;
 	} u;
 	char data[0];
 };
@@ -97,7 +94,7 @@ static void *watch_realloc(void *udata, void *p, size_t n)
 
 static void watch_free(void *udata, void *p)
 {
-	struct htmlTag *t;
+	Tag *t;
 	struct jsdata_wrap *w;
 
 	if (!p)
@@ -112,17 +109,17 @@ static void watch_free(void *udata, void *p)
 	}
 }
 
-void connectTagObject(struct htmlTag *t, jsobjtype p)
+void connectTagObject(Tag *t, jsobjtype p)
 {
 	struct jsdata_wrap *w = jsdata_of(p);
 	if (w->u.t)
 		debugPrint(1, "multiple tags connect to js pointer %p", p);
 	w->u.t = t;
 	t->jv = p;
-	set_property_number_nat(p, "eb$seqno", t->seqno);
+	set_property_number_0(t->f0->cx, p, "eb$seqno", t->seqno);
 }
 
-void disconnectTagObject(struct htmlTag *t)
+void disconnectTagObject(Tag *t)
 {
 	struct jsdata_wrap *w;
 	jsobjtype p = t->jv;
@@ -284,7 +281,7 @@ static duk_ret_t native_logputs(duk_context * cx)
 	duk_remove(cx, 0);
 	if (debugLevel >= minlev && s && *s)
 		debugPrint(3, "%s", s);
-	jsInterruptCheck();
+	jsInterruptCheck(cx);
 	return 0;
 }
 
@@ -368,16 +365,16 @@ static const char *pointer2string(const jsobjtype obj)
 
 // Sometimes control c can interrupt long running javascript, if the script
 // calls our native methods.
-static void jsInterruptCheck(void)
+static void jsInterruptCheck(duk_context * cx)
 {
 	if (!intFlag)
 		return;
-	duk_get_global_string(jcx, "eb$stopexec");
+	duk_get_global_string(cx, "eb$stopexec");
 // this next line should fail and stop the script!
 // Assuming we aren't in a try{} block.
-	duk_call(jcx, 0);
+	duk_call(cx, 0);
 // It didn't stop the script, oh well.
-	duk_pop(jcx);
+	duk_pop(cx);
 }
 
 static duk_ret_t getter_innerHTML(duk_context * cx)
@@ -397,7 +394,7 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	if (!h)			// should never happen
 		h = emptyString;
 	debugPrint(5, "setter h 1");
-	jsInterruptCheck();
+	jsInterruptCheck(cx);
 	duk_push_this(cx);
 // remove the preexisting children.
 	if (duk_get_prop_string(cx, -1, "childNodes") && duk_is_array(cx, -1)) {
@@ -437,7 +434,7 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	nzFree(run);
 	debugPrint(5, "setter h 2");
 
-	run_function_onearg_nat(context0_obj, "textarea$html$crossover",
+	run_function_onearg_0(cx, context0_obj, "textarea$html$crossover",
 				thisobj);
 
 // mutation fix up from native code
@@ -490,13 +487,7 @@ static duk_ret_t setter_value(duk_context * cx)
 
 static void forceFrameExpand(duk_context * cx, jsobjtype thisobj)
 {
-// Have to save all the global variables, because other js scrips will be
-// running in another context.
-// Having all these global variables isn't great programming.
-	struct ebFrame *save_cf = cf;
-	jsobjtype save_jcx = jcx;
-	jsobjtype save_winobj = winobj;
-	jsobjtype save_docobj = docobj;
+	Frame *save_cf = cf;
 	const char *save_src = jsSourceFile;
 	int save_lineno = jsLineno;
 	bool save_plug = pluginsOn;
@@ -507,9 +498,6 @@ static void forceFrameExpand(duk_context * cx, jsobjtype thisobj)
 	frameExpandLine(0, thisobj);
 	whichproc = 'j';
 	cf = save_cf;
-	jcx = save_jcx;
-	winobj = save_winobj;
-	docobj = save_docobj;
 	jsSourceFile = save_src;
 	jsLineno = save_lineno;
 	pluginsOn = save_plug;
@@ -520,7 +508,7 @@ static duk_ret_t getter_cd(duk_context * cx)
 {
 	bool found;
 	jsobjtype thisobj;
-	jsInterruptCheck();
+	jsInterruptCheck(cx);
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
 	found = duk_get_prop_string(cx, -1, "eb$auto");
@@ -542,7 +530,7 @@ static duk_ret_t getter_cw(duk_context * cx)
 {
 	bool found;
 	jsobjtype thisobj;
-	jsInterruptCheck();
+	jsInterruptCheck(cx);
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
 	found = duk_get_prop_string(cx, -1, "eb$auto");
@@ -576,9 +564,9 @@ static duk_ret_t native_unframe2(duk_context * cx)
 	return 0;
 }
 
-static void linkageNow(char linkmode, jsobjtype o)
+static void linkageNow(duk_context * cx, char linkmode, jsobjtype o)
 {
-	jsInterruptCheck();
+	jsInterruptCheck(cx);
 	debugPrint(4, "linkset %s", effects + 2);
 	javaSetsLinkage(false, linkmode, o, strchr(effects, ',') + 1);
 	nzFree(effects);
@@ -593,11 +581,11 @@ static duk_ret_t native_log_element(duk_context * cx)
 	if (!newobj || !tag)
 		return 0;
 	debugPrint(5, "log el 1");
-	jsInterruptCheck();
+	jsInterruptCheck(cx);
 // pass the newly created node over to edbrowse
 	sprintf(e, "l{c|%s,%s 0x0, 0x0, ", pointer2string(newobj), tag);
 	effectString(e);
-	linkageNow('c', newobj);
+	linkageNow(cx, 'c', newobj);
 	duk_pop(cx);
 // create the innerHTML member with its setter, this has to be done in C.
 	duk_push_string(cx, "innerHTML");
@@ -674,7 +662,7 @@ static void set_timeout(duk_context * cx, bool isInterval)
 // compile the string under the filename timer
 		duk_push_string(cx, "timer");
 		if (duk_pcompile(cx, 0)) {
-			processError();
+			processError(cx);
 			cc_error = true;
 			duk_push_c_function(cx, native_error_stub_0, 0);
 		}
@@ -696,14 +684,14 @@ static void set_timeout(duk_context * cx, bool isInterval)
 // Create a timer object.
 	duk_get_global_string(cx, "Timer");
 	if (duk_pnew(cx, 0)) {
-		processError();
+		processError(cx);
 		duk_pop_n(cx, 3);
 		goto done;
 	}
 // stack now has function global fakePropertyName timer-object.
 // classs is milliseconds, for debugging
 	duk_push_int(cx, n);
-	duk_put_prop_string(jcx, -2, "class");
+	duk_put_prop_string(cx, -2, "class");
 	to = duk_get_heapptr(cx, -1);
 // protect this timer from the garbage collector.
 	duk_def_prop(cx, 1,
@@ -763,10 +751,10 @@ static duk_ret_t native_win_close(duk_context * cx)
 
 // find the frame, in the current window, that goes with this.
 // Used by document.write to put the html in the right frame.
-static struct ebFrame *thisFrame(duk_context * cx)
+static Frame *thisFrame(duk_context * cx)
 {
 	jsobjtype thisobj;
-	struct ebFrame *f;
+	Frame *f;
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
@@ -781,7 +769,7 @@ static void dwrite(duk_context * cx, bool newline)
 {
 	int top = duk_get_top(cx);
 	const char *s;
-	struct ebFrame *f, *save_cf = cf;
+	Frame *f, *save_cf = cf;
 	if (top) {
 		duk_push_string(cx, emptyString);
 		duk_insert(cx, 0);
@@ -825,7 +813,7 @@ static duk_ret_t native_doc_writeln(duk_context * cx)
 
 // We need to call and remember up to 3 node names, and then embed
 // them in the side effects string, after all duktape calls have been made.
-static const char *embedNodeName(jsobjtype obj)
+static const char *embedNodeName(duk_context * cx, jsobjtype obj)
 {
 	static char buf1[MAXTAGNAME], buf2[MAXTAGNAME], buf3[MAXTAGNAME];
 	char *b;
@@ -843,9 +831,9 @@ static const char *embedNodeName(jsobjtype obj)
 		b = buf3;
 	*b = 0;
 
-	duk_push_heapptr(jcx, obj);
-	if (duk_get_prop_string(jcx, -1, "nodeName"))
-		nodeName = duk_get_string(jcx, -1);
+	duk_push_heapptr(cx, obj);
+	if (duk_get_prop_string(cx, -1, "nodeName"))
+		nodeName = duk_get_string(cx, -1);
 	if (nodeName) {
 		length = strlen(nodeName);
 		if (length >= MAXTAGNAME)
@@ -853,7 +841,7 @@ static const char *embedNodeName(jsobjtype obj)
 		strncpy(b, nodeName, length);
 		b[length] = 0;
 	}
-	duk_pop_2(jcx);
+	duk_pop_2(cx);
 	caseShift(b, 'l');
 	return b;
 }				/* embedNodeName */
@@ -903,8 +891,8 @@ static void append0(duk_context * cx, bool side)
 		goto done;
 
 /* pass this linkage information back to edbrowse, to update its dom tree */
-	thisname = embedNodeName(thisobj);
-	childname = embedNodeName(child);
+	thisname = embedNodeName(cx, thisobj);
+	childname = embedNodeName(cx, child);
 	asprintf(&e, "l{a|%s,%s ", pointer2string(thisobj), thisname);
 	effectString(e);
 	free(e);
@@ -912,7 +900,7 @@ static void append0(duk_context * cx, bool side)
 	effectChar(',');
 	effectString(childname);
 	effectString(" 0x0, ");
-	linkageNow('a', thisobj);
+	linkageNow(cx, 'a', thisobj);
 
 done:
 	debugPrint(5, "append 2");
@@ -989,9 +977,9 @@ static duk_ret_t native_insbf(duk_context * cx)
 		      DUK_DEFPROP_SET_WRITABLE | DUK_DEFPROP_SET_CONFIGURABLE));
 
 /* pass this linkage information back to edbrowse, to update its dom tree */
-	thisname = embedNodeName(thisobj);
-	childname = embedNodeName(child);
-	itemname = embedNodeName(item);
+	thisname = embedNodeName(cx, thisobj);
+	childname = embedNodeName(cx, child);
+	itemname = embedNodeName(cx, item);
 	asprintf(&e, "l{b|%s,%s ", pointer2string(thisobj), thisname);
 	effectString(e);
 	free(e);
@@ -1003,7 +991,7 @@ static duk_ret_t native_insbf(duk_context * cx)
 	effectChar(',');
 	effectString(itemname);
 	effectChar(' ');
-	linkageNow('b', thisobj);
+	linkageNow(cx, 'b', thisobj);
 
 done:
 	debugPrint(5, "before 2");
@@ -1059,8 +1047,8 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	duk_put_prop_string(cx, -2, "parentNode");
 
 /* pass this linkage information back to edbrowse, to update its dom tree */
-	thisname = embedNodeName(thisobj);
-	childname = embedNodeName(child);
+	thisname = embedNodeName(cx, thisobj);
+	childname = embedNodeName(cx, child);
 	asprintf(&e, "l{r|%s,%s ", pointer2string(thisobj), thisname);
 	effectString(e);
 	free(e);
@@ -1068,7 +1056,7 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	effectChar(',');
 	effectString(childname);
 	effectString(" 0x0, ");
-	linkageNow('r', thisobj);
+	linkageNow(cx, 'r', thisobj);
 
 	debugPrint(5, "remove 2");
 // mutation fix up from native code
@@ -1138,8 +1126,9 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 // async and sync are completely different
 	if (async) {
 		const char *fpn = fakePropName();
-		struct htmlTag *t =
-		    newTag(cw->browseMode ? "object" : "script");
+// I'm going to put the tag in cf, the current frame, and hope that's right,
+// hope that xhr runs in a script that runs in the current frame.
+		Tag *t =     newTag(cf, cw->browseMode ? "object" : "script");
 		t->deleted = true;	// do not render this tag
 		t->step = 3;
 		t->async = true;
@@ -1291,7 +1280,7 @@ static void startCookie(void)
 	}
 }
 
-static bool foldinCookie(const char *newcook)
+static bool foldinCookie(duk_context * cx, const char *newcook)
 {
 	char *nc, *loc, *loc2;
 	int j;
@@ -1317,9 +1306,9 @@ static bool foldinCookie(const char *newcook)
 		return false;
 	}
 
-	duk_get_global_string(jcx, "eb$url");
-	receiveCookie(duk_get_string(jcx, -1), newcook);
-	duk_pop(jcx);
+	duk_get_global_string(cx, "eb$url");
+	receiveCookie(duk_get_string(cx, -1), newcook);
+	duk_pop(cx);
 
 	++s;
 	save = *s;
@@ -1347,7 +1336,7 @@ add:
 	nzFree(nc);
 	debugPrint(4, "cookieCopy %s", cookieCopy);
 	return true;
-}				/* foldinCookie */
+}
 
 static duk_ret_t native_getcook(duk_context * cx)
 {
@@ -1360,7 +1349,7 @@ static duk_ret_t native_setcook(duk_context * cx)
 	const char *newcook = duk_get_string(cx, 0);
 	debugPrint(5, "cook 1");
 	if (newcook) {
-		foldinCookie(newcook);
+		foldinCookie(cx, newcook);
 	}
 	debugPrint(5, "cook 2");
 	return 0;
@@ -1392,7 +1381,7 @@ static duk_ret_t native_qsa(duk_context * cx)
 		root = duk_get_heapptr(cx, -1);
 		duk_pop(cx);
 	}
-	jsInterruptCheck();
+	jsInterruptCheck(cx);
 	ao = querySelectorAll(selstring, root);
 	duk_pop_n(cx, top);
 	duk_push_heapptr(cx, ao);
@@ -1418,7 +1407,7 @@ static duk_ret_t native_qs(duk_context * cx)
 		root = duk_get_heapptr(cx, -1);
 		duk_pop(cx);
 	}
-	jsInterruptCheck();
+	jsInterruptCheck(cx);
 	ao = querySelector(selstring, root);
 	duk_pop_n(cx, top);
 	if (ao)
@@ -1437,7 +1426,7 @@ static duk_ret_t native_qs0(duk_context * cx)
 	duk_push_this(cx);
 	root = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
-	jsInterruptCheck();
+	jsInterruptCheck(cx);
 	rc = querySelector0(selstring, root);
 	duk_pop(cx);
 	duk_push_boolean(cx, rc);
@@ -1446,7 +1435,7 @@ static duk_ret_t native_qs0(duk_context * cx)
 
 static duk_ret_t native_cssApply(duk_context * cx)
 {
-	jsInterruptCheck();
+	jsInterruptCheck(cx);
 	if (duk_is_object(cx, 1) && duk_is_object(cx, 2))
 		cssApply(duk_get_heapptr(cx, 0), duk_get_heapptr(cx, 1),
 			 duk_get_heapptr(cx, 2));
@@ -1465,152 +1454,153 @@ static duk_ret_t native_cssText(duk_context * cx)
 	return 0;
 }
 
-void createJavaContext_nat(void)
+void createJavaContext_0(Frame *f)
 {
 	static int seqno;
+	duk_context * cx;
 
 	duk_push_thread_new_globalenv(context0);
-	jcx = duk_get_context(context0, -1);
-	if (!jcx)
+	cx = f->cx = duk_get_context(context0, -1);
+	if (!cx)
 		return;
 	debugPrint(3, "create js context %d", duk_get_top(context0) - 1);
 // the global object, which will become window,
 // and the document object.
-	duk_push_global_object(jcx);
-	winobj = duk_get_heapptr(jcx, 0);
-	duk_push_string(jcx, "document");
-	duk_push_object(jcx);
-	docobj = duk_get_heapptr(jcx, 2);
-	duk_def_prop(jcx, 0,
+	duk_push_global_object(cx);
+	f->winobj = duk_get_heapptr(cx, 0);
+	duk_push_string(cx, "document");
+	duk_push_object(cx);
+	f->docobj = duk_get_heapptr(cx, 2);
+	duk_def_prop(cx, 0,
 		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
 		      DUK_DEFPROP_CLEAR_WRITABLE |
 		      DUK_DEFPROP_CLEAR_CONFIGURABLE));
-	duk_pop(jcx);
+	duk_pop(cx);
 
 // bind native functions here
-	duk_push_c_function(jcx, native_new_location, 1);
-	duk_put_global_string(jcx, "eb$newLocation");
-	duk_push_c_function(jcx, native_mywin, 0);
-	duk_put_global_string(jcx, "my$win");
-	duk_push_c_function(jcx, native_mydoc, 0);
-	duk_put_global_string(jcx, "my$doc");
-	duk_push_c_function(jcx, native_puts, 1);
-	duk_put_global_string(jcx, "eb$puts");
-	duk_push_c_function(jcx, native_wlf, 2);
-	duk_put_global_string(jcx, "eb$wlf");
-	duk_push_c_function(jcx, native_media, 1);
-	duk_put_global_string(jcx, "eb$media");
-	duk_push_c_function(jcx, native_btoa, 1);
-	duk_put_global_string(jcx, "btoa");
-	duk_push_c_function(jcx, native_atob, 1);
-	duk_put_global_string(jcx, "atob");
-	duk_push_c_function(jcx, native_unframe, 2);
-	duk_put_global_string(jcx, "eb$unframe");
-	duk_push_c_function(jcx, native_unframe2, 1);
-	duk_put_global_string(jcx, "eb$unframe2");
-	duk_push_c_function(jcx, native_logputs, 2);
-	duk_put_global_string(jcx, "eb$logputs");
-	duk_push_c_function(jcx, native_prompt, DUK_VARARGS);
-	duk_put_global_string(jcx, "prompt");
-	duk_push_c_function(jcx, native_confirm, 1);
-	duk_put_global_string(jcx, "confirm");
-	duk_push_c_function(jcx, native_log_element, 2);
-	duk_put_global_string(jcx, "eb$logElement");
-	duk_push_c_function(jcx, native_setTimeout, DUK_VARARGS);
-	duk_put_global_string(jcx, "setTimeout");
-	duk_push_c_function(jcx, native_setInterval, DUK_VARARGS);
-	duk_put_global_string(jcx, "setInterval");
-	duk_push_c_function(jcx, native_clearTimeout, 1);
-	duk_put_global_string(jcx, "clearTimeout");
-	duk_push_c_function(jcx, native_clearTimeout, 1);
-	duk_put_global_string(jcx, "clearInterval");
-	duk_push_c_function(jcx, native_win_close, 0);
-	duk_put_global_string(jcx, "close");
-	duk_push_c_function(jcx, native_fetchHTTP, 4);
-	duk_put_global_string(jcx, "eb$fetchHTTP");
-	duk_push_c_function(jcx, native_resolveURL, 2);
-	duk_put_global_string(jcx, "eb$resolveURL");
-	duk_push_c_function(jcx, native_formSubmit, 0);
-	duk_put_global_string(jcx, "eb$formSubmit");
-	duk_push_c_function(jcx, native_formReset, 0);
-	duk_put_global_string(jcx, "eb$formReset");
-	duk_push_c_function(jcx, native_getcook, 0);
-	duk_put_global_string(jcx, "eb$getcook");
-	duk_push_c_function(jcx, native_setcook, 1);
-	duk_put_global_string(jcx, "eb$setcook");
-	duk_push_c_function(jcx, getter_cd, 0);
-	duk_put_global_string(jcx, "eb$getter_cd");
-	duk_push_c_function(jcx, getter_cw, 0);
-	duk_put_global_string(jcx, "eb$getter_cw");
-	duk_push_c_function(jcx, native_css_start, 3);
-	duk_put_global_string(jcx, "eb$cssDocLoad");
-	duk_push_c_function(jcx, native_qsa, DUK_VARARGS);
-	duk_put_global_string(jcx, "querySelectorAll");
-	duk_push_c_function(jcx, native_qs, DUK_VARARGS);
-	duk_put_global_string(jcx, "querySelector");
-	duk_push_c_function(jcx, native_qs0, 1);
-	duk_put_global_string(jcx, "querySelector0");
-	duk_push_c_function(jcx, native_cssApply, 3);
-	duk_put_global_string(jcx, "eb$cssApply");
-	duk_push_c_function(jcx, native_cssText, 1);
-	duk_put_global_string(jcx, "eb$cssText");
+	duk_push_c_function(cx, native_new_location, 1);
+	duk_put_global_string(cx, "eb$newLocation");
+	duk_push_c_function(cx, native_mywin, 0);
+	duk_put_global_string(cx, "my$win");
+	duk_push_c_function(cx, native_mydoc, 0);
+	duk_put_global_string(cx, "my$doc");
+	duk_push_c_function(cx, native_puts, 1);
+	duk_put_global_string(cx, "eb$puts");
+	duk_push_c_function(cx, native_wlf, 2);
+	duk_put_global_string(cx, "eb$wlf");
+	duk_push_c_function(cx, native_media, 1);
+	duk_put_global_string(cx, "eb$media");
+	duk_push_c_function(cx, native_btoa, 1);
+	duk_put_global_string(cx, "btoa");
+	duk_push_c_function(cx, native_atob, 1);
+	duk_put_global_string(cx, "atob");
+	duk_push_c_function(cx, native_unframe, 2);
+	duk_put_global_string(cx, "eb$unframe");
+	duk_push_c_function(cx, native_unframe2, 1);
+	duk_put_global_string(cx, "eb$unframe2");
+	duk_push_c_function(cx, native_logputs, 2);
+	duk_put_global_string(cx, "eb$logputs");
+	duk_push_c_function(cx, native_prompt, DUK_VARARGS);
+	duk_put_global_string(cx, "prompt");
+	duk_push_c_function(cx, native_confirm, 1);
+	duk_put_global_string(cx, "confirm");
+	duk_push_c_function(cx, native_log_element, 2);
+	duk_put_global_string(cx, "eb$logElement");
+	duk_push_c_function(cx, native_setTimeout, DUK_VARARGS);
+	duk_put_global_string(cx, "setTimeout");
+	duk_push_c_function(cx, native_setInterval, DUK_VARARGS);
+	duk_put_global_string(cx, "setInterval");
+	duk_push_c_function(cx, native_clearTimeout, 1);
+	duk_put_global_string(cx, "clearTimeout");
+	duk_push_c_function(cx, native_clearTimeout, 1);
+	duk_put_global_string(cx, "clearInterval");
+	duk_push_c_function(cx, native_win_close, 0);
+	duk_put_global_string(cx, "close");
+	duk_push_c_function(cx, native_fetchHTTP, 4);
+	duk_put_global_string(cx, "eb$fetchHTTP");
+	duk_push_c_function(cx, native_resolveURL, 2);
+	duk_put_global_string(cx, "eb$resolveURL");
+	duk_push_c_function(cx, native_formSubmit, 0);
+	duk_put_global_string(cx, "eb$formSubmit");
+	duk_push_c_function(cx, native_formReset, 0);
+	duk_put_global_string(cx, "eb$formReset");
+	duk_push_c_function(cx, native_getcook, 0);
+	duk_put_global_string(cx, "eb$getcook");
+	duk_push_c_function(cx, native_setcook, 1);
+	duk_put_global_string(cx, "eb$setcook");
+	duk_push_c_function(cx, getter_cd, 0);
+	duk_put_global_string(cx, "eb$getter_cd");
+	duk_push_c_function(cx, getter_cw, 0);
+	duk_put_global_string(cx, "eb$getter_cw");
+	duk_push_c_function(cx, native_css_start, 3);
+	duk_put_global_string(cx, "eb$cssDocLoad");
+	duk_push_c_function(cx, native_qsa, DUK_VARARGS);
+	duk_put_global_string(cx, "querySelectorAll");
+	duk_push_c_function(cx, native_qs, DUK_VARARGS);
+	duk_put_global_string(cx, "querySelector");
+	duk_push_c_function(cx, native_qs0, 1);
+	duk_put_global_string(cx, "querySelector0");
+	duk_push_c_function(cx, native_cssApply, 3);
+	duk_put_global_string(cx, "eb$cssApply");
+	duk_push_c_function(cx, native_cssText, 1);
+	duk_put_global_string(cx, "eb$cssText");
 
-	duk_push_heapptr(jcx, docobj);	// native document methods
+	duk_push_heapptr(cx, f->docobj);	// native document methods
 
-	duk_push_c_function(jcx, native_hasfocus, 0);
-	duk_put_prop_string(jcx, -2, "hasFocus");
-	duk_push_c_function(jcx, native_doc_write, DUK_VARARGS);
-	duk_put_prop_string(jcx, -2, "write");
-	duk_push_c_function(jcx, native_doc_writeln, DUK_VARARGS);
-	duk_put_prop_string(jcx, -2, "writeln");
-	duk_push_c_function(jcx, native_apch1, 1);
-	duk_put_prop_string(jcx, -2, "eb$apch1");
-	duk_push_c_function(jcx, native_apch2, 1);
-	duk_put_prop_string(jcx, -2, "eb$apch2");
-	duk_push_c_function(jcx, native_insbf, 2);
-	duk_put_prop_string(jcx, -2, "eb$insbf");
-	duk_push_c_function(jcx, native_removeChild, 1);
-	duk_put_prop_string(jcx, -2, "removeChild");
+	duk_push_c_function(cx, native_hasfocus, 0);
+	duk_put_prop_string(cx, -2, "hasFocus");
+	duk_push_c_function(cx, native_doc_write, DUK_VARARGS);
+	duk_put_prop_string(cx, -2, "write");
+	duk_push_c_function(cx, native_doc_writeln, DUK_VARARGS);
+	duk_put_prop_string(cx, -2, "writeln");
+	duk_push_c_function(cx, native_apch1, 1);
+	duk_put_prop_string(cx, -2, "eb$apch1");
+	duk_push_c_function(cx, native_apch2, 1);
+	duk_put_prop_string(cx, -2, "eb$apch2");
+	duk_push_c_function(cx, native_insbf, 2);
+	duk_put_prop_string(cx, -2, "eb$insbf");
+	duk_push_c_function(cx, native_removeChild, 1);
+	duk_put_prop_string(cx, -2, "removeChild");
 
 // document.ctx$ is the context number
-	duk_push_number(jcx, ++seqno);
-	duk_put_prop_string(jcx, -2, "ctx$");
+	duk_push_number(cx, ++seqno);
+	duk_put_prop_string(cx, -2, "ctx$");
 // document.eb$seqno = 0
-	duk_push_number(jcx, 0);
-	duk_put_prop_string(jcx, -2, "eb$seqno");
+	duk_push_number(cx, 0);
+	duk_put_prop_string(cx, -2, "eb$seqno");
 
-	duk_pop(jcx); // document
+	duk_pop(cx); // document
 
 // Link to the master context, i.e. the master window.
 // This is denoted mw0 throughout.
-	duk_push_global_object(jcx);
-	duk_push_string(jcx, "mw0");
-	duk_push_heapptr(jcx, context0_obj);
-	duk_def_prop(jcx, -3,
+	duk_push_global_object(cx);
+	duk_push_string(cx, "mw0");
+	duk_push_heapptr(cx, context0_obj);
+	duk_def_prop(cx, -3,
 		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
 		      DUK_DEFPROP_CLEAR_WRITABLE |
 		      DUK_DEFPROP_CLEAR_CONFIGURABLE));
-	duk_pop(jcx);
+	duk_pop(cx);
 
 // Sequence is to set cf->fileName, then createContext(), so for a short time,
 // we can rely on that variable.
 // Let's make it more permanent, per context.
 // Has to be nonwritable for security reasons.
-	duk_push_global_object(jcx);
-	duk_push_string(jcx, "eb$url");
-	duk_push_string(jcx, cf->fileName);
-	duk_def_prop(jcx, -3,
+	duk_push_global_object(cx);
+	duk_push_string(cx, "eb$url");
+	duk_push_string(cx, cf->fileName);
+	duk_def_prop(cx, -3,
 		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
 		      DUK_DEFPROP_CLEAR_WRITABLE |
 		      DUK_DEFPROP_CLEAR_CONFIGURABLE));
-	duk_pop(jcx);
+	duk_pop(cx);
 
 	startCookie();		// so document.cookie will work properly
 
 // setupJavaDom() in ebjs.c does the rest.
-}				/* createJavaContext_nat */
+}				/* createJavaContext_0 */
 
-void freeJavaContext_nat(jsobjtype cx)
+void freeJavaContext_0(jsobjtype cx)
 {
 	int i, top = duk_get_top(context0);
 	for (i = 0; i < top; ++i) {
@@ -1620,16 +1610,16 @@ void freeJavaContext_nat(jsobjtype cx)
 			break;
 		}
 	}
-}				/* freeJavaContext_nat */
+}				/* freeJavaContext_0 */
 
 // determine the type of the element on the top of the stack.
-static enum ej_proptype top_proptype(void)
+static enum ej_proptype top_proptype(duk_context * cx)
 {
 	double d;
 	int n;
-	switch (duk_get_type(jcx, -1)) {
+	switch (duk_get_type(cx, -1)) {
 	case DUK_TYPE_NUMBER:
-		d = duk_get_number(jcx, -1);
+		d = duk_get_number(cx, -1);
 		n = d;
 		return (n == d ? EJ_PROP_INT : EJ_PROP_FLOAT);
 	case DUK_TYPE_STRING:
@@ -1637,9 +1627,9 @@ static enum ej_proptype top_proptype(void)
 	case DUK_TYPE_BOOLEAN:
 		return EJ_PROP_BOOL;
 	case DUK_TYPE_OBJECT:
-		if (duk_is_function(jcx, -1))
+		if (duk_is_function(cx, -1))
 			return EJ_PROP_FUNCTION;
-		if (duk_is_array(jcx, -1))
+		if (duk_is_array(cx, -1))
 			return EJ_PROP_ARRAY;
 		return EJ_PROP_OBJECT;
 	case DUK_TYPE_NULL:
@@ -1668,144 +1658,155 @@ static duk_ret_t protected_get(duk_context * cx, void *udata)
 	return 1;
 }
 
-enum ej_proptype typeof_property_nat(jsobjtype parent, const char *name)
+enum ej_proptype typeof_property_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
+	duk_context * cx = cx0;
 	enum ej_proptype l;
 	int rc;
-	duk_push_heapptr(jcx, parent);
-	rc = duk_safe_call(jcx, protected_get, (void *)name, 0, 1);
-	l = rc ? 0 : top_proptype();
-	duk_pop_2(jcx);
+	duk_push_heapptr(cx, parent);
+	rc = duk_safe_call(cx, protected_get, (void *)name, 0, 1);
+	l = rc ? 0 : top_proptype(cx);
+	duk_pop_2(cx);
 	return l;
 }
 
-bool has_property_nat(jsobjtype parent, const char *name)
+bool has_property_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
+	duk_context * cx = cx0;
 	bool l;
-	duk_push_heapptr(jcx, parent);
-	l = duk_has_prop_string(jcx, -1, name);
-	duk_pop(jcx);
+	duk_push_heapptr(cx, parent);
+	l = duk_has_prop_string(cx, -1, name);
+	duk_pop(cx);
 	return l;
 }
 
-void delete_property_nat(jsobjtype parent, const char *name)
+void delete_property_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
-	duk_push_heapptr(jcx, parent);
-	duk_del_prop_string(jcx, -1, name);
-	duk_pop(jcx);
-}				/* delete_property_nat */
+	duk_context * cx = cx0;
+	duk_push_heapptr(cx, parent);
+	duk_del_prop_string(cx, -1, name);
+	duk_pop(cx);
+}				/* delete_property_0 */
 
-int get_arraylength_nat(jsobjtype a)
+int get_arraylength_0(jsobjtype cx0, jsobjtype a)
 {
+	duk_context * cx = cx0;
 	int l;
-	duk_push_heapptr(jcx, a);
-	if (duk_is_array(jcx, -1))
-		l = duk_get_length(jcx, -1);
+	duk_push_heapptr(cx, a);
+	if (duk_is_array(cx, -1))
+		l = duk_get_length(cx, -1);
 	else
 		l = -1;
-	duk_pop(jcx);
+	duk_pop(cx);
 	return l;
-}				/* get_arraylength_nat */
+}				/* get_arraylength_0 */
 
 /* Return a property as a string, if it is
  * string compatible. The string is allocated, free it when done. */
-char *get_property_string_nat(jsobjtype parent, const char *name)
+char *get_property_string_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
+	duk_context * cx = cx0;
 	const char *s;
 	char *s0;
 	enum ej_proptype proptype;
-	duk_push_heapptr(jcx, parent);
-	duk_get_prop_string(jcx, -1, name);
-	proptype = top_proptype();
+	duk_push_heapptr(cx, parent);
+	duk_get_prop_string(cx, -1, name);
+	proptype = top_proptype(cx);
 	if (proptype == EJ_PROP_NONE) {
-		duk_pop_2(jcx);
+		duk_pop_2(cx);
 		return NULL;
 	}
-	if (duk_is_object(jcx, -1)) {
+	if (duk_is_object(cx, -1)) {
 /* special code here to return the object pointer */
 /* That's what edbrowse is going to want. */
-		jsobjtype o = duk_get_heapptr(jcx, -1);
+		jsobjtype o = duk_get_heapptr(cx, -1);
 		s = pointer2string(o);
 	} else
-		s = duk_safe_to_string(jcx, -1);
+		s = duk_safe_to_string(cx, -1);
 	if (!s)
 		s = emptyString;
 	s0 = cloneString(s);
-	duk_pop_2(jcx);
+	duk_pop_2(cx);
 	return s0;
-}				/* get_property_string_nat */
+}				/* get_property_string_0 */
 
-jsobjtype get_property_object_nat(jsobjtype parent, const char *name)
+jsobjtype get_property_object_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
+	duk_context * cx = cx0;
 	jsobjtype o = NULL;
-	duk_push_heapptr(jcx, parent);
-	duk_get_prop_string(jcx, -1, name);
-	if (duk_is_object(jcx, -1))
-		o = duk_get_heapptr(jcx, -1);
-	duk_pop_2(jcx);
+	duk_push_heapptr(cx, parent);
+	duk_get_prop_string(cx, -1, name);
+	if (duk_is_object(cx, -1))
+		o = duk_get_heapptr(cx, -1);
+	duk_pop_2(cx);
 	return o;
-}				/* get_property_object_nat */
+}				/* get_property_object_0 */
 
-jsobjtype get_property_function_nat(jsobjtype parent, const char *name)
+jsobjtype get_property_function_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
+	duk_context * cx = cx0;
 	jsobjtype o = NULL;
-	duk_push_heapptr(jcx, parent);
-	duk_get_prop_string(jcx, -1, name);
-	if (duk_is_function(jcx, -1))
-		o = duk_get_heapptr(jcx, -1);
-	duk_pop_2(jcx);
+	duk_push_heapptr(cx, parent);
+	duk_get_prop_string(cx, -1, name);
+	if (duk_is_function(cx, -1))
+		o = duk_get_heapptr(cx, -1);
+	duk_pop_2(cx);
 	return o;
-}				/* get_property_function_nat */
+}				/* get_property_function_0 */
 
-int get_property_number_nat(jsobjtype parent, const char *name)
+int get_property_number_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
+	duk_context * cx = cx0;
 	int n = -1;
-	duk_push_heapptr(jcx, parent);
-	duk_get_prop_string(jcx, -1, name);
-	if (duk_is_number(jcx, -1)) {
-		double d = duk_get_number(jcx, -1);
+	duk_push_heapptr(cx, parent);
+	duk_get_prop_string(cx, -1, name);
+	if (duk_is_number(cx, -1)) {
+		double d = duk_get_number(cx, -1);
 		n = d;		// truncate
 	}
-	duk_pop_2(jcx);
+	duk_pop_2(cx);
 	return n;
-}				/* get_property_number_nat */
+}				/* get_property_number_0 */
 
-double get_property_float_nat(jsobjtype parent, const char *name)
+double get_property_float_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
+	duk_context * cx = cx0;
 	double d = -1;
-	duk_push_heapptr(jcx, parent);
-	duk_get_prop_string(jcx, -1, name);
-	if (duk_is_number(jcx, -1))
-		d = duk_get_number(jcx, -1);
-	duk_pop_2(jcx);
+	duk_push_heapptr(cx, parent);
+	duk_get_prop_string(cx, -1, name);
+	if (duk_is_number(cx, -1))
+		d = duk_get_number(cx, -1);
+	duk_pop_2(cx);
 	return d;
-}				/* get_property_float_nat */
+}				/* get_property_float_0 */
 
-bool get_property_bool_nat(jsobjtype parent, const char *name)
+bool get_property_bool_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
+	duk_context * cx = cx0;
 	bool b = false;
-	duk_push_heapptr(jcx, parent);
-	duk_get_prop_string(jcx, -1, name);
-	if (duk_is_number(jcx, -1)) {
-		if (duk_get_number(jcx, -1))
+	duk_push_heapptr(cx, parent);
+	duk_get_prop_string(cx, -1, name);
+	if (duk_is_number(cx, -1)) {
+		if (duk_get_number(cx, -1))
 			b = true;
 	}
-	if (duk_is_boolean(jcx, -1)) {
-		if (duk_get_boolean(jcx, -1))
+	if (duk_is_boolean(cx, -1)) {
+		if (duk_get_boolean(cx, -1))
 			b = true;
 	}
-	duk_pop_2(jcx);
+	duk_pop_2(cx);
 	return b;
-}				/* get_property_bool_nat */
+}				/* get_property_bool_0 */
 
-int set_property_string_nat(jsobjtype parent, const char *name,
+int set_property_string_0(jsobjtype cx0, jsobjtype parent, const char *name,
 			    const char *value)
 {
+	duk_context * cx = cx0;
 	bool defset = false;
 	duk_c_function setter = NULL;
 	duk_c_function getter = NULL;
 	const char *altname;
-	duk_push_heapptr(jcx, parent);
+	duk_push_heapptr(cx, parent);
 	if (stringEqual(name, "innerHTML"))
 		setter = setter_innerHTML, getter = getter_innerHTML,
 		    altname = "inner$HTML";
@@ -1813,83 +1814,87 @@ int set_property_string_nat(jsobjtype parent, const char *name,
 // This one is complicated. If option.value had side effects,
 // that would only serve to confuse.
 		bool valsetter = true;
-		duk_get_global_string(jcx, "Option");
-		if (duk_instanceof(jcx, -2, -1))
+		duk_get_global_string(cx, "Option");
+		if (duk_instanceof(cx, -2, -1))
 			valsetter = false;
-		duk_pop(jcx);
-		duk_get_global_string(jcx, "Select");
-		if (duk_instanceof(jcx, -2, -1)) {
+		duk_pop(cx);
+		duk_get_global_string(cx, "Select");
+		if (duk_instanceof(cx, -2, -1)) {
 			valsetter = false;
 			puts("select.value set! This shouldn't happen.");
 		}
-		duk_pop(jcx);
+		duk_pop(cx);
 		if (valsetter)
 			setter = setter_value,
 			    getter = getter_value, altname = "val$ue";
 	}
 	if (setter) {
-		if (!duk_get_prop_string(jcx, -1, name))
+		if (!duk_get_prop_string(cx, -1, name))
 			defset = true;
-		duk_pop(jcx);
+		duk_pop(cx);
 	}
 	if (defset) {
-		duk_push_string(jcx, name);
-		duk_push_c_function(jcx, getter, 0);
-		duk_push_c_function(jcx, setter, 1);
-		duk_def_prop(jcx, -4,
+		duk_push_string(cx, name);
+		duk_push_c_function(cx, getter, 0);
+		duk_push_c_function(cx, setter, 1);
+		duk_def_prop(cx, -4,
 			     (DUK_DEFPROP_HAVE_SETTER | DUK_DEFPROP_HAVE_GETTER
 			      | DUK_DEFPROP_SET_ENUMERABLE));
 	}
 	if (!value)
 		value = emptyString;
-	duk_push_string(jcx, value);
-	duk_put_prop_string(jcx, -2, (setter ? altname : name));
-	duk_pop(jcx);
+	duk_push_string(cx, value);
+	duk_put_prop_string(cx, -2, (setter ? altname : name));
+	duk_pop(cx);
 	return 0;
-}				/* set_property_string_nat */
+}				/* set_property_string_0 */
 
-int set_property_bool_nat(jsobjtype parent, const char *name, bool n)
+int set_property_bool_0(jsobjtype cx0, jsobjtype parent, const char *name, bool n)
 {
-	duk_push_heapptr(jcx, parent);
-	duk_push_boolean(jcx, n);
-	duk_put_prop_string(jcx, -2, name);
-	duk_pop(jcx);
+	duk_context * cx = cx0;
+	duk_push_heapptr(cx, parent);
+	duk_push_boolean(cx, n);
+	duk_put_prop_string(cx, -2, name);
+	duk_pop(cx);
 	return 0;
-}				/* set_property_bool_nat */
+}				/* set_property_bool_0 */
 
-int set_property_number_nat(jsobjtype parent, const char *name, int n)
+int set_property_number_0(jsobjtype cx0, jsobjtype parent, const char *name, int n)
 {
-	duk_push_heapptr(jcx, parent);
-	duk_push_int(jcx, n);
-	duk_put_prop_string(jcx, -2, name);
-	duk_pop(jcx);
+	duk_context * cx = cx0;
+	duk_push_heapptr(cx, parent);
+	duk_push_int(cx, n);
+	duk_put_prop_string(cx, -2, name);
+	duk_pop(cx);
 	return 0;
-}				/* set_property_number_nat */
+}				/* set_property_number_0 */
 
-int set_property_float_nat(jsobjtype parent, const char *name, double n)
+int set_property_float_0(jsobjtype cx0, jsobjtype parent, const char *name, double n)
 {
-	duk_push_heapptr(jcx, parent);
-	duk_push_number(jcx, n);
-	duk_put_prop_string(jcx, -2, name);
-	duk_pop(jcx);
+	duk_context * cx = cx0;
+	duk_push_heapptr(cx, parent);
+	duk_push_number(cx, n);
+	duk_put_prop_string(cx, -2, name);
+	duk_pop(cx);
 	return 0;
-}				/* set_property_float_nat */
+}				/* set_property_float_0 */
 
-int set_property_object_nat(jsobjtype parent, const char *name, jsobjtype child)
+int set_property_object_0(jsobjtype cx0, jsobjtype parent, const char *name, jsobjtype child)
 {
-	duk_push_heapptr(jcx, parent);
+	duk_context * cx = cx0;
+	duk_push_heapptr(cx, parent);
 
 // Special code for frame.contentDocument
 	if (stringEqual(name, "contentDocument")) {
 		bool rc;
-		duk_get_global_string(jcx, "Frame");
-		rc = duk_instanceof(jcx, -2, -1);
-		duk_pop(jcx);
+		duk_get_global_string(cx, "Frame");
+		rc = duk_instanceof(cx, -2, -1);
+		duk_pop(cx);
 		if (rc) {
-			duk_push_string(jcx, name);
-			duk_push_c_function(jcx, getter_cd, 0);
-			duk_push_c_function(jcx, setter_cd, 1);
-			duk_def_prop(jcx, -4,
+			duk_push_string(cx, name);
+			duk_push_c_function(cx, getter_cd, 0);
+			duk_push_c_function(cx, setter_cd, 1);
+			duk_def_prop(cx, -4,
 				     (DUK_DEFPROP_HAVE_SETTER |
 				      DUK_DEFPROP_HAVE_GETTER |
 				      DUK_DEFPROP_SET_ENUMERABLE));
@@ -1899,14 +1904,14 @@ int set_property_object_nat(jsobjtype parent, const char *name, jsobjtype child)
 
 	if (stringEqual(name, "contentWindow")) {
 		bool rc;
-		duk_get_global_string(jcx, "Frame");
-		rc = duk_instanceof(jcx, -2, -1);
-		duk_pop(jcx);
+		duk_get_global_string(cx, "Frame");
+		rc = duk_instanceof(cx, -2, -1);
+		duk_pop(cx);
 		if (rc) {
-			duk_push_string(jcx, name);
-			duk_push_c_function(jcx, getter_cw, 0);
-			duk_push_c_function(jcx, setter_cw, 1);
-			duk_def_prop(jcx, -4,
+			duk_push_string(cx, name);
+			duk_push_c_function(cx, getter_cw, 0);
+			duk_push_c_function(cx, setter_cw, 1);
+			duk_def_prop(cx, -4,
 				     (DUK_DEFPROP_HAVE_SETTER |
 				      DUK_DEFPROP_HAVE_GETTER |
 				      DUK_DEFPROP_SET_ENUMERABLE));
@@ -1914,36 +1919,37 @@ int set_property_object_nat(jsobjtype parent, const char *name, jsobjtype child)
 		}
 	}
 
-	duk_push_heapptr(jcx, child);
-	duk_put_prop_string(jcx, -2, name);
-	duk_pop(jcx);
+	duk_push_heapptr(cx, child);
+	duk_put_prop_string(cx, -2, name);
+	duk_pop(cx);
 	return 0;
-}				/* set_property_object_nat */
+}				/* set_property_object_0 */
 
 // handler.toString = function() { return this.body; }
 static duk_ret_t native_fntos(duk_context * cx)
 {
 	duk_push_this(cx);
-	duk_get_prop_string(jcx, -1, "body");
+	duk_get_prop_string(cx, -1, "body");
 	duk_remove(cx, -2);
 	return 1;
 }
 
-int set_property_function_nat(jsobjtype parent, const char *name,
+int set_property_function_0(jsobjtype cx0, jsobjtype parent, const char *name,
 			      const char *body)
 {
+	duk_context * cx = cx0;
 	char *body2, *s;
 	int l;
 	if (!body || !*body) {
 // null or empty function, function will return null.
 		body = "null";
 	}
-	duk_push_string(jcx, body);
-	duk_push_string(jcx, name);
-	if (duk_pcompile(jcx, 0)) {
-		processError();
+	duk_push_string(cx, body);
+	duk_push_string(cx, name);
+	if (duk_pcompile(cx, 0)) {
+		processError(cx);
 		debugPrint(3, "compile error for %p.%s", parent, name);
-		duk_push_c_function(jcx, native_error_stub_1, 0);
+		duk_push_c_function(cx, native_error_stub_1, 0);
 	}
 // At this point I have to undo the mashinations performed by handlerSet().
 	s = body2 = cloneString(body);
@@ -1953,15 +1959,15 @@ int set_property_function_nat(jsobjtype parent, const char *name,
 		if (!strncmp(s, "(function(){", 12))
 			s += 12;
 	}
-	duk_push_string(jcx, s);
+	duk_push_string(cx, s);
 	nzFree(body2);
-	duk_put_prop_string(jcx, -2, "body");
-	duk_push_c_function(jcx, native_fntos, 0);
-	duk_put_prop_string(jcx, -2, "toString");
-	duk_push_heapptr(jcx, parent);
-	duk_insert(jcx, -2);	// switch places
-	duk_put_prop_string(jcx, -2, name);
-	duk_pop(jcx);
+	duk_put_prop_string(cx, -2, "body");
+	duk_push_c_function(cx, native_fntos, 0);
+	duk_put_prop_string(cx, -2, "toString");
+	duk_push_heapptr(cx, parent);
+	duk_insert(cx, -2);	// switch places
+	duk_put_prop_string(cx, -2, name);
+	duk_pop(cx);
 	return 0;
 }
 
@@ -1974,20 +1980,20 @@ model, or printed right now if JS1 is set.
 Pop the error object when done.
 *********************************************************************/
 
-static void processError(void)
+static void processError(duk_context * cx)
 {
 	const char *callstack = emptyString;
 	int offset = 0;
 	char *cut, *s;
 
-	if (duk_get_prop_string(jcx, -1, "lineNumber"))
-		offset = duk_get_int(jcx, -1);
-	duk_pop(jcx);
+	if (duk_get_prop_string(cx, -1, "lineNumber"))
+		offset = duk_get_int(cx, -1);
+	duk_pop(cx);
 
-	if (duk_get_prop_string(jcx, -1, "stack"))
-		callstack = duk_to_string(jcx, -1);
+	if (duk_get_prop_string(cx, -1, "stack"))
+		callstack = duk_to_string(cx, -1);
 	nzFree(errorMessage);
-	errorMessage = cloneString(duk_to_string(jcx, -2));
+	errorMessage = cloneString(duk_to_string(cx, -2));
 	if (strstr(errorMessage, "callstack") && strlen(callstack)) {
 // this is rare.
 		nzFree(errorMessage);
@@ -2006,7 +2012,7 @@ static void processError(void)
 				*cut = 0;
 		}
 	}
-	duk_pop(jcx);
+	duk_pop(cx);
 
 	if (debugLevel >= 3) {
 /* print message, this will be in English, and mostly for our debugging */
@@ -2057,7 +2063,7 @@ and it invokes the duktape machinery again as well.
 The resulting core dump has the stack so corrupted, that gdb is hopelessly confused.
 *********************************************************************/
 
-static void uptrace(jsobjtype node)
+static void uptrace(duk_context * cx, jsobjtype node)
 {
 	static bool infunction = false;
 	int t;
@@ -2068,40 +2074,40 @@ static void uptrace(jsobjtype node)
 		exit(1);
 	}
 	infunction = true;
-	duk_push_heapptr(jcx, node);
+	duk_push_heapptr(cx, node);
 	while (true) {
 		const char *nn, *cn;	// node name class name
 		char nnbuf[20];
-		if (duk_get_prop_string(jcx, -1, "nodeName"))
-			nn = duk_to_string(jcx, -1);
+		if (duk_get_prop_string(cx, -1, "nodeName"))
+			nn = duk_to_string(cx, -1);
 		else
 			nn = "?";
 		strncpy(nnbuf, nn, 20);
 		nnbuf[20 - 1] = 0;
 		if (!nnbuf[0])
 			strcpy(nnbuf, "?");
-		duk_pop(jcx);
-		if (duk_get_prop_string(jcx, -1, "class"))
-			cn = duk_to_string(jcx, -1);
+		duk_pop(cx);
+		if (duk_get_prop_string(cx, -1, "class"))
+			cn = duk_to_string(cx, -1);
 		else
 			cn = "?";
 		debugPrint(3, "%s.%s", nnbuf, (cn[0] ? cn : "?"));
-		duk_pop(jcx);
-		if (!duk_get_prop_string(jcx, -1, "parentNode")) {
+		duk_pop(cx);
+		if (!duk_get_prop_string(cx, -1, "parentNode")) {
 // we're done.
-			duk_pop_2(jcx);
+			duk_pop_2(cx);
 			break;
 		}
-		duk_remove(jcx, -2);
-		t = top_proptype();
+		duk_remove(cx, -2);
+		t = top_proptype(cx);
 		if(t == EJ_PROP_NULL) {
 			debugPrint(3, "null");
-			duk_pop(jcx);
+			duk_pop(cx);
 			break;
 		}
 		if(t != EJ_PROP_OBJECT) {
 			debugPrint(3, "parentNode not object, type %d", t);
-			duk_pop(jcx);
+			duk_pop(cx);
 			break;
 		}
 	}
@@ -2109,218 +2115,227 @@ static void uptrace(jsobjtype node)
 	infunction = false;
 }
 
-bool run_function_bool_nat(jsobjtype parent, const char *name)
+bool run_function_bool_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
+	duk_context * cx = cx0;
 	int dbl = 3;		// debug level
 	int seqno = -1;
-	duk_push_heapptr(jcx, parent);
+	duk_push_heapptr(cx, parent);
 	if (stringEqual(name, "ontimer")) {
 		dbl = 4;
-		if (duk_get_prop_string(jcx, -1, "tsn"))
-			seqno = duk_get_int(jcx, -1);
-		duk_pop(jcx);
+		if (duk_get_prop_string(cx, -1, "tsn"))
+			seqno = duk_get_int(cx, -1);
+		duk_pop(cx);
 	}
-	if (!duk_get_prop_string(jcx, -1, name) || !duk_is_function(jcx, -1)) {
+	if (!duk_get_prop_string(cx, -1, name) || !duk_is_function(cx, -1)) {
 #if 0
 		if (!errorMessage)
 			asprintf(&errorMessage, "no such function %s", name);
 #endif
-		duk_pop_2(jcx);
+		duk_pop_2(cx);
 		return (debugLevel < 3);
 	}
-	duk_insert(jcx, -2);
+	duk_insert(cx, -2);
 	if (seqno > 0)
 		debugPrint(dbl, "exec %s timer %d", name, seqno);
 	else
 		debugPrint(dbl, "exec %s", name);
-	if (!duk_pcall_method(jcx, 0)) {
+	if (!duk_pcall_method(cx, 0)) {
 		bool rc = true;
 		debugPrint(dbl, "exec complete");
-		if (duk_is_boolean(jcx, -1))
-			rc = duk_get_boolean(jcx, -1);
-		if (duk_is_number(jcx, -1))
-			rc = (duk_get_number(jcx, -1) != 0);
-		if (duk_is_string(jcx, -1)) {
-			const char *b = duk_get_string(jcx, -1);
+		if (duk_is_boolean(cx, -1))
+			rc = duk_get_boolean(cx, -1);
+		if (duk_is_number(cx, -1))
+			rc = (duk_get_number(cx, -1) != 0);
+		if (duk_is_string(cx, -1)) {
+			const char *b = duk_get_string(cx, -1);
 			if (stringEqualCI(b, "false"))
 				rc = false;
 		}
-		duk_pop(jcx);
+		duk_pop(cx);
 		return rc;
 	}
 // error in execution
 	if (intFlag)
 		i_puts(MSG_Interrupted);
-	processError();
+	processError(cx);
 	debugPrint(3, "failure on %p.%s()", parent, name);
-	uptrace(parent);
+	uptrace(cx, parent);
 	debugPrint(3, "exec complete");
 	return (debugLevel < 3);
-}				/* run_function_bool_nat */
+}				/* run_function_bool_0 */
 
 // The single argument to the function has to be an object.
 // Returns -1 if the return is not int or bool
-int run_function_onearg_nat(jsobjtype parent, const char *name, jsobjtype child)
+int run_function_onearg_0(jsobjtype cx0, jsobjtype parent, const char *name, jsobjtype child)
 {
+	duk_context * cx = cx0;
 	int rc = -1;
-	duk_push_heapptr(jcx, parent);
-	if (!duk_get_prop_string(jcx, -1, name) || !duk_is_function(jcx, -1)) {
+	duk_push_heapptr(cx, parent);
+	if (!duk_get_prop_string(cx, -1, name) || !duk_is_function(cx, -1)) {
 #if 0
 		if (!errorMessage)
 			asprintf(&errorMessage, "no such function %s", name);
 #endif
-		duk_pop_2(jcx);
+		duk_pop_2(cx);
 		return rc;
 	}
-	duk_insert(jcx, -2);
-	duk_push_heapptr(jcx, child);	// child is the only argument
-	if (!duk_pcall_method(jcx, 1)) {
+	duk_insert(cx, -2);
+	duk_push_heapptr(cx, child);	// child is the only argument
+	if (!duk_pcall_method(cx, 1)) {
 // See if return is int or bool
-		enum ej_proptype t = top_proptype();
+		enum ej_proptype t = top_proptype(cx);
 		if (t == EJ_PROP_BOOL)
-			rc = duk_get_boolean(jcx, -1);
+			rc = duk_get_boolean(cx, -1);
 		if (t == EJ_PROP_INT)
-			rc = duk_get_number(jcx, -1);
-		duk_pop(jcx);
+			rc = duk_get_number(cx, -1);
+		duk_pop(cx);
 		return rc;
 	}
 // error in execution
 	if (intFlag)
 		i_puts(MSG_Interrupted);
-	processError();
+	processError(cx);
 	debugPrint(3, "failure on %p.%s[]", parent, name);
-	uptrace(parent);
+	uptrace(cx, parent);
 	return rc;
-}				/* run_function_onearg_nat */
+}				/* run_function_onearg_0 */
 
 // The single argument to the function has to be a string.
-void run_function_onestring_nat(jsobjtype parent, const char *name,
+void run_function_onestring_0(jsobjtype cx0, jsobjtype parent, const char *name,
 				const char *s)
 {
-	duk_push_heapptr(jcx, parent);
-	if (!duk_get_prop_string(jcx, -1, name) || !duk_is_function(jcx, -1)) {
+	duk_context * cx = cx0;
+	duk_push_heapptr(cx, parent);
+	if (!duk_get_prop_string(cx, -1, name) || !duk_is_function(cx, -1)) {
 #if 0
 		if (!errorMessage)
 			asprintf(&errorMessage, "no such function %s", name);
 #endif
-		duk_pop_2(jcx);
+		duk_pop_2(cx);
 		return;
 	}
-	duk_insert(jcx, -2);
-	duk_push_string(jcx, s);	// s is the only argument
-	if (!duk_pcall_method(jcx, 1)) {
-		duk_pop(jcx);
+	duk_insert(cx, -2);
+	duk_push_string(cx, s);	// s is the only argument
+	if (!duk_pcall_method(cx, 1)) {
+		duk_pop(cx);
 		return;
 	}
 // error in execution
 	if (intFlag)
 		i_puts(MSG_Interrupted);
-	processError();
+	processError(cx);
 	debugPrint(3, "failure on %p.%s[]", parent, name);
-	uptrace(parent);
-}				/* run_function_onestring_nat */
+	uptrace(cx, parent);
+}				/* run_function_onestring_0 */
 
-jsobjtype instantiate_array_nat(jsobjtype parent, const char *name)
+jsobjtype instantiate_array_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
+	duk_context * cx = cx0;
 	jsobjtype a;
-	duk_push_heapptr(jcx, parent);
-	if (duk_get_prop_string(jcx, -1, name) && duk_is_array(jcx, -1)) {
-		a = duk_get_heapptr(jcx, -1);
-		duk_pop_2(jcx);
+	duk_push_heapptr(cx, parent);
+	if (duk_get_prop_string(cx, -1, name) && duk_is_array(cx, -1)) {
+		a = duk_get_heapptr(cx, -1);
+		duk_pop_2(cx);
 		return a;
 	}
-	duk_pop(jcx);
-	duk_get_global_string(jcx, "Array");
-	if (duk_pnew(jcx, 0)) {
-		processError();
+	duk_pop(cx);
+	duk_get_global_string(cx, "Array");
+	if (duk_pnew(cx, 0)) {
+		processError(cx);
 		debugPrint(3, "failure on %p.%s = []", parent, name);
-		uptrace(parent);
-		duk_pop(jcx);
+		uptrace(cx, parent);
+		duk_pop(cx);
 		return 0;
 	}
-	a = duk_get_heapptr(jcx, -1);
-	duk_put_prop_string(jcx, -2, name);
-	duk_pop(jcx);
+	a = duk_get_heapptr(cx, -1);
+	duk_put_prop_string(cx, -2, name);
+	duk_pop(cx);
 	return a;
-}				/* instantiate_array_nat */
+}				/* instantiate_array_0 */
 
-jsobjtype instantiate_nat(jsobjtype parent, const char *name,
+jsobjtype instantiate_0(jsobjtype cx0, jsobjtype parent, const char *name,
 			  const char *classname)
 {
+	duk_context * cx = cx0;
 	jsobjtype a;
-	duk_push_heapptr(jcx, parent);
-	if (duk_get_prop_string(jcx, -1, name) && duk_is_object(jcx, -1)) {
+	duk_push_heapptr(cx, parent);
+	if (duk_get_prop_string(cx, -1, name) && duk_is_object(cx, -1)) {
 // I'll assume the object is of the proper class.
-		a = duk_get_heapptr(jcx, -1);
-		duk_pop_2(jcx);
+		a = duk_get_heapptr(cx, -1);
+		duk_pop_2(cx);
 		return a;
 	}
-	duk_pop(jcx);
+	duk_pop(cx);
 	if (!classname)
 		classname = "Object";
-	if (!duk_get_global_string(jcx, classname)) {
+	if (!duk_get_global_string(cx, classname)) {
 		fprintf(stderr, "unknown class %s, cannot instantiate\n",
 			classname);
 		exit(8);
 	}
-	if (duk_pnew(jcx, 0)) {
-		processError();
+	if (duk_pnew(cx, 0)) {
+		processError(cx);
 		debugPrint(3, "failure on %p.%s = new %s", parent, name,
 			   classname);
-		uptrace(parent);
-		duk_pop(jcx);
+		uptrace(cx, parent);
+		duk_pop(cx);
 		return 0;
 	}
-	a = duk_get_heapptr(jcx, -1);
-	duk_put_prop_string(jcx, -2, name);
-	duk_pop(jcx);
+	a = duk_get_heapptr(cx, -1);
+	duk_put_prop_string(cx, -2, name);
+	duk_pop(cx);
 	return a;
-}				/* instantiate_nat */
+}				/* instantiate_0 */
 
-jsobjtype instantiate_array_element_nat(jsobjtype parent, int idx,
+jsobjtype instantiate_array_element_0(jsobjtype cx0, jsobjtype parent, int idx,
 					const char *classname)
 {
+	duk_context * cx = cx0;
 	jsobjtype a;
 	if (!classname)
 		classname = "Object";
-	duk_push_heapptr(jcx, parent);
-	duk_get_global_string(jcx, classname);
-	if (duk_pnew(jcx, 0)) {
-		processError();
+	duk_push_heapptr(cx, parent);
+	duk_get_global_string(cx, classname);
+	if (duk_pnew(cx, 0)) {
+		processError(cx);
 		debugPrint(3, "failure on %p[%d] = new %s", parent, idx,
 			   classname);
-		uptrace(parent);
-		duk_pop(jcx);
+		uptrace(cx, parent);
+		duk_pop(cx);
 		return 0;
 	}
-	a = duk_get_heapptr(jcx, -1);
-	duk_put_prop_index(jcx, -2, idx);
-	duk_pop(jcx);
+	a = duk_get_heapptr(cx, -1);
+	duk_put_prop_index(cx, -2, idx);
+	duk_pop(cx);
 	return a;
 }
 
-int set_array_element_object_nat(jsobjtype parent, int idx, jsobjtype child)
+int set_array_element_object_0(jsobjtype cx0, jsobjtype parent, int idx, jsobjtype child)
 {
-	duk_push_heapptr(jcx, parent);
-	duk_push_heapptr(jcx, child);
-	duk_put_prop_index(jcx, -2, idx);
-	duk_pop(jcx);
+	duk_context * cx = cx0;
+	duk_push_heapptr(cx, parent);
+	duk_push_heapptr(cx, child);
+	duk_put_prop_index(cx, -2, idx);
+	duk_pop(cx);
 	return 0;
 }
 
-jsobjtype get_array_element_object_nat(jsobjtype parent, int idx)
+jsobjtype get_array_element_object_0(jsobjtype cx0, jsobjtype parent, int idx)
 {
+	duk_context * cx = cx0;
 	jsobjtype a = 0;
-	duk_push_heapptr(jcx, parent);
-	duk_get_prop_index(jcx, -1, idx);
-	if (duk_is_object(jcx, -1))
-		a = duk_get_heapptr(jcx, -1);
-	duk_pop_2(jcx);
+	duk_push_heapptr(cx, parent);
+	duk_get_prop_index(cx, -1, idx);
+	if (duk_is_object(cx, -1))
+		a = duk_get_heapptr(cx, -1);
+	duk_pop_2(cx);
 	return a;
 }
 
-char *run_script_nat(const char *s)
+char *run_script_0(jsobjtype cx0, const char *s)
 {
+	duk_context * cx = cx0;
 	char *result = 0;
 	bool rc;
 	const char *gc;
@@ -2357,69 +2372,58 @@ char *run_script_nat(const char *s)
 		stringAndString(&s2, &l, u);
 	}
 
-	rc = duk_peval_string(jcx, (s2 ? s2 : s));
+	rc = duk_peval_string(cx, (s2 ? s2 : s));
 	nzFree(s2);
 	if (intFlag)
 		i_puts(MSG_Interrupted);
 	if (!rc) {
-		s = duk_safe_to_string(jcx, -1);
+		s = duk_safe_to_string(cx, -1);
 		if (s && !*s)
 			s = 0;
 		if (s)
 			result = cloneString(s);
-		duk_pop(jcx);
+		duk_pop(cx);
 	} else {
-		processError();
+		processError(cx);
 	}
 	gc = getenv("JSGC");
 	if (gc && *gc)
-		duk_gc(jcx, 0);
+		duk_gc(cx, 0);
 	return result;
 }
 
 // execute script.text code; more efficient than the above.
-void run_data_nat(jsobjtype o)
+void run_data_0(jsobjtype cx0, jsobjtype o)
 {
+	duk_context * cx = cx0;
 	bool rc;
 	const char *s, *gc;
-	duk_push_heapptr(jcx, o);
-	if (!duk_get_prop_string(jcx, -1, "text")) {
+	duk_push_heapptr(cx, o);
+	if (!duk_get_prop_string(cx, -1, "text")) {
 // no data
-		duk_pop_2(jcx);
+		duk_pop_2(cx);
 		return;
 	}
-	s = duk_safe_to_string(jcx, -1);
+	s = duk_safe_to_string(cx, -1);
 	if (!s || !*s)
 		return;
 // defer to the earlier routine if there are breakpoints
 	if (strstr(s, "bp@(") || strstr(s, "trace@(")) {
-		run_script_nat(s);
-		duk_pop_2(jcx);
+		run_script_0(cx, s);
+		duk_pop_2(cx);
 		return;
 	}
-	rc = duk_peval_string(jcx, s);
+	rc = duk_peval_string(cx, s);
 	if (intFlag)
 		i_puts(MSG_Interrupted);
 	if (!rc) {
-		duk_pop_n(jcx, 3);
+		duk_pop_n(cx, 3);
 	} else {
-		processError();
-		duk_pop_2(jcx);
+		processError(cx);
+		duk_pop_2(cx);
 	}
 	gc = getenv("JSGC");
 	if (gc && *gc)
-		duk_gc(jcx, 0);
+		duk_gc(cx, 0);
 }
 
-#if 0
-// This is never called; I don't know what it is.
-void put_data_nat(jsobjtype cx, jsobjtype o, const char *s)
-{
-	if (!cx || !o || !s || !*s)
-		return;
-	duk_push_heapptr(cx, o);
-	duk_push_string(cx, s);
-	duk_put_prop_string(cx, -2, "data");
-	duk_pop(cx);
-}
-#endif

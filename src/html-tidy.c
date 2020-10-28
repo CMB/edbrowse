@@ -262,7 +262,7 @@ static void convertNode(TidyNode node, int level, bool opentag)
 {
 	ctmbstr name;
 	TidyAttr tattr;
-	struct htmlTag *t;
+	Tag *t;
 	int nattr;		/* number of attributes */
 	int i;
 
@@ -279,7 +279,7 @@ static void convertNode(TidyNode node, int level, bool opentag)
 		return;
 	}
 
-	t = newTag((char *)name);
+	t = newTag(cf, (char *)name);
 	if (!t)
 		return;
 

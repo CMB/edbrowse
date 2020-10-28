@@ -1372,7 +1372,7 @@ void *httpConnectBack1(void *ptr)
 
 void *httpConnectBack2(void *ptr)
 {
-	struct htmlTag *t = ptr;
+	Tag *t = ptr;
 	bool rc;
 	struct i_get g;
 	memset(&g, 0, sizeof(g));
@@ -1402,7 +1402,7 @@ void *httpConnectBack2(void *ptr)
 
 void *httpConnectBack3(void *ptr)
 {
-	struct htmlTag *t = ptr;
+	Tag *t = ptr;
 	bool rc;
 	struct i_get g;
 	char *outgoing_body = 0, *outgoing_headers = 0;
@@ -2714,10 +2714,10 @@ int frameExpandLine(int ln, jsobjtype fo)
 	const char *s;
 	char *a;
 	char *jssrc = 0;
-	struct htmlTag *t;
-	struct ebFrame *save_cf, *new_cf, *last_f;
+	Tag *t;
+	Frame *save_cf, *new_cf, *last_f;
 	uchar save_local;
-	struct htmlTag *cdt;	// contentDocument tag
+	Tag *cdt;	// contentDocument tag
 
 	if (fo) {
 		t = tagFromJavaVar(fo);
@@ -2745,7 +2745,7 @@ int frameExpandLine(int ln, jsobjtype fo)
 		return 0;
 	}
 // Check with js first, in case it changed.
-	if (t->jv && (a = get_property_url(t->jv, false)) && *a) {
+	if (t->jv && (a = get_property_url(t->f0, t->jv, false)) && *a) {
 		nzFree(t->href);
 		t->href = a;
 	}
@@ -2772,7 +2772,7 @@ int frameExpandLine(int ln, jsobjtype fo)
 	save_cf = cf = t->f0;
 /* have to push a new frame before we read the web page */
 	for (last_f = &(cw->f0); last_f->next; last_f = last_f->next) ;
-	last_f->next = cf = allocZeroMem(sizeof(struct ebFrame));
+	last_f->next = cf = allocZeroMem(sizeof(Frame));
 	cf->owner = cw;
 	cf->frametag = t;
 	debugPrint(2, "fetch frame %s",
@@ -2849,7 +2849,7 @@ So check for serverData null here. Once again we pop the frame.
 // is the contentDocument tag.
 	cdt = t->firstchild;
 // the placeholder document node will soon be orphaned.
-	delete_property(cdt->jv, "parentNode");
+	delete_property(cdt->f0, cdt->jv, "parentNode");
 	htmlNodesIntoTree(start, cdt);
 	cdt->step = 0;
 	prerender(0);
@@ -2867,22 +2867,22 @@ we did that before and now it's being expanded. So bump step up to 2.
 		decorate(0);
 		set_basehref(cf->hbase);
 // parent points to the containing frame.
-		set_property_object(cf->winobj, "parent", save_cf->winobj);
+		set_property_object(cf, cf->winobj, "parent", save_cf->winobj);
 // And top points to the top.
 		cf = save_cf;
-		topobj = get_property_object(cf->winobj, "top");
+		topobj = get_property_object(cf, cf->winobj, "top");
 		cf = new_cf;
-		set_property_object(cf->winobj, "top", topobj);
-		set_property_object(cf->winobj, "frameElement", t->jv);
-		run_function_bool(cf->winobj, "eb$qs$start");
+		set_property_object(cf, cf->winobj, "top", topobj);
+		set_property_object(cf, cf->winobj, "frameElement", t->jv);
+		run_function_bool(cf, cf->winobj, "eb$qs$start");
 		if (jssrc) {
-			jsRunScript(cf->winobj, jssrc, "frame.src", 1);
+			jsRunScript(cf, cf->winobj, jssrc, "frame.src", 1);
 		}
 		runScriptsPending(true);
 		runOnload();
 		runScriptsPending(false);
-		set_property_string(cf->docobj, "readyState", "complete");
-		run_event_bool(cf->docobj, "document", "onreadystatechange");
+		set_property_string(cf, cf->docobj, "readyState", "complete");
+		run_event_bool(cf, cf->docobj, "document", "onreadystatechange");
 		runScriptsPending(false);
 		rebuildSelectors();
 	}
@@ -2909,16 +2909,16 @@ we did that before and now it's being expanded. So bump step up to 2.
 		cdt->style = 0;
 // Should I switch this tag into the new frame? I don't really know.
 		cdt->f0 = new_cf;
-		set_property_object(t->jv, "content$Document", cdo);
-		cna = get_property_object(t->jv, "childNodes");
-		set_array_element_object(cna, 0, cdo);
+		set_property_object(new_cf, t->jv, "content$Document", cdo);
+		cna = get_property_object(t->f0, t->jv, "childNodes");
+		set_array_element_object(t->f0, cna, 0, cdo);
 // Should we do this? For consistency I guess yes.
-		set_property_object(cdo, "parentNode", t->jv);
+		set_property_object(t->f0, cdo, "parentNode", t->jv);
 		cwo = new_cf->winobj;
-		set_property_object(t->jv, "content$Window", cwo);
+		set_property_object(new_cf, t->jv, "content$Window", cwo);
 // run the frame onload function if it is there.
 // I assume it should run in the higher frame.
-		run_event_bool(t->jv, t->info->name, "onload");
+		run_event_bool(t->f0, t->jv, t->info->name, "onload");
 	}
 
 	return 0;
@@ -2926,14 +2926,14 @@ we did that before and now it's being expanded. So bump step up to 2.
 
 static int frameContractLine(int ln)
 {
-	struct htmlTag *t = line2frame(ln);
+	Tag *t = line2frame(ln);
 	if (!t)
 		return 1;
 	t->contracted = true;
 	return 0;
 }				/* frameContractLine */
 
-struct htmlTag *line2frame(int ln)
+Tag *line2frame(int ln)
 {
 	const char *line;
 	int n, opentag = 0, ln1 = ln;
@@ -2978,8 +2978,8 @@ static const char *stringInBufLine(const char *s, const char *t)
 bool reexpandFrame(void)
 {
 	int j, start;
-	struct htmlTag *frametag;
-	struct htmlTag *cdt;	// contentDocument tag
+	Tag *frametag;
+	Tag *cdt;	// contentDocument tag
 	uchar save_local;
 	bool rc;
 	jsobjtype save_top, save_parent, save_fe;
@@ -2987,15 +2987,15 @@ bool reexpandFrame(void)
 	cf = newloc_f;
 	frametag = cf->frametag;
 	cdt = frametag->firstchild;
-	save_top = get_property_object(cf->winobj, "top");
-	save_parent = get_property_object(cf->winobj, "parent");
-	save_fe = get_property_object(cf->winobj, "frameElement");
+	save_top = get_property_object(cf, cf->winobj, "top");
+	save_parent = get_property_object(cf, cf->winobj, "parent");
+	save_fe = get_property_object(cf, cf->winobj, "frameElement");
 
 // Cut away our tree nodes from the previous document, which are now inaccessible.
 	underKill(cdt);
 
 // the previous document node will soon be orphaned.
-	delete_property(cdt->jv, "parentNode");
+	delete_property(cf, cdt->jv, "parentNode");
 
 	delTimers(cf);
 	freeJavaContext(cf);
@@ -3052,15 +3052,15 @@ bool reexpandFrame(void)
 	if (cf->docobj) {
 		decorate(0);
 		set_basehref(cf->hbase);
-		set_property_object(cf->winobj, "top", save_top);
-		set_property_object(cf->winobj, "parent", save_parent);
-		set_property_object(cf->winobj, "frameElement", save_fe);
-		run_function_bool(cf->winobj, "eb$qs$start");
+		set_property_object(cf, cf->winobj, "top", save_top);
+		set_property_object(cf, cf->winobj, "parent", save_parent);
+		set_property_object(cf, cf->winobj, "frameElement", save_fe);
+		run_function_bool(cf, cf->winobj, "eb$qs$start");
 		runScriptsPending(true);
 		runOnload();
 		runScriptsPending(false);
-		set_property_string(cf->docobj, "readyState", "complete");
-		run_event_bool(cf->docobj, "document", "onreadystatechange");
+		set_property_string(cf, cf->docobj, "readyState", "complete");
+		run_event_bool(cf, cf->docobj, "document", "onreadystatechange");
 		runScriptsPending(false);
 		rebuildSelectors();
 	}
@@ -3071,7 +3071,7 @@ bool reexpandFrame(void)
 	browseLocal = save_local;
 
 	if (cf->docobj) {
-		struct ebFrame *save_cf;
+		Frame *save_cf;
 		jsobjtype cdo;	// contentDocument object
 		jsobjtype cwo;	// contentWindow object
 		jsobjtype cna;	// childNodes array
@@ -3086,12 +3086,12 @@ bool reexpandFrame(void)
 // but that requires a change of context.
 		save_cf = cf;
 		cf = frametag->f0;
-		set_property_object(frametag->jv, "content$Document", cdo);
-		cna = get_property_object(frametag->jv, "childNodes");
-		set_array_element_object(cna, 0, cdo);
+		set_property_object(cf, frametag->jv, "content$Document", cdo);
+		cna = get_property_object(cf, frametag->jv, "childNodes");
+		set_array_element_object(cf, cna, 0, cdo);
 // Should we do this? For consistency I guess yes.
-		set_property_object(cdo, "parentNode", frametag->jv);
-		set_property_object(frametag->jv, "content$Window", cwo);
+		set_property_object(cf, cdo, "parentNode", frametag->jv);
+		set_property_object(cf, frametag->jv, "content$Window", cwo);
 		cf = save_cf;
 	}
 
@@ -3101,7 +3101,7 @@ bool reexpandFrame(void)
 // Make sure a web page is not trying to read a local file.
 bool frameSecurityFile(const char *thisfile)
 {
-	struct ebFrame *f = &cf->owner->f0;
+	Frame *f = &cf->owner->f0;
 	for (; f != cf; f = f->next) {
 		if (!isURL(f->fileName))
 			continue;
@@ -3117,9 +3117,9 @@ static bool remember_contracted;
 void unframe(jsobjtype fobj, jsobjtype newdoc)
 {
 	int i, n;
-	struct htmlTag *t, *cdt;
+	Tag *t, *cdt;
 	jsobjtype cdo;
-	struct ebFrame *f, *f1;
+	Frame *f, *f1;
 
 	t = tagFromJavaVar(fobj);
 	if (!t) {
@@ -3175,6 +3175,6 @@ void unframe(jsobjtype fobj, jsobjtype newdoc)
 
 void unframe2(jsobjtype fobj)
 {
-	struct htmlTag *t = tagFromJavaVar(fobj);
+	Tag *t = tagFromJavaVar(fobj);
 	t->contracted = remember_contracted;
 }

@@ -293,9 +293,9 @@ struct rule {
 
 struct hashhead {
 	char *key;
-	struct htmlTag **body;
+	Tag **body;
 	int n;
-	struct htmlTag *t;
+	Tag *t;
 };
 
 static struct hashhead *hashtags, *hashids, *hashclasses;
@@ -322,13 +322,13 @@ static bool onematch, topmatch, skiproot, gcsmatch, bulkmatch, bulktotal;
 static char matchtype;		// 0 plain 1 before 2 after
 static bool matchhover;		// match on :hover selectors.
 static jsobjtype rootobj;
-static struct htmlTag **doclist;
+static Tag **doclist;
 static int doclist_a, doclist_n;
-static void build_doclist(struct htmlTag *top);
+static void build_doclist(Tag *top);
 static void hashBuild(void);
 static void hashFree(void);
 static void hashPrint(void);
-static struct htmlTag **bestListAtomic(struct asel *a);
+static Tag **bestListAtomic(struct asel *a);
 static void cssEverybody(void);
 
 static char *fromShortCache(const char *url)
@@ -1573,15 +1573,12 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 
 static void frameFromWindow(jsobjtype thisobj)
 {
-	struct ebFrame *f;
+	Frame *f;
 	for (f = &(cw->f0); f; f = f->next)
 		if (f->winobj == thisobj)
 			break;
 	if (f) {
-		if (f != cf) {
-			cf = f;
-			set_js_globals();
-		}
+		cf = f;
 	} else {
 		debugPrint(3, " can't find frame for window object %p",
 			   thisobj);
@@ -1590,7 +1587,7 @@ static void frameFromWindow(jsobjtype thisobj)
 
 void cssDocLoad(jsobjtype thisobj, char *start, bool pageload)
 {
-	struct ebFrame *save_cf = cf;
+	Frame *save_cf = cf;
 	struct cssmaster *cm;
 	bool recompile = false;
 	frameFromWindow(thisobj);
@@ -1634,7 +1631,6 @@ void cssDocLoad(jsobjtype thisobj, char *start, bool pageload)
 
 done:
 	cf = save_cf;
-	set_js_globals();
 }
 
 static void chainFree(struct asel *asel)
@@ -1689,7 +1685,7 @@ static void cssPiecesFree(struct desc *d)
 	}
 }
 
-void cssFree(struct ebFrame *f)
+void cssFree(Frame *f)
 {
 	struct shortcache *c;
 	struct cssmaster *cm = f->cssmaster;
@@ -1798,21 +1794,22 @@ You could almost replace it with :[lang=|foo], except, that same selector
 is compared against all the ancestors. Ugh.
 *********************************************************************/
 
-static bool languageSpecial(struct htmlTag *t, jsobjtype obj, const char *lang)
+static bool languageSpecial(Tag *t, jsobjtype obj, const char *lang)
 {
 	char *v;
 	bool valloc;
 	int rc, l = strlen(lang);
+	jsobjtype cx = cf->cx;
 
 top:
 	v = 0;
 	valloc = false;
 	if (t)
-		obj = t->jv;
+		obj = t->jv, cx = t->f0->cx;
 	if (bulkmatch && t)
 		v = (char *)attribVal(t, "lang");
 	else if (obj) {
-		v = get_property_string_nat(obj, "lang");
+		v = get_property_string_0(cx, obj, "lang");
 		valloc = true;
 	}
 	if (!v)
@@ -1829,8 +1826,8 @@ up:
 			goto top;
 		return false;
 	}
-	if ((obj = get_property_object_nat(obj, "parentNode")) &&
-	    get_property_number_nat(obj, "nodeType") != 9)
+	if ((obj = get_property_object_0(cx, obj, "parentNode")) &&
+	    get_property_number_0(cx, obj, "nodeType") != 9)
 		goto top;
 	return false;
 }
@@ -1847,22 +1844,23 @@ struct sibnode {
 	int nodeType;
 	int myself;
 	union {
-		struct htmlTag *t;
+		Tag *t;
 		jsobjtype j;
 	} u;
 };
 static struct sibnode *sibs;
 
-static int spread(struct htmlTag *t, jsobjtype obj)
+static int spread(Tag *t, jsobjtype obj)
 {
 	int ns = 0;		// number of siblings
 	int i, ntype, me_index = -1;
 	jsobjtype pobj, children, w;
+	jsobjtype cx;
 
 	sibs = NULL;
 
 	if (t) {
-		struct htmlTag *tp, *u;
+		Tag *tp, *u;
 		if (!(tp = t->parent) || tp->action == TAGACT_DOC)
 			return 0;
 		for ((u = tp->firstchild); u; u = u->sibling) {
@@ -1888,26 +1886,27 @@ static int spread(struct htmlTag *t, jsobjtype obj)
 		return ns;
 	}
 // bummer, have to go by objects
-	pobj = get_property_object_nat(obj, "parentNode");
-	if (!pobj || get_property_number_nat(pobj, "nodeType") == 9)
+	cx = cf->cx;
+	pobj = get_property_object_0(cx, obj, "parentNode");
+	if (!pobj || get_property_number_0(cx, pobj, "nodeType") == 9)
 		return 0;
-	children = get_property_object_nat(pobj, "childNodes");
+	children = get_property_object_0(cx, pobj, "childNodes");
 	if (!children)
 		return 0;
-	ns = get_arraylength_nat(children);
+	ns = get_arraylength_0(cx, children);
 	if (!ns)
 		return 0;
 	sibs = allocMem(sizeof(struct sibnode) * ns);
 	for (i = 0; i < ns; ++i) {
 		char *v;
 		int l;
-		w = get_array_element_object_nat(children, i);
+		w = get_array_element_object_0(cx, children, i);
 		if (!w) {	// should never happen
 			free(sibs);
 			return 0;
 		}
-		sibs[i].nodeType = get_property_number_nat(w, "nodeType");
-		v = get_property_string_nat(w, "nodeName");
+		sibs[i].nodeType = get_property_number_0(cx, w, "nodeType");
+		v = get_property_string_0(cx, w, "nodeName");
 		if (!v) {
 			strcpy(sibs[i].tag, "@x");
 		} else {
@@ -1975,16 +1974,17 @@ static int spreadType(int ns)
 }
 
 // Like spread but for children, not siblings. Still I use the sibs array.
-static int spreadKids(struct htmlTag *t, jsobjtype obj)
+static int spreadKids(Tag *t, jsobjtype obj)
 {
 	int ns = 0;		// number of children
 	int i, ntype;
 	jsobjtype children, w;
+	jsobjtype cx = cf->cx;
 
 	sibs = NULL;
 
 	if (t) {
-		struct htmlTag *u;
+		Tag *u;
 		for ((u = t->firstchild); u; u = u->sibling)
 			++ns;
 		if (!ns)
@@ -2006,23 +2006,23 @@ static int spreadKids(struct htmlTag *t, jsobjtype obj)
 		return ns;
 	}
 
-	children = get_property_object_nat(obj, "childNodes");
+	children = get_property_object_0(cx, obj, "childNodes");
 	if (!children)
 		return 0;
-	ns = get_arraylength_nat(children);
+	ns = get_arraylength_0(cx, children);
 	if (!ns)
 		return 0;
 	sibs = allocMem(sizeof(struct sibnode) * ns);
 	for (i = 0; i < ns; ++i) {
 		char *v;
 		int l;
-		w = get_array_element_object_nat(children, i);
+		w = get_array_element_object_0(cx, children, i);
 		if (!w) {	// should never happen
 			free(sibs);
 			return 0;
 		}
-		sibs[i].nodeType = get_property_number_nat(w, "nodeType");
-		v = get_property_string_nat(w, "nodeName");
+		sibs[i].nodeType = get_property_number_0(cx, w, "nodeType");
+		v = get_property_string_0(cx, w, "nodeName");
 		if (!v) {
 			strcpy(sibs[i].tag, "@x");
 		} else {
@@ -2041,8 +2041,9 @@ static int spreadKids(struct htmlTag *t, jsobjtype obj)
 
 // Things like enabled, clik, read-only, only make sense for input fields;
 // they are false for other tags.
-static bool inputLike(struct htmlTag *t, jsobjtype obj, int flavor)
+static bool inputLike(Tag *t, jsobjtype obj, int flavor)
 {
+	jsobjtype cx = cf->cx;
 	char *v;
 	bool rc;
 	int j, action;
@@ -2062,7 +2063,7 @@ static bool inputLike(struct htmlTag *t, jsobjtype obj, int flavor)
 		if (!rc)
 			return false;
 	} else {
-		v = get_property_string_nat(obj, "nodeName");
+		v = get_property_string_0(cx, obj, "nodeName");
 		if (!v || !*v)
 			return false;
 		j = stringInList(inputtags, v);
@@ -2077,7 +2078,7 @@ static bool inputLike(struct htmlTag *t, jsobjtype obj, int flavor)
 			action = TAGACT_BUTTON;
 	}
 	if (flavor == 1) {	// clickable
-		v = get_property_string_nat(obj, "type");
+		v = get_property_string_0(cx, obj, "type");
 		rc = (action == TAGACT_BUTTON || (action == TAGACT_INPUT &&
 						  v
 						  && stringInList(clicktypes,
@@ -2086,7 +2087,7 @@ static bool inputLike(struct htmlTag *t, jsobjtype obj, int flavor)
 		return rc;
 	}
 	if (flavor == 2) {	// writable
-		v = get_property_string_nat(obj, "type");
+		v = get_property_string_0(cx, obj, "type");
 		rc = (action == TAGACT_SELECT || (action == TAGACT_INPUT &&
 						  v
 						  && stringInList(nwtypes,
@@ -2108,20 +2109,21 @@ That chain is considered, or not considered, based on before after hover
 criteria in qsa2() and qsaMatchGroup(), so we need not test for those here.
 *********************************************************************/
 
-static bool qsaMatchChain(struct htmlTag *t, jsobjtype obj,
+static bool qsaMatchChain(Tag *t, jsobjtype obj,
 			  const struct asel *a);
 
-static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
+static bool qsaMatch(Tag *t, jsobjtype obj, const struct asel *a)
 {
 	bool rc;
 	struct mod *mod;
+	jsobjtype cx = cf->cx;
 
 	if (a->tag) {
 		const char *nn;
 		if (t)
 			nn = t->nodeName;
 		else
-			nn = get_property_string_nat(obj, "nodeName");
+			nn = get_property_string_0(cx, obj, "nodeName");
 		if (!nn)	// should never happen
 			return false;
 		rc = stringEqualCI(nn, a->tag);
@@ -2181,7 +2183,7 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 		}
 
 		if (t)
-			obj = t->jv;
+			obj = t->jv, cx = t->f0->cx;
 
 // for bulkmatch we use the attributes on t,
 // not js, t is faster.
@@ -2207,17 +2209,17 @@ static bool qsaMatch(struct htmlTag *t, jsobjtype obj, const struct asel *a)
 			else if (obj) {
 				if (!strncmp(p + 1, "data-", 5)) {
 					jsobjtype ds =
-					    get_property_object_nat(obj,
+					    get_property_object_0(cx, obj,
 								    "dataset");
 					if (ds) {
 						char *k = cloneString(p + 6);
 						camelCase(k);
-						v = get_property_string_nat(ds,
+						v = get_property_string_0(cx, ds,
 									    k);
 						nzFree(k);
 					}
 				} else
-					v = get_property_string_nat(obj, p + 1);
+					v = get_property_string_0(cx, obj, p + 1);
 				valloc = true;
 			}
 			if (cut)
@@ -2448,7 +2450,7 @@ all the div sections just below the current node.
 			}
 			if (!rootobj) {
 				const char *a =
-				    get_property_string_nat(obj, "nodeName");
+				    get_property_string_0(cx, obj, "nodeName");
 				rc = (a && stringEqualCI(a, "document"));
 				cnzFree(a);
 				if (rc)
@@ -2475,7 +2477,7 @@ all the div sections just below the current node.
 				}
 // text node has to be empty.
 				if (t) {
-					struct htmlTag *u = sibs[i].u.t;
+					Tag *u = sibs[i].u.t;
 					if (bulkmatch) {
 						if (u->textval && *u->textval) {
 							rc = false;
@@ -2491,7 +2493,7 @@ all the div sections just below the current node.
 					rc = false;
 					break;
 				}
-				v = get_property_string_nat(w, "data");
+				v = get_property_string_0(cx, w, "data");
 				rc = (!v || !*v);
 				nzFree(v);
 				if (!rc)
@@ -2509,7 +2511,7 @@ all the div sections just below the current node.
 				if (t && bulkmatch)
 					rc = t->disabled;
 				else
-					rc = get_property_bool_nat(obj,
+					rc = get_property_bool_0(cx, obj,
 								   "disabled");
 				if (p[1] == 'e')
 					rc ^= 1;
@@ -2526,7 +2528,7 @@ all the div sections just below the current node.
 				if (t && bulkmatch)
 					rc = t->rdonly;
 				else
-					rc = get_property_bool_nat(obj,
+					rc = get_property_bool_0(cx, obj,
 								   "readonly");
 				if (p[6] == 'w')
 					rc ^= 1;
@@ -2542,7 +2544,7 @@ all the div sections just below the current node.
 				if (t && bulkmatch)
 					rc = t->checked;
 				else
-					rc = get_property_bool_nat(obj,
+					rc = get_property_bool_0(cx, obj,
 								   "checked");
 			}
 			if (rc)
@@ -2576,13 +2578,17 @@ Called from qsaMatchGroup and from qsa1.
 This is recursive, since we must explore every path.
 *********************************************************************/
 
-static bool qsaMatchChain(struct htmlTag *t, jsobjtype obj,
+static bool qsaMatchChain(Tag *t, jsobjtype obj,
 			  const struct asel *a)
 {
-	struct htmlTag *u;
+	Tag *u;
+	jsobjtype cx = cf->cx;
 
 	if (!a)			// should never happen
 		return false;
+
+	if(t)
+		cx = t->f0->cx;
 
 	switch (a->combin) {
 	case ',':
@@ -2613,7 +2619,7 @@ onetime:
 			goto onetime;
 		}
 // now by objects
-		obj = get_property_object_nat(obj, "previousSibling");
+		obj = get_property_object_0(cx, obj, "previousSibling");
 		if (!obj)
 			break;
 		if (!qsaMatch(t, obj, a))
@@ -2637,7 +2643,7 @@ onetime:
 			}
 			break;
 		}
-		while ((obj = get_property_object_nat(obj, "previousSibling"))) {
+		while ((obj = get_property_object_0(cx, obj, "previousSibling"))) {
 			if (!qsaMatch(t, obj, a))
 				continue;
 			if (!a->next)
@@ -2656,10 +2662,10 @@ onetime:
 				break;
 			goto onetime;
 		}
-		obj = get_property_object_nat(obj, "parentNode");
+		obj = get_property_object_0(cx, obj, "parentNode");
 		if (!obj)
 			break;
-		if (get_property_number_nat(obj, "numType") == 9)
+		if (get_property_number_0(cx, obj, "numType") == 9)
 			break;
 		if (!qsaMatch(t, obj, a))
 			break;
@@ -2677,8 +2683,8 @@ onetime:
 			}
 			break;
 		}
-		while ((obj = get_property_object_nat(obj, "parentNode")) &&
-		       get_property_number_nat(obj, "nodeType") != 9) {
+		while ((obj = get_property_object_0(cx, obj, "parentNode")) &&
+		       get_property_number_0(cx, obj, "nodeType") != 9) {
 			if (!qsaMatch(t, obj, a))
 				continue;
 			if (!a->next)
@@ -2694,7 +2700,7 @@ onetime:
 }
 
 // Only called from cssApply, as part of getComputedStyle.
-static bool qsaMatchGroup(struct htmlTag *t, jsobjtype obj, struct desc *d)
+static bool qsaMatchGroup(Tag *t, jsobjtype obj, struct desc *d)
 {
 	struct sel *sel;
 	FILE *f = 0;
@@ -2731,18 +2737,18 @@ the result is an allocated array of nodes from the list that match.
 Only called from qsa2.
 *********************************************************************/
 
-static struct htmlTag **qsa1(const struct sel *sel)
+static Tag **qsa1(const struct sel *sel)
 {
 	int i, n = 1;
-	struct htmlTag *t;
-	struct htmlTag **a, **list;
+	Tag *t;
+	Tag **a, **list;
 
 	list = bestListAtomic(sel->chain);
 	if (!onematch && list) {
 // allocate room for all, in case they all match.
 		for (n = 0; list[n]; ++n) ;
 	}
-	a = allocMem((n + 1) * sizeof(struct htmlTag *));
+	a = allocMem((n + 1) * sizeof(Tag *));
 	if (!list) {
 		a[0] = 0;
 		return a;
@@ -2763,21 +2769,21 @@ static struct htmlTag **qsa1(const struct sel *sel)
 	}
 	a[n] = 0;
 	if (!onematch)
-		a = reallocMem(a, (n + 1) * sizeof(struct htmlTag *));
+		a = reallocMem(a, (n + 1) * sizeof(Tag *));
 	return a;
 }
 
 // merge two lists of nodes, giving a third.
-static struct htmlTag **qsaMerge(struct htmlTag **list1, struct htmlTag **list2)
+static Tag **qsaMerge(Tag **list1, Tag **list2)
 {
 	int n1, n2, i1, i2, v1, v2, n;
-	struct htmlTag **a;
+	Tag **a;
 	bool g1 = true, g2 = true;
 // make sure there's room for both lists
 	for (n1 = 0; list1[n1]; ++n1) ;
 	for (n2 = 0; list2[n2]; ++n2) ;
 	n = n1 + n2;
-	a = allocMem((n + 1) * sizeof(struct htmlTag *));
+	a = allocMem((n + 1) * sizeof(Tag *));
 	n = i1 = i2 = 0;
 	if (!n1)
 		g1 = false;
@@ -2822,9 +2828,9 @@ static struct htmlTag **qsaMerge(struct htmlTag **list1, struct htmlTag **list2)
 // querySelectorAll on a group, uses merge above.
 // Called from javascript querySelectorAll and from cssEverybody.
 
-static struct htmlTag **qsa2(struct desc *d)
+static Tag **qsa2(struct desc *d)
 {
-	struct htmlTag **a = 0, **a2, **a_new;
+	Tag **a = 0, **a2, **a_new;
 	struct sel *sel;
 	for (sel = d->selectors; sel; sel = sel->next) {
 		if (sel->error)
@@ -2851,13 +2857,13 @@ static struct htmlTag **qsa2(struct desc *d)
 
 // Build the list of nodes in the document.
 // Gee, this use to be one line of javascript, via getElementsByTagName().
-static void build1_doclist(struct htmlTag *t);
+static void build1_doclist(Tag *t);
 static int doclist_cmp(const void *v1, const void *v2);
-static void build_doclist(struct htmlTag *top)
+static void build_doclist(Tag *top)
 {
 	doclist_n = 0;
 	doclist_a = 500;
-	doclist = allocMem((doclist_a + 1) * sizeof(struct htmlTag *));
+	doclist = allocMem((doclist_a + 1) * sizeof(Tag *));
 	if (top) {
 		build1_doclist(top);
 	} else {
@@ -2872,17 +2878,17 @@ static void build_doclist(struct htmlTag *top)
 		}
 	}
 	doclist[doclist_n] = 0;
-	qsort(doclist, doclist_n, sizeof(struct htmlTag *), doclist_cmp);
+	qsort(doclist, doclist_n, sizeof(Tag *), doclist_cmp);
 }
 
 // recursive
-static void build1_doclist(struct htmlTag *t)
+static void build1_doclist(Tag *t)
 {
 	if (doclist_n == doclist_a) {
 		doclist_a += 500;
 		doclist =
 		    reallocMem(doclist,
-			       (doclist_a + 1) * sizeof(struct htmlTag *));
+			       (doclist_a + 1) * sizeof(Tag *));
 	}
 	doclist[doclist_n++] = t;
 	t->highspec = 0;
@@ -2897,16 +2903,16 @@ static void build1_doclist(struct htmlTag *t)
 
 static int doclist_cmp(const void *v1, const void *v2)
 {
-	const struct htmlTag *const *p1 = v1;
-	const struct htmlTag *const *p2 = v2;
+	const Tag *const *p1 = v1;
+	const Tag *const *p2 = v2;
 	int d = (*p1)->seqno - (*p2)->seqno;
 	return d;
 }
 
-static struct htmlTag **qsaInternal(const char *selstring, struct htmlTag *top)
+static Tag **qsaInternal(const char *selstring, Tag *top)
 {
 	struct desc *d0;
-	struct htmlTag **a;
+	Tag **a;
 	char *s;
 // Compile the selector. The string has to be allocated.
 	if (!selstring)
@@ -2943,26 +2949,27 @@ static struct htmlTag **qsaInternal(const char *selstring, struct htmlTag *top)
 }
 
 // turn an array of html tags into an array of objects
-static jsobjtype objectize(struct htmlTag **list)
+static jsobjtype objectize(Tag **list)
 {
+	jsobjtype cx = cf->cx;
 	int i, j;
-	const struct htmlTag *t;
+	const Tag *t;
 	jsobjtype ao;
-	delete_property_nat(cf->winobj, "qsagc");
-	ao = instantiate_array_nat(cf->winobj, "qsagc");
+	delete_property_0(cx, cf->winobj, "qsagc");
+	ao = instantiate_array_0(cx, cf->winobj, "qsagc");
 	if (!ao || !list)
 		return ao;
 	for (i = j = 0; (t = list[i]); ++i) {
 		if (!t->jv)	// should never happen
 			continue;
-		set_array_element_object_nat(ao, j++, t->jv);
+		set_array_element_object_0(cx, ao, j++, t->jv);
 	}
 	return ao;
 }
 
 jsobjtype querySelectorAll(const char *selstring, jsobjtype topobj)
 {
-	struct htmlTag *top = 0, **a;
+	Tag *top = 0, **a;
 	jsobjtype ao;
 	rootobj = topobj;
 	if (topobj)
@@ -2976,7 +2983,7 @@ jsobjtype querySelectorAll(const char *selstring, jsobjtype topobj)
 // this one just returns the node
 jsobjtype querySelector(const char *selstring, jsobjtype topobj)
 {
-	struct htmlTag *top = 0, **a;
+	Tag *top = 0, **a;
 	jsobjtype node = 0;
 	rootobj = topobj;
 	if (topobj)
@@ -2994,7 +3001,7 @@ jsobjtype querySelector(const char *selstring, jsobjtype topobj)
 
 bool querySelector0(const char *selstring, jsobjtype topobj)
 {
-	struct htmlTag *top = 0, **a;
+	Tag *top = 0, **a;
 	jsobjtype node = 0;
 	rootobj = topobj;
 	if (topobj)
@@ -3013,6 +3020,7 @@ bool querySelector0(const char *selstring, jsobjtype topobj)
 // replace each attr(foo) with the value of attribute foo
 static char *attrify(jsobjtype obj, char *line)
 {
+	jsobjtype cx = cf->cx;
 	char *s;
 	int sl;
 	char *t, *t1, *t2, *v;
@@ -3027,7 +3035,7 @@ static char *attrify(jsobjtype obj, char *line)
 		*t2++ = 0;
 		stringAndBytes(&s, &sl, t, t1 - t);
 		t1 += 5;
-		v = get_property_string_nat(obj, t1);
+		v = get_property_string_0(cx, obj, t1);
 		if (v) {
 			stringAndString(&s, &sl, v);
 			nzFree(v);
@@ -3064,6 +3072,7 @@ Set a flag if that is found.
 
 static void do_rules(jsobjtype obj, struct rule *r0, int highspec)
 {
+	jsobjtype cx = cf->cx;
 	struct rule *r, *r1;
 	char *s, *s_attr;
 	int sl;
@@ -3099,7 +3108,7 @@ in fact it's easier to list the tags that allow it.
 			"LISTING", "STRONG", "EM", "S", "STRIKE", "I", "U", "B",
 			0
 		};
-		s = get_property_string_nat(obj, "nodeName");
+		s = get_property_string_0(cx, obj, "nodeName");
 		if (s && stringInList(ok2inject, s) >= 0)
 			forbidden = false;
 		nzFree(s);
@@ -3108,41 +3117,41 @@ in fact it's easier to list the tags that allow it.
 	}
 
 	if (matchtype == 1) {	// before
-		if (get_property_bool_nat(obj, "inj$before")) {
-			textobj = get_property_object_nat(obj, "firstChild");
+		if (get_property_bool_0(cx, obj, "inj$before")) {
+			textobj = get_property_object_0(cx, obj, "firstChild");
 		} else {
 			textobj =
-			    instantiate_nat(cf->winobj, "eb$inject",
+			    instantiate_0(cx, cf->winobj, "eb$inject",
 					    "TextNode");
 			if (!textobj)	// should never happen
 				return;
 			javaSetsLinkage(false, 'c', textobj, jl);
-			run_function_onearg_nat(obj, "prependChild", textobj);
+			run_function_onearg_0(cx, obj, "prependChild", textobj);
 // It is now linked in and safe from gc
-			delete_property_nat(cf->winobj, "eb$inject");
-			set_property_bool_nat(obj, "inj$before", true);
+			delete_property_0(cx, cf->winobj, "eb$inject");
+			set_property_bool_0(cx, obj, "inj$before", true);
 		}
 	}
 
 	if (matchtype == 2) {	// after
-		if (get_property_bool_nat(obj, "inj$after")) {
-			textobj = get_property_object_nat(obj, "lastChild");
+		if (get_property_bool_0(cx, obj, "inj$after")) {
+			textobj = get_property_object_0(cx, obj, "lastChild");
 		} else {
 			textobj =
-			    instantiate_nat(cf->winobj, "eb$inject",
+			    instantiate_0(cx, cf->winobj, "eb$inject",
 					    "TextNode");
 			if (!textobj)	// should never happen
 				return;
 			javaSetsLinkage(false, 'c', textobj, jl);
-			run_function_onearg_nat(obj, "appendChild", textobj);
+			run_function_onearg_0(cx, obj, "appendChild", textobj);
 // It is now linked in and safe from gc
-			delete_property_nat(cf->winobj, "eb$inject");
-			set_property_bool_nat(obj, "inj$after", true);
+			delete_property_0(cx, cf->winobj, "eb$inject");
+			set_property_bool_0(cx, obj, "inj$after", true);
 		}
 	}
 
 	if (matchtype)
-		obj = get_property_object_nat(textobj, "style");
+		obj = get_property_object_0(cx, textobj, "style");
 // obj is now the style object, ready for attributes
 
 	s = initString(&sl);
@@ -3158,12 +3167,12 @@ in fact it's easier to list the tags that allow it.
 			    (stringEqual(r->atname, "visibility") &&
 			     strlen(r->atval)
 			     && !stringEqual(r->atval, "hidden")))
-				set_property_bool_nat(obj, "hov$vis", true);
+				set_property_bool_0(cx, obj, "hov$vis", true);
 // what about color anything other than transparent?
 // If invisible because color = transparent, then color = red unhides it.
 			if (stringEqual(r->atname, "color") && strlen(r->atval)
 			    && !stringEqual(r->atval, "transparent"))
-				set_property_bool_nat(obj, "hov$col", true);
+				set_property_bool_0(cx, obj, "hov$col", true);
 			continue;
 		}
 // special code for before after content
@@ -3177,8 +3186,8 @@ in fact it's easier to list the tags that allow it.
 		}
 // if it appears to be part of the prototype, and not the object,
 // I won't write it.
-		has = has_property_nat(obj, r->atname);
-		what = typeof_property_nat(obj, r->atname);
+		has = has_property_0(cx, obj, r->atname);
+		what = typeof_property_0(cx, obj, r->atname);
 		if (has && !what)
 			continue;
 
@@ -3192,7 +3201,7 @@ in fact it's easier to list the tags that allow it.
 // Don't write if the specificity is less
 		a = allocMem(strlen(r->atname) + 6);
 		sprintf(a, "%s$$scy", r->atname);
-		spec = get_property_number_nat(obj, a);
+		spec = get_property_number_0(cx, obj, a);
 		if (spec > highspec) {
 			free(a);
 			continue;
@@ -3200,8 +3209,8 @@ in fact it's easier to list the tags that allow it.
 
 		if (bulkmatch)
 			++bulktotal;
-		set_property_string_nat(obj, r->atname, r->atval);
-		set_property_number_nat(obj, a, highspec);
+		set_property_string_0(cx, obj, r->atname, r->atval);
+		set_property_number_0(cx, obj, a, highspec);
 		free(a);
 	}
 
@@ -3219,9 +3228,9 @@ in fact it's easier to list the tags that allow it.
 	s_attr = attrify(original, s);
 	nzFree(s);
 	s = s_attr;
-	set_property_string_nat(textobj, "data", s);
+	set_property_string_0(cx, textobj, "data", s);
 	nzFree(s);
-	set_property_bool_nat(textobj, "inj$css", true);
+	set_property_bool_0(cx, textobj, "inj$css", true);
 }
 
 /*********************************************************************
@@ -3236,8 +3245,9 @@ where "this" is not the window object, then we have to make some changes.
 
 void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination)
 {
-	struct ebFrame *save_cf = cf;
-	struct htmlTag *t = tagFromJavaVar(node);
+	Frame *save_cf = cf;
+	jsobjtype cx;
+	Tag *t = tagFromJavaVar(node);
 	struct cssmaster *cm;
 	struct desc *d;
 
@@ -3245,6 +3255,8 @@ void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination)
 		return;
 
 	frameFromWindow(thisobj);
+	cx = cf->cx;
+
 // I think the root is document, not the current node, but that is not clear.
 	rootobj = 0;
 	cm = cf->cssmaster;
@@ -3254,9 +3266,9 @@ void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination)
 // it's a getComputedStyle match
 	gcsmatch = true;
 	nzFree(t->class);
-	t->class = get_property_string_nat(node, "class");
+	t->class = get_property_string_0(cx, node, "class");
 	nzFree(t->id);
-	t->id = get_property_string_nat(node, "id");
+	t->id = get_property_string_0(cx, node, "id");
 
 	for (d = cm->descriptors; d; d = d->next) {
 		if (qsaMatchGroup(t, node, d))
@@ -3265,7 +3277,6 @@ void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination)
 
 done:
 	cf = save_cf;
-	set_js_globals();
 	gcsmatch = false;
 }
 
@@ -3351,7 +3362,7 @@ static void hashSortCrunch(struct hashhead **hp, int *np, bool keyalloc)
 			mark->body[j] = 0, ++mark;
 		if (mark < v)
 			(*mark) = (*v);
-		mark->body = allocMem((mark->n + 1) * sizeof(struct htmlTag *));
+		mark->body = allocMem((mark->n + 1) * sizeof(Tag *));
 		mark->body[0] = mark->t;
 		mark->t = 0;
 		j = 1;
@@ -3372,7 +3383,7 @@ static void hashSortCrunch(struct hashhead **hp, int *np, bool keyalloc)
 
 static void hashBuild(void)
 {
-	struct htmlTag *t;
+	Tag *t;
 	int i, j, a;
 	struct hashhead *h;
 	static const char ws[] = " \t\r\n\f";	// white space
@@ -3545,7 +3556,7 @@ static struct hashhead *findKey(struct hashhead *list, int n, const char *key)
 // This could be no list at all, if the selector includes .foo,
 // and there is no node of class foo.
 // Or it could be doclist if there is no tag and no class or id modifiers.
-static struct htmlTag **bestListAtomic(struct asel *a)
+static Tag **bestListAtomic(struct asel *a)
 {
 	struct mod *mod;
 	struct hashhead *h, *best_h;
@@ -3591,9 +3602,10 @@ static void cssEverybody(void)
 {
 	struct cssmaster *cm = cf->cssmaster;
 	struct desc *d0 = cm->descriptors, *d;
-	struct htmlTag **a, **u;
+	Tag **a, **u;
 	jsobjtype style;
-	struct htmlTag *t;
+	jsobjtype cx;
+	Tag *t;
 	int l;
 
 	bulkmatch = true;
@@ -3613,11 +3625,12 @@ static void cssEverybody(void)
 			for (u = a; (t = *u); ++u) {
 				if (!t->jv)
 					continue;
+		cx = t->f0->cx;
 				if (matchtype)
 					style = t->jv;
 				else {
 					style =
-					    get_property_object_nat(t->jv,
+					    get_property_object_0(cx, t->jv,
 								    "style");
 					if (!style)
 						continue;

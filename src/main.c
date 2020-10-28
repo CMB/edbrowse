@@ -72,10 +72,10 @@ static void *inputForever(void *ptr);
 static pthread_t foreground_thread;
 static void finishBrowse(void)
 {
-	struct htmlTag *t;
+	Tag *t;
 	int j;
 	char *a, *newbuf;
-	struct ebFrame *f;
+	Frame *f;
 	whichproc = 'e';
 // tags should certainly be set
 	if (!tagList)

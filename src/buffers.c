@@ -646,7 +646,7 @@ addchar:
 				while (isspace(*resfile))
 					++resfile;
 			}
-			result = jsRunScriptResult(cf->winobj, s, "jdb", 1);
+			result = jsRunScriptResult(cf, cf->winobj, s, "jdb", 1);
 			if (resfile)
 				f = fopen(resfile, "w");
 			if (result) {
@@ -889,7 +889,7 @@ static void undoPush(void)
 
 static void freeWindow(struct ebWindow *w)
 {
-	struct ebFrame *f, *fnext;
+	Frame *f, *fnext;
 	struct histLabel *label, *lnext;
 	freeTags(w);
 	for (f = &w->f0; f; f = fnext) {
@@ -3560,9 +3560,9 @@ replaceText(const char *line, int len, const char *rhs,
 static void
 findField(const char *line, int ftype, int n,
 	  int *total, int *realtotal, int *tagno, char **href,
-	  const struct htmlTag **tagp)
+	  const Tag **tagp)
 {
-	const struct htmlTag *t;
+	const Tag *t;
 	int nt = 0;		/* number of fields total */
 	int nrt = 0;		/* the real total, for input fields */
 	int nm = 0;		/* number match */
@@ -3645,7 +3645,7 @@ findField(const char *line, int ftype, int n,
 				*href = cloneString(t->href);
 			if (href && isJSAlive && t->jv) {
 /* defer to the js variable for the reference */
-				char *jh = get_property_url(t->jv, false);
+				char *jh = get_property_url(cf, t->jv, false);
 				if (jh) {
 					if (!*href || !stringEqual(*href, jh)) {
 						nzFree(*href);
@@ -4429,7 +4429,7 @@ pwd:
 	}
 
 	if (stringEqual(line, "jdb")) {
-		const struct htmlTag *t;
+		const Tag *t;
 		cmd = 'e';
 		if (!cw->browseMode) {
 			setError(MSG_NoBrowse);
@@ -4451,7 +4451,7 @@ pwd:
 	}
 
 	if (stringEqual(line, "ub") || stringEqual(line, "et")) {
-		struct ebFrame *f, *fnext;
+		Frame *f, *fnext;
 		struct histLabel *label, *lnext;
 		ub = (line[0] == 'u');
 		rc = true;
@@ -4494,7 +4494,7 @@ et_go:
 				nzFree(f->fileName);
 				free(f);
 			} else {
-				f->jcx = f->winobj = f->docobj = 0;
+				f->cx = f->winobj = f->docobj = 0;
 				f->dw = 0;
 				f->dw_l = 0;
 				f->hbase = 0;
@@ -4942,7 +4942,7 @@ et_go:
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(debugClone + MSG_DebugCloneOff);
 		if (isJSAlive)
-			set_property_bool(cf->winobj, "cloneDebug", debugClone);
+			set_property_bool(cf, cf->winobj, "cloneDebug", debugClone);
 		return true;
 	}
 
@@ -4951,7 +4951,7 @@ et_go:
 		if (helpMessagesOn)
 			i_puts(debugClone + MSG_DebugCloneOff);
 		if (isJSAlive)
-			set_property_bool(cf->winobj, "cloneDebug", debugClone);
+			set_property_bool(cf, cf->winobj, "cloneDebug", debugClone);
 		return true;
 	}
 
@@ -4960,7 +4960,7 @@ et_go:
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(debugEvent + MSG_DebugEventOff);
 		if (isJSAlive)
-			set_property_bool(cf->winobj, "eventDebug", debugEvent);
+			set_property_bool(cf, cf->winobj, "eventDebug", debugEvent);
 		return true;
 	}
 
@@ -4969,7 +4969,7 @@ et_go:
 		if (helpMessagesOn)
 			i_puts(debugEvent + MSG_DebugEventOff);
 		if (isJSAlive)
-			set_property_bool(cf->winobj, "eventDebug", debugEvent);
+			set_property_bool(cf, cf->winobj, "eventDebug", debugEvent);
 		return true;
 	}
 
@@ -4978,7 +4978,7 @@ et_go:
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(debugThrow + MSG_DebugThrowOff);
 		if (isJSAlive)
-			set_property_bool(cf->winobj, "throwDebug", debugThrow);
+			set_property_bool(cf, cf->winobj, "throwDebug", debugThrow);
 		return true;
 	}
 
@@ -4987,7 +4987,7 @@ et_go:
 		if (helpMessagesOn)
 			i_puts(debugThrow + MSG_DebugThrowOff);
 		if (isJSAlive)
-			set_property_bool(cf->winobj, "throwDebug", debugThrow);
+			set_property_bool(cf, cf->winobj, "throwDebug", debugThrow);
 		return true;
 	}
 
@@ -5340,7 +5340,7 @@ static char *showLinks(void)
 	bool click, dclick;
 	char c, *p, *s, *t, *q, *line, *h, *h2;
 	int j, k = 0, tagno;
-	const struct htmlTag *tag;
+	const Tag *tag;
 
 	if (cw->browseMode && endRange) {
 		line = (char *)fetchLine(endRange, -1);
@@ -5457,7 +5457,7 @@ static char *showLinks(void)
 
 static bool lineHasTag(const char *p, const char *s)
 {
-	const struct htmlTag *t;
+	const Tag *t;
 	char c;
 	int j;
 
@@ -5489,7 +5489,7 @@ bool runCommand(const char *line)
 	int i, j, n;
 	int writeMode = O_TRUNC;
 	struct ebWindow *w = NULL;
-	const struct htmlTag *tag = NULL;	/* event variables */
+	const Tag *tag = NULL;	/* event variables */
 	bool nogo = true, rc = true;
 	bool emode = false;	// force e, not browse
 	bool postSpace = false, didRange = false;
@@ -6300,7 +6300,7 @@ replaceframe:
 // edbrowse is more like a touchscreen, and there are such devices, so just go.
 // No mouseEnter, mouseOver, mouseExit, etc.
 			if (!jsdead)
-				set_property_string(cf->winobj, "status", h);
+				set_property_string(cf, cf->winobj, "status", h);
 			if (jsgo) {
 				jSyncup(false);
 				rc = bubble_event(tag, "onclick");
@@ -6315,7 +6315,7 @@ replaceframe:
 /* actually running the url, not passing it to http etc, need to unescape */
 				unpercentString(h);
 				cf = tag->f0;
-				jsRunScript(cf->winobj, h, "a.href", 1);
+				jsRunScript(cf, cf->winobj, h, "a.href", 1);
 				jSideEffects();
 				if (newlocation)
 					goto redirect;
@@ -6422,7 +6422,7 @@ replaceframe:
 				}
 
 				if (c == '*') {
-					struct ebFrame *save_cf = cf;
+					Frame *save_cf = cf;
 					jSyncup(false);
 					c = infPush(tagno, &allocatedLine);
 					jSideEffects();

@@ -16,7 +16,7 @@ static void markAllDead(void)
 {
 	int cx;			/* edbrowse context */
 	struct ebWindow *w;
-	struct ebFrame *f;
+	Frame *f;
 	bool killed = false;
 
 	for (cx = 1; cx <= maxSession; ++cx) {
@@ -27,7 +27,7 @@ static void markAllDead(void)
 					continue;
 				f->winobj = 0;
 				f->docobj = 0;
-				f->jcx = 0;
+				f->cx = 0;
 				killed = true;
 			}
 			w = w->prev;
@@ -56,7 +56,7 @@ static void js_start(void)
 static void javaSetsInner(jsobjtype v, const char *newtext);
 void javaSetsTagVar(jsobjtype v, const char *newtext)
 {
-	struct htmlTag *t = tagFromJavaVar(v);
+	Tag *t = tagFromJavaVar(v);
 	if (!t)
 		return;
 	if (t->itype == INP_HIDDEN || t->itype == INP_RADIO
@@ -73,7 +73,7 @@ void javaSetsTagVar(jsobjtype v, const char *newtext)
 static void javaSetsInner(jsobjtype v, const char *newtext)
 {
 	int side;
-	struct htmlTag *t = tagFromJavaVar(v);
+	Tag *t = tagFromJavaVar(v);
 	if (!t)
 		return;
 /* the tag should always be a textarea tag. */
@@ -111,8 +111,9 @@ static const char *debugString(const char *v)
 	return v;
 }				/* debugString */
 
-/* Create a js context for the current window.
- * The corresponding js context will be stored in cf->jcx. */
+// Create a js context for the current frame.
+// The corresponding js context will be stored in cf->cx.
+// We don't pass frame as a parameter, cf (current frame) is assumed.
 void createJavaContext(void)
 {
 	if (!allowJS)
@@ -122,9 +123,8 @@ void createJavaContext(void)
 		js_start();
 
 	debugPrint(5, "> create context for session %d", context);
-	createJavaContext_nat();
-	get_js_globals();
-	if (jcx) {
+	createJavaContext_0(cf);
+	if (cf->cx) {
 		debugPrint(5, "< ok");
 		setupJavaDom();
 	} else {
@@ -140,21 +140,21 @@ You can free another window, or a whole stack of windows, by typeing
 q2 while in session 1.
 *********************************************************************/
 
-void freeJavaContext(struct ebFrame *f)
+void freeJavaContext(Frame *f)
 {
-	if (!f->jcx)
+	if (!f->cx)
 		return;
 	debugPrint(5, "> free frame %p", f);
-	freeJavaContext_nat(f->jcx);
-	f->jcx = f->winobj = f->docobj = 0;
+	freeJavaContext_0(f->cx);
+	f->cx = f->winobj = f->docobj = 0;
 	debugPrint(5, "< ok");
 	cssFree(f);
 }				/* freeJavaContext */
 
 /* Run some javascript code under the current window */
 /* Pass the return value of the script back as a string. */
-char *jsRunScriptResult(jsobjtype obj, const char *str, const char *filename,
-			int lineno)
+char *jsRunScriptResult(const Frame *f, jsobjtype obj, const char *str,
+const char *filename, 			int lineno)
 {
 	char *result;
 
@@ -164,7 +164,7 @@ char *jsRunScriptResult(jsobjtype obj, const char *str, const char *filename,
 		return NULL;
 	}
 
-	if (!allowJS || !cf->winobj)
+	if (!allowJS || !f->winobj)
 		return NULL;
 	if (!str || !str[0])
 		return NULL;
@@ -172,9 +172,8 @@ char *jsRunScriptResult(jsobjtype obj, const char *str, const char *filename,
 	debugPrint(5, "> script:");
 	jsSourceFile = filename;
 	jsLineno = lineno;
-	set_js_globals();
 	whichproc = 'j';
-	result = run_script_nat(str);
+	result = run_script_0(f->cx, str);
 	whichproc = 'e';
 	jsSourceFile = NULL;
 	debugPrint(5, "< ok");
@@ -182,114 +181,105 @@ char *jsRunScriptResult(jsobjtype obj, const char *str, const char *filename,
 }				/* jsRunScriptResult */
 
 /* like the above but throw away the result */
-void jsRunScript(jsobjtype obj, const char *str, const char *filename,
-		 int lineno)
+void jsRunScript(const Frame *f, jsobjtype obj, const char *str,
+const char *filename, 		 int lineno)
 {
-	char *s = jsRunScriptResult(obj, str, filename, lineno);
+	char *s = jsRunScriptResult(f, obj, str, filename, lineno);
 	nzFree(s);
 }				/* jsRunScript */
 
-void jsRunData(jsobjtype obj, const char *filename, int lineno)
+void jsRunData(const Frame *f, jsobjtype obj,
+const char *filename, int lineno)
 {
 // this never runs from the j process.
 	if (whichproc != 'e') {
 		debugPrint(1, "jsRunData run from the js process");
 		return;
 	}
-	if (!allowJS || !cf->winobj || !obj)
+	if (!allowJS || !f->winobj || !obj)
 		return;
 	debugPrint(5, "> script:");
 	jsSourceFile = filename;
 	jsLineno = lineno;
-	set_js_globals();
 	whichproc = 'j';
-	run_data_nat(obj);
+	run_data_0(f->cx, obj);
 	whichproc = 'e';
 	jsSourceFile = NULL;
 	debugPrint(5, "< ok");
 }
 
 /* does the member exist in the object or its prototype? */
-bool has_property(jsobjtype obj, const char *name)
+bool has_property(const Frame *f, jsobjtype obj, const char *name)
 {
 	bool p = false;
-
 	if (!obj) {
 		debugPrint(3, "has_property(0, %s)", name);
 		return false;
 	}
 	if (whichproc == 'j')
-		return has_property_nat(obj, name);
-	if (!allowJS || !cf->winobj)
+		return has_property_0(f->cx, obj, name);
+	if (!allowJS || !f->winobj)
 		return false;
-
 	debugPrint(5, "> has %s", name);
-	set_js_globals();
-	p = has_property_nat(obj, name);
+	p = has_property_0(f->cx, obj, name);
 	debugPrint(5, "< %s", (p ? "true" : "false"));
 	return p;
 }				/* has_property */
 
 /* return the type of the member */
-enum ej_proptype typeof_property(jsobjtype obj, const char *name)
+enum ej_proptype typeof_property(const Frame *f, jsobjtype obj, const char *name)
 {
 	enum ej_proptype p;
-
 	if (!obj) {
 		debugPrint(3, "typeof_property(0, %s)", name);
 		return EJ_PROP_NONE;
 	}
 	if (whichproc == 'j')
-		return typeof_property_nat(obj, name);
-	if (!allowJS || !cf->winobj)
+		return typeof_property_0(f->cx, obj, name);
+	if (!allowJS || !f->winobj)
 		return EJ_PROP_NONE;
-
 	debugPrint(5, "> has %s", name);
-	set_js_globals();
-	p = typeof_property_nat(obj, name);
+	p = typeof_property_0(f->cx, obj, name);
 	debugPrint(5, "< %d", p);
 	return p;
 }				/* typeof_property */
 
-void delete_property(jsobjtype obj, const char *name)
+void delete_property(const Frame *f, jsobjtype obj, const char *name)
 {
 	if (!obj) {
 		debugPrint(3, "delete_property(0, %s)", name);
 		return;
 	}
 	if (whichproc == 'j') {
-		delete_property_nat(obj, name);
+		delete_property_0(f->cx, obj, name);
 		return;
 	}
-	if (!allowJS || !cf->winobj)
+	if (!allowJS || !f->winobj)
 		return;
-
 	debugPrint(5, "> delete %s", name);
-	set_js_globals();
-	delete_property_nat(obj, name);
+	delete_property_0(f->cx, obj, name);
 	debugPrint(5, "< ok");
 }				/* delete_property */
 
 // allocated; the caller must free it
-char *get_property_string(jsobjtype obj, const char *name)
+char *get_property_string(const Frame *f, jsobjtype obj, const char *name)
 {
 	char *s;
-	if (!allowJS || !cf->winobj)
+	if (!allowJS || !f->winobj)
 		return 0;
 	if (!obj) {
 		debugPrint(3, "get_property_string(0, %s)", name);
 		return 0;
 	}
 	if (whichproc == 'j')
-		return get_property_string_nat(obj, name);
+		return get_property_string_0(f->cx, obj, name);
 	debugPrint(5, "> get %s", name);
-	set_js_globals();
-	s = get_property_string_nat(obj, name);
+	s = get_property_string_0(f->cx, obj, name);
 	debugPrint(5, "< %s", debugString(s));
 	return s;
 }				/* get_property_string */
 
-int get_property_number(jsobjtype obj, const char *name)
+int get_property_number(const Frame *f, jsobjtype obj, const char *name)
 {
 	int n = -1;
 	if (!obj) {
@@ -297,17 +287,16 @@ int get_property_number(jsobjtype obj, const char *name)
 		return -1;
 	}
 	if (whichproc == 'j')
-		return get_property_number_nat(obj, name);
-	if (!allowJS || !cf->winobj)
+		return get_property_number_0(f->cx, obj, name);
+	if (!allowJS || !f->winobj)
 		return -1;
 	debugPrint(5, "> get %s", name);
-	set_js_globals();
-	n = get_property_number_nat(obj, name);
+	n = get_property_number_0(f->cx, obj, name);
 	debugPrint(5, "< %d", n);
 	return n;
 }				/* get_property_number */
 
-double get_property_float(jsobjtype obj, const char *name)
+double get_property_float(const Frame *f, jsobjtype obj, const char *name)
 {
 	double n = 0.0;
 	if (!obj) {
@@ -315,17 +304,16 @@ double get_property_float(jsobjtype obj, const char *name)
 		return n;
 	}
 	if (whichproc == 'j')
-		return get_property_float_nat(obj, name);
-	if (!allowJS || !cf->winobj)
+		return get_property_float_0(f->cx, obj, name);
+	if (!allowJS || !f->winobj)
 		return n;
 	debugPrint(5, "> get %s", name);
-	set_js_globals();
-	n = get_property_float_nat(obj, name);
+	n = get_property_float_0(f->cx, obj, name);
 	debugPrint(5, "< %lf", n);
 	return n;
 }				/* get_property_float */
 
-bool get_property_bool(jsobjtype obj, const char *name)
+bool get_property_bool(const Frame *f, jsobjtype obj, const char *name)
 {
 	bool n = false;
 	if (!obj) {
@@ -333,18 +321,17 @@ bool get_property_bool(jsobjtype obj, const char *name)
 		return n;
 	}
 	if (whichproc == 'j')
-		return get_property_bool_nat(obj, name);
-	if (!allowJS || !cf->winobj)
+		return get_property_bool_0(f->cx, obj, name);
+	if (!allowJS || !f->winobj)
 		return n;
 	debugPrint(5, "> get %s", name);
-	set_js_globals();
-	n = get_property_bool_nat(obj, name);
+	n = get_property_bool_0(f->cx, obj, name);
 	debugPrint(5, "< %s", (n ? "treu" : "false"));
 	return n;
 }				/* get_property_bool */
 
 /* get a js object as a member of another object */
-jsobjtype get_property_object(jsobjtype parent, const char *name)
+jsobjtype get_property_object(const Frame *f, jsobjtype parent, const char *name)
 {
 	jsobjtype child = 0;
 	if (!parent) {
@@ -352,17 +339,16 @@ jsobjtype get_property_object(jsobjtype parent, const char *name)
 		return child;
 	}
 	if (whichproc == 'j')
-		return get_property_object_nat(parent, name);
-	if (!allowJS || !cf->winobj)
+		return get_property_object_0(f->cx, parent, name);
+	if (!allowJS || !f->winobj)
 		return child;
 	debugPrint(5, "> get %s", name);
-	set_js_globals();
-	child = get_property_object_nat(parent, name);
+	child = get_property_object_0(f->cx, parent, name);
 	debugPrint(5, "< %p", child);
 	return child;
 }				/* get_property_object */
 
-jsobjtype get_property_function(jsobjtype parent, const char *name)
+jsobjtype get_property_function(const Frame *f, jsobjtype parent, const char *name)
 {
 	jsobjtype child = 0;
 	if (!parent) {
@@ -370,168 +356,158 @@ jsobjtype get_property_function(jsobjtype parent, const char *name)
 		return child;
 	}
 	if (whichproc == 'j')
-		return get_property_function_nat(parent, name);
-	if (!allowJS || !cf->winobj)
+		return get_property_function_0(f->cx, parent, name);
+	if (!allowJS || !f->winobj)
 		return child;
 	debugPrint(5, "> get %s", name);
-	set_js_globals();
-	child = get_property_function_nat(parent, name);
+	child = get_property_function_0(f->cx, parent, name);
 	debugPrint(5, "< %p", child);
 	return child;
 }				/* get_property_function */
 
-jsobjtype get_array_element_object(jsobjtype obj, int idx)
+jsobjtype get_array_element_object(const Frame *f, jsobjtype obj, int idx)
 {
 	jsobjtype p = 0;
-	if (!allowJS || !cf->winobj)
+	if (!allowJS || !f->winobj)
 		return p;
 	if (!obj) {
 		debugPrint(3, "get_array_element_object(0, %d)", idx);
 		return p;
 	}
 	if (whichproc == 'j')
-		return get_array_element_object_nat(obj, idx);
+		return get_array_element_object_0(f->cx, obj, idx);
 	debugPrint(5, "> get [%d]", idx);
-	set_js_globals();
-	p = get_array_element_object_nat(obj, idx);
+	p = get_array_element_object_0(f->cx, obj, idx);
 	debugPrint(5, "< %p", p);
 	return p;
 }				/* get_array_element_object */
 
-int set_property_string(jsobjtype obj, const char *name, const char *value)
+int set_property_string(const Frame *f, jsobjtype obj, const char *name, const char *value)
 {
 	int rc;
-	if (!allowJS || !cf->winobj)
+	if (!allowJS || !f->winobj)
 		return -1;
 	if (!obj) {
 		debugPrint(3, "set_property_string(0, %s, %s)", name, value);
 		return -1;
 	}
 	if (whichproc == 'j')
-		return set_property_string_nat(obj, name, value);
+		return set_property_string_0(f->cx, obj, name, value);
 	if (value == NULL)
 		value = emptyString;
 	debugPrint(5, "> set %s=%s", name, debugString(value));
-	set_js_globals();
-	rc = set_property_string_nat(obj, name, value);
+	rc = set_property_string_0(f->cx, obj, name, value);
 	debugPrint(5, "< ok");
 	return rc;
 }				/* set_property_string */
 
-int set_property_number(jsobjtype obj, const char *name, int n)
+int set_property_number(const Frame *f, jsobjtype obj, const char *name, int n)
 {
 	int rc;
-	if (!allowJS || !cf->winobj)
+	if (!allowJS || !f->winobj)
 		return -1;
 	if (!obj) {
 		debugPrint(3, "set_property_number(0, %s, %d)", name, n);
 		return -1;
 	}
 	if (whichproc == 'j')
-		return set_property_number_nat(obj, name, n);
+		return set_property_number_0(f->cx, obj, name, n);
 	debugPrint(5, "> set %s=%d", name, n);
-	set_js_globals();
-	rc = set_property_number_nat(obj, name, n);
+	rc = set_property_number_0(f->cx, obj, name, n);
 	debugPrint(5, "< ok");
 	return rc;
 }				/* set_property_number */
 
-int set_property_float(jsobjtype obj, const char *name, double n)
+int set_property_float(const Frame *f, jsobjtype obj, const char *name, double n)
 {
 	int rc;
-	if (!allowJS || !cf->winobj)
+	if (!allowJS || !f->winobj)
 		return -1;
 	if (!obj) {
 		debugPrint(3, "set_property(0, %s, %lf)", name, n);
 		return -1;
 	}
 	if (whichproc == 'j')
-		return set_property_float_nat(obj, name, n);
+		return set_property_float_0(f->cx, obj, name, n);
 	debugPrint(5, "> set %s=%lf", name, n);
-	set_js_globals();
-	rc = set_property_float_nat(obj, name, n);
+	rc = set_property_float_0(f->cx, obj, name, n);
 	debugPrint(5, "< ok");
 	return rc;
 }				/* set_property_float */
 
-int set_property_bool(jsobjtype obj, const char *name, bool n)
+int set_property_bool(const Frame *f, jsobjtype obj, const char *name, bool n)
 {
 	int rc;
-	if (!allowJS || !cf->winobj)
+	if (!allowJS || !f->winobj)
 		return -1;
 	if (!obj) {
 		debugPrint(3, "set_property(0, %s, %d)", name, n);
 		return -1;
 	}
 	if (whichproc == 'j')
-		return set_property_bool_nat(obj, name, n);
+		return set_property_bool_0(f->cx, obj, name, n);
 	debugPrint(5, "> set %s=%s", name, (n ? "true" : "false"));
-	set_js_globals();
-	rc = set_property_bool_nat(obj, name, n);
+	rc = set_property_bool_0(f->cx, obj, name, n);
 	debugPrint(5, "< ok");
 	return rc;
 }				/* set_property_bool */
 
-int set_property_object(jsobjtype parent, const char *name, jsobjtype child)
+int set_property_object(const Frame *f, jsobjtype parent, const char *name, jsobjtype child)
 {
 	int rc;
-	if (!allowJS || !cf->winobj)
+	if (!allowJS || !f->winobj)
 		return -1;
 	if (!parent) {
 		debugPrint(3, "set_property_object(0, %s, %p)", name, child);
 		return -1;
 	}
 	if (whichproc == 'j')
-		return set_property_object_nat(parent, name, child);
+		return set_property_object_0(f->cx, parent, name, child);
 	debugPrint(5, "> set %s=%p", name, child);
-	set_js_globals();
-	rc = set_property_object_nat(parent, name, child);
+	rc = set_property_object_0(f->cx, parent, name, child);
 	debugPrint(5, "< ok");
 	return rc;
 }				/* set_property_object */
 
-jsobjtype instantiate_array(jsobjtype parent, const char *name)
+jsobjtype instantiate_array(const Frame *f, jsobjtype parent, const char *name)
 {
 	jsobjtype p = 0;
-	if (!allowJS || !cf->winobj)
+	if (!allowJS || !f->winobj)
 		return p;
 	if (!parent) {
 		debugPrint(3, "instantiate_array(0, %s)", name);
 		return p;
 	}
 	if (whichproc == 'j')
-		return instantiate_array_nat(parent, name);
-
+		return instantiate_array_0(f->cx, parent, name);
 	debugPrint(5, "> new array %s", name);
-	set_js_globals();
-	p = instantiate_array_nat(parent, name);
+	p = instantiate_array_0(f->cx, parent, name);
 	debugPrint(5, "< ok");
 	return p;
 }				/* instantiate_array */
 
-int set_array_element_object(jsobjtype array, int idx, jsobjtype child)
+int set_array_element_object(const Frame *f, jsobjtype array, int idx, jsobjtype child)
 {
 	int rc;
-	if (!allowJS || !cf->winobj)
+	if (!allowJS || !f->winobj)
 		return -1;
 	if (!array) {
 		debugPrint(3, "set_array_element_object(0, %d)", idx);
 		return -1;
 	}
 	if (whichproc == 'j')
-		return set_array_element_object_nat(array, idx, child);
+		return set_array_element_object_0(f->cx, array, idx, child);
 	debugPrint(5, "> set [%d]=%p", idx, child);
-	set_js_globals();
-	rc = set_array_element_object_nat(array, idx, child);
+	rc = set_array_element_object_0(f->cx, array, idx, child);
 	debugPrint(5, "< ok");
 	return rc;
 }				/* set_array_element_object */
 
-jsobjtype instantiate_array_element(jsobjtype array, int idx,
+jsobjtype instantiate_array_element(const Frame *f, jsobjtype array, int idx,
 				    const char *classname)
 {
 	jsobjtype p = 0;
-	if (!allowJS || !cf->winobj)
+	if (!allowJS || !f->winobj)
 		return p;
 	if (!array) {
 		debugPrint(3, "instantiate_array_element(0, %d, %s)", idx,
@@ -539,10 +515,9 @@ jsobjtype instantiate_array_element(jsobjtype array, int idx,
 		return p;
 	}
 	if (whichproc == 'j')
-		return instantiate_array_element_nat(array, idx, classname);
+		return instantiate_array_element_0(f->cx, array, idx, classname);
 	debugPrint(5, "> set [%d]=%s", idx, classname);
-	set_js_globals();
-	p = instantiate_array_element_nat(array, idx, classname);
+	p = instantiate_array_element_0(f->cx, array, idx, classname);
 	debugPrint(5, "< ok");
 	return p;
 }				/* instantiate_array_element */
@@ -550,70 +525,65 @@ jsobjtype instantiate_array_element(jsobjtype array, int idx,
 /* Instantiate a new object from a given class.
  * Return is NULL if there is a js disaster.
  * Set classname = NULL for a generic object. */
-jsobjtype instantiate(jsobjtype parent, const char *name, const char *classname)
+jsobjtype instantiate(const Frame *f, jsobjtype parent, const char *name, const char *classname)
 {
 	jsobjtype p = 0;
-
-	if (!allowJS || !cf->winobj)
+	if (!allowJS || !f->winobj)
 		return p;
 	if (!parent) {
 		debugPrint(3, "instantiate(0, %s, %s)", name, classname);
 		return p;
 	}
 	if (whichproc == 'j')
-		return instantiate_nat(parent, name, classname);
-
+		return instantiate_0(f->cx, parent, name, classname);
 	debugPrint(5, "> instantiate %s %s", name,
 		   (classname ? classname : "object"));
-	set_js_globals();
-	p = instantiate_nat(parent, name, classname);
+	p = instantiate_0(f->cx, parent, name, classname);
 	debugPrint(5, "< ok");
 	return p;
 }				/* instantiate */
 
-int set_property_function(jsobjtype parent, const char *name, const char *body)
+int set_property_function(const Frame *f, jsobjtype parent, const char *name, const char *body)
 {
 	int rc;
-	if (!allowJS || !cf->winobj)
+	if (!allowJS || !f->winobj)
 		return -1;
 	if (!parent) {
 		debugPrint(3, "set_property_function(0, %s)", name);
 		return -1;
 	}
 	if (whichproc == 'j')
-		return set_property_function_nat(parent, name, body);
+		return set_property_function_0(f->cx, parent, name, body);
 	if (!body)
 		body = emptyString;
 	debugPrint(5, "> set %s=%s", name, debugString(body));
-	set_js_globals();
-	rc = set_property_function_nat(parent, name, body);
+	rc = set_property_function_0(f->cx, parent, name, body);
 	debugPrint(5, "< ok");
 	return rc;
 }				/* set_property_function */
 
-int get_arraylength(jsobjtype a)
+int get_arraylength(const Frame *f, jsobjtype a)
 {
 	int l;
-	if (!allowJS || !cf->winobj)
+	if (!allowJS || !f->winobj)
 		return -1;
 	if (!a) {
 		debugPrint(3, "get_arraylength(0)");
 		return -1;
 	}
 	if (whichproc == 'j')
-		return get_arraylength_nat(a);
+		return get_arraylength_0(f->cx, a);
 	debugPrint(5, "> get length");
-	set_js_globals();
-	l = get_arraylength_nat(a);
+	l = get_arraylength_0(f->cx, a);
 	debugPrint(5, "< ok");
 	return l;
 }				/* get_arraylength */
 
 /* run a function with no args that returns a boolean */
-bool run_function_bool(jsobjtype obj, const char *name)
+bool run_function_bool(const Frame *f, jsobjtype obj, const char *name)
 {
 	bool rc;
-	if (!allowJS || !cf->winobj)
+	if (!allowJS || !f->winobj)
 		return false;
 	if (!obj) {
 		debugPrint(3, "run_function_bool(0, %s", name);
@@ -622,94 +592,91 @@ bool run_function_bool(jsobjtype obj, const char *name)
 	if (intFlag)
 		return false;
 	if (whichproc == 'j')
-		return run_function_bool_nat(obj, name);
+		return run_function_bool_0(f->cx, obj, name);
 	debugPrint(5, "> function %s", name);
-	set_js_globals();
-	whichproc = 'j';	// this line is totally important!
-	rc = run_function_bool_nat(obj, name);
+	whichproc = 'j';
+	rc = run_function_bool_0(f->cx, obj, name);
 	whichproc = 'e';
 	debugPrint(5, "< %s", (rc ? "true" : "false"));
 	return rc;
 }				/* run_function_bool */
 
-jsobjtype create_event(jsobjtype parent, const char *evname)
+jsobjtype create_event(const Frame *f, jsobjtype parent, const char *evname)
 {
 	jsobjtype e;
 	const char *evname1 = evname;
 	if (evname[0] == 'o' && evname[1] == 'n')
 		evname1 += 2;
 // gc$event protects from garbage collection
-	e = instantiate(parent, "gc$event", "Event");
-	set_property_string(e, "type", evname1);
+	e = instantiate(f, parent, "gc$event", "Event");
+	set_property_string(f, e, "type", evname1);
 	return e;
 }
 
-void unlink_event(jsobjtype parent)
+void unlink_event(const Frame *f, jsobjtype parent)
 {
-	delete_property(parent, "gc$event");
+	delete_property(f, parent, "gc$event");
 }
 
-bool run_event_bool(jsobjtype obj, const char *pname, const char *evname)
+bool run_event_bool(const Frame *f, jsobjtype obj, const char *pname, const char *evname)
 {
 	int rc;
 	jsobjtype eo;	// created event object
-	if (!handlerPresent(obj, evname))
+	if (!handlerPresent(f, obj, evname))
 		return true;
 	if (debugLevel >= 3) {
-		bool evdebug = get_property_bool(cf->winobj, "eventDebug");
+		bool evdebug = get_property_bool(f, f->winobj, "eventDebug");
 		if (evdebug) {
-			int seqno = get_property_number(obj, "eb$seqno");
+			int seqno = get_property_number(f, obj, "eb$seqno");
 			debugPrint(3, "trigger %s tag %d %s", pname, seqno, evname);
 		}
 	}
-	eo = create_event(obj, evname);
-	set_property_object(eo, "target", obj);
-	set_property_object(eo, "currentTarget", obj);
-	set_property_number(eo, "eventPhase", 2);
-	rc = run_function_onearg(obj, evname, eo);
-	unlink_event(obj);
+	eo = create_event(f, obj, evname);
+	set_property_object(f, eo, "target", obj);
+	set_property_object(f, eo, "currentTarget", obj);
+	set_property_number(f, eo, "eventPhase", 2);
+	rc = run_function_onearg(f, obj, evname, eo);
+	unlink_event(f, obj);
 // no return or some other return is treated as true in this case
 	if (rc < 0)
 		rc = true;
 	return rc;
 }
 
-int run_function_onearg(jsobjtype obj, const char *name, jsobjtype a)
+int run_function_onearg(const Frame *f, jsobjtype obj, const char *name, jsobjtype a)
 {
 	int rc;
-	if (!allowJS || !cf->winobj)
+	if (!allowJS || !f->winobj)
 		return 0;
 	if (!obj) {
 		debugPrint(3, "run_function_onearg(0, %s", name);
 		return 0;
 	}
 	if (whichproc == 'j')
-		return run_function_onearg_nat(obj, name, a);
+		return run_function_onearg_0(f->cx, obj, name, a);
 	debugPrint(5, "> function %s", name);
-	set_js_globals();
-	whichproc = 'j';	// this line is totally important!
-	rc = run_function_onearg_nat(obj, name, a);
+	whichproc = 'j';
+	rc = run_function_onearg_0(f->cx, obj, name, a);
 	whichproc = 'e';
 	debugPrint(5, "< ok");
 	return rc;
 }
 
-void run_function_onestring(jsobjtype obj, const char *name, const char *s)
+void run_function_onestring(const Frame *f, jsobjtype obj, const char *name, const char *s)
 {
-	if (!allowJS || !cf->winobj)
+	if (!allowJS || !f->winobj)
 		return;
 	if (!obj) {
 		debugPrint(3, "run_function_onestring(0, %s", name);
 		return;
 	}
 	if (whichproc == 'j') {
-		run_function_onestring_nat(obj, name, s);
+		run_function_onestring_0(f->cx, obj, name, s);
 		return;
 	}
 	debugPrint(5, "> function %s", name);
-	set_js_globals();
-	whichproc = 'j';	// this line is totally important!
-	run_function_onestring_nat(obj, name, s);
+	whichproc = 'j';
+	run_function_onestring_0(f->cx, obj, name, s);
 	whichproc = 'e';
 	debugPrint(5, "< ok");
 }
@@ -728,12 +695,12 @@ void set_basehref(const char *h)
 {
 	if (!h)
 		h = emptyString;
-	set_property_string(cf->winobj, "eb$base", h);
+	set_property_string(cf, cf->winobj, "eb$base", h);
 // This is special code for snapshot simulations.
 // If the file jslocal is present, push base over to window.location etc,
 // as though you were running that page.
 	if (!access("jslocal", 4) && h[0]) {
-		run_function_bool(cf->winobj, "eb$base$snapshot");
+		run_function_bool(cf, cf->winobj, "eb$base$snapshot");
 		nzFree(cf->fileName);
 		cf->fileName = cloneString(h);
 	}
@@ -762,6 +729,7 @@ void setupJavaDom(void)
 {
 	jsobjtype w = cf->winobj;	// window object
 	jsobjtype d = cf->docobj;	// document object
+	jsobjtype cx = cf->cx;	// current context
 	jsobjtype nav;		// navigator object
 	jsobjtype navpi;	// navigator plugins
 	jsobjtype navmt;	// navigator mime types
@@ -777,120 +745,119 @@ void setupJavaDom(void)
 	extern const char startWindowJS[];
 	extern const char thirdJS[];
 
-	set_property_object(w, "window", w);
+	set_property_object_0(cx, w, "window", w);
 
 /* the js window/document setup script.
  * These are all the things that do not depend on the platform,
  * OS, configurations, etc. */
-	jsRunScript(w, startWindowJS, "StartWindow", 1);
-	jsRunScript(w, thirdJS, "Third", 1);
+	jsRunScript(cf, w, startWindowJS, "StartWindow", 1);
+	jsRunScript(cf, w, thirdJS, "Third", 1);
 
-	nav = get_property_object(w, "navigator");
+	nav = get_property_object_0(cx, w, "navigator");
 	if (nav == NULL)
 		return;
 /* some of the navigator is in startwindow.js; the runtime properties are here. */
-	set_property_string(nav, "userLanguage", languages[eb_lang]);
-	set_property_string(nav, "language", languages[eb_lang]);
-	set_property_string(nav, "appVersion", version);
-	set_property_string(nav, "vendorSub", version);
-	set_property_string(nav, "userAgent", currentAgent);
+	set_property_string_0(cx, nav, "userLanguage", languages[eb_lang]);
+	set_property_string_0(cx, nav, "language", languages[eb_lang]);
+	set_property_string_0(cx, nav, "appVersion", version);
+	set_property_string_0(cx, nav, "vendorSub", version);
+	set_property_string_0(cx, nav, "userAgent", currentAgent);
 	uname(&ubuf);
-	set_property_string(nav, "oscpu", ubuf.sysname);
-	set_property_string(nav, "platform", ubuf.machine);
+	set_property_string_0(cx, nav, "oscpu", ubuf.sysname);
+	set_property_string_0(cx, nav, "platform", ubuf.machine);
 
 /* Build the array of mime types and plugins,
  * according to the entries in the config file. */
-	navpi = get_property_object(nav, "plugins");
-	navmt = get_property_object(nav, "mimeTypes");
+	navpi = get_property_object_0(cx, nav, "plugins");
+	navmt = get_property_object_0(cx, nav, "mimeTypes");
 	if (navpi == NULL || navmt == NULL)
 		return;
 	mt = mimetypes;
 	for (i = 0; i < maxMime; ++i, ++mt) {
 		int len;
 /* po is the plugin object and mo is the mime object */
-		jsobjtype po = instantiate_array_element(navpi, i, 0);
-		jsobjtype mo = instantiate_array_element(navmt, i, 0);
+		jsobjtype po = instantiate_array_element_0(cx, navpi, i, 0);
+		jsobjtype mo = instantiate_array_element_0(cx, navmt, i, 0);
 		if (po == NULL || mo == NULL)
 			return;
-		set_property_object(mo, "enabledPlugin", po);
-		set_property_string(mo, "type", mt->type);
-		set_property_object(navmt, mt->type, mo);
-		set_property_string(mo, "description", mt->desc);
-		set_property_string(mo, "suffixes", mt->suffix);
+		set_property_object_0(cx, mo, "enabledPlugin", po);
+		set_property_string_0(cx, mo, "type", mt->type);
+		set_property_object_0(cx, navmt, mt->type, mo);
+		set_property_string_0(cx, mo, "description", mt->desc);
+		set_property_string_0(cx, mo, "suffixes", mt->suffix);
 /* I don't really have enough information from the config file to fill
  * in the attributes of the plugin object.
  * I'm just going to fake it.
  * Description will be the same as that of the mime type,
  * and the filename will be the program to run.
  * No idea if this is right or not. */
-		set_property_string(po, "description", mt->desc);
-		set_property_string(po, "filename", mt->program);
+		set_property_string_0(cx, po, "description", mt->desc);
+		set_property_string_0(cx, po, "filename", mt->program);
 /* For the name, how about the program without its options? */
 		len = strcspn(mt->program, " \t");
 		save_c = mt->program[len];
 		mt->program[len] = 0;
-		set_property_string(po, "name", mt->program);
+		set_property_string_0(cx, po, "name", mt->program);
 		mt->program[len] = save_c;
 	}
 
-	hist = get_property_object(w, "history");
+	hist = get_property_object_0(cx, w, "history");
 	if (hist == NULL)
 		return;
-	set_property_string(hist, "current", cf->fileName);
+	set_property_string_0(cx, hist, "current", cf->fileName);
 
-	set_property_string(d, "referrer", cw->referrer);
-	set_property_string(d, "URL", cf->fileName);
-	set_property_string(d, "location", cf->fileName);
-	set_property_string(w, "location", cf->fileName);
-	jsRunScript(w,
+	set_property_string_0(cx, d, "referrer", cw->referrer);
+	set_property_string_0(cx, d, "URL", cf->fileName);
+	set_property_string_0(cx, d, "location", cf->fileName);
+	set_property_string_0(cx, w, "location", cf->fileName);
+	jsRunScript(cf, w,
 		    "window.location.replace = document.location.replace = function(s) { this.href = s; };Object.defineProperty(window.location,'replace',{enumerable:false});Object.defineProperty(document.location,'replace',{enumerable:false});",
 		    "locreplace", 1);
-	set_property_string(d, "domain", getHostURL(cf->fileName));
+	set_property_string_0(cx, d, "domain", getHostURL(cf->fileName));
 	if (debugClone)
-		set_property_bool(cf->winobj, "cloneDebug", true);
+		set_property_bool_0(cx, w, "cloneDebug", true);
 	if (debugEvent)
-		set_property_bool(cf->winobj, "eventDebug", true);
+		set_property_bool_0(cx, w, "eventDebug", true);
 	if (debugThrow)
-		set_property_bool(cf->winobj, "throwDebug", true);
+		set_property_bool_0(cx, w, "throwDebug", true);
 }				/* setupJavaDom */
 
 /* Get the url from a url object, special wrapper.
  * Owner object is passed, look for obj.href, obj.src, or obj.action.
  * Return that if it's a string, or its member href if it is a url.
  * The result, coming from get_property_string, is allocated. */
-char *get_property_url(jsobjtype owner, bool action)
+char *get_property_url(const Frame *f, jsobjtype owner, bool action)
 {
 	enum ej_proptype mtype;	/* member type */
 	jsobjtype uo = 0;	/* url object */
-
 	if (action) {
-		mtype = typeof_property(owner, "action");
+		mtype = typeof_property(f, owner, "action");
 		if (mtype == EJ_PROP_STRING)
-			return get_property_string(owner, "action");
+			return get_property_string(f, owner, "action");
 		if (mtype != EJ_PROP_OBJECT)
 			return 0;
-		uo = get_property_object(owner, "action");
+		uo = get_property_object(f, owner, "action");
 	} else {
-		mtype = typeof_property(owner, "href");
+		mtype = typeof_property(f, owner, "href");
 		if (mtype == EJ_PROP_STRING)
-			return get_property_string(owner, "href");
+			return get_property_string(f, owner, "href");
 		if (mtype == EJ_PROP_OBJECT)
-			uo = get_property_object(owner, "href");
+			uo = get_property_object(f, owner, "href");
 		else if (mtype)
 			return 0;
 		if (!uo) {
-			mtype = typeof_property(owner, "src");
+			mtype = typeof_property(f, owner, "src");
 			if (mtype == EJ_PROP_STRING)
-				return get_property_string(owner, "src");
+				return get_property_string(f, owner, "src");
 			if (mtype == EJ_PROP_OBJECT)
-				uo = get_property_object(owner, "src");
+				uo = get_property_object(f, owner, "src");
 		}
 	}
 
 	if (uo == NULL)
 		return 0;
 /* should this be href$val? */
-	return get_property_string(uo, "href");
+	return get_property_string(f, uo, "href");
 }				/* get_property_url */
 
 /*********************************************************************
@@ -904,9 +871,9 @@ That line isn't even there, the tag is obsolete, its pointer is obsolete.
 Check for that here in the only way I think is safe, from the top.
 *********************************************************************/
 
-bool tagIsRooted(struct htmlTag *t)
+bool tagIsRooted(Tag *t)
 {
-struct htmlTag *u, *v = 0, *w;
+Tag *u, *v = 0, *w;
 
 	for(u = t; u; v = u, u = u->parent) {
 		u->lic = -1;
@@ -949,7 +916,7 @@ so this should be a rock solid test.
 // bad luck, the new object gets the same pointer. Then put it back in the
 // same place in the tree. I've seen it happen.
 // Use our sseqno to defend against this.
-		if(get_property_number(u->jv, "eb$seqno") != u->seqno)
+		if(get_property_number_0(u->f0->cx, u->jv, "eb$seqno") != u->seqno)
 			goto fail;
 		if(u == t)
 			break;
@@ -960,22 +927,22 @@ so this should be a rock solid test.
 		if(!v->jv)
 			goto fail;
 // find v->jv in the children of u.
-		if(!(cn = get_property_object(u->jv, "childNodes")))
+		if(!(cn = get_property_object_0(u->f0->cx, u->jv, "childNodes")))
 			goto fail;
-		len = get_arraylength(cn);
+		len = get_arraylength_0(u->f0->cx, cn);
 		for(i = 0; i < len; ++i)
-			if(get_array_element_object(cn, i) == v->jv) // found it
+			if(get_array_element_object_0(u->f0->cx, cn, i) == v->jv) // found it
 				break;
 		if(i == len)
 			goto fail; // not found
 		u = v;
 	}
 
-	debugPrint(3, "%s is rooted", t->info->name);
+	debugPrint(4, "%s %d is rooted", t->info->name, t->seqno);
 	return true; // properly rooted
 
 fail:
-	debugPrint(3, "%s is not rooted", t->info->name);
+	debugPrint(3, "%s %d is not rooted", t->info->name, t->seqno);
 	return false;
 }
 
@@ -990,15 +957,16 @@ since the line <> in the buffer looks exactly the same,
 so this tells you the options underneath have changed.
 *********************************************************************/
 
-static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
+static void rebuildSelector(Tag *sel, jsobjtype oa, int len2)
 {
 	int i2 = 0;
 	bool check2;
 	char *s;
 	const char *selname;
 	bool changed = false;
-	struct htmlTag *t, *t0 = 0;
+	Tag *t, *t0 = 0;
 	jsobjtype oo;		/* option object */
+	jsobjtype cx = sel->f0->cx;
 
 	selname = sel->name;
 	if (!selname)
@@ -1016,7 +984,7 @@ static void rebuildSelector(struct htmlTag *sel, jsobjtype oa, int len2)
 		}
 
 /* find the corresponding option object */
-		if ((oo = get_array_element_object(oa, i2)) == NULL) {
+		if ((oo = get_array_element_object_0(cx, oa, i2)) == NULL) {
 /* Wow this shouldn't happen. */
 /* Guess I'll just pretend the array stops here. */
 			len2 = i2;
@@ -1036,8 +1004,8 @@ I'm bringing the tags back to life.
 			connectTagObject(t, oo);
 		}
 
-		t->rchecked = get_property_bool(oo, "defaultSelected");
-		check2 = get_property_bool(oo, "selected");
+		t->rchecked = get_property_bool_0(cx, oo, "defaultSelected");
+		check2 = get_property_bool_0(cx, oo, "selected");
 		if (check2) {
 			if (sel->multiple)
 				++sel->lic;
@@ -1048,14 +1016,14 @@ I'm bringing the tags back to life.
 		if (t->checked != check2)
 			changed = true;
 		t->checked = check2;
-		s = get_property_string(oo, "text");
+		s = get_property_string_0(cx, oo, "text");
 		if ((s && !t->textval) || !stringEqual(t->textval, s)) {
 			nzFree(t->textval);
 			t->textval = s;
 			changed = true;
 		} else
 			nzFree(s);
-		s = get_property_string(oo, "value");
+		s = get_property_string_0(cx, oo, "value");
 		if ((s && !t->value) || !stringEqual(t->value, s)) {
 			nzFree(t->value);
 			t->value = s;
@@ -1083,23 +1051,23 @@ I'm bringing the tags back to life.
 		}
 	} else if (!t) {
 		for (; i2 < len2; ++i2) {
-			if ((oo = get_array_element_object(oa, i2)) == NULL)
+			if ((oo = get_array_element_object_0(cx, oa, i2)) == NULL)
 				break;
-			t = newTag("option");
+			t = newTag(sel->f0, "option");
 			t->lic = i2;
 			t->controller = sel;
 			connectTagObject(t, oo);
 			t->step = 2;	// already decorated
-			t->textval = get_property_string(oo, "text");
-			t->value = get_property_string(oo, "value");
-			t->checked = get_property_bool(oo, "selected");
+			t->textval = get_property_string_0(cx, oo, "text");
+			t->value = get_property_string_0(cx, oo, "value");
+			t->checked = get_property_bool_0(cx, oo, "selected");
 			if (t->checked) {
 				if (sel->multiple)
 					++sel->lic;
 				else
 					sel->lic = i2;
 			}
-			t->rchecked = get_property_bool(oo, "defaultSelected");
+			t->rchecked = get_property_bool_0(cx, oo, "defaultSelected");
 			changed = true;
 		}
 	}
@@ -1115,13 +1083,13 @@ I'm bringing the tags back to life.
 	nzFree(s);
 
 	if (!sel->multiple)
-		set_property_number(sel->jv, "selectedIndex", sel->lic);
+		set_property_number_0(cx, sel->jv, "selectedIndex", sel->lic);
 }				/* rebuildSelector */
 
 void rebuildSelectors(void)
 {
 	int i1;
-	struct htmlTag *t;
+	Tag *t;
 	jsobjtype oa;		/* option array */
 	int len;		/* length of option array */
 
@@ -1140,9 +1108,9 @@ void rebuildSelectors(void)
 			continue;
 
 /* there should always be an options array, if not then move on */
-		if ((oa = get_property_object(t->jv, "options")) == NULL)
+		if ((oa = get_property_object_0(t->f0->cx, t->jv, "options")) == NULL)
 			continue;
-		if ((len = get_arraylength(oa)) < 0)
+		if ((len = get_arraylength_0(t->f0->cx, oa)) < 0)
 			continue;
 		rebuildSelector(t, oa, len);
 	}

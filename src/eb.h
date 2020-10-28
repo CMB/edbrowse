@@ -81,9 +81,6 @@ typedef uchar bool;
 // between edbrowse and the js engine.
 typedef void *jsobjtype;
 
-extern jsobjtype jcx; // the javascript context
-extern jsobjtype winobj;	// window object
-extern jsobjtype docobj;	// document object
 extern const char *jsSourceFile; // sourcefile providing the javascript
 extern int jsLineno; // line number
 
@@ -404,18 +401,16 @@ struct ebFrame {
 /* The javascript context and window corresponding to this url or frame.
  * If this is null then javascript is not operational for this frame.
  * We could still be browsing however, without javascript. */
-	jsobjtype jcx;
+	jsobjtype cx;
 	jsobjtype winobj;
 	jsobjtype docobj;	/* window.document */
 	const struct MIMETYPE *mt;
 	void *cssmaster;
 	short jtmin;
 };
-extern struct ebFrame *cf;	/* current frame */
 
-#define set_js_globals_f(f) (jcx = f->jcx, winobj = f->winobj, docobj = f->docobj)
-#define set_js_globals() set_js_globals_f(cf)
-#define get_js_globals() (cf->jcx = jcx, cf->winobj = winobj, cf->docobj = docobj)
+typedef struct ebFrame Frame;
+extern Frame *cf;	/* current frame */
 
 /* single linked list for internal jump history */
 struct histLabel {
@@ -488,7 +483,7 @@ extern struct ebWindow *cw;	/* current window */
 #define tagList (cw->tags)
 
 /* js is running in the current session */
-#define isJSAlive (cf->jcx != NULL && allowJS)
+#define isJSAlive (cf->cx && allowJS)
 
 /*********************************************************************
 Temporary cap on the number of lines, so the integer index into cw->map
@@ -603,6 +598,8 @@ struct htmlTag {
 	int inner;		/* for inner html */
 	int highspec; // specificity of a selector that matches this node
 };
+
+typedef struct htmlTag Tag;
 
 /* htmlTag.action */
 enum {
