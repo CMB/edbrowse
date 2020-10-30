@@ -1,6 +1,7 @@
-// This program came from the Mozilla site, for moz 52.
+// This program originally came from the Mozilla site, for moz 52.
 // https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/How_to_embed_the_JavaScript_engine
 // I tweaked it for moz 60.
+// Then I added so much stuff to it you'd hardly recognize it.
 
 #include <jsapi.h>
 #include <js/Initialization.h>
@@ -21,7 +22,7 @@ static JSClass global_class = {
 
 // couple of native methods.
 // increment the ascii letters of a string.  "hat" becomes "ibu"
-static bool letterInc(JSContext *cx, unsigned argc, JS::Value *vp)
+static bool nat_letterInc(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
 // This only works for strings
@@ -40,7 +41,7 @@ args.rval().setUndefined();
 }
 
 // decrement the ascii letters of a string.
-static bool letterDec(JSContext *cx, unsigned argc, JS::Value *vp)
+static bool nat_letterDec(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
 // This only works for strings
@@ -57,9 +58,147 @@ args.rval().setUndefined();
   return true;
 }
 
-static JSFunctionSpec nativeMethods[] = {
-  JS_FN("letterInc", letterInc, 1, 0),
-  JS_FN("letterDec", letterDec, 1, 0),
+static bool nat_puts(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+// This only works for strings
+if(JS_TypeOfValue(cx, args[0]) ==  JSTYPE_STRING) {
+JSString *s = args[0].toString();
+char *es = JS_EncodeString(cx, s);
+puts(es);
+free(es);
+} else {
+puts("?notstring?");
+}
+args.rval().setUndefined();
+  return true;
+}
+
+static char cookieCopy[] = "; ";
+
+static bool nat_getcook(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+JS::RootedString m(cx, JS_NewStringCopyZ(cx, cookieCopy));
+args.rval().setString(m);
+  return true;
+}
+
+static bool nat_setcook(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+// This only works for strings
+if(JS_TypeOfValue(cx, args[0]) ==  JSTYPE_STRING) {
+JSString *s = args[0].toString();
+char *es = JS_EncodeString(cx, s);
+//foldinCookie(cx, es);
+free(es);
+}
+args.rval().setUndefined();
+  return true;
+}
+
+static bool nat_formSubmit(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+//        javaSubmitsForm(thisobj, false);
+args.rval().setUndefined();
+  return true;
+}
+
+static bool nat_formReset(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+//        javaSubmitsForm(thisobj, true);
+args.rval().setUndefined();
+  return true;
+}
+
+static bool nat_qsa(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+char *selstring = NULL;
+JS::RootedObject start(cx);
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+if(JS_TypeOfValue(cx, args[0]) ==  JSTYPE_STRING) {
+JSString *s = args[0].toString();
+selstring = JS_EncodeString(cx, s);
+}
+if(argc >= 2 && args[1].isObject()) {
+JS::MutableHandleObject starthandle = &start;
+JS_ValueToObject(cx, args[1], starthandle);
+} else {
+start = JS_THIS_OBJECT(cx, vp);
+}
+// call querySelectorAll in css.c
+free(selstring);
+// return empty array for now. I don't understand this, But I guess it works.
+// Is there an easier or safer way?
+JS::RootedValue aov(cx); // array object value
+aov = JS::ObjectValue(*JS_NewArrayObject(cx, 0));
+args.rval().set(aov);
+  return true;
+}
+
+static bool nat_mywin(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+JS::RootedValue v(cx);
+v = JS::ObjectValue(*JS::CurrentGlobalOrNull(cx));
+args.rval().set(v);
+  return true;
+}
+
+static bool nat_mydoc(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+JS::RootedObject g(cx); // global
+g = JS::CurrentGlobalOrNull(cx);
+JS::RootedValue v(cx);
+JS::MutableHandleValue vh = &v;
+        if (JS_GetProperty(cx, g, "document", vh) &&
+v.isObject()) {
+args.rval().set(v);
+} else {
+// no document; this should never happen.
+args.rval().setUndefined();
+}
+  return true;
+}
+
+// just stubs from here on out.
+static bool nat_stub(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+args.rval().setUndefined();
+  return true;
+}
+
+static JSFunctionSpec nativeMethodsWindow[] = {
+  JS_FN("letterInc", nat_letterInc, 1, 0),
+  JS_FN("letterDec", nat_letterDec, 1, 0),
+  JS_FN("eb$puts", nat_puts, 1, 0),
+  JS_FN("eb$getcook", nat_getcook, 0, 0),
+  JS_FN("eb$setcook", nat_setcook, 1, 0),
+  JS_FN("eb$formSubmit", nat_formSubmit, 1, 0),
+  JS_FN("eb$formReset", nat_formReset, 1, 0),
+  JS_FN("querySelectorAll", nat_qsa, 1, 0),
+  JS_FN("querySelector", nat_stub, 1, 0),
+  JS_FN("querySelector0", nat_stub, 1, 0),
+  JS_FN("focus", nat_stub, 0, 0),
+  JS_FN("blur", nat_stub, 0, 0),
+  JS_FN("eb$cssText", nat_stub, 1, 0),
+  JS_FN("my$win", nat_mywin, 0, 0),
+  JS_FN("my$doc", nat_mydoc, 0, 0),
+  JS_FS_END
+};
+
+static JSFunctionSpec nativeMethodsDocument[] = {
+  JS_FN("eb$apch1", nat_stub, 1, 0),
+  JS_FN("eb$apch2", nat_stub, 1, 0),
+  JS_FN("eb$insbf", nat_stub, 1, 0),
+  JS_FN("removeChild", nat_stub, 1, 0),
   JS_FS_END
 };
 
@@ -92,10 +231,12 @@ static JSRuntime *jrt;		/* our js runtime environment */
 
 int main(int argc, const char *argv[])
 {
-bool iaflag; // interactive
+bool iaflag = false; // interactive
 int ci, cl;
+// list of 3 contexts; but it's all the same context
 JSContext *cxlist[3], *cx;
-JSObject *glist[3], *g;
+JSObject *glist[3], *g; // global objects
+JSObject *dlist[3], *doc; // document objects
 bool ok;
 const char *script, *filename;
 int lineno;
@@ -135,7 +276,7 @@ g = glist[ci] = global;
 // why can't I just pass g?
 // Why do I need a rooted object, or handle or some such?
         JS_InitStandardClasses(cx, global);
-JS_DefineFunctions(cx, global, nativeMethods);
+JS_DefineFunctions(cx, global, nativeMethodsWindow);
 
 // link back to master window
 if(ci) {
@@ -152,12 +293,38 @@ if(!JS_DefineProperty(cx, global, "window", objval,
 puts("unable to create window");
 return 1;
 }
-objval = JS::ObjectValue(*JS_NewObject(cx, nullptr));
+JS::RootedObject document(cx, JS_NewObject(cx, nullptr));
+dlist[ci] = document;
+objval = JS::ObjectValue(*dlist[ci]);
 if(!JS_DefineProperty(cx, global, "document", objval,
 (JSPROP_READONLY|JSPROP_PERMANENT))) {
 puts("unable to create document");
 return 1;
 }
+JS_DefineFunctions(cx, document, nativeMethodsDocument);
+
+// startwindow doesn't have a return value, but Evaluate doesn't know that.
+      JS::MutableHandleValue rval = &objval;
+        filename = "startwindow.js";
+        lineno = 1;
+        JS::CompileOptions opts(cx);
+        opts.setFileAndLine(filename, lineno);
+        ok = JS::Evaluate(cx, opts, filename, rval);
+if(!ok) {
+ReportJSException(cx);
+return 2;
+}
+
+// If you want to back it off, use endwindow.js instead of third.js
+        filename = "third.js";
+        lineno = 1;
+        opts.setFileAndLine(filename, lineno);
+        ok = JS::Evaluate(cx, opts, filename, rval);
+if(!ok) {
+ReportJSException(cx);
+return 2;
+}
+
 }
 }
 
