@@ -112,17 +112,19 @@ cl = iaflag ? 3 : 1;
 for(ci=0; ci<cl; ++ci) {
 if(!ci) { // first one
 cx = JS_NewContext(JS::DefaultHeapMaxBytes);
+    if (!JS::InitSelfHostedCode(cx))
+        return 1;
 } else {
 // It seems not to matter whether we make independent contextts,
-// or contexts under a parent context.
+// or contexts under a parent context,
+// or separate contexts at all.
 //cx = JS_NewContext(JS::DefaultHeapMaxBytes);
-cx = JS_NewContext(JS::DefaultHeapMaxBytes, JS::DefaultNurseryBytes, cxlist[0]);
+//cx = JS_NewContext(JS::DefaultHeapMaxBytes, JS::DefaultNurseryBytes, cxlist[0]);
 }
 cxlist[ci] = cx;
     if (!cx)
         return 1;
-    if (!JS::InitSelfHostedCode(cx))
-        return 1;
+
       JSAutoRequest ar(cx);
       JS::CompartmentOptions options;
       JS::RootedObject global(cx, JS_NewGlobalObject(cx, &global_class, nullptr, JS::FireOnNewGlobalHook, options));
@@ -134,13 +136,26 @@ g = glist[ci] = global;
 // Why do I need a rooted object, or handle or some such?
         JS_InitStandardClasses(cx, global);
 JS_DefineFunctions(cx, global, nativeMethods);
+
 // link back to master window
 if(ci) {
-JS::RootedValue mw0val(cx);
-mw0val = JS::ObjectValue(*glist[0]);
-if(!JS_DefineProperty(cx, global, "mw0", mw0val,
+JS::RootedValue objval(cx);
+objval = JS::ObjectValue(*glist[0]);
+if(!JS_DefineProperty(cx, global, "mw0", objval,
 (JSPROP_READONLY|JSPROP_PERMANENT))) {
 puts("unable to create mw0");
+return 1;
+}
+objval = JS::ObjectValue(*g);
+if(!JS_DefineProperty(cx, global, "window", objval,
+(JSPROP_READONLY|JSPROP_PERMANENT))) {
+puts("unable to create window");
+return 1;
+}
+objval = JS::ObjectValue(*JS_NewObject(cx, nullptr));
+if(!JS_DefineProperty(cx, global, "document", objval,
+(JSPROP_READONLY|JSPROP_PERMANENT))) {
+puts("unable to create document");
 return 1;
 }
 }
@@ -243,13 +258,16 @@ default: puts("undefined"); break;
 }
 }
 
+#if 0
 // closing the second context causes a seg fault
 for(ci=cl-1; ci>=0; --ci) {
   printf("down %d\n", ci);
     JS_DestroyContext(cxlist[ci]);
   puts("gone");
 }
+#endif
 
+JS_DestroyContext(cx);
     JS_ShutDown();
     return 0;
 }
