@@ -58,18 +58,88 @@ args.rval().setUndefined();
   return true;
 }
 
+static char emptyString[] = "";
+static void nzFree(void *s)
+{
+	if (s && s != emptyString)
+		free(s);
+}
+void cnzFree(const void *v)
+{
+	nzFree((void *)v);
+}
+
+// Here begins code that can eventually move to jseng-moz.cpp
+
+/*********************************************************************
+This returns the string equivalent of the js value, but use with care.
+It's only good til the next call to stringize, then it will be trashed.
+If you want the result longer than that, you better copy it.
+*********************************************************************/
+
+static const char *stringize(JSContext *cx, JS::HandleValue v)
+{
+	static char buf[48];
+	static const char *dynamic;
+	int n;
+	double d;
+	JSString *str;
+bool ok;
+
+if(v.isNull())
+return "null";
+
+switch(JS_TypeOfValue(cx, v)) {
+// This enum isn't in every version; leave it to default.
+// case JSTYPE_UNDEFINED: return "undefined"; break;
+
+case JSTYPE_OBJECT:
+case JSTYPE_FUNCTION:
+// invoke toString
+{
+JS::RootedObject p(cx);
+JS_ValueToObject(cx, v, &p);
+JS::RootedValue tos(cx); // toString
+ok = JS_CallFunctionName(cx, p, "toString", JS::HandleValueArray::empty(), &tos);
+if(ok && tos.isString()) {
+cnzFree(dynamic);
+str = tos.toString();
+dynamic = JS_EncodeString(cx, str);
+return dynamic;
+}
+}
+return "object";
+
+case JSTYPE_STRING:
+cnzFree(dynamic);
+str = v.toString();
+dynamic = JS_EncodeString(cx, str);
+return dynamic;
+
+case JSTYPE_NUMBER:
+if(v.isInt32())
+sprintf(buf, "%d", v.toInt32());
+else sprintf(buf, "%f", v.toDouble());
+return buf;
+
+case JSTYPE_BOOLEAN: return v.toBoolean() ? "true" : "false";
+
+// null is returned as object and doesn't trip this case, for some reason
+case JSTYPE_NULL: return "null";
+
+// don't know what symbol is
+case JSTYPE_SYMBOL: return "symbol";
+
+case JSTYPE_LIMIT: return "limit";
+
+default: return "undefined";
+}
+}
+
 static bool nat_puts(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
-// This only works for strings
-if(JS_TypeOfValue(cx, args[0]) ==  JSTYPE_STRING) {
-JSString *s = args[0].toString();
-char *es = JS_EncodeString(cx, s);
-puts(es);
-free(es);
-} else {
-puts("?notstring?");
-}
+if(argc >= 1) puts(stringize(cx, args[0]));
 args.rval().setUndefined();
   return true;
 }
@@ -88,7 +158,7 @@ static bool nat_setcook(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
 // This only works for strings
-if(JS_TypeOfValue(cx, args[0]) ==  JSTYPE_STRING) {
+if(argc >= 1 && JS_TypeOfValue(cx, args[0]) ==  JSTYPE_STRING) {
 JSString *s = args[0].toString();
 char *es = JS_EncodeString(cx, s);
 //foldinCookie(cx, es);
@@ -121,13 +191,12 @@ static bool nat_qsa(JSContext *cx, unsigned argc, JS::Value *vp)
 char *selstring = NULL;
 JS::RootedObject start(cx);
   JS::CallArgs args = CallArgsFromVp(argc, vp);
-if(JS_TypeOfValue(cx, args[0]) ==  JSTYPE_STRING) {
+if(argc >= 1 && JS_TypeOfValue(cx, args[0]) ==  JSTYPE_STRING) {
 JSString *s = args[0].toString();
 selstring = JS_EncodeString(cx, s);
 }
 if(argc >= 2 && args[1].isObject()) {
-JS::MutableHandleObject starthandle = &start;
-JS_ValueToObject(cx, args[1], starthandle);
+JS_ValueToObject(cx, args[1], &start);
 } else {
 start = JS_THIS_OBJECT(cx, vp);
 }
@@ -156,8 +225,7 @@ static bool nat_mydoc(JSContext *cx, unsigned argc, JS::Value *vp)
 JS::RootedObject g(cx); // global
 g = JS::CurrentGlobalOrNull(cx);
 JS::RootedValue v(cx);
-JS::MutableHandleValue vh = &v;
-        if (JS_GetProperty(cx, g, "document", vh) &&
+        if (JS_GetProperty(cx, g, "document", &v) &&
 v.isObject()) {
 args.rval().set(v);
 } else {
@@ -233,39 +301,26 @@ int main(int argc, const char *argv[])
 {
 bool iaflag = false; // interactive
 int ci, cl;
-// list of 3 contexts; but it's all the same context
-JSContext *cxlist[3], *cx;
+JSContext *cx;
 JSObject *glist[3], *g; // global objects
-JSObject *dlist[3], *doc; // document objects
+JSObject *dlist[3]; // document objects
 bool ok;
 const char *script, *filename;
 int lineno;
 
 if(argc > 1 && !strcmp(argv[1], "-i")) iaflag = true;
+cl = iaflag ? 3 : 1;
 
     JS_Init();
 
-cl = iaflag ? 3 : 1;
-
-// opening a second context causes a seg fault on moz 60.
-// No clue why. For now this has to run on moz 52.
+// Mozilla assumes one context per thread; we can run all of edbrowse
+// inside one context; I think.
+cx = JS_NewContext(JS::DefaultHeapMaxBytes);
+if(!cx) return 1;
+    if (!JS::InitSelfHostedCode(cx))         return 1;
+      JSString *str;
 
 for(ci=0; ci<cl; ++ci) {
-if(!ci) { // first one
-cx = JS_NewContext(JS::DefaultHeapMaxBytes);
-    if (!JS::InitSelfHostedCode(cx))
-        return 1;
-} else {
-// It seems not to matter whether we make independent contextts,
-// or contexts under a parent context,
-// or separate contexts at all.
-//cx = JS_NewContext(JS::DefaultHeapMaxBytes);
-//cx = JS_NewContext(JS::DefaultHeapMaxBytes, JS::DefaultNurseryBytes, cxlist[0]);
-}
-cxlist[ci] = cx;
-    if (!cx)
-        return 1;
-
       JSAutoRequest ar(cx);
       JS::CompartmentOptions options;
       JS::RootedObject global(cx, JS_NewGlobalObject(cx, &global_class, nullptr, JS::FireOnNewGlobalHook, options));
@@ -278,8 +333,24 @@ g = glist[ci] = global;
         JS_InitStandardClasses(cx, global);
 JS_DefineFunctions(cx, global, nativeMethodsWindow);
 
-// link back to master window
 if(ci) {
+/*********************************************************************
+Not the first compartment.
+Link back to the master window.
+Warning! This architecture produces a seg fault on mozjs 60 when
+this program terminates and we clean up.
+Creating a js class in one compartment, then instantiating an object from
+that class in another compartment, seems to screw up the heap in some way.
+Use this file instead of startwindow.js to demonstrate it;
+then you don't need third.js or endwindow.js.
+
+if(!mw0.compiled)
+mw0.CSSStyleDeclaration = function(){ };
+CSSStyleDeclaration = mw0.CSSStyleDeclaration;
+document.style = new CSSStyleDeclaration;
+mw0.compiled = true;
+*********************************************************************/
+
 JS::RootedValue objval(cx);
 objval = JS::ObjectValue(*glist[0]);
 if(!JS_DefineProperty(cx, global, "mw0", objval,
@@ -303,13 +374,12 @@ return 1;
 }
 JS_DefineFunctions(cx, document, nativeMethodsDocument);
 
-// startwindow doesn't have a return value, but Evaluate doesn't know that.
-      JS::MutableHandleValue rval = &objval;
+// read in startwindow.js
         filename = "startwindow.js";
         lineno = 1;
         JS::CompileOptions opts(cx);
         opts.setFileAndLine(filename, lineno);
-        ok = JS::Evaluate(cx, opts, filename, rval);
+        ok = JS::Evaluate(cx, opts, filename, &objval);
 if(!ok) {
 ReportJSException(cx);
 return 2;
@@ -319,7 +389,7 @@ return 2;
         filename = "third.js";
         lineno = 1;
         opts.setFileAndLine(filename, lineno);
-        ok = JS::Evaluate(cx, opts, filename, rval);
+        ok = JS::Evaluate(cx, opts, filename, &objval);
 if(!ok) {
 ReportJSException(cx);
 return 2;
@@ -331,34 +401,20 @@ return 2;
 //  puts("after 3 loop");
 
 {
-cx = cxlist[0];
 g = glist[0];
       JSAutoRequest ar(cx);
         JSAutoCompartment ac(cx, g);
-//      JS::RootedValue rval(cx);
-// This works, but the GC rooting guide suggests doing it a different way,
-// which also works. I don't know if this new approach is part of 60.
-// Well the guide recommends it so I'm trying it.
-// This reminds me of memory::unique_ptr, wrapper around a pointer,
-// so things are disposed of when they go out of scope.
       JS::RootedValue v(cx);
-      JS::MutableHandleValue rval = &v;
-
         script = "letterInc('gdkkn')+letterDec('!xpsme') + ', it is '+new Date()";
         filename = "noname";
         lineno = 1;
         JS::CompileOptions opts(cx);
         opts.setFileAndLine(filename, lineno);
-// The call to Evaluate was passed &rval when rval was the rooted value;
-// now it's rval when using the handle wrapper around the value.
-// The prototype in jsapi.h expects JS::MutableHandleValue rval as fifth parameter.
-// Why then does the old way work?
-// Because JS::RootedValue * casts properly into JS::MutableHandleValue, I guess.
-        ok = JS::Evaluate(cx, opts, script, strlen(script), rval);
+        ok = JS::Evaluate(cx, opts, script, strlen(script), &v);
         if (!ok)
           return 1;
-      JSString *str = rval.toString();
-// str seems to be internal to rval, or manage by rval;
+str = v.toString();
+// str seems to be internal to v, or manage by v;
 // if I try delete str, free() says invalid pointer.
 char *es = JS_EncodeString(cx, str);
       printf("%s\n", es);
@@ -370,21 +426,18 @@ free(es);
 
 if(iaflag) {
 char line[500];
+// end with control d, EOF
 while(fgets(line, sizeof(line), stdin)) {
 // should check for line too long here
       JSAutoRequest ar(cx);
         JSAutoCompartment ac(cx, g);
       JS::RootedValue v(cx);
-      JS::MutableHandleValue rval = &v;
-JSString *str;
-char *es;
 
 // change context?
 if(line[0] == 'e' &&
 line[1] >= '1' && line[1] <= '3' &&
 isspace(line[2])) {
 printf("context %c\n", line[1]);
-cx = cxlist[line[1] - '1'];
 g = glist[line[1] - '1'];
 continue;
 }
@@ -394,45 +447,14 @@ script = line;
         lineno = 1;
         JS::CompileOptions opts(cx);
         opts.setFileAndLine(filename, lineno);
-        ok = JS::Evaluate(cx, opts, script, strlen(script), rval);
+        ok = JS::Evaluate(cx, opts, script, strlen(script), &v);
 if(!ok) {
 ReportJSException(cx);
 } else {
-switch(JS_TypeOfValue(cx, rval)) {
-// This enum isn't in every version
-// case JSTYPE_UNDEFINED: puts("undefined"); break;
-case JSTYPE_OBJECT: puts("object"); break;
-case JSTYPE_FUNCTION: puts("function"); break;
-case JSTYPE_STRING:
-str = rval.toString();
-es = JS_EncodeString(cx, str);
-      printf("%s\n", es);
-free(es);
-break;
-case JSTYPE_NUMBER:
-if(rval.isInt32())
-printf("%d\n", rval.toInt32());
-else printf("%f\n", rval.toDouble());
-break;
-case JSTYPE_BOOLEAN: puts(rval.toBoolean() ? "true" : "false"); break;
-// null is returned as object and doesn't trip this case, for some reason
-case JSTYPE_NULL: puts("null"); break;
-case JSTYPE_SYMBOL: puts("symbol"); break;
-case JSTYPE_LIMIT: puts("limit"); break;
-default: puts("undefined"); break;
+puts(stringize(cx, v));
 }
 }
 }
-}
-
-#if 0
-// closing the second context causes a seg fault
-for(ci=cl-1; ci>=0; --ci) {
-  printf("down %d\n", ci);
-    JS_DestroyContext(cxlist[ci]);
-  puts("gone");
-}
-#endif
 
 JS_DestroyContext(cx);
     JS_ShutDown();
