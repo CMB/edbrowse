@@ -3868,8 +3868,14 @@ It may work when called from one context and fail when called from another.
 If I built our classes per context, and not in the master window,
 that would be problematic because then I couldn't use instanceof URL
 and instanceof Option, as I do today.
+Now - all that said - I don't need to do any of these for mozjs or v8,
+because these methods are inbuilt.
+The only one they don't have is item, and that isn't documented anywhere,
+so not sure where I picked that one up from.
+I'm just going to leave them all out if not duktape.
 *********************************************************************/
 
+if(window.Duktape) {
 Array.prototype.item = function(x) { return this[x] };
 Object.defineProperty(Array.prototype, "item", { enumerable: false});
 
@@ -3915,6 +3921,7 @@ a.push(w);
 return a;
 }
 Object.defineProperty(Array.prototype, "map", { enumerable: false});
+}
 
 // On the first call this setter just creates the url, the location of the
 // current web page, But on the next call it has the side effect of replacing
