@@ -438,8 +438,24 @@ if(line[0] == 'e' &&
 line[1] >= '1' && line[1] <= '3' &&
 isspace(line[2])) {
 printf("context %c\n", line[1]);
-g = glist[line[1] - '1'];
+ci = line[1] - '1';
+g = glist[ci];
+if(!ci) continue;
+// verify the permanency of object pointers
+        JSAutoCompartment bc(cx, g);
+JS::RootedObject gr(cx);
+gr = g;
+        if (JS_GetProperty(cx, gr, "document", &v) &&
+v.isObject()) {
+JS::RootedObject new_d(cx);
+JS_ValueToObject(cx, v, &new_d);
+if(dlist[ci] == new_d)
 continue;
+puts("object pointer mismatch, document pointer has changed!");
+return 3;
+}
+puts("document object is lost!");
+return 3;
 }
 
 script = line;
