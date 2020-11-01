@@ -592,7 +592,8 @@ struct htmlTag {
 #define DIS_HOVERCOLOR 5
 	uchar disval; // displayable value for the node
 	int ninp;		/* number of nonhidden inputs */
-	char *name, *id, *class, *nodeName, *value, *href;
+// class is reserved word in c++, so use jclass for javascript class
+	char *name, *id, *jclass, *nodeName, *value, *href;
 	const char *rvalue; /* for reset */
 	char *innerHTML; /* the html string under this tag */
 	int inner;		/* for inner html */

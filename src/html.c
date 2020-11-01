@@ -3293,7 +3293,7 @@ ab:
 	cx = t->f0->cx;
 	t->name = get_property_string_0(cx, t->jv, "name");
 	t->id = get_property_string_0(cx, t->jv, "id");
-	t->class = get_property_string_0(cx, t->jv, "class");
+	t->jclass = get_property_string_0(cx, t->jv, "class");
 
 	switch (action) {
 	case TAGACT_INPUT:

@@ -799,7 +799,7 @@ static void prerenderNode(Tag *t, bool opentag)
 	case TAGACT_SPAN:
 		if (!opentag)
 			break;
-		if (!(a = t->class))
+		if (!(a = t->jclass))
 			break;
 		if (stringEqualCI(a, "sup"))
 			action = TAGACT_SUP;
@@ -940,7 +940,7 @@ static void domLink(Tag *t, const char *classname,	/* instantiate this class */
 	const char *idname = t->id;
 	const char *membername = 0;	/* usually symname */
 	const char *href_url = t->href;
-	const char *tcn = t->class;
+	const char *tcn = t->jclass;
 	const char *stylestring = attribVal(t, "style");
 	jsobjtype so = 0;	/* obj.style */
 	jsobjtype ato = 0;	/* obj.attributes */
@@ -1156,7 +1156,7 @@ static void optionJS(Tag *t)
 {
 	Tag *sel = t->controller;
 	const char *tx = t->textval;
-	const char *cl = t->class;
+	const char *cl = t->jclass;
 
 	if (!sel)
 		return;
@@ -1313,7 +1313,7 @@ Needless to say that's not good!
 			if (!w)
 				w = emptyString;
 			set_property_string(cf, t->jv, "data", w);
-			w = (t->class ? t->class : emptyString);
+			w = (t->jclass ? t->jclass : emptyString);
 			set_property_string(cf, t->jv, "class", w);
 			set_property_string(cf, t->jv, "last$class", w);
 		}
@@ -1818,7 +1818,7 @@ static void freeTag(Tag *t)
 	nzFree(t->textval);
 	nzFree(t->name);
 	nzFree(t->id);
-	nzFree(t->class);
+	nzFree(t->jclass);
 	nzFree(t->nodeName);
 	nzFree(t->value);
 	cnzFree(t->rvalue);
@@ -2107,7 +2107,7 @@ checkattributes:
 			v = t->atvals[j];
 			if (v && !*v)
 				v = 0;
-			t->class = cloneString(v);
+			t->jclass = cloneString(v);
 		}
 		if ((j = stringInListCI(t->attributes, "value")) >= 0) {
 			v = t->atvals[j];
