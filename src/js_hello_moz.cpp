@@ -280,7 +280,7 @@ if(JS_GetPendingException(cx,&exception) &&
 exception.isObject()) {
 // I don't think we need this line.
 // JS::AutoSaveExceptionState savedExc(cx);
-JS::Rooted<JSObject*> exceptionObject(cx,
+JS::RootedObject exceptionObject(cx,
 &exception.toObject());
 JSErrorReport *what =
 JS_ErrorFromException(cx,exceptionObject);
@@ -294,8 +294,8 @@ JS_ClearPendingException(cx);
 }
 
 // Keep some rooted objects out of scope, so we can track their pointers.
-// The three global objects and the 3 document objects.
-static JS::RootedObject *groot[3];
+// The three window objects and the 3 document objects.
+static JS::RootedObject *winroot[3];
 static JS::RootedObject *docroot[3];
 
 int main(int argc, const char *argv[])
@@ -319,15 +319,19 @@ cx = JS_NewContext(JS::DefaultHeapMaxBytes);
 if(!cx) return 1;
     if (!JS::InitSelfHostedCode(cx))         return 1;
 
+// Multipurpose value, can we declare this outside of any compartment,
+// then use it in various compartments?
+      JS::RootedValue v(cx);
+
 for(i=0; i<top; ++i) {
       JSAutoRequest ar(cx);
       JS::CompartmentOptions options;
-groot[i] = new       JS::RootedObject(cx, JS_NewGlobalObject(cx, &global_class, nullptr, JS::FireOnNewGlobalHook, options));
-      if (!groot[i])
+winroot[i] = new       JS::RootedObject(cx, JS_NewGlobalObject(cx, &global_class, nullptr, JS::FireOnNewGlobalHook, options));
+      if (!winroot[i])
           return 1;
-        JSAutoCompartment ac(cx, *groot[i]);
-        JS_InitStandardClasses(cx, *groot[i]);
-JS_DefineFunctions(cx, *groot[i], nativeMethodsWindow);
+        JSAutoCompartment ac(cx, *winroot[i]);
+        JS_InitStandardClasses(cx, *winroot[i]);
+JS_DefineFunctions(cx, *winroot[i], nativeMethodsWindow);
 
 if(i) {
 /*********************************************************************
@@ -339,7 +343,7 @@ Creating a js class in one compartment, then instantiating an object from
 that class in another compartment, seems to screw up the heap in some way.
 Use this file instead of startwindow.js to demonstrate it;
 then you don't need third.js or endwindow.js.
-
+--------------------------------------------------
 if(!mw0.compiled)
 mw0.CSSStyleDeclaration = function(){ };
 CSSStyleDeclaration = mw0.CSSStyleDeclaration;
@@ -347,15 +351,18 @@ document.style = new CSSStyleDeclaration;
 mw0.compiled = true;
 *********************************************************************/
 
-JS::RootedValue objval(cx);
-objval = JS::ObjectValue(**groot[0]);
-if(!JS_DefineProperty(cx, *groot[i], "mw0", objval,
+JS::RootedValue objval(cx); // object as value
+// winroot[0] is pointer to first window rooted structure.
+// *winroot[0] is first window rooted structure.
+// **winroot[0] is pointer to first window object.
+objval = JS::ObjectValue(**winroot[0]);
+if(!JS_DefineProperty(cx, *winroot[i], "mw0", objval,
 (JSPROP_READONLY|JSPROP_PERMANENT))) {
 puts("unable to create mw0");
 return 1;
 }
-objval = JS::ObjectValue(**groot[i]);
-if(!JS_DefineProperty(cx, *groot[i], "window", objval,
+objval = JS::ObjectValue(**winroot[i]);
+if(!JS_DefineProperty(cx, *winroot[i], "window", objval,
 (JSPROP_READONLY|JSPROP_PERMANENT))) {
 puts("unable to create window");
 return 1;
@@ -364,7 +371,7 @@ return 1;
 // time for document under window
 docroot[i] = new JS::RootedObject(cx, JS_NewObject(cx, nullptr));
 objval = JS::ObjectValue(**docroot[i]);
-if(!JS_DefineProperty(cx, *groot[i], "document", objval,
+if(!JS_DefineProperty(cx, *winroot[i], "document", objval,
 (JSPROP_READONLY|JSPROP_PERMANENT))) {
 puts("unable to create document");
 return 1;
@@ -399,8 +406,7 @@ i = 0; // back to the master window
 
 {
       JSAutoRequest ar(cx);
-        JSAutoCompartment ac(cx, *groot[i]);
-      JS::RootedValue v(cx);
+        JSAutoCompartment ac(cx, *winroot[i]);
         script = "letterInc('gdkkn')+letterDec('!xpsme') + ', it is '+new Date()";
         filename = "noname";
         lineno = 1;
@@ -435,9 +441,8 @@ printf("context %c\n", line[1]);
 i = line[1] - '1';
 if(!i) continue;
 // verify the permanency of object pointers
-        JSAutoCompartment bc(cx, *groot[i]);
-      JS::RootedValue v(cx);
-        if (JS_GetProperty(cx, *groot[i], "document", &v) &&
+        JSAutoCompartment bc(cx, *winroot[i]);
+        if (JS_GetProperty(cx, *winroot[i], "document", &v) &&
 v.isObject()) {
 JS::RootedObject new_d(cx);
 JS_ValueToObject(cx, v, &new_d);
@@ -453,8 +458,7 @@ puts("document object is lost!");
 return 3;
 }
 
-        JSAutoCompartment ac(cx, *groot[i]);
-      JS::RootedValue v(cx);
+        JSAutoCompartment ac(cx, *winroot[i]);
 script = line;
         filename = "noname";
         lineno = 1;
@@ -474,7 +478,7 @@ puts(stringize(cx, v));
 // when we destroy the context.
 for(i=0; i<top; ++i) {
 if(i) *docroot[i] = nullptr;
-*groot[i] = nullptr;
+*winroot[i] = nullptr;
 }
 
 JS_DestroyContext(cx);
