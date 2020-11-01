@@ -254,8 +254,6 @@ static JSFunctionSpec nativeMethodsWindow[] = {
   JS_FN("querySelectorAll", nat_qsa, 1, 0),
   JS_FN("querySelector", nat_stub, 1, 0),
   JS_FN("querySelector0", nat_stub, 1, 0),
-  JS_FN("focus", nat_stub, 0, 0),
-  JS_FN("blur", nat_stub, 0, 0),
   JS_FN("eb$cssText", nat_stub, 1, 0),
   JS_FN("my$win", nat_mywin, 0, 0),
   JS_FN("my$doc", nat_mydoc, 0, 0),
@@ -295,21 +293,23 @@ JS_ClearPendingException(cx);
 }
 }
 
-static JSRuntime *jrt;		/* our js runtime environment */
+// Keep some rooted objects out of scope, so we can track their pointers.
+// The three global objects and the 3 document objects.
+static JS::RootedObject *groot[3];
+static JS::RootedObject *docroot[3];
 
 int main(int argc, const char *argv[])
 {
 bool iaflag = false; // interactive
-int ci, cl;
+int i, top;
 JSContext *cx;
-JSObject *glist[3], *g; // global objects
-JSObject *dlist[3]; // document objects
 bool ok;
 const char *script, *filename;
 int lineno;
+      JSString *str;
 
 if(argc > 1 && !strcmp(argv[1], "-i")) iaflag = true;
-cl = iaflag ? 3 : 1;
+top = iaflag ? 3 : 1;
 
     JS_Init();
 
@@ -318,22 +318,18 @@ cl = iaflag ? 3 : 1;
 cx = JS_NewContext(JS::DefaultHeapMaxBytes);
 if(!cx) return 1;
     if (!JS::InitSelfHostedCode(cx))         return 1;
-      JSString *str;
 
-for(ci=0; ci<cl; ++ci) {
+for(i=0; i<top; ++i) {
       JSAutoRequest ar(cx);
       JS::CompartmentOptions options;
-      JS::RootedObject global(cx, JS_NewGlobalObject(cx, &global_class, nullptr, JS::FireOnNewGlobalHook, options));
-      if (!global)
+groot[i] = new       JS::RootedObject(cx, JS_NewGlobalObject(cx, &global_class, nullptr, JS::FireOnNewGlobalHook, options));
+      if (!groot[i])
           return 1;
-g = glist[ci] = global;
-        JSAutoCompartment ac(cx, g);
-// why can't I just pass g?
-// Why do I need a rooted object, or handle or some such?
-        JS_InitStandardClasses(cx, global);
-JS_DefineFunctions(cx, global, nativeMethodsWindow);
+        JSAutoCompartment ac(cx, *groot[i]);
+        JS_InitStandardClasses(cx, *groot[i]);
+JS_DefineFunctions(cx, *groot[i], nativeMethodsWindow);
 
-if(ci) {
+if(i) {
 /*********************************************************************
 Not the first compartment.
 Link back to the master window.
@@ -352,27 +348,28 @@ mw0.compiled = true;
 *********************************************************************/
 
 JS::RootedValue objval(cx);
-objval = JS::ObjectValue(*glist[0]);
-if(!JS_DefineProperty(cx, global, "mw0", objval,
+objval = JS::ObjectValue(**groot[0]);
+if(!JS_DefineProperty(cx, *groot[i], "mw0", objval,
 (JSPROP_READONLY|JSPROP_PERMANENT))) {
 puts("unable to create mw0");
 return 1;
 }
-objval = JS::ObjectValue(*g);
-if(!JS_DefineProperty(cx, global, "window", objval,
+objval = JS::ObjectValue(**groot[i]);
+if(!JS_DefineProperty(cx, *groot[i], "window", objval,
 (JSPROP_READONLY|JSPROP_PERMANENT))) {
 puts("unable to create window");
 return 1;
 }
-JS::RootedObject document(cx, JS_NewObject(cx, nullptr));
-dlist[ci] = document;
-objval = JS::ObjectValue(*dlist[ci]);
-if(!JS_DefineProperty(cx, global, "document", objval,
+
+// time for document under window
+docroot[i] = new JS::RootedObject(cx, JS_NewObject(cx, nullptr));
+objval = JS::ObjectValue(**docroot[i]);
+if(!JS_DefineProperty(cx, *groot[i], "document", objval,
 (JSPROP_READONLY|JSPROP_PERMANENT))) {
 puts("unable to create document");
 return 1;
 }
-JS_DefineFunctions(cx, document, nativeMethodsDocument);
+JS_DefineFunctions(cx, *docroot[i], nativeMethodsDocument);
 
 // read in startwindow.js
         filename = "startwindow.js";
@@ -398,12 +395,11 @@ return 2;
 }
 }
 
-//  puts("after 3 loop");
+i = 0; // back to the master window
 
 {
-g = glist[0];
       JSAutoRequest ar(cx);
-        JSAutoCompartment ac(cx, g);
+        JSAutoCompartment ac(cx, *groot[i]);
       JS::RootedValue v(cx);
         script = "letterInc('gdkkn')+letterDec('!xpsme') + ', it is '+new Date()";
         filename = "noname";
@@ -430,34 +426,35 @@ char line[500];
 while(fgets(line, sizeof(line), stdin)) {
 // should check for line too long here
       JSAutoRequest ar(cx);
-        JSAutoCompartment ac(cx, g);
-      JS::RootedValue v(cx);
 
 // change context?
 if(line[0] == 'e' &&
 line[1] >= '1' && line[1] <= '3' &&
 isspace(line[2])) {
 printf("context %c\n", line[1]);
-ci = line[1] - '1';
-g = glist[ci];
-if(!ci) continue;
+i = line[1] - '1';
+if(!i) continue;
 // verify the permanency of object pointers
-        JSAutoCompartment bc(cx, g);
-JS::RootedObject gr(cx);
-gr = g;
-        if (JS_GetProperty(cx, gr, "document", &v) &&
+        JSAutoCompartment bc(cx, *groot[i]);
+      JS::RootedValue v(cx);
+        if (JS_GetProperty(cx, *groot[i], "document", &v) &&
 v.isObject()) {
 JS::RootedObject new_d(cx);
 JS_ValueToObject(cx, v, &new_d);
-if(dlist[ci] == new_d)
+JSObject *j1 = *docroot[i];
+JSObject *j2 = new_d;
+if(j1 == j2)
 continue;
 puts("object pointer mismatch, document pointer has changed!");
+printf("%p versus %p\n", j1 ,j2);
 return 3;
 }
 puts("document object is lost!");
 return 3;
 }
 
+        JSAutoCompartment ac(cx, *groot[i]);
+      JS::RootedValue v(cx);
 script = line;
         filename = "noname";
         lineno = 1;
@@ -470,6 +467,14 @@ ReportJSException(cx);
 puts(stringize(cx, v));
 }
 }
+}
+
+// release the rooted objects from their object pointers.
+// Just trying to avoid an argument with the cleanup process
+// when we destroy the context.
+for(i=0; i<top; ++i) {
+if(i) *docroot[i] = nullptr;
+*groot[i] = nullptr;
 }
 
 JS_DestroyContext(cx);
