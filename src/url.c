@@ -412,8 +412,13 @@ static bool parseURL(const char *url, const char **proto, int *prlen, const char
 			return false;
 	if (host)
 		*host = p;
-	if (holen)
+	if (holen) {
 		*holen = q - p;
+// Watch out. Accessing document.cookie from javascript calls this function,
+// and we might have .browse on the end of the domain, which causes trouble.
+		if(*holen > 7 && stringEqual(q - 7, ".browse"))
+			*holen -= 7;
+	}
 	if (*q == ':') {	/* port specified */
 		int n;
 		const char *cc, *pp = q + strcspn(q, "/?#\1");

@@ -1195,8 +1195,6 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 	duk_join(cx, 2);
 	nzFree(outgoing_xhrheaders);
 	nzFree(outgoing_xhrbody);
-// http fetch could bring new cookies into the current window.
-// Can I just call startCookie() again to refresh the cookie copy?
 
 	debugPrint(5, "xhr 2");
 	return 1;
@@ -1259,11 +1257,9 @@ static void startCookie(void)
 	bool secure = false;
 	const char *proto;
 	char *s;
-
 	nzFree(cookieCopy);
 	cookieCopy = initString(&cook_l);
 	stringAndString(&cookieCopy, &cook_l, "; ");
-
 	if (url) {
 		proto = getProtURL(url);
 		if (proto && stringEqualCI(proto, "https"))
@@ -1280,66 +1276,9 @@ static void startCookie(void)
 	}
 }
 
-static bool foldinCookie(duk_context * cx, const char *newcook)
-{
-	char *nc, *loc, *loc2;
-	int j;
-	char *s;
-	char save;
-
-	debugPrint(4, "inject cookie %s", newcook);
-/* make a copy with ; in front */
-	j = strlen(newcook);
-	nc = allocString(j + 3);
-	strcpy(nc, "; ");
-	strcpy(nc + 2, newcook);
-
-/* cut off the extra attributes */
-	s = strpbrk(nc + 2, " \t;");
-	if (s)
-		*s = 0;
-
-/* cookie has to look like keyword=value */
-	s = strchr(nc + 2, '=');
-	if (!s || s == nc + 2) {
-		nzFree(nc);
-		return false;
-	}
-
-	duk_get_global_string(cx, "eb$url");
-	receiveCookie(duk_get_string(cx, -1), newcook);
-	duk_pop(cx);
-
-	++s;
-	save = *s;
-	*s = 0;			/* I'll put it back later */
-	loc = strstr(cookieCopy, nc);
-	*s = save;
-	if (!loc)
-		goto add;
-
-/* find next piece */
-	loc2 = strchr(loc + 2, ';');
-	if (!loc2)
-		loc2 = loc + strlen(loc);
-
-/* excise the oold, put in the new */
-	j = loc2 - loc;
-	strmove(loc, loc2);
-	cook_l -= j;
-
-add:
-	if (cook_l == 2)	// empty
-		stringAndString(&cookieCopy, &cook_l, nc + 2);
-	else
-		stringAndString(&cookieCopy, &cook_l, nc);
-	nzFree(nc);
-	debugPrint(4, "cookieCopy %s", cookieCopy);
-	return true;
-}
-
 static duk_ret_t native_getcook(duk_context * cx)
 {
+	startCookie();
 	duk_push_string(cx, cookieCopy + 2);
 	return 1;
 }
@@ -1349,7 +1288,12 @@ static duk_ret_t native_setcook(duk_context * cx)
 	const char *newcook = duk_get_string(cx, 0);
 	debugPrint(5, "cook 1");
 	if (newcook) {
-		foldinCookie(cx, newcook);
+		const char *s = strchr(newcook, '=');
+		if(s && s > newcook) {
+			duk_get_global_string(cx, "eb$url");
+			receiveCookie(duk_get_string(cx, -1), newcook);
+			duk_pop(cx);
+		}
 	}
 	debugPrint(5, "cook 2");
 	return 0;
@@ -1594,8 +1538,6 @@ void createJavaContext_0(Frame *f)
 		      DUK_DEFPROP_CLEAR_WRITABLE |
 		      DUK_DEFPROP_CLEAR_CONFIGURABLE));
 	duk_pop(cx);
-
-	startCookie();		// so document.cookie will work properly
 
 // setupJavaDom() in ebjs.c does the rest.
 }				/* createJavaContext_0 */
