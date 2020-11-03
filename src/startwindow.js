@@ -3152,7 +3152,7 @@ var evname = evs[j];
 eval('mw0.' + cn + '.prototype["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.dom$class = mw0.constructor.prototype.dom$class) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3171,7 +3171,7 @@ var evname = evs[j];
 eval('mw0.' + cn + '.prototype["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.dom$class = mw0.constructor.prototype.dom$class) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3189,7 +3189,7 @@ var evname = evs[j];
 eval('mw0.' + cn + '.prototype["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.dom$class = mw0.constructor.prototype.dom$class) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3206,7 +3206,7 @@ var evname = evs[j];
 eval('mw0.' + cn + '.prototype["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.dom$class = mw0.constructor.prototype.dom$class) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3799,7 +3799,7 @@ var evname = evs[j];
 eval(cn + '["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(' + cn + ', "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$orig?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.constructor.dom$class = mw0.constructor.prototype.dom$class) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$orig?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
