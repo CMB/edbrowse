@@ -621,9 +621,16 @@ if(found) {
 JS_SetProperty(cxa, parent, altname, ourval);
 return;
 }
+#if MOZJS_MAJOR_VERSION >= 60
 if(setter)
 JS_DefineProperty(cxa, parent, name, getter, setter,
 (JSPROP_ENUMERATE|JSPROP_GETTER|JSPROP_SETTER));
+#else
+if(setter)
+JS_DefineProperty(cxa, parent, name, 0,
+(JSPROP_ENUMERATE|JSPROP_GETTER|JSPROP_SETTER),
+getter, setter);
+#endif
 JS_DefineProperty(cxa, parent, altname, ourval, JSPROP_STD);
 }
 
