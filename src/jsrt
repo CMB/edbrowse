@@ -750,11 +750,6 @@ if(document.cookie != "")
 fail(150);
 */
 
-document.cookie = "yy=37 other stuff";
-document.cookie = "zz=59";
-if(document.cookie != "yy=37; zz=59")
-fail(151);
-
 insertBefore_returnvalue();
 
 function insertBefore_returnvalue()
