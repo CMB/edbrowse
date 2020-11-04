@@ -2775,6 +2775,7 @@ int frameExpandLine(int ln, jsobjtype fo)
 	last_f->next = cf = allocZeroMem(sizeof(Frame));
 	cf->owner = cw;
 	cf->frametag = t;
+	cf->gsn = ++gfsn;
 	debugPrint(2, "fetch frame %s",
 		   (s ? s : (jssrc ? "javascript" : "empty")));
 

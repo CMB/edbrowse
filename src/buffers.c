@@ -711,6 +711,7 @@ static struct ebWindow *createWindow(void)
 	nw = allocZeroMem(sizeof(struct ebWindow));
 	saveSubstitutionStrings();
 	restoreSubstitutionStrings(nw);
+	nw->f0.gsn = ++gfsn;
 	return nw;
 }				/* createWindow */
 

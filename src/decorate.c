@@ -14,6 +14,7 @@ foo.innerHTML = string or document.write(string).
  * These are replaced with stubs when run within the javascript process. */
 struct ebWindow *cw;
 Frame *cf;
+int gfsn;
 
 /* traverse the tree of nodes with a callback function */
 nodeFunction traverse_callback;

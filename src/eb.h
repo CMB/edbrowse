@@ -386,6 +386,7 @@ struct ebFrame {
 	struct ebFrame *next;
 	struct ebWindow *owner;
 	struct htmlTag *frametag;
+	int gsn; // global sequence number
 	char *fileName;		/* name of file or url */
 	char *firstURL;		// before http redirection
 	char *hbase; /* base for href references */
@@ -411,6 +412,7 @@ struct ebFrame {
 
 typedef struct ebFrame Frame;
 extern Frame *cf;	/* current frame */
+extern int gfsn; // global frame sequence number
 
 /* single linked list for internal jump history */
 struct histLabel {
