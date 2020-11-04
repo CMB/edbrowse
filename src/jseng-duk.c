@@ -105,6 +105,7 @@ static void watch_free(void *udata, void *p)
 	free(w);
 	if (t) {
 		debugPrint(4, "gc %p", p);
+		t->jslink = false;
 		killTag(t);
 	}
 }
@@ -116,7 +117,9 @@ void connectTagObject(Tag *t, jsobjtype p)
 		debugPrint(1, "multiple tags connect to js pointer %p", p);
 	w->u.t = t;
 	t->jv = p;
+	t->jslink = true;
 	set_property_number_0(t->f0->cx, p, "eb$seqno", t->seqno);
+	set_property_number_0(t->f0->cx, p, "eb$gsn", t->gsn);
 }
 
 void disconnectTagObject(Tag *t)
@@ -134,6 +137,7 @@ void disconnectTagObject(Tag *t)
 			   p);
 	w->u.t = NULL;
 	t->jv = NULL;
+	t->jslink = false;
 }
 
 int js_main(void)

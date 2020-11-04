@@ -536,6 +536,7 @@ struct htmlTag {
 	jsobjtype jv;		/* corresponding javascript variable */
 	jsobjtype style; // style object
 	int seqno;
+	int gsn; // global sequence number, for rooting
 	char *js_file;
 	int js_ln;			/* line number of javascript */
 	int lic;		/* list item count, highly overloaded */
@@ -568,7 +569,8 @@ struct htmlTag {
 	bool checked:1;
 	bool rchecked:1;	/* for reset */
 	bool post:1;		/* post, rather than get */
-	bool javapost:1;	/* post by calling javascript */
+	bool javapost:1;	// post by calling javascript
+	bool jslink:1;	// linked to a js object
 	bool mime:1;		/* encode as mime, rather than url encode */
 	bool bymail:1;		/* send by mail, rather than http */
 	bool submitted:1;
@@ -583,7 +585,7 @@ struct htmlTag {
 	bool masked:1;
 	bool iscolor:1;
 	char subsup;		/* span turned into sup or sub */
-	uchar itype;		/* input type = */
+	uchar itype;		// input type =
 	uchar itype_minor;
 #define DIS_INVISIBLE 1
 #define DIS_HOVER 2

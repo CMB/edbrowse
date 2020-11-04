@@ -869,6 +869,10 @@ Imagine a timer fires and js rearranges the entire tree, but we haven't
 rerendered yet. You type g on a link.
 That line isn't even there, the tag is obsolete, its pointer is obsolete.
 Check for that here in the only way I think is safe, from the top.
+However, if objects are rooted in some way,
+so that they can't go away without being released,
+then there is an easier way. Start with the given node and climb up
+through parentNode, looking for a global object.
 *********************************************************************/
 
 bool tagIsRooted(Tag *t)

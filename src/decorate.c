@@ -1815,6 +1815,10 @@ const struct tagInfo availableTags[] = {
 static void freeTag(Tag *t)
 {
 	char **a;
+// Even if js has been turned off, if this tag was previously connected to an
+// object, we should disconnect it.
+	if(t->jslink)
+		disconnectTagObject(t);
 	nzFree(t->textval);
 	nzFree(t->name);
 	nzFree(t->id);
@@ -1883,6 +1887,7 @@ Tag *newTag(const Frame *f, const char *name)
 {
 	Tag *t, *t1, *t2 = 0;
 	const struct tagInfo *ti;
+	static int gsn = 0;
 
 	for (ti = availableTags; ti->name[0]; ++ti)
 		if (stringEqualCI(ti->name, name))
@@ -1899,6 +1904,7 @@ Tag *newTag(const Frame *f, const char *name)
 	t->f0 = (Frame *) f;		/* set owning frame */
 	t->info = ti;
 	t->seqno = cw->numTags;
+	t->gsn = ++gsn;
 	t->nodeName = cloneString(name);
 	pushTag(t);
 	if (t->action == TAGACT_SCRIPT) {
