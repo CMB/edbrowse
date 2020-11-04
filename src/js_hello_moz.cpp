@@ -1257,10 +1257,6 @@ cxa = JS_NewContext(JS::DefaultHeapMaxBytes);
 if(!cxa) return 1;
     if (!JS::InitSelfHostedCode(cxa))         return 1;
 
-// Multipurpose value, can we declare this outside of any compartment,
-// then use it in various compartments?
-      JS::RootedValue v(cxa);
-
 for(i=0; i<top; ++i) {
       JSAutoRequest ar(cxa);
       JS::CompartmentOptions options;
@@ -1350,6 +1346,7 @@ i = 0; // back to the master window
         lineno = 1;
         JS::CompileOptions opts(cxa);
         opts.setFileAndLine(filename, lineno);
+      JS::RootedValue v(cxa);
         ok = JS::Evaluate(cxa, opts, script, strlen(script), &v);
         if (!ok)
           return 1;
@@ -1370,6 +1367,7 @@ char line[500];
 while(fgets(line, sizeof(line), stdin)) {
 // should check for line too long here
       JSAutoRequest ar(cxa);
+      JS::RootedValue v(cxa);
 
 // change context?
 if(line[0] == 'e' &&
@@ -1408,7 +1406,8 @@ puts(stringize(v));
 }
 }
 
-for(i=0; i<top; ++i) {
+// rooted objects have to free in the reverse (stack) order.
+for(i=top-1; i>=0; --i) {
 if(i) delete docroot[i];
 delete winroot[i];
 }
