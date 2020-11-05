@@ -227,6 +227,15 @@ static JSContext *cxa; // the context for all
 // I'll still use cx when it is passed in, as it must be for native methods.
 // But it will be equal to cxa.
 
+// Rooting window, to hold on to any objects that edbrowse might access.
+static JS::RootedObject *rw0;
+
+// Master window, with large and complex functions that we want to
+// compile and store only once. Unfortunately, as of moz 60,
+// it seems we can't do this with classes. Objects must instantiate
+// from a class in the same window.    idk
+static JS::RootedObject *mw0;
+
 // The _o methods are the lowest level, calling upon the engine.
 // They take JSObject as parameter, thus _o
 
@@ -636,17 +645,25 @@ JS_DefineProperty(cxa, parent, altname, ourval, JSPROP_STD);
 
 void connectTagObject(Tag *t, JS::HandleObject o)
 {
-	t->jv = new JS::RootedObject(cxa, o);
+char buf[16];
+sprintf(buf, "o%d", t->gsn);
+JS::RootedValue v(cxa);
+v = JS::ObjectValue(*o);
+JS_DefineProperty(cxa, *rw0, buf, v,
+JSPROP_STD);
 JS_DefineProperty(cxa, o, "eb$seqno", t->seqno,
 (JSPROP_READONLY|JSPROP_PERMANENT));
+JS_DefineProperty(cxa, o, "eb$gsn", t->gsn,
+(JSPROP_READONLY|JSPROP_PERMANENT));
+t->jslink = true;
 }
 
 void disconnectTagObject(Tag *t)
 {
-// I assume (hope) deleting the rooted thing
-// calls a destructor to unroot what it pointed to.
-delete (JS::RootedObject*)(t->jv);
-	t->jv = NULL;
+char buf[16];
+sprintf(buf, "o%d", t->gsn);
+JS_DeleteProperty(cxa, *rw0, buf);
+t->jslink = false;
 }
 
 // I don't have any reverse pointers, so I'm just going to scan the list.
@@ -654,19 +671,53 @@ delete (JS::RootedObject*)(t->jv);
 static Tag *tagFromObject(JS::HandleObject o)
 {
 	Tag *t;
-	int i;
+	int i, gsn;
 	if (!tagList)
 		i_printfExit(MSG_NullListInform);
-JS::RootedObject r(cxa, o);
+JS::RootedValue v(cxa);
+if(!JS_GetProperty(cxa, o, "eb$gsn", &v) ||
+!v.isInt32())
+return NULL;
+gsn = v.toInt32();
 	for (i = 0; i < cw->numTags; ++i) {
 		t = tagList[i];
-if(!t->jv || t->dead)
+if(t->dead) // not sure how this would happen
 continue;
-// overloaded == compares the object pointers inside the rooted structures
-if(r == *(JS::RootedObject*)(t->jv))
+if(t->gsn == gsn)
 			return t;
 	}
 	return 0;
+}
+
+// inverse of the above
+static JSObject *tagToObject(const Tag *t)
+{
+char buf[16];
+sprintf(buf, "o%d", t->gsn);
+JS::RootedValue v(cxa);
+JS::RootedObject o(cxa);
+if(JS_GetProperty(cxa, *rw0, buf, &v) &&
+v.isObject()) {
+JS_ValueToObject(cxa, v, &o);
+// cast from rooted object to JSObject *
+return o;
+}
+return 0;
+}
+
+static JSObject *frameToObject(int sn)
+{
+char buf[16];
+sprintf(buf, "g%d", sn);
+JS::RootedValue v(cxa);
+JS::RootedObject o(cxa);
+if(JS_GetProperty(cxa, *rw0, buf, &v) &&
+v.isObject()) {
+JS_ValueToObject(cxa, v, &o);
+// cast from rooted object to JSObject *
+return o;
+}
+return 0;
 }
 
 // Create a new tag for this pointer, only called from document.createElement().
@@ -1224,6 +1275,8 @@ JS::RootedObject exceptionObject(cxa,
 JSErrorReport *what =
 JS_ErrorFromException(cxa,exceptionObject);
 if(what) {
+if(!stringEqual(what->filename, "noname"))
+printf("%s line %d: ", what->filename, what->lineno);
 puts(what->message().c_str());
 // what->filename what->lineno
 }
@@ -1232,133 +1285,176 @@ JS_ClearPendingException(cxa);
 }
 }
 
-// Keep some rooted objects out of scope, so we can track their pointers.
-// The three window objects and the 3 document objects.
-static JS::RootedObject *winroot[3];
-static JS::RootedObject *docroot[3];
+// This assumes you are in the compartment where you want to exec the file
+static void execFile(const char *filename)
+{
+        JS::CompileOptions opts(cxa);
+        opts.setFileAndLine(filename, 1);
+JS::RootedValue v(cxa);
+        bool ok = JS::Evaluate(cxa, opts, filename, &v);
+if(!ok) {
+ReportJSException();
+exit(2);
+}
+}
+
+static void execScript(const char *script)
+{
+        JS::CompileOptions opts(cxa);
+        opts.setFileAndLine("noname", 0);
+JS::RootedValue v(cxa);
+        bool ok = JS::Evaluate(cxa, opts, script, strlen(script), &v);
+if(!ok)
+ReportJSException();
+else
+puts(stringize(v));
+}
+
+// This is an edbrowse context, in a frame,
+// nothing like the Mozilla js context.
+bool createJSContext(int sn)
+{
+char buf[16];
+sprintf(buf, "g%d", sn);
+debugPrint(3, "create js context", sn);
+      JS::CompartmentOptions options;
+JSObject *g = JS_NewGlobalObject(cxa, &global_class, nullptr, JS::FireOnNewGlobalHook, options);
+if(!g)
+return false;
+JS::RootedObject global(cxa, g);
+        JSAutoCompartment ac(cxa, g);
+        JS_InitStandardClasses(cxa, global);
+JS_DefineFunctions(cxa, global, nativeMethodsWindow);
+
+JS::RootedValue objval(cxa); // object as value
+objval = JS::ObjectValue(*global);
+if(!JS_DefineProperty(cxa, *rw0, buf, objval, JSPROP_STD))
+return false;
+
+// Link back to the master window.
+objval = JS::ObjectValue(**mw0);
+if(!JS_DefineProperty(cxa, global, "mw0", objval,
+(JSPROP_READONLY|JSPROP_PERMANENT)))
+return false;
+
+// Link to root window, debugging only.
+// Don't do this in production; it's a huge security risk!
+objval = JS::ObjectValue(**rw0);
+JS_DefineProperty(cxa, global, "rw0", objval,
+(JSPROP_READONLY|JSPROP_PERMANENT));
+
+// window
+objval = JS::ObjectValue(*global);
+if(!JS_DefineProperty(cxa, global, "window", objval,
+(JSPROP_READONLY|JSPROP_PERMANENT)))
+return false;
+
+// time for document under window
+JS::RootedObject docroot(cxa, JS_NewObject(cxa, nullptr));
+objval = JS::ObjectValue(*docroot);
+if(!JS_DefineProperty(cxa, global, "document", objval,
+(JSPROP_READONLY|JSPROP_PERMANENT)))
+return false;
+JS_DefineFunctions(cxa, docroot, nativeMethodsDocument);
+
+set_property_number_o(global, "eb$ctx", sn);
+set_property_number_o(docroot, "eb$seqno", 0);
+// Sequence is to set cf->fileName, then createContext(), so for a short time,
+// we can rely on that variable.
+// Let's make it more permanent, per context.
+// Has to be nonwritable for security reasons.
+JS::RootedValue v(cxa);
+JS::RootedString m(cxa, JS_NewStringCopyZ(cxa, cf->fileName));
+v.setString(m);
+JS_DefineProperty(cxa, global, "eb$url", v,
+(JSPROP_READONLY|JSPROP_PERMANENT));
+
+execFile("compartment.js");
+return true;
+}
+
+void destroy_js_context(int sn)
+{
+char buf[16];
+sprintf(buf, "g%d", sn);
+debugPrint(3, "remove js context", sn);
+JS_DeleteProperty(cxa, *rw0, buf);
+}
 
 int main(int argc, const char *argv[])
 {
 bool iaflag = false; // interactive
-int i, top;
-bool ok;
-const char *script, *filename;
-int lineno;
-      JSString *str;
+int c; // compartment
+int top; // number of windows
+char buf[16];
 
 if(argc > 1 && !strcmp(argv[1], "-i")) iaflag = true;
-top = iaflag ? 3 : 1;
+top = iaflag ? 9 : 1;
 
     JS_Init();
-
 // Mozilla assumes one context per thread; we can run all of edbrowse
 // inside one context; I think.
 cxa = JS_NewContext(JS::DefaultHeapMaxBytes);
 if(!cxa) return 1;
     if (!JS::InitSelfHostedCode(cxa))         return 1;
 
-for(i=0; i<top; ++i) {
-      JSAutoRequest ar(cxa);
+// make rooting window and master window
+	{
       JS::CompartmentOptions options;
-winroot[i] = new       JS::RootedObject(cxa, JS_NewGlobalObject(cxa, &global_class, nullptr, JS::FireOnNewGlobalHook, options));
-      if (!winroot[i])
+rw0 = new       JS::RootedObject(cxa, JS_NewGlobalObject(cxa, &global_class, nullptr, JS::FireOnNewGlobalHook, options));
+      if (!rw0)
           return 1;
-        JSAutoCompartment ac(cxa, *winroot[i]);
-        JS_InitStandardClasses(cxa, *winroot[i]);
-JS_DefineFunctions(cxa, *winroot[i], nativeMethodsWindow);
+        JSAutoCompartment ac(cxa, *rw0);
+        JS_InitStandardClasses(cxa, *rw0);
+	}
 
-if(i) {
-/*********************************************************************
-Not the first compartment.
-Link back to the master window.
-Warning! This architecture produces a seg fault on mozjs 60 when
-this program terminates and we clean up.
-Creating a js class in one compartment, then instantiating an object from
-that class in another compartment, seems to screw up the heap in some way.
-Use this file instead of startwindow.js to demonstrate it;
-then you don't need third.js or endwindow.js.
---------------------------------------------------
-if(!mw0.compiled)
-mw0.CSSStyleDeclaration = function(){ };
-CSSStyleDeclaration = mw0.CSSStyleDeclaration;
-document.style = new CSSStyleDeclaration;
-mw0.compiled = true;
-*********************************************************************/
-
+	{
+      JS::CompartmentOptions options;
+mw0 = new       JS::RootedObject(cxa, JS_NewGlobalObject(cxa, &global_class, nullptr, JS::FireOnNewGlobalHook, options));
+      if (!mw0)
+          return 1;
+        JSAutoCompartment ac(cxa, *mw0);
+        JS_InitStandardClasses(cxa, *mw0);
+JS_DefineFunctions(cxa, *mw0, nativeMethodsWindow);
+// Link yourself to the master window.
 JS::RootedValue objval(cxa); // object as value
-// winroot[0] is pointer to first window rooted structure.
-// *winroot[0] is first window rooted structure.
-// **winroot[0] is first window object.
-objval = JS::ObjectValue(**winroot[0]);
-if(!JS_DefineProperty(cxa, *winroot[i], "mw0", objval,
-(JSPROP_READONLY|JSPROP_PERMANENT))) {
-puts("unable to create mw0");
-return 1;
-}
-objval = JS::ObjectValue(**winroot[i]);
-if(!JS_DefineProperty(cxa, *winroot[i], "window", objval,
-(JSPROP_READONLY|JSPROP_PERMANENT))) {
-puts("unable to create window");
-return 1;
+objval = JS::ObjectValue(**mw0);
+JS_DefineProperty(cxa, *mw0, "mw0", objval,
+(JSPROP_READONLY|JSPROP_PERMANENT));
+// need document, just for its native methods
+JS::RootedObject docroot(cxa, JS_NewObject(cxa, nullptr));
+objval = JS::ObjectValue(*docroot);
+JS_DefineProperty(cxa, *mw0, "document", objval,
+(JSPROP_READONLY|JSPROP_PERMANENT));
+JS_DefineFunctions(cxa, docroot, nativeMethodsDocument);
+execFile("master.js");
+execFile("third.js");
+	}
+
+for(c=0; c<top; ++c) {
+Frame f;
+sprintf(buf, "session %d", c+1);
+cf = &f;
+cf->fileName = buf;
+if(!createJSContext(c))
+printf("create failed on %d\n", c+1);
 }
 
-// time for document under window
-docroot[i] = new JS::RootedObject(cxa, JS_NewObject(cxa, nullptr));
-objval = JS::ObjectValue(**docroot[i]);
-if(!JS_DefineProperty(cxa, *winroot[i], "document", objval,
-(JSPROP_READONLY|JSPROP_PERMANENT))) {
-puts("unable to create document");
-return 1;
-}
-JS_DefineFunctions(cxa, *docroot[i], nativeMethodsDocument);
-
-// read in startwindow.js
-        filename = "startwindow.js";
-        lineno = 1;
-        JS::CompileOptions opts(cxa);
-        opts.setFileAndLine(filename, lineno);
-        ok = JS::Evaluate(cxa, opts, filename, &objval);
-if(!ok) {
-ReportJSException();
-return 2;
-}
-
-// If you want to back it off, use endwindow.js instead of third.js
-        filename = "third.js";
-        lineno = 1;
-        opts.setFileAndLine(filename, lineno);
-        ok = JS::Evaluate(cxa, opts, filename, &objval);
-if(!ok) {
-ReportJSException();
-return 2;
-}
-
-}
-}
-
-i = 0; // back to the master window
+c = 0; // back to the first window
+//  puts("after loop");
 
 {
-      JSAutoRequest ar(cxa);
-        JSAutoCompartment ac(cxa, *winroot[i]);
-        script = "letterInc('gdkkn')+letterDec('!xpsme') + ', it is '+new Date()";
-        filename = "noname";
-        lineno = 1;
-        JS::CompileOptions opts(cxa);
-        opts.setFileAndLine(filename, lineno);
-      JS::RootedValue v(cxa);
-        ok = JS::Evaluate(cxa, opts, script, strlen(script), &v);
-        if (!ok)
-          return 1;
-str = v.toString();
-// str seems to be internal to v, or manage by v;
-// if I try delete str, free() says invalid pointer.
-char *es = JS_EncodeString(cxa, str);
-      printf("%s\n", es);
-// should we use delete or free here; either seems to work.
-free(es);
-// The original hello program didn't free es, but who cares, exit(0),
-// thus these little sample programs sometimes leave out important details.
+JS::RootedValue v(cxa);
+JS::RootedObject co(cxa); // current object
+sprintf(buf, "g%d", c);
+if(!JS_GetProperty(cxa, *rw0, buf, &v) ||
+!v.isObject()) {
+printf("no rooted global %s\n", buf);
+exit(3);
+}
+JS_ValueToObject(cxa, v, &co);
+        JSAutoCompartment ac(cxa, co);
+execScript("letterInc('gdkkn')+letterDec('!xpsme') + ', it is '+new Date()");
 }
 
 if(iaflag) {
@@ -1366,52 +1462,33 @@ char line[500];
 // end with control d, EOF
 while(fgets(line, sizeof(line), stdin)) {
 // should check for line too long here
-      JSAutoRequest ar(cxa);
-      JS::RootedValue v(cxa);
 
 // change context?
 if(line[0] == 'e' &&
-line[1] >= '1' && line[1] <= '3' &&
+line[1] >= '1' && line[1] <= '9' &&
 isspace(line[2])) {
 printf("context %c\n", line[1]);
-i = line[1] - '1';
-if(!i) continue;
-// verify the permanency of object pointers
-        JSAutoCompartment bc(cxa, *winroot[i]);
-        if (JS_GetProperty(cxa, *winroot[i], "document", &v) &&
-v.isObject()) {
-JS::RootedObject new_d(cxa);
-JS_ValueToObject(cxa, v, &new_d);
-if(new_d == *docroot[i])
+c = line[1] - '1';
 continue;
-puts("object pointer mismatch, document pointer has changed!");
-return 3;
-}
-puts("document object is lost!");
-return 3;
 }
 
-        JSAutoCompartment ac(cxa, *winroot[i]);
-script = line;
-        filename = "noname";
-        lineno = 1;
-        JS::CompileOptions opts(cxa);
-        opts.setFileAndLine(filename, lineno);
-        ok = JS::Evaluate(cxa, opts, script, strlen(script), &v);
-if(!ok) {
-ReportJSException();
-} else {
-puts(stringize(v));
-}
+JS::RootedValue v(cxa);
+JS::RootedObject co(cxa); // current object
+sprintf(buf, "g%d\n", c);
+JS_GetProperty(cxa, *rw0, buf, &v);
+JS_ValueToObject(cxa, v, &co);
+        JSAutoCompartment ac(cxa, co);
+execScript(line);
 }
 }
 
 // rooted objects have to free in the reverse (stack) order.
-for(i=top-1; i>=0; --i) {
-if(i) delete docroot[i];
-delete winroot[i];
-}
+  puts("del m");
+delete mw0;
+  puts("del r");
+delete rw0;
 
+  puts("destroy");
 JS_DestroyContext(cxa);
     JS_ShutDown();
     return 0;
