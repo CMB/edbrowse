@@ -1373,11 +1373,12 @@ execFile("compartment.js");
 return true;
 }
 
-void destroy_js_context(int sn)
+void destroyJSContext(int sn)
 {
 char buf[16];
 sprintf(buf, "g%d", sn);
 debugPrint(3, "remove js context", sn);
+        JSAutoCompartment ac(cxa, *rw0);
 JS_DeleteProperty(cxa, *rw0, buf);
 }
 
@@ -1474,13 +1475,17 @@ continue;
 
 JS::RootedValue v(cxa);
 JS::RootedObject co(cxa); // current object
-sprintf(buf, "g%d\n", c);
+sprintf(buf, "g%d", c);
 JS_GetProperty(cxa, *rw0, buf, &v);
 JS_ValueToObject(cxa, v, &co);
         JSAutoCompartment ac(cxa, co);
 execScript(line);
 }
 }
+
+// I should be able to remove globals in any order, need not be a stack
+for(c=0; c<top; ++c)
+destroyJSContext(c);
 
 // rooted objects have to free in the reverse (stack) order.
   puts("del m");

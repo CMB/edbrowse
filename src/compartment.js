@@ -605,7 +605,7 @@ w.hrefset$p.push("' + cn + '"); \
 w.hrefset$a.push(h); \
 return; } \
 var last_href = (this.href$2 ? this.href$2.href$val : null); \
-if(!this.href$2) { this.href$2 = new mw0.URL(h ? eb$resolveURL(w.eb$base,h) : h) } else { if(!this.href$2.href$val && h) h =  eb$resolveURL(w.eb$base,h); \
+if(!this.href$2) { this.href$2 = new URL(h ? eb$resolveURL(w.eb$base,h) : h) } else { if(!this.href$2.href$val && h) h =  eb$resolveURL(w.eb$base,h); \
 this.href$2.href = h; }  \
 var next_href = this.href$2.href$val; \
 /* special code for setting frame.src, redirect to a new page. */ \
@@ -654,10 +654,10 @@ CSSStyleSheet.prototype.addRule = mw0.CSSStyleSheet.prototype.addRule;
 CSSStyleDeclaration = function(){
         this.element = null;
         this.style = this;
-	 this.attributes = new mw0.NamedNodeMap;
+	 this.attributes = new NamedNodeMap;
 this.ownerDocument = my$doc();
 this.attributes.owner = this;
-this.sheet = new mw0.CSSStyleSheet;
+this.sheet = new CSSStyleSheet;
 };
 CSSStyleDeclaration.prototype.dom$class = "CSSStyleDeclaration";
 CSSStyleDeclaration.prototype.animationDelay =
@@ -673,12 +673,6 @@ CSSStyleDeclaration.prototype.getPropertyPriority = mw0.CSSStyleDeclaration.prot
 Object.defineProperty(CSSStyleDeclaration.prototype, "css$data", {
 get: function() { var s = ""; for(var i=0; i<this.childNodes.length; ++i) if(this.childNodes[i].nodeName == "#text") s += this.childNodes[i].data; return s; }});
 Object.defineProperty(CSSStyleDeclaration.prototype, "cssText", { get: mw0.cssTextGet, set: eb$cssText });
-
-// pages seem to want document.style to exist
-document.style = new CSSStyleDeclaration;
-document.style.bgcolor = "white";
-document.defaultView = window;
-document.defaultView.getComputedStyle = mw0.getComputedStyle;
 
 Table.prototype.insertRow = mw0.insertRow;
 tBody.prototype.insertRow = mw0.insertRow;
@@ -716,7 +710,7 @@ this.class = "";
  * I have to treat a text node like an html node. */
 this.childNodes = [];
 this.parentNode = null;
-this.attributes = new mw0.NamedNodeMap;
+this.attributes = new NamedNodeMap;
 this.attributes.owner = this;
 }
 TextNode.prototype.dom$class = "TextNode";
@@ -1275,4 +1269,10 @@ for(var i=0; i<l; ++i) a[i] = Math.floor(Math.random()*0x100000000);
 rastep = 0;
 requestAnimationFrame = mw0.requestAnimationFrame;
 cancelAnimationFrame = eb$voidfunction;
+
+// pages seem to want document.style to exist
+document.style = new CSSStyleDeclaration;
+document.style.bgcolor = "white";
+document.defaultView = window;
+document.defaultView.getComputedStyle = mw0.getComputedStyle;
 
