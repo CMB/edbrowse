@@ -204,8 +204,9 @@ void i_printf(int crap, ...) { printf(" print %d\n"); }
 
 int sideBuffer(int cx, const char *text, int textlen, const char *bufname) { puts("side buffer"); return 0; }
 
-struct ebWindow *cw;
-Frame *cf;
+static struct ebWindow win0;
+struct ebWindow *cw = &win0;
+Frame *cf = &win0.f0;
 int context = 0, debugLevel = 1;
 struct ebSession sessionList[10];
 
@@ -591,13 +592,15 @@ if(!h)
 h = emptyString;
 	debugPrint(5, "setter h 1");
         JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+JS_SetProperty(cx, thisobj, "inner$HTML", args[0]);
+	debugPrint(5, "setter h 2");
 args.rval().setUndefined();
 return true;
 }
 
 void set_property_string_o(JS::HandleObject parent, const char *name, const char *value)
 {
-	bool defset = false, found;
+	bool found;
 	JSNative getter = NULL;
 	JSNative setter = NULL;
 	const char *altname = 0;
@@ -630,14 +633,15 @@ if(found) {
 JS_SetProperty(cxa, parent, altname, ourval);
 return;
 }
+// Ok I thought sure I'd need to set JSPROP_GETTER|JSPROP_SETTER
+// but that causes a seg fault.
 #if MOZJS_MAJOR_VERSION >= 60
 if(setter)
 JS_DefineProperty(cxa, parent, name, getter, setter,
-(JSPROP_ENUMERATE|JSPROP_GETTER|JSPROP_SETTER));
+JSPROP_STD);
 #else
 if(setter)
-JS_DefineProperty(cxa, parent, name, 0,
-(JSPROP_ENUMERATE|JSPROP_GETTER|JSPROP_SETTER),
+JS_DefineProperty(cxa, parent, name, 0, JSPROP_STD,
 getter, setter);
 #endif
 JS_DefineProperty(cxa, parent, altname, ourval, JSPROP_STD);
@@ -1011,6 +1015,23 @@ JS::RootedObject b_j(cxa);
 domSetsLinkage(type, p_j, p_name, a_j, emptyString, b_j, emptyString);
 }
 
+static bool nat_logElement(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+if(argc != 2 ||
+!args[0].isObject() || !args[1].isString())
+return true;
+	debugPrint(5, "log el 1");
+JS::RootedObject obj(cxa);
+JS_ValueToObject(cxa, args[0], &obj);
+// this call creates the getter and setter for innerHTML
+set_property_string_o(obj, "innerHTML", emptyString);
+const char *tagname = stringize(args[1]);
+domSetsLinkage('c', obj, tagname);
+	debugPrint(5, "log el 2");
+return true;
+}
+
 static bool nat_puts(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
@@ -1247,6 +1268,7 @@ static JSFunctionSpec nativeMethodsWindow[] = {
   JS_FN("eb$cssText", nat_stub, 1, 0),
   JS_FN("my$win", nat_mywin, 0, 0),
   JS_FN("my$doc", nat_mydoc, 0, 0),
+  JS_FN("eb$logElement", nat_logElement, 2, 0),
   JS_FS_END
 };
 
@@ -1390,7 +1412,7 @@ int top; // number of windows
 char buf[16];
 
 if(argc > 1 && !strcmp(argv[1], "-i")) iaflag = true;
-top = iaflag ? 9 : 1;
+top = iaflag ? 3 : 1;
 
     JS_Init();
 // Mozilla assumes one context per thread; we can run all of edbrowse
@@ -1433,9 +1455,7 @@ execFile("third.js");
 	}
 
 for(c=0; c<top; ++c) {
-Frame f;
 sprintf(buf, "session %d", c+1);
-cf = &f;
 cf->fileName = buf;
 if(!createJSContext(c))
 printf("create failed on %d\n", c+1);
@@ -1448,12 +1468,18 @@ c = 0; // back to the first window
 JS::RootedValue v(cxa);
 JS::RootedObject co(cxa); // current object
 sprintf(buf, "g%d", c);
+// WARNING! You have to be in a compartment to do the next GetProperty.
+// If you're not, it will work, but something will seg fault later on,
+// and it will be near impossible to debug.
+	{
+        JSAutoCompartment bc(cxa, *rw0);
 if(!JS_GetProperty(cxa, *rw0, buf, &v) ||
 !v.isObject()) {
-printf("no rooted global %s\n", buf);
+printf("can't find global %s\n", buf);
 exit(3);
 }
 JS_ValueToObject(cxa, v, &co);
+}
         JSAutoCompartment ac(cxa, co);
 execScript("letterInc('gdkkn')+letterDec('!xpsme') + ', it is '+new Date()");
 }
@@ -1466,7 +1492,7 @@ while(fgets(line, sizeof(line), stdin)) {
 
 // change context?
 if(line[0] == 'e' &&
-line[1] >= '1' && line[1] <= '9' &&
+line[1] >= '1' && line[1] <= '3' &&
 isspace(line[2])) {
 printf("context %c\n", line[1]);
 c = line[1] - '1';
@@ -1476,8 +1502,15 @@ continue;
 JS::RootedValue v(cxa);
 JS::RootedObject co(cxa); // current object
 sprintf(buf, "g%d", c);
-JS_GetProperty(cxa, *rw0, buf, &v);
+	{
+        JSAutoCompartment bc(cxa, *rw0);
+if(!JS_GetProperty(cxa, *rw0, buf, &v) ||
+!v.isObject()) {
+printf("can't find global %s\n", buf);
+continue;
+}
 JS_ValueToObject(cxa, v, &co);
+	}
         JSAutoCompartment ac(cxa, co);
 execScript(line);
 }
@@ -1488,12 +1521,10 @@ for(c=0; c<top; ++c)
 destroyJSContext(c);
 
 // rooted objects have to free in the reverse (stack) order.
-  puts("del m");
 delete mw0;
-  puts("del r");
 delete rw0;
 
-  puts("destroy");
+puts("destroy");
 JS_DestroyContext(cxa);
     JS_ShutDown();
     return 0;

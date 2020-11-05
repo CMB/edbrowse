@@ -21,6 +21,7 @@ eb$voidfunction = function() { }
 eb$truefunction = function() { return true; }
 eb$falsefunction = function() { return false; }
 focus = blur = eb$voidfunction;
+alert = eb$puts;
 
 mw0.dumptree = function(top) {
 var nn = top.nodeName.toLowerCase();
@@ -177,7 +178,7 @@ return s;
 }
 
 mw0.eb$logtime = function(debug, level, obj) {
-var today=new my$win().Date;
+var today=new (my$win().Date);
 var h=today.getHours();
 var m=today.getMinutes();
 var s=today.getSeconds();
@@ -193,7 +194,7 @@ log: function(obj) { mw0.eb$logtime(3, "log", obj); },
 info: function(obj) { mw0.eb$logtime(3, "info", obj); },
 warn: function(obj) { mw0.eb$logtime(3, "warn", obj); },
 error: function(obj) { mw0.eb$logtime(3, "error", obj); },
-timeStamp: function(label) { if(label === undefined) label = "x"; return label.toString() + (new my$win().Date).getTime(); }
+timeStamp: function(label) { if(label === undefined) label = "x"; return label.toString() + (new (my$win().Date)).getTime(); }
 };
 
 mw0.URL = function() {
@@ -565,7 +566,7 @@ Object.defineProperty(mw0.Validity.prototype, "valid", {
 get: function() { // only need to check items with getters
 return !(this.valueMissing)}});
 
-mw0.Element = function() { this.validity = new my$win().Validity, this.validity.owner = this}; mw0.Element.prototype.dom$class = "Element";
+mw0.Element = function() { this.validity = new (my$win().Validity), this.validity.owner = this}; mw0.Element.prototype.dom$class = "Element";
 mw0.Element.prototype.selectionStart = 0;
 mw0.Element.prototype.selectionEnd = -1;
 mw0.Element.prototype.selectionDirection = "none";
@@ -582,7 +583,7 @@ var nn = this.nodeName, t = this.type;
 // as though the user had clicked on this
 if(nn == "button" || (nn == "INPUT" &&
 (t == "button" || t == "reset" || t == "submit" || t == "checkbox" || t == "radio"))) {
-var e = new my$win().Event;
+var e = new (my$win().Event);
 e.initEvent("click", true, true);
 if(!this.dispatchEvent(e)) return;
 // do what the tag says to do
@@ -686,7 +687,7 @@ alert3("textarea.innerHTML is too complicated for me to render");
 }
 
 mw0.HTMLElement = function(){}; mw0.HTMLElement.prototype.dom$class = "HTMLElement";
-mw0.Select = function() { this.selectedIndex = -1; this.value = "";this.validity = new my$win().Validity, this.validity.owner = this}; mw0.Select.prototype.dom$class = "Select";
+mw0.Select = function() { this.selectedIndex = -1; this.value = "";this.validity = new (my$win().Validity), this.validity.owner = this}; mw0.Select.prototype.dom$class = "Select";
 Object.defineProperty(mw0.Select.prototype, "value", {
 get: function() {
 var a = this.options;
@@ -710,7 +711,7 @@ mw0.Div = function(){}; mw0.Div.prototype.dom$class = "Div";
 mw0.Div.prototype.doScroll = eb$voidfunction;
 mw0.Div.prototype.click = function() {
 // as though the user had clicked on this
-var e = new my$win().Event;
+var e = new (my$win().Event);
 e.initEvent("click", true, true);
 this.dispatchEvent(e);
 }
@@ -766,7 +767,7 @@ for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
 var u = ulist[i]; // url name
 eval('Object.defineProperty(mw0.' + cn + '.prototype, "' + u + '", { \
-get: function() { if(!this.href$2) this.href$2 = new my$win().URL; return this.href$2; }, \
+get: function() { if(!this.href$2) this.href$2 = new (my$win().URL); return this.href$2; }, \
 set: function(h) { if(h.dom$class == "URL") h = h.toString(); \
 if(h === null || h === undefined) h = ""; \
 var w = my$win(); \
@@ -775,14 +776,14 @@ w.hrefset$p.push("' + cn + '"); \
 w.hrefset$a.push(h); \
 return; } \
 var last_href = (this.href$2 ? this.href$2.href$val : null); \
-if(!this.href$2) { this.href$2 = new my$win().URL(h ? eb$resolveURL(w.eb$base,h) : h) } else { if(!this.href$2.href$val && h) h =  eb$resolveURL(w.eb$base,h); \
+if(!this.href$2) { this.href$2 = new (my$win().URL)(h ? eb$resolveURL(w.eb$base,h) : h) } else { if(!this.href$2.href$val && h) h =  eb$resolveURL(w.eb$base,h); \
 this.href$2.href = h; }  \
 var next_href = this.href$2.href$val; \
 /* special code for setting frame.src, redirect to a new page. */ \
 if(this.dom$class == "Frame" && this.content$Document && this.content$Document.lastChild && last_href != next_href && next_href) { \
 /* There is a nasty corner case here, dont know if it ever happens. What if we are replacing the running frame? window.parent.src = new_url; See if we can get around it this way. */ \
 if(w == this.content$Window) { w.location = next_href; return; } \
-var d = new my$win().Document; d.childNodes = []; d.attributes = new my$win().NamedNodeMap; d.attributes.owner = d; \
+var d = new (my$win().Document); d.childNodes = []; d.attributes = new (my$win().NamedNodeMap); d.attributes.owner = d; \
 d.nodeName = "DOCUMENT"; d.tagName = "document"; d.nodeType = 9; d.ownerDocument = my$doc(); \
 delete this.eb$auto; this.content$Document = this.content$Window = d; \
 eb$unframe(this, d); /* fix links on the edbrowse side */ \
@@ -885,7 +886,7 @@ if (typeof this.onmessage == "function")
 // whose responsibility is it to add the event handler?   The web developer's?
 // Because we (the browser implementers) don't have any way of knowing what in particular
 // they want the handler to actually do with the message.  Right?
-var me = new my$win().Event;
+var me = new (my$win().Event);
 me.name = "message";
 me.type = "message";
 me.data = message
@@ -947,10 +948,10 @@ mw0.dataCamel = function(t) { return mw0.camelCase(t.replace(/^data-/,"")); }
 mw0.CSSStyleDeclaration = function(){
         this.element = null;
         this.style = this;
-	 this.attributes = new my$win().NamedNodeMap;
+	 this.attributes = new (my$win().NamedNodeMap);
 this.ownerDocument = my$doc();
 this.attributes.owner = this;
-this.sheet = new my$win().CSSStyleSheet;
+this.sheet = new (my$win().CSSStyleSheet);
 };
 mw0.CSSStyleDeclaration.prototype.dom$class = "CSSStyleDeclaration";
 // these are default properties of a style object
@@ -1013,7 +1014,7 @@ but what about individual attributes?
 I haven't found a way to do this without breaking acid test 33 and others.
 *********************************************************************/
 
-s = new my$win().CSSStyleDeclaration;
+s = new (my$win().CSSStyleDeclaration);
 s.element = e;
 
 /*********************************************************************
@@ -1106,7 +1107,7 @@ if(e.nodeType != 1 && e.nodeType != 3) return;
 
 // style object should already be there
 if(!e.style) {
-e.style = new my$win().CSSStyleDeclaration;
+e.style = new (my$win().CSSStyleDeclaration);
 e.style.element = e;
 }
 s = e.style;
@@ -1276,7 +1277,7 @@ this.data$2 += arguments[0];
 this.nodeName = this.tagName = "#text";
 this.nodeType = 3;
 this.ownerDocument = my$doc();
-this.style = new my$win().CSSStyleDeclaration;
+this.style = new (my$win().CSSStyleDeclaration);
 this.style.element = this;
 this.class = "";
 /* A text node chould never have children, and does not need childNodes array,
@@ -1286,7 +1287,7 @@ this.class = "";
  * I have to treat a text node like an html node. */
 this.childNodes = [];
 this.parentNode = null;
-this.attributes = new my$win().NamedNodeMap;
+this.attributes = new (my$win().NamedNodeMap);
 this.attributes.owner = this;
 }
 mw0.TextNode.prototype.dom$class = "TextNode";
@@ -1300,7 +1301,7 @@ set: function(s) { this.data$2 = s + ""; }});
 
 mw0.createTextNode = function(t) {
 if(t == undefined) t = "";
-var c = new my$win().TextNode(t);
+var c = new (my$win().TextNode)(t);
 eb$logElement(c, "text");
 return c;
 }
@@ -1318,7 +1319,7 @@ mw0.Comment.prototype.dom$class = "Comment";
 
 mw0.createComment = function(t) {
 if(t == undefined) t = "";
-var c = new my$win().Comment(t);
+var c = new (my$win().Comment)(t);
 eb$logElement(c, "comment");
 return c;
 }
@@ -1339,7 +1340,7 @@ mw0.Option.prototype.dom$class = "Option";
 // boundingClientRect
 
 mw0.getBoundingClientRect = function(){
-var r = new my$win().Object;
+var r = new (my$win().Object);
 r.top = 0;
 r.bottom = 0;
 r.left = 0;
@@ -1488,7 +1489,7 @@ mw0.isabove = function(a, b)
 {
 var j = 0;
 while(b) {
-if(b == a) { var e = new my$win().Error; e.HIERARCHY_REQUEST_ERR = e.code = 3; throw e; }
+if(b == a) { var e = new (my$win().Error); e.HIERARCHY_REQUEST_ERR = e.code = 3; throw e; }
 if(++j == 1000) { alert3("isabove loop"); break; }
 b = b.parentNode;
 }
@@ -1666,9 +1667,9 @@ return;
 }
 if(mw0.implicitMember(this, name)) return;
 var oldv = null;
-if(!this.attributes) this.attributes = new my$win().NamedNodeMap;
+if(!this.attributes) this.attributes = new (my$win().NamedNodeMap);
 if(!this.attributes[name]) {
-var a = new my$win().Attr();
+var a = new (my$win().Attr);
 a.owner = this;
 a.name = name;
 a.specified = true;
@@ -1738,7 +1739,7 @@ mw0.getAttributeNode = function(name) {
 // or should we return a new Attr node with no value?
 return this.attributes[name] ? this.attributes[name] : null;
 /*
-a = new my$win().Attr;
+a = new (my$win().Attr);
 a.owner = this;
 a.name = name;
 return a;
@@ -1761,7 +1762,7 @@ var debug = my$win().cloneDebug;
 
 if(node1.dom$class == "CSSStyleDeclaration") {
 if(debug) alert3("copy style");
-node2 = new my$win().CSSStyleDeclaration;
+node2 = new (my$win().CSSStyleDeclaration);
 for (var item in node1){
 if(!node1.hasOwnProperty(item)) continue;
 if (typeof node1[item] === 'string' ||
@@ -1883,7 +1884,7 @@ if(item === "ownerDocument") continue; // handled by createElement
 if(node1[item].dom$class == "URL") {
 var u = node1[item];
 if(debug) alert3("copy URL " + item);
-node2[item] = new my$win().URL(u.href);
+node2[item] = new (my$win().URL)(u.href);
 continue;
 }
 
@@ -1941,7 +1942,7 @@ node2.style.element = node2;
 
 if (node1.attributes.dom$class == "NamedNodeMap") {
 if(debug) alert3("copy attributes");
-node2.attributes = new my$win().NamedNodeMap;
+node2.attributes = new (my$win().NamedNodeMap);
 node2.attributes.owner = node2;
 for(var l=0; l<node1.attributes.length; ++l) {
 if(debug) alert3("copy attribute " + node1.attributes[l].name);
@@ -2132,7 +2133,7 @@ mw0.Event = function(etype){
     this.currentTarget = null;
     this.target = null;
     this.eventPhase = 0;
-    this.timeStamp = new my$win().Date().getTime();
+    this.timeStamp = new (my$win().Date)().getTime();
 this.defaultPrevented = false;
 if(typeof etype == "string") this.type = etype;
 };
@@ -2152,7 +2153,7 @@ this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = d
 mw0.Event.prototype.initCustomEvent = function(t, bubbles, cancel, detail) {
 this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = detail; }
 
-mw0.createEvent = function(unused) { return new my$win().Event; }
+mw0.createEvent = function(unused) { return new (my$win().Event); }
 
 mw0.dispatchEvent = function (e) {
 if(my$win().eventDebug) alert3("dispatch " + this.nodeName + " tag " + (this.eb$seqno?this.eb$seqno:"?") + " " + e.type);
@@ -2335,7 +2336,7 @@ this.removeListener = function(f) { this.removeEventListener("mediaChange", f, f
 
 mw0.matchMedia = function(s)
 {
-var q = new my$win().MediaQueryList;
+var q = new (my$win().MediaQueryList);
 q.media = s;
 q.matches = eb$media(s);
 return q;
@@ -2957,7 +2958,7 @@ var mismatch = false;
 var u = mw0.createElement(s);
 if(!u) return null;
 if(!nsurl) nsurl = "";
-u.namespaceURI = new my$win().URL(nsurl);
+u.namespaceURI = new (my$win().URL)(nsurl);
 // prefix and url have to fit together, I guess.
 // I don't understand any of this.
 if(!s.match(/:/)) {
@@ -2983,7 +2984,7 @@ if(nsurl != "http://www.w3.org/2000/xmlns/") mismatch = true;
 } else mismatch = true;
 if(mismatch) {
 alert3("bad createElementNS(" + nsurl + "," + s + ')');
-var e = new my$win().Error; e.code = 14; throw e;
+var e = new (my$win().Error); e.code = 14; throw e;
 }
 return u;
 }
@@ -2999,52 +3000,52 @@ if(!t.match(/^[a-z:\d_]+$/) || t.match(/^\d/)) {
 alert3("bad createElement(" + t + ')');
 // acid3 says we should throw an exception here.
 // But we get these kinds of strings from www.oranges.com all the time.
-var e = new my$win().Error; e.code = 5; throw e;
+var e = new (my$win().Error); e.code = 5; throw e;
 }
 switch(t) { 
-case "body": c = new my$win().Body; break;
-case "object": c = new my$win().HtmlObj; break;
-case "a": c = new my$win().Anchor; break;
-case "htmlanchorelement": c = new my$win().HTMLAnchorElement; break;
+case "body": c = new (my$win().Body); break;
+case "object": c = new (my$win().HtmlObj); break;
+case "a": c = new (my$win().Anchor); break;
+case "htmlanchorelement": c = new (my$win().HTMLAnchorElement); break;
 case "image": t = "img";
-case "img": c = new my$win().Image; break;
-case "link": c = new my$win().Link; break;
-case "meta": c = new my$win().Meta; break;
-case "cssstyledeclaration": case "style": c = new my$win().CSSStyleDeclaration; break;
-case "script": c = new my$win().Script; break;
-case "div": c = new my$win().Div; break;
-case "label": c = new my$win().Label; break;
-case "p": c = new my$win().P; break;
-case "header": c = new my$win().Header; break;
-case "footer": c = new my$win().Footer; break;
-case "table": c = new my$win().Table; break;
-case "tbody": c = new my$win().tBody; break;
-case "tr": c = new my$win().tRow; break;
-case "td": c = new my$win().Cell; break;
-case "caption": c = new my$win().tCap; break;
-case "thead": c = new my$win().tHead; break;
-case "tfoot": c = new my$win().tFoot; break;
-case "canvas": c = new my$win().Canvas; break;
-case "audio": case "video": c = new my$win().Audio; break;
-case "document": c = new my$win().Document; break;
-case "htmliframeelement": case "iframe": case "frame": c = new my$win().Frame; break;
-case "select": c = new my$win().Select; break;
+case "img": c = new (my$win().Image); break;
+case "link": c = new (my$win().Link); break;
+case "meta": c = new (my$win().Meta); break;
+case "cssstyledeclaration": case "style": c = new (my$win().CSSStyleDeclaration); break;
+case "script": c = new (my$win().Script); break;
+case "div": c = new (my$win().Div); break;
+case "label": c = new (my$win().Label); break;
+case "p": c = new (my$win().P); break;
+case "header": c = new (my$win().Header); break;
+case "footer": c = new (my$win().Footer); break;
+case "table": c = new (my$win().Table); break;
+case "tbody": c = new (my$win().tBody); break;
+case "tr": c = new (my$win().tRow); break;
+case "td": c = new (my$win().Cell); break;
+case "caption": c = new (my$win().tCap); break;
+case "thead": c = new (my$win().tHead); break;
+case "tfoot": c = new (my$win().tFoot); break;
+case "canvas": c = new (my$win().Canvas); break;
+case "audio": case "video": c = new (my$win().Audio); break;
+case "document": c = new (my$win().Document); break;
+case "htmliframeelement": case "iframe": case "frame": c = new (my$win().Frame); break;
+case "select": c = new (my$win().Select); break;
 case "option":
-c = new my$win().Option;
+c = new (my$win().Option);
 c.nodeName = c.tagName = "OPTION";
 c.childNodes = [];
 // we don't log options because rebuildSelectors() checks
 // the dropdown lists after every js run.
 return c;
-case "form": c = new my$win().Form; break;
+case "form": c = new (my$win().Form); break;
 case "input": case "element": case "textarea":
-c = new my$win().Element;
+c = new (my$win().Element);
 if(t == "textarea") c.type = t;
 break;
-case "button": c = new my$win().Element; c.type = "submit"; break;
+case "button": c = new (my$win().Element); c.type = "submit"; break;
 default:
 /* eb$puts("createElement default " + s); */
-c = new my$win().HTMLElement;
+c = new (my$win().HTMLElement);
 }
 
 /* ok, for some element types this perhaps doesn't make sense,
@@ -3052,14 +3053,14 @@ c = new my$win().HTMLElement;
 if(c.dom$class == "CSSStyleDeclaration") {
 c.element = c;
 } else {
-c.style = new my$win().CSSStyleDeclaration;
+c.style = new (my$win().CSSStyleDeclaration);
 c.style.element = c;
 }
 c.dataset = {};
 c.childNodes = [];
 if(c.dom$class == "Select") c.options = c.childNodes;
 c.parentNode = null;
-c.attributes = new my$win().NamedNodeMap;
+c.attributes = new (my$win().NamedNodeMap);
 c.attributes.owner = c;
 if(t == "input") { // name and type are automatic attributes acid test 53
 c.setAttribute("name", "");
@@ -3228,11 +3229,11 @@ mw0.XMLHttpRequest.prototype.onreadystatechange = mw0.XMLHttpRequest.prototype.o
 mw0.XMLHttpRequest.prototype.getResponseHeader = function(header){
 var rHeader, returnedHeaders;
 if (this.readyState < 3){
-throw new my$win().Error("INVALID_STATE_ERR");
+throw new (my$win().Error)("INVALID_STATE_ERR");
 } else {
 returnedHeaders = [];
 for (rHeader in this.responseHeaders) {
-if (rHeader.match(new my$win().RegExp(header, "i"))) {
+if (rHeader.match(new (my$win().RegExp)(header, "i"))) {
 returnedHeaders.push(this.responseHeaders[rHeader]);
 }
 }
@@ -3246,7 +3247,7 @@ return null;
 mw0.XMLHttpRequest.prototype.getAllResponseHeaders = function(){
 var header, returnedHeaders = [];
 if (this.readyState < 3){
-throw new my$win().Error("INVALID_STATE_ERR");
+throw new (my$win().Error)("INVALID_STATE_ERR");
 } else {
 for (header in this.responseHeaders) {
 returnedHeaders.push( header + ": " + this.responseHeaders[header] );
@@ -3379,7 +3380,7 @@ Object.defineProperty(mw0.CSSStyleDeclaration.prototype, "cssText", { get: mw0.c
 mw0.eb$qs$start = function()
 {
 // This is a stub for now.
-my$doc().prependChild(new my$win().DocType);
+my$doc().prependChild(new (my$win().DocType));
 mw0.cssGather(true);
 }
 
@@ -3710,7 +3711,7 @@ if(!o.active) continue;
 var r; // mutation record
 if(isattr) { // the easy case
 if(o.attr && o.target == b) {
-r = new my$win().MutationRecord;
+r = new (my$win().MutationRecord);
 r.type = "attributes";
 r.attributeName = y;
 r.target = b;
@@ -3721,7 +3722,7 @@ continue;
 }
 // ok a child of b has changed
 if(o.kids && o.target == b) {
-r = new my$win().MutationRecord;
+r = new (my$win().MutationRecord);
 mw0.mrKids(r, b, y, z);
 o.callback([r], o);
 continue;
@@ -3730,7 +3731,7 @@ if(!o.subtree) continue;
 // climb up the tree
 for(var t = b; t && t.nodeType == 1; t = t.parentNode) {
 if(o.subtree && o.target == t) {
-r = new my$win().MutationRecord;
+r = new (my$win().MutationRecord);
 mw0.mrKids(r, b, y, z);
 o.callback([r], o);
 break;
